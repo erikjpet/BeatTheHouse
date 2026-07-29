@@ -87,7 +87,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 			visible_target_ids.append(node_id)
 			node["locked"] = route_locked
 			if route_locked:
-				node["travel_disabled_reason"] = str(status.get("disabled_reason", "That route is not available right now."))
+				node["travel_disabled_reason"] = str(status.get("disabled_reason", "Route locked. Check the clue, the clock, or another stop."))
 				node["attribute_badges"] = []
 				travel_disabled_ids.append(node_id)
 				var locked_route_path = host._string_array(route.get("world_path", []))
@@ -122,7 +122,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 			if enabled:
 				travel_enabled_ids.append(node_id)
 			else:
-				var disabled_reason = str(status.get("disabled_reason", "That route is not available right now."))
+				var disabled_reason = str(status.get("disabled_reason", "Route closed. Check hours or pick another stop."))
 				if not open_now and not open_status_text.is_empty():
 					disabled_reason = open_status_text
 				node["travel_disabled_reason"] = disabled_reason

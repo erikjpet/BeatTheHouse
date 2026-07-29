@@ -791,7 +791,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var action := _action(action_id)
 	if action.is_empty():
-		return _empty_result(action_id, stake, environment, "Action is not available.")
+		return _empty_result(action_id, stake, environment, "That move is closed from here. Pick a lit action.")
 
 	var is_cheat := _is_cheat_action(action_id)
 	var economic_profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}

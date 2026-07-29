@@ -1444,7 +1444,7 @@ func _surface_action_block_reason(action: String) -> String:
 		if not unless_flag.is_empty() and bool(state.get(unless_flag, false)):
 			continue
 		var reason := str(block.get("reason", ""))
-		return reason if not reason.is_empty() else "That action is not available right now."
+		return reason if not reason.is_empty() else "That control is waiting on the current reveal. Let the table finish."
 	return ""
 
 

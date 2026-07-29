@@ -267,7 +267,7 @@ static func travel_card_lines(travel_hooks: Array, travel_changes: Dictionary, t
 	var lines: Array = []
 	if not travel_hooks.is_empty(): lines.append("New routes: %s." % _call_list_label(labeler, travel_hooks))
 	if not travel_changes.is_empty(): lines.append("Routes changed.")
-	lines.append("No route is available right now." if travel_choices.is_empty() else "Available: %s." % travel_summary(travel_choices))
+	lines.append("No open route leaves this room. Check the clock or return home." if travel_choices.is_empty() else "Available: %s." % travel_summary(travel_choices))
 	return lines
 
 

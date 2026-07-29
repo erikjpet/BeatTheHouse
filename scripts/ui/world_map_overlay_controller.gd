@@ -254,7 +254,7 @@ func select_run_node(node_id: String, current_node_id: String, visible_node_ids:
 	selected_travel_label = str(choice.get("label", clean_id)) if enabled else ""
 	var message := "Route marked: %s." % str(choice.get("label", clean_id))
 	if not enabled:
-		message = str(choice.get("disabled_reason", "That route is not available right now."))
+		message = str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop."))
 	return _result(enabled, message, true)
 
 
@@ -280,7 +280,7 @@ func confirm_run_selection(choice: Dictionary) -> Dictionary:
 	if choice.is_empty():
 		return _confirm_result("message", confirmed_target_id, "", {}, "That stop is not available from here right now.", true)
 	if not bool(choice.get("enabled", true)):
-		return _confirm_result("message", confirmed_target_id, "", {}, str(choice.get("disabled_reason", "That route is not available right now.")), true)
+		return _confirm_result("message", confirmed_target_id, "", {}, str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")), true)
 	selected_travel_target_id = str(choice.get("id", ""))
 	selected_travel_label = str(choice.get("label", selected_travel_target_id))
 	return _confirm_result("travel", selected_travel_target_id, selected_travel_label, choice, "", false)

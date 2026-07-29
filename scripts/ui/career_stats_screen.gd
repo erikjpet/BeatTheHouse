@@ -78,7 +78,7 @@ func _ensure_built() -> void:
 	close_button.custom_minimum_size = Vector2(VisualStyle.SPACE_9 * 3.0, VisualStyle.TOUCH_TARGET)
 	header.add_child(close_button)
 
-	var subtitle := FoundationWidgetsScript.muted_label("Lifetime results, daily streaks, challenge clears, and recent runs from the permanent profile.", VisualStyle.TYPE_BODY)
+	var subtitle := FoundationWidgetsScript.muted_label("Your permanent ledger fills in as runs end: routes, streaks, money, and scars.", VisualStyle.TYPE_BODY)
 	subtitle.max_lines_visible = 2
 	add_child(subtitle)
 
@@ -102,7 +102,7 @@ func _ensure_built() -> void:
 	var empty_title := FoundationWidgetsScript.label("No runs recorded yet", VisualStyle.TYPE_HEADING)
 	FoundationWidgetsScript.set_control_font_color(empty_title, VisualStyle.role("selected"))
 	empty_stack.add_child(empty_title)
-	empty_stack.add_child(FoundationWidgetsScript.muted_label("Start a run, chase the Grand Casino, and this ledger will fill in with outcomes, streaks, and route wins.", VisualStyle.TYPE_BODY))
+	empty_stack.add_child(FoundationWidgetsScript.muted_label("Start a run. Win or lose, the ledger will record the route, money, and what came home.", VisualStyle.TYPE_BODY))
 
 	headline_grid = GridContainer.new()
 	headline_grid.columns = 1 if small_screen_mode else 2
@@ -189,7 +189,7 @@ func _render_challenges() -> void:
 	FoundationWidgetsScript.clear(challenge_stack)
 	var challenges := _array(model.get("challenges", []))
 	if challenges.is_empty():
-		challenge_stack.add_child(FoundationWidgetsScript.muted_label("No completed challenges yet.", VisualStyle.TYPE_BODY))
+		challenge_stack.add_child(FoundationWidgetsScript.muted_label("No challenge clears yet. Optional runs will leave their stamp here.", VisualStyle.TYPE_BODY))
 		return
 	for challenge_value in challenges:
 		var challenge := _dict(challenge_value)
@@ -200,7 +200,7 @@ func _render_history() -> void:
 	FoundationWidgetsScript.clear(history_stack)
 	var history := _array(model.get("history", []))
 	if history.is_empty():
-		history_stack.add_child(FoundationWidgetsScript.muted_label("No completed runs recorded yet.", VisualStyle.TYPE_BODY))
+		history_stack.add_child(FoundationWidgetsScript.muted_label("No finished runs yet. Your first bust or victory becomes the opening entry.", VisualStyle.TYPE_BODY))
 		return
 	for entry_value in history:
 		var entry := _dict(entry_value)

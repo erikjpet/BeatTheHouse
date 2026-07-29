@@ -190,7 +190,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_xray_peeks": _dictionary_array(active_ticket.get("xray_peeks", [])) if result_ready else [],
 		"scratch_fortune": str(active_ticket.get("fortune_tier", "")) if result_ready else "",
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
-		"scratch_rules": "%s Winners wait for the clerk." % _ticket_play_label(str(active_ticket.get("type_id", "")), _dict_ref(active_ticket.get("mechanic", {}))) if not active_ticket.is_empty() else "Buy a ticket, scratch each silver box, then file the result.",
+		"scratch_rules": "%s Winners wait for the clerk." % _ticket_play_label(str(active_ticket.get("type_id", "")), _dict_ref(active_ticket.get("mechanic", {}))) if not active_ticket.is_empty() else _machine_empty_rules(stock),
 		"surface_animation_channels": [
 			GameModule.surface_animation_channel(DISPENSE_CHANNEL, last_dispense_id, DISPENSE_DURATION_MSEC, int(machine.get("dispense_started_msec", 0)), {"metadata": {"ticket_id": str(active_ticket.get("id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
 			GameModule.surface_animation_channel(FILE_CHANNEL, last_file_id, FILE_DURATION_MSEC, int(machine.get("file_started_msec", 0)), {"metadata": {"pile": str(machine.get("last_settled_pile", ""))}}),
@@ -1674,6 +1674,11 @@ func _draw_machine(surface, state: Dictionary) -> void:
 	surface.draw_rect(glass, Color("#90a8b5"), false, 3)
 	surface.draw_polygon([glass.position + Vector2(7, 4), glass.position + Vector2(36, 4), glass.position + Vector2(112, glass.size.y - 4), glass.position + Vector2(82, glass.size.y - 4)], [Color(0.65, 0.90, 1.0, 0.055)])
 	var stock := _array_ref(state.get("scratch_stock", []))
+	var any_stocked := false
+	for slot_value in stock:
+		if typeof(slot_value) == TYPE_DICTIONARY and int((slot_value as Dictionary).get("remaining", 0)) > 0:
+			any_stocked = true
+			break
 	var row_count := maxi(1, stock.size())
 	var row_height := (glass.size.y - 14.0) / float(row_count)
 	for index in range(stock.size()):
@@ -1687,7 +1692,7 @@ func _draw_machine(surface, state: Dictionary) -> void:
 	surface.draw_rect(Rect2(payment.position + Vector2(48, 8), Vector2(10, 15)), Color("#050608"))
 	var status := Rect2(MACHINE_RECT.position + Vector2(93, 329), Vector2(166, 31))
 	surface.draw_rect(status, Color("#15241f"))
-	surface.surface_label_centered("SELECT A LIT ROW", status, 9, Color("#66f0ad"))
+	surface.surface_label_centered("SELECT A LIT ROW" if any_stocked else "SOLD OUT - TRY LATER", status, 9, Color("#66f0ad") if any_stocked else C_PINK)
 	var chute := Rect2(MACHINE_RECT.position + Vector2(42, 367), Vector2(MACHINE_RECT.size.x - 84, 27))
 	surface.draw_rect(chute, Color("#24070d"))
 	surface.draw_rect(chute, Color("#ffb05f"), false, 2)
@@ -2973,6 +2978,13 @@ func _stock_view(machine: Dictionary) -> Array:
 	for value in _dictionary_array(machine.get("stock", [])):
 		result.append((value as Dictionary).duplicate(true))
 	return result
+
+
+func _machine_empty_rules(stock: Array) -> String:
+	for slot_value in stock:
+		if typeof(slot_value) == TYPE_DICTIONARY and int((slot_value as Dictionary).get("remaining", 0)) > 0:
+			return "Buy a ticket, scratch each silver box, then file the result."
+	return "This machine is sold out for now. Check another store or come back after restock."
 
 
 func _normalize_machine_state(machine: Dictionary) -> void:

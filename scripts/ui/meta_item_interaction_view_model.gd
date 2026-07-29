@@ -355,13 +355,21 @@ static func _flatten_container_items(containers: Array) -> Array:
 static func _summary(meta_service: Variant, mode: String, item_count: int, trade_selected_ids: Array) -> String:
 	match mode:
 		MODE_BAGS:
+			if item_count <= 0:
+				return "No unopened bags. Win a standard run to bring one home."
 			return "%d unopened bag%s. Select one to inspect before opening." % [item_count, "" if item_count == 1 else "s"]
 		MODE_SALE:
 			var gold := int(meta_service.snapshot().get("gold_balance", 0)) if meta_service != null and meta_service.has_method("snapshot") else 0
+			if item_count <= 0:
+				return "Nothing to sell yet. Sal's counter wakes up after your first haul."
 			return "%d sale option%s. Sal pays in gold; you have %d." % [item_count, "" if item_count == 1 else "s", gold]
 		MODE_TRADE:
+			if item_count <= 0:
+				return "Trade-up needs five matching collection items. Win bags first."
 			return "%d/5 selected. All five must share one collection and tier." % trade_selected_ids.size()
 		_:
+			if item_count <= 0:
+				return "Your shelves are empty. Beat a route to bring home bags and permanent keepsakes."
 			return "%d owned item%s. Switch containers to inspect, pack, or unpack." % [item_count, "" if item_count == 1 else "s"]
 
 
@@ -375,10 +383,10 @@ static func _title(mode: String) -> String:
 
 static func _empty_text(mode: String) -> String:
 	match mode:
-		MODE_BAGS: return "No unopened collection bags."
-		MODE_SALE: return "Nothing is available to sell."
-		MODE_TRADE: return "No collection items are eligible for trade-up."
-		_: return "No collection items owned yet."
+		MODE_BAGS: return "No unopened bags. Win a standard run, then open the prize here."
+		MODE_SALE: return "Nothing for Sal yet. Bring home bags or keepsakes first."
+		MODE_TRADE: return "Trade-up needs five matching collection pieces. Keep cracking bags."
+		_: return "No collection items yet. Start a run, beat a route, and bring something home."
 
 
 static func _asset_path_for_icon(icon_key: String) -> String:

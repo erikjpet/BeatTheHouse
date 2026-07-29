@@ -690,7 +690,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		return _resolve_ticket_set_purchase(run_state, environment, rng, ui_state)
 	var action := _action(action_id)
 	if action.is_empty():
-		return _empty_result(action_id, 0, environment, "Action is not available.")
+		return _empty_result(action_id, 0, environment, "That pull-tab control is not live. Pick a stocked row.")
 	var machine := _ensure_machine_state(run_state, environment, true)
 	var deals := _deal_array(machine.get("deals", []))
 	var deal_index := clampi(int(ui_state.get("pull_tab_deal_index", 0)), 0, maxi(0, deals.size() - 1))

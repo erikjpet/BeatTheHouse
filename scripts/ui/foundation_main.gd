@@ -787,7 +787,7 @@ func select_game_action(action_id: String, action_kind: String) -> void:
 		return
 	var action := _available_game_action(action_id, action_kind)
 	if action.is_empty():
-		_show_message("Action is not available.")
+		_show_message("That move is closed from here. Pick a lit action on the table.")
 		return
 	selected_action_id = str(action.get("id", ""))
 	selected_action_kind = action_kind
@@ -866,7 +866,7 @@ func _current_game_bound_surface_action(action: String, index: int) -> Dictionar
 func _on_game_surface_action_blocked(_action: String, reason: String) -> void:
 	var message := reason.strip_edges()
 	if message.is_empty():
-		message = "That action is not available right now."
+		message = "That move is closed from here. Try a lit control."
 	_show_message(message)
 	_refresh()
 
@@ -958,13 +958,13 @@ func _play_surface_command_audio(command: Dictionary, fallback_index: int) -> vo
 func _select_or_resolve_surface_game_action(action_kind: String, index: int, confirm_requested: bool) -> bool:
 	var actions := _game_action_view_list(action_kind)
 	if index < 0 or index >= actions.size():
-		_show_message("That action is not available.")
+		_show_message("That table spot is only scenery. Pick a lit action.")
 		_refresh()
 		return false
 	var action: Dictionary = actions[index]
 	var action_id := str(action.get("id", ""))
 	if action_id.is_empty():
-		_show_message("That action is not available.")
+		_show_message("That table spot is only scenery. Pick a lit action.")
 		_refresh()
 		return false
 	if game_surface_canvas != null:
@@ -1471,7 +1471,7 @@ func select_travel_option(target_id: String) -> bool:
 		return false
 	var choice := _travel_choice(target_id)
 	if choice.is_empty():
-		_show_message("Travel option is not available.")
+		_show_message("No open route leads there from this room.")
 		return false
 	selected_action_category = ACTION_CATEGORY_TRAVEL
 	_set_current_screen(SCREEN_TRAVEL)
@@ -1479,7 +1479,7 @@ func select_travel_option(target_id: String) -> bool:
 	focus_interactable_object("travel:leave")
 	selected_world_map_node_id = choice_target_id
 	if not bool(choice.get("enabled", true)):
-		_show_message(str(choice.get("disabled_reason", "That route is not available right now.")))
+		_show_message(str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
 		_refresh_world_map_overlay()
 		_refresh()
 		return false
@@ -1505,12 +1505,12 @@ func confirm_selected_travel() -> void:
 		_show_message("Travel is already in progress.")
 		return
 	if choice.is_empty():
-		_show_message("Travel option is not available.")
+		_show_message("No open route leads there from this room.")
 		_clear_selected_travel()
 		_refresh()
 		return
 	if not bool(choice.get("enabled", true)):
-		_show_message(str(choice.get("disabled_reason", "That route is not available right now.")))
+		_show_message(str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
 		_refresh()
 		return
 	_travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice)
@@ -3961,7 +3961,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if route.is_empty():
 		route = library.route(target_id) if library != null else {}
 	if not bool(choice_data.get("enabled", true)):
-		_show_message(str(choice_data.get("disabled_reason", "That route is not available right now.")))
+		_show_message(str(choice_data.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
 		_refresh()
 		return
 	if _is_meta_session():
@@ -6599,7 +6599,7 @@ func _render_empty_context_panel() -> void:
 	card.add_child(_muted_label("Bright props can act. Dim or locked props explain what is missing.", 12))
 	var objects := _interactable_object_view_list()
 	if objects.is_empty():
-		card.add_child(_muted_label("Nothing is available here yet.", 12))
+		card.add_child(_muted_label("This room is quiet for now. Open travel, check the clock, or return home.", 12))
 		return
 	card.add_child(_label("Visible things nearby", 13))
 	var shown := 0
@@ -6959,7 +6959,7 @@ func _add_context_travel_actions(card: VBoxContainer, target_id: String) -> void
 	if not unlock_lines.is_empty():
 		card.add_child(_muted_label("Unlock: %s" % "; ".join(unlock_lines.slice(0, 2)), 12))
 	if not bool(choice.get("enabled", true)):
-		card.add_child(_muted_label(str(choice.get("disabled_reason", "That route is not available right now.")), 13))
+		card.add_child(_muted_label(str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")), 13))
 		return
 	if selected_travel_target_id == target_id:
 		_add_card_button(card, "Travel to %s" % selected_travel_label, Callable(self, "confirm_selected_travel"), false, true)
@@ -7064,7 +7064,7 @@ func _action_category_view_list() -> Array:
 			"description": "Choose where to go next when a route is available.",
 			"count": travel_count,
 			"enabled": travel_count > 0,
-			"empty_text": "No route is available from here yet.",
+			"empty_text": "No open route leaves from here yet. Check the map, wait out the clock, or use a room exit.",
 		},
 	]
 
@@ -12899,7 +12899,7 @@ func _refresh_world_map_detail() -> void:
 		if locked_blocks > 0:
 			locked_distance = "%s / %d block%s" % [locked_distance, locked_blocks, "" if locked_blocks == 1 else "s"]
 		lines.append("Distance: %s" % locked_distance)
-		lines.append("Locked: %s" % str(choice.get("disabled_reason", "That route is not available right now.")))
+		lines.append("Locked: %s" % str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
 		_set_world_map_confirm_enabled(false)
 		_set_world_map_detail_badges(AttributeBadgesScript.for_world_map_detail(destination_kind, choice))
 		world_map_detail_label.text = "\n".join(lines)
@@ -12938,7 +12938,7 @@ func _refresh_world_map_detail() -> void:
 	elif bool(choice.get("enabled", true)):
 		lines.append("Status: Route open.")
 	else:
-		lines.append("Status: %s" % str(choice.get("disabled_reason", "That route is not available right now.")))
+		lines.append("Status: %s" % str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
 	_set_world_map_detail_badges(AttributeBadgesScript.for_world_map_detail(destination_kind, choice))
 	_set_world_map_confirm_enabled(bool(choice.get("enabled", true)))
 	world_map_detail_label.text = "\n".join(lines)
@@ -13273,8 +13273,14 @@ func _coach_context_snapshot() -> Dictionary:
 			"debt_count": run_state.debt.size() if run_state != null else 0,
 			"closing_time_active": run_state.closing_time_active() if run_state != null else false,
 			"grand_casino_chips": run_state.grand_casino_chips if run_state != null else 0,
+			"grand_casino_atm_debt": int(run_state.call("grand_casino_atm_debt")) if run_state != null and run_state.has_method("grand_casino_atm_debt") else 0,
 			"players_card_tier": str(objective.get("players_card_tier", "none")),
+			"players_card_ready_to_claim": bool(objective.get("players_card_ready_to_claim", false)),
+			"players_card_can_claim": bool(objective.get("players_card_can_claim", false)),
 			"high_roller_ready": bool(objective.get("high_roller_ready", false)),
+			"showdown_pending": bool(objective.get("showdown_pending", false)),
+			"showdown_active": bool(objective.get("showdown_active", false)),
+			"available_cheat_actions": _coach_available_cheat_action_count(),
 		},
 		"ui": {
 			"pawn_counter_open": _run_inventory_popup_is_visible() and run_inventory_popup_mode == "pawn_counter",
@@ -13291,6 +13297,12 @@ func _coach_context_snapshot() -> Dictionary:
 		"reduce_motion": _reduce_motion_enabled(),
 		"small_screen": _small_screen_enabled(),
 	}
+
+
+func _coach_available_cheat_action_count() -> int:
+	if current_game == null:
+		return 0
+	return _game_action_view_list("cheat").size()
 
 
 func _starter_card_count() -> int:

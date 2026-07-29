@@ -29,19 +29,50 @@ static func build(meta_service: Variant) -> Dictionary:
 		})
 	return {
 		"title": "Home",
-		"summary": "%s - %d owned, %d unopened bag%s, %d gold." % [
-			str(home.get("display_name", "Back Alley")),
-			owned_instances.size(),
-			unopened_bags.size(),
-			"" if unopened_bags.size() == 1 else "s",
-			int(snapshot.get("gold_balance", 0)),
-		],
+		"summary": _summary_text(home, owned_instances.size(), unopened_bags.size(), int(snapshot.get("gold_balance", 0))),
+		"empty_state": _empty_state(owned_instances.size(), unopened_bags.size(), int(snapshot.get("gold_balance", 0))),
+		"top_tier_state": _top_tier_state(home),
 		"home": home,
 		"owned_count": owned_instances.size(),
 		"bag_count": unopened_bags.size(),
 		"gold_balance": int(snapshot.get("gold_balance", 0)),
 		"collections": collections,
 		"unopened_bags": unopened_bags,
+	}
+
+
+static func _summary_text(home: Dictionary, owned_count: int, bag_count: int, gold: int) -> String:
+	var upgrade: Dictionary = home.get("upgrade", {}) if typeof(home.get("upgrade", {})) == TYPE_DICTIONARY else {}
+	var next_text := "Top housing tier" if upgrade.is_empty() else "%d gold to %s" % [maxi(0, int(upgrade.get("price", 0)) - gold), str(upgrade.get("display_name", "next home"))]
+	return "%s - %d owned, %d unopened bag%s, %d gold. %s." % [
+			str(home.get("display_name", "Back Alley")),
+			owned_count,
+			bag_count,
+			"" if bag_count == 1 else "s",
+			gold,
+			next_text,
+		]
+
+
+static func _empty_state(owned_count: int, bag_count: int, gold: int) -> Dictionary:
+	if owned_count > 0 or bag_count > 0 or gold > 0:
+		return {"visible": false}
+	return {
+		"visible": true,
+		"title": "Fresh room, empty shelves",
+		"detail": "Win a standard run to bring home bags, gold, and permanent keepsakes.",
+		"nudge": "Start a run, beat a route, then open bags here.",
+	}
+
+
+static func _top_tier_state(home: Dictionary) -> Dictionary:
+	var upgrade: Dictionary = home.get("upgrade", {}) if typeof(home.get("upgrade", {})) == TYPE_DICTIONARY else {}
+	if not upgrade.is_empty():
+		return {"visible": false}
+	return {
+		"visible": true,
+		"title": "Top housing tier",
+		"detail": "No higher room is for sale. Spend gold on Sal's shelf, bags, and trade-ups.",
 	}
 
 

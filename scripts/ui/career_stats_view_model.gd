@@ -37,7 +37,7 @@ static func build(profile_inventory: ProfileInventory) -> Dictionary:
 		"challenges": _challenge_rows(challenges),
 		"history": _history_rows(history),
 		"missing_stats": [
-			"Per-game win rates are not persisted; the profile stores games played, but not per-game wins/losses.",
+			"Fine-grain table wins are not written to the permanent ledger yet; route outcomes and money are.",
 		],
 	}
 
