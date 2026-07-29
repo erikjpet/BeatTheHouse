@@ -2,7 +2,7 @@
 	{
 		"id": "universal_passive_items",
 		"display_name": "Universal Passive Items",
-		"description": "Broad luck, travel, and heat-management items that are not tied to one game surface.",
+		"description": "Luck and heat tools for any room.",
 		"default_enabled": true,
 		"game_ids": [],
 		"item_ids": [
@@ -29,7 +29,7 @@
 	{
 		"id": "universal_active_items",
 		"display_name": "Universal Active Items",
-		"description": "Active-use items that can be enabled independently of game-specific item packs.",
+		"description": "Pocket moves for the whole night.",
 		"default_enabled": true,
 		"game_ids": [],
 		"item_ids": [
@@ -41,7 +41,7 @@
 	{
 		"id": "scratch_tickets_pack",
 		"display_name": "Scratch Tickets Pack",
-		"description": "Gas-station scratch tickets and scratch-specific tools.",
+		"description": "Scratchers and their pocket folklore.",
 		"default_enabled": true,
 		"game_ids": ["scratch_tickets"],
 		"item_ids": ["xray_glasses", "tarot_card", "lucky_penny", "pile_of_scratch_tickets"]
@@ -49,7 +49,7 @@
 	{
 		"id": "pull_tabs_pack",
 		"display_name": "Pull Tabs Pack",
-		"description": "Pull-tab machines plus detector, tarot, and glasses tools that only affect pull tabs.",
+		"description": "Sealed tabs and suspicious little helpers.",
 		"default_enabled": true,
 		"game_ids": ["pull_tabs"],
 		"item_ids": [
@@ -62,7 +62,7 @@
 	{
 		"id": "slot_pack",
 		"display_name": "Slot Pack",
-		"description": "Slot machines plus cabinet-manipulation gear.",
+		"description": "Cabinets, coins, and bright bad ideas.",
 		"default_enabled": true,
 		"game_ids": ["slot"],
 		"item_ids": [
@@ -93,7 +93,7 @@
 	{
 		"id": "bar_dice_pack",
 		"display_name": "Bar Dice Pack",
-		"description": "Bar dice tables plus dice-weighting gear.",
+		"description": "Dice, cups, and careful wrists.",
 		"default_enabled": true,
 		"game_ids": ["bar_dice"],
 		"item_ids": ["weighted_keyring", "dice_calipers", "false_bottom_cup"]
@@ -101,7 +101,7 @@
 	{
 		"id": "blackjack_pack",
 		"display_name": "Blackjack Pack",
-		"description": "Blackjack tables plus hole-card, counting, and side-bet tools.",
+		"description": "Cards, counts, and dealer shadows.",
 		"default_enabled": true,
 		"game_ids": ["blackjack"],
 		"item_ids": [
@@ -121,7 +121,7 @@
 	{
 		"id": "baccarat_pack",
 		"display_name": "Baccarat Pack",
-		"description": "Baccarat tables plus shared card-note support.",
+		"description": "Baccarat pressure with quiet card notes.",
 		"default_enabled": true,
 		"game_ids": ["baccarat"],
 		"item_ids": ["scratch_pad", "odds_notebook", "shoe_cut_marker", "marked_cards", "edge_sort_loupe"]
@@ -129,7 +129,7 @@
 	{
 		"id": "roulette_pack",
 		"display_name": "Roulette Pack",
-		"description": "Roulette tables and wheel-pressure play.",
+		"description": "Wheel pressure and smooth hands.",
 		"default_enabled": true,
 		"game_ids": ["roulette"],
 		"item_ids": ["foil_sleeve", "chip_slide_wax", "sleeve_rig"]
@@ -137,7 +137,7 @@
 	{
 		"id": "video_poker_pack",
 		"display_name": "Video Poker Pack",
-		"description": "Video poker machines plus shared card-note support.",
+		"description": "Cabinet poker with card-note nerves.",
 		"default_enabled": true,
 		"game_ids": ["video_poker"],
 		"item_ids": ["scratch_pad", "odds_notebook", "holdout_wax", "sleeve_rig"]

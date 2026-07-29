@@ -1,163 +1,199 @@
 [
-	{
-		"id": "dry_run",
-		"title": "Dry Run",
-		"description": "No drink services, lower opening luck, and slower table nerve.",
-		"completion_flag": "challenge_dry_run_complete",
-		"modifiers": {
-			"blocked_service_categories": ["alcohol"],
-			"baseline_luck_delta": -4,
-			"starting_bankroll_delta": 10
-		}
-	},
-	{
-		"id": "debt_spiral",
-		"title": "Debt Spiral",
-		"description": "Start with a shark note already on your back and a little extra cash in hand.",
-		"completion_flag": "challenge_debt_spiral_complete",
-		"modifiers": {
-			"starting_bankroll_delta": 35,
-			"starting_debt": [
-				{
-					"id": "debt_spiral_note",
-					"lender_id": "street_lender",
-					"balance": 80,
-					"status": "active",
-					"deadline_turns": 2,
-					"interest_rate": 0.2
-				}
-			]
-		}
-	},
-	{
-		"id": "pacifist",
-		"title": "Pacifist",
-		"description": "No cheat actions are available, and the clean Players Card target is lighter.",
-		"completion_flag": "challenge_pacifist_complete",
-		"modifiers": {
-			"disable_cheat_actions": true,
-			"grand_casino_high_roller_net_delta": -5,
-			"grand_casino_high_roller_max_heat_delta": 5
-		}
-	},
-	{
-		"id": "one_machine",
-		"title": "One Machine",
-		"description": "Slots and universal gear only, with a smaller stake cushion.",
-		"completion_flag": "challenge_one_machine_complete",
-		"modifiers": {
-			"content_groups": [
-				"universal_passive_items",
-				"universal_active_items",
-				"slot_pack"
-			],
-			"starting_bankroll_delta": -20,
-			"baseline_luck_delta": 2
-		}
-	},
-	{
-		"id": "heat_wave",
-		"title": "Heat Wave",
-		"description": "Begin warm, cool off more slowly, and get cheaper tips from non-drink services.",
-		"completion_flag": "challenge_heat_wave_complete",
-		"modifiers": {
-			"starting_heat": 14,
-			"local_risk_decay_percent_delta": -10,
-			"local_heat_turn_decay_interval_delta": 2,
-			"service_cost_multipliers": {
-				"information": 0.5,
-				"security": 0.5,
-				"music": 0.5
-			}
-		}
-	},
-	{
-		"id": "thin_wallet",
-		"title": "Thin Wallet",
-		"description": "Half a bankroll, sharper opening luck, and every enabled table still in play.",
-		"completion_flag": "challenge_thin_wallet_complete",
-		"modifiers": {
-			"starting_bankroll": 50,
-			"baseline_luck_delta": 3
-		}
-	},
-	{
-		"id": "card_sharp",
-		"title": "Card Sharp",
-		"description": "Cards-only rooms and shared card tools, with the Grand Casino clean target raised.",
-		"completion_flag": "challenge_card_sharp_complete",
-		"modifiers": {
-			"content_groups": [
-				"universal_passive_items",
-				"universal_active_items",
-				"blackjack_pack",
-				"baccarat_pack",
-				"video_poker_pack"
-			],
-			"grand_casino_high_roller_net_delta": 20
-		}
-	},
-	{
-		"id": "tutorial_first_card",
-		"title": "First Night in Town",
-		"description": "A guided first run ending with your Players Card.",
-		"completion_flag": "challenge_tutorial_first_card_complete",
-		"fixed_seed": "FIRST-NIGHT-ACE-17",
-		"menu_visible": false,
-		"tutorial": true,
-		"exclude_profile_stats": true,
-		"modifiers": {
-			"tutorial_run": true,
-			"tutorial_main_floor_only": true,
-			"tutorial_shop_item_pool_strict": true,
-			"tutorial_first_slot_net": 2,
-			"home_archetype_id": "motel_room",
-			"starting_bankroll": 80,
-			"tutorial_environment_overrides": {
-				"motel_room": {
-					"home_profile": {
-						"starting_cash": [80, 80],
-						"starting_items": 0,
-						"starting_containers": [
-							{"item_id": "backpack", "capacity": 5}
-						]
-					}
-				},
-				"corner_store": {
-					"item_pool": ["instant_coffee"],
-					"item_count": [1, 1]
-				},
-				"bar": {
-					"game_pool": ["blackjack"],
-					"required_game_ids": ["blackjack"],
-					"game_count": [1, 1],
-					"event_pool": ["tutorial_friendly_choice", "tutorial_grand_casino_invitation"],
-					"required_event_ids": ["tutorial_friendly_choice", "tutorial_grand_casino_invitation"],
-					"event_count": [2, 2]
-				},
-				"grand_casino": {
-					"game_pool": ["slot"],
-					"required_game_ids": ["slot"],
-					"game_count": [1, 1],
-					"demo_objective": {
-						"title": "Earn Your First Players Card",
-						"summary": "Finish one clean Main Floor spin $1 ahead, then return to Linda.",
-						"high_roller_net_winnings": 1,
-						"high_roller_min_grand_casino_games": 1,
-						"high_roller_max_heat": 90,
-						"players_card_bronze_min_games": 1,
-						"players_card_bronze_net_winnings": 0,
-						"players_card_bronze_max_heat": 90,
-						"players_card_silver_min_games": 1,
-						"players_card_silver_net_winnings": 1,
-						"players_card_silver_max_heat": 90,
-						"players_card_gold_min_games": 1,
-						"players_card_gold_net_winnings": 1,
-						"players_card_gold_max_heat": 90,
-						"victory_message": "Linda issued your first Players Card."
-					}
-				}
-			}
-		}
-	}
+  {
+    "id": "dry_run",
+    "title": "Dry Run",
+    "description": "No drinks. Bad nerve. Clean hands.",
+    "completion_flag": "challenge_dry_run_complete",
+    "modifiers": {
+      "blocked_service_categories": [
+        "alcohol"
+      ],
+      "baseline_luck_delta": -4,
+      "starting_bankroll_delta": 10
+    }
+  },
+  {
+    "id": "debt_spiral",
+    "title": "Debt Spiral",
+    "description": "Start marked, funded, and hunted.",
+    "completion_flag": "challenge_debt_spiral_complete",
+    "modifiers": {
+      "starting_bankroll_delta": 35,
+      "starting_debt": [
+        {
+          "id": "debt_spiral_note",
+          "lender_id": "street_lender",
+          "balance": 80,
+          "status": "active",
+          "deadline_turns": 2,
+          "interest_rate": 0.2
+        }
+      ]
+    }
+  },
+  {
+    "id": "pacifist",
+    "title": "Pacifist",
+    "description": "No cheating. Smaller clean-card target.",
+    "completion_flag": "challenge_pacifist_complete",
+    "modifiers": {
+      "disable_cheat_actions": true,
+      "grand_casino_high_roller_net_delta": -5,
+      "grand_casino_high_roller_max_heat_delta": 5
+    }
+  },
+  {
+    "id": "one_machine",
+    "title": "One Machine",
+    "description": "Slots only, with thin cushion.",
+    "completion_flag": "challenge_one_machine_complete",
+    "modifiers": {
+      "content_groups": [
+        "universal_passive_items",
+        "universal_active_items",
+        "slot_pack"
+      ],
+      "starting_bankroll_delta": -20,
+      "baseline_luck_delta": 2
+    }
+  },
+  {
+    "id": "heat_wave",
+    "title": "Heat Wave",
+    "description": "Start warm. Cool down slow.",
+    "completion_flag": "challenge_heat_wave_complete",
+    "modifiers": {
+      "starting_heat": 14,
+      "local_risk_decay_percent_delta": -10,
+      "local_heat_turn_decay_interval_delta": 2,
+      "service_cost_multipliers": {
+        "information": 0.5,
+        "security": 0.5,
+        "music": 0.5
+      }
+    }
+  },
+  {
+    "id": "thin_wallet",
+    "title": "Thin Wallet",
+    "description": "Half cash. Sharper opening luck.",
+    "completion_flag": "challenge_thin_wallet_complete",
+    "modifiers": {
+      "starting_bankroll": 50,
+      "baseline_luck_delta": 3
+    }
+  },
+  {
+    "id": "card_sharp",
+    "title": "Card Sharp",
+    "description": "Cards only. Bigger clean target.",
+    "completion_flag": "challenge_card_sharp_complete",
+    "modifiers": {
+      "content_groups": [
+        "universal_passive_items",
+        "universal_active_items",
+        "blackjack_pack",
+        "baccarat_pack",
+        "video_poker_pack"
+      ],
+      "grand_casino_high_roller_net_delta": 20
+    }
+  },
+  {
+    "id": "tutorial_first_card",
+    "title": "First Night in Town",
+    "description": "First night, guided by trouble.",
+    "completion_flag": "challenge_tutorial_first_card_complete",
+    "fixed_seed": "FIRST-NIGHT-ACE-17",
+    "menu_visible": false,
+    "tutorial": true,
+    "exclude_profile_stats": true,
+    "modifiers": {
+      "tutorial_run": true,
+      "tutorial_main_floor_only": true,
+      "tutorial_shop_item_pool_strict": true,
+      "tutorial_first_slot_net": 2,
+      "home_archetype_id": "motel_room",
+      "starting_bankroll": 80,
+      "tutorial_environment_overrides": {
+        "motel_room": {
+          "home_profile": {
+            "starting_cash": [
+              80,
+              80
+            ],
+            "starting_items": 0,
+            "starting_containers": [
+              {
+                "item_id": "backpack",
+                "capacity": 5
+              }
+            ]
+          }
+        },
+        "corner_store": {
+          "item_pool": [
+            "instant_coffee"
+          ],
+          "item_count": [
+            1,
+            1
+          ]
+        },
+        "bar": {
+          "game_pool": [
+            "blackjack"
+          ],
+          "required_game_ids": [
+            "blackjack"
+          ],
+          "game_count": [
+            1,
+            1
+          ],
+          "event_pool": [
+            "tutorial_friendly_choice",
+            "tutorial_grand_casino_invitation"
+          ],
+          "required_event_ids": [
+            "tutorial_friendly_choice",
+            "tutorial_grand_casino_invitation"
+          ],
+          "event_count": [
+            2,
+            2
+          ]
+        },
+        "grand_casino": {
+          "game_pool": [
+            "slot"
+          ],
+          "required_game_ids": [
+            "slot"
+          ],
+          "game_count": [
+            1,
+            1
+          ],
+          "demo_objective": {
+            "title": "Earn Your First Players Card",
+            "summary": "Finish one clean Main Floor spin $1 ahead, then return to Linda.",
+            "high_roller_net_winnings": 1,
+            "high_roller_min_grand_casino_games": 1,
+            "high_roller_max_heat": 90,
+            "players_card_bronze_min_games": 1,
+            "players_card_bronze_net_winnings": 0,
+            "players_card_bronze_max_heat": 90,
+            "players_card_silver_min_games": 1,
+            "players_card_silver_net_winnings": 1,
+            "players_card_silver_max_heat": 90,
+            "players_card_gold_min_games": 1,
+            "players_card_gold_net_winnings": 1,
+            "players_card_gold_max_heat": 90,
+            "victory_message": "Linda issued your first Players Card."
+          }
+        }
+      }
+    }
+  }
 ]

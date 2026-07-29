@@ -9,7 +9,8 @@
     "is_start": true,
     "next_archetypes": [
       "bar",
-      "gas_station_casino"
+      "gas_station_casino",
+      "pawn_shop"
     ],
     "rare_next_archetypes": [
       "jazz_club"
@@ -27,9 +28,9 @@
       "perspective": "first_person",
       "scene_type": "shop",
       "asset_path": "res://assets/art/environments/corner_store.png",
-      "description": "Cheap supplies and low attention."
+      "description": "Fluorescent shelves. Clerk eyes."
     },
-    "objective_hint": "Build cash, then find an invitation at the bigger rooms.",
+    "objective_hint": "Build cash. Bigger rooms keep invitations warm.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -215,14 +216,9 @@
       1
     ],
     "suspicion_cues": [
-      "The clerk glances up when you linger near the counter."
+      "The clerk watches the register, then you."
     ],
     "travel_hooks": [
-      "bar",
-      "gas_station_casino",
-      "pawn_shop"
-    ],
-    "next_archetypes": [
       "bar",
       "gas_station_casino",
       "pawn_shop"
@@ -265,9 +261,9 @@
       "perspective": "first_person",
       "scene_type": "shop",
       "asset_path": "res://assets/art/environments/back_alley.png",
-      "description": "Shady tools and high risk."
+      "description": "Wet brick and worse bargains."
     },
-    "objective_hint": "Build cash, then find an invitation at the bigger rooms.",
+    "objective_hint": "Buy cheap, breathe quiet, leave before remembered.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -490,7 +486,7 @@
       1
     ],
     "suspicion_cues": [
-      "The seller keeps one eye on the mouth of the alley."
+      "Every puddle reflects somebody waiting."
     ],
     "travel_hooks": [
       "bar",
@@ -530,9 +526,9 @@
       "perspective": "first_person",
       "scene_type": "shop",
       "asset_path": "res://assets/art/environments/motel.png",
-      "description": "Private recovery and regrouping."
+      "description": "Thin walls. Thinner luck."
     },
-    "objective_hint": "Build cash, then find an invitation at the bigger rooms.",
+    "objective_hint": "Recover, stash gear, then return hungry.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -722,7 +718,7 @@
       2
     ],
     "suspicion_cues": [
-      "The front desk phone rings once and stops."
+      "The desk bell hears more than it rings."
     ],
     "travel_hooks": [
       "gas_station_casino",
@@ -770,9 +766,9 @@
       "perspective": "first_person",
       "scene_type": "bar",
       "asset_path": "res://assets/art/environments/bar.png",
-      "description": "Low-stakes games and talk."
+      "description": "Cheap neon. Loud regulars."
     },
-    "objective_hint": "Build cash, then find an invitation at the bigger rooms.",
+    "objective_hint": "Listen first. Local mouths open routes.",
     "layout": {
       "game_spots": [
         [
@@ -937,7 +933,7 @@
     ],
     "lender_hooks": [],
     "suspicion_cues": [
-      "A regular looks over after your third good roll."
+      "Regulars notice strangers by the second drink."
     ],
     "travel_hooks": [
       "corner_store",
@@ -981,9 +977,9 @@
       "perspective": "first_person",
       "scene_type": "gas_station_casino",
       "asset_path": "res://assets/art/environments/gas_station_casino.png",
-      "description": "Bright machines and cameras."
+      "description": "Scratchers glare under cameras."
     },
-    "objective_hint": "Build cash, then find an invitation at the bigger rooms.",
+    "objective_hint": "Paper games pay fast and watch faster.",
     "layout": {
       "game_spots": [
         [
@@ -1152,7 +1148,7 @@
     ],
     "lender_hooks": [],
     "suspicion_cues": [
-      "A camera dome above the coolers twitches once."
+      "The camera dome blinks like it knows odds."
     ],
     "travel_hooks": [
       "corner_store",
@@ -1197,9 +1193,9 @@
       "perspective": "first_person",
       "scene_type": "underground",
       "asset_path": "res://assets/art/environments/small_underground_casino.png",
-      "description": "Higher action, sharper eyes."
+      "description": "Low ceiling. Real action."
     },
-    "objective_hint": "Win enough, then chase an invitation at the bigger rooms.",
+    "objective_hint": "Better tables, hotter heat. Choose nerve.",
     "layout": {
       "game_spots": [
         [
@@ -1379,7 +1375,7 @@
       2
     ],
     "suspicion_cues": [
-      "The guard near the side door stops laughing when you win."
+      "Security is informal and very personal."
     ],
     "travel_hooks": [
       "back_alley",
@@ -1426,9 +1422,9 @@
       "perspective": "first_person",
       "scene_type": "jazz_club",
       "asset_path": "res://assets/art/environments/jazz_club.png",
-      "description": "Music, favors, and pull tabs."
+      "description": "Blue light. Brass secrets."
     },
-    "objective_hint": "Buy the trio rounds, stay for the set, and earn rare luck gear.",
+    "objective_hint": "Music buys favors if you tip right.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -1578,11 +1574,26 @@
         "min_bpm": 116,
         "max_bpm": 124,
         "heat_curve": [
-          {"heat": 0, "bpm": 116},
-          {"heat": 35, "bpm": 118.5},
-          {"heat": 50, "bpm": 120},
-          {"heat": 75, "bpm": 122},
-          {"heat": 100, "bpm": 124}
+          {
+            "heat": 0,
+            "bpm": 116
+          },
+          {
+            "heat": 35,
+            "bpm": 118.5
+          },
+          {
+            "heat": 50,
+            "bpm": 120
+          },
+          {
+            "heat": 75,
+            "bpm": 122
+          },
+          {
+            "heat": 100,
+            "bpm": 124
+          }
         ],
         "max_bpm_per_second": 0.5,
         "max_bpm_per_bar": 0.75,
@@ -1600,12 +1611,98 @@
         "default_lead_in_bars": 2,
         "fill_cooldown_bars": 4,
         "stages": [
-          {"id": "sparse", "start_bar": 0, "duration_bars": 4, "roles": {"pad": 0.9, "bass": 0.0, "lead": 0.0, "drums_low": 0.28, "drums_high": 0.0}},
-          {"id": "build_bass", "start_bar": 4, "duration_bars": 4, "request_fill": true, "change_roles": ["bass"], "roles": {"pad": 0.92, "bass": 0.66, "lead": 0.0, "drums_low": 0.30, "drums_high": 0.0}},
-          {"id": "build_drums", "start_bar": 8, "duration_bars": 4, "request_fill": true, "change_roles": ["drums_low", "drums_high"], "roles": {"pad": 0.94, "bass": 0.72, "lead": 0.0, "drums_low": 0.70, "drums_high": 0.32}},
-          {"id": "peak", "start_bar": 12, "duration_bars": 8, "request_fill": true, "change_roles": ["lead", "drums_high"], "roles": {"pad": 1.0, "bass": 0.82, "lead": 1.0, "drums_low": 0.86, "drums_high": 0.88}},
-          {"id": "release", "start_bar": 20, "duration_bars": 4, "roles": {"pad": 0.88, "bass": 0.52, "lead": 0.08, "drums_low": 0.38, "drums_high": 0.0}},
-          {"id": "rebuild", "start_bar": 24, "duration_bars": 8, "request_fill": true, "change_roles": ["pad", "bass", "drums_high"], "roles": {"pad": 1.0, "bass": 0.76, "lead": 0.64, "drums_low": 0.74, "drums_high": 0.58}}
+          {
+            "id": "sparse",
+            "start_bar": 0,
+            "duration_bars": 4,
+            "roles": {
+              "pad": 0.9,
+              "bass": 0.0,
+              "lead": 0.0,
+              "drums_low": 0.28,
+              "drums_high": 0.0
+            }
+          },
+          {
+            "id": "build_bass",
+            "start_bar": 4,
+            "duration_bars": 4,
+            "request_fill": true,
+            "change_roles": [
+              "bass"
+            ],
+            "roles": {
+              "pad": 0.92,
+              "bass": 0.66,
+              "lead": 0.0,
+              "drums_low": 0.3,
+              "drums_high": 0.0
+            }
+          },
+          {
+            "id": "build_drums",
+            "start_bar": 8,
+            "duration_bars": 4,
+            "request_fill": true,
+            "change_roles": [
+              "drums_low",
+              "drums_high"
+            ],
+            "roles": {
+              "pad": 0.94,
+              "bass": 0.72,
+              "lead": 0.0,
+              "drums_low": 0.7,
+              "drums_high": 0.32
+            }
+          },
+          {
+            "id": "peak",
+            "start_bar": 12,
+            "duration_bars": 8,
+            "request_fill": true,
+            "change_roles": [
+              "lead",
+              "drums_high"
+            ],
+            "roles": {
+              "pad": 1.0,
+              "bass": 0.82,
+              "lead": 1.0,
+              "drums_low": 0.86,
+              "drums_high": 0.88
+            }
+          },
+          {
+            "id": "release",
+            "start_bar": 20,
+            "duration_bars": 4,
+            "roles": {
+              "pad": 0.88,
+              "bass": 0.52,
+              "lead": 0.08,
+              "drums_low": 0.38,
+              "drums_high": 0.0
+            }
+          },
+          {
+            "id": "rebuild",
+            "start_bar": 24,
+            "duration_bars": 8,
+            "request_fill": true,
+            "change_roles": [
+              "pad",
+              "bass",
+              "drums_high"
+            ],
+            "roles": {
+              "pad": 1.0,
+              "bass": 0.76,
+              "lead": 0.64,
+              "drums_low": 0.74,
+              "drums_high": 0.58
+            }
+          }
         ]
       }
     },
@@ -1664,7 +1761,7 @@
     ],
     "lender_hooks": [],
     "suspicion_cues": [
-      "The room quiets for half a beat when someone walks in hot."
+      "The band misses fewer notes than faces."
     ],
     "travel_hooks": [
       "bar",
@@ -1700,9 +1797,9 @@
       "perspective": "first_person",
       "scene_type": "kitty_cat_lounge",
       "asset_path": "res://assets/art/environments/jazz_club.png",
-      "description": "Costly heat control."
+      "description": "Velvet shadows, expensive smiles."
     },
-    "objective_hint": "Work the room, then claim the Grand Casino invitation.",
+    "objective_hint": "Spend for grace before the room learns you.",
     "layout": {
       "game_spots": [
         [
@@ -1933,7 +2030,7 @@
       1
     ],
     "suspicion_cues": [
-      "The host smiles at your action and counts the empty glasses."
+      "Hosts smile wider when heat rises."
     ],
     "travel_hooks": [
       "bar",
@@ -1978,9 +2075,9 @@
       "perspective": "first_person",
       "scene_type": "delta_queen",
       "asset_path": "res://assets/art/environments/small_underground_casino.png",
-      "description": "Riverboat tables; dock timer."
+      "description": "River brass and moving felt."
     },
-    "objective_hint": "Ride the boat, then claim the Grand Casino invitation.",
+    "objective_hint": "Ride the river; let distance cool heat.",
     "layout": {
       "game_spots": [
         [
@@ -2208,7 +2305,7 @@
       1
     ],
     "suspicion_cues": [
-      "The river keeps everyone aboard with their tells."
+      "Riverboat staff know every exit."
     ],
     "travel_hooks": [
       "small_underground_casino",
@@ -2252,9 +2349,9 @@
     "visual_context": {
       "perspective": "first_person",
       "scene_type": "beach",
-      "description": "Dockside beach and quiet surf."
+      "description": "Salt wind. Quiet heat."
     },
-    "objective_hint": "Cool off, search the tide line, or try the weathered boardwalk slot before returning to the circuit.",
+    "objective_hint": "No tables here. Let the surf erase you.",
     "layout": {
       "game_spots": [
         [
@@ -2309,7 +2406,7 @@
         -999
       ],
       "root_midi": 45,
-      "safety": 0.70,
+      "safety": 0.7,
       "texture": "riverboat",
       "texture_rate": 0.16,
       "volume": 0.22
@@ -2349,7 +2446,7 @@
     ],
     "lender_hooks": [],
     "suspicion_cues": [
-      "Only the tide keeps score here."
+      "Nobody is watching. That feels suspicious."
     ],
     "travel_hooks": [
       "delta_queen",
@@ -2391,9 +2488,9 @@
       "perspective": "first_person",
       "scene_type": "pawn_shop",
       "art_key": "pawn_shop",
-      "description": "Six locked resale spots, barred counter, sell tray."
+      "description": "Sal shelves your mistakes."
     },
-    "objective_hint": "Inspect six resale spots, buy exact collection items, or sell at Sal's tray.",
+    "objective_hint": "Sell mistakes, buy worse ones, ask Sal.",
     "layout": {
       "pawn_counter_spots": [
         [
@@ -2470,7 +2567,7 @@
     },
     "music_profile": {
       "theme": "pawn shop",
-      "ambience": 0.40,
+      "ambience": 0.4,
       "mode": "minor",
       "progression": [
         0,
@@ -2546,7 +2643,7 @@
       "sals_pawn_counter"
     ],
     "suspicion_cues": [
-      "The barred window stays shut unless you put something on the tray."
+      "Sal watches the shelf, then your pockets."
     ],
     "travel_hooks": [
       "corner_store",
@@ -2588,9 +2685,9 @@
       "perspective": "first_person",
       "scene_type": "boss",
       "asset_path": "res://assets/art/environments/grand_casino.png",
-      "description": "Boss floor under cameras."
+      "description": "Gold glass. Quiet teeth."
     },
-    "objective_hint": "Build a clean Players Card record at Cage.",
+    "objective_hint": "Play clean, earn Linda, avoid certainty.",
     "demo_objective": {
       "id": "grand_casino_demo_bankroll",
       "type": "bankroll_target",
@@ -2835,7 +2932,7 @@
     ],
     "lender_hooks": [],
     "suspicion_cues": [
-      "Every repeated edge makes the pit boss look up."
+      "The ceiling loves a pattern."
     ],
     "travel_hooks": [
       "motel",
@@ -2852,24 +2949,72 @@
         "memory_high_heat_threshold": 50,
         "rosters": {
           "blackjack": [
-            {"id": "mara", "name": "Mara", "style_id": "mara"},
-            {"id": "lee", "name": "Lee", "style_id": "lena"},
-            {"id": "june", "name": "June", "style_id": "june"}
+            {
+              "id": "mara",
+              "name": "Mara",
+              "style_id": "mara"
+            },
+            {
+              "id": "lee",
+              "name": "Lee",
+              "style_id": "lena"
+            },
+            {
+              "id": "june",
+              "name": "June",
+              "style_id": "june"
+            }
           ],
           "baccarat": [
-            {"id": "sable", "name": "Sable", "style_id": "sable"},
-            {"id": "noor", "name": "Noor", "style_id": "dot"},
-            {"id": "camille", "name": "Camille", "style_id": "iris"}
+            {
+              "id": "sable",
+              "name": "Sable",
+              "style_id": "sable"
+            },
+            {
+              "id": "noor",
+              "name": "Noor",
+              "style_id": "dot"
+            },
+            {
+              "id": "camille",
+              "name": "Camille",
+              "style_id": "iris"
+            }
           ],
           "roulette": [
-            {"id": "vega", "name": "Vega", "style_id": "vince"},
-            {"id": "rook", "name": "Rook", "style_id": "marco"},
-            {"id": "sal", "name": "Sal", "style_id": "sal"}
+            {
+              "id": "vega",
+              "name": "Vega",
+              "style_id": "vince"
+            },
+            {
+              "id": "rook",
+              "name": "Rook",
+              "style_id": "marco"
+            },
+            {
+              "id": "sal",
+              "name": "Sal",
+              "style_id": "sal"
+            }
           ],
           "bartender": [
-            {"id": "rafi", "name": "Rafi", "style_id": "rafi"},
-            {"id": "nora", "name": "Nora", "style_id": "nell"},
-            {"id": "cal", "name": "Cal", "style_id": "mara"}
+            {
+              "id": "rafi",
+              "name": "Rafi",
+              "style_id": "rafi"
+            },
+            {
+              "id": "nora",
+              "name": "Nora",
+              "style_id": "nell"
+            },
+            {
+              "id": "cal",
+              "name": "Cal",
+              "style_id": "mara"
+            }
           ]
         },
         "memory_lines": {
@@ -2926,9 +3071,9 @@
       "perspective": "first_person",
       "scene_type": "boss",
       "asset_path": "res://assets/art/environments/grand_casino.png",
-      "description": "A velvet-rope table room under close cameras."
+      "description": "Big felt. Smaller mercy."
     },
-    "objective_hint": "Win clean at the high-limit tables or stay ahead of Rourke.",
+    "objective_hint": "High limits. High attention. No freebies.",
     "demo_objective": {
       "id": "grand_casino_demo_bankroll",
       "type": "bankroll_target",
@@ -3099,7 +3244,7 @@
     "service_pool": [],
     "lender_hooks": [],
     "suspicion_cues": [
-      "The felt is quieter here, so every mistake travels farther."
+      "High-limit staff count breaths."
     ],
     "travel_hooks": [],
     "local_narrative_flags": {
@@ -3138,9 +3283,9 @@
       "perspective": "first_person",
       "scene_type": "boss",
       "asset_path": "res://assets/art/environments/grand_casino.png",
-      "description": "Private table, hard chairs, one controlled door."
+      "description": "No crowd. Just Rourke."
     },
-    "objective_hint": "Rourke controls what happens in this room.",
+    "objective_hint": "Rourke deals consequences. Hold steady.",
     "demo_objective": {
       "id": "grand_casino_demo_bankroll",
       "type": "bankroll_target",
@@ -3272,7 +3417,7 @@
     "service_pool": [],
     "lender_hooks": [],
     "suspicion_cues": [
-      "The door shuts softly behind anyone Rourke brings inside."
+      "Rourke does not need cameras here."
     ],
     "travel_hooks": [],
     "local_narrative_flags": {
@@ -3309,9 +3454,9 @@
       "perspective": "first_person",
       "scene_type": "grand_casino_cage",
       "art_key": "grand_casino_cage",
-      "description": "Private barred service room under cold teller lamps."
+      "description": "Barred glass. Linda waits."
     },
-    "objective_hint": "Speak with Linda, settle the marker, and manage chips at the counter.",
+    "objective_hint": "Settle markers before Linda talks gold.",
     "demo_objective": {
       "id": "grand_casino_demo_bankroll",
       "type": "bankroll_target",
@@ -3442,7 +3587,7 @@
     "service_pool": [],
     "lender_hooks": [],
     "suspicion_cues": [
-      "The teller room is quiet enough for every chip to sound loud."
+      "Linda sees everything through not-looking."
     ],
     "travel_hooks": [],
     "local_narrative_flags": {
@@ -3466,19 +3611,58 @@
           4
         ],
         "candidate_offers": [
-          {"item_id": "instant_coffee", "chip_price": 8},
-          {"item_id": "cashout_envelope", "chip_price": 12},
-          {"item_id": "thermos_black_coffee", "chip_price": 18},
-          {"item_id": "pickled_olive_jar", "chip_price": 10},
-          {"item_id": "cheap_sunglasses", "chip_price": 14},
-          {"item_id": "scratch_pad", "chip_price": 11},
-          {"item_id": "card_counters_notes", "chip_price": 20},
-          {"item_id": "side_bet_chart", "chip_price": 16},
-          {"item_id": "lucky_penny", "chip_price": 9},
-          {"item_id": "lucky_keychain", "chip_price": 13},
-          {"item_id": "lucky_bar_napkin", "chip_price": 7},
-          {"item_id": "payment_calendar", "chip_price": 15},
-          {"item_id": "roadside_map", "chip_price": 17}
+          {
+            "item_id": "instant_coffee",
+            "chip_price": 8
+          },
+          {
+            "item_id": "cashout_envelope",
+            "chip_price": 12
+          },
+          {
+            "item_id": "thermos_black_coffee",
+            "chip_price": 18
+          },
+          {
+            "item_id": "pickled_olive_jar",
+            "chip_price": 10
+          },
+          {
+            "item_id": "cheap_sunglasses",
+            "chip_price": 14
+          },
+          {
+            "item_id": "scratch_pad",
+            "chip_price": 11
+          },
+          {
+            "item_id": "card_counters_notes",
+            "chip_price": 20
+          },
+          {
+            "item_id": "side_bet_chart",
+            "chip_price": 16
+          },
+          {
+            "item_id": "lucky_penny",
+            "chip_price": 9
+          },
+          {
+            "item_id": "lucky_keychain",
+            "chip_price": 13
+          },
+          {
+            "item_id": "lucky_bar_napkin",
+            "chip_price": 7
+          },
+          {
+            "item_id": "payment_calendar",
+            "chip_price": 15
+          },
+          {
+            "item_id": "roadside_map",
+            "chip_price": 17
+          }
         ]
       },
       "casino_fixtures": [
@@ -3542,7 +3726,7 @@
     "visual_context": {
       "perspective": "first_person",
       "scene_type": "motel_room",
-      "description": "Home room and lobby door."
+      "description": "A rented pause."
     },
     "home_profile": {
       "starting_cash": [
@@ -3663,7 +3847,7 @@
         -999
       ],
       "root_midi": 43,
-      "safety": 0.90,
+      "safety": 0.9,
       "texture": "motel",
       "texture_rate": 0.18,
       "volume": 0.22
@@ -3707,7 +3891,8 @@
       "private",
       "cheap",
       "buzzing"
-    ]
+    ],
+    "objective_hint": "Rest, store, choose what follows you."
   },
   {
     "id": "apartment",
@@ -3732,7 +3917,7 @@
     "visual_context": {
       "perspective": "first_person",
       "scene_type": "apartment",
-      "description": "Home storage and city access."
+      "description": "Better locks. Softer silence."
     },
     "home_profile": {
       "starting_cash": [
@@ -3918,7 +4103,8 @@
       "private",
       "city",
       "thin_walls"
-    ]
+    ],
+    "objective_hint": "Sort the stash. Plan like rent exists."
   },
   {
     "id": "house",
@@ -3943,7 +4129,7 @@
     "visual_context": {
       "perspective": "first_person",
       "scene_type": "house",
-      "description": "Living room, kitchen, trunk."
+      "description": "Your roof. For now."
     },
     "home_profile": {
       "starting_cash": [
@@ -4136,6 +4322,7 @@
       "private",
       "old",
       "thin_light"
-    ]
+    ],
+    "objective_hint": "Home keeps score quietly."
   }
 ]

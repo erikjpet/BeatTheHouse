@@ -1,92 +1,92 @@
 [
   {
     "id": "corner_store",
-    "blurb": "Fluorescent aisles, a watchful clerk, and cheap chances near the register.",
-    "options": ["Browse counter", "Inspect games", "Leave"]
+    "blurb": "Fluorescent aisles. Cheap chances glare near the register.",
+    "options": ["Read the counter", "Eye the games", "Step out"]
   },
   {
     "id": "back_alley",
-    "blurb": "Bad light and worse offers. Read every silhouette before committing.",
-    "options": ["Hear offers", "Inspect pickups", "Find a route"]
+    "blurb": "Bad light, worse offers, and silhouettes with opinions.",
+    "options": ["Hear the offer", "Check the ground", "Find a route"]
   },
   {
     "id": "motel",
-    "blurb": "A tired lobby where rooms, rumors, and bus routes cross.",
-    "options": ["Talk at desk", "Check services", "Travel"]
+    "blurb": "A tired lobby where rooms, rumors, and buses cross.",
+    "options": ["Talk desk", "Read services", "Catch a route"]
   },
   {
     "id": "bar",
-    "blurb": "Loose talk, strong pours, and small games under warm neon.",
-    "options": ["Order", "Talk", "Play", "Leave"]
+    "blurb": "Loose talk, strong pours, small games, warm neon.",
+    "options": ["Order", "Listen", "Play", "Leave"]
   },
   {
     "id": "gas_station_casino",
-    "blurb": "Scratchers, machines, and road dust share one humming floor.",
-    "options": ["Play", "Shop", "Scout route"]
+    "blurb": "Scratchers, machines, and road dust hum together.",
+    "options": ["Play", "Shop", "Read routes"]
   },
   {
     "id": "small_underground_casino",
-    "blurb": "Low ceiling, close tables, and no action without somebody noticing.",
+    "blurb": "Low ceiling, close tables, nobody missing much.",
     "options": ["Choose table", "Read room", "Leave"]
   },
   {
     "id": "jazz_club",
-    "blurb": "The band changes the room. Timing matters as much as the cards.",
+    "blurb": "The band bends the room. Timing matters.",
     "options": ["Listen", "Order", "Play", "Talk"]
   },
   {
     "id": "kitty_cat_lounge",
-    "blurb": "Soft booths and sharp eyes hide a surprisingly serious floor.",
-    "options": ["Inspect lounge", "Play", "Talk", "Leave"]
+    "blurb": "Soft booths, sharp eyes, surprisingly serious tables.",
+    "options": ["Read lounge", "Play", "Talk", "Leave"]
   },
   {
     "id": "delta_queen",
-    "blurb": "Riverboat tables roll beneath brass, velvet, and a practiced dealer's smile.",
+    "blurb": "Brass, velvet, river tables, practiced smiles.",
     "options": ["Choose table", "Walk deck", "Talk", "Disembark"]
   },
   {
     "id": "beach",
-    "blurb": "Open air cools the heat, but every detour costs time.",
-    "options": ["Recover", "Inspect", "Travel"]
+    "blurb": "Open air cools heat. Detours still charge.",
+    "options": ["Recover", "Look around", "Travel"]
   },
   {
     "id": "pawn_shop",
-    "blurb": "Cash, repairs, and second chances sit behind barred glass.",
+    "blurb": "Cash, repairs, and second chances behind glass.",
     "options": ["Buy", "Sell", "Repair", "Talk"]
   },
   {
     "id": "grand_casino",
-    "blurb": "The main floor watches clean play, loud money, and every shortcut.",
+    "blurb": "Clean play, loud money, watched shortcuts.",
     "options": ["Choose table", "Read staff", "Visit Cage", "Travel"]
   },
   {
     "id": "grand_casino_high_limit",
-    "blurb": "Bigger stakes and quieter scrutiny. The host remembers every hand.",
+    "blurb": "Bigger stakes. Quieter scrutiny. Perfect memory.",
     "options": ["Play high limit", "Read host", "Return"]
   },
   {
     "id": "grand_casino_back_room",
-    "blurb": "Rourke asks once. Your answer, evidence, and heat decide the rest.",
-    "options": ["Answer", "Use evidence", "Hold nerve"]
+    "blurb": "Rourke asks once. The room records everything.",
+    "options": ["Answer", "Show evidence", "Hold nerve"]
   },
   {
     "id": "grand_casino_cage",
-    "blurb": "Linda settles chips, markers, gifts, and Players Card business.",
+    "blurb": "Linda settles chips, markers, gifts, and trouble.",
     "options": ["Cash out", "Settle marker", "Claim card", "Shop"]
   },
   {
     "id": "motel_room",
-    "blurb": "Home room and lobby door. Regroup before the clock or rent turns.",
+    "blurb": "Thin walls, your key, and a little quiet.",
     "options": ["Rest", "Manage storage", "Renew", "Enter lobby"]
   },
   {
     "id": "apartment",
-    "blurb": "A steadier home with room to sort gear and plan the next run.",
+    "blurb": "Steadier walls. Room for gear and second thoughts.",
     "options": ["Rest", "Manage storage", "Review loadout", "Leave"]
   },
   {
     "id": "house",
-    "blurb": "The long-term home: collection, storage, upgrades, and the next climb.",
+    "blurb": "Your long con gets a roof and shelves.",
     "options": ["Collection", "Storage", "Trade up", "Start run"]
   }
 ]

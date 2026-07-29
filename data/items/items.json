@@ -1,1255 +1,1872 @@
 [
-	{
-		"id": "creased_luck_card",
-		"display_name": "Creased Luck Card",
-		"class": "permanent",
-		"domain": "global",
-		"content_groups": ["universal_passive_items"],
-		"sellable": true,
-		"sale_price": 6,
-		"price_min": 8,
-		"price_max": 16,
-		"asset_path": "res://assets/art/items/creased_luck_card.png",
-		"icon_key": "luck_card",
-		"environment_prop": "loose_card",
-		"surface": "felt_table",
-		"description": "Small luck boost.",
-		"effect": {"baseline_luck_delta": 1, "win_chance": 2, "win_bonus": 1}
-	},
-	{
-		"id": "pile_of_pull_tabs",
-		"display_name": "Pile of Pull Tabs",
-		"class": "ticket pile",
-		"domain": "global",
-		"content_groups": ["pull_tabs_pack"],
-		"sellable": false,
-		"sale_price": 0,
-		"price_min": 0,
-		"price_max": 0,
-		"asset_path": "res://assets/art/games/pull_tabs.png",
-		"icon_key": "pull_tabs",
-		"environment_prop": "paper_stack",
-		"surface": "counter",
-		"description": "Owned pull tabs, grouped by their purchase location.",
-		"effect": {}
-	},
-	{
-		"id": "pile_of_scratch_tickets",
-		"display_name": "Pile of Scratch Tickets",
-		"class": "ticket pile",
-		"domain": "global",
-		"content_groups": ["scratch_tickets_pack"],
-		"sellable": false,
-		"sale_price": 0,
-		"price_min": 0,
-		"price_max": 0,
-		"asset_path": "res://assets/art/games/scratch_tickets.png",
-		"icon_key": "scratch_ticket",
-		"environment_prop": "paper_stack",
-		"surface": "counter",
-		"description": "Owned scratch tickets, grouped by their purchase location.",
-		"effect": {}
-	},
-	{
-		"id": "instant_coffee",
-		"display_name": "Instant Coffee",
-		"class": "consumable",
-		"domain": "global",
-		"content_groups": ["universal_passive_items"],
-		"sellable": true,
-		"sale_price": 3,
-		"price_min": 4,
-		"price_max": 9,
-		"asset_path": "res://assets/art/items/instant_coffee.png",
-		"icon_key": "coffee_cup",
-		"environment_prop": "coffee",
-		"surface": "store_shelf",
-		"description": "Clean-play focus.",
-		"effect": {"legal_win_chance": 3, "loss_reduction": 1, "cheat_suspicion_delta": 1}
-	},
-	{
-		"id": "ledger_pencil",
-		"display_name": "Ledger Pencil",
-		"class": "permanent",
-		"domain": "global",
-		"content_groups": ["universal_passive_items"],
-		"build_tags": ["clean_grinder"],
-		"sellable": true,
-		"sale_price": 8,
-		"price_min": 12,
-		"price_max": 20,
-		"asset_path": "res://assets/art/items/ledger_pencil.png",
-		"icon_key": "ledger_pencil",
-		"environment_prop": "notepad",
-		"surface": "store_shelf",
-		"description": "Cleaner odds notes.",
-		"effect": {
-			"win_chance": 1,
-			"loss_reduction": 1,
-			"synergies": [
-				{"requires_any": ["instant_coffee"], "effects": {"win_chance": 1}},
-				{"requires_any": ["cashout_envelope"], "effects": {"loss_reduction": 1}}
-			]
-		}
-	},
-	{
-		"id": "cashout_envelope",
-		"display_name": "Cashout Envelope",
-		"class": "permanent",
-		"domain": "global",
-		"content_groups": ["universal_passive_items"],
-		"build_tags": ["clean_grinder", "debt_surfer"],
-		"sellable": true,
-		"sale_price": 9,
-		"price_min": 14,
-		"price_max": 24,
-		"asset_path": "res://assets/art/items/cashout_envelope.png",
-		"icon_key": "cashout_envelope",
-		"environment_prop": "map",
-		"surface": "store_shelf",
-		"description": "Steadier cashouts.",
-		"effect": {
-			"win_bonus": 1,
-			"loss_reduction": 1,
-			"synergies": [
-				{"requires_any": ["creased_luck_card"], "effects": {"win_bonus": 1}},
-				{"requires_any": ["ledger_pencil"], "effects": {"loss_reduction": 1}}
-			]
-		}
-	},
-	{
-		"id": "thermos_black_coffee",
-		"display_name": "Thermos of Black Coffee",
-		"class": "consumable",
-		"domain": "global",
-		"content_groups": ["universal_active_items"],
-		"sellable": true,
-		"sale_price": 8,
-		"price_min": 14,
-		"price_max": 24,
-		"asset_path": "res://assets/art/items/thermos_black_coffee.png",
-		"icon_key": "thermos_black_coffee",
-		"environment_prop": "coffee",
-		"surface": "store_shelf",
-		"description": "Sobers and steadies.",
-		"effect": {
-			"active_item": true,
-			"active_mode": "consumable",
-			"active_target": "global",
-			"drunk_delta": -28,
-			"pending_drunk_absorption_delta": -28,
-			"drunk_distortion_suppression_turns": 3,
-			"inventory_remove": ["thermos_black_coffee"],
-			"inventory_add": ["thermos_black_coffee_half"],
-			"messages": ["Black coffee pulls the room back into focus."]
-		}
-	},
-	{
-		"id": "thermos_black_coffee_half",
-		"display_name": "Half Thermos",
-		"class": "consumable",
-		"domain": "global",
-		"content_groups": ["universal_active_items"],
-		"sellable": false,
-		"sale_price": 0,
-		"price_min": 0,
-		"price_max": 0,
-		"asset_path": "res://assets/art/items/thermos_black_coffee_half.png",
-		"icon_key": "thermos_black_coffee_half",
-		"environment_prop": "coffee",
-		"surface": "store_shelf",
-		"description": "Last sober-up pour.",
-		"effect": {
-			"active_item": true,
-			"active_mode": "consumable",
-			"active_target": "global",
-			"drunk_delta": -24,
-			"pending_drunk_absorption_delta": -24,
-			"drunk_distortion_suppression_turns": 2,
-			"inventory_remove": ["thermos_black_coffee_half"],
-			"messages": ["The last coffee steadies your hands."]
-		}
-	},
-	{
-		"id": "pickled_olive_jar",
-		"display_name": "Pickled Olive Jar",
-		"class": "consumable",
-		"domain": "global",
-		"content_groups": ["universal_active_items"],
-		"build_tags": ["drunk_gambler"],
-		"sellable": true,
-		"sale_price": 6,
-		"price_min": 9,
-		"price_max": 16,
-		"asset_path": "res://assets/art/items/flask_of_courage.png",
-		"icon_key": "pickled_olive_jar",
-		"environment_prop": "coffee",
-		"surface": "counter_case",
-		"description": "Drink and luck.",
-		"effect": {
-			"active_item": true,
-			"active_mode": "consumable",
-			"active_target": "global",
-			"alcohol_intake": 8,
-			"baseline_luck_delta": 1,
-			"win_bonus": 1,
-			"inventory_remove": ["pickled_olive_jar"],
-			"messages": ["The olives hit sharp and lucky."],
-			"synergies": [
-				{"requires_any": ["lucky_bar_napkin"], "effects": {"win_chance": 1}}
-			]
-		}
-	},
-	{
-		"id": "lucky_bar_napkin",
-		"display_name": "Lucky Bar Napkin",
-		"class": "permanent",
-		"domain": "global",
-		"content_groups": ["universal_passive_items"],
-		"build_tags": ["drunk_gambler", "clean_grinder"],
-		"sellable": true,
-		"sale_price": 6,
-		"price_min": 8,
-		"price_max": 15,
-		"asset_path": "res://assets/art/items/lucky_charm.png",
-		"icon_key": "lucky_bar_napkin",
-		"environment_prop": "loose_card",
-		"surface": "felt_table",
-		"description": "Drunk-play stabilizer.",
-		"effect": {
-			"win_chance": 1,
-			"loss_reduction": 1,
-			"synergies": [
-				{"requires_any": ["pickled_olive_jar"], "effects": {"win_bonus": 1}},
-				{"requires_any": ["thermos_black_coffee", "thermos_black_coffee_half", "instant_coffee"], "effects": {"loss_reduction": 1}}
-			]
-		}
-	},
-	{
-		"id": "cheap_sunglasses",
-		"display_name": "Cheap Sunglasses",
-		"class": "temporary",
-		"domain": "security",
-		"content_groups": ["universal_passive_items"],
-		"sellable": true,
-		"sale_price": 7,
-		"price_min": 10,
-		"price_max": 18,
-		"asset_path": "res://assets/art/items/cheap_sunglasses.png",
-		"icon_key": "sunglasses",
-		"environment_prop": "sunglasses",
-		"surface": "counter_case",
-		"description": "Lowers cheat heat.",
-		"effect": {"cheat_suspicion_delta": -2}
-	},
-	{
-		"id": "marked_cards",
-		"display_name": "Marked Cards",
-		"class": "contraband",
-		"domain": "games",
-		"content_groups": ["blackjack_pack", "baccarat_pack"],
-		"sellable": true,
-		"sale_price": 13,
-		"price_min": 18,
-		"price_max": 32,
-		"asset_path": "res://assets/art/items/marked_cards.png",
-		"icon_key": "marked_cards",
-		"environment_prop": "loose_card",
-		"surface": "felt_table",
-		"description": "Helps card peeks.",
-		"effect": {"blackjack_peek_heat_delta": -3, "blackjack_dealer_catch_chance": -8, "blackjack_peek_loss_reduction": 2, "baccarat_edge_sort_cue_count": -1, "cheat_suspicion_delta": 1}
-	},
-	{
-		"id": "edge_sort_loupe",
-		"display_name": "Edge-Sort Loupe",
-		"class": "contraband",
-		"domain": "games",
-		"content_groups": ["baccarat_pack"],
-		"sellable": true,
-		"sale_price": 22,
-		"price_min": 36,
-		"price_max": 64,
-		"asset_path": "res://assets/art/items/edge_sort_loupe.png",
-		"icon_key": "edge_sort_loupe",
-		"environment_prop": "loose_card",
-		"surface": "counter_case",
-		"description": "Reads card backs.",
-		"effect": {"baccarat_edge_sort_cue_count": -1, "baccarat_edge_sort_memory_tolerance": 1, "baccarat_edge_sort_heat_delta": -2, "skill_cheat_drunk_memory_offset": 1, "cheat_suspicion_delta": 1}
-	},
-	{
-		"id": "scratch_pad",
-		"display_name": "Scratch Pad",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["blackjack_pack", "baccarat_pack", "video_poker_pack"],
-		"sellable": true,
-		"sale_price": 5,
-		"price_min": 6,
-		"price_max": 13,
-		"asset_path": "res://assets/art/items/scratch_pad.png",
-		"icon_key": "scratch_pad",
-		"environment_prop": "notepad",
-		"surface": "folding_table",
-		"description": "Stores quick counts.",
-		"effect": {"baccarat_edge_sort_memory_tolerance": 1, "families": {"cards": {"win_chance": 5}}}
-	},
-	{
-		"id": "odds_notebook",
-		"display_name": "Odds Notebook",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["blackjack_pack", "baccarat_pack", "video_poker_pack"],
-		"build_tags": ["advantage_player"],
-		"sellable": true,
-		"sale_price": 12,
-		"price_min": 18,
-		"price_max": 32,
-		"asset_path": "res://assets/art/items/odds_notebook.png",
-		"icon_key": "odds_notebook",
-		"environment_prop": "notepad",
-		"surface": "folding_table",
-		"description": "Sharper odds notes.",
-		"effect": {
-			"blackjack_count_tolerance": 1,
-			"blackjack_count_edge_bonus": 1,
-			"baccarat_edge_sort_memory_tolerance": 1,
-			"families": {"cards": {"win_chance": 2}},
-			"synergies": [
-				{"requires_any": ["card_counters_notes"], "effects": {"blackjack_count_window_msec": 120}},
-				{"requires_any": ["scratch_pad"], "effects": {"baccarat_edge_sort_memory_tolerance": 1}}
-			]
-		}
-	},
-	{
-		"id": "shoe_cut_marker",
-		"display_name": "Shoe-Cut Marker",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["blackjack_pack", "baccarat_pack"],
-		"build_tags": ["advantage_player"],
-		"sellable": true,
-		"sale_price": 14,
-		"price_min": 22,
-		"price_max": 38,
-		"asset_path": "res://assets/art/items/shoe_cut_marker.png",
-		"icon_key": "shoe_cut_marker",
-		"environment_prop": "loose_card",
-		"surface": "felt_table",
-		"description": "Sharper shoe reads.",
-		"effect": {
-			"blackjack_count_cover": 2,
-			"baccarat_edge_sort_memory_tolerance": 1,
-			"synergies": [
-				{"requires_any": ["edge_sort_loupe"], "effects": {"baccarat_edge_sort_cue_count": -1}},
-				{"requires_any": ["odds_notebook"], "effects": {"blackjack_count_edge_bonus": 1}}
-			]
-		}
-	},
-	{
-		"id": "card_counters_notes",
-		"display_name": "Counter's Notes",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["blackjack_pack"],
-		"sellable": true,
-		"sale_price": 8,
-		"price_min": 12,
-		"price_max": 22,
-		"asset_path": "res://assets/art/items/card_counters_notes.png",
-		"icon_key": "card_counters_notes",
-		"environment_prop": "notepad",
-		"surface": "folding_table",
-		"description": "Improves count checks.",
-		"effect": {"blackjack_count_tolerance": 1, "blackjack_count_window_msec": 90, "blackjack_count_heat_delta": -2, "blackjack_count_cover": 4, "blackjack_count_edge_bonus": 2, "baccarat_edge_sort_memory_tolerance": 1}
-	},
-	{
-		"id": "side_bet_chart",
-		"display_name": "Side-Bet Chart",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["blackjack_pack"],
-		"sellable": true,
-		"sale_price": 7,
-		"price_min": 10,
-		"price_max": 18,
-		"asset_path": "res://assets/art/items/side_bet_chart.png",
-		"icon_key": "side_bet_chart",
-		"environment_prop": "notepad",
-		"surface": "counter_case",
-		"description": "Improves side bets.",
-		"effect": {"blackjack_side_bet_bonus": 1, "blackjack_side_bet_loss_reduction": 1, "blackjack_side_bet_flat_bonus": 1}
-	},
-	{
-		"id": "basic_strategy_card",
-		"display_name": "Basic Strategy Card",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["blackjack_pack"],
-		"sellable": true,
-		"sale_price": 9,
-		"price_min": 14,
-		"price_max": 24,
-		"asset_path": "res://assets/art/items/basic_strategy_card.png",
-		"icon_key": "basic_strategy_card",
-		"environment_prop": "loose_card",
-		"surface": "felt_table",
-		"description": "Guides blackjack play.",
-		"effect": {"blackjack_basic_strategy_card": 1}
-	},
-	{
-		"id": "lucky_ladies_compact",
-		"display_name": "Lucky Ladies Compact",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["blackjack_pack"],
-		"sellable": true,
-		"sale_price": 16,
-		"price_min": 24,
-		"price_max": 42,
-		"asset_path": "res://assets/art/items/lucky_ladies_compact.png",
-		"icon_key": "lucky_ladies_compact",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Boosts Lucky Ladies.",
-		"effect": {"blackjack_lucky_ladies_stake_multiplier": 2, "blackjack_lucky_ladies_payout_multiplier": 2}
-	},
-	{
-		"id": "coolers_cufflinks",
-		"display_name": "Cooler's Cufflinks",
-		"class": "permanent",
-		"domain": "security",
-		"content_groups": ["blackjack_pack"],
-		"sellable": true,
-		"sale_price": 20,
-		"price_min": 32,
-		"price_max": 54,
-		"asset_path": "res://assets/art/items/coolers_cufflinks.png",
-		"icon_key": "coolers_cufflinks",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Blocks peek heat.",
-		"effect": {"blackjack_failed_peek_heat_absorb": 1}
-	},
-	{
-		"id": "broken_cufflinks",
-		"display_name": "Broken Cufflinks",
-		"class": "damaged",
-		"domain": "security",
-		"content_groups": ["blackjack_pack"],
-		"sellable": false,
-		"sale_price": 0,
-		"price_min": 0,
-		"price_max": 0,
-		"asset_path": "res://assets/art/items/broken_cufflinks.png",
-		"icon_key": "broken_cufflinks",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Damaged peek gear.",
-		"effect": {"blackjack_peek_window_percent": 50, "repair_cost": 50, "repair_to_item": "coolers_cufflinks"}
-	},
-	{
-		"id": "high_roller_watch",
-		"display_name": "High Roller Watch",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["blackjack_pack"],
-		"sellable": true,
-		"sale_price": 18,
-		"price_min": 28,
-		"price_max": 48,
-		"asset_path": "res://assets/art/items/high_roller_watch.png",
-		"icon_key": "high_roller_watch",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Raises table limits.",
-		"effect": {"blackjack_table_limit_multiplier": 2, "blackjack_table_minimum_to_previous_max": 1}
-	},
-	{
-		"id": "lucky_keychain",
-		"display_name": "Lucky Keychain",
-		"class": "permanent",
-		"domain": "global",
-		"content_groups": ["universal_passive_items"],
-		"sellable": true,
-		"sale_price": 5,
-		"price_min": 7,
-		"price_max": 14,
-		"asset_path": "res://assets/art/items/lucky_keychain.png",
-		"icon_key": "keychain",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Softens bad beats.",
-		"effect": {"loss_reduction": 2}
-	},
-	{
-		"id": "foil_sleeve",
-		"display_name": "Foil Sleeve",
-		"class": "contraband",
-		"domain": "games",
-		"content_groups": ["slot_pack", "roulette_pack"],
-		"sellable": true,
-		"sale_price": 10,
-		"price_min": 14,
-		"price_max": 24,
-		"asset_path": "res://assets/art/items/foil_sleeve.png",
-		"icon_key": "foil_sleeve",
-		"environment_prop": "foil_sleeve",
-		"surface": "box_stack",
-		"description": "Cabinet cheat aid.",
-		"effect": {"families": {"slots": {"win_chance": 6}, "wheel": {"roulette_past_post_perfect_msec": 20, "roulette_past_post_good_msec": 35, "roulette_past_post_window_msec": 80, "roulette_past_post_base_heat": -3}}, "cheat_suspicion_delta": 2}
-	},
-	{
-		"id": "holdout_wax",
-		"display_name": "Holdout Wax",
-		"class": "contraband",
-		"domain": "games",
-		"content_groups": ["video_poker_pack"],
-		"sellable": true,
-		"sale_price": 17,
-		"price_min": 26,
-		"price_max": 44,
-		"asset_path": "res://assets/art/items/holdout_wax.png",
-		"icon_key": "holdout_wax",
-		"environment_prop": "foil_sleeve",
-		"surface": "counter_case",
-		"description": "Improves card swaps.",
-		"effect": {"video_poker_holdout_perfect_msec": 28, "video_poker_holdout_good_msec": 55, "video_poker_holdout_close_msec": 80, "video_poker_holdout_heat_delta": -2, "skill_cheat_drunk_window_offset_msec": 8, "cheat_suspicion_delta": 1}
-	},
-	{
-		"id": "chip_slide_wax",
-		"display_name": "Chip-Slide Wax",
-		"class": "contraband",
-		"domain": "games",
-		"content_groups": ["roulette_pack"],
-		"sellable": true,
-		"sale_price": 19,
-		"price_min": 30,
-		"price_max": 52,
-		"asset_path": "res://assets/art/items/chip_slide_wax.png",
-		"icon_key": "chip_slide_wax",
-		"environment_prop": "foil_sleeve",
-		"surface": "counter_case",
-		"description": "Improves late chips.",
-		"effect": {"families": {"wheel": {"roulette_past_post_perfect_msec": 35, "roulette_past_post_good_msec": 65, "roulette_past_post_window_msec": 130, "roulette_past_post_base_heat": -3}}, "skill_cheat_drunk_window_offset_msec": 8, "cheat_suspicion_delta": 1}
-	},
-	{
-		"id": "sleeve_rig",
-		"display_name": "Sleeve Rig",
-		"class": "contraband",
-		"domain": "games",
-		"content_groups": ["video_poker_pack", "roulette_pack"],
-		"build_tags": ["cheat_specialist"],
-		"sellable": true,
-		"sale_price": 24,
-		"price_min": 38,
-		"price_max": 64,
-		"asset_path": "res://assets/art/items/holdout_rig.png",
-		"icon_key": "sleeve_rig",
-		"environment_prop": "foil_sleeve",
-		"surface": "counter_case",
-		"description": "Combines wax tricks.",
-		"effect": {
-			"video_poker_holdout_good_msec": 20,
-			"video_poker_holdout_close_msec": 35,
-			"families": {"wheel": {"roulette_past_post_window_msec": 35}},
-			"cheat_suspicion_delta": 2,
-			"synergies": [
-				{"requires_any": ["holdout_wax"], "effects": {"video_poker_holdout_perfect_msec": 12}},
-				{"requires_any": ["chip_slide_wax"], "families": {"wheel": {"roulette_past_post_good_msec": 20}}}
-			]
-		}
-	},
-	{
-		"id": "coin_return_shim",
-		"display_name": "Coin-Return Shim",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 9,
-		"price_min": 12,
-		"price_max": 22,
-		"asset_path": "res://assets/art/items/coin_return_shim.png",
-		"icon_key": "coin_return_shim",
-		"environment_prop": "coin",
-		"surface": "box_stack",
-		"description": "Refunds slot losses.",
-		"effect": {"families": {"slots": {"slot_three_reel_loss_refund_percent": 35}}}
-	},
-	{
-		"id": "lucky_reel_grease",
-		"display_name": "Lucky Reel Grease",
-		"class": "consumable",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 18,
-		"price_min": 26,
-		"price_max": 44,
-		"asset_path": "res://assets/art/items/lucky_reel_grease.png",
-		"icon_key": "lucky_reel_grease",
-		"environment_prop": "token",
-		"surface": "counter_case",
-		"description": "Adds nudge chances.",
-		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot"}
-	},
-	{
-		"id": "timing_bracelet",
-		"display_name": "Timing Bracelet",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 10,
-		"price_min": 15,
-		"price_max": 25,
-		"asset_path": "res://assets/art/items/timing_bracelet.png",
-		"icon_key": "timing_bracelet",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Easier Buffalo nudges.",
-		"effect": {"families": {"slots": {"slot_nudge_perfect_msec_bonus": 15, "slot_nudge_close_msec_bonus": 25}}}
-	},
-	{
-		"id": "gold_tooth_token",
-		"display_name": "Gold-Tooth Token",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 16,
-		"price_min": 24,
-		"price_max": 40,
-		"asset_path": "res://assets/art/items/gold_tooth_token.png",
-		"icon_key": "gold_tooth_token",
-		"environment_prop": "coin",
-		"surface": "counter_case",
-		"description": "Richer Buffalo coins.",
-		"effect": {"families": {"slots": {"slot_gold_tooth_coin_upgrade_chance": 10, "slot_gold_tooth_coin_multiplier": 2}}}
-	},
-	{
-		"id": "payout_pamphlet",
-		"display_name": "Payout Pamphlet",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 7,
-		"price_min": 10,
-		"price_max": 18,
-		"asset_path": "res://assets/art/items/payout_pamphlet.png",
-		"icon_key": "payout_pamphlet",
-		"environment_prop": "notepad",
-		"surface": "counter_case",
-		"description": "Small slot edge.",
-		"effect": {"families": {"slots": {"win_bonus": 1}}}
-	},
-	{
-		"id": "cold_quarters",
-		"display_name": "Cold Quarters",
-		"class": "consumable",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 12,
-		"price_min": 18,
-		"price_max": 30,
-		"asset_path": "res://assets/art/items/cold_quarters.png",
-		"icon_key": "cold_quarters",
-		"environment_prop": "coin",
-		"surface": "counter_case",
-		"description": "Lowers nudge heat.",
-		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot", "slot_cold_quarter_heat_reduction": 6}
-	},
-	{
-		"id": "neon_players_charm",
-		"display_name": "Neon Player's Charm",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 20,
-		"price_min": 30,
-		"price_max": 52,
-		"asset_path": "res://assets/art/items/neon_players_charm.png",
-		"icon_key": "neon_players_charm",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Boosts first feature.",
-		"effect": {"families": {"slots": {"slot_first_bonus_bonus_percent": 15, "slot_first_bonus_bonus_cap": 40}}}
-	},
-	{
-		"id": "split_reel_note",
-		"display_name": "Split-Reel Note",
-		"class": "consumable",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 14,
-		"price_min": 22,
-		"price_max": 36,
-		"asset_path": "res://assets/art/items/split_reel_note.png",
-		"icon_key": "split_reel_note",
-		"environment_prop": "notepad",
-		"surface": "counter_case",
-		"description": "Clearer nudge cue.",
-		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot", "slot_split_reel_note_perfect_msec_bonus": 55, "slot_split_reel_note_close_msec_bonus": 90}
-	},
-	{
-		"id": "feature_magnet",
-		"display_name": "Feature Magnet",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 22,
-		"price_min": 34,
-		"price_max": 58,
-		"asset_path": "res://assets/art/items/feature_magnet.png",
-		"icon_key": "feature_magnet",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "More slot features.",
-		"effect": {"families": {"slots": {"slot_feature_weight_bonus_percent": 125, "slot_reel_win_weight_percent": 35}}}
-	},
-	{
-		"id": "cumquat_sandwich",
-		"display_name": "Cumquat Sandwich",
-		"class": "consumable",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"rarity": "legendary",
-		"sellable": false,
-		"sale_price": 0,
-		"price_min": 0,
-		"price_max": 0,
-		"asset_path": "res://assets/art/items/cumquat_sandwich.png",
-		"icon_key": "cumquat_sandwich",
-		"environment_prop": "sandwich",
-		"surface": "counter_case",
-		"description": "Forces one slot bonus.",
-		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "slot"}
-	},
-	{
-		"id": "drain_cleaner",
-		"display_name": "Drain Cleaner",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 10,
-		"price_min": 16,
-		"price_max": 28,
-		"asset_path": "res://assets/art/items/drain_cleaner.png",
-		"icon_key": "drain_cleaner",
-		"environment_prop": "coin",
-		"surface": "box_stack",
-		"description": "Pays bad drains.",
-		"effect": {"families": {"slots": {"slot_pinball_drain_cleaner_uses": 1, "slot_pinball_drain_cleaner_floor_percent": 200, "slot_pinball_drain_cleaner_award_percent": 100}}}
-	},
-	{
-		"id": "jackpot_magnet",
-		"display_name": "Jackpot Magnet",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 18,
-		"price_min": 28,
-		"price_max": 48,
-		"asset_path": "res://assets/art/items/jackpot_magnet.png",
-		"icon_key": "jackpot_magnet",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Boosts jackpot cups.",
-		"effect": {"families": {"slots": {"slot_pinball_jackpot_magnet_uses": 4, "slot_pinball_jackpot_magnet_award_percent": 35, "slot_pinball_jackpot_magnet_progress_bonus": 1}}}
-	},
-	{
-		"id": "splitter_token",
-		"display_name": "Splitter Token",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 15,
-		"price_min": 22,
-		"price_max": 38,
-		"asset_path": "res://assets/art/items/splitter_token.png",
-		"icon_key": "splitter_token",
-		"environment_prop": "coin",
-		"surface": "counter_case",
-		"description": "Adds cascade ball.",
-		"effect": {"families": {"slots": {"slot_pinball_splitter_token_uses": 1, "slot_pinball_splitter_token_extra_balls": 1}}}
-	},
-	{
-		"id": "return_spring",
-		"display_name": "Return Spring",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 13,
-		"price_min": 20,
-		"price_max": 34,
-		"asset_path": "res://assets/art/items/return_spring.png",
-		"icon_key": "return_spring",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Saves slow balls.",
-		"effect": {"families": {"slots": {"slot_pinball_return_spring_uses": 1, "slot_pinball_return_spring_impulse": 170}}}
-	},
-	{
-		"id": "tilt_dampener",
-		"display_name": "Tilt Dampener",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 12,
-		"price_min": 18,
-		"price_max": 32,
-		"asset_path": "res://assets/art/items/tilt_dampener.png",
-		"icon_key": "tilt_dampener",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Forgiving nudges.",
-		"effect": {"families": {"slots": {"slot_pinball_tilt_dampener_percent": 45}}}
-	},
-	{
-		"id": "bumper_battery",
-		"display_name": "Bumper Battery",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 14,
-		"price_min": 22,
-		"price_max": 36,
-		"asset_path": "res://assets/art/items/bumper_battery.png",
-		"icon_key": "bumper_battery",
-		"environment_prop": "token",
-		"surface": "counter_case",
-		"description": "Stronger first bumpers.",
-		"effect": {"families": {"slots": {"slot_pinball_bumper_battery_hits": 3, "slot_pinball_bumper_battery_award_percent": 40, "slot_pinball_bumper_battery_kick_percent": 130, "slot_pinball_bumper_battery_up_impulse": 18}}}
-	},
-	{
-		"id": "rubber_pegs",
-		"display_name": "Rubber Pegs",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 16,
-		"price_min": 24,
-		"price_max": 42,
-		"asset_path": "res://assets/art/items/rubber_pegs.png",
-		"icon_key": "rubber_pegs",
-		"environment_prop": "token",
-		"surface": "counter_case",
-		"description": "Livelier peg bounces.",
-		"effect": {"families": {"slots": {"slot_pinball_rubber_pegs": 1}}}
-	},
-	{
-		"id": "magnet_cup",
-		"display_name": "Magnet Cup",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 20,
-		"price_min": 30,
-		"price_max": 52,
-		"asset_path": "res://assets/art/items/magnet_cup.png",
-		"icon_key": "magnet_cup",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Wider cup captures.",
-		"effect": {"families": {"slots": {"slot_pinball_magnet_cup_radius_percent": 18}}}
-	},
-	{
-		"id": "extra_ball_token",
-		"display_name": "Extra Ball Token",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 24,
-		"price_min": 36,
-		"price_max": 64,
-		"asset_path": "res://assets/art/items/extra_ball_token.png",
-		"icon_key": "extra_ball_token",
-		"environment_prop": "coin",
-		"surface": "counter_case",
-		"description": "Adds feature ball.",
-		"effect": {"families": {"slots": {"slot_pinball_extra_ball_token": 1}}}
-	},
-	{
-		"id": "plunger_tuner",
-		"display_name": "Plunger Tuner",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 18,
-		"price_min": 26,
-		"price_max": 46,
-		"asset_path": "res://assets/art/items/plunger_tuner.png",
-		"icon_key": "plunger_tuner",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Easier skill shots.",
-		"effect": {"families": {"slots": {"slot_pinball_plunger_tuner_width_percent": 200}}}
-	},
-	{
-		"id": "lock_jammer",
-		"display_name": "Lock Jammer",
-		"class": "contraband",
-		"domain": "games",
-		"content_groups": ["slot_pack"],
-		"sellable": true,
-		"sale_price": 28,
-		"price_min": 42,
-		"price_max": 72,
-		"asset_path": "res://assets/art/items/lock_jammer.png",
-		"icon_key": "lock_jammer",
-		"environment_prop": "keychain",
-		"surface": "counter_case",
-		"description": "Faster multiball locks.",
-		"effect": {"families": {"slots": {"slot_pinball_lock_jammer_uses": 1}}, "cheat_suspicion_delta": 1}
-	},
-	{
-		"id": "weighted_keyring",
-		"display_name": "Weighted Keyring",
-		"class": "contraband",
-		"domain": "games",
-		"content_groups": ["bar_dice_pack"],
-		"sellable": true,
-		"sale_price": 12,
-		"price_min": 16,
-		"price_max": 28,
-		"asset_path": "res://assets/art/items/weighted_keyring.png",
-		"icon_key": "weighted_keyring",
-		"environment_prop": "weighted_keyring",
-		"surface": "folding_table",
-		"description": "Loaded dice weight.",
-		"effect": {"families": {"dice": {"win_chance": 7, "bar_dice_controlled_roll_perfect_msec": 20, "bar_dice_controlled_roll_good_msec": 45, "bar_dice_controlled_roll_close_msec": 65, "bar_dice_controlled_roll_meter_period_msec": 80, "bar_dice_controlled_roll_base_heat": -1}}, "cheat_suspicion_delta": 2}
-	},
-	{
-		"id": "dice_calipers",
-		"display_name": "Dice Calipers",
-		"class": "contraband",
-		"domain": "games",
-		"content_groups": ["bar_dice_pack"],
-		"sellable": true,
-		"sale_price": 18,
-		"price_min": 28,
-		"price_max": 48,
-		"asset_path": "res://assets/art/items/dice_calipers.png",
-		"icon_key": "dice_calipers",
-		"environment_prop": "weighted_keyring",
-		"surface": "folding_table",
-		"description": "Controlled-roll aid.",
-		"effect": {"families": {"dice": {"bar_dice_controlled_roll_perfect_msec": 35, "bar_dice_controlled_roll_good_msec": 70, "bar_dice_controlled_roll_close_msec": 95, "bar_dice_controlled_roll_meter_period_msec": 120, "bar_dice_controlled_roll_base_heat": -2}}, "skill_cheat_drunk_window_offset_msec": 6, "cheat_suspicion_delta": 1}
-	},
-	{
-		"id": "false_bottom_cup",
-		"display_name": "False-Bottom Cup",
-		"class": "contraband",
-		"domain": "games",
-		"content_groups": ["bar_dice_pack"],
-		"build_tags": ["cheat_specialist"],
-		"sellable": true,
-		"sale_price": 18,
-		"price_min": 28,
-		"price_max": 48,
-		"asset_path": "res://assets/art/items/loaded_dice.png",
-		"icon_key": "false_bottom_cup",
-		"environment_prop": "weighted_keyring",
-		"surface": "folding_table",
-		"description": "Hidden dice cup.",
-		"effect": {
-			"families": {"dice": {"bar_dice_controlled_roll_good_msec": 35, "bar_dice_controlled_roll_close_msec": 50, "bar_dice_controlled_roll_base_heat": -1}},
-			"skill_cheat_drunk_window_offset_msec": 4,
-			"cheat_suspicion_delta": 2,
-			"synergies": [
-				{"requires_any": ["weighted_keyring"], "families": {"dice": {"bar_dice_controlled_roll_perfect_msec": 15}}},
-				{"requires_any": ["dice_calipers"], "families": {"dice": {"bar_dice_controlled_roll_meter_period_msec": 80}}}
-			]
-		}
-	},
-	{
-		"id": "roadside_map",
-		"display_name": "Roadside Map",
-		"class": "permanent",
-		"domain": "travel",
-		"content_groups": ["universal_passive_items"],
-		"sellable": true,
-		"sale_price": 4,
-		"price_min": 5,
-		"price_max": 11,
-		"asset_path": "res://assets/art/items/roadside_map.png",
-		"icon_key": "roadside_map",
-		"environment_prop": "map",
-		"surface": "folding_table",
-		"description": "Reveals route stops.",
-		"effect": {"win_bonus": 1, "travel_scouting_level": 1}
-	},
-	{
-		"id": "payment_calendar",
-		"display_name": "Payment Calendar",
-		"class": "permanent",
-		"domain": "global",
-		"content_groups": ["universal_passive_items"],
-		"build_tags": ["debt_surfer"],
-		"sellable": true,
-		"sale_price": 8,
-		"price_min": 12,
-		"price_max": 22,
-		"asset_path": "res://assets/art/items/payment_calendar.png",
-		"icon_key": "payment_calendar",
-		"environment_prop": "notepad",
-		"surface": "store_shelf",
-		"description": "Extends debt grace.",
-		"effect": {
-			"debt_grace_turns": 1,
-			"loss_reduction": 1,
-			"synergies": [
-				{"requires_any": ["pawn_receipt_sleeve"], "effects": {"debt_grace_turns": 1}},
-				{"requires_any": ["cashout_envelope"], "effects": {"loss_reduction": 1}}
-			]
-		}
-	},
-	{
-		"id": "pawn_receipt_sleeve",
-		"display_name": "Pawn Receipt Sleeve",
-		"class": "permanent",
-		"domain": "security",
-		"content_groups": ["universal_passive_items"],
-		"build_tags": ["debt_surfer"],
-		"sellable": true,
-		"sale_price": 10,
-		"price_min": 16,
-		"price_max": 28,
-		"asset_path": "res://assets/art/items/pawn_receipt_sleeve.png",
-		"icon_key": "pawn_receipt_sleeve",
-		"environment_prop": "notepad",
-		"surface": "counter_case",
-		"description": "Protects pawn loans.",
-		"effect": {
-			"debt_default_heat_delta": -2,
-			"loss_reduction": 1,
-			"synergies": [
-				{"requires_any": ["payment_calendar"], "effects": {"debt_default_heat_delta": -2}},
-				{"requires_any": ["cashout_envelope"], "effects": {"debt_grace_turns": 1}}
-			]
-		}
-	},
-	{
-		"id": "xray_glasses",
-		"display_name": "X-Ray Glasses",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["pull_tabs_pack", "scratch_tickets_pack"],
-		"sellable": true,
-		"sale_price": 18,
-		"price_min": 26,
-		"price_max": 42,
-		"asset_path": "res://assets/art/items/xray_glasses.png",
-		"icon_key": "xray_glasses",
-		"environment_prop": "glasses",
-		"surface": "counter_case",
-		"description": "Marks buried winners and peeks through scratch latex.",
-		"effect": {"scratch_peek_cells": 3, "scratch_peek_heat": 6}
-	},
-	{
-		"id": "tab_detector",
-		"display_name": "Tab Detector",
-		"class": "active",
-		"domain": "games",
-		"content_groups": ["pull_tabs_pack"],
-		"sellable": true,
-		"sale_price": 20,
-		"price_min": 30,
-		"price_max": 48,
-		"asset_path": "res://assets/art/items/tab_detector.png",
-		"icon_key": "tab_detector",
-		"environment_prop": "scanner",
-		"surface": "counter_case",
-		"description": "Finds next winner.",
-		"effect": {"active_item": true, "active_mode": "toggle", "active_target": "pull_tabs"}
-	},
-	{
-		"id": "tarot_card",
-		"display_name": "Tarot Card",
-		"class": "consumable",
-		"domain": "games",
-		"content_groups": ["pull_tabs_pack", "scratch_tickets_pack"],
-		"sellable": true,
-		"sale_price": 9,
-		"price_min": 14,
-		"price_max": 24,
-		"asset_path": "res://assets/art/items/tarot_card.png",
-		"icon_key": "tarot_card",
-		"environment_prop": "loose_card",
-		"surface": "felt_table",
-		"description": "Previews pull tabs and reads a scratcher's fortune.",
-		"effect": {"active_item": true, "active_mode": "consumable", "active_target": "pull_tabs", "scratch_fortune_hint": 1}
-	},
-	{
-		"id": "lucky_penny",
-		"display_name": "Lucky Penny",
-		"class": "permanent",
-		"domain": "games",
-		"content_groups": ["scratch_tickets_pack"],
-		"sellable": true,
-		"sale_price": 11,
-		"price_min": 18,
-		"price_max": 30,
-		"asset_path": "res://assets/art/items/lucky_penny.png",
-		"icon_key": "lucky_penny",
-		"environment_prop": "coin",
-		"surface": "counter_case",
-		"description": "Shields one scratch-ticket penalty.",
-		"effect": {"scratch_penalty_shields": 1}
-	},
-	{
-		"id": "jazz_sax_lucky_coin",
-		"display_name": "Sax Lucky Coin",
-		"class": "permanent",
-		"domain": "global",
-		"content_groups": ["universal_passive_items"],
-		"sellable": false,
-		"sale_price": 0,
-		"price_min": 80,
-		"price_max": 80,
-		"asset_path": "res://assets/art/items/jazz_sax_lucky_coin.png",
-		"icon_key": "jazz_sax_lucky_coin",
-		"environment_prop": "coin",
-		"surface": "counter_case",
-		"description": "Clean luck boost.",
-		"effect": {"win_chance": 10, "win_bonus": 3, "loss_reduction": 2, "cheat_suspicion_delta": -2}
-	},
-	{
-		"id": "jazz_cello_lucky_coin",
-		"display_name": "Cello Lucky Coin",
-		"class": "permanent",
-		"domain": "global",
-		"content_groups": ["universal_passive_items"],
-		"sellable": false,
-		"sale_price": 0,
-		"price_min": 80,
-		"price_max": 80,
-		"asset_path": "res://assets/art/items/jazz_cello_lucky_coin.png",
-		"icon_key": "jazz_cello_lucky_coin",
-		"environment_prop": "coin",
-		"surface": "counter_case",
-		"description": "Clean luck boost.",
-		"effect": {"win_chance": 10, "win_bonus": 3, "loss_reduction": 2, "cheat_suspicion_delta": -2}
-	},
-	{
-		"id": "jazz_drummer_lucky_coin",
-		"display_name": "Drummer Lucky Coin",
-		"class": "permanent",
-		"domain": "global",
-		"content_groups": ["universal_passive_items"],
-		"sellable": false,
-		"sale_price": 0,
-		"price_min": 80,
-		"price_max": 80,
-		"asset_path": "res://assets/art/items/jazz_drummer_lucky_coin.png",
-		"icon_key": "jazz_drummer_lucky_coin",
-		"environment_prop": "coin",
-		"surface": "counter_case",
-		"description": "Clean luck boost.",
-		"effect": {"win_chance": 10, "win_bonus": 3, "loss_reduction": 2, "cheat_suspicion_delta": -2}
-	},
-	{
-		"id": "jazz_drummer_glasses",
-		"display_name": "Legend's Glasses",
-		"class": "permanent",
-		"domain": "security",
-		"content_groups": ["universal_passive_items"],
-		"sellable": false,
-		"sale_price": 0,
-		"price_min": 120,
-		"price_max": 120,
-		"asset_path": "res://assets/art/items/jazz_drummer_glasses.png",
-		"icon_key": "jazz_drummer_glasses",
-		"environment_prop": "glasses",
-		"surface": "counter_case",
-		"description": "Clears venue heat.",
-		"effect": {"win_chance": 3, "cheat_suspicion_delta": -4, "loss_reduction": 1}
-	},
-	{
-		"id": "bag",
-		"display_name": "Bag",
-		"class": "container",
-		"domain": "home",
-		"content_groups": ["universal_passive_items"],
-		"sellable": true,
-		"sale_price": 8,
-		"price_min": 12,
-		"price_max": 22,
-		"asset_path": "res://assets/art/items/bag.png",
-		"icon_key": "bag",
-		"environment_prop": "satchel",
-		"surface": "counter",
-		"description": "Stores 3 items.",
-		"container_capacity": 3,
-		"effect": {}
-	},
-	{
-		"id": "backpack",
-		"display_name": "Backpack",
-		"class": "container",
-		"domain": "home",
-		"content_groups": ["universal_passive_items"],
-		"sellable": true,
-		"sale_price": 14,
-		"price_min": 22,
-		"price_max": 34,
-		"asset_path": "res://assets/art/items/backpack.png",
-		"icon_key": "backpack",
-		"environment_prop": "satchel",
-		"surface": "counter",
-		"description": "Stores 5 items.",
-		"container_capacity": 5,
-		"effect": {}
-	},
-	{
-		"id": "suitcase",
-		"display_name": "Suitcase",
-		"class": "container",
-		"domain": "home",
-		"content_groups": ["universal_passive_items"],
-		"sellable": true,
-		"sale_price": 22,
-		"price_min": 36,
-		"price_max": 55,
-		"asset_path": "res://assets/art/items/suitcase.png",
-		"icon_key": "suitcase",
-		"environment_prop": "briefcase",
-		"surface": "counter",
-		"description": "Stores 7 items.",
-		"container_capacity": 7,
-		"effect": {}
-	},
-	{
-		"id": "trunk",
-		"display_name": "Trunk",
-		"class": "container",
-		"domain": "home",
-		"content_groups": ["universal_passive_items"],
-		"sellable": true,
-		"sale_price": 34,
-		"price_min": 58,
-		"price_max": 84,
-		"asset_path": "res://assets/art/items/trunk.png",
-		"icon_key": "trunk",
-		"environment_prop": "crate",
-		"surface": "counter",
-		"description": "Stores 10 items.",
-		"container_capacity": 10,
-		"effect": {}
-	}
+  {
+    "id": "creased_luck_card",
+    "display_name": "Creased Luck Card",
+    "class": "permanent",
+    "domain": "global",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": true,
+    "sale_price": 6,
+    "price_min": 8,
+    "price_max": 16,
+    "asset_path": "res://assets/art/items/creased_luck_card.png",
+    "icon_key": "luck_card",
+    "environment_prop": "loose_card",
+    "surface": "felt_table",
+    "description": "Bent paper. Still likes your hand.",
+    "effect": {
+      "baseline_luck_delta": 1,
+      "win_chance": 2,
+      "win_bonus": 1
+    }
+  },
+  {
+    "id": "pile_of_pull_tabs",
+    "display_name": "Pile of Pull Tabs",
+    "class": "ticket pile",
+    "domain": "global",
+    "content_groups": [
+      "pull_tabs_pack"
+    ],
+    "sellable": false,
+    "sale_price": 0,
+    "price_min": 0,
+    "price_max": 0,
+    "asset_path": "res://assets/art/games/pull_tabs.png",
+    "icon_key": "pull_tabs",
+    "environment_prop": "paper_stack",
+    "surface": "counter",
+    "description": "Your tabs, bundled by old trouble.",
+    "effect": {}
+  },
+  {
+    "id": "pile_of_scratch_tickets",
+    "display_name": "Pile of Scratch Tickets",
+    "class": "ticket pile",
+    "domain": "global",
+    "content_groups": [
+      "scratch_tickets_pack"
+    ],
+    "sellable": false,
+    "sale_price": 0,
+    "price_min": 0,
+    "price_max": 0,
+    "asset_path": "res://assets/art/games/scratch_tickets.png",
+    "icon_key": "scratch_ticket",
+    "environment_prop": "paper_stack",
+    "surface": "counter",
+    "description": "Your scratchers, waiting under gray skin.",
+    "effect": {}
+  },
+  {
+    "id": "instant_coffee",
+    "display_name": "Instant Coffee",
+    "class": "consumable",
+    "domain": "global",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": true,
+    "sale_price": 3,
+    "price_min": 4,
+    "price_max": 9,
+    "asset_path": "res://assets/art/items/instant_coffee.png",
+    "icon_key": "coffee_cup",
+    "environment_prop": "coffee",
+    "surface": "store_shelf",
+    "description": "Bitter focus in a paper sleeve.",
+    "effect": {
+      "legal_win_chance": 3,
+      "loss_reduction": 1,
+      "cheat_suspicion_delta": 1
+    }
+  },
+  {
+    "id": "ledger_pencil",
+    "display_name": "Ledger Pencil",
+    "class": "permanent",
+    "domain": "global",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "build_tags": [
+      "clean_grinder"
+    ],
+    "sellable": true,
+    "sale_price": 8,
+    "price_min": 12,
+    "price_max": 20,
+    "asset_path": "res://assets/art/items/ledger_pencil.png",
+    "icon_key": "ledger_pencil",
+    "environment_prop": "notepad",
+    "surface": "store_shelf",
+    "description": "Tiny graphite. Cleaner sins.",
+    "effect": {
+      "win_chance": 1,
+      "loss_reduction": 1,
+      "synergies": [
+        {
+          "requires_any": [
+            "instant_coffee"
+          ],
+          "effects": {
+            "win_chance": 1
+          }
+        },
+        {
+          "requires_any": [
+            "cashout_envelope"
+          ],
+          "effects": {
+            "loss_reduction": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "cashout_envelope",
+    "display_name": "Cashout Envelope",
+    "class": "permanent",
+    "domain": "global",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "build_tags": [
+      "clean_grinder",
+      "debt_surfer"
+    ],
+    "sellable": true,
+    "sale_price": 9,
+    "price_min": 14,
+    "price_max": 24,
+    "asset_path": "res://assets/art/items/cashout_envelope.png",
+    "icon_key": "cashout_envelope",
+    "environment_prop": "map",
+    "surface": "store_shelf",
+    "description": "A plan for leaving ahead.",
+    "effect": {
+      "win_bonus": 1,
+      "loss_reduction": 1,
+      "synergies": [
+        {
+          "requires_any": [
+            "creased_luck_card"
+          ],
+          "effects": {
+            "win_bonus": 1
+          }
+        },
+        {
+          "requires_any": [
+            "ledger_pencil"
+          ],
+          "effects": {
+            "loss_reduction": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "thermos_black_coffee",
+    "display_name": "Thermos of Black Coffee",
+    "class": "consumable",
+    "domain": "global",
+    "content_groups": [
+      "universal_active_items"
+    ],
+    "sellable": true,
+    "sale_price": 8,
+    "price_min": 14,
+    "price_max": 24,
+    "asset_path": "res://assets/art/items/thermos_black_coffee.png",
+    "icon_key": "thermos_black_coffee",
+    "environment_prop": "coffee",
+    "surface": "store_shelf",
+    "description": "Black mercy for shaking hands.",
+    "effect": {
+      "active_item": true,
+      "active_mode": "consumable",
+      "active_target": "global",
+      "drunk_delta": -28,
+      "pending_drunk_absorption_delta": -28,
+      "drunk_distortion_suppression_turns": 3,
+      "inventory_remove": [
+        "thermos_black_coffee"
+      ],
+      "inventory_add": [
+        "thermos_black_coffee_half"
+      ],
+      "messages": [
+        "Black coffee drags the room back into focus."
+      ]
+    }
+  },
+  {
+    "id": "thermos_black_coffee_half",
+    "display_name": "Half Thermos",
+    "class": "consumable",
+    "domain": "global",
+    "content_groups": [
+      "universal_active_items"
+    ],
+    "sellable": false,
+    "sale_price": 0,
+    "price_min": 0,
+    "price_max": 0,
+    "asset_path": "res://assets/art/items/thermos_black_coffee_half.png",
+    "icon_key": "thermos_black_coffee_half",
+    "environment_prop": "coffee",
+    "surface": "store_shelf",
+    "description": "One last sober little miracle.",
+    "effect": {
+      "active_item": true,
+      "active_mode": "consumable",
+      "active_target": "global",
+      "drunk_delta": -24,
+      "pending_drunk_absorption_delta": -24,
+      "drunk_distortion_suppression_turns": 2,
+      "inventory_remove": [
+        "thermos_black_coffee_half"
+      ],
+      "messages": [
+        "The last pour steadies what is left of you."
+      ]
+    }
+  },
+  {
+    "id": "pickled_olive_jar",
+    "display_name": "Pickled Olive Jar",
+    "class": "consumable",
+    "domain": "global",
+    "content_groups": [
+      "universal_active_items"
+    ],
+    "build_tags": [
+      "drunk_gambler"
+    ],
+    "sellable": true,
+    "sale_price": 6,
+    "price_min": 9,
+    "price_max": 16,
+    "asset_path": "res://assets/art/items/flask_of_courage.png",
+    "icon_key": "pickled_olive_jar",
+    "environment_prop": "coffee",
+    "surface": "counter_case",
+    "description": "Brine, bite, and borrowed nerve.",
+    "effect": {
+      "active_item": true,
+      "active_mode": "consumable",
+      "active_target": "global",
+      "alcohol_intake": 8,
+      "baseline_luck_delta": 1,
+      "win_bonus": 1,
+      "inventory_remove": [
+        "pickled_olive_jar"
+      ],
+      "messages": [
+        "The olives bite first. Luck follows late."
+      ],
+      "synergies": [
+        {
+          "requires_any": [
+            "lucky_bar_napkin"
+          ],
+          "effects": {
+            "win_chance": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "lucky_bar_napkin",
+    "display_name": "Lucky Bar Napkin",
+    "class": "permanent",
+    "domain": "global",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "build_tags": [
+      "drunk_gambler",
+      "clean_grinder"
+    ],
+    "sellable": true,
+    "sale_price": 6,
+    "price_min": 8,
+    "price_max": 15,
+    "asset_path": "res://assets/art/items/lucky_charm.png",
+    "icon_key": "lucky_bar_napkin",
+    "environment_prop": "loose_card",
+    "surface": "felt_table",
+    "description": "Bar luck, folded twice.",
+    "effect": {
+      "win_chance": 1,
+      "loss_reduction": 1,
+      "synergies": [
+        {
+          "requires_any": [
+            "pickled_olive_jar"
+          ],
+          "effects": {
+            "win_bonus": 1
+          }
+        },
+        {
+          "requires_any": [
+            "thermos_black_coffee",
+            "thermos_black_coffee_half",
+            "instant_coffee"
+          ],
+          "effects": {
+            "loss_reduction": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "cheap_sunglasses",
+    "display_name": "Cheap Sunglasses",
+    "class": "temporary",
+    "domain": "security",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": true,
+    "sale_price": 7,
+    "price_min": 10,
+    "price_max": 18,
+    "asset_path": "res://assets/art/items/cheap_sunglasses.png",
+    "icon_key": "sunglasses",
+    "environment_prop": "sunglasses",
+    "surface": "counter_case",
+    "description": "Plastic shade for guilty eyes.",
+    "effect": {
+      "cheat_suspicion_delta": -2
+    }
+  },
+  {
+    "id": "marked_cards",
+    "display_name": "Marked Cards",
+    "class": "contraband",
+    "domain": "games",
+    "content_groups": [
+      "blackjack_pack",
+      "baccarat_pack"
+    ],
+    "sellable": true,
+    "sale_price": 13,
+    "price_min": 18,
+    "price_max": 32,
+    "asset_path": "res://assets/art/items/marked_cards.png",
+    "icon_key": "marked_cards",
+    "environment_prop": "loose_card",
+    "surface": "felt_table",
+    "description": "The backs whisper if you listen.",
+    "effect": {
+      "blackjack_peek_heat_delta": -3,
+      "blackjack_dealer_catch_chance": -8,
+      "blackjack_peek_loss_reduction": 2,
+      "baccarat_edge_sort_cue_count": -1,
+      "cheat_suspicion_delta": 1
+    }
+  },
+  {
+    "id": "edge_sort_loupe",
+    "display_name": "Edge-Sort Loupe",
+    "class": "contraband",
+    "domain": "games",
+    "content_groups": [
+      "baccarat_pack"
+    ],
+    "sellable": true,
+    "sale_price": 22,
+    "price_min": 36,
+    "price_max": 64,
+    "asset_path": "res://assets/art/items/edge_sort_loupe.png",
+    "icon_key": "edge_sort_loupe",
+    "environment_prop": "loose_card",
+    "surface": "counter_case",
+    "description": "A glass eye for crooked backs.",
+    "effect": {
+      "baccarat_edge_sort_cue_count": -1,
+      "baccarat_edge_sort_memory_tolerance": 1,
+      "baccarat_edge_sort_heat_delta": -2,
+      "skill_cheat_drunk_memory_offset": 1,
+      "cheat_suspicion_delta": 1
+    }
+  },
+  {
+    "id": "scratch_pad",
+    "display_name": "Scratch Pad",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "blackjack_pack",
+      "baccarat_pack",
+      "video_poker_pack"
+    ],
+    "sellable": true,
+    "sale_price": 5,
+    "price_min": 6,
+    "price_max": 13,
+    "asset_path": "res://assets/art/items/scratch_pad.png",
+    "icon_key": "scratch_pad",
+    "environment_prop": "notepad",
+    "surface": "folding_table",
+    "description": "Numbers hide better on paper.",
+    "effect": {
+      "baccarat_edge_sort_memory_tolerance": 1,
+      "families": {
+        "cards": {
+          "win_chance": 5
+        }
+      }
+    }
+  },
+  {
+    "id": "odds_notebook",
+    "display_name": "Odds Notebook",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "blackjack_pack",
+      "baccarat_pack",
+      "video_poker_pack"
+    ],
+    "build_tags": [
+      "advantage_player"
+    ],
+    "sellable": true,
+    "sale_price": 12,
+    "price_min": 18,
+    "price_max": 32,
+    "asset_path": "res://assets/art/items/odds_notebook.png",
+    "icon_key": "odds_notebook",
+    "environment_prop": "notepad",
+    "surface": "folding_table",
+    "description": "Bad math, made useful.",
+    "effect": {
+      "blackjack_count_tolerance": 1,
+      "blackjack_count_edge_bonus": 1,
+      "baccarat_edge_sort_memory_tolerance": 1,
+      "families": {
+        "cards": {
+          "win_chance": 2
+        }
+      },
+      "synergies": [
+        {
+          "requires_any": [
+            "card_counters_notes"
+          ],
+          "effects": {
+            "blackjack_count_window_msec": 120
+          }
+        },
+        {
+          "requires_any": [
+            "scratch_pad"
+          ],
+          "effects": {
+            "baccarat_edge_sort_memory_tolerance": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "shoe_cut_marker",
+    "display_name": "Shoe-Cut Marker",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "blackjack_pack",
+      "baccarat_pack"
+    ],
+    "build_tags": [
+      "advantage_player"
+    ],
+    "sellable": true,
+    "sale_price": 14,
+    "price_min": 22,
+    "price_max": 38,
+    "asset_path": "res://assets/art/items/shoe_cut_marker.png",
+    "icon_key": "shoe_cut_marker",
+    "environment_prop": "loose_card",
+    "surface": "felt_table",
+    "description": "A tiny wound in the shoe.",
+    "effect": {
+      "blackjack_count_cover": 2,
+      "baccarat_edge_sort_memory_tolerance": 1,
+      "synergies": [
+        {
+          "requires_any": [
+            "edge_sort_loupe"
+          ],
+          "effects": {
+            "baccarat_edge_sort_cue_count": -1
+          }
+        },
+        {
+          "requires_any": [
+            "odds_notebook"
+          ],
+          "effects": {
+            "blackjack_count_edge_bonus": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "card_counters_notes",
+    "display_name": "Counter's Notes",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "blackjack_pack"
+    ],
+    "sellable": true,
+    "sale_price": 8,
+    "price_min": 12,
+    "price_max": 22,
+    "asset_path": "res://assets/art/items/card_counters_notes.png",
+    "icon_key": "card_counters_notes",
+    "environment_prop": "notepad",
+    "surface": "folding_table",
+    "description": "Someone counted before you sweated.",
+    "effect": {
+      "blackjack_count_tolerance": 1,
+      "blackjack_count_window_msec": 90,
+      "blackjack_count_heat_delta": -2,
+      "blackjack_count_cover": 4,
+      "blackjack_count_edge_bonus": 2,
+      "baccarat_edge_sort_memory_tolerance": 1
+    }
+  },
+  {
+    "id": "side_bet_chart",
+    "display_name": "Side-Bet Chart",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "blackjack_pack"
+    ],
+    "sellable": true,
+    "sale_price": 7,
+    "price_min": 10,
+    "price_max": 18,
+    "asset_path": "res://assets/art/items/side_bet_chart.png",
+    "icon_key": "side_bet_chart",
+    "environment_prop": "notepad",
+    "surface": "counter_case",
+    "description": "Pretty traps, uglier odds.",
+    "effect": {
+      "blackjack_side_bet_bonus": 1,
+      "blackjack_side_bet_loss_reduction": 1,
+      "blackjack_side_bet_flat_bonus": 1
+    }
+  },
+  {
+    "id": "basic_strategy_card",
+    "display_name": "Basic Strategy Card",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "blackjack_pack"
+    ],
+    "sellable": true,
+    "sale_price": 9,
+    "price_min": 14,
+    "price_max": 24,
+    "asset_path": "res://assets/art/items/basic_strategy_card.png",
+    "icon_key": "basic_strategy_card",
+    "environment_prop": "loose_card",
+    "surface": "felt_table",
+    "description": "Common sense laminated for emergencies.",
+    "effect": {
+      "blackjack_basic_strategy_card": 1
+    }
+  },
+  {
+    "id": "lucky_ladies_compact",
+    "display_name": "Lucky Ladies Compact",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "blackjack_pack"
+    ],
+    "sellable": true,
+    "sale_price": 16,
+    "price_min": 24,
+    "price_max": 42,
+    "asset_path": "res://assets/art/items/lucky_ladies_compact.png",
+    "icon_key": "lucky_ladies_compact",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Powder mirror, queenly superstition.",
+    "effect": {
+      "blackjack_lucky_ladies_stake_multiplier": 2,
+      "blackjack_lucky_ladies_payout_multiplier": 2
+    }
+  },
+  {
+    "id": "coolers_cufflinks",
+    "display_name": "Cooler's Cufflinks",
+    "class": "permanent",
+    "domain": "security",
+    "content_groups": [
+      "blackjack_pack"
+    ],
+    "sellable": true,
+    "sale_price": 20,
+    "price_min": 32,
+    "price_max": 54,
+    "asset_path": "res://assets/art/items/coolers_cufflinks.png",
+    "icon_key": "coolers_cufflinks",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Cold metal for hot peeks.",
+    "effect": {
+      "blackjack_failed_peek_heat_absorb": 1
+    }
+  },
+  {
+    "id": "broken_cufflinks",
+    "display_name": "Broken Cufflinks",
+    "class": "damaged",
+    "domain": "security",
+    "content_groups": [
+      "blackjack_pack"
+    ],
+    "sellable": false,
+    "sale_price": 0,
+    "price_min": 0,
+    "price_max": 0,
+    "asset_path": "res://assets/art/items/broken_cufflinks.png",
+    "icon_key": "broken_cufflinks",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Damaged shine. Still crooked.",
+    "effect": {
+      "blackjack_peek_window_percent": 50,
+      "repair_cost": 50,
+      "repair_to_item": "coolers_cufflinks"
+    }
+  },
+  {
+    "id": "high_roller_watch",
+    "display_name": "High Roller Watch",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "blackjack_pack"
+    ],
+    "sellable": true,
+    "sale_price": 18,
+    "price_min": 28,
+    "price_max": 48,
+    "asset_path": "res://assets/art/items/high_roller_watch.png",
+    "icon_key": "high_roller_watch",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Heavy watch, heavier minimums.",
+    "effect": {
+      "blackjack_table_limit_multiplier": 2,
+      "blackjack_table_minimum_to_previous_max": 1
+    }
+  },
+  {
+    "id": "lucky_keychain",
+    "display_name": "Lucky Keychain",
+    "class": "permanent",
+    "domain": "global",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": true,
+    "sale_price": 5,
+    "price_min": 7,
+    "price_max": 14,
+    "asset_path": "res://assets/art/items/lucky_keychain.png",
+    "icon_key": "keychain",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Keys to nowhere. Luck to somewhere.",
+    "effect": {
+      "loss_reduction": 2
+    }
+  },
+  {
+    "id": "foil_sleeve",
+    "display_name": "Foil Sleeve",
+    "class": "contraband",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack",
+      "roulette_pack"
+    ],
+    "sellable": true,
+    "sale_price": 10,
+    "price_min": 14,
+    "price_max": 24,
+    "asset_path": "res://assets/art/items/foil_sleeve.png",
+    "icon_key": "foil_sleeve",
+    "environment_prop": "foil_sleeve",
+    "surface": "box_stack",
+    "description": "Cabinet static with criminal posture.",
+    "effect": {
+      "families": {
+        "slots": {
+          "win_chance": 6
+        },
+        "wheel": {
+          "roulette_past_post_perfect_msec": 20,
+          "roulette_past_post_good_msec": 35,
+          "roulette_past_post_window_msec": 80,
+          "roulette_past_post_base_heat": -3
+        }
+      },
+      "cheat_suspicion_delta": 2
+    }
+  },
+  {
+    "id": "holdout_wax",
+    "display_name": "Holdout Wax",
+    "class": "contraband",
+    "domain": "games",
+    "content_groups": [
+      "video_poker_pack"
+    ],
+    "sellable": true,
+    "sale_price": 17,
+    "price_min": 26,
+    "price_max": 44,
+    "asset_path": "res://assets/art/items/holdout_wax.png",
+    "icon_key": "holdout_wax",
+    "environment_prop": "foil_sleeve",
+    "surface": "counter_case",
+    "description": "Sticky little card-shop sin.",
+    "effect": {
+      "video_poker_holdout_perfect_msec": 28,
+      "video_poker_holdout_good_msec": 55,
+      "video_poker_holdout_close_msec": 80,
+      "video_poker_holdout_heat_delta": -2,
+      "skill_cheat_drunk_window_offset_msec": 8,
+      "cheat_suspicion_delta": 1
+    }
+  },
+  {
+    "id": "chip_slide_wax",
+    "display_name": "Chip-Slide Wax",
+    "class": "contraband",
+    "domain": "games",
+    "content_groups": [
+      "roulette_pack"
+    ],
+    "sellable": true,
+    "sale_price": 19,
+    "price_min": 30,
+    "price_max": 52,
+    "asset_path": "res://assets/art/items/chip_slide_wax.png",
+    "icon_key": "chip_slide_wax",
+    "environment_prop": "foil_sleeve",
+    "surface": "counter_case",
+    "description": "Late chips slide like gossip.",
+    "effect": {
+      "families": {
+        "wheel": {
+          "roulette_past_post_perfect_msec": 35,
+          "roulette_past_post_good_msec": 65,
+          "roulette_past_post_window_msec": 130,
+          "roulette_past_post_base_heat": -3
+        }
+      },
+      "skill_cheat_drunk_window_offset_msec": 8,
+      "cheat_suspicion_delta": 1
+    }
+  },
+  {
+    "id": "sleeve_rig",
+    "display_name": "Sleeve Rig",
+    "class": "contraband",
+    "domain": "games",
+    "content_groups": [
+      "video_poker_pack",
+      "roulette_pack"
+    ],
+    "build_tags": [
+      "cheat_specialist"
+    ],
+    "sellable": true,
+    "sale_price": 24,
+    "price_min": 38,
+    "price_max": 64,
+    "asset_path": "res://assets/art/items/holdout_rig.png",
+    "icon_key": "sleeve_rig",
+    "environment_prop": "foil_sleeve",
+    "surface": "counter_case",
+    "description": "A whole wardrobe of bad ideas.",
+    "effect": {
+      "video_poker_holdout_good_msec": 20,
+      "video_poker_holdout_close_msec": 35,
+      "families": {
+        "wheel": {
+          "roulette_past_post_window_msec": 35
+        }
+      },
+      "cheat_suspicion_delta": 2,
+      "synergies": [
+        {
+          "requires_any": [
+            "holdout_wax"
+          ],
+          "effects": {
+            "video_poker_holdout_perfect_msec": 12
+          }
+        },
+        {
+          "requires_any": [
+            "chip_slide_wax"
+          ],
+          "families": {
+            "wheel": {
+              "roulette_past_post_good_msec": 20
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "coin_return_shim",
+    "display_name": "Coin-Return Shim",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 9,
+    "price_min": 12,
+    "price_max": 22,
+    "asset_path": "res://assets/art/items/coin_return_shim.png",
+    "icon_key": "coin_return_shim",
+    "environment_prop": "coin",
+    "surface": "box_stack",
+    "description": "Metal teeth for stingy slots.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_three_reel_loss_refund_percent": 35
+        }
+      }
+    }
+  },
+  {
+    "id": "lucky_reel_grease",
+    "display_name": "Lucky Reel Grease",
+    "class": "consumable",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 18,
+    "price_min": 26,
+    "price_max": 44,
+    "asset_path": "res://assets/art/items/lucky_reel_grease.png",
+    "icon_key": "lucky_reel_grease",
+    "environment_prop": "token",
+    "surface": "counter_case",
+    "description": "The reels get suggestible.",
+    "effect": {
+      "active_item": true,
+      "active_mode": "consumable",
+      "active_target": "slot"
+    }
+  },
+  {
+    "id": "timing_bracelet",
+    "display_name": "Timing Bracelet",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 10,
+    "price_min": 15,
+    "price_max": 25,
+    "asset_path": "res://assets/art/items/timing_bracelet.png",
+    "icon_key": "timing_bracelet",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Keeps time with bad intentions.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_nudge_perfect_msec_bonus": 15,
+          "slot_nudge_close_msec_bonus": 25
+        }
+      }
+    }
+  },
+  {
+    "id": "gold_tooth_token",
+    "display_name": "Gold-Tooth Token",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 16,
+    "price_min": 24,
+    "price_max": 40,
+    "asset_path": "res://assets/art/items/gold_tooth_token.png",
+    "icon_key": "gold_tooth_token",
+    "environment_prop": "coin",
+    "surface": "counter_case",
+    "description": "A rich grin in your pocket.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_gold_tooth_coin_upgrade_chance": 10,
+          "slot_gold_tooth_coin_multiplier": 2
+        }
+      }
+    }
+  },
+  {
+    "id": "payout_pamphlet",
+    "display_name": "Payout Pamphlet",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 7,
+    "price_min": 10,
+    "price_max": 18,
+    "asset_path": "res://assets/art/items/payout_pamphlet.png",
+    "icon_key": "payout_pamphlet",
+    "environment_prop": "notepad",
+    "surface": "counter_case",
+    "description": "Fine print with teeth filed down.",
+    "effect": {
+      "families": {
+        "slots": {
+          "win_bonus": 1
+        }
+      }
+    }
+  },
+  {
+    "id": "cold_quarters",
+    "display_name": "Cold Quarters",
+    "class": "consumable",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 12,
+    "price_min": 18,
+    "price_max": 30,
+    "asset_path": "res://assets/art/items/cold_quarters.png",
+    "icon_key": "cold_quarters",
+    "environment_prop": "coin",
+    "surface": "counter_case",
+    "description": "Quiet coins. Cooler hands.",
+    "effect": {
+      "active_item": true,
+      "active_mode": "consumable",
+      "active_target": "slot",
+      "slot_cold_quarter_heat_reduction": 6
+    }
+  },
+  {
+    "id": "neon_players_charm",
+    "display_name": "Neon Player's Charm",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 20,
+    "price_min": 30,
+    "price_max": 52,
+    "asset_path": "res://assets/art/items/neon_players_charm.png",
+    "icon_key": "neon_players_charm",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "First feature gets a wink.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_first_bonus_bonus_percent": 15,
+          "slot_first_bonus_bonus_cap": 40
+        }
+      }
+    }
+  },
+  {
+    "id": "split_reel_note",
+    "display_name": "Split-Reel Note",
+    "class": "consumable",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 14,
+    "price_min": 22,
+    "price_max": 36,
+    "asset_path": "res://assets/art/items/split_reel_note.png",
+    "icon_key": "split_reel_note",
+    "environment_prop": "notepad",
+    "surface": "counter_case",
+    "description": "A note from someone who watched too long.",
+    "effect": {
+      "active_item": true,
+      "active_mode": "consumable",
+      "active_target": "slot",
+      "slot_split_reel_note_perfect_msec_bonus": 55,
+      "slot_split_reel_note_close_msec_bonus": 90
+    }
+  },
+  {
+    "id": "feature_magnet",
+    "display_name": "Feature Magnet",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 22,
+    "price_min": 34,
+    "price_max": 58,
+    "asset_path": "res://assets/art/items/feature_magnet.png",
+    "icon_key": "feature_magnet",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Pulls trouble toward bonus lights.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_feature_weight_bonus_percent": 125,
+          "slot_reel_win_weight_percent": 35
+        }
+      }
+    }
+  },
+  {
+    "id": "cumquat_sandwich",
+    "display_name": "Cumquat Sandwich",
+    "class": "consumable",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "rarity": "legendary",
+    "sellable": false,
+    "sale_price": 0,
+    "price_min": 0,
+    "price_max": 0,
+    "asset_path": "res://assets/art/items/cumquat_sandwich.png",
+    "icon_key": "cumquat_sandwich",
+    "environment_prop": "sandwich",
+    "surface": "counter_case",
+    "description": "Awful lunch. Beautiful omen.",
+    "effect": {
+      "active_item": true,
+      "active_mode": "consumable",
+      "active_target": "slot"
+    }
+  },
+  {
+    "id": "drain_cleaner",
+    "display_name": "Drain Cleaner",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 10,
+    "price_min": 16,
+    "price_max": 28,
+    "asset_path": "res://assets/art/items/drain_cleaner.png",
+    "icon_key": "drain_cleaner",
+    "environment_prop": "coin",
+    "surface": "box_stack",
+    "description": "For drains that owe you money.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_pinball_drain_cleaner_uses": 1,
+          "slot_pinball_drain_cleaner_floor_percent": 200,
+          "slot_pinball_drain_cleaner_award_percent": 100
+        }
+      }
+    }
+  },
+  {
+    "id": "jackpot_magnet",
+    "display_name": "Jackpot Magnet",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 18,
+    "price_min": 28,
+    "price_max": 48,
+    "asset_path": "res://assets/art/items/jackpot_magnet.png",
+    "icon_key": "jackpot_magnet",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Makes cups act sentimental.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_pinball_jackpot_magnet_uses": 4,
+          "slot_pinball_jackpot_magnet_award_percent": 35,
+          "slot_pinball_jackpot_magnet_progress_bonus": 1
+        }
+      }
+    }
+  },
+  {
+    "id": "splitter_token",
+    "display_name": "Splitter Token",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 15,
+    "price_min": 22,
+    "price_max": 38,
+    "asset_path": "res://assets/art/items/splitter_token.png",
+    "icon_key": "splitter_token",
+    "environment_prop": "coin",
+    "surface": "counter_case",
+    "description": "One ball becomes a rumor.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_pinball_splitter_token_uses": 1,
+          "slot_pinball_splitter_token_extra_balls": 1
+        }
+      }
+    }
+  },
+  {
+    "id": "return_spring",
+    "display_name": "Return Spring",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 13,
+    "price_min": 20,
+    "price_max": 34,
+    "asset_path": "res://assets/art/items/return_spring.png",
+    "icon_key": "return_spring",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Saves lazy steel from shame.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_pinball_return_spring_uses": 1,
+          "slot_pinball_return_spring_impulse": 170
+        }
+      }
+    }
+  },
+  {
+    "id": "tilt_dampener",
+    "display_name": "Tilt Dampener",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 12,
+    "price_min": 18,
+    "price_max": 32,
+    "asset_path": "res://assets/art/items/tilt_dampener.png",
+    "icon_key": "tilt_dampener",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Forgiveness bolted under the glass.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_pinball_tilt_dampener_percent": 45
+        }
+      }
+    }
+  },
+  {
+    "id": "bumper_battery",
+    "display_name": "Bumper Battery",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 14,
+    "price_min": 22,
+    "price_max": 36,
+    "asset_path": "res://assets/art/items/bumper_battery.png",
+    "icon_key": "bumper_battery",
+    "environment_prop": "token",
+    "surface": "counter_case",
+    "description": "First bounce gets teeth.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_pinball_bumper_battery_hits": 3,
+          "slot_pinball_bumper_battery_award_percent": 40,
+          "slot_pinball_bumper_battery_kick_percent": 130,
+          "slot_pinball_bumper_battery_up_impulse": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "rubber_pegs",
+    "display_name": "Rubber Pegs",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 16,
+    "price_min": 24,
+    "price_max": 42,
+    "asset_path": "res://assets/art/items/rubber_pegs.png",
+    "icon_key": "rubber_pegs",
+    "environment_prop": "token",
+    "surface": "counter_case",
+    "description": "More life in the fall.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_pinball_rubber_pegs": 1
+        }
+      }
+    }
+  },
+  {
+    "id": "magnet_cup",
+    "display_name": "Magnet Cup",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 20,
+    "price_min": 30,
+    "price_max": 52,
+    "asset_path": "res://assets/art/items/magnet_cup.png",
+    "icon_key": "magnet_cup",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "A cup with needy gravity.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_pinball_magnet_cup_radius_percent": 18
+        }
+      }
+    }
+  },
+  {
+    "id": "extra_ball_token",
+    "display_name": "Extra Ball Token",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 24,
+    "price_min": 36,
+    "price_max": 64,
+    "asset_path": "res://assets/art/items/extra_ball_token.png",
+    "icon_key": "extra_ball_token",
+    "environment_prop": "coin",
+    "surface": "counter_case",
+    "description": "One more chance, stamped round.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_pinball_extra_ball_token": 1
+        }
+      }
+    }
+  },
+  {
+    "id": "plunger_tuner",
+    "display_name": "Plunger Tuner",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 18,
+    "price_min": 26,
+    "price_max": 46,
+    "asset_path": "res://assets/art/items/plunger_tuner.png",
+    "icon_key": "plunger_tuner",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Turns launch panic into timing.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_pinball_plunger_tuner_width_percent": 200
+        }
+      }
+    }
+  },
+  {
+    "id": "lock_jammer",
+    "display_name": "Lock Jammer",
+    "class": "contraband",
+    "domain": "games",
+    "content_groups": [
+      "slot_pack"
+    ],
+    "sellable": true,
+    "sale_price": 28,
+    "price_min": 42,
+    "price_max": 72,
+    "asset_path": "res://assets/art/items/lock_jammer.png",
+    "icon_key": "lock_jammer",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Locks open when they should not.",
+    "effect": {
+      "families": {
+        "slots": {
+          "slot_pinball_lock_jammer_uses": 1
+        }
+      },
+      "cheat_suspicion_delta": 1
+    }
+  },
+  {
+    "id": "weighted_keyring",
+    "display_name": "Weighted Keyring",
+    "class": "contraband",
+    "domain": "games",
+    "content_groups": [
+      "bar_dice_pack"
+    ],
+    "sellable": true,
+    "sale_price": 12,
+    "price_min": 16,
+    "price_max": 28,
+    "asset_path": "res://assets/art/items/weighted_keyring.png",
+    "icon_key": "weighted_keyring",
+    "environment_prop": "weighted_keyring",
+    "surface": "folding_table",
+    "description": "Keys heavy enough to lie.",
+    "effect": {
+      "families": {
+        "dice": {
+          "win_chance": 7,
+          "bar_dice_controlled_roll_perfect_msec": 20,
+          "bar_dice_controlled_roll_good_msec": 45,
+          "bar_dice_controlled_roll_close_msec": 65,
+          "bar_dice_controlled_roll_meter_period_msec": 80,
+          "bar_dice_controlled_roll_base_heat": -1
+        }
+      },
+      "cheat_suspicion_delta": 2
+    }
+  },
+  {
+    "id": "dice_calipers",
+    "display_name": "Dice Calipers",
+    "class": "contraband",
+    "domain": "games",
+    "content_groups": [
+      "bar_dice_pack"
+    ],
+    "sellable": true,
+    "sale_price": 18,
+    "price_min": 28,
+    "price_max": 48,
+    "asset_path": "res://assets/art/items/dice_calipers.png",
+    "icon_key": "dice_calipers",
+    "environment_prop": "weighted_keyring",
+    "surface": "folding_table",
+    "description": "Measures dice and excuses.",
+    "effect": {
+      "families": {
+        "dice": {
+          "bar_dice_controlled_roll_perfect_msec": 35,
+          "bar_dice_controlled_roll_good_msec": 70,
+          "bar_dice_controlled_roll_close_msec": 95,
+          "bar_dice_controlled_roll_meter_period_msec": 120,
+          "bar_dice_controlled_roll_base_heat": -2
+        }
+      },
+      "skill_cheat_drunk_window_offset_msec": 6,
+      "cheat_suspicion_delta": 1
+    }
+  },
+  {
+    "id": "false_bottom_cup",
+    "display_name": "False-Bottom Cup",
+    "class": "contraband",
+    "domain": "games",
+    "content_groups": [
+      "bar_dice_pack"
+    ],
+    "build_tags": [
+      "cheat_specialist"
+    ],
+    "sellable": true,
+    "sale_price": 18,
+    "price_min": 28,
+    "price_max": 48,
+    "asset_path": "res://assets/art/items/loaded_dice.png",
+    "icon_key": "false_bottom_cup",
+    "environment_prop": "weighted_keyring",
+    "surface": "folding_table",
+    "description": "A cup with a basement.",
+    "effect": {
+      "families": {
+        "dice": {
+          "bar_dice_controlled_roll_good_msec": 35,
+          "bar_dice_controlled_roll_close_msec": 50,
+          "bar_dice_controlled_roll_base_heat": -1
+        }
+      },
+      "skill_cheat_drunk_window_offset_msec": 4,
+      "cheat_suspicion_delta": 2,
+      "synergies": [
+        {
+          "requires_any": [
+            "weighted_keyring"
+          ],
+          "families": {
+            "dice": {
+              "bar_dice_controlled_roll_perfect_msec": 15
+            }
+          }
+        },
+        {
+          "requires_any": [
+            "dice_calipers"
+          ],
+          "families": {
+            "dice": {
+              "bar_dice_controlled_roll_meter_period_msec": 80
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "roadside_map",
+    "display_name": "Roadside Map",
+    "class": "permanent",
+    "domain": "travel",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": true,
+    "sale_price": 4,
+    "price_min": 5,
+    "price_max": 11,
+    "asset_path": "res://assets/art/items/roadside_map.png",
+    "icon_key": "roadside_map",
+    "environment_prop": "map",
+    "surface": "folding_table",
+    "description": "Routes scribbled by survivors.",
+    "effect": {
+      "win_bonus": 1,
+      "travel_scouting_level": 1
+    }
+  },
+  {
+    "id": "payment_calendar",
+    "display_name": "Payment Calendar",
+    "class": "permanent",
+    "domain": "global",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "build_tags": [
+      "debt_surfer"
+    ],
+    "sellable": true,
+    "sale_price": 8,
+    "price_min": 12,
+    "price_max": 22,
+    "asset_path": "res://assets/art/items/payment_calendar.png",
+    "icon_key": "payment_calendar",
+    "environment_prop": "notepad",
+    "surface": "store_shelf",
+    "description": "Deadlines look softer in ink.",
+    "effect": {
+      "debt_grace_turns": 1,
+      "loss_reduction": 1,
+      "synergies": [
+        {
+          "requires_any": [
+            "pawn_receipt_sleeve"
+          ],
+          "effects": {
+            "debt_grace_turns": 1
+          }
+        },
+        {
+          "requires_any": [
+            "cashout_envelope"
+          ],
+          "effects": {
+            "loss_reduction": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "pawn_receipt_sleeve",
+    "display_name": "Pawn Receipt Sleeve",
+    "class": "permanent",
+    "domain": "security",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "build_tags": [
+      "debt_surfer"
+    ],
+    "sellable": true,
+    "sale_price": 10,
+    "price_min": 16,
+    "price_max": 28,
+    "asset_path": "res://assets/art/items/pawn_receipt_sleeve.png",
+    "icon_key": "pawn_receipt_sleeve",
+    "environment_prop": "notepad",
+    "surface": "counter_case",
+    "description": "Keeps Sal honest enough.",
+    "effect": {
+      "debt_default_heat_delta": -2,
+      "loss_reduction": 1,
+      "synergies": [
+        {
+          "requires_any": [
+            "payment_calendar"
+          ],
+          "effects": {
+            "debt_default_heat_delta": -2
+          }
+        },
+        {
+          "requires_any": [
+            "cashout_envelope"
+          ],
+          "effects": {
+            "debt_grace_turns": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "xray_glasses",
+    "display_name": "X-Ray Glasses",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "pull_tabs_pack",
+      "scratch_tickets_pack"
+    ],
+    "sellable": true,
+    "sale_price": 18,
+    "price_min": 26,
+    "price_max": 42,
+    "asset_path": "res://assets/art/items/xray_glasses.png",
+    "icon_key": "xray_glasses",
+    "environment_prop": "glasses",
+    "surface": "counter_case",
+    "description": "Cheap frames. Expensive secrets.",
+    "effect": {
+      "scratch_peek_cells": 3,
+      "scratch_peek_heat": 6
+    }
+  },
+  {
+    "id": "tab_detector",
+    "display_name": "Tab Detector",
+    "class": "active",
+    "domain": "games",
+    "content_groups": [
+      "pull_tabs_pack"
+    ],
+    "sellable": true,
+    "sale_price": 20,
+    "price_min": 30,
+    "price_max": 48,
+    "asset_path": "res://assets/art/items/tab_detector.png",
+    "icon_key": "tab_detector",
+    "environment_prop": "scanner",
+    "surface": "counter_case",
+    "description": "Finds paper with a pulse.",
+    "effect": {
+      "active_item": true,
+      "active_mode": "toggle",
+      "active_target": "pull_tabs"
+    }
+  },
+  {
+    "id": "tarot_card",
+    "display_name": "Tarot Card",
+    "class": "consumable",
+    "domain": "games",
+    "content_groups": [
+      "pull_tabs_pack",
+      "scratch_tickets_pack"
+    ],
+    "sellable": true,
+    "sale_price": 9,
+    "price_min": 14,
+    "price_max": 24,
+    "asset_path": "res://assets/art/items/tarot_card.png",
+    "icon_key": "tarot_card",
+    "environment_prop": "loose_card",
+    "surface": "felt_table",
+    "description": "Fortune, laminated and smug.",
+    "effect": {
+      "active_item": true,
+      "active_mode": "consumable",
+      "active_target": "pull_tabs",
+      "scratch_fortune_hint": 1
+    }
+  },
+  {
+    "id": "lucky_penny",
+    "display_name": "Lucky Penny",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "scratch_tickets_pack"
+    ],
+    "sellable": true,
+    "sale_price": 11,
+    "price_min": 18,
+    "price_max": 30,
+    "asset_path": "res://assets/art/items/lucky_penny.png",
+    "icon_key": "lucky_penny",
+    "environment_prop": "coin",
+    "surface": "counter_case",
+    "description": "One copper apology from fate.",
+    "effect": {
+      "scratch_penalty_shields": 1
+    }
+  },
+  {
+    "id": "jazz_sax_lucky_coin",
+    "display_name": "Sax Lucky Coin",
+    "class": "permanent",
+    "domain": "global",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": false,
+    "sale_price": 0,
+    "price_min": 80,
+    "price_max": 80,
+    "asset_path": "res://assets/art/items/jazz_sax_lucky_coin.png",
+    "icon_key": "jazz_sax_lucky_coin",
+    "environment_prop": "coin",
+    "surface": "counter_case",
+    "description": "A bright note in coin form.",
+    "effect": {
+      "win_chance": 10,
+      "win_bonus": 3,
+      "loss_reduction": 2,
+      "cheat_suspicion_delta": -2
+    }
+  },
+  {
+    "id": "jazz_cello_lucky_coin",
+    "display_name": "Cello Lucky Coin",
+    "class": "permanent",
+    "domain": "global",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": false,
+    "sale_price": 0,
+    "price_min": 80,
+    "price_max": 80,
+    "asset_path": "res://assets/art/items/jazz_cello_lucky_coin.png",
+    "icon_key": "jazz_cello_lucky_coin",
+    "environment_prop": "coin",
+    "surface": "counter_case",
+    "description": "Low strings, steady luck.",
+    "effect": {
+      "win_chance": 10,
+      "win_bonus": 3,
+      "loss_reduction": 2,
+      "cheat_suspicion_delta": -2
+    }
+  },
+  {
+    "id": "jazz_drummer_lucky_coin",
+    "display_name": "Drummer Lucky Coin",
+    "class": "permanent",
+    "domain": "global",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": false,
+    "sale_price": 0,
+    "price_min": 80,
+    "price_max": 80,
+    "asset_path": "res://assets/art/items/jazz_drummer_lucky_coin.png",
+    "icon_key": "jazz_drummer_lucky_coin",
+    "environment_prop": "coin",
+    "surface": "counter_case",
+    "description": "Luck with a backbeat.",
+    "effect": {
+      "win_chance": 10,
+      "win_bonus": 3,
+      "loss_reduction": 2,
+      "cheat_suspicion_delta": -2
+    }
+  },
+  {
+    "id": "jazz_drummer_glasses",
+    "display_name": "Legend's Glasses",
+    "class": "permanent",
+    "domain": "security",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": false,
+    "sale_price": 0,
+    "price_min": 120,
+    "price_max": 120,
+    "asset_path": "res://assets/art/items/jazz_drummer_glasses.png",
+    "icon_key": "jazz_drummer_glasses",
+    "environment_prop": "glasses",
+    "surface": "counter_case",
+    "description": "Legendary shades. Quiet room.",
+    "effect": {
+      "win_chance": 3,
+      "cheat_suspicion_delta": -4,
+      "loss_reduction": 1
+    }
+  },
+  {
+    "id": "bag",
+    "display_name": "Bag",
+    "class": "container",
+    "domain": "home",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": true,
+    "sale_price": 8,
+    "price_min": 12,
+    "price_max": 22,
+    "asset_path": "res://assets/art/items/bag.png",
+    "icon_key": "bag",
+    "environment_prop": "satchel",
+    "surface": "counter",
+    "description": "Three pockets. No questions.",
+    "container_capacity": 3,
+    "effect": {}
+  },
+  {
+    "id": "backpack",
+    "display_name": "Backpack",
+    "class": "container",
+    "domain": "home",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": true,
+    "sale_price": 14,
+    "price_min": 22,
+    "price_max": 34,
+    "asset_path": "res://assets/art/items/backpack.png",
+    "icon_key": "backpack",
+    "environment_prop": "satchel",
+    "surface": "counter",
+    "description": "Five pockets and a grudge.",
+    "container_capacity": 5,
+    "effect": {}
+  },
+  {
+    "id": "suitcase",
+    "display_name": "Suitcase",
+    "class": "container",
+    "domain": "home",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": true,
+    "sale_price": 22,
+    "price_min": 36,
+    "price_max": 55,
+    "asset_path": "res://assets/art/items/suitcase.png",
+    "icon_key": "suitcase",
+    "environment_prop": "briefcase",
+    "surface": "counter",
+    "description": "Seven slots for bad planning.",
+    "container_capacity": 7,
+    "effect": {}
+  },
+  {
+    "id": "trunk",
+    "display_name": "Trunk",
+    "class": "container",
+    "domain": "home",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": true,
+    "sale_price": 34,
+    "price_min": 58,
+    "price_max": 84,
+    "asset_path": "res://assets/art/items/trunk.png",
+    "icon_key": "trunk",
+    "environment_prop": "crate",
+    "surface": "counter",
+    "description": "Ten slots. Heavy history.",
+    "container_capacity": 10,
+    "effect": {}
+  }
 ]
