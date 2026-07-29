@@ -1342,6 +1342,22 @@ func _event_seconds(event_id: String) -> float:
 			return 0.16
 		"blackjack_distraction":
 			return 0.44
+		"video_poker_button":
+			return 0.10
+		"video_poker_deal":
+			return 0.30
+		"video_poker_hold":
+			return 0.14
+		"video_poker_draw":
+			return 0.48
+		"video_poker_cheat":
+			return 0.42
+		"video_poker_cheat_beat":
+			return 0.22
+		"video_poker_double":
+			return 0.34
+		"video_poker_win":
+			return 0.78
 		"roulette_chip_select":
 			return 0.14
 		"roulette_chip_place":
@@ -1482,6 +1498,22 @@ func _event_sample(event_id: String, t: float, frame: int, seconds: float) -> fl
 			return _sample_blackjack_count(t, frame, seconds)
 		"blackjack_distraction":
 			return _sample_blackjack_distraction(t, frame, seconds)
+		"video_poker_button":
+			return _sample_button(t, frame, seconds) * 0.72 + _sample_rounded_cabinet_click(t, frame, seconds) * 0.35
+		"video_poker_deal":
+			return _sample_blackjack_card(t, frame, seconds) * 0.70 + _sample_rounded_cabinet_click(t, frame, seconds) * 0.45
+		"video_poker_hold":
+			return _sample_rounded_cabinet_click(t, frame, seconds)
+		"video_poker_draw":
+			return _sample_blackjack_card(t, frame, seconds) * 0.42 + _sample_coin_cascade(t, frame, seconds, 4) * 0.34
+		"video_poker_cheat":
+			return _sample_bonus_start_digital(t, frame, seconds) * 0.38 + _sample_blackjack_peek(t, frame, seconds) * 0.65
+		"video_poker_cheat_beat":
+			return _sample_bonus_step_digital(t, frame, seconds) * 0.45 + _sample_rounded_cabinet_click(t, frame, seconds) * 0.55
+		"video_poker_double":
+			return _sample_gold_coin_tease(t, frame, seconds) * 0.42 + _sample_rounded_cabinet_click(t, frame, seconds) * 0.45
+		"video_poker_win":
+			return _sample_coin_cascade(t, frame, seconds, 7) * 0.60 + _sample_bonus_total(t, frame, seconds) * 0.35
 		"roulette_chip_select":
 			return _sample_roulette_chip_select(t, frame, seconds)
 		"roulette_chip_place":
@@ -1867,6 +1899,12 @@ func _sample_blackjack_distraction(t: float, frame: int, seconds: float) -> floa
 	var chatter := _soft_noise(frame, 211, 11) * 0.055 * _pulse_train(t, 20.0, 0.56) * _decay_env(t, seconds, 0.012, 0.360)
 	var bump := _body_thump(t, seconds, 140.0, 0.18) * 0.38
 	return glass + chatter + bump
+
+
+func _sample_rounded_cabinet_click(t: float, frame: int, seconds: float) -> float:
+	var press := _pulse_window(t, 0.0, 0.052) * (_body_thump(t, 0.12, 136.0, 0.18) * 0.18 + _soft_noise(frame, 503, 5) * 0.055)
+	var lamp := _rounded_bell(t, 460.0, 0.10, 0.004) * 0.060 * _decay_env(t, seconds, 0.004, 0.090)
+	return press + lamp
 
 
 func _sample_roulette_chip_select(t: float, frame: int, seconds: float) -> float:
