@@ -47,11 +47,11 @@ const FAILURE_STRANDED := "stranded"
 const FAILURE_POLICE_CAPTURE := "police_capture"
 const FAILURE_CASINO_TAKEN_OUT_BACK := "casino_taken_out_back"
 const FAILURE_ABANDONED := "abandoned"
-const BANKROLL_ZERO_FAILURE_MESSAGE := "You are out of money. The run is over."
-const STRANDED_FAILURE_MESSAGE := "No valid stake, route, sale, lender, or cash event remains. The run is over."
-const POLICE_CAPTURE_FAILURE_MESSAGE := "Police flood the room and catch you before you can slip away. The run is over."
-const CASINO_TAKEN_OUT_BACK_FAILURE_MESSAGE := "The casino takes you out back. The run is over."
-const ABANDONED_FAILURE_MESSAGE := "You walk away from the table. The run is over."
+const BANKROLL_ZERO_FAILURE_MESSAGE := "You are out of money. The room stops pretending it knows you."
+const STRANDED_FAILURE_MESSAGE := "No stake, ride, sale, lender, or miracle remains. The night folds."
+const POLICE_CAPTURE_FAILURE_MESSAGE := "Blue lights flood the room; cuffs find you first."
+const CASINO_TAKEN_OUT_BACK_FAILURE_MESSAGE := "The casino walks you out back. The neon stays inside."
+const ABANDONED_FAILURE_MESSAGE := "You leave the table before the table leaves you."
 const GRAND_CASINO_ARCHETYPE_ID := "grand_casino"
 const GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID := "grand_casino_high_limit"
 const GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID := "grand_casino_back_room"
@@ -135,7 +135,7 @@ const GRAND_CASINO_MEMORY_DEFAULT_LINES := {
 	"high_heat": "The staff remember how hot your last visit became.",
 	"returning": "A floor attendant recognizes you before you reach the felt.",
 }
-const GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE := "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings. Rourke lets the elevator close; the house will remember your face."
+const GRAND_CASINO_SHOWDOWN_DEFAULT_SUCCESS_MESSAGE := "Rourke cannot prove enough to keep you. The elevator closes; the house keeps your face."
 const GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE := "Linda issues the Gold Players Card and lets you leave with your winnings."
 const GRAND_CASINO_ACT_TWO_SEAM_MESSAGE := "The Gold card opens doors beyond this city."
 const ROURKE_MOVE_EVALUATION_ACTIONS := 3
@@ -1428,15 +1428,15 @@ func grand_casino_room_access_status(target_archetype_id: String, high_limit_buy
 		if target_id == GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
 			return {"available": false, "locked": true, "reason": "Locked for this lesson. The Main Floor has everything you need; a Players Card can open High-Limit on later runs."}
 		if target_id == GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
-			return {"available": false, "locked": true, "reason": "Locked for this lesson. Rourke's Back Room belongs to later runs."}
+			return {"available": false, "locked": true, "reason": "Lesson lock: Rourke's Back Room can wait its turn."}
 		if target_id == GRAND_CASINO_ARCHETYPE_ID or target_id == GRAND_CASINO_CAGE_ARCHETYPE_ID:
 			return {"available": true, "access_method": "tutorial_main_floor", "cost": 0}
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)):
 		if target_id == GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_DUEL:
 			return {"available": true, "access_method": "showdown", "cost": 0}
-		return {"available": false, "locked": true, "reason": "Rourke keeps the Back Room door shut until the duel ends."}
+		return {"available": false, "locked": true, "reason": "Rourke keeps that door shut until the duel is done."}
 	if target_id == GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID:
-		return {"available": false, "locked": true, "reason": "Locked. Rourke opens the Back Room only for a showdown."}
+		return {"available": false, "locked": true, "reason": "Locked. Rourke opens it only when the house calls."}
 	if target_id == GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
 		if bool(narrative_flags.get("grand_casino_high_limit_access", false)):
 			return {"available": true, "access_method": str(narrative_flags.get("grand_casino_high_limit_access_method", "card")), "cost": 0}
@@ -1563,7 +1563,7 @@ func buy_grand_casino_chips(chip_amount: int, cash_rate: int = 1) -> Dictionary:
 	if not _is_grand_casino_environment(current_environment):
 		return {"ok": false, "message": "Casino chips are only sold inside the Grand Casino."}
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)):
-		return {"ok": false, "message": "The Cage is locked while Rourke's duel is active."}
+		return {"ok": false, "message": "The Cage goes quiet while Rourke deals."}
 	var amount := maxi(0, chip_amount)
 	var rate := maxi(1, cash_rate)
 	var cash_cost := amount * rate
@@ -1581,9 +1581,9 @@ func cash_out_grand_casino_chips(chip_amount: int = -1, cash_rate: int = 1) -> D
 	if str(current_environment.get("archetype_id", "")) != GRAND_CASINO_CAGE_ARCHETYPE_ID:
 		return {"ok": false, "message": "Chip redemption is available at Linda's Cage counter."}
 	if bool(narrative_flags.get("grand_casino_walked_with_chips", false)):
-		return {"ok": false, "message": "Rourke closed the Cage account when you were shown the door."}
+		return {"ok": false, "message": "Rourke closed the Cage account after the door found you."}
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)) and str(narrative_flags.get("grand_casino_duel_outcome", "")) != GrandCasinoDuelModelScript.OUTCOME_WALK_OUT_CLEAN:
-		return {"ok": false, "message": "The Cage is locked while Rourke's duel is active."}
+		return {"ok": false, "message": "The Cage goes quiet while Rourke deals."}
 	var amount := grand_casino_chips if chip_amount < 0 else chip_amount
 	var rate := maxi(1, cash_rate)
 	var preview := CageEconomyModelScript.cashout_preview(
@@ -2435,20 +2435,20 @@ func security_action_pressure(action_kind: String, stake: int, projected_level: 
 			return {
 				"bankroll_delta": 0,
 				"ended": false,
-				"message": "Rourke's crew closes in; the back room is coming.",
+				"message": "Rourke's crew tightens the room. The back door waits.",
 			}
 		var shutdown_cost := -mini(maxi(10, safe_stake), maxi(bankroll, 0))
 		return {
 			"bankroll_delta": shutdown_cost,
 			"ended": true,
-			"message": "Police lights slam across the room; the run ends in cuffs.",
+			"message": "Police lights slap the room blue; cuffs arrive before the door.",
 		}
 	if level >= 85:
 		var crackdown_cost := -mini(maxi(8, safe_stake), maxi(bankroll, 0))
 		return {
 			"bankroll_delta": crackdown_cost,
 			"ended": false,
-			"message": "Security leans in hard and forces a costly exit.",
+			"message": "Security leans close and bills you for leaving.",
 		}
 	if level >= 65:
 		var half_stake := maxi(1, int(ceil(float(safe_stake) / 2.0)))
@@ -2456,7 +2456,7 @@ func security_action_pressure(action_kind: String, stake: int, projected_level: 
 		return {
 			"bankroll_delta": shakedown_cost,
 			"ended": false,
-			"message": "Security pressure adds a shakedown cost.",
+			"message": "Security pressure turns into a small, ugly shakedown.",
 		}
 	return {
 		"bankroll_delta": 0,
@@ -3124,20 +3124,20 @@ func _trigger_grand_casino_showdown(status: Dictionary, trigger_reason: String) 
 	_log_grand_casino_heat_reroute(showdown_event_id, trigger_reason, sources)
 	var objective := _copy_dict(current_environment.get("demo_objective", {}))
 	objective["finale_event_id"] = showdown_event_id
-	objective["finale_trigger_message"] = "Rourke calls you to the back room."
+	objective["finale_trigger_message"] = "Rourke calls you where the carpet ends."
 	_trigger_demo_finale(status, objective)
 
 
 func _log_grand_casino_heat_reroute(showdown_event_id: String, trigger_reason: String, sources: Array) -> void:
 	if _story_log_has_type("grand_casino_heat_reroute", showdown_event_id):
 		return
-	var message := "Rourke calls you to the back room."
+	var message := "Rourke calls you where the carpet ends."
 	if trigger_reason == "forced_heat":
-		message = "A heat spike puts Rourke's crew on you."
+		message = "A heat spike puts Rourke's crew in your shadow."
 	elif trigger_reason == "heat_attention":
-		message = "Staff attention turns your heat into Rourke's call."
+		message = "Staff attention hands your heat to Rourke."
 	elif trigger_reason == "dirty_money":
-		message = "The Players Card review sends the win to Rourke."
+		message = "The Players Card review sends your win across Rourke's desk."
 	log_story({
 		"type": "grand_casino_heat_reroute",
 		"event_id": showdown_event_id,
@@ -3286,11 +3286,11 @@ func start_grand_casino_showdown(config: Dictionary = {}) -> Dictionary:
 		"heat": suspicion_level(),
 		"environment_id": str(current_environment.get("id", "")),
 		"environment_archetype_id": str(current_environment.get("archetype_id", "")),
-		"message": "Rourke takes you to the back room.",
+		"message": "Rourke walks you past the last friendly light.",
 	})
 	return {
 		"ok": true,
-		"message": "Rourke walks you past the floor. One pocket can change before the door.",
+		"message": "Rourke walks you past the floor. One pocket gets one last lie.",
 		"status": grand_casino_showdown_status(config),
 	}
 
@@ -3314,7 +3314,7 @@ func resolve_grand_casino_showdown_walk(method: String, item_id: String, config:
 	narrative_flags["grand_casino_showdown_ditch_method"] = clean_method
 	narrative_flags["grand_casino_showdown_ditch_item_id"] = clean_item_id
 	var walk_config := _copy_dict(config.get("walk", {}))
-	var message := "You keep every pocket as Rourke walks."
+	var message := "You keep every pocket steady while Rourke walks."
 	var heat_sting := 0
 	if clean_method == "crew":
 		remove_item(clean_item_id)
@@ -3402,7 +3402,7 @@ func resolve_grand_casino_showdown_interrogation(choice_id: String, config: Dict
 		"evidence_id": str(answer.get("evidence_id", "")),
 		"choice_id": choice_id,
 		"strength": int(answer.get("strength", 0)),
-		"message": "Rourke records the answer and turns the page.",
+		"message": "Rourke records the answer like it was always evidence.",
 	})
 	var evidence_ids := _copy_array(narrative_flags.get("grand_casino_showdown_interrogation_evidence", []))
 	if beat_index + 1 < evidence_ids.size():
@@ -3572,11 +3572,11 @@ func _finalize_grand_casino_duel_if_complete(state: Dictionary) -> void:
 			if cashed_chips > 0:
 				cash_out_grand_casino_chips(cashed_chips, grand_casino_chip_exchange_rate())
 			narrative_flags["grand_casino_duel_cashed_chip_amount"] = cashed_chips
-			_complete_grand_casino_showdown_success("You take Rourke's stack. Linda cashes the rack, and the elevator opens.")
+			_complete_grand_casino_showdown_success("You take Rourke's stack. Linda kisses the rack goodbye. The elevator opens.")
 		GrandCasinoDuelModelScript.OUTCOME_SHOWN_THE_DOOR:
 			_complete_grand_casino_showdown_shown_door()
 		_:
-			_complete_grand_casino_showdown_failure("Rourke takes the last hand. The casino takes you out back, and the run ends.")
+			_complete_grand_casino_showdown_failure("Rourke takes the last hand. The casino takes you where neon does not follow.")
 
 
 func _complete_grand_casino_showdown_shown_door() -> void:
@@ -3592,7 +3592,7 @@ func _complete_grand_casino_showdown_shown_door() -> void:
 	_return_grand_casino_crew_handoff()
 	_clear_grand_casino_showdown_terminal_flags()
 	narrative_flags["grand_casino_endgame_state"] = GRAND_CASINO_STATE_VICTORY
-	var message := "Rourke opens the service door but closes the Cage. You leave with %d uncashed house chips." % chip_amount
+	var message := "Rourke opens the service door and closes the Cage. %d house chips leave cold in your pocket." % chip_amount
 	var status := demo_objective_status()
 	if not bool(status.get("grand_casino_objective", false)):
 		status = {"id": GRAND_CASINO_OBJECTIVE_ID, "target_bankroll": bankroll, "victory_message": message}
@@ -3630,7 +3630,7 @@ func _apply_grand_casino_showdown_pat_down(config: Dictionary) -> Dictionary:
 		"message": message,
 	})
 	if tier == "blatant":
-		message = str(pat_down_config.get("blatant_failure_message", "Rourke finds a loaded cheating kit. The casino takes you out back before the game begins."))
+		message = str(pat_down_config.get("blatant_failure_message", "Rourke finds a loaded cheating kit. The back door gets impatient."))
 		narrative_flags["grand_casino_showdown_success"] = false
 		_complete_grand_casino_showdown_failure(message)
 	return {"tier": tier, "message": message, "pat_down": pat_down}
@@ -4966,13 +4966,13 @@ func _grand_casino_derived_state(source: Dictionary, high_roller_ready: bool, sh
 
 func _grand_casino_objective_summary(high_roller_ready: bool, showdown_pending: bool, heat_route_ready: bool, dirty_money_showdown_ready: bool, money_target_met: bool, game_target_met: bool, _target_bankroll: int, required_net: int, remaining_games: int) -> String:
 	if showdown_pending:
-		return "Rourke is calling you to the back room."
+		return "Rourke wants you past the friendly lights."
 	if high_roller_ready:
 		return "Gold Players Card review is ready at the Cage."
 	if dirty_money_showdown_ready:
-		return "The Players Card review is sending the win to Rourke."
+		return "The Players Card review put your win on Rourke's desk."
 	if heat_route_ready:
-		return "Heat is drawing Rourke toward the table."
+		return "Your heat has Rourke walking toward the table."
 	if not money_target_met:
 		return "Win $%d clean on the Grand Casino floor toward Gold." % required_net
 	if not game_target_met:

@@ -193,7 +193,7 @@ static func home_interactable_objects(host: Variant) -> Array:
 		"enabled": true,
 		"action_summary": "Sleep until you wake naturally.",
 		"status_summary": "Several hours pass.",
-		"effect_summary": "Lowers heat and intoxication.",
+		"effect_summary": "Cools heat and steadies the room.",
 		"visual_key": "home_sleep",
 		"prop": "bed",
 		"icon_key": "motel_room",

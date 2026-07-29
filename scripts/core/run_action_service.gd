@@ -113,7 +113,7 @@ func _item_purpose_summary(item_definition: Dictionary) -> String:
 	var item_class := str(item_definition.get("class", item_definition.get("item_class", ""))).strip_edges().to_lower()
 	var domain := str(item_definition.get("domain", "")).strip_edges().to_lower()
 	if int(effect.get("container_capacity", item_definition.get("container_capacity", 0))) > 0 or item_class == "container":
-		return "Stores items outside your carried kit."
+		return "Keeps the extra weight off your back."
 	if bool(effect.get("active_item", false)) or not str(effect.get("active_mode", "")).strip_edges().is_empty():
 		var target := str(effect.get("active_target", domain)).strip_edges()
 		return "Active item for %s." % _purpose_domain_label(target)
@@ -129,12 +129,12 @@ func _item_purpose_summary(item_definition: Dictionary) -> String:
 	if int(effect.get("cheat_suspicion_delta", 0)) > 0:
 		return "Stronger edge, more heat."
 	if effect.has("win_chance") or effect.has("legal_win_chance") or effect.has("win_bonus") or effect.has("loss_reduction"):
-		return "Improves clean-play outcomes."
+		return "Helps honest hands look a little luckier."
 	if domain == "games":
 		return "Helps gambling decisions."
 	if domain == "travel":
 		return "Helps route choices."
-	return "Adds a useful run item."
+	return "Puts another small edge in your pocket."
 
 
 func _purpose_family_list(family_ids: Array) -> String:

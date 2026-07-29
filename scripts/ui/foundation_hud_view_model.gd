@@ -246,7 +246,7 @@ static func objective_goal_text(run_state: RunState, pressure: Dictionary, objec
 static func boss_floor_objective_goal_text(objective: Dictionary) -> String:
 	var state := str(objective.get("objective_state", "grand-incomplete"))
 	if state == "showdown-active": return "Rourke has you in back. Keep your story straight."
-	if state == "showdown-pending" or bool(objective.get("showdown_pending", false)): return "Rourke is calling. Answer the back-room event."
+	if state == "showdown-pending" or bool(objective.get("showdown_pending", false)): return "Rourke wants the back room. Go answer."
 	if bool(objective.get("players_card_ready_to_claim", false)):
 		var next_label := str(objective.get("players_card_next_tier_label", "Next tier"))
 		var debt := int(objective.get("grand_casino_atm_debt", 0))
@@ -274,7 +274,7 @@ static func objective_guidance_view(pressure: Dictionary, objective: Dictionary,
 		"victory": route = "summary"; text = "Victory is claimed. Review the run summary or start fresh."
 		"failure": route = "summary"; text = "The run is over. Return to the menu or start a new climb."
 		"high-roller-ready": route = "players_card"; text = "Linda will issue the Players Card if you take the Cage review now."
-		"showdown-pending": route = "pit_boss_showdown"; text = "Rourke is calling. Take the back-room event before more play."
+		"showdown-pending": route = "pit_boss_showdown"; text = "Rourke wants the back room before another hand."
 		"showdown-active": route = "pit_boss_showdown"; text = "Rourke has you off the floor. Choose one answer and stand by it."
 		"grand-incomplete": route = "boss_floor"; text = boss_floor_incomplete_guidance(objective)
 	return {"state": state, "route": route, "text": text, "clean_progress_close": boss_floor_progress_close(objective), "heat_pressure_close": boss_floor_heat_pressure_close(objective), "staff_attention": bool(objective.get("staff_attention_active", false)), "next": next_option}

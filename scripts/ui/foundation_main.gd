@@ -1485,7 +1485,7 @@ func select_travel_option(target_id: String) -> bool:
 		return false
 	selected_travel_target_id = choice_target_id
 	selected_travel_label = str(choice.get("label", selected_travel_target_id))
-	_show_message("Selected travel: %s." % selected_travel_label)
+	_show_message("Route marked: %s." % selected_travel_label)
 	_refresh_world_map_overlay()
 	_refresh()
 	return true

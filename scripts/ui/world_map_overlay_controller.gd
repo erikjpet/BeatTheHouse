@@ -252,7 +252,7 @@ func select_run_node(node_id: String, current_node_id: String, visible_node_ids:
 	var enabled := bool(choice.get("enabled", true))
 	selected_travel_target_id = clean_id if enabled else ""
 	selected_travel_label = str(choice.get("label", clean_id)) if enabled else ""
-	var message := "Selected travel: %s." % str(choice.get("label", clean_id))
+	var message := "Route marked: %s." % str(choice.get("label", clean_id))
 	if not enabled:
 		message = str(choice.get("disabled_reason", "That route is not available right now."))
 	return _result(enabled, message, true)
@@ -268,7 +268,7 @@ func select_meta_node(node_id: String, location_id: String, node_ids: Array, cho
 		return _result(true, "You are here.", true)
 	selected_travel_target_id = node_id
 	selected_travel_label = str(choice.get("label", node_id))
-	return _result(true, "Selected travel: %s." % selected_travel_label, true)
+	return _result(true, "Route marked: %s." % selected_travel_label, true)
 
 
 func confirm_run_selection(choice: Dictionary) -> Dictionary:
