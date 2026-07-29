@@ -15,6 +15,10 @@ signal transfer_item_requested(from_container_id: String, to_container_id: Strin
 
 const RUN_INVENTORY_POPUP_SIZE := Vector2(1120, 620)
 const RUN_INVENTORY_POPUP_MARGIN := 12.0
+const RUN_INVENTORY_TICKET_PILE_IDS := {
+	"pile_of_pull_tabs": true,
+	"pile_of_scratch_tickets": true,
+}
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const InventoryContainerSurfaceScript := preload("res://scripts/ui/inventory_container_surface.gd")
 const InventoryContainerCatalogScript := preload("res://scripts/ui/inventory_container_catalog.gd")
@@ -188,6 +192,7 @@ func _build() -> void:
 
 	_panel = FoundationWidgets.panel_container(Color("#080817", 0.98), VisualStyle.AMBER)
 	_panel.custom_minimum_size = RUN_INVENTORY_POPUP_SIZE
+	_panel.clip_contents = true
 	_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_panel)
 
@@ -215,6 +220,7 @@ func _build() -> void:
 
 	_body = BoxContainer.new()
 	_body.vertical = false
+	_body.clip_contents = true
 	_body.add_theme_constant_override("separation", 10)
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_body.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -222,6 +228,7 @@ func _build() -> void:
 
 	_inventory_panel = FoundationWidgets.panel_container(Color("#0b0b18", 0.96), VisualStyle.AMBER)
 	_inventory_panel.custom_minimum_size = Vector2(420, 360)
+	_inventory_panel.clip_contents = true
 	_inventory_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_inventory_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_inventory_panel.size_flags_stretch_ratio = 0.95
@@ -254,6 +261,7 @@ func _build() -> void:
 
 	_detail_panel = FoundationWidgets.panel_container(VisualStyle.DARK_2, VisualStyle.CYAN_2)
 	_detail_panel.custom_minimum_size = Vector2(520, 260)
+	_detail_panel.clip_contents = true
 	_detail_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_detail_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_detail_panel.size_flags_stretch_ratio = 1.25
@@ -261,6 +269,7 @@ func _build() -> void:
 	_detail_scroll = ScrollContainer.new()
 	_detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_detail_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_detail_scroll.follow_focus = true
 	_detail_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_detail_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_detail_panel.add_child(_detail_scroll)
@@ -393,6 +402,9 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 	_add_collection_float_rows(item)
 	var description := str(item.get("description", "")).strip_edges()
 	_detail_box.add_child(FoundationWidgets.label(description if not description.is_empty() else "No description is available yet.", 12))
+	if _item_is_portable_ticket_pile(item):
+		_render_ticket_pile_summary(item)
+		return
 	if _mode() == "pawn_counter":
 		_render_pawn_actions(item)
 		return
@@ -478,6 +490,33 @@ func _add_collection_float_rows(item: Dictionary) -> void:
 		return
 	FoundationWidgets.add_detail_row(_detail_box, "Floats", "P %.1f%%  C %.1f%%  R %.1f%%  U %.1f%%" % [float(floats.get("potency", 0.0)) * 100.0, float(floats.get("condition", 0.0)) * 100.0, float(floats.get("resonance", 0.0)) * 100.0, float(floats.get("usage", 0.0)) * 100.0])
 	FoundationWidgets.add_detail_row(_detail_box, "Condition", str(meta_collection.get("condition_band", "unknown")).replace("_", " ").capitalize())
+
+
+func _render_ticket_pile_summary(item: Dictionary) -> void:
+	_add_section_header("Ticket State", "This inventory entry is a carried summary, not a playable ticket menu.")
+	var ticket_count := maxi(0, int(item.get("ticket_count", 0)))
+	var unplayed_count := maxi(0, int(item.get("ticket_unplayed_count", 0)))
+	var winner_count := maxi(0, int(item.get("ticket_winner_count", 0)))
+	FoundationWidgets.add_detail_row(_detail_box, "Held", "%d ticket%s" % [ticket_count, "" if ticket_count == 1 else "s"])
+	FoundationWidgets.add_detail_row(_detail_box, "Unplayed", "%d still waiting at their original machine state" % unplayed_count)
+	FoundationWidgets.add_detail_row(_detail_box, "Revealed winners", "%d worth $%d face value" % [winner_count, maxi(0, int(item.get("ticket_face_value", 0)))])
+	var origins := _copy_array(item.get("ticket_origin_names", []))
+	var origin_text := "Unknown purchase location"
+	if not origins.is_empty():
+		var labels: Array = []
+		for origin_value in origins:
+			var origin := str(origin_value).strip_edges()
+			if not origin.is_empty() and not labels.has(origin):
+				labels.append(origin)
+		if not labels.is_empty():
+			origin_text = ", ".join(labels)
+	FoundationWidgets.add_detail_row(_detail_box, "Return to", origin_text)
+	FoundationWidgets.add_detail_row(_detail_box, "Action", "Go back to the purchase machine to continue opening these. Revealed winners can still be cashed at Sal's counter.", true)
+
+
+func _item_is_portable_ticket_pile(item: Dictionary) -> bool:
+	var item_id := str(item.get("id", "")).strip_edges()
+	return RUN_INVENTORY_TICKET_PILE_IDS.has(item_id) or bool(item.get("ticket_pile_item", false))
 
 
 func _render_pawn_actions(item: Dictionary) -> void:
@@ -589,19 +628,22 @@ func _position_popup() -> void:
 		minf(preferred_size.y, available_size.y)
 	)
 	var stacked_layout := popup_size.x < 820.0
+	var estimated_chrome_height := 92.0 if not stacked_layout else 108.0
+	var body_budget := maxf(120.0, popup_size.y - estimated_chrome_height)
 	if _items_scroll != null:
-		_items_scroll.custom_minimum_size = Vector2(0.0, maxf(96.0, popup_size.y * 0.24)) if stacked_layout else Vector2(minf(460.0, maxf(320.0, popup_size.x * 0.38)), 0.0)
+		var inventory_surface_minimum := Vector2(0.0, minf(maxf(56.0, body_budget * 0.30), body_budget * 0.40)) if stacked_layout else Vector2(minf(420.0, maxf(260.0, popup_size.x * 0.34)), minf(360.0, maxf(150.0, body_budget)))
+		_items_scroll.custom_minimum_size = inventory_surface_minimum
+		if _container_surface != null:
+			_container_surface.set_stage_minimum_size(inventory_surface_minimum if stacked_layout else Vector2(inventory_surface_minimum.x, minf(360.0, maxf(180.0, body_budget))))
 	if _body != null:
 		_body.vertical = stacked_layout
 	if _inventory_panel != null:
-		_inventory_panel.custom_minimum_size = Vector2(maxf(240.0, popup_size.x - 16.0), maxf(118.0, popup_size.y * 0.34)) if stacked_layout else Vector2(420.0, 360.0)
+		_inventory_panel.custom_minimum_size = Vector2(maxf(220.0, popup_size.x - 16.0), minf(maxf(64.0, body_budget * 0.30), body_budget * 0.40)) if stacked_layout else Vector2(minf(420.0, maxf(260.0, popup_size.x * 0.36)), minf(360.0, maxf(140.0, body_budget)))
 	if _detail_panel != null:
-		_detail_panel.custom_minimum_size = Vector2(maxf(240.0, popup_size.x - 16.0), maxf(82.0, popup_size.y * 0.22)) if stacked_layout else Vector2(minf(560.0, maxf(480.0, popup_size.x * 0.48)), minf(250.0, maxf(96.0, popup_size.y * 0.34)))
-	var minimum_popup_size := _panel.get_combined_minimum_size()
-	var final_popup_size := Vector2(
-		minf(maxf(popup_size.x, minimum_popup_size.x), overlay_rect.size.x),
-		minf(maxf(popup_size.y, minimum_popup_size.y), overlay_rect.size.y)
-	)
+		_detail_panel.custom_minimum_size = Vector2(maxf(220.0, popup_size.x - 16.0), minf(maxf(52.0, body_budget * 0.24), body_budget * 0.34)) if stacked_layout else Vector2(minf(520.0, maxf(300.0, popup_size.x * 0.46)), minf(250.0, maxf(120.0, body_budget)))
+	if _detail_scroll != null:
+		_detail_scroll.custom_minimum_size = Vector2(0.0, 0.0)
+	var final_popup_size := popup_size
 	var centered_position := Vector2(
 		floorf((overlay_rect.size.x - final_popup_size.x) * 0.5),
 		floorf((overlay_rect.size.y - final_popup_size.y) * 0.5)

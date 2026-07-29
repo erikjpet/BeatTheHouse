@@ -5172,6 +5172,7 @@ func portable_ticket_pile_summary(item_id: String) -> Dictionary:
 				var active := _copy_dict(state.get("active_ticket", {}))
 				if not active.is_empty():
 					unplayed_count += 1
+				unplayed_count += _portable_ticket_array_size(state.get("pending_queue", []))
 	return {
 		"kind": kind,
 		"item_id": str(PORTABLE_TICKET_ITEM_IDS.get(kind, "")),

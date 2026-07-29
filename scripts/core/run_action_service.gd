@@ -435,7 +435,15 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 			status += "; %d still unopened" % unplayed_count
 		if winner_count > 0:
 			status += "; %d revealed winner%s worth $%d" % [winner_count, "" if winner_count == 1 else "s", face_value]
-		detail["description"] = status + ". Return winners to their purchase location, or let Sal cash revealed winners for 20%."
+		detail["description"] = status + ". This is a stateful summary item only; return to the purchase machine to continue opening those exact tickets."
+		detail["sellable"] = false
+		detail["active_item"] = false
+		detail["active_mode"] = ""
+		detail["active_target"] = ""
+		detail["active_selected"] = false
+		detail["repairable"] = false
+		detail["effect_summary"] = ""
+		detail["ticket_pile_item"] = true
 		detail["ticket_count"] = ticket_count
 		detail["ticket_origin_count"] = origin_count
 		detail["ticket_origin_names"] = summary.get("origin_names", [])

@@ -43,7 +43,7 @@
 		"sale_price": 0,
 		"price_min": 0,
 		"price_max": 0,
-		"asset_path": "res://assets/art/game_scenes/pull_tabs.png",
+		"asset_path": "res://assets/art/games/scratch_tickets.png",
 		"icon_key": "scratch_ticket",
 		"environment_prop": "paper_stack",
 		"surface": "counter",

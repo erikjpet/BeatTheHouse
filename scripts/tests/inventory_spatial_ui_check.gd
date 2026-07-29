@@ -8,6 +8,8 @@ const MetaViewModelScript := preload("res://scripts/ui/meta_item_interaction_vie
 const MetaServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const ResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
+const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 
 const TEST_STORE_PATH := "user://inventory_spatial_ui_check.json"
 
@@ -249,6 +251,72 @@ func _run() -> void:
 	await process_frame
 	_check(_control_tree_has_text(run_screen, "Open Trunk preview"), "Placement flow did not show the selected container's open-interior preview.")
 	_check(_control_tree_has_text(run_screen, "10 selectable spaces"), "Placement preview did not use the selected container's authoritative capacity.")
+	run_screen.close()
+	run_screen.set_small_screen_mode(true)
+	run_screen.size = Vector2(640, 360)
+	var compact_items: Array = []
+	var compact_slots: Array = []
+	for index in range(8):
+		var item_id := "compact_%d" % index
+		var item := {
+			"id": item_id,
+			"display_name": "Compact Item %d" % index,
+			"storage_source": "carried",
+			"selection_key": "run:carried:%s" % item_id,
+			"description": "A deliberately verbose inventory description that should scroll inside the fitted popup instead of forcing the menu below the viewport.",
+			"active_item": true,
+		}
+		compact_items.append(item)
+		compact_slots.append({"slot_index": index, "occupied": true, "actionable": true, "selection_key": item.get("selection_key", ""), "item": item})
+	run_screen.open({
+		"mode": "inspect",
+		"title": "Compact Inventory",
+		"summary": "Small viewport fit check.",
+		"selected": {"id": "compact_0", "source": "carried"},
+		"selected_key": "run:carried:compact_0",
+		"items": compact_items,
+		"containers": [{"key": "run_carried", "container_type": "loose_carry", "display_name": "Carried Items", "capacity": 0, "slots": compact_slots}],
+	})
+	await process_frame
+	var compact_layout := run_screen.layout_rects()
+	_check(_screen_encloses_rect(compact_layout, "popup_rect"), "Compact run inventory popup escaped the screen.")
+	_check(_screen_encloses_rect(compact_layout, "grid_rect"), "Compact run inventory item area escaped the screen.")
+	_check(_screen_encloses_rect(compact_layout, "detail_rect"), "Compact run inventory detail/actions area escaped the screen.")
+	_check(_control_tree_has_text(run_screen, "Set Active"), "Compact fitted detail panel lost the selected item's action button.")
+	run_screen.close()
+	run_screen.set_small_screen_mode(false)
+	run_screen.size = Vector2(1280, 720)
+
+	var ticket_run: RunState = RunStateScript.new()
+	var ticket_library: ContentLibrary = ContentLibraryScript.new()
+	ticket_library.load(false)
+	var ticket_service: RunActionService = RunActionServiceScript.new()
+	ticket_service.setup(ticket_library, ticket_run)
+	var ticket_origin := {"id": "corner_store_test", "display_name": "Corner Store", "world_node_id": "corner_store", "archetype_id": "corner_store"}
+	ticket_run.remember_portable_ticket_state("scratch_tickets", ticket_origin, {
+		"active_ticket": {"id": "active_ticket"},
+		"pending_queue": [{"id": "queued_a"}, {"id": "queued_b"}],
+		"winner_pile": [{"id": "winner_a", "payout": 25}],
+		"loser_pile": [{"id": "loser_a", "payout": 0}],
+	})
+	var pile_detail := ticket_service.inventory_item_detail(RunStateScript.SCRATCH_TICKET_PILE_ITEM_ID)
+	_check(bool(pile_detail.get("ticket_pile_item", false)), "Scratch ticket pile did not identify itself as an inert stateful pile item.")
+	_check(int(pile_detail.get("ticket_count", 0)) == 5, "Scratch ticket pile detail did not count active, queued, winner, and loser tickets.")
+	_check(int(pile_detail.get("ticket_unplayed_count", 0)) == 3, "Scratch ticket pile detail did not count queued scratch tickets as unplayed state.")
+	_check(not bool(pile_detail.get("active_item", true)) and not bool(pile_detail.get("sellable", true)) and not bool(pile_detail.get("repairable", true)), "Scratch ticket pile still exposed normal item action affordances.")
+	run_screen.open({
+		"mode": "inspect",
+		"title": "Inventory",
+		"summary": "Ticket pile presentation.",
+		"selected": {"id": RunStateScript.SCRATCH_TICKET_PILE_ITEM_ID, "source": "carried"},
+		"selected_key": "run:carried:%s" % RunStateScript.SCRATCH_TICKET_PILE_ITEM_ID,
+		"items": [pile_detail],
+		"containers": [{"key": "run_carried", "container_type": "loose_carry", "display_name": "Carried Items", "capacity": 0, "slots": [{"slot_index": 0, "occupied": true, "actionable": true, "selection_key": "run:carried:%s" % RunStateScript.SCRATCH_TICKET_PILE_ITEM_ID, "item": pile_detail}]}],
+	})
+	await process_frame
+	_check(_control_tree_has_text(run_screen, "Return to"), "Ticket pile detail did not show its purchase-location return guidance.")
+	_check(_control_tree_has_text(run_screen, "Corner Store"), "Ticket pile detail did not name the origin where state will resume.")
+	_check(not _control_tree_has_text(run_screen, "Set Active") and not _control_tree_has_text(run_screen, "Cannot sell."), "Ticket pile detail still rendered the legacy normal-item action menu.")
 	run_screen.queue_free()
 	focus_origin.queue_free()
 
@@ -475,6 +543,12 @@ func _meta_card_surface_clean(snapshot: Dictionary, label: String) -> bool:
 
 func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+
+func _screen_encloses_rect(snapshot: Dictionary, key: String) -> bool:
+	var screen_rect: Rect2 = snapshot.get("screen_rect", Rect2())
+	var target_rect: Rect2 = snapshot.get(key, Rect2())
+	return screen_rect.size.x > 0.0 and screen_rect.size.y > 0.0 and target_rect.size.x > 0.0 and target_rect.size.y > 0.0 and screen_rect.grow(1.0).encloses(target_rect)
 
 
 func _remove_test_store() -> void:

@@ -120,6 +120,17 @@ func set_small_screen_mode(enabled: bool) -> void:
 	_render_active_container()
 
 
+func set_stage_minimum_size(minimum_size: Vector2) -> void:
+	custom_minimum_size = Vector2(maxf(96.0, minimum_size.x), maxf(56.0, minimum_size.y))
+	if _stage != null:
+		var switcher_allowance := FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT + float(VisualStyle.SPACE_2)
+		_stage.custom_minimum_size = Vector2(
+			maxf(96.0, minimum_size.x - float(VisualStyle.SPACE_2)),
+			maxf(24.0, minimum_size.y - switcher_allowance)
+		)
+		_layout_slots()
+
+
 func active_container_key() -> String:
 	var container := _active_container()
 	return str(container.get("key", ""))
