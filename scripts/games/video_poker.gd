@@ -2727,43 +2727,194 @@ func _draw_machine(surface, surface_state: Dictionary) -> void:
 	var glass := Color(str(surface_state.get("cabinet_glass", "#071323")))
 	var trim := Color(str(surface_state.get("cabinet_trim", "#f7ef75")))
 	var theme := str(surface_state.get("cabinet_theme", "retro"))
-	surface.draw_rect(Rect2(Vector2.ZERO, board_size), Color("#05070d"))
-	surface.draw_rect(Rect2(8, 6, board_size.x - 16, board_size.y - 12), body)
-	surface.draw_rect(Rect2(8, 6, board_size.x - 16, board_size.y - 12), Color(trim.r, trim.g, trim.b, 0.38), false, 3)
-	surface.draw_rect(Rect2(20, 18, board_size.x - 40, board_size.y - 34), Color("#080b12"))
-	for stripe in range(7):
-		var stripe_x := 32.0 + float(stripe) * 126.0
-		var stripe_color := primary if stripe % 2 == 0 else secondary
-		surface.draw_rect(Rect2(stripe_x, 22, 58, 384), Color(stripe_color.r, stripe_color.g, stripe_color.b, 0.035))
-	surface.draw_rect(MACHINE_HEADER_RECT.grow_individual(-12, 4, -12, -3), glass)
-	surface.draw_rect(MACHINE_HEADER_RECT.grow_individual(-12, 4, -12, -3), Color(primary.r, primary.g, primary.b, 0.40), false, 2)
-	surface.draw_rect(Rect2(0, MACHINE_HEADER_RECT.end.y - 2, board_size.x, 2), primary)
-	surface.surface_label(str(surface_state.get("machine_name", "VIDEO POKER")).to_upper().left(28), Vector2(24, 25), 21, trim)
+	match theme:
+		"deuces":
+			_draw_double_deuces_cabinet(surface, surface_state, board_size, primary, secondary, body, glass, trim)
+		"gold":
+			_draw_triple_bonus_cabinet(surface, surface_state, board_size, primary, secondary, body, glass, trim)
+		_:
+			_draw_neon_jacks_cabinet(surface, surface_state, board_size, primary, secondary, body, glass, trim)
+
+
+func _draw_neon_jacks_cabinet(surface, surface_state: Dictionary, board_size: Vector2, primary: Color, secondary: Color, body: Color, glass: Color, trim: Color) -> void:
+	surface.draw_rect(Rect2(Vector2.ZERO, board_size), Color("#03070f"))
+	surface.draw_rect(Rect2(0, 390, board_size.x, 40), Color("#07040f"))
+	surface.draw_rect(Rect2(16, 14, board_size.x - 32, board_size.y - 26), Color("#111729"))
+	surface.draw_rect(Rect2(16, 14, board_size.x - 32, board_size.y - 26), Color(primary.r, primary.g, primary.b, 0.62), false, 4)
+	surface.draw_rect(Rect2(30, 26, board_size.x - 60, 376), Color(body.r * 0.62, body.g * 0.62, body.b * 0.62, 1.0))
+	for stripe in range(8):
+		var x := 46.0 + float(stripe) * 102.0
+		surface.draw_rect(Rect2(x, 38, 36, 326), Color(primary.r, primary.g, primary.b, 0.055))
+		surface.draw_rect(Rect2(x + 48, 38, 18, 326), Color(secondary.r, secondary.g, secondary.b, 0.040))
+	_draw_bulb_row(surface, Rect2(30, 34, board_size.x - 60, 8), primary, secondary)
+	_draw_neon_starfield(surface, primary, secondary)
+	_draw_video_poker_bezel(surface, PAYTABLE_RECT.grow(4.0), primary, secondary, 2)
+	_draw_video_poker_bezel(surface, PRIMARY_HAND_RECT.grow(4.0), primary, trim, 3)
+	_draw_video_poker_bezel(surface, STATUS_PANEL_RECT.grow(4.0), trim, primary, 2)
+	_draw_neon_marquee(surface, surface_state, primary, secondary, trim)
+	_draw_chrome_speaker_stack(surface, Rect2(34, 190, 18, 150), primary)
+	_draw_chrome_speaker_stack(surface, Rect2(850, 190, 18, 150), secondary)
+	surface.draw_rect(PRIMARY_HAND_RECT, Color(glass.r, glass.g, glass.b, 0.97))
+	surface.draw_rect(PRIMARY_HAND_RECT, Color(primary.r, primary.g, primary.b, 0.30), false, 2)
+	surface.draw_rect(STATUS_PANEL_RECT, Color("#070e1f"))
+	surface.draw_rect(STATUS_PANEL_RECT, Color(trim.r, trim.g, trim.b, 0.30), false, 2)
+	_draw_control_console(surface, CONTROL_DECK_RECT, Color("#11182a"), primary, secondary, trim, "raised")
+
+
+func _draw_double_deuces_cabinet(surface, surface_state: Dictionary, board_size: Vector2, primary: Color, secondary: Color, body: Color, glass: Color, trim: Color) -> void:
+	surface.draw_rect(Rect2(Vector2.ZERO, board_size), Color("#02110e"))
+	surface.draw_rect(Rect2(0, 392, board_size.x, 38), Color("#03100c"))
+	surface.draw_rect(Rect2(22, 10, board_size.x - 44, board_size.y - 22), Color("#062019"))
+	surface.draw_rect(Rect2(22, 10, board_size.x - 44, board_size.y - 22), Color(primary.r, primary.g, primary.b, 0.50), false, 3)
+	surface.draw_rect(Rect2(8, 76, 28, 284), Color(primary.r, primary.g, primary.b, 0.18))
+	surface.draw_rect(Rect2(864, 76, 28, 284), Color(secondary.r, secondary.g, secondary.b, 0.20))
+	for y in range(92, 340, 38):
+		surface.draw_circle(Vector2(22, y), 9, Color(primary.r, primary.g, primary.b, 0.35))
+		surface.draw_circle(Vector2(878, y + 18), 9, Color(secondary.r, secondary.g, secondary.b, 0.34))
+	for pip in range(18):
+		var px := 54.0 + float((pip * 47) % 784)
+		var py := 50.0 + float((pip * 31) % 316)
+		surface.surface_label("2", Vector2(px, py), 22, Color(primary.r, primary.g, primary.b, 0.16))
+	_draw_deuce_marquee(surface, surface_state, primary, secondary, trim)
+	_draw_deuce_wild_window(surface, Rect2(342, 9, 216, 27), primary, secondary)
+	_draw_video_poker_bezel(surface, PAYTABLE_RECT.grow(4.0), secondary, primary, 2)
+	_draw_video_poker_bezel(surface, PRIMARY_HAND_RECT.grow(4.0), primary, secondary, 2)
+	_draw_video_poker_bezel(surface, STATUS_PANEL_RECT.grow(4.0), secondary, trim, 2)
+	surface.draw_rect(PRIMARY_HAND_RECT, Color(glass.r, glass.g, glass.b, 0.97))
+	surface.draw_rect(PRIMARY_HAND_RECT, Color(primary.r, primary.g, primary.b, 0.34), false, 2)
+	surface.draw_rect(STATUS_PANEL_RECT, Color("#061b18"))
+	surface.draw_rect(STATUS_PANEL_RECT, Color(secondary.r, secondary.g, secondary.b, 0.34), false, 2)
+	_draw_control_console(surface, CONTROL_DECK_RECT, Color("#071c17"), primary, secondary, trim, "split")
+
+
+func _draw_triple_bonus_cabinet(surface, surface_state: Dictionary, board_size: Vector2, primary: Color, secondary: Color, body: Color, glass: Color, trim: Color) -> void:
+	surface.draw_rect(Rect2(Vector2.ZERO, board_size), Color("#100602"))
+	surface.draw_rect(Rect2(6, 8, board_size.x - 12, board_size.y - 16), Color("#2c1606"))
+	surface.draw_rect(Rect2(6, 8, board_size.x - 12, board_size.y - 16), Color(trim.r, trim.g, trim.b, 0.50), false, 4)
+	surface.draw_rect(Rect2(28, 30, board_size.x - 56, 356), Color(body.r * 0.72, body.g * 0.72, body.b * 0.72, 1.0))
+	for ray in range(12):
+		var x := 40.0 + float(ray) * 76.0
+		surface.draw_polygon([Vector2(x, 66), Vector2(x + 52, 186), Vector2(x - 28, 186)], [Color(trim.r, trim.g, trim.b, 0.06)]) # SA2_PER_FRAME_OK: bounded high-roller cabinet sunburst rays.
+	for coin in range(9):
+		var p := Vector2(56.0 + float((coin * 91) % 770), 52.0 + float((coin * 43) % 298))
+		_draw_gold_coin(surface, p, 8.0 + float(coin % 3), primary, trim)
+	_draw_gold_crown_marquee(surface, surface_state, primary, secondary, trim)
+	_draw_video_poker_bezel(surface, PAYTABLE_RECT.grow(5.0), trim, secondary, 3)
+	_draw_video_poker_bezel(surface, PRIMARY_HAND_RECT.grow(5.0), primary, trim, 3)
+	_draw_video_poker_bezel(surface, STATUS_PANEL_RECT.grow(5.0), trim, primary, 3)
+	surface.draw_rect(PRIMARY_HAND_RECT, Color(glass.r, glass.g, glass.b, 0.97))
+	surface.draw_rect(PRIMARY_HAND_RECT, Color(primary.r, primary.g, primary.b, 0.30), false, 2)
+	surface.draw_rect(STATUS_PANEL_RECT, Color("#170a03"))
+	surface.draw_rect(STATUS_PANEL_RECT, Color(trim.r, trim.g, trim.b, 0.36), false, 2)
+	_draw_control_console(surface, CONTROL_DECK_RECT, Color("#211104"), primary, secondary, trim, "gold")
+
+
+func _draw_neon_marquee(surface, surface_state: Dictionary, primary: Color, secondary: Color, trim: Color) -> void:
+	var sign := Rect2(20, 4, 860, 44)
+	surface.draw_rect(sign, Color("#081221"))
+	surface.draw_rect(sign, Color(primary.r, primary.g, primary.b, 0.65), false, 2)
+	surface.draw_rect(Rect2(sign.position + Vector2(8, 8), Vector2(338, 28)), Color("#05101d"))
+	surface.surface_label(str(surface_state.get("machine_name", "NEON JACKS")).to_upper().left(24), Vector2(34, 30), 22, trim)
 	surface.surface_label("%s  %s  %s" % [
 		str(surface_state.get("variant_label", "Jacks or Better")).left(22),
 		str(surface_state.get("paytable_tier_label", "Standard")).left(14),
 		str(surface_state.get("multi_hand_mode", "1 Play")),
-	], Vector2(402, 24), 12, secondary)
-	if theme == "deuces":
-		for pip in range(12):
-			var px := 46.0 + float((pip * 73) % 790)
-			var py := 58.0 + float((pip * 41) % 292)
-			surface.surface_label("2", Vector2(px, py), 20, Color(primary.r, primary.g, primary.b, 0.18))
-	elif theme == "gold":
-		for ray in range(10):
-			var x := 42.0 + float(ray) * 82.0
-			surface.draw_polygon([Vector2(x, 64), Vector2(x + 44, 170), Vector2(x - 22, 170)], [Color(trim.r, trim.g, trim.b, 0.05)]) # SA2_PER_FRAME_OK: bounded cabinet-art rays, at most 10 tiny triangles.
+	], Vector2(404, 30), 12, secondary)
+	surface.draw_rect(Rect2(776, 21, 86, 34), Color("#032634"))
+	surface.draw_rect(Rect2(776, 21, 86, 34), primary, false, 1)
+	surface.surface_label_centered("LEAVE", Rect2(776, 22, 86, 30), 14, C_WHITE)
+
+
+func _draw_deuce_marquee(surface, surface_state: Dictionary, primary: Color, secondary: Color, trim: Color) -> void:
+	var sign := Rect2(18, 2, 864, 50)
+	surface.draw_rect(sign, Color("#06251d"))
+	surface.draw_rect(sign, Color(primary.r, primary.g, primary.b, 0.58), false, 3)
+	surface.surface_label("DOUBLE DEUCES", Vector2(28, 31), 22, trim)
+	surface.surface_label("%s  %s" % [
+		str(surface_state.get("paytable_tier_label", "Standard")).left(14),
+		str(surface_state.get("multi_hand_mode", "2 Play")),
+	], Vector2(584, 30), 11, secondary)
+	for i in range(4):
+		var pos := Vector2(690.0 + float(i) * 26.0, 27.0)
+		surface.surface_label("2", pos, 18, primary)
+	surface.draw_rect(Rect2(776, 21, 86, 34), Color("#02322b"))
+	surface.draw_rect(Rect2(776, 21, 86, 34), secondary, false, 1)
+	surface.surface_label_centered("LEAVE", Rect2(776, 22, 86, 30), 14, C_WHITE)
+
+
+func _draw_gold_crown_marquee(surface, surface_state: Dictionary, primary: Color, secondary: Color, trim: Color) -> void:
+	var sign := Rect2(12, 0, 876, 54)
+	surface.draw_rect(sign, Color("#291204"))
+	surface.draw_rect(sign, Color(trim.r, trim.g, trim.b, 0.64), false, 4)
+	for tooth in range(5):
+		var base_x := 338.0 + float(tooth) * 32.0
+		surface.draw_polygon([Vector2(base_x, 8), Vector2(base_x + 16, 0), Vector2(base_x + 32, 8)], [Color(primary.r, primary.g, primary.b, 0.42)]) # SA2_PER_FRAME_OK: five small crown peaks in static cabinet art.
+	surface.surface_label("TRIPLE DOUBLE BONUS", Vector2(24, 30), 21, trim)
+	surface.surface_label("%s  %s  %s" % [
+		str(surface_state.get("variant_label", "Double Double Bonus")).left(22),
+		str(surface_state.get("paytable_tier_label", "Standard")).left(14),
+		str(surface_state.get("multi_hand_mode", "3 Play")),
+	], Vector2(404, 30), 12, secondary)
+	surface.draw_rect(Rect2(776, 21, 86, 34), Color("#3a1b05"))
+	surface.draw_rect(Rect2(776, 21, 86, 34), trim, false, 1)
+	surface.surface_label_centered("LEAVE", Rect2(776, 22, 86, 30), 14, C_WHITE)
+
+
+func _draw_video_poker_bezel(surface, rect: Rect2, primary: Color, secondary: Color, thickness: int) -> void:
+	surface.draw_rect(rect, Color(primary.r, primary.g, primary.b, 0.12))
+	surface.draw_rect(rect, Color(primary.r, primary.g, primary.b, 0.58), false, thickness)
+	surface.draw_rect(rect.grow(-5.0), Color(secondary.r, secondary.g, secondary.b, 0.30), false, 1)
+
+
+func _draw_bulb_row(surface, rect: Rect2, primary: Color, secondary: Color) -> void:
+	for index in range(18):
+		var pos := rect.position + Vector2(14.0 + float(index) * (rect.size.x - 28.0) / 17.0, rect.size.y * 0.5)
+		var color := primary if index % 2 == 0 else secondary
+		surface.draw_circle(pos, 3.0, Color(color.r, color.g, color.b, 0.60))
+
+
+func _draw_neon_starfield(surface, primary: Color, secondary: Color) -> void:
+	for star in range(15):
+		var p := Vector2(58.0 + float((star * 59) % 778), 62.0 + float((star * 37) % 292))
+		var color := primary if star % 2 == 0 else secondary
+		surface.draw_rect(Rect2(p.x - 5, p.y, 10, 2), Color(color.r, color.g, color.b, 0.22))
+		surface.draw_rect(Rect2(p.x - 1, p.y - 4, 2, 10), Color(color.r, color.g, color.b, 0.18))
+
+
+func _draw_chrome_speaker_stack(surface, rect: Rect2, accent: Color) -> void:
+	surface.draw_rect(rect, Color("#05070d"))
+	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.32), false, 1)
+	for y in range(8, int(rect.size.y) - 4, 14):
+		surface.draw_rect(Rect2(rect.position + Vector2(4, y), Vector2(rect.size.x - 8, 2)), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.22))
+
+
+func _draw_deuce_wild_window(surface, rect: Rect2, primary: Color, secondary: Color) -> void:
+	surface.draw_rect(rect, Color("#031511"))
+	surface.draw_rect(rect, Color(primary.r, primary.g, primary.b, 0.38), false, 2)
+	surface.surface_label_centered("WILD 2s", rect.grow(-4.0), 13, secondary)
+
+
+func _draw_gold_coin(surface, pos: Vector2, radius: float, primary: Color, trim: Color) -> void:
+	surface.draw_circle(pos, radius, Color(primary.r, primary.g, primary.b, 0.24))
+	surface.draw_circle(pos, maxf(1.0, radius - 3.0), Color(trim.r, trim.g, trim.b, 0.16))
+	surface.surface_label("$", pos + Vector2(-3, 4), 8, Color(trim.r, trim.g, trim.b, 0.30))
+
+
+func _draw_control_console(surface, rect: Rect2, fill: Color, primary: Color, secondary: Color, trim: Color, style: String) -> void:
+	surface.draw_rect(rect, fill)
+	var rail_color := trim
+	if style == "split":
+		rail_color = primary
+	elif style == "gold":
+		rail_color = trim
+	surface.draw_rect(rect, Color(rail_color.r, rail_color.g, rail_color.b, 0.30), false, 2)
+	if style == "raised":
+		surface.draw_rect(Rect2(rect.position + Vector2(4, 5), Vector2(rect.size.x - 8, 4)), Color(primary.r, primary.g, primary.b, 0.20))
+	elif style == "split":
+		surface.draw_rect(Rect2(rect.position + Vector2(8, 6), Vector2(rect.size.x * 0.46, rect.size.y - 12)), Color(primary.r, primary.g, primary.b, 0.06))
+		surface.draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.51, 6), Vector2(rect.size.x * 0.46, rect.size.y - 12)), Color(secondary.r, secondary.g, secondary.b, 0.06))
 	else:
-		for star in range(14):
-			var p := Vector2(44.0 + float((star * 59) % 802), 56.0 + float((star * 37) % 292))
-			surface.draw_rect(Rect2(p.x - 5, p.y, 10, 2), Color(primary.r, primary.g, primary.b, 0.20))
-			surface.draw_rect(Rect2(p.x - 1, p.y - 4, 2, 10), Color(secondary.r, secondary.g, secondary.b, 0.18))
-	surface.draw_rect(PRIMARY_HAND_RECT, Color(glass.r, glass.g, glass.b, 0.96))
-	surface.draw_rect(PRIMARY_HAND_RECT, Color(primary.r, primary.g, primary.b, 0.32), false, 2)
-	surface.draw_rect(STATUS_PANEL_RECT, Color(glass.r, glass.g, glass.b, 0.94))
-	surface.draw_rect(STATUS_PANEL_RECT, Color(trim.r, trim.g, trim.b, 0.28), false, 2)
-	surface.draw_rect(CONTROL_DECK_RECT, Color(body.r * 0.72, body.g * 0.72, body.b * 0.72, 1.0))
-	surface.draw_rect(CONTROL_DECK_RECT, Color(trim.r, trim.g, trim.b, 0.24), false, 1)
+		surface.draw_rect(Rect2(rect.position + Vector2(8, 6), Vector2(rect.size.x - 16, 5)), Color(trim.r, trim.g, trim.b, 0.24))
 
 
 func _draw_paytable_grid(surface, surface_state: Dictionary) -> void:
