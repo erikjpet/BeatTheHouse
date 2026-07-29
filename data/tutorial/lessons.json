@@ -14,7 +14,7 @@
       "kind": "hud_element",
       "id": "heat"
     },
-    "copy": "Heat draws eyes. Quiet rooms let it cool.",
+    "copy": "Heat draws eyes. Cheat evidence can bring Rourke; quiet rooms let it cool.",
     "completion": {
       "type": "any_action"
     }
@@ -34,7 +34,7 @@
       "kind": "hud_element",
       "id": "debt"
     },
-    "copy": "Debt buys time. Lenders collect with teeth.",
+    "copy": "Debt and ATM markers buy time. Pay them before interest or teeth arrive.",
     "completion": {
       "type": "any_action"
     }
@@ -116,7 +116,7 @@
       "kind": "hud_element",
       "id": "map"
     },
-    "copy": "Routes cost time. Check the clock.",
+    "copy": "Routes cost time. Closed stops relight by the clock.",
     "completion": {
       "type": "any_action"
     }
@@ -136,7 +136,7 @@
       "kind": "hud_element",
       "id": "chips"
     },
-    "copy": "Grand Casino spends chips first. Linda cashes survivors.",
+    "copy": "Grand Casino tables spend chips first. Linda cashes survivors.",
     "completion": {
       "type": "any_action"
     }
@@ -160,7 +160,7 @@
       "kind": "hud_element",
       "id": "objective"
     },
-    "copy": "Clean play impresses Linda. Better cards follow.",
+    "copy": "Bronze, Silver, Gold: play clean, then claim the ready tier from Linda.",
     "completion": {
       "type": "any_action"
     }

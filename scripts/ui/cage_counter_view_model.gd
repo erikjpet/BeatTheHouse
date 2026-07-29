@@ -40,12 +40,12 @@ static func build(run_state: RunState) -> Dictionary:
 		promotions.append("%d suite rest%s ready" % [suite_rests, "" if suite_rests == 1 else "s"])
 	if bool(objective.get("players_card_look_away_available", false)):
 		promotions.append("Linda look-away ready")
-	var benefit_text := "No tier benefits yet."
+	var benefit_text := "No tier benefits yet. Play clean sets to unlock Bronze, Silver, then Gold."
 	if not benefits.is_empty():
 		benefit_text = "Benefits: %s" % ", ".join(benefits)
 	var cashout := CageEconomyModelScript.cashout_preview(run_state.grand_casino_chips, run_state.grand_casino_chips, rate, _atm_debt(run_state), run_state.bankroll)
 	return {
-		"title": "Cashout Counter",
+		"title": "Cage: Chips, Cashout, Card",
 		"host": {
 			"id": "linda",
 			"name": "Linda",
@@ -85,7 +85,7 @@ static func build(run_state: RunState) -> Dictionary:
 			},
 		},
 		"promotions": promotions,
-		"promotions_empty": "Cheat evidence closed this account for the run." if not card_eligible else "No promotions or comps are available right now.",
+		"promotions_empty": "Cheat evidence closed this account for the run." if not card_eligible else "No comps yet. Clean card tiers open the drawer.",
 		"comp_actions": [
 			{"id": "drink", "label": "Use Drink Comp", "enabled": card_eligible and drink_comps > 0},
 			{"id": "suite_rest", "label": "Use Suite Rest", "enabled": card_eligible and suite_rests > 0},
@@ -96,13 +96,13 @@ static func build(run_state: RunState) -> Dictionary:
 static func service_summary(run_state: RunState, node_id: String) -> String:
 	var model := build(run_state)
 	if model.is_empty():
-		return "Linda keeps the account closed."
+		return "Linda keeps the account closed until you are inside the Grand Casino."
 	var balance: Dictionary = model.get("balance", {})
 	var card: Dictionary = model.get("card", {})
 	match node_id:
 		"chips":
 			var preview: Dictionary = model.get("cashout_preview", {})
-			return "Cash $%d. Chips %d at %d:1. Cashout pays $%d to the marker and $%d to you." % [int(balance.get("cash", 0)), int(balance.get("chips", 0)), int(balance.get("rate", 1)), int(preview.get("debt_paid", 0)), int(preview.get("cash_paid", 0))]
+			return "Tables spend chips first. Cash $%d. Chips %d at %d:1; cashout pays $%d marker, $%d pocket." % [int(balance.get("cash", 0)), int(balance.get("chips", 0)), int(balance.get("rate", 1)), int(preview.get("debt_paid", 0)), int(preview.get("cash_paid", 0))]
 		"card":
 			return "%s. %s %s" % [str(card.get("tier", "Unranked")), str(card.get("progress", "")), str(card.get("review_detail", ""))]
 		"comps":
@@ -131,7 +131,7 @@ static func _card_progress(objective: Dictionary) -> String:
 		return str(objective.get("players_card_ineligible_reason", "Cheat evidence closed the card program for this run."))
 	var next_label := str(objective.get("players_card_next_tier_label", ""))
 	if next_label.is_empty():
-		return "Gold earned. Complete Linda's review at the Cage."
+		return "Gold earned. No higher tier remains."
 	return "%s: %d/%d games, $%d/$%d segment net, heat %d/%d." % [
 		next_label,
 		int(objective.get("players_card_segment_games", 0)),
@@ -147,17 +147,17 @@ static func _review_detail(objective: Dictionary, flags: Dictionary, state: Stri
 	if state == "ineligible":
 		return "Cheat evidence permanently closes every Players Card tier this run."
 	if state == "ready":
-		return "Clean play is verified. Linda can issue the next tier here."
+		return "Threshold met and clean enough. Linda can issue the next tier here."
 	if state == "blocked":
 		return str(objective.get("players_card_claim_block_reason", "Casino attention has frozen the review."))
-	return "Keep play clean and heat controlled. Current heat: %d." % int(objective.get("current_heat", 0))
+	return "Play the listed set, stay under heat, then come back to claim. Current heat: %d." % int(objective.get("current_heat", 0))
 
 
 static func _linda_line(objective: Dictionary, state: String) -> String:
 	if state == "ineligible":
 		return "I cannot put a card on an account with evidence."
 	if state == "ready":
-		return "Your next tier is ready. I can issue it here."
+		return "Your next tier is ready. Settle the marker, then I can print it."
 	if state == "blocked":
 		return "Rourke put a hold on this review. The floor will come for you."
 	return "%s is on the account. Keep the count clean." % str(objective.get("players_card_tier_label", "Unranked"))

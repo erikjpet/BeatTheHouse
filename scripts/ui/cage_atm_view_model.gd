@@ -27,7 +27,7 @@ static func build(run_state: RunState) -> Dictionary:
 		})
 	var payoff := mini(debt, cash)
 	return {
-		"title": "Grand Casino ATM",
+		"title": "Grand Casino ATM Marker",
 		"debt": debt,
 		"cash": cash,
 		"available_credit": int(status.get("available_credit", 0)),
@@ -42,7 +42,7 @@ static func build(run_state: RunState) -> Dictionary:
 		"next_interest_label": "Day %d, 3 AM" % (int(floor(float(next_boundary) / 1440.0)) + 1),
 		"interest_rate_percent": int(round(CageEconomyModelScript.DAILY_INTEREST_RATE * 100.0)),
 		"projected_next_balance": int(status.get("projected_next_balance", 0)),
-		"summary": "Marker $%d. Cash $%d. Next 5%% at Day %d, 3 AM: $%d." % [
+		"summary": "Borrowed cash becomes a marker. Marker $%d. Cash $%d. Next 5%% at Day %d, 3 AM: $%d." % [
 			debt,
 			cash,
 			int(floor(float(next_boundary) / 1440.0)) + 1,
@@ -63,7 +63,7 @@ static func inline_actions(run_state: RunState) -> Array:
 		"id": "borrow_50",
 		"emit_object_id": "cage_atm_action:borrow:50",
 		"label": "Borrow $50",
-		"detail": "Receive $50; marker becomes $%d." % int(borrow.get("debt_after", debt)),
+		"detail": "Receive $50 cash now; marker becomes $%d." % int(borrow.get("debt_after", debt)),
 		"enabled": bool(borrow.get("ok", false)),
 		"disabled_reason": str(borrow.get("reason", "")),
 	})
@@ -73,7 +73,7 @@ static func inline_actions(run_state: RunState) -> Array:
 			"id": "repay_%d" % amount,
 			"emit_object_id": "cage_atm_action:repay:%d" % amount,
 			"label": "Repay $%d" % amount,
-			"detail": "Cash payment; marker becomes $%d." % int(repay.get("debt_after", debt)),
+			"detail": "Pay cash at the Cage; marker becomes $%d." % int(repay.get("debt_after", debt)),
 			"enabled": bool(repay.get("ok", false)),
 			"disabled_reason": str(repay.get("reason", "")),
 		})
