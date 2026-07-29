@@ -1,14 +1,20 @@
 # Beat the House Content Style Guide
 
-Status: active for the unreleased v0.4 Act 1 release-path content.
+Status: active for the unreleased 0.5 release-path content.
 
 This guide defines the release voice and copy guardrails for player-facing text
 in `data/` and obvious release-path script constants. It complements the
 existing compact-copy validators under `scripts/tests/foundation/`.
 
+For 0.5 and later, `docs/plans/0.5_voice_bible.md` is the binding creative
+reference. This guide carries the compact UI limits and safety guardrails; the
+voice bible carries character voice, narration texture, and line-pool rules.
+
 ## Release Voice
 
-Beat the House speaks in terse casino noir:
+Beat the House speaks in terse casino noir: neo-noir on a neon budget, dry and
+knowing, with people talking like they live under the lights rather than reading
+a spec sheet.
 
 - Short, concrete, and playable.
 - Stakes are readable before the player commits.
@@ -26,6 +32,15 @@ Avoid:
 - Long jokes, lore dumps, and explanatory paragraphs inside compact UI panels.
 - Exact stat spoilers in item descriptions when glyphs or structured UI already
   communicate the mechanical class.
+
+## 0.5 Voice Bible Rules
+
+The approved bible adds two hard copy rules:
+
+1. Recurring speakers and repeatable actions draw from pools of at least three
+   lines. No back-to-back repeats.
+2. Tooltips stay brief, descriptive, and characterful. Glyphs carry exact
+   numbers; prose carries the vibe and gist.
 
 ## Length Rules
 
