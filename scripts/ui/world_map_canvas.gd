@@ -112,10 +112,12 @@ func current_view_snapshot() -> Dictionary:
 		if not node_is_in_view(node_id):
 			continue
 		var center := _normalized_position(_copy_dict(node.get("position", {})))
+		var marker_rect := Rect2(center - ICON_SIZE * 0.5, ICON_SIZE)
 		markers.append({
 			"id": node_id,
 			"position": _copy_dict(node.get("position", {})),
 			"screen_center": {"x": center.x, "y": center.y},
+			"screen_rect": {"x": marker_rect.position.x, "y": marker_rect.position.y, "w": marker_rect.size.x, "h": marker_rect.size.y},
 			"icon_path": str(node.get("icon_path", "")),
 			"travel_target": bool(node.get("travel_target", false)),
 			"travel_enabled": bool(node.get("travel_enabled", false)),
@@ -665,6 +667,8 @@ func _normalized_view_aspect() -> float:
 
 
 func _selected_focus_zoom_active() -> bool:
+	if bool(snapshot.get("fit_all_nodes", false)):
+		return false
 	return not map_view_selected_node_id_cache.is_empty() and nodes_by_id_cache.has(map_view_selected_node_id_cache)
 
 

@@ -64,10 +64,10 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		push_error("Meta home did not switch the top bar to meta mode.")
 		return false
 	var hud_fields := _copy_array(meta_hud.get("fields", []))
-	if hud_fields.size() != 2 or str(_copy_dict(hud_fields[0]).get("id", "")) != "gold" or str(_copy_dict(hud_fields[1]).get("id", "")) != "next_home_price":
-		push_error("Meta top bar should expose only gold and next home price, got %s." % str(hud_fields))
+	if hud_fields.size() != 3 or str(_copy_dict(hud_fields[0]).get("id", "")) != "location" or str(_copy_dict(hud_fields[1]).get("id", "")) != "gold" or str(_copy_dict(hud_fields[2]).get("id", "")) != "next_tier":
+		push_error("Meta top bar should expose only location, gold, and next-tier goal, got %s." % str(hud_fields))
 		return false
-	if int(meta_hud.get("gold", -1)) != 0 or str(meta_hud.get("next_home_label", "")) != "Motel Room" or int(meta_hud.get("next_home_price", 0)) != 60:
+	if int(meta_hud.get("gold", -1)) != 0 or str(meta_hud.get("location_text", "")) != "Home · Back Alley" or str(meta_hud.get("next_home_label", "")) != "Motel Room" or int(meta_hud.get("next_home_price", 0)) != 60 or int(meta_hud.get("next_home_remaining_gold", -1)) != 60:
 		push_error("Fresh meta top bar had wrong values: %s." % str(meta_hud))
 		return false
 	var top_inventory_button := app.get("top_inventory_button") as Button
@@ -98,6 +98,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	var meta_map_view: Dictionary = meta_map_canvas.call("current_view_snapshot")
 	var meta_map_bounds: Dictionary = meta_map_view.get("map_bounds", {}) if typeof(meta_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
 	var meta_map_markers: Array = _copy_array(meta_map_view.get("icon_markers", []))
+	var meta_map_holder_rect := _snapshot_rect(meta_map_screen.get("world_map_holder_rect", {}))
 	var meta_home_marker := _map_icon_marker(meta_map_markers, "home")
 	if meta_home_marker.is_empty():
 		push_error("Meta world map did not draw the home icon marker.")
@@ -114,6 +115,8 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if meta_pawn_icon != "res://assets/art/map_icons/pawn_shop.png" or not FileAccess.file_exists(meta_pawn_icon):
 		push_error("Meta world map pawn shop marker used the wrong icon path: %s." % meta_pawn_icon)
 		return false
+	if not _map_markers_fit(meta_map_markers, meta_map_holder_rect, "initial meta world map"):
+		return false
 	var meta_target_ids: Array = _copy_array(_copy_dict(meta_map_screen.get("world_map", {})).get("travel_target_ids", []))
 	if meta_target_ids.is_empty():
 		push_error("Meta world map did not expose a travel target.")
@@ -123,23 +126,21 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		push_error("Meta world map rejected selecting %s." % meta_target_id)
 		return false
 	var immediate_meta_map_view: Dictionary = meta_map_canvas.call("current_view_snapshot")
-	var immediate_meta_bounds: Dictionary = immediate_meta_map_view.get("map_bounds", {}) if typeof(immediate_meta_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
 	var target_meta_bounds: Dictionary = immediate_meta_map_view.get("target_map_bounds", {}) if typeof(immediate_meta_map_view.get("target_map_bounds", {})) == TYPE_DICTIONARY else {}
-	if not _map_bounds_equal(meta_map_bounds, immediate_meta_bounds):
-		push_error("Selecting a meta world-map node snapped the view window instead of animating: before %s immediate %s." % [JSON.stringify(meta_map_bounds), JSON.stringify(immediate_meta_bounds)])
-		return false
-	if _map_bounds_equal(immediate_meta_bounds, target_meta_bounds) or not bool(immediate_meta_map_view.get("selected_focus_zoom_animating", false)):
-		push_error("Selecting a meta world-map node did not expose an animated selected-location focus target.")
+	if bool(immediate_meta_map_view.get("selected_focus_zoom_active", true)):
+		push_error("Meta world-map selection enabled selected-node zoom instead of all-node framing.")
 		return false
 	for _layout_index in range(54):
 		await process_frame
 	var selected_meta_map_view: Dictionary = meta_map_canvas.call("current_view_snapshot")
 	var selected_meta_bounds: Dictionary = selected_meta_map_view.get("map_bounds", {}) if typeof(selected_meta_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
-	if not _map_bounds_equal(target_meta_bounds, selected_meta_bounds) or bool(selected_meta_map_view.get("selected_focus_zoom_animating", true)):
-		push_error("Selecting a meta world-map node did not settle on the animated focus target: target %s after %s." % [JSON.stringify(target_meta_bounds), JSON.stringify(selected_meta_bounds)])
+	if not _map_bounds_equal(target_meta_bounds, selected_meta_bounds) or bool(selected_meta_map_view.get("selected_focus_zoom_animating", false)):
+		push_error("Meta world-map all-node framing changed after selection: target %s after %s." % [JSON.stringify(target_meta_bounds), JSON.stringify(selected_meta_bounds)])
 		return false
 	if not _map_canvas_size_equal(meta_map_view, selected_meta_map_view):
 		push_error("Selecting a meta world-map node changed the canvas size: before %s after %s." % [JSON.stringify(meta_map_view.get("canvas_size", {})), JSON.stringify(selected_meta_map_view.get("canvas_size", {}))])
+		return false
+	if not _map_markers_fit(_copy_array(selected_meta_map_view.get("icon_markers", [])), meta_map_holder_rect, "selected meta world map"):
 		return false
 	var selected_meta_screen: Dictionary = app.call("current_screen_snapshot")
 	var selected_meta_detail := str(selected_meta_screen.get("world_map_detail_text", ""))
@@ -569,6 +570,22 @@ func _world_map_detail_popup_fits(screen_snapshot: Dictionary) -> bool:
 	if not holder_rect.grow(1.0).encloses(popup_rect):
 		push_error("World map detail popup was not clamped inside the map: popup=%s holder=%s." % [str(popup_rect), str(holder_rect)])
 		return false
+	return true
+
+
+func _map_markers_fit(markers: Array, holder_rect: Rect2, label: String) -> bool:
+	if holder_rect.size.x <= 0.0 or holder_rect.size.y <= 0.0:
+		push_error("%s did not expose valid holder bounds: %s." % [label, str(holder_rect)])
+		return false
+	for marker_value in markers:
+		if typeof(marker_value) != TYPE_DICTIONARY:
+			continue
+		var marker: Dictionary = marker_value
+		var marker_rect := _snapshot_rect(marker.get("screen_rect", {}))
+		var absolute_rect := Rect2(holder_rect.position + marker_rect.position, marker_rect.size)
+		if marker_rect.size.x <= 0.0 or marker_rect.size.y <= 0.0 or not holder_rect.grow(1.0).encloses(absolute_rect):
+			push_error("%s marker %s was not fully inside the map holder: marker=%s holder=%s." % [label, str(marker.get("id", "")), str(absolute_rect), str(holder_rect)])
+			return false
 	return true
 
 

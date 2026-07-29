@@ -381,6 +381,7 @@ func world_map_snapshot(location_id: String, selected_node_id: String) -> Dictio
 		"travel_disabled_node_ids": [],
 		"travel_paths": travel_paths,
 		"map_focus_node_ids": map_node_ids(),
+		"fit_all_nodes": true,
 		"background_path": WorldMapScript.MAP_BACKGROUND_PATH,
 	}
 
