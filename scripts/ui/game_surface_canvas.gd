@@ -1493,7 +1493,10 @@ func _draw_foundation_play_overlay() -> void:
 	if _surface_renderer() == "slot_machine":
 		return
 	if bool(state.get("surface_controls_native", false)):
-		_draw_surface_back_control(Rect2(776, 22, 86, 34))
+		var back_rect := Rect2(776, 22, 86, 34)
+		if _surface_renderer() == "card_machine":
+			back_rect = Rect2(806, 22, 86, 34)
+		_draw_surface_back_control(back_rect)
 		if surface_game_module == null:
 			_draw_foundation_control_strip(Rect2(22, 248, 856, 72), true)
 			return

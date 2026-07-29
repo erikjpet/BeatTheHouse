@@ -311,14 +311,14 @@ const SUIT_WORD := {0: "Spades", 1: "Hearts", 2: "Clubs", 3: "Diamonds"}
 # glass and button deck so the cabinet, not the surrounding room, is the focus.
 const VIDEO_POKER_BOARD_SIZE := Vector2(960, 540)
 const MACHINE_HEADER_RECT := Rect2(0, 0, 960, 74)
-const PAYTABLE_RECT := Rect2(220, 142, 520, 80)
-const PRIMARY_HAND_RECT := Rect2(220, 230, 520, 174)
-const STATUS_PANEL_RECT := Rect2(752, 142, 156, 262)
-const CARD_ROW_ORIGIN := Vector2(286, 286)
+const PAYTABLE_RECT := Rect2(42, 80, 674, 82)
+const PRIMARY_HAND_RECT := Rect2(42, 172, 674, 206)
+const STATUS_PANEL_RECT := Rect2(730, 80, 166, 298)
+const CARD_ROW_ORIGIN := Vector2(118, 232)
 const CARD_SIZE := Vector2(56, 64)
 const CARD_SPACING := 56.0
 const HOLD_BUTTON_SIZE := Vector2(44, 14)
-const CONTROL_DECK_RECT := Rect2(246, 382, 470, 44)
+const CONTROL_DECK_RECT := Rect2(42, 382, 854, 46)
 const CABINET_BACKGROUND_PATHS := {
 	"jacks_or_better": "res://assets/art/games/video_poker_cabinets/jacks_or_better_cabinet_bg.png",
 	"double_deuces": "res://assets/art/games/video_poker_cabinets/double_deuces_cabinet_bg.png",
@@ -3121,8 +3121,8 @@ func _draw_card_row(surface, surface_state: Dictionary, phase: String) -> void:
 	var row_h := (usable_h - row_gap * float(row_count - 1)) / float(row_count)
 	var label_w := 42.0
 	var card_gap := 5.0
-	var card_h := clampf(row_h - 4.0, 28.0, 66.0)
-	var card_w := clampf(minf(card_h * 0.72, (PRIMARY_HAND_RECT.size.x - label_w - card_gap * 6.0 - 12.0) / 5.0), 25.0, 48.0)
+	var card_h := clampf(row_h - 4.0, 28.0, 104.0)
+	var card_w := clampf(minf(card_h * 0.72, (PRIMARY_HAND_RECT.size.x - label_w - card_gap * 6.0 - 12.0) / 5.0), 25.0, 78.0)
 	var start_x := PRIMARY_HAND_RECT.position.x + label_w + (PRIMARY_HAND_RECT.size.x - label_w - (card_w * 5.0 + card_gap * 4.0)) * 0.5
 	for row_index in range(row_count):
 		var row_hand := hand
@@ -3229,7 +3229,7 @@ func _draw_card_in_rect(surface, card_value: Variant, rect: Rect2, held: bool, s
 	var rank := int(card.get("rank", 2))
 	var suit := int(card.get("suit", 0))
 	var color := C_PINK if suit == 1 or suit == 3 else C_DARK
-	var rank_size := clampi(int(rect.size.y * 0.31), 9, 18)
+	var rank_size := clampi(int(rect.size.y * 0.31), 9, 28)
 	var suit_scale := clampf(rect.size.y / 60.0, 0.45, 1.0)
 	if bool(card.get("joker", false)) or rank == 0:
 		surface.surface_label("JOKER", rect.position + Vector2(5, rect.size.y * 0.42), clampi(rank_size - 1, 8, 14), C_PINK)
@@ -3279,9 +3279,9 @@ func _draw_controls(surface, surface_state: Dictionary, phase: String) -> void:
 	var cabinet_trim := Color(str(surface_state.get("cabinet_trim", "#f7ef75")))
 	var cabinet_secondary := Color(str(surface_state.get("cabinet_secondary", "#ff4fd8")))
 	if phase == "double_up":
-		_draw_cabinet_button(surface, Rect2(CONTROL_DECK_RECT.position + Vector2(10, 9), Vector2(98, 28)), "DOUBLE", "video_poker_double", 0, cabinet_trim, false)
-		_draw_cabinet_button(surface, Rect2(CONTROL_DECK_RECT.position + Vector2(120, 9), Vector2(98, 28)), "DEAL", "video_poker_deal", 0, cabinet_button, false)
-		surface.surface_label_centered("PICK A CARD ABOVE", Rect2(CONTROL_DECK_RECT.position + Vector2(238, 10), Vector2(214, 26)), 11, C_AMBER)
+		_draw_cabinet_button(surface, Rect2(CONTROL_DECK_RECT.position + Vector2(18, 8), Vector2(132, 30)), "DOUBLE", "video_poker_double", 0, cabinet_trim, false)
+		_draw_cabinet_button(surface, Rect2(CONTROL_DECK_RECT.position + Vector2(168, 8), Vector2(132, 30)), "DEAL", "video_poker_deal", 0, cabinet_button, false)
+		surface.surface_label_centered("PICK A CARD ABOVE", Rect2(CONTROL_DECK_RECT.position + Vector2(326, 9), Vector2(498, 28)), 12, C_AMBER)
 		return
 	var win_pending := phase == "settled" and bool(surface_state.get("double_up_available", false))
 	var betting_enabled := phase == "idle" or phase == "settled"
@@ -3301,12 +3301,12 @@ func _draw_controls(surface, surface_state: Dictionary, phase: String) -> void:
 		cheat_button_accent = cabinet_secondary
 		cheat_button_enabled = true
 	var deck_pos := CONTROL_DECK_RECT.position
-	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(10, 9), Vector2(58, 28)), "BET 1", "video_poker_bet_one", 0, cabinet_trim, betting_enabled)
-	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(76, 9), Vector2(58, 28)), "MAX", "video_poker_bet_max", 0, cabinet_trim, betting_enabled)
-	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(144, 9), Vector2(62, 28)), str(surface_state.get("coin_label", "DENOM")).to_upper(), "video_poker_denom", 0, cabinet_secondary, betting_enabled)
-	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(220, 6), Vector2(82, 34)), "DRAW" if phase == "hold" else "DEAL", "video_poker_draw" if phase == "hold" else "video_poker_deal", 0, cabinet_button, true)
-	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(316, 9), Vector2(72, 28)), cheat_button_label, cheat_button_action, 0, cheat_button_accent, cheat_button_enabled)
-	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(398, 9), Vector2(60, 28)), "PAY", "video_poker_collect", 0, cabinet_button, false)
+	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(16, 8), Vector2(92, 30)), "BET 1", "video_poker_bet_one", 0, cabinet_trim, betting_enabled)
+	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(124, 8), Vector2(92, 30)), "MAX", "video_poker_bet_max", 0, cabinet_trim, betting_enabled)
+	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(232, 8), Vector2(102, 30)), str(surface_state.get("coin_label", "DENOM")).to_upper(), "video_poker_denom", 0, cabinet_secondary, betting_enabled)
+	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(366, 5), Vector2(152, 36)), "DRAW" if phase == "hold" else "DEAL", "video_poker_draw" if phase == "hold" else "video_poker_deal", 0, cabinet_button, true)
+	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(552, 8), Vector2(128, 30)), cheat_button_label, cheat_button_action, 0, cheat_button_accent, cheat_button_enabled)
+	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(716, 8), Vector2(112, 30)), "PAY", "video_poker_collect", 0, cabinet_button, false)
 	if phase == "settled":
 		var delta := int(surface_state.get("result_bankroll_delta", 0))
 		var color := C_TEAL if delta > 0 else (C_YELLOW if delta == 0 else C_ORANGE)
