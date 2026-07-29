@@ -29,7 +29,7 @@ the repository.
 | Active planning target | 0.5.0 Grand Casino rework |
 | Current release readiness | 0.5 implementation complete; source gates are tracked in `docs/plans/0.5_release_checklist.md`; release-owner playtest, packaging, upload, and tag remain owner actions |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
-| Renderer | Godot mobile renderer |
+| Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
 | Target exports | Web/itch.io and Windows desktop; Android/iOS presets remain credential-blocked |
 | Run model | Seeded deterministic run state with forked RNG streams |
