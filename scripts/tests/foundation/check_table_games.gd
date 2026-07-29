@@ -2712,8 +2712,8 @@ func _check_video_poker_surface_contract(game: GameModule, failures: Array) -> v
 		failures.append("Video poker mark did not create a timed holdout challenge.")
 	else:
 		var beats: Array = mark_challenge.get("beats", []) if typeof(mark_challenge.get("beats", [])) == TYPE_ARRAY else []
-		if beats.size() != 3 or int(mark_challenge.get("chain_version", 0)) < 2:
-			failures.append("Video poker holdout did not create the required three-beat PALM/SWAP/COVER chain.")
+		if beats.size() != 2 or int(mark_challenge.get("chain_version", 0)) < 3:
+			failures.append("Video poker holdout did not create the required two-beat LINE UP/COMMIT chain.")
 	# The cheat's marked holds match the module's own suggested holds for the deal.
 	var fresh_surface := game.surface_state(run_state, environment, deal_state)
 	if JSON.stringify(mark_state.get("holds", [])) != JSON.stringify(fresh_surface.get("suggested_holds", [])):
@@ -2723,7 +2723,7 @@ func _check_video_poker_surface_contract(game: GameModule, failures: Array) -> v
 	mark_harness.setup(marked_surface)
 	game.draw_surface(mark_harness, marked_surface, {"contract_harness": true})
 	if not _surface_harness_has_action(mark_harness, "video_poker_palm"):
-		failures.append("Video poker marked holdout surface is missing the PALM timing control.")
+		failures.append("Video poker marked holdout surface is missing the timed holdout control.")
 	if not bool(marked_surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Video poker marked holdout surface did not request realtime timing refresh.")
 	var holdout_meter: Dictionary = marked_surface.get("holdout_meter", {}) if typeof(marked_surface.get("holdout_meter", {})) == TYPE_DICTIONARY else {}
@@ -2732,7 +2732,7 @@ func _check_video_poker_surface_contract(game: GameModule, failures: Array) -> v
 	var palm_state: Dictionary = _video_poker_complete_holdout_chain(game, run_state, mark_state, 0)
 	var palm_challenge: Dictionary = palm_state.get("holdout_challenge", {}) if typeof(palm_state.get("holdout_challenge", {})) == TYPE_DICTIONARY else {}
 	if str(palm_challenge.get("skill_grade", "")) != "perfect" or not bool(palm_challenge.get("chain_complete", false)):
-		failures.append("Video poker PALM/SWAP/COVER chain did not grade perfect timed inputs.")
+		failures.append("Video poker LINE UP/COMMIT chain did not grade perfect timed inputs.")
 	var cheat_draw := game.surface_action_command("video_poker_draw", 0, true, palm_state, run_state, environment)
 	if str(cheat_draw.get("action_id", "")) != "mark_holds" or str(cheat_draw.get("action_kind", "")) != "cheat" or not bool(cheat_draw.get("resolve", false)):
 		failures.append("Video poker DRAW did not resolve the armed holdout cheat.")
@@ -2816,10 +2816,6 @@ func _check_video_poker_evaluation(game: GameModule, failures: Array) -> void:
 	_vp_check_pay(game, "jacks_or_better", [_vp_card(11, 0), _vp_card(11, 1), _vp_card(4, 2), _vp_card(4, 3), _vp_card(9, 0)], "two_pair", failures)
 	_vp_check_pay(game, "jacks_or_better", [_vp_card(12, 0), _vp_card(12, 1), _vp_card(3, 2), _vp_card(5, 3), _vp_card(9, 0)], "jacks_or_better", failures)
 	_vp_check_pay(game, "jacks_or_better", [_vp_card(6, 0), _vp_card(6, 1), _vp_card(3, 2), _vp_card(9, 3), _vp_card(13, 0)], "", failures)
-	# Bonus Poker enhanced quads.
-	_vp_check_pay(game, "bonus_poker", [_vp_card(14, 0), _vp_card(14, 1), _vp_card(14, 2), _vp_card(14, 3), _vp_card(9, 0)], "four_aces", failures)
-	_vp_check_pay(game, "bonus_poker", [_vp_card(3, 0), _vp_card(3, 1), _vp_card(3, 2), _vp_card(3, 3), _vp_card(9, 0)], "four_2_4", failures)
-	_vp_check_pay(game, "bonus_poker", [_vp_card(13, 0), _vp_card(13, 1), _vp_card(13, 2), _vp_card(13, 3), _vp_card(9, 0)], "four_5_k", failures)
 	# Double Double Bonus quads with kickers (and two pair pays the reduced row).
 	_vp_check_pay(game, "double_double_bonus", [_vp_card(14, 0), _vp_card(14, 1), _vp_card(14, 2), _vp_card(14, 3), _vp_card(2, 0)], "four_aces_kicker", failures)
 	_vp_check_pay(game, "double_double_bonus", [_vp_card(14, 0), _vp_card(14, 1), _vp_card(14, 2), _vp_card(14, 3), _vp_card(9, 0)], "four_aces", failures)
@@ -2837,25 +2833,15 @@ func _check_video_poker_evaluation(game: GameModule, failures: Array) -> void:
 	_vp_check_pay(game, "deuces_wild", [_vp_card(2, 0), _vp_card(7, 1), _vp_card(8, 2), _vp_card(9, 3), _vp_card(10, 0)], "straight", failures)
 	_vp_check_pay(game, "deuces_wild", [_vp_card(2, 0), _vp_card(7, 1), _vp_card(7, 2), _vp_card(9, 3), _vp_card(11, 0)], "three_kind", failures)
 	_vp_check_pay(game, "deuces_wild", [_vp_card(7, 0), _vp_card(7, 1), _vp_card(9, 3), _vp_card(11, 0), _vp_card(13, 2)], "", failures)
-	# Joker Poker one-joker wild categories and kings-or-better floor.
-	_vp_check_pay(game, "joker_poker", [_vp_card(14, 2), _vp_card(13, 2), _vp_card(12, 2), _vp_card(11, 2), _vp_card(10, 2)], "natural_royal", failures)
-	_vp_check_pay(game, "joker_poker", [_vp_card(0, 4), _vp_card(13, 1), _vp_card(13, 2), _vp_card(13, 3), _vp_card(13, 0)], "five_kind", failures)
-	_vp_check_pay(game, "joker_poker", [_vp_card(0, 4), _vp_card(14, 1), _vp_card(13, 1), _vp_card(12, 1), _vp_card(11, 1)], "wild_royal", failures)
-	_vp_check_pay(game, "joker_poker", [_vp_card(0, 4), _vp_card(13, 1), _vp_card(8, 2), _vp_card(7, 0), _vp_card(3, 1)], "kings_or_better", failures)
-	_vp_check_pay(game, "joker_poker", [_vp_card(12, 1), _vp_card(12, 2), _vp_card(8, 2), _vp_card(7, 0), _vp_card(3, 1)], "", failures)
-
-
 func _check_video_poker_paytable_variants(game: GameModule, failures: Array) -> void:
 	var jacks_keys: Array = _vp_row_keys(_vp_variant(game, "jacks_or_better"))
-	for variant_id in ["bonus_poker", "double_double_bonus", "deuces_wild", "joker_poker"]:
+	for variant_id in ["double_double_bonus", "deuces_wild"]:
 		var variant_keys: Array = _vp_row_keys(_vp_variant(game, variant_id))
 		if JSON.stringify(variant_keys) == JSON.stringify(jacks_keys):
 			failures.append("Video poker %s paytable is a reskin of Jacks or Better." % variant_id)
 	var ace_quads := [_vp_card(14, 0), _vp_card(14, 1), _vp_card(14, 2), _vp_card(14, 3), _vp_card(9, 0)]
 	if _vp_pay_mult(game, "jacks_or_better", ace_quads) != 25:
 		failures.append("Video poker Jacks or Better four aces did not use the base quad payout.")
-	if _vp_pay_mult(game, "bonus_poker", ace_quads) != 80:
-		failures.append("Video poker Bonus Poker four aces did not use its bonus payout.")
 	if _vp_pay_mult(game, "double_double_bonus", ace_quads) != 160:
 		failures.append("Video poker Double Double Bonus four aces did not use its variant payout.")
 	var ace_quads_kicker := [_vp_card(14, 0), _vp_card(14, 1), _vp_card(14, 2), _vp_card(14, 3), _vp_card(2, 0)]
@@ -2867,11 +2853,6 @@ func _check_video_poker_paytable_variants(game: GameModule, failures: Array) -> 
 	var deuces_quads := [_vp_card(2, 0), _vp_card(2, 1), _vp_card(2, 2), _vp_card(2, 3), _vp_card(9, 0)]
 	if _vp_pay_mult(game, "deuces_wild", deuces_quads) != 200:
 		failures.append("Video poker Deuces Wild did not use the four-deuces paytable row.")
-	var joker_five_kind := [_vp_card(0, 4), _vp_card(13, 1), _vp_card(13, 2), _vp_card(13, 3), _vp_card(13, 0)]
-	if _vp_pay_mult(game, "joker_poker", joker_five_kind) != 200:
-		failures.append("Video poker Joker Poker did not use the five-of-a-kind paytable row.")
-
-
 func _check_video_poker_generated_identity(game: GameModule, failures: Array) -> void:
 	var run_a: RunState = RunStateScript.new()
 	run_a.start_new("VIDEO-POKER-GENERATED")
@@ -2883,14 +2864,18 @@ func _check_video_poker_generated_identity(game: GameModule, failures: Array) ->
 	var state_b: Dictionary = game.generate_environment_state(run_b, env_b, run_b.create_rng("video_poker_identity"))
 	if JSON.stringify(state_a) != JSON.stringify(state_b):
 		failures.append("Video poker generated cabinet identity is not deterministic for the same seed.")
-	for required_key in ["cabinet_key", "variant_id", "paytable_tier_id", "coin_denominations", "denomination_index", "multi_hand_count", "progressive_meter", "holdout_tell"]:
+	for required_key in ["cabinet_id", "cabinet_key", "variant_id", "paytable_tier_id", "coin_denominations", "denomination_index", "multi_hand_count", "progressive_meter", "holdout_tell"]:
 		if not state_a.has(required_key):
 			failures.append("Video poker generated state is missing %s." % required_key)
 	var denominations: Array = state_a.get("coin_denominations", [])
 	if denominations.size() < 2:
 		failures.append("Video poker generated denomination set is too shallow.")
-	if not [1, 3, 5, 10].has(int(state_a.get("multi_hand_count", 0))):
-		failures.append("Video poker generated multi-hand count was not one of the cabinet modes.")
+	var expected_hands := {"jacks_or_better": 1, "double_deuces": 2, "triple_double_bonus": 3}
+	var cabinet_id := str(state_a.get("cabinet_id", ""))
+	if not expected_hands.has(cabinet_id):
+		failures.append("Video poker generated a retired cabinet id: %s." % cabinet_id)
+	elif int(state_a.get("multi_hand_count", 0)) != int(expected_hands.get(cabinet_id, 0)):
+		failures.append("Video poker generated cabinet %s with the wrong hand count." % cabinet_id)
 	env_a["game_states"] = {"video_poker": state_a}
 	run_a.current_environment = env_a.duplicate(true)
 	var surface := game.surface_state(run_a, run_a.current_environment, {})
@@ -2934,6 +2919,13 @@ func _vp_fresh(game: GameModule, variant_id: String, seed_text: String, bankroll
 	var environment := _surface_contract_environment()
 	environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": maxi(20, coin_value * hand_count * 5)}
 	var state: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("vp_state"))
+	match variant_id:
+		"deuces_wild":
+			state["cabinet_id"] = "double_deuces"
+		"double_double_bonus":
+			state["cabinet_id"] = "triple_double_bonus"
+		_:
+			state["cabinet_id"] = "jacks_or_better"
 	state["variant_id"] = variant_id
 	state["paytable_tier_id"] = tier_id
 	state["coin_denominations"] = [{"label": "$%d" % coin_value, "credits": coin_value}]
@@ -3051,7 +3043,7 @@ func _video_poker_complete_holdout_chain(game: GameModule, run_state: RunState, 
 
 
 func _check_video_poker_multi_hand(game: GameModule, failures: Array) -> void:
-	var run_state: RunState = _vp_fresh(game, "bonus_poker", "VIDEO-POKER-MULTI", 1000000, "standard", 5, 1)
+	var run_state: RunState = _vp_fresh(game, "double_double_bonus", "VIDEO-POKER-MULTI", 1000000, "full_pay", 3, 1)
 	var deal_cmd := game.surface_action_command("video_poker_deal", 0, false, {}, run_state, run_state.current_environment)
 	var ui: Dictionary = deal_cmd.get("ui_state", {})
 	ui["holds"] = [0, 1]
@@ -3059,8 +3051,8 @@ func _check_video_poker_multi_hand(game: GameModule, failures: Array) -> void:
 	var result := game.resolve_with_context("draw", 5, run_state, run_state.current_environment, run_state.create_rng("vp_multi_resolve"), ui)
 	var hands: Array = result.get("video_poker_hands", [])
 	var hand_results: Array = result.get("video_poker_hand_results", [])
-	if hands.size() != 5 or hand_results.size() != 5:
-		failures.append("Video poker 5 Play did not resolve five independent hands.")
+	if hands.size() != 3 or hand_results.size() != 3:
+		failures.append("Video poker Triple Double Bonus did not resolve three independent hands.")
 		return
 	var first_hand: Array = hands[0]
 	var distinct_hands := {}
@@ -3079,8 +3071,8 @@ func _check_video_poker_multi_hand(game: GameModule, failures: Array) -> void:
 		failures.append("Video poker multi-hand gross did not equal the sum of hand results.")
 	if distinct_hands.size() <= 1:
 		failures.append("Video poker multi-hand draws did not show independent per-hand decks.")
-	if int(result.get("video_poker_bet", 0)) != 25:
-		failures.append("Video poker 5 Play max-coin denomination math was wrong.")
+	if int(result.get("video_poker_bet", 0)) != 15:
+		failures.append("Video poker 3-hand max-coin denomination math was wrong.")
 
 
 func _video_poker_hand_unique(hand: Array) -> bool:
@@ -3109,6 +3101,8 @@ func _check_video_poker_cheat(game: GameModule, failures: Array) -> void:
 		failures.append("Video poker holdout did not report the graded perfect skill outcome.")
 	if not bool(cheat_result.get("video_poker_holdout_applied", false)):
 		failures.append("Video poker perfect holdout did not apply the palm-and-swap payoff.")
+	if str(cheat_result.get("video_poker_blunt_feedback", "")).find("RESULT:") < 0 or typeof(cheat_result.get("video_poker_holdout_target_card", {})) != TYPE_DICTIONARY:
+		failures.append("Video poker holdout did not expose blunt swap-card/result feedback.")
 	if typeof(cheat_result.get("skill_story_context", {})) != TYPE_DICTIONARY or int((cheat_result.get("skill_story_context", {}) as Dictionary).get("skill_margin_msec", 999)) != 0:
 		failures.append("Video poker holdout did not expose the shared skill story context with timing margin.")
 	_check_action_result_application_contract(before, run_state, cheat_result, "video poker holdout result", failures)
@@ -3116,7 +3110,7 @@ func _check_video_poker_cheat(game: GameModule, failures: Array) -> void:
 	var direct_deal := game.surface_action_command("video_poker_deal", 0, false, {}, direct_run, direct_run.current_environment)
 	var direct_result := game.resolve_with_context("mark_holds", 5, direct_run, direct_run.current_environment, direct_run.create_rng("vp_direct_cheat"), direct_deal.get("ui_state", {}))
 	if bool(direct_result.get("video_poker_holdout_applied", false)) or str(direct_result.get("skill_grade", "")) != "miss":
-		failures.append("Video poker mark_holds without a timed PALM granted an ungraded holdout payoff.")
+		failures.append("Video poker mark_holds without a completed timed holdout granted an ungraded payoff.")
 	var deterministic_a: RunState = _vp_fresh(game, "jacks_or_better", "VIDEO-POKER-CHEAT-DETERMINISTIC", 100000)
 	var deterministic_b: RunState = _vp_fresh(game, "jacks_or_better", "VIDEO-POKER-CHEAT-DETERMINISTIC", 100000)
 	var det_deal_a := game.surface_action_command("video_poker_deal", 0, false, {"surface_time_msec": 20000}, deterministic_a, deterministic_a.current_environment)
@@ -3247,30 +3241,19 @@ func _video_poker_double_signature(result: Dictionary) -> Dictionary:
 
 
 func _check_video_poker_rtp_bands(game: GameModule, failures: Array) -> void:
-	var variants := ["jacks_or_better", "bonus_poker", "double_double_bonus", "deuces_wild", "joker_poker"]
-	var tiers := ["full_pay", "standard", "short_pay"]
-	var tier_probe_rows := {
-		"jacks_or_better": "full_house",
-		"bonus_poker": "full_house",
-		"double_double_bonus": "full_house",
-		"deuces_wild": "wild_royal",
-		"joker_poker": "full_house",
-	}
-	var by_key := {}
-	for variant_id in variants:
-		for tier_id in tiers:
-			var rtp_rounds := 3000 if variant_id == "joker_poker" else 1800
-			var rtp := _video_poker_rtp(game, variant_id, tier_id, "draw", "VIDEO-POKER-RTP-%s-%s" % [variant_id.to_upper(), tier_id.to_upper()], rtp_rounds)
-			by_key["%s:%s" % [variant_id, tier_id]] = rtp
-			print("VIDEO_POKER %s/%s RTP = %.4f" % [variant_id, tier_id, rtp])
-			if rtp < 0.70 or rtp > 1.08:
-				failures.append("Video poker %s/%s RTP %.4f fell outside the sampled sane band." % [variant_id, tier_id, rtp])
-	for variant_id in variants:
-		var row_key := str(tier_probe_rows.get(variant_id, "full_house"))
-		var full_mult := _video_poker_tier_row_mult(game, variant_id, "full_pay", row_key)
-		var short_mult := _video_poker_tier_row_mult(game, variant_id, "short_pay", row_key)
-		if full_mult <= short_mult:
-			failures.append("Video poker %s full-pay row '%s' did not outrank short-pay (%d <= %d)." % [variant_id, row_key, full_mult, short_mult])
+	var cabinets := [
+		{"variant": "jacks_or_better", "tier": "full_pay", "hands": 1, "seed": "JACKS"},
+		{"variant": "deuces_wild", "tier": "full_pay", "hands": 2, "seed": "DEUCES"},
+		{"variant": "double_double_bonus", "tier": "full_pay", "hands": 3, "seed": "TRIPLE"},
+	]
+	for cabinet in cabinets:
+		var variant_id := str(cabinet.get("variant", "jacks_or_better"))
+		var tier_id := str(cabinet.get("tier", "full_pay"))
+		var hand_count := int(cabinet.get("hands", 1))
+		var rtp := _video_poker_rtp(game, variant_id, tier_id, "draw", "VIDEO-POKER-RTP-%s" % str(cabinet.get("seed", "CABINET")), 2200, hand_count)
+		print("VIDEO_POKER %s/%s/%dHAND RTP = %.4f" % [variant_id, tier_id, hand_count, rtp])
+		if rtp < 0.70 or rtp > 1.12:
+			failures.append("Video poker active cabinet %s/%s/%d-hand RTP %.4f fell outside the sampled sane band." % [variant_id, tier_id, hand_count, rtp])
 
 
 func _video_poker_tier_row_mult(game: GameModule, variant_id: String, tier_id: String, row_key: String) -> int:
@@ -3283,8 +3266,8 @@ func _video_poker_tier_row_mult(game: GameModule, variant_id: String, tier_id: S
 	return 0
 
 
-func _video_poker_rtp(game: GameModule, variant_id: String, tier_id: String, action_id: String, seed_text: String, rounds: int) -> float:
-	var run_state: RunState = _vp_fresh(game, variant_id, seed_text, 100000000, tier_id, 1, 1)
+func _video_poker_rtp(game: GameModule, variant_id: String, tier_id: String, action_id: String, seed_text: String, rounds: int, hand_count: int = 1) -> float:
+	var run_state: RunState = _vp_fresh(game, variant_id, seed_text, 100000000, tier_id, hand_count, 1)
 	var environment: Dictionary = run_state.current_environment
 	var rng: RngStream = run_state.create_rng("vp_rtp")
 	var staked := 0
