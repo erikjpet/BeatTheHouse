@@ -289,13 +289,19 @@ func _run() -> void:
 
 	var meta_screen: MetaItemInteractionScreen = MetaScreenScript.new()
 	root.add_child(meta_screen)
-	meta_screen.set_small_screen_mode(true)
 	meta_screen.set_reduced_motion(true)
+	meta_screen.set_small_screen_mode(false)
 	meta_screen.open(sale_model)
 	await process_frame
-	var meta_snapshot := meta_screen.layout_snapshot()
-	_check(int(meta_snapshot.get("item_count", 0)) == 27, "Meta screen did not expose every sale option.")
-	_check(bool(meta_snapshot.get("small_screen_mode", false)) and bool(meta_snapshot.get("reduced_motion", false)), "Meta screen accessibility modes were not retained.")
+	var meta_snapshot_large := meta_screen.layout_snapshot()
+	_check(int(meta_snapshot_large.get("item_count", 0)) == 27, "Meta screen did not expose every sale option.")
+	_check(not bool(meta_snapshot_large.get("small_screen_mode", true)) and bool(meta_snapshot_large.get("reduced_motion", false)), "Meta screen large accessibility state was not retained.")
+	_check(_meta_card_surface_clean(meta_snapshot_large, "large meta sale grid"), "Large meta sale grid had overlapping or clipped cards.")
+	meta_screen.set_small_screen_mode(true)
+	await process_frame
+	var meta_snapshot_small := meta_screen.layout_snapshot()
+	_check(bool(meta_snapshot_small.get("small_screen_mode", false)) and bool(meta_snapshot_small.get("reduced_motion", false)), "Meta screen small accessibility modes were not retained.")
+	_check(_meta_card_surface_clean(meta_snapshot_small, "small meta sale grid"), "Small meta sale grid had overlapping or clipped cards.")
 	meta_screen.queue_free()
 
 	_remove_test_store()
@@ -435,6 +441,36 @@ func _unique_selection_count(model: Dictionary) -> int:
 	for item_value in _array(model.get("items", [])):
 		keys[str((item_value as Dictionary).get("selection_key", ""))] = true
 	return keys.size()
+
+
+func _meta_card_surface_clean(snapshot: Dictionary, label: String) -> bool:
+	var surface: Dictionary = snapshot.get("surface", {}) if typeof(snapshot.get("surface", {})) == TYPE_DICTIONARY else {}
+	if str(surface.get("item_presentation", "")) != "rarity_card_grid":
+		failures.append("%s did not use the rarity card-grid presentation." % label)
+		return false
+	var slots := _array(surface.get("slots", []))
+	if slots.is_empty():
+		failures.append("%s did not render any visible card slots." % label)
+		return false
+	for index in range(slots.size()):
+		var slot: Dictionary = slots[index]
+		var rect: Rect2 = slot.get("rect", Rect2())
+		if rect.size.x < 96.0 or rect.size.y < 82.0:
+			failures.append("%s rendered an unreadably small card: %s." % [label, str(rect)])
+			return false
+		for key in ["icon_rect", "name_rect", "count_rect", "group_rect"]:
+			var child_rect: Rect2 = slot.get(key, Rect2())
+			if child_rect.size.x <= 0.0 or child_rect.size.y <= 0.0 or not rect.grow(1.0).encloses(child_rect):
+				failures.append("%s %s escaped its card: card=%s child=%s." % [label, key, str(rect), str(child_rect)])
+				return false
+		for other_index in range(index):
+			var other: Dictionary = slots[other_index]
+			var other_rect: Rect2 = other.get("rect", Rect2())
+			var overlap := rect.intersection(other_rect)
+			if overlap.size.x > 1.0 and overlap.size.y > 1.0:
+				failures.append("%s cards overlapped: %s vs %s." % [label, str(rect), str(other_rect)])
+				return false
+	return true
 
 
 func _array(value: Variant) -> Array:

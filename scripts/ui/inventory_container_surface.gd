@@ -43,6 +43,9 @@ var _slot_buttons: Array = []
 var _slot_icons: Array = []
 var _slot_markers: Array = []
 var _slot_underlines: Array = []
+var _slot_name_labels: Array = []
+var _slot_count_labels: Array = []
+var _slot_group_labels: Array = []
 var _slot_models: Array = []
 var _slot_rects: Dictionary = {}
 
@@ -148,6 +151,10 @@ func layout_snapshot() -> Dictionary:
 			"occupied": bool(slot.get("occupied", false)),
 			"rect": rect,
 			"icon_rect": icon_rect,
+			"name_rect": (_slot_name_labels[visible_index] as Label).get_global_rect() if visible_index < _slot_name_labels.size() else Rect2(),
+			"count_rect": (_slot_count_labels[visible_index] as Label).get_global_rect() if visible_index < _slot_count_labels.size() else Rect2(),
+			"group_rect": (_slot_group_labels[visible_index] as Label).get_global_rect() if visible_index < _slot_group_labels.size() else Rect2(),
+			"rarity": str(_copy_dict(slot.get("item", {})).get("tier", "")),
 		})
 	return {
 		"active_container_key": active_container_key(),
@@ -174,8 +181,8 @@ func layout_snapshot() -> Dictionary:
 		"small_screen_mode": _small_screen_mode,
 		"reduced_motion": _reduced_motion,
 		"high_contrast": VisualStyle.high_contrast_enabled,
-		"item_presentation": "transparent_cutout",
-		"selection_cue": "underline_and_marker",
+		"item_presentation": "rarity_card_grid" if _grouped_card_mode() else "transparent_cutout",
+		"selection_cue": "rarity_outline_card" if _grouped_card_mode() else "underline_and_marker",
 	}
 
 
@@ -306,6 +313,9 @@ func _render_active_container() -> void:
 	_container_art_rects.clear()
 	_slot_models = []
 	var aggregate_used_count := 0
+	if _grouped_card_mode():
+		_render_grouped_card_container()
+		return
 	for index in range(_container_backgrounds.size()):
 		(_container_backgrounds[index] as TextureRect).visible = false
 		(_container_foregrounds[index] as TextureRect).visible = false
@@ -354,6 +364,9 @@ func _render_active_container() -> void:
 		(_slot_icons[index] as TextureRect).visible = button.visible
 		(_slot_markers[index] as Label).visible = button.visible
 		(_slot_underlines[index] as ColorRect).visible = false
+		(_slot_name_labels[index] as Label).visible = false
+		(_slot_count_labels[index] as Label).visible = false
+		(_slot_group_labels[index] as Label).visible = false
 		if not button.visible:
 			continue
 		var slot: Dictionary = _slot_models[index]
@@ -369,6 +382,62 @@ func _render_active_container() -> void:
 	_previous_button.visible = _containers.size() > 1 or current_page_count > 1
 	_next_button.visible = _containers.size() > 1 or current_page_count > 1
 	_empty_label.visible = aggregate_used_count == 0
+	_layout_slots()
+	_apply_slot_styles()
+
+
+func _render_grouped_card_container() -> void:
+	for index in range(_container_backgrounds.size()):
+		(_container_backgrounds[index] as TextureRect).visible = false
+		(_container_foregrounds[index] as TextureRect).visible = false
+		(_container_fallbacks[index] as Panel).visible = false
+		(_container_labels[index] as Label).visible = false
+	var container_index := clampi(_active_container_index, 0, maxi(0, _containers.size() - 1))
+	var container := _active_container()
+	var all_slots := _normalized_slots(container)
+	var page_size := _grouped_card_page_size()
+	var page_count := maxi(1, int(ceil(float(all_slots.size()) / float(page_size))))
+	if not _selected_key.is_empty():
+		for slot_index in range(all_slots.size()):
+			if str((all_slots[slot_index] as Dictionary).get("selection_key", "")) == _selected_key:
+				_active_page_index = slot_index / page_size
+				break
+	_active_page_index = clampi(_active_page_index, 0, page_count - 1)
+	var visible_slots := all_slots.slice(_active_page_index * page_size, mini(all_slots.size(), (_active_page_index + 1) * page_size))
+	for slot_index in range(visible_slots.size()):
+		var slot: Dictionary = visible_slots[slot_index]
+		slot["container_index"] = container_index
+		slot["container_key"] = str(container.get("key", ""))
+		slot["presentation_slot_index"] = _active_page_index * page_size + slot_index
+		_slot_models.append(slot)
+	_ensure_slot_pool(_slot_models.size())
+	for index in range(_slot_buttons.size()):
+		var visible := index < _slot_models.size()
+		var button := _slot_buttons[index] as Button
+		button.visible = visible
+		(_slot_icons[index] as TextureRect).visible = visible
+		(_slot_markers[index] as Label).visible = visible
+		(_slot_underlines[index] as ColorRect).visible = false
+		(_slot_name_labels[index] as Label).visible = visible
+		(_slot_count_labels[index] as Label).visible = visible
+		(_slot_group_labels[index] as Label).visible = visible
+		if not visible:
+			continue
+		var slot: Dictionary = _slot_models[index]
+		var occupied := bool(slot.get("occupied", false))
+		var item: Dictionary = slot.get("item", {}) if typeof(slot.get("item", {})) == TYPE_DICTIONARY else {}
+		button.disabled = not occupied
+		button.mouse_filter = Control.MOUSE_FILTER_STOP if occupied else Control.MOUSE_FILTER_IGNORE
+		(_slot_icons[index] as TextureRect).texture = _texture(str(item.get("asset_path", item.get("icon_path", "")))) if occupied else null
+		(_slot_name_labels[index] as Label).text = str(item.get("display_name", "Item")).left(24) if occupied else ""
+		(_slot_count_labels[index] as Label).text = "x%d" % maxi(1, int(item.get("count", 1))) if occupied else ""
+		(_slot_group_labels[index] as Label).text = str(item.get("group_label", item.get("collection_display_name", ""))).left(28) if occupied else ""
+		(_slot_markers[index] as Label).text = str(slot.get("state_marker", "")) if occupied else ""
+		button.tooltip_text = _slot_tooltip(slot)
+	_container_label.text = _surface_summary_label(page_count)
+	_previous_button.visible = page_count > 1
+	_next_button.visible = page_count > 1
+	_empty_label.visible = _occupied_slot_count(container) == 0
 	_layout_slots()
 	_apply_slot_styles()
 
@@ -557,11 +626,36 @@ func _ensure_slot_pool(count: int) -> void:
 		marker.add_theme_color_override("font_outline_color", Color(VisualStyle.DARK, 0.96))
 		button.add_child(marker)
 		_slot_markers.append(marker)
+
+		var group_label := FoundationWidgets.muted_label("", VisualStyle.TYPE_MICRO)
+		group_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		group_label.clip_text = true
+		group_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.add_child(group_label)
+		_slot_group_labels.append(group_label)
+
+		var name_label := FoundationWidgets.label("", VisualStyle.TYPE_CAPTION)
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		name_label.clip_text = true
+		name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.add_child(name_label)
+		_slot_name_labels.append(name_label)
+
+		var count_label := FoundationWidgets.label("", VisualStyle.TYPE_MICRO)
+		count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		count_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.add_child(count_label)
+		_slot_count_labels.append(count_label)
 		_slot_buttons.append(button)
 
 
 func _layout_slots() -> void:
 	if _stage == null:
+		return
+	if _grouped_card_mode():
+		_layout_grouped_card_slots()
 		return
 	_layout_container_art()
 	_slot_rects.clear()
@@ -622,12 +716,57 @@ func _layout_slots() -> void:
 		_slot_rects[key if not key.is_empty() else "empty:%d" % index] = Rect2(button.global_position, button.size)
 
 
+func _layout_grouped_card_slots() -> void:
+	_slot_rects.clear()
+	if _slot_models.is_empty():
+		return
+	var gap := float(VisualStyle.SPACE_4)
+	var columns := _grouped_card_columns()
+	var card_width := floorf((_stage.size.x - gap * float(columns - 1)) / float(columns))
+	var card_height := maxf(VisualStyle.TOUCH_TARGET * 2.0, minf(VisualStyle.TOUCH_TARGET * 3.0, (_stage.size.y - gap * float(maxi(1, int(ceil(float(_slot_models.size()) / float(columns)))) - 1)) / float(maxi(1, int(ceil(float(_slot_models.size()) / float(columns)))))))
+	for index in range(_slot_models.size()):
+		var row := index / columns
+		var column := index % columns
+		var pixel_rect := Rect2(
+			Vector2(float(column) * (card_width + gap), float(row) * (card_height + gap)),
+			Vector2(card_width, card_height)
+		)
+		var button := _slot_buttons[index] as Button
+		button.position = pixel_rect.position
+		button.size = pixel_rect.size
+		var pad := float(VisualStyle.SPACE_3)
+		var group_label := _slot_group_labels[index] as Label
+		group_label.position = Vector2(pad, pad)
+		group_label.size = Vector2(maxf(1.0, button.size.x - pad * 2.0 - VisualStyle.ICON_SMALL.x), VisualStyle.TYPE_CAPTION + VisualStyle.SPACE_2)
+		var count_label := _slot_count_labels[index] as Label
+		count_label.position = Vector2(maxf(0.0, button.size.x - VisualStyle.ICON_SMALL.x - pad), pad)
+		count_label.size = Vector2(VisualStyle.ICON_SMALL.x, VisualStyle.TYPE_CAPTION + VisualStyle.SPACE_2)
+		var icon := _slot_icons[index] as TextureRect
+		var icon_side := minf(button.size.x - pad * 2.0, button.size.y * 0.42)
+		icon.size = Vector2(icon_side, icon_side)
+		icon.position = Vector2(floorf((button.size.x - icon_side) * 0.5), floorf(button.size.y * 0.22))
+		var name_label := _slot_name_labels[index] as Label
+		name_label.position = Vector2(pad, maxf(icon.position.y + icon.size.y + VisualStyle.SPACE_2, button.size.y - VisualStyle.TOUCH_TARGET))
+		name_label.size = Vector2(maxf(1.0, button.size.x - pad * 2.0), minf(VisualStyle.TOUCH_TARGET, button.size.y - name_label.position.y - pad))
+		var underline := _slot_underlines[index] as ColorRect
+		underline.size = Vector2(maxf(VisualStyle.TOUCH_TARGET, button.size.x - pad * 2.0), VisualStyle.BORDER_STANDARD)
+		underline.position = Vector2(pad, button.size.y - pad - underline.size.y)
+		var marker := _slot_markers[index] as Label
+		marker.position = Vector2(maxf(0.0, button.size.x - VisualStyle.ICON_SMALL.x), maxf(0.0, button.size.y - VisualStyle.ICON_SMALL.y))
+		marker.size = VisualStyle.ICON_SMALL
+		var key := str((_slot_models[index] as Dictionary).get("selection_key", ""))
+		_slot_rects[key if not key.is_empty() else "empty:%d" % index] = Rect2(button.global_position, button.size)
+
+
 func _art_rect() -> Rect2:
 	var side := minf(_stage.size.x, _stage.size.y)
 	return Rect2(Vector2(floorf((_stage.size.x - side) * 0.5), floorf((_stage.size.y - side) * 0.5)), Vector2(side, side))
 
 
 func _apply_slot_styles() -> void:
+	if _grouped_card_mode():
+		_apply_grouped_card_styles()
+		return
 	for index in range(mini(_slot_models.size(), _slot_buttons.size())):
 		var slot: Dictionary = _slot_models[index]
 		var button := _slot_buttons[index] as Button
@@ -662,6 +801,47 @@ func _apply_slot_styles() -> void:
 		# The underline/marker already communicates focus. Scaling the object itself
 		# makes a nearly full-size model spill out of its physical recess and adds a
 		# showy pulse that fights the container art.
+		icon.scale = Vector2.ONE
+		button.modulate = Color.WHITE
+		button.scale = Vector2.ONE
+
+
+func _apply_grouped_card_styles() -> void:
+	for index in range(mini(_slot_models.size(), _slot_buttons.size())):
+		var slot: Dictionary = _slot_models[index]
+		var item: Dictionary = slot.get("item", {}) if typeof(slot.get("item", {})) == TYPE_DICTIONARY else {}
+		var button := _slot_buttons[index] as Button
+		var icon := _slot_icons[index] as TextureRect
+		var marker := _slot_markers[index] as Label
+		var underline := _slot_underlines[index] as ColorRect
+		var group_label := _slot_group_labels[index] as Label
+		var name_label := _slot_name_labels[index] as Label
+		var count_label := _slot_count_labels[index] as Label
+		var key := str(slot.get("selection_key", ""))
+		var selected := not key.is_empty() and key == _selected_key
+		var focused := not key.is_empty() and key == _focused_key
+		var hovered := not key.is_empty() and key == _hovered_key
+		var outline := VisualStyle.rarity_outline_color(str(item.get("tier", "")))
+		var fill := Color(VisualStyle.role("surface_raised"), 0.96)
+		if selected:
+			fill = Color(outline, 0.24)
+		elif focused or hovered:
+			fill = Color(outline, 0.16)
+		var border_width := VisualStyle.BORDER_FOCUS if selected else VisualStyle.BORDER_STANDARD
+		var style := VisualStyle.pixel_box(fill, outline, border_width)
+		for state in ["normal", "hover", "focus", "pressed", "hover_pressed", "disabled"]:
+			button.add_theme_stylebox_override(state, style)
+		var cue := "◆" if selected else "◇" if focused else "•" if hovered else ""
+		underline.visible = not cue.is_empty()
+		underline.color = outline
+		var state_marker := str(slot.get("state_marker", "")).strip_edges()
+		marker.text = "%s %s" % [cue, state_marker] if not cue.is_empty() and not state_marker.is_empty() else cue if not cue.is_empty() else state_marker
+		marker.add_theme_color_override("font_color", outline)
+		FoundationWidgets.set_control_font_color(group_label, outline)
+		FoundationWidgets.set_control_font_color(count_label, outline)
+		FoundationWidgets.set_control_font_color(name_label, VisualStyle.role("text_primary"))
+		var disabled_reason := str(slot.get("disabled_reason", "")).strip_edges()
+		icon.modulate = Color(VisualStyle.WHITE, 0.55) if not disabled_reason.is_empty() and not selected else Color.WHITE
 		icon.scale = Vector2.ONE
 		button.modulate = Color.WHITE
 		button.scale = Vector2.ONE
@@ -891,12 +1071,51 @@ func _first_occupied_key_on_page(container_index: int, page_index: int) -> Strin
 
 
 func _page_size(slot_count: int) -> int:
+	if _grouped_card_mode():
+		return _grouped_card_page_size()
 	return SMALL_SCREEN_PAGE_SIZE if _small_screen_mode and slot_count > SMALL_SCREEN_PAGE_SIZE else maxi(1, slot_count)
 
 
 func _page_count(container: Dictionary) -> int:
 	var slot_count := maxi(_dictionary_array(container.get("slots", [])).size(), int(container.get("capacity", 0)))
 	return maxi(1, int(ceil(float(slot_count) / float(_page_size(slot_count)))))
+
+
+func _grouped_card_mode() -> bool:
+	var layout: Dictionary = _model.get("layout", {}) if typeof(_model.get("layout", {})) == TYPE_DICTIONARY else {}
+	return str(layout.get("presentation", "")) == "grouped_card_grid"
+
+
+func _grouped_card_columns(area_size: Vector2 = Vector2.ZERO) -> int:
+	if area_size == Vector2.ZERO and _stage != null:
+		area_size = _stage.size
+	if area_size.x <= 0.0:
+		return 1
+	var minimum_width := VisualStyle.TOUCH_TARGET * (3.2 if _small_screen_mode else 3.6)
+	return maxi(1, int(floor((area_size.x + float(VisualStyle.SPACE_4)) / (minimum_width + float(VisualStyle.SPACE_4)))))
+
+
+func _grouped_card_page_size() -> int:
+	var area_size := _grouped_card_stage_size_estimate()
+	if area_size.y <= 0.0:
+		return 8 if _small_screen_mode else 12
+	var columns := _grouped_card_columns(area_size)
+	var minimum_height := VisualStyle.TOUCH_TARGET * (2.25 if _small_screen_mode else 2.5)
+	var rows := maxi(1, int(floor((area_size.y + float(VisualStyle.SPACE_4)) / (minimum_height + float(VisualStyle.SPACE_4)))))
+	return maxi(1, columns * rows)
+
+
+func _grouped_card_stage_size_estimate() -> Vector2:
+	if _stage == null:
+		return Vector2.ZERO
+	var minimum_size := _stage.custom_minimum_size
+	if _stage.size.x > minimum_size.x and _stage.size.y > minimum_size.y:
+		return _stage.size
+	var header_allowance := FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT + float(VisualStyle.SPACE_2)
+	return Vector2(
+		maxf(minimum_size.x, size.x),
+		maxf(minimum_size.y, size.y - header_allowance)
+	)
 
 
 func _selection_location(selection_key: String) -> Dictionary:
@@ -985,6 +1204,10 @@ func _dictionary_array(value: Variant) -> Array:
 		if typeof(entry) == TYPE_DICTIONARY:
 			result.append((entry as Dictionary).duplicate(true))
 	return result
+
+
+func _copy_dict(value: Variant) -> Dictionary:
+	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
 
 
 func _string_array(value: Variant) -> Array:

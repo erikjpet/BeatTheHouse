@@ -21,22 +21,22 @@ static func build(meta_service: Variant, mode: String, selected_key: String = ""
 	var containers: Array = []
 	match mode:
 		MODE_BAGS:
-			containers = [_dynamic_container("meta_bags", "home_storage", "Unopened Bags", bag_models)]
+			containers = [_dynamic_container("meta_bags", "home_storage", "Unopened Bags", _sorted_meta_items(bag_models))]
 		MODE_SALE:
 			var sale_items: Array = []
 			for item in item_models:
 				if bool((item as Dictionary).get("sale_eligible", false)):
 					sale_items.append(item)
 			sale_items.append_array(bag_models)
-			containers = [_dynamic_container("meta_sale", "home_storage", "Your Items and Bags", sale_items)]
+			containers = [_dynamic_container("meta_sale", "home_storage", "Sale Items and Bags", _sorted_meta_items(sale_items))]
 		MODE_TRADE:
 			var trade_items: Array = []
 			for item in item_models:
 				if bool((item as Dictionary).get("trade_visible", false)):
 					trade_items.append(item)
-			containers = [_dynamic_container("meta_trade", "home_storage", "Trade-Up Items", trade_items)]
+			containers = [_dynamic_container("meta_trade", "home_storage", "Trade-Up Items", _sorted_meta_items(trade_items))]
 		_:
-			containers = _loadout_containers(meta_service, snapshot, item_models, carried_ids)
+			containers = [_dynamic_container("meta_collection_storage", "home_storage", "Home Storage", _sorted_meta_items(item_models))]
 	var all_items := _flatten_container_items(containers)
 	var resolved_key := selected_key if _contains_selection(containers, selected_key) else _first_selection(containers)
 	var global_actions: Array = []
@@ -61,7 +61,7 @@ static func build(meta_service: Variant, mode: String, selected_key: String = ""
 		"trade_summary": _trade_summary(all_items, valid_trade_selected_ids),
 		"gold_balance": int(snapshot.get("gold_balance", 0)),
 		"empty_text": _empty_text(mode),
-		"layout": {"presentation": "spatial_container", "stable_view": true},
+		"layout": {"presentation": "grouped_card_grid", "stable_view": true, "grouping": "collection_tier_storage"},
 	}
 
 
@@ -151,6 +151,12 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 			"collection_display_name": str(collection.get("display_name", "Grand Casino Rewards" if item_class != CollectionItemResolverScript.ITEM_CLASS_COLLECTION else "Collection")),
 			"collection_id": str(definition.get("collection_id", "")),
 			"tier": str(definition.get("tier", "")),
+			"group_label": "%s · %s · %s" % [
+				str(collection.get("display_name", "Collection")),
+				str(definition.get("tier", "")).capitalize(),
+				"Carried" if packed else "Stored",
+			],
+			"count": 1,
 			"item_class": item_class,
 			"domain": "meta",
 			"icon_key": str(definition.get("icon_key", "")),
@@ -200,6 +206,8 @@ static func _bag_models(meta_service: Variant, resolver: Variant, bags: Array, m
 			"collection_display_name": str(collection.get("display_name", "Collection")),
 			"collection_id": str(definition.get("collection_id", bag.get("collection_id", ""))),
 			"tier": str(definition.get("tier", bag.get("tier", ""))),
+			"group_label": "Unopened Bags · %s · %s" % [str(collection.get("display_name", "Collection")), str(definition.get("tier", bag.get("tier", ""))).capitalize()],
+			"count": 1,
 			"item_class": "unopened_bag",
 			"domain": "meta",
 			"icon_key": str(definition.get("icon_key", "")),
@@ -293,6 +301,39 @@ static func _slots(items: Array) -> Array:
 			"state_marker": str(item.get("state_marker", "")),
 		})
 	return result
+
+
+static func _sorted_meta_items(items: Array) -> Array:
+	var result: Array = []
+	for item_value in items:
+		if typeof(item_value) == TYPE_DICTIONARY:
+			result.append((item_value as Dictionary).duplicate(true))
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var a_group := str(a.get("group_label", a.get("collection_display_name", "")))
+		var b_group := str(b.get("group_label", b.get("collection_display_name", "")))
+		if a_group != b_group:
+			return a_group < b_group
+		var a_tier := _tier_rank(str(a.get("tier", "")))
+		var b_tier := _tier_rank(str(b.get("tier", "")))
+		if a_tier != b_tier:
+			return a_tier < b_tier
+		var a_name := str(a.get("display_name", ""))
+		var b_name := str(b.get("display_name", ""))
+		if a_name != b_name:
+			return a_name < b_name
+		return int(a.get("instance_id", 0)) < int(b.get("instance_id", 0))
+	)
+	return result
+
+
+static func _tier_rank(tier: String) -> int:
+	match tier.strip_edges().to_lower():
+		"blue": return 10
+		"purple": return 20
+		"pink": return 30
+		"red": return 40
+		"gold": return 50
+	return 0
 
 
 static func _flatten_container_items(containers: Array) -> Array:
