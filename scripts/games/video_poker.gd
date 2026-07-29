@@ -311,9 +311,9 @@ const SUIT_WORD := {0: "Spades", 1: "Hearts", 2: "Clubs", 3: "Diamonds"}
 # glass and button deck so the cabinet, not the surrounding room, is the focus.
 const VIDEO_POKER_BOARD_SIZE := Vector2(960, 540)
 const MACHINE_HEADER_RECT := Rect2(0, 0, 960, 74)
-const PAYTABLE_RECT := Rect2(42, 80, 674, 82)
-const PRIMARY_HAND_RECT := Rect2(42, 172, 674, 206)
-const STATUS_PANEL_RECT := Rect2(730, 80, 166, 298)
+const PAYTABLE_RECT := Rect2(42, 70, 854, 56)
+const PRIMARY_HAND_RECT := Rect2(42, 132, 854, 246)
+const STATUS_PANEL_RECT := Rect2(710, 74, 178, 50)
 const CARD_ROW_ORIGIN := Vector2(118, 232)
 const CARD_SIZE := Vector2(56, 64)
 const CARD_SPACING := 56.0
@@ -2968,24 +2968,27 @@ func _draw_paytable_grid(surface, surface_state: Dictionary) -> void:
 	var active_column := clampi(int(surface_state.get("active_paytable_column", level)), 0, maxi(0, pay_bets.size() - 1))
 	var win_key := str(surface_state.get("result_pay_key", ""))
 	var grid := PAYTABLE_RECT
+	var content_grid := grid
+	if STATUS_PANEL_RECT.position.x < grid.end.x and STATUS_PANEL_RECT.position.y < grid.end.y:
+		content_grid = Rect2(grid.position, Vector2(maxf(240.0, STATUS_PANEL_RECT.position.x - grid.position.x - 10.0), grid.size.y))
 	surface.draw_rect(grid, Color("#0b1020"))
 	surface.draw_rect(grid, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.32), false, 2)
 	surface.surface_label_centered("PAY TABLE - %s - BET %d COIN %s" % [
 		str(surface_state.get("variant_label", "Video Poker")).to_upper().left(24),
 		coin_count,
 		str(surface_state.get("coin_label", "1c")).to_upper(),
-	], Rect2(grid.position + Vector2(12, 6), Vector2(grid.size.x - 24, 18)), 13, C_YELLOW)
+	], Rect2(content_grid.position + Vector2(12, 6), Vector2(content_grid.size.x - 24, 18)), 13, C_YELLOW)
 	var column_count := 2 if rows.size() > 6 else 1
 	var rows_per_column := int(ceil(float(maxi(1, rows.size())) / float(column_count)))
 	var column_gap := 16.0
-	var column_width := (grid.size.x - 28.0 - column_gap * float(column_count - 1)) / float(column_count)
-	var row_h := (grid.size.y - 36.0) / float(maxi(1, rows_per_column))
+	var column_width := (content_grid.size.x - 28.0 - column_gap * float(column_count - 1)) / float(column_count)
+	var row_h := (content_grid.size.y - 36.0) / float(maxi(1, rows_per_column))
 	for i in range(rows.size()):
 		var row: Dictionary = rows[i] if typeof(rows[i]) == TYPE_DICTIONARY else {}
 		var column := i / rows_per_column
 		var row_index := i % rows_per_column
-		var x := grid.position.x + 14.0 + float(column) * (column_width + column_gap)
-		var y := grid.position.y + 32.0 + float(row_index) * row_h
+		var x := content_grid.position.x + 14.0 + float(column) * (column_width + column_gap)
+		var y := content_grid.position.y + 32.0 + float(row_index) * row_h
 		var row_rect := Rect2(x, y, column_width, row_h - 1.0)
 		var is_win := win_key != "" and str(row.get("key", "")) == win_key
 		if is_win:
@@ -3008,14 +3011,20 @@ func _draw_paytable_grid(surface, surface_state: Dictionary) -> void:
 
 func _draw_meters(surface, surface_state: Dictionary) -> void:
 	var panel := STATUS_PANEL_RECT
-	surface.surface_label_centered("MACHINE METERS", Rect2(panel.position + Vector2(10, 8), Vector2(panel.size.x - 20, 16)), 11, C_YELLOW)
+	var compact := panel.size.y < 120.0
+	surface.surface_label_centered("METERS" if compact else "MACHINE METERS", Rect2(panel.position + Vector2(8, 6), Vector2(panel.size.x - 16, 14)), 10 if compact else 11, C_YELLOW)
 	var gap := 8.0
 	var meter_w := (panel.size.x - 28.0 - gap) * 0.5
-	var meter_size := Vector2(meter_w, 34)
-	_draw_meter(surface, panel.position + Vector2(14, 30), meter_size, "CREDITS", int(surface_state.get("credits", 0)), C_YELLOW)
-	_draw_meter(surface, panel.position + Vector2(14 + meter_w + gap, 30), meter_size, "BET", int(surface_state.get("bet_credits", 0)), C_CYAN)
-	_draw_meter(surface, panel.position + Vector2(14, 70), meter_size, "WIN", int(surface_state.get("win_credits", 0)), C_TEAL)
-	_draw_meter(surface, panel.position + Vector2(14 + meter_w + gap, 70), meter_size, "PROG", int(surface_state.get("progressive_meter", 0)), C_AMBER)
+	var meter_h := 16.0 if compact else 34.0
+	var meter_size := Vector2(meter_w, meter_h)
+	var first_y := 18.0 if compact else 30.0
+	var second_y := 36.0 if compact else 70.0
+	_draw_meter(surface, panel.position + Vector2(14, first_y), meter_size, "CREDITS", int(surface_state.get("credits", 0)), C_YELLOW)
+	_draw_meter(surface, panel.position + Vector2(14 + meter_w + gap, first_y), meter_size, "BET", int(surface_state.get("bet_credits", 0)), C_CYAN)
+	_draw_meter(surface, panel.position + Vector2(14, second_y), meter_size, "WIN", int(surface_state.get("win_credits", 0)), C_TEAL)
+	_draw_meter(surface, panel.position + Vector2(14 + meter_w + gap, second_y), meter_size, "PROG", int(surface_state.get("progressive_meter", 0)), C_AMBER)
+	if compact:
+		return
 	surface.surface_label_centered("%d COIN  %s  %d PLAY" % [
 		int(surface_state.get("coin_count", 1)),
 		str(surface_state.get("coin_label", "1c")).to_upper(),
@@ -3027,6 +3036,9 @@ func _draw_meter(surface, pos: Vector2, size: Vector2, label: String, value: int
 	var rect := Rect2(pos, size)
 	surface.draw_rect(rect, Color("#05070d"))
 	surface.draw_rect(rect, Color(color.r, color.g, color.b, 0.35), false, 1)
+	if size.y < 24.0:
+		surface.surface_label("%s %s" % [label.left(3), str(value).left(6)], pos + Vector2(4, 13), 7, color)
+		return
 	surface.surface_label(label, pos + Vector2(6, 11), 8, Color(color.r, color.g, color.b, 0.70))
 	surface.surface_label(str(value).left(8), pos + Vector2(6, 25), 13, color)
 
@@ -3114,25 +3126,25 @@ func _draw_card_row(surface, surface_state: Dictionary, phase: String) -> void:
 	elif phase == "settled":
 		phase_label = str(surface_state.get("result_pay_label", "NO PAY")).to_upper()
 	surface.surface_label_centered(phase_label, Rect2(PRIMARY_HAND_RECT.position + Vector2(10, 8), Vector2(PRIMARY_HAND_RECT.size.x - 20, 18)), 13, C_YELLOW if phase == "idle" else C_CYAN)
-	var row_count := clampi(hand_count, 1, 3)
-	var row_gap := 4.0
-	var row_top := PRIMARY_HAND_RECT.position.y + 28.0
-	var usable_h := PRIMARY_HAND_RECT.size.y - 34.0
-	var row_h := (usable_h - row_gap * float(row_count - 1)) / float(row_count)
-	var label_w := 42.0
-	var card_gap := 5.0
-	var card_h := clampf(row_h - 4.0, 28.0, 104.0)
-	var card_w := clampf(minf(card_h * 0.72, (PRIMARY_HAND_RECT.size.x - label_w - card_gap * 6.0 - 12.0) / 5.0), 25.0, 78.0)
-	var start_x := PRIMARY_HAND_RECT.position.x + label_w + (PRIMARY_HAND_RECT.size.x - label_w - (card_w * 5.0 + card_gap * 4.0)) * 0.5
-	for row_index in range(row_count):
+	var slots := _hand_display_slots(hand_count)
+	for row_index in range(slots.size()):
+		var slot: Rect2 = slots[row_index]
 		var row_hand := hand
 		if (phase == "settled" or phase == "double_up") and row_index < final_hands.size():
 			row_hand = CardShoeScript.card_array(final_hands[row_index])
 			if row_hand.size() != HAND_SIZE:
 				row_hand = hand
-		var y := row_top + float(row_index) * (row_h + row_gap)
 		var row_label := "HAND %d" % (row_index + 1)
-		surface.surface_label(row_label, Vector2(PRIMARY_HAND_RECT.position.x + 8.0, y + card_h * 0.58), 8, C_CYAN if row_index == 0 else C_SOFT)
+		surface.draw_rect(slot, Color(0.0, 0.0, 0.0, 0.12))
+		surface.draw_rect(slot, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.22 if row_index == 0 else 0.12), false, 1)
+		var label_w := 54.0 if slot.size.x >= 430.0 else 42.0
+		var card_gap := 8.0 if slot.size.x >= 520.0 else 5.0
+		var card_h := clampf(slot.size.y - 20.0, 34.0, 142.0)
+		var card_w := clampf(minf(card_h * 0.72, (slot.size.x - label_w - card_gap * 4.0 - 12.0) / 5.0), 25.0, 102.0)
+		var row_w := card_w * 5.0 + card_gap * 4.0
+		var start_x := slot.position.x + label_w + maxf(0.0, (slot.size.x - label_w - row_w) * 0.5)
+		var y := slot.position.y + (slot.size.y - card_h) * 0.5 + 6.0
+		surface.surface_label(row_label, Vector2(slot.position.x + 8.0, slot.position.y + 16.0), 8, C_CYAN if row_index == 0 else C_SOFT)
 		for i in range(row_hand.size()):
 			var rect := Rect2(Vector2(start_x + float(i) * (card_w + card_gap), y), Vector2(card_w, card_h))
 			var held := row_index == 0 and holds.has(i)
@@ -3152,7 +3164,33 @@ func _draw_card_row(surface, surface_state: Dictionary, phase: String) -> void:
 	if phase == "hold":
 		pass
 	elif phase == "idle":
-		surface.surface_label_centered("DEAL A HAND", Rect2(PRIMARY_HAND_RECT.position + Vector2(10, 140), Vector2(PRIMARY_HAND_RECT.size.x - 20, 18)), 11, C_SOFT)
+		surface.surface_label_centered("DEAL A HAND", Rect2(PRIMARY_HAND_RECT.position + Vector2(10, PRIMARY_HAND_RECT.size.y - 28.0), Vector2(PRIMARY_HAND_RECT.size.x - 20, 18)), 11, C_SOFT)
+
+
+func _hand_display_slots(hand_count: int) -> Array:
+	var rect := PRIMARY_HAND_RECT.grow(-10.0)
+	rect.position.y += 24.0
+	rect.size.y -= 28.0
+	var safe_count := clampi(hand_count, 1, 3)
+	if safe_count == 1:
+		return [rect.grow(-6.0)]
+	if safe_count == 2:
+		var gap := 10.0
+		var row_h := (rect.size.y - gap) * 0.5
+		return [
+			Rect2(rect.position, Vector2(rect.size.x, row_h)),
+			Rect2(rect.position + Vector2(0, row_h + gap), Vector2(rect.size.x, row_h)),
+		]
+	var gap_x := 10.0
+	var gap_y := 10.0
+	var top_h := (rect.size.y - gap_y) * 0.5
+	var cell_w := (rect.size.x - gap_x) * 0.5
+	var bottom_x := rect.position.x + (rect.size.x - cell_w) * 0.5
+	return [
+		Rect2(rect.position, Vector2(cell_w, top_h)),
+		Rect2(rect.position + Vector2(cell_w + gap_x, 0), Vector2(cell_w, top_h)),
+		Rect2(Vector2(bottom_x, rect.position.y + top_h + gap_y), Vector2(cell_w, top_h)),
+	]
 
 
 func _draw_multi_hand_stack(surface, surface_state: Dictionary, phase: String) -> void:
@@ -3160,6 +3198,8 @@ func _draw_multi_hand_stack(surface, surface_state: Dictionary, phase: String) -
 	var results: Array = _copy_array(surface_state.get("hand_results", []))
 	var hand_count := maxi(1, int(surface_state.get("hand_count", 1)))
 	var panel := STATUS_PANEL_RECT
+	if panel.size.y < 120.0:
+		return
 	var list_top := panel.position.y + 126.0
 	surface.draw_rect(Rect2(panel.position.x + 12, list_top - 2.0, panel.size.x - 24, 1), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.22))
 	surface.surface_label(str(surface_state.get("multi_hand_mode", "1 Play")).to_upper(), Vector2(panel.position.x + 16, list_top + 12), 10, C_CYAN)
@@ -3270,7 +3310,7 @@ func _draw_suit_scaled(surface, pos: Vector2, suit: int, color: Color, scale: fl
 func _draw_info_line(surface, surface_state: Dictionary) -> void:
 	var info_rect := Rect2(PRIMARY_HAND_RECT.position + Vector2(8, -18), Vector2(PRIMARY_HAND_RECT.size.x - 16, 14))
 	surface.surface_label_centered(str(surface_state.get("info_text", "")).left(82), info_rect, 10, C_CYAN)
-	if bool(surface_state.get("pit_boss_watched", false)):
+	if bool(surface_state.get("pit_boss_watched", false)) and STATUS_PANEL_RECT.size.y >= 120.0:
 		surface.surface_label(str(surface_state.get("pit_boss_summary", "")).left(26), STATUS_PANEL_RECT.position + Vector2(16, 158), 9, C_PINK)
 
 
