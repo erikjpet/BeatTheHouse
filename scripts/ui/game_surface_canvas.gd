@@ -1141,7 +1141,7 @@ func _board_offset(scale: float) -> Vector2:
 
 
 func _active_board_size() -> Vector2:
-	if _surface_renderer() == "slot_machine":
+	if _surface_renderer() == "slot_machine" or _surface_renderer() == "card_machine":
 		return SLOT_BOARD_SIZE
 	return Vector2(BOARD_SIZE)
 
