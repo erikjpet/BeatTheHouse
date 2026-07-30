@@ -1234,7 +1234,7 @@ func _normalized_event_id_uncached(event_id: String) -> String:
 	if family_event == "scratch_paper_foley_loop" or family_event == "scratch_box_pop":
 		return family_event
 	match family_event:
-		"button", "button_pinball", "button_buffalo", "button_digital", "lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital", "reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital", "reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital", "gold_coin_tease", "double_gold_coin_tease", "bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital", "bumper", "pinball_money_ding", "bonus_step_buffalo", "bonus_step_digital", "jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital", "payout", "payout_digital", "bonus_total", "bonus_total_buffalo", "bonus_total_digital", "jackpot", "jackpot_buffalo", "jackpot_digital", "lose", "pull_tab_click", "pull_tab_thump", "paper_peek", "paper_peel", "blackjack_card", "blackjack_chip", "blackjack_felt", "blackjack_payout", "blackjack_bust", "blackjack_peek", "blackjack_count", "blackjack_distraction", "roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch", "roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout":
+		"button", "button_pinball", "button_buffalo", "button_digital", "lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital", "reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital", "reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital", "gold_coin_tease", "double_gold_coin_tease", "bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital", "bumper", "pinball_money_ding", "bonus_step_buffalo", "bonus_step_digital", "jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital", "payout", "payout_digital", "bonus_total", "bonus_total_buffalo", "bonus_total_digital", "jackpot", "jackpot_buffalo", "jackpot_digital", "lose", "pull_tab_click", "pull_tab_thump", "paper_peek", "paper_peel", "blackjack_card", "blackjack_chip", "blackjack_felt", "blackjack_payout", "blackjack_bust", "blackjack_peek", "blackjack_count", "blackjack_distraction", "video_poker_button", "video_poker_deal", "video_poker_hold", "video_poker_draw", "video_poker_cheat", "video_poker_cheat_beat", "video_poker_double", "video_poker_win", "roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch", "roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout":
 			return event_id
 		"slot_reel_spin_loop":
 			return "reel_loop"
@@ -1501,11 +1501,11 @@ func _event_sample(event_id: String, t: float, frame: int, seconds: float) -> fl
 		"video_poker_button":
 			return _sample_button(t, frame, seconds) * 0.72 + _sample_rounded_cabinet_click(t, frame, seconds) * 0.35
 		"video_poker_deal":
-			return _sample_blackjack_card(t, frame, seconds) * 0.70 + _sample_rounded_cabinet_click(t, frame, seconds) * 0.45
+			return _sample_blackjack_card(t, frame, seconds) * 0.70 + _sample_blackjack_card(t - 0.090, frame + 31, maxf(0.01, seconds - 0.090)) * 0.50 + _sample_rounded_cabinet_click(t, frame, seconds) * 0.35
 		"video_poker_hold":
 			return _sample_rounded_cabinet_click(t, frame, seconds)
 		"video_poker_draw":
-			return _sample_blackjack_card(t, frame, seconds) * 0.42 + _sample_coin_cascade(t, frame, seconds, 4) * 0.34
+			return _sample_blackjack_card(t, frame, seconds) * 0.60 + _sample_blackjack_card(t - 0.105, frame + 37, maxf(0.01, seconds - 0.105)) * 0.52 + _sample_blackjack_card(t - 0.220, frame + 71, maxf(0.01, seconds - 0.220)) * 0.44 + _sample_rounded_cabinet_click(t, frame, seconds) * 0.22
 		"video_poker_cheat":
 			return _sample_bonus_start_digital(t, frame, seconds) * 0.38 + _sample_blackjack_peek(t, frame, seconds) * 0.65
 		"video_poker_cheat_beat":
@@ -1549,68 +1549,65 @@ func _event_sample(event_id: String, t: float, frame: int, seconds: float) -> fl
 
 
 func _sample_button(t: float, frame: int, seconds: float) -> float:
-	var env := _decay_env(t, seconds, 0.010, 0.075)
-	var felt_press := _body_thump(t, seconds, 126.0, 0.16) * 0.62
-	var cap := _rounded_bell(t, 360.0, 0.09, 0.002) * 0.18
-	var velvet := _soft_noise(frame, 3, 5) * 0.045 * _pulse_window(t, 0.0, 0.040)
-	return (felt_press + cap + velvet) * env
+	var press := _cabinet_button_click(t, frame, 3, 0.92)
+	var return_tick := _cabinet_button_click(t - 0.052, frame + 17, 19, 0.38)
+	return (press + return_tick) * _decay_env(t, seconds, 0.001, 0.070)
 
 
 func _sample_drink_consumed(t: float, frame: int, seconds: float) -> float:
-	var glass_env := _decay_env(t, 0.16, 0.010, 0.120)
-	var glass := (_rounded_bell(t, 640.0, 0.18, 0.006) * 0.16 + _rounded_bell(t, 820.0, 0.14, 0.008) * 0.08) * glass_env
-	var sip_window := _pulse_window(t, 0.055, 0.285)
-	var liquid := (_soft_noise(frame, 1709, 17) * 0.095 + _warm_tone(t, 210.0, 0.55) * 0.030) * sip_window
-	var bubbles := _rounded_bell(t, 520.0 + 48.0 * sin(TAU * 5.0 * t), 0.10, 0.008) * 0.045 * _pulse_train(t, 11.0, 0.24) * sip_window
-	var swallow_t := t - 0.285
+	var glass_lift := _glass_tick(t, frame, 1709, 0.60)
+	var sip_window := _pulse_window(t, 0.055, 0.270)
+	var liquid := (_soft_noise(frame, 1711, 3) - _soft_noise(frame, 1721, 17)) * 0.075 * _pulse_train(t, 18.0, 0.70) * sip_window
+	var pour := _warm_tone(t, lerpf(260.0, 122.0, clampf(t / 0.30, 0.0, 1.0)), 0.28) * 0.030 * sip_window
+	var bubbles := _rounded_bell(t, 520.0 + 70.0 * sin(TAU * 4.7 * t), 0.09, 0.008) * 0.040 * _pulse_train(t, 13.0, 0.22) * sip_window
+	var swallow_t := t - 0.270
 	var swallow := 0.0
 	if swallow_t >= 0.0:
 		var swallow_progress := clampf(swallow_t / 0.24, 0.0, 1.0)
 		var swallow_frequency := lerpf(175.0, 82.0, swallow_progress)
 		var swallow_env := _decay_env(swallow_t, 0.25, 0.018, 0.13)
 		swallow = (_warm_tone(swallow_t, swallow_frequency, 0.40) * 0.15 + _soft_noise(frame, 1913, 19) * 0.020) * swallow_env
-	var settle := _rounded_bell(t - 0.46, 520.0, 0.16, 0.006) * 0.030 * _pulse_window(t, 0.46, seconds - 0.46)
-	return glass + liquid + bubbles + swallow + settle
+	var settle := _glass_tick(t - 0.455, frame + 29, 1741, 0.45)
+	return glass_lift + liquid + pour + bubbles + swallow + settle
 
 
 func _sample_phone_call(t: float, frame: int, seconds: float) -> float:
-	var ring_one := _pulse_window(t, 0.02, 0.34)
-	var ring_two := _pulse_window(t, 0.58, 0.34)
-	var dial_click := _pulse_window(t, 0.0, 0.045) * (_soft_noise(frame, 6029, 5) * 0.075 + _rounded_bell(t, 480.0, 0.07, 0.002) * 0.070)
-	var ring_env := ring_one + ring_two
-	var warble := sin(TAU * 5.2 * t) * 6.0
-	var bell_a := _warm_tone(t, 390.0 + warble, 0.46) * 0.16
-	var bell_b := _warm_tone(t, 492.0 - warble * 0.5, 0.32) * 0.10
-	var line_hiss := (_soft_noise(frame, 6043, 11) - _soft_noise(frame / 3, 6047, 11)) * 0.022 * _pulse_window(t, 0.04, seconds - 0.04)
+	var dial_click := _pulse_window(t, 0.0, 0.036) * (_soft_noise(frame, 6029, 5) * 0.055 + _rounded_bell(t, 520.0, 0.05, 0.002) * 0.045)
+	var ring_one := _telephone_ring_segment(t, frame, 0.025, 0.315)
+	var ring_two := _telephone_ring_segment(t, frame + 2300, 0.425, 0.315)
+	var line_hiss := (_soft_noise(frame, 6043, 11) - _soft_noise(frame / 3, 6047, 11)) * 0.010 * _pulse_window(t, 0.04, seconds - 0.04)
 	var cradle_tail_t := t - 0.96
 	var cradle := 0.0
 	if cradle_tail_t >= 0.0:
-		cradle = (_body_thump(cradle_tail_t, 0.12, 170.0, 0.13) + _soft_noise(frame, 6053, 7) * 0.035) * _decay_env(cradle_tail_t, 0.12, 0.004, 0.060)
-	return dial_click + (bell_a + bell_b) * ring_env * 0.85 + line_hiss + cradle
+		cradle = (_body_thump(cradle_tail_t, 0.12, 170.0, 0.10) + _soft_noise(frame, 6053, 7) * 0.026) * _decay_env(cradle_tail_t, 0.12, 0.004, 0.060)
+	return dial_click + ring_one + ring_two + line_hiss + cradle
 
 
 func _sample_scratch_paper_foley_loop(t: float, frame: int, seconds: float) -> float:
-	var cycle := t / maxf(0.001, seconds)
-	var grain_phase := fmod(cycle * 19.0, 1.0)
-	var grain_envelope := sin(PI * clampf(grain_phase, 0.0, 1.0))
-	var coarse := (_soft_noise(frame, 2719, 9) - _soft_noise(frame, 2729, 23)) * 0.075
-	var fiber := (_soft_noise(frame, 3253, 3) - _soft_noise(frame, 3259, 7)) * 0.030
-	var pressure := 0.60 + 0.22 * _noise(frame / 71, 3301)
-	return (coarse + fiber * grain_envelope) * pressure
+	var coin_grit := _scratch_coin_grit(t, frame, seconds, 2719, 0.85)
+	var latex_drag := _warm_tone(t, 72.0 + 12.0 * sin(TAU * 2.4 * t), 0.18) * 0.020
+	return coin_grit + latex_drag
 
 
 func _sample_scratch_box_pop(t: float, frame: int, seconds: float) -> float:
-	var snap := _pulse_window(t, 0.0, 0.040) * (_soft_noise(frame, 4547, 5) * 0.13 + _body_thump(t, seconds, 260.0, 0.13) * 0.18)
-	var paper_lift := _pulse_window(t, 0.018, 0.095) * (_soft_noise(frame, 4561, 3) - _soft_noise(frame, 4567, 13)) * 0.050
-	var soft_air := _warm_tone(t, lerpf(160.0, 88.0, clampf(t / maxf(0.001, seconds), 0.0, 1.0)), 0.36) * 0.040 * _decay_env(t, seconds, 0.004, 0.120)
-	return snap + paper_lift + soft_air
+	var foil_snap := _pulse_window(t, 0.0, 0.038) * (_soft_noise(frame, 4547, 3) * 0.100 + _body_thump(t, seconds, 240.0, 0.16) * 0.16)
+	var coin_lift := _inharmonic_coin_ping(t - 0.018, frame, 4561, 680.0, 0.26)
+	var dust := _scratch_coin_grit(t, frame + 53, seconds, 4567, 0.34) * _pulse_window(t, 0.012, 0.100)
+	return foil_snap + coin_lift + dust
 
 
 func _sample_lever(t: float, frame: int, seconds: float) -> float:
-	var pull := _pulse_window(t, 0.0, 0.16) * _warm_tone(t, lerpf(88.0, 44.0, clampf(t / 0.16, 0.0, 1.0)), 0.42) * 0.30
-	var spring := _pulse_window(t, 0.12, 0.16) * _rounded_bell(t, lerpf(380.0, 210.0, clampf((t - 0.12) / 0.16, 0.0, 1.0)), 0.18, 0.004) * 0.13
-	var latch := _pulse_window(t, 0.24, 0.08) * (_soft_noise(frame, 11, 5) * 0.15 + _body_thump(t, seconds, 86.0, 0.22) * 0.18)
-	return (pull + spring + latch) * _decay_env(t, seconds, 0.010, 0.280)
+	var handle_pull := _pulse_window(t, 0.0, 0.145) * _warm_tone(t, lerpf(96.0, 45.0, clampf(t / 0.145, 0.0, 1.0)), 0.30) * 0.28
+	var ratchet := 0.0
+	for i in range(5):
+		var local := t - (0.032 + float(i) * 0.034)
+		ratchet += _clay_chip_clack(local, frame + i * 41, 11 + i * 13, 0.34)
+	var spring_local := t - 0.170
+	var spring := 0.0
+	if spring_local >= 0.0:
+		spring = sin(TAU * lerpf(18.0, 8.0, clampf(spring_local / 0.14, 0.0, 1.0)) * spring_local) * _rounded_bell(spring_local, 360.0, 0.16, 0.003) * 0.090
+	var return_clunk := _pulse_window(t, 0.255, 0.075) * (_body_thump(t - 0.255, 0.10, 92.0, 0.45) + _soft_noise(frame, 31, 5) * 0.080)
+	return (handle_pull + ratchet + spring + return_clunk) * _decay_env(t, seconds, 0.004, 0.260)
 
 
 func _sample_nudge(t: float, frame: int, seconds: float) -> float:
@@ -1622,17 +1619,18 @@ func _sample_nudge(t: float, frame: int, seconds: float) -> float:
 
 func _sample_reel_loop(t: float, frame: int, seconds: float) -> float:
 	var local := fposmod(t, seconds)
-	var motor := _warm_tone(t, 58.0, 0.36) * 0.050 + _warm_tone(t, 116.0, 0.22) * 0.025
-	var tick_phase := fposmod(local * 14.0, 1.0)
-	var tick := _pulse_window(tick_phase, 0.0, 0.16) * (_rounded_bell(t, 430.0, 0.08, 0.004) * 0.055 + _soft_noise(frame, 41, 5) * 0.034)
-	var belt := _soft_noise(frame, 53, 17) * 0.020
-	return motor + tick + belt
+	var motor := _warm_tone(t, 58.0, 0.34) * 0.044 + _warm_tone(t, 116.0, 0.20) * 0.020
+	var tick_phase := fposmod(local * 18.0, 1.0)
+	var detent := _pulse_window(tick_phase, 0.0, 0.115) * (_clay_chip_clack(tick_phase * 0.035, frame, 41, 0.28) + _soft_noise(frame, 43, 5) * 0.018)
+	var belt := (_soft_noise(frame, 53, 17) - _soft_noise(frame, 59, 29)) * 0.016
+	return motor + detent + belt
 
 
 func _sample_reel_stop(t: float, frame: int, seconds: float) -> float:
-	var clack := _pulse_window(t, 0.0, 0.070) * (_soft_noise(frame, 61, 3) * 0.20 + _rounded_bell(t, 360.0, 0.13, 0.002) * 0.15)
-	var lock := _pulse_window(t, 0.055, 0.12) * _warm_tone(t, lerpf(190.0, 88.0, clampf((t - 0.055) / 0.12, 0.0, 1.0)), 0.35) * 0.21
-	return (clack + lock) * _decay_env(t, seconds, 0.001, 0.170)
+	var brake := _clay_chip_clack(t, frame, 61, 0.92)
+	var detent := _clay_chip_clack(t - 0.055, frame + 23, 67, 0.56)
+	var lock := _pulse_window(t, 0.070, 0.110) * _warm_tone(t - 0.070, lerpf(190.0, 82.0, clampf((t - 0.070) / 0.11, 0.0, 1.0)), 0.28) * 0.16
+	return (brake + detent + lock) * _decay_env(t, seconds, 0.001, 0.170)
 
 
 func _sample_buffalo_button(t: float, frame: int, seconds: float) -> float:
@@ -1642,9 +1640,9 @@ func _sample_buffalo_button(t: float, frame: int, seconds: float) -> float:
 
 
 func _sample_digital_button(t: float, frame: int, seconds: float) -> float:
-	var chirp := _rounded_bell(t, lerpf(520.0, 760.0, clampf(t / seconds, 0.0, 1.0)), 0.075, 0.006) * 0.14
-	var tick := _rounded_bell(t, 690.0, 0.050, 0.004) * 0.070 * _pulse_window(t, 0.0, 0.040)
-	return chirp + tick + _soft_noise(frame, 223, 5) * 0.014
+	var plastic := _cabinet_button_click(t, frame, 223, 0.55)
+	var chirp := _rounded_bell(t, 760.0, 0.050, 0.004) * 0.050 * _pulse_window(t, 0.0, 0.045)
+	return plastic + chirp + _soft_noise(frame, 229, 5) * 0.010
 
 
 func _sample_buffalo_reel_loop(t: float, frame: int, seconds: float) -> float:
@@ -1670,10 +1668,9 @@ func _sample_buffalo_reel_stop(t: float, frame: int, seconds: float) -> float:
 
 
 func _sample_gold_coin_tease(t: float, frame: int, seconds: float) -> float:
-	var clang := _rounded_bell(t, lerpf(560.0, 430.0, clampf(t / 0.18, 0.0, 1.0)), 0.28, 0.006) * 0.28
-	var shine := _rounded_bell(t, 840.0 + 32.0 * sin(TAU * 8.0 * t), 0.34, 0.008) * 0.070
-	var stomp := _sample_buffalo_reel_stop(t, frame, seconds) * 0.42
-	return clang + shine + stomp
+	var coin := _inharmonic_coin_ping(t, frame, 269, 610.0, 1.0)
+	var table := _body_thump(t, seconds, 110.0, 0.18) * _decay_env(t, seconds, 0.002, 0.180)
+	return coin + table
 
 
 func _sample_double_gold_coin_tease(t: float, frame: int, seconds: float) -> float:
@@ -1738,10 +1735,11 @@ func _sample_bonus_start(t: float, frame: int, seconds: float) -> float:
 
 
 func _sample_bumper(t: float, frame: int, seconds: float) -> float:
-	var pop := _rounded_bell(t, lerpf(620.0, 360.0, clampf(t / 0.12, 0.0, 1.0)), 0.16, 0.004) * 0.20
-	var body := _body_thump(t, seconds, 170.0, 0.18) * 0.48
-	var spark := _soft_noise(frame, 83, 3) * 0.045 * _pulse_window(t, 0.0, 0.055)
-	return pop + body + spark
+	var solenoid := _body_thump(t, seconds, 155.0, 0.34) * _pulse_window(t, 0.0, 0.115)
+	var rubber_pop := _rounded_bell(t, lerpf(760.0, 420.0, clampf(t / 0.13, 0.0, 1.0)), 0.15, 0.003) * 0.16
+	var contact := _soft_noise(frame, 83, 3) * 0.055 * _pulse_window(t, 0.0, 0.040)
+	var rebound := _rounded_bell(t - 0.066, 540.0, 0.11, 0.003) * 0.070
+	return solenoid + rubber_pop + contact + rebound
 
 
 func _sample_pinball_money_ding(t: float, frame: int, seconds: float) -> float:
@@ -1751,29 +1749,34 @@ func _sample_pinball_money_ding(t: float, frame: int, seconds: float) -> float:
 		var local := t - float(i) * 0.052
 		if local < 0.0:
 			continue
-		sample += _rounded_bell(local, float(notes[i]), 0.26, 0.006) * 0.110 * _decay_env(local, 0.24, 0.006, 0.190)
+		sample += _win_bell(local, frame + i * 13, 89 + i * 19, float(notes[i]), 0.74)
 	var body := _warm_tone(t, 261.63, 0.38) * 0.045 * _decay_env(t, seconds, 0.012, 0.260)
 	var strike := _soft_noise(frame, 89, 5) * 0.022 * _pulse_window(t, 0.0, 0.040)
 	return (sample + body + strike) * _decay_env(t, seconds, 0.002, 0.300)
 
 
 func _sample_jackpot_hit(t: float, frame: int, seconds: float) -> float:
-	var sweep := _rounded_bell(t, lerpf(330.0, 740.0, clampf(t / seconds, 0.0, 1.0)), 0.38, 0.014) * 0.16
-	var bell := _rounded_bell(t, 880.0, 0.32, 0.008) * 0.070
-	var coins := _sample_coin_cascade(t, frame, seconds, 4) * 0.55
-	return sweep + bell + coins
+	var bell := 0.0
+	for i in range(3):
+		var local := t - float(i) * 0.060
+		if local >= 0.0:
+			bell += _win_bell(local, frame + i * 17, 91 + i * 23, 659.25 + float(i) * 110.0, 0.70)
+	var coins := _sample_coin_cascade(t, frame, seconds, 4) * 0.42
+	return bell + coins
 
 
 func _sample_coin_cascade(t: float, frame: int, seconds: float, count: int) -> float:
 	var sample := 0.0
 	for i in range(count):
-		var start := 0.030 + float(i) * seconds / float(count + 1)
+		var scatter := float((i * 37) % 23) * 0.0015
+		var start := 0.024 + float(i) * seconds / float(count + 1) + scatter
 		var local := t - start
 		if local < 0.0:
 			continue
-		var env := _decay_env(local, 0.20, 0.006, 0.170)
-		var freq := 430.0 + float((i * 83) % 300)
-		sample += (_rounded_bell(local, freq, 0.20, 0.004) * 0.120 + _soft_noise(frame + i * 17, 97, 5) * 0.018) * env
+		var freq := 470.0 + float((i * 113) % 520)
+		sample += _inharmonic_coin_ping(local, frame + i * 31, 97 + i * 17, freq, 0.72)
+		var tabletop := _soft_noise(frame + i * 19, 101, 5) * 0.012 * _pulse_window(local, 0.030, 0.065)
+		sample += tabletop
 	return sample * _decay_env(t, seconds, 0.006, seconds * 0.82)
 
 
@@ -1790,13 +1793,13 @@ func _sample_bonus_total(t: float, frame: int, seconds: float) -> float:
 
 func _sample_jackpot(t: float, frame: int, seconds: float) -> float:
 	var notes := [392.0, 523.25, 659.25, 783.99, 1046.5, 1318.5]
-	var sample := _sample_coin_cascade(t, frame, seconds, 16) * 0.70
+	var sample := _sample_coin_cascade(t, frame, seconds, 16) * 0.58
 	for i in range(notes.size()):
 		var start := float(i) * 0.105
 		var local := t - start
 		if local < 0.0:
 			continue
-		sample += _rounded_bell(local, float(notes[i]), 0.48, 0.010) * 0.095 * _decay_env(local, 0.48, 0.010, 0.360)
+		sample += _win_bell(local, frame + i * 29, 121 + i * 11, float(notes[i]), 0.78)
 	sample += _warm_tone(t, 196.0, 0.36) * 0.050 * _decay_env(t, seconds, 0.020, seconds * 0.90)
 	return sample
 
@@ -1808,36 +1811,37 @@ func _sample_lose(t: float, frame: int, seconds: float) -> float:
 
 
 func _sample_pull_tab_thump(t: float, frame: int, seconds: float) -> float:
-	var thump := _body_thump(t, seconds, 78.0, 0.36) * _decay_env(t, seconds, 0.004, 0.190)
-	var latch := _pulse_window(t, 0.020, 0.075) * (_soft_noise(frame, 127, 5) * 0.14 + _rounded_bell(t, 380.0, 0.12, 0.004) * 0.075)
-	var drop := _pulse_window(t, 0.140, 0.090) * (_soft_noise(frame, 131, 7) * 0.090 + _body_thump(t - 0.14, 0.12, 150.0, 0.20) * 0.35)
-	return thump + latch + drop
+	var thump := _body_thump(t, seconds, 82.0, 0.32) * _decay_env(t, seconds, 0.004, 0.190)
+	var cardboard := _paper_friction(t, frame, 127, seconds, 0.70) * _pulse_window(t, 0.010, 0.105)
+	var latch := _clay_chip_clack(t - 0.026, frame, 131, 0.34)
+	var drop := _pulse_window(t, 0.140, 0.090) * (_soft_noise(frame, 137, 7) * 0.060 + _body_thump(t - 0.14, 0.12, 150.0, 0.22) * 0.30)
+	return thump + cardboard + latch + drop
 
 
 func _sample_pull_tab_click(t: float, frame: int, seconds: float) -> float:
-	var strike := _pulse_window(t, 0.0, 0.050) * (_rounded_bell(t, 520.0, 0.10, 0.004) * 0.15 + _soft_noise(frame, 125, 5) * 0.065)
-	var relay := _pulse_window(t, 0.045, 0.065) * (_rounded_bell(t, 410.0, 0.12, 0.004) * 0.090 + _soft_noise(frame, 129, 7) * 0.050)
-	var spring := _warm_tone(t, 108.0, 0.25) * 0.055 * _decay_env(t, seconds, 0.006, 0.120)
-	return (strike + relay + spring) * _decay_env(t, seconds, 0.002, 0.130)
+	var tab_snap := _pulse_window(t, 0.0, 0.050) * (_soft_noise(frame, 125, 3) * 0.095 + _rounded_bell(t, 620.0, 0.070, 0.003) * 0.060)
+	var paper_tear := _paper_friction(t - 0.030, frame + 17, 129, 0.12, 0.62)
+	var spring := _warm_tone(t, 108.0, 0.22) * 0.040 * _decay_env(t, seconds, 0.006, 0.120)
+	return (tab_snap + paper_tear + spring) * _decay_env(t, seconds, 0.002, 0.130)
 
 
 func _sample_paper_peek(t: float, frame: int, seconds: float) -> float:
-	var crinkle := _soft_noise(frame, 137, 3) * 0.090 * _pulse_train(t, 34.0, 0.62)
-	var bend := _warm_tone(t, 190.0, 0.30) * 0.045 * _decay_env(t, seconds, 0.008, 0.130)
-	return (crinkle + bend) * _decay_env(t, seconds, 0.006, 0.150)
+	var crinkle := _paper_friction(t, frame, 137, seconds, 0.82)
+	var bend := _warm_tone(t, 190.0, 0.26) * 0.034 * _decay_env(t, seconds, 0.008, 0.130)
+	return crinkle + bend
 
 
 func _sample_paper_peel(t: float, frame: int, seconds: float) -> float:
-	var tear := _soft_noise(frame, 149, 3) * 0.120 * _pulse_train(t, 42.0, 0.55) * _decay_env(t, seconds, 0.012, 0.220)
-	var zipper := _warm_tone(t, lerpf(320.0, 210.0, clampf(t / seconds, 0.0, 1.0)), 0.22) * 0.052 * _decay_env(t, seconds, 0.006, 0.260)
-	var snap := _pulse_window(t, 0.225, 0.055) * (_soft_noise(frame, 151, 5) * 0.090 + _rounded_bell(t, 520.0, 0.08, 0.004) * 0.050)
+	var tear := _paper_friction(t, frame, 149, seconds, 1.10) * _pulse_train(t, 46.0, 0.65)
+	var zipper := _warm_tone(t, lerpf(320.0, 210.0, clampf(t / seconds, 0.0, 1.0)), 0.20) * 0.038 * _decay_env(t, seconds, 0.006, 0.260)
+	var snap := _pulse_window(t, 0.225, 0.055) * (_soft_noise(frame, 151, 5) * 0.070 + _rounded_bell(t, 520.0, 0.08, 0.004) * 0.040)
 	return tear + zipper + snap
 
 
 func _sample_blackjack_card(t: float, frame: int, seconds: float) -> float:
-	var slide := _soft_noise(frame, 163, 3) * 0.080 * _pulse_train(t, 52.0, 0.46) * _decay_env(t, seconds, 0.006, 0.135)
-	var snap := _pulse_window(t, 0.070, 0.060) * (_rounded_bell(t, 430.0, 0.10, 0.004) * 0.10 + _soft_noise(frame, 167, 7) * 0.070)
-	var felt := _warm_tone(t, lerpf(150.0, 74.0, clampf(t / seconds, 0.0, 1.0)), 0.24) * 0.055 * _decay_env(t, seconds, 0.004, 0.110)
+	var slide := _paper_friction(t, frame, 163, seconds, 0.72) * _pulse_train(t, 54.0, 0.58)
+	var snap := _pulse_window(t, 0.070, 0.060) * (_rounded_bell(t, 430.0, 0.08, 0.003) * 0.060 + _soft_noise(frame, 167, 5) * 0.090)
+	var felt := _warm_tone(t, lerpf(132.0, 70.0, clampf(t / seconds, 0.0, 1.0)), 0.18) * 0.038 * _decay_env(t, seconds, 0.004, 0.110)
 	return slide + snap + felt
 
 
@@ -1846,13 +1850,8 @@ func _sample_blackjack_chip(t: float, frame: int, seconds: float) -> float:
 	for i in range(4):
 		var start := 0.012 + float(i) * 0.050
 		var local := t - start
-		if local < 0.0:
-			continue
-		var ring_freq := 420.0 + float(i) * 74.0
-		var ring := _rounded_bell(local, ring_freq, 0.18, 0.004) * 0.11
-		var ceramic := _soft_noise(frame + i * 23, 173, 5) * 0.042
-		sample += (ring + ceramic) * _decay_env(local, 0.20, 0.002, 0.150)
-	var stack := _body_thump(t, seconds, 110.0, 0.20) * 0.25
+		sample += _clay_chip_clack(local, frame + i * 23, 173 + i * 17, 0.62)
+	var stack := _body_thump(t, seconds, 112.0, 0.18) * 0.22
 	return (sample + stack) * _decay_env(t, seconds, 0.002, 0.260)
 
 
@@ -1863,14 +1862,16 @@ func _sample_blackjack_felt(t: float, frame: int, seconds: float) -> float:
 
 
 func _sample_blackjack_payout(t: float, frame: int, seconds: float) -> float:
-	var chips := _sample_coin_cascade(t, frame, seconds, 8) * 0.62
+	var chips := 0.0
+	for i in range(8):
+		chips += _clay_chip_clack(t - (0.030 + float(i) * 0.066), frame + i * 17, 199 + i * 11, 0.50)
 	var table := _warm_tone(t, 96.0, 0.28) * 0.060 * _decay_env(t, seconds, 0.012, 0.540)
 	var accent := 0.0
 	for i in range(3):
 		var start := 0.11 + float(i) * 0.12
 		var local := t - start
 		if local >= 0.0:
-			accent += _rounded_bell(local, 430.0 + float(i) * 92.0, 0.24, 0.006) * 0.060 * _decay_env(local, 0.24, 0.004, 0.170)
+			accent += _clay_chip_clack(local, frame + i * 21, 211 + i * 13, 0.34)
 	return chips + table + accent
 
 
@@ -1895,22 +1896,20 @@ func _sample_blackjack_count(t: float, frame: int, seconds: float) -> float:
 
 
 func _sample_blackjack_distraction(t: float, frame: int, seconds: float) -> float:
-	var glass := _sample_coin_cascade(t, frame, seconds, 3) * 0.28
+	var glass := _glass_tick(t, frame, 211, 0.62) + _glass_tick(t - 0.095, frame + 23, 223, 0.38)
 	var chatter := _soft_noise(frame, 211, 11) * 0.055 * _pulse_train(t, 20.0, 0.56) * _decay_env(t, seconds, 0.012, 0.360)
 	var bump := _body_thump(t, seconds, 140.0, 0.18) * 0.38
 	return glass + chatter + bump
 
 
 func _sample_rounded_cabinet_click(t: float, frame: int, seconds: float) -> float:
-	var press := _pulse_window(t, 0.0, 0.052) * (_body_thump(t, 0.12, 136.0, 0.18) * 0.18 + _soft_noise(frame, 503, 5) * 0.055)
-	var lamp := _rounded_bell(t, 460.0, 0.10, 0.004) * 0.060 * _decay_env(t, seconds, 0.004, 0.090)
-	return press + lamp
+	return _cabinet_button_click(t, frame, 503, 0.72) * _decay_env(t, seconds, 0.001, 0.090)
 
 
 func _sample_roulette_chip_select(t: float, frame: int, seconds: float) -> float:
-	var snap := _pulse_window(t, 0.0, 0.045) * (_rounded_bell(t, 480.0, 0.10, 0.004) * 0.12 + _soft_noise(frame, 337, 5) * 0.045)
-	var ceramic := _rounded_bell(t, 430.0, 0.12, 0.004) * 0.070
-	var tray := _body_thump(t, seconds, 132.0, 0.14) * 0.22
+	var snap := _clay_chip_clack(t, frame, 337, 0.76)
+	var ceramic := _clay_chip_clack(t - 0.038, frame + 19, 347, 0.34)
+	var tray := _body_thump(t, seconds, 132.0, 0.12) * 0.18
 	return (snap + ceramic + tray) * _decay_env(t, seconds, 0.001, 0.120)
 
 
@@ -1919,19 +1918,14 @@ func _sample_roulette_chip_place(t: float, frame: int, seconds: float) -> float:
 	var starts := [0.0, 0.038, 0.082]
 	for i in range(starts.size()):
 		var local := t - float(starts[i])
-		if local < 0.0:
-			continue
-		var freq := 410.0 + float(i) * 68.0
-		var ring := _rounded_bell(local, freq, 0.16, 0.004) * 0.095
-		var edge := _soft_noise(frame + i * 19, 347, 5) * 0.044
-		sample += (ring + edge) * _decay_env(local, 0.16, 0.001, 0.125)
+		sample += _clay_chip_clack(local, frame + i * 19, 347 + i * 17, 0.55)
 	var felt := _warm_tone(t, 88.0, 0.30) * 0.060 * _decay_env(t, seconds, 0.004, 0.210)
 	return (sample + felt) * _decay_env(t, seconds, 0.001, 0.240)
 
 
 func _sample_roulette_chip_lift(t: float, frame: int, seconds: float) -> float:
-	var scrape := _soft_noise(frame, 359, 3) * 0.070 * _pulse_train(t, 42.0, 0.48) * _decay_env(t, seconds, 0.006, 0.140)
-	var click := _pulse_window(t, 0.070, 0.050) * (_rounded_bell(t, 430.0, 0.10, 0.004) * 0.070 + _soft_noise(frame, 367, 7) * 0.034)
+	var scrape := _soft_noise(frame, 359, 3) * 0.050 * _pulse_train(t, 42.0, 0.48) * _decay_env(t, seconds, 0.006, 0.140)
+	var click := _clay_chip_clack(t - 0.070, frame, 367, 0.46)
 	var felt := _warm_tone(t, 74.0, 0.26) * 0.038 * _decay_env(t, seconds, 0.006, 0.170)
 	return scrape + click + felt
 
@@ -1940,12 +1934,7 @@ func _sample_roulette_chip_stack(t: float, frame: int, seconds: float) -> float:
 	var sample := 0.0
 	for i in range(7):
 		var local := t - (0.012 + float(i) * 0.044)
-		if local < 0.0:
-			continue
-		var freq := 360.0 + float((i * 47) % 240)
-		var tick := _rounded_bell(local, freq, 0.17, 0.004) * 0.075
-		var ceramic := _soft_noise(frame + i * 29, 373, 5) * 0.038
-		sample += (tick + ceramic) * _decay_env(local, 0.18, 0.001, 0.125)
+		sample += _clay_chip_clack(local, frame + i * 29, 373 + i * 17, 0.48)
 	var stack_body := _warm_tone(t, 112.0, 0.28) * 0.060 * _decay_env(t, seconds, 0.006, 0.320)
 	return (sample + stack_body) * _decay_env(t, seconds, 0.001, 0.360)
 
@@ -1955,55 +1944,50 @@ func _sample_roulette_chip_sweep(t: float, frame: int, seconds: float) -> float:
 	var sample := scrape + _warm_tone(t, 62.0, 0.22) * 0.060 * _decay_env(t, seconds, 0.010, 0.420)
 	for i in range(6):
 		var local := t - (0.030 + float(i) * 0.058)
-		if local < 0.0:
-			continue
-		var ping := _rounded_bell(local, 360.0 + float(i) * 55.0, 0.15, 0.004) * 0.052
-		sample += (ping + _soft_noise(frame + i * 31, 397, 7) * 0.030) * _decay_env(local, 0.15, 0.002, 0.110)
+		sample += _clay_chip_clack(local, frame + i * 31, 397 + i * 19, 0.38)
 	return sample
 
 
 func _sample_roulette_rotor_launch(t: float, frame: int, seconds: float) -> float:
-	var hand_push := _body_thump(t, seconds, 76.0, 0.28) * 0.56
-	var wood := _soft_noise(frame, 409, 7) * 0.046 * _pulse_train(t, 30.0, 0.52) * _decay_env(t, seconds, 0.012, 0.420)
-	var spindle := _warm_tone(t, lerpf(108.0, 156.0, clampf(t / seconds, 0.0, 1.0)), 0.30) * 0.078 * _decay_env(t, seconds, 0.024, 0.500)
-	var ball_throw := _pulse_window(t, 0.240, 0.110) * (_rounded_bell(t, 620.0, 0.14, 0.006) * 0.060 + _soft_noise(frame, 419, 5) * 0.040)
+	var hand_push := _body_thump(t, seconds, 76.0, 0.28) * 0.48
+	var wood := _soft_noise(frame, 409, 7) * 0.036 * _pulse_train(t, 30.0, 0.52) * _decay_env(t, seconds, 0.012, 0.420)
+	var spindle := _warm_tone(t, lerpf(108.0, 156.0, clampf(t / seconds, 0.0, 1.0)), 0.26) * 0.066 * _decay_env(t, seconds, 0.024, 0.500)
+	var ball_throw := _pulse_window(t, 0.240, 0.110) * (_ivory_ball_tick(t - 0.240, frame, 419, 0.62) + _soft_noise(frame, 421, 5) * 0.025)
 	return hand_push + wood + spindle + ball_throw
 
 
 func _sample_roulette_ball_loop(t: float, frame: int, seconds: float) -> float:
 	var local := fposmod(t, seconds)
-	var tick_phase := fposmod(local * 24.0, 1.0)
-	var tick := _pulse_window(tick_phase, 0.0, 0.16) * (_rounded_bell(t, 560.0, 0.08, 0.006) * 0.028 + _soft_noise(frame, 431, 5) * 0.018)
-	var rim := _warm_tone(t, 92.0, 0.18) * 0.024 + _warm_tone(t, 184.0, 0.12) * 0.013
+	var tick_phase := fposmod(local * 30.0, 1.0)
+	var tick := _pulse_window(tick_phase, 0.0, 0.115) * (_ivory_ball_tick(tick_phase * 0.028, frame, 431, 0.22) + _soft_noise(frame, 433, 5) * 0.010)
+	var rim := _warm_tone(t, 92.0, 0.16) * 0.020 + _warm_tone(t, 184.0, 0.10) * 0.011
 	var air := _soft_noise(frame, 439, 23) * 0.010
 	var rotor := _warm_tone(t, 37.0, 0.16) * 0.016
 	return tick + rim + air + rotor
 
 
 func _sample_roulette_ball_rim_tick(t: float, frame: int, seconds: float) -> float:
-	var ivory := _rounded_bell(t, lerpf(720.0, 460.0, clampf(t / seconds, 0.0, 1.0)), 0.09, 0.004) * 0.095
+	var ivory := _ivory_ball_tick(t, frame, 443, 0.72)
 	var rail := _warm_tone(t, 230.0, 0.24) * 0.040 * _decay_env(t, seconds, 0.004, 0.120)
 	var grain := _soft_noise(frame, 443, 5) * 0.030 * _pulse_window(t, 0.0, 0.055)
 	return ivory + rail + grain
 
 
 func _sample_roulette_ball_roll(t: float, frame: int, seconds: float) -> float:
-	var tick_rate := lerpf(28.0, 16.0, clampf(t / seconds, 0.0, 1.0))
-	var tick := _pulse_train(t, tick_rate, 0.30) * (_rounded_bell(t, 560.0, 0.08, 0.004) * 0.052 + _soft_noise(frame, 307, 5) * 0.030)
+	var tick_rate := lerpf(33.0, 13.0, clampf(t / seconds, 0.0, 1.0))
+	var tick := _pulse_train(t, tick_rate, 0.28) * (_ivory_ball_tick(t, frame, 307, 0.40) + _soft_noise(frame, 309, 5) * 0.016)
 	var rim := _warm_tone(t, 84.0, 0.20) * 0.030 + _warm_tone(t, 168.0, 0.13) * 0.016
 	var hiss := _soft_noise(frame, 311, 17) * 0.014
 	return (tick + rim + hiss) * _decay_env(t, seconds, 0.006, 0.240)
 
 
 func _sample_roulette_ball_drop(t: float, frame: int, seconds: float) -> float:
-	var whirr := _rounded_bell(t, lerpf(620.0, 340.0, clampf(t / seconds, 0.0, 1.0)), 0.22, 0.008) * 0.052
+	var whirr := _warm_tone(t, lerpf(220.0, 150.0, clampf(t / seconds, 0.0, 1.0)), 0.18) * 0.030 * _decay_env(t, seconds, 0.006, 0.280)
 	var rail := _sample_roulette_ball_rim_tick(t, frame, seconds) * 0.68
 	var diamonds := 0.0
 	for i in range(4):
 		var local := t - (0.105 + float(i) * 0.052)
-		if local < 0.0:
-			continue
-		diamonds += (_rounded_bell(local, 560.0 - float(i) * 55.0, 0.10, 0.004) * 0.048 + _soft_noise(frame + i * 23, 449, 5) * 0.026) * _decay_env(local, 0.10, 0.002, 0.080)
+		diamonds += _ivory_ball_tick(local, frame + i * 23, 449 + i * 17, 0.38)
 	return whirr + rail + diamonds
 
 
@@ -2014,9 +1998,8 @@ func _sample_roulette_ball_scatter(t: float, frame: int, seconds: float) -> floa
 		var local := t - start
 		if local < 0.0:
 			continue
-		var freq := 620.0 - float(i) * 62.0
-		var click := _rounded_bell(local, freq, 0.12, 0.003) * 0.085 + _soft_noise(frame + i * 19, 317, 5) * 0.046
-		var body := _warm_tone(local, 190.0 - float(i) * 14.0, 0.24) * 0.045
+		var click := _ivory_ball_tick(local, frame + i * 19, 317 + i * 11, 0.66)
+		var body := _warm_tone(local, 190.0 - float(i) * 14.0, 0.20) * 0.038
 		sample += (click + body) * _decay_env(local, 0.13, 0.001, 0.105)
 	return sample * _decay_env(t, seconds, 0.002, 0.360)
 
@@ -2029,7 +2012,7 @@ func _sample_roulette_ball_bounce(t: float, frame: int, seconds: float) -> float
 		if local < 0.0:
 			continue
 		var strength := pow(0.72, float(i))
-		var ivory := _rounded_bell(local, 620.0 - float(i) * 58.0, 0.15, 0.003) * 0.110
+		var ivory := _ivory_ball_tick(local, frame + i * 31, 331 + i * 13, 0.72)
 		var pocket := _warm_tone(local, 180.0 - float(i) * 14.0, 0.26) * 0.105
 		var scrape := _soft_noise(frame + i * 31, 331, 5) * 0.040
 		sample += (ivory + pocket + scrape) * strength * _decay_env(local, 0.17 + float(i) * 0.025, 0.001, 0.145)
@@ -2037,15 +2020,15 @@ func _sample_roulette_ball_bounce(t: float, frame: int, seconds: float) -> float
 
 
 func _sample_roulette_ball_pocket(t: float, frame: int, seconds: float) -> float:
-	var clack := _pulse_window(t, 0.0, 0.075) * (_rounded_bell(t, 560.0, 0.12, 0.003) * 0.115 + _soft_noise(frame, 461, 5) * 0.048)
+	var clack := _pulse_window(t, 0.0, 0.075) * (_ivory_ball_tick(t, frame, 461, 0.72) + _soft_noise(frame, 461, 5) * 0.035)
 	var pocket := _body_thump(t, seconds, 190.0, 0.26) * 0.62
-	var settle := _pulse_window(t, 0.155, 0.110) * (_rounded_bell(t, 420.0, 0.13, 0.004) * 0.052 + _soft_noise(frame, 467, 7) * 0.026)
+	var settle := _pulse_window(t, 0.155, 0.110) * (_ivory_ball_tick(t - 0.155, frame + 17, 467, 0.38) + _soft_noise(frame, 467, 7) * 0.020)
 	return (clack + pocket + settle) * _decay_env(t, seconds, 0.001, 0.360)
 
 
 func _sample_roulette_dolly_tap(t: float, frame: int, seconds: float) -> float:
 	var wood := _body_thump(t, seconds, 165.0, 0.18) * 0.42
-	var tap := _pulse_window(t, 0.035, 0.060) * (_rounded_bell(t, 430.0, 0.10, 0.004) * 0.045 + _soft_noise(frame, 479, 5) * 0.026)
+	var tap := _pulse_window(t, 0.035, 0.060) * (_clay_chip_clack(t - 0.035, frame, 479, 0.30) + _soft_noise(frame, 479, 5) * 0.018)
 	var felt := _soft_noise(frame, 487, 11) * 0.024 * _pulse_window(t, 0.0, 0.090)
 	return wood + tap + felt
 
@@ -2056,10 +2039,97 @@ func _sample_roulette_payout(t: float, frame: int, seconds: float) -> float:
 	var accent := 0.0
 	for i in range(4):
 		var local := t - (0.180 + float(i) * 0.095)
-		if local < 0.0:
-			continue
-		accent += _rounded_bell(local, 420.0 + float(i) * 70.0, 0.20, 0.004) * 0.050 * _decay_env(local, 0.20, 0.002, 0.150)
+		accent += _clay_chip_clack(local, frame + i * 19, 491 + i * 13, 0.34)
 	return chips + tray + accent
+
+
+func _telephone_ring_segment(t: float, frame: int, start: float, duration: float) -> float:
+	var local := t - start
+	if local < 0.0 or local > duration:
+		return 0.0
+	var envelope := _pulse_window(local, 0.0, duration)
+	var warble := sin(TAU * 12.5 * local) * 5.0
+	var tremolo := 0.54 + 0.46 * absf(sin(TAU * 20.0 * local))
+	var tone_a := sin(TAU * (440.0 + warble) * local) * 0.52
+	var tone_b := sin(TAU * (480.0 - warble * 0.65) * local + 0.15) * 0.48
+	var bell_body := sin(TAU * 220.0 * local) * 0.10
+	var striker := _soft_noise(frame, 6071, 5) * 0.030 * _pulse_window(local, 0.0, 0.026)
+	return (tone_a + tone_b + bell_body) * envelope * tremolo * 0.135 + striker
+
+
+func _inharmonic_coin_ping(local: float, frame: int, seed: int, base_frequency: float, strength: float) -> float:
+	if local < 0.0:
+		return 0.0
+	var strike := _soft_noise(frame, seed, 3) * 0.065 * _pulse_window(local, 0.0, 0.018)
+	var env := _decay_env(local, 0.30, 0.002, 0.235)
+	var p1 := sin(TAU * base_frequency * local)
+	var p2 := sin(TAU * base_frequency * 2.62 * local + 0.17) * 0.46
+	var p3 := sin(TAU * base_frequency * 3.83 * local + 0.31) * 0.24
+	var p4 := sin(TAU * base_frequency * 5.07 * local + 0.43) * 0.12
+	return ((p1 + p2 + p3 + p4) * 0.105 * env + strike) * strength
+
+
+func _win_bell(local: float, frame: int, seed: int, base_frequency: float, strength: float) -> float:
+	if local < 0.0:
+		return 0.0
+	var strike := _soft_noise(frame, seed, 3) * 0.030 * _pulse_window(local, 0.0, 0.022)
+	var bell := _rounded_bell(local, base_frequency, 0.42, 0.006) * 0.092
+	var shimmer := sin(TAU * base_frequency * 2.01 * local + 0.12) * 0.026 * _decay_env(local, 0.50, 0.006, 0.400)
+	return (bell + shimmer + strike) * strength
+
+
+func _clay_chip_clack(local: float, frame: int, seed: int, strength: float) -> float:
+	if local < 0.0:
+		return 0.0
+	var edge := _soft_noise(frame, seed, 3) * 0.070 * _pulse_window(local, 0.0, 0.030)
+	var body := _warm_tone(local, 176.0 + float(seed % 37), 0.16) * 0.085 * _decay_env(local, 0.13, 0.001, 0.095)
+	var low := _body_thump(local, 0.14, 118.0 + float(seed % 23), 0.20)
+	var faint_ring := sin(TAU * (330.0 + float(seed % 71)) * local) * 0.030 * _decay_env(local, 0.16, 0.002, 0.110)
+	return (edge + body + low + faint_ring) * strength
+
+
+func _cabinet_button_click(local: float, frame: int, seed: int, strength: float) -> float:
+	if local < 0.0:
+		return 0.0
+	var cap_snap := _soft_noise(frame, seed, 3) * 0.065 * _pulse_window(local, 0.0, 0.026)
+	var plunger := _body_thump(local, 0.11, 138.0 + float(seed % 19), 0.20)
+	var plastic := _rounded_bell(local, 360.0 + float(seed % 90), 0.070, 0.003) * 0.035
+	return (cap_snap + plunger + plastic) * _decay_env(local, 0.10, 0.001, 0.080) * strength
+
+
+func _paper_friction(t: float, frame: int, seed: int, seconds: float, strength: float) -> float:
+	if t < 0.0 or t > seconds:
+		return 0.0
+	var fibers := (_soft_noise(frame, seed, 3) - _soft_noise(frame, seed + 7, 13)) * 0.062
+	var crinkle := _soft_noise(frame, seed + 17, 5) * 0.040 * _pulse_train(t, 38.0, 0.54)
+	return (fibers + crinkle) * _decay_env(t, seconds, 0.006, seconds * 0.78) * strength
+
+
+func _scratch_coin_grit(t: float, frame: int, seconds: float, seed: int, strength: float) -> float:
+	if t < 0.0 or t > seconds:
+		return 0.0
+	var coarse := (_soft_noise(frame, seed, 3) - _soft_noise(frame, seed + 11, 23)) * 0.064
+	var latex := _soft_noise(frame, seed + 23, 5) * 0.038 * _pulse_train(t, 54.0, 0.58)
+	var foil_edge := _inharmonic_coin_ping(fposmod(t, 0.082), frame, seed + 41, 860.0, 0.16) * _pulse_train(t, 13.0, 0.20)
+	return (coarse + latex + foil_edge) * strength
+
+
+func _ivory_ball_tick(local: float, frame: int, seed: int, strength: float) -> float:
+	if local < 0.0:
+		return 0.0
+	var tick := _rounded_bell(local, 760.0 + float(seed % 80), 0.060, 0.002) * 0.075
+	var hard_edge := _soft_noise(frame, seed, 3) * 0.045 * _pulse_window(local, 0.0, 0.018)
+	var wheel := _warm_tone(local, 210.0 + float(seed % 30), 0.14) * 0.026 * _decay_env(local, 0.09, 0.001, 0.070)
+	return (tick + hard_edge + wheel) * strength
+
+
+func _glass_tick(local: float, frame: int, seed: int, strength: float) -> float:
+	if local < 0.0:
+		return 0.0
+	var glass := _rounded_bell(local, 720.0 + float(seed % 90), 0.18, 0.006) * 0.070
+	var high := _rounded_bell(local, 1180.0 + float(seed % 170), 0.12, 0.004) * 0.035
+	var contact := _soft_noise(frame, seed + 5, 3) * 0.024 * _pulse_window(local, 0.0, 0.020)
+	return (glass + high + contact) * strength
 
 
 func _clear_markers_with_prefix(prefix: String) -> void:
