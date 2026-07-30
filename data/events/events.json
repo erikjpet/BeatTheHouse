@@ -615,11 +615,13 @@
     "interaction_mode": "triggered",
     "presentation": "talk",
     "speaker": {
-      "role": "stranger",
+      "role": "lender",
       "name": "Motel Friend",
       "character_id": "nico_motel_friend",
+      "character_identity_key": "motel_friend",
       "voice_line_key": "motel_knock",
-      "silhouette": "cap",
+      "silhouette": "coat",
+      "environment_actor": true,
       "bind": "none"
     },
     "scopes": [

@@ -61,13 +61,12 @@
     "speaker": {
       "role": "lender",
       "name": "Motel Friend",
-      "presentation": "faceless_silhouette",
       "silhouette": "coat",
       "portrait_count": 1,
-      "face_layers": [],
       "bind": "none",
       "character_id": "nico_motel_friend",
       "character_identity_key": "motel_friend",
+      "environment_actor": true,
       "voice_line_key": "loan_offer"
     },
     "description": "Soft loan, thin walls.",

@@ -3950,6 +3950,11 @@ func _check_lender_debt_foundation(library: ContentLibrary, failures: Array) -> 
 		elif lender_id == "the_crew":
 			if str(speaker.get("character_pool_id", "")) != "crew_regulars" or str(speaker.get("presentation", "")) == "faceless_silhouette":
 				failures.append("The Crew lender does not use the visible reusable character pool.")
+		elif lender_id == "motel_friend":
+			if str(speaker.get("character_id", "")) != "nico_motel_friend" or str(speaker.get("presentation", "")) == "faceless_silhouette":
+				failures.append("Motel friend lender does not use Nico's visible character model.")
+			if not bool(speaker.get("environment_actor", true)):
+				failures.append("Motel friend lender was not placed as a physical environment actor.")
 		elif lender_id == "brother_in_law":
 			if bool(speaker.get("environment_actor", true)):
 				failures.append("Phone-only brother-in-law lender was placed as a physical environment actor.")
