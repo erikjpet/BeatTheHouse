@@ -2968,7 +2968,7 @@ func _generate_ambient_data_thread(profile: Dictionary, cache_key: String, token
 			else _web_music_bed_stem_set(profile, WEB_AUDIO_MUSIC_BED_SECONDS, "web_full", token)
 		)
 	else:
-		stem_set = _procedural_stem_set_from_context(profile, context, stage, token)
+		stem_set = _procedural_stem_pcm_contract_from_context(profile, context, stage, token)
 	if stage == AMBIENT_STAGE_WEB:
 		frames = int(stem_set.get("loop_frames", 0))
 		_prepare_web_bridge_payloads(stem_set)
@@ -3056,7 +3056,7 @@ func _apply_generated_ambient_data(result: Dictionary) -> void:
 	var token := int(result.get("token", 0))
 	if cache_key.is_empty() or token != _current_generation_token() or cache_key != _pending_cache_key:
 		return
-	var stem_set: Dictionary = result.get("stem_set", {}) as Dictionary
+	var stem_set: Dictionary = _materialize_pcm_stem_set(result.get("stem_set", {}) as Dictionary)
 	if not _stem_set_contract_valid(stem_set):
 		_pending_cache_key = ""
 		return
@@ -3129,6 +3129,32 @@ func _procedural_stem_set_from_context(profile: Dictionary, context: Dictionary,
 		return {}
 	var stems := _streams_from_stem_data(stem_data, frames)
 	var contract := _stem_set_contract("procedural", stems, float(context.get("bpm", profile.get("bpm", 82.0))), int(context.get("bars", 1)), frames, str(profile.get("palette_id", "")), {}, stage)
+	contract["step_period"] = float(context.get("step_period", 0.36))
+	contract["profile"] = profile.duplicate(true)
+	return contract
+
+
+func _procedural_stem_pcm_contract_from_context(profile: Dictionary, context: Dictionary, stage: String, token: int = -1) -> Dictionary:
+	var frames := int(context.get("frames", 0))
+	if frames <= 0:
+		return {}
+	var stem_data := _ambient_stem_pcm_data(context, token)
+	if stem_data.is_empty():
+		return {}
+	var stems := {}
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		var role := str(role_value)
+		var data: PackedByteArray = stem_data.get(role, PackedByteArray())
+		if data.is_empty():
+			data = _empty_pcm(frames)
+		stems[role] = {
+			"pcm_data": data,
+			"frames": frames,
+			"sample_rate": SAMPLE_RATE,
+			"loop_begin": 0,
+			"loop_end": frames,
+		}
+	var contract := _stem_set_contract("procedural_pcm", stems, float(context.get("bpm", profile.get("bpm", 82.0))), int(context.get("bars", 1)), frames, str(profile.get("palette_id", "")), {}, stage)
 	contract["step_period"] = float(context.get("step_period", 0.36))
 	contract["profile"] = profile.duplicate(true)
 	return contract
@@ -4073,6 +4099,36 @@ func _streams_from_stem_data(stem_data: Dictionary, frames: int) -> Dictionary:
 			data = _empty_pcm(frames)
 		stems[role] = _ambient_stream_from_data(data, frames)
 	return stems
+
+
+func _materialize_pcm_stem_set(stem_set: Dictionary) -> Dictionary:
+	if stem_set.is_empty() or typeof(stem_set.get("stems", {})) != TYPE_DICTIONARY:
+		return stem_set
+	var source := str(stem_set.get("source", ""))
+	var stems: Dictionary = stem_set.get("stems", {})
+	var materialized := {}
+	var materialized_any := false
+	for role_value in stems.keys():
+		var role := str(role_value)
+		var value: Variant = stems.get(role)
+		if typeof(value) == TYPE_DICTIONARY and (value as Dictionary).has("pcm_data"):
+			var entry := value as Dictionary
+			var frames := maxi(1, int(entry.get("frames", entry.get("loop_end", stem_set.get("loop_frames", 1)))))
+			var sample_rate := maxi(1, int(entry.get("sample_rate", SAMPLE_RATE)))
+			var data: PackedByteArray = entry.get("pcm_data", PackedByteArray())
+			if data.is_empty():
+				data = _empty_pcm(frames)
+			materialized[role] = _ambient_stream_from_data_with_rate(data, frames, sample_rate)
+			materialized_any = true
+		else:
+			materialized[role] = value
+	if not materialized_any:
+		return stem_set
+	var result := stem_set.duplicate(true)
+	result["stems"] = materialized
+	if source == "procedural_pcm":
+		result["source"] = "procedural"
+	return result
 
 
 func _feature_stem_set_for_input(input: Dictionary) -> Dictionary:
