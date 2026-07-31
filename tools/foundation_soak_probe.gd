@@ -16,6 +16,7 @@ const DEFAULT_ACTIONS_PER_SAMPLE := 28
 const SAMPLE_INTERVAL_MINUTES := 10
 const WARMUP_SAMPLE_COUNT := 3
 const RETAINED_SLOPE_TAIL_SAMPLE_COUNT := 6
+const RETAINED_MEASUREMENT_SETTLE_FRAMES := 28
 const SAVE_LOAD_ACTION_INTERVAL := 23
 const RUN_ROTATION_ACTION_INTERVAL := 160
 const SLOT_AUTOPLAY_ACTION_INTERVAL := 97
@@ -483,7 +484,7 @@ func _sample_retained_state(sample_index: int) -> void:
 	app.set("autosave_slot_id", SOAK_SAVE_SLOT)
 	app.call("start_foundation_run", RETAINED_MEASUREMENT_SEED, challenge)
 	coverage["retained_measurement_resets"] = int(coverage.get("retained_measurement_resets", 0)) + 1
-	await _settle(4)
+	await _settle(RETAINED_MEASUREMENT_SETTLE_FRAMES)
 	await _sample(sample_index, true)
 
 
@@ -740,6 +741,7 @@ func _write_report() -> void:
 			"actions_per_sample": actions_per_sample,
 			"warmup_sample_count": WARMUP_SAMPLE_COUNT,
 			"retained_slope_tail_sample_count": RETAINED_SLOPE_TAIL_SAMPLE_COUNT,
+			"retained_measurement_settle_frames": RETAINED_MEASUREMENT_SETTLE_FRAMES + 2,
 			"serialized_run_state_cap_bytes": MAX_SERIALIZED_RUN_STATE_BYTES,
 			"environment_history_cap": RunStateScript.MAX_ENVIRONMENT_HISTORY_ENTRIES,
 			"story_log_cap": RunStateScript.MAX_STORY_LOG_ENTRIES,

@@ -54,5 +54,16 @@ if ($OpenEditor) {
 }
 
 $consoleGodot = Use-ConsoleGodot $godot
-& $consoleGodot --headless --path $root --script "res://tools/foundation_visual_qa.gd"
-exit $LASTEXITCODE
+$previousErrorActionPreference = $ErrorActionPreference
+try {
+    # Godot writes warnings to stderr. Preserve those diagnostics without
+    # letting PowerShell convert a successful native run into a terminating
+    # script error; the native exit code remains the gate authority.
+    $ErrorActionPreference = "Continue"
+    & $consoleGodot --headless --path $root --script "res://tools/foundation_visual_qa.gd"
+    $godotExitCode = $LASTEXITCODE
+}
+finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+}
+exit $godotExitCode
