@@ -8,6 +8,7 @@ extends GameModule
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
+const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
@@ -6202,21 +6203,7 @@ func _draw_card_row(surface, cards: Array, start: Vector2, _hand_index: int = 0,
 
 
 func _draw_card(surface, card_value: Variant, pos: Vector2, scale: float = 1.0) -> void:
-	var card: Dictionary = card_value if typeof(card_value) == TYPE_DICTIONARY else {}
-	var size := Vector2(42, 60) * scale
-	var rect := Rect2(pos, size)
-	if bool(card.get("hidden", false)):
-		surface.draw_rect(rect, C_SOFT)
-		surface.draw_rect(Rect2(pos + Vector2(3, 3) * scale, size - Vector2(6, 6) * scale), C_PINK)
-		surface.draw_rect(Rect2(pos + Vector2(9, 9) * scale, size - Vector2(18, 18) * scale), Color("#563be0"))
-		return
-	surface.draw_rect(rect, C_SOFT)
-	surface.draw_rect(Rect2(pos + Vector2(3, 3) * scale, size - Vector2(6, 6) * scale), Color("#fbf8e6"))
-	var rank := _rank_text(int(card.get("rank", 2)))
-	var suit := int(card.get("suit", 0))
-	var color := C_PINK if suit == 1 or suit == 2 else C_DARK
-	surface.surface_label(rank, pos + Vector2(7, 21) * scale, int(15 * scale), color)
-	_draw_suit(surface, pos + Vector2(22, 40) * scale, suit, color, scale)
+	PlayingCardRendererScript.draw_card(surface, card_value, Rect2(pos, Vector2(42, 60) * scale))
 
 
 func _draw_suit(surface, pos: Vector2, suit: int, color: Color, scale: float = 1.0) -> void:

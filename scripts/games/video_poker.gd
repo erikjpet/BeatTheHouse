@@ -34,6 +34,7 @@ extends GameModule
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
+const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
 const C_DARK := VisualStyleScript.DARK
 const C_PINK := VisualStyleScript.PINK
 const C_PINK_2 := VisualStyleScript.PINK_2
@@ -3281,37 +3282,11 @@ func _draw_card(surface, card_value: Variant, pos: Vector2, held: bool, suggeste
 
 
 func _draw_card_in_rect(surface, card_value: Variant, rect: Rect2, held: bool, suggested: bool, scoring: bool) -> void:
-	var card: Dictionary = card_value if typeof(card_value) == TYPE_DICTIONARY else {}
-	if bool(card.get("hidden", false)):
-		_draw_card_back(surface, rect)
-		return
-	if scoring:
-		surface.draw_rect(Rect2(rect.position - Vector2(5, 5), rect.size + Vector2(10, 10)), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.30))
-	surface.draw_rect(rect, C_SOFT)
-	surface.draw_rect(Rect2(rect.position + Vector2(3, 3), rect.size - Vector2(6, 6)), Color("#fbf8e6"))
-	if suggested:
-		surface.draw_rect(rect.grow(3.0), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.45), false, 2)
-	if held:
-		surface.draw_rect(rect.grow(4.0), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.55), false, 3)
-	elif scoring:
-		surface.draw_rect(rect.grow(4.0), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.70), false, 3)
-	var rank := int(card.get("rank", 2))
-	var suit := int(card.get("suit", 0))
-	var color := C_PINK if suit == 1 or suit == 3 else C_DARK
-	var rank_size := clampi(int(rect.size.y * 0.31), 9, 28)
-	var suit_scale := clampf(rect.size.y / 60.0, 0.45, 1.0)
-	if bool(card.get("joker", false)) or rank == 0:
-		surface.surface_label("JOKER", rect.position + Vector2(5, rect.size.y * 0.42), clampi(rank_size - 1, 8, 14), C_PINK)
-		surface.draw_circle(rect.position + rect.size * 0.62, 5.0 * suit_scale, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.55))
-		return
-	surface.surface_label(CardShoeScript.rank_label(rank), rect.position + Vector2(5, rank_size + 4), rank_size, color)
-	_draw_suit_scaled(surface, rect.position + Vector2(rect.size.x * 0.52, rect.size.y * 0.62), suit, color, suit_scale)
+	PlayingCardRendererScript.draw_card(surface, card_value, rect, {"held": held, "suggested": suggested, "scoring": scoring})
 
 
 func _draw_card_back(surface, rect: Rect2) -> void:
-	surface.draw_rect(rect, C_SOFT)
-	surface.draw_rect(Rect2(rect.position + Vector2(4, 4), rect.size - Vector2(8, 8)), C_PINK)
-	surface.draw_rect(Rect2(rect.position + Vector2(12, 12), rect.size - Vector2(24, 24)), Color("#563be0"))
+	PlayingCardRendererScript.draw_card_back(surface, rect)
 
 
 func _draw_suit(surface, pos: Vector2, suit: int, color: Color) -> void:
@@ -3319,21 +3294,7 @@ func _draw_suit(surface, pos: Vector2, suit: int, color: Color) -> void:
 
 
 func _draw_suit_scaled(surface, pos: Vector2, suit: int, color: Color, scale: float) -> void:
-	match suit:
-		0:
-			surface.draw_polygon([pos + Vector2(0, -12) * scale, pos + Vector2(12, 4) * scale, pos + Vector2(-12, 4) * scale], [color])
-			surface.draw_rect(Rect2(pos.x - 3 * scale, pos.y + 2 * scale, 6 * scale, 10 * scale), color)
-		1:
-			surface.draw_circle(pos + Vector2(-6, -4) * scale, 7 * scale, color)
-			surface.draw_circle(pos + Vector2(6, -4) * scale, 7 * scale, color)
-			surface.draw_polygon([pos + Vector2(-14, 0) * scale, pos + Vector2(14, 0) * scale, pos + Vector2(0, 14) * scale], [color])
-		2:
-			surface.draw_circle(pos + Vector2(-7, 0) * scale, 7 * scale, color)
-			surface.draw_circle(pos + Vector2(7, 0) * scale, 7 * scale, color)
-			surface.draw_circle(pos + Vector2(0, -8) * scale, 7 * scale, color)
-			surface.draw_rect(Rect2(pos.x - 3 * scale, pos.y + 2 * scale, 6 * scale, 12 * scale), color)
-		_:
-			surface.draw_polygon([pos + Vector2(0, -13) * scale, pos + Vector2(11, 0) * scale, pos + Vector2(0, 13) * scale, pos + Vector2(-11, 0) * scale], [color])
+	PlayingCardRendererScript.draw_suit(surface, pos, suit, color, scale)
 
 
 func _draw_info_line(surface, surface_state: Dictionary) -> void:
