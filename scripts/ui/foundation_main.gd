@@ -4518,10 +4518,10 @@ func _build_ui() -> void:
 	screen_stack_root.add_child(start_screen)
 	_build_start_screen()
 
-	if PerfTelemetryOverlayScript.runtime_enabled():
-		call_deferred("_ensure_run_ui_built")
-	else:
-		_ensure_run_ui_built()
+	# Finish the shared run shell before the menu is declared interactive.
+	# Deferring this in telemetry builds moved a full UI construction burst into
+	# the player's first menu frames and made the ready marker misleading.
+	_ensure_run_ui_built()
 	_apply_accessibility_settings()
 
 
@@ -4566,8 +4566,10 @@ func _ensure_main_menu_background_built() -> void:
 	var menu_environment_id := _main_menu_background_environment_id()
 	if not menu_environment_id.is_empty():
 		main_menu_background.set("environment_id", menu_environment_id)
-	main_menu_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	start_screen.add_child(main_menu_background)
+	# PixelSceneCanvas initializes itself as an interactive room. The decorative
+	# menu preview must remain click-through after that ready hook has run.
+	main_menu_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	start_screen.move_child(main_menu_background, 0)
 
 
