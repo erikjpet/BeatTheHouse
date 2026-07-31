@@ -1997,6 +1997,12 @@ func _run() -> void:
 	if not await _check_background_slot_all_in_confirmation(app):
 		quit(1)
 		return
+	if not await _check_multi_slot_reentry_uses_selected_fixture(app):
+		quit(1)
+		return
+	if not await _check_multi_slot_background_autoplay_budget(app):
+		quit(1)
+		return
 	if not await _check_web_travel_cannot_strand_transition(app):
 		quit(1)
 		return

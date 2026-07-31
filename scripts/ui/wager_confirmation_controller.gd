@@ -9,14 +9,16 @@ var pending_skip_stake_validation := false
 var pending_preserve_surface_ui_state := false
 var pending_stake: int = 0
 var pending_source_game_id: String = ""
+var pending_source_game_state_key: String = ""
 
 
-func configure_confirmation(action_id: String, stake: int, wager_cost: int, skip_stake_validation: bool, preserve_surface_ui_state: bool, source_game_id: String, action_label: String) -> Dictionary:
+func configure_confirmation(action_id: String, stake: int, wager_cost: int, skip_stake_validation: bool, preserve_surface_ui_state: bool, source_game_id: String, action_label: String, source_game_state_key: String = "") -> Dictionary:
 	pending_action_id = action_id
 	pending_skip_stake_validation = skip_stake_validation
 	pending_preserve_surface_ui_state = preserve_surface_ui_state
 	pending_stake = stake
 	pending_source_game_id = source_game_id
+	pending_source_game_state_key = source_game_state_key
 	var summary := "Betting $%d risks your last cash. If this play loses, the run ends after the result finishes resolving." % wager_cost
 	return {
 		"title": "All-in wager",
@@ -51,6 +53,7 @@ func pending_state() -> Dictionary:
 		"preserve_surface_ui_state": pending_preserve_surface_ui_state,
 		"stake": pending_stake,
 		"source_game_id": pending_source_game_id,
+		"source_game_state_key": pending_source_game_state_key,
 	}
 
 
@@ -64,3 +67,4 @@ func clear() -> void:
 	pending_preserve_surface_ui_state = false
 	pending_stake = 0
 	pending_source_game_id = ""
+	pending_source_game_state_key = ""
