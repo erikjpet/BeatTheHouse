@@ -49,6 +49,8 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets machine exposed no spatial buy targets.")
 	_check_scratch_purchase_and_input(game, run_state, environment, failures)
 	_check_scratch_render_layers(game, failures)
+	_check_scratch_instance_uniqueness(game, failures)
+	_check_scratch_shared_card_renderer(failures)
 	_check_scratch_pre_reveal_privacy(game, failures)
 	_check_scratch_determinism(game, failures)
 	_check_scratch_luck_hook(game, failures)
@@ -56,6 +58,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_mask_feel(game, failures)
 	_check_scratch_per_box_reveals(game, failures)
 	_check_scratch_result_and_queue_flow(game, failures)
+	_check_scratch_discard_flow(game, failures)
 	_check_scratch_save_restore(game, failures)
 	_check_scratch_stale_region_upgrade(game, failures)
 	_check_scratch_sizes(game, failures)
@@ -148,14 +151,58 @@ func _check_scratch_render_layers(game: GameModule, failures: Array) -> void:
 		run_state.current_environment = environment
 		var surface := game.surface_state(run_state, environment, {})
 		var layers := _scratch_string_array(surface.get("scratch_ticket_render_layers", []))
-		if layers != ["production_background_art", "generated_result_symbols", "ticket_specific_foil_mask"]:
-			failures.append("Scratch %s render layers should use one production background plus symbols plus styled foil, got %s." % [type_id, JSON.stringify(layers)])
+		if layers != ["background", "icons", "foil"]:
+			failures.append("Scratch %s render layers must be exactly background, icons, foil; got %s." % [type_id, JSON.stringify(layers)])
 		if str(surface.get("scratch_foil_style_id", "")).is_empty():
 			failures.append("Scratch %s did not expose a ticket-specific foil style." % type_id)
+		if str(surface.get("scratch_mask_kind", "")) != "continuous_high_resolution":
+			failures.append("Scratch %s did not expose the continuous high-resolution mask." % type_id)
 		var harness := SurfaceHarness.new()
 		harness.setup(surface)
 		if not game.draw_surface(harness, surface, {"contract_harness": true}):
 			failures.append("Scratch %s production render failed in the surface harness." % type_id)
+		for layer_count in [1, 2, 3]:
+			var isolated_harness := SurfaceHarness.new()
+			isolated_harness.setup(surface)
+			if not game.draw_surface(isolated_harness, surface, {"contract_harness": true, "scratch_layer_count": layer_count}):
+				failures.append("Scratch %s layer-isolation render %d failed." % [type_id, layer_count])
+
+
+func _check_scratch_instance_uniqueness(game: GameModule, failures: Array) -> void:
+	for type_id in SCRATCH_IDS:
+		var definition: Dictionary = game.call("_ticket_type", type_id)
+		var mechanic: Dictionary = definition.get("mechanic", {})
+		var table := _dict_array(definition.get("prize_table", []))
+		if table.is_empty():
+			failures.append("Scratch %s has no prize row for uniqueness proof." % type_id)
+			continue
+		var prize: Dictionary = table.back()
+		var signatures: Dictionary = {}
+		for instance_index in range(5):
+			var content: Dictionary = game.call("_build_mechanic_content", str(mechanic.get("type", "")), mechanic, prize, _scratch_rng("same-payout:%s:%d" % [type_id, instance_index]))
+			var fixture := {"mechanic": mechanic, "mechanic_result": content}
+			if int(game.call("_evaluate_mechanic", fixture)) != int(prize.get("payout", -1)):
+				failures.append("Scratch %s uniqueness instance %d did not preserve the selected payout." % [type_id, instance_index])
+			signatures[JSON.stringify(content)] = true
+		if signatures.size() < 3:
+			failures.append("Scratch %s same-payout generation produced only %d visibly distinct results across five seeded instances." % [type_id, signatures.size()])
+
+
+func _check_scratch_shared_card_renderer(failures: Array) -> void:
+	var shared_path := "res://scripts/games/playing_card_renderer.gd"
+	var shared_source := FileAccess.get_file_as_string(shared_path)
+	if shared_source.is_empty() or shared_source.find("class_name PlayingCardRenderer") == -1:
+		failures.append("Scratch card fidelity has no shared PlayingCardRenderer.")
+		return
+	for path in [
+		"res://scripts/games/blackjack.gd",
+		"res://scripts/games/baccarat.gd",
+		"res://scripts/games/video_poker.gd",
+		"res://scripts/games/scratch_ticket_icon_renderer.gd",
+	]:
+		var source := FileAccess.get_file_as_string(path)
+		if source.find("playing_card_renderer.gd") == -1 or source.find("PlayingCardRendererScript.draw_card") == -1:
+			failures.append("%s does not reuse the shared table-game card renderer." % path)
 
 
 func _check_scratch_pre_reveal_privacy(game: GameModule, failures: Array) -> void:
@@ -288,12 +335,18 @@ func _check_scratch_mask_feel(game: GameModule, failures: Array) -> void:
 		failures.append("Scratch feel tuning lost its 66% pass or compact brush.")
 	var columns := int(scratch.get("mask_columns", 0))
 	var rows := int(scratch.get("mask_rows", 0))
+	if columns < 192 or rows < 128 or str(scratch.get("mask_kind", "")) != "continuous_high_resolution":
+		failures.append("Scratch mask remained coarse at %dx%d instead of using a continuous high-resolution mask." % [columns, rows])
 	var center_index := (rows / 2) * columns + columns / 2
 	var center := rect.get_center()
 	game.call("_scratch_segment", machine, center, center)
 	var alpha_after_one := int((ticket.get("latex_mask", []) as Array)[center_index])
-	if alpha_after_one < 82 or alpha_after_one > 92:
-		failures.append("A scratch pass did not remove about two-thirds of remaining latex; alpha=%d." % alpha_after_one)
+	if alpha_after_one != 0:
+		failures.append("A scratch pass did not lift the core of the foil cleanly; alpha=%d." % alpha_after_one)
+	var feather_row := clampi(roundi((center.y + 12.0 - rect.position.y) / rect.size.y * rows), 0, rows - 1)
+	var feather_alpha := int((ticket.get("latex_mask", []) as Array)[feather_row * columns + columns / 2])
+	if feather_alpha <= 0 or feather_alpha >= 255:
+		failures.append("The scratch brush lost its soft feathered edge; alpha=%d." % feather_alpha)
 	if bool(game.call("_ticket_complete", ticket)):
 		failures.append("One honest scratch point completed a ticket; multiple passes are required.")
 	var fast := game.call("_scratch_segment", machine, Vector2(rect.position.x, center.y), Vector2(rect.end.x, center.y)) as Dictionary
@@ -433,6 +486,47 @@ func _check_scratch_result_and_queue_flow(game: GameModule, failures: Array) -> 
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	if _dict_array(machine.get("pending_queue", [])).size() != 1 or str((machine.get("active_ticket", {}) as Dictionary).get("id", "")) == first_id:
 		failures.append("Scratch filing did not advance to the next queued ticket.")
+
+
+func _check_scratch_discard_flow(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SCRATCH-DISCARD-FLOW")
+	run_state.bankroll = 500000
+	var environment := _scratch_environment("scratch_discard")
+	var dud := _scratch_ticket_with_win_state(game, "two_fer", false, "discard-dud")
+	var next_ticket: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "lucky_7s"), _scratch_rng("discard-next"), 0, "discard-next")
+	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("discard-stock"))
+	machine["active_ticket"] = dud
+	machine["pending_queue"] = [next_ticket]
+	environment["game_states"] = {"scratch_tickets": machine}
+	run_state.current_environment = environment
+	var before_outcome := JSON.stringify(dud.get("mechanic_result", {}))
+	game.call("_scratch_segment", machine, Vector2(450, 200), Vector2(520, 200))
+	var begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(450, 200), {}, run_state, environment)
+	var command := game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(248, 372), begin.get("ui_state", {}), run_state, environment)
+	if not bool(command.get("handled", false)) or not bool(command.get("direct_resolve", false)) or not bool((command.get("ui_state", {}) as Dictionary).get("scratch_discard_unfinished", false)):
+		failures.append("Swiping a ticket into the waste basket did not create an unfinished-discard command.")
+		return
+	var result := game.resolve_with_context("settle_scratch_ticket", 0, run_state, environment, _scratch_rng("discard-resolve"), command.get("ui_state", {}))
+	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if not bool(result.get("scratch_discarded_unfinished", false)) or str((machine.get("active_ticket", {}) as Dictionary).get("id", "")) != str(next_ticket.get("id", "")):
+		failures.append("Scratch waste basket did not remove the dud and advance the queue.")
+	if _dict_array(machine.get("loser_pile", [])).is_empty() or JSON.stringify((_dict_array(machine.get("loser_pile", [])).back() as Dictionary).get("mechanic_result", {})) != before_outcome:
+		failures.append("Scratch discard changed the purchase-fixed dud or failed to file it.")
+	var surface := game.surface_state(run_state, environment, {})
+	var harness := SurfaceHarness.new()
+	harness.setup(surface)
+	game.draw_surface(harness, surface, {"contract_harness": true})
+	if not _surface_harness_has_action(harness, "scratch_discard"):
+		failures.append("Scratch surface did not expose a clearly actionable waste basket.")
+	var winner := _scratch_ticket_with_win_state(game, "golden_vault", true, "discard-winner")
+	machine["active_ticket"] = winner
+	environment["game_states"] = {"scratch_tickets": machine}
+	var winner_command := game.surface_action_command("scratch_discard", 0, false, {}, run_state, environment)
+	var winner_result := game.resolve_with_context("settle_scratch_ticket", 0, run_state, environment, _scratch_rng("discard-winner-resolve"), winner_command.get("ui_state", {}))
+	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if not bool(winner_result.get("scratch_discard_preserved_winner", false)) or _dict_array(machine.get("winner_pile", [])).is_empty():
+		failures.append("Discarding an unfinished winner did not preserve it for clerk redemption.")
 
 
 func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
@@ -775,6 +869,26 @@ func _scratch_rng(seed_text: String) -> RngStream:
 	var seed := RunState.text_to_seed(seed_text)
 	rng.configure(seed, seed)
 	return rng
+
+
+func _scratch_ticket_with_win_state(game: GameModule, type_id: String, winning: bool, seed_text: String) -> Dictionary:
+	var definition: Dictionary = game.call("_ticket_type", type_id)
+	var ticket: Dictionary = game.call("_roll_ticket", definition, _scratch_rng("%s:roll" % seed_text), 0, seed_text)
+	var chosen_prize: Dictionary = {}
+	for prize_value in _dict_array(definition.get("prize_table", [])):
+		var prize: Dictionary = prize_value
+		if (int(prize.get("payout", 0)) > 0) == winning:
+			chosen_prize = prize
+			break
+	var mechanic: Dictionary = definition.get("mechanic", {})
+	var content: Dictionary = game.call("_build_mechanic_content", str(mechanic.get("type", "")), mechanic, chosen_prize, _scratch_rng("%s:face" % seed_text))
+	ticket["outcome_id"] = str(chosen_prize.get("id", ""))
+	ticket["outcome"] = chosen_prize.duplicate(true)
+	ticket["payout"] = int(chosen_prize.get("payout", 0))
+	ticket["mechanic_result"] = content
+	ticket["spots"] = content.get("spots", [])
+	game.call("_initialize_ticket_mask", ticket, definition)
+	return ticket
 
 
 func _dict_array(value: Variant) -> Array:
