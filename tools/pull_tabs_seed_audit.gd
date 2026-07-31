@@ -15,6 +15,9 @@ const MAX_RENDERED_TRAY_TICKETS := 32
 const MAX_RENDERED_STACK_TICKETS := 9
 const MAX_ACTIVE_DISPENSE_EVENTS := 48
 const MAX_EVENT_LOCAL_DROP_START_MSEC := 300
+const MIN_DEAL_RTP := 1.24
+const MAX_DEAL_RTP := 1.26
+const TOP_PRIZE_MULTIPLIER := 100
 
 var stats: Dictionary = {}
 var resolve_ms_samples: Array = []
@@ -148,6 +151,7 @@ func _audit_generated_machine(machine: Dictionary, label: String, failures: Arra
 			failures.append("%s: column %d opening burn plus sleeve does not match generated ticket count." % [label, deal_index])
 		if prizes.size() < 6:
 			failures.append("%s: column %d does not expose the full prize ladder." % [label, deal_index])
+		_audit_deal_odds(deal, label, deal_index, failures)
 		remaining_levels[str(deal.get("remaining", 0))] = true
 		_check_prize_remainders_match_sleeve(deal, label, deal_index, failures)
 	if remaining_levels.size() != deals.size():
@@ -157,6 +161,23 @@ func _audit_generated_machine(machine: Dictionary, label: String, failures: Arra
 		failures.append("%s: generated machine is missing pull-tab item state." % label)
 	elif int(item_state.get("xray_deal_index", -1)) < 0 or (item_state.get("xray_target", {}) as Dictionary).is_empty():
 		failures.append("%s: generated machine did not choose an x-ray target." % label)
+
+
+func _audit_deal_odds(deal: Dictionary, label: String, deal_index: int, failures: Array) -> void:
+	var price := maxi(1, int(deal.get("price", 1)))
+	var ticket_count := maxi(1, int(deal.get("ticket_count", 0)))
+	var payout_total := 0
+	var top_payout := 0
+	for prize_value in deal.get("prizes", []):
+		var prize: Dictionary = prize_value
+		var payout := maxi(0, int(prize.get("payout", 0)))
+		payout_total += maxi(0, int(prize.get("count", 0))) * payout
+		top_payout = maxi(top_payout, payout)
+	var rtp := float(payout_total) / float(ticket_count * price)
+	if rtp < MIN_DEAL_RTP or rtp > MAX_DEAL_RTP:
+		failures.append("%s: column %d RTP %.5f is outside %.2f-%.2f." % [label, deal_index, rtp, MIN_DEAL_RTP, MAX_DEAL_RTP])
+	if top_payout != price * TOP_PRIZE_MULTIPLIER:
+		failures.append("%s: column %d top prize is %d, expected %dx price (%d)." % [label, deal_index, top_payout, TOP_PRIZE_MULTIPLIER, price * TOP_PRIZE_MULTIPLIER])
 
 
 func _audit_active_item_mechanics(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:

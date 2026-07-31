@@ -15,13 +15,14 @@ const REAL_PULL_TAB_UNIT_COUNT := 540
 const PULL_TAB_INITIAL_REMOVED_MIN_RATIO := 0.04
 const PULL_TAB_INITIAL_REMOVED_BAND_RATIO := 0.045
 const PULL_TAB_INITIAL_REMOVED_JITTER_RATIO := 0.025
+# A 150-ticket deal scales to 48 payouts and 188 stake units (125.33% RTP).
 const PULL_TAB_UNIT_PRIZE_COUNTS := [
 	{"id": "small", "symbol": "CHERRY", "multiplier": 1, "count": 126},
 	{"id": "small_plus", "symbol": "LEMON", "multiplier": 2, "count": 25},
-	{"id": "medium_small", "symbol": "BELL", "multiplier": 5, "count": 10},
+	{"id": "medium_small", "symbol": "BELL", "multiplier": 3, "count": 10},
 	{"id": "medium", "symbol": "BAR", "multiplier": 10, "count": 2},
-	{"id": "large", "symbol": "7", "multiplier": 30, "count": 1},
-	{"id": "top", "symbol": "CROWN", "multiplier": 60, "count": 1},
+	{"id": "large", "symbol": "7", "multiplier": 20, "count": 1},
+	{"id": "top", "symbol": "CROWN", "multiplier": 100, "count": 1},
 ]
 const SORT_TICKET_ACTION := "sort_tab_ticket"
 const REDEEM_HOOK_ID := "ticket_redeemer"

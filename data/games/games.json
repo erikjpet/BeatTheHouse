@@ -525,7 +525,7 @@
         "id": "buy_tab",
         "label": "Buy Ticket",
         "summary": "Pick a dispenser row; ticket drops into the stack",
-        "win_chance": 34,
+        "win_chance": 32,
         "payout_mult": 4
       }
     ],
