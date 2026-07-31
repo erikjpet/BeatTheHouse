@@ -114,8 +114,8 @@
       "choices": [
         {
           "id": "follow_tip",
-          "label": "Follow the stain",
-          "text": "The Small Underground Casino route opens because even bad notes tell the truth.",
+          "label": "Follow the tip",
+          "text": "Opens an underground route.",
           "consequences": {
             "add_next_archetypes": [
               "small_underground_casino"
@@ -128,8 +128,8 @@
         },
         {
           "id": "ignore_tip",
-          "label": "Leave it in the oil",
-          "text": "You stay with cleaner roads. For now.",
+          "label": "Ignore it",
+          "text": "You pass.",
           "consequences": {
             "resolve_event": true
           }
@@ -162,8 +162,8 @@
       "choices": [
         {
           "id": "accept_invite",
-          "label": "Take the velvet card",
-          "text": "The Grand Casino route opens on your map, all gold teeth and bad manners.",
+          "label": "Take the invite",
+          "text": "Opens the Grand Casino.",
           "consequences": {
             "add_next_archetypes": [
               "grand_casino"
@@ -179,8 +179,8 @@
         },
         {
           "id": "not_yet",
-          "label": "Let it wait",
-          "text": "The host keeps the invitation warm and your hands empty.",
+          "label": "Not yet",
+          "text": "The invite stays open.",
           "consequences": {
             "messages": [
               "The host keeps the invitation ready."
@@ -230,8 +230,8 @@
       "choices": [
         {
           "id": "read_his_route",
-          "label": "Read his orbit",
-          "text": "You learn what pulls Rourke away and when to disappear.",
+          "label": "Watch Rourke",
+          "text": "You learn Rourke's routine.",
           "effects_hidden": true,
           "consequences": {
             "flags": {
@@ -242,8 +242,8 @@
         },
         {
           "id": "flash_the_edge",
-          "label": "Show him a corner",
-          "text": "Rourke catches one polished move and files your face for later.",
+          "label": "Show off",
+          "text": "Rourke marks your face.",
           "effects_hidden": true,
           "consequences": {
             "flags": {
@@ -290,7 +290,7 @@
       "choices": [
         {
           "id": "talk_down",
-          "label": "Look boring",
+          "label": "Play it cool",
           "text": "You sell ordinary hard enough to pass.",
           "consequences": {
             "suspicion_delta": -3,
@@ -299,8 +299,8 @@
         },
         {
           "id": "brush_off",
-          "label": "Make a memory",
-          "text": "They keep your face where nervous people keep knives.",
+          "label": "Brush him off",
+          "text": "They remember you.",
           "consequences": {
             "suspicion_delta": 4,
             "resolve_event": true
@@ -352,7 +352,7 @@
       "choices": [
         {
           "id": "tip_the_solo",
-          "label": "Buy the solo",
+          "label": "Tip the band",
           "text": "The sax points a little luck at your next hand.",
           "consequence_summary": "$ -10, luck +1",
           "consequences": {
@@ -367,8 +367,8 @@
         },
         {
           "id": "ask_old_room",
-          "label": "Ask Mo about doors",
-          "text": "Mo names the Small Underground Casino route like it owes him rent.",
+          "label": "Ask about rooms",
+          "text": "Opens the Underground Casino.",
           "consequence_summary": "Small Underground Casino route opens",
           "consequences": {
             "add_next_archetypes": [
@@ -383,7 +383,7 @@
         },
         {
           "id": "let_them_play",
-          "label": "Let the song work",
+          "label": "Just listen",
           "text": "You keep quiet and the room forgets to watch.",
           "consequence_summary": "Heat -2",
           "consequences": {
@@ -435,7 +435,7 @@
         {
           "id": "buy_the_name",
           "label": "Buy the name",
-          "text": "A drink buys the Small Underground Casino route and a better introduction.",
+          "text": "Opens the Underground Casino.",
           "consequence_summary": "$ -8, Small Underground Casino route opens",
           "consequences": {
             "bankroll_delta": -8,
@@ -451,7 +451,7 @@
         },
         {
           "id": "keep_it_soft",
-          "label": "Keep it velvet",
+          "label": "Keep it quiet",
           "text": "You listen soft enough to become background.",
           "consequence_summary": "Heat -2",
           "consequences": {
@@ -464,7 +464,7 @@
         },
         {
           "id": "say_too_much",
-          "label": "Talk too bright",
+          "label": "Talk too much",
           "text": "The wrong ear hears you fishing.",
           "consequence_summary": "Heat +5",
           "consequences": {
@@ -538,8 +538,8 @@
         },
         {
           "id": "take_address",
-          "label": "Take Celeste?s address",
-          "text": "The Grand Casino route opens in your pocket without costing the cover.",
+          "label": "Take the address",
+          "text": "Opens the Grand Casino.",
           "consequence_summary": "Grand Casino route opens",
           "consequences": {
             "add_next_archetypes": [
@@ -554,7 +554,7 @@
         },
         {
           "id": "decline_after_hours",
-          "label": "Pass the velvet",
+          "label": "Decline",
           "text": "You smile and let the hook miss meat.",
           "consequence_summary": "Heat -1",
           "consequences": {
@@ -588,7 +588,7 @@
       "choices": [
         {
           "id": "take_cash",
-          "label": "Take the finder fee",
+          "label": "Take the cash",
           "text": "Small cash. Small stain. Both fit in your pocket.",
           "consequences": {
             "bankroll_delta": 8,
@@ -644,8 +644,8 @@
       "choices": [
         {
           "id": "borrow",
-          "label": "Take the soft money",
-          "text": "Emergency cash arrives with a name you may regret.",
+          "label": "Borrow cash",
+          "text": "Fast cash, bad friend.",
           "consequences": {
             "bankroll_delta": 35,
             "debt": {
@@ -659,7 +659,7 @@
         },
         {
           "id": "refuse",
-          "label": "Keep the door shut",
+          "label": "Refuse",
           "text": "You keep the night quiet, or quieter.",
           "consequences": {
             "resolve_event": true
@@ -688,7 +688,7 @@
       "choices": [
         {
           "id": "blend_in",
-          "label": "Join the noise",
+          "label": "Blend in",
           "text": "The crowd covers your next move.",
           "consequences": {
             "suspicion_delta": -2,
@@ -697,7 +697,7 @@
         },
         {
           "id": "needle",
-          "label": "Twist the volume",
+          "label": "Needle him",
           "text": "You bait a scene and lose subtlety.",
           "consequences": {
             "bankroll_delta": 6,
@@ -726,7 +726,7 @@
       "choices": [
         {
           "id": "wait",
-          "label": "Let it cool",
+          "label": "Wait it out",
           "text": "Momentum dies, attention thins.",
           "consequences": {
             "bankroll_delta": -3,
@@ -766,7 +766,7 @@
       "choices": [
         {
           "id": "cheap_route",
-          "label": "Take the safer tip",
+          "label": "Safer tip",
           "text": "You learn a cleaner shop stop.",
           "consequences": {
             "set_next_archetypes": [
@@ -778,8 +778,8 @@
         },
         {
           "id": "dark_route",
-          "label": "Ask about darker pavement",
-          "text": "The Back Alley route opens where the lights quit.",
+          "label": "Riskier tip",
+          "text": "Opens the Back Alley.",
           "consequences": {
             "add_next_archetypes": [
               "back_alley"
@@ -830,7 +830,7 @@
       "choices": [
         {
           "id": "acknowledge",
-          "label": "Remember the warning",
+          "label": "Take the warning",
           "text": "Dave?s sentence follows you off the bus.",
           "consequences": {
             "set_story_flag": "dave_bus_warning_seen",
@@ -865,7 +865,7 @@
       "choices": [
         {
           "id": "slip_out",
-          "label": "Leave like smoke",
+          "label": "Slip out",
           "text": "You exit carefully and keep your shape.",
           "consequences": {
             "suspicion_delta": -2,
@@ -874,7 +874,7 @@
         },
         {
           "id": "rush",
-          "label": "Bolt ugly",
+          "label": "Bolt",
           "text": "You move fast and look guilty doing it.",
           "consequences": {
             "suspicion_delta": 5,
@@ -901,7 +901,7 @@
       "choices": [
         {
           "id": "lay_low",
-          "label": "Become furniture",
+          "label": "Lay low",
           "text": "You sit out while attention walks past.",
           "consequence_summary": "Lose $8, heat -6",
           "consequences": {
@@ -916,7 +916,7 @@
         },
         {
           "id": "act_natural",
-          "label": "Act expensive",
+          "label": "Act natural",
           "text": "You move chips like innocence has table manners.",
           "consequence_summary": "Heat +4",
           "consequences": {
@@ -951,7 +951,7 @@
       "choices": [
         {
           "id": "take_comp",
-          "label": "Accept the hook",
+          "label": "Take the comp",
           "text": "The drink is free. Your name is not.",
           "consequence_summary": "Bankroll +10, drink +8, heat +5",
           "consequences": {
@@ -967,7 +967,7 @@
         },
         {
           "id": "decline",
-          "label": "Smile and pass",
+          "label": "Decline",
           "text": "You keep distance from the kindness.",
           "consequence_summary": "Heat -2",
           "consequences": {
@@ -1000,7 +1000,7 @@
       "choices": [
         {
           "id": "change_table",
-          "label": "Buy a reset",
+          "label": "Change tables",
           "text": "You pay for a drift to another table.",
           "consequence_summary": "Lose $5, heat -8",
           "consequences": {
@@ -1015,7 +1015,7 @@
         },
         {
           "id": "press_anyway",
-          "label": "Press under glass",
+          "label": "Press on",
           "text": "You ride the streak while the ceiling watches.",
           "consequence_summary": "Bankroll +15, heat +14",
           "consequences": {
@@ -1059,8 +1059,8 @@
       "choices": [
         {
           "id": "finish_one",
-          "label": "Finish one last move",
-          "text": "You get one action before the room closes its fist.",
+          "label": "One last move",
+          "text": "One last move, then closed.",
           "consequence_summary": "Next action forces travel",
           "consequences": {
             "flags": {
@@ -1072,7 +1072,7 @@
         },
         {
           "id": "slip_twenty",
-          "label": "Fold the twenty",
+          "label": "Slip a bribe",
           "text": "The inspector pockets the bill and your face.",
           "consequence_summary": "Lose $20, later extortion",
           "consequences": {
@@ -1119,7 +1119,7 @@
       "choices": [
         {
           "id": "pay_again",
-          "label": "Pay the encore",
+          "label": "Pay again",
           "text": "The second squeeze buys a little calm.",
           "consequence_summary": "Lose $35",
           "consequences": {
@@ -1132,7 +1132,7 @@
         },
         {
           "id": "refuse",
-          "label": "Keep the door shut",
+          "label": "Refuse",
           "text": "You keep the night quiet, or quieter.",
           "consequence_summary": "Next action forces travel",
           "consequences": {
@@ -1185,7 +1185,7 @@
       "choices": [
         {
           "id": "play_through",
-          "label": "Play through it",
+          "label": "Play on",
           "text": "You ride the shoe while everyone gets watched.",
           "consequence_summary": "Heat +6",
           "consequences": {
@@ -1199,7 +1199,7 @@
         },
         {
           "id": "tip_off",
-          "label": "Tap him a warning",
+          "label": "Warn him",
           "text": "You warn him. He owes you a quiet one.",
           "consequence_summary": "Future favor",
           "consequences": {
@@ -1213,7 +1213,7 @@
         },
         {
           "id": "drop_word",
-          "label": "Point the light away",
+          "label": "Snitch on him",
           "text": "The pit looks his way and you look clean.",
           "consequence_summary": "Heat -2, snitch flag",
           "consequences": {
@@ -1280,7 +1280,7 @@
         },
         {
           "id": "wave_off",
-          "label": "Wave it dead",
+          "label": "Wave it off",
           "text": "You keep distance and bank the goodwill.",
           "consequence_summary": "Heat -4",
           "consequences": {
@@ -1331,7 +1331,7 @@
       "choices": [
         {
           "id": "shrug",
-          "label": "Wear the cold",
+          "label": "Shrug it off",
           "text": "You play through the looks.",
           "consequence_summary": "Heat +4",
           "consequences": {
@@ -1344,7 +1344,7 @@
         },
         {
           "id": "buy_round",
-          "label": "Buy the room",
+          "label": "Buy a round",
           "text": "A little cash softens the rail.",
           "consequence_summary": "Lose $10, heat -3",
           "consequences": {
@@ -1395,7 +1395,7 @@
       "choices": [
         {
           "id": "accept",
-          "label": "Drink the favor",
+          "label": "Take the drink",
           "text": "Luck gets louder. So does the hook.",
           "consequence_summary": "Drink +18, luck +1",
           "consequences": {
@@ -1410,7 +1410,7 @@
         },
         {
           "id": "refuse",
-          "label": "Keep the door shut",
+          "label": "Refuse",
           "text": "You keep the night quiet, or quieter.",
           "consequence_summary": "Heat +2",
           "consequences": {
@@ -1424,8 +1424,8 @@
         },
         {
           "id": "coffee_swap",
-          "label": "Pour your own courage",
-          "text": "Coffee keeps the host smiling and your hands honest.",
+          "label": "Order coffee",
+          "text": "Coffee, not liquor.",
           "consequence_summary": "Spend a pour, steady vision",
           "conditions": {
             "requires_items": [
@@ -1487,7 +1487,7 @@
       "choices": [
         {
           "id": "pay_now",
-          "label": "Pay for quiet",
+          "label": "Pay up",
           "text": "Cash leaves. Silence arrives.",
           "consequence_summary": "Lose $20, heat -2",
           "consequences": {
@@ -1502,8 +1502,8 @@
         },
         {
           "id": "promise",
-          "label": "Borrow one more stop",
-          "text": "You talk the collector into patience with a receipt.",
+          "label": "Stall him",
+          "text": "You buy time.",
           "consequence_summary": "Heat +3, promise flag",
           "consequences": {
             "suspicion_delta": 3,
@@ -1516,7 +1516,7 @@
         },
         {
           "id": "stand_ground",
-          "label": "Hold your stare",
+          "label": "Stand firm",
           "text": "The room notices your backbone. So does he.",
           "consequence_summary": "Checked: item help, failure hurts",
           "consequences": {
@@ -1586,7 +1586,7 @@
       "choices": [
         {
           "id": "position",
-          "label": "Catch the handoff",
+          "label": "Use the shuffle",
           "text": "You move where the staff shuffle helps.",
           "consequence_summary": "Cheat watch softened 3 actions",
           "consequences": {
@@ -1654,7 +1654,7 @@
         },
         {
           "id": "freeze",
-          "label": "Hands still",
+          "label": "Stay still",
           "text": "You look boring enough to survive the blackout.",
           "consequence_summary": "Heat -2",
           "consequences": {
@@ -1697,8 +1697,8 @@
       "choices": [
         {
           "id": "stand_still",
-          "label": "Take the count",
-          "text": "The room counts chips and finds you ordinary enough.",
+          "label": "Stand still",
+          "text": "You wait out the recount.",
           "consequence_summary": "Heat +10",
           "consequences": {
             "suspicion_delta": 10,
@@ -1710,7 +1710,7 @@
         },
         {
           "id": "buy_confusion",
-          "label": "Tip the blur",
+          "label": "Tip a runner",
           "text": "The runner makes the math wobble.",
           "consequence_summary": "Lose $25, heat +2",
           "consequences": {
@@ -1769,7 +1769,7 @@
         },
         {
           "id": "fade",
-          "label": "Let money shine",
+          "label": "Stay low",
           "text": "The whale takes the light. You keep the shade.",
           "consequence_summary": "Heat -3",
           "consequences": {
@@ -1813,7 +1813,7 @@
       "choices": [
         {
           "id": "tip_dealer",
-          "label": "Tip the rhythm",
+          "label": "Tip the dealer",
           "text": "You buy timing and a little discretion.",
           "consequence_summary": "Lose $8, heat -6",
           "consequences": {
@@ -1824,7 +1824,7 @@
         },
         {
           "id": "save_cash",
-          "label": "Keep the bill",
+          "label": "Keep your cash",
           "text": "You keep cash and accept the narrower opening.",
           "consequence_summary": "Watch softened 1 action",
           "consequences": {
@@ -1861,7 +1861,7 @@
       "choices": [
         {
           "id": "sit_out",
-          "label": "Rent the quiet",
+          "label": "Lay low",
           "text": "Time passes. Heat exhales.",
           "consequence_summary": "Lose $10, heat -8",
           "consequences": {
@@ -1918,7 +1918,7 @@
         },
         {
           "id": "walk_past",
-          "label": "Walk past clean",
+          "label": "Walk past",
           "text": "You keep the cash and your profile.",
           "consequence_summary": "Heat +5",
           "consequences": {
@@ -1953,7 +1953,7 @@
       "choices": [
         {
           "id": "press",
-          "label": "Press the hot hand",
+          "label": "Press your luck",
           "text": "The streak gets louder and hungrier.",
           "consequence_summary": "Bankroll +18, heat +5",
           "consequences": {
@@ -1964,7 +1964,7 @@
         },
         {
           "id": "pocket",
-          "label": "Pocket the story",
+          "label": "Cash out",
           "text": "You leave before luck starts charging rent.",
           "consequence_summary": "Heat -3",
           "consequences": {
@@ -2027,7 +2027,7 @@
         },
         {
           "id": "refuse",
-          "label": "Keep the door shut",
+          "label": "Refuse",
           "text": "You keep the night quiet, or quieter.",
           "consequence_summary": "Heat +9, refusal flag",
           "consequences": {
@@ -2069,13 +2069,13 @@
       "choices": [
         {
           "id": "high_roller_cashout",
-          "label": "Sign for gold",
+          "label": "Claim Gold card",
           "text": "Linda slides the Gold card through the glass.",
           "consequence_summary": "Win the demo clean"
         },
         {
           "id": "wait",
-          "label": "Let it cool",
+          "label": "Not yet",
           "text": "Momentum dies, attention thins.",
           "consequence_summary": "Keep playing"
         }
@@ -2362,7 +2362,7 @@
       "choices": [
         {
           "id": "make_call",
-          "label": "Dial the guilt",
+          "label": "Make the call",
           "text": "You wait through rings and old family weather.",
           "audio_cue": "phone_call",
           "audio_cue_volume_db": -3.0,
@@ -2392,7 +2392,7 @@
         },
         {
           "id": "not_tonight",
-          "label": "Let it sleep",
+          "label": "Not tonight",
           "text": "The receiver stays down. So does the lecture.",
           "consequence_summary": "No debt and no family strings.",
           "consequences": {
@@ -2442,7 +2442,7 @@
       "choices": [
         {
           "id": "accept",
-          "label": "Drink the favor",
+          "label": "Take the loan",
           "text": "Luck gets louder. So does the hook.",
           "consequence_summary": "Bankroll +30 and brother-in-law debt.",
           "conclusion_animation": "bankroll_transfer",
@@ -2453,7 +2453,7 @@
         },
         {
           "id": "deny",
-          "label": "Hang up clean",
+          "label": "Hang up",
           "text": "You thank him before the lecture finds shoes.",
           "consequence_summary": "No loan; family remembers the call.",
           "consequences": {
@@ -2584,7 +2584,7 @@
       "choices": [
         {
           "id": "take_number",
-          "label": "Pocket the number",
+          "label": "Take the number",
           "text": "You take the superstition and its smell.",
           "consequence_summary": "Luck +1, heat +1",
           "consequences": {
@@ -2655,7 +2655,7 @@
       "choices": [
         {
           "id": "hear_pattern",
-          "label": "Hear the shoe",
+          "label": "Hear him out",
           "text": "You take the rhythm and keep your face still.",
           "consequence_summary": "Luck +1, heat +2",
           "consequences": {
@@ -2666,7 +2666,7 @@
         },
         {
           "id": "tip_dealer",
-          "label": "Tip the rhythm",
+          "label": "Tip the dealer",
           "text": "You buy timing and a little discretion.",
           "consequence_summary": "$ -8, heat -4",
           "consequences": {
@@ -2727,7 +2727,7 @@
       "choices": [
         {
           "id": "accept_tip",
-          "label": "Take the hold",
+          "label": "Take the tip",
           "text": "You accept the advice and let the cabinet judge.",
           "consequence_summary": "$ +6, heat +1",
           "consequences": {
@@ -2738,7 +2738,7 @@
         },
         {
           "id": "swap_seat",
-          "label": "Change chairs",
+          "label": "Change seats",
           "text": "You move seats and lose the stare.",
           "consequence_summary": "Heat -2",
           "consequences": {
@@ -2797,7 +2797,7 @@
       "choices": [
         {
           "id": "take_side_bet",
-          "label": "Take the loud money",
+          "label": "Take the bet",
           "text": "You take the side bet and its spotlight.",
           "consequence_summary": "$ +7, heat +3",
           "consequences": {
@@ -2808,7 +2808,7 @@
         },
         {
           "id": "laugh_it_off",
-          "label": "Make him funny",
+          "label": "Laugh it off",
           "text": "The table laughs at him instead of you.",
           "consequence_summary": "Heat -2",
           "consequences": {
@@ -2867,7 +2867,7 @@
       "choices": [
         {
           "id": "take_tip",
-          "label": "Read the jar",
+          "label": "Take the tip",
           "text": "You take the local?s paper instinct.",
           "consequence_summary": "$ +5, story flag",
           "consequences": {
@@ -2878,7 +2878,7 @@
         },
         {
           "id": "buy_coffee",
-          "label": "Buy their quiet",
+          "label": "Buy coffee",
           "text": "Coffee buys a softer witness.",
           "consequence_summary": "$ -4, heat -2",
           "consequences": {
@@ -2932,7 +2932,7 @@
       "choices": [
         {
           "id": "play_cool",
-          "label": "Slow the sparkle",
+          "label": "Play it cool",
           "text": "You ease your rhythm and let the floor breathe.",
           "consequence_summary": "Heat -4, cool flag",
           "consequences": {
@@ -2945,7 +2945,7 @@
         },
         {
           "id": "buy_round",
-          "label": "Buy the room",
+          "label": "Buy a round",
           "text": "A little cash softens the rail.",
           "consequence_summary": "$ -12, heat -8",
           "consequences": {
@@ -2956,7 +2956,7 @@
         },
         {
           "id": "talk_back",
-          "label": "Get cute",
+          "label": "Talk back",
           "text": "You make a point and become one.",
           "consequence_summary": "Heat +5, pride flag",
           "consequences": {
@@ -3003,7 +3003,7 @@
       "choices": [
         {
           "id": "walk_now",
-          "label": "Leave before certain",
+          "label": "Walk away",
           "text": "You step away before Rourke makes it math.",
           "consequence_summary": "Heat -10",
           "consequences": {
@@ -3016,7 +3016,7 @@
         },
         {
           "id": "bluff",
-          "label": "Smile through it",
+          "label": "Bluff it",
           "text": "You sell the win as manners and noise.",
           "consequence_summary": "60% heat -8; miss heat +8",
           "consequences": {
@@ -3037,7 +3037,7 @@
         },
         {
           "id": "slip_bribe",
-          "label": "Pay for minutes",
+          "label": "Slip a bribe",
           "text": "Cash buys the next few breaths.",
           "consequence_summary": "$ -30, heat -14",
           "consequences": {
@@ -3089,8 +3089,8 @@
         },
         {
           "id": "ask_about_action",
-          "label": "Ask where lights get brighter",
-          "text": "You ask where a careful player finds a bigger room.",
+          "label": "Ask about games",
+          "text": "You ask about bigger games.",
           "response_type": "curious",
           "consequences": {
             "flags": {
@@ -3131,8 +3131,8 @@
       "choices": [
         {
           "id": "accept_first_invitation",
-          "label": "Take the crest",
-          "text": "The Grand Casino route opens, stamped in gold and trouble.",
+          "label": "Take the invite",
+          "text": "Opens the Grand Casino.",
           "response_type": "warm",
           "consequences": {
             "add_next_archetypes": [
