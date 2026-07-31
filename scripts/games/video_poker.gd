@@ -32,18 +32,8 @@ extends GameModule
 # are applied through the shared host apply_result helper; this module never mutates
 # RunState directly.
 
-const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
-const C_DARK := VisualStyleScript.DARK
-const C_PINK := VisualStyleScript.PINK
-const C_PINK_2 := VisualStyleScript.PINK_2
-const C_CYAN := VisualStyleScript.CYAN
-const C_TEAL := VisualStyleScript.TEAL
-const C_YELLOW := VisualStyleScript.YELLOW
-const C_AMBER := VisualStyleScript.AMBER
-const C_ORANGE := VisualStyleScript.ORANGE
-const C_WHITE := VisualStyleScript.WHITE
-const C_SOFT := VisualStyleScript.SOFT
+const VideoPokerRendererScript := preload("res://scripts/games/video_poker_renderer.gd")
 
 const HAND_SIZE := 5
 const STATE_SCHEMA := "video_poker_machine_state"
@@ -298,34 +288,13 @@ const VARIANTS := {
 		],
 	},
 }
-const VARIANT_WEIGHTS := ["jacks_or_better", "deuces_wild", "double_double_bonus"]
-
 const RANK_WORD := {
 	2: "Twos", 3: "Threes", 4: "Fours", 5: "Fives", 6: "Sixes", 7: "Sevens",
 	8: "Eights", 9: "Nines", 10: "Tens", 11: "Jacks", 12: "Queens", 13: "Kings", 14: "Aces",
 }
 const SUIT_WORD := {0: "Spades", 1: "Hearts", 2: "Clubs", 3: "Diamonds"}
 
-# Video poker uses the same 960x540 presentation footprint as the slot cabinets:
-# a full cabinet background with the live game UI scaled up into the machine's
-# glass and button deck so the cabinet, not the surrounding room, is the focus.
-const VIDEO_POKER_BOARD_SIZE := Vector2(960, 540)
-const MACHINE_HEADER_RECT := Rect2(0, 0, 960, 74)
-const PAYTABLE_RECT := Rect2(42, 70, 854, 56)
-const PRIMARY_HAND_RECT := Rect2(42, 132, 854, 246)
-const STATUS_PANEL_RECT := Rect2(710, 74, 178, 50)
-const CARD_ROW_ORIGIN := Vector2(118, 232)
-const CARD_SIZE := Vector2(56, 64)
-const CARD_SPACING := 56.0
-const HOLD_BUTTON_SIZE := Vector2(44, 14)
-const CONTROL_DECK_RECT := Rect2(42, 382, 854, 46)
-const CABINET_BACKGROUND_PATHS := {
-	"jacks_or_better": "res://assets/art/games/video_poker_cabinets/jacks_or_better_cabinet_bg.png",
-	"double_deuces": "res://assets/art/games/video_poker_cabinets/double_deuces_cabinet_bg.png",
-	"triple_double_bonus": "res://assets/art/games/video_poker_cabinets/triple_double_bonus_cabinet_bg.png",
-}
-
-var cabinet_background_textures: Dictionary = {}
+var machine_renderer := VideoPokerRendererScript.new()
 
 
 # Creates the entry message for the cabinet.
@@ -352,6 +321,12 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 	var base_ceiling := int(_copy_dict(environment.get("economic_profile", {})).get("stake_ceiling", 20))
 	var wager_ceiling := run_state.wager_stake_ceiling(base_ceiling) if run_state != null else base_ceiling
 	var playable_indices: Array = _playable_denomination_indices(denomination_set, hand_count, wager_ceiling)
+	if playable_indices.is_empty():
+		# Every real cabinet must support the complete one-to-five coin ladder.
+		# Low-limit rooms therefore fall back to the smallest credit denomination
+		# instead of generating a machine whose multi-hand max bet is impossible.
+		denomination_set = [{"label": "1c", "credits": 1}]
+		playable_indices = [0]
 	var denomination_index := int(rng.pick(playable_indices, 0))
 	var machine_name := str(cabinet.get("machine_name", cabinet.get("label", "Video Poker")))
 	var tell := str(cabinet.get("cheat_prompt", "Time the skill beat, then tap the highlighted card slot."))
@@ -437,6 +412,33 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var flip: Dictionary = _active_flip(ui, last_result, hand_active)
 	var pit_boss: Dictionary = run_state.pit_boss_watch_status(environment)
 	var holdout_item_modifiers := skill_item_modifier_badges(run_state, HOLDOUT_ITEM_EFFECT_KEYS)
+	var display_hands: Array = []
+	if phase == "settled" or phase == "double_up":
+		display_hands = final_hands
+	else:
+		for _hand_index in range(hand_count):
+			display_hands.append(hand)
+	var winning_pay_keys: Array = []
+	for result_value in hand_results:
+		if typeof(result_value) != TYPE_DICTIONARY:
+			continue
+		var result_row: Dictionary = result_value
+		var result_key := str(result_row.get("pay_key", ""))
+		if int(result_row.get("total", 0)) > 0 and not result_key.is_empty() and not winning_pay_keys.has(result_key):
+			winning_pay_keys.append(result_key)
+	var rendered_hand_signatures: Array = []
+	for display_hand_value in display_hands:
+		rendered_hand_signatures.append(_hand_signature(display_hand_value if typeof(display_hand_value) == TYPE_ARRAY else []))
+	var outcome_headline := ""
+	if phase == "settled":
+		if win_credits > 0:
+			outcome_headline = "WIN: %s • PAID %d CREDITS" % [pay_label.to_upper(), win_credits]
+		else:
+			outcome_headline = "NO PAY • SET YOUR BET AND PRESS DEAL"
+	elif phase == "hold":
+		outcome_headline = "TAP CARDS TO HOLD • THEN PRESS DRAW"
+	else:
+		outcome_headline = "SET 1-5 COINS PER HAND • PRESS DEAL"
 
 	var spec: Dictionary = GameModule.surface_spec({
 		"surface_renderer": "card_machine",
@@ -446,7 +448,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
 		"surface_embeds_outcomes": true,
-		"surface_animates_idle": false,
+		"surface_animates_idle": true,
 		"surface_realtime_state_refresh": marked and str(holdout_challenge.get("skill_grade", "")).is_empty() and not bool(ui.get("reduce_motion", false)),
 		"reduce_motion": bool(ui.get("reduce_motion", false)),
 		"phase": phase,
@@ -483,6 +485,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"holdout_tell": str(state.get("holdout_tell", "")),
 		"hand": hand,
 		"hands": final_hands,
+		"display_hands": display_hands,
+		"rendered_hand_signatures": rendered_hand_signatures,
 		"hand_results": hand_results,
 		"holds": holds,
 		"suggested_holds": suggested,
@@ -501,7 +505,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"highlight_bet_column": bet_level,
 		"result_pay_key": category,
 		"result_pay_label": pay_label,
+		"winning_pay_keys": winning_pay_keys,
 		"payout_mult": pay_mult,
+		"outcome_headline": outcome_headline,
 		"info_text": _info_text(phase, hand, holds, last_result, marked, variant, holdout_challenge),
 		"result_message": str(last_result.get("summary", "")) if showing_result or double_phase else "",
 		"result_bankroll_delta": int(last_result.get("bankroll_delta", 0)) if phase == "settled" else 0,
@@ -536,6 +542,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"video_poker_mark": "video_poker_cheat",
 				"video_poker_palm": "video_poker_cheat_beat",
 				"video_poker_deal": "video_poker_deal",
+				"video_poker_bet_down": "video_poker_button",
 				"video_poker_bet_one": "video_poker_button",
 				"video_poker_bet_max": "video_poker_button",
 				"video_poker_double": "video_poker_double",
@@ -562,20 +569,7 @@ func wager_activity_incomplete(_run_state: RunState, _environment: Dictionary, u
 
 # Draws the cabinet screen and registers visible/invisible hit regions.
 func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
-	if str(surface_state.get("surface_renderer", "")) != "card_machine":
-		return false
-	var phase := str(surface_state.get("phase", "hold"))
-	_draw_machine(surface, surface_state)
-	_draw_paytable_grid(surface, surface_state)
-	_draw_meters(surface, surface_state)
-	if phase == "double_up":
-		_draw_double_up(surface, surface_state)
-	else:
-		_draw_card_row(surface, surface_state, phase)
-	_draw_info_line(surface, surface_state)
-	_draw_controls(surface, surface_state, phase)
-	_draw_holdout_meter(surface, surface_state)
-	return true
+	return machine_renderer.draw(surface, surface_state, _render_context)
 
 
 # Converts screen clicks into UI-local bet/hold/deal/double state or shared actions.
@@ -586,12 +580,16 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 	next["denomination_index"] = _next_playable_denomination_index(state, _denomination_index(next, state) - 1, run_state, environment)
 	next["bet_level"] = _affordable_bet_level(state, next, run_state, environment)
 	match surface_action:
+		"video_poker_bet_down":
+			next["bet_level"] = maxi(0, _bet_level(next) - 1)
+			var down_coins := _coin_count_for_level(_bet_level(next))
+			return _bet_command(next, _wager_for(state, next), "Bet %d coin%s per hand." % [down_coins, "" if down_coins == 1 else "s"])
 		"video_poker_bet_one":
-			var level := (_bet_level(next) + 1) % BET_LADDER.size()
+			var level := mini(MAX_BET_LEVEL, _bet_level(next) + 1)
 			next["bet_level"] = level
 			next["bet_level"] = _affordable_bet_level(state, next, run_state, environment)
 			var shown_coins := _coin_count_for_level(_bet_level(next))
-			return _bet_command(next, _wager_for(state, next), "Bet %d coin%s." % [shown_coins, "" if shown_coins == 1 else "s"])
+			return _bet_command(next, _wager_for(state, next), "Bet %d coin%s per hand." % [shown_coins, "" if shown_coins == 1 else "s"])
 		"video_poker_bet_max":
 			next["bet_level"] = MAX_BET_LEVEL
 			next["bet_level"] = _affordable_bet_level(state, next, run_state, environment)
@@ -648,10 +646,10 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				if not draw_challenge_complete:
 					next["holdout_challenge"] = draw_challenge
 					return _message_command(next, "Finish the timed holdout beat before the draw.")
-				return _action_command("mark_holds", "cheat", confirm_requested, next, index, _wager_for(state, next), "Draw with the holdout. Click again to risk the swap.")
+				return _immediate_action_command("mark_holds", "cheat", next, index, _wager_for(state, next), "Drawing with the armed holdout.")
 			next["marked"] = false
 			next.erase("holdout_challenge")
-			return _action_command("draw", "legal", confirm_requested, next, index, _wager_for(state, next), "Draw ready. Click again to replace the un-held cards.")
+			return _immediate_action_command("draw", "legal", next, index, _wager_for(state, next), "Drawing the un-held cards.")
 		"video_poker_mark":
 			if not bool(next.get("hand_active", false)):
 				return _message_command(next, "Deal a hand first.")
@@ -699,7 +697,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			if not bool(next.get("double_active", false)):
 				return _message_command(next, "Press DOUBLE UP first.")
 			next["double_pick"] = clampi(index, 0, 3)
-			return _action_command("double_up", "legal", confirm_requested, next, index, 0, "Card chosen. Click again to flip it.")
+			return _immediate_action_command("double_up", "legal", next, index, 0, "Card chosen. Flipping now.")
 	return {"handled": false}
 
 
@@ -741,8 +739,9 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	if bet_credits <= 0 or bet_credits > affordable:
 		return _empty_result(action_id, 0, environment, "You do not have enough credits to deal.")
 
-	# The deal is the deterministic opening; the draw pool is the rest of that deck,
-	# shuffled with the injected stream so replacements are random and unique.
+	# The deal is the deterministic opening. One-hand play draws from the original
+	# remaining deck; multi-hand play follows real Triple Play rules: every result
+	# hand gets its own independent 52-card deck with only the held cards removed.
 	var deck: Array = _deal_deck(run_state, state)
 	var opening: Array = _slice_cards(deck, 0, HAND_SIZE)
 	var holds: Array = _index_array(ui.get("holds", []))
@@ -759,7 +758,6 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		holdout_margin = int(holdout_challenge.get("margin_msec", 0))
 		holdout_applied = _holdout_grade_applies(holdout_grade)
 		holdout_outcome = _holdout_skill_outcome(holdout_grade)
-	var draw_base: Array = _deck_without_cards(_base_deck(variant), opening)
 	var final_hands: Array = []
 	var hand_results: Array = []
 	var total_gross := 0
@@ -768,8 +766,21 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	var best_index := 0
 	var best_value := -999999
 	var luck_bonus := clampi(run_state.luck_win_chance_bonus() + _item_bonus("win_chance", run_state, is_cheat), 0, 35)
+	var draw_removed_cards: Array = _draw_removed_cards_for_rule(opening, holds, hand_count)
+	var draw_base: Array = _deck_without_cards(_base_deck(variant), draw_removed_cards)
+	var draw_rule := "single_remaining_deck" if hand_count <= 1 else "independent_deck_minus_held"
 	for hand_index in range(hand_count):
-		var pool: Array = CardShoeScript.shuffle_cards(draw_base, rng)
+		var draw_stream_key := "draw:%s:%d:%d:%s" % [
+			str(state.get("cabinet_key", "")),
+			int(state.get("hands_played", 0)),
+			hand_index,
+			JSON.stringify(holds),
+		]
+		var hand_rng: RngStream = rng.fork(draw_stream_key)
+		# Advance the parent action stream once per hand while keeping each hand's
+		# completion deck independently seeded and replayable.
+		rng.randi_range(1, RngStream.MODULUS - 1)
+		var pool: Array = CardShoeScript.shuffle_cards(draw_base, hand_rng)
 		var final_hand: Array = opening.duplicate(true)
 		var drawn_indices: Array = []
 		var pool_cursor := 0
@@ -811,6 +822,10 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 			"bonus_label": str(bonus_layer.get("label", "")),
 			"scoring_indices": _index_array(descriptor.get("scoring_indices", [])),
 			"drawn_indices": drawn_indices,
+			"draw_deck_rule": draw_rule,
+			"draw_stream_key": draw_stream_key,
+			"draw_pool_size": draw_base.size(),
+			"draw_removed_cards": draw_removed_cards.duplicate(true),
 		})
 	if final_hands.is_empty():
 		return _empty_result(action_id, bet_credits, environment, "The machine failed to draw a hand.")
@@ -820,8 +835,8 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	var pay_row: Dictionary = _pay_for(primary_descriptor, variant)
 	var gross_payout := total_gross
 	var bankroll_delta := gross_payout - bet_credits
-	var won := bankroll_delta > 0
-	if won:
+	var profitable := bankroll_delta > 0
+	if profitable:
 		bankroll_delta = maxi(1, bankroll_delta + run_state.luck_payout_bonus(bet_credits, true) + _item_bonus("win_bonus", run_state, is_cheat))
 	elif bankroll_delta < 0:
 		bankroll_delta = mini(0, bankroll_delta + _item_bonus("loss_reduction", run_state, is_cheat))
@@ -854,8 +869,9 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	if hand_count > 1:
 		blurb = "%s x%d hands" % [blurb, hand_count]
 	var message := _outcome_message(blurb, pay_row, gross_payout, bankroll_delta, suspicion_delta, is_cheat, pit_boss_summary, security_message, holdout_grade, holdout_applied, holdout_challenge, state)
-	# Only a clean (non-cheated) paying win can be gambled on the double-up.
-	var win_credits := maxi(0, bankroll_delta) if won else 0
+	# A real machine's WIN meter and gamble stake show the gross paid credits,
+	# even when one winning multi-hand row returns less than the total wager.
+	var win_credits := maxi(0, gross_payout)
 
 	var resolved_at := GameModule.deterministic_time_msec(run_state, ui)
 	state["progressive_meter"] = PROGRESSIVE_BASE if total_progressive_bonus > 0 else int(state.get("progressive_meter", PROGRESSIVE_BASE)) + maxi(1, int(bet_credits / 30))
@@ -880,7 +896,7 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		"bonus_credits": total_bonus,
 		"progressive_bonus": total_progressive_bonus,
 		"win_credits": win_credits,
-		"double_credits": win_credits if (won and not is_cheat) else 0,
+		"double_credits": win_credits if (win_credits > 0 and not is_cheat) else 0,
 		"double_chain": 0,
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
@@ -903,7 +919,7 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		"game_id": get_id(),
 		"action_id": action_id,
 		"action_kind": "cheat" if is_cheat else "legal",
-		"won": won,
+		"won": gross_payout > 0,
 		"variant": str(state.get("variant_id", "")),
 		"paytable_tier": str(state.get("paytable_tier_id", "")),
 		"category": str(primary_result.get("pay_key", "")),
@@ -1136,6 +1152,14 @@ func _normalize_state(state: Dictionary) -> Dictionary:
 	if not PAYTABLE_TIERS.has(normalized["paytable_tier_id"]):
 		normalized["paytable_tier_id"] = "full_pay"
 	normalized["coin_denominations"] = _normalize_denominations(normalized.get("coin_denominations", []))
+	var has_base_denomination := false
+	for denomination_value in normalized["coin_denominations"]:
+		if typeof(denomination_value) == TYPE_DICTIONARY and int((denomination_value as Dictionary).get("credits", 0)) == 1:
+			has_base_denomination = true
+			break
+	if not has_base_denomination:
+		(normalized["coin_denominations"] as Array).push_front({"label": "1c", "credits": 1})
+		normalized["denomination_index"] = 0
 	normalized["denomination_index"] = clampi(int(normalized.get("denomination_index", 0)), 0, maxi(0, (normalized["coin_denominations"] as Array).size() - 1))
 	normalized["multi_hand_count"] = int(cabinet.get("hand_count", _normalize_hand_count(int(normalized.get("multi_hand_count", 1)))))
 	normalized["cabinet_key"] = str(normalized.get("cabinet_key", "%s:%s:%dplay" % [normalized["cabinet_id"], normalized["paytable_tier_id"], normalized["multi_hand_count"]]))
@@ -1157,7 +1181,7 @@ func _normalized_ui_state(ui_state: Dictionary) -> Dictionary:
 	next["holds"] = _index_array(next.get("holds", []))
 	next["hand_active"] = bool(next.get("hand_active", false))
 	next["marked"] = bool(next.get("marked", false))
-	next["bet_level"] = clampi(int(next.get("bet_level", MAX_BET_LEVEL)), 0, MAX_BET_LEVEL)
+	next["bet_level"] = clampi(int(next.get("bet_level", 0)), 0, MAX_BET_LEVEL)
 	next["denomination_index"] = maxi(0, int(next.get("denomination_index", 0)))
 	var holdout_challenge: Dictionary = _normalized_holdout_challenge(next.get("holdout_challenge", {}))
 	if holdout_challenge.is_empty():
@@ -1750,11 +1774,9 @@ func _playable_denomination_indices(denominations: Array, hand_count: int, wager
 	var result: Array = []
 	for i in range(denominations.size()):
 		var entry: Dictionary = denominations[i] if typeof(denominations[i]) == TYPE_DICTIONARY else {}
-		var min_wager := maxi(1, int(entry.get("credits", 1))) * maxi(1, hand_count)
-		if min_wager <= wager_ceiling:
+		var max_wager := maxi(1, int(entry.get("credits", 1))) * maxi(1, hand_count) * _coin_count_for_level(MAX_BET_LEVEL)
+		if max_wager <= wager_ceiling:
 			result.append(i)
-	if result.is_empty():
-		result.append(0)
 	return result
 
 
@@ -1796,7 +1818,7 @@ func _wild_ranks(variant: Dictionary) -> Array:
 
 
 func _bet_level(ui: Dictionary) -> int:
-	return clampi(int(ui.get("bet_level", MAX_BET_LEVEL)), 0, MAX_BET_LEVEL)
+	return clampi(int(ui.get("bet_level", 0)), 0, MAX_BET_LEVEL)
 
 
 func _coin_count_for_level(level: int) -> int:
@@ -1854,6 +1876,20 @@ func _deck_without_cards(deck: Array, cards: Array) -> Array:
 				result.remove_at(i)
 				break
 	return result
+
+
+func _draw_removed_cards_for_rule(opening: Array, holds: Array, hand_count: int) -> Array:
+	var removed: Array = []
+	if hand_count <= 1:
+		return opening
+	for hold_value in holds:
+		var hold_index := int(hold_value)
+		if hold_index < 0 or hold_index >= opening.size():
+			continue
+		var card: Dictionary = opening[hold_index] if typeof(opening[hold_index]) == TYPE_DICTIONARY else {}
+		if not card.is_empty():
+			removed.append(card)
+	return removed
 
 
 func _same_card(a: Dictionary, b: Dictionary) -> bool:
@@ -2672,6 +2708,20 @@ func _action_command(action_id: String, action_kind: String, confirm_requested: 
 	})
 
 
+func _immediate_action_command(action_id: String, action_kind: String, ui_state: Dictionary, index: int, set_stake: int, message: String) -> Dictionary:
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": ui_state,
+		"action_id": action_id,
+		"action_kind": action_kind,
+		"direct_resolve": true,
+		"preserve_surface_ui_state": false,
+		"set_stake": set_stake,
+		"selected_index": index,
+		"message": message,
+	})
+
+
 func _message_command(ui_state: Dictionary, message: String) -> Dictionary:
 	return GameModule.surface_command({
 		"handled": true,
@@ -2728,673 +2778,6 @@ func _build_result(action_id: String, action_kind: String, stake: int, bankroll_
 
 # --- Drawing -----------------------------------------------------------------
 
-func _draw_machine(surface, surface_state: Dictionary) -> void:
-	var board_size: Vector2 = surface.surface_board_size()
-	var primary := Color(str(surface_state.get("cabinet_primary", "#19d6ff")))
-	var secondary := Color(str(surface_state.get("cabinet_secondary", "#ff4fd8")))
-	var body := Color(str(surface_state.get("cabinet_body", "#111a2b")))
-	var glass := Color(str(surface_state.get("cabinet_glass", "#071323")))
-	var trim := Color(str(surface_state.get("cabinet_trim", "#f7ef75")))
-	var theme := str(surface_state.get("cabinet_theme", "retro"))
-	var background := _cabinet_background_texture(str(surface_state.get("cabinet_id", "jacks_or_better")))
-	if background != null:
-		surface.draw_texture_rect(background, Rect2(Vector2.ZERO, board_size), false)
-		_draw_live_cabinet_glass(surface, primary, secondary, trim)
-		return
-	match theme:
-		"deuces":
-			_draw_double_deuces_cabinet(surface, surface_state, board_size, primary, secondary, body, glass, trim)
-		"gold":
-			_draw_triple_bonus_cabinet(surface, surface_state, board_size, primary, secondary, body, glass, trim)
-		_:
-			_draw_neon_jacks_cabinet(surface, surface_state, board_size, primary, secondary, body, glass, trim)
-
-
-func _cabinet_background_texture(cabinet_id: String) -> Texture2D:
-	var path := str(CABINET_BACKGROUND_PATHS.get(cabinet_id, ""))
-	if path.is_empty():
-		return null
-	if cabinet_background_textures.has(path):
-		return cabinet_background_textures[path] as Texture2D
-	if not ResourceLoader.exists(path):
-		cabinet_background_textures[path] = null
-		return null
-	var texture := load(path) as Texture2D
-	cabinet_background_textures[path] = texture
-	return texture
-
-
-func _draw_live_cabinet_glass(surface, primary: Color, secondary: Color, trim: Color) -> void:
-	for panel in [PAYTABLE_RECT, PRIMARY_HAND_RECT, STATUS_PANEL_RECT]:
-		var rect: Rect2 = panel
-		surface.draw_rect(rect.grow(3.0), Color(0.0, 0.0, 0.0, 0.52))
-		surface.draw_rect(rect, Color("#050915"))
-		surface.draw_rect(rect, Color(primary.r, primary.g, primary.b, 0.32), false, 2)
-		surface.draw_rect(rect.grow(-4.0), Color(secondary.r, secondary.g, secondary.b, 0.18), false, 1)
-	surface.draw_rect(CONTROL_DECK_RECT.grow(3.0), Color(0.0, 0.0, 0.0, 0.54))
-	surface.draw_rect(CONTROL_DECK_RECT, Color("#070914"))
-	surface.draw_rect(CONTROL_DECK_RECT, Color(trim.r, trim.g, trim.b, 0.28), false, 1)
-
-
-func _draw_neon_jacks_cabinet(surface, surface_state: Dictionary, board_size: Vector2, primary: Color, secondary: Color, body: Color, glass: Color, trim: Color) -> void:
-	surface.draw_rect(Rect2(Vector2.ZERO, board_size), Color("#03070f"))
-	surface.draw_rect(Rect2(0, 390, board_size.x, 40), Color("#07040f"))
-	surface.draw_rect(Rect2(16, 14, board_size.x - 32, board_size.y - 26), Color("#111729"))
-	surface.draw_rect(Rect2(16, 14, board_size.x - 32, board_size.y - 26), Color(primary.r, primary.g, primary.b, 0.62), false, 4)
-	surface.draw_rect(Rect2(30, 26, board_size.x - 60, 376), Color(body.r * 0.62, body.g * 0.62, body.b * 0.62, 1.0))
-	for stripe in range(8):
-		var x := 46.0 + float(stripe) * 102.0
-		surface.draw_rect(Rect2(x, 38, 36, 326), Color(primary.r, primary.g, primary.b, 0.055))
-		surface.draw_rect(Rect2(x + 48, 38, 18, 326), Color(secondary.r, secondary.g, secondary.b, 0.040))
-	_draw_bulb_row(surface, Rect2(30, 34, board_size.x - 60, 8), primary, secondary)
-	_draw_neon_starfield(surface, primary, secondary)
-	_draw_video_poker_bezel(surface, PAYTABLE_RECT.grow(4.0), primary, secondary, 2)
-	_draw_video_poker_bezel(surface, PRIMARY_HAND_RECT.grow(4.0), primary, trim, 3)
-	_draw_video_poker_bezel(surface, STATUS_PANEL_RECT.grow(4.0), trim, primary, 2)
-	_draw_neon_marquee(surface, surface_state, primary, secondary, trim)
-	_draw_chrome_speaker_stack(surface, Rect2(34, 190, 18, 150), primary)
-	_draw_chrome_speaker_stack(surface, Rect2(850, 190, 18, 150), secondary)
-	surface.draw_rect(PRIMARY_HAND_RECT, Color(glass.r, glass.g, glass.b, 0.97))
-	surface.draw_rect(PRIMARY_HAND_RECT, Color(primary.r, primary.g, primary.b, 0.30), false, 2)
-	surface.draw_rect(STATUS_PANEL_RECT, Color("#070e1f"))
-	surface.draw_rect(STATUS_PANEL_RECT, Color(trim.r, trim.g, trim.b, 0.30), false, 2)
-	_draw_control_console(surface, CONTROL_DECK_RECT, Color("#11182a"), primary, secondary, trim, "raised")
-
-
-func _draw_double_deuces_cabinet(surface, surface_state: Dictionary, board_size: Vector2, primary: Color, secondary: Color, body: Color, glass: Color, trim: Color) -> void:
-	surface.draw_rect(Rect2(Vector2.ZERO, board_size), Color("#02110e"))
-	surface.draw_rect(Rect2(0, 392, board_size.x, 38), Color("#03100c"))
-	surface.draw_rect(Rect2(22, 10, board_size.x - 44, board_size.y - 22), Color("#062019"))
-	surface.draw_rect(Rect2(22, 10, board_size.x - 44, board_size.y - 22), Color(primary.r, primary.g, primary.b, 0.50), false, 3)
-	surface.draw_rect(Rect2(8, 76, 28, 284), Color(primary.r, primary.g, primary.b, 0.18))
-	surface.draw_rect(Rect2(864, 76, 28, 284), Color(secondary.r, secondary.g, secondary.b, 0.20))
-	for y in range(92, 340, 38):
-		surface.draw_circle(Vector2(22, y), 9, Color(primary.r, primary.g, primary.b, 0.35))
-		surface.draw_circle(Vector2(878, y + 18), 9, Color(secondary.r, secondary.g, secondary.b, 0.34))
-	for pip in range(18):
-		var px := 54.0 + float((pip * 47) % 784)
-		var py := 50.0 + float((pip * 31) % 316)
-		surface.surface_label("2", Vector2(px, py), 22, Color(primary.r, primary.g, primary.b, 0.16))
-	_draw_deuce_marquee(surface, surface_state, primary, secondary, trim)
-	_draw_deuce_wild_window(surface, Rect2(342, 9, 216, 27), primary, secondary)
-	_draw_video_poker_bezel(surface, PAYTABLE_RECT.grow(4.0), secondary, primary, 2)
-	_draw_video_poker_bezel(surface, PRIMARY_HAND_RECT.grow(4.0), primary, secondary, 2)
-	_draw_video_poker_bezel(surface, STATUS_PANEL_RECT.grow(4.0), secondary, trim, 2)
-	surface.draw_rect(PRIMARY_HAND_RECT, Color(glass.r, glass.g, glass.b, 0.97))
-	surface.draw_rect(PRIMARY_HAND_RECT, Color(primary.r, primary.g, primary.b, 0.34), false, 2)
-	surface.draw_rect(STATUS_PANEL_RECT, Color("#061b18"))
-	surface.draw_rect(STATUS_PANEL_RECT, Color(secondary.r, secondary.g, secondary.b, 0.34), false, 2)
-	_draw_control_console(surface, CONTROL_DECK_RECT, Color("#071c17"), primary, secondary, trim, "split")
-
-
-func _draw_triple_bonus_cabinet(surface, surface_state: Dictionary, board_size: Vector2, primary: Color, secondary: Color, body: Color, glass: Color, trim: Color) -> void:
-	surface.draw_rect(Rect2(Vector2.ZERO, board_size), Color("#100602"))
-	surface.draw_rect(Rect2(6, 8, board_size.x - 12, board_size.y - 16), Color("#2c1606"))
-	surface.draw_rect(Rect2(6, 8, board_size.x - 12, board_size.y - 16), Color(trim.r, trim.g, trim.b, 0.50), false, 4)
-	surface.draw_rect(Rect2(28, 30, board_size.x - 56, 356), Color(body.r * 0.72, body.g * 0.72, body.b * 0.72, 1.0))
-	for ray in range(12):
-		var x := 40.0 + float(ray) * 76.0
-		surface.draw_polygon([Vector2(x, 66), Vector2(x + 52, 186), Vector2(x - 28, 186)], [Color(trim.r, trim.g, trim.b, 0.06)]) # SA2_PER_FRAME_OK: bounded high-roller cabinet sunburst rays.
-	for coin in range(9):
-		var p := Vector2(56.0 + float((coin * 91) % 770), 52.0 + float((coin * 43) % 298))
-		_draw_gold_coin(surface, p, 8.0 + float(coin % 3), primary, trim)
-	_draw_gold_crown_marquee(surface, surface_state, primary, secondary, trim)
-	_draw_video_poker_bezel(surface, PAYTABLE_RECT.grow(5.0), trim, secondary, 3)
-	_draw_video_poker_bezel(surface, PRIMARY_HAND_RECT.grow(5.0), primary, trim, 3)
-	_draw_video_poker_bezel(surface, STATUS_PANEL_RECT.grow(5.0), trim, primary, 3)
-	surface.draw_rect(PRIMARY_HAND_RECT, Color(glass.r, glass.g, glass.b, 0.97))
-	surface.draw_rect(PRIMARY_HAND_RECT, Color(primary.r, primary.g, primary.b, 0.30), false, 2)
-	surface.draw_rect(STATUS_PANEL_RECT, Color("#170a03"))
-	surface.draw_rect(STATUS_PANEL_RECT, Color(trim.r, trim.g, trim.b, 0.36), false, 2)
-	_draw_control_console(surface, CONTROL_DECK_RECT, Color("#211104"), primary, secondary, trim, "gold")
-
-
-func _draw_neon_marquee(surface, surface_state: Dictionary, primary: Color, secondary: Color, trim: Color) -> void:
-	var sign := Rect2(20, 4, 860, 44)
-	surface.draw_rect(sign, Color("#081221"))
-	surface.draw_rect(sign, Color(primary.r, primary.g, primary.b, 0.65), false, 2)
-	surface.draw_rect(Rect2(sign.position + Vector2(8, 8), Vector2(338, 28)), Color("#05101d"))
-	surface.surface_label(str(surface_state.get("machine_name", "NEON JACKS")).to_upper().left(24), Vector2(34, 30), 22, trim)
-	surface.surface_label("%s  %s  %s" % [
-		str(surface_state.get("variant_label", "Jacks or Better")).left(22),
-		str(surface_state.get("paytable_tier_label", "Standard")).left(14),
-		str(surface_state.get("multi_hand_mode", "1 Play")),
-	], Vector2(404, 30), 12, secondary)
-	surface.draw_rect(Rect2(776, 21, 86, 34), Color("#032634"))
-	surface.draw_rect(Rect2(776, 21, 86, 34), primary, false, 1)
-	surface.surface_label_centered("LEAVE", Rect2(776, 22, 86, 30), 14, C_WHITE)
-
-
-func _draw_deuce_marquee(surface, surface_state: Dictionary, primary: Color, secondary: Color, trim: Color) -> void:
-	var sign := Rect2(18, 2, 864, 50)
-	surface.draw_rect(sign, Color("#06251d"))
-	surface.draw_rect(sign, Color(primary.r, primary.g, primary.b, 0.58), false, 3)
-	surface.surface_label("DOUBLE DEUCES", Vector2(28, 31), 22, trim)
-	surface.surface_label("%s  %s" % [
-		str(surface_state.get("paytable_tier_label", "Standard")).left(14),
-		str(surface_state.get("multi_hand_mode", "2 Play")),
-	], Vector2(584, 30), 11, secondary)
-	for i in range(4):
-		var pos := Vector2(690.0 + float(i) * 26.0, 27.0)
-		surface.surface_label("2", pos, 18, primary)
-	surface.draw_rect(Rect2(776, 21, 86, 34), Color("#02322b"))
-	surface.draw_rect(Rect2(776, 21, 86, 34), secondary, false, 1)
-	surface.surface_label_centered("LEAVE", Rect2(776, 22, 86, 30), 14, C_WHITE)
-
-
-func _draw_gold_crown_marquee(surface, surface_state: Dictionary, primary: Color, secondary: Color, trim: Color) -> void:
-	var sign := Rect2(12, 0, 876, 54)
-	surface.draw_rect(sign, Color("#291204"))
-	surface.draw_rect(sign, Color(trim.r, trim.g, trim.b, 0.64), false, 4)
-	for tooth in range(5):
-		var base_x := 338.0 + float(tooth) * 32.0
-		surface.draw_polygon([Vector2(base_x, 8), Vector2(base_x + 16, 0), Vector2(base_x + 32, 8)], [Color(primary.r, primary.g, primary.b, 0.42)]) # SA2_PER_FRAME_OK: five small crown peaks in static cabinet art.
-	surface.surface_label("TRIPLE DOUBLE BONUS", Vector2(24, 30), 21, trim)
-	surface.surface_label("%s  %s  %s" % [
-		str(surface_state.get("variant_label", "Double Double Bonus")).left(22),
-		str(surface_state.get("paytable_tier_label", "Standard")).left(14),
-		str(surface_state.get("multi_hand_mode", "3 Play")),
-	], Vector2(404, 30), 12, secondary)
-	surface.draw_rect(Rect2(776, 21, 86, 34), Color("#3a1b05"))
-	surface.draw_rect(Rect2(776, 21, 86, 34), trim, false, 1)
-	surface.surface_label_centered("LEAVE", Rect2(776, 22, 86, 30), 14, C_WHITE)
-
-
-func _draw_video_poker_bezel(surface, rect: Rect2, primary: Color, secondary: Color, thickness: int) -> void:
-	surface.draw_rect(rect, Color(primary.r, primary.g, primary.b, 0.12))
-	surface.draw_rect(rect, Color(primary.r, primary.g, primary.b, 0.58), false, thickness)
-	surface.draw_rect(rect.grow(-5.0), Color(secondary.r, secondary.g, secondary.b, 0.30), false, 1)
-
-
-func _draw_bulb_row(surface, rect: Rect2, primary: Color, secondary: Color) -> void:
-	for index in range(18):
-		var pos := rect.position + Vector2(14.0 + float(index) * (rect.size.x - 28.0) / 17.0, rect.size.y * 0.5)
-		var color := primary if index % 2 == 0 else secondary
-		surface.draw_circle(pos, 3.0, Color(color.r, color.g, color.b, 0.60))
-
-
-func _draw_neon_starfield(surface, primary: Color, secondary: Color) -> void:
-	for star in range(15):
-		var p := Vector2(58.0 + float((star * 59) % 778), 62.0 + float((star * 37) % 292))
-		var color := primary if star % 2 == 0 else secondary
-		surface.draw_rect(Rect2(p.x - 5, p.y, 10, 2), Color(color.r, color.g, color.b, 0.22))
-		surface.draw_rect(Rect2(p.x - 1, p.y - 4, 2, 10), Color(color.r, color.g, color.b, 0.18))
-
-
-func _draw_chrome_speaker_stack(surface, rect: Rect2, accent: Color) -> void:
-	surface.draw_rect(rect, Color("#05070d"))
-	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.32), false, 1)
-	for y in range(8, int(rect.size.y) - 4, 14):
-		surface.draw_rect(Rect2(rect.position + Vector2(4, y), Vector2(rect.size.x - 8, 2)), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.22))
-
-
-func _draw_deuce_wild_window(surface, rect: Rect2, primary: Color, secondary: Color) -> void:
-	surface.draw_rect(rect, Color("#031511"))
-	surface.draw_rect(rect, Color(primary.r, primary.g, primary.b, 0.38), false, 2)
-	surface.surface_label_centered("WILD 2s", rect.grow(-4.0), 13, secondary)
-
-
-func _draw_gold_coin(surface, pos: Vector2, radius: float, primary: Color, trim: Color) -> void:
-	surface.draw_circle(pos, radius, Color(primary.r, primary.g, primary.b, 0.24))
-	surface.draw_circle(pos, maxf(1.0, radius - 3.0), Color(trim.r, trim.g, trim.b, 0.16))
-	surface.surface_label("$", pos + Vector2(-3, 4), 8, Color(trim.r, trim.g, trim.b, 0.30))
-
-
-func _draw_control_console(surface, rect: Rect2, fill: Color, primary: Color, secondary: Color, trim: Color, style: String) -> void:
-	surface.draw_rect(rect, fill)
-	var rail_color := trim
-	if style == "split":
-		rail_color = primary
-	elif style == "gold":
-		rail_color = trim
-	surface.draw_rect(rect, Color(rail_color.r, rail_color.g, rail_color.b, 0.30), false, 2)
-	if style == "raised":
-		surface.draw_rect(Rect2(rect.position + Vector2(4, 5), Vector2(rect.size.x - 8, 4)), Color(primary.r, primary.g, primary.b, 0.20))
-	elif style == "split":
-		surface.draw_rect(Rect2(rect.position + Vector2(8, 6), Vector2(rect.size.x * 0.46, rect.size.y - 12)), Color(primary.r, primary.g, primary.b, 0.06))
-		surface.draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.51, 6), Vector2(rect.size.x * 0.46, rect.size.y - 12)), Color(secondary.r, secondary.g, secondary.b, 0.06))
-	else:
-		surface.draw_rect(Rect2(rect.position + Vector2(8, 6), Vector2(rect.size.x - 16, 5)), Color(trim.r, trim.g, trim.b, 0.24))
-
-
-func _draw_paytable_grid(surface, surface_state: Dictionary) -> void:
-	var rows: Array = surface_state.get("paytable_rows", [])
-	var coin_count := maxi(1, int(surface_state.get("coin_count", 1)))
-	var coin_value := maxi(1, int(surface_state.get("coin_value", 1)))
-	var win_key := str(surface_state.get("result_pay_key", ""))
-	var grid := PAYTABLE_RECT
-	surface.draw_rect(grid, Color("#0b1020"))
-	surface.draw_rect(grid, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.32), false, 2)
-	var title_rect := Rect2(grid.position + Vector2(12, 6), Vector2(210, 18))
-	surface.surface_label("PAY TABLE / NET", title_rect.position + Vector2(0, 13), 12, C_YELLOW)
-	var net := int(surface_state.get("result_bankroll_delta", 0))
-	var win := int(surface_state.get("win_credits", 0))
-	var bet := int(surface_state.get("bet_credits", 0))
-	var credits := int(surface_state.get("credits", 0))
-	var hand_count := maxi(1, int(surface_state.get("hand_count", 1)))
-	var state_label := str(surface_state.get("result_pay_label", "IN PLAY" if win <= 0 else "WIN")).to_upper()
-	if win_key.is_empty():
-		state_label = "IN PLAY"
-	var summary_rects := [
-		{"label": "CRED", "value": str(credits), "color": C_YELLOW},
-		{"label": "BET", "value": str(bet), "color": C_CYAN},
-		{"label": "WIN", "value": str(win), "color": C_TEAL},
-		{"label": "NET", "value": "%+d" % net, "color": C_TEAL if net >= 0 else C_ORANGE},
-	]
-	var meter_x := grid.position.x + 224.0
-	var meter_w := 76.0
-	for index in range(summary_rects.size()):
-		var item: Dictionary = summary_rects[index]
-		_draw_status_chip(surface, Rect2(meter_x + float(index) * (meter_w + 8.0), grid.position.y + 8.0, meter_w, 40.0), str(item.get("label", "")), str(item.get("value", "")), item.get("color", C_SOFT) as Color)
-	var result_rect := Rect2(grid.position.x + 572.0, grid.position.y + 8.0, 126.0, 40.0)
-	_draw_status_chip(surface, result_rect, "%d PLAY" % hand_count, state_label.left(15), C_TEAL if win > 0 else C_SOFT)
-	var pay_rect := Rect2(grid.position.x + 708.0, grid.position.y + 8.0, 180.0, 40.0)
-	surface.draw_rect(pay_rect, Color("#05070d"))
-	surface.draw_rect(pay_rect, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.30), false, 1)
-	surface.surface_label_centered("%s  %d COIN  %s" % [
-		str(surface_state.get("variant_label", "Video Poker")).to_upper().left(16),
-		coin_count,
-		str(surface_state.get("coin_label", "1c")).to_upper(),
-	], Rect2(pay_rect.position + Vector2(6, 6), Vector2(pay_rect.size.x - 12, 12)), 7, C_SOFT)
-	var top_rows := _featured_pay_rows(rows, win_key, hand_count)
-	var row_w := (pay_rect.size.x - 12.0) / float(maxi(1, top_rows.size()))
-	for index in range(top_rows.size()):
-		var row: Dictionary = top_rows[index]
-		var row_key := str(row.get("key", ""))
-		var row_rect := Rect2(pay_rect.position.x + 6.0 + float(index) * row_w, pay_rect.position.y + 20.0, row_w - 3.0, 15.0)
-		var is_win := not win_key.is_empty() and row_key == win_key
-		if is_win:
-			surface.draw_rect(row_rect, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.24))
-		var pay := _row_pay(row, coin_count, coin_count >= MAX_BET_LEVEL) * coin_value
-		surface.surface_label_centered("%s %d" % [str(row.get("label", "")).left(7), pay], row_rect, 6, C_YELLOW if is_win else C_SOFT)
-
-
-func _draw_status_chip(surface, rect: Rect2, label: String, value: String, color: Color) -> void:
-	surface.draw_rect(rect, Color("#05070d"))
-	surface.draw_rect(rect, Color(color.r, color.g, color.b, 0.34), false, 1)
-	surface.surface_label(label.left(6), rect.position + Vector2(6, 12), 7, Color(color.r, color.g, color.b, 0.80))
-	surface.surface_label(value.left(10), rect.position + Vector2(6, 30), 12, color)
-
-
-func _featured_pay_rows(rows: Array, win_key: String, hand_count: int) -> Array:
-	var result: Array = []
-	if not win_key.is_empty():
-		for row_value in rows:
-			var row: Dictionary = row_value if typeof(row_value) == TYPE_DICTIONARY else {}
-			if str(row.get("key", "")) == win_key:
-				result.append(row)
-				break
-	var preferred := ["royal_flush", "straight_flush", "four_kind", "full_house", "flush"]
-	if hand_count >= 2:
-		preferred = ["natural_royal", "four_deuces", "wild_royal", "five_kind", "straight_flush"] if hand_count == 2 else ["royal_flush", "four_aces_kicker", "four_aces", "four_2_4_kicker", "straight_flush"]
-	for key in preferred:
-		if result.size() >= 4:
-			break
-		for row_value in rows:
-			var row: Dictionary = row_value if typeof(row_value) == TYPE_DICTIONARY else {}
-			if str(row.get("key", "")) == key and not result.has(row):
-				result.append(row)
-				break
-	if result.is_empty() and not rows.is_empty():
-		for index in range(mini(4, rows.size())):
-			var fallback: Dictionary = rows[index] if typeof(rows[index]) == TYPE_DICTIONARY else {}
-			result.append(fallback)
-	return result
-
-
-func _draw_meters(surface, surface_state: Dictionary) -> void:
-	var panel := STATUS_PANEL_RECT
-	if panel.size.y < 120.0:
-		return
-	surface.surface_label_centered("MACHINE METERS", Rect2(panel.position + Vector2(8, 6), Vector2(panel.size.x - 16, 14)), 11, C_YELLOW)
-	var gap := 8.0
-	var meter_w := (panel.size.x - 28.0 - gap) * 0.5
-	var meter_size := Vector2(meter_w, 34.0)
-	_draw_meter(surface, panel.position + Vector2(14, 30), meter_size, "CREDITS", int(surface_state.get("credits", 0)), C_YELLOW)
-	_draw_meter(surface, panel.position + Vector2(14 + meter_w + gap, 30), meter_size, "BET", int(surface_state.get("bet_credits", 0)), C_CYAN)
-	_draw_meter(surface, panel.position + Vector2(14, 70), meter_size, "WIN", int(surface_state.get("win_credits", 0)), C_TEAL)
-	_draw_meter(surface, panel.position + Vector2(14 + meter_w + gap, 70), meter_size, "PROG", int(surface_state.get("progressive_meter", 0)), C_AMBER)
-	surface.surface_label_centered("%d COIN  %s  %d PLAY" % [
-		int(surface_state.get("coin_count", 1)),
-		str(surface_state.get("coin_label", "1c")).to_upper(),
-		int(surface_state.get("hand_count", 1)),
-	], Rect2(panel.position + Vector2(14, 114), Vector2(panel.size.x - 28, 18)), 10, C_SOFT)
-
-
-func _draw_meter(surface, pos: Vector2, size: Vector2, label: String, value: int, color: Color) -> void:
-	var rect := Rect2(pos, size)
-	surface.draw_rect(rect, Color("#05070d"))
-	surface.draw_rect(rect, Color(color.r, color.g, color.b, 0.35), false, 1)
-	if size.y < 24.0:
-		surface.surface_label("%s %s" % [label.left(3), str(value).left(6)], pos + Vector2(4, 13), 7, color)
-		return
-	surface.surface_label(label, pos + Vector2(6, 11), 8, Color(color.r, color.g, color.b, 0.70))
-	surface.surface_label(str(value).left(8), pos + Vector2(6, 25), 13, color)
-
-
-func _draw_holdout_meter(surface, surface_state: Dictionary) -> void:
-	if not bool(surface_state.get("holdout_ready", false)):
-		return
-	var meter: Dictionary = surface_state.get("holdout_meter", {}) if typeof(surface_state.get("holdout_meter", {})) == TYPE_DICTIONARY else {}
-	if bool(meter.get("chain_complete", false)):
-		return
-	var reduce_motion := bool(meter.get("reduce_motion", surface_state.get("reduce_motion", false)))
-	var overlay := Rect2(154, 92, 592, 224)
-	surface.draw_rect(Rect2(Vector2.ZERO, surface.surface_board_size()), Color(0.0, 0.0, 0.0, 0.56))
-	surface.draw_rect(overlay, Color("#0b0d18"))
-	surface.draw_rect(overlay, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.62), false, 3)
-	surface.draw_rect(overlay.grow(-8.0), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.22), false, 1)
-	var beat_label := str(meter.get("beat_label", "LINE UP")).to_upper()
-	var beat_index := int(meter.get("beat_index", 0))
-	var beat_count := maxi(1, int(meter.get("beat_count", 1)))
-	surface.surface_label_centered("%s  %d/%d" % [str(surface_state.get("cabinet_cheat_name", "HOLDOUT CHEAT")).to_upper(), beat_index + 1, beat_count], Rect2(overlay.position + Vector2(14, 12), Vector2(overlay.size.x - 28, 20)), 13, C_YELLOW)
-	surface.surface_label_centered(beat_label, Rect2(overlay.position + Vector2(18, 38), Vector2(overlay.size.x - 36, 42)), 28, C_CYAN)
-	var kind := str(meter.get("beat_kind", "timing"))
-	var instructions := str(surface_state.get("cabinet_cheat_prompt", "Tap inside the yellow box at the timing notch."))
-	if kind == "target":
-		instructions = "Tap the yellow card slot: the machine will show exactly what card lands."
-	elif kind == "simple":
-		instructions = "Reduced motion: press once to complete the safe holdout swap."
-	surface.surface_label_centered(instructions, Rect2(overlay.position + Vector2(28, 82), Vector2(overlay.size.x - 56, 18)), 11, C_SOFT)
-	var track := Rect2(overlay.position + Vector2(70, 122), Vector2(overlay.size.x - 140, 12))
-	surface.draw_rect(track, Color("#050713"))
-	surface.draw_rect(track, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.30), false, 1)
-	var progress_x := track.position.x + track.size.x * clampf(float(meter.get("progress", 0.0)), 0.0, 1.0)
-	var target_x := track.position.x + track.size.x * clampf(float(meter.get("target", 0.5)), 0.0, 1.0)
-	surface.draw_rect(Rect2(track.position.x, track.position.y, maxf(0.0, progress_x - track.position.x), track.size.y), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.42))
-	surface.draw_rect(Rect2(target_x - 2.0, track.position.y - 8.0, 4.0, track.size.y + 16.0), C_YELLOW)
-	var input := float(meter.get("input", -1.0))
-	if input >= 0.0:
-		var input_x := track.position.x + track.size.x * clampf(input, 0.0, 1.0)
-		surface.draw_rect(Rect2(input_x - 2.0, track.position.y - 8.0, 4.0, track.size.y + 16.0), C_CYAN)
-	if kind == "target":
-		var slot_w := 82.0
-		var slot_gap := 18.0
-		var row_w := slot_w * HAND_SIZE + slot_gap * float(HAND_SIZE - 1)
-		var row_x := overlay.position.x + (overlay.size.x - row_w) * 0.5
-		var target_slot := int(meter.get("target_slot", -1))
-		for i in range(HAND_SIZE):
-			var slot := Rect2(row_x + float(i) * (slot_w + slot_gap), overlay.position.y + 154.0, slot_w, 44.0)
-			var active := i == target_slot
-			surface.draw_rect(slot, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.12 if active else 0.06))
-			surface.surface_label_centered("SLOT %d" % (i + 1), slot.grow(-4.0), 12, C_YELLOW if active else C_SOFT)
-			surface.surface_add_hit(slot, "video_poker_palm", i)
-			if active:
-				_draw_guidance_border(surface, slot, "COMMIT", true)
-	else:
-		var prompt := Rect2(overlay.position + Vector2(overlay.size.x * 0.5 - 78.0, 154.0), Vector2(156, 46))
-		surface.draw_rect(prompt, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.18))
-		var prompt_label := str(surface_state.get("cabinet_cheat_name", beat_label)).to_upper() if kind == "simple" else beat_label
-		surface.surface_label_centered(prompt_label.left(16), prompt.grow(-5.0), 18, C_YELLOW)
-		surface.surface_add_hit(prompt, "video_poker_palm", 0)
-		_draw_guidance_border(surface, prompt, beat_label, true)
-
-
-func _draw_guidance_border(surface, rect: Rect2, label: String, active: bool) -> void:
-	if surface.has_method("surface_draw_guidance_border"):
-		surface.call("surface_draw_guidance_border", rect, label, active)
-	else:
-		surface.draw_rect(rect.grow(3.0), C_YELLOW if active else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.42), false, 3)
-
-
-func _draw_card_row(surface, surface_state: Dictionary, phase: String) -> void:
-	var hand: Array = CardShoeScript.card_array(surface_state.get("hand", []))
-	if hand.size() != HAND_SIZE:
-		hand = _presentation_cards(HAND_SIZE)
-	var final_hands: Array = _hands_array(surface_state.get("hands", []))
-	var holds: Array = _index_array(surface_state.get("holds", []))
-	var suggested: Array = _index_array(surface_state.get("suggested_holds", []))
-	var scoring: Array = _index_array(surface_state.get("scoring_indices", []))
-	var drawn: Array = _index_array(surface_state.get("drawn_indices", []))
-	var flip_active := bool(surface.surface_animation_active(FLIP_CHANNEL))
-	var flip_progress := float(surface.surface_animation_progress(FLIP_CHANNEL))
-	var hand_count := maxi(1, int(surface_state.get("hand_count", 1)))
-	var phase_label := "INSERT BET - PRESS DEAL"
-	if phase == "hold":
-		phase_label = "SELECT HOLDS - PRESS DRAW"
-	elif phase == "settled":
-		phase_label = str(surface_state.get("result_pay_label", "NO PAY")).to_upper()
-	surface.surface_label_centered(phase_label, Rect2(PRIMARY_HAND_RECT.position + Vector2(10, 8), Vector2(PRIMARY_HAND_RECT.size.x - 20, 18)), 13, C_YELLOW if phase == "idle" else C_CYAN)
-	var slots := _hand_display_slots(hand_count)
-	for row_index in range(slots.size()):
-		var slot: Rect2 = slots[row_index]
-		var row_hand := hand
-		if (phase == "settled" or phase == "double_up") and row_index < final_hands.size():
-			row_hand = CardShoeScript.card_array(final_hands[row_index])
-			if row_hand.size() != HAND_SIZE:
-				row_hand = hand
-		var row_label := "HAND %d" % (row_index + 1)
-		surface.draw_rect(slot, Color(0.0, 0.0, 0.0, 0.12))
-		surface.draw_rect(slot, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.22 if row_index == 0 else 0.12), false, 1)
-		var label_w := 54.0 if slot.size.x >= 430.0 else 42.0
-		var card_gap := 8.0 if slot.size.x >= 520.0 else 5.0
-		var card_h := clampf(slot.size.y - 20.0, 34.0, 142.0)
-		var card_w := clampf(minf(card_h * 0.72, (slot.size.x - label_w - card_gap * 4.0 - 12.0) / 5.0), 25.0, 102.0)
-		var row_w := card_w * 5.0 + card_gap * 4.0
-		var start_x := slot.position.x + label_w + maxf(0.0, (slot.size.x - label_w - row_w) * 0.5)
-		var y := slot.position.y + (slot.size.y - card_h) * 0.5 + 6.0
-		surface.surface_label(row_label, Vector2(slot.position.x + 8.0, slot.position.y + 16.0), 8, C_CYAN if row_index == 0 else C_SOFT)
-		for i in range(row_hand.size()):
-			var rect := Rect2(Vector2(start_x + float(i) * (card_w + card_gap), y), Vector2(card_w, card_h))
-			var held := row_index == 0 and holds.has(i)
-			var is_suggested := row_index == 0 and suggested.has(i) and not held
-			var is_scoring := row_index == 0 and scoring.has(i)
-			var flipping := row_index == 0 and flip_active and drawn.has(i) and flip_progress < 0.5
-			if flipping:
-				_draw_card_back(surface, rect)
-			else:
-				_draw_card_in_rect(surface, row_hand[i], rect, held, is_suggested, is_scoring and phase != "hold")
-			if phase == "hold" and row_index == 0:
-				var hold_badge := Rect2(rect.position + Vector2(0, rect.size.y - 12.0), Vector2(rect.size.x, 12.0))
-				surface.draw_rect(hold_badge, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.68 if held else 0.34))
-				surface.surface_label_centered("HELD" if held else "H%d" % (i + 1), hold_badge.grow(-1.0), 7, C_WHITE if held else C_CYAN)
-				surface.surface_add_exact_hit(rect, "video_poker_hold", i)
-	_draw_multi_hand_stack(surface, surface_state, phase)
-	if phase == "hold":
-		pass
-	elif phase == "idle":
-		surface.surface_label_centered("DEAL A HAND", Rect2(PRIMARY_HAND_RECT.position + Vector2(10, PRIMARY_HAND_RECT.size.y - 28.0), Vector2(PRIMARY_HAND_RECT.size.x - 20, 18)), 11, C_SOFT)
-
-
-func _hand_display_slots(hand_count: int) -> Array:
-	var rect := PRIMARY_HAND_RECT.grow(-10.0)
-	rect.position.y += 24.0
-	rect.size.y -= 28.0
-	var safe_count := clampi(hand_count, 1, 3)
-	if safe_count == 1:
-		return [rect.grow(-6.0)]
-	if safe_count == 2:
-		var gap := 10.0
-		var cell_w := (rect.size.x - gap) * 0.5
-		return [
-			Rect2(rect.position, Vector2(cell_w, rect.size.y)),
-			Rect2(rect.position + Vector2(cell_w + gap, 0), Vector2(cell_w, rect.size.y)),
-		]
-	var gap_x := 10.0
-	var gap_y := 10.0
-	var top_h := (rect.size.y - gap_y) * 0.5
-	var cell_w := (rect.size.x - gap_x) * 0.5
-	var bottom_x := rect.position.x + (rect.size.x - cell_w) * 0.5
-	return [
-		Rect2(rect.position, Vector2(cell_w, top_h)),
-		Rect2(rect.position + Vector2(cell_w + gap_x, 0), Vector2(cell_w, top_h)),
-		Rect2(Vector2(bottom_x, rect.position.y + top_h + gap_y), Vector2(cell_w, top_h)),
-	]
-
-
-func _draw_multi_hand_stack(surface, surface_state: Dictionary, phase: String) -> void:
-	var hands: Array = _hands_array(surface_state.get("hands", []))
-	var results: Array = _copy_array(surface_state.get("hand_results", []))
-	var hand_count := maxi(1, int(surface_state.get("hand_count", 1)))
-	var panel := STATUS_PANEL_RECT
-	if panel.size.y < 120.0:
-		return
-	var list_top := panel.position.y + 126.0
-	surface.draw_rect(Rect2(panel.position.x + 12, list_top - 2.0, panel.size.x - 24, 1), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.22))
-	surface.surface_label(str(surface_state.get("multi_hand_mode", "1 Play")).to_upper(), Vector2(panel.position.x + 16, list_top + 12), 10, C_CYAN)
-	if hand_count <= 1 and hands.size() <= 1:
-		var result_label := str(surface_state.get("result_pay_label", "READY")) if phase == "settled" else ("READY" if phase == "idle" else "IN PLAY")
-		surface.surface_label(result_label.left(20).to_upper(), Vector2(panel.position.x + 16, list_top + 30), 10, C_SOFT if phase == "idle" else C_TEAL)
-		return
-	if hands.is_empty():
-		surface.surface_label("ALL %d HAND%s SHOWN" % [hand_count, "" if hand_count == 1 else "S"], Vector2(panel.position.x + 16, list_top + 30.0), 9, C_SOFT)
-		return
-	var visible_count := mini(hands.size(), 3)
-	for hand_index in range(visible_count):
-		var y := list_top + 28.0 + float(hand_index) * 18.0
-		var result: Dictionary = results[hand_index] if hand_index < results.size() and typeof(results[hand_index]) == TYPE_DICTIONARY else {}
-		var label := str(result.get("pay_label", "No Pay"))
-		var total := int(result.get("total", 0))
-		surface.surface_label("#%d %s  %d" % [hand_index + 1, label.left(14), total], Vector2(panel.position.x + 16, y), 9, C_TEAL if total > 0 else C_SOFT)
-	if hands.size() > visible_count:
-		surface.surface_label("+%d MORE" % (hands.size() - visible_count), Vector2(panel.position.x + 162, list_top + 48), 9, C_AMBER)
-
-
-func _draw_double_up(surface, surface_state: Dictionary) -> void:
-	var view: Dictionary = surface_state.get("double_up_view", {})
-	var dealer: Dictionary = view.get("dealer", {})
-	surface.draw_rect(PRIMARY_HAND_RECT, Color("#0c1422"))
-	surface.draw_rect(PRIMARY_HAND_RECT, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.30), false, 2)
-	surface.surface_label_centered("DOUBLE OR NOTHING - %d CREDITS AT RISK" % int(view.get("at_risk", 0)), Rect2(PRIMARY_HAND_RECT.position + Vector2(12, 8), Vector2(PRIMARY_HAND_RECT.size.x - 24, 18)), 13, C_AMBER)
-	var dealer_rect := Rect2(PRIMARY_HAND_RECT.position + Vector2(34, 62), CARD_SIZE)
-	surface.surface_label_centered("DEALER", Rect2(dealer_rect.position + Vector2(0, -18), Vector2(dealer_rect.size.x, 14)), 10, C_SOFT)
-	_draw_card_in_rect(surface, dealer, dealer_rect, false, false, false)
-	var pick_gap := 14.0
-	var row_w := CARD_SIZE.x * 4.0 + pick_gap * 3.0
-	var pick_x := PRIMARY_HAND_RECT.position.x + PRIMARY_HAND_RECT.size.x - row_w - 34.0
-	var pick_y := dealer_rect.position.y
-	surface.surface_label_centered("PICK ONE CARD TO BEAT THE DEALER", Rect2(Vector2(pick_x, pick_y - 18.0), Vector2(row_w, 14)), 10, C_SOFT)
-	var new_selected := int(view.get("selected_pick", -1))
-	for pick_index in range(4):
-		var pick_pos := Vector2(pick_x + float(pick_index) * (CARD_SIZE.x + pick_gap), pick_y)
-		surface.draw_rect(Rect2(pick_pos, CARD_SIZE), C_SOFT)
-		surface.draw_rect(Rect2(pick_pos + Vector2(4, 4), CARD_SIZE - Vector2(8, 8)), C_PINK if pick_index != new_selected else C_TEAL)
-		surface.draw_rect(Rect2(pick_pos + Vector2(12, 12), CARD_SIZE - Vector2(24, 24)), Color("#563be0"))
-		surface.surface_label("?", pick_pos + CARD_SIZE * 0.5 + Vector2(-7, 8), 26, C_WHITE)
-		var pick_rect := Rect2(pick_pos, CARD_SIZE)
-		surface.surface_add_exact_hit(pick_rect, "video_poker_double_pick", pick_index)
-		_draw_guidance_border(surface, pick_rect, "PICK" if pick_index == new_selected else "", true)
-
-
-func _draw_card(surface, card_value: Variant, pos: Vector2, held: bool, suggested: bool, scoring: bool) -> void:
-	_draw_card_in_rect(surface, card_value, Rect2(pos, CARD_SIZE), held, suggested, scoring)
-
-
-func _draw_card_in_rect(surface, card_value: Variant, rect: Rect2, held: bool, suggested: bool, scoring: bool) -> void:
-	var card: Dictionary = card_value if typeof(card_value) == TYPE_DICTIONARY else {}
-	if bool(card.get("hidden", false)):
-		_draw_card_back(surface, rect)
-		return
-	if scoring:
-		surface.draw_rect(Rect2(rect.position - Vector2(5, 5), rect.size + Vector2(10, 10)), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.30))
-	surface.draw_rect(rect, C_SOFT)
-	surface.draw_rect(Rect2(rect.position + Vector2(3, 3), rect.size - Vector2(6, 6)), Color("#fbf8e6"))
-	if suggested:
-		surface.draw_rect(rect.grow(3.0), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.45), false, 2)
-	if held:
-		surface.draw_rect(rect.grow(4.0), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.55), false, 3)
-	elif scoring:
-		surface.draw_rect(rect.grow(4.0), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.70), false, 3)
-	var rank := int(card.get("rank", 2))
-	var suit := int(card.get("suit", 0))
-	var color := C_PINK if suit == 1 or suit == 3 else C_DARK
-	var rank_size := clampi(int(rect.size.y * 0.31), 9, 28)
-	var suit_scale := clampf(rect.size.y / 60.0, 0.45, 1.0)
-	if bool(card.get("joker", false)) or rank == 0:
-		surface.surface_label("JOKER", rect.position + Vector2(5, rect.size.y * 0.42), clampi(rank_size - 1, 8, 14), C_PINK)
-		surface.draw_circle(rect.position + rect.size * 0.62, 5.0 * suit_scale, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.55))
-		return
-	surface.surface_label(CardShoeScript.rank_label(rank), rect.position + Vector2(5, rank_size + 4), rank_size, color)
-	_draw_suit_scaled(surface, rect.position + Vector2(rect.size.x * 0.52, rect.size.y * 0.62), suit, color, suit_scale)
-
-
-func _draw_card_back(surface, rect: Rect2) -> void:
-	surface.draw_rect(rect, C_SOFT)
-	surface.draw_rect(Rect2(rect.position + Vector2(4, 4), rect.size - Vector2(8, 8)), C_PINK)
-	surface.draw_rect(Rect2(rect.position + Vector2(12, 12), rect.size - Vector2(24, 24)), Color("#563be0"))
-
-
-func _draw_suit(surface, pos: Vector2, suit: int, color: Color) -> void:
-	_draw_suit_scaled(surface, pos, suit, color, 1.0)
-
-
-func _draw_suit_scaled(surface, pos: Vector2, suit: int, color: Color, scale: float) -> void:
-	match suit:
-		0:
-			surface.draw_polygon([pos + Vector2(0, -12) * scale, pos + Vector2(12, 4) * scale, pos + Vector2(-12, 4) * scale], [color])
-			surface.draw_rect(Rect2(pos.x - 3 * scale, pos.y + 2 * scale, 6 * scale, 10 * scale), color)
-		1:
-			surface.draw_circle(pos + Vector2(-6, -4) * scale, 7 * scale, color)
-			surface.draw_circle(pos + Vector2(6, -4) * scale, 7 * scale, color)
-			surface.draw_polygon([pos + Vector2(-14, 0) * scale, pos + Vector2(14, 0) * scale, pos + Vector2(0, 14) * scale], [color])
-		2:
-			surface.draw_circle(pos + Vector2(-7, 0) * scale, 7 * scale, color)
-			surface.draw_circle(pos + Vector2(7, 0) * scale, 7 * scale, color)
-			surface.draw_circle(pos + Vector2(0, -8) * scale, 7 * scale, color)
-			surface.draw_rect(Rect2(pos.x - 3 * scale, pos.y + 2 * scale, 6 * scale, 12 * scale), color)
-		_:
-			surface.draw_polygon([pos + Vector2(0, -13) * scale, pos + Vector2(11, 0) * scale, pos + Vector2(0, 13) * scale, pos + Vector2(-11, 0) * scale], [color])
-
-
-func _draw_info_line(surface, surface_state: Dictionary) -> void:
-	var info_rect := Rect2(PRIMARY_HAND_RECT.position + Vector2(8, -18), Vector2(PRIMARY_HAND_RECT.size.x - 16, 14))
-	surface.surface_label_centered(str(surface_state.get("info_text", "")).left(82), info_rect, 10, C_CYAN)
-	if bool(surface_state.get("pit_boss_watched", false)) and STATUS_PANEL_RECT.size.y >= 120.0:
-		surface.surface_label(str(surface_state.get("pit_boss_summary", "")).left(26), STATUS_PANEL_RECT.position + Vector2(16, 158), 9, C_PINK)
-
-
-func _draw_controls(surface, surface_state: Dictionary, phase: String) -> void:
-	var cabinet_button := Color(str(surface_state.get("cabinet_button", "#1ac8ff")))
-	var cabinet_trim := Color(str(surface_state.get("cabinet_trim", "#f7ef75")))
-	var cabinet_secondary := Color(str(surface_state.get("cabinet_secondary", "#ff4fd8")))
-	if phase == "double_up":
-		_draw_cabinet_button(surface, Rect2(CONTROL_DECK_RECT.position + Vector2(18, 8), Vector2(132, 30)), "DOUBLE", "video_poker_double", 0, cabinet_trim, false)
-		_draw_cabinet_button(surface, Rect2(CONTROL_DECK_RECT.position + Vector2(168, 8), Vector2(132, 30)), "DEAL", "video_poker_deal", 0, cabinet_button, false)
-		surface.surface_label_centered("PICK A CARD ABOVE", Rect2(CONTROL_DECK_RECT.position + Vector2(326, 9), Vector2(498, 28)), 12, C_AMBER)
-		return
-	var win_pending := phase == "settled" and bool(surface_state.get("double_up_available", false))
-	var betting_enabled := phase == "idle" or phase == "settled"
-	var holdout_ready := phase == "hold" and bool(surface_state.get("holdout_ready", false))
-	var cheat_button_label := "DOUBLE"
-	var cheat_button_action := "video_poker_double"
-	var cheat_button_accent := C_AMBER
-	var cheat_button_enabled := win_pending
-	if holdout_ready:
-		cheat_button_label = str(surface_state.get("cabinet_cheat_name", "COMMIT")).to_upper().left(12)
-		cheat_button_action = "video_poker_palm"
-		cheat_button_accent = cabinet_secondary
-		cheat_button_enabled = true
-	elif phase == "hold":
-		cheat_button_label = "CHEAT"
-		cheat_button_action = "video_poker_mark"
-		cheat_button_accent = cabinet_secondary
-		cheat_button_enabled = true
-	var deck_pos := CONTROL_DECK_RECT.position
-	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(16, 8), Vector2(92, 30)), "BET 1", "video_poker_bet_one", 0, cabinet_trim, betting_enabled)
-	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(124, 8), Vector2(92, 30)), "MAX", "video_poker_bet_max", 0, cabinet_trim, betting_enabled)
-	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(232, 8), Vector2(102, 30)), str(surface_state.get("coin_label", "DENOM")).to_upper(), "video_poker_denom", 0, cabinet_secondary, betting_enabled)
-	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(366, 5), Vector2(152, 36)), "DRAW" if phase == "hold" else "DEAL", "video_poker_draw" if phase == "hold" else "video_poker_deal", 0, cabinet_button, true)
-	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(552, 8), Vector2(128, 30)), cheat_button_label, cheat_button_action, 0, cheat_button_accent, cheat_button_enabled)
-	_draw_cabinet_button(surface, Rect2(deck_pos + Vector2(716, 8), Vector2(112, 30)), "PAY", "video_poker_collect", 0, cabinet_button, false)
-	if phase == "settled":
-		var delta := int(surface_state.get("result_bankroll_delta", 0))
-		var color := C_TEAL if delta > 0 else (C_YELLOW if delta == 0 else C_ORANGE)
-		surface.surface_label_centered("BANKROLL %+d  HEAT %+d" % [delta, int(surface_state.get("result_suspicion_delta", 0))], Rect2(STATUS_PANEL_RECT.position + Vector2(8, 146), Vector2(STATUS_PANEL_RECT.size.x - 16, 14)), 8, color)
-
-
-func _draw_cabinet_button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool) -> void:
-	var hovered: bool = enabled and bool(surface.surface_region_hovered(action, index))
-	var fill_alpha := 0.24 if hovered else (0.16 if enabled else 0.06)
-	var border := C_WHITE if hovered else (accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.28))
-	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, fill_alpha))
-	surface.draw_rect(rect, border, false, 2 if hovered else 1)
-	surface.surface_label_centered(label.left(12), rect.grow(-4), 12, accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.42))
-	if enabled:
-		surface.surface_add_hit(rect, action, index)
-
-
-# --- Result builders ---------------------------------------------------------
-
 func _empty_result(action_id: String, stake: int, environment: Dictionary, text: String) -> Dictionary:
 	return GameModule.build_action_result({
 		"ok": false,
@@ -3440,6 +2823,22 @@ func _hands_array(value: Variant) -> Array:
 	for hand_value in value:
 		result.append(CardShoeScript.card_array(hand_value))
 	return result
+
+
+func _hand_signature(value: Variant) -> String:
+	if typeof(value) != TYPE_ARRAY:
+		return ""
+	var parts: Array[String] = []
+	for card_value in value:
+		if typeof(card_value) != TYPE_DICTIONARY:
+			parts.append("?")
+			continue
+		var card: Dictionary = card_value
+		if bool(card.get("hidden", false)):
+			parts.append("BACK")
+		else:
+			parts.append("%d:%d" % [int(card.get("rank", 0)), int(card.get("suit", -1))])
+	return "|".join(parts)
 
 
 func _presentation_cards(count: int) -> Array:

@@ -3980,7 +3980,7 @@ func _check_canvas_hit_dispatch(surface: Dictionary, rect: Rect2, action: String
 
 
 func _check_surface_hit_layout(harness: SurfaceHarness, label: String, failures: Array) -> void:
-	var board := Rect2(Vector2.ZERO, Vector2(ArtContractsScript.GAME_BOARD_SIZE))
+	var board := Rect2(Vector2.ZERO, harness.design_size)
 	var regions: Array = []
 	for region_value in harness.hit_regions:
 		if typeof(region_value) != TYPE_DICTIONARY:

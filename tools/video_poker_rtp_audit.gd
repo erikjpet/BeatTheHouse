@@ -3,12 +3,12 @@ extends SceneTree
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
-const DEFAULT_ROUNDS := 3000
+const DEFAULT_ROUNDS := 10000
 const REPORT_PATH := "res://.tmp/video_poker/rtp_audit.json"
 const CABINETS := [
-	{"cabinet_id": "jacks_or_better", "variant_id": "jacks_or_better", "tier_id": "full_pay", "hands": 1, "label": "Jacks or Better"},
-	{"cabinet_id": "double_deuces", "variant_id": "deuces_wild", "tier_id": "full_pay", "hands": 2, "label": "Double Deuces"},
-	{"cabinet_id": "triple_double_bonus", "variant_id": "double_double_bonus", "tier_id": "full_pay", "hands": 3, "label": "Triple Double Bonus"},
+	{"cabinet_id": "jacks_or_better", "variant_id": "jacks_or_better", "tier_id": "full_pay", "hands": 1, "label": "Jacks or Better", "schedule": "9/6", "optimal_rtp": 0.9954, "sample_min": 0.88, "sample_max": 1.12},
+	{"cabinet_id": "double_deuces", "variant_id": "deuces_wild", "tier_id": "full_pay", "hands": 2, "label": "Double Deuces", "schedule": "Illinois 25/15/9/4/4/3", "optimal_rtp": 0.9891, "sample_min": 0.78, "sample_max": 1.12},
+	{"cabinet_id": "triple_double_bonus", "variant_id": "double_double_bonus", "tier_id": "full_pay", "hands": 3, "label": "Triple Double Bonus", "schedule": "10/6 DDB", "optimal_rtp": 1.0007, "sample_min": 0.80, "sample_max": 1.18},
 ]
 
 var failures: Array = []
@@ -77,6 +77,7 @@ func _video_poker_game(library) -> GameModule:
 
 func _audit_cabinet(game: GameModule, cabinet: Dictionary, rounds: int) -> Dictionary:
 	var run_state := _fresh_run(game, cabinet)
+	_assert_locked_paytable(game, run_state, cabinet)
 	var rng := run_state.create_rng("video_poker_rtp_%s" % str(cabinet.get("cabinet_id", "")))
 	var staked := 0
 	var returned := 0
@@ -98,14 +99,20 @@ func _audit_cabinet(game: GameModule, cabinet: Dictionary, rounds: int) -> Dicti
 		if int(run_state.bankroll) < 1000000:
 			run_state.bankroll = before
 	var rtp := float(returned) / float(maxi(1, staked))
-	if rtp < 0.70 or rtp > 1.12:
-		failures.append("%s RTP %.4f outside audit band." % [str(cabinet.get("label", "")), rtp])
+	var sample_min := float(cabinet.get("sample_min", 0.0))
+	var sample_max := float(cabinet.get("sample_max", 2.0))
+	if rtp < sample_min or rtp > sample_max:
+		failures.append("%s recommendation-policy RTP %.4f outside declared %.4f-%.4f band." % [str(cabinet.get("label", "")), rtp, sample_min, sample_max])
 	return {
 		"cabinet_id": str(cabinet.get("cabinet_id", "")),
 		"label": str(cabinet.get("label", "")),
 		"variant_id": str(cabinet.get("variant_id", "")),
 		"tier_id": str(cabinet.get("tier_id", "")),
 		"hands": int(cabinet.get("hands", 1)),
+		"schedule": str(cabinet.get("schedule", "")),
+		"declared_optimal_rtp": float(cabinet.get("optimal_rtp", 0.0)),
+		"sample_band": [sample_min, sample_max],
+		"sample_policy": "deterministic concise hold recommendation",
 		"rounds": rounds,
 		"bet_per_round": int(round(float(staked) / float(maxi(1, rounds)))),
 		"total_cost": staked,
@@ -115,6 +122,27 @@ func _audit_cabinet(game: GameModule, cabinet: Dictionary, rounds: int) -> Dicti
 		"top_hit": top_hit,
 		"top_return": top_return,
 	}
+
+
+func _assert_locked_paytable(game: GameModule, run_state: RunState, cabinet: Dictionary) -> void:
+	var state: Dictionary = game.call("_machine_state", run_state, run_state.current_environment)
+	var variant: Dictionary = game.call("_variant", state)
+	var actual := {}
+	for row_value in variant.get("rows", []):
+		var row: Dictionary = row_value if typeof(row_value) == TYPE_DICTIONARY else {}
+		actual[str(row.get("key", ""))] = int(row.get("mult", 0))
+	var expected := {}
+	match str(cabinet.get("cabinet_id", "")):
+		"jacks_or_better":
+			expected = {"full_house": 9, "flush": 6, "straight": 4, "jacks_or_better": 1}
+		"double_deuces":
+			expected = {"wild_royal": 25, "five_kind": 15, "straight_flush": 9, "four_kind": 4, "full_house": 4, "flush": 3, "straight": 2, "three_kind": 1}
+		"triple_double_bonus":
+			expected = {"four_aces_kicker": 400, "four_2_4_kicker": 160, "four_aces": 160, "four_2_4": 80, "four_5_k": 50, "full_house": 10, "flush": 6}
+	for key_value in expected.keys():
+		var key := str(key_value)
+		if int(actual.get(key, -1)) != int(expected.get(key, -2)):
+			failures.append("%s paytable row %s expected %d, got %d." % [str(cabinet.get("label", "")), key, int(expected.get(key, 0)), int(actual.get(key, -1))])
 
 
 func _fresh_run(game: GameModule, cabinet: Dictionary) -> RunState:
