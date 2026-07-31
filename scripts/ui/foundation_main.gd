@@ -184,6 +184,7 @@ var camera_focus_point: Vector2 = Vector2(0.5, 0.5)
 var current_context_mode: String = CONTEXT_MODE_ROOM
 var game_surface_ui_state: Dictionary = {}
 var game_module_cache: Dictionary = {}
+var current_game_state_key: String = ""
 var pending_event_choice_popup_event_id: String = ""
 var pending_event_choice_popup_focus_choice_id: String = ""
 var pending_event_choice_popup_snapshot: Dictionary = {}
@@ -192,6 +193,7 @@ var pending_wager_confirm_skip_stake_validation := false
 var pending_wager_confirm_preserve_surface_ui_state := false
 var pending_wager_confirm_stake: int = 0
 var pending_wager_confirm_source_game_id: String = ""
+var pending_wager_confirm_source_game_state_key: String = ""
 var pending_all_in_result_terminal_check := false
 var terminal_evaluator_call_count := 0
 var presented_bankroll_hold_active := false
@@ -703,10 +705,11 @@ func enter_game(game_id: String, state_key: String = "") -> void:
 	if game_module == null:
 		_show_message("This game is not ready here.")
 		return
-	if clean_state_key != clean_game_id:
+	if clean_state_key != clean_game_id or _environment_active_game_state_key(run_state.current_environment, clean_game_id) != clean_game_id:
 		_set_active_game_state_key(clean_game_id, clean_state_key)
 	_reset_game_surface_runtime_state()
 	current_game = game_module
+	current_game_state_key = clean_state_key
 	_sync_presented_bankroll_to_actual()
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_GAME)
@@ -736,6 +739,7 @@ func _enter_grand_casino_duel_surface() -> bool:
 	if game_module == null:
 		return false
 	current_game = game_module
+	current_game_state_key = duel_game_id
 	_sync_presented_bankroll_to_actual()
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_GAME)
@@ -1147,14 +1151,19 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 	var current_environment_id := str(run_state.current_environment.get("id", ""))
 	var environment_id := str(environment_data.get("id", ""))
 	var same_environment := current_environment_id == environment_id
-	var current_game_id := current_game.get_id() if current_game != null else ""
 	var has_runtime_candidate := false
 	for candidate_value in game_ids_value as Array:
 		var candidate_id := str(candidate_value)
-		if candidate_id.is_empty() or (same_environment and candidate_id == current_game_id):
+		if candidate_id.is_empty():
 			continue
-		has_runtime_candidate = true
-		break
+		for candidate_state_key_value in _environment_runtime_state_keys(environment_data, candidate_id):
+			var candidate_state_key := str(candidate_state_key_value)
+			if _environment_runtime_state_is_foreground(environment_data, candidate_id, candidate_state_key, same_environment):
+				continue
+			has_runtime_candidate = true
+			break
+		if has_runtime_candidate:
+			break
 	if not has_runtime_candidate:
 		return false
 	var original_active_game_state_keys := _copy_dict(environment_data.get("active_game_state_keys", {}))
@@ -1162,19 +1171,20 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 		var game_id := str(game_id_value)
 		if game_id.is_empty():
 			continue
-		if same_environment and current_game != null and game_id == current_game.get_id():
-			continue
 		var game := _game_module_for_id(game_id)
 		if game == null:
 			continue
-		for state_key in _environment_runtime_state_keys(environment_data, game_id):
+		for state_key_value in _environment_runtime_state_keys(environment_data, game_id):
+			var state_key := str(state_key_value)
+			if _environment_runtime_state_is_foreground(environment_data, game_id, state_key, same_environment):
+				continue
 			_set_environment_active_game_state_key(environment_data, game_id, state_key)
 			if not game.environment_runtime_needs_tick(run_state, environment_data, now_msec):
 				continue
 			var runtime_wager_cost := maxi(0, game.wager_cost_for_context("spin", 0, run_state, environment_data, {}))
 			if _wager_needs_final_bankroll_confirmation(game, "spin", 0, runtime_wager_cost, {}, environment_data):
 				_pause_environment_runtime_for_wager_confirmation(game, game_id, environment_data)
-				_show_wager_confirmation_popup("spin", runtime_wager_cost, runtime_wager_cost, true, false, game_id)
+				_show_wager_confirmation_popup("spin", runtime_wager_cost, runtime_wager_cost, true, false, game_id, state_key)
 				_show_message("%s autoplay needs your approval before risking your last cash." % game.get_display_name())
 				_restore_environment_active_game_state_keys(environment_data, original_active_game_state_keys)
 				_refresh_runtime_environment_views()
@@ -1207,9 +1217,13 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 					_show_message(str(result.get("message", command.get("message", ""))))
 				_advance_alcohol_absorption()
 				_autosave_foundation_run("Autosaved.")
+				_restore_environment_active_game_state_keys(environment_data, original_active_game_state_keys)
+				return true
 			elif command.has("message"):
 				_show_message(str(command.get("message", "")))
 				_refresh_runtime_environment_views()
+				_restore_environment_active_game_state_keys(environment_data, original_active_game_state_keys)
+				return true
 	_restore_environment_active_game_state_keys(environment_data, original_active_game_state_keys)
 	return true
 
@@ -1260,6 +1274,24 @@ func _set_environment_active_game_state_key(environment_data: Dictionary, game_i
 	var active_keys := _copy_dict(environment_data.get("active_game_state_keys", {}))
 	active_keys[game_id] = state_key
 	environment_data["active_game_state_keys"] = active_keys
+
+
+func _environment_active_game_state_key(environment_data: Dictionary, game_id: String) -> String:
+	var clean_game_id := game_id.strip_edges()
+	var active_keys := _copy_dict(environment_data.get("active_game_state_keys", {}))
+	var state_key := str(active_keys.get(clean_game_id, clean_game_id)).strip_edges()
+	return state_key if not state_key.is_empty() else clean_game_id
+
+
+func _environment_runtime_state_is_foreground(environment_data: Dictionary, game_id: String, state_key: String, same_environment: bool) -> bool:
+	if not same_environment or current_game == null:
+		return false
+	if game_id != current_game.get_id():
+		return false
+	var foreground_state_key := current_game_state_key.strip_edges()
+	if foreground_state_key.is_empty():
+		foreground_state_key = _environment_active_game_state_key(environment_data, game_id)
+	return state_key == foreground_state_key
 
 
 func _restore_environment_active_game_state_keys(environment_data: Dictionary, active_keys: Dictionary) -> void:
@@ -7307,10 +7339,17 @@ func confirm_pending_wager_action() -> void:
 	var skip_stake_validation := pending_wager_confirm_skip_stake_validation
 	var preserve_surface_ui_state := pending_wager_confirm_preserve_surface_ui_state
 	var source_game_id := pending_wager_confirm_source_game_id
+	var source_game_state_key := pending_wager_confirm_source_game_state_key
 	_clear_pending_wager_confirmation()
 	_hide_event_choice_popup()
-	if not source_game_id.is_empty() and (current_game == null or source_game_id != current_game.get_id()):
-		_resolve_environment_runtime_wager_action(source_game_id, action_id, true)
+	var source_is_foreground := false
+	if not source_game_id.is_empty() and current_game != null and source_game_id == current_game.get_id():
+		var foreground_state_key := current_game_state_key.strip_edges()
+		if foreground_state_key.is_empty():
+			foreground_state_key = _environment_active_game_state_key(run_state.current_environment, source_game_id)
+		source_is_foreground = source_game_state_key.strip_edges().is_empty() or source_game_state_key == foreground_state_key
+	if not source_game_id.is_empty() and not source_is_foreground:
+		_resolve_environment_runtime_wager_action(source_game_id, action_id, true, source_game_state_key)
 	else:
 		_resolve_game_action(action_id, skip_stake_validation, preserve_surface_ui_state, true)
 
@@ -7353,7 +7392,7 @@ func _pause_environment_runtime_for_wager_confirmation(game: GameModule, _game_i
 		_show_message(str(command.get("message", "Autoplay paused for confirmation.")))
 
 
-func _resolve_environment_runtime_wager_action(game_id: String, action_id: String, wager_confirmed: bool = false) -> void:
+func _resolve_environment_runtime_wager_action(game_id: String, action_id: String, wager_confirmed: bool = false, state_key: String = "") -> void:
 	if run_state == null or library == null or game_id.is_empty():
 		return
 	var game := _game_module_for_id(game_id)
@@ -7361,6 +7400,9 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 		_show_message("That background game is no longer available.")
 		_refresh()
 		return
+	var original_active_game_state_keys := _copy_dict(run_state.current_environment.get("active_game_state_keys", {}))
+	if not state_key.strip_edges().is_empty():
+		_set_environment_active_game_state_key(run_state.current_environment, game_id, state_key)
 	var wager_cost := maxi(0, game.wager_cost_for_context(action_id, 0, run_state, run_state.current_environment, {}))
 	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(game, action_id, 0, wager_cost, {})
 	if confirmed_all_in_wager:
@@ -7391,8 +7433,10 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 		_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("environment_game"):
+		_restore_environment_active_game_state_keys(run_state.current_environment, original_active_game_state_keys)
 		_refresh_runtime_environment_views()
 		return
+	_restore_environment_active_game_state_keys(run_state.current_environment, original_active_game_state_keys)
 	_refresh_runtime_environment_views()
 
 
@@ -7664,15 +7708,16 @@ func _sync_wager_confirmation_controller_to_host() -> void:
 	pending_wager_confirm_preserve_surface_ui_state = bool(state.get("preserve_surface_ui_state", false))
 	pending_wager_confirm_stake = int(state.get("stake", 0))
 	pending_wager_confirm_source_game_id = str(state.get("source_game_id", ""))
+	pending_wager_confirm_source_game_state_key = str(state.get("source_game_state_key", ""))
 
 
-func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: int, skip_stake_validation: bool, preserve_surface_ui_state: bool, source_game_id: String = "") -> void:
+func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: int, skip_stake_validation: bool, preserve_surface_ui_state: bool, source_game_id: String = "", source_game_state_key: String = "") -> void:
 	if event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
 		_show_message("This bet risks your last cash. Click again to confirm.")
 		return
 	_ensure_wager_confirmation_controller()
 	var action_label := _wager_confirmation_action_label(action_id, source_game_id)
-	var view := wager_confirmation_controller.configure_confirmation(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state, source_game_id, action_label)
+	var view := wager_confirmation_controller.configure_confirmation(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state, source_game_id, action_label, source_game_state_key)
 	_sync_wager_confirmation_controller_to_host()
 	pending_event_choice_popup_event_id = ""
 	pending_event_choice_popup_focus_choice_id = ""

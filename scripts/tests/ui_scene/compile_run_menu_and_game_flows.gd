@@ -1110,6 +1110,139 @@ func _check_background_slot_all_in_confirmation(app: Control) -> bool:
 	return true
 
 
+func _check_multi_slot_reentry_uses_selected_fixture(app: Control) -> bool:
+	var original_run_state: Variant = app.get("run_state")
+	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
+	app.call("start_foundation_run", "UI-MULTI-SLOT-REENTRY")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		push_error("Multi-slot reentry fixture could not start a run.")
+		return false
+	if not _install_multi_slot_fixture_room(app, run_state):
+		return false
+	if not bool(app.call("activate_interactable_object", "game:slot:3")):
+		push_error("Multi-slot reentry fixture could not enter slot fixture 3.")
+		return false
+	await process_frame
+	var active_keys: Dictionary = run_state.current_environment.get("active_game_state_keys", {}) if typeof(run_state.current_environment.get("active_game_state_keys", {})) == TYPE_DICTIONARY else {}
+	if str(active_keys.get("slot", "")) != "slot:3":
+		push_error("Entering slot fixture 3 did not select state key slot:3.")
+		return false
+	app.call("back_to_environment")
+	await process_frame
+	if not bool(app.call("activate_interactable_object", "game:slot")):
+		push_error("Multi-slot reentry fixture could not re-enter slot fixture 1.")
+		return false
+	await process_frame
+	active_keys = run_state.current_environment.get("active_game_state_keys", {}) if typeof(run_state.current_environment.get("active_game_state_keys", {})) == TYPE_DICTIONARY else {}
+	if str(active_keys.get("slot", "")) != "slot":
+		push_error("Re-entering the first slot left the previous fixture active: %s." % JSON.stringify(active_keys))
+		return false
+	app.call("return_to_main_menu")
+	await process_frame
+	app.set("run_state", original_run_state)
+	app.set("dev_game_test_mode", original_dev_game_test_mode)
+	app.call("_refresh_run_action_service")
+	app.call("_refresh_start_screen")
+	await process_frame
+	return true
+
+
+func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
+	var original_run_state: Variant = app.get("run_state")
+	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
+	app.call("start_foundation_run", "UI-MULTI-SLOT-AUTOPLAY")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		push_error("Multi-slot autoplay fixture could not start a run.")
+		return false
+	run_state.bankroll = 100000
+	if not _install_multi_slot_fixture_room(app, run_state):
+		return false
+	for state_key in ["slot", "slot:2", "slot:3"]:
+		var machine: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, state_key)
+		machine = SlotMachineStateScript.set_selected_bet(machine, "bet_2")
+		machine["slot_autoplay_active"] = true
+		machine["slot_autoplay_next_msec"] = 1
+		machine["spin_count"] = 10 if state_key == "slot" else 20 if state_key == "slot:2" else 30
+		SlotMachineStateScript.write_machine(run_state.current_environment, state_key, machine)
+	if not bool(app.call("activate_interactable_object", "game:slot:2")):
+		push_error("Multi-slot autoplay fixture could not enter foreground slot fixture 2.")
+		return false
+	app.call("_advance_environment_game_runtime")
+	var after_first_slot_1 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot").get("spin_count", 0))
+	var after_first_slot_2 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot:2").get("spin_count", 0))
+	var after_first_slot_3 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot:3").get("spin_count", 0))
+	if after_first_slot_1 != 11 or after_first_slot_2 != 20 or after_first_slot_3 != 30:
+		push_error("First multi-slot runtime tick should advance only background slot 1; got %d/%d/%d." % [after_first_slot_1, after_first_slot_2, after_first_slot_3])
+		return false
+	app.call("_advance_environment_game_runtime")
+	var after_second_slot_1 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot").get("spin_count", 0))
+	var after_second_slot_2 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot:2").get("spin_count", 0))
+	var after_second_slot_3 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot:3").get("spin_count", 0))
+	if after_second_slot_1 != 11 or after_second_slot_2 != 20 or after_second_slot_3 != 31:
+		push_error("Second multi-slot runtime tick should advance only background slot 3; got %d/%d/%d." % [after_second_slot_1, after_second_slot_2, after_second_slot_3])
+		return false
+	var active_keys: Dictionary = run_state.current_environment.get("active_game_state_keys", {}) if typeof(run_state.current_environment.get("active_game_state_keys", {})) == TYPE_DICTIONARY else {}
+	if str(active_keys.get("slot", "")) != "slot:2":
+		push_error("Background multi-slot runtime did not restore the foreground slot fixture: %s." % JSON.stringify(active_keys))
+		return false
+	app.call("return_to_main_menu")
+	await process_frame
+	app.set("run_state", original_run_state)
+	app.set("dev_game_test_mode", original_dev_game_test_mode)
+	app.call("_refresh_run_action_service")
+	app.call("_refresh_start_screen")
+	await process_frame
+	return true
+
+
+func _install_multi_slot_fixture_room(app: Control, run_state: RunState) -> bool:
+	var slot_game_value: Variant = app.call("_game_module_for_id", "slot")
+	if not slot_game_value is GameModule:
+		push_error("Multi-slot fixture could not load the slot module.")
+		return false
+	var slot_game: GameModule = slot_game_value
+	var environment := {
+		"id": "ui_multi_slot_fixture_room",
+		"archetype_id": "grand_casino",
+		"display_name": "Multi Slot Fixture",
+		"kind": "casino",
+		"tier": 3,
+		"turns": 0,
+		"game_ids": ["slot"],
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"travel_hooks": [],
+		"next_archetypes": [],
+		"object_fixtures": [],
+		"layout": {"game_fixture_counts": {"slot": 3}},
+		"game_states": {},
+	}
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	var fixture_states: Dictionary = slot_game.call("generate_environment_fixture_states", run_state, environment, run_state.create_rng("ui_multi_slot_fixture_states"), 3)
+	if not fixture_states.has("slot") or not fixture_states.has("slot:2") or not fixture_states.has("slot:3"):
+		push_error("Multi-slot fixture did not generate three independent slot machine states.")
+		return false
+	environment["game_states"] = fixture_states
+	run_state.set_environment(environment)
+	app.set("current_game", null)
+	app.call("clear_interaction_focus")
+	app.call("_refresh_run_action_service")
+	app.call("_refresh")
+	var snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	for object_id in ["game:slot", "game:slot:2", "game:slot:3"]:
+		if _object_by_id(snapshot.get("interactable_objects", []), object_id).is_empty():
+			push_error("Multi-slot fixture did not expose interactable %s." % object_id)
+			return false
+	return true
+
+
 func _install_background_slot_autoplay(app: Control, run_state: RunState, bet_id: String, next_msec: int) -> bool:
 	var slot_game_value: Variant = app.call("_game_module_for_id", "slot")
 	if not slot_game_value is GameModule:
