@@ -317,3 +317,11 @@ Manual feel/clarity acceptance:
 Deviations:
 - Work remained on the isolated `video-poker-rebuild` branch and is pushed without merging because another task owns the dirty primary checkout.
 - Captures and RTP reports remain under `.tmp/` as required and are intentionally untracked.
+
+### Landing supplement — 2026-07-30
+
+- The finish-and-land pass rebased the branch onto latest `origin/main`, strengthened the live display proof, and reran the complete integrated gate battery.
+- Triple Double Bonus now has explicit acceptance evidence for three unique displayed signatures, three result rows, and mixed independently evaluated outcomes in one live capture.
+- Final proof commit: `d8b40241`.
+- Non-squash merge to `main`: `6cb9d7619ec5c04250d3fd94734c907ea0f3df43`.
+- Full landing details and fresh gate timings are recorded in `docs/todone/video_poker_rebuild_finish_and_land_prompt.md`.
