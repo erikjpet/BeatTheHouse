@@ -3218,6 +3218,29 @@ func _check_video_poker_cheat(game: GameModule, failures: Array) -> void:
 		failures.append("Video poker perfect holdout did not apply the palm-and-swap payoff.")
 	if str(cheat_result.get("video_poker_blunt_feedback", "")).find("RESULT:") < 0 or typeof(cheat_result.get("video_poker_holdout_target_card", {})) != TYPE_DICTIONARY:
 		failures.append("Video poker holdout did not expose blunt swap-card/result feedback.")
+	var target_slot := int(cheat_result.get("video_poker_holdout_target_slot", -1))
+	var committed_card: Dictionary = cheat_result.get("video_poker_holdout_target_card", {}) if typeof(cheat_result.get("video_poker_holdout_target_card", {})) == TYPE_DICTIONARY else {}
+	var cheat_hand: Array = cheat_result.get("video_poker_hand", [])
+	var landed_card: Dictionary = cheat_hand[target_slot] if target_slot >= 0 and target_slot < cheat_hand.size() and typeof(cheat_hand[target_slot]) == TYPE_DICTIONARY else {}
+	if not bool(game.call("_same_card", committed_card, landed_card)):
+		failures.append("Video poker holdout feedback named a card that was not inserted into the promised final-hand slot.")
+	var cheat_environment: Dictionary = cheat_result.get("environment", run_state.current_environment) if typeof(cheat_result.get("environment", run_state.current_environment)) == TYPE_DICTIONARY else run_state.current_environment
+	var cheat_surface := game.surface_state(run_state, cheat_environment, {})
+	var target_name := str(game.call("_card_name", committed_card)).to_upper()
+	var result_detail := str(cheat_surface.get("result_detail", ""))
+	if result_detail.find("SWAPPED IN %s" % target_name) < 0 or result_detail.find("RESULT:") < 0:
+		failures.append("Video poker settled cabinet did not visibly name the holdout card and resulting hand.")
+	var cheat_harness := SurfaceHarness.new()
+	cheat_harness.setup(cheat_surface)
+	game.draw_surface(cheat_harness, cheat_surface, {"contract_harness": true})
+	var rendered_blunt_feedback := false
+	for label_value in cheat_harness.labels:
+		var rendered_label := str(label_value)
+		if rendered_label.find("SWAPPED IN %s" % target_name) >= 0 and rendered_label.find("RESULT:") >= 0:
+			rendered_blunt_feedback = true
+			break
+	if not rendered_blunt_feedback:
+		failures.append("Video poker renderer did not draw the blunt holdout result beat.")
 	if typeof(cheat_result.get("skill_story_context", {})) != TYPE_DICTIONARY or int((cheat_result.get("skill_story_context", {}) as Dictionary).get("skill_margin_msec", 999)) != 0:
 		failures.append("Video poker holdout did not expose the shared skill story context with timing margin.")
 	_check_action_result_application_contract(before, run_state, cheat_result, "video poker holdout result", failures)
