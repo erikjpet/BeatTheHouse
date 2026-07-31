@@ -170,6 +170,7 @@ var selected_item_offer_price: int = 0
 var last_item_result: Dictionary = {}
 var selected_service_hook_id: String = ""
 var selected_service_hook_label: String = ""
+var service_hook_resolution_locked: bool = false
 var selected_lender_hook_id: String = ""
 var selected_lender_hook_label: String = ""
 var last_hook_result: Dictionary = {}
@@ -3459,6 +3460,8 @@ func repair_inventory_item(item_id: String) -> bool:
 func select_service_hook(service_id: String) -> bool:
 	if _guard_player_input_route():
 		return false
+	if service_hook_resolution_locked:
+		return false
 	var option := _service_hook(service_id)
 	if option.is_empty():
 		_show_message("That service is not available.")
@@ -3485,6 +3488,8 @@ func confirm_selected_service_hook() -> bool:
 func use_service_hook(service_id: String) -> bool:
 	if _guard_player_input_route():
 		return false
+	if service_hook_resolution_locked:
+		return false
 	var option := _service_hook(service_id)
 	if option.is_empty():
 		_show_message("That service is not available.")
@@ -3497,6 +3502,8 @@ func use_service_hook(service_id: String) -> bool:
 		_show_message(str(option.get("disabled_reason", "Service cannot be used right now.")))
 		_refresh()
 		return false
+	service_hook_resolution_locked = true
+	call_deferred("_clear_service_hook_resolution_lock")
 	_refresh_run_action_service()
 	var inventory_before := _run_inventory_id_set()
 	var resolved := run_action_service.use_hook("service", service_id)
@@ -3519,6 +3526,10 @@ func use_service_hook(service_id: String) -> bool:
 		return true
 	_refresh()
 	return true
+
+
+func _clear_service_hook_resolution_lock() -> void:
+	service_hook_resolution_locked = false
 
 
 # Selects a lender hook without mutating simulation state.
@@ -8235,6 +8246,8 @@ func activate_interactable_object(object_id: String) -> bool:
 		return _activate_cage_atm_action(object_id)
 	if object_id.begins_with("cage_gift_action:"):
 		return _activate_cage_gift_shop_action(object_id)
+	if service_hook_resolution_locked and object_id.begins_with("service:"):
+		return false
 	if not focus_interactable_object(object_id):
 		return false
 	var object_data := _interactable_object(object_id)
