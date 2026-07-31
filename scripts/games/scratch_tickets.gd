@@ -2,6 +2,12 @@ class_name ScratchTicketsGame
 extends GameModule
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const RegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
+const BackgroundRendererScript := preload("res://scripts/games/scratch_ticket_background_renderer.gd")
+const IconRendererScript := preload("res://scripts/games/scratch_ticket_icon_renderer.gd")
+const FoilRendererScript := preload("res://scripts/games/scratch_ticket_foil_renderer.gd")
+const MaskScript := preload("res://scripts/games/scratch_ticket_mask.gd")
+const MachineRendererScript := preload("res://scripts/games/scratch_ticket_machine_renderer.gd")
 const SURFACE_DESIGN_SIZE := Vector2(VisualStyleScript.GAME_BOARD_SIZE)
 const C_DARK := VisualStyleScript.DARK
 const C_WHITE := VisualStyleScript.WHITE
@@ -15,6 +21,7 @@ const SCRATCH_ALL_ACTION := "scratch_all"
 const SETTLE_ACTION := "settle_scratch_ticket"
 const REVEAL_ACTION := "scratch_reveal"
 const FILE_TICKET_ACTION := "scratch_file_ticket"
+const DISCARD_TICKET_ACTION := "scratch_discard"
 const DISPENSE_CHANNEL := "scratch_ticket_dispense"
 const FILE_CHANNEL := "scratch_ticket_file"
 const SWEEP_CHANNEL := "scratch_box_pop"
@@ -35,55 +42,12 @@ const COLLECTION_TOTAL := 7
 const DEFAULT_BRUSH_RADIUS := 15.0
 const DEFAULT_PASS_REMOVAL := 0.66
 const DEFAULT_SWEEP_THRESHOLD := 0.80
-const DEFAULT_MASK_COLUMNS := 48
-const DEFAULT_MASK_ROWS := 32
+const DEFAULT_MASK_COLUMNS := MaskScript.MASK_COLUMNS
+const DEFAULT_MASK_ROWS := MaskScript.MASK_ROWS
 const MACHINE_STATE_VERSION := 3
-const REGION_LAYOUT_VERSION := 4
-const PRODUCTION_TICKET_ART := {
-	"two_fer": "res://assets/art/scratch_tickets/layers/two_fer_background_v2.png",
-	"lucky_7s": "res://assets/art/scratch_tickets/layers/lucky_7s_background_v2.png",
-	"tic_tac_gold": "res://assets/art/scratch_tickets/layers/tic_tac_gold_background_v2.png",
-	"crossword_corner": "res://assets/art/scratch_tickets/layers/crossword_corner_background_v2.png",
-	"bonus_bingo": "res://assets/art/scratch_tickets/layers/bonus_bingo_background_v2.png",
-	"high_roller_holdem": "res://assets/art/scratch_tickets/layers/high_roller_holdem_background_v2.png",
-	"golden_vault": "res://assets/art/scratch_tickets/layers/golden_vault_background_v2.png",
-}
-const SCRATCH_FOIL_TEXTURE := "res://assets/art/scratch_tickets/layers/scratch_foil_tile_v1.png"
-const REVEAL_SYMBOL_ART := {
-	"bell": "res://assets/art/scratch_tickets/reveal_symbols/bell.png",
-	"bingo_ball": "res://assets/art/scratch_tickets/reveal_symbols/bingo_ball.png",
-	"bingo_cell": "res://assets/art/scratch_tickets/reveal_symbols/bingo_cell.png",
-	"brass_bar": "res://assets/art/scratch_tickets/reveal_symbols/brass_bar.png",
-	"card_black": "res://assets/art/scratch_tickets/reveal_symbols/card_black.png",
-	"card_red": "res://assets/art/scratch_tickets/reveal_symbols/card_red.png",
-	"cash_stack": "res://assets/art/scratch_tickets/reveal_symbols/cash_stack.png",
-	"clover": "res://assets/art/scratch_tickets/reveal_symbols/clover.png",
-	"crossword_cell": "res://assets/art/scratch_tickets/reveal_symbols/crossword_cell.png",
-	"dust": "res://assets/art/scratch_tickets/reveal_symbols/dust.png",
-	"gold_bar": "res://assets/art/scratch_tickets/reveal_symbols/gold_bar.png",
-	"gold_coin": "res://assets/art/scratch_tickets/reveal_symbols/gold_coin.png",
-	"letter_tile": "res://assets/art/scratch_tickets/reveal_symbols/letter_tile.png",
-	"lucky_seven": "res://assets/art/scratch_tickets/reveal_symbols/lucky_seven.png",
-	"miss_cross": "res://assets/art/scratch_tickets/reveal_symbols/miss_cross.png",
-	"multiplier_coin": "res://assets/art/scratch_tickets/reveal_symbols/multiplier_coin.png",
-	"number_coin": "res://assets/art/scratch_tickets/reveal_symbols/number_coin.png",
-	"star": "res://assets/art/scratch_tickets/reveal_symbols/star.png",
-	"twofer": "res://assets/art/scratch_tickets/reveal_symbols/twofer.png",
-	"vault_open": "res://assets/art/scratch_tickets/reveal_symbols/vault_open.png",
-	"vault_sealed": "res://assets/art/scratch_tickets/reveal_symbols/vault_sealed.png",
-	"wild_card": "res://assets/art/scratch_tickets/reveal_symbols/wild_card.png",
-	"winning_star": "res://assets/art/scratch_tickets/reveal_symbols/winning_star.png",
-}
-const CROSSWORD_COLUMNS := 11
-const CROSSWORD_ROWS := 10
-const CROSSWORD_GRID_RECT_VALUES := [0.06, 0.35, 0.50, 0.50]
-const CROSSWORD_BANK_RECT_VALUES := [0.62, 0.38, 0.31, 0.44]
+const REGION_LAYOUT_VERSION := RegionModelScript.LAYOUT_VERSION
 
 var active_ticket_rect := DEFAULT_TICKET_RECT
-var active_scratch_rect := DEFAULT_SCRATCH_RECT
-var production_ticket_texture_cache: Dictionary = {}
-var reveal_symbol_texture_cache: Dictionary = {}
-var scratch_foil_texture_cache: Texture2D = null
 
 
 func gameplay_model() -> String:
@@ -159,15 +123,19 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_active_price": int(active_ticket.get("price", 0)),
 		"scratch_winner_count": _dictionary_array(machine.get("winner_pile", [])).size(),
 		"scratch_loser_count": _dictionary_array(machine.get("loser_pile", [])).size(),
-		"scratch_winner_pile": _dictionary_array(machine.get("winner_pile", [])).duplicate(true),
-		"scratch_loser_pile": _dictionary_array(machine.get("loser_pile", [])).duplicate(true),
+		"scratch_winner_pile": machine.get("winner_pile", []),
+		"scratch_loser_pile": machine.get("loser_pile", []),
 		"scratch_last_settled_ticket": _copy_dict(machine.get("last_settled_ticket", {})),
 		"scratch_last_settled_pile": str(machine.get("last_settled_pile", "")),
 		"scratch_machine_style": "physical_lottery_vending_cabinet",
-		"scratch_machine_art_features": ["floor_unit", "jackpot_marquee", "glass_stock_rows", "branded_side_panel", "selection_buttons", "dispensing_tray"],
-		"scratch_ticket_face_style": "layered_printed_lottery_ticket",
+		"scratch_machine_art_features": ["floor_unit", "jackpot_marquee", "glass_stock_rows", "branded_side_panel", "selection_buttons", "dispensing_tray", "waste_basket", "cabinet_lighting"],
+		"scratch_ticket_face_style": "strict_three_layer_printed_ticket",
 		"scratch_ticket_render_layers": _ticket_render_layers(active_ticket),
 		"scratch_foil_style_id": _ticket_foil_style_id(active_ticket),
+		"scratch_mask_kind": str(_dict_ref(active_ticket.get("scratch", {})).get("mask_kind", "")),
+		"scratch_discard_rule": "Discarded winners are filed safely and remain payable at the clerk.",
+		"scratch_discard_interaction": "Swipe the ticket into the basket, or click the basket.",
+		"scratch_discard_available": not active_ticket.is_empty(),
 		"scratch_dispense_animation": not last_dispense_id.is_empty(),
 		"scratch_crumbs": crumbs,
 		"scratch_drag_active": bool(ui_state.get("scratch_drag_active", false)),
@@ -212,7 +180,7 @@ func surface_pointer_uses_lightweight_ui_state(surface_action: String) -> bool:
 	return surface_action == SCRUB_ACTION
 
 
-func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
+func draw_surface(surface, state: Dictionary, render_context: Dictionary = {}) -> bool:
 	if str(state.get("surface_renderer", "")) != "scratch_tickets":
 		return false
 	surface.surface_begin_design_space(SURFACE_DESIGN_SIZE)
@@ -220,15 +188,15 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 		var compact_tab := str(state.get("scratch_compact_tab", "machine"))
 		_draw_compact_tabs(surface, compact_tab)
 		if compact_tab == "machine":
-			_draw_machine(surface, state)
+			MachineRendererScript.draw(surface, state, MACHINE_RECT)
 		else:
-			_draw_ticket(surface, state)
+			_draw_ticket(surface, state, render_context)
 			_draw_surface_hud(surface, state)
 			_draw_dispense_animation(surface, state)
 			_draw_file_animation(surface, state)
 	else:
-		_draw_machine(surface, state)
-		_draw_ticket(surface, state)
+		MachineRendererScript.draw(surface, state, MACHINE_RECT)
+		_draw_ticket(surface, state, render_context)
 		_draw_surface_hud(surface, state)
 		_draw_dispense_animation(surface, state)
 		_draw_file_animation(surface, state)
@@ -238,22 +206,13 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 func _ticket_render_layers(ticket: Dictionary) -> Array:
 	if ticket.is_empty():
 		return []
-	var type_id := str(ticket.get("type_id", ""))
-	if _has_production_ticket_art(type_id):
-		return ["production_background_art", "generated_result_symbols", "ticket_specific_foil_mask"]
-	return ["procedural_background", "generated_result_symbols", "generic_foil_mask"]
+	return ["background", "icons", "foil"]
 
 
 func _ticket_foil_style_id(ticket: Dictionary) -> String:
 	if ticket.is_empty():
 		return ""
-	var face := _dict_ref(ticket.get("face", {}))
-	var palette := _dict_ref(face.get("palette", {}))
-	var latex := Color(str(palette.get("latex", "#b9bcc8")))
-	var ink := Color(str(palette.get("ink", "#35152e")))
-	var accent := Color(str(palette.get("accent", "#ef3156")))
-	var trim := Color(str(palette.get("trim", "#ffd447")))
-	return str(_scratch_foil_style(ticket, latex, ink, accent, trim).get("id", ""))
+	return FoilRendererScript.style_id(ticket)
 
 
 func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -310,14 +269,28 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				"preserve_surface_ui_state": false,
 				"message": "Ticket filed.",
 			})
+		DISCARD_TICKET_ACTION:
+			if _copy_dict(machine.get("active_ticket", {})).is_empty():
+				return GameModule.surface_command({"message": "There is no ticket to discard."})
+			var discard_state := ui_state.duplicate(false)
+			discard_state["scratch_discard_unfinished"] = true
+			return GameModule.surface_command({
+				"ui_state": discard_state,
+				"action_id": SETTLE_ACTION,
+				"action_kind": "legal",
+				"direct_resolve": true,
+				"skip_stake_validation": true,
+				"preserve_surface_ui_state": false,
+				"message": "Ticket dropped in the waste basket.",
+			})
 	return {"handled": false}
 
 
 func surface_pointer_command(surface_action: String, _index: int, phase: String, board_position: Vector2, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	if surface_action != SCRUB_ACTION:
 		return {"handled": false}
-	var next_state := ui_state.duplicate(false)
-	var machine := _ensure_machine_state(run_state, environment, true)
+	var next_state := ui_state
+	var machine := _machine_state_for_pointer(run_state, environment)
 	if phase == "begin":
 		next_state["scratch_drag_active"] = true
 		next_state["scratch_drag_moved"] = false
@@ -327,6 +300,20 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 	if phase == "end":
 		next_state["scratch_drag_active"] = false
 		next_state.erase("scratch_last_pointer")
+		if MachineRendererScript.waste_basket_rect(MACHINE_RECT).grow(12.0).has_point(board_position) and not _copy_dict(machine.get("active_ticket", {})).is_empty():
+			next_state["scratch_discard_unfinished"] = true
+			return GameModule.surface_command({
+				"ui_state": next_state,
+				"action_id": SETTLE_ACTION,
+				"action_kind": "legal",
+				"direct_resolve": true,
+				"skip_stake_validation": true,
+				"preserve_surface_ui_state": false,
+				"message": "Ticket swiped into the waste basket.",
+				"surface_audio_loop_stop": SCRATCH_AUDIO_LOOP,
+				"surface_audio_cue": "paper_peel",
+			})
+		_write_machine_state(environment, machine, run_state, false)
 		return _scratch_pointer_surface_command(machine, next_state, {"surface_audio_loop_stop": SCRATCH_AUDIO_LOOP})
 	if phase != "move" or not bool(next_state.get("scratch_drag_active", false)):
 		return _scratch_pointer_surface_command(machine, next_state)
@@ -340,10 +327,12 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 		return _scratch_pointer_surface_command(machine, next_state, {"surface_audio_loop_stop": SCRATCH_AUDIO_LOOP})
 	var reduce_motion := _reduce_motion_enabled(next_state)
 	next_state["scratch_crumbs"] = [] if reduce_motion else _crumbs_for_segment(previous, board_position, int(scratch_result.get("erased_samples", 0)))
-	if not _dictionary_array(scratch_result.get("swept_sections", [])).is_empty():
+	var swept_sections: Array = scratch_result.get("swept_sections", []) if typeof(scratch_result.get("swept_sections", [])) == TYPE_ARRAY else []
+	if not swept_sections.is_empty():
 		machine["sweep_started_msec"] = GameModule.deterministic_time_msec(run_state, next_state)
-	_write_machine_state(environment, machine, run_state)
 	var completed := bool(scratch_result.get("ticket_complete", false))
+	if completed:
+		_write_machine_state(environment, machine, run_state, false)
 	var penalty := int(scratch_result.get("penalty", 0))
 	var distance := previous.distance_to(board_position)
 	var activity := clampf(distance / 24.0, 0.0, 1.0)
@@ -354,7 +343,7 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 		"surface_audio_loop_volume_db": lerpf(-19.0, -10.5, activity),
 		"surface_audio_loop_pitch": lerpf(0.92, 1.06, activity),
 	}
-	if not _dictionary_array(scratch_result.get("swept_sections", [])).is_empty():
+	if not swept_sections.is_empty():
 		command["surface_audio_cue"] = SCRATCH_POP_CUE
 	if completed:
 		command.erase("surface_audio_loop_start")
@@ -368,26 +357,32 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 		command["action_kind"] = "legal"
 		command["direct_resolve"] = true
 		command["skip_stake_validation"] = true
-	return _scratch_pointer_surface_command(machine, next_state, command)
+	return _scratch_pointer_surface_command(machine, next_state, command, not swept_sections.is_empty())
 
 
-func _scratch_pointer_surface_command(machine: Dictionary, ui_state: Dictionary, extra: Dictionary = {}) -> Dictionary:
-	var command := extra.duplicate(false)
+func _scratch_pointer_surface_command(machine: Dictionary, ui_state: Dictionary, extra: Dictionary = {}, refresh_animation_channels: bool = false) -> Dictionary:
+	var command := extra
+	var active_ticket: Dictionary = machine.get("active_ticket", {}) if typeof(machine.get("active_ticket", {})) == TYPE_DICTIONARY else {}
+	var pending_queue: Array = machine.get("pending_queue", []) if typeof(machine.get("pending_queue", [])) == TYPE_ARRAY else []
+	var reduce_motion := _reduce_motion_enabled(ui_state)
+	command["handled"] = true
 	command["ui_state"] = ui_state
 	command["surface_transient"] = true
-	command["surface_state_patch"] = {
-		"scratch_ticket": machine.get("active_ticket", {}),
-		"scratch_queue": machine.get("pending_queue", []),
-		"scratch_queue_count": _dictionary_array(machine.get("pending_queue", [])).size(),
-		"scratch_result_ready": bool(_copy_dict(machine.get("active_ticket", {})).get("result_ready", false)),
+	var patch := {
+		"scratch_ticket": active_ticket,
+		"scratch_queue": pending_queue,
+		"scratch_queue_count": pending_queue.size(),
+		"scratch_result_ready": bool(active_ticket.get("result_ready", false)),
 		"scratch_crumbs": ui_state.get("scratch_crumbs", []),
 		"scratch_drag_active": bool(ui_state.get("scratch_drag_active", false)),
 		"scratch_last_pointer": ui_state.get("scratch_last_pointer", Vector2.ZERO),
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
-		"scratch_reduce_motion": _reduce_motion_enabled(ui_state),
-		"surface_animation_channels": _scratch_animation_channels(machine, _reduce_motion_enabled(ui_state)),
+		"scratch_reduce_motion": reduce_motion,
 	}
-	return GameModule.surface_command(command, true)
+	if refresh_animation_channels:
+		patch["surface_animation_channels"] = _scratch_animation_channels(machine, reduce_motion)
+	command["surface_state_patch"] = patch
+	return command
 
 
 func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
@@ -411,9 +406,9 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		BUY_ACTION:
 			return _resolve_purchase(stake, run_state, environment, rng, ui_state)
 		REVEAL_ACTION:
-			return _resolve_reveal(run_state, environment, rng, false)
+			return _resolve_reveal(run_state, environment, rng, false, false)
 		SETTLE_ACTION:
-			return _resolve_reveal(run_state, environment, rng, true)
+			return _resolve_reveal(run_state, environment, rng, true, bool(ui_state.get("scratch_discard_unfinished", false)))
 	return _scratch_empty_result(action_id, environment, "That scratch-ticket action is unavailable.")
 
 
@@ -624,7 +619,7 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 	return result
 
 
-func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStream, settle: bool) -> Dictionary:
+func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStream, settle: bool, discard_unfinished: bool = false) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, true)
 	var ticket := _copy_dict(machine.get("active_ticket", {}))
 	if ticket.is_empty():
@@ -632,10 +627,11 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 	var payout := int(ticket.get("payout", 0))
 	var message := "The printed result shows through."
 	if settle:
-		if not _ticket_complete(ticket):
+		if not _ticket_complete(ticket) and not discard_unfinished:
 			return _scratch_empty_result(SETTLE_ACTION, environment, "Some latex still covers this ticket.")
 		ticket["settled"] = true
 		ticket["result_ready"] = true
+		ticket["discarded_unfinished"] = discard_unfinished
 		var pile_name := "winner_pile" if payout > 0 else "loser_pile"
 		var pile := _dictionary_array(machine.get(pile_name, []))
 		pile.append(ticket)
@@ -654,7 +650,13 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 		machine["last_settled_pile"] = pile_name
 		machine["last_file_id"] = "scratch-file:%s" % str(ticket.get("id", pile.size()))
 		machine["file_started_msec"] = GameModule.deterministic_time_msec(run_state, {})
-		message = "%s: %s %s" % [str(ticket.get("display_name", "Ticket")), _ticket_result_summary(ticket), _ticket_win_reason(ticket)]
+		if discard_unfinished:
+			message = "%s discarded. %s" % [
+				str(ticket.get("display_name", "Ticket")),
+				"Any winner is filed safely for clerk redemption." if payout > 0 else "No prize was forfeited.",
+			]
+		else:
+			message = "%s: %s %s" % [str(ticket.get("display_name", "Ticket")), _ticket_result_summary(ticket), _ticket_win_reason(ticket)]
 		if typeof(next_ticket) == TYPE_DICTIONARY and not (next_ticket as Dictionary).is_empty():
 			message += " Next up: %s." % str((next_ticket as Dictionary).get("display_name", "ticket"))
 	else:
@@ -664,12 +666,13 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 	var deltas := GameModule.empty_result_deltas()
 	deltas["messages"] = [message]
 	deltas["story_log"] = [{
-		"type": "scratch_ticket_settle" if settle else "scratch_ticket_reveal",
+		"type": "scratch_ticket_discard" if discard_unfinished else "scratch_ticket_settle" if settle else "scratch_ticket_reveal",
 		"game_id": get_id(),
 		"action_id": SETTLE_ACTION if settle else REVEAL_ACTION,
 		"ticket_id": str(ticket.get("id", "")),
 		"ticket_type": str(ticket.get("type_id", "")),
 		"pending_clerk_payout": payout if settle else 0,
+		"discarded_unfinished": discard_unfinished,
 		"bankroll_delta": 0,
 		"suspicion_delta": 0,
 		"environment_id": str(environment.get("id", "")),
@@ -691,6 +694,8 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 		"message": message,
 	})
 	result["defer_bankroll_zero_failure"] = not _copy_dict(machine.get("active_ticket", {})).is_empty() or not _dictionary_array(machine.get("pending_queue", [])).is_empty() or _pending_payout(machine) > 0
+	result["scratch_discarded_unfinished"] = discard_unfinished
+	result["scratch_discard_preserved_winner"] = discard_unfinished and payout > 0
 	if settle:
 		result["scratch_discovered_type_id"] = str(ticket.get("type_id", ""))
 	GameModule.apply_result(run_state, result, rng)
@@ -848,283 +853,49 @@ func _definition_top_prize(ticket_type: Dictionary) -> int:
 
 
 func _initialize_ticket_mask(ticket: Dictionary, ticket_type: Dictionary) -> void:
-	var scratch := _copy_dict(ticket_type.get("scratch", {}))
-	var mask_columns := maxi(24, int(scratch.get("mask_columns", DEFAULT_MASK_COLUMNS)))
-	var mask_rows := maxi(18, int(scratch.get("mask_rows", DEFAULT_MASK_ROWS)))
-	scratch["mask_columns"] = mask_columns
-	scratch["mask_rows"] = mask_rows
-	scratch["brush_radius"] = maxf(8.0, float(scratch.get("brush_radius", DEFAULT_BRUSH_RADIUS)))
-	scratch["pass_removal"] = clampf(float(scratch.get("pass_removal", DEFAULT_PASS_REMOVAL)), 0.10, 0.90)
-	scratch["sweep_threshold"] = clampf(float(scratch.get("sweep_threshold", DEFAULT_SWEEP_THRESHOLD)), 0.50, 0.98)
-	ticket["scratch"] = scratch
-	var regions := _ticket_art_regions(ticket)
-	var mask: Array = []
-	mask.resize(mask_columns * mask_rows)
-	mask.fill(0)
-	for region_index in range(regions.size()):
-		var region: Dictionary = regions[region_index]
-		var values: Array = region.get("rect", [])
-		var left := float(values[0])
-		var top := float(values[1])
-		var right := minf(1.0, left + float(values[2]))
-		var bottom := minf(1.0, top + float(values[3]))
-		var column_start := clampi(int(ceil(left * float(mask_columns) - 0.5)), 0, mask_columns)
-		var column_end := clampi(int(ceil(right * float(mask_columns) - 0.5)), column_start, mask_columns)
-		var row_start := clampi(int(ceil(top * float(mask_rows) - 0.5)), 0, mask_rows)
-		var row_end := clampi(int(ceil(bottom * float(mask_rows) - 0.5)), row_start, mask_rows)
-		var sample_total := 0
-		for row in range(row_start, row_end):
-			var row_offset := row * mask_columns
-			for column in range(column_start, column_end):
-				var sample_index := row_offset + column
-				if int(mask[sample_index]) != 0:
-					continue
-				mask[sample_index] = 255
-				sample_total += 1
-		region["sample_total"] = sample_total
-		region["mask_remaining_units"] = sample_total * 255
-		region["coverage"] = 0.0
-		region["revealed"] = false
-		regions[region_index] = region
-	ticket["scratch_regions"] = regions
-	ticket["sections"] = _sections_from_regions(regions)
-	ticket["latex_mask"] = mask
-	ticket["mask_revision"] = 0
-	ticket["region_layout_version"] = REGION_LAYOUT_VERSION
-	ticket["result_ready"] = false
+	MaskScript.initialize(ticket, ticket_type)
 
 
 func _ticket_art_regions(ticket: Dictionary) -> Array:
-	var result: Array = []
-	var spots := _dictionary_array(ticket.get("spots", []))
-	match str(ticket.get("type_id", "")):
-		"two_fer":
-			for index in range(mini(3, spots.size())):
-				result.append(_scratch_region(index, spots[index], "play", "SPOT %d" % (index + 1), [0.12 + float(index) * 0.28, 0.50, 0.20, 0.24]))
-		"lucky_7s":
-			for index in range(mini(2, spots.size())):
-				result.append(_scratch_region(index, spots[index], "winning_numbers", "WIN %d" % (index + 1), [0.075, 0.43 + float(index) * 0.15, 0.135, 0.105]))
-			for index in range(2, mini(8, spots.size())):
-				var your_index := index - 2
-				result.append(_scratch_region(index, spots[index], "your_numbers", "YOUR %d" % (your_index + 1), [0.38 + float(your_index % 3) * 0.18, 0.42 + float(your_index / 3) * 0.165, 0.145, 0.115]))
-			if spots.size() > 8:
-				result.append(_scratch_region(8, spots[8], "bonus", "BONUS", [0.28, 0.80, 0.18, 0.13]))
-		"tic_tac_gold":
-			for index in range(mini(9, spots.size())):
-				result.append(_scratch_region(index, spots[index], "board", "GRID %d" % (index + 1), [0.18 + float(index % 3) * 0.18, 0.405 + float(index / 3) * 0.135, 0.14, 0.105]))
-			if spots.size() > 9:
-				result.append(_scratch_region(9, spots[9], "bonus", "BONUS", [0.73, 0.45, 0.18, 0.18]))
-		"crossword_corner":
-			for index in range(spots.size()):
-				var spot: Dictionary = spots[index]
-				match str(spot.get("role", "")):
-					"bank_letter":
-						var bank_index := int(spot.get("bank_index", index))
-						result.append(_scratch_region(index, spot, "letter_bank", "LETTER %d" % (bank_index + 1), _crossword_bank_rect_values(bank_index)))
-					"crossword_cell":
-						result.append(_scratch_region(index, spot, "crossword", "GRID %d,%d" % [int(spot.get("column", 0)) + 1, int(spot.get("row", 0)) + 1], _crossword_cell_rect_values(int(spot.get("column", 0)), int(spot.get("row", 0)))))
-		"bonus_bingo":
-			for index in range(mini(24, spots.size())):
-				result.append(_scratch_region(index, spots[index], "callers", "CALL %d" % (index + 1), [0.06 + float(index % 12) * 0.075, 0.27 + float(index / 12) * 0.085, 0.055, 0.060]))
-			for card_index in range(4):
-				var origin := Vector2(0.07 + float(card_index) * 0.23, 0.55)
-				for cell_index in range(25):
-					var spot_index := 24 + card_index * 25 + cell_index
-					if spot_index >= spots.size():
-						continue
-					result.append(_scratch_region(spot_index, spots[spot_index], "card_%d" % (card_index + 1), "CARD %d-%d" % [card_index + 1, cell_index + 1], [origin.x + float(cell_index % 5) * 0.038, origin.y + float(cell_index / 5) * 0.052, 0.036, 0.046]))
-		"high_roller_holdem":
-			for index in range(mini(5, spots.size())):
-				result.append(_scratch_region(index, spots[index], "your_hand", "YOUR CARD %d" % (index + 1), [0.16 + float(index) * 0.135, 0.40, 0.105, 0.075]))
-			for index in range(5, mini(10, spots.size())):
-				var card_index := index - 5
-				result.append(_scratch_region(index, spots[index], "dealer_hand", "DEALER CARD %d" % (card_index + 1), [0.16 + float(card_index) * 0.135, 0.55, 0.105, 0.075]))
-			if spots.size() > 10:
-				result.append(_scratch_region(10, spots[10], "wild", "WILD", [0.15, 0.74, 0.70, 0.075]))
-		"golden_vault":
-			if spots.size() > 0:
-				result.append(_scratch_region(0, spots[0], "multiplier", "MULTIPLIER", [0.24, 0.405, 0.52, 0.075]))
-			for index in range(1, mini(6, spots.size())):
-				var rung_index := index - 1
-				result.append(_scratch_region(index, spots[index], "cash_ladder", "RUNG %d" % (rung_index + 1), [0.13, 0.535 + float(rung_index) * 0.055, 0.74, 0.045]))
-			if spots.size() > 6:
-				result.append(_scratch_region(6, spots[6], "gold_bar", "GOLD BAR", [0.13, 0.825, 0.34, 0.060]))
-			if spots.size() > 7:
-				result.append(_scratch_region(7, spots[7], "final_vault", "FINAL VAULT", [0.53, 0.825, 0.34, 0.060]))
-	if result.is_empty():
-		for index in range(spots.size()):
-			result.append(_scratch_region(index, spots[index], str((spots[index] as Dictionary).get("section_id", "play")), "SPOT %d" % (index + 1), [0.05, 0.05, 0.90, 0.90]))
-	return result
-
-
-func _scratch_region(index: int, spot: Dictionary, section_id: String, label: String, rect_values: Array) -> Dictionary:
-	var rect := _normalized_rect_array(rect_values)
-	return {
-		"id": "%s_%02d" % [section_id, index],
-		"layout_version": REGION_LAYOUT_VERSION,
-		"spot_index": int(spot.get("index", index)),
-		"section_id": section_id,
-		"label": label,
-		"role": str(spot.get("role", "")),
-		"rect": rect,
-		"art_rect": rect.duplicate(false),
-		"sample_total": 0,
-		"mask_remaining_units": 0,
-		"coverage": 0.0,
-		"revealed": false,
-	}
-
-
-func _crossword_cell_rect_values(column: int, row: int) -> Array:
-	var grid := _normalized_rect_array(CROSSWORD_GRID_RECT_VALUES)
-	var cell_w := float(grid[2]) / float(CROSSWORD_COLUMNS)
-	var cell_h := float(grid[3]) / float(CROSSWORD_ROWS)
-	return [float(grid[0]) + float(column) * cell_w, float(grid[1]) + float(row) * cell_h, cell_w, cell_h]
-
-
-func _crossword_bank_rect_values(index: int) -> Array:
-	var bank := _normalized_rect_array(CROSSWORD_BANK_RECT_VALUES)
-	var columns := 6
-	var rows := 3
-	var gap_x := 0.006
-	var gap_y := 0.012
-	var cell_w := (float(bank[2]) - gap_x * float(columns - 1)) / float(columns)
-	var cell_h := (float(bank[3]) - gap_y * float(rows - 1)) / float(rows)
-	var column := index % columns
-	var row := index / columns
-	return [float(bank[0]) + float(column) * (cell_w + gap_x), float(bank[1]) + float(row) * (cell_h + gap_y), cell_w, cell_h]
-
+	return RegionModelScript.build(ticket)
 
 func _ensure_ticket_regions(ticket: Dictionary) -> void:
-	if ticket.is_empty():
-		return
-	var scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
-	var columns := maxi(24, int(scratch.get("mask_columns", DEFAULT_MASK_COLUMNS)))
-	var rows := maxi(18, int(scratch.get("mask_rows", DEFAULT_MASK_ROWS)))
-	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
-	var regions := _dictionary_array(ticket.get("scratch_regions", []))
-	var metadata_stale := int(ticket.get("region_layout_version", 0)) != REGION_LAYOUT_VERSION or (not regions.is_empty() and int((regions[0] as Dictionary).get("layout_version", 0)) != REGION_LAYOUT_VERSION)
-	var needs_rebuild := regions.is_empty() or int((regions[0] as Dictionary).get("sample_total", 0)) <= 0 or mask.size() != columns * rows or metadata_stale
-	if not needs_rebuild:
-		return
-	regions = _rebuild_ticket_regions_preserving_progress(ticket, regions, columns, rows)
-	mask = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
-	ticket["scratch_regions"] = regions
-	ticket["latex_mask"] = mask
-	ticket["sections"] = _sections_from_regions(regions)
-	ticket["region_layout_version"] = REGION_LAYOUT_VERSION
-	ticket["result_ready"] = _ticket_complete(ticket)
-
-
-func _rebuild_ticket_regions_preserving_progress(ticket: Dictionary, old_regions: Array, columns: int, rows: int) -> Array:
-	var rebuilt := _ticket_art_regions(ticket)
-	var new_mask: Array = []
-	new_mask.resize(columns * rows)
-	new_mask.fill(0)
-	for region_index in range(rebuilt.size()):
-		var region: Dictionary = rebuilt[region_index]
-		var progress := _prior_region_progress(region, old_regions, bool(ticket.get("result_ready", false)))
-		var alpha := clampi(int(round(255.0 * (1.0 - progress))), 0, 255)
-		var sample_total := _rasterize_region_mask(new_mask, rebuilt, region_index, columns, rows, alpha)
-		region["sample_total"] = sample_total
-		region["mask_remaining_units"] = sample_total * alpha
-		region["coverage"] = 1.0 if sample_total <= 0 else 1.0 - float(region.get("mask_remaining_units", 0)) / float(sample_total * 255)
-		region["revealed"] = progress >= 0.995 or sample_total <= 0
-		region["layout_version"] = REGION_LAYOUT_VERSION
-		rebuilt[region_index] = region
-	ticket["latex_mask"] = new_mask
-	ticket["mask_revision"] = int(ticket.get("mask_revision", 0)) + 1
-	return rebuilt
-
-
-func _prior_region_progress(region: Dictionary, old_regions: Array, fallback_revealed: bool) -> float:
-	var best_progress := 1.0 if fallback_revealed else 0.0
-	var found := false
-	for old_value in old_regions:
-		var old_region: Dictionary = old_value
-		var same_identity := str(old_region.get("id", "")) == str(region.get("id", ""))
-		var same_spot := int(old_region.get("spot_index", -1)) == int(region.get("spot_index", -2)) and str(old_region.get("role", "")) == str(region.get("role", ""))
-		if not same_identity and not same_spot:
-			continue
-		found = true
-		var sample_total := maxi(1, int(old_region.get("sample_total", 0)))
-		var remaining_units := clampi(int(old_region.get("mask_remaining_units", sample_total * 255)), 0, sample_total * 255)
-		var progress := 1.0 if bool(old_region.get("revealed", false)) else clampf(float(old_region.get("coverage", 1.0 - float(remaining_units) / float(sample_total * 255))), 0.0, 1.0)
-		best_progress = maxf(best_progress, progress)
-	return best_progress if found else (1.0 if fallback_revealed else 0.0)
+	MaskScript.ensure(ticket)
 
 
 func _sections_from_regions(regions: Array) -> Array:
-	var sections_by_id := {}
-	var order: Array = []
-	for region_value in regions:
-		var region: Dictionary = region_value
-		var section_id := str(region.get("section_id", "play"))
-		if not sections_by_id.has(section_id):
-			sections_by_id[section_id] = {"id": section_id, "label": section_id.to_upper().replace("_", " "), "sample_total": 0, "mask_remaining_units": 0, "coverage": 0.0, "revealed": true}
-			order.append(section_id)
-		var section: Dictionary = sections_by_id[section_id]
-		section["sample_total"] = int(section.get("sample_total", 0)) + int(region.get("sample_total", 0))
-		section["mask_remaining_units"] = int(section.get("mask_remaining_units", 0)) + int(region.get("mask_remaining_units", 0))
-		section["revealed"] = bool(section.get("revealed", true)) and bool(region.get("revealed", false))
-		sections_by_id[section_id] = section
-	var result: Array = []
-	for section_id in order:
-		var section: Dictionary = sections_by_id[section_id]
-		var total_units := maxi(1, int(section.get("sample_total", 0)) * 255)
-		section["coverage"] = 1.0 - float(section.get("mask_remaining_units", total_units)) / float(total_units)
-		result.append(section)
-	return result
-
-
-func _rasterize_region_mask(mask: Array, regions: Array, region_index: int, columns: int, rows: int, alpha: int) -> int:
-	var region: Dictionary = regions[region_index]
-	var values: Array = region.get("rect", [])
-	var left := float(values[0])
-	var top := float(values[1])
-	var right := minf(1.0, left + float(values[2]))
-	var bottom := minf(1.0, top + float(values[3]))
-	var column_start := clampi(int(ceil(left * float(columns) - 0.5)), 0, columns)
-	var column_end := clampi(int(ceil(right * float(columns) - 0.5)), column_start, columns)
-	var row_start := clampi(int(ceil(top * float(rows) - 0.5)), 0, rows)
-	var row_end := clampi(int(ceil(bottom * float(rows) - 0.5)), row_start, rows)
-	var changed := 0
-	for row in range(row_start, row_end):
-		var row_offset := row * columns
-		for column in range(column_start, column_end):
-			var sample_index := row_offset + column
-			if int(mask[sample_index]) == alpha:
-				continue
-			mask[sample_index] = alpha
-			changed += 1
-	return changed
-
+	return MaskScript.sections_from_regions(regions)
 
 func _build_mechanic_content(mechanic_type: String, mechanic: Dictionary, prize: Dictionary, rng: RngStream) -> Dictionary:
 	match mechanic_type:
 		"match_two_of_three":
 			return _build_two_fer_content(mechanic, prize, rng)
 		"key_number_match":
-			return _build_lucky_sevens_content(prize)
+			return _build_lucky_sevens_content(prize, rng)
 		"tic_tac_toe":
-			return _build_tic_tac_gold_content(prize)
+			return _build_tic_tac_gold_content(prize, rng)
 		"crossword":
-			return _build_crossword_content(mechanic, prize)
+			return _build_crossword_content(mechanic, prize, rng)
 		"bingo":
-			return _build_bingo_content(prize)
+			return _build_bingo_content(prize, rng)
 		"beat_dealer_poker":
-			return _build_holdem_content(mechanic, prize)
+			return _build_holdem_content(mechanic, prize, rng)
 		"multi_game_vault":
-			return _build_vault_content(prize)
+			return _build_vault_content(prize, rng)
 	return {"spots": []}
 
 
 func _build_two_fer_content(mechanic: Dictionary, prize: Dictionary, rng: RngStream) -> Dictionary:
 	var match_symbol := str(prize.get("match_symbol", ""))
+	var symbol_pool: Array = ["CLOVER", "BELL", "STAR", "2FER"]
 	var symbols: Array = ["CLOVER", "BELL", "STAR"]
 	if not match_symbol.is_empty():
-		var other := "BELL" if match_symbol != "BELL" else "STAR"
+		symbol_pool.erase(match_symbol)
+		var other := str(symbol_pool[rng.randi_range(0, symbol_pool.size() - 1)])
 		symbols = [match_symbol, match_symbol, other]
+	else:
+		_shuffle_array(symbol_pool, rng)
+		symbols = [symbol_pool[0], symbol_pool[1], symbol_pool[2]]
 	_shuffle_array(symbols, rng)
 	var spots: Array = []
 	for index in range(symbols.size()):
@@ -1132,18 +903,28 @@ func _build_two_fer_content(mechanic: Dictionary, prize: Dictionary, rng: RngStr
 	return {"spots": spots, "symbols": symbols, "legend": _copy_dict(mechanic.get("legend", {}))}
 
 
-func _build_lucky_sevens_content(prize: Dictionary) -> Dictionary:
+func _build_lucky_sevens_content(prize: Dictionary, rng: RngStream) -> Dictionary:
 	var winning_seven := bool(prize.get("winning_seven", false))
 	var bonus := bool(prize.get("bonus", false))
 	var bonus_prize := 50 if bonus else 0
-	var winning_numbers: Array = [7, 19] if winning_seven else [12, 23]
-	var your_numbers: Array = [3, 9, 16, 28, 31, 40]
+	var number_pool: Array = []
+	for number in range(1, 41):
+		if number != 7:
+			number_pool.append(number)
+	_shuffle_array(number_pool, rng)
+	var winning_numbers: Array = [7, number_pool.pop_back()] if winning_seven else [number_pool.pop_back(), number_pool.pop_back()]
+	var your_numbers: Array = []
+	while your_numbers.size() < 6:
+		var candidate := int(number_pool.pop_back())
+		if not winning_numbers.has(candidate):
+			your_numbers.append(candidate)
 	var your_seven_count := clampi(int(prize.get("your_seven_count", 0)), 0, 6)
 	var match_count := clampi(int(prize.get("match_count", 0)), 0, 6 - your_seven_count)
 	for index in range(your_seven_count):
 		your_numbers[index] = 7
 	for index in range(match_count):
 		your_numbers[your_seven_count + index] = int(winning_numbers[index % winning_numbers.size()])
+	_shuffle_array(your_numbers, rng)
 	var winner_count := 6 if winning_seven else your_seven_count + match_count
 	var prizes := _split_amount(maxi(0, int(prize.get("payout", 0)) - bonus_prize), winner_count)
 	var your_spots: Array = []
@@ -1160,14 +941,14 @@ func _build_lucky_sevens_content(prize: Dictionary) -> Dictionary:
 		var spot := {"index": spots.size(), "section_id": "your_numbers", "number": number, "prize": amount, "winner": winner, "auto_seven": number == 7, "role": "your_number"}
 		your_spots.append(spot)
 		spots.append(spot)
-	var bonus_spot := {"index": spots.size(), "section_id": "bonus", "number": 7 if bonus else 2, "prize": bonus_prize, "winner": bonus, "role": "bonus_number"}
+	var bonus_spot := {"index": spots.size(), "section_id": "bonus", "number": 7 if bonus else int(number_pool.pop_back()), "prize": bonus_prize, "winner": bonus, "role": "bonus_number"}
 	spots.append(bonus_spot)
 	return {"spots": spots, "winning_numbers": winning_numbers, "your_numbers": your_spots, "winning_seven": winning_seven, "bonus": bonus, "bonus_prize": bonus_prize, "bonus_number": int(bonus_spot.get("number", 0))}
 
 
-func _build_tic_tac_gold_content(prize: Dictionary) -> Dictionary:
+func _build_tic_tac_gold_content(prize: Dictionary, rng: RngStream) -> Dictionary:
 	var requested_lines := clampi(int(prize.get("line_count", 0)), 0, 8)
-	var marks := _tic_marks_for_line_count(requested_lines)
+	var marks := _tic_marks_for_line_count_with_rng(requested_lines, rng)
 	var completed := _tic_completed_lines(marks)
 	var bonus := bool(prize.get("bonus", false))
 	var payout := maxi(0, int(prize.get("payout", 0)))
@@ -1180,29 +961,36 @@ func _build_tic_tac_gold_content(prize: Dictionary) -> Dictionary:
 		line_prizes[int(completed[index])] = int(line_amounts[index])
 	var spots: Array = []
 	for index in range(9):
-		spots.append({"index": index, "section_id": "board", "mark": "WIN" if bool(marks[index]) else "MISS", "role": "board_mark"})
-	spots.append({"index": 9, "section_id": "bonus", "mark": "GOLD" if bonus else "DUST", "prize": bonus_prize, "role": "bonus"})
-	return {"spots": spots, "marks": marks, "completed_lines": completed, "line_prizes": line_prizes, "bonus": bonus, "bonus_prize": bonus_prize}
+		spots.append({"index": index, "section_id": "board", "mark": "WIN" if bool(marks[index]) else "MISS", "role": "board_mark", "variant": rng.randi_range(0, 7)})
+	spots.append({"index": 9, "section_id": "bonus", "mark": "GOLD" if bonus else "DUST", "prize": bonus_prize, "role": "bonus", "variant": rng.randi_range(0, 7)})
+	return {"spots": spots, "marks": marks, "completed_lines": completed, "line_prizes": line_prizes, "bonus": bonus, "bonus_prize": bonus_prize, "print_variant": rng.randi_range(1000, 9999)}
 
 
-func _build_crossword_content(mechanic: Dictionary, prize: Dictionary) -> Dictionary:
+func _build_crossword_content(mechanic: Dictionary, prize: Dictionary, rng: RngStream) -> Dictionary:
 	var words := _crossword_layout_words(_string_array(mechanic.get("words", [])))
+	var completion_order := words.duplicate(false)
+	_shuffle_array(completion_order, rng)
 	var completed_count := clampi(int(prize.get("word_count", 0)), 0, words.size())
 	var completed_words: Array = []
 	for index in range(completed_count):
-		completed_words.append(words[index])
+		completed_words.append(completion_order[index])
 	var bank: Array = []
 	for word_value in completed_words:
 		for character_index in range(str(word_value).length()):
 			var letter := str(word_value).substr(character_index, 1)
 			if not bank.has(letter):
 				bank.append(letter)
+	var fillers: Array = []
 	for filler_index in range("ETAOINSHRDLUCMFWYP".length()):
-		var filler := "ETAOINSHRDLUCMFWYP".substr(filler_index, 1)
+		fillers.append("ETAOINSHRDLUCMFWYP".substr(filler_index, 1))
+	_shuffle_array(fillers, rng)
+	for filler_value in fillers:
+		var filler := str(filler_value)
 		if not bank.has(filler):
 			bank.append(filler)
 		if bank.size() >= 18:
 			break
+	_shuffle_array(bank, rng)
 	var spots: Array = []
 	for index in range(bank.size()):
 		spots.append({"index": spots.size(), "section_id": "letter_bank", "letter": str(bank[index]), "bank_index": index, "role": "bank_letter"})
@@ -1261,8 +1049,8 @@ func _crossword_layout_entries(words: Array) -> Array:
 	return result
 
 
-func _build_bingo_content(prize: Dictionary) -> Dictionary:
-	var caller_numbers := _bingo_called_numbers()
+func _build_bingo_content(prize: Dictionary, rng: RngStream) -> Dictionary:
+	var caller_numbers := _bingo_called_numbers(rng)
 	var total_lines := maxi(0, int(prize.get("line_count", 0)))
 	var blackout_cards := clampi(int(prize.get("blackout_cards", 0)), 0, 4)
 	var cards: Array = []
@@ -1302,8 +1090,20 @@ func _build_bingo_content(prize: Dictionary) -> Dictionary:
 	return {"spots": spots, "caller_numbers": caller_numbers, "cards": cards, "line_count": total_lines, "blackout_cards": blackout_cards}
 
 
-func _bingo_called_numbers() -> Array:
-	return [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 35, 39, 43, 46, 49, 52, 55, 58, 61, 64, 67, 70, 73]
+func _bingo_called_numbers(rng: RngStream = null) -> Array:
+	if rng == null:
+		return [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 35, 39, 43, 46, 49, 52, 55, 58, 61, 64, 67, 70, 73]
+	var result: Array = []
+	var counts := [5, 5, 4, 5, 5]
+	for column in range(5):
+		var pool: Array = []
+		for number in range(column * 15 + 1, column * 15 + 16):
+			pool.append(number)
+		_shuffle_array(pool, rng)
+		for index in range(int(counts[column])):
+			result.append(pool[index])
+	_shuffle_array(result, rng)
+	return result
 
 
 func _bingo_card_numbers(card_index: int, daubed: Array, caller_numbers: Array) -> Array:
@@ -1356,7 +1156,7 @@ func _bingo_completed_line_count(daubed: Array) -> int:
 	return lines
 
 
-func _build_holdem_content(mechanic: Dictionary, prize: Dictionary) -> Dictionary:
+func _build_holdem_content(mechanic: Dictionary, prize: Dictionary, rng: RngStream) -> Dictionary:
 	var your_rank := str(prize.get("your_rank", "HIGH CARD"))
 	var dealer_rank := str(prize.get("dealer_rank", "PAIR"))
 	var rank_order := _string_array(mechanic.get("rank_order", []))
@@ -1365,8 +1165,10 @@ func _build_holdem_content(mechanic: Dictionary, prize: Dictionary) -> Dictionar
 	var final_rank_index := rank_order.find(your_rank)
 	if wild and final_rank_index > 0:
 		base_your_rank = str(rank_order[final_rank_index - 1])
-	var your_hand := _poker_hand_for_rank(your_rank, bool(prize.get("pocket_aces", false)))
-	var dealer_hand := _poker_hand_for_rank(dealer_rank, false)
+	var your_hand := _poker_hand_for_rank(your_rank, bool(prize.get("pocket_aces", false)), rng)
+	var dealer_hand := _poker_hand_for_rank(dealer_rank, false, rng)
+	_shuffle_array(your_hand, rng)
+	_shuffle_array(dealer_hand, rng)
 	var spots: Array = []
 	for card_value in your_hand:
 		spots.append({"index": spots.size(), "section_id": "your_hand", "card": str(card_value), "role": "your_card"})
@@ -1376,7 +1178,7 @@ func _build_holdem_content(mechanic: Dictionary, prize: Dictionary) -> Dictionar
 	return {"spots": spots, "your_hand": your_hand, "dealer_hand": dealer_hand, "base_your_rank": base_your_rank, "your_rank": your_rank, "dealer_rank": dealer_rank, "wild": wild, "pocket_aces": bool(prize.get("pocket_aces", false)), "printed_prize": maxi(0, int(prize.get("payout", 0)))}
 
 
-func _build_vault_content(prize: Dictionary) -> Dictionary:
+func _build_vault_content(prize: Dictionary, rng: RngStream) -> Dictionary:
 	var payout := maxi(0, int(prize.get("payout", 0)))
 	var multiplier := clampi(int(prize.get("multiplier", 2)), 2, 20)
 	var hit_count := clampi(int(prize.get("ladder_hits", 0)), 0, 5)
@@ -1387,13 +1189,19 @@ func _build_vault_content(prize: Dictionary) -> Dictionary:
 	var vault_payout := payout - ladder_total
 	var ladder_base_total := ladder_total / multiplier
 	var ladder_remainder := ladder_total - ladder_base_total * multiplier
-	var ladder_base_prizes := _split_amount(ladder_base_total, winning_rungs)
+	var ladder_base_prizes := _random_split_amount(ladder_base_total, winning_rungs, rng)
+	var rung_order := [0, 1, 2, 3, 4]
+	_shuffle_array(rung_order, rng)
+	var winning_indices: Array = rung_order.slice(0, winning_rungs)
 	var ladder: Array = []
 	var spots: Array = [{"index": 0, "section_id": "multiplier", "multiplier": multiplier, "role": "multiplier"}]
+	var payout_cursor := 0
 	for rung in range(5):
-		var match_win := rung < winning_rungs
-		var base_prize := int(ladder_base_prizes[rung]) if rung < ladder_base_prizes.size() else 0
-		var multiplied_prize := base_prize * multiplier + (ladder_remainder if rung == 0 and match_win else 0)
+		var match_win := winning_indices.has(rung)
+		var base_prize := int(ladder_base_prizes[payout_cursor]) if match_win and payout_cursor < ladder_base_prizes.size() else 0
+		var multiplied_prize := base_prize * multiplier + (ladder_remainder if payout_cursor == 0 and match_win else 0)
+		if match_win:
+			payout_cursor += 1
 		var entry := {"rung": rung + 1, "match": match_win, "base_prize": base_prize, "payout": multiplied_prize}
 		ladder.append(entry)
 		spots.append({"index": spots.size(), "section_id": "cash_ladder", "rung": rung + 1, "match": match_win, "base_prize": base_prize, "payout": multiplied_prize, "role": "ladder"})
@@ -1507,19 +1315,98 @@ func _tic_marks_for_line_count(line_count: int) -> Array:
 	return full
 
 
-func _poker_hand_for_rank(rank_name: String, pocket_aces: bool) -> Array:
+func _tic_marks_for_line_count_with_rng(line_count: int, rng: RngStream) -> Array:
+	var candidates: Array = []
+	for bits in range(512):
+		var marks: Array = []
+		for index in range(9):
+			marks.append((bits & (1 << index)) != 0)
+		if _tic_completed_lines(marks).size() == line_count:
+			candidates.append(marks)
+	if candidates.is_empty():
+		return _tic_marks_for_line_count(line_count)
+	return candidates[rng.randi_range(0, candidates.size() - 1)]
+
+
+func _poker_hand_for_rank(rank_name: String, pocket_aces: bool, rng: RngStream = null) -> Array:
+	var suit_offset := rng.randi_range(0, 3) if rng != null else 0
+	var rank_offset := rng.randi_range(0, 7) if rng != null else 0
 	if pocket_aces:
-		return ["AS", "AH", "7C", "5D", "2S"]
+		return [_card_code(14, suit_offset), _card_code(14, suit_offset + 1), _card_code(9 + rank_offset % 4, suit_offset + 2), _card_code(5 + rank_offset % 3, suit_offset + 3), _card_code(2 + rank_offset % 2, suit_offset)]
 	match rank_name:
-		"PAIR": return ["KS", "KH", "8D", "5C", "2H"]
-		"TWO PAIR": return ["QS", "QH", "8D", "8C", "2H"]
-		"STRAIGHT": return ["9S", "8H", "7D", "6C", "5H"]
-		"FLUSH": return ["KS", "JS", "8S", "5S", "2S"]
-		"FULL HOUSE": return ["JS", "JH", "JD", "5C", "5H"]
-		"FOUR KIND": return ["9S", "9H", "9D", "9C", "2H"]
-		"STRAIGHT FLUSH": return ["9S", "8S", "7S", "6S", "5S"]
-		"ROYAL FLUSH": return ["AS", "KS", "QS", "JS", "10S"]
-	return ["AS", "JD", "8C", "5H", "2S"]
+		"PAIR":
+			var pair_rank := 10 + rank_offset % 4
+			return [_card_code(pair_rank, suit_offset), _card_code(pair_rank, suit_offset + 1), _card_code(8, suit_offset + 2), _card_code(5, suit_offset + 3), _card_code(2, suit_offset)]
+		"TWO PAIR":
+			var high_pair := 11 + rank_offset % 3
+			var low_pair := 6 + rank_offset % 3
+			return [_card_code(high_pair, suit_offset), _card_code(high_pair, suit_offset + 1), _card_code(low_pair, suit_offset + 2), _card_code(low_pair, suit_offset + 3), _card_code(2, suit_offset)]
+		"STRAIGHT":
+			var straight_high := 8 + rank_offset % 5
+			var straight_hand: Array = []
+			for index in range(5):
+				straight_hand.append(_card_code(straight_high - index, suit_offset + index))
+			return straight_hand
+		"FLUSH":
+			var flush_hand: Array = []
+			for rank in [13, 11, 8, 5 + rank_offset % 2, 2]:
+				flush_hand.append(_card_code(rank, suit_offset))
+			return flush_hand
+		"FULL HOUSE":
+			var triple_rank := 10 + rank_offset % 4
+			var pair_rank := 4 + rank_offset % 4
+			return [_card_code(triple_rank, suit_offset), _card_code(triple_rank, suit_offset + 1), _card_code(triple_rank, suit_offset + 2), _card_code(pair_rank, suit_offset), _card_code(pair_rank, suit_offset + 1)]
+		"FOUR KIND":
+			var quad_rank := 7 + rank_offset % 7
+			var quad_hand: Array = []
+			for suit in range(4):
+				quad_hand.append(_card_code(quad_rank, suit))
+			quad_hand.append(_card_code(2 + rank_offset % 3, suit_offset))
+			return quad_hand
+		"STRAIGHT FLUSH":
+			var flush_high := 8 + rank_offset % 5
+			var straight_flush_hand: Array = []
+			for index in range(5):
+				straight_flush_hand.append(_card_code(flush_high - index, suit_offset))
+			return straight_flush_hand
+		"ROYAL FLUSH":
+			var royal_hand: Array = []
+			for rank in [14, 13, 12, 11, 10]:
+				royal_hand.append(_card_code(rank, suit_offset))
+			return royal_hand
+	return [_card_code(14, suit_offset), _card_code(11, suit_offset + 3), _card_code(8, suit_offset + 2), _card_code(5, suit_offset + 1), _card_code(2 + rank_offset % 2, suit_offset)]
+
+
+func _card_code(rank: int, suit: int) -> String:
+	var rank_label := "A" if rank == 14 else "K" if rank == 13 else "Q" if rank == 12 else "J" if rank == 11 else str(rank)
+	return "%s%s" % [rank_label, ["S", "H", "C", "D"][posmod(suit, 4)]]
+
+
+func _random_split_amount(total: int, count: int, rng: RngStream) -> Array:
+	if count <= 0:
+		return []
+	if rng == null or count == 1:
+		return _split_amount(total, count)
+	var weights: Array = []
+	var weight_total := 0
+	for _index in range(count):
+		var weight := rng.randi_range(2, 11)
+		weights.append(weight)
+		weight_total += weight
+	var result: Array = []
+	var assigned := 0
+	for index in range(count):
+		var amount := maxi(0, int(floor(float(total) * float(weights[index]) / float(weight_total))))
+		result.append(amount)
+		assigned += amount
+	var remainder_index := rng.randi_range(0, count - 1)
+	result[remainder_index] = int(result[remainder_index]) + maxi(0, total - assigned)
+	var result_total := 0
+	for amount in result:
+		result_total += int(amount)
+	if result_total != total:
+		result[0] = int(result[0]) + (total - result_total)
+	return result
 
 
 func _weighted_prize(ticket_type: Dictionary, rng: RngStream, luck_modifier: int) -> Dictionary:
@@ -1552,162 +1439,20 @@ func _scratch_segment(machine: Dictionary, from: Vector2, to: Vector2) -> Dictio
 	if typeof(ticket_value) != TYPE_DICTIONARY or (ticket_value as Dictionary).is_empty():
 		return {"erased_samples": 0, "message": "Buy a ticket first."}
 	var ticket: Dictionary = ticket_value
-	var scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
-	var brush_radius := maxf(8.0, float(scratch.get("brush_radius", DEFAULT_BRUSH_RADIUS)))
-	var brush_radius_squared := brush_radius * brush_radius
-	var removal := clampf(float(scratch.get("pass_removal", DEFAULT_PASS_REMOVAL)), 0.10, 0.90)
-	var threshold := clampf(float(scratch.get("sweep_threshold", DEFAULT_SWEEP_THRESHOLD)), 0.50, 0.98)
-	var mask_columns := maxi(24, int(scratch.get("mask_columns", DEFAULT_MASK_COLUMNS)))
-	var mask_rows := maxi(18, int(scratch.get("mask_rows", DEFAULT_MASK_ROWS)))
-	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
-	_ensure_ticket_regions(ticket)
-	var regions := _dictionary_array(ticket.get("scratch_regions", []))
-	if mask.size() != mask_columns * mask_rows or regions.is_empty():
-		return {"erased_samples": 0, "message": "This ticket's coating is damaged."}
-	var scratch_rect := _ticket_scratch_rect(ticket)
-	var segment_bounds := Rect2(Vector2(minf(from.x, to.x), minf(from.y, to.y)), Vector2(absf(to.x - from.x), absf(to.y - from.y))).grow(brush_radius)
-	if not scratch_rect.intersects(segment_bounds):
-		return {"erased_samples": 0, "message": "Drag across the printed latex."}
-	var erased_samples := 0
-	var erased_units := 0
-	var interpolated_dabs := maxi(1, int(ceil(from.distance_to(to) / maxf(2.0, brush_radius * 0.35))))
-	for sample_index in range(mask.size()):
-		var old_alpha := int(mask[sample_index])
-		if old_alpha <= 0:
-			continue
-		var normalized := _mask_sample_normalized(sample_index, mask_columns, mask_rows)
-		var sample_point := scratch_rect.position + normalized * scratch_rect.size
-		if not segment_bounds.has_point(sample_point) or _distance_squared_to_segment(sample_point, from, to) > brush_radius_squared:
-			continue
-		var region_index := _region_index_at_normalized(regions, normalized)
-		if region_index < 0 or bool((regions[region_index] as Dictionary).get("revealed", false)):
-			continue
-		var new_alpha := 0 if old_alpha <= 2 else clampi(int(round(float(old_alpha) * (1.0 - removal))), 0, old_alpha - 1)
-		var removed_units := old_alpha - new_alpha
-		mask[sample_index] = new_alpha
-		erased_samples += 1
-		erased_units += removed_units
-		var region: Dictionary = regions[region_index]
-		region["mask_remaining_units"] = maxi(0, int(region.get("mask_remaining_units", 0)) - removed_units)
-		regions[region_index] = region
-	var swept_regions: Array = []
-	for region_index in range(regions.size()):
-		var region: Dictionary = regions[region_index]
-		if bool(region.get("revealed", false)):
-			continue
-		var total_units := maxi(1, int(region.get("sample_total", 0)) * 255)
-		var coverage := 1.0 - float(region.get("mask_remaining_units", total_units)) / float(total_units)
-		region["coverage"] = clampf(coverage, 0.0, 1.0)
-		if coverage >= threshold:
-			_clear_mask_region(mask, regions, region_index, mask_columns, mask_rows)
-			region = regions[region_index]
-			region["revealed"] = true
-			region["coverage"] = 1.0
-			region["mask_remaining_units"] = 0
-			regions[region_index] = region
-			swept_regions.append(region)
-			machine["last_sweep_section"] = str(region.get("id", "region_%d" % region_index))
-			machine["last_sweep_id"] = "scratch-pop:%s:%s:%d" % [str(ticket.get("id", "ticket")), str(region.get("id", region_index)), int(ticket.get("mask_revision", 0)) + 1]
-		else:
-			regions[region_index] = region
-	ticket["latex_mask"] = mask
-	ticket["scratch_regions"] = regions
-	ticket["sections"] = _sections_from_regions(regions)
-	ticket["mask_revision"] = int(ticket.get("mask_revision", 0)) + 1
-	var complete := _ticket_complete(ticket)
-	ticket["result_ready"] = complete
-	var message := "Soft flakes lift; another pass will open the patch."
-	if not swept_regions.is_empty():
-		message = "%s pops clean." % str((swept_regions[0] as Dictionary).get("label", "That box"))
-	return {"erased_samples": erased_samples, "erased_units": erased_units, "interpolated_dabs": interpolated_dabs, "swept_sections": swept_regions, "swept_regions": swept_regions, "penalty": 0, "ticket_complete": complete, "message": message}
+	var result := MaskScript.scratch(ticket, from, to, _ticket_scratch_rect(ticket))
+	var swept: Array = result.get("swept_regions", []) if typeof(result.get("swept_regions", [])) == TYPE_ARRAY else []
+	if not swept.is_empty():
+		var last_region: Dictionary = swept.back()
+		machine["last_sweep_section"] = str(last_region.get("id", "region"))
+		machine["last_sweep_id"] = "scratch-pop:%s:%s:%d" % [str(ticket.get("id", "ticket")), str(last_region.get("id", "region")), int(ticket.get("mask_revision", 0))]
+	return result
 
 
 func _reveal_all(machine: Dictionary) -> void:
-	var ticket := _copy_dict(machine.get("active_ticket", {}))
-	_ensure_ticket_regions(ticket)
-	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
-	for sample_index in range(mask.size()):
-		mask[sample_index] = 0
-	ticket["latex_mask"] = mask
-	var sections: Array = ticket.get("sections", []) if typeof(ticket.get("sections", [])) == TYPE_ARRAY else []
-	var regions := _dictionary_array(ticket.get("scratch_regions", []))
-	for region_index in range(regions.size()):
-		var region: Dictionary = regions[region_index]
-		region["revealed"] = true
-		region["coverage"] = 1.0
-		region["mask_remaining_units"] = 0
-		regions[region_index] = region
-	ticket["scratch_regions"] = regions
-	for section_index in range(sections.size()):
-		var section: Dictionary = sections[section_index]
-		section["revealed"] = true
-		section["coverage"] = 1.0
-		section["mask_remaining_units"] = 0
-		sections[section_index] = section
-		ticket["sections"] = sections
-	ticket["result_ready"] = true
-	machine["active_ticket"] = ticket
-
-
-func _draw_machine(surface, state: Dictionary) -> void:
-	var shadow := Rect2(MACHINE_RECT.position + Vector2(8, 7), MACHINE_RECT.size)
-	surface.draw_rect(shadow, Color(0.0, 0.0, 0.0, 0.42))
-	var cabinet := [MACHINE_RECT.position + Vector2(8, 0), MACHINE_RECT.position + Vector2(MACHINE_RECT.size.x - 9, 0), MACHINE_RECT.position + Vector2(MACHINE_RECT.size.x, 12), MACHINE_RECT.end - Vector2(0, 11), MACHINE_RECT.end - Vector2(12, 0), MACHINE_RECT.position + Vector2(10, MACHINE_RECT.size.y), MACHINE_RECT.position + Vector2(0, MACHINE_RECT.size.y - 13), MACHINE_RECT.position + Vector2(0, 14)]
-	surface.draw_polygon(cabinet, [Color("#9f1d2c")])
-	var marquee := Rect2(MACHINE_RECT.position + Vector2(8, 8), Vector2(MACHINE_RECT.size.x - 16, 58))
-	surface.draw_rect(marquee, Color("#ef3649"))
-	surface.draw_rect(marquee, Color("#ffcf49"), false, 3)
-	for ray in range(12):
-		var angle := float(ray) * TAU / 12.0
-		surface.draw_line(marquee.get_center(), marquee.get_center() + Vector2(cos(angle), sin(angle)) * 36.0, Color(1.0, 0.85, 0.25, 0.16), 3)
-	surface.surface_label_centered("GOLD ROAD", Rect2(marquee.position + Vector2(8, 8), Vector2(marquee.size.x - 16, 22)), 19, C_WHITE)
-	surface.surface_label_centered("NIGHT OWL JACKPOT • SCRATCH HERE", Rect2(marquee.position + Vector2(8, 34), Vector2(marquee.size.x - 16, 14)), 8, C_YELLOW)
-	var side_panel := Rect2(MACHINE_RECT.position + Vector2(9, 72), Vector2(48, 250))
-	surface.draw_rect(side_panel, Color("#0c8d88"))
-	surface.draw_rect(side_panel, Color("#72eee0"), false, 2)
-	for stripe in range(7):
-		surface.draw_polygon([side_panel.position + Vector2(0, stripe * 38), side_panel.position + Vector2(48, stripe * 38 + 15), side_panel.position + Vector2(48, stripe * 38 + 29), side_panel.position + Vector2(0, stripe * 38 + 14)], [Color(1.0, 0.85, 0.25, 0.10)])
-	for index in range(4):
-		surface.surface_label_centered(["GOLD", "ROAD", "LUCK", "CO." ][index], Rect2(side_panel.position + Vector2(3, 22 + index * 52), Vector2(42, 22)), 10, C_WHITE)
-	var glass := Rect2(MACHINE_RECT.position + Vector2(63, 72), Vector2(204, 250))
-	surface.draw_rect(glass, Color("#070b12"))
-	surface.draw_rect(glass, Color("#90a8b5"), false, 3)
-	surface.draw_polygon([glass.position + Vector2(7, 4), glass.position + Vector2(36, 4), glass.position + Vector2(112, glass.size.y - 4), glass.position + Vector2(82, glass.size.y - 4)], [Color(0.65, 0.90, 1.0, 0.055)])
-	var stock := _array_ref(state.get("scratch_stock", []))
-	var any_stocked := false
-	for slot_value in stock:
-		if typeof(slot_value) == TYPE_DICTIONARY and int((slot_value as Dictionary).get("remaining", 0)) > 0:
-			any_stocked = true
-			break
-	var row_count := maxi(1, stock.size())
-	var row_height := (glass.size.y - 14.0) / float(row_count)
-	for index in range(stock.size()):
-		var slot: Dictionary = stock[index]
-		var rect := Rect2(glass.position + Vector2(7, 7.0 + float(index) * row_height), Vector2(glass.size.x - 14, maxf(24.0, row_height - 5.0)))
-		_draw_vending_window(surface, slot, rect, index)
-	var payment := Rect2(MACHINE_RECT.position + Vector2(17, 329), Vector2(68, 31))
-	surface.draw_rect(payment, Color("#361019"))
-	surface.draw_rect(payment, Color("#ff6070"), false, 2)
-	surface.surface_label_centered("CASH", payment, 9, C_WHITE)
-	surface.draw_rect(Rect2(payment.position + Vector2(48, 8), Vector2(10, 15)), Color("#050608"))
-	var status := Rect2(MACHINE_RECT.position + Vector2(93, 329), Vector2(166, 31))
-	surface.draw_rect(status, Color("#15241f"))
-	surface.surface_label_centered("SELECT A LIT ROW" if any_stocked else "SOLD OUT - TRY LATER", status, 9, Color("#66f0ad") if any_stocked else C_PINK)
-	var chute := Rect2(MACHINE_RECT.position + Vector2(42, 367), Vector2(MACHINE_RECT.size.x - 84, 27))
-	surface.draw_rect(chute, Color("#24070d"))
-	surface.draw_rect(chute, Color("#ffb05f"), false, 2)
-	surface.draw_rect(chute.grow(-6), Color("#040507"))
-	surface.surface_label_centered("TAKE TICKET", chute, 8, C_SOFT)
-	for foot_x in [24.0, MACHINE_RECT.size.x - 38.0]:
-		surface.draw_rect(Rect2(MACHINE_RECT.position + Vector2(foot_x, 397), Vector2(14, 7)), Color("#32151a"))
-	var complete := bool(state.get("scratch_collection_complete", false))
-	var collection_label := str(state.get("scratch_collection_status", "%d/%d PRINTS FOUND" % [int(state.get("scratch_collection_count", 0)), int(state.get("scratch_collection_total", COLLECTION_TOTAL))]))
-	var collection_rect := Rect2(MACHINE_RECT.position + Vector2(91, 399), Vector2(150, 10))
-	if complete:
-		surface.draw_rect(collection_rect.grow(3), Color("#f7d753", 0.22))
-		surface.draw_rect(collection_rect.grow(3), Color("#fff2a6"), false, 1)
-	surface.surface_label_centered(collection_label, collection_rect, 6, C_WHITE if complete else C_YELLOW)
-
+	var ticket_value: Variant = machine.get("active_ticket", {})
+	if typeof(ticket_value) != TYPE_DICTIONARY or (ticket_value as Dictionary).is_empty():
+		return
+	MaskScript.reveal_all(ticket_value as Dictionary)
 
 func _draw_compact_tabs(surface, active_tab: String) -> void:
 	var origin := Vector2(306, 8) if active_tab == "machine" else Vector2(18, 8)
@@ -1722,56 +1467,7 @@ func _draw_compact_tab(surface, rect: Rect2, label: String, action: String, sele
 	surface.surface_add_hit(rect, action, 0)
 
 
-func _draw_vending_window(surface, slot: Dictionary, rect: Rect2, index: int) -> void:
-	var palette := _dict_ref(slot.get("palette", {}))
-	var paper := Color(str(palette.get("paper", "#fff2c7")))
-	var ink := Color(str(palette.get("ink", "#35152e")))
-	var accent := Color(str(palette.get("accent", "#ef3156")))
-	var sold_out := int(slot.get("remaining", 0)) <= 0
-	var compact := rect.size.y < 42.0
-	surface.draw_rect(rect, Color("#171c25"))
-	surface.draw_rect(rect, Color("#4f5f6b"), false, 1)
-	var mini_size := _dispenser_ticket_size(str(slot.get("size_id", "medium_square")))
-	mini_size *= 0.42 if compact else 0.68
-	var preview_column_width := 46.0 if compact else 58.0
-	var ticket := Rect2(rect.position + Vector2(8.0 + (preview_column_width - mini_size.x) * 0.5, (rect.size.y - mini_size.y) * 0.5), mini_size)
-	surface.draw_rect(Rect2(ticket.position + Vector2(3, 3), ticket.size), Color(0.0, 0.0, 0.0, 0.42))
-	surface.draw_rect(ticket, Color(paper.r * (0.42 if sold_out else 1.0), paper.g * (0.42 if sold_out else 1.0), paper.b * (0.42 if sold_out else 1.0)))
-	surface.draw_rect(Rect2(ticket.position, Vector2(ticket.size.x, minf(12.0 if compact else 18.0, ticket.size.y * 0.30))), Color(accent.r, accent.g, accent.b, 0.45 if sold_out else 1.0))
-	if not compact:
-		surface.surface_label_centered(str(slot.get("display_name", "Ticket")).to_upper().left(15), Rect2(ticket.position + Vector2(2, 2), Vector2(ticket.size.x - 4, minf(14.0, ticket.size.y * 0.28))), 6, C_DARK if not sold_out else C_SOFT)
-	for mark_index in range(6):
-		var mark_center := ticket.position + Vector2(ticket.size.x * (0.25 + float(mark_index % 3) * 0.25), ticket.size.y * (0.56 + float(mark_index / 3) * 0.25))
-		surface.draw_circle(mark_center, maxf(2.0, minf(ticket.size.x, ticket.size.y) * 0.07), Color(accent.r, accent.g, accent.b, 0.22 if sold_out else 0.72))
-	var label_x := 60.0 if compact else 72.0
-	surface.surface_label(str(slot.get("display_name", "Ticket")).to_upper().left(21 if compact else 20), rect.position + Vector2(label_x, 10 if compact else 16), 6 if compact else 7, C_SOFT)
-	surface.surface_label("SOLD OUT" if sold_out else "$%d • %d LEFT" % [int(slot.get("price", 1)), int(slot.get("remaining", 0))], rect.position + Vector2(label_x, 23 if compact else 35), 6 if compact else 8, C_PINK if sold_out else C_WHITE)
-	var button := Rect2(rect.end - Vector2(27, 26), Vector2(20, 20)) if compact else Rect2(rect.end - Vector2(31, 39), Vector2(23, 29))
-	surface.draw_rect(button, Color("#4a111b") if sold_out else Color("#14734e"))
-	surface.draw_rect(button, C_PINK if sold_out else Color("#65f2ac"), false, 2)
-	surface.surface_label_centered(str(index + 1), button, 8 if compact else 10, C_WHITE)
-	if not sold_out:
-		surface.surface_add_hit(rect, "scratch_buy", index)
-		surface.surface_add_hit(button, "scratch_buy", index)
-		var quantity_max := mini(3, int(slot.get("remaining", 0)))
-		for extra in range(2, quantity_max + 1):
-			var q_rect := Rect2(button.position + Vector2(-23.0, float(extra - 2) * 11.0), Vector2(20, 9)) if compact else Rect2(rect.end - Vector2(31 + float(extra - 1) * 26.0, 12), Vector2(23, 11))
-			surface.draw_rect(q_rect, Color("#233f2f"))
-			surface.draw_rect(q_rect, Color("#65f2ac"), false, 1)
-			surface.surface_label_centered("x%d" % extra, q_rect, 5 if compact else 6, C_WHITE)
-			surface.surface_add_hit(q_rect, "scratch_buy", index + (extra - 1) * 100)
-
-
-func _dispenser_ticket_size(size_id: String) -> Vector2:
-	match size_id:
-		"small_rectangle": return Vector2(88, 38)
-		"medium_square": return Vector2(58, 58)
-		"large_rectangle": return Vector2(88, 58)
-		"tall": return Vector2(43, 66)
-	return Vector2(58, 58)
-
-
-func _draw_ticket(surface, state: Dictionary) -> void:
+func _draw_ticket(surface, state: Dictionary, render_context: Dictionary = {}) -> void:
 	var ticket := _dict_ref(state.get("scratch_ticket", {}))
 	_configure_active_ticket_layout(ticket, bool(state.get("scratch_compact_mode", false)))
 	_draw_counter_mat(surface)
@@ -1779,53 +1475,32 @@ func _draw_ticket(surface, state: Dictionary) -> void:
 	if ticket.is_empty() or bool(surface.surface_animation_active(DISPENSE_CHANNEL)):
 		_draw_empty_ticket_outline(surface)
 		return
-	var face := _dict_ref(ticket.get("face", {}))
-	var palette := _dict_ref(face.get("palette", {}))
-	var paper := Color(str(palette.get("paper", "#fff2c7")))
-	var ink := Color(str(palette.get("ink", "#35152e")))
-	var accent := Color(str(palette.get("accent", "#ef3156")))
-	var latex := Color(str(palette.get("latex", "#b9bcc8")))
-	var trim := Color(str(palette.get("trim", "#ffd447")))
-	var art_texture := _production_ticket_texture(str(ticket.get("type_id", "")))
-	var uses_production_art := art_texture != null
-	var ticket_shape := [active_ticket_rect.position + Vector2(7, 0), active_ticket_rect.end - Vector2(7, active_ticket_rect.size.y), active_ticket_rect.end - Vector2(0, 7), active_ticket_rect.end - Vector2(7, 0), active_ticket_rect.position + Vector2(7, active_ticket_rect.size.y), active_ticket_rect.position + Vector2(0, active_ticket_rect.size.y - 7), active_ticket_rect.position + Vector2(0, 7)]
-	var shadow_shape: Array = []
-	for point_value in ticket_shape:
-		shadow_shape.append((point_value as Vector2) + Vector2(5, 5))
-	surface.draw_polygon(shadow_shape, [Color(0.0, 0.0, 0.0, 0.35)])
-	surface.draw_polygon(ticket_shape, [paper])
-	if uses_production_art:
-		surface.draw_texture_rect(art_texture, active_ticket_rect, false)
-	else:
-		surface.draw_rect(active_ticket_rect.grow(-4), trim, false, 3)
-		_draw_ticket_background(surface, ticket, paper, ink, accent, trim)
-		_draw_ticket_header(surface, ticket, paper, ink, accent, trim)
-	var fortune := str(state.get("scratch_fortune", ""))
-	if not fortune.is_empty():
-		surface.surface_label("TAROT: %s" % fortune.to_upper(), active_ticket_rect.position + Vector2(active_ticket_rect.size.x - 112, 104), 7, accent)
-	if int(state.get("scratch_penalty_shields", 0)) > 0:
-		surface.surface_label("PENNY ASSIST", active_ticket_rect.position + Vector2(20, 104), 7, accent)
-	var xray_peeks := _array_ref(state.get("scratch_xray_peeks", []))
-	if not uses_production_art:
-		_draw_layer_slot_wells(surface, ticket, ink, accent, trim)
-	_draw_mechanic_result(surface, ticket, ink, accent, trim)
-	_draw_ticket_latex_mask(surface, ticket, latex, ink, accent, trim)
-	_draw_xray_peeks(surface, xray_peeks, accent)
-	var scratch_rect := _ticket_scratch_rect(ticket)
+	var render_rect := active_ticket_rect
+	if bool(state.get("scratch_drag_active", false)):
+		var pointer: Vector2 = state.get("scratch_last_pointer", active_ticket_rect.get_center())
+		var discard_drag := clampf((active_ticket_rect.position.x - pointer.x) / 100.0, 0.0, 1.0)
+		if discard_drag > 0.0:
+			var dragged_size := active_ticket_rect.size.lerp(Vector2(120, 76), discard_drag)
+			var dragged_center := active_ticket_rect.get_center().lerp(pointer + Vector2(45, -50), discard_drag)
+			render_rect = Rect2(dragged_center - dragged_size * 0.5, dragged_size)
+	var layer_count := clampi(int(render_context.get("scratch_layer_count", state.get("scratch_debug_layer_count", 3))), 1, 3)
+	BackgroundRendererScript.draw(surface, ticket, render_rect)
+	if layer_count >= 2:
+		IconRendererScript.draw(surface, ticket, render_rect)
+	if layer_count >= 3:
+		FoilRendererScript.draw(surface, ticket, render_rect, state)
 	if bool(ticket.get("result_ready", false)):
-		_draw_result_overlay(surface, ticket, trim, accent, ink)
-		surface.surface_add_hit(active_ticket_rect.grow(-10), FILE_TICKET_ACTION, 0)
+		surface.surface_add_hit(active_ticket_rect.grow(-4), FILE_TICKET_ACTION, 0)
 	else:
-		surface.surface_add_drag_hit(scratch_rect.grow(5), SCRUB_ACTION, 0)
-	if not uses_production_art:
-		_draw_ticket_rules(surface, ticket, ink, accent, trim)
-	var crumbs := _array_ref(state.get("scratch_crumbs", []))
-	for crumb_value in crumbs:
-		var crumb: Dictionary = crumb_value
-		var point := Vector2(float(crumb.get("x", 0.0)), float(crumb.get("y", 0.0)))
-		surface.draw_circle(point, float(crumb.get("r", 2.0)), latex)
-	_draw_brush_feedback(surface, state, latex)
-	_draw_sweep_feedback(surface, state, trim)
+		surface.surface_add_drag_hit(active_ticket_rect.grow(2), SCRUB_ACTION, 0)
+
+
+func _draw_counter_mat(surface) -> void:
+	surface.draw_rect(PLAY_SURFACE_RECT, Color("#201a17"))
+	for stripe in range(11):
+		var y := PLAY_SURFACE_RECT.position.y + 10.0 + float(stripe) * 34.0
+		surface.draw_line(Vector2(PLAY_SURFACE_RECT.position.x + 6, y), Vector2(PLAY_SURFACE_RECT.end.x - 6, y), Color(0.50, 0.36, 0.25, 0.09), 1)
+	surface.draw_rect(PLAY_SURFACE_RECT, Color("#6f5641"), false, 2)
 
 
 func _draw_queue_stack(surface, state: Dictionary) -> void:
@@ -1833,1037 +1508,20 @@ func _draw_queue_stack(surface, state: Dictionary) -> void:
 	var count := int(state.get("scratch_queue_count", queue.size()))
 	if count <= 0:
 		return
-	var origin := PLAY_SURFACE_RECT.end - Vector2(126, 112)
+	var origin := PLAY_SURFACE_RECT.end - Vector2(104, 88)
 	for index in range(mini(4, count)):
 		var ticket: Dictionary = queue[index] if index < queue.size() and typeof(queue[index]) == TYPE_DICTIONARY else {}
-		var rect := Rect2(origin + Vector2(float(index) * 9.0, float(index) * 7.0), Vector2(86, 58))
-		_draw_mini_scratch_ticket(surface, ticket, rect, 0.82)
-	var badge := Rect2(origin + Vector2(8, 68), Vector2(96, 28))
+		_draw_mini_scratch_ticket(surface, ticket, Rect2(origin + Vector2(float(index) * 7.0, float(index) * 5.0), Vector2(74, 48)), 0.72)
+	var badge := Rect2(origin + Vector2(2, 55), Vector2(88, 21))
 	surface.draw_rect(badge, Color("#171313"))
 	surface.draw_rect(badge, Color("#ffcf49"), false, 2)
-	surface.surface_label_centered("%d WAITING" % count, badge, 8, C_WHITE)
-
-
-func _draw_result_overlay(surface, ticket: Dictionary, trim: Color, accent: Color, ink: Color) -> void:
-	var panel := Rect2(active_ticket_rect.position + Vector2(22, active_ticket_rect.size.y * 0.32), Vector2(active_ticket_rect.size.x - 44, active_ticket_rect.size.y * 0.30))
-	var win := int(ticket.get("payout", 0)) > 0
-	var scratch_regions := _dictionary_array(ticket.get("scratch_regions", []))
-	var spots := _dictionary_array(ticket.get("spots", []))
-	for region_value in scratch_regions:
-		var region: Dictionary = region_value
-		var spot_index := clampi(int(region.get("spot_index", 0)), 0, maxi(0, spots.size() - 1))
-		var spot: Dictionary = spots[spot_index] if spot_index < spots.size() else {}
-		if _spot_is_winner(ticket, _dict_ref(ticket.get("mechanic_result", {})), spot):
-			surface.draw_rect(_region_rect(region, active_scratch_rect).grow(3), trim, false, 2)
-	surface.draw_rect(panel, Color("#102116") if win else Color("#241417"))
-	surface.draw_rect(panel, trim if win else accent, false, 3)
-	surface.surface_label_centered(_ticket_result_summary(ticket), Rect2(panel.position + Vector2(8, 7), Vector2(panel.size.x - 16, 34)), 20 if panel.size.x > 260 else 15, trim if win else C_PINK)
-	surface.surface_label_centered(_ticket_win_reason(ticket).left(58), Rect2(panel.position + Vector2(10, 45), Vector2(panel.size.x - 20, 24)), 8, C_WHITE)
-	var file_rect := Rect2(panel.position + Vector2(panel.size.x * 0.25, panel.size.y - 30), Vector2(panel.size.x * 0.50, 22))
-	surface.draw_rect(file_rect, Color("#17644c"))
-	surface.draw_rect(file_rect, Color("#69efb3"), false, 2)
-	surface.surface_label_centered("CLICK TO FILE", file_rect, 8, C_WHITE)
-
-
-func _draw_mechanic_result(surface, ticket: Dictionary, ink: Color, accent: Color, trim: Color) -> void:
-	var result: Dictionary = ticket.get("mechanic_result", {}) if typeof(ticket.get("mechanic_result", {})) == TYPE_DICTIONARY else {}
-	var play_rect := active_scratch_rect
-	var regions := _dictionary_array(ticket.get("scratch_regions", []))
-	var spots := _dictionary_array(ticket.get("spots", []))
-	for region_value in regions:
-		var region: Dictionary = region_value
-		var spot_index := clampi(int(region.get("spot_index", 0)), 0, maxi(0, spots.size() - 1))
-		var spot: Dictionary = spots[spot_index] if spot_index < spots.size() else {}
-		_draw_spot_box(surface, ticket, result, spot, region, _region_rect(region, play_rect), ink, accent, trim)
-
-
-func _draw_layer_slot_wells(surface, ticket: Dictionary, ink: Color, accent: Color, trim: Color) -> void:
-	var type_id := str(ticket.get("type_id", ""))
-	var regions := _dictionary_array(ticket.get("scratch_regions", []))
-	if regions.is_empty():
-		return
-	if type_id == "crossword_corner":
-		_draw_crossword_slot_wells(surface, ticket, ink, accent, trim)
-		return
-	for region_value in regions:
-		var region: Dictionary = region_value
-		var rect := _region_rect(region, active_scratch_rect)
-		_draw_region_slot_well(surface, type_id, str(region.get("section_id", "")), rect, ink, accent, trim)
-
-
-func _draw_region_slot_well(surface, type_id: String, section_id: String, rect: Rect2, ink: Color, accent: Color, trim: Color) -> void:
-	var shadow := Rect2(rect.position + Vector2(2, 2), rect.size)
-	var panel := rect.grow(3)
-	match type_id:
-		"two_fer":
-			_draw_starburst(surface, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.66, Color(0, 0, 0, 0.30))
-			_draw_starburst(surface, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.62, Color(trim.r, trim.g, trim.b, 0.58))
-			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.47, Color("#fff0b3"))
-			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.47, accent, false, 3)
-		"lucky_7s":
-			if section_id == "winning_numbers":
-				_draw_starburst(surface, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.62, Color("#ff2e65"))
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.38, Color("#121323"))
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.38, trim, false, 3)
-			else:
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.49, Color(0, 0, 0, 0.42))
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.45, Color("#10371e"))
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.45, trim, false, 2)
-		"tic_tac_gold":
-			surface.draw_rect(shadow, Color(0, 0, 0, 0.32))
-			surface.draw_rect(panel, Color("#071024"))
-			surface.draw_rect(panel.grow(-4), Color("#fff3bf"))
-			surface.draw_rect(panel.grow(-4), trim, false, 2)
-		"bonus_bingo":
-			if section_id == "callers":
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.50, Color("#fff7d4"))
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.50, accent, false, 2)
-			else:
-				surface.draw_rect(rect, Color("#f7fff1"))
-				surface.draw_rect(rect, Color(ink.r, ink.g, ink.b, 0.32), false, 1)
-		"high_roller_holdem":
-			surface.draw_polygon([rect.position + Vector2(3, 0), rect.end - Vector2(0, rect.size.y - 3), rect.end - Vector2(3, 0), rect.position + Vector2(0, rect.size.y - 3)], [Color(0, 0, 0, 0.30)])
-			surface.draw_polygon([rect.position + Vector2(4, 1), rect.end - Vector2(1, rect.size.y - 4), rect.end - Vector2(4, 1), rect.position + Vector2(1, rect.size.y - 4)], [Color("#fff5d8")])
-			surface.draw_rect(rect.grow(-2), accent, false, 2)
-		"golden_vault":
-			surface.draw_rect(shadow, Color(0, 0, 0, 0.34))
-			surface.draw_rect(panel, Color("#100d12"))
-			surface.draw_rect(panel.grow(-3), Color(trim.r, trim.g, trim.b, 0.24), false, 2)
-		_:
-			surface.draw_rect(shadow, Color(0, 0, 0, 0.28))
-			surface.draw_rect(panel, Color("#fff0c9"))
-			surface.draw_rect(panel, trim, false, 2)
-
-
-func _draw_crossword_slot_wells(surface, ticket: Dictionary, ink: Color, accent: Color, trim: Color) -> void:
-	var occupied: Dictionary = {}
-	for spot_value in _dictionary_array(ticket.get("spots", [])):
-		var spot: Dictionary = spot_value
-		if str(spot.get("role", "")) == "crossword_cell":
-			occupied["%d,%d" % [int(spot.get("column", 0)), int(spot.get("row", 0))]] = spot
-	var grid_panel := _ticket_relative_rect(CROSSWORD_GRID_RECT_VALUES).grow(6)
-	surface.draw_rect(grid_panel, Color("#0d1a26"))
-	surface.draw_rect(grid_panel.grow(-3), Color("#c9f3ef"))
-	surface.draw_rect(grid_panel, trim, false, 3)
-	for row in range(CROSSWORD_ROWS):
-		for column in range(CROSSWORD_COLUMNS):
-			var cell_rect := _ticket_relative_rect(_crossword_cell_rect_values(column, row))
-			var key := "%d,%d" % [column, row]
-			if occupied.has(key):
-				surface.draw_rect(cell_rect.grow(-1), Color("#f9f2d8"))
-				surface.draw_rect(cell_rect.grow(-1), Color(ink.r, ink.g, ink.b, 0.62), false, 1)
-			else:
-				surface.draw_rect(cell_rect.grow(-1), Color("#17202a"))
-				surface.draw_rect(cell_rect.grow(-1), Color("#283848"), false, 1)
-	var bank_panel := _ticket_relative_rect(CROSSWORD_BANK_RECT_VALUES).grow(8)
-	surface.draw_rect(bank_panel, Color("#09263c"))
-	surface.draw_rect(bank_panel, accent, false, 3)
-	surface.surface_label_centered("YOUR LETTERS", Rect2(bank_panel.position + Vector2(4, 3), Vector2(bank_panel.size.x - 8, 14)), 8, trim)
-	for index in range(18):
-		var letter_rect := _ticket_relative_rect(_crossword_bank_rect_values(index))
-		surface.draw_rect(letter_rect, Color("#d8fbff"))
-		surface.draw_rect(letter_rect, Color(ink.r, ink.g, ink.b, 0.48), false, 1)
-	var result := _dict_ref(ticket.get("mechanic_result", {}))
-	var legend := _dict_ref(result.get("legend", {}))
-	var legend_rect := Rect2(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.06, active_ticket_rect.size.y * 0.87), Vector2(active_ticket_rect.size.x * 0.88, active_ticket_rect.size.y * 0.085))
-	surface.draw_rect(legend_rect, Color("#fff8dc"))
-	surface.draw_rect(legend_rect, Color("#111827"), false, 2)
-	surface.surface_label("PRIZE LEGEND", legend_rect.position + Vector2(7, 11), 7, Color("#b4142f"))
-	var cursor_x := legend_rect.position.x + 85
-	for word_count in [3, 4, 5, 6, 7]:
-		var amount := int(legend.get(str(word_count), 0))
-		if amount <= 0:
-			continue
-		surface.surface_label("%d WORDS $%d" % [word_count, amount], Vector2(cursor_x, legend_rect.position.y + 11), 6, ink)
-		cursor_x += 82
-
-
-func _ticket_relative_rect(rect_values: Array) -> Rect2:
-	var values := _normalized_rect_array(rect_values)
-	return Rect2(active_ticket_rect.position + Vector2(float(values[0]) * active_ticket_rect.size.x, float(values[1]) * active_ticket_rect.size.y), Vector2(float(values[2]) * active_ticket_rect.size.x, float(values[3]) * active_ticket_rect.size.y))
-
-
-func _draw_spot_symbol_reveal(surface, ticket: Dictionary, result: Dictionary, spot: Dictionary, region: Dictionary, rect: Rect2, ink: Color, trim: Color) -> bool:
-	var symbol_id := _spot_symbol_texture_id(ticket, spot)
-	if symbol_id.is_empty():
-		return false
-	var winner := _spot_is_winner(ticket, result, spot)
-	var role := str(spot.get("role", ""))
-	var main_text := _spot_symbol_main_text(ticket, spot)
-	var sub_text := _spot_symbol_sub_text(ticket, result, spot)
-	if _symbol_role_suppresses_sub_label(role):
-		sub_text = ""
-	_draw_symbol_readability_plaque(surface, symbol_id, role, rect, winner, ink, trim)
-	var inset_rect := rect.grow(-maxf(0.5, minf(rect.size.x, rect.size.y) * 0.025))
-	if inset_rect.size.x <= 1.0 or inset_rect.size.y <= 1.0:
-		inset_rect = rect
-	var drawn := _draw_centered_reveal_symbol(surface, symbol_id, inset_rect, _symbol_icon_coverage(role, main_text, sub_text))
-	if not drawn:
-		return false
-	if winner:
-		surface.draw_rect(rect.grow(-1), trim, false, 3 if minf(rect.size.x, rect.size.y) >= 32.0 else 2)
-	if not main_text.is_empty():
-		var font_size := _symbol_main_font_size(rect, main_text)
-		var label_rect := _symbol_main_label_rect(role, rect, not sub_text.is_empty())
-		_draw_symbol_label(surface, main_text, label_rect, font_size, _symbol_text_color(symbol_id, role, ink, trim), _symbol_text_stroke(symbol_id, role))
-	if not sub_text.is_empty():
-		var sub_rect := _symbol_sub_label_rect(role, rect)
-		_draw_symbol_label(surface, sub_text, sub_rect, _symbol_sub_font_size(rect, sub_text), _symbol_text_color(symbol_id, role, ink, trim), _symbol_text_stroke(symbol_id, role))
-	return true
-
-
-func _draw_symbol_readability_plaque(surface, symbol_id: String, role: String, rect: Rect2, winner: bool, ink: Color, trim: Color) -> void:
-	var short_side := minf(rect.size.x, rect.size.y)
-	var plaque := rect.grow(-maxf(0.0, short_side * 0.015))
-	var bg := Color("#fff8df")
-	var border := Color("#141019")
-	match role:
-		"winning_number":
-			bg = Color("#191528")
-			border = trim
-		"your_number", "bonus_number", "caller":
-			bg = Color("#fff2a8")
-			border = Color("#2b1b11")
-		"bank_letter":
-			bg = Color("#d8fbff")
-			border = Color("#123f52")
-		"crossword_cell", "bingo_cell":
-			bg = Color("#fffdf0")
-			border = Color("#123821")
-		"your_card", "dealer_card", "wild":
-			bg = Color("#fff7e1")
-			border = Color("#1c1420")
-		"ladder", "gold_bar", "vault", "multiplier":
-			bg = Color("#17131c")
-			border = trim
-	var alpha := 0.96
-	if _symbol_text_needs_light(symbol_id):
-		alpha = 0.92
-	surface.draw_rect(plaque, Color(bg.r, bg.g, bg.b, alpha))
-	surface.draw_rect(plaque, border, false, 2 if short_side >= 26.0 else 1)
-	if winner:
-		surface.draw_rect(plaque.grow(2), trim, false, 2)
-
-
-func _symbol_icon_coverage(role: String, main_text: String, sub_text: String) -> float:
-	if main_text.is_empty():
-		return 0.98
-	match role:
-		"crossword_cell", "bank_letter", "bingo_cell", "caller":
-			return 1.00
-		"your_card", "dealer_card", "wild":
-			return 0.98
-		"ladder", "gold_bar", "vault", "multiplier":
-			return 0.92
-	return 0.96 if sub_text.is_empty() else 0.90
-
-
-func _symbol_main_label_rect(role: String, rect: Rect2, has_sub_text: bool) -> Rect2:
-	match role:
-		"crossword_cell", "bank_letter", "bingo_cell", "caller", "your_card", "dealer_card", "wild":
-			return Rect2(rect.position + Vector2(1, 1), Vector2(rect.size.x - 2, rect.size.y - 2))
-		"ladder", "gold_bar", "vault", "multiplier":
-			return Rect2(rect.position + Vector2(2, 1), Vector2(rect.size.x - 4, rect.size.y * (0.66 if has_sub_text else 0.86)))
-	return Rect2(rect.position + Vector2(2, rect.size.y * (0.10 if has_sub_text else 0.06)), Vector2(rect.size.x - 4, rect.size.y * (0.58 if has_sub_text else 0.84)))
-
-
-func _symbol_sub_label_rect(role: String, rect: Rect2) -> Rect2:
-	match role:
-		"ladder", "gold_bar", "vault", "multiplier":
-			return Rect2(rect.position + Vector2(2, rect.size.y * 0.58), Vector2(rect.size.x - 4, rect.size.y * 0.38))
-	return Rect2(rect.position + Vector2(2, rect.size.y * 0.60), Vector2(rect.size.x - 4, rect.size.y * 0.36))
-
-
-func _symbol_role_suppresses_sub_label(role: String) -> bool:
-	return ["crossword_cell", "bank_letter", "bingo_cell", "caller", "your_card", "dealer_card"].has(role)
-
-
-func _draw_symbol_label(surface, text: String, rect: Rect2, font_size: int, fill: Color, stroke: Color) -> void:
-	if text.is_empty():
-		return
-	_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, -1.0, 0.0)
-	_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, 1.0, 0.0)
-	_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, 0.0, -1.0)
-	_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, 0.0, 1.0)
-	if minf(rect.size.x, rect.size.y) >= 24.0:
-		_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, -1.0, -1.0)
-		_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, 1.0, -1.0)
-		_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, -1.0, 1.0)
-		_draw_symbol_label_shadow(surface, text, rect, font_size, stroke, 1.0, 1.0)
-	surface.surface_label_centered(text, rect, font_size, fill)
-
-
-func _draw_symbol_label_shadow(surface, text: String, rect: Rect2, font_size: int, stroke: Color, offset_x: float, offset_y: float) -> void:
-	surface.surface_label_centered(text, Rect2(rect.position + Vector2(offset_x, offset_y), rect.size), font_size, stroke)
-
-
-func _draw_centered_reveal_symbol(surface, symbol_id: String, rect: Rect2, coverage: float = 0.86) -> bool:
-	var texture := _reveal_symbol_texture(symbol_id)
-	if texture == null:
-		return false
-	var texture_size := Vector2(float(texture.get_width()), float(texture.get_height()))
-	if texture_size.x <= 0.0 or texture_size.y <= 0.0:
-		return false
-	var available := Vector2(maxf(1.0, rect.size.x * coverage), maxf(1.0, rect.size.y * coverage))
-	var scale := minf(available.x / texture_size.x, available.y / texture_size.y)
-	var draw_size := texture_size * scale
-	var draw_rect := Rect2(rect.position + (rect.size - draw_size) * 0.5, draw_size)
-	surface.draw_texture_rect(texture, draw_rect, false)
-	return true
-
-
-func _reveal_symbol_texture(symbol_id: String) -> Texture2D:
-	if reveal_symbol_texture_cache.has(symbol_id):
-		return reveal_symbol_texture_cache[symbol_id] as Texture2D
-	var path := str(REVEAL_SYMBOL_ART.get(symbol_id, ""))
-	if path.is_empty():
-		return null
-	var resource := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_REUSE)
-	var texture := resource as Texture2D
-	if texture != null:
-		reveal_symbol_texture_cache[symbol_id] = texture
-	return texture
-
-
-func _spot_symbol_texture_id(ticket: Dictionary, spot: Dictionary) -> String:
-	var role := str(spot.get("role", ""))
-	var type_id := str(ticket.get("type_id", ""))
-	match role:
-		"pair_spot":
-			match str(spot.get("symbol", "")).to_upper():
-				"CLOVER": return "clover"
-				"BELL": return "bell"
-				"STAR": return "star"
-				"2FER": return "twofer"
-			return "number_coin"
-		"winning_number":
-			return "winning_star"
-		"your_number":
-			return "lucky_seven" if int(spot.get("number", 0)) == 7 else "number_coin"
-		"bonus_number":
-			return "lucky_seven" if int(spot.get("number", 0)) == 7 else "number_coin"
-		"board_mark":
-			return "gold_coin" if str(spot.get("mark", "")) == "WIN" else "miss_cross"
-		"bonus":
-			return "gold_bar" if str(spot.get("mark", "")) == "GOLD" else "dust"
-		"bank_letter":
-			return "letter_tile"
-		"crossword_cell":
-			return "crossword_cell"
-		"caller":
-			return "bingo_ball"
-		"bingo_cell":
-			return "bingo_cell"
-		"your_card", "dealer_card":
-			return "card_red" if _card_symbol_is_red(str(spot.get("card", ""))) else "card_black"
-		"wild":
-			return "wild_card" if str(spot.get("card", "")) == "WILD" else "miss_cross"
-		"multiplier":
-			return "multiplier_coin"
-		"ladder":
-			return "cash_stack" if bool(spot.get("match", false)) else "vault_sealed"
-		"gold_bar":
-			return "gold_bar" if bool(spot.get("win_all", false)) else "brass_bar"
-		"vault":
-			return "vault_open" if str(spot.get("symbol", "")) == "OPEN" else "vault_sealed"
-	if type_id == "crossword_corner" and spot.has("letter"):
-		return "crossword_cell"
-	return ""
-
-
-func _spot_symbol_main_text(ticket: Dictionary, spot: Dictionary) -> String:
-	var role := str(spot.get("role", ""))
-	match role:
-		"winning_number", "your_number", "bonus_number", "caller":
-			return str(int(spot.get("number", 0)))
-		"bingo_cell":
-			var number := int(spot.get("number", 0))
-			return "FREE" if number == 0 else str(number)
-		"bank_letter", "crossword_cell":
-			return str(spot.get("letter", ""))
-		"your_card", "dealer_card":
-			return str(spot.get("card", ""))
-		"wild":
-			return "WILD" if str(spot.get("card", "")) == "WILD" else "NO"
-		"multiplier":
-			return "%dx" % int(spot.get("multiplier", 1))
-		"ladder":
-			return "$%d" % int(spot.get("base_prize", 0)) if bool(spot.get("match", false)) else "LOCK"
-		"gold_bar":
-			return "GOLD" if bool(spot.get("win_all", false)) else "BRASS"
-		"vault":
-			return "OPEN" if str(spot.get("symbol", "")) == "OPEN" else "LOCK"
-	if str(ticket.get("type_id", "")) == "tic_tac_gold":
-		return str(spot.get("mark", ""))
-	return ""
-
-
-func _spot_symbol_sub_text(ticket: Dictionary, result: Dictionary, spot: Dictionary) -> String:
-	match str(ticket.get("type_id", "")):
-		"two_fer":
-			var legend: Dictionary = result.get("legend", {}) if typeof(result.get("legend", {})) == TYPE_DICTIONARY else {}
-			var prize := int(legend.get(str(spot.get("symbol", "")), 0))
-			return "$%d" % prize if prize > 0 else ""
-		"lucky_7s":
-			if str(spot.get("role", "")) == "your_number" or str(spot.get("role", "")) == "bonus_number":
-				return "$%d" % int(spot.get("prize", 0))
-		"high_roller_holdem":
-			return "YOU" if str(spot.get("role", "")).begins_with("your") else "HOUSE" if str(spot.get("role", "")).begins_with("dealer") else ""
-		"golden_vault":
-			if str(spot.get("role", "")) == "ladder" and bool(spot.get("match", false)):
-				return "x%d" % int(result.get("multiplier", 1))
-			if str(spot.get("role", "")) == "vault" and int(spot.get("payout", 0)) > 0:
-				return "$%d" % int(spot.get("payout", 0))
-	return ""
-
-
-func _symbol_main_font_size(rect: Rect2, text: String) -> int:
-	var short_side := minf(rect.size.x, rect.size.y)
-	if short_side < 21.0:
-		return 7 if text.length() <= 2 else 6
-	if short_side < 30.0:
-		return 10 if text.length() <= 2 else 8
-	if short_side < 45.0:
-		return 14 if text.length() <= 3 else 10
-	return 19 if text.length() <= 3 else 13
-
-
-func _symbol_sub_font_size(rect: Rect2, text: String) -> int:
-	if minf(rect.size.x, rect.size.y) < 30.0:
-		return 7 if text.length() <= 5 else 6
-	return 9 if text.length() <= 7 else 8
-
-
-func _symbol_text_color(symbol_id: String, role: String, ink: Color, trim: Color) -> Color:
-	match role:
-		"winning_number":
-			return C_WHITE
-		"your_card", "dealer_card":
-			return Color("#d62236") if symbol_id == "card_red" else Color("#101018")
-		"wild", "ladder", "gold_bar", "vault", "multiplier":
-			return trim
-	if _symbol_text_needs_light(symbol_id):
-		return C_WHITE
-	return ink
-
-
-func _symbol_text_stroke(symbol_id: String, role: String) -> Color:
-	match role:
-		"your_card", "dealer_card", "crossword_cell", "bank_letter", "bingo_cell", "caller", "your_number", "bonus_number":
-			return Color(1.0, 1.0, 1.0, 0.72)
-	if _symbol_text_needs_light(symbol_id):
-		return Color(0.0, 0.0, 0.0, 0.92)
-	return Color(0.0, 0.0, 0.0, 0.76)
-
-
-func _symbol_text_needs_light(symbol_id: String) -> bool:
-	return ["card_black", "vault_sealed", "miss_cross", "wild_card"].has(symbol_id)
-
-
-func _card_symbol_is_red(card: String) -> bool:
-	return card.contains("H") or card.contains("D") or card.contains("♥") or card.contains("♦")
-
-
-func _draw_spot_box(surface, ticket: Dictionary, result: Dictionary, spot: Dictionary, region: Dictionary, rect: Rect2, ink: Color, accent: Color, trim: Color) -> void:
-	var type_id := str(ticket.get("type_id", ""))
-	var winner := _spot_is_winner(ticket, result, spot)
-	var fill := Color(trim.r, trim.g, trim.b, 0.22) if winner else Color(ink.r, ink.g, ink.b, 0.08)
-	var main := _spot_main_label(spot, region)
-	var sub := _spot_sub_label(ticket, result, spot, region)
-	if _draw_spot_symbol_reveal(surface, ticket, result, spot, region, rect, ink, trim):
-		return
-	if _has_production_ticket_art(type_id):
-		_draw_production_spot_text(surface, ticket, result, spot, region, rect, ink, trim)
-		return
-	match type_id:
-		"two_fer":
-			_draw_starburst(surface, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.60, Color(trim.r, trim.g, trim.b, 0.30 if winner else 0.16))
-			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.46, Color(accent.r, accent.g, accent.b, 0.32))
-			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.46, trim if winner else accent, false, 3)
-			surface.surface_label_centered(main.left(6), Rect2(rect.position + Vector2(2, rect.size.y * 0.20), Vector2(rect.size.x - 4, rect.size.y * 0.38)), 13, ink)
-			surface.surface_label_centered(sub, Rect2(rect.position + Vector2(2, rect.size.y * 0.56), Vector2(rect.size.x - 4, rect.size.y * 0.24)), 8, ink)
-			return
-		"lucky_7s":
-			var winning_number := str(spot.get("role", "")) == "winning_number"
-			if winning_number:
-				_draw_starburst(surface, rect.get_center(), minf(rect.size.x, rect.size.y) * 0.58, Color("#ff2e65"))
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.34, Color("#151725"))
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.34, trim, false, 3)
-				surface.surface_label_centered(main, rect, 16, C_WHITE)
-				surface.surface_label_centered("WIN", Rect2(rect.position + Vector2(2, rect.size.y - 18), Vector2(rect.size.x - 4, 14)), 7, trim)
-			else:
-				for notch in range(12):
-					var angle := float(notch) * TAU / 12.0
-					surface.draw_circle(rect.get_center() + Vector2(cos(angle), sin(angle)) * minf(rect.size.x, rect.size.y) * 0.41, 3.0, Color(0, 0, 0, 0.55))
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.42, Color("#0e2219"))
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.42, trim if winner else Color("#0a0f16"), false, 3)
-				surface.surface_label_centered(main, Rect2(rect.position + Vector2(0, 1), Vector2(rect.size.x, rect.size.y * 0.56)), 15, C_WHITE if winner else trim)
-				surface.surface_label_centered(sub, Rect2(rect.position + Vector2(2, rect.size.y * 0.55), Vector2(rect.size.x - 4, rect.size.y * 0.32)), 8, C_WHITE)
-			return
-		"tic_tac_gold":
-			surface.draw_rect(rect, Color("#06101e"))
-			surface.draw_rect(rect.grow(-4), Color("#ffe27a") if main == "GOLD" or main == "WIN" else Color(ink.r, ink.g, ink.b, 0.10), false, 3)
-			surface.draw_line(rect.position + Vector2(4, 4), rect.end - Vector2(4, rect.size.y - 4), Color(trim.r, trim.g, trim.b, 0.28), 2)
-		"bonus_bingo":
-			if bool(spot.get("daubed", false)) or str(spot.get("role", "")) == "caller":
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.40, Color(accent.r, accent.g, accent.b, 0.38))
-		"high_roller_holdem":
-			surface.draw_polygon([rect.position + Vector2(3, 0), rect.end - Vector2(0, rect.size.y - 3), rect.end - Vector2(3, 0), rect.position + Vector2(0, rect.size.y - 3)], [Color("#fff5d8")])
-			surface.draw_rect(rect.grow(-2), trim if winner else Color("#b64552"), false, 2)
-			var card_ink := Color("#c22636") if main.contains("H") or main.contains("D") else Color("#171313")
-			surface.surface_label_centered(main, Rect2(rect.position + Vector2(2, 2), Vector2(rect.size.x - 4, rect.size.y - 4)), 10, card_ink)
-			if not sub.is_empty():
-				surface.surface_label_centered(sub, Rect2(rect.position + Vector2(2, rect.size.y - 16), Vector2(rect.size.x - 4, 14)), 6, card_ink)
-			return
-		"golden_vault":
-			surface.draw_rect(rect, Color("#09090f") if not winner else Color("#3c2909"))
-			surface.draw_rect(rect.grow(-3), Color(trim.r, trim.g, trim.b, 0.20), false, 2)
-			surface.draw_circle(rect.position + Vector2(rect.size.x - 16, rect.size.y * 0.5), minf(rect.size.y, 24.0) * 0.30, trim if winner else accent, false, 2)
-		"crossword_corner":
-			if str(spot.get("role", "")) == "bank_letter":
-				surface.draw_rect(rect, Color("#bcebef"))
-				surface.draw_rect(rect, accent, false, 2)
-				surface.surface_label_centered(main, Rect2(rect.position + Vector2(2, 1), Vector2(rect.size.x - 4, rect.size.y - 2)), 11 if rect.size.x > 24.0 else 8, ink)
-			else:
-				surface.draw_rect(rect.grow(-1), Color("#fff5d8"))
-				surface.draw_rect(rect.grow(-1), trim if winner else Color(ink.r, ink.g, ink.b, 0.58), false, 1)
-				surface.surface_label_centered(main, Rect2(rect.position + Vector2(1, 0), Vector2(rect.size.x - 2, rect.size.y)), 10 if rect.size.x > 24.0 else 7, ink)
-			return
-		_:
-			surface.draw_rect(rect, fill)
-			surface.draw_rect(rect, trim if winner else accent, false, 2)
-	if type_id == "bonus_bingo":
-		if str(spot.get("role", "")) == "caller":
-			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.46, Color("#eefaf0"))
-			surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.46, accent, false, 2)
-		else:
-			surface.draw_rect(rect, Color("#e9fff1"))
-			surface.draw_rect(rect, accent if bool(spot.get("daubed", false)) else Color(ink.r, ink.g, ink.b, 0.26), false, 1)
-			if bool(spot.get("daubed", false)):
-				surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.32, Color(accent.r, accent.g, accent.b, 0.42))
-	else:
-		if not ["tic_tac_gold", "crossword_corner", "golden_vault"].has(type_id):
-			surface.draw_rect(rect, fill)
-			surface.draw_rect(rect, trim if winner else accent, false, 2)
-	var font_size := 14
-	if rect.size.x < 42.0 or rect.size.y < 28.0:
-		font_size = 6
-	elif rect.size.x < 70.0 or rect.size.y < 42.0:
-		font_size = 9
-	elif main.length() > 7:
-		font_size = 10
-	surface.surface_label_centered(main, Rect2(rect.position + Vector2(3, 2), Vector2(rect.size.x - 6, rect.size.y * (0.68 if not sub.is_empty() else 0.58))), font_size, trim if winner and type_id == "golden_vault" else ink)
-	if not sub.is_empty():
-		surface.surface_label_centered(sub, Rect2(rect.position + Vector2(3, rect.size.y * 0.56), Vector2(rect.size.x - 6, rect.size.y * 0.38)), 6 if rect.size.x < 48.0 else 8, trim if winner else ink)
-
-
-func _draw_production_spot_text(surface, ticket: Dictionary, result: Dictionary, spot: Dictionary, region: Dictionary, rect: Rect2, ink: Color, trim: Color) -> void:
-	var main := _spot_main_label(spot, region)
-	var sub := _spot_sub_label(ticket, result, spot, region)
-	if main.is_empty() and sub.is_empty():
-		return
-	var winner := _spot_is_winner(ticket, result, spot)
-	var role := str(spot.get("role", ""))
-	var main_rect := Rect2(rect.position + Vector2(2, rect.size.y * 0.18), Vector2(rect.size.x - 4, rect.size.y * (0.48 if not sub.is_empty() else 0.64)))
-	if role == "crossword_cell" or role == "bank_letter" or role == "bingo_cell":
-		main_rect = Rect2(rect.position + Vector2(1, 1), Vector2(rect.size.x - 2, rect.size.y - 2))
-	var main_size := _symbol_main_font_size(rect, main)
-	if main.length() > 6:
-		main_size = mini(main_size, 9)
-	var label_color := trim if winner and str(ticket.get("type_id", "")) == "golden_vault" else ink
-	var shadow := Color(0.0, 0.0, 0.0, 0.55)
-	surface.surface_label_centered(main.left(10), Rect2(main_rect.position + Vector2(1, 1), main_rect.size), main_size, shadow)
-	surface.surface_label_centered(main.left(10), main_rect, main_size, label_color)
-	if not sub.is_empty() and role != "crossword_cell" and role != "bank_letter" and role != "bingo_cell":
-		var sub_rect := Rect2(rect.position + Vector2(2, rect.size.y * 0.60), Vector2(rect.size.x - 4, rect.size.y * 0.32))
-		surface.surface_label_centered(sub.left(12), Rect2(sub_rect.position + Vector2(1, 1), sub_rect.size), 6 if rect.size.x < 48.0 else 8, shadow)
-		surface.surface_label_centered(sub.left(12), sub_rect, 6 if rect.size.x < 48.0 else 8, label_color)
-
-
-func _spot_main_label(spot: Dictionary, region: Dictionary) -> String:
-	if spot.has("symbol"):
-		return str(spot.get("symbol", ""))
-	if spot.has("number"):
-		var number := int(spot.get("number", 0))
-		return "FREE" if number == 0 and str(spot.get("role", "")) == "bingo_cell" else str(number)
-	if spot.has("letter"):
-		return str(spot.get("letter", ""))
-	if spot.has("word"):
-		return str(spot.get("word", ""))
-	if spot.has("card"):
-		return str(spot.get("card", ""))
-	if spot.has("mark"):
-		return str(spot.get("mark", ""))
-	if spot.has("multiplier"):
-		return "%dx" % int(spot.get("multiplier", 1))
-	if spot.has("rung"):
-		return "RUNG %d" % int(spot.get("rung", 0))
-	return str(region.get("label", "SPOT"))
-
-
-func _spot_sub_label(ticket: Dictionary, result: Dictionary, spot: Dictionary, _region: Dictionary) -> String:
-	match str(ticket.get("type_id", "")):
-		"two_fer":
-			var legend: Dictionary = result.get("legend", {}) if typeof(result.get("legend", {})) == TYPE_DICTIONARY else {}
-			return "$%d" % int(legend.get(str(spot.get("symbol", "")), 0))
-		"lucky_7s":
-			return "WIN" if str(spot.get("role", "")) == "winning_number" else "$%d" % int(spot.get("prize", 0))
-		"tic_tac_gold":
-			return "$%d" % int(spot.get("prize", 0)) if int(spot.get("prize", 0)) > 0 else ""
-		"crossword_corner":
-			return ""
-		"bonus_bingo":
-			return "DAUB" if bool(spot.get("daubed", false)) else ""
-		"high_roller_holdem":
-			if str(spot.get("role", "")) == "wild":
-				return "BOOST" if bool(result.get("wild", false)) else ""
-			return "YOU" if str(spot.get("role", "")).begins_with("your") else "HOUSE"
-		"golden_vault":
-			if spot.has("base_prize"):
-				return "$%d x %d" % [int(spot.get("base_prize", 0)), int(result.get("multiplier", 1))] if bool(spot.get("match", false)) else "LOCK"
-			if spot.has("payout"):
-				return "$%d" % int(spot.get("payout", 0)) if int(spot.get("payout", 0)) > 0 else ""
-	return ""
-
-
-func _spot_is_winner(ticket: Dictionary, result: Dictionary, spot: Dictionary) -> bool:
-	match str(ticket.get("type_id", "")):
-		"two_fer":
-			var symbols: Array = result.get("symbols", []) if typeof(result.get("symbols", [])) == TYPE_ARRAY else []
-			return symbols.count(spot.get("symbol", "")) >= 2
-		"lucky_7s":
-			return bool(spot.get("winner", false)) or bool(result.get("winning_seven", false))
-		"tic_tac_gold":
-			return str(spot.get("mark", "")) == "WIN" or str(spot.get("mark", "")) == "GOLD"
-		"crossword_corner":
-			return bool(spot.get("complete", false))
-		"bonus_bingo":
-			return bool(spot.get("daubed", false)) and str(spot.get("role", "")) == "bingo_cell"
-		"high_roller_holdem":
-			return int(ticket.get("payout", 0)) > 0 and (str(spot.get("role", "")).begins_with("your") or str(spot.get("role", "")) == "wild")
-		"golden_vault":
-			return bool(spot.get("match", false)) or bool(spot.get("win_all", false)) or str(spot.get("symbol", "")) == "OPEN"
-	return int(ticket.get("payout", 0)) > 0
-
-
-func _draw_number_medallion(surface, rect: Rect2, number: int, ink: Color, accent: Color) -> void:
-	surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.45, Color(accent.r, accent.g, accent.b, 0.28))
-	surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.45, accent, false, 2)
-	surface.surface_label_centered(str(number), rect, 14, ink)
-
-
-func _draw_bingo_card(surface, card: Dictionary, rect: Rect2, ink: Color, accent: Color, trim: Color) -> void:
-	var numbers: Array = card.get("numbers", []) if typeof(card.get("numbers", [])) == TYPE_ARRAY else []
-	var daubed: Array = card.get("daubed", []) if typeof(card.get("daubed", [])) == TYPE_ARRAY else []
-	surface.draw_rect(rect, Color(ink.r, ink.g, ink.b, 0.06))
-	surface.draw_rect(rect, trim if bool(card.get("blackout", false)) else accent, false, 2)
-	for index in range(mini(25, numbers.size())):
-		var cell := Rect2(rect.position + Vector2(float(index % 5) * rect.size.x / 5.0, float(index / 5) * rect.size.y / 5.0), rect.size / 5.0)
-		if index < daubed.size() and bool(daubed[index]):
-			surface.draw_circle(cell.get_center(), 6, Color(accent.r, accent.g, accent.b, 0.42))
-		surface.surface_label_centered("FREE" if index == 12 else str(numbers[index]), cell, 4 if index == 12 else 5, ink)
-
-
-func _draw_poker_hand(surface, cards: Array, origin: Vector2, ink: Color, accent: Color, available_width: float) -> void:
-	var gap := maxf(2.0, available_width * 0.012)
-	var width := (available_width - 10.0 - gap * 4.0) / 5.0
-	for index in range(cards.size()):
-		var rect := Rect2(origin + Vector2(float(index) * (width + gap), 5), Vector2(width, 58))
-		surface.draw_rect(rect, Color("#fff5d8"))
-		surface.draw_rect(rect, accent, false, 2)
-		surface.surface_label_centered(str(cards[index]), rect, 10, ink)
-
-
-func _draw_xray_peeks(surface, peeks: Array, accent: Color) -> void:
-	if peeks.is_empty():
-		return
-	var values: Array = []
-	for peek_value in peeks:
-		values.append(str((peek_value as Dictionary).get("symbol", "?")))
-	var banner := Rect2(active_scratch_rect.get_center() - Vector2(74, 15), Vector2(148, 30))
-	surface.draw_rect(banner, Color(accent.r, accent.g, accent.b, 0.18))
-	surface.draw_rect(banner, accent, false, 1)
-	surface.surface_label_centered("X-RAY  %s" % " / ".join(values), banner, 8, accent)
-
-
-func _draw_counter_mat(surface) -> void:
-	var mat := PLAY_SURFACE_RECT
-	surface.draw_rect(mat, Color("#321d18"))
-	for stripe in range(9):
-		var y := mat.position.y + 8.0 + float(stripe) * 47.0
-		surface.draw_line(Vector2(mat.position.x + 3, y), Vector2(mat.end.x - 3, y - 13), Color(1.0, 0.78, 0.54, 0.035), 2)
+	surface.surface_label_centered("%d WAITING" % count, badge, 7, C_WHITE)
 
 
 func _draw_empty_ticket_outline(surface) -> void:
-	active_ticket_rect = DEFAULT_TICKET_RECT
-	active_scratch_rect = DEFAULT_SCRATCH_RECT
-	surface.draw_rect(PLAY_SURFACE_RECT, Color("#191513"))
-	for corner in range(4):
-		var offset := Vector2(13 if corner % 2 == 0 else PLAY_SURFACE_RECT.size.x - 33, 19 if corner < 2 else PLAY_SURFACE_RECT.size.y - 39)
-		surface.draw_rect(Rect2(PLAY_SURFACE_RECT.position + offset, Vector2(20, 20)), Color("#6b5143"), false, 2)
-	surface.surface_label_centered("TICKET LANDING TRAY", Rect2(PLAY_SURFACE_RECT.position + Vector2(28, 154), Vector2(PLAY_SURFACE_RECT.size.x - 56, 28)), 16, Color("#a78a77"))
-	surface.surface_label_centered("Choose a printed ticket from the cabinet", Rect2(PLAY_SURFACE_RECT.position + Vector2(24, 186), Vector2(PLAY_SURFACE_RECT.size.x - 48, 20)), 9, Color("#816b5e"))
-
-
-func _production_ticket_texture(type_id: String) -> Texture2D:
-	var path := str(PRODUCTION_TICKET_ART.get(type_id, ""))
-	if path.is_empty():
-		return null
-	if production_ticket_texture_cache.has(path):
-		return production_ticket_texture_cache[path] as Texture2D
-	var resource := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_REUSE)
-	var texture := resource as Texture2D
-	production_ticket_texture_cache[path] = texture
-	return texture
-
-
-func _draw_ticket_header(surface, ticket: Dictionary, paper: Color, ink: Color, accent: Color, trim: Color) -> void:
-	var type_id := str(ticket.get("type_id", ""))
-	var title := str(ticket.get("display_name", "SCRATCH TICKET")).to_upper()
-	var title_rect := Rect2(active_ticket_rect.position + Vector2(22, 10), Vector2(active_ticket_rect.size.x - 44, 38))
-	var prize_rect := Rect2(active_ticket_rect.position + Vector2(34, 50), Vector2(active_ticket_rect.size.x - 68, 22))
-	match type_id:
-		"two_fer":
-			title_rect = Rect2(active_ticket_rect.position + Vector2(74, 12), Vector2(active_ticket_rect.size.x - 112, 42))
-			prize_rect = Rect2(active_ticket_rect.position + Vector2(88, 55), Vector2(active_ticket_rect.size.x - 176, 22))
-			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(20, 6)), accent, trim)
-		"lucky_7s":
-			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(10, 6)), Color("#ff2e65"), trim)
-			for index in range(3):
-				_draw_starburst(surface, active_ticket_rect.position + Vector2(active_ticket_rect.size.x - 38.0 - index * 28.0, 16.0 + index * 13.0), 10.0 + float(index) * 2.0, C_WHITE)
-		"tic_tac_gold":
-			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(8, 6)), Color("#0e1a2f"), trim)
-		"crossword_corner":
-			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(8, 5)), Color("#1a9bc2"), C_WHITE)
-		"bonus_bingo":
-			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(8, 5)), Color("#f3f7e8"), accent)
-		"high_roller_holdem":
-			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(8, 5)), Color("#0b231b"), trim)
-		"golden_vault":
-			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(8, 5)), Color("#0c0a10"), trim)
-		_:
-			_draw_slash_banner(surface, _grow_rect_xy(title_rect, Vector2(8, 5)), accent, trim)
-	_draw_lottery_serial(surface, ink)
-	_draw_price_badge(surface, int(ticket.get("price", 1)), accent, trim)
-	_draw_title_shadow(surface, title, title_rect, 23 if title.length() < 15 else 19, C_WHITE if paper.get_luminance() < 0.38 else ink, trim)
-	_draw_top_prize_ribbon(surface, "WIN UP TO $%d" % int(ticket.get("top_prize", 0)), prize_rect, trim, accent, paper)
-	surface.surface_label_centered(_ticket_play_label(type_id, _dict_ref(ticket.get("mechanic", {}))).left(66), Rect2(active_ticket_rect.position + Vector2(20, 76), Vector2(active_ticket_rect.size.x - 40, 17)), 8, C_WHITE if paper.get_luminance() < 0.38 else ink)
-
-
-func _grow_rect_xy(rect: Rect2, amount: Vector2) -> Rect2:
-	return Rect2(rect.position - amount, rect.size + amount * 2.0)
-
-
-func _draw_price_badge(surface, price: int, accent: Color, trim: Color) -> void:
-	var center := active_ticket_rect.position + Vector2(24, 24)
-	_draw_starburst(surface, center, 23.0, trim)
-	surface.draw_circle(center, 18.0, accent)
-	surface.draw_circle(center, 18.0, C_WHITE, false, 2)
-	surface.surface_label_centered("$%d" % price, Rect2(center - Vector2(19, 12), Vector2(38, 24)), 14, C_WHITE)
-
-
-func _draw_lottery_serial(surface, ink: Color) -> void:
-	var top := active_ticket_rect.position.y + 7.0
-	surface.surface_label("GOLD ROAD LOTTERY", active_ticket_rect.position + Vector2(active_ticket_rect.size.x - 124, 14), 6, Color(ink.r, ink.g, ink.b, 0.76))
-	var barcode := Rect2(active_ticket_rect.position + Vector2(active_ticket_rect.size.x - 78, top), Vector2(52, 8))
-	for index in range(12):
-		var width := 2.0 if index % 3 == 0 else 1.0
-		surface.draw_rect(Rect2(barcode.position + Vector2(float(index) * 4.0, 0), Vector2(width, barcode.size.y)), Color(ink.r, ink.g, ink.b, 0.70))
-
-
-func _draw_top_prize_ribbon(surface, text: String, rect: Rect2, trim: Color, accent: Color, paper: Color) -> void:
-	var fill := Color(accent.r, accent.g, accent.b, 0.90) if paper.get_luminance() > 0.42 else Color(trim.r, trim.g, trim.b, 0.92)
-	var text_color := C_DARK if fill.get_luminance() > 0.55 else C_WHITE
-	surface.draw_polygon([
-		rect.position + Vector2(12, 0),
-		rect.end - Vector2(12, rect.size.y),
-		rect.end,
-		rect.end - Vector2(12, 0),
-		rect.position + Vector2(12, rect.size.y),
-		rect.position,
-	], [fill])
-	surface.draw_rect(rect.grow(1), trim, false, 2)
-	surface.surface_label_centered(text, rect, 11, text_color)
-
-
-func _draw_slash_banner(surface, rect: Rect2, fill: Color, stroke: Color) -> void:
-	surface.draw_polygon([
-		rect.position + Vector2(12, 0),
-		rect.end - Vector2(0, rect.size.y),
-		rect.end - Vector2(12, 0),
-		rect.position + Vector2(0, rect.size.y),
-	], [Color(0, 0, 0, 0.28)])
-	var body := Rect2(rect.position + Vector2(0, -2), rect.size)
-	surface.draw_polygon([
-		body.position + Vector2(14, 0),
-		body.end - Vector2(0, body.size.y),
-		body.end - Vector2(14, 0),
-		body.position + Vector2(0, body.size.y),
-	], [fill])
-	surface.draw_line(body.position + Vector2(14, 1), body.end - Vector2(0, body.size.y - 1), stroke, 3)
-	surface.draw_line(body.position + Vector2(0, body.size.y - 2), body.end - Vector2(14, 2), stroke, 3)
-
-
-func _draw_title_shadow(surface, text: String, rect: Rect2, font_size: int, color: Color, shadow_color: Color) -> void:
-	surface.surface_label_centered(text, Rect2(rect.position + Vector2(3, 3), rect.size), font_size, Color(0, 0, 0, 0.78))
-	surface.surface_label_centered(text, Rect2(rect.position + Vector2(1, 1), rect.size), font_size, shadow_color)
-	surface.surface_label_centered(text, rect, font_size, color)
-
-
-func _draw_ticket_perforation(surface, color: Color) -> void:
-	for x in range(12, int(active_ticket_rect.size.x), 16):
-		surface.draw_circle(active_ticket_rect.position + Vector2(float(x), 2), 2.0, Color(color.r, color.g, color.b, 0.42))
-		surface.draw_circle(active_ticket_rect.position + Vector2(float(x), active_ticket_rect.size.y - 2), 2.0, Color(color.r, color.g, color.b, 0.42))
-
-
-func _draw_halftone(surface, rect: Rect2, color: Color, step: int = 18, radius: float = 2.0) -> void:
-	for y in range(0, int(rect.size.y), step):
-		for x in range(0, int(rect.size.x), step):
-			var alternate := ((x / step) + (y / step)) % 2 == 0
-			var alpha := 0.11 if alternate else 0.055
-			surface.draw_circle(rect.position + Vector2(float(x) + radius * 2.0, float(y) + radius * 2.0), radius, Color(color.r, color.g, color.b, alpha))
-
-
-func _draw_starburst(surface, center: Vector2, radius: float, color: Color) -> void:
-	var points: Array = []
-	for index in range(12):
-		var local_radius := radius if index % 2 == 0 else radius * 0.42
-		var angle := -PI * 0.5 + float(index) * TAU / 12.0
-		points.append(center + Vector2(cos(angle), sin(angle)) * local_radius)
-	surface.draw_polygon(points, [color])
-
-
-func _draw_ticket_background(surface, ticket: Dictionary, paper: Color, ink: Color, accent: Color, trim: Color) -> void:
-	# SA2_PER_FRAME_OK: bounded decorative geometry (at most 18 marks) is the ticket face itself; no state duplication or unbounded allocation.
-	var face := _dict_ref(ticket.get("face", {}))
-	var layout := str(face.get("layout", "classic_nine"))
-	_draw_ticket_perforation(surface, ink)
-	_draw_halftone(surface, active_ticket_rect.grow(-10), accent, 18, 2.0)
-	match layout:
-		"two_fer_burst":
-			surface.draw_polygon([active_ticket_rect.position + Vector2(0, 82), active_ticket_rect.position + Vector2(active_ticket_rect.size.x, 38), active_ticket_rect.position + Vector2(active_ticket_rect.size.x, 96), active_ticket_rect.position + Vector2(0, 126)], [Color(accent.r, accent.g, accent.b, 0.18)])
-			for ray in range(18):
-				var angle := float(ray) * TAU / 18.0
-				surface.draw_line(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 86), active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 86) + Vector2(cos(angle), sin(angle)) * active_ticket_rect.size.x * 0.50, Color(accent.r, accent.g, accent.b, 0.12), 3)
-			for star in range(7):
-				_draw_starburst(surface, active_ticket_rect.position + Vector2(38 + float(star) * 66.0, 102 + float(star % 2) * 42.0), 9.0, Color(trim.r, trim.g, trim.b, 0.54))
-		"lucky_seven_neon":
-			surface.draw_rect(active_ticket_rect.grow(-9), Color("#0488b7"))
-			_draw_halftone(surface, active_ticket_rect.grow(-8), Color("#00243a"), 15, 2.2)
-			for seven in range(7):
-				var point := active_ticket_rect.position + Vector2(24 + (seven * 47) % maxi(40, int(active_ticket_rect.size.x - 46)), 92 + (seven * 67) % maxi(60, int(active_ticket_rect.size.y - 130)))
-				surface.surface_label_centered("7", Rect2(point, Vector2(26, 28)), 18, Color(C_WHITE.r, C_WHITE.g, C_WHITE.b, 0.34))
-				_draw_starburst(surface, point + Vector2(22, 8), 7.0, Color(C_WHITE.r, C_WHITE.g, C_WHITE.b, 0.68))
-		"tic_tac_gold":
-			surface.draw_rect(active_ticket_rect.grow(-14), Color("#10162b"))
-			surface.draw_rect(active_ticket_rect.grow(-18), Color(trim.r, trim.g, trim.b, 0.22), false, 2)
-			for stripe in range(10):
-				var x := active_ticket_rect.position.x + float(stripe) * 44.0 - 40.0
-				surface.draw_polygon([Vector2(x, active_ticket_rect.position.y + 92), Vector2(x + 18, active_ticket_rect.position.y + 92), Vector2(x + 62, active_ticket_rect.position.y + 132), Vector2(x + 44, active_ticket_rect.position.y + 132)], [Color(trim.r, trim.g, trim.b, 0.18)]) # SA2_PER_FRAME_OK: bounded four-point gold stripe.
-		"golden_vault":
-			surface.draw_rect(active_ticket_rect.grow(-12), Color("#07060b"))
-			surface.draw_rect(active_ticket_rect.grow(-18), Color(trim.r, trim.g, trim.b, 0.16), false, 3)
-			for ring in range(5):
-				surface.draw_circle(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 114), 34.0 + float(ring) * 13.0, Color(accent.r, accent.g, accent.b, 0.10), false, 3)
-			surface.draw_circle(active_ticket_rect.get_center() + Vector2(0, 40), active_ticket_rect.size.x * 0.35, Color(trim.r, trim.g, trim.b, 0.11), false, 6)
-		"corner_crossword":
-			surface.draw_rect(active_ticket_rect.grow(-12), Color("#ef6677"))
-			_draw_halftone(surface, active_ticket_rect.grow(-18), Color("#7c1022"), 14, 2.2)
-			var grid_panel := Rect2(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.30, 92), Vector2(active_ticket_rect.size.x * 0.64, active_ticket_rect.size.y - 160))
-			surface.draw_rect(grid_panel, Color("#96d8da"))
-			for line in range(12):
-				surface.draw_line(grid_panel.position + Vector2(float(line) * grid_panel.size.x / 12.0, 0), grid_panel.position + Vector2(float(line) * grid_panel.size.x / 12.0, grid_panel.size.y), Color(ink.r, ink.g, ink.b, 0.18), 1)
-				surface.draw_line(grid_panel.position + Vector2(0, float(line) * grid_panel.size.y / 12.0), grid_panel.position + Vector2(grid_panel.size.x, float(line) * grid_panel.size.y / 12.0), Color(ink.r, ink.g, ink.b, 0.18), 1)
-			for line_index in range(9):
-				var offset := float(line_index) * 38.0
-				surface.draw_line(active_ticket_rect.position + Vector2(10 + offset, 92), active_ticket_rect.position + Vector2(10 + offset, active_ticket_rect.size.y - 20), Color(ink.r, ink.g, ink.b, 0.05), 1)
-		"four_card_bingo":
-			surface.draw_rect(active_ticket_rect.grow(-12), Color("#e9f8e6"))
-			_draw_halftone(surface, active_ticket_rect.grow(-16), accent, 19, 3.0)
-			for ball in range(14):
-				var point := active_ticket_rect.position + Vector2(16 + (ball * 71) % maxi(40, int(active_ticket_rect.size.x - 30)), 94 + (ball * 43) % maxi(60, int(active_ticket_rect.size.y - 115)))
-				surface.draw_circle(point, 9 + float(ball % 3), Color(accent.r, accent.g, accent.b, 0.12))
-		"high_roller_felt":
-			surface.draw_rect(active_ticket_rect.grow(-12), Color("#08261e"))
-			surface.draw_circle(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 160), active_ticket_rect.size.x * 0.45, Color("#175940"))
-			surface.draw_circle(active_ticket_rect.position + Vector2(active_ticket_rect.size.x * 0.5, 160), active_ticket_rect.size.x * 0.45, trim, false, 4)
-			for diamond in range(7):
-				var center := active_ticket_rect.position + Vector2(30 + (diamond * 46) % maxi(40, int(active_ticket_rect.size.x - 45)), 112 + (diamond % 2) * maxf(80, active_ticket_rect.size.y - 160))
-				surface.draw_polygon([center + Vector2(0, -12), center + Vector2(8, 0), center + Vector2(0, 12), center + Vector2(-8, 0)], [Color(trim.r, trim.g, trim.b, 0.18)])
-
-
-func _draw_ticket_latex_mask(surface, ticket: Dictionary, latex: Color, ink: Color, accent: Color, trim: Color) -> void:
-	var scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
-	var columns := maxi(24, int(scratch.get("mask_columns", DEFAULT_MASK_COLUMNS)))
-	var rows := maxi(18, int(scratch.get("mask_rows", DEFAULT_MASK_ROWS)))
-	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
-	if mask.size() != columns * rows:
-		return
-	var rect := _ticket_scratch_rect(ticket)
-	var sample_size := Vector2(rect.size.x / float(columns), rect.size.y / float(rows))
-	var foil_style := _scratch_foil_style(ticket, latex, ink, accent, trim)
-	# Runs of equal alpha keep the high-resolution buffer cheap to draw without copying it.
-	for row in range(rows):
-		var column := 0
-		while column < columns:
-			var alpha := int(mask[row * columns + column])
-			if alpha <= 0:
-				column += 1
-				continue
-			var run_end := column + 1
-			while run_end < columns and int(mask[row * columns + run_end]) == alpha:
-				run_end += 1
-			var run_rect := Rect2(rect.position + Vector2(float(column) * sample_size.x, float(row) * sample_size.y), Vector2(float(run_end - column) * sample_size.x + 0.5, sample_size.y + 0.5))
-			var run_alpha := float(alpha) / 255.0
-			_draw_scratch_foil_run(surface, ticket, run_rect, run_alpha, foil_style, row, column, sample_size)
-			column = run_end
-
-
-func _scratch_foil_style(ticket: Dictionary, latex: Color, ink: Color, accent: Color, trim: Color) -> Dictionary:
-	var type_id := str(ticket.get("type_id", ""))
-	match type_id:
-		"two_fer":
-			return {"id": "two_fer_blue_magenta_burst", "base": Color("#009ed3"), "tint": Color("#ff4aac"), "glint": Color("#d9fbff"), "mark": Color("#fff04d"), "pattern": "burst"}
-		"lucky_7s":
-			return {"id": "lucky_7s_green_gold_slots", "base": Color("#00a761"), "tint": Color("#f7d244"), "glint": Color("#fff5a7"), "mark": Color("#0a5330"), "pattern": "sevens"}
-		"tic_tac_gold":
-			return {"id": "tic_tac_gold_foil", "base": Color("#d6a320"), "tint": Color("#fff09b"), "glint": Color("#fff9cf"), "mark": Color("#7b2f00"), "pattern": "gold_hatch"}
-		"crossword_corner":
-			return {"id": "crossword_corner_cyan_letterfoil", "base": Color("#62d8ef"), "tint": Color("#fff0a0"), "glint": Color("#eaffff"), "mark": Color("#176985"), "pattern": "crossword_grid"}
-		"bonus_bingo":
-			return {"id": "bonus_bingo_red_ballfoil", "base": Color("#f05b5e"), "tint": Color("#ffd966"), "glint": Color("#fff2e8"), "mark": Color("#b01732"), "pattern": "bingo_dots"}
-		"high_roller_holdem":
-			return {"id": "high_roller_holdem_cardfoil", "base": Color("#12875d"), "tint": Color("#f0cf77"), "glint": Color("#fff4da"), "mark": Color("#101010"), "pattern": "card_suits"}
-		"golden_vault":
-			return {"id": "golden_vault_black_gold_security", "base": Color("#20190f"), "tint": Color("#f4c64a"), "glint": Color("#fff1a8"), "mark": Color("#be8a25"), "pattern": "vault_hatch"}
-	return {"id": "generic_colored_foil", "base": latex, "tint": trim, "glint": Color("#fff8dc"), "mark": accent, "pattern": "hatch"}
-
-
-func _draw_scratch_foil_run(surface, _ticket: Dictionary, run_rect: Rect2, run_alpha: float, style: Dictionary, row: int, column: int, sample_size: Vector2) -> void:
-	var base: Color = style.get("base", Color("#b9bcc8")) as Color
-	var tint: Color = style.get("tint", Color("#ffffff")) as Color
-	var glint: Color = style.get("glint", Color("#ffffff")) as Color
-	var mark: Color = style.get("mark", Color("#ffffff")) as Color
-	var pattern := str(style.get("pattern", "hatch"))
-	var texture := _scratch_foil_texture()
-	surface.draw_rect(run_rect, Color(base.r, base.g, base.b, run_alpha))
-	if texture != null:
-		surface.draw_texture_rect(texture, run_rect, true, Color(tint.r, tint.g, tint.b, 0.46 * run_alpha))
-	var phase := int((row * 5 + column * 3) % 8)
-	var can_detail := run_rect.size.x >= sample_size.x * 1.75 and run_rect.size.y >= 2.0
-	if not can_detail:
-		return
-	match pattern:
-		"burst":
-			if phase % 2 == 0:
-				surface.draw_line(run_rect.position + Vector2(0, run_rect.size.y * 0.70), run_rect.position + Vector2(run_rect.size.x, run_rect.size.y * 0.18), Color(glint.r, glint.g, glint.b, 0.38 * run_alpha), 1)
-			if phase % 4 == 0:
-				surface.draw_line(run_rect.position + Vector2(run_rect.size.x * 0.15, 0), run_rect.position + Vector2(run_rect.size.x * 0.38, run_rect.size.y), Color(mark.r, mark.g, mark.b, 0.30 * run_alpha), 1)
-		"sevens":
-			if phase % 3 == 0:
-				surface.draw_line(run_rect.position + Vector2(2, run_rect.size.y * 0.25), run_rect.position + Vector2(run_rect.size.x - 2, run_rect.size.y * 0.25), Color(glint.r, glint.g, glint.b, 0.28 * run_alpha), 1)
-				surface.draw_line(run_rect.position + Vector2(run_rect.size.x * 0.56, run_rect.size.y * 0.25), run_rect.position + Vector2(run_rect.size.x * 0.42, run_rect.size.y * 0.88), Color(mark.r, mark.g, mark.b, 0.26 * run_alpha), 1)
-		"gold_hatch":
-			surface.draw_line(run_rect.position + Vector2(0, run_rect.size.y), run_rect.position + Vector2(run_rect.size.x, 0), Color(glint.r, glint.g, glint.b, 0.28 * run_alpha), 1)
-			if phase % 4 == 1:
-				surface.draw_line(run_rect.position + Vector2(run_rect.size.x * 0.10, 0), run_rect.position + Vector2(run_rect.size.x * 0.64, run_rect.size.y), Color(mark.r, mark.g, mark.b, 0.18 * run_alpha), 1)
-		"crossword_grid":
-			if row % 3 == 0:
-				surface.draw_line(run_rect.position + Vector2(0, run_rect.size.y * 0.50), run_rect.position + Vector2(run_rect.size.x, run_rect.size.y * 0.50), Color(mark.r, mark.g, mark.b, 0.24 * run_alpha), 1)
-			if phase % 4 == 0:
-				surface.draw_line(run_rect.position + Vector2(run_rect.size.x * 0.33, 0), run_rect.position + Vector2(run_rect.size.x * 0.33, run_rect.size.y), Color(glint.r, glint.g, glint.b, 0.22 * run_alpha), 1)
-		"bingo_dots":
-			if phase % 2 == 0:
-				surface.draw_circle(run_rect.get_center(), minf(run_rect.size.x, maxf(2.0, run_rect.size.y)) * 0.24, Color(glint.r, glint.g, glint.b, 0.22 * run_alpha))
-			if phase % 5 == 0:
-				surface.draw_circle(run_rect.position + Vector2(run_rect.size.x * 0.22, run_rect.size.y * 0.48), minf(run_rect.size.x, maxf(2.0, run_rect.size.y)) * 0.18, Color(mark.r, mark.g, mark.b, 0.20 * run_alpha))
-		"card_suits":
-			if phase % 3 == 0:
-				var center := run_rect.get_center()
-				var suit := [center + Vector2(0, -run_rect.size.y * 0.28), center + Vector2(run_rect.size.y * 0.22, 0), center + Vector2(0, run_rect.size.y * 0.28), center + Vector2(-run_rect.size.y * 0.22, 0)]
-				surface.draw_polygon(suit, [Color(glint.r, glint.g, glint.b, 0.26 * run_alpha)])
-			else:
-				surface.draw_line(run_rect.position + Vector2(0, run_rect.size.y * 0.18), run_rect.position + Vector2(run_rect.size.x, run_rect.size.y * 0.82), Color(mark.r, mark.g, mark.b, 0.14 * run_alpha), 1)
-		"vault_hatch":
-			surface.draw_line(run_rect.position + Vector2(0, run_rect.size.y * 0.18), run_rect.position + Vector2(run_rect.size.x, run_rect.size.y * 0.18), Color(tint.r, tint.g, tint.b, 0.26 * run_alpha), 1)
-			if phase % 3 == 0:
-				surface.draw_rect(Rect2(run_rect.position + Vector2(run_rect.size.x * 0.15, run_rect.size.y * 0.42), Vector2(run_rect.size.x * 0.70, maxf(1.0, run_rect.size.y * 0.18))), Color(mark.r, mark.g, mark.b, 0.24 * run_alpha))
-		_:
-			surface.draw_line(run_rect.position + Vector2(0, run_rect.size.y), run_rect.position + Vector2(run_rect.size.x, 0), Color(glint.r, glint.g, glint.b, 0.24 * run_alpha), 1)
-
-
-func _scratch_foil_texture() -> Texture2D:
-	if scratch_foil_texture_cache != null:
-		return scratch_foil_texture_cache
-	var resource := ResourceLoader.load(SCRATCH_FOIL_TEXTURE, "Texture2D", ResourceLoader.CACHE_MODE_REUSE)
-	scratch_foil_texture_cache = resource as Texture2D
-	return scratch_foil_texture_cache
-
-
-func _draw_brush_feedback(surface, state: Dictionary, latex: Color) -> void:
-	if not bool(state.get("scratch_drag_active", false)):
-		return
-	var point: Vector2 = state.get("scratch_last_pointer", Vector2.ZERO)
-	var drunk_level := maxi(0, int(state.get("scratch_drunk_level", 0)))
-	if drunk_level > 0 and not bool(state.get("scratch_reduce_motion", false)):
-		var time := float(surface.surface_render_elapsed_sec)
-		point += Vector2(sin(time * 9.0), cos(time * 7.0)) * minf(4.0, float(drunk_level) * 0.08)
-	var radius := maxf(8.0, float(state.get("scratch_brush_radius", DEFAULT_BRUSH_RADIUS)))
-	surface.draw_circle(point, radius, Color(1.0, 1.0, 1.0, 0.12), false, 2)
-	surface.draw_circle(point + Vector2(-radius * 0.25, -radius * 0.18), 2.0, Color(latex.r, latex.g, latex.b, 0.85))
-
-
-func _draw_sweep_feedback(surface, state: Dictionary, trim: Color) -> void:
-	if bool(state.get("scratch_reduce_motion", false)) or not bool(surface.surface_animation_active(SWEEP_CHANNEL)):
-		return
-	var progress: float = float(surface.surface_animation_progress(SWEEP_CHANNEL))
-	var ticket := _dict_ref(state.get("scratch_ticket", {}))
-	var region_id := str(surface.surface_animation_metadata(SWEEP_CHANNEL).get("region", ""))
-	var rect := _ticket_scratch_rect(ticket)
-	for region_value in _dictionary_array(ticket.get("scratch_regions", [])):
-		var region: Dictionary = region_value
-		if str(region.get("id", "")) == region_id:
-			rect = _region_rect(region, active_scratch_rect).grow(5.0 * (1.0 - progress))
-			break
-	surface.draw_rect(rect, Color(trim.r, trim.g, trim.b, 0.34 * (1.0 - progress)), false, 3)
-
-
-func _ticket_play_label(type_id: String, _mechanic: Dictionary) -> String:
-	match type_id:
-		"two_fer": return "MATCH ANY TWO OF THREE SYMBOLS"
-		"lucky_7s": return "MATCH NUMBERS — EVERY 7 HAS POWER"
-		"tic_tac_gold": return "COMPLETE WIN LINES — CHECK THE BONUS"
-		"crossword_corner": return "REVEAL LETTERS — COMPLETE THREE OR MORE WORDS"
-		"bonus_bingo": return "CALL 24 NUMBERS — FINISH LINES OR BLACKOUT"
-		"high_roller_holdem": return "BEAT THE DEALER — WILD AND POCKET ACES PAY"
-		"golden_vault": return "CLIMB THE LADDER — BREAK THE FINAL VAULT"
-	return "SCRATCH THE PRINTED PLAY AREAS"
-
-
-func _ticket_prize_legend(ticket: Dictionary) -> String:
-	match str(ticket.get("type_id", "")):
-		"two_fer": return "PAIR: CLOVER $2, BELL $4, STAR $10, 2FER $50"
-		"lucky_7s": return "MATCH PAYS PRIZE; ANY 7 IS SPECIAL"
-		"tic_tac_gold": return "WIN LINES ADD; BONUS GOLD PAYS"
-		"crossword_corner": return "3+ WORDS PAY MORE AS WORD COUNT RISES"
-		"bonus_bingo": return "LINES PAY; BLACKOUTS PAY BIG"
-		"high_roller_holdem": return "BETTER HAND WINS; POCKET ACES WIN ALL"
-		"golden_vault": return "LADDER x MULTIPLIER; VAULT IS TOP"
-	return "SCRATCH ALL BOXES, THEN FILE THE RESULT"
-
-
-func _draw_ticket_rules(surface, ticket: Dictionary, ink: Color, accent: Color, trim: Color) -> void:
-	var mechanic := _dict_ref(ticket.get("mechanic", {}))
-	var rules_height := 54.0 if active_ticket_rect.size.y >= 300.0 else 42.0
-	var rules_rect := Rect2(active_ticket_rect.position + Vector2(14, active_ticket_rect.size.y - rules_height - 7), Vector2(active_ticket_rect.size.x - 28, rules_height))
-	surface.draw_rect(rules_rect, Color(0.0, 0.0, 0.0, 0.09))
-	surface.draw_rect(rules_rect, Color(accent.r, accent.g, accent.b, 0.65), false, 1)
-	surface.surface_label(_ticket_play_label(str(ticket.get("type_id", "")), mechanic).left(64), rules_rect.position + Vector2(7, 13), 7 if active_ticket_rect.size.x < 330 else 8, ink)
-	surface.surface_label(_ticket_prize_legend(ticket).left(64), rules_rect.position + Vector2(7, 28), 6 if active_ticket_rect.size.x < 330 else 7, ink)
-	var active_serial := str(ticket.get("id", "000000")).right(12).to_upper()
-	if rules_height >= 50.0:
-		surface.surface_label("VOID IF ALTERED  -  %s" % active_serial, rules_rect.position + Vector2(7, rules_height - 5), 5, Color(ink.r, ink.g, ink.b, 0.72))
-	surface.draw_rect(Rect2(active_ticket_rect.position + Vector2(4, active_ticket_rect.size.y - 3), Vector2(active_ticket_rect.size.x - 8, 3)), trim)
+	surface.draw_rect(active_ticket_rect, Color(0.0, 0.0, 0.0, 0.16))
+	surface.draw_rect(active_ticket_rect, Color("#7d6249"), false, 2)
+	surface.surface_label_centered("SELECT A STOCKED ROW", active_ticket_rect, 11, C_SOFT)
 
 
 func _draw_surface_hud(surface, state: Dictionary) -> void:
@@ -2872,26 +1530,24 @@ func _draw_surface_hud(surface, state: Dictionary) -> void:
 	surface.draw_rect(STATUS_HUD_RECT, Color("#171313"))
 	surface.draw_rect(STATUS_HUD_RECT, Color("#7d6249"), false, 2)
 	var name := str(ticket.get("display_name", "SELECT A TICKET")).to_upper()
-	var price := int(ticket.get("price", 0))
-	surface.surface_label(name.left(22), STATUS_HUD_RECT.position + Vector2(10, 22), 9, C_WHITE)
-	surface.surface_label("PRICE $%d" % price if price > 0 else "SELECT ROW", STATUS_HUD_RECT.position + Vector2(145, 22), 8, C_YELLOW)
-	surface.surface_label("DUE $%d" % pending, STATUS_HUD_RECT.position + Vector2(215, 22), 8, Color("#62e3a2") if pending > 0 else C_SOFT)
-	var queue_count := int(state.get("scratch_queue_count", 0))
-	surface.surface_label("QUEUE %d" % queue_count, STATUS_HUD_RECT.position + Vector2(286, 22), 8, C_YELLOW if queue_count > 0 else C_SOFT)
-	var clerk_rect := Rect2(STATUS_HUD_RECT.end - Vector2(166, 29), Vector2(84, 24))
-	surface.draw_rect(clerk_rect, Color("#16452f") if pending > 0 else Color("#25211d"))
-	surface.draw_rect(clerk_rect, Color("#62e3a2") if pending > 0 else Color("#756858"), false, 1)
-	surface.surface_label_centered("CASH AT CLERK", clerk_rect, 7, C_WHITE if pending > 0 else C_SOFT)
+	if bool(ticket.get("result_ready", false)):
+		name = "READY: CLICK TICKET"
+	surface.surface_label(name.left(21), STATUS_HUD_RECT.position + Vector2(9, 22), 8, C_WHITE)
+	surface.surface_label("$%d" % int(ticket.get("price", 0)) if not ticket.is_empty() else "--", STATUS_HUD_RECT.position + Vector2(133, 22), 8, C_YELLOW)
+	surface.surface_label("DUE $%d" % pending, STATUS_HUD_RECT.position + Vector2(177, 22), 8, Color("#62e3a2") if pending > 0 else C_SOFT)
+	surface.surface_label("Q %d" % int(state.get("scratch_queue_count", 0)), STATUS_HUD_RECT.position + Vector2(244, 22), 8, C_YELLOW)
 	if ticket.is_empty():
 		return
-	if bool(ticket.get("result_ready", false)):
-		surface.surface_label("RESULT READY - CLICK TICKET", STATUS_HUD_RECT.position + Vector2(10, 40), 7, Color("#69efb3"))
-	var all_rect := Rect2(STATUS_HUD_RECT.end - Vector2(78, 29), Vector2(72, 24))
-	var reduced := bool(state.get("scratch_reduce_motion", false))
-	surface.draw_rect(all_rect, Color("#613047") if not reduced else Color("#17644c"))
-	surface.draw_rect(all_rect, C_PINK if not reduced else Color("#69efb3"), false, 2)
-	surface.surface_label_centered("SCRATCH ALL", all_rect, 7, C_WHITE)
+	var all_rect := Rect2(STATUS_HUD_RECT.position + Vector2(306, 5), Vector2(70, 24))
+	surface.draw_rect(all_rect, Color("#17644c") if bool(state.get("scratch_reduce_motion", false)) else Color("#613047"))
+	surface.draw_rect(all_rect, Color("#69efb3") if bool(state.get("scratch_reduce_motion", false)) else C_PINK, false, 2)
+	surface.surface_label_centered("CLEAR ALL", all_rect, 7, C_WHITE)
 	surface.surface_add_hit(all_rect, SCRATCH_ALL_ACTION, 0)
+	var trash_rect := Rect2(STATUS_HUD_RECT.position + Vector2(382, 5), Vector2(72, 24))
+	surface.draw_rect(trash_rect, Color("#393f45"))
+	surface.draw_rect(trash_rect, Color("#c6cdd3"), false, 2)
+	surface.surface_label_centered("TRASH", trash_rect, 7, C_WHITE)
+	surface.surface_add_hit(trash_rect, DISCARD_TICKET_ACTION, 0)
 
 
 func _draw_mini_scratch_ticket(surface, ticket: Dictionary, rect: Rect2, alpha: float) -> void:
@@ -2914,13 +1570,13 @@ func _draw_dispense_animation(surface, state: Dictionary) -> void:
 	var ticket := _dict_ref(state.get("scratch_ticket", {}))
 	if ticket.is_empty():
 		return
-	var slot := clampi(int(surface.surface_animation_metadata(DISPENSE_CHANNEL).get("slot", 0)), 0, 3)
+	var slot := clampi(int(surface.surface_animation_metadata(DISPENSE_CHANNEL).get("slot", 0)), 0, 6)
 	var progress := _ease_out_cubic(surface.surface_animation_progress(DISPENSE_CHANNEL))
-	var source := MACHINE_RECT.position + Vector2(170, 106 + slot * 59)
-	var chute := MACHINE_RECT.position + Vector2(MACHINE_RECT.size.x * 0.5, 381)
+	var source := MACHINE_RECT.position + Vector2(178, 94 + slot * 32)
+	var chute := MACHINE_RECT.position + Vector2(104, 380)
 	var target := active_ticket_rect.get_center()
 	var position := source.lerp(chute, clampf(progress * 2.0, 0.0, 1.0)) if progress < 0.5 else chute.lerp(target, clampf((progress - 0.5) * 2.0, 0.0, 1.0))
-	var size := Vector2(80, 56).lerp(active_ticket_rect.size * 0.82, progress)
+	var size := Vector2(74, 48).lerp(active_ticket_rect.size * 0.82, progress)
 	_draw_mini_scratch_ticket(surface, ticket, Rect2(position - size * 0.5, size), 1.0)
 	surface.draw_rect(Rect2(position - size * 0.5, size).grow(3), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.25 * (1.0 - progress)), false, 3)
 
@@ -2932,13 +1588,14 @@ func _draw_file_animation(surface, state: Dictionary) -> void:
 	if ticket.is_empty():
 		return
 	var progress := _ease_in_out_cubic(surface.surface_animation_progress(FILE_CHANNEL))
+	var discarded := bool(ticket.get("discarded_unfinished", false))
 	var winner := str(state.get("scratch_last_settled_pile", "")) == "winner_pile"
-	var width: float = 110.0
-	var target: Vector2 = STATUS_HUD_RECT.position + Vector2(294.0, 2.0) if winner else STATUS_HUD_RECT.position + Vector2(382.0, 2.0)
-	var source := active_ticket_rect.position + Vector2(24, 72)
+	var basket := MachineRendererScript.waste_basket_rect(MACHINE_RECT)
+	var target := basket.get_center() if discarded or not winner else STATUS_HUD_RECT.position + Vector2(210, 16)
+	var source := active_ticket_rect.get_center()
 	var position := source.lerp(target, progress)
-	var size := Vector2(244, 280).lerp(Vector2(width - 22, 38), progress)
-	_draw_mini_scratch_ticket(surface, ticket, Rect2(position, size), 1.0 - progress * 0.25)
+	var size := active_ticket_rect.size.lerp(Vector2(54, 38), progress)
+	_draw_mini_scratch_ticket(surface, ticket, Rect2(position - size * 0.5, size), 1.0 - progress * 0.35)
 
 
 func _ease_out_cubic(value: float) -> float:
@@ -2949,7 +1606,6 @@ func _ease_out_cubic(value: float) -> float:
 func _ease_in_out_cubic(value: float) -> float:
 	var t := clampf(value, 0.0, 1.0)
 	return 4.0 * t * t * t if t < 0.5 else 1.0 - pow(-2.0 * t + 2.0, 3.0) * 0.5
-
 
 func _xray_peeks(ticket: Dictionary, count: int, rng: RngStream) -> Array:
 	var spots := _dictionary_array(ticket.get("spots", []))
@@ -2985,6 +1641,18 @@ func _machine_empty_rules(stock: Array) -> String:
 		if typeof(slot_value) == TYPE_DICTIONARY and int((slot_value as Dictionary).get("remaining", 0)) > 0:
 			return "Buy a ticket, scratch each silver box, then file the result."
 	return "This machine is sold out for now. Check another store or come back after restock."
+
+
+func _ticket_play_label(type_id: String, _mechanic: Dictionary) -> String:
+	match type_id:
+		"two_fer": return "Match any two symbols."
+		"lucky_7s": return "Match a winning number; every 7 has power."
+		"tic_tac_gold": return "Complete win lines and check the bonus."
+		"crossword_corner": return "Reveal 18 letters and complete at least three words."
+		"bonus_bingo": return "Call 24 numbers and complete lines or a blackout."
+		"high_roller_holdem": return "Beat the dealer with the better five-card hand."
+		"golden_vault": return "Match ladder rungs, multiply, and open the vault."
+	return "Scratch every printed result area."
 
 
 func _normalize_machine_state(machine: Dictionary) -> void:
@@ -3045,6 +1713,14 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 		states[get_id()] = generated
 		environment["game_states"] = states
 	return generated
+
+
+func _machine_state_for_pointer(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var value: Variant = states.get(get_id(), {})
+	if typeof(value) == TYPE_DICTIONARY and not (value as Dictionary).is_empty():
+		return value as Dictionary
+	return _ensure_machine_state(run_state, environment, true)
 
 
 func _read_machine_state(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -3221,27 +1897,12 @@ func _pending_payout(machine: Dictionary) -> int:
 
 
 func _ticket_complete(ticket: Dictionary) -> bool:
-	var regions_value: Variant = ticket.get("scratch_regions", [])
-	if typeof(regions_value) == TYPE_ARRAY and not (regions_value as Array).is_empty():
-		for region_value in regions_value as Array:
-			if typeof(region_value) != TYPE_DICTIONARY or not bool((region_value as Dictionary).get("revealed", false)):
-				return false
-		return true
-	var sections_value: Variant = ticket.get("sections", [])
-	if typeof(sections_value) == TYPE_ARRAY and not (sections_value as Array).is_empty():
-		for section_value in sections_value as Array:
-			if typeof(section_value) != TYPE_DICTIONARY or not bool((section_value as Dictionary).get("revealed", false)):
-				return false
-		return true
-	return false
+	return MaskScript.ticket_complete(ticket)
 
 
 func _ticket_scratch_rect(_ticket: Dictionary) -> Rect2:
 	var size_id := str(_ticket.get("size_id", "medium_square"))
-	var rect := _ticket_rect_for_size(size_id, false)
-	if _has_production_ticket_art(str(_ticket.get("type_id", ""))):
-		return _production_scratch_rect_for_ticket(rect)
-	return _scratch_rect_for_ticket_rect(size_id, rect)
+	return _ticket_rect_for_size(size_id, false)
 
 
 func _ticket_rect_for_size(size_id: String, _compact: bool = false) -> Rect2:
@@ -3263,70 +1924,9 @@ func _size_orientation(size_id: String) -> String:
 	return "balanced"
 
 
-func _scratch_rect_for_ticket_rect(size_id: String, rect: Rect2) -> Rect2:
-	var header := 100.0
-	var footer := 69.0
-	var side := 22.0
-	if size_id == "small_rectangle":
-		header = 76.0
-		footer = 49.0
-		side = 24.0
-	elif size_id == "tall":
-		side = 18.0
-	return Rect2(rect.position + Vector2(side, header), Vector2(rect.size.x - side * 2.0, rect.size.y - header - footer))
-
-
 func _configure_active_ticket_layout(ticket: Dictionary, compact: bool) -> void:
 	var size_id := str(ticket.get("size_id", "medium_square")) if not ticket.is_empty() else "medium_square"
 	active_ticket_rect = _ticket_rect_for_size(size_id, compact)
-	active_scratch_rect = _production_scratch_rect_for_ticket(active_ticket_rect) if _has_production_ticket_art(str(ticket.get("type_id", ""))) else _scratch_rect_for_ticket_rect(size_id, active_ticket_rect)
-
-
-func _has_production_ticket_art(type_id: String) -> bool:
-	return PRODUCTION_TICKET_ART.has(type_id)
-
-
-func _production_scratch_rect_for_ticket(rect: Rect2) -> Rect2:
-	return rect
-
-
-func _mask_sample_normalized(sample_index: int, columns: int, rows: int) -> Vector2:
-	return Vector2((float(sample_index % columns) + 0.5) / float(columns), (float(sample_index / columns) + 0.5) / float(rows))
-
-
-func _normalized_rect_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY or (value as Array).size() < 4:
-		return [0.0, 0.0, 1.0, 1.0]
-	var source := value as Array
-	return [clampf(float(source[0]), 0.0, 1.0), clampf(float(source[1]), 0.0, 1.0), clampf(float(source[2]), 0.01, 1.0), clampf(float(source[3]), 0.01, 1.0)]
-
-
-func _region_index_at_normalized(regions: Array, normalized: Vector2) -> int:
-	for index in range(regions.size()):
-		var region: Dictionary = regions[index]
-		var values: Array = region.get("rect", []) if typeof(region.get("rect", [])) == TYPE_ARRAY else []
-		if values.size() < 4:
-			continue
-		var rect := Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
-		if rect.has_point(normalized):
-			return index
-	return -1
-
-
-func _region_rect(region: Dictionary, play_rect: Rect2) -> Rect2:
-	var values: Array = region.get("art_rect", region.get("rect", [])) if typeof(region.get("art_rect", region.get("rect", []))) == TYPE_ARRAY else []
-	if values.size() < 4:
-		values = [0.0, 0.0, 1.0, 1.0]
-	return Rect2(play_rect.position + Vector2(float(values[0]) * play_rect.size.x, float(values[1]) * play_rect.size.y), Vector2(float(values[2]) * play_rect.size.x, float(values[3]) * play_rect.size.y))
-
-
-func _clear_mask_region(mask: Array, regions: Array, region_index: int, columns: int, rows: int) -> void:
-	for sample_index in range(mask.size()):
-		if int(mask[sample_index]) <= 0:
-			continue
-		if _region_index_at_normalized(regions, _mask_sample_normalized(sample_index, columns, rows)) == region_index:
-			mask[sample_index] = 0
-
 
 func _reduce_motion_enabled(ui_state: Dictionary) -> bool:
 	if bool(ui_state.get("reduce_motion", false)):
@@ -3348,15 +1948,6 @@ func _scratch_animation_channels(machine: Dictionary, reduce_motion: bool) -> Ar
 		GameModule.surface_animation_channel(FILE_CHANNEL, str(machine.get("last_file_id", "")), FILE_DURATION_MSEC, int(machine.get("file_started_msec", 0)), {"metadata": {"pile": str(machine.get("last_settled_pile", ""))}}),
 		GameModule.surface_animation_channel(SWEEP_CHANNEL, str(machine.get("last_sweep_id", "")), 0 if reduce_motion else SWEEP_DURATION_MSEC, int(machine.get("sweep_started_msec", 0)), {"metadata": {"region": str(machine.get("last_sweep_section", ""))}}),
 	]
-
-
-func _distance_squared_to_segment(point: Vector2, from: Vector2, to: Vector2) -> float:
-	var delta := to - from
-	var length_squared := delta.length_squared()
-	if length_squared <= 0.0001:
-		return point.distance_squared_to(from)
-	var t := clampf((point - from).dot(delta) / length_squared, 0.0, 1.0)
-	return point.distance_squared_to(from + delta * t)
 
 
 func _crumbs_for_segment(from: Vector2, to: Vector2, erased_samples: int) -> Array:
