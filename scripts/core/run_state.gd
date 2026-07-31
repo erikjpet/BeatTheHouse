@@ -5477,7 +5477,7 @@ func economy() -> String:
 
 # Returns whether a route can currently be traveled without mutating state.
 func travel_route_status(route_data: Dictionary) -> Dictionary:
-	var cost := maxi(0, int(route_data.get("cost", 0)))
+	var cost := _travel_route_cost(route_data)
 	var status := {
 		"available": true,
 		"disabled_reason": "",
@@ -5532,6 +5532,17 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 		status["available"] = false
 		status["disabled_reason"] = "Not enough bankroll for this route."
 	return _finalize_travel_route_status(status, route_data)
+
+
+func _travel_route_cost(route_data: Dictionary) -> int:
+	var base_cost := maxi(0, int(route_data.get("cost", 0)))
+	var current_archetype_id := str(current_environment.get("archetype_id", current_environment.get("id", ""))).strip_edges()
+	if current_archetype_id.is_empty():
+		return base_cost
+	var free_from_archetypes := _string_array(_copy_array(route_data.get("free_from_archetypes", [])))
+	if free_from_archetypes.has(current_archetype_id):
+		return 0
+	return base_cost
 
 
 func _route_locked_hint_enabled(route_data: Dictionary) -> bool:

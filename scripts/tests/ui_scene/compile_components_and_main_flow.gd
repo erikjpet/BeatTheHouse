@@ -5185,6 +5185,7 @@ func _run() -> void:
 		"id": "fixture_ui_service",
 		"display_name": "Fixture Service",
 		"description": "A contract fixture service resolved through result deltas.",
+		"cost": 8,
 		"deltas": {
 			"bankroll_delta": 3,
 			"flags_set": {"fixture_ui_service_used": true},
@@ -5249,12 +5250,28 @@ func _run() -> void:
 		push_error("Selecting a service hook mutated serialized RunState.")
 		quit(1)
 		return
-	if not bool(app.call("confirm_selected_service_hook")):
-		push_error("Foundation UI rejected a supported service hook result.")
+	var service_bankroll_before := hook_run_state.bankroll
+	var service_definition := hook_library.service(service_id)
+	var service_status := hook_run_state.service_hook_status(service_definition)
+	var expected_service_resolver: RunActionService = RunActionServiceScript.new()
+	expected_service_resolver.setup(hook_library, hook_run_state)
+	var service_deltas := expected_service_resolver.hook_result_deltas(service_definition, "service", service_status)
+	var expected_service_delta := int(service_deltas.get("bankroll_delta", 0))
+	if not bool(app.call("activate_interactable_object", str(service_interactable.get("object_id", "")))):
+		push_error("Foundation UI rejected a supported service hook result through object activation.")
 		quit(1)
 		return
+	var duplicate_service_accepted := bool(app.call("activate_interactable_object", str(service_interactable.get("object_id", ""))))
 	await process_frame
+	if duplicate_service_accepted:
+		push_error("Foundation UI accepted a duplicate service activation in the same frame.")
+		quit(1)
+		return
 	var service_result_state: Dictionary = app.call("serialized_run_state")
+	if hook_run_state.bankroll != service_bankroll_before + expected_service_delta:
+		push_error("Supported service hook object activation charged more than once; bankroll %d expected %d." % [hook_run_state.bankroll, service_bankroll_before + expected_service_delta])
+		quit(1)
+		return
 	if not bool(service_result_state.get("flags", service_result_state.get("narrative_flags", {})).get("fixture_ui_service_used", false)):
 		push_error("Supported service hook did not apply flags through result-delta.")
 		quit(1)

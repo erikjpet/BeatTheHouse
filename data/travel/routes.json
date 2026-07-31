@@ -114,6 +114,9 @@
     "destination_archetype": "delta_queen",
     "description": "Riverboat felt and brass.",
     "cost": 12,
+    "free_from_archetypes": [
+      "beach"
+    ],
     "risk": "medium",
     "distance": "far",
     "risk_decay": 62,
@@ -135,6 +138,9 @@
     "destination_archetype": "beach",
     "description": "Salt air. Fewer witnesses.",
     "cost": 3,
+    "free_from_archetypes": [
+      "delta_queen"
+    ],
     "risk": "low",
     "distance": "near",
     "risk_decay": 35

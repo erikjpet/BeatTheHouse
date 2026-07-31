@@ -1965,6 +1965,34 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 		failures.append("Confirmed travel did not apply route risk through result-delta.")
 	if run_state.story_log.is_empty() or str((run_state.story_log[run_state.story_log.size() - 1] as Dictionary).get("type", "")) != "travel":
 		failures.append("Confirmed travel did not record a travel story entry.")
+	var riverboat_route := library.route("delta_queen")
+	var beach_free_route := library.route("beach")
+	if riverboat_route.is_empty() or beach_free_route.is_empty():
+		failures.append("Travel route fixtures are missing: delta_queen/beach.")
+	else:
+		var riverboat_run: RunState = RunStateScript.new()
+		riverboat_run.start_new("TRAVEL-RIVERBOAT-BEACH")
+		riverboat_run.bankroll = 1
+		riverboat_run.set_environment({"id": "fixture_riverboat", "archetype_id": "delta_queen", "turns": 0})
+		var beach_status := riverboat_run.travel_route_status(beach_free_route)
+		if int(beach_status.get("cost", -1)) != 0 or not bool(beach_status.get("available", false)):
+			failures.append("Travel from the River Queen to the Beach should be free and available even with low bankroll.")
+		var beach_run: RunState = RunStateScript.new()
+		beach_run.start_new("TRAVEL-BEACH-RIVERBOAT")
+		beach_run.bankroll = 1
+		beach_run.environment_history.append({"id": "fixture_riverboat_previous", "archetype_id": "delta_queen"})
+		beach_run.set_environment({"id": "fixture_beach", "archetype_id": "beach", "turns": 0})
+		var riverboat_status := beach_run.travel_route_status(riverboat_route)
+		if int(riverboat_status.get("cost", -1)) != 0 or not bool(riverboat_status.get("available", false)):
+			failures.append("Travel from the Beach to the River Queen should be free and available during the boarding window even with low bankroll.")
+		var outside_run: RunState = RunStateScript.new()
+		outside_run.start_new("TRAVEL-BEACH-PAID-ELSEWHERE")
+		var normal_beach_cost := maxi(0, int(beach_free_route.get("cost", 0)))
+		outside_run.bankroll = maxi(0, normal_beach_cost - 1)
+		outside_run.set_environment({"id": "fixture_bar", "archetype_id": "bar", "turns": 0})
+		var paid_beach_status := outside_run.travel_route_status(beach_free_route)
+		if normal_beach_cost <= 0 or bool(paid_beach_status.get("available", true)) or int(paid_beach_status.get("cost", 0)) != normal_beach_cost:
+			failures.append("Beach travel should keep its normal paid route cost outside the River Queen.")
 
 	var locked_run: RunState = RunStateScript.new()
 	locked_run.start_new("TRAVEL-LOCKED")
