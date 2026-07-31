@@ -741,8 +741,9 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	if bet_credits <= 0 or bet_credits > affordable:
 		return _empty_result(action_id, 0, environment, "You do not have enough credits to deal.")
 
-	# The deal is the deterministic opening; the draw pool is the rest of that deck,
-	# shuffled with the injected stream so replacements are random and unique.
+	# The deal is the deterministic opening. One-hand play draws from the original
+	# remaining deck; multi-hand play follows real Triple Play rules: every result
+	# hand gets its own independent 52-card deck with only the held cards removed.
 	var deck: Array = _deal_deck(run_state, state)
 	var opening: Array = _slice_cards(deck, 0, HAND_SIZE)
 	var holds: Array = _index_array(ui.get("holds", []))
@@ -759,7 +760,6 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		holdout_margin = int(holdout_challenge.get("margin_msec", 0))
 		holdout_applied = _holdout_grade_applies(holdout_grade)
 		holdout_outcome = _holdout_skill_outcome(holdout_grade)
-	var draw_base: Array = _deck_without_cards(_base_deck(variant), opening)
 	var final_hands: Array = []
 	var hand_results: Array = []
 	var total_gross := 0
@@ -768,8 +768,21 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	var best_index := 0
 	var best_value := -999999
 	var luck_bonus := clampi(run_state.luck_win_chance_bonus() + _item_bonus("win_chance", run_state, is_cheat), 0, 35)
+	var draw_removed_cards: Array = _draw_removed_cards_for_rule(opening, holds, hand_count)
+	var draw_base: Array = _deck_without_cards(_base_deck(variant), draw_removed_cards)
+	var draw_rule := "single_remaining_deck" if hand_count <= 1 else "independent_deck_minus_held"
 	for hand_index in range(hand_count):
-		var pool: Array = CardShoeScript.shuffle_cards(draw_base, rng)
+		var draw_stream_key := "draw:%s:%d:%d:%s" % [
+			str(state.get("cabinet_key", "")),
+			int(state.get("hands_played", 0)),
+			hand_index,
+			JSON.stringify(holds),
+		]
+		var hand_rng: RngStream = rng.fork(draw_stream_key)
+		# Advance the parent action stream once per hand while keeping each hand's
+		# completion deck independently seeded and replayable.
+		rng.randi_range(1, RngStream.MODULUS - 1)
+		var pool: Array = CardShoeScript.shuffle_cards(draw_base, hand_rng)
 		var final_hand: Array = opening.duplicate(true)
 		var drawn_indices: Array = []
 		var pool_cursor := 0
@@ -811,6 +824,10 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 			"bonus_label": str(bonus_layer.get("label", "")),
 			"scoring_indices": _index_array(descriptor.get("scoring_indices", [])),
 			"drawn_indices": drawn_indices,
+			"draw_deck_rule": draw_rule,
+			"draw_stream_key": draw_stream_key,
+			"draw_pool_size": draw_base.size(),
+			"draw_removed_cards": draw_removed_cards.duplicate(true),
 		})
 	if final_hands.is_empty():
 		return _empty_result(action_id, bet_credits, environment, "The machine failed to draw a hand.")
@@ -1854,6 +1871,20 @@ func _deck_without_cards(deck: Array, cards: Array) -> Array:
 				result.remove_at(i)
 				break
 	return result
+
+
+func _draw_removed_cards_for_rule(opening: Array, holds: Array, hand_count: int) -> Array:
+	var removed: Array = []
+	if hand_count <= 1:
+		return opening
+	for hold_value in holds:
+		var hold_index := int(hold_value)
+		if hold_index < 0 or hold_index >= opening.size():
+			continue
+		var card: Dictionary = opening[hold_index] if typeof(opening[hold_index]) == TYPE_DICTIONARY else {}
+		if not card.is_empty():
+			removed.append(card)
+	return removed
 
 
 func _same_card(a: Dictionary, b: Dictionary) -> bool:

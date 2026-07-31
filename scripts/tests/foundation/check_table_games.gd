@@ -3066,6 +3066,13 @@ func _check_video_poker_multi_hand(game: GameModule, failures: Array) -> void:
 		if hand.size() >= 2 and first_hand.size() >= 2:
 			if JSON.stringify([hand[0], hand[1]]) != JSON.stringify([first_hand[0], first_hand[1]]):
 				failures.append("Video poker multi-hand did not replicate held cards across hands.")
+		if str(row.get("draw_deck_rule", "")) != "independent_deck_minus_held":
+			failures.append("Video poker multi-hand result did not report the independent deck-minus-held rule.")
+		if int(row.get("draw_pool_size", 0)) != 50:
+			failures.append("Video poker multi-hand draw pool was not 52 minus the two held cards.")
+		var removed_cards: Array = row.get("draw_removed_cards", []) if typeof(row.get("draw_removed_cards", [])) == TYPE_ARRAY else []
+		if removed_cards.size() != 2 or JSON.stringify(removed_cards) != JSON.stringify([first_hand[0], first_hand[1]]):
+			failures.append("Video poker multi-hand draw did not remove exactly the held cards from each independent deck.")
 		distinct_hands[JSON.stringify(hand)] = true
 	if total != int(result.get("video_poker_gross", -1)):
 		failures.append("Video poker multi-hand gross did not equal the sum of hand results.")
@@ -3073,6 +3080,43 @@ func _check_video_poker_multi_hand(game: GameModule, failures: Array) -> void:
 		failures.append("Video poker multi-hand draws did not show independent per-hand decks.")
 	if int(result.get("video_poker_bet", 0)) != 15:
 		failures.append("Video poker 3-hand max-coin denomination math was wrong.")
+	_check_video_poker_multi_hand_many_seeds(game, failures)
+
+
+func _check_video_poker_multi_hand_many_seeds(game: GameModule, failures: Array) -> void:
+	var copied_draws := 0
+	var invalid_results := 0
+	for seed_index in range(36):
+		var hands := 2 if seed_index % 2 == 0 else 3
+		var variant := "deuces_wild" if hands == 2 else "double_double_bonus"
+		var run_state: RunState = _vp_fresh(game, variant, "VIDEO-POKER-MULTI-SEED-%02d" % seed_index, 1000000, "full_pay", hands, 1)
+		var deal_cmd := game.surface_action_command("video_poker_deal", 0, false, {}, run_state, run_state.current_environment)
+		var ui: Dictionary = deal_cmd.get("ui_state", {})
+		ui["holds"] = [0, 2]
+		ui["bet_level"] = 4
+		var result := game.resolve_with_context("draw", 5, run_state, run_state.current_environment, run_state.create_rng("vp_multi_seed_resolve"), ui)
+		var resolved_hands: Array = result.get("video_poker_hands", []) if typeof(result.get("video_poker_hands", [])) == TYPE_ARRAY else []
+		var hand_results: Array = result.get("video_poker_hand_results", []) if typeof(result.get("video_poker_hand_results", [])) == TYPE_ARRAY else []
+		if resolved_hands.size() != hands or hand_results.size() != hands:
+			invalid_results += 1
+			continue
+		var distinct := {}
+		for hand_index in range(resolved_hands.size()):
+			var hand: Array = resolved_hands[hand_index] if typeof(resolved_hands[hand_index]) == TYPE_ARRAY else []
+			if hand.size() != 5 or not _video_poker_hand_unique(hand):
+				invalid_results += 1
+			if hand.size() >= 3 and JSON.stringify([hand[0], hand[2]]) != JSON.stringify([resolved_hands[0][0], resolved_hands[0][2]]):
+				invalid_results += 1
+			distinct[JSON.stringify([hand[1], hand[3], hand[4]])] = true
+			var row: Dictionary = hand_results[hand_index] if typeof(hand_results[hand_index]) == TYPE_DICTIONARY else {}
+			if str(row.get("draw_deck_rule", "")) != "independent_deck_minus_held" or int(row.get("draw_pool_size", 0)) != 50:
+				invalid_results += 1
+		if distinct.size() <= 1:
+			copied_draws += 1
+	if invalid_results > 0:
+		failures.append("Video poker many-seed multi-hand proof found %d invalid independent draw results." % invalid_results)
+	if copied_draws > 1:
+		failures.append("Video poker many-seed multi-hand proof saw copied draw signatures in %d seeds." % copied_draws)
 
 
 func _video_poker_hand_unique(hand: Array) -> bool:
