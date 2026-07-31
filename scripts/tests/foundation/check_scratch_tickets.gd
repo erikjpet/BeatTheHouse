@@ -197,7 +197,7 @@ func _check_scratch_shared_card_renderer(failures: Array) -> void:
 	for path in [
 		"res://scripts/games/blackjack.gd",
 		"res://scripts/games/baccarat.gd",
-		"res://scripts/games/video_poker.gd",
+		"res://scripts/games/video_poker_renderer.gd",
 		"res://scripts/games/scratch_ticket_icon_renderer.gd",
 	]:
 		var source := FileAccess.get_file_as_string(path)

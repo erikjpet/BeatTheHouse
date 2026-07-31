@@ -115,7 +115,7 @@
         {
           "id": "follow_tip",
           "label": "Follow the tip",
-          "text": "Opens an underground route.",
+          "text": "Opens the Small Underground Casino route.",
           "consequences": {
             "add_next_archetypes": [
               "small_underground_casino"
@@ -779,7 +779,7 @@
         {
           "id": "dark_route",
           "label": "Riskier tip",
-          "text": "Opens the Back Alley.",
+          "text": "Opens the Back Alley route.",
           "consequences": {
             "add_next_archetypes": [
               "back_alley"
