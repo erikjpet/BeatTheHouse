@@ -2,7 +2,7 @@ class_name VideoPokerRenderer
 extends RefCounted
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
-const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
+const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
 
 const DESIGN_SIZE := Vector2(960, 540)
 const HEADER := Rect2(18, 14, 924, 58)
@@ -297,40 +297,9 @@ func _draw_hand_panel(surface, state: Dictionary, palette: Dictionary, panel: Re
 
 func _draw_card(surface, card: Dictionary, rect: Rect2, held: bool, winning: bool, face_down: bool = false) -> void:
 	if face_down or bool(card.get("hidden", false)):
-		surface.draw_rect(rect, C_SOFT)
-		surface.draw_rect(rect.grow(-4), Color("#341963"))
-		for stripe in range(4):
-			surface.draw_line(rect.position + Vector2(8, 12 + stripe * 12), rect.position + Vector2(rect.size.x - 8, 5 + stripe * 12), C_PINK.darkened(0.28), 2)
+		PlayingCardRendererScript.draw_card_back(surface, rect)
 		return
-	surface.draw_rect(rect.grow(3), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.34) if winning else Color(0, 0, 0, 0.50))
-	surface.draw_rect(rect, Color("#fff9e8"))
-	surface.draw_rect(rect.grow(-3), Color("#f7f2df"), false, 1)
-	if held:
-		surface.draw_rect(rect.grow(3), C_TEAL, false, 3)
-	var rank := int(card.get("rank", 2))
-	var suit := int(card.get("suit", 0))
-	var ink := C_PINK if suit == 1 or suit == 3 else C_DARK
-	var rank_size := clampi(int(rect.size.y * 0.27), 12, 30)
-	surface.surface_label(CardShoeScript.rank_label(rank), rect.position + Vector2(6, rank_size + 3), rank_size, ink)
-	_draw_suit(surface, rect.position + rect.size * Vector2(0.58, 0.62), suit, ink, clampf(rect.size.y / 82.0, 0.48, 1.35))
-
-
-func _draw_suit(surface, pos: Vector2, suit: int, color: Color, scale: float) -> void:
-	match suit:
-		0:
-			surface.draw_polygon([pos + Vector2(0, -11) * scale, pos + Vector2(10, 3) * scale, pos + Vector2(-10, 3) * scale], [color]) # SA2_PER_FRAME_OK: fixed three-point suit glyph.
-			surface.draw_rect(Rect2(pos + Vector2(-2, 2) * scale, Vector2(4, 10) * scale), color)
-		1:
-			surface.draw_circle(pos + Vector2(-5, -3) * scale, 6 * scale, color)
-			surface.draw_circle(pos + Vector2(5, -3) * scale, 6 * scale, color)
-			surface.draw_polygon([pos + Vector2(-11, 0) * scale, pos + Vector2(11, 0) * scale, pos + Vector2(0, 12) * scale], [color]) # SA2_PER_FRAME_OK: fixed three-point suit glyph.
-		2:
-			surface.draw_circle(pos + Vector2(-6, 0) * scale, 6 * scale, color)
-			surface.draw_circle(pos + Vector2(6, 0) * scale, 6 * scale, color)
-			surface.draw_circle(pos + Vector2(0, -7) * scale, 6 * scale, color)
-			surface.draw_rect(Rect2(pos + Vector2(-2, 2) * scale, Vector2(4, 10) * scale), color)
-		_:
-			surface.draw_polygon([pos + Vector2(0, -11) * scale, pos + Vector2(9, 0) * scale, pos + Vector2(0, 11) * scale, pos + Vector2(-9, 0) * scale], [color]) # SA2_PER_FRAME_OK: fixed four-point suit glyph.
+	PlayingCardRendererScript.draw_card_state(surface, card, rect, held, false, winning)
 
 
 func _draw_controls(surface, state: Dictionary, palette: Dictionary) -> void:
