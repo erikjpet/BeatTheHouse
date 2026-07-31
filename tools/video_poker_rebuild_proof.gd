@@ -66,11 +66,16 @@ func _capture_cabinet(cabinet: Dictionary) -> void:
 		failures.append("%s did not reach five coins through BET MAX." % cabinet_id)
 	_emit_surface_input("video_poker_deal", 0, false)
 	await _wait_card_reveal()
-	_emit_surface_input("video_poker_hold", 0, false)
-	_emit_surface_input("video_poker_hold", 2, false)
+	var proof_holds := [1] if cabinet_id == "triple_double_bonus" else [0, 2]
+	for hold_index in proof_holds:
+		_emit_surface_input("video_poker_hold", hold_index, false)
 	await _settle(6)
 	var hold_state := _surface_state(canvas)
-	if str(hold_state.get("phase", "")) != "hold" or not (hold_state.get("holds", []) as Array).has(0) or not (hold_state.get("holds", []) as Array).has(2):
+	var active_holds: Array = hold_state.get("holds", [])
+	var holds_applied := true
+	for hold_index in proof_holds:
+		holds_applied = holds_applied and active_holds.has(hold_index)
+	if str(hold_state.get("phase", "")) != "hold" or not holds_applied:
 		failures.append("%s did not reach the driven DEAL -> HOLD state." % cabinet_id)
 	await _save_shot("%s_02_hold_guidance" % cabinet_id)
 	_emit_surface_input("video_poker_draw", 0, false)
@@ -89,6 +94,13 @@ func _capture_cabinet(cabinet: Dictionary) -> void:
 	var result_rows: Array = result_state.get("hand_results", []) if typeof(result_state.get("hand_results", [])) == TYPE_ARRAY else []
 	if result_rows.size() != hand_count:
 		failures.append("%s did not expose one independently paid result per hand." % cabinet_id)
+	var result_labels := {}
+	for result_value in result_rows:
+		var result_row: Dictionary = result_value if typeof(result_value) == TYPE_DICTIONARY else {}
+		var result_label := str(result_row.get("pay_label", "")).strip_edges()
+		result_labels["NO PAY" if result_label.is_empty() else result_label] = true
+	if cabinet_id == "triple_double_bonus" and result_labels.size() < 2:
+		failures.append("%s did not display independently different outcomes: %s." % [cabinet_id, JSON.stringify(result_labels.keys())])
 	await _save_shot("%s_03_result" % cabinet_id)
 	proof_rows.append({
 		"cabinet": cabinet_id,
@@ -99,6 +111,7 @@ func _capture_cabinet(cabinet: Dictionary) -> void:
 		"rendered_hand_signatures": signatures,
 		"distinct_rendered_hands": distinct.size(),
 		"result_rows": result_rows.size(),
+		"distinct_result_labels": result_labels.keys(),
 		"outcome_headline": str(result_state.get("outcome_headline", "")),
 		"winning_pay_keys": result_state.get("winning_pay_keys", []),
 	})
