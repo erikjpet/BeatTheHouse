@@ -12833,7 +12833,6 @@ func _on_world_map_canvas_layout_changed() -> void:
 
 func _request_world_map_button_relayout() -> void:
 	_ensure_world_map_overlay_controller()
-	world_map_overlay_controller.reset_button_layout()
 	if world_map_button_relayout_deferred:
 		return
 	world_map_button_relayout_deferred = true
@@ -12845,8 +12844,9 @@ func _refresh_world_map_overlay_after_layout() -> void:
 	if world_map_overlay == null or not world_map_overlay.visible:
 		return
 	_ensure_world_map_overlay_controller()
-	world_map_overlay_controller.reset_button_layout()
-	_refresh_world_map_overlay()
+	var snapshot := _world_map_snapshot()
+	world_map_overlay_controller.sync_node_buttons(snapshot)
+	_position_world_map_detail_popup(snapshot)
 
 
 func _world_map_node_ids(snapshot: Dictionary) -> Array:
