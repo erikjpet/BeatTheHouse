@@ -439,6 +439,17 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		outcome_headline = "TAP CARDS TO HOLD • THEN PRESS DRAW"
 	else:
 		outcome_headline = "SET 1-5 COINS PER HAND • PRESS DEAL"
+	var result_detail := outcome_headline
+	if phase == "settled" and bool(last_result.get("cheated", false)):
+		var holdout_name := str(cabinet.get("cheat_name", "Holdout")).to_upper()
+		var result_name := str(last_result.get("blurb", last_result.get("pay_label", "No Pay"))).strip_edges().to_upper()
+		if result_name.is_empty():
+			result_name = "NO PAY"
+		if bool(last_result.get("holdout_applied", false)):
+			var target_name := _card_name(_copy_dict(last_result.get("holdout_target_card", {}))).to_upper()
+			result_detail = "%s • SWAPPED IN %s • RESULT: %s" % [holdout_name, target_name, result_name]
+		else:
+			result_detail = "%s • NO CARD SWAPPED • RESULT: %s" % [holdout_name, result_name]
 
 	var spec: Dictionary = GameModule.surface_spec({
 		"surface_renderer": "card_machine",
@@ -508,6 +519,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"winning_pay_keys": winning_pay_keys,
 		"payout_mult": pay_mult,
 		"outcome_headline": outcome_headline,
+		"result_detail": result_detail,
 		"info_text": _info_text(phase, hand, holds, last_result, marked, variant, holdout_challenge),
 		"result_message": str(last_result.get("summary", "")) if showing_result or double_phase else "",
 		"result_bankroll_delta": int(last_result.get("bankroll_delta", 0)) if phase == "settled" else 0,
@@ -780,7 +792,12 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		# Advance the parent action stream once per hand while keeping each hand's
 		# completion deck independently seeded and replayable.
 		rng.randi_range(1, RngStream.MODULUS - 1)
-		var pool: Array = CardShoeScript.shuffle_cards(draw_base, hand_rng)
+		var hand_draw_base := draw_base
+		if is_cheat and hand_index == 0 and holdout_applied:
+			var reserved_card := _copy_dict(holdout_challenge.get("target_card", {}))
+			if not reserved_card.is_empty():
+				hand_draw_base = _deck_without_cards(draw_base, [reserved_card])
+		var pool: Array = CardShoeScript.shuffle_cards(hand_draw_base, hand_rng)
 		var final_hand: Array = opening.duplicate(true)
 		var drawn_indices: Array = []
 		var pool_cursor := 0
@@ -791,7 +808,7 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 					pool_cursor += 1
 					drawn_indices.append(i)
 		if is_cheat and hand_index == 0 and holdout_applied:
-			final_hand = _apply_holdout(final_hand, holds, variant)
+			final_hand = _apply_committed_holdout(final_hand, holds, holdout_challenge)
 		var descriptor: Dictionary = _evaluate(final_hand, _wild_ranks(variant))
 		var pay_row: Dictionary = _pay_for(descriptor, variant)
 		if not is_cheat and int(pay_row.get("mult", 0)) <= 0 and luck_bonus > 0 and rng.randi_range(1, 100) <= luck_bonus:
@@ -1424,6 +1441,16 @@ func _holdout_target(hand: Array, holds: Array, variant: Dictionary) -> Dictiona
 			var card: Dictionary = hand[i] if i < hand.size() and typeof(hand[i]) == TYPE_DICTIONARY else {}
 			return {"slot": i, "card": card.duplicate(true)}
 	return {"slot": -1, "card": {}}
+
+
+func _apply_committed_holdout(hand: Array, holds: Array, challenge: Dictionary) -> Array:
+	var result := hand.duplicate(true)
+	var slot := int(challenge.get("target_slot", -1))
+	var card := _copy_dict(challenge.get("target_card", {}))
+	if slot < 0 or slot >= HAND_SIZE or holds.has(slot) or card.is_empty():
+		return result
+	result[slot] = card
+	return result
 
 
 func _grade_holdout_challenge(challenge: Dictionary) -> Dictionary:

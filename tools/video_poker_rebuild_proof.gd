@@ -39,6 +39,7 @@ func _run() -> void:
 		print("VP_PROOF: begin %s" % str(cabinet_value.get("id", "")))
 		await _capture_cabinet(cabinet_value)
 		print("VP_PROOF: complete %s" % str(cabinet_value.get("id", "")))
+	await _prove_holdout_feedback()
 	await _prove_double_up_pointer(false, "1280x720 mouse")
 	await _prove_small_screen_touch_loop()
 	await _capture_slot_reference()
@@ -64,6 +65,7 @@ func _capture_cabinet(cabinet: Dictionary) -> void:
 	var max_state := _surface_state(canvas)
 	if int(max_state.get("coin_count", 0)) != 5:
 		failures.append("%s did not reach five coins through BET MAX." % cabinet_id)
+	await _save_shot("%s_02_bet_max" % cabinet_id)
 	_emit_surface_input("video_poker_deal", 0, false)
 	await _wait_card_reveal()
 	var proof_holds := [1] if cabinet_id == "triple_double_bonus" else [0, 2]
@@ -77,7 +79,7 @@ func _capture_cabinet(cabinet: Dictionary) -> void:
 		holds_applied = holds_applied and active_holds.has(hold_index)
 	if str(hold_state.get("phase", "")) != "hold" or not holds_applied:
 		failures.append("%s did not reach the driven DEAL -> HOLD state." % cabinet_id)
-	await _save_shot("%s_02_hold_guidance" % cabinet_id)
+	await _save_shot("%s_03_hold_guidance" % cabinet_id)
 	_emit_surface_input("video_poker_draw", 0, false)
 	await _wait_card_reveal()
 	var result_state := _surface_state(canvas)
@@ -101,7 +103,7 @@ func _capture_cabinet(cabinet: Dictionary) -> void:
 		result_labels["NO PAY" if result_label.is_empty() else result_label] = true
 	if cabinet_id == "triple_double_bonus" and result_labels.size() < 2:
 		failures.append("%s did not display independently different outcomes: %s." % [cabinet_id, JSON.stringify(result_labels.keys())])
-	await _save_shot("%s_03_result" % cabinet_id)
+	await _save_shot("%s_04_result" % cabinet_id)
 	proof_rows.append({
 		"cabinet": cabinet_id,
 		"hands": hand_count,
@@ -167,6 +169,62 @@ func _prove_small_screen_touch_loop() -> void:
 	print("VP_PROOF: complete small-screen touch controls")
 
 
+func _prove_holdout_feedback() -> void:
+	print("VP_PROOF: begin holdout feedback")
+	if not await _prepare_video_poker(CABINETS[0]):
+		return
+	var canvas: Control = app.get("game_surface_canvas")
+	_emit_surface_input("video_poker_bet_max", 0, false)
+	_emit_surface_input("video_poker_deal", 0, false)
+	await _wait_card_reveal()
+	_emit_surface_input("video_poker_mark", 0, false)
+	await _settle(4)
+	var marked := _surface_state(canvas)
+	if not bool(marked.get("holdout_ready", false)):
+		failures.append("Live HOLDOUT did not arm through its visible control.")
+		return
+	await _save_shot("jacks_or_better_holdout_armed")
+	var safety := 0
+	while safety < 4:
+		safety += 1
+		var challenge: Dictionary = _surface_state(canvas).get("holdout_challenge", {})
+		if bool(challenge.get("chain_complete", false)) or not str(challenge.get("skill_grade", "")).is_empty():
+			break
+		var beats: Array = challenge.get("beats", [])
+		if beats.is_empty():
+			failures.append("Live HOLDOUT did not expose its skill beats.")
+			return
+		var beat_index := clampi(int(challenge.get("current_beat", 0)), 0, beats.size() - 1)
+		var beat: Dictionary = beats[beat_index] if typeof(beats[beat_index]) == TYPE_DICTIONARY else {}
+		var target_msec := int(beat.get("target_msec", Time.get_ticks_msec()))
+		var delay_msec := maxi(0, target_msec - Time.get_ticks_msec())
+		if delay_msec > 0:
+			await create_timer(float(delay_msec) / 1000.0).timeout
+		var target_index := int(challenge.get("target_slot", 0)) if str(beat.get("kind", "")) == "target" else 0
+		_emit_surface_input("video_poker_palm", target_index, false)
+		await _settle(3)
+	var completed := _surface_state(canvas)
+	var completed_grade := str(completed.get("holdout_grade", ""))
+	if completed_grade != "perfect":
+		failures.append("Live HOLDOUT inputs did not grade perfect.")
+		return
+	_emit_surface_input("video_poker_draw", 0, false)
+	await _wait_card_reveal()
+	var result := _surface_state(canvas)
+	var detail := str(result.get("result_detail", ""))
+	if detail.find("SWAPPED IN ") < 0 or detail.find("RESULT:") < 0:
+		failures.append("Live HOLDOUT result did not visibly name the swapped card and resulting hand: %s" % detail)
+	await _save_shot("jacks_or_better_holdout_result")
+	proof_rows.append({
+		"control": "holdout",
+		"input": "1280x720 mouse",
+		"grade": completed_grade,
+		"result_detail": detail,
+		"blunt_feedback_visible": detail.find("SWAPPED IN ") >= 0 and detail.find("RESULT:") >= 0,
+	})
+	print("VP_PROOF: complete holdout feedback")
+
+
 func _prove_double_up_pointer(touch: bool, input_label: String) -> void:
 	_install_double_up_fixture()
 	await _settle(8)
@@ -181,6 +239,8 @@ func _prove_double_up_pointer(touch: bool, input_label: String) -> void:
 	if str(open.get("phase", "")) != "double_up":
 		failures.append("%s DOUBLE UP did not open the gamble." % input_label)
 		return
+	if not touch:
+		await _save_shot("jacks_or_better_double_up_open")
 	for pick_index in range(4):
 		var position: Vector2 = canvas.call("local_position_for_surface_action", "video_poker_double_pick", pick_index)
 		if position.x < 0.0 or position.y < 0.0:
@@ -189,6 +249,8 @@ func _prove_double_up_pointer(touch: bool, input_label: String) -> void:
 	await _wait_card_reveal()
 	if str(_surface_state(canvas).get("phase", "")) == "double_up":
 		failures.append("%s double-up pick did not resolve on the first press." % input_label)
+	if not touch:
+		await _save_shot("jacks_or_better_double_up_result")
 	proof_rows.append({
 		"control": "double_up",
 		"input": input_label,

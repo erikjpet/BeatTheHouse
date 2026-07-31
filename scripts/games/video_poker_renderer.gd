@@ -211,13 +211,17 @@ func _draw_hands(surface, state: Dictionary, palette: Dictionary) -> void:
 func _draw_guidance(surface, state: Dictionary, palette: Dictionary) -> void:
 	var phase := str(state.get("phase", "idle"))
 	var primary: Color = palette["primary"]
+	var strip := Rect2(PLAYFIELD.position + Vector2(8, 7), Vector2(PLAYFIELD.size.x - 16, 24))
+	if phase == "settled":
+		var result_detail := str(state.get("result_detail", state.get("outcome_headline", ""))).strip_edges()
+		surface.draw_rect(strip, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.20))
+		surface.draw_rect(strip, C_YELLOW, false, 2)
+		surface.surface_label_centered(result_detail.left(128), strip.grow(-3), 9, C_YELLOW)
+		return
 	var steps := ["1  SET BET", "2  DEAL", "3  TAP CARDS TO HOLD", "4  DRAW", "5  AUTO PAY"]
 	var active := 1
 	if phase == "hold":
 		active = 2
-	elif phase == "settled":
-		active = 4
-	var strip := Rect2(PLAYFIELD.position + Vector2(8, 7), Vector2(PLAYFIELD.size.x - 16, 24))
 	var step_w := strip.size.x / float(steps.size())
 	for index in range(steps.size()):
 		var rect := Rect2(strip.position.x + float(index) * step_w, strip.position.y, step_w - 3, strip.size.y)
