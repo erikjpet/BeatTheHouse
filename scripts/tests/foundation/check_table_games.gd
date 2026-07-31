@@ -2634,8 +2634,11 @@ func _check_video_poker_surface_contract(game: GameModule, failures: Array) -> v
 	var surface := game.surface_state(run_state, environment, {})
 	if str(surface.get("surface_renderer", "")) != "card_machine":
 		failures.append("Video poker surface did not route to the card-machine renderer.")
+	_check_idle_animation_liveness_contract(surface, "Video poker cabinet surface", failures)
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Video poker surface did not expose native surface controls.")
+	if not bool(surface.get("surface_animates_idle", false)):
+		failures.append("Video poker cabinet lights do not keep the idle surface alive.")
 	if (surface.get("hand", []) as Array).size() != 5:
 		failures.append("Video poker surface did not expose a five-card hand.")
 	if str(surface.get("phase", "")) != "idle":
@@ -2645,6 +2648,8 @@ func _check_video_poker_surface_contract(game: GameModule, failures: Array) -> v
 		failures.append("Video poker surface did not expose the full 1-5 coin paytable columns.")
 	if int(surface.get("active_paytable_column", -1)) != int(surface.get("bet_level", -2)) or int(surface.get("highlight_bet_column", -1)) != int(surface.get("bet_level", -2)):
 		failures.append("Video poker surface did not mark the current-bet paytable column.")
+	if int(surface.get("coin_count", 0)) != 1:
+		failures.append("Video poker fresh cabinet should begin at one coin per hand.")
 	var idle_hand: Array = surface.get("hand", []) as Array
 	var first_idle_card: Dictionary = idle_hand[0] if idle_hand.size() > 0 and typeof(idle_hand[0]) == TYPE_DICTIONARY else {}
 	if not first_idle_card.has("hidden"):
@@ -2659,9 +2664,10 @@ func _check_video_poker_surface_contract(game: GameModule, failures: Array) -> v
 			idle_paytable_visible = true
 	if not idle_paytable_visible:
 		failures.append("Video poker renderer did not keep the paytable visible while idle.")
-	for action in ["video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_deal"]:
+	for action in ["video_poker_bet_down", "video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_deal"]:
 		if not _surface_harness_has_action(idle_harness, action):
 			failures.append("Video poker idle cabinet is missing %s." % action)
+	_check_video_poker_bet_controls(game, failures)
 	var idle_draw := game.surface_action_command("video_poker_draw", 0, false, {}, run_state, environment)
 	if str(idle_draw.get("action_id", "")) == "draw":
 		failures.append("Video poker DRAW should not resolve before DEAL.")
@@ -2680,6 +2686,8 @@ func _check_video_poker_surface_contract(game: GameModule, failures: Array) -> v
 	var draw_click := game.surface_action_command("video_poker_draw", 0, false, hold_state, run_state, environment)
 	if str(draw_click.get("action_kind", "")) != "legal":
 		failures.append("Video poker draw did not map to a legal action.")
+	if not bool(draw_click.get("direct_resolve", false)):
+		failures.append("Video poker DRAW still requires a second confirmation click.")
 	var selected_surface := game.surface_state(run_state, environment, hold_state)
 	if not (selected_surface.get("native_selected_surface_actions", []) as Array).is_empty():
 		failures.append("Video poker surface should not expose native selected actions that can auto-advance play.")
@@ -2734,8 +2742,8 @@ func _check_video_poker_surface_contract(game: GameModule, failures: Array) -> v
 	if str(palm_challenge.get("skill_grade", "")) != "perfect" or not bool(palm_challenge.get("chain_complete", false)):
 		failures.append("Video poker LINE UP/COMMIT chain did not grade perfect timed inputs.")
 	var cheat_draw := game.surface_action_command("video_poker_draw", 0, true, palm_state, run_state, environment)
-	if str(cheat_draw.get("action_id", "")) != "mark_holds" or str(cheat_draw.get("action_kind", "")) != "cheat" or not bool(cheat_draw.get("resolve", false)):
-		failures.append("Video poker DRAW did not resolve the armed holdout cheat.")
+	if str(cheat_draw.get("action_id", "")) != "mark_holds" or str(cheat_draw.get("action_kind", "")) != "cheat" or not bool(cheat_draw.get("direct_resolve", false)):
+		failures.append("Video poker DRAW did not resolve the armed holdout cheat in one press.")
 	var reduced_run: RunState = _vp_fresh(game, "jacks_or_better", "VIDEO-POKER-REDUCED-HOLDOUT", 5000)
 	var reduced_deal := game.surface_action_command("video_poker_deal", 0, false, {"reduce_motion": true, "surface_time_msec": 41000}, reduced_run, reduced_run.current_environment)
 	var reduced_mark := game.surface_action_command("video_poker_mark", 0, false, reduced_deal.get("ui_state", {}), reduced_run, reduced_run.current_environment)
@@ -2747,6 +2755,40 @@ func _check_video_poker_surface_contract(game: GameModule, failures: Array) -> v
 		failures.append("Video poker reduce-motion holdout did not collapse to a single accessible input.")
 	if bool(reduced_surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Video poker reduce-motion holdout still requested continuous realtime redraw.")
+
+
+func _check_video_poker_bet_controls(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = _vp_fresh(game, "jacks_or_better", "VIDEO-POKER-BET-CONTROLS", 100000, "full_pay", 1, 1)
+	var environment: Dictionary = run_state.current_environment
+	environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 200}
+	run_state.current_environment = environment
+	var ui: Dictionary = {"bet_level": 0, "denomination_index": 0}
+	var wagers: Array[int] = []
+	for expected_coin in range(1, 6):
+		var bet_surface := game.surface_state(run_state, environment, ui)
+		var wager := int(bet_surface.get("bet_credits", 0))
+		wagers.append(wager)
+		if int(bet_surface.get("coin_count", 0)) != expected_coin:
+			failures.append("Video poker BET + did not reach %d coins per hand." % expected_coin)
+			return
+		if expected_coin < 5:
+			var command := game.surface_action_command("video_poker_bet_one", 0, false, ui, run_state, environment)
+			ui = command.get("ui_state", {}) if typeof(command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	for index in range(1, wagers.size()):
+		if wagers[index] <= wagers[index - 1]:
+			failures.append("Video poker wager did not increase across the 1-5 coin ladder: %s." % JSON.stringify(wagers))
+	var down := game.surface_action_command("video_poker_bet_down", 0, false, ui, run_state, environment)
+	var down_ui: Dictionary = down.get("ui_state", {}) if typeof(down.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var down_surface := game.surface_state(run_state, environment, down_ui)
+	if int(down_surface.get("coin_count", 0)) != 4 or int(down_surface.get("bet_credits", 0)) >= int(wagers[4]):
+		failures.append("Video poker BET - did not reduce a five-coin wager.")
+	var max_command := game.surface_action_command("video_poker_bet_max", 0, false, {"bet_level": 0, "denomination_index": 0}, run_state, environment)
+	var max_ui: Dictionary = max_command.get("ui_state", {}) if typeof(max_command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var max_surface := game.surface_state(run_state, environment, max_ui)
+	if int(max_surface.get("coin_count", 0)) != 5 or int(max_surface.get("active_paytable_column", -1)) != 4:
+		failures.append("Video poker BET MAX did not select five coins and the fifth paytable column.")
+	if int(max_command.get("set_stake", 0)) != int(max_surface.get("bet_credits", -1)):
+		failures.append("Video poker BET MAX command wager did not match the live BET meter.")
 
 
 # Video poker is a full-simulation draw-poker module: hand evaluation, holds
@@ -2868,14 +2910,22 @@ func _check_video_poker_generated_identity(game: GameModule, failures: Array) ->
 		if not state_a.has(required_key):
 			failures.append("Video poker generated state is missing %s." % required_key)
 	var denominations: Array = state_a.get("coin_denominations", [])
-	if denominations.size() < 2:
-		failures.append("Video poker generated denomination set is too shallow.")
+	if denominations.is_empty():
+		failures.append("Video poker generated no playable denomination.")
 	var expected_hands := {"jacks_or_better": 1, "double_deuces": 2, "triple_double_bonus": 3}
 	var cabinet_id := str(state_a.get("cabinet_id", ""))
 	if not expected_hands.has(cabinet_id):
 		failures.append("Video poker generated a retired cabinet id: %s." % cabinet_id)
 	elif int(state_a.get("multi_hand_count", 0)) != int(expected_hands.get(cabinet_id, 0)):
 		failures.append("Video poker generated cabinet %s with the wrong hand count." % cabinet_id)
+	var max_coin_accessible := false
+	for denomination_value in denominations:
+		var denomination: Dictionary = denomination_value if typeof(denomination_value) == TYPE_DICTIONARY else {}
+		if int(denomination.get("credits", 0)) * maxi(1, int(state_a.get("multi_hand_count", 1))) * 5 <= int((env_a.get("economic_profile", {}) as Dictionary).get("stake_ceiling", 20)):
+			max_coin_accessible = true
+			break
+	if not max_coin_accessible:
+		failures.append("Video poker generated no denomination capable of a five-coin max bet.")
 	env_a["game_states"] = {"video_poker": state_a}
 	run_a.current_environment = env_a.duplicate(true)
 	var surface := game.surface_state(run_a, run_a.current_environment, {})
@@ -2941,11 +2991,11 @@ func _check_video_poker_result_visible(game: GameModule, failures: Array) -> voi
 	var run_state: RunState = _vp_fresh(game, "jacks_or_better", "VIDEO-POKER-RESULT-VISIBLE", 500)
 	var deal_cmd := game.surface_action_command("video_poker_deal", 0, false, {}, run_state, run_state.current_environment)
 	var dealt_ui: Dictionary = deal_cmd.get("ui_state", {})
-	# A confirmed draw must resolve and must NOT preserve UI-local state, so the host
+	# One DRAW press must resolve and must NOT preserve UI-local state, so the host
 	# clears the active hand and the next surface_state shows the settled result.
 	var confirm_cmd := game.surface_action_command("video_poker_draw", 0, true, dealt_ui, run_state, run_state.current_environment)
-	if not bool(confirm_cmd.get("resolve", false)):
-		failures.append("Video poker confirmed draw did not request resolution.")
+	if not bool(confirm_cmd.get("direct_resolve", false)):
+		failures.append("Video poker DRAW did not request immediate resolution.")
 	if bool(confirm_cmd.get("preserve_surface_ui_state", false)):
 		failures.append("Video poker resolving draw preserved UI-local state, stranding the surface in the hold phase.")
 	var result := game.resolve_with_context("draw", 8, run_state, run_state.current_environment, run_state.create_rng("vp_visible_resolve"), confirm_cmd.get("ui_state", dealt_ui))
@@ -3080,6 +3130,27 @@ func _check_video_poker_multi_hand(game: GameModule, failures: Array) -> void:
 		failures.append("Video poker multi-hand draws did not show independent per-hand decks.")
 	if int(result.get("video_poker_bet", 0)) != 15:
 		failures.append("Video poker 3-hand max-coin denomination math was wrong.")
+	var settled_surface := game.surface_state(run_state, run_state.current_environment, {})
+	if int(settled_surface.get("win_credits", -1)) != total:
+		failures.append("Video poker WIN meter did not show the gross payout summed across hands.")
+	var display_hands: Array = settled_surface.get("display_hands", []) if typeof(settled_surface.get("display_hands", [])) == TYPE_ARRAY else []
+	var rendered_signatures: Array = settled_surface.get("rendered_hand_signatures", []) if typeof(settled_surface.get("rendered_hand_signatures", [])) == TYPE_ARRAY else []
+	var distinct_rendered := {}
+	for signature_value in rendered_signatures:
+		distinct_rendered[str(signature_value)] = true
+	if display_hands.size() != 3 or rendered_signatures.size() != 3 or distinct_rendered.size() != 3:
+		failures.append("Video poker settled renderer state did not expose three visibly distinct Triple Double Bonus hands.")
+	var settled_harness := SurfaceHarness.new()
+	settled_harness.setup(settled_surface)
+	game.draw_surface(settled_harness, settled_surface, {"contract_harness": true})
+	for hand_number in range(1, 4):
+		var rendered_label := false
+		for label_value in settled_harness.labels:
+			if str(label_value).begins_with("HAND %d" % hand_number):
+				rendered_label = true
+				break
+		if not rendered_label:
+			failures.append("Video poker renderer did not draw visible HAND %d content." % hand_number)
 	_check_video_poker_multi_hand_many_seeds(game, failures)
 
 
@@ -3224,6 +3295,21 @@ func _video_poker_rtp_with_luck(game: GameModule, seed_text: String, luck: int) 
 
 func _check_video_poker_double_up(game: GameModule, failures: Array) -> void:
 	# A double-up gamble resolves wins and losses and applies the delta through the host.
+	for pick_index in range(4):
+		var control_run: RunState = _vp_fresh(game, "jacks_or_better", "VIDEO-POKER-DOUBLE-CONTROL-%d" % pick_index, 1000000)
+		var control_environment: Dictionary = control_run.current_environment
+		var control_states: Dictionary = control_environment.get("game_states", {})
+		var control_machine: Dictionary = control_states.get("video_poker", {})
+		control_machine["last_result"] = {"double_credits": 12, "double_chain": 0, "win_credits": 12, "hand": [], "coins": 5}
+		control_states["video_poker"] = control_machine
+		control_environment["game_states"] = control_states
+		control_run.current_environment = control_environment
+		var open_command := game.surface_action_command("video_poker_double", 0, false, {}, control_run, control_environment)
+		var open_ui: Dictionary = open_command.get("ui_state", {}) if typeof(open_command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+		var pick_command := game.surface_action_command("video_poker_double_pick", pick_index, false, open_ui, control_run, control_environment)
+		var pick_ui: Dictionary = pick_command.get("ui_state", {}) if typeof(pick_command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+		if not bool(pick_command.get("direct_resolve", false)) or int(pick_ui.get("double_pick", -1)) != pick_index:
+			failures.append("Video poker double-up pick %d did not resolve from one control press." % (pick_index + 1))
 	var det_a: Dictionary = _video_poker_seeded_double_result(game, "VIDEO-POKER-DOUBLE-DETERMINISTIC", 2)
 	var det_b: Dictionary = _video_poker_seeded_double_result(game, "VIDEO-POKER-DOUBLE-DETERMINISTIC", 2)
 	if JSON.stringify(_video_poker_double_signature(det_a)) != JSON.stringify(_video_poker_double_signature(det_b)):

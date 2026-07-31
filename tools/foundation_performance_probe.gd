@@ -33,6 +33,7 @@ const IDLE_SURFACE_DRAW_WAIVERS := {}
 const ANIMATED_IDLE_SURFACE_DRAW_BUDGETS := {
 	"roulette": 7.0,
 	"scratch_tickets": 5.0,
+	"video_poker": 5.0,
 }
 const GAME_IDLE_LIVENESS := {
 	"pull_tabs": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
@@ -42,7 +43,7 @@ const GAME_IDLE_LIVENESS := {
 	"blackjack": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"baccarat": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"roulette": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
-	"video_poker": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 0, "zero_reason": "The idle video-poker cabinet is static until a deal or draw animation starts."},
+	"video_poker": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 }
 const ENVIRONMENT_IDLE_LIVENESS := {
 	"counter": "scene_idle_animation_redraw_count",

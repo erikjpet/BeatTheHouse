@@ -100,6 +100,7 @@ class SurfaceHarness:
 	var animation_duration := 2.4
 	var animation_progress := 1.0
 	var flicker_value := 0.0
+	var design_size := Vector2(ArtContractsScript.GAME_BOARD_SIZE)
 
 	func setup(state: Dictionary) -> void:
 		surface_state = state.duplicate(true)
@@ -115,12 +116,14 @@ class SurfaceHarness:
 		animation_duration = 2.4
 		animation_progress = 1.0
 		flicker_value = 0.0
+		design_size = Vector2(ArtContractsScript.GAME_BOARD_SIZE)
 
 	func surface_board_size() -> Vector2:
 		return Vector2(ArtContractsScript.GAME_BOARD_SIZE)
 
-	func surface_begin_design_space(_design_size: Vector2) -> void:
-		pass
+	func surface_begin_design_space(requested_design_size: Vector2) -> void:
+		if requested_design_size.x > 0.0 and requested_design_size.y > 0.0:
+			design_size = requested_design_size
 
 	func surface_begin_design_space_inset(design_size: Vector2, _inset: Vector2) -> void:
 		surface_begin_design_space(design_size)
