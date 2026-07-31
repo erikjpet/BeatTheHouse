@@ -4,7 +4,9 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 
 
 static func build_start_screen(host: Variant) -> void:
-	host.call_deferred("_ensure_main_menu_background_built")
+	# The menu is not interactive until its visible background is ready. Building
+	# it here prevents a deferred texture/cache burst from landing under input.
+	host._ensure_main_menu_background_built()
 
 	var menu_panel = host._panel_container(Color(VisualStyle.role("surface_base"), 0.96), VisualStyle.PURPLE_2)
 	host.main_menu_panel = menu_panel

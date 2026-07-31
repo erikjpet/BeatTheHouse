@@ -634,6 +634,7 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 
 func _try_event_card_flow(prepared_fixture: bool = false) -> void:
 	await _resolve_blocking_event_popups()
+	await _resolve_blocking_talk_dock_for_surface_flow()
 	_return_to_room_view()
 	await _settle()
 	_record_state("event_screen", "Focused event object after normal UI navigation.")
@@ -2524,7 +2525,7 @@ func _drive_risky_surface_until_heat(min_heat: int, max_attempts: int, first_vis
 		var consequence_text := JSON.stringify(app.call("current_consequence_view_snapshot")).to_lower()
 		var game_text := JSON.stringify(game_snapshot).to_lower()
 		var pressure_text := "%s %s %s" % [visible_text, consequence_text, game_text]
-		if pressure_text.find("shakedown") != -1 or pressure_text.find("costly exit") != -1 or pressure_text.find("risky moves now bring") != -1:
+		if pressure_text.find("shakedown") != -1 or pressure_text.find("costly exit") != -1 or pressure_text.find("risky moves now bring") != -1 or pressure_text.find("security leans close") != -1:
 			_cover("high_heat_consequence")
 		attempts += 1
 	if not bool(report["coverage"].get("high_heat_changes_risk", false)):

@@ -14,6 +14,7 @@ signal music_cue_requested(cue_id: String, context: Dictionary)
 
 const SFX_BUS := "SFX"
 const SAMPLE_RATE := 22050
+const WEB_SAMPLE_RATE := 6000
 const TELEPHONE_SAMPLE_RATE := 4000
 const PCM_BYTES_PER_FRAME := 2
 const SLOT_CLASSIC_REEL_STOP_TIMES := [1.05, 1.55, 2.15]
@@ -54,6 +55,15 @@ const ENVIRONMENT_PREWARM_EVENTS := [
 	"scratch_box_pop",
 ]
 const PREWARM_EVENTS_PER_FRAME := 1
+const WEB_PREWARM_SAMPLES_PER_FRAME := 32
+const WEB_CRITICAL_PREWARM_EVENTS := [
+	"blackjack_card",
+	"blackjack_chip",
+	"roulette_chip_select",
+	"roulette_chip_place",
+	"roulette_rotor_launch",
+	"roulette_ball_loop",
+]
 const ROULETTE_RIM_TIMES := [0.42, 0.82, 1.26, 1.78, 2.34, 2.94, 3.32]
 const ROULETTE_SCATTER_TIMES := [3.66, 3.86, 4.08, 4.32]
 const MUSIC_DIRECTOR_CUES := {
@@ -139,6 +149,12 @@ var _normalized_event_cache: Dictionary = {}
 var _prewarm_queue: Array[String] = []
 var _prewarm_event_override: Array[String] = []
 var _prewarm_started := false
+var _prewarm_active_event_id := ""
+var _prewarm_active_seconds := 0.0
+var _prewarm_active_sample_rate := 0
+var _prewarm_active_frame_count := 0
+var _prewarm_active_frame_cursor := 0
+var _prewarm_active_data := PackedByteArray()
 
 
 func set_prewarm_events(event_ids: Array) -> void:
@@ -149,6 +165,7 @@ func set_prewarm_events(event_ids: Array) -> void:
 			_prewarm_event_override.append(normalized)
 	if _prewarm_started:
 		_prewarm_started = false
+		_clear_web_prewarm_event()
 		_begin_incremental_prewarm()
 
 
@@ -162,6 +179,9 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if OS.has_feature("web"):
+		_process_web_prewarm_chunk()
+		return
 	if _prewarm_queue.is_empty():
 		set_process(false)
 		return
@@ -775,6 +795,8 @@ func debug_soak_snapshot() -> Dictionary:
 		"stream_cache_size": _stream_cache.size(),
 		"normalized_event_cache_size": _normalized_event_cache.size(),
 		"played_marker_count": _played_markers.size(),
+		"prewarm_queue_size": _prewarm_queue.size(),
+		"prewarm_active": not _prewarm_active_event_id.is_empty(),
 	}
 
 
@@ -1147,17 +1169,74 @@ func _begin_incremental_prewarm() -> void:
 	_prewarm_started = true
 	_prewarm_queue.clear()
 	if _prewarm_event_override.is_empty():
-		for event_id in BLACKJACK_PREWARM_EVENTS:
-			_queue_prewarm_event(str(event_id))
-		for event_id in ROULETTE_PREWARM_EVENTS:
-			_queue_prewarm_event(str(event_id))
-		for event_id in ENVIRONMENT_PREWARM_EVENTS:
-			_queue_prewarm_event(str(event_id))
+		if OS.has_feature("web"):
+			for event_id in WEB_CRITICAL_PREWARM_EVENTS:
+				_queue_prewarm_event(str(event_id))
+		else:
+			for event_id in BLACKJACK_PREWARM_EVENTS:
+				_queue_prewarm_event(str(event_id))
+			for event_id in ROULETTE_PREWARM_EVENTS:
+				_queue_prewarm_event(str(event_id))
+			for event_id in ENVIRONMENT_PREWARM_EVENTS:
+				_queue_prewarm_event(str(event_id))
 	else:
 		for event_id in _prewarm_event_override:
 			_queue_prewarm_event(str(event_id))
 	if not _prewarm_queue.is_empty():
 		set_process(true)
+
+
+func _process_web_prewarm_chunk() -> void:
+	if _prewarm_active_event_id.is_empty():
+		while not _prewarm_queue.is_empty():
+			var event_id := str(_prewarm_queue.pop_front())
+			if _stream_cache.has(event_id):
+				continue
+			_begin_web_prewarm_event(event_id)
+			break
+	if _prewarm_active_event_id.is_empty():
+		set_process(false)
+		return
+	var chunk_end := mini(
+		_prewarm_active_frame_cursor + WEB_PREWARM_SAMPLES_PER_FRAME,
+		_prewarm_active_frame_count
+	)
+	for frame in range(_prewarm_active_frame_cursor, chunk_end):
+		var t := float(frame) / float(_prewarm_active_sample_rate)
+		_write_i16(
+			_prewarm_active_data,
+			frame * PCM_BYTES_PER_FRAME,
+			_soft_limit(_event_sample(_prewarm_active_event_id, t, frame, _prewarm_active_seconds))
+		)
+	_prewarm_active_frame_cursor = chunk_end
+	if _prewarm_active_frame_cursor < _prewarm_active_frame_count:
+		return
+	_stream_cache[_prewarm_active_event_id] = _audio_stream_from_pcm(
+		_prewarm_active_event_id,
+		_prewarm_active_sample_rate,
+		_prewarm_active_frame_count,
+		_prewarm_active_data
+	)
+	_clear_web_prewarm_event()
+
+
+func _begin_web_prewarm_event(event_id: String) -> void:
+	_prewarm_active_event_id = _normalized_event_id(event_id)
+	_prewarm_active_seconds = _event_seconds(_prewarm_active_event_id)
+	_prewarm_active_sample_rate = _event_sample_rate(_prewarm_active_event_id)
+	_prewarm_active_frame_count = maxi(1, int(_prewarm_active_seconds * float(_prewarm_active_sample_rate)))
+	_prewarm_active_frame_cursor = 0
+	_prewarm_active_data = PackedByteArray()
+	_prewarm_active_data.resize(_prewarm_active_frame_count * PCM_BYTES_PER_FRAME)
+
+
+func _clear_web_prewarm_event() -> void:
+	_prewarm_active_event_id = ""
+	_prewarm_active_seconds = 0.0
+	_prewarm_active_sample_rate = 0
+	_prewarm_active_frame_count = 0
+	_prewarm_active_frame_cursor = 0
+	_prewarm_active_data = PackedByteArray()
 
 
 func _queue_prewarm_event(event_id: String) -> void:
@@ -1179,6 +1258,8 @@ func _event_stream(event_id: String) -> AudioStreamWAV:
 	var normalized := _normalized_event_id(event_id)
 	if _stream_cache.has(normalized):
 		return _stream_cache[normalized]
+	if normalized == _prewarm_active_event_id:
+		_clear_web_prewarm_event()
 	var seconds := _event_seconds(normalized)
 	var sample_rate := _event_sample_rate(normalized)
 	var frames := maxi(1, int(seconds * float(sample_rate)))
@@ -1187,20 +1268,27 @@ func _event_stream(event_id: String) -> AudioStreamWAV:
 	for i in range(frames):
 		var t := float(i) / float(sample_rate)
 		_write_i16(data, i * PCM_BYTES_PER_FRAME, _soft_limit(_event_sample(normalized, t, i, seconds)))
+	var stream := _audio_stream_from_pcm(normalized, sample_rate, frames, data)
+	_stream_cache[normalized] = stream
+	return stream
+
+
+func _audio_stream_from_pcm(event_id: String, sample_rate: int, frames: int, data: PackedByteArray) -> AudioStreamWAV:
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = sample_rate
 	stream.data = data
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if normalized.begins_with("reel_loop") or normalized in ["roulette_ball_loop", "scratch_paper_foley_loop"] else AudioStreamWAV.LOOP_DISABLED
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if event_id.begins_with("reel_loop") or event_id in ["roulette_ball_loop", "scratch_paper_foley_loop"] else AudioStreamWAV.LOOP_DISABLED
 	stream.loop_begin = 0
 	stream.loop_end = frames
-	_stream_cache[normalized] = stream
 	return stream
 
 
 func _event_sample_rate(event_id: String) -> int:
 	if event_id == "phone_call":
 		return TELEPHONE_SAMPLE_RATE
+	if OS.has_feature("web"):
+		return WEB_SAMPLE_RATE
 	return SAMPLE_RATE
 
 
