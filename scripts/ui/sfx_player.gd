@@ -14,6 +14,7 @@ signal music_cue_requested(cue_id: String, context: Dictionary)
 
 const SFX_BUS := "SFX"
 const SAMPLE_RATE := 22050
+const TELEPHONE_SAMPLE_RATE := 4000
 const PCM_BYTES_PER_FRAME := 2
 const SLOT_CLASSIC_REEL_STOP_TIMES := [1.05, 1.55, 2.15]
 const SLOT_POST_REEL_BONUS_DELAY := 0.40
@@ -47,11 +48,12 @@ const ROULETTE_PREWARM_EVENTS := [
 	"roulette_payout",
 ]
 const ENVIRONMENT_PREWARM_EVENTS := [
-	"drink_consumed",
 	"phone_call",
+	"drink_consumed",
 	"scratch_paper_foley_loop",
 	"scratch_box_pop",
 ]
+const PREWARM_EVENTS_PER_FRAME := 1
 const ROULETTE_RIM_TIMES := [0.42, 0.82, 1.26, 1.78, 2.34, 2.94, 3.32]
 const ROULETTE_SCATTER_TIMES := [3.66, 3.86, 4.08, 4.32]
 const MUSIC_DIRECTOR_CUES := {
@@ -134,14 +136,39 @@ var _surface_loop_event_id := ""
 var _surface_loop_fade_tween: Tween
 var _played_markers: Dictionary = {}
 var _normalized_event_cache: Dictionary = {}
+var _prewarm_queue: Array[String] = []
+var _prewarm_event_override: Array[String] = []
+var _prewarm_started := false
+
+
+func set_prewarm_events(event_ids: Array) -> void:
+	_prewarm_event_override.clear()
+	for event_id in event_ids:
+		var normalized := _normalized_event_id(str(event_id))
+		if not normalized.is_empty() and not _prewarm_event_override.has(normalized):
+			_prewarm_event_override.append(normalized)
+	if _prewarm_started:
+		_prewarm_started = false
+		_begin_incremental_prewarm()
 
 
 func _ready() -> void:
 	if WebAudioBridgeScript.available():
 		WebAudioBridgeScript.ensure()
 	if not _running_headless():
+		set_process(false)
 		_ensure_players()
-		call_deferred("_prewarm_table_streams")
+		call_deferred("_begin_incremental_prewarm")
+
+
+func _process(_delta: float) -> void:
+	if _prewarm_queue.is_empty():
+		set_process(false)
+		return
+	for _i in range(PREWARM_EVENTS_PER_FRAME):
+		if _prewarm_queue.is_empty():
+			break
+		_event_stream(str(_prewarm_queue.pop_front()))
 
 
 func play_surface_cue(cue_id: String, context: Dictionary = {}, surface_state: Dictionary = {}) -> void:
@@ -1074,6 +1101,7 @@ func _stop_one_shot_loops() -> void:
 
 
 func _play(event_id: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
+	_remove_from_prewarm_queue(_normalized_event_id(event_id))
 	var stream := _event_stream(event_id)
 	if WebAudioBridgeScript.available():
 		WebAudioBridgeScript.play_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch)
@@ -1111,15 +1139,40 @@ func _ensure_players() -> void:
 	add_child(_loop_player)
 
 
-func _prewarm_table_streams() -> void:
+func _begin_incremental_prewarm() -> void:
 	if _running_headless():
 		return
-	for event_id in BLACKJACK_PREWARM_EVENTS:
-		_event_stream(str(event_id))
-	for event_id in ROULETTE_PREWARM_EVENTS:
-		_event_stream(str(event_id))
-	for event_id in ENVIRONMENT_PREWARM_EVENTS:
-		_event_stream(str(event_id))
+	if _prewarm_started:
+		return
+	_prewarm_started = true
+	_prewarm_queue.clear()
+	if _prewarm_event_override.is_empty():
+		for event_id in BLACKJACK_PREWARM_EVENTS:
+			_queue_prewarm_event(str(event_id))
+		for event_id in ROULETTE_PREWARM_EVENTS:
+			_queue_prewarm_event(str(event_id))
+		for event_id in ENVIRONMENT_PREWARM_EVENTS:
+			_queue_prewarm_event(str(event_id))
+	else:
+		for event_id in _prewarm_event_override:
+			_queue_prewarm_event(str(event_id))
+	if not _prewarm_queue.is_empty():
+		set_process(true)
+
+
+func _queue_prewarm_event(event_id: String) -> void:
+	var normalized := _normalized_event_id(event_id)
+	if _stream_cache.has(normalized) or _prewarm_queue.has(normalized):
+		return
+	_prewarm_queue.append(normalized)
+
+
+func _remove_from_prewarm_queue(event_id: String) -> void:
+	if _prewarm_queue.is_empty():
+		return
+	var index := _prewarm_queue.find(_normalized_event_id(event_id))
+	if index >= 0:
+		_prewarm_queue.remove_at(index)
 
 
 func _event_stream(event_id: String) -> AudioStreamWAV:
@@ -1127,21 +1180,28 @@ func _event_stream(event_id: String) -> AudioStreamWAV:
 	if _stream_cache.has(normalized):
 		return _stream_cache[normalized]
 	var seconds := _event_seconds(normalized)
-	var frames := maxi(1, int(seconds * float(SAMPLE_RATE)))
+	var sample_rate := _event_sample_rate(normalized)
+	var frames := maxi(1, int(seconds * float(sample_rate)))
 	var data := PackedByteArray()
 	data.resize(frames * PCM_BYTES_PER_FRAME)
 	for i in range(frames):
-		var t := float(i) / float(SAMPLE_RATE)
+		var t := float(i) / float(sample_rate)
 		_write_i16(data, i * PCM_BYTES_PER_FRAME, _soft_limit(_event_sample(normalized, t, i, seconds)))
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
-	stream.mix_rate = SAMPLE_RATE
+	stream.mix_rate = sample_rate
 	stream.data = data
 	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if normalized.begins_with("reel_loop") or normalized in ["roulette_ball_loop", "scratch_paper_foley_loop"] else AudioStreamWAV.LOOP_DISABLED
 	stream.loop_begin = 0
 	stream.loop_end = frames
 	_stream_cache[normalized] = stream
 	return stream
+
+
+func _event_sample_rate(event_id: String) -> int:
+	if event_id == "phone_call":
+		return TELEPHONE_SAMPLE_RATE
+	return SAMPLE_RATE
 
 
 func _normalized_event_id(event_id: String) -> String:
@@ -1572,14 +1632,18 @@ func _sample_drink_consumed(t: float, frame: int, seconds: float) -> float:
 
 
 func _sample_phone_call(t: float, frame: int, seconds: float) -> float:
-	var dial_click := _pulse_window(t, 0.0, 0.036) * (_soft_noise(frame, 6029, 5) * 0.055 + _rounded_bell(t, 520.0, 0.05, 0.002) * 0.045)
+	var dial_click := 0.0
+	if t <= 0.040:
+		var click_env := 1.0 - clampf(t / 0.040, 0.0, 1.0)
+		dial_click = (sin(TAU * 880.0 * t) * 0.060 + _noise(frame, 6029) * 0.035) * click_env
 	var ring_one := _telephone_ring_segment(t, frame, 0.025, 0.315)
 	var ring_two := _telephone_ring_segment(t, frame + 2300, 0.425, 0.315)
-	var line_hiss := (_soft_noise(frame, 6043, 11) - _soft_noise(frame / 3, 6047, 11)) * 0.010 * _pulse_window(t, 0.04, seconds - 0.04)
+	var line_hiss := _noise(frame, 6043) * 0.004 * _pulse_window(t, 0.04, seconds - 0.04)
 	var cradle_tail_t := t - 0.96
 	var cradle := 0.0
-	if cradle_tail_t >= 0.0:
-		cradle = (_body_thump(cradle_tail_t, 0.12, 170.0, 0.10) + _soft_noise(frame, 6053, 7) * 0.026) * _decay_env(cradle_tail_t, 0.12, 0.004, 0.060)
+	if cradle_tail_t >= 0.0 and cradle_tail_t <= 0.12:
+		var cradle_env := 1.0 - clampf(cradle_tail_t / 0.12, 0.0, 1.0)
+		cradle = (sin(TAU * 135.0 * cradle_tail_t) * 0.060 + _noise(frame, 6053) * 0.012) * cradle_env
 	return dial_click + ring_one + ring_two + line_hiss + cradle
 
 
@@ -2047,14 +2111,15 @@ func _telephone_ring_segment(t: float, frame: int, start: float, duration: float
 	var local := t - start
 	if local < 0.0 or local > duration:
 		return 0.0
-	var envelope := _pulse_window(local, 0.0, duration)
-	var warble := sin(TAU * 12.5 * local) * 5.0
-	var tremolo := 0.54 + 0.46 * absf(sin(TAU * 20.0 * local))
-	var tone_a := sin(TAU * (440.0 + warble) * local) * 0.52
-	var tone_b := sin(TAU * (480.0 - warble * 0.65) * local + 0.15) * 0.48
-	var bell_body := sin(TAU * 220.0 * local) * 0.10
-	var striker := _soft_noise(frame, 6071, 5) * 0.030 * _pulse_window(local, 0.0, 0.026)
-	return (tone_a + tone_b + bell_body) * envelope * tremolo * 0.135 + striker
+	var attack := clampf(local / 0.018, 0.0, 1.0)
+	var release := clampf((duration - local) / 0.045, 0.0, 1.0)
+	var envelope := minf(attack, release)
+	var warble_phase := sin(TAU * 12.5 * local)
+	var tremolo := 0.58 + 0.42 * absf(sin(TAU * 18.0 * local))
+	var tone_a := sin(TAU * 440.0 * local + warble_phase * 0.18)
+	var tone_b := sin(TAU * 480.0 * local - warble_phase * 0.12 + 0.15)
+	var striker := _noise(frame, 6071) * 0.020 * (1.0 - clampf(local / 0.022, 0.0, 1.0))
+	return (tone_a * 0.52 + tone_b * 0.48) * envelope * tremolo * 0.145 + striker
 
 
 func _inharmonic_coin_ping(local: float, frame: int, seed: int, base_frequency: float, strength: float) -> float:

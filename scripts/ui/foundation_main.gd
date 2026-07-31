@@ -7605,13 +7605,20 @@ func _play_environment_audio_cue(cue_id: String, volume_db: float = -1.0) -> voi
 	var normalized_cue := cue_id.strip_edges()
 	if normalized_cue.is_empty():
 		return
-	if environment_sfx_player == null:
-		environment_sfx_player = SfxPlayerScript.new()
-		add_child(environment_sfx_player)
+	_ensure_environment_sfx_player()
 	if normalized_cue.begins_with("bonus_start") and environment_sfx_player.has_method("play_slot_event"):
 		environment_sfx_player.call("play_slot_event", normalized_cue, volume_db, 1.0)
 	elif environment_sfx_player.has_method("play_surface_cue"):
 		environment_sfx_player.call("play_surface_cue", normalized_cue, {"action": normalized_cue, "volume_db": volume_db}, {})
+
+
+func _ensure_environment_sfx_player() -> void:
+	if environment_sfx_player != null:
+		return
+	environment_sfx_player = SfxPlayerScript.new()
+	if environment_sfx_player.has_method("set_prewarm_events"):
+		environment_sfx_player.call("set_prewarm_events", ["phone_call"])
+	add_child(environment_sfx_player)
 
 
 func _on_game_surface_music_cue(cue_id: String, context: Dictionary) -> void:
