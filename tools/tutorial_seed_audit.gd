@@ -6,17 +6,21 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const GameModuleScript := preload("res://scripts/core/game_module.gd")
+const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const BlackjackScript := preload("res://scripts/games/blackjack.gd")
 const PullTabsScript := preload("res://scripts/games/pull_tabs.gd")
 
-const OUTPUT_JSON := "res://.tmp/tutorial_rework/tutorial_guided_run_audit.json"
-const OUTPUT_MARKDOWN := "res://.tmp/tutorial_rework/tutorial_guided_run_audit.md"
+const DEFAULT_OUTPUT_DIR := "res://.tmp/tutorial_rework"
 
 var library
 var failures: Array = []
+var output_dir := DEFAULT_OUTPUT_DIR
 
 
 func _init() -> void:
+	for argument in OS.get_cmdline_user_args():
+		if argument.begins_with("--out="):
+			output_dir = argument.trim_prefix("--out=").trim_suffix("/")
 	call_deferred("_run")
 
 
@@ -25,14 +29,18 @@ func _run() -> void:
 	library.load()
 	for error_value in library.validation_errors:
 		failures.append("Content validation: %s" % str(error_value))
+	var authored_contract := _verify_authored_contract()
 	var path_a := await _run_route("path_a")
 	var path_b := await _run_route("path_b_skip")
 	var isolation := _normal_run_isolation()
+	var stuck_sweep := _tutorial_stuck_sweep(100)
 	var report := {
 		"challenge_id": "tutorial_first_card",
 		"fixed_seed": str(library.challenge_config_for("tutorial_first_card", "ignored").get("seed_text", "")),
 		"routes": [path_a, path_b],
+		"authored_contract": authored_contract,
 		"normal_run_isolation": isolation,
+		"tutorial_stuck_sweep": stuck_sweep,
 		"failures": failures.duplicate(),
 		"passed": failures.is_empty(),
 	}
@@ -44,6 +52,114 @@ func _run() -> void:
 		for failure in failures:
 			push_error(str(failure))
 		quit(1)
+
+
+func _verify_authored_contract() -> Dictionary:
+	var ambient_ids: Array = []
+	var tutorial_delivery_count := 0
+	var highlighted_count := 0
+	for lesson_value in library.tutorial_lessons:
+		if typeof(lesson_value) != TYPE_DICTIONARY:
+			continue
+		var lesson: Dictionary = lesson_value
+		var lesson_id := str(lesson.get("id", ""))
+		if lesson_id.begins_with("tip_first_") or lesson_id == "tip_starter_card_home":
+			ambient_ids.append(lesson_id)
+		if str(lesson.get("scope", "")) == "tutorial_run":
+			if str(lesson.get("delivery", "")) == "dialogue":
+				tutorial_delivery_count += 1
+			var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+			if str(anchor.get("kind", "none")) != "none" and not str(anchor.get("id", "")).is_empty():
+				highlighted_count += 1
+	_check(ambient_ids.is_empty(), "Removed ambient tutorial tips still exist: %s" % JSON.stringify(ambient_ids), failures)
+	_check(tutorial_delivery_count == library.tutorial_lessons.size(), "Not every shipped tutorial lesson uses dialogue delivery.", failures)
+	_check(highlighted_count == library.tutorial_lessons.size(), "Not every shipped tutorial lesson owns a highlight anchor.", failures)
+
+	var pal: Dictionary = library.character("pal_tutorial_guide")
+	var host: Dictionary = library.character("vivienne_grand_host")
+	var bible_text := FileAccess.get_file_as_string("res://docs/plans/0.5_voice_bible.md")
+	_check(str(pal.get("display_name", "")) == "Pal" and str(pal.get("voice", {})).contains("your pal"), "Pal is missing or does not call themselves your pal.", failures)
+	_check(str(host.get("display_name", "")) == "Vivienne Vale" and str(host.get("id", "")) != "linda_cage_host", "Vivienne Vale is missing or not distinct from Linda.", failures)
+	_check(bible_text.contains("Pal") and bible_text.contains("your pal") and bible_text.contains("Vivienne Vale") and bible_text.contains("Grand Casino Host"), "Voice bible is missing Pal or Vivienne Vale.", failures)
+
+	var inspect_coffee: Dictionary = library.tutorial_lesson("tutorial_inspect_coffee")
+	var inspect_pencil: Dictionary = library.tutorial_lesson("tutorial_inspect_pencil")
+	var buy_item: Dictionary = library.tutorial_lesson("tutorial_buy_store_item")
+	_check(str(_dict(inspect_coffee.get("anchor", {})).get("id", "")) == "item:instant_coffee", "Corner-store first item inspection is not authored.", failures)
+	_check(_string_array(_dict(inspect_pencil.get("trigger", {})).get("depends_on", [])).has("tutorial_inspect_coffee") and str(_dict(inspect_pencil.get("anchor", {})).get("id", "")) == "item:ledger_pencil", "Corner-store second item inspection does not follow the first.", failures)
+	_check(_string_array(_dict(buy_item.get("trigger", {})).get("depends_on", [])).has("tutorial_inspect_pencil"), "Corner-store purchase does not wait for both inspections.", failures)
+
+	var pal_nodes := _dict(library.dialogue("tutorial_pal_guidance").get("nodes", {}))
+	var route_copy := str(_dict(pal_nodes.get("route_split", {})).get("text", ""))
+	var crew_copy := str(_dict(pal_nodes.get("crew_warning", {})).get("text", ""))
+	var lookaway_copy := str(_dict(pal_nodes.get("blackjack_lookaway", {})).get("text", ""))
+	var peek_copy := str(_dict(pal_nodes.get("blackjack_peek", {})).get("text", ""))
+	var invitation_copy := str(_dict(pal_nodes.get("invitation", {})).get("text", ""))
+	var goodbye_copy := str(_dict(pal_nodes.get("grand_depart", {})).get("text", ""))
+	_check(route_copy.contains("tip opened two doors") and route_copy.contains("strongly recommend") and route_copy.contains("skip"), "Pal does not explain and strongly steer the skippable route split.", failures)
+	_check(crew_copy.contains("last place you turn"), "Pal's Crew warning omits the required last-place-you-turn language.", failures)
+	_check(lookaway_copy.contains("easiest cheat") and lookaway_copy.contains("DRINK PASS spills a drink") and lookaway_copy.contains("CHIP SPILL"), "Pal's lookaway copy is not accurate to the real controls.", failures)
+	_check(peek_copy.contains("add heat") and peek_copy.contains("close the table"), "Pal's peek copy omits caught consequences.", failures)
+	_check(invitation_copy.contains("keep an eye on your environment") and invitation_copy.contains("accept"), "Pal's invitation copy omits environment scanning or acceptance.", failures)
+	_check(goodbye_copy.contains("banned") and goodbye_copy.contains("Rourke") and goodbye_copy.contains("Good luck"), "Pal's Grand Casino farewell is incomplete.", failures)
+
+	var modifiers := _dict(library.challenge_config_for("tutorial_first_card", "IGNORED").get("modifiers", {}))
+	var forced_choices := _dict(modifiers.get("tutorial_forced_event_choices", {}))
+	_check(str(forced_choices.get("comped_suite_offer", "")) == "take_comp", "Tutorial comp is not forced to take_comp.", failures)
+	_check(int(modifiers.get("tutorial_pull_tab_xray_offset", -1)) == 2, "Tutorial X-ray pull-tab offset is not 2.", failures)
+
+	var rourke_warning_levels: Array = []
+	for event_value in library.events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = event_value
+		var speaker := _dict(event.get("speaker", {}))
+		var trigger := _dict(event.get("trigger", {}))
+		if str(speaker.get("character_id", "")) == "rourke_pit_boss" and str(trigger.get("type", "")) == "heat_threshold":
+			rourke_warning_levels.append(int(trigger.get("level", -1)))
+	_check(rourke_warning_levels == [85], "Rourke warning must be one heat-85 hook with no escalation ladder: %s" % JSON.stringify(rourke_warning_levels), failures)
+	return {
+		"ambient_tip_ids": ambient_ids,
+		"dialogue_lessons": tutorial_delivery_count,
+		"highlighted_lessons": highlighted_count,
+		"pal": str(pal.get("display_name", "")),
+		"host": str(host.get("display_name", "")),
+		"rourke_warning_levels": rourke_warning_levels,
+	}
+
+
+func _tutorial_stuck_sweep(seed_count: int) -> Dictionary:
+	var stuck: Array = []
+	for seed_index in range(seed_count):
+		var route_id := "path_a" if seed_index % 2 == 0 else "path_b_skip"
+		var config: Dictionary = library.challenge_config_for("tutorial_first_card", "TUTORIAL-SWEEP-%03d" % seed_index)
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new(str(config.get("seed_text", "")), config)
+		run_state.begin_act(1)
+		var generator := RunGeneratorScript.new(library)
+		generator.next_environment(run_state)
+		var ok := str(run_state.current_environment.get("archetype_id", "")) == "apartment"
+		ok = ok and _string_array(run_state.current_environment.get("next_archetypes", [])) == ["corner_store"]
+		if ok:
+			generator.next_environment(run_state, "corner_store", true)
+			var tip := _resolve_event(run_state, "parking_lot_tip", "follow_tip")
+			ok = bool(tip.get("ok", false))
+		if ok and route_id == "path_a":
+			generator.next_environment(run_state, "gas_station_casino", true)
+			ok = str(run_state.current_environment.get("archetype_id", "")) == "gas_station_casino"
+		if ok:
+			generator.next_environment(run_state, "small_underground_casino", true)
+			ok = str(run_state.current_environment.get("archetype_id", "")) == "small_underground_casino"
+		if ok:
+			var invite := _resolve_event(run_state, "tutorial_grand_casino_invitation", "accept_first_invitation")
+			ok = bool(invite.get("ok", false)) and bool(run_state.narrative_flags.get("grand_casino_invite", false))
+		if ok:
+			generator.next_environment(run_state, "grand_casino", true)
+			ok = str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID
+		if not ok:
+			stuck.append({"index": seed_index, "route": route_id, "environment": str(run_state.current_environment.get("archetype_id", ""))})
+	_check(stuck.is_empty(), "Tutorial route stuck-state sweep failed: %s" % JSON.stringify(stuck), failures)
+	return {"iterations": seed_count, "path_a": int(ceil(float(seed_count) / 2.0)), "path_b_skip": int(floor(float(seed_count) / 2.0)), "stuck": stuck.size(), "fixed_seed": "FIRST-NIGHT-ACE-17"}
 
 
 func _run_route(route_id: String) -> Dictionary:
@@ -58,6 +174,8 @@ func _run_route(route_id: String) -> Dictionary:
 	_check(run_state.bankroll == 80, "%s did not start with $80." % route_id, route_failures)
 	var apartment_offers := _dict_array(run_state.current_environment.get("item_offers", []))
 	_check(apartment_offers.size() == 1 and str(apartment_offers[0].get("id", "")) == "xray_glasses", "%s apartment did not contain only the forced X-ray Glasses pickup." % route_id, route_failures)
+	var first_destinations := _string_array(run_state.current_environment.get("next_archetypes", []))
+	_check(first_destinations == ["corner_store"], "%s apartment map did not offer only the corner store: %s" % [route_id, JSON.stringify(first_destinations)], route_failures)
 	var action_service := RunActionServiceScript.new()
 	action_service.setup(library, run_state)
 	var xray_pickup: Dictionary = action_service.buy_item_offer("xray_glasses")
@@ -89,6 +207,8 @@ func _run_route(route_id: String) -> Dictionary:
 	_check(bool(phone_result.get("ok", false)) and bool(family_result.get("ok", false)) and not run_state.debt.is_empty(), "%s did not take the real family loan and receive debt." % route_id, route_failures)
 	var tip_result := _resolve_event(run_state, "parking_lot_tip", "follow_tip")
 	_check(bool(tip_result.get("ok", false)) and bool(run_state.narrative_flags.get("underground_tip", false)), "%s parking tip did not open the underground route." % route_id, route_failures)
+	var opened_routes := _string_array(run_state.current_environment.get("next_archetypes", []))
+	_check(opened_routes.has("gas_station_casino") and opened_routes.has("small_underground_casino"), "%s parking tip did not leave both Path A and Path B open: %s" % [route_id, JSON.stringify(opened_routes)], route_failures)
 
 	var pull_tab_proof := {"skipped": route_id != "path_a"}
 	if route_id == "path_a":
@@ -108,6 +228,9 @@ func _run_route(route_id: String) -> Dictionary:
 	_check(bool(comp_result.get("ok", false)) and bool(run_state.narrative_flags.get("grand_casino_event_comped_suite_offer_take_comp", false)), "%s did not take the forced real comp." % route_id, route_failures)
 	var cage_entered: bool = generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
 	_check(cage_entered, "%s could not enter Linda's Cage." % route_id, route_failures)
+	var gift_shop_state := _dict(run_state.current_environment.get("cage_gift_shop_state", {}))
+	var gift_shop_stock := _dict_array(gift_shop_state.get("stock", []))
+	_check(gift_shop_stock.size() >= 3, "%s Linda's Cage did not expose the real chips-only gift shop stock." % route_id, route_failures)
 	var chip_purchase := run_state.buy_grand_casino_chips(10)
 	_check(bool(chip_purchase.get("ok", false)) and run_state.grand_casino_chips >= 10, "%s could not buy chips from Linda." % route_id, route_failures)
 	var linda_nodes: Dictionary = _dict(library.dialogue("linda_cage_services").get("nodes", {}))
@@ -127,8 +250,8 @@ func _run_route(route_id: String) -> Dictionary:
 	return {
 		"route": route_id,
 		"passed": route_failures.is_empty(),
-		"apartment": {"archetype": "apartment", "xray_picked_up": run_state.inventory.has("xray_glasses")},
-		"corner_store": {"offers": store_offer_ids, "family_debt_count": run_state.debt.size(), "tip_followed": bool(run_state.narrative_flags.get("underground_tip", false))},
+		"apartment": {"archetype": "apartment", "xray_picked_up": run_state.inventory.has("xray_glasses"), "first_destinations": first_destinations},
+		"corner_store": {"offers": store_offer_ids, "family_debt_count": run_state.debt.size(), "tip_followed": bool(run_state.narrative_flags.get("underground_tip", false)), "opened_routes": opened_routes},
 		"pull_tabs": pull_tab_proof,
 		"blackjack": blackjack_proof,
 		"grand_casino": {"comp_taken": bool(run_state.narrative_flags.get("grand_casino_event_comped_suite_offer_take_comp", false)), "chips_bought": int(chip_purchase.get("chips_delta", 0)), "hand": grand_hand, "bronze_claim": bronze_claim},
@@ -199,6 +322,25 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 		icons[icon_index] = icon
 	challenge["icons"] = icons
 	count_state["count_challenge"] = challenge
+	var miss_run: RunState = RunStateScript.new()
+	miss_run.from_dict(run_state.to_dict())
+	var miss_game: GameModule = BlackjackScript.new()
+	miss_game.setup(library.game("blackjack"), library)
+	var miss_state := count_state.duplicate(true)
+	var miss_challenge := _dict(miss_state.get("count_challenge", {}))
+	var miss_icons := _dict_array(miss_challenge.get("icons", []))
+	for icon_index in range(miss_icons.size()):
+		var miss_icon: Dictionary = miss_icons[icon_index]
+		miss_icon["spawn_msec"] = now - 10000
+		miss_icon["duration_msec"] = 1
+		miss_icons[icon_index] = miss_icon
+	miss_challenge["icons"] = miss_icons
+	miss_state["count_challenge"] = miss_challenge
+	var miss_result := miss_game.resolve_with_context("count_cards", 0, miss_run, miss_run.current_environment, miss_run.create_rng("tutorial_count_miss"), miss_state)
+	var miss_final_state := _dict(miss_result.get("blackjack_surface_ui_state", miss_state))
+	var miss_final_challenge := _dict(miss_final_state.get("count_challenge", {}))
+	var miss_perfect := bool(miss_result.get("blackjack_count_perfect", miss_final_challenge.get("perfect", true)))
+	_check(not miss_perfect and int(miss_result.get("suspicion_delta", 0)) > 0, "Missing real count pulses did not add heat: %s" % JSON.stringify(miss_result), route_failures)
 	for icon_index in range(icons.size()):
 		count_state = game.surface_action_command("blackjack_count_icon", icon_index, false, count_state, run_state, run_state.current_environment).get("ui_state", {})
 	var coach_state := game.coach_state(run_state, run_state.current_environment, count_state)
@@ -209,7 +351,7 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	var stand := game.surface_action_command("blackjack_stand", 0, false, final_count_state, run_state, run_state.current_environment)
 	if bool(stand.get("resolve", false)):
 		game.resolve_with_context(str(stand.get("action_id", "play_basic")), 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_raised_stand"), stand.get("ui_state", {}))
-	return {"normal_hand_settled": bool(clean.get("settled", false)), "raised_bet": 4, "lookaway_id": str(distracted_state.get("dealer_lookaway_id", "")), "peek_had_window": bool(peek_state.get("peek_had_window", false)), "count_icon_count": icons.size(), "count_all_selected": bool(coach_state.get("count_all_selected", false)), "count_heat_delta": int(count_result.get("suspicion_delta", 0)), "raised_deal_ok": bool(deal_result.get("ok", false))}
+	return {"normal_hand_settled": bool(clean.get("settled", false)), "raised_bet": 4, "lookaway_id": str(distracted_state.get("dealer_lookaway_id", "")), "peek_had_window": bool(peek_state.get("peek_had_window", false)), "count_icon_count": icons.size(), "count_all_selected": bool(coach_state.get("count_all_selected", false)), "count_miss_heat_delta": int(miss_result.get("suspicion_delta", 0)), "raised_deal_ok": bool(deal_result.get("ok", false))}
 
 
 func _deal_and_stand(game: GameModule, run_state: RunState, stake: int, rng_label: String) -> Dictionary:
@@ -234,6 +376,24 @@ func _settle_grand_blackjack_hand(run_state: RunState, route_failures: Array) ->
 func _normal_run_isolation() -> Dictionary:
 	var config: Dictionary = library.challenge_config_for("standard", "NORMAL-ISOLATION")
 	var modifiers: Dictionary = config.get("modifiers", {}) if typeof(config.get("modifiers", {})) == TYPE_DICTIONARY else {}
+	var tutorial_modifier_keys := ["tutorial_run", "home_archetype_id", "tutorial_environment_overrides", "tutorial_forced_event_choices", "tutorial_event_chain_chances", "tutorial_pull_tab_xray_offset", "tutorial_initial_map_targets", "tutorial_main_floor_only"]
+	var leaked_modifier_keys: Array = []
+	for key in tutorial_modifier_keys:
+		if modifiers.has(key):
+			leaked_modifier_keys.append(key)
+	var normal_a: RunState = RunStateScript.new()
+	normal_a.start_new("NORMAL-ISOLATION", config)
+	normal_a.begin_act(1)
+	var normal_generator_a := RunGeneratorScript.new(library)
+	normal_generator_a.next_environment(normal_a)
+	var normal_b: RunState = RunStateScript.new()
+	normal_b.start_new("NORMAL-ISOLATION", config)
+	normal_b.begin_act(1)
+	var normal_generator_b := RunGeneratorScript.new(library)
+	normal_generator_b.next_environment(normal_b)
+	var normal_start_json := JSON.stringify(normal_a.current_environment)
+	_check(normal_start_json == JSON.stringify(normal_b.current_environment), "Normal home/item generation is not byte-identical for the same seed.", failures)
+	_check(leaked_modifier_keys.is_empty(), "Tutorial forcing leaked into normal config: %s" % JSON.stringify(leaked_modifier_keys), failures)
 	var grand: Dictionary = library.environment_archetype(RunState.GRAND_CASINO_ARCHETYPE_ID)
 	var objective: Dictionary = grand.get("demo_objective", {}) if typeof(grand.get("demo_objective", {})) == TYPE_DICTIONARY else {}
 	var phone: Dictionary = library.event("call_brother_in_law")
@@ -248,17 +408,32 @@ func _normal_run_isolation() -> Dictionary:
 	var pull_tabs: GameModule = PullTabsScript.new()
 	pull_tabs.setup(library.game("pull_tabs"), library)
 	var normal_machine := pull_tabs.generate_environment_state(normal_run, normal_environment, normal_run.create_rng("normal_stock"))
+	var normal_control_run: RunState = RunStateScript.new()
+	normal_control_run.start_new("NORMAL-PULL-TAB-ISOLATION", config)
+	var normal_control_machine := pull_tabs.generate_environment_state(normal_control_run, normal_environment, normal_control_run.create_rng("normal_stock"))
 	var scripted := false
 	for deal in _dict_array(normal_machine.get("deals", [])):
 		if bool(deal.get("tutorial_xray_scripted", false)):
 			scripted = true
-	_check(not modifiers.has("tutorial_forced_event_choices") and not modifiers.has("tutorial_pull_tab_xray_offset"), "Tutorial forcing leaked into a normal challenge config.", failures)
+	var guarded_config := RunStateScript.custom_challenge("normal_guard_probe", "NORMAL-GUARD", {"tutorial_pull_tab_xray_offset": 2})
+	var guarded_run: RunState = RunStateScript.new()
+	guarded_run.start_new("NORMAL-GUARD", guarded_config)
+	var guarded_machine := pull_tabs.generate_environment_state(guarded_run, normal_environment, guarded_run.create_rng("normal_guard_stock"))
+	var guard_scripted := false
+	for deal in _dict_array(guarded_machine.get("deals", [])):
+		if bool(deal.get("tutorial_xray_scripted", false)):
+			guard_scripted = true
+	_check(JSON.stringify(normal_machine) == JSON.stringify(normal_control_machine), "Normal pull-tab stock changed for an identical seed.", failures)
+	_check(not guard_scripted, "Pull-tab tutorial stock scripting ignored the tutorial-run guard.", failures)
 	_check(normal_chain_chance == 0.75, "Normal family phone chance changed from 0.75.", failures)
 	_check(not scripted, "Tutorial X-ray stock scripting leaked into a normal pull-tab machine.", failures)
 	_check(int(objective.get("high_roller_net_winnings", -1)) == 30 and int(objective.get("high_roller_min_grand_casino_games", -1)) == 5 and int(objective.get("high_roller_max_heat", -1)) == 30, "Normal Grand Casino thresholds changed.", failures)
+	_check(int(objective.get("players_card_bronze_min_games", -1)) == 1 and int(objective.get("players_card_bronze_net_winnings", -1)) == 5 and int(objective.get("players_card_bronze_max_heat", -1)) == 30, "Normal Bronze thresholds changed.", failures)
+	_check(int(objective.get("players_card_silver_min_games", -1)) == 3 and int(objective.get("players_card_silver_net_winnings", -1)) == 15 and int(objective.get("players_card_silver_max_heat", -1)) == 30, "Normal Silver thresholds changed.", failures)
+	_check(int(objective.get("players_card_gold_min_games", -1)) == 5 and int(objective.get("players_card_gold_net_winnings", -1)) == 30 and int(objective.get("players_card_gold_max_heat", -1)) == 30, "Normal Gold thresholds changed.", failures)
 	var host_dialogue: Dictionary = library.dialogue("normal_grand_host_greeting")
 	_check(str(_dict(host_dialogue.get("speaker", {})).get("character_id", "")) == "vivienne_grand_host", "Normal-run Host greeting is missing Vivienne.", failures)
-	return {"tutorial_modifier_keys_absent": not modifiers.has("tutorial_forced_event_choices"), "family_phone_chain_chance": normal_chain_chance, "pull_tab_stock_scripted": scripted, "grand_thresholds": {"net": objective.get("high_roller_net_winnings", -1), "games": objective.get("high_roller_min_grand_casino_games", -1), "heat": objective.get("high_roller_max_heat", -1)}, "host_greeting_dialogue": str(host_dialogue.get("id", ""))}
+	return {"tutorial_modifier_keys_absent": leaked_modifier_keys.is_empty(), "normal_start_hash": hash(normal_start_json), "normal_start_archetype": str(normal_a.current_environment.get("archetype_id", "")), "family_phone_chain_chance": normal_chain_chance, "pull_tab_stock_scripted": scripted, "pull_tab_guard_scripted": guard_scripted, "normal_stock_hash": hash(JSON.stringify(normal_machine)), "grand_thresholds": {"net": objective.get("high_roller_net_winnings", -1), "games": objective.get("high_roller_min_grand_casino_games", -1), "heat": objective.get("high_roller_max_heat", -1)}, "card_thresholds": {"bronze": [objective.get("players_card_bronze_min_games", -1), objective.get("players_card_bronze_net_winnings", -1), objective.get("players_card_bronze_max_heat", -1)], "silver": [objective.get("players_card_silver_min_games", -1), objective.get("players_card_silver_net_winnings", -1), objective.get("players_card_silver_max_heat", -1)], "gold": [objective.get("players_card_gold_min_games", -1), objective.get("players_card_gold_net_winnings", -1), objective.get("players_card_gold_max_heat", -1)]}, "host_greeting_dialogue": str(host_dialogue.get("id", ""))}
 
 
 func _resolve_event(run_state: RunState, event_id: String, choice_id: String) -> Dictionary:
@@ -303,9 +478,11 @@ func _ids(values: Array) -> Array:
 
 
 func _write_report(report: Dictionary) -> void:
-	var absolute_json := ProjectSettings.globalize_path(OUTPUT_JSON)
+	var output_json := "%s/tutorial_guided_run_audit.json" % output_dir
+	var output_markdown := "%s/tutorial_guided_run_audit.md" % output_dir
+	var absolute_json := ProjectSettings.globalize_path(output_json)
 	DirAccess.make_dir_recursive_absolute(absolute_json.get_base_dir())
-	var json_file := FileAccess.open(OUTPUT_JSON, FileAccess.WRITE)
+	var json_file := FileAccess.open(output_json, FileAccess.WRITE)
 	json_file.store_string(JSON.stringify(report, "\t"))
 	json_file.close()
 	var lines := [
@@ -317,12 +494,14 @@ func _write_report(report: Dictionary) -> void:
 	for route_value in report.get("routes", []):
 		var route: Dictionary = route_value
 		lines.append("- `%s`: %s; end `%s`; X-ray payout `$%d`; count pulses `%d`." % [str(route.get("route", "")), "PASS" if bool(route.get("passed", false)) else "FAIL", str(route.get("tutorial_end_route", "")), int(_dict(route.get("pull_tabs", {})).get("redeemed_payout", 0)), int(_dict(route.get("blackjack", {})).get("count_icon_count", 0))])
+	lines.append("- Authored delivery: `%s`" % JSON.stringify(report.get("authored_contract", {})))
 	lines.append("- Normal isolation: `%s`" % JSON.stringify(report.get("normal_run_isolation", {})))
+	lines.append("- Tutorial stuck sweep: `%s`" % JSON.stringify(report.get("tutorial_stuck_sweep", {})))
 	if not report.get("failures", []).is_empty():
 		lines.append("")
 		lines.append("## Failures")
 		for failure in report.get("failures", []):
 			lines.append("- %s" % str(failure))
-	var markdown_file := FileAccess.open(OUTPUT_MARKDOWN, FileAccess.WRITE)
+	var markdown_file := FileAccess.open(output_markdown, FileAccess.WRITE)
 	markdown_file.store_string("\n".join(lines) + "\n")
 	markdown_file.close()
