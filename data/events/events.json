@@ -3119,8 +3119,7 @@
     },
     "conditions": {
       "requires_flags": {
-        "tutorial_active": true,
-        "tutorial_friendly_choice_done": true
+        "tutorial_active": true
       },
       "blocked_by_flags": [
         "grand_casino_invite"

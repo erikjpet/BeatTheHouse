@@ -15,6 +15,7 @@ const GRANTS_FLAG := "_meta_bag_grants"
 const SELECTED_FLAG := "_meta_bag_selected"
 const SPECIAL_OUTCOME_PROCESSED_FLAG := "_meta_special_outcome_processed"
 const PLAYERS_CARD_REWARD_FLAG := "_meta_players_card_reward"
+const TUTORIAL_BRONZE_ROUTE := "tutorial_bronze_card"
 const PLAYERS_CARD_DESTROYED_FLAG := "_meta_players_card_destroyed"
 const GRAND_CASINO_CHIPS_REWARD_FLAG := "_meta_grand_casino_chips_reward"
 const PRESTIGE_RESULT_FLAG := "_meta_prestige_result"
@@ -72,7 +73,7 @@ func apply_terminal_special_outcome(run_state: RunState, meta_collection_service
 		return {"ok": false, "mutated": false}
 	var tutorial_card_victory := run_state.is_tutorial_run() \
 		and run_state.run_status == RunState.RUN_STATUS_ENDED \
-		and str(run_state.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
+		and [RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, TUTORIAL_BRONZE_ROUTE].has(str(run_state.narrative_flags.get("demo_victory_route", "")))
 	if not run_state.meta_collection_enabled_for_run() and not tutorial_card_victory:
 		return {"ok": true, "mutated": false}
 	if bool(run_state.narrative_flags.get(SPECIAL_OUTCOME_PROCESSED_FLAG, false)):
@@ -115,7 +116,7 @@ func apply_terminal_special_outcome(run_state: RunState, meta_collection_service
 		run_state.narrative_flags[MetaCollectionServiceScript.FAILURE_DECAY_FLAG] = true
 		run_state.clear_pending_bag_markers()
 	elif run_state.run_status == RunState.RUN_STATUS_ENDED:
-		if str(run_state.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID:
+		if str(run_state.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID or tutorial_card_victory:
 			var stamp := _players_card_stamp(run_state)
 			var card: Dictionary = meta_collection_service.mint_players_card(stamp)
 			if not card.is_empty():
@@ -132,7 +133,7 @@ func apply_terminal_special_outcome(run_state: RunState, meta_collection_service
 					"type": "meta_players_card_minted",
 					"instance_id": int(card.get("instance_id", 0)),
 					"route": RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID,
-					"message": "Linda's Gold Players Card was added to the collection.",
+					"message": "Linda's %s Players Card was added to the collection." % str(stamp.get("tier_reached", "Gold")).capitalize(),
 				})
 				result["card_reward"] = reward
 				result["mutated"] = true

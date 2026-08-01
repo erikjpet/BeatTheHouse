@@ -19,25 +19,16 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	if run_state == null or not run_state.is_tutorial_run() or str(run_state.challenge_config.get("id", "")) != "tutorial_first_card":
 		push_error("Lessons replay did not start the fixed tutorial challenge.")
 		return false
-	if str(run_state.current_environment.get("archetype_id", "")) != "motel_room" or run_state.bankroll != 80:
+	if str(run_state.current_environment.get("archetype_id", "")) != "apartment" or run_state.bankroll != 80:
 		push_error("Tutorial UI did not start with the authored First Night framing.")
 		return false
 	var coach_snapshot: Dictionary = app.get("coach_overlay").call("current_snapshot")
-	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_home_container" or not bool(coach_snapshot.get("gating", false)):
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_apartment_xray" or str(coach_snapshot.get("delivery", "")) != "dialogue" or not bool(coach_snapshot.get("gating", false)):
 		push_error("Tutorial UI did not focus and gate the first Home beat.")
 		return false
-	if not bool(app.call("activate_interactable_object", "home_container:backpack_01")):
-		push_error("Tutorial UI could not activate the highlighted Home backpack through the real object route.")
-		return false
-	await process_frame
-	if not bool(app.get("run_inventory_screen").call("is_open")):
-		push_error("Tutorial Home backpack did not open the shared inventory surface.")
-		return false
-	app.call("close_run_inventory")
-	await process_frame
-	coach_snapshot = app.get("coach_overlay").call("current_snapshot")
-	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_empty_loadout" or not bool(coach_snapshot.get("gating", false)):
-		push_error("Tutorial did not advance from the backpack to the carried-inventory lesson.")
+	var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(talk_snapshot.get("visible", false)) or str(talk_snapshot.get("speaker", "")) != "Pal":
+		push_error("Tutorial first beat did not speak through the real Pal TalkDock conversation.")
 		return false
 	app.call("open_run_menu")
 	await process_frame
@@ -82,8 +73,9 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	run_state = app.get("run_state")
 	run_state.run_status = RunState.RUN_STATUS_ENDED
 	run_state.narrative_flags["demo_victory"] = true
-	run_state.narrative_flags["demo_victory_route"] = RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
-	run_state.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD
+	run_state.narrative_flags["demo_victory_route"] = "tutorial_bronze_card"
+	run_state.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
+	run_state.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
 	app.call("_process_terminal_meta_bag_drops")
 	var meta_service: MetaCollectionService = app.get("meta_collection_service")
 	var starter_id := 0
@@ -102,8 +94,8 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	await process_frame
 	await process_frame
 	coach_snapshot = app.get("coach_overlay").call("current_snapshot")
-	if str(coach_snapshot.get("lesson_id", "")) != "tip_starter_card_home" or not str(coach_snapshot.get("copy", "")).contains("recognition") or not str(coach_snapshot.get("copy", "")).contains("gone forever"):
-		push_error("Tutorial victory did not fire the starter-card fragility handoff back home.")
+	if str(coach_snapshot.get("lesson_id", "")).begins_with("tip_first_") or str(coach_snapshot.get("lesson_id", "")) == "tip_starter_card_home":
+		push_error("Tutorial victory reintroduced a removed ambient first-time tip.")
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
@@ -111,8 +103,19 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	await process_frame
 	run_state = app.get("run_state")
 	coach_snapshot = app.get("coach_overlay").call("current_snapshot")
-	if run_state == null or run_state.is_tutorial_run() or not bool(run_state.challenge_modifiers().get("grand_casino_prestige", false)) or str(coach_snapshot.get("lesson_id", "")) == "tip_starter_card_home":
-		push_error("First normal run after the tutorial did not carry prestige or repeated the starter-card tip.")
+	if run_state == null or run_state.is_tutorial_run() or not bool(run_state.challenge_modifiers().get("grand_casino_prestige", false)) or str(coach_snapshot.get("lesson_id", "")).begins_with("tip_first_"):
+		push_error("First normal run after the tutorial did not carry prestige or repeated an ambient tip.")
+		return false
+	run_state.current_environment = {"id": "normal_grand_host_ui", "archetype_id": RunState.GRAND_CASINO_ARCHETYPE_ID}
+	app.call("_queue_normal_grand_host_greeting", {"id": "normal_previous_room", "archetype_id": "bar"})
+	var host_greeting: Dictionary = run_state.pending_talk_event("dialogue:normal_grand_host_greeting")
+	var host_speaker: Dictionary = host_greeting.get("speaker", {}) if typeof(host_greeting.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if str(host_greeting.get("dialogue_id", "")) != "normal_grand_host_greeting" or str(host_speaker.get("character_id", "")) != "vivienne_grand_host":
+		push_error("Normal Grand Casino entry did not queue Vivienne Vale's one-time Host greeting.")
+		return false
+	app.call("_queue_normal_grand_host_greeting", {"id": "another_previous_room", "archetype_id": "bar"})
+	if run_state.pending_talk_event_count() != 1:
+		push_error("Normal Grand Casino Host greeting queued more than once.")
 		return false
 	app.set("run_state", null)
 	app.call("return_to_main_menu")

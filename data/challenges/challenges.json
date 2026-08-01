@@ -112,35 +112,99 @@
       "tutorial_run": true,
       "tutorial_main_floor_only": true,
       "tutorial_shop_item_pool_strict": true,
-      "tutorial_first_slot_net": 2,
-      "home_archetype_id": "motel_room",
+      "home_archetype_id": "apartment",
       "starting_bankroll": 80,
+      "tutorial_forced_event_choices": {
+        "call_brother_in_law": "make_call",
+        "family_loan": "accept",
+        "parking_lot_tip": "follow_tip",
+        "tutorial_grand_casino_invitation": "accept_first_invitation",
+        "comped_suite_offer": "take_comp"
+      },
+      "tutorial_event_chain_chances": {
+        "family_loan": 1.0
+      },
+      "tutorial_pull_tab_xray_offset": 2,
       "tutorial_environment_overrides": {
-        "motel_room": {
+        "apartment": {
           "home_profile": {
             "starting_cash": [
               80,
               80
             ],
-            "starting_items": 0,
-            "starting_containers": [
-              {
-                "item_id": "backpack",
-                "capacity": 5
-              }
-            ]
-          }
+            "starting_items": 1,
+            "starting_item_pool": [
+              "xray_glasses"
+            ],
+            "starting_containers": []
+          },
+          "next_archetypes": [
+            "corner_store"
+          ],
+          "travel_hooks": [
+            "corner_store"
+          ]
         },
         "corner_store": {
           "item_pool": [
-            "instant_coffee"
+            "instant_coffee",
+            "ledger_pencil"
           ],
           "item_count": [
+            2,
+            2
+          ],
+          "event_pool": [
+            "call_brother_in_law",
+            "parking_lot_tip"
+          ],
+          "required_event_ids": [
+            "call_brother_in_law",
+            "parking_lot_tip"
+          ],
+          "event_count": [
+            2,
+            2
+          ],
+          "lender_hooks": [
+            "the_crew"
+          ],
+          "lender_count": [
             1,
             1
+          ],
+          "next_archetypes": [
+            "gas_station_casino"
+          ],
+          "travel_hooks": [
+            "gas_station_casino"
           ]
         },
-        "bar": {
+        "gas_station_casino": {
+          "game_pool": [
+            "pull_tabs"
+          ],
+          "required_game_ids": [
+            "pull_tabs"
+          ],
+          "game_count": [
+            1,
+            1
+          ],
+          "event_pool": [],
+          "required_event_ids": [],
+          "event_count": [
+            0,
+            0
+          ],
+          "next_archetypes": [
+            "small_underground_casino"
+          ],
+          "travel_hooks": [
+            "small_underground_casino"
+          ]
+        },
+        "small_underground_casino": {
           "game_pool": [
             "blackjack"
           ],
@@ -152,45 +216,55 @@
             1
           ],
           "event_pool": [
-            "tutorial_friendly_choice",
             "tutorial_grand_casino_invitation"
           ],
           "required_event_ids": [
-            "tutorial_friendly_choice",
             "tutorial_grand_casino_invitation"
           ],
           "event_count": [
-            2,
-            2
-          ]
+            1,
+            1
+          ],
+          "next_archetypes": [],
+          "travel_hooks": []
         },
         "grand_casino": {
           "game_pool": [
-            "slot"
+            "blackjack"
           ],
           "required_game_ids": [
-            "slot"
+            "blackjack"
           ],
           "game_count": [
             1,
             1
           ],
+          "event_pool": [
+            "comped_suite_offer"
+          ],
+          "required_event_ids": [
+            "comped_suite_offer"
+          ],
+          "event_count": [
+            1,
+            1
+          ],
           "demo_objective": {
             "title": "Earn Your First Players Card",
-            "summary": "Finish one clean Main Floor spin $1 ahead, then return to Linda.",
-            "high_roller_net_winnings": 1,
-            "high_roller_min_grand_casino_games": 1,
+            "summary": "Play one Main Floor table hand, claim Bronze from Linda, and learn the road to Gold.",
+            "high_roller_net_winnings": 9999,
+            "high_roller_min_grand_casino_games": 99,
             "high_roller_max_heat": 90,
             "players_card_bronze_min_games": 1,
-            "players_card_bronze_net_winnings": 0,
-            "players_card_bronze_max_heat": 90,
-            "players_card_silver_min_games": 1,
-            "players_card_silver_net_winnings": 1,
+            "players_card_bronze_net_winnings": -999,
+            "players_card_bronze_max_heat": 100,
+            "players_card_silver_min_games": 99,
+            "players_card_silver_net_winnings": 9999,
             "players_card_silver_max_heat": 90,
-            "players_card_gold_min_games": 1,
-            "players_card_gold_net_winnings": 1,
+            "players_card_gold_min_games": 99,
+            "players_card_gold_net_winnings": 9999,
             "players_card_gold_max_heat": 90,
-            "victory_message": "Linda issued your first Players Card."
+            "victory_message": "Linda issued Bronze and named the Golden Players Card as your next goal."
           }
         }
       }

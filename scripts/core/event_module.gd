@@ -307,6 +307,9 @@ static func _apply_trigger_event_hook(run_state: RunState, source_result: Dictio
 	if run_state == null or target_id.is_empty():
 		return
 	var chance := clampf(float(hook_data.get("chance", 1.0)), 0.0, 1.0)
+	var chance_overrides: Dictionary = run_state.challenge_modifiers().get("tutorial_event_chain_chances", {}) if typeof(run_state.challenge_modifiers().get("tutorial_event_chain_chances", {})) == TYPE_DICTIONARY else {}
+	if chance_overrides.has(target_id):
+		chance = clampf(float(chance_overrides.get(target_id, chance)), 0.0, 1.0)
 	var threshold := clampi(int(round(chance * 10000.0)), 0, 10000)
 	var rng := run_state.create_rng()
 	var roll := rng.randi_range(0, 9999)

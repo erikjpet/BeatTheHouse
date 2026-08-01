@@ -451,6 +451,23 @@ func _resolve_tab_detector_scan(run_state: RunState, environment: Dictionary, rn
 	return result
 
 
+func coach_state(run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
+	var machine := _read_machine_state(run_state, environment)
+	if machine.is_empty():
+		return {}
+	var target_consumed := false
+	var item_state := _pull_tab_item_state(machine)
+	for target_value in _dictionary_array(item_state.get("xray_targets", [])):
+		if bool((target_value as Dictionary).get("consumed", false)):
+			target_consumed = true
+			break
+	return {
+		"scripted_target_consumed": target_consumed,
+		"pending_payout": _pending_winner_payout(machine),
+		"redeemable_count": _array_size(machine.get("winner_pile", [])),
+	}
+
+
 func _toggle_tab_detector_active_item(machine: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	if run_state == null or not run_state.inventory.has(TAB_DETECTOR_ITEM_ID):
 		return {"handled": true, "message": "You do not have the Tab Detector."}
@@ -1288,7 +1305,7 @@ func _next_unopened_command(machine: Dictionary, ui_state: Dictionary) -> Dictio
 	return {"handled": true, "message": "Every ticket in the stack has been opened."}
 
 
-func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng_override: RngStream = null) -> Dictionary:
+func _generate_machine_state(run_state: RunState, environment: Dictionary, rng_override: RngStream = null) -> Dictionary:
 	var environment_id := str(environment.get("id", "room"))
 	var machine_rng := rng_override
 	if machine_rng == null:
@@ -1322,7 +1339,9 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng_
 			"ticket_sleeve": ticket_sleeve,
 		}
 		deals.append(deal)
+	_apply_tutorial_xray_stock(deals, run_state)
 	var item_state := _initial_pull_tab_item_state(deals, machine_rng)
+	item_state = _apply_tutorial_xray_item_target(deals, item_state, run_state)
 	return {
 		"schema": "pull_tab_machine_state",
 		"version": 1,
@@ -1340,6 +1359,60 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng_
 		"last_dispense_id": "",
 		"last_dispense_events": [],
 	}
+
+
+func _apply_tutorial_xray_stock(deals: Array, run_state: RunState) -> void:
+	if run_state == null or not run_state.is_tutorial_run():
+		return
+	var desired_offset := int(run_state.challenge_modifiers().get("tutorial_pull_tab_xray_offset", -1))
+	if desired_offset < 0 or deals.is_empty() or typeof(deals[0]) != TYPE_DICTIONARY:
+		return
+	var deal: Dictionary = deals[0]
+	var sleeve := _int_array(deal.get("ticket_sleeve", []))
+	var prizes := _dictionary_array(deal.get("prizes", []))
+	if sleeve.is_empty() or prizes.is_empty():
+		return
+	var winner_index := -1
+	var winner_payout := 0
+	for index in range(sleeve.size()):
+		var prize_index := int(sleeve[index])
+		if prize_index < 0 or prize_index >= prizes.size():
+			continue
+		var payout := maxi(0, int((prizes[prize_index] as Dictionary).get("payout", 0)))
+		if payout > winner_payout:
+			winner_payout = payout
+			winner_index = index
+	if winner_index < 0:
+		return
+	var target_offset := clampi(desired_offset, 0, sleeve.size() - 1)
+	var winner_prize_index: int = sleeve.pop_at(winner_index)
+	sleeve.insert(target_offset, winner_prize_index)
+	deal["ticket_sleeve"] = sleeve
+	deal["tutorial_xray_scripted"] = true
+	deal["tutorial_xray_offset"] = target_offset
+	deals[0] = deal
+
+
+func _apply_tutorial_xray_item_target(deals: Array, item_state: Dictionary, run_state: RunState) -> Dictionary:
+	if run_state == null or not run_state.is_tutorial_run():
+		return item_state
+	var desired_offset := int(run_state.challenge_modifiers().get("tutorial_pull_tab_xray_offset", -1))
+	if desired_offset < 0 or deals.is_empty() or typeof(deals[0]) != TYPE_DICTIONARY:
+		return item_state
+	var scripted_target := _highest_remaining_winner_target(deals[0] as Dictionary, 0)
+	if scripted_target.is_empty():
+		return item_state
+	scripted_target["consumed"] = false
+	var targets: Array = [scripted_target]
+	for target_value in _dictionary_array(item_state.get("xray_targets", [])):
+		var target: Dictionary = target_value
+		if int(target.get("deal_index", -1)) == 0:
+			continue
+		targets.append(target.duplicate(true))
+		if targets.size() >= XRAY_TARGET_COUNT:
+			break
+	item_state["xray_targets"] = targets
+	return _sync_legacy_xray_fields(item_state)
 
 
 func _deal_templates() -> Array:

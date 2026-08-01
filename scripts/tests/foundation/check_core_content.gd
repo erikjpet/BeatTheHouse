@@ -28,6 +28,7 @@ const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.g
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
+const PullTabsGameScript := preload("res://scripts/games/pull_tabs.gd")
 const SlotGameScript := preload("res://scripts/games/slot.gd")
 const SlotMachineGeneratorScript := preload("res://scripts/games/slots/slot_machine_generator.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
@@ -2514,11 +2515,11 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 	for lesson_value in library.tutorial_lessons:
 		if typeof(lesson_value) == TYPE_DICTIONARY and str((lesson_value as Dictionary).get("scope", "")).strip_edges() != "tutorial_run":
 			normal_lessons.append(lesson_value)
-	if normal_lessons.size() != 9:
-		failures.append("Coach lesson pack must ship exactly nine first-time tips after the starter-card handoff.")
-	for expected_id in ["tip_first_heat_gain", "tip_first_debt_taken", "tip_first_closing_warning", "tip_first_pawn_interaction", "tip_first_item_purchase", "tip_first_map_open", "tip_first_chips_gained", "tip_first_card_tier", "tip_starter_card_home"]:
-		if library.tutorial_lesson(expected_id).is_empty():
-			failures.append("Coach lesson pack is missing %s." % expected_id)
+	if not normal_lessons.is_empty():
+		failures.append("Dialogue-guided tutorial retained ambient first-time coach tips.")
+	for removed_id in ["tip_first_heat_gain", "tip_first_debt_taken", "tip_first_closing_warning", "tip_first_pawn_interaction", "tip_first_item_purchase", "tip_first_map_open", "tip_first_chips_gained", "tip_first_card_tier", "tip_starter_card_home"]:
+		if not library.tutorial_lesson(removed_id).is_empty():
+			failures.append("Removed ambient lesson still ships: %s." % removed_id)
 	var duplicate_library := ContentLibraryScript.new()
 	duplicate_library.tutorial_lessons = [_coach_lesson_fixture("duplicate"), _coach_lesson_fixture("duplicate")]
 	if not _coach_errors_contain(duplicate_library.validate(), "duplicate id"):
@@ -2537,29 +2538,13 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 	cycle_library.tutorial_lessons = [cycle_a, cycle_b]
 	if not _coach_errors_contain(cycle_library.validate(), "dependency cycle"):
 		failures.append("Coach lesson validation accepted a dependency cycle.")
-	var contexts := {
-		"tip_first_heat_gain": {"run": {"heat_gain_count": 1}},
-		"tip_first_debt_taken": {"run": {"debt_count": 1}},
-		"tip_first_closing_warning": {"run": {"closing_time_active": true}},
-		"tip_first_pawn_interaction": {"ui": {"pawn_counter_open": true}},
-		"tip_first_item_purchase": {"screen": "RESULT", "action": {"last_result_type": "item_purchase"}},
-		"tip_first_map_open": {"screen": "TRAVEL", "ui": {"world_map_open": true}},
-		"tip_first_chips_gained": {"environment_archetype": "grand_casino", "run": {"grand_casino_chips": 1}},
-		"tip_first_card_tier": {"run": {"players_card_tier": "bronze"}},
-		"tip_starter_card_home": {"meta": {"home": true, "starter_card_count": 1}},
-	}
-	for lesson_value in normal_lessons:
-		var lesson: Dictionary = lesson_value
-		var lesson_id := str(lesson.get("id", ""))
-		var context: Dictionary = contexts.get(lesson_id, {})
-		if not CoachViewModelScript.trigger_matches(lesson, context, {}, true):
-			failures.append("Coach tip %s did not fire for its truthful state fixture." % lesson_id)
-		var seen_fixture: Dictionary = {}
-		seen_fixture[lesson_id] = true
-		if CoachViewModelScript.trigger_matches(lesson, context, seen_fixture, true):
-			failures.append("Coach tip %s fired more than once after seen-state." % lesson_id)
-		if CoachViewModelScript.trigger_matches(lesson, context, {}, false):
-			failures.append("Coach tip %s fired while normal tips were disabled." % lesson_id)
+	var dialogue_lesson := library.tutorial_lesson("tutorial_apartment_xray")
+	var dialogue_model := CoachViewModelScript.build(dialogue_lesson, {"viewport_rect": Rect2(Vector2.ZERO, Vector2(1280, 720))})
+	if str(dialogue_model.get("delivery", "")) != "dialogue" or str(dialogue_model.get("dialogue_id", "")) != "tutorial_pal_guidance":
+		failures.append("Tutorial lesson did not route speech through the dialogue delivery contract.")
+	var state_lesson := library.tutorial_lesson("tutorial_blackjack_count_all")
+	if not CoachViewModelScript.state_completion_matches(state_lesson, {"game": {"count_all_selected": true}}):
+		failures.append("Coach state-predicate completion did not recognize a finished count challenge.")
 	var hud_lesson := _coach_lesson_fixture("hud_anchor")
 	hud_lesson["anchor"] = {"kind": "hud_element", "id": "heat"}
 	var hud_context := {
@@ -2642,29 +2627,58 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		failures.append("Tutorial fixed seed generated divergent initial runs.")
 	if not run_a.is_tutorial_run() or not run_a.excludes_profile_stats():
 		failures.append("Tutorial run did not exclude profile and challenge statistics.")
-	if str(run_a.current_environment.get("archetype_id", "")) != "motel_room" or run_a.bankroll != 80 or not run_a.inventory.is_empty():
+	if str(run_a.current_environment.get("archetype_id", "")) != "apartment" or run_a.bankroll != 80 or not run_a.inventory.is_empty():
 		failures.append("Tutorial initial home, bankroll, or carried loadout contract drifted.")
-	var containers: Array = run_a.current_environment.get("home_containers", []) if typeof(run_a.current_environment.get("home_containers", [])) == TYPE_ARRAY else []
-	if containers.size() != 1 or not (containers[0] as Dictionary).get("item_ids", []).is_empty():
-		failures.append("Tutorial did not start with one empty backpack.")
-	generator_a.next_environment(run_a, "motel", true)
-	generator_a.next_environment(run_a, "corner_store", true)
+	var home_offers: Array = run_a.current_environment.get("item_offers", []) if typeof(run_a.current_environment.get("item_offers", [])) == TYPE_ARRAY else []
+	if home_offers.size() != 1 or str((home_offers[0] as Dictionary).get("id", "")) != "xray_glasses":
+		failures.append("Tutorial apartment did not force exactly one X-ray Glasses pickup.")
 	var item_service := RunActionServiceScript.new()
+	item_service.setup(library, run_a)
+	var glasses_pickup: Dictionary = item_service.buy_item_offer("xray_glasses")
+	if not bool(glasses_pickup.get("ok", false)) or not run_a.inventory.has("xray_glasses"):
+		failures.append("Tutorial could not pick up its forced X-ray Glasses.")
+	generator_a.next_environment(run_a, "corner_store", true)
 	item_service.setup(library, run_a)
 	var purchase: Dictionary = item_service.buy_item_offer("instant_coffee")
 	if not bool(purchase.get("ok", false)) or run_a.inventory.is_empty():
 		failures.append("Tutorial end-to-end arc could not buy its cheap store item through RunActionService.")
-	generator_a.next_environment(run_a, "bar", true)
+	var phone_event := EventModuleScript.new()
+	phone_event.setup(library.event("call_brother_in_law"), library)
+	var phone_result: Dictionary = phone_event.resolve(run_a, run_a.current_environment, "make_call")
+	var family_event := EventModuleScript.new()
+	family_event.setup(library.event("family_loan"), library)
+	var family_result: Dictionary = family_event.resolve(run_a, run_a.current_environment, "accept")
+	if not bool(phone_result.get("ok", false)) or not bool(family_result.get("ok", false)) or run_a.debt.is_empty():
+		failures.append("Tutorial forced family call did not produce real lender debt.")
+	var parking_event := EventModuleScript.new()
+	parking_event.setup(library.event("parking_lot_tip"), library)
+	var parking_result: Dictionary = parking_event.resolve(run_a, run_a.current_environment, "follow_tip")
+	if not bool(parking_result.get("ok", false)) or not bool(run_a.narrative_flags.get("underground_tip", false)):
+		failures.append("Tutorial parking tip did not open the route split.")
+	var gas_run := RunStateScript.new()
+	gas_run.start_new("PATH-A", config_a)
+	gas_run.begin_act(1)
+	var gas_generator := RunGeneratorScript.new(library)
+	gas_generator.next_environment(gas_run)
+	var gas_items := RunActionServiceScript.new()
+	gas_items.setup(library, gas_run)
+	gas_items.buy_item_offer("xray_glasses")
+	gas_generator.next_environment(gas_run, "corner_store", true)
+	var gas_tip := EventModuleScript.new()
+	gas_tip.setup(library.event("parking_lot_tip"), library)
+	gas_tip.resolve(gas_run, gas_run.current_environment, "follow_tip")
+	gas_generator.next_environment(gas_run, "gas_station_casino", true)
+	var pull_tabs: GameModule = PullTabsGameScript.new()
+	pull_tabs.setup(library.game("pull_tabs"), library)
+	pull_tabs.enter(gas_run, gas_run.current_environment)
+	var xray_surface := pull_tabs.surface_state(gas_run, gas_run.current_environment, {})
+	var xray_item_state: Dictionary = xray_surface.get("pull_tab_item_state", {}) if typeof(xray_surface.get("pull_tab_item_state", {})) == TYPE_DICTIONARY else {}
+	var xray_target: Dictionary = xray_item_state.get("xray_target", {}) if typeof(xray_item_state.get("xray_target", {})) == TYPE_DICTIONARY else {}
+	if int(xray_target.get("offset", -1)) != 2 or int(xray_target.get("payout", 0)) <= 0:
+		failures.append("Path A did not script an X-ray-visible winner near the stack bottom.")
+	generator_a.next_environment(run_a, "small_underground_casino", true)
 	if run_a.current_environment.get("game_ids", []) != ["blackjack"]:
 		failures.append("Tutorial end-to-end arc did not reach its real blackjack table.")
-	var friendly_event := EventModuleScript.new()
-	friendly_event.setup(library.event("tutorial_friendly_choice"), library)
-	if not friendly_event.can_trigger(run_a, run_a.current_environment, {"type": "manual"}):
-		failures.append("Tutorial friendly conversation was not eligible at the bar.")
-	else:
-		var friendly_result: Dictionary = friendly_event.resolve(run_a, run_a.current_environment, "keep_it_light")
-		if not bool(friendly_result.get("ok", false)) or not bool(run_a.narrative_flags.get("tutorial_friendly_choice_done", false)):
-			failures.append("Tutorial friendly conversation did not resolve its authored flag.")
 	var invite_event := EventModuleScript.new()
 	invite_event.setup(library.event("tutorial_grand_casino_invitation"), library)
 	var invite_result: Dictionary = invite_event.resolve(run_a, run_a.current_environment, "accept_first_invitation")
@@ -2673,27 +2687,15 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	elif not WorldMapScript.is_node_visible(run_a.world_map, "grand_casino"):
 		failures.append("Tutorial invitation did not reveal the Grand Casino on the real world map.")
 	generator_a.next_environment(run_a, "grand_casino", true)
-	if str(run_a.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID or run_a.current_environment.get("game_ids", []) != ["slot"]:
-		failures.append("Tutorial finale did not generate exactly one Main Floor slot.")
+	if str(run_a.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID or run_a.current_environment.get("game_ids", []) != ["blackjack"]:
+		failures.append("Tutorial finale did not generate exactly one Main Floor table game.")
 	var tutorial_status := run_a.demo_objective_status()
-	if int(tutorial_status.get("high_roller_net_winnings", -1)) != 1 or int(tutorial_status.get("high_roller_min_grand_casino_games", -1)) != 1 or int(tutorial_status.get("high_roller_max_heat", -1)) != 90:
-		failures.append("Tutorial Grand Casino objective did not preserve the 1 game / $1 net / 90 heat contract.")
+	if int(tutorial_status.get("players_card_next_min_games", -1)) != 1 or int(tutorial_status.get("players_card_next_net_winnings", 0)) != -999 or int(tutorial_status.get("players_card_next_max_heat", -1)) != 100:
+		failures.append("Tutorial Grand Casino objective did not preserve the compressed one-game Bronze contract.")
 	var normal_grand := library.environment_archetype(RunState.GRAND_CASINO_ARCHETYPE_ID)
 	var normal_objective: Dictionary = normal_grand.get("demo_objective", {}) if typeof(normal_grand.get("demo_objective", {})) == TYPE_DICTIONARY else {}
 	if int(normal_objective.get("high_roller_net_winnings", -1)) != 30 or int(normal_objective.get("high_roller_min_grand_casino_games", -1)) != 5 or int(normal_objective.get("high_roller_max_heat", -1)) != 30:
 		failures.append("Tutorial tier compression changed normal Grand Casino objective balance.")
-	var normal_slot_run := RunStateScript.new()
-	normal_slot_run.start_new("TUTORIAL-NORMAL-SLOT-CONTROL")
-	var current_environment_value: Variant = run_a.get("current_environment")
-	var normal_slot_environment: Dictionary = current_environment_value.to_dict() if current_environment_value is EnvironmentInstance else (current_environment_value as Dictionary).duplicate(true)
-	normal_slot_environment["game_states"] = {}
-	normal_slot_run.set_environment(normal_slot_environment)
-	var normal_slot: GameModule = SlotGameScript.new()
-	normal_slot.setup(library.game("slot"), library)
-	normal_slot.enter(normal_slot_run, normal_slot_run.current_environment)
-	var normal_spin: Dictionary = normal_slot.resolve_with_context("spin", 2, normal_slot_run, normal_slot_run.current_environment, normal_slot_run.create_rng(), {})
-	if bool(normal_spin.get("tutorial_first_night_match", false)):
-		failures.append("Tutorial first-night match leaked into a normal run.")
 	var high_limit_access := run_a.grand_casino_room_access_status(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, 60)
 	var back_room_access := run_a.grand_casino_room_access_status(RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID, 60)
 	if bool(high_limit_access.get("available", true)) or not str(high_limit_access.get("reason", "")).contains("Main Floor") or bool(back_room_access.get("available", true)):
@@ -2706,26 +2708,37 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	run_a.narrative_flags.erase("grand_casino_showdown_pending")
 	run_a.narrative_flags.erase("the_house_calls_pending")
 	run_a.suspicion["level"] = 0
-	var tutorial_slot: GameModule = SlotGameScript.new()
-	tutorial_slot.setup(library.game("slot"), library)
-	tutorial_slot.enter(run_a, run_a.current_environment)
-	var tutorial_spin_rng := run_a.create_rng()
-	var tutorial_spin: Dictionary = tutorial_slot.resolve_with_context("spin", 2, run_a, run_a.current_environment, tutorial_spin_rng, {})
-	GameModule.apply_result(run_a, tutorial_spin, tutorial_spin_rng)
+	GameModule.apply_result(run_a, {
+		"ok": true,
+		"type": "game_action",
+		"action_id": "stand",
+		"action_kind": "legal",
+		"game_id": "blackjack",
+		"environment_id": str(run_a.current_environment.get("id", "")),
+		"stake": 1,
+		"bankroll_delta": -1,
+		"suspicion_delta": 0,
+		"deltas": {"bankroll_delta": -1, "suspicion_delta": 0},
+		"state": GameModule.RESULT_CONTINUE,
+		"message": "Tutorial table hand complete.",
+	})
 	var ready_status := run_a.demo_objective_status()
-	if not bool(tutorial_spin.get("tutorial_first_night_match", false)) or int(ready_status.get("grand_casino_games_played", 0)) != 1 or int(ready_status.get("grand_casino_net_winnings", 0)) < 1 or str(ready_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER or str(ready_status.get("players_card_next_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD or not bool(ready_status.get("high_roller_ready", false)):
-		failures.append("Tutorial fixed-seed Main Floor spin did not reach the compressed Gold review: %s" % JSON.stringify(ready_status))
+	if int(ready_status.get("grand_casino_games_played", 0)) != 1 or str(ready_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_NONE or str(ready_status.get("players_card_next_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE or not bool(ready_status.get("players_card_ready_to_claim", false)):
+		failures.append("Tutorial Main Floor hand did not reach the compressed Bronze review: %s" % JSON.stringify(ready_status))
 	if not generator_a.enter_grand_casino_room(run_a, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
 		failures.append("Tutorial did not permit the required return to Linda in the Cage.")
-	var tutorial_cashout := run_a.complete_grand_casino_high_roller_cashout({"success_message": "Tutorial card issued."})
-	if not bool(tutorial_cashout.get("ok", false)) or run_a.run_status != RunState.RUN_STATUS_ENDED:
-		failures.append("Tutorial Linda review did not complete the real clean-victory route.")
-	var tutorial_linda := library.dialogue("tutorial_linda_gold_review")
+	var bronze_claim := run_a.claim_grand_casino_players_card_tier()
+	if not bool(bronze_claim.get("ok", false)) or str(bronze_claim.get("tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE:
+		failures.append("Tutorial Linda review did not issue Bronze.")
+	run_a.apply_demo_finale_result({"event_id": "tutorial_bronze_complete", "route": "tutorial_bronze_card", "branch": "win", "message": "Tutorial card issued."})
+	if run_a.run_status != RunState.RUN_STATUS_ENDED or str(run_a.narrative_flags.get("demo_victory_route", "")) != "tutorial_bronze_card":
+		failures.append("Tutorial Linda review did not complete the Bronze tutorial route.")
+	var tutorial_linda := library.dialogue("tutorial_linda_bronze_finish")
 	var linda_speaker: Dictionary = tutorial_linda.get("speaker", {}) if typeof(tutorial_linda.get("speaker", {})) == TYPE_DICTIONARY else {}
 	var linda_nodes: Dictionary = tutorial_linda.get("nodes", {}) if typeof(tutorial_linda.get("nodes", {})) == TYPE_DICTIONARY else {}
-	var linda_review: Dictionary = linda_nodes.get("review", {}) if typeof(linda_nodes.get("review", {})) == TYPE_DICTIONARY else {}
-	if str(linda_speaker.get("name", "")) != "Linda" or not str(linda_review.get("text", "")).contains("card goes with it"):
-		failures.append("Tutorial Linda review is missing its warmer card meaning and fragility explanation.")
+	var linda_review: Dictionary = linda_nodes.get("goal", {}) if typeof(linda_nodes.get("goal", {})) == TYPE_DICTIONARY else {}
+	if str(linda_speaker.get("name", "")) != "Linda" or not str(linda_review.get("text", "")).contains("Gold"):
+		failures.append("Tutorial Linda review is missing its Bronze-to-Gold explanation.")
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TUTORIAL_META_STORE_PATH)
 	_remove_tutorial_meta_store()
 	var tutorial_meta := MetaCollectionServiceScript.new()
@@ -2755,9 +2768,8 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	legacy_profile.loaded_from_disk = true
 	if TutorialFlowScript.should_auto_start(legacy_profile, fresh_meta):
 		failures.append("Legacy profile without onboarding state was forced into the tutorial.")
-	var legacy_heat_tip := library.tutorial_lesson("tip_first_heat_gain")
-	if not CoachViewModelScript.trigger_matches(legacy_heat_tip, {"run": {"heat_gain_count": 1}}, legacy_profile.tips_seen, true):
-		failures.append("Legacy profile did not retain normal first-time coach tips.")
+	if not legacy_profile.tips_seen.is_empty():
+		failures.append("Legacy profile fabricated removed ambient coach tips.")
 	var tutorial_lessons: Array = []
 	for lesson_value in library.tutorial_lessons:
 		if typeof(lesson_value) == TYPE_DICTIONARY and str((lesson_value as Dictionary).get("scope", "")) == "tutorial_run":
@@ -2804,8 +2816,8 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 			failures.append("Tutorial coach anchor failed in small-screen mode: %s." % str(lesson.get("id", "")))
 		if not bool(small_model.get("small_screen", false)) or not bool(small_model.get("reduce_motion", false)) or float(small_model.get("minimum_control_height", 0.0)) < 52.0:
 			failures.append("Tutorial coach accessibility state drifted: %s." % str(lesson.get("id", "")))
-	if tutorial_copy_words > 280:
-		failures.append("Tutorial coach copy exceeded the paced 280-word budget: %d words." % tutorial_copy_words)
+	if tutorial_copy_words > 420:
+		failures.append("Tutorial highlight copy exceeded the paced 420-word budget: %d words." % tutorial_copy_words)
 	var narrow_model := CoachViewModelScript.build(_coach_lesson_fixture("narrow_phone"), {
 		"viewport_rect": Rect2(Vector2.ZERO, Vector2(240, 320)),
 		"small_screen": true,

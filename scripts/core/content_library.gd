@@ -1014,6 +1014,9 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 		"tutorial_main_floor_only": true,
 		"tutorial_shop_item_pool_strict": true,
 		"tutorial_first_slot_net": true,
+		"tutorial_forced_event_choices": true,
+		"tutorial_event_chain_chances": true,
+		"tutorial_pull_tab_xray_offset": true,
 		"tutorial_environment_overrides": true,
 	}
 	for key_value in modifiers.keys():
@@ -1022,7 +1025,7 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 			validation_errors.append("challenges %s modifiers has unknown key: %s" % [challenge_id, key])
 	if modifiers.has("content_groups"):
 		_validate_id_references("challenges %s modifiers.content_groups" % challenge_id, modifiers.get("content_groups", []), group_ids)
-	for key in ["starting_bankroll", "starting_bankroll_delta", "baseline_luck_delta", "starting_heat", "local_risk_decay_percent_delta", "local_heat_turn_decay_interval_delta", "grand_casino_high_roller_net_delta", "grand_casino_high_roller_max_heat_delta", "tutorial_first_slot_net"]:
+	for key in ["starting_bankroll", "starting_bankroll_delta", "baseline_luck_delta", "starting_heat", "local_risk_decay_percent_delta", "local_heat_turn_decay_interval_delta", "grand_casino_high_roller_net_delta", "grand_casino_high_roller_max_heat_delta", "tutorial_first_slot_net", "tutorial_pull_tab_xray_offset"]:
 		if modifiers.has(key) and not _variant_is_number(modifiers.get(key, 0)):
 			validation_errors.append("challenges %s modifiers.%s must be numeric." % [challenge_id, key])
 	if modifiers.has("starting_bankroll") and int(modifiers.get("starting_bankroll", 0)) <= 0:
@@ -1044,6 +1047,9 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 			validation_errors.append("challenges %s modifiers.%s must be a boolean." % [challenge_id, boolean_key])
 	if modifiers.has("home_archetype_id"):
 		_validate_id_references("challenges %s modifiers.home_archetype_id" % challenge_id, [modifiers.get("home_archetype_id", "")], environment_ids)
+	for map_key in ["tutorial_forced_event_choices", "tutorial_event_chain_chances"]:
+		if modifiers.has(map_key) and typeof(modifiers.get(map_key)) != TYPE_DICTIONARY:
+			validation_errors.append("challenges %s modifiers.%s must be a dictionary." % [challenge_id, map_key])
 	if modifiers.has("tutorial_environment_overrides"):
 		var overrides_value: Variant = modifiers.get("tutorial_environment_overrides", {})
 		if typeof(overrides_value) != TYPE_DICTIONARY:
@@ -2400,6 +2406,15 @@ func _validate_tutorial_lesson_definitions() -> void:
 		_validate_tutorial_anchor(lesson_id, lesson.get("anchor", {}))
 		_validate_tutorial_completion(lesson_id, lesson.get("completion", {}), lesson.get("anchor", {}))
 		_validate_tutorial_gating(lesson_id, lesson.get("gating", null))
+		var delivery := str(lesson.get("delivery", "coach")).strip_edges().to_lower()
+		if not ["coach", "dialogue"].has(delivery):
+			validation_errors.append("tutorial_lessons %s has unknown delivery: %s" % [lesson_id, delivery])
+		elif delivery == "dialogue":
+			var dialogue_id := str(lesson.get("dialogue_id", "")).strip_edges()
+			if dialogue_id.is_empty() or dialogue(dialogue_id).is_empty():
+				validation_errors.append("tutorial_lessons %s references unknown dialogue: %s" % [lesson_id, dialogue_id])
+			if str(lesson.get("dialogue_node", "")).strip_edges().is_empty():
+				validation_errors.append("tutorial_lessons %s dialogue delivery requires dialogue_node." % lesson_id)
 		var lesson_copy := str(lesson.get("copy", "")).strip_edges()
 		if lesson_copy.is_empty():
 			validation_errors.append("tutorial_lessons %s copy must not be empty." % lesson_id)
@@ -2454,12 +2469,14 @@ func _validate_tutorial_completion(lesson_id: String, value: Variant, anchor_val
 		return
 	var completion: Dictionary = value
 	var completion_type := str(completion.get("type", "")).strip_edges()
-	if not ["anchored_action", "any_action", "explicit_ok"].has(completion_type):
+	if not ["anchored_action", "any_action", "explicit_ok", "state_predicate"].has(completion_type):
 		validation_errors.append("tutorial_lessons %s completion has unknown type: %s" % [lesson_id, completion_type])
 	elif completion_type == "anchored_action":
 		var anchor: Dictionary = _as_dict(anchor_value)
 		if str(anchor.get("kind", "none")) == "none":
 			validation_errors.append("tutorial_lessons %s anchored_action completion requires an anchor." % lesson_id)
+	elif completion_type == "state_predicate":
+		_validate_tutorial_state_predicates(lesson_id, completion.get("state_predicates", []))
 
 
 func _validate_tutorial_gating(lesson_id: String, value: Variant) -> void:

@@ -3743,6 +3743,7 @@ func apply_demo_finale_result(finale_data: Dictionary) -> Dictionary:
 			_complete_demo_objective(status, message, {
 				"finale_event_id": event_id,
 				"finale_branch": branch,
+				"demo_victory_route": str(finale_data.get("route", event_id)).strip_edges(),
 			})
 		"caught", "caught_cheating":
 			_clear_demo_finale_pending(event_id)
@@ -4711,12 +4712,6 @@ func _initialize_grand_casino_objective_runtime() -> void:
 		else:
 			narrative_flags["grand_casino_players_card_awarded_tier"] = legacy_tier
 			narrative_flags["grand_casino_players_card_ready_to_claim"] = false
-		if is_tutorial_run():
-			# The authored tutorial is deliberately compressed to one clean game and
-			# the canonical Gold review. Its hidden training account starts at Silver;
-			# standard and prestige runs always begin Unranked.
-			narrative_flags["grand_casino_players_card_awarded_tier"] = GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
-			narrative_flags["grand_casino_players_card_ready_to_claim"] = false
 	# A carried meta Gold card keeps its prestige recognition modifiers, but a
 	# new run's card program begins Unranked. This is deliberate: prestige makes
 	# the standards tighter/safer; it never skips a run-local Linda award.
@@ -4857,7 +4852,11 @@ func _grand_casino_objective_config(objective: Dictionary) -> Dictionary:
 		"players_card_suite_drunk_recovery": 24,
 	}
 	for key in card_defaults:
-		config[key] = maxi(0, int(objective.get(key, card_defaults[key])))
+		var configured_value := int(objective.get(key, card_defaults[key]))
+		if is_tutorial_run() and key == "players_card_bronze_net_winnings":
+			config[key] = clampi(configured_value, -10000, 10000)
+		else:
+			config[key] = maxi(0, configured_value)
 	for heat_key in ["players_card_bronze_max_heat", "players_card_silver_max_heat", "players_card_gold_max_heat"]:
 		config[heat_key] = clampi(int(objective.get(heat_key, card_defaults[heat_key])) + prestige_heat_delta, 0, 100)
 	config["players_card_gold_min_games"] = maxi(int(config.get("players_card_gold_min_games", 0)), int(config.get("high_roller_min_grand_casino_games", 0)))

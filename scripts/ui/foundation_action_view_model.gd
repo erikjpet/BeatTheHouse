@@ -510,12 +510,15 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 	var payload: Dictionary = event_definition.get("payload", {})
 	var option_choices: Array = []
 	var scene_summary := str(payload.get("summary", ""))
+	var forced_choice_id: String = str(host._tutorial_forced_event_choice(event_id))
 	for choice in choices:
 		if typeof(choice) != TYPE_DICTIONARY:
 			continue
 		var choice_data = (choice as Dictionary).duplicate(true)
 		var choice_id = str(choice_data.get("id", ""))
 		if choice_id.is_empty():
+			continue
+		if not forced_choice_id.is_empty() and choice_id != forced_choice_id:
 			continue
 		var choice_scene_summary := str(choice_data.get("scene_summary", "")).strip_edges()
 		if not choice_scene_summary.is_empty():
