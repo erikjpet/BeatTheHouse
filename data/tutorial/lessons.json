@@ -1,1119 +1,572 @@
 [
   {
-    "id": "tip_first_heat_gain",
-    "trigger": {
-      "state_predicates": [
-        {
-          "path": "run.heat_gain_count",
-          "op": "gt",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "heat"
-    },
-    "copy": "Heat draws eyes. Cheat evidence can bring Rourke; quiet rooms let it cool.",
-    "completion": {
-      "type": "any_action"
-    }
-  },
-  {
-    "id": "tip_first_debt_taken",
-    "trigger": {
-      "state_predicates": [
-        {
-          "path": "run.debt_count",
-          "op": "gt",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "debt"
-    },
-    "copy": "Debt and ATM markers buy time. Pay them before interest or teeth arrive.",
-    "completion": {
-      "type": "any_action"
-    }
-  },
-  {
-    "id": "tip_first_closing_warning",
-    "trigger": {
-      "state_predicates": [
-        {
-          "path": "run.closing_time_active",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "clock"
-    },
-    "copy": "Closing time means it. Finish the active wager.",
-    "completion": {
-      "type": "any_action"
-    }
-  },
-  {
-    "id": "tip_first_pawn_interaction",
-    "trigger": {
-      "state_predicates": [
-        {
-          "path": "ui.pawn_counter_open",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "inventory"
-    },
-    "copy": "Pawned gear gets a ticket. Guard it.",
-    "completion": {
-      "type": "any_action"
-    }
-  },
-  {
-    "id": "tip_first_item_purchase",
-    "trigger": {
-      "screen": "RESULT",
-      "state_predicates": [
-        {
-          "path": "action.last_result_type",
-          "op": "equals",
-          "value": "item_purchase"
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "inventory"
-    },
-    "copy": "Gear changes a run. Read the glyphs.",
-    "completion": {
-      "type": "any_action"
-    }
-  },
-  {
-    "id": "tip_first_map_open",
-    "trigger": {
-      "screen": "TRAVEL",
-      "state_predicates": [
-        {
-          "path": "ui.world_map_open",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "map"
-    },
-    "copy": "Routes cost time. Closed stops relight by the clock.",
-    "completion": {
-      "type": "any_action"
-    }
-  },
-  {
-    "id": "tip_first_chips_gained",
-    "trigger": {
-      "state_predicates": [
-        {
-          "path": "run.grand_casino_chips",
-          "op": "gt",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "chips"
-    },
-    "copy": "Grand Casino tables spend chips first. Linda cashes survivors.",
-    "completion": {
-      "type": "any_action"
-    }
-  },
-  {
-    "id": "tip_first_card_tier",
-    "trigger": {
-      "state_predicates": [
-        {
-          "path": "run.players_card_tier",
-          "op": "one_of",
-          "value": [
-            "bronze",
-            "silver",
-            "gold"
-          ]
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "objective"
-    },
-    "copy": "Bronze, Silver, Gold: play clean, then claim the ready tier from Linda.",
-    "completion": {
-      "type": "any_action"
-    }
-  },
-  {
-    "id": "tutorial_home_container",
+    "id": "tutorial_apartment_xray",
     "scope": "tutorial_run",
-    "trigger": {
-      "environment_archetype": "motel_room",
-      "state_predicates": [
-        {
-          "path": "run.challenge_id",
-          "op": "equals",
-          "value": "tutorial_first_card"
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "home_container:backpack_01"
-    },
-    "copy": "Open the backpack. Trouble needs pockets.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "home_container:backpack_01"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "apartment_intro",
+    "trigger": {"environment_archetype": "apartment", "state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]},
+    "anchor": {"kind": "interactable_object", "id": "item:xray_glasses"},
+    "copy": "Pal points out the X-ray Glasses waiting in the apartment.",
+    "completion": {"type": "anchored_action", "action_id": "item:xray_glasses"},
+    "gating": {"allowed_action_ids": ["ui:any", "item:xray_glasses"]}
   },
   {
-    "id": "tutorial_empty_loadout",
+    "id": "tutorial_inventory_xray",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_home_container"
-      ],
-      "environment_archetype": "motel_room",
-      "state_predicates": [
-        {
-          "path": "run.inventory_count",
-          "op": "equals",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "inventory"
-    },
-    "copy": "Open carried gear. The backpack waits separate.",
-    "completion": {
-      "type": "anchored_action",
-      "action_id": "inventory"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "inventory"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "inventory_check",
+    "trigger": {"depends_on": ["tutorial_apartment_xray"], "environment_archetype": "apartment", "state_predicates": [{"path": "run.inventory_count", "op": "gte", "value": 1}]},
+    "anchor": {"kind": "hud_element", "id": "inventory"},
+    "copy": "Pal asks you to confirm the glasses in carried inventory.",
+    "completion": {"type": "anchored_action", "action_id": "inventory"},
+    "gating": {"allowed_action_ids": ["inventory"]}
   },
   {
-    "id": "tutorial_leave_home",
+    "id": "tutorial_open_map_corner",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_empty_loadout"
-      ],
-      "environment_archetype": "motel_room",
-      "state_predicates": [
-        {
-          "path": "run.challenge_id",
-          "op": "equals",
-          "value": "tutorial_first_card"
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "travel:leave"
-    },
-    "copy": "Use the door. The lobby is awake.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "travel:leave"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "map_corner",
+    "trigger": {"depends_on": ["tutorial_inventory_xray"], "environment_archetype": "apartment", "state_predicates": []},
+    "anchor": {"kind": "hud_element", "id": "map"},
+    "copy": "Pal points to the travel map.",
+    "completion": {"type": "anchored_action", "action_id": "map"},
+    "gating": {"allowed_action_ids": ["map"]}
   },
   {
-    "id": "tutorial_leave_motel",
+    "id": "tutorial_travel_corner",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_leave_home"
-      ],
-      "environment_archetype": "motel",
-      "state_predicates": [
-        {
-          "path": "run.challenge_id",
-          "op": "equals",
-          "value": "tutorial_first_card"
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "travel:leave"
-    },
-    "copy": "Use the lobby exit. The city map waits.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "travel:leave"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "map_corner",
+    "trigger": {"depends_on": ["tutorial_open_map_corner"], "screen": "TRAVEL", "state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]},
+    "anchor": {"kind": "hud_element", "id": "map"},
+    "copy": "The corner store is the only first destination.",
+    "completion": {"type": "anchored_action", "action_id": "travel:corner_store"},
+    "gating": {"allowed_action_ids": ["travel:corner_store"]}
   },
   {
-    "id": "tutorial_map_store",
+    "id": "tutorial_inspect_coffee",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_leave_motel"
-      ],
-      "screen": "TRAVEL",
-      "state_predicates": [
-        {
-          "path": "ui.world_map_open",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "map"
-    },
-    "copy": "Choose Corner Store. Check time, method, cost.",
-    "completion": {
-      "type": "anchored_action",
-      "action_id": "travel:corner_store"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "travel:corner_store"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "corner_items",
+    "trigger": {"depends_on": ["tutorial_travel_corner"], "environment_archetype": "corner_store", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "item:instant_coffee"},
+    "copy": "Inspect the first shelf item.",
+    "completion": {"type": "anchored_action", "action_id": "item:instant_coffee"},
+    "gating": {"allowed_action_ids": ["item:instant_coffee"]}
   },
   {
-    "id": "tutorial_buy_coffee",
+    "id": "tutorial_inspect_pencil",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_map_store"
-      ],
-      "environment_archetype": "corner_store",
-      "state_predicates": [
-        {
-          "path": "run.inventory_count",
-          "op": "equals",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "item:instant_coffee"
-    },
-    "copy": "Buy Instant Coffee. Glyphs tell the math.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "ui:any",
-        "item:instant_coffee"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "corner_items",
+    "trigger": {"depends_on": ["tutorial_inspect_coffee"], "environment_archetype": "corner_store", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "item:ledger_pencil"},
+    "copy": "Inspect the second shelf item before buying.",
+    "completion": {"type": "anchored_action", "action_id": "item:ledger_pencil"},
+    "gating": {"allowed_action_ids": ["item:ledger_pencil"]}
   },
   {
-    "id": "tutorial_leave_store",
+    "id": "tutorial_buy_store_item",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_buy_coffee"
-      ],
-      "environment_archetype": "corner_store",
-      "state_predicates": [
-        {
-          "path": "run.inventory_count",
-          "op": "gt",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "travel:leave"
-    },
-    "copy": "Open the map. Tables still want you.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "travel:leave"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "corner_items",
+    "trigger": {"depends_on": ["tutorial_inspect_pencil"], "environment_archetype": "corner_store", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "item:ledger_pencil"},
+    "copy": "Buy either inspected item.",
+    "completion": {"type": "any_action"},
+    "gating": {"allowed_action_ids": ["item:instant_coffee", "item:ledger_pencil"]}
   },
   {
-    "id": "tutorial_map_bar",
+    "id": "tutorial_crew_warning",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_leave_store"
-      ],
-      "screen": "TRAVEL",
-      "state_predicates": [
-        {
-          "path": "ui.world_map_open",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "map"
-    },
-    "copy": "Travel to Low Tide Bar. Low stakes first.",
-    "completion": {
-      "type": "anchored_action",
-      "action_id": "travel:bar"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "travel:bar"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "crew_warning",
+    "trigger": {"depends_on": ["tutorial_buy_store_item"], "environment_archetype": "corner_store", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "lender:the_crew"},
+    "copy": "Pal identifies the Crew as a last-resort lender.",
+    "completion": {"type": "explicit_ok"}
   },
   {
-    "id": "tutorial_enter_blackjack",
+    "id": "tutorial_family_phone",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_map_bar"
-      ],
-      "environment_archetype": "bar",
-      "state_predicates": [
-        {
-          "path": "run.challenge_id",
-          "op": "equals",
-          "value": "tutorial_first_card"
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "game:blackjack"
-    },
-    "copy": "Sit at blackjack. Same rules, less mercy later.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "game:blackjack"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "family_phone",
+    "trigger": {"depends_on": ["tutorial_crew_warning"], "environment_archetype": "corner_store", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "event:call_brother_in_law"},
+    "copy": "Use the counter phone and take the family loan.",
+    "completion": {"type": "anchored_action", "action_id": "event:call_brother_in_law"},
+    "gating": {"allowed_action_ids": ["event:call_brother_in_law", "ui:any"]}
   },
   {
-    "id": "tutorial_count_toggle",
+    "id": "tutorial_family_debt",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_enter_blackjack"
-      ],
-      "game_id": "blackjack",
-      "state_predicates": [
-        {
-          "path": "run.challenge_id",
-          "op": "equals",
-          "value": "tutorial_first_card"
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "surface_action",
-      "id": "blackjack_count_toggle"
-    },
-    "copy": "Open the count. Reading tables draws eyes.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "blackjack_count_toggle",
-        "ui:any"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "family_phone",
+    "trigger": {"depends_on": ["tutorial_family_phone"], "environment_archetype": "corner_store", "state_predicates": [{"path": "run.debt_count", "op": "gte", "value": 1}]},
+    "anchor": {"kind": "hud_element", "id": "debt"},
+    "copy": "The accepted family loan now appears as real debt.",
+    "completion": {"type": "explicit_ok"}
   },
   {
-    "id": "tutorial_blackjack_deal",
+    "id": "tutorial_parking_tip",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_count_toggle"
-      ],
-      "game_id": "blackjack",
-      "state_predicates": [
-        {
-          "path": "run.challenge_id",
-          "op": "equals",
-          "value": "tutorial_first_card"
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "surface_action",
-      "id": "blackjack_deal"
-    },
-    "copy": "Keep minimum stake. Deal one hand.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "blackjack_deal",
-        "ui:any"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "parking_tip",
+    "trigger": {"depends_on": ["tutorial_family_debt"], "environment_archetype": "corner_store", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "event:parking_lot_tip"},
+    "copy": "Open the parking-lot tip and follow it.",
+    "completion": {"type": "anchored_action", "action_id": "event:parking_lot_tip"},
+    "gating": {"allowed_action_ids": ["event:parking_lot_tip", "ui:any"]}
   },
   {
-    "id": "tutorial_blackjack_stand",
+    "id": "tutorial_route_map",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_blackjack_deal"
-      ],
-      "game_id": "blackjack",
-      "state_predicates": [
-        {
-          "path": "run.challenge_id",
-          "op": "equals",
-          "value": "tutorial_first_card"
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "surface_action",
-      "id": "blackjack_stand"
-    },
-    "copy": "Stand. Let the cards testify.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "blackjack_stand",
-        "blackjack_deal",
-        "ui:any"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "route_split",
+    "trigger": {"depends_on": ["tutorial_parking_tip"], "environment_archetype": "corner_store", "state_predicates": [{"path": "run.flags.underground_tip", "op": "equals", "value": true}]},
+    "anchor": {"kind": "hud_element", "id": "map"},
+    "copy": "Pal explains the optional gas detour and direct underground route.",
+    "completion": {"type": "anchored_action", "action_id": "map"},
+    "gating": {"allowed_action_ids": ["map"]}
   },
   {
-    "id": "tutorial_heat_result",
+    "id": "tutorial_route_choice",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_blackjack_stand"
-      ],
-      "game_id": "blackjack",
-      "state_predicates": [
-        {
-          "path": "run.challenge_id",
-          "op": "equals",
-          "value": "tutorial_first_card"
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "heat"
-    },
-    "copy": "Heat is attention with a longer memory.",
-    "completion": {
-      "type": "explicit_ok"
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "route_split",
+    "trigger": {"depends_on": ["tutorial_route_map"], "screen": "TRAVEL", "state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]},
+    "anchor": {"kind": "hud_element", "id": "map"},
+    "copy": "Choose the recommended gas detour or skip straight underground.",
+    "completion": {"type": "any_action"},
+    "gating": {"allowed_action_ids": ["travel:gas_station_casino", "travel:small_underground_casino"]}
   },
   {
-    "id": "tutorial_leave_table",
+    "id": "tutorial_gas_machine",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_heat_result"
-      ],
-      "game_id": "blackjack",
-      "state_predicates": [
-        {
-          "path": "run.challenge_id",
-          "op": "equals",
-          "value": "tutorial_first_card"
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "surface_action",
-      "id": "surface_back"
-    },
-    "copy": "Leave the table. Talk to the room.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "surface_back"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "gas_machine",
+    "trigger": {"depends_on": ["tutorial_route_choice"], "environment_archetype": "gas_station_casino", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "game:pull_tabs"},
+    "copy": "Open the pull-tab machine.",
+    "completion": {"type": "anchored_action", "action_id": "game:pull_tabs"},
+    "gating": {"allowed_action_ids": ["game:pull_tabs"]}
   },
   {
-    "id": "tutorial_friendly_talk",
+    "id": "tutorial_gas_xray_buy",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_leave_table"
-      ],
-      "environment_archetype": "bar",
-      "state_predicates": [
-        {
-          "path": "run.tutorial_friendly_choice_done",
-          "op": "equals",
-          "value": false
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "event:tutorial_friendly_choice"
-    },
-    "copy": "Talk to the regular. Sound human.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "event:tutorial_friendly_choice"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "gas_xray",
+    "trigger": {"depends_on": ["tutorial_gas_machine"], "environment_archetype": "gas_station_casino", "game_id": "pull_tabs", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "pull_tab_buy"},
+    "copy": "Buy down to the X-ray-marked winner.",
+    "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.scripted_target_consumed", "op": "equals", "value": true}]},
+    "gating": {"allowed_action_ids": ["pull_tab_buy"]}
   },
   {
-    "id": "tutorial_invitation",
+    "id": "tutorial_gas_peel",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_friendly_talk"
-      ],
-      "environment_archetype": "bar",
-      "state_predicates": [
-        {
-          "path": "run.tutorial_friendly_choice_done",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "event:tutorial_grand_casino_invitation"
-    },
-    "copy": "The host has a card. Hear them out.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "event:tutorial_grand_casino_invitation"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "gas_peel",
+    "trigger": {"depends_on": ["tutorial_gas_xray_buy"], "environment_archetype": "gas_station_casino", "game_id": "pull_tabs", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "pull_tab_reveal_next"},
+    "copy": "Peel the marked ticket and file the winner.",
+    "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.pending_payout", "op": "gt", "value": 0}]},
+    "gating": {"allowed_action_ids": ["pull_tab_collect_tray", "pull_tab_reveal_next", "pull_tab_next_unopened", "pull_tab_file_ticket"]}
   },
   {
-    "id": "tutorial_invitation_complete",
+    "id": "tutorial_gas_leave_machine",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_invitation"
-      ],
-      "environment_archetype": "bar",
-      "state_predicates": [
-        {
-          "path": "run.tutorial_invited",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "objective"
-    },
-    "copy": "The Grand Casino now glows on the map.",
-    "completion": {
-      "type": "explicit_ok"
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "gas_clerk",
+    "trigger": {"depends_on": ["tutorial_gas_peel"], "environment_archetype": "gas_station_casino", "game_id": "pull_tabs", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "surface_back"},
+    "copy": "Leave the machine with the winning tab filed.",
+    "completion": {"type": "anchored_action", "action_id": "surface_back"},
+    "gating": {"allowed_action_ids": ["surface_back"]}
   },
   {
-    "id": "tutorial_map_grand_casino",
+    "id": "tutorial_gas_redeem",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_invitation_complete"
-      ],
-      "screen": "TRAVEL",
-      "state_predicates": [
-        {
-          "path": "ui.world_map_open",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "map"
-    },
-    "copy": "Travel to the Grand Casino Main Floor.",
-    "completion": {
-      "type": "anchored_action",
-      "action_id": "travel:grand_casino"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "travel:grand_casino"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "gas_clerk",
+    "trigger": {"depends_on": ["tutorial_gas_leave_machine"], "environment_archetype": "gas_station_casino", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "game_hook:pull_tabs:ticket_redeemer"},
+    "copy": "Redeem the winner at the pull-tab clerk.",
+    "completion": {"type": "state_predicate", "state_predicates": [{"path": "action.last_result_type", "op": "equals", "value": "pull_tab_redeem"}]},
+    "gating": {"allowed_action_ids": ["game_hook:pull_tabs:ticket_redeemer", "ui:any"]}
   },
   {
-    "id": "tutorial_enter_cage_buy_in",
+    "id": "tutorial_gas_map_underground",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_map_grand_casino"
-      ],
-      "environment_archetype": "grand_casino",
-      "state_predicates": [
-        {
-          "path": "run.grand_casino_chips",
-          "op": "equals",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "travel:grand_casino_cage"
-    },
-    "copy": "Enter the Cage. Linda waits behind bars.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "travel:grand_casino_cage"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "gas_depart",
+    "trigger": {"depends_on": ["tutorial_gas_redeem"], "environment_archetype": "gas_station_casino", "state_predicates": []},
+    "anchor": {"kind": "hud_element", "id": "map"},
+    "copy": "Open the map for the underground casino.",
+    "completion": {"type": "anchored_action", "action_id": "map"},
+    "gating": {"allowed_action_ids": ["map"]}
   },
   {
-    "id": "tutorial_open_cage_counter",
+    "id": "tutorial_gas_travel_underground",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_enter_cage_buy_in"
-      ],
-      "environment_archetype": "grand_casino_cage",
-      "state_predicates": [
-        {
-          "path": "run.grand_casino_chips",
-          "op": "equals",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "casino_fixture:cage_counter"
-    },
-    "copy": "Talk to Linda at the counter.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "casino_fixture:cage_counter"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "gas_depart",
+    "trigger": {"depends_on": ["tutorial_gas_map_underground"], "screen": "TRAVEL", "state_predicates": []},
+    "anchor": {"kind": "hud_element", "id": "map"},
+    "copy": "Travel underground.",
+    "completion": {"type": "anchored_action", "action_id": "travel:small_underground_casino"},
+    "gating": {"allowed_action_ids": ["travel:small_underground_casino"]}
+  },
+  {
+    "id": "tutorial_underground_table",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "underground_enter",
+    "trigger": {"depends_on": ["tutorial_route_choice"], "environment_archetype": "small_underground_casino", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "game:blackjack"},
+    "copy": "Enter the underground blackjack table.",
+    "completion": {"type": "anchored_action", "action_id": "game:blackjack"},
+    "gating": {"allowed_action_ids": ["game:blackjack"]}
+  },
+  {
+    "id": "tutorial_blackjack_clean_deal",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "blackjack_normal",
+    "trigger": {"depends_on": ["tutorial_underground_table"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "blackjack_deal"},
+    "copy": "Deal one clean blackjack hand.",
+    "completion": {"type": "anchored_action", "action_id": "blackjack_deal"},
+    "gating": {"allowed_action_ids": ["blackjack_deal"]}
+  },
+  {
+    "id": "tutorial_blackjack_clean_finish",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "blackjack_finish",
+    "trigger": {"depends_on": ["tutorial_blackjack_clean_deal"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "blackjack_stand"},
+    "copy": "Finish the ordinary hand cleanly.",
+    "completion": {"type": "anchored_action", "action_id": "blackjack_stand"},
+    "gating": {"allowed_action_ids": ["blackjack_hit", "blackjack_stand"]}
+  },
+  {
+    "id": "tutorial_blackjack_raise",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "blackjack_raise",
+    "trigger": {"depends_on": ["tutorial_blackjack_clean_finish"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "surface_stake_up"},
+    "copy": "Raise the next bet with an on-felt chip control.",
+    "completion": {"type": "anchored_action", "action_id": "surface_stake_up"},
+    "gating": {"allowed_action_ids": ["surface_stake_up"]}
+  },
+  {
+    "id": "tutorial_blackjack_raised_deal",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "blackjack_deal_raised",
+    "trigger": {"depends_on": ["tutorial_blackjack_raise"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "blackjack_deal"},
+    "copy": "Deal the raised hand.",
+    "completion": {"type": "anchored_action", "action_id": "blackjack_deal"},
+    "gating": {"allowed_action_ids": ["blackjack_deal"]}
+  },
+  {
+    "id": "tutorial_blackjack_lookaway",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "blackjack_lookaway",
+    "trigger": {"depends_on": ["tutorial_blackjack_raised_deal"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "blackjack_distraction"},
+    "copy": "Trigger the existing table distraction to open a lookaway.",
+    "completion": {"type": "anchored_action", "action_id": "blackjack_distraction"},
+    "gating": {"allowed_action_ids": ["blackjack_distraction"]}
+  },
+  {
+    "id": "tutorial_blackjack_peek",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "blackjack_peek",
+    "trigger": {"depends_on": ["tutorial_blackjack_lookaway"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": [{"path": "game.lookaway_started", "op": "equals", "value": true}]},
+    "anchor": {"kind": "surface_action", "id": "blackjack_peek"},
+    "copy": "Peek only inside the dealer's real lookaway window.",
+    "completion": {"type": "anchored_action", "action_id": "blackjack_peek"},
+    "gating": {"allowed_action_ids": ["blackjack_peek"]}
+  },
+  {
+    "id": "tutorial_blackjack_count_start",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "blackjack_count_start",
+    "trigger": {"depends_on": ["tutorial_blackjack_peek"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "blackjack_count"},
+    "copy": "Start the real count challenge.",
+    "completion": {"type": "anchored_action", "action_id": "blackjack_count"},
+    "gating": {"allowed_action_ids": ["blackjack_count"]}
+  },
+  {
+    "id": "tutorial_blackjack_count_all",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "blackjack_count_bubbles",
+    "trigger": {"depends_on": ["tutorial_blackjack_count_start"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": [{"path": "game.count_started", "op": "equals", "value": true}]},
+    "anchor": {"kind": "surface_action", "id": "blackjack_count_icon"},
+    "copy": "Select every count bubble before any fade.",
+    "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.count_all_selected", "op": "equals", "value": true}]},
+    "gating": {"allowed_action_ids": ["blackjack_count_icon"]}
+  },
+  {
+    "id": "tutorial_heat_warning",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "heat",
+    "trigger": {"depends_on": ["tutorial_underground_table"], "environment_archetype": "small_underground_casino", "state_predicates": [{"path": "run.heat_gain_count", "op": "gte", "value": 1}]},
+    "anchor": {"kind": "hud_element", "id": "heat"},
+    "copy": "Pal flags the first heat gain and its terminal risk.",
+    "completion": {"type": "explicit_ok"}
+  },
+  {
+    "id": "tutorial_leave_blackjack",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "invitation",
+    "trigger": {"depends_on": ["tutorial_blackjack_count_all"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "surface_back"},
+    "copy": "Leave the table and scan the room.",
+    "completion": {"type": "anchored_action", "action_id": "surface_back"},
+    "gating": {"allowed_action_ids": ["blackjack_hit", "blackjack_stand", "surface_back"]}
+  },
+  {
+    "id": "tutorial_accept_invitation",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "invitation",
+    "trigger": {"depends_on": ["tutorial_leave_blackjack"], "environment_archetype": "small_underground_casino", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "event:tutorial_grand_casino_invitation"},
+    "copy": "Open and accept the Grand Casino invitation.",
+    "completion": {"type": "anchored_action", "action_id": "event:tutorial_grand_casino_invitation"},
+    "gating": {"allowed_action_ids": ["event:tutorial_grand_casino_invitation", "ui:any"]}
+  },
+  {
+    "id": "tutorial_pal_goodbye_map",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "grand_depart",
+    "trigger": {"depends_on": ["tutorial_accept_invitation"], "environment_archetype": "small_underground_casino", "state_predicates": [{"path": "run.tutorial_invited", "op": "equals", "value": true}]},
+    "anchor": {"kind": "hud_element", "id": "map"},
+    "copy": "Pal says goodbye and warns you about Rourke.",
+    "completion": {"type": "anchored_action", "action_id": "map"},
+    "gating": {"allowed_action_ids": ["map"]}
+  },
+  {
+    "id": "tutorial_travel_grand",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "grand_depart",
+    "trigger": {"depends_on": ["tutorial_pal_goodbye_map"], "screen": "TRAVEL", "state_predicates": []},
+    "anchor": {"kind": "hud_element", "id": "map"},
+    "copy": "Travel to the Grand Casino.",
+    "completion": {"type": "anchored_action", "action_id": "travel:grand_casino"},
+    "gating": {"allowed_action_ids": ["travel:grand_casino"]}
+  },
+  {
+    "id": "tutorial_host_entry",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "grand_entry",
+    "trigger": {"depends_on": ["tutorial_travel_grand"], "environment_archetype": "grand_casino", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "casino_fixture:host_desk"},
+    "copy": "Vivienne Vale welcomes you and explains Players Card standing.",
+    "completion": {"type": "explicit_ok"}
+  },
+  {
+    "id": "tutorial_rourke_intro",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_rourke_intro",
+    "dialogue_node": "intro",
+    "trigger": {"depends_on": ["tutorial_host_entry"], "environment_archetype": "grand_casino", "state_predicates": []},
+    "anchor": {"kind": "hud_element", "id": "heat"},
+    "copy": "Rourke states the clean-play terms of his casino.",
+    "completion": {"type": "explicit_ok"}
+  },
+  {
+    "id": "tutorial_take_comp",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "comp",
+    "trigger": {"depends_on": ["tutorial_rourke_intro"], "environment_archetype": "grand_casino", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "event:comped_suite_offer"},
+    "copy": "Vivienne requires the free comp before the Cage visit.",
+    "completion": {"type": "anchored_action", "action_id": "event:comped_suite_offer"},
+    "gating": {"allowed_action_ids": ["event:comped_suite_offer", "ui:any"]}
+  },
+  {
+    "id": "tutorial_enter_cage",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "cage",
+    "trigger": {"depends_on": ["tutorial_take_comp"], "environment_archetype": "grand_casino", "state_predicates": [{"path": "run.flags.grand_casino_event_comped_suite_offer_take_comp", "op": "equals", "value": true}]},
+    "anchor": {"kind": "interactable_object", "id": "travel:grand_casino_cage"},
+    "copy": "Enter the Cage and find Linda.",
+    "completion": {"type": "anchored_action", "action_id": "travel:grand_casino_cage"},
+    "gating": {"allowed_action_ids": ["travel:grand_casino_cage"]}
+  },
+  {
+    "id": "tutorial_open_linda",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "cage",
+    "trigger": {"depends_on": ["tutorial_enter_cage"], "environment_archetype": "grand_casino_cage", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "casino_fixture:cage_counter"},
+    "copy": "Talk to Linda for the full chips, cashout, and debt explanation.",
+    "completion": {"type": "anchored_action", "action_id": "casino_fixture:cage_counter"},
+    "gating": {"allowed_action_ids": ["casino_fixture:cage_counter"]}
   },
   {
     "id": "tutorial_buy_cage_chips",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_open_cage_counter"
-      ],
-      "environment_archetype": "grand_casino_cage",
-      "state_predicates": [
-        {
-          "path": "run.grand_casino_chips",
-          "op": "equals",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "surface_action",
-      "id": "cage:buy_chips"
-    },
-    "copy": "Choose chips, then buy the smallest stack.",
-    "completion": {
-      "type": "anchored_action",
-      "action_id": "cage:buy_chips"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "cage:buy_chips"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "cage",
+    "trigger": {"depends_on": ["tutorial_open_linda"], "environment_archetype": "grand_casino_cage", "state_predicates": []},
+    "anchor": {"kind": "hud_element", "id": "chips"},
+    "copy": "Use Linda's counter to buy chips.",
+    "completion": {"type": "anchored_action", "action_id": "cage:buy_chips"},
+    "gating": {"allowed_action_ids": ["ui:any", "cage:buy_chips"]}
   },
   {
-    "id": "tutorial_chips_and_cash",
+    "id": "tutorial_cage_shop",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_buy_cage_chips"
-      ],
-      "environment_archetype": "grand_casino_cage",
-      "state_predicates": [
-        {
-          "path": "run.grand_casino_chips",
-          "op": "gt",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "chips"
-    },
-    "copy": "Chips play upstairs. Linda makes them cash.",
-    "completion": {
-      "type": "explicit_ok"
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "shop",
+    "trigger": {"depends_on": ["tutorial_buy_cage_chips"], "environment_archetype": "grand_casino_cage", "state_predicates": [{"path": "run.grand_casino_chips", "op": "gt", "value": 0}]},
+    "anchor": {"kind": "interactable_object", "id": "casino_fixture:cage_gift_shop"},
+    "copy": "Vivienne points out that the Cage shop also spends chips.",
+    "completion": {"type": "explicit_ok"}
   },
   {
-    "id": "tutorial_leave_cage_for_game",
+    "id": "tutorial_return_main_floor",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_chips_and_cash"
-      ],
-      "environment_archetype": "grand_casino_cage",
-      "state_predicates": [
-        {
-          "path": "run.grand_casino_chips",
-          "op": "gt",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "travel:grand_casino"
-    },
-    "copy": "Return to the Main Floor slot.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "travel:grand_casino"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "table_play",
+    "trigger": {"depends_on": ["tutorial_cage_shop"], "environment_archetype": "grand_casino_cage", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "travel:grand_casino"},
+    "copy": "Return to the main floor to play for Bronze.",
+    "completion": {"type": "anchored_action", "action_id": "travel:grand_casino"},
+    "gating": {"allowed_action_ids": ["travel:grand_casino"]}
   },
   {
-    "id": "tutorial_enter_grand_slot",
+    "id": "tutorial_enter_grand_table",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_leave_cage_for_game"
-      ],
-      "environment_archetype": "grand_casino",
-      "state_predicates": [
-        {
-          "path": "run.grand_casino_chips",
-          "op": "gt",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "game:slot"
-    },
-    "copy": "Use the slot. Finish one dollar ahead.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "game:slot"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "table_play",
+    "trigger": {"depends_on": ["tutorial_return_main_floor"], "environment_archetype": "grand_casino", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "game:blackjack"},
+    "copy": "Enter the Grand Casino blackjack table.",
+    "completion": {"type": "anchored_action", "action_id": "game:blackjack"},
+    "gating": {"allowed_action_ids": ["game:blackjack"]}
   },
   {
-    "id": "tutorial_spin_grand_slot",
+    "id": "tutorial_earn_bronze",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_enter_grand_slot"
-      ],
-      "game_id": "slot",
-      "state_predicates": [
-        {
-          "path": "run.challenge_id",
-          "op": "equals",
-          "value": "tutorial_first_card"
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "surface_action",
-      "id": "spin"
-    },
-    "copy": "Minimum bet. One spin. Breathe.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "spin",
-        "slot_spin",
-        "ui:any"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "table_play",
+    "trigger": {"depends_on": ["tutorial_enter_grand_table"], "environment_archetype": "grand_casino", "game_id": "blackjack", "state_predicates": []},
+    "anchor": {"kind": "hud_element", "id": "objective"},
+    "copy": "Play freely until the compressed Bronze qualification is ready.",
+    "completion": {"type": "state_predicate", "state_predicates": [{"path": "run.players_card_ready_to_claim", "op": "equals", "value": true}]},
+    "gating": {"allowed_action_ids": ["*"]}
   },
   {
-    "id": "tutorial_gold_target",
+    "id": "tutorial_leave_grand_table",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_spin_grand_slot"
-      ],
-      "game_id": "slot",
-      "state_predicates": [
-        {
-          "path": "run.high_roller_ready",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "objective"
-    },
-    "copy": "Gold is ready. Linda has the glass warm.",
-    "completion": {
-      "type": "explicit_ok"
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "return_linda",
+    "trigger": {"depends_on": ["tutorial_earn_bronze"], "environment_archetype": "grand_casino", "game_id": "blackjack", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "surface_back"},
+    "copy": "Bronze is ready; leave the table.",
+    "completion": {"type": "anchored_action", "action_id": "surface_back"},
+    "gating": {"allowed_action_ids": ["surface_back"]}
   },
   {
-    "id": "tutorial_leave_grand_slot",
+    "id": "tutorial_return_cage",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_gold_target"
-      ],
-      "game_id": "slot",
-      "state_predicates": [
-        {
-          "path": "run.high_roller_ready",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "surface_action",
-      "id": "surface_back"
-    },
-    "copy": "Leave the slot. Return to the floor.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "surface_back"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "return_linda",
+    "trigger": {"depends_on": ["tutorial_leave_grand_table"], "environment_archetype": "grand_casino", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "travel:grand_casino_cage"},
+    "copy": "Return to Linda at the Cage.",
+    "completion": {"type": "anchored_action", "action_id": "travel:grand_casino_cage"},
+    "gating": {"allowed_action_ids": ["travel:grand_casino_cage"]}
   },
   {
-    "id": "tutorial_return_to_cage",
+    "id": "tutorial_reopen_linda",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_leave_grand_slot"
-      ],
-      "environment_archetype": "grand_casino",
-      "state_predicates": [
-        {
-          "path": "run.high_roller_ready",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "travel:grand_casino_cage"
-    },
-    "copy": "Go back through the Cage door.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "travel:grand_casino_cage"
-      ]
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "return_linda",
+    "trigger": {"depends_on": ["tutorial_return_cage"], "environment_archetype": "grand_casino_cage", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "casino_fixture:cage_counter"},
+    "copy": "Open Linda's Players Card ledger.",
+    "completion": {"type": "anchored_action", "action_id": "casino_fixture:cage_counter"},
+    "gating": {"allowed_action_ids": ["casino_fixture:cage_counter"]}
   },
   {
-    "id": "tutorial_reopen_cage_counter",
+    "id": "tutorial_claim_bronze",
     "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_return_to_cage"
-      ],
-      "environment_archetype": "grand_casino_cage",
-      "state_predicates": [
-        {
-          "path": "run.high_roller_ready",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "interactable_object",
-      "id": "casino_fixture:cage_counter"
-    },
-    "copy": "Speak with Linda to settle the review.",
-    "completion": {
-      "type": "anchored_action"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "casino_fixture:cage_counter"
-      ]
-    }
-  },
-  {
-    "id": "tutorial_cash_out_chips",
-    "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_reopen_cage_counter"
-      ],
-      "environment_archetype": "grand_casino_cage",
-      "state_predicates": [
-        {
-          "path": "run.grand_casino_chips",
-          "op": "gt",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "surface_action",
-      "id": "cage:cash_out"
-    },
-    "copy": "Cash every chip before the card talk.",
-    "completion": {
-      "type": "anchored_action",
-      "action_id": "cage:cash_out"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "cage:cash_out"
-      ]
-    }
-  },
-  {
-    "id": "tutorial_start_linda_review",
-    "scope": "tutorial_run",
-    "trigger": {
-      "depends_on": [
-        "tutorial_cash_out_chips"
-      ],
-      "environment_archetype": "grand_casino_cage",
-      "state_predicates": [
-        {
-          "path": "run.grand_casino_chips",
-          "op": "equals",
-          "value": 0
-        },
-        {
-          "path": "run.high_roller_ready",
-          "op": "equals",
-          "value": true
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "surface_action",
-      "id": "cage:review"
-    },
-    "copy": "Choose Players Card, then claim the ready tier.",
-    "completion": {
-      "type": "anchored_action",
-      "action_id": "cage:review"
-    },
-    "gating": {
-      "allowed_action_ids": [
-        "cage:review"
-      ]
-    }
-  },
-  {
-    "id": "tip_starter_card_home",
-    "trigger": {
-      "state_predicates": [
-        {
-          "path": "meta.home",
-          "op": "equals",
-          "value": true
-        },
-        {
-          "path": "meta.starter_card_count",
-          "op": "gt",
-          "value": 0
-        }
-      ]
-    },
-    "anchor": {
-      "kind": "hud_element",
-      "id": "inventory"
-    },
-    "copy": "Carry the first card. Its recognition matters; lose the run and it is gone forever.",
-    "completion": {
-      "type": "explicit_ok"
-    }
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_host_guidance",
+    "dialogue_node": "return_linda",
+    "trigger": {"depends_on": ["tutorial_reopen_linda"], "environment_archetype": "grand_casino_cage", "state_predicates": [{"path": "run.players_card_ready_to_claim", "op": "equals", "value": true}]},
+    "anchor": {"kind": "hud_element", "id": "objective"},
+    "copy": "Claim Bronze; Linda will explain the Golden Card goal.",
+    "completion": {"type": "anchored_action", "action_id": "cage:review"},
+    "gating": {"allowed_action_ids": ["ui:any", "cage:review"]}
   }
 ]

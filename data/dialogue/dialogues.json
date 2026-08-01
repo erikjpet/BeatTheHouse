@@ -458,6 +458,7 @@
     "nodes": {
       "main": {
         "text": "Linda turns from the ledger. The barred window keeps her face in shadow.",
+        "tutorial_text": "Cash buys chips here; chips fund Grand tables and the shop. Cashing out pays your house marker first, then returns the balance.",
         "choices": [
           {
             "id": "open_chips",
@@ -495,6 +496,7 @@
       },
       "chips": {
         "text": "Linda rests one hand beside the chip tray.",
+        "tutorial_text": "Buy chips with cash, sugar. Tables and the shop use that rack. Redeem here; the Cage pays debt first, then returns the balance.",
         "choices": [
           {
             "id": "cage_buy_25",
@@ -532,6 +534,7 @@
       },
       "card": {
         "text": "Linda checks the card ledger without looking up.",
+        "tutorial_text": "The card climbs one tier at a time: Bronze, Silver, then Gold. Games, net result, and heat all reach the ledger. A ready tier still has to be claimed at my window.",
         "choices": [
           {
             "id": "cage_claim_card",
@@ -844,6 +847,242 @@
             "end": true
           }
         ]
+      }
+    }
+  },
+  {
+    "id": "tutorial_pal_guidance",
+    "display_name": "Pal",
+    "speaker": {
+      "role": "guide",
+      "name": "Pal",
+      "character_id": "pal_tutorial_guide",
+      "voice_line_key": "guide",
+      "mood": "encouraging",
+      "behavior": "keeping an eye on the next move",
+      "silhouette": "cap",
+      "presentation": "animated_character_model"
+    },
+    "start": "apartment_intro",
+    "nodes": {
+      "apartment_intro": {
+        "text": "Hey — think of me as your pal on this one. A real roof comes with a little edge. The X-ray Glasses are waiting in your apartment; pick them up.",
+        "choices": [{"id": "continue", "label": "Pick them up", "effects": {}, "end": true}]
+      },
+      "inventory_check": {
+        "text": "Good. Open your inventory and make sure the X-ray Glasses made the trip. Never leave an edge on the floor.",
+        "choices": [{"id": "continue", "label": "Check inventory", "effects": {}, "end": true}]
+      },
+      "map_corner": {
+        "text": "Time to move. Open the travel map. Tonight starts with one honest light: the corner store.",
+        "choices": [{"id": "continue", "label": "Open the map", "effects": {}, "end": true}]
+      },
+      "corner_items": {
+        "text": "Look over every item before you spend. Read the shelf, compare the hooks, then buy the one you want.",
+        "choices": [{"id": "continue", "label": "Check the shelf", "effects": {}, "end": true}]
+      },
+      "crew_warning": {
+        "text": "See the Crew in the corner? Last resort. Their cash is quick because the favor comes due slow.",
+        "choices": [{"id": "continue", "label": "Keep my distance", "effects": {}, "end": true}]
+      },
+      "family_phone": {
+        "text": "The counter phone is safer, not free. Make the family call and take the loan. Watch the debt follow you onto the HUD.",
+        "choices": [{"id": "continue", "label": "Use the phone", "effects": {}, "end": true}]
+      },
+      "parking_tip": {
+        "text": "That note in the lot is an event. Open it and choose Follow the tip. A dirty lead can still point somewhere useful.",
+        "choices": [{"id": "continue", "label": "Follow the lead", "effects": {}, "end": true}]
+      },
+      "route_split": {
+        "text": "The tip opened two doors. I strongly recommend the gas-station casino first; your glasses can earn travel money there. You may skip it and go underground now.",
+        "choices": [{"id": "continue", "label": "Choose a route", "effects": {}, "end": true}]
+      },
+      "gas_machine": {
+        "text": "There is the pull-tab machine. Get close. Your glasses can read what the paper is trying to hide.",
+        "choices": [{"id": "continue", "label": "Open the machine", "effects": {}, "end": true}]
+      },
+      "gas_xray": {
+        "text": "The X-ray mark points to a real winner tucked near the bottom of a stack. Buy down to that marked tab — the result is already fixed.",
+        "choices": [{"id": "continue", "label": "Buy the marked tab", "effects": {}, "end": true}]
+      },
+      "gas_peel": {
+        "text": "Now peel every window. The glasses found the edge; the tab still has to be played before it can be paid.",
+        "choices": [{"id": "continue", "label": "Peel the tab", "effects": {}, "end": true}]
+      },
+      "gas_clerk": {
+        "text": "Winner in hand. Leave the machine and take the good paper to Rina at the clerk tray. Machines sell; clerks settle.",
+        "choices": [{"id": "continue", "label": "Cash the winner", "effects": {}, "end": true}]
+      },
+      "gas_depart": {
+        "text": "Clean cash, useful lesson. Open the map and head underground. That part was optional; the next table is not.",
+        "choices": [{"id": "continue", "label": "Go underground", "effects": {}, "end": true}]
+      },
+      "underground_enter": {
+        "text": "Blackjack first. Sit at the table and play one ordinary hand before we bend anything.",
+        "choices": [{"id": "continue", "label": "Take a seat", "effects": {}, "end": true}]
+      },
+      "blackjack_normal": {
+        "text": "Start clean. Put out the current bet and deal. Read the cards, then finish the hand normally.",
+        "choices": [{"id": "continue", "label": "Deal clean", "effects": {}, "end": true}]
+      },
+      "blackjack_finish": {
+        "text": "Stand this one out. A normal hand teaches you what the table looks like before heat gets in the way.",
+        "choices": [{"id": "continue", "label": "Stand", "effects": {}, "end": true}]
+      },
+      "blackjack_raise": {
+        "text": "Use the on-felt chips to raise the bet. Bigger chips change the next hand's risk before DEAL locks it in.",
+        "choices": [{"id": "continue", "label": "Raise the bet", "effects": {}, "end": true}]
+      },
+      "blackjack_deal_raised": {
+        "text": "The raised wager is showing. Deal the next hand and keep your eyes on the dealer's attention strip.",
+        "choices": [{"id": "continue", "label": "Deal", "effects": {}, "end": true}]
+      },
+      "blackjack_lookaway": {
+        "text": "The table's distraction buttons create a short lookaway. DRINK PASS is the drink play here; CHIP SPILL works too. Trigger one, then move fast.",
+        "choices": [{"id": "continue", "label": "Create a lookaway", "effects": {}, "end": true}]
+      },
+      "blackjack_peek": {
+        "text": "PEEK only while the attention strip says the window is open. Outside it, the dealer can catch the look and close the table on you.",
+        "choices": [{"id": "continue", "label": "Peek now", "effects": {}, "end": true}]
+      },
+      "blackjack_count_start": {
+        "text": "Counting is the other edge. Start COUNT and the visible cards will throw count bubbles onto the felt.",
+        "choices": [{"id": "continue", "label": "Start counting", "effects": {}, "end": true}]
+      },
+      "blackjack_count_bubbles": {
+        "text": "Hit every count bubble before it fades. Miss one and you trip over the count — the table adds heat.",
+        "choices": [{"id": "continue", "label": "Clear every bubble", "effects": {}, "end": true}]
+      },
+      "heat": {
+        "text": "That is heat. Keep it away from the top; fill the meter and the police arrive — or someone worse gets there first.",
+        "choices": [{"id": "continue", "label": "Watch the heat", "effects": {}, "end": true}]
+      },
+      "invitation": {
+        "text": "Before you leave, scan the room. That Grand Casino invitation is the kind of event people miss. Open it and take it.",
+        "choices": [{"id": "continue", "label": "Take the invitation", "effects": {}, "end": true}]
+      },
+      "grand_depart": {
+        "text": "The Grand is open. I am banned there — long story — so your pal stops here. Play clean around Rourke; he notices systems. Good luck.",
+        "choices": [{"id": "continue", "label": "Head to the Grand", "effects": {}, "end": true}]
+      }
+    }
+  },
+  {
+    "id": "tutorial_host_guidance",
+    "display_name": "Vivienne Vale",
+    "speaker": {
+      "role": "staff",
+      "name": "Vivienne Vale",
+      "character_id": "vivienne_grand_host",
+      "voice_line_key": "guide",
+      "mood": "polished",
+      "behavior": "guiding the Grand Casino floor",
+      "silhouette": "rings",
+      "presentation": "animated_character_model"
+    },
+    "start": "grand_entry",
+    "nodes": {
+      "grand_entry": {
+        "text": "Welcome to the Grand. I am Vivienne Vale, your host. Play earns Players Card standing; standing opens the house one velvet rope at a time.",
+        "choices": [{"id": "continue", "label": "Meet the Host", "effects": {}, "end": true}]
+      },
+      "comp": {
+        "text": "A small courtesy first. Take the free comp on the main floor. We find gratitude improves attention.",
+        "choices": [{"id": "continue", "label": "Take the comp", "effects": {}, "end": true}]
+      },
+      "cage": {
+        "text": "Linda keeps the accounts in the Cage. Visit her now; she will put chips between you and the tables.",
+        "choices": [{"id": "continue", "label": "Go to the Cage", "effects": {}, "end": true}]
+      },
+      "shop": {
+        "text": "The gift case prices everything in chips. Buy-in money is play money here — and shop money when the glass says so.",
+        "choices": [{"id": "continue", "label": "Check the shop", "effects": {}, "end": true}]
+      },
+      "table_play": {
+        "text": "Back to the main floor. Play a table game with those chips until Bronze lights up. The tutorial threshold is close; the rules are real.",
+        "choices": [{"id": "continue", "label": "Earn Bronze", "effects": {}, "end": true}]
+      },
+      "return_linda": {
+        "text": "Bronze is ready. Return to Linda at the Cage and ask her to issue it.",
+        "choices": [{"id": "continue", "label": "Return to Linda", "effects": {}, "end": true}]
+      }
+    }
+  },
+  {
+    "id": "tutorial_rourke_intro",
+    "display_name": "Elias Rourke",
+    "speaker": {
+      "role": "pit_boss",
+      "name": "Rourke",
+      "character_id": "rourke_pit_boss",
+      "voice_line_key": "scouting",
+      "mood": "controlled",
+      "behavior": "watching from the edge of the floor",
+      "silhouette": "coat",
+      "presentation": "animated_character_model"
+    },
+    "start": "intro",
+    "nodes": {
+      "intro": {
+        "text": "Play clean in my casino and you have nothing to worry about. That is the whole arrangement.",
+        "choices": [{"id": "continue", "label": "Understood", "effects": {}, "end": true}]
+      }
+    }
+  },
+  {
+    "id": "normal_grand_host_greeting",
+    "display_name": "Vivienne Vale",
+    "speaker": {
+      "role": "staff",
+      "name": "Vivienne Vale",
+      "character_id": "vivienne_grand_host",
+      "voice_line_key": "greeting",
+      "mood": "welcoming",
+      "behavior": "meeting a new arrival beneath the chandelier",
+      "silhouette": "rings",
+      "presentation": "animated_character_model"
+    },
+    "start": "greeting",
+    "nodes": {
+      "greeting": {
+        "text": "Welcome to the Grand. I am Vivienne Vale, your host. Anything you need, the house will remember.",
+        "choices": [{"id": "continue", "label": "Enter the floor", "effects": {}, "end": true}]
+      }
+    }
+  },
+  {
+    "id": "tutorial_linda_bronze_finish",
+    "display_name": "Linda — Bronze and Beyond",
+    "speaker": {
+      "role": "staff",
+      "name": "Linda",
+      "character_id": "linda_cage_host",
+      "voice_line_key": "bronze",
+      "mood": "warm",
+      "behavior": "sliding a Bronze card beneath the barred glass",
+      "silhouette": "featureless",
+      "presentation": "faceless_silhouette",
+      "face_layers": []
+    },
+    "start": "goal",
+    "nodes": {
+      "goal": {
+        "text": "Bronze already, sugar? This card is the first rung. Keep playing clean, settle what you owe at cashout, and come back when the ledger says Gold.",
+        "choices": [{
+          "id": "finish_tutorial",
+          "label": "Aim for the Golden Card",
+          "text": "Finish the guided first night.",
+          "effects": {
+            "demo_finale": {
+              "event_id": "tutorial_bronze_complete",
+              "route": "tutorial_bronze_card",
+              "branch": "win",
+              "message": "Linda issues Bronze and leaves the Golden Players Card as your next goal."
+            }
+          },
+          "effects_hidden": true,
+          "end": true
+        }]
       }
     }
   }
