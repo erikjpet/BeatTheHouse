@@ -1017,6 +1017,7 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 		"tutorial_forced_event_choices": true,
 		"tutorial_event_chain_chances": true,
 		"tutorial_pull_tab_xray_offset": true,
+		"tutorial_initial_map_targets": true,
 		"tutorial_environment_overrides": true,
 	}
 	for key_value in modifiers.keys():
@@ -1047,6 +1048,8 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 			validation_errors.append("challenges %s modifiers.%s must be a boolean." % [challenge_id, boolean_key])
 	if modifiers.has("home_archetype_id"):
 		_validate_id_references("challenges %s modifiers.home_archetype_id" % challenge_id, [modifiers.get("home_archetype_id", "")], environment_ids)
+	if modifiers.has("tutorial_initial_map_targets"):
+		_validate_id_references("challenges %s modifiers.tutorial_initial_map_targets" % challenge_id, modifiers.get("tutorial_initial_map_targets", []), environment_ids)
 	for map_key in ["tutorial_forced_event_choices", "tutorial_event_chain_chances"]:
 		if modifiers.has(map_key) and typeof(modifiers.get(map_key)) != TYPE_DICTIONARY:
 			validation_errors.append("challenges %s modifiers.%s must be a dictionary." % [challenge_id, map_key])

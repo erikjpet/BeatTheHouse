@@ -113,6 +113,9 @@
       "tutorial_main_floor_only": true,
       "tutorial_shop_item_pool_strict": true,
       "home_archetype_id": "apartment",
+      "tutorial_initial_map_targets": [
+        "corner_store"
+      ],
       "starting_bankroll": 80,
       "tutorial_forced_event_choices": {
         "call_brother_in_law": "make_call",

@@ -136,7 +136,8 @@ func world_map_snapshot(run_state: RunState, selected_id: String = "") -> Dictio
 func _next_world_environment(run_state: RunState, target_archetype_id: String, rng: RngStream, target_prevalidated: bool = false) -> EnvironmentInstance:
 	var map := WorldMap.new(library)
 	if not run_state.has_world_map():
-		run_state.set_world_map(map.build(run_state, rng.fork("world_map")))
+		var initial_map := map.build(run_state, rng.fork("world_map"))
+		run_state.set_world_map(_apply_tutorial_initial_map_targets(initial_map, run_state))
 	var map_data := run_state.world_map
 	var target_id := target_archetype_id.strip_edges()
 	var current_node_id := run_state.current_world_node_id()
@@ -158,6 +159,42 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	run_state.enter_world_node(target_id, run_state.current_environment)
 	run_state.save_rng(rng)
 	return EnvironmentInstance.from_dict(run_state.current_environment)
+
+
+# Constrains only the tutorial's first map reveal. Later event choices unlock
+# their authored destinations through RunState.add_next_archetypes().
+func _apply_tutorial_initial_map_targets(map_data: Dictionary, run_state: RunState) -> Dictionary:
+	if run_state == null or not run_state.is_tutorial_run():
+		return map_data
+	var configured: Variant = run_state.challenge_modifiers().get("tutorial_initial_map_targets", [])
+	if typeof(configured) != TYPE_ARRAY or (configured as Array).is_empty():
+		return map_data
+	var allowed := {str(map_data.get("start_node_id", "")): true}
+	for target_value in configured:
+		var target_id := str(target_value).strip_edges()
+		if not target_id.is_empty():
+			allowed[target_id] = true
+	var constrained := map_data.duplicate(true)
+	var nodes: Array = constrained.get("nodes", [])
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = nodes[index]
+		var node_id := str(node.get("id", ""))
+		if allowed.has(node_id):
+			if node_id != str(constrained.get("start_node_id", "")):
+				node["state"] = WorldMap.STATE_REVEALED
+				node["discovered_at_spawn"] = true
+				node["discovery_source"] = WorldMap.DISCOVERY_SOURCE_SPAWN
+		else:
+			node["state"] = WorldMap.STATE_HIDDEN
+			node["discovered_at_spawn"] = false
+			node["discovery_source"] = WorldMap.DISCOVERY_SOURCE_NONE
+			node.erase("discovered_by_travel")
+			node.erase("unlocked")
+		nodes[index] = node
+	constrained["nodes"] = nodes
+	return constrained
 
 
 func _legacy_next_environment(run_state: RunState, target_archetype_id: String, rng: RngStream) -> EnvironmentInstance:

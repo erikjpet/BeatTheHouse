@@ -2609,6 +2609,23 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 			visible_ids.append(str((option_value as Dictionary).get("id", "")))
 	if visible_ids.has("tutorial_first_card"):
 		failures.append("Tutorial challenge leaked into challenge_options.")
+	var pal_dialogue: Dictionary = library.dialogue("tutorial_pal_guidance")
+	var pal_nodes: Dictionary = pal_dialogue.get("nodes", {}) if typeof(pal_dialogue.get("nodes", {})) == TYPE_DICTIONARY else {}
+	var parking_copy := str((pal_nodes.get("parking_tip", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("parking_tip", {})) == TYPE_DICTIONARY else ""
+	var crew_copy := str((pal_nodes.get("crew_warning", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("crew_warning", {})) == TYPE_DICTIONARY else ""
+	var lookaway_copy := str((pal_nodes.get("blackjack_lookaway", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("blackjack_lookaway", {})) == TYPE_DICTIONARY else ""
+	var peek_copy := str((pal_nodes.get("blackjack_peek", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("blackjack_peek", {})) == TYPE_DICTIONARY else ""
+	var invite_copy := str((pal_nodes.get("invitation", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("invitation", {})) == TYPE_DICTIONARY else ""
+	if not parking_copy.contains("may lead somewhere useful later"):
+		failures.append("Pal's parking-tip line lost the later-use explanation.")
+	if not crew_copy.contains("last place you turn"):
+		failures.append("Pal's Crew warning lost the required last-place-you-turn language.")
+	if not lookaway_copy.contains("easiest cheat") or not lookaway_copy.contains("DRINK PASS spills a drink"):
+		failures.append("Pal's lookaway lesson does not identify the easiest cheat and real spill-a-drink control.")
+	if not peek_copy.contains("add heat") or not peek_copy.contains("close the table"):
+		failures.append("Pal's peek lesson does not state the consequences of getting caught.")
+	if not invite_copy.contains("keep an eye on your environment") or not invite_copy.contains("accept it"):
+		failures.append("Pal's invitation lesson lost its environment-scan and accept instructions.")
 	var config_a := library.challenge_config_for("tutorial_first_card", "FIRST-REQUEST")
 	var config_b := library.challenge_config_for("tutorial_first_card", "SECOND-REQUEST")
 	if str(config_a.get("seed_text", "")) != "FIRST-NIGHT-ACE-17" or config_a != config_b:

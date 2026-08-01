@@ -882,7 +882,7 @@
         "choices": [{"id": "continue", "label": "Check the shelf", "effects": {}, "end": true}]
       },
       "crew_warning": {
-        "text": "See the Crew in the corner? Last resort. Their cash is quick because the favor comes due slow.",
+        "text": "See the Crew in the corner? They are the last place you turn. Their cash is quick because the favor comes due slow.",
         "choices": [{"id": "continue", "label": "Keep my distance", "effects": {}, "end": true}]
       },
       "family_phone": {
@@ -890,7 +890,7 @@
         "choices": [{"id": "continue", "label": "Use the phone", "effects": {}, "end": true}]
       },
       "parking_tip": {
-        "text": "That note in the lot is an event. Open it and choose Follow the tip. A dirty lead can still point somewhere useful.",
+        "text": "That note in the lot is an event. Open it and choose Follow the tip. It may lead somewhere useful later.",
         "choices": [{"id": "continue", "label": "Follow the lead", "effects": {}, "end": true}]
       },
       "route_split": {
@@ -938,11 +938,11 @@
         "choices": [{"id": "continue", "label": "Deal", "effects": {}, "end": true}]
       },
       "blackjack_lookaway": {
-        "text": "The table's distraction buttons create a short lookaway. DRINK PASS is the drink play here; CHIP SPILL works too. Trigger one, then move fast.",
+        "text": "The easiest cheat here starts with a distraction. DRINK PASS spills a drink; CHIP SPILL works too. Either opens a short lookaway — trigger one, then move fast.",
         "choices": [{"id": "continue", "label": "Create a lookaway", "effects": {}, "end": true}]
       },
       "blackjack_peek": {
-        "text": "PEEK only while the attention strip says the window is open. Outside it, the dealer can catch the look and close the table on you.",
+        "text": "PEEK only while the attention strip says the window is open. Outside it, the dealer can catch you, add heat, and close the table.",
         "choices": [{"id": "continue", "label": "Peek now", "effects": {}, "end": true}]
       },
       "blackjack_count_start": {
@@ -958,7 +958,7 @@
         "choices": [{"id": "continue", "label": "Watch the heat", "effects": {}, "end": true}]
       },
       "invitation": {
-        "text": "Before you leave, scan the room. That Grand Casino invitation is the kind of event people miss. Open it and take it.",
+        "text": "Always keep an eye on your environment. Look at that Grand Casino invitation, open it, and accept it before you leave.",
         "choices": [{"id": "continue", "label": "Take the invitation", "effects": {}, "end": true}]
       },
       "grand_depart": {
