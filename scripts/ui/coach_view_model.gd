@@ -2,7 +2,7 @@ class_name CoachViewModel
 extends RefCounted
 
 const ANCHOR_KINDS := ["interactable_object", "hud_element", "surface_action", "none"]
-const COMPLETION_TYPES := ["anchored_action", "any_action", "explicit_ok"]
+const COMPLETION_TYPES := ["anchored_action", "any_action", "explicit_ok", "state_predicate"]
 const VIEWPORT_MARGIN := 12.0
 
 
@@ -66,6 +66,9 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 	)
 	var bubble_rect := _bubble_rect(viewport_rect, anchor_rect, bubble_size)
 	var gating := _dict(lesson.get("gating", {}))
+	var delivery := str(lesson.get("delivery", "coach")).strip_edges().to_lower()
+	if not ["coach", "dialogue"].has(delivery):
+		delivery = "coach"
 	return {
 		"visible": true,
 		"lesson_id": str(lesson.get("id", "")),
@@ -79,6 +82,9 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 		"bubble_rect": _rect_dict(bubble_rect),
 		"viewport_rect": _rect_dict(viewport_rect),
 		"completion_type": completion_type,
+		"delivery": delivery,
+		"dialogue_id": str(lesson.get("dialogue_id", "")).strip_edges(),
+		"dialogue_node": str(lesson.get("dialogue_node", "")).strip_edges(),
 		"dismissible": true,
 		"dismiss_action_id": "coach:ok" if completion_type == "explicit_ok" else "coach:skip",
 		"dismiss_label": "Got it" if completion_type == "explicit_ok" else "Skip tip",
@@ -114,7 +120,22 @@ static func completion_matches(lesson: Dictionary, action_id: String) -> bool:
 			return not expected.is_empty() and expected == action_id.strip_edges()
 		"explicit_ok":
 			return action_id == "coach:ok"
+		"state_predicate":
+			return false
 	return false
+
+
+static func state_completion_matches(lesson: Dictionary, context: Dictionary) -> bool:
+	var completion := _dict(lesson.get("completion", {}))
+	if str(completion.get("type", "")) != "state_predicate":
+		return false
+	var predicates: Variant = completion.get("state_predicates", [])
+	if typeof(predicates) != TYPE_ARRAY or (predicates as Array).is_empty():
+		return false
+	for predicate_value in predicates:
+		if typeof(predicate_value) != TYPE_DICTIONARY or not _predicate_matches(predicate_value, context):
+			return false
+	return true
 
 
 static func _predicate_matches(predicate: Dictionary, context: Dictionary) -> bool:

@@ -770,6 +770,21 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 	return _blackjack_surface_action_command(surface_action, index, confirm_requested, ui_state, run_state, environment)
 
 
+func coach_state(_run_state: RunState, _environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var count_challenge: Dictionary = ui_state.get("count_challenge", {}) if typeof(ui_state.get("count_challenge", {})) == TYPE_DICTIONARY else {}
+	var cheats: Dictionary = ui_state.get("cheats_used", {}) if typeof(ui_state.get("cheats_used", {})) == TYPE_DICTIONARY else {}
+	var count_icons: Array = count_challenge.get("icons", []) if typeof(count_challenge.get("icons", [])) == TYPE_ARRAY else []
+	var clicked_icons: Array = count_challenge.get("clicked_icons", []) if typeof(count_challenge.get("clicked_icons", [])) == TYPE_ARRAY else []
+	return {
+		"count_started": not count_challenge.is_empty(),
+		"count_all_selected": not count_icons.is_empty() and clicked_icons.size() >= count_icons.size(),
+		"count_answered": bool(ui_state.get("count_answered", false)),
+		"count_perfect": bool(ui_state.get("count_perfect", false)),
+		"lookaway_started": not str(ui_state.get("dealer_lookaway_id", "")).is_empty(),
+		"peek_used": bool(cheats.get("peek_hole_card", false)),
+	}
+
+
 func _blackjack_surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var table: Dictionary = _table_state(run_state, environment)
 	var next_state: Dictionary = _normalized_session(run_state, environment, ui_state, table)

@@ -1745,6 +1745,10 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	var resolving_talk := not _event_choice_popup_is_visible() and not talk_entry.is_empty()
 	if not _event_choice_popup_is_visible() and not resolving_talk and _guard_player_input_route():
 		return
+	var tutorial_forced_choice := _tutorial_forced_event_choice(event_id)
+	if not tutorial_forced_choice.is_empty() and tutorial_forced_choice != choice_id:
+		_show_message("Your pal points you back to the highlighted choice.")
+		return
 	var event_definition := library.event(event_id)
 	if event_definition.is_empty():
 		_show_message("Event definition is missing.")
@@ -2446,7 +2450,14 @@ func _refresh_talk_dock() -> void:
 		return
 	var entry_speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
 	var voice_line := str(entry_speaker.get("voice_line", "")).strip_edges()
-	if not voice_line.is_empty():
+	var authored_guide_dialogue := [
+		"tutorial_pal_guidance",
+		"tutorial_host_guidance",
+		"tutorial_rourke_intro",
+		"tutorial_linda_bronze_finish",
+		"normal_grand_host_greeting",
+	].has(dialogue_id) or (dialogue_id == "linda_cage_services" and run_state.is_tutorial_run())
+	if not voice_line.is_empty() and not authored_guide_dialogue:
 		option = option.duplicate(true)
 		var voice_name := str(entry_speaker.get("speaking_character_name", "")).strip_edges()
 		var spoken_summary := "%s: \"%s\"" % [voice_name, voice_line] if not voice_name.is_empty() else voice_line
@@ -2492,12 +2503,15 @@ func start_dialogue(dialogue_id: String, source_data: Dictionary = {}) -> bool:
 		"source_object_id": str(source_data.get("object_id", source_data.get("source_object_id", ""))),
 		"environment_snapshot": run_state.current_environment.duplicate(true),
 	}
+	var tutorial_lesson_id := str(source_data.get("tutorial_lesson_id", "")).strip_edges()
+	if not tutorial_lesson_id.is_empty():
+		context["tutorial_lesson_id"] = tutorial_lesson_id
 	var source_event_id := str(source_data.get("source_event_id", source_data.get("event_id", ""))).strip_edges()
 	if not source_event_id.is_empty():
 		context["source_event_id"] = source_event_id
 	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
 	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), clean_id, str(speaker.get("voice_line_key", "")))
-	var start_node := str(dialogue.get("start", "")).strip_edges()
+	var start_node := str(source_data.get("start_node", dialogue.get("start", ""))).strip_edges()
 	if not run_state.enqueue_dialogue(clean_id, event_id, speaker, start_node, "dialogue", context):
 		_show_message("Conversation is already queued.")
 		_refresh()
@@ -2557,8 +2571,8 @@ func _dialogue_option_for_entry(entry: Dictionary) -> Dictionary:
 			"enabled": true,
 			"attribute_badges": [],
 		})
-	var summary := str(node.get("text", ""))
-	if dialogue_id == "linda_cage_services":
+	var summary := str(node.get("tutorial_text", node.get("text", ""))) if run_state != null and run_state.is_tutorial_run() else str(node.get("text", ""))
+	if dialogue_id == "linda_cage_services" and (run_state == null or not run_state.is_tutorial_run()):
 		summary = CageCounterViewModelScript.service_summary(run_state, node_id)
 	elif dialogue_id == "sal_starter_offer":
 		summary = _sal_starter_offer_summary()
@@ -2731,6 +2745,7 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 		if not source_event_id.is_empty():
 			run_state.resolve_event(source_event_id)
 		run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
+		_notify_tutorial_guide_dialogue_finished(entry, choice_definition, true)
 		_show_message("")
 		_refresh_talk_dock()
 		_refresh()
@@ -2753,6 +2768,7 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 			if not source_event_id.is_empty():
 				run_state.resolve_event(source_event_id)
 			run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
+			_notify_tutorial_guide_dialogue_finished(entry, choice_definition, true)
 	_show_message(str(result.get("message", "")))
 	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
@@ -2761,6 +2777,16 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 		_refresh()
 		return
 	_refresh()
+
+
+func _notify_tutorial_guide_dialogue_finished(entry: Dictionary, choice_definition: Dictionary, ok: bool) -> void:
+	if not ok or not bool(choice_definition.get("end", false)) or coach_overlay == null:
+		return
+	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+	var lesson_id := str(context.get("tutorial_lesson_id", "")).strip_edges()
+	if lesson_id.is_empty():
+		return
+	coach_overlay.notify_dialogue_completed(lesson_id)
 
 
 func _sal_starter_offer_summary() -> String:
@@ -4120,6 +4146,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		if _should_yield_for_travel_transition():
 			await get_tree().process_frame
 	_hide_travel_transition()
+	_queue_normal_grand_host_greeting(previous_environment)
 	var travel_context := {
 		"trigger": "travel",
 		"type": "travel",
@@ -4138,6 +4165,23 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_refresh()
 	elif web_atomic_travel:
 		_refresh()
+
+
+func _queue_normal_grand_host_greeting(previous_environment: Dictionary) -> void:
+	if run_state == null or run_state.is_tutorial_run():
+		return
+	if str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
+		return
+	if run_state.is_grand_casino_environment(previous_environment):
+		return
+	if bool(run_state.narrative_flags.get("grand_host_greeting_seen", false)):
+		return
+	run_state.narrative_flags["grand_host_greeting_seen"] = true
+	start_dialogue("normal_grand_host_greeting", {
+		"event_id": "dialogue:normal_grand_host_greeting",
+		"source": "grand_casino_entry",
+		"source_object_id": "casino_fixture:host_desk",
+	})
 
 
 func _linda_cage_choice_status(choice_id: String) -> Dictionary:
@@ -5286,6 +5330,8 @@ func _build_item_found_popup() -> void:
 func _build_coach_overlay() -> void:
 	coach_overlay = CoachOverlayScript.new()
 	coach_overlay.lesson_seen.connect(Callable(self, "_on_coach_lesson_seen"))
+	coach_overlay.lesson_completed.connect(Callable(self, "_on_coach_lesson_completed"))
+	coach_overlay.dialogue_requested.connect(Callable(self, "_on_coach_dialogue_requested"))
 	add_child(coach_overlay)
 	coach_overlay.set_lessons(library.tutorial_lessons if library != null else [])
 	coach_overlay.restore_seen(profile_inventory.tips_seen if profile_inventory != null else {})
@@ -8712,6 +8758,12 @@ func _complete_cage_players_card_review() -> void:
 		run_state.advance_environment_turns(1)
 		_autosave_foundation_run("Autosaved.")
 		_show_message(str(claim_result.get("message", "Linda issues the next Players Card tier.")))
+		if run_state.is_tutorial_run() and str(claim_result.get("tier", "")) == RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE:
+			start_dialogue("tutorial_linda_bronze_finish", {
+				"event_id": "dialogue:tutorial_linda_bronze_finish",
+				"source": "tutorial_bronze_review",
+				"source_object_id": "casino_fixture:cage_counter",
+			})
 		_refresh_talk_dock()
 		_refresh_runtime_environment_views()
 		return
@@ -10249,6 +10301,30 @@ func _on_coach_lesson_seen(lesson_id: String) -> void:
 	profile_inventory.save()
 
 
+func _on_coach_lesson_completed(lesson_id: String) -> void:
+	if run_state == null or library == null or not TutorialFlowScript.lesson_is_tutorial(lesson_id, library.tutorial_lessons):
+		return
+	var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+	completed[lesson_id] = true
+	run_state.narrative_flags["tutorial_lessons_completed"] = completed
+
+
+func _on_coach_dialogue_requested(lesson_id: String, dialogue_id: String, dialogue_node: String) -> void:
+	if run_state == null or not run_state.is_tutorial_run() or dialogue_id.is_empty():
+		return
+	var event_id := "tutorial_guide:%s" % lesson_id
+	if not run_state.pending_talk_event(event_id).is_empty():
+		_refresh_talk_dock()
+		return
+	start_dialogue(dialogue_id, {
+		"event_id": event_id,
+		"source": "tutorial_guide",
+		"source_object_id": "guide:%s" % lesson_id,
+		"start_node": dialogue_node,
+		"tutorial_lesson_id": lesson_id,
+	})
+
+
 func _drunk_effect_mode() -> String:
 	if run_state != null and run_state.drunk_distortion_suppressed():
 		return "classic"
@@ -11257,7 +11333,8 @@ func _configure_coach_for_run() -> void:
 	coach_overlay.restore_seen(profile_inventory.tips_seen if profile_inventory != null else {})
 	coach_overlay.set_tips_enabled(user_settings == null or user_settings.coach_tips_enabled)
 	if run_state != null and run_state.is_tutorial_run():
-		coach_overlay.begin_tutorial_run()
+		var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+		coach_overlay.begin_tutorial_run(completed)
 
 
 func current_run_menu_snapshot() -> Dictionary:
@@ -11719,7 +11796,7 @@ func _process_terminal_meta_bag_drops() -> void:
 				save_status_message = "Sal stocked; terminal receipt save failed."
 	var tutorial_card_victory := run_state.is_tutorial_run() \
 		and run_state.run_status == RunState.RUN_STATUS_ENDED \
-		and str(run_state.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID
+		and [RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "tutorial_bronze_card"].has(str(run_state.narrative_flags.get("demo_victory_route", "")))
 	if not run_state.meta_collection_enabled_for_run() and not tutorial_card_victory:
 		return
 	var special_outcome: Dictionary = collection_drop_service.apply_terminal_special_outcome(run_state, meta_collection_service)
@@ -12294,6 +12371,13 @@ func _eligible_event_option_with_context(event_id: String, context: Dictionary =
 
 func _event_choice(event_option: Dictionary, choice_id: String) -> Dictionary:
 	return FoundationActionViewModelScript.event_choice(self, event_option, choice_id)
+
+
+func _tutorial_forced_event_choice(event_id: String) -> String:
+	if run_state == null or not run_state.is_tutorial_run():
+		return ""
+	var choices: Dictionary = run_state.challenge_modifiers().get("tutorial_forced_event_choices", {}) if typeof(run_state.challenge_modifiers().get("tutorial_forced_event_choices", {})) == TYPE_DICTIONARY else {}
+	return str(choices.get(event_id.strip_edges(), "")).strip_edges()
 
 
 func _position_event_choice_popup() -> void:
@@ -13324,6 +13408,10 @@ func _coach_context_snapshot() -> Dictionary:
 	var result_type := str(last_item_result.get("type", ""))
 	if result_type.is_empty():
 		result_type = str(last_hook_result.get("type", last_game_result.get("type", "")))
+	var tutorial_flags := run_state.narrative_flags if run_state != null else {}
+	var game_coach_state: Dictionary = {}
+	if current_game != null and run_state != null:
+		game_coach_state = current_game.coach_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
 	return {
 		"screen": current_screen,
 		"environment_kind": str(environment.get("kind", archetype.get("kind", ""))),
@@ -13348,7 +13436,9 @@ func _coach_context_snapshot() -> Dictionary:
 			"showdown_pending": bool(objective.get("showdown_pending", false)),
 			"showdown_active": bool(objective.get("showdown_active", false)),
 			"available_cheat_actions": _coach_available_cheat_action_count(),
+			"flags": tutorial_flags.duplicate(true),
 		},
+		"game": game_coach_state,
 		"ui": {
 			"pawn_counter_open": _run_inventory_popup_is_visible() and run_inventory_popup_mode == "pawn_counter",
 			"world_map_open": _world_map_overlay_is_visible(),

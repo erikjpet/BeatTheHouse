@@ -143,6 +143,12 @@ func surface_state(_run_state: RunState, _environment: Dictionary, _ui_state: Di
 	return {}
 
 
+# Exposes sparse, action-boundary tutorial facts without teaching the UI any
+# game-specific state schema.
+func coach_state(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
+	return {}
+
+
 # Reports whether a wager that already started still needs player/automatic
 # actions before its outcome is final. Venue closing may block a new wager, but
 # must never strand one of these in-progress activities.

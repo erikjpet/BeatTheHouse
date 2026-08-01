@@ -3,6 +3,7 @@ extends Control
 
 signal lesson_seen(lesson_id: String)
 signal lesson_completed(lesson_id: String)
+signal dialogue_requested(lesson_id: String, dialogue_id: String, dialogue_node: String)
 
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 
@@ -92,11 +93,15 @@ func set_tips_enabled(enabled: bool) -> void:
 	suspend()
 
 
-func begin_tutorial_run() -> void:
+func begin_tutorial_run(completed_lessons: Dictionary = {}) -> void:
 	for lesson_value in lessons:
 		var lesson := _dict(lesson_value)
 		if str(lesson.get("scope", "")).strip_edges() == "tutorial_run":
-			seen.erase(str(lesson.get("id", "")).strip_edges())
+			var lesson_id := str(lesson.get("id", "")).strip_edges()
+			if bool(completed_lessons.get(lesson_id, false)):
+				seen[lesson_id] = true
+			else:
+				seen.erase(lesson_id)
 	suspend()
 
 
@@ -124,8 +129,10 @@ func evaluate_at_boundary(context: Dictionary) -> void:
 	observed_context["small_screen"] = small_screen
 	latest_context = observed_context
 	if not active_lesson.is_empty():
+		if CoachViewModelScript.state_completion_matches(active_lesson, observed_context):
+			_finish_active()
 		var next_layout_key := _layout_key(active_lesson, observed_context)
-		if next_layout_key != active_layout_key:
+		if not active_lesson.is_empty() and next_layout_key != active_layout_key:
 			active_context = observed_context.duplicate(true)
 			_render_active(false)
 	for lesson_value in lessons:
@@ -149,6 +156,16 @@ func notify_action(action_id: String) -> bool:
 	return true
 
 
+func notify_dialogue_completed(lesson_id: String) -> bool:
+	if active_lesson.is_empty() or str(active_lesson.get("id", "")) != lesson_id.strip_edges():
+		return false
+	var completion := _dict(active_lesson.get("completion", {}))
+	if str(completion.get("type", "")) != "explicit_ok":
+		return true
+	_finish_active()
+	return true
+
+
 func suspend() -> void:
 	queued_lessons.clear()
 	queued_ids.clear()
@@ -158,6 +175,8 @@ func suspend() -> void:
 	prepared_snapshot = {}
 	active_layout_key = 0
 	visible = false
+	if panel != null:
+		panel.visible = false
 	if focus_layer != null:
 		focus_layer.set_snapshot({})
 	_stop_attention_motion()
@@ -219,9 +238,16 @@ func _show_next() -> void:
 	active_context = latest_context.duplicate(true) if not latest_context.is_empty() else _dict(entry.get("context", {})).duplicate(true)
 	queued_ids.erase(str(active_lesson.get("id", "")))
 	var lesson_id := str(active_lesson.get("id", ""))
-	seen[lesson_id] = true
+	if str(active_lesson.get("scope", "")).strip_edges() != "tutorial_run":
+		seen[lesson_id] = true
 	lesson_seen.emit(lesson_id)
 	_render_active(true)
+	if str(active_lesson.get("delivery", "coach")).strip_edges().to_lower() == "dialogue":
+		dialogue_requested.emit(
+			lesson_id,
+			str(active_lesson.get("dialogue_id", "")).strip_edges(),
+			str(active_lesson.get("dialogue_node", "")).strip_edges()
+		)
 
 
 func _render_active(play_motion: bool) -> void:
@@ -241,6 +267,8 @@ func _render_active(play_motion: bool) -> void:
 	panel.custom_minimum_size = bubble_rect.size
 	panel.size = bubble_rect.size
 	focus_layer.set_snapshot(prepared_snapshot)
+	var dialogue_delivery := str(prepared_snapshot.get("delivery", "coach")) == "dialogue"
+	panel.visible = not dialogue_delivery
 	visible = true
 	move_to_front()
 	if play_motion:
@@ -249,11 +277,15 @@ func _render_active(play_motion: bool) -> void:
 
 func _finish_active() -> void:
 	var completed_id := str(active_lesson.get("id", ""))
+	if not completed_id.is_empty():
+		seen[completed_id] = true
 	active_lesson = {}
 	active_context = {}
 	prepared_snapshot = {}
 	active_layout_key = 0
 	visible = false
+	if panel != null:
+		panel.visible = false
 	focus_layer.set_snapshot({})
 	_stop_attention_motion()
 	if not completed_id.is_empty():

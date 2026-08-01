@@ -1480,6 +1480,78 @@
     ]
   },
   {
+    "id": "pal_tutorial_guide",
+    "display_name": "Pal",
+    "title": "Street Guide",
+    "role": "guide",
+    "model": {
+      "skin_color": "#9b684e",
+      "hair_color": "#241c27",
+      "jacket_color": "#244b55",
+      "accent_color": "#54e0c7",
+      "silhouette": "cap",
+      "scale": 1.02
+    },
+    "voice": {
+      "style": "Warm, streetwise, upbeat, plain-spoken, and firmly on the player's side.",
+      "lines": {
+        "guide": [
+          "Hey. Think of me as your pal on this one.",
+          "Easy does it. Your pal has the next light picked out.",
+          "Good read. Keep moving and keep your eyes open."
+        ]
+      }
+    },
+    "encounters": [
+      {
+        "context": "tutorial",
+        "line_key": "guide",
+        "dialogue_id": "tutorial_pal_guidance"
+      }
+    ]
+  },
+  {
+    "id": "vivienne_grand_host",
+    "display_name": "Vivienne Vale",
+    "title": "Grand Casino Host",
+    "role": "staff",
+    "model": {
+      "skin_color": "#b77b61",
+      "hair_color": "#251526",
+      "jacket_color": "#402653",
+      "accent_color": "#e3b45d",
+      "silhouette": "rings",
+      "scale": 1.06
+    },
+    "voice": {
+      "style": "Polished and warmly professional, with a velvet-gloved hook beneath every kindness.",
+      "lines": {
+        "greeting": [
+          "Welcome to the Grand. I am Vivienne Vale. The house is delighted you found us.",
+          "Vivienne Vale, your host. Anything you need, the house will remember.",
+          "Welcome back. The velvet is soft because the rules are not."
+        ],
+        "guide": [
+          "A small courtesy first. We find gratitude improves attention.",
+          "Linda keeps the accounts. I keep the evening moving.",
+          "Play clean, play often, and the card will notice."
+        ]
+      }
+    },
+    "encounters": [
+      {
+        "context": "grand_entry",
+        "line_key": "greeting",
+        "dialogue_id": "normal_grand_host_greeting"
+      },
+      {
+        "context": "tutorial",
+        "line_key": "guide",
+        "dialogue_id": "tutorial_host_guidance"
+      }
+    ]
+  },
+  {
     "id": "tomas_market_merchant",
     "display_name": "Tomas Reed",
     "title": "Market Merchant",
