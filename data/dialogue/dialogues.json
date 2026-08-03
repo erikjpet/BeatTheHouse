@@ -894,7 +894,7 @@
         "choices": [{"id": "continue", "label": "Use the phone", "effects": {}, "end": true}]
       },
       "parking_tip": {
-        "text": "Open the parking-lot note and choose Follow the tip.",
+        "text": "Open the parking-lot note and choose Follow the tip. It may lead somewhere useful later.",
         "choices": [{"id": "continue", "label": "Follow the lead", "effects": {}, "end": true}]
       },
       "route_split": {
@@ -942,11 +942,11 @@
         "choices": [{"id": "continue", "label": "Deal", "effects": {}, "end": true}]
       },
       "blackjack_lookaway": {
-        "text": "Use DRINK PASS or CHIP SPILL for a brief lookaway. Move fast.",
+        "text": "The easiest cheat is a lookaway: DRINK PASS spills a drink, while CHIP SPILL buys a brief opening. Move fast.",
         "choices": [{"id": "continue", "label": "Create a lookaway", "effects": {}, "end": true}]
       },
       "blackjack_peek": {
-        "text": "PEEK only during an open attention window, or risk being caught.",
+        "text": "PEEK only during an open attention window. Getting caught will add heat and can close the table.",
         "choices": [{"id": "continue", "label": "Peek now", "effects": {}, "end": true}]
       },
       "blackjack_count_start": {
@@ -962,7 +962,7 @@
         "choices": [{"id": "continue", "label": "Watch the heat", "effects": {}, "end": true}]
       },
       "invitation": {
-        "text": "Open and accept the Grand Casino invitation before you leave.",
+        "text": "Before you leave, keep an eye on your environment. Open the Grand Casino invitation and accept it.",
         "choices": [{"id": "continue", "label": "Take the invitation", "effects": {}, "end": true}]
       },
       "grand_depart": {

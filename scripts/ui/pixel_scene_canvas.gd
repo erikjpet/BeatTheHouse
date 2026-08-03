@@ -2040,6 +2040,8 @@ func _apply_reserved_overlay_layout(objects: Array) -> Array:
 		return objects
 	var board_bounds := Rect2(Vector2(OBJECT_LAYOUT_MARGIN, OBJECT_LAYOUT_MARGIN), Vector2(BOARD_SIZE) - Vector2(OBJECT_LAYOUT_MARGIN * 2.0, OBJECT_LAYOUT_MARGIN * 2.0))
 	var board_size := Vector2(BOARD_SIZE)
+	var placed_protected_rects: Array[Rect2] = []
+	var movable_objects: Array[Dictionary] = []
 	for object_value in objects:
 		if typeof(object_value) != TYPE_DICTIONARY:
 			continue
@@ -2049,11 +2051,17 @@ func _apply_reserved_overlay_layout(objects: Array) -> Array:
 		var object_rect := _board_rect_for_object(object_data)
 		var protected_rect := object_rect.grow(OBJECT_LABEL_HEIGHT + OBJECT_LABEL_GAP + 4.0)
 		if not protected_rect.intersects(reserved_board_rect):
-			continue
+			placed_protected_rects.append(protected_rect)
+		else:
+			movable_objects.append(object_data)
+	for object_data in movable_objects:
+		var object_rect := _board_rect_for_object(object_data)
+		var protected_rect := object_rect.grow(OBJECT_LABEL_HEIGHT + OBJECT_LABEL_GAP + 4.0)
 		var translations: Array[Vector2] = [
 			Vector2(0.0, reserved_board_rect.position.y - CONVERSATION_OVERLAY_CLEARANCE - protected_rect.end.y),
 			Vector2(reserved_board_rect.end.x + CONVERSATION_OVERLAY_CLEARANCE - protected_rect.position.x, 0.0),
 			Vector2(reserved_board_rect.position.x - CONVERSATION_OVERLAY_CLEARANCE - protected_rect.end.x, 0.0),
+			Vector2(0.0, reserved_board_rect.end.y + CONVERSATION_OVERLAY_CLEARANCE - protected_rect.position.y),
 		]
 		var best_translation := Vector2.ZERO
 		var best_distance := INF
@@ -2061,15 +2069,45 @@ func _apply_reserved_overlay_layout(objects: Array) -> Array:
 			var candidate := Rect2(protected_rect.position + translation, protected_rect.size)
 			if not board_bounds.encloses(candidate) or candidate.intersects(reserved_board_rect):
 				continue
+			var collides := false
+			for placed_rect in placed_protected_rects:
+				if candidate.intersects(placed_rect):
+					collides = true
+					break
+			if collides:
+				continue
 			var distance := translation.length_squared()
 			if distance < best_distance:
 				best_distance = distance
 				best_translation = translation
 		if best_distance == INF:
+			var max_candidate_position := board_bounds.end - protected_rect.size
+			var candidate_y := board_bounds.position.y
+			while candidate_y <= max_candidate_position.y:
+				var candidate_x := board_bounds.position.x
+				while candidate_x <= max_candidate_position.x:
+					var candidate := Rect2(Vector2(candidate_x, candidate_y), protected_rect.size)
+					if not candidate.intersects(reserved_board_rect):
+						var collides := false
+						for placed_rect in placed_protected_rects:
+							if candidate.intersects(placed_rect):
+								collides = true
+								break
+						if not collides:
+							var translation := candidate.position - protected_rect.position
+							var distance := translation.length_squared()
+							if distance < best_distance:
+								best_distance = distance
+								best_translation = translation
+					candidate_x += 8.0
+				candidate_y += 8.0
+		if best_distance == INF:
+			placed_protected_rects.append(protected_rect)
 			continue
 		var moved_center := object_rect.get_center() + best_translation
 		object_data["position"] = Vector2(moved_center.x / board_size.x, moved_center.y / board_size.y)
 		overlay_repositioned_object_ids.append(str(object_data.get("id", "")))
+		placed_protected_rects.append(Rect2(protected_rect.position + best_translation, protected_rect.size))
 	return objects
 
 
