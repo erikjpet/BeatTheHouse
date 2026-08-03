@@ -1,5 +1,19 @@
 # Agent Prompt — Reconcile Current Worktree and Restore Green Gates
 
+# Execution record — 2026-08-03
+
+- Preserved base: `d83020843f9e2053ab00dbfecbfb4ba173d540d5` on `agent/v05-pre-rework-baseline`.
+- Working branch: `agent/v05-pre-human-playtest-rework`.
+- Implementation commit: `5389fba8` (`fix integration gate regressions`).
+- Report: `docs/plans/v05_integration_gate_recovery.md`.
+- Restored the four currently failing Pal semantic contracts; the Crew contract was already green.
+- Repaired deterministic reserved-overlay fixture placement without weakening the Sal overlap assertion.
+- PASS: `git diff --check`, validation, Smoke, FoundationSuite `systems`, `scratch_tickets`, `ui`, and `all`.
+- Evidence: `.tmp/test_reports/20260803_115040_smoke/`, `20260803_115332_smoke/`, `20260803_115505_smoke/`, `20260803_115625_smoke/`, and `20260803_115956_smoke/`.
+- No branch was pushed.
+
+---
+
 Last reconciled: 2026-08-03
 Release target: 0.5.0
 Status: OPEN / MUST LAND BEFORE FINAL TUTORIAL AND PERFORMANCE CLOSURE
