@@ -14,6 +14,7 @@ const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_ove
 const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const REPORT_PATH := "user://foundation_performance_probe_report.json"
+const PERF_SAVE_SLOT := "foundation_performance_probe_autosave"
 const TEST_META_COLLECTION_PATH := "user://foundation_performance_probe_meta_collection.json"
 const META_COLLECTION_PATH_ENV := "BTH_META_COLLECTION_PATH"
 const DEFAULT_SEED_PREFIX := "FOUNDATION-PERF"
@@ -100,6 +101,7 @@ const NEW_SURFACE_BUDGETS := {
 	"meta_home_idle": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"talk_dock_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"dialogue_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
+	"late_run_crew_dialogue_open": {"call_ms": 50.0},
 	"eviction_map_transition": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"run_report_replay": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"grand_casino_duel_idle": {"draw_p95_ms": MAX_SURFACE_DRAW_P95_MS, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
@@ -759,6 +761,7 @@ func _probe_new_surface_budgets() -> void:
 	await _probe_meta_home_surface_budget()
 	await _probe_talk_dock_surface_budget()
 	await _probe_dialogue_surface_budget()
+	await _probe_late_run_crew_dialogue_budget()
 	await _probe_eviction_map_transition_budget()
 	await _probe_run_report_replay_budget()
 	await _probe_rourke_duel_surface_budget()
@@ -958,6 +961,130 @@ func _probe_dialogue_surface_budget() -> void:
 		failures.append("Dialogue performance probe did not expose pull_tab_clerk in the talk dock.")
 		return
 	await _record_new_surface_phase("dialogue_active", "Dialogue active")
+
+
+func _probe_late_run_crew_dialogue_budget() -> void:
+	app.call("start_foundation_run", "%s-late-crew" % seed_prefix)
+	await _settle(3)
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		failures.append("Late-run Crew dialogue probe could not access RunState.")
+		return
+	run_state.bankroll = 1
+	run_state.economic_state = "volatile"
+	var environment := run_state.current_environment.duplicate(true)
+	environment["id"] = "perf_delta_queen_late_run"
+	environment["world_node_id"] = "delta_queen"
+	environment["archetype_id"] = "delta_queen"
+	environment["display_name"] = "Delta Queen"
+	environment["kind"] = "casino"
+	environment["tier"] = 2
+	environment["game_ids"] = []
+	environment["event_ids"] = []
+	environment["resolved_event_ids"] = []
+	environment["service_ids"] = []
+	environment["lender_hooks"] = ["the_crew"]
+	environment["travel_hooks"] = []
+	environment["next_archetypes"] = []
+	var legacy_mask: Array = []
+	legacy_mask.resize(256 * 192)
+	legacy_mask.fill(255)
+	var legacy_ticket := {
+		"id": "legacy-late-run-ticket",
+		"type_id": "two_fer",
+		"display_name": "Two Fer",
+		"payout": 0,
+		"result_ready": true,
+		"settled": true,
+		"mechanic_result": {"spots": [{"symbol": "CHERRY"}, {"symbol": "LEMON"}]},
+		"latex_mask": legacy_mask,
+		"scratch_regions": [{"id": "play:0", "revealed": true, "coverage": 1.0}],
+		"sections": [{"id": "play", "revealed": true, "coverage": 1.0}],
+	}
+	var legacy_losers: Array = []
+	for index in range(5):
+		var receipt := legacy_ticket.duplicate(true)
+		receipt["id"] = "legacy-late-run-ticket-%d" % index
+		legacy_losers.append(receipt)
+	var origin_key := RunState.portable_ticket_origin_key(environment)
+	var legacy_player_state := {
+		"origin_key": origin_key,
+		"origin_name": "Delta Queen",
+		"origin_environment_id": str(environment.get("id", "")),
+		"origin_world_node_id": "delta_queen",
+		"origin_archetype_id": "delta_queen",
+		"active_ticket": {},
+		"pending_queue": [],
+		"winner_pile": [],
+		"loser_pile": legacy_losers,
+		"last_settled_ticket": legacy_losers.back().duplicate(true),
+		"last_settled_pile": "loser_pile",
+	}
+	environment["game_states"] = {"scratch_tickets": legacy_player_state.duplicate(true)}
+	run_state.current_environment = environment
+	run_state.portable_ticket_piles = {"scratch_tickets": {origin_key: legacy_player_state}}
+	run_state.world_map = {
+		"version": 1,
+		"seed_text": run_state.seed_text,
+		"start_node_id": "delta_queen",
+		"current_node_id": "delta_queen",
+		"nodes": [{"id": "delta_queen", "state": "visited", "environment": environment.duplicate(true)}],
+		"edges": [],
+		"visited_path": ["delta_queen"],
+	}
+	var legacy_save_started := Time.get_ticks_usec()
+	var legacy_snapshot := run_state.to_dict()
+	var legacy_json := JSON.stringify(legacy_snapshot)
+	var legacy_build_serialize_ms := float(Time.get_ticks_usec() - legacy_save_started) / 1000.0
+	var legacy_chars := legacy_json.length()
+	var migrated := RunState.new()
+	migrated.from_dict(legacy_snapshot)
+	app.set("run_state", migrated)
+	app.call("_refresh_run_action_service")
+	app.call("clear_interaction_focus")
+	app.call("_refresh")
+	await _settle(2)
+	var select_started := Time.get_ticks_usec()
+	var selected := bool(app.call("select_lender_hook", "the_crew"))
+	var select_ms := float(Time.get_ticks_usec() - select_started) / 1000.0
+	var open_started := Time.get_ticks_usec()
+	var opened := bool(app.call("_start_lender_conversation", "the_crew", "borrow"))
+	var open_ms := float(Time.get_ticks_usec() - open_started) / 1000.0
+	var compact_save_started := Time.get_ticks_usec()
+	var compact_json := JSON.stringify(migrated.to_dict())
+	var compact_build_serialize_ms := float(Time.get_ticks_usec() - compact_save_started) / 1000.0
+	var compact_chars := compact_json.length()
+	var queued_entry := migrated.pending_talk_event("lender_conversation:borrow:the_crew")
+	var queued_context: Dictionary = _dict(queued_entry.get("context", {}))
+	var queued_environment: Dictionary = _dict(queued_context.get("environment_snapshot", {}))
+	var queued_environment_chars := JSON.stringify(queued_environment).length()
+	var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
+	var budget := _dict(NEW_SURFACE_BUDGETS.get("late_run_crew_dialogue_open", {}))
+	observations.append({
+		"seed": "new_surface:late_run_crew_dialogue_open",
+		"run_index": -1,
+		"environment_id": "perf_delta_queen_late_run",
+		"mode": "late_run_crew_dialogue_open",
+		"selection_call_ms": select_ms,
+		"selection_available": selected,
+		"open_call_ms": open_ms,
+		"legacy_save_chars": legacy_chars,
+		"compacted_save_chars": compact_chars,
+		"legacy_build_serialize_ms": legacy_build_serialize_ms,
+		"compacted_build_serialize_ms": compact_build_serialize_ms,
+		"queued_environment_chars": queued_environment_chars,
+		"budget": budget,
+	})
+	new_surface_coverage["late_run_crew_dialogue_open"] = int(new_surface_coverage.get("late_run_crew_dialogue_open", 0)) + 1
+	if not opened or not bool(talk_snapshot.get("visible", false)):
+		failures.append("Late-run Crew dialogue performance probe did not open the conversation.")
+	if queued_environment.has("game_states"):
+		failures.append("Late-run Crew dialogue copied live game-machine state into its presentation context.")
+	var call_budget := float(budget.get("call_ms", 0.0))
+	if call_budget > 0.0 and (select_ms > call_budget or open_ms > call_budget):
+		failures.append("Late-run Crew interaction took %.3f ms to select and %.3f ms to open; budget is %.3f ms per call." % [select_ms, open_ms, call_budget])
+	if compact_chars >= legacy_chars / 4:
+		failures.append("Late-run save compaction retained too much completed scratch-mask state (%d -> %d chars)." % [legacy_chars, compact_chars])
 
 
 func _probe_eviction_map_transition_budget() -> void:
@@ -1342,6 +1469,7 @@ func _open_fresh_app() -> void:
 		app.queue_free()
 		await process_frame
 	app = MainScene.instantiate()
+	app.set("autosave_slot_id", PERF_SAVE_SLOT)
 	root.add_child(app)
 	await _settle(3)
 

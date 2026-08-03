@@ -97,7 +97,7 @@ func _verify_authored_contract() -> Dictionary:
 	var invitation_copy := str(_dict(pal_nodes.get("invitation", {})).get("text", ""))
 	var goodbye_copy := str(_dict(pal_nodes.get("grand_depart", {})).get("text", ""))
 	_check(route_copy.contains("tip opened two doors") and route_copy.contains("strongly recommend") and route_copy.contains("skip"), "Pal does not explain and strongly steer the skippable route split.", failures)
-	_check(crew_copy.contains("last place you turn"), "Pal's Crew warning omits the required last-place-you-turn language.", failures)
+	_check(crew_copy.contains("isn't free") and crew_copy.contains("put you to work") and not crew_copy.contains("Avoid the Crew"), "Pal's Crew hint must imply the loan's work obligation without directly telling the player to avoid the Crew.", failures)
 	_check(lookaway_copy.contains("easiest cheat") and lookaway_copy.contains("DRINK PASS spills a drink") and lookaway_copy.contains("CHIP SPILL"), "Pal's lookaway copy is not accurate to the real controls.", failures)
 	_check(peek_copy.contains("add heat") and peek_copy.contains("close the table"), "Pal's peek copy omits caught consequences.", failures)
 	_check(invitation_copy.contains("keep an eye on your environment") and invitation_copy.contains("accept"), "Pal's invitation copy omits environment scanning or acceptance.", failures)

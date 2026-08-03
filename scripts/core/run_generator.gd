@@ -135,9 +135,11 @@ func world_map_snapshot(run_state: RunState, selected_id: String = "") -> Dictio
 
 func _next_world_environment(run_state: RunState, target_archetype_id: String, rng: RngStream, target_prevalidated: bool = false) -> EnvironmentInstance:
 	var map := WorldMap.new(library)
+	var initialized_tutorial_map := false
 	if not run_state.has_world_map():
 		var initial_map := map.build(run_state, rng.fork("world_map"))
 		run_state.set_world_map(_apply_tutorial_initial_map_targets(initial_map, run_state))
+		initialized_tutorial_map = run_state.is_tutorial_run()
 	var map_data := run_state.world_map
 	var target_id := target_archetype_id.strip_edges()
 	var current_node_id := run_state.current_world_node_id()
@@ -157,8 +159,35 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	var environment_data := _world_environment_data_for_node(run_state, map_data, node, rng)
 	run_state.set_environment(environment_data)
 	run_state.enter_world_node(target_id, run_state.current_environment)
+	_apply_tutorial_authored_travel_targets(run_state, target_id)
+	if initialized_tutorial_map:
+		# enter_node() normally reveals every neighbor. Reapply the authored first
+		# reveal after entering the apartment so Gas Casino cannot leak onto the
+		# first tutorial map before the Corner Store route beat.
+		run_state.set_world_map(_apply_tutorial_initial_map_targets(run_state.world_map, run_state))
 	run_state.save_rng(rng)
 	return EnvironmentInstance.from_dict(run_state.current_environment)
+
+
+func _apply_tutorial_authored_travel_targets(run_state: RunState, environment_id: String) -> void:
+	if run_state == null or not run_state.is_tutorial_run():
+		return
+	var modifiers := run_state.challenge_modifiers()
+	var overrides: Dictionary = modifiers.get("tutorial_environment_overrides", {}) if typeof(modifiers.get("tutorial_environment_overrides", {})) == TYPE_DICTIONARY else {}
+	var override: Dictionary = overrides.get(environment_id, {}) if typeof(overrides.get(environment_id, {})) == TYPE_DICTIONARY else {}
+	if not override.has("next_archetypes") and not override.has("travel_hooks"):
+		return
+	var targets: Array = []
+	for source in [_string_array(override.get("next_archetypes", [])), _string_array(override.get("travel_hooks", []))]:
+		for target_id_value in source:
+			var target_id := str(target_id_value)
+			if not target_id.is_empty() and not targets.has(target_id):
+				targets.append(target_id)
+	run_state.set_next_archetypes(targets)
+	run_state.current_environment["travel_hooks"] = targets.duplicate()
+	run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(run_state.current_environment)
+	if run_state.has_world_map():
+		run_state.store_current_world_node_environment()
 
 
 # Constrains only the tutorial's first map reveal. Later event choices unlock

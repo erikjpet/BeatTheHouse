@@ -474,6 +474,12 @@ func _check_scratch_result_and_queue_flow(game: GameModule, failures: Array) -> 
 	if str(active.get("id", "")) != first_id or not bool(active.get("result_ready", false)):
 		failures.append("Scratch All should enter result state without filing the ticket.")
 	var surface := game.surface_state(run_state, environment, {"reduce_motion": true})
+	var first_payout := int(active.get("payout", 0))
+	var expected_pile := "winner_pile" if first_payout > 0 else "loser_pile"
+	if str(surface.get("scratch_result_summary", "")).is_empty() or str(surface.get("scratch_result_reason", "")).is_empty():
+		failures.append("Scratch completion did not showcase the purchase-fixed result before filing.")
+	if first_payout > 0 and int(surface.get("scratch_current_winnings", 0)) < first_payout:
+		failures.append("Scratch completion did not include the active win in the visible amount due.")
 	var harness := SurfaceHarness.new()
 	harness.setup(surface)
 	game.draw_surface(harness, surface, {"contract_harness": true})
@@ -486,6 +492,15 @@ func _check_scratch_result_and_queue_flow(game: GameModule, failures: Array) -> 
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	if _dict_array(machine.get("pending_queue", [])).size() != 1 or str((machine.get("active_ticket", {}) as Dictionary).get("id", "")) == first_id:
 		failures.append("Scratch filing did not advance to the next queued ticket.")
+	var filed_pile := _dict_array(machine.get(expected_pile, []))
+	if filed_pile.is_empty() or str((filed_pile.back() as Dictionary).get("id", "")) != first_id:
+		failures.append("Scratch filing did not visibly retain the completed ticket in its win/loss pile.")
+	elif (filed_pile.back() as Dictionary).has("latex_mask") or (filed_pile.back() as Dictionary).has("scratch_regions"):
+		failures.append("Scratch filing retained the high-resolution scratch mask in a completed pile receipt.")
+	if str(machine.get("last_settled_pile", "")) != expected_pile or str((machine.get("last_settled_ticket", {}) as Dictionary).get("id", "")) != first_id:
+		failures.append("Scratch filing did not retain its pile-animation receipt.")
+	elif (machine.get("last_settled_ticket", {}) as Dictionary).has("latex_mask") or (machine.get("last_settled_ticket", {}) as Dictionary).has("scratch_regions"):
+		failures.append("Scratch pile-animation receipt retained a duplicate high-resolution mask.")
 
 
 func _check_scratch_discard_flow(game: GameModule, failures: Array) -> void:
@@ -502,11 +517,18 @@ func _check_scratch_discard_flow(game: GameModule, failures: Array) -> void:
 	run_state.current_environment = environment
 	var before_outcome := JSON.stringify(dud.get("mechanic_result", {}))
 	game.call("_scratch_segment", machine, Vector2(450, 200), Vector2(520, 200))
+	var accidental_begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(450, 200), {}, run_state, environment)
+	var accidental_end := game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(248, 372), accidental_begin.get("ui_state", {}), run_state, environment)
+	if bool(accidental_end.get("direct_resolve", false)):
+		failures.append("Scratch waste basket accepted an unintentional release without a deliberate drag path.")
 	var begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(450, 200), {}, run_state, environment)
-	var command := game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(248, 372), begin.get("ui_state", {}), run_state, environment)
+	var move := game.surface_pointer_command("scratch_scrub", 0, "move", Vector2(286, 322), begin.get("ui_state", {}), run_state, environment)
+	var command := game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(248, 372), move.get("ui_state", {}), run_state, environment)
 	if not bool(command.get("handled", false)) or not bool(command.get("direct_resolve", false)) or not bool((command.get("ui_state", {}) as Dictionary).get("scratch_discard_unfinished", false)):
-		failures.append("Swiping a ticket into the waste basket did not create an unfinished-discard command.")
+		failures.append("A deliberate long drag into the waste-basket opening did not create an unfinished-discard command.")
 		return
+	if not _dict_array((command.get("ui_state", {}) as Dictionary).get("scratch_crumbs", [])).is_empty() or (command.get("ui_state", {}) as Dictionary).has("scratch_last_pointer"):
+		failures.append("Scratch release left a crumb or pointer dot at the final scratch position.")
 	var result := game.resolve_with_context("settle_scratch_ticket", 0, run_state, environment, _scratch_rng("discard-resolve"), command.get("ui_state", {}))
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	if not bool(result.get("scratch_discarded_unfinished", false)) or str((machine.get("active_ticket", {}) as Dictionary).get("id", "")) != str(next_ticket.get("id", "")):
@@ -517,16 +539,18 @@ func _check_scratch_discard_flow(game: GameModule, failures: Array) -> void:
 	var harness := SurfaceHarness.new()
 	harness.setup(surface)
 	game.draw_surface(harness, surface, {"contract_harness": true})
-	if not _surface_harness_has_action(harness, "scratch_discard"):
-		failures.append("Scratch surface did not expose a clearly actionable waste basket.")
+	if _surface_harness_has_action(harness, "scratch_discard") or not _surface_harness_has_action(harness, "scratch_scrub"):
+		failures.append("Scratch waste basket exposed an accidental click discard instead of the deliberate drag gesture.")
 	var winner := _scratch_ticket_with_win_state(game, "golden_vault", true, "discard-winner")
 	machine["active_ticket"] = winner
-	environment["game_states"] = {"scratch_tickets": machine}
+	game.call("_write_machine_state", environment, machine, run_state)
 	var winner_command := game.surface_action_command("scratch_discard", 0, false, {}, run_state, environment)
 	var winner_result := game.resolve_with_context("settle_scratch_ticket", 0, run_state, environment, _scratch_rng("discard-winner-resolve"), winner_command.get("ui_state", {}))
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	if not bool(winner_result.get("scratch_discard_preserved_winner", false)) or _dict_array(machine.get("winner_pile", [])).is_empty():
 		failures.append("Discarding an unfinished winner did not preserve it for clerk redemption.")
+	if str(machine.get("last_settled_pile", "")) != "winner_pile" or str((machine.get("last_settled_ticket", {}) as Dictionary).get("id", "")) != str(winner.get("id", "")):
+		failures.append("Filing the final ticket without a queue lost its visible pile-animation receipt.")
 
 
 func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
@@ -543,15 +567,59 @@ func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment
 	game.call("_scratch_segment", machine, Vector2(350, 170), Vector2(590, 250))
+	game.call("_write_machine_state", environment, machine, run_state, false)
 	var outcome_json := JSON.stringify(ticket.get("mechanic_result", {}))
 	var mask_json := JSON.stringify(ticket.get("latex_mask", []))
 	var queue_json := JSON.stringify(machine.get("pending_queue", []))
+	run_state.world_map = {
+		"version": 1,
+		"seed_text": run_state.seed_text,
+		"start_node_id": "scratch_save",
+		"current_node_id": "scratch_save",
+		"nodes": [{"id": "scratch_save", "state": "visited", "environment": {}}],
+		"edges": [],
+		"visited_path": ["scratch_save"],
+	}
+	run_state.store_current_world_node_environment()
+	var save_data := run_state.to_dict()
+	var saved_machine: Dictionary = (save_data.get("current_environment", {}).get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if saved_machine.has("active_ticket") or saved_machine.has("pending_queue"):
+		failures.append("Scratch save duplicated player-owned tickets inside the current environment snapshot.")
+	var saved_nodes: Array = (save_data.get("world_map", {}) as Dictionary).get("nodes", [])
+	var saved_node_environment: Dictionary = (saved_nodes[0] as Dictionary).get("environment", {}) if not saved_nodes.is_empty() else {}
+	var saved_node_machine: Dictionary = (saved_node_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if saved_node_machine.has("active_ticket") or saved_node_machine.has("pending_queue"):
+		failures.append("Scratch save duplicated player-owned tickets inside a stored world-map environment.")
+	# Simulate a pre-fix save: completed masks existed in the portable pile and
+	# the entire player-owned machine was duplicated in the world-map node.
+	var legacy_receipt := ticket.duplicate(true)
+	legacy_receipt["settled"] = true
+	legacy_receipt["result_ready"] = true
+	var portable_snapshot: Dictionary = save_data.get("portable_ticket_piles", {})
+	var scratch_origins: Dictionary = portable_snapshot.get("scratch_tickets", {})
+	var origin_key := RunState.portable_ticket_origin_key(environment)
+	var portable_state: Dictionary = scratch_origins.get(origin_key, {})
+	portable_state["loser_pile"] = [legacy_receipt]
+	portable_state["last_settled_ticket"] = legacy_receipt.duplicate(true)
+	scratch_origins[origin_key] = portable_state
+	portable_snapshot["scratch_tickets"] = scratch_origins
+	save_data["portable_ticket_piles"] = portable_snapshot
+	(saved_nodes[0] as Dictionary)["environment"] = environment.duplicate(true)
+	(save_data.get("world_map", {}) as Dictionary)["nodes"] = saved_nodes
 	var restored: RunState = RunStateScript.new()
-	restored.from_dict(run_state.to_dict())
+	restored.from_dict(save_data)
 	var loaded: Dictionary = ((restored.current_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}) as Dictionary).get("active_ticket", {})
 	var loaded_machine: Dictionary = (restored.current_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	if JSON.stringify(loaded.get("mechanic_result", {})) != outcome_json or JSON.stringify(loaded.get("latex_mask", [])) != mask_json or JSON.stringify(loaded_machine.get("pending_queue", [])) != queue_json:
 		failures.append("Scratch save/load did not restore fixed outcome, partial mask, and queued tickets.")
+	var migrated_receipts := _dict_array(loaded_machine.get("loser_pile", []))
+	if migrated_receipts.is_empty() or (migrated_receipts[0] as Dictionary).has("latex_mask") or (migrated_receipts[0] as Dictionary).has("scratch_regions"):
+		failures.append("Scratch save migration did not compact a legacy completed-ticket mask.")
+	var migrated_node: Dictionary = ((restored.world_map.get("nodes", []) as Array)[0] as Dictionary)
+	var migrated_node_environment: Dictionary = migrated_node.get("environment", {})
+	var migrated_node_machine: Dictionary = (migrated_node_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if migrated_node_machine.has("active_ticket") or migrated_node_machine.has("pending_queue") or migrated_node_machine.has("loser_pile"):
+		failures.append("Scratch save migration retained duplicate player-owned state in the world-map node.")
 
 
 func _check_scratch_stale_region_upgrade(game: GameModule, failures: Array) -> void:
@@ -793,6 +861,25 @@ func _check_scratch_sound(failures: Array) -> void:
 	var source := FileAccess.get_file_as_string("res://scripts/ui/sfx_player.gd")
 	if source.contains("scratch_scrape_loop") or source.contains("coin_edge") or source.contains("_sample_scratch_scrape"):
 		failures.append("Retired metallic scratch synthesis remains in the SFX source.")
+	if not source.contains("NATIVE_PREWARM_BUDGET_USEC") or source.contains("_event_stream(str(_prewarm_queue.pop_front()))"):
+		failures.append("Native SFX startup prewarm is not protected by an incremental frame budget.")
+	var chunked_sfx := ScratchSfxPlayerScript.new()
+	chunked_sfx.call("_begin_prewarm_event", "scratch_box_pop")
+	chunked_sfx.call("_process_prewarm_chunk")
+	var first_chunk: Dictionary = chunked_sfx.debug_soak_snapshot()
+	var first_cursor := int(first_chunk.get("prewarm_active_frame_cursor", 0))
+	var frame_count := int(first_chunk.get("prewarm_active_frame_count", 0))
+	if not bool(first_chunk.get("prewarm_active", false)) or first_cursor <= 0 or first_cursor >= frame_count:
+		failures.append("Native SFX prewarm did not yield after a bounded first synthesis chunk.")
+	var chunk_count := 1
+	while bool(chunked_sfx.debug_soak_snapshot().get("prewarm_active", false)) and chunk_count < 20000:
+		chunked_sfx.call("_process_prewarm_chunk")
+		chunk_count += 1
+	var chunked_stream: AudioStreamWAV = chunked_sfx.preview_event_stream("scratch_box_pop")
+	if chunk_count >= 20000 or chunked_stream == null or pop_stream == null or chunked_stream.data != pop_stream.data:
+		failures.append("Incremental SFX prewarm did not finish with byte-identical deterministic PCM.")
+	chunked_sfx.free()
+	sfx.free()
 
 
 func _check_scratch_items(game: GameModule, failures: Array) -> void:

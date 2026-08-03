@@ -380,6 +380,40 @@ func local_position_for_surface_action(action: String, index: int = -1) -> Vecto
 	return _local_position_for_hit_region(action, index)
 
 
+func global_rect_for_surface_action(action: String, index: int = -1) -> Rect2:
+	_ensure_snapshot_proxy_hit_regions()
+	var board_hit_rect := _board_hit_rect_for_action(action, index)
+	if not board_hit_rect.has_area():
+		var resolved := _resolved_surface_action_binding(action, index)
+		board_hit_rect = _board_hit_rect_for_action(str(resolved.get("action", action)), int(resolved.get("index", index)))
+	if not board_hit_rect.has_area():
+		return Rect2()
+	var board_scale := _board_scale()
+	var local_rect := Rect2(_board_to_screen(board_hit_rect.position), board_hit_rect.size * board_scale)
+	var transform := get_global_transform()
+	var corner_a := transform * local_rect.position
+	var corner_b := transform * Vector2(local_rect.end.x, local_rect.position.y)
+	var corner_c := transform * local_rect.end
+	var corner_d := transform * Vector2(local_rect.position.x, local_rect.end.y)
+	var minimum := Vector2(minf(minf(corner_a.x, corner_b.x), minf(corner_c.x, corner_d.x)), minf(minf(corner_a.y, corner_b.y), minf(corner_c.y, corner_d.y)))
+	var maximum := Vector2(maxf(maxf(corner_a.x, corner_b.x), maxf(corner_c.x, corner_d.x)), maxf(maxf(corner_a.y, corner_b.y), maxf(corner_c.y, corner_d.y)))
+	return Rect2(minimum, maximum - minimum)
+
+
+func _board_hit_rect_for_action(action: String, index: int = -1) -> Rect2:
+	for region_value in hit_regions:
+		if typeof(region_value) != TYPE_DICTIONARY:
+			continue
+		var region: Dictionary = region_value
+		if str(region.get("action", "")) != action:
+			continue
+		if index >= 0 and int(region.get("index", -1)) != index:
+			continue
+		var rect_value: Variant = region.get("rect", Rect2())
+		return rect_value if typeof(rect_value) == TYPE_RECT2 else Rect2()
+	return Rect2()
+
+
 func _local_position_for_hit_region(action: String, index: int = -1) -> Vector2:
 	for region in hit_regions:
 		if typeof(region) != TYPE_DICTIONARY:

@@ -171,19 +171,26 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 
 static func _apply_directional_route_overrides(route: Dictionary, source_id: String, destination_id: String) -> Dictionary:
 	var result := route.duplicate(true)
-	if source_id != BEACH_ID or destination_id != BEACH_GATEWAY_ID:
+	if not _is_beach_gateway_pair(source_id, destination_id):
 		return result
 	result["base_cost"] = 0
 	result["cost"] = 0
-	result["requires_travel_count_min"] = 0
-	result.erase("availability_window")
-	result.erase("hide_until_travel_count_met")
-	result.erase("travel_count_condition_text")
-	result["condition_text"] = "Free walk back while the River Queen is open."
 	result["travel_method_kind"] = TRAVEL_METHOD_WALK
 	result["travel_method"] = travel_method_label(TRAVEL_METHOD_WALK)
 	result["method"] = travel_method_label(TRAVEL_METHOD_WALK)
-	result["beach_return_walk"] = true
+	result["beach_connector_walk"] = true
+	if source_id == BEACH_ID:
+		# The return still respects the River Queen environment's authored hours,
+		# but never inherits its destination fare or progression schedule.
+		result["requires_travel_count_min"] = 0
+		result.erase("availability_window")
+		result.erase("hide_until_travel_count_met")
+		result.erase("travel_count_condition_text")
+		result["condition_text"] = "Free walk back while the River Queen is open."
+		result["beach_return_walk"] = true
+	else:
+		result["condition_text"] = "Free dockside walk to the beach."
+		result["beach_access_walk"] = true
 	return result
 
 

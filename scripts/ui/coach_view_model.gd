@@ -2,7 +2,7 @@ class_name CoachViewModel
 extends RefCounted
 
 const ANCHOR_KINDS := ["interactable_object", "hud_element", "surface_action", "none"]
-const COMPLETION_TYPES := ["anchored_action", "any_action", "explicit_ok", "state_predicate"]
+const COMPLETION_TYPES := ["anchored_action", "one_of_actions", "any_action", "explicit_ok", "state_predicate"]
 const VIEWPORT_MARGIN := 12.0
 
 
@@ -65,7 +65,8 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 		minf(bubble_height, maxf(1.0, viewport_rect.size.y - VIEWPORT_MARGIN * 2.0))
 	)
 	var bubble_rect := _bubble_rect(viewport_rect, anchor_rect, bubble_size)
-	var gating := _dict(lesson.get("gating", {}))
+	var guidance := _dict(lesson.get("gating", {}))
+	var suggested_action_ids := _string_array(guidance.get("allowed_action_ids", []))
 	var delivery := str(lesson.get("delivery", "coach")).strip_edges().to_lower()
 	if not ["coach", "dialogue"].has(delivery):
 		delivery = "coach"
@@ -88,22 +89,20 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 		"dismissible": true,
 		"dismiss_action_id": "coach:ok" if completion_type == "explicit_ok" else "coach:skip",
 		"dismiss_label": "Got it" if completion_type == "explicit_ok" else "Skip tip",
-		"gating": not gating.is_empty(),
-		"allowed_action_ids": _string_array(gating.get("allowed_action_ids", [])),
+		"gating": false,
+		"highlight_emphasis": not guidance.is_empty(),
+		"allowed_action_ids": suggested_action_ids,
+		"suggested_action_ids": suggested_action_ids,
 		"reduce_motion": bool(context.get("reduce_motion", false)),
 		"small_screen": small_screen,
 		"minimum_control_height": 52.0 if small_screen else 40.0,
 	}
 
 
-static func input_allowed(snapshot: Dictionary, action_id: String) -> bool:
-	if snapshot.is_empty() or not bool(snapshot.get("gating", false)):
-		return true
-	var normalized := action_id.strip_edges()
-	if normalized == "coach:ok" or normalized == "coach:skip":
-		return true
-	var allowed := _string_array(snapshot.get("allowed_action_ids", []))
-	return allowed.has("*") or (not normalized.is_empty() and allowed.has(normalized))
+static func input_allowed(_snapshot: Dictionary, _action_id: String) -> bool:
+	# Tutorial guidance is advisory. Retain this compatibility method for callers
+	# and tests, but never turn a highlight into an input permission boundary.
+	return true
 
 
 static func completion_matches(lesson: Dictionary, action_id: String) -> bool:
@@ -113,6 +112,8 @@ static func completion_matches(lesson: Dictionary, action_id: String) -> bool:
 	match str(completion.get("type", "any_action")):
 		"any_action":
 			return not action_id.strip_edges().is_empty()
+		"one_of_actions":
+			return _string_array(completion.get("action_ids", [])).has(action_id.strip_edges())
 		"anchored_action":
 			var expected := str(completion.get("action_id", "")).strip_edges()
 			if expected.is_empty():

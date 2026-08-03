@@ -2542,6 +2542,16 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 	var dialogue_model := CoachViewModelScript.build(dialogue_lesson, {"viewport_rect": Rect2(Vector2.ZERO, Vector2(1280, 720))})
 	if str(dialogue_model.get("delivery", "")) != "dialogue" or str(dialogue_model.get("dialogue_id", "")) != "tutorial_pal_guidance":
 		failures.append("Tutorial lesson did not route speech through the dialogue delivery contract.")
+	for map_lesson_id in ["tutorial_open_map_corner", "tutorial_route_map", "tutorial_gas_map_underground", "tutorial_pal_goodbye_map"]:
+		var map_lesson := library.tutorial_lesson(map_lesson_id)
+		var anchor: Dictionary = map_lesson.get("anchor", {}) if typeof(map_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+		var completion: Dictionary = map_lesson.get("completion", {}) if typeof(map_lesson.get("completion", {})) == TYPE_DICTIONARY else {}
+		var gating: Dictionary = map_lesson.get("gating", {}) if typeof(map_lesson.get("gating", {})) == TYPE_DICTIONARY else {}
+		var allowed_actions: Array = gating.get("allowed_action_ids", []) if typeof(gating.get("allowed_action_ids", [])) == TYPE_ARRAY else []
+		if str(anchor.get("kind", "")) != "interactable_object" or str(anchor.get("id", "")) != "travel:leave":
+			failures.append("Tutorial map lesson %s does not highlight the room's travel object." % map_lesson_id)
+		if str(completion.get("action_id", "")) != "map" or not allowed_actions.has("travel:leave") or not allowed_actions.has("map"):
+			failures.append("Tutorial map lesson %s cannot open and complete through the real travel-object route." % map_lesson_id)
 	var state_lesson := library.tutorial_lesson("tutorial_blackjack_count_all")
 	if not CoachViewModelScript.state_completion_matches(state_lesson, {"game": {"count_all_selected": true}}):
 		failures.append("Coach state-predicate completion did not recognize a finished count challenge.")
@@ -2571,8 +2581,15 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 	var gating_lesson := _coach_lesson_fixture("gating")
 	gating_lesson["gating"] = {"allowed_action_ids": ["fixture:door"]}
 	var gating_model := CoachViewModelScript.build(gating_lesson, {"viewport_rect": Rect2(Vector2.ZERO, Vector2(1280, 720))})
-	if CoachViewModelScript.input_allowed(gating_model, "wrong:door") or not CoachViewModelScript.input_allowed(gating_model, "fixture:door"):
-		failures.append("Coach gating did not restrict only undeclared input routes.")
+	var suggested_actions: Array = gating_model.get("suggested_action_ids", []) if typeof(gating_model.get("suggested_action_ids", [])) == TYPE_ARRAY else []
+	if bool(gating_model.get("gating", true)) or not bool(gating_model.get("highlight_emphasis", false)) or not suggested_actions.has("fixture:door"):
+		failures.append("Coach guidance did not preserve its suggested action without enabling input gating.")
+	if not CoachViewModelScript.input_allowed(gating_model, "wrong:door") or not CoachViewModelScript.input_allowed(gating_model, "fixture:door"):
+		failures.append("Coach highlight blocked player input instead of remaining advisory.")
+	var one_of_lesson := _coach_lesson_fixture("one_of_completion")
+	one_of_lesson["completion"] = {"type": "one_of_actions", "action_ids": ["fixture:left", "fixture:right"]}
+	if CoachViewModelScript.completion_matches(one_of_lesson, "fixture:unrelated") or not CoachViewModelScript.completion_matches(one_of_lesson, "fixture:left") or not CoachViewModelScript.completion_matches(one_of_lesson, "fixture:right"):
+		failures.append("Advisory tutorial guidance completed from an unrelated action instead of its explicit action set.")
 	if not CoachViewModelScript.input_allowed(object_model, "wrong:door"):
 		failures.append("Non-gating coach tip blocked player input.")
 	var missing_anchor_lesson := _coach_lesson_fixture("missing_anchor_skip")
@@ -2618,8 +2635,8 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var invite_copy := str((pal_nodes.get("invitation", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("invitation", {})) == TYPE_DICTIONARY else ""
 	if not parking_copy.contains("may lead somewhere useful later"):
 		failures.append("Pal's parking-tip line lost the later-use explanation.")
-	if not crew_copy.contains("last place you turn"):
-		failures.append("Pal's Crew warning lost the required last-place-you-turn language.")
+	if not crew_copy.contains("isn't free") or not crew_copy.contains("put you to work") or crew_copy.contains("Avoid the Crew"):
+		failures.append("Pal's Crew hint must imply the loan's work obligation without directly telling the player to avoid the Crew.")
 	if not lookaway_copy.contains("easiest cheat") or not lookaway_copy.contains("DRINK PASS spills a drink"):
 		failures.append("Pal's lookaway lesson does not identify the easiest cheat and real spill-a-drink control.")
 	if not peek_copy.contains("add heat") or not peek_copy.contains("close the table"):
@@ -2646,6 +2663,17 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		failures.append("Tutorial run did not exclude profile and challenge statistics.")
 	if str(run_a.current_environment.get("archetype_id", "")) != "apartment" or run_a.bankroll != 80 or not run_a.inventory.is_empty():
 		failures.append("Tutorial initial home, bankroll, or carried loadout contract drifted.")
+	var initial_tutorial_visible_nodes := WorldMapScript.visible_node_ids(run_a.world_map)
+	if initial_tutorial_visible_nodes.size() != 2 or not initial_tutorial_visible_nodes.has(run_a.current_world_node_id()) or not initial_tutorial_visible_nodes.has("corner_store") or initial_tutorial_visible_nodes.has("gas_station_casino"):
+		failures.append("Tutorial first map reveal was not limited to the apartment and Corner Store: %s." % str(initial_tutorial_visible_nodes))
+	var noisy_tutorial_targets := ["gas_station_casino", "corner_store", "small_underground_casino", "bar"]
+	if TutorialFlowScript.travel_target_ids(run_a, noisy_tutorial_targets) != ["corner_store"]:
+		failures.append("Tutorial apartment travel policy did not expose Corner Store as its only selection.")
+	var normal_route_run := RunStateScript.new()
+	normal_route_run.start_new("NORMAL-ROUTE-ISOLATION", RunStateScript.standard_challenge("NORMAL-ROUTE-ISOLATION"))
+	normal_route_run.set_environment({"id": "normal_apartment", "archetype_id": "apartment"})
+	if TutorialFlowScript.travel_target_ids(normal_route_run, noisy_tutorial_targets) != noisy_tutorial_targets:
+		failures.append("Tutorial travel filtering changed normal-run travel targets.")
 	var home_offers: Array = run_a.current_environment.get("item_offers", []) if typeof(run_a.current_environment.get("item_offers", [])) == TYPE_ARRAY else []
 	if home_offers.size() != 1 or str((home_offers[0] as Dictionary).get("id", "")) != "xray_glasses":
 		failures.append("Tutorial apartment did not force exactly one X-ray Glasses pickup.")
@@ -2655,6 +2683,8 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	if not bool(glasses_pickup.get("ok", false)) or not run_a.inventory.has("xray_glasses"):
 		failures.append("Tutorial could not pick up its forced X-ray Glasses.")
 	generator_a.next_environment(run_a, "corner_store", true)
+	if TutorialFlowScript.travel_target_ids(run_a, noisy_tutorial_targets) != ["gas_station_casino"]:
+		failures.append("Tutorial Corner Store exposed a route other than Gas Casino before the parking tip.")
 	item_service.setup(library, run_a)
 	var purchase: Dictionary = item_service.buy_item_offer("instant_coffee")
 	if not bool(purchase.get("ok", false)) or run_a.inventory.is_empty():
@@ -2672,6 +2702,16 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var parking_result: Dictionary = parking_event.resolve(run_a, run_a.current_environment, "follow_tip")
 	if not bool(parking_result.get("ok", false)) or not bool(run_a.narrative_flags.get("underground_tip", false)):
 		failures.append("Tutorial parking tip did not open the route split.")
+	var authored_route_split: Array = []
+	for route_source in [run_a.current_environment.get("next_archetypes", []), run_a.current_environment.get("travel_hooks", [])]:
+		for route_target_value in route_source:
+			var route_target := str(route_target_value)
+			if not authored_route_split.has(route_target):
+				authored_route_split.append(route_target)
+	if authored_route_split != ["gas_station_casino", "small_underground_casino"]:
+		failures.append("Tutorial Corner Store route state did not retain exactly Gas Casino and Underground Casino: %s." % str(authored_route_split))
+	if TutorialFlowScript.travel_target_ids(run_a, noisy_tutorial_targets) != ["gas_station_casino", "small_underground_casino"]:
+		failures.append("Tutorial route split did not expose exactly Gas Casino and Underground Casino after the parking tip.")
 	var gas_run := RunStateScript.new()
 	gas_run.start_new("PATH-A", config_a)
 	gas_run.begin_act(1)
@@ -2807,6 +2847,19 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		tutorial_copy_words += lesson_copy.split(" ", false).size()
 		if lesson_copy.length() > 80:
 			failures.append("Tutorial coach copy exceeded the compact bubble limit: %s." % str(lesson.get("id", "")))
+		var completion: Dictionary = lesson.get("completion", {}) if typeof(lesson.get("completion", {})) == TYPE_DICTIONARY else {}
+		if str(lesson.get("delivery", "")) == "dialogue" and str(completion.get("type", "")) != "explicit_ok":
+			var dialogue := library.dialogue(str(lesson.get("dialogue_id", "")))
+			var dialogue_nodes: Dictionary = dialogue.get("nodes", {}) if typeof(dialogue.get("nodes", {})) == TYPE_DICTIONARY else {}
+			var dialogue_node: Dictionary = dialogue_nodes.get(str(lesson.get("dialogue_node", "")), {}) if typeof(dialogue_nodes.get(str(lesson.get("dialogue_node", "")), {})) == TYPE_DICTIONARY else {}
+			var dialogue_choices: Array = dialogue_node.get("choices", []) if typeof(dialogue_node.get("choices", [])) == TYPE_ARRAY else []
+			if dialogue_choices.size() != 1 or typeof(dialogue_choices[0]) != TYPE_DICTIONARY:
+				failures.append("Action-guided tutorial dialogue must expose one proceed choice: %s." % str(lesson.get("id", "")))
+			else:
+				var proceed_choice: Dictionary = dialogue_choices[0]
+				var effects: Variant = proceed_choice.get("effects", proceed_choice.get("consequences", {}))
+				if not bool(proceed_choice.get("end", false)) or (typeof(effects) == TYPE_DICTIONARY and not (effects as Dictionary).is_empty()):
+					failures.append("Action-guided tutorial dialogue cannot safely auto-proceed: %s." % str(lesson.get("id", "")))
 		var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
 		var anchor_kind := str(anchor.get("kind", "none"))
 		var anchor_id := str(anchor.get("id", ""))

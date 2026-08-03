@@ -44,6 +44,25 @@ static func draw(surface, ticket: Dictionary, ticket_rect: Rect2) -> void:
 		var spot: Dictionary = spots[spot_index]
 		var rect := RegionModelScript.rect_for(region, ticket_rect)
 		_paint_result_icon(surface, str(ticket.get("type_id", "")), spot, rect, ink, accent, trim)
+	if bool(ticket.get("result_ready", false)):
+		_paint_validation_result(surface, ticket, ticket_rect, ink, accent, trim)
+
+
+static func _paint_validation_result(surface, ticket: Dictionary, ticket_rect: Rect2, ink: Color, accent: Color, trim: Color) -> void:
+	var payout := maxi(0, int(ticket.get("payout", 0)))
+	var won := payout > 0
+	var stamp := Rect2(
+		ticket_rect.position + Vector2(ticket_rect.size.x * 0.31, ticket_rect.size.y * 0.902),
+		Vector2(ticket_rect.size.x * 0.38, ticket_rect.size.y * 0.068)
+	)
+	var dark_base := ink if ink.get_luminance() < 0.48 else accent.darkened(0.56)
+	var fill := dark_base if won else dark_base.darkened(0.18)
+	var border := trim if won else accent.lightened(0.25)
+	surface.draw_rect(stamp, Color(fill.r, fill.g, fill.b, 0.96))
+	surface.draw_rect(stamp, border, false, 2)
+	surface.draw_rect(stamp.grow(-3.0), Color(border.r, border.g, border.b, 0.48), false, 1)
+	var text := "WIN  $%d" % payout if won else "NOT A WINNER"
+	surface.surface_label_centered(text, stamp.grow(-4.0), clampi(int(stamp.size.y * 0.48), 7, 12), Color("#fff8df"))
 
 
 static func _paint_result_icon(surface, type_id: String, spot: Dictionary, rect: Rect2, ink: Color, accent: Color, trim: Color) -> void:

@@ -143,7 +143,7 @@
     "type": "progression",
     "interaction_mode": "interactable",
     "scopes": [
-      "casino"
+      "any"
     ],
     "asset_path": "res://assets/art/events/parking_lot_tip.png",
     "icon_key": "parking_note",

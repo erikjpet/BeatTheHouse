@@ -1,5 +1,40 @@
 # Agent Prompt — Final Performance & Cleanup Audit (No Stutter, Hangs, or Slowdown)
 
+## 2026-08-03 queue reconciliation
+
+This prompt remains **OPEN**. The prior execution produced
+`docs/plans/0.5_performance_audit.md`, fixed several defects, and passed every
+recorded gate except the binding full retained-state soak. The final slope was
+279,116.400 bytes/sample against the unchanged 262,144-byte/sample limit, so
+the report correctly remains **NOT RELEASE-READY**.
+
+The primary worktree now contains later uncommitted integration work including
+Scratch Ticket receipt/mask compaction, portable ticket state, tutorial/
+TalkDock/UI changes, SFX changes, and new probes. Integrate it through
+`current_worktree_integration_gate_recovery_prompt.md` before rerunning the
+final audit verdict.
+
+The independent 2026-08-03 real-interface Web tutorial playtest also observed
+a main-thread blocking warning during launch. Reproduce, measure, and
+root-cause it as a performance follow-up. Do not claim it caused the tutorial
+opening soft-lock without evidence.
+
+Additional binding requirements for the resumed audit:
+
+- Test the exact final integrated release-candidate source, not the earlier
+  audit worktree or a partially dirty snapshot.
+- Prove completed Scratch Ticket compaction is backward-compatible,
+  deterministic, bounded, and improves retained memory rather than only
+  serialized JSON size.
+- Repeat the full 180-minute/504-action soak after integration and tutorial
+  completion; short diagnostic soaks cannot close the blocker.
+- Keep the 262,144-byte/sample budget unchanged. Do not relabel allocator
+  growth harmless without bounded proof accepted by the owner.
+- Refresh every gate below because the 2026-07-31 evidence is historical after
+  later source changes.
+- Add a dated resumed-audit section to the existing performance report with
+  final before/after evidence and a truthful new verdict.
+
 Copy everything below this line into the worker agent.
 
 ---

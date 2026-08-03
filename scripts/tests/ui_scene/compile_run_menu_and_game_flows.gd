@@ -23,13 +23,220 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 		push_error("Tutorial UI did not start with the authored First Night framing.")
 		return false
 	var coach_snapshot: Dictionary = app.get("coach_overlay").call("current_snapshot")
-	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_apartment_xray" or str(coach_snapshot.get("delivery", "")) != "dialogue" or not bool(coach_snapshot.get("gating", false)):
-		push_error("Tutorial UI did not focus and gate the first Home beat.")
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_apartment_xray" or str(coach_snapshot.get("delivery", "")) != "dialogue" or bool(coach_snapshot.get("gating", true)) or not bool(coach_snapshot.get("highlight_emphasis", false)):
+		push_error("Tutorial UI did not focus the first Home beat as non-blocking guidance.")
+		return false
+	if not app.get("coach_overlay").call("input_allowed", "unrelated:tutorial_action"):
+		push_error("The first tutorial highlight disabled an unrelated player action.")
 		return false
 	var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
 	if not bool(talk_snapshot.get("visible", false)) or str(talk_snapshot.get("speaker", "")) != "Pal":
 		push_error("Tutorial first beat did not speak through the real Pal TalkDock conversation.")
 		return false
+	var coach_overlay: Control = app.get("coach_overlay")
+	coach_overlay.call("notify_action", "item:xray_glasses")
+	run_state.add_item("xray_glasses")
+	run_state.complete_talk_event_resolution("tutorial_guide:tutorial_apartment_xray")
+	app.call("_refresh")
+	await process_frame
+	coach_snapshot = coach_overlay.call("current_snapshot")
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_inventory_xray" or run_state.pending_talk_event("tutorial_guide:tutorial_inventory_xray").is_empty():
+		push_error("Tutorial UI did not advance from the X-ray pickup to Pal's inventory check.")
+		return false
+	app.call("open_run_inventory")
+	await process_frame
+	await process_frame
+	if not bool(app.call("_run_inventory_popup_is_visible")):
+		push_error("Opening Inventory for Pal's check did not open the inventory surface.")
+		return false
+	if not run_state.pending_talk_event("tutorial_guide:tutorial_inventory_xray").is_empty():
+		push_error("Opening Inventory left Pal's already-satisfied inventory prompt waiting for a redundant click.")
+		return false
+	coach_snapshot = coach_overlay.call("current_snapshot")
+	if str(coach_snapshot.get("lesson_id", "")) == "tutorial_open_map_corner" or not run_state.pending_talk_event("tutorial_guide:tutorial_open_map_corner").is_empty():
+		push_error("Opening Inventory presented Pal's travel lesson before the player closed the inventory surface.")
+		return false
+	talk_snapshot = app.call("current_talk_dock_snapshot")
+	if bool(talk_snapshot.get("visible", false)) and str(talk_snapshot.get("event_id", "")) == "tutorial_guide:tutorial_open_map_corner":
+		push_error("Pal's travel dialogue appeared on top of the open inventory surface.")
+		return false
+	app.call("close_run_inventory")
+	await process_frame
+	coach_snapshot = coach_overlay.call("current_snapshot")
+	var map_allowed_actions: Array = coach_snapshot.get("allowed_action_ids", []) if typeof(coach_snapshot.get("allowed_action_ids", [])) == TYPE_ARRAY else []
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_open_map_corner" or str(coach_snapshot.get("anchor_kind", "")) != "interactable_object" or str(coach_snapshot.get("anchor_id", "")) != "travel:leave" or not bool(coach_snapshot.get("anchor_found", false)):
+		push_error("Tutorial map beat did not place its coach highlight on the visible Leave/travel object.")
+		return false
+	if not map_allowed_actions.has("travel:leave") or not map_allowed_actions.has("map"):
+		push_error("Tutorial map beat did not authorize the room-object click and nested map-open action.")
+		return false
+	if run_state.pending_talk_event("tutorial_guide:tutorial_open_map_corner").is_empty():
+		push_error("Closing Inventory did not resume Pal's deferred travel dialogue.")
+		return false
+	var initial_map_anchor := _snapshot_rect(coach_snapshot.get("anchor_rect", {}))
+	if not bool(app.call("focus_interactable_object", "travel:leave")):
+		push_error("Tutorial map beat could not focus the highlighted Leave/travel object.")
+		return false
+	var map_anchor_moved := false
+	for _camera_frame in range(20):
+		await process_frame
+		coach_snapshot = coach_overlay.call("current_snapshot")
+		var moving_map_anchor := _snapshot_rect(coach_snapshot.get("anchor_rect", {}))
+		var moving_map_object_rect: Rect2 = app.get("environment_canvas").call("global_rect_for_object", "travel:leave")
+		if moving_map_anchor.position.distance_to(moving_map_object_rect.position) > 0.75 or moving_map_anchor.size.distance_to(moving_map_object_rect.size) > 0.75:
+			push_error("Tutorial map highlight lost the live Leave/travel rectangle during camera frame %d." % _camera_frame)
+			return false
+		if not initial_map_anchor.is_equal_approx(moving_map_anchor):
+			map_anchor_moved = true
+	if not map_anchor_moved:
+		push_error("Tutorial map highlight stayed behind while the environment camera focused Leave/travel.")
+		return false
+	var live_talk_dock: Control = app.get("talk_dock")
+	if run_state.pending_talk_event("tutorial_guide:tutorial_open_map_corner").is_empty():
+		push_error("Tutorial map prompt disappeared before the player performed its displayed action.")
+		return false
+	var environment_canvas: Control = app.get("environment_canvas")
+	var live_leave_rect: Rect2 = environment_canvas.call("global_rect_for_object", "travel:leave")
+	var leave_click := InputEventMouseButton.new()
+	leave_click.button_index = MOUSE_BUTTON_LEFT
+	leave_click.pressed = true
+	leave_click.position = environment_canvas.get_global_transform().affine_inverse() * live_leave_rect.get_center()
+	environment_canvas.call("_gui_input", leave_click)
+	await process_frame
+	await process_frame
+	if not bool(app.call("_world_map_overlay_is_visible")):
+		push_error("A single real mouse click on highlighted Leave did not open the map from Pal's active prompt.")
+		return false
+	if not run_state.pending_talk_event("tutorial_guide:tutorial_open_map_corner").is_empty():
+		push_error("Opening the map did not advance Pal's matching prompt through its dialogue choice.")
+		return false
+	if not bool(run_state.narrative_flags.get("tutorial_lessons_completed", {}).get("tutorial_open_map_corner", false)):
+		push_error("Tutorial map did not become visible or complete its opening beat through the real player route.")
+		return false
+	var map_talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
+	var live_world_map: Control = app.get("world_map_overlay")
+	if not bool(map_talk_snapshot.get("visible", false)) or live_talk_dock == null or not live_talk_dock.is_visible_in_tree():
+		push_error("Tutorial conversation was not readable while the world map was open.")
+		return false
+	if live_world_map == null or live_talk_dock.z_index <= live_world_map.z_index:
+		push_error("Tutorial conversation did not render above the world-map popup.")
+		return false
+	coach_snapshot = coach_overlay.call("current_snapshot")
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_travel_corner" or run_state.pending_talk_event("tutorial_guide:tutorial_travel_corner").is_empty():
+		push_error("Opening the map did not present Pal's corner-store action conversation.")
+		return false
+	var first_tutorial_map: Dictionary = app.call("_world_map_snapshot")
+	var first_tutorial_targets: Array = first_tutorial_map.get("travel_target_ids", []) if typeof(first_tutorial_map.get("travel_target_ids", [])) == TYPE_ARRAY else []
+	var first_tutorial_enabled: Array = first_tutorial_map.get("travel_enabled_node_ids", []) if typeof(first_tutorial_map.get("travel_enabled_node_ids", [])) == TYPE_ARRAY else []
+	var first_tutorial_nodes: Array = first_tutorial_map.get("nodes", []) if typeof(first_tutorial_map.get("nodes", [])) == TYPE_ARRAY else []
+	var first_tutorial_node_ids: Array = []
+	for node_value in first_tutorial_nodes:
+		if typeof(node_value) == TYPE_DICTIONARY:
+			first_tutorial_node_ids.append(str((node_value as Dictionary).get("id", "")))
+	if first_tutorial_targets != ["corner_store"] or first_tutorial_enabled != ["corner_store"] or first_tutorial_node_ids.has("gas_station_casino") or first_tutorial_node_ids.has("small_underground_casino"):
+		push_error("Tutorial first map did not offer only Corner Store: targets=%s enabled=%s nodes=%s." % [str(first_tutorial_targets), str(first_tutorial_enabled), str(first_tutorial_node_ids)])
+		return false
+	if live_talk_dock.get_index() <= live_world_map.get_index():
+		push_error("The map conversation rendered visibly but was behind the map in GUI input order.")
+		return false
+	var map_dialogue_button := _find_visible_button(live_talk_dock, "Choose corner store")
+	if map_dialogue_button == null or not map_dialogue_button.is_visible_in_tree():
+		push_error("The map conversation did not expose its selectable corner-store proceed button.")
+		return false
+	if map_dialogue_button.mouse_filter == Control.MOUSE_FILTER_IGNORE:
+		push_error("The visible map conversation button was configured to ignore pointer input.")
+		return false
+	var dialogue_hotkey := InputEventKey.new()
+	dialogue_hotkey.keycode = KEY_1
+	dialogue_hotkey.pressed = true
+	app.call("_input", dialogue_hotkey)
+	await process_frame
+	await process_frame
+	if not run_state.pending_talk_event("tutorial_guide:tutorial_travel_corner").is_empty():
+		push_error("The TalkDock proceed choice could not be selected while the map overlay was active.")
+		return false
+	if not coach_overlay.call("input_allowed", "travel:corner_store"):
+		push_error("Dismissing the map conversation disabled its required underlying travel action.")
+		return false
+	if not bool(app.call("select_world_map_node", "corner_store")) or str(app.get("selected_world_map_node_id")) != "corner_store":
+		push_error("The required corner-store map action could not be taken after dismissing the conversation.")
+		return false
+	coach_overlay.call("notify_action", "travel:corner_store")
+	await process_frame
+	await process_frame
+	app.call("close_world_map")
+	await process_frame
+	var tutorial_generator: RunGenerator = app.get("generator")
+	tutorial_generator.next_environment(run_state, "corner_store", true)
+	var completed_corner_lessons: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}).duplicate(true)
+	for completed_lesson_id in ["tutorial_inspect_coffee", "tutorial_inspect_pencil", "tutorial_buy_store_item", "tutorial_crew_warning"]:
+		completed_corner_lessons[completed_lesson_id] = true
+	run_state.narrative_flags["tutorial_lessons_completed"] = completed_corner_lessons
+	coach_overlay.call("begin_tutorial_run", completed_corner_lessons)
+	app.call("_refresh")
+	await process_frame
+	coach_snapshot = coach_overlay.call("current_snapshot")
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_family_phone" or run_state.pending_talk_event("tutorial_guide:tutorial_family_phone").is_empty():
+		push_error("Tutorial did not reach Pal's family-phone lesson in the real corner-store UI flow.")
+		return false
+	if not bool(app.call("activate_interactable_object", "event:call_brother_in_law")):
+		push_error("Pal's highlighted counter phone could not open its natural event-choice popup.")
+		return false
+	await process_frame
+	await process_frame
+	var phone_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(phone_popup.get("visible", false)) or str(phone_popup.get("event_id", "")) != "call_brother_in_law":
+		push_error("The counter phone action did not present its real call choice.")
+		return false
+	if not run_state.pending_talk_event("tutorial_guide:tutorial_family_phone").is_empty():
+		push_error("The natural phone popup blocked completion of Pal's already-satisfied phone instruction.")
+		return false
+	app.call("resolve_event_choice", "call_brother_in_law", "make_call")
+	await process_frame
+	await process_frame
+	var family_loan_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(family_loan_talk.get("visible", false)) or str(family_loan_talk.get("event_id", "")) != "family_loan":
+		push_error("The real family-loan conversation did not follow the completed phone lesson cleanly.")
+		return false
+	app.call("_on_talk_dock_choice_requested", "family_loan", "accept")
+	await process_frame
+	await process_frame
+	coach_snapshot = coach_overlay.call("current_snapshot")
+	var debt_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if run_state.debt.is_empty() or str(coach_snapshot.get("lesson_id", "")) != "tutorial_family_debt" or str(debt_talk.get("event_id", "")) != "tutorial_guide:tutorial_family_debt":
+		push_error("Resolving the natural family-loan dialogue did not resume Pal's debt lesson.")
+		return false
+	app.call("_on_talk_dock_choice_requested", "tutorial_guide:tutorial_family_debt", "continue")
+	await process_frame
+	await process_frame
+	coach_snapshot = coach_overlay.call("current_snapshot")
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_parking_tip":
+		push_error("Completing Pal's post-loan debt explanation did not advance to the parking-tip lesson.")
+		return false
+	coach_overlay.call("notify_action", "event:parking_lot_tip")
+	run_state.narrative_flags["underground_tip"] = true
+	run_state.add_next_archetypes(["small_underground_casino"])
+	app.call("_invalidate_travel_view_cache")
+	app.call("_refresh")
+	await process_frame
+	app.call("open_world_map")
+	await process_frame
+	await process_frame
+	var route_split_map: Dictionary = app.call("_world_map_snapshot")
+	var route_split_targets: Array = route_split_map.get("travel_target_ids", []) if typeof(route_split_map.get("travel_target_ids", [])) == TYPE_ARRAY else []
+	var route_split_enabled: Array = route_split_map.get("travel_enabled_node_ids", []) if typeof(route_split_map.get("travel_enabled_node_ids", [])) == TYPE_ARRAY else []
+	if route_split_targets != ["gas_station_casino", "small_underground_casino"] or route_split_enabled != route_split_targets:
+		push_error("Tutorial route-split map did not offer exactly Gas Casino and Underground Casino: targets=%s enabled=%s." % [str(route_split_targets), str(route_split_enabled)])
+		return false
+	var current_stop_choice: Dictionary = app.call("_travel_choice", "corner_store")
+	if bool(app.call("select_world_map_node", "bar")) or not current_stop_choice.is_empty():
+		push_error("Tutorial route-split map offered travel outside Gas Casino and Underground Casino.")
+		return false
+	if not bool(app.call("select_world_map_node", "gas_station_casino")) or not bool(app.call("select_world_map_node", "small_underground_casino")):
+		push_error("Tutorial route-split map did not allow both authored route choices.")
+		return false
+	app.call("close_world_map")
+	await process_frame
 	app.call("open_run_menu")
 	await process_frame
 	var skip_button: Button = app.get("run_menu_skip_tutorial_button")
@@ -648,6 +855,14 @@ func _check_pull_tab_buy_button_single_activation(app: Control) -> bool:
 	var click_position: Vector2 = canvas.call("local_position_for_surface_action", "pull_tab_buy", 0)
 	if click_position.x < 0.0 or click_position.y < 0.0:
 		push_error("Pull-tab duplicate-input fixture could not locate the buy button hit region.")
+		return false
+	var buy_global_rect: Rect2 = canvas.call("global_rect_for_surface_action", "pull_tab_buy", 0)
+	var coach_anchor_rects: Dictionary = app.call("_coach_anchor_rects")
+	var surface_anchor_rects: Dictionary = coach_anchor_rects.get("surface_actions", {}) if typeof(coach_anchor_rects.get("surface_actions", {})) == TYPE_DICTIONARY else {}
+	var highlighted_buy_rect: Rect2 = surface_anchor_rects.get("pull_tab_buy", Rect2()) if typeof(surface_anchor_rects.get("pull_tab_buy", Rect2())) == TYPE_RECT2 else Rect2()
+	var global_click_position: Vector2 = canvas.get_global_transform() * click_position
+	if not buy_global_rect.has_area() or not buy_global_rect.has_point(global_click_position) or not highlighted_buy_rect.is_equal_approx(buy_global_rect):
+		push_error("Pull-tab BUY guidance did not match the live scaled purchase hit region: highlight=%s live=%s click=%s." % [str(highlighted_buy_rect), str(buy_global_rect), str(global_click_position)])
 		return false
 	var touch_event := InputEventScreenTouch.new()
 	touch_event.pressed = true
@@ -2423,6 +2638,22 @@ func _click_visible_button(node: Node, text: String) -> bool:
 		if _click_visible_button(child, text):
 			return true
 	return false
+
+
+func _find_visible_button(node: Node, text: String) -> Button:
+	if node == null:
+		return null
+	if node is CanvasItem and not (node as CanvasItem).visible:
+		return null
+	if node is Button:
+		var button := node as Button
+		if not button.disabled and button.text == text:
+			return button
+	for child in node.get_children():
+		var found := _find_visible_button(child, text)
+		if found != null:
+			return found
+	return null
 
 
 func _category_by_id(categories: Array, category_id: String) -> Dictionary:

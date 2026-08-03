@@ -1,7 +1,7 @@
 class_name ScratchTicketRegionModel
 extends RefCounted
 
-const LAYOUT_VERSION := 6
+const LAYOUT_VERSION := 7
 const CROSSWORD_COLUMNS := 11
 const CROSSWORD_ROWS := 10
 const CROSSWORD_GRID := [0.06, 0.32, 0.50, 0.48]
@@ -17,10 +17,10 @@ static func build(ticket: Dictionary) -> Array:
 				regions.append(_region(index, spots[index], "play", "SPOT %d" % (index + 1), [0.105 + float(index) * 0.292, 0.495, 0.225, 0.225]))
 		"lucky_7s":
 			for index in range(mini(2, spots.size())):
-				regions.append(_region(index, spots[index], "winning_numbers", "WIN %d" % (index + 1), [0.105, 0.425 + float(index) * 0.145, 0.135, 0.105]))
+				regions.append(_region(index, spots[index], "winning_numbers", "WIN %d" % (index + 1), [0.105, 0.425 + float(index) * 0.145, 0.135, 0.105], "ellipse"))
 			for index in range(2, mini(8, spots.size())):
 				var your_index := index - 2
-				regions.append(_region(index, spots[index], "your_numbers", "YOUR %d" % (your_index + 1), [0.335 + float(your_index % 3) * 0.205, 0.425 + float(your_index / 3) * 0.145, 0.145, 0.105]))
+				regions.append(_region(index, spots[index], "your_numbers", "YOUR %d" % (your_index + 1), [0.335 + float(your_index % 3) * 0.205, 0.425 + float(your_index / 3) * 0.145, 0.145, 0.105], "ellipse"))
 			if spots.size() > 8:
 				regions.append(_region(8, spots[8], "bonus", "BONUS", [0.285, 0.755, 0.19, 0.13]))
 		"tic_tac_gold":
@@ -91,7 +91,7 @@ static func normalized_rect(value: Variant) -> Array:
 	]
 
 
-static func _region(index: int, spot: Dictionary, section_id: String, label: String, rect_values: Array) -> Dictionary:
+static func _region(index: int, spot: Dictionary, section_id: String, label: String, rect_values: Array, mask_shape: String = "rect") -> Dictionary:
 	var rect := normalized_rect(rect_values)
 	return {
 		"id": "%s_%02d" % [section_id, index],
@@ -102,6 +102,7 @@ static func _region(index: int, spot: Dictionary, section_id: String, label: Str
 		"role": str(spot.get("role", "")),
 		"rect": rect,
 		"art_rect": rect.duplicate(false),
+		"mask_shape": mask_shape,
 		"sample_total": 0,
 		"mask_remaining_units": 0,
 		"coverage": 0.0,

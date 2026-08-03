@@ -38,6 +38,7 @@ func _run() -> void:
 	await _capture_layer_isolation()
 	await _capture_uniqueness()
 	await _capture_smooth_scratch()
+	await _capture_result_and_piles()
 	await _capture_trash_flow()
 	await _capture_machine()
 	_write_manifest()
@@ -120,7 +121,8 @@ func _capture_trash_flow() -> void:
 	var before := await _render(before_surface)
 	_save_image(before, "trash_flow_01_dud_mid_scratch.png")
 	var begin := game.surface_pointer_command("scratch_scrub", 0, "begin", rect.get_center(), {}, context.get("run_state"), context.get("environment"))
-	var drag_ui: Dictionary = begin.get("ui_state", {})
+	var move := game.surface_pointer_command("scratch_scrub", 0, "move", Vector2(286, 322), begin.get("ui_state", {}), context.get("run_state"), context.get("environment"))
+	var drag_ui: Dictionary = move.get("ui_state", {})
 	drag_ui["scratch_last_pointer"] = Vector2(248, 372)
 	var target_surface := game.surface_state(context.get("run_state"), context.get("environment"), drag_ui)
 	var target := await _render(target_surface)
@@ -135,6 +137,30 @@ func _capture_trash_flow() -> void:
 	sheet.blit_rect(target, Rect2i(Vector2i.ZERO, CAPTURE_SIZE), Vector2i(CAPTURE_SIZE.x, 0))
 	sheet.blit_rect(after, Rect2i(Vector2i.ZERO, CAPTURE_SIZE), Vector2i(CAPTURE_SIZE.x * 2, 0))
 	_save_image(sheet, "trash_flow_demonstration.png")
+
+
+func _capture_result_and_piles() -> void:
+	var winner := _ticket_for_prize("two_fer", 3, "result-winner")
+	var dud := _ticket_for_prize("two_fer", 0, "result-dud")
+	dud["settled"] = true
+	dud["result_ready"] = true
+	var context := _surface_context(winner, [])
+	var machine: Dictionary = context.get("machine", {})
+	machine["loser_pile"] = [dud]
+	game.call("_write_machine_state", context.get("environment"), machine, context.get("run_state"))
+	game.surface_action_command("scratch_all", 0, false, {}, context.get("run_state"), context.get("environment"))
+	var complete_surface := game.surface_state(context.get("run_state"), context.get("environment"), {})
+	var complete := await _render(complete_surface)
+	_save_image(complete, "result_flow_01_win_showcase.png")
+	var file_command := game.surface_action_command("scratch_file_ticket", 0, false, {}, context.get("run_state"), context.get("environment"))
+	game.resolve_with_context("settle_scratch_ticket", 0, context.get("run_state"), context.get("environment"), _rng("result-file"), file_command.get("ui_state", {}))
+	var filed_surface := game.surface_state(context.get("run_state"), context.get("environment"), {})
+	var filed := await _render(filed_surface)
+	_save_image(filed, "result_flow_02_visible_piles.png")
+	var sheet := Image.create(CAPTURE_SIZE.x * 2, CAPTURE_SIZE.y, false, Image.FORMAT_RGBA8)
+	sheet.blit_rect(complete, Rect2i(Vector2i.ZERO, CAPTURE_SIZE), Vector2i.ZERO)
+	sheet.blit_rect(filed, Rect2i(Vector2i.ZERO, CAPTURE_SIZE), Vector2i(CAPTURE_SIZE.x, 0))
+	_save_image(sheet, "result_and_pile_demonstration.png")
 
 
 func _capture_machine() -> void:

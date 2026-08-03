@@ -205,6 +205,19 @@ static func reveal_all(ticket: Dictionary) -> void:
 	ticket["result_ready"] = true
 
 
+static func compact_settled(ticket: Dictionary) -> Dictionary:
+	# A filed ticket is a receipt, not a scratch surface. Keeping its 49,152
+	# mask samples makes every later save, travel snapshot, and conversation
+	# pay for presentation data that can never be interacted with again.
+	var receipt := ticket.duplicate(false)
+	receipt.erase("latex_mask")
+	receipt.erase("scratch_regions")
+	receipt.erase("sections")
+	receipt.erase("mask_revision")
+	receipt["mask_compacted"] = true
+	return receipt
+
+
 static func ticket_complete(ticket: Dictionary) -> bool:
 	var regions := _dictionary_array(ticket.get("scratch_regions", []))
 	if regions.is_empty():
@@ -244,6 +257,8 @@ static func _rasterize_region(mask: Array, region: Dictionary, alpha: int) -> in
 	for row in range(int(ranges[2]), int(ranges[3])):
 		var offset := row * MASK_COLUMNS
 		for column in range(int(ranges[0]), int(ranges[1])):
+			if not _sample_inside_region(region, column, row):
+				continue
 			var index := offset + column
 			if int(mask[index]) == alpha:
 				continue
@@ -257,7 +272,8 @@ static func _clear_region(mask: Array, region: Dictionary) -> void:
 	for row in range(int(ranges[2]), int(ranges[3])):
 		var offset := row * MASK_COLUMNS
 		for column in range(int(ranges[0]), int(ranges[1])):
-			mask[offset + column] = 0
+			if _sample_inside_region(region, column, row):
+				mask[offset + column] = 0
 
 
 static func _apply_linear_progress(mask: Array, region: Dictionary, progress: float) -> void:
@@ -267,7 +283,8 @@ static func _apply_linear_progress(mask: Array, region: Dictionary, progress: fl
 	for row in range(int(ranges[2]), int(ranges[3])):
 		var offset := row * MASK_COLUMNS
 		for column in range(int(ranges[0]), int(ranges[0]) + clear_columns):
-			mask[offset + column] = 0
+			if _sample_inside_region(region, column, row):
+				mask[offset + column] = 0
 
 
 static func _remaining_units(mask: Array, region: Dictionary) -> int:
@@ -276,8 +293,24 @@ static func _remaining_units(mask: Array, region: Dictionary) -> int:
 	for row in range(int(ranges[2]), int(ranges[3])):
 		var offset := row * MASK_COLUMNS
 		for column in range(int(ranges[0]), int(ranges[1])):
-			total += int(mask[offset + column])
+			if _sample_inside_region(region, column, row):
+				total += int(mask[offset + column])
 	return total
+
+
+static func _sample_inside_region(region: Dictionary, column: int, row: int) -> bool:
+	if str(region.get("mask_shape", "rect")) != "ellipse":
+		return true
+	var values: Array = region.get("rect", []) if typeof(region.get("rect", [])) == TYPE_ARRAY else []
+	if values.size() < 4:
+		return true
+	var center_x := (float(values[0]) + float(values[2]) * 0.5) * MASK_COLUMNS
+	var center_y := (float(values[1]) + float(values[3]) * 0.5) * MASK_ROWS
+	var radius_x := maxf(0.5, float(values[2]) * MASK_COLUMNS * 0.5)
+	var radius_y := maxf(0.5, float(values[3]) * MASK_ROWS * 0.5)
+	var dx := (float(column) + 0.5 - center_x) / radius_x
+	var dy := (float(row) + 0.5 - center_y) / radius_y
+	return dx * dx + dy * dy <= 1.0
 
 
 static func _region_ranges(region: Dictionary) -> Array:

@@ -54,8 +54,9 @@ const ENVIRONMENT_PREWARM_EVENTS := [
 	"scratch_paper_foley_loop",
 	"scratch_box_pop",
 ]
-const PREWARM_EVENTS_PER_FRAME := 1
 const WEB_PREWARM_SAMPLES_PER_FRAME := 32
+const NATIVE_PREWARM_BUDGET_USEC := 500
+const NATIVE_PREWARM_TIME_CHECK_INTERVAL := 8
 const WEB_CRITICAL_PREWARM_EVENTS := [
 	"blackjack_card",
 	"blackjack_chip",
@@ -165,7 +166,7 @@ func set_prewarm_events(event_ids: Array) -> void:
 			_prewarm_event_override.append(normalized)
 	if _prewarm_started:
 		_prewarm_started = false
-		_clear_web_prewarm_event()
+		_clear_prewarm_event()
 		_begin_incremental_prewarm()
 
 
@@ -179,16 +180,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if OS.has_feature("web"):
-		_process_web_prewarm_chunk()
-		return
-	if _prewarm_queue.is_empty():
-		set_process(false)
-		return
-	for _i in range(PREWARM_EVENTS_PER_FRAME):
-		if _prewarm_queue.is_empty():
-			break
-		_event_stream(str(_prewarm_queue.pop_front()))
+	_process_prewarm_chunk()
 
 
 func play_surface_cue(cue_id: String, context: Dictionary = {}, surface_state: Dictionary = {}) -> void:
@@ -797,6 +789,8 @@ func debug_soak_snapshot() -> Dictionary:
 		"played_marker_count": _played_markers.size(),
 		"prewarm_queue_size": _prewarm_queue.size(),
 		"prewarm_active": not _prewarm_active_event_id.is_empty(),
+		"prewarm_active_frame_cursor": _prewarm_active_frame_cursor,
+		"prewarm_active_frame_count": _prewarm_active_frame_count,
 	}
 
 
@@ -1186,29 +1180,38 @@ func _begin_incremental_prewarm() -> void:
 		set_process(true)
 
 
-func _process_web_prewarm_chunk() -> void:
+func _process_prewarm_chunk() -> void:
 	if _prewarm_active_event_id.is_empty():
 		while not _prewarm_queue.is_empty():
 			var event_id := str(_prewarm_queue.pop_front())
 			if _stream_cache.has(event_id):
 				continue
-			_begin_web_prewarm_event(event_id)
+			_begin_prewarm_event(event_id)
 			break
 	if _prewarm_active_event_id.is_empty():
 		set_process(false)
 		return
-	var chunk_end := mini(
+	var started_usec := Time.get_ticks_usec()
+	var web_prewarm := OS.has_feature("web")
+	var chunk_limit := mini(
 		_prewarm_active_frame_cursor + WEB_PREWARM_SAMPLES_PER_FRAME,
 		_prewarm_active_frame_count
-	)
-	for frame in range(_prewarm_active_frame_cursor, chunk_end):
+	) if web_prewarm else _prewarm_active_frame_count
+	while _prewarm_active_frame_cursor < chunk_limit:
+		var frame := _prewarm_active_frame_cursor
 		var t := float(frame) / float(_prewarm_active_sample_rate)
 		_write_i16(
 			_prewarm_active_data,
 			frame * PCM_BYTES_PER_FRAME,
 			_soft_limit(_event_sample(_prewarm_active_event_id, t, frame, _prewarm_active_seconds))
 		)
-	_prewarm_active_frame_cursor = chunk_end
+		_prewarm_active_frame_cursor += 1
+		if (
+			not web_prewarm
+			and _prewarm_active_frame_cursor % NATIVE_PREWARM_TIME_CHECK_INTERVAL == 0
+			and Time.get_ticks_usec() - started_usec >= NATIVE_PREWARM_BUDGET_USEC
+		):
+			break
 	if _prewarm_active_frame_cursor < _prewarm_active_frame_count:
 		return
 	_stream_cache[_prewarm_active_event_id] = _audio_stream_from_pcm(
@@ -1217,10 +1220,10 @@ func _process_web_prewarm_chunk() -> void:
 		_prewarm_active_frame_count,
 		_prewarm_active_data
 	)
-	_clear_web_prewarm_event()
+	_clear_prewarm_event()
 
 
-func _begin_web_prewarm_event(event_id: String) -> void:
+func _begin_prewarm_event(event_id: String) -> void:
 	_prewarm_active_event_id = _normalized_event_id(event_id)
 	_prewarm_active_seconds = _event_seconds(_prewarm_active_event_id)
 	_prewarm_active_sample_rate = _event_sample_rate(_prewarm_active_event_id)
@@ -1230,7 +1233,7 @@ func _begin_web_prewarm_event(event_id: String) -> void:
 	_prewarm_active_data.resize(_prewarm_active_frame_count * PCM_BYTES_PER_FRAME)
 
 
-func _clear_web_prewarm_event() -> void:
+func _clear_prewarm_event() -> void:
 	_prewarm_active_event_id = ""
 	_prewarm_active_seconds = 0.0
 	_prewarm_active_sample_rate = 0
@@ -1259,7 +1262,7 @@ func _event_stream(event_id: String) -> AudioStreamWAV:
 	if _stream_cache.has(normalized):
 		return _stream_cache[normalized]
 	if normalized == _prewarm_active_event_id:
-		_clear_web_prewarm_event()
+		_clear_prewarm_event()
 	var seconds := _event_seconds(normalized)
 	var sample_rate := _event_sample_rate(normalized)
 	var frames := maxi(1, int(seconds * float(sample_rate)))

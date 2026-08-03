@@ -73,10 +73,8 @@ static func draw(surface, state: Dictionary, machine_rect: Rect2) -> void:
 	surface.surface_label_centered("TICKET DELIVERY", chute, 7, C_SOFT)
 	var basket := waste_basket_rect(machine_rect)
 	var basket_enabled := not (state.get("scratch_ticket", {}) as Dictionary).is_empty() if typeof(state.get("scratch_ticket", {})) == TYPE_DICTIONARY else false
-	var basket_drop_target := basket_enabled and bool(state.get("scratch_drag_active", false)) and basket.grow(12.0).has_point(state.get("scratch_last_pointer", Vector2.ZERO))
+	var basket_drop_target := basket_enabled and bool(state.get("scratch_trash_armed", false)) and waste_basket_drop_rect(machine_rect).has_point(state.get("scratch_last_pointer", Vector2.ZERO))
 	_paint_waste_basket(surface, basket, basket_enabled, basket_drop_target)
-	if typeof(state.get("scratch_ticket", {})) == TYPE_DICTIONARY and not (state.get("scratch_ticket", {}) as Dictionary).is_empty():
-		surface.surface_add_hit(basket, "scratch_discard", 0)
 	var collection := Rect2(machine_rect.position + Vector2(24, 397), Vector2(162, 10))
 	var complete := bool(state.get("scratch_collection_complete", false))
 	surface.surface_label_centered(str(state.get("scratch_collection_status", "0/7 PRINTS FOUND")), collection, 6, C_YELLOW if not complete else Color("#fff3a0"))
@@ -84,6 +82,11 @@ static func draw(surface, state: Dictionary, machine_rect: Rect2) -> void:
 
 static func waste_basket_rect(machine_rect: Rect2) -> Rect2:
 	return Rect2(machine_rect.position + Vector2(201, 324), Vector2(59, 70))
+
+
+static func waste_basket_drop_rect(machine_rect: Rect2) -> Rect2:
+	var basket := waste_basket_rect(machine_rect)
+	return Rect2(basket.position + Vector2(7, 9), Vector2(basket.size.x - 14, basket.size.y - 18))
 
 
 static func _paint_stock_row(surface, slot: Dictionary, rect: Rect2, index: int) -> void:
@@ -145,4 +148,4 @@ static func _paint_waste_basket(surface, rect: Rect2, enabled: bool, drop_target
 		surface.draw_line(Vector2(x, rect.position.y + 22), Vector2(x - 2, rect.end.y - 11), dark, 2)
 	surface.draw_rect(Rect2(rect.position + Vector2(4, 12), Vector2(rect.size.x - 8, 7)), Color("#d8dde1") if enabled else metal)
 	surface.draw_rect(Rect2(rect.position + Vector2(17, 5), Vector2(rect.size.x - 34, 8)), dark, false, 3)
-	surface.surface_label_centered("DROP" if drop_target else "TRASH", Rect2(rect.position + Vector2(0, rect.size.y - 14), Vector2(rect.size.x, 12)), 7, Color("#fff3c0") if enabled else C_SOFT)
+	surface.surface_label_centered("RELEASE" if drop_target else "DRAG HERE", Rect2(rect.position + Vector2(-3, rect.size.y - 14), Vector2(rect.size.x + 6, 12)), 6, Color("#fff3c0") if enabled else C_SOFT)

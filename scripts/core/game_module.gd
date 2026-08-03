@@ -745,6 +745,8 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 		run_state.set_next_archetypes(_copy_array(travel_changes.get("set_next_archetypes", [])))
 	if travel_changes.has("add_next_archetypes"):
 		run_state.add_next_archetypes(_copy_array(travel_changes.get("add_next_archetypes", [])))
+	if flags.has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
+		run_state.reconcile_grand_casino_invitation_uniqueness()
 	for story_entry in deltas.get("story_log", []):
 		if typeof(story_entry) == TYPE_DICTIONARY:
 			run_state.log_story(story_entry)

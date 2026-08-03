@@ -474,10 +474,15 @@ func _check_talk_dock_component() -> bool:
 	parent.add_child(dock)
 	await process_frame
 	var emitted := {"event_id": "", "choice_id": "", "count": 0}
+	var occupied_events := {"count": 0, "rect": Rect2()}
 	dock.choice_requested.connect(func(event_id: String, choice_id: String) -> void:
 		emitted["event_id"] = event_id
 		emitted["choice_id"] = choice_id
 		emitted["count"] = int(emitted.get("count", 0)) + 1
+	)
+	dock.occupied_rect_changed.connect(func(rect: Rect2) -> void:
+		occupied_events["count"] = int(occupied_events.get("count", 0)) + 1
+		occupied_events["rect"] = rect
 	)
 	dock.set_entry(_talk_dock_entry_fixture(), _talk_dock_option_fixture(), 2)
 	await process_frame
@@ -485,6 +490,17 @@ func _check_talk_dock_component() -> bool:
 	if not bool(snapshot.get("visible", false)) or not bool(snapshot.get("expanded", false)) or int(snapshot.get("choice_count", 0)) != 3:
 		parent.queue_free()
 		push_error("Talk dock fixture did not render an expanded timed entry.")
+		return false
+	if float(snapshot.get("choice_button_height", 0.0)) > VisualStyleScript.TALK_CHOICE_HEIGHT + 0.5:
+		parent.queue_free()
+		push_error("TalkDock response buttons expanded beyond their compact authored height.")
+		return false
+	var occupied_rect := _snapshot_rect(snapshot.get("occupied_rect", Rect2()))
+	var reserved_rect := _snapshot_rect(snapshot.get("environment_reserved_rect", Rect2()))
+	var emitted_occupied_rect: Rect2 = occupied_events.get("rect", Rect2())
+	if occupied_rect.size.x <= 0.0 or occupied_rect.size.y <= 0.0 or not reserved_rect.encloses(occupied_rect) or int(occupied_events.get("count", 0)) <= 0 or not emitted_occupied_rect.is_equal_approx(occupied_rect):
+		parent.queue_free()
+		push_error("TalkDock did not publish its live occupied rectangle for environment layout: %s." % str(snapshot))
 		return false
 	if not bool(snapshot.get("speaker_label_visible", false)) or str(snapshot.get("speaker_text", "")) != "Mara":
 		parent.queue_free()
@@ -562,7 +578,7 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Talk dock did not clamp inside a small viewport: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
-	if panel_rect.size.x > 540.0 or panel_rect.size.x >= screen_rect.size.x - 80.0 or panel_rect.size.x < 280.0 or panel_rect.size.y > 220.0:
+	if panel_rect.size.x > 460.0 or panel_rect.size.x >= screen_rect.size.x - 80.0 or panel_rect.size.x < 280.0 or panel_rect.size.y > 208.0:
 		parent.queue_free()
 		push_error("Talk dock did not present a compact selection overlay: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
@@ -570,21 +586,116 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Talk dock cluster did not anchor to the bottom left: panel=%s portrait=%s screen=%s." % [str(panel_rect), str(portrait_rect), str(screen_rect)])
 		return false
-	if portrait_rect.size.x < 170.0 or portrait_rect.size.y < 220.0 or absf(portrait_rect.end.y - screen_rect.end.y) > 28.0:
+	if portrait_rect.size.x < 140.0 or portrait_rect.size.y < 180.0 or portrait_rect.size.x > 210.0 or portrait_rect.size.y > 290.0 or absf(portrait_rect.end.y - screen_rect.end.y) > 28.0:
 		parent.queue_free()
-		push_error("Talk dock speaker was not staged as a large environment portrait: portrait=%s screen=%s." % [str(portrait_rect), str(screen_rect)])
+		push_error("Talk dock speaker did not use the compact environment portrait footprint: portrait=%s screen=%s." % [str(portrait_rect), str(screen_rect)])
 		return false
+	var environment_canvas: Control = PixelSceneCanvasScript.new()
+	environment_canvas.size = parent.size
+	parent.add_child(environment_canvas)
+	environment_canvas.call("set_reserved_overlay_rect", reserved_rect)
+	environment_canvas.call("render_environment_snapshot", {
+		"id": "talk_dock_clearance_fixture",
+		"display_name": "Talk Dock Clearance Fixture",
+		"interactable_objects": [{
+			"object_id": "service:under_talk_dock",
+			"object_type": "service",
+			"visual_type": "service",
+			"source_id": "under_talk_dock",
+			"label": "Visible Task",
+			"enabled": true,
+			"normalized_rect": {"x": 0.12, "y": 0.70, "w": 0.14, "h": 0.16},
+		}],
+	})
+	await process_frame
+	var clearance_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	var repositioned_ids: Array = clearance_snapshot.get("overlay_repositioned_object_ids", []) if typeof(clearance_snapshot.get("overlay_repositioned_object_ids", [])) == TYPE_ARRAY else []
+	var room_object_rect: Rect2 = environment_canvas.call("global_rect_for_object", "service:under_talk_dock")
+	if not repositioned_ids.has("service:under_talk_dock") or room_object_rect.intersects(reserved_rect):
+		environment_canvas.queue_free()
+		parent.queue_free()
+		push_error("Environment object remained inside the TalkDock reserve: object=%s reserved=%s snapshot=%s." % [str(room_object_rect), str(reserved_rect), str(clearance_snapshot)])
+		return false
+	var local_object_center: Vector2 = environment_canvas.get_global_transform().affine_inverse() * room_object_rect.get_center()
+	if str(environment_canvas.call("object_id_at_local_position", local_object_center)) != "service:under_talk_dock":
+		environment_canvas.queue_free()
+		parent.queue_free()
+		push_error("TalkDock-aware environment layout did not keep hit testing on the relocated object.")
+		return false
+	environment_canvas.call("set_selected_object", "service:under_talk_dock")
+	for _focus_frame in range(48):
+		environment_canvas.call("_process", 1.0 / 60.0)
+	var focused_object_rect: Rect2 = environment_canvas.call("global_rect_for_object", "service:under_talk_dock")
+	if focused_object_rect.intersects(reserved_rect):
+		environment_canvas.queue_free()
+		parent.queue_free()
+		push_error("Environment focus camera moved the tutorial target back under the TalkDock: object=%s reserved=%s." % [str(focused_object_rect), str(reserved_rect)])
+		return false
+	environment_canvas.queue_free()
 	var response_icon_kinds: Array = snapshot.get("response_icon_kinds", [])
 	if str(snapshot.get("presentation", "")) != "environment_overlay" or bool(snapshot.get("choice_effects_visible", true)) or _has_visible_text(dock, "Heat -1") or not response_icon_kinds.has("heat_down") or not response_icon_kinds.has("heat_up") or not response_icon_kinds.has("leave"):
 		parent.queue_free()
 		push_error("Talk dock did not pair concealed effect values with qualitative response icons: %s." % str(response_icon_kinds))
 		return false
-	dock.clear_entry()
-	if bool(dock.current_snapshot().get("visible", true)):
+	dock.set_small_screen_mode(true)
+	dock.set_reduce_motion(true)
+	var authored_copy_fits := await _check_talk_dock_copy_fits(dock)
+	dock.set_reduce_motion(false)
+	if not authored_copy_fits:
 		parent.queue_free()
-		push_error("Talk dock clear_entry did not hide the dock.")
+		return false
+	dock.set_small_screen_mode(false)
+	var reserved_before_clear := dock.environment_reserved_global_rect()
+	dock.clear_entry()
+	if bool(dock.current_snapshot().get("visible", true)) or not dock.environment_reserved_global_rect().is_equal_approx(reserved_before_clear):
+		parent.queue_free()
+		push_error("Talk dock clear_entry did not hide the dock while preserving its environment reserve.")
 		return false
 	parent.queue_free()
+	return true
+
+
+func _check_talk_dock_copy_fits(dock: TalkDock) -> bool:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/dialogue/dialogues.json"))
+	if typeof(parsed) != TYPE_ARRAY:
+		push_error("TalkDock fit audit could not parse dialogue content.")
+		return false
+	var overflows: Array[String] = []
+	for dialogue_value in parsed:
+		if typeof(dialogue_value) != TYPE_DICTIONARY:
+			continue
+		var dialogue: Dictionary = dialogue_value
+		var dialogue_id := str(dialogue.get("id", ""))
+		var nodes: Dictionary = dialogue.get("nodes", {}) if typeof(dialogue.get("nodes", {})) == TYPE_DICTIONARY else {}
+		for node_id_value in nodes:
+			var node_id := str(node_id_value)
+			var node: Dictionary = nodes.get(node_id, {}) if typeof(nodes.get(node_id, {})) == TYPE_DICTIONARY else {}
+			for body_field in ["text", "tutorial_text"]:
+				var body := str(node.get(body_field, "")).strip_edges()
+				if body.is_empty():
+					continue
+				dock.set_entry({
+					"event_id": "talk_fit:%s:%s:%s" % [dialogue_id, node_id, body_field],
+					"speaker": dialogue.get("speaker", {}),
+				}, {
+					"display_name": str(dialogue.get("display_name", "Conversation")),
+					"summary": body,
+					"choices": node.get("choices", []),
+				}, 1)
+				await process_frame
+				var snapshot: Dictionary = dock.current_snapshot()
+				if bool(snapshot.get("body_text_clipped", false)):
+					overflows.append("%s/%s/%s (%d chars, %d lines for %d visible)" % [
+						dialogue_id,
+						node_id,
+						body_field,
+						int(snapshot.get("body_character_count", 0)),
+						int(snapshot.get("body_line_count", 0)),
+						int(snapshot.get("body_visible_line_count", 0)),
+					])
+	if not overflows.is_empty():
+		push_error("Authored conversation copy overflows the 640x360 TalkDock: %s" % "; ".join(overflows))
+		return false
 	return true
 
 
@@ -634,9 +745,10 @@ func _check_coach_overlay_component() -> bool:
 	overlay.set_lessons([{"id": "coach_gate", "trigger": {"state_predicates": []}, "anchor": {"kind": "interactable_object", "id": "fixture:door"}, "copy": "Use this door.", "completion": {"type": "anchored_action"}, "gating": {"allowed_action_ids": ["fixture:door"]}}])
 	overlay.evaluate_at_boundary(context)
 	await process_frame
-	if overlay.input_allowed("wrong:door") or not overlay.input_allowed("fixture:door"):
+	var guidance_snapshot := overlay.current_snapshot()
+	if not overlay.input_allowed("wrong:door") or not overlay.input_allowed("fixture:door") or bool(guidance_snapshot.get("gating", true)) or not bool(guidance_snapshot.get("highlight_emphasis", false)):
 		parent.queue_free()
-		push_error("Coach overlay gating did not block only undeclared actions.")
+		push_error("Coach overlay highlight blocked an unrelated player action.")
 		return false
 	overlay.set_reduce_motion(true)
 	var attention_tween: Tween = overlay.get("attention_tween")
@@ -947,15 +1059,27 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
 	var portrait_rect := _snapshot_rect(snapshot.get("portrait_rect", Rect2()))
 	var screen_rect := _snapshot_rect(snapshot.get("screen_rect", Rect2()))
-	if panel_rect.size.x < 420.0 or panel_rect.size.x > 540.0 or panel_rect.size.y > 220.0 or panel_rect.size.x >= screen_rect.size.x - 160.0:
+	if panel_rect.size.x < 400.0 or panel_rect.size.x > 460.0 or panel_rect.size.y > 208.0 or panel_rect.size.x >= screen_rect.size.x - 160.0:
 		push_error("Dialogue dock fixture did not use the compact selection overlay: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
 	if screen_rect.size.x <= 0.0 or screen_rect.size.y <= 0.0 or portrait_rect.position.x > screen_rect.position.x + 48.0 or panel_rect.position.x > portrait_rect.end.x + 2.0 or absf(panel_rect.end.y - screen_rect.end.y) > 28.0:
 		push_error("Dialogue dock main flow did not anchor its cluster to the bottom left: panel=%s portrait=%s screen=%s." % [str(panel_rect), str(portrait_rect), str(screen_rect)])
 		return false
-	if portrait_rect.size.x < 240.0 or portrait_rect.size.y < 340.0 or absf(portrait_rect.end.y - screen_rect.end.y) > 28.0:
-		push_error("Dialogue dock main flow did not stage a large speaker over the environment: portrait=%s screen=%s." % [str(portrait_rect), str(screen_rect)])
+	if portrait_rect.size.x < 180.0 or portrait_rect.size.y < 240.0 or portrait_rect.size.x > 210.0 or portrait_rect.size.y > 290.0 or absf(portrait_rect.end.y - screen_rect.end.y) > 28.0:
+		push_error("Dialogue dock main flow did not stage a compact speaker over the environment: portrait=%s screen=%s." % [str(portrait_rect), str(screen_rect)])
 		return false
+	var environment_reserved_rect := _snapshot_rect(snapshot.get("environment_reserved_rect", Rect2()))
+	var dialogue_environment_canvas: Control = app.get("environment_canvas")
+	var dialogue_environment_snapshot: Dictionary = dialogue_environment_canvas.call("current_view_snapshot") if dialogue_environment_canvas != null else {}
+	var dialogue_environment_objects: Array = dialogue_environment_snapshot.get("objects", []) if typeof(dialogue_environment_snapshot.get("objects", [])) == TYPE_ARRAY else []
+	for object_value in dialogue_environment_objects:
+		if typeof(object_value) != TYPE_DICTIONARY or not bool((object_value as Dictionary).get("interactive", true)):
+			continue
+		var dialogue_object_id := str((object_value as Dictionary).get("id", ""))
+		var dialogue_object_rect: Rect2 = dialogue_environment_canvas.call("global_rect_for_object", dialogue_object_id)
+		if dialogue_object_rect.intersects(environment_reserved_rect):
+			push_error("Live dialogue left environment object %s under the reserved conversation area: object=%s reserve=%s." % [dialogue_object_id, str(dialogue_object_rect), str(environment_reserved_rect)])
+			return false
 	var response_icon_kinds: Array = snapshot.get("response_icon_kinds", [])
 	if str(snapshot.get("presentation", "")) != "environment_overlay" or bool(snapshot.get("choice_effects_visible", true)) or response_icon_kinds.is_empty() or not _has_visible_text(app, str(snapshot.get("summary", ""))):
 		push_error("Dialogue dock main flow did not expose spoken context with qualitative response icons and concealed values: %s." % str(response_icon_kinds))
@@ -1170,6 +1294,24 @@ func _check_beach_return_travel_choice(app: Control) -> bool:
 		["beach", "delta_queen"],
 		WorldMapScript.DISCOVERY_SOURCE_EVENT
 	)
+	var delta_environment := beach_environment.duplicate(true)
+	delta_environment["id"] = "ui_delta_queen_beach_access"
+	delta_environment["archetype_id"] = "delta_queen"
+	delta_environment["world_node_id"] = "delta_queen"
+	delta_environment["display_name"] = "The River Queen"
+	delta_environment["kind"] = "casino"
+	map_data = WorldMapScript.enter_node(map_data, "delta_queen", delta_environment)
+	run_state.set_environment(delta_environment)
+	run_state.set_world_map(map_data)
+	run_state.bankroll = 0
+	run_state.game_clock_minutes = 12 * 60
+	app.call("_invalidate_travel_view_cache")
+	var access_choice: Dictionary = app.call("_travel_choice", "beach", ["beach"])
+	if not bool(access_choice.get("enabled", false)) \
+		or int(access_choice.get("cost", -1)) != 0 \
+		or str(access_choice.get("travel_method", "")) != "Walk":
+		push_error("Delta Queen did not expose the free Beach access walk: %s" % JSON.stringify(access_choice))
+		return false
 	map_data = WorldMapScript.enter_node(map_data, "beach", beach_environment)
 	run_state.set_environment(beach_environment)
 	run_state.set_world_map(map_data)
@@ -1935,6 +2077,11 @@ func _run() -> void:
 		push_error("Meta collection launcher should be labeled Home on the main menu.")
 		quit(1)
 		return
+	# Keep the tutorial-critical pull-tab interaction ahead of unrelated meta-home
+	# checks so its hit-target regression is always exercised by the UI gate.
+	if not await _check_pull_tab_buy_button_single_activation(app):
+		quit(1)
+		return
 	if not await _check_meta_home_launcher_opens_room(app):
 		quit(1)
 		return
@@ -1974,9 +2121,6 @@ func _run() -> void:
 	await process_frame
 	if game_library_page.visible or not start_menu_controls.visible:
 		push_error("Games page Back did not return to the main menu controls.")
-		quit(1)
-		return
-	if not await _check_pull_tab_buy_button_single_activation(app):
 		quit(1)
 		return
 	if not await _check_slot_autoplay_button_one_click(app):

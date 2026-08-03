@@ -2472,12 +2472,16 @@ func _validate_tutorial_completion(lesson_id: String, value: Variant, anchor_val
 		return
 	var completion: Dictionary = value
 	var completion_type := str(completion.get("type", "")).strip_edges()
-	if not ["anchored_action", "any_action", "explicit_ok", "state_predicate"].has(completion_type):
+	if not ["anchored_action", "one_of_actions", "any_action", "explicit_ok", "state_predicate"].has(completion_type):
 		validation_errors.append("tutorial_lessons %s completion has unknown type: %s" % [lesson_id, completion_type])
 	elif completion_type == "anchored_action":
 		var anchor: Dictionary = _as_dict(anchor_value)
 		if str(anchor.get("kind", "none")) == "none":
 			validation_errors.append("tutorial_lessons %s anchored_action completion requires an anchor." % lesson_id)
+	elif completion_type == "one_of_actions":
+		var action_ids: Variant = completion.get("action_ids", [])
+		if typeof(action_ids) != TYPE_ARRAY or _string_array(action_ids).is_empty():
+			validation_errors.append("tutorial_lessons %s one_of_actions completion requires action_ids." % lesson_id)
 	elif completion_type == "state_predicate":
 		_validate_tutorial_state_predicates(lesson_id, completion.get("state_predicates", []))
 

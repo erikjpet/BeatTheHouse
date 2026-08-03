@@ -2,14 +2,19 @@ class_name TalkDock
 extends Control
 
 signal choice_requested(event_id: String, choice_id: String)
+signal occupied_rect_changed(rect: Rect2)
 
 const COLLAPSED_SIZE := Vector2(420, 58)
-const EXPANDED_PANEL_SIZE := Vector2(540, 180)
-const EXPANDED_PORTRAIT_SIZE := Vector2(280, 390)
-const SMALL_SCREEN_EXPANDED_PANEL_HEIGHT := 220.0
+const EXPANDED_PANEL_WIDTH := 460.0
+const SINGLE_CHOICE_PANEL_WIDTH := 420.0
+const EXPANDED_PANEL_BASE_HEIGHT := 156.0
+const EXPANDED_PANEL_EXTRA_ROW_HEIGHT := 40.0
+const SMALL_SCREEN_CHOICE_ROW_EXTRA := 12.0
+const EXPANDED_PORTRAIT_SIZE := Vector2(210, 290)
 const VIEWPORT_MARGIN := Vector2(18, 18)
 const MAX_CHOICES := 4
 const IGNORE_PENALTY_HEAT := 5
+const PRESENTATION_Z_INDEX := 100
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 
 
@@ -248,6 +253,7 @@ var full_body_text := ""
 var reveal_elapsed := 0.0
 var typewriter_active := false
 var rendered_entry_key := ""
+var last_occupied_rect := Rect2()
 
 var panel: PanelContainer
 var stack: VBoxContainer
@@ -270,6 +276,7 @@ var rendered_response_icon_kinds: Array[String] = []
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	z_index = PRESENTATION_Z_INDEX
 	visible = false
 	_build()
 	_position_panel()
@@ -323,6 +330,7 @@ func clear_entry() -> void:
 	full_body_text = ""
 	typewriter_active = false
 	set_process(false)
+	_notify_occupied_rect_changed()
 
 
 func handle_hotkey(event: InputEvent) -> bool:
@@ -381,9 +389,11 @@ func current_snapshot() -> Dictionary:
 		"queue_count": queue_count,
 		"choice_count": _choices().size(),
 		"choice_ids": choice_ids,
+		"choice_button_height": _rendered_choice_button_height(),
 		"ignore_penalty_heat": IGNORE_PENALTY_HEAT,
 		"anchored_bottom_left": true,
 		"presentation": "environment_overlay",
+		"z_index": z_index,
 		"choice_effects_visible": false,
 		"response_icon_kinds": rendered_response_icon_kinds.duplicate(),
 		"portrait_animation_active": portrait_model.animation_active if portrait_model != null else false,
@@ -406,14 +416,52 @@ func current_snapshot() -> Dictionary:
 		"typewriter_active": typewriter_active,
 		"visible_characters": body_label.visible_characters if body_label != null else -1,
 		"body_character_count": full_body_text.length(),
+		"body_line_count": body_label.get_line_count() if body_label != null else 0,
+		"body_visible_line_count": body_label.get_visible_line_count() if body_label != null else 0,
+		"body_text_clipped": body_label != null and body_label.get_line_count() > body_label.get_visible_line_count(),
 		"urgency_bar_visible": urgency_bar != null and urgency_bar.is_visible_in_tree(),
 		"click_to_skip": true,
 		"reduce_motion": reduce_motion,
 		"timing": timing.duplicate(true),
 		"panel_rect": panel.get_global_rect() if panel != null else Rect2(),
 		"portrait_rect": portrait_panel.get_global_rect() if portrait_panel != null and portrait_panel.visible else Rect2(),
+		"occupied_rect": occupied_global_rect(),
+		"environment_reserved_rect": environment_reserved_global_rect(),
 		"screen_rect": get_global_rect(),
 	}
+
+
+func occupied_global_rect() -> Rect2:
+	if not visible or panel == null:
+		return Rect2()
+	var occupied := panel.get_global_rect()
+	if expanded and portrait_panel != null and portrait_panel.visible:
+		occupied = occupied.merge(portrait_panel.get_global_rect())
+	return occupied
+
+
+# This footprint remains stable while dialogue is hidden, so environment
+# objects are authored into a safe composition before a future talk opens.
+func environment_reserved_global_rect() -> Rect2:
+	if not is_inside_tree():
+		return Rect2()
+	var layout := _expanded_layout_rects(true)
+	var local_rect: Rect2 = layout.get("portrait_rect", Rect2())
+	local_rect = local_rect.merge(layout.get("panel_rect", Rect2()))
+	var canvas_transform := get_global_transform()
+	var top_left := canvas_transform * local_rect.position
+	var top_right := canvas_transform * Vector2(local_rect.end.x, local_rect.position.y)
+	var bottom_left := canvas_transform * Vector2(local_rect.position.x, local_rect.end.y)
+	var bottom_right := canvas_transform * local_rect.end
+	var minimum := Vector2(
+		minf(minf(top_left.x, top_right.x), minf(bottom_left.x, bottom_right.x)),
+		minf(minf(top_left.y, top_right.y), minf(bottom_left.y, bottom_right.y))
+	)
+	var maximum := Vector2(
+		maxf(maxf(top_left.x, top_right.x), maxf(bottom_left.x, bottom_right.x)),
+		maxf(maxf(top_left.y, top_right.y), maxf(bottom_left.y, bottom_right.y))
+	)
+	return Rect2(minimum, maximum - minimum)
 
 
 func set_reduce_motion(enabled: bool) -> void:
@@ -432,7 +480,7 @@ func set_small_screen_mode(enabled: bool) -> void:
 	if collapsed_button != null:
 		collapsed_button.custom_minimum_size.y = SmallScreenPolicyScript.control_height(FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT, enabled)
 	if collapse_button != null:
-		collapse_button.custom_minimum_size.y = SmallScreenPolicyScript.control_height(FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT, enabled)
+		collapse_button.custom_minimum_size.y = SmallScreenPolicyScript.control_height(VisualStyle.TALK_CHOICE_HEIGHT, enabled)
 	_render_choices()
 	_position_panel()
 
@@ -440,6 +488,8 @@ func set_small_screen_mode(enabled: bool) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
 		_position_panel()
+	elif what == NOTIFICATION_VISIBILITY_CHANGED:
+		call_deferred("_notify_occupied_rect_changed")
 
 
 func _build() -> void:
@@ -503,7 +553,7 @@ func _build() -> void:
 	header_row.add_child(badge_label)
 
 	collapse_button = FoundationWidgets.button("Hide", Callable(self, "_toggle_expanded"))
-	collapse_button.custom_minimum_size = Vector2(VisualStyle.TALK_COLLAPSE_WIDTH, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	collapse_button.custom_minimum_size = Vector2(VisualStyle.TALK_COLLAPSE_WIDTH, VisualStyle.TALK_CHOICE_HEIGHT)
 	header_row.add_child(collapse_button)
 
 	body_label = FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE)
@@ -524,10 +574,10 @@ func _build() -> void:
 
 	choice_list = GridContainer.new()
 	choice_list.columns = 2
-	choice_list.add_theme_constant_override("h_separation", VisualStyle.SPACE_4)
-	choice_list.add_theme_constant_override("v_separation", VisualStyle.SPACE_3)
+	choice_list.add_theme_constant_override("h_separation", VisualStyle.SPACE_3)
+	choice_list.add_theme_constant_override("v_separation", VisualStyle.SPACE_2)
 	choice_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	choice_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	choice_list.size_flags_vertical = Control.SIZE_SHRINK_END
 	stack.add_child(choice_list)
 
 
@@ -622,7 +672,7 @@ func _render_choices() -> void:
 		var response := HBoxContainer.new()
 		response.add_theme_constant_override("separation", VisualStyle.SPACE_2)
 		response.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		response.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		response.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		var icon_kinds := _response_icon_kinds(choice_data)
 		for icon_kind in icon_kinds:
 			var response_icon := ResponseIcon.new(icon_kind)
@@ -631,8 +681,9 @@ func _render_choices() -> void:
 			rendered_response_icon_kinds.append(icon_kind)
 		var button := FoundationWidgets.button(label, Callable(self, "_on_choice_pressed").bind(choice_id))
 		button.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, SmallScreenPolicyScript.control_height(VisualStyle.TALK_CHOICE_HEIGHT, small_screen_mode))
+		FoundationWidgets.set_control_font_size(button, VisualStyle.TYPE_SMALL)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		button.clip_text = true
 		var enabled := bool(choice_data.get("enabled", true))
 		var disabled_reason := str(choice_data.get("disabled_reason", "")).strip_edges()
@@ -640,6 +691,19 @@ func _render_choices() -> void:
 		button.tooltip_text = disabled_reason if not enabled else _response_icon_descriptions(icon_kinds)
 		response.add_child(button)
 		choice_list.add_child(response)
+
+
+func _rendered_choice_button_height() -> float:
+	if choice_list == null:
+		return 0.0
+	var maximum_height := 0.0
+	for response_value in choice_list.get_children():
+		if not response_value is Control:
+			continue
+		for child_value in (response_value as Control).get_children():
+			if child_value is Button:
+				maximum_height = maxf(maximum_height, (child_value as Button).size.y)
+	return maximum_height
 
 
 func _response_icon_kinds(choice: Dictionary) -> Array[String]:
@@ -824,31 +888,59 @@ func _position_panel() -> void:
 		)
 		panel.size = collapsed_size
 		panel.position = Vector2(VIEWPORT_MARGIN.x, maxf(VIEWPORT_MARGIN.y, size.y - collapsed_size.y - VIEWPORT_MARGIN.y))
+		_notify_occupied_rect_changed()
 		return
-	var portrait_size := Vector2(
-		minf(EXPANDED_PORTRAIT_SIZE.x, maxf(180.0, size.x * 0.24)),
-		minf(EXPANDED_PORTRAIT_SIZE.y, maxf(230.0, size.y * 0.55))
+	var layout := _expanded_layout_rects(false)
+	var next_portrait_rect: Rect2 = layout.get("portrait_rect", Rect2())
+	var next_panel_rect: Rect2 = layout.get("panel_rect", Rect2())
+	portrait_panel.position = next_portrait_rect.position
+	portrait_panel.size = next_portrait_rect.size
+	panel.position = next_panel_rect.position
+	panel.size = next_panel_rect.size
+	_notify_occupied_rect_changed()
+
+
+func _expanded_layout_rects(reserve_maximum_capacity: bool) -> Dictionary:
+	var available_size := Vector2(
+		maxf(280.0, size.x - VIEWPORT_MARGIN.x * 2.0),
+		maxf(44.0, size.y - VIEWPORT_MARGIN.y * 2.0)
 	)
-	portrait_panel.size = portrait_size
-	portrait_panel.position = Vector2(
-		VIEWPORT_MARGIN.x + 12.0,
-		maxf(VIEWPORT_MARGIN.y, size.y - portrait_size.y - VIEWPORT_MARGIN.y)
+	var portrait_size := Vector2(
+		minf(EXPANDED_PORTRAIT_SIZE.x, maxf(150.0, size.x * 0.18)),
+		minf(EXPANDED_PORTRAIT_SIZE.y, maxf(190.0, size.y * 0.44))
+	)
+	var portrait_rect := Rect2(
+		Vector2(VIEWPORT_MARGIN.x + 12.0, maxf(VIEWPORT_MARGIN.y, size.y - portrait_size.y - VIEWPORT_MARGIN.y)),
+		portrait_size
 	)
 	var panel_left := minf(
-		portrait_panel.position.x + portrait_size.x - 12.0,
+		portrait_rect.position.x + portrait_size.x - 12.0,
 		maxf(VIEWPORT_MARGIN.x, size.x - 280.0 - VIEWPORT_MARGIN.x)
 	)
 	var panel_available_width := maxf(280.0, size.x - panel_left - VIEWPORT_MARGIN.x)
-	var panel_size := Vector2(
-		minf(EXPANDED_PANEL_SIZE.x, panel_available_width),
-		minf(EXPANDED_PANEL_SIZE.y, available_size.y)
-	)
-	panel_size.y = minf(
-		SMALL_SCREEN_EXPANDED_PANEL_HEIGHT if small_screen_mode else EXPANDED_PANEL_SIZE.y,
-		available_size.y
-	)
-	panel.size = panel_size
-	panel.position = Vector2(panel_left, maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y))
+	var choice_count := MAX_CHOICES if reserve_maximum_capacity else _choices().size()
+	var desired_width := EXPANDED_PANEL_WIDTH if reserve_maximum_capacity or choice_count > 1 else SINGLE_CHOICE_PANEL_WIDTH
+	var choice_columns := 2 if reserve_maximum_capacity else maxi(1, choice_list.columns if choice_list != null else 1)
+	var choice_rows := maxi(1, ceili(float(maxi(1, choice_count)) / float(choice_columns)))
+	var desired_height := EXPANDED_PANEL_BASE_HEIGHT
+	desired_height += float(maxi(0, choice_rows - 1)) * EXPANDED_PANEL_EXTRA_ROW_HEIGHT
+	if small_screen_mode:
+		desired_height += float(choice_rows) * SMALL_SCREEN_CHOICE_ROW_EXTRA
+	var panel_size := Vector2(minf(desired_width, panel_available_width), minf(desired_height, available_size.y))
+	return {
+		"portrait_rect": portrait_rect,
+		"panel_rect": Rect2(Vector2(panel_left, maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y)), panel_size),
+	}
+
+
+func _notify_occupied_rect_changed() -> void:
+	if not is_inside_tree():
+		return
+	var next_rect := occupied_global_rect()
+	if next_rect.is_equal_approx(last_occupied_rect):
+		return
+	last_occupied_rect = next_rect
+	occupied_rect_changed.emit(next_rect)
 
 
 func _play_attention_animation() -> void:

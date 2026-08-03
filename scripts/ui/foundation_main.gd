@@ -540,7 +540,7 @@ func _input(event: InputEvent) -> void:
 		if procedural_music_player != null and procedural_music_player.has_method("web_audio_user_gesture"):
 			procedural_music_player.web_audio_user_gesture()
 		_schedule_web_audio_unlock_refresh()
-	if talk_dock != null and not _modal_contract_blocks_player_input() and talk_dock.handle_hotkey(event):
+	if talk_dock != null and not _talk_dock_input_is_blocked() and talk_dock.handle_hotkey(event):
 		get_viewport().set_input_as_handled()
 
 
@@ -1644,9 +1644,6 @@ func confirm_world_map_travel() -> void:
 		_confirm_meta_world_map_travel()
 		return
 	var coach_travel_action := "travel:%s" % confirmed_target_id
-	if coach_overlay != null and not coach_overlay.input_allowed(coach_travel_action):
-		_show_message("Follow the highlighted advice first.")
-		return
 	var choice := _travel_choice(confirmed_target_id)
 	var result := world_map_overlay_controller.confirm_run_selection(choice)
 	_sync_world_map_overlay_controller_to_host()
@@ -1957,7 +1954,7 @@ func _ensure_closing_time_departure_talk() -> bool:
 		"type": "dialogue",
 		"dialogue_id": CLOSING_TIME_DIALOGUE_ID,
 		"source": "closing_time",
-		"environment_snapshot": run_state.current_environment.duplicate(true),
+		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
 	}
 	var start_node := str(dialogue.get("start", "notice")).strip_edges()
 	var speaker := _closing_time_talk_speaker(dialogue)
@@ -2341,7 +2338,7 @@ func _weighted_triggered_event_pick(candidates: Array, rng: RngStream) -> Dictio
 
 func _event_context_with_environment(context: Dictionary, environment: Dictionary) -> Dictionary:
 	var queued_context := context.duplicate(true)
-	queued_context["environment_snapshot"] = environment.duplicate(true)
+	queued_context["environment_snapshot"] = RunState.environment_context_snapshot(environment)
 	return queued_context
 
 
@@ -2470,6 +2467,11 @@ func _refresh_talk_dock() -> void:
 	if item_found_popup != null and item_found_popup.is_open():
 		item_found_talk_dock_suspended = true
 		talk_dock.visible = false
+	elif _world_map_overlay_is_visible():
+		# The map is a full-screen STOP control and moves itself to the front when
+		# opened. Keep the visible conversation last in GUI input order as well as
+		# above it visually so its buttons remain selectable.
+		talk_dock.move_to_front()
 
 
 func _pending_talk_event_entry(event_id: String) -> Dictionary:
@@ -2501,7 +2503,7 @@ func start_dialogue(dialogue_id: String, source_data: Dictionary = {}) -> bool:
 		"dialogue_id": clean_id,
 		"source": str(source_data.get("source", "dialogue")),
 		"source_object_id": str(source_data.get("object_id", source_data.get("source_object_id", ""))),
-		"environment_snapshot": run_state.current_environment.duplicate(true),
+		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
 	}
 	var tutorial_lesson_id := str(source_data.get("tutorial_lesson_id", "")).strip_edges()
 	if not tutorial_lesson_id.is_empty():
@@ -3812,25 +3814,34 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 	if dev_game_test_mode:
 		save_status_message = "Practice sessions are not autosaved."
 		return false
+	# Capture the completed action while it is still the active context. This is
+	# deliberately separate from JSON serialization/disk I/O: a later deferred
+	# flush must not mutate RunState during an unrelated hover/focus frame.
+	_prepare_foundation_run_save()
 	# Never make a player action wait for disk I/O. The pending slot coalesces
 	# rapid/repeating actions and the game-surface guard waits out animations.
+	# Always leave at least one draw boundary before serialization so a newly
+	# opened dialogue/context panel becomes visible before any save work begins.
 	if not force:
 		_queue_pending_autosave(status_text, 1 if _should_defer_autosave_for_web() else 0)
 		return true
 	return _write_foundation_run_save(status_text)
 
 
-func _write_foundation_run_save(status_text: String = "Autosaved.") -> bool:
-	if run_state == null:
-		return false
+func _prepare_foundation_run_save() -> void:
 	_checkpoint_current_game_surface_ui_state()
 	_evaluate_run_terminal_state()
-	if save_service == null:
-		save_status_message = "Autosave unavailable."
-		return false
 	if procedural_music_player != null:
 		run_state.remember_music_tempo_state(procedural_music_player.adaptive_tempo_save_state())
 		run_state.remember_music_choreography_state(procedural_music_player.music_choreography_save_state())
+
+
+func _write_foundation_run_save(status_text: String = "Autosaved.") -> bool:
+	if run_state == null:
+		return false
+	if save_service == null:
+		save_status_message = "Autosave unavailable."
+		return false
 	var error := save_service.save_run(run_state, autosave_slot_id)
 	if error == OK:
 		pending_autosave = false
@@ -4048,7 +4059,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	# Persist UI-local ticket reveals while the module still points at the
 	# environment where the tickets were purchased.
 	_reset_game_surface_runtime_state()
-	var previous_environment := run_state.current_environment.duplicate(true)
+	var previous_environment := RunState.environment_context_snapshot(run_state.current_environment)
 	ignored_talk_entries = _pending_talk_entries()
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
@@ -5317,7 +5328,14 @@ func _build_event_choice_popup_overlay() -> void:
 func _build_talk_dock() -> void:
 	talk_dock = TalkDockScript.new()
 	talk_dock.choice_requested.connect(Callable(self, "_on_talk_dock_choice_requested"))
+	talk_dock.occupied_rect_changed.connect(Callable(self, "_on_talk_dock_occupied_rect_changed"))
 	add_child(talk_dock)
+	call_deferred("_on_talk_dock_occupied_rect_changed", Rect2())
+
+
+func _on_talk_dock_occupied_rect_changed(_rect: Rect2) -> void:
+	if environment_canvas != null:
+		environment_canvas.set_reserved_overlay_rect(talk_dock.environment_reserved_global_rect() if talk_dock != null else Rect2())
 
 
 func _build_item_found_popup() -> void:
@@ -7509,6 +7527,12 @@ func _modal_contract_blocks_player_input() -> bool:
 	return travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
 
 
+func _talk_dock_input_is_blocked() -> bool:
+	# A map can intentionally host a tutorial conversation. It remains modal to
+	# the room behind it, but must not make its own TalkDock unresponsive.
+	return travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible()
+
+
 func _blocking_modal_message() -> String:
 	if travel_transition_active:
 		return "Travel is already in progress."
@@ -7535,9 +7559,6 @@ func _guard_player_input_route(force_closing_allowed: bool = false, coach_action
 				_show_message(_closing_time_disabled_reason())
 			return true
 		if coach_overlay != null:
-			if not coach_overlay.input_allowed(coach_action_id):
-				_show_message("Follow the highlighted advice first.")
-				return true
 			coach_overlay.notify_action(coach_action_id)
 		return false
 	_show_message(message)
@@ -8490,7 +8511,7 @@ func _start_lender_conversation(lender_id: String, mode: String) -> bool:
 		"lender_id": clean_id,
 		"lender_mode": clean_mode,
 		"source_object_id": "lender:%s" % clean_id,
-		"environment_snapshot": run_state.current_environment.duplicate(true),
+		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
 	}
 	var lender_line_key := "loan_offer" if clean_mode == "borrow" else "loan_repayment" if clean_mode == "repay" else "pawn_offer"
 	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), clean_id, lender_line_key)
@@ -8710,9 +8731,6 @@ func _start_linda_cage_services(object_data: Dictionary) -> bool:
 func _buy_cage_chips(amount: int) -> void:
 	if run_state == null:
 		return
-	if coach_overlay != null and not coach_overlay.input_allowed("cage:buy_chips"):
-		_show_message("Follow the highlighted advice first.")
-		return
 	var result := run_state.buy_grand_casino_chips(amount, run_state.grand_casino_chip_exchange_rate())
 	if bool(result.get("ok", false)):
 		if coach_overlay != null:
@@ -8727,9 +8745,6 @@ func _buy_cage_chips(amount: int) -> void:
 func _cash_out_cage_chips() -> void:
 	if run_state == null:
 		return
-	if coach_overlay != null and not coach_overlay.input_allowed("cage:cash_out"):
-		_show_message("Follow the highlighted advice first.")
-		return
 	var result := run_state.cash_out_grand_casino_chips(-1, run_state.grand_casino_chip_exchange_rate())
 	if bool(result.get("ok", false)):
 		if coach_overlay != null:
@@ -8743,9 +8758,6 @@ func _cash_out_cage_chips() -> void:
 
 func _complete_cage_players_card_review() -> void:
 	if run_state == null or library == null:
-		return
-	if coach_overlay != null and not coach_overlay.input_allowed("cage:review"):
-		_show_message("Follow the highlighted advice first.")
 		return
 	var claim_result := run_state.claim_grand_casino_players_card_tier()
 	if not bool(claim_result.get("ok", false)):
@@ -9065,11 +9077,34 @@ func _on_environment_object_hovered(object_id: String) -> void:
 
 
 func _on_environment_object_focused(object_id: String) -> void:
-	focus_interactable_object(object_id)
+	if not focus_interactable_object(object_id):
+		return
+	if object_id == "travel:leave" and coach_overlay != null and coach_overlay.active_anchor_kind() == "interactable_object" and coach_overlay.active_anchor_id() == object_id:
+		call_deferred("_activate_tutorial_map_object", object_id, coach_overlay.active_lesson_id())
+
+
+func _activate_tutorial_map_object(object_id: String, lesson_id: String) -> void:
+	if run_state == null or not run_state.is_tutorial_run() or _world_map_overlay_is_visible():
+		return
+	if coach_overlay == null or coach_overlay.active_lesson_id() != lesson_id or coach_overlay.active_anchor_id() != object_id:
+		return
+	activate_interactable_object(object_id)
 
 
 func _on_environment_object_activated(object_id: String) -> void:
 	activate_interactable_object(object_id)
+
+
+func _on_environment_view_geometry_changed() -> void:
+	if coach_overlay == null or environment_canvas == null:
+		return
+	var anchor_kind := coach_overlay.active_anchor_kind()
+	if anchor_kind != "interactable_object":
+		return
+	var anchor_id := coach_overlay.active_anchor_id()
+	if anchor_id.is_empty():
+		return
+	coach_overlay.update_active_anchor_rect(anchor_kind, anchor_id, environment_canvas.global_rect_for_object(anchor_id))
 
 
 func select_environment_view_object(index: int = 0) -> void:
@@ -9094,6 +9129,8 @@ func _render_foundation_snapshots() -> void:
 func _render_environment_canvas_snapshot() -> void:
 	if environment_canvas == null:
 		return
+	if talk_dock != null:
+		environment_canvas.set_reserved_overlay_rect(talk_dock.environment_reserved_global_rect())
 	environment_canvas.render_environment_snapshot(_environment_view_snapshot())
 	rendered_environment_snapshot_signature = _environment_snapshot_signature()
 
@@ -10307,6 +10344,41 @@ func _on_coach_lesson_completed(lesson_id: String) -> void:
 	var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
 	completed[lesson_id] = true
 	run_state.narrative_flags["tutorial_lessons_completed"] = completed
+	call_deferred("_advance_completed_tutorial_action_dialogue", lesson_id)
+
+
+func _advance_completed_tutorial_action_dialogue(lesson_id: String) -> void:
+	if run_state == null or library == null or not run_state.is_tutorial_run():
+		return
+	var clean_lesson_id := lesson_id.strip_edges()
+	if clean_lesson_id.is_empty():
+		return
+	var event_id := "tutorial_guide:%s" % clean_lesson_id
+	var entry := run_state.pending_talk_event(event_id)
+	if entry.is_empty():
+		return
+	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+	if str(context.get("tutorial_lesson_id", "")).strip_edges() != clean_lesson_id:
+		return
+	var dialogue := library.dialogue(str(entry.get("dialogue_id", "")).strip_edges())
+	var node_id := str(entry.get("current_node", dialogue.get("start", ""))).strip_edges()
+	var node := _dialogue_node(dialogue, node_id)
+	var choices: Array = node.get("choices", []) if typeof(node.get("choices", [])) == TYPE_ARRAY else []
+	if choices.size() != 1 or typeof(choices[0]) != TYPE_DICTIONARY:
+		return
+	var choice: Dictionary = choices[0]
+	var choice_id := str(choice.get("id", "")).strip_edges()
+	if choice_id.is_empty() or not bool(choice.get("end", false)) or not _dialogue_choice_effects(choice).is_empty():
+		return
+	var option_choice := _event_choice(_dialogue_option_for_entry(entry), choice_id)
+	if option_choice.is_empty() or not bool(option_choice.get("enabled", true)):
+		return
+	# This is an internal acknowledgement of an action the player already
+	# performed, not a second player event choice. Resolve it even when that
+	# action opened its own natural popup (the family phone is the canonical
+	# case), otherwise the completed guide entry can strand the real dialogue
+	# behind it in the shared TalkDock queue.
+	_resolve_dialogue_choice(entry, choice_id)
 
 
 func _on_coach_dialogue_requested(lesson_id: String, dialogue_id: String, dialogue_node: String) -> void:
@@ -13396,6 +13468,11 @@ func _small_screen_enabled() -> bool:
 func _refresh_coach_at_boundary() -> void:
 	if coach_overlay == null or run_state == null or current_screen == SCREEN_START:
 		return
+	# Opening Inventory can satisfy a tutorial action. Do not evaluate the next
+	# lesson until the inventory's close refresh, so Pal never talks over the
+	# item surface the player was just asked to inspect.
+	if _run_inventory_popup_is_visible():
+		return
 	coach_overlay.evaluate_at_boundary(_coach_context_snapshot())
 
 
@@ -13485,26 +13562,27 @@ func _coach_anchor_rects() -> Dictionary:
 	_coach_store_control_rect(hud, "map", world_map_title_label if _world_map_overlay_is_visible() else title_label)
 	var objects: Dictionary = {}
 	if environment_canvas != null:
-		var canvas_rect := environment_canvas.get_global_rect()
 		for object_value in _interactable_object_view_list():
 			if typeof(object_value) != TYPE_DICTIONARY:
 				continue
 			var object_data: Dictionary = object_value
-			var normalized_rect := _rect_from_dict(object_data.get("focus_rect", {}))
-			if normalized_rect.size.x <= 0.0 or normalized_rect.size.y <= 0.0:
+			var object_id := str(object_data.get("object_id", ""))
+			var rendered_rect := environment_canvas.global_rect_for_object(object_id)
+			if not rendered_rect.has_area():
 				continue
-			objects[str(object_data.get("object_id", ""))] = Rect2(canvas_rect.position + normalized_rect.position * canvas_rect.size, normalized_rect.size * canvas_rect.size)
+			objects[object_id] = rendered_rect
 	var surface_actions: Dictionary = {}
 	if game_surface_canvas != null:
-		var surface_origin := game_surface_canvas.get_global_rect().position
 		for region_value in game_surface_canvas.hit_regions:
 			if typeof(region_value) != TYPE_DICTIONARY:
 				continue
 			var region: Dictionary = region_value
 			var action_id := str(region.get("action", "")).strip_edges()
-			var local_rect: Rect2 = region.get("rect", Rect2()) if typeof(region.get("rect", Rect2())) == TYPE_RECT2 else Rect2()
-			if not action_id.is_empty() and local_rect.has_area() and not surface_actions.has(action_id):
-				surface_actions[action_id] = Rect2(surface_origin + local_rect.position, local_rect.size)
+			if action_id.is_empty() or surface_actions.has(action_id):
+				continue
+			var rendered_rect: Rect2 = game_surface_canvas.global_rect_for_surface_action(action_id)
+			if rendered_rect.has_area():
+				surface_actions[action_id] = rendered_rect
 	return {"hud_elements": hud, "interactable_objects": objects, "surface_actions": surface_actions}
 
 

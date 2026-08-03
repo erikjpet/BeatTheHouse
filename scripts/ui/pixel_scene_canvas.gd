@@ -6,6 +6,7 @@ extends Control
 signal object_hovered(object_id: String)
 signal object_focused(object_id: String)
 signal object_activated(object_id: String)
+signal view_geometry_changed
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
@@ -42,6 +43,7 @@ const CAMERA_MAX_SMOOTH_DELTA := 1.0 / 30.0
 const CAMERA_ZOOM_SNAP_EPSILON := 0.001
 const CAMERA_OFFSET_SNAP_EPSILON := 0.35
 const OBJECT_LAYOUT_MARGIN := 16.0
+const CONVERSATION_OVERLAY_CLEARANCE := 12.0
 const OBJECT_LAYOUT_GAP := 8.0
 const OBJECT_LAYOUT_MAX_OVERLAP_AREA := 0.01
 const DEFAULT_OBJECT_VISUAL_MIN_SIZE := Vector2(72.0, 48.0)
@@ -141,6 +143,8 @@ var scene_idle_animation_redraw_accumulator := 0.0
 var scene_idle_animation_redraw_count := 0
 var last_touch_press_msec: int = -100000
 var last_touch_press_position: Vector2 = Vector2(-100000.0, -100000.0)
+var reserved_overlay_global_rect := Rect2()
+var overlay_repositioned_object_ids: Array[String] = []
 
 
 func _ready() -> void:
@@ -151,9 +155,11 @@ func _ready() -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
+		_reflow_foundation_objects_for_reserved_overlay()
 		_invalidate_camera_target()
 		_update_camera_target_if_needed()
 		queue_redraw()
+		view_geometry_changed.emit()
 
 
 # Copies a foundation EnvironmentInstance view snapshot into canvas-local state.
@@ -186,6 +192,7 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	_invalidate_camera_target()
 	_update_camera_target_if_needed()
 	queue_redraw()
+	view_geometry_changed.emit()
 
 
 func set_small_screen_mode(enabled: bool) -> void:
@@ -196,6 +203,22 @@ func set_small_screen_mode(enabled: bool) -> void:
 	info_card_visual_object_id = ""
 	_invalidate_camera_target()
 	queue_redraw()
+	view_geometry_changed.emit()
+
+
+# Keeps room interactions out from under a live conversation without changing
+# authored environment data. Rendering, hit testing, camera focus, and coach
+# anchors all consume the same repositioned scene-object records.
+func set_reserved_overlay_rect(global_rect: Rect2) -> bool:
+	if global_rect.is_equal_approx(reserved_overlay_global_rect):
+		return false
+	reserved_overlay_global_rect = global_rect
+	_reflow_foundation_objects_for_reserved_overlay()
+	_invalidate_camera_target()
+	_update_camera_target_if_needed()
+	queue_redraw()
+	view_geometry_changed.emit()
+	return true
 
 
 func debug_soak_snapshot() -> Dictionary:
@@ -211,6 +234,8 @@ func debug_soak_snapshot() -> Dictionary:
 		"object_animation_phase_cache_size": object_animation_phase_cache.size(),
 		"background_texture_loaded": background_texture != null,
 		"scene_idle_animation_redraw_count": scene_idle_animation_redraw_count,
+		"reserved_overlay_global_rect": reserved_overlay_global_rect,
+		"overlay_repositioned_object_ids": overlay_repositioned_object_ids.duplicate(),
 	}
 
 
@@ -248,6 +273,8 @@ func _normalized_drunk_effect_mode(value: String) -> String:
 
 # Updates UI-local selection without changing simulation state.
 func set_selected_object(object_id: String, snap_to_target: bool = true) -> void:
+	var previous_zoom := camera_zoom
+	var previous_offset := camera_offset
 	if selected_object_id != object_id:
 		selected_object_id = object_id
 		_invalidate_camera_target()
@@ -257,6 +284,8 @@ func set_selected_object(object_id: String, snap_to_target: bool = true) -> void
 		camera_offset = target_camera_offset
 		_snap_info_card_to_target()
 	queue_redraw()
+	if absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON:
+		view_geometry_changed.emit()
 
 
 # Selects one rendered view object by index for smoke tests and keyboard/controller affordances.
@@ -321,6 +350,8 @@ func current_view_snapshot() -> Dictionary:
 		"preserves_aspect_ratio": true,
 		"small_screen_mode": small_screen_mode,
 		"minimum_environment_hit_size": SmallScreenPolicyScript.environment_hit_size(small_screen_mode),
+		"reserved_overlay_global_rect": reserved_overlay_global_rect,
+		"overlay_repositioned_object_ids": overlay_repositioned_object_ids.duplicate(),
 		"objects": _copy_array(_active_scene_objects()),
 		"object_layout": _scene_object_layout_snapshot(_active_scene_objects()),
 		"selected_info": _selected_object_info_snapshot(),
@@ -445,8 +476,11 @@ func _process(delta: float) -> void:
 		camera_zoom = target_camera_zoom
 		camera_offset = target_camera_offset
 		_snap_info_card_to_target()
-		if absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON or was_info_animating:
+		var snapped_camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
+		if snapped_camera_changed or was_info_animating:
 			queue_redraw()
+		if snapped_camera_changed:
+			view_geometry_changed.emit()
 		return
 	var scaled_delta := delta * drunk_time_scale
 	flicker += scaled_delta
@@ -463,6 +497,8 @@ func _process(delta: float) -> void:
 	var camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
 	if camera_changed or info_card_animating or was_info_animating or _scene_idle_animation_redraw_due(scaled_delta):
 		queue_redraw()
+	if camera_changed:
+		view_geometry_changed.emit()
 
 
 func _scene_idle_animation_active() -> bool:
@@ -1983,7 +2019,95 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"confirm_action_id": str(record.get("confirm_action_id", "")),
 		}
 		objects.append(_apply_draw_hints(scene_object, object_type, index))
+	return _apply_reserved_overlay_layout(objects)
+
+
+func _reflow_foundation_objects_for_reserved_overlay() -> void:
+	if not uses_foundation_snapshot or foundation_snapshot.is_empty():
+		return
+	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
+	_rebuild_scene_object_cache()
+	if not selected_object_id.is_empty() and _scene_object(selected_object_id).is_empty():
+		selected_object_id = ""
+	if not hovered_object_id.is_empty() and _scene_object(hovered_object_id).is_empty():
+		hovered_object_id = ""
+
+
+func _apply_reserved_overlay_layout(objects: Array) -> Array:
+	overlay_repositioned_object_ids.clear()
+	var reserved_board_rect := _reserved_overlay_board_rect()
+	if reserved_board_rect.size.x <= 0.0 or reserved_board_rect.size.y <= 0.0:
+		return objects
+	var board_bounds := Rect2(Vector2(OBJECT_LAYOUT_MARGIN, OBJECT_LAYOUT_MARGIN), Vector2(BOARD_SIZE) - Vector2(OBJECT_LAYOUT_MARGIN * 2.0, OBJECT_LAYOUT_MARGIN * 2.0))
+	var board_size := Vector2(BOARD_SIZE)
+	for object_value in objects:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		if not bool(object_data.get("interactive", true)):
+			continue
+		var object_rect := _board_rect_for_object(object_data)
+		var protected_rect := object_rect.grow(OBJECT_LABEL_HEIGHT + OBJECT_LABEL_GAP + 4.0)
+		if not protected_rect.intersects(reserved_board_rect):
+			continue
+		var translations: Array[Vector2] = [
+			Vector2(0.0, reserved_board_rect.position.y - CONVERSATION_OVERLAY_CLEARANCE - protected_rect.end.y),
+			Vector2(reserved_board_rect.end.x + CONVERSATION_OVERLAY_CLEARANCE - protected_rect.position.x, 0.0),
+			Vector2(reserved_board_rect.position.x - CONVERSATION_OVERLAY_CLEARANCE - protected_rect.end.x, 0.0),
+		]
+		var best_translation := Vector2.ZERO
+		var best_distance := INF
+		for translation in translations:
+			var candidate := Rect2(protected_rect.position + translation, protected_rect.size)
+			if not board_bounds.encloses(candidate) or candidate.intersects(reserved_board_rect):
+				continue
+			var distance := translation.length_squared()
+			if distance < best_distance:
+				best_distance = distance
+				best_translation = translation
+		if best_distance == INF:
+			continue
+		var moved_center := object_rect.get_center() + best_translation
+		object_data["position"] = Vector2(moved_center.x / board_size.x, moved_center.y / board_size.y)
+		overlay_repositioned_object_ids.append(str(object_data.get("id", "")))
 	return objects
+
+
+func _reserved_overlay_board_rect() -> Rect2:
+	var local_rect := _reserved_overlay_local_rect()
+	if local_rect.size.x <= 0.0 or local_rect.size.y <= 0.0:
+		return Rect2()
+	var base_scale := _board_base_scale()
+	if base_scale <= 0.0:
+		return Rect2()
+	var base_offset := _board_base_offset(base_scale)
+	var board_rect := Rect2((local_rect.position - base_offset) / base_scale, local_rect.size / base_scale)
+	return board_rect.intersection(Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)))
+
+
+func _reserved_overlay_local_rect() -> Rect2:
+	if reserved_overlay_global_rect.size.x <= 0.0 or reserved_overlay_global_rect.size.y <= 0.0 or size.x <= 0.0 or size.y <= 0.0:
+		return Rect2()
+	var canvas_global_rect := get_global_rect()
+	if not canvas_global_rect.intersects(reserved_overlay_global_rect):
+		return Rect2()
+	var intersection := canvas_global_rect.intersection(reserved_overlay_global_rect)
+	var inverse_transform := get_global_transform().affine_inverse()
+	var global_corners := [
+		intersection.position,
+		Vector2(intersection.end.x, intersection.position.y),
+		Vector2(intersection.position.x, intersection.end.y),
+		intersection.end,
+	]
+	var minimum := Vector2(INF, INF)
+	var maximum := Vector2(-INF, -INF)
+	for corner in global_corners:
+		var local_corner: Vector2 = inverse_transform * (corner as Vector2)
+		minimum.x = minf(minimum.x, local_corner.x)
+		minimum.y = minf(minimum.y, local_corner.y)
+		maximum.x = maxf(maximum.x, local_corner.x)
+		maximum.y = maxf(maximum.y, local_corner.y)
+	return Rect2(minimum, maximum - minimum).intersection(Rect2(Vector2.ZERO, size))
 
 
 func _object_layout_footprint(object_data: Dictionary, position: Vector2) -> Rect2:
@@ -2946,6 +3070,7 @@ func _update_camera_target() -> void:
 	target_camera_zoom = FOCUS_ZOOM
 	target_camera_offset = _camera_offset_for_focus(camera_focus_point, target_camera_zoom)
 	target_camera_offset = _camera_offset_with_info_clearance(object_data, object_rect, target_camera_zoom, target_camera_offset)
+	target_camera_offset = _camera_offset_with_reserved_overlay_clearance(object_rect, target_camera_zoom, target_camera_offset)
 
 
 func _camera_offset_for_focus(focus_point: Vector2, zoom: float) -> Vector2:
@@ -2970,6 +3095,39 @@ func _camera_axis_offset(canvas_length: float, scaled_length: float, base_offset
 	var min_offset := canvas_length - scaled_length - base_offset_axis
 	var max_offset := -base_offset_axis
 	return clampf(desired_axis, minf(min_offset, max_offset), maxf(min_offset, max_offset))
+
+
+func _camera_offset_with_reserved_overlay_clearance(object_rect: Rect2, zoom: float, fallback_offset: Vector2) -> Vector2:
+	var reserved_local_rect := _reserved_overlay_local_rect()
+	if reserved_local_rect.size.x <= 0.0 or reserved_local_rect.size.y <= 0.0:
+		return fallback_offset
+	var base_scale := _board_base_scale()
+	var scale := base_scale * zoom
+	var base_offset := _board_base_offset(base_scale)
+	var object_local_rect := Rect2(base_offset + fallback_offset + object_rect.position * scale, object_rect.size * scale).grow(CONVERSATION_OVERLAY_CLEARANCE)
+	if not object_local_rect.intersects(reserved_local_rect):
+		return fallback_offset
+	var translations: Array[Vector2] = [
+		Vector2(0.0, reserved_local_rect.position.y - object_local_rect.end.y),
+		Vector2(reserved_local_rect.end.x - object_local_rect.position.x, 0.0),
+		Vector2(reserved_local_rect.position.x - object_local_rect.end.x, 0.0),
+	]
+	var scaled_board_size := Vector2(BOARD_SIZE) * scale
+	var best_offset := fallback_offset
+	var best_distance := INF
+	for translation in translations:
+		var candidate_offset := Vector2(
+			_camera_axis_offset(size.x, scaled_board_size.x, base_offset.x, fallback_offset.x + translation.x),
+			_camera_axis_offset(size.y, scaled_board_size.y, base_offset.y, fallback_offset.y + translation.y)
+		)
+		var candidate_rect := Rect2(base_offset + candidate_offset + object_rect.position * scale, object_rect.size * scale).grow(CONVERSATION_OVERLAY_CLEARANCE)
+		if candidate_rect.intersects(reserved_local_rect):
+			continue
+		var distance := candidate_offset.distance_squared_to(fallback_offset)
+		if distance < best_distance:
+			best_distance = distance
+			best_offset = candidate_offset
+	return best_offset
 
 
 func _camera_offset_with_info_clearance(object_data: Dictionary, object_rect: Rect2, zoom: float, fallback_offset: Vector2) -> Vector2:
@@ -3119,6 +3277,29 @@ func _board_rect_to_local_rect(board_rect: Rect2) -> Rect2:
 	var base_scale := _board_base_scale()
 	var scale := base_scale * camera_zoom
 	return Rect2(_board_base_offset(base_scale) + camera_offset + board_rect.position * scale, board_rect.size * scale)
+
+
+# Returns the live viewport-space rectangle after the current camera pan/zoom.
+# Cached canvas object data keeps this path free of environment snapshot copies.
+func global_rect_for_object(object_id: String) -> Rect2:
+	var object_data := _scene_object(object_id)
+	if object_data.is_empty():
+		return Rect2()
+	var local_rect := _board_rect_to_local_rect(_interaction_rect_for_object(object_data))
+	var canvas_transform := get_global_transform()
+	var top_left := canvas_transform * local_rect.position
+	var top_right := canvas_transform * Vector2(local_rect.end.x, local_rect.position.y)
+	var bottom_left := canvas_transform * Vector2(local_rect.position.x, local_rect.end.y)
+	var bottom_right := canvas_transform * local_rect.end
+	var minimum := Vector2(
+		minf(minf(top_left.x, top_right.x), minf(bottom_left.x, bottom_right.x)),
+		minf(minf(top_left.y, top_right.y), minf(bottom_left.y, bottom_right.y))
+	)
+	var maximum := Vector2(
+		maxf(maxf(top_left.x, top_right.x), maxf(bottom_left.x, bottom_right.x)),
+		maxf(maxf(top_left.y, top_right.y), maxf(bottom_left.y, bottom_right.y))
+	)
+	return Rect2(minimum, maximum - minimum)
 
 
 func _update_drunk_distortion_protected_rects() -> void:

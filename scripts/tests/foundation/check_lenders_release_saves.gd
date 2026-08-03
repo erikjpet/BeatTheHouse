@@ -3604,6 +3604,7 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	decline_run.set_environment(decline_env)
 	var invite_module := EventModule.new()
 	invite_module.setup(invite_definition, library)
+	_check_grand_casino_invite_table_win_spawn(library, invite_module, kitty, delta, failures)
 	if not invite_module.can_trigger(decline_run, decline_env):
 		failures.append("Grand Casino invite did not trigger at a tier-2 casino before acceptance.")
 	var decline_result := invite_module.resolve(decline_run, decline_env, "not_yet")
@@ -3669,6 +3670,83 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 			var gated_status: Dictionary = loaded_gated.travel_route_status(locked_route)
 			if bool(gated_status.get("available", true)) or bool(gated_status.get("hidden", true)) or not bool(gated_status.get("locked", false)):
 				failures.append("Grand Casino locked route hint did not survive save/load without the invite flag.")
+
+
+func _check_grand_casino_invite_table_win_spawn(library: ContentLibrary, invite_module: EventModule, kitty: Dictionary, delta: Dictionary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("GRAND-INVITE-TABLE-WIN")
+	run_state.bankroll = 1000
+	var map := WorldMapScript.new(library)
+	run_state.set_world_map(map.build(run_state, run_state.create_rng("table_win_map")))
+	var source_node_id := run_state.current_world_node_id()
+	var source_archetype := _archetype_by_id(library, "gas_station_casino")
+	var source_environment := EnvironmentInstance.from_archetype(source_archetype, 1, run_state.create_rng("table_win_source"), library).to_dict()
+	source_environment["id"] = "table_win_source_room"
+	source_environment["world_node_id"] = source_node_id
+	var source_event_ids := _string_array(source_environment.get("event_ids", []))
+	source_event_ids.erase(RunState.GRAND_CASINO_INVITATION_EVENT_ID)
+	source_environment["event_ids"] = source_event_ids
+	run_state.set_environment(source_environment)
+	var default_environment := EnvironmentInstance.from_archetype(delta, 2, run_state.create_rng("table_win_default"), library).to_dict()
+	default_environment["world_node_id"] = "delta_queen"
+	run_state.world_map = WorldMapScript.store_environment(run_state.world_map, "delta_queen", default_environment)
+
+	GameModule.apply_result(run_state, {"ok": true, "game_id": "roulette", "source_id": "roulette", "action_id": "spin_roulette", "deltas": {"bankroll_delta": 300}})
+	GameModule.apply_result(run_state, {"ok": true, "game_id": "slot", "source_id": "slot", "action_id": "spin", "deltas": {"bankroll_delta": 1000}})
+	if bool(run_state.narrative_flags.get(RunState.GRAND_CASINO_INVITATION_TABLE_WIN_FLAG, false)):
+		failures.append("Grand Casino table-win invite triggered at exactly $300 or from a non-table game.")
+
+	var qualifying_result := {"ok": true, "game_id": "blackjack", "source_id": "blackjack", "action_id": "play_basic", "deltas": {"bankroll_delta": 301}}
+	GameModule.apply_result(run_state, qualifying_result)
+	if not bool(run_state.narrative_flags.get(RunState.GRAND_CASINO_INVITATION_TABLE_WIN_FLAG, false)):
+		failures.append("A net blackjack win over $300 did not trigger the Grand Casino invitation.")
+	if not _string_array(run_state.current_environment.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
+		failures.append("The table-win invitation did not spawn in the player's current environment.")
+	if not bool(qualifying_result.get("grand_casino_invitation_spawned", false)) or _string_array(qualifying_result.get("messages", [])).is_empty():
+		failures.append("The qualifying table result did not tell the player that the invitation spawned.")
+	if not invite_module.can_trigger(run_state, run_state.current_environment):
+		failures.append("The table-win invitation spawned but was not interactable in its earned environment.")
+	var default_node := WorldMapScript.node_by_id(run_state.world_map, "delta_queen")
+	var stored_default: Dictionary = default_node.get("environment", {}) if typeof(default_node.get("environment", {})) == TYPE_DICTIONARY else {}
+	if _string_array(stored_default.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
+		failures.append("The table-win trigger left a second invitation at the default Tier-2 spawn.")
+
+	run_state.store_current_world_node_environment()
+	var other_environment := EnvironmentInstance.from_archetype(kitty, 2, run_state.create_rng("table_win_other"), library).to_dict()
+	other_environment["world_node_id"] = "kitty_cat_lounge"
+	run_state.set_environment(other_environment)
+	if _string_array(run_state.current_environment.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
+		failures.append("Entering another default Tier-2 venue regenerated a second table-win invitation.")
+	GameModule.apply_result(run_state, {"ok": true, "game_id": "roulette", "source_id": "roulette", "action_id": "spin_roulette", "deltas": {"bankroll_delta": 900}})
+	if str(run_state.narrative_flags.get("grand_casino_invite_table_win_environment_id", "")) != "table_win_source_room":
+		failures.append("A later table win relocated an invitation that had already spawned.")
+
+	var loaded: RunState = RunStateScript.new()
+	loaded.from_dict(run_state.to_dict())
+	var loaded_source_node := WorldMapScript.node_by_id(loaded.world_map, source_node_id)
+	var loaded_source: Dictionary = loaded_source_node.get("environment", {}) if typeof(loaded_source_node.get("environment", {})) == TYPE_DICTIONARY else {}
+	if not _string_array(loaded_source.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
+		failures.append("The earned invitation location did not survive save/load.")
+	loaded.set_environment(loaded_source)
+	if not invite_module.can_trigger(loaded, loaded.current_environment):
+		failures.append("The earned invitation was not interactable after returning to its saved location.")
+	else:
+		var accept_result := invite_module.resolve(loaded, loaded.current_environment, "accept_invite")
+		if not bool(accept_result.get("ok", false)) or not bool(loaded.narrative_flags.get("grand_casino_invite", false)):
+			failures.append("The earned table-win invitation could not be accepted normally.")
+		if _string_array(loaded.current_environment.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID) or _world_map_stored_event_count(loaded.world_map, RunState.GRAND_CASINO_INVITATION_EVENT_ID) != 0:
+			failures.append("Accepting the table-win invitation left another spawned copy in the run.")
+
+
+func _world_map_stored_event_count(map_data: Dictionary, event_id: String) -> int:
+	var count := 0
+	for node_value in map_data.get("nodes", []):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var environment_value: Variant = (node_value as Dictionary).get("environment", {})
+		if typeof(environment_value) == TYPE_DICTIONARY and _string_array((environment_value as Dictionary).get("event_ids", [])).has(event_id):
+			count += 1
+	return count
 
 
 func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Dictionary, locked_route: Dictionary, failures: Array) -> void:

@@ -4,6 +4,11 @@ extends RefCounted
 const CHALLENGE_ID := "tutorial_first_card"
 const LESSON_SCOPE := "tutorial_run"
 const INVITATION_FLAG := "grand_casino_invite"
+const APARTMENT_ID := "apartment"
+const CORNER_STORE_ID := "corner_store"
+const GAS_CASINO_ID := "gas_station_casino"
+const UNDERGROUND_CASINO_ID := "small_underground_casino"
+const GRAND_CASINO_ID := "grand_casino"
 
 
 static func is_tutorial_challenge(config: Dictionary) -> bool:
@@ -74,3 +79,33 @@ static func lesson_is_tutorial(lesson_id: String, lessons: Array) -> bool:
 
 static func invitation_received(run_state: RunState) -> bool:
 	return run_state != null and bool(run_state.narrative_flags.get(INVITATION_FLAG, false))
+
+
+# Tutorial travel is an authored sequence, not a sample from the normal-run
+# world-map candidate pool. Keep this presentation policy tutorial-scoped so
+# normal route discovery and selection remain byte-identical.
+static func travel_target_ids(run_state: RunState, candidate_ids: Array) -> Array:
+	if run_state == null or not run_state.is_tutorial_run():
+		return candidate_ids.duplicate()
+	var environment_id := str(run_state.current_environment.get("archetype_id", run_state.current_world_node_id())).strip_edges()
+	var authored_ids: Array = []
+	match environment_id:
+		APARTMENT_ID:
+			authored_ids = [CORNER_STORE_ID]
+		CORNER_STORE_ID:
+			authored_ids = [GAS_CASINO_ID]
+			if bool(run_state.narrative_flags.get("underground_tip", false)):
+				authored_ids.append(UNDERGROUND_CASINO_ID)
+		GAS_CASINO_ID:
+			authored_ids = [UNDERGROUND_CASINO_ID]
+		UNDERGROUND_CASINO_ID:
+			if invitation_received(run_state):
+				authored_ids = [GRAND_CASINO_ID]
+		_:
+			return candidate_ids.duplicate()
+	var result: Array = []
+	for target_id_value in authored_ids:
+		var target_id := str(target_id_value)
+		if candidate_ids.has(target_id) or (run_state.has_world_map() and WorldMap.is_node_visible(run_state.world_map, target_id)):
+			result.append(target_id)
+	return result

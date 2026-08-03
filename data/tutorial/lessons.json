@@ -30,17 +30,17 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "map_corner",
     "trigger": {"depends_on": ["tutorial_inventory_xray"], "environment_archetype": "apartment", "state_predicates": []},
-    "anchor": {"kind": "hud_element", "id": "map"},
+    "anchor": {"kind": "interactable_object", "id": "travel:leave"},
     "copy": "Pal points to the travel map.",
     "completion": {"type": "anchored_action", "action_id": "map"},
-    "gating": {"allowed_action_ids": ["map"]}
+    "gating": {"allowed_action_ids": ["travel:leave", "map"]}
   },
   {
     "id": "tutorial_travel_corner",
     "scope": "tutorial_run",
     "delivery": "dialogue",
     "dialogue_id": "tutorial_pal_guidance",
-    "dialogue_node": "map_corner",
+    "dialogue_node": "map_destination",
     "trigger": {"depends_on": ["tutorial_open_map_corner"], "screen": "TRAVEL", "state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]},
     "anchor": {"kind": "hud_element", "id": "map"},
     "copy": "The corner store is the only first destination.",
@@ -80,7 +80,7 @@
     "trigger": {"depends_on": ["tutorial_inspect_pencil"], "environment_archetype": "corner_store", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "item:ledger_pencil"},
     "copy": "Buy either inspected item.",
-    "completion": {"type": "any_action"},
+    "completion": {"type": "one_of_actions", "action_ids": ["item:instant_coffee", "item:ledger_pencil"]},
     "gating": {"allowed_action_ids": ["item:instant_coffee", "item:ledger_pencil"]}
   },
   {
@@ -91,7 +91,7 @@
     "dialogue_node": "crew_warning",
     "trigger": {"depends_on": ["tutorial_buy_store_item"], "environment_archetype": "corner_store", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "lender:the_crew"},
-    "copy": "Pal identifies the Crew as a last-resort lender.",
+    "copy": "Pal explains that the Crew's cash comes with work attached.",
     "completion": {"type": "explicit_ok"}
   },
   {
@@ -136,10 +136,10 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "route_split",
     "trigger": {"depends_on": ["tutorial_parking_tip"], "environment_archetype": "corner_store", "state_predicates": [{"path": "run.flags.underground_tip", "op": "equals", "value": true}]},
-    "anchor": {"kind": "hud_element", "id": "map"},
+    "anchor": {"kind": "interactable_object", "id": "travel:leave"},
     "copy": "Pal explains the optional gas detour and direct underground route.",
     "completion": {"type": "anchored_action", "action_id": "map"},
-    "gating": {"allowed_action_ids": ["map"]}
+    "gating": {"allowed_action_ids": ["travel:leave", "map"]}
   },
   {
     "id": "tutorial_route_choice",
@@ -150,7 +150,7 @@
     "trigger": {"depends_on": ["tutorial_route_map"], "screen": "TRAVEL", "state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]},
     "anchor": {"kind": "hud_element", "id": "map"},
     "copy": "Choose the recommended gas detour or skip straight underground.",
-    "completion": {"type": "any_action"},
+    "completion": {"type": "one_of_actions", "action_ids": ["travel:gas_station_casino", "travel:small_underground_casino"]},
     "gating": {"allowed_action_ids": ["travel:gas_station_casino", "travel:small_underground_casino"]}
   },
   {
@@ -220,10 +220,10 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "gas_depart",
     "trigger": {"depends_on": ["tutorial_gas_redeem"], "environment_archetype": "gas_station_casino", "state_predicates": []},
-    "anchor": {"kind": "hud_element", "id": "map"},
+    "anchor": {"kind": "interactable_object", "id": "travel:leave"},
     "copy": "Open the map for the underground casino.",
     "completion": {"type": "anchored_action", "action_id": "map"},
-    "gating": {"allowed_action_ids": ["map"]}
+    "gating": {"allowed_action_ids": ["travel:leave", "map"]}
   },
   {
     "id": "tutorial_gas_travel_underground",
@@ -387,10 +387,10 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "grand_depart",
     "trigger": {"depends_on": ["tutorial_accept_invitation"], "environment_archetype": "small_underground_casino", "state_predicates": [{"path": "run.tutorial_invited", "op": "equals", "value": true}]},
-    "anchor": {"kind": "hud_element", "id": "map"},
+    "anchor": {"kind": "interactable_object", "id": "travel:leave"},
     "copy": "Pal says goodbye and warns you about Rourke.",
     "completion": {"type": "anchored_action", "action_id": "map"},
-    "gating": {"allowed_action_ids": ["map"]}
+    "gating": {"allowed_action_ids": ["travel:leave", "map"]}
   },
   {
     "id": "tutorial_travel_grand",

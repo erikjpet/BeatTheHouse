@@ -3051,8 +3051,23 @@ func _world_map_beach_route_gate_ok(map_data: Dictionary, label: String, library
 	if not delta_targets.has("beach"):
 		failures.append("World map beach should be travelable from delta_queen for %s." % label)
 		return false
-	if map_service.route_for_target(gated_map, "delta_queen", "beach").is_empty():
+	var access_route: Dictionary = map_service.route_for_target(gated_map, "delta_queen", "beach")
+	if access_route.is_empty():
 		failures.append("World map beach route should resolve from delta_queen for %s." % label)
+		return false
+	if int(access_route.get("cost", -1)) != 0 \
+		or int(access_route.get("base_cost", -1)) != 0 \
+		or str(access_route.get("travel_method_kind", "")) != WorldMapScript.TRAVEL_METHOD_WALK \
+		or str(access_route.get("travel_method", "")) != "Walk" \
+		or not bool(access_route.get("beach_access_walk", false)):
+		failures.append("Delta Queen access to the Beach must be a free dockside walk for %s: %s." % [label, JSON.stringify(access_route)])
+		return false
+	var broke_access_run: RunState = RunStateScript.new()
+	broke_access_run.start_new("BEACH-ACCESS-FREE")
+	broke_access_run.bankroll = 0
+	var access_status := broke_access_run.travel_route_status(access_route)
+	if not bool(access_status.get("available", false)) or int(access_status.get("cost", -1)) != 0:
+		failures.append("A broke player could not take the free Delta Queen to Beach walk for %s." % label)
 		return false
 	gated_map = WorldMapScript.enter_node(gated_map, "beach", {})
 	var beach_targets := WorldMapScript.travel_target_ids(gated_map, "beach")

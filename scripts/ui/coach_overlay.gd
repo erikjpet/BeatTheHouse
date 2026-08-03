@@ -14,16 +14,25 @@ class FocusLayer:
 	const CoachFocusViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 
 	var snapshot: Dictionary = {}
+	var live_anchor_rect := Rect2()
+	var live_anchor_rect_valid := false
 
 	func set_snapshot(next_snapshot: Dictionary) -> void:
 		snapshot = next_snapshot.duplicate(true)
+		live_anchor_rect = Rect2()
+		live_anchor_rect_valid = false
+		queue_redraw()
+
+	func set_live_anchor_rect(anchor_rect: Rect2) -> void:
+		live_anchor_rect = anchor_rect
+		live_anchor_rect_valid = true
 		queue_redraw()
 
 	func _draw() -> void:
 		if snapshot.is_empty() or not bool(snapshot.get("visible", false)):
 			return
-		var anchor: Rect2 = CoachFocusViewModelScript._rect(snapshot.get("anchor_rect", {}))
-		var alpha := 0.40 if bool(snapshot.get("gating", false)) else 0.10
+		var anchor: Rect2 = live_anchor_rect if live_anchor_rect_valid else CoachFocusViewModelScript._rect(snapshot.get("anchor_rect", {}))
+		var alpha := 0.40 if bool(snapshot.get("highlight_emphasis", false)) else 0.10
 		if not anchor.has_area():
 			draw_rect(Rect2(Vector2.ZERO, size), Color(0.0, 0.0, 0.0, alpha), true)
 			return
@@ -45,6 +54,10 @@ var active_context: Dictionary = {}
 var latest_context: Dictionary = {}
 var prepared_snapshot: Dictionary = {}
 var active_layout_key := 0
+var live_anchor_rect := Rect2()
+var live_anchor_rect_valid := false
+var active_anchor_kind_value := ""
+var active_anchor_id_value := ""
 var tips_enabled := true
 var reduce_motion := false
 var small_screen := false
@@ -79,6 +92,10 @@ func restore_seen(next_seen: Dictionary) -> void:
 	latest_context = {}
 	prepared_snapshot = {}
 	active_layout_key = 0
+	live_anchor_rect = Rect2()
+	live_anchor_rect_valid = false
+	active_anchor_kind_value = ""
+	active_anchor_id_value = ""
 	visible = false
 
 
@@ -174,6 +191,10 @@ func suspend() -> void:
 	latest_context = {}
 	prepared_snapshot = {}
 	active_layout_key = 0
+	live_anchor_rect = Rect2()
+	live_anchor_rect_valid = false
+	active_anchor_kind_value = ""
+	active_anchor_id_value = ""
 	visible = false
 	if panel != null:
 		panel.visible = false
@@ -188,6 +209,9 @@ func input_allowed(action_id: String) -> bool:
 
 func current_snapshot() -> Dictionary:
 	var snapshot := prepared_snapshot.duplicate(true)
+	if live_anchor_rect_valid:
+		snapshot["anchor_rect"] = CoachViewModelScript._rect_dict(live_anchor_rect)
+		snapshot["anchor_found"] = live_anchor_rect.has_area()
 	snapshot["visible"] = visible and not active_lesson.is_empty()
 	snapshot["queued_count"] = queued_lessons.size()
 	return snapshot
@@ -256,6 +280,10 @@ func _render_active(play_motion: bool) -> void:
 	active_context["reduce_motion"] = reduce_motion
 	active_context["small_screen"] = small_screen
 	prepared_snapshot = CoachViewModelScript.build(active_lesson, active_context)
+	live_anchor_rect = CoachViewModelScript._rect(prepared_snapshot.get("anchor_rect", {}))
+	live_anchor_rect_valid = true
+	active_anchor_kind_value = str(prepared_snapshot.get("anchor_kind", ""))
+	active_anchor_id_value = str(prepared_snapshot.get("anchor_id", "")).strip_edges()
 	active_layout_key = _layout_key(active_lesson, active_context)
 	eyebrow_label.text = str(prepared_snapshot.get("eyebrow", "DEALER'S ADVICE"))
 	copy_label.text = str(prepared_snapshot.get("copy", ""))
@@ -283,6 +311,10 @@ func _finish_active() -> void:
 	active_context = {}
 	prepared_snapshot = {}
 	active_layout_key = 0
+	live_anchor_rect = Rect2()
+	live_anchor_rect_valid = false
+	active_anchor_kind_value = ""
+	active_anchor_id_value = ""
 	visible = false
 	if panel != null:
 		panel.visible = false
@@ -290,6 +322,33 @@ func _finish_active() -> void:
 	_stop_attention_motion()
 	if not completed_id.is_empty():
 		lesson_completed.emit(completed_id)
+
+
+func active_anchor_kind() -> String:
+	return active_anchor_kind_value
+
+
+func active_lesson_id() -> String:
+	return str(active_lesson.get("id", "")).strip_edges()
+
+
+func active_anchor_id() -> String:
+	return active_anchor_id_value
+
+
+# Moves only the active focus rectangle. Tutorial state, trigger evaluation,
+# and the prepared guidance model remain unchanged during camera motion.
+func update_active_anchor_rect(anchor_kind: String, anchor_id: String, next_rect: Rect2) -> bool:
+	if active_lesson.is_empty() or anchor_kind != active_anchor_kind() or anchor_id != active_anchor_id():
+		return false
+	var clipped_rect := next_rect.intersection(Rect2(Vector2.ZERO, size)) if next_rect.has_area() else Rect2()
+	if live_anchor_rect_valid and live_anchor_rect.is_equal_approx(clipped_rect):
+		return false
+	live_anchor_rect = clipped_rect
+	live_anchor_rect_valid = true
+	if focus_layer != null:
+		focus_layer.set_live_anchor_rect(clipped_rect)
+	return true
 
 
 func _on_ok_pressed() -> void:

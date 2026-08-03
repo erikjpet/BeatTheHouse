@@ -320,6 +320,10 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 		choice["attribute_badges"] = []
 		return choice
 	choice["distance"] = str(status.get("distance", choice.get("distance", "")))
+	# The status is authoritative for contextual fares such as
+	# free_from_archetypes. Keeping the authored/generated fare here made a
+	# genuinely free route display and badge itself as paid.
+	choice["cost"] = int(status.get("cost", choice.get("cost", route.get("cost", 0))))
 	choice["risk_decay"] = int(status.get("risk_decay", choice.get("risk_decay", 0)))
 	choice["risk_text"] = str(status.get("risk_text", ""))
 	choice["risk_event"] = host._copy_dict(status.get("risk_event", {}))
@@ -381,6 +385,7 @@ static func travel_target_ids(host: Variant) -> Array:
 	for local_target_id in host._string_array(flags.get("casino_room_targets", [])):
 		if not result.has(local_target_id):
 			result.append(local_target_id)
+	result = host.TutorialFlowScript.travel_target_ids(host.run_state, result)
 	host.travel_target_ids_cache_key = cache_key
 	host.travel_target_ids_cache = result.duplicate()
 	return result
@@ -393,10 +398,17 @@ static func travel_base_cache_key(host: Variant) -> String:
 	var map_visited_count = 0
 	var map_node_count = 0
 	var closing_status = host.run_state.closing_time_status()
+	var tutorial_route_stage := ""
+	if host.run_state.is_tutorial_run():
+		tutorial_route_stage = "%s:%s:%s" % [
+			str(host.run_state.current_environment.get("archetype_id", "")),
+			str(bool(host.run_state.narrative_flags.get("underground_tip", false))),
+			str(bool(host.run_state.narrative_flags.get("grand_casino_invite", false))),
+		]
 	if host.run_state.has_world_map():
 		map_visited_count = host._copy_array(host.run_state.world_map.get("visited_path", [])).size()
 		map_node_count = host._copy_array(host.run_state.world_map.get("nodes", [])).size()
-	return "%s|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%s|%d" % [
+	return "%s|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%s|%d|%s" % [
 		host.current_screen,
 		str(host.run_state.current_environment.get("id", "")),
 		map_current_id,
@@ -413,6 +425,7 @@ static func travel_base_cache_key(host: Variant) -> String:
 		host.run_state.game_minute_of_day(),
 		str(closing_status.get("phase", "")),
 		int(closing_status.get("grace_actions_remaining", 0)),
+		tutorial_route_stage,
 	]
 
 

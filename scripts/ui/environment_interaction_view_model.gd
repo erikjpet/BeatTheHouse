@@ -45,7 +45,9 @@ static func snapshot_signature(run_state: RunState) -> String:
 static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dictionary:
 	if run_state == null:
 		return {}
-	var snapshot := run_state.current_environment.duplicate(true)
+	# The room canvas is a read-only presentation surface. Machine state can
+	# contain large masks/decks and is neither rendered nor mutated here.
+	var snapshot := RunState.environment_context_snapshot(run_state.current_environment)
 	var recent_result: Dictionary = data.get("recent_result", {})
 	var recent_deltas: Dictionary = recent_result.get("deltas", {})
 	snapshot["suspicion_level"] = run_state.suspicion_level()

@@ -64,6 +64,9 @@ const GRAND_CASINO_ARCHETYPE_IDS := [
 ]
 const GRAND_CASINO_TABLE_GAME_IDS := ["blackjack", "baccarat", "roulette"]
 const GRAND_CASINO_CHIP_GAME_IDS := ["blackjack", "baccarat", "roulette", "slot", "video_poker", "pull_tabs", "bar_dice"]
+const GRAND_CASINO_INVITATION_EVENT_ID := "grand_casino_invite"
+const GRAND_CASINO_INVITATION_TABLE_WIN_THRESHOLD := 300
+const GRAND_CASINO_INVITATION_TABLE_WIN_FLAG := "grand_casino_invite_table_win_spawned"
 const GRAND_CASINO_OBJECTIVE_ID := "grand_casino_demo_bankroll"
 const GRAND_CASINO_SHOWDOWN_EVENT_ID := "the_house_calls"
 const GRAND_CASINO_HIGH_ROLLER_EVENT_ID := "high_roller_cashout"
@@ -1251,6 +1254,7 @@ func set_environment(environment_data: Dictionary) -> void:
 		environment_history.append(_environment_history_entry(current_environment))
 		_compact_environment_history()
 	current_environment = _normalize_environment(environment_data)
+	_reconcile_grand_casino_invitation_uniqueness()
 	restore_portable_ticket_piles_to_environment(current_environment)
 	current_environment["entered_game_clock_minutes"] = maxi(0, game_clock_minutes)
 	if _is_grand_casino_environment(current_environment):
@@ -1400,7 +1404,7 @@ func store_current_world_node_environment() -> void:
 		var main_floor := grand_casino_room_environment(GRAND_CASINO_ARCHETYPE_ID)
 		if not main_floor.is_empty():
 			stored_environment = main_floor
-	world_map = WorldMap.store_environment(world_map, node_id, stored_environment)
+	world_map = WorldMap.store_environment(world_map, node_id, _environment_for_persistent_storage(stored_environment))
 
 
 func store_grand_casino_room_environment(environment: Dictionary) -> void:
@@ -1452,7 +1456,7 @@ func grand_casino_room_access_status(target_archetype_id: String, high_limit_buy
 func enter_world_node(node_id: String, environment_data: Dictionary) -> void:
 	if world_map.is_empty() or node_id.strip_edges().is_empty():
 		return
-	world_map = WorldMap.enter_node(world_map, node_id, environment_data)
+	world_map = WorldMap.enter_node(world_map, node_id, _environment_for_persistent_storage(environment_data))
 
 
 func environment_travel_count() -> int:
@@ -2680,6 +2684,113 @@ func record_profile_game_result(result: Dictionary) -> void:
 		narrative_flags["profile_biggest_single_win"] = maxi(maxi(0, int(narrative_flags.get("profile_biggest_single_win", 0))), bankroll_delta)
 	elif bankroll_delta < 0:
 		narrative_flags["profile_bankroll_lost"] = maxi(0, int(narrative_flags.get("profile_bankroll_lost", 0))) + absi(bankroll_delta)
+	_try_spawn_grand_casino_invitation_from_table_win(game_id, bankroll_delta, result)
+
+
+func _try_spawn_grand_casino_invitation_from_table_win(game_id: String, bankroll_delta: int, result: Dictionary) -> bool:
+	if not GRAND_CASINO_TABLE_GAME_IDS.has(game_id):
+		return false
+	if bankroll_delta <= GRAND_CASINO_INVITATION_TABLE_WIN_THRESHOLD:
+		return false
+	if bool(narrative_flags.get("grand_casino_invite", false)) or bool(narrative_flags.get(GRAND_CASINO_INVITATION_TABLE_WIN_FLAG, false)):
+		return false
+	if current_environment.is_empty():
+		return false
+	var environment_id := str(current_environment.get("id", "")).strip_edges()
+	var world_node_id := str(current_environment.get("world_node_id", current_world_node_id())).strip_edges()
+	var invitation_message := "A host notices the $%d table win and leaves a High Roller Invitation nearby." % bankroll_delta
+	narrative_flags[GRAND_CASINO_INVITATION_TABLE_WIN_FLAG] = true
+	narrative_flags["grand_casino_invite_table_win_game_id"] = game_id
+	narrative_flags["grand_casino_invite_table_win_amount"] = bankroll_delta
+	narrative_flags["grand_casino_invite_table_win_environment_id"] = environment_id
+	narrative_flags["grand_casino_invite_table_win_world_node_id"] = world_node_id
+	_reconcile_grand_casino_invitation_uniqueness()
+	store_current_world_node_environment()
+	log_story({
+		"type": "grand_casino_invitation_table_win",
+		"event_id": GRAND_CASINO_INVITATION_EVENT_ID,
+		"game_id": game_id,
+		"bankroll_delta": bankroll_delta,
+		"environment_id": environment_id,
+		"world_node_id": world_node_id,
+		"message": invitation_message,
+	})
+	var result_deltas := _copy_dict(result.get("deltas", {}))
+	var messages := _copy_array(result.get("messages", result_deltas.get("messages", [])))
+	if not messages.has(invitation_message):
+		messages.append(invitation_message)
+	result["messages"] = messages
+	var delta_messages := _copy_array(result_deltas.get("messages", []))
+	if not delta_messages.has(invitation_message):
+		delta_messages.append(invitation_message)
+	result_deltas["messages"] = delta_messages
+	result["deltas"] = result_deltas
+	result["grand_casino_invitation_spawned"] = true
+	result["grand_casino_invitation_event_id"] = GRAND_CASINO_INVITATION_EVENT_ID
+	return true
+
+
+# Keeps the table-win invitation at its earned location and strips generated
+# Tier-2 copies. Once accepted, no environment retains a second invitation.
+func reconcile_grand_casino_invitation_uniqueness() -> void:
+	_reconcile_grand_casino_invitation_uniqueness()
+
+
+func _reconcile_grand_casino_invitation_uniqueness() -> void:
+	var invitation_received := bool(narrative_flags.get("grand_casino_invite", false))
+	var table_win_spawned := bool(narrative_flags.get(GRAND_CASINO_INVITATION_TABLE_WIN_FLAG, false))
+	if not invitation_received and not table_win_spawned:
+		return
+	if not current_environment.is_empty():
+		var keep_current := not invitation_received and _is_grand_casino_invitation_table_win_environment(current_environment)
+		_set_environment_event_presence(current_environment, GRAND_CASINO_INVITATION_EVENT_ID, keep_current)
+	var nodes := _copy_array(world_map.get("nodes", []))
+	var nodes_changed := false
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = nodes[index]
+		var stored_value: Variant = node.get("environment", {})
+		if typeof(stored_value) != TYPE_DICTIONARY or (stored_value as Dictionary).is_empty():
+			continue
+		var stored: Dictionary = stored_value
+		var keep_stored := not invitation_received and _is_grand_casino_invitation_table_win_environment(stored)
+		if _set_environment_event_presence(stored, GRAND_CASINO_INVITATION_EVENT_ID, keep_stored):
+			node["environment"] = stored
+			nodes[index] = node
+			nodes_changed = true
+	if nodes_changed:
+		world_map["nodes"] = nodes
+
+
+func _is_grand_casino_invitation_table_win_environment(environment: Dictionary) -> bool:
+	var source_node_id := str(narrative_flags.get("grand_casino_invite_table_win_world_node_id", "")).strip_edges()
+	var environment_node_id := str(environment.get("world_node_id", "")).strip_edges()
+	if not source_node_id.is_empty() and environment_node_id == source_node_id:
+		return true
+	var source_environment_id := str(narrative_flags.get("grand_casino_invite_table_win_environment_id", "")).strip_edges()
+	return not source_environment_id.is_empty() and str(environment.get("id", "")).strip_edges() == source_environment_id
+
+
+func _set_environment_event_presence(environment: Dictionary, event_id: String, present: bool) -> bool:
+	var event_ids := _copy_array(environment.get("event_ids", []))
+	var changed := false
+	if present:
+		if not event_ids.has(event_id):
+			event_ids.append(event_id)
+			changed = true
+		var resolved_ids := _copy_array(environment.get("resolved_event_ids", []))
+		if resolved_ids.has(event_id):
+			resolved_ids.erase(event_id)
+			environment["resolved_event_ids"] = resolved_ids
+			changed = true
+	elif event_ids.has(event_id):
+		event_ids.erase(event_id)
+		changed = true
+	if changed:
+		environment["event_ids"] = event_ids
+		environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	return changed
 
 
 func _grand_casino_demo_objective_status(source: Dictionary, objective: Dictionary) -> Dictionary:
@@ -2977,7 +3088,7 @@ func _grant_grand_casino_players_card_tier(target_tier: String, queue_dialogue: 
 		var dialogue_id := str(GRAND_CASINO_LINDA_TIER_DIALOGUES[tier_id])
 		enqueue_dialogue(dialogue_id, "dialogue:%s" % dialogue_id, GRAND_CASINO_LINDA_SPEAKER, "recognition", "players_card_tier", {
 			"tier": tier_id,
-			"environment_snapshot": current_environment.duplicate(true),
+			"environment_snapshot": environment_context_snapshot(current_environment),
 		})
 	return true
 
@@ -5080,7 +5191,7 @@ func remember_portable_ticket_state(kind: String, environment: Dictionary, state
 	# Machine modules hand over their owned arrays at an action boundary. Keep
 	# those live references here; save serialization is the deep-copy boundary.
 	# Re-copying an accumulated ticket pile after every purchase is quadratic.
-	var stored := state.duplicate(false)
+	var stored := _portable_ticket_state_for_live_storage(clean_kind, state)
 	stored["origin_key"] = origin_key
 	stored["origin_name"] = portable_ticket_origin_name(environment)
 	stored["origin_environment_id"] = str(environment.get("id", "")).strip_edges()
@@ -5093,7 +5204,7 @@ func remember_portable_ticket_state(kind: String, environment: Dictionary, state
 	_sync_portable_ticket_inventory_markers()
 
 
-func capture_portable_ticket_piles_from_environment(environment: Dictionary) -> void:
+func capture_portable_ticket_piles_from_environment(environment: Dictionary, only_missing: bool = false) -> void:
 	if environment.is_empty():
 		return
 	var game_states_value: Variant = environment.get("game_states", {})
@@ -5105,8 +5216,11 @@ func capture_portable_ticket_piles_from_environment(environment: Dictionary) -> 
 		var machine_value: Variant = game_states.get(kind, {})
 		if typeof(machine_value) != TYPE_DICTIONARY or (machine_value as Dictionary).is_empty():
 			continue
+		var existing := portable_ticket_state(kind, environment)
+		if only_missing and not existing.is_empty():
+			continue
 		var player_state := _portable_ticket_player_state(kind, machine_value as Dictionary)
-		if _portable_ticket_state_count(kind, player_state) > 0 or not portable_ticket_state(kind, environment).is_empty():
+		if _portable_ticket_state_count(kind, player_state) > 0 or not existing.is_empty():
 			remember_portable_ticket_state(kind, environment, player_state)
 
 
@@ -7314,8 +7428,10 @@ func to_dict() -> Dictionary:
 		"alcoholic_level": alcoholic_level,
 		"pending_drunk_absorption": pending_drunk_absorption.duplicate(true),
 		"drunk_distortion_suppression_turns": drunk_distortion_suppression_turns,
-		"current_environment": current_environment.duplicate(true),
-		"world_map": WorldMap.normalize(world_map),
+		# Player-owned ticket state is serialized once in portable_ticket_piles.
+		# The current/world-node machine copies retain only location-owned stock.
+		"current_environment": _environment_for_persistent_storage(current_environment),
+		"world_map": _compact_world_map_ticket_storage(WorldMap.normalize(world_map)),
 		"grand_casino_room_states": _grand_casino_room_states_for_save(),
 		"grand_casino_staffing": grand_casino_staffing.duplicate(true),
 		"rourke_current_room": rourke_current_room,
@@ -7387,11 +7503,11 @@ func from_dict(data: Dictionary) -> void:
 	current_environment = _normalize_environment(_copy_dict(data.get("current_environment", {})))
 	# Import current-room machine ownership from pre-portable saves, then make
 	# the portable record authoritative for the restored surface.
-	capture_portable_ticket_piles_from_environment(current_environment)
+	capture_portable_ticket_piles_from_environment(current_environment, true)
 	restore_portable_ticket_piles_to_environment(current_environment)
 	_sync_portable_ticket_inventory_markers()
 	_apply_sals_forfeited_shelf_to_current_environment()
-	world_map = WorldMap.normalize(_copy_dict(data.get("world_map", {})))
+	world_map = _compact_world_map_ticket_storage(WorldMap.normalize(_copy_dict(data.get("world_map", {}))))
 	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
 	grand_casino_staffing = _normalize_grand_casino_staffing(_copy_dict(data.get("grand_casino_staffing", {})))
 	rourke_current_room = _normalize_grand_casino_room_id(str(data.get("rourke_current_room", "")))
@@ -7426,6 +7542,7 @@ func from_dict(data: Dictionary) -> void:
 	story_flags = _copy_dict(data.get("story_flags", {}))
 	for story_flag_key in story_flags.keys():
 		narrative_flags[str(story_flag_key)] = story_flags[story_flag_key]
+	_reconcile_grand_casino_invitation_uniqueness()
 	story_log_archive_count = maxi(0, int(data.get("story_log_archive_count", 0)))
 	story_log = _normalize_story_log(_copy_array(data.get("story_log", [])))
 	for story_entry_value in story_log:
@@ -7712,6 +7829,111 @@ func _sync_portable_ticket_inventory_markers() -> void:
 				active_item_id = ""
 
 
+static func _environment_for_persistent_storage(environment: Dictionary) -> Dictionary:
+	if environment.is_empty():
+		return {}
+	var stored: Dictionary = {}
+	for key_value in environment.keys():
+		var key := str(key_value)
+		if key == "game_states":
+			continue
+		stored[key] = _persistent_copy_value(environment.get(key_value))
+	var states_value: Variant = environment.get("game_states", {})
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return stored
+	var stored_states: Dictionary = {}
+	for game_key_value in (states_value as Dictionary).keys():
+		var game_key := str(game_key_value)
+		var state_value: Variant = (states_value as Dictionary).get(game_key_value)
+		if PORTABLE_TICKET_KINDS.has(game_key) and typeof(state_value) == TYPE_DICTIONARY:
+			var machine: Dictionary = state_value as Dictionary
+			var stored_machine: Dictionary = {}
+			var player_fields: Array = PORTABLE_TICKET_PLAYER_FIELDS.get(game_key, [])
+			for field_value in machine.keys():
+				var field := str(field_value)
+				if player_fields.has(field):
+					continue
+				stored_machine[field] = _persistent_copy_value(machine.get(field_value))
+			stored_states[game_key] = stored_machine
+		else:
+			stored_states[game_key] = _persistent_copy_value(state_value)
+	stored["game_states"] = stored_states
+	return stored
+
+
+static func environment_context_snapshot(environment: Dictionary) -> Dictionary:
+	# Dialogue/event predicates consume the room identity, offers, hooks, layout,
+	# and routing fields—not live machine internals. Keeping game_states here
+	# made every focus/refresh copy high-resolution ticket masks and other game
+	# runtime buffers into presentation and queued-event records.
+	var snapshot: Dictionary = {}
+	for key_value in environment.keys():
+		if str(key_value) == "game_states":
+			continue
+		snapshot[key_value] = _persistent_copy_value(environment.get(key_value))
+	return snapshot
+
+
+static func _compact_world_map_ticket_storage(map_data: Dictionary) -> Dictionary:
+	if map_data.is_empty():
+		return {}
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return map_data
+	var nodes: Array = nodes_value
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = nodes[index]
+		var environment_value: Variant = node.get("environment", {})
+		if typeof(environment_value) == TYPE_DICTIONARY and not (environment_value as Dictionary).is_empty():
+			node["environment"] = _environment_for_persistent_storage(environment_value as Dictionary)
+			nodes[index] = node
+	map_data["nodes"] = nodes
+	return map_data
+
+
+static func _persistent_copy_value(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		return (value as Dictionary).duplicate(true)
+	if typeof(value) == TYPE_ARRAY:
+		return (value as Array).duplicate(true)
+	return value
+
+
+static func _compact_scratch_ticket_receipt(ticket: Dictionary, deep_copy: bool) -> Dictionary:
+	var receipt: Dictionary = {}
+	for key_value in ticket.keys():
+		var key := str(key_value)
+		if ["latex_mask", "scratch_regions", "sections", "mask_revision"].has(key):
+			continue
+		var value: Variant = ticket.get(key_value)
+		receipt[key] = _persistent_copy_value(value) if deep_copy else value
+	receipt["mask_compacted"] = true
+	return receipt
+
+
+static func _compact_scratch_ticket_receipt_array(value: Variant, deep_copy: bool) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for ticket_value in value as Array:
+		if typeof(ticket_value) == TYPE_DICTIONARY:
+			result.append(_compact_scratch_ticket_receipt(ticket_value as Dictionary, deep_copy))
+	return result
+
+
+static func _portable_ticket_state_for_live_storage(kind: String, state: Dictionary) -> Dictionary:
+	var stored := state.duplicate(false)
+	if kind != "scratch_tickets":
+		return stored
+	stored["winner_pile"] = _compact_scratch_ticket_receipt_array(state.get("winner_pile", []), false)
+	stored["loser_pile"] = _compact_scratch_ticket_receipt_array(state.get("loser_pile", []), false)
+	var last_value: Variant = state.get("last_settled_ticket", {})
+	stored["last_settled_ticket"] = _compact_scratch_ticket_receipt(last_value as Dictionary, false) if typeof(last_value) == TYPE_DICTIONARY and not (last_value as Dictionary).is_empty() else {}
+	return stored
+
+
 static func _portable_ticket_player_state(kind: String, machine: Dictionary) -> Dictionary:
 	var result := {}
 	for field_value in _copy_array(PORTABLE_TICKET_PLAYER_FIELDS.get(kind, [])):
@@ -7772,7 +7994,20 @@ static func _normalize_portable_ticket_piles(value: Dictionary) -> Dictionary:
 				var state_value: Variant = (origins_value as Dictionary).get(origin_key_value, {})
 				if origin_key.is_empty() or typeof(state_value) != TYPE_DICTIONARY:
 					continue
-				var state: Dictionary = (state_value as Dictionary).duplicate(true)
+				var state: Dictionary
+				if kind == "scratch_tickets":
+					state = {}
+					for field_value in (state_value as Dictionary).keys():
+						var field := str(field_value)
+						var field_data: Variant = (state_value as Dictionary).get(field_value)
+						if field == "winner_pile" or field == "loser_pile":
+							state[field] = _compact_scratch_ticket_receipt_array(field_data, true)
+						elif field == "last_settled_ticket" and typeof(field_data) == TYPE_DICTIONARY:
+							state[field] = _compact_scratch_ticket_receipt(field_data as Dictionary, true) if not (field_data as Dictionary).is_empty() else {}
+						else:
+							state[field] = _persistent_copy_value(field_data)
+				else:
+					state = (state_value as Dictionary).duplicate(true)
 				state["origin_key"] = origin_key
 				origins[origin_key] = state
 		if not origins.is_empty() or value.has(kind):
