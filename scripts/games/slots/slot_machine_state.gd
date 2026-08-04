@@ -42,7 +42,11 @@ static func _stored_machine(environment: Dictionary, game_id: String) -> Variant
 
 
 static func write_machine(environment: Dictionary, game_id: String, machine: Dictionary) -> void:
-	var states: Dictionary = _copy_dict(environment.get("game_states", {}))
+	# Replacing one machine must not deep-copy every other fixture in a large
+	# casino. The map is copied shallowly and the target value is independently
+	# normalized below, preserving ownership without cross-fixture allocation.
+	var states_value: Variant = environment.get("game_states", {})
+	var states: Dictionary = (states_value as Dictionary).duplicate(false) if typeof(states_value) == TYPE_DICTIONARY else {}
 	states[game_id] = normalize(machine)
 	environment["game_states"] = states
 

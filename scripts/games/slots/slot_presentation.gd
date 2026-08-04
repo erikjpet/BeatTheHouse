@@ -214,6 +214,46 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	})
 
 
+func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
+	var surface_time_msec := maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
+	var stored_active_bonus: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	var spin_elapsed_msec := _surface_spin_elapsed_msec(ui_state, 0)
+	var trigger_reveal_msec := _trigger_bonus_reveal_msec(machine)
+	var trigger_reveal_pending := _trigger_bonus_reveal_pending(machine, stored_active_bonus, spin_elapsed_msec, trigger_reveal_msec)
+	var active_bonus := _display_active_bonus(machine, stored_active_bonus, surface_time_msec, trigger_reveal_pending)
+	active_bonus = _with_pinball_alert_metadata(active_bonus, machine)
+	if str(active_bonus.get("family", "")) == "pinball" and bool(active_bonus.get("active", false)):
+		active_bonus["pinball_launch_meter"] = _pinball_launch_meter(active_bonus, surface_time_msec)
+	var feature_active := _bonus_visible_on_surface(active_bonus)
+	var nudge_offer: Dictionary = machine.get("last_nudge_offer", {}) if typeof(machine.get("last_nudge_offer", {})) == TYPE_DICTIONARY else {}
+	var nudge_timing := _nudge_chain_timing_state(nudge_offer, ui_state)
+	var nudge_available := not nudge_offer.is_empty() and bool(nudge_timing.get("available", false))
+	var skin: Dictionary = current_surface_state.get("slot_skin", {}) if typeof(current_surface_state.get("slot_skin", {})) == TYPE_DICTIONARY else {}
+	var feature_family := str(active_bonus.get("family", ""))
+	return {
+		"surface_realtime_state_refresh": nudge_available or trigger_reveal_pending or (feature_active and (feature_family == "pinball" or feature_family == "buffalo")),
+		"slot_visual_time_msec": surface_time_msec,
+		"slot_attract_phase": _attract_phase(surface_time_msec, skin),
+		"slot_bonus_trigger_reveal_pending": trigger_reveal_pending,
+		"slot_spin_elapsed_msec": spin_elapsed_msec,
+		"slot_feature_scene": _feature_scene(active_bonus),
+		"slot_bonus_total": int(active_bonus.get("feature_total", active_bonus.get("pending_award", machine.get("last_bonus_total", 0)))),
+		"slot_nudge_available": nudge_available,
+		"slot_nudge_tease_window_active": bool(nudge_timing.get("window_active", false)),
+		"slot_nudge_tease_window_msec": _copy_dict_shallow(nudge_timing.get("window_msec", {})),
+		"slot_nudge_tease_input_msec": int(nudge_timing.get("input_msec", -1)),
+		"slot_nudge_tease_outcome_hint": str(nudge_timing.get("hint", "")),
+		"slot_nudge_chain": _copy_dict_shallow(nudge_timing.get("chain", {})),
+		"slot_nudge_chain_elapsed_msec": int(nudge_timing.get("input_msec", -1)),
+		"slot_active_bonus": active_bonus,
+		"slot_active_bonus_active": feature_active,
+		"slot_autoplay_active": bool(machine.get("slot_autoplay_active", false)),
+		"slot_free_spins": int(machine.get("free_spins", 0)),
+		"bankroll": run_state.wager_capacity_for_game("slot") if run_state != null else int(current_surface_state.get("bankroll", 0)),
+		"suspicion_level": run_state.suspicion_level() if run_state != null else int(current_surface_state.get("suspicion_level", 0)),
+	}
+
+
 func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary, run_state: RunState, surface_time_msec: int, ui_state: Dictionary) -> Dictionary:
 	var live: Dictionary = PinballFeatureScript.surface_refresh(active_bonus, surface_time_msec)
 	live = _with_pinball_alert_metadata(live, machine)

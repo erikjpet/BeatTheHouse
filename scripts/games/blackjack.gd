@@ -1794,6 +1794,12 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 
 
 func _surface_low_detail_idle(surface) -> bool:
+	# Keep the live cards, count bubbles, wager controls, and dealer-state meters
+	# intact on Web, but use the static cast/room treatment during active hands as
+	# well as idle. The articulated background was the dominant non-gameplay draw
+	# cost under the shipping target's low-end throttle.
+	if OS.has_feature("web"):
+		return true
 	return bool(surface.surface_low_detail_idle()) if surface != null and surface.has_method("surface_low_detail_idle") else false
 
 

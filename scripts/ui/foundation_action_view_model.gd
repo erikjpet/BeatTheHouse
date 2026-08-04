@@ -21,7 +21,7 @@ static func game_view_snapshot(host: Variant) -> Dictionary:
 		module_surface_state = host.current_game.surface_state(host.run_state, host.run_state.current_environment, host._current_game_surface_ui_state())
 		if typeof(module_surface_state) != TYPE_DICTIONARY:
 			module_surface_state = {}
-		else:
+		elif game_id != "slot":
 			module_surface_state = module_surface_state.duplicate(true)
 		host._sync_surface_feature_music_state(module_surface_state)
 		if module_surface_state.has("surface_renderer"):
@@ -102,7 +102,10 @@ static func game_view_snapshot(host: Variant) -> Dictionary:
 		"summary_source": str(result.get("summary_source", "active_game" if host.current_game != null else "")),
 	}
 	for key in module_surface_state.keys():
-		snapshot[key] = host._snapshot_copy_value(module_surface_state[key])
+		# Slot presentation constructs an isolated surface spec. Transferring its
+		# nested arrays directly avoids copying reel strips/grids a second time in
+		# the same action frame; the canvas treats snapshots as read-only.
+		snapshot[key] = module_surface_state[key] if game_id == "slot" else host._snapshot_copy_value(module_surface_state[key])
 	snapshot["bankroll"] = host._presented_bankroll()
 	snapshot["stake_min"] = int(stake_range.get("min", 1))
 	snapshot["stake_max"] = int(stake_range.get("max", 1))
@@ -151,6 +154,13 @@ static func current_game_result_snapshot(host: Variant) -> Dictionary:
 static func current_game_embeds_result_feedback(host: Variant) -> bool:
 	if host.current_game == null or host.run_state == null:
 		return false
+	# The rendered surface already owns this presentation capability. Reading its
+	# live state avoids regenerating the complete slot/table surface after every
+	# action merely to recover one stable boolean.
+	if host.game_surface_canvas != null:
+		var rendered_state: Dictionary = host.game_surface_canvas.realtime_surface_state()
+		if str(rendered_state.get("game_id", "")) == host.current_game.get_id() and rendered_state.has("surface_embeds_outcomes"):
+			return bool(rendered_state.get("surface_embeds_outcomes", false))
 	var surface_state = host.current_game.surface_state(host.run_state, host.run_state.current_environment, host._current_game_surface_ui_state())
 	if typeof(surface_state) != TYPE_DICTIONARY:
 		return false

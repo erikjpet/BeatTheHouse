@@ -219,6 +219,10 @@ func surface_pause_repeating_action_for_confirmation(_ui_state: Dictionary, _run
 # Optional environment-level runtime state. Games use this for persistent
 # machine/table activity that should continue while the detailed surface is
 # closed, such as an autoplaying slot cabinet.
+func environment_runtime_enabled() -> bool:
+	return false
+
+
 func environment_runtime_state(_run_state: RunState, _environment: Dictionary) -> Dictionary:
 	return {}
 

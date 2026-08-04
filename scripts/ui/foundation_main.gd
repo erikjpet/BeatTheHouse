@@ -59,6 +59,7 @@ const TALK_IGNORE_HEAT_DELTA := 5
 const CLOSING_TIME_DIALOGUE_ID := "venue_closing_notice"
 const CLOSING_TIME_TALK_EVENT_ID := "dialogue:venue_closing_notice"
 const CLOSING_TIME_TALK_CHOICE_ID := "head_out"
+const ENVIRONMENT_RUNTIME_STATE_KEY_CACHE_LIMIT := 64
 const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
 const RESULT_FEEDBACK_HEIGHT := 46.0
@@ -214,6 +215,8 @@ var travel_transition_target_label: String = ""
 var travel_transition_force_web_runtime_for_test := false
 var game_surface_auto_resolving := false
 var environment_game_runtime_scan_count := 0
+var environment_runtime_state_key_cache: Dictionary = {}
+var environment_runtime_active_keys_scratch: Dictionary = {}
 var last_game_surface_realtime_refresh_msec := 0
 var surface_feature_music_active := false
 var surface_feature_music_ducking := false
@@ -583,6 +586,8 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_autosave_after_frame = -1
 	environment_clock_fractional_minutes = 0.0
 	stored_grand_casino_runtime_last_msec = -100000
+	environment_runtime_state_key_cache.clear()
+	environment_runtime_active_keys_scratch.clear()
 	last_environment_runtime_result = {}
 	run_report_model = {}
 	run_report_model_key = ""
@@ -1161,34 +1166,31 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 	var current_environment_id := str(run_state.current_environment.get("id", ""))
 	var environment_id := str(environment_data.get("id", ""))
 	var same_environment := current_environment_id == environment_id
-	var has_runtime_candidate := false
-	for candidate_value in game_ids_value as Array:
-		var candidate_id := str(candidate_value)
-		if candidate_id.is_empty():
-			continue
-		for candidate_state_key_value in _environment_runtime_state_keys(environment_data, candidate_id):
-			var candidate_state_key := str(candidate_state_key_value)
-			if _environment_runtime_state_is_foreground(environment_data, candidate_id, candidate_state_key, same_environment):
-				continue
-			has_runtime_candidate = true
-			break
-		if has_runtime_candidate:
-			break
-	if not has_runtime_candidate:
-		return false
-	var original_active_game_state_keys := _copy_dict(environment_data.get("active_game_state_keys", {}))
+	var scanned := false
 	for game_id_value in game_ids_value as Array:
 		var game_id := str(game_id_value)
 		if game_id.is_empty():
 			continue
 		var game := _game_module_for_id(game_id)
-		if game == null:
+		if game == null or not game.environment_runtime_enabled():
 			continue
+		var active_keys_value: Variant = environment_data.get("active_game_state_keys", null)
+		var using_scratch_active_keys := typeof(active_keys_value) != TYPE_DICTIONARY
+		var active_keys: Dictionary
+		if using_scratch_active_keys:
+			environment_runtime_active_keys_scratch.clear()
+			active_keys = environment_runtime_active_keys_scratch
+			environment_data["active_game_state_keys"] = active_keys
+		else:
+			active_keys = active_keys_value as Dictionary
+		var had_active_key := active_keys.has(game_id)
+		var previous_active_key: Variant = active_keys.get(game_id)
 		for state_key_value in _environment_runtime_state_keys(environment_data, game_id):
 			var state_key := str(state_key_value)
 			if _environment_runtime_state_is_foreground(environment_data, game_id, state_key, same_environment):
 				continue
-			_set_environment_active_game_state_key(environment_data, game_id, state_key)
+			scanned = true
+			active_keys[game_id] = state_key
 			if not game.environment_runtime_needs_tick(run_state, environment_data, now_msec):
 				continue
 			var runtime_wager_cost := maxi(0, game.wager_cost_for_context("spin", 0, run_state, environment_data, {}))
@@ -1196,7 +1198,7 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 				_pause_environment_runtime_for_wager_confirmation(game, game_id, environment_data)
 				_show_wager_confirmation_popup("spin", runtime_wager_cost, runtime_wager_cost, true, false, game_id, state_key)
 				_show_message("%s autoplay needs your approval before risking your last cash." % game.get_display_name())
-				_restore_environment_active_game_state_keys(environment_data, original_active_game_state_keys)
+				_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
 				_refresh_runtime_environment_views()
 				return true
 			var rng := run_state.create_rng()
@@ -1214,7 +1216,7 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 						GameModule.apply_result(run_state, result, rng)
 					_evaluate_run_terminal_state()
 					if run_state.is_terminal():
-						_restore_environment_active_game_state_keys(environment_data, original_active_game_state_keys)
+						_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
 						_render_environment_screen()
 						return true
 				last_environment_runtime_result = result.duplicate(true)
@@ -1227,15 +1229,15 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 					_show_message(str(result.get("message", command.get("message", ""))))
 				_advance_alcohol_absorption()
 				_autosave_foundation_run("Autosaved.")
-				_restore_environment_active_game_state_keys(environment_data, original_active_game_state_keys)
+				_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
 				return true
 			elif command.has("message"):
 				_show_message(str(command.get("message", "")))
 				_refresh_runtime_environment_views()
-				_restore_environment_active_game_state_keys(environment_data, original_active_game_state_keys)
+				_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
 				return true
-	_restore_environment_active_game_state_keys(environment_data, original_active_game_state_keys)
-	return true
+		_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
+	return scanned
 
 
 func _advance_grand_casino_stored_main_floor_slot_runtime(now_msec: int) -> bool:
@@ -1266,18 +1268,43 @@ func _main_floor_slot_game_id() -> String:
 
 
 func _environment_runtime_state_keys(environment_data: Dictionary, game_id: String) -> Array:
+	var environment_id := str(environment_data.get("id", ""))
+	var environment_cache_value: Variant = environment_runtime_state_key_cache.get(environment_id)
+	if typeof(environment_cache_value) == TYPE_DICTIONARY:
+		var environment_cache: Dictionary = environment_cache_value
+		var cached_value: Variant = environment_cache.get(game_id)
+		if typeof(cached_value) == TYPE_ARRAY:
+			return cached_value as Array
 	var result: Array = [game_id]
-	var layout := _copy_dict(environment_data.get("layout", {}))
-	var fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
+	var layout_value: Variant = environment_data.get("layout", {})
+	var layout: Dictionary = layout_value as Dictionary if typeof(layout_value) == TYPE_DICTIONARY else {}
+	var fixture_counts_value: Variant = layout.get("game_fixture_counts", {})
+	var fixture_counts: Dictionary = fixture_counts_value as Dictionary if typeof(fixture_counts_value) == TYPE_DICTIONARY else {}
 	var fixture_count := maxi(1, int(fixture_counts.get(game_id, 1)))
 	for fixture_index in range(1, fixture_count):
 		result.append("%s:%d" % [game_id, fixture_index + 1])
-	var game_states := _copy_dict(environment_data.get("game_states", {}))
-	for key_value in game_states.keys():
+	var game_states_value: Variant = environment_data.get("game_states", {})
+	var game_states: Dictionary = game_states_value as Dictionary if typeof(game_states_value) == TYPE_DICTIONARY else {}
+	for key_value in game_states:
 		var key := str(key_value)
 		if key.begins_with("%s:" % game_id) and not result.has(key):
 			result.append(key)
+	if environment_runtime_state_key_cache.size() >= ENVIRONMENT_RUNTIME_STATE_KEY_CACHE_LIMIT and not environment_runtime_state_key_cache.has(environment_id):
+		environment_runtime_state_key_cache.clear()
+	if not environment_runtime_state_key_cache.has(environment_id):
+		environment_runtime_state_key_cache[environment_id] = {}
+	(environment_runtime_state_key_cache[environment_id] as Dictionary)[game_id] = result
 	return result
+
+
+func _restore_environment_runtime_active_key(environment_data: Dictionary, active_keys: Dictionary, game_id: String, had_active_key: bool, previous_active_key: Variant, using_scratch_active_keys: bool) -> void:
+	if had_active_key:
+		active_keys[game_id] = previous_active_key
+	else:
+		active_keys.erase(game_id)
+	if using_scratch_active_keys:
+		environment_data.erase("active_game_state_keys")
+		environment_runtime_active_keys_scratch.clear()
 
 
 func _set_environment_active_game_state_key(environment_data: Dictionary, game_id: String, state_key: String) -> void:
@@ -4000,6 +4027,8 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	pending_autosave_after_frame = -1
 	environment_clock_fractional_minutes = 0.0
 	run_item_icon_texture_cache.clear()
+	environment_runtime_state_key_cache.clear()
+	environment_runtime_active_keys_scratch.clear()
 	run_state = loaded
 	_configure_coach_for_run()
 	_sync_presented_bankroll_to_actual()
@@ -6146,6 +6175,44 @@ func _refresh() -> void:
 		_schedule_game_coach_refresh_after_draw()
 
 
+func _refresh_after_embedded_game_action() -> void:
+	# A native game surface remains in the same layout after an embedded result.
+	# Rebuilding the environment, run report, result panel, map, and focus layout
+	# here made repeating slot actions hitch despite none of those views changing.
+	# Keep all player-visible action consequences live while limiting this hot
+	# path to the HUD, rendered game, dialogue/coach, and adaptive music.
+	if run_state == null or current_screen != SCREEN_GAME or current_game == null:
+		_refresh()
+		return
+	_invalidate_run_screen_layout()
+	_invalidate_travel_view_cache()
+	interactable_object_view_cache_valid = false
+	_evaluate_run_terminal_state()
+	if current_screen != SCREEN_GAME or current_game == null:
+		_refresh()
+		return
+	_refresh_world_header()
+	var hud_model := _run_status_hud_model()
+	if status_label != null:
+		status_label.text = str(hud_model.get("status_text", ""))
+	if objective_label != null:
+		objective_label.text = str(hud_model.get("objective_text", ""))
+	if structured_hud != null:
+		structured_hud.set_reduce_motion(_reduce_motion_enabled())
+		structured_hud.set_compact_mode(_small_screen_enabled())
+		structured_hud.render(hud_model)
+	_style_hud_for_recent_consequence()
+	if save_status_label != null:
+		save_status_label.text = str(hud_model.get("save_text", ""))
+	_apply_hud_mode_visibility()
+	_refresh_active_item_slot()
+	_refresh_environment_result_feedback()
+	_render_foundation_snapshots()
+	_refresh_talk_dock()
+	_update_procedural_music()
+	_schedule_game_coach_refresh_after_draw()
+
+
 func _schedule_game_coach_refresh_after_draw() -> void:
 	if game_coach_refresh_scheduled:
 		return
@@ -7421,11 +7488,15 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		_refresh_stake_input()
 		return
 	var wager_cost := _wager_cost_for_action(action_id, stake)
-	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, _current_game_surface_ui_state()):
+	# Build the action context once. Slot autoplay reaches this path repeatedly, and
+	# each UI-state snapshot contains nested machine/runtime data. Rebuilding it for
+	# confirmation, resolution, and result presentation caused visible Web hitches.
+	var action_surface_ui_state := _current_game_surface_ui_state()
+	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state):
 		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
 		return
-	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, _current_game_surface_ui_state())
+	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state)
 	if confirmed_all_in_wager:
 		run_state.begin_deferred_bankroll_zero_resolution()
 	var wager_funding := run_state.fund_grand_casino_wager(current_game.get_id(), wager_cost, run_state.current_environment)
@@ -7437,7 +7508,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		return
 	var bankroll_before_result := run_state.bankroll
 	var rng := run_state.create_rng()
-	var result := current_game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, _current_game_surface_ui_state())
+	var result := current_game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, action_surface_ui_state)
 	if bool(result.get("ok", false)):
 		var scratch_completion: Dictionary = _record_scratch_ticket_discovery(str(result.get("scratch_discovered_type_id", "")))
 		if not scratch_completion.is_empty():
@@ -7501,7 +7572,10 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			_sync_presented_bankroll_to_actual()
 		_refresh()
 		return
-	_refresh()
+	if embeds_result_feedback and current_screen == SCREEN_GAME and current_game != null:
+		_refresh_after_embedded_game_action()
+	else:
+		_refresh()
 
 
 func _play_result_surface_audio_cue(result: Dictionary) -> void:

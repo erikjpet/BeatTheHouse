@@ -152,8 +152,21 @@ func active_item_command(item_id: String, run_state: RunState, environment: Dict
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	var machine: Dictionary = _ensure_machine_state(run_state, environment, run_state.create_rng("slot_surface") if run_state != null else null)
+	# Rendering is read-only. Once a machine exists, use its live stored snapshot
+	# instead of normalizing, deep-copying, and writing the entire environment's
+	# game-state map on every surface rebuild.
+	var machine: Dictionary = _peek_machine(environment)
+	if machine.is_empty():
+		machine = _ensure_machine_state(run_state, environment, run_state.create_rng("slot_surface") if run_state != null else null)
 	return presentation.surface_state(machine, run_state, definition, ui_state)
+
+
+func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
+	# Realtime slot presentation used to rebuild the entire machine snapshot,
+	# including reel strips, grids, audio cues, and bonus history, every frame.
+	# Machine mutations still rebuild canonically at action boundaries; frames in
+	# between only need the time-dependent presentation fields below.
+	return presentation.realtime_state_patch(_peek_machine(environment), run_state, ui_state, current_surface_state)
 
 
 func draw_surface(surface_canvas, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
@@ -180,7 +193,8 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	var normalized_action := _normalize_action(action_id)
 	if normalized_action.begins_with("slot_bonus_"):
 		var bonus_resolved: Dictionary = resolver.resolve_bonus_action(machine, normalized_action, rng, definition, environment, run_state, _slot_cross_game_item_effects(run_state, machine, false), _ui_state)
-		var bonus_machine: Dictionary = _slot_copy_dict(bonus_resolved.get("machine", machine))
+		var bonus_machine_value: Variant = bonus_resolved.get("machine", machine)
+		var bonus_machine: Dictionary = bonus_machine_value as Dictionary if typeof(bonus_machine_value) == TYPE_DICTIONARY else machine
 		if not StateScript.active_bonus_incomplete(bonus_machine):
 			bonus_machine.erase("slot_bonus_watchdog_since_msec")
 		if bool(bonus_machine.get("slot_autoplay_active", false)):
@@ -190,14 +204,21 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		else:
 			bonus_machine["slot_bonus_auto_next_msec"] = _slot_bonus_auto_next_msec(bonus_machine, _ui_state, run_state)
 		_write_machine(environment, bonus_machine)
-		return _slot_copy_dict(bonus_resolved.get("result", {}))
+		var bonus_result_value: Variant = bonus_resolved.get("result", {})
+		return bonus_result_value as Dictionary if typeof(bonus_result_value) == TYPE_DICTIONARY else {}
 	if normalized_action != "spin" and normalized_action != "nudge":
 		return _empty_slot_result(normalized_action, environment, "That slot action is not available.")
 	var selected_bet: Dictionary = StateScript.selected_bet(machine)
-	var resolved: Dictionary = resolver.resolve_spin(machine, normalized_action, selected_bet, rng, definition, environment, true, false, run_state, _slot_cross_game_item_effects(run_state, machine, normalized_action == "nudge"), _ui_state)
-	var resolved_machine: Dictionary = _slot_copy_dict(resolved.get("machine", machine))
+	# _ensure_machine_state returns an owned, current-schema machine and the
+	# final write normalizes once. Normalizing at both resolver entry and exit
+	# duplicated the entire reel/bonus state twice per spin.
+	var resolved: Dictionary = resolver.resolve_spin(machine, normalized_action, selected_bet, rng, definition, environment, false, false, run_state, _slot_cross_game_item_effects(run_state, machine, normalized_action == "nudge"), _ui_state)
+	var resolved_machine_value: Variant = resolved.get("machine", machine)
+	var resolved_machine: Dictionary = resolved_machine_value as Dictionary if typeof(resolved_machine_value) == TYPE_DICTIONARY else machine
 	resolved = _apply_tutorial_first_night_match(resolved, resolved_machine, normalized_action, run_state)
-	resolved_machine = _slot_copy_dict(resolved.get("machine", resolved_machine))
+	resolved_machine_value = resolved.get("machine", resolved_machine)
+	if typeof(resolved_machine_value) == TYPE_DICTIONARY:
+		resolved_machine = resolved_machine_value as Dictionary
 	if _slot_feature_pending(resolved_machine):
 		resolved_machine = _mark_slot_feature_pending(resolved_machine, GameModule.deterministic_time_msec(run_state, _ui_state))
 	elif bool(resolved_machine.get("slot_autoplay_active", false)):
@@ -207,7 +228,8 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	else:
 		resolved_machine["slot_bonus_auto_next_msec"] = _slot_bonus_auto_next_msec(resolved_machine, _ui_state, run_state)
 	_write_machine(environment, resolved_machine)
-	return _slot_copy_dict(resolved.get("result", {}))
+	var result_value: Variant = resolved.get("result", {})
+	return result_value as Dictionary if typeof(result_value) == TYPE_DICTIONARY else {}
 
 
 func _apply_tutorial_first_night_match(resolved: Dictionary, machine: Dictionary, action_id: String, run_state: RunState) -> Dictionary:
@@ -480,6 +502,10 @@ func surface_pause_repeating_action_for_confirmation(_ui_state: Dictionary, _run
 	})
 
 
+func environment_runtime_enabled() -> bool:
+	return true
+
+
 func environment_runtime_needs_tick(_run_state: RunState, environment: Dictionary, now_msec: int) -> bool:
 	# Per-frame check: peek (zero-copy, read-only) instead of deep-copying the machine.
 	var machine: Dictionary = _peek_machine(environment)
@@ -507,8 +533,9 @@ func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng:
 	machine["slot_autoplay_next_msec"] = now_msec + _slot_autoplay_delay_msec(machine)
 	_write_machine(environment, machine)
 	var selected_bet: Dictionary = StateScript.selected_bet(machine)
-	var resolved: Dictionary = resolver.resolve_spin(machine, "spin", selected_bet, rng, definition, environment, true, false, run_state, _slot_cross_game_item_effects(run_state, machine, false))
-	var resolved_machine: Dictionary = _slot_copy_dict(resolved.get("machine", machine))
+	var resolved: Dictionary = resolver.resolve_spin(machine, "spin", selected_bet, rng, definition, environment, false, false, run_state, _slot_cross_game_item_effects(run_state, machine, false))
+	var resolved_machine_value: Variant = resolved.get("machine", machine)
+	var resolved_machine: Dictionary = resolved_machine_value as Dictionary if typeof(resolved_machine_value) == TYPE_DICTIONARY else machine
 	var feature_pending := _slot_feature_pending(resolved_machine)
 	if feature_pending:
 		resolved_machine = _mark_slot_feature_pending(resolved_machine, now_msec)
@@ -516,7 +543,8 @@ func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng:
 		resolved_machine["slot_autoplay_active"] = true
 		resolved_machine["slot_autoplay_next_msec"] = now_msec + _slot_autoplay_delay_msec(resolved_machine)
 	_write_machine(environment, resolved_machine)
-	var result: Dictionary = _slot_copy_dict(resolved.get("result", {}))
+	var result_value: Variant = resolved.get("result", {})
+	var result: Dictionary = result_value as Dictionary if typeof(result_value) == TYPE_DICTIONARY else {}
 	if feature_pending:
 		result["slot_pending_feature"] = true
 	return {
@@ -1055,7 +1083,7 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, rng: Rn
 			generation_rng.configure(1)
 		machine = generator.generate_machine(run_state, environment, generation_rng, definition, get_id())
 		_write_machine(environment, machine)
-	else:
+	elif int(machine.get("schema_version", 0)) != StateScript.SCHEMA_VERSION:
 		machine = StateScript.normalize(machine)
 		_write_machine(environment, machine)
 	return machine

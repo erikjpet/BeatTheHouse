@@ -904,6 +904,16 @@ func _draw_symbol(surface, definition: Dictionary, family: String, symbol: Strin
 	surface.draw_rect(rect, Color(glow.r, glow.g, glow.b, 0.38), false, 1)
 	var center := rect.position + rect.size * 0.5
 	var radius := minf(rect.size.x, rect.size.y) * 0.30
+	if blurred:
+		# Shapes and labels cannot be read while a reel is moving. A single
+		# directional highlight preserves each symbol's palette and improves the
+		# sense of speed without issuing several invisible glyph/shape draws.
+		var streak := Rect2(
+			Vector2(rect.position.x + rect.size.x * 0.16, center.y - maxf(1.0, rect.size.y * 0.035)),
+			Vector2(rect.size.x * 0.68, maxf(2.0, rect.size.y * 0.07))
+		)
+		surface.draw_rect(streak, Color(secondary.r, secondary.g, secondary.b, 0.62))
+		return
 	match str(meta.get("shape", "")):
 		"coin", "chrome_ball", "steel_ball":
 			surface.draw_circle(center, radius, primary)

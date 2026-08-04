@@ -182,6 +182,12 @@ static func draw_table_patrons(surface, state: Dictionary, positions: Array = []
 
 
 static func _surface_low_detail_idle(surface) -> bool:
+	# Web tables keep cards, wagers, controls, and tells at full fidelity, while
+	# the room/dealer/patron chrome uses the existing static treatment. Rebuilding
+	# the articulated background cast during every active animation doubled the
+	# throttled-Web frame cost without adding actionable information.
+	if OS.has_feature("web"):
+		return true
 	return bool(surface.surface_low_detail_idle()) if surface != null and surface.has_method("surface_low_detail_idle") else false
 
 
