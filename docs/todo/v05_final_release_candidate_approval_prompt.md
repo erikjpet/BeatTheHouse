@@ -2,7 +2,7 @@
 
 Last reconciled: 2026-08-04
 Release target: 0.5.0
-Status: PENDING FINAL WEB PERFORMANCE, TUT-N17, AND OWNER APPROVAL
+Status: PENDING TUT-N17 AND OWNER APPROVAL
 
 ## Objective
 
@@ -22,9 +22,9 @@ archived:
 
 The tutorial is agent-verifiable through TUT-N25 except for human-only
 TUT-N17. The performance audit has closed native, memory-soak, Scratch Ticket,
-and Grand Casino runtime work, but the 20-second Web cold-ready gate and final
-broad L0.2 matrix remain open. See the current queue and evidence reports; do
-not reuse the former 2026-08-03 blockers as current state.
+Grand Casino runtime, 20-second Web cold-ready, and broad L0.2 work. See the
+current queue and evidence reports; do not reuse the former 2026-08-03 blockers
+as current state.
 
 The intended source must be committed and clean. If an entry condition is not
 satisfied, return to its owning prompt rather than manufacturing an RC verdict.

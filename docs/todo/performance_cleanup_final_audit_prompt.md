@@ -2,7 +2,8 @@
 
 ## 2026-08-04 queue reconciliation
 
-This prompt remains **OPEN, but the retained-memory blocker is closed**. The
+This prompt remains **OPEN FOR FINAL-RC EVIDENCE REFRESH; ALL PERFORMANCE
+BLOCKERS ARE CLOSED**. The
 integrated source is committed on `main`. Scratch Ticket compaction is proven
 deterministic, backward-compatible, and bounded; the full 180-minute/504-action
 soak passes with a negative retained-memory trend and zero retained orphans.
@@ -11,21 +12,14 @@ mouse play, visual QA, and all seven Scratch Ticket RTP bands are green. The
 evidence and superseding verdicts are in
 `docs/plans/0.5_performance_audit.md`.
 
-Web audio parity is also implemented: 80 Web SFX cues and authored music
-derivatives use the shared 22.05 kHz delivery contract, decode off the main
-thread, and follow native bus gains. The remaining release blockers are:
-
-- the binding 4x-throttled cold-ready measurement is 23.776 seconds against the
-  unchanged 20-second budget with the smallest safe threaded 4/1 worker pools;
-- smaller threaded pools exhaust PThreads, while the measured single-threaded
-  export blocks procedural music on the browser main thread, so neither is an
-  acceptable workaround; and
-- the complete broad L0.2 Web matrix must be rerun and closed with the final
-  high-fidelity audio path active.
-
-Do not archive this prompt or claim the complete audit green until those Web
-requirements and the exact-source final matrix pass. Do not weaken a budget,
-liveness floor, throttle, assertion, or deterministic requirement.
+Web audio parity is also implemented: 80 Web SFX cues and deterministic
+prebuilt procedural music beds use the shared 22.05 kHz delivery contract,
+decode off the main thread, and follow native bus gains. The final
+single-thread Web export passes the unchanged 4x-throttled cold-ready gate at
+17.557 seconds/20 seconds and the complete broad L0.2 matrix. Do not archive
+this prompt until the exact final-RC source matrix is refreshed alongside the
+remaining owner gates. Do not weaken a budget, liveness floor, throttle,
+assertion, or deterministic requirement.
 
 Copy everything below this line into the worker agent.
 

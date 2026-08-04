@@ -9,10 +9,10 @@ not release-approved.**
 
 Integration recovery, the agent-verifiable tutorial work, native
 performance/liveness, the full retained-memory soak, Scratch Ticket compaction,
-and Grand Casino Web runtime repair are complete. Release closure is now
-blocked by the final broad Web performance verdict, the human-only TUT-N17
-cold-player gate, owner Web/Windows playtesting, the collection `draft`
-decision, packaging, publication, and tagging.
+Grand Casino Web runtime repair, and the final Web performance closure are
+complete. Release closure is now blocked by the human-only TUT-N17 cold-player
+gate, owner Web/Windows playtesting, the collection `draft` decision,
+packaging, publication, and tagging.
 
 Current repository state at this reconciliation:
 
@@ -29,10 +29,10 @@ Current repository state at this reconciliation:
 - The 180-minute/504-action soak passes with a negative retained-memory trend,
   bounded Scratch Ticket receipts, and zero retained orphans. Native budgets,
   liveness, determinism, Grand Casino Web runtime, and Scratch RTP are green.
-- High-fidelity Web music/SFX parity is implemented. The safe 4/1 threaded
-  worker configuration improves 4x-throttled cold ready from 26.855 seconds to
-  23.776 seconds, which still misses the unchanged 20-second gate. The broad
-  L0.2 Web matrix also needs a final exact-source closure run.
+- High-fidelity Web music/SFX parity is implemented. The final single-thread
+  export uses deterministic prebuilt procedural beds and passes 4x-throttled
+  cold ready at 17.557 seconds/20 seconds. The exact broad L0.2 matrix is green,
+  including slot autoplay at 88.312 ms/100 ms.
 - There is no `v0.5.0` tag and no final release package recorded under
   `builds/`.
 
@@ -187,15 +187,15 @@ Binding prompt:
 - [ ] Archive the prompt to `docs/todone/` with an execution record only after
   every binding gate passes.
 
-The remaining gate work is specifically the unchanged 20-second cold-ready
-budget and a final broad L0.2 run with the high-fidelity Web audio delivery
-active. Current safe 4/1 worker evidence is 23.776 seconds. Do not describe the
-full Web matrix as green until both are closed; smaller/single-threaded worker
-experiments were measured and rejected.
+The Web blocker is closed without changing the 20-second cold-ready budget or
+any scenario budget. Evidence is
+`.tmp/web_perf_item1/final_l02_green3.summary.json`; high-fidelity audio evidence
+is `.tmp/web_perf_item1/final_la6.json`. The audit prompt remains open only for
+any exact-candidate matrix refresh required by final RC approval.
 
 ### 4. Build and approve the final release candidate
 
-Status: **PRE-HUMAN MATERIAL PREPARED; BLOCKED BY STEP 3 AND OWNER GATES**
+Status: **PRE-HUMAN MATERIAL PREPARED; BLOCKED BY HUMAN/OWNER GATES**
 
 Binding prompt:
 `docs/todo/v05_final_release_candidate_approval_prompt.md`

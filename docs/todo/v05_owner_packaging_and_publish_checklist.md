@@ -24,7 +24,7 @@ action requires the owner's explicit request or direct execution.
   SHA-256 hashes.
 - [ ] Confirm version 0.5.0 and absence of debug-only, profile, secret, test,
   and unrelated files.
-- [ ] Test Web with production headers, SharedArrayBuffer, 1280x720 embed,
+- [ ] Test Web with production headers, 1280x720 embed,
   fullscreen, audio, save, and reload.
 - [ ] Test the packaged Windows build on a clean profile.
 - [ ] Repeat critical fresh-profile tutorial, both routes, Replay Lessons,
@@ -37,7 +37,7 @@ action requires the owner's explicit request or direct execution.
 
 - [ ] Upload Web to `html` with user version `0.5.0`.
 - [ ] Upload Windows to `windows` with user version `0.5.0`.
-- [ ] Configure browser play, 1280x720, fullscreen, and SharedArrayBuffer.
+- [ ] Configure browser play, 1280x720, and fullscreen. SharedArrayBuffer is optional.
 - [ ] Publish approved copy, screenshots, safety framing, and platforms.
 - [ ] Test the live page and downloaded Windows artifact.
 - [ ] Record URLs, channel/build IDs, timestamps, and artifact hashes.

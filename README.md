@@ -372,10 +372,11 @@ Current pre-human evidence and remaining final results:
   visual QA. The native performance/liveness battery, 180-minute/504-action
   soak, Scratch Ticket RTP audit, and Grand Casino Web runtime budgets are also
   green; see the current tutorial and performance reports below.
-- The final exact-source battery must still close the 20-second Web cold-ready
-  gate and reconfirm the broad L0.2 Web matrix with high-fidelity audio active.
-  TUT-N17 and the owner's packaged Web/Windows playtest cannot be replaced by
-  automation.
+- The final integrated Web source passes the unchanged 4x-throttled cold-ready
+  and broad L0.2 budgets with high-fidelity audio active: interactive ready is
+  17.557 seconds against 20 seconds and slot autoplay is 88.312 ms against
+  100 ms. TUT-N17 and the owner's packaged Web/Windows playtest cannot be
+  replaced by automation.
 - Only fresh reports linked by `docs/plans/0.5_release_checklist.md` are final
   0.5 release evidence; older candidate reports remain historical baselines.
 
@@ -484,13 +485,10 @@ before store submission.
 
 ## Known Release Limitations
 
-- The latest safe threaded Web worker configuration improves 4x-throttled cold
-  ready from 26.855 seconds to 23.776 seconds, but still misses the unchanged
-  20-second release gate. Smaller pools exhausted the PThread pool, and the
-  single-threaded export made procedural music block the browser main thread;
-  neither rejected configuration ships.
-- The broad L0.2 Web performance matrix must be rerun and closed with the final
-  high-fidelity Web audio bank before release approval.
+- The Web export is intentionally single-threaded. Procedural music is generated
+  deterministically at build time into compact Web beds, so browser startup and
+  playback no longer depend on PThreads or main-thread synthesis. Cross-origin
+  isolation headers remain supported but are not required by the shipped build.
 - Tutorial requirement TUT-N17 is pending five cold players, including two
   without Blackjack knowledge; agent-driven routes do not satisfy that human
   comprehension gate.

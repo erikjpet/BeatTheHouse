@@ -153,7 +153,7 @@ else {
         Write-Host "  1. Upload $($cfg.Zip) to your itch.io project."
         Write-Host "  2. Tick 'This file will be played in the browser'."
         Write-Host "  3. Embed options: set size 1280 x 720, enable the fullscreen button."
-        Write-Host "  4. Enable 'SharedArrayBuffer support' (required - the game uses threads)."
+        Write-Host "  4. SharedArrayBuffer support is optional; the shipped Web export is single-threaded."
         Write-Host "  5. Butler channel: $($cfg.DefaultChannel); user version: $projectVersion."
     }
     else {

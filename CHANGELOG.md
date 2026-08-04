@@ -7,9 +7,9 @@ All notable public release changes for Beat the House are recorded here.
 Status: **pre-human release-candidate preparation.** The feature and integration
 queues are implemented on `main`. The pre-human tutorial matrix, native
 performance/liveness battery, 180-minute soak, determinism, Scratch Ticket RTP,
-and Grand Casino Web runtime checks pass. The final broad Web performance
-closure, five-person cold-player tutorial gate, owner playtest, packaging,
-publication, and tagging remain pending.
+Grand Casino Web runtime, and final broad Web performance checks pass. The
+five-person cold-player tutorial gate, owner playtest, packaging, publication,
+and tagging remain pending.
 
 ### Added
 
@@ -81,10 +81,11 @@ publication, and tagging remain pending.
   kHz synthesis contract, authored music derivatives preserve their stem mix,
   decoding/validation stays off the main thread, and browser playback follows
   Master/Music/SFX bus gains.
-- Reduces the threaded Web export pools from 8/4 to the smallest verified safe
-  4/1 configuration. On the binding 4x-throttled host this improves cold ready
-  from 26.855 seconds to 23.776 seconds without PThread exhaustion, but the
-  unchanged 20-second release gate remains open.
+- Ships the Web export single-threaded and replaces runtime procedural-music
+  synthesis with deterministic prebuilt 22.05 kHz beds. Bounded run-shell
+  staging and slot autoplay de-allocation bring 4x-throttled cold ready to
+  17.557 seconds/20 seconds and autoplay to 88.312 ms/100 ms without changing
+  simulation or performance budgets.
 
 ### Fixed
 

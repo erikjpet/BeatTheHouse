@@ -1,12 +1,12 @@
-# Serves the local web build with the headers Godot needs for SharedArrayBuffer.
+# Serves the local Web build with production-compatible isolation headers.
 #
-# Browsers only enable SharedArrayBuffer (which threaded Godot web builds need)
-# when the page is served "cross-origin isolated", i.e. with:
+# The shipped 0.5 Web preset is single-threaded and does not require
+# SharedArrayBuffer. These headers preserve compatibility with isolated hosting
+# and make this local server representative of stricter production embeds:
 #   Cross-Origin-Opener-Policy: same-origin
 #   Cross-Origin-Embedder-Policy: require-corp
-# Opening index.html directly, or using a basic static server, does NOT send
-# these, so the game shows the "Cross-Origin Isolation / SharedArrayBuffer
-# missing" error. This script serves builds/web with the right headers.
+# This script serves builds/web with those headers while retaining normal
+# single-thread operation when a host does not provide them.
 #
 # Examples:
 #   .\tools\serve_web.ps1               # serve at http://127.0.0.1:8060 and open a browser
@@ -55,7 +55,7 @@ class IsolatedHandler(SimpleHTTPRequestHandler):
             pass
 
 print(f"Serving {directory}")
-print(f"  http://127.0.0.1:{port}  (cross-origin isolated; SharedArrayBuffer enabled)")
+print(f"  http://127.0.0.1:{port}  (production-compatible isolation headers)")
 print("  Ctrl+C to stop.")
 HTTPServer(("127.0.0.1", port), IsolatedHandler).serve_forever()
 '@
