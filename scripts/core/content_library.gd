@@ -21,6 +21,8 @@ const TRAVEL_ROUTES_PATH := "res://data/travel/routes.json"
 const MUSIC_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const TUTORIAL_LESSONS_PATH := "res://data/tutorial/lessons.json"
 const MUSIC_ASSET_ROOT := "res://assets/audio/music"
+const MUSIC_WEB_ASSET_ROOT := "res://assets/audio/music_web"
+const MUSIC_WEB_SAMPLE_RATE := 22050
 const MIN_AUTHORED_MUSIC_LOOP_SECONDS := 12.0
 const AUTHORED_MUSIC_SAMPLE_RATE := 44100
 const AUTHORED_MUSIC_ALLOWED_BITS_PER_SAMPLE := [16, 24]
@@ -30,6 +32,7 @@ const TUTORIAL_HUD_ANCHOR_KEYS := ["heat", "debt", "clock", "chips", "objective"
 
 static var _music_wav_info_cache: Dictionary = {}
 static var _music_wav_info_cache_order: Array[String] = []
+static var _music_web_adpcm_info_cache: Dictionary = {}
 static var _music_wav_info_cache_hits := 0
 static var _music_wav_info_cache_misses := 0
 
@@ -578,6 +581,7 @@ static func music_wav_info_cache_snapshot() -> Dictionary:
 static func clear_music_wav_info_cache() -> void:
 	_music_wav_info_cache.clear()
 	_music_wav_info_cache_order.clear()
+	_music_web_adpcm_info_cache.clear()
 	_music_wav_info_cache_hits = 0
 	_music_wav_info_cache_misses = 0
 
@@ -2153,7 +2157,7 @@ func _validate_music_asset_file(label: String, track_id: String, filename: Strin
 	if not lowered.ends_with(".wav") and not lowered.ends_with(".ogg"):
 		validation_errors.append("%s file must be WAV or OGG: %s." % [label, filename])
 		return
-	var path := "%s/%s/%s" % [MUSIC_ASSET_ROOT, track_id, filename]
+	var path := _music_delivery_asset_path(track_id, filename)
 	if not FileAccess.file_exists(path):
 		validation_errors.append("%s references missing file: %s." % [label, path])
 
@@ -2169,7 +2173,23 @@ func _validate_music_loop_asset(label: String, track_id: String, filename: Strin
 		return {}
 	if not filename.to_lower().ends_with(".wav"):
 		return {}
-	var path := "%s/%s/%s" % [MUSIC_ASSET_ROOT, track_id, filename]
+	var path := _music_delivery_asset_path(track_id, filename)
+	if OS.has_feature("web"):
+		var web_info := _web_adpcm_info(path, false)
+		if not bool(web_info.get("valid", false)):
+			validation_errors.append("%s has invalid Web ADPCM delivery: %s." % [label, str(web_info.get("error", "unreadable header"))])
+			return {}
+		if bool(web_info.get("deferred_payload_inspection", false)):
+			return {}
+		var expected_web_frames := int(round(float(loop_frames) * float(MUSIC_WEB_SAMPLE_RATE) / float(AUTHORED_MUSIC_SAMPLE_RATE)))
+		if int(web_info.get("sample_rate", 0)) != MUSIC_WEB_SAMPLE_RATE:
+			validation_errors.append("%s Web delivery must be %d Hz, got %d Hz." % [label, MUSIC_WEB_SAMPLE_RATE, int(web_info.get("sample_rate", 0))])
+		if int(web_info.get("frames", 0)) != expected_web_frames:
+			validation_errors.append("%s Web delivery frame count must be %d, got %d." % [label, expected_web_frames, int(web_info.get("frames", 0))])
+		# Native validation remains the authority for source-master synchronization
+		# and manifest metadata. Returning no source-shaped info avoids comparing a
+		# 22.05 kHz delivery derivative against the 44.1 kHz authoring contract.
+		return {}
 	var info := _wav_info(path)
 	if not bool(info.get("valid", false)):
 		validation_errors.append("%s has an invalid PCM WAV: %s." % [label, str(info.get("error", "unreadable header"))])
@@ -2187,6 +2207,60 @@ func _validate_music_loop_asset(label: String, track_id: String, filename: Strin
 	var min_loop_frames := int(float(sample_rate) * MIN_AUTHORED_MUSIC_LOOP_SECONDS)
 	if loop_frames < min_loop_frames:
 		validation_errors.append("%s loop is %.1fs; authored room music must be at least %.1fs." % [label, float(loop_frames) / float(sample_rate), MIN_AUTHORED_MUSIC_LOOP_SECONDS])
+	return info
+
+
+func _music_delivery_asset_path(track_id: String, filename: String) -> String:
+	if OS.has_feature("web"):
+		return "%s/%s/%s.bthadpcm.gz" % [MUSIC_WEB_ASSET_ROOT, track_id, filename.get_basename()]
+	return "%s/%s/%s" % [MUSIC_ASSET_ROOT, track_id, filename]
+
+
+static func inspect_web_music_delivery(path: String) -> Dictionary:
+	return _web_adpcm_info(path, true)
+
+
+static func _web_adpcm_info(path: String, inspect_payload: bool = true) -> Dictionary:
+	var cache_key := "%s|%s" % [path, str(inspect_payload)]
+	if _music_web_adpcm_info_cache.has(cache_key):
+		return (_music_web_adpcm_info_cache.get(cache_key, {}) as Dictionary).duplicate(true)
+	if not FileAccess.file_exists(path):
+		return {"valid": false, "error": "file does not exist"}
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {"valid": false, "error": "file could not be opened"}
+	var bytes := file.get_buffer(file.get_length())
+	file.close()
+	if path.to_lower().ends_with(".gz"):
+		if not inspect_payload:
+			if bytes.size() < 2 or int(bytes[0]) != 0x1f or int(bytes[1]) != 0x8b:
+				return {"valid": false, "error": "missing gzip container header"}
+			var deferred_info := {"valid": true, "deferred_payload_inspection": true}
+			_music_web_adpcm_info_cache[cache_key] = deferred_info.duplicate(true)
+			return deferred_info
+		bytes = bytes.decompress_dynamic(16 * 1024 * 1024, FileAccess.COMPRESSION_GZIP)
+	if bytes.size() < 19 or bytes.slice(0, 4).get_string_from_ascii() != "BTHA":
+		return {"valid": false, "error": "missing BTHA header"}
+	var version := int(bytes[4])
+	var channels := int(bytes[5])
+	var sample_rate := bytes.decode_u32(8)
+	var frames := bytes.decode_u32(12)
+	var header_bytes := 16 + channels * 3
+	var file_size := bytes.size()
+	if version != 1:
+		return {"valid": false, "error": "unsupported version %d" % version}
+	if channels < 1 or channels > 2:
+		return {"valid": false, "error": "unsupported channel count %d" % channels}
+	if sample_rate <= 0 or frames <= 0 or file_size <= header_bytes:
+		return {"valid": false, "error": "invalid rate, frame count, or payload"}
+	var info := {
+		"valid": true,
+		"sample_rate": sample_rate,
+		"channels": channels,
+		"frames": frames,
+		"codec": "bth_ima_adpcm4",
+	}
+	_music_web_adpcm_info_cache[cache_key] = info.duplicate(true)
 	return info
 
 

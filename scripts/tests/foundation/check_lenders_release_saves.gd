@@ -435,6 +435,10 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 		failures.append("Web audio bridge must keep a browser-side compressor before destination output.")
 	if not bool(web_contract.get("script_has_pcm_decoder", false)) or not bool(web_contract.get("script_has_music_stems", false)):
 		failures.append("Web audio bridge must decode PCM buffers and play the normal music stem set.")
+	if not bool(web_contract.get("script_has_adpcm_decoder", false)):
+		failures.append("Web audio bridge must decode the bounded 22.05 kHz authored ADPCM delivery.")
+	if not bool(web_contract.get("script_syncs_user_bus_levels", false)):
+		failures.append("Web audio bridge must mirror the native Master, Music, and SFX volume buses.")
 	if int(web_contract.get("minimum_buffer_sample_rate", 0)) < 3000 or not bool(web_contract.get("script_resamples_low_rate_pcm", false)):
 		failures.append("Web audio bridge must upsample bandwidth-bounded music beds to a browser-supported AudioBuffer rate.")
 	if not bool(web_contract.get("script_rejects_empty_music_groups", false)):
@@ -467,6 +471,25 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 	var foundation_main_text := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
 	if foundation_main_text.find("_suppress_web_music_for_game_surface") != -1 or foundation_main_text.find("OS.has_feature(\"web\") and current_screen == SCREEN_GAME") != -1:
 		failures.append("Web procedural music should keep playing inside game surfaces instead of being suppressed on entry.")
+	var export_presets_text := FileAccess.get_file_as_string("res://export_presets.cfg")
+	var web_preset_start := export_presets_text.find("[preset.3]")
+	var web_options_start := export_presets_text.find("[preset.3.options]")
+	var web_preset_text := export_presets_text.substr(web_preset_start, web_options_start - web_preset_start) if web_preset_start >= 0 and web_options_start > web_preset_start else ""
+	var desktop_preset_end := export_presets_text.find("[preset.0.options]")
+	var desktop_preset_text := export_presets_text.substr(0, desktop_preset_end) if desktop_preset_end > 0 else ""
+	if web_preset_text.find("assets/audio/music/*") < 0 or web_preset_text.find("assets/audio/music_web/**") < 0 or web_preset_text.find("assets/audio/sfx_web/**") < 0:
+		failures.append("Web export must replace desktop masters with the bounded Web-authored delivery, not remove both copies.")
+	if desktop_preset_text.find("assets/audio/music/*") >= 0:
+		failures.append("Desktop export must retain the untouched authored music masters.")
+	if not FileAccess.file_exists("res://assets/audio/music_web/corner_store_sparse_fixture/pad.bthadpcm.gz") or not FileAccess.file_exists("res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Bass_UprightBass_1.bthadpcm.gz"):
+		failures.append("Web-authored 22.05 kHz music delivery is incomplete.")
+	for web_music_path in [
+		"res://assets/audio/music_web/corner_store_sparse_fixture/pad.bthadpcm.gz",
+		"res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Bass_UprightBass_1.bthadpcm.gz",
+	]:
+		var web_music_info: Dictionary = ContentLibraryScript.inspect_web_music_delivery(web_music_path)
+		if not bool(web_music_info.get("valid", false)) or int(web_music_info.get("sample_rate", 0)) != 22050 or int(web_music_info.get("frames", 0)) <= 0:
+			failures.append("Web authored music delivery failed deep build-time validation: %s." % web_music_path)
 
 	var player: ProceduralMusicPlayer = ProceduralMusicPlayerScript.new()
 	get_root().add_child(player)
@@ -477,6 +500,8 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 	var web_bed_seconds := float(music_latency.get("web_bed_seconds", 0.0))
 	var web_bed_pcm_bytes := int(music_latency.get("web_bed_pcm_bytes", 0))
 	var web_bed_cap_bytes := int(music_latency.get("web_bed_bridge_cap_bytes", 0))
+	if int(music_latency.get("web_bed_sample_rate", 0)) < 22050:
+		failures.append("Web procedural music must retain the 22.05 kHz fidelity floor used by the browser mix contract.")
 	if web_bed_seconds < 30.0:
 		failures.append("Web procedural music bed should be long-form, not a short startup loop.")
 	if web_bed_pcm_bytes <= 0 or web_bed_cap_bytes <= 0 or web_bed_pcm_bytes > web_bed_cap_bytes:
@@ -993,6 +1018,20 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	if sfx_text.find("_sample_bonus_music") != -1:
 		failures.append("SfxPlayer still contains generated bonus music samplers.")
 	var sfx := SfxPlayerScript.new()
+	var sfx_fidelity: Dictionary = sfx.audio_fidelity_contract_snapshot()
+	if int(sfx_fidelity.get("web_sample_rate", 0)) != int(sfx_fidelity.get("native_sample_rate", -1)) or int(sfx_fidelity.get("web_sample_rate", 0)) < 22050:
+		failures.append("Web SFX must render from the same 22.05 kHz synthesis source as native playback.")
+	if not bool(sfx_fidelity.get("shared_synthesis", false)) or not bool(sfx_fidelity.get("web_incremental_prewarm", false)):
+		failures.append("Web SFX fidelity parity must retain bounded incremental prewarming.")
+	if not bool(sfx_fidelity.get("web_delivery_uses_preencoded_pcm", false)) or int(sfx_fidelity.get("web_delivery_event_count", 0)) != SfxPlayerScript.WEB_DELIVERY_EVENT_IDS.size():
+		failures.append("Web SFX must use the complete pre-encoded desktop-rate delivery bank.")
+	for delivery_event_value in SfxPlayerScript.WEB_DELIVERY_EVENT_IDS:
+		var delivery_event_id := str(delivery_event_value)
+		if not FileAccess.file_exists("res://assets/audio/sfx_web/%s.bthsfx" % delivery_event_id):
+			failures.append("Web SFX delivery bank is missing %s." % delivery_event_id)
+	var web_sfx_delivery: AudioStreamWAV = sfx.call("_web_delivery_event_stream", "blackjack_card")
+	if web_sfx_delivery == null or web_sfx_delivery.format != AudioStreamWAV.FORMAT_IMA_ADPCM or web_sfx_delivery.mix_rate != 22050 or web_sfx_delivery.data.is_empty() or str(web_sfx_delivery.get_meta(WebAudioBridgeScript.PCM_BASE64_META, "")).is_empty():
+		failures.append("Web SFX delivery master could not be decoded and prepared for the browser bridge.")
 	var director_cues: Array = sfx.debug_music_director_cue_ids()
 	if not director_cues.has("bonus_music_buffalo") or not director_cues.has("bonus_music_pinball"):
 		failures.append("SfxPlayer did not keep feature music cue ids routed to the MusicDirector.")

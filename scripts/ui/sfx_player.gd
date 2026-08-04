@@ -14,8 +14,8 @@ signal music_cue_requested(cue_id: String, context: Dictionary)
 
 const SFX_BUS := "SFX"
 const SAMPLE_RATE := 22050
-const WEB_SAMPLE_RATE := 6000
 const TELEPHONE_SAMPLE_RATE := 4000
+const WEB_DELIVERY_ROOT := "res://assets/audio/sfx_web"
 const PCM_BYTES_PER_FRAME := 2
 const SLOT_CLASSIC_REEL_STOP_TIMES := [1.05, 1.55, 2.15]
 const SLOT_POST_REEL_BONUS_DELAY := 0.40
@@ -64,6 +64,23 @@ const WEB_CRITICAL_PREWARM_EVENTS := [
 	"roulette_chip_place",
 	"roulette_rotor_launch",
 	"roulette_ball_loop",
+]
+const WEB_DELIVERY_EVENT_IDS := [
+	"button", "button_pinball", "button_buffalo", "button_digital",
+	"drink_consumed", "phone_call", "scratch_paper_foley_loop", "scratch_box_pop",
+	"lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital",
+	"reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital",
+	"reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital",
+	"gold_coin_tease", "double_gold_coin_tease",
+	"bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital",
+	"bumper", "pinball_money_ding", "bonus_step_buffalo", "bonus_step_digital",
+	"jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital", "payout", "payout_digital",
+	"bonus_total", "bonus_total_buffalo", "bonus_total_digital", "jackpot", "jackpot_buffalo", "jackpot_digital", "lose",
+	"pull_tab_click", "pull_tab_thump", "paper_peek", "paper_peel",
+	"blackjack_card", "blackjack_chip", "blackjack_felt", "blackjack_payout", "blackjack_bust", "blackjack_peek", "blackjack_count", "blackjack_distraction",
+	"video_poker_button", "video_poker_deal", "video_poker_hold", "video_poker_draw", "video_poker_cheat", "video_poker_cheat_beat", "video_poker_double", "video_poker_win",
+	"roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch",
+	"roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout",
 ]
 const ROULETTE_RIM_TIMES := [0.42, 0.82, 1.26, 1.78, 2.34, 2.94, 3.32]
 const ROULETTE_SCATTER_TIMES := [3.66, 3.86, 4.08, 4.32]
@@ -794,6 +811,18 @@ func debug_soak_snapshot() -> Dictionary:
 	}
 
 
+func audio_fidelity_contract_snapshot() -> Dictionary:
+	return {
+		"native_sample_rate": SAMPLE_RATE,
+		"web_sample_rate": SAMPLE_RATE,
+		"telephone_sample_rate": TELEPHONE_SAMPLE_RATE,
+		"shared_synthesis": true,
+		"web_delivery_event_count": WEB_DELIVERY_EVENT_IDS.size(),
+		"web_delivery_uses_preencoded_pcm": true,
+		"web_incremental_prewarm": true,
+	}
+
+
 func _active_slot_audio_id(slot_state: Dictionary, feature_scene: Dictionary, timing: Dictionary) -> String:
 	if bool(slot_state.get("slot_nudge_chain_active", false)):
 		var chain_id := str(timing.get("nudge_chain_active_id", ""))
@@ -1181,6 +1210,17 @@ func _begin_incremental_prewarm() -> void:
 
 
 func _process_prewarm_chunk() -> void:
+	if OS.has_feature("web") and _prewarm_active_event_id.is_empty():
+		while not _prewarm_queue.is_empty():
+			var delivery_event_id := str(_prewarm_queue.pop_front())
+			if _stream_cache.has(delivery_event_id):
+				continue
+			var delivery_stream := _web_delivery_event_stream(delivery_event_id)
+			if delivery_stream != null:
+				_stream_cache[delivery_event_id] = delivery_stream
+			return
+		set_process(false)
+		return
 	if _prewarm_active_event_id.is_empty():
 		while not _prewarm_queue.is_empty():
 			var event_id := str(_prewarm_queue.pop_front())
@@ -1261,6 +1301,11 @@ func _event_stream(event_id: String) -> AudioStreamWAV:
 	var normalized := _normalized_event_id(event_id)
 	if _stream_cache.has(normalized):
 		return _stream_cache[normalized]
+	if OS.has_feature("web"):
+		var delivery_stream := _web_delivery_event_stream(normalized)
+		if delivery_stream != null:
+			_stream_cache[normalized] = delivery_stream
+			return delivery_stream
 	if normalized == _prewarm_active_event_id:
 		_clear_prewarm_event()
 	var seconds := _event_seconds(normalized)
@@ -1273,6 +1318,37 @@ func _event_stream(event_id: String) -> AudioStreamWAV:
 		_write_i16(data, i * PCM_BYTES_PER_FRAME, _soft_limit(_event_sample(normalized, t, i, seconds)))
 	var stream := _audio_stream_from_pcm(normalized, sample_rate, frames, data)
 	_stream_cache[normalized] = stream
+	return stream
+
+
+func _web_delivery_event_stream(event_id: String) -> AudioStreamWAV:
+	var path := "%s/%s.bthsfx" % [WEB_DELIVERY_ROOT, event_id]
+	if not FileAccess.file_exists(path):
+		return null
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return null
+	var header := file.get_line().split("|")
+	var remaining_bytes := maxi(0, file.get_length() - file.get_position())
+	var encoded := file.get_buffer(remaining_bytes).get_string_from_ascii().strip_edges()
+	file.close()
+	if header.size() != 3 or header[0] != "BTHA64" or header[1] != "1" or encoded.is_empty():
+		return null
+	var data := Marshalls.base64_to_raw(encoded)
+	if data.size() < 19 or data.slice(0, 4).get_string_from_ascii() != "BTHA" or int(data[4]) != 1:
+		return null
+	var sample_rate := data.decode_u32(8)
+	var frames := data.decode_u32(12)
+	if sample_rate <= 0 or frames <= 0:
+		return null
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_IMA_ADPCM
+	stream.mix_rate = sample_rate
+	stream.data = data
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if header[2] == "1" else AudioStreamWAV.LOOP_DISABLED
+	stream.loop_begin = 0
+	stream.loop_end = frames
+	stream.set_meta(WebAudioBridgeScript.PCM_BASE64_META, encoded)
 	return stream
 
 
@@ -1290,8 +1366,6 @@ func _audio_stream_from_pcm(event_id: String, sample_rate: int, frames: int, dat
 func _event_sample_rate(event_id: String) -> int:
 	if event_id == "phone_call":
 		return TELEPHONE_SAMPLE_RATE
-	if OS.has_feature("web"):
-		return WEB_SAMPLE_RATE
 	return SAMPLE_RATE
 
 

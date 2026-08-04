@@ -2815,6 +2815,10 @@ func _run() -> void:
 		push_error("Web procedural music bed should not collapse to a short repeated loop.")
 		quit(1)
 		return
+	if int(music_latency.get("web_bed_sample_rate", 0)) < 22050:
+		push_error("Web procedural music bed fell below the native-aligned 22.05 kHz fidelity floor.")
+		quit(1)
+		return
 	if int(music_latency.get("web_bed_pcm_bytes", 0)) > int(music_latency.get("web_bed_bridge_cap_bytes", 0)):
 		push_error("Web procedural music bed exceeded the browser PCM bridge budget.")
 		quit(1)

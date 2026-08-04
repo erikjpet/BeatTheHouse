@@ -8,12 +8,13 @@ static var _last_music_mix_keys: Dictionary = {}
 static var _last_music_mix_msec: Dictionary = {}
 static var _registered_pcm_keys: Dictionary = {}
 static var _active_music_groups: Dictionary = {}
+static var _last_bus_levels_key := ""
 static var _call_counts: Dictionary = {}
 static var _payload_bytes := 0
 static var _preencoded_payload_hits := 0
 static var _synchronous_payload_encodes := 0
 
-const WEB_AUDIO_VERSION := 5
+const WEB_AUDIO_VERSION := 7
 const WEB_AUDIO_MIN_BUFFER_SAMPLE_RATE := 3000
 const PCM_BASE64_META: StringName = &"_bth_web_pcm_base64"
 const WEB_MASTER_GAIN := 0.72
@@ -28,7 +29,7 @@ const WEB_MUSIC_STEM_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", 
 
 const WEB_AUDIO_SCRIPT := """
 (function () {
-	var BRIDGE_VERSION = 5;
+	var BRIDGE_VERSION = 7;
 	if (window.BTHWebAudio && window.BTHWebAudio.version === BRIDGE_VERSION) {
 		return true;
 	}
@@ -103,6 +104,50 @@ const WEB_AUDIO_SCRIPT := """
 					sampleValue -= 65536;
 				}
 				output[outputFrame] = clamp(sampleValue / 32768, -1, 1);
+			}
+		}
+		return buffer;
+	}
+	function decodeBthImaAdpcm(payload, ctx) {
+		var bytes = base64ToBytes(payload.data);
+		if (bytes.length < 19 || bytes[0] !== 66 || bytes[1] !== 84 || bytes[2] !== 72 || bytes[3] !== 65 || bytes[4] !== 1) {
+			throw new Error("Invalid BTH IMA ADPCM stream");
+		}
+		var channels = Math.max(1, Math.min(2, bytes[5] | 0));
+		var sampleRate = (bytes[8] | (bytes[9] << 8) | (bytes[10] << 16) | (bytes[11] << 24)) >>> 0;
+		var frames = (bytes[12] | (bytes[13] << 8) | (bytes[14] << 16) | (bytes[15] << 24)) >>> 0;
+		var dataOffset = 16 + channels * 3;
+		if (!sampleRate || !frames || bytes.length <= dataOffset) {
+			throw new Error("Truncated BTH IMA ADPCM stream");
+		}
+		var indexTable = [-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8];
+		var stepTable = [7,8,9,10,11,12,13,14,16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,337,371,408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552,1707,1878,2066,2272,2499,2749,3024,3327,3660,4026,4428,4871,5358,5894,6484,7132,7845,8630,9493,10442,11487,12635,13899,15289,16818,18500,20350,22385,24623,27086,29794,32767];
+		var predictors = [];
+		var indices = [];
+		var buffer = ctx.createBuffer(channels, frames, sampleRate);
+		for (var channel = 0; channel < channels; channel += 1) {
+			var headerOffset = 16 + channel * 3;
+			var predictor = (bytes[headerOffset + 1] << 8) | bytes[headerOffset];
+			if (predictor >= 32768) predictor -= 65536;
+			predictors[channel] = predictor;
+			indices[channel] = Math.max(0, Math.min(88, bytes[headerOffset + 2] | 0));
+			buffer.getChannelData(channel)[0] = predictor / 32768;
+		}
+		var nibbleOffset = 0;
+		for (var frame = 1; frame < frames; frame += 1) {
+			for (var channel = 0; channel < channels; channel += 1) {
+				var packed = bytes[dataOffset + (nibbleOffset >> 1)] || 0;
+				var code = (nibbleOffset & 1) ? (packed >> 4) & 15 : packed & 15;
+				nibbleOffset += 1;
+				var step = stepTable[indices[channel]];
+				var delta = step >> 3;
+				if (code & 4) delta += step;
+				if (code & 2) delta += step >> 1;
+				if (code & 1) delta += step >> 2;
+				predictors[channel] += (code & 8) ? -delta : delta;
+				predictors[channel] = clamp(predictors[channel], -32768, 32767);
+				indices[channel] = clamp(indices[channel] + indexTable[code], 0, 88);
+				buffer.getChannelData(channel)[frame] = predictors[channel] / 32768;
 			}
 		}
 		return buffer;
@@ -193,7 +238,7 @@ const WEB_AUDIO_SCRIPT := """
 				return false;
 			}
 			try {
-				this.pcmBuffers[key] = decodePcm16(payload, this.ctx);
+				this.pcmBuffers[key] = payload.codec === "bth_ima_adpcm4" ? decodeBthImaAdpcm(payload, this.ctx) : decodePcm16(payload, this.ctx);
 			} catch (error) {
 				console.error("BTH Web Audio PCM decode failed:", error);
 				return false;
@@ -325,6 +370,18 @@ const WEB_AUDIO_SCRIPT := """
 			}
 			return true;
 		},
+		setBusLevels: function (payload) {
+			payload = parsePayload(payload, {});
+			if (!this.ensure()) {
+				return false;
+			}
+			var ctx = this.ctx;
+			var now = ctx.currentTime;
+			this.master.gain.setTargetAtTime(clamp(Number(payload.master || 0), 0, 1), now, 0.025);
+			this.musicBus.gain.setTargetAtTime(clamp(Number(payload.music || 0), 0, 1), now, 0.025);
+			this.sfxBus.gain.setTargetAtTime(clamp(Number(payload.sfx || 0), 0, 1), now, 0.025);
+			return true;
+		},
 		stopMusic: function (payload) {
 			payload = parsePayload(payload, {});
 			var groupId = "";
@@ -406,6 +463,7 @@ static func unlock() -> void:
 	_last_music_payload_key = ""
 	_record_bridge_call("unlock", 0)
 	_bridge_interface.unlock()
+	_sync_output_levels()
 
 
 static func play_stream(stream: AudioStream, stream_id: String, volume_db: float = 0.0, pitch: float = 1.0, loop_id: String = "", force_loop: bool = false) -> bool:
@@ -413,6 +471,7 @@ static func play_stream(stream: AudioStream, stream_id: String, volume_db: float
 		return false
 	if not _bridge_ready():
 		return false
+	_sync_output_levels()
 	var payload := _stream_payload(stream, stream_id, volume_db, pitch, loop_id, force_loop)
 	if payload.is_empty():
 		return false
@@ -441,6 +500,7 @@ static func play_music_stems(group_id: String, stem_set_key: String, stem_set: D
 		return false
 	if not _bridge_ready():
 		return false
+	_sync_output_levels()
 	var stems_value: Variant = stem_set.get("stems", {})
 	if typeof(stems_value) != TYPE_DICTIONARY:
 		return false
@@ -495,6 +555,7 @@ static func set_music_mix(group_id: String, role_volume_db: Dictionary) -> void:
 		return
 	if not _bridge_ready():
 		return
+	_sync_output_levels()
 	var safe_group_id := group_id.strip_edges()
 	if safe_group_id.is_empty():
 		safe_group_id = "music"
@@ -555,6 +616,32 @@ static func reset_debug_stats() -> void:
 	_last_music_mix_msec = {}
 	_registered_pcm_keys = {}
 	_active_music_groups = {}
+	_last_bus_levels_key = ""
+
+
+static func _sync_output_levels() -> void:
+	if _bridge_interface == null:
+		return
+	var levels := {
+		"master": _audio_bus_linear("Master"),
+		"music": _audio_bus_linear("Music"),
+		"sfx": _audio_bus_linear("SFX"),
+	}
+	var levels_key := JSON.stringify(levels)
+	if levels_key == _last_bus_levels_key:
+		return
+	_last_bus_levels_key = levels_key
+	_record_bridge_call("set_bus_levels", levels_key.length())
+	_bridge_interface.setBusLevels(levels_key)
+
+
+static func _audio_bus_linear(bus_name: String) -> float:
+	var bus_index := AudioServer.get_bus_index(bus_name)
+	if bus_index < 0:
+		return 1.0
+	if AudioServer.is_bus_mute(bus_index):
+		return 0.0
+	return clampf(db_to_linear(AudioServer.get_bus_volume_db(bus_index)), 0.0, 1.0)
 
 
 static func debug_stats() -> Dictionary:
@@ -588,10 +675,12 @@ static func mix_contract_snapshot() -> Dictionary:
 		"script_has_highpass": WEB_AUDIO_SCRIPT.find("this.highpass.type = \"highpass\"") >= 0 and WEB_AUDIO_SCRIPT.find("this.highpass.frequency.value = 38") >= 0,
 		"script_has_compressor": WEB_AUDIO_SCRIPT.find("createDynamicsCompressor") >= 0 and WEB_AUDIO_SCRIPT.find("this.compressor.threshold.value = -6") >= 0,
 		"script_has_pcm_decoder": WEB_AUDIO_SCRIPT.find("decodePcm16") >= 0 and WEB_AUDIO_SCRIPT.find("createBuffer(channels, outputFrames, outputSampleRate)") >= 0,
+		"script_has_adpcm_decoder": WEB_AUDIO_SCRIPT.find("decodeBthImaAdpcm") >= 0 and WEB_AUDIO_SCRIPT.find("bth_ima_adpcm4") >= 0,
 		"script_resamples_low_rate_pcm": WEB_AUDIO_SCRIPT.find("Math.max(3000, inputSampleRate)") >= 0 and WEB_AUDIO_SCRIPT.find("outputFrame * inputSampleRate / outputSampleRate") >= 0,
 		"script_rejects_empty_music_groups": WEB_AUDIO_SCRIPT.find("if (!Object.keys(group.sources).length)") >= 0,
 		"script_accepts_json_payloads": WEB_AUDIO_SCRIPT.find("parsePayload") >= 0 and WEB_AUDIO_SCRIPT.find("JSON.parse(payload)") >= 0,
 		"script_has_music_stems": WEB_AUDIO_SCRIPT.find("playMusicStems") >= 0 and WEB_AUDIO_SCRIPT.find("setMusicMix") >= 0,
+		"script_syncs_user_bus_levels": WEB_AUDIO_SCRIPT.find("setBusLevels") >= 0 and WEB_AUDIO_SCRIPT.find("this.musicBus.gain.setTargetAtTime") >= 0 and WEB_AUDIO_SCRIPT.find("this.sfxBus.gain.setTargetAtTime") >= 0,
 		"script_has_loop_stop": WEB_AUDIO_SCRIPT.find("stopLoop") >= 0,
 		"script_has_oscillator_fallback": WEB_AUDIO_SCRIPT.find("createOscillator") >= 0,
 		"bridge_uses_direct_interface": true,
@@ -607,13 +696,15 @@ static func _stream_payload(stream: AudioStream, stream_id: String, volume_db: f
 	if not (stream is AudioStreamWAV):
 		return {}
 	var wav := stream as AudioStreamWAV
-	if wav.format != AudioStreamWAV.FORMAT_16_BITS:
+	var is_pcm16 := wav.format == AudioStreamWAV.FORMAT_16_BITS
+	var is_web_adpcm := wav.format == AudioStreamWAV.FORMAT_IMA_ADPCM
+	if not is_pcm16 and not is_web_adpcm:
 		return {}
 	var data := wav.data
 	var channels := 2 if wav.stereo else 1
 	var bytes_per_frame := maxi(1, channels * 2)
-	var frames := maxi(1, int(data.size() / bytes_per_frame))
-	if data.size() < bytes_per_frame:
+	var frames := maxi(1, int(data.size() / bytes_per_frame)) if is_pcm16 else maxi(1, int(wav.loop_end))
+	if data.is_empty():
 		return {}
 	var sample_rate := maxi(1, wav.mix_rate)
 	var loop_begin := clampi(int(wav.loop_begin), 0, maxi(0, frames - 1))
@@ -625,12 +716,14 @@ static func _stream_payload(stream: AudioStream, stream_id: String, volume_db: f
 	var safe_stream_id := stream_id.strip_edges()
 	if safe_stream_id.is_empty():
 		safe_stream_id = "pcm"
-	var stream_key := "%s|sr%d|ch%d|bytes%d|loop%d:%d" % [safe_stream_id, sample_rate, channels, data.size(), loop_begin, loop_end]
+	var codec := "pcm_s16le" if is_pcm16 else "bth_ima_adpcm4"
+	var stream_key := "%s|%s|sr%d|ch%d|bytes%d|loop%d:%d" % [safe_stream_id, codec, sample_rate, channels, data.size(), loop_begin, loop_end]
 	var registered := bool(_registered_pcm_keys.get(stream_key, false))
 	var payload := {
 		"key": stream_key,
 		"sample_rate": sample_rate,
 		"channels": channels,
+		"codec": codec,
 		"frames": frames,
 		"volume_db": volume_db,
 		"pitch": clampf(pitch, 0.35, 2.5),
@@ -655,7 +748,7 @@ static func prepare_pcm_stream_for_bridge(stream: AudioStream) -> bool:
 	if not (stream is AudioStreamWAV):
 		return false
 	var wav := stream as AudioStreamWAV
-	if wav.format != AudioStreamWAV.FORMAT_16_BITS or wav.data.is_empty():
+	if not [AudioStreamWAV.FORMAT_16_BITS, AudioStreamWAV.FORMAT_IMA_ADPCM].has(wav.format) or wav.data.is_empty():
 		return false
 	if not str(wav.get_meta(PCM_BASE64_META, "")).is_empty():
 		return true

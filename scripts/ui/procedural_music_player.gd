@@ -110,14 +110,15 @@ const MUSIC_FEATURE_ATTACK_SECONDS := 0.25
 const MUSIC_FEATURE_RELEASE_SECONDS := 2.0
 const MUSIC_AUTHORED_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const MUSIC_AUTHORED_ROOT := "res://assets/audio/music"
+const MUSIC_AUTHORED_WEB_ROOT := "res://assets/audio/music_web"
 const AUTHORED_MANIFEST_CACHE_LIMIT := 32
 const MUSIC_MIN_VOLUME_DB := -80.0
-const WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES := 393216
+const WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES := 8388608
 const WEB_AUDIO_MUSIC_BED_SECONDS := 30.0
-const WEB_AUDIO_MUSIC_BED_SAMPLE_RATE := 1000
+const WEB_AUDIO_MUSIC_BED_SAMPLE_RATE := 22050
 const WEB_AUDIO_RENDER_STRIDE_FRAMES := 2
-const WEB_AUDIO_WORKER_YIELD_SOURCE_FRAMES := 512
-const WEB_AUDIO_WORKER_YIELD_USEC := 5000
+const WEB_AUDIO_WORKER_YIELD_SOURCE_FRAMES := 8192
+const WEB_AUDIO_WORKER_YIELD_USEC := 100
 const WEB_MIXDOWN_ROLE_WEIGHTS := {
 	"pad": 0.74,
 	"bass": 0.52,
@@ -2937,7 +2938,8 @@ func _start_ambient_generation(profile: Dictionary, cache_key: String, token: in
 	_thread_token = token
 	_thread_stage = stage
 	_generation_thread = Thread.new()
-	var error := _generation_thread.start(Callable(self, "_generate_ambient_data_thread").bind(profile.duplicate(true), cache_key, token, stage))
+	var thread_priority := Thread.PRIORITY_LOW if OS.has_feature("web") else Thread.PRIORITY_NORMAL
+	var error := _generation_thread.start(Callable(self, "_generate_ambient_data_thread").bind(profile.duplicate(true), cache_key, token, stage), thread_priority)
 	if error != OK:
 		push_warning("Procedural music generation thread failed to start: %s" % str(error))
 		_generation_thread = null
@@ -2963,7 +2965,7 @@ func _generate_ambient_data_thread(profile: Dictionary, cache_key: String, token
 	if stage == AMBIENT_STAGE_WEB:
 		var authored_source := _authored_web_mixdown_source_from_profile(profile)
 		stem_set = (
-			_web_music_mixdown_stem_set(profile, authored_source, token)
+			_web_authored_stem_set(profile, authored_source)
 			if not authored_source.is_empty()
 			else _web_music_bed_stem_set(profile, WEB_AUDIO_MUSIC_BED_SECONDS, "web_full", token)
 		)
@@ -3530,7 +3532,7 @@ func _authored_web_mixdown_source_from_profile(profile: Dictionary) -> Dictionar
 	var music_state := _copy_dict(profile.get("_web_authored_selection_state", {}))
 	var selection := MusicArrangementSelectorScript.select(entry, profile, music_state)
 	var selected_stems := _copy_dict(selection.get("stems", {}))
-	var loop_frames := int(entry.get("loop_frames", 0))
+	var loop_frames := _authored_playback_loop_frames(entry)
 	var stems := {}
 	for role_value in selected_stems.keys():
 		var role := str(role_value).strip_edges()
@@ -3556,8 +3558,18 @@ func _authored_web_mixdown_source_from_profile(profile: Dictionary) -> Dictionar
 		AMBIENT_STAGE_FULL
 	)
 	contract["track_id"] = track_id
-	contract["sample_rate"] = int(entry.get("sample_rate", SAMPLE_RATE))
+	contract["sample_rate"] = _authored_playback_sample_rate(entry)
 	contract["selection_key"] = str(selection.get("selection_key", "base"))
+	return contract
+
+
+func _web_authored_stem_set(profile: Dictionary, authored_stem_set: Dictionary) -> Dictionary:
+	if not _stem_set_contract_valid(authored_stem_set):
+		return {}
+	var contract := authored_stem_set.duplicate(true)
+	contract["profile"] = profile.duplicate(true)
+	contract["web_bridge_bed"] = true
+	contract["web_bridge_authored"] = true
 	return contract
 
 
@@ -3604,10 +3616,9 @@ func _web_music_bed_pcm_data(context: Dictionary, frames: int, sample_rate: int,
 	var texture_seed := int(context.get("texture_seed", 0))
 	var variation_seed := int(context.get("variation_seed", texture_seed))
 	var humanize_seed := int(context.get("humanize_seed", variation_seed))
-	# Browser music is intentionally bandwidth-limited. Render at the same
-	# bounded stride used by the full procedural pipeline, then retain the exact
-	# frame count and loop duration by holding each sample across the stride.
-	# This keeps the worker from starving the browser renderer on low-end CPUs.
+	# Browser music uses the same synthesis voices and a proper audio-bandwidth
+	# source rate. Rendering remains on the worker and yields in bounded chunks
+	# so fidelity does not come at the cost of starving the browser renderer.
 	var render_stride := maxi(1, WEB_AUDIO_RENDER_STRIDE_FRAMES)
 	var i := 0
 	while i < frames:
@@ -3895,7 +3906,7 @@ func _play_web_music_bed_for_cache(cache_key: String, resume_position: float, so
 		if _web_music_bed_cache.has(cache_key):
 			var cached_stem_set: Dictionary = _web_music_bed_cache.get(cache_key, {}) as Dictionary
 			cached_source = str(cached_stem_set.get("source", ""))
-		if cached_source != "web_mixdown":
+		if cached_source != "web_mixdown" and not bool((_web_music_bed_cache.get(cache_key, {}) as Dictionary).get("web_bridge_authored", false)):
 			_request_web_music_bed_generation(profile, cache_key)
 			return
 	if not _web_music_bed_cache.has(cache_key):
@@ -4788,7 +4799,7 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	if typeof(stems_value) != TYPE_DICTIONARY:
 		return {}
 	var stems_data: Dictionary = stems_value
-	var loop_frames := int(entry.get("loop_frames", 0))
+	var loop_frames := _authored_playback_loop_frames(entry)
 	var stems := {}
 	for role_value in stems_data.keys():
 		var role := str(role_value).strip_edges()
@@ -4807,7 +4818,7 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	var stingers := _authored_stingers(track_id, entry)
 	var contract := _stem_set_contract("authored", stems, float(entry.get("bpm", 82.0)), int(entry.get("bars", 1)), loop_frames, str(entry.get("palette_id", track_id)), stingers, AMBIENT_STAGE_FULL)
 	contract["track_id"] = track_id
-	contract["sample_rate"] = int(entry.get("sample_rate", SAMPLE_RATE))
+	contract["sample_rate"] = _authored_playback_sample_rate(entry)
 	contract["channels"] = int(entry.get("channels", 1))
 	contract["bit_depth"] = int(entry.get("bit_depth", 16))
 	contract["profile"] = profile.duplicate(true)
@@ -5063,11 +5074,27 @@ func _authored_one_shots(track_id: String, entries: Dictionary) -> Dictionary:
 
 
 func _authored_music_path(track_id: String, filename: String) -> String:
-	return "%s/%s/%s" % [MUSIC_AUTHORED_ROOT, track_id, filename]
+	var root := MUSIC_AUTHORED_WEB_ROOT if OS.has_feature("web") else MUSIC_AUTHORED_ROOT
+	var playback_filename := "%s.bthadpcm.gz" % filename.get_basename() if OS.has_feature("web") else filename
+	return "%s/%s/%s" % [root, track_id, playback_filename]
+
+
+func _authored_playback_sample_rate(entry: Dictionary) -> int:
+	return WEB_AUDIO_MUSIC_BED_SAMPLE_RATE if OS.has_feature("web") else int(entry.get("sample_rate", SAMPLE_RATE))
+
+
+func _authored_playback_loop_frames(entry: Dictionary) -> int:
+	var source_frames := int(entry.get("loop_frames", 0))
+	if not OS.has_feature("web"):
+		return source_frames
+	var source_rate := maxi(1, int(entry.get("sample_rate", SAMPLE_RATE)))
+	return maxi(1, int(round(float(source_frames) * float(WEB_AUDIO_MUSIC_BED_SAMPLE_RATE) / float(source_rate))))
 
 
 func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: bool = true):
 	var lowered := path.to_lower()
+	if lowered.ends_with(".bthadpcm") or lowered.ends_with(".bthadpcm.gz"):
+		return _load_web_adpcm_stream(path, loop_frames, loop_enabled)
 	if lowered.ends_with(".wav"):
 		# Decode the untouched source master ourselves. This keeps 24-bit source
 		# validation deterministic across editor/import settings; 24-bit masters
@@ -5081,6 +5108,31 @@ func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: b
 	if loaded is AudioStream:
 		return loaded
 	return null
+
+
+func _load_web_adpcm_stream(path: String, loop_frames: int, loop_enabled: bool = true):
+	if not FileAccess.file_exists(path):
+		return null
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if path.to_lower().ends_with(".gz"):
+		bytes = bytes.decompress_dynamic(16 * 1024 * 1024, FileAccess.COMPRESSION_GZIP)
+	if bytes.size() < 19 or _ascii_from_bytes(bytes, 0, 4) != "BTHA" or int(bytes[4]) != 1:
+		return null
+	var channels := int(bytes[5])
+	var sample_rate := _u32_le(bytes, 8)
+	var source_frames := _u32_le(bytes, 12)
+	var header_bytes := 16 + channels * 3
+	if channels < 1 or channels > 2 or sample_rate <= 0 or source_frames <= 0 or bytes.size() <= header_bytes:
+		return null
+	if loop_enabled and loop_frames > 0 and source_frames != loop_frames:
+		return null
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_IMA_ADPCM
+	stream.mix_rate = sample_rate
+	stream.stereo = channels > 1
+	stream.data = bytes
+	_configure_wav_loop(stream, source_frames if loop_enabled else 0, loop_enabled)
+	return stream
 
 
 func _configure_wav_loop(stream: AudioStreamWAV, loop_frames: int, loop_enabled: bool = true) -> void:
