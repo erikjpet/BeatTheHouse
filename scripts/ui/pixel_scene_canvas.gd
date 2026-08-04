@@ -155,7 +155,6 @@ func _ready() -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
-		_reflow_foundation_objects_for_reserved_overlay()
 		_invalidate_camera_target()
 		_update_camera_target_if_needed()
 		queue_redraw()
@@ -181,6 +180,7 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(foundation_snapshot.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
+	overlay_repositioned_object_ids.clear()
 	_clear_draw_text_caches()
 	_rebuild_scene_object_cache()
 	_prune_object_animation_phase_cache()
@@ -206,14 +206,13 @@ func set_small_screen_mode(enabled: bool) -> void:
 	view_geometry_changed.emit()
 
 
-# Keeps room interactions out from under a live conversation without changing
-# authored environment data. Rendering, hit testing, camera focus, and coach
-# anchors all consume the same repositioned scene-object records.
+# Keeps camera focus clear of a live conversation without changing stable room
+# object placement. TalkDock owns target avoidance; the canvas never relocates
+# generated environment objects in response to overlay motion.
 func set_reserved_overlay_rect(global_rect: Rect2) -> bool:
 	if global_rect.is_equal_approx(reserved_overlay_global_rect):
 		return false
 	reserved_overlay_global_rect = global_rect
-	_reflow_foundation_objects_for_reserved_overlay()
 	_invalidate_camera_target()
 	_update_camera_target_if_needed()
 	queue_redraw()
@@ -2025,108 +2024,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"confirm_action_id": str(record.get("confirm_action_id", "")),
 		}
 		objects.append(_apply_draw_hints(scene_object, object_type, index))
-	return _apply_reserved_overlay_layout(objects)
-
-
-func _reflow_foundation_objects_for_reserved_overlay() -> void:
-	if not uses_foundation_snapshot or foundation_snapshot.is_empty():
-		return
-	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
-	_rebuild_scene_object_cache()
-	if not selected_object_id.is_empty() and _scene_object(selected_object_id).is_empty():
-		selected_object_id = ""
-	if not hovered_object_id.is_empty() and _scene_object(hovered_object_id).is_empty():
-		hovered_object_id = ""
-
-
-func _apply_reserved_overlay_layout(objects: Array) -> Array:
-	overlay_repositioned_object_ids.clear()
-	var reserved_board_rect := _reserved_overlay_board_rect()
-	if reserved_board_rect.size.x <= 0.0 or reserved_board_rect.size.y <= 0.0:
-		return objects
-	var board_bounds := Rect2(Vector2(OBJECT_LAYOUT_MARGIN, OBJECT_LAYOUT_MARGIN), Vector2(BOARD_SIZE) - Vector2(OBJECT_LAYOUT_MARGIN * 2.0, OBJECT_LAYOUT_MARGIN * 2.0))
-	var board_size := Vector2(BOARD_SIZE)
-	var placed_protected_rects: Array[Rect2] = []
-	var movable_objects: Array[Dictionary] = []
-	for object_value in objects:
-		if typeof(object_value) != TYPE_DICTIONARY:
-			continue
-		var object_data: Dictionary = object_value
-		if not bool(object_data.get("interactive", true)):
-			continue
-		var object_rect := _board_rect_for_object(object_data)
-		var protected_rect := object_rect.grow(OBJECT_LABEL_HEIGHT + OBJECT_LABEL_GAP + 4.0)
-		if not protected_rect.intersects(reserved_board_rect):
-			placed_protected_rects.append(protected_rect)
-		else:
-			movable_objects.append(object_data)
-	for object_data in movable_objects:
-		var object_rect := _board_rect_for_object(object_data)
-		var protected_rect := object_rect.grow(OBJECT_LABEL_HEIGHT + OBJECT_LABEL_GAP + 4.0)
-		var translations: Array[Vector2] = [
-			Vector2(0.0, reserved_board_rect.position.y - CONVERSATION_OVERLAY_CLEARANCE - protected_rect.end.y),
-			Vector2(reserved_board_rect.end.x + CONVERSATION_OVERLAY_CLEARANCE - protected_rect.position.x, 0.0),
-			Vector2(reserved_board_rect.position.x - CONVERSATION_OVERLAY_CLEARANCE - protected_rect.end.x, 0.0),
-			Vector2(0.0, reserved_board_rect.end.y + CONVERSATION_OVERLAY_CLEARANCE - protected_rect.position.y),
-		]
-		var best_translation := Vector2.ZERO
-		var best_distance := INF
-		for translation in translations:
-			var candidate := Rect2(protected_rect.position + translation, protected_rect.size)
-			if not board_bounds.encloses(candidate) or candidate.intersects(reserved_board_rect):
-				continue
-			var collides := false
-			for placed_rect in placed_protected_rects:
-				if candidate.intersects(placed_rect):
-					collides = true
-					break
-			if collides:
-				continue
-			var distance := translation.length_squared()
-			if distance < best_distance:
-				best_distance = distance
-				best_translation = translation
-		if best_distance == INF:
-			var max_candidate_position := board_bounds.end - protected_rect.size
-			var candidate_y := board_bounds.position.y
-			while candidate_y <= max_candidate_position.y:
-				var candidate_x := board_bounds.position.x
-				while candidate_x <= max_candidate_position.x:
-					var candidate := Rect2(Vector2(candidate_x, candidate_y), protected_rect.size)
-					if not candidate.intersects(reserved_board_rect):
-						var collides := false
-						for placed_rect in placed_protected_rects:
-							if candidate.intersects(placed_rect):
-								collides = true
-								break
-						if not collides:
-							var translation := candidate.position - protected_rect.position
-							var distance := translation.length_squared()
-							if distance < best_distance:
-								best_distance = distance
-								best_translation = translation
-					candidate_x += 8.0
-				candidate_y += 8.0
-		if best_distance == INF:
-			placed_protected_rects.append(protected_rect)
-			continue
-		var moved_center := object_rect.get_center() + best_translation
-		object_data["position"] = Vector2(moved_center.x / board_size.x, moved_center.y / board_size.y)
-		overlay_repositioned_object_ids.append(str(object_data.get("id", "")))
-		placed_protected_rects.append(Rect2(protected_rect.position + best_translation, protected_rect.size))
 	return objects
-
-
-func _reserved_overlay_board_rect() -> Rect2:
-	var local_rect := _reserved_overlay_local_rect()
-	if local_rect.size.x <= 0.0 or local_rect.size.y <= 0.0:
-		return Rect2()
-	var base_scale := _board_base_scale()
-	if base_scale <= 0.0:
-		return Rect2()
-	var base_offset := _board_base_offset(base_scale)
-	var board_rect := Rect2((local_rect.position - base_offset) / base_scale, local_rect.size / base_scale)
-	return board_rect.intersection(Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)))
 
 
 func _reserved_overlay_local_rect() -> Rect2:

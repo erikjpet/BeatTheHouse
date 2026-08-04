@@ -24,6 +24,8 @@ class FocusLayer:
 		queue_redraw()
 
 	func set_live_anchor_rect(anchor_rect: Rect2) -> void:
+		if live_anchor_rect_valid and live_anchor_rect.is_equal_approx(anchor_rect):
+			return
 		live_anchor_rect = anchor_rect
 		live_anchor_rect_valid = true
 		queue_redraw()
@@ -58,6 +60,7 @@ var prepared_snapshot: Dictionary = {}
 var active_layout_key := 0
 var live_anchor_rect := Rect2()
 var live_anchor_rect_valid := false
+var live_anchor_change_count := 0
 var active_anchor_kind_value := ""
 var active_anchor_id_value := ""
 var active_dialogue_requested := false
@@ -98,6 +101,7 @@ func restore_seen(next_seen: Dictionary) -> void:
 	active_layout_key = 0
 	live_anchor_rect = Rect2()
 	live_anchor_rect_valid = false
+	live_anchor_change_count = 0
 	active_anchor_kind_value = ""
 	active_anchor_id_value = ""
 	active_dialogue_requested = false
@@ -229,6 +233,7 @@ func current_snapshot() -> Dictionary:
 		snapshot["anchor_found"] = live_anchor_rect.has_area()
 	snapshot["visible"] = visible and not active_lesson.is_empty()
 	snapshot["queued_count"] = queued_lessons.size()
+	snapshot["live_anchor_change_count"] = live_anchor_change_count
 	return snapshot
 
 
@@ -365,6 +370,7 @@ func update_active_anchor_rect(anchor_kind: String, anchor_id: String, next_rect
 		return false
 	live_anchor_rect = clipped_rect
 	live_anchor_rect_valid = true
+	live_anchor_change_count += 1
 	if focus_layer != null:
 		focus_layer.set_live_anchor_rect(clipped_rect)
 	_request_active_dialogue_once()

@@ -633,11 +633,28 @@ func _check_talk_dock_component() -> bool:
 	var clearance_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
 	var repositioned_ids: Array = clearance_snapshot.get("overlay_repositioned_object_ids", []) if typeof(clearance_snapshot.get("overlay_repositioned_object_ids", [])) == TYPE_ARRAY else []
 	var room_object_rect: Rect2 = environment_canvas.call("global_rect_for_object", "service:under_talk_dock")
-	if not repositioned_ids.has("service:under_talk_dock") or room_object_rect.intersects(reserved_rect):
+	var stable_object_position := Vector2(-1.0, -1.0)
+	for object_value in clearance_snapshot.get("objects", []):
+		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("id", "")) == "service:under_talk_dock":
+			stable_object_position = (object_value as Dictionary).get("position", Vector2(-1.0, -1.0))
+			break
+	if not repositioned_ids.is_empty() or stable_object_position.x < 0.0:
 		environment_canvas.queue_free()
 		parent.queue_free()
-		push_error("Environment object remained inside the TalkDock reserve: object=%s reserved=%s snapshot=%s." % [str(room_object_rect), str(reserved_rect), str(clearance_snapshot)])
+		push_error("Conversation reserve mutated stable environment layout state: %s." % str(clearance_snapshot))
 		return false
+	environment_canvas.call("set_reserved_overlay_rect", Rect2(320, 12, 290, 210))
+	environment_canvas.call("set_reserved_overlay_rect", reserved_rect)
+	var refreshed_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	for object_value in refreshed_snapshot.get("objects", []):
+		if typeof(object_value) != TYPE_DICTIONARY or str((object_value as Dictionary).get("id", "")) != "service:under_talk_dock":
+			continue
+		var refreshed_position: Vector2 = (object_value as Dictionary).get("position", Vector2(-1.0, -1.0))
+		if not refreshed_position.is_equal_approx(stable_object_position):
+			environment_canvas.queue_free()
+			parent.queue_free()
+			push_error("Environment service position changed when the conversation reserve moved.")
+			return false
 	var local_object_center: Vector2 = environment_canvas.get_global_transform().affine_inverse() * room_object_rect.get_center()
 	if str(environment_canvas.call("object_id_at_local_position", local_object_center)) != "service:under_talk_dock":
 		environment_canvas.queue_free()
@@ -647,12 +664,16 @@ func _check_talk_dock_component() -> bool:
 	environment_canvas.call("set_selected_object", "service:under_talk_dock")
 	for _focus_frame in range(48):
 		environment_canvas.call("_process", 1.0 / 60.0)
-	var focused_object_rect: Rect2 = environment_canvas.call("global_rect_for_object", "service:under_talk_dock")
-	if focused_object_rect.intersects(reserved_rect):
-		environment_canvas.queue_free()
-		parent.queue_free()
-		push_error("Environment focus camera moved the tutorial target back under the TalkDock: object=%s reserved=%s." % [str(focused_object_rect), str(reserved_rect)])
-		return false
+	var focused_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	for object_value in focused_snapshot.get("objects", []):
+		if typeof(object_value) != TYPE_DICTIONARY or str((object_value as Dictionary).get("id", "")) != "service:under_talk_dock":
+			continue
+		var focused_position: Vector2 = (object_value as Dictionary).get("position", Vector2(-1.0, -1.0))
+		if not focused_position.is_equal_approx(stable_object_position):
+			environment_canvas.queue_free()
+			parent.queue_free()
+			push_error("Environment focus moved the service instead of moving only the camera.")
+			return false
 	environment_canvas.queue_free()
 	var response_icon_kinds: Array = snapshot.get("response_icon_kinds", [])
 	if str(snapshot.get("presentation", "")) != "environment_overlay" or bool(snapshot.get("choice_effects_visible", true)) or _has_visible_text(dock, "Heat -1") or not response_icon_kinds.has("heat_down") or not response_icon_kinds.has("heat_up") or not response_icon_kinds.has("leave"):
@@ -771,6 +792,26 @@ func _check_coach_overlay_component() -> bool:
 	if not overlay.input_allowed("wrong:door") or not overlay.input_allowed("fixture:door") or bool(guidance_snapshot.get("gating", true)) or not bool(guidance_snapshot.get("highlight_emphasis", false)):
 		parent.queue_free()
 		push_error("Coach overlay highlight blocked an unrelated player action.")
+		return false
+	var stable_anchor := _snapshot_rect(guidance_snapshot.get("anchor_rect", {}))
+	var anchor_change_count := int(guidance_snapshot.get("live_anchor_change_count", -1))
+	for _refresh_index in range(24):
+		overlay.update_active_anchor_rect("interactable_object", "fixture:door", stable_anchor)
+	var stable_guidance_snapshot := overlay.current_snapshot()
+	if int(stable_guidance_snapshot.get("live_anchor_change_count", -1)) != anchor_change_count or not bool(stable_guidance_snapshot.get("highlight_emphasis", false)):
+		parent.queue_free()
+		push_error("Stable coach anchor refreshes changed or de-emphasized the highlight.")
+		return false
+	var shifted_anchor := Rect2(stable_anchor.position + Vector2(4.0, 3.0), stable_anchor.size)
+	if not overlay.update_active_anchor_rect("interactable_object", "fixture:door", shifted_anchor):
+		parent.queue_free()
+		push_error("Coach overlay rejected one real geometry change.")
+		return false
+	for _refresh_index in range(24):
+		overlay.update_active_anchor_rect("interactable_object", "fixture:door", shifted_anchor)
+	if int(overlay.current_snapshot().get("live_anchor_change_count", -1)) != anchor_change_count + 1:
+		parent.queue_free()
+		push_error("Coach overlay rebuilt an unchanged live anchor instead of updating once.")
 		return false
 	overlay.restore_seen({})
 	overlay.set_lessons([{
@@ -1113,6 +1154,15 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	environment["resolved_event_ids"] = []
 	environment["next_archetypes"] = ["bar"]
 	run_state.set_environment(environment)
+	var layout_before_dialogue := JSON.stringify(_copy_dict(_copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {})))
+	app.call("_refresh")
+	await process_frame
+	var rendered_positions_before_dialogue: Dictionary = {}
+	var pre_dialogue_canvas: Control = app.get("environment_canvas")
+	var pre_dialogue_snapshot: Dictionary = pre_dialogue_canvas.call("current_view_snapshot") if pre_dialogue_canvas != null else {}
+	for object_value in pre_dialogue_snapshot.get("objects", []):
+		if typeof(object_value) == TYPE_DICTIONARY:
+			rendered_positions_before_dialogue[str((object_value as Dictionary).get("id", ""))] = (object_value as Dictionary).get("position", Vector2(-1.0, -1.0))
 	if not bool(app.call("start_dialogue", "pull_tab_clerk", {})):
 		push_error("Dialogue dock fixture could not start pull_tab_clerk.")
 		return false
@@ -1148,10 +1198,14 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 		if typeof(object_value) != TYPE_DICTIONARY or not bool((object_value as Dictionary).get("interactive", true)):
 			continue
 		var dialogue_object_id := str((object_value as Dictionary).get("id", ""))
-		var dialogue_object_rect: Rect2 = dialogue_environment_canvas.call("global_rect_for_object", dialogue_object_id)
-		if dialogue_object_rect.intersects(environment_reserved_rect):
-			push_error("Live dialogue left environment object %s under the reserved conversation area: object=%s reserve=%s." % [dialogue_object_id, str(dialogue_object_rect), str(environment_reserved_rect)])
+		var rendered_position: Vector2 = (object_value as Dictionary).get("position", Vector2(-1.0, -1.0))
+		var stable_position: Vector2 = rendered_positions_before_dialogue.get(dialogue_object_id, Vector2(-1.0, -1.0))
+		if stable_position.x < 0.0 or not rendered_position.is_equal_approx(stable_position):
+			push_error("Live dialogue relocated environment object %s instead of preserving its generated position: rendered=%s stable=%s reserve=%s." % [dialogue_object_id, str(rendered_position), str(stable_position), str(environment_reserved_rect)])
 			return false
+	if JSON.stringify(_copy_dict(_copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {}))) != layout_before_dialogue:
+		push_error("Opening live dialogue changed generated environment object placement.")
+		return false
 	var response_icon_kinds: Array = snapshot.get("response_icon_kinds", [])
 	if str(snapshot.get("presentation", "")) != "environment_overlay" or bool(snapshot.get("choice_effects_visible", true)) or response_icon_kinds.is_empty() or not _has_visible_text(app, str(snapshot.get("summary", ""))):
 		push_error("Dialogue dock main flow did not expose spoken context with qualitative response icons and concealed values: %s." % str(response_icon_kinds))

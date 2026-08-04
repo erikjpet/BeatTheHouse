@@ -486,8 +486,13 @@ func set_reduce_motion(enabled: bool) -> void:
 func set_avoid_global_rect(next_rect: Rect2) -> void:
 	if avoid_global_rect.is_equal_approx(next_rect):
 		return
+	var previous_has_area := avoid_global_rect.has_area()
+	var previous_side := _preferred_layout_side()
 	avoid_global_rect = next_rect
-	_position_panel()
+	var side_changed := previous_side != _preferred_layout_side()
+	var occupancy_changed := previous_has_area != avoid_global_rect.has_area()
+	if side_changed or occupancy_changed or occupied_global_rect().intersects(avoid_global_rect.grow(8.0)):
+		_position_panel()
 
 
 func set_small_screen_mode(enabled: bool) -> void:
@@ -511,11 +516,12 @@ func _notification(what: int) -> void:
 
 func _build() -> void:
 	panel = FoundationWidgets.panel_container(Color(VisualStyle.role("surface_overlay"), 0.98), VisualStyle.role("danger"))
-	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.clip_contents = true
 	add_child(panel)
 
 	stack = VBoxContainer.new()
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stack.add_theme_constant_override("separation", VisualStyle.SPACE_2)
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -526,6 +532,7 @@ func _build() -> void:
 	stack.add_child(collapsed_button)
 
 	header_row = HBoxContainer.new()
+	header_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	header_row.add_theme_constant_override("separation", VisualStyle.SPACE_5)
 	header_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.add_child(header_row)
@@ -540,11 +547,13 @@ func _build() -> void:
 	portrait_model.set_reduce_motion(reduce_motion)
 
 	var header_text := VBoxContainer.new()
+	header_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	header_text.add_theme_constant_override("separation", VisualStyle.SPACE_1)
 	header_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header_row.add_child(header_text)
 
 	speaker_name_plate = FoundationWidgets.panel_container(VisualStyle.role("surface_raised"), VisualStyle.role("accent_secondary"))
+	speaker_name_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	speaker_name_plate.custom_minimum_size.y = VisualStyle.TALK_CHOICE_HEIGHT
 	header_text.add_child(speaker_name_plate)
 	speaker_label = FoundationWidgets.label("", VisualStyle.TYPE_HEADING)
@@ -593,6 +602,7 @@ func _build() -> void:
 	stack.add_child(urgency_bar)
 
 	choice_list = GridContainer.new()
+	choice_list.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	choice_list.columns = 2
 	choice_list.add_theme_constant_override("h_separation", VisualStyle.SPACE_3)
 	choice_list.add_theme_constant_override("v_separation", VisualStyle.SPACE_2)
@@ -645,6 +655,7 @@ func _begin_body_reveal(text_value: String) -> void:
 	reserved_body_line_count = _estimated_body_line_count(EXPANDED_PANEL_WIDTH)
 	reveal_elapsed = 0.0
 	body_label.text = full_body_text
+	body_label.mouse_filter = Control.MOUSE_FILTER_STOP
 	if reduce_motion or full_body_text.is_empty():
 		_complete_body_reveal()
 		return
@@ -658,6 +669,7 @@ func _complete_body_reveal() -> void:
 	set_process(false)
 	if body_label != null:
 		body_label.visible_characters = -1
+		body_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
 func _on_body_gui_input(event: InputEvent) -> void:

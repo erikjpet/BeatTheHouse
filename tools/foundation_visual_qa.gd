@@ -1397,6 +1397,10 @@ func _try_item_card_flow(prepared_fixture: bool = false) -> void:
 	_assert_m2_player_feedback_clarity("item result")
 	_return_to_room_view()
 	await _settle()
+	await _resolve_blocking_event_popups()
+	await _resolve_blocking_talk_dock()
+	_return_to_room_view()
+	await _settle()
 	canvas = app.get("environment_canvas") as Control
 	if canvas != null and canvas.visible and canvas.has_method("current_view_snapshot"):
 		var disabled_item := _first_clickable_canvas_object_type_enabled(canvas, "item", false)

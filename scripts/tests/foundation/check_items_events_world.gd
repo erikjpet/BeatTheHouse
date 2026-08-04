@@ -2426,6 +2426,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	if JSON.stringify(loaded.world_map) != JSON.stringify(run_a.world_map):
 		failures.append("World map graph/discovery/path state did not survive RunState save/load.")
 	_check_unique_object_layout_classes(library, failures)
+	_check_generated_object_layout_stability(library, failures)
 
 
 func _check_closing_soon_world_travel(library: ContentLibrary, failures: Array) -> void:
@@ -3149,6 +3150,37 @@ func _check_unique_object_layout_classes(library: ContentLibrary, failures: Arra
 			failures.append("Pull Tabs duplicate dialogue clerk still reserved a room object in %s." % str(archetype_id))
 		if not object_rects.has("game_hook:pull_tabs:ticket_redeemer"):
 			failures.append("Pull Tabs unique clerk guard dropped the redeem counter in %s." % str(archetype_id))
+
+
+func _check_generated_object_layout_stability(library: ContentLibrary, failures: Array) -> void:
+	for archetype_id in ["corner_store", "bar", "gas_station_casino", "small_underground_casino", "grand_casino"]:
+		var archetype := _archetype_by_id(library, archetype_id)
+		if archetype.is_empty():
+			failures.append("Stable object layout guard could not load %s." % archetype_id)
+			continue
+		var seed_text := "STABLE-ROOM-LAYOUT:%s" % archetype_id
+		var first_run: RunState = RunStateScript.new()
+		first_run.start_new(seed_text)
+		var environment := EnvironmentInstance.from_archetype(archetype, 1, first_run.create_rng("stable_room_layout"), library).to_dict()
+		var layout := EnvironmentInstance.ensure_generated_layout(environment)
+		environment["layout"] = layout
+		var object_rects := _copy_dict(layout.get("object_rects", {}))
+		if archetype_id == "bar" and not object_rects.has("service:house_drink"):
+			failures.append("Stable object layout guard did not classify the bar drink through service_spots.")
+			continue
+		var serialized_layout := JSON.stringify(layout)
+		for _refresh_index in range(24):
+			var refreshed_layout := EnvironmentInstance.ensure_generated_layout(environment)
+			if JSON.stringify(refreshed_layout) != serialized_layout:
+				failures.append("Generated object layout changed during a read-only %s selection/refresh cycle." % archetype_id)
+				break
+			environment["layout"] = refreshed_layout
+		var repeated_run: RunState = RunStateScript.new()
+		repeated_run.start_new(seed_text)
+		var repeated_environment := EnvironmentInstance.from_archetype(archetype, 1, repeated_run.create_rng("stable_room_layout"), library).to_dict()
+		var repeated_layout := EnvironmentInstance.ensure_generated_layout(repeated_environment)
+		if JSON.stringify(_copy_dict(repeated_layout.get("object_rects", {}))) != JSON.stringify(object_rects):
+			failures.append("The same seed did not reproduce the same fixed %s object positions." % archetype_id)
 
 
 func _unique_object_layout_conflicts(environment_data: Dictionary, library: ContentLibrary) -> Array:
