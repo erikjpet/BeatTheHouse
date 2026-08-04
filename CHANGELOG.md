@@ -4,9 +4,12 @@ All notable public release changes for Beat the House are recorded here.
 
 ## 0.5.0 - In development
 
-Status: **in development.** The Grand Casino feature queue is implemented;
-the full repository release battery passed on 2026-07-17. Owner playtesting,
-packaging, publication, and tagging are still in progress.
+Status: **pre-human release-candidate preparation.** The feature and integration
+queues are implemented on `main`. The pre-human tutorial matrix, native
+performance/liveness battery, 180-minute soak, determinism, Scratch Ticket RTP,
+and Grand Casino Web runtime checks pass. The final broad Web performance
+closure, five-person cold-player tutorial gate, owner playtest, packaging,
+publication, and tagging remain pending.
 
 ### Added
 
@@ -45,23 +48,69 @@ packaging, publication, and tagging are still in progress.
 - Records the Act 2 seam on a Gold-card victory while keeping the run terminal
   in Act 1; the victory report states that the Gold card opens doors beyond
   this city without exposing unimplemented Act 2 UI.
+- Replaces the legacy tutorial bubble chain with a dialogue-guided first night
+  led by Pal and the Grand Casino Host. New Run and Replay Lessons begin in the
+  Apartment and teach X-ray inventory use, the Corner Store/family loan,
+  optional pull tabs, Blackjack/Peek/counting/Heat, the High Roller Invitation,
+  Linda's Cage economy, and the Bronze Players Card through real actions.
+- Rebuilds all seven Scratch Tickets around distinct generated-art backgrounds
+  and exactly separated background, result-icon, and theme-matched foil layers.
+  Results remain fixed at purchase; high-resolution interpolated scratching,
+  deliberate drag-to-bin discard, result totals, and visible win/dud piles are
+  presentation-only additions.
+- Adds a second High Roller Invitation path: a table-game win over $300 places
+  the invitation in the current environment and suppresses the random Tier-2
+  copy once earned or accepted.
 
 ### Changed
 
 - Tunes Rourke edge callouts from an 8-chip to an 18-chip swing so preparation
   materially matters, and moves the shown-the-door lower margin from -8 to -60
   so all three duel endings occupy meaningful measured bands.
-- Final 0.5 repository-gate evidence: **PASS** on 2026-07-17. The complete
-  suite matrix, timeout policy, before/after balance table, route and ending
-  rates, performance results, zero-warning visual QA, strict 60-run mouse
-  batch, Web smoke, and report paths are recorded in
-  `.tmp/release_readiness_0_5_0.md`; owner playtest and publishing remain
-  manual.
+- Makes travel between the Delta Queen and Beach a free dockside walk in both
+  directions while preserving the River Queen's authored availability rules.
+- Keeps tutorial highlights visual and mouse-pass-through, synchronizes them
+  with camera/object movement, and lets requested actions advance dialogue
+  exactly once after modal lifecycle boundaries such as Inventory and map.
+- Compacts settled Scratch Ticket masks into bounded receipts while preserving
+  seeded outcomes, old-save migration, portable piles, and the seven RTP bands.
+- Removes recurring Grand Casino late-floor deep copies and redundant slot
+  autoplay presentation rebuilds. The 180-minute/504-action soak now finishes
+  with a negative retained-memory trend and bounded serialized RunState.
+- Aligns Web audio with native playback: all 80 SFX cues use the shared 22.05
+  kHz synthesis contract, authored music derivatives preserve their stem mix,
+  decoding/validation stays off the main thread, and browser playback follows
+  Master/Music/SFX bus gains.
+- Reduces the threaded Web export pools from 8/4 to the smallest verified safe
+  4/1 configuration. On the binding 4x-throttled host this improves cold ready
+  from 26.855 seconds to 23.776 seconds without PThread exhaustion, but the
+  unchanged 20-second release gate remains open.
 
-## 0.4.0 - Act 1 completion release
+### Fixed
 
-Status: **released on 2026-07-15.** The fresh final-gate battery passed on
-2026-07-14, followed by owner playtesting and publication.
+- Fixes Sal's Pawn Shop authored fixture overlaps and restores the tutorial
+  dialogue contracts caught by the integration suites.
+- Fixes tutorial starts leaking profile home state, deprecated Dealer's Advice
+  tips, missing X-ray Glasses, offscreen or blocking highlights, map/modal
+  ownership failures, natural phone-dialogue interruption, and skip/recovery
+  loops.
+- Fixes Scratch Ticket completion feedback disappearing before the player can
+  read the payout, completed tickets not entering their win/dud piles, overly
+  easy accidental trashing, and stale scratch marks at the last pointer point.
+- Fixes sustained Grand Casino slowdown caused by per-frame environment-state
+  scans/copies and the repeating Web slot-autoplay action hitch.
+- Fixes the low-bandwidth Web-only music/SFX substitutions and missing native
+  audio-bus gain parity.
+
+Current evidence is recorded in `docs/plans/tutorial_completion_report.md`,
+`docs/plans/0.5_performance_audit.md`, and
+`docs/plans/0.5_release_checklist.md`. No final release approval is claimed
+until the remaining Web, human, packaging, and publishing gates close.
+
+## 0.4.0 - Unpublished Act 1 candidate
+
+Status: **tagged candidate, not published.** The candidate gate battery passed,
+but later playtesting found defects and development continued into 0.5.0.
 
 ### Release Notes
 

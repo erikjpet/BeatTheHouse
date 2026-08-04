@@ -7,13 +7,17 @@ play full simulations of Scratch Tickets, Pull Tabs, Slots, Bar Dice,
 Blackjack, Baccarat, Roulette, and Video Poker. Every win, cheat, drink, loan,
 and bad exit pushes the run state forward.
 
-Versions 0.2.0 through 0.4.0 are historical releases. Version 0.5.0 is the
-current release-candidate source line. It keeps the released Act 1 foundation
-and reworks the Grand Casino into a three-room endgame with a living Rourke, a chips-and-Cage economy,
-Linda's Bronze/Silver/Gold Players Card ladder, a four-phase back-room showdown,
-a playable heads-up blackjack duel, and persistent card/chip meta rewards. The
-0.5 repository gate battery, owner playtest, fresh export packaging, uploads,
-and release tag remain release-owner actions until recorded otherwise.
+Versions 0.2.0 through 0.3.3 are historical source releases; 0.4.0 was an Act 1
+candidate tag that was not published before development continued. Version
+0.5.0 is the current pre-human release-candidate source line. It keeps the Act
+1 foundation and reworks the Grand Casino into a three-room endgame with a living
+Rourke, a chips-and-Cage economy, Linda's Bronze/Silver/Gold Players Card
+ladder, a four-phase back-room showdown, a playable heads-up blackjack duel,
+and persistent card/chip meta rewards. Integration recovery, the agent-driven
+tutorial matrix, native performance/liveness, the 180-minute soak, and Grand
+Casino Web runtime checks are green. The cold-player tutorial gate, the final
+Web cold-start/broad performance closure, owner playtest, fresh export
+packaging, uploads, and release tag remain pending until recorded otherwise.
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
 the repository.
@@ -25,9 +29,9 @@ the repository.
 | Engine | Godot 4.x project with Godot 4.6 project feature metadata |
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
-| Prior release line | 0.4.0 Act 1 completion release |
-| Active planning target | 0.5.0 Grand Casino rework |
-| Current release readiness | 0.5 implementation complete; source gates are tracked in `docs/plans/0.5_release_checklist.md`; release-owner playtest, packaging, upload, and tag remain owner actions |
+| Prior release line | 0.3.3 public source release; 0.4.0 unpublished Act 1 candidate |
+| Active planning target | 0.5.0 pre-release verification and owner approval |
+| Current release readiness | Feature implementation and pre-human tutorial repair are complete; Web cold-start/broad performance closure, TUT-N17 cold-player testing, final owner playtest, packaging, upload, and tag remain pending in `docs/todo/README_0_5_release_queue.md` |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -71,10 +75,10 @@ Production content is JSON under `data/`.
 | Lenders | 5 | `data/debt/lenders.json` | `street_lender`, `motel_friend`, `the_crew`, `brother_in_law`, `sals_pawn_counter` |
 | Travel route templates | 12 | `data/travel/routes.json` | Destination templates for shops, casinos, tier-2 venues, the jazz club, beach, the underground casino, and the Grand Casino; `WorldMap` turns them into seeded graph paths with costs, unlocks, scouting previews, travel locks, and route-risk events |
 | Challenges | 8 | `data/challenges/challenges.json` | Act 1 authored challenge runs with profile completion flags |
-| Dialogues | 20 | `data/dialogue/dialogues.json` | Talk/dock dialogue content for current Act 1 and 0.5 routes |
+| Dialogues | 25 | `data/dialogue/dialogues.json` | TalkDock dialogue content for current Act 1, the guided first night, and 0.5 routes |
 | Collection schemas | 1 collection | `data/collections/collections.json` | Local meta collection bags/items, housing data, and pawn-shop sale values |
 | Music tracks | 3 | `data/audio/music_manifest.json` | Authored music manifest used by the procedural music player |
-| Tutorial lessons | 40 | `data/tutorial/lessons.json` | Coach/tutorial sequence definitions and gating contracts |
+| Tutorial lessons | 49 | `data/tutorial/lessons.json` | Dialogue-guided tutorial sequence definitions, highlights, and gating contracts |
 
 `data/art/art_manifest.json` maps art identities used by environments, events,
 items, games, and the UI. Asset files live under `assets/`.
@@ -149,7 +153,7 @@ rendering details.
 
 | Game | Family | Module | Cheat actions | Current behavior |
 | --- | --- | --- | --- | --- |
-| Scratch Tickets | lottery | `scripts/games/scratch_tickets.gd` | none | Scarce vending stock, seven themed ticket rules, fixed-at-purchase outcomes, per-region scratch reveal, and collection-print payoff |
+| Scratch Tickets | lottery | `scripts/games/scratch_tickets.gd` | none | Seven generated-art ticket faces with separate background/icon/foil renderers, high-resolution interpolated scratching, intentional drag-to-bin discard, visible win/dud piles, fixed-at-purchase outcomes, compact settled receipts, and collection-print payoff |
 | Pull Tabs | novelty | `scripts/games/pull_tabs.gd` | `tab_detector_scan` | Finite pull-tab deals, ticket windows, row/deal state, detector and tarot item interactions |
 | Slot | slots | `scripts/games/slot.gd` | `nudge` | Generated Pinball/Buffalo machines, fixed bet ladder, reel-shift nudge, autoplay, feature bonuses, and bonus-stuck watchdog coverage |
 | Bar Dice | dice | `scripts/games/bar_dice.gd` | `loaded_toss`, `palmed_swap` | Ship, Captain, Crew as a bar-top table game with patrons, cargo scoring, carryover pots, and skill-timed dice cheats |
@@ -228,8 +232,12 @@ return data; the shared result path mutates the run.
 | `scripts/ui/foundation_main.gd` | Main UI shell, run lifecycle, object focus, game entry/exit, autosave, terminal screens, test snapshots |
 | `scripts/ui/game_surface_canvas.gd` | Shared host for full-simulation game surfaces, hit regions, animation channels, audio cues, scaling |
 | `scripts/ui/pixel_scene_canvas.gd` | Procedural environment/object scene rendering |
+| `scripts/ui/talk_dock.gd` | Dialogue popup layout, speaker presentation, choices, and action-driven progression |
+| `scripts/ui/coach_overlay.gd` | Visual-only tutorial highlights that track rendered targets without blocking pointer input |
+| `scripts/ui/world_map_overlay_controller.gd` | Modal map ownership, tutorial-safe layering, and travel interaction lifecycle |
 | `scripts/ui/sfx_player.gd` | Procedural and shared sound effect playback |
 | `scripts/ui/procedural_music_player.gd` | Procedural room music |
+| `scripts/ui/web_audio_bridge.gd` | Browser delivery for pre-encoded Web SFX/music banks and native-equivalent bus gain behavior |
 | `scripts/ui/settings_menu.gd` | Settings UI |
 | `scripts/ui/drunk_distortion_overlay.gd` | Drunk/alcohol visual effect |
 | `scripts/ui/icon_sprite_renderer.gd` | Icon rendering helper |
@@ -238,6 +246,22 @@ return data; the shared result path mutates the run.
 The UI is designed around mouse/touch parity. Full-simulation games own their
 surface-specific state and drawing, while the foundation shell owns flow, routing,
 shared state, autosave, and terminal presentation.
+
+The guided first night starts both New Run and Replay Lessons in the Apartment
+with Pal, forced X-ray Glasses, and action-driven TalkDock guidance. Its authored
+route covers the Corner Store and family loan, an optional Gas Casino pull-tab
+lesson, Underground Blackjack/Peek/counting/Heat, the High Roller Invitation,
+and the Grand Casino Host/Rourke/Linda/Bronze sequence. Highlights are visual
+only: camera movement updates their screen transform while the underlying real
+hit target remains usable. Both authored routes and the modal lifecycle matrix
+have agent-driven real-pointer evidence in
+`docs/plans/tutorial_completion_report.md`; the five-person cold-player gate
+TUT-N17 remains explicitly human-only.
+
+Native and Web audio now share the 22.05 kHz SFX synthesis contract. The Web
+export ships 80 pre-encoded SFX cues and authored music derivatives, decodes
+them off the main thread, preserves the stem mix, and follows the native
+Master/Music/SFX bus gains. The native authored masters remain unchanged.
 
 ## Save, Failure, And Victory
 
@@ -340,11 +364,18 @@ powershell -ExecutionPolicy Bypass -File tools\ui05_popup_fit_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\ui05_asset_pipeline_check.ps1
 ```
 
-Required final results (pending a fresh release run):
+Current pre-human evidence and remaining final results:
 
-- Validation, every supported FoundationSuite name, performance, soak,
-  determinism, stuck-state, visual QA, strict 60-run mouse play, and Web smoke
-  must all pass on the final tree.
+- The integrated tutorial source has passed validation, every FoundationSuite,
+  both scripted and real-pointer tutorial routes, the 100-seed traversal and
+  stuck-state sweeps, 10-seed determinism, strict rendered mouse input, and
+  visual QA. The native performance/liveness battery, 180-minute/504-action
+  soak, Scratch Ticket RTP audit, and Grand Casino Web runtime budgets are also
+  green; see the current tutorial and performance reports below.
+- The final exact-source battery must still close the 20-second Web cold-ready
+  gate and reconfirm the broad L0.2 Web matrix with high-fidelity audio active.
+  TUT-N17 and the owner's packaged Web/Windows playtest cannot be replaced by
+  automation.
 - Only fresh reports linked by `docs/plans/0.5_release_checklist.md` are final
   0.5 release evidence; older candidate reports remain historical baselines.
 
@@ -388,6 +419,10 @@ context:
 - `docs/plans/0.5_devlog_post.md` - draft 0.5 devlog copy for the owner.
 - `docs/plans/0.5_prerelease_playtest_report.md` - 0.5 prerelease playtest
   findings and closure evidence.
+- `docs/plans/tutorial_completion_report.md` - current pre-human tutorial
+  requirement table, real-interface route matrix, and explicit TUT-N17 handoff.
+- `docs/plans/0.5_performance_audit.md` - current native/Web performance,
+  liveness, memory-soak, Scratch Ticket compaction, and Web audio evidence.
 - `docs/plans/act_one_feature_complete_task_board.md` - the historical Act 1
   implementation board, retained for decisions and landing evidence.
 - `docs/plans/pinball_feature_rework_plan.md`,
@@ -422,8 +457,8 @@ context:
   historical candidate evidence.
 - `docs/plans/0.4_release_checklist.md` - the 0.4 package/readiness ledger,
   retained as historical context.
-- `docs/plans/0.4_publish_copy.md` - paste-ready itch.io, GitHub release, and
-  devlog copy for the 0.4.0 release.
+- `docs/plans/0.4_publish_copy.md` - historical paste-ready itch.io, GitHub,
+  and devlog copy prepared for the unpublished 0.4.0 candidate.
 
 For current slot implementation work, use the slot stack listed in this README
 and the pinball docs above rather than older file names referenced inside
@@ -449,6 +484,18 @@ before store submission.
 
 ## Known Release Limitations
 
+- The latest safe threaded Web worker configuration improves 4x-throttled cold
+  ready from 26.855 seconds to 23.776 seconds, but still misses the unchanged
+  20-second release gate. Smaller pools exhausted the PThread pool, and the
+  single-threaded export made procedural music block the browser main thread;
+  neither rejected configuration ships.
+- The broad L0.2 Web performance matrix must be rerun and closed with the final
+  high-fidelity Web audio bank before release approval.
+- Tutorial requirement TUT-N17 is pending five cold players, including two
+  without Blackjack knowledge; agent-driven routes do not satisfy that human
+  comprehension gate.
+- The collection schema still uses `draft: true` pending the owner's explicit
+  ship decision.
 - itch.io publishing remains a user action: install/login with butler and push
   the Web and Windows packages from `tools/export_itch.ps1`, or upload through
   the itch.io dashboard.

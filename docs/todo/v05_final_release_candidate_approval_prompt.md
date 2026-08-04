@@ -1,8 +1,8 @@
 # Agent Prompt — Build and Approve the Final 0.5 Release Candidate
 
-Last reconciled: 2026-08-03
+Last reconciled: 2026-08-04
 Release target: 0.5.0
-Status: PENDING INTEGRATION, TUTORIAL, AND PERFORMANCE CLOSURE
+Status: PENDING FINAL WEB PERFORMANCE, TUT-N17, AND OWNER APPROVAL
 
 ## Objective
 
@@ -12,12 +12,19 @@ uploading, creating a release, or pushing a tag.
 
 ## Entry conditions
 
-Do not start final RC validation until all three active implementation prompts
-are complete and archived:
+Integration recovery is complete and archived at
+`docs/todone/current_worktree_integration_gate_recovery_prompt.md`. Do not
+start final RC approval until the two remaining active prompts are complete and
+archived:
 
-- `current_worktree_integration_gate_recovery_prompt.md`;
 - `tutorial_first_time_player_completion_prompt.md`;
 - `performance_cleanup_final_audit_prompt.md`.
+
+The tutorial is agent-verifiable through TUT-N25 except for human-only
+TUT-N17. The performance audit has closed native, memory-soak, Scratch Ticket,
+and Grand Casino runtime work, but the 20-second Web cold-ready gate and final
+broad L0.2 matrix remain open. See the current queue and evidence reports; do
+not reuse the former 2026-08-03 blockers as current state.
 
 The intended source must be committed and clean. If an entry condition is not
 satisfied, return to its owning prompt rather than manufacturing an RC verdict.
