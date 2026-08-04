@@ -51,8 +51,22 @@ static func write_machine(environment: Dictionary, game_id: String, machine: Dic
 	environment["game_states"] = states
 
 
+static func write_owned_machine(environment: Dictionary, game_id: String, machine: Dictionary) -> void:
+	# Resolution paths already own read_machine()'s copy. Preserve every
+	# canonical normalization and compaction below without first cloning the
+	# entire nested machine a second time.
+	var states_value: Variant = environment.get("game_states", {})
+	var states: Dictionary = (states_value as Dictionary).duplicate(false) if typeof(states_value) == TYPE_DICTIONARY else {}
+	states[game_id] = normalize_owned(machine)
+	environment["game_states"] = states
+
+
 static func normalize(machine_value: Variant) -> Dictionary:
 	var machine: Dictionary = _copy_dict(machine_value)
+	return normalize_owned(machine)
+
+
+static func normalize_owned(machine: Dictionary) -> Dictionary:
 	machine["schema_version"] = SCHEMA_VERSION
 	machine["format_id"] = str(machine.get("format_id", "classic_3_reel"))
 	machine["type_id"] = str(machine.get("type_id", "pinball"))

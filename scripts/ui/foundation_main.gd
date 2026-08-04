@@ -242,6 +242,8 @@ var start_screen: Control
 var run_screen: Control
 var screen_stack_root: Control
 var run_ui_built := false
+var run_ui_build_stage := 0
+var run_ui_build_in_progress := false
 var main_menu_panel: PanelContainer
 var start_menu_controls: VBoxContainer
 var start_menu_intro: VBoxContainer
@@ -899,6 +901,7 @@ func _on_game_surface_pointer_action(action: String, index: int, phase: String, 
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
 	var command := current_game.surface_pointer_command(action, index, phase, board_position, ui_state, run_state, run_state.current_environment)
+	command["_resolved_surface_ui_state"] = ui_state
 	_apply_game_surface_command(command, index, false)
 
 
@@ -910,6 +913,7 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
 	var command := current_game.surface_action_command(action, index, confirm_requested, ui_state, run_state, run_state.current_environment)
+	command["_resolved_surface_ui_state"] = ui_state
 	return _apply_game_surface_command(command, index, confirm_requested)
 
 
@@ -931,15 +935,16 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 	var environment_changed := bool(command.get("environment_changed", false))
 	var action_id := str(command.get("action_id", ""))
 	var action_kind := str(command.get("action_kind", ""))
+	var resolved_surface_ui_state: Dictionary = command.get("_resolved_surface_ui_state", {}) if typeof(command.get("_resolved_surface_ui_state", {})) == TYPE_DICTIONARY else {}
 	if bool(command.get("direct_resolve", false)) and not action_id.is_empty():
-		_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)))
+		_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state)
 		return true
 	if not action_id.is_empty() and not action_kind.is_empty():
 		var already_selected := selected_action_id == action_id and selected_action_kind == action_kind
 		if not already_selected:
 			select_game_action(action_id, action_kind)
 		if bool(command.get("resolve", false)) or confirm_requested or already_selected:
-			_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)))
+			_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state)
 			return true
 	elif command.has("message"):
 		_show_message(str(command.get("message", "")))
@@ -1025,12 +1030,16 @@ func _advance_game_surface_automation() -> void:
 	var tick_state := _current_game_surface_auto_tick_state()
 	if not current_game.surface_needs_auto_tick(tick_state, run_state, run_state.current_environment):
 		return
-	var ui_state := _current_game_surface_ui_state()
+	var ui_state := tick_state if current_game.surface_auto_action_uses_lightweight_ui_state() else _current_game_surface_ui_state()
 	if not current_game.surface_needs_auto_tick(ui_state, run_state, run_state.current_environment):
 		return
-	var command := current_game.surface_auto_action_command(ui_state, run_state, run_state.current_environment, _current_game_surface_status())
+	var command := current_game.surface_auto_action_command(ui_state, run_state, run_state.current_environment, {})
 	if command.is_empty() or not bool(command.get("handled", false)):
 		return
+	# Reuse the action-boundary snapshot already built above. Rebuilding it in
+	# _resolve_game_action duplicated nested slot/runtime data on every autoplay
+	# spin and occasionally joined that work to an already expensive draw frame.
+	command["_resolved_surface_ui_state"] = ui_state
 	game_surface_auto_resolving = true
 	_apply_game_surface_command(command, -1, false)
 	game_surface_auto_resolving = false
@@ -4732,10 +4741,14 @@ func _build_ui() -> void:
 	screen_stack_root.add_child(start_screen)
 	_build_start_screen()
 
-	# Finish the shared run shell before the menu is declared interactive.
-	# Deferring this in telemetry builds moved a full UI construction burst into
-	# the player's first menu frames and made the ready marker misleading.
-	_ensure_run_ui_built()
+	# Web only needs the start screen for its first interactive frame. Build the
+	# much larger run shell one bounded stage per frame behind the menu instead
+	# of turning all overlays into one visible startup stall. An immediate New
+	# Run still completes any remaining stages synchronously.
+	if OS.has_feature("web"):
+		call_deferred("_prewarm_run_ui_after_web_start")
+	else:
+		_ensure_run_ui_built()
 	_apply_accessibility_settings()
 
 
@@ -4744,28 +4757,65 @@ func _ensure_run_ui_built() -> void:
 		return
 	if screen_stack_root == null:
 		return
-	run_screen = Control.new()
-	run_screen.set_anchors_preset(Control.PRESET_FULL_RECT)
-	run_screen.clip_contents = true
-	run_screen.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	run_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	run_screen.visible = false
-	screen_stack_root.add_child(run_screen)
-	_build_run_screen()
-	_build_talk_dock()
-	_build_run_menu_overlay()
-	_build_settings_overlay()
-	_build_event_choice_popup_overlay()
-	_build_conclusion_animation_overlay()
-	_build_run_inventory_overlay()
-	_build_meta_item_interaction_overlay()
-	_build_run_journal_overlay()
-	_build_travel_transition_overlay()
-	_build_world_map_overlay()
-	_build_item_found_popup()
-	_build_coach_overlay()
-	run_ui_built = true
-	_apply_accessibility_settings()
+	while not run_ui_built:
+		_build_next_run_ui_stage()
+
+
+func _prewarm_run_ui_after_web_start() -> void:
+	if run_ui_built or run_ui_build_in_progress or screen_stack_root == null:
+		return
+	run_ui_build_in_progress = true
+	await get_tree().process_frame
+	while not run_ui_built:
+		_build_next_run_ui_stage()
+		if not run_ui_built:
+			_build_next_run_ui_stage()
+		if not run_ui_built:
+			await get_tree().process_frame
+	run_ui_build_in_progress = false
+
+
+func _build_next_run_ui_stage() -> void:
+	match run_ui_build_stage:
+		0:
+			run_screen = Control.new()
+			run_screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+			run_screen.clip_contents = true
+			run_screen.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			run_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			run_screen.visible = false
+			screen_stack_root.add_child(run_screen)
+			_build_run_screen()
+		1:
+			_build_talk_dock()
+		2:
+			_build_run_menu_overlay()
+		3:
+			_build_settings_overlay()
+		4:
+			_build_event_choice_popup_overlay()
+		5:
+			_build_conclusion_animation_overlay()
+		6:
+			_build_run_inventory_overlay()
+		7:
+			_build_meta_item_interaction_overlay()
+		8:
+			_build_run_journal_overlay()
+		9:
+			_build_travel_transition_overlay()
+		10:
+			_build_world_map_overlay()
+		11:
+			_build_item_found_popup()
+		12:
+			_build_coach_overlay()
+		_:
+			run_ui_built = true
+			run_ui_build_in_progress = false
+			_apply_accessibility_settings()
+			return
+	run_ui_build_stage += 1
 
 
 func _build_start_screen() -> void:
@@ -7474,7 +7524,7 @@ func _add_current_game_panel(environment: Dictionary) -> void:
 	actions_list = previous_actions_list
 
 
-func _resolve_game_action(action_id: String, skip_stake_validation: bool = false, preserve_surface_ui_state: bool = false, wager_confirmed: bool = false) -> void:
+func _resolve_game_action(action_id: String, skip_stake_validation: bool = false, preserve_surface_ui_state: bool = false, wager_confirmed: bool = false, resolved_surface_ui_state: Dictionary = {}) -> void:
 	if action_id.is_empty() or current_game == null:
 		return
 	if not wager_confirmed and _guard_player_input_route():
@@ -7491,7 +7541,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	# Build the action context once. Slot autoplay reaches this path repeatedly, and
 	# each UI-state snapshot contains nested machine/runtime data. Rebuilding it for
 	# confirmation, resolution, and result presentation caused visible Web hitches.
-	var action_surface_ui_state := _current_game_surface_ui_state()
+	var action_surface_ui_state := resolved_surface_ui_state if not resolved_surface_ui_state.is_empty() else _current_game_surface_ui_state()
 	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state):
 		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
@@ -7573,6 +7623,20 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		_refresh()
 		return
 	if embeds_result_feedback and current_screen == SCREEN_GAME and current_game != null:
+		if game_surface_auto_resolving:
+			# Autoplay resolution and a complete presentation snapshot used to land
+			# in the same frame. The outcome, RNG, persistence, and next-spin clock
+			# are already committed; hand the rendered update to the following frame
+			# so neither frame blocks the player.
+			call_deferred("_refresh_after_embedded_autoplay_action")
+		else:
+			_refresh_after_embedded_game_action()
+	else:
+		_refresh()
+
+
+func _refresh_after_embedded_autoplay_action() -> void:
+	if current_screen == SCREEN_GAME and current_game != null:
 		_refresh_after_embedded_game_action()
 	else:
 		_refresh()

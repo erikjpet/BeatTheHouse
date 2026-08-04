@@ -230,6 +230,18 @@ func dump_report() -> Dictionary:
 	return report
 
 
+# The Web runtime can close before its final console message crosses the
+# browser/probe boundary. Keep the tree alive for two frames so a successful
+# auto-quit run cannot be misreported as a timeout.
+func _quit_after_report_flush() -> void:
+	if not auto_quit:
+		return
+	if OS.has_feature("web"):
+		await get_tree().process_frame
+		await get_tree().process_frame
+	get_tree().quit()
+
+
 func mark_event(event_id: String, data: Dictionary = {}) -> void:
 	telemetry_events.append({
 		"id": event_id,
@@ -256,8 +268,7 @@ func _run_l02_plan() -> void:
 	await _measure_scripted_memory()
 	l02_driver_complete = true
 	dump_report()
-	if auto_quit:
-		get_tree().quit()
+	await _quit_after_report_flush()
 
 
 func _run_corner_store_plan() -> void:
@@ -269,14 +280,12 @@ func _run_corner_store_plan() -> void:
 	if app == null:
 		mark_event("corner_store_missing_app")
 		dump_report()
-		if auto_quit:
-			get_tree().quit()
+		await _quit_after_report_flush()
 		return
 	await _measure_corner_store()
 	l02_driver_complete = true
 	dump_report()
-	if auto_quit:
-		get_tree().quit()
+	await _quit_after_report_flush()
 
 
 func _run_grand_casino_plan() -> void:
@@ -288,8 +297,7 @@ func _run_grand_casino_plan() -> void:
 	if app == null:
 		mark_event("grand_casino_missing_app")
 		dump_report()
-		if auto_quit:
-			get_tree().quit()
+		await _quit_after_report_flush()
 		return
 	app.start_foundation_run("WEB-GRAND-CASINO-LATE")
 	await _wait_frames(8)
@@ -298,8 +306,7 @@ func _run_grand_casino_plan() -> void:
 	if run_state == null or generator == null:
 		mark_event("grand_casino_missing_runtime")
 		dump_report()
-		if auto_quit:
-			get_tree().quit()
+		await _quit_after_report_flush()
 		return
 	run_state.bankroll = maxi(run_state.bankroll, 5000)
 	run_state.narrative_flags["grand_casino_invite"] = true
@@ -334,8 +341,7 @@ func _run_grand_casino_plan() -> void:
 	l02_driver_complete = true
 	dump_report()
 	_publish_grand_casino_browser_summary()
-	if auto_quit:
-		get_tree().quit()
+	await _quit_after_report_flush()
 
 
 func _publish_grand_casino_browser_summary() -> void:
@@ -386,8 +392,7 @@ func _run_lb3_plan() -> void:
 	if app == null:
 		mark_event("lb3_missing_app")
 		dump_report()
-		if auto_quit:
-			get_tree().quit()
+		await _quit_after_report_flush()
 		return
 	mark_event("lb3_boot_snapshot", _boot_timeline_snapshot())
 	var run_started_usec := Time.get_ticks_usec()
@@ -413,8 +418,7 @@ func _run_lb3_plan() -> void:
 	await _measure_lb3_save_stall()
 	l02_driver_complete = true
 	dump_report()
-	if auto_quit:
-		get_tree().quit()
+	await _quit_after_report_flush()
 
 
 func _measure_lb3_game_open(game_id: String, first_open: bool) -> void:
@@ -545,8 +549,7 @@ func _run_la1_plan() -> void:
 	if app == null:
 		mark_event("la1_missing_app")
 		dump_report()
-		if auto_quit:
-			get_tree().quit()
+		await _quit_after_report_flush()
 		return
 	app.start_foundation_run("LA1-WEB-CORE")
 	await _wait_frames(20)
@@ -587,8 +590,7 @@ func _run_la1_plan() -> void:
 		})
 	l02_driver_complete = true
 	dump_report()
-	if auto_quit:
-		get_tree().quit()
+	await _quit_after_report_flush()
 
 
 func _run_la5_plan() -> void:
@@ -600,8 +602,7 @@ func _run_la5_plan() -> void:
 	if app == null:
 		mark_event("la5_missing_app")
 		dump_report()
-		if auto_quit:
-			get_tree().quit()
+		await _quit_after_report_flush()
 		return
 	app.start_foundation_run("LA5-DRUNK-ENV")
 	await _wait_frames(20)
@@ -615,8 +616,7 @@ func _run_la5_plan() -> void:
 	await _measure_scenario("la5_game_drunk_distortion", {"surface": "slot", "mode": "drunk_distortion"}, scenario_frames)
 	l02_driver_complete = true
 	dump_report()
-	if auto_quit:
-		get_tree().quit()
+	await _quit_after_report_flush()
 
 
 func _run_la6_plan() -> void:
@@ -628,8 +628,7 @@ func _run_la6_plan() -> void:
 	if app == null:
 		mark_event("la6_missing_app")
 		dump_report()
-		if auto_quit:
-			get_tree().quit()
+		await _quit_after_report_flush()
 		return
 	WebAudioBridgeScript.reset_debug_stats()
 	app.start_foundation_run("LA6-WEB-AUDIO")
@@ -649,8 +648,7 @@ func _run_la6_plan() -> void:
 	mark_event("la6_web_audio_bridge_stats", WebAudioBridgeScript.debug_stats())
 	l02_driver_complete = true
 	dump_report()
-	if auto_quit:
-		get_tree().quit()
+	await _quit_after_report_flush()
 
 
 func _force_drunk_distortion_level(level: int) -> void:

@@ -111,6 +111,7 @@ const MUSIC_FEATURE_RELEASE_SECONDS := 2.0
 const MUSIC_AUTHORED_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const MUSIC_AUTHORED_ROOT := "res://assets/audio/music"
 const MUSIC_AUTHORED_WEB_ROOT := "res://assets/audio/music_web"
+const MUSIC_PROCEDURAL_WEB_ROOT := "res://assets/audio/music_web/procedural"
 const AUTHORED_MANIFEST_CACHE_LIMIT := 32
 const MUSIC_MIN_VOLUME_DB := -80.0
 const WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES := 8388608
@@ -3458,7 +3459,60 @@ func _request_web_music_bed_generation(profile: Dictionary, cache_key: String) -
 func _start_web_music_bed_generation(profile: Dictionary, cache_key: String, token: int) -> void:
 	if token != _current_generation_token() or cache_key != _pending_cache_key or _web_music_bed_cache.has(cache_key):
 		return
+	if OS.has_feature("web") and not OS.has_feature("threads"):
+		var authored_source := _authored_web_mixdown_source_from_profile(profile)
+		var stem_set := (
+			_web_authored_stem_set(profile, authored_source)
+			if not authored_source.is_empty()
+			else _prebuilt_web_procedural_stem_set(profile)
+		)
+		if stem_set.is_empty():
+			push_warning("No prebuilt Web music bed for archetype: %s" % str(profile.get("archetype_id", "")))
+			_pending_cache_key = ""
+			return
+		_prepare_web_bridge_payloads(stem_set)
+		_apply_generated_ambient_data({
+			"cancelled": false,
+			"cache_key": cache_key,
+			"token": token,
+			"stage": AMBIENT_STAGE_WEB,
+			"profile": profile,
+			"frames": int(stem_set.get("loop_frames", 0)),
+			"stem_set": stem_set,
+		})
+		return
 	_start_ambient_generation(profile, cache_key, token, AMBIENT_STAGE_WEB)
+
+
+func _prebuilt_web_procedural_stem_set(profile: Dictionary) -> Dictionary:
+	var archetype_id := str(profile.get("archetype_id", "")).strip_edges()
+	if archetype_id.is_empty() or archetype_id != archetype_id.validate_filename():
+		return {}
+	var path := "%s/%s.bthadpcm.gz" % [MUSIC_PROCEDURAL_WEB_ROOT, archetype_id]
+	var stream: AudioStreamWAV = _load_web_adpcm_stream(path, 0, true) as AudioStreamWAV
+	if stream == null or stream.loop_end <= 0:
+		return {}
+	var context := _ambient_generation_context(profile)
+	var frames := int(stream.loop_end)
+	var step_period := float(context.get("step_period", 0.36))
+	var seconds := float(frames) / float(maxi(1, stream.mix_rate))
+	var bars := maxi(1, int(ceil(seconds / maxf(step_period * float(STEPS_PER_BAR), 0.001))))
+	var contract := _stem_set_contract(
+		"web_prebuilt",
+		{"pad": stream},
+		float(context.get("bpm", profile.get("bpm", 82.0))),
+		bars,
+		frames,
+		str(profile.get("palette_id", "")),
+		{},
+		AMBIENT_STAGE_PRIMER
+	)
+	contract["step_period"] = step_period
+	contract["profile"] = profile.duplicate(true)
+	contract["sample_rate"] = stream.mix_rate
+	contract["track_id"] = "web_prebuilt_%s_%s" % [archetype_id, str(profile.get("palette_id", ""))]
+	contract["web_bridge_bed"] = true
+	return contract
 
 
 func _play_web_full_bed(profile: Dictionary, cache_key: String) -> void:

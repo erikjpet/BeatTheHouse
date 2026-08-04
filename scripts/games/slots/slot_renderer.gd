@@ -490,10 +490,12 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 	var motions: Array = _read_array(signature.get("reel_motion", []))
 	var win_cells: Array = _read_array(state.get("slot_win_cells", []))
 	var win_lookup: Dictionary = _win_cell_lookup(win_cells)
+	var reels_landed := _all_reels_landed(motions)
+	var motion_symbols_simplified := not str(state.get("slot_animation_id", "")).is_empty() and not reels_landed
 	var reveal_ready := bool(signature.get("result_reveal_ready", false))
 	if not signature.has("result_reveal_ready"):
 		reveal_ready = _result_reveal_ready(state, time_msec)
-	var show_wins := win_cells.size() > 0 and _all_reels_landed(motions) and reveal_ready
+	var show_wins := win_cells.size() > 0 and reels_landed and reveal_ready
 	var win_centers: Dictionary = {}
 	for reel_index in range(reel_count):
 		var motion: Dictionary = _read_dict(motions[reel_index]) if reel_index < motions.size() else {"phase": "settled", "scroll_cells": 0.0, "blur": 0.0}
@@ -509,7 +511,10 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 		if bool(motion.get("tease", false)) and phase == "tease_slow_roll":
 			var reel_glow := Rect2(reel_x - 4, rect.position.y + 4, cell_w + 8, rect.size.y - 8)
 			surface.draw_rect(reel_glow, Color(accent.r, accent.g, accent.b, 0.26), false, 4)
-		for visual_row in range(-1, row_count + 2):
+		# Reel motion only scrolls upward. Rows above zero and below the single
+		# incoming bottom row are always clipped, yet the vector symbol renderer
+		# used to build both on every animation frame.
+		for visual_row in range(0, row_count + 1):
 			var y: float = rect.position.y + gap + (float(visual_row) - fractional) * (cell_h + gap)
 			var cell := Rect2(Vector2(reel_x, y), Vector2(cell_w, cell_h))
 			var visible_cell: Rect2 = _rect_intersection(cell, rect)
@@ -519,7 +524,11 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 			var source_row := visual_row + whole_offset
 			var symbol := _visible_symbol(strips, stops, grid, reel_index, source_row, row_count, landing_slot)
 			symbol = _buffalo_display_symbol(family, symbol, grid, reel_index, source_row, landing_slot, time_msec, phase != "settle" and phase != "settled")
-			_draw_symbol(surface, definition, family, symbol, visible_cell, blur > 0.12)
+			# Until the last reel lands, use the motion treatment consistently for
+			# every reel. Rebuilding labels and detailed vector glyphs on early-stop
+			# reels added a large Web hitch even though the result is not readable or
+			# actionable until the full grid settles.
+			_draw_symbol(surface, definition, family, symbol, visible_cell, motion_symbols_simplified or blur > 0.12)
 			if family == "buffalo" and symbol == "GOLD_TOKEN" and (bool(motion.get("tease", false)) or bool(signature.get("gold_tease_active", false))):
 				var coin_pulse := 0.48 + 0.24 * sin(float(time_msec) * 0.018 + float(reel_index))
 				surface.draw_rect(_rect_intersection(visible_cell.grow(5), rect), Color("#ffd35a", coin_pulse), false, 4)
@@ -859,7 +868,7 @@ func _buffalo_unintentional_gold_visible(surface_state: Dictionary, time_msec: i
 		if phase == "settled":
 			whole_offset = 0
 		var landing_slot := phase == "decel" or phase == "tease_slow_roll" or phase == "settle" or phase == "settled"
-		for visual_row in range(-1, row_count + 2):
+		for visual_row in range(0, row_count + 1):
 			var source_row := visual_row + whole_offset
 			var raw_symbol := _visible_symbol(strips, stops, grid, reel_index, source_row, row_count, landing_slot)
 			var display_symbol := _buffalo_display_symbol("buffalo", raw_symbol, grid, reel_index, source_row, landing_slot, time_msec, phase != "settle" and phase != "settled")
@@ -2153,7 +2162,7 @@ func _draw_buffalo_free_games_reel_grid(surface, rect: Rect2, state: Dictionary,
 		if phase == "settled":
 			fractional = 0.0
 			whole_offset = 0
-		for visual_row in range(-1, row_count + 2):
+		for visual_row in range(0, row_count + 1):
 			var cell := _buffalo_free_game_cell_rect(rect, reel_index, visual_row, reel_count, row_count, gap, cell_w, cell_h)
 			cell.position.y -= fractional * (cell_h + gap)
 			var visible_cell := _rect_intersection(cell, rect)
