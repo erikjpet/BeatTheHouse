@@ -10,11 +10,13 @@ static func trigger_matches(lesson: Dictionary, context: Dictionary, seen: Dicti
 	var lesson_id := str(lesson.get("id", "")).strip_edges()
 	if lesson_id.is_empty() or bool(seen.get(lesson_id, false)):
 		return false
-	if not tips_enabled:
-		return false
 	var tutorial_context: bool = _path_value(context, "run.tutorial") == true
 	var tutorial_lesson := str(lesson.get("scope", "")).strip_edges() == "tutorial_run"
 	if tutorial_context != tutorial_lesson:
+		return false
+	# The guided run is binding even when the profile's ambient-tip preference is
+	# off. That preference only controls normal-run Dealer's Advice lessons.
+	if not tutorial_lesson and not tips_enabled:
 		return false
 	var trigger := _dict(lesson.get("trigger", {}))
 	if trigger.is_empty():
@@ -41,7 +43,7 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 	var viewport_rect := _rect(context.get("viewport_rect", Rect2(Vector2.ZERO, Vector2(1280, 720))))
 	if viewport_rect.size.x <= 0.0 or viewport_rect.size.y <= 0.0:
 		viewport_rect = Rect2(Vector2.ZERO, Vector2(1280, 720))
-	var anchor := _dict(lesson.get("anchor", {}))
+	var anchor := resolved_anchor(lesson, context)
 	var anchor_kind := str(anchor.get("kind", "none"))
 	if not ANCHOR_KINDS.has(anchor_kind):
 		anchor_kind = "none"
@@ -70,11 +72,12 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 	var delivery := str(lesson.get("delivery", "coach")).strip_edges().to_lower()
 	if not ["coach", "dialogue"].has(delivery):
 		delivery = "coach"
+	var tutorial_lesson := str(lesson.get("scope", "")).strip_edges() == "tutorial_run"
 	return {
 		"visible": true,
 		"lesson_id": str(lesson.get("id", "")),
-		"voice": "dealer_advice",
-		"eyebrow": "DEALER'S ADVICE",
+		"voice": "pal" if tutorial_lesson else "dealer_advice",
+		"eyebrow": "PAL'S POINTER" if tutorial_lesson else "DEALER'S ADVICE",
 		"copy": str(lesson.get("copy", "")),
 		"anchor_kind": anchor_kind,
 		"anchor_id": anchor_id,
@@ -97,6 +100,34 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 		"small_screen": small_screen,
 		"minimum_control_height": 52.0 if small_screen else 40.0,
 	}
+
+
+# A lesson may follow a short interaction loop without becoming a chain of
+# repetitive popups. The first matching variant owns the highlight; the base
+# anchor remains the fallback. Variants are presentation-only and are evaluated
+# at the same explicit UI boundaries as the rest of the coach model.
+static func resolved_anchor(lesson: Dictionary, context: Dictionary) -> Dictionary:
+	var fallback := _dict(lesson.get("anchor", {}))
+	var variants: Variant = lesson.get("anchor_variants", [])
+	if typeof(variants) != TYPE_ARRAY:
+		return fallback
+	for variant_value in variants:
+		if typeof(variant_value) != TYPE_DICTIONARY:
+			continue
+		var variant: Dictionary = variant_value
+		var predicates: Variant = variant.get("state_predicates", [])
+		if typeof(predicates) != TYPE_ARRAY or (predicates as Array).is_empty():
+			continue
+		var matches := true
+		for predicate_value in predicates:
+			if typeof(predicate_value) != TYPE_DICTIONARY or not _predicate_matches(predicate_value, context):
+				matches = false
+				break
+		if matches:
+			var candidate := _dict(variant.get("anchor", {}))
+			if not candidate.is_empty():
+				return candidate
+	return fallback
 
 
 static func input_allowed(_snapshot: Dictionary, _action_id: String) -> bool:

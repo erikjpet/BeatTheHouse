@@ -1696,7 +1696,10 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 			countable_cards += 1
 	if count_icons.size() != countable_cards:
 		failures.append("Blackjack count created pulses for neutral cards or missed countable cards.")
-	var test_now := Time.get_ticks_msec()
+	# Drive the live count entirely from the supplied surface clock. This is the
+	# same clock Web actions and rendering receive, and protects deterministic
+	# tests from accidental raw wall-clock reads in hit/miss paths.
+	var test_now := 12000
 	for i in range(count_icons.size()):
 		if typeof(count_icons[i]) != TYPE_DICTIONARY:
 			continue
@@ -1710,6 +1713,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		count_icons[i] = icon
 	count_challenge["icons"] = count_icons
 	answer_state["count_challenge"] = count_challenge
+	answer_state["surface_time_msec"] = test_now
 	for i in range(count_icons.size()):
 		var answer_click := game.surface_action_command("blackjack_count_icon", i, false, answer_state, run_state, environment)
 		answer_state = answer_click.get("ui_state", {})
@@ -1729,11 +1733,12 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var miss_icons: Array = miss_challenge.get("icons", []) as Array
 	if not miss_icons.is_empty() and typeof(miss_icons[0]) == TYPE_DICTIONARY:
 		var miss_icon: Dictionary = miss_icons[0]
-		miss_icon["spawn_msec"] = Time.get_ticks_msec() - 5000
+		miss_icon["spawn_msec"] = test_now - 5000
 		miss_icon["duration_msec"] = 1
 		miss_icons[0] = miss_icon
 		miss_challenge["icons"] = miss_icons
 		miss_state["count_challenge"] = miss_challenge
+		miss_state["surface_time_msec"] = test_now
 		if not game.surface_needs_auto_tick(miss_state, run_state, environment):
 			failures.append("Blackjack live count did not request auto tick when a count symbol expired.")
 		var miss_tick := game.surface_auto_action_command(miss_state, run_state, environment, {})
@@ -3586,6 +3591,11 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var control_harness := SurfaceHarness.new()
 	control_harness.setup(stack_surface)
 	game.draw_surface(control_harness, stack_surface, {})
+	var empty_harness := SurfaceHarness.new()
+	empty_harness.setup(surface)
+	game.draw_surface(empty_harness, surface, {})
+	if not empty_harness.labels.has("0/0"):
+		failures.append("Pull Tabs empty ticket pile displayed a phantom current ticket.")
 	var open_button_rect := Rect2()
 	var auto_open_button_rect := Rect2()
 	var found_open_button := false
@@ -3657,12 +3667,39 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var revealed_stack: Array = revealed_surface.get("pull_tab_stack", [])
 	if revealed_stack.is_empty() or not bool((revealed_stack[0] as Dictionary).get("fully_revealed", false)):
 		failures.append("Pull Tabs reveal command did not open all ticket rows from one click as UI-local state.")
+	var compacted_target_machine := {
+		"deals": [{"id": "a"}, {"id": "b"}, {"id": "c"}],
+		"item_state": {"xray_targets": [{"consumed": true, "deal_index": 2, "ticket_number": 11}]},
+	}
+	var compacted_target_ticket := {"deal_index": 2, "ticket_number_value": 11}
+	if not bool(game.call("_ticket_is_consumed_xray_target", compacted_target_machine, compacted_target_ticket)):
+		failures.append("Pull Tabs coach identity lost a consumed X-ray target when the compacted ticket omitted its convenience flag.")
 	if str(reveal_click.get("action_id", "")) != "":
 		failures.append("Pull Tabs reveal click should not immediately sort the ticket.")
 	if str(revealed_surface.get("pull_tab_reveal_animation_id", "")).is_empty():
 		failures.append("Pull Tabs reveal click did not expose a row-by-row peel animation.")
 	if (revealed_surface.get("pull_tab_winner_pile", []) as Array).is_empty() == false or (revealed_surface.get("pull_tab_loser_pile", []) as Array).is_empty() == false:
 		failures.append("Pull Tabs reveal moved a ticket into a pile before the file click.")
+	var revealed_harness := SurfaceHarness.new()
+	revealed_harness.setup(revealed_surface)
+	game.draw_surface(revealed_harness, revealed_surface, {})
+	var revealed_auto_rect := Rect2()
+	var revealed_file_rect := Rect2()
+	for hit_value in revealed_harness.hit_regions:
+		if typeof(hit_value) != TYPE_DICTIONARY:
+			continue
+		var hit: Dictionary = hit_value
+		match str(hit.get("action", "")):
+			"pull_tab_auto_open":
+				revealed_auto_rect = hit.get("rect", Rect2()) as Rect2
+			"pull_tab_file_ticket":
+				revealed_file_rect = hit.get("rect", Rect2()) as Rect2
+	if revealed_file_rect.size == Vector2.ZERO or not revealed_harness.labels.has("FILE"):
+		failures.append("Pull Tabs fully revealed ticket did not expose a distinct visible File button.")
+	elif revealed_auto_rect.intersects(revealed_file_rect):
+		failures.append("Pull Tabs File and Auto Open controls overlap, making filing ambiguous.")
+	elif revealed_file_rect.end.x > 776.0:
+		failures.append("Pull Tabs File control intrudes into the shared Leave control region.")
 	var file_click := _check_surface_command_non_mutating(game, "pull_tab_file_ticket", 0, false, reveal_state, run_state, environment, "pull-tab file ticket", failures)
 	if str(file_click.get("action_id", "")) != "sort_tab_ticket" or not bool(file_click.get("direct_resolve", false)):
 		failures.append("Pull Tabs file click did not request a direct ticket-sort resolution.")

@@ -450,6 +450,10 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	for key in requires_flags.keys():
 		if run_state.narrative_flags.get(str(key), null) != requires_flags[key]:
 			return false
+	var completed_tutorial_lessons := _copy_dict(run_state.narrative_flags.get("tutorial_lessons_completed", {}))
+	for lesson_id in _string_array(conditions.get("requires_tutorial_lessons", [])):
+		if not bool(completed_tutorial_lessons.get(lesson_id, false)):
+			return false
 	var requires_story_flags := _copy_dict(conditions.get("requires_story_flags", {}))
 	for key in requires_story_flags.keys():
 		if _story_flag_value(run_state, str(key)) != requires_story_flags[key]:

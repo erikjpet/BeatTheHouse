@@ -116,6 +116,10 @@
       "tutorial_initial_map_targets": [
         "corner_store"
       ],
+      "tutorial_travel_cost_overrides": {
+        "corner_store": 0,
+        "grand_casino": 0
+      },
       "starting_bankroll": 80,
       "tutorial_forced_event_choices": {
         "call_brother_in_law": "make_call",

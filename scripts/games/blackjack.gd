@@ -670,7 +670,7 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 		var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 		_sync_count_challenge_icons(session, run_state)
 		var challenge: Dictionary = _local_copy_dict(session.get("count_challenge", {}))
-		if _count_has_new_misses(challenge, Time.get_ticks_msec()):
+		if _count_has_new_misses(challenge, _surface_time_for_count(session)):
 			return true
 	if _has_dealt_hand(ui_state) or bool(table.get("barred", false)):
 		return false
@@ -770,11 +770,23 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 	return _blackjack_surface_action_command(surface_action, index, confirm_requested, ui_state, run_state, environment)
 
 
-func coach_state(_run_state: RunState, _environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+func coach_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var count_challenge: Dictionary = ui_state.get("count_challenge", {}) if typeof(ui_state.get("count_challenge", {})) == TYPE_DICTIONARY else {}
 	var cheats: Dictionary = ui_state.get("cheats_used", {}) if typeof(ui_state.get("cheats_used", {})) == TYPE_DICTIONARY else {}
 	var count_icons: Array = count_challenge.get("icons", []) if typeof(count_challenge.get("icons", [])) == TYPE_ARRAY else []
 	var clicked_icons: Array = count_challenge.get("clicked_icons", []) if typeof(count_challenge.get("clicked_icons", [])) == TYPE_ARRAY else []
+	var surface_action_anchors: Array = []
+	var table := _table_state(run_state, environment)
+	var distractions: Array = _dictionary_array(table.get("distractions", []))
+	for index in range(mini(distractions.size(), 3)):
+		var distraction: Dictionary = distractions[index]
+		var distraction_id := str(distraction.get("id", "")).strip_edges()
+		if not distraction_id.is_empty():
+			surface_action_anchors.append({
+				"id": "blackjack_distraction:%s" % distraction_id,
+				"action": "blackjack_distraction",
+				"index": index,
+			})
 	return {
 		"count_started": not count_challenge.is_empty(),
 		"count_all_selected": not count_icons.is_empty() and clicked_icons.size() >= count_icons.size(),
@@ -782,6 +794,7 @@ func coach_state(_run_state: RunState, _environment: Dictionary, ui_state: Dicti
 		"count_perfect": bool(ui_state.get("count_perfect", false)),
 		"lookaway_started": not str(ui_state.get("dealer_lookaway_id", "")).is_empty(),
 		"peek_used": bool(cheats.get("peek_hole_card", false)),
+		"surface_action_anchors": surface_action_anchors,
 	}
 
 
@@ -857,7 +870,7 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 			command["preserve_surface_ui_state"] = true
 			return GameModule.surface_command(command)
 		"blackjack_distraction":
-			return _start_distraction_command(index, next_state, table)
+			return _start_distraction_command(index, next_state, table, run_state)
 		"blackjack_patron_cover":
 			return _cover_patron_command(index, next_state, table)
 		"blackjack_count_toggle":
@@ -2658,7 +2671,7 @@ func _draw_count_challenge(surface, surface_state: Dictionary) -> void:
 	var challenge: Dictionary = _local_copy_dict(surface_state.get("count_challenge", {}))
 	if challenge.is_empty():
 		return
-	var now_msec := Time.get_ticks_msec()
+	var now_msec := _surface_time_for_count(surface_state)
 	var icons: Array = _dictionary_array(challenge.get("icons", []))
 	var clicked: Array = _string_array(challenge.get("clicked_icons", []))
 	var missed: Array = _count_missed_icon_ids(challenge, now_msec)
@@ -4944,7 +4957,7 @@ func _surface_stake_floor(run_state: RunState, environment: Dictionary) -> int:
 	return floor
 
 
-func _start_distraction_command(index: int, ui_state: Dictionary, table: Dictionary) -> Dictionary:
+func _start_distraction_command(index: int, ui_state: Dictionary, table: Dictionary, run_state: RunState = null) -> Dictionary:
 	var distractions: Array = _dictionary_array(table.get("distractions", []))
 	if index < 0 or index >= distractions.size():
 		return _message_command(ui_state, "That distraction is not available at this table.")
@@ -4952,7 +4965,13 @@ func _start_distraction_command(index: int, ui_state: Dictionary, table: Diction
 	var now := Time.get_ticks_msec()
 	var distraction_id := str(distraction.get("id", "distraction"))
 	ui_state["dealer_lookaway_started_msec"] = now
-	ui_state["dealer_lookaway_duration_msec"] = int(distraction.get("duration_msec", 2800))
+	var duration_msec := int(distraction.get("duration_msec", 2800))
+	# The guided run opens Pal's required explanation after the real distraction
+	# starts. Give a first-time player enough time to read that instruction and
+	# still act on the production Peek window; normal-run timing is untouched.
+	if run_state != null and run_state.is_tutorial_run():
+		duration_msec = maxi(duration_msec, 15000)
+	ui_state["dealer_lookaway_duration_msec"] = duration_msec
 	ui_state["dealer_lookaway_id"] = "%s:%s:%d" % [get_id(), distraction_id, now]
 	ui_state["dealer_distraction_id"] = distraction_id
 	ui_state["dealer_distraction_noise"] = int(distraction.get("noise", 0))
@@ -4997,11 +5016,21 @@ func _toggle_side_bet_command(index: int, ui_state: Dictionary, table: Dictionar
 
 # Count stays local by design: it is a multi-icon card-identity state machine,
 # not the scalar timing window shared by holdout, controlled roll, and past-post.
+func _count_icon_duration_msec(run_state: RunState) -> int:
+	var duration_msec := clampi(COUNT_ICON_DURATION_MSEC + _item_effect_total("blackjack_count_window_msec", run_state), 1800, 4600)
+	# As with the tutorial Peek, Pal's required explanation opens after the real
+	# timed interaction begins. Preserve normal difficulty while making the
+	# fixed guided run readable before its bubbles expire.
+	if run_state != null and run_state.is_tutorial_run():
+		return maxi(duration_msec, 30000)
+	return duration_msec
+
+
 func _start_count_challenge(ui_state: Dictionary, table: Dictionary, run_state: RunState, now_msec: int = -1) -> void:
 	var cards: Array = _visible_count_challenge_cards(ui_state)
 	var icons: Array = []
 	var now := _surface_time_for_count(ui_state, now_msec)
-	var icon_duration := clampi(COUNT_ICON_DURATION_MSEC + _item_effect_total("blackjack_count_window_msec", run_state), 1800, 4600)
+	var icon_duration := _count_icon_duration_msec(run_state)
 	var challenge_id := "%s:count:%d" % [get_id(), now]
 	for i in range(cards.size()):
 		var card_value: Variant = cards[i]
@@ -5102,7 +5131,7 @@ func _hit_count_icon(index: int, ui_state: Dictionary, table: Dictionary, _run_s
 		return _message_command(ui_state, "Start the count first.")
 	if bool(ui_state.get("count_answered", false)):
 		return _message_command(ui_state, "Count already recorded.")
-	var now_msec := Time.get_ticks_msec()
+	var now_msec := _surface_time_for_count(ui_state)
 	challenge = _refresh_count_challenge_misses(challenge, now_msec)
 	var icons: Array = _dictionary_array(challenge.get("icons", []))
 	if index < 0 or index >= icons.size():
@@ -5227,7 +5256,7 @@ func _sync_count_challenge_icons(ui_state: Dictionary, run_state: RunState, now_
 			if typeof(card_value) == TYPE_DICTIONARY:
 				tracked_keys.append(_count_icon_card_key(card_value as Dictionary))
 	now_msec = _surface_time_for_count(ui_state, now_msec)
-	var icon_duration := clampi(COUNT_ICON_DURATION_MSEC + _item_effect_total("blackjack_count_window_msec", run_state), 1800, 4600)
+	var icon_duration := _count_icon_duration_msec(run_state)
 	var challenge_id := str(challenge.get("challenge_id", "%s:count:%d" % [get_id(), now_msec]))
 	var serial := int(challenge.get("icon_serial", icons.size()))
 	var added := 0
@@ -5282,7 +5311,7 @@ func _update_live_count_state(ui_state: Dictionary, _table: Dictionary, run_stat
 	_sync_count_challenge_icons(ui_state, run_state)
 	challenge = _local_copy_dict(ui_state.get("count_challenge", {}))
 	var missed_before: int = (_string_array(challenge.get("missed_icons", []))).size()
-	var now_msec := Time.get_ticks_msec()
+	var now_msec := _surface_time_for_count(ui_state)
 	challenge = _refresh_count_challenge_misses(challenge, now_msec)
 	var missed_after: int = (_string_array(challenge.get("missed_icons", []))).size()
 	ui_state["count_challenge"] = challenge

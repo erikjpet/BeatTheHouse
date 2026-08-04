@@ -18,7 +18,17 @@ static func is_tutorial_challenge(config: Dictionary) -> bool:
 static func challenge_config(library: ContentLibrary) -> Dictionary:
 	if library == null:
 		return {}
-	return library.challenge_config_for(CHALLENGE_ID, "")
+	var config := library.challenge_config_for(CHALLENGE_ID, "")
+	if config.is_empty():
+		return {}
+	# The guided run owns its opening room. Enforce the authored identity at the
+	# boundary so profile home/loadout modifiers can never leak into either New
+	# Run or Replay Lessons.
+	var modifiers: Dictionary = config.get("modifiers", {}) if typeof(config.get("modifiers", {})) == TYPE_DICTIONARY else {}
+	modifiers = modifiers.duplicate(true)
+	modifiers["home_archetype_id"] = APARTMENT_ID
+	config["modifiers"] = modifiers
+	return config
 
 
 static func should_auto_start(profile: Variant, meta_snapshot: Dictionary) -> bool:

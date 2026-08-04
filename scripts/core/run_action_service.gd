@@ -411,7 +411,8 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 		"sellable": sellable,
 		"sale_price": sale_price,
 		"sale_breakdown": sale_breakdown,
-		"effect_summary": "",
+		"effect_summary": str(definition.get("effect_description", effect_summary(effect))),
+		"behavior_summary": _inventory_behavior_summary(item_class, is_active, item_id == selected_id),
 		"attribute_badges": AttributeBadgesScript.for_item(item_context),
 		"asset_path": str(definition.get("asset_path", "")),
 		"icon_key": str(definition.get("icon_key", item_id)),
@@ -452,6 +453,20 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 		detail["ticket_face_value"] = face_value
 		detail["sal_cash_value"] = maxi(0, int(summary.get("sal_cash_value", 0)))
 	return detail
+
+
+func _inventory_behavior_summary(item_class: String, is_active: bool, selected: bool) -> String:
+	if is_active:
+		return "Active item — equipped in the one active-item slot." if selected else "Active item — select Equip to place it in the one active-item slot."
+	match item_class.strip_edges().to_lower():
+		"consumable":
+			return "Consumable — its effect is spent when used."
+		"permanent":
+			return "Permanent passive — works while carried and does not use the active-item slot."
+		"container":
+			return "Storage — place it at home to add inventory spaces."
+		_:
+			return "Passive — works while carried and does not use the active-item slot."
 
 
 func portable_ticket_cash_options(lender_id: String = SALS_PAWN_COUNTER_ID) -> Array:
@@ -1128,9 +1143,7 @@ func effect_summary(effect: Dictionary) -> String:
 	var parts: Array = []
 	for key in effect.keys():
 		var key_text := str(key)
-		if key_text == "asset_path":
-			continue
-		if key_text == "synergies":
+		if ["asset_path", "synergies", "active_item", "active_mode", "active_target", "repair_to_item", "repair_cost"].has(key_text):
 			continue
 		var value: Variant = effect[key]
 		if key_text == "families" and typeof(value) == TYPE_DICTIONARY:

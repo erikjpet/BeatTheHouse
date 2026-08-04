@@ -275,6 +275,12 @@ func _normalized_drunk_effect_mode(value: String) -> String:
 func set_selected_object(object_id: String, snap_to_target: bool = true) -> void:
 	var previous_zoom := camera_zoom
 	var previous_offset := camera_offset
+	# Selection and hover share the inspection card. Tutorial focus can move to
+	# another authored target while the pointer is still resting over the prior
+	# one; clearing only the selection would therefore leave that stale hover
+	# card rendered over the new target until the player moved the mouse.
+	if object_id.is_empty() and not hovered_object_id.is_empty():
+		_set_hovered_object("")
 	if selected_object_id != object_id:
 		selected_object_id = object_id
 		_invalidate_camera_target()
@@ -2662,7 +2668,8 @@ func _selected_info_action_label(object_data: Dictionary) -> String:
 		"enter_game":
 			label = "Enter"
 		"buy_item":
-			label = "Buy"
+			var action_summary := str(object_data.get("action_summary", "")).strip_edges().to_lower()
+			label = "Pick up" if label.to_lower().contains("pickup") or action_summary.contains("pickup") else "Buy"
 		"talk_shopkeeper":
 			label = "Talk"
 		"confirm_travel", "select_travel":
@@ -3323,7 +3330,19 @@ func global_rect_for_object(object_id: String) -> Rect2:
 	var object_data := _scene_object(object_id)
 	if object_data.is_empty():
 		return Rect2()
-	var local_rect := _board_rect_to_local_rect(_interaction_rect_for_object(object_data))
+	return _local_rect_to_global_rect(_board_rect_to_local_rect(_interaction_rect_for_object(object_data)))
+
+
+func global_rect_for_selected_object_action(object_id: String) -> Rect2:
+	if selected_object_id != object_id:
+		return Rect2()
+	var action_rect := _selected_info_action_button_rect()
+	if not action_rect.has_area():
+		return Rect2()
+	return _local_rect_to_global_rect(_board_rect_to_local_rect(action_rect))
+
+
+func _local_rect_to_global_rect(local_rect: Rect2) -> Rect2:
 	var canvas_transform := get_global_transform()
 	var top_left := canvas_transform * local_rect.position
 	var top_right := canvas_transform * Vector2(local_rect.end.x, local_rect.position.y)
@@ -3537,10 +3556,10 @@ func _draw_object_label(rect: Rect2, label: String, object_type: String, disable
 	if label_rect.size.x <= 0.0 or label_rect.size.y <= 0.0:
 		return
 	var color := _color_for_object_type(object_type)
-	var alpha := 0.86 if active else 0.68
+	var alpha := 1.0 if active else 0.86
 	if disabled:
 		color = C_SOFT
-		alpha = 0.46
+		alpha = 0.68
 	var font := get_theme_default_font()
 	var fitted := _fit_draw_text(text, font, 8, label_rect.size.x - 6.0)
 	var text_pos := label_rect.position + Vector2(3.0, 10.0)

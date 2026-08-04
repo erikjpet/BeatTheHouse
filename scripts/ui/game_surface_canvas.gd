@@ -264,6 +264,16 @@ func surface_animation_liveness_active() -> bool:
 	return _surface_animation_liveness_active()
 
 
+# A lightweight boundary query for UI owners that must wait until a finite
+# presentation channel has rebuilt its final hit regions. Idle renderer motion
+# is intentionally excluded: it does not live in surface_animation_channels.
+func surface_transition_animation_active() -> bool:
+	for channel_id_value in surface_animation_channels.keys():
+		if surface_animation_active(str(channel_id_value)):
+			return true
+	return false
+
+
 func reset_performance_counters() -> void:
 	perf_full_snapshot_calls = 0
 	perf_runtime_status_calls = 0

@@ -1619,7 +1619,8 @@
     "icon_key": "xray_glasses",
     "environment_prop": "glasses",
     "surface": "counter_case",
-    "description": "Cheap frames. Expensive secrets.",
+    "description": "Permanent X-ray gear for covered tickets.",
+    "effect_description": "Reveals up to 3 covered scratch symbols; surveillance Heat +6 when applied.",
     "effect": {
       "scratch_peek_cells": 3,
       "scratch_peek_heat": 6

@@ -6,10 +6,14 @@ extends SceneTree
 const MainScene := preload("res://scenes/main.tscn")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
+const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
+const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const REPORT_PATH := "user://foundation_visual_qa_report.json"
 const TEST_SETTINGS_PATH := "user://settings_foundation_visual_qa.json"
 const TEST_META_COLLECTION_PATH := "user://foundation_visual_qa_meta_collection.json"
+const TEST_PROFILE_INVENTORY_PATH := "user://foundation_visual_qa_profile_inventory.json"
+const TEST_AUTOSAVE_SLOT := "foundation_visual_qa_autosave"
 const META_COLLECTION_PATH_ENV := "BTH_META_COLLECTION_PATH"
 const DEFAULT_VISUAL_QA_SEED := "FOUNDATION-VISUAL-QA"
 const CONTINUE_QA_SEED := "FOUNDATION-CONTINUE-QA"
@@ -122,6 +126,14 @@ func _init() -> void:
 func _run() -> void:
 	_use_isolated_user_settings(TEST_SETTINGS_PATH)
 	_use_isolated_meta_collection_store(TEST_META_COLLECTION_PATH)
+	_use_isolated_completed_tutorial_profile(TEST_PROFILE_INVENTORY_PATH)
+	var test_save_service: SaveService = SaveServiceScript.new()
+	var clear_error := test_save_service.clear_run(TEST_AUTOSAVE_SLOT)
+	if clear_error != OK:
+		push_error("Could not clear isolated visual QA autosave slot.")
+		report["warnings"].append("Could not clear isolated visual QA autosave slot.")
+		_write_report()
+		quit(1)
 	visual_qa_seed = _configured_visual_qa_seed()
 	report["seed"] = visual_qa_seed
 	await _open_fresh_app()
@@ -420,6 +432,21 @@ func _use_isolated_meta_collection_store(path: String) -> void:
 		"next_instance_id": 1,
 	}, "\t"))
 	file.close()
+
+
+func _use_isolated_completed_tutorial_profile(path: String) -> void:
+	OS.set_environment(ProfileInventoryScript.INVENTORY_PATH_ENV, path)
+	var absolute := ProjectSettings.globalize_path(path)
+	if FileAccess.file_exists(absolute):
+		DirAccess.remove_absolute(absolute)
+	var isolated_profile: ProfileInventory = ProfileInventoryScript.new()
+	isolated_profile.tutorial_completed = true
+	var error := isolated_profile.save()
+	if error != OK:
+		push_error("Could not prepare isolated visual QA profile inventory.")
+		report["warnings"].append("Could not prepare isolated visual QA profile inventory.")
+		_write_report()
+		quit(1)
 
 
 func _verify_sal_resale_shelf_visual_states() -> void:
@@ -1169,13 +1196,13 @@ func _prepare_multi_game_visual_qa_fixture() -> void:
 
 
 func _reset_fixed_price_surface_for_risky_action() -> void:
-	await _resolve_blocking_event_popups()
-	await _resolve_blocking_talk_dock_for_surface_flow()
+	await _resolve_blocking_surface_interrupts()
 	_return_to_room_view()
 	await _settle()
 	await _prepare_risky_game_visual_qa_fixture()
-	await _resolve_blocking_event_popups()
-	await _resolve_blocking_talk_dock_for_surface_flow()
+	await _resolve_blocking_surface_interrupts()
+	_return_to_room_view()
+	await _settle()
 	_record_state("risky_game_fixture_risky_reset", "Reopened deterministic fixed-price game surface for visible risky-action coverage.")
 	var entered_label := await _double_click_first_play_object_type("game")
 	_require(not entered_label.is_empty(), "Could not re-enter deterministic fixed-price game surface for risky-action QA.")
@@ -1897,6 +1924,7 @@ func _open_fresh_app() -> void:
 	# Visual QA owns simulation time explicitly so non-mutating UI comparisons
 	# are not invalidated by the production clock advancing between frames.
 	app.set("continuous_environment_clock_enabled", false)
+	app.set("autosave_slot_id", TEST_AUTOSAVE_SLOT)
 	root.add_child(app)
 	await _settle()
 
@@ -1985,6 +2013,17 @@ func _resolve_blocking_talk_dock_for_surface_flow() -> void:
 	strict_game_surface_only_active = false
 	await _resolve_blocking_talk_dock()
 	strict_game_surface_only_active = strict_surface_before
+
+
+func _resolve_blocking_surface_interrupts(max_count: int = 8) -> void:
+	for _index in range(max_count):
+		await _resolve_blocking_event_popups()
+		await _resolve_blocking_talk_dock_for_surface_flow()
+		var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+		var dock := app.get("talk_dock") as Control
+		if not bool(popup.get("visible", false)) and (dock == null or not dock.visible):
+			return
+	_require(false, "Surface interrupt chain did not clear within the visual QA action bound.")
 
 
 func _wait_for_room_camera(max_frames: int = 18) -> void:
@@ -2544,14 +2583,16 @@ func _return_to_room_view() -> void:
 			_push_mouse_motion(global_position)
 			_push_mouse_button(global_position, true)
 			_push_mouse_button(global_position, false)
-			return
-	if not _click_button_exact("Back to environment").is_empty():
+			var after_surface_click: Dictionary = app.call("current_screen_snapshot")
+			if str(after_surface_click.get("screen", "")) == "ENVIRONMENT":
+				return
+	if not _click_button_exact("Back to environment").is_empty() and _room_view_is_active():
 		return
-	if not _click_button_exact("Back to room").is_empty():
+	if not _click_button_exact("Back to room").is_empty() and _room_view_is_active():
 		return
-	if not _click_button_contains("Back to environment").is_empty():
+	if not _click_button_contains("Back to environment").is_empty() and _room_view_is_active():
 		return
-	if not _click_button_contains("Back to room").is_empty():
+	if not _click_button_contains("Back to room").is_empty() and _room_view_is_active():
 		return
 	if app.has_method("current_screen_snapshot"):
 		var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
@@ -2571,6 +2612,12 @@ func _return_to_room_view() -> void:
 	_push_mouse_motion(global_position)
 	_push_mouse_button(global_position, true)
 	_push_mouse_button(global_position, false)
+
+
+func _room_view_is_active() -> bool:
+	if app == null or not app.has_method("current_screen_snapshot"):
+		return false
+	return str((app.call("current_screen_snapshot") as Dictionary).get("screen", "")) == "ENVIRONMENT"
 
 
 func _click_first_play_object_type(object_type: String) -> String:

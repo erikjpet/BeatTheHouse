@@ -496,7 +496,7 @@
       },
       "chips": {
         "text": "Linda rests one hand beside the chip tray.",
-        "tutorial_text": "Buy chips with cash for tables and the shop. Debt is paid first.",
+        "tutorial_text": "Buy chips with cash for tables and the shop. Cashout pays debt first.",
         "choices": [
           {
             "id": "cage_buy_25",
@@ -866,23 +866,23 @@
     "start": "apartment_intro",
     "nodes": {
       "apartment_intro": {
-        "text": "I'm your pal. Pick up the X-ray Glasses in your apartment.",
+        "text": "I'm your pal. Build cash and earn a Players Card. $0 or full Heat ends the run. Watch Heat, Drunk, and time. Take the glasses.",
         "choices": [{"id": "continue", "label": "Pick them up", "effects": {}, "end": true}]
       },
       "inventory_check": {
-        "text": "Good. Open Inventory and confirm the X-ray Glasses are there.",
+        "text": "Open Inventory. Permanent passives work while carried; consumables are spent. Only one active item can be equipped. Confirm the X-ray Glasses and read their effect.",
         "choices": [{"id": "continue", "label": "Check inventory", "effects": {}, "end": true}]
       },
       "map_corner": {
-        "text": "Open the travel map. Your first stop is the corner store.",
+        "text": "Travel spends time and may cost cash; open hours matter. Buy gear, gamble, manage Debt, and earn Bronze toward Gold. Open the map; the corner store is your only stop.",
         "choices": [{"id": "continue", "label": "Open the map", "effects": {}, "end": true}]
       },
       "map_destination": {
-        "text": "Select the corner store on the map, then travel there.",
+        "text": "The map shows travel cost, minutes, and open state. Corner Store costs $0 now. Select it, then Travel.",
         "choices": [{"id": "continue", "label": "Choose corner store", "effects": {}, "end": true}]
       },
       "corner_items": {
-        "text": "Inspect the shelf, compare the items, then buy one.",
+        "text": "Inspect both shelf items. Each card shows price and what your Bankroll will be after purchase. Buy either one.",
         "choices": [{"id": "continue", "label": "Check the shelf", "effects": {}, "end": true}]
       },
       "crew_warning": {
@@ -890,31 +890,35 @@
         "choices": [{"id": "continue", "label": "Good to know", "effects": {}, "end": true}]
       },
       "family_phone": {
-        "text": "Use the counter phone. Take the family loan and watch your debt.",
+        "text": "Use the counter phone and take the $30 family loan. It raises Bankroll now, adds family Debt to the HUD, and future cashout pays Debt first.",
         "choices": [{"id": "continue", "label": "Use the phone", "effects": {}, "end": true}]
+      },
+      "family_debt": {
+        "text": "The receipt icon is family Debt. Bankroll rose by $30, but cashout pays Debt first. Keep enough cash to survive the run.",
+        "choices": [{"id": "continue", "label": "Debt understood", "effects": {}, "end": true}]
       },
       "parking_tip": {
         "text": "Open the parking-lot note and choose Follow the tip. It may lead somewhere useful later.",
         "choices": [{"id": "continue", "label": "Follow the lead", "effects": {}, "end": true}]
       },
       "route_split": {
-        "text": "Two routes opened. Try the gas casino, or go underground.",
+        "text": "That tip opened two doors. I strongly recommend the Gas Casino lesson, but it is optional: choose Gas Casino, or skip it and go straight Underground.",
         "choices": [{"id": "continue", "label": "Choose a route", "effects": {}, "end": true}]
       },
       "gas_machine": {
-        "text": "Open the pull-tab machine. Your glasses can read the paper.",
+        "text": "Open the pull-tab machine. Outcomes are fixed when each ticket is bought; peeling only reveals them. Your glasses mark a real winner in the stack.",
         "choices": [{"id": "continue", "label": "Open the machine", "effects": {}, "end": true}]
       },
       "gas_xray": {
-        "text": "X-ray marks a winner near the stack's bottom. Buy down to it.",
-        "choices": [{"id": "continue", "label": "Buy the marked tab", "effects": {}, "end": true}]
+        "text": "Read the yellow marker: it shows tickets left and total cost. Buy that column, then Collect each dropped ticket until the marked winner is purchased.",
+        "choices": [{"id": "continue", "label": "Buy and collect", "effects": {}, "end": true}]
       },
       "gas_peel": {
-        "text": "Peel every window. A winning tab must be played before payout.",
-        "choices": [{"id": "continue", "label": "Peel the tab", "effects": {}, "end": true}]
+        "text": "Select the marked ticket, Peel all three windows, then File it into the winner pile. Piles shows sorted tickets; Leave only after the winner is filed.",
+        "choices": [{"id": "continue", "label": "Collect and peel", "effects": {}, "end": true}]
       },
       "gas_clerk": {
-        "text": "Take the winning tab to Rina at the clerk tray. She pays it out.",
+        "text": "Leave the machine, open Rina's clerk tray, and Redeem. A filed winner is not cash until the clerk pays it.",
         "choices": [{"id": "continue", "label": "Cash the winner", "effects": {}, "end": true}]
       },
       "gas_depart": {
@@ -922,15 +926,15 @@
         "choices": [{"id": "continue", "label": "Go underground", "effects": {}, "end": true}]
       },
       "underground_enter": {
-        "text": "Sit at blackjack and play one ordinary hand first.",
+        "text": "At blackjack, get closer to 21 than the dealer without going over. 2-10 use their number, face cards are 10, and an Ace is 1 or 11. Sit for a clean hand.",
         "choices": [{"id": "continue", "label": "Take a seat", "effects": {}, "end": true}]
       },
       "blackjack_normal": {
-        "text": "Set your bet, deal, read the cards, then finish the hand.",
+        "text": "Choose the wager with the felt chips; Deal locks it. Hit takes a card. Stand keeps your total for dealer comparison. Deal this deterministic practice hand.",
         "choices": [{"id": "continue", "label": "Deal clean", "effects": {}, "end": true}]
       },
       "blackjack_finish": {
-        "text": "Stand this hand. Learn the normal table before adding heat.",
+        "text": "Your total is ready. Stand; the dealer then draws by house rules and compares totals. Going over 21 would bust immediately.",
         "choices": [{"id": "continue", "label": "Stand", "effects": {}, "end": true}]
       },
       "blackjack_raise": {
@@ -938,27 +942,31 @@
         "choices": [{"id": "continue", "label": "Raise the bet", "effects": {}, "end": true}]
       },
       "blackjack_deal_raised": {
-        "text": "Your larger bet is set. Deal and watch the dealer's attention.",
+        "text": "Deal locks the raised wager. Risky actions spend their named prop or opportunity, reveal useful information, and can add Heat if mistimed.",
         "choices": [{"id": "continue", "label": "Deal", "effects": {}, "end": true}]
       },
+      "heat_before_cheat": {
+        "text": "Before cheating, read Heat at the top. Full Heat ends the run. A caught Peek or missed count bubble adds Heat; clean play, leaving, or cooling off avoids more attention.",
+        "choices": [{"id": "continue", "label": "I understand Heat", "effects": {}, "end": true}]
+      },
       "blackjack_lookaway": {
-        "text": "The easiest cheat is a lookaway: DRINK PASS spills a drink, while CHIP SPILL buys a brief opening. Move fast.",
+        "text": "The easiest cheat is the real lookaway: DRINK PASS spills a drink; CHIP SPILL is the backup opening. A caught Peek adds Heat. Travel or clean play can cool attention.",
         "choices": [{"id": "continue", "label": "Create a lookaway", "effects": {}, "end": true}]
       },
       "blackjack_peek": {
-        "text": "PEEK only during an open attention window. Getting caught will add heat and can close the table.",
+        "text": "PEEK only while the attention window is open; it reveals the dealer hole card for Hit or Stand. Getting caught will add heat and can close the table.",
         "choices": [{"id": "continue", "label": "Peek now", "effects": {}, "end": true}]
       },
       "blackjack_count_start": {
-        "text": "Start COUNT. Visible cards will place count bubbles on the felt.",
+        "text": "COUNT uses Hi-Lo: 2-6 = +1, 7-9 = 0, 10-Ace = -1. Start it; every visible card creates one bubble.",
         "choices": [{"id": "continue", "label": "Start counting", "effects": {}, "end": true}]
       },
       "blackjack_count_bubbles": {
-        "text": "Clear every count bubble before it fades. A miss adds heat.",
+        "text": "Select every bubble before it fades. A positive running count means more 10s and Aces may remain. A miss adds Heat; perfect counting avoids that penalty.",
         "choices": [{"id": "continue", "label": "Clear every bubble", "effects": {}, "end": true}]
       },
       "heat": {
-        "text": "Heat brings police—or worse—when the meter fills.",
+        "text": "That real mistake raised Heat. Full Heat ends the run and high Heat makes risky play harsher. Stop cheating, play clean, or travel to cool off before trying again.",
         "choices": [{"id": "continue", "label": "Watch the heat", "effects": {}, "end": true}]
       },
       "invitation": {
@@ -991,7 +999,7 @@
         "choices": [{"id": "continue", "label": "Meet the Host", "effects": {}, "end": true}]
       },
       "comp": {
-        "text": "Take the free comp on the main floor before visiting the Cage.",
+        "text": "Take the free suite comp before visiting the Cage. Comps are stored on your Players Card for their stated use; this one costs nothing.",
         "choices": [{"id": "continue", "label": "Take the comp", "effects": {}, "end": true}]
       },
       "cage": {
@@ -999,11 +1007,11 @@
         "choices": [{"id": "continue", "label": "Go to the Cage", "effects": {}, "end": true}]
       },
       "shop": {
-        "text": "The gift case uses chips. Buy an item before returning to play.",
+        "text": "The gift case uses chips, not cash. Inspect the case and read one chip-priced offer; buying is optional.",
         "choices": [{"id": "continue", "label": "Check the shop", "effects": {}, "end": true}]
       },
       "table_play": {
-        "text": "Play a table game with your chips until Bronze lights up.",
+        "text": "Bronze progress is 0/1 Grand table games. Play one clean table hand with chips; at 1/1, return to Linda to claim Bronze.",
         "choices": [{"id": "continue", "label": "Earn Bronze", "effects": {}, "end": true}]
       },
       "return_linda": {
@@ -1071,17 +1079,39 @@
     "start": "goal",
     "nodes": {
       "goal": {
-        "text": "Bronze, sugar. Play clean, settle debts, and return for Gold.",
+        "text": "Bronze Players Card, sugar. You learned items, travel, debt, pull-tabs, blackjack, cheating, Heat, chips, comps, and card progress. Gold is the next tier.",
+        "choices": [{
+          "id": "review_persistence",
+          "label": "What carries forward?",
+          "text": "Review the handoff.",
+          "effects": {},
+          "effects_hidden": true,
+          "goto": "persistence"
+        }]
+      },
+      "persistence": {
+        "text": "Your collection and Players Card rewards persist between runs; ordinary run cash, chips, debt, and carried gear do not unless a reward says otherwise. Normal runs are now open.",
+        "choices": [{
+          "id": "review_next_goal",
+          "label": "Show my next goal",
+          "text": "Continue to the final objective.",
+          "effects": {},
+          "effects_hidden": true,
+          "goto": "next_goal"
+        }]
+      },
+      "next_goal": {
+        "text": "Start a normal run, build Bankroll without filling Heat, improve your collection, and return to Linda after enough Grand Casino table play to earn the Gold Players Card.",
         "choices": [{
           "id": "finish_tutorial",
-          "label": "Aim for the Golden Card",
-          "text": "Finish the guided first night.",
+          "label": "Finish First Night",
+          "text": "End the guided run and unlock normal play.",
           "effects": {
             "demo_finale": {
               "event_id": "tutorial_bronze_complete",
               "route": "tutorial_bronze_card",
               "branch": "win",
-              "message": "Linda issues Bronze and leaves the Golden Players Card as your next goal."
+              "message": "Linda issues Bronze and leaves the Gold Players Card as your next goal."
             }
           },
           "effects_hidden": true,

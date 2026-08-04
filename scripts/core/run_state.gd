@@ -6878,6 +6878,20 @@ func next_pending_modal_triggered_event() -> Dictionary:
 
 
 func next_pending_talk_event() -> Dictionary:
+	# During the guided run, Pal's currently active instruction must resume ahead
+	# of unrelated ambient conversations that happened to enqueue on the same
+	# action boundary. The queue itself is left intact: once the guide beat is
+	# resolved, the natural conversation is still available and proceeds next.
+	# Normal runs retain strict insertion order.
+	if is_tutorial_run():
+		for entry_value in pending_triggered_events:
+			var tutorial_entry := _normalize_triggered_event_entry(entry_value)
+			var tutorial_context: Dictionary = tutorial_entry.get("context", {}) if typeof(tutorial_entry.get("context", {})) == TYPE_DICTIONARY else {}
+			var is_guide_entry := str(tutorial_entry.get("source", "")) == "tutorial_guide" \
+				or str(tutorial_context.get("source", "")) == "tutorial_guide" \
+				or not str(tutorial_context.get("tutorial_lesson_id", "")).strip_edges().is_empty()
+			if str(tutorial_entry.get("presentation", "modal")) == "talk" and is_guide_entry:
+				return tutorial_entry
 	for entry_value in pending_triggered_events:
 		var entry := _normalize_triggered_event_entry(entry_value)
 		if str(entry.get("presentation", "modal")) == "talk":

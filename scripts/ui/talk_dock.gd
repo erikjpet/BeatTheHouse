@@ -7,8 +7,9 @@ signal occupied_rect_changed(rect: Rect2)
 const COLLAPSED_SIZE := Vector2(420, 58)
 const EXPANDED_PANEL_WIDTH := 460.0
 const SINGLE_CHOICE_PANEL_WIDTH := 420.0
-const EXPANDED_PANEL_BASE_HEIGHT := 156.0
+const EXPANDED_PANEL_BASE_HEIGHT := 160.0
 const EXPANDED_PANEL_EXTRA_ROW_HEIGHT := 40.0
+const EXPANDED_PANEL_EXTRA_BODY_LINE_HEIGHT := 23.0
 const SMALL_SCREEN_CHOICE_ROW_EXTRA := 12.0
 const EXPANDED_PORTRAIT_SIZE := Vector2(210, 290)
 const VIEWPORT_MARGIN := Vector2(18, 18)
@@ -114,7 +115,10 @@ class PortraitModel:
 		PortraitTableGameVisualsScript._draw_table_character(self, _faceless_style(animation_clock), Vector2(size.x * 0.5, size.y + 18.0 + idle_bob), character_scale, animation_clock)
 
 	func _faceless_style(phase: float) -> Dictionary:
-		var shadow := VisualStyle.role("shadow")
+		# "shadow" is a palette color, not a semantic role. Passing it through
+		# role() fell back to white and rendered anonymous callers as a blank white
+		# paper-doll instead of a readable faceless silhouette.
+		var shadow := VisualStyle.color("shadow")
 		return {
 			"name": "",
 			"skin": shadow,
@@ -254,6 +258,8 @@ var reveal_elapsed := 0.0
 var typewriter_active := false
 var rendered_entry_key := ""
 var last_occupied_rect := Rect2()
+var avoid_global_rect := Rect2()
+var reserved_body_line_count := 1
 
 var panel: PanelContainer
 var stack: VBoxContainer
@@ -427,6 +433,8 @@ func current_snapshot() -> Dictionary:
 		"portrait_rect": portrait_panel.get_global_rect() if portrait_panel != null and portrait_panel.visible else Rect2(),
 		"occupied_rect": occupied_global_rect(),
 		"environment_reserved_rect": environment_reserved_global_rect(),
+		"avoid_rect": avoid_global_rect,
+		"layout_side": str(_expanded_layout_rects(false).get("side", "left")),
 		"screen_rect": get_global_rect(),
 	}
 
@@ -471,6 +479,15 @@ func set_reduce_motion(enabled: bool) -> void:
 	if portrait_model != null:
 		portrait_model.set_reduce_motion(enabled)
 		portrait_model.set_animation_active(visible and expanded)
+
+
+# Keep an authored instruction away from its live target without taking input
+# ownership from that target.
+func set_avoid_global_rect(next_rect: Rect2) -> void:
+	if avoid_global_rect.is_equal_approx(next_rect):
+		return
+	avoid_global_rect = next_rect
+	_position_panel()
 
 
 func set_small_screen_mode(enabled: bool) -> void:
@@ -528,11 +545,14 @@ func _build() -> void:
 	header_row.add_child(header_text)
 
 	speaker_name_plate = FoundationWidgets.panel_container(VisualStyle.role("surface_raised"), VisualStyle.role("accent_secondary"))
+	speaker_name_plate.custom_minimum_size.y = VisualStyle.TALK_CHOICE_HEIGHT
 	header_text.add_child(speaker_name_plate)
 	speaker_label = FoundationWidgets.label("", VisualStyle.TYPE_HEADING)
-	speaker_label.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, VisualStyle.SPACE_7)
+	speaker_label.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, VisualStyle.TALK_CHOICE_HEIGHT)
+	speaker_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	speaker_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	speaker_label.max_lines_visible = 1
-	speaker_label.clip_text = true
+	speaker_label.clip_text = false
 	FoundationWidgets.set_control_font_color(speaker_label, VisualStyle.YELLOW)
 	speaker_name_plate.add_child(speaker_label)
 
@@ -557,7 +577,7 @@ func _build() -> void:
 	header_row.add_child(collapse_button)
 
 	body_label = FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE)
-	body_label.max_lines_visible = 2
+	body_label.max_lines_visible = 4
 	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body_label.mouse_filter = Control.MOUSE_FILTER_STOP
 	body_label.gui_input.connect(Callable(self, "_on_body_gui_input"))
@@ -622,6 +642,7 @@ func _begin_body_reveal(text_value: String) -> void:
 	if text_value == full_body_text and (typewriter_active or body_label.visible_characters == -1):
 		return
 	full_body_text = text_value
+	reserved_body_line_count = _estimated_body_line_count(EXPANDED_PANEL_WIDTH)
 	reveal_elapsed = 0.0
 	body_label.text = full_body_text
 	if reduce_motion or full_body_text.is_empty():
@@ -909,28 +930,78 @@ func _expanded_layout_rects(reserve_maximum_capacity: bool) -> Dictionary:
 		minf(EXPANDED_PORTRAIT_SIZE.x, maxf(150.0, size.x * 0.18)),
 		minf(EXPANDED_PORTRAIT_SIZE.y, maxf(190.0, size.y * 0.44))
 	)
-	var portrait_rect := Rect2(
-		Vector2(VIEWPORT_MARGIN.x + 12.0, maxf(VIEWPORT_MARGIN.y, size.y - portrait_size.y - VIEWPORT_MARGIN.y)),
-		portrait_size
-	)
-	var panel_left := minf(
-		portrait_rect.position.x + portrait_size.x - 12.0,
-		maxf(VIEWPORT_MARGIN.x, size.x - 280.0 - VIEWPORT_MARGIN.x)
-	)
-	var panel_available_width := maxf(280.0, size.x - panel_left - VIEWPORT_MARGIN.x)
 	var choice_count := MAX_CHOICES if reserve_maximum_capacity else _choices().size()
 	var desired_width := EXPANDED_PANEL_WIDTH if reserve_maximum_capacity or choice_count > 1 else SINGLE_CHOICE_PANEL_WIDTH
 	var choice_columns := 2 if reserve_maximum_capacity else maxi(1, choice_list.columns if choice_list != null else 1)
 	var choice_rows := maxi(1, ceili(float(maxi(1, choice_count)) / float(choice_columns)))
 	var desired_height := EXPANDED_PANEL_BASE_HEIGHT
 	desired_height += float(maxi(0, choice_rows - 1)) * EXPANDED_PANEL_EXTRA_ROW_HEIGHT
+	var body_line_count := reserved_body_line_count if reserve_maximum_capacity else _estimated_body_line_count(desired_width)
+	desired_height += float(maxi(0, body_line_count - 2)) * EXPANDED_PANEL_EXTRA_BODY_LINE_HEIGHT
 	if small_screen_mode:
 		desired_height += float(choice_rows) * SMALL_SCREEN_CHOICE_ROW_EXTRA
+	if panel != null:
+		desired_height = maxf(desired_height, panel.get_combined_minimum_size().y)
+	var side := _preferred_layout_side()
+	var portrait_x := VIEWPORT_MARGIN.x + 12.0
+	if side == "right":
+		portrait_x = maxf(VIEWPORT_MARGIN.x, size.x - portrait_size.x - VIEWPORT_MARGIN.x - 12.0)
+	var portrait_rect := Rect2(
+		Vector2(portrait_x, maxf(VIEWPORT_MARGIN.y, size.y - portrait_size.y - VIEWPORT_MARGIN.y)),
+		portrait_size
+	)
+	var panel_available_width := maxf(280.0, size.x - portrait_size.x - VIEWPORT_MARGIN.x * 2.0 + 12.0)
 	var panel_size := Vector2(minf(desired_width, panel_available_width), minf(desired_height, available_size.y))
+	var panel_left := portrait_rect.position.x + portrait_size.x - 12.0
+	if side == "right":
+		panel_left = portrait_rect.position.x - panel_size.x + 12.0
+	panel_left = clampf(panel_left, VIEWPORT_MARGIN.x, maxf(VIEWPORT_MARGIN.x, size.x - panel_size.x - VIEWPORT_MARGIN.x))
+	var panel_rect := Rect2(Vector2(panel_left, maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y)), panel_size)
+	var avoid_local_rect := _global_rect_to_local_rect(avoid_global_rect)
+	var occupied_rect := portrait_rect.merge(panel_rect)
+	if avoid_local_rect.has_area() and occupied_rect.intersects(avoid_local_rect.grow(8.0)):
+		var lift := avoid_local_rect.position.y - 8.0 - occupied_rect.end.y
+		if occupied_rect.position.y + lift >= VIEWPORT_MARGIN.y:
+			portrait_rect.position.y += lift
+			panel_rect.position.y += lift
+		else:
+			var drop := avoid_local_rect.end.y + 8.0 - occupied_rect.position.y
+			if occupied_rect.end.y + drop <= size.y - VIEWPORT_MARGIN.y:
+				portrait_rect.position.y += drop
+				panel_rect.position.y += drop
 	return {
 		"portrait_rect": portrait_rect,
-		"panel_rect": Rect2(Vector2(panel_left, maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y)), panel_size),
+		"panel_rect": panel_rect,
+		"side": side,
 	}
+
+
+func _global_rect_to_local_rect(global_rect: Rect2) -> Rect2:
+	if not global_rect.has_area() or not is_inside_tree():
+		return Rect2()
+	var inverse := get_global_transform().affine_inverse()
+	var corner_a := inverse * global_rect.position
+	var corner_b := inverse * Vector2(global_rect.end.x, global_rect.position.y)
+	var corner_c := inverse * global_rect.end
+	var corner_d := inverse * Vector2(global_rect.position.x, global_rect.end.y)
+	var minimum := Vector2(minf(minf(corner_a.x, corner_b.x), minf(corner_c.x, corner_d.x)), minf(minf(corner_a.y, corner_b.y), minf(corner_c.y, corner_d.y)))
+	var maximum := Vector2(maxf(maxf(corner_a.x, corner_b.x), maxf(corner_c.x, corner_d.x)), maxf(maxf(corner_a.y, corner_b.y), maxf(corner_c.y, corner_d.y)))
+	return Rect2(minimum, maximum - minimum)
+
+
+func _estimated_body_line_count(panel_width: float) -> int:
+	if full_body_text.strip_edges().is_empty():
+		return 1
+	var usable_width := maxf(220.0, panel_width - 36.0)
+	var average_character_width := maxf(7.0, float(VisualStyle.TYPE_BODY_LARGE) * 0.53)
+	var characters_per_line := maxi(24, int(floor(usable_width / average_character_width)))
+	return clampi(ceili(float(full_body_text.length()) / float(characters_per_line)), 1, 4)
+
+
+func _preferred_layout_side() -> String:
+	if not avoid_global_rect.has_area():
+		return "left"
+	return "right" if avoid_global_rect.get_center().x < global_position.x + size.x * 0.5 else "left"
 
 
 func _notify_occupied_rect_changed() -> void:

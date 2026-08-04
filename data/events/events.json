@@ -3121,6 +3121,9 @@
       "requires_flags": {
         "tutorial_active": true
       },
+      "requires_tutorial_lessons": [
+        "tutorial_leave_blackjack"
+      ],
       "blocked_by_flags": [
         "grand_casino_invite"
       ]

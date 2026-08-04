@@ -2540,8 +2540,8 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 		failures.append("Coach lesson validation accepted a dependency cycle.")
 	var dialogue_lesson := library.tutorial_lesson("tutorial_apartment_xray")
 	var dialogue_model := CoachViewModelScript.build(dialogue_lesson, {"viewport_rect": Rect2(Vector2.ZERO, Vector2(1280, 720))})
-	if str(dialogue_model.get("delivery", "")) != "dialogue" or str(dialogue_model.get("dialogue_id", "")) != "tutorial_pal_guidance":
-		failures.append("Tutorial lesson did not route speech through the dialogue delivery contract.")
+	if str(dialogue_model.get("delivery", "")) != "dialogue" or str(dialogue_model.get("dialogue_id", "")) != "tutorial_pal_guidance" or str(dialogue_model.get("voice", "")) != "pal" or str(dialogue_model.get("eyebrow", "")).contains("DEALER"):
+		failures.append("Tutorial lesson did not route speech through Pal without the deprecated Dealer's Advice identity.")
 	for map_lesson_id in ["tutorial_open_map_corner", "tutorial_route_map", "tutorial_gas_map_underground", "tutorial_pal_goodbye_map"]:
 		var map_lesson := library.tutorial_lesson(map_lesson_id)
 		var anchor: Dictionary = map_lesson.get("anchor", {}) if typeof(map_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
@@ -2555,6 +2555,29 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 	var state_lesson := library.tutorial_lesson("tutorial_blackjack_count_all")
 	if not CoachViewModelScript.state_completion_matches(state_lesson, {"game": {"count_all_selected": true}}):
 		failures.append("Coach state-predicate completion did not recognize a finished count challenge.")
+	var raise_lesson := library.tutorial_lesson("tutorial_blackjack_raise")
+	if not CoachViewModelScript.completion_matches(raise_lesson, "blackjack_chip"):
+		failures.append("The tutorial wager lesson did not accept the real on-felt blackjack chip action.")
+	var lookaway_lesson := library.tutorial_lesson("tutorial_blackjack_lookaway")
+	var lookaway_anchor: Dictionary = lookaway_lesson.get("anchor", {}) if typeof(lookaway_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+	if str(lookaway_anchor.get("id", "")) != "blackjack_distraction:drink_pass":
+		failures.append("The tutorial lookaway lesson did not target the real Drink Pass control.")
+	var count_start_lesson := library.tutorial_lesson("tutorial_blackjack_count_start")
+	var count_start_anchor: Dictionary = count_start_lesson.get("anchor", {}) if typeof(count_start_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+	if str(count_start_anchor.get("id", "")) != "blackjack_count_toggle" or not CoachViewModelScript.completion_matches(count_start_lesson, "blackjack_count_toggle"):
+		failures.append("The tutorial count lesson did not anchor and accept the real COUNT toggle.")
+	var cage_shop_lesson := library.tutorial_lesson("tutorial_cage_shop")
+	var cage_shop_completion: Dictionary = cage_shop_lesson.get("completion", {}) if typeof(cage_shop_lesson.get("completion", {})) == TYPE_DICTIONARY else {}
+	if str(cage_shop_completion.get("action_id", "")) != "focus:casino_fixture:cage_gift_shop" or not CoachViewModelScript.completion_matches(cage_shop_lesson, "focus:casino_fixture:cage_gift_shop"):
+		failures.append("The tutorial gift-case lesson cannot complete from the real non-purchasing focus action.")
+	var heat_precheck := library.tutorial_lesson("tutorial_blackjack_heat_precheck")
+	var heat_mistake := library.tutorial_lesson("tutorial_heat_warning")
+	if heat_precheck.is_empty() or not CoachViewModelScript.trigger_matches(heat_precheck, {"run": {"tutorial": true}, "environment_archetype": "small_underground_casino", "game_id": "blackjack"}, {"tutorial_blackjack_raised_deal": true}, false):
+		failures.append("Perfect tutorial play did not guarantee a pre-cheat Heat explanation.")
+	if CoachViewModelScript.trigger_matches(heat_mistake, {"run": {"tutorial": true}, "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"count_answered": true, "count_perfect": true}}, {"tutorial_blackjack_count_start": true}, false):
+		failures.append("Perfect counting incorrectly triggered the mistake-only Heat follow-up.")
+	if not CoachViewModelScript.trigger_matches(heat_mistake, {"run": {"tutorial": true}, "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"count_answered": true, "count_perfect": false}}, {"tutorial_blackjack_count_start": true}, false):
+		failures.append("A real count mistake did not trigger the contextual Heat follow-up.")
 	var hud_lesson := _coach_lesson_fixture("hud_anchor")
 	hud_lesson["anchor"] = {"kind": "hud_element", "id": "heat"}
 	var hud_context := {
@@ -2647,6 +2670,13 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var config_b := library.challenge_config_for("tutorial_first_card", "SECOND-REQUEST")
 	if str(config_a.get("seed_text", "")) != "FIRST-NIGHT-ACE-17" or config_a != config_b:
 		failures.append("Tutorial challenge did not enforce one deterministic fixed seed.")
+	var entry_config := TutorialFlowScript.challenge_config(library)
+	var entry_modifiers: Dictionary = entry_config.get("modifiers", {}) if typeof(entry_config.get("modifiers", {})) == TYPE_DICTIONARY else {}
+	if str(entry_config.get("id", "")) != "tutorial_first_card" or str(entry_modifiers.get("home_archetype_id", "")) != "apartment":
+		failures.append("Tutorial entry boundary did not enforce the authored Apartment identity.")
+	var tutorial_travel_costs: Dictionary = entry_modifiers.get("tutorial_travel_cost_overrides", {}) if typeof(entry_modifiers.get("tutorial_travel_cost_overrides", {})) == TYPE_DICTIONARY else {}
+	if int(tutorial_travel_costs.get("corner_store", -1)) != 0 or int(tutorial_travel_costs.get("grand_casino", -1)) != 0:
+		failures.append("Tutorial fares did not preserve the affordable $0 Corner Store and Grand Casino route contracts.")
 	var run_a := RunStateScript.new()
 	run_a.start_new("IGNORED", config_a)
 	run_a.begin_act(1)
@@ -2674,6 +2704,8 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	normal_route_run.set_environment({"id": "normal_apartment", "archetype_id": "apartment"})
 	if TutorialFlowScript.travel_target_ids(normal_route_run, noisy_tutorial_targets) != noisy_tutorial_targets:
 		failures.append("Tutorial travel filtering changed normal-run travel targets.")
+	if (normal_route_run.challenge_modifiers() as Dictionary).has("tutorial_travel_cost_overrides"):
+		failures.append("Tutorial fare overrides leaked into a normal-run challenge.")
 	var home_offers: Array = run_a.current_environment.get("item_offers", []) if typeof(run_a.current_environment.get("item_offers", [])) == TYPE_ARRAY else []
 	if home_offers.size() != 1 or str((home_offers[0] as Dictionary).get("id", "")) != "xray_glasses":
 		failures.append("Tutorial apartment did not force exactly one X-ray Glasses pickup.")
@@ -2682,6 +2714,9 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var glasses_pickup: Dictionary = item_service.buy_item_offer("xray_glasses")
 	if not bool(glasses_pickup.get("ok", false)) or not run_a.inventory.has("xray_glasses"):
 		failures.append("Tutorial could not pick up its forced X-ray Glasses.")
+	var glasses_detail := item_service.inventory_item_detail("xray_glasses")
+	if not str(glasses_detail.get("effect_summary", "")).contains("3") or not str(glasses_detail.get("effect_summary", "")).contains("6") or not str(glasses_detail.get("behavior_summary", "")).contains("Permanent passive") or bool(glasses_detail.get("active_item", true)):
+		failures.append("Tutorial X-ray inventory detail did not expose its real passive effect, Heat cost, and active-slot behavior.")
 	generator_a.next_environment(run_a, "corner_store", true)
 	if TutorialFlowScript.travel_target_ids(run_a, noisy_tutorial_targets) != ["gas_station_casino"]:
 		failures.append("Tutorial Corner Store exposed a route other than Gas Casino before the parking tip.")
@@ -2738,6 +2773,13 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		failures.append("Tutorial end-to-end arc did not reach its real blackjack table.")
 	var invite_event := EventModuleScript.new()
 	invite_event.setup(library.event("tutorial_grand_casino_invitation"), library)
+	if invite_event.can_trigger(run_a, run_a.current_environment):
+		failures.append("Tutorial invitation appeared before the Blackjack departure lesson completed.")
+	var tutorial_lessons_completed: Dictionary = run_a.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_a.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+	tutorial_lessons_completed["tutorial_leave_blackjack"] = true
+	run_a.narrative_flags["tutorial_lessons_completed"] = tutorial_lessons_completed
+	if not invite_event.can_trigger(run_a, run_a.current_environment):
+		failures.append("Tutorial invitation did not appear after the Blackjack departure lesson completed.")
 	var invite_result: Dictionary = invite_event.resolve(run_a, run_a.current_environment, "accept_first_invitation")
 	if not bool(invite_result.get("ok", false)) or not bool(run_a.narrative_flags.get("grand_casino_invite", false)):
 		failures.append("Tutorial end-to-end arc did not accept the Grand Casino invitation.")
@@ -2840,9 +2882,17 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	if tutorial_lessons.size() < 28:
 		failures.append("Tutorial coach data did not cover the full seven-beat arc through Linda's review.")
 	var tutorial_copy_words := 0
+	var gas_departure_anchor_verified := false
+	var grand_departure_anchor_verified := false
 	var small_viewport := Rect2(Vector2.ZERO, Vector2(360, 640))
 	for lesson_index in range(tutorial_lessons.size()):
 		var lesson: Dictionary = tutorial_lessons[lesson_index]
+		if str(lesson.get("id", "")) == "tutorial_gas_travel_underground":
+			var departure_anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+			gas_departure_anchor_verified = str(departure_anchor.get("kind", "")) == "hud_element" and str(departure_anchor.get("id", "")) == "travel:small_underground_casino"
+		if str(lesson.get("id", "")) == "tutorial_travel_grand":
+			var grand_anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+			grand_departure_anchor_verified = str(grand_anchor.get("kind", "")) == "hud_element" and str(grand_anchor.get("id", "")) == "travel:grand_casino"
 		var lesson_copy := str(lesson.get("copy", "")).strip_edges()
 		tutorial_copy_words += lesson_copy.split(" ", false).size()
 		if lesson_copy.length() > 80:
@@ -2886,6 +2936,10 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 			failures.append("Tutorial coach anchor failed in small-screen mode: %s." % str(lesson.get("id", "")))
 		if not bool(small_model.get("small_screen", false)) or not bool(small_model.get("reduce_motion", false)) or float(small_model.get("minimum_control_height", 0.0)) < 52.0:
 			failures.append("Tutorial coach accessibility state drifted: %s." % str(lesson.get("id", "")))
+	if not gas_departure_anchor_verified:
+		failures.append("The post-redemption Gas Casino lesson did not anchor the live Underground map node.")
+	if not grand_departure_anchor_verified:
+		failures.append("The invitation departure lesson did not anchor the live Grand Casino map node.")
 	if tutorial_copy_words > 420:
 		failures.append("Tutorial highlight copy exceeded the paced 420-word budget: %d words." % tutorial_copy_words)
 	var narrow_model := CoachViewModelScript.build(_coach_lesson_fixture("narrow_phone"), {

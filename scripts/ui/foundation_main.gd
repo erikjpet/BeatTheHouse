@@ -322,6 +322,7 @@ var event_choice_popup_title_label: Label
 var event_choice_popup_summary_label: Label
 var event_choice_popup_choices_list: VBoxContainer
 var talk_dock: TalkDock
+var talk_dock_avoid_sync_active := false
 var item_found_popup: ItemFoundPopup
 var coach_overlay: CoachOverlay
 var item_found_talk_dock_suspended := false
@@ -379,6 +380,7 @@ var world_map_canvas_snapshot_key: String = ""
 var world_map_detail_badges_key: String = "__unset__"
 var rendered_environment_snapshot_signature: String = ""
 var action_panel_refresh_scheduled := false
+var game_coach_refresh_scheduled := false
 var pending_action_panel_object: Dictionary = {}
 var interactable_object_view_cache: Array = []
 var interactable_object_view_cache_valid := false
@@ -708,6 +710,7 @@ func enter_game(game_id: String, state_key: String = "") -> void:
 		return
 	if clean_state_key != clean_game_id or _environment_active_game_state_key(run_state.current_environment, clean_game_id) != clean_game_id:
 		_set_active_game_state_key(clean_game_id, clean_state_key)
+	_clear_recent_result_feedback()
 	_reset_game_surface_runtime_state()
 	current_game = game_module
 	current_game_state_key = clean_state_key
@@ -769,7 +772,7 @@ func back_to_environment() -> void:
 	_sync_presented_bankroll_to_actual()
 	_reset_game_surface_runtime_state()
 	current_game = null
-	last_game_result = {}
+	_clear_recent_result_feedback()
 	_set_current_screen(SCREEN_ENVIRONMENT)
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
@@ -781,6 +784,12 @@ func back_to_environment() -> void:
 	clear_interaction_focus()
 	_show_message("Choose a game, answer trouble, buy gear, or move on.")
 	_refresh()
+
+
+func _clear_recent_result_feedback() -> void:
+	last_game_result = {}
+	last_item_result = {}
+	last_hook_result = {}
 
 
 # Selects a GameModule action without mutating simulation state.
@@ -1560,6 +1569,7 @@ func open_world_map(force_closing_allowed: bool = false) -> bool:
 	if world_map_overlay != null:
 		world_map_overlay.visible = true
 		world_map_overlay.move_to_front()
+	_sync_coach_focus_visibility()
 	_request_world_map_button_relayout()
 	_refresh()
 	return true
@@ -1583,6 +1593,7 @@ func close_world_map() -> void:
 	_clear_world_map_selection(false)
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
+	_sync_coach_focus_visibility()
 	if current_screen == SCREEN_TRAVEL:
 		_set_current_screen(SCREEN_ENVIRONMENT)
 		_refresh()
@@ -1656,8 +1667,14 @@ func confirm_world_map_travel() -> void:
 		return
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
+	_sync_coach_focus_visibility()
 	if coach_overlay != null:
-		coach_overlay.notify_action(coach_travel_action)
+		var completed_lesson_id := coach_overlay.active_lesson_id()
+		if coach_overlay.notify_action(coach_travel_action) and not completed_lesson_id.is_empty():
+			# Travel changes the environment immediately. Finish the guide's
+			# one-button acknowledgement first so the shared TalkDock queue cannot
+			# misclassify the requested action as abandoning Pal and add Heat.
+			_advance_completed_tutorial_action_dialogue(completed_lesson_id)
 	_travel_to(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), result.get("choice", {}) as Dictionary)
 
 
@@ -2010,6 +2027,14 @@ func _advance_talk_event_action_boundary(_source: String) -> bool:
 func _enqueue_talk_events_for_action_boundary(source: String) -> bool:
 	if run_state == null or library == null:
 		return false
+	# The guided run has its own authored dialogue cadence. Random patrons,
+	# debt collectors, and heat-threshold callers can otherwise queue behind Pal
+	# without ever becoming visible, then get charged as "abandoned" when the
+	# requested tutorial action changes rooms. Manual tutorial events (the family
+	# phone, invitation, comp, Host, Rourke, and Linda) enter through their explicit
+	# interaction paths and are unaffected. Normal runs retain the full cadence.
+	if run_state.is_tutorial_run():
+		return false
 	var enqueued := false
 	if _enqueue_heat_threshold_talk_events(source):
 		enqueued = true
@@ -2061,6 +2086,11 @@ func _source_allows_action_triggered_events(source: String) -> bool:
 
 func _enqueue_triggered_events_for_context(source: String, context: Dictionary, environment: Dictionary) -> bool:
 	if run_state == null or library == null:
+		return false
+	# Automatic world cadence is intentionally paused during the authored guided
+	# run. These events are not tutorial beats and sharing the TalkDock queue with
+	# Pal made invisible conversations accrue abandonment Heat on travel.
+	if run_state.is_tutorial_run():
 		return false
 	var candidates: Array = []
 	var enqueued := false
@@ -2414,6 +2444,7 @@ func _show_triggered_event_popup(entry: Dictionary) -> bool:
 		)
 	event_choice_popup_overlay.visible = true
 	event_choice_popup_overlay.move_to_front()
+	_sync_coach_focus_visibility()
 	_position_event_choice_popup()
 	call_deferred("_position_event_choice_popup")
 	return true
@@ -2422,9 +2453,11 @@ func _show_triggered_event_popup(entry: Dictionary) -> bool:
 func _refresh_talk_dock() -> void:
 	if talk_dock == null:
 		return
+	_sync_talk_dock_coach_avoid_rect()
 	if run_state == null or library == null:
 		talk_dock.clear_entry()
 		return
+	_clear_completed_tutorial_action_acknowledgements()
 	var entry := run_state.next_pending_talk_event()
 	if entry.is_empty():
 		talk_dock.clear_entry()
@@ -2474,6 +2507,38 @@ func _refresh_talk_dock() -> void:
 		talk_dock.move_to_front()
 
 
+# Player actions can open their own natural modal in the same input frame that
+# completes Pal's instruction. The coach completion signal is deferred so the
+# modal can take ownership safely; on Web that used to leave the already-met
+# Pal entry at the head of the talk queue, concealing the natural conversation
+# until the player redundantly clicked the old instruction. Treat a completed,
+# effect-free tutorial guide page as an acknowledgement and retire it before
+# choosing the next talk entry. This is tutorial-scoped and does not alter the
+# natural event or its outcome.
+func _clear_completed_tutorial_action_acknowledgements() -> void:
+	if run_state == null or library == null or not run_state.is_tutorial_run():
+		return
+	var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+	for _index in range(8):
+		var entry := run_state.next_pending_talk_event()
+		if entry.is_empty():
+			return
+		var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+		var lesson_id := str(context.get("tutorial_lesson_id", "")).strip_edges()
+		if lesson_id.is_empty() or not bool(completed.get(lesson_id, false)):
+			return
+		var dialogue := library.dialogue(str(entry.get("dialogue_id", "")).strip_edges())
+		var node_id := str(entry.get("current_node", dialogue.get("start", ""))).strip_edges()
+		var node := _dialogue_node(dialogue, node_id)
+		var choices: Array = node.get("choices", []) if typeof(node.get("choices", [])) == TYPE_ARRAY else []
+		if choices.size() != 1 or typeof(choices[0]) != TYPE_DICTIONARY:
+			return
+		var choice: Dictionary = choices[0]
+		if not bool(choice.get("end", false)) or not _dialogue_choice_effects(choice).is_empty():
+			return
+		run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
+
+
 func _pending_talk_event_entry(event_id: String) -> Dictionary:
 	if run_state == null:
 		return {}
@@ -2489,6 +2554,7 @@ func start_dialogue(dialogue_id: String, source_data: Dictionary = {}) -> bool:
 		_show_message("Dialogue is not available.")
 		_refresh()
 		return false
+	_clear_recent_result_feedback()
 	var event_id := str(source_data.get("event_id", "")).strip_edges()
 	if event_id.is_empty():
 		event_id = "dialogue:%s" % clean_id
@@ -3252,10 +3318,12 @@ func open_run_inventory() -> void:
 	_reset_game_surface_runtime_state()
 	_hide_run_journal_popup()
 	_open_run_inventory_popup("inspect")
+	_sync_coach_focus_visibility()
 
 
 func close_run_inventory() -> void:
 	_hide_run_inventory_popup()
+	_sync_coach_focus_visibility()
 	_refresh()
 
 
@@ -3271,10 +3339,12 @@ func open_run_journal() -> void:
 		return
 	_hide_run_inventory_popup()
 	_open_run_journal_popup()
+	_sync_coach_focus_visibility()
 
 
 func close_run_journal() -> void:
 	_hide_run_journal_popup()
+	_sync_coach_focus_visibility()
 
 
 func use_active_item_slot() -> bool:
@@ -3449,6 +3519,7 @@ func _show_active_item_confirmation_popup(item: Dictionary) -> void:
 	_add_wager_confirmation_card("Cancel", "Keep the item ready.", "No change.", Callable(self, "cancel_pending_active_item_use"), false)
 	event_choice_popup_overlay.visible = true
 	event_choice_popup_overlay.move_to_front()
+	_sync_coach_focus_visibility()
 	_position_event_choice_popup()
 	call_deferred("_position_event_choice_popup")
 
@@ -3984,10 +4055,12 @@ func open_run_menu() -> void:
 	_refresh_run_menu()
 	run_menu_overlay.visible = true
 	run_menu_overlay.move_to_front()
+	_sync_coach_focus_visibility()
 
 
 func close_run_menu() -> void:
 	_hide_run_menu()
+	_sync_coach_focus_visibility()
 	_refresh()
 
 
@@ -4032,6 +4105,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		return
 	if travel_transition_active:
 		return
+	_clear_recent_result_feedback()
 	var ignored_talk_entries: Array = []
 	if choice_data.is_empty():
 		choice_data = _travel_choice(target_id)
@@ -4056,6 +4130,15 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_show_message("That interior casino door is not available.")
 		_refresh()
 		return
+	# Every successful travel entry point must acknowledge the same tutorial
+	# action before the environment changes. World-map travel already does this
+	# in its confirmation handler; room doors and direct exits arrive here
+	# without that handler. Resolving Pal's completed prompt now keeps it out of
+	# the normal ignored-conversation penalty collected below.
+	if coach_overlay != null:
+		var completed_travel_lesson_id := coach_overlay.active_lesson_id()
+		if coach_overlay.notify_action("travel:%s" % target_id) and not completed_travel_lesson_id.is_empty():
+			_advance_completed_tutorial_action_dialogue(completed_travel_lesson_id)
 	# Persist UI-local ticket reveals while the module still points at the
 	# environment where the tickets were purchased.
 	_reset_game_surface_runtime_state()
@@ -4232,7 +4315,11 @@ func _resolve_linda_cage_service_choice(entry: Dictionary, choice_id: String) ->
 		return
 	match choice_id:
 		"cage_buy_25":
-			_buy_cage_chips(25)
+			if _buy_cage_chips(25) and run_state.is_tutorial_run():
+				# Buying chips is the tutorial's requested Linda action. Close the
+				# service conversation so moving to the gift case cannot be treated as
+				# walking away from Linda mid-sentence.
+				run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
 		"cage_buy_50":
 			_buy_cage_chips(50)
 		"cage_cashout_all":
@@ -5335,7 +5422,16 @@ func _build_talk_dock() -> void:
 
 func _on_talk_dock_occupied_rect_changed(_rect: Rect2) -> void:
 	if environment_canvas != null:
-		environment_canvas.set_reserved_overlay_rect(talk_dock.environment_reserved_global_rect() if talk_dock != null else Rect2())
+		environment_canvas.set_reserved_overlay_rect(_current_talk_dock_environment_reserved_rect())
+
+
+func _current_talk_dock_environment_reserved_rect() -> Rect2:
+	if talk_dock == null:
+		return Rect2()
+	var reserve_hidden_tutorial_layout := run_state != null and run_state.is_tutorial_run()
+	if not talk_dock.visible and not reserve_hidden_tutorial_layout:
+		return Rect2()
+	return talk_dock.environment_reserved_global_rect()
 
 
 func _build_item_found_popup() -> void:
@@ -6036,8 +6132,7 @@ func _refresh() -> void:
 	interactable_object_view_cache_valid = false
 	var has_run := run_state != null
 	if not has_run or current_screen == SCREEN_START:
-		if coach_overlay != null:
-			coach_overlay.suspend()
+		_clear_run_guidance_for_start_screen()
 		_hide_run_menu()
 		_set_current_screen(SCREEN_START)
 		_render_start_screen()
@@ -6047,6 +6142,54 @@ func _refresh() -> void:
 	if _run_menu_is_visible():
 		_refresh_run_menu()
 	_refresh_coach_at_boundary()
+	if current_screen == SCREEN_GAME and current_game != null:
+		_schedule_game_coach_refresh_after_draw()
+
+
+func _schedule_game_coach_refresh_after_draw() -> void:
+	if game_coach_refresh_scheduled:
+		return
+	game_coach_refresh_scheduled = true
+	call_deferred("_refresh_game_coach_after_draw")
+
+
+func _refresh_game_coach_after_draw() -> void:
+	var tree := get_tree()
+	if tree != null:
+		# A deferred callback that awaits one process_frame resumes before that
+		# frame's draw pass. Wait through the following frame as well so dynamic
+		# surface actions (for example Peel -> File) have rebuilt their exact hit
+		# regions before the coach reads them.
+		await tree.process_frame
+		await tree.process_frame
+	if current_screen != SCREEN_GAME or current_game == null:
+		game_coach_refresh_scheduled = false
+		return
+	# Refresh immediately for actions whose target exists during presentation
+	# (entering a game and Buy are common examples).
+	_refresh_coach_at_boundary()
+	_refresh_talk_dock()
+	if tree != null and game_surface_canvas != null and game_surface_canvas.surface_transition_animation_active():
+		# Some actions expose their next exact hit target only after a finite
+		# presentation completes. Wait for that transition, not for idle renderer
+		# liveness, and cap the wait so a malformed channel cannot strand coach
+		# evaluation. This loop performs no snapshot or collection copies.
+		var transition_wait_frames := 0
+		while game_surface_canvas != null \
+				and game_surface_canvas.surface_transition_animation_active() \
+				and transition_wait_frames < 180:
+			transition_wait_frames += 1
+			await tree.process_frame
+		await tree.process_frame
+	game_coach_refresh_scheduled = false
+	if current_screen != SCREEN_GAME or current_game == null:
+		return
+	# GameSurfaceCanvas builds its exact pointer hit regions during drawing. The
+	# first synchronous refresh therefore cannot anchor a newly-entered game's
+	# lesson. Re-evaluate once after that draw so dialogue and highlight share the
+	# real rendered action rectangle.
+	_refresh_coach_at_boundary()
+	_refresh_talk_dock()
 
 
 func _render_start_screen() -> void:
@@ -7558,8 +7701,10 @@ func _guard_player_input_route(force_closing_allowed: bool = false, coach_action
 			if not _ensure_closing_time_departure_talk():
 				_show_message(_closing_time_disabled_reason())
 			return true
+		_record_tutorial_action_if_authored(coach_action_id)
 		if coach_overlay != null:
-			coach_overlay.notify_action(coach_action_id)
+			if coach_overlay.notify_action(coach_action_id):
+				_consume_recorded_tutorial_action(coach_action_id)
 		return false
 	_show_message(message)
 	_refresh_modal_contract_owner()
@@ -7815,6 +7960,7 @@ func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: i
 		_add_wager_confirmation_card(str(card.get("label", "")), str(card.get("text", "")), str(card.get("impact", "")), callback, bool(card.get("primary", false)))
 	event_choice_popup_overlay.visible = true
 	event_choice_popup_overlay.move_to_front()
+	_sync_coach_focus_visibility()
 	_position_event_choice_popup()
 	call_deferred("_position_event_choice_popup")
 
@@ -8321,6 +8467,8 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 			_refresh_world_header(object_data)
 	if actions_list != null:
 		_schedule_action_panel_refresh(object_data)
+	if coach_overlay != null:
+		coach_overlay.notify_action("focus:%s" % object_id)
 	return true
 
 
@@ -8728,9 +8876,9 @@ func _start_linda_cage_services(object_data: Dictionary) -> bool:
 	})
 
 
-func _buy_cage_chips(amount: int) -> void:
+func _buy_cage_chips(amount: int) -> bool:
 	if run_state == null:
-		return
+		return false
 	var result := run_state.buy_grand_casino_chips(amount, run_state.grand_casino_chip_exchange_rate())
 	if bool(result.get("ok", false)):
 		if coach_overlay != null:
@@ -8740,6 +8888,7 @@ func _buy_cage_chips(amount: int) -> void:
 	_show_message(str(result.get("message", "The Cage could not complete that buy-in.")))
 	_refresh_talk_dock()
 	_refresh_runtime_environment_views()
+	return bool(result.get("ok", false))
 
 
 func _cash_out_cage_chips() -> void:
@@ -8832,6 +8981,15 @@ func _activate_event_response_action(action_object_id: String) -> bool:
 		return false
 	var event_id := payload.substr(0, separator)
 	var choice_id := payload.substr(separator + 1)
+	_record_tutorial_action_if_authored("event:%s" % event_id)
+	if coach_overlay != null:
+		var completed_lesson_id := coach_overlay.active_lesson_id()
+		if coach_overlay.notify_action("event:%s" % event_id) and not completed_lesson_id.is_empty():
+			_consume_recorded_tutorial_action("event:%s" % event_id)
+			# Canvas event cards resolve a response directly instead of reopening the
+			# event popup. A tutorial anchored to the parent event must therefore be
+			# acknowledged here, before its natural follow-up conversation is queued.
+			_advance_completed_tutorial_action_dialogue(completed_lesson_id)
 	if not select_event_choice(event_id, choice_id):
 		return false
 	confirm_selected_event_choice()
@@ -8957,6 +9115,7 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 		)
 	event_choice_popup_overlay.visible = true
 	event_choice_popup_overlay.move_to_front()
+	_sync_coach_focus_visibility()
 	_position_event_choice_popup()
 	call_deferred("_position_event_choice_popup")
 	return true
@@ -9079,6 +9238,7 @@ func _on_environment_object_hovered(object_id: String) -> void:
 func _on_environment_object_focused(object_id: String) -> void:
 	if not focus_interactable_object(object_id):
 		return
+	_sync_coach_environment_anchor_geometry()
 	if object_id == "travel:leave" and coach_overlay != null and coach_overlay.active_anchor_kind() == "interactable_object" and coach_overlay.active_anchor_id() == object_id:
 		call_deferred("_activate_tutorial_map_object", object_id, coach_overlay.active_lesson_id())
 
@@ -9096,6 +9256,10 @@ func _on_environment_object_activated(object_id: String) -> void:
 
 
 func _on_environment_view_geometry_changed() -> void:
+	_sync_coach_environment_anchor_geometry()
+
+
+func _sync_coach_environment_anchor_geometry() -> void:
 	if coach_overlay == null or environment_canvas == null:
 		return
 	var anchor_kind := coach_overlay.active_anchor_kind()
@@ -9104,7 +9268,17 @@ func _on_environment_view_geometry_changed() -> void:
 	var anchor_id := coach_overlay.active_anchor_id()
 	if anchor_id.is_empty():
 		return
-	coach_overlay.update_active_anchor_rect(anchor_kind, anchor_id, environment_canvas.global_rect_for_object(anchor_id))
+	# Before focus, point at the room object itself. Once the player selects it,
+	# the next real click is the action in its information card, so move both the
+	# highlight and TalkDock avoidance to that live hit region. This keeps the
+	# camera, visible instruction, and actual pointer target in one coordinate
+	# model instead of allowing Pal to cover the button the lesson requested.
+	var rendered_rect := environment_canvas.global_rect_for_selected_object_action(anchor_id)
+	if not rendered_rect.has_area():
+		rendered_rect = environment_canvas.global_rect_for_object(anchor_id)
+	coach_overlay.update_active_anchor_rect(anchor_kind, anchor_id, rendered_rect)
+	_sync_coach_focus_visibility()
+	_sync_talk_dock_coach_avoid_rect()
 
 
 func select_environment_view_object(index: int = 0) -> void:
@@ -9129,8 +9303,7 @@ func _render_foundation_snapshots() -> void:
 func _render_environment_canvas_snapshot() -> void:
 	if environment_canvas == null:
 		return
-	if talk_dock != null:
-		environment_canvas.set_reserved_overlay_rect(talk_dock.environment_reserved_global_rect())
+	environment_canvas.set_reserved_overlay_rect(_current_talk_dock_environment_reserved_rect())
 	environment_canvas.render_environment_snapshot(_environment_view_snapshot())
 	rendered_environment_snapshot_signature = _environment_snapshot_signature()
 
@@ -10085,7 +10258,7 @@ func start_tutorial_run() -> void:
 		_show_message("The First Night lesson is unavailable.")
 		return
 	selected_challenge_id = ""
-	start_foundation_run(str(config.get("seed_text", "FIRST-NIGHT-ACE-17")), config)
+	start_foundation_run(str(config.get("seed_text", "FIRST-NIGHT-ACE-17")), config, false)
 
 
 func _fresh_profile_needs_tutorial() -> bool:
@@ -10229,6 +10402,7 @@ func return_to_main_menu() -> void:
 	last_environment_runtime_result = {}
 	run_item_icon_texture_cache.clear()
 	run_state = null
+	_clear_run_guidance_for_start_screen()
 	meta_session_active = false
 	meta_session_location_id = ""
 	meta_last_panel_message = ""
@@ -10291,6 +10465,7 @@ func open_settings_menu() -> void:
 		start_menu_intro.visible = true
 	settings_overlay.visible = true
 	settings_overlay.move_to_front()
+	_sync_coach_focus_visibility()
 	settings_menu.open()
 
 
@@ -10299,6 +10474,7 @@ func close_settings_menu() -> void:
 		settings_menu.visible = false
 	if settings_overlay != null:
 		settings_overlay.visible = false
+	_sync_coach_focus_visibility()
 	if current_screen == SCREEN_START:
 		if start_menu_intro != null:
 			start_menu_intro.visible = true
@@ -10344,7 +10520,35 @@ func _on_coach_lesson_completed(lesson_id: String) -> void:
 	var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
 	completed[lesson_id] = true
 	run_state.narrative_flags["tutorial_lessons_completed"] = completed
-	call_deferred("_advance_completed_tutorial_action_dialogue", lesson_id)
+	call_deferred("_resume_after_completed_tutorial_action", lesson_id)
+
+
+func _resume_after_completed_tutorial_action(lesson_id: String) -> void:
+	_advance_completed_tutorial_action_dialogue(lesson_id)
+	_clear_stale_focus_before_dependent_tutorial_target(lesson_id)
+	# Dialogue completion can refresh re-entrantly while CoachOverlay is still
+	# unwinding the prior lesson. Evaluate once more at the settled boundary so
+	# consecutive focus/action lessons never leave a blank guidance gap.
+	_refresh_coach_at_boundary()
+
+
+func _clear_stale_focus_before_dependent_tutorial_target(completed_lesson_id: String) -> void:
+	if library == null or selected_object_id.is_empty():
+		return
+	for lesson_value in library.tutorial_lessons:
+		if typeof(lesson_value) != TYPE_DICTIONARY:
+			continue
+		var lesson: Dictionary = lesson_value
+		var trigger: Dictionary = lesson.get("trigger", {}) if typeof(lesson.get("trigger", {})) == TYPE_DICTIONARY else {}
+		if not _string_array(trigger.get("depends_on", [])).has(completed_lesson_id):
+			continue
+		var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+		if str(anchor.get("kind", "")) != "interactable_object":
+			continue
+		var next_object_id := str(anchor.get("id", "")).strip_edges()
+		if not next_object_id.is_empty() and next_object_id != selected_object_id:
+			clear_interaction_focus(false)
+		return
 
 
 func _advance_completed_tutorial_action_dialogue(lesson_id: String) -> void:
@@ -10384,6 +10588,14 @@ func _advance_completed_tutorial_action_dialogue(lesson_id: String) -> void:
 func _on_coach_dialogue_requested(lesson_id: String, dialogue_id: String, dialogue_node: String) -> void:
 	if run_state == null or not run_state.is_tutorial_run() or dialogue_id.is_empty():
 		return
+	var lesson := library.tutorial_lesson(lesson_id) if library != null else {}
+	var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+	var target_object_id := str(anchor.get("id", "")).strip_edges()
+	if str(anchor.get("kind", "")) == "interactable_object" and not selected_object_id.is_empty() and selected_object_id != target_object_id:
+		# A prior inspection card can cover the next authored object. Clear that
+		# visual focus before Pal names the new target; the camera returns to the
+		# room and the live highlight is recomputed by the canvas geometry signal.
+		clear_interaction_focus(false)
 	var event_id := "tutorial_guide:%s" % lesson_id
 	if not run_state.pending_talk_event(event_id).is_empty():
 		_refresh_talk_dock()
@@ -10518,6 +10730,7 @@ func _exit_meta_session() -> void:
 	_reset_game_surface_runtime_state()
 	current_game = null
 	run_state = null
+	_clear_run_guidance_for_start_screen()
 	meta_session_active = false
 	meta_session_location_id = ""
 	meta_last_panel_message = ""
@@ -11028,6 +11241,7 @@ func _show_meta_popup(title: String, summary: String, popup_type: String) -> voi
 	_clear(event_choice_popup_choices_list)
 	event_choice_popup_overlay.visible = true
 	event_choice_popup_overlay.move_to_front()
+	_sync_coach_focus_visibility()
 	_position_event_choice_popup()
 	call_deferred("_position_event_choice_popup")
 
@@ -11355,6 +11569,7 @@ func _run_menu_is_visible() -> bool:
 func _hide_run_menu() -> void:
 	if run_menu_overlay != null:
 		run_menu_overlay.visible = false
+	_sync_coach_focus_visibility()
 
 
 func _refresh_run_menu() -> void:
@@ -12503,6 +12718,7 @@ func current_selection_popup_anatomy_snapshot() -> Dictionary:
 func _hide_event_choice_popup(clear_snapshot: bool = true) -> void:
 	if event_choice_popup_overlay != null:
 		event_choice_popup_overlay.visible = false
+	_sync_coach_focus_visibility()
 	if event_choice_popup_choices_list != null:
 		_clear(event_choice_popup_choices_list)
 	if event_choice_popup_panel != null:
@@ -12545,6 +12761,7 @@ func _open_run_inventory_popup(mode: String = "inspect", container_id: String = 
 	run_inventory_popup_mode = mode
 	run_inventory_context_container_id = container_id
 	run_inventory_screen.open(_run_inventory_popup_model(mode, container_id))
+	_sync_coach_focus_visibility()
 	_sync_run_inventory_selection_from_screen()
 
 
@@ -12607,6 +12824,7 @@ func _position_run_inventory_popup() -> void:
 func _hide_run_inventory_popup() -> void:
 	if run_inventory_screen != null:
 		run_inventory_screen.close()
+	_sync_coach_focus_visibility()
 	run_inventory_popup_mode = ""
 	run_inventory_context_container_id = ""
 	selected_run_inventory_item_id = ""
@@ -12623,6 +12841,7 @@ func _open_run_journal_popup() -> void:
 	_render_run_journal_contents()
 	run_journal_overlay.visible = true
 	run_journal_overlay.move_to_front()
+	_sync_coach_focus_visibility()
 	_position_run_journal_popup()
 	call_deferred("_position_run_journal_popup")
 
@@ -12704,6 +12923,7 @@ func _position_run_journal_popup() -> void:
 func _hide_run_journal_popup() -> void:
 	if run_journal_overlay != null:
 		run_journal_overlay.visible = false
+	_sync_coach_focus_visibility()
 	if run_journal_list != null:
 		_clear(run_journal_list)
 	if run_journal_panel != null:
@@ -13063,6 +13283,31 @@ func _refresh_world_map_overlay_after_layout() -> void:
 	var snapshot := _world_map_snapshot()
 	world_map_overlay_controller.sync_node_buttons(snapshot)
 	_position_world_map_detail_popup(snapshot)
+	_sync_coach_world_map_anchor_geometry()
+
+
+func _sync_coach_world_map_anchor_geometry() -> void:
+	if coach_overlay == null or world_map_overlay_controller == null or not _world_map_overlay_is_visible():
+		return
+	if coach_overlay.active_anchor_kind() != "hud_element":
+		return
+	var anchor_id := coach_overlay.active_anchor_id()
+	if not anchor_id.begins_with("travel:"):
+		return
+	var node_id := anchor_id.trim_prefix("travel:")
+	# A lesson may recommend one route while explicitly allowing another. Once
+	# the player selects any authored destination, follow that selection to the
+	# shared Travel confirmation so the highlight and TalkDock avoidance stay
+	# aligned with the action they actually chose.
+	var selected_node_id := selected_world_map_node_id.strip_edges()
+	if not selected_node_id.is_empty():
+		var coach_snapshot: Dictionary = coach_overlay.current_snapshot()
+		var allowed_actions: Array = coach_snapshot.get("allowed_action_ids", []) if typeof(coach_snapshot.get("allowed_action_ids", [])) == TYPE_ARRAY else []
+		if allowed_actions.has("travel:%s" % selected_node_id):
+			node_id = selected_node_id
+	coach_overlay.update_active_anchor_rect("hud_element", anchor_id, world_map_overlay_controller.global_rect_for_node(node_id))
+	_sync_coach_focus_visibility()
+	_sync_talk_dock_coach_avoid_rect()
 
 
 func _world_map_node_ids(snapshot: Dictionary) -> Array:
@@ -13474,6 +13719,136 @@ func _refresh_coach_at_boundary() -> void:
 	if _run_inventory_popup_is_visible():
 		return
 	coach_overlay.evaluate_at_boundary(_coach_context_snapshot())
+	_complete_preperformed_tutorial_actions()
+	_sync_coach_focus_visibility()
+	_sync_talk_dock_coach_avoid_rect()
+
+
+func _record_tutorial_action_if_authored(action_id: String) -> void:
+	if run_state == null or library == null or not run_state.is_tutorial_run():
+		return
+	var clean_action_id := action_id.strip_edges()
+	if clean_action_id.is_empty():
+		return
+	var authored := false
+	for lesson_value in library.tutorial_lessons:
+		if typeof(lesson_value) != TYPE_DICTIONARY:
+			continue
+		var lesson: Dictionary = lesson_value
+		if str(lesson.get("scope", "")) != "tutorial_run":
+			continue
+		var completion: Dictionary = lesson.get("completion", {}) if typeof(lesson.get("completion", {})) == TYPE_DICTIONARY else {}
+		match str(completion.get("type", "")):
+			"anchored_action":
+				var expected := str(completion.get("action_id", "")).strip_edges()
+				if expected.is_empty():
+					var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+					expected = str(anchor.get("id", "")).strip_edges()
+				authored = expected == clean_action_id
+			"one_of_actions":
+				authored = _string_array(completion.get("action_ids", [])).has(clean_action_id)
+		if authored:
+			break
+	if not authored:
+		return
+	var performed: Dictionary = run_state.narrative_flags.get("tutorial_actions_performed", {}) if typeof(run_state.narrative_flags.get("tutorial_actions_performed", {})) == TYPE_DICTIONARY else {}
+	performed[clean_action_id] = true
+	run_state.narrative_flags["tutorial_actions_performed"] = performed
+
+
+func _consume_recorded_tutorial_action(action_id: String) -> void:
+	if run_state == null or not run_state.is_tutorial_run():
+		return
+	var performed: Dictionary = run_state.narrative_flags.get("tutorial_actions_performed", {}) if typeof(run_state.narrative_flags.get("tutorial_actions_performed", {})) == TYPE_DICTIONARY else {}
+	var clean_action_id := action_id.strip_edges()
+	if clean_action_id.is_empty() or not performed.has(clean_action_id):
+		return
+	performed.erase(clean_action_id)
+	run_state.narrative_flags["tutorial_actions_performed"] = performed
+
+
+func _complete_preperformed_tutorial_actions() -> void:
+	if coach_overlay == null or run_state == null or library == null or not run_state.is_tutorial_run():
+		return
+	var performed: Dictionary = run_state.narrative_flags.get("tutorial_actions_performed", {}) if typeof(run_state.narrative_flags.get("tutorial_actions_performed", {})) == TYPE_DICTIONARY else {}
+	if performed.is_empty():
+		return
+	for _index in range(16):
+		var lesson_id := coach_overlay.active_lesson_id()
+		if lesson_id.is_empty():
+			return
+		var lesson := library.tutorial_lesson(lesson_id)
+		var completion: Dictionary = lesson.get("completion", {}) if typeof(lesson.get("completion", {})) == TYPE_DICTIONARY else {}
+		var action_ids: Array = []
+		match str(completion.get("type", "")):
+			"anchored_action":
+				var action_id := str(completion.get("action_id", "")).strip_edges()
+				if action_id.is_empty():
+					var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+					action_id = str(anchor.get("id", "")).strip_edges()
+				if not action_id.is_empty():
+					action_ids.append(action_id)
+			"one_of_actions":
+				action_ids = _string_array(completion.get("action_ids", []))
+			_:
+				return
+		var matched_action := ""
+		for action_id_value in action_ids:
+			var candidate := str(action_id_value)
+			if bool(performed.get(candidate, false)):
+				matched_action = candidate
+				break
+		if matched_action.is_empty() or not coach_overlay.notify_action(matched_action):
+			return
+		_consume_recorded_tutorial_action(matched_action)
+		coach_overlay.evaluate_at_boundary(_coach_context_snapshot())
+
+
+func _sync_coach_focus_visibility() -> void:
+	if coach_overlay == null:
+		return
+	var enabled := true
+	if _run_menu_is_visible() or (settings_overlay != null and settings_overlay.visible) or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _event_choice_popup_is_visible():
+		enabled = false
+	elif _world_map_overlay_is_visible():
+		var anchor_kind := coach_overlay.active_anchor_kind()
+		var anchor_id := coach_overlay.active_anchor_id()
+		enabled = anchor_kind == "hud_element" and (anchor_id == "map" or anchor_id.begins_with("travel:"))
+	coach_overlay.set_focus_visual_enabled(enabled)
+
+
+func _clear_run_guidance_for_start_screen() -> void:
+	if coach_overlay != null:
+		coach_overlay.suspend()
+	if talk_dock != null:
+		talk_dock.clear_entry()
+		talk_dock.set_avoid_global_rect(Rect2())
+	item_found_talk_dock_suspended = false
+
+
+func _sync_talk_dock_coach_avoid_rect() -> void:
+	if talk_dock == null or talk_dock_avoid_sync_active:
+		return
+	var anchor_rect := Rect2()
+	if coach_overlay != null and not coach_overlay.active_lesson_id().is_empty():
+		anchor_rect = coach_overlay.active_anchor_rect()
+	# The player is free to open the map before Pal asks for travel. In that
+	# case the authored room/surface anchor is behind the modal and cannot keep
+	# selectable map nodes clear. Prefer any live map node currently covered by
+	# the dialogue so off-script exploration remains usable instead of becoming
+	# a soft lock.
+	if _world_map_overlay_is_visible() and world_map_overlay_controller != null:
+		var occupied := talk_dock.occupied_global_rect()
+		var map_avoid_rect := Rect2()
+		for node_id_value in world_map_overlay_controller.button_ids:
+			var node_rect := world_map_overlay_controller.global_rect_for_node(str(node_id_value))
+			if node_rect.has_area() and occupied.intersects(node_rect.grow(8.0)):
+				map_avoid_rect = node_rect if not map_avoid_rect.has_area() else map_avoid_rect.merge(node_rect)
+		if map_avoid_rect.has_area():
+			anchor_rect = map_avoid_rect
+	talk_dock_avoid_sync_active = true
+	talk_dock.set_avoid_global_rect(anchor_rect)
+	talk_dock_avoid_sync_active = false
 
 
 func _coach_context_snapshot() -> Dictionary:
@@ -13485,6 +13860,9 @@ func _coach_context_snapshot() -> Dictionary:
 	var result_type := str(last_item_result.get("type", ""))
 	if result_type.is_empty():
 		result_type = str(last_hook_result.get("type", last_game_result.get("type", "")))
+	var last_action_id := str(last_item_result.get("action_id", ""))
+	if last_action_id.is_empty():
+		last_action_id = str(last_hook_result.get("action_id", last_game_result.get("action_id", "")))
 	var tutorial_flags := run_state.narrative_flags if run_state != null else {}
 	var game_coach_state: Dictionary = {}
 	if current_game != null and run_state != null:
@@ -13525,9 +13903,9 @@ func _coach_context_snapshot() -> Dictionary:
 			"home": _is_meta_session() and meta_session_location_id == META_LOCATION_HOME,
 			"starter_card_count": starter_card_count,
 		},
-		"action": {"last_result_type": result_type},
+		"action": {"last_result_type": result_type, "last_action_id": last_action_id},
 		"viewport_rect": Rect2(Vector2.ZERO, size),
-		"anchor_rects": _coach_anchor_rects(),
+		"anchor_rects": _coach_anchor_rects(game_coach_state),
 		"reduce_motion": _reduce_motion_enabled(),
 		"small_screen": _small_screen_enabled(),
 	}
@@ -13551,15 +13929,21 @@ func _starter_card_count() -> int:
 	return count
 
 
-func _coach_anchor_rects() -> Dictionary:
+func _coach_anchor_rects(game_coach_state: Dictionary = {}) -> Dictionary:
 	var hud: Dictionary = {}
-	_coach_store_control_rect(hud, "heat", status_label)
-	_coach_store_control_rect(hud, "debt", status_label)
-	_coach_store_control_rect(hud, "clock", status_label)
-	_coach_store_control_rect(hud, "chips", status_label)
+	_coach_store_structured_hud_rect(hud, "heat")
+	_coach_store_structured_hud_rect(hud, "debt")
+	_coach_store_structured_hud_rect(hud, "clock")
+	_coach_store_structured_hud_rect(hud, "chips")
 	_coach_store_control_rect(hud, "objective", objective_label)
 	_coach_store_control_rect(hud, "inventory", top_inventory_button)
 	_coach_store_control_rect(hud, "map", world_map_title_label if _world_map_overlay_is_visible() else title_label)
+	if _world_map_overlay_is_visible() and world_map_overlay_controller != null:
+		for node_id_value in world_map_overlay_controller.button_ids:
+			var node_id := str(node_id_value).strip_edges()
+			var node_rect := world_map_overlay_controller.global_rect_for_node(node_id)
+			if not node_id.is_empty() and node_rect.has_area():
+				hud["travel:%s" % node_id] = node_rect
 	var objects: Dictionary = {}
 	if environment_canvas != null:
 		for object_value in _interactable_object_view_list():
@@ -13567,7 +13951,9 @@ func _coach_anchor_rects() -> Dictionary:
 				continue
 			var object_data: Dictionary = object_value
 			var object_id := str(object_data.get("object_id", ""))
-			var rendered_rect := environment_canvas.global_rect_for_object(object_id)
+			var rendered_rect := environment_canvas.global_rect_for_selected_object_action(object_id)
+			if not rendered_rect.has_area():
+				rendered_rect = environment_canvas.global_rect_for_object(object_id)
 			if not rendered_rect.has_area():
 				continue
 			objects[object_id] = rendered_rect
@@ -13578,17 +13964,43 @@ func _coach_anchor_rects() -> Dictionary:
 				continue
 			var region: Dictionary = region_value
 			var action_id := str(region.get("action", "")).strip_edges()
-			if action_id.is_empty() or surface_actions.has(action_id):
+			if action_id.is_empty():
 				continue
-			var rendered_rect: Rect2 = game_surface_canvas.global_rect_for_surface_action(action_id)
-			if rendered_rect.has_area():
+			var action_index := int(region.get("index", -1))
+			var indexed_action_id := "%s:%d" % [action_id, action_index] if action_index >= 0 else ""
+			var rendered_rect: Rect2 = game_surface_canvas.global_rect_for_surface_action(action_id, action_index)
+			if not indexed_action_id.is_empty() and not surface_actions.has(indexed_action_id) and rendered_rect.has_area():
+				surface_actions[indexed_action_id] = rendered_rect
+			if not surface_actions.has(action_id) and rendered_rect.has_area():
 				surface_actions[action_id] = rendered_rect
+	for alias_value in game_coach_state.get("surface_action_anchors", []):
+		if typeof(alias_value) != TYPE_DICTIONARY:
+			continue
+		var alias: Dictionary = alias_value
+		var alias_id := str(alias.get("id", "")).strip_edges()
+		var source_action := str(alias.get("action", "")).strip_edges()
+		var source_index := int(alias.get("index", -1))
+		if alias_id.is_empty() or source_action.is_empty():
+			continue
+		var alias_rect := game_surface_canvas.global_rect_for_surface_action(source_action, source_index) if game_surface_canvas != null else Rect2()
+		if alias_rect.has_area():
+			surface_actions[alias_id] = alias_rect
 	return {"hud_elements": hud, "interactable_objects": objects, "surface_actions": surface_actions}
+
+
+func _coach_store_structured_hud_rect(target: Dictionary, key: String) -> void:
+	if structured_hud == null:
+		return
+	var rect := structured_hud.global_rect_for_element(key)
+	if rect.has_area():
+		target[key] = rect
 
 
 func _coach_store_control_rect(target: Dictionary, key: String, control: Control) -> void:
 	if control != null and control.is_visible_in_tree():
-		target[key] = control.get_global_rect()
+		var rect := control.get_global_rect()
+		if rect.has_area():
+			target[key] = rect
 
 
 func _coach_heat_gain_count() -> int:

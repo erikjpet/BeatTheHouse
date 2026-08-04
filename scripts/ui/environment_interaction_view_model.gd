@@ -229,6 +229,10 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 		var enabled := bool(offer.get("affordable", true)) and not failed
 		var object_id := "item:%s" % item_id
 		var action_label := "Pickup" if bool(offer.get("pickup", false)) else str(offer.get("action_label", "Buy"))
+		var price := maxi(0, int(offer.get("price", 0)))
+		var cost_summary := "Pickup"
+		if not bool(offer.get("pickup", false)):
+			cost_summary = "Cost: $%d · Bankroll after: $%d" % [price, maxi(0, run_state.bankroll - price)]
 		objects.append(_object_with_rect({
 			"object_id": object_id,
 			"object_type": "item",
@@ -241,7 +245,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			"action_summary": "" if enabled else "Needs more bankroll before it can be used.",
 			"effect_summary": str(offer.get("effect_summary", "")),
 			"impact_summary": str(offer.get("purpose_summary", "")).strip_edges(),
-			"cost_summary": "Pickup" if bool(offer.get("pickup", false)) else "Cost: %d" % int(offer.get("price", 0)),
+			"cost_summary": cost_summary,
 			"attribute_badges": _copy_array(offer.get("attribute_badges", [])),
 			"visual_key": "item",
 			"prop": str(offer.get("environment_prop", "")),

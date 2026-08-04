@@ -451,7 +451,7 @@ func _resolve_tab_detector_scan(run_state: RunState, environment: Dictionary, rn
 	return result
 
 
-func coach_state(run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
+func coach_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var machine := _read_machine_state(run_state, environment)
 	if machine.is_empty():
 		return {}
@@ -463,9 +463,54 @@ func coach_state(run_state: RunState, environment: Dictionary, _ui_state: Dictio
 			break
 	return {
 		"scripted_target_consumed": target_consumed,
+		"scripted_target_filed": _scripted_xray_target_filed(machine),
+		"scripted_target_ready_to_file": _scripted_xray_target_ready_to_file(machine, ui_state),
+		"tray_count": _array_size(machine.get("tray_stack", [])),
+		"play_stack_count": _array_size(machine.get("ticket_stack", [])),
 		"pending_payout": _pending_winner_payout(machine),
 		"redeemable_count": _array_size(machine.get("winner_pile", [])),
 	}
+
+
+func _scripted_xray_target_ready_to_file(machine: Dictionary, ui_state: Dictionary) -> bool:
+	for ticket_value in _ticket_stack_view(machine, ui_state):
+		if typeof(ticket_value) != TYPE_DICTIONARY:
+			continue
+		var ticket: Dictionary = ticket_value
+		if _ticket_is_consumed_xray_target(machine, ticket) and bool(ticket.get("fully_revealed", false)):
+			return true
+	return false
+
+
+func _scripted_xray_target_filed(machine: Dictionary) -> bool:
+	for pile_name in ["winner_pile", "redeemed_pile"]:
+		for ticket_value in _array_view(machine.get(pile_name, [])):
+			if typeof(ticket_value) == TYPE_DICTIONARY and _ticket_is_consumed_xray_target(machine, ticket_value as Dictionary):
+				return true
+	return false
+
+
+# Compacted and legacy pull-tab saves can omit the per-ticket convenience flag
+# while retaining the authoritative consumed X-ray target in item_state. Coach
+# progression must follow that canonical identity or the real tutorial can
+# reveal the scripted winner and still strand the File highlight on Peel.
+func _ticket_is_consumed_xray_target(machine: Dictionary, ticket: Dictionary) -> bool:
+	if bool(ticket.get("xray_target_consumed", false)):
+		return true
+	var ticket_number := int(ticket.get("ticket_number_value", 0))
+	if ticket_number <= 0:
+		ticket_number = int(str(ticket.get("ticket_number", "")).replace("#", ""))
+	var deal_index := int(ticket.get("deal_index", -1))
+	if ticket_number <= 0 or deal_index < 0:
+		return false
+	var item_state := _pull_tab_item_state(machine)
+	for target_value in _dictionary_array(item_state.get("xray_targets", [])):
+		var target: Dictionary = target_value
+		if bool(target.get("consumed", false)) \
+				and int(target.get("deal_index", -1)) == deal_index \
+				and int(target.get("ticket_number", -1)) == ticket_number:
+			return true
+	return false
 
 
 func _toggle_tab_detector_active_item(machine: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -2246,6 +2291,9 @@ func _deal_view_list(machine: Dictionary, run_state: RunState, item_surface: Dic
 		var prizes := _dictionary_array(deal.get("prizes", []))
 		var top_prize := _deal_top_prize_summary(deal)
 		var tension := _deal_tension_state(deal)
+		var xray_target := _xray_target_for_deal(machine, index) if bool(item_surface.get("xray_available", false)) else {}
+		if not xray_target.is_empty():
+			xray_target["total_cost"] = maxi(0, int(xray_target.get("tickets_until", 0))) * price
 		var view: Dictionary = {
 			"id": str(deal.get("id", "")),
 			"index": index,
@@ -2261,7 +2309,7 @@ func _deal_view_list(machine: Dictionary, run_state: RunState, item_surface: Dic
 			"enabled": run_state != null and run_state.wager_capacity_for_game(get_id()) >= price and remaining > 0,
 			"prize_rows": _prize_rows_for_view(prizes),
 			"palette": _pt_copy_dict(deal.get("palette", {})),
-			"xray_target": _xray_target_for_deal(machine, index) if bool(item_surface.get("xray_available", false)) else {},
+			"xray_target": xray_target,
 			"tab_detector_highlight": bool(item_surface.get("tab_detector_active", false)) and index == detector_highlight_index,
 			"tab_detector_active": bool(item_surface.get("tab_detector_active", false)),
 			"tab_detector_next_heat": int(item_surface.get("tab_detector_next_heat", TAB_DETECTOR_BASE_HEAT)),
@@ -3134,9 +3182,22 @@ func _draw_pull_tab_control_panel(surface, rect: Rect2, deals: Array, surface_st
 	surface.draw_rect(rect, Color("#2b3038"), false, 2)
 	surface.draw_circle(rect.position + Vector2(rect.size.x * 0.5, 14), 5, Color("#1b2028"))
 	surface.draw_rect(Rect2(rect.position + Vector2(12, 28), Vector2(rect.size.x - 24, 12)), Color("#33c85a"))
-	surface.surface_label("PLAY", rect.position + Vector2(19, 64), 12, C_PINK)
-	surface.surface_label("THE", rect.position + Vector2(25, 82), 13, C_PINK)
-	surface.surface_label("MASTER", rect.position + Vector2(8, 104), 17, C_PINK)
+	var tutorial_target := {}
+	for deal_value in deals:
+		if typeof(deal_value) != TYPE_DICTIONARY:
+			continue
+		var deal_target: Dictionary = (deal_value as Dictionary).get("xray_target", {}) if typeof((deal_value as Dictionary).get("xray_target", {})) == TYPE_DICTIONARY else {}
+		if not deal_target.is_empty():
+			tutorial_target = deal_target
+			break
+	if tutorial_target.is_empty():
+		surface.surface_label("PLAY", rect.position + Vector2(19, 64), 12, C_PINK)
+		surface.surface_label("THE", rect.position + Vector2(25, 82), 13, C_PINK)
+		surface.surface_label("MASTER", rect.position + Vector2(8, 104), 17, C_PINK)
+	else:
+		surface.surface_label_centered("XRAY TARGET", Rect2(rect.position + Vector2(4, 48), Vector2(rect.size.x - 8, 14)), 7, C_PINK)
+		surface.surface_label_centered("%d TICKETS" % int(tutorial_target.get("tickets_until", 0)), Rect2(rect.position + Vector2(4, 68), Vector2(rect.size.x - 8, 16)), 8, C_YELLOW)
+		surface.surface_label_centered("TOTAL $%d" % int(tutorial_target.get("total_cost", 0)), Rect2(rect.position + Vector2(4, 91), Vector2(rect.size.x - 8, 16)), 8, C_YELLOW)
 	var scan_rect := Rect2(rect.position + Vector2(10, 124), Vector2(rect.size.x - 20, 30))
 	var item_state: Dictionary = surface_state.get("pull_tab_item_state", {})
 	var active := bool(item_state.get("tab_detector_active", false))
@@ -3308,20 +3369,26 @@ func _draw_pull_tab_stack_panel(surface, rect: Rect2, surface_state: Dictionary,
 	var winner_excluded_id := filing_ticket_id if filing_pile == "winner_pile" else ""
 	var loser_excluded_id := filing_ticket_id if filing_pile == "loser_pile" else ""
 	surface.surface_label("TICKET PILE", rect.position + Vector2(14, 22), 18, C_CYAN)
-	surface.surface_label("%d/%d" % [mini(cursor + 1, maxi(1, count)), count], rect.position + Vector2(118, 22), 14, C_SOFT)
+	var visible_ticket_number := 0 if count <= 0 else mini(cursor + 1, count)
+	surface.surface_label("%d/%d" % [visible_ticket_number, count], rect.position + Vector2(118, 22), 14, C_SOFT)
 	if pending_payout > 0:
 		surface.surface_label("CASH $%d" % pending_payout, rect.position + Vector2(312, 42), 9, C_YELLOW)
-	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(170, 8), Vector2(32, 24)), "<", "pull_tab_prev", count > 1 and cursor > 0)
-	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(208, 8), Vector2(32, 24)), ">", "pull_tab_next", count > 1 and cursor < count - 1)
-	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(246, 8), Vector2(54, 24)), "OPEN", "pull_tab_next_unopened", count > 0)
-	var auto_open_active := bool(surface_state.get("pull_tab_auto_open_active", false))
-	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(306, 8), Vector2(90, 24)), "STOP AUTO" if auto_open_active else "AUTO OPEN", PULL_TAB_AUTO_OPEN_ACTION, count > 0, auto_open_active)
 	var display_start_index := 0
 	if bool(surface.surface_animation_active(PULL_TAB_DISPENSE_CHANNEL)) and not stack.is_empty():
 		var arriving: Dictionary = stack[0] as Dictionary
 		if str(arriving.get("id", "")) == str(surface.surface_animation_active_id(PULL_TAB_DISPENSE_CHANNEL)):
 			display_start_index = 1
 	var display_count := maxi(0, stack.size() - display_start_index)
+	var active_ticket: Dictionary = stack[display_start_index] as Dictionary if display_count > 0 else {}
+	var reveal_rows_complete := not bool(surface.surface_animation_active(PULL_TAB_REVEAL_CHANNEL)) \
+		or int(surface.surface_elapsed(PULL_TAB_REVEAL_CHANNEL) * 1000.0) >= (2 * PULL_TAB_REVEAL_STAGGER_MSEC + PULL_TAB_REVEAL_ROW_DURATION_MSEC)
+	var can_file := not active_ticket.is_empty() and bool(active_ticket.get("fully_revealed", false)) and reveal_rows_complete
+	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(132, 8), Vector2(24, 24)), "<", "pull_tab_prev", count > 1 and cursor > 0)
+	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(159, 8), Vector2(24, 24)), ">", "pull_tab_next", count > 1 and cursor < count - 1)
+	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(186, 8), Vector2(38, 24)), "OPEN", "pull_tab_next_unopened", count > 0)
+	var auto_open_active := bool(surface_state.get("pull_tab_auto_open_active", false))
+	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(227, 8), Vector2(55, 24)), "STOP" if auto_open_active else "AUTO OPEN", PULL_TAB_AUTO_OPEN_ACTION, count > 0, auto_open_active)
+	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(285, 8), Vector2(43, 24)), "FILE", PULL_TAB_FILE_TICKET_ACTION, can_file)
 	if display_count <= 0:
 		_draw_pull_tab_empty_pile(surface, Rect2(rect.position + Vector2(38, 56), Vector2(316, 148)), int(surface_state.get("pull_tab_tray_count", 0)))
 		_draw_pull_tab_sorted_piles(surface, pile_rect, winner_pile, loser_pile, winner_excluded_id, loser_excluded_id)
@@ -3330,7 +3397,7 @@ func _draw_pull_tab_stack_panel(surface, rect: Rect2, surface_state: Dictionary,
 	for view_index in range(mini(display_count - 1, 5), 0, -1):
 		var ticket: Dictionary = stack[display_start_index + view_index] as Dictionary
 		_draw_pull_tab_mini_ticket(surface, ticket, Rect2(rect.position + Vector2(68 + view_index * 10, 56 + view_index * 5), Vector2(238, 138)), 0.18 + float(view_index) * 0.02)
-	var active: Dictionary = stack[display_start_index] as Dictionary
+	var active: Dictionary = active_ticket
 	_draw_pull_tab_ticket(surface, active, active_rect, true)
 	_draw_pull_tab_sorted_piles(surface, pile_rect, winner_pile, loser_pile, winner_excluded_id, loser_excluded_id)
 	_draw_pull_tab_file_animation(surface, surface_state, active_rect, pile_rect)
@@ -3494,8 +3561,6 @@ func _draw_pull_tab_ticket(surface, ticket: Dictionary, rect: Rect2, interactive
 		if interactive:
 			var hovered := bool(surface.surface_region_hovered(PULL_TAB_FILE_TICKET_ACTION))
 			surface.draw_rect(rect.grow(3), Color(banner_color.r, banner_color.g, banner_color.b, 0.16 if hovered else 0.08), false, 3 if hovered else 2)
-			surface.surface_draw_ready_badge(rect, "FILE")
-			surface.surface_add_invisible_hit(rect, PULL_TAB_FILE_TICKET_ACTION)
 	elif interactive and not bool(ticket.get("fully_revealed", false)):
 		var hovered_peel := bool(surface.surface_region_hovered("pull_tab_reveal_next"))
 		surface.draw_rect(rect.grow(3), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.16 if hovered_peel else 0.08), false, 3 if hovered_peel else 2)

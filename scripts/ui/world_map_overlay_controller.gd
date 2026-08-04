@@ -152,6 +152,23 @@ func node_ids(snapshot: Dictionary) -> Array:
 	return ids
 
 
+func global_rect_for_node(node_id: String) -> Rect2:
+	var clean_id := node_id.strip_edges()
+	if clean_id.is_empty() or nodes_layer == null:
+		return Rect2()
+	if clean_id == selected_node_id and confirm_button != null and confirm_button.is_visible_in_tree() and not confirm_button.disabled:
+		var confirm_rect := confirm_button.get_global_rect()
+		if confirm_rect.has_area():
+			return confirm_rect
+	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
+		var button := _pool_button(index)
+		if button == null or not button.is_visible_in_tree():
+			continue
+		if str(button.get_meta("node_id", "")).strip_edges() == clean_id:
+			return button.get_global_rect()
+	return Rect2()
+
+
 func position_detail_popup(snapshot: Dictionary) -> void:
 	if detail_popup == null or holder == null:
 		return

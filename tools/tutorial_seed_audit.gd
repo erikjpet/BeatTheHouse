@@ -34,6 +34,7 @@ func _run() -> void:
 	var path_b := await _run_route("path_b_skip")
 	var isolation := _normal_run_isolation()
 	var stuck_sweep := _tutorial_stuck_sweep(100)
+	var lesson_boundary_save_load := _tutorial_lesson_boundary_save_load()
 	var report := {
 		"challenge_id": "tutorial_first_card",
 		"fixed_seed": str(library.challenge_config_for("tutorial_first_card", "ignored").get("seed_text", "")),
@@ -41,6 +42,7 @@ func _run() -> void:
 		"authored_contract": authored_contract,
 		"normal_run_isolation": isolation,
 		"tutorial_stuck_sweep": stuck_sweep,
+		"lesson_boundary_save_load": lesson_boundary_save_load,
 		"failures": failures.duplicate(),
 		"passed": failures.is_empty(),
 	}
@@ -160,6 +162,63 @@ func _tutorial_stuck_sweep(seed_count: int) -> Dictionary:
 			stuck.append({"index": seed_index, "route": route_id, "environment": str(run_state.current_environment.get("archetype_id", ""))})
 	_check(stuck.is_empty(), "Tutorial route stuck-state sweep failed: %s" % JSON.stringify(stuck), failures)
 	return {"iterations": seed_count, "path_a": int(ceil(float(seed_count) / 2.0)), "path_b_skip": int(floor(float(seed_count) / 2.0)), "stuck": stuck.size(), "fixed_seed": "FIRST-NIGHT-ACE-17"}
+
+
+func _tutorial_lesson_boundary_save_load() -> Dictionary:
+	var boundary_failures: Array = []
+	var config: Dictionary = library.challenge_config_for("tutorial_first_card", "IGNORED-BY-FIXED-SEED")
+	var current: RunState = RunStateScript.new()
+	current.start_new(str(config.get("seed_text", "")), config)
+	current.begin_act(1)
+	RunGeneratorScript.new(library).next_environment(current)
+	var completed: Dictionary = {}
+	var checked_ids: Array = []
+	for lesson_value in library.tutorial_lessons:
+		if typeof(lesson_value) != TYPE_DICTIONARY:
+			continue
+		var lesson: Dictionary = lesson_value
+		if str(lesson.get("scope", "")) != "tutorial_run":
+			continue
+		var lesson_id := str(lesson.get("id", "")).strip_edges()
+		var dialogue_id := str(lesson.get("dialogue_id", "")).strip_edges()
+		var dialogue_node := str(lesson.get("dialogue_node", "")).strip_edges()
+		var event_id := "tutorial_guide:%s" % lesson_id
+		current.narrative_flags["tutorial_lessons_completed"] = completed.duplicate(true)
+		var queued := current.enqueue_dialogue(
+			dialogue_id,
+			event_id,
+			{"name": "Pal"},
+			dialogue_node,
+			"dialogue",
+			{"tutorial_lesson_id": lesson_id}
+		)
+		_check(queued, "Lesson-boundary save/load fixture could not queue %s." % lesson_id, boundary_failures)
+		var restored: RunState = RunStateScript.new()
+		restored.from_dict(current.to_dict())
+		var restored_completed := _dict(restored.narrative_flags.get("tutorial_lessons_completed", {}))
+		var restored_talk := restored.pending_talk_event(event_id)
+		_check(
+			JSON.stringify(restored_completed) == JSON.stringify(completed)
+			and str(restored_talk.get("dialogue_id", "")) == dialogue_id
+			and str(restored_talk.get("current_node", "")) == dialogue_node
+			and str(_dict(restored_talk.get("context", {})).get("tutorial_lesson_id", "")) == lesson_id,
+			"Tutorial lesson boundary changed across save/load at %s." % lesson_id,
+			boundary_failures
+		)
+		restored.complete_talk_event_resolution(event_id)
+		completed[lesson_id] = true
+		restored.narrative_flags["tutorial_lessons_completed"] = completed.duplicate(true)
+		current = RunStateScript.new()
+		current.from_dict(restored.to_dict())
+		checked_ids.append(lesson_id)
+	for failure in boundary_failures:
+		failures.append(failure)
+	return {
+		"boundaries_checked": checked_ids.size(),
+		"lesson_ids": checked_ids,
+		"failures": boundary_failures,
+		"passed": boundary_failures.is_empty() and checked_ids.size() == library.tutorial_lessons.size(),
+	}
 
 
 func _run_route(route_id: String) -> Dictionary:
@@ -286,6 +345,8 @@ func _play_scripted_pull_tab(run_state: RunState, route_failures: Array) -> Dict
 		var sort_result := game.resolve_with_context(str(file_command.get("action_id", "")), 0, run_state, run_state.current_environment, run_state.create_rng("tutorial_pull_sort"), ui_state)
 		if not bool(sort_result.get("ok", false)):
 			break
+	var after_file := game.coach_state(run_state, run_state.current_environment, ui_state)
+	_check(bool(after_file.get("scripted_target_filed", false)), "Path A did not peel and file the scripted X-ray winner itself.", route_failures)
 	var before_redeem := run_state.bankroll
 	var redeem_command := game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", run_state, run_state.current_environment, run_state.create_rng("tutorial_pull_redeem"))
 	var redeem_result: Dictionary = redeem_command.get("result", {}) if typeof(redeem_command.get("result", {})) == TYPE_DICTIONARY else {}

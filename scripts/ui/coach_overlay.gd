@@ -32,6 +32,8 @@ class FocusLayer:
 		if snapshot.is_empty() or not bool(snapshot.get("visible", false)):
 			return
 		var anchor: Rect2 = live_anchor_rect if live_anchor_rect_valid else CoachFocusViewModelScript._rect(snapshot.get("anchor_rect", {}))
+		if str(snapshot.get("anchor_kind", "none")) != "none" and not anchor.has_area():
+			return
 		var alpha := 0.40 if bool(snapshot.get("highlight_emphasis", false)) else 0.10
 		if not anchor.has_area():
 			draw_rect(Rect2(Vector2.ZERO, size), Color(0.0, 0.0, 0.0, alpha), true)
@@ -58,9 +60,11 @@ var live_anchor_rect := Rect2()
 var live_anchor_rect_valid := false
 var active_anchor_kind_value := ""
 var active_anchor_id_value := ""
+var active_dialogue_requested := false
 var tips_enabled := true
 var reduce_motion := false
 var small_screen := false
+var focus_visual_enabled := true
 
 var focus_layer: FocusLayer
 var panel: Panel
@@ -96,6 +100,7 @@ func restore_seen(next_seen: Dictionary) -> void:
 	live_anchor_rect_valid = false
 	active_anchor_kind_value = ""
 	active_anchor_id_value = ""
+	active_dialogue_requested = false
 	visible = false
 
 
@@ -136,6 +141,15 @@ func set_small_screen_mode(enabled: bool) -> void:
 	if not prepared_snapshot.is_empty():
 		active_context["small_screen"] = enabled
 		_render_active(false)
+
+
+# Modal surfaces may cover the world-space target while the tutorial dialogue
+# deliberately remains readable. Hide only the visual focus layer in that case;
+# lesson state and input behavior stay untouched.
+func set_focus_visual_enabled(enabled: bool) -> void:
+	focus_visual_enabled = enabled
+	if focus_layer != null:
+		focus_layer.visible = enabled
 
 
 func evaluate_at_boundary(context: Dictionary) -> void:
@@ -195,6 +209,7 @@ func suspend() -> void:
 	live_anchor_rect_valid = false
 	active_anchor_kind_value = ""
 	active_anchor_id_value = ""
+	active_dialogue_requested = false
 	visible = false
 	if panel != null:
 		panel.visible = false
@@ -265,13 +280,8 @@ func _show_next() -> void:
 	if str(active_lesson.get("scope", "")).strip_edges() != "tutorial_run":
 		seen[lesson_id] = true
 	lesson_seen.emit(lesson_id)
+	active_dialogue_requested = false
 	_render_active(true)
-	if str(active_lesson.get("delivery", "coach")).strip_edges().to_lower() == "dialogue":
-		dialogue_requested.emit(
-			lesson_id,
-			str(active_lesson.get("dialogue_id", "")).strip_edges(),
-			str(active_lesson.get("dialogue_node", "")).strip_edges()
-		)
 
 
 func _render_active(play_motion: bool) -> void:
@@ -295,10 +305,12 @@ func _render_active(play_motion: bool) -> void:
 	panel.custom_minimum_size = bubble_rect.size
 	panel.size = bubble_rect.size
 	focus_layer.set_snapshot(prepared_snapshot)
+	focus_layer.visible = focus_visual_enabled
 	var dialogue_delivery := str(prepared_snapshot.get("delivery", "coach")) == "dialogue"
 	panel.visible = not dialogue_delivery
 	visible = true
 	move_to_front()
+	_request_active_dialogue_once()
 	if play_motion:
 		_play_attention_motion()
 
@@ -315,6 +327,7 @@ func _finish_active() -> void:
 	live_anchor_rect_valid = false
 	active_anchor_kind_value = ""
 	active_anchor_id_value = ""
+	active_dialogue_requested = false
 	visible = false
 	if panel != null:
 		panel.visible = false
@@ -336,6 +349,12 @@ func active_anchor_id() -> String:
 	return active_anchor_id_value
 
 
+func active_anchor_rect() -> Rect2:
+	if live_anchor_rect_valid:
+		return live_anchor_rect
+	return CoachViewModelScript._rect(prepared_snapshot.get("anchor_rect", {}))
+
+
 # Moves only the active focus rectangle. Tutorial state, trigger evaluation,
 # and the prepared guidance model remain unchanged during camera motion.
 func update_active_anchor_rect(anchor_kind: String, anchor_id: String, next_rect: Rect2) -> bool:
@@ -348,7 +367,25 @@ func update_active_anchor_rect(anchor_kind: String, anchor_id: String, next_rect
 	live_anchor_rect_valid = true
 	if focus_layer != null:
 		focus_layer.set_live_anchor_rect(clipped_rect)
+	_request_active_dialogue_once()
 	return true
+
+
+func _request_active_dialogue_once() -> void:
+	if active_dialogue_requested or active_lesson.is_empty():
+		return
+	if str(prepared_snapshot.get("delivery", "coach")) != "dialogue":
+		return
+	var anchor_kind := str(prepared_snapshot.get("anchor_kind", "none"))
+	var anchor_found := live_anchor_rect.has_area() if live_anchor_rect_valid else bool(prepared_snapshot.get("anchor_found", false))
+	if anchor_kind != "none" and not anchor_found:
+		return
+	active_dialogue_requested = true
+	dialogue_requested.emit(
+		str(active_lesson.get("id", "")),
+		str(active_lesson.get("dialogue_id", "")).strip_edges(),
+		str(active_lesson.get("dialogue_node", "")).strip_edges()
+	)
 
 
 func _on_ok_pressed() -> void:
@@ -385,7 +422,7 @@ func _rebuild_queued_ids() -> void:
 
 
 func _layout_key(lesson: Dictionary, context: Dictionary) -> int:
-	var anchor := _dict(lesson.get("anchor", {}))
+	var anchor := CoachViewModelScript.resolved_anchor(lesson, context)
 	var kind := str(anchor.get("kind", "none"))
 	var anchor_id := str(anchor.get("id", ""))
 	var group_name: String = str({"interactable_object": "interactable_objects", "hud_element": "hud_elements", "surface_action": "surface_actions"}.get(kind, ""))
@@ -395,6 +432,8 @@ func _layout_key(lesson: Dictionary, context: Dictionary) -> int:
 		str(context.get("screen", "")),
 		str(context.get("environment_archetype", "")),
 		str(context.get("game_id", "")),
+		kind,
+		anchor_id,
 		context.get("viewport_rect", Rect2()),
 		group.get(anchor_id, Rect2()),
 		bool(context.get("small_screen", false)),

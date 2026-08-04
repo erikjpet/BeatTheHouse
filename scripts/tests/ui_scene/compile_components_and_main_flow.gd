@@ -590,6 +590,28 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Talk dock speaker did not use the compact environment portrait footprint: portrait=%s screen=%s." % [str(portrait_rect), str(screen_rect)])
 		return false
+	parent.size = Vector2(1280, 720)
+	dock.size = parent.size
+	dock.set_avoid_global_rect(Rect2(80, 520, 150, 110))
+	await process_frame
+	var avoided_snapshot := dock.current_snapshot()
+	var avoided_occupied := _snapshot_rect(avoided_snapshot.get("occupied_rect", Rect2()))
+	if str(avoided_snapshot.get("layout_side", "")) != "right" or avoided_occupied.intersects(Rect2(80, 520, 150, 110)):
+		parent.queue_free()
+		push_error("TalkDock did not move opposite a live left-side tutorial target: %s." % str(avoided_snapshot))
+		return false
+	dock.set_avoid_global_rect(Rect2(1050, 520, 150, 110))
+	await process_frame
+	if str(dock.current_snapshot().get("layout_side", "")) != "left":
+		parent.queue_free()
+		push_error("TalkDock did not move opposite a live right-side tutorial target.")
+		return false
+	dock.set_avoid_global_rect(Rect2())
+	parent.size = Vector2(640, 360)
+	dock.size = parent.size
+	await process_frame
+	snapshot = dock.current_snapshot()
+	reserved_rect = _snapshot_rect(snapshot.get("environment_reserved_rect", Rect2()))
 	var environment_canvas: Control = PixelSceneCanvasScript.new()
 	environment_canvas.size = parent.size
 	parent.add_child(environment_canvas)
@@ -750,6 +772,52 @@ func _check_coach_overlay_component() -> bool:
 		parent.queue_free()
 		push_error("Coach overlay highlight blocked an unrelated player action.")
 		return false
+	overlay.restore_seen({})
+	overlay.set_lessons([{
+		"id": "coach_dynamic_anchor",
+		"trigger": {"state_predicates": []},
+		"anchor": {"kind": "surface_action", "id": "buy"},
+		"anchor_variants": [
+			{
+				"state_predicates": [{"path": "game.tray_count", "op": "gt", "value": 0}],
+				"anchor": {"kind": "surface_action", "id": "collect"},
+			},
+			{
+				"state_predicates": [{"path": "game.ready_to_file", "op": "equals", "value": true}],
+				"anchor": {"kind": "surface_action", "id": "file"},
+			},
+		],
+		"copy": "Buy, then collect.",
+		"completion": {"type": "state_predicate", "state_predicates": [{"path": "game.done", "op": "truthy"}]},
+	}])
+	var dynamic_context := {
+		"viewport_rect": Rect2(Vector2.ZERO, parent.size),
+		"game": {"tray_count": 0, "ready_to_file": false, "done": false},
+		# File deliberately reuses Collect's rectangle. Anchor identity still has
+		# to invalidate the cached layout when a surface swaps actions in place.
+		"anchor_rects": {"surface_actions": {"buy": Rect2(20, 420, 80, 44), "collect": Rect2(160, 420, 90, 44), "file": Rect2(160, 420, 90, 44)}},
+	}
+	overlay.evaluate_at_boundary(dynamic_context)
+	await process_frame
+	if str(overlay.current_snapshot().get("anchor_id", "")) != "buy":
+		parent.queue_free()
+		push_error("Coach dynamic anchor did not start on the Buy action.")
+		return false
+	dynamic_context["game"] = {"tray_count": 1, "ready_to_file": false, "done": false}
+	overlay.evaluate_at_boundary(dynamic_context)
+	await process_frame
+	var dynamic_snapshot := overlay.current_snapshot()
+	if str(dynamic_snapshot.get("anchor_id", "")) != "collect" or not _snapshot_rect(dynamic_snapshot.get("anchor_rect", {})).is_equal_approx(Rect2(160, 420, 90, 44)):
+		parent.queue_free()
+		push_error("Coach dynamic anchor did not follow the waiting tray action: %s" % str(dynamic_snapshot))
+		return false
+	dynamic_context["game"] = {"tray_count": 0, "ready_to_file": true, "done": false}
+	overlay.evaluate_at_boundary(dynamic_context)
+	await process_frame
+	if str(overlay.current_snapshot().get("anchor_id", "")) != "file" or not _snapshot_rect(overlay.current_snapshot().get("anchor_rect", {})).is_equal_approx(Rect2(160, 420, 90, 44)):
+		parent.queue_free()
+		push_error("Coach dynamic anchor did not advance to the ready File action.")
+		return false
 	overlay.set_reduce_motion(true)
 	var attention_tween: Tween = overlay.get("attention_tween")
 	var coach_panel: Panel = overlay.get("panel")
@@ -764,10 +832,14 @@ func _check_coach_overlay_component() -> bool:
 	])
 	overlay.set_tips_enabled(false)
 	overlay.evaluate_at_boundary({"viewport_rect": Rect2(Vector2.ZERO, parent.size), "run": {"tutorial": false}})
-	overlay.evaluate_at_boundary({"viewport_rect": Rect2(Vector2.ZERO, parent.size), "run": {"tutorial": true}})
 	if bool(overlay.current_snapshot().get("visible", false)) or int(overlay.current_snapshot().get("queued_count", 0)) != 0:
 		parent.queue_free()
-		push_error("Tips-off coach profile displayed normal or tutorial guidance.")
+		push_error("Tips-off coach profile displayed normal-run Dealer's Advice.")
+		return false
+	overlay.evaluate_at_boundary({"viewport_rect": Rect2(Vector2.ZERO, parent.size), "run": {"tutorial": true}})
+	if str(overlay.current_snapshot().get("lesson_id", "")) != "tips_off_tutorial" or not bool(overlay.current_snapshot().get("visible", false)):
+		parent.queue_free()
+		push_error("Ambient-tip preference disabled the binding guided tutorial.")
 		return false
 	parent.queue_free()
 	await process_frame
@@ -5209,8 +5281,8 @@ func _run() -> void:
 		quit(1)
 		return
 	var selected_inventory_item: Dictionary = run_inventory_snapshot.get("selected_item", {}) if typeof(run_inventory_snapshot.get("selected_item", {})) == TYPE_DICTIONARY else {}
-	if str(run_inventory_snapshot.get("selected_item_id", "")) != item_id or selected_inventory_item.is_empty() or str(selected_inventory_item.get("description", "")).is_empty() or not str(selected_inventory_item.get("effect_summary", "")).is_empty():
-		push_error("Run inventory did not select the item with short description-only detail text.")
+	if str(run_inventory_snapshot.get("selected_item_id", "")) != item_id or selected_inventory_item.is_empty() or str(selected_inventory_item.get("description", "")).is_empty() or str(selected_inventory_item.get("effect_summary", "")).is_empty() or str(selected_inventory_item.get("behavior_summary", "")).is_empty():
+		push_error("Run inventory did not select the item with description, actual effect, and behavior detail.")
 		quit(1)
 		return
 	app.call("select_run_inventory_item", item_id, str(purchased_inventory_item.get("storage_source", "carried")))
@@ -5226,8 +5298,8 @@ func _run() -> void:
 		push_error("Run inventory popup moved off-center or off-screen after item selection: %s within %s." % [str(selected_popup_rect), str(selected_screen_rect)])
 		quit(1)
 		return
-	if not str(purchased_inventory_item.get("effect_summary", "")).is_empty() or int(purchased_inventory_item.get("sale_price", -1)) < 0 or not bool(purchased_inventory_item.get("sellable", false)):
-		push_error("Run inventory item details exposed stat text or missed sale price/sellable status.")
+	if str(purchased_inventory_item.get("effect_summary", "")).is_empty() or str(purchased_inventory_item.get("behavior_summary", "")).is_empty() or int(purchased_inventory_item.get("sale_price", -1)) < 0 or not bool(purchased_inventory_item.get("sellable", false)):
+		push_error("Run inventory item details missed actual effects, behavior, sale price, or sellable status.")
 		quit(1)
 		return
 	app.call("close_run_inventory")

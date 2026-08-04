@@ -42,8 +42,8 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "map_destination",
     "trigger": {"depends_on": ["tutorial_open_map_corner"], "screen": "TRAVEL", "state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]},
-    "anchor": {"kind": "hud_element", "id": "map"},
-    "copy": "The corner store is the only first destination.",
+    "anchor": {"kind": "hud_element", "id": "travel:corner_store"},
+    "copy": "Corner Store is the only first stop; its card shows $0, time, and open state.",
     "completion": {"type": "anchored_action", "action_id": "travel:corner_store"},
     "gating": {"allowed_action_ids": ["travel:corner_store"]}
   },
@@ -56,7 +56,7 @@
     "trigger": {"depends_on": ["tutorial_travel_corner"], "environment_archetype": "corner_store", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "item:instant_coffee"},
     "copy": "Inspect the first shelf item.",
-    "completion": {"type": "anchored_action", "action_id": "item:instant_coffee"},
+    "completion": {"type": "anchored_action", "action_id": "focus:item:instant_coffee"},
     "gating": {"allowed_action_ids": ["item:instant_coffee"]}
   },
   {
@@ -68,7 +68,7 @@
     "trigger": {"depends_on": ["tutorial_inspect_coffee"], "environment_archetype": "corner_store", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "item:ledger_pencil"},
     "copy": "Inspect the second shelf item before buying.",
-    "completion": {"type": "anchored_action", "action_id": "item:ledger_pencil"},
+    "completion": {"type": "anchored_action", "action_id": "focus:item:ledger_pencil"},
     "gating": {"allowed_action_ids": ["item:ledger_pencil"]}
   },
   {
@@ -111,7 +111,7 @@
     "scope": "tutorial_run",
     "delivery": "dialogue",
     "dialogue_id": "tutorial_pal_guidance",
-    "dialogue_node": "family_phone",
+    "dialogue_node": "family_debt",
     "trigger": {"depends_on": ["tutorial_family_phone"], "environment_archetype": "corner_store", "state_predicates": [{"path": "run.debt_count", "op": "gte", "value": 1}]},
     "anchor": {"kind": "hud_element", "id": "debt"},
     "copy": "The accepted family loan now appears as real debt.",
@@ -148,8 +148,8 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "route_split",
     "trigger": {"depends_on": ["tutorial_route_map"], "screen": "TRAVEL", "state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]},
-    "anchor": {"kind": "hud_element", "id": "map"},
-    "copy": "Choose the recommended gas detour or skip straight underground.",
+    "anchor": {"kind": "hud_element", "id": "travel:gas_station_casino"},
+    "copy": "Gas Casino is recommended; Underground is the optional authored skip route.",
     "completion": {"type": "one_of_actions", "action_ids": ["travel:gas_station_casino", "travel:small_underground_casino"]},
     "gating": {"allowed_action_ids": ["travel:gas_station_casino", "travel:small_underground_casino"]}
   },
@@ -173,9 +173,15 @@
     "dialogue_node": "gas_xray",
     "trigger": {"depends_on": ["tutorial_gas_machine"], "environment_archetype": "gas_station_casino", "game_id": "pull_tabs", "state_predicates": []},
     "anchor": {"kind": "surface_action", "id": "pull_tab_buy"},
-    "copy": "Buy down to the X-ray-marked winner.",
+    "anchor_variants": [
+      {
+        "state_predicates": [{"path": "game.tray_count", "op": "gt", "value": 0}],
+        "anchor": {"kind": "surface_action", "id": "pull_tab_collect_tray"}
+      }
+    ],
+    "copy": "Read tickets left and total cost. Buy, then Collect until the winner drops.",
     "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.scripted_target_consumed", "op": "equals", "value": true}]},
-    "gating": {"allowed_action_ids": ["pull_tab_buy"]}
+    "gating": {"allowed_action_ids": ["pull_tab_buy", "pull_tab_collect_tray"]}
   },
   {
     "id": "tutorial_gas_peel",
@@ -185,8 +191,18 @@
     "dialogue_node": "gas_peel",
     "trigger": {"depends_on": ["tutorial_gas_xray_buy"], "environment_archetype": "gas_station_casino", "game_id": "pull_tabs", "state_predicates": []},
     "anchor": {"kind": "surface_action", "id": "pull_tab_reveal_next"},
-    "copy": "Peel the marked ticket and file the winner.",
-    "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.pending_payout", "op": "gt", "value": 0}]},
+    "anchor_variants": [
+      {
+        "state_predicates": [{"path": "game.tray_count", "op": "gt", "value": 0}],
+        "anchor": {"kind": "surface_action", "id": "pull_tab_collect_tray"}
+      },
+      {
+        "state_predicates": [{"path": "game.scripted_target_ready_to_file", "op": "equals", "value": true}],
+        "anchor": {"kind": "surface_action", "id": "pull_tab_file_ticket"}
+      }
+    ],
+    "copy": "Select, Peel all windows, File the winner, then verify it under Piles.",
+    "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.scripted_target_filed", "op": "equals", "value": true}]},
     "gating": {"allowed_action_ids": ["pull_tab_collect_tray", "pull_tab_reveal_next", "pull_tab_next_unopened", "pull_tab_file_ticket"]}
   },
   {
@@ -210,7 +226,7 @@
     "trigger": {"depends_on": ["tutorial_gas_leave_machine"], "environment_archetype": "gas_station_casino", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "game_hook:pull_tabs:ticket_redeemer"},
     "copy": "Redeem the winner at the pull-tab clerk.",
-    "completion": {"type": "state_predicate", "state_predicates": [{"path": "action.last_result_type", "op": "equals", "value": "pull_tab_redeem"}]},
+    "completion": {"type": "state_predicate", "state_predicates": [{"path": "action.last_action_id", "op": "equals", "value": "redeem_pull_tab_winners"}]},
     "gating": {"allowed_action_ids": ["game_hook:pull_tabs:ticket_redeemer", "ui:any"]}
   },
   {
@@ -232,7 +248,7 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "gas_depart",
     "trigger": {"depends_on": ["tutorial_gas_map_underground"], "screen": "TRAVEL", "state_predicates": []},
-    "anchor": {"kind": "hud_element", "id": "map"},
+    "anchor": {"kind": "hud_element", "id": "travel:small_underground_casino"},
     "copy": "Travel underground.",
     "completion": {"type": "anchored_action", "action_id": "travel:small_underground_casino"},
     "gating": {"allowed_action_ids": ["travel:small_underground_casino"]}
@@ -282,8 +298,8 @@
     "trigger": {"depends_on": ["tutorial_blackjack_clean_finish"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": []},
     "anchor": {"kind": "surface_action", "id": "surface_stake_up"},
     "copy": "Raise the next bet with an on-felt chip control.",
-    "completion": {"type": "anchored_action", "action_id": "surface_stake_up"},
-    "gating": {"allowed_action_ids": ["surface_stake_up"]}
+    "completion": {"type": "one_of_actions", "action_ids": ["surface_stake_up", "blackjack_chip"]},
+    "gating": {"allowed_action_ids": ["surface_stake_up", "blackjack_chip"]}
   },
   {
     "id": "tutorial_blackjack_raised_deal",
@@ -298,13 +314,24 @@
     "gating": {"allowed_action_ids": ["blackjack_deal"]}
   },
   {
+    "id": "tutorial_blackjack_heat_precheck",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "heat_before_cheat",
+    "trigger": {"depends_on": ["tutorial_blackjack_raised_deal"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": []},
+    "anchor": {"kind": "hud_element", "id": "heat"},
+    "copy": "Understand Heat before trying a table cheat.",
+    "completion": {"type": "explicit_ok"}
+  },
+  {
     "id": "tutorial_blackjack_lookaway",
     "scope": "tutorial_run",
     "delivery": "dialogue",
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "blackjack_lookaway",
-    "trigger": {"depends_on": ["tutorial_blackjack_raised_deal"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": []},
-    "anchor": {"kind": "surface_action", "id": "blackjack_distraction"},
+    "trigger": {"depends_on": ["tutorial_blackjack_heat_precheck"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "blackjack_distraction:drink_pass"},
     "copy": "Trigger the existing table distraction to open a lookaway.",
     "completion": {"type": "anchored_action", "action_id": "blackjack_distraction"},
     "gating": {"allowed_action_ids": ["blackjack_distraction"]}
@@ -328,10 +355,10 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "blackjack_count_start",
     "trigger": {"depends_on": ["tutorial_blackjack_peek"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": []},
-    "anchor": {"kind": "surface_action", "id": "blackjack_count"},
+    "anchor": {"kind": "surface_action", "id": "blackjack_count_toggle"},
     "copy": "Start the real count challenge.",
-    "completion": {"type": "anchored_action", "action_id": "blackjack_count"},
-    "gating": {"allowed_action_ids": ["blackjack_count"]}
+    "completion": {"type": "one_of_actions", "action_ids": ["blackjack_count", "blackjack_count_toggle"]},
+    "gating": {"allowed_action_ids": ["blackjack_count", "blackjack_count_toggle"]}
   },
   {
     "id": "tutorial_blackjack_count_all",
@@ -351,7 +378,7 @@
     "delivery": "dialogue",
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "heat",
-    "trigger": {"depends_on": ["tutorial_underground_table"], "environment_archetype": "small_underground_casino", "state_predicates": [{"path": "run.heat_gain_count", "op": "gte", "value": 1}]},
+    "trigger": {"depends_on": ["tutorial_blackjack_count_start"], "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": [{"path": "game.count_answered", "op": "equals", "value": true}, {"path": "game.count_perfect", "op": "equals", "value": false}]},
     "anchor": {"kind": "hud_element", "id": "heat"},
     "copy": "Pal flags the first heat gain and its terminal risk.",
     "completion": {"type": "explicit_ok"}
@@ -399,7 +426,7 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "grand_depart",
     "trigger": {"depends_on": ["tutorial_pal_goodbye_map"], "screen": "TRAVEL", "state_predicates": []},
-    "anchor": {"kind": "hud_element", "id": "map"},
+    "anchor": {"kind": "hud_element", "id": "travel:grand_casino"},
     "copy": "Travel to the Grand Casino.",
     "completion": {"type": "anchored_action", "action_id": "travel:grand_casino"},
     "gating": {"allowed_action_ids": ["travel:grand_casino"]}
@@ -482,8 +509,9 @@
     "dialogue_node": "shop",
     "trigger": {"depends_on": ["tutorial_buy_cage_chips"], "environment_archetype": "grand_casino_cage", "state_predicates": [{"path": "run.grand_casino_chips", "op": "gt", "value": 0}]},
     "anchor": {"kind": "interactable_object", "id": "casino_fixture:cage_gift_shop"},
-    "copy": "Vivienne points out that the Cage shop also spends chips.",
-    "completion": {"type": "explicit_ok"}
+    "copy": "Select the chip-priced gift case and read one offer; purchase is optional.",
+    "completion": {"type": "anchored_action", "action_id": "focus:casino_fixture:cage_gift_shop"},
+    "gating": {"allowed_action_ids": ["focus:casino_fixture:cage_gift_shop", "casino_fixture:cage_gift_shop"]}
   },
   {
     "id": "tutorial_return_main_floor",
@@ -517,7 +545,7 @@
     "dialogue_node": "table_play",
     "trigger": {"depends_on": ["tutorial_enter_grand_table"], "environment_archetype": "grand_casino", "game_id": "blackjack", "state_predicates": []},
     "anchor": {"kind": "hud_element", "id": "objective"},
-    "copy": "Play freely until the compressed Bronze qualification is ready.",
+    "copy": "Bronze needs 1 Grand table game: play until progress changes from 0/1 to 1/1.",
     "completion": {"type": "state_predicate", "state_predicates": [{"path": "run.players_card_ready_to_claim", "op": "equals", "value": true}]},
     "gating": {"allowed_action_ids": ["*"]}
   },

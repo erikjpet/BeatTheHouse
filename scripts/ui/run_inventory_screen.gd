@@ -400,6 +400,12 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 	_add_section_header("What It Does", "Read before you move or equip it.")
 	_add_attribute_badges(item)
 	_add_collection_float_rows(item)
+	var behavior_summary := str(item.get("behavior_summary", "")).strip_edges()
+	if not behavior_summary.is_empty():
+		FoundationWidgets.add_detail_row(_detail_box, "Behavior", behavior_summary)
+	var effect_summary := str(item.get("effect_summary", "")).strip_edges()
+	if not effect_summary.is_empty():
+		FoundationWidgets.add_detail_row(_detail_box, "Effect", effect_summary)
 	var description := str(item.get("description", "")).strip_edges()
 	_detail_box.add_child(FoundationWidgets.label(description if not description.is_empty() else "No description is available yet.", 12))
 	if _item_is_portable_ticket_pile(item):

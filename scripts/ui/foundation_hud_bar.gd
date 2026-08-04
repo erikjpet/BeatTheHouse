@@ -141,6 +141,28 @@ func current_snapshot() -> Dictionary:
 	return snapshot
 
 
+# Returns the rectangle of the control the player actually sees. Tutorial
+# focus must never target the hidden legacy status label that predates this HUD.
+func global_rect_for_element(element_id: String) -> Rect2:
+	var control: Control
+	match element_id.strip_edges().to_lower():
+		"heat":
+			control = heat_meter
+		"chips":
+			control = chips_chip
+		"clock":
+			control = time_button
+		"debt":
+			control = status_tray
+		_:
+			control = self
+	if control != null and control.is_visible_in_tree():
+		var rect := control.get_global_rect()
+		if rect.has_area():
+			return rect
+	return get_global_rect() if is_visible_in_tree() else Rect2()
+
+
 func _build() -> void:
 	var row := HBoxContainer.new()
 	run_bar = row

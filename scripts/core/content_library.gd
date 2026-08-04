@@ -1018,6 +1018,7 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 		"tutorial_event_chain_chances": true,
 		"tutorial_pull_tab_xray_offset": true,
 		"tutorial_initial_map_targets": true,
+		"tutorial_travel_cost_overrides": true,
 		"tutorial_environment_overrides": true,
 	}
 	for key_value in modifiers.keys():
@@ -1050,6 +1051,17 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 		_validate_id_references("challenges %s modifiers.home_archetype_id" % challenge_id, [modifiers.get("home_archetype_id", "")], environment_ids)
 	if modifiers.has("tutorial_initial_map_targets"):
 		_validate_id_references("challenges %s modifiers.tutorial_initial_map_targets" % challenge_id, modifiers.get("tutorial_initial_map_targets", []), environment_ids)
+	if modifiers.has("tutorial_travel_cost_overrides"):
+		var travel_costs_value: Variant = modifiers.get("tutorial_travel_cost_overrides", {})
+		if typeof(travel_costs_value) != TYPE_DICTIONARY:
+			validation_errors.append("challenges %s modifiers.tutorial_travel_cost_overrides must be a dictionary." % challenge_id)
+		else:
+			for environment_id_value in (travel_costs_value as Dictionary).keys():
+				var environment_id := str(environment_id_value).strip_edges()
+				_validate_id_references("challenges %s modifiers.tutorial_travel_cost_overrides" % challenge_id, [environment_id], environment_ids)
+				var cost_value: Variant = (travel_costs_value as Dictionary).get(environment_id_value)
+				if not _variant_is_number(cost_value) or int(cost_value) < 0:
+					validation_errors.append("challenges %s modifiers.tutorial_travel_cost_overrides.%s must be a non-negative number." % [challenge_id, environment_id])
 	for map_key in ["tutorial_forced_event_choices", "tutorial_event_chain_chances"]:
 		if modifiers.has(map_key) and typeof(modifiers.get(map_key)) != TYPE_DICTIONARY:
 			validation_errors.append("challenges %s modifiers.%s must be a dictionary." % [challenge_id, map_key])
@@ -2407,6 +2419,7 @@ func _validate_tutorial_lesson_definitions() -> void:
 				validation_errors.append("tutorial_lessons %s depends on unknown lesson id: %s" % [lesson_id, dependency_id])
 		_validate_tutorial_state_predicates(lesson_id, trigger.get("state_predicates", []))
 		_validate_tutorial_anchor(lesson_id, lesson.get("anchor", {}))
+		_validate_tutorial_anchor_variants(lesson_id, lesson.get("anchor_variants", []))
 		_validate_tutorial_completion(lesson_id, lesson.get("completion", {}), lesson.get("anchor", {}))
 		_validate_tutorial_gating(lesson_id, lesson.get("gating", null))
 		var delivery := str(lesson.get("delivery", "coach")).strip_edges().to_lower()
@@ -2462,8 +2475,29 @@ func _validate_tutorial_anchor(lesson_id: String, value: Variant) -> void:
 		return
 	if kind != "none" and str(anchor.get("id", "")).strip_edges().is_empty():
 		validation_errors.append("tutorial_lessons %s anchor %s is missing id." % [lesson_id, kind])
-	elif kind == "hud_element" and not TUTORIAL_HUD_ANCHOR_KEYS.has(str(anchor.get("id", "")).strip_edges()):
-		validation_errors.append("tutorial_lessons %s anchor references unknown HUD key: %s" % [lesson_id, str(anchor.get("id", ""))])
+	elif kind == "hud_element":
+		var anchor_id := str(anchor.get("id", "")).strip_edges()
+		var travel_node_anchor := anchor_id.begins_with("travel:") and not anchor_id.trim_prefix("travel:").is_empty()
+		if not TUTORIAL_HUD_ANCHOR_KEYS.has(anchor_id) and not travel_node_anchor:
+			validation_errors.append("tutorial_lessons %s anchor references unknown HUD key: %s" % [lesson_id, anchor_id])
+
+
+func _validate_tutorial_anchor_variants(lesson_id: String, value: Variant) -> void:
+	if typeof(value) != TYPE_ARRAY:
+		validation_errors.append("tutorial_lessons %s anchor_variants must be an array." % lesson_id)
+		return
+	for index in range((value as Array).size()):
+		var variant_value: Variant = (value as Array)[index]
+		if typeof(variant_value) != TYPE_DICTIONARY:
+			validation_errors.append("tutorial_lessons %s anchor_variants[%d] must be a dictionary." % [lesson_id, index])
+			continue
+		var variant: Dictionary = variant_value
+		var predicates: Variant = variant.get("state_predicates", [])
+		if typeof(predicates) != TYPE_ARRAY or (predicates as Array).is_empty():
+			validation_errors.append("tutorial_lessons %s anchor_variants[%d] requires state_predicates." % [lesson_id, index])
+		else:
+			_validate_tutorial_state_predicates("%s anchor_variants[%d]" % [lesson_id, index], predicates)
+		_validate_tutorial_anchor("%s anchor_variants[%d]" % [lesson_id, index], variant.get("anchor", {}))
 
 
 func _validate_tutorial_completion(lesson_id: String, value: Variant, anchor_value: Variant) -> void:
