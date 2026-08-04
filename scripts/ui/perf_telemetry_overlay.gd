@@ -129,6 +129,7 @@ func configure(owner: FoundationMain) -> void:
 		"ticks_msec": created_msec,
 		"plan": plan_id,
 		"sample_stride_frames": sample_stride_frames,
+		"web_thread_feature": OS.has_feature("threads"),
 	})
 	if plan_id == "l02":
 		call_deferred("_run_l02_plan")

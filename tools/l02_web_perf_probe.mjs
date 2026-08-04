@@ -21,6 +21,7 @@ const timeoutMs = Number(args.timeoutMs ?? args["timeout-ms"] ?? 900000);
 const cpuRate = Number(args.cpu ?? 1);
 const chromePath = resolveChromePath(String(args.chromePath ?? args["chrome-path"] ?? ""));
 const coldCache = boolArg(args.coldCache ?? args["cold-cache"] ?? false);
+const readyOnly = boolArg(args.readyOnly ?? args["ready-only"] ?? false);
 
 if (coldCache && fs.existsSync(profileDir)) {
   fs.rmSync(profileDir, { recursive: true, force: true });
@@ -49,6 +50,7 @@ let ready = null;
 const started = Date.now();
 let navigationStarted = 0;
 let readyPageMsec = 0;
+const startupConsole = [];
 
 try {
   context = await browserType.launchPersistentContext(profileDir, launchOptions);
@@ -69,6 +71,9 @@ try {
   });
   page.on("console", (message) => {
     const text = message.text();
+    if (message.type() === "warning" || message.type() === "error" || text.includes("Blocking on the main thread")) {
+      startupConsole.push({ type: message.type(), text, wall_msec: Date.now() - started });
+    }
     if (text.startsWith("__BTH_READY_PAGE_MSEC__ ")) {
       readyPageMsec = Number(text.slice("__BTH_READY_PAGE_MSEC__ ".length)) || 0;
     } else if (text.startsWith("BTH_PERF_READY ")) {
@@ -90,14 +95,34 @@ try {
   navigationStarted = Date.now();
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
   const deadline = Date.now() + timeoutMs;
-  while (report === null && Date.now() < deadline) {
+  while ((readyOnly ? ready === null : report === null) && Date.now() < deadline) {
     await page.waitForTimeout(1000);
   }
-  if (report === null) {
-    throw new Error(`Timed out after ${timeoutMs}ms waiting for BTH_PERF_REPORT.`);
+  if (readyOnly ? ready === null : report === null) {
+    const marker = readyOnly ? "BTH_PERF_READY" : "BTH_PERF_REPORT";
+    throw new Error(`Timed out after ${timeoutMs}ms waiting for ${marker}.`);
   }
   const userAgent = await page.evaluate(() => navigator.userAgent);
   const browserVersion = context.browser()?.version?.() ?? browserName;
+  const startupTiming = await page.evaluate(() => ({
+    now_msec: performance.now(),
+    navigation: performance.getEntriesByType("navigation").map((entry) => ({
+      dom_content_loaded_msec: entry.domContentLoadedEventEnd,
+      load_msec: entry.loadEventEnd,
+      response_end_msec: entry.responseEnd,
+      transfer_bytes: entry.transferSize,
+      encoded_bytes: entry.encodedBodySize,
+    })),
+    resources: performance.getEntriesByType("resource").map((entry) => ({
+      name: entry.name.split("/").pop(),
+      start_msec: entry.startTime,
+      duration_msec: entry.duration,
+      response_end_msec: entry.responseEnd,
+      transfer_bytes: entry.transferSize,
+      encoded_bytes: entry.encodedBodySize,
+      decoded_bytes: entry.decodedBodySize,
+    })).sort((left, right) => right.duration_msec - left.duration_msec),
+  }));
   const output = {
     browser: browserName,
     browser_version: browserVersion,
@@ -105,12 +130,15 @@ try {
     cpu_throttle_rate: cpuRate,
     url,
     cold_cache: coldCache,
+    ready_only: readyOnly,
     ready,
+    startup_timing: startupTiming,
+    startup_console: startupConsole,
     wall_msec: Date.now() - started,
     report,
   };
   fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
-  console.log(`L0.2 web perf report written to ${outputPath}`);
+  console.log(`${readyOnly ? "Web startup" : "L0.2 web perf"} report written to ${outputPath}`);
 } finally {
   if (context) {
     await context.close();
