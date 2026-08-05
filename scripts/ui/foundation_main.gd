@@ -5588,7 +5588,6 @@ func _apply_talk_dock_environment_reserve() -> void:
 	if environment_canvas != null:
 		environment_canvas.set_reserved_overlay_rect(reserved_rect)
 	if world_map_overlay_controller != null:
-		world_map_overlay_controller.set_reserved_overlay_global_rect(reserved_rect)
 		if _world_map_overlay_is_visible():
 			_position_world_map_detail_popup(_world_map_snapshot())
 			_sync_coach_world_map_anchor_geometry(false)
@@ -13645,6 +13644,56 @@ func _world_map_title_text(current_label: String) -> String:
 func _position_world_map_detail_popup(snapshot: Dictionary) -> void:
 	_ensure_world_map_overlay_controller()
 	world_map_overlay_controller.position_detail_popup(snapshot)
+	_position_world_map_detail_popup_clear_of_talk_dock()
+
+
+func _position_world_map_detail_popup_clear_of_talk_dock() -> void:
+	if world_map_detail_popup == null or world_map_holder == null or talk_dock == null:
+		return
+	if not world_map_detail_popup.visible or not talk_dock.visible:
+		return
+	var reserved_global_rect := talk_dock.environment_reserved_global_rect()
+	var popup_global_rect := world_map_detail_popup.get_global_rect()
+	if not reserved_global_rect.has_area() or not popup_global_rect.intersects(reserved_global_rect):
+		return
+	var holder_global_rect := world_map_holder.get_global_rect()
+	var holder_size := world_map_holder.size
+	var popup_size := world_map_detail_popup.size
+	var margin := VisualStyle.SPACE_2
+	var reserved_local_rect := Rect2(reserved_global_rect.position - holder_global_rect.position, reserved_global_rect.size)
+	var current_rect := Rect2(world_map_detail_popup.position, popup_size)
+	var candidates: Array[Rect2] = []
+	if reserved_local_rect.get_center().x <= holder_size.x * 0.5:
+		candidates.append(Rect2(Vector2(reserved_local_rect.end.x + margin, current_rect.position.y), popup_size))
+	else:
+		candidates.append(Rect2(Vector2(reserved_local_rect.position.x - popup_size.x - margin, current_rect.position.y), popup_size))
+	candidates.append(Rect2(Vector2(current_rect.position.x, reserved_local_rect.position.y - popup_size.y - margin), popup_size))
+	var bounds := Rect2(Vector2(margin, margin), holder_size - Vector2(margin * 2.0, margin * 2.0))
+	var best_rect := current_rect
+	var best_overlap := _rect_overlap_area(current_rect, reserved_local_rect)
+	var best_movement := 0.0
+	for candidate in candidates:
+		var clamped := Rect2(
+			Vector2(
+				clampf(candidate.position.x, bounds.position.x, maxf(bounds.position.x, bounds.end.x - popup_size.x)),
+				clampf(candidate.position.y, bounds.position.y, maxf(bounds.position.y, bounds.end.y - popup_size.y))
+			),
+			popup_size
+		)
+		var overlap := _rect_overlap_area(clamped, reserved_local_rect)
+		var movement := clamped.position.distance_squared_to(current_rect.position)
+		if overlap < best_overlap or (is_equal_approx(overlap, best_overlap) and movement < best_movement):
+			best_rect = clamped
+			best_overlap = overlap
+			best_movement = movement
+	world_map_detail_popup.position = Vector2(roundf(best_rect.position.x), roundf(best_rect.position.y))
+
+
+func _rect_overlap_area(first: Rect2, second: Rect2) -> float:
+	if not first.has_area() or not second.has_area() or not first.intersects(second):
+		return 0.0
+	var intersection := first.intersection(second)
+	return intersection.size.x * intersection.size.y
 
 
 func _refresh_world_map_detail() -> void:
