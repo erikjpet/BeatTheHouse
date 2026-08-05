@@ -1299,6 +1299,11 @@ func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environme
 func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
 	if action_id != "play_basic" and action_id != "blackjack_place_bet":
 		return 0
+	# Rourke's fixed ante belongs to the duel's internal player/Rourke stacks.
+	# Charging the normal cash/chip wager again at hand settlement can reject a
+	# completed hand and leave the player trapped behind the SETTLE control.
+	if _is_rourke_duel(run_state, environment):
+		return 0
 	var table: Dictionary = _table_state(run_state, environment)
 	if bool(table.get("barred", false)):
 		return 0

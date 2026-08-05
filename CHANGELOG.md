@@ -110,6 +110,9 @@ and tagging remain pending.
 - Rebalances Buffalo free games on the 5x4 and 6x5 cabinets so large boards
   generate fewer gold tokens and cannot retrigger past 28 total spins, while
   preserving the classic 3-reel math and terminal full-board Grand result.
+- Fixes Rourke duel hands becoming trapped on SETTLE after a hit to 21 by
+  keeping the fixed ante inside the duel stacks instead of charging the
+  player's ordinary cash or casino chips again at settlement.
 
 Current evidence is recorded in `docs/plans/tutorial_completion_report.md`,
 `docs/plans/0.5_performance_audit.md`, and

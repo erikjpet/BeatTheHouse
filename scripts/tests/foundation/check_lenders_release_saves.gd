@@ -1848,6 +1848,46 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 			failures.append("Rourke boss surface did not deal a playable deterministic blackjack hand.")
 		if JSON.stringify(_save_load_canonical_value([dealt_ui.get("player_hands", []), dealt_ui.get("dealer_cards", []), win_run.grand_casino_duel_status().get("edge_schedule", [])])) != JSON.stringify(_save_load_canonical_value([replay_ui.get("player_hands", []), replay_ui.get("dealer_cards", []), replay_run.grand_casino_duel_status().get("edge_schedule", [])])):
 			failures.append("Identical Rourke duel seeds/actions did not reproduce hands and edge schedule.")
+		var hit_run: RunState = RunStateScript.new()
+		hit_run.from_dict(win_run.to_dict())
+		hit_run.bankroll = 0
+		hit_run.grand_casino_chips = 0
+		var hit_ui := _copy_dict(dealt_ui)
+		hit_ui["boss_duel_session"] = true
+		hit_ui["selected_stake"] = int(duel_state.get("ante", 20))
+		hit_ui["locked_stake"] = int(duel_state.get("ante", 20))
+		hit_ui["active_hand_index"] = 0
+		hit_ui["moves_made"] = false
+		hit_ui["round_terminal"] = false
+		hit_ui["settlement_pending"] = false
+		hit_ui["settlement_count_revealed"] = false
+		hit_ui["counting_enabled"] = false
+		hit_ui["count_challenge"] = {}
+		hit_ui["dealer_hole_visible"] = false
+		hit_ui["dealer_cards"] = [{"rank": 9, "suit": 0, "deck": 0}, {"rank": 7, "suit": 1, "deck": 0}]
+		hit_ui["player_hands"] = [{
+			"cards": [{"rank": 10, "suit": 2, "deck": 0}, {"rank": 5, "suit": 3, "deck": 0}],
+			"stood": false,
+			"doubled": false,
+			"split": false,
+			"blackjack_eligible": true,
+			"wager_multiplier": 1,
+		}]
+		hit_ui["shoe"] = [{"rank": 6, "suit": 0, "deck": 0}, {"rank": 2, "suit": 1, "deck": 0}]
+		hit_ui["shoe_refilled_during_hand"] = true
+		hit_run.persist_grand_casino_duel_session(hit_ui)
+		var hit_hands_before := _copy_array(hit_run.grand_casino_duel_status().get("hands", [])).size()
+		var hit_command := game.surface_action_command("blackjack_hit", 0, false, hit_ui, hit_run, hit_run.current_environment)
+		var hit_command_ui := _copy_dict(hit_command.get("ui_state", {}))
+		if str(hit_command.get("action_id", "")) != "play_basic" or not bool(hit_command.get("resolve", false)) or not bool(hit_command_ui.get("settlement_pending", false)):
+			failures.append("Rourke hit-to-21 did not produce an immediately settleable hand: %s." % JSON.stringify(hit_command))
+		elif game.wager_cost_for_context("play_basic", int(duel_state.get("ante", 20)), hit_run, hit_run.current_environment, hit_command_ui) != 0:
+			failures.append("Rourke hit-to-21 settlement incorrectly requested another cash/chip ante.")
+		else:
+			var hit_result := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), hit_run, hit_run.current_environment, hit_run.create_rng("duel_hit_21_unused"), hit_command_ui)
+			var hit_hands_after := _copy_array(hit_run.grand_casino_duel_status().get("hands", [])).size()
+			if not bool(hit_result.get("ok", false)) or hit_hands_after != hit_hands_before + 1:
+				failures.append("Rourke hit-to-21 SETTLE path did not advance exactly one duel hand: result=%s state=%s." % [JSON.stringify(hit_result), JSON.stringify(hit_run.grand_casino_duel_status())])
 		var double_run: RunState = RunStateScript.new()
 		double_run.from_dict(win_run.to_dict())
 		var double_ui := _copy_dict(dealt_ui)
