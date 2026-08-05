@@ -13280,8 +13280,9 @@ func _refresh_active_item_slot() -> void:
 		active_item_button.tooltip_text = "Click to choose an active item from inventory."
 		return
 	var display_name := str(item.get("display_name", item.get("id", "Item")))
-	active_item_button.text = "Use: %s" % display_name.left(16)
-	active_item_button.tooltip_text = "%s\nClick to use this active item." % str(item.get("description", "Use active item."))
+	var compact_name := display_name if display_name.length() <= 12 else "%s..." % display_name.left(9)
+	active_item_button.text = "Use: %s" % compact_name
+	active_item_button.tooltip_text = "%s\n%s\nClick to use this active item." % [display_name, str(item.get("description", "Use active item."))]
 	active_item_button.icon = _run_item_texture_for_asset_path(str(item.get("asset_path", "")))
 
 

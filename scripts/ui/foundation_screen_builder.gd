@@ -196,7 +196,11 @@ static func build_run_screen(host: Variant) -> void:
 	host.top_inventory_button.tooltip_text = "Inspect current run items."
 	hud_row.add_child(host.top_inventory_button)
 	host.active_item_button = host._hud_nav_button("Use Item: Empty", Callable(host, "use_active_item_slot"))
-	host.active_item_button.custom_minimum_size = Vector2(VisualStyle.SPACE_9 * 3.0 + VisualStyle.SPACE_8, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	# Keep the action cluster on one line even when the Grand Casino HUD adds
+	# its chips meter. Button content otherwise expands past this width and the
+	# HFlowContainer wraps the active item below the clipped HUD panel.
+	host.active_item_button.custom_minimum_size = Vector2(VisualStyle.SPACE_9 * 5.0 + VisualStyle.SPACE_6, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	host.active_item_button.clip_text = true
 	host.active_item_button.tooltip_text = "Use or choose the equipped active item."
 	hud_row.add_child(host.active_item_button)
 	host.status_label = host._label("", VisualStyle.TYPE_BODY_LARGE)
