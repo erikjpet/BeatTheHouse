@@ -44,6 +44,7 @@ const META_LOCATION_HOME := "home"
 const META_LOCATION_START_RUN := "start_run"
 const RUN_INFO_BAND_RATIO := 0.10
 const RUN_INFO_MIN_HEIGHT := 72.0
+const RUN_HUD_COMPACT_MAX_WIDTH := 1280.0
 const ENVIRONMENT_CANVAS_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_FOCUSED_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_PREVIEW_MIN_SIZE := Vector2.ZERO
@@ -6292,7 +6293,7 @@ func _refresh_after_embedded_game_action() -> void:
 		objective_label.text = str(hud_model.get("objective_text", ""))
 	if structured_hud != null:
 		structured_hud.set_reduce_motion(_reduce_motion_enabled())
-		structured_hud.set_compact_mode(_small_screen_enabled())
+		structured_hud.set_compact_mode(_compact_run_hud_enabled())
 		structured_hud.render(hud_model)
 	_style_hud_for_recent_consequence()
 	if save_status_label != null:
@@ -6381,7 +6382,7 @@ func _render_environment_screen() -> void:
 		objective_label.text = str(hud_model.get("objective_text", ""))
 	if structured_hud != null:
 		structured_hud.set_reduce_motion(_reduce_motion_enabled())
-		structured_hud.set_compact_mode(_small_screen_enabled())
+		structured_hud.set_compact_mode(_compact_run_hud_enabled())
 		structured_hud.render(hud_model)
 	if environment_header != null:
 		environment_header.render(run_state.current_environment, str(hud_model.get("goal_text", "")))
@@ -13280,8 +13281,9 @@ func _refresh_active_item_slot() -> void:
 		active_item_button.tooltip_text = "Click to choose an active item from inventory."
 		return
 	var display_name := str(item.get("display_name", item.get("id", "Item")))
-	active_item_button.text = "Use: %s" % display_name.left(16)
-	active_item_button.tooltip_text = "%s\nClick to use this active item." % str(item.get("description", "Use active item."))
+	var compact_name := display_name if display_name.length() <= 12 else "%s..." % display_name.left(9)
+	active_item_button.text = "Use: %s" % compact_name
+	active_item_button.tooltip_text = "%s\n%s\nClick to use this active item." % [display_name, str(item.get("description", "Use active item."))]
 	active_item_button.icon = _run_item_texture_for_asset_path(str(item.get("asset_path", "")))
 
 
@@ -13889,6 +13891,15 @@ func _accessibility_control_scale() -> float:
 
 func _small_screen_enabled() -> bool:
 	return user_settings != null and user_settings.play_on_small_screen
+
+
+func _compact_run_hud_enabled() -> bool:
+	if _small_screen_enabled():
+		return true
+	var width := run_screen.size.x if run_screen != null else 0.0
+	if width <= 0.0 and is_inside_tree():
+		width = get_viewport_rect().size.x
+	return width > 0.0 and width <= RUN_HUD_COMPACT_MAX_WIDTH
 
 
 func _refresh_coach_at_boundary() -> void:

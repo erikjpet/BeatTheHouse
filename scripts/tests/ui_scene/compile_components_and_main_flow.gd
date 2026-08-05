@@ -1362,6 +1362,40 @@ func _check_shared_selection_popup_text_flow(app: Control) -> bool:
 	if active_item_button.text.find("Use:") == -1 or active_item_button.text.find("Cumquat") == -1:
 		push_error("Active-item top-bar use slot did not identify the equipped item: %s" % active_item_button.text)
 		return false
+	var original_environment := run_state.current_environment.duplicate(true)
+	var original_chips := run_state.grand_casino_chips
+	run_state.current_environment["id"] = "ui_active_item_grand_casino"
+	run_state.current_environment["archetype_id"] = "grand_casino"
+	run_state.current_environment["world_node_id"] = "grand_casino"
+	run_state.current_environment["display_name"] = "Grand Casino"
+	run_state.current_environment["kind"] = "casino"
+	run_state.grand_casino_chips = 500
+	app.call("_refresh")
+	await process_frame
+	await process_frame
+	var run_hud_panel := app.get("run_hud_panel") as Control
+	var panel_rect := run_hud_panel.get_global_rect() if run_hud_panel != null else Rect2()
+	var active_rect := active_item_button.get_global_rect()
+	var active_rect_end := active_rect.position + active_rect.size - Vector2.ONE
+	if run_hud_panel == null \
+		or not active_item_button.is_visible_in_tree() \
+		or not panel_rect.has_point(active_rect.position) \
+		or not panel_rect.has_point(active_rect_end) \
+		or active_rect.size.y < 44.0:
+		push_error("Grand Casino HUD clipped or hid the active-item control: panel=%s active=%s." % [str(panel_rect), str(active_rect)])
+		return false
+	active_item_button.emit_signal("pressed")
+	await process_frame
+	await process_frame
+	var button_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if str(button_popup.get("popup_type", "")) != "active_item_confirmation":
+		push_error("Visible Grand Casino active-item control did not open its use prompt: %s." % JSON.stringify(button_popup))
+		return false
+	app.call("cancel_pending_active_item_use")
+	run_state.current_environment = original_environment
+	run_state.grand_casino_chips = original_chips
+	app.call("_refresh")
+	await process_frame
 	var stable_size := Vector2.ZERO
 	for open_index in range(3):
 		if not bool(app.call("use_active_item_slot")):
