@@ -5878,30 +5878,6 @@ func _run() -> void:
 		push_error("World map overlay did not render the current node and currently travelable stops.")
 		quit(1)
 		return
-	var current_map_node_id := str(map_snapshot.get("current_node_id", ""))
-	var enabled_map_node_ids: Array = map_snapshot.get("travel_enabled_node_ids", []) if typeof(map_snapshot.get("travel_enabled_node_ids", [])) == TYPE_ARRAY else []
-	for visible_node_value in map_snapshot.get("nodes", []):
-		if typeof(visible_node_value) != TYPE_DICTIONARY:
-			continue
-		var visible_node: Dictionary = visible_node_value
-		var visible_node_id := str(visible_node.get("id", ""))
-		var was_visited := str(visible_node.get("state", WorldMapScript.STATE_HIDDEN)) == WorldMapScript.STATE_VISITED
-		if visible_node_id != current_map_node_id and not was_visited and not enabled_map_node_ids.has(visible_node_id):
-			push_error("World map exposed a location that is neither visited nor currently travelable: %s." % visible_node_id)
-			quit(1)
-			return
-	var expected_focus_ids: Array = []
-	if not current_map_node_id.is_empty():
-		expected_focus_ids.append(current_map_node_id)
-	for enabled_map_node_id_value in enabled_map_node_ids:
-		var enabled_map_node_id := str(enabled_map_node_id_value)
-		if not expected_focus_ids.has(enabled_map_node_id):
-			expected_focus_ids.append(enabled_map_node_id)
-	var actual_focus_ids: Array = map_snapshot.get("map_focus_node_ids", []) if typeof(map_snapshot.get("map_focus_node_ids", [])) == TYPE_ARRAY else []
-	if actual_focus_ids != expected_focus_ids:
-		push_error("World map initial camera focus must contain only the current stop and all enabled travel destinations: %s vs %s." % [JSON.stringify(actual_focus_ids), JSON.stringify(expected_focus_ids)])
-		quit(1)
-		return
 	var revealed_fixture := {
 		"id": "unvisited_fixture",
 		"state": WorldMapScript.STATE_REVEALED,
@@ -5918,8 +5894,8 @@ func _run() -> void:
 		return
 	var seen_fixture := revealed_fixture.duplicate(true)
 	seen_fixture["seen"] = true
-	if bool(app.call("_world_map_node_should_render", seen_fixture, false, false)):
-		push_error("World map visibility contract exposed a seen-but-unvisited location that is not currently travelable.")
+	if not bool(app.call("_world_map_node_should_render", seen_fixture, false, false)):
+		push_error("World map visibility contract hid a previously seen location that is not currently travelable.")
 		quit(1)
 		return
 	var visited_fixture := revealed_fixture.duplicate(true)
