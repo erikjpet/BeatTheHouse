@@ -111,12 +111,36 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 	var video_free_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")
 	var classic_free: Dictionary = buffalo.open_feature(classic_free_machine, {"classification": "free_games"}, 10, run_state.create_rng("buffalo_classic_free_balance"), definition)
 	var video_free: Dictionary = buffalo.open_feature(video_free_machine, {"classification": "free_games"}, 10, run_state.create_rng("buffalo_video_free_balance"), definition)
+	var line_free_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "line_5x3", "standard", "plain")
+	var line_free: Dictionary = buffalo.open_feature(line_free_machine, {"classification": "free_games"}, 10, run_state.create_rng("buffalo_line_free_balance"), definition)
 	if int(classic_free.get("remaining_steps", 0)) <= int(video_free.get("remaining_steps", 0)):
 		failures.append("Slot buffalo 3x1 feature did not receive more starting free spins than the 6x5 feature.")
 	if int(classic_free.get("retrigger_threshold", 0)) >= int(video_free.get("retrigger_threshold", 0)):
 		failures.append("Slot buffalo 3x1 feature did not have the more attainable retrigger threshold.")
 	if int(video_free.get("retrigger_grant", 0)) >= int(classic_free.get("retrigger_grant", 0)):
 		failures.append("Slot buffalo 6x5 feature retrigger still granted as many spins as the 3x1 feature.")
+	if int(line_free.get("max_total_steps", 0)) >= 30 or int(video_free.get("max_total_steps", 0)) >= 30:
+		failures.append("Slot buffalo large-board free games can still grow to 30 or more spins.")
+	var classic_gold_grid := [["GOLD_TOKEN"], ["GOLD_TOKEN"], ["GOLD_TOKEN"]]
+	var classic_gold_rng: RngStream = run_state.create_rng("buffalo_classic_gold_unchanged")
+	var classic_rng_before := classic_gold_rng.snapshot()
+	buffalo.call("_balance_large_free_game_gold", classic_free_machine, classic_free, classic_gold_grid, classic_gold_rng)
+	if classic_gold_grid != [["GOLD_TOKEN"], ["GOLD_TOKEN"], ["GOLD_TOKEN"]] or classic_gold_rng.snapshot() != classic_rng_before:
+		failures.append("Slot buffalo large-board gold rebalance changed the classic 3-reel grid or RNG stream.")
+	var line_gold_grid: Array = []
+	for _reel in range(5):
+		line_gold_grid.append(["GOLD_TOKEN", "GOLD_TOKEN", "GOLD_TOKEN", "GOLD_TOKEN"])
+	line_gold_grid[4][3] = "BUFFALO"
+	var line_gold_balance: Dictionary = buffalo.call("_balance_large_free_game_gold", line_free_machine, line_free, line_gold_grid, run_state.create_rng("buffalo_line_gold_limit"))
+	if SlotRngMath.count_symbol(line_gold_grid, "GOLD_TOKEN") > 2 or int(line_gold_balance.get("suppressed", 0)) <= 0:
+		failures.append("Slot buffalo 5x4 free games did not suppress the large-board gold flood.")
+	var video_gold_grid: Array = []
+	for _reel in range(6):
+		video_gold_grid.append(["GOLD_TOKEN", "GOLD_TOKEN", "GOLD_TOKEN", "GOLD_TOKEN", "GOLD_TOKEN"])
+	video_gold_grid[5][4] = "BUFFALO"
+	var video_gold_balance: Dictionary = buffalo.call("_balance_large_free_game_gold", video_free_machine, video_free, video_gold_grid, run_state.create_rng("buffalo_video_gold_limit"))
+	if SlotRngMath.count_symbol(video_gold_grid, "GOLD_TOKEN") > 2 or int(video_gold_balance.get("suppressed", 0)) <= 0:
+		failures.append("Slot buffalo 6x5 free games did not suppress the large-board gold flood.")
 
 	var hold_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")
 	var hold_entry: Dictionary = {"id": "hold_and_spin", "classification": "hold_and_spin"}

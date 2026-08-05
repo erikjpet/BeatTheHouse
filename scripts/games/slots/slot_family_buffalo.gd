@@ -23,6 +23,9 @@ const FREE_GAMES_FORMAT_PROFILES := {
 		"session_cap_multiplier": 120,
 	},
 	"line_5x3": {
+		"free_spin_gold_keep_percent": 40,
+		"free_spin_gold_max_per_step": 2,
+		"max_total_steps": 28,
 		"session_cap_multiplier": 65,
 	},
 	"video_feature": {
@@ -31,7 +34,9 @@ const FREE_GAMES_FORMAT_PROFILES := {
 		"five_scatter_spins": 17,
 		"retrigger_threshold": 5,
 		"retrigger_grant": 2,
-		"max_total_steps": 32,
+		"max_total_steps": 28,
+		"free_spin_gold_keep_percent": 25,
+		"free_spin_gold_max_per_step": 2,
 		"payout_percent": 120,
 		"session_cap_multiplier": 90,
 	},
@@ -923,6 +928,7 @@ func _step_free_games(machine: Dictionary, active: Dictionary, rng: RngStream) -
 		reel_strips = _copy_array(machine.get("reel_strips", []))
 	var stops: Array = MathScript.pick_reel_stops(reel_strips, rng)
 	var grid: Array = MathScript.project_grid(reel_strips, stops, reel_count, row_count)
+	var gold_balance := _balance_large_free_game_gold(machine, active, grid, rng)
 	var payout_percent := maxi(1, int(active.get("payout_percent", 100)))
 	var payout_scale := float(payout_percent) / 100.0
 	var coin_result: Dictionary = _collect_free_game_coins(active, grid, stake, float(active.get("feature_scale", 1.0)) * payout_scale, rng)
@@ -936,7 +942,13 @@ func _step_free_games(machine: Dictionary, active: Dictionary, rng: RngStream) -
 	var projected_total_steps := maxi(0, int(active.get("total_steps", 0)))
 	var retrigger_threshold := maxi(1, int(active.get("retrigger_threshold", FREE_GAMES_RETRIGGER_THRESHOLD)))
 	var retrigger_grant := maxi(1, int(active.get("retrigger_grant", FREE_GAMES_RETRIGGER_GRANT)))
-	var max_total_steps := maxi(projected_total_steps, int(active.get("max_total_steps", FREE_GAMES_MAX_TOTAL_STEPS)))
+	var stored_max_total_steps := int(active.get("max_total_steps", FREE_GAMES_MAX_TOTAL_STEPS))
+	var max_total_steps := maxi(projected_total_steps, stored_max_total_steps)
+	var format_id := str(machine.get("format_id", ""))
+	if format_id != "classic_3_reel" and reel_count > 3:
+		var configured_max_total_steps := int(_free_games_profile(format_id).get("max_total_steps", FREE_GAMES_MAX_TOTAL_STEPS))
+		max_total_steps = maxi(projected_total_steps, mini(stored_max_total_steps, configured_max_total_steps))
+		active["max_total_steps"] = max_total_steps
 	while coins_since_retrigger >= retrigger_threshold and projected_total_steps + retrigger_grant <= max_total_steps:
 		coins_since_retrigger -= retrigger_threshold
 		retrigger += retrigger_grant
@@ -966,10 +978,9 @@ func _step_free_games(machine: Dictionary, active: Dictionary, rng: RngStream) -
 		active["total_steps"] = int(active.get("total_steps", 0)) + retrigger
 		active["retrigger_count"] = int(active.get("retrigger_count", 0)) + retrigger_events
 	var classification := "true_win" if spin_award > stake else "ldw" if spin_award > 0 else "zero_loss"
-	history.append({"id": "stampede_free_spin", "step": int(active.get("step_index", 0)), "gold_tokens": new_coins.size(), "coin_hits": new_coins.duplicate(true), "coins_collected": coins_collected, "coins_since_retrigger": coins_since_retrigger, "coin_award": int(coin_result.get("coin_award", 0)), "coin_total": coin_total, "retrigger": retrigger, "retrigger_events": retrigger_events, "grid_award": grid_award, "award": spin_award, "running_total": spin_win_total, "grid": grid.duplicate(true), "reel_stops": stops.duplicate(true), "classification": classification})
+	history.append({"id": "stampede_free_spin", "step": int(active.get("step_index", 0)), "gold_tokens": new_coins.size(), "gold_candidates": int(gold_balance.get("candidates", new_coins.size())), "gold_suppressed": int(gold_balance.get("suppressed", 0)), "coin_hits": new_coins.duplicate(true), "coins_collected": coins_collected, "coins_since_retrigger": coins_since_retrigger, "coin_award": int(coin_result.get("coin_award", 0)), "coin_total": coin_total, "retrigger": retrigger, "retrigger_events": retrigger_events, "grid_award": grid_award, "award": spin_award, "running_total": spin_win_total, "grid": grid.duplicate(true), "reel_stops": stops.duplicate(true), "classification": classification})
 	active["history"] = history
 	var cell_capacity := maxi(1, reel_count * row_count)
-	var format_id := str(machine.get("format_id", ""))
 	var full_screen := collected_coins.size() >= cell_capacity if format_id == "video_feature" else MathScript.count_symbol(grid, "GOLD_TOKEN") >= cell_capacity
 	if full_screen:
 		active["remaining_steps"] = 0
@@ -1020,6 +1031,56 @@ func _step_free_games(machine: Dictionary, active: Dictionary, rng: RngStream) -
 	step["classification"] = classification
 	step["spin_award"] = spin_award
 	return step
+
+
+func _balance_large_free_game_gold(machine: Dictionary, active: Dictionary, grid: Array, rng: RngStream) -> Dictionary:
+	var format_id := str(machine.get("format_id", ""))
+	var reel_count := maxi(1, int(machine.get("reel_count", grid.size())))
+	# The classic cabinet's three visible cells are its authored heritage math.
+	# Returning before scanning the grid also guarantees this rebalance consumes
+	# no RNG and leaves existing 3-reel seeded outcomes byte-for-byte unchanged.
+	if format_id == "classic_3_reel" or reel_count <= 3:
+		return {"candidates": MathScript.count_symbol(grid, "GOLD_TOKEN"), "kept": MathScript.count_symbol(grid, "GOLD_TOKEN"), "suppressed": 0}
+	var profile := _free_games_profile(format_id)
+	var keep_percent := clampi(int(profile.get("free_spin_gold_keep_percent", 100)), 0, 100)
+	var max_per_step := maxi(0, int(profile.get("free_spin_gold_max_per_step", reel_count * maxi(1, int(machine.get("row_count", 1))))))
+	var candidates: Array[Vector2i] = []
+	for reel_index in range(grid.size()):
+		var column: Array = grid[reel_index] if typeof(grid[reel_index]) == TYPE_ARRAY else []
+		for row_index in range(column.size()):
+			if str(column[row_index]) == "GOLD_TOKEN":
+				candidates.append(Vector2i(reel_index, row_index))
+	var cell_capacity := reel_count * maxi(1, int(machine.get("row_count", 1)))
+	# A literal full board is the terminal Grand result, not a retrigger source.
+	# Preserve it so the authored jackpot resolves immediately on this step.
+	if candidates.size() >= cell_capacity:
+		return {"candidates": candidates.size(), "kept": candidates.size(), "suppressed": 0, "full_screen": true}
+	if format_id == "video_feature":
+		var occupied_cells: Dictionary = {}
+		for coin_value in _dictionary_array(active.get("collected_coins", [])):
+			var coin: Dictionary = coin_value
+			occupied_cells[_coin_cell_key(int(coin.get("reel", -1)), int(coin.get("row", -1)))] = true
+		for cell in candidates:
+			occupied_cells[_coin_cell_key(cell.x, cell.y)] = true
+		if occupied_cells.size() >= cell_capacity:
+			return {"candidates": candidates.size(), "kept": candidates.size(), "suppressed": 0, "full_screen": true}
+	# Shuffle candidates so the per-spin cap does not favor any reel or row.
+	for index in range(candidates.size() - 1, 0, -1):
+		var swap_index := rng.randi_range(0, index)
+		var swap_value := candidates[index]
+		candidates[index] = candidates[swap_index]
+		candidates[swap_index] = swap_value
+	var kept := 0
+	var grid_seed := _grid_seed(grid) + int(active.get("step_index", 0)) * 31
+	for cell in candidates:
+		var keep := kept < max_per_step and rng.randi_range(1, 100) <= keep_percent
+		if keep:
+			kept += 1
+			continue
+		var column: Array = grid[cell.x] as Array
+		column[cell.y] = _buffalo_fill_symbol(cell.x, cell.y, grid_seed)
+		grid[cell.x] = column
+	return {"candidates": candidates.size(), "kept": kept, "suppressed": candidates.size() - kept}
 
 
 func _collect_free_game_coins(active: Dictionary, grid: Array, stake: int, feature_scale: float, rng: RngStream) -> Dictionary:

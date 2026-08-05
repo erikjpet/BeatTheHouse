@@ -107,6 +107,9 @@ and tagging remain pending.
   scans/copies and the repeating Web slot-autoplay action hitch.
 - Fixes the low-bandwidth Web-only music/SFX substitutions and missing native
   audio-bus gain parity.
+- Rebalances Buffalo free games on the 5x4 and 6x5 cabinets so large boards
+  generate fewer gold tokens and cannot retrigger past 28 total spins, while
+  preserving the classic 3-reel math and terminal full-board Grand result.
 
 Current evidence is recorded in `docs/plans/tutorial_completion_report.md`,
 `docs/plans/0.5_performance_audit.md`, and
