@@ -1352,6 +1352,8 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack surface did not start in a deal-ready betting phase.")
 	if not bool(surface.get("surface_animates_idle", false)):
 		failures.append("Blackjack betting surface must declare idle animation liveness for dealer, patron, and timer motion.")
+	if (surface.get("patrons", []) as Array).is_empty() or (surface.get("dealer_profile", {}) as Dictionary).is_empty():
+		failures.append("Blackjack pre-deal surface did not expose its animated patrons and dealer.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Blackjack betting surface must not rebuild full realtime snapshots while idle.")
 	if (surface.get("table_round_timer", {}) as Dictionary).is_empty():
@@ -1444,6 +1446,8 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack initial deal did not expose card-by-card animation events.")
 	else:
 		var first_deal_event: Dictionary = deal_events[0] if typeof(deal_events[0]) == TYPE_DICTIONARY else {}
+		if str(first_deal_event.get("zone", "")) == "player" and float(first_deal_event.get("scale", 0.0)) < 0.80:
+			failures.append("Blackjack player cards did not use the enlarged readable scale.")
 		if str(first_deal_event.get("zone", "")) != "player" or not first_deal_event.has("from") or not first_deal_event.has("to"):
 			failures.append("Blackjack deal animation events did not include normalized card targets.")
 		var prior_delay := -1
@@ -1883,6 +1887,8 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var bust_hands: Array = bust_result.get("blackjack_hand_results", []) as Array
 	if bust_hands.is_empty() or str((bust_hands[0] as Dictionary).get("outcome", "")) != "bust":
 		failures.append("Blackjack bust resolve did not settle the hand as a bust.")
+	if (bust_result.get("blackjack_dealer", []) as Array).size() <= 2:
+		failures.append("Blackjack bust loss ended before the dealer completed the hand.")
 
 	var natural_run_state: RunState = RunStateScript.new()
 	natural_run_state.start_new("BLACKJACK-NATURAL-CONTRACT")
@@ -3722,6 +3728,21 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var hooks := game.environment_interactable_objects(run_state, environment)
 	if hooks.is_empty():
 		failures.append("Pull Tabs did not expose a room-side redemption clerk.")
+	else:
+		var cash_in_found := false
+		for hook_value in hooks:
+			if typeof(hook_value) != TYPE_DICTIONARY:
+				continue
+			for action_value in (hook_value as Dictionary).get("available_actions", []):
+				if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == "redeem_pull_tab_winners" and str((action_value as Dictionary).get("label", "")) == "Cash In":
+					cash_in_found = true
+		if not cash_in_found:
+			failures.append("Pull Tabs redemption control did not use the Cash In label.")
+	var winner_count_harness := SurfaceHarness.new()
+	winner_count_harness.setup(sorted_surface)
+	game.call("_draw_pull_tab_ordered_winner_pile", winner_count_harness, Rect2(0, 0, 150, 100), [_pull_tab_test_ticket_result("one", 5), _pull_tab_test_ticket_result("two", 5)])
+	if not winner_count_harness.labels.has("WINNERS x2"):
+		failures.append("Pull Tabs winners pile did not draw its winner count.")
 	_clear_pull_tab_winners(environment)
 	_set_pull_tab_loser_count(environment, 3)
 	_inject_pull_tab_winner(environment, _pull_tab_test_ticket_result("clean", 5))

@@ -46,7 +46,7 @@ const STRATEGY_DEVIATION_MAX_HEAT := 24
 const STRATEGY_DEVIATION_MAX_WATCH := 45
 const COOLERS_CUFFLINKS_ITEM_ID := "coolers_cufflinks"
 const BROKEN_CUFFLINKS_ITEM_ID := "broken_cufflinks"
-const PLAYER_CARD_SCALE := 0.70
+const PLAYER_CARD_SCALE := 0.84
 const DEALER_CARD_SCALE := 0.78
 const PATRON_CARD_SCALE := 0.43
 const BJ_CONSOLE_Y := 342.0
@@ -672,6 +672,8 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 		var challenge: Dictionary = _local_copy_dict(session.get("count_challenge", {}))
 		if _count_has_new_misses(challenge, _surface_time_for_count(session)):
 			return true
+	if _has_dealt_hand(ui_state) and (_all_hands_complete(ui_state) or _dealer_has_blackjack(_card_array(ui_state.get("dealer_cards", [])))):
+		return true
 	if _has_dealt_hand(ui_state) or bool(table.get("barred", false)):
 		return false
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
@@ -714,6 +716,8 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 	var notice: String = _update_live_count_state(next_state, table, run_state, true)
 	if not notice.is_empty():
 		return _message_command(next_state, notice)
+	if _has_dealt_hand(next_state) and (_all_hands_complete(next_state) or _dealer_has_blackjack(_card_array(next_state.get("dealer_cards", [])))):
+		return _settle_completed_round_command(next_state, int(next_state.get("active_hand_index", 0)), _terminal_round_message(next_state), table, run_state)
 	if _has_dealt_hand(next_state) or bool(table.get("barred", false)):
 		return {"handled": false}
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
@@ -2544,7 +2548,7 @@ func _patron_jacket_color(patron: Dictionary) -> Color:
 
 func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
 	var result: Dictionary = _local_copy_dict(surface_state.get("last_result", {}))
-	var rect := Rect2(646, 12, 232, 74)
+	var rect := Rect2(18, 12, 232, 74)
 	if result.is_empty():
 		_draw_neon_panel(surface, rect, C_CYAN, 0.10)
 		surface.surface_label("TABLE READ", rect.position + Vector2(10, 18), 12, C_CYAN)
@@ -3716,13 +3720,13 @@ func _dealer_final_cards(session: Dictionary, table: Dictionary) -> Array:
 	var dealer_draw_needed := false
 	for hand_value in _hand_array(session.get("player_hands", [])):
 		var hand: Dictionary = hand_value
-		if not _hand_resolves_without_dealer_draw(hand):
+		if not bool(hand.get("surrendered", false)) and not _is_natural_blackjack(hand):
 			dealer_draw_needed = true
 			break
 	if not dealer_draw_needed:
 		for patron_hand_value in _hand_array(session.get("patron_hands", [])):
 			var patron_hand: Dictionary = patron_hand_value
-			if not _hand_resolves_without_dealer_draw(patron_hand):
+			if not bool(patron_hand.get("surrendered", false)) and not _is_natural_blackjack(patron_hand):
 				dealer_draw_needed = true
 				break
 	if not dealer_draw_needed:

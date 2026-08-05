@@ -468,7 +468,7 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"id": REDEEM_HOOK_ID,
 		"object_id": "game_hook:%s:%s" % [get_id(), REDEEM_HOOK_ID],
 		"label": label,
-		"short_description": "Checks and cashes winning lottery tickets from this room.",
+		"short_description": "Turns the room's winning scratchers into cash.",
 		"enabled": true,
 		"recovery": payout > 0,
 		"action_summary": "Cash %d winner%s for $%d." % [winners, "" if winners == 1 else "s", payout] if winners > 0 else "No scratched winners to cash.",
@@ -480,7 +480,7 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"icon_key": "service",
 		"unique_object_class": "lottery_redemption_clerk",
 		"unique_object_priority": 120 if payout > 0 else 90,
-		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Cash tickets"}],
+		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Cash In"}],
 		"confirm_action_id": REDEEM_ACTION_ID,
 	}]
 

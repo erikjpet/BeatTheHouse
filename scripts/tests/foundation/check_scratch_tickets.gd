@@ -26,6 +26,16 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets did not route to its native surface.")
 	if not bool(surface.get("surface_animates_idle", false)) or bool(surface.get("surface_realtime_state_refresh", true)):
 		failures.append("Scratch Tickets idle liveness/zero-copy flags are incorrect.")
+	var cash_hooks := game.environment_interactable_objects(run_state, environment)
+	var scratch_cash_in_found := false
+	for hook_value in cash_hooks:
+		if typeof(hook_value) != TYPE_DICTIONARY:
+			continue
+		for action_value in (hook_value as Dictionary).get("available_actions", []):
+			if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("label", "")) == "Cash In":
+				scratch_cash_in_found = true
+	if not scratch_cash_in_found:
+		failures.append("Scratch Tickets redemption control did not use the Cash In label.")
 	if not bool(surface.get("surface_pointer_coalesce_moves", false)) or not game.surface_pointer_uses_lightweight_ui_state("scratch_scrub"):
 		failures.append("Scratch Tickets did not retain coalesced lightweight pointer input.")
 	if bool(surface.get("scratch_core_surface_scroll", true)) or str(surface.get("scratch_ui_mode", "")) != "machine_surface_split":

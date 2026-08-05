@@ -273,7 +273,7 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"id": REDEEM_HOOK_ID,
 		"object_id": "game_hook:%s:%s" % [get_id(), REDEEM_HOOK_ID],
 		"label": label,
-		"short_description": "Cashes winning lottery tickets from this room.",
+		"short_description": "Turns the room's winning tabs into cash.",
 		"enabled": true,
 		"recovery": pending_payout > 0,
 		"action_summary": "Redeem %d winner%s for $%d." % [winner_count, "" if winner_count == 1 else "s", pending_payout] if winner_count > 0 else "No winning tabs to redeem.",
@@ -285,7 +285,7 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"icon_key": "service",
 		"unique_object_class": "lottery_redemption_clerk",
 		"unique_object_priority": 120 if pending_payout > 0 else 90,
-		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Redeem pull-tabs"}],
+		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Cash In"}],
 		"confirm_action_id": REDEEM_ACTION_ID,
 	}]
 
@@ -3721,9 +3721,8 @@ func _draw_pull_tab_ordered_winner_pile(surface, rect: Rect2, ripped_tabs: Array
 	var accent := C_TEAL
 	surface.draw_rect(rect, Color("#05080b"))
 	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.22), false, 1)
-	surface.surface_label("WINNERS", rect.position + Vector2(7, 13), 9, accent)
 	var filtered_count := _pile_filtered_count(ripped_tabs, excluded_ticket_id, excluded_ticket_present)
-	surface.surface_label(str(filtered_count), rect.position + Vector2(rect.size.x - 18, 13), 9, accent)
+	surface.surface_label("WINNERS x%d" % filtered_count, rect.position + Vector2(7, 13), 9, accent)
 	if filtered_count <= 0:
 		_draw_pull_tab_empty_stack_ghost(surface, rect, accent)
 		return
