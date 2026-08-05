@@ -4,6 +4,7 @@ extends GameModule
 # Deterministic full-simulation slot machine module.
 
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
+const DefinitionCacheScript := preload("res://scripts/games/slots/slot_definition_cache.gd")
 const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
 const GeneratorScript := preload("res://scripts/games/slots/slot_machine_generator.gd")
 const ResolverScript := preload("res://scripts/games/slots/slot_resolver.gd")
@@ -29,15 +30,21 @@ var resolver
 var presentation
 var renderer
 var catalog
+var definition_cache
 
 
 func setup(p_definition: Dictionary, p_library: ContentLibrary = null) -> void:
 	super.setup(p_definition, p_library)
+	definition_cache = DefinitionCacheScript.new()
+	definition_cache.configure(p_definition)
 	generator = GeneratorScript.new()
 	resolver = ResolverScript.new()
 	presentation = PresentationScript.new()
 	renderer = RendererScript.new()
 	catalog = CatalogScript.new()
+	# Compile immutable pinball boards with the module, before any foreground or
+	# background spin can make a player-facing frame pay the cold-cache cost.
+	PinballFeatureScript.prewarm_board_templates()
 
 
 func gameplay_model() -> String:
@@ -46,6 +53,7 @@ func gameplay_model() -> String:
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	_ensure_machine_state(run_state, environment, run_state.create_rng("slot_enter") if run_state != null else null)
+	_resume_saved_presentation_checkpoint(environment)
 	var result: Dictionary = super.enter(run_state, environment)
 	var machine: Dictionary = _read_machine(environment)
 	result["message"] = "%s %s machine waits." % [
@@ -53,6 +61,59 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 		str(machine.get("format_id", "classic_3_reel")).replace("_", " "),
 	]
 	return result
+
+
+func checkpoint_surface_ui_state(ui_state: Dictionary, _run_state: RunState, environment: Dictionary) -> void:
+	var machine: Dictionary = _read_machine(environment)
+	if machine.is_empty() or str(machine.get("slot_animation_id", "")).is_empty():
+		return
+	var runtime_value: Variant = ui_state.get("surface_runtime_status", {})
+	var runtime: Dictionary = runtime_value as Dictionary if typeof(runtime_value) == TYPE_DICTIONARY else {}
+	var animations_value: Variant = runtime.get("surface_animations", {})
+	var animations: Dictionary = animations_value as Dictionary if typeof(animations_value) == TYPE_DICTIONARY else {}
+	var spin_value: Variant = animations.get("slot_spin", {})
+	var spin: Dictionary = spin_value as Dictionary if typeof(spin_value) == TYPE_DICTIONARY else {}
+	if str(spin.get("active_id", "")) != str(machine.get("slot_animation_id", "")):
+		return
+	var elapsed_msec := maxi(0, int(round(float(spin.get("elapsed", 0.0)) * 1000.0)))
+	var duration_msec := maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
+	if bool(spin.get("active", false)) and elapsed_msec < duration_msec:
+		machine["slot_animation_resume_elapsed_msec"] = elapsed_msec
+	elif StateScript.active_bonus_incomplete(machine) or str(machine.get("slot_animation_id", "")).begins_with("bonus:"):
+		# Feature/replay payloads remain durable, but record that their finite
+		# channel already reached the end so reopening does not replay it.
+		machine["slot_animation_resume_elapsed_msec"] = duration_msec
+	else:
+		_settle_completed_presentation(machine)
+	_write_machine(environment, machine)
+
+
+func _resume_saved_presentation_checkpoint(environment: Dictionary) -> void:
+	var machine: Dictionary = _read_machine(environment)
+	if machine.is_empty() or not machine.has("slot_animation_resume_elapsed_msec"):
+		return
+	var elapsed_msec := clampi(
+		int(machine.get("slot_animation_resume_elapsed_msec", 0)),
+		0,
+		maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
+	)
+	machine.erase("slot_animation_resume_elapsed_msec")
+	if elapsed_msec >= int(machine.get("slot_animation_duration_msec", 0)) and not StateScript.active_bonus_incomplete(machine) and not str(machine.get("slot_animation_id", "")).begins_with("bonus:"):
+		_settle_completed_presentation(machine)
+	else:
+		machine["slot_animation_started_msec"] = maxi(1, Time.get_ticks_msec() - elapsed_msec)
+	_write_machine(environment, machine)
+
+
+func _settle_completed_presentation(machine: Dictionary) -> void:
+	# Feature state, replay data, final grid, classification, and offers remain
+	# durable. Only the finite ordinary-spin timeline has reached end-of-life.
+	machine.erase("slot_animation_resume_elapsed_msec")
+	machine["slot_animation_id"] = ""
+	machine["slot_animation_duration_msec"] = 0
+	machine["slot_animation_started_msec"] = 0
+	machine["slot_animation_plan"] = {}
+	machine["last_previous_grid"] = []
 
 
 func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -95,11 +156,12 @@ func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
 
 
 func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
-	return generator.generate_machine(run_state, environment, rng, definition, get_id())
+	var machine: Dictionary = generator.generate_machine(run_state, environment, rng, definition, get_id())
+	return definition_cache.compact_machine_for_storage(machine)
 
 
 func generate_environment_fixture_states(_run_state: RunState, environment: Dictionary, rng: RngStream, fixture_count: int) -> Dictionary:
-	if str(environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID or fixture_count < 3:
+	if str(environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID or fixture_count <= 0:
 		return {}
 	var fixture_specs := [
 		{"format_id": "classic_3_reel", "type_id": "pinball", "math_variant_id": "steady", "cabinet_variant_id": "neon_magenta", "bonus_variant_id": "plain"},
@@ -107,10 +169,11 @@ func generate_environment_fixture_states(_run_state: RunState, environment: Dict
 		{"format_id": "video_feature", "type_id": "pinball", "math_variant_id": "volatile", "cabinet_variant_id": "blacklight", "bonus_variant_id": "jackpot_chase"},
 	]
 	var result: Dictionary = {}
-	for fixture_index in range(mini(fixture_count, fixture_specs.size())):
+	for fixture_index in range(fixture_count):
 		var key := get_id() if fixture_index == 0 else "%s:%d" % [get_id(), fixture_index + 1]
-		var spec: Dictionary = fixture_specs[fixture_index]
-		result[key] = generator.build_machine_from_ids(definition, spec, rng.fork("grand_casino_slot_fixture:%d" % fixture_index))
+		var spec: Dictionary = fixture_specs[fixture_index % fixture_specs.size()]
+		var machine: Dictionary = generator.build_machine_from_ids(definition, spec, rng.fork("grand_casino_slot_fixture:%d" % fixture_index))
+		result[key] = definition_cache.compact_machine_for_storage(machine)
 	return result
 
 
@@ -126,7 +189,7 @@ func _machine_state_key(environment: Dictionary) -> String:
 
 
 func _read_machine(environment: Dictionary) -> Dictionary:
-	return StateScript.read_machine(environment, _machine_state_key(environment))
+	return definition_cache.owned_runtime_machine(StateScript.peek_machine(environment, _machine_state_key(environment)))
 
 
 func _peek_machine(environment: Dictionary) -> Dictionary:
@@ -134,11 +197,11 @@ func _peek_machine(environment: Dictionary) -> Dictionary:
 
 
 func _write_machine(environment: Dictionary, machine: Dictionary) -> void:
-	StateScript.write_machine(environment, _machine_state_key(environment), machine)
+	StateScript.write_runtime_machine(environment, _machine_state_key(environment), machine)
 
 
 func _write_owned_machine(environment: Dictionary, machine: Dictionary) -> void:
-	StateScript.write_owned_machine(environment, _machine_state_key(environment), machine)
+	StateScript.write_runtime_machine(environment, _machine_state_key(environment), machine)
 
 
 func active_item_command(item_id: String, run_state: RunState, environment: Dictionary, _rng: RngStream) -> Dictionary:
@@ -159,7 +222,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	# Rendering is read-only. Once a machine exists, use its live stored snapshot
 	# instead of normalizing, deep-copying, and writing the entire environment's
 	# game-state map on every surface rebuild.
-	var machine: Dictionary = _peek_machine(environment)
+	var machine: Dictionary = _read_machine(environment)
 	if machine.is_empty():
 		machine = _ensure_machine_state(run_state, environment, run_state.create_rng("slot_surface") if run_state != null else null)
 	return presentation.surface_state(machine, run_state, definition, ui_state)
@@ -178,14 +241,12 @@ func draw_surface(surface_canvas, surface_state: Dictionary, _render_context: Di
 
 
 func prewarm_surface_assets() -> int:
+	PinballFeatureScript.prewarm_board_templates()
 	return int(renderer.prewarm_background_textures(definition))
 
 
 func debug_surface_asset_cache_snapshot() -> Dictionary:
-	return {
-		"background_texture_cache_size": int(renderer.background_texture_cache_size()),
-		"background_texture_cache_cap": RendererScript.MAX_BACKGROUND_TEXTURE_CACHE,
-	}
+	return renderer.cache_snapshot()
 
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
@@ -532,6 +593,14 @@ func environment_runtime_needs_tick(_run_state: RunState, environment: Dictionar
 	return next_msec <= 0 or now_msec >= next_msec
 
 
+func environment_runtime_next_due_msec(_run_state: RunState, environment: Dictionary, now_msec: int) -> int:
+	var machine: Dictionary = _peek_machine(environment)
+	if machine.is_empty() or not bool(machine.get("slot_autoplay_active", false)):
+		return -1
+	var next_msec := int(machine.get("slot_autoplay_next_msec", 0))
+	return now_msec if next_msec <= 0 else next_msec
+
+
 func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng: RngStream, now_msec: int) -> Dictionary:
 	var machine: Dictionary = _ensure_machine_state(run_state, environment, rng)
 	if machine.is_empty() or not bool(machine.get("slot_autoplay_active", false)):
@@ -550,7 +619,7 @@ func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng:
 	machine["slot_autoplay_next_msec"] = now_msec + _slot_autoplay_delay_msec(machine)
 	_write_machine(environment, machine)
 	var selected_bet: Dictionary = StateScript.selected_bet(machine)
-	var resolved: Dictionary = resolver.resolve_spin(machine, "spin", selected_bet, rng, definition, environment, false, false, run_state, _slot_cross_game_item_effects(run_state, machine, false))
+	var resolved: Dictionary = resolver.resolve_spin(machine, "spin", selected_bet, rng, definition, environment, false, false, run_state, _slot_cross_game_item_effects(run_state, machine, false), {}, false)
 	var resolved_machine_value: Variant = resolved.get("machine", machine)
 	var resolved_machine: Dictionary = resolved_machine_value as Dictionary if typeof(resolved_machine_value) == TYPE_DICTIONARY else machine
 	var feature_pending := _slot_feature_pending(resolved_machine)

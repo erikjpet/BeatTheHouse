@@ -26,9 +26,11 @@ static var _runtime_sessions: Dictionary = {}
 static var _layouts: Dictionary = {}
 static var _compiled_boards: Dictionary = {}
 static var _surface_refresh_msec: Dictionary = {}
+static var _board_templates: Dictionary = {}
 static var _sequencer_instance = null
 static var _session_order: Array[String] = []
 const MAX_RUNTIME_SESSIONS := 32
+const MAX_BOARD_TEMPLATES := 24
 const EVENT_LOG_CAP := 192
 const TRAJECTORY_CAP := 120
 const DISPLAY_TRAJECTORY_CAP := 24
@@ -54,15 +56,14 @@ class RuntimeSession:
 func open(machine: Dictionary, mode: String, stake: int, rng: RngStream, params: Dictionary = {}) -> Dictionary:
 	var session_seed := rng.randi_range(1, 2140000000)
 	var session_id := "pinball:%s:%s:%d" % [str(machine.get("format_id", "")), mode, session_seed]
-	var layout: Dictionary = BoardsScript.by_id(_board_id_for_mode(mode))
-	layout["mode"] = mode
 	var item_effects: Dictionary = _dict(params.get("item_effects", {}))
-	var compiler := BoardScript.new()
-	var compiled: Dictionary = compiler.compile(layout, ItemsScript.compile_modifiers(item_effects))
+	var template := _board_template(mode, item_effects)
+	var layout: Dictionary = template.get("layout", {})
+	var compiled: Dictionary = template.get("compiled", {})
 	var sim := SimScript.new()
 	var cap := maxi(1, int(params.get("cap", stake * 12)))
 	sim.configure(compiled, session_seed, {"cap": cap})
-	_store_session(session_id, sim, layout, compiled)
+	_store_session(session_id, sim, layout, compiled, template.get("layout_view", {}))
 	var total_balls := maxi(1, int(params.get("ball_budget", _ball_budget_for_mode(mode, stake))) + ItemsScript.ball_budget_bonus(item_effects))
 	var skill_width := maxi(LAUNCH_METER_SWEET_WIDTH, int(round(float(compiled.get("skill_width", 0.03)) * 100.0)))
 	skill_width = maxi(LAUNCH_METER_SWEET_WIDTH, int(round(float(skill_width * ItemsScript.skill_width_percent(item_effects)) / 100.0)))
@@ -542,13 +543,13 @@ func _session_for(active: Dictionary):
 	var session_id := str(active.get("runtime_session_id", ""))
 	if _sessions.has(session_id):
 		return _sessions[session_id]
-	var compiler := BoardScript.new()
-	var layout: Dictionary = BoardsScript.by_id(_board_id_for_mode(str(active.get("mode", ""))))
-	var compiled: Dictionary = compiler.compile(layout, ItemsScript.compile_modifiers(_dict(active.get("pinball_item_effects", {}))))
+	var template := _board_template(str(active.get("mode", "")), _dict(active.get("pinball_item_effects", {})))
+	var layout: Dictionary = template.get("layout", {})
+	var compiled: Dictionary = template.get("compiled", {})
 	var sim := SimScript.new()
 	sim.configure(compiled, int(active.get("runtime_seed", 1)), {"cap": int(active.get("session_cap", 500))})
 	_restore_session_progress(active, sim)
-	_store_session(session_id, sim, layout, compiled)
+	_store_session(session_id, sim, layout, compiled, template.get("layout_view", {}))
 	return sim
 
 
@@ -563,10 +564,10 @@ static func _runtime_for_static(active: Dictionary) -> RuntimeSession:
 	return runtime as RuntimeSession if runtime is RuntimeSession else null
 
 
-static func _store_session(session_id: String, sim, layout: Dictionary, compiled: Dictionary) -> void:
+static func _store_session(session_id: String, sim, layout: Dictionary, compiled: Dictionary, cached_layout_view: Dictionary = {}) -> void:
 	if session_id.is_empty():
 		return
-	var layout_view := _layout_view(layout)
+	var layout_view := cached_layout_view if not cached_layout_view.is_empty() else _layout_view(layout)
 	var runtime := RuntimeSession.new()
 	runtime.sim = sim
 	runtime.layout = layout
@@ -632,7 +633,39 @@ static func runtime_session_debug_snapshot() -> Dictionary:
 		"sim_count": sim_count,
 		"cached_view_count": cached_view_count,
 		"cached_view_bytes": cached_view_bytes,
+		"board_template_cache_size": _board_templates.size(),
+		"board_template_cache_cap": MAX_BOARD_TEMPLATES,
 	}
+
+
+static func _board_template(mode: String, item_effects: Dictionary) -> Dictionary:
+	var modifiers: Dictionary = ItemsScript.compile_modifiers(item_effects)
+	var key := "%s|%s" % [_board_id_for_mode(mode), JSON.stringify(modifiers)]
+	if _board_templates.has(key):
+		var cached_value: Variant = _board_templates.get(key)
+		if typeof(cached_value) == TYPE_DICTIONARY:
+			return cached_value as Dictionary
+	var layout: Dictionary = BoardsScript.by_id(_board_id_for_mode(mode))
+	layout["mode"] = mode
+	var compiler := BoardScript.new()
+	var template := {
+		"layout": layout,
+		"compiled": compiler.compile(layout, modifiers),
+		"layout_view": _layout_view(layout),
+	}
+	_board_templates[key] = template
+	while _board_templates.size() > MAX_BOARD_TEMPLATES:
+		_board_templates.erase(_board_templates.keys()[0])
+	return template
+
+
+static func prewarm_board_templates() -> int:
+	# These immutable layouts are used by ordinary cabinets and should never make
+	# the first feature-bearing frame pay compilation cost. Item-modified boards
+	# retain their own bounded, content-keyed cache entries.
+	for mode in ["em_bumper_drop", "lane_multiball", "video_feature"]:
+		_board_template(mode, {})
+	return _board_templates.size()
 
 
 static func _prune_session_cache() -> void:
@@ -919,7 +952,7 @@ func _mode_for_machine(machine: Dictionary) -> String:
 			return "em_bumper_drop"
 
 
-func _board_id_for_mode(mode: String) -> String:
+static func _board_id_for_mode(mode: String) -> String:
 	if mode == "lane_multiball":
 		return "lock_cascade"
 	if mode == "video_feature":

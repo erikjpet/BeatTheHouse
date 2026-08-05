@@ -36,7 +36,7 @@ func machine_has_feature_entry(machine: Dictionary, definition: Dictionary) -> b
 	return not _feature_entry_for_family(machine, family, definition, false).is_empty()
 
 
-func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictionary, rng: RngStream, definition: Dictionary, environment: Dictionary = {}, normalize_machine: bool = true, audit_metrics_mode: bool = false, run_state: RunState = null, item_effects: Dictionary = {}, ui_state: Dictionary = {}) -> Dictionary:
+func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictionary, rng: RngStream, definition: Dictionary, environment: Dictionary = {}, normalize_machine: bool = true, audit_metrics_mode: bool = false, run_state: RunState = null, item_effects: Dictionary = {}, ui_state: Dictionary = {}, include_presentation_payload: bool = true) -> Dictionary:
 	if normalize_machine:
 		machine = StateScript.normalize(machine)
 	var normalized_action := _normalize_action(action_id)
@@ -75,12 +75,8 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 		if audit_metrics_mode and family_id == "pinball":
 			grid = _blank_grid(int(machine.get("reel_count", 3)), int(machine.get("row_count", 1)))
 		else:
-			var reel_strips: Array = []
 			var reel_strips_value: Variant = machine.get("reel_strips", [])
-			if audit_metrics_mode and typeof(reel_strips_value) == TYPE_ARRAY:
-				reel_strips = reel_strips_value as Array
-			else:
-				reel_strips = _copy_array(reel_strips_value)
+			var reel_strips: Array = reel_strips_value as Array if typeof(reel_strips_value) == TYPE_ARRAY else []
 			stops = MathScript.pick_reel_stops(reel_strips, rng)
 			grid = MathScript.project_grid(
 				reel_strips,
@@ -198,7 +194,7 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	machine["slot_reel_stop_times"] = _copy_array(animation_plan.get("reel_stop_times", []))
 	machine["slot_reel_timeline"] = _copy_array(animation_plan.get("reel_timeline", []))
 	machine["slot_bonus_start_time"] = float(animation_plan.get("bonus_start_time", 0.0))
-	var result: Dictionary = _spin_result(machine, entry, normalized_action, stake, stake_cost, immediate_payout, bankroll_delta, suspicion_delta, environment, animation_plan, feature_triggered, active_bonus, side_effects, free_spin, nudge_applied, cross_effects)
+	var result: Dictionary = _spin_result(machine, entry, normalized_action, stake, stake_cost, immediate_payout, bankroll_delta, suspicion_delta, environment, animation_plan, feature_triggered, active_bonus, side_effects, free_spin, nudge_applied, cross_effects, include_presentation_payload)
 	return {"machine": StateScript.normalize(machine) if normalize_machine else machine, "result": result}
 
 
@@ -287,7 +283,7 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = award
 	deltas["messages"] = [message]
-	deltas["story_log"] = [{
+	deltas["story_log"] = [_compact_story_receipt({
 		"type": "game_action",
 		"slot_event": "slot_bonus_step",
 		"game_id": "slot",
@@ -306,7 +302,7 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 		"suspicion_delta": 0,
 		"won": award > 0,
 		"environment_id": str(environment.get("id", "")),
-	}]
+	})]
 	var result := GameModule.build_action_result({
 		"ok": true,
 		"type": "game_action",
@@ -790,7 +786,8 @@ func _prepare_near_miss_nudge_target(machine: Dictionary, family, entry: Diction
 		return {"entry": prepared_entry, "grid": prepared_grid, "stops": prepared_stops}
 	var reel_count := maxi(1, int(machine.get("reel_count", 3)))
 	var row_count := maxi(1, int(machine.get("row_count", 1)))
-	var strips: Array = _copy_array(machine.get("reel_strips", []))
+	var strips_value: Variant = machine.get("reel_strips", [])
+	var strips: Array = strips_value as Array if typeof(strips_value) == TYPE_ARRAY else []
 	for cell_value in missing_cells:
 		var cell: Dictionary = _copy_dict(cell_value)
 		var reel_index := clampi(int(cell.get("reel", 0)), 0, reel_count - 1)
@@ -937,7 +934,8 @@ func _nudge_target_payload(machine: Dictionary, family, entry: Dictionary, grid:
 	var reel_index := clampi(int(target.get("reel", 0)), 0, reel_count - 1)
 	var row_index := clampi(int(target.get("row", 0)), 0, maxi(0, int(machine.get("row_count", 1)) - 1))
 	var direction := int(target.get("direction", 1))
-	var strips: Array = _copy_array(machine.get("reel_strips", []))
+	var strips_value: Variant = machine.get("reel_strips", [])
+	var strips: Array = strips_value as Array if typeof(strips_value) == TYPE_ARRAY else []
 	var strip: Array = _reel_strip(strips, reel_index)
 	if strip.is_empty():
 		return {}
@@ -1107,7 +1105,8 @@ func _feature_placement_for_grid(machine: Dictionary, family_id: String, grid: A
 
 func _grid_with_reel_stop(machine: Dictionary, base_grid: Array, reel_index: int, new_stop: int) -> Array:
 	var result: Array = MathScript.clone_grid(base_grid)
-	var strips: Array = _copy_array(machine.get("reel_strips", []))
+	var strips_value: Variant = machine.get("reel_strips", [])
+	var strips: Array = strips_value as Array if typeof(strips_value) == TYPE_ARRAY else []
 	var strip: Array = _reel_strip(strips, reel_index)
 	if strip.is_empty() or reel_index < 0 or reel_index >= result.size():
 		return result
@@ -1591,7 +1590,7 @@ func _cheat_action_def(definition: Dictionary, action_id: String) -> Dictionary:
 	return {}
 
 
-func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, stake: int, stake_cost: int, payout: int, bankroll_delta: int, suspicion_delta: int, environment: Dictionary, animation_plan: Dictionary, feature_triggered: bool, active_bonus: Dictionary, side_effects: Dictionary, free_spin: bool, nudge_applied: bool, cross_effects: Dictionary = {}) -> Dictionary:
+func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, stake: int, stake_cost: int, payout: int, bankroll_delta: int, suspicion_delta: int, environment: Dictionary, animation_plan: Dictionary, feature_triggered: bool, active_bonus: Dictionary, side_effects: Dictionary, free_spin: bool, nudge_applied: bool, cross_effects: Dictionary = {}, include_presentation_payload: bool = true) -> Dictionary:
 	var classification := str(machine.get("last_classification", "zero_loss"))
 	var nudge_skill_outcome := _last_nudge_skill_outcome(machine) if action_id == NUDGE_ACTION else ""
 	if action_id == NUDGE_ACTION and nudge_skill_outcome.is_empty():
@@ -1615,7 +1614,7 @@ func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, sta
 	deltas["suspicion_delta"] = suspicion_delta
 	deltas["messages"] = [message]
 	deltas["ended"] = bool(cross_effects.get("security_ended", false))
-	deltas["story_log"] = [{
+	deltas["story_log"] = [_compact_story_receipt({
 		"type": "game_action",
 		"slot_event": "slot_spin",
 		"game_id": "slot",
@@ -1643,7 +1642,7 @@ func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, sta
 		"pit_boss_watched": bool(cross_effects.get("pit_boss_watched", false)),
 		"pit_boss_heat_bonus": int(cross_effects.get("pit_boss_heat_bonus", 0)),
 		"environment_id": str(environment.get("id", "")),
-	}]
+	})]
 	var result := GameModule.build_action_result({
 		"ok": true,
 		"type": "game_action",
@@ -1676,15 +1675,16 @@ func _spin_result(machine: Dictionary, entry: Dictionary, action_id: String, sta
 	result["slot_nudge_skill_outcome"] = nudge_skill_outcome
 	result["slot_feature_triggered"] = feature_triggered
 	result["slot_forced_bonus_item"] = bool(entry.get("forced_by_cumquat_sandwich", false))
-	result["slot_active_bonus"] = active_bonus.duplicate(true)
-	result["slot_grid"] = _copy_array(machine.get("last_grid", []))
-	result["slot_reel_stops"] = _copy_array(machine.get("reel_stops", []))
-	result["slot_animation_plan"] = animation_plan.duplicate(true)
 	result["slot_animation_id"] = str(animation_plan.get("id", ""))
 	result["slot_animation_duration_msec"] = int(animation_plan.get("duration_msec", 0))
-	result["slot_reel_stop_times"] = _copy_array(animation_plan.get("reel_stop_times", []))
-	result["slot_reel_timeline"] = _copy_array(animation_plan.get("reel_timeline", []))
 	result["slot_bonus_start_time"] = float(animation_plan.get("bonus_start_time", 0.0))
+	if include_presentation_payload:
+		result["slot_active_bonus"] = active_bonus.duplicate(true)
+		result["slot_grid"] = _copy_array(machine.get("last_grid", []))
+		result["slot_reel_stops"] = _copy_array(machine.get("reel_stops", []))
+		result["slot_animation_plan"] = animation_plan.duplicate(true)
+		result["slot_reel_stop_times"] = _copy_array(animation_plan.get("reel_stop_times", []))
+		result["slot_reel_timeline"] = _copy_array(animation_plan.get("reel_timeline", []))
 	result["slot_gold_conversion"] = bool(side_effects.get("conversion", false))
 	result["slot_conversion_award"] = int(side_effects.get("conversion_award", 0))
 	result["slot_scatter_count"] = int(side_effects.get("gold_token_count", side_effects.get("pinball_count", 0)))
@@ -2156,6 +2156,36 @@ func _copy_array(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return (value as Array).duplicate(true)
+
+
+func _compact_story_receipt(entry: Dictionary) -> Dictionary:
+	# Routine slot results carry many optional zero/default facts. Keep every
+	# non-default gameplay fact while avoiding hundreds of redundant bytes per
+	# autoplay spin in the durable story ledger.
+	for key in [
+		"suspicion_delta", "base_suspicion_delta", "payout", "bankroll_delta",
+		"luck_payout_bonus", "item_payout_bonus", "item_loss_reduction",
+		"slot_loss_refund", "slot_grease_failed_nudge_heat_bonus",
+		"security_bankroll_delta", "pit_boss_heat_bonus", "skill_margin_msec",
+		"pinball_momentum_hit_count", "pinball_momentum_bonus",
+	]:
+		if entry.has(key) and (typeof(entry.get(key)) == TYPE_INT or typeof(entry.get(key)) == TYPE_FLOAT) and float(entry.get(key)) == 0.0:
+			entry.erase(key)
+	for key in [
+		"won", "slot_cold_quarter_used", "pit_boss_watched", "complete",
+		"watchdog", "slot_first_bonus_item_award",
+	]:
+		if entry.has(key) and not bool(entry.get(key)):
+			entry.erase(key)
+	for key_value in entry.keys():
+		var value: Variant = entry.get(key_value)
+		if typeof(value) == TYPE_STRING and str(value).is_empty():
+			entry.erase(key_value)
+		elif typeof(value) == TYPE_ARRAY and (value as Array).is_empty():
+			entry.erase(key_value)
+		elif typeof(value) == TYPE_DICTIONARY and (value as Dictionary).is_empty():
+			entry.erase(key_value)
+	return entry
 
 
 func _copy_dict(value: Variant) -> Dictionary:

@@ -923,9 +923,11 @@ func _step_free_games(machine: Dictionary, active: Dictionary, rng: RngStream) -
 	var bet_id := str(active.get("bet_id", _copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")))
 	var reel_count := maxi(1, int(machine.get("reel_count", 5)))
 	var row_count := maxi(1, int(machine.get("row_count", 4)))
-	var reel_strips: Array = _copy_array(machine.get("bonus_reel_strips", machine.get("reel_strips", [])))
+	var reel_strips_value: Variant = machine.get("bonus_reel_strips", machine.get("reel_strips", []))
+	var reel_strips: Array = reel_strips_value as Array if typeof(reel_strips_value) == TYPE_ARRAY else []
 	if reel_strips.is_empty():
-		reel_strips = _copy_array(machine.get("reel_strips", []))
+		var fallback_strips: Variant = machine.get("reel_strips", [])
+		reel_strips = fallback_strips as Array if typeof(fallback_strips) == TYPE_ARRAY else []
 	var stops: Array = MathScript.pick_reel_stops(reel_strips, rng)
 	var grid: Array = MathScript.project_grid(reel_strips, stops, reel_count, row_count)
 	var gold_balance := _balance_large_free_game_gold(machine, active, grid, rng)
@@ -1365,9 +1367,11 @@ func _new_lock(existing_locks: Array, max_cells: int, stake: int, row_count: int
 func _hold_respin_display(machine: Dictionary, active: Dictionary, locks: Array, new_lock_events: Array, rng: RngStream) -> Dictionary:
 	var reel_count := maxi(1, int(active.get("reel_count", machine.get("reel_count", 5))))
 	var row_count := maxi(1, int(active.get("row_count", machine.get("row_count", 3))))
-	var reel_strips: Array = _copy_array(machine.get("bonus_reel_strips", machine.get("reel_strips", [])))
+	var reel_strips_value: Variant = machine.get("bonus_reel_strips", machine.get("reel_strips", []))
+	var reel_strips: Array = reel_strips_value as Array if typeof(reel_strips_value) == TYPE_ARRAY else []
 	if reel_strips.is_empty():
-		reel_strips = _copy_array(machine.get("reel_strips", []))
+		var fallback_strips: Variant = machine.get("reel_strips", [])
+		reel_strips = fallback_strips as Array if typeof(fallback_strips) == TYPE_ARRAY else []
 	var stops: Array = MathScript.pick_reel_stops(reel_strips, rng)
 	var grid: Array = MathScript.project_grid(reel_strips, stops, reel_count, row_count)
 	var lock_lookup: Dictionary = {}

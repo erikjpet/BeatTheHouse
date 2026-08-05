@@ -3,7 +3,15 @@ extends RefCounted
 
 # Canonical persistent slot state schema and normalization.
 
-const SCHEMA_VERSION := 1
+const SCHEMA_VERSION := 2
+const IMMUTABLE_DEFINITION_STATE_KEYS := [
+	"reel_strips",
+	"bonus_reel_strips",
+]
+const DUPLICATE_PRESENTATION_STATE_KEYS := [
+	"slot_reel_timeline",
+	"slot_reel_stop_times",
+]
 const BET_OPTIONS := [
 	{"id": "bet_2", "label": "MIN", "total_credits": 2},
 	{"id": "bet_5", "label": "LOW", "total_credits": 5},
@@ -49,6 +57,7 @@ static func write_machine(environment: Dictionary, game_id: String, machine: Dic
 	var states: Dictionary = (states_value as Dictionary).duplicate(false) if typeof(states_value) == TYPE_DICTIONARY else {}
 	states[game_id] = normalize(machine)
 	environment["game_states"] = states
+	_bump_environment_runtime_revision(environment)
 
 
 static func write_owned_machine(environment: Dictionary, game_id: String, machine: Dictionary) -> void:
@@ -59,6 +68,43 @@ static func write_owned_machine(environment: Dictionary, game_id: String, machin
 	var states: Dictionary = (states_value as Dictionary).duplicate(false) if typeof(states_value) == TYPE_DICTIONARY else {}
 	states[game_id] = normalize_owned(machine)
 	environment["game_states"] = states
+	_bump_environment_runtime_revision(environment)
+
+
+# Resolution owns its mutable values and borrows definition-cache arrays. Keep
+# those immutable arrays shared instead of normalizing/copying them again.
+static func write_runtime_machine(environment: Dictionary, game_id: String, machine: Dictionary) -> void:
+	var states_value: Variant = environment.get("game_states", {})
+	var states: Dictionary = (states_value as Dictionary).duplicate(false) if typeof(states_value) == TYPE_DICTIONARY else {}
+	for key in IMMUTABLE_DEFINITION_STATE_KEYS:
+		machine.erase(key)
+	# Production SlotGame hands this method a top-level-owned, already-valid v2
+	# machine. Re-normalizing here deep-copied active feature graphs that the
+	# resolver had just produced. Keep the canonical schema marker and compact
+	# the storage-only fields without a second graph traversal.
+	machine["schema_version"] = SCHEMA_VERSION
+	var normalized: Dictionary = machine
+	# Definition arrays deliberately remain absent from stored cabinet state.
+	# SlotGame reattaches shared immutable arrays for resolution/presentation.
+	for key in IMMUTABLE_DEFINITION_STATE_KEYS:
+		normalized.erase(key)
+	# The animation plan is authoritative for these values and every
+	# presentation consumer already falls back to it. Do not retain a second
+	# copy per cabinet.
+	for key in DUPLICATE_PRESENTATION_STATE_KEYS:
+		normalized.erase(key)
+	var active_value: Variant = normalized.get("active_bonus", {})
+	if typeof(active_value) == TYPE_DICTIONARY:
+		# Reconstructed from the bounded runtime session and immutable board
+		# template; never duplicate the static board layout into a save cabinet.
+		(active_value as Dictionary).erase("pinball_view")
+	states[game_id] = normalized
+	environment["game_states"] = states
+	_bump_environment_runtime_revision(environment)
+
+
+static func _bump_environment_runtime_revision(environment: Dictionary) -> void:
+	environment["environment_runtime_revision"] = int(environment.get("environment_runtime_revision", 0)) + 1
 
 
 static func normalize(machine_value: Variant) -> Dictionary:
@@ -114,6 +160,8 @@ static func normalize_owned(machine: Dictionary) -> Dictionary:
 	machine["slot_animation_id"] = str(machine.get("slot_animation_id", ""))
 	machine["slot_animation_duration_msec"] = maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
 	machine["slot_animation_started_msec"] = maxi(0, int(machine.get("slot_animation_started_msec", 0)))
+	if machine.has("slot_animation_resume_elapsed_msec"):
+		machine["slot_animation_resume_elapsed_msec"] = maxi(0, int(machine.get("slot_animation_resume_elapsed_msec", 0)))
 	machine["slot_autoplay_active"] = bool(machine.get("slot_autoplay_active", false))
 	machine["slot_autoplay_next_msec"] = maxi(0, int(machine.get("slot_autoplay_next_msec", 0)))
 	machine["active_bonus"] = _normalize_active_bonus(machine.get("active_bonus", {}))
@@ -292,6 +340,11 @@ static func _normalize_active_bonus(value: Variant) -> Dictionary:
 		return {"active": false, "complete": true}
 	active["active"] = bool(active.get("active", false))
 	active["complete"] = bool(active.get("complete", not bool(active.get("active", false))))
+	# A settled feature is already represented by last_bonus_replay and bonus_state.
+	# Keep the compact terminal marker (and any forward-compatible unknown fields)
+	# instead of manufacturing every active-session default into persistent state.
+	if not bool(active["active"]):
+		return active
 	active["mode"] = str(active.get("mode", ""))
 	active["family"] = str(active.get("family", ""))
 	active["visual_replay"] = bool(active.get("visual_replay", false))

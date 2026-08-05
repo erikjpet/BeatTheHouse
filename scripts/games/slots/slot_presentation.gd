@@ -136,7 +136,9 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		"slot_grid": _copy_array(machine.get("last_grid", [])),
 		"slot_previous_grid": _copy_array(machine.get("last_previous_grid", [])),
 		"slot_reel_stops": _copy_array(machine.get("reel_stops", [])),
-		"slot_reel_strips": _copy_array(machine.get("reel_strips", [])),
+		# Reel strips are immutable definition data. Surface state borrows the
+		# shared array; renderers and snapshots must treat it as read-only.
+		"slot_reel_strips": machine.get("reel_strips", []),
 		"slot_reel_stop_times": _reel_stop_times(machine),
 		"slot_reel_timeline": timeline,
 		"slot_animation_plan": _copy_dict(machine.get("slot_animation_plan", {})),
