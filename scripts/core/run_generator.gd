@@ -4,6 +4,7 @@ extends RefCounted
 # Builds deterministic environments from library data.
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
+const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 
 var library: ContentLibrary
 
@@ -211,12 +212,14 @@ func _apply_tutorial_initial_map_targets(map_data: Dictionary, run_state: RunSta
 		var node: Dictionary = nodes[index]
 		var node_id := str(node.get("id", ""))
 		if allowed.has(node_id):
+			node["seen"] = true
 			if node_id != str(constrained.get("start_node_id", "")):
 				node["state"] = WorldMap.STATE_REVEALED
 				node["discovered_at_spawn"] = true
 				node["discovery_source"] = WorldMap.DISCOVERY_SOURCE_SPAWN
 		else:
 			node["state"] = WorldMap.STATE_HIDDEN
+			node["seen"] = false
 			node["discovered_at_spawn"] = false
 			node["discovery_source"] = WorldMap.DISCOVERY_SOURCE_NONE
 			node.erase("discovered_by_travel")
@@ -313,7 +316,7 @@ func _world_target_is_available(run_state: RunState, map_data: Dictionary, sourc
 		return false
 	var archetype := _archetype_by_id(target_id)
 	var arrival_minute := (run_state.game_minute_of_day() + maxi(1, int(route.get("distance_blocks", 1))) * 6) % EnvironmentHours.MINUTES_PER_DAY
-	return EnvironmentHours.environment_open_at(archetype, arrival_minute)
+	return TutorialFlowScript.environment_open_at(run_state, archetype, arrival_minute)
 
 
 func _enabled_world_route_ids(run_state: RunState, map_data: Dictionary, source_id: String) -> Array:
@@ -338,7 +341,7 @@ func _world_route_ids(run_state: RunState, map_data: Dictionary, source_id: Stri
 			continue
 		var archetype := _archetype_by_id(target_id)
 		var arrival_minute := (run_state.game_minute_of_day() + maxi(1, int(route.get("distance_blocks", 1))) * 6) % EnvironmentHours.MINUTES_PER_DAY
-		if not EnvironmentHours.environment_open_at(archetype, arrival_minute):
+		if not TutorialFlowScript.environment_open_at(run_state, archetype, arrival_minute):
 			continue
 		var status := run_state.travel_route_status(route)
 		if not bool(status.get("hidden", false)) and (bool(status.get("available", true)) or (include_locked and bool(status.get("locked", false)))):

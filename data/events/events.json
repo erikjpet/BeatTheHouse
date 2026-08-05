@@ -92,7 +92,9 @@
   {
     "id": "parking_lot_tip",
     "display_name": "Parking Lot Tip",
-    "type": "progression",
+    "type": "discovery",
+    "presentation_class": "discovery",
+    "discovery_summary": "Underground route lead",
     "interaction_mode": "interactable",
     "scopes": [
       "any"
@@ -140,7 +142,9 @@
   {
     "id": "grand_casino_invite",
     "display_name": "High Roller Invitation",
-    "type": "progression",
+    "type": "discovery",
+    "presentation_class": "discovery",
+    "discovery_summary": "Grand Casino access",
     "interaction_mode": "interactable",
     "scopes": [
       "any"
@@ -400,7 +404,9 @@
   {
     "id": "jazz_connected_regular",
     "display_name": "Connected Regular",
-    "type": "progression",
+    "type": "discovery",
+    "presentation_class": "discovery",
+    "discovery_summary": "Underground contact",
     "interaction_mode": "triggered",
     "presentation": "talk",
     "speaker": {
@@ -481,7 +487,9 @@
   {
     "id": "jazz_after_hours_invitation",
     "display_name": "After-Hours Invite",
-    "type": "progression",
+    "type": "discovery",
+    "presentation_class": "discovery",
+    "discovery_summary": "Grand Casino cover",
     "interaction_mode": "triggered",
     "presentation": "talk",
     "speaker": {
@@ -749,7 +757,9 @@
   {
     "id": "side_door",
     "display_name": "Side Door",
-    "type": "progression",
+    "type": "discovery",
+    "presentation_class": "discovery",
+    "discovery_summary": "Back-alley route lead",
     "interaction_mode": "interactable",
     "scopes": [
       "casino"
@@ -757,17 +767,17 @@
     "asset_path": "res://assets/art/events/side_door.png",
     "icon_key": "side_door",
     "environment_prop": "side_door",
-    "start_summary": "A side door sells shorter trouble.",
+    "start_summary": "A runner knows two roads off the floor.",
     "trigger": {
       "type": "manual"
     },
     "payload": {
-      "summary": "A side door sells shorter trouble.",
+      "summary": "A runner knows two roads off the floor.",
       "choices": [
         {
           "id": "cheap_route",
-          "label": "Safer tip",
-          "text": "You learn a cleaner shop stop.",
+          "label": "Clean stop",
+		  "text": "Reveals a low-profile shop stop.",
           "consequences": {
             "set_next_archetypes": [
               "corner_store",
@@ -778,8 +788,8 @@
         },
         {
           "id": "dark_route",
-          "label": "Riskier tip",
-          "text": "Opens the Back Alley route.",
+          "label": "Back-alley lead",
+		  "text": "Opens the Back Alley route and draws a little heat.",
           "consequences": {
             "add_next_archetypes": [
               "back_alley"
@@ -794,7 +804,9 @@
   {
     "id": "dave_bus_warning",
     "display_name": "A Stranger on the Bus",
-    "type": "progression",
+    "type": "discovery",
+    "presentation_class": "discovery",
+    "discovery_summary": "Travel warning",
     "interaction_mode": "triggered",
     "presentation": "talk",
     "speaker": {
@@ -2337,6 +2349,7 @@
     "display_name": "Counter Phone",
     "type": "debt",
     "interaction_mode": "interactable",
+    "dialogue_id": "family_phone_exchange",
     "scopes": [
       "shop"
     ],
@@ -3105,7 +3118,9 @@
   {
     "id": "tutorial_grand_casino_invitation",
     "display_name": "A Host's Invitation",
-    "type": "progression",
+    "type": "discovery",
+    "presentation_class": "discovery",
+    "discovery_summary": "Grand Casino access",
     "interaction_mode": "interactable",
     "scopes": [
       "casino"
@@ -3122,7 +3137,7 @@
         "tutorial_active": true
       },
       "requires_tutorial_lessons": [
-        "tutorial_leave_blackjack"
+		"tutorial_drink_intro"
       ],
       "blocked_by_flags": [
         "grand_casino_invite"

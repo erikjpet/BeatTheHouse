@@ -36,17 +36,17 @@ class FocusLayer:
 		var anchor: Rect2 = live_anchor_rect if live_anchor_rect_valid else CoachFocusViewModelScript._rect(snapshot.get("anchor_rect", {}))
 		if str(snapshot.get("anchor_kind", "none")) != "none" and not anchor.has_area():
 			return
-		var alpha := 0.40 if bool(snapshot.get("highlight_emphasis", false)) else 0.10
-		if not anchor.has_area():
-			draw_rect(Rect2(Vector2.ZERO, size), Color(0.0, 0.0, 0.0, alpha), true)
-			return
-		var top_height := maxf(0.0, anchor.position.y)
-		var bottom_y := minf(size.y, anchor.end.y)
-		draw_rect(Rect2(Vector2.ZERO, Vector2(size.x, top_height)), Color(0.0, 0.0, 0.0, alpha), true)
-		draw_rect(Rect2(Vector2(0.0, bottom_y), Vector2(size.x, maxf(0.0, size.y - bottom_y))), Color(0.0, 0.0, 0.0, alpha), true)
-		draw_rect(Rect2(Vector2(0.0, anchor.position.y), Vector2(maxf(0.0, anchor.position.x), anchor.size.y)), Color(0.0, 0.0, 0.0, alpha), true)
-		draw_rect(Rect2(Vector2(anchor.end.x, anchor.position.y), Vector2(maxf(0.0, size.x - anchor.end.x), anchor.size.y)), Color(0.0, 0.0, 0.0, alpha), true)
-		draw_rect(anchor.grow(4.0), VisualStyle.YELLOW, false, 2.0)
+		if anchor.has_area():
+			_draw_positive_focus(anchor)
+		for rect_value in snapshot.get("additional_anchor_rects", []):
+			var additional := CoachFocusViewModelScript._rect(rect_value)
+			if additional.has_area():
+				_draw_positive_focus(additional)
+
+	func _draw_positive_focus(anchor: Rect2) -> void:
+		draw_rect(anchor.grow(10.0), Color(VisualStyle.YELLOW, 0.16), false, 6.0)
+		draw_rect(anchor.grow(5.0), Color(VisualStyle.YELLOW, 0.46), false, 3.0)
+		draw_rect(anchor.grow(2.0), VisualStyle.YELLOW, false, 2.0)
 
 
 var lessons: Array = []
@@ -250,19 +250,24 @@ func _build() -> void:
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", VisualStyle.SPACE_5)
 	margin.add_theme_constant_override("margin_right", VisualStyle.SPACE_5)
-	margin.add_theme_constant_override("margin_top", VisualStyle.TYPE_MICRO)
-	margin.add_theme_constant_override("margin_bottom", VisualStyle.TYPE_MICRO)
+	margin.add_theme_constant_override("margin_top", VisualStyle.SPACE_3)
+	margin.add_theme_constant_override("margin_bottom", VisualStyle.SPACE_3)
 	panel.add_child(margin)
 	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", VisualStyle.SPACE_4 - VisualStyle.BORDER_HAIRLINE)
+	stack.add_theme_constant_override("separation", VisualStyle.SPACE_3)
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_child(stack)
 	eyebrow_label = FoundationWidgets.label("DEALER'S ADVICE", VisualStyle.TYPE_SMALL)
 	FoundationWidgets.set_control_font_color(eyebrow_label, VisualStyle.YELLOW)
 	stack.add_child(eyebrow_label)
 	copy_label = FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE + VisualStyle.BORDER_HAIRLINE)
 	copy_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	copy_label.max_lines_visible = 3
+	copy_label.max_lines_visible = 4
 	stack.add_child(copy_label)
+	var action_spacer := Control.new()
+	action_spacer.custom_minimum_size.y = float(VisualStyle.SPACE_4)
+	action_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_child(action_spacer)
 	ok_button = FoundationWidgets.button("Got it", Callable(self, "_on_ok_pressed"))
 	ok_button.size_flags_horizontal = Control.SIZE_SHRINK_END
 	stack.add_child(ok_button)

@@ -76,6 +76,7 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 		item_context["price"] = price
 		item_context["pickup"] = pickup
 		var game_affinity := AttributeBadgesScript.item_game_affinity_id(item_context)
+		var addition_count := _effect_addition_count(item_definition.get("effect", {}))
 		offers.append({
 			"id": item_id,
 			"display_name": display_name,
@@ -89,6 +90,7 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 			"environment_prop": str(item_definition.get("environment_prop", "")),
 			"surface": str(item_definition.get("surface", "counter")),
 			"effect_summary": "",
+			"addition_count": addition_count,
 			"attribute_badges": AttributeBadgesScript.for_item(item_context),
 			"game_affinity": game_affinity,
 			"game_affinity_label": AttributeBadgesScript.item_game_affinity_label(item_context),
@@ -96,6 +98,22 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 			"selected": item_id == selected_item_id,
 		})
 	return offers
+
+
+func _effect_addition_count(effect_value: Variant) -> int:
+	if typeof(effect_value) != TYPE_DICTIONARY:
+		return 0
+	var count := 0
+	for key_value in (effect_value as Dictionary).keys():
+		var key := str(key_value)
+		if ["synergies", "active_item", "active_mode", "active_target", "asset_path"].has(key):
+			continue
+		var value: Variant = (effect_value as Dictionary).get(key_value)
+		if typeof(value) == TYPE_DICTIONARY:
+			count += _effect_addition_count(value)
+		elif typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT or typeof(value) == TYPE_BOOL:
+			count += 1
+	return count
 
 
 # Finds one current environment item offer by id.

@@ -4918,7 +4918,7 @@ func _run() -> void:
 		push_error("Selecting an event choice mutated serialized RunState.")
 		quit(1)
 		return
-	if not _selected_info_text_fits(app.get("environment_canvas"), "event object info", ["Risk:"]):
+	if not _selected_info_text_fits(app.get("environment_canvas"), "event object info", ["Discovery:"]):
 		quit(1)
 		return
 	var event_canvas_snapshot: Dictionary = (app.get("environment_canvas") as Control).call("current_view_snapshot")
@@ -5793,6 +5793,12 @@ func _run() -> void:
 		push_error("World map visibility contract hid an unvisited location that can currently be traveled to.")
 		quit(1)
 		return
+	var seen_fixture := revealed_fixture.duplicate(true)
+	seen_fixture["seen"] = true
+	if not bool(app.call("_world_map_node_should_render", seen_fixture, false, false)):
+		push_error("World map visibility contract hid a previously seen location that is not currently travelable.")
+		quit(1)
+		return
 	var visited_fixture := revealed_fixture.duplicate(true)
 	visited_fixture["state"] = WorldMapScript.STATE_VISITED
 	if not bool(app.call("_world_map_node_should_render", visited_fixture, false, false)):
@@ -5804,8 +5810,14 @@ func _run() -> void:
 		quit(1)
 		return
 	var map_target_ids: Array = map_snapshot.get("travel_target_ids", []) if typeof(map_snapshot.get("travel_target_ids", [])) == TYPE_ARRAY else []
-	if map_target_ids.size() > 3:
-		push_error("World map exposed more than three travel targets.")
+	var full_map_state: Dictionary = map_open_state_after.get("world_map", {}) if typeof(map_open_state_after.get("world_map", {})) == TYPE_DICTIONARY else {}
+	var unvisited_map_target_count := 0
+	for target_id_value in map_target_ids:
+		var target_node := _world_map_node_by_id(full_map_state, str(target_id_value))
+		if str(target_node.get("state", WorldMapScript.STATE_HIDDEN)) != WorldMapScript.STATE_VISITED:
+			unvisited_map_target_count += 1
+	if unvisited_map_target_count > 3:
+		push_error("World map exposed more than three unvisited travel targets; visited return routes must not consume that cap.")
 		quit(1)
 		return
 	var map_canvas := app.get("world_map_nodes_layer") as Control
@@ -5890,8 +5902,9 @@ func _run() -> void:
 			quit(1)
 			return
 		var was_visited := str(full_node.get("state", WorldMapScript.STATE_HIDDEN)) == WorldMapScript.STATE_VISITED
-		if node_id != current_map_id and not was_visited and not bool(node_data.get("travel_enabled", false)):
-			push_error("World map displayed unvisited location %s even though it cannot currently be traveled to." % node_id)
+		var was_seen := bool(full_node.get("seen", false))
+		if node_id != current_map_id and not was_visited and not was_seen and not bool(node_data.get("travel_enabled", false)):
+			push_error("World map displayed unseen location %s even though it cannot currently be traveled to." % node_id)
 			quit(1)
 			return
 		if node_id == WorldMapScript.GRAND_CASINO_ID and not bool(map_narrative_flags.get("grand_casino_invite", false)):
@@ -5903,8 +5916,8 @@ func _run() -> void:
 				push_error("World map travel target %s did not expose open-hours metadata." % node_id)
 				quit(1)
 				return
-		if str(node_data.get("discovery_source", "")).strip_edges() == WorldMapScript.DISCOVERY_SOURCE_TRAVEL and str(node_data.get("state", "")) != WorldMapScript.STATE_VISITED and not bool(node_data.get("travel_target", false)):
-			push_error("World map displayed travel-discovered non-target node %s." % node_id)
+		if str(node_data.get("discovery_source", "")).strip_edges() == WorldMapScript.DISCOVERY_SOURCE_TRAVEL and str(node_data.get("state", "")) != WorldMapScript.STATE_VISITED and not was_seen and not bool(node_data.get("travel_target", false)):
+			push_error("World map displayed unseen travel-discovered non-target node %s." % node_id)
 			quit(1)
 			return
 		if bool(node_data.get("travel_enabled", false)):

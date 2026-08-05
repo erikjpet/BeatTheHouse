@@ -51,15 +51,20 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 	var anchor_rect := _anchor_rect(anchor_kind, anchor_id, context)
 	if anchor_rect.has_area():
 		anchor_rect = anchor_rect.intersection(viewport_rect)
+	var additional_anchor_rects: Array = []
+	for additional_id in _string_array(lesson.get("additional_anchor_ids", [])):
+		var additional_rect := _anchor_rect(anchor_kind, additional_id, context)
+		if additional_rect.has_area():
+			additional_anchor_rects.append(_rect_dict(additional_rect.intersection(viewport_rect)))
 	var small_screen := bool(context.get("small_screen", false))
 	var completion := _dict(lesson.get("completion", {}))
 	var completion_type := str(completion.get("type", "any_action"))
 	if not COMPLETION_TYPES.has(completion_type):
 		completion_type = "any_action"
 	var available_width := maxf(1.0, viewport_rect.size.x - VIEWPORT_MARGIN * 2.0)
-	var preferred_width := 400.0 if small_screen else 360.0
+	var preferred_width := 420.0 if small_screen else 384.0
 	var bubble_width := minf(available_width, preferred_width)
-	var bubble_height := 148.0 if completion_type == "explicit_ok" else 112.0
+	var bubble_height := 172.0 if completion_type == "explicit_ok" else 144.0
 	if small_screen:
 		bubble_height += 14.0
 	var bubble_size := Vector2(
@@ -83,6 +88,7 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 		"anchor_id": anchor_id,
 		"anchor_found": anchor_kind == "none" or anchor_rect.has_area(),
 		"anchor_rect": _rect_dict(anchor_rect),
+		"additional_anchor_rects": additional_anchor_rects,
 		"bubble_rect": _rect_dict(bubble_rect),
 		"viewport_rect": _rect_dict(viewport_rect),
 		"completion_type": completion_type,
@@ -215,16 +221,17 @@ static func _anchor_rect(kind: String, anchor_id: String, context: Dictionary) -
 
 
 static func _bubble_rect(viewport_rect: Rect2, anchor_rect: Rect2, bubble_size: Vector2) -> Rect2:
+	const ANCHOR_GAP := 24.0
 	var position := viewport_rect.get_center() - bubble_size * 0.5
 	if anchor_rect.has_area():
-		var below_y := anchor_rect.end.y + 10.0
-		var above_y := anchor_rect.position.y - bubble_size.y - 10.0
+		var below_y := anchor_rect.end.y + ANCHOR_GAP
+		var above_y := anchor_rect.position.y - bubble_size.y - ANCHOR_GAP
 		if below_y + bubble_size.y <= viewport_rect.end.y - VIEWPORT_MARGIN:
 			position = Vector2(anchor_rect.get_center().x - bubble_size.x * 0.5, below_y)
 		elif above_y >= viewport_rect.position.y + VIEWPORT_MARGIN:
 			position = Vector2(anchor_rect.get_center().x - bubble_size.x * 0.5, above_y)
 		else:
-			position = Vector2(anchor_rect.end.x + 10.0, anchor_rect.get_center().y - bubble_size.y * 0.5)
+			position = Vector2(anchor_rect.end.x + ANCHOR_GAP, anchor_rect.get_center().y - bubble_size.y * 0.5)
 	position.x = clampf(position.x, viewport_rect.position.x + VIEWPORT_MARGIN, viewport_rect.end.x - bubble_size.x - VIEWPORT_MARGIN)
 	position.y = clampf(position.y, viewport_rect.position.y + VIEWPORT_MARGIN, viewport_rect.end.y - bubble_size.y - VIEWPORT_MARGIN)
 	return Rect2(position, bubble_size)

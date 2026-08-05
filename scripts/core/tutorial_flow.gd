@@ -11,6 +11,55 @@ const UNDERGROUND_CASINO_ID := "small_underground_casino"
 const GRAND_CASINO_ID := "grand_casino"
 
 
+static func environment_open_status(run_state: RunState, archetype: Dictionary, minute_of_day: int) -> Dictionary:
+	if run_state == null or not run_state.is_tutorial_run():
+		return EnvironmentHours.status_at(archetype, minute_of_day)
+	return {
+		"open": true,
+		"always_open": true,
+		"closing_soon": false,
+		"label": "Open for lessons",
+		"disabled_reason": "",
+		"opens_at": "",
+		"closes_at": "",
+		"minutes_until_open": 0,
+		"minutes_until_close": EnvironmentHours.MINUTES_PER_DAY,
+		"tutorial_override": true,
+	}
+
+
+static func environment_open_at(run_state: RunState, archetype: Dictionary, minute_of_day: int) -> bool:
+	return bool(environment_open_status(run_state, archetype, minute_of_day).get("open", true))
+
+
+static func environment_status_text(run_state: RunState, archetype: Dictionary, minute_of_day: int) -> String:
+	var status := environment_open_status(run_state, archetype, minute_of_day)
+	if bool(status.get("tutorial_override", false)):
+		return "Open for lessons"
+	return EnvironmentHours.travel_status_text(archetype, minute_of_day)
+
+
+# A caught tutorial peek is a real outcome, but it branches to the table exit
+# instead of pointing at count controls on a barred table.
+static func apply_caught_transition(run_state: RunState, result: Dictionary) -> Dictionary:
+	if run_state == null or not run_state.is_tutorial_run():
+		return {}
+	var caught := bool(result.get("dealer_caught_cheat", false)) or bool(result.get("blackjack_cheat_caught", false)) or bool(result.get("blackjack_table_barred", false))
+	if not caught:
+		return {}
+	var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+	for lesson_id in ["tutorial_blackjack_peek", "tutorial_blackjack_count_start", "tutorial_blackjack_count_all"]:
+		completed[lesson_id] = true
+	run_state.narrative_flags["tutorial_lessons_completed"] = completed
+	run_state.narrative_flags["tutorial_caught_continue"] = true
+	return {
+		"continued": true,
+		"next_lesson_id": "tutorial_leave_blackjack",
+		"completed_lessons": completed.duplicate(true),
+		"message": "The dealer caught the move and barred the table. The lesson continues: leave the table and scan the room.",
+	}
+
+
 static func is_tutorial_challenge(config: Dictionary) -> bool:
 	return str(config.get("id", "")).strip_edges() == CHALLENGE_ID or bool(config.get("tutorial", false))
 
@@ -117,5 +166,11 @@ static func travel_target_ids(run_state: RunState, candidate_ids: Array) -> Arra
 	for target_id_value in authored_ids:
 		var target_id := str(target_id_value)
 		if candidate_ids.has(target_id) or (run_state.has_world_map() and WorldMap.is_node_visible(run_state.world_map, target_id)):
+			result.append(target_id)
+	for target_id_value in candidate_ids:
+		var target_id := str(target_id_value)
+		if target_id == environment_id or result.has(target_id) or not run_state.has_world_map():
+			continue
+		if WorldMap.node_state(run_state.world_map, target_id) == WorldMap.STATE_VISITED:
 			result.append(target_id)
 	return result

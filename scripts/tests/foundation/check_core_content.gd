@@ -2674,6 +2674,43 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var entry_modifiers: Dictionary = entry_config.get("modifiers", {}) if typeof(entry_config.get("modifiers", {})) == TYPE_DICTIONARY else {}
 	if str(entry_config.get("id", "")) != "tutorial_first_card" or str(entry_modifiers.get("home_archetype_id", "")) != "apartment":
 		failures.append("Tutorial entry boundary did not enforce the authored Apartment identity.")
+	var closed_corner := _archetype_by_id(library, "corner_store")
+	var hours_run := RunStateScript.new()
+	hours_run.start_new("TUTORIAL-HOURS", config_a)
+	if EnvironmentHoursScript.environment_open_at(closed_corner, 300) or not TutorialFlowScript.environment_open_at(hours_run, closed_corner, 300):
+		failures.append("Tutorial venue-hours override did not keep a normally closed location open.")
+	var caught_run := RunStateScript.new()
+	caught_run.start_new("TUTORIAL-CAUGHT", config_a)
+	var caught_transition := TutorialFlowScript.apply_caught_transition(caught_run, {"dealer_caught_cheat": true})
+	var caught_completed: Dictionary = caught_transition.get("completed_lessons", {}) if typeof(caught_transition.get("completed_lessons", {})) == TYPE_DICTIONARY else {}
+	if str(caught_transition.get("next_lesson_id", "")) != "tutorial_leave_blackjack" or not bool(caught_completed.get("tutorial_blackjack_count_all", false)):
+		failures.append("Caught tutorial blackjack outcome did not transition to the leave-table recovery lesson.")
+	var shelf_lesson := library.tutorial_lesson("tutorial_inspect_coffee")
+	var shelf_model := CoachViewModelScript.build(shelf_lesson, {
+		"viewport_rect": Rect2(Vector2.ZERO, Vector2(1280, 720)),
+		"anchor_rects": {"interactable_objects": {"item:instant_coffee": Rect2(100, 200, 80, 60), "item:ledger_pencil": Rect2(200, 200, 80, 60)}},
+	})
+	if (shelf_model.get("additional_anchor_rects", []) as Array).size() != 1:
+		failures.append("Tutorial shelf lesson did not resolve both item highlights.")
+	var phone_dialogue := library.dialogue("family_phone_exchange")
+	var phone_nodes: Dictionary = phone_dialogue.get("nodes", {}) if typeof(phone_dialogue.get("nodes", {})) == TYPE_DICTIONARY else {}
+	if phone_nodes.size() < 3 or str((phone_nodes.get("answer", {}) as Dictionary).get("text", "")).is_empty() or (phone_nodes.get("answer", {}) as Dictionary).get("choices", []).is_empty():
+		failures.append("Family phone call did not expose a multi-turn caller/player exchange.")
+	var drink_lesson := library.tutorial_lesson("tutorial_drink_intro")
+	var drink_anchor: Dictionary = drink_lesson.get("anchor", {}) if typeof(drink_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+	if str(drink_anchor.get("id", "")) != "service:house_drink" or not str((pal_nodes.get("drink_intro", {}) as Dictionary).get("text", "")).contains("Drunk"):
+		failures.append("Tutorial drinking beat did not explain Drunk at the real drink service.")
+	var filtered_overlay_badges := AttributeBadgesScript.for_object_overlay([{"glyph_id": "risk_tier"}, {"glyph_id": "class_event"}])
+	if filtered_overlay_badges.size() != 1 or str((filtered_overlay_badges[0] as Dictionary).get("glyph_id", "")) != "class_event":
+		failures.append("Object-overlay badge selection did not remove risk_tier at the source.")
+	var discovery_badge := AttributeBadgesScript.class_badge("event", "discovery")
+	if str(discovery_badge.get("tooltip", "")).contains(str(discovery_badge.get("value_text", ""))):
+		failures.append("Class badge tooltip source repeated the concrete class value.")
+	var discovery_event_ids := ["parking_lot_tip", "grand_casino_invite", "jazz_connected_regular", "jazz_after_hours_invitation", "side_door", "dave_bus_warning", "tutorial_grand_casino_invitation"]
+	for discovery_event_id in discovery_event_ids:
+		var discovery_event := library.event(discovery_event_id)
+		if str(discovery_event.get("type", "")) != "discovery" or str(discovery_event.get("presentation_class", "")) != "discovery" or str(discovery_event.get("discovery_summary", "")).is_empty():
+			failures.append("Event did not use discovery class and box copy: %s." % discovery_event_id)
 	var tutorial_travel_costs: Dictionary = entry_modifiers.get("tutorial_travel_cost_overrides", {}) if typeof(entry_modifiers.get("tutorial_travel_cost_overrides", {})) == TYPE_DICTIONARY else {}
 	if int(tutorial_travel_costs.get("corner_store", -1)) != 0 or int(tutorial_travel_costs.get("grand_casino", -1)) != 0:
 		failures.append("Tutorial fares did not preserve the affordable $0 Corner Store and Grand Casino route contracts.")
@@ -2711,6 +2748,9 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		failures.append("Tutorial apartment did not force exactly one X-ray Glasses pickup.")
 	var item_service := RunActionServiceScript.new()
 	item_service.setup(library, run_a)
+	var coffee_definition := library.item("instant_coffee")
+	if int(item_service.call("_effect_addition_count", coffee_definition.get("effect", {}))) != 3:
+		failures.append("Instant Coffee shelf hover did not expose its +3 additions count.")
 	var glasses_pickup: Dictionary = item_service.buy_item_offer("xray_glasses")
 	if not bool(glasses_pickup.get("ok", false)) or not run_a.inventory.has("xray_glasses"):
 		failures.append("Tutorial could not pick up its forced X-ray Glasses.")
@@ -2778,8 +2818,12 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var tutorial_lessons_completed: Dictionary = run_a.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_a.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
 	tutorial_lessons_completed["tutorial_leave_blackjack"] = true
 	run_a.narrative_flags["tutorial_lessons_completed"] = tutorial_lessons_completed
+	if invite_event.can_trigger(run_a, run_a.current_environment):
+		failures.append("Tutorial invitation appeared before the drinking lesson completed.")
+	tutorial_lessons_completed["tutorial_drink_intro"] = true
+	run_a.narrative_flags["tutorial_lessons_completed"] = tutorial_lessons_completed
 	if not invite_event.can_trigger(run_a, run_a.current_environment):
-		failures.append("Tutorial invitation did not appear after the Blackjack departure lesson completed.")
+		failures.append("Tutorial invitation did not appear after the drinking lesson completed.")
 	var invite_result: Dictionary = invite_event.resolve(run_a, run_a.current_environment, "accept_first_invitation")
 	if not bool(invite_result.get("ok", false)) or not bool(run_a.narrative_flags.get("grand_casino_invite", false)):
 		failures.append("Tutorial end-to-end arc did not accept the Grand Casino invitation.")

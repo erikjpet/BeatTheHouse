@@ -225,6 +225,8 @@ var drunk_time_anchor_real_msec := 0
 var drunk_time_anchor_scaled_msec := 0
 var drunk_time_last_scale := 1.0
 var continuous_environment_clock_enabled := true
+var environment_pause_started_msec := 0
+var environment_paused_total_msec := 0
 var environment_clock_fractional_minutes := 0.0
 var stored_grand_casino_runtime_last_msec := -100000
 var dev_game_test_mode := false
@@ -1071,7 +1073,7 @@ func _advance_game_surface_realtime_state() -> void:
 		return
 	if not game_surface_canvas.surface_realtime_state_refresh_enabled():
 		return
-	var now_msec := Time.get_ticks_msec()
+	var now_msec := _environment_simulation_time_msec()
 	if last_game_surface_realtime_refresh_msec > 0 and now_msec - last_game_surface_realtime_refresh_msec < GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC:
 		return
 	last_game_surface_realtime_refresh_msec = now_msec
@@ -1176,7 +1178,7 @@ func _advance_environment_game_runtime() -> void:
 		return
 	if _modal_contract_blocks_player_input():
 		return
-	var now_msec := Time.get_ticks_msec()
+	var now_msec := _environment_simulation_time_msec()
 	var scanned := _advance_environment_game_runtime_for_environment(run_state.current_environment, now_msec)
 	if run_state.is_terminal() or _modal_contract_blocks_player_input():
 		return
@@ -1504,7 +1506,7 @@ func _current_drunk_time_scale() -> float:
 
 
 func _apply_game_surface_time_fields(ui_state: Dictionary, real_time_msec: int = -1) -> Dictionary:
-	var now_msec := Time.get_ticks_msec() if real_time_msec < 0 else real_time_msec
+	var now_msec := _environment_simulation_time_msec() if real_time_msec < 0 else real_time_msec
 	var time_scale := _current_drunk_time_scale()
 	var speed_percent := clampi(int(round(time_scale * 100.0)), int(round(RunState.DRUNK_TIME_SCALE_MIN * 100.0)), 100)
 	ui_state["surface_time_msec"] = now_msec
@@ -1516,7 +1518,7 @@ func _apply_game_surface_time_fields(ui_state: Dictionary, real_time_msec: int =
 
 
 func _drunk_scaled_surface_time_msec(real_time_msec: int = -1, scale_value: float = -1.0) -> int:
-	var now_msec := Time.get_ticks_msec() if real_time_msec < 0 else real_time_msec
+	var now_msec := _environment_simulation_time_msec() if real_time_msec < 0 else real_time_msec
 	var time_scale := clampf(scale_value if scale_value > 0.0 else _current_drunk_time_scale(), RunState.DRUNK_TIME_SCALE_MIN, 1.0)
 	if drunk_time_anchor_real_msec <= 0:
 		drunk_time_anchor_real_msec = now_msec
@@ -5508,8 +5510,28 @@ func _build_talk_dock() -> void:
 	talk_dock = TalkDockScript.new()
 	talk_dock.choice_requested.connect(Callable(self, "_on_talk_dock_choice_requested"))
 	talk_dock.occupied_rect_changed.connect(Callable(self, "_on_talk_dock_occupied_rect_changed"))
+	talk_dock.conversation_active_changed.connect(Callable(self, "_on_talk_dock_conversation_active_changed"))
 	add_child(talk_dock)
 	call_deferred("_on_talk_dock_occupied_rect_changed", Rect2())
+
+
+func _on_talk_dock_conversation_active_changed(active: bool) -> void:
+	var now_msec := Time.get_ticks_msec()
+	if active and environment_pause_started_msec <= 0:
+		environment_pause_started_msec = now_msec
+	elif not active and environment_pause_started_msec > 0:
+		environment_paused_total_msec += maxi(0, now_msec - environment_pause_started_msec)
+		environment_pause_started_msec = 0
+	if environment_canvas != null:
+		environment_canvas.set_environment_activity_paused(active)
+	if game_surface_canvas != null:
+		game_surface_canvas.set_environment_activity_paused(active)
+
+
+func _environment_simulation_time_msec() -> int:
+	var now_msec := Time.get_ticks_msec()
+	var current_pause := maxi(0, now_msec - environment_pause_started_msec) if environment_pause_started_msec > 0 else 0
+	return maxi(0, now_msec - environment_paused_total_msec - current_pause)
 
 
 func _on_talk_dock_occupied_rect_changed(_rect: Rect2) -> void:
@@ -5806,6 +5828,7 @@ func _ensure_world_map_overlay_controller() -> void:
 	if world_map_overlay_controller == null:
 		world_map_overlay_controller = WorldMapOverlayControllerScript.new()
 		world_map_overlay_controller.node_pressed.connect(Callable(self, "select_world_map_node"))
+		world_map_overlay_controller.node_hovered.connect(Callable(self, "select_world_map_node"))
 	world_map_overlay_controller.set_small_screen_mode(_small_screen_enabled())
 
 
@@ -7635,6 +7658,12 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		run_state.clear_deferred_bankroll_zero_resolution()
 	if confirmed_all_in_wager and run_state.defer_next_bankroll_zero_failure:
 		run_state.clear_deferred_bankroll_zero_resolution()
+	var tutorial_caught_transition := TutorialFlowScript.apply_caught_transition(run_state, result)
+	if not tutorial_caught_transition.is_empty():
+		result["tutorial_caught_transition"] = tutorial_caught_transition.duplicate(true)
+		result["message"] = str(tutorial_caught_transition.get("message", result.get("message", "")))
+		if coach_overlay != null:
+			coach_overlay.begin_tutorial_run(tutorial_caught_transition.get("completed_lessons", {}))
 	var embeds_result_feedback := _current_game_embeds_result_feedback()
 	if bool(result.get("ok", false)) and embeds_result_feedback and not runtime_tick_in_progress:
 		_begin_presented_bankroll_hold(result, bankroll_before_result, wager_cost)
@@ -7849,7 +7878,7 @@ func _blocking_decision_popup_is_visible() -> bool:
 
 
 func _modal_contract_blocks_player_input() -> bool:
-	return travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
+	return travel_transition_active or (talk_dock != null and talk_dock.conversation_active) or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
 
 
 func _talk_dock_input_is_blocked() -> bool:
@@ -9516,7 +9545,7 @@ func _environment_view_snapshot() -> Dictionary:
 		"selected_travel_target_id": selected_travel_target_id,
 		"selected_travel_label": selected_travel_label,
 		"venue_open_status": _environment_open_status(archetype),
-		"venue_open_status_text": EnvironmentHours.travel_status_text(archetype, run_state.game_minute_of_day()),
+		"venue_open_status_text": TutorialFlowScript.environment_status_text(run_state, archetype, run_state.game_minute_of_day()),
 		"world_map_overlay_visible": world_map_visible,
 		"world_map": _world_map_snapshot() if world_map_visible else {},
 		"event_options": _eligible_event_option_view_list(),
@@ -13541,7 +13570,7 @@ func _refresh_world_map_detail() -> void:
 	lines.append("Stop: %s" % str(node.get("label", selected_world_map_node_id)))
 	var node_archetype := _environment_archetype(str(node.get("archetype_id", selected_world_map_node_id)))
 	var destination_kind := str(node_archetype.get("kind", node.get("kind", "")))
-	var status_text := EnvironmentHours.travel_status_text(node_archetype, run_state.game_minute_of_day())
+	var status_text := TutorialFlowScript.environment_status_text(run_state, node_archetype, run_state.game_minute_of_day())
 	if bool(choice.get("locked", false)):
 		lines.append("Hours: %s" % str(choice.get("open_status_text", status_text)))
 		lines.append(_world_map_travel_cost_line(choice))

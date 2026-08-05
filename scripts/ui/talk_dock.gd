@@ -3,6 +3,7 @@ extends Control
 
 signal choice_requested(event_id: String, choice_id: String)
 signal occupied_rect_changed(rect: Rect2)
+signal conversation_active_changed(active: bool)
 
 const COLLAPSED_SIZE := Vector2(420, 58)
 const EXPANDED_PANEL_WIDTH := 460.0
@@ -253,6 +254,7 @@ var expanded := false
 var armed_choice_id := ""
 var reduce_motion := false
 var small_screen_mode := false
+var conversation_active := false
 var full_body_text := ""
 var reveal_elapsed := 0.0
 var typewriter_active := false
@@ -317,6 +319,9 @@ func set_entry(next_entry: Dictionary, next_option: Dictionary, next_queue_count
 	armed_choice_id = ""
 	rendered_entry_key = next_key
 	visible = true
+	if not conversation_active:
+		conversation_active = true
+		conversation_active_changed.emit(true)
 	_render()
 	_play_attention_animation()
 
@@ -329,6 +334,9 @@ func clear_entry() -> void:
 	armed_choice_id = ""
 	rendered_entry_key = ""
 	visible = false
+	if conversation_active:
+		conversation_active = false
+		conversation_active_changed.emit(false)
 	if portrait_model != null:
 		portrait_model.set_animation_active(false)
 	if choice_list != null:

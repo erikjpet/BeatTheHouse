@@ -20,7 +20,7 @@
         "choices": [
           {
             "id": "redeem_chatter",
-            "label": "Cash winners",
+            "label": "Cash In",
             "effects": {},
             "goto": "redeem"
           },
@@ -851,6 +851,67 @@
     }
   },
   {
+    "id": "family_phone_exchange",
+    "display_name": "Gabe on the Counter Phone",
+    "speaker": {
+      "role": "lender",
+      "name": "Gabe",
+      "character_id": "gabe_brother_in_law",
+      "voice_line_key": "family_loan",
+      "mood": "guarded",
+      "behavior": "speaking over the phone",
+      "silhouette": "featureless",
+      "presentation": "faceless_silhouette",
+      "face_layers": [],
+      "bind": "none"
+    },
+    "start": "answer",
+    "nodes": {
+      "answer": {
+        "text": "You found the one phone in town that still charges guilt by the minute. You all right?",
+        "choices": [
+          {"id": "need_help", "label": "I need a little help.", "effects": {}, "goto": "weather"},
+          {"id": "just_checking", "label": "Just checking in.", "effects": {}, "goto": "weather"}
+        ]
+      },
+      "weather": {
+        "text": "Checking in never starts with a counter phone after dark. How deep is it?",
+        "choices": [
+          {"id": "thirty", "label": "Thirty gets me breathing.", "effects": {}, "goto": "terms"},
+          {"id": "not_deep", "label": "Deep enough to call family.", "effects": {}, "goto": "terms"}
+        ]
+      },
+      "terms": {
+        "text": "Thirty, then. It is help, not a gift. When you cash out, family gets remembered first.",
+        "choices": [
+          {
+            "id": "make_call",
+            "label": "Take the family loan.",
+            "text": "You accept the money and the hook tied to it.",
+            "effects": {
+              "resolve_event": true,
+              "trigger_event": {
+                "event_id": "family_loan",
+                "chance": 0.75,
+                "success_flags": {"brother_in_law_phone_ready": true},
+                "failure_flags": {"brother_in_law_phone_ready": false},
+                "failure_message": "The line drops before the transfer clears."
+              }
+            },
+            "end": true
+          },
+          {
+            "id": "not_tonight",
+            "label": "Tell him not tonight.",
+            "text": "You put the receiver down before the debt can cross the wire.",
+            "effects": {"resolve_event": true},
+            "end": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "id": "tutorial_pal_guidance",
     "display_name": "Pal",
     "speaker": {
@@ -972,6 +1033,10 @@
       "invitation": {
         "text": "Before you leave, keep an eye on your environment. Open the Grand Casino invitation and accept it.",
         "choices": [{"id": "continue", "label": "Take the invitation", "effects": {}, "end": true}]
+      },
+      "drink_intro": {
+        "text": "The bar sells courage with a timer on it. A drink can lift Luck, but Drunk slows the room, bends timing, and makes Heat harder to read. Buying is optional; knowing the trade is not.",
+        "choices": [{"id": "continue", "label": "Mind the Drunk meter", "effects": {}, "end": true}]
       },
       "grand_depart": {
         "text": "I'm banned from the Grand. Play clean around Rourke. Good luck.",

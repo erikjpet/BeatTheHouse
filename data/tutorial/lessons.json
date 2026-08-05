@@ -55,7 +55,8 @@
     "dialogue_node": "corner_items",
     "trigger": {"depends_on": ["tutorial_travel_corner"], "environment_archetype": "corner_store", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "item:instant_coffee"},
-    "copy": "Inspect the first shelf item.",
+    "additional_anchor_ids": ["item:ledger_pencil"],
+    "copy": "Both shelf items are worth inspecting. Start with Instant Coffee.",
     "completion": {"type": "anchored_action", "action_id": "focus:item:instant_coffee"},
     "gating": {"allowed_action_ids": ["item:instant_coffee"]}
   },
@@ -179,7 +180,7 @@
         "anchor": {"kind": "surface_action", "id": "pull_tab_collect_tray"}
       }
     ],
-    "copy": "Read tickets left and total cost. Buy, then Collect until the winner drops.",
+    "copy": "Buy tickets, then collect each one from the tray.",
     "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.scripted_target_consumed", "op": "equals", "value": true}]},
     "gating": {"allowed_action_ids": ["pull_tab_buy", "pull_tab_collect_tray"]}
   },
@@ -201,7 +202,7 @@
         "anchor": {"kind": "surface_action", "id": "pull_tab_file_ticket"}
       }
     ],
-    "copy": "Select, Peel all windows, File the winner, then verify it under Piles.",
+    "copy": "Collect from the tray. Select the mark, peel every window, then file the winner.",
     "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.scripted_target_filed", "op": "equals", "value": true}]},
     "gating": {"allowed_action_ids": ["pull_tab_collect_tray", "pull_tab_reveal_next", "pull_tab_next_unopened", "pull_tab_file_ticket"]}
   },
@@ -396,12 +397,24 @@
     "gating": {"allowed_action_ids": ["blackjack_hit", "blackjack_stand", "surface_back"]}
   },
   {
+    "id": "tutorial_drink_intro",
+    "scope": "tutorial_run",
+    "delivery": "dialogue",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "drink_intro",
+    "trigger": {"depends_on": ["tutorial_leave_blackjack"], "environment_archetype": "small_underground_casino", "state_predicates": []},
+    "anchor": {"kind": "interactable_object", "id": "service:house_drink"},
+    "copy": "Learn what buying a drink does and what Drunk changes.",
+    "completion": {"type": "explicit_ok"},
+    "gating": {"allowed_action_ids": ["service:house_drink", "ui:any"]}
+  },
+  {
     "id": "tutorial_accept_invitation",
     "scope": "tutorial_run",
     "delivery": "dialogue",
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "invitation",
-    "trigger": {"depends_on": ["tutorial_leave_blackjack"], "environment_archetype": "small_underground_casino", "state_predicates": []},
+    "trigger": {"depends_on": ["tutorial_drink_intro"], "environment_archetype": "small_underground_casino", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "event:tutorial_grand_casino_invitation"},
     "copy": "Open and accept the Grand Casino invitation.",
     "completion": {"type": "anchored_action", "action_id": "event:tutorial_grand_casino_invitation"},

@@ -145,12 +145,21 @@ var last_touch_press_msec: int = -100000
 var last_touch_press_position: Vector2 = Vector2(-100000.0, -100000.0)
 var reserved_overlay_global_rect := Rect2()
 var overlay_repositioned_object_ids: Array[String] = []
+var environment_activity_paused := false
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
 	_ensure_drunk_distortion_overlay()
+
+
+func set_environment_activity_paused(paused: bool) -> void:
+	if environment_activity_paused == paused:
+		return
+	environment_activity_paused = paused
+	scene_idle_animation_redraw_accumulator = 0.0
+	queue_redraw()
 
 
 func _notification(what: int) -> void:
@@ -284,7 +293,9 @@ func set_selected_object(object_id: String, snap_to_target: bool = true) -> void
 		selected_object_id = object_id
 		_invalidate_camera_target()
 	_update_camera_target_if_needed()
-	if reduce_motion or (selected_object_id.is_empty() and snap_to_target):
+	# A conversation freezes the room, so focus changes commit at this input
+	# boundary instead of leaving the camera halfway between two frozen states.
+	if reduce_motion or environment_activity_paused or (selected_object_id.is_empty() and snap_to_target):
 		camera_zoom = target_camera_zoom
 		camera_offset = target_camera_offset
 		_snap_info_card_to_target()
@@ -418,6 +429,9 @@ func _gui_input(event: InputEvent) -> void:
 			if _activate_selected_info_action_at_local_position(mouse_event.position):
 				accept_event()
 				return
+			if _focus_hovered_info_at_local_position(mouse_event.position):
+				accept_event()
+				return
 			if mouse_event.double_click:
 				_activate_object_at_local_position(mouse_event.position)
 			else:
@@ -432,6 +446,9 @@ func _gui_input(event: InputEvent) -> void:
 				return
 			_remember_touch_press(touch_event.position)
 			if _activate_selected_info_action_at_local_position(touch_event.position):
+				accept_event()
+				return
+			if _focus_hovered_info_at_local_position(touch_event.position):
 				accept_event()
 				return
 			if touch_event.double_tap:
@@ -472,6 +489,8 @@ func _mouse_duplicates_recent_touch_press(position: Vector2) -> bool:
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
+	if environment_activity_paused:
+		return
 	var previous_zoom := camera_zoom
 	var previous_offset := camera_offset
 	var was_info_animating := info_card_animating
@@ -507,7 +526,7 @@ func _process(delta: float) -> void:
 
 
 func _scene_idle_animation_active() -> bool:
-	return not reduce_motion
+	return not reduce_motion and not environment_activity_paused
 
 
 func _scene_idle_animation_redraw_due(delta: float) -> bool:
@@ -2008,6 +2027,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"impact_summary": str(record.get("impact_summary", "")),
 			"choice_summary": str(record.get("choice_summary", "")),
 			"risk_summary": str(record.get("risk_summary", "")),
+			"classification_summary": str(record.get("classification_summary", "")),
+			"addition_count": maxi(0, int(record.get("addition_count", 0))),
 			"cost_summary": str(record.get("cost_summary", "")),
 			"attribute_badges": _copy_array(record.get("attribute_badges", [])),
 			"runtime_state": (record.get("runtime_state", {}) as Dictionary).duplicate(true) if typeof(record.get("runtime_state", {})) == TYPE_DICTIONARY else {},
@@ -2325,6 +2346,12 @@ func _object_info_lines(object_data: Dictionary) -> Array:
 	var cost := str(object_data.get("cost_summary", "")).strip_edges()
 	if not cost.is_empty():
 		_append_wrapped_info_lines(lines, cost, max_chars, 1)
+	var addition_count := maxi(0, int(object_data.get("addition_count", 0)))
+	if addition_count > 0:
+		_append_wrapped_info_lines(lines, "+%d addition%s" % [addition_count, "" if addition_count == 1 else "s"], max_chars, 1)
+	var classification := str(object_data.get("classification_summary", "")).strip_edges()
+	if not classification.is_empty():
+		_append_wrapped_info_lines(lines, "Discovery: %s" % classification.capitalize(), max_chars, 1)
 	var risk := str(object_data.get("risk_summary", "")).strip_edges()
 	if not risk.is_empty():
 		_append_wrapped_info_lines(lines, "Risk: %s" % risk if not risk.begins_with("Risk:") else risk, max_chars, 1)
@@ -2776,6 +2803,20 @@ func _activate_selected_info_action_at_local_position(local_position: Vector2) -
 	object_focused.emit(object_id)
 	var emit_object_id := str(action_entry.get("emit_object_id", "")).strip_edges()
 	object_activated.emit(emit_object_id if not emit_object_id.is_empty() else object_id)
+	return true
+
+
+func _focus_hovered_info_at_local_position(local_position: Vector2) -> bool:
+	if not selected_object_id.is_empty() or hovered_object_id.is_empty():
+		return false
+	var info := _selected_object_info()
+	if info.is_empty():
+		return false
+	var info_rect := _animated_info_card_rect(info)
+	if not info_rect.has_point(_local_to_board_position(local_position)):
+		return false
+	set_selected_object(hovered_object_id)
+	object_focused.emit(hovered_object_id)
 	return true
 
 

@@ -87,12 +87,22 @@ var surface_animation_handoff_until_msec := 0
 var surface_render_elapsed_sec := 0.0
 var transient_surface_loop_deadline_msec := 0
 var transient_surface_loop_id := ""
+var environment_activity_paused := false
 
 
 func set_game_module(game_module: GameModule) -> void:
 	if surface_game_module == game_module:
 		return
 	surface_game_module = game_module
+	queue_redraw()
+
+
+func set_environment_activity_paused(paused: bool) -> void:
+	if environment_activity_paused == paused:
+		return
+	environment_activity_paused = paused
+	if paused:
+		captured_pointer_move_pending = false
 	queue_redraw()
 
 
@@ -912,6 +922,10 @@ func _process(delta: float) -> void:
 	_flush_captured_pointer_move()
 	if transient_surface_loop_deadline_msec > 0 and Time.get_ticks_msec() >= transient_surface_loop_deadline_msec:
 		surface_stop_audio_loop(transient_surface_loop_id)
+	if environment_activity_paused:
+		continuous_redraw_was_active = false
+		surface_animation_redraw_accumulator = 0.0
+		return
 	if reduce_motion:
 		flicker = 0.0
 		surface_render_elapsed_sec = 0.0

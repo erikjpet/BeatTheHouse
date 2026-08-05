@@ -52,8 +52,22 @@ static func class_badge(kind: String, class_id: String) -> Dictionary:
 	if glyph_id.is_empty():
 		return {}
 	var value_text := _class_value_text(clean_kind, clean_class)
-	var tooltip := "%s: %s" % [_glyph_label(glyph_id), _title_text(clean_class)]
+	# The class value already owns the concrete class name. Keeping it out of the
+	# tooltip source prevents renderers from composing the same phrase twice.
+	var tooltip := _glyph_label(glyph_id)
 	return _badge(glyph_id, value_text, "class", tooltip)
+
+
+static func for_object_overlay(badges: Array) -> Array:
+	var result: Array = []
+	for badge_value in badges:
+		if typeof(badge_value) != TYPE_DICTIONARY:
+			continue
+		var badge: Dictionary = badge_value
+		if str(badge.get("glyph_id", "")) == "risk_tier":
+			continue
+		result.append(badge.duplicate(true))
+	return result
 
 
 static func class_badge_map(kind: String) -> Dictionary:
