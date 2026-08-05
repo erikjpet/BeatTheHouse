@@ -60,6 +60,9 @@ const TALK_IGNORE_HEAT_DELTA := 5
 const CLOSING_TIME_DIALOGUE_ID := "venue_closing_notice"
 const CLOSING_TIME_TALK_EVENT_ID := "dialogue:venue_closing_notice"
 const CLOSING_TIME_TALK_CHOICE_ID := "head_out"
+const TUTORIAL_PAL_DIALOGUE_ID := "tutorial_pal_guidance"
+const TUTORIAL_HEAT_DIALOGUE_NODE := "heat_99"
+const TUTORIAL_PEEK_REPRIEVE_DIALOGUE_ID := "tutorial_blackjack_dealer_reprieve"
 const ENVIRONMENT_RUNTIME_STATE_KEY_CACHE_LIMIT := 64
 const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
@@ -530,7 +533,7 @@ func _advance_run_game_clock(delta: float) -> void:
 	if current_screen == SCREEN_START:
 		return
 	var tree_paused := is_inside_tree() and get_tree().paused
-	if _modal_contract_blocks_player_input() or tree_paused:
+	if _simulation_progression_paused() or tree_paused:
 		return
 	environment_clock_fractional_minutes += maxf(0.0, delta) * GAME_CLOCK_MINUTES_PER_REAL_SECOND
 	var elapsed_minutes := int(floor(environment_clock_fractional_minutes))
@@ -1044,7 +1047,7 @@ func _set_surface_stake_to_bound(bound_name: String) -> bool:
 func _advance_game_surface_automation() -> void:
 	if game_surface_auto_resolving or run_state == null or current_game == null:
 		return
-	if _modal_contract_blocks_player_input():
+	if _simulation_progression_paused():
 		return
 	var tick_state := _current_game_surface_auto_tick_state()
 	if not current_game.surface_needs_auto_tick(tick_state, run_state, run_state.current_environment):
@@ -1067,7 +1070,7 @@ func _advance_game_surface_automation() -> void:
 func _advance_game_surface_realtime_state() -> void:
 	if game_surface_auto_resolving or run_state == null or current_game == null or game_surface_canvas == null:
 		return
-	if _modal_contract_blocks_player_input():
+	if _simulation_progression_paused():
 		return
 	if current_screen != SCREEN_GAME or not game_surface_canvas.visible or not game_surface_canvas.is_visible_in_tree():
 		return
@@ -1176,11 +1179,11 @@ func _advance_environment_game_runtime() -> void:
 		return
 	if _foreground_game_blocks_environment_runtime():
 		return
-	if _modal_contract_blocks_player_input():
+	if _simulation_progression_paused():
 		return
 	var now_msec := _environment_simulation_time_msec()
 	var scanned := _advance_environment_game_runtime_for_environment(run_state.current_environment, now_msec)
-	if run_state.is_terminal() or _modal_contract_blocks_player_input():
+	if run_state.is_terminal() or _simulation_progression_paused():
 		return
 	scanned = _advance_grand_casino_stored_main_floor_slot_runtime(now_msec) or scanned
 	if scanned:
@@ -2508,9 +2511,12 @@ func _show_triggered_event_popup(entry: Dictionary) -> bool:
 func _refresh_talk_dock() -> void:
 	if talk_dock == null:
 		return
-	_sync_talk_dock_coach_avoid_rect()
 	if run_state == null or library == null:
 		talk_dock.clear_entry()
+		return
+	if run_state.is_terminal():
+		talk_dock.clear_entry()
+		item_found_talk_dock_suspended = false
 		return
 	_clear_completed_tutorial_action_acknowledgements()
 	var entry := run_state.next_pending_talk_event()
@@ -2537,6 +2543,7 @@ func _refresh_talk_dock() -> void:
 	var voice_line := str(entry_speaker.get("voice_line", "")).strip_edges()
 	var authored_guide_dialogue := [
 		"tutorial_pal_guidance",
+		TUTORIAL_PEEK_REPRIEVE_DIALOGUE_ID,
 		"tutorial_host_guidance",
 		"tutorial_rourke_intro",
 		"tutorial_linda_bronze_finish",
@@ -2551,7 +2558,10 @@ func _refresh_talk_dock() -> void:
 			option["summary"] = "%s\n%s" % [spoken_summary, precise_summary]
 		else:
 			option["summary"] = spoken_summary
+	talk_dock_avoid_sync_active = true
 	talk_dock.set_entry(entry, option, run_state.pending_talk_event_count())
+	talk_dock_avoid_sync_active = false
+	_sync_talk_dock_coach_avoid_rect()
 	if item_found_popup != null and item_found_popup.is_open():
 		item_found_talk_dock_suspended = true
 		talk_dock.visible = false
@@ -2644,6 +2654,27 @@ func start_dialogue(dialogue_id: String, source_data: Dictionary = {}) -> bool:
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
 	return true
+
+
+func _enqueue_tutorial_dialogue_without_refresh(dialogue_id: String, node_id: String, event_id: String, source: String, speaker_name: String = "") -> bool:
+	if run_state == null or library == null or not run_state.is_tutorial_run():
+		return false
+	var dialogue := library.dialogue(dialogue_id)
+	if dialogue.is_empty() or run_state.pending_talk_event(event_id).size() > 0:
+		return false
+	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), dialogue_id, str(speaker.get("voice_line_key", "")))
+	if not speaker_name.strip_edges().is_empty():
+		speaker["name"] = speaker_name.strip_edges()
+	var context := {
+		"trigger": source,
+		"type": "dialogue",
+		"dialogue_id": dialogue_id,
+		"source": source,
+		"source_object_id": "guide:runtime_intervention",
+		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
+	}
+	return run_state.enqueue_dialogue(dialogue_id, event_id, speaker, node_id, source, context)
 
 
 func _start_event_dialogue(event_id: String) -> bool:
@@ -5517,15 +5548,27 @@ func _build_talk_dock() -> void:
 
 func _on_talk_dock_conversation_active_changed(active: bool) -> void:
 	var now_msec := Time.get_ticks_msec()
-	if active and environment_pause_started_msec <= 0:
+	var should_pause := active \
+		and run_state != null \
+		and run_state.is_tutorial_run() \
+		and talk_dock != null \
+		and _talk_entry_is_pal_tutorial_dialogue(talk_dock.entry)
+	if should_pause and environment_pause_started_msec <= 0:
 		environment_pause_started_msec = now_msec
-	elif not active and environment_pause_started_msec > 0:
+	elif not should_pause and environment_pause_started_msec > 0:
 		environment_paused_total_msec += maxi(0, now_msec - environment_pause_started_msec)
 		environment_pause_started_msec = 0
 	if environment_canvas != null:
-		environment_canvas.set_environment_activity_paused(active)
+		environment_canvas.set_environment_activity_paused(should_pause)
 	if game_surface_canvas != null:
-		game_surface_canvas.set_environment_activity_paused(active)
+		game_surface_canvas.set_environment_activity_paused(should_pause)
+
+
+func _talk_entry_is_pal_tutorial_dialogue(entry: Dictionary) -> bool:
+	if str(entry.get("dialogue_id", "")).strip_edges() == "tutorial_pal_guidance":
+		return true
+	var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
+	return str(speaker.get("character_id", "")).strip_edges() == "pal_tutorial_guide"
 
 
 func _environment_simulation_time_msec() -> int:
@@ -5535,15 +5578,26 @@ func _environment_simulation_time_msec() -> int:
 
 
 func _on_talk_dock_occupied_rect_changed(_rect: Rect2) -> void:
+	if talk_dock_avoid_sync_active:
+		return
+	_apply_talk_dock_environment_reserve()
+
+
+func _apply_talk_dock_environment_reserve() -> void:
+	var reserved_rect := _current_talk_dock_environment_reserved_rect()
 	if environment_canvas != null:
-		environment_canvas.set_reserved_overlay_rect(_current_talk_dock_environment_reserved_rect())
+		environment_canvas.set_reserved_overlay_rect(reserved_rect)
+	if world_map_overlay_controller != null:
+		world_map_overlay_controller.set_reserved_overlay_global_rect(reserved_rect)
+		if _world_map_overlay_is_visible():
+			_position_world_map_detail_popup(_world_map_snapshot())
+			_sync_coach_world_map_anchor_geometry(false)
 
 
 func _current_talk_dock_environment_reserved_rect() -> Rect2:
 	if talk_dock == null:
 		return Rect2()
-	var reserve_hidden_tutorial_layout := run_state != null and run_state.is_tutorial_run()
-	if not talk_dock.visible and not reserve_hidden_tutorial_layout:
+	if not talk_dock.visible:
 		return Rect2()
 	return talk_dock.environment_reserved_global_rect()
 
@@ -5828,7 +5882,6 @@ func _ensure_world_map_overlay_controller() -> void:
 	if world_map_overlay_controller == null:
 		world_map_overlay_controller = WorldMapOverlayControllerScript.new()
 		world_map_overlay_controller.node_pressed.connect(Callable(self, "select_world_map_node"))
-		world_map_overlay_controller.node_hovered.connect(Callable(self, "select_world_map_node"))
 	world_map_overlay_controller.set_small_screen_mode(_small_screen_enabled())
 
 
@@ -7664,6 +7717,14 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		result["message"] = str(tutorial_caught_transition.get("message", result.get("message", "")))
 		if coach_overlay != null:
 			coach_overlay.begin_tutorial_run(tutorial_caught_transition.get("completed_lessons", {}))
+	if bool(result.get("blackjack_tutorial_peek_reprieve", false)):
+		_enqueue_tutorial_dialogue_without_refresh(
+			TUTORIAL_PEEK_REPRIEVE_DIALOGUE_ID,
+			"warning",
+			"tutorial_intervention:blackjack_peek_reprieve",
+			"tutorial_intervention",
+			str(result.get("blackjack_dealer_name", "Dealer"))
+		)
 	var embeds_result_feedback := _current_game_embeds_result_feedback()
 	if bool(result.get("ok", false)) and embeds_result_feedback and not runtime_tick_in_progress:
 		_begin_presented_bankroll_hold(result, bankroll_before_result, wager_cost)
@@ -7879,6 +7940,26 @@ func _blocking_decision_popup_is_visible() -> bool:
 
 func _modal_contract_blocks_player_input() -> bool:
 	return travel_transition_active or (talk_dock != null and talk_dock.conversation_active) or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
+
+
+func _simulation_progression_paused() -> bool:
+	# Conversations remain modal to player input, but only Pal owns the tutorial
+	# time-freeze contract. Natural dealer, patron, and event conversations keep
+	# normal-run clocks and autonomous systems moving behind the dialogue.
+	return travel_transition_active \
+		or _pal_tutorial_time_freeze_active() \
+		or _event_choice_popup_is_visible() \
+		or _meta_item_interaction_is_visible() \
+		or _run_inventory_popup_is_visible() \
+		or _run_journal_popup_is_visible() \
+		or _world_map_overlay_is_visible() \
+		or _run_menu_is_visible()
+
+
+func _pal_tutorial_time_freeze_active() -> bool:
+	if run_state == null or not run_state.is_tutorial_run() or talk_dock == null:
+		return false
+	return talk_dock.conversation_active and _talk_entry_is_pal_tutorial_dialogue(talk_dock.entry)
 
 
 func _talk_dock_input_is_blocked() -> bool:
@@ -8680,6 +8761,7 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 		_schedule_action_panel_refresh(object_data)
 	if coach_overlay != null:
 		coach_overlay.notify_action("focus:%s" % object_id)
+	_sync_talk_dock_coach_avoid_rect()
 	return true
 
 
@@ -9440,6 +9522,7 @@ func clear_interaction_focus(animate_camera_return: bool = false) -> void:
 			_refresh_world_header()
 	if actions_list != null:
 		_schedule_action_panel_refresh()
+	_sync_talk_dock_coach_avoid_rect()
 
 
 func _on_environment_object_hovered(object_id: String) -> void:
@@ -12181,6 +12264,7 @@ func _has_deferred_bankroll_zero_failure() -> bool:
 func _evaluate_run_terminal_state(force: bool = false) -> Dictionary:
 	if run_state == null:
 		return {}
+	_queue_pending_tutorial_heat_intervention()
 	if _all_in_result_terminal_check_is_pending() and not force:
 		return {
 			"failed": false,
@@ -12196,6 +12280,21 @@ func _evaluate_run_terminal_state(force: bool = false) -> Dictionary:
 	_route_ended_run_if_needed(result)
 	_route_failed_run_if_needed(result)
 	return result
+
+
+func _queue_pending_tutorial_heat_intervention() -> void:
+	if run_state == null or not run_state.is_tutorial_run():
+		return
+	var intervention := run_state.consume_tutorial_heat_intervention()
+	if intervention.is_empty():
+		return
+	var serial := maxi(1, int(intervention.get("serial", 1)))
+	_enqueue_tutorial_dialogue_without_refresh(
+		TUTORIAL_PAL_DIALOGUE_ID,
+		TUTORIAL_HEAT_DIALOGUE_NODE,
+		"tutorial_intervention:heat_99:%d" % serial,
+		"tutorial_intervention"
+	)
 
 
 func _run_terminal_evaluator_evaluate_and_apply() -> Dictionary:
@@ -12224,6 +12323,11 @@ func _resolve_pending_all_in_terminal_result() -> bool:
 
 func _clear_terminal_interaction_state() -> void:
 	pending_all_in_result_terminal_check = false
+	if run_state != null:
+		run_state.retire_pending_talk_events()
+	if talk_dock != null:
+		talk_dock.clear_entry()
+	item_found_talk_dock_suspended = false
 	_reset_game_surface_runtime_state()
 	current_game = null
 	game_surface_ui_state = {}
@@ -13498,7 +13602,7 @@ func _refresh_world_map_overlay_after_layout() -> void:
 	_sync_coach_world_map_anchor_geometry()
 
 
-func _sync_coach_world_map_anchor_geometry() -> void:
+func _sync_coach_world_map_anchor_geometry(sync_talk_dock: bool = true) -> void:
 	if coach_overlay == null or world_map_overlay_controller == null or not _world_map_overlay_is_visible():
 		return
 	if coach_overlay.active_anchor_kind() != "hud_element":
@@ -13519,7 +13623,8 @@ func _sync_coach_world_map_anchor_geometry() -> void:
 			node_id = selected_node_id
 	coach_overlay.update_active_anchor_rect("hud_element", anchor_id, world_map_overlay_controller.global_rect_for_node(node_id))
 	_sync_coach_focus_visibility()
-	_sync_talk_dock_coach_avoid_rect()
+	if sync_talk_dock:
+		_sync_talk_dock_coach_avoid_rect()
 
 
 func _world_map_node_ids(snapshot: Dictionary) -> Array:
@@ -14051,25 +14156,49 @@ func _sync_talk_dock_coach_avoid_rect() -> void:
 	if talk_dock == null or talk_dock_avoid_sync_active:
 		return
 	var anchor_rect := Rect2()
-	if coach_overlay != null and not coach_overlay.active_lesson_id().is_empty():
+	var focus_x_hint := -1.0
+	var focus_boundary_id := selected_object_id
+	var environment_focus_visible := current_screen != SCREEN_GAME \
+		and current_game == null \
+		and environment_canvas != null \
+		and environment_canvas.visible
+	if environment_focus_visible and not selected_object_id.is_empty() and environment_canvas.has_method("global_rect_for_selected_composition"):
+		anchor_rect = environment_canvas.call("global_rect_for_selected_composition")
+		focus_x_hint = anchor_rect.get_center().x
+	elif coach_overlay != null and not coach_overlay.active_lesson_id().is_empty():
 		anchor_rect = coach_overlay.active_anchor_rect()
+		focus_boundary_id = "%s:%s" % [coach_overlay.active_anchor_kind(), coach_overlay.active_anchor_id()]
 	# The player is free to open the map before Pal asks for travel. In that
 	# case the authored room/surface anchor is behind the modal and cannot keep
 	# selectable map nodes clear. Prefer any live map node currently covered by
 	# the dialogue so off-script exploration remains usable instead of becoming
 	# a soft lock.
 	if _world_map_overlay_is_visible() and world_map_overlay_controller != null:
-		var occupied := talk_dock.occupied_global_rect()
-		var map_avoid_rect := Rect2()
-		for node_id_value in world_map_overlay_controller.button_ids:
-			var node_rect := world_map_overlay_controller.global_rect_for_node(str(node_id_value))
-			if node_rect.has_area() and occupied.intersects(node_rect.grow(8.0)):
-				map_avoid_rect = node_rect if not map_avoid_rect.has_area() else map_avoid_rect.merge(node_rect)
-		if map_avoid_rect.has_area():
-			anchor_rect = map_avoid_rect
+		var map_focus_id := selected_world_map_node_id.strip_edges()
+		if map_focus_id.is_empty():
+			var map_snapshot := _world_map_snapshot()
+			var enabled_ids: Array = map_snapshot.get("travel_enabled_node_ids", []) if typeof(map_snapshot.get("travel_enabled_node_ids", [])) == TYPE_ARRAY else []
+			for node_value in map_snapshot.get("nodes", []):
+				if typeof(node_value) != TYPE_DICTIONARY:
+					continue
+				var node_data: Dictionary = node_value
+				var node_id := str(node_data.get("id", ""))
+				if enabled_ids.has(node_id) and str(node_data.get("state", "")) != WorldMapScript.STATE_VISITED:
+					map_focus_id = node_id
+					break
+			if map_focus_id.is_empty() and not enabled_ids.is_empty():
+				map_focus_id = str(enabled_ids[0])
+		var map_node_rect := world_map_overlay_controller.global_rect_for_node(map_focus_id)
+		if map_node_rect.has_area():
+			anchor_rect = map_node_rect
+			focus_x_hint = map_node_rect.get_center().x
+			focus_boundary_id = "map:%s" % map_focus_id
+	var event_id := str(talk_dock.entry.get("event_id", ""))
+	var boundary_key := "%s|%s|%s" % [event_id, focus_boundary_id if not focus_boundary_id.is_empty() else "none", current_screen]
 	talk_dock_avoid_sync_active = true
-	talk_dock.set_avoid_global_rect(anchor_rect)
+	talk_dock.set_avoid_global_rect(anchor_rect, boundary_key, focus_x_hint)
 	talk_dock_avoid_sync_active = false
+	_apply_talk_dock_environment_reserve()
 
 
 func _coach_context_snapshot() -> Dictionary:

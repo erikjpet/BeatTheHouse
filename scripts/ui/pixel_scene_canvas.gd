@@ -44,6 +44,8 @@ const CAMERA_ZOOM_SNAP_EPSILON := 0.001
 const CAMERA_OFFSET_SNAP_EPSILON := 0.35
 const OBJECT_LAYOUT_MARGIN := 16.0
 const CONVERSATION_OVERLAY_CLEARANCE := 12.0
+const CONVERSATION_RESERVED_FOCUS_PADDING := 4.0
+const CONVERSATION_RESERVED_EDGE_THRESHOLD := 48.0
 const OBJECT_LAYOUT_GAP := 8.0
 const OBJECT_LAYOUT_MAX_OVERLAP_AREA := 0.01
 const DEFAULT_OBJECT_VISUAL_MIN_SIZE := Vector2(72.0, 48.0)
@@ -293,9 +295,10 @@ func set_selected_object(object_id: String, snap_to_target: bool = true) -> void
 		selected_object_id = object_id
 		_invalidate_camera_target()
 	_update_camera_target_if_needed()
-	# A conversation freezes the room, so focus changes commit at this input
-	# boundary instead of leaving the camera halfway between two frozen states.
-	if reduce_motion or environment_activity_paused or (selected_object_id.is_empty() and snap_to_target):
+	# Reduced-motion and explicit room resets snap. A tutorial conversation only
+	# freezes autonomous room activity; player-driven focus presentation remains
+	# animated while simulation time is stopped.
+	if reduce_motion or (selected_object_id.is_empty() and snap_to_target):
 		camera_zoom = target_camera_zoom
 		camera_offset = target_camera_offset
 		_snap_info_card_to_target()
@@ -489,8 +492,6 @@ func _mouse_duplicates_recent_touch_press(position: Vector2) -> bool:
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
-	if environment_activity_paused:
-		return
 	var previous_zoom := camera_zoom
 	var previous_offset := camera_offset
 	var was_info_animating := info_card_animating
@@ -506,7 +507,9 @@ func _process(delta: float) -> void:
 		if snapped_camera_changed:
 			view_geometry_changed.emit()
 		return
-	var scaled_delta := delta * drunk_time_scale
+	var scaled_delta := maxf(0.0, delta) * drunk_time_scale
+	# Environment animation is presentation, not simulation. It remains alive
+	# while Pal freezes tutorial clocks and game progression.
 	flicker += scaled_delta
 	_update_camera_target_if_needed()
 	var speed := FOCUS_LERP_SPEED if camera_focus_active else ROOM_LERP_SPEED
@@ -526,7 +529,7 @@ func _process(delta: float) -> void:
 
 
 func _scene_idle_animation_active() -> bool:
-	return not reduce_motion and not environment_activity_paused
+	return not reduce_motion
 
 
 func _scene_idle_animation_redraw_due(delta: float) -> bool:
@@ -2070,7 +2073,7 @@ func _reserved_overlay_local_rect() -> Rect2:
 		minimum.y = minf(minimum.y, local_corner.y)
 		maximum.x = maxf(maximum.x, local_corner.x)
 		maximum.y = maxf(maximum.y, local_corner.y)
-	return Rect2(minimum, maximum - minimum).intersection(Rect2(Vector2.ZERO, size))
+	return Rect2(minimum, maximum - minimum).grow(CONVERSATION_RESERVED_FOCUS_PADDING).intersection(Rect2(Vector2.ZERO, size))
 
 
 func _object_layout_footprint(object_data: Dictionary, position: Vector2) -> Rect2:
@@ -3054,7 +3057,7 @@ func _update_camera_target() -> void:
 	target_camera_zoom = FOCUS_ZOOM
 	target_camera_offset = _camera_offset_for_focus(camera_focus_point, target_camera_zoom)
 	target_camera_offset = _camera_offset_with_info_clearance(object_data, object_rect, target_camera_zoom, target_camera_offset)
-	target_camera_offset = _camera_offset_with_reserved_overlay_clearance(object_rect, target_camera_zoom, target_camera_offset)
+	target_camera_offset = _camera_offset_with_reserved_overlay_clearance(object_data, object_rect, target_camera_zoom, target_camera_offset)
 
 
 func _camera_offset_for_focus(focus_point: Vector2, zoom: float) -> Vector2:
@@ -3081,37 +3084,85 @@ func _camera_axis_offset(canvas_length: float, scaled_length: float, base_offset
 	return clampf(desired_axis, minf(min_offset, max_offset), maxf(min_offset, max_offset))
 
 
-func _camera_offset_with_reserved_overlay_clearance(object_rect: Rect2, zoom: float, fallback_offset: Vector2) -> Vector2:
+func _camera_offset_with_reserved_overlay_clearance(object_data: Dictionary, object_rect: Rect2, zoom: float, fallback_offset: Vector2) -> Vector2:
 	var reserved_local_rect := _reserved_overlay_local_rect()
 	if reserved_local_rect.size.x <= 0.0 or reserved_local_rect.size.y <= 0.0:
 		return fallback_offset
 	var base_scale := _board_base_scale()
 	var scale := base_scale * zoom
 	var base_offset := _board_base_offset(base_scale)
-	var object_local_rect := Rect2(base_offset + fallback_offset + object_rect.position * scale, object_rect.size * scale).grow(CONVERSATION_OVERLAY_CLEARANCE)
-	if not object_local_rect.intersects(reserved_local_rect):
+	var fallback_composition := _focus_composition_local_rect_for_camera(object_data, object_rect, zoom, fallback_offset).grow(CONVERSATION_OVERLAY_CLEARANCE)
+	if not fallback_composition.intersects(reserved_local_rect):
 		return fallback_offset
 	var translations: Array[Vector2] = [
-		Vector2(0.0, reserved_local_rect.position.y - object_local_rect.end.y),
-		Vector2(reserved_local_rect.end.x - object_local_rect.position.x, 0.0),
-		Vector2(reserved_local_rect.position.x - object_local_rect.end.x, 0.0),
+		Vector2(0.0, reserved_local_rect.position.y - fallback_composition.end.y),
+		Vector2(reserved_local_rect.end.x - fallback_composition.position.x, 0.0),
+		Vector2(reserved_local_rect.position.x - fallback_composition.end.x, 0.0),
 	]
 	var scaled_board_size := Vector2(BOARD_SIZE) * scale
 	var best_offset := fallback_offset
-	var best_distance := INF
+	var screen_rect := Rect2(Vector2.ZERO, size)
+	var fallback_overflow := fallback_composition.size.x * fallback_composition.size.y - _rect_overlap_area(fallback_composition, screen_rect)
+	var best_score := fallback_overflow * 1000000000.0 + _rect_overlap_area(fallback_composition, reserved_local_rect) * 1000000.0
 	for translation in translations:
 		var candidate_offset := Vector2(
-			_camera_axis_offset(size.x, scaled_board_size.x, base_offset.x, fallback_offset.x + translation.x),
-			_camera_axis_offset(size.y, scaled_board_size.y, base_offset.y, fallback_offset.y + translation.y)
+			_camera_axis_offset_with_reserved_space(size.x, scaled_board_size.x, base_offset.x, fallback_offset.x + translation.x, reserved_local_rect.position.x, size.x - reserved_local_rect.end.x),
+			_camera_axis_offset_with_reserved_space(size.y, scaled_board_size.y, base_offset.y, fallback_offset.y + translation.y, reserved_local_rect.position.y, size.y - reserved_local_rect.end.y)
 		)
-		var candidate_rect := Rect2(base_offset + candidate_offset + object_rect.position * scale, object_rect.size * scale).grow(CONVERSATION_OVERLAY_CLEARANCE)
-		if candidate_rect.intersects(reserved_local_rect):
-			continue
-		var distance := candidate_offset.distance_squared_to(fallback_offset)
-		if distance < best_distance:
-			best_distance = distance
+		for _refinement in range(4):
+			var refinement_composition := _focus_composition_local_rect_for_camera(object_data, object_rect, zoom, candidate_offset).grow(CONVERSATION_OVERLAY_CLEARANCE)
+			if not refinement_composition.intersects(reserved_local_rect):
+				break
+			var correction_x := 0.0
+			if size.x - reserved_local_rect.end.x <= CONVERSATION_RESERVED_EDGE_THRESHOLD:
+				correction_x = reserved_local_rect.position.x - refinement_composition.end.x
+			elif reserved_local_rect.position.x <= CONVERSATION_RESERVED_EDGE_THRESHOLD:
+				correction_x = reserved_local_rect.end.x - refinement_composition.position.x
+			if is_zero_approx(correction_x):
+				break
+			var refined_x := _camera_axis_offset_with_reserved_space(size.x, scaled_board_size.x, base_offset.x, candidate_offset.x + correction_x, reserved_local_rect.position.x, size.x - reserved_local_rect.end.x)
+			if is_equal_approx(refined_x, candidate_offset.x):
+				break
+			candidate_offset.x = refined_x
+		var candidate_composition := _focus_composition_local_rect_for_camera(object_data, object_rect, zoom, candidate_offset).grow(CONVERSATION_OVERLAY_CLEARANCE)
+		var overflow_area := candidate_composition.size.x * candidate_composition.size.y - _rect_overlap_area(candidate_composition, screen_rect)
+		var overlap_area := _rect_overlap_area(candidate_composition, reserved_local_rect)
+		var movement_cost := candidate_offset.distance_squared_to(fallback_offset) * 0.01
+		var score := overflow_area * 1000000000.0 + overlap_area * 1000000.0 + movement_cost
+		if score < best_score:
+			best_score = score
 			best_offset = candidate_offset
 	return best_offset
+
+
+func _camera_axis_offset_with_reserved_space(canvas_length: float, scaled_length: float, base_offset_axis: float, desired_axis: float, reserved_start_gap: float, reserved_end_gap: float) -> float:
+	var regular_min := canvas_length - scaled_length - base_offset_axis
+	var regular_max := -base_offset_axis
+	var minimum := minf(regular_min, regular_max)
+	var maximum := maxf(regular_min, regular_max)
+	if size.x > 720.0:
+		return clampf(desired_axis, minimum, maximum)
+	if reserved_start_gap <= CONVERSATION_RESERVED_EDGE_THRESHOLD:
+		maximum += maxf(0.0, canvas_length - reserved_end_gap)
+	if reserved_end_gap <= CONVERSATION_RESERVED_EDGE_THRESHOLD:
+		minimum -= maxf(0.0, canvas_length - reserved_start_gap)
+	return clampf(desired_axis, minimum, maximum)
+
+
+func _focus_composition_local_rect_for_camera(object_data: Dictionary, object_rect: Rect2, zoom: float, camera_offset_value: Vector2) -> Rect2:
+	var base_scale := _board_base_scale()
+	var scale := base_scale * zoom
+	var base_offset := _board_base_offset(base_scale)
+	var object_local_rect := Rect2(base_offset + camera_offset_value + object_rect.position * scale, object_rect.size * scale)
+	var visible_rect := _visible_board_rect_for_camera(camera_offset_value, zoom)
+	var usable_rect := _usable_info_visible_rect(visible_rect)
+	var object_type := str(object_data.get("type", "item"))
+	var title := str(object_data.get("label", "")).strip_edges()
+	var lines := _object_info_lines(object_data)
+	var card_size := _object_info_size(title, lines, object_type, usable_rect, object_data)
+	var card_rect := _object_info_rect_for_visible(object_rect, card_size, usable_rect)
+	var card_local_rect := Rect2(base_offset + camera_offset_value + card_rect.position * scale, card_rect.size * scale)
+	return object_local_rect.merge(card_local_rect)
 
 
 func _camera_offset_with_info_clearance(object_data: Dictionary, object_rect: Rect2, zoom: float, fallback_offset: Vector2) -> Vector2:
@@ -3279,6 +3330,21 @@ func global_rect_for_selected_object_action(object_id: String) -> Rect2:
 	if not action_rect.has_area():
 		return Rect2()
 	return _local_rect_to_global_rect(_board_rect_to_local_rect(action_rect))
+
+
+func global_rect_for_selected_composition() -> Rect2:
+	if selected_object_id.is_empty():
+		return Rect2()
+	var object_data := _scene_object(selected_object_id)
+	if object_data.is_empty():
+		return Rect2()
+	var composition := _board_rect_to_local_rect(_board_rect_for_object(object_data))
+	var info := _selected_object_info()
+	if not info.is_empty():
+		var info_rect: Variant = info.get("rect", Rect2())
+		if typeof(info_rect) == TYPE_RECT2 and (info_rect as Rect2).has_area():
+			composition = composition.merge(_board_rect_to_local_rect(info_rect as Rect2))
+	return _local_rect_to_global_rect(composition)
 
 
 func _local_rect_to_global_rect(local_rect: Rect2) -> Rect2:

@@ -12,26 +12,43 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 
 var app: Control
 var out_dir := "res://.tmp/tutorial_rework/captures"
+var capture_size := Vector2i(1280, 720)
+var layout_failure_count := 0
 
 
 func _init() -> void:
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--out="):
 			out_dir = argument.trim_prefix("--out=")
+		elif argument.begins_with("--size="):
+			var dimensions := argument.trim_prefix("--size=").to_lower().split("x", false, 1)
+			if dimensions.size() == 2:
+				capture_size = Vector2i(maxi(320, int(dimensions[0])), maxi(240, int(dimensions[1])))
 	call_deferred("_run")
 
 
 func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out_dir))
+	var layout_file := FileAccess.open("%s/layout_records.jsonl" % ProjectSettings.globalize_path(out_dir), FileAccess.WRITE)
+	if layout_file != null:
+		layout_file.store_string("")
 	OS.set_environment("BTH_META_COLLECTION_PATH", "%s/tutorial_capture_meta.json" % ProjectSettings.globalize_path(out_dir))
 	if DisplayServer.get_name() != "headless":
-		DisplayServer.window_set_size(Vector2i(1280, 720))
+		DisplayServer.window_set_size(capture_size)
+	root.content_scale_size = capture_size
 	app = MainScene.instantiate()
 	root.add_child(app)
 	await _settle(10)
 	app.call("start_tutorial_run")
 	await _settle(14)
 	await _save_shot("01_dialogue_highlight_apartment_pal")
+	if not await _save_stability_record():
+		quit(1)
+		return
+	app.call("focus_interactable_object", "item:xray_glasses")
+	app.call("_sync_coach_environment_anchor_geometry")
+	await _settle(4)
+	await _save_shot("01b_xray_focus_opposite_dock")
 
 	var run_state: RunState = app.get("run_state")
 	if not run_state.inventory.has("xray_glasses"):
@@ -192,7 +209,7 @@ func _run() -> void:
 	await _settle(8)
 	await _save_shot("18_normal_run_host_greeting")
 	print("TUTORIAL_GUIDED_CAPTURE_DONE -> %s" % ProjectSettings.globalize_path(out_dir))
-	quit(0)
+	quit(1 if layout_failure_count > 0 else 0)
 
 
 func _stage_environment(archetype_id: String) -> bool:
@@ -373,6 +390,106 @@ func _save_shot(file_id: String) -> void:
 		push_error("Tutorial capture failed: %s (%d)" % [path, error])
 	else:
 		print("TUTORIAL_GUIDED_SHOT %s" % path)
+	_append_layout_record(file_id)
+
+
+func _append_layout_record(file_id: String) -> void:
+	var talk_dock: TalkDock = app.get("talk_dock")
+	var environment_canvas: Control = app.get("environment_canvas")
+	if talk_dock == null or environment_canvas == null:
+		return
+	var dock_snapshot: Dictionary = talk_dock.current_snapshot()
+	var occupied_rect: Rect2 = dock_snapshot.get("occupied_rect", Rect2())
+	var reserved_rect: Rect2 = dock_snapshot.get("environment_reserved_rect", Rect2())
+	var current_screen := str(app.get("current_screen"))
+	var focus_composition: Rect2 = dock_snapshot.get("avoid_rect", Rect2())
+	if not focus_composition.has_area() and current_screen == "ENVIRONMENT":
+		focus_composition = environment_canvas.call("global_rect_for_selected_composition")
+	var screen_rect := Rect2(Vector2.ZERO, app.get_viewport_rect().size)
+	var overlap_free := not focus_composition.has_area() or not occupied_rect.intersects(focus_composition.grow(10.0))
+	var fully_visible := not focus_composition.has_area() or screen_rect.encloses(focus_composition)
+	var record := {
+		"shot": file_id,
+		"screen": current_screen,
+		"logical_viewport_size": _vector_record(screen_rect.size),
+		"dock_visible": bool(dock_snapshot.get("visible", false)),
+		"layout_side": str(dock_snapshot.get("layout_side", "")),
+		"layout_vertical": str(dock_snapshot.get("layout_vertical", "")),
+		"anchored_bottom": bool(dock_snapshot.get("anchored_bottom", false)),
+		"portrait_outer_edge": bool(dock_snapshot.get("portrait_outer_edge", false)),
+		"occupied_rect": _rect_record(occupied_rect),
+		"reserved_rect": _rect_record(reserved_rect),
+		"avoid_rect": _rect_record(dock_snapshot.get("avoid_rect", Rect2())),
+		"focus_composition_rect": _rect_record(focus_composition),
+		"focus_overlap_free": overlap_free,
+		"focus_fully_visible": fully_visible,
+	}
+	var file := FileAccess.open("%s/layout_records.jsonl" % ProjectSettings.globalize_path(out_dir), FileAccess.READ_WRITE)
+	if file != null:
+		file.seek_end()
+		file.store_line(JSON.stringify(record))
+	if bool(record.get("dock_visible", false)) and (str(record.get("layout_vertical", "")) != "bottom" or not bool(record.get("anchored_bottom", false)) or not bool(record.get("portrait_outer_edge", false)) or not overlap_free or not fully_visible):
+		layout_failure_count += 1
+		push_error("Tutorial capture layout invariant failed: %s" % JSON.stringify(record))
+
+
+func _save_stability_record() -> bool:
+	await _settle(30)
+	var talk_dock: TalkDock = app.get("talk_dock")
+	var environment_canvas: Control = app.get("environment_canvas")
+	if talk_dock == null or environment_canvas == null:
+		push_error("Tutorial capture could not record talk dock stability.")
+		return false
+	var dock_before: Dictionary = talk_dock.current_snapshot()
+	var camera_before: Dictionary = environment_canvas.call("current_view_snapshot")
+	await _settle(180)
+	var dock_after: Dictionary = talk_dock.current_snapshot()
+	var camera_after: Dictionary = environment_canvas.call("current_view_snapshot")
+	var stable := int(dock_before.get("layout_side_change_count", -1)) == int(dock_after.get("layout_side_change_count", -2)) \
+		and int(dock_before.get("layout_position_change_count", -1)) == int(dock_after.get("layout_position_change_count", -2)) \
+		and int(camera_before.get("camera_target_refresh_count", -1)) == int(camera_after.get("camera_target_refresh_count", -2)) \
+		and (camera_before.get("camera_offset", Vector2.INF) as Vector2).is_equal_approx(camera_after.get("camera_offset", Vector2.ZERO) as Vector2)
+	var logical_viewport_size := app.get_viewport_rect().size
+	var record := {
+		"capture_size_requested": [capture_size.x, capture_size.y],
+		"logical_viewport_size": _vector_record(logical_viewport_size),
+		"idle_frames": 180,
+		"stable": stable,
+		"layout_side": str(dock_after.get("layout_side", "")),
+		"layout_side_change_count_before": int(dock_before.get("layout_side_change_count", -1)),
+		"layout_side_change_count_after": int(dock_after.get("layout_side_change_count", -1)),
+		"layout_position_change_count_before": int(dock_before.get("layout_position_change_count", -1)),
+		"layout_position_change_count_after": int(dock_after.get("layout_position_change_count", -1)),
+		"camera_target_refresh_count_before": int(camera_before.get("camera_target_refresh_count", -1)),
+		"camera_target_refresh_count_after": int(camera_after.get("camera_target_refresh_count", -1)),
+		"camera_offset_before": _vector_record(camera_before.get("camera_offset", Vector2.ZERO)),
+		"camera_offset_after": _vector_record(camera_after.get("camera_offset", Vector2.ZERO)),
+		"occupied_rect_before": _rect_record(dock_before.get("occupied_rect", Rect2())),
+		"occupied_rect_after": _rect_record(dock_after.get("occupied_rect", Rect2())),
+	}
+	var path := "%s/stability_%dx%d.json" % [ProjectSettings.globalize_path(out_dir), capture_size.x, capture_size.y]
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		push_error("Tutorial capture could not write stability record: %s" % path)
+		return false
+	file.store_string(JSON.stringify(record, "\t") + "\n")
+	print("TUTORIAL_GUIDED_STABILITY %s stable=%s" % [path, str(stable)])
+	if not stable:
+		push_error("Tutorial capture detected idle talk-dock or camera churn: %s" % JSON.stringify(record))
+	return stable
+
+
+func _vector_record(value: Variant) -> Array:
+	var vector: Vector2 = value if value is Vector2 else Vector2.ZERO
+	return [vector.x, vector.y]
+
+
+func _rect_record(value: Variant) -> Dictionary:
+	var rect: Rect2 = value if value is Rect2 else Rect2()
+	return {
+		"position": _vector_record(rect.position),
+		"size": _vector_record(rect.size),
+	}
 
 
 func _settle(frames: int) -> void:

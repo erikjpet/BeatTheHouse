@@ -578,7 +578,7 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Talk dock did not clamp inside a small viewport: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
-	if panel_rect.size.x > 460.0 or panel_rect.size.x >= screen_rect.size.x - 80.0 or panel_rect.size.x < 280.0 or panel_rect.size.y > 208.0:
+	if panel_rect.size.x > 190.0 or panel_rect.size.x >= screen_rect.size.x - 400.0 or panel_rect.size.x < 160.0 or panel_rect.size.y > screen_rect.size.y - 32.0:
 		parent.queue_free()
 		push_error("Talk dock did not present a compact selection overlay: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
@@ -586,29 +586,56 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("Talk dock cluster did not anchor to the bottom left: panel=%s portrait=%s screen=%s." % [str(panel_rect), str(portrait_rect), str(screen_rect)])
 		return false
-	if portrait_rect.size.x < 140.0 or portrait_rect.size.y < 180.0 or portrait_rect.size.x > 210.0 or portrait_rect.size.y > 290.0 or absf(portrait_rect.end.y - screen_rect.end.y) > 28.0:
+	if portrait_rect.size.x < 60.0 or portrait_rect.size.y < 120.0 or portrait_rect.size.x > 70.0 or portrait_rect.size.y > 136.0 or absf(portrait_rect.end.y - screen_rect.end.y) > 28.0:
 		parent.queue_free()
 		push_error("Talk dock speaker did not use the compact environment portrait footprint: portrait=%s screen=%s." % [str(portrait_rect), str(screen_rect)])
 		return false
 	parent.size = Vector2(1280, 720)
 	dock.size = parent.size
-	dock.set_avoid_global_rect(Rect2(80, 520, 150, 110))
+	dock.set_avoid_global_rect(Rect2(80, 520, 150, 110), "fixture:left-focus")
 	await process_frame
 	var avoided_snapshot := dock.current_snapshot()
 	var avoided_occupied := _snapshot_rect(avoided_snapshot.get("occupied_rect", Rect2()))
-	if str(avoided_snapshot.get("layout_side", "")) != "right" or avoided_occupied.intersects(Rect2(80, 520, 150, 110)):
+	if str(avoided_snapshot.get("layout_side", "")) != "right" or avoided_occupied.intersects(Rect2(80, 520, 150, 110)) or not bool(avoided_snapshot.get("anchored_bottom", false)) or not bool(avoided_snapshot.get("portrait_outer_edge", false)):
 		parent.queue_free()
 		push_error("TalkDock did not move opposite a live left-side tutorial target: %s." % str(avoided_snapshot))
 		return false
-	dock.set_avoid_global_rect(Rect2(1050, 520, 150, 110))
+	var stable_side_changes := int(avoided_snapshot.get("layout_side_change_count", -1))
+	var stable_position_changes := int(avoided_snapshot.get("layout_position_change_count", -1))
+	for jitter_index in range(120):
+		var jitter := float((jitter_index % 7) - 3) * 0.5
+		dock.set_avoid_global_rect(Rect2(80.0 + jitter, 520.0 - jitter, 150, 110), "fixture:left-focus")
 	await process_frame
-	if str(dock.current_snapshot().get("layout_side", "")) != "left":
+	var stable_snapshot := dock.current_snapshot()
+	if str(stable_snapshot.get("layout_side", "")) != "right" or int(stable_snapshot.get("layout_side_change_count", -2)) != stable_side_changes or int(stable_snapshot.get("layout_position_change_count", -2)) != stable_position_changes or not _snapshot_rect(stable_snapshot.get("occupied_rect", Rect2())).is_equal_approx(avoided_occupied):
+		parent.queue_free()
+		push_error("TalkDock changed side or position while the same focus boundary jittered: %s." % str(stable_snapshot))
+		return false
+	dock.set_avoid_global_rect(Rect2(1050, 520, 150, 110), "fixture:right-focus")
+	await process_frame
+	var right_focus_snapshot := dock.current_snapshot()
+	if str(right_focus_snapshot.get("layout_side", "")) != "left" or not bool(right_focus_snapshot.get("anchored_bottom", false)) or not bool(right_focus_snapshot.get("portrait_outer_edge", false)):
 		parent.queue_free()
 		push_error("TalkDock did not move opposite a live right-side tutorial target.")
 		return false
-	dock.set_avoid_global_rect(Rect2())
+	dock.set_avoid_global_rect(Rect2(), "fixture:no-focus")
 	parent.size = Vector2(640, 360)
 	dock.size = parent.size
+	var compact_entry := _talk_dock_entry_fixture()
+	compact_entry["event_id"] = "compact_bottom_target"
+	var compact_option := _talk_dock_option_fixture()
+	compact_option["choices"] = [(compact_option.get("choices", []) as Array)[0]]
+	dock.set_entry(compact_entry, compact_option, 1)
+	dock.set_avoid_global_rect(Rect2(270, 292, 100, 50), "fixture:bottom-center-control", 320.0)
+	await process_frame
+	snapshot = dock.current_snapshot()
+	var compact_protected_rect := Rect2(270, 292, 100, 50).grow(10.0)
+	if _snapshot_rect(snapshot.get("occupied_rect", Rect2())).intersects(compact_protected_rect) or str(snapshot.get("layout_vertical", "")) != "bottom" or not bool(snapshot.get("anchored_bottom", false)):
+		parent.queue_free()
+		push_error("TalkDock did not stay in an overlap-free bottom corner beside a compact tutorial control: %s." % str(snapshot))
+		return false
+	dock.set_avoid_global_rect(Rect2(), "fixture:compact-no-focus")
+	dock.set_entry(_talk_dock_entry_fixture(), _talk_dock_option_fixture(), 2)
 	await process_frame
 	snapshot = dock.current_snapshot()
 	reserved_rect = _snapshot_rect(snapshot.get("environment_reserved_rect", Rect2()))
@@ -661,10 +688,40 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("TalkDock-aware environment layout did not keep hit testing on the relocated object.")
 		return false
+	environment_canvas.call("set_environment_activity_paused", true)
+	var frozen_focus_before: Dictionary = environment_canvas.call("current_view_snapshot")
+	var frozen_scene_time := float(frozen_focus_before.get("scene_animation_time", -1.0))
 	environment_canvas.call("set_selected_object", "service:under_talk_dock")
-	for _focus_frame in range(48):
+	var frozen_focus_immediate: Dictionary = environment_canvas.call("current_view_snapshot")
+	if is_equal_approx(float(frozen_focus_immediate.get("camera_zoom", 0.0)), float(frozen_focus_immediate.get("target_camera_zoom", 0.0))) \
+		and (frozen_focus_immediate.get("camera_offset", Vector2.ZERO) as Vector2).is_equal_approx(frozen_focus_immediate.get("target_camera_offset", Vector2.ZERO) as Vector2):
+		environment_canvas.queue_free()
+		parent.queue_free()
+		push_error("Tutorial-frozen focus snapped instead of starting its camera animation.")
+		return false
+	environment_canvas.call("_process", 1.0 / 60.0)
+	var frozen_focus_first_frame: Dictionary = environment_canvas.call("current_view_snapshot")
+	if is_equal_approx(float(frozen_focus_first_frame.get("camera_zoom", 0.0)), float(frozen_focus_before.get("camera_zoom", 0.0))) \
+		and (frozen_focus_first_frame.get("camera_offset", Vector2.ZERO) as Vector2).is_equal_approx(frozen_focus_before.get("camera_offset", Vector2.ZERO) as Vector2):
+		environment_canvas.queue_free()
+		parent.queue_free()
+		push_error("Tutorial-frozen focus camera did not advance on presentation frame time.")
+		return false
+	for _focus_frame in range(47):
 		environment_canvas.call("_process", 1.0 / 60.0)
 	var focused_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	if float(focused_snapshot.get("scene_animation_time", -2.0)) <= frozen_scene_time or not bool(focused_snapshot.get("scene_idle_animation_active", false)):
+		environment_canvas.queue_free()
+		parent.queue_free()
+		push_error("Tutorial simulation freeze stopped visual environment animation.")
+		return false
+	if not is_equal_approx(float(focused_snapshot.get("camera_zoom", 0.0)), float(focused_snapshot.get("target_camera_zoom", 0.0))) \
+		or not (focused_snapshot.get("camera_offset", Vector2.ZERO) as Vector2).is_equal_approx(focused_snapshot.get("target_camera_offset", Vector2.ZERO) as Vector2):
+		environment_canvas.queue_free()
+		parent.queue_free()
+		push_error("Tutorial-frozen focus camera did not finish its animated shift.")
+		return false
+	environment_canvas.call("set_environment_activity_paused", false)
 	for object_value in focused_snapshot.get("objects", []):
 		if typeof(object_value) != TYPE_DICTIONARY or str((object_value as Dictionary).get("id", "")) != "service:under_talk_dock":
 			continue
@@ -674,6 +731,23 @@ func _check_talk_dock_component() -> bool:
 			parent.queue_free()
 			push_error("Environment focus moved the service instead of moving only the camera.")
 			return false
+	var focused_composition: Rect2 = environment_canvas.call("global_rect_for_selected_composition")
+	if not focused_composition.has_area() or focused_composition.intersects(reserved_rect.grow(2.0)):
+		environment_canvas.queue_free()
+		parent.queue_free()
+		push_error("Focused object and info panel composition overlapped the fixed TalkDock reserve: composition=%s reserve=%s." % [str(focused_composition), str(reserved_rect)])
+		return false
+	var camera_refresh_count := int(focused_snapshot.get("camera_target_refresh_count", -1))
+	var stable_camera_offset: Vector2 = focused_snapshot.get("camera_offset", Vector2.ZERO)
+	for _idle_frame in range(120):
+		environment_canvas.call("set_reserved_overlay_rect", reserved_rect)
+		environment_canvas.call("_process", 1.0 / 60.0)
+	var idle_focus_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	if int(idle_focus_snapshot.get("camera_target_refresh_count", -2)) != camera_refresh_count or not (idle_focus_snapshot.get("camera_offset", Vector2.INF) as Vector2).is_equal_approx(stable_camera_offset):
+		environment_canvas.queue_free()
+		parent.queue_free()
+		push_error("Focused camera target churned while the fixed conversation reserve was idle: %s." % str(idle_focus_snapshot))
+		return false
 	environment_canvas.queue_free()
 	var response_icon_kinds: Array = snapshot.get("response_icon_kinds", [])
 	if str(snapshot.get("presentation", "")) != "environment_overlay" or bool(snapshot.get("choice_effects_visible", true)) or _has_visible_text(dock, "Heat -1") or not response_icon_kinds.has("heat_down") or not response_icon_kinds.has("heat_up") or not response_icon_kinds.has("leave"):
@@ -1123,6 +1197,14 @@ func _resolve_talk_event_fixture(app: Control, presentation: String) -> int:
 		if not bool(talk_snapshot.get("visible", false)) or str(talk_snapshot.get("event_id", "")) != event_id:
 			push_error("Talk dock fixture did not expose the queued talk event.")
 			return -1
+		var normal_environment_canvas: Control = app.get("environment_canvas")
+		var normal_game_canvas: Control = app.get("game_surface_canvas")
+		if int(app.get("environment_pause_started_msec")) > 0 \
+			or (normal_environment_canvas != null and bool(normal_environment_canvas.get("environment_activity_paused"))) \
+			or (normal_game_canvas != null and bool(normal_game_canvas.get("environment_activity_paused"))) \
+			or bool(app.call("_simulation_progression_paused")):
+			push_error("A normal-run conversation paused room or game simulation.")
+			return -1
 		var before_screen: Dictionary = app.call("current_screen_snapshot")
 		if not bool(app.call("select_action_category", "items")):
 			push_error("Talk dock pending entry blocked normal action-category routing.")
@@ -1181,13 +1263,13 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
 	var portrait_rect := _snapshot_rect(snapshot.get("portrait_rect", Rect2()))
 	var screen_rect := _snapshot_rect(snapshot.get("screen_rect", Rect2()))
-	if panel_rect.size.x < 400.0 or panel_rect.size.x > 460.0 or panel_rect.size.y > 208.0 or panel_rect.size.x >= screen_rect.size.x - 160.0:
+	if panel_rect.size.x < 360.0 or panel_rect.size.x > 400.0 or panel_rect.size.y > 208.0 or panel_rect.size.x >= screen_rect.size.x - 160.0:
 		push_error("Dialogue dock fixture did not use the compact selection overlay: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
-	if screen_rect.size.x <= 0.0 or screen_rect.size.y <= 0.0 or portrait_rect.position.x > screen_rect.position.x + 48.0 or panel_rect.position.x > portrait_rect.end.x + 2.0 or absf(panel_rect.end.y - screen_rect.end.y) > 28.0:
-		push_error("Dialogue dock main flow did not anchor its cluster to the bottom left: panel=%s portrait=%s screen=%s." % [str(panel_rect), str(portrait_rect), str(screen_rect)])
+	if screen_rect.size.x <= 0.0 or screen_rect.size.y <= 0.0 or not bool(snapshot.get("anchored_bottom", false)) or not bool(snapshot.get("portrait_outer_edge", false)) or absf(panel_rect.end.y - screen_rect.end.y) > 28.0:
+		push_error("Dialogue dock main flow did not anchor its adaptive cluster to a bottom corner with the portrait on the outer edge: panel=%s portrait=%s screen=%s side=%s." % [str(panel_rect), str(portrait_rect), str(screen_rect), str(snapshot.get("layout_side", ""))])
 		return false
-	if portrait_rect.size.x < 180.0 or portrait_rect.size.y < 240.0 or portrait_rect.size.x > 210.0 or portrait_rect.size.y > 290.0 or absf(portrait_rect.end.y - screen_rect.end.y) > 28.0:
+	if portrait_rect.size.x < 160.0 or portrait_rect.size.y < 230.0 or portrait_rect.size.x > 170.0 or portrait_rect.size.y > 250.0 or absf(portrait_rect.end.y - screen_rect.end.y) > 28.0:
 		push_error("Dialogue dock main flow did not stage a compact speaker over the environment: portrait=%s screen=%s." % [str(portrait_rect), str(screen_rect)])
 		return false
 	var environment_reserved_rect := _snapshot_rect(snapshot.get("environment_reserved_rect", Rect2()))
@@ -3801,6 +3883,7 @@ func _run() -> void:
 	root.add_child(active_game_canvas)
 	active_game_canvas.call("render_game_snapshot", {
 		"game_id": "active_surface_animation",
+		"surface_time_msec": 5000,
 		"reduce_motion": false,
 		"surface_animates_idle": true,
 		"surface_animation_channels": [{
@@ -3828,6 +3911,22 @@ func _run() -> void:
 		push_error("Game surface animation did not maintain a 60 FPS redraw cadence.")
 		quit(1)
 		return
+	active_game_canvas.call("set_environment_activity_paused", true)
+	var frozen_game_start: Dictionary = active_game_canvas.call("current_view_snapshot")
+	var frozen_game_time := int(frozen_game_start.get("surface_simulation_time_msec", -1))
+	var frozen_game_redraws := int(frozen_game_start.get("surface_animation_redraw_count", -1))
+	for _frozen_game_animation_frame in range(6):
+		active_game_canvas.call("_process", 1.0 / 60.0)
+	var frozen_game_end: Dictionary = active_game_canvas.call("current_view_snapshot")
+	if int(frozen_game_end.get("surface_simulation_time_msec", -2)) != frozen_game_time:
+		push_error("Pal-frozen game presentation advanced its blackjack simulation/Peek clock.")
+		quit(1)
+		return
+	if int(frozen_game_end.get("surface_animation_redraw_count", -2)) - frozen_game_redraws < 6:
+		push_error("Pal-frozen game presentation stopped dealer/patron environment animation.")
+		quit(1)
+		return
+	active_game_canvas.call("set_environment_activity_paused", false)
 	var roulette_full_idle_canvas: Control = GameSurfaceCanvasScript.new()
 	root.add_child(roulette_full_idle_canvas)
 	roulette_full_idle_canvas.call("render_game_snapshot", {
@@ -5779,6 +5878,30 @@ func _run() -> void:
 		push_error("World map overlay did not render the current node and currently travelable stops.")
 		quit(1)
 		return
+	var current_map_node_id := str(map_snapshot.get("current_node_id", ""))
+	var enabled_map_node_ids: Array = map_snapshot.get("travel_enabled_node_ids", []) if typeof(map_snapshot.get("travel_enabled_node_ids", [])) == TYPE_ARRAY else []
+	for visible_node_value in map_snapshot.get("nodes", []):
+		if typeof(visible_node_value) != TYPE_DICTIONARY:
+			continue
+		var visible_node: Dictionary = visible_node_value
+		var visible_node_id := str(visible_node.get("id", ""))
+		var was_visited := str(visible_node.get("state", WorldMapScript.STATE_HIDDEN)) == WorldMapScript.STATE_VISITED
+		if visible_node_id != current_map_node_id and not was_visited and not enabled_map_node_ids.has(visible_node_id):
+			push_error("World map exposed a location that is neither visited nor currently travelable: %s." % visible_node_id)
+			quit(1)
+			return
+	var expected_focus_ids: Array = []
+	if not current_map_node_id.is_empty():
+		expected_focus_ids.append(current_map_node_id)
+	for enabled_map_node_id_value in enabled_map_node_ids:
+		var enabled_map_node_id := str(enabled_map_node_id_value)
+		if not expected_focus_ids.has(enabled_map_node_id):
+			expected_focus_ids.append(enabled_map_node_id)
+	var actual_focus_ids: Array = map_snapshot.get("map_focus_node_ids", []) if typeof(map_snapshot.get("map_focus_node_ids", [])) == TYPE_ARRAY else []
+	if actual_focus_ids != expected_focus_ids:
+		push_error("World map initial camera focus must contain only the current stop and all enabled travel destinations: %s vs %s." % [JSON.stringify(actual_focus_ids), JSON.stringify(expected_focus_ids)])
+		quit(1)
+		return
 	var revealed_fixture := {
 		"id": "unvisited_fixture",
 		"state": WorldMapScript.STATE_REVEALED,
@@ -5795,8 +5918,8 @@ func _run() -> void:
 		return
 	var seen_fixture := revealed_fixture.duplicate(true)
 	seen_fixture["seen"] = true
-	if not bool(app.call("_world_map_node_should_render", seen_fixture, false, false)):
-		push_error("World map visibility contract hid a previously seen location that is not currently travelable.")
+	if bool(app.call("_world_map_node_should_render", seen_fixture, false, false)):
+		push_error("World map visibility contract exposed a seen-but-unvisited location that is not currently travelable.")
 		quit(1)
 		return
 	var visited_fixture := revealed_fixture.duplicate(true)
@@ -6165,6 +6288,19 @@ func _run() -> void:
 	var failure_fixture_run: RunState = app.get("run_state")
 	failure_fixture_run.record_score_spending(19, "ui_failure_fixture")
 	var expected_failure_score := failure_fixture_run.run_spending_score
+	var terminal_talk_dialogue := (app.get("library") as ContentLibrary).dialogue("pull_tab_clerk")
+	var terminal_talk_speaker: Dictionary = terminal_talk_dialogue.get("speaker", {}) if typeof(terminal_talk_dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+	failure_fixture_run.retire_pending_talk_events()
+	if not failure_fixture_run.enqueue_dialogue("pull_tab_clerk", "ui_failure_terminal_talk", terminal_talk_speaker, "greeting", "ui_terminal_fixture"):
+		push_error("Failure-screen fixture could not enqueue its pending conversation.")
+		quit(1)
+		return
+	app.call("_refresh_talk_dock")
+	await process_frame
+	if not bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
+		push_error("Failure-screen fixture did not display its pending conversation before termination.")
+		quit(1)
+		return
 	failure_fixture_run.add_suspicion("ui_failure_screen:police", 100, "behavior", true, {"environment_id": str(failure_fixture_run.current_environment.get("id", ""))})
 	app.call("_refresh")
 	await process_frame
@@ -6184,6 +6320,10 @@ func _run() -> void:
 		return
 	if (app.get("game_surface_canvas") as Control).visible:
 		push_error("Game surface remained visible over the failure summary.")
+		quit(1)
+		return
+	if failure_fixture_run.pending_talk_event_count() != 0 or bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
+		push_error("Failure report retained a pending conversation popup.")
 		quit(1)
 		return
 	var failure_summary: Dictionary = app.call("current_run_report_snapshot")
@@ -6277,6 +6417,17 @@ func _run() -> void:
 	victory_fixture_run.narrative_flags["demo_victory_route"] = "high_roller_cashout"
 	victory_fixture_run.narrative_flags["demo_victory_message"] = RunState.GRAND_CASINO_HIGH_ROLLER_DEFAULT_SUCCESS_MESSAGE
 	victory_fixture_run.narrative_flags["demo_finale_completed"] = true
+	victory_fixture_run.retire_pending_talk_events()
+	if not victory_fixture_run.enqueue_dialogue("pull_tab_clerk", "ui_victory_terminal_talk", terminal_talk_speaker, "greeting", "ui_terminal_fixture"):
+		push_error("Victory-screen fixture could not enqueue its pending conversation.")
+		quit(1)
+		return
+	app.call("_refresh_talk_dock")
+	await process_frame
+	if not bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
+		push_error("Victory-screen fixture did not display its pending conversation before termination.")
+		quit(1)
+		return
 	victory_fixture_run.run_status = RunState.RUN_STATUS_ENDED
 	app.call("_refresh")
 	await process_frame
@@ -6296,6 +6447,10 @@ func _run() -> void:
 		return
 	if (app.get("game_surface_canvas") as Control).visible:
 		push_error("Game surface remained visible over the victory summary.")
+		quit(1)
+		return
+	if victory_fixture_run.pending_talk_event_count() != 0 or bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
+		push_error("Victory report retained a pending conversation popup.")
 		quit(1)
 		return
 	var victory_summary: Dictionary = app.call("current_run_report_snapshot")

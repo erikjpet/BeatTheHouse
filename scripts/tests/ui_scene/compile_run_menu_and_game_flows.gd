@@ -34,6 +34,25 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	if not bool(talk_snapshot.get("visible", false)) or str(talk_snapshot.get("speaker", "")) != "Pal":
 		push_error("Tutorial first beat did not speak through the real Pal TalkDock conversation.")
 		return false
+	var tutorial_environment_canvas: Control = app.get("environment_canvas")
+	var tutorial_game_canvas: Control = app.get("game_surface_canvas")
+	if int(app.get("environment_pause_started_msec")) <= 0 \
+		or tutorial_environment_canvas == null or not bool(tutorial_environment_canvas.get("environment_activity_paused")) \
+		or tutorial_game_canvas == null or not bool(tutorial_game_canvas.get("environment_activity_paused")) \
+		or not bool(app.call("_simulation_progression_paused")):
+		push_error("Pal's tutorial conversation did not pause room and game simulation.")
+		return false
+	if not bool(app.call("_talk_entry_is_pal_tutorial_dialogue", {"dialogue_id": "tutorial_pal_guidance", "speaker": {"character_id": "pal_tutorial_guide"}})) \
+		or bool(app.call("_talk_entry_is_pal_tutorial_dialogue", {"dialogue_id": "tutorial_host_guidance", "speaker": {"character_id": "vivienne_grand_host"}})):
+		push_error("Tutorial freeze policy did not distinguish Pal from other tutorial speakers.")
+		return false
+	var tutorial_animation_before: Dictionary = tutorial_environment_canvas.call("current_view_snapshot")
+	tutorial_environment_canvas.call("_process", 1.0 / 30.0)
+	var tutorial_animation_after: Dictionary = tutorial_environment_canvas.call("current_view_snapshot")
+	if float(tutorial_animation_after.get("scene_animation_time", -1.0)) <= float(tutorial_animation_before.get("scene_animation_time", -1.0)) \
+		or not bool(tutorial_animation_after.get("scene_idle_animation_active", false)):
+		push_error("Pal's tutorial time freeze stopped visual environment animation.")
+		return false
 	var coach_overlay: Control = app.get("coach_overlay")
 	if not bool(app.call("focus_interactable_object", "item:xray_glasses")):
 		push_error("Tutorial X-ray Glasses could not be focused through the real room interaction model.")
@@ -381,6 +400,10 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	var gas_buy_anchor: Rect2 = app.get("game_surface_canvas").call("global_rect_for_surface_action", "pull_tab_buy")
 	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_gas_xray_buy" or not bool(coach_snapshot.get("anchor_found", false)) or not _snapshot_rect(coach_snapshot.get("anchor_rect", {})).is_equal_approx(gas_buy_anchor) or str(gas_game_talk.get("event_id", "")) != "tutorial_guide:tutorial_gas_xray_buy":
 		push_error("Entering the real pull-tab surface did not show Pal and highlight its rendered Buy action: coach=%s talk=%s buy=%s." % [str(coach_snapshot), str(gas_game_talk), str(gas_buy_anchor)])
+		return false
+	var gas_talk_occupied := _snapshot_rect(gas_game_talk.get("occupied_rect", Rect2()))
+	if gas_talk_occupied.intersects(gas_buy_anchor.grow(10.0)):
+		push_error("Pal's pull-tab instruction overlapped the highlighted Buy/collect control: talk=%s target=%s." % [str(gas_talk_occupied), str(gas_buy_anchor)])
 		return false
 	app.set("last_hook_result", {"type": "game_hook", "action_id": "redeem_pull_tab_winners"})
 	var redeem_context: Dictionary = app.call("_coach_context_snapshot")
