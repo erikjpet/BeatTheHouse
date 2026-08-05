@@ -2208,6 +2208,9 @@ func _run() -> void:
 	if not await _check_pull_tab_buy_button_single_activation(app):
 		quit(1)
 		return
+	if not await _check_scratch_ticket_selected_slot_purchase(app):
+		quit(1)
+		return
 	if not await _check_meta_home_launcher_opens_room(app):
 		quit(1)
 		return
@@ -4012,13 +4015,25 @@ func _run() -> void:
 		push_error("Game-mode autosave wrote immediately instead of waiting for the surface to settle.")
 		quit(1)
 		return
+	if int(app.get("pending_autosave_after_frame")) <= Engine.get_process_frames():
+		push_error("Native autosave did not preserve a draw boundary before serialization and disk I/O.")
+		quit(1)
+		return
+	app.call("_flush_pending_autosave_if_ready")
+	if not bool((app.call("save_status_snapshot") as Dictionary).get("pending_autosave", false)):
+		push_error("Native autosave flushed inside the player-action frame.")
+		quit(1)
+		return
 	var serialized_before_back := JSON.stringify(app.call("serialized_run_state"))
 	var surface_back_event := InputEventMouseButton.new()
 	surface_back_event.button_index = MOUSE_BUTTON_LEFT
 	surface_back_event.pressed = true
 	surface_back_event.position = surface_back_position
 	focused_game_surface.call("_gui_input", surface_back_event)
-	await process_frame
+	for _autosave_frame in range(3):
+		await process_frame
+		if not bool((app.call("save_status_snapshot") as Dictionary).get("pending_autosave", false)):
+			break
 	var flushed_autosave_status: Dictionary = app.call("save_status_snapshot")
 	if bool(flushed_autosave_status.get("pending_autosave", false)):
 		push_error("Deferred game-mode autosave did not flush after leaving the game surface.")

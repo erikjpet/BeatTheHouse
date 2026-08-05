@@ -101,7 +101,7 @@ const NEW_SURFACE_BUDGETS := {
 	"meta_home_idle": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"talk_dock_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"dialogue_active": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
-	"late_run_crew_dialogue_open": {"call_ms": 50.0},
+	"late_run_crew_dialogue_open": {"call_ms": 16.0},
 	"eviction_map_transition": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"run_report_replay": {"frame_p95_ms": 16.0, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},
 	"grand_casino_duel_idle": {"draw_p95_ms": MAX_SURFACE_DRAW_P95_MS, "sample_frames": NEW_SURFACE_SAMPLE_FRAMES},

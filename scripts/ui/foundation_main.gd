@@ -683,7 +683,7 @@ func select_action_category(category_id: String) -> bool:
 	selected_action_category = category_id
 	_set_current_screen(_screen_for_action_category(category_id))
 	_focus_first_interactable_for_category(category_id)
-	_refresh()
+	_refresh_after_environment_selection()
 	return true
 
 
@@ -815,7 +815,7 @@ func select_game_action(action_id: String, action_kind: String) -> void:
 	selected_action_label = _action_label(action)
 	_set_current_screen(SCREEN_GAME)
 	_show_message("Selected %s action: %s." % [_action_kind_label(action_kind), selected_action_label])
-	_refresh()
+	_refresh_after_game_selection()
 
 
 func _on_game_surface_action(action: String, index: int, confirm_requested: bool = false) -> void:
@@ -935,7 +935,7 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 	var environment_changed := bool(command.get("environment_changed", false))
 	var action_id := str(command.get("action_id", ""))
 	var action_kind := str(command.get("action_kind", ""))
-	var resolved_surface_ui_state: Dictionary = command.get("_resolved_surface_ui_state", {}) if typeof(command.get("_resolved_surface_ui_state", {})) == TYPE_DICTIONARY else {}
+	var resolved_surface_ui_state := _surface_command_resolution_ui_state(command)
 	if bool(command.get("direct_resolve", false)) and not action_id.is_empty():
 		_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state)
 		return true
@@ -956,6 +956,22 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 		_autosave_foundation_run("Autosaved.")
 	_refresh()
 	return true
+
+
+func _surface_command_resolution_ui_state(command: Dictionary) -> Dictionary:
+	var resolved_state: Dictionary = command.get("_resolved_surface_ui_state", {}) if typeof(command.get("_resolved_surface_ui_state", {})) == TYPE_DICTIONARY else {}
+	var command_state: Dictionary = command.get("ui_state", {}) if typeof(command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	if command_state.is_empty():
+		return resolved_state
+	if resolved_state.is_empty():
+		return command_state
+	# The module command is the authoritative post-click state. Keep the
+	# pre-click snapshot as context for partial commands, but overlay selections
+	# such as scratch vending row/quantity before resolving the action.
+	var merged_state := resolved_state.duplicate(false)
+	for key in command_state:
+		merged_state[key] = command_state[key]
+	return merged_state
 
 
 func _play_surface_command_audio(command: Dictionary, fallback_index: int) -> void:
@@ -1559,13 +1575,13 @@ func select_travel_option(target_id: String) -> bool:
 	if not bool(choice.get("enabled", true)):
 		_show_message(str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
 		_refresh_world_map_overlay()
-		_refresh()
+		_refresh_after_environment_selection()
 		return false
 	selected_travel_target_id = choice_target_id
 	selected_travel_label = str(choice.get("label", selected_travel_target_id))
 	_show_message("Route marked: %s." % selected_travel_label)
 	_refresh_world_map_overlay()
-	_refresh()
+	_refresh_after_environment_selection()
 	return true
 
 
@@ -1766,7 +1782,7 @@ func select_event_choice(event_id: String, choice_id: String) -> bool:
 	_set_current_screen(SCREEN_EVENT)
 	focus_interactable_object("event:%s" % selected_event_id)
 	_show_message("Selected event choice: %s." % selected_event_choice_label)
-	_refresh()
+	_refresh_after_environment_selection()
 	return true
 
 
@@ -3165,7 +3181,7 @@ func select_item_offer(item_id: String) -> bool:
 	_set_current_screen(SCREEN_ITEMS)
 	focus_interactable_object("item:%s" % selected_item_offer_id)
 	_show_message("Selected item: %s." % selected_item_offer_label)
-	_refresh()
+	_refresh_after_environment_selection()
 	return true
 
 
@@ -3639,7 +3655,7 @@ func select_service_hook(service_id: String) -> bool:
 	_set_current_screen(SCREEN_ITEMS)
 	focus_interactable_object("service:%s" % selected_service_hook_id)
 	_show_message("%s: %s" % [selected_service_hook_label, str(option.get("status", ""))])
-	_refresh()
+	_refresh_after_environment_selection()
 	return true
 
 
@@ -3713,7 +3729,7 @@ func select_lender_hook(lender_id: String) -> bool:
 	_set_current_screen(SCREEN_ITEMS)
 	focus_interactable_object("lender:%s" % selected_lender_hook_id)
 	_show_message("%s: %s" % [selected_lender_hook_label, str(option.get("status", ""))])
-	_refresh()
+	_refresh_after_environment_selection()
 	return true
 
 
@@ -3930,7 +3946,7 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 	# Always leave at least one draw boundary before serialization so a newly
 	# opened dialogue/context panel becomes visible before any save work begins.
 	if not force:
-		_queue_pending_autosave(status_text, 1 if _should_defer_autosave_for_web() else 0)
+		_queue_pending_autosave(status_text, 1)
 		return true
 	return _write_foundation_run_save(status_text)
 
@@ -3982,10 +3998,6 @@ func _queue_pending_autosave(status_text: String, defer_frames: int) -> void:
 
 func _should_defer_autosave_for_game_surface() -> bool:
 	return current_screen == SCREEN_GAME and current_game != null and not _run_menu_is_visible()
-
-
-func _should_defer_autosave_for_web() -> bool:
-	return OS.has_feature("web")
 
 
 func _game_surface_autosave_blocked() -> bool:
@@ -6223,6 +6235,37 @@ func _refresh() -> void:
 	_refresh_coach_at_boundary()
 	if current_screen == SCREEN_GAME and current_game != null:
 		_schedule_game_coach_refresh_after_draw()
+
+
+func _refresh_after_environment_selection() -> void:
+	# Focus/category changes do not mutate the room. Rebuilding its complete
+	# interactable snapshot here made every inspection click hitch in populated
+	# late-run rooms. The focus path already moves the camera and schedules the
+	# exact action card, so only refresh the lightweight chrome/guide surfaces.
+	if run_state == null or current_screen == SCREEN_START or current_game != null:
+		_refresh()
+		return
+	# focus_interactable_object() already updates the header and schedules the
+	# exact focused action card with the object data it just resolved. Do not
+	# resolve that object list a second time here.
+	_apply_hud_mode_visibility()
+	if run_state.is_tutorial_run():
+		# Tutorial coach context is intentionally evaluated after the click returns;
+		# it can inspect the full authored target matrix without taxing normal play.
+		call_deferred("_refresh_coach_at_boundary")
+
+
+func _refresh_after_game_selection() -> void:
+	if run_state == null or current_screen != SCREEN_GAME or current_game == null:
+		_refresh()
+		return
+	_invalidate_run_screen_layout()
+	_refresh_world_header()
+	_apply_hud_mode_visibility()
+	_render_foundation_snapshots()
+	_schedule_action_panel_refresh()
+	_refresh_talk_dock()
+	_schedule_game_coach_refresh_after_draw()
 
 
 func _refresh_after_embedded_game_action() -> void:
@@ -8811,7 +8854,7 @@ func _start_lender_conversation(lender_id: String, mode: String) -> bool:
 	_refresh_talk_dock()
 	_show_message("Talking to %s." % str(speaker.get("name", definition.get("display_name", "Unknown"))))
 	_autosave_foundation_run("Autosaved.")
-	_refresh()
+	_refresh_after_environment_selection()
 	return true
 
 

@@ -1055,6 +1055,65 @@ func _check_pull_tab_buy_button_single_activation(app: Control) -> bool:
 	return true
 
 
+func _check_scratch_ticket_selected_slot_purchase(app: Control) -> bool:
+	var original_run_state: Variant = app.get("run_state")
+	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
+	app.call("start_game_test_session", "scratch_tickets")
+	await process_frame
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	var game: GameModule = app.get("current_game")
+	var canvas: Control = app.get("game_surface_canvas")
+	if run_state == null or game == null or canvas == null:
+		push_error("Scratch selected-slot purchase fixture could not start the native ticket surface.")
+		return false
+	run_state.bankroll = 100000
+	var machine: Dictionary = game.call("_ensure_machine_state", run_state, run_state.current_environment, true)
+	var stock: Array = machine.get("stock", []) if typeof(machine.get("stock", [])) == TYPE_ARRAY else []
+	if stock.size() < 2 or typeof(stock[0]) != TYPE_DICTIONARY or typeof(stock[1]) != TYPE_DICTIONARY:
+		push_error("Scratch selected-slot purchase fixture did not expose two vending rows.")
+		return false
+	var sold_out_slot: Dictionary = stock[0]
+	sold_out_slot["remaining"] = 0
+	stock[0] = sold_out_slot
+	var selected_slot: Dictionary = stock[1]
+	selected_slot["remaining"] = maxi(2, int(selected_slot.get("remaining", 0)))
+	stock[1] = selected_slot
+	machine["stock"] = stock
+	game.call("_write_machine_state", run_state.current_environment, machine, run_state)
+	app.call("_refresh")
+	await process_frame
+	var click_position: Vector2 = canvas.call("local_position_for_surface_action", "scratch_buy", 1)
+	if click_position.x < 0.0 or click_position.y < 0.0:
+		push_error("Scratch selected-slot purchase fixture could not locate vending row 2.")
+		return false
+	var bankroll_before := run_state.bankroll
+	var selected_type_id := str(selected_slot.get("type_id", ""))
+	var selected_price := maxi(1, int(selected_slot.get("price", 1)))
+	var mouse_event := InputEventMouseButton.new()
+	mouse_event.button_index = MOUSE_BUTTON_LEFT
+	mouse_event.pressed = true
+	mouse_event.position = click_position
+	canvas.call("_gui_input", mouse_event)
+	await process_frame
+	var purchased_machine: Dictionary = game.call("_ensure_machine_state", run_state, run_state.current_environment, false)
+	var active_ticket: Dictionary = purchased_machine.get("active_ticket", {}) if typeof(purchased_machine.get("active_ticket", {})) == TYPE_DICTIONARY else {}
+	if active_ticket.is_empty() or str(active_ticket.get("type_id", "")) != selected_type_id:
+		push_error("Clicking scratch vending row 2 resolved against stale row 1 state: expected=%s actual=%s." % [selected_type_id, str(active_ticket.get("type_id", ""))])
+		return false
+	if run_state.bankroll != bankroll_before - selected_price:
+		push_error("Scratch vending row 2 charged $%d instead of $%d." % [bankroll_before - run_state.bankroll, selected_price])
+		return false
+	app.call("return_to_main_menu")
+	await process_frame
+	app.set("run_state", original_run_state)
+	app.set("dev_game_test_mode", original_dev_game_test_mode)
+	app.call("_refresh_run_action_service")
+	app.call("_refresh_start_screen")
+	await process_frame
+	return true
+
+
 func _check_slot_autoplay_button_one_click(app: Control) -> bool:
 	var original_run_state: Variant = app.get("run_state")
 	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))

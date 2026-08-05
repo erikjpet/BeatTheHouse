@@ -89,6 +89,11 @@ and tagging remain pending.
 
 ### Fixed
 
+- Fixes native micro-stutters on ordinary room/game selections by removing
+  redundant full-room rebuilds and guaranteeing a draw boundary before
+  autosave serialization. Also fixes Scratch Ticket vending clicks resolving
+  against the previous row selection instead of the clicked ticket and
+  quantity.
 - Fixes Sal's Pawn Shop authored fixture overlaps and restores the tutorial
   dialogue contracts caught by the integration suites.
 - Fixes tutorial starts leaking profile home state, deprecated Dealer's Advice
