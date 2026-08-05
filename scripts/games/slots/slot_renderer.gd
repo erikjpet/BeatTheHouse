@@ -9,6 +9,8 @@ const PINBALL_AIM_CHOICES := 25
 const PINBALL_START_CHOICES := 25
 const PINBALL_POWER_CHOICES := 21
 const MAX_BACKGROUND_TEXTURE_CACHE := 6
+const MAX_SYMBOL_METADATA_CACHE := 192
+const MAX_SYMBOL_LABEL_CACHE := 128
 const PINBALL_START_ACTIONS := [
 	"slot_bonus_start_00",
 	"slot_bonus_start_01",
@@ -993,6 +995,7 @@ func _symbol_draw_metadata(definition: Dictionary, family: String, symbol: Strin
 		"glow": glow,
 	}
 	symbol_draw_metadata_cache[key] = cached
+	_trim_cache(symbol_draw_metadata_cache, MAX_SYMBOL_METADATA_CACHE)
 	return cached
 
 
@@ -2689,7 +2692,24 @@ func _symbol_label(symbol: String) -> String:
 	elif symbol.length() > 4:
 		label = symbol.left(2)
 	symbol_label_cache[symbol] = label
+	_trim_cache(symbol_label_cache, MAX_SYMBOL_LABEL_CACHE)
 	return label
+
+
+func cache_snapshot() -> Dictionary:
+	return {
+		"background_texture_cache_size": background_textures.size(),
+		"background_texture_cache_cap": MAX_BACKGROUND_TEXTURE_CACHE,
+		"symbol_metadata_cache_size": symbol_draw_metadata_cache.size(),
+		"symbol_metadata_cache_cap": MAX_SYMBOL_METADATA_CACHE,
+		"symbol_label_cache_size": symbol_label_cache.size(),
+		"symbol_label_cache_cap": MAX_SYMBOL_LABEL_CACHE,
+	}
+
+
+func _trim_cache(cache: Dictionary, cap: int) -> void:
+	while cache.size() > maxi(1, cap):
+		cache.erase(cache.keys()[0])
 
 
 func _rect_from_dict(value: Variant) -> Rect2:
