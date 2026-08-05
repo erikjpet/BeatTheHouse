@@ -17,6 +17,8 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	var environment := _scratch_environment("scratch_contract_gas")
 	var machine: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("scratch_stock"))
 	_ensure_stock_for_quantity(machine, 1)
+	machine["scalper_visit_token"] = game.call("_scratch_visit_token", run_state, environment)
+	machine["scalper_present"] = false
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment
 	if str(machine.get("schema", "")) != "scratch_ticket_machine_state" or _dict_array(machine.get("stock", [])).size() != SCRATCH_IDS.size():
@@ -73,6 +75,8 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_stale_region_upgrade(game, failures)
 	_check_scratch_sizes(game, failures)
 	_check_scratch_stock(game, failures)
+	_check_scratch_restock(game, failures)
+	_check_scratch_scalper(game, failures)
 	_check_scratch_collection_completion(game, failures)
 	_check_scratch_single_remaining_purchase(game, failures)
 	_check_scratch_rtp(game, failures)
@@ -752,6 +756,125 @@ func _check_scratch_stock(game: GameModule, failures: Array) -> void:
 			break
 	if not rotated:
 		failures.append("Scratch stock did not rotate across day-keyed streams.")
+
+
+func _check_scratch_restock(game: GameModule, failures: Array) -> void:
+	var roll_counts := {0: 0, 1: 0, 2: 0}
+	for roll in range(100):
+		var count := int(game.call("restock_count_for_roll", roll))
+		roll_counts[count] = int(roll_counts.get(count, 0)) + 1
+	if int(roll_counts.get(0, 0)) != 50 or int(roll_counts.get(1, 0)) != 40 or int(roll_counts.get(2, 0)) != 10:
+		failures.append("Scratch three-hour restock rolls are not exactly 50%% none, 40%% one, and 10%% two.")
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SCRATCH-RESTOCK-CATCHUP")
+	run_state.game_clock_minutes = 540
+	var environment := _scratch_environment("scratch_restock_catchup")
+	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("restock-catchup-stock"))
+	var stock := _dict_array(machine.get("stock", []))
+	for slot_value in stock:
+		var slot: Dictionary = slot_value
+		slot["remaining"] = 0
+		slot["capacity"] = 5
+	machine["stock"] = stock
+	machine["restock_phase_minute"] = 0
+	machine["restock_cursor_absolute_minute"] = 0
+	machine["next_restock_absolute_minute"] = 180
+	machine["restock_event_count"] = 0
+	machine["scalper_present"] = false
+	game.call("_advance_restock_schedule", run_state, environment, machine)
+	if int(machine.get("restock_event_count", 0)) != 3 or int(machine.get("restock_cursor_absolute_minute", -1)) != 540 or int(machine.get("next_restock_absolute_minute", -1)) != 720:
+		failures.append("Scratch restock did not catch up each elapsed three-hour boundary exactly once.")
+	var total_stock := int(game.call("_stock_total", machine))
+	if total_stock < 0 or total_stock > 6:
+		failures.append("Scratch catch-up added more than two tickets per elapsed restock.")
+	for slot_value in _dict_array(machine.get("stock", [])):
+		var slot: Dictionary = slot_value
+		if int(slot.get("remaining", -1)) < 0 or int(slot.get("remaining", 0)) > int(slot.get("capacity", 0)):
+			failures.append("Scratch restock exceeded a ticket slot's machine capacity.")
+	var before_repeat := machine.duplicate(true)
+	game.call("_advance_restock_schedule", run_state, environment, machine)
+	if machine != before_repeat:
+		failures.append("Scratch restock replayed a processed boundary without time advancing.")
+	var replay_run: RunState = RunStateScript.new()
+	replay_run.start_new("SCRATCH-RESTOCK-CATCHUP")
+	replay_run.game_clock_minutes = 540
+	var replay_machine: Dictionary = game.call("_generate_machine_state", replay_run, environment, _scratch_rng("restock-catchup-stock"))
+	var replay_stock := _dict_array(replay_machine.get("stock", []))
+	for slot_value in replay_stock:
+		var slot: Dictionary = slot_value
+		slot["remaining"] = 0
+		slot["capacity"] = 5
+	replay_machine["stock"] = replay_stock
+	replay_machine["restock_phase_minute"] = 0
+	replay_machine["restock_cursor_absolute_minute"] = 0
+	replay_machine["next_restock_absolute_minute"] = 180
+	replay_machine["restock_event_count"] = 0
+	replay_machine["scalper_present"] = false
+	game.call("_advance_restock_schedule", replay_run, environment, replay_machine)
+	if replay_machine.get("stock", []) != machine.get("stock", []) or int(replay_machine.get("restock_event_count", 0)) != int(machine.get("restock_event_count", 0)):
+		failures.append("Scratch elapsed-time restocking was not deterministic for a run seed and machine.")
+
+
+func _check_scratch_scalper(game: GameModule, failures: Array) -> void:
+	var present_count := 0
+	var knows_count := 0
+	for roll in range(100):
+		present_count += 1 if bool(game.call("scalper_present_for_roll", roll)) else 0
+		knows_count += 1 if bool(game.call("scalper_knows_for_roll", roll)) else 0
+	if present_count != 30:
+		failures.append("Scratch scalper visit odds drifted from the configured 30%% encounter chance.")
+	if knows_count != 50:
+		failures.append("Scratch scalper dialogue odds are not an exact 50/50 split.")
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SCRATCH-SCALPER")
+	var environment := _scratch_environment("scratch_scalper")
+	environment["entered_game_clock_minutes"] = run_state.game_clock_minutes
+	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("scalper-stock"))
+	var stock := _dict_array(machine.get("stock", []))
+	for slot_value in stock:
+		(slot_value as Dictionary)["remaining"] = 1
+	machine["stock"] = stock
+	var cleared := int(game.call("_clear_machine_stock", machine))
+	if cleared != stock.size() or int(game.call("_stock_total", machine)) != 0:
+		failures.append("Scratch scalper did not leave every machine slot out of stock.")
+	machine["scalper_visit_token"] = game.call("_scratch_visit_token", run_state, environment)
+	machine["scalper_present"] = true
+	machine["scalper_knows_schedule"] = true
+	machine["next_restock_absolute_minute"] = run_state.game_clock_minutes + 180
+	environment["game_states"] = {"scratch_tickets": machine}
+	run_state.current_environment = environment
+	var hooks := game.environment_interactable_objects(run_state, environment)
+	var scalper_hook := _scratch_hook(hooks, "scratch_ticket_scalper")
+	if scalper_hook.is_empty() or str(scalper_hook.get("object_id", "")) != "dialogue:scratch_ticket_scalper" or str(scalper_hook.get("dialogue_id", "")) != "scratch_ticket_scalper_knows":
+		failures.append("Scratch scalper did not appear as a stable talk target with the informed dialogue branch.")
+	if not str(scalper_hook.get("dialogue_summary", "")).contains("Day ") or not (str(scalper_hook.get("dialogue_summary", "")).contains("AM") or str(scalper_hook.get("dialogue_summary", "")).contains("PM")):
+		failures.append("Informed scratch scalper dialogue did not reveal the exact next restock time.")
+	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	machine["scalper_knows_schedule"] = false
+	environment["game_states"] = {"scratch_tickets": machine}
+	hooks = game.environment_interactable_objects(run_state, environment)
+	scalper_hook = _scratch_hook(hooks, "scratch_ticket_scalper")
+	if str(scalper_hook.get("dialogue_id", "")) != "scratch_ticket_scalper_oblivious" or str(scalper_hook.get("dialogue_summary", "")).contains("Day "):
+		failures.append("Oblivious scratch scalper dialogue exposed the hidden restock schedule.")
+	var tutorial_run: RunState = RunStateScript.new()
+	tutorial_run.start_new("SCRATCH-SCALPER-TUTORIAL")
+	tutorial_run.challenge_config = {"tutorial": true}
+	var tutorial_environment := _scratch_environment("scratch_scalper_tutorial")
+	tutorial_environment["entered_game_clock_minutes"] = tutorial_run.game_clock_minutes
+	var tutorial_machine: Dictionary = game.call("_generate_machine_state", tutorial_run, tutorial_environment, _scratch_rng("scalper-tutorial-stock"))
+	tutorial_machine["scalper_present"] = true
+	tutorial_environment["game_states"] = {"scratch_tickets": tutorial_machine}
+	tutorial_run.current_environment = tutorial_environment
+	var tutorial_hooks := game.environment_interactable_objects(tutorial_run, tutorial_environment)
+	if not _scratch_hook(tutorial_hooks, "scratch_ticket_scalper").is_empty():
+		failures.append("Scratch scalper intruded on the guided tutorial run.")
+
+
+func _scratch_hook(hooks: Array, hook_id: String) -> Dictionary:
+	for hook_value in hooks:
+		if typeof(hook_value) == TYPE_DICTIONARY and str((hook_value as Dictionary).get("id", "")) == hook_id:
+			return hook_value as Dictionary
+	return {}
 
 
 func _check_scratch_collection_completion(game: GameModule, failures: Array) -> void:

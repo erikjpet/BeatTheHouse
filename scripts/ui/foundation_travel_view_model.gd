@@ -38,7 +38,6 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 	var target_ids = host._travel_target_ids()
 	var travel_enabled_ids: Array = []
 	var travel_disabled_ids: Array = []
-	var visible_target_ids: Array = []
 	var travel_paths: Array = []
 	var route_path_geometry: Array = []
 	var displayed_lookup: Dictionary = {}
@@ -84,7 +83,6 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 		node["travel_enabled"] = enabled
 		node["travel_disabled_reason"] = ""
 		if visible_travel_target:
-			visible_target_ids.append(node_id)
 			node["locked"] = route_locked
 			if route_locked:
 				node["travel_disabled_reason"] = str(status.get("disabled_reason", "Route locked. Check the clue, the clock, or another stop."))
@@ -155,10 +153,6 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 	var focus_node_ids: Array = []
 	if displayed_lookup.has(current_id):
 		focus_node_ids.append(current_id)
-	for target_id_value in visible_target_ids:
-		var target_id = str(target_id_value)
-		if displayed_lookup.has(target_id) and not focus_node_ids.has(target_id):
-			focus_node_ids.append(target_id)
 	for enabled_id_value in travel_enabled_ids:
 		var enabled_id = str(enabled_id_value)
 		if displayed_lookup.has(enabled_id) and not focus_node_ids.has(enabled_id):
@@ -204,8 +198,6 @@ static func _append_route_path_geometry(result: Array, nodes_by_id: Dictionary, 
 
 static func world_map_node_should_render(host: Variant, node: Dictionary, is_current: bool, is_available_target: bool) -> bool:
 	if is_current or is_available_target:
-		return true
-	if bool(node.get("seen", false)):
 		return true
 	var state = str(node.get("state", host.WorldMapScript.STATE_HIDDEN)).strip_edges().to_lower()
 	return state == host.WorldMapScript.STATE_VISITED

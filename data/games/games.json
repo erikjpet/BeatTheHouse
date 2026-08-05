@@ -12,7 +12,7 @@
     "scene_asset_path": "res://assets/art/game_scenes/scratch_tickets.png",
     "environment_prop": "machine",
     "intro": "A ticket machine buzzes like it knows you.",
-    "description": "Buy, scratch, hope quietly.",
+    "description": "Buy, scratch, hope. Quietly.",
     "legal_actions": [
       {
         "id": "buy_scratch_ticket",
@@ -37,7 +37,7 @@
     "scene_asset_path": "res://assets/art/game_scenes/pull_tabs.png",
     "environment_prop": "machine",
     "intro": "A pull-tab rack waits by the counter.",
-    "description": "Peel paper. Cash survivors.",
+    "description": "Peel paper. Cash the survivors.",
     "pull_tab_deals": [
       {
         "id": "cherry_bells",
@@ -551,7 +551,7 @@
     "scene_asset_path": "res://assets/art/game_scenes/slot.png",
     "environment_prop": "machine",
     "intro": "The reels hum, hungry and polite.",
-    "description": "Spin reels; chase features.",
+    "description": "Spin reels. Chase the feature.",
     "slot_generation": {
       "behavior_combo_count": 72,
       "visual_machine_count": 360,
@@ -2875,7 +2875,7 @@
     "scene_asset_path": "res://assets/art/game_scenes/bar_dice.png",
     "environment_prop": "dice_table",
     "intro": "The cup hits leather like a threat.",
-    "description": "Throw 6-5-4, then lie better.",
+    "description": "Throw 6-5-4. Then lie better.",
     "legal_actions": [
       {
         "id": "roll",
@@ -2925,7 +2925,7 @@
     "scene_asset_path": "res://assets/art/game_scenes/blackjack.png",
     "environment_prop": "card_table",
     "intro": "The dealer taps felt. Your turn to sweat.",
-    "description": "Beat twenty-one without becoming interesting.",
+    "description": "Beat twenty-one without being worth watching.",
     "legal_actions": [
       {
         "id": "play_basic",
@@ -2967,7 +2967,7 @@
     "scene_asset_path": "res://assets/art/game_scenes/baccarat.png",
     "environment_prop": "baccarat_table",
     "intro": "The shoe waits with expensive patience.",
-    "description": "Back banker, player, or bad judgment.",
+    "description": "Bet banker, player, or bad instinct.",
     "legal_actions": [
       {
         "id": "deal_baccarat",
@@ -3015,7 +3015,7 @@
     "scene_asset_path": "res://assets/art/game_scenes/roulette.png",
     "environment_prop": "roulette_table",
     "intro": "The wheel spins. Chips pray in public.",
-    "description": "Place chips, watch gravity testify.",
+    "description": "Place chips. Let gravity testify.",
     "legal_actions": [
       {
         "id": "spin_roulette",
@@ -3065,7 +3065,7 @@
     "scene_asset_path": "res://assets/art/game_scenes/video_poker.png",
     "environment_prop": "video_poker_machine",
     "intro": "A candy-lit cabinet hums for decisions.",
-    "description": "Hold, draw, double down on nerve.",
+    "description": "Hold, draw, and bet your nerve.",
     "legal_actions": [
       {
         "id": "draw",

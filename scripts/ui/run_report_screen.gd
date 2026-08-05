@@ -236,6 +236,8 @@ func _build() -> void:
 	travel_stack.add_child(travel_holder)
 	map_canvas = WorldMapCanvasScript.new()
 	map_canvas.set_anchors_preset(Control.PRESET_FULL_RECT)
+	map_canvas.mouse_filter = Control.MOUSE_FILTER_STOP
+	map_canvas.tooltip_text = "Scroll to zoom. Click and drag to move the map."
 	travel_holder.add_child(map_canvas)
 	play_button = Button.new()
 	play_button.text = "▶ Play"

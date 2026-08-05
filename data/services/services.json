@@ -3,7 +3,7 @@
     "id": "cashier_tip",
     "display_name": "Cashier Tip",
     "category": "information",
-    "description": "Safer exits, cashier-priced.",
+    "description": "Safer exits, cashier priced.",
     "cost": 4,
     "effect": {
       "suspicion_delta": -1,
@@ -11,7 +11,7 @@
         "route_scouting_active": true
       },
       "messages": [
-        "The cashier marks exits like she owes them money."
+        "She marks the exits like she owes them."
       ]
     }
   },
@@ -19,14 +19,14 @@
     "id": "house_drink",
     "display_name": "Buy a Drink",
     "category": "alcohol",
-    "description": "Warm courage. Loose timing.",
+    "description": "Warm courage. Loose hands.",
     "cost": 8,
-    "message": "You buy a quick drink. Luck lifts, but the room gets easier to read wrong.",
+    "message": "You buy a quick one. Luck lifts, the room gets easier to misread.",
     "effect": {
       "alcohol_intake": 16,
       "suspicion_delta": 1,
       "messages": [
-        "The drink warms your nerve and loosens your timing."
+        "The drink warms the nerve and loosens the timing."
       ]
     }
   },

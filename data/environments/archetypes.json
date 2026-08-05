@@ -28,9 +28,9 @@
       "perspective": "first_person",
       "scene_type": "shop",
       "asset_path": "res://assets/art/environments/corner_store.png",
-      "description": "Fluorescent shelves. Clerk eyes."
+      "description": "Fluorescent aisles. Clerk counts."
     },
-    "objective_hint": "Build cash. Bigger rooms keep invitations warm.",
+    "objective_hint": "Build cash. Bigger rooms only open for it.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -115,7 +115,7 @@
     "security_profile": {
       "strictness": "low",
       "visible_cues": [
-        "The clerk watches the register more than the door."
+      "The clerk counts the till more than the door."
       ]
     },
     "music_profile": {
@@ -216,7 +216,7 @@
       1
     ],
     "suspicion_cues": [
-      "The clerk watches the register, then you."
+      "The clerk counts the till, then you."
     ],
     "travel_hooks": [
       "bar",
@@ -261,9 +261,9 @@
       "perspective": "first_person",
       "scene_type": "shop",
       "asset_path": "res://assets/art/environments/back_alley.png",
-      "description": "Wet brick and worse bargains."
+      "description": "Wet brick. Bargains get worse."
     },
-    "objective_hint": "Buy cheap, breathe quiet, leave before remembered.",
+    "objective_hint": "Buy cheap, stay quiet, leave unremembered.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -392,7 +392,7 @@
     "security_profile": {
       "strictness": "uneven",
       "visible_cues": [
-        "A parked car idles too long under the neon spill."
+      "A parked car idles under the neon too long."
       ]
     },
     "music_profile": {
@@ -486,7 +486,7 @@
       1
     ],
     "suspicion_cues": [
-      "Every puddle reflects somebody waiting."
+      "Puddles hold somebody else's face."
     ],
     "travel_hooks": [
       "bar",
@@ -526,9 +526,9 @@
       "perspective": "first_person",
       "scene_type": "shop",
       "asset_path": "res://assets/art/environments/motel.png",
-      "description": "Thin walls. Thinner luck."
+      "description": "Thin walls. Luck runs thinner."
     },
-    "objective_hint": "Recover, stash gear, then return hungry.",
+    "objective_hint": "Recover. Stash the gear. Come back hungry.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -621,7 +621,7 @@
     "security_profile": {
       "strictness": "private",
       "visible_cues": [
-        "Footsteps pass the door whenever the sign buzzes."
+      "Footsteps pass whenever the vacancy sign buzzes."
       ]
     },
     "music_profile": {
@@ -718,7 +718,7 @@
       2
     ],
     "suspicion_cues": [
-      "The desk bell hears more than it rings."
+      "The desk bell hears more than it says."
     ],
     "travel_hooks": [
       "gas_station_casino",
@@ -766,9 +766,9 @@
       "perspective": "first_person",
       "scene_type": "bar",
       "asset_path": "res://assets/art/environments/bar.png",
-      "description": "Cheap neon. Loud regulars."
+      "description": "Cheap neon. Regulars get loud."
     },
-    "objective_hint": "Listen first. Local mouths open routes.",
+    "objective_hint": "Listen first. Local talk opens routes.",
     "layout": {
       "game_spots": [
         [
@@ -848,7 +848,7 @@
     "security_profile": {
       "strictness": "loose",
       "visible_cues": [
-        "The bartender notices repeat wins more than small bets."
+      "The bartender counts repeat wins, not small bets."
       ]
     },
     "music_profile": {
@@ -933,7 +933,7 @@
     ],
     "lender_hooks": [],
     "suspicion_cues": [
-      "Regulars notice strangers by the second drink."
+      "Regulars clock strangers by the second drink."
     ],
     "travel_hooks": [
       "corner_store",
@@ -977,9 +977,9 @@
       "perspective": "first_person",
       "scene_type": "gas_station_casino",
       "asset_path": "res://assets/art/environments/gas_station_casino.png",
-      "description": "Scratchers glare under cameras."
+      "description": "Scratchers sit under the ceiling."
     },
-    "objective_hint": "Paper games pay fast and watch faster.",
+    "objective_hint": "Paper pays fast. The ceiling counts faster.",
     "layout": {
       "game_spots": [
         [
@@ -1063,7 +1063,7 @@
     "security_profile": {
       "strictness": "low",
       "visible_cues": [
-        "The cashier mirrors your movement in the cooler glass."
+      "The cashier tracks you in the cooler glass."
       ]
     },
     "music_profile": {
@@ -1148,7 +1148,7 @@
     ],
     "lender_hooks": [],
     "suspicion_cues": [
-      "The camera dome blinks like it knows odds."
+      "The ceiling blinks. It knows the odds."
     ],
     "travel_hooks": [
       "corner_store",
@@ -1193,9 +1193,9 @@
       "perspective": "first_person",
       "scene_type": "underground",
       "asset_path": "res://assets/art/environments/small_underground_casino.png",
-      "description": "Low ceiling. Real action."
+      "description": "Low ceiling. Play kept close."
     },
-    "objective_hint": "Better tables, hotter heat. Choose nerve.",
+    "objective_hint": "Better tables are provided. Heat comes too.",
     "layout": {
       "game_spots": [
         [
@@ -1279,7 +1279,7 @@
     "security_profile": {
       "strictness": "high",
       "visible_cues": [
-        "A door guard remembers everyone who walks in twice."
+      "Every return guest is remembered at the door."
       ]
     },
     "music_profile": {
@@ -1375,7 +1375,7 @@
       2
     ],
     "suspicion_cues": [
-      "Security is informal and very personal."
+      "Security is personal. Courtesy is thin."
     ],
     "travel_hooks": [
       "back_alley",
@@ -1422,9 +1422,9 @@
       "perspective": "first_person",
       "scene_type": "jazz_club",
       "asset_path": "res://assets/art/environments/jazz_club.png",
-      "description": "Blue light. Brass secrets."
+      "description": "Blue light. Brass kept close."
     },
-    "objective_hint": "Music buys favors if you tip right.",
+    "objective_hint": "Music provides favors for the right tip.",
     "object_fixtures": [
       "shopkeeper:merchant"
     ],
@@ -1528,7 +1528,7 @@
     "security_profile": {
       "strictness": "loose",
       "visible_cues": [
-        "The bartender cares more about the band than the door."
+      "The bartender sees to the band before the door."
       ]
     },
     "music_profile": {
@@ -1761,7 +1761,7 @@
     ],
     "lender_hooks": [],
     "suspicion_cues": [
-      "The band misses fewer notes than faces."
+      "The band keeps notes. Faces, too."
     ],
     "travel_hooks": [
       "bar",
@@ -1797,9 +1797,9 @@
       "perspective": "first_person",
       "scene_type": "kitty_cat_lounge",
       "asset_path": "res://assets/art/environments/jazz_club.png",
-      "description": "Velvet shadows, expensive smiles."
+      "description": "Velvet shadows. Attentive smiles."
     },
-    "objective_hint": "Spend for grace before the room learns you.",
+    "objective_hint": "Spend for grace before attention settles.",
     "layout": {
       "game_spots": [
         [
@@ -1911,7 +1911,7 @@
       "attention_scale": 0.75,
       "alcohol_pressure": "high",
       "visible_cues": [
-        "The floor staff look away from small sins when the champagne keeps moving."
+      "Small sins are overlooked while champagne is served."
       ]
     },
     "music_profile": {
@@ -2030,7 +2030,7 @@
       1
     ],
     "suspicion_cues": [
-      "Hosts smile wider when heat rises."
+      "The hosts smile as attention rises."
     ],
     "travel_hooks": [
       "bar",
@@ -2075,9 +2075,9 @@
       "perspective": "first_person",
       "scene_type": "delta_queen",
       "asset_path": "res://assets/art/environments/small_underground_casino.png",
-      "description": "River brass and moving felt."
+      "description": "River brass. Felt moves gently."
     },
-    "objective_hint": "Ride the river; let distance cool heat.",
+    "objective_hint": "Let the river provide distance from heat.",
     "layout": {
       "game_spots": [
         [
@@ -2184,7 +2184,7 @@
       "strictness": "licensed-gray",
       "attention_scale": 1.15,
       "visible_cues": [
-        "The deck boss is polite, but the rail leaves nowhere to disappear."
+      "The deck boss is gracious. The rail provides no exit."
       ]
     },
     "music_profile": {
@@ -2305,7 +2305,7 @@
       1
     ],
     "suspicion_cues": [
-      "Riverboat staff know every exit."
+      "Every exit is known to the staff."
     ],
     "travel_hooks": [
       "small_underground_casino",
@@ -2349,9 +2349,9 @@
     "visual_context": {
       "perspective": "first_person",
       "scene_type": "beach",
-      "description": "Salt wind. Quiet heat."
+      "description": "Salt wind. Heat kept low."
     },
-    "objective_hint": "No tables here. Let the surf erase you.",
+    "objective_hint": "No tables. The surf sees to the rest.",
     "layout": {
       "game_spots": [
         [
@@ -2381,7 +2381,7 @@
       "strictness": "loose",
       "attention_scale": 0.55,
       "visible_cues": [
-        "The surf buries small mistakes."
+      "The surf sees to small mistakes."
       ]
     },
     "music_profile": {
@@ -2446,7 +2446,7 @@
     ],
     "lender_hooks": [],
     "suspicion_cues": [
-      "Nobody is watching. That feels suspicious."
+      "No floorman. The quiet feels borrowed."
     ],
     "travel_hooks": [
       "delta_queen",
@@ -2488,9 +2488,9 @@
       "perspective": "first_person",
       "scene_type": "pawn_shop",
       "art_key": "pawn_shop",
-      "description": "Sal shelves your mistakes."
+      "description": "Mistakes go on Sal's shelf."
     },
-    "objective_hint": "Sell mistakes, buy worse ones, ask Sal.",
+    "objective_hint": "Sell mistakes. Buy worse. Ask Sal.",
     "layout": {
       "pawn_counter_spots": [
         [
@@ -2562,7 +2562,7 @@
     "security_profile": {
       "strictness": "safe",
       "visible_cues": [
-        "Sal keeps the glass shut unless you set something on the tray."
+      "Set something on the tray. Sal opens the glass."
       ]
     },
     "music_profile": {
@@ -2643,7 +2643,7 @@
       "sals_pawn_counter"
     ],
     "suspicion_cues": [
-      "Sal watches the shelf, then your pockets."
+      "Sal counts the shelf, then your pockets."
     ],
     "travel_hooks": [
       "corner_store",
@@ -2685,9 +2685,9 @@
       "perspective": "first_person",
       "scene_type": "boss",
       "asset_path": "res://assets/art/environments/grand_casino.png",
-      "description": "Gold glass. Quiet teeth."
+      "description": "Gold glass. Attentive teeth."
     },
-    "objective_hint": "Play clean, earn Linda, avoid certainty.",
+    "objective_hint": "Play clean. Linda obliges. Rourke is certain.",
     "demo_objective": {
       "id": "grand_casino_demo_bankroll",
       "type": "bankroll_target",
@@ -2825,7 +2825,7 @@
     "security_profile": {
       "strictness": "boss",
       "visible_cues": [
-        "Rourke watches anyone whose wins look too clean."
+      "Unusually clean wins are referred to Rourke."
       ],
       "pit_boss": {
         "enabled": true,
@@ -2932,7 +2932,7 @@
     ],
     "lender_hooks": [],
     "suspicion_cues": [
-      "The ceiling loves a pattern."
+      "The ceiling keeps every pattern."
     ],
     "travel_hooks": [
       "motel",
@@ -3158,7 +3158,7 @@
     "security_profile": {
       "strictness": "boss",
       "visible_cues": [
-        "The high-limit dealers report every strange edge to Rourke."
+      "Every unusual edge is discreetly reported to Rourke."
       ],
       "pit_boss": {
         "enabled": true,
@@ -3244,7 +3244,7 @@
     "service_pool": [],
     "lender_hooks": [],
     "suspicion_cues": [
-      "High-limit staff count breaths."
+      "Every breath is attentively counted."
     ],
     "travel_hooks": [],
     "local_narrative_flags": {
@@ -3348,7 +3348,7 @@
     "security_profile": {
       "strictness": "boss",
       "visible_cues": [
-        "There is nowhere in the Back Room the house cannot see."
+      "Nothing in the Back Room is kept from the house."
       ],
       "pit_boss": {
         "enabled": true,
@@ -3417,7 +3417,7 @@
     "service_pool": [],
     "lender_hooks": [],
     "suspicion_cues": [
-      "Rourke does not need cameras here."
+      "Every detail is provided to Rourke here."
     ],
     "travel_hooks": [],
     "local_narrative_flags": {
@@ -3527,7 +3527,7 @@
     "security_profile": {
       "strictness": "boss",
       "visible_cues": [
-        "The bars hide Linda from the floor without hiding the cameras."
+        "The bars keep Linda private. The ceiling stays clear."
       ],
       "pit_boss": {
         "enabled": false,
@@ -3587,7 +3587,7 @@
     "service_pool": [],
     "lender_hooks": [],
     "suspicion_cues": [
-      "Linda sees everything through not-looking."
+      "Linda keeps the room without looking up."
     ],
     "travel_hooks": [],
     "local_narrative_flags": {
@@ -3823,7 +3823,7 @@
     "security_profile": {
       "strictness": "safe",
       "visible_cues": [
-        "The room is private until the paid stay runs out."
+        "Privacy lasts as long as the paid stay."
       ]
     },
     "music_profile": {
@@ -3878,7 +3878,7 @@
     "service_pool": [],
     "lender_hooks": [],
     "suspicion_cues": [
-      "Nobody is watching the room yet."
+      "The room is yours until checkout."
     ],
     "travel_hooks": [
       "motel"
@@ -3892,7 +3892,7 @@
       "cheap",
       "buzzing"
     ],
-    "objective_hint": "Rest, store, choose what follows you."
+    "objective_hint": "Rest. Store what stays. Choose what goes."
   },
   {
     "id": "apartment",
@@ -4033,7 +4033,7 @@
     "security_profile": {
       "strictness": "safe",
       "visible_cues": [
-        "The apartment is quiet until rent comes due."
+        "Quiet holds until the rent comes due."
       ]
     },
     "music_profile": {
@@ -4088,7 +4088,7 @@
     "service_pool": [],
     "lender_hooks": [],
     "suspicion_cues": [
-      "The hallway is quiet for now."
+      "The hallway stays quiet for now."
     ],
     "travel_hooks": [
       "corner_store",
@@ -4104,7 +4104,7 @@
       "city",
       "thin_walls"
     ],
-    "objective_hint": "Sort the stash. Plan like rent exists."
+    "objective_hint": "Sort the stash. Plan for the rent."
   },
   {
     "id": "house",
@@ -4252,7 +4252,7 @@
     "security_profile": {
       "strictness": "safe",
       "visible_cues": [
-        "The house stays quiet until the first payment hits."
+        "Quiet holds until the first payment."
       ]
     },
     "music_profile": {
@@ -4307,7 +4307,7 @@
     "service_pool": [],
     "lender_hooks": [],
     "suspicion_cues": [
-      "The street is quiet outside the curtains."
+      "Quiet waits outside the curtains."
     ],
     "travel_hooks": [
       "corner_store",
@@ -4323,6 +4323,6 @@
       "old",
       "thin_light"
     ],
-    "objective_hint": "Home keeps score quietly."
+    "objective_hint": "Your roof. Mind the payment."
   }
 ]

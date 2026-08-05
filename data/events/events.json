@@ -13,17 +13,17 @@
     "environment_prop": "clerk_counter",
     "unique_object_class": "shop_counter_clerk",
     "unique_object_priority": 60,
-    "start_summary": "The clerk is tired enough to bargain.",
+    "start_summary": "Eleven hours in. Tired enough to deal.",
     "trigger": {
       "type": "manual"
     },
     "payload": {
-      "summary": "The clerk is tired enough to bargain.",
+      "summary": "Eleven hours in. Tired enough to deal.",
       "choices": [
         {
           "id": "haggle",
           "label": "Haggle",
-          "text": "You squeeze a few dollars out of the moment.",
+          "text": "You squeeze a few dollars out of the hour.",
           "consequences": {
             "bankroll_delta": 5,
             "suspicion_delta": 1,
@@ -33,7 +33,7 @@
         {
           "id": "move_on",
           "label": "Move On",
-          "text": "You leave the clerk alone.",
+          "text": "You let the clerk be.",
           "consequences": {
             "resolve_event": true
           }
@@ -55,17 +55,17 @@
     "environment_prop": "clerk_talk",
     "unique_object_class": "shop_counter_clerk",
     "unique_object_priority": 50,
-    "start_summary": "The cooler hums. So does gossip.",
+    "start_summary": "The cooler hums. So does the gossip.",
     "trigger": {
       "type": "manual"
     },
     "payload": {
-      "summary": "The cooler hums. So does gossip.",
+      "summary": "The cooler hums. So does the gossip.",
       "choices": [
         {
           "id": "ask_routes",
           "label": "Ask Routes",
-          "text": "You get a cleaner read on nearby gambling rooms.",
+          "text": "You come away with a cleaner read on the rooms.",
           "consequences": {
             "set_next_archetypes": [
               "bar",
@@ -80,7 +80,7 @@
         {
           "id": "keep_quiet",
           "label": "Keep Quiet",
-          "text": "You avoid becoming memorable.",
+          "text": "You stay unmemorable.",
           "consequences": {
             "suspicion_delta": -1,
             "resolve_event": true
@@ -102,7 +102,7 @@
     "asset_path": "res://assets/art/events/parking_lot_tip.png",
     "icon_key": "parking_note",
     "environment_prop": "paper_note",
-    "start_summary": "A dirty note names an underground route.",
+    "start_summary": "A dirty note names a way underground.",
     "trigger": {
       "type": "manual"
     },
@@ -112,12 +112,12 @@
       ]
     },
     "payload": {
-      "summary": "A dirty note names an underground route.",
+      "summary": "A dirty note names a way underground.",
       "choices": [
         {
           "id": "follow_tip",
           "label": "Follow the tip",
-          "text": "Opens the Small Underground Casino route.",
+          "text": "The way underground opens.",
           "consequences": {
             "add_next_archetypes": [
               "small_underground_casino"
@@ -290,12 +290,12 @@
       "chance_percent": 18
     },
     "payload": {
-      "summary": "A nervous coat clocks your heat.",
+      "summary": "A nervous coat reads your heat.",
       "choices": [
         {
           "id": "talk_down",
           "label": "Play it cool",
-          "text": "You sell ordinary hard enough to pass.",
+          "text": "You sell ordinary well enough to pass.",
           "consequences": {
             "suspicion_delta": -3,
             "resolve_event": true
@@ -304,7 +304,7 @@
         {
           "id": "brush_off",
           "label": "Brush him off",
-          "text": "They remember you.",
+          "text": "He remembers you.",
           "consequences": {
             "suspicion_delta": 4,
             "resolve_event": true
@@ -909,12 +909,12 @@
       "type": "manual"
     },
     "payload": {
-      "summary": "The pit boss makes a slow pass.",
+      "summary": "The pit boss is making his rounds.",
       "choices": [
         {
           "id": "lay_low",
           "label": "Lay low",
-          "text": "You sit out while attention walks past.",
+          "text": "You sit out while the attention passes.",
           "consequence_summary": "Lose $8, heat -6",
           "consequences": {
             "bankroll_delta": -8,
@@ -929,7 +929,7 @@
         {
           "id": "act_natural",
           "label": "Act natural",
-          "text": "You move chips like innocence has table manners.",
+          "text": "You move chips like innocence has manners.",
           "consequence_summary": "Heat +4",
           "consequences": {
             "suspicion_delta": 4,
@@ -954,17 +954,17 @@
     "asset_path": "res://assets/art/events/comped_suite_offer.png",
     "icon_key": "casino_host",
     "environment_prop": "casino_host",
-    "start_summary": "A free suite comes with hooks.",
+    "start_summary": "The suite is free. So is the hook.",
     "trigger": {
       "type": "manual"
     },
     "payload": {
-      "summary": "A free suite comes with hooks.",
+      "summary": "The suite is free. So is the hook.",
       "choices": [
         {
           "id": "take_comp",
           "label": "Take the comp",
-          "text": "The drink is free. Your name is not.",
+          "text": "The room is free. Your name is not.",
           "consequence_summary": "Bankroll +10, drink +8, heat +5",
           "consequences": {
             "bankroll_delta": 10,
@@ -980,7 +980,7 @@
         {
           "id": "decline",
           "label": "Decline",
-          "text": "You keep distance from the kindness.",
+          "text": "You keep your distance from the kindness.",
           "consequence_summary": "Heat -2",
           "consequences": {
             "suspicion_delta": -2,
@@ -1008,12 +1008,12 @@
       "turns": 2
     },
     "payload": {
-      "summary": "The ceiling starts remembering you.",
+      "summary": "The ceiling has taken an interest.",
       "choices": [
         {
           "id": "change_table",
           "label": "Change tables",
-          "text": "You pay for a drift to another table.",
+          "text": "You buy a quiet drift to another table.",
           "consequence_summary": "Lose $5, heat -8",
           "consequences": {
             "bankroll_delta": -5,
@@ -1028,7 +1028,7 @@
         {
           "id": "press_anyway",
           "label": "Press on",
-          "text": "You ride the streak while the ceiling watches.",
+          "text": "You ride the streak. The ceiling attends.",
           "consequence_summary": "Bankroll +15, heat +14",
           "consequences": {
             "bankroll_delta": 15,
@@ -1193,12 +1193,12 @@
       ]
     },
     "payload": {
-      "summary": "A rival sees your count.",
+      "summary": "A rival has your count.",
       "choices": [
         {
           "id": "play_through",
           "label": "Play on",
-          "text": "You ride the shoe while everyone gets watched.",
+          "text": "You ride the shoe while everyone is watched.",
           "consequence_summary": "Heat +6",
           "consequences": {
             "suspicion_delta": 6,
@@ -1212,7 +1212,7 @@
         {
           "id": "tip_off",
           "label": "Warn him",
-          "text": "You warn him. He owes you a quiet one.",
+          "text": "A word passes. He owes you a quiet one.",
           "consequence_summary": "Future favor",
           "consequences": {
             "suspicion_delta": 2,
@@ -1226,7 +1226,7 @@
         {
           "id": "drop_word",
           "label": "Snitch on him",
-          "text": "The pit looks his way and you look clean.",
+          "text": "The pit turns his way. You look clean.",
           "consequence_summary": "Heat -2, snitch flag",
           "consequences": {
             "suspicion_delta": -2,
@@ -1274,12 +1274,12 @@
       ]
     },
     "payload": {
-      "summary": "A signal flickers from friendly hands.",
+      "summary": "Friendly hands flicker a signal.",
       "choices": [
         {
           "id": "take_signal",
           "label": "Take the signal",
-          "text": "You cash the small edge without waving.",
+          "text": "You take the small edge quietly.",
           "consequence_summary": "Bankroll +12, heat -2",
           "consequences": {
             "bankroll_delta": 12,
@@ -1293,7 +1293,7 @@
         {
           "id": "wave_off",
           "label": "Wave it off",
-          "text": "You keep distance and bank the goodwill.",
+          "text": "You keep the distance and bank goodwill.",
           "consequence_summary": "Heat -4",
           "consequences": {
             "suspicion_delta": -4,
@@ -1403,12 +1403,12 @@
       ]
     },
     "payload": {
-      "summary": "A host offers liquid generosity.",
+      "summary": "The host insists. The house does too.",
       "choices": [
         {
           "id": "accept",
           "label": "Take the drink",
-          "text": "Luck gets louder. So does the hook.",
+          "text": "Luck gets louder. The hook, too.",
           "consequence_summary": "Drink +18, luck +1",
           "consequences": {
             "alcohol_intake": 18,
@@ -1423,7 +1423,7 @@
         {
           "id": "refuse",
           "label": "Refuse",
-          "text": "You keep the night quiet, or quieter.",
+          "text": "You decline the kindness politely.",
           "consequence_summary": "Heat +2",
           "consequences": {
             "suspicion_delta": 2,
@@ -1437,7 +1437,7 @@
         {
           "id": "coffee_swap",
           "label": "Order coffee",
-          "text": "Coffee, not liquor.",
+          "text": "Coffee. Not liquor.",
           "consequence_summary": "Spend a pour, steady vision",
           "conditions": {
             "requires_items": [
@@ -1495,12 +1495,12 @@
       ]
     },
     "payload": {
-      "summary": "A debt arrives wearing patience.",
+      "summary": "A debt arrives, wearing patience.",
       "choices": [
         {
           "id": "pay_now",
           "label": "Pay up",
-          "text": "Cash leaves. Silence arrives.",
+          "text": "Cash goes. Quiet comes back.",
           "consequence_summary": "Lose $20, heat -2",
           "consequences": {
             "bankroll_delta": -20,
@@ -1529,7 +1529,7 @@
         {
           "id": "stand_ground",
           "label": "Stand firm",
-          "text": "The room notices your backbone. So does he.",
+          "text": "The room notices the backbone. So does he.",
           "consequence_summary": "Checked: item help, failure hurts",
           "consequences": {
             "resolve_event": true,
@@ -1594,12 +1594,12 @@
       ]
     },
     "payload": {
-      "summary": "Fresh eyes hit the floor.",
+      "summary": "Fresh eyes come on the floor.",
       "choices": [
         {
           "id": "position",
           "label": "Use the shuffle",
-          "text": "You move where the staff shuffle helps.",
+          "text": "You move where the changeover helps.",
           "consequence_summary": "Cheat watch softened 3 actions",
           "consequences": {
             "flags": {
@@ -1612,7 +1612,7 @@
         {
           "id": "ignore",
           "label": "Let it pass",
-          "text": "You let the moment keep its secrets.",
+          "text": "The moment keeps its secrets.",
           "consequence_summary": "Cheat watch softened 1 action",
           "consequences": {
             "flags": {
@@ -1648,12 +1648,12 @@
       ]
     },
     "payload": {
-      "summary": "The room blinks dark.",
+      "summary": "The room goes dark.",
       "choices": [
         {
           "id": "move",
           "label": "Use the dark",
-          "text": "One unwatched action slips through.",
+          "text": "One unwatched move slips through.",
           "consequence_summary": "Next action unwatched, later count",
           "consequences": {
             "flags": {
@@ -1667,7 +1667,7 @@
         {
           "id": "freeze",
           "label": "Stay still",
-          "text": "You look boring enough to survive the blackout.",
+          "text": "You look boring enough to survive it.",
           "consequence_summary": "Heat -2",
           "consequences": {
             "suspicion_delta": -2,
@@ -1705,12 +1705,12 @@
       ]
     },
     "payload": {
-      "summary": "The lights return with arithmetic.",
+      "summary": "The lights return with the arithmetic.",
       "choices": [
         {
           "id": "stand_still",
           "label": "Stand still",
-          "text": "You wait out the recount.",
+          "text": "You stand through the recount.",
           "consequence_summary": "Heat +10",
           "consequences": {
             "suspicion_delta": 10,
@@ -1723,7 +1723,7 @@
         {
           "id": "buy_confusion",
           "label": "Tip a runner",
-          "text": "The runner makes the math wobble.",
+          "text": "A runner makes the arithmetic wobble.",
           "consequence_summary": "Lose $25, heat +2",
           "consequences": {
             "bankroll_delta": -25,
@@ -1766,12 +1766,12 @@
       "min_tier": 2
     },
     "payload": {
-      "summary": "A whale drags every eye sideways.",
+      "summary": "A whale pulls every eye sideways.",
       "choices": [
         {
           "id": "tail",
           "label": "Follow the whale",
-          "text": "You ride rich distraction for a quick score.",
+          "text": "You ride the rich distraction for a score.",
           "consequence_summary": "Bankroll +20, heat +8",
           "consequences": {
             "bankroll_delta": 20,
@@ -1782,7 +1782,7 @@
         {
           "id": "fade",
           "label": "Stay low",
-          "text": "The whale takes the light. You keep the shade.",
+          "text": "He takes the light. You keep the shade.",
           "consequence_summary": "Heat -3",
           "consequences": {
             "suspicion_delta": -3,
@@ -1821,12 +1821,12 @@
       "min_tier": 2
     },
     "payload": {
-      "summary": "A dealer knows the staff rhythm.",
+      "summary": "A dealer knows the floor's rhythm.",
       "choices": [
         {
           "id": "tip_dealer",
           "label": "Tip the dealer",
-          "text": "You buy timing and a little discretion.",
+          "text": "You buy timing, and some discretion.",
           "consequence_summary": "Lose $8, heat -6",
           "consequences": {
             "bankroll_delta": -8,
@@ -1837,7 +1837,7 @@
         {
           "id": "save_cash",
           "label": "Keep your cash",
-          "text": "You keep cash and accept the narrower opening.",
+          "text": "You keep the cash and the narrower window.",
           "consequence_summary": "Watch softened 1 action",
           "consequences": {
             "flags": {
@@ -1869,12 +1869,12 @@
       "min_suspicion": 15
     },
     "payload": {
-      "summary": "A booth rents quiet by the minute.",
+      "summary": "The booth rents quiet by the minute.",
       "choices": [
         {
           "id": "sit_out",
           "label": "Lay low",
-          "text": "Time passes. Heat exhales.",
+          "text": "Time passes. The heat exhales.",
           "consequence_summary": "Lose $10, heat -8",
           "consequences": {
             "bankroll_delta": -10,
@@ -1885,7 +1885,7 @@
         {
           "id": "keep_moving",
           "label": "Keep moving",
-          "text": "Momentum stays. So do the looks.",
+          "text": "You keep momentum. And the looks.",
           "consequence_summary": "Heat +3",
           "consequences": {
             "suspicion_delta": 3,
@@ -1915,12 +1915,12 @@
       "min_suspicion": 20
     },
     "payload": {
-      "summary": "The door wants a private toll.",
+      "summary": "The door has its own toll.",
       "choices": [
         {
           "id": "pay",
           "label": "Pay the door",
-          "text": "The floor forgets a few details.",
+          "text": "The floor forgets a detail or two.",
           "consequence_summary": "Lose $15, heat -10",
           "consequences": {
             "bankroll_delta": -15,
@@ -1931,7 +1931,7 @@
         {
           "id": "walk_past",
           "label": "Walk past",
-          "text": "You keep the cash and your profile.",
+          "text": "You keep the cash and the profile.",
           "consequence_summary": "Heat +5",
           "consequences": {
             "suspicion_delta": 5,
@@ -1961,12 +1961,12 @@
       "min_luck": 1
     },
     "payload": {
-      "summary": "Your streak gets loud and hungry.",
+      "summary": "The streak gets loud and hungry.",
       "choices": [
         {
           "id": "press",
           "label": "Press your luck",
-          "text": "The streak gets louder and hungrier.",
+          "text": "It gets louder and hungrier.",
           "consequence_summary": "Bankroll +18, heat +5",
           "consequences": {
             "bankroll_delta": 18,
@@ -1977,7 +1977,7 @@
         {
           "id": "pocket",
           "label": "Cash out",
-          "text": "You leave before luck starts charging rent.",
+          "text": "You leave before luck charges rent.",
           "consequence_summary": "Heat -3",
           "consequences": {
             "suspicion_delta": -3,
@@ -2020,12 +2020,12 @@
       }
     },
     "payload": {
-      "summary": "The Crew collects one favor.",
+      "summary": "The Crew comes for one favor.",
       "choices": [
         {
           "id": "run_package",
           "label": "Run the package",
-          "text": "You do the favor exactly on their clock.",
+          "text": "You run it exactly on their clock.",
           "consequence_summary": "Bankroll +22, heat +4",
           "consequences": {
             "bankroll_delta": 22,
@@ -2040,7 +2040,7 @@
         {
           "id": "refuse",
           "label": "Refuse",
-          "text": "You keep the night quiet, or quieter.",
+          "text": "The night stays quiet. Quieter, even.",
           "consequence_summary": "Heat +9, refusal flag",
           "consequences": {
             "suspicion_delta": 9,
@@ -2105,7 +2105,7 @@
     "asset_path": "res://assets/art/events/pit_boss_sweep.png",
     "icon_key": "pit_boss_call",
     "environment_prop": "pit_boss",
-    "start_summary": "Rourke owns the next room.",
+    "start_summary": "The next room is Rourke's.",
     "trigger": {
       "type": "manual"
     },
@@ -2116,7 +2116,7 @@
     },
     "payload": {
       "kind": "grand_casino_showdown",
-      "summary": "Rourke owns the next room.",
+      "summary": "The next room is Rourke's.",
       "success_message": "Rourke cannot prove enough to hold you. The casino lets you walk with your winnings. Rourke lets the elevator close; the house will remember your face.",
       "failure_message": "The story falls apart in the back room. The casino takes you out back and the run ends.",
       "showdown_tuning": {
@@ -2338,7 +2338,7 @@
         {
           "id": "enter_back_room",
           "label": "Follow Rourke",
-          "text": "Rourke leads you where applause cannot reach.",
+          "text": "Rourke walks you past where applause reaches.",
           "consequence_summary": "The walk begins"
         }
       ]
@@ -2369,14 +2369,14 @@
     "visual_key": "phone",
     "icon_key": "payphone",
     "environment_prop": "payphone",
-    "start_summary": "A counter phone knows family guilt.",
+    "start_summary": "A counter phone. Family guilt is free.",
     "payload": {
-      "summary": "A counter phone knows family guilt.",
+      "summary": "A counter phone. Family guilt is free.",
       "choices": [
         {
           "id": "make_call",
           "label": "Make the call",
-          "text": "You wait through rings and old family weather.",
+          "text": "You wait through the rings and the old weather.",
           "audio_cue": "phone_call",
           "audio_cue_volume_db": -3.0,
           "consequence_summary": "75% family answers; otherwise no answer.",
@@ -2406,7 +2406,7 @@
         {
           "id": "not_tonight",
           "label": "Not tonight",
-          "text": "The receiver stays down. So does the lecture.",
+          "text": "Receiver down. The lecture with it.",
           "consequence_summary": "No debt and no family strings.",
           "consequences": {
             "resolve_event": true

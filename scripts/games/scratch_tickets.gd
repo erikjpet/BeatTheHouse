@@ -32,6 +32,15 @@ const SCRATCH_AUDIO_LOOP := "scratch_paper_foley_loop"
 const SCRATCH_POP_CUE := "scratch_box_pop"
 const REDEEM_HOOK_ID := "scratch_ticket_clerk"
 const REDEEM_ACTION_ID := "redeem_scratch_winners"
+const SCALPER_HOOK_ID := "scratch_ticket_scalper"
+const SCALPER_DIALOGUE_KNOWS_ID := "scratch_ticket_scalper_knows"
+const SCALPER_DIALOGUE_OBLIVIOUS_ID := "scratch_ticket_scalper_oblivious"
+const RESTOCK_INTERVAL_MINUTES := 180
+const RESTOCK_ZERO_PERCENT := 50
+const RESTOCK_ONE_PERCENT := 40
+const RESTOCK_TWO_PERCENT := 10
+const SCALPER_VISIT_CHANCE_PERCENT := 30
+const SCALPER_KNOWS_CHANCE_PERCENT := 50
 const MACHINE_RECT := Rect2(18, 13, 278, 404)
 const PLAY_SURFACE_RECT := Rect2(306, 48, 586, 370)
 const DEFAULT_TICKET_RECT := Rect2(422, 54, 354, 356)
@@ -48,7 +57,7 @@ const DEFAULT_MASK_COLUMNS := MaskScript.MASK_COLUMNS
 const DEFAULT_MASK_ROWS := MaskScript.MASK_ROWS
 const DISCARD_ARM_DISTANCE := 120.0
 const DISCARD_DROP_DISTANCE := 190.0
-const MACHINE_STATE_VERSION := 3
+const MACHINE_STATE_VERSION := 4
 const REGION_LAYOUT_VERSION := RegionModelScript.LAYOUT_VERSION
 
 var active_ticket_rect := DEFAULT_TICKET_RECT
@@ -61,8 +70,10 @@ func gameplay_model() -> String:
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var result := super.enter(run_state, environment)
-	result["message"] = "The scratcher vending machine hums beside the clerk. Pick a slot, then drag across the latex."
+	result["message"] = "The scratcher vending machine hums beside the clerk. Stock releases in small unposted batches; pick a live slot, then drag across the latex."
 	result["scratch_stock_count"] = _dictionary_array(machine.get("stock", [])).size()
+	result["scratch_stock_available"] = _stock_total(machine)
+	result["scratch_scalper_present"] = bool(machine.get("scalper_present", false))
 	return result
 
 
@@ -116,6 +127,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_pointer_coalesce_moves": true,
 		"machine_name": str(machine.get("machine_name", "Highway Scratch Center")),
 		"scratch_stock": stock,
+		"scratch_stock_available": _stock_total(machine),
+		"scratch_restock_interval_minutes": RESTOCK_INTERVAL_MINUTES,
+		"scratch_restock_schedule_public": false,
+		"scratch_scalper_present": bool(machine.get("scalper_present", false)),
 		"scratch_ticket": active_ticket,
 		"scratch_queue": queue,
 		"scratch_queue_count": queue.size(),
@@ -165,7 +180,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_xray_peeks": _dictionary_array(active_ticket.get("xray_peeks", [])) if result_ready else [],
 		"scratch_fortune": str(active_ticket.get("fortune_tier", "")) if result_ready else "",
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
-		"scratch_rules": "%s Winners wait for the clerk." % _ticket_play_label(str(active_ticket.get("type_id", "")), _dict_ref(active_ticket.get("mechanic", {}))) if not active_ticket.is_empty() else _machine_empty_rules(stock),
+		"scratch_rules": "%s Winners wait for the clerk." % _ticket_play_label(str(active_ticket.get("type_id", "")), _dict_ref(active_ticket.get("mechanic", {}))) if not active_ticket.is_empty() else _machine_empty_rules(machine, stock),
 		"surface_animation_channels": [
 			GameModule.surface_animation_channel(DISPENSE_CHANNEL, last_dispense_id, DISPENSE_DURATION_MSEC, int(machine.get("dispense_started_msec", 0)), {"metadata": {"ticket_id": str(active_ticket.get("id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
 			GameModule.surface_animation_channel(FILE_CHANNEL, last_file_id, FILE_DURATION_MSEC, int(machine.get("file_started_msec", 0)), {"metadata": {"pile": str(machine.get("last_settled_pile", ""))}}),
@@ -460,11 +475,11 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 
 
 func environment_interactable_objects(run_state: RunState, environment: Dictionary) -> Array:
-	var machine := _read_machine_state(run_state, environment)
+	var machine := _ensure_machine_state(run_state, environment, true)
 	var payout := _pending_payout(machine)
 	var winners := _dictionary_array(machine.get("winner_pile", [])).size()
 	var label := _redeemer_label(environment)
-	return [{
+	var objects: Array = [{
 		"id": REDEEM_HOOK_ID,
 		"object_id": "game_hook:%s:%s" % [get_id(), REDEEM_HOOK_ID],
 		"label": label,
@@ -483,6 +498,30 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 		"available_actions": [{"id": REDEEM_ACTION_ID, "label": "Cash In"}],
 		"confirm_action_id": REDEEM_ACTION_ID,
 	}]
+	if bool(machine.get("scalper_present", false)):
+		var knows_schedule := bool(machine.get("scalper_knows_schedule", false))
+		var dialogue_id := SCALPER_DIALOGUE_KNOWS_ID if knows_schedule else SCALPER_DIALOGUE_OBLIVIOUS_ID
+		objects.append({
+			"id": SCALPER_HOOK_ID,
+			"object_id": "dialogue:%s" % SCALPER_HOOK_ID,
+			"label": "Scalper",
+			"short_description": "A reseller camps beside the empty scratch-ticket machine.",
+			"enabled": true,
+			"action_summary": "Ask about the machine's restock.",
+			"effect_summary": "He may know the next release time—or pretend he does not.",
+			"risk_summary": "Every slot is empty while he is watching it.",
+			"cost_summary": "",
+			"dialogue_id": dialogue_id,
+			"dialogue_summary": _scalper_dialogue_summary(machine, knows_schedule),
+			"visual_key": "scalper",
+			"visual_type": "character",
+			"icon_key": "clerk_chat",
+			"unique_object_class": SCALPER_HOOK_ID,
+			"unique_object_priority": 130,
+			"available_actions": [{"id": "start_dialogue", "label": "Talk"}],
+			"confirm_action_id": "start_dialogue",
+		})
+	return objects
 
 
 func environment_action_command(hook_id: String, action_id: String, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
@@ -803,11 +842,13 @@ func _redeemer_label(environment: Dictionary) -> String:
 	return "Lottery Clerk"
 
 
-func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
+func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var day_key := int(environment.get("generated_day", environment.get("day", 0)))
 	var stream_key := "scratch-stock:%s:day:%d" % [str(environment.get("id", "room")), day_key]
 	var root_rng := rng if rng != null else _seeded_rng("scratch-stock-root:%s" % str(environment.get("id", "room")))
 	var machine_rng := root_rng.fork(stream_key)
+	var current_absolute_minute := maxi(0, run_state.game_clock_minutes) if run_state != null else maxi(0, day_key * 1440)
+	var restock_phase_minute := machine_rng.randi_range(0, RESTOCK_INTERVAL_MINUTES - 1)
 	var stock: Array = []
 	for ticket_type_value in _ticket_types():
 		var ticket_type: Dictionary = ticket_type_value
@@ -820,6 +861,7 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 			"display_name": str(ticket_type.get("display_name", "Ticket")),
 			"price": maxi(1, int(ticket_type.get("price", 1))),
 			"remaining": remaining,
+			"capacity": maximum,
 			"stock_weight": maxi(1, int(ticket_type.get("stock_weight", 1))),
 			"size_id": str(ticket_type.get("size_id", "medium_square")),
 			"palette": _copy_dict(_copy_dict(ticket_type.get("face", {})).get("palette", {})),
@@ -831,6 +873,20 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 		"stock_day": int(environment.get("generated_day", environment.get("day", 0))),
 		"stock_stream_key": stream_key,
 		"stock_weighting": "full_roster_75_out_of_stock_1_to_5",
+		"restock_interval_minutes": RESTOCK_INTERVAL_MINUTES,
+		"restock_distribution": "50_percent_0_40_percent_1_10_percent_2",
+		"restock_phase_minute": restock_phase_minute,
+		"restock_cursor_absolute_minute": current_absolute_minute,
+		"next_restock_absolute_minute": _next_restock_after(current_absolute_minute, restock_phase_minute),
+		"last_restock_scheduled_count": 0,
+		"last_restock_stocked_count": 0,
+		"restock_event_count": 0,
+		"scalper_visit_chance_percent": SCALPER_VISIT_CHANCE_PERCENT,
+		"scalper_present": false,
+		"scalper_knows_schedule": false,
+		"scalper_visit_token": "",
+		"scalper_cleared_count": 0,
+		"scalper_intercepted_restock_count": 0,
 		"stock": stock,
 		"environment_hooks": [{
 			"id": REDEEM_HOOK_ID,
@@ -838,6 +894,13 @@ func _generate_machine_state(_run_state: RunState, environment: Dictionary, rng:
 			"label": "Scratch-Ticket Clerk",
 			"unique_object_class": "scratch_ticket_clerk",
 			"unique_object_priority": 100,
+		}, {
+			"id": SCALPER_HOOK_ID,
+			"kind": "dialogue",
+			"label": "Scalper",
+			"object_id": "dialogue:%s" % SCALPER_HOOK_ID,
+			"unique_object_class": SCALPER_HOOK_ID,
+			"unique_object_priority": 130,
 		}],
 		"active_ticket": {},
 		"pending_queue": [],
@@ -1714,11 +1777,164 @@ func _stock_view(machine: Dictionary) -> Array:
 	return result
 
 
-func _machine_empty_rules(stock: Array) -> String:
+func _machine_empty_rules(machine: Dictionary, stock: Array) -> String:
 	for slot_value in stock:
 		if typeof(slot_value) == TYPE_DICTIONARY and int((slot_value as Dictionary).get("remaining", 0)) > 0:
 			return "Buy a ticket, scratch each silver box, then file the result."
-	return "This machine is sold out for now. Check another store or come back after restock."
+	if bool(machine.get("scalper_present", false)):
+		return "A scalper is camped beside the machine. Every slot is empty while he watches the release."
+	return "This machine is sold out for now. It releases a small batch every three hours, but posts no countdown."
+
+
+static func restock_count_for_roll(roll: int) -> int:
+	var normalized_roll := posmod(roll, 100)
+	if normalized_roll < RESTOCK_ZERO_PERCENT:
+		return 0
+	if normalized_roll < RESTOCK_ZERO_PERCENT + RESTOCK_ONE_PERCENT:
+		return 1
+	return 2
+
+
+static func scalper_present_for_roll(roll: int) -> bool:
+	return posmod(roll, 100) < SCALPER_VISIT_CHANCE_PERCENT
+
+
+static func scalper_knows_for_roll(roll: int) -> bool:
+	return posmod(roll, 100) < SCALPER_KNOWS_CHANCE_PERCENT
+
+
+static func _next_restock_after(absolute_minute: int, phase_minute: int) -> int:
+	var cursor := maxi(0, absolute_minute)
+	var phase := clampi(phase_minute, 0, RESTOCK_INTERVAL_MINUTES - 1)
+	var cycle_start := cursor - posmod(cursor, RESTOCK_INTERVAL_MINUTES)
+	var candidate := cycle_start + phase
+	if candidate <= cursor:
+		candidate += RESTOCK_INTERVAL_MINUTES
+	return candidate
+
+
+func _advance_restock_schedule(run_state: RunState, environment: Dictionary, machine: Dictionary) -> bool:
+	if run_state == null:
+		return false
+	var now := maxi(0, run_state.game_clock_minutes)
+	var phase := clampi(int(machine.get("restock_phase_minute", 0)), 0, RESTOCK_INTERVAL_MINUTES - 1)
+	var cursor := maxi(0, int(machine.get("restock_cursor_absolute_minute", now)))
+	var next_boundary := _next_restock_after(cursor, phase)
+	var changed := false
+	while next_boundary <= now:
+		var rng := run_state.create_rng("scratch-restock:%s:%d" % [_machine_identity(environment), next_boundary])
+		var scheduled_count := restock_count_for_roll(rng.randi_range(0, 99))
+		var stocked_count := 0
+		if bool(machine.get("scalper_present", false)):
+			machine["scalper_intercepted_restock_count"] = int(machine.get("scalper_intercepted_restock_count", 0)) + scheduled_count
+		else:
+			stocked_count = _add_restock_tickets(machine, scheduled_count, rng)
+		machine["last_restock_scheduled_count"] = scheduled_count
+		machine["last_restock_stocked_count"] = stocked_count
+		machine["restock_event_count"] = int(machine.get("restock_event_count", 0)) + 1
+		cursor = next_boundary
+		next_boundary = _next_restock_after(cursor, phase)
+		changed = true
+	machine["restock_cursor_absolute_minute"] = cursor
+	machine["next_restock_absolute_minute"] = next_boundary
+	return changed
+
+
+func _add_restock_tickets(machine: Dictionary, count: int, rng: RngStream) -> int:
+	var stock := _dictionary_array(machine.get("stock", []))
+	var added := 0
+	for _ticket_index in range(clampi(count, 0, 2)):
+		var eligible_indexes: Array[int] = []
+		var total_weight := 0
+		for index in range(stock.size()):
+			var slot: Dictionary = stock[index]
+			if int(slot.get("remaining", 0)) >= int(slot.get("capacity", 5)):
+				continue
+			eligible_indexes.append(index)
+			total_weight += maxi(1, int(slot.get("stock_weight", 1)))
+		if eligible_indexes.is_empty() or total_weight <= 0:
+			break
+		var pick := rng.randi_range(1, total_weight)
+		var chosen_index := int(eligible_indexes.back())
+		for index in eligible_indexes:
+			pick -= maxi(1, int((stock[index] as Dictionary).get("stock_weight", 1)))
+			if pick <= 0:
+				chosen_index = index
+				break
+		var chosen: Dictionary = stock[chosen_index]
+		chosen["remaining"] = int(chosen.get("remaining", 0)) + 1
+		stock[chosen_index] = chosen
+		added += 1
+	machine["stock"] = stock
+	return added
+
+
+func _refresh_scalper_for_visit(run_state: RunState, environment: Dictionary, machine: Dictionary) -> bool:
+	if run_state == null:
+		return false
+	if not environment.has("entered_game_clock_minutes"):
+		environment["entered_game_clock_minutes"] = run_state.game_clock_minutes
+	var visit_token := _scratch_visit_token(run_state, environment)
+	if visit_token == str(machine.get("scalper_visit_token", "")):
+		return false
+	machine["scalper_visit_token"] = visit_token
+	if run_state.is_tutorial_run():
+		machine["scalper_present"] = false
+		machine["scalper_knows_schedule"] = false
+		return true
+	var rng := run_state.create_rng("scratch-scalper:%s:%s" % [_machine_identity(environment), visit_token])
+	var present := scalper_present_for_roll(rng.randi_range(0, 99))
+	var knows_schedule := present and scalper_knows_for_roll(rng.randi_range(0, 99))
+	machine["scalper_present"] = present
+	machine["scalper_knows_schedule"] = knows_schedule
+	machine["scalper_cleared_count"] = _clear_machine_stock(machine) if present else 0
+	return true
+
+
+func _clear_machine_stock(machine: Dictionary) -> int:
+	var stock := _dictionary_array(machine.get("stock", []))
+	var cleared := 0
+	for index in range(stock.size()):
+		var slot: Dictionary = stock[index]
+		cleared += maxi(0, int(slot.get("remaining", 0)))
+		slot["remaining"] = 0
+		stock[index] = slot
+	machine["stock"] = stock
+	return cleared
+
+
+func _stock_total(machine: Dictionary) -> int:
+	var total := 0
+	for slot_value in _dictionary_array(machine.get("stock", [])):
+		total += maxi(0, int((slot_value as Dictionary).get("remaining", 0)))
+	return total
+
+
+func _scratch_visit_token(run_state: RunState, environment: Dictionary) -> String:
+	var entered_at := maxi(0, int(environment.get("entered_game_clock_minutes", run_state.game_clock_minutes if run_state != null else 0)))
+	return "%s@%d" % [_machine_identity(environment), entered_at]
+
+
+func _machine_identity(environment: Dictionary) -> String:
+	return RunState.portable_ticket_origin_key(environment)
+
+
+func _scalper_dialogue_summary(machine: Dictionary, knows_schedule: bool) -> String:
+	if knows_schedule:
+		return "I watch the route, not the screen. Next release should hit around %s. Be here before the clerk wheels past." % _clock_text_at_absolute_minute(int(machine.get("next_restock_absolute_minute", 0)))
+	return "Restock time? Never heard of one. I am just standing beside an empty machine because I like the carpet."
+
+
+static func _clock_text_at_absolute_minute(absolute_minute: int) -> String:
+	var safe_minute := maxi(0, absolute_minute)
+	var day := int(floor(float(safe_minute) / 1440.0)) + 1
+	var minute_of_day := safe_minute % 1440
+	var hour_24 := int(floor(float(minute_of_day) / 60.0)) % 24
+	var minute := minute_of_day % 60
+	var hour_12 := hour_24 % 12
+	if hour_12 == 0:
+		hour_12 = 12
+	return "Day %d, %d:%02d %s" % [day, hour_12, minute, "AM" if hour_24 < 12 else "PM"]
 
 
 func _ticket_play_label(type_id: String, _mechanic: Dictionary) -> String:
@@ -1733,7 +1949,7 @@ func _ticket_play_label(type_id: String, _mechanic: Dictionary) -> String:
 	return "Scratch every printed result area."
 
 
-func _normalize_machine_state(machine: Dictionary) -> void:
+func _normalize_machine_state(machine: Dictionary, run_state: RunState = null) -> void:
 	var needs_upgrade := int(machine.get("version", 1)) < MACHINE_STATE_VERSION or not machine.has("pending_queue")
 	if not machine.has("pending_queue"):
 		machine["pending_queue"] = []
@@ -1758,6 +1974,34 @@ func _normalize_machine_state(machine: Dictionary) -> void:
 					_ensure_ticket_regions(ticket)
 					tickets[index] = ticket
 			machine[field] = tickets
+	var stock := _dictionary_array(machine.get("stock", []))
+	for index in range(stock.size()):
+		var slot: Dictionary = stock[index]
+		var ticket_type := _ticket_type(str(slot.get("type_id", "")))
+		var count_range := _int_array(ticket_type.get("stock_count", [0, 5]))
+		var default_capacity := clampi(int(count_range[1]) if count_range.size() > 1 else 5, 1, 5)
+		slot["capacity"] = maxi(1, int(slot.get("capacity", default_capacity)))
+		slot["remaining"] = clampi(int(slot.get("remaining", 0)), 0, int(slot.get("capacity", default_capacity)))
+		stock[index] = slot
+	machine["stock"] = stock
+	var phase_fallback := posmod(RunState.text_to_seed(str(machine.get("stock_stream_key", "scratch-restock"))), RESTOCK_INTERVAL_MINUTES)
+	var phase := clampi(int(machine.get("restock_phase_minute", phase_fallback)), 0, RESTOCK_INTERVAL_MINUTES - 1)
+	var current_absolute_minute := maxi(0, run_state.game_clock_minutes) if run_state != null else maxi(0, int(machine.get("stock_day", 0)) * 1440)
+	var cursor := maxi(0, int(machine.get("restock_cursor_absolute_minute", current_absolute_minute)))
+	machine["restock_interval_minutes"] = RESTOCK_INTERVAL_MINUTES
+	machine["restock_distribution"] = "50_percent_0_40_percent_1_10_percent_2"
+	machine["restock_phase_minute"] = phase
+	machine["restock_cursor_absolute_minute"] = cursor
+	machine["next_restock_absolute_minute"] = maxi(cursor + 1, int(machine.get("next_restock_absolute_minute", _next_restock_after(cursor, phase))))
+	machine["last_restock_scheduled_count"] = clampi(int(machine.get("last_restock_scheduled_count", 0)), 0, 2)
+	machine["last_restock_stocked_count"] = clampi(int(machine.get("last_restock_stocked_count", 0)), 0, 2)
+	machine["restock_event_count"] = maxi(0, int(machine.get("restock_event_count", 0)))
+	machine["scalper_visit_chance_percent"] = SCALPER_VISIT_CHANCE_PERCENT
+	machine["scalper_present"] = bool(machine.get("scalper_present", false))
+	machine["scalper_knows_schedule"] = bool(machine.get("scalper_knows_schedule", false))
+	machine["scalper_visit_token"] = str(machine.get("scalper_visit_token", ""))
+	machine["scalper_cleared_count"] = maxi(0, int(machine.get("scalper_cleared_count", 0)))
+	machine["scalper_intercepted_restock_count"] = maxi(0, int(machine.get("scalper_intercepted_restock_count", 0)))
 	machine["version"] = maxi(MACHINE_STATE_VERSION, int(machine.get("version", 1)))
 
 
@@ -1790,11 +2034,16 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 	var value: Variant = states.get(get_id(), {})
 	if typeof(value) == TYPE_DICTIONARY and not (value as Dictionary).is_empty():
 		var machine := value as Dictionary if persist else (value as Dictionary).duplicate(true)
-		_normalize_machine_state(machine)
+		_normalize_machine_state(machine, run_state)
+		if persist:
+			_refresh_scalper_for_visit(run_state, environment, machine)
+			_advance_restock_schedule(run_state, environment, machine)
 		_sync_portable_ticket_state(run_state, environment, machine)
 		return machine
 	var generated := _generate_machine_state(run_state, environment, null)
-	_normalize_machine_state(generated)
+	_normalize_machine_state(generated, run_state)
+	if persist:
+		_refresh_scalper_for_visit(run_state, environment, generated)
 	_sync_portable_ticket_state(run_state, environment, generated)
 	if persist:
 		var writable_states := states.duplicate(false)
@@ -1817,18 +2066,18 @@ func _read_machine_state(run_state: RunState, environment: Dictionary) -> Dictio
 		var value: Variant = (states_value as Dictionary).get(get_id(), {})
 		if typeof(value) == TYPE_DICTIONARY and not (value as Dictionary).is_empty():
 			var machine := (value as Dictionary).duplicate(true)
-			_normalize_machine_state(machine)
+			_normalize_machine_state(machine, run_state)
 			_sync_portable_ticket_state(run_state, environment, machine)
 			return machine
 	var generated := _generate_machine_state(run_state, environment, null)
-	_normalize_machine_state(generated)
+	_normalize_machine_state(generated, run_state)
 	_sync_portable_ticket_state(run_state, environment, generated)
 	return generated
 
 
 func _write_machine_state(environment: Dictionary, machine: Dictionary, run_state: RunState = null, normalize_before_write: bool = true) -> void:
 	if normalize_before_write:
-		_normalize_machine_state(machine)
+		_normalize_machine_state(machine, run_state)
 	var states := _game_states_for_write(environment)
 	states[get_id()] = machine
 	environment["game_states"] = states
@@ -1851,7 +2100,7 @@ func _sync_portable_ticket_state(run_state: RunState, environment: Dictionary, m
 	for field in ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
 		if portable.has(field):
 			machine[field] = portable[field]
-	_normalize_machine_state(machine)
+	_normalize_machine_state(machine, run_state)
 
 
 func _portable_ticket_player_state(machine: Dictionary) -> Dictionary:

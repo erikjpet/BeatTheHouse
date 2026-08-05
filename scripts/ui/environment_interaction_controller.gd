@@ -134,6 +134,7 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 				"effect_summary": str(hook.get("effect_summary", "")),
 				"risk_summary": str(hook.get("risk_summary", "")),
 				"cost_summary": str(hook.get("cost_summary", "")),
+				"dialogue_summary": str(hook.get("dialogue_summary", "")),
 				"attribute_badges": host._copy_array(hook.get("attribute_badges", [])),
 				"visual_key": str(hook.get("visual_key", "")),
 				"icon_key": str(hook.get("icon_key", "service")),

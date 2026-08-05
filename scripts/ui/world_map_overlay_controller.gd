@@ -6,7 +6,6 @@ signal message_requested(text: String)
 signal travel_requested(target_id: String, label: String, choice: Dictionary)
 signal meta_travel_requested(target_id: String)
 signal node_pressed(node_id: String)
-signal node_hovered(node_id: String)
 
 const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 24
 const WORLD_MAP_DETAIL_BADGE_CELL_POOL_SIZE := 6
@@ -30,6 +29,7 @@ var button_ids: Array = []
 var button_layout_size := Vector2(-1.0, -1.0)
 var detail_badges_key := "__unset__"
 var detail_badges_snapshot: Array = []
+var reserved_overlay_global_rect := Rect2()
 var selected_node_id: String = ""
 var selected_travel_target_id: String = ""
 var selected_travel_label: String = ""
@@ -56,6 +56,9 @@ func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_no
 	detail_label = detail_node
 	badge_slot = badge_slot_node
 	confirm_button = confirm_node
+	if holder != null:
+		holder.mouse_default_cursor_shape = Control.CURSOR_ARROW
+		holder.tooltip_text = "Scroll to zoom. Click and drag to move the map."
 	_apply_small_screen_button_sizes()
 
 
@@ -193,7 +196,60 @@ func position_detail_popup(snapshot: Dictionary) -> void:
 	var y := center.y - popup_size.y * 0.5
 	x = clampf(x, margin, maxf(margin, holder_size.x - popup_size.x - margin))
 	y = clampf(y, margin, maxf(margin, holder_size.y - popup_size.y - margin))
-	detail_popup.position = Vector2(roundf(x), roundf(y))
+	var preferred_rect := Rect2(Vector2(x, y), popup_size)
+	var reserved_rect := _reserved_overlay_holder_rect()
+	var candidates: Array[Rect2] = [preferred_rect]
+	if reserved_rect.has_area():
+		candidates.append(Rect2(Vector2(x, reserved_rect.position.y - popup_size.y - margin), popup_size))
+		candidates.append(Rect2(Vector2(reserved_rect.position.x - popup_size.x - margin, y), popup_size))
+		candidates.append(Rect2(Vector2(reserved_rect.end.x + margin, y), popup_size))
+	var holder_rect := Rect2(Vector2(margin, margin), holder_size - Vector2(margin * 2.0, margin * 2.0))
+	var best_rect := _clamp_popup_rect(preferred_rect, holder_rect)
+	var best_score := INF
+	for candidate in candidates:
+		var clamped := _clamp_popup_rect(candidate, holder_rect)
+		var overlap_area := _rect_overlap_area(clamped, reserved_rect)
+		var movement_cost := clamped.position.distance_squared_to(preferred_rect.position) * 0.01
+		var score := overlap_area * 1000000.0 + movement_cost
+		if score < best_score:
+			best_score = score
+			best_rect = clamped
+	detail_popup.position = Vector2(roundf(best_rect.position.x), roundf(best_rect.position.y))
+
+
+func set_reserved_overlay_global_rect(rect: Rect2) -> void:
+	reserved_overlay_global_rect = rect
+
+
+func _reserved_overlay_holder_rect() -> Rect2:
+	if holder == null or not reserved_overlay_global_rect.has_area() or not holder.get_global_rect().intersects(reserved_overlay_global_rect):
+		return Rect2()
+	var intersection := holder.get_global_rect().intersection(reserved_overlay_global_rect)
+	var inverse := holder.get_global_transform().affine_inverse()
+	var top_left := inverse * intersection.position
+	var top_right := inverse * Vector2(intersection.end.x, intersection.position.y)
+	var bottom_left := inverse * Vector2(intersection.position.x, intersection.end.y)
+	var bottom_right := inverse * intersection.end
+	var minimum := Vector2(minf(minf(top_left.x, top_right.x), minf(bottom_left.x, bottom_right.x)), minf(minf(top_left.y, top_right.y), minf(bottom_left.y, bottom_right.y)))
+	var maximum := Vector2(maxf(maxf(top_left.x, top_right.x), maxf(bottom_left.x, bottom_right.x)), maxf(maxf(top_left.y, top_right.y), maxf(bottom_left.y, bottom_right.y)))
+	return Rect2(minimum, maximum - minimum)
+
+
+func _clamp_popup_rect(rect: Rect2, bounds: Rect2) -> Rect2:
+	return Rect2(
+		Vector2(
+			clampf(rect.position.x, bounds.position.x, maxf(bounds.position.x, bounds.end.x - rect.size.x)),
+			clampf(rect.position.y, bounds.position.y, maxf(bounds.position.y, bounds.end.y - rect.size.y))
+		),
+		rect.size
+	)
+
+
+func _rect_overlap_area(a: Rect2, b: Rect2) -> float:
+	if not a.has_area() or not b.has_area() or not a.intersects(b):
+		return 0.0
+	var intersection := a.intersection(b)
+	return intersection.size.x * intersection.size.y
 
 
 func set_detail_badges(badges_value: Variant) -> void:
@@ -231,42 +287,57 @@ func detail_badges() -> Array:
 
 func handle_holder_gui_input(event: InputEvent) -> bool:
 	if event is InputEventMouseButton:
-		var wheel_event := event as InputEventMouseButton
-		if wheel_event.pressed and [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN, MOUSE_BUTTON_WHEEL_LEFT, MOUSE_BUTTON_WHEEL_RIGHT].has(wheel_event.button_index):
-			var direction := Vector2.ZERO
-			match wheel_event.button_index:
-				MOUSE_BUTTON_WHEEL_UP:
-					direction.y = -1.0
-				MOUSE_BUTTON_WHEEL_DOWN:
-					direction.y = 1.0
-				MOUSE_BUTTON_WHEEL_LEFT:
-					direction.x = -1.0
-				MOUSE_BUTTON_WHEEL_RIGHT:
-					direction.x = 1.0
-			if nodes_layer != null and nodes_layer.has_method("pan_map"):
-				nodes_layer.call("pan_map", direction)
-				reset_button_layout()
-				return true
-	if selected_node_id.is_empty():
-		return false
-	var local_position := Vector2.ZERO
-	var pressed := false
-	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
-		pressed = mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT
-		local_position = mouse_event.position
-	elif event is InputEventScreenTouch:
+		if mouse_event.pressed and [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN].has(mouse_event.button_index):
+			var zoom_step := 1 if mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP else -1
+			if nodes_layer != null and nodes_layer.has_method("zoom_map"):
+				if bool(nodes_layer.call("zoom_map", zoom_step, mouse_event.position)):
+					reset_button_layout()
+				return true
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			if mouse_event.pressed:
+				if _detail_popup_contains_local_position(mouse_event.position) or _node_button_contains_holder_position(mouse_event.position):
+					return false
+				if nodes_layer != null and nodes_layer.has_method("begin_navigation_drag"):
+					nodes_layer.call("begin_navigation_drag", mouse_event.position)
+					return true
+			elif _navigation_drag_in_progress():
+				var dragged := bool(nodes_layer.call("end_navigation_drag"))
+				if dragged:
+					reset_button_layout()
+				elif not selected_node_id.is_empty():
+					clear_selection()
+				return true
+	if event is InputEventMouseMotion and _navigation_drag_in_progress():
+		var moved := bool(nodes_layer.call("update_navigation_drag", (event as InputEventMouseMotion).position))
+		if moved:
+			reset_button_layout()
+		return true
+	if event is InputEventScreenTouch:
 		var touch_event := event as InputEventScreenTouch
-		pressed = touch_event.pressed
-		local_position = touch_event.position
-	if not pressed:
-		return false
-	if _detail_popup_contains_local_position(local_position):
-		return false
-	if _node_button_contains_holder_position(local_position):
-		return false
-	clear_selection()
-	return true
+		if touch_event.pressed:
+			if _detail_popup_contains_local_position(touch_event.position) or _node_button_contains_holder_position(touch_event.position):
+				return false
+			if nodes_layer != null and nodes_layer.has_method("begin_navigation_drag"):
+				nodes_layer.call("begin_navigation_drag", touch_event.position)
+				return true
+		elif _navigation_drag_in_progress():
+			var touch_dragged := bool(nodes_layer.call("end_navigation_drag"))
+			if touch_dragged:
+				reset_button_layout()
+			elif not selected_node_id.is_empty():
+				clear_selection()
+			return true
+	if event is InputEventScreenDrag and _navigation_drag_in_progress():
+		var touch_moved := bool(nodes_layer.call("update_navigation_drag", (event as InputEventScreenDrag).position))
+		if touch_moved:
+			reset_button_layout()
+		return true
+	return false
+
+
+func _navigation_drag_in_progress() -> bool:
+	return nodes_layer != null and nodes_layer.has_method("navigation_drag_in_progress") and bool(nodes_layer.call("navigation_drag_in_progress"))
 
 
 func select_run_node(node_id: String, current_node_id: String, visible_node_ids: Array, choice: Dictionary) -> Dictionary:
@@ -593,7 +664,6 @@ func _ensure_node_button_pool() -> void:
 		button.disabled = true
 		button.set_meta("pool_index", index)
 		button.set_meta("node_id", "")
-		button.mouse_entered.connect(Callable(self, "_on_pool_button_hovered").bind(index))
 		nodes_layer.add_child(button)
 
 
@@ -614,15 +684,6 @@ func _on_pool_button_pressed(index: int) -> void:
 	if node_id.is_empty():
 		return
 	node_pressed.emit(node_id)
-
-
-func _on_pool_button_hovered(index: int) -> void:
-	var button := _pool_button(index)
-	if button == null or button.disabled:
-		return
-	var node_id := str(button.get_meta("node_id", "")).strip_edges()
-	if not node_id.is_empty() and node_id != selected_node_id:
-		node_hovered.emit(node_id)
 
 
 func _detail_popup_contains_local_position(local_position: Vector2) -> bool:

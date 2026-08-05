@@ -1,0 +1,41 @@
+#EXTM3U
+#EXTINF:47,Walkup Apartment
+01_apartment.wav
+#EXTINF:47,Old House
+02_house.wav
+#EXTINF:24,Corner Store
+03_corner_store.wav
+#EXTINF:46,Motel Exterior
+04_motel.wav
+#EXTINF:47,Motel Room
+05_motel_room.wav
+#EXTINF:50,Back Alley
+06_back_alley.wav
+#EXTINF:44,Local Bar
+07_bar.wav
+#EXTINF:46,Gas Station Casino
+08_gas_station_casino.wav
+#EXTINF:49,Small Underground Casino
+09_small_underground_casino.wav
+#EXTINF:40,Jazz Club
+10_jazz_club.wav
+#EXTINF:49,Kitty Cat Lounge
+11_kitty_cat_lounge.wav
+#EXTINF:46,Delta Queen
+12_delta_queen.wav
+#EXTINF:53,Neon Beach
+13_beach.wav
+#EXTINF:47,Pawn Shop
+14_pawn_shop.wav
+#EXTINF:45,Grand Casino Floor
+15_grand_casino.wav
+#EXTINF:48,Grand Casino High Limit
+16_grand_casino_high_limit.wav
+#EXTINF:51,Grand Casino Back Room
+17_grand_casino_back_room.wav
+#EXTINF:49,Grand Casino Cage
+18_grand_casino_cage.wav
+#EXTINF:30,Buffalo Slot Bonus Feature
+19_buffalo_feature.wav
+#EXTINF:30,Pinball Slot Bonus Feature
+20_arcade_feature.wav

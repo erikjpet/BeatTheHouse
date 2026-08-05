@@ -15,7 +15,7 @@
     "icon_key": "luck_card",
     "environment_prop": "loose_card",
     "surface": "felt_table",
-    "description": "Bent paper. Still likes your hand.",
+    "description": "Bent paper. Unread, and still lucky.",
     "effect": {
       "baseline_luck_delta": 1,
       "win_chance": 2,
@@ -38,7 +38,7 @@
     "icon_key": "pull_tabs",
     "environment_prop": "paper_stack",
     "surface": "counter",
-    "description": "Your tabs, bundled by old trouble.",
+    "description": "Your tabs, bundled and off the books.",
     "effect": {}
   },
   {
@@ -57,7 +57,7 @@
     "icon_key": "scratch_ticket",
     "environment_prop": "paper_stack",
     "surface": "counter",
-    "description": "Your scratchers, waiting under gray skin.",
+    "description": "Your scratchers. Answers already printed.",
     "effect": {}
   },
   {
@@ -76,7 +76,7 @@
     "icon_key": "coffee_cup",
     "environment_prop": "coffee",
     "surface": "store_shelf",
-    "description": "Bitter focus in a paper sleeve.",
+    "description": "Bitter focus. No frills, no favors.",
     "effect": {
       "legal_win_chance": 3,
       "loss_reduction": 1,
@@ -102,7 +102,7 @@
     "icon_key": "ledger_pencil",
     "environment_prop": "notepad",
     "surface": "store_shelf",
-    "description": "Tiny graphite. Cleaner sins.",
+    "description": "Tiny graphite. Nothing to trace.",
     "effect": {
       "win_chance": 1,
       "loss_reduction": 1,
@@ -146,7 +146,7 @@
     "icon_key": "cashout_envelope",
     "environment_prop": "map",
     "surface": "store_shelf",
-    "description": "A plan for leaving ahead.",
+    "description": "Paper. For leaving ahead.",
     "effect": {
       "win_bonus": 1,
       "loss_reduction": 1,
@@ -186,7 +186,7 @@
     "icon_key": "thermos_black_coffee",
     "environment_prop": "coffee",
     "surface": "store_shelf",
-    "description": "Black mercy for shaking hands.",
+    "description": "Black mercy. Hands go quiet.",
     "effect": {
       "active_item": true,
       "active_mode": "consumable",
@@ -221,7 +221,7 @@
     "icon_key": "thermos_black_coffee_half",
     "environment_prop": "coffee",
     "surface": "store_shelf",
-    "description": "One last sober little miracle.",
+    "description": "Half left. One more steady hour.",
     "effect": {
       "active_item": true,
       "active_mode": "consumable",
@@ -256,7 +256,7 @@
     "icon_key": "pickled_olive_jar",
     "environment_prop": "coffee",
     "surface": "counter_case",
-    "description": "Brine, bite, and borrowed nerve.",
+    "description": "Brine, bite, borrowed nerve.",
     "effect": {
       "active_item": true,
       "active_mode": "consumable",
@@ -302,7 +302,7 @@
     "icon_key": "lucky_bar_napkin",
     "environment_prop": "loose_card",
     "surface": "felt_table",
-    "description": "Bar luck, folded twice.",
+    "description": "Bar luck, folded small.",
     "effect": {
       "win_chance": 1,
       "loss_reduction": 1,
@@ -697,7 +697,7 @@
     "icon_key": "keychain",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "Keys to nowhere. Luck to somewhere.",
+    "description": "Keys to nowhere. Still opens something.",
     "effect": {
       "loss_reduction": 2
     }
@@ -1535,7 +1535,7 @@
     "icon_key": "payment_calendar",
     "environment_prop": "notepad",
     "surface": "store_shelf",
-    "description": "Deadlines look softer in ink.",
+    "description": "Ink is kinder than the book.",
     "effect": {
       "debt_grace_turns": 1,
       "loss_reduction": 1,
@@ -1711,7 +1711,7 @@
     "icon_key": "jazz_sax_lucky_coin",
     "environment_prop": "coin",
     "surface": "counter_case",
-    "description": "A bright note in coin form.",
+    "description": "A bright note, struck in coin.",
     "effect": {
       "win_chance": 10,
       "win_bonus": 3,
@@ -1735,7 +1735,7 @@
     "icon_key": "jazz_cello_lucky_coin",
     "environment_prop": "coin",
     "surface": "counter_case",
-    "description": "Low strings, steady luck.",
+    "description": "Low strings, steadier luck.",
     "effect": {
       "win_chance": 10,
       "win_bonus": 3,
@@ -1759,7 +1759,7 @@
     "icon_key": "jazz_drummer_lucky_coin",
     "environment_prop": "coin",
     "surface": "counter_case",
-    "description": "Luck with a backbeat.",
+    "description": "Luck, kept on the beat.",
     "effect": {
       "win_chance": 10,
       "win_bonus": 3,

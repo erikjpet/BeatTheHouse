@@ -579,6 +579,7 @@ static func build_report_map_snapshot(world_map: Dictionary, timeline: Dictionar
 		node["travel_enabled"] = false
 		nodes.append(node)
 		added_node_ids[node_id] = true
+	_fit_report_node_positions(nodes)
 	var edges: Array = []
 	for edge_value in _dict_array(world_map.get("edges", [])):
 		if visited_lookup.has(str(edge_value.get("a", ""))) and visited_lookup.has(str(edge_value.get("b", ""))):
@@ -602,12 +603,57 @@ static func build_report_map_snapshot(world_map: Dictionary, timeline: Dictionar
 	report_map["edges"] = edges
 	report_map["visited_path"] = path
 	report_map["map_focus_node_ids"] = visited_focus_ids
+	report_map["fit_all_nodes"] = true
 	report_map["travel_paths"] = []
 	report_map["route_path_geometry"] = route_geometry
 	report_map["selected_node_id"] = ""
 	if not path.is_empty():
 		report_map["current_node_id"] = str(path[-1])
 	return report_map
+
+
+static func _fit_report_node_positions(nodes: Array) -> void:
+	if nodes.is_empty():
+		return
+	var source_positions: Array[Vector2] = []
+	var source_min := Vector2(INF, INF)
+	var source_max := Vector2(-INF, -INF)
+	for node_value in nodes:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var position: Dictionary = node.get("position", {}) if typeof(node.get("position", {})) == TYPE_DICTIONARY else {}
+		var source := Vector2(
+			clampf(float(position.get("x", 0.5)), 0.0, 1.0),
+			clampf(float(position.get("y", 0.5)), 0.0, 1.0)
+		)
+		source_positions.append(source)
+		source_min = source_min.min(source)
+		source_max = source_max.max(source)
+	if source_positions.is_empty():
+		return
+	var source_center := (source_min + source_max) * 0.5
+	var source_span := source_max - source_min
+	var safe_span := Vector2(0.76, 0.76)
+	var scale := INF
+	if source_span.x > 0.0001:
+		scale = minf(scale, safe_span.x / source_span.x)
+	if source_span.y > 0.0001:
+		scale = minf(scale, safe_span.y / source_span.y)
+	if is_inf(scale):
+		scale = 1.0
+	scale = minf(1.0, scale)
+	var source_index := 0
+	for node_value in nodes:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var fitted := Vector2(0.5, 0.5) + (source_positions[source_index] - source_center) * scale
+		node["position"] = {
+			"x": clampf(fitted.x, 0.12, 0.88),
+			"y": clampf(fitted.y, 0.12, 0.88),
+		}
+		source_index += 1
 
 
 static func _timeline_positions_by_id(timeline: Dictionary) -> Dictionary:

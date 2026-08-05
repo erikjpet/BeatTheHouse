@@ -1580,5 +1580,46 @@
         "line_key": "shop_greeting"
       }
     ]
+  },
+  {
+    "id": "vince_ticket_scalper",
+    "display_name": "Vince Crow",
+    "title": "Ticket Scalper",
+    "role": "patron",
+    "model": {
+      "skin_color": "#9b684f",
+      "hair_color": "#17131f",
+      "jacket_color": "#25223d",
+      "accent_color": "#ef476f",
+      "silhouette": "hoodie",
+      "scale": 1.01
+    },
+    "voice": {
+      "style": "Defensive and watchful, always trying to sound less informed than he is.",
+      "lines": {
+        "knows": [
+          "I watch the route, not the screen. The next release has a time.",
+          "The clerk keeps a rhythm. I keep notes.",
+          "You want stock, you learn the route."
+        ],
+        "oblivious": [
+          "Restock? I am just standing here.",
+          "Timer? Never seen one.",
+          "Empty machine. Comfortable floor. That is all."
+        ]
+      }
+    },
+    "encounters": [
+      {
+        "context": "knows",
+        "line_key": "knows",
+        "dialogue_id": "scratch_ticket_scalper_knows"
+      },
+      {
+        "context": "oblivious",
+        "line_key": "oblivious",
+        "dialogue_id": "scratch_ticket_scalper_oblivious"
+      }
+    ]
   }
 ]

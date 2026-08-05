@@ -546,6 +546,11 @@ func _timed_ui(run_state: RunState, key: String, extras: Dictionary = {}) -> Dic
 func _scratch_buy_ui(run_state: RunState) -> Dictionary:
 	var game_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var machine: Dictionary = game_states.get("scratch_tickets", {}) if typeof(game_states.get("scratch_tickets", {})) == TYPE_DICTIONARY else {}
+	var scratch_game: GameModule = game_modules.get("scratch_tickets", null)
+	if scratch_game != null:
+		machine["scalper_visit_token"] = scratch_game.call("_scratch_visit_token", run_state, run_state.current_environment)
+		machine["scalper_present"] = false
+		machine["scalper_knows_schedule"] = false
 	var stock: Array = machine.get("stock", []) if typeof(machine.get("stock", [])) == TYPE_ARRAY else []
 	for index in range(stock.size()):
 		if typeof(stock[index]) == TYPE_DICTIONARY and int((stock[index] as Dictionary).get("remaining", 0)) > 0:

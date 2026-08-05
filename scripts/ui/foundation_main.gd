@@ -2642,6 +2642,9 @@ func start_dialogue(dialogue_id: String, source_data: Dictionary = {}) -> bool:
 	var source_event_id := str(source_data.get("source_event_id", source_data.get("event_id", ""))).strip_edges()
 	if not source_event_id.is_empty():
 		context["source_event_id"] = source_event_id
+	var summary_override := str(source_data.get("dialogue_summary", "")).strip_edges()
+	if not summary_override.is_empty():
+		context["summary_override"] = summary_override
 	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
 	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), clean_id, str(speaker.get("voice_line_key", "")))
 	var start_node := str(source_data.get("start_node", dialogue.get("start", ""))).strip_edges()
@@ -2726,6 +2729,10 @@ func _dialogue_option_for_entry(entry: Dictionary) -> Dictionary:
 			"attribute_badges": [],
 		})
 	var summary := str(node.get("tutorial_text", node.get("text", ""))) if run_state != null and run_state.is_tutorial_run() else str(node.get("text", ""))
+	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+	var summary_override := str(context.get("summary_override", "")).strip_edges()
+	if not summary_override.is_empty():
+		summary = summary_override
 	if dialogue_id == "linda_cage_services" and (run_state == null or not run_state.is_tutorial_run()):
 		summary = CageCounterViewModelScript.service_summary(run_state, node_id)
 	elif dialogue_id == "sal_starter_offer":

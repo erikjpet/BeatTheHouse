@@ -11,7 +11,11 @@ const BACKGROUND_PATH := "res://assets/art/map_backgrounds/cyberpunk_city_overhe
 const MAP_ICON_DIR := "res://assets/art/map_icons"
 const SELECTED_FOCUS_ZOOM := 0.86
 const SELECTED_FOCUS_LERP_SPEED := 22.0
+const NAVIGATION_ZOOM_LERP_SPEED := 14.0
 const MAP_BOUNDS_SNAP_EPSILON := 0.00035
+const NAVIGATION_ZOOM_INCREMENT := 0.82
+const NAVIGATION_MIN_VIEW_SCALE := 0.28
+const NAVIGATION_DRAG_THRESHOLD := 4.0
 const CURRENT_MARKER_RING := Color("#00f5ff")
 const CURRENT_MARKER_CORE := Color("#5df2a2")
 const CURRENT_MARKER_LABEL_BG := Color("#05060a", 0.90)
@@ -30,7 +34,6 @@ var enabled_travel_edge_ids_cache: Array = []
 var cached_layout_size := Vector2(-1.0, -1.0)
 var snapshot_signature := ""
 var map_view_bounds_signature := ""
-var user_pan_offset := Vector2.ZERO
 var map_view_basis_signature := ""
 var map_view_focus_node_ids_cache: Array = []
 var map_view_selected_node_id_cache := ""
@@ -39,11 +42,19 @@ var replay_keyframes: Array = []
 var replay_segments: Array = []
 var replay_progress := 1.0
 var replay_reduce_motion := false
+var navigation_content_signature := ""
+var navigation_user_view_active := false
+var navigation_user_view_bounds := Rect2(Vector2.ZERO, Vector2.ONE)
+var navigation_drag_active := false
+var navigation_drag_moved := false
+var navigation_drag_origin := Vector2.ZERO
+var navigation_drag_last_position := Vector2.ZERO
 
 
 func _ready() -> void:
 	_background_texture()
 	_prewarm_map_icon_directory()
+	mouse_default_cursor_shape = Control.CURSOR_ARROW
 
 
 func _process(delta: float) -> void:
@@ -69,10 +80,52 @@ func set_map_snapshot(map_snapshot: Dictionary) -> void:
 	var next_signature := JSON.stringify(map_snapshot)
 	if next_signature == snapshot_signature:
 		return
+	var next_navigation_signature := _navigation_content_signature(map_snapshot)
+	if next_navigation_signature != navigation_content_signature:
+		navigation_content_signature = next_navigation_signature
+		_reset_navigation_view_state()
 	snapshot_signature = next_signature
 	snapshot = map_snapshot.duplicate(true)
 	_rebuild_snapshot_cache()
 	queue_redraw()
+
+
+func _gui_input(event: InputEvent) -> void:
+	if handle_navigation_input(event):
+		accept_event()
+
+
+func handle_navigation_input(event: InputEvent) -> bool:
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			zoom_map(1, mouse_event.position)
+			return true
+		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			zoom_map(-1, mouse_event.position)
+			return true
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			if mouse_event.pressed:
+				begin_navigation_drag(mouse_event.position)
+				return true
+			if navigation_drag_active:
+				end_navigation_drag()
+				return true
+	if event is InputEventMouseMotion and navigation_drag_active:
+		update_navigation_drag((event as InputEventMouseMotion).position)
+		return true
+	if event is InputEventScreenTouch:
+		var touch_event := event as InputEventScreenTouch
+		if touch_event.pressed:
+			begin_navigation_drag(touch_event.position)
+			return true
+		if navigation_drag_active:
+			end_navigation_drag()
+			return true
+	if event is InputEventScreenDrag and navigation_drag_active:
+		update_navigation_drag((event as InputEventScreenDrag).position)
+		return true
+	return false
 
 
 func set_run_report_replay(keyframes: Array, reduce_motion: bool, segments: Array = []) -> void:
@@ -167,6 +220,15 @@ func current_view_snapshot() -> Dictionary:
 		view["background_fills_canvas"] = destination_rect.size.distance_to(size) <= 0.5
 	view["selected_focus_zoom_active"] = _selected_focus_zoom_active()
 	view["selected_focus_zoom_animating"] = not _map_bounds_equal(map_view_bounds_cache, target_map_view_bounds_cache)
+	var navigation_aspect := target_map_view_bounds_cache.size.x / maxf(0.001, target_map_view_bounds_cache.size.y)
+	var navigation_max_size := _navigation_max_size(navigation_aspect)
+	view["navigation"] = {
+		"user_view_active": navigation_user_view_active,
+		"drag_active": navigation_drag_active,
+		"at_minimum_zoom": target_map_view_bounds_cache.size.distance_to(navigation_max_size) <= 0.0005,
+		"at_maximum_zoom": target_map_view_bounds_cache.size.distance_to(navigation_max_size * NAVIGATION_MIN_VIEW_SCALE) <= 0.0005,
+		"zoom_increment": NAVIGATION_ZOOM_INCREMENT,
+	}
 	view["visible_route_segments"] = _visible_route_segment_snapshots()
 	view["run_report_replay"] = _replay_marker_state()
 	return view
@@ -588,7 +650,7 @@ func _normalized_position(position: Dictionary) -> Vector2:
 func _compute_map_view_bounds() -> Rect2:
 	var nodes := _bounds_focus_nodes(map_view_focus_node_ids_cache)
 	if nodes.is_empty():
-		return _full_map_view_bounds()
+		return _navigation_or_authored_bounds(_full_map_view_bounds())
 	var min_x := 1.0
 	var min_y := 1.0
 	var max_x := 0.0
@@ -610,36 +672,177 @@ func _compute_map_view_bounds() -> Rect2:
 	var center := Vector2((min_x + max_x) * 0.5, (min_y + max_y) * 0.5)
 	var width := maxf(0.34, (max_x - min_x) + 0.20)
 	var height := maxf(0.34, (max_y - min_y) + 0.20)
-	var aspect := _normalized_view_aspect()
-	if width / height < aspect:
-		width = height * aspect
+	if bool(snapshot.get("fit_all_nodes", false)):
+		width = minf(1.0, width)
+		height = minf(1.0, height)
 	else:
-		height = width / aspect
-	var fit_scale := minf(1.0, minf(1.0 / maxf(0.001, width), 1.0 / maxf(0.001, height)))
-	width *= fit_scale
-	height *= fit_scale
+		var aspect := _normalized_view_aspect()
+		if width / height < aspect:
+			width = height * aspect
+		else:
+			height = width / aspect
+		var fit_scale := minf(1.0, minf(1.0 / maxf(0.001, width), 1.0 / maxf(0.001, height)))
+		width *= fit_scale
+		height *= fit_scale
 	var x0 := clampf(center.x - width * 0.5, 0.0, 1.0 - width)
 	var y0 := clampf(center.y - height * 0.5, 0.0, 1.0 - height)
 	var base_bounds := Rect2(Vector2(x0, y0), Vector2(width, height))
-	return _apply_user_pan(_selected_focus_bounds(base_bounds))
+	return _navigation_or_authored_bounds(_selected_focus_bounds(base_bounds))
 
 
 func pan_map(direction: Vector2) -> void:
 	if direction == Vector2.ZERO:
 		return
+	_ensure_layout_cache()
 	var bounds := target_map_view_bounds_cache
-	user_pan_offset += Vector2(direction.x * bounds.size.x, direction.y * bounds.size.y) * 0.18
+	_set_navigation_bounds(Rect2(bounds.position + direction * bounds.size * 0.18, bounds.size), false)
+
+
+func zoom_map(step: int, local_anchor: Vector2 = Vector2(-1.0, -1.0)) -> bool:
+	if step == 0:
+		return false
+	_ensure_layout_cache()
+	var bounds := target_map_view_bounds_cache
+	var layout_size := _current_or_default_layout_size()
+	var anchor_ratio := Vector2(0.5, 0.5)
+	if local_anchor.x >= 0.0 and local_anchor.y >= 0.0:
+		anchor_ratio = Vector2(
+			clampf(local_anchor.x / maxf(1.0, layout_size.x), 0.0, 1.0),
+			clampf(local_anchor.y / maxf(1.0, layout_size.y), 0.0, 1.0)
+		)
+	var factor := pow(NAVIGATION_ZOOM_INCREMENT, abs(step))
+	if step < 0:
+		factor = 1.0 / factor
+	var anchor_in_map := bounds.position + anchor_ratio * bounds.size
+	var next_size := bounds.size * factor
+	var next_bounds := Rect2(anchor_in_map - anchor_ratio * next_size, next_size)
+	return _set_navigation_bounds(next_bounds, false)
+
+
+func begin_navigation_drag(local_position: Vector2) -> void:
+	if not _map_bounds_equal(map_view_bounds_cache, target_map_view_bounds_cache):
+		navigation_user_view_active = true
+		navigation_user_view_bounds = map_view_bounds_cache
+		target_map_view_bounds_cache = map_view_bounds_cache
+	navigation_drag_active = true
+	navigation_drag_moved = false
+	navigation_drag_origin = local_position
+	navigation_drag_last_position = local_position
+
+
+func navigation_drag_in_progress() -> bool:
+	return navigation_drag_active
+
+
+func update_navigation_drag(local_position: Vector2) -> bool:
+	if not navigation_drag_active:
+		return false
+	var pointer_delta := local_position - navigation_drag_last_position
+	navigation_drag_last_position = local_position
+	if not navigation_drag_moved and local_position.distance_to(navigation_drag_origin) >= NAVIGATION_DRAG_THRESHOLD:
+		navigation_drag_moved = true
+	if not navigation_drag_moved or pointer_delta == Vector2.ZERO:
+		return false
+	_ensure_layout_cache()
+	var bounds := target_map_view_bounds_cache
+	var layout_size := _current_or_default_layout_size()
+	var source_delta := Vector2(
+		-pointer_delta.x / maxf(1.0, layout_size.x) * bounds.size.x,
+		-pointer_delta.y / maxf(1.0, layout_size.y) * bounds.size.y
+	)
+	return _set_navigation_bounds(Rect2(bounds.position + source_delta, bounds.size), true)
+
+
+func end_navigation_drag() -> bool:
+	var moved := navigation_drag_active and navigation_drag_moved
+	navigation_drag_active = false
+	navigation_drag_moved = false
+	return moved
+
+
+func reset_navigation_view() -> void:
+	_reset_navigation_view_state()
 	map_view_bounds_signature = ""
 	_rebuild_layout_cache()
 	queue_redraw()
 
 
-func _apply_user_pan(bounds: Rect2) -> Rect2:
-	var position := bounds.position + user_pan_offset
-	position.x = clampf(position.x, 0.0, 1.0 - bounds.size.x)
-	position.y = clampf(position.y, 0.0, 1.0 - bounds.size.y)
-	user_pan_offset = position - bounds.position
-	return Rect2(position, bounds.size)
+func _navigation_or_authored_bounds(authored_bounds: Rect2) -> Rect2:
+	if navigation_user_view_active:
+		return _clamp_navigation_bounds(navigation_user_view_bounds)
+	return authored_bounds
+
+
+func _set_navigation_bounds(requested_bounds: Rect2, immediate: bool) -> bool:
+	var next_bounds := _clamp_navigation_bounds(requested_bounds)
+	if _map_bounds_equal(next_bounds, target_map_view_bounds_cache):
+		return false
+	navigation_user_view_active = true
+	navigation_user_view_bounds = next_bounds
+	target_map_view_bounds_cache = next_bounds
+	map_view_bounds_signature = _map_view_bounds_signature(map_view_basis_signature)
+	if immediate:
+		map_view_bounds_cache = next_bounds
+		_rebuild_node_screen_position_cache()
+		layout_changed.emit()
+	queue_redraw()
+	return true
+
+
+func _clamp_navigation_bounds(requested_bounds: Rect2) -> Rect2:
+	var aspect := requested_bounds.size.x / maxf(0.001, requested_bounds.size.y)
+	var maximum_size := _navigation_max_size(aspect)
+	var requested_size := requested_bounds.size
+	var width := clampf(requested_size.x, maximum_size.x * NAVIGATION_MIN_VIEW_SCALE, maximum_size.x)
+	var height := width / maxf(0.001, aspect)
+	if height > maximum_size.y:
+		height = maximum_size.y
+		width = height * aspect
+	var size_clamped := Vector2(width, height)
+	var max_position := Vector2.ONE - size_clamped
+	var position := Vector2(
+		clampf(requested_bounds.position.x, 0.0, max_position.x),
+		clampf(requested_bounds.position.y, 0.0, max_position.y)
+	)
+	return Rect2(position, size_clamped)
+
+
+func _navigation_max_size(aspect: float) -> Vector2:
+	if aspect >= 1.0:
+		return Vector2(1.0, 1.0 / maxf(0.001, aspect))
+	return Vector2(maxf(0.001, aspect), 1.0)
+
+
+func _reset_navigation_view_state() -> void:
+	navigation_user_view_active = false
+	navigation_user_view_bounds = Rect2(Vector2.ZERO, Vector2.ONE)
+	navigation_drag_active = false
+	navigation_drag_moved = false
+	map_view_bounds_signature = ""
+
+
+func _navigation_content_signature(map_snapshot: Dictionary) -> String:
+	var parts: Array[String] = []
+	for node_value in _array_view(map_snapshot.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var position: Dictionary = node.get("position", {}) if typeof(node.get("position", {})) == TYPE_DICTIONARY else {}
+		parts.append("%s:%.5f:%.5f" % [
+			str(node.get("id", "")),
+			float(position.get("x", 0.5)),
+			float(position.get("y", 0.5)),
+		])
+	parts.sort()
+	parts.append("current:%s" % str(map_snapshot.get("current_node_id", "")))
+	var focus_ids := _string_array(map_snapshot.get("map_focus_node_ids", []))
+	focus_ids.sort()
+	parts.append("focus:%s" % ",".join(focus_ids))
+	var enabled_ids := _string_array(map_snapshot.get("travel_enabled_node_ids", []))
+	enabled_ids.sort()
+	parts.append("enabled:%s" % ",".join(enabled_ids))
+	parts.append("fit_all:%s" % str(bool(map_snapshot.get("fit_all_nodes", false))))
+	return "|".join(parts)
 
 
 func _selected_focus_bounds(base_bounds: Rect2) -> Rect2:
@@ -694,7 +897,8 @@ func _selected_focus_zoom_active() -> bool:
 func _bounds_lerp_weight(delta: float) -> float:
 	if delta <= 0.0:
 		return 0.0
-	return clampf(1.0 - exp(-SELECTED_FOCUS_LERP_SPEED * delta), 0.0, 1.0)
+	var speed := NAVIGATION_ZOOM_LERP_SPEED if navigation_user_view_active else SELECTED_FOCUS_LERP_SPEED
+	return clampf(1.0 - exp(-speed * delta), 0.0, 1.0)
 
 
 func _lerp_map_bounds(from_bounds: Rect2, to_bounds: Rect2, weight: float) -> Rect2:

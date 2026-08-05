@@ -151,7 +151,7 @@
 		"price": 100,
 		"size_id": "tall",
 		"face": {"layout": "golden_vault", "symbol_set": "vault_gold", "palette": {"paper": "#171622", "ink": "#fff1bc", "accent": "#c89428", "latex": "#77727b", "trim": "#ffe27a"}},
-		"mechanic": {"type": "multi_game_vault", "rules": ["Matched rungs pay the revealed 2x–20x multiplier.", "Match cash on five ladder rungs.", "GOLD BAR wins every ladder rung.", "The final vault holds the top prize."], "multipliers": [2, 3, 5, 10, 20], "ladder_rungs": 5},
+		"mechanic": {"type": "multi_game_vault", "rules": ["Matched rungs pay the revealed 2x-20x multiplier.", "Match cash on five ladder rungs.", "GOLD BAR wins every ladder rung.", "The final vault holds the top prize."], "multipliers": [2, 3, 5, 10, 20], "ladder_rungs": 5},
 		"sections": [
 			{"id": "multiplier", "label": "MULTIPLIER", "rect": [0.12, 0.03, 0.76, 0.15]},
 			{"id": "cash_ladder", "label": "CASH LADDER", "rect": [0.10, 0.22, 0.80, 0.43]},

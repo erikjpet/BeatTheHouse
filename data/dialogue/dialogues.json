@@ -1154,7 +1154,7 @@
   },
   {
     "id": "tutorial_linda_bronze_finish",
-    "display_name": "Linda — Bronze and Beyond",
+    "display_name": "Linda: Bronze and Beyond",
     "speaker": {
       "role": "staff",
       "name": "Linda",
@@ -1207,6 +1207,48 @@
           "effects_hidden": true,
           "end": true
         }]
+      }
+    }
+  },
+  {
+    "id": "scratch_ticket_scalper_knows",
+    "display_name": "Vince: Machine Watch",
+    "speaker": {
+      "role": "patron",
+      "name": "Vince",
+      "character_id": "vince_ticket_scalper",
+      "voice_line_key": "knows",
+      "mood": "guarded",
+      "behavior": "camping beside the sold-out ticket machine",
+      "silhouette": "hoodie",
+      "presentation": "animated_character_model"
+    },
+    "start": "restock",
+    "nodes": {
+      "restock": {
+        "text": "I watch the route, not the screen. I know when the next release lands.",
+        "choices": [{"id": "continue", "label": "Leave him to it", "effects": {}, "end": true}]
+      }
+    }
+  },
+  {
+    "id": "scratch_ticket_scalper_oblivious",
+    "display_name": "Vince: Just Waiting",
+    "speaker": {
+      "role": "patron",
+      "name": "Vince",
+      "character_id": "vince_ticket_scalper",
+      "voice_line_key": "oblivious",
+      "mood": "innocent",
+      "behavior": "pretending not to watch the sold-out ticket machine",
+      "silhouette": "hoodie",
+      "presentation": "animated_character_model"
+    },
+    "start": "denial",
+    "nodes": {
+      "denial": {
+        "text": "Restock time? Never heard of one. I just like standing here.",
+        "choices": [{"id": "continue", "label": "Sure you do", "effects": {}, "end": true}]
       }
     }
   }
