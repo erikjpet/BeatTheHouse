@@ -238,6 +238,13 @@ func environment_runtime_needs_tick(_run_state: RunState, _environment: Dictiona
 	return false
 
 
+# Returns the next monotonic simulation timestamp this fixture needs. A
+# negative value means inactive. Modules with background runtime should
+# override this so the host does not poll every fixture every frame.
+func environment_runtime_next_due_msec(run_state: RunState, environment: Dictionary, now_msec: int) -> int:
+	return now_msec if environment_runtime_needs_tick(run_state, environment, now_msec) else -1
+
+
 func environment_runtime_tick(_run_state: RunState, _environment: Dictionary, _rng: RngStream, _now_msec: int) -> Dictionary:
 	return {"handled": false}
 

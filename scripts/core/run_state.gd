@@ -7565,6 +7565,78 @@ func to_dict() -> Dictionary:
 	}
 
 
+# Captures a worker-safe save generation without first deep-copying duplicated
+# current/map/room environment graphs. Slot/environment writers replace their
+# top-level maps, while this snapshot owns each mutable root container. The v2
+# codec is non-mutating and performs the final compact deep projection on the
+# worker.
+func to_save_snapshot() -> Dictionary:
+	return {
+		"seed_text": seed_text,
+		"seed_value": seed_value,
+		"rng_seed": rng_seed,
+		"rng_state": rng_state,
+		"challenge_config": challenge_config.duplicate(false),
+		"bankroll": bankroll,
+		"grand_casino_chips": grand_casino_chips,
+		"grand_casino_atm_debt": grand_casino_atm_debt(),
+		"economic_state": economic_state,
+		"inventory": inventory.duplicate(false),
+		"portable_ticket_piles": portable_ticket_piles.duplicate(false),
+		"active_item_id": active_item_id,
+		"debt": debt.duplicate(false),
+		"sals_forfeited_item_ids": sals_forfeited_item_ids.duplicate(false),
+		"suspicion": suspicion.duplicate(false),
+		"baseline_luck": baseline_luck,
+		"drunk_level": drunk_level,
+		"alcoholic_level": alcoholic_level,
+		"pending_drunk_absorption": pending_drunk_absorption.duplicate(false),
+		"drunk_distortion_suppression_turns": drunk_distortion_suppression_turns,
+		"current_environment": _environment_for_persistent_storage(current_environment, false),
+		"world_map": _world_map_for_save_snapshot(world_map),
+		"grand_casino_room_states": _grand_casino_room_states_for_save(false),
+		"grand_casino_staffing": grand_casino_staffing.duplicate(false),
+		"rourke_current_room": rourke_current_room,
+		"rourke_current_spot": rourke_current_spot,
+		"rourke_facing": rourke_facing,
+		"rourke_actions_until_move": rourke_actions_until_move,
+		"rourke_off_floor_actions": rourke_off_floor_actions,
+		"rourke_floor_action_index": rourke_floor_action_index,
+		"linda_cage_state": linda_cage_state.duplicate(false),
+		"grand_casino_room_heat_accumulators": grand_casino_room_heat_accumulators.duplicate(false),
+		"rival_cheaters": rival_cheaters.duplicate(false),
+		"rival_cheater_day": rival_cheater_day,
+		"rourke_escort_state": rourke_escort_state.duplicate(false),
+		"pending_triggered_events": pending_triggered_events.duplicate(true),
+		"pending_bags": pending_bags.duplicate(true),
+		"active_triggered_event": active_triggered_event.duplicate(true),
+		"event_cadence": event_cadence.duplicate(false),
+		"music_arrangement_state": music_arrangement_state.duplicate(false),
+		"music_tempo_state": music_tempo_state.duplicate(false),
+		"music_choreography_state": music_choreography_state.duplicate(false),
+		"environment_history": environment_history.duplicate(false),
+		"environment_history_archive_count": environment_history_archive_count,
+		"unlocked_travel": unlocked_travel.duplicate(false),
+		"narrative_flags": narrative_flags.duplicate(false),
+		"story_flags": story_flags.duplicate(false),
+		"story_log": story_log.duplicate(false),
+		"story_log_archive_count": story_log_archive_count,
+		"heat_history": heat_history.duplicate(false),
+		"simulation_msec": simulation_msec,
+		"game_clock_minutes": game_clock_minutes,
+		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,
+		"grand_casino_atm_interest_notifications": grand_casino_atm_interest_notifications.duplicate(false),
+		"closing_time_state": closing_time_state.duplicate(false),
+		"act": act_marker(),
+		"act_index": act_marker(),
+		"home_state": home_state.duplicate(false),
+		"run_status": run_status,
+		"run_failure_reason": run_failure_reason,
+		"run_failure_message": run_failure_message,
+		"run_spending_score": run_spending_score,
+	}
+
+
 # Restores the run from saved data.
 func from_dict(data: Dictionary) -> void:
 	seed_text = str(data.get("seed_text", "FOUNDATION-SEED"))
@@ -7921,7 +7993,7 @@ func _sync_portable_ticket_inventory_markers() -> void:
 				active_item_id = ""
 
 
-static func _environment_for_persistent_storage(environment: Dictionary) -> Dictionary:
+static func _environment_for_persistent_storage(environment: Dictionary, deep_copy: bool = true) -> Dictionary:
 	if environment.is_empty():
 		return {}
 	var stored: Dictionary = {}
@@ -7929,7 +8001,7 @@ static func _environment_for_persistent_storage(environment: Dictionary) -> Dict
 		var key := str(key_value)
 		if key == "game_states":
 			continue
-		stored[key] = _persistent_copy_value(environment.get(key_value))
+		stored[key] = _persistent_copy_value(environment.get(key_value)) if deep_copy else environment.get(key_value)
 	var states_value: Variant = environment.get("game_states", {})
 	if typeof(states_value) != TYPE_DICTIONARY:
 		return stored
@@ -7945,12 +8017,33 @@ static func _environment_for_persistent_storage(environment: Dictionary) -> Dict
 				var field := str(field_value)
 				if player_fields.has(field):
 					continue
-				stored_machine[field] = _persistent_copy_value(machine.get(field_value))
+				stored_machine[field] = _persistent_copy_value(machine.get(field_value)) if deep_copy else machine.get(field_value)
 			stored_states[game_key] = stored_machine
 		else:
-			stored_states[game_key] = _persistent_copy_value(state_value)
+			stored_states[game_key] = _persistent_copy_value(state_value) if deep_copy else state_value
 	stored["game_states"] = stored_states
 	return stored
+
+
+static func _world_map_for_save_snapshot(map_data: Dictionary) -> Dictionary:
+	if map_data.is_empty():
+		return {}
+	var snapshot := map_data.duplicate(false)
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return snapshot
+	var nodes: Array = []
+	for node_value in nodes_value as Array:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			nodes.append(node_value)
+			continue
+		var node := (node_value as Dictionary).duplicate(false)
+		var environment_value: Variant = node.get("environment", {})
+		if typeof(environment_value) == TYPE_DICTIONARY and not (environment_value as Dictionary).is_empty():
+			node["environment"] = _environment_for_persistent_storage(environment_value as Dictionary, false)
+		nodes.append(node)
+	snapshot["nodes"] = nodes
+	return snapshot
 
 
 static func environment_context_snapshot(environment: Dictionary) -> Dictionary:
@@ -8336,7 +8429,7 @@ static func _normalize_rourke_escort_state(data: Dictionary) -> Dictionary:
 	}
 
 
-func _grand_casino_room_states_for_save() -> Dictionary:
+func _grand_casino_room_states_for_save(deep_copy: bool = true) -> Dictionary:
 	var result: Dictionary = {}
 	var active_room_id := ""
 	if _is_grand_casino_environment(current_environment):
@@ -8349,7 +8442,7 @@ func _grand_casino_room_states_for_save() -> Dictionary:
 			continue
 		var room: Variant = grand_casino_room_states.get(room_id, {})
 		if typeof(room) == TYPE_DICTIONARY and not (room as Dictionary).is_empty():
-			result[room_id] = (room as Dictionary).duplicate(true)
+			result[room_id] = (room as Dictionary).duplicate(deep_copy)
 	return result
 
 

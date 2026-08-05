@@ -143,6 +143,7 @@ const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
+const EnvironmentRuntimeSchedulerScript := preload("res://scripts/core/environment_runtime_scheduler.gd")
 
 var user_settings: UserSettings
 var profile_inventory: ProfileInventory
@@ -221,6 +222,8 @@ var game_surface_auto_resolving := false
 var environment_game_runtime_scan_count := 0
 var environment_runtime_state_key_cache: Dictionary = {}
 var environment_runtime_active_keys_scratch: Dictionary = {}
+var environment_runtime_scheduler = EnvironmentRuntimeSchedulerScript.new()
+var environment_runtime_last_timing_usec: Dictionary = {}
 var last_game_surface_realtime_refresh_msec := 0
 var surface_feature_music_active := false
 var surface_feature_music_ducking := false
@@ -243,6 +246,10 @@ var autosave_slot_id := AUTOSAVE_SLOT
 var pending_autosave := false
 var pending_autosave_status_text := "Autosaved."
 var pending_autosave_after_frame := -1
+var autosave_dirty_generation := 0
+var autosave_inflight_generation := 0
+var autosave_completed_generation := 0
+var autosave_loadable_available := false
 
 var start_screen: Control
 var run_screen: Control
@@ -495,7 +502,7 @@ func _process(delta: float) -> void:
 			_advance_presented_bankroll()
 		if (current_screen == SCREEN_ENVIRONMENT or current_screen == SCREEN_GAME) and not meta_session_active:
 			_advance_environment_game_runtime()
-		if pending_autosave:
+		if pending_autosave or (save_service != null and save_service.async_save_in_flight()):
 			_flush_pending_autosave_if_ready()
 		return
 	perf_telemetry_overlay.begin_foundation_frame()
@@ -519,7 +526,7 @@ func _process(delta: float) -> void:
 		var environment_started_usec := Time.get_ticks_usec()
 		_advance_environment_game_runtime()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("environment_runtime", Time.get_ticks_usec() - environment_started_usec)
-	if pending_autosave:
+	if pending_autosave or (save_service != null and save_service.async_save_in_flight()):
 		var autosave_started_usec := Time.get_ticks_usec()
 		_flush_pending_autosave_if_ready()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("autosave_flush", Time.get_ticks_usec() - autosave_started_usec)
@@ -561,6 +568,11 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
 		_invalidate_run_screen_layout()
 		_apply_run_screen_layout()
+	elif what == NOTIFICATION_WM_CLOSE_REQUEST and run_state != null and not _is_meta_session():
+		# Window-manager exits are durability boundaries just like the in-game
+		# Exit action. A worker generation is joined and the newest state is
+		# written atomically before Godot accepts the close request.
+		_autosave_foundation_run("Saved before exit.", true)
 
 
 func _initialize_perf_telemetry() -> void:
@@ -596,6 +608,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	stored_grand_casino_runtime_last_msec = -100000
 	environment_runtime_state_key_cache.clear()
 	environment_runtime_active_keys_scratch.clear()
+	environment_runtime_scheduler.clear()
 	last_environment_runtime_result = {}
 	run_report_model = {}
 	run_report_model_key = ""
@@ -727,6 +740,7 @@ func enter_game(game_id: String, state_key: String = "") -> void:
 	_reset_game_surface_runtime_state()
 	current_game = game_module
 	current_game_state_key = clean_state_key
+	_invalidate_environment_runtime_schedule(run_state.current_environment)
 	_sync_presented_bankroll_to_actual()
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_GAME)
@@ -785,6 +799,7 @@ func back_to_environment() -> void:
 	_sync_presented_bankroll_to_actual()
 	_reset_game_surface_runtime_state()
 	current_game = null
+	_invalidate_environment_runtime_schedule(run_state.current_environment if run_state != null else {})
 	_clear_recent_result_feedback()
 	_set_current_screen(SCREEN_ENVIRONMENT)
 	_hide_event_choice_popup()
@@ -1191,84 +1206,181 @@ func _advance_environment_game_runtime() -> void:
 
 
 func _advance_environment_game_runtime_for_environment(environment_data: Dictionary, now_msec: int, game_ids_override: Array = []) -> bool:
+	var frame_started_usec := Time.get_ticks_usec()
 	var game_ids_value: Variant = game_ids_override if not game_ids_override.is_empty() else environment_data.get("game_ids", [])
 	if typeof(game_ids_value) != TYPE_ARRAY or (game_ids_value as Array).is_empty():
 		return false
 	var current_environment_id := str(run_state.current_environment.get("id", ""))
 	var environment_id := str(environment_data.get("id", ""))
 	var same_environment := current_environment_id == environment_id
-	var scanned := false
-	for game_id_value in game_ids_value as Array:
+	if environment_id.is_empty():
+		return false
+	if environment_runtime_scheduler.needs_reconcile(environment_id, now_msec, int(environment_data.get("environment_runtime_revision", 0))):
+		_rebuild_environment_runtime_schedule(environment_data, game_ids_value as Array, now_msec, same_environment)
+	var due := environment_runtime_scheduler.take_due(environment_id, now_msec)
+	if due.is_empty():
+		environment_runtime_last_timing_usec = {
+			"schedule": Time.get_ticks_usec() - frame_started_usec,
+			"resolve": 0,
+			"commit": 0,
+			"autosave_prepare": 0,
+			"total": Time.get_ticks_usec() - frame_started_usec,
+		}
+		return false
+	var schedule_finished_usec := Time.get_ticks_usec()
+	var game_id := str(due.get("game_id", ""))
+	var state_key := str(due.get("state_key", ""))
+	var game := _game_module_for_id(game_id)
+	if game == null or not game.environment_runtime_enabled():
+		return false
+	if _environment_runtime_state_is_foreground(environment_data, game_id, state_key, same_environment):
+		return false
+	var active_keys_value: Variant = environment_data.get("active_game_state_keys", null)
+	var using_scratch_active_keys := typeof(active_keys_value) != TYPE_DICTIONARY
+	var active_keys: Dictionary
+	if using_scratch_active_keys:
+		environment_runtime_active_keys_scratch.clear()
+		active_keys = environment_runtime_active_keys_scratch
+		environment_data["active_game_state_keys"] = active_keys
+	else:
+		active_keys = active_keys_value as Dictionary
+	var had_active_key := active_keys.has(game_id)
+	var previous_active_key: Variant = active_keys.get(game_id)
+	active_keys[game_id] = state_key
+	var runtime_wager_cost := maxi(0, game.wager_cost_for_context("spin", 0, run_state, environment_data, {}))
+	if _wager_needs_final_bankroll_confirmation(game, "spin", 0, runtime_wager_cost, {}, environment_data):
+		_pause_environment_runtime_for_wager_confirmation(game, game_id, environment_data)
+		_reschedule_environment_runtime_fixture(environment_data, game, game_id, state_key, now_msec)
+		_show_wager_confirmation_popup("spin", runtime_wager_cost, runtime_wager_cost, true, false, game_id, state_key)
+		_show_message("%s autoplay needs your approval before risking your last cash." % game.get_display_name())
+		_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
+		_refresh_runtime_environment_views()
+		return true
+	var rng := run_state.create_rng()
+	var resolve_started_usec := Time.get_ticks_usec()
+	var command := game.environment_runtime_tick(run_state, environment_data, rng, now_msec)
+	var resolve_finished_usec := Time.get_ticks_usec()
+	_reschedule_environment_runtime_fixture(environment_data, game, game_id, state_key, now_msec)
+	if command.is_empty() or not bool(command.get("handled", false)):
+		_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
+		return true
+	var audio_cue := str(command.get("audio_cue", ""))
+	if not audio_cue.is_empty():
+		_play_environment_audio_cue(audio_cue, float(command.get("audio_cue_volume_db", -1.0)))
+	var result: Dictionary = command.get("result", {})
+	var commit_started_usec := Time.get_ticks_usec()
+	if not result.is_empty():
+		if bool(result.get("ok", false)):
+			run_state.advance_environment_turns(1)
+			if bool(result.get("host_apply_result", false)):
+				GameModule.apply_result(run_state, result, rng)
+			_evaluate_run_terminal_state()
+			if run_state.is_terminal():
+				_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
+				_render_environment_screen()
+				return true
+		var receipt := _environment_runtime_result_receipt(result)
+		last_environment_runtime_result = receipt
+		if current_game == null:
+			last_game_result = receipt.duplicate(true)
+			last_item_result = {}
+			last_hook_result = {}
+			_show_message(str(result.get("message", "")))
+		elif bool(command.get("attention", false)) or bool(result.get("slot_pending_feature", false)):
+			_show_message(str(result.get("message", command.get("message", ""))))
+		_advance_alcohol_absorption()
+		var autosave_started_usec := Time.get_ticks_usec()
+		_autosave_foundation_run("Autosaved.")
+		environment_runtime_last_timing_usec = {
+			"schedule": schedule_finished_usec - frame_started_usec,
+			"resolve": resolve_finished_usec - resolve_started_usec,
+			"commit": autosave_started_usec - commit_started_usec,
+			"autosave_prepare": Time.get_ticks_usec() - autosave_started_usec,
+			"total": Time.get_ticks_usec() - frame_started_usec,
+		}
+	elif command.has("message"):
+		_show_message(str(command.get("message", "")))
+		_refresh_runtime_environment_views()
+	_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
+	return true
+
+
+func _rebuild_environment_runtime_schedule(environment_data: Dictionary, game_ids: Array, now_msec: int, same_environment: bool) -> void:
+	var environment_id := str(environment_data.get("id", ""))
+	var entries: Array = []
+	var active_keys_value: Variant = environment_data.get("active_game_state_keys", null)
+	var using_scratch_active_keys := typeof(active_keys_value) != TYPE_DICTIONARY
+	var active_keys: Dictionary
+	if using_scratch_active_keys:
+		environment_runtime_active_keys_scratch.clear()
+		active_keys = environment_runtime_active_keys_scratch
+		environment_data["active_game_state_keys"] = active_keys
+	else:
+		active_keys = active_keys_value as Dictionary
+	var order_index := 0
+	for game_id_value in game_ids:
 		var game_id := str(game_id_value)
-		if game_id.is_empty():
-			continue
 		var game := _game_module_for_id(game_id)
 		if game == null or not game.environment_runtime_enabled():
 			continue
-		var active_keys_value: Variant = environment_data.get("active_game_state_keys", null)
-		var using_scratch_active_keys := typeof(active_keys_value) != TYPE_DICTIONARY
-		var active_keys: Dictionary
-		if using_scratch_active_keys:
-			environment_runtime_active_keys_scratch.clear()
-			active_keys = environment_runtime_active_keys_scratch
-			environment_data["active_game_state_keys"] = active_keys
-		else:
-			active_keys = active_keys_value as Dictionary
 		var had_active_key := active_keys.has(game_id)
 		var previous_active_key: Variant = active_keys.get(game_id)
 		for state_key_value in _environment_runtime_state_keys(environment_data, game_id):
 			var state_key := str(state_key_value)
 			if _environment_runtime_state_is_foreground(environment_data, game_id, state_key, same_environment):
 				continue
-			scanned = true
 			active_keys[game_id] = state_key
-			if not game.environment_runtime_needs_tick(run_state, environment_data, now_msec):
-				continue
-			var runtime_wager_cost := maxi(0, game.wager_cost_for_context("spin", 0, run_state, environment_data, {}))
-			if _wager_needs_final_bankroll_confirmation(game, "spin", 0, runtime_wager_cost, {}, environment_data):
-				_pause_environment_runtime_for_wager_confirmation(game, game_id, environment_data)
-				_show_wager_confirmation_popup("spin", runtime_wager_cost, runtime_wager_cost, true, false, game_id, state_key)
-				_show_message("%s autoplay needs your approval before risking your last cash." % game.get_display_name())
-				_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
-				_refresh_runtime_environment_views()
-				return true
-			var rng := run_state.create_rng()
-			var command := game.environment_runtime_tick(run_state, environment_data, rng, now_msec)
-			if command.is_empty() or not bool(command.get("handled", false)):
-				continue
-			var audio_cue := str(command.get("audio_cue", ""))
-			if not audio_cue.is_empty():
-				_play_environment_audio_cue(audio_cue, float(command.get("audio_cue_volume_db", -1.0)))
-			var result: Dictionary = command.get("result", {})
-			if not result.is_empty():
-				if bool(result.get("ok", false)):
-					run_state.advance_environment_turns(1)
-					if bool(result.get("host_apply_result", false)):
-						GameModule.apply_result(run_state, result, rng)
-					_evaluate_run_terminal_state()
-					if run_state.is_terminal():
-						_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
-						_render_environment_screen()
-						return true
-				last_environment_runtime_result = result.duplicate(true)
-				if current_game == null:
-					last_game_result = result.duplicate(true)
-					last_item_result = {}
-					last_hook_result = {}
-					_show_message(str(result.get("message", "")))
-				elif bool(command.get("attention", false)) or bool(result.get("slot_pending_feature", false)):
-					_show_message(str(result.get("message", command.get("message", ""))))
-				_advance_alcohol_absorption()
-				_autosave_foundation_run("Autosaved.")
-				_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
-				return true
-			elif command.has("message"):
-				_show_message(str(command.get("message", "")))
-				_refresh_runtime_environment_views()
-				_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
-				return true
-		_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
-	return scanned
+			var due_msec := game.environment_runtime_next_due_msec(run_state, environment_data, now_msec)
+			if due_msec >= 0:
+				entries.append({
+					"game_id": game_id,
+					"state_key": state_key,
+					"due_msec": due_msec,
+					"tie_key": "%04d|%s|%s" % [order_index, game_id, state_key],
+				})
+			order_index += 1
+		_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, false)
+	if using_scratch_active_keys:
+		environment_data.erase("active_game_state_keys")
+		environment_runtime_active_keys_scratch.clear()
+	environment_runtime_scheduler.replace(environment_id, entries, now_msec, int(environment_data.get("environment_runtime_revision", 0)))
+
+
+func _reschedule_environment_runtime_fixture(environment_data: Dictionary, game: GameModule, game_id: String, state_key: String, now_msec: int) -> void:
+	var environment_id := str(environment_data.get("id", ""))
+	if environment_id.is_empty() or game == null:
+		return
+	var due_msec := game.environment_runtime_next_due_msec(run_state, environment_data, now_msec)
+	environment_runtime_scheduler.upsert(environment_id, {
+		"game_id": game_id,
+		"state_key": state_key,
+		"due_msec": due_msec,
+		"tie_key": "%s|%s" % [game_id, state_key],
+	}, int(environment_data.get("environment_runtime_revision", 0)))
+
+
+func _invalidate_environment_runtime_schedule(environment_data: Dictionary = {}) -> void:
+	var source := environment_data if not environment_data.is_empty() else (run_state.current_environment if run_state != null else {})
+	var environment_id := str(source.get("id", ""))
+	if not environment_id.is_empty():
+		environment_runtime_scheduler.invalidate(environment_id)
+
+
+func _environment_runtime_result_receipt(result: Dictionary) -> Dictionary:
+	var receipt := result.duplicate(false)
+	for key in [
+		"slot_animation_plan",
+		"slot_reel_timeline",
+		"slot_reel_stop_times",
+		"slot_grid",
+		"slot_reel_stops",
+		"slot_active_bonus",
+		"slot_bonus_step",
+	]:
+		receipt.erase(key)
+	if receipt.has("deltas") and typeof(receipt.get("deltas")) == TYPE_DICTIONARY:
+		receipt["deltas"] = (receipt.get("deltas") as Dictionary).duplicate(true)
+	return receipt
 
 
 func _advance_grand_casino_stored_main_floor_slot_runtime(now_msec: int) -> bool:
@@ -1482,7 +1594,10 @@ func _augment_game_surface_realtime_patch(patch: Dictionary, ui_state: Dictionar
 
 func _checkpoint_current_game_surface_ui_state() -> void:
 	if current_game != null and run_state != null and not run_state.current_environment.is_empty() and not game_surface_ui_state.is_empty():
-		current_game.checkpoint_surface_ui_state(game_surface_ui_state, run_state, run_state.current_environment)
+		# Checkpoints must observe the live animation clock, not the UI preferences
+		# captured when the surface was opened. This is what makes a save taken in
+		# the middle of a finite presentation resume from the same rendered frame.
+		current_game.checkpoint_surface_ui_state(_current_game_surface_ui_state(), run_state, run_state.current_environment)
 
 
 func _reset_game_surface_runtime_state() -> void:
@@ -3989,7 +4104,8 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 	if not force:
 		_queue_pending_autosave(status_text, 1)
 		return true
-	return _write_foundation_run_save(status_text)
+	autosave_dirty_generation += 1
+	return _write_foundation_run_save(status_text, true)
 
 
 func _prepare_foundation_run_save() -> void:
@@ -4000,27 +4116,44 @@ func _prepare_foundation_run_save() -> void:
 		run_state.remember_music_choreography_state(procedural_music_player.music_choreography_save_state())
 
 
-func _write_foundation_run_save(status_text: String = "Autosaved.") -> bool:
+func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous: bool = false) -> bool:
 	if run_state == null:
 		return false
 	if save_service == null:
 		save_status_message = "Autosave unavailable."
 		return false
-	var error := save_service.save_run(run_state, autosave_slot_id)
+	if synchronous and save_service.async_save_in_flight():
+		var pending_error := save_service.wait_for_async_save()
+		if pending_error != OK:
+			save_status_message = "Autosave failed."
+			return false
+	var requested_generation := autosave_dirty_generation
+	var error := save_service.save_run(run_state, autosave_slot_id) if synchronous else save_service.begin_save_run(run_state, autosave_slot_id)
 	if error == OK:
-		pending_autosave = false
+		if synchronous:
+			autosave_completed_generation = maxi(autosave_completed_generation, requested_generation)
+			autosave_inflight_generation = 0
+			autosave_loadable_available = true
+		else:
+			autosave_inflight_generation = requested_generation
+		pending_autosave = autosave_dirty_generation > requested_generation
 		pending_autosave_status_text = "Autosaved."
-		pending_autosave_after_frame = -1
-		save_status_message = status_text
+		pending_autosave_after_frame = Engine.get_process_frames() + 1 if pending_autosave else -1
+		save_status_message = status_text if synchronous else "Autosave writing."
 		if save_status_label != null:
 			save_status_label.text = _save_status_text()
 		_refresh_start_screen()
+		return true
+	if error == ERR_BUSY:
+		pending_autosave = true
+		pending_autosave_after_frame = Engine.get_process_frames() + 1
 		return true
 	save_status_message = "Autosave failed."
 	return false
 
 
 func _flush_pending_autosave_if_ready() -> void:
+	_poll_async_foundation_save()
 	if not pending_autosave:
 		return
 	if pending_autosave_after_frame >= 0 and Engine.get_process_frames() < pending_autosave_after_frame:
@@ -4030,11 +4163,41 @@ func _flush_pending_autosave_if_ready() -> void:
 	_write_foundation_run_save(pending_autosave_status_text)
 
 
+func _poll_async_foundation_save() -> void:
+	if save_service == null or not save_service.async_save_in_flight():
+		return
+	var result := save_service.poll_async_save()
+	if not bool(result.get("completed", false)):
+		return
+	if int(result.get("error", FAILED)) == OK:
+		autosave_completed_generation = maxi(autosave_completed_generation, autosave_inflight_generation)
+		autosave_inflight_generation = 0
+		autosave_loadable_available = true
+		pending_autosave = autosave_dirty_generation > autosave_completed_generation
+		if pending_autosave:
+			pending_autosave_after_frame = Engine.get_process_frames() + 1
+		else:
+			save_status_message = "Autosaved."
+	else:
+		autosave_inflight_generation = 0
+		save_status_message = "Autosave failed."
+		pending_autosave = true
+		pending_autosave_after_frame = Engine.get_process_frames() + 1
+	if save_status_label != null:
+		save_status_label.text = _save_status_text()
+
+
 func _queue_pending_autosave(status_text: String, defer_frames: int) -> void:
+	autosave_dirty_generation += 1
 	pending_autosave = true
 	pending_autosave_status_text = status_text
 	pending_autosave_after_frame = maxi(pending_autosave_after_frame, Engine.get_process_frames() + maxi(0, defer_frames))
 	save_status_message = "Autosave pending."
+	# Async generation state is player-visible HUD state. Keep the rendered label
+	# synchronized at the mutation boundary so snapshots and the actual frame can
+	# never disagree during the deferred capture window.
+	if save_status_label != null:
+		save_status_label.text = _save_status_text()
 
 
 func _should_defer_autosave_for_game_surface() -> bool:
@@ -4072,6 +4235,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	var load_result := save_service.last_load_result()
 	if loaded == null:
 		var found_corrupt_save := bool(load_result.get("primary_exists", false)) or bool(load_result.get("backup_exists", false))
+		autosave_loadable_available = false
 		save_status_message = "Saved run is corrupt." if found_corrupt_save else "No saved run is available."
 		_show_message("Saved run is corrupt and no backup could be loaded." if found_corrupt_save else "No saved run found.")
 		if return_to_start_on_missing:
@@ -4091,6 +4255,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	run_item_icon_texture_cache.clear()
 	environment_runtime_state_key_cache.clear()
 	environment_runtime_active_keys_scratch.clear()
+	environment_runtime_scheduler.clear()
 	run_state = loaded
 	_configure_coach_for_run()
 	_sync_presented_bankroll_to_actual()
@@ -4116,6 +4281,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	_clear_selected_lender_hook()
 	clear_interaction_focus()
 	var loaded_from_backup := str(load_result.get("outcome", "")) == SaveService.LOAD_OUTCOME_BACKUP
+	autosave_loadable_available = true
 	save_status_message = "Loaded backup save." if loaded_from_backup else "Loaded run."
 	_set_current_screen(SCREEN_ENVIRONMENT)
 	if procedural_music_player != null:
@@ -4596,6 +4762,7 @@ func _initialize_foundation() -> void:
 	game_module_cache = {}
 	generator = RunGenerator.new(library)
 	save_service = SaveService.new()
+	autosave_loadable_available = save_service.has_run(autosave_slot_id)
 	platform_services = PlatformServices.new()
 	platform_services.setup("local")
 	platform_services.initialize()
@@ -10591,6 +10758,7 @@ func _confirm_skip_tutorial() -> void:
 		if clear_error != OK:
 			_show_message("Could not clear the tutorial Resume Slot.")
 			return
+		autosave_loadable_available = false
 	if coach_overlay != null:
 		coach_overlay.suspend()
 	run_state = null
@@ -11835,7 +12003,10 @@ func save_status_snapshot() -> Dictionary:
 	var pressure: Dictionary = consequence.get("pressure", {})
 	return {
 		"slot_id": autosave_slot_id,
-		"has_save": _has_foundation_save(),
+		# Worker-side file installation may finish between two model reads. Expose
+		# availability only after the main-thread completion boundary so visible
+		# HUD text and semantic snapshots advance atomically.
+		"has_save": autosave_loadable_available,
 		"load_available": _has_foundation_save(),
 		"save_path": save_service.run_save_path(autosave_slot_id) if save_service != null else "",
 		"status_text": _save_status_text(),
@@ -11946,7 +12117,14 @@ func _save_status_text() -> String:
 	if _is_meta_session():
 		return ""
 	if run_state != null:
-		return str(_run_status_hud_model().get("save_text", ""))
+		# Save-generation transitions are hot (background cabinets can queue one
+		# every result). Build only the save fragment instead of the full objective,
+		# inventory, pressure, world, and consequence HUD model.
+		return FoundationHudViewModelScript.hud_save_text(
+			autosave_loadable_available,
+			save_status_message,
+			Callable(self, "_player_facing_text")
+		)
 	var availability := "Saved run available" if _has_foundation_save() else "No saved run"
 	if run_state == null:
 		return availability
@@ -11986,7 +12164,9 @@ func _run_status_hud_model() -> Dictionary:
 		"debt_items": _debt_view_list(),
 		"inventory_items": _inventory_view_list(),
 		"presented_bankroll": _presented_bankroll(),
-		"has_save": _has_foundation_save(),
+		# File installation completes on the worker; publish availability to HUD
+		# consumers only when the main thread accepts that generation.
+		"has_save": autosave_loadable_available,
 		"save_status_message": save_status_message,
 		"economy_text": _economy_cue_text(),
 		"next_objective": _next_objective_option(),

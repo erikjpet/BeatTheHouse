@@ -5,7 +5,8 @@ extends RefCounted
 
 const SAVE_DIR := "user://saves"
 const SAVE_SCHEMA := "beat_the_house.foundation_run"
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
+const RunSaveCodecScript := preload("res://scripts/core/run_save_codec.gd")
 const LOAD_OUTCOME_PRIMARY := "loaded-primary"
 const LOAD_OUTCOME_BACKUP := "loaded-backup"
 const LOAD_OUTCOME_NONE := "nothing-loadable"
@@ -19,20 +20,31 @@ var last_load_outcome: Dictionary = {
 	"backup_loadable": false,
 }
 var trusted_primary_fingerprints: Dictionary = {}
+var async_task_id: int = -1
+var async_result_box: Dictionary = {}
+var async_slot_id: String = ""
+var io_mutex := Mutex.new()
 
 
 # Checks whether a run save exists.
 func has_run(slot_id: String = "autosave") -> bool:
 	var clean_slot := _slot_id(slot_id)
-	if _primary_fingerprint_is_trusted(clean_slot, run_save_path(clean_slot)):
-		return true
-	return bool(slot_status(clean_slot).get("has_loadable", false))
+	io_mutex.lock()
+	var result := _primary_fingerprint_is_trusted(clean_slot, run_save_path(clean_slot))
+	if not result:
+		result = bool(_slot_status_unlocked(clean_slot).get("has_loadable", false))
+	io_mutex.unlock()
+	return result
 
 
 # Writes run state to a save slot.
 func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	if run_state == null:
 		return ERR_INVALID_PARAMETER
+	if async_task_id >= 0:
+		var async_error := wait_for_async_save()
+		if async_error != OK:
+			return async_error
 	var clean_slot := _slot_id(slot_id)
 	var path := run_save_path(clean_slot)
 	var absolute_path := ProjectSettings.globalize_path(path)
@@ -76,8 +88,131 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	return install_error
 
 
+# Captures one detached RunState generation on the main thread, then performs
+# save projection, JSON encoding, validation, and atomic file rotation on a
+# worker. Only one generation writes at a time; FoundationMain coalesces newer
+# dirty generations while this job is in flight.
+func begin_save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
+	if run_state == null:
+		return ERR_INVALID_PARAMETER
+	if async_task_id >= 0:
+		return ERR_BUSY
+	var clean_slot := _slot_id(slot_id)
+	var runtime_snapshot := run_state.to_save_snapshot()
+	var path := run_save_path(clean_slot)
+	var backup_path := backup_save_path(clean_slot)
+	async_result_box = {"error": ERR_BUSY, "slot_id": clean_slot}
+	async_slot_id = clean_slot
+	async_task_id = WorkerThreadPool.add_task(
+		Callable(self, "_async_save_worker").bind(runtime_snapshot, clean_slot, path, backup_path, async_result_box),
+		false,
+		"Beat the House autosave"
+	)
+	return OK
+
+
+func async_save_in_flight() -> bool:
+	return async_task_id >= 0
+
+
+func poll_async_save() -> Dictionary:
+	if async_task_id < 0:
+		return {"completed": false, "in_flight": false}
+	if not WorkerThreadPool.is_task_completed(async_task_id):
+		return {"completed": false, "in_flight": true, "slot_id": async_slot_id}
+	WorkerThreadPool.wait_for_task_completion(async_task_id)
+	return _finish_async_save_result()
+
+
+func _finish_async_save_result() -> Dictionary:
+	var result := async_result_box.duplicate(true)
+	result["completed"] = true
+	result["in_flight"] = false
+	if int(result.get("error", FAILED)) == OK:
+		_remember_primary_fingerprint(async_slot_id, run_save_path(async_slot_id))
+	else:
+		trusted_primary_fingerprints.erase(async_slot_id)
+	async_task_id = -1
+	async_result_box = {}
+	async_slot_id = ""
+	return result
+
+
+func wait_for_async_save() -> Error:
+	if async_task_id < 0:
+		return OK
+	WorkerThreadPool.wait_for_task_completion(async_task_id)
+	var result := _finish_async_save_result()
+	return int(result.get("error", FAILED))
+
+
+func _async_save_worker(runtime_snapshot: Dictionary, slot_id: String, path: String, backup_path: String, result_box: Dictionary) -> void:
+	var payload := {
+		"schema": SAVE_SCHEMA,
+		"version": SAVE_VERSION,
+		"act": maxi(1, int(runtime_snapshot.get("act", 1))),
+		"slot_id": slot_id,
+		"run_state": RunSaveCodecScript.encode(runtime_snapshot),
+	}
+	io_mutex.lock()
+	result_box["error"] = _write_payload_atomic(payload, path, backup_path)
+	io_mutex.unlock()
+
+
+static func _write_payload_atomic(payload: Dictionary, path: String, backup_path: String) -> Error:
+	var absolute_path := ProjectSettings.globalize_path(path)
+	var backup_absolute := ProjectSettings.globalize_path(backup_path)
+	var directory_error := DirAccess.make_dir_recursive_absolute(absolute_path.get_base_dir())
+	if directory_error != OK:
+		return directory_error
+	var temp_path := "%s.tmp" % absolute_path
+	var file := FileAccess.open(temp_path, FileAccess.WRITE)
+	if file == null:
+		return FileAccess.get_open_error()
+	file.store_string(JSON.stringify(payload))
+	var write_error := file.get_error()
+	file.close()
+	if write_error != OK:
+		_remove_worker_file(temp_path)
+		return write_error
+	if FileAccess.file_exists(absolute_path) and _worker_payload_loadable(absolute_path):
+		if FileAccess.file_exists(backup_absolute):
+			var remove_backup_error := DirAccess.remove_absolute(backup_absolute)
+			if remove_backup_error != OK:
+				_remove_worker_file(temp_path)
+				return remove_backup_error
+		var backup_error := DirAccess.rename_absolute(absolute_path, backup_absolute)
+		if backup_error != OK:
+			_remove_worker_file(temp_path)
+			return backup_error
+	elif FileAccess.file_exists(absolute_path):
+		var remove_primary_error := DirAccess.remove_absolute(absolute_path)
+		if remove_primary_error != OK:
+			_remove_worker_file(temp_path)
+			return remove_primary_error
+	return DirAccess.rename_absolute(temp_path, absolute_path)
+
+
+static func _worker_payload_loadable(absolute_path: String) -> bool:
+	var text := FileAccess.get_file_as_string(absolute_path)
+	var json := JSON.new()
+	if json.parse(text) != OK or typeof(json.data) != TYPE_DICTIONARY:
+		return false
+	var payload: Dictionary = json.data
+	if payload.get("schema", "") == SAVE_SCHEMA:
+		return typeof(payload.get("run_state", {})) == TYPE_DICTIONARY
+	return payload.has("seed_text") and payload.has("rng_state") and payload.has("current_environment")
+
+
+static func _remove_worker_file(absolute_path: String) -> void:
+	if FileAccess.file_exists(absolute_path):
+		DirAccess.remove_absolute(absolute_path)
+
+
 # Loads run state from a save slot.
 func load_run(slot_id: String = "autosave") -> Variant:
+	if async_task_id >= 0:
+		wait_for_async_save()
 	var clean_slot := _slot_id(slot_id)
 	var primary := _read_run_state_from_path(run_save_path(clean_slot))
 	var backup := _read_run_state_from_path(backup_save_path(clean_slot))
@@ -94,6 +229,10 @@ func load_run(slot_id: String = "autosave") -> Variant:
 
 # Removes both generations of a slot so a deliberately skipped tutorial cannot resume.
 func clear_run(slot_id: String = "autosave") -> Error:
+	if async_task_id >= 0:
+		var async_error := wait_for_async_save()
+		if async_error != OK:
+			return async_error
 	var clean_slot := _slot_id(slot_id)
 	for path in [run_save_path(clean_slot), backup_save_path(clean_slot)]:
 		var absolute_path := ProjectSettings.globalize_path(path)
@@ -111,6 +250,13 @@ func last_load_result() -> Dictionary:
 
 func slot_status(slot_id: String = "autosave") -> Dictionary:
 	var clean_slot := _slot_id(slot_id)
+	io_mutex.lock()
+	var result := _slot_status_unlocked(clean_slot)
+	io_mutex.unlock()
+	return result
+
+
+func _slot_status_unlocked(clean_slot: String) -> Dictionary:
 	var primary := _read_run_state_from_path(run_save_path(clean_slot))
 	var backup := _read_run_state_from_path(backup_save_path(clean_slot))
 	var primary_loadable := bool(primary.get("loadable", false))
@@ -147,7 +293,7 @@ func _save_payload(run_state: RunState, slot_id: String) -> Dictionary:
 		"version": SAVE_VERSION,
 		"act": run_state.act_marker(),
 		"slot_id": slot_id,
-		"run_state": run_state.to_dict(),
+		"run_state": RunSaveCodecScript.encode(run_state.to_dict()),
 	}
 
 
@@ -157,7 +303,7 @@ func _run_data_from_payload(payload: Dictionary) -> Dictionary:
 		var run_data: Variant = payload.get("run_state", {})
 		if typeof(run_data) != TYPE_DICTIONARY:
 			return {}
-		var copied_run_data := (run_data as Dictionary).duplicate(true)
+		var copied_run_data := RunSaveCodecScript.decode(run_data as Dictionary)
 		if not copied_run_data.has("act"):
 			copied_run_data["act"] = maxi(1, int(payload.get("act", 1)))
 		return copied_run_data
