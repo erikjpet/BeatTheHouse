@@ -44,6 +44,11 @@ static func environment_status_text(run_state: RunState, archetype: Dictionary, 
 static func apply_caught_transition(run_state: RunState, result: Dictionary) -> Dictionary:
 	if run_state == null or not run_state.is_tutorial_run():
 		return {}
+	# The first watched Peek now has its own authored dealer reprieve. The table
+	# remains playable, so the normal lesson dependency chain should continue
+	# instead of skipping the counting hand as the barred-table recovery does.
+	if bool(result.get("blackjack_tutorial_peek_reprieve", false)):
+		return {}
 	var caught := bool(result.get("dealer_caught_cheat", false)) or bool(result.get("blackjack_cheat_caught", false)) or bool(result.get("blackjack_table_barred", false))
 	if not caught:
 		return {}

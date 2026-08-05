@@ -1193,6 +1193,37 @@ func _check_dialogue_system_foundation(library: ContentLibrary, failures: Array)
 		if run_state.suspicion_level() < heat_before + 2:
 			failures.append("Dialogue risky branch did not apply its heat cost.")
 
+	var terminal_failure: RunState = RunStateScript.new()
+	terminal_failure.start_new("TERMINAL-TALK-FAILURE")
+	terminal_failure.enqueue_triggered_event("terminal_modal_fixture", "fixture")
+	terminal_failure.enqueue_dialogue("pull_tab_clerk", "terminal_failure_talk", speaker, "greeting", "fixture")
+	terminal_failure.enqueue_dialogue("pull_tab_clerk", "terminal_failure_talk_2", speaker, "greeting", "fixture")
+	terminal_failure.fail_run(RunState.FAILURE_ABANDONED, "Fixture run ended.")
+	if terminal_failure.pending_talk_event_count() != 0 or not terminal_failure.next_pending_talk_event().is_empty():
+		failures.append("Failing a run retained unresolved conversations.")
+	if terminal_failure.next_pending_modal_triggered_event().is_empty():
+		failures.append("Terminal conversation retirement removed a non-talk triggered event.")
+	if terminal_failure.enqueue_dialogue("pull_tab_clerk", "late_terminal_talk", speaker, "greeting", "fixture"):
+		failures.append("A failed run accepted a new conversation after termination.")
+
+	var terminal_victory: RunState = RunStateScript.new()
+	terminal_victory.start_new("TERMINAL-TALK-VICTORY")
+	terminal_victory.enqueue_dialogue("pull_tab_clerk", "terminal_victory_talk", speaker, "greeting", "fixture")
+	terminal_victory.call("_complete_demo_objective", {
+		"id": "terminal_talk_fixture",
+		"target_bankroll": terminal_victory.bankroll,
+		"victory_message": "Fixture victory.",
+	})
+	if terminal_victory.run_status != RunState.RUN_STATUS_ENDED or terminal_victory.pending_talk_event_count() != 0:
+		failures.append("Winning a run retained unresolved conversations.")
+
+	var terminal_save := run_state.to_dict()
+	terminal_save["run_status"] = RunState.RUN_STATUS_ENDED
+	var restored_terminal: RunState = RunStateScript.new()
+	restored_terminal.from_dict(terminal_save)
+	if restored_terminal.pending_talk_event_count() != 0:
+		failures.append("Loading a terminal run restored an obsolete conversation popup.")
+
 
 func _dialogue_choice_fixture(dialogue: Dictionary, node_id: String, choice_id: String) -> Dictionary:
 	var nodes: Dictionary = dialogue.get("nodes", {}) if typeof(dialogue.get("nodes", {})) == TYPE_DICTIONARY else {}

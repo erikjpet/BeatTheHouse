@@ -2558,6 +2558,15 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 	var raise_lesson := library.tutorial_lesson("tutorial_blackjack_raise")
 	if not CoachViewModelScript.completion_matches(raise_lesson, "blackjack_chip"):
 		failures.append("The tutorial wager lesson did not accept the real on-felt blackjack chip action.")
+	var blackjack_boundary_context := {"run": {"tutorial": true}, "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"hands_played": 0, "between_hands": false}}
+	if CoachViewModelScript.trigger_matches(raise_lesson, blackjack_boundary_context, {"tutorial_blackjack_clean_finish": true}, false):
+		failures.append("The raised-bet Pal dialogue became eligible before the clean tutorial hand settled.")
+	blackjack_boundary_context["game"] = {"hands_played": 1, "between_hands": true}
+	if not CoachViewModelScript.trigger_matches(raise_lesson, blackjack_boundary_context, {"tutorial_blackjack_clean_finish": true}, false):
+		failures.append("The raised-bet Pal dialogue did not become eligible at the next hand boundary.")
+	for within_hand_lesson_id in ["tutorial_blackjack_clean_finish", "tutorial_blackjack_raised_deal", "tutorial_blackjack_heat_precheck", "tutorial_blackjack_lookaway", "tutorial_blackjack_count_start", "tutorial_blackjack_count_all"]:
+		if str(library.tutorial_lesson(within_hand_lesson_id).get("delivery", "dialogue")) == "dialogue":
+			failures.append("Within-hand blackjack lesson still chained a Pal dialogue: %s." % within_hand_lesson_id)
 	var lookaway_lesson := library.tutorial_lesson("tutorial_blackjack_lookaway")
 	var lookaway_anchor: Dictionary = lookaway_lesson.get("anchor", {}) if typeof(lookaway_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
 	if str(lookaway_anchor.get("id", "")) != "blackjack_distraction:drink_pass":
@@ -2572,7 +2581,7 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 		failures.append("The tutorial gift-case lesson cannot complete from the real non-purchasing focus action.")
 	var heat_precheck := library.tutorial_lesson("tutorial_blackjack_heat_precheck")
 	var heat_mistake := library.tutorial_lesson("tutorial_heat_warning")
-	if heat_precheck.is_empty() or not CoachViewModelScript.trigger_matches(heat_precheck, {"run": {"tutorial": true}, "environment_archetype": "small_underground_casino", "game_id": "blackjack"}, {"tutorial_blackjack_raised_deal": true}, false):
+	if heat_precheck.is_empty() or not CoachViewModelScript.trigger_matches(heat_precheck, {"run": {"tutorial": true}, "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"hand_active": true}}, {"tutorial_blackjack_raised_deal": true}, false):
 		failures.append("Perfect tutorial play did not guarantee a pre-cheat Heat explanation.")
 	if CoachViewModelScript.trigger_matches(heat_mistake, {"run": {"tutorial": true}, "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"count_answered": true, "count_perfect": true}}, {"tutorial_blackjack_count_start": true}, false):
 		failures.append("Perfect counting incorrectly triggered the mistake-only Heat follow-up.")
@@ -2655,6 +2664,7 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var crew_copy := str((pal_nodes.get("crew_warning", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("crew_warning", {})) == TYPE_DICTIONARY else ""
 	var lookaway_copy := str((pal_nodes.get("blackjack_lookaway", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("blackjack_lookaway", {})) == TYPE_DICTIONARY else ""
 	var peek_copy := str((pal_nodes.get("blackjack_peek", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("blackjack_peek", {})) == TYPE_DICTIONARY else ""
+	var heat_99_copy := str((pal_nodes.get("heat_99", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("heat_99", {})) == TYPE_DICTIONARY else ""
 	var invite_copy := str((pal_nodes.get("invitation", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("invitation", {})) == TYPE_DICTIONARY else ""
 	if not parking_copy.contains("may lead somewhere useful later"):
 		failures.append("Pal's parking-tip line lost the later-use explanation.")
@@ -2664,6 +2674,13 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		failures.append("Pal's lookaway lesson does not identify the easiest cheat and real spill-a-drink control.")
 	if not peek_copy.contains("add heat") or not peek_copy.contains("close the table"):
 		failures.append("Pal's peek lesson does not state the consequences of getting caught.")
+	if not heat_99_copy.contains("calm down") or not heat_99_copy.contains("75%"):
+		failures.append("Pal's tutorial Heat intervention does not warn the player and explain the reset to 75%.")
+	var dealer_reprieve := library.dialogue("tutorial_blackjack_dealer_reprieve")
+	var dealer_reprieve_nodes: Dictionary = dealer_reprieve.get("nodes", {}) if typeof(dealer_reprieve.get("nodes", {})) == TYPE_DICTIONARY else {}
+	var dealer_reprieve_copy := str((dealer_reprieve_nodes.get("warning", {}) as Dictionary).get("text", "")) if typeof(dealer_reprieve_nodes.get("warning", {})) == TYPE_DICTIONARY else ""
+	if not dealer_reprieve_copy.contains("Just this once") or not dealer_reprieve_copy.contains("don't let me catch you again"):
+		failures.append("Tutorial blackjack dealer reprieve dialogue is missing its one-time warning.")
 	if not invite_copy.contains("keep an eye on your environment") or not invite_copy.contains("accept it"):
 		failures.append("Pal's invitation lesson lost its environment-scan and accept instructions.")
 	var config_a := library.challenge_config_for("tutorial_first_card", "FIRST-REQUEST")
@@ -2685,6 +2702,19 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var caught_completed: Dictionary = caught_transition.get("completed_lessons", {}) if typeof(caught_transition.get("completed_lessons", {})) == TYPE_DICTIONARY else {}
 	if str(caught_transition.get("next_lesson_id", "")) != "tutorial_leave_blackjack" or not bool(caught_completed.get("tutorial_blackjack_count_all", false)):
 		failures.append("Caught tutorial blackjack outcome did not transition to the leave-table recovery lesson.")
+	if not TutorialFlowScript.apply_caught_transition(caught_run, {"dealer_caught_cheat": true, "blackjack_tutorial_peek_reprieve": true}).is_empty():
+		failures.append("The one-time tutorial Peek reprieve incorrectly skipped the remaining blackjack lessons.")
+	var heat_run := RunStateScript.new()
+	heat_run.start_new("TUTORIAL-HEAT-INTERVENTION", config_a)
+	heat_run.suspicion["level"] = 98
+	var tutorial_heat_applied := heat_run.add_suspicion("tutorial_heat_fixture", 8)
+	var tutorial_heat_intervention := heat_run.consume_tutorial_heat_intervention()
+	if tutorial_heat_applied != 1 or heat_run.suspicion_level() != RunStateScript.TUTORIAL_HEAT_INTERVENTION_LEVEL:
+		failures.append("Tutorial Heat did not cap at 99 before cooling to 75 instead of reaching terminal Heat.")
+	if int(tutorial_heat_intervention.get("threshold", 0)) != RunStateScript.TUTORIAL_HEAT_CEILING or int(tutorial_heat_intervention.get("reduced_to", 0)) != RunStateScript.TUTORIAL_HEAT_INTERVENTION_LEVEL:
+		failures.append("Tutorial Heat intervention did not publish the pending Pal warning contract.")
+	if heat_run.run_status != RunStateScript.RUN_STATUS_ACTIVE:
+		failures.append("Tutorial Heat intervention ended the run at the protected ceiling.")
 	var shelf_lesson := library.tutorial_lesson("tutorial_inspect_coffee")
 	var shelf_model := CoachViewModelScript.build(shelf_lesson, {
 		"viewport_rect": Rect2(Vector2.ZERO, Vector2(1280, 720)),

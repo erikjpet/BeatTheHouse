@@ -330,7 +330,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		payout_started_msec += deal_duration_msec
 	var deal_animation_active := not deal_active_id.is_empty() and deal_started_msec > 0 and now_msec - deal_started_msec >= 0 and now_msec - deal_started_msec < deal_duration_msec
 	var payout_animation_active := not payout_active_id.is_empty() and payout_started_msec > 0 and now_msec - payout_started_msec >= 0 and now_msec - payout_started_msec < PAYOUT_ANIMATION_DURATION_MSEC
-	var timer_active := not dealt and not barred and not deal_animation_active and not payout_animation_active
+	var timer_active := not dealt and not barred and not deal_animation_active and not payout_animation_active and (run_state == null or not run_state.is_tutorial_run())
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
 	if timer_active and bool(round_timer.get("active", false)) and table_notice == "Slide chips, choose side bets, then press DEAL.":
 		var timer_seconds := int(round_timer.get("remaining_seconds", 0))
@@ -363,6 +363,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var shoe_label_value := str(table.get("shoe_label", CardShoeScript.shoe_label(int(table.get("deck_count", 6)))))
 	var spec := GameModule.surface_spec({
 		"surface_renderer": "blackjack",
+		"surface_time_msec": now_msec,
 		"surface_life": "immersive_table",
 		"surface_cast": "dealer_table",
 		"surface_controls_native": true,
@@ -676,6 +677,11 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 		return true
 	if _has_dealt_hand(ui_state) or bool(table.get("barred", false)):
 		return false
+	# The guided table advances only from an explicit DEAL. Timed count misses and
+	# completed-hand settlement above remain live, but an idle lesson can never
+	# deal the next hand out from under a first-time player.
+	if run_state != null and run_state.is_tutorial_run():
+		return false
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 	if _blackjack_table_motion_active(table, now_msec):
 		return false
@@ -719,6 +725,8 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 	if _has_dealt_hand(next_state) and (_all_hands_complete(next_state) or _dealer_has_blackjack(_card_array(next_state.get("dealer_cards", [])))):
 		return _settle_completed_round_command(next_state, int(next_state.get("active_hand_index", 0)), _terminal_round_message(next_state), table, run_state)
 	if _has_dealt_hand(next_state) or bool(table.get("barred", false)):
+		return {"handled": false}
+	if run_state != null and run_state.is_tutorial_run():
 		return {"handled": false}
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 	if _blackjack_table_motion_active(table, now_msec):
@@ -781,6 +789,8 @@ func coach_state(run_state: RunState, environment: Dictionary, ui_state: Diction
 	var clicked_icons: Array = count_challenge.get("clicked_icons", []) if typeof(count_challenge.get("clicked_icons", [])) == TYPE_ARRAY else []
 	var surface_action_anchors: Array = []
 	var table := _table_state(run_state, environment)
+	var hand_active := _has_dealt_hand(ui_state)
+	var hands_played := int(table.get("hands_played", 0))
 	var distractions: Array = _dictionary_array(table.get("distractions", []))
 	for index in range(mini(distractions.size(), 3)):
 		var distraction: Dictionary = distractions[index]
@@ -792,6 +802,9 @@ func coach_state(run_state: RunState, environment: Dictionary, ui_state: Diction
 				"index": index,
 			})
 	return {
+		"hands_played": hands_played,
+		"hand_active": hand_active,
+		"between_hands": not hand_active and not _local_copy_dict(table.get("last_result", {})).is_empty(),
 		"count_started": not count_challenge.is_empty(),
 		"count_all_selected": not count_icons.is_empty() and clicked_icons.size() >= count_icons.size(),
 		"count_answered": bool(ui_state.get("count_answered", false)),
@@ -1525,7 +1538,12 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 	var pit_boss_watched := bool(pit_boss_status.get("watched", false))
 	var pit_boss_heat_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
 	var dealer_name := str(table.get("dealer_name", "The dealer"))
+	var tutorial_reprieve := run_state != null \
+		and run_state.is_tutorial_run() \
+		and not bool(run_state.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false))
 	var message := "%s catches the peek cold, sweeps your bet, and tells you the blackjack table is closed to you for cheating." % dealer_name
+	if tutorial_reprieve:
+		message = "%s catches the bad peek and sweeps your bet, but stops short of closing the practice table." % dealer_name
 	var pit_boss_summary := str(pit_boss_status.get("summary", "")) if bool(pit_boss_status.get("active", false)) else ""
 	if not pit_boss_summary.is_empty():
 		message = "%s %s" % [message, pit_boss_summary]
@@ -1534,15 +1552,23 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 		heat_delta = 0
 		applied_heat_preview = 0
 		message = "%s Cooler's Cufflinks catch the heat, then snap into useless metal." % message
-	table["barred"] = true
-	table["barred_reason"] = "%s will not deal to you again after the caught hole-card peek." % dealer_name
-	table["barred_at_hand"] = int(table.get("hands_played", 0))
-	table["barred_confiscated_bet"] = confiscated_bet
-	table["barred_scope"] = "blackjack_table"
-	table["barred_heat_delta"] = applied_heat_preview
+	table["barred"] = not tutorial_reprieve
+	if tutorial_reprieve:
+		table.erase("barred_reason")
+		table.erase("barred_at_hand")
+		table.erase("barred_confiscated_bet")
+		table.erase("barred_scope")
+		table.erase("barred_heat_delta")
+		run_state.narrative_flags["tutorial_blackjack_peek_reprieve_used"] = true
+	else:
+		table["barred_reason"] = "%s will not deal to you again after the caught hole-card peek." % dealer_name
+		table["barred_at_hand"] = int(table.get("hands_played", 0))
+		table["barred_confiscated_bet"] = confiscated_bet
+		table["barred_scope"] = "blackjack_table"
+		table["barred_heat_delta"] = applied_heat_preview
 	table["last_patron_action_events"] = []
 	table["last_result"] = {
-		"headline": "BARRED",
+		"headline": "REPRIEVED" if tutorial_reprieve else "BARRED",
 		"summary": message,
 		"bankroll_delta": -confiscated_bet,
 		"suspicion_delta": applied_heat_preview,
@@ -1566,7 +1592,8 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 		"suspicion_delta": applied_heat_preview,
 		"base_suspicion_delta": heat_delta,
 		"dealer_caught_cheat": true,
-		"blackjack_table_barred": true,
+		"blackjack_table_barred": not tutorial_reprieve,
+		"blackjack_tutorial_peek_reprieve": tutorial_reprieve,
 		"coolers_cufflinks_broke": cufflinks_broke,
 		"pit_boss_watched": pit_boss_watched,
 		"pit_boss_heat_bonus": pit_boss_heat_bonus,
@@ -1600,7 +1627,9 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 		"pit_boss_heat_bonus": pit_boss_heat_bonus,
 		"base_suspicion_delta": heat_delta,
 	})
-	result["blackjack_table_barred"] = true
+	result["blackjack_table_barred"] = not tutorial_reprieve
+	result["blackjack_tutorial_peek_reprieve"] = tutorial_reprieve
+	result["blackjack_dealer_name"] = dealer_name
 	result["blackjack_watched_peek"] = true
 	result["blackjack_confiscated_bet"] = confiscated_bet
 	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke
@@ -1680,7 +1709,7 @@ func _draw_blackjack_table(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
-	var focus: Dictionary = _dealer_focus_for_surface_state(surface_state)
+	var focus: Dictionary = _dealer_focus_for_surface_state(surface, surface_state)
 	var profile: Dictionary = surface_state.get("dealer_profile", {}) if typeof(surface_state.get("dealer_profile", {})) == TYPE_DICTIONARY else {}
 	var low_detail := _surface_low_detail_idle(surface)
 	var looking_away := bool(focus.get("lookaway_active", false))
@@ -2097,7 +2126,7 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 		_draw_table_button(surface, stand_rect, "STAND", "blackjack_stand", 0, C_CYAN, bool(surface_state.get("can_stand", false)), surface.surface_native_action_selected("blackjack_stand"))
 		_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 24, 72, 26), "DOUBLE", "blackjack_double", 0, C_YELLOW, bool(surface_state.get("can_double", false)))
 		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 54, 84, 22), "SPLIT", "blackjack_split", 0, C_AMBER, bool(surface_state.get("can_split", false)))
-		var focus := _dealer_focus_for_surface_state(surface_state)
+		var focus := _dealer_focus_for_surface_state(surface, surface_state)
 		var peek_available := bool(surface_state.get("peek_available", false))
 		var peek_dangerous := peek_available and not bool(focus.get("peek_window_open", false)) and not bool(surface_state.get("dealer_hole_visible", false))
 		_draw_table_button(surface, Rect2(panel.position.x + 104, panel.position.y + 54, 84, 22), "PEEK", "blackjack_peek", 0, C_PINK if peek_dangerous else C_TEAL, peek_available, surface.surface_native_action_selected("blackjack_peek"))
@@ -2314,7 +2343,7 @@ func _surface_clock(surface) -> float:
 	return float(surface.surface_flicker()) if surface != null and surface.has_method("surface_flicker") else float(Time.get_ticks_msec()) / 1000.0
 
 
-func _dealer_focus_for_surface_state(surface_state: Dictionary) -> Dictionary:
+func _dealer_focus_for_surface_state(surface, surface_state: Dictionary) -> Dictionary:
 	var runtime: Dictionary = surface_state.get("dealer_focus_runtime", {}) if typeof(surface_state.get("dealer_focus_runtime", {})) == TYPE_DICTIONARY else {}
 	if runtime.is_empty():
 		return surface_state.get("dealer_focus", {}) if typeof(surface_state.get("dealer_focus", {})) == TYPE_DICTIONARY else {}
@@ -2323,7 +2352,7 @@ func _dealer_focus_for_surface_state(surface_state: Dictionary) -> Dictionary:
 	var heat: int = int(surface_state.get("suspicion_level", 0))
 	var started := int(runtime.get("dealer_lookaway_started_msec", 0))
 	var duration := int(runtime.get("dealer_lookaway_duration_msec", 0))
-	var now := Time.get_ticks_msec()
+	var now := int(surface.call("surface_simulation_time_msec")) if surface != null and surface.has_method("surface_simulation_time_msec") else int(surface_state.get("surface_time_msec", Time.get_ticks_msec()))
 	var active := started > 0 and duration > 0 and now <= started + duration
 	var remaining := maxi(0, started + duration - now) if active else 0
 	var cycle_msec := maxi(900, int(320000 / maxi(45, int(profile.get("gaze_speed", 95)))))
@@ -4977,7 +5006,7 @@ func _start_distraction_command(index: int, ui_state: Dictionary, table: Diction
 	if index < 0 or index >= distractions.size():
 		return _message_command(ui_state, "That distraction is not available at this table.")
 	var distraction: Dictionary = distractions[index]
-	var now := Time.get_ticks_msec()
+	var now := _session_time_msec(ui_state)
 	var distraction_id := str(distraction.get("id", "distraction"))
 	ui_state["dealer_lookaway_started_msec"] = now
 	var duration_msec := int(distraction.get("duration_msec", 2800))
@@ -5002,7 +5031,7 @@ func _cover_patron_command(index: int, ui_state: Dictionary, table: Dictionary) 
 	var patron_id := str(patron.get("id", "patron_%d" % index))
 	var cover: Dictionary = _local_copy_dict(ui_state.get("patron_cover", {}))
 	cover[patron_id] = {
-		"started_msec": Time.get_ticks_msec(),
+		"started_msec": _session_time_msec(ui_state),
 		"duration_msec": 5200,
 		"cover": 22,
 	}

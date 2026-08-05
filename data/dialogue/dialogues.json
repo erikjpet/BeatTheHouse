@@ -1030,6 +1030,10 @@
         "text": "That real mistake raised Heat. Full Heat ends the run and high Heat makes risky play harsher. Stop cheating, play clean, or travel to cool off before trying again.",
         "choices": [{"id": "continue", "label": "Watch the heat", "effects": {}, "end": true}]
       },
+      "heat_99": {
+        "text": "You really need to calm down. I pulled your Heat back to 75% so the lesson can continue, but I cannot keep doing your breathing for you.",
+        "choices": [{"id": "continue", "label": "Calm down", "effects": {}, "end": true}]
+      },
       "invitation": {
         "text": "Before you leave, keep an eye on your environment. Open the Grand Casino invitation and accept it.",
         "choices": [{"id": "continue", "label": "Take the invitation", "effects": {}, "end": true}]
@@ -1041,6 +1045,27 @@
       "grand_depart": {
         "text": "I'm banned from the Grand. Play clean around Rourke. Good luck.",
         "choices": [{"id": "continue", "label": "Head to the Grand", "effects": {}, "end": true}]
+      }
+    }
+  },
+  {
+    "id": "tutorial_blackjack_dealer_reprieve",
+    "display_name": "Dealer",
+    "speaker": {
+      "role": "dealer",
+      "name": "Dealer",
+      "character_id": "omar_shift_dealer",
+      "voice_line_key": "staff_tip",
+      "mood": "stern",
+      "behavior": "keeping one hand on the shoe",
+      "silhouette": "vest",
+      "presentation": "animated_character_model"
+    },
+    "start": "warning",
+    "nodes": {
+      "warning": {
+        "text": "Just this once I'll leave it open for you, but don't let me catch you again.",
+        "choices": [{"id": "continue", "label": "Understood", "effects": {}, "end": true}]
       }
     }
   },

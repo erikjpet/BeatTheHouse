@@ -41,6 +41,8 @@ const RUN_STATUS_ACTIVE := "active"
 const RUN_STATUS_DISTRESSED := "distressed"
 const RUN_STATUS_FAILED := "failed"
 const RUN_STATUS_ENDED := "ended"
+const TUTORIAL_HEAT_CEILING := 99
+const TUTORIAL_HEAT_INTERVENTION_LEVEL := 75
 const FAILURE_NONE := ""
 const FAILURE_BANKROLL_ZERO := "bankroll_zero"
 const FAILURE_STRANDED := "stranded"
@@ -2035,7 +2037,14 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 	var adjusted_amount := alcohol_adjusted_suspicion_delta(amount)
 	if _consume_grand_casino_linda_look_away(adjusted_amount, context):
 		adjusted_amount = 0
-	var level := clampi(base_level + adjusted_amount, 0, 100)
+	var active_location := location_id.is_empty() or location_id == current_location_id or current_location_id.is_empty()
+	var tutorial_heat_intervention := is_tutorial_run() \
+		and active_location \
+		and adjusted_amount > 0 \
+		and base_level < TUTORIAL_HEAT_CEILING \
+		and base_level + adjusted_amount >= TUTORIAL_HEAT_CEILING
+	var ceiling := TUTORIAL_HEAT_CEILING if is_tutorial_run() else 100
+	var level := clampi(base_level + adjusted_amount, 0, ceiling)
 	var applied_amount := level - base_level
 	if location_id.is_empty():
 		suspicion["level"] = level
@@ -2061,8 +2070,48 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 	suspicion["cues"] = cues
 	if applied_amount > 0:
 		record_grand_casino_room_heat_gain(_grand_casino_room_id_from_context(context), applied_amount)
+	if tutorial_heat_intervention:
+		_apply_tutorial_heat_intervention(location_id, cue_id)
 	_evaluate_immediate_terminal_state(defer_bankroll_zero)
 	return applied_amount
+
+
+func _apply_tutorial_heat_intervention(location_id: String, cue_id: String) -> void:
+	var current_location_id := current_suspicion_location_id()
+	if location_id.is_empty():
+		suspicion["level"] = TUTORIAL_HEAT_INTERVENTION_LEVEL
+	elif location_id == current_location_id or current_location_id.is_empty():
+		var levels := _local_suspicion_levels()
+		levels[location_id] = TUTORIAL_HEAT_INTERVENTION_LEVEL
+		suspicion["local_levels"] = levels
+		suspicion["level"] = TUTORIAL_HEAT_INTERVENTION_LEVEL
+	else:
+		return
+	var serial := int(narrative_flags.get("tutorial_heat_intervention_serial", 0)) + 1
+	narrative_flags["tutorial_heat_intervention_serial"] = serial
+	narrative_flags["tutorial_heat_intervention_pending"] = {
+		"serial": serial,
+		"cue_id": cue_id,
+		"location_id": location_id,
+		"threshold": TUTORIAL_HEAT_CEILING,
+		"reduced_to": TUTORIAL_HEAT_INTERVENTION_LEVEL,
+	}
+	_record_heat_history(false)
+	log_story({
+		"type": "tutorial_heat_intervention",
+		"cue_id": cue_id,
+		"heat_threshold": TUTORIAL_HEAT_CEILING,
+		"heat_after": TUTORIAL_HEAT_INTERVENTION_LEVEL,
+		"message": "Pal pulls you back before the heat can end the lesson.",
+	})
+
+
+func consume_tutorial_heat_intervention() -> Dictionary:
+	var pending: Dictionary = narrative_flags.get("tutorial_heat_intervention_pending", {}) if typeof(narrative_flags.get("tutorial_heat_intervention_pending", {})) == TYPE_DICTIONARY else {}
+	if pending.is_empty():
+		return {}
+	narrative_flags.erase("tutorial_heat_intervention_pending")
+	return pending.duplicate(true)
 
 
 func _consume_grand_casino_linda_look_away(adjusted_amount: int, context: Dictionary) -> bool:
@@ -2096,7 +2145,7 @@ func _consume_grand_casino_linda_look_away(adjusted_amount: int, context: Dictio
 
 # Returns current suspicion as a bounded behavior pressure value.
 func suspicion_level() -> int:
-	return clampi(int(suspicion.get("level", 0)), 0, 100)
+	return clampi(int(suspicion.get("level", 0)), 0, TUTORIAL_HEAT_CEILING if is_tutorial_run() else 100)
 
 
 # Returns the local heat key for a generated or explicit environment id.
@@ -2111,7 +2160,7 @@ func suspicion_level_for_environment_id(environment_id: String) -> int:
 		return suspicion_level()
 	var levels := _local_suspicion_levels()
 	if levels.has(location_id):
-		return clampi(int(levels.get(location_id, 0)), 0, 100)
+		return clampi(int(levels.get(location_id, 0)), 0, TUTORIAL_HEAT_CEILING if is_tutorial_run() else 100)
 	if location_id == current_suspicion_location_id():
 		return suspicion_level()
 	return 0
@@ -4073,6 +4122,7 @@ func _complete_demo_objective(status: Dictionary, override_message: String = "",
 	run_status = RUN_STATUS_ENDED
 	run_failure_reason = FAILURE_NONE
 	run_failure_message = ""
+	retire_pending_talk_events()
 	if not _story_log_has_demo_victory(str(status.get("id", ""))):
 		var story_entry := {
 			"type": "demo_victory",
@@ -6803,6 +6853,11 @@ func enqueue_triggered_event(event_id: String, source: String = "", context: Dic
 	var normalized_id := event_id.strip_edges()
 	if normalized_id.is_empty():
 		return false
+	# Conversations belong to the live run. Event producers can finish their
+	# action after a terminal result has already been committed, so reject a late
+	# talk enqueue at the source instead of letting it leak onto the run report.
+	if is_terminal() and str(entry_overrides.get("presentation", "modal")) == "talk":
+		return false
 	if str(active_triggered_event.get("event_id", "")) == normalized_id:
 		return false
 	for entry_value in pending_triggered_events:
@@ -6885,6 +6940,12 @@ func next_pending_talk_event() -> Dictionary:
 	# Normal runs retain strict insertion order.
 	if is_tutorial_run():
 		for entry_value in pending_triggered_events:
+			var intervention_entry := _normalize_triggered_event_entry(entry_value)
+			var intervention_context: Dictionary = intervention_entry.get("context", {}) if typeof(intervention_entry.get("context", {})) == TYPE_DICTIONARY else {}
+			var intervention_source := str(intervention_entry.get("source", intervention_context.get("source", "")))
+			if str(intervention_entry.get("presentation", "modal")) == "talk" and intervention_source == "tutorial_intervention":
+				return intervention_entry
+		for entry_value in pending_triggered_events:
 			var tutorial_entry := _normalize_triggered_event_entry(entry_value)
 			var tutorial_context: Dictionary = tutorial_entry.get("context", {}) if typeof(tutorial_entry.get("context", {})) == TYPE_DICTIONARY else {}
 			var is_guide_entry := str(tutorial_entry.get("source", "")) == "tutorial_guide" \
@@ -6928,6 +6989,20 @@ func complete_talk_event_resolution(event_id: String = "") -> void:
 		if expected_id.is_empty() or str(entry.get("event_id", "")) == expected_id:
 			pending_triggered_events.remove_at(index)
 			return
+
+
+# Retires every unresolved conversation without applying its choices. Terminal
+# runs no longer have a gameplay context in which those choices can be made;
+# non-talk triggered events remain intact for save/report history compatibility.
+func retire_pending_talk_events() -> int:
+	var retired_count := 0
+	for index in range(pending_triggered_events.size() - 1, -1, -1):
+		var entry := _normalize_triggered_event_entry(pending_triggered_events[index])
+		if str(entry.get("presentation", "modal")) != "talk":
+			continue
+		pending_triggered_events.remove_at(index)
+		retired_count += 1
+	return retired_count
 
 
 func advance_focused_talk_event_actions(amount: int = 1) -> Dictionary:
@@ -7126,6 +7201,7 @@ func fail_run(reason: String, message: String = "") -> void:
 	run_status = RUN_STATUS_FAILED
 	run_failure_reason = reason if not reason.strip_edges().is_empty() else FAILURE_BANKROLL_ZERO
 	run_failure_message = message if not message.strip_edges().is_empty() else _failure_message_for_reason(run_failure_reason)
+	retire_pending_talk_events()
 	if bankroll <= 0:
 		bankroll = 0
 		economic_state = "insolvent"
@@ -7599,6 +7675,8 @@ func from_dict(data: Dictionary) -> void:
 			run_failure_reason = FAILURE_BANKROLL_ZERO if bankroll <= 0 else FAILURE_STRANDED
 		if run_failure_message.strip_edges().is_empty():
 			run_failure_message = _failure_message_for_reason(run_failure_reason)
+	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
+		retire_pending_talk_events()
 
 
 # Converts text into a deterministic positive seed.

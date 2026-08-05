@@ -85,6 +85,7 @@ var surface_animation_redraw_accumulator := 0.0
 var surface_animation_redraw_count := 0
 var surface_animation_handoff_until_msec := 0
 var surface_render_elapsed_sec := 0.0
+var surface_simulation_clock_msec := 0.0
 var transient_surface_loop_deadline_msec := 0
 var transient_surface_loop_id := ""
 var environment_activity_paused := false
@@ -133,6 +134,7 @@ func clear_runtime_state() -> void:
 	surface_animation_redraw_count = 0
 	surface_animation_handoff_until_msec = 0
 	surface_render_elapsed_sec = 0.0
+	surface_simulation_clock_msec = 0.0
 	transient_surface_loop_deadline_msec = 0
 	transient_surface_loop_id = ""
 	_update_drunk_distortion_overlay()
@@ -145,6 +147,7 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	view_data = snapshot.duplicate(false)
 	game_id = str(view_data.get("game_id", game_id))
 	state = view_data
+	surface_simulation_clock_msec = float(state.get("surface_time_msec", surface_simulation_clock_msec))
 	reduce_motion = bool(state.get("reduce_motion", false))
 	drunk_time_scale = clampf(float(state.get("drunk_time_scale", 1.0)), DRUNK_TIME_SCALE_MIN, 1.0)
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
@@ -159,6 +162,8 @@ func apply_surface_state_patch(patch: Dictionary) -> void:
 	for key in patch.keys():
 		view_data[key] = patch[key]
 	state = view_data
+	if patch.has("surface_time_msec"):
+		surface_simulation_clock_msec = float(state.get("surface_time_msec", surface_simulation_clock_msec))
 	if patch.has("reduce_motion"):
 		reduce_motion = bool(state.get("reduce_motion", false))
 	if patch.has("drunk_time_scale"):
@@ -209,6 +214,7 @@ func current_view_snapshot() -> Dictionary:
 		"drunk_time_scale": drunk_time_scale,
 		"drunk_time_scale_percent": int(round(drunk_time_scale * 100.0)),
 		"reduce_motion": reduce_motion,
+		"surface_simulation_time_msec": surface_simulation_time_msec(),
 		"surface_text_protected_rect_count": surface_text_protected_rects.size(),
 		"drunk_distortion_visible": drunk_distortion_overlay != null and drunk_distortion_overlay.visible,
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
@@ -246,6 +252,7 @@ func surface_runtime_status() -> Dictionary:
 		"drunk_time_scale": drunk_time_scale,
 		"drunk_time_scale_percent": int(round(drunk_time_scale * 100.0)),
 		"reduce_motion": reduce_motion,
+		"surface_simulation_time_msec": surface_simulation_time_msec(),
 		"surface_text_protected_rect_count": surface_text_protected_rects.size(),
 		"drunk_distortion_visible": drunk_distortion_overlay != null and drunk_distortion_overlay.visible,
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
@@ -492,6 +499,10 @@ func surface_flicker() -> float:
 	if reduce_motion:
 		return 0.0
 	return flicker
+
+
+func surface_simulation_time_msec() -> int:
+	return maxi(0, int(round(surface_simulation_clock_msec)))
 
 
 func surface_elapsed(channel_id: String) -> float:
@@ -922,10 +933,6 @@ func _process(delta: float) -> void:
 	_flush_captured_pointer_move()
 	if transient_surface_loop_deadline_msec > 0 and Time.get_ticks_msec() >= transient_surface_loop_deadline_msec:
 		surface_stop_audio_loop(transient_surface_loop_id)
-	if environment_activity_paused:
-		continuous_redraw_was_active = false
-		surface_animation_redraw_accumulator = 0.0
-		return
 	if reduce_motion:
 		flicker = 0.0
 		surface_render_elapsed_sec = 0.0
@@ -935,6 +942,8 @@ func _process(delta: float) -> void:
 	var clamped_delta := maxf(0.0, delta)
 	flicker += clamped_delta
 	surface_render_elapsed_sec += clamped_delta
+	if not environment_activity_paused:
+		surface_simulation_clock_msec += clamped_delta * 1000.0
 	_sync_surface_audio()
 	_schedule_surface_animation_redraws(clamped_delta)
 

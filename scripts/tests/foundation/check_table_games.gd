@@ -1678,6 +1678,17 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var auto_hand := game.surface_auto_action_command({"surface_time_msec": Time.get_ticks_msec()}, timer_run_state, timer_environment, {})
 	if str(auto_hand.get("action_id", "")) != "play_basic" or not bool(auto_hand.get("direct_resolve", false)) or not bool((auto_hand.get("ui_state", {}) as Dictionary).get("blackjack_sit_out", false)):
 		failures.append("Blackjack timer auto command did not resolve a sit-out hand through basic play.")
+	var tutorial_timer_run: RunState = RunStateScript.new()
+	tutorial_timer_run.start_new("BLACKJACK-TUTORIAL-NO-TIMER", {"tutorial": true, "modifiers": {"tutorial_run": true}})
+	tutorial_timer_run.current_environment = timer_environment.duplicate(true)
+	var tutorial_timer_environment: Dictionary = tutorial_timer_run.current_environment
+	var tutorial_timer_surface := game.surface_state(tutorial_timer_run, tutorial_timer_environment, {"surface_time_msec": Time.get_ticks_msec()})
+	if not (tutorial_timer_surface.get("table_round_timer", {}) as Dictionary).is_empty():
+		failures.append("Tutorial blackjack exposed the automated next-hand timer.")
+	if game.surface_needs_auto_tick({"surface_time_msec": Time.get_ticks_msec()}, tutorial_timer_run, tutorial_timer_environment):
+		failures.append("Tutorial blackjack requested an automatic idle deal.")
+	if bool(game.surface_auto_action_command({"surface_time_msec": Time.get_ticks_msec()}, tutorial_timer_run, tutorial_timer_environment, {}).get("handled", false)):
+		failures.append("Tutorial blackjack produced an automatic idle deal command.")
 	var cheat_click := game.surface_action_command("blackjack_count_toggle", 0, false, deal_ui, run_state, environment)
 	if str(cheat_click.get("action_id", "")) == "count_cards" or bool(cheat_click.get("resolve", false)):
 		failures.append("Blackjack count opened a modal/resolve action instead of starting the live overlay.")
@@ -1788,6 +1799,41 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var barred_object_state := game.environment_object_state(watched_peek_run_state, watched_peek_environment)
 	if str((barred_object_state.get("visual_state", {}) as Dictionary).get("status", "")) != "barred":
 		failures.append("Blackjack barred table did not publish a barred environment object status.")
+	var tutorial_peek_run: RunState = RunStateScript.new()
+	tutorial_peek_run.start_new("BLACKJACK-TUTORIAL-PEEK-REPRIEVE", {"tutorial": true, "modifiers": {"tutorial_run": true}})
+	var tutorial_peek_environment := _surface_contract_environment()
+	var tutorial_peek_table := generated_state.duplicate(true)
+	tutorial_peek_table["dealer_profile"] = {"attention_base": 100, "gaze_speed": 95, "blink_offset": 0, "tell": "locks onto your hands"}
+	tutorial_peek_table["patrons"] = []
+	tutorial_peek_table["side_bets"] = []
+	tutorial_peek_environment["game_states"] = {"blackjack": tutorial_peek_table}
+	tutorial_peek_run.current_environment = tutorial_peek_environment.duplicate(true)
+	var tutorial_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5, "surface_time_msec": 4000}, tutorial_peek_run, tutorial_peek_environment)
+	var tutorial_deal_ui: Dictionary = tutorial_deal.get("ui_state", {})
+	tutorial_deal_ui["surface_time_msec"] = 5000
+	var tutorial_distraction := game.surface_action_command("blackjack_distraction", 0, false, tutorial_deal_ui, tutorial_peek_run, tutorial_peek_environment)
+	var tutorial_distraction_ui: Dictionary = tutorial_distraction.get("ui_state", {})
+	if int(tutorial_distraction_ui.get("dealer_lookaway_started_msec", -1)) != 5000:
+		failures.append("Tutorial blackjack Peek window started from wall time instead of the pausable surface clock.")
+	var frozen_peek_a := game.surface_state(tutorial_peek_run, tutorial_peek_environment, tutorial_distraction_ui)
+	var frozen_peek_b := game.surface_state(tutorial_peek_run, tutorial_peek_environment, tutorial_distraction_ui)
+	if int((frozen_peek_a.get("dealer_focus", {}) as Dictionary).get("lookaway_remaining_msec", -1)) != int((frozen_peek_b.get("dealer_focus", {}) as Dictionary).get("lookaway_remaining_msec", -2)):
+		failures.append("Tutorial blackjack Peek time advanced while the supplied simulation clock was frozen.")
+	var tutorial_bad_peek := game.surface_action_command("blackjack_peek", 0, false, tutorial_deal.get("ui_state", {}), tutorial_peek_run, tutorial_peek_environment)
+	var tutorial_peek_result := game.resolve_with_context("peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_reprieve"), tutorial_bad_peek.get("ui_state", {}))
+	var tutorial_after_table: Dictionary = ((tutorial_peek_environment.get("game_states", {}) as Dictionary).get("blackjack", {}) as Dictionary)
+	if not bool(tutorial_peek_result.get("blackjack_tutorial_peek_reprieve", false)) or bool(tutorial_peek_result.get("blackjack_table_barred", true)) or bool(tutorial_after_table.get("barred", true)):
+		failures.append("The first caught tutorial Peek did not leave the blackjack table open through the dealer reprieve.")
+	if not bool(tutorial_peek_run.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false)):
+		failures.append("Tutorial blackjack did not persist consumption of the one-time Peek reprieve.")
+	var second_tutorial_table := tutorial_peek_table.duplicate(true)
+	second_tutorial_table["barred"] = false
+	tutorial_peek_environment["game_states"] = {"blackjack": second_tutorial_table}
+	var second_tutorial_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5, "surface_time_msec": 8000}, tutorial_peek_run, tutorial_peek_environment)
+	var second_tutorial_peek := game.surface_action_command("blackjack_peek", 0, false, second_tutorial_deal.get("ui_state", {}), tutorial_peek_run, tutorial_peek_environment)
+	var second_tutorial_result := game.resolve_with_context("peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_barred"), second_tutorial_peek.get("ui_state", {}))
+	if not bool(second_tutorial_result.get("blackjack_table_barred", false)):
+		failures.append("Tutorial blackjack granted more than one caught-Peek reprieve.")
 	var cufflinks_run_state: RunState = RunStateScript.new()
 	cufflinks_run_state.start_new("BLACKJACK-COOLERS-CUFFLINKS")
 	cufflinks_run_state.add_item("coolers_cufflinks")
