@@ -1,22 +1,25 @@
 # Agent Prompt — Repair and Complete the 0.5 First-Time-Player Tutorial
 
-Last reconciled: 2026-08-03
+Last reconciled: 2026-08-05
 Release target: 0.5.0
-Status: OPEN / P0 REAL-INTERFACE SOFT-LOCK
+Status: PRE-HUMAN IMPLEMENTATION COMPLETE / TUT-N17 HUMAN GATE OPEN
 
 ## Current verdict
 
-**TUTORIAL VISUAL VERIFICATION FAILED.**
+**PRE-HUMAN TUTORIAL IMPLEMENTATION PASSES; HUMAN ACCEPTANCE IS NOT DONE.**
 
-An independent player used a fresh Web debug export of the current dirty tree
-at 1280x720 with real pointer clicks and screenshots. Both a clean-origin New
-Run and Replay Lessons soft-locked in the opening flow. The intended Apartment,
-Pal, X-ray, travel, game, Grand Casino, Bronze, and completion experience has
-not been proven through the legitimate player interface.
+The opening soft-lock and TUT-N01-N16/N18-N25 defects described below are the
+historical baseline. They were repaired and recorded in
+`docs/plans/tutorial_completion_report.md`; New Run, Replay Lessons, both route
+choices, Bronze, modal cleanup, save/load, and normal-run isolation pass the
+agent-verifiable matrix. Keep the detailed baseline because it defines the
+regression contract, but do not report those defects as current.
 
-Scripted verification remains necessary but is insufficient. No document,
-test, or implementation may call the tutorial complete until the real-interface
-matrix and both full-route mouse playthroughs in this prompt pass.
+TUT-N17 remains binding: five cold human players, including two without
+Blackjack knowledge, must achieve 5/5 unassisted completion and at least 80%
+aggregate core-concept comprehension. Automation or agent-driven pointer play
+cannot close it. The prompt remains active for this human gate and for any
+defects those trials expose.
 
 ## Binding evidence
 
@@ -177,28 +180,28 @@ explain persistence and next steps for a normal run.
 
 ## P1 — required comprehension work
 
-- [ ] TUT-N08: show actual item effects and passive/active/equipped/consumable/
+- [x] TUT-N08: show actual item effects and passive/active/equipped/consumable/
   permanent behavior; explain the active-item slot.
-- [ ] TUT-N09: show store price, remaining bankroll, loan amount/source, debt
+- [x] TUT-N09: show store price, remaining bankroll, loan amount/source, debt
   HUD location, and repayment/cashout order numerically.
-- [ ] TUT-N10: show pull-tab stack, target distance, total cost, and distinct
+- [x] TUT-N10: show pull-tab stack, target distance, total cost, and distinct
   Buy/Collect/Peel/File/Piles/Leave/Redeem steps; explain fixed-at-purchase.
-- [ ] TUT-N11: explain cheat resource source/consumption, information benefit,
+- [x] TUT-N11: explain cheat resource source/consumption, information benefit,
   count values, running-count benefit, miss penalty, and caught consequence.
-- [ ] TUT-N12: show numerical Bronze progress and a clear return-to-Linda state.
-- [ ] TUT-N13: split Linda's cash/chips/shop/debt explanation, state the comp
+- [x] TUT-N12: show numerical Bronze progress and a clear return-to-Linda state.
+- [x] TUT-N13: split Linda's cash/chips/shop/debt explanation, state the comp
   reward/storage, and require inspection of one chip-priced offer.
 
 ## P2 — polish and resilience
 
-- [ ] TUT-N14: blocked actions state the current requirement and keep the real
+- [x] TUT-N14: blocked actions state the current requirement and keep the real
   target highlighted.
-- [ ] TUT-N15: show travel cost, time, open state, and optional route clearly.
-- [ ] TUT-N16: shorten repeated guidance during multi-step interactions.
+- [x] TUT-N15: show travel cost, time, open state, and optional route clearly.
+- [x] TUT-N16: shorten repeated guidance during multi-step interactions.
 - [ ] TUT-N17: run at least five cold testers (two without Blackjack
   knowledge); require 5/5 unassisted completion and at least 80% core-concept
   comprehension.
-- [ ] TUT-N25: raise scene-label and secondary-object-text contrast to a
+- [x] TUT-N25: raise scene-label and secondary-object-text contrast to a
   readable level at 1280x720 without losing hierarchy; verify in Web captures.
 
 ## Binding real-interface visual acceptance matrix

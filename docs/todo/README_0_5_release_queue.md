@@ -1,275 +1,143 @@
-# Beat the House 0.5 pre-release completion queue
+# Beat the House 0.5 Pre-Release Completion Queue
 
-Last reconciled: 2026-08-04
+Last reconciled: 2026-08-05
+Authoritative audit: `docs/plans/0.5_pre_release_audit.md`
 
 ## Current verdict
 
-**0.5.0 is feature-complete and the integrated source is on `main`, but it is
-not release-approved.**
+**0.5.0 is substantially implemented but is not feature-complete under its own
+prompts and is not release-approved.**
 
-Integration recovery, the agent-verifiable tutorial work, native
-performance/liveness, the full retained-memory soak, Scratch Ticket compaction,
-Grand Casino Web runtime repair, and the final Web performance closure are
-complete. Release closure is now blocked by the human-only TUT-N17 cold-player
-gate, owner Web/Windows playtesting, the collection `draft` decision,
-packaging, publication, and tagging.
+The large 0.5 systems, pre-human tutorial route, Web/audio performance work,
+and runtime-storage root fix are present. Two deliberately split feature
+prompts remain open, the committed tree has Systems/UI regressions, the script
+load gate can report false green, and the current worktree contains uncommitted
+owner changes. Human tutorial acceptance, owner decisions, exact-source RC
+approval, packaging, publication, and `v0.5.0` are also pending.
 
-Current repository state at this reconciliation:
+Current identity:
 
-- The consolidated implementation checkpoint before this documentation truth
-  pass is `6256d20584fa3b7b6c2100def716a8fa7900308b`. `main` is the only local
-  and remote branch; the implementation worktree was clean at reconciliation.
-- The former dirty integration workset landed in logical commits. Sal's fixture
-  overlaps and the five tutorial dialogue contracts are fixed; the integration
-  recovery report is `docs/plans/v05_integration_gate_recovery.md`.
-- TUT-N01 through TUT-N16 and TUT-N18 through TUT-N25 pass scripted and
-  agent-driven real-pointer coverage through both authored routes. TUT-N17 is
-  still pending five human cold players; see
-  `docs/plans/tutorial_completion_report.md`.
-- The 180-minute/504-action soak passes with a negative retained-memory trend,
-  bounded Scratch Ticket receipts, and zero retained orphans. Native budgets,
-  liveness, determinism, Grand Casino Web runtime, and Scratch RTP are green.
-- High-fidelity Web music/SFX parity is implemented. The final single-thread
-  export uses deterministic prebuilt procedural beds and passes 4x-throttled
-  cold ready at 17.557 seconds/20 seconds. The exact broad L0.2 matrix is green,
-  including slot autoplay at 88.312 ms/100 ms.
-- There is no `v0.5.0` tag and no final release package recorded under
-  `builds/`.
+- committed `main`: `58519d4a08add056dd63ba3734c99addca130cdb`;
+- `main` is five commits ahead of `origin/main` at this reconciliation;
+- working tree is dirty with the in-progress narration/audio-bus rollout;
+- no `v0.5.0` tag exists;
+- generic files under `builds/` are not approved 0.5 artifacts.
 
-Historical evidence remains useful only for the commit it tested. This queue
-and `docs/plans/0.5_release_checklist.md` identify the remaining gates for the
-current clean `main` source.
+## Binding execution order
 
-## Execution order
+### 0. Reconcile the current user-owned worktree
 
-### 1. Preserve and reconcile the current worktree
+Status: **OPEN**
 
-Status: **COMPLETE AND ARCHIVED**
+- [ ] Finish and verify the narration/audio-bus work already present, or record
+  an explicit owner decision to defer it from 0.5.
+- [ ] Commit included work in intentional units. Do not discard or sweep-stage
+  unrelated files.
+- [ ] Establish one clean committed source identity before candidate gates.
 
-Execution record:
-`docs/todone/current_worktree_integration_gate_recovery_prompt.md`
+### 1. Restore release-gate truth and fix committed regressions
 
-- [x] Treat every existing modification and the untracked
-  `docs/plans/tutorial_first_time_player_review.md` as user-owned work; do not
-  revert, overwrite, or stage it indiscriminately.
-- [x] Inventory the work by concern and split it into reviewable logical
-  commits only after the relevant gates pass.
-- [x] Fix the current UI scene compilation failure: overlapping Sal's
-  pawn-shop fixtures (`meta_sal_shelf:0`/`:4` and
-  `meta_pawn_counter:sell`/`meta_sal:talk`).
-- [x] Restore the five tutorial binding requirements reported by the systems
-  suite without undoing the intended writing/tutorial improvements:
-  - Pal's parking tip must explain its later use.
-  - Pal's Crew warning must retain the required last-place-you-turn meaning.
-  - Pal's lookaway lesson must identify the easiest cheat and the real
-    spill-a-drink control.
-  - Pal's Peek lesson must state the consequences of getting caught.
-  - Pal's invitation lesson must retain the environment-scan and acceptance
-    instructions.
-- [x] Re-run `tools/validate_project.ps1`, Smoke, and the affected systems/UI
-  suites until they pass without `ERROR:`/`SCRIPT ERROR:` output or new leak
-  warnings.
-- [x] Run `git diff --check` and review the final diff for accidental scope,
-  generated artifacts, debug output, and user-owned changes before committing.
+Status: **OPEN / P0**
+Binding prompt: `docs/todo/v05_release_gate_truth_and_regression_prompt.md`
 
-Landed as `5389fba8` and documented by `bcbc8f0a`; the later consolidated
-source is now on `main`.
+- [ ] Make GDScript/direct-load and generated-runner coverage honest; a parse
+  error may not yield a PASS report.
+- [ ] Fix the three clean-HEAD travel/content Systems failures.
+- [ ] Fix off-tree inventory focus, leaked resource/error output, and the
+  bag-reel anchor warning.
+- [ ] Fix the reproducible world-map focus snap at the state-machine seam.
+- [ ] Reconcile the tutorial dealer-reprieve line and contract in the current
+  narration tree.
+- [ ] Archive only after clean Systems/UI and strict stderr evidence.
 
-### 2. Complete the tutorial as a first-time-player experience
+### 2. Complete the promised inventory redesign
 
-Status: **PRE-HUMAN COMPLETE; TUT-N17 PENDING HUMAN**
+Status: **OPEN**
+Binding prompt: `docs/todo/tutorial_inventory_rework_prompt.md`
 
-Binding prompt:
-`docs/todo/tutorial_first_time_player_completion_prompt.md`
+- [ ] Deliver the shared item-card/view-model contract for run inventory and
+  meta storage, responsive card/detail presentation, badges/affinity/stack,
+  and source-level risk exclusion.
+- [ ] Reconcile the full item-description voice pass with the narration rollout
+  rather than rewriting or reverting it independently.
+- [ ] Capture desktop/small-screen evidence and archive after all gates pass.
 
-The second audit's opening soft-lock, home-state leak, missing X-ray item,
-highlight/hit-region drift, modal ownership, and teaching defects were repaired
-in `6074ce35` and `0113eabf`. Clean-origin New Run and Replay Lessons now start
-in Apartment, avoid Dealer's Advice/`tip_first_*`, and complete both Path A and
-the authored Path B skip through Bronze and the normal-run handoff using the
-real interface and real pointer input. The exact requirement and evidence table
-is `docs/plans/tutorial_completion_report.md`.
+### 3. Complete meaningful destination decisions
 
-Do not call the tutorial human-approved until TUT-N17 is performed by five cold
-players. Agent automation and agent-driven real-interface play cannot complete
-that requirement.
+Status: **PARTIAL / OPEN**
+Binding prompt: `docs/todo/tutorial_meaningful_decisions_prompt.md`
 
-Known work already identified by the first-time-player review:
+- [x] Tutorial Gas Casino versus Underground fork exists and rejoins safely.
+- [ ] Make whole-run destinations expose honest offer/forfeit tradeoffs.
+- [ ] Back the visible differences with deterministic route/environment/event
+  data, not flavor text over equivalent destinations.
+- [ ] Prove both tutorial branches and representative normal-run decisions.
 
-#### P0 - required before tutorial completion
+### 4. Refresh final performance and fidelity evidence
 
-- [x] TUT-N01: make every tutorial speaker name, line, and response fully
-  readable at 1280x720; eliminate blank nameplates, clipping, and off-screen
-  controls.
-- [x] TUT-N02: keep dialogue and portraits from covering the highlighted
-  object or game control; every instruction and target must be usable at the
-  same time.
-- [x] TUT-N03: teach the first-minute mental model: the run goal, failure
-  conditions, Bankroll, Heat, Drunk, time, Inventory, active items, and the
-  purpose of the guided first night.
-- [x] TUT-N04: teach Blackjack basics before testing Blackjack, including 21,
-  busting, dealer comparison, card values, Hit, Stand, and when a wager locks.
-- [x] TUT-N05: guarantee Heat comprehension on both perfect and mistake
-  routes, with exact risks and recovery/avoidance guidance.
-- [x] TUT-N06: clear, collapse, or expire stale result messages at travel,
-  game, and guided-conversation context boundaries.
-- [x] TUT-N07: repair and expand the ending, standardize Players Card tier
-  terminology, recap the learned systems, and clearly hand the player into a
-  normal run.
+Status: **HISTORICAL GATES GREEN; EXACT FINAL SOURCE PENDING**
+Binding prompt: `docs/todo/performance_cleanup_final_audit_prompt.md`
 
-#### P1 - required comprehension improvements
+- [x] Historical native, Web, liveness, 180-minute soak, Scratch RTP, Grand
+  Casino, and slot runtime/storage root-fix budgets are green.
+- [ ] After steps 0-3, rerun every binding performance, soak, determinism, Web,
+  strict-input, visual, save/migration, and storage gate on the exact source.
+- [ ] Archive the performance prompt with the final-source execution record.
 
-- [x] TUT-N08: state actual item effects and clearly label passive, active,
-  equipped, consumable, and permanent behavior.
-- [x] TUT-N09: teach money and debt with visible numbers: price, remaining
-  bankroll, loan amount/source, repayment rule, and debt-first cashout.
-- [x] TUT-N10: make the pull-tab/X-ray route a visible procedure with stack,
-  distance, total cost, and Buy/Collect/Peel/File/Redeem steps.
-- [x] TUT-N11: explain cheating resources, the information gained, count
-  values and benefit, miss penalties, and the consequences of getting caught.
-- [x] TUT-N12: show concrete Bronze progress and a clear return-to-Linda state.
-- [x] TUT-N13: split Linda's cash/chips/shop/debt lesson into digestible steps,
-  show the exact comp reward, and require inspection of one chip-priced offer.
+### 5. Complete the human tutorial gate
 
-#### P2 - polish and resilience
+Status: **TUT-N01-N16/N18-N25 PASS; TUT-N17 OPEN**
+Binding prompt: `docs/todo/tutorial_first_time_player_completion_prompt.md`
 
-- [x] TUT-N14: make blocked actions explain the current required action and
-  keep its target highlighted.
-- [x] TUT-N15: clarify travel cost, elapsed time, open/closed state, and the
-  optional recommended route.
-- [x] TUT-N16: reduce repeated guidance during multi-step interactions.
-- [ ] TUT-N17: complete a true novice usability gate: at least five cold
-  testers, including at least two without Blackjack knowledge, with 5/5
-  completion without intervention and at least 80% core-concept comprehension.
+- [ ] Test five cold players, including at least two without Blackjack
+  knowledge.
+- [ ] Require 5/5 unassisted completion and at least 80% aggregate core-concept
+  comprehension; record route, interventions, misses, and observations.
+- [ ] Fix any discovered blocker through a new scoped defect prompt, rerun
+  affected automation, and repeat invalidated human trials.
+- [ ] Archive only when TUT-N17 genuinely passes.
 
-#### Second-audit findings and binding acceptance
+### 6. Build and approve one exact release candidate
 
-- [x] Receive and incorporate the second agent's real-interface audit.
-- [x] De-duplicate its findings against TUT-N01 through TUT-N17 and assign new
-  findings TUT-N18 through TUT-N25 in the binding tutorial prompt.
-- [x] Fix New Run and Replay Lessons so both enter Apartment and reach Pal,
-  never the deprecated Dealer's Advice/tip-first chain.
-- [x] Restore the X-ray starting item and storage/inventory flow.
-- [x] Keep camera focus, rendered target, highlight transform, and real hit
-  region synchronized; visible highlights must be purely visual and clickable
-  through to their actual target.
-- [x] Fix overlay suspension/cleanup across Inventory, Run Menu, map, other
-  modals, scene changes, and main-menu return.
-- [x] Make skip/recovery advance safely rather than loop backward.
-- [x] Raise scene-label and secondary-object-text contrast for Web at 1280x720.
-- [x] Complete the binding real-interface visual acceptance matrix in the
-  tutorial prompt for Apartment, travel/store, both routes, Blackjack,
-  invitation, Grand Casino/Bronze, ending, and every modal transition.
-- [x] Re-run scripted routes, isolation, save/load, determinism, stuck-state,
-  visual capture, strict input, real-interface mouse, and novice-comprehension
-  gates on the final implementation. Scripted success alone cannot close the
-  tutorial.
+Status: **BLOCKED BY STEPS 0-5 AND OWNER DECISIONS**
+Binding prompt: `docs/todo/v05_final_release_candidate_approval_prompt.md`
 
-### 3. Close the final performance and cleanup audit
+- [ ] Run the complete matrix on one clean commit, not a historical report or
+  dirty tree.
+- [ ] Refresh and inspect all player-facing captures.
+- [ ] Complete owner Web/Windows hands-on play and approve or reject the exact
+  hash.
+- [ ] Record the collection `draft: true` decision, limitations, publish copy,
+  screenshots, safety framing, and supported platforms.
 
-Status: **MEMORY/NATIVE/GRAND CASINO GREEN; FINAL WEB CLOSURE OPEN**
+### 7. Package and publish 0.5.0
 
-Binding prompt:
-`docs/todo/performance_cleanup_final_audit_prompt.md`
+Status: **OWNER-CONTROLLED / NOT STARTED**
+Binding checklist: `docs/todo/v05_owner_packaging_and_publish_checklist.md`
 
-- [x] Root-cause and fix the retained static-memory slope without weakening
-  the 262,144-byte/sample limit or changing deterministic simulation.
-- [x] Confirm that the current Scratch Ticket receipt/mask compaction work is
-  correct, backward-compatible, and actually improves long-session retained
-  memory rather than merely serialized size.
-- [x] Repeat the full 180-minute/504-action retained soak after the final
-  tutorial and integration changes; a short diagnostic soak is not sufficient.
-- [ ] Re-run all gates required by the active audit prompt: project validation,
-  every supported FoundationSuite, native performance and liveness, soak,
-  determinism, throttled web, strict mouse batch, and visual QA.
-- [x] Update `docs/plans/0.5_performance_audit.md` with final before/after
-  evidence and a truthful release verdict.
-- [ ] Archive the prompt to `docs/todone/` with an execution record only after
-  every binding gate passes.
-
-The Web blocker is closed without changing the 20-second cold-ready budget or
-any scenario budget. Evidence is
-`.tmp/web_perf_item1/final_l02_green3.summary.json`; high-fidelity audio evidence
-is `.tmp/web_perf_item1/final_la6.json`. The audit prompt remains open only for
-any exact-candidate matrix refresh required by final RC approval.
-
-### 4. Build and approve the final release candidate
-
-Status: **PRE-HUMAN MATERIAL PREPARED; BLOCKED BY HUMAN/OWNER GATES**
-
-Binding prompt:
-`docs/todo/v05_final_release_candidate_approval_prompt.md`
-
-- [ ] Run the complete release gate matrix on the exact commit intended for
-  release, not on an earlier committed baseline or a dirty worktree.
-- [ ] Refresh tutorial, Sal's shelf, Scratch Tickets, Grand Casino, and other
-  affected visual evidence after the final UI changes.
-- [ ] Complete the owner's final hands-on playtest across Web and Windows,
-  including a fresh-profile tutorial and a normal run after tutorial
-  completion.
-- [ ] Confirm there are no stutters, hangs, frozen idle animation, clipped or
-  occluded tutorial instructions, stale result messages, soft-locks, save/load
-  regressions, or normal-run contamination.
-- [ ] Decide whether the collection schema ships with `draft: true`; either
-  record owner acceptance as a release limitation or request and verify the
-  schema-finalization change.
-- [ ] Review and approve the final publish copy, screenshots, changelog, known
-  limitations, and safety framing.
-
-### 5. Package and publish 0.5.0
-
-Status: **OWNER RELEASE ACTIONS; NOT STARTED**
-
-Binding owner checklist:
-`docs/todo/v05_owner_packaging_and_publish_checklist.md`
-
-- [ ] Produce final Web and Windows packages from the approved release commit
-  and record filenames, sizes, and SHA-256 hashes.
-- [ ] Smoke-test the packaged artifacts rather than only the editor/source
-  build.
-- [ ] Upload the Web build to the itch `html` channel and the Windows build to
-  the `windows` channel with user version `0.5.0`.
-- [ ] Publish the approved itch/GitHub release copy and artifacts.
-- [ ] Create and push `v0.5.0` only after playtest, packaging, upload, and
-  artifact verification are complete.
-- [ ] Record the final release evidence and update README/CHANGELOG language
-  from development status to the published state.
+- [ ] Build and verify Web/Windows packages from the approved commit.
+- [ ] Record names, sizes, SHA-256 hashes, tool versions, and packaged-artifact
+  playtests.
+- [ ] With explicit owner authorization, upload/publish itch and GitHub.
+- [ ] Create and push annotated `v0.5.0` at the exact published source.
+- [ ] Reconcile README, CHANGELOG, release checklist, URLs, and hashes.
 
 ## Definition of 0.5 complete
 
-0.5 is complete only when all of the following are true:
-
-- [x] The integrated pre-human worktree is clean and its source is on the
-  remote `main` branch. Final RC identity is not yet approved.
-- [x] The second tutorial audit has been incorporated and every accepted
-  tutorial blocker has evidence of resolution.
-- [ ] Scripted tutorial, simulated-player, strict input, and cold-player
-  comprehension gates are green. All except human-only TUT-N17 pass.
-- [ ] The retained-memory soak passes; the final Web cold-start and broad L0.2
-  performance gates remain open.
-- [ ] The owner has approved the final hands-on Web and Windows playtest.
-- [ ] The collection `draft` decision and all accepted limitations are
-  documented.
-- [ ] Final packages are verified and published.
-- [ ] The `v0.5.0` tag points to the exact published source commit.
-
-## Already completed and archived
-
-The former SFX rework, video-poker machine rework, writing voice pass,
-edge-state/feature polish, meta-home UI pass, trailer work, playtest polish,
-Cage rework, and the rest of the feature queue are archived under
-`docs/todone/`. They are not active tasks. If final integration or testing
-finds a regression in archived work, create a new follow-up task; do not edit
-or reactivate the archived prompt.
+- [ ] All active implementation/regression prompts are archived with evidence.
+- [ ] The final exact-source matrix is green with clean classified stderr and
+  unchanged budgets/liveness floors.
+- [ ] TUT-N17 and owner Web/Windows hands-on play pass.
+- [ ] The collection decision and every accepted limitation are recorded.
+- [ ] Verified Web/Windows artifacts are published.
+- [ ] `v0.5.0` points to the exact published source and public records agree.
 
 ## Working rules
 
-- Never delete completed prompts; archive them with an execution record after
-  verified completion.
-- Never weaken a test, budget, liveness floor, or deterministic assertion just
-  to make a release gate green.
-- Never overwrite or revert user-owned dirty-worktree changes.
-- Stage explicitly by file and concern. Do not mix unrelated fixes into a
-  release commit.
-- Historical reports describe the source they tested. Re-run their gates after
-  later integration instead of treating old evidence as proof for new source.
+- Historical reports prove only the hash they tested.
+- Never weaken a test, budget, liveness floor, deterministic assertion, or
+  human gate to declare release readiness.
+- Never overwrite, revert, or indiscriminately stage user-owned work.
+- Archive completed prompts; do not delete them.
+- Any post-approval code change invalidates the candidate and reruns affected
+  gates and artifact builds.

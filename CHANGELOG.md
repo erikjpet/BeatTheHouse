@@ -4,12 +4,12 @@ All notable public release changes for Beat the House are recorded here.
 
 ## 0.5.0 - In development
 
-Status: **pre-human release-candidate preparation.** The feature and integration
-queues are implemented on `main`. The pre-human tutorial matrix, native
-performance/liveness battery, 180-minute soak, determinism, Scratch Ticket RTP,
-Grand Casino Web runtime, and final broad Web performance checks pass. The
-five-person cold-player tutorial gate, owner playtest, packaging, publication,
-and tagging remain pending.
+Status: **gap closure; not a release candidate.** Most feature work and the
+historical pre-human tutorial, performance/liveness, soak, determinism, Scratch
+Ticket, Grand Casino Web, and storage gates are implemented. The 2026-08-05
+audit found two promised split features still open plus committed Systems/UI
+and gate-honesty regressions. Five-person cold-player testing, exact-source
+owner approval, packaging, publication, and tagging remain pending.
 
 ### Added
 
@@ -61,6 +61,9 @@ and tagging remain pending.
 - Adds a second High Roller Invitation path: a table-game win over $300 places
   the invitation in the current environment and suppresses the random Tier-2
   copy once earned or accepted.
+- Adds deterministic Scratch Ticket machine restocking every three in-game
+  hours with the 50% none/40% one/10% two distribution, elapsed-time catch-up,
+  and a seeded scalper encounter whose dialogue may reveal the next drop.
 
 ### Changed
 
@@ -114,10 +117,11 @@ and tagging remain pending.
   keeping the fixed ante inside the duel stacks instead of charging the
   player's ordinary cash or casino chips again at settlement.
 
-Current evidence is recorded in `docs/plans/tutorial_completion_report.md`,
-`docs/plans/0.5_performance_audit.md`, and
+Current evidence is recorded in `docs/plans/0.5_pre_release_audit.md`,
+`docs/plans/tutorial_completion_report.md`, `docs/plans/0.5_performance_audit.md`, and
 `docs/plans/0.5_release_checklist.md`. No final release approval is claimed
-until the remaining Web, human, packaging, and publishing gates close.
+until the active feature, regression, human, packaging, and publishing gates
+close.
 
 ## 0.4.0 - Unpublished Act 1 candidate
 

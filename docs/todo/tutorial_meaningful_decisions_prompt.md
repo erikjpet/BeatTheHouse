@@ -1,5 +1,21 @@
 # Agent Prompt — Meaningful Destination Decisions (+ tutorial route branch)
 
+Last reconciled: 2026-08-05
+Release target: 0.5.0
+Status: **PARTIAL / WHOLE-GAME DECISION CONTRACT OPEN**
+
+The tutorial Gas Casino versus Underground branch now exists, is deterministic,
+and rejoins the guided finale. That satisfies only Part 2's structural fork.
+The 2026-08-05 audit found no whole-game offer-versus-forfeit comparison or
+data contract proving that visible destination choices create materially
+different opportunity costs. Existing cost/risk/scouting previews are inputs,
+not completion of Part 1. Preserve the working fork and build the missing
+normal-run decision system at the route/environment/event seam.
+
+Begin only after `v05_release_gate_truth_and_regression_prompt.md` closes the
+current travel-content and map-focus failures. Those fixes must be reused, not
+reimplemented here.
+
 Copy everything below the line into the worker agent. This is one of two
 feature prompts split out of the tutorial playtest pass
 (`tutorial_playtest_fixes_prompt.md`, notes 10 and 26) because it is a design

@@ -1,5 +1,21 @@
 # Agent Prompt — Inventory Screen Rework + Item Description Redo
 
+Last reconciled: 2026-08-05
+Release target: 0.5.0
+Status: **OPEN / PROMISED SPLIT FEATURE NOT YET EXECUTED**
+
+The 2026-08-05 pre-release audit confirmed that later work supplied useful
+prerequisites but did not close this prompt. Run and meta inventory now share
+the spatial `InventoryContainerSurface`, item affinity badges exist, and the
+in-progress narration rollout edits many item descriptions. The promised
+scannable item-card/detail contract is still absent, this prompt has no
+execution record, and it has never been archived.
+
+Treat the current narration changes as owner-owned input. Reconcile and reuse
+their item descriptions; do not overwrite them with an independent second
+voice pass. Entry also requires the release-gate truth/regression prompt to be
+green so this task cannot archive against false-positive gates.
+
 Copy everything below the line into the worker agent. This is one of two
 feature prompts split out of the tutorial playtest pass
 (`tutorial_playtest_fixes_prompt.md`, note 1) because it needs real design

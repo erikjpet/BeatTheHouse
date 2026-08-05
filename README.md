@@ -13,11 +13,12 @@ candidate tag that was not published before development continued. Version
 1 foundation and reworks the Grand Casino into a three-room endgame with a living
 Rourke, a chips-and-Cage economy, Linda's Bronze/Silver/Gold Players Card
 ladder, a four-phase back-room showdown, a playable heads-up blackjack duel,
-and persistent card/chip meta rewards. Integration recovery, the agent-driven
-tutorial matrix, native performance/liveness, the 180-minute soak, and Grand
-Casino Web runtime checks are green. The cold-player tutorial gate, the final
-Web cold-start/broad performance closure, owner playtest, fresh export
-packaging, uploads, and release tag remain pending until recorded otherwise.
+and persistent card/chip meta rewards. Historical integration, pre-human
+tutorial, native/Web performance, soak, and runtime-storage gates are green.
+The current source is back in gap closure: two promised split features remain,
+fresh Systems/UI regressions and gate-honesty defects are open, and the
+worktree is not yet an exact candidate. Cold-player testing, owner playtest,
+fresh export packaging, uploads, and the release tag also remain pending.
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
 the repository.
@@ -31,7 +32,7 @@ the repository.
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
 | Prior release line | 0.3.3 public source release; 0.4.0 unpublished Act 1 candidate |
 | Active planning target | 0.5.0 pre-release verification and owner approval |
-| Current release readiness | Feature implementation and pre-human tutorial repair are complete; Web cold-start/broad performance closure, TUT-N17 cold-player testing, final owner playtest, packaging, upload, and tag remain pending in `docs/todo/README_0_5_release_queue.md` |
+| Current release readiness | Gap closure: see `docs/plans/0.5_pre_release_audit.md` and `docs/todo/README_0_5_release_queue.md`; not an approved release candidate |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |

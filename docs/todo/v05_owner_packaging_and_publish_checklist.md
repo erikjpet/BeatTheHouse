@@ -1,6 +1,6 @@
 # Owner Checklist — Package and Publish Beat the House 0.5.0
 
-Last reconciled: 2026-08-03
+Last reconciled: 2026-08-05
 Status: NOT STARTED / OWNER-CONTROLLED EXTERNAL ACTIONS
 
 ## Authority boundary

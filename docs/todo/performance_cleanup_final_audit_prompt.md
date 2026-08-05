@@ -1,9 +1,9 @@
 # Agent Prompt — Final Performance & Cleanup Audit (No Stutter, Hangs, or Slowdown)
 
-## 2026-08-04 queue reconciliation
+## 2026-08-05 queue reconciliation
 
-This prompt remains **OPEN FOR FINAL-RC EVIDENCE REFRESH; ALL PERFORMANCE
-BLOCKERS ARE CLOSED**. The
+This prompt remains **OPEN FOR EXACT-FINAL-SOURCE EVIDENCE REFRESH; HISTORICAL
+PERFORMANCE BLOCKERS ARE CLOSED**. The
 integrated source is committed on `main`. Scratch Ticket compaction is proven
 deterministic, backward-compatible, and bounded; the full 180-minute/504-action
 soak passes with a negative retained-memory trend and zero retained orphans.
@@ -18,8 +18,12 @@ decode off the main thread, and follow native bus gains. The final
 single-thread Web export passes the unchanged 4x-throttled cold-ready gate at
 17.557 seconds/20 seconds and the complete broad L0.2 matrix. Do not archive
 this prompt until the exact final-RC source matrix is refreshed alongside the
-remaining owner gates. Do not weaken a budget, liveness floor, throttle,
-assertion, or deterministic requirement.
+remaining feature, regression, human, and owner gates. The 2026-08-05 audit
+found committed Systems/UI failures and two unexecuted feature prompts. Those
+are owned by the release-gate truth, inventory, and meaningful-destination
+prompts. Do not archive or run the final matrix until they land on one clean
+source identity. Do not weaken a budget, liveness floor, throttle, assertion,
+or deterministic requirement.
 
 Copy everything below this line into the worker agent.
 

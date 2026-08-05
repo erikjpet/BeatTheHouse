@@ -1,8 +1,8 @@
 # Agent Prompt — Build and Approve the Final 0.5 Release Candidate
 
-Last reconciled: 2026-08-04
+Last reconciled: 2026-08-05
 Release target: 0.5.0
-Status: PENDING TUT-N17 AND OWNER APPROVAL
+Status: BLOCKED BY IMPLEMENTATION, GATE-TRUTH, TUT-N17, AND OWNER APPROVAL
 
 ## Objective
 
@@ -14,17 +14,21 @@ uploading, creating a release, or pushing a tag.
 
 Integration recovery is complete and archived at
 `docs/todone/current_worktree_integration_gate_recovery_prompt.md`. Do not
-start final RC approval until the two remaining active prompts are complete and
-archived:
+start final RC approval until every implementation/regression prompt is
+complete and archived and the intended source is clean:
 
+- `v05_release_gate_truth_and_regression_prompt.md`;
+- `tutorial_inventory_rework_prompt.md`;
+- `tutorial_meaningful_decisions_prompt.md`;
 - `tutorial_first_time_player_completion_prompt.md`;
 - `performance_cleanup_final_audit_prompt.md`.
 
 The tutorial is agent-verifiable through TUT-N25 except for human-only
-TUT-N17. The performance audit has closed native, memory-soak, Scratch Ticket,
-Grand Casino runtime, 20-second Web cold-ready, and broad L0.2 work. See the
-current queue and evidence reports; do not reuse the former 2026-08-03 blockers
-as current state.
+TUT-N17. Historical performance evidence closed native, memory-soak, Scratch
+Ticket, Grand Casino runtime, 20-second Web cold-ready, broad L0.2, and slot
+runtime/storage work, but it must be refreshed after the remaining changes.
+See the current queue and audit; neither historical green nor historical red
+is a substitute for the exact candidate matrix.
 
 The intended source must be committed and clean. If an entry condition is not
 satisfied, return to its owning prompt rather than manufacturing an RC verdict.
