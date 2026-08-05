@@ -3,7 +3,7 @@ extends RefCounted
 
 # Persistent deterministic travel graph for Act 1 runs.
 
-const VERSION := 1
+const VERSION := 2
 const GRAND_CASINO_ID := "grand_casino"
 const JAZZ_CLUB_ID := "jazz_club"
 const UNDERGROUND_SHORTCUT_ID := "small_underground_casino"
@@ -77,6 +77,7 @@ func build(run_state: RunState, rng: RngStream) -> Dictionary:
 			"game_capacity": _archetype_game_capacity(archetype),
 			"position": position.duplicate(true),
 			"state": STATE_REVEALED if discovered_at_spawn else STATE_HIDDEN,
+			"seen": discovered_at_spawn,
 			"discovered_at_spawn": discovered_at_spawn,
 			"discovery_source": DISCOVERY_SOURCE_SPAWN if discovered_at_spawn else DISCOVERY_SOURCE_NONE,
 			"route_spawn_open": _route_is_spawn_open(archetype_id),
@@ -112,6 +113,8 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 	var path := _path_between_normalized(normalized, source_id, destination_id, true)
 	if path.size() < 2:
 		if source_node.is_empty() or destination_node.is_empty():
+			return {}
+		if str(destination_node.get("state", STATE_HIDDEN)) == STATE_VISITED:
 			return {}
 		if str(destination_node.get("state", STATE_HIDDEN)) != STATE_VISITED and not bool(destination_node.get("unlocked", false)):
 			return {}
@@ -447,8 +450,6 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 		if not target_id.is_empty() and not result.has(target_id):
 			result.append(target_id)
 	for candidate_value in enabled_old_candidates:
-		if result.size() >= total_limit:
-			break
 		var candidate: Dictionary = candidate_value
 		var target_id := str(candidate.get("id", ""))
 		if target_id.is_empty() or result.has(target_id):
@@ -509,6 +510,7 @@ static func enter_node(map_data: Dictionary, node_id: String, environment_data: 
 		var node: Dictionary = nodes[index]
 		if str(node.get("id", "")) == target_id:
 			node["state"] = STATE_VISITED
+			node["seen"] = true
 			if not environment_data.is_empty():
 				node["environment"] = environment_data.duplicate(true)
 			nodes[index] = node
@@ -519,9 +521,12 @@ static func enter_node(map_data: Dictionary, node_id: String, environment_data: 
 		var candidate_node_id := str(node.get("id", ""))
 		if candidate_node_id.is_empty() or str(node.get("state", STATE_HIDDEN)) != STATE_HIDDEN:
 			continue
+		if not bool(node.get("route_spawn_open", true)) and not bool(node.get("unlocked", false)):
+			continue
 		if not are_neighbors(normalized, target_id, candidate_node_id):
 			continue
 		node["state"] = STATE_REVEALED
+		node["seen"] = true
 		node["discovery_source"] = DISCOVERY_SOURCE_TRAVEL
 		node["discovered_by_travel"] = true
 		nodes[index] = node
@@ -545,6 +550,7 @@ static func mark_scouted(map_data: Dictionary, node_id: String) -> Dictionary:
 		var node: Dictionary = nodes[index]
 		if str(node.get("id", "")) == target_id:
 			node["scouted"] = true
+			node["seen"] = true
 			nodes[index] = node
 			break
 	normalized["nodes"] = nodes
@@ -569,6 +575,7 @@ static func unlock_nodes(map_data: Dictionary, node_ids: Array, source: String =
 			continue
 		if str(node.get("state", STATE_HIDDEN)) != STATE_VISITED:
 			node["state"] = STATE_REVEALED
+		node["seen"] = true
 		if clean_source == DISCOVERY_SOURCE_SPAWN:
 			node["discovered_at_spawn"] = true
 		else:
@@ -1241,6 +1248,8 @@ static func _normalize_nodes(nodes: Array) -> Array:
 			discovery_source = DISCOVERY_SOURCE_SPAWN
 		elif unlocked and discovery_source.is_empty():
 			discovery_source = DISCOVERY_SOURCE_EVENT
+		var normalized_state := _normalized_state(str(source.get("state", STATE_HIDDEN)))
+		var legacy_seen := normalized_state == STATE_VISITED or (normalized_state == STATE_REVEALED and (discovered_at_spawn or unlocked or discovery_source in [DISCOVERY_SOURCE_SPAWN, DISCOVERY_SOURCE_EVENT, DISCOVERY_SOURCE_TRAVEL]))
 		result.append({
 			"id": id,
 			"archetype_id": str(source.get("archetype_id", id)),
@@ -1252,7 +1261,8 @@ static func _normalize_nodes(nodes: Array) -> Array:
 				"x": clampf(float(position.get("x", 0.5)), 0.0, 1.0),
 				"y": clampf(float(position.get("y", 0.5)), 0.0, 1.0),
 			},
-			"state": _normalized_state(str(source.get("state", STATE_HIDDEN))),
+			"state": normalized_state,
+			"seen": bool(source.get("seen", legacy_seen)),
 			"discovered_at_spawn": discovered_at_spawn,
 			"unlocked": unlocked,
 			"discovery_source": discovery_source,
@@ -1308,6 +1318,8 @@ static func _normalized_state(state: String) -> String:
 
 
 static func _node_is_visible(node: Dictionary) -> bool:
+	if bool(node.get("seen", false)):
+		return true
 	var state := str(node.get("state", STATE_HIDDEN))
 	if state == STATE_VISITED:
 		return true
@@ -1327,6 +1339,7 @@ static func _snapshot_node(node: Dictionary) -> Dictionary:
 		"game_capacity": int(node.get("game_capacity", 0)),
 		"position": _copy_dict(node.get("position", {})),
 		"state": str(node.get("state", STATE_HIDDEN)),
+		"seen": bool(node.get("seen", false)),
 		"discovered_at_spawn": bool(node.get("discovered_at_spawn", false)),
 		"unlocked": bool(node.get("unlocked", false)),
 		"discovery_source": str(node.get("discovery_source", "")),
@@ -1429,6 +1442,8 @@ static func _travel_candidate_entries_prepared(map_data: Dictionary, source_id: 
 			continue
 		var path := _path_between_prepared(map_data, source_id, target_id, true, visible_lookup)
 		if path.size() < 2:
+			if visited_only:
+				continue
 			if not visited_only and not bool(node.get("unlocked", false)):
 				continue
 			path = [source_id, target_id]

@@ -324,15 +324,17 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	var route_split_map: Dictionary = app.call("_world_map_snapshot")
 	var route_split_targets: Array = route_split_map.get("travel_target_ids", []) if typeof(route_split_map.get("travel_target_ids", [])) == TYPE_ARRAY else []
 	var route_split_enabled: Array = route_split_map.get("travel_enabled_node_ids", []) if typeof(route_split_map.get("travel_enabled_node_ids", [])) == TYPE_ARRAY else []
-	if route_split_targets != ["gas_station_casino", "small_underground_casino"] or route_split_enabled != route_split_targets:
-		push_error("Tutorial route-split map did not offer exactly Gas Casino and Underground Casino: targets=%s enabled=%s." % [str(route_split_targets), str(route_split_enabled)])
+	if route_split_targets.size() != 3 or route_split_enabled.size() != 3 \
+			or not route_split_targets.has("apartment") or not route_split_targets.has("gas_station_casino") or not route_split_targets.has("small_underground_casino") \
+			or not route_split_enabled.has("apartment") or not route_split_enabled.has("gas_station_casino") or not route_split_enabled.has("small_underground_casino"):
+		push_error("Tutorial route-split map did not offer both authored routes plus the visited Apartment return route: targets=%s enabled=%s." % [str(route_split_targets), str(route_split_enabled)])
 		return false
 	var current_stop_choice: Dictionary = app.call("_travel_choice", "corner_store")
 	if bool(app.call("select_world_map_node", "bar")) or not current_stop_choice.is_empty():
-		push_error("Tutorial route-split map offered travel outside Gas Casino and Underground Casino.")
+		push_error("Tutorial route-split map exposed an undiscovered route or allowed selecting the current stop.")
 		return false
-	if not bool(app.call("select_world_map_node", "gas_station_casino")) or not bool(app.call("select_world_map_node", "small_underground_casino")):
-		push_error("Tutorial route-split map did not allow both authored route choices.")
+	if not bool(app.call("select_world_map_node", "apartment")) or not bool(app.call("select_world_map_node", "gas_station_casino")) or not bool(app.call("select_world_map_node", "small_underground_casino")):
+		push_error("Tutorial route-split map did not allow both authored route choices and the visited Apartment return route.")
 		return false
 	app.call("_sync_coach_world_map_anchor_geometry")
 	var route_confirm_button: Button = app.get("world_map_confirm_button")
@@ -349,8 +351,14 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	await process_frame
 	var gas_departure_targets: Array = app.call("_travel_target_ids")
 	var underground_choice: Dictionary = app.call("_travel_choice", "small_underground_casino")
-	if gas_departure_targets != ["small_underground_casino"] or underground_choice.is_empty() or not bool(underground_choice.get("enabled", false)):
-		push_error("The Path A departure map did not expose a usable Underground Casino target: targets=%s choice=%s." % [str(gas_departure_targets), str(underground_choice)])
+	var apartment_choice: Dictionary = app.call("_travel_choice", "apartment")
+	var corner_store_choice: Dictionary = app.call("_travel_choice", "corner_store")
+	if gas_departure_targets.size() != 3 \
+			or not gas_departure_targets.has("small_underground_casino") or not gas_departure_targets.has("apartment") or not gas_departure_targets.has("corner_store") \
+			or underground_choice.is_empty() or not bool(underground_choice.get("enabled", false)) \
+			or apartment_choice.is_empty() or not bool(apartment_choice.get("enabled", false)) \
+			or corner_store_choice.is_empty() or not bool(corner_store_choice.get("enabled", false)):
+		push_error("The Path A departure map did not expose Underground plus both visited return routes: targets=%s underground=%s apartment=%s corner=%s." % [str(gas_departure_targets), str(underground_choice), str(apartment_choice), str(corner_store_choice)])
 		return false
 	app.call("open_world_map")
 	for _frame in range(24):

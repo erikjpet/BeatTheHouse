@@ -618,7 +618,14 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 	_require(str(map_snapshot.get("background_path", "")).contains("map_backgrounds"), "World map opened without the cyberpunk city background metadata.")
 	_cover("world_map_background")
 	var map_target_ids: Array = map_snapshot.get("travel_target_ids", []) if typeof(map_snapshot.get("travel_target_ids", [])) == TYPE_ARRAY else []
-	_require(map_target_ids.size() <= 3, "World map opened with too many capped travel targets.")
+	var unvisited_map_target_count := 0
+	for node_value in map_nodes:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var target_node: Dictionary = node_value
+		if map_target_ids.has(str(target_node.get("id", ""))) and str(target_node.get("state", "hidden")) != "visited":
+			unvisited_map_target_count += 1
+	_require(unvisited_map_target_count <= 3, "World map opened with too many capped unvisited travel targets; visited return routes must remain available.")
 	var icons_ready := not map_nodes.is_empty()
 	var travel_highlight_ready := false
 	for node_value in map_nodes:

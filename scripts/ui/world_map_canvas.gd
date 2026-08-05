@@ -30,6 +30,7 @@ var enabled_travel_edge_ids_cache: Array = []
 var cached_layout_size := Vector2(-1.0, -1.0)
 var snapshot_signature := ""
 var map_view_bounds_signature := ""
+var user_pan_offset := Vector2.ZERO
 var map_view_basis_signature := ""
 var map_view_focus_node_ids_cache: Array = []
 var map_view_selected_node_id_cache := ""
@@ -620,7 +621,25 @@ func _compute_map_view_bounds() -> Rect2:
 	var x0 := clampf(center.x - width * 0.5, 0.0, 1.0 - width)
 	var y0 := clampf(center.y - height * 0.5, 0.0, 1.0 - height)
 	var base_bounds := Rect2(Vector2(x0, y0), Vector2(width, height))
-	return _selected_focus_bounds(base_bounds)
+	return _apply_user_pan(_selected_focus_bounds(base_bounds))
+
+
+func pan_map(direction: Vector2) -> void:
+	if direction == Vector2.ZERO:
+		return
+	var bounds := target_map_view_bounds_cache
+	user_pan_offset += Vector2(direction.x * bounds.size.x, direction.y * bounds.size.y) * 0.18
+	map_view_bounds_signature = ""
+	_rebuild_layout_cache()
+	queue_redraw()
+
+
+func _apply_user_pan(bounds: Rect2) -> Rect2:
+	var position := bounds.position + user_pan_offset
+	position.x = clampf(position.x, 0.0, 1.0 - bounds.size.x)
+	position.y = clampf(position.y, 0.0, 1.0 - bounds.size.y)
+	user_pan_offset = position - bounds.position
+	return Rect2(position, bounds.size)
 
 
 func _selected_focus_bounds(base_bounds: Rect2) -> Rect2:

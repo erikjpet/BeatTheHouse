@@ -6,6 +6,7 @@ signal message_requested(text: String)
 signal travel_requested(target_id: String, label: String, choice: Dictionary)
 signal meta_travel_requested(target_id: String)
 signal node_pressed(node_id: String)
+signal node_hovered(node_id: String)
 
 const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 24
 const WORLD_MAP_DETAIL_BADGE_CELL_POOL_SIZE := 6
@@ -229,6 +230,23 @@ func detail_badges() -> Array:
 
 
 func handle_holder_gui_input(event: InputEvent) -> bool:
+	if event is InputEventMouseButton:
+		var wheel_event := event as InputEventMouseButton
+		if wheel_event.pressed and [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN, MOUSE_BUTTON_WHEEL_LEFT, MOUSE_BUTTON_WHEEL_RIGHT].has(wheel_event.button_index):
+			var direction := Vector2.ZERO
+			match wheel_event.button_index:
+				MOUSE_BUTTON_WHEEL_UP:
+					direction.y = -1.0
+				MOUSE_BUTTON_WHEEL_DOWN:
+					direction.y = 1.0
+				MOUSE_BUTTON_WHEEL_LEFT:
+					direction.x = -1.0
+				MOUSE_BUTTON_WHEEL_RIGHT:
+					direction.x = 1.0
+			if nodes_layer != null and nodes_layer.has_method("pan_map"):
+				nodes_layer.call("pan_map", direction)
+				reset_button_layout()
+				return true
 	if selected_node_id.is_empty():
 		return false
 	var local_position := Vector2.ZERO
@@ -535,7 +553,7 @@ func _hit_button(callback: Callable) -> Button:
 	button.text = ""
 	button.flat = true
 	button.focus_mode = Control.FOCUS_NONE
-	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	button.mouse_filter = Control.MOUSE_FILTER_PASS
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	var empty := StyleBoxEmpty.new()
@@ -575,6 +593,7 @@ func _ensure_node_button_pool() -> void:
 		button.disabled = true
 		button.set_meta("pool_index", index)
 		button.set_meta("node_id", "")
+		button.mouse_entered.connect(Callable(self, "_on_pool_button_hovered").bind(index))
 		nodes_layer.add_child(button)
 
 
@@ -595,6 +614,15 @@ func _on_pool_button_pressed(index: int) -> void:
 	if node_id.is_empty():
 		return
 	node_pressed.emit(node_id)
+
+
+func _on_pool_button_hovered(index: int) -> void:
+	var button := _pool_button(index)
+	if button == null or button.disabled:
+		return
+	var node_id := str(button.get_meta("node_id", "")).strip_edges()
+	if not node_id.is_empty() and node_id != selected_node_id:
+		node_hovered.emit(node_id)
 
 
 func _detail_popup_contains_local_position(local_position: Vector2) -> bool:

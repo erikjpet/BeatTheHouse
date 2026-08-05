@@ -12,6 +12,7 @@ func _init() -> void:
 
 func _run() -> void:
 	await _check_zoomed_route_geometry_survives()
+	await _check_scroll_pan_moves_view()
 	await _check_run_report_map_fits_missing_final_location()
 	if failures.is_empty():
 		print("WORLD_MAP_CANVAS_ROUTE_VISIBILITY_CHECK PASS")
@@ -59,6 +60,30 @@ func _check_zoomed_route_geometry_survives() -> void:
 		await process_frame
 	var focused_view := canvas.current_view_snapshot()
 	_check(_array(focused_view.get("visible_route_segments", [])).size() >= 1, "Focused map dropped all travel route segments when endpoints were cropped.")
+	canvas.queue_free()
+
+
+func _check_scroll_pan_moves_view() -> void:
+	var canvas: WorldMapCanvas = WorldMapCanvasScript.new()
+	canvas.size = Vector2(360, 220)
+	root.add_child(canvas)
+	canvas.set_map_snapshot({
+		"current_node_id": "center",
+		"selected_node_id": "center",
+		"map_focus_node_ids": ["center"],
+		"nodes": [
+			{"id": "center", "display_name": "Center", "icon_path": "res://assets/art/map_icons/bar.png", "state": "visited", "seen": true, "position": {"x": 0.50, "y": 0.50}},
+			{"id": "pawn", "display_name": "Pawn Shop", "icon_path": "res://assets/art/map_icons/pawn_shop.png", "state": "revealed", "seen": true, "position": {"x": 0.92, "y": 0.86}},
+		],
+		"edges": [{"id": "center--pawn", "a": "center", "b": "pawn", "distance": "near"}],
+	})
+	await process_frame
+	var before: Dictionary = canvas.current_view_snapshot().get("map_bounds", {})
+	canvas.pan_map(Vector2(1.0, 1.0))
+	for _index in range(12):
+		await process_frame
+	var after: Dictionary = canvas.current_view_snapshot().get("map_bounds", {})
+	_check(JSON.stringify(before) != JSON.stringify(after), "Mouse-wheel map pan did not move the map view bounds.")
 	canvas.queue_free()
 
 

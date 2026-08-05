@@ -71,8 +71,8 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 		if visible_travel_target:
 			var node_archetype = host._environment_archetype(node_id)
 			var arrival_minute = host._arrival_minute_for_route(route, false)
-			var open_status = EnvironmentHours.status_at(node_archetype, arrival_minute)
-			open_status_text = EnvironmentHours.travel_status_text(node_archetype, arrival_minute)
+			var open_status = host._environment_open_status_at(node_archetype, arrival_minute)
+			open_status_text = host.TutorialFlowScript.environment_status_text(host.run_state, node_archetype, arrival_minute)
 			open_now = bool(open_status.get("open", true))
 			closing_soon = bool(open_status.get("closing_soon", false))
 			if not open_now:
@@ -205,6 +205,8 @@ static func _append_route_path_geometry(result: Array, nodes_by_id: Dictionary, 
 static func world_map_node_should_render(host: Variant, node: Dictionary, is_current: bool, is_available_target: bool) -> bool:
 	if is_current or is_available_target:
 		return true
+	if bool(node.get("seen", false)):
+		return true
 	var state = str(node.get("state", host.WorldMapScript.STATE_HIDDEN)).strip_edges().to_lower()
 	return state == host.WorldMapScript.STATE_VISITED
 
@@ -307,7 +309,7 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 	var arrival_minute = host._arrival_minute_for_route(route, forced_walk)
 	var open_status = host._environment_open_status_at(archetype, arrival_minute)
 	choice["open_status"] = open_status.duplicate(true)
-	choice["open_status_text"] = EnvironmentHours.travel_status_text(archetype, arrival_minute)
+	choice["open_status_text"] = host.TutorialFlowScript.environment_status_text(host.run_state, archetype, arrival_minute)
 	choice["open_now"] = bool(open_status.get("open", true))
 	choice["closing_soon"] = bool(open_status.get("closing_soon", false))
 	choice["arrival_minute"] = arrival_minute
@@ -468,7 +470,7 @@ static func enabled_world_route_ids(host: Variant, source_id: String) -> Array:
 		if route.is_empty():
 			continue
 		var archetype = host._environment_archetype(target_id)
-		if not EnvironmentHours.environment_open_at(archetype, host._arrival_minute_for_route(route, false)):
+		if not host.TutorialFlowScript.environment_open_at(host.run_state, archetype, host._arrival_minute_for_route(route, false)):
 			continue
 		var status = host.run_state.travel_route_status(route)
 		if not bool(status.get("hidden", false)) and (bool(status.get("available", true)) or bool(status.get("locked", false))):
@@ -486,11 +488,11 @@ static func current_environment_archetype(host: Variant) -> Dictionary:
 static func environment_open_status(host: Variant, archetype: Dictionary) -> Dictionary:
 	if host.run_state == null:
 		return EnvironmentHours.status_at(archetype, 0)
-	return EnvironmentHours.status_at(archetype, host.run_state.game_minute_of_day())
+	return host.TutorialFlowScript.environment_open_status(host.run_state, archetype, host.run_state.game_minute_of_day())
 
 
 static func environment_open_status_at(host: Variant, archetype: Dictionary, minute_of_day: int) -> Dictionary:
-	return EnvironmentHours.status_at(archetype, minute_of_day)
+	return host.TutorialFlowScript.environment_open_status(host.run_state, archetype, minute_of_day)
 
 
 static func travel_clock_minutes_for_route(host: Variant, route: Dictionary, force_walk: bool = false) -> int:
