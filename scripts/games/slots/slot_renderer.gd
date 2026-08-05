@@ -105,6 +105,7 @@ func render_signature(surface_state: Dictionary, _definition: Dictionary, time_m
 		"reel_phase": reel_phase,
 		"reel_scroll_cells": reel_scroll_cells,
 		"reel_blur": reel_blur,
+		"moving_symbol_treatment": "symbol_silhouette",
 		"reel_stop_msec": reel_stop_msec,
 		"tease_active": bool(plan.get("tease_active", false)) or str(surface_state.get("slot_classification", "")) == "near_miss",
 		"tease_overlay_visible": result_reveal_ready and (bool(plan.get("tease_active", false)) or str(surface_state.get("slot_classification", "")) == "near_miss"),
@@ -914,14 +915,9 @@ func _draw_symbol(surface, definition: Dictionary, family: String, symbol: Strin
 	var center := rect.position + rect.size * 0.5
 	var radius := minf(rect.size.x, rect.size.y) * 0.30
 	if blurred:
-		# Shapes and labels cannot be read while a reel is moving. A single
-		# directional highlight preserves each symbol's palette and improves the
-		# sense of speed without issuing several invisible glyph/shape draws.
-		var streak := Rect2(
-			Vector2(rect.position.x + rect.size.x * 0.16, center.y - maxf(1.0, rect.size.y * 0.035)),
-			Vector2(rect.size.x * 0.68, maxf(2.0, rect.size.y * 0.07))
-		)
-		surface.draw_rect(streak, Color(secondary.r, secondary.g, secondary.b, 0.62))
+		# Preserve each icon's shape in motion. The old one-line speed streak
+		# collapsed every Buffalo symbol into the same horizontal dash.
+		_draw_moving_symbol_silhouette(surface, str(meta.get("shape", "")), rect, center, radius, primary, secondary, glow)
 		return
 	match str(meta.get("shape", "")):
 		"coin", "chrome_ball", "steel_ball":
@@ -954,6 +950,31 @@ func _draw_symbol(surface, definition: Dictionary, family: String, symbol: Strin
 			surface.draw_rect(rect.grow(-5), primary)
 	var label := _symbol_label(symbol)
 	surface.surface_label_centered(label, rect.grow(-3), int(clampf(rect.size.y * 0.30, 8.0, 20.0)), Color("#f8fafc"))
+
+
+func _draw_moving_symbol_silhouette(surface, shape: String, rect: Rect2, center: Vector2, radius: float, primary: Color, secondary: Color, glow: Color) -> void:
+	var motion_primary := Color(primary.r, primary.g, primary.b, 0.82)
+	var motion_secondary := Color(secondary.r, secondary.g, secondary.b, 0.70)
+	match shape:
+		"coin", "chrome_ball", "steel_ball", "sunset", "bumper":
+			surface.draw_circle(center, radius * 0.88, motion_primary)
+			surface.draw_circle(center, radius * 0.42, Color(glow.r, glow.g, glow.b, 0.52))
+		"buffalo_head", "animal_badge":
+			surface.draw_circle(center, radius * 0.82, motion_primary)
+			surface.draw_circle(center + Vector2(-radius * 0.62, -radius * 0.18), radius * 0.25, motion_secondary)
+			surface.draw_circle(center + Vector2(radius * 0.62, -radius * 0.18), radius * 0.25, motion_secondary)
+		"fruit":
+			surface.draw_circle(center + Vector2(-radius * 0.24, radius * 0.10), radius * 0.54, motion_primary)
+			surface.draw_circle(center + Vector2(radius * 0.24, radius * 0.13), radius * 0.54, motion_secondary)
+		"spinner":
+			surface.draw_line(center + Vector2(-radius * 0.82, 0), center + Vector2(radius * 0.82, 0), motion_primary, 3)
+			surface.draw_line(center + Vector2(0, -radius * 0.82), center + Vector2(0, radius * 0.82), motion_secondary, 3)
+			surface.draw_circle(center, radius * 0.20, Color(glow.r, glow.g, glow.b, 0.72))
+		_:
+			var inset := Vector2(maxf(4.0, rect.size.x * 0.18), maxf(4.0, rect.size.y * 0.20))
+			var tile := Rect2(rect.position + inset, rect.size - inset * 2.0)
+			surface.draw_rect(tile, motion_primary)
+			surface.draw_rect(tile.grow(-3), motion_secondary, false, 2)
 
 
 func _symbol_draw_metadata(definition: Dictionary, family: String, symbol: String) -> Dictionary:

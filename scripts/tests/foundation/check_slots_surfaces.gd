@@ -1,5 +1,22 @@
 extends "res://scripts/tests/foundation/check_core_content.gd"
 
+
+class MotionSymbolHarness:
+	extends RefCounted
+
+	var circle_count := 0
+	var rect_count := 0
+	var line_count := 0
+
+	func draw_circle(_position: Vector2, _radius: float, _color: Color, _filled: bool = true, _width: float = -1.0, _antialiased: bool = false) -> void:
+		circle_count += 1
+
+	func draw_rect(_rect: Rect2, _color: Color, _filled: bool = true, _width: float = -1.0, _antialiased: bool = false) -> void:
+		rect_count += 1
+
+	func draw_line(_from: Vector2, _to: Vector2, _color: Color, _width: float = -1.0, _antialiased: bool = false) -> void:
+		line_count += 1
+
 func _check_slot_free_games_carryover(definition: Dictionary, failures: Array) -> void:
 	var buffalo = SlotFamilyBuffaloScript.new()
 	var run_state: RunState = _slot_run_state("SLOT-FREE-CARRYOVER", 100000)
@@ -59,6 +76,36 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 	var resolver = SlotResolverScript.new()
 	var presentation = SlotPresentationScript.new()
 	var renderer = SlotRendererScript.new()
+	var buffalo_motion := MotionSymbolHarness.new()
+	renderer.call("_draw_moving_symbol_silhouette", buffalo_motion, "buffalo_head", Rect2(0, 0, 96, 96), Vector2(48, 48), 28.0, Color.RED, Color.YELLOW, Color.WHITE)
+	if buffalo_motion.circle_count < 3 or buffalo_motion.line_count != 0:
+		failures.append("Slot Buffalo moving symbols regressed to generic line streaks instead of Buffalo silhouettes.")
+	var spinner_motion := MotionSymbolHarness.new()
+	renderer.call("_draw_moving_symbol_silhouette", spinner_motion, "spinner", Rect2(0, 0, 96, 96), Vector2(48, 48), 28.0, Color.RED, Color.YELLOW, Color.WHITE)
+	if spinner_motion.line_count < 2 or spinner_motion.circle_count < 1:
+		failures.append("Slot moving-symbol silhouettes did not preserve spinner-specific geometry.")
+	var feature_music_player = ProceduralMusicPlayerScript.new()
+	var feature_load_started := Time.get_ticks_usec()
+	var delivered_feature: Dictionary = feature_music_player.call("_feature_stem_set_for_input", {"cue_id": "bonus_music_buffalo"})
+	var feature_load_usec := Time.get_ticks_usec() - feature_load_started
+	if str(delivered_feature.get("source", "")) != "feature_delivery" or bool(delivered_feature.get("runtime_synthesis", true)):
+		failures.append("Slot Buffalo feature music still used synchronous runtime synthesis.")
+	if feature_load_usec > 100000:
+		failures.append("Slot Buffalo feature music delivery exceeded the 100 ms cold-load budget (%d usec)." % feature_load_usec)
+	var delivered_stems: Dictionary = delivered_feature.get("stems", {}) as Dictionary
+	for required_role in ProceduralMusicPlayerScript.MUSIC_STEM_ROLES:
+		if not (delivered_stems.get(str(required_role), null) is AudioStream):
+			failures.append("Slot Buffalo feature delivery is missing the %s stem." % str(required_role))
+	feature_music_player.free()
+	var slot_sfx = SfxPlayerScript.new()
+	var jackpot_sfx_started := Time.get_ticks_usec()
+	var jackpot_stream: AudioStreamWAV = slot_sfx.call("_event_stream", "jackpot_buffalo") as AudioStreamWAV
+	var jackpot_sfx_usec := Time.get_ticks_usec() - jackpot_sfx_started
+	if jackpot_stream == null or jackpot_stream.format != AudioStreamWAV.FORMAT_16_BITS:
+		failures.append("Slot Buffalo jackpot SFX did not use its prebuilt delivery stream.")
+	if jackpot_sfx_usec > 100000:
+		failures.append("Slot Buffalo jackpot SFX exceeded the 100 ms cold-load budget (%d usec)." % jackpot_sfx_usec)
+	slot_sfx.free()
 	var run_state: RunState = _slot_run_state("SLOT-BUFFALO-PRESENTATION", 100000)
 	var classic_free_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "classic_3_reel", "standard", "plain")
 	var video_free_machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "video_feature", "standard", "plain")
@@ -128,6 +175,8 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 	var hold_animation_surface: Dictionary = presentation.surface_state(animation_machine, run_state, definition, {"surface_time_msec": 240})
 	var hold_animation_scene: Dictionary = _slot_dict(hold_animation_surface.get("slot_feature_scene", {}))
 	var hold_auto_manifest: Dictionary = renderer.render_signature(hold_animation_surface, definition, 240)
+	if str(hold_auto_manifest.get("moving_symbol_treatment", "")) != "symbol_silhouette":
+		failures.append("Slot reel motion manifest did not require symbol-specific silhouettes.")
 	if not bool(hold_animation_surface.get("slot_active_bonus_active", false)) or not bool(hold_animation_scene.get("active", false)) or str(hold_auto_manifest.get("mode", "")) != "feature":
 		failures.append("Slot buffalo hold respin reverted to base UI during the in-feature reel spin.")
 	var hold_spin_manifest: Dictionary = renderer.render_signature(hold_animation_surface, definition, 240, "feature")

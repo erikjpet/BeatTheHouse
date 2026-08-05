@@ -16,6 +16,7 @@ const SFX_BUS := "SFX"
 const SAMPLE_RATE := 22050
 const TELEPHONE_SAMPLE_RATE := 4000
 const WEB_DELIVERY_ROOT := "res://assets/audio/sfx_web"
+const NATIVE_DELIVERY_ROOT := "res://assets/audio/sfx_native"
 const PCM_BYTES_PER_FRAME := 2
 const SLOT_CLASSIC_REEL_STOP_TIMES := [1.05, 1.55, 2.15]
 const SLOT_POST_REEL_BONUS_DELAY := 0.40
@@ -82,6 +83,21 @@ const WEB_DELIVERY_EVENT_IDS := [
 	"roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch",
 	"roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout",
 ]
+const NATIVE_SLOT_DELIVERY_EVENTS := {
+	"button": true, "button_pinball": true, "button_buffalo": true, "button_digital": true,
+	"lever": true, "lever_buffalo": true, "lever_digital": true,
+	"nudge": true, "nudge_pinball": true, "nudge_buffalo": true, "nudge_digital": true,
+	"reel_loop": true, "reel_loop_pinball": true, "reel_loop_buffalo": true, "reel_loop_digital": true,
+	"reel_stop": true, "reel_stop_pinball": true, "reel_stop_buffalo": true, "reel_stop_digital": true,
+	"gold_coin_tease": true, "double_gold_coin_tease": true,
+	"bonus_start": true, "bonus_start_pinball": true, "bonus_start_buffalo": true, "bonus_start_digital": true,
+	"bumper": true, "pinball_money_ding": true, "bonus_step_buffalo": true, "bonus_step_digital": true,
+	"jackpot_hit": true, "jackpot_hit_buffalo": true, "jackpot_hit_digital": true,
+	"payout": true, "payout_digital": true,
+	"bonus_total": true, "bonus_total_buffalo": true, "bonus_total_digital": true,
+	"jackpot": true, "jackpot_buffalo": true, "jackpot_digital": true,
+	"lose": true,
+}
 const ROULETTE_RIM_TIMES := [0.42, 0.82, 1.26, 1.78, 2.34, 2.94, 3.32]
 const ROULETTE_SCATTER_TIMES := [3.66, 3.86, 4.08, 4.32]
 const MUSIC_DIRECTOR_CUES := {
@@ -753,6 +769,10 @@ func preview_event_stream(event_id: String) -> AudioStreamWAV:
 	return _event_stream(event_id)
 
 
+func render_event_master_stream(event_id: String) -> AudioStreamWAV:
+	return _synthesized_event_stream(_normalized_event_id(event_id))
+
+
 func debug_slot_cue_markers(slot_state: Dictionary) -> Array:
 	var timing := _dict(slot_state.get("_surface_audio_timing", {}))
 	var scene := _dict(slot_state.get("slot_feature_scene", {}))
@@ -820,6 +840,8 @@ func audio_fidelity_contract_snapshot() -> Dictionary:
 		"web_delivery_event_count": WEB_DELIVERY_EVENT_IDS.size(),
 		"web_delivery_uses_preencoded_pcm": true,
 		"web_incremental_prewarm": true,
+		"native_slot_delivery_event_count": NATIVE_SLOT_DELIVERY_EVENTS.size(),
+		"native_slot_events_avoid_runtime_synthesis": true,
 	}
 
 
@@ -1301,11 +1323,22 @@ func _event_stream(event_id: String) -> AudioStreamWAV:
 	var normalized := _normalized_event_id(event_id)
 	if _stream_cache.has(normalized):
 		return _stream_cache[normalized]
+	if not OS.has_feature("web") and bool(NATIVE_SLOT_DELIVERY_EVENTS.get(normalized, false)):
+		var native_delivery_stream := _native_delivery_event_stream(normalized)
+		if native_delivery_stream != null:
+			_stream_cache[normalized] = native_delivery_stream
+			return native_delivery_stream
 	if OS.has_feature("web"):
 		var delivery_stream := _web_delivery_event_stream(normalized)
 		if delivery_stream != null:
 			_stream_cache[normalized] = delivery_stream
 			return delivery_stream
+	var synthesized := _synthesized_event_stream(normalized)
+	_stream_cache[normalized] = synthesized
+	return synthesized
+
+
+func _synthesized_event_stream(normalized: String) -> AudioStreamWAV:
 	if normalized == _prewarm_active_event_id:
 		_clear_prewarm_event()
 	var seconds := _event_seconds(normalized)
@@ -1317,7 +1350,28 @@ func _event_stream(event_id: String) -> AudioStreamWAV:
 		var t := float(i) / float(sample_rate)
 		_write_i16(data, i * PCM_BYTES_PER_FRAME, _soft_limit(_event_sample(normalized, t, i, seconds)))
 	var stream := _audio_stream_from_pcm(normalized, sample_rate, frames, data)
-	_stream_cache[normalized] = stream
+	return stream
+
+
+func _native_delivery_event_stream(event_id: String) -> AudioStreamWAV:
+	var path := "%s/%s.bthpcm" % [NATIVE_DELIVERY_ROOT, event_id]
+	if not FileAccess.file_exists(path):
+		return null
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.size() < 18 or bytes.slice(0, 4).get_string_from_ascii() != "BTHP" or int(bytes[4]) != 1 or int(bytes[5]) != 1:
+		return null
+	var sample_rate := bytes.decode_u32(8)
+	var frames := bytes.decode_u32(12)
+	var pcm := bytes.slice(16)
+	if sample_rate <= 0 or frames <= 0 or pcm.size() != frames * PCM_BYTES_PER_FRAME:
+		return null
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = sample_rate
+	stream.data = pcm
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if (int(bytes[6]) & 1) != 0 else AudioStreamWAV.LOOP_DISABLED
+	stream.loop_begin = 0
+	stream.loop_end = frames
 	return stream
 
 

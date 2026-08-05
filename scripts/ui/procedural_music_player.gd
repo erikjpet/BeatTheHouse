@@ -112,6 +112,31 @@ const MUSIC_AUTHORED_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const MUSIC_AUTHORED_ROOT := "res://assets/audio/music"
 const MUSIC_AUTHORED_WEB_ROOT := "res://assets/audio/music_web"
 const MUSIC_PROCEDURAL_WEB_ROOT := "res://assets/audio/music_web/procedural"
+const MUSIC_FEATURE_DELIVERY_ROOT := "res://assets/audio/music_features"
+const SFX_DELIVERY_ROOT := "res://assets/audio/sfx_web"
+const NATIVE_SFX_DELIVERY_ROOT := "res://assets/audio/sfx_native"
+const FEATURE_DELIVERY_PROFILES := {
+	"buffalo": {"bpm": 78.0, "root_midi": 42, "bars": 2},
+	"arcade": {"bpm": 96.0, "root_midi": 52, "bars": 2},
+}
+const FEATURE_DELIVERY_STINGERS := {
+	"buffalo": {
+		"jackpot_buffalo": "jackpot_buffalo",
+		"jackpot_hit_buffalo": "jackpot_hit_buffalo",
+		"bonus_total_buffalo": "bonus_total_buffalo",
+	},
+	"arcade": {
+		"feature_intro": "bonus_start_pinball",
+		"multiball": "bonus_total",
+		"jackpot": "jackpot_hit",
+		"super_jackpot": "jackpot",
+		"feature_total": "bonus_total",
+		"pinball_feature_intro": "bonus_start_pinball",
+		"pinball_multiball": "bonus_total",
+		"pinball_jackpot_lane": "jackpot_hit",
+		"pinball_super_jackpot": "jackpot",
+	},
+}
 const AUTHORED_MANIFEST_CACHE_LIMIT := 32
 const MUSIC_MIN_VOLUME_DB := -80.0
 const WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES := 8388608
@@ -4207,6 +4232,14 @@ func _feature_stem_set_for_input(input: Dictionary) -> Dictionary:
 	var cache_key := "feature:%d:%s:%s:%0.2f" % [AMBIENT_VERSION, cue_id, str(base_profile.get("palette_id", "")), bpm]
 	if _feature_stem_cache.has(cache_key):
 		return (_feature_stem_cache.get(cache_key, {}) as Dictionary).duplicate(true)
+	# Feature outcomes are known before the reels start. Baking their multi-stem
+	# PCM here used to block that first jackpot/bonus spin for several seconds.
+	# Load the deterministic delivery stems instead; procedural synthesis remains
+	# only as a development fallback when an asset is missing.
+	var delivered := _delivered_feature_stem_set(style, cue_id, palette_id)
+	if not delivered.is_empty():
+		_feature_stem_cache[cache_key] = delivered.duplicate(true)
+		return delivered
 	var bars := 2
 	var step_period := _step_period_from_bpm(bpm)
 	var frames := maxi(1, int(step_period * float(STEPS_PER_BAR * bars) * float(SAMPLE_RATE)))
@@ -4225,6 +4258,123 @@ func _feature_stem_set_for_input(input: Dictionary) -> Dictionary:
 	}
 	_feature_stem_cache[cache_key] = contract.duplicate(true)
 	return contract
+
+
+func _delivered_feature_stem_set(style: String, cue_id: String, palette_id: String) -> Dictionary:
+	var profile: Dictionary = FEATURE_DELIVERY_PROFILES.get(style, {}) as Dictionary
+	if profile.is_empty():
+		return {}
+	var stems := _load_feature_stem_pack("%s/%s.bthstems" % [MUSIC_FEATURE_DELIVERY_ROOT, style])
+	if stems.is_empty():
+		return {}
+	var stingers := {}
+	var aliases: Dictionary = FEATURE_DELIVERY_STINGERS.get(style, {}) as Dictionary
+	for cue_value in aliases.keys():
+		var stream := _load_feature_stinger_delivery(str(aliases.get(cue_value, "")))
+		if stream != null:
+			stingers[str(cue_value)] = stream
+	var first_stream: AudioStreamWAV = stems.get("pad") as AudioStreamWAV
+	var frames := int(first_stream.loop_end)
+	var bpm := float(profile.get("bpm", 96.0))
+	var bars := int(profile.get("bars", 2))
+	var contract := _stem_set_contract("feature_delivery", stems, bpm, bars, frames, palette_id, stingers, AMBIENT_STAGE_FULL)
+	contract["step_period"] = _step_period_from_bpm(bpm)
+	contract["profile"] = {
+		"theme": style,
+		"palette_id": palette_id,
+		"root_midi": int(profile.get("root_midi", 45)),
+	}
+	contract["delivery_cue_id"] = cue_id
+	contract["runtime_synthesis"] = false
+	if WebAudioBridgeScript.available():
+		_prepare_web_bridge_payloads(contract)
+	return contract
+
+
+func _load_sfx_delivery_stream(event_id: String) -> AudioStreamWAV:
+	if event_id.is_empty():
+		return null
+	var path := "%s/%s.bthsfx" % [SFX_DELIVERY_ROOT, event_id]
+	if not FileAccess.file_exists(path):
+		return null
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return null
+	var header := file.get_line().split("|")
+	var remaining_bytes := maxi(0, file.get_length() - file.get_position())
+	var encoded := file.get_buffer(remaining_bytes).get_string_from_ascii().strip_edges()
+	file.close()
+	if header.size() != 3 or header[0] != "BTHA64" or header[1] != "1" or encoded.is_empty():
+		return null
+	var data := Marshalls.base64_to_raw(encoded)
+	if data.size() < 19 or data.slice(0, 4).get_string_from_ascii() != "BTHA" or int(data[4]) != 1:
+		return null
+	var sample_rate := data.decode_u32(8)
+	var frames := data.decode_u32(12)
+	if sample_rate <= 0 or frames <= 0:
+		return null
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_IMA_ADPCM
+	stream.mix_rate = sample_rate
+	stream.data = data
+	stream.loop_mode = AudioStreamWAV.LOOP_DISABLED
+	stream.loop_begin = 0
+	stream.loop_end = frames
+	stream.set_meta(WebAudioBridgeScript.PCM_BASE64_META, encoded)
+	return stream
+
+
+func _load_feature_stinger_delivery(event_id: String) -> AudioStreamWAV:
+	if OS.has_feature("web"):
+		return _load_sfx_delivery_stream(event_id)
+	return _load_pcm_delivery_stream("%s/%s.bthpcm" % [NATIVE_SFX_DELIVERY_ROOT, event_id], false)
+
+
+func _load_pcm_delivery_stream(path: String, loop_enabled: bool) -> AudioStreamWAV:
+	if not FileAccess.file_exists(path):
+		return null
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.size() < 18 or bytes.slice(0, 4).get_string_from_ascii() != "BTHP" or int(bytes[4]) != 1 or int(bytes[5]) != 1:
+		return null
+	var sample_rate := bytes.decode_u32(8)
+	var frames := bytes.decode_u32(12)
+	var pcm := bytes.slice(16)
+	if sample_rate <= 0 or frames <= 0 or pcm.size() != frames * PCM_BYTES_PER_FRAME:
+		return null
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = sample_rate
+	stream.data = pcm
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if loop_enabled else AudioStreamWAV.LOOP_DISABLED
+	stream.loop_begin = 0
+	stream.loop_end = frames
+	return stream
+
+
+func _load_feature_stem_pack(path: String) -> Dictionary:
+	if not FileAccess.file_exists(path):
+		return {}
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.size() < 18 or bytes.slice(0, 4).get_string_from_ascii() != "BTHM" or int(bytes[4]) != 1 or int(bytes[5]) != 1:
+		return {}
+	var role_count := int(bytes[6])
+	var sample_rate := bytes.decode_u32(8)
+	var frames := bytes.decode_u32(12)
+	var role_bytes := frames * PCM_BYTES_PER_FRAME
+	if role_count != MUSIC_STEM_ROLES.size() or sample_rate <= 0 or frames <= 0 or bytes.size() != 16 + role_bytes * role_count:
+		return {}
+	var stems := {}
+	for role_index in range(role_count):
+		var stream := AudioStreamWAV.new()
+		stream.format = AudioStreamWAV.FORMAT_16_BITS
+		stream.mix_rate = sample_rate
+		var start := 16 + role_index * role_bytes
+		stream.data = bytes.slice(start, start + role_bytes)
+		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		stream.loop_begin = 0
+		stream.loop_end = frames
+		stems[str(MUSIC_STEM_ROLES[role_index])] = stream
+	return stems
 
 
 func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> void:
