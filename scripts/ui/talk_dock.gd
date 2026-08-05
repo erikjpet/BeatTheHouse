@@ -6,14 +6,17 @@ signal occupied_rect_changed(rect: Rect2)
 signal conversation_active_changed(active: bool)
 
 const COLLAPSED_SIZE := Vector2(420, 58)
-const EXPANDED_PANEL_WIDTH := 460.0
-const SINGLE_CHOICE_PANEL_WIDTH := 420.0
+const EXPANDED_PANEL_WIDTH := 400.0
+const SINGLE_CHOICE_PANEL_WIDTH := 360.0
 const EXPANDED_PANEL_BASE_HEIGHT := 160.0
 const EXPANDED_PANEL_EXTRA_ROW_HEIGHT := 40.0
 const EXPANDED_PANEL_EXTRA_BODY_LINE_HEIGHT := 23.0
 const SMALL_SCREEN_CHOICE_ROW_EXTRA := 12.0
-const EXPANDED_PORTRAIT_SIZE := Vector2(210, 290)
+const SMALL_SCREEN_PANEL_WIDTH := 176.0
+const SMALL_SCREEN_PORTRAIT_SIZE := Vector2(64, 128)
+const EXPANDED_PORTRAIT_SIZE := Vector2(170, 250)
 const VIEWPORT_MARGIN := Vector2(18, 18)
+const LAYOUT_SIDE_HYSTERESIS := 12.0
 const MAX_CHOICES := 4
 const IGNORE_PENALTY_HEAT := 5
 const PRESENTATION_Z_INDEX := 100
@@ -262,6 +265,11 @@ var rendered_entry_key := ""
 var last_occupied_rect := Rect2()
 var avoid_global_rect := Rect2()
 var reserved_body_line_count := 1
+var locked_layout_side := "left"
+var locked_layout_vertical := "bottom"
+var layout_boundary_key := ""
+var layout_side_change_count := 0
+var layout_position_change_count := 0
 
 var panel: PanelContainer
 var stack: VBoxContainer
@@ -319,9 +327,11 @@ func set_entry(next_entry: Dictionary, next_option: Dictionary, next_queue_count
 	armed_choice_id = ""
 	rendered_entry_key = next_key
 	visible = true
-	if not conversation_active:
-		conversation_active = true
-		conversation_active_changed.emit(true)
+	conversation_active = true
+	# Entry identity matters to simulation policy (Pal freezes tutorial time;
+	# other speakers do not). Re-publish active state whenever the rendered entry
+	# changes, including direct speaker-to-speaker queue transitions.
+	conversation_active_changed.emit(true)
 	_render()
 	_play_attention_animation()
 
@@ -405,7 +415,9 @@ func current_snapshot() -> Dictionary:
 		"choice_ids": choice_ids,
 		"choice_button_height": _rendered_choice_button_height(),
 		"ignore_penalty_heat": IGNORE_PENALTY_HEAT,
-		"anchored_bottom_left": true,
+		"anchored_bottom_left": locked_layout_side == "left",
+		"anchored_bottom": _layout_is_bottom_anchored(),
+		"portrait_outer_edge": _portrait_is_on_outer_edge(),
 		"presentation": "environment_overlay",
 		"z_index": z_index,
 		"choice_effects_visible": false,
@@ -442,7 +454,11 @@ func current_snapshot() -> Dictionary:
 		"occupied_rect": occupied_global_rect(),
 		"environment_reserved_rect": environment_reserved_global_rect(),
 		"avoid_rect": avoid_global_rect,
-		"layout_side": str(_expanded_layout_rects(false).get("side", "left")),
+		"layout_side": locked_layout_side,
+		"layout_vertical": locked_layout_vertical,
+		"layout_boundary_key": layout_boundary_key,
+		"layout_side_change_count": layout_side_change_count,
+		"layout_position_change_count": layout_position_change_count,
 		"screen_rect": get_global_rect(),
 	}
 
@@ -491,15 +507,21 @@ func set_reduce_motion(enabled: bool) -> void:
 
 # Keep an authored instruction away from its live target without taking input
 # ownership from that target.
-func set_avoid_global_rect(next_rect: Rect2) -> void:
-	if avoid_global_rect.is_equal_approx(next_rect):
-		return
-	var previous_has_area := avoid_global_rect.has_area()
-	var previous_side := _preferred_layout_side()
+func set_avoid_global_rect(next_rect: Rect2, boundary_key: String = "", focus_x_hint: float = -1.0) -> void:
+	var clean_boundary_key := boundary_key.strip_edges()
+	var boundary_changed := clean_boundary_key.is_empty() or clean_boundary_key != layout_boundary_key
 	avoid_global_rect = next_rect
-	var side_changed := previous_side != _preferred_layout_side()
-	var occupancy_changed := previous_has_area != avoid_global_rect.has_area()
-	if side_changed or occupancy_changed or occupied_global_rect().intersects(avoid_global_rect.grow(8.0)):
+	if not boundary_changed:
+		return
+	if not clean_boundary_key.is_empty():
+		layout_boundary_key = clean_boundary_key
+	var next_side := _side_for_new_boundary(next_rect, focus_x_hint)
+	var next_vertical := "bottom"
+	if next_side != locked_layout_side or next_vertical != locked_layout_vertical:
+		if next_side != locked_layout_side:
+			layout_side_change_count += 1
+		locked_layout_side = next_side
+		locked_layout_vertical = next_vertical
 		_position_panel()
 
 
@@ -512,11 +534,15 @@ func set_small_screen_mode(enabled: bool) -> void:
 	if collapse_button != null:
 		collapse_button.custom_minimum_size.y = SmallScreenPolicyScript.control_height(VisualStyle.TALK_CHOICE_HEIGHT, enabled)
 	_render_choices()
+	_reconsider_current_placement()
 	_position_panel()
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
+		if choice_list != null and expanded:
+			_render_choices()
+		_reconsider_current_placement()
 		_position_panel()
 	elif what == NOTIFICATION_VISIBILITY_CHANGED:
 		call_deferred("_notify_occupied_rect_changed")
@@ -528,12 +554,17 @@ func _build() -> void:
 	panel.clip_contents = true
 	add_child(panel)
 
+	var panel_content := Control.new()
+	panel_content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(panel_content)
+
 	stack = VBoxContainer.new()
 	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stack.add_theme_constant_override("separation", VisualStyle.SPACE_2)
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel.add_child(stack)
+	panel_content.add_child(stack)
+	stack.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	collapsed_button = FoundationWidgets.button("", Callable(self, "_toggle_expanded"))
 	collapsed_button.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
@@ -698,7 +729,7 @@ func _render_choices() -> void:
 		return
 	var choices := _choices()
 	var compact_columns := mini(3, choices.size()) if choices.size() <= 3 else 2
-	var maximum_columns := 2 if small_screen_mode else (4 if size.x >= 1040.0 else compact_columns)
+	var maximum_columns := 1 if _compact_layout_enabled() else (4 if size.x >= 1040.0 else compact_columns)
 	choice_list.columns = maxi(1, mini(maximum_columns, choices.size()))
 	for choice in choices:
 		if typeof(choice) != TYPE_DICTIONARY:
@@ -918,6 +949,10 @@ func _speaker_display_name() -> String:
 func _position_panel() -> void:
 	if panel == null:
 		return
+	if body_label != null:
+		body_label.max_lines_visible = 10 if _compact_layout_enabled() else 4
+	var previous_panel_rect := Rect2(panel.position, panel.size)
+	var previous_portrait_rect := Rect2(portrait_panel.position, portrait_panel.size) if portrait_panel != null else Rect2()
 	var available_size := Vector2(
 		maxf(280.0, size.x - VIEWPORT_MARGIN.x * 2.0),
 		maxf(44.0, size.y - VIEWPORT_MARGIN.y * 2.0)
@@ -928,7 +963,10 @@ func _position_panel() -> void:
 			minf(COLLAPSED_SIZE.y, available_size.y)
 		)
 		panel.size = collapsed_size
-		panel.position = Vector2(VIEWPORT_MARGIN.x, maxf(VIEWPORT_MARGIN.y, size.y - collapsed_size.y - VIEWPORT_MARGIN.y))
+		var collapsed_x := VIEWPORT_MARGIN.x if locked_layout_side == "left" else maxf(VIEWPORT_MARGIN.x, size.x - collapsed_size.x - VIEWPORT_MARGIN.x)
+		var collapsed_y := VIEWPORT_MARGIN.y if locked_layout_vertical == "top" else maxf(VIEWPORT_MARGIN.y, size.y - collapsed_size.y - VIEWPORT_MARGIN.y)
+		panel.position = Vector2(collapsed_x, collapsed_y)
+		_record_layout_position_change(previous_panel_rect, previous_portrait_rect)
 		_notify_occupied_rect_changed()
 		return
 	var layout := _expanded_layout_rects(false)
@@ -938,57 +976,51 @@ func _position_panel() -> void:
 	portrait_panel.size = next_portrait_rect.size
 	panel.position = next_panel_rect.position
 	panel.size = next_panel_rect.size
+	_record_layout_position_change(previous_panel_rect, previous_portrait_rect)
 	_notify_occupied_rect_changed()
 
 
 func _expanded_layout_rects(reserve_maximum_capacity: bool) -> Dictionary:
+	return _expanded_layout_rects_for(locked_layout_side, locked_layout_vertical, reserve_maximum_capacity)
+
+
+func _expanded_layout_rects_for(side: String, vertical: String, reserve_maximum_capacity: bool) -> Dictionary:
+	var compact_layout := _compact_layout_enabled()
 	var available_size := Vector2(
 		maxf(280.0, size.x - VIEWPORT_MARGIN.x * 2.0),
 		maxf(44.0, size.y - VIEWPORT_MARGIN.y * 2.0)
 	)
-	var portrait_size := Vector2(
+	var portrait_size := SMALL_SCREEN_PORTRAIT_SIZE if compact_layout else Vector2(
 		minf(EXPANDED_PORTRAIT_SIZE.x, maxf(150.0, size.x * 0.18)),
 		minf(EXPANDED_PORTRAIT_SIZE.y, maxf(190.0, size.y * 0.44))
 	)
 	var choice_count := MAX_CHOICES if reserve_maximum_capacity else _choices().size()
-	var desired_width := EXPANDED_PANEL_WIDTH if reserve_maximum_capacity or choice_count > 1 else SINGLE_CHOICE_PANEL_WIDTH
-	var choice_columns := 2 if reserve_maximum_capacity else maxi(1, choice_list.columns if choice_list != null else 1)
+	var desired_width := SMALL_SCREEN_PANEL_WIDTH if compact_layout else (EXPANDED_PANEL_WIDTH if reserve_maximum_capacity or choice_count > 1 else SINGLE_CHOICE_PANEL_WIDTH)
+	var choice_columns := (1 if compact_layout else 2) if reserve_maximum_capacity else maxi(1, choice_list.columns if choice_list != null else 1)
 	var choice_rows := maxi(1, ceili(float(maxi(1, choice_count)) / float(choice_columns)))
 	var desired_height := EXPANDED_PANEL_BASE_HEIGHT
 	desired_height += float(maxi(0, choice_rows - 1)) * EXPANDED_PANEL_EXTRA_ROW_HEIGHT
 	var body_line_count := reserved_body_line_count if reserve_maximum_capacity else _estimated_body_line_count(desired_width)
 	desired_height += float(maxi(0, body_line_count - 2)) * EXPANDED_PANEL_EXTRA_BODY_LINE_HEIGHT
-	if small_screen_mode:
+	if compact_layout:
 		desired_height += float(choice_rows) * SMALL_SCREEN_CHOICE_ROW_EXTRA
-	if panel != null:
-		desired_height = maxf(desired_height, panel.get_combined_minimum_size().y)
-	var side := _preferred_layout_side()
 	var portrait_x := VIEWPORT_MARGIN.x + 12.0
 	if side == "right":
 		portrait_x = maxf(VIEWPORT_MARGIN.x, size.x - portrait_size.x - VIEWPORT_MARGIN.x - 12.0)
+	var portrait_y := VIEWPORT_MARGIN.y if vertical == "top" else maxf(VIEWPORT_MARGIN.y, size.y - portrait_size.y - VIEWPORT_MARGIN.y)
 	var portrait_rect := Rect2(
-		Vector2(portrait_x, maxf(VIEWPORT_MARGIN.y, size.y - portrait_size.y - VIEWPORT_MARGIN.y)),
+		Vector2(portrait_x, portrait_y),
 		portrait_size
 	)
-	var panel_available_width := maxf(280.0, size.x - portrait_size.x - VIEWPORT_MARGIN.x * 2.0 + 12.0)
+	var minimum_panel_width := 160.0 if compact_layout else 280.0
+	var panel_available_width := maxf(minimum_panel_width, size.x - portrait_size.x - VIEWPORT_MARGIN.x * 2.0 + 12.0)
 	var panel_size := Vector2(minf(desired_width, panel_available_width), minf(desired_height, available_size.y))
 	var panel_left := portrait_rect.position.x + portrait_size.x - 12.0
 	if side == "right":
 		panel_left = portrait_rect.position.x - panel_size.x + 12.0
 	panel_left = clampf(panel_left, VIEWPORT_MARGIN.x, maxf(VIEWPORT_MARGIN.x, size.x - panel_size.x - VIEWPORT_MARGIN.x))
-	var panel_rect := Rect2(Vector2(panel_left, maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y)), panel_size)
-	var avoid_local_rect := _global_rect_to_local_rect(avoid_global_rect)
-	var occupied_rect := portrait_rect.merge(panel_rect)
-	if avoid_local_rect.has_area() and occupied_rect.intersects(avoid_local_rect.grow(8.0)):
-		var lift := avoid_local_rect.position.y - 8.0 - occupied_rect.end.y
-		if occupied_rect.position.y + lift >= VIEWPORT_MARGIN.y:
-			portrait_rect.position.y += lift
-			panel_rect.position.y += lift
-		else:
-			var drop := avoid_local_rect.end.y + 8.0 - occupied_rect.position.y
-			if occupied_rect.end.y + drop <= size.y - VIEWPORT_MARGIN.y:
-				portrait_rect.position.y += drop
-				panel_rect.position.y += drop
+	var panel_y := VIEWPORT_MARGIN.y if vertical == "top" else maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y)
+	var panel_rect := Rect2(Vector2(panel_left, panel_y), panel_size)
 	return {
 		"portrait_rect": portrait_rect,
 		"panel_rect": panel_rect,
@@ -996,32 +1028,71 @@ func _expanded_layout_rects(reserve_maximum_capacity: bool) -> Dictionary:
 	}
 
 
-func _global_rect_to_local_rect(global_rect: Rect2) -> Rect2:
-	if not global_rect.has_area() or not is_inside_tree():
-		return Rect2()
-	var inverse := get_global_transform().affine_inverse()
-	var corner_a := inverse * global_rect.position
-	var corner_b := inverse * Vector2(global_rect.end.x, global_rect.position.y)
-	var corner_c := inverse * global_rect.end
-	var corner_d := inverse * Vector2(global_rect.position.x, global_rect.end.y)
-	var minimum := Vector2(minf(minf(corner_a.x, corner_b.x), minf(corner_c.x, corner_d.x)), minf(minf(corner_a.y, corner_b.y), minf(corner_c.y, corner_d.y)))
-	var maximum := Vector2(maxf(maxf(corner_a.x, corner_b.x), maxf(corner_c.x, corner_d.x)), maxf(maxf(corner_a.y, corner_b.y), maxf(corner_c.y, corner_d.y)))
-	return Rect2(minimum, maximum - minimum)
+func _reconsider_current_placement() -> void:
+	locked_layout_vertical = "bottom"
+	if not avoid_global_rect.has_area():
+		return
+	var preferred_side := _side_for_new_boundary(avoid_global_rect)
+	var next_side := preferred_side
+	if next_side != locked_layout_side:
+		layout_side_change_count += 1
+	locked_layout_side = next_side
 
 
 func _estimated_body_line_count(panel_width: float) -> int:
 	if full_body_text.strip_edges().is_empty():
 		return 1
-	var usable_width := maxf(220.0, panel_width - 36.0)
+	var usable_width := maxf(120.0, panel_width - 36.0)
 	var average_character_width := maxf(7.0, float(VisualStyle.TYPE_BODY_LARGE) * 0.53)
-	var characters_per_line := maxi(24, int(floor(usable_width / average_character_width)))
-	return clampi(ceili(float(full_body_text.length()) / float(characters_per_line)), 1, 4)
+	var characters_per_line := maxi(14, int(floor(usable_width / average_character_width)))
+	return clampi(ceili(float(full_body_text.length()) / float(characters_per_line)), 1, 10)
 
 
 func _preferred_layout_side() -> String:
-	if not avoid_global_rect.has_area():
+	return locked_layout_side
+
+
+func _compact_layout_enabled() -> bool:
+	return small_screen_mode or size.x <= 720.0
+
+
+func _side_for_new_boundary(focus_rect: Rect2, focus_x_hint: float = -1.0) -> String:
+	if not focus_rect.has_area() and focus_x_hint < 0.0:
+		return locked_layout_side
+	var midpoint := global_position.x + size.x * 0.5
+	var focus_x := focus_x_hint if focus_x_hint >= 0.0 else focus_rect.get_center().x
+	if focus_rect.has_area():
+		focus_x = maxf(focus_x, focus_rect.end.x)
+	if locked_layout_side == "left" and focus_x < midpoint - LAYOUT_SIDE_HYSTERESIS:
+		return "right"
+	if locked_layout_side == "right" and focus_x > midpoint + LAYOUT_SIDE_HYSTERESIS:
 		return "left"
-	return "right" if avoid_global_rect.get_center().x < global_position.x + size.x * 0.5 else "left"
+	return locked_layout_side
+
+
+func _record_layout_position_change(previous_panel_rect: Rect2, previous_portrait_rect: Rect2) -> void:
+	var next_panel_rect := Rect2(panel.position, panel.size)
+	var next_portrait_rect := Rect2(portrait_panel.position, portrait_panel.size) if portrait_panel != null else Rect2()
+	if not next_panel_rect.is_equal_approx(previous_panel_rect) or not next_portrait_rect.is_equal_approx(previous_portrait_rect):
+		layout_position_change_count += 1
+
+
+func _layout_is_bottom_anchored() -> bool:
+	if panel == null:
+		return false
+	if locked_layout_vertical != "bottom":
+		return false
+	var screen_bottom := global_position.y + size.y - VIEWPORT_MARGIN.y
+	return absf(panel.get_global_rect().end.y - screen_bottom) <= 1.0
+
+
+func _portrait_is_on_outer_edge() -> bool:
+	if portrait_panel == null or not portrait_panel.visible:
+		return true
+	var portrait_rect := portrait_panel.get_global_rect()
+	var left_edge := global_position.x + VIEWPORT_MARGIN.x + 12.0
+	var right_edge := global_position.x + size.x - VIEWPORT_MARGIN.x - 12.0
+	return absf(portrait_rect.position.x - left_edge) <= 1.0 if locked_layout_side == "left" else absf(portrait_rect.end.x - right_edge) <= 1.0
 
 
 func _notify_occupied_rect_changed() -> void:
