@@ -2200,7 +2200,7 @@ func _assert_objective_hud(context_label: String) -> void:
 			_require(not str(hud.get(field, "")).strip_edges().is_empty(), "%s run-status HUD snapshot is missing field: %s." % [context_label, field])
 		_require(str(hud.get("status_text", "")) == status_text, "%s run-status HUD status snapshot does not match visible text." % context_label)
 		_require(str(hud.get("objective_text", "")) == objective_text, "%s run-status HUD objective snapshot does not match visible text." % context_label)
-		_require(str(hud.get("save_text", "")) == save_text, "%s run-status HUD save snapshot does not match visible text." % context_label)
+		_require(str(hud.get("save_text", "")) == save_text, "%s run-status HUD save snapshot does not match visible text (visible='%s', snapshot='%s')." % [context_label, save_text, str(hud.get("save_text", ""))])
 		var presentation: Dictionary = hud.get("presentation", {})
 		var heat_presentation: Dictionary = presentation.get("heat", {})
 		var drunk_presentation: Dictionary = presentation.get("drunk", {})

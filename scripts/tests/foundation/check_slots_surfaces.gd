@@ -17,6 +17,80 @@ class MotionSymbolHarness:
 	func draw_line(_from: Vector2, _to: Vector2, _color: Color, _width: float = -1.0, _antialiased: bool = false) -> void:
 		line_count += 1
 
+
+func _check_slot_runtime_storage_contract(definition: Dictionary, failures: Array) -> void:
+	var run_state: RunState = _slot_run_state("SLOT-RUNTIME-STORAGE", 100000)
+	var legacy: Dictionary = _slot_machine(definition, run_state, "pinball", "line_5x3", "standard", "plain")
+	var cache = SlotDefinitionCacheScript.new()
+	cache.configure(definition)
+	var compact := cache.compact_machine_for_storage(legacy.duplicate(true))
+	if compact.has("reel_strips") or compact.has("bonus_reel_strips"):
+		failures.append("Slot schema-v2 compact state retained immutable reel definitions.")
+	var hydrated: Dictionary = cache.owned_runtime_machine(compact)
+	if hydrated.get("reel_strips", []) != legacy.get("reel_strips", []) or hydrated.get("reel_heights", []) != legacy.get("reel_heights", []):
+		failures.append("Slot definition cache hydration changed canonical reel strips or geometry.")
+	var game = SlotGameScript.new()
+	game.setup(definition)
+	game.prewarm_surface_assets()
+	var environment := {
+		"id": "slot_runtime_storage",
+		"archetype_id": "casino",
+		"kind": "casino",
+		"game_ids": ["slot"],
+		"game_states": {"slot": compact},
+	}
+	run_state.set_environment(environment)
+	environment = run_state.current_environment
+	var save_service = SaveServiceScript.new()
+	var checkpoint_slot := "foundation_slot_runtime_checkpoint"
+	for progress_value in [0.25, 0.50, 0.90]:
+		var progress := float(progress_value)
+		var expected_elapsed := int(round(3000.0 * progress))
+		var machine: Dictionary = game.call("_read_machine", environment)
+		machine["slot_animation_id"] = "storage-checkpoint"
+		machine["slot_animation_duration_msec"] = 3000
+		machine["slot_animation_plan"] = {"id": "storage-checkpoint", "duration_msec": 3000, "reel_timeline": [{"reel": 0, "stop_time": 1.0}]}
+		game.call("_write_machine", environment, machine)
+		game.checkpoint_surface_ui_state({"surface_runtime_status": {"surface_animations": {"slot_spin": {
+			"active_id": "storage-checkpoint", "active": true, "elapsed": progress * 3.0,
+		}}}}, run_state, environment)
+		var active_saved: Dictionary = SlotMachineStateScript.peek_machine(environment, "slot")
+		if int(active_saved.get("slot_animation_resume_elapsed_msec", -1)) != expected_elapsed:
+			failures.append("Slot active presentation checkpoint did not persist %d%% elapsed time." % int(progress * 100.0))
+		if save_service.save_run(run_state, checkpoint_slot) != OK:
+			failures.append("Slot active presentation checkpoint failed to save at %d%%." % int(progress * 100.0))
+			break
+		var loaded_value: Variant = save_service.load_run(checkpoint_slot)
+		if not (loaded_value is RunState):
+			failures.append("Slot active presentation checkpoint failed to load at %d%%." % int(progress * 100.0))
+			break
+		run_state = loaded_value as RunState
+		environment = run_state.current_environment
+		game.enter(run_state, environment)
+		var resumed: Dictionary = SlotMachineStateScript.peek_machine(environment, "slot")
+		var resumed_elapsed := Time.get_ticks_msec() - int(resumed.get("slot_animation_started_msec", 0))
+		if absi(resumed_elapsed - expected_elapsed) > 17:
+			failures.append("Slot active presentation checkpoint did not resume within one rendered frame at %d%%." % int(progress * 100.0))
+	save_service.clear_run(checkpoint_slot)
+	var machine: Dictionary = game.call("_read_machine", environment)
+	machine["slot_animation_started_msec"] = 0
+	game.call("_write_machine", environment, machine)
+	game.checkpoint_surface_ui_state({"surface_runtime_status": {"surface_animations": {"slot_spin": {
+		"active_id": "storage-checkpoint", "active": false, "elapsed": 3.0,
+	}}}}, run_state, environment)
+	var settled: Dictionary = SlotMachineStateScript.peek_machine(environment, "slot")
+	if not str(settled.get("slot_animation_id", "")).is_empty() or not (settled.get("slot_animation_plan", {}) as Dictionary).is_empty():
+		failures.append("Slot completed ordinary presentation retained its expired animation timeline.")
+	var renderer = SlotRendererScript.new()
+	for index in range(SlotRendererScript.MAX_SYMBOL_METADATA_CACHE + 24):
+		renderer.call("_symbol_draw_metadata", definition, "pinball", "CACHE_%03d" % index)
+	var cache_status: Dictionary = renderer.cache_snapshot()
+	if int(cache_status.get("symbol_metadata_cache_size", 0)) > int(cache_status.get("symbol_metadata_cache_cap", 0)):
+		failures.append("Slot symbol metadata cache exceeded its explicit bound under variant churn.")
+	var pinball_cache: Dictionary = PinballFeatureScript.runtime_session_debug_snapshot()
+	if int(pinball_cache.get("board_template_cache_size", 0)) > int(pinball_cache.get("board_template_cache_cap", 0)):
+		failures.append("Pinball immutable board template cache exceeded its explicit bound.")
+
 func _check_slot_free_games_carryover(definition: Dictionary, failures: Array) -> void:
 	var buffalo = SlotFamilyBuffaloScript.new()
 	var run_state: RunState = _slot_run_state("SLOT-FREE-CARRYOVER", 100000)

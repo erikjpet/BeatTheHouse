@@ -13,6 +13,7 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
 const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const REPORT_PATH := "user://foundation_performance_probe_report.json"
 const PERF_SAVE_SLOT := "foundation_performance_probe_autosave"
 const TEST_META_COLLECTION_PATH := "user://foundation_performance_probe_meta_collection.json"
@@ -1429,9 +1430,9 @@ func _slot_machine_state(run_state: RunState, game_id: String) -> Dictionary:
 
 func _write_slot_machine_state(run_state: RunState, game_id: String, machine: Dictionary) -> void:
 	var environment: Dictionary = run_state.current_environment
-	var game_states: Dictionary = environment.get("game_states", {})
-	game_states[game_id] = machine.duplicate(true)
-	environment["game_states"] = game_states
+	# Exercise the production mutation seam so the due-time scheduler receives
+	# the same revision invalidation as a real autoplay action.
+	SlotMachineStateScript.write_runtime_machine(environment, game_id, machine)
 	run_state.current_environment = environment
 
 
