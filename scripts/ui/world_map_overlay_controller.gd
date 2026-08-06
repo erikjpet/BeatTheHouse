@@ -184,7 +184,17 @@ func position_detail_popup(snapshot: Dictionary) -> void:
 	if holder_size.x <= 0.0 or holder_size.y <= 0.0:
 		holder_size = Vector2(800, 430)
 	detail_popup.custom_minimum_size = Vector2(VisualStyle.POPUP_MIN_WIDTH, VisualStyle.FLEXIBLE_SIZE)
-	var popup_size := FoundationWidgetsScript.autosize_popup(detail_popup, holder_size, detail_popup.get_combined_minimum_size())
+	var content_minimum := detail_popup.get_combined_minimum_size()
+	var popup_size := FoundationWidgetsScript.autosize_popup(detail_popup, holder_size, content_minimum)
+	# Route decisions deliberately use all six visible lines (stop, hours,
+	# offer, commitment, alternative, status). The generic popup helper caps
+	# height at 72% for transient prompts; a map-owned popup can safely use the
+	# holder's remaining height and must not clip the last decision lines.
+	var map_height_limit := maxf(0.0, holder_size.y - float(VisualStyle.SPACE_5 * 2))
+	var decision_height := minf(content_minimum.y + float(VisualStyle.SPACE_6 * 2), map_height_limit)
+	if decision_height > popup_size.y:
+		popup_size.y = decision_height
+		detail_popup.size.y = decision_height
 	detail_popup.visible = true
 	var center := holder_size * 0.5
 	if nodes_layer != null and nodes_layer.has_method("local_position_for_node") and bool(nodes_layer.call("node_is_in_view", node_id)):

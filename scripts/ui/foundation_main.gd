@@ -6025,13 +6025,13 @@ func _build_world_map_overlay() -> void:
 
 	world_map_badge_slot = VBoxContainer.new()
 	world_map_badge_slot.add_theme_constant_override("separation", 4)
-	world_map_badge_slot.custom_minimum_size = Vector2(248, 0)
+	world_map_badge_slot.custom_minimum_size = Vector2(472, 0)
 	world_map_badge_slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	world_map_badge_slot.visible = false
 	popup_stack.add_child(world_map_badge_slot)
 
 	world_map_detail_label = _label("Select a revealed stop.", 13)
-	world_map_detail_label.custom_minimum_size = Vector2(248, 78)
+	world_map_detail_label.custom_minimum_size = Vector2(472, 182)
 	world_map_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	world_map_detail_label.max_lines_visible = 6
 	world_map_detail_label.clip_text = true
@@ -13906,7 +13906,19 @@ func _refresh_world_map_detail() -> void:
 		_set_world_map_detail_badges([])
 		world_map_detail_label.text = "\n".join(lines)
 		return
-	var choice := _travel_choice(selected_world_map_node_id)
+	var choice := {}
+	# Use the framed list consumed by the room travel UI so the map cannot fall
+	# back to an unframed one-off route dictionary and silently drop decision
+	# context. The raw lookup remains a compatibility fallback for legacy maps.
+	for choice_value in _travel_choice_view_list():
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var candidate: Dictionary = choice_value
+		if str(candidate.get("id", "")) == selected_world_map_node_id:
+			choice = candidate
+			break
+	if choice.is_empty():
+		choice = _travel_choice(selected_world_map_node_id)
 	lines.append("Stop: %s" % str(node.get("label", selected_world_map_node_id)))
 	var node_archetype := _environment_archetype(str(node.get("archetype_id", selected_world_map_node_id)))
 	var destination_kind := str(node_archetype.get("kind", node.get("kind", "")))
@@ -13946,12 +13958,18 @@ func _refresh_world_map_detail() -> void:
 		return
 	status_text = str(choice.get("open_status_text", status_text))
 	lines.append("Hours: %s" % status_text)
-	lines.append(_world_map_travel_cost_line(choice))
-	var distance_blocks := int(choice.get("distance_blocks", 0))
-	var distance_text := str(choice.get("distance", "near")).capitalize()
-	if distance_blocks > 0:
-		distance_text = "%s / %d block%s" % [distance_text, distance_blocks, "" if distance_blocks == 1 else "s"]
-	lines.append("Distance: %s" % distance_text)
+	var decision_lines: Array = choice.get("decision_lines", []) if typeof(choice.get("decision_lines", [])) == TYPE_ARRAY else []
+	if decision_lines.size() == 3:
+		# The view model owns the offer, live commitment, and alternative-cost
+		# derivation. The map popup is only their production presentation seam.
+		lines.append_array(decision_lines)
+	else:
+		lines.append(_world_map_travel_cost_line(choice))
+		var distance_blocks := int(choice.get("distance_blocks", 0))
+		var distance_text := str(choice.get("distance", "near")).capitalize()
+		if distance_blocks > 0:
+			distance_text = "%s / %d block%s" % [distance_text, distance_blocks, "" if distance_blocks == 1 else "s"]
+		lines.append("Distance: %s" % distance_text)
 	var unlock_summary := str(choice.get("unlock_summary", "")).strip_edges()
 	if not bool(choice.get("enabled", true)) and not unlock_summary.is_empty():
 		lines.append("Status: %s" % unlock_summary)

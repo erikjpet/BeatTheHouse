@@ -6089,18 +6089,24 @@ func _run() -> void:
 		quit(1)
 		return
 	var detail_text := str(selected_map_screen.get("world_map_detail_text", ""))
-	var travel_detail_line := ""
+	var offer_line := ""
+	var commitment_line := ""
+	var forfeit_line := ""
 	for detail_line_value in detail_text.split("\n"):
 		var detail_line := str(detail_line_value)
-		if detail_line.begins_with("Travel:"):
-			travel_detail_line = detail_line
-			break
-	if travel_detail_line.is_empty() or not travel_detail_line.contains(" · Cost: $") or not detail_text.contains("Distance:"):
-		push_error("World map selection popup did not show travel method and cost together with distance: %s" % detail_text)
+		if detail_line.begins_with("Offers:"):
+			offer_line = detail_line
+		elif detail_line.begins_with("Commits:"):
+			commitment_line = detail_line
+		elif detail_line.begins_with("Forfeits now:"):
+			forfeit_line = detail_line
+	if offer_line.is_empty() or commitment_line.is_empty() or forfeit_line.is_empty() \
+		or not commitment_line.contains(" min") or not commitment_line.contains("$"):
+		push_error("World map selection popup did not show offer, live commitment, and forfeited alternative: %s" % detail_text)
 		quit(1)
 		return
 	if detail_text.split("\n").size() > 6:
-		push_error("World map selection popup put required travel text below its six visible lines: %s" % detail_text)
+		push_error("World map selection popup put required decision text below its six visible lines: %s" % detail_text)
 		quit(1)
 		return
 	if not _world_map_detail_popup_fits(selected_map_screen):

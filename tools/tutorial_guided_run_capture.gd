@@ -87,7 +87,30 @@ func _run() -> void:
 	await _save_shot("04_corner_family_loan_real_debt")
 	_clear_guide_state()
 	_resolve_event("parking_lot_tip", "follow_tip")
+	# Direct fixture resolution can leave the production consequence card open;
+	# dismiss it exactly as the player would before selecting a map destination.
+	app.call("_hide_event_choice_popup")
 	app.call("open_world_map")
+	# Keep the route-choice proof focused on the actual decision contract rather
+	# than an unselected map. Selection is presentation-only; travel remains a
+	# separate confirmation so this capture cannot advance the tutorial. Resolve
+	# the target from the live choices because route identities may be generated
+	# world-node instances or direct environment archetype ids.
+	var route_target_id := ""
+	var route_choices: Array = app.call("_travel_choice_view_list") as Array
+	for route_choice_value in route_choices:
+		if typeof(route_choice_value) != TYPE_DICTIONARY:
+			continue
+		var route_choice: Dictionary = route_choice_value
+		var candidate_id := str(route_choice.get("target_id", route_choice.get("id", ""))).strip_edges()
+		if candidate_id.is_empty():
+			continue
+		if route_target_id.is_empty() or str(route_choice.get("archetype_id", "")) == "gas_station_casino":
+			route_target_id = candidate_id
+	if route_target_id.is_empty() or not bool(app.call("select_world_map_node", route_target_id)):
+		push_error("Tutorial capture could not select a live route decision frame.")
+		quit(1)
+		return
 	_stage_guide_lesson("tutorial_route_choice")
 	await _settle(8)
 	await _save_shot("05_parking_tip_opens_path_a_and_b")
