@@ -565,10 +565,14 @@ function Invoke-FoundationPerfSmoke {
     $oldSeedPrefix = $env:BTH_PERF_SEED_PREFIX
     try {
         $env:BTH_PERF_RUNS = "0"
-        $env:BTH_PERF_FRAMES = "40"
+        # Animated surfaces redraw below the engine frame rate. Forty frames
+        # yielded only ~17 draw samples, so a single scheduler spike became the
+        # computed p95. Use the probe's authored 120-frame baseline; budgets are
+        # unchanged, but the percentile now represents a real distribution.
+        $env:BTH_PERF_FRAMES = "120"
         $env:BTH_PERF_RESOLVE_SAMPLES = "24"
         $env:BTH_PERF_SEED_PREFIX = "CHECK-GODOT-PERF"
-        Invoke-GodotScript -Name "foundation_perf_smoke" -ScriptPath "res://tools/foundation_performance_probe.gd" -StageTimeoutSec 60
+        Invoke-GodotScript -Name "foundation_perf_smoke" -ScriptPath "res://tools/foundation_performance_probe.gd" -StageTimeoutSec 90
     }
     finally {
         $env:BTH_PERF_RUNS = $oldRuns
