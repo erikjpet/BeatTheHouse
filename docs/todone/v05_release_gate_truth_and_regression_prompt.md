@@ -4,6 +4,34 @@ Last reconciled: 2026-08-05
 Release target: 0.5.0
 Status: OPEN / BLOCKS FEATURE CLOSURE AND FINAL RC
 
+## Execution record — 2026-08-05
+
+Status: **COMPLETE**
+
+- Root causes: the load gate treated a non-null script resource/process exit as
+  success even when strict stderr contained parser/runtime errors;
+  compositional Foundation/UI fragments were being loaded outside their real
+  generated compilation units; map selection cleared its animation origin at
+  the wrong state-machine boundary; inventory focus and bag sizing ran before
+  their owning controls had stable tree/layout state; and stale content/UI
+  assertions no longer followed the authored route and outcome contracts.
+- Fixes: strict classified stderr is now authoritative; standalone scripts are
+  exhaustive-loaded while compositional fragments run through split runners;
+  map focus preserves its pre-selection window; lifecycle/layout ownership was
+  corrected; the Grand Casino seen/locked route, parking-tip route-open copy,
+  dealer reprieve, and data-backed result-title contracts were reconciled.
+- Commits: `038d8a94`, `f9fb2fd2`, `ee41ac74`, with final gate-quality followups
+  `37eba0bb` and `84ae3fc6`.
+- Negative control: a temporary invalid standalone fixture made
+  `gdscript_load_check` and its wrapper exit nonzero in
+  `.tmp/gate_truth_negative_control/summary.json`; the fixture was removed.
+- Gates: Systems and UI passed with clean classified stderr
+  (`.tmp/v05_systems_green/summary.json`,
+  `.tmp/v05_ui_decision_final/summary.json`); the exact-source Full matrix
+  passed at `.tmp/v05_release_candidate_green/summary.json`; determinism
+  matched 320 checkpoints/hash `2820946917`; strict mouse play passed 2/2;
+  visual QA completed with no warnings.
+
 ## Objective
 
 Make the release gates accurately fail on real errors, then fix every fresh

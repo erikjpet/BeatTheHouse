@@ -1,29 +1,59 @@
 # Agent Prompt — Final Performance & Cleanup Audit (No Stutter, Hangs, or Slowdown)
 
+## Execution record — 2026-08-05
+
+Status: **COMPLETE ON THE 0.5 TECHNICAL BASELINE**
+
+- Defects fixed: late-run Crew recovery was falsely terminal because the
+  evaluator recognized only `effect.bankroll_delta`, not the Crew's
+  `debt_profile` loan; opening that conversation also ran an unrelated full
+  checkpoint. Buffalo true wins used a format-blind paytable and missed RTP
+  targets on line/video formats. The release performance smoke sampled only
+  about 17 animated draws, making one scheduler spike its p95.
+- Root repairs: debt-profile liquidity is evaluated at the terminal seam;
+  presentation queue mutation uses the pending autosave boundary; Buffalo has
+  explicit format-aware true-win paytables with attributable deep-audit rows;
+  and release p95 uses the authored 120-frame distribution without changing a
+  budget or liveness floor.
+- Commits: `3c4f7e57`, `e4ec5549`, `37eba0bb`, `84ae3fc6` (plus the earlier
+  integrated scratch-history/storage compaction and Web-audio work recorded in
+  `docs/plans/0.5_performance_audit.md`).
+- Native: the exact-source 8-run/120-frame/48-resolve probe passed 63
+  observations with zero failures at
+  `.tmp/v05_release_performance_full.json`; the full table is in the audit.
+- Long run/storage: the 180-minute/504-action soak passed with retained memory
+  growth `-471582`, object growth `-3`, node growth `-2`, zero orphans, and
+  maximum serialized workload `179067`; the 12-cabinet storage soak ended at
+  109593 bytes after 21 save/loads and the focused 12-cabinet probe stayed
+  bounded at 3091 bytes per machine/130043 bytes total.
+- Web/player gates: L0.2 and Grand Casino passed under 4x CPU throttle;
+  strict mouse play passed 2/2; deterministic hashes matched; visual QA had no
+  warnings; all seven Scratch Ticket RTP bands passed.
+- Final gate: `.tmp/v05_release_candidate_green/summary.json` is entirely
+  green, including exhaustive source load, Foundation `all`, UI, native
+  performance, slot physics/deep audit, and roulette rules/audio.
+
 ## 2026-08-05 queue reconciliation
 
-This prompt remains **OPEN FOR EXACT-FINAL-SOURCE EVIDENCE REFRESH; HISTORICAL
-PERFORMANCE BLOCKERS ARE CLOSED**. The
+This prompt is **CLOSED ON THE EXACT-SOURCE 0.5 TECHNICAL BASELINE**. The
 integrated source is committed on `main`. Scratch Ticket compaction is proven
 deterministic, backward-compatible, and bounded; the full 180-minute/504-action
 soak passes with a negative retained-memory trend and zero retained orphans.
 Native performance/liveness, Grand Casino Web runtime, determinism, strict
 mouse play, visual QA, and all seven Scratch Ticket RTP bands are green. The
-evidence and superseding verdicts are in
+evidence and final superseding verdict are in
 `docs/plans/0.5_performance_audit.md`.
 
 Web audio parity is also implemented: 80 Web SFX cues and deterministic
 prebuilt procedural music beds use the shared 22.05 kHz delivery contract,
 decode off the main thread, and follow native bus gains. The final
-single-thread Web export passes the unchanged 4x-throttled cold-ready gate at
-17.557 seconds/20 seconds and the complete broad L0.2 matrix. Do not archive
-this prompt until the exact final-RC source matrix is refreshed alongside the
-remaining feature, regression, human, and owner gates. The 2026-08-05 audit
-found committed Systems/UI failures and two unexecuted feature prompts. Those
-are owned by the release-gate truth, inventory, and meaningful-destination
-prompts. Do not archive or run the final matrix until they land on one clean
-source identity. Do not weaken a budget, liveness floor, throttle, assertion,
-or deterministic requirement.
+single-thread Web export passes the unchanged 4x-throttled cold-ready gate and
+the complete broad L0.2 matrix. The release-gate truth, inventory, and
+meaningful-destination prompts landed before the final matrix. Exact-source
+native/Web, soak, storage, deterministic, strict-input, visual, RTP, and Full
+gates now pass on one committed technical baseline without weakening a budget,
+liveness floor, throttle, assertion, or deterministic requirement. Human and
+owner acceptance remain in their own binding release prompts.
 
 Copy everything below this line into the worker agent.
 

@@ -4,12 +4,11 @@ All notable public release changes for Beat the House are recorded here.
 
 ## 0.5.0 - In development
 
-Status: **gap closure; not a release candidate.** Most feature work and the
-historical pre-human tutorial, performance/liveness, soak, determinism, Scratch
-Ticket, Grand Casino Web, and storage gates are implemented. The 2026-08-05
-audit found two promised split features still open plus committed Systems/UI
-and gate-honesty regressions. Five-person cold-player testing, exact-source
-owner approval, packaging, publication, and tagging remain pending.
+Status: **technical baseline green; owner approval pending.** Feature,
+regression, narration/audio, performance/liveness, soak, determinism, Scratch
+Ticket, Grand Casino Web, storage, strict-input, visual, and exact-source Full
+gates are complete. Five-person cold-player testing, owner Web/Windows approval
+and release decisions, packaging, publication, and tagging remain pending.
 
 ### Added
 
@@ -89,6 +88,12 @@ owner approval, packaging, publication, and tagging remain pending.
   staging and slot autoplay de-allocation bring 4x-throttled cold ready to
   17.557 seconds/20 seconds and autoplay to 88.312 ms/100 ms without changing
   simulation or performance budgets.
+- Unifies run inventory and meta storage around responsive pooled item cards
+  with voiced descriptions, affinity/attribute glyphs, stack counts, and
+  source-level exclusion of the irrelevant risk badge.
+- Gives every authored destination a distinct offer/tradeoff contract and
+  shows live time, cash, Heat, risk, and forfeited-alternative costs in the
+  production map before travel.
 
 ### Fixed
 
@@ -110,6 +115,14 @@ owner approval, packaging, publication, and tagging remain pending.
   scans/copies and the repeating Web slot-autoplay action hitch.
 - Fixes the low-bandwidth Web-only music/SFX substitutions and missing native
   audio-bus gain parity.
+- Makes release gates authoritative for parser/runtime stderr, validates
+  compositional tests through their real generated runners, and fixes map
+  focus, lifecycle/layout, and stale content-contract regressions found by the
+  honest gate.
+- Keeps late-run Crew recovery live by recognizing debt-profile liquidity and
+  removing an unrelated terminal checkpoint from conversation opening.
+- Rebalances Buffalo true wins through explicit format-aware paytables and
+  makes the deep audit/report contracts validate the canonical payout seam.
 - Rebalances Buffalo free games on the 5x4 and 6x5 cabinets so large boards
   generate fewer gold tokens and cannot retrigger past 28 total spins, while
   preserving the classic 3-reel math and terminal full-board Grand result.
@@ -120,8 +133,7 @@ owner approval, packaging, publication, and tagging remain pending.
 Current evidence is recorded in `docs/plans/0.5_pre_release_audit.md`,
 `docs/plans/tutorial_completion_report.md`, `docs/plans/0.5_performance_audit.md`, and
 `docs/plans/0.5_release_checklist.md`. No final release approval is claimed
-until the active feature, regression, human, packaging, and publishing gates
-close.
+until the human, owner, packaging, and publishing gates close.
 
 ## 0.4.0 - Unpublished Act 1 candidate
 

@@ -4,6 +4,31 @@ Last reconciled: 2026-08-05
 Release target: 0.5.0
 Status: **OPEN / PROMISED SPLIT FEATURE NOT YET EXECUTED**
 
+## Execution record — 2026-08-05
+
+Status: **COMPLETE**
+
+- Design choices: the recommended responsive card grid, voiced-line detail
+  depth, and one shared item-card presentation contract for run inventory and
+  meta-home storage were used.
+- Implementation: `item_card_view_model.gd` is the shared source of item-card
+  title/voice/glyph/badge/affinity/stack presentation; run and meta inventory
+  use the same pooled grouped-card surface; `risk_tier` is excluded at badge
+  selection; ticket/pile quantities summarize instead of flooding the grid;
+  hover/selection exposes the `+N` stack without mechanical prose.
+- Voice: all 67 run-item descriptions and 40 collection flavor lines were
+  reconciled with the narration rollout and audited for distinct, nonnumeric
+  neo-noir copy.
+- Commits: `0845c7fc`, `a0b9290a`, `39c56a31`.
+- Captures: `.tmp/inventory_card_redesign/after/run_inventory_desktop.png`,
+  `run_inventory_small.png`, `meta_inventory_desktop.png`, and
+  `meta_inventory_small.png` (before captures are in the sibling `before/`
+  directory).
+- Gates: exact-source UI integration and design-system checks passed in
+  `.tmp/v05_ui_decision_final/summary.json`; determinism matched hash
+  `2820946917`; visual QA reported no warnings; the final Full matrix passed
+  in `.tmp/v05_release_candidate_green/summary.json`.
+
 The 2026-08-05 pre-release audit confirmed that later work supplied useful
 prerequisites but did not close this prompt. Run and meta inventory now share
 the spatial `InventoryContainerSurface`, item affinity badges exist, and the

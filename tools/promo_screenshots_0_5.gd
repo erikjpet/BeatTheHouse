@@ -23,7 +23,8 @@ func _init() -> void:
 
 func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(out_dir)
-	var store_path := "%s/promo_meta_store.json" % out_dir
+	# Capture fixture state belongs in user data, not beside publishable images.
+	var store_path := "user://promo_capture_0_5_meta.json"
 	OS.set_environment("BTH_META_COLLECTION_PATH", store_path)
 	if FileAccess.file_exists(store_path):
 		DirAccess.remove_absolute(store_path)
@@ -68,6 +69,9 @@ func _capture_cage() -> void:
 		await _settle(8)
 	_set_environment_archetype("grand_casino_cage")
 	await _settle(12)
+	app.set("last_hook_result", {"message": "The Cage is open."})
+	app.call("_refresh")
+	await _settle(2)
 	await _save_shot("06_cage")
 
 
@@ -83,7 +87,7 @@ func _capture_sale_showcase() -> void:
 	await _settle(4)
 	app.call("_enter_meta_location", "pawn_shop")
 	await _settle(8)
-	var opened := false
+	var focused := false
 	var snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
 	var objects: Array = snapshot.get("objects", []) if typeof(snapshot.get("objects", [])) == TYPE_ARRAY else []
 	for object_value in objects:
@@ -92,10 +96,12 @@ func _capture_sale_showcase() -> void:
 		var object_data: Dictionary = object_value
 		var object_id := str(object_data.get("object_id", ""))
 		if object_id.begins_with("meta_sal_shelf:") and bool(object_data.get("enabled", true)):
-			opened = bool(app.call("activate_interactable_object", object_id))
+			focused = bool(app.call("focus_interactable_object", object_id))
 			break
-	if not opened and app.has_method("open_meta_sal_shelf"):
-		app.call("open_meta_sal_shelf", 0)
+	if not focused:
+		push_error("Promo capture could not focus an occupied Sal shelf.")
+		quit(1)
+		return
 	await _settle(10)
 	await _save_shot("07_sale_showcase")
 
@@ -174,6 +180,10 @@ func _show_dialogue() -> void:
 	}
 	talk_dock.call("set_entry", entry, option, 2)
 	await _settle(8)
+	# Promo evidence must show the authored line, not a timing-dependent partial
+	# typewriter frame. This invokes the same completion path as click-to-skip.
+	talk_dock.call("_complete_body_reveal")
+	await _settle(2)
 
 
 func _save_shot(file_id: String) -> void:

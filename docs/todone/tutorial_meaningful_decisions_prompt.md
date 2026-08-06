@@ -4,6 +4,32 @@ Last reconciled: 2026-08-05
 Release target: 0.5.0
 Status: **PARTIAL / WHOLE-GAME DECISION CONTRACT OPEN**
 
+## Execution record — 2026-08-05
+
+Status: **COMPLETE**
+
+- Design choices: travel remains reversible where a route exists, but every
+  commitment still spends time/cash and changes Heat/risk opportunity; the
+  single guided fork stays Gas Casino (safer, smaller lesson) versus
+  Underground (more games, faster money/Heat); both paths converge on the same
+  finale.
+- Implementation: all 12 authored routes have distinct `decision.offer` and
+  `decision.tradeoff` contracts. `FoundationTravelViewModel` derives live
+  commitment from minutes, cost, Heat, and risk, and derives forfeits from the
+  other currently visible enabled choices. The production map now consumes
+  that same framed list and visibly presents offer, commitment, forfeit, and
+  status without clipping; route simulation remains data-driven and seeded.
+- Commits: `c64bd635`, `a44f1822`, `e8fdb0c3`.
+- Captures: the final route contract is visible in
+  `.tmp/v05_tutorial_capture_final/05_parking_tip_opens_path_a_and_b.png`;
+  Gas/Pull-Tabs and Underground/Blackjack branches are captured as steps
+  `06`–`11` in the same directory; normal-run host re-entry is step `18`.
+- Gates: both guided branches completed in the capture driver; strict rendered
+  mouse play passed 2/2 with two victories and no true failures; determinism
+  matched 320 checkpoints/hash `2820946917`; the complete UI suite and final
+  Full matrix passed in `.tmp/v05_ui_decision_final/summary.json` and
+  `.tmp/v05_release_candidate_green/summary.json`.
+
 The tutorial Gas Casino versus Underground branch now exists, is deterministic,
 and rejoins the guided finale. That satisfies only Part 2's structural fork.
 The 2026-08-05 audit found no whole-game offer-versus-forfeit comparison or

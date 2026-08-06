@@ -2,7 +2,18 @@
 
 Last reconciled: 2026-08-05
 Release target: 0.5.0
-Status: BLOCKED BY IMPLEMENTATION, GATE-TRUTH, TUT-N17, AND OWNER APPROVAL
+Status: BLOCKED ONLY BY TUT-N17 AND OWNER APPROVAL
+
+## 2026-08-05 technical baseline handoff
+
+Implementation/regression prompts are archived, version metadata is `0.5.0`,
+the exact-source automated matrix is green at
+`.tmp/v05_release_candidate_green/summary.json`, the higher-sample native
+probe is green at `.tmp/v05_release_performance_full.json`, and the canonical
+screenshots in `docs/screenshots/0.5/` were regenerated and visually
+inspected. Collection metadata passes with `draft: true` still awaiting the
+owner ship decision. This is not APPROVED: TUT-N17 and owner Web/Windows
+hands-on play/decisions remain mandatory.
 
 ## Objective
 
@@ -17,18 +28,18 @@ Integration recovery is complete and archived at
 start final RC approval until every implementation/regression prompt is
 complete and archived and the intended source is clean:
 
-- `v05_release_gate_truth_and_regression_prompt.md`;
-- `tutorial_inventory_rework_prompt.md`;
-- `tutorial_meaningful_decisions_prompt.md`;
+- `docs/todone/v05_release_gate_truth_and_regression_prompt.md` (complete);
+- `docs/todone/tutorial_inventory_rework_prompt.md` (complete);
+- `docs/todone/tutorial_meaningful_decisions_prompt.md` (complete);
 - `tutorial_first_time_player_completion_prompt.md`;
-- `performance_cleanup_final_audit_prompt.md`.
+- `docs/todone/performance_cleanup_final_audit_prompt.md` (complete).
 
 The tutorial is agent-verifiable through TUT-N25 except for human-only
-TUT-N17. Historical performance evidence closed native, memory-soak, Scratch
-Ticket, Grand Casino runtime, 20-second Web cold-ready, broad L0.2, and slot
-runtime/storage work, but it must be refreshed after the remaining changes.
-See the current queue and audit; neither historical green nor historical red
-is a substitute for the exact candidate matrix.
+TUT-N17. Exact-source evidence now closes native performance, memory soak,
+Scratch Ticket, Grand Casino runtime, 20-second Web cold-ready, broad L0.2,
+and slot runtime/storage work on the technical baseline. See the current queue
+and audit. A later code change still invalidates the candidate and reruns the
+affected evidence.
 
 The intended source must be committed and clean. If an entry condition is not
 satisfied, return to its owning prompt rather than manufacturing an RC verdict.
