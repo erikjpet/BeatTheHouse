@@ -23,6 +23,7 @@ const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.g
 const InventoryContainerSurfaceScript := preload("res://scripts/ui/inventory_container_surface.gd")
 const InventoryContainerCatalogScript := preload("res://scripts/ui/inventory_container_catalog.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
+const ItemCardViewModelScript := preload("res://scripts/ui/item_card_view_model.gd")
 
 var _texture_provider: Callable = Callable()
 var _model: Dictionary = {}
@@ -391,6 +392,9 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 		return
 	_add_section_header("Selected Item", "What you picked and where it currently lives.")
 	_add_selected_item_header(item)
+	var card := ItemCardViewModelScript.build(item)
+	FoundationWidgets.add_detail_row(_detail_box, "Stack", str(card.get("stack_text", "+1")))
+	FoundationWidgets.add_detail_row(_detail_box, "Affinity", str(card.get("affinity_label", "General")))
 	FoundationWidgets.add_detail_row(_detail_box, "Where", _item_location_label(item))
 	FoundationWidgets.add_detail_row(_detail_box, "Type", "%s / %s" % [str(item.get("item_class", "unknown")).capitalize(), str(item.get("domain", "global")).capitalize()])
 	if item.has("capacity") and int(item.get("capacity", 0)) > 0:
@@ -403,9 +407,6 @@ func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 	var behavior_summary := str(item.get("behavior_summary", "")).strip_edges()
 	if not behavior_summary.is_empty():
 		FoundationWidgets.add_detail_row(_detail_box, "Behavior", behavior_summary)
-	var effect_summary := str(item.get("effect_summary", "")).strip_edges()
-	if not effect_summary.is_empty():
-		FoundationWidgets.add_detail_row(_detail_box, "Effect", effect_summary)
 	var description := str(item.get("description", "")).strip_edges()
 	_detail_box.add_child(FoundationWidgets.label(description if not description.is_empty() else "No description is available yet.", 12))
 	if _item_is_portable_ticket_pile(item):
@@ -607,7 +608,7 @@ func _render_home_storage_actions(item: Dictionary) -> void:
 
 
 func _add_attribute_badges(item: Dictionary) -> void:
-	var badges := _copy_array(item.get("attribute_badges", []))
+	var badges := ItemCardViewModelScript.detail_badges(item)
 	if badges.is_empty():
 		return
 	AttributeBadgeRowScript.warm_cache(badges, 16)

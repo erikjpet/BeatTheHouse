@@ -10,6 +10,7 @@ const ResolverScript := preload("res://scripts/core/collection_item_resolver.gd"
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
+const RunViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 
 const TEST_STORE_PATH := "user://inventory_spatial_ui_check.json"
 
@@ -25,6 +26,7 @@ func _run() -> void:
 	_audit_icon_models()
 	_audit_collection_icon_coverage()
 	_audit_container_art_style()
+	_audit_item_voice()
 	var catalog := CatalogScript.load_catalog(true)
 	for error in CatalogScript.validate_catalog(catalog):
 		failures.append(str(error))
@@ -158,6 +160,35 @@ func _run() -> void:
 	_check(bool(surface.layout_snapshot().get("high_contrast", false)), "High-contrast state did not reach the spatial surface.")
 	VisualStyle.set_high_contrast_enabled(false)
 	surface.queue_free()
+
+	var card_library: ContentLibrary = ContentLibraryScript.new()
+	card_library.load(false)
+	var card_run: RunState = RunStateScript.new()
+	card_run.start_new("INVENTORY-CARD-CONTRACT")
+	card_run.inventory = ["creased_luck_card", "creased_luck_card", "roadside_map"]
+	var card_service: RunActionService = RunActionServiceScript.new()
+	card_service.setup(card_library, card_run)
+	var card_model := RunViewModelScript.build(card_run, card_service, "inspect", "", {})
+	_check(str((card_model.get("layout", {}) as Dictionary).get("presentation", "")) == "grouped_card_grid", "Run inventory view model did not request the shared card grid.")
+	var card_surface: InventoryContainerSurface = SurfaceScript.new()
+	card_surface.size = Vector2(640, 420)
+	root.add_child(card_surface)
+	card_surface.configure(Callable(), catalog)
+	card_surface.update_model(card_model)
+	await process_frame
+	var run_card_snapshot := card_surface.layout_snapshot()
+	_check(str(run_card_snapshot.get("item_presentation", "")) == "rarity_card_grid", "Run inventory did not use the shared item-card renderer.")
+	var saw_stack_two := false
+	for slot_value in _array(run_card_snapshot.get("slots", [])):
+		var slot: Dictionary = slot_value
+		if str(slot.get("stack_text", "")) == "+2":
+			saw_stack_two = true
+		_check(not bool(slot.get("contains_risk_badge", true)), "Item card exposed the forbidden risk_tier badge.")
+		for rect_key in ["name_rect", "description_rect", "badge_rect", "count_rect"]:
+			var child_rect: Rect2 = slot.get(rect_key, Rect2())
+			_check(child_rect.has_area() and (slot.get("rect", Rect2()) as Rect2).grow(1.0).encloses(child_rect), "Run item card %s escaped its card bounds." % rect_key)
+	_check(saw_stack_two, "Duplicate run items did not collapse into a visible +2 stack.")
+	card_surface.queue_free()
 
 	var fallback_surface: InventoryContainerSurface = SurfaceScript.new()
 	fallback_surface.size = Vector2(420, 420)
@@ -469,6 +500,45 @@ func _audit_container_art_style() -> void:
 		_check(int(metrics.get("warm_pixels", 0)) >= 8, "Container art lost the shared amber/brass accent: %s" % path)
 
 
+func _audit_item_voice() -> void:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/items/items.json"))
+	var descriptions: Dictionary = {}
+	var items := _array(parsed)
+	_check(items.size() >= 60, "Item voice audit did not cover the full run-item roster.")
+	for item_value in items:
+		var item: Dictionary = item_value
+		var description := str(item.get("description", "")).strip_edges()
+		_check(not description.is_empty(), "Item %s has no voiced description." % str(item.get("id", "unknown")))
+		_check(description.find("\n") < 0 and description.find("\r") < 0, "Item %s description is not one line." % str(item.get("id", "unknown")))
+		_check(not _contains_digit(description), "Item %s description restates mechanics with a number." % str(item.get("id", "unknown")))
+		_check(not descriptions.has(description), "Item description is duplicated: %s" % description)
+		descriptions[description] = true
+	var collection_flavors: Array[String] = []
+	_collect_named_strings(JSON.parse_string(FileAccess.get_file_as_string("res://data/collections/collections.json")), "flavor", collection_flavors)
+	_check(collection_flavors.size() >= 40, "Item voice audit did not cover the collection-item roster.")
+	for flavor in collection_flavors:
+		_check(not flavor.strip_edges().is_empty() and not _contains_digit(flavor), "Collection flavor is blank or restates mechanics: %s" % flavor)
+
+
+func _collect_named_strings(value: Variant, key: String, result: Array[String]) -> void:
+	if typeof(value) == TYPE_DICTIONARY:
+		var dictionary: Dictionary = value
+		if dictionary.has(key):
+			result.append(str(dictionary.get(key, "")))
+		for child in dictionary.values():
+			_collect_named_strings(child, key, result)
+	elif typeof(value) == TYPE_ARRAY:
+		for child in value as Array:
+			_collect_named_strings(child, key, result)
+
+
+func _contains_digit(value: String) -> bool:
+	for character in value:
+		if character >= "0" and character <= "9":
+			return true
+	return false
+
+
 func _container_art_metrics(image: Image) -> Dictionary:
 	var colors: Dictionary = {}
 	var dark_pixels := 0
@@ -526,7 +596,7 @@ func _meta_card_surface_clean(snapshot: Dictionary, label: String) -> bool:
 		if rect.size.x < 96.0 or rect.size.y < 82.0:
 			failures.append("%s rendered an unreadably small card: %s." % [label, str(rect)])
 			return false
-		for key in ["icon_rect", "name_rect", "count_rect", "group_rect"]:
+		for key in ["icon_rect", "name_rect", "description_rect", "badge_rect", "count_rect", "group_rect"]:
 			var child_rect: Rect2 = slot.get(key, Rect2())
 			if child_rect.size.x <= 0.0 or child_rect.size.y <= 0.0 or not rect.grow(1.0).encloses(child_rect):
 				failures.append("%s %s escaped its card: card=%s child=%s." % [label, key, str(rect), str(child_rect)])

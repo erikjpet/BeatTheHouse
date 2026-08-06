@@ -3,7 +3,7 @@ extends RefCounted
 
 
 static func build(run_state: RunState, run_action_service: RunActionService, mode: String, container_id: String, selected: Dictionary) -> Dictionary:
-	var items := _inventory_popup_item_view_list(run_state, run_action_service, mode, container_id)
+	var items := _stack_item_models(_inventory_popup_item_view_list(run_state, run_action_service, mode, container_id))
 	var containers := _spatial_container_models(run_state, mode, container_id, items)
 	var spatial_items := _flatten_container_items(containers)
 	var selected_key := _selected_spatial_key(spatial_items, selected)
@@ -18,8 +18,32 @@ static func build(run_state: RunState, run_action_service: RunActionService, mod
 		"containers": containers,
 		"selected_key": selected_key,
 		"active_container_key": _active_container_key(containers, selected_key),
-		"layout": {"columns": 2, "presentation": "spatial_container", "stable_view": true},
+		"layout": {"columns": 2, "presentation": "grouped_card_grid", "stable_view": true, "grouping": "run_storage_source"},
 	}
+
+
+static func _stack_item_models(items: Array) -> Array:
+	var result: Array = []
+	var index_by_key: Dictionary = {}
+	for item_value in items:
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = (item_value as Dictionary).duplicate(true)
+		var key := "%s|%s|%s|%s" % [
+			str(item.get("id", "")),
+			str(item.get("storage_source", "carried")),
+			str(item.get("container_id", "")),
+			str(item.get("debt_id", "")),
+		]
+		if index_by_key.has(key) and not bool(item.get("ticket_pile_item", false)):
+			var index := int(index_by_key.get(key, -1))
+			if index >= 0:
+				result[index]["count"] = int((result[index] as Dictionary).get("count", 1)) + 1
+			continue
+		item["count"] = maxi(1, int(item.get("ticket_count", item.get("count", 1))))
+		index_by_key[key] = result.size()
+		result.append(item)
+	return result
 
 
 static func _flatten_container_items(containers: Array) -> Array:
