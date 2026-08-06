@@ -1,92 +1,92 @@
 [
   {
     "id": "corner_store",
-    "blurb": "Fluorescent aisles. Cheap chances glare near the register.",
+    "blurb": "Fluorescent aisles. Cheap chances by the register.",
     "options": ["Read the counter", "Eye the games", "Step out"]
   },
   {
     "id": "back_alley",
-    "blurb": "Bad light, worse offers, and silhouettes with opinions.",
+    "blurb": "Bad light, worse offers, silhouettes with opinions.",
     "options": ["Hear the offer", "Check the ground", "Find a route"]
   },
   {
     "id": "motel",
-    "blurb": "A tired lobby where rooms, rumors, and buses cross.",
+    "blurb": "A tired lobby where rooms, rumors, and buses meet.",
     "options": ["Talk desk", "Read services", "Catch a route"]
   },
   {
     "id": "bar",
-    "blurb": "Loose talk, strong pours, small games, warm neon.",
+    "blurb": "Loose talk, strong pours, and warm neon.",
     "options": ["Order", "Listen", "Play", "Leave"]
   },
   {
     "id": "gas_station_casino",
-    "blurb": "Scratchers, machines, and road dust hum together.",
+    "blurb": "Scratchers, machines, road dust. The ceiling counts.",
     "options": ["Play", "Shop", "Read routes"]
   },
   {
     "id": "small_underground_casino",
-    "blurb": "Low ceiling, close tables, nobody missing much.",
+    "blurb": "Low ceiling, close tables. Nothing is missed.",
     "options": ["Choose table", "Read room", "Leave"]
   },
   {
     "id": "jazz_club",
-    "blurb": "The band bends the room. Timing matters.",
+    "blurb": "The band bends the room. Timing is provided.",
     "options": ["Listen", "Order", "Play", "Talk"]
   },
   {
     "id": "kitty_cat_lounge",
-    "blurb": "Soft booths, sharp eyes, surprisingly serious tables.",
+    "blurb": "Soft booths, attentive eyes, serious tables.",
     "options": ["Read lounge", "Play", "Talk", "Leave"]
   },
   {
     "id": "delta_queen",
-    "blurb": "Brass, velvet, river tables, practiced smiles.",
+    "blurb": "Brass, velvet, river tables, practiced courtesy.",
     "options": ["Choose table", "Walk deck", "Talk", "Disembark"]
   },
   {
     "id": "beach",
-    "blurb": "Open air cools heat. Detours still charge.",
+    "blurb": "Open air sees to the heat. Detours still charge.",
     "options": ["Recover", "Look around", "Travel"]
   },
   {
     "id": "pawn_shop",
-    "blurb": "Cash, repairs, and second chances behind glass.",
+    "blurb": "Cash, repairs, second chances. All behind glass.",
     "options": ["Buy", "Sell", "Repair", "Talk"]
   },
   {
     "id": "grand_casino",
-    "blurb": "Clean play, loud money, watched shortcuts.",
+    "blurb": "Clean play, loud money, shortcuts noted.",
     "options": ["Choose table", "Read staff", "Visit Cage", "Travel"]
   },
   {
     "id": "grand_casino_high_limit",
-    "blurb": "Bigger stakes. Quieter scrutiny. Perfect memory.",
+    "blurb": "Bigger stakes. Quieter attention. Perfect memory.",
     "options": ["Play high limit", "Read host", "Return"]
   },
   {
     "id": "grand_casino_back_room",
-    "blurb": "Rourke asks once. The room records everything.",
+    "blurb": "Rourke asks once. The room keeps everything.",
     "options": ["Answer", "Show evidence", "Hold nerve"]
   },
   {
     "id": "grand_casino_cage",
-    "blurb": "Linda settles chips, markers, gifts, and trouble.",
+    "blurb": "Linda sees to chips, markers, gifts, and trouble.",
     "options": ["Cash out", "Settle marker", "Claim card", "Shop"]
   },
   {
     "id": "motel_room",
-    "blurb": "Thin walls, your key, and a little quiet.",
+    "blurb": "Thin walls, your key, a little quiet.",
     "options": ["Rest", "Manage storage", "Renew", "Enter lobby"]
   },
   {
     "id": "apartment",
-    "blurb": "Steadier walls. Room for gear and second thoughts.",
+    "blurb": "Better walls. Room for gear and second thoughts.",
     "options": ["Rest", "Manage storage", "Review loadout", "Leave"]
   },
   {
     "id": "house",
-    "blurb": "Your long con gets a roof and shelves.",
+    "blurb": "Your long con, with a roof and shelves.",
     "options": ["Collection", "Storage", "Trade up", "Start run"]
   }
 ]

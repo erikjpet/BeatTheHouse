@@ -2,7 +2,7 @@
   {
     "id": "dry_run",
     "title": "Dry Run",
-    "description": "No drinks. Bad nerve. Clean hands.",
+    "description": "No drinks. Poor nerve. Clean hands.",
     "completion_flag": "challenge_dry_run_complete",
     "modifiers": {
       "blocked_service_categories": [
@@ -15,7 +15,7 @@
   {
     "id": "debt_spiral",
     "title": "Debt Spiral",
-    "description": "Start marked, funded, and hunted.",
+    "description": "Start marked, funded, hunted.",
     "completion_flag": "challenge_debt_spiral_complete",
     "modifiers": {
       "starting_bankroll_delta": 35,
@@ -34,7 +34,7 @@
   {
     "id": "pacifist",
     "title": "Pacifist",
-    "description": "No cheating. Smaller clean-card target.",
+    "description": "No cheating. A smaller clean target.",
     "completion_flag": "challenge_pacifist_complete",
     "modifiers": {
       "disable_cheat_actions": true,
@@ -45,7 +45,7 @@
   {
     "id": "one_machine",
     "title": "One Machine",
-    "description": "Slots only, with thin cushion.",
+    "description": "Slots only. Thin cushion.",
     "completion_flag": "challenge_one_machine_complete",
     "modifiers": {
       "content_groups": [
@@ -60,7 +60,7 @@
   {
     "id": "heat_wave",
     "title": "Heat Wave",
-    "description": "Start warm. Cool down slow.",
+    "description": "Start warm. Cool off slowly.",
     "completion_flag": "challenge_heat_wave_complete",
     "modifiers": {
       "starting_heat": 14,
@@ -76,7 +76,7 @@
   {
     "id": "thin_wallet",
     "title": "Thin Wallet",
-    "description": "Half cash. Sharper opening luck.",
+    "description": "Half the cash. Sharper opening luck.",
     "completion_flag": "challenge_thin_wallet_complete",
     "modifiers": {
       "starting_bankroll": 50,
@@ -86,7 +86,7 @@
   {
     "id": "card_sharp",
     "title": "Card Sharp",
-    "description": "Cards only. Bigger clean target.",
+    "description": "Cards only. A bigger clean target.",
     "completion_flag": "challenge_card_sharp_complete",
     "modifiers": {
       "content_groups": [
@@ -102,7 +102,7 @@
   {
     "id": "tutorial_first_card",
     "title": "First Night in Town",
-    "description": "First night, guided by trouble.",
+    "description": "Your first night, guided by trouble.",
     "completion_flag": "challenge_tutorial_first_card_complete",
     "fixed_seed": "FIRST-NIGHT-ACE-17",
     "menu_visible": false,
@@ -258,7 +258,7 @@
           ],
           "demo_objective": {
             "title": "Earn Your First Players Card",
-            "summary": "Play one Main Floor table hand, claim Bronze from Linda, and learn the road to Gold.",
+            "summary": "Play one Main Floor hand, claim Bronze from Linda, and learn the road to Gold.",
             "high_roller_net_winnings": 9999,
             "high_roller_min_grand_casino_games": 99,
             "high_roller_max_heat": 90,

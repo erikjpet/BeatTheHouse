@@ -17,7 +17,7 @@
       {
         "id": "buy_scratch_ticket",
         "label": "Buy Ticket",
-        "summary": "Buy the ticket. Fate is already printed.",
+        "summary": "Buy the ticket. It was decided at the press.",
         "win_chance": 0,
         "payout_mult": 0
       }
@@ -524,7 +524,7 @@
       {
         "id": "buy_tab",
         "label": "Buy Ticket",
-        "summary": "Pick a dispenser row; ticket drops into the stack",
+        "summary": "Pick a row. The ticket drops into your stack.",
         "win_chance": 32,
         "payout_mult": 4
       }
@@ -533,7 +533,7 @@
       {
         "id": "tab_detector_scan",
         "label": "Detector Scan",
-        "summary": "Toggle detector; winning buys raise heat",
+        "summary": "Switch the detector on. Winning buys draw heat.",
         "suspicion_delta": 4
       }
     ]
@@ -2846,7 +2846,7 @@
       {
         "id": "spin",
         "label": "Spin",
-        "summary": "Spin the selected fixed bet.",
+        "summary": "Spin at the bet you picked.",
         "win_chance": 36,
         "payout_mult": 3
       }
@@ -2855,7 +2855,7 @@
       {
         "id": "nudge",
         "label": "Nudge",
-        "summary": "Shift a near miss into a bounded bonus.",
+        "summary": "Nudge a near miss into a small bonus.",
         "win_chance": 0,
         "payout_mult": 0,
         "suspicion_delta": 12
@@ -2880,7 +2880,7 @@
       {
         "id": "roll",
         "label": "Roll",
-        "summary": "Ante into the bar pot, shake up to three times, lock 6-5-4, and beat the table's cargo.",
+        "summary": "Ante the pot, shake up to three times, lock 6-5-4, then beat the table's cargo.",
         "win_chance": 42,
         "payout_mult": 3
       }
@@ -2889,7 +2889,7 @@
       {
         "id": "loaded_toss",
         "label": "Loaded Toss",
-        "summary": "Force the next needed Ship, Captain, or Crew face; raises heat if watched.",
+        "summary": "Force the Ship, Captain, or Crew face you need. Draws heat if anyone looks.",
         "win_chance": 54,
         "payout_mult": 3,
         "suspicion_delta": 10
@@ -2897,7 +2897,7 @@
       {
         "id": "palmed_swap",
         "label": "Palmed Swap",
-        "summary": "Track the weak die and time one hidden swap; a bad palm still raises heat.",
+        "summary": "Find the weak die and time one swap. A bad palm draws heat anyway.",
         "win_chance": 60,
         "payout_mult": 3,
         "suspicion_delta": 16,
@@ -2930,7 +2930,7 @@
       {
         "id": "play_basic",
         "label": "Play Hand",
-        "summary": "Hit, stand, split, or double on a blackjack table; naturals pay 3:2",
+        "summary": "Hit, stand, split, or double. Naturals pay 3:2.",
         "win_chance": 49,
         "payout_mult": 2
       }
@@ -2939,7 +2939,7 @@
       {
         "id": "peek_hole_card",
         "label": "Peek Hole Card",
-        "summary": "Try to glimpse the dealer's down card; heat depends on table watchfulness",
+        "summary": "Steal a look at the dealer's down card. Watchful tables cost you.",
         "win_chance": 0,
         "payout_mult": 0,
         "suspicion_delta": 6
@@ -2947,7 +2947,7 @@
       {
         "id": "count_cards",
         "label": "Count Cards",
-        "summary": "Complete a Hi-Lo count check to update your recorded count",
+        "summary": "Run a Hi-Lo check and update the count you carry.",
         "win_chance": 0,
         "payout_mult": 0,
         "suspicion_delta": 8
@@ -2972,7 +2972,7 @@
       {
         "id": "deal_baccarat",
         "label": "Deal",
-        "summary": "Place Player, Banker, Tie, or pair chips before the croupier deals from the shoe.",
+        "summary": "Back Player, Banker, Tie, or pairs before the croupier deals.",
         "win_chance": 0,
         "payout_mult": 0
       }
@@ -2981,7 +2981,7 @@
       {
         "id": "read_baccarat_shoe",
         "label": "Read Shoe",
-        "summary": "Memorize the dealer's brief shoe cues to earn a read; mistakes raise heat.",
+        "summary": "Memorize the dealer's shoe cues to earn a read. Mistakes draw heat.",
         "win_chance": 0,
         "payout_mult": 0,
         "suspicion_delta": 8,
@@ -2995,7 +2995,7 @@
       {
         "id": "edge_sort",
         "label": "Edge Sort",
-        "summary": "Track card-back cues across hands for a short betting edge; watched failures raise heat",
+        "summary": "Track card-back cues across hands for a short edge. Getting caught draws heat.",
         "win_chance": 0,
         "payout_mult": 0,
         "suspicion_delta": 8
@@ -3020,7 +3020,7 @@
       {
         "id": "spin_roulette",
         "label": "Spin",
-        "summary": "Place roulette chips across the layout, then spin the wheel.",
+        "summary": "Lay chips across the layout, then let the wheel decide.",
         "win_chance": 0,
         "payout_mult": 0
       }
@@ -3029,7 +3029,7 @@
       {
         "id": "read_wheel_bias",
         "label": "Read Wheel",
-        "summary": "Track the rotor's low-side tick and stop on it; missed reads still raise heat.",
+        "summary": "Track the rotor's low-side tick and call it. A missed read draws heat.",
         "win_chance": 0,
         "payout_mult": 0,
         "suspicion_delta": 8,
@@ -3045,7 +3045,7 @@
       {
         "id": "past_post",
         "label": "Past-Post",
-        "summary": "Slide one late chip after the ball settles; timing can pay, but caught moves spike heat",
+        "summary": "Slide one chip after the ball settles. Timing pays. Getting caught costs more.",
         "win_chance": 0,
         "payout_mult": 0,
         "suspicion_delta": 18
@@ -3070,7 +3070,7 @@
       {
         "id": "draw",
         "label": "Draw",
-        "summary": "Hold cards, draw the rest, pay on Jacks or better",
+        "summary": "Hold what you want, draw the rest. Jacks or better pays.",
         "win_chance": 31,
         "payout_mult": 3
       }
@@ -3079,7 +3079,7 @@
       {
         "id": "mark_holds",
         "label": "Mark Holds",
-        "summary": "Palm in one ideal card on the draw; raises heat",
+        "summary": "Palm one ideal card into the draw. It draws heat.",
         "win_chance": 46,
         "payout_mult": 3,
         "suspicion_delta": 14

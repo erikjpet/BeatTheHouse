@@ -371,7 +371,7 @@
     },
     "suspicion": {
       "label": "Heat",
-      "description": "Suspicion or attention change.",
+      "description": "Change in attention on you.",
       "palette": "pink",
       "polarity": "positive_bad",
       "format": "%+d",
@@ -412,7 +412,7 @@
     },
     "luck": {
       "label": "Luck",
-      "description": "Baseline luck change.",
+      "description": "Change in your base luck.",
       "palette": "yellow",
       "polarity": "positive_good",
       "format": "%+d",
@@ -464,7 +464,7 @@
     },
     "risk_tier": {
       "label": "Risk",
-      "description": "Route or encounter risk tier.",
+      "description": "How risky the route or run-in is.",
       "palette": "orange",
       "polarity": "positive_bad",
       "format": "pips",
@@ -540,7 +540,7 @@
     },
     "cost": {
       "label": "Cost",
-      "description": "Price or fare paid.",
+      "description": "What you pay.",
       "palette": "amber",
       "polarity": "positive_bad",
       "format": "%d",
@@ -619,7 +619,7 @@
     },
     "win_bonus": {
       "label": "Pay",
-      "description": "Winnings or payout bonus.",
+      "description": "Bonus to winnings.",
       "palette": "yellow",
       "polarity": "positive_good",
       "format": "%+d",
@@ -661,7 +661,7 @@
     },
     "risk_decay": {
       "label": "Cool",
-      "description": "Heat cooling while traveling.",
+      "description": "Heat cools while you travel.",
       "palette": "cyan_2",
       "polarity": "positive_good",
       "format": "%d",
@@ -704,7 +704,7 @@
     },
     "debt": {
       "label": "Debt",
-      "description": "Debt contract or grace effect.",
+      "description": "Debt terms or grace given.",
       "palette": "purple",
       "polarity": "positive_bad",
       "format": "%s",
@@ -742,7 +742,7 @@
     },
     "time_actions": {
       "label": "Time",
-      "description": "Action timing or duration.",
+      "description": "How long the action takes.",
       "palette": "cyan",
       "polarity": "neutral",
       "format": "%s",
@@ -783,7 +783,7 @@
     },
     "alcohol": {
       "label": "Drink",
-      "description": "Alcohol or drunkness change.",
+      "description": "Alcohol or drunkenness change.",
       "palette": "purple_2",
       "polarity": "positive_bad",
       "format": "%+d",
@@ -824,7 +824,7 @@
     },
     "story": {
       "label": "Story",
-      "description": "Story flag set.",
+      "description": "Sets a story flag.",
       "palette": "purple_2",
       "polarity": "neutral",
       "format": "%s",
@@ -907,7 +907,7 @@
     },
     "game_blackjack": {
       "label": "Blackjack",
-      "description": "Blackjack tools know this table.",
+      "description": "Works at the blackjack table.",
       "palette": "yellow",
       "polarity": "neutral",
       "format": "%s",
@@ -946,7 +946,7 @@
     },
     "game_video_poker": {
       "label": "Video Poker",
-      "description": "Video Poker tools know this table.",
+      "description": "Works at the video poker cabinet.",
       "palette": "pink",
       "polarity": "neutral",
       "format": "%s",
@@ -985,7 +985,7 @@
     },
     "game_bar_dice": {
       "label": "Bar Dice",
-      "description": "Bar Dice tools know this table.",
+      "description": "Works at the bar dice cup.",
       "palette": "orange",
       "polarity": "neutral",
       "format": "%s",
@@ -1023,7 +1023,7 @@
     },
     "game_roulette": {
       "label": "Roulette",
-      "description": "Roulette tools know this table.",
+      "description": "Works at the roulette wheel.",
       "palette": "red",
       "polarity": "neutral",
       "format": "%s",
@@ -1062,7 +1062,7 @@
     },
     "game_baccarat": {
       "label": "Baccarat",
-      "description": "Baccarat tools know this table.",
+      "description": "Works at the baccarat shoe.",
       "palette": "purple_2",
       "polarity": "neutral",
       "format": "%s",
@@ -1104,7 +1104,7 @@
     },
     "game_slot": {
       "label": "Slots",
-      "description": "Slots tools know this table.",
+      "description": "Works at the slot cabinet.",
       "palette": "amber",
       "polarity": "neutral",
       "format": "%s",
@@ -1144,7 +1144,7 @@
     },
     "game_scratch_tickets": {
       "label": "Scratchers",
-      "description": "Scratchers tools know this table.",
+      "description": "Works on scratch tickets.",
       "palette": "cyan_2",
       "polarity": "neutral",
       "format": "%s",
@@ -1186,7 +1186,7 @@
     },
     "game_pull_tabs": {
       "label": "Pull Tabs",
-      "description": "Pull Tabs tools know this table.",
+      "description": "Works on pull tabs.",
       "palette": "teal",
       "polarity": "neutral",
       "format": "%s",
@@ -1227,7 +1227,7 @@
     },
     "inventory": {
       "label": "Gear",
-      "description": "Inventory item gained or removed.",
+      "description": "An item gained or lost.",
       "palette": "yellow",
       "polarity": "neutral",
       "format": "%s",

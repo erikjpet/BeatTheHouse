@@ -1,5 +1,21 @@
 # Agent Prompt: Narration and Dialogue Reword, Full Rollout
 
+**EXECUTED 2026-08-05. All 7 phases complete.** Phases 1 and 2 landed earlier
+(archetypes, events). Phases 3 to 7 executed in this pass: 339 strings across
+13 data files, plus full contraction and elision restoration.
+
+Results: `docs/plans/0.6_rollout_reword_diff.md`.
+Spec: `docs/plans/0.6_voice_bible_world_register.md`.
+
+Outstanding, deliberately not done:
+- Never render-verified. Godot is not installed on the project manager
+  machine, so no string has been seen on screen.
+- Dave Harlan's `bus_warning` line pool still has 1 line against the 0.5
+  rule of 3 or more. Expanding it is new writing and needs an owner call.
+- The ~2,100 hardcoded player-facing strings in `scripts/ui`, `scripts/games`,
+  and `scripts/core` remain untouched by any voice pass. Out of scope here;
+  needs its own prompt.
+
 Copy everything below the line into the worker agent. This is the full pass:
 **811 strings across 15 data files**, covering narration *and* character
 dialogue. A 104 string calibration pilot already ran and was approved; this
@@ -250,6 +266,56 @@ Drawn from strings already in the data ("The ceiling loves a pattern.",
    key. Never change the length of a line pool array.
 8. **No em dashes and no en dashes.** Not in data, not in your report, not in
    any doc you write. Use commas, colons, or full stops.
+
+## Restore contractions and elisions
+
+**This is the highest-yield rule in the pass. Apply it everywhere.**
+
+The 0.5 writing pass shipped on 2026-07-29 (commit `1c813562`) and then
+something stripped every apostrophe out of the result. The approved bible
+lines and the lines actually in the data no longer match:
+
+```
+bible:  "Casino chips. They wouldn't cash 'em and you bring 'em to me. Cute."
+data:   "Casino chips. They would not cash them and you bring them to me. Cute."
+
+bible:  "I got you. It's nothing. It's a little something. It's not nothing."
+data:   "I got you. It is nothing. It is a little something. It is not nothing."
+
+bible:  "Pay me when you're flush. You'll be flush. Right? Right."
+data:   "Pay me when you are flush. You will be flush. Right? Right."
+```
+
+Contraction-free speech reads stiff and formal, which is exactly the
+"old-timey costume" effect this spec forbids. It is also the single biggest
+reason the dialogue does not currently sound like people talking.
+
+**Restore contractions and elisions wherever a person is speaking**, and in
+narration wherever the contraction is the natural form. This is restoration
+toward the approved bible, not new writing, and it does not count against
+your budgets.
+
+- `do not` to `don't`, `it is` to `it's`, `you are` to `you're`, `I am` to
+  `I'm`, `will not` to `won't`, `let us` to `let's`, and so on.
+- Restore elisions where the bible has them: `'em` for `them`, `'Course` for
+  `Of course`. The bible uses 4 instances of `'em`; the data has 1.
+- Do **not** contract where the formal form is deliberate. Rourke is precise
+  by character, and "I am certain" may be stronger than "I'm certain."
+  Judgment per line, per the speaker's `voice.style`.
+
+41 strings currently carry formal expansions, concentrated in
+`characters.json` (28) and `dialogues.json` (7), so most of this lands in
+phases 6 and 7. The rest are scattered across events, items, lenders, and
+collections; fix them in whichever phase you meet them.
+
+No sanitizer, hook, or validator rule that would re-strip apostrophes exists
+in the repo, so the restoration will stick. **If apostrophes revert after you
+write them, stop and report it** rather than working around it.
+
+**Do not add emphasis markup.** The bible italicises a word here and there
+(`bring 'em to *me*`), but the data contains zero BBCode and the UI does not
+use `RichTextLabel`, so asterisks would render literally. Carry the emphasis
+in word order instead.
 
 ## Dialogue-specific rules
 

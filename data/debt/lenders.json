@@ -15,7 +15,7 @@
       "character_identity_key": "street_lender",
       "voice_line_key": "loan_offer"
     },
-    "description": "Fast cash. Cold book.",
+    "description": "Fast cash. A cold book.",
     "debt_profile": {
       "principal_min": 25,
       "principal_max": 60,
@@ -29,7 +29,7 @@
       "suspicion_pressure",
       "forced_repayment"
     ],
-    "message": "Fast cash. Your name goes in the book.",
+    "message": "Fast cash. Your name in the book.",
     "effect": {
       "bankroll_delta": 25,
       "suspicion_delta": 1,
@@ -50,7 +50,7 @@
         "street_lender_debt": true
       },
       "messages": [
-        "Fast cash lands. The book follows."
+        "The cash lands. The book follows."
       ]
     }
   },
@@ -69,7 +69,7 @@
       "environment_actor": true,
       "voice_line_key": "loan_offer"
     },
-    "description": "Soft loan, thin walls.",
+    "description": "A soft loan. Thin walls.",
     "debt_profile": {
       "principal_min": 15,
       "principal_max": 40,
@@ -83,7 +83,7 @@
       "favor_owed",
       "story_pressure"
     ],
-    "message": "Nico spots you cash and pretends it is nothing.",
+    "message": "Nico spots you cash and says it's nothing.",
     "effect": {
       "bankroll_delta": 20,
       "suspicion_delta": 0,
@@ -104,7 +104,7 @@
         "motel_friend_debt": true
       },
       "messages": [
-        "Nico helps. The motel walls hear it."
+        "Nico helps. The walls hear it happen."
       ]
     }
   },
@@ -123,7 +123,7 @@
       "character_identity_key": "the_crew",
       "voice_line_key": "loan_offer"
     },
-    "description": "No interest. Favors instead.",
+    "description": "No interest. Only favors.",
     "debt_profile": {
       "principal_min": 35,
       "principal_max": 55,
@@ -140,10 +140,10 @@
       "scheduled_favors",
       "cash_conversion"
     ],
-    "message": "The Crew hands over money like time already belongs to them.",
+    "message": "The Crew hands it over like it was always yours. It wasn't.",
     "effect": {
       "messages": [
-        "The Crew pays now. Favors collect later."
+        "The Crew pays now. Favors collect after."
       ]
     }
   },
@@ -164,7 +164,7 @@
       "character_identity_key": "brother_in_law",
       "voice_line_key": "loan_offer"
     },
-    "description": "Family help, family invoice.",
+    "description": "Family help. Family invoice.",
     "availability": {
       "requires_flags": {
         "brother_in_law_phone_ready": true
@@ -187,10 +187,10 @@
       "recurring_nag",
       "story_scar"
     ],
-    "message": "Family money lands with a sigh attached.",
+    "message": "Family money arrives with a sigh attached.",
     "effect": {
       "messages": [
-        "Family wires relief and a lecture."
+        "Family wires relief, and a lecture."
       ]
     }
   },
@@ -210,7 +210,7 @@
       "character_identity_key": "sals_pawn_counter",
       "voice_line_key": "loan_offer"
     },
-    "description": "Sal buys your mistakes.",
+    "description": "Sal buys the mistakes.",
     "debt_profile": {
       "principal_min": 10,
       "principal_max": 70,
@@ -225,10 +225,10 @@
       "collateral_escrow",
       "collateral_forfeit"
     ],
-    "message": "Sal counts cash like he is doing charity wrong.",
+    "message": "Sal counts cash like he's doing charity wrong.",
     "effect": {
       "messages": [
-        "Sal buys the item and insults it for free."
+        "Sal buys it, and insults it for free."
       ]
     }
   }

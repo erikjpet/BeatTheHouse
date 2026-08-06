@@ -344,7 +344,7 @@
     "icon_key": "sunglasses",
     "environment_prop": "sunglasses",
     "surface": "counter_case",
-    "description": "Plastic shade for guilty eyes.",
+    "description": "Plastic shade. Eyes stop telling.",
     "effect": {
       "cheat_suspicion_delta": -2
     }
@@ -366,7 +366,7 @@
     "icon_key": "marked_cards",
     "environment_prop": "loose_card",
     "surface": "felt_table",
-    "description": "The backs whisper if you listen.",
+    "description": "The backs talk. You just have to look.",
     "effect": {
       "blackjack_peek_heat_delta": -3,
       "blackjack_dealer_catch_chance": -8,
@@ -391,7 +391,7 @@
     "icon_key": "edge_sort_loupe",
     "environment_prop": "loose_card",
     "surface": "counter_case",
-    "description": "A glass eye for crooked backs.",
+    "description": "A glass eye for crooked edges.",
     "effect": {
       "baccarat_edge_sort_cue_count": -1,
       "baccarat_edge_sort_memory_tolerance": 1,
@@ -418,7 +418,7 @@
     "icon_key": "scratch_pad",
     "environment_prop": "notepad",
     "surface": "folding_table",
-    "description": "Numbers hide better on paper.",
+    "description": "Numbers keep better on paper.",
     "effect": {
       "baccarat_edge_sort_memory_tolerance": 1,
       "families": {
@@ -449,7 +449,7 @@
     "icon_key": "odds_notebook",
     "environment_prop": "notepad",
     "surface": "folding_table",
-    "description": "Bad math, made useful.",
+    "description": "Bad math, put to work.",
     "effect": {
       "blackjack_count_tolerance": 1,
       "blackjack_count_edge_bonus": 1,
@@ -499,7 +499,7 @@
     "icon_key": "shoe_cut_marker",
     "environment_prop": "loose_card",
     "surface": "felt_table",
-    "description": "A tiny wound in the shoe.",
+    "description": "A small nick in the shoe.",
     "effect": {
       "blackjack_count_cover": 2,
       "baccarat_edge_sort_memory_tolerance": 1,
@@ -539,7 +539,7 @@
     "icon_key": "card_counters_notes",
     "environment_prop": "notepad",
     "surface": "folding_table",
-    "description": "Someone counted before you sweated.",
+    "description": "Somebody counted here before you.",
     "effect": {
       "blackjack_count_tolerance": 1,
       "blackjack_count_window_msec": 90,
@@ -565,7 +565,7 @@
     "icon_key": "side_bet_chart",
     "environment_prop": "notepad",
     "surface": "counter_case",
-    "description": "Pretty traps, uglier odds.",
+    "description": "Pretty traps. Uglier odds.",
     "effect": {
       "blackjack_side_bet_bonus": 1,
       "blackjack_side_bet_loss_reduction": 1,
@@ -588,7 +588,7 @@
     "icon_key": "basic_strategy_card",
     "environment_prop": "loose_card",
     "surface": "felt_table",
-    "description": "Common sense laminated for emergencies.",
+    "description": "Common sense, laminated.",
     "effect": {
       "blackjack_basic_strategy_card": 1
     }
@@ -609,7 +609,7 @@
     "icon_key": "lucky_ladies_compact",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "Powder mirror, queenly superstition.",
+    "description": "A powder mirror with queenly habits.",
     "effect": {
       "blackjack_lucky_ladies_stake_multiplier": 2,
       "blackjack_lucky_ladies_payout_multiplier": 2
@@ -631,7 +631,7 @@
     "icon_key": "coolers_cufflinks",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "Cold metal for hot peeks.",
+    "description": "Cold metal for a hot look.",
     "effect": {
       "blackjack_failed_peek_heat_absorb": 1
     }
@@ -652,7 +652,7 @@
     "icon_key": "broken_cufflinks",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "Damaged shine. Still crooked.",
+    "description": "Cracked shine. Still crooked.",
     "effect": {
       "blackjack_peek_window_percent": 50,
       "repair_cost": 50,
@@ -675,7 +675,7 @@
     "icon_key": "high_roller_watch",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "Heavy watch, heavier minimums.",
+    "description": "Heavy watch. Heavier minimums.",
     "effect": {
       "blackjack_table_limit_multiplier": 2,
       "blackjack_table_minimum_to_previous_max": 1
@@ -719,7 +719,7 @@
     "icon_key": "foil_sleeve",
     "environment_prop": "foil_sleeve",
     "surface": "box_stack",
-    "description": "Cabinet static with criminal posture.",
+    "description": "Cabinet static, put to bad use.",
     "effect": {
       "families": {
         "slots": {
@@ -751,7 +751,7 @@
     "icon_key": "holdout_wax",
     "environment_prop": "foil_sleeve",
     "surface": "counter_case",
-    "description": "Sticky little card-shop sin.",
+    "description": "A sticky little card-shop sin.",
     "effect": {
       "video_poker_holdout_perfect_msec": 28,
       "video_poker_holdout_good_msec": 55,
@@ -777,7 +777,7 @@
     "icon_key": "chip_slide_wax",
     "environment_prop": "foil_sleeve",
     "surface": "counter_case",
-    "description": "Late chips slide like gossip.",
+    "description": "Chips slide late, like gossip.",
     "effect": {
       "families": {
         "wheel": {
@@ -811,7 +811,7 @@
     "icon_key": "sleeve_rig",
     "environment_prop": "foil_sleeve",
     "surface": "counter_case",
-    "description": "A whole wardrobe of bad ideas.",
+    "description": "An entire wardrobe of bad ideas.",
     "effect": {
       "video_poker_holdout_good_msec": 20,
       "video_poker_holdout_close_msec": 35,
@@ -859,7 +859,7 @@
     "icon_key": "coin_return_shim",
     "environment_prop": "coin",
     "surface": "box_stack",
-    "description": "Metal teeth for stingy slots.",
+    "description": "Metal teeth for a stingy slot.",
     "effect": {
       "families": {
         "slots": {
@@ -884,7 +884,7 @@
     "icon_key": "lucky_reel_grease",
     "environment_prop": "token",
     "surface": "counter_case",
-    "description": "The reels get suggestible.",
+    "description": "The reels turn suggestible.",
     "effect": {
       "active_item": true,
       "active_mode": "consumable",
@@ -907,7 +907,7 @@
     "icon_key": "timing_bracelet",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "Keeps time with bad intentions.",
+    "description": "Keeps time, and bad intentions.",
     "effect": {
       "families": {
         "slots": {
@@ -933,7 +933,7 @@
     "icon_key": "gold_tooth_token",
     "environment_prop": "coin",
     "surface": "counter_case",
-    "description": "A rich grin in your pocket.",
+    "description": "A rich man's grin, pocket-sized.",
     "effect": {
       "families": {
         "slots": {
@@ -959,7 +959,7 @@
     "icon_key": "payout_pamphlet",
     "environment_prop": "notepad",
     "surface": "counter_case",
-    "description": "Fine print with teeth filed down.",
+    "description": "Fine print, teeth filed down.",
     "effect": {
       "families": {
         "slots": {
@@ -984,7 +984,7 @@
     "icon_key": "cold_quarters",
     "environment_prop": "coin",
     "surface": "counter_case",
-    "description": "Quiet coins. Cooler hands.",
+    "description": "Quiet coins, cooler hands.",
     "effect": {
       "active_item": true,
       "active_mode": "consumable",
@@ -1008,7 +1008,7 @@
     "icon_key": "neon_players_charm",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "First feature gets a wink.",
+    "description": "The first feature gets a wink.",
     "effect": {
       "families": {
         "slots": {
@@ -1034,7 +1034,7 @@
     "icon_key": "split_reel_note",
     "environment_prop": "notepad",
     "surface": "counter_case",
-    "description": "A note from someone who watched too long.",
+    "description": "A note from somebody who watched.",
     "effect": {
       "active_item": true,
       "active_mode": "consumable",
@@ -1059,7 +1059,7 @@
     "icon_key": "feature_magnet",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "Pulls trouble toward bonus lights.",
+    "description": "Pulls trouble toward the lights.",
     "effect": {
       "families": {
         "slots": {
@@ -1086,7 +1086,7 @@
     "icon_key": "cumquat_sandwich",
     "environment_prop": "sandwich",
     "surface": "counter_case",
-    "description": "Awful lunch. Beautiful omen.",
+    "description": "A terrible lunch. A fine omen.",
     "effect": {
       "active_item": true,
       "active_mode": "consumable",
@@ -1109,7 +1109,7 @@
     "icon_key": "drain_cleaner",
     "environment_prop": "coin",
     "surface": "box_stack",
-    "description": "For drains that owe you money.",
+    "description": "For the drains that owe you.",
     "effect": {
       "families": {
         "slots": {
@@ -1136,7 +1136,7 @@
     "icon_key": "jackpot_magnet",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "Makes cups act sentimental.",
+    "description": "Makes the cups sentimental.",
     "effect": {
       "families": {
         "slots": {
@@ -1163,7 +1163,7 @@
     "icon_key": "splitter_token",
     "environment_prop": "coin",
     "surface": "counter_case",
-    "description": "One ball becomes a rumor.",
+    "description": "One ball becomes two rumors.",
     "effect": {
       "families": {
         "slots": {
@@ -1189,7 +1189,7 @@
     "icon_key": "return_spring",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "Saves lazy steel from shame.",
+    "description": "Saves lazy steel from itself.",
     "effect": {
       "families": {
         "slots": {
@@ -1215,7 +1215,7 @@
     "icon_key": "tilt_dampener",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "Forgiveness bolted under the glass.",
+    "description": "Forgiveness, bolted under glass.",
     "effect": {
       "families": {
         "slots": {
@@ -1240,7 +1240,7 @@
     "icon_key": "bumper_battery",
     "environment_prop": "token",
     "surface": "counter_case",
-    "description": "First bounce gets teeth.",
+    "description": "The first bounce gets teeth.",
     "effect": {
       "families": {
         "slots": {
@@ -1268,7 +1268,7 @@
     "icon_key": "rubber_pegs",
     "environment_prop": "token",
     "surface": "counter_case",
-    "description": "More life in the fall.",
+    "description": "More life on the way down.",
     "effect": {
       "families": {
         "slots": {
@@ -1293,7 +1293,7 @@
     "icon_key": "magnet_cup",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "A cup with needy gravity.",
+    "description": "A cup with its own gravity.",
     "effect": {
       "families": {
         "slots": {
@@ -1318,7 +1318,7 @@
     "icon_key": "extra_ball_token",
     "environment_prop": "coin",
     "surface": "counter_case",
-    "description": "One more chance, stamped round.",
+    "description": "Another chance, stamped round.",
     "effect": {
       "families": {
         "slots": {
@@ -1343,7 +1343,7 @@
     "icon_key": "plunger_tuner",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "Turns launch panic into timing.",
+    "description": "Trades launch panic for timing.",
     "effect": {
       "families": {
         "slots": {
@@ -1368,7 +1368,7 @@
     "icon_key": "lock_jammer",
     "environment_prop": "keychain",
     "surface": "counter_case",
-    "description": "Locks open when they should not.",
+    "description": "Locks open when they shouldn't.",
     "effect": {
       "families": {
         "slots": {
@@ -1394,7 +1394,7 @@
     "icon_key": "weighted_keyring",
     "environment_prop": "weighted_keyring",
     "surface": "folding_table",
-    "description": "Keys heavy enough to lie.",
+    "description": "Keys heavy enough to lie with.",
     "effect": {
       "families": {
         "dice": {
@@ -1425,7 +1425,7 @@
     "icon_key": "dice_calipers",
     "environment_prop": "weighted_keyring",
     "surface": "folding_table",
-    "description": "Measures dice and excuses.",
+    "description": "Measures dice, and excuses.",
     "effect": {
       "families": {
         "dice": {
@@ -1459,7 +1459,7 @@
     "icon_key": "false_bottom_cup",
     "environment_prop": "weighted_keyring",
     "surface": "folding_table",
-    "description": "A cup with a basement.",
+    "description": "A cup with a false floor.",
     "effect": {
       "families": {
         "dice": {
@@ -1510,7 +1510,7 @@
     "icon_key": "roadside_map",
     "environment_prop": "map",
     "surface": "folding_table",
-    "description": "Routes scribbled by survivors.",
+    "description": "Routes drawn by people who left.",
     "effect": {
       "win_bonus": 1,
       "travel_scouting_level": 1
@@ -1578,7 +1578,7 @@
     "icon_key": "pawn_receipt_sleeve",
     "environment_prop": "notepad",
     "surface": "counter_case",
-    "description": "Keeps Sal honest enough.",
+    "description": "Keeps Sal honest. Nearly.",
     "effect": {
       "debt_default_heat_delta": -2,
       "loss_reduction": 1,
@@ -1619,7 +1619,7 @@
     "icon_key": "xray_glasses",
     "environment_prop": "glasses",
     "surface": "counter_case",
-    "description": "Permanent X-ray gear for covered tickets.",
+    "description": "Sees through the gray. Permanently.",
     "effect_description": "Reveals up to 3 covered scratch symbols; surveillance Heat +6 when applied.",
     "effect": {
       "scratch_peek_cells": 3,
@@ -1642,7 +1642,7 @@
     "icon_key": "tab_detector",
     "environment_prop": "scanner",
     "surface": "counter_case",
-    "description": "Finds paper with a pulse.",
+    "description": "Finds the paper with a pulse.",
     "effect": {
       "active_item": true,
       "active_mode": "toggle",
@@ -1666,7 +1666,7 @@
     "icon_key": "tarot_card",
     "environment_prop": "loose_card",
     "surface": "felt_table",
-    "description": "Fortune, laminated and smug.",
+    "description": "A fortune, laminated and smug.",
     "effect": {
       "active_item": true,
       "active_mode": "consumable",
@@ -1690,7 +1690,7 @@
     "icon_key": "lucky_penny",
     "environment_prop": "coin",
     "surface": "counter_case",
-    "description": "One copper apology from fate.",
+    "description": "A copper apology from fate.",
     "effect": {
       "scratch_penalty_shields": 1
     }
@@ -1783,7 +1783,7 @@
     "icon_key": "jazz_drummer_glasses",
     "environment_prop": "glasses",
     "surface": "counter_case",
-    "description": "Legendary shades. Quiet room.",
+    "description": "Famous shades. Quiet room.",
     "effect": {
       "win_chance": 3,
       "cheat_suspicion_delta": -4,
@@ -1806,7 +1806,7 @@
     "icon_key": "bag",
     "environment_prop": "satchel",
     "surface": "counter",
-    "description": "Three pockets. No questions.",
+    "description": "A few pockets. No questions.",
     "container_capacity": 3,
     "effect": {}
   },
@@ -1826,7 +1826,7 @@
     "icon_key": "backpack",
     "environment_prop": "satchel",
     "surface": "counter",
-    "description": "Five pockets and a grudge.",
+    "description": "More pockets, and a grudge.",
     "container_capacity": 5,
     "effect": {}
   },
@@ -1846,7 +1846,7 @@
     "icon_key": "suitcase",
     "environment_prop": "briefcase",
     "surface": "counter",
-    "description": "Seven slots for bad planning.",
+    "description": "Room enough for bad planning.",
     "container_capacity": 7,
     "effect": {}
   },
@@ -1866,7 +1866,7 @@
     "icon_key": "trunk",
     "environment_prop": "crate",
     "surface": "counter",
-    "description": "Ten slots. Heavy history.",
+    "description": "Heavy, and full of history.",
     "container_capacity": 10,
     "effect": {}
   }

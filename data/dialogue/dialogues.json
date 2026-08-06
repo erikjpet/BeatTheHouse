@@ -16,7 +16,7 @@
     "start": "greeting",
     "nodes": {
       "greeting": {
-        "text": "Winners, questions, trouble. Pick one.",
+        "text": "Winners, questions, trouble. One of those.",
         "choices": [
           {
             "id": "redeem_chatter",
@@ -59,7 +59,7 @@
         ]
       },
       "redeem": {
-        "text": "Winners cash at the tray. Dead paper stays dead.",
+        "text": "Winners cash at the tray. Dead paper stays that way.",
         "choices": [
           {
             "id": "done",
@@ -70,7 +70,7 @@
         ]
       },
       "loose": {
-        "text": "Maybe. Maybe the camera heard you ask.",
+        "text": "Maybe. Maybe the ceiling heard you ask.",
         "choices": [
           {
             "id": "done",
@@ -81,7 +81,7 @@
         ]
       },
       "routes": {
-        "text": "Gas station paper gets jumpy after midnight.",
+        "text": "Gas station paper turns jumpy after midnight.",
         "choices": [
           {
             "id": "done",
@@ -110,7 +110,7 @@
     "start": "counter",
     "nodes": {
       "counter": {
-        "text": "Late shelf. Cheap if you do not linger.",
+        "text": "Late shelf. Cheap if you don't linger.",
         "choices": [
           {
             "id": "haggle",
@@ -148,7 +148,7 @@
     "start": "counter",
     "nodes": {
       "counter": {
-        "text": "People talk when the cooler hums loud.",
+        "text": "People talk when the cooler hums loud enough.",
         "choices": [
           {
             "id": "ask_routes",
@@ -192,7 +192,7 @@
     "start": "notice",
     "nodes": {
       "notice": {
-        "text": "Room is done pretending it loves you. Door time.",
+        "text": "The room's done pretending it loves you. Door's there.",
         "choices": [
           {
             "id": "head_out",
@@ -223,7 +223,7 @@
     "start": "recognition",
     "nodes": {
       "recognition": {
-        "text": "Bronze already, sugar? Somebody behaved. Mostly.",
+        "text": "Bronze already, sugar? Somebody's been behaving. Mostly.",
         "choices": [
           {
             "id": "thank_linda",
@@ -254,7 +254,7 @@
     "start": "recognition",
     "nodes": {
       "recognition": {
-        "text": "Silver opens the velvet rope. Step careful.",
+        "text": "Silver opens the velvet rope. Step careful, honey.",
         "choices": [
           {
             "id": "take_silver",
@@ -285,7 +285,7 @@
     "start": "review",
     "nodes": {
       "review": {
-        "text": "Five settled games. Clean money. Sign here for Gold.",
+        "text": "Five settled games. Clean money. Sign here for Gold, sugar.",
         "choices": [
           {
             "id": "accept_gold_card",
@@ -330,7 +330,7 @@
     "start": "review",
     "nodes": {
       "review": {
-        "text": "You won clean. Carry this card. Lose the run and you lose it.",
+        "text": "You won clean, sugar. Carry the card. Lose the run and you lose it.",
         "choices": [
           {
             "id": "accept_first_card",
@@ -367,7 +367,7 @@
     "start": "line",
     "nodes": {
       "line": {
-        "text": "Keep the slips flat. The Cage remembers clean hands.",
+        "text": "Keep the slips flat, sugar. The Cage remembers clean hands.",
         "choices": [
           {
             "id": "move_on",
@@ -397,7 +397,7 @@
     "start": "line",
     "nodes": {
       "line": {
-        "text": "Rourke watches shortcuts. I watch who needs none.",
+        "text": "Rourke watches shortcuts. I watch who doesn't need one.",
         "choices": [
           {
             "id": "move_on",
@@ -427,7 +427,7 @@
     "start": "line",
     "nodes": {
       "line": {
-        "text": "The velvet rope opens for a record, not a story.",
+        "text": "The rope opens for a record, honey. Not a story.",
         "choices": [
           {
             "id": "move_on",
@@ -457,7 +457,7 @@
     "start": "main",
     "nodes": {
       "main": {
-        "text": "Linda turns from the ledger, face shadowed behind the bars.",
+        "text": "Linda turns from the ledger, face lost behind the bars.",
         "tutorial_text": "Cash buys chips for tables and shop. Cashout pays debt first.",
         "choices": [
           {
@@ -495,7 +495,7 @@
         ]
       },
       "chips": {
-        "text": "Linda rests one hand beside the chip tray.",
+        "text": "Linda sets one hand beside the chip tray.",
         "tutorial_text": "Buy chips with cash for tables and the shop. Cashout pays debt first.",
         "choices": [
           {
@@ -533,7 +533,7 @@
         ]
       },
       "card": {
-        "text": "Linda checks the card ledger without looking up.",
+        "text": "Linda checks the card ledger, never looking up.",
         "tutorial_text": "Card tiers: Bronze, Silver, then Gold. Claim each at my window.",
         "choices": [
           {
@@ -563,7 +563,7 @@
         ]
       },
       "comps": {
-        "text": "Linda checks the promotions written beside your name.",
+        "text": "Linda reads the promotions written beside your name.",
         "choices": [
           {
             "id": "cage_comp_drink",
@@ -618,7 +618,7 @@
     "start": "counter",
     "nodes": {
       "counter": {
-        "text": "Browse quick. The good stuff is offended by your budget.",
+        "text": "Browse quick. The good stuff's offended by your budget.",
         "choices": [
           {
             "id": "move_on",
@@ -648,7 +648,7 @@
     "start": "line",
     "nodes": {
       "line": {
-        "text": "Exact piece, exact numbers. Glass opens once.",
+        "text": "Exact piece, exact number. The glass opens once.",
         "choices": [
           {
             "id": "move_on",
@@ -678,7 +678,7 @@
     "start": "line",
     "nodes": {
       "line": {
-        "text": "You bought the readings too. Keep the interesting part intact.",
+        "text": "You bought the readings too. Keep the interesting part whole.",
         "choices": [
           {
             "id": "move_on",
@@ -708,7 +708,7 @@
     "start": "line",
     "nodes": {
       "line": {
-        "text": "That's my quote. The shelf price will be my business.",
+        "text": "That's my quote. The shelf price is my business.",
         "choices": [
           {
             "id": "move_on",
@@ -738,7 +738,7 @@
     "start": "line",
     "nodes": {
       "line": {
-        "text": "Clean transfer. You get gold; I get possibilities.",
+        "text": "Clean transfer. You get gold. I get possibilities.",
         "choices": [
           {
             "id": "move_on",
@@ -768,7 +768,7 @@
     "start": "offer",
     "nodes": {
       "offer": {
-        "text": "Sal makes a one-time offer on the exact starter item.",
+        "text": "Sal makes one offer on the exact starter item.",
         "choices": [
           {
             "id": "sal_starter_sell_back",
@@ -807,7 +807,7 @@
     "start": "line",
     "nodes": {
       "line": {
-        "text": "Same edge sample. Ten times my pawn quote if you want it twice.",
+        "text": "Same edge sample. Ten times my quote if you want it twice.",
         "choices": [
           {
             "id": "move_on",
@@ -837,7 +837,7 @@
     "start": "line",
     "nodes": {
       "line": {
-        "text": "Keep it, then. Edge pieces don't need my permission to be rare.",
+        "text": "Keep it, then. Edge pieces don't need me to call them rare.",
         "choices": [
           {
             "id": "move_on",
@@ -868,21 +868,21 @@
     "start": "answer",
     "nodes": {
       "answer": {
-        "text": "You found the one phone in town that still charges guilt by the minute. You all right?",
+        "text": "You found the one phone in town that still bills guilt by the minute. You all right?",
         "choices": [
           {"id": "need_help", "label": "I need a little help.", "effects": {}, "goto": "weather"},
           {"id": "just_checking", "label": "Just checking in.", "effects": {}, "goto": "weather"}
         ]
       },
       "weather": {
-        "text": "Checking in never starts with a counter phone after dark. How deep is it?",
+        "text": "Nobody checks in from a counter phone after dark. How deep is it?",
         "choices": [
           {"id": "thirty", "label": "Thirty gets me breathing.", "effects": {}, "goto": "terms"},
           {"id": "not_deep", "label": "Deep enough to call family.", "effects": {}, "goto": "terms"}
         ]
       },
       "terms": {
-        "text": "Thirty, then. It is help, not a gift. When you cash out, family gets remembered first.",
+        "text": "Thirty, then. It's help, not a gift. When you cash out, family gets remembered first.",
         "choices": [
           {
             "id": "make_call",
@@ -963,7 +963,7 @@
         "choices": [{"id": "continue", "label": "Follow the lead", "effects": {}, "end": true}]
       },
       "route_split": {
-        "text": "That tip opened two doors. I strongly recommend the Gas Casino lesson, but it is optional: choose Gas Casino, or skip it and go straight Underground.",
+        "text": "That tip opened two doors. I strongly recommend the Gas Casino lesson, but it's optional: choose Gas Casino, or skip it and go straight Underground.",
         "choices": [{"id": "continue", "label": "Choose a route", "effects": {}, "end": true}]
       },
       "gas_machine": {
@@ -979,7 +979,7 @@
         "choices": [{"id": "continue", "label": "Collect and peel", "effects": {}, "end": true}]
       },
       "gas_clerk": {
-        "text": "Leave the machine, open Rina's clerk tray, and Redeem. A filed winner is not cash until the clerk pays it.",
+        "text": "Leave the machine, open Rina's clerk tray, and Redeem. A filed winner isn't cash until the clerk pays it.",
         "choices": [{"id": "continue", "label": "Cash the winner", "effects": {}, "end": true}]
       },
       "gas_depart": {
@@ -1031,7 +1031,7 @@
         "choices": [{"id": "continue", "label": "Watch the heat", "effects": {}, "end": true}]
       },
       "heat_99": {
-        "text": "You really need to calm down. I pulled your Heat back to 75% so the lesson can continue, but I cannot keep doing your breathing for you.",
+        "text": "You really need to calm down. I pulled your Heat back to 75% so the lesson can continue, but I can't keep doing your breathing for you.",
         "choices": [{"id": "continue", "label": "Calm down", "effects": {}, "end": true}]
       },
       "invitation": {
@@ -1039,7 +1039,7 @@
         "choices": [{"id": "continue", "label": "Take the invitation", "effects": {}, "end": true}]
       },
       "drink_intro": {
-        "text": "The bar sells courage with a timer on it. A drink can lift Luck, but Drunk slows the room, bends timing, and makes Heat harder to read. Buying is optional; knowing the trade is not.",
+        "text": "The bar sells courage with a timer on it. A drink can lift Luck, but Drunk slows the room, bends timing, and makes Heat harder to read. Buying is optional. Knowing the trade isn't.",
         "choices": [{"id": "continue", "label": "Mind the Drunk meter", "effects": {}, "end": true}]
       },
       "grand_depart": {
@@ -1064,7 +1064,7 @@
     "start": "warning",
     "nodes": {
       "warning": {
-        "text": "Just this once I'll leave it open for you, but don't let me catch you again.",
+        "text": "Just this once I'll leave it open. Don't let me catch you again.",
         "choices": [{"id": "continue", "label": "Understood", "effects": {}, "end": true}]
       }
     }
@@ -1085,7 +1085,7 @@
     "start": "grand_entry",
     "nodes": {
       "grand_entry": {
-        "text": "Welcome. I'm Vivienne. Table play earns Players Card standing.",
+        "text": "Welcome. I'm Vivienne Vale. Table play earns Players Card standing.",
         "choices": [{"id": "continue", "label": "Meet the Host", "effects": {}, "end": true}]
       },
       "comp": {
@@ -1093,7 +1093,7 @@
         "choices": [{"id": "continue", "label": "Take the comp", "effects": {}, "end": true}]
       },
       "cage": {
-        "text": "Visit Linda in the Cage for accounts, chips, and cashout.",
+        "text": "Linda sees to accounts, chips, and cashout at the Cage.",
         "choices": [{"id": "continue", "label": "Go to the Cage", "effects": {}, "end": true}]
       },
       "shop": {
@@ -1105,7 +1105,7 @@
         "choices": [{"id": "continue", "label": "Earn Bronze", "effects": {}, "end": true}]
       },
       "return_linda": {
-        "text": "Bronze is ready. Return to Linda at the Cage to claim it.",
+        "text": "Bronze is ready. Linda will hand it over at the Cage.",
         "choices": [{"id": "continue", "label": "Return to Linda", "effects": {}, "end": true}]
       }
     }
@@ -1126,7 +1126,7 @@
     "start": "intro",
     "nodes": {
       "intro": {
-        "text": "Play clean in my casino and you have nothing to fear.",
+        "text": "Play clean on my floor and you've nothing to fear.",
         "choices": [{"id": "continue", "label": "Understood", "effects": {}, "end": true}]
       }
     }
@@ -1147,7 +1147,7 @@
     "start": "greeting",
     "nodes": {
       "greeting": {
-        "text": "Welcome to the Grand. I'm Vivienne, your host. Enjoy the floor.",
+        "text": "Welcome to the Grand. I'm Vivienne, your host. The floor is yours.",
         "choices": [{"id": "continue", "label": "Enter the floor", "effects": {}, "end": true}]
       }
     }
@@ -1180,7 +1180,7 @@
         }]
       },
       "persistence": {
-        "text": "Your collection and Players Card rewards persist between runs; ordinary run cash, chips, debt, and carried gear do not unless a reward says otherwise. Normal runs are now open.",
+        "text": "Your collection and Players Card rewards persist between runs; ordinary run cash, chips, debt, and carried gear don't unless a reward says otherwise. Normal runs are now open.",
         "choices": [{
           "id": "review_next_goal",
           "label": "Show my next goal",
@@ -1226,7 +1226,7 @@
     "start": "restock",
     "nodes": {
       "restock": {
-        "text": "I watch the route, not the screen. I know when the next release lands.",
+        "text": "I watch the route, not the screen. I know when the next drop lands.",
         "choices": [{"id": "continue", "label": "Leave him to it", "effects": {}, "end": true}]
       }
     }
@@ -1247,7 +1247,7 @@
     "start": "denial",
     "nodes": {
       "denial": {
-        "text": "Restock time? Never heard of one. I just like standing here.",
+        "text": "Restock time? Never heard of it. I just like standing here.",
         "choices": [{"id": "continue", "label": "Sure you do", "effects": {}, "end": true}]
       }
     }

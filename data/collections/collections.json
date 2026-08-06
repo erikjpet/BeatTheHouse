@@ -92,7 +92,7 @@
         "collection_id": "grand_casino_rewards",
         "tier": "gold",
         "icon_key": "basic_strategy_card",
-        "flavor": "Linda's Gold card, stamped with the run that earned it.",
+        "flavor": "Linda's Gold card, stamped with the run that paid for it.",
         "base_effect": {},
         "durability_policy": {
           "condition": 0.08,
@@ -110,7 +110,7 @@
         "collection_id": "grand_casino_rewards",
         "tier": "gold",
         "icon_key": "poker_chip",
-        "flavor": "A rack the Grand Casino refused to cash. Sal knows another market.",
+        "flavor": "A rack the Grand wouldn't cash. Sal knows another market.",
         "base_effect": {},
         "loadout_eligible": false,
         "sale_policy": {
@@ -124,7 +124,7 @@
       {
         "id": "roadside_luck",
         "display_name": "Roadside Luck Collection",
-        "theme": "convenience-store charms, motel counters, and small clean-play edges",
+        "theme": "Counter charms, motel keys, and small edges that stay clean.",
         "drop_table": {
           "blue": 7000,
           "purple": 2000,
@@ -140,7 +140,7 @@
             "tier": "blue",
             "collection_id": "roadside_luck",
             "icon_key": "cashout_envelope",
-            "flavor": "A soft paper bag with a lucky receipt tucked under the fold."
+            "flavor": "A soft paper bag, a lucky receipt folded under the flap."
           },
           {
             "itemdef_id": 9001,
@@ -149,7 +149,7 @@
             "tier": "purple",
             "collection_id": "roadside_luck",
             "icon_key": "lucky_bar_napkin",
-            "flavor": "A roadside prize bag with a purple stamp and a coffee stain."
+            "flavor": "A roadside prize bag, purple stamp, one coffee ring."
           },
           {
             "itemdef_id": 9002,
@@ -158,7 +158,7 @@
             "tier": "pink",
             "collection_id": "roadside_luck",
             "icon_key": "neon_players_charm",
-            "flavor": "The paper glints like a motel sign after midnight."
+            "flavor": "The paper glints like a motel sign past midnight."
           },
           {
             "itemdef_id": 9003,
@@ -167,7 +167,7 @@
             "tier": "red",
             "collection_id": "roadside_luck",
             "icon_key": "high_roller_watch",
-            "flavor": "A rare counter bag sealed with a red pull-tab sticker."
+            "flavor": "A counter bag sealed with a red pull-tab sticker."
           },
           {
             "itemdef_id": 9004,
@@ -176,7 +176,7 @@
             "tier": "gold",
             "collection_id": "roadside_luck",
             "icon_key": "gold_tooth_token",
-            "flavor": "A tiny gold-tagged bag that feels heavier than it looks."
+            "flavor": "A small gold-tagged bag, heavier than it looks."
           }
         ],
         "items": [
@@ -241,7 +241,7 @@
                 "decay_max": 0.05
               }
             },
-            "flavor": "A bent house card that still seems to land face up.",
+            "flavor": "A bent house card that still lands face up.",
             "icon_key": "luck_card"
           },
           {
@@ -305,7 +305,7 @@
                 "decay_max": 0.055
               }
             },
-            "flavor": "A bitter packet for the kind of focus that fits in a coat pocket.",
+            "flavor": "A bitter packet. The kind of focus that fits a coat pocket.",
             "icon_key": "coffee_cup"
           },
           {
@@ -369,7 +369,7 @@
                 "decay_max": 0.05
               }
             },
-            "flavor": "A stub of pencil sharpened down by careful records.",
+            "flavor": "A pencil stub worn down by careful records.",
             "icon_key": "ledger_pencil"
           },
           {
@@ -433,7 +433,7 @@
                 "decay_max": 0.05
               }
             },
-            "flavor": "A folded envelope that makes leaving ahead feel possible.",
+            "flavor": "A folded envelope that makes leaving ahead look possible.",
             "icon_key": "cashout_envelope"
           },
           {
@@ -497,7 +497,7 @@
                 "decay_max": 0.055
               }
             },
-            "flavor": "A napkin full of score marks and one good superstition.",
+            "flavor": "A napkin of score marks and one good superstition.",
             "icon_key": "lucky_bar_napkin"
           },
           {
@@ -561,7 +561,7 @@
                 "decay_max": 0.045
               }
             },
-            "flavor": "Highlighted routes and coffee rings turn into a plan.",
+            "flavor": "Highlighted routes and coffee rings, close enough to a plan.",
             "icon_key": "roadside_map"
           },
           {
@@ -625,7 +625,7 @@
                 "decay_max": 0.045
               }
             },
-            "flavor": "Dates circled in red, then crossed out with relief.",
+            "flavor": "Dates circled in red, crossed out with relief.",
             "icon_key": "payment_calendar"
           },
           {
@@ -689,7 +689,7 @@
                 "decay_max": 0.055
               }
             },
-            "flavor": "A clear sleeve for keeping hard choices dry.",
+            "flavor": "A clear sleeve that keeps hard choices dry.",
             "icon_key": "pawn_receipt_sleeve"
           },
           {
@@ -753,7 +753,7 @@
                 "decay_max": 0.055
               }
             },
-            "flavor": "A room key that always seems to open one more door.",
+            "flavor": "A room key that keeps opening one more door.",
             "icon_key": "lucky_keychain"
           },
           {
@@ -817,7 +817,7 @@
                 "decay_max": 0.06
               }
             },
-            "flavor": "Old luck tied to a new ring.",
+            "flavor": "Old luck on a new ring.",
             "icon_key": "lucky_charm"
           },
           {
@@ -881,7 +881,7 @@
                 "decay_max": 0.06
               }
             },
-            "flavor": "A tiny sign bright enough to make a bad table look honest.",
+            "flavor": "A small sign bright enough to make a bad table look honest.",
             "icon_key": "neon_players_charm"
           },
           {
@@ -945,7 +945,7 @@
                 "decay_max": 0.065
               }
             },
-            "flavor": "A heavy watch that ticks like a dealer counting down.",
+            "flavor": "A heavy watch, ticking like a dealer counting down.",
             "icon_key": "high_roller_watch"
           },
           {
@@ -1009,7 +1009,7 @@
                 "decay_max": 0.065
               }
             },
-            "flavor": "A pocket magnet wrapped in old prize-counter foil.",
+            "flavor": "A pocket magnet wrapped in prize-counter foil.",
             "icon_key": "feature_magnet"
           },
           {
@@ -1074,7 +1074,7 @@
                 "decay_max": 0.07
               }
             },
-            "flavor": "A polished token from a motel that never appears on maps.",
+            "flavor": "A polished token from a motel no map admits to.",
             "icon_key": "gold_tooth_token"
           }
         ]
@@ -1082,7 +1082,7 @@
       {
         "id": "house_edge",
         "display_name": "House Edge Collection",
-        "theme": "table-read tools, slot-side timing pieces, and risky casino advantages",
+        "theme": "Table reads, timing pieces, and edges worth getting caught for.",
         "drop_table": {
           "blue": 7000,
           "purple": 2000,
@@ -1098,7 +1098,7 @@
             "tier": "blue",
             "collection_id": "house_edge",
             "icon_key": "sunglasses",
-            "flavor": "A blue-tagged table bag with casino dust in the seams."
+            "flavor": "A blue-tagged table bag with dust in the seams."
           },
           {
             "itemdef_id": 9011,
@@ -1107,7 +1107,7 @@
             "tier": "purple",
             "collection_id": "house_edge",
             "icon_key": "marked_cards",
-            "flavor": "A purple table bag sealed with a narrow strip of tape."
+            "flavor": "A purple table bag, sealed with a strip of tape."
           },
           {
             "itemdef_id": 9012,
@@ -1116,7 +1116,7 @@
             "tier": "pink",
             "collection_id": "house_edge",
             "icon_key": "holdout_wax",
-            "flavor": "A pink-tagged bag that feels warm from the machine floor."
+            "flavor": "A pink-tagged bag, still warm from the machine floor."
           },
           {
             "itemdef_id": 9013,
@@ -1125,7 +1125,7 @@
             "tier": "red",
             "collection_id": "house_edge",
             "icon_key": "holdout_rig",
-            "flavor": "A red-tagged bag with a dealer's mark under the fold."
+            "flavor": "A red-tagged bag, dealer's mark under the fold."
           },
           {
             "itemdef_id": 9014,
@@ -1134,7 +1134,7 @@
             "tier": "gold",
             "collection_id": "house_edge",
             "icon_key": "velvet_table_key",
-            "flavor": "A gold table bag with a tag that names no casino."
+            "flavor": "A gold table bag. The tag names no casino."
           }
         ],
         "items": [
@@ -1198,7 +1198,7 @@
                 "decay_max": 0.05
               }
             },
-            "flavor": "The lenses are scratched, but the stare still works.",
+            "flavor": "Scratched lenses. The stare still works.",
             "icon_key": "sunglasses"
           },
           {
@@ -1262,7 +1262,7 @@
                 "decay_max": 0.05
               }
             },
-            "flavor": "Quick marks for quicker decisions.",
+            "flavor": "Fast marks for faster decisions.",
             "icon_key": "scratch_pad"
           },
           {
@@ -1325,7 +1325,7 @@
                 "decay_max": 0.055
               }
             },
-            "flavor": "A laminated edge for bets that usually bite back.",
+            "flavor": "A laminated edge for bets that bite back.",
             "icon_key": "side_bet_chart"
           },
           {
@@ -1389,7 +1389,7 @@
                 "decay_max": 0.05
               }
             },
-            "flavor": "Small print, big nerve.",
+            "flavor": "Small print. Big nerve.",
             "icon_key": "payout_pamphlet"
           },
           {
@@ -1453,7 +1453,7 @@
                 "decay_max": 0.06
               }
             },
-            "flavor": "A familiar deck with marks too subtle to trust twice.",
+            "flavor": "A familiar deck, marked too subtly to trust twice.",
             "icon_key": "marked_cards"
           },
           {
@@ -1517,7 +1517,7 @@
                 "decay_max": 0.06
               }
             },
-            "flavor": "A tiny glass eye for a table that looks back.",
+            "flavor": "A small glass eye for a table that looks back.",
             "icon_key": "edge_sort_loupe"
           },
           {
@@ -1581,7 +1581,7 @@
                 "decay_max": 0.06
               }
             },
-            "flavor": "Loose beads that click on the beat before the reel stops.",
+            "flavor": "Loose beads clicking the beat before the reel stops.",
             "icon_key": "timing_bracelet"
           },
           {
@@ -1645,7 +1645,7 @@
                 "decay_max": 0.055
               }
             },
-            "flavor": "Quarters that stay cold no matter how long the run gets.",
+            "flavor": "Quarters that stay cold however long the run runs.",
             "icon_key": "cold_quarters"
           },
           {
@@ -1709,7 +1709,7 @@
                 "decay_max": 0.065
               }
             },
-            "flavor": "A thumb-sized tin for hands that need to act natural.",
+            "flavor": "A thumb-sized tin for hands acting natural.",
             "icon_key": "holdout_wax"
           },
           {
@@ -1773,7 +1773,7 @@
                 "decay_max": 0.065
               }
             },
-            "flavor": "A folded machine note with a timing mark in the crease.",
+            "flavor": "A folded machine note, timing mark in the crease.",
             "icon_key": "split_reel_note"
           },
           {
@@ -1837,7 +1837,7 @@
                 "decay_max": 0.065
               }
             },
-            "flavor": "A ring weighted just enough to remind your hand where it is.",
+            "flavor": "A ring weighted enough to remind your hand where it is.",
             "icon_key": "weighted_keyring"
           },
           {
@@ -1901,7 +1901,7 @@
                 "decay_max": 0.07
               }
             },
-            "flavor": "Carefully built, badly explained, and too useful to ignore.",
+            "flavor": "Carefully built, badly explained, too useful to leave.",
             "icon_key": "holdout_rig"
           },
           {
@@ -1965,7 +1965,7 @@
                 "decay_max": 0.07
               }
             },
-            "flavor": "A pair of quiet cufflinks with a colder reputation.",
+            "flavor": "Quiet cufflinks with a colder reputation.",
             "icon_key": "coolers_cufflinks"
           },
           {
@@ -2030,7 +2030,7 @@
                 "decay_max": 0.075
               }
             },
-            "flavor": "A small key wrapped in velvet, cut for a room behind the pit.",
+            "flavor": "A small key in velvet, cut for a room behind the pit.",
             "icon_key": "velvet_table_key"
           }
         ]

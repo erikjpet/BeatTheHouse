@@ -34,9 +34,9 @@
     "id": "call_brother_in_law",
     "display_name": "Call Brother-in-Law",
     "category": "family",
-    "description": "Family guilt on speed dial.",
+    "description": "Family guilt, one call away.",
     "cost": 0,
-    "message": "You make the family call and hear the strings before the cash.",
+    "message": "You make the call. The strings arrive before the money.",
     "audio_cue": "phone_call",
     "audio_cue_volume_db": -3.0,
     "effect": {
@@ -44,7 +44,7 @@
         "brother_in_law_phone_ready": true
       },
       "messages": [
-        "The line clicks alive. Family guilt is available."
+        "The line clicks alive. Family guilt, on tap."
       ]
     }
   },
@@ -52,13 +52,13 @@
     "id": "jazz_sax_round",
     "display_name": "Buy Sax a Round",
     "category": "favor",
-    "description": "Buy brass; borrow luck.",
+    "description": "Buy the brass a round.",
     "cost": 8,
-    "message": "The sax player nods over the rim and lets the solo curl around your luck.",
+    "message": "The sax nods over the rim and lets the solo see to your luck.",
     "effect": {
       "baseline_luck_delta": 1,
       "messages": [
-        "The sax player remembers the round."
+        "The sax player keeps the round in mind."
       ]
     }
   },
@@ -66,13 +66,13 @@
     "id": "jazz_cello_round",
     "display_name": "Buy Cello a Round",
     "category": "favor",
-    "description": "Low strings cool eyes.",
+    "description": "Low strings, cooler eyes.",
     "cost": 8,
-    "message": "The cellist smiles into a low walking line and keeps time with your nerve.",
+    "message": "The cellist walks a low line and keeps time with your nerve.",
     "effect": {
       "suspicion_delta": -1,
       "messages": [
-        "The cellist answers low and steady."
+        "The cellist answers, low and steady."
       ]
     }
   },
@@ -80,13 +80,13 @@
     "id": "jazz_drummer_round",
     "display_name": "Buy Drummer a Round",
     "category": "favor",
-    "description": "Backbeat, buzz, rare gear.",
+    "description": "Backbeat, buzz, odd gear.",
     "cost": 8,
-    "message": "The drummer taps the glass twice, then rolls the groove forward.",
+    "message": "The drummer taps the glass twice and rolls the groove on.",
     "effect": {
       "alcohol_intake": 4,
       "messages": [
-        "The drummer gives you a two-tap salute."
+        "The drummer offers a two-tap salute."
       ]
     }
   },
@@ -94,14 +94,14 @@
     "id": "jazz_band_tip_jar",
     "display_name": "Band Tip Jar",
     "category": "favor",
-    "description": "Tip the band; buy grace.",
+    "description": "Tip the band. Buy grace.",
     "cost": 6,
-    "message": "You feed the band jar and let chance carry the round.",
+    "message": "You feed the jar and let chance carry the round.",
     "effect": {
       "heat_cooldown_actions": 3,
       "heat_cooldown_per_action": 1,
       "messages": [
-        "The jar eats the bills. The band notices."
+        "The jar takes the bills. The band notices."
       ]
     }
   },
@@ -109,13 +109,13 @@
     "id": "listen_to_jazz",
     "display_name": "Stay for the Set",
     "category": "music",
-    "description": "Stay awhile. Heat forgets.",
+    "description": "Stay a while. Heat forgets.",
     "cost": 0,
-    "message": "You stay through the changes and let the room swing around you.",
+    "message": "You stay through the changes. The room swings around you.",
     "effect": {
       "suspicion_delta": -1,
       "messages": [
-        "You stay for the set; the room looks elsewhere."
+        "You stay for the set. The room looks elsewhere."
       ]
     }
   },
@@ -123,12 +123,12 @@
     "id": "show_drummer_glasses",
     "display_name": "Show Legend's Glasses",
     "category": "security",
-    "description": "Old legend clears the room.",
+    "description": "An old name clears the room.",
     "cost": 0,
-    "message": "The glasses make people rethink what they saw.",
+    "message": "The glasses make people doubt what they saw.",
     "effect": {
       "messages": [
-        "The drummer's glasses stop the whispers cold."
+        "The drummer's glasses stop the whispering."
       ]
     }
   },
@@ -136,15 +136,15 @@
     "id": "kitty_champagne",
     "display_name": "Champagne Tray",
     "category": "alcohol",
-    "description": "Bubbles, luck, soft trouble.",
+    "description": "Bubbles and quiet trouble.",
     "cost": 18,
-    "message": "The lounge sends over champagne and the room softens at the edges.",
+    "message": "The lounge provides champagne. The room softens at the edges.",
     "effect": {
       "alcohol_intake": 22,
       "baseline_luck_delta": 2,
       "suspicion_delta": -1,
       "messages": [
-        "Champagne buys grace, not steady hands."
+        "Champagne provides grace, not steady hands."
       ]
     }
   },
@@ -152,15 +152,15 @@
     "id": "kitty_burlesque_show",
     "display_name": "Burlesque Show",
     "category": "nightlife",
-    "description": "Spotlights steal attention.",
+    "description": "The spotlights take over.",
     "cost": 28,
-    "message": "The lights hit the stage and half the room forgets to watch you.",
+    "message": "The lights take the stage and half the room forgets you.",
     "effect": {
       "alcohol_intake": 8,
       "baseline_luck_delta": 1,
       "suspicion_delta": -5,
       "messages": [
-        "The show gives your heat somewhere prettier to go."
+        "The show provides your heat somewhere prettier."
       ]
     }
   },
@@ -168,14 +168,14 @@
     "id": "riverboat_deck_walk",
     "display_name": "Walk the Deck",
     "category": "recovery",
-    "description": "Cold river, quieter eyes.",
+    "description": "Cold river. Quieter eyes.",
     "cost": 10,
-    "message": "Cold river air clears your head while the dock stays out of reach.",
+    "message": "Cold river air sees to your head. The dock stays far off.",
     "effect": {
       "suspicion_delta": -2,
       "drunk_delta": -6,
       "messages": [
-        "River air cools the attention clinging to you."
+        "River air cools the attention that follows you."
       ]
     }
   },
@@ -183,15 +183,15 @@
     "id": "beach_relax",
     "display_name": "Relax",
     "category": "recovery",
-    "description": "Surf rinses the heat.",
+    "description": "The surf rinses heat.",
     "cost": 0,
     "duration_minutes": 60,
-    "message": "The surf gives the heat time to fade.",
+    "message": "The surf provides time. The heat fades.",
     "effect": {
       "suspicion_delta": -3,
       "drunk_delta": -4,
       "messages": [
-        "The surf talks the room out of your name."
+        "The surf argues the room out of your name."
       ]
     }
   },
@@ -199,9 +199,9 @@
     "id": "beach_sand_pile",
     "display_name": "Sand Pile",
     "category": "discovery",
-    "description": "Dig where luck washed up.",
+    "description": "Dig where luck washes up.",
     "cost": 0,
-    "message": "You uncover a Cumquat Sandwich.",
+    "message": "You turn up a Cumquat Sandwich.",
     "availability": {
       "single_use_flag": "beach_sand_pile_found",
       "blocked_text": "The pile is empty."
@@ -217,7 +217,7 @@
         "beach_sand_pile_found": true
       },
       "messages": [
-        "You uncover a Cumquat Sandwich. Naturally."
+        "You turn up a Cumquat Sandwich. Naturally."
       ]
     }
   }
