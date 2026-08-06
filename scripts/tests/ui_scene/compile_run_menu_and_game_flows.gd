@@ -337,6 +337,17 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	app.call("_invalidate_travel_view_cache")
 	app.call("_refresh")
 	await process_frame
+	var route_split_choices: Array = app.call("_travel_choice_view_list")
+	for tutorial_target_id in ["gas_station_casino", "small_underground_casino"]:
+		var framed_choice: Dictionary = {}
+		for choice_value in route_split_choices:
+			if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == tutorial_target_id:
+				framed_choice = choice_value
+				break
+		var decision_lines: Array = framed_choice.get("decision_lines", []) if typeof(framed_choice.get("decision_lines", [])) == TYPE_ARRAY else []
+		if decision_lines.size() != 3 or str(framed_choice.get("decision_commitment", "")).find("min") == -1 or str(framed_choice.get("decision_forfeit", "")).find("Casino") == -1:
+			push_error("Tutorial route %s did not expose offer, live commitment, and the other visible route's opportunity cost: %s." % [tutorial_target_id, str(framed_choice)])
+			return false
 	app.call("open_world_map")
 	await process_frame
 	await process_frame

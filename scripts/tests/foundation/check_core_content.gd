@@ -28,6 +28,7 @@ const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.g
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
+const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")
 const PullTabsGameScript := preload("res://scripts/games/pull_tabs.gd")
 const SlotGameScript := preload("res://scripts/games/slot.gd")
 const SlotMachineGeneratorScript := preload("res://scripts/games/slots/slot_machine_generator.gd")
@@ -534,6 +535,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	if library.games.size() < 5:
 		failures.append("Expected at least five starter activities.")
 	_check_player_facing_description_copy(library, failures)
+	_check_destination_decision_contract(library, failures)
 	_check_release_copy_style_blockers(library, failures)
 	_check_content_art_presentation(library, failures)
 	_check_blackjack_item_content(library, failures)
@@ -712,6 +714,47 @@ func _check_player_facing_description_copy(library: ContentLibrary, failures: Ar
 		var archetype: Dictionary = archetype_value
 		var visual_context: Dictionary = archetype.get("visual_context", {}) if typeof(archetype.get("visual_context", {})) == TYPE_DICTIONARY else {}
 		_check_copy_word_limit("environment %s description" % str(archetype.get("id", "")), str(visual_context.get("description", "")), 8, failures)
+
+
+func _check_destination_decision_contract(library: ContentLibrary, failures: Array) -> void:
+	var offers := {}
+	for route_value in library.travel_routes:
+		if typeof(route_value) != TYPE_DICTIONARY:
+			continue
+		var route: Dictionary = route_value
+		var route_id := str(route.get("id", ""))
+		var decision: Dictionary = route.get("decision", {}) if typeof(route.get("decision", {})) == TYPE_DICTIONARY else {}
+		var offer := str(decision.get("offer", "")).strip_edges()
+		var tradeoff := str(decision.get("tradeoff", "")).strip_edges()
+		if offer.is_empty() or tradeoff.is_empty():
+			failures.append("Travel route %s is missing its offer/tradeoff decision contract." % route_id)
+		if offers.has(offer):
+			failures.append("Travel routes %s and %s share the same decision offer." % [str(offers.get(offer, "")), route_id])
+		offers[offer] = route_id
+	var framed := FoundationTravelViewModelScript.decision_frame_choices([
+		{"id": "gas_station_casino", "label": "Gas Station Casino", "enabled": true, "cost": 3, "travel_minutes": 10, "risk": "medium", "suspicion_delta": 1, "decision": library.route("gas_station_casino").get("decision", {})},
+		{"id": "small_underground_casino", "label": "Underground Casino", "enabled": true, "cost": 5, "travel_minutes": 20, "risk": "high", "suspicion_delta": 3, "decision": library.route("small_underground_casino").get("decision", {})},
+	])
+	if framed.size() != 2:
+		failures.append("Travel decision framing did not preserve both tutorial route choices.")
+	else:
+		for choice_value in framed:
+			var choice: Dictionary = choice_value
+			var lines: Array = choice.get("decision_lines", []) if typeof(choice.get("decision_lines", [])) == TYPE_ARRAY else []
+			if lines.size() != 3 or str(choice.get("decision_commitment", "")).find("min") == -1 or str(choice.get("decision_forfeit", "")).find("Casino") == -1:
+				failures.append("Travel decision framing did not expose offer, live commitment, and visible-alternative forfeit for %s." % str(choice.get("id", "")))
+	var gas := _archetype_by_id(library, "gas_station_casino")
+	var underground := _archetype_by_id(library, "small_underground_casino")
+	var gas_route := library.route("gas_station_casino")
+	var underground_route := library.route("small_underground_casino")
+	if _string_array(gas.get("game_pool", [])) == _string_array(underground.get("game_pool", [])):
+		failures.append("Tutorial route branches share the same game pool.")
+	if _string_array(gas.get("event_pool", [])) == _string_array(underground.get("event_pool", [])):
+		failures.append("Tutorial route branches share the same event pool.")
+	if str((gas.get("security_profile", {}) as Dictionary).get("strictness", "")) == str((underground.get("security_profile", {}) as Dictionary).get("strictness", "")):
+		failures.append("Tutorial route branches share the same security consequence.")
+	if int(gas_route.get("cost", 0)) >= int(underground_route.get("cost", 0)) or str(gas_route.get("risk", "")) == str(underground_route.get("risk", "")):
+		failures.append("Tutorial route branches lost their safer-versus-higher-stakes route shape.")
 
 
 func _check_travel_unlock_event_copy(library: ContentLibrary, failures: Array) -> void:

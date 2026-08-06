@@ -4,6 +4,10 @@
     "label": "Corner Store",
     "destination_archetype": "corner_store",
     "description": "Bright shelves. Cheap sins.",
+    "decision": {
+      "offer": "Cheap supplies and a quiet route lead.",
+      "tradeoff": "the louder money elsewhere"
+    },
     "cost": 1,
     "risk": "low",
     "distance": "near",
@@ -14,6 +18,10 @@
     "label": "Back Alley",
     "destination_archetype": "back_alley",
     "description": "A shortcut with teeth.",
+    "decision": {
+      "offer": "Fast access and a chance to cut the line.",
+      "tradeoff": "the safer road"
+    },
     "cost": 1,
     "risk": "high",
     "distance": "near",
@@ -34,6 +42,10 @@
     "label": "Motel",
     "destination_archetype": "motel",
     "description": "Thin walls. Private recovery.",
+    "decision": {
+      "offer": "Private recovery and room to cool off.",
+      "tradeoff": "another venue's action"
+    },
     "cost": 2,
     "risk": "medium",
     "distance": "far",
@@ -44,6 +56,10 @@
     "label": "Roadside Bar",
     "destination_archetype": "bar",
     "description": "Local games. Louder lies.",
+    "decision": {
+      "offer": "Small games, local contacts, and drink work.",
+      "tradeoff": "a quieter lead"
+    },
     "cost": 2,
     "risk": "medium",
     "distance": "local",
@@ -54,6 +70,10 @@
     "label": "Sal's Pawn Shop",
     "destination_archetype": "pawn_shop",
     "description": "Sal prices the mistakes.",
+    "decision": {
+      "offer": "Cash, loans, repairs, and Sal's shelf.",
+      "tradeoff": "time at the tables"
+    },
     "cost": 2,
     "risk": "low",
     "distance": "near",
@@ -64,6 +84,10 @@
     "label": "Jazz Club",
     "destination_archetype": "jazz_club",
     "description": "Music, favors, and low light.",
+    "decision": {
+      "offer": "Favors, music work, and low-heat contacts.",
+      "tradeoff": "faster gambling money"
+    },
     "cost": 4,
     "risk": "low",
     "distance": "local",
@@ -74,6 +98,10 @@
     "label": "Gas Station Casino",
     "destination_archetype": "gas_station_casino",
     "description": "Machines under tired eyes.",
+    "decision": {
+      "offer": "Gentler stakes, machines, and cheap tickets.",
+      "tradeoff": "the Underground's faster money"
+    },
     "cost": 3,
     "risk": "medium",
     "distance": "local",
@@ -85,6 +113,10 @@
     "label": "Underground Casino",
     "destination_archetype": "small_underground_casino",
     "description": "Better action. Hotter exits.",
+    "decision": {
+      "offer": "More tables, faster money, and the Grand's attention.",
+      "tradeoff": "the gas stop's gentler lesson"
+    },
     "cost": 5,
     "risk": "high",
     "distance": "far",
@@ -100,6 +132,10 @@
     "label": "Kitty Cat Lounge",
     "destination_archetype": "kitty_cat_lounge",
     "description": "Velvet, and cooler heat.",
+    "decision": {
+      "offer": "Social leads and a cooler high-roller room.",
+      "tradeoff": "a cheaper destination"
+    },
     "cost": 10,
     "risk": "medium",
     "distance": "far",
@@ -113,6 +149,10 @@
     "label": "The River Queen",
     "destination_archetype": "delta_queen",
     "description": "Riverboat felt. River brass.",
+    "decision": {
+      "offer": "Riverboat tables, stronger rewards, and schedule pressure.",
+      "tradeoff": "a route that stays put"
+    },
     "cost": 12,
     "free_from_archetypes": [
       "beach"
@@ -137,6 +177,10 @@
     "label": "The Beach",
     "destination_archetype": "beach",
     "description": "Salt air, fewer witnesses.",
+    "decision": {
+      "offer": "The cleanest heat relief on the map.",
+      "tradeoff": "a paying table"
+    },
     "cost": 3,
     "free_from_archetypes": [
       "delta_queen"
@@ -150,6 +194,10 @@
     "label": "Grand Casino",
     "destination_archetype": "grand_casino",
     "description": "The ride to the boss.",
+    "decision": {
+      "offer": "The boss floor, the card, and the run's finish.",
+      "tradeoff": "every unfinished lead"
+    },
     "cost": 70,
     "risk": "boss",
     "distance": "remote",
