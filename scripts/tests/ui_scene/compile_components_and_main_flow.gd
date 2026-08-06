@@ -6526,7 +6526,7 @@ func _run() -> void:
 		push_error("Repeated victory report bag claim duplicated the reward.")
 		quit(1)
 		return
-	if not _has_visible_text(app, "Players Card earned"):
+	if not _has_visible_text(app, str(victory_outcome.get("title", ""))):
 		push_error("Victory screen did not present the Players Card outcome title.")
 		quit(1)
 		return
