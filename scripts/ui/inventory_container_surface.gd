@@ -8,6 +8,8 @@ signal container_changed(container_key: String)
 
 const CatalogScript := preload("res://scripts/ui/inventory_container_catalog.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
+const ItemCardViewModelScript := preload("res://scripts/ui/item_card_view_model.gd")
+const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const DEFAULT_STAGE_SIZE := Vector2(350, 350)
 const SMALL_SCREEN_PAGE_SIZE := 5
 
@@ -46,6 +48,8 @@ var _slot_underlines: Array = []
 var _slot_name_labels: Array = []
 var _slot_count_labels: Array = []
 var _slot_group_labels: Array = []
+var _slot_description_labels: Array = []
+var _slot_badge_hosts: Array = []
 var _slot_models: Array = []
 var _slot_rects: Dictionary = {}
 
@@ -165,6 +169,10 @@ func layout_snapshot() -> Dictionary:
 			"name_rect": (_slot_name_labels[visible_index] as Label).get_global_rect() if visible_index < _slot_name_labels.size() else Rect2(),
 			"count_rect": (_slot_count_labels[visible_index] as Label).get_global_rect() if visible_index < _slot_count_labels.size() else Rect2(),
 			"group_rect": (_slot_group_labels[visible_index] as Label).get_global_rect() if visible_index < _slot_group_labels.size() else Rect2(),
+			"description_rect": (_slot_description_labels[visible_index] as Label).get_global_rect() if visible_index < _slot_description_labels.size() else Rect2(),
+			"badge_rect": (_slot_badge_hosts[visible_index] as HBoxContainer).get_global_rect() if visible_index < _slot_badge_hosts.size() else Rect2(),
+			"stack_text": str(ItemCardViewModelScript.build(_copy_dict(slot.get("item", {}))).get("stack_text", "+1")),
+			"contains_risk_badge": _card_contains_risk_badge(_copy_dict(slot.get("item", {}))),
 			"rarity": str(_copy_dict(slot.get("item", {})).get("tier", "")),
 		})
 	return {
@@ -378,6 +386,8 @@ func _render_active_container() -> void:
 		(_slot_name_labels[index] as Label).visible = false
 		(_slot_count_labels[index] as Label).visible = false
 		(_slot_group_labels[index] as Label).visible = false
+		(_slot_description_labels[index] as Label).visible = false
+		(_slot_badge_hosts[index] as HBoxContainer).visible = false
 		if not button.visible:
 			continue
 		var slot: Dictionary = _slot_models[index]
@@ -432,19 +442,24 @@ func _render_grouped_card_container() -> void:
 		(_slot_name_labels[index] as Label).visible = visible
 		(_slot_count_labels[index] as Label).visible = visible
 		(_slot_group_labels[index] as Label).visible = visible
+		(_slot_description_labels[index] as Label).visible = visible
+		(_slot_badge_hosts[index] as HBoxContainer).visible = visible
 		if not visible:
 			continue
 		var slot: Dictionary = _slot_models[index]
 		var occupied := bool(slot.get("occupied", false))
 		var item: Dictionary = slot.get("item", {}) if typeof(slot.get("item", {})) == TYPE_DICTIONARY else {}
+		var card := ItemCardViewModelScript.build(item)
 		button.disabled = not occupied
 		button.mouse_filter = Control.MOUSE_FILTER_STOP if occupied else Control.MOUSE_FILTER_IGNORE
 		(_slot_icons[index] as TextureRect).texture = _texture(str(item.get("asset_path", item.get("icon_path", "")))) if occupied else null
-		(_slot_name_labels[index] as Label).text = str(item.get("display_name", "Item")).left(24) if occupied else ""
-		(_slot_count_labels[index] as Label).text = "x%d" % maxi(1, int(item.get("count", 1))) if occupied else ""
-		(_slot_group_labels[index] as Label).text = str(item.get("group_label", item.get("collection_display_name", ""))).left(28) if occupied else ""
+		(_slot_name_labels[index] as Label).text = str(card.get("display_name", "Item")).left(28) if occupied else ""
+		(_slot_count_labels[index] as Label).text = str(card.get("stack_text", "+1")) if occupied else ""
+		(_slot_group_labels[index] as Label).text = str(card.get("class_label", "Item")).left(18) if occupied else ""
+		(_slot_description_labels[index] as Label).text = str(card.get("description", "")).left(96) if occupied else ""
+		_render_compact_badges(_slot_badge_hosts[index] as HBoxContainer, card.get("compact_badges", []))
 		(_slot_markers[index] as Label).text = str(slot.get("state_marker", "")) if occupied else ""
-		button.tooltip_text = _slot_tooltip(slot)
+		button.tooltip_text = str(card.get("tooltip", _slot_tooltip(slot)))
 	_container_label.text = _surface_summary_label(page_count)
 	_previous_button.visible = page_count > 1
 	_next_button.visible = page_count > 1
@@ -659,7 +674,38 @@ func _ensure_slot_pool(count: int) -> void:
 		count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		button.add_child(count_label)
 		_slot_count_labels.append(count_label)
+
+		var description_label := FoundationWidgets.muted_label("", VisualStyle.TYPE_MICRO)
+		description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		description_label.clip_text = true
+		description_label.max_lines_visible = 2
+		description_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.add_child(description_label)
+		_slot_description_labels.append(description_label)
+
+		var badge_host := HBoxContainer.new()
+		badge_host.add_theme_constant_override("separation", 3)
+		badge_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.add_child(badge_host)
+		_slot_badge_hosts.append(badge_host)
 		_slot_buttons.append(button)
+
+
+func _render_compact_badges(host: HBoxContainer, badges_value: Variant) -> void:
+	FoundationWidgets.clear(host)
+	if typeof(badges_value) != TYPE_ARRAY:
+		return
+	for badge_value in badges_value as Array:
+		if typeof(badge_value) != TYPE_DICTIONARY:
+			continue
+		var badge: Dictionary = badge_value
+		var icon := TextureRect.new()
+		icon.custom_minimum_size = Vector2(14, 14)
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.texture = AttributeBadgeRowScript.texture_for_badge(badge, 14, false)
+		icon.tooltip_text = str(badge.get("tooltip", ""))
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		host.add_child(icon)
 
 
 func _layout_slots() -> void:
@@ -734,7 +780,7 @@ func _layout_grouped_card_slots() -> void:
 	var gap := float(VisualStyle.SPACE_4)
 	var columns := _grouped_card_columns()
 	var card_width := floorf((_stage.size.x - gap * float(columns - 1)) / float(columns))
-	var card_height := maxf(VisualStyle.TOUCH_TARGET * 2.0, minf(VisualStyle.TOUCH_TARGET * 3.0, (_stage.size.y - gap * float(maxi(1, int(ceil(float(_slot_models.size()) / float(columns)))) - 1)) / float(maxi(1, int(ceil(float(_slot_models.size()) / float(columns)))))))
+	var card_height := maxf(VisualStyle.TOUCH_TARGET * 3.1, minf(VisualStyle.TOUCH_TARGET * 3.5, (_stage.size.y - gap * float(maxi(1, int(ceil(float(_slot_models.size()) / float(columns)))) - 1)) / float(maxi(1, int(ceil(float(_slot_models.size()) / float(columns)))))))
 	for index in range(_slot_models.size()):
 		var row := index / columns
 		var column := index % columns
@@ -752,13 +798,20 @@ func _layout_grouped_card_slots() -> void:
 		var count_label := _slot_count_labels[index] as Label
 		count_label.position = Vector2(maxf(0.0, button.size.x - VisualStyle.ICON_SMALL.x - pad), pad)
 		count_label.size = Vector2(VisualStyle.ICON_SMALL.x, VisualStyle.TYPE_CAPTION + VisualStyle.SPACE_2)
+		var badge_host := _slot_badge_hosts[index] as HBoxContainer
+		badge_host.position = Vector2(pad, pad + VisualStyle.TYPE_CAPTION + VisualStyle.SPACE_2)
+		badge_host.size = Vector2(maxf(1.0, button.size.x - pad * 2.0), 18.0)
 		var icon := _slot_icons[index] as TextureRect
-		var icon_side := minf(button.size.x - pad * 2.0, button.size.y * 0.42)
+		var icon_side := minf(46.0, button.size.y * 0.34)
 		icon.size = Vector2(icon_side, icon_side)
-		icon.position = Vector2(floorf((button.size.x - icon_side) * 0.5), floorf(button.size.y * 0.22))
+		icon.position = Vector2(pad, badge_host.position.y + badge_host.size.y + VisualStyle.SPACE_2)
 		var name_label := _slot_name_labels[index] as Label
-		name_label.position = Vector2(pad, maxf(icon.position.y + icon.size.y + VisualStyle.SPACE_2, button.size.y - VisualStyle.TOUCH_TARGET))
-		name_label.size = Vector2(maxf(1.0, button.size.x - pad * 2.0), minf(VisualStyle.TOUCH_TARGET, button.size.y - name_label.position.y - pad))
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		name_label.position = Vector2(icon.position.x + icon.size.x + VisualStyle.SPACE_2, icon.position.y)
+		name_label.size = Vector2(maxf(1.0, button.size.x - name_label.position.x - pad), 24.0)
+		var description_label := _slot_description_labels[index] as Label
+		description_label.position = Vector2(name_label.position.x, name_label.position.y + name_label.size.y)
+		description_label.size = Vector2(name_label.size.x, maxf(24.0, button.size.y - description_label.position.y - pad * 2.0))
 		var underline := _slot_underlines[index] as ColorRect
 		underline.size = Vector2(maxf(VisualStyle.TOUCH_TARGET, button.size.x - pad * 2.0), VisualStyle.BORDER_STANDARD)
 		underline.position = Vector2(pad, button.size.y - pad - underline.size.y)
@@ -767,6 +820,13 @@ func _layout_grouped_card_slots() -> void:
 		marker.size = VisualStyle.ICON_SMALL
 		var key := str((_slot_models[index] as Dictionary).get("selection_key", ""))
 		_slot_rects[key if not key.is_empty() else "empty:%d" % index] = Rect2(button.global_position, button.size)
+
+
+func _card_contains_risk_badge(item: Dictionary) -> bool:
+	for badge_value in ItemCardViewModelScript.detail_badges(item):
+		if str((badge_value as Dictionary).get("glyph_id", "")) == "risk_tier":
+			return true
+	return false
 
 
 func _art_rect() -> Rect2:
@@ -1102,7 +1162,7 @@ func _grouped_card_columns(area_size: Vector2 = Vector2.ZERO) -> int:
 		area_size = _stage.size
 	if area_size.x <= 0.0:
 		return 1
-	var minimum_width := VisualStyle.TOUCH_TARGET * (3.2 if _small_screen_mode else 3.6)
+	var minimum_width := VisualStyle.TOUCH_TARGET * (4.0 if _small_screen_mode else 4.2)
 	return maxi(1, int(floor((area_size.x + float(VisualStyle.SPACE_4)) / (minimum_width + float(VisualStyle.SPACE_4)))))
 
 
@@ -1111,7 +1171,7 @@ func _grouped_card_page_size() -> int:
 	if area_size.y <= 0.0:
 		return 8 if _small_screen_mode else 12
 	var columns := _grouped_card_columns(area_size)
-	var minimum_height := VisualStyle.TOUCH_TARGET * (2.25 if _small_screen_mode else 2.5)
+	var minimum_height := VisualStyle.TOUCH_TARGET * (3.1 if _small_screen_mode else 3.25)
 	var rows := maxi(1, int(floor((area_size.y + float(VisualStyle.SPACE_4)) / (minimum_height + float(VisualStyle.SPACE_4)))))
 	return maxi(1, columns * rows)
 
@@ -1141,7 +1201,9 @@ func _selection_location(selection_key: String) -> Dictionary:
 func _focus_button_for_key(selection_key: String) -> void:
 	for index in range(_slot_models.size()):
 		if str((_slot_models[index] as Dictionary).get("selection_key", "")) == selection_key:
-			(_slot_buttons[index] as Button).grab_focus()
+			var button := _slot_buttons[index] as Button
+			if button.is_inside_tree() and button.is_visible_in_tree():
+				button.grab_focus()
 			return
 
 

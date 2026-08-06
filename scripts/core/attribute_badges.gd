@@ -193,7 +193,7 @@ static func for_item(item: Dictionary) -> Array:
 	_append_effect_badges(badges, effect)
 	if int(source.get("capacity", source.get("container_capacity", 0))) > 0:
 		_add_badge(badges, _badge("inventory", "x%d" % int(source.get("capacity", source.get("container_capacity", 0))), "neutral", "Storage capacity"))
-	return _filtered_badges(badges)
+	return for_object_overlay(_filtered_badges(badges))
 
 
 static func item_game_affinity_id(item: Dictionary) -> String:

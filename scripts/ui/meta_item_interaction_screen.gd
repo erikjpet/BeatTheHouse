@@ -8,6 +8,8 @@ signal action_requested(action_id: String, payload: Dictionary)
 const SurfaceScript := preload("res://scripts/ui/inventory_container_surface.gd")
 const CatalogScript := preload("res://scripts/ui/inventory_container_catalog.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
+const ItemCardViewModelScript := preload("res://scripts/ui/item_card_view_model.gd")
+const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const POPUP_SIZE := Vector2(980, 600)
 const POPUP_MARGIN := 12.0
 
@@ -179,6 +181,7 @@ func _render_detail() -> void:
 		_add_global_actions()
 		return
 	var header := HBoxContainer.new()
+	var card := ItemCardViewModelScript.build(item)
 	header.add_theme_constant_override("separation", 8)
 	_detail_box.add_child(header)
 	var icon := TextureRect.new()
@@ -192,6 +195,12 @@ func _render_detail() -> void:
 	FoundationWidgets.set_control_font_color(title, VisualStyle.YELLOW)
 	header.add_child(title)
 	FoundationWidgets.add_detail_row(_detail_box, "Where", str(item.get("storage_source", "stored")).replace("_", " ").capitalize())
+	FoundationWidgets.add_detail_row(_detail_box, "Stack", str(card.get("stack_text", "+1")))
+	FoundationWidgets.add_detail_row(_detail_box, "Affinity", str(card.get("affinity_label", "General")))
+	var detail_badges: Array = card.get("badges", [])
+	if not detail_badges.is_empty():
+		AttributeBadgeRowScript.warm_cache(detail_badges, 16)
+		_detail_box.add_child(AttributeBadgeRowScript.control_row(detail_badges, 16))
 	if not str(item.get("collection_display_name", "")).is_empty():
 		FoundationWidgets.add_detail_row(_detail_box, "Collection", str(item.get("collection_display_name", "")))
 	if not str(item.get("tier", "")).is_empty():

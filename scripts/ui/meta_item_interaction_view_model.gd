@@ -3,6 +3,7 @@ extends RefCounted
 
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
+const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 
 const MODE_CONTAINER := "meta_container"
 const MODE_BAGS := "meta_bags"
@@ -138,6 +139,10 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 				"disabled_reason": trade_reason if not trade_compatible else "Five items are already selected." if trade_selected_ids.size() >= 5 and selected_index < 0 else "",
 			})
 		var band: Dictionary = resolver.condition_band(definition, instance)
+		var badge_context := definition.duplicate(true)
+		badge_context["item_class"] = item_class
+		badge_context["domain"] = "meta"
+		badge_context["sale_price"] = int(quote.get("price", 0))
 		var item_disabled_reason := trade_reason
 		if mode == MODE_CONTAINER and not packable:
 			item_disabled_reason = "This meta-only item stays in home storage."
@@ -171,6 +176,7 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 				"resonance": clampf(float(instance.get("resonance", 0.0)), 0.0, 1.0),
 				"usage": clampf(float(instance.get("usage", 0.0)), 0.0, 1.0),
 			},
+			"attribute_badges": AttributeBadgesScript.for_item(badge_context),
 			"sale_eligible": bool(quote.get("ok", false)),
 			"sale_price": int(quote.get("price", 0)),
 			"sale_breakdown": quote.duplicate(true),
@@ -196,6 +202,9 @@ static func _bag_models(meta_service: Variant, resolver: Variant, bags: Array, m
 			actions.append({"id": "open_bag", "label": "Open", "payload": {"instance_id": instance_id}})
 		elif mode == MODE_SALE and bool(quote.get("ok", false)):
 			actions.append({"id": "arm_sale", "label": "Sell for %d gold" % int(quote.get("price", 0)), "payload": {"kind": MetaCollectionServiceScript.SALE_KIND_BAG, "instance_id": instance_id}, "permanent": true})
+		var bag_badge_context := definition.duplicate(true)
+		bag_badge_context["item_class"] = "unopened_bag"
+		bag_badge_context["domain"] = "meta"
 		result.append({
 			"id": str(definition.get("id", "collection_bag")),
 			"instance_id": instance_id,
@@ -218,6 +227,7 @@ static func _bag_models(meta_service: Variant, resolver: Variant, bags: Array, m
 			"sale_eligible": bool(quote.get("ok", false)),
 			"sale_price": int(quote.get("price", 0)),
 			"sale_breakdown": quote.duplicate(true),
+			"attribute_badges": AttributeBadgesScript.for_item(bag_badge_context),
 			"actions": actions,
 		})
 	return result
