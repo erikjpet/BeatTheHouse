@@ -37,7 +37,7 @@ func _init() -> void:
 		var failures: Array = _target_failures(definition, scenario, metrics)
 		for failure in failures:
 			missed.append("%s:%s" % [str(scenario.get("key", "")), str(failure)])
-		print("DEEP_AUDIT key=%s spins=%d scripted_nudges=%s nudges=%d rtp=%.5f hit=%.5f true=%.5f ldw=%.5f near=%.5f feature=%.5f bands=%s" % [
+		print("DEEP_AUDIT key=%s spins=%d scripted_nudges=%s nudges=%d rtp=%.5f hit=%.5f true=%.5f ldw=%.5f near=%.5f feature=%.5f base=%d bonus=%d stake=%d class=%s bands=%s" % [
 			str(scenario.get("key", "")),
 			spins,
 			str(script_nudges),
@@ -48,6 +48,10 @@ func _init() -> void:
 			float(metrics.get("ldw_frequency", 0.0)),
 			float(metrics.get("near_miss_frequency", 0.0)),
 			float(metrics.get("feature_frequency", 0.0)),
+			int(metrics.get("base_payout_total", 0)),
+			int(metrics.get("feature_award_total", 0)),
+			int(metrics.get("stake_total", 0)),
+			JSON.stringify(metrics.get("payout_by_class", {})),
 			"PASS" if failures.is_empty() else "FAIL:%s" % JSON.stringify(failures),
 		])
 	if missed.is_empty():
@@ -79,6 +83,9 @@ func _scenario_metrics(definition: Dictionary, generator, resolver, scenario: Di
 	var near_miss_count := 0
 	var feature_count := 0
 	var nudge_count := 0
+	var base_payout_total := 0
+	var feature_award_total := 0
+	var payout_by_class := {}
 	for spin_index in range(spins):
 		if StateScript.active_bonus_incomplete(machine):
 			machine["active_bonus"] = {"active": false, "complete": true}
@@ -101,7 +108,9 @@ func _scenario_metrics(definition: Dictionary, generator, resolver, scenario: Di
 				terminal_result = nudge_result
 				nudge_count += 1
 		var payout := maxi(0, int(terminal_result.get("slot_payout", 0)))
+		base_payout_total += payout
 		var classification := str(terminal_result.get("slot_classification", ""))
+		payout_by_class[classification] = int(payout_by_class.get(classification, 0)) + payout
 		var feature_triggered := bool(terminal_result.get("slot_feature_triggered", false))
 		if payout > 0 or feature_triggered:
 			hit_count += 1
@@ -115,6 +124,7 @@ func _scenario_metrics(definition: Dictionary, generator, resolver, scenario: Di
 			feature_count += 1
 			var feature_award: int = int(resolver.complete_active_bonus_for_metrics(machine, rng, definition))
 			total_delta += feature_award
+			feature_award_total += feature_award
 			machine["active_bonus"] = {"active": false, "complete": true}
 		if spins >= 1000 and (spin_index + 1) % 1000 == 0:
 			print("DEEP_AUDIT_PROGRESS key=%s spins=%d features=%d" % [
@@ -132,6 +142,10 @@ func _scenario_metrics(definition: Dictionary, generator, resolver, scenario: Di
 		"near_miss_frequency": float(near_miss_count) / float(safe_spins),
 		"feature_frequency": float(feature_count) / float(safe_spins),
 		"nudge_count": nudge_count,
+		"base_payout_total": base_payout_total,
+		"feature_award_total": feature_award_total,
+		"stake_total": total_stake,
+		"payout_by_class": payout_by_class,
 	}
 
 

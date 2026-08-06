@@ -1659,6 +1659,11 @@
         "feature_frequency": 0.018,
         "feature_tolerance": 0.012
       },
+      "true_win_payout_percent_by_format": {
+        "classic_3_reel": 94,
+        "line_5x3": 140,
+        "video_feature": 159
+      },
       "symbols": [
         {
           "id": "BUFFALO",

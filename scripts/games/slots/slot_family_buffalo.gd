@@ -363,15 +363,21 @@ func _cell_lookup(cells: Array) -> Dictionary:
 func grid_payout_for_entry(grid: Array, stake: int, stake_cost: int = -1, machine: Dictionary = {}, definition: Dictionary = {}, entry: Dictionary = {}) -> int:
 	var classification := str(entry.get("classification", ""))
 	var forced_placement: Dictionary = _copy_dict(entry.get("forced_placement", {}))
+	var payout := -1
 	if (classification == "true_win" or classification == "ldw") and str(forced_placement.get("kind", "")) == "line":
-		var forced_line_payout := _forced_line_payout(grid, stake, stake_cost, definition, forced_placement)
-		if forced_line_payout >= 0:
-			return forced_line_payout
+		payout = _forced_line_payout(grid, stake, stake_cost, definition, forced_placement)
 	if (classification == "true_win" or classification == "ldw") and str(forced_placement.get("kind", "")) == "ways":
-		var forced_payout := _forced_ways_payout(grid, stake, stake_cost, definition, forced_placement)
-		if forced_payout >= 0:
-			return forced_payout
-	return grid_payout(grid, stake, stake_cost, machine, definition)
+		payout = _forced_ways_payout(grid, stake, stake_cost, definition, forced_placement)
+	if payout < 0:
+		payout = grid_payout(grid, stake, stake_cost, machine, definition)
+	if classification != "true_win":
+		return payout
+	var config := _buffalo_config(definition)
+	var format_scales: Dictionary = _copy_dict(config.get("true_win_payout_percent_by_format", {}))
+	var format_percent := maxi(1, int(format_scales.get(str(machine.get("format_id", "classic_3_reel")), 100)))
+	var math_variant: Dictionary = _variant_by_id(definition.get("slot_math_variants", []), str(machine.get("math_variant_id", "standard")))
+	var normal_pay_scale := maxf(0.0, float(math_variant.get("normal_pay_scale", 1.0)))
+	return maxi(0, int(round(float(payout * format_percent) * normal_pay_scale / 100.0)))
 
 
 func _forced_line_payout(grid: Array, stake: int, stake_cost: int, definition: Dictionary, forced_placement: Dictionary) -> int:
