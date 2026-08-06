@@ -384,8 +384,15 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 		failures.append("Music FX foundation fixture could not find environment archetypes.")
 		return
 
+	var topology_before: Dictionary = ProceduralMusicPlayerScript.music_bus_topology_snapshot()
+	if not bool(topology_before.get("preconfigured", false)):
+		failures.append("The authored audio bus layout was incomplete before music startup: %s." % JSON.stringify(topology_before))
+	var bus_count_before := int(topology_before.get("bus_count", -1))
 	var graph_a: Dictionary = ProceduralMusicPlayerScript.ensure_music_fx_bus_graph()
 	var graph_b: Dictionary = ProceduralMusicPlayerScript.ensure_music_fx_bus_graph()
+	var topology_after: Dictionary = ProceduralMusicPlayerScript.music_bus_topology_snapshot()
+	if int(topology_after.get("bus_count", -2)) != bus_count_before or not bool(topology_after.get("preconfigured", false)):
+		failures.append("Repeated music startup mutated the audio bus topology while the mixer could be active: before=%s after=%s." % [JSON.stringify(topology_before), JSON.stringify(topology_after)])
 	if int(graph_a.get("effect_count", 0)) != 4 or int(graph_b.get("effect_count", 0)) != 4:
 		failures.append("Music master bus should contain shared pitch compensation, low-pass, chorus, and the safety limiter.")
 	if JSON.stringify(graph_a.get("effects", [])) != JSON.stringify(graph_b.get("effects", [])):

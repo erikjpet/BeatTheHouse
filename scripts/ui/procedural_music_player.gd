@@ -18,6 +18,7 @@ const MusicOutcomeDirectorModelScript := preload("res://scripts/ui/music_outcome
 # cached per room/heat profile, played through the Music bus.
 
 const MUSIC_BUS := "Music"
+const SFX_BUS := "SFX"
 const AMBIENT_VERSION := 11
 const MUSIC_FX_GRAPH_VERSION := 3
 const MUSIC_STEM_CONTRACT_VERSION := 2
@@ -1757,7 +1758,7 @@ static func ensure_music_send_bus_graph() -> Dictionary:
 		var effect_key := str(effect_value)
 		var bus_name := _music_send_bus_name(effect_key)
 		var bus_index := _ensure_audio_bus(bus_name)
-		AudioServer.set_bus_send(bus_index, MUSIC_BUS)
+		_set_audio_bus_send_if_changed(bus_index, MUSIC_BUS)
 		var matches := AudioServer.get_bus_effect_count(bus_index) == 1
 		if matches:
 			var existing := AudioServer.get_bus_effect(bus_index, 0)
@@ -6166,6 +6167,15 @@ static func _ensure_audio_bus(bus_name: String) -> int:
 	return bus_index
 
 
+static func _set_audio_bus_send_if_changed(bus_index: int, send_bus: String) -> void:
+	if bus_index < 0 or AudioServer.get_bus_send(bus_index) == send_bus:
+		return
+	# AudioServer reads the bus graph on its mixer thread. Keep routing writes
+	# exceptional: the authored layout supplies the steady-state topology, and
+	# this fallback repairs a missing route once instead of racing every frame.
+	AudioServer.set_bus_send(bus_index, send_bus)
+
+
 static func _ensure_music_stem_buses() -> Dictionary:
 	var music_index := _ensure_audio_bus(MUSIC_BUS)
 	var result := {}
@@ -6173,7 +6183,7 @@ static func _ensure_music_stem_buses() -> Dictionary:
 		var role := str(role_value)
 		var bus_name := _music_stem_bus_name(role)
 		var bus_index := _ensure_audio_bus(bus_name)
-		AudioServer.set_bus_send(bus_index, MUSIC_BUS)
+		_set_audio_bus_send_if_changed(bus_index, MUSIC_BUS)
 		result[role] = {
 			"bus": bus_name,
 			"bus_index": bus_index,
@@ -6181,6 +6191,36 @@ static func _ensure_music_stem_buses() -> Dictionary:
 			"music_bus_index": music_index,
 		}
 	return result
+
+
+static func music_bus_topology_snapshot() -> Dictionary:
+	var expected_sends := {
+		MUSIC_BUS: "Master",
+		SFX_BUS: "Master",
+	}
+	for effect_value in MUSIC_SEND_EFFECT_ORDER:
+		expected_sends[_music_send_bus_name(str(effect_value))] = MUSIC_BUS
+	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
+		expected_sends[_music_stem_bus_name(str(role_value))] = MUSIC_BUS
+	var missing: Array = []
+	var misrouted := {}
+	for bus_name_value in expected_sends:
+		var bus_name := str(bus_name_value)
+		var bus_index := AudioServer.get_bus_index(bus_name)
+		if bus_index < 0:
+			missing.append(bus_name)
+			continue
+		var actual_send := str(AudioServer.get_bus_send(bus_index))
+		var expected_send := str(expected_sends.get(bus_name, ""))
+		if actual_send != expected_send:
+			misrouted[bus_name] = {"expected": expected_send, "actual": actual_send}
+	return {
+		"bus_count": AudioServer.get_bus_count(),
+		"expected_bus_count": expected_sends.size() + 1,
+		"missing": missing,
+		"misrouted": misrouted,
+		"preconfigured": missing.is_empty() and misrouted.is_empty(),
+	}
 
 
 static func music_stem_bus_graph_snapshot() -> Dictionary:
