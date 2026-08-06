@@ -6319,7 +6319,7 @@ func _run() -> void:
 		push_error("Failure run report did not include where, replay, and money-flow context.")
 		quit(1)
 		return
-	if not _has_visible_text(app, "Captured by police") or not _has_visible_text(app, "STORY · MONEY FLOW") or not _has_visible_text(app, "$%d = %d" % [expected_failure_score, expected_failure_score]):
+	if not _has_visible_text(app, str(failure_outcome.get("title", ""))) or not _has_visible_text(app, "STORY · MONEY FLOW") or not _has_visible_text(app, "$%d = %d" % [expected_failure_score, expected_failure_score]):
 		push_error("Failure run report did not present player-facing reason, money flow, and score.")
 		quit(1)
 		return

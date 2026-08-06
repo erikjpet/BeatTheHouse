@@ -299,6 +299,8 @@ func handle_holder_gui_input(event: InputEvent) -> bool:
 				if _detail_popup_contains_local_position(mouse_event.position) or _node_button_contains_holder_position(mouse_event.position):
 					return false
 				if nodes_layer != null and nodes_layer.has_method("begin_navigation_drag"):
+					if not selected_node_id.is_empty():
+						clear_selection()
 					nodes_layer.call("begin_navigation_drag", mouse_event.position)
 					return true
 			elif _navigation_drag_in_progress():
@@ -319,6 +321,8 @@ func handle_holder_gui_input(event: InputEvent) -> bool:
 			if _detail_popup_contains_local_position(touch_event.position) or _node_button_contains_holder_position(touch_event.position):
 				return false
 			if nodes_layer != null and nodes_layer.has_method("begin_navigation_drag"):
+				if not selected_node_id.is_empty():
+					clear_selection()
 				nodes_layer.call("begin_navigation_drag", touch_event.position)
 				return true
 		elif _navigation_drag_in_progress():

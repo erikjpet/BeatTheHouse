@@ -582,6 +582,13 @@ function Invoke-ExhaustiveParse {
     $scripts = @(Get-ChildItem -LiteralPath (Join-Path $root "scripts") -Filter "*.gd" -Recurse -File) + @(Get-ChildItem -LiteralPath (Join-Path $root "tools") -Filter "*.gd" -Recurse -File)
     foreach ($script in $scripts) {
         $resourcePath = "res://" + (Get-ProjectRelativePath $script.FullName)
+        # These files are compositional fragments whose base class and helpers
+        # are supplied by the generated split runners. Parsing the fragments as
+        # standalone SceneTrees is invalid; the runner stages below compile and
+        # execute their assembled source instead.
+        if ($resourcePath.StartsWith("res://scripts/tests/foundation/") -or $resourcePath.StartsWith("res://scripts/tests/ui_scene/")) {
+            continue
+        }
         $stageName = "parse_" + (($resourcePath -replace "^res://", "") -replace "[\\/]", "_")
         Invoke-ProcessStage -Name $stageName -FilePath $script:Godot -Arguments @("--headless", "--path", $root, "--check-only", "--script", $resourcePath) -StageTimeoutSec 90 | Out-Null
     }
