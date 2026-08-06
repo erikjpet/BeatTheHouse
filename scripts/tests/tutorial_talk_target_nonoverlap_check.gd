@@ -54,6 +54,17 @@ func _run_nonoverlap_check() -> void:
 		return
 	if not _tutorial_runtime_dialogue_interventions_work():
 		return
+	_clear_guide_state()
+	app.set("game_surface_ui_state", {})
+	app.call("_refresh")
+	await _settle(8)
+	var stake_before_raise := int(app.call("_current_selected_stake"))
+	app.call("_on_game_surface_action", "surface_stake_up", -1, false)
+	await _settle(8)
+	var stake_after_raise := int(app.call("_current_selected_stake"))
+	if stake_after_raise <= stake_before_raise:
+		_fail("Blackjack tutorial chip control did not increase the wager through the live surface-action route.")
+		return
 
 	print("tutorial_talk_target_nonoverlap_check: PASS")
 	quit(0)
