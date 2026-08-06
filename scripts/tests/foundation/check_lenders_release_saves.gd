@@ -3128,6 +3128,19 @@ func _check_recovery_loss_pressure_foundation(library: ContentLibrary, failures:
 	var recovery_status := RunTerminalEvaluatorScript.evaluate(recovery_run, library)
 	if bool(recovery_status.get("failed", false)) or not bool(recovery_status.get("lender_available", false)):
 		failures.append("Low-bankroll lender recovery was not recognized before zero cash.")
+	var crew_recovery_run: RunState = RunStateScript.new()
+	crew_recovery_run.start_new("M2-FUN-CREW-RECOVERY")
+	crew_recovery_run.set_environment({
+		"id": "delta_queen_crew_recovery_fixture",
+		"archetype_id": "delta_queen",
+		"tier": 2,
+		"kind": "casino",
+		"lender_hooks": ["the_crew"],
+	})
+	crew_recovery_run.change_bankroll(-(crew_recovery_run.bankroll - 1))
+	var crew_recovery_status := RunTerminalEvaluatorScript.evaluate(crew_recovery_run, library)
+	if bool(crew_recovery_status.get("failed", false)) or not bool(crew_recovery_status.get("lender_available", false)):
+		failures.append("Debt-profile Crew recovery was falsely classified as stranded.")
 	var lender_result := _fixture_lender_result(recovery_run, lender, "street_lender")
 	GameModule.apply_result(recovery_run, lender_result)
 	if recovery_run.bankroll <= 0:

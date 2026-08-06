@@ -174,6 +174,9 @@ static func _has_lender_recovery(run_state: RunState, library: ContentLibrary) -
 		var effect := _copy_dict(definition.get("effect", {}))
 		if int(effect.get("bankroll_delta", 0)) > 0:
 			return true
+		var debt_profile := _copy_dict(definition.get("debt_profile", {}))
+		if int(debt_profile.get("loan_amount", 0)) > 0 or int(debt_profile.get("principal_max", 0)) > 0:
+			return true
 	return false
 
 

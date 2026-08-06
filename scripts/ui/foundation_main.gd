@@ -9132,7 +9132,12 @@ func _start_lender_conversation(lender_id: String, mode: String) -> bool:
 		return false
 	_refresh_talk_dock()
 	_show_message("Talking to %s." % str(speaker.get("name", definition.get("display_name", "Unknown"))))
-	_autosave_foundation_run("Autosaved.")
+	# Opening a conversation mutates only the pending talk queue. Running the
+	# full action checkpoint here re-evaluated terminal state in the middle of a
+	# recovery offer and charged the click for unrelated game/music capture.
+	# Persist the queue after the mandatory draw boundary; the writer captures
+	# the latest RunState when it begins.
+	_queue_pending_autosave("Autosaved.", 1)
 	_refresh_after_environment_selection()
 	return true
 
