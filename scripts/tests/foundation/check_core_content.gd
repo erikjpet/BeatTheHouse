@@ -4239,12 +4239,14 @@ func _check_slot_reel_display_consistency(definition: Dictionary, failures: Arra
 			var stake_cost := maxi(0, int(result.get("slot_stake_cost", stake)))
 			var payout := maxi(0, int(result.get("slot_payout", 0)))
 			if not bool(result.get("slot_feature_triggered", false)):
-				var visual_payout := buffalo.grid_payout(grid, stake, stake_cost, machine, definition) if family_id == "buffalo" else pinball.grid_payout(grid, stake, stake_cost, machine, definition)
-				if (classification == "zero_loss" or classification == "near_miss") and visual_payout > 0:
-					failures.append("Slot %s/%s displayed an unpaid winning grid on %s/%s: visual=%d paid=%d win_kind=%s win_symbol=%s grid=%s." % [family_id, format_id, classification, str(result.get("slot_outcome_id", "")), visual_payout, payout, str(result.get("slot_win_kind", "")), str(result.get("slot_win_symbol", "")), JSON.stringify(grid)])
+				var raw_grid_payout := buffalo.grid_payout(grid, stake, stake_cost, machine, definition) if family_id == "buffalo" else pinball.grid_payout(grid, stake, stake_cost, machine, definition)
+				if (classification == "zero_loss" or classification == "near_miss") and raw_grid_payout > 0:
+					failures.append("Slot %s/%s displayed an unpaid winning grid on %s/%s: visual=%d paid=%d win_kind=%s win_symbol=%s grid=%s." % [family_id, format_id, classification, str(result.get("slot_outcome_id", "")), raw_grid_payout, payout, str(result.get("slot_win_kind", "")), str(result.get("slot_win_symbol", "")), JSON.stringify(grid)])
 					return
-				if (classification == "true_win" or classification == "ldw") and visual_payout != payout:
-					failures.append("Slot %s/%s paid %d but displayed a %d-credit grid on %s: grid=%s." % [family_id, format_id, payout, visual_payout, classification, JSON.stringify(grid)])
+				var payout_entry := {"classification": classification}
+				var authoritative_payout := buffalo.grid_payout_for_entry(grid, stake, stake_cost, machine, definition, payout_entry) if family_id == "buffalo" else pinball.grid_payout_for_entry(grid, stake, stake_cost, machine, definition, payout_entry)
+				if (classification == "true_win" or classification == "ldw") and authoritative_payout != payout:
+					failures.append("Slot %s/%s paid %d but its authoritative %s paytable returned %d: raw_grid=%d grid=%s." % [family_id, format_id, payout, classification, authoritative_payout, raw_grid_payout, JSON.stringify(grid)])
 					return
 			if classification == "true_win":
 				true_win_count += 1
