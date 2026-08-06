@@ -234,6 +234,7 @@ static func travel_choice_view_list(host: Variant) -> Array:
 			continue
 		choice["selected"] = target_id == host.selected_travel_target_id
 		choices.append(choice)
+	choices = decision_frame_choices(choices)
 	host.travel_choice_cache_key = cache_key
 	host.travel_choice_cache = choices.duplicate(true)
 	return choices
@@ -280,6 +281,7 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 		"tier": int(archetype.get("tier", 1)),
 		"description": str(route.get("description", "")),
 		"route": route.duplicate(true),
+		"decision": host._copy_dict(route.get("decision", {})),
 	}
 	if route.has("cost"):
 		choice["cost"] = int(route.get("cost", 0))
@@ -365,6 +367,55 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 	choice["disabled_reason"] = disabled_reason
 	choice["attribute_badges"] = host.AttributeBadgesScript.for_route(choice, host._copy_dict(choice.get("risk_event", {})))
 	return choice
+
+
+static func decision_frame_choices(source_choices: Array) -> Array:
+	var choices := source_choices.duplicate(true)
+	for choice_index in range(choices.size()):
+		if typeof(choices[choice_index]) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choices[choice_index]
+		var decision: Dictionary = choice.get("decision", {}) if typeof(choice.get("decision", {})) == TYPE_DICTIONARY else {}
+		var offer := str(decision.get("offer", choice.get("description", ""))).strip_edges()
+		var commitment_parts: Array = []
+		commitment_parts.append("%d min" % maxi(0, int(choice.get("travel_minutes", 0))))
+		commitment_parts.append("$%d" % maxi(0, int(choice.get("cost", 0))))
+		var heat_delta := int(choice.get("suspicion_delta", 0))
+		if heat_delta != 0:
+			commitment_parts.append("heat %+d" % heat_delta)
+		var risk := str(choice.get("risk", "")).strip_edges()
+		if not risk.is_empty():
+			commitment_parts.append("%s risk" % risk)
+		var forfeit_parts: Array = []
+		for other_index in range(choices.size()):
+			if other_index == choice_index or typeof(choices[other_index]) != TYPE_DICTIONARY:
+				continue
+			var other: Dictionary = choices[other_index]
+			if not bool(other.get("enabled", true)):
+				continue
+			var other_decision: Dictionary = other.get("decision", {}) if typeof(other.get("decision", {})) == TYPE_DICTIONARY else {}
+			var other_offer := str(other_decision.get("offer", other.get("description", ""))).strip_edges()
+			if other_offer.is_empty():
+				continue
+			forfeit_parts.append("%s — %s" % [str(other.get("label", other.get("id", "Route"))), other_offer])
+			if forfeit_parts.size() >= 2:
+				break
+		if forfeit_parts.is_empty():
+			var authored_forfeit := str(decision.get("tradeoff", "another route's opening")).strip_edges()
+			forfeit_parts.append(authored_forfeit)
+		var decision_lines: Array = [
+			"Offers: %s" % offer,
+			"Commits: %s" % " · ".join(commitment_parts),
+			"Forfeits now: %s" % "; ".join(forfeit_parts),
+		]
+		choice["decision_offer"] = offer
+		choice["decision_commitment"] = str(decision_lines[1])
+		choice["decision_forfeit"] = str(decision_lines[2])
+		choice["decision_lines"] = decision_lines
+		var preview_lines: Array = choice.get("preview_lines", []) if typeof(choice.get("preview_lines", [])) == TYPE_ARRAY else []
+		choice["preview_lines"] = decision_lines + preview_lines
+		choices[choice_index] = choice
+	return choices
 
 
 static func travel_target_ids(host: Variant) -> Array:
