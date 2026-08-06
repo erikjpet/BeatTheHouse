@@ -213,6 +213,7 @@ static func normalize(map_data: Dictionary) -> Dictionary:
 	normalized["seed_text"] = str(normalized.get("seed_text", ""))
 	normalized["start_node_id"] = str(normalized.get("start_node_id", ""))
 	normalized["current_node_id"] = str(normalized.get("current_node_id", normalized.get("start_node_id", "")))
+	normalized["revision"] = maxi(0, int(normalized.get("revision", 0)))
 	normalized["nodes"] = _normalize_nodes(_copy_array(normalized.get("nodes", [])))
 	normalized["edges"] = _normalize_edges(_copy_array(normalized.get("edges", [])))
 	normalized["visited_path"] = _string_array(normalized.get("visited_path", []))
@@ -494,7 +495,7 @@ static func store_environment(map_data: Dictionary, node_id: String, environment
 		nodes[index] = node
 		break
 	normalized["nodes"] = nodes
-	return normalized
+	return _bump_revision(normalized)
 
 
 static func enter_node(map_data: Dictionary, node_id: String, environment_data: Dictionary = {}) -> Dictionary:
@@ -535,7 +536,7 @@ static func enter_node(map_data: Dictionary, node_id: String, environment_data: 
 	if path.is_empty() or str(path[path.size() - 1]) != target_id:
 		path.append(target_id)
 	normalized["visited_path"] = path
-	return normalized
+	return _bump_revision(normalized)
 
 
 static func mark_scouted(map_data: Dictionary, node_id: String) -> Dictionary:
@@ -554,7 +555,7 @@ static func mark_scouted(map_data: Dictionary, node_id: String) -> Dictionary:
 			nodes[index] = node
 			break
 	normalized["nodes"] = nodes
-	return normalized
+	return _bump_revision(normalized)
 
 
 static func unlock_nodes(map_data: Dictionary, node_ids: Array, source: String = DISCOVERY_SOURCE_EVENT) -> Dictionary:
@@ -583,7 +584,7 @@ static func unlock_nodes(map_data: Dictionary, node_ids: Array, source: String =
 		node["discovery_source"] = clean_source
 		nodes[index] = node
 	normalized["nodes"] = nodes
-	return normalized
+	return _bump_revision(normalized)
 
 
 static func refresh_shop_node_environments(map_data: Dictionary, node_ids: Array) -> Dictionary:
@@ -604,7 +605,7 @@ static func refresh_shop_node_environments(map_data: Dictionary, node_ids: Array
 		node["environment"] = {}
 		nodes[index] = node
 	normalized["nodes"] = nodes
-	return normalized
+	return _bump_revision(normalized)
 
 
 static func mark_home_lost(map_data: Dictionary, node_id: String) -> Dictionary:
@@ -625,7 +626,12 @@ static func mark_home_lost(map_data: Dictionary, node_id: String) -> Dictionary:
 		nodes[index] = node
 		break
 	normalized["nodes"] = nodes
-	return normalized
+	return _bump_revision(normalized)
+
+
+static func _bump_revision(map_data: Dictionary) -> Dictionary:
+	map_data["revision"] = maxi(0, int(map_data.get("revision", 0))) + 1
+	return map_data
 
 
 static func snapshot(map_data: Dictionary, selected_id: String = "") -> Dictionary:

@@ -1069,6 +1069,7 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	# These headless-only Nodes are never inserted into a SceneTree, so free them
 	# synchronously and release cached float PCM resources before process exit.
 	player.free()
+	outcome_player.free()
 	quantized_player.free()
 	feature_player.free()
 	event_player.free()

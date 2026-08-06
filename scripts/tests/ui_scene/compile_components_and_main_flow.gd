@@ -421,27 +421,29 @@ func _check_bag_open_reel_component() -> bool:
 		"display_name": "UI Reel Bag",
 	}
 	var model: Dictionary = BagOpenReelViewModelScript.build(result, possible, false, "ui-reel")
+	var reel_host := Control.new()
+	reel_host.size = Vector2(1280, 720)
+	root.add_child(reel_host)
 	var reel: BagOpenReel = BagOpenReelScript.new()
 	reel.configure(Callable(self, "_run_inventory_test_texture"))
-	reel.size = Vector2(1280, 720)
-	root.add_child(reel)
+	reel_host.add_child(reel)
 	reel.open(model)
 	await process_frame
 	var opening_snapshot: Dictionary = reel.layout_snapshot()
 	if not bool(opening_snapshot.get("visible", false)) or bool(opening_snapshot.get("spin_complete", true)):
 		push_error("Bag reel component did not open in spinning state.")
-		reel.queue_free()
+		reel_host.queue_free()
 		return false
 	if int(opening_snapshot.get("landing_itemdef_id", -1)) != int(item.get("itemdef_id", -2)):
 		push_error("Bag reel component landing card was not pinned to the committed item.")
-		reel.queue_free()
+		reel_host.queue_free()
 		return false
 	reel.finish_spin()
 	await process_frame
 	var finished_snapshot: Dictionary = reel.layout_snapshot()
 	if not bool(finished_snapshot.get("spin_complete", false)):
 		push_error("Bag reel component skip did not snap to completion.")
-		reel.queue_free()
+		reel_host.queue_free()
 		return false
 	reel.set_small_screen_mode(true)
 	await process_frame
@@ -450,7 +452,7 @@ func _check_bag_open_reel_component() -> bool:
 	var showcase: Rect2 = small_snapshot.get("showcase_rect", Rect2())
 	if not bool(small_snapshot.get("small_screen_mode", false)) or panel.end.x > reel.size.x + 0.1 or showcase.end.y > reel.size.y + 0.1:
 		push_error("Bag reel small-screen layout exceeded the viewport.")
-		reel.queue_free()
+		reel_host.queue_free()
 		return false
 	var reduced_model: Dictionary = BagOpenReelViewModelScript.build(result, possible, true, "ui-reel")
 	reel.open(reduced_model)
@@ -458,10 +460,10 @@ func _check_bag_open_reel_component() -> bool:
 	var reduced_snapshot: Dictionary = reel.layout_snapshot()
 	if not bool(reduced_snapshot.get("reduce_motion", false)) or not bool(reduced_snapshot.get("spin_complete", false)):
 		push_error("Bag reel reduce-motion path did not open directly on the result.")
-		reel.queue_free()
+		reel_host.queue_free()
 		return false
 	reel.close()
-	reel.queue_free()
+	reel_host.queue_free()
 	return true
 
 

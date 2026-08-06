@@ -722,7 +722,10 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if bool(app.call("current_run_menu_snapshot").get("visible", true)):
 		push_error("Abandon Run left the in-run menu visible over the terminal summary.")
 		return false
-	if not _has_visible_text(app, "Walked away"):
+	var abandoned_report: Dictionary = app.call("current_run_report_snapshot")
+	var abandoned_outcome: Dictionary = abandoned_report.get("outcome", {}) if typeof(abandoned_report.get("outcome", {})) == TYPE_DICTIONARY else {}
+	var abandoned_title := str(abandoned_outcome.get("title", "")).strip_edges()
+	if abandoned_title.is_empty() or not _has_visible_text(app, abandoned_title):
 		push_error("Abandon Run did not present a clear terminal summary title.")
 		return false
 	if not await _check_run_menu_main_menu_button_closes_overlay(app, "UI-RUN-MENU-MAIN", false):

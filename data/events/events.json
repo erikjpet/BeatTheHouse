@@ -118,6 +118,7 @@
           "id": "follow_tip",
           "label": "Follow the tip",
           "text": "The way underground opens.",
+          "consequence_summary": "Small Underground Casino route opens",
           "consequences": {
             "add_next_archetypes": [
               "small_underground_casino"
@@ -838,7 +839,7 @@
       ]
     },
     "payload": {
-      "summary": "Look for the cruel and unusual.",
+      "summary": "Seek out the cruel and unusual.",
       "choices": [
         {
           "id": "acknowledge",
@@ -851,7 +852,7 @@
                 "type": "story_lead",
                 "id": "dave_bus_warning",
                 "event_id": "dave_bus_warning",
-                "message": "Dave said to find the cruel and unusual."
+                "message": "Dave said: Seek out the cruel and unusual."
               }
             ],
             "resolve_event": true

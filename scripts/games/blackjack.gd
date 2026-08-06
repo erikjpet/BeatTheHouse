@@ -1630,6 +1630,14 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 	result["blackjack_table_barred"] = not tutorial_reprieve
 	result["blackjack_tutorial_peek_reprieve"] = tutorial_reprieve
 	result["blackjack_dealer_name"] = dealer_name
+	if tutorial_reprieve:
+		result["tutorial_dialogue_request"] = {
+			"dialogue_id": "tutorial_blackjack_dealer_reprieve",
+			"node_id": "warning",
+			"queue_key": "tutorial_intervention:peek_reprieve",
+			"source_kind": "tutorial_intervention",
+			"speaker": dealer_name,
+		}
 	result["blackjack_watched_peek"] = true
 	result["blackjack_confiscated_bet"] = confiscated_bet
 	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke

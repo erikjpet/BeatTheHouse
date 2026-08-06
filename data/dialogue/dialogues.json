@@ -913,6 +913,7 @@
   },
   {
     "id": "tutorial_pal_guidance",
+    "authored_guide_dialogue": true,
     "display_name": "Pal",
     "speaker": {
       "role": "guide",
@@ -1050,6 +1051,7 @@
   },
   {
     "id": "tutorial_blackjack_dealer_reprieve",
+    "authored_guide_dialogue": true,
     "display_name": "Dealer",
     "speaker": {
       "role": "dealer",
@@ -1064,13 +1066,14 @@
     "start": "warning",
     "nodes": {
       "warning": {
-        "text": "Just this once I'll leave it open. Don't let me catch you again.",
+        "text": "Just this once I'll leave it open, but don't let me catch you again.",
         "choices": [{"id": "continue", "label": "Understood", "effects": {}, "end": true}]
       }
     }
   },
   {
     "id": "tutorial_host_guidance",
+    "authored_guide_dialogue": true,
     "display_name": "Vivienne Vale",
     "speaker": {
       "role": "staff",
@@ -1112,6 +1115,7 @@
   },
   {
     "id": "tutorial_rourke_intro",
+    "authored_guide_dialogue": true,
     "display_name": "Elias Rourke",
     "speaker": {
       "role": "pit_boss",
@@ -1133,6 +1137,7 @@
   },
   {
     "id": "normal_grand_host_greeting",
+    "authored_guide_dialogue": true,
     "display_name": "Vivienne Vale",
     "speaker": {
       "role": "staff",
@@ -1154,6 +1159,7 @@
   },
   {
     "id": "tutorial_linda_bronze_finish",
+    "authored_guide_dialogue": true,
     "display_name": "Linda: Bronze and Beyond",
     "speaker": {
       "role": "staff",

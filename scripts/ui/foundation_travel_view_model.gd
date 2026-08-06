@@ -200,7 +200,7 @@ static func world_map_node_should_render(host: Variant, node: Dictionary, is_cur
 	if is_current or is_available_target:
 		return true
 	var state = str(node.get("state", host.WorldMapScript.STATE_HIDDEN)).strip_edges().to_lower()
-	return state == host.WorldMapScript.STATE_VISITED
+	return state == host.WorldMapScript.STATE_VISITED or (state == host.WorldMapScript.STATE_REVEALED and bool(node.get("seen", false)))
 
 
 static func world_route_for_target(host: Variant, target_id: String) -> Dictionary:
@@ -403,6 +403,7 @@ static func travel_base_cache_key(host: Variant) -> String:
 	var map_current_id = host.run_state.current_world_node_id() if host.run_state.has_world_map() else ""
 	var map_visited_count = 0
 	var map_node_count = 0
+	var map_revision = 0
 	var closing_status = host.run_state.closing_time_status()
 	var tutorial_route_stage := ""
 	if host.run_state.is_tutorial_run():
@@ -414,13 +415,16 @@ static func travel_base_cache_key(host: Variant) -> String:
 	if host.run_state.has_world_map():
 		map_visited_count = host._copy_array(host.run_state.world_map.get("visited_path", [])).size()
 		map_node_count = host._copy_array(host.run_state.world_map.get("nodes", [])).size()
-	return "%s|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%s|%d|%s" % [
+		map_revision = int(host.run_state.world_map.get("revision", 0))
+	return "%s|%s|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%s|%d|%s" % [
 		host.current_screen,
+		host.run_state.seed_text,
 		str(host.run_state.current_environment.get("id", "")),
 		map_current_id,
 		host.run_state.environment_travel_count(),
 		map_visited_count,
 		map_node_count,
+		map_revision,
 		host.run_state.bankroll,
 		host.run_state.suspicion_level(),
 		host.run_state.current_travel_lock_remaining(),

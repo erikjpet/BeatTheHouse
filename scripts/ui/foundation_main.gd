@@ -62,7 +62,6 @@ const CLOSING_TIME_TALK_EVENT_ID := "dialogue:venue_closing_notice"
 const CLOSING_TIME_TALK_CHOICE_ID := "head_out"
 const TUTORIAL_PAL_DIALOGUE_ID := "tutorial_pal_guidance"
 const TUTORIAL_HEAT_DIALOGUE_NODE := "heat_99"
-const TUTORIAL_PEEK_REPRIEVE_DIALOGUE_ID := "tutorial_blackjack_dealer_reprieve"
 const ENVIRONMENT_RUNTIME_STATE_KEY_CACHE_LIMIT := 64
 const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
@@ -2656,14 +2655,7 @@ func _refresh_talk_dock() -> void:
 		return
 	var entry_speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
 	var voice_line := str(entry_speaker.get("voice_line", "")).strip_edges()
-	var authored_guide_dialogue := [
-		"tutorial_pal_guidance",
-		TUTORIAL_PEEK_REPRIEVE_DIALOGUE_ID,
-		"tutorial_host_guidance",
-		"tutorial_rourke_intro",
-		"tutorial_linda_bronze_finish",
-		"normal_grand_host_greeting",
-	].has(dialogue_id) or (dialogue_id == "linda_cage_services" and run_state.is_tutorial_run())
+	var authored_guide_dialogue := bool(option.get("authored_guide_dialogue", false)) or (dialogue_id == "linda_cage_services" and run_state.is_tutorial_run())
 	if not voice_line.is_empty() and not authored_guide_dialogue:
 		option = option.duplicate(true)
 		var voice_name := str(entry_speaker.get("speaking_character_name", "")).strip_edges()
@@ -2866,6 +2858,7 @@ func _dialogue_option_for_entry(entry: Dictionary) -> Dictionary:
 		"display_name": str(dialogue.get("display_name", dialogue_id.replace("_", " ").capitalize())),
 		"type": "dialogue",
 		"interaction_mode": "triggered",
+		"authored_guide_dialogue": bool(dialogue.get("authored_guide_dialogue", false)),
 		"summary": summary,
 		"choices": choices,
 	}
@@ -7890,13 +7883,14 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		result["message"] = str(tutorial_caught_transition.get("message", result.get("message", "")))
 		if coach_overlay != null:
 			coach_overlay.begin_tutorial_run(tutorial_caught_transition.get("completed_lessons", {}))
-	if bool(result.get("blackjack_tutorial_peek_reprieve", false)):
+	var tutorial_dialogue_request := _copy_dict(result.get("tutorial_dialogue_request", {}))
+	if not tutorial_dialogue_request.is_empty():
 		_enqueue_tutorial_dialogue_without_refresh(
-			TUTORIAL_PEEK_REPRIEVE_DIALOGUE_ID,
-			"warning",
-			"tutorial_intervention:blackjack_peek_reprieve",
-			"tutorial_intervention",
-			str(result.get("blackjack_dealer_name", "Dealer"))
+			str(tutorial_dialogue_request.get("dialogue_id", "")),
+			str(tutorial_dialogue_request.get("node_id", "")),
+			str(tutorial_dialogue_request.get("queue_key", "")),
+			str(tutorial_dialogue_request.get("source_kind", "tutorial_intervention")),
+			str(tutorial_dialogue_request.get("speaker", "Dealer"))
 		)
 	var embeds_result_feedback := _current_game_embeds_result_feedback()
 	if bool(result.get("ok", false)) and embeds_result_feedback and not runtime_tick_in_progress:

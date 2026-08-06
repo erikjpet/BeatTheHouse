@@ -364,6 +364,7 @@ function Invoke-ProcessStage {
     $timedOut = $false
     $exitCode = 1
     $errorText = ""
+    $stderrIssues = @()
     if ($VerboseStages) {
         Write-Host "STAGE START $Name"
     }
@@ -402,6 +403,13 @@ function Invoke-ProcessStage {
         $stderrTask.Wait(5000) | Out-Null
         [System.IO.File]::WriteAllText($stdout, $stdoutTask.Result)
         [System.IO.File]::WriteAllText($stderr, $stderrTask.Result)
+        $stderrIssues = @($stderrTask.Result -split "`r?`n" | Where-Object {
+            $_ -match '^\s*(SCRIPT ERROR|ERROR|WARNING):'
+        })
+        if ($exitCode -eq 0 -and $stderrIssues.Count -gt 0) {
+            $exitCode = 127
+            $errorText = "Godot reported $($stderrIssues.Count) error/warning line(s) on stderr despite returning exit code 0."
+        }
     }
     catch {
         $errorText = $_.Exception.Message
@@ -436,6 +444,8 @@ function Invoke-ProcessStage {
         suite_time_baseline_sec = $suiteTimeBaselineSec
         suite_time_budget_sec = $suiteTimeBudgetSec
         suite_time_budget_exceeded = $suiteTimeBudgetExceeded
+        stderr_issue_count = $stderrIssues.Count
+        stderr_issues = $stderrIssues
         stdout = $stdout
         stderr = $stderr
         error = $errorText
@@ -465,6 +475,8 @@ function Write-TestSummary {
             suite_time_baseline_sec = $stage.suite_time_baseline_sec
             suite_time_budget_sec = $stage.suite_time_budget_sec
             suite_time_budget_exceeded = $stage.suite_time_budget_exceeded
+            stderr_issue_count = $stage.stderr_issue_count
+            stderr_issues = @($stage.stderr_issues)
             stdout = $stage.stdout
             stderr = $stage.stderr
             error = $stage.error
@@ -537,7 +549,7 @@ function Invoke-GodotImport {
 
 function Invoke-GDScriptLoadCheck {
     $report = Convert-ReportResourcePath "gdscript_load_check.json"
-    Invoke-GodotScript -Name "gdscript_load_check" -ScriptPath "res://tools/gdscript_load_check.gd" -UserArgs @("--roots=res://scripts,res://tools", "--report=$report") -StageTimeoutSec 180
+    Invoke-GodotScript -Name "gdscript_load_check" -ScriptPath "res://tools/gdscript_load_check.gd" -UserArgs @("--roots=res://scripts,res://tools", "--exclude=res://scripts/tests/foundation,res://scripts/tests/ui_scene", "--report=$report") -StageTimeoutSec 180
 }
 
 function Invoke-FoundationSuite {
