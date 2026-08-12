@@ -17,9 +17,8 @@ and persistent card/chip meta rewards. Narration/audio, inventory cards,
 meaningful destination tradeoffs, trustworthy release gates, automated
 tutorial coverage, native/Web performance, soak/storage, strict-input,
 visual, and exact-source Full gates are green on the technical baseline.
-The owner approved publishing the accumulated source to GitHub on 2026-08-12.
-Final packaged Web/Windows verification, public uploads, and the release tag
-remain separate publication steps.
+The owner approved the tested baseline for public release on 2026-08-12. The
+`v0.5.0` tag and GitHub Release identify the official playtest-event baseline.
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
 the repository.
@@ -32,8 +31,8 @@ the repository.
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
 | Prior release line | 0.3.3 public source release; 0.4.0 unpublished Act 1 candidate |
-| Active planning target | 0.5.0 source integration and package publication |
-| Current release readiness | Source feature-complete and authorized for GitHub integration; see `docs/plans/0.5_source_completion_record.md`; final package verification, tag, and public release remain pending |
+| Active planning target | 0.5.0 released baseline; future work begins after this tag |
+| Current release readiness | Official GitHub release approved; see `docs/plans/0.5_source_completion_record.md` and the `v0.5.0` release |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -497,8 +496,7 @@ before store submission.
 - The historical TUT-N17 plan requested five cold players, including two
   without Blackjack knowledge. Any remaining sample gap must be recorded as an
   accepted limitation or completed before the public package release.
-- The collection schema still uses `draft: true` pending the owner's explicit
-  ship decision.
+- The collection schema ships with `draft: true` as an accepted 0.5 limitation.
 - itch.io publishing remains a user action: install/login with butler and push
   the Web and Windows packages from `tools/export_itch.ps1`, or upload through
   the itch.io dashboard.

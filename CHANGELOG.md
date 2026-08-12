@@ -2,13 +2,12 @@
 
 All notable public release changes for Beat the House are recorded here.
 
-## 0.5.0 - Source complete (2026-08-12)
+## 0.5.0 - Released (2026-08-12)
 
-Status: **source feature-complete and authorized for GitHub integration.** The
-owner approved publishing the accumulated 0.5 source, tests, art, reports, and
-review artifacts on 2026-08-12. Final packaged Web/Windows verification,
-public artifact publication, and the annotated `v0.5.0` tag remain separate
-release steps.
+Status: **official GitHub release.** The owner approved the accumulated 0.5
+source, tests, art, reports, review artifacts, and final playtest fixes as the
+baseline for the 2026-08-12 playtest event. The annotated `v0.5.0` tag is the
+authoritative boundary for all work completed before 0.5.
 
 ### Final playtest completion pass
 

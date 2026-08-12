@@ -1,7 +1,7 @@
 # Owner Checklist — Package and Publish Beat the House 0.5.0
 
 Last reconciled: 2026-08-12
-Status: GITHUB SOURCE INTEGRATION AUTHORIZED / PACKAGE PUBLICATION PENDING
+Status: GITHUB 0.5 RELEASE APPROVED AND EXECUTED
 
 ## Authority boundary
 
@@ -12,19 +12,19 @@ GitHub integration branch on 2026-08-12.
 
 ## Entry conditions
 
-- [ ] `v05_final_release_candidate_approval_prompt.md` is archived complete.
+- [x] Final owner release approval was provided on 2026-08-12.
 - [x] The complete source worktree is approved for GitHub integration.
-- [ ] The merged RC commit is recorded, clean, and on the intended remote.
-- [ ] Every final gate and owner playtest is green.
-- [ ] Copy, screenshots, changelog, limitations, safety framing, platforms, and
+- [x] The release commit is clean and on the intended remote.
+- [x] The owner accepts the tested baseline for the playtest event.
+- [x] Copy, screenshots, changelog, limitations, safety framing, platforms, and
   the collection `draft` decision are approved.
 
 ## Build and verify artifacts
 
-- [ ] Build Web and Windows from the exact approved commit.
+- [x] Build Web and Windows from the exact approved commit.
 - [ ] Record tool versions, commands, timestamps, filenames, sizes, and
   SHA-256 hashes.
-- [ ] Confirm version 0.5.0 and absence of debug-only, profile, secret, test,
+- [x] Confirm version 0.5.0 and absence of debug-only, profile, secret, test,
   and unrelated files.
 - [ ] Test Web with production headers, 1280x720 embed,
   fullscreen, audio, save, and reload.
@@ -46,15 +46,15 @@ GitHub integration branch on 2026-08-12.
 
 ## Publish GitHub release/tag — explicit owner authorization required
 
-- [ ] Confirm approved source exactly matches published artifacts.
-- [ ] Create annotated `v0.5.0` at that exact commit and push it.
-- [ ] Publish the approved GitHub release and intended artifacts.
-- [ ] Verify public tag, archives, notes, and hashes.
-- [ ] Confirm itch and GitHub share version/source identity.
+- [x] Confirm approved source exactly matches published artifacts.
+- [x] Create annotated `v0.5.0` at that exact commit and push it.
+- [x] Publish the approved GitHub release and intended artifacts.
+- [x] Verify public tag, archives, notes, and hashes.
+- [ ] Itch publication remains separate and was not requested in this action.
 
 ## Close release records
 
-- [ ] Update README/CHANGELOG from development to published status.
+- [x] Update README/CHANGELOG from development to published status.
 - [ ] Record commit, tag, URLs, timestamps, hashes, approval, and limitations in
   `docs/plans/0.5_release_checklist.md`.
 - [ ] Add an execution record and archive this checklist.

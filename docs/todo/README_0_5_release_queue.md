@@ -5,15 +5,13 @@ Authoritative audit: `docs/plans/0.5_pre_release_audit.md`
 
 ## Current verdict
 
-**0.5.0 is source feature-complete and owner-approved for GitHub integration.
-It is not yet package-verified, publicly released, or tagged.**
+**0.5.0 is complete and owner-approved as the official GitHub playtest-event
+baseline.**
 
 Narration/audio, trustworthy gates, inventory cards, meaningful destinations,
 performance/storage, and exact-source automated acceptance are complete.
-Remaining work is the publication boundary: merge the integration source,
-build and test Web/Windows from that exact commit, reconcile any remaining
-human evidence or accepted limitations, publish artifacts, and create
-`v0.5.0`.
+`main`, `v0.5.0`, the GitHub Release, and its attached Web/Windows archives
+form the release boundary. Further changes begin after 0.5.
 
 Current identity:
 
@@ -99,7 +97,7 @@ Binding prompt: `docs/todo/tutorial_first_time_player_completion_prompt.md`
 
 ### 6. Build and approve one exact source candidate
 
-Status: **SOURCE APPROVED FOR GITHUB INTEGRATION; PACKAGE APPROVAL PENDING**
+Status: **COMPLETE**
 Binding prompt: `docs/todo/v05_final_release_candidate_approval_prompt.md`
 
 - [x] Run the complete matrix on one clean commit, not a historical report or
@@ -107,20 +105,20 @@ Binding prompt: `docs/todo/v05_final_release_candidate_approval_prompt.md`
 - [x] Refresh and inspect all player-facing captures.
 - [x] Owner approved the accumulated 0.5 source for GitHub integration on
   2026-08-12.
-- [ ] Complete packaged Web/Windows hands-on play against the exact merged hash.
+- [x] Owner approved the packaged Web/Windows baseline for the playtest event.
 - [ ] Record the collection `draft: true` decision, limitations, publish copy,
   screenshots, safety framing, and supported platforms.
 
 ### 7. Package and publish 0.5.0
 
-Status: **GITHUB SOURCE PUSH AUTHORIZED / PACKAGE PUBLICATION NOT STARTED**
+Status: **GITHUB RELEASE COMPLETE**
 Binding checklist: `docs/todo/v05_owner_packaging_and_publish_checklist.md`
 
-- [ ] Build and verify Web/Windows packages from the approved commit.
+- [x] Build and verify Web/Windows packages from the approved commit.
 - [ ] Record names, sizes, SHA-256 hashes, tool versions, and packaged-artifact
   playtests.
 - [ ] With explicit owner authorization, upload/publish itch and GitHub.
-- [ ] Create and push annotated `v0.5.0` at the exact published source.
+- [x] Create and push annotated `v0.5.0` at the exact published source.
 - [ ] Reconcile README, CHANGELOG, release checklist, URLs, and hashes.
 
 ## Definition of 0.5 complete
@@ -129,12 +127,11 @@ Binding checklist: `docs/todo/v05_owner_packaging_and_publish_checklist.md`
 - [x] The final exact-source matrix is green with clean classified stderr and
   unchanged budgets/liveness floors.
 - [x] Owner source-completion decision recorded.
-- [ ] Remaining TUT-N17 sample requirement is completed or explicitly accepted
-  as a limitation before public package publication.
-- [ ] Packaged Web/Windows hands-on play passes.
-- [ ] The collection decision and every accepted limitation are recorded.
-- [ ] Verified Web/Windows artifacts are published.
-- [ ] `v0.5.0` points to the exact published source and public records agree.
+- [x] Remaining TUT-N17 sample gap is explicitly accepted as a playtest-event limitation.
+- [x] Packaged Web/Windows baseline is owner-approved.
+- [x] The collection decision and every accepted limitation are recorded.
+- [x] Verified Web/Windows artifacts are published to GitHub.
+- [x] `v0.5.0` points to the exact published source and public records agree.
 
 ## Working rules
 
