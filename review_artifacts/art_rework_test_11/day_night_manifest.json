@@ -1,0 +1,33 @@
+{
+  "set": "art_rework_test_11",
+  "status": "review_ready",
+  "environment_count": 18,
+  "noon_method": "independent_scene_repaint",
+  "noon_style_reference": "calibration_refs",
+  "midnight_source": "art_rework_test_04",
+  "midnight_byte_identical_to_test04": true,
+  "game_dimensions": [900, 430],
+  "full_resolution_noon_masters_included": true,
+  "palette_lut_used": false,
+  "production_assets_overwritten": false,
+  "environments": [
+    "apartment",
+    "back_alley",
+    "bar",
+    "beach",
+    "corner_store",
+    "delta_queen",
+    "gas_station_casino",
+    "grand_casino",
+    "grand_casino_back_room",
+    "grand_casino_cage",
+    "grand_casino_high_limit",
+    "house",
+    "jazz_club",
+    "kitty_cat_lounge",
+    "motel",
+    "motel_room",
+    "pawn_shop",
+    "small_underground_casino"
+  ]
+}

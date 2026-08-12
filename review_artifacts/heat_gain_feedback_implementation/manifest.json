@@ -1,0 +1,45 @@
+{
+	"audio_preview": {
+		"description": "Mid-strength preview of the subtle radio-chirp Heat cue.",
+		"file": "04_heat_gain_sound_plus_8.wav",
+		"heat_gain": 8,
+		"runtime_profile": {
+			"amount": 8,
+			"duration_sec": 0.3,
+			"event_id": "heat_gain",
+			"intensity": 0.538435334188504,
+			"pitch": 0.984612240102621,
+			"volume_db": -13.0386056619632
+		}
+	},
+	"capture_size": {
+		"height": 720,
+		"width": 1280
+	},
+	"examples": [
+		{
+			"description": "Light response for a small Heat gain.",
+			"file": "01_environment_low_gain_plus_2.png",
+			"heat_gain": 2,
+			"view": "environment"
+		},
+		{
+			"description": "Stronger response for a large single Heat gain.",
+			"file": "02_environment_high_gain_plus_20.png",
+			"heat_gain": 20,
+			"view": "environment"
+		},
+		{
+			"description": "High-Heat game view showing the unified police-light strength and gain response.",
+			"file": "03_game_view_gain_plus_12.png",
+			"heat_gain": 12,
+			"view": "game"
+		}
+	],
+	"files": [
+		"01_environment_low_gain_plus_2.png",
+		"02_environment_high_gain_plus_20.png",
+		"03_game_view_gain_plus_12.png",
+		"04_heat_gain_sound_plus_8.wav"
+	]
+}

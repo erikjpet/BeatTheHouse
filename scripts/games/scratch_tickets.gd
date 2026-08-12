@@ -141,7 +141,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_current_winnings": _visible_pending_payout(machine),
 		"scratch_active_price": int(active_ticket.get("price", 0)),
 		"scratch_winner_count": _dictionary_array(machine.get("winner_pile", [])).size(),
-		"scratch_loser_count": _dictionary_array(machine.get("loser_pile", [])).size(),
+		"scratch_loser_count": _dictionary_array(machine.get("loser_pile", [])).size() + maxi(0, int(machine.get("loser_archive_count", 0))),
 		"scratch_winner_pile": machine.get("winner_pile", []),
 		"scratch_loser_pile": machine.get("loser_pile", []),
 		"scratch_last_settled_ticket": _copy_dict(machine.get("last_settled_ticket", {})),
@@ -269,14 +269,15 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				"selected_index": stock_index,
 			})
 		SCRATCH_ALL_ACTION:
-			if _dict_ref(machine.get("active_ticket", {})).is_empty():
+			var active_ticket := _dict_ref(machine.get("active_ticket", {}))
+			if active_ticket.is_empty():
 				return GameModule.surface_command({"message": "Buy a ticket first."})
 			_reveal_all(machine)
 			_write_machine_state(environment, machine, run_state)
 			return GameModule.surface_command({
 				"environment_changed": true,
 				"message": "The remaining latex crumbles away. Read the result, then click the ticket to file it.",
-				"surface_audio_cue": SCRATCH_POP_CUE,
+				"surface_audio_cue": "ticket_win" if int(active_ticket.get("payout", 0)) > 0 else SCRATCH_POP_CUE,
 			})
 		FILE_TICKET_ACTION:
 			if _dict_ref(machine.get("active_ticket", {})).is_empty():
@@ -358,7 +359,8 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 		return _scratch_pointer_surface_command(machine, next_state)
 	next_state["scratch_drag_moved"] = true
 	var drag_origin: Vector2 = next_state.get("scratch_drag_origin", previous)
-	var discard_progress := _discard_drag_progress(drag_origin, board_position)
+	var active_ticket := _dict_ref(machine.get("active_ticket", {}))
+	var discard_progress := _discard_drag_progress(drag_origin, board_position, active_ticket)
 	next_state["scratch_discard_drag_progress"] = discard_progress
 	if discard_progress >= 0.52:
 		next_state["scratch_trash_armed"] = true
@@ -390,6 +392,8 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 		command["surface_audio_loop_stop"] = SCRATCH_AUDIO_LOOP
 		command["environment_changed"] = true
 		command["message"] = "%s Click the ticket to file it." % str(scratch_result.get("message", "Result revealed."))
+		if int(_dict_ref(machine.get("active_ticket", {})).get("payout", 0)) > 0:
+			command["surface_audio_cue"] = "ticket_win"
 	elif penalty > 0:
 		command.erase("surface_audio_loop_start")
 		command["surface_audio_loop_stop"] = SCRATCH_AUDIO_LOOP
@@ -431,8 +435,9 @@ func _scratch_pointer_surface_command(machine: Dictionary, ui_state: Dictionary,
 	return command
 
 
-func _discard_drag_progress(origin: Vector2, point: Vector2) -> float:
-	if not active_ticket_rect.grow(4.0).has_point(origin):
+func _discard_drag_progress(origin: Vector2, point: Vector2, ticket: Dictionary = {}) -> float:
+	var pointer_frame := _ticket_art_frame(ticket, active_ticket_rect) if not ticket.is_empty() else active_ticket_rect
+	if not pointer_frame.grow(4.0).has_point(origin):
 		return 0.0
 	var basket := MachineRendererScript.waste_basket_drop_rect(MACHINE_RECT)
 	var approach := basket.grow(46.0)
@@ -634,6 +639,11 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 		_reserve_penalty_shields(ticket, shield_capacity)
 		purchased_tickets.append(ticket)
 		if not has_active_ticket:
+			# Queued tickets intentionally stay compact until they reach the table,
+			# but the visible ticket must have its authored mask before its first
+			# frame. Initializing it on the first drag makes the foil suddenly pop
+			# into existence over the background artwork.
+			_ensure_ticket_regions(ticket)
 			machine["active_ticket"] = ticket
 			machine["penalty_shields_remaining"] = shield_capacity
 			has_active_ticket = true
@@ -690,13 +700,24 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 		"environment_id": str(environment.get("id", "")),
 		"message": message,
 	})
-	# The result and machine state share the purchase-fixed ticket. Consumers
-	# treat action results as immutable, so copying the full latex mask here only
-	# adds a second allocation at the purchase boundary.
-	result["scratch_ticket"] = first_ticket
-	result["scratch_purchased_tickets"] = purchased_tickets
+	# The live active ticket owns the high-resolution mask. Action results are
+	# deep-copied for presentation/history, so return mask-free purchase receipts
+	# rather than duplicating 49,152 samples at the purchase boundary.
+	var purchase_receipts: Array = []
+	for purchased_value in purchased_tickets:
+		if typeof(purchased_value) != TYPE_DICTIONARY:
+			continue
+		var receipt := (purchased_value as Dictionary).duplicate(false)
+		for runtime_field in ["latex_mask", "scratch_regions", "sections"]:
+			receipt.erase(runtime_field)
+		purchase_receipts.append(receipt)
+	result["scratch_ticket"] = purchase_receipts[0] if not purchase_receipts.is_empty() else {}
+	result["scratch_purchased_tickets"] = purchase_receipts
 	result["scratch_buy_quantity"] = quantity
 	result["scratch_outcome_fixed_at_purchase"] = true
+	result["suppress_music_outcome"] = true
+	result["surface_audio_cue"] = "ticket_dispenser"
+	result["surface_audio_context"] = {"action": "scratch_buy"}
 	result["scratch_luck_modifier"] = luck
 	result["scratch_xray_peeks"] = _dictionary_array(first_ticket.get("xray_peeks", [])).duplicate(true)
 	result["scratch_fortune"] = str(first_ticket.get("fortune_tier", ""))
@@ -785,6 +806,7 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 	result["defer_bankroll_zero_failure"] = not _dict_ref(machine.get("active_ticket", {})).is_empty() or not _dictionary_array(machine.get("pending_queue", [])).is_empty() or _pending_payout(machine) > 0
 	result["scratch_discarded_unfinished"] = discard_unfinished
 	result["scratch_discard_preserved_winner"] = discard_unfinished and payout > 0
+	result["suppress_music_outcome"] = settle
 	if settle:
 		result["scratch_discovered_type_id"] = str(ticket.get("type_id", ""))
 	GameModule.apply_result(run_state, result, rng)
@@ -866,6 +888,10 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 			"size_id": str(ticket_type.get("size_id", "medium_square")),
 			"palette": _copy_dict(_copy_dict(ticket_type.get("face", {})).get("palette", {})),
 		})
+	var initially_empty := _stock_total_from_rows(stock) <= 0
+	var initial_scalper_present := initially_empty and run_state != null and not run_state.is_tutorial_run()
+	var initial_scalper_knows := initial_scalper_present and scalper_knows_for_roll(machine_rng.randi_range(0, 99))
+	var initial_visit_token := _scratch_visit_token(run_state, environment) if initial_scalper_present else ""
 	return {
 		"schema": "scratch_ticket_machine_state",
 		"version": MACHINE_STATE_VERSION,
@@ -882,9 +908,11 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"last_restock_stocked_count": 0,
 		"restock_event_count": 0,
 		"scalper_visit_chance_percent": SCALPER_VISIT_CHANCE_PERCENT,
-		"scalper_present": false,
-		"scalper_knows_schedule": false,
-		"scalper_visit_token": "",
+		# A machine generated with no sellable tickets always has a scalper already
+		# camping it. Stocked machines keep the normal seeded visit chance below.
+		"scalper_present": initial_scalper_present,
+		"scalper_knows_schedule": initial_scalper_knows,
+		"scalper_visit_token": initial_visit_token,
 		"scalper_cleared_count": 0,
 		"scalper_intercepted_restock_count": 0,
 		"stock": stock,
@@ -906,6 +934,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"pending_queue": [],
 		"winner_pile": [],
 		"loser_pile": [],
+		"loser_archive_count": 0,
 		"pending_penalty": 0,
 		"penalty_shields_remaining": 0,
 		"purchased_count": 0,
@@ -1597,14 +1626,18 @@ func _draw_ticket(surface, state: Dictionary, render_context: Dictionary = {}) -
 			var dragged_size := active_ticket_rect.size.lerp(Vector2(120, 76), discard_drag)
 			var dragged_center := active_ticket_rect.get_center().lerp(pointer + Vector2(45, -50), discard_drag)
 			render_rect = Rect2(dragged_center - dragged_size * 0.5, dragged_size)
+	var art_frame := _ticket_art_frame(ticket, render_rect)
 	var layer_count := clampi(int(render_context.get("scratch_layer_count", state.get("scratch_debug_layer_count", 3))), 1, 3)
-	BackgroundRendererScript.draw(surface, ticket, render_rect)
+	BackgroundRendererScript.draw(surface, ticket, art_frame)
 	if layer_count >= 2:
-		IconRendererScript.draw(surface, ticket, render_rect)
+		IconRendererScript.draw(surface, ticket, art_frame)
 	if layer_count >= 3:
-		FoilRendererScript.draw(surface, ticket, render_rect, state)
-	if not bool(ticket.get("result_ready", false)):
-		surface.surface_add_drag_hit(active_ticket_rect.grow(2), SCRUB_ACTION, 0)
+		FoilRendererScript.draw(surface, ticket, art_frame, state)
+	if bool(ticket.get("result_ready", false)):
+		surface.surface_draw_ready_badge(art_frame, "CLICK TO FILE")
+		surface.surface_add_exact_invisible_hit(art_frame, FILE_TICKET_ACTION, 0)
+	else:
+		surface.surface_add_drag_hit(art_frame.grow(2), SCRUB_ACTION, 0)
 
 
 func _draw_counter_mat(surface) -> void:
@@ -1631,11 +1664,11 @@ func _draw_queue_stack(surface, state: Dictionary) -> void:
 
 
 func _draw_result_piles(surface, state: Dictionary) -> void:
-	_draw_result_pile(surface, _array_ref(state.get("scratch_winner_pile", [])), WIN_PILE_RECT, true)
-	_draw_result_pile(surface, _array_ref(state.get("scratch_loser_pile", [])), LOSS_PILE_RECT, false)
+	_draw_result_pile(surface, _array_ref(state.get("scratch_winner_pile", [])), WIN_PILE_RECT, true, int(state.get("scratch_winner_count", -1)))
+	_draw_result_pile(surface, _array_ref(state.get("scratch_loser_pile", [])), LOSS_PILE_RECT, false, int(state.get("scratch_loser_count", -1)))
 
 
-func _draw_result_pile(surface, tickets: Array, rect: Rect2, winner: bool) -> void:
+func _draw_result_pile(surface, tickets: Array, rect: Rect2, winner: bool, total_count: int = -1) -> void:
 	var accent := Color("#62e3a2") if winner else Color("#c6cdd3")
 	var backing := Color("#102a20") if winner else Color("#262b30")
 	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.18))
@@ -1648,7 +1681,8 @@ func _draw_result_pile(surface, tickets: Array, rect: Rect2, winner: bool) -> vo
 	var badge := Rect2(rect.position + Vector2(-2, rect.size.y + 3), Vector2(rect.size.x + 4, 19))
 	surface.draw_rect(badge, backing)
 	surface.draw_rect(badge, accent, false, 2)
-	var label := "%d WIN%s" % [tickets.size(), "" if tickets.size() == 1 else "S"] if winner else "%d DUD%s" % [tickets.size(), "" if tickets.size() == 1 else "S"]
+	var count := tickets.size() if total_count < 0 else maxi(0, total_count)
+	var label := "%d WIN%s" % [count, "" if count == 1 else "S"] if winner else "%d DUD%s" % [count, "" if count == 1 else "S"]
 	surface.surface_label_centered(label, badge, 7, C_WHITE)
 
 
@@ -1673,12 +1707,9 @@ func _draw_surface_hud(surface, state: Dictionary) -> void:
 	if ticket.is_empty():
 		return
 	if bool(ticket.get("result_ready", false)):
-		var file_rect := Rect2(STATUS_HUD_RECT.position + Vector2(306, 5), Vector2(148, 24))
 		var won := int(ticket.get("payout", 0)) > 0
-		surface.draw_rect(file_rect, Color("#17644c") if won else Color("#393f45"))
-		surface.draw_rect(file_rect, Color("#69efb3") if won else Color("#c6cdd3"), false, 2)
-		surface.surface_label_centered("FILE WIN $%d" % int(ticket.get("payout", 0)) if won else "FILE NO-WIN", file_rect, 7, C_WHITE)
-		surface.surface_add_hit(file_rect, FILE_TICKET_ACTION, 0)
+		var instruction_rect := Rect2(STATUS_HUD_RECT.position + Vector2(306, 5), Vector2(148, 24))
+		surface.surface_label_centered("CLICK TICKET  $%d" % int(ticket.get("payout", 0)) if won else "CLICK TICKET", instruction_rect, 7, Color("#69efb3") if won else C_SOFT)
 		return
 	var all_rect := Rect2(STATUS_HUD_RECT.position + Vector2(306, 5), Vector2(70, 24))
 	surface.draw_rect(all_rect, Color("#17644c") if bool(state.get("scratch_reduce_motion", false)) else Color("#613047"))
@@ -1875,15 +1906,20 @@ func _refresh_scalper_for_visit(run_state: RunState, environment: Dictionary, ma
 	if not environment.has("entered_game_clock_minutes"):
 		environment["entered_game_clock_minutes"] = run_state.game_clock_minutes
 	var visit_token := _scratch_visit_token(run_state, environment)
-	if visit_token == str(machine.get("scalper_visit_token", "")):
-		return false
-	machine["scalper_visit_token"] = visit_token
 	if run_state.is_tutorial_run():
+		var tutorial_changed := bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false))
 		machine["scalper_present"] = false
 		machine["scalper_knows_schedule"] = false
-		return true
+		machine["scalper_visit_token"] = visit_token
+		return tutorial_changed
+	var same_visit := visit_token == str(machine.get("scalper_visit_token", ""))
+	if same_visit and (bool(machine.get("scalper_present", false)) or _stock_total(machine) > 0):
+		return false
+	machine["scalper_visit_token"] = visit_token
 	var rng := run_state.create_rng("scratch-scalper:%s:%s" % [_machine_identity(environment), visit_token])
-	var present := scalper_present_for_roll(rng.randi_range(0, 99))
+	# Empty-on-arrival is the encounter condition itself. The percentage roll is
+	# only needed when a stocked machine may be intercepted and cleared.
+	var present := _stock_total(machine) <= 0 or scalper_present_for_roll(rng.randi_range(0, 99))
 	var knows_schedule := present and scalper_knows_for_roll(rng.randi_range(0, 99))
 	machine["scalper_present"] = present
 	machine["scalper_knows_schedule"] = knows_schedule
@@ -1904,8 +1940,12 @@ func _clear_machine_stock(machine: Dictionary) -> int:
 
 
 func _stock_total(machine: Dictionary) -> int:
+	return _stock_total_from_rows(_dictionary_array(machine.get("stock", [])))
+
+
+func _stock_total_from_rows(stock: Array) -> int:
 	var total := 0
-	for slot_value in _dictionary_array(machine.get("stock", [])):
+	for slot_value in stock:
 		total += maxi(0, int((slot_value as Dictionary).get("remaining", 0)))
 	return total
 
@@ -1921,7 +1961,12 @@ func _machine_identity(environment: Dictionary) -> String:
 
 func _scalper_dialogue_summary(machine: Dictionary, knows_schedule: bool) -> String:
 	if knows_schedule:
-		return "I watch the route, not the screen. Next release should hit around %s. Be here before the clerk wheels past." % _clock_text_at_absolute_minute(int(machine.get("next_restock_absolute_minute", 0)))
+		var next_restock := int(machine.get("next_restock_absolute_minute", 0))
+		return "I keep the clerk's schedule. This machine resets every three hours: %s, then %s, then %s. Be here before the clerk wheels past." % [
+			_clock_text_at_absolute_minute(next_restock),
+			_clock_text_at_absolute_minute(next_restock + RESTOCK_INTERVAL_MINUTES),
+			_clock_text_at_absolute_minute(next_restock + RESTOCK_INTERVAL_MINUTES * 2),
+		]
 	return "Restock time? Never heard of one. I am just standing beside an empty machine because I like the carpet."
 
 
@@ -1950,6 +1995,8 @@ func _ticket_play_label(type_id: String, _mechanic: Dictionary) -> String:
 
 
 func _normalize_machine_state(machine: Dictionary, run_state: RunState = null) -> void:
+	if _machine_state_is_current(machine):
+		return
 	var needs_upgrade := int(machine.get("version", 1)) < MACHINE_STATE_VERSION or not machine.has("pending_queue")
 	if not machine.has("pending_queue"):
 		machine["pending_queue"] = []
@@ -1957,6 +2004,7 @@ func _normalize_machine_state(machine: Dictionary, run_state: RunState = null) -
 		machine["winner_pile"] = []
 	if not machine.has("loser_pile"):
 		machine["loser_pile"] = []
+	machine["loser_archive_count"] = maxi(0, int(machine.get("loser_archive_count", 0)))
 	var active_value: Variant = machine.get("active_ticket", {})
 	if typeof(active_value) == TYPE_DICTIONARY:
 		var active: Dictionary = active_value
@@ -2003,6 +2051,22 @@ func _normalize_machine_state(machine: Dictionary, run_state: RunState = null) -
 	machine["scalper_cleared_count"] = maxi(0, int(machine.get("scalper_cleared_count", 0)))
 	machine["scalper_intercepted_restock_count"] = maxi(0, int(machine.get("scalper_intercepted_restock_count", 0)))
 	machine["version"] = maxi(MACHINE_STATE_VERSION, int(machine.get("version", 1)))
+
+
+func _machine_state_is_current(machine: Dictionary) -> bool:
+	if int(machine.get("version", 0)) < MACHINE_STATE_VERSION:
+		return false
+	if str(machine.get("schema", "")) != "scratch_ticket_machine_state":
+		return false
+	for field in ["stock", "pending_queue", "winner_pile", "loser_pile"]:
+		if typeof(machine.get(field, null)) != TYPE_ARRAY:
+			return false
+	if typeof(machine.get("active_ticket", null)) != TYPE_DICTIONARY:
+		return false
+	var active: Dictionary = machine.get("active_ticket", {}) as Dictionary
+	if _ticket_region_upgrade_needed(active):
+		return false
+	return machine.has("restock_phase_minute") and machine.has("restock_cursor_absolute_minute") and machine.has("next_restock_absolute_minute")
 
 
 func _ticket_region_upgrade_needed(ticket: Dictionary) -> bool:
@@ -2078,11 +2142,15 @@ func _read_machine_state(run_state: RunState, environment: Dictionary) -> Dictio
 func _write_machine_state(environment: Dictionary, machine: Dictionary, run_state: RunState = null, normalize_before_write: bool = true) -> void:
 	if normalize_before_write:
 		_normalize_machine_state(machine, run_state)
+	var portable := RunState.compact_portable_ticket_state(get_id(), _portable_ticket_player_state(machine), false)
+	for field in ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
+		if portable.has(field):
+			machine[field] = portable[field]
 	var states := _game_states_for_write(environment)
 	states[get_id()] = machine
 	environment["game_states"] = states
 	if run_state != null:
-		run_state.remember_portable_ticket_state(get_id(), environment, _portable_ticket_player_state(machine))
+		run_state.remember_portable_ticket_state(get_id(), environment, portable)
 
 
 func _sync_portable_ticket_state(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
@@ -2097,7 +2165,7 @@ func _sync_portable_ticket_state(run_state: RunState, environment: Dictionary, m
 			portable = run_state.portable_ticket_state(get_id(), environment)
 	if portable.is_empty():
 		return
-	for field in ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
+	for field in ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
 		if portable.has(field):
 			machine[field] = portable[field]
 	_normalize_machine_state(machine, run_state)
@@ -2109,6 +2177,7 @@ func _portable_ticket_player_state(machine: Dictionary) -> Dictionary:
 		"pending_queue": machine.get("pending_queue", []),
 		"winner_pile": machine.get("winner_pile", []),
 		"loser_pile": machine.get("loser_pile", []),
+		"loser_archive_count": maxi(0, int(machine.get("loser_archive_count", 0))),
 		"pending_penalty": maxi(0, int(machine.get("pending_penalty", 0))),
 		"penalty_shields_remaining": maxi(0, int(machine.get("penalty_shields_remaining", 0))),
 		"last_settled_ticket": _copy_dict(machine.get("last_settled_ticket", {})),
@@ -2122,7 +2191,7 @@ func _portable_ticket_player_state(machine: Dictionary) -> Dictionary:
 
 
 func _portable_ticket_count(state: Dictionary) -> int:
-	return (0 if _dict_ref(state.get("active_ticket", {})).is_empty() else 1) + _dictionary_array(state.get("pending_queue", [])).size() + _dictionary_array(state.get("winner_pile", [])).size() + _dictionary_array(state.get("loser_pile", [])).size()
+	return (0 if _dict_ref(state.get("active_ticket", {})).is_empty() else 1) + _dictionary_array(state.get("pending_queue", [])).size() + _dictionary_array(state.get("winner_pile", [])).size() + _dictionary_array(state.get("loser_pile", [])).size() + maxi(0, int(state.get("loser_archive_count", 0)))
 
 
 func _stamp_ticket_origin(ticket: Dictionary, environment: Dictionary) -> void:
@@ -2247,7 +2316,11 @@ func _ticket_complete(ticket: Dictionary) -> bool:
 
 func _ticket_scratch_rect(_ticket: Dictionary) -> Rect2:
 	var size_id := str(_ticket.get("size_id", "medium_square"))
-	return _ticket_rect_for_size(size_id, false)
+	return _ticket_art_frame(_ticket, _ticket_rect_for_size(size_id, false))
+
+
+func _ticket_art_frame(ticket: Dictionary, ticket_rect: Rect2) -> Rect2:
+	return RegionModelScript.art_frame(ticket_rect, RegionModelScript.art_size(str(ticket.get("type_id", ""))))
 
 
 func _ticket_rect_for_size(size_id: String, _compact: bool = false) -> Rect2:

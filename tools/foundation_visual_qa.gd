@@ -653,7 +653,8 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 	await _settle()
 	var selected_map_screen: Dictionary = app.call("current_screen_snapshot")
 	var detail_text := str(selected_map_screen.get("world_map_detail_text", ""))
-	_require(detail_text.contains("Travel:") and detail_text.contains("Distance:") and detail_text.contains("Cost:"), "World map info panel did not show route method, distance, and cost.")
+	var detail_lines := detail_text.split("\n")
+	_require(detail_lines.size() == 4 and str(detail_lines[1]).begins_with("Hours:") and str(detail_lines[3]).contains(" min * ") and str(detail_lines[3]).contains("$ * ") and str(detail_lines[3]).count(" * ") == 2, "World map info panel did not use the compact name, hours, description, and travel format.")
 	_cover("world_map_info_panel")
 	_require(serialized_before_map_select == _serialized_run_text(), "Selecting a world-map node mutated RunState before route confirmation.")
 	app.call("confirm_world_map_travel")
@@ -987,8 +988,13 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	canvas = app.get("environment_canvas") as Control
 	var cage_screen_snapshot: Dictionary = app.call("current_screen_snapshot")
 	_require(canvas != null and canvas.visible, "Players Card visual QA could not render the walkable Cage room (screen=%s, run_status=%s, failure=%s, cash=%d, environment=%s)." % [str(cage_screen_snapshot.get("screen", "")), str(fixture_run.run_status), str(fixture_run.run_failure_reason), fixture_run.bankroll, str(fixture_run.current_environment.get("archetype_id", ""))])
-	for fixture_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "casino_fixture:cage_gift_shop"]:
+	for fixture_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm"]:
 		_require(not _canvas_object_by_id(canvas, fixture_id).is_empty(), "Walkable Cage visual QA could not find fixture %s." % fixture_id)
+	_require(_canvas_object_by_id(canvas, "casino_fixture:cage_gift_shop").is_empty(), "Cage visual QA still exposed the gift case as a popup catalog fixture.")
+	for shelf_index in range(3):
+		var shelf_id := "cage_gift_item:%d" % shelf_index
+		var shelf_item := _canvas_object_by_id(canvas, shelf_id)
+		_require(not shelf_item.is_empty() and str(shelf_item.get("object_type", "")) == "item" and not str(shelf_item.get("icon_key", "")).is_empty(), "Cage visual QA could not find icon-based shelf offer %s." % shelf_id)
 	var cage_model: Dictionary = CageCounterViewModelScript.build(fixture_run)
 	var cage_card: Dictionary = cage_model.get("card", {}) if typeof(cage_model.get("card", {})) == TYPE_DICTIONARY else {}
 	var cage_host: Dictionary = cage_model.get("host", {}) if typeof(cage_model.get("host", {})) == TYPE_DICTIONARY else {}
@@ -1016,7 +1022,7 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	_require(fixture_run.grand_casino_chips == 0, "Visible Cage cash-out did not return all chips to cash.")
 	_cover("grand_casino_high_roller_cashout")
 	_record_state("grand_casino_cage_room", "The fourth walkable Grand Casino room shows Linda's counter, ATM, and chip-priced gift case.")
-	_record_state("grand_casino_cage_normal_shop", "The saved gift case presents three or four focused chip-priced offers.")
+	_record_state("grand_casino_cage_normal_shop", "The saved gift case presents three or four independent icon-based shelf items priced in chips.")
 	var normal_shop_state: Dictionary = fixture_run.current_environment.get("cage_gift_shop_state", {}).duplicate(true)
 	var empty_shop_state := normal_shop_state.duplicate(true)
 	var empty_stock: Array = empty_shop_state.get("stock", []).duplicate(true)

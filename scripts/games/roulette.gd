@@ -36,6 +36,10 @@ const LINE_BET_H := 8.0
 const OUTSIDE_Y := 272.0
 const CONSOLE_Y := 344.0
 const CONSOLE_H := 76.0
+const RECENT_NUMBERS_RECT := Rect2(250, 6, 436, 28)
+const DEALER_STATION_RECT := Rect2(352, 54, 196, 104)
+const BET_INFORMATION_RECT := Rect2(352, 36, 196, 16)
+const TABLE_NOTICE_RECT := Rect2(644, 352, 238, 60)
 const HISTORY_LIMIT := 12
 const TRAJECTORY_KEYFRAMES := 96
 const MAX_VISIBLE_PATRONS := 3
@@ -60,8 +64,20 @@ const WHEEL_READ_ITEM_EFFECT_KEYS := [
 	"roulette_past_post_perfect_msec",
 	"roulette_past_post_good_msec",
 	"roulette_past_post_window_msec",
-	"roulette_past_post_base_heat",
 	"skill_cheat_drunk_window_offset_msec",
+]
+const WHEEL_READ_FAILED_HEAT := 20
+const WHEEL_BIAS_GREEN_MAGNET_CHANCE_PERCENT := 8
+const WHEEL_BIAS_FAVORED_PERCENT := 60
+const WHEEL_BIAS_GREEN_MULTIPLIER := 2
+const WHEEL_BIAS_EXPLOIT_HEAT_CAP := 64
+const WHEEL_BIAS_PAIRS := [
+	{"axis": "color", "favored_bet": "red", "favored_label": "RED", "opposed_bet": "black", "opposed_label": "BLACK"},
+	{"axis": "color", "favored_bet": "black", "favored_label": "BLACK", "opposed_bet": "red", "opposed_label": "RED"},
+	{"axis": "range", "favored_bet": "low", "favored_label": "1-18", "opposed_bet": "high", "opposed_label": "19-36"},
+	{"axis": "range", "favored_bet": "high", "favored_label": "19-36", "opposed_bet": "low", "opposed_label": "1-18"},
+	{"axis": "parity", "favored_bet": "even", "favored_label": "EVEN", "opposed_bet": "odd", "opposed_label": "ODD"},
+	{"axis": "parity", "favored_bet": "odd", "favored_label": "ODD", "opposed_bet": "even", "opposed_label": "EVEN"},
 ]
 
 const AMERICAN_SEQUENCE := [
@@ -121,8 +137,8 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 		chip_denominations.append(table_min)
 	return {
 		"schema": "roulette_table_state",
-		"version": 1,
-		"normalized_version": 1,
+		"version": 2,
+		"normalized_version": 2,
 		"table_name": str(rng.pick(names, names[0])),
 		"dealer_name": str(rng.pick(["Vega", "Mara", "Rook", "June", "Sal"], "Vega")),
 		"variant": variant,
@@ -140,6 +156,7 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 			"table_max": table_max,
 		},
 		"physics_profile": _standard_physics_profile(rng),
+		"wheel_bias": _generate_wheel_bias(rng),
 		"dealer_profile": _generate_dealer_profile(rng, catch_base),
 		"patrons": _generate_table_patrons(rng, int(environment.get("depth", 0))),
 		"chip_denominations": chip_denominations,
@@ -148,6 +165,7 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 		"last_results": [],
 		"last_result": {},
 		"bias_read": {},
+		"bias_exploit_wins": 0,
 		"dealer_catch_base": catch_base,
 		"table_barred": false,
 		"barred_reason": "",
@@ -196,7 +214,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	if past_post_available:
 		table_notice = "The payout lock is open. A late chip could still slide."
 	elif wheel_read_active:
-		table_notice = "Track the cyan tick and lock it over the low-side marker."
+		table_notice = "Track the cyan tick and lock it over the timing marker."
 	if barred:
 		table_notice = str(table.get("barred_reason", "The roulette wheel is closed to you."))
 	var surface_patrons := GameModule.patrons_with_talk_focus(_patrons_for_surface(table, last_result, now_msec), ui_state.get("focused_talk_speaker", {}))
@@ -213,7 +231,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": true,
-		"surface_dynamic_overlay_channels": [ROULETTE_SPIN_CHANNEL],
+		"surface_dynamic_overlay_channels": [ROULETTE_SPIN_CHANNEL, ROULETTE_PAYOUT_CHANNEL],
 		"surface_realtime_state_refresh": roulette_motion_active,
 		"surface_time_msec": now_msec,
 		"surface_state_labels": [
@@ -226,13 +244,17 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				str(last_result.get("spin_id", "")) if spin_active else "",
 				SPIN_ANIMATION_DURATION_MSEC if spin_active else 0,
 				int(last_result.get("resolved_at_msec", 0)),
-				{"metadata": {"winning_number": str(last_result.get("winning_number", ""))}}
+				{
+					"clock_source": "surface",
+					"metadata": {"winning_number": str(last_result.get("winning_number", ""))},
+				}
 			),
 			GameModule.surface_animation_channel(
 				ROULETTE_PAYOUT_CHANNEL,
 				str(last_result.get("payout_animation_id", "")) if payout_active else "",
 				PAYOUT_ANIMATION_DURATION_MSEC if payout_active else 0,
-				int(last_result.get("resolved_at_msec", 0)) + SPIN_ANIMATION_DURATION_MSEC
+				int(last_result.get("resolved_at_msec", 0)) + SPIN_ANIMATION_DURATION_MSEC,
+				{"clock_source": "surface"}
 			),
 		],
 		"surface_action_blocks": _surface_action_blocks(roulette_wheel_locked),
@@ -284,6 +306,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"wheel_read_active": wheel_read_active,
 		"wheel_read_heat_preview": _read_wheel_heat(table, run_state),
 		"wheel_read_item_modifiers": wheel_read_item_modifiers,
+		"bias_read": _copy_dict(table.get("bias_read", {})),
 		"result_reveal_active": result_reveal_active,
 		"roulette_result_settled": result_settled_for_display,
 		"roulette_motion_active": roulette_motion_active,
@@ -355,7 +378,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	if past_post_available:
 		table_notice = "The payout lock is open. A late chip could still slide."
 	elif wheel_read_active:
-		table_notice = "Track the cyan tick and lock it over the low-side marker."
+		table_notice = "Track the cyan tick and lock it over the timing marker."
 	if barred:
 		table_notice = str(table.get("barred_reason", "The roulette wheel is closed to you."))
 	return {
@@ -367,13 +390,17 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 				str(last_result.get("spin_id", "")) if spin_active else "",
 				SPIN_ANIMATION_DURATION_MSEC if spin_active else 0,
 				int(last_result.get("resolved_at_msec", 0)),
-				{"metadata": {"winning_number": str(last_result.get("winning_number", ""))}}
+				{
+					"clock_source": "surface",
+					"metadata": {"winning_number": str(last_result.get("winning_number", ""))},
+				}
 			),
 			GameModule.surface_animation_channel(
 				ROULETTE_PAYOUT_CHANNEL,
 				str(last_result.get("payout_animation_id", "")) if payout_active else "",
 				PAYOUT_ANIMATION_DURATION_MSEC if payout_active else 0,
-				int(last_result.get("resolved_at_msec", 0)) + SPIN_ANIMATION_DURATION_MSEC
+				int(last_result.get("resolved_at_msec", 0)) + SPIN_ANIMATION_DURATION_MSEC,
+				{"clock_source": "surface"}
 			),
 		],
 		"surface_action_blocks": _surface_action_blocks(roulette_wheel_locked),
@@ -565,7 +592,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		if not bool(validation.get("ok", false)):
 			return _empty_roulette_result(action_id, stake, environment, str(validation.get("message", "Those roulette bets cannot be placed.")))
 	var effective_profile := _effective_physics_profile(table, run_state, environment, session, rng)
-	var spin := _simulate_spin(table, effective_profile, rng)
+	var spin := _apply_table_wheel_bias(_simulate_spin(table, effective_profile, rng), table, rng)
 	var cheat_context: Dictionary = _copy_dict(session.get("cheats_used", {}))
 	var used_nudge := bool(cheat_context.get("wheel_nudge", false))
 	if used_nudge:
@@ -576,13 +603,12 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	for result_value in bet_results:
 		if typeof(result_value) == TYPE_DICTIONARY:
 			bankroll_delta += int((result_value as Dictionary).get("bankroll_delta", 0))
-	var suspicion_delta := 0
-	var used_cheat := bool(cheat_context.get("read_wheel_bias", false)) or used_nudge
+	var bias_exploitation := _record_revealed_bias_exploitation(table, bets, winning_number)
+	var bias_exploit_heat := int(bias_exploitation.get("heat", 0))
+	var suspicion_delta := bias_exploit_heat
+	var used_cheat := used_nudge
 	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null and used_cheat else {}
 	var pit_boss_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
-	if bool(cheat_context.get("read_wheel_bias", false)):
-		var raw_heat := int(cheat_context.get("read_wheel_heat", 0))
-		suspicion_delta = run_state.alcohol_adjusted_suspicion_delta(raw_heat) if run_state != null and raw_heat > 0 else raw_heat
 	if used_nudge:
 		var nudge_heat := int(cheat_context.get("wheel_nudge_heat", _nudge_wheel_heat(table, run_state, environment)))
 		var adjusted_nudge_heat := run_state.alcohol_adjusted_suspicion_delta(nudge_heat) if run_state != null and nudge_heat > 0 else nudge_heat
@@ -596,11 +622,17 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		message = "You sit out the spin. %s" % message
 	elif used_nudge:
 		message = "%s You nudge the wheel's rhythm before the ball drops." % message
-	var table_pressure := _roulette_pressure_message(table, pit_boss_status) if used_cheat else ""
+	if bias_exploit_heat > 0:
+		message = "%s The croupier notices your repeated %s wins. Heat +%d." % [message, str(bias_exploitation.get("favored_label", "biased-wheel")), bias_exploit_heat]
+	var table_pressure := _roulette_pressure_message(table, pit_boss_status) if used_cheat or bias_exploit_heat > 0 else ""
 	if not table_pressure.is_empty():
 		message = "%s %s" % [message, table_pressure]
 	var result_action_kind := "cheat" if used_cheat or suspicion_delta > 0 else "legal"
 	_update_table_after_spin(table, bets, bet_results, spin, bankroll_delta, suspicion_delta, rng, result_msec)
+	var stored_last_result := _copy_dict(table.get("last_result", {}))
+	stored_last_result["summary"] = message
+	stored_last_result["bias_exploitation"] = bias_exploitation.duplicate(true)
+	table["last_result"] = stored_last_result
 	_apply_patron_rapport_after_roulette(table, session, bets, winning_number)
 	_update_environment_table(environment, table)
 	var story_entry := {
@@ -615,6 +647,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"cheated": used_cheat,
 		"sat_out": sit_out,
 		"wheel_nudge": used_nudge,
+		"roulette_bias_exploitation": bias_exploitation,
 		"wheel_nudge_watched": bool(cheat_context.get("wheel_nudge_watched", false)),
 		"winning_number": winning_number,
 		"winning_color": str(spin.get("winning_color", "")),
@@ -660,6 +693,8 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["roulette_sat_out"] = sit_out
 	result["roulette_wheel_nudge"] = used_nudge
 	result["roulette_wheel_nudge_watched"] = bool(cheat_context.get("wheel_nudge_watched", false))
+	result["roulette_bias_exploitation"] = bias_exploitation
+	result["roulette_bias_exploit_heat"] = bias_exploit_heat
 	result["roulette_pit_boss_watched"] = bool(pit_boss_status.get("watched", false))
 	result["roulette_pit_boss_heat_bonus"] = pit_boss_bonus
 	result["roulette_table_pressure"] = table_pressure
@@ -1203,6 +1238,57 @@ func _standard_physics_profile(rng: RngStream) -> Dictionary:
 	}
 
 
+func _generate_wheel_bias(rng: RngStream) -> Dictionary:
+	if rng.randi_range(1, 100) <= WHEEL_BIAS_GREEN_MAGNET_CHANCE_PERCENT:
+		return {
+			"id": "green_magnet",
+			"type": "green_magnet",
+			"favored_bet": "green",
+			"favored_label": "GREEN",
+			"green_multiplier": WHEEL_BIAS_GREEN_MULTIPLIER,
+		}
+	var selected: Dictionary = rng.pick(WHEEL_BIAS_PAIRS, WHEEL_BIAS_PAIRS[0])
+	var result := selected.duplicate(true)
+	result["id"] = "%s_%s" % [str(result.get("axis", "outside")), str(result.get("favored_bet", "red"))]
+	result["type"] = "outside_skew"
+	result["favored_percent"] = WHEEL_BIAS_FAVORED_PERCENT
+	return result
+
+
+func _fallback_wheel_bias(table: Dictionary) -> Dictionary:
+	var bias_rng := RngStream.new()
+	bias_rng.configure(_stable_hash("roulette_bias:%s:%s:%s" % [
+		str(table.get("table_name", "roulette")),
+		str(table.get("dealer_name", "croupier")),
+		str(table.get("variant", "american_double_zero")),
+	]))
+	return _generate_wheel_bias(bias_rng)
+
+
+func _normalize_wheel_bias(value: Variant, table: Dictionary = {}) -> Dictionary:
+	var bias: Dictionary = (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+	if bias.is_empty():
+		bias = _fallback_wheel_bias(table)
+	if str(bias.get("type", "")) == "green_magnet":
+		return {
+			"id": "green_magnet",
+			"type": "green_magnet",
+			"favored_bet": "green",
+			"favored_label": "GREEN",
+			"green_multiplier": WHEEL_BIAS_GREEN_MULTIPLIER,
+		}
+	var favored_bet := str(bias.get("favored_bet", "red"))
+	for pair_value in WHEEL_BIAS_PAIRS:
+		var pair: Dictionary = pair_value
+		if str(pair.get("favored_bet", "")) == favored_bet:
+			var result := pair.duplicate(true)
+			result["id"] = "%s_%s" % [str(result.get("axis", "outside")), favored_bet]
+			result["type"] = "outside_skew"
+			result["favored_percent"] = WHEEL_BIAS_FAVORED_PERCENT
+			return result
+	return _normalize_wheel_bias({}, table)
+
+
 func _effective_physics_profile(table: Dictionary, run_state: RunState, environment: Dictionary, _ui_state: Dictionary, _rng: RngStream) -> Dictionary:
 	var profile := _normalize_physics_profile(table.get("physics_profile", {}))
 	for modifier in _physics_modifiers(run_state, environment, table):
@@ -1257,6 +1343,63 @@ func _simulate_spin(table: Dictionary, profile: Dictionary, rng: RngStream) -> D
 		},
 		"trajectory": _build_spin_trajectory(launch, drop, deflect, capture, profile, table),
 	}
+
+
+func _apply_table_wheel_bias(spin: Dictionary, table: Dictionary, rng: RngStream) -> Dictionary:
+	var bias := _normalize_wheel_bias(table.get("wheel_bias", {}), table)
+	var target_number := _sample_biased_winning_number(table, bias, rng)
+	if target_number.is_empty():
+		return spin
+	var result := _retarget_spin_to_number(spin, table, target_number, "bias")
+	result["wheel_bias_applied"] = str(bias.get("id", ""))
+	return result
+
+
+func _sample_biased_winning_number(table: Dictionary, bias_value: Variant, rng: RngStream) -> String:
+	var bias := _normalize_wheel_bias(bias_value, table)
+	var sequence := _wheel_sequence(table)
+	if sequence.is_empty():
+		return ""
+	var green_numbers := _green_numbers(table)
+	if str(bias.get("type", "")) == "green_magnet":
+		var total_weight := sequence.size() + green_numbers.size() * (WHEEL_BIAS_GREEN_MULTIPLIER - 1)
+		var roll := rng.randi_range(0, maxi(0, total_weight - 1))
+		for number_value in sequence:
+			var number := str(number_value)
+			var weight := WHEEL_BIAS_GREEN_MULTIPLIER if green_numbers.has(number) else 1
+			if roll < weight:
+				return number
+			roll -= weight
+		return str(sequence[sequence.size() - 1])
+	# Green keeps its normal wheel share. Conditional on a non-green result,
+	# the favored side receives exactly 60% of the outcome weight.
+	if rng.randi_range(1, sequence.size()) <= green_numbers.size():
+		return str(rng.pick(green_numbers, green_numbers[0]))
+	var favored_numbers := _numbers_for_bias_bet(str(bias.get("favored_bet", "red")))
+	var opposed_numbers := _numbers_for_bias_bet(str(bias.get("opposed_bet", "black")))
+	var pool := favored_numbers if rng.randi_range(1, 100) <= WHEEL_BIAS_FAVORED_PERCENT else opposed_numbers
+	return str(rng.pick(pool, pool[0] if not pool.is_empty() else sequence[0]))
+
+
+func _green_numbers(table: Dictionary) -> Array:
+	return ["0"] if int(_table_rules(table).get("zero_count", 2)) == 1 else ["0", "00"]
+
+
+func _numbers_for_bias_bet(bet_type: String) -> Array:
+	match bet_type:
+		"red":
+			return RED_NUMBERS.duplicate(true)
+		"black":
+			return BLACK_NUMBERS.duplicate(true)
+		"low":
+			return _range_strings(1, 18)
+		"high":
+			return _range_strings(19, 36)
+		"even":
+			return _even_numbers()
+		"odd":
+			return _odd_numbers()
+	return []
 
 
 func _sample_launch_conditions(profile: Dictionary, rng: RngStream) -> Dictionary:
@@ -1568,6 +1711,55 @@ func _roulette_celebration_score(bet: Dictionary, won: bool) -> int:
 	var payout := maxi(0, int(bet.get("payout", 0)))
 	var stake := maxi(1, int(bet.get("stake", 1)))
 	return clampi(payout * 2 + int(round(log(float(stake) + 1.0) / log(2.0))), 1, 100)
+
+
+func _record_revealed_bias_exploitation(table: Dictionary, bets: Array, winning_number: String) -> Dictionary:
+	var read := _copy_dict(table.get("bias_read", {}))
+	if not bool(read.get("applied", false)):
+		return {}
+	var bias := _normalize_wheel_bias(table.get("wheel_bias", {}), table)
+	if not _bets_exploit_bias_win(bets, winning_number, bias, table):
+		return {}
+	var exploit_wins := clampi(int(table.get("bias_exploit_wins", 0)) + 1, 1, 1000000)
+	table["bias_exploit_wins"] = exploit_wins
+	var heat := 0
+	if exploit_wins > 1:
+		heat = mini(WHEEL_BIAS_EXPLOIT_HEAT_CAP, 1 << mini(6, exploit_wins - 1))
+	return {
+		"bias_id": str(bias.get("id", "")),
+		"favored_bet": str(bias.get("favored_bet", "")),
+		"favored_label": str(bias.get("favored_label", "the wheel's tell")),
+		"exploit_wins": exploit_wins,
+		"heat": heat,
+	}
+
+
+func _bets_exploit_bias_win(bets: Array, winning_number: String, bias: Dictionary, table: Dictionary) -> bool:
+	if str(bias.get("type", "")) == "green_magnet":
+		var green_numbers := _green_numbers(table)
+		if not green_numbers.has(winning_number):
+			return false
+		for bet_value in bets:
+			if typeof(bet_value) != TYPE_DICTIONARY:
+				continue
+			var numbers := _string_array((bet_value as Dictionary).get("numbers", []))
+			if numbers.has(winning_number) and not numbers.is_empty() and _all_numbers_in_pool(numbers, green_numbers):
+				return true
+		return false
+	var favored_bet := str(bias.get("favored_bet", ""))
+	if not _numbers_for_bias_bet(favored_bet).has(winning_number):
+		return false
+	for bet_value in bets:
+		if typeof(bet_value) == TYPE_DICTIONARY and str((bet_value as Dictionary).get("type", "")) == favored_bet:
+			return true
+	return false
+
+
+func _all_numbers_in_pool(numbers: Array, pool: Array) -> bool:
+	for number in numbers:
+		if not pool.has(str(number)):
+			return false
+	return true
 
 
 func _select_chip_command(index: int, state: Dictionary, table: Dictionary) -> Dictionary:
@@ -1945,17 +2137,13 @@ func _read_wheel_command(index: int, state: Dictionary, table: Dictionary, run_s
 	if resolving:
 		challenge["input_msec"] = GameModule.deterministic_time_msec(run_state, state)
 		challenge = _grade_wheel_read_challenge(challenge)
-		var cheats := _copy_dict(state.get("cheats_used", {}))
-		cheats[WHEEL_READ_ACTION_ID] = true
-		cheats["read_wheel_heat"] = maxi(1, int(challenge.get("base_heat", _read_wheel_heat(table, run_state))) + _wheel_read_grade_heat_modifier(str(challenge.get("skill_grade", "miss"))))
-		state["cheats_used"] = cheats
 		state["bias_read"] = _wheel_read_context_for_grade(table, challenge)
 	state["wheel_read_challenge"] = challenge
 	var watch := _roulette_table_watch_status(table, run_state, environment)
-	var risk := "Heat +%d" % int(challenge.get("base_heat", _read_wheel_heat(table, run_state)))
+	var risk := "FAILURE: HEAT +%d" % int(challenge.get("base_heat", _read_wheel_heat(table, run_state)))
 	if bool(watch.get("watched", false)):
 		risk = "%s; WATCHED" % risk
-	var message := "Wheel read armed. Stop the cyan tick on the low-side marker. %s." % risk
+	var message := "Wheel read armed. Stop the cyan tick on the timing marker. %s." % risk
 	if resolving:
 		message = _wheel_read_input_message(str(challenge.get("skill_grade", "miss")), risk)
 	return GameModule.surface_command({
@@ -2098,46 +2286,38 @@ func _wheel_read_meter(challenge: Dictionary, ui_state: Dictionary) -> Dictionar
 	}
 
 
-func _wheel_read_grade_heat_modifier(grade: String) -> int:
-	var action := _action(WHEEL_READ_ACTION_ID)
-	match grade:
-		"perfect":
-			return -int(action.get("skill_perfect_heat_reduction", 2))
-		"partial":
-			return int(action.get("skill_partial_heat_bonus", 2))
-		"miss":
-			return int(action.get("skill_miss_heat_bonus", 5))
-		"blown":
-			return int(action.get("skill_blown_heat_bonus", 10))
-	return 0
-
-
 func _wheel_read_context_for_grade(table: Dictionary, challenge: Dictionary) -> Dictionary:
 	var grade := str(challenge.get("skill_grade", "miss"))
-	var profile := _normalize_physics_profile(table.get("physics_profile", {}))
-	var tilted := absf(float(profile.get("tilt_degrees", 0.0))) > 0.05
-	var base_message := "The ball favors late scatter near the low side." if tilted else "The wheel looks level, but the diamonds are lively."
-	match grade:
-		"perfect":
-			return {"tilt_degrees": float(profile.get("tilt_degrees", 0.0)), "scatter": float(profile.get("diamond_scatter_degrees", 0.0)), "quality": "exact", "message": "Perfect rotor read. %s" % base_message}
-		"good":
-			return {"tilt_degrees": float(profile.get("tilt_degrees", 0.0)), "scatter": 0.0, "quality": "strong", "message": "Clean rotor read. %s" % base_message}
-		"partial":
-			return {"tilt_degrees": 0.0, "scatter": 0.0, "quality": "vague", "message": "You catch only a vague low-side tell before the rotor gets away."}
-		"blown":
-			return {"quality": "blown", "message": "The croupier catches your stare; the apparent wheel tell is useless."}
-		_:
-			return {"quality": "miss", "message": "Your eyes lose the low-side tick and the wheel read gives you nothing."}
+	if not GameModule.skill_grade_applies(grade):
+		return {
+			"applied": false,
+			"quality": "blown" if grade == "blown" else "miss",
+			"message": "The croupier catches your stare and the wheel read gives you nothing." if grade == "blown" else "Your eyes lose the timing mark and the wheel read gives you nothing.",
+		}
+	var bias := _normalize_wheel_bias(table.get("wheel_bias", {}), table)
+	var read := bias.duplicate(true)
+	read["applied"] = true
+	read["quality"] = "exact"
+	if str(bias.get("type", "")) == "green_magnet":
+		var green_label := "0" if _green_numbers(table).size() == 1 else "0 and 00"
+		read["message"] = "TABLE READ: A hidden green magnet makes %s land twice as often as a normal pocket." % green_label
+	else:
+		read["message"] = "TABLE READ: On non-green spins, %s is favored %d/40 over %s." % [
+			str(bias.get("favored_label", "one side")),
+			int(bias.get("favored_percent", WHEEL_BIAS_FAVORED_PERCENT)),
+			str(bias.get("opposed_label", "the other side")),
+		]
+	return read
 
 
 func _wheel_read_input_message(grade: String, risk: String) -> String:
 	match grade:
 		"perfect":
-			return "Perfect wheel read locked. %s." % risk
+			return "Perfect wheel read locked. The table tell is yours; no Heat gained."
 		"good":
-			return "Clean wheel read locked. %s." % risk
+			return "Clean wheel read locked. The table tell is yours; no Heat gained."
 		"partial":
-			return "Only a vague wheel tell sticks. %s." % risk
+			return "The timing mark just holds. The table tell is yours; no Heat gained."
 		"blown":
 			return "The croupier catches your stare before the tick lines up. %s." % risk
 		_:
@@ -2151,18 +2331,20 @@ func _resolve_read_wheel(action_id: String, run_state: RunState, environment: Di
 		challenge = _start_wheel_read_challenge(ui_state, table, run_state, environment)
 	challenge = _grade_wheel_read_challenge(challenge)
 	var grade := str(challenge.get("skill_grade", "miss"))
+	var read_applied := GameModule.skill_grade_applies(grade)
 	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
-	var pit_boss_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
-	var base_suspicion_delta := maxi(1, int(challenge.get("base_heat", _read_wheel_heat(table, run_state))) + _item_effect_total("cheat_suspicion_delta", run_state) + _wheel_read_grade_heat_modifier(grade))
-	var raw_heat := maxi(1, base_suspicion_delta + (run_state.security_risk_bonus("cheat") if run_state != null else 0) + pit_boss_bonus)
-	var suspicion_delta := run_state.alcohol_adjusted_suspicion_delta(raw_heat) if run_state != null else raw_heat
-	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", 0, run_state.suspicion_level() + suspicion_delta) if run_state != null else {}
+	var pit_boss_bonus := 0
+	var base_suspicion_delta := 0 if read_applied else WHEEL_READ_FAILED_HEAT
+	var suspicion_delta := base_suspicion_delta
+	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", 0, run_state.suspicion_level() + suspicion_delta) if run_state != null and suspicion_delta > 0 else {}
 	var bankroll_delta := int(security_pressure.get("bankroll_delta", 0))
-	var read := _copy_dict(ui_state.get("bias_read", {}))
-	if read.is_empty():
-		read = _wheel_read_context_for_grade(table, challenge)
+	var read := _wheel_read_context_for_grade(table, challenge)
+	if read_applied:
+		table["bias_read"] = read.duplicate(true)
+		_update_environment_table(environment, table)
 	var message := str(read.get("message", "Your wheel read breaks down."))
-	message = "%s Heat +%d." % [message, suspicion_delta]
+	if suspicion_delta > 0:
+		message = "%s Heat +%d." % [message, suspicion_delta]
 	var pit_boss_summary := str(pit_boss_status.get("summary", "")) if bool(pit_boss_status.get("active", false)) else ""
 	if not pit_boss_summary.is_empty():
 		message = "%s %s" % [message, pit_boss_summary]
@@ -2205,7 +2387,7 @@ func _resolve_read_wheel(action_id: String, run_state: RunState, environment: Di
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"deltas": deltas,
-		"won": false,
+		"won": read_applied,
 		"environment_id": environment.get("id", ""),
 		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": message,
@@ -2237,7 +2419,7 @@ func _resolve_read_wheel(action_id: String, run_state: RunState, environment: Di
 	result["roulette_bias_read"] = read
 	result["roulette_wheel_read_challenge"] = challenge
 	result["roulette_wheel_read_grade"] = grade
-	result["roulette_wheel_read_applied"] = GameModule.skill_grade_applies(grade)
+	result["roulette_wheel_read_applied"] = read_applied
 	result["roulette_pit_boss_watched"] = bool(pit_boss_status.get("watched", false))
 	result["roulette_pit_boss_heat_bonus"] = pit_boss_bonus
 	result["roulette_table_pressure"] = table_pressure
@@ -2367,7 +2549,7 @@ func _roulette_wheel_motion(surface, surface_state: Dictionary) -> Dictionary:
 
 func _draw_static_croupier_station(surface, surface_state: Dictionary) -> void:
 	var focus: Dictionary = TableVisualsScript.dealer_focus_for_state(surface_state)
-	var rect := Rect2(352, 54, 196, 104)
+	var rect := DEALER_STATION_RECT
 	var danger := clampi(int(focus.get("peek_danger", 0)), 0, 100)
 	var attention := clampi(int(focus.get("attention_meter", 0)), 0, 100)
 	var accent := C_PINK if danger >= 70 else C_YELLOW if danger >= 42 else C_TEAL
@@ -2515,7 +2697,7 @@ func _draw_croupier_station(surface, surface_state: Dictionary) -> void:
 
 func _draw_recent_numbers(surface, surface_state: Dictionary) -> void:
 	var recent := _array_ref(surface_state.get("recent_numbers", surface_state.get("roulette_recent_numbers", [])))
-	var rect := Rect2(250, 6, 436, 28)
+	var rect := RECENT_NUMBERS_RECT
 	_draw_neon_panel(surface, rect, C_CYAN, 0.08)
 	surface.surface_label("RECENT", rect.position + Vector2(8, 18), 8, C_SOFT)
 	if recent.is_empty():
@@ -2673,10 +2855,42 @@ func _draw_table_notice(surface, surface_state: Dictionary) -> void:
 	var notice := str(surface_state.get("table_notice", ""))
 	if notice.is_empty():
 		return
-	var rect := Rect2(244, 314, 420, 24)
+	var rect := TABLE_NOTICE_RECT
 	var accent := C_YELLOW if str(surface_state.get("phase", "")) == "spinning" else C_TEAL
 	_draw_neon_panel(surface, rect, accent, 0.18)
-	surface.surface_label_centered_plain(notice.left(72), rect.grow(-4), 10, accent)
+	var lines := _roulette_notice_lines(notice)
+	for line_index in range(lines.size()):
+		var line_rect := Rect2(rect.position + Vector2(6, 5 + line_index * 13), Vector2(rect.size.x - 12, 11))
+		surface.surface_label_centered_plain(str(lines[line_index]), line_rect, 7, accent)
+
+
+func _roulette_notice_lines(text: String, max_chars: int = 46, max_lines: int = 4) -> Array:
+	var words := text.strip_edges().split(" ", false)
+	var lines: Array = []
+	var current := ""
+	for word_value in words:
+		var word := str(word_value)
+		if current.is_empty():
+			current = word
+		elif current.length() + 1 + word.length() <= max_chars:
+			current = "%s %s" % [current, word]
+		else:
+			lines.append(current)
+			current = word
+	if not current.is_empty():
+		lines.append(current)
+	if lines.size() <= max_lines:
+		return lines
+	var visible: Array = []
+	for line_index in range(max_lines):
+		visible.append(lines[line_index])
+	var final_line := str(visible[max_lines - 1])
+	visible[max_lines - 1] = "%s..." % final_line.left(maxi(1, max_chars - 3))
+	return visible
+
+
+func _roulette_table_notice_rect() -> Rect2:
+	return TABLE_NOTICE_RECT
 
 
 func _draw_round_timer(surface, surface_state: Dictionary) -> void:
@@ -2742,7 +2956,7 @@ func _draw_wheel_read_meter(surface, state: Dictionary, rect: Rect2) -> void:
 	var progress_x := rect.position.x + rect.size.x * clampf(float(meter.get("progress", 0.0)), 0.0, 1.0)
 	surface.draw_rect(Rect2(target_x - 4.0, rect.position.y - 2.0, 8.0, rect.size.y + 4.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.46))
 	surface.draw_rect(Rect2(progress_x - 2.0, rect.position.y - 3.0, 4.0, rect.size.y + 6.0), C_CYAN)
-	surface.surface_label("HEAT +%d" % int(state.get("wheel_read_heat_preview", 0)), rect.position + Vector2(96, -1), 7, C_PINK_2)
+	surface.surface_label("MISS +%d HEAT" % int(state.get("wheel_read_heat_preview", 0)), rect.position + Vector2(82, -1), 7, C_PINK_2)
 
 
 func _draw_spin_result(surface, surface_state: Dictionary) -> void:
@@ -2776,12 +2990,37 @@ func _draw_rule_hover_overlay(surface, surface_state: Dictionary) -> void:
 	if target_index < 0:
 		return
 	var target: Dictionary = targets[target_index]
-	var rect := Rect2(724, 84, 150, 92)
-	_draw_neon_panel(surface, rect, C_YELLOW, 0.20)
-	surface.surface_label(str(target.get("type", "bet")).replace("_", " ").to_upper().left(18), rect.position + Vector2(10, 15), 9, C_SOFT)
-	surface.surface_label(str(target.get("label", "")).left(18), rect.position + Vector2(10, 35), 15, C_YELLOW)
-	surface.surface_label("pays %d:1" % int(target.get("payout", 0)), rect.position + Vector2(10, 52), 10, C_TEAL)
-	surface.surface_label(",".join(_string_array(target.get("numbers", []))).left(24), rect.position + Vector2(10, 69), 8, C_SOFT)
+	var rect := BET_INFORMATION_RECT
+	# This is the narrow protected band between Recent Spins and the croupier.
+	# Avoid the usual neon glow here because its grown bounds would spill into
+	# both neighboring regions even when the panel rectangle itself is clear.
+	surface.draw_rect(rect, Color(0.01, 0.02, 0.05, 0.94))
+	surface.draw_rect(rect, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.48), false, 1)
+	var bet_label := str(target.get("label", target.get("type", "BET"))).replace("_", " ").to_upper().left(18)
+	var headline := "%s  ·  PAYS %d:1" % [bet_label, int(target.get("payout", 0))]
+	surface.surface_label_centered_plain(headline, Rect2(rect.position, Vector2(rect.size.x, 8)), 6, C_YELLOW)
+	surface.surface_label_centered_plain(_roulette_bet_coverage_summary(target), Rect2(rect.position + Vector2(0, 8), Vector2(rect.size.x, 8)), 6, C_SOFT)
+
+
+func _roulette_bet_coverage_summary(target: Dictionary) -> String:
+	var numbers := _string_array(target.get("numbers", []))
+	if numbers.is_empty():
+		return str(target.get("type", "BET")).replace("_", " ").to_upper().left(24)
+	if numbers.size() <= 6:
+		return "COVERS %s" % ", ".join(numbers)
+	return "COVERS %d NUMBERS" % numbers.size()
+
+
+func _roulette_information_panel_rect() -> Rect2:
+	return BET_INFORMATION_RECT
+
+
+func _roulette_recent_panel_rect() -> Rect2:
+	return RECENT_NUMBERS_RECT
+
+
+func _roulette_dealer_panel_rect() -> Rect2:
+	return DEALER_STATION_RECT
 
 
 func _draw_payout_animation(surface, surface_state: Dictionary) -> void:
@@ -2883,8 +3122,8 @@ func _fallback_table_state(run_state: RunState, environment: Dictionary) -> Dict
 func _normalize_table_state(table: Dictionary) -> Dictionary:
 	var normalized := table.duplicate(true)
 	normalized["schema"] = str(normalized.get("schema", "roulette_table_state"))
-	normalized["version"] = maxi(1, int(normalized.get("version", 1)))
-	normalized["normalized_version"] = 1
+	normalized["version"] = maxi(2, int(normalized.get("version", 1)))
+	normalized["normalized_version"] = 2
 	var variant := str(normalized.get("variant", "american_double_zero"))
 	if not ["american_double_zero", "european_single_zero"].has(variant):
 		variant = "american_double_zero"
@@ -2908,6 +3147,7 @@ func _normalize_table_state(table: Dictionary) -> Dictionary:
 	rules["table_max"] = maxi(rules["outside_min_each"], int(rules.get("table_max", 100)))
 	normalized["rules"] = rules
 	normalized["physics_profile"] = _normalize_physics_profile(normalized.get("physics_profile", {}))
+	normalized["wheel_bias"] = _normalize_wheel_bias(normalized.get("wheel_bias", {}), normalized)
 	normalized["dealer_profile"] = _normalize_dealer_profile(normalized.get("dealer_profile", {}), normalized)
 	normalized["patrons"] = _normalize_patrons(normalized.get("patrons", []), normalized)
 	normalized["chip_denominations"] = _chip_denominations(normalized)
@@ -2916,6 +3156,7 @@ func _normalize_table_state(table: Dictionary) -> Dictionary:
 	normalized["last_result"] = _copy_dict(normalized.get("last_result", {}))
 	normalized["last_bets"] = _bet_array(normalized.get("last_bets", []))
 	normalized["bias_read"] = _copy_dict(normalized.get("bias_read", {}))
+	normalized["bias_exploit_wins"] = clampi(int(normalized.get("bias_exploit_wins", 0)), 0, 1000000)
 	normalized["table_barred"] = bool(normalized.get("table_barred", false))
 	normalized["barred_reason"] = str(normalized.get("barred_reason", ""))
 	normalized["table_round_timer_started_msec"] = int(normalized.get("table_round_timer_started_msec", 0))
@@ -2923,7 +3164,7 @@ func _normalize_table_state(table: Dictionary) -> Dictionary:
 
 
 func _table_state_is_current(table: Dictionary) -> bool:
-	return str(table.get("schema", "")) == "roulette_table_state" and int(table.get("normalized_version", 0)) >= 1
+	return str(table.get("schema", "")) == "roulette_table_state" and int(table.get("normalized_version", 0)) >= 2 and not _copy_dict(table.get("wheel_bias", {})).is_empty()
 
 
 func _normalize_physics_profile(value: Variant) -> Dictionary:
@@ -2983,6 +3224,14 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 		session["roulette_undo_stack"] = []
 	if typeof(session.get("cheats_used", {})) != TYPE_DICTIONARY:
 		session["cheats_used"] = {}
+	var cheats := _copy_dict(session.get("cheats_used", {}))
+	# Wheel reads now reveal persistent table knowledge; legacy one-spin read
+	# markers must not charge Heat on the player's next legal spin.
+	cheats.erase(WHEEL_READ_ACTION_ID)
+	cheats.erase("read_wheel_heat")
+	session["cheats_used"] = cheats
+	if _copy_dict(session.get("bias_read", {})).is_empty() and not _copy_dict(table.get("bias_read", {})).is_empty():
+		session["bias_read"] = _copy_dict(table.get("bias_read", {}))
 	var past_post_challenge := _normalized_past_post_challenge(session.get("past_post_challenge", {}))
 	if past_post_challenge.is_empty():
 		session.erase("past_post_challenge")
@@ -3238,6 +3487,9 @@ func _table_notice(table: Dictionary, session: Dictionary, last_result: Dictiona
 		return "The croupier marks the number and pays the layout."
 	if bool(session.get("roulette_nudge_ready", false)):
 		return "Nudge ready. Confirm the spin before the croupier's eyes return."
+	var last_bias_exploitation := _copy_dict(last_result.get("bias_exploitation", {}))
+	if int(last_bias_exploitation.get("heat", 0)) > 0:
+		return str(last_result.get("summary", "The croupier notices your repeated skew wins."))
 	if not _copy_dict(session.get("bias_read", {})).is_empty():
 		return str(_copy_dict(session.get("bias_read", {})).get("message", "You have a read on the wheel."))
 	if not last_result.is_empty():
@@ -3604,14 +3856,18 @@ func _roulette_result_reveal_active(last_result: Dictionary, elapsed_msec: int) 
 
 
 func _apply_nudged_spin(spin: Dictionary, table: Dictionary, bets: Array) -> Dictionary:
-	var result := spin.duplicate(true)
-	var fallback_number := str(result.get("winning_number", "0"))
+	var fallback_number := str(spin.get("winning_number", "0"))
 	var target_number := _nudge_target_number(table, bets, fallback_number)
+	return _retarget_spin_to_number(spin, table, target_number, "nudge")
+
+
+func _retarget_spin_to_number(spin: Dictionary, table: Dictionary, target_number: String, reason: String) -> Dictionary:
+	var result := spin.duplicate(true)
 	var sequence := _wheel_sequence(table)
 	var target_index := sequence.find(target_number)
 	if target_index < 0:
 		return result
-	result["spin_id"] = "%s_nudge_%s" % [str(result.get("spin_id", "roulette")), target_number]
+	result["spin_id"] = "%s_%s_%s" % [str(result.get("spin_id", "roulette")), reason, target_number]
 	result["winning_number"] = target_number
 	result["winning_index"] = target_index
 	result["winning_color"] = _roulette_color(target_number)
@@ -3708,11 +3964,8 @@ func _roulette_room_info(surface_state: Dictionary) -> String:
 	]
 
 
-func _read_wheel_heat(table: Dictionary, run_state: RunState) -> int:
-	var profile := _copy_dict(table.get("dealer_profile", {}))
-	var base := int(table.get("dealer_catch_base", 12)) + int(profile.get("late_bet_scrutiny", 10))
-	base = int(round(float(base) / 3.0)) + _item_effect_total("roulette_past_post_base_heat", run_state)
-	return clampi(base, 1, 36)
+func _read_wheel_heat(_table: Dictionary, _run_state: RunState) -> int:
+	return WHEEL_READ_FAILED_HEAT
 
 
 func _chip_denominations(table: Dictionary) -> Array:

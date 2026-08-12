@@ -2,13 +2,42 @@
 
 All notable public release changes for Beat the House are recorded here.
 
-## 0.5.0 - In development
+## 0.5.0 - Source complete (2026-08-12)
 
-Status: **technical baseline green; owner approval pending.** Feature,
-regression, narration/audio, performance/liveness, soak, determinism, Scratch
-Ticket, Grand Casino Web, storage, strict-input, visual, and exact-source Full
-gates are complete. Five-person cold-player testing, owner Web/Windows approval
-and release decisions, packaging, publication, and tagging remain pending.
+Status: **source feature-complete and authorized for GitHub integration.** The
+owner approved publishing the accumulated 0.5 source, tests, art, reports, and
+review artifacts on 2026-08-12. Final packaged Web/Windows verification,
+public artifact publication, and the annotated `v0.5.0` tag remain separate
+release steps.
+
+### Final playtest completion pass
+
+- Rebuilds the main menu with original logo/button art, a centered control
+  grid, live environment backgrounds, and reliable reopen behavior.
+- Adds the Pocket Watch and Fred's Poker Hat, including precise clock display,
+  video-poker best-play guidance, and a small Heat cost on wins.
+- Adds scalable red-edge Heat feedback with subtle audio while preserving the
+  police-light overlay across rooms and game surfaces.
+- Reworks map discovery and first-location variance, restores click focus and
+  recenter behavior, fixes popup/icon separation, and animates accurate
+  location-to-location travel on the run report.
+- Fixes late-run responsiveness through bounded ticket/item persistence,
+  reduced copy churn, and extreme-state probes covering large inventories,
+  debt, money, tickets, dialogue, and concurrent machine activity.
+- Fixes Blackjack tutorial pacing, patron/dealer/card animation, persistent
+  count state, instant settlement skips, and Heat balance for counting and
+  nonstandard strategy.
+- Fixes Video Poker denomination/bet limits, Draw resolution, Double Up reveal
+  timing, and recommendation presentation.
+- Fixes slot entry, reel-symbol animation, autoplay lifecycle, Grand Casino
+  machine count/currency, and Pinball Jackpot launch/board presentation.
+- Fixes Roulette table layout, wheel-read bias/Heat mechanics, and the complete
+  exported-Web spin, payout, and reveal sequence.
+- Fixes Bar Dice pot selection, Pull Tab liveness, Scratch Ticket dispense and
+  click-to-file behavior, and measured irregular per-well foil/icon alignment.
+- Expands the guided tutorial with corrected dialogue sequencing, screen-safe
+  highlights, tutorial restart on failure, Cage shop interaction, Bronze-card
+  pacing, and the post-first-run Players Card help item.
 
 ### Added
 

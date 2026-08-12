@@ -1,0 +1,33 @@
+{
+  "set": "art_rework_test_10",
+  "status": "review_ready",
+  "daytime_direction": "approved_calibration_references",
+  "nighttime_direction": "test04_neon_master",
+  "environment_count": 18,
+  "dimensions": [900, 430],
+  "logical_dimensions": [450, 215],
+  "display_scale": 2,
+  "colors_per_endpoint": 40,
+  "transition_mode": "indexed_palette_lut",
+  "geometry_status": "pixel_identity_verified",
+  "environments": [
+    "apartment",
+    "back_alley",
+    "bar",
+    "beach",
+    "corner_store",
+    "delta_queen",
+    "gas_station_casino",
+    "grand_casino",
+    "grand_casino_back_room",
+    "grand_casino_cage",
+    "grand_casino_high_limit",
+    "house",
+    "jazz_club",
+    "kitty_cat_lounge",
+    "motel",
+    "motel_room",
+    "pawn_shop",
+    "small_underground_casino"
+  ]
+}

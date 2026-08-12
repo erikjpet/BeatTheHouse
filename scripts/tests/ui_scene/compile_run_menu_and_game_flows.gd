@@ -72,14 +72,17 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	if str(xray_info.get("action_label", "")).to_lower() != "pick up":
 		push_error("The free tutorial Glasses action was mislabeled as a purchase: %s." % str(xray_info))
 		return false
-	coach_overlay.call("notify_action", "item:xray_glasses")
-	run_state.add_item("xray_glasses")
-	run_state.complete_talk_event_resolution("tutorial_guide:tutorial_apartment_xray")
-	app.call("_refresh")
+	if not bool(app.call("apply_item_offer", "xray_glasses")):
+		push_error("Tutorial X-ray Glasses could not be picked up through the production item action.")
+		return false
 	await process_frame
 	coach_snapshot = coach_overlay.call("current_snapshot")
-	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_inventory_xray" or run_state.pending_talk_event("tutorial_guide:tutorial_inventory_xray").is_empty():
-		push_error("Tutorial UI did not advance from the X-ray pickup to Pal's inventory check.")
+	var inventory_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if str(app.get("current_screen")) != "RESULT" or str(app.call("_coach_visible_surface_screen")) != "ENVIRONMENT" \
+			or str(coach_snapshot.get("lesson_id", "")) != "tutorial_inventory_xray" \
+			or run_state.pending_talk_event("tutorial_guide:tutorial_inventory_xray").is_empty() \
+			or str(inventory_talk.get("event_id", "")) != "tutorial_guide:tutorial_inventory_xray":
+		push_error("Production X-ray pickup did not immediately advance to Pal's voiced inventory check: screen=%s coach=%s talk=%s." % [str(app.get("current_screen")), str(coach_snapshot), str(inventory_talk)])
 		return false
 	app.call("open_run_inventory")
 	await process_frame
@@ -237,37 +240,57 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_inspect_coffee":
 		push_error("Corner Store did not begin with the first real item-inspection lesson: %s." % str(coach_snapshot))
 		return false
-	if not bool(app.call("focus_interactable_object", "item:instant_coffee")):
-		push_error("A real single-click-style focus could not inspect Instant Coffee.")
-		return false
-	await process_frame
-	await process_frame
-	coach_snapshot = coach_overlay.call("current_snapshot")
-	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_inspect_pencil" or str(coach_snapshot.get("anchor_id", "")) != "item:ledger_pencil":
-		push_error("Inspecting coffee did not advance exactly once to the visible Ledger Pencil: coach=%s completed=%s talk=%s." % [str(coach_snapshot), str(run_state.narrative_flags.get("tutorial_lessons_completed", {})), str(run_state.next_pending_talk_event())])
-		return false
+	var coffee_rect: Rect2 = app.get("environment_canvas").call("global_rect_for_object", "item:instant_coffee")
 	var pencil_rect: Rect2 = app.get("environment_canvas").call("global_rect_for_object", "item:ledger_pencil")
-	var cleared_coffee_card: Dictionary = app.get("environment_canvas").call("_selected_object_info_snapshot")
-	if not str(app.get("selected_object_id")).is_empty() or bool(cleared_coffee_card.get("visible", false)) or not _snapshot_rect(coach_snapshot.get("anchor_rect", {})).is_equal_approx(pencil_rect):
-		push_error("The coffee inspection card/camera was not cleared before highlighting the real Ledger Pencil.")
+	var shelf_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	var shelf_talk_rect := _snapshot_rect(shelf_talk.get("occupied_rect", {}))
+	if not coffee_rect.has_area() or not pencil_rect.has_area() or shelf_talk_rect.intersects(coffee_rect) or shelf_talk_rect.intersects(pencil_rect):
+		push_error("Pal's two-item shelf instruction covered one of its highlighted targets: talk=%s coffee=%s pencil=%s." % [str(shelf_talk_rect), str(coffee_rect), str(pencil_rect)])
 		return false
+	# Deliberately inspect and buy the Pencil first, while Coffee is still the
+	# active lesson. Tutorial actions are advisory, so this is the production
+	# path that previously removed a future anchor and softlocked the run.
 	if not bool(app.call("focus_interactable_object", "item:ledger_pencil")):
-		push_error("A real single-click-style focus could not inspect Ledger Pencil.")
-		return false
-	await process_frame
-	await process_frame
-	coach_snapshot = coach_overlay.call("current_snapshot")
-	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_buy_store_item":
-		push_error("Inspecting both shelf items did not advance to the actual purchase lesson: %s." % str(coach_snapshot))
+		push_error("The tutorial could not inspect Ledger Pencil before Coffee.")
 		return false
 	if not bool(app.call("activate_interactable_object", "item:ledger_pencil")):
-		push_error("The selected Ledger Pencil could not be purchased through its real item action.")
+		push_error("The tutorial could not purchase Ledger Pencil first.")
 		return false
 	await process_frame
 	await process_frame
 	coach_snapshot = coach_overlay.call("current_snapshot")
-	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_crew_warning":
-		push_error("The real store purchase did not advance to Pal's Crew warning: %s." % str(coach_snapshot))
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_inspect_coffee" or not run_state.inventory.has("ledger_pencil"):
+		push_error("Buying Pencil early did not preserve Coffee as the active instruction: coach=%s inventory=%s." % [str(coach_snapshot), str(run_state.inventory)])
+		return false
+	if not bool(app.call("focus_interactable_object", "item:instant_coffee")):
+		push_error("The remaining Instant Coffee could not be inspected after buying Pencil first.")
+		return false
+	for _shop_transition_frame in range(4):
+		await process_frame
+	coach_snapshot = coach_overlay.call("current_snapshot")
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_buy_remaining_store_item" or str(coach_snapshot.get("anchor_id", "")) != "item:instant_coffee":
+		push_error("The wrong-order shelf flow did not carry forward Pencil inspection/purchase and point to the remaining Coffee: %s." % str(coach_snapshot))
+		return false
+	app.call("_sync_coach_environment_anchor_geometry")
+	coach_snapshot = coach_overlay.call("current_snapshot")
+	var coffee_action_rect: Rect2 = app.get("environment_canvas").call("global_rect_for_selected_object_action", "item:instant_coffee")
+	var coffee_anchor_rect := _snapshot_rect(coach_snapshot.get("anchor_rect", {}))
+	shelf_talk = app.call("current_talk_dock_snapshot")
+	shelf_talk_rect = _snapshot_rect(shelf_talk.get("occupied_rect", {}))
+	if not coffee_action_rect.has_area() \
+			or coffee_anchor_rect.position.distance_to(coffee_action_rect.position) > 0.75 \
+			or coffee_anchor_rect.size.distance_to(coffee_action_rect.size) > 0.75 \
+			or shelf_talk_rect.intersects(coffee_action_rect):
+		push_error("The remaining-item highlight and Pal popup did not stay aligned and non-overlapping: action=%s coach=%s talk=%s." % [str(coffee_action_rect), str(coach_snapshot), str(shelf_talk_rect)])
+		return false
+	if not bool(app.call("activate_interactable_object", "item:instant_coffee")):
+		push_error("The remaining Instant Coffee could not be purchased through its real item action.")
+		return false
+	await process_frame
+	await process_frame
+	coach_snapshot = coach_overlay.call("current_snapshot")
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_crew_warning" or not run_state.inventory.has("instant_coffee") or not run_state.inventory.has("ledger_pencil"):
+		push_error("Buying both shelf items in the wrong order did not advance to Pal's Crew warning: coach=%s inventory=%s." % [str(coach_snapshot), str(run_state.inventory)])
 		return false
 	app.call("_on_talk_dock_choice_requested", "tutorial_guide:tutorial_crew_warning", "continue")
 	await process_frame
@@ -300,7 +323,11 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 		push_error("The inline phone response left Pal's already-satisfied phone instruction ahead of the natural loan conversation.")
 		return false
 	var family_loan_talk: Dictionary = app.call("current_talk_dock_snapshot")
-	if not run_state.pending_talk_event("tutorial_guide:tutorial_family_phone").is_empty() or not bool(family_loan_talk.get("visible", false)) or str(family_loan_talk.get("event_id", "")) != "family_loan":
+	if not run_state.pending_talk_event("tutorial_guide:tutorial_family_phone").is_empty() \
+		or not run_state.pending_talk_event("tutorial_guide:tutorial_family_debt").is_empty() \
+		or bool(run_state.narrative_flags.get("tutorial_family_loan_dialogue_resolved", false)) \
+		or not bool(family_loan_talk.get("visible", false)) \
+		or str(family_loan_talk.get("event_id", "")) != "family_loan":
 		push_error("The real family-loan conversation did not follow the completed phone lesson cleanly.")
 		return false
 	app.call("_on_talk_dock_choice_requested", "family_loan", "accept")
@@ -308,7 +335,7 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	await process_frame
 	coach_snapshot = coach_overlay.call("current_snapshot")
 	var debt_talk: Dictionary = app.call("current_talk_dock_snapshot")
-	if run_state.debt.is_empty() or str(coach_snapshot.get("lesson_id", "")) != "tutorial_family_debt" or str(debt_talk.get("event_id", "")) != "tutorial_guide:tutorial_family_debt" or not str(debt_talk.get("summary", "")).contains("cashout pays Debt first") or not (debt_talk.get("choice_ids", []) as Array).has("continue"):
+	if run_state.debt.is_empty() or not bool(run_state.narrative_flags.get("tutorial_family_loan_dialogue_resolved", false)) or str(coach_snapshot.get("lesson_id", "")) != "tutorial_family_debt" or str(debt_talk.get("event_id", "")) != "tutorial_guide:tutorial_family_debt" or not str(debt_talk.get("summary", "")).contains("cashout pays Debt first") or not (debt_talk.get("choice_ids", []) as Array).has("continue"):
 		push_error(
 			"Resolving the natural family-loan dialogue did not resume Pal's debt lesson: debt=%s coach=%s talk=%s pending=%s."
 			% [str(run_state.debt), str(coach_snapshot), str(debt_talk), str({"count": run_state.pending_talk_event_count(), "next": run_state.next_pending_talk_event()})]
@@ -408,13 +435,13 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	await process_frame
 	coach_snapshot = coach_overlay.call("current_snapshot")
 	var gas_game_talk: Dictionary = app.call("current_talk_dock_snapshot")
-	var gas_buy_anchor: Rect2 = app.get("game_surface_canvas").call("global_rect_for_surface_action", "pull_tab_buy")
-	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_gas_xray_buy" or not bool(coach_snapshot.get("anchor_found", false)) or not _snapshot_rect(coach_snapshot.get("anchor_rect", {})).is_equal_approx(gas_buy_anchor) or str(gas_game_talk.get("event_id", "")) != "tutorial_guide:tutorial_gas_xray_buy":
-		push_error("Entering the real pull-tab surface did not show Pal and highlight its rendered Buy action: coach=%s talk=%s buy=%s." % [str(coach_snapshot), str(gas_game_talk), str(gas_buy_anchor)])
+	var gas_peek_anchor: Rect2 = app.get("game_surface_canvas").call("global_rect_for_surface_action", "pull_tab_detector_scan")
+	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_gas_peek" or not bool(coach_snapshot.get("anchor_found", false)) or not _snapshot_rect(coach_snapshot.get("anchor_rect", {})).is_equal_approx(gas_peek_anchor) or str(gas_game_talk.get("event_id", "")) != "tutorial_guide:tutorial_gas_peek":
+		push_error("Entering the real pull-tab surface did not show Pal and highlight its rendered Peek action: coach=%s talk=%s peek=%s." % [str(coach_snapshot), str(gas_game_talk), str(gas_peek_anchor)])
 		return false
 	var gas_talk_occupied := _snapshot_rect(gas_game_talk.get("occupied_rect", Rect2()))
-	if gas_talk_occupied.intersects(gas_buy_anchor.grow(10.0)):
-		push_error("Pal's pull-tab instruction overlapped the highlighted Buy/collect control: talk=%s target=%s." % [str(gas_talk_occupied), str(gas_buy_anchor)])
+	if gas_talk_occupied.intersects(gas_peek_anchor.grow(10.0)):
+		push_error("Pal's pull-tab instruction overlapped the highlighted Peek control: talk=%s target=%s." % [str(gas_talk_occupied), str(gas_peek_anchor)])
 		return false
 	app.set("last_hook_result", {"type": "game_hook", "action_id": "redeem_pull_tab_winners"})
 	var redeem_context: Dictionary = app.call("_coach_context_snapshot")
@@ -487,7 +514,10 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	run_state.narrative_flags["demo_victory_route"] = "tutorial_bronze_card"
 	run_state.narrative_flags["grand_casino_players_card_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
 	run_state.narrative_flags["grand_casino_players_card_awarded_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE
-	app.call("_process_terminal_meta_bag_drops")
+	app.call("_route_ended_run_if_needed")
+	await process_frame
+	await process_frame
+	await process_frame
 	var meta_service: MetaCollectionService = app.get("meta_collection_service")
 	var starter_id := 0
 	for instance_value in meta_service.owned_instances():
@@ -501,12 +531,34 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	if not profile.tutorial_completed or starter_id <= 0:
 		push_error("Tutorial victory did not complete the profile and mint a starter card through the UI terminal route.")
 		return false
-	app.call("_on_run_report_home_requested")
+	if not meta_service.carried_instance_ids().has(starter_id):
+		push_error("Tutorial victory left the starter Players Card in storage instead of the home held inventory.")
+		return false
+	run_state = app.get("run_state")
+	coach_snapshot = app.get("coach_overlay").call("current_snapshot")
+	if run_state == null \
+			or not bool(run_state.narrative_flags.get("_meta_home_session", false)) \
+			or str(run_state.challenge_config.get("id", "")) != "tutorial_meta_home_handoff" \
+			or str(coach_snapshot.get("lesson_id", "")) != "tutorial_meta_home_card" \
+			or str(app.get("selected_object_id")).find("meta_container:") != 0:
+		push_error("Tutorial victory did not force the Players Card handoff into the highlighted Meta Home Bag: run=%s coach=%s selected=%s." % [str(run_state.challenge_config if run_state != null else {}), str(coach_snapshot), str(app.get("selected_object_id"))])
+		return false
+	app.call("open_meta_container")
 	await process_frame
+	var home_inventory: Dictionary = app.call("current_meta_item_interaction_snapshot")
+	var home_card_visible := bool(home_inventory.get("visible", false)) \
+		and int(home_inventory.get("item_count", 0)) > 0 \
+		and meta_service.carried_instance_ids().has(starter_id)
+	if not home_card_visible:
+		push_error("The exact starter Players Card was not visible as a held item in the home inventory.")
+		return false
+	app.call("close_meta_item_interaction")
 	await process_frame
 	coach_snapshot = app.get("coach_overlay").call("current_snapshot")
-	if str(coach_snapshot.get("lesson_id", "")).begins_with("tip_first_") or str(coach_snapshot.get("lesson_id", "")) == "tip_starter_card_home":
-		push_error("Tutorial victory reintroduced a removed ambient first-time tip.")
+	if str(coach_snapshot.get("lesson_id", "")) == "tutorial_meta_home_card" \
+			or str(coach_snapshot.get("lesson_id", "")).begins_with("tip_first_") \
+			or str(coach_snapshot.get("lesson_id", "")) == "tip_starter_card_home":
+		push_error("Opening the Home Bag did not complete the forced card handoff cleanly: %s." % str(coach_snapshot))
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
@@ -514,8 +566,16 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	await process_frame
 	run_state = app.get("run_state")
 	coach_snapshot = app.get("coach_overlay").call("current_snapshot")
-	if run_state == null or run_state.is_tutorial_run() or not bool(run_state.challenge_modifiers().get("grand_casino_prestige", false)) or str(coach_snapshot.get("lesson_id", "")).begins_with("tip_first_"):
-		push_error("First normal run after the tutorial did not carry prestige or repeated an ambient tip.")
+	var starter_card_in_run_inventory := false
+	if run_state != null:
+		for item_value in _copy_array(run_state.inventory):
+			var item := _copy_dict(item_value)
+			var meta := _copy_dict(item.get("meta_collection", {}))
+			if int(meta.get("instance_id", 0)) == starter_id and str(meta.get("item_class", "")) == "players_card":
+				starter_card_in_run_inventory = true
+				break
+	if run_state == null or run_state.is_tutorial_run() or not bool(run_state.challenge_modifiers().get("grand_casino_prestige", false)) or not starter_card_in_run_inventory or str(coach_snapshot.get("lesson_id", "")).begins_with("tip_first_"):
+		push_error("First normal run after the tutorial did not carry the Players Card/prestige state or repeated an ambient tip.")
 		return false
 	run_state.current_environment = {"id": "normal_grand_host_ui", "archetype_id": RunState.GRAND_CASINO_ARCHETYPE_ID}
 	app.call("_queue_normal_grand_host_greeting", {"id": "normal_previous_room", "archetype_id": "bar"})
@@ -542,8 +602,8 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	app.call("_refresh")
 	await process_frame
 	var report_screen: RunReportScreen = app.get("run_report_screen")
-	if profile.tutorial_completed or report_screen == null or report_screen.new_run_button.text != "Replay Lessons" or report_screen.home_button.text != "Start Normal Run" or not str(report_screen.outcome_how.text).contains("Replay the lesson"):
-		push_error("Tutorial failure did not preserve incomplete state and offer replay or normal-start encouragement.")
+	if profile.tutorial_completed or report_screen == null or report_screen.new_run_button.text != "Restart Tutorial" or report_screen.home_button.text != "Start Normal Run" or not str(report_screen.outcome_how.text).contains("Restart the tutorial"):
+		push_error("Tutorial failure did not preserve incomplete state and offer an explicit tutorial restart or normal-start choice.")
 		return false
 	app.call("_on_run_report_new_run_requested")
 	await process_frame
@@ -1249,6 +1309,44 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 	if bool(game_snapshot.get("slot_autoplay_active", false)):
 		push_error("All-in confirmation did not pause slot autoplay while waiting for the player.")
 		return false
+	var normal_anatomy: Dictionary = app.call("current_selection_popup_anatomy_snapshot")
+	if bool(normal_anatomy.get("scroll_required", true)):
+		push_error("The ordinary two-choice all-in confirmation unnecessarily enabled a scrollbar: %s" % JSON.stringify(normal_anatomy))
+		return false
+	if float(normal_anatomy.get("action_zone_height", 0.0)) + 1.0 < float(normal_anatomy.get("choices_minimum_height", 0.0)):
+		push_error("The ordinary all-in confirmation did not expand to contain both choices: %s" % JSON.stringify(normal_anatomy))
+		return false
+	# Exercise the bounded fallback with more options than the viewport can hold.
+	# This is the only case where the shared blocking-decision surface may scroll.
+	for option_index in range(8):
+		app.call(
+			"_add_wager_confirmation_card",
+			"Overflow option %d" % option_index,
+			"A deliberately long additional decision used to exercise bounded popup sizing.",
+			"No state change.",
+			Callable(app, "cancel_pending_wager_confirmation"),
+			false
+		)
+	await process_frame
+	await process_frame
+	var crowded_anatomy: Dictionary = app.call("current_selection_popup_anatomy_snapshot")
+	if not bool(crowded_anatomy.get("scroll_required", false)):
+		push_error("An oversized blocking decision did not enable its overflow scrollbar: %s" % JSON.stringify(crowded_anatomy))
+		return false
+	if not bool(crowded_anatomy.get("uses_full_safe_height", false)):
+		push_error("An oversized blocking decision did not expand to the full safe screen height: %s" % JSON.stringify(crowded_anatomy))
+		return false
+	var popup_panel := app.get("event_choice_popup_panel") as Control
+	var popup_overlay := app.get("event_choice_popup_overlay") as Control
+	var popup_scroll := app.get("event_choice_popup_scroll") as ScrollContainer
+	if popup_panel == null or popup_overlay == null or not popup_overlay.get_global_rect().grow(1.0).encloses(popup_panel.get_global_rect()):
+		push_error("An oversized blocking decision extended beyond the visible screen bounds.")
+		return false
+	if popup_scroll == null \
+		or not popup_scroll.get_v_scroll_bar().visible \
+		or popup_scroll.size.y < popup_panel.size.y - 32.0:
+		push_error("An oversized blocking decision enabled scrolling without exposing its full-height scrollbar.")
+		return false
 	app.call("cancel_pending_wager_confirmation")
 	for _index in range(5):
 		await process_frame
@@ -1287,11 +1385,8 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 	if int(refund_machine_after.get("spin_count", 0)) != refunded_spin_count_before + 1:
 		push_error("The guaranteed-refund slot spin did not execute after skipping confirmation.")
 		return false
-	if not run_state.has_liquid_run_funds():
-		push_error("Coin-Return Shim did not preserve spendable funds after the all-in slot spin.")
-		return false
-	if run_state.grand_casino_game_uses_chips("slot", run_state.current_environment) and run_state.grand_casino_chips <= 0:
-		push_error("Grand Casino Coin-Return Shim refund did not return as a redeemable chip.")
+	if run_state.wager_capacity_for_game("slot", run_state.current_environment) <= 0:
+		push_error("Coin-Return Shim did not preserve spendable cash after the all-in slot spin.")
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
@@ -2254,10 +2349,40 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	for cage_object_value in app.call("_interactable_object_view_list"):
 		if typeof(cage_object_value) == TYPE_DICTIONARY:
 			cage_objects[str((cage_object_value as Dictionary).get("object_id", ""))] = cage_object_value
-	for cage_object_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "casino_fixture:cage_gift_shop", "travel:grand_casino"]:
+	for cage_object_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "travel:grand_casino"]:
 		if not cage_objects.has(cage_object_id):
 			push_error("Walkable Cage did not expose authored object %s." % cage_object_id)
 			return false
+	if cage_objects.has("casino_fixture:cage_gift_shop"):
+		push_error("Cage gift stock regressed into a single fixture popup instead of room-native shelf items.")
+		return false
+	var cage_gift_items: Array = []
+	for cage_object_key in cage_objects.keys():
+		var candidate: Dictionary = cage_objects.get(cage_object_key, {})
+		if str(cage_object_key).begins_with("cage_gift_item:"):
+			cage_gift_items.append(candidate)
+	if cage_gift_items.size() < 3 or cage_gift_items.size() > 4:
+		push_error("Cage shelves did not expose all 3-4 saved gift items as independent room objects.")
+		return false
+	for cage_gift_item_value in cage_gift_items:
+		var cage_gift_item: Dictionary = cage_gift_item_value
+		if str(cage_gift_item.get("object_type", "")) != "item" \
+			or str(cage_gift_item.get("icon_key", "")).is_empty() \
+			or str(cage_gift_item.get("currency", "")) != "chips" \
+			or not str(cage_gift_item.get("cost_summary", "")).contains("chips"):
+			push_error("A Cage shelf offer did not use the normal icon-based item contract with chip pricing.")
+			return false
+	# Continued runs retain their generated layout. A save made before shelf
+	# items existed must still inherit the new authored Cage shelf coordinates.
+	var saved_cage_layout: Dictionary = (high_roller_run.current_environment.get("layout", {}) as Dictionary).duplicate(true)
+	var legacy_cage_layout := saved_cage_layout.duplicate(true)
+	legacy_cage_layout.erase("item_spots")
+	high_roller_run.current_environment["layout"] = legacy_cage_layout
+	var resolved_legacy_layout: Dictionary = app.call("_current_environment_layout")
+	high_roller_run.current_environment["layout"] = saved_cage_layout
+	if (resolved_legacy_layout.get("item_spots", []) as Array).size() != 4:
+		push_error("A continued Cage save did not inherit the new authored shelf coordinates.")
+		return false
 	var atm_object: Dictionary = cage_objects.get("casino_fixture:cage_atm", {})
 	if (atm_object.get("inline_actions", []) as Array).size() != 4:
 		push_error("Cage ATM did not expose compact borrow, partial repayment, and payoff controls.")
@@ -2268,10 +2393,6 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 		return false
 	if not bool(app.call("activate_interactable_object", "cage_atm_action:repay:full")) or high_roller_run.bankroll != atm_cash_before or high_roller_run.grand_casino_atm_debt() != 0:
 		push_error("Cage ATM inline Pay in Full did not clear the marker from cash.")
-		return false
-	var gift_actions: Array = (cage_objects.get("casino_fixture:cage_gift_shop", {}) as Dictionary).get("inline_actions", [])
-	if gift_actions.size() < 3 or gift_actions.size() > 4 or str((gift_actions[0] as Dictionary).get("emit_object_id", "")).find("cage_gift_action:buy:") != 0:
-		push_error("Cage gift case did not expose its 3-4 saved chip-priced offers as focused room controls.")
 		return false
 	if not bool(app.call("_start_linda_cage_services", {"object_id": "casino_fixture:cage_counter"})):
 		push_error("High-roller Players Card review could not open Linda's talk menu.")

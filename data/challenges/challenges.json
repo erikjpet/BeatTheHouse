@@ -132,6 +132,7 @@
         "family_loan": 1.0
       },
       "tutorial_pull_tab_xray_offset": 2,
+      "tutorial_pull_tab_peek_results": [true, false, true, false],
       "tutorial_environment_overrides": {
         "apartment": {
           "home_profile": {
@@ -258,11 +259,11 @@
           ],
           "demo_objective": {
             "title": "Earn Your First Players Card",
-            "summary": "Play one Main Floor hand, claim Bronze from Linda, and learn the road to Gold.",
+            "summary": "Finish two Main Floor blackjack hands, claim Bronze from Linda, and learn the road to Gold.",
             "high_roller_net_winnings": 9999,
             "high_roller_min_grand_casino_games": 99,
             "high_roller_max_heat": 90,
-            "players_card_bronze_min_games": 1,
+            "players_card_bronze_min_games": 2,
             "players_card_bronze_net_winnings": -999,
             "players_card_bronze_max_heat": 100,
             "players_card_silver_min_games": 99,

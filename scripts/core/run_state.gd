@@ -3,6 +3,8 @@ extends RefCounted
 
 # Source of truth for one active run in the foundation path.
 
+signal heat_changed(applied_amount: int, level: int, cue_id: String, context: Dictionary)
+
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
@@ -43,6 +45,9 @@ const RUN_STATUS_FAILED := "failed"
 const RUN_STATUS_ENDED := "ended"
 const TUTORIAL_HEAT_CEILING := 99
 const TUTORIAL_HEAT_INTERVENTION_LEVEL := 75
+const TUTORIAL_DRUNK_COFFEE_THRESHOLD := 33
+const TUTORIAL_DRUNK_COFFEE_ITEM_ID := "thermos_black_coffee"
+const TUTORIAL_DRUNK_COFFEE_PENDING_FLAG := "tutorial_drunk_coffee_interventions_pending"
 const FAILURE_NONE := ""
 const FAILURE_BANKROLL_ZERO := "bankroll_zero"
 const FAILURE_STRANDED := "stranded"
@@ -65,8 +70,13 @@ const GRAND_CASINO_ARCHETYPE_IDS := [
 	GRAND_CASINO_CAGE_ARCHETYPE_ID,
 ]
 const GRAND_CASINO_TABLE_GAME_IDS := ["blackjack", "baccarat", "roulette"]
-const GRAND_CASINO_CHIP_GAME_IDS := ["blackjack", "baccarat", "roulette", "slot", "video_poker", "pull_tabs", "bar_dice"]
+const GRAND_CASINO_CHIP_GAME_IDS := ["blackjack", "baccarat", "roulette", "video_poker", "pull_tabs", "bar_dice"]
 const GRAND_CASINO_INVITATION_EVENT_ID := "grand_casino_invite"
+const TIER_TWO_LOCATION_SPAWN_FLAG := "tier_two_casino_spawns_enabled"
+const TIER_TWO_LOCATION_SPAWN_REASON_FLAG := "tier_two_casino_spawn_reason"
+const TIER_TWO_LOCATION_SPAWN_VISITS_FLAG := "tier_two_casino_spawn_visit_ids"
+const TIER_TWO_UNDERGROUND_SOURCE_ID := "small_underground_casino"
+const TIER_TWO_REQUIRED_TIER_ONE_CASINO_VISITS := 2
 const GRAND_CASINO_INVITATION_TABLE_WIN_THRESHOLD := 300
 const GRAND_CASINO_INVITATION_TABLE_WIN_FLAG := "grand_casino_invite_table_win_spawned"
 const GRAND_CASINO_OBJECTIVE_ID := "grand_casino_demo_bankroll"
@@ -169,9 +179,15 @@ const AVAILABILITY_CATEGORICAL_UNAVAILABLE := "categorically_unavailable"
 const EVENT_CADENCE_GLOBAL_GAP_ACTIONS := 6
 const EVENT_CADENCE_BREATHER_ACTIONS := 1
 const EVENT_CADENCE_VISIT_EVENT_CHANCE_PERCENT := 45
-const MAX_ENVIRONMENT_HISTORY_ENTRIES := 48
+# Visit rows are deliberately tiny (identity plus entry/departure clocks). Keep
+# enough exact visits for long multi-day report timelines without retaining any
+# environment machine/runtime payloads.
+const MAX_ENVIRONMENT_HISTORY_ENTRIES := 256
 const MAX_STORY_LOG_ENTRIES := 240
 const MAX_HEAT_HISTORY_ENTRIES := 480
+const MAX_PENDING_TRIGGERED_EVENTS := 64
+const MAX_PENDING_BAG_MARKERS := 32
+const MAX_ATM_INTEREST_NOTIFICATIONS := 32
 const HEAT_HISTORY_COMPACT_TARGET := 360
 const STORY_SEEN_TYPE_FLAG_PREFIX := "_story_seen:"
 const STORY_SEEN_EVENT_FLAG_PREFIX := "_story_seen_event:"
@@ -201,9 +217,23 @@ const PORTABLE_TICKET_ITEM_IDS := {
 	"scratch_tickets": SCRATCH_TICKET_PILE_ITEM_ID,
 }
 const PORTABLE_TICKET_PLAYER_FIELDS := {
-	"pull_tabs": ["tray_stack", "ticket_stack", "winner_pile", "loser_pile"],
-	"scratch_tickets": ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"],
+	"pull_tabs": ["tray_stack", "ticket_stack", "winner_pile", "loser_pile", "loser_archive_count"],
+	"scratch_tickets": ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"],
 }
+const PORTABLE_PULL_TAB_LOSER_RECEIPT_LIMIT := 10
+const PORTABLE_SCRATCH_TICKET_LOSER_RECEIPT_LIMIT := 5
+const PORTABLE_PULL_TAB_RECEIPT_FIELDS := [
+	"id", "deal_id", "deal_index", "ticket_number", "ticket_number_value", "serial", "form", "display_name",
+	"palette", "price", "payout", "tainted", "fake", "tab_detector_heat",
+	"xray_target_consumed", "burned_payout", "pile_depth_index", "origin_key", "origin_name",
+	"origin_environment_id", "origin_world_node_id", "origin_archetype_id",
+]
+const PORTABLE_SCRATCH_RECEIPT_FIELDS := [
+	"id", "type_id", "size_id", "display_name", "price", "payout", "outcome_id",
+	"fortune_tier", "face", "palette", "result_ready", "settled",
+	"discarded_unfinished", "mask_compacted", "origin_key", "origin_name",
+	"origin_environment_id", "origin_world_node_id", "origin_archetype_id",
+]
 
 var seed_text: String = ""
 var seed_value: int = 1
@@ -270,6 +300,9 @@ var _item_effects_by_id: Dictionary = {}
 var _item_effects_loaded: bool = false
 var _item_definitions_by_id: Dictionary = {}
 var _item_definitions_loaded: bool = false
+var _item_effect_total_cache: Dictionary = {}
+var _owned_item_lookup_cache: Dictionary = {}
+var _owned_item_lookup_cache_valid := false
 
 
 # Resets the run from a seed and optional challenge.
@@ -1251,11 +1284,24 @@ func _event_cadence_visit_key(environment_data: Dictionary) -> String:
 func set_environment(environment_data: Dictionary) -> void:
 	var previous_was_grand_casino := _is_grand_casino_environment(current_environment)
 	if not current_environment.is_empty():
+		# Travel advances the clock before installing the destination, but stamps
+		# the actual departure first. Preserve that boundary so the report can
+		# animate the journey instead of collapsing it to a zero-length teleport.
+		# Direct environment changes still close at the current clock.
+		var entered_minutes := maxi(0, int(current_environment.get("entered_game_clock_minutes", game_clock_minutes)))
+		var stamped_departure := int(current_environment.get("departed_game_clock_minutes", -1))
+		var departed_minutes := game_clock_minutes
+		if stamped_departure >= entered_minutes and stamped_departure <= game_clock_minutes:
+			departed_minutes = stamped_departure
+		current_environment["departed_game_clock_minutes"] = maxi(entered_minutes, departed_minutes)
 		capture_portable_ticket_piles_from_environment(current_environment)
 		_store_current_local_suspicion()
 		environment_history.append(_environment_history_entry(current_environment))
 		_compact_environment_history()
 	current_environment = _normalize_environment(environment_data)
+	# Stored/revisited environments may contain the boundary from their prior
+	# visit. The destination is active now and must begin with an open visit.
+	current_environment.erase("departed_game_clock_minutes")
 	_reconcile_grand_casino_invitation_uniqueness()
 	restore_portable_ticket_piles_to_environment(current_environment)
 	current_environment["entered_game_clock_minutes"] = maxi(0, game_clock_minutes)
@@ -1426,6 +1472,14 @@ func grand_casino_room_environment(archetype_id: String) -> Dictionary:
 	return (room as Dictionary).duplicate(true) if typeof(room) == TYPE_DICTIONARY else {}
 
 
+# Internal runtime view for schedulers that only inspect or deliberately update
+# the stored room. Player-facing restoration continues to use the owned copy
+# above, while this avoids deep-copying every cabinet on every foreground frame.
+func peek_grand_casino_room_environment(archetype_id: String) -> Dictionary:
+	var room: Variant = grand_casino_room_states.get(archetype_id.strip_edges(), {})
+	return room as Dictionary if typeof(room) == TYPE_DICTIONARY else {}
+
+
 func grand_casino_room_access_status(target_archetype_id: String, high_limit_buy_in: int = 60) -> Dictionary:
 	var target_id := target_archetype_id.strip_edges()
 	if not is_grand_casino_environment():
@@ -1459,6 +1513,49 @@ func enter_world_node(node_id: String, environment_data: Dictionary) -> void:
 	if world_map.is_empty() or node_id.strip_edges().is_empty():
 		return
 	world_map = WorldMap.enter_node(world_map, node_id, _environment_for_persistent_storage(environment_data))
+	_reconcile_tier_two_casino_spawn_eligibility()
+
+
+# Tier-2 casino routes are intentionally hidden at spawn. Open their spawn gates
+# once the player has either found the Underground or visited two distinct
+# Tier-1 casinos. The nodes remain hidden until normal neighbor discovery finds
+# each one; this milestone must not reveal both venues immediately.
+func _reconcile_tier_two_casino_spawn_eligibility() -> void:
+	if world_map.is_empty():
+		return
+	var nodes_value: Variant = world_map.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return
+	var visited_tier_one_casino_ids: Array = []
+	var tier_two_casino_ids: Array = []
+	var underground_visited := false
+	var every_tier_two_casino_spawn_enabled := true
+	for node_value in nodes_value as Array:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", "")).strip_edges()
+		var node_kind := str(node.get("kind", "")).strip_edges().to_lower()
+		var node_tier := maxi(1, int(node.get("tier", 1)))
+		var visited := str(node.get("state", WorldMap.STATE_HIDDEN)) == WorldMap.STATE_VISITED
+		if visited and node_tier == 1 and node_kind == "casino" and not visited_tier_one_casino_ids.has(node_id):
+			visited_tier_one_casino_ids.append(node_id)
+		if visited and node_id == TIER_TWO_UNDERGROUND_SOURCE_ID:
+			underground_visited = true
+		if node_tier == 2 and node_kind == "casino":
+			tier_two_casino_ids.append(node_id)
+			if not bool(node.get("route_spawn_open", false)):
+				every_tier_two_casino_spawn_enabled = false
+	if tier_two_casino_ids.is_empty():
+		return
+	var threshold_met := underground_visited or visited_tier_one_casino_ids.size() >= TIER_TWO_REQUIRED_TIER_ONE_CASINO_VISITS
+	if not threshold_met:
+		return
+	if not every_tier_two_casino_spawn_enabled:
+		world_map = WorldMap.enable_node_spawns(world_map, tier_two_casino_ids)
+	narrative_flags[TIER_TWO_LOCATION_SPAWN_FLAG] = true
+	narrative_flags[TIER_TWO_LOCATION_SPAWN_REASON_FLAG] = "underground_visit" if underground_visited else "two_tier_one_casinos"
+	narrative_flags[TIER_TWO_LOCATION_SPAWN_VISITS_FLAG] = visited_tier_one_casino_ids.duplicate()
 
 
 func environment_travel_count() -> int:
@@ -1787,6 +1884,8 @@ func _process_grand_casino_atm_interest_boundaries(previous_minutes: int, curren
 			"message": "3:00 AM marker interest added $%d. Grand Casino ATM balance: $%d." % [interest_added, new_balance],
 		}
 		grand_casino_atm_interest_notifications.append(notification)
+		if grand_casino_atm_interest_notifications.size() > MAX_ATM_INTEREST_NOTIFICATIONS:
+			grand_casino_atm_interest_notifications.pop_front()
 		log_story({
 			"type": "debt_interest",
 			"debt_id": CageEconomyModelScript.ATM_DEBT_ID,
@@ -1877,12 +1976,16 @@ func grand_casino_players_card_comp_result(comp_id: String) -> Dictionary:
 func route_grand_casino_game_currency(result: Dictionary, deltas: Dictionary) -> Dictionary:
 	var routed := deltas
 	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
-	if not grand_casino_game_uses_chips(game_id):
+	var result_environment := {
+		"id": str(result.get("environment_id", "")),
+		"archetype_id": str(result.get("environment_archetype_id", "")),
+	}
+	if not grand_casino_game_uses_chips(game_id, result_environment):
 		return routed
 	var chips_delta := int(routed.get("bankroll_delta", result.get("bankroll_delta", 0)))
 	var funding_amount := _grand_casino_result_wager_funding_amount(result, chips_delta)
 	if funding_amount > grand_casino_chips:
-		var funding := fund_grand_casino_wager(game_id, funding_amount, current_environment)
+		var funding := fund_grand_casino_wager(game_id, funding_amount, result_environment)
 		if bool(funding.get("ok", false)):
 			result["wager_existing_chips_used"] = int(funding.get("existing_chips_used", 0))
 			result["wager_chips_bought"] = int(funding.get("chips_bought", 0))
@@ -2072,6 +2175,8 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 		record_grand_casino_room_heat_gain(_grand_casino_room_id_from_context(context), applied_amount)
 	if tutorial_heat_intervention:
 		_apply_tutorial_heat_intervention(location_id, cue_id)
+	if applied_amount != 0 and active_location:
+		heat_changed.emit(applied_amount, suspicion_level(), cue_id, context.duplicate(true))
 	_evaluate_immediate_terminal_state(defer_bankroll_zero)
 	return applied_amount
 
@@ -2211,7 +2316,7 @@ func change_drunk(delta: int) -> void:
 		return
 	if delta < 0 and has_pending_drunk_absorption():
 		return
-	drunk_level = clampi(drunk_level + delta, 0, ALCOHOL_MAX)
+	_set_drunk_level(drunk_level + delta)
 
 
 func change_pending_drunk_absorption(delta: int) -> void:
@@ -2270,7 +2375,7 @@ func update_drunk_absorption(now_msec: int = -1) -> Dictionary:
 		while remaining > 0 and drunk_level < ALCOHOL_MAX and now_msec >= next_msec:
 			var step := mini(remaining, DRUNK_ABSORPTION_POINTS_PER_INTERVAL)
 			step = mini(step, ALCOHOL_MAX - drunk_level)
-			drunk_level = clampi(drunk_level + step, 0, ALCOHOL_MAX)
+			_set_drunk_level(drunk_level + step)
 			remaining -= step
 			applied += step
 			next_msec += interval
@@ -2309,7 +2414,7 @@ func _queue_drunk_absorption(amount: int) -> void:
 		return
 	var immediate := mini(queued, DRUNK_ABSORPTION_INITIAL_POINTS)
 	if immediate > 0:
-		drunk_level = clampi(drunk_level + immediate, 0, ALCOHOL_MAX)
+		_set_drunk_level(drunk_level + immediate)
 		queued -= immediate
 	if queued <= 0:
 		return
@@ -2329,6 +2434,57 @@ func _queue_drunk_absorption(amount: int) -> void:
 		"next_msec": next_msec,
 		"queued_msec": now_msec,
 	})
+
+
+# Applies every live Drunk change through one threshold seam. Save restoration
+# assigns the persisted value directly, so loading above the threshold never
+# fabricates a new tutorial warning.
+func _set_drunk_level(next_level: int) -> void:
+	var previous_level := drunk_level
+	drunk_level = clampi(next_level, 0, ALCOHOL_MAX)
+	if is_tutorial_run() \
+			and previous_level <= TUTORIAL_DRUNK_COFFEE_THRESHOLD \
+			and drunk_level > TUTORIAL_DRUNK_COFFEE_THRESHOLD:
+		_publish_tutorial_drunk_coffee_intervention(previous_level, drunk_level)
+
+
+func _publish_tutorial_drunk_coffee_intervention(previous_level: int, current_level: int) -> void:
+	var already_owned := inventory.has(TUTORIAL_DRUNK_COFFEE_ITEM_ID)
+	add_item(TUTORIAL_DRUNK_COFFEE_ITEM_ID)
+	var serial := int(narrative_flags.get("tutorial_drunk_coffee_intervention_serial", 0)) + 1
+	narrative_flags["tutorial_drunk_coffee_intervention_serial"] = serial
+	var pending: Array = _copy_array(narrative_flags.get(TUTORIAL_DRUNK_COFFEE_PENDING_FLAG, []))
+	pending.append({
+		"serial": serial,
+		"previous_level": previous_level,
+		"current_level": current_level,
+		"threshold": TUTORIAL_DRUNK_COFFEE_THRESHOLD,
+		"item_id": TUTORIAL_DRUNK_COFFEE_ITEM_ID,
+		"item_granted": not already_owned,
+	})
+	narrative_flags[TUTORIAL_DRUNK_COFFEE_PENDING_FLAG] = pending
+	log_story({
+		"type": "tutorial_drunk_coffee_intervention",
+		"drunk_before": previous_level,
+		"drunk_after": current_level,
+		"item_id": TUTORIAL_DRUNK_COFFEE_ITEM_ID,
+		"item_granted": not already_owned,
+		"message": "Pal steps in with coffee after Drunk crosses 33%.",
+	})
+
+
+func consume_tutorial_drunk_coffee_intervention() -> Dictionary:
+	var pending: Array = _copy_array(narrative_flags.get(TUTORIAL_DRUNK_COFFEE_PENDING_FLAG, []))
+	while not pending.is_empty():
+		var entry_value: Variant = pending.pop_front()
+		if pending.is_empty():
+			narrative_flags.erase(TUTORIAL_DRUNK_COFFEE_PENDING_FLAG)
+		else:
+			narrative_flags[TUTORIAL_DRUNK_COFFEE_PENDING_FLAG] = pending
+		if typeof(entry_value) == TYPE_DICTIONARY:
+			return (entry_value as Dictionary).duplicate(true)
+	narrative_flags.erase(TUTORIAL_DRUNK_COFFEE_PENDING_FLAG)
+	return {}
 
 
 # Changes the persistent alcohol need meter.
@@ -5141,6 +5297,11 @@ func _grand_casino_objective_summary(high_roller_ready: bool, showdown_pending: 
 
 
 func _grand_casino_result_has_wager(result: Dictionary) -> bool:
+	# Blackjack debits the wager on Deal, then returns the settled outcome as a
+	# separate result. The wager-placement receipt is not a completed hand and
+	# must never advance Players Card progress.
+	if str(result.get("game_id", "")) == "blackjack":
+		return str(result.get("action_id", "")) == "play_basic" and int(result.get("stake", 0)) > 0
 	if int(result.get("stake", 0)) > 0 or int(result.get("stake_cost", 0)) > 0:
 		return true
 	var deltas := _copy_dict(result.get("deltas", {}))
@@ -5388,6 +5549,7 @@ func add_item(item_id: String) -> void:
 		return
 	if not inventory.has(item_id):
 		inventory.append(item_id)
+		invalidate_inventory_effect_cache()
 
 
 # Removes a run item and clears the active slot if that item was equipped.
@@ -5397,6 +5559,7 @@ func remove_item(item_id: String) -> void:
 	if is_portable_ticket_pile_item(item_id) and int(portable_ticket_pile_summary(item_id).get("ticket_count", 0)) > 0:
 		return
 	inventory.erase(item_id)
+	invalidate_inventory_effect_cache()
 	if active_item_id == item_id:
 		active_item_id = ""
 
@@ -5414,6 +5577,9 @@ func item_effect_total(key: String, game_family: String = "", action_kind: Strin
 		return 0
 	var family_key := game_family.strip_edges()
 	var action_key := action_kind.strip_edges()
+	var cache_key := "%s|%s|%s" % [effect_key, family_key, action_key]
+	if _item_effect_total_cache.has(cache_key):
+		return int(_item_effect_total_cache.get(cache_key, 0))
 	var effects_by_id := _item_effect_index()
 	var owned_lookup := _owned_item_lookup()
 	var total := 0
@@ -5435,6 +5601,7 @@ func item_effect_total(key: String, game_family: String = "", action_kind: Strin
 			var families := _copy_dict(effect.get("families", {}))
 			total += _numeric_effect_value(_copy_dict(families.get(family_key, {})), effect_key)
 		total += _synergy_effect_total(effect, effect_key, family_key, action_key, owned_lookup)
+	_item_effect_total_cache[cache_key] = total
 	return total
 
 
@@ -5446,12 +5613,22 @@ func _inventory_entry_effect(entry: Variant) -> Dictionary:
 
 
 func _owned_item_lookup() -> Dictionary:
+	if _owned_item_lookup_cache_valid:
+		return _owned_item_lookup_cache
 	var result := {}
 	for inventory_entry in inventory:
 		var item_id := _inventory_item_id(inventory_entry)
 		if not item_id.is_empty():
 			result[item_id] = true
-	return result
+	_owned_item_lookup_cache = result
+	_owned_item_lookup_cache_valid = true
+	return _owned_item_lookup_cache
+
+
+func invalidate_inventory_effect_cache() -> void:
+	_item_effect_total_cache.clear()
+	_owned_item_lookup_cache.clear()
+	_owned_item_lookup_cache_valid = false
 
 
 func _synergy_effect_total(effect: Dictionary, effect_key: String, family_key: String, action_key: String, owned_lookup: Dictionary) -> int:
@@ -5699,6 +5876,8 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 
 func _travel_route_cost(route_data: Dictionary) -> int:
 	var base_cost := maxi(0, int(route_data.get("cost", 0)))
+	if _travel_route_is_walk(route_data):
+		return 0
 	var current_archetype_id := str(current_environment.get("archetype_id", current_environment.get("id", ""))).strip_edges()
 	if current_archetype_id.is_empty():
 		return base_cost
@@ -5706,6 +5885,16 @@ func _travel_route_cost(route_data: Dictionary) -> int:
 	if free_from_archetypes.has(current_archetype_id):
 		return 0
 	return base_cost
+
+
+func _travel_route_is_walk(route_data: Dictionary) -> bool:
+	var explicit_kind := str(route_data.get("travel_method_kind", "")).strip_edges().to_lower()
+	if not explicit_kind.is_empty():
+		return explicit_kind == "walk"
+	var method := str(route_data.get("travel_method", route_data.get("method", ""))).strip_edges().to_lower()
+	if not method.is_empty():
+		return method == "walk" or method.contains("walk")
+	return str(route_data.get("distance", "")).strip_edges().to_lower() == "near"
 
 
 func _route_locked_hint_enabled(route_data: Dictionary) -> bool:
@@ -6866,6 +7055,8 @@ func enqueue_triggered_event(event_id: String, source: String = "", context: Dic
 		var entry: Dictionary = entry_value
 		if str(entry.get("event_id", "")) == normalized_id:
 			return false
+	if pending_triggered_events.size() >= MAX_PENDING_TRIGGERED_EVENTS:
+		return false
 	var queued_context := context.duplicate(true)
 	var entry := {
 		"event_id": normalized_id,
@@ -6945,6 +7136,22 @@ func next_pending_talk_event() -> Dictionary:
 			var intervention_source := str(intervention_entry.get("source", intervention_context.get("source", "")))
 			if str(intervention_entry.get("presentation", "modal")) == "talk" and intervention_source == "tutorial_intervention":
 				return intervention_entry
+		# Applying the family loan creates debt before the shared dialogue queue is
+		# refreshed. If an older save already queued Pal's debt explanation at that
+		# boundary, keep the actual phone offer in front of the explanation.
+		var family_loan_entry: Dictionary = {}
+		var family_debt_guide_pending := false
+		for entry_value in pending_triggered_events:
+			var ordered_entry := _normalize_triggered_event_entry(entry_value)
+			if str(ordered_entry.get("presentation", "modal")) != "talk":
+				continue
+			var ordered_event_id := str(ordered_entry.get("event_id", ""))
+			if ordered_event_id == "family_loan":
+				family_loan_entry = ordered_entry
+			elif ordered_event_id == "tutorial_guide:tutorial_family_debt":
+				family_debt_guide_pending = true
+		if not family_loan_entry.is_empty() and family_debt_guide_pending:
+			return family_loan_entry
 		for entry_value in pending_triggered_events:
 			var tutorial_entry := _normalize_triggered_event_entry(entry_value)
 			var tutorial_context: Dictionary = tutorial_entry.get("context", {}) if typeof(tutorial_entry.get("context", {})) == TYPE_DICTIONARY else {}
@@ -7070,6 +7277,8 @@ func add_pending_bag_marker(marker: Dictionary) -> Dictionary:
 			var existing := _normalize_pending_bag_marker(existing_value)
 			if str(existing.get("marker_id", "")) == marker_id:
 				return existing
+	if pending_bags.size() >= MAX_PENDING_BAG_MARKERS:
+		return {}
 	pending_bags.append(normalized)
 	return normalized.duplicate(true)
 
@@ -7647,7 +7856,8 @@ func from_dict(data: Dictionary) -> void:
 	bankroll = int(data.get("bankroll", DEFAULT_BANKROLL))
 	grand_casino_chips = maxi(0, int(data.get("grand_casino_chips", 0)))
 	economic_state = str(data.get("economic_state", "stable"))
-	inventory = _copy_array(data.get("inventory", []))
+	inventory = _normalize_inventory_entries(data.get("inventory", []))
+	invalidate_inventory_effect_cache()
 	portable_ticket_piles = _normalize_portable_ticket_piles(_copy_dict(data.get("portable_ticket_piles", {})))
 	active_item_id = str(data.get("active_item_id", ""))
 	if not inventory.has(active_item_id):
@@ -7704,6 +7914,9 @@ func from_dict(data: Dictionary) -> void:
 	story_flags = _copy_dict(data.get("story_flags", {}))
 	for story_flag_key in story_flags.keys():
 		narrative_flags[str(story_flag_key)] = story_flags[story_flag_key]
+	# Repair saves made before Tier-2 casino spawning had an explicit progression
+	# milestone. The visited-node state is already authoritative.
+	_reconcile_tier_two_casino_spawn_eligibility()
 	_reconcile_grand_casino_invitation_uniqueness()
 	story_log_archive_count = maxi(0, int(data.get("story_log_archive_count", 0)))
 	story_log = _normalize_story_log(_copy_array(data.get("story_log", [])))
@@ -7711,6 +7924,9 @@ func from_dict(data: Dictionary) -> void:
 		if typeof(story_entry_value) == TYPE_DICTIONARY:
 			_remember_story_seen_flags(story_entry_value as Dictionary)
 	_compact_story_log()
+	# Restore the authoritative clock before synthesizing any missing timeline
+	# sample. Older saves without heat history must not receive a fake Day-1 row.
+	game_clock_minutes = maxi(0, int(data.get("game_clock_minutes", GAME_CLOCK_START_MINUTE)))
 	heat_history = normalize_heat_history(_copy_array(data.get("heat_history", [])))
 	if heat_history.is_empty():
 		_record_heat_history(not current_environment.is_empty())
@@ -7718,12 +7934,16 @@ func from_dict(data: Dictionary) -> void:
 	simulation_msec = maxi(0, int(data.get("simulation_msec", int(_copy_dict(data.get("event_cadence", {})).get("action_index", 0)) * SIMULATION_ACTION_MSEC)))
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)) and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_LEGACY_CHECK and not _copy_dict(narrative_flags.get("grand_casino_duel_terms", {})).is_empty():
 		_begin_grand_casino_duel(_copy_dict(narrative_flags.get("grand_casino_duel_terms", {})))
-	game_clock_minutes = maxi(0, int(data.get("game_clock_minutes", GAME_CLOCK_START_MINUTE)))
 	grand_casino_atm_interest_boundary_index = int(data.get(
 		"grand_casino_atm_interest_boundary_index",
 		CageEconomyModelScript.boundary_index_at_or_before(game_clock_minutes)
 	))
 	grand_casino_atm_interest_notifications = _copy_array(data.get("grand_casino_atm_interest_notifications", []))
+	if grand_casino_atm_interest_notifications.size() > MAX_ATM_INTEREST_NOTIFICATIONS:
+		grand_casino_atm_interest_notifications = grand_casino_atm_interest_notifications.slice(
+			grand_casino_atm_interest_notifications.size() - MAX_ATM_INTEREST_NOTIFICATIONS,
+			grand_casino_atm_interest_notifications.size()
+		)
 	closing_time_state = _normalize_closing_time_state(_copy_dict(data.get("closing_time_state", {})))
 	act_index = maxi(1, int(data.get("act", data.get("act_index", 1))))
 	home_state = _normalize_home_state(_copy_dict(data.get("home_state", {})))
@@ -8086,14 +8306,23 @@ static func _persistent_copy_value(value: Variant) -> Variant:
 	return value
 
 
-static func _compact_scratch_ticket_receipt(ticket: Dictionary, deep_copy: bool) -> Dictionary:
+static func _compact_ticket_receipt(ticket: Dictionary, fields: Array, deep_copy: bool) -> Dictionary:
 	var receipt: Dictionary = {}
-	for key_value in ticket.keys():
+	for key_value in fields:
 		var key := str(key_value)
-		if ["latex_mask", "scratch_regions", "sections", "mask_revision"].has(key):
+		if not ticket.has(key):
 			continue
-		var value: Variant = ticket.get(key_value)
+		var value: Variant = ticket.get(key)
 		receipt[key] = _persistent_copy_value(value) if deep_copy else value
+	return receipt
+
+
+static func _compact_pull_tab_receipt(ticket: Dictionary, deep_copy: bool) -> Dictionary:
+	return _compact_ticket_receipt(ticket, PORTABLE_PULL_TAB_RECEIPT_FIELDS, deep_copy)
+
+
+static func _compact_scratch_ticket_receipt(ticket: Dictionary, deep_copy: bool) -> Dictionary:
+	var receipt := _compact_ticket_receipt(ticket, PORTABLE_SCRATCH_RECEIPT_FIELDS, deep_copy)
 	receipt["mask_compacted"] = true
 	return receipt
 
@@ -8108,22 +8337,65 @@ static func _compact_scratch_ticket_receipt_array(value: Variant, deep_copy: boo
 	return result
 
 
-static func _portable_ticket_state_for_live_storage(kind: String, state: Dictionary) -> Dictionary:
-	var stored := state.duplicate(false)
+static func _compact_pull_tab_receipt_array(value: Variant, deep_copy: bool) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for ticket_value in value as Array:
+		if typeof(ticket_value) == TYPE_DICTIONARY:
+			result.append(_compact_pull_tab_receipt(ticket_value as Dictionary, deep_copy))
+	return result
+
+
+static func _bounded_loser_receipts(receipts: Array, existing_archive_count: int, limit: int) -> Dictionary:
+	var archive_count := maxi(0, existing_archive_count)
+	var retained := receipts
+	if retained.size() > limit:
+		var overflow := retained.size() - limit
+		archive_count += overflow
+		retained = retained.slice(overflow, retained.size())
+	for index in range(retained.size()):
+		var value: Variant = retained[index]
+		if typeof(value) == TYPE_DICTIONARY:
+			(value as Dictionary)["pile_depth_index"] = archive_count + index
+	return {"receipts": retained, "archive_count": archive_count}
+
+
+# Produces the bounded player-owned ticket state used by both game machines and
+# persistence. Settled losers have no remaining gameplay value, so only the
+# visible tail is retained; the exact historical count remains available for
+# pile labels, inventory, and pull-tab cashout scrutiny.
+static func compact_portable_ticket_state(kind: String, state: Dictionary, deep_copy: bool = false) -> Dictionary:
+	var stored := state.duplicate(true) if deep_copy else state.duplicate(false)
+	if kind == "pull_tabs":
+		stored["winner_pile"] = _compact_pull_tab_receipt_array(state.get("winner_pile", []), deep_copy)
+		var pull_losers := _compact_pull_tab_receipt_array(state.get("loser_pile", []), deep_copy)
+		var bounded_pull := _bounded_loser_receipts(pull_losers, int(state.get("loser_archive_count", 0)), PORTABLE_PULL_TAB_LOSER_RECEIPT_LIMIT)
+		stored["loser_pile"] = bounded_pull.get("receipts", [])
+		stored["loser_archive_count"] = int(bounded_pull.get("archive_count", 0))
+		return stored
 	if kind != "scratch_tickets":
 		return stored
-	stored["winner_pile"] = _compact_scratch_ticket_receipt_array(state.get("winner_pile", []), false)
-	stored["loser_pile"] = _compact_scratch_ticket_receipt_array(state.get("loser_pile", []), false)
+	stored["winner_pile"] = _compact_scratch_ticket_receipt_array(state.get("winner_pile", []), deep_copy)
+	var scratch_losers := _compact_scratch_ticket_receipt_array(state.get("loser_pile", []), deep_copy)
+	var bounded_scratch := _bounded_loser_receipts(scratch_losers, int(state.get("loser_archive_count", 0)), PORTABLE_SCRATCH_TICKET_LOSER_RECEIPT_LIMIT)
+	stored["loser_pile"] = bounded_scratch.get("receipts", [])
+	stored["loser_archive_count"] = int(bounded_scratch.get("archive_count", 0))
 	var last_value: Variant = state.get("last_settled_ticket", {})
-	stored["last_settled_ticket"] = _compact_scratch_ticket_receipt(last_value as Dictionary, false) if typeof(last_value) == TYPE_DICTIONARY and not (last_value as Dictionary).is_empty() else {}
+	stored["last_settled_ticket"] = _compact_scratch_ticket_receipt(last_value as Dictionary, deep_copy) if typeof(last_value) == TYPE_DICTIONARY and not (last_value as Dictionary).is_empty() else {}
 	return stored
+
+
+static func _portable_ticket_state_for_live_storage(kind: String, state: Dictionary) -> Dictionary:
+	return compact_portable_ticket_state(kind, state, false)
 
 
 static func _portable_ticket_player_state(kind: String, machine: Dictionary) -> Dictionary:
 	var result := {}
 	for field_value in _copy_array(PORTABLE_TICKET_PLAYER_FIELDS.get(kind, [])):
 		var field := str(field_value)
-		var value: Variant = machine.get(field, [] if field.ends_with("pile") or field.ends_with("stack") or field.ends_with("queue") else {})
+		var fallback: Variant = 0 if field.ends_with("_count") else [] if field.ends_with("pile") or field.ends_with("stack") or field.ends_with("queue") else {}
+		var value: Variant = machine.get(field, fallback)
 		if typeof(value) == TYPE_ARRAY:
 			result[field] = (value as Array).duplicate(true)
 		elif typeof(value) == TYPE_DICTIONARY:
@@ -8143,7 +8415,7 @@ static func _apply_portable_ticket_state_to_machine(kind: String, portable: Dict
 
 
 static func _portable_ticket_state_count(kind: String, state: Dictionary) -> int:
-	var count := _portable_ticket_array_size(state.get("winner_pile", [])) + _portable_ticket_array_size(state.get("loser_pile", []))
+	var count := _portable_ticket_array_size(state.get("winner_pile", [])) + _portable_ticket_array_size(state.get("loser_pile", [])) + maxi(0, int(state.get("loser_archive_count", 0)))
 	if kind == "pull_tabs":
 		return count + _portable_ticket_array_size(state.get("tray_stack", [])) + _portable_ticket_array_size(state.get("ticket_stack", []))
 	if kind == "scratch_tickets" and not _copy_dict(state.get("active_ticket", {})).is_empty():
@@ -8179,20 +8451,7 @@ static func _normalize_portable_ticket_piles(value: Dictionary) -> Dictionary:
 				var state_value: Variant = (origins_value as Dictionary).get(origin_key_value, {})
 				if origin_key.is_empty() or typeof(state_value) != TYPE_DICTIONARY:
 					continue
-				var state: Dictionary
-				if kind == "scratch_tickets":
-					state = {}
-					for field_value in (state_value as Dictionary).keys():
-						var field := str(field_value)
-						var field_data: Variant = (state_value as Dictionary).get(field_value)
-						if field == "winner_pile" or field == "loser_pile":
-							state[field] = _compact_scratch_ticket_receipt_array(field_data, true)
-						elif field == "last_settled_ticket" and typeof(field_data) == TYPE_DICTIONARY:
-							state[field] = _compact_scratch_ticket_receipt(field_data as Dictionary, true) if not (field_data as Dictionary).is_empty() else {}
-						else:
-							state[field] = _persistent_copy_value(field_data)
-				else:
-					state = (state_value as Dictionary).duplicate(true)
+				var state := compact_portable_ticket_state(kind, state_value as Dictionary, true)
 				state["origin_key"] = origin_key
 				origins[origin_key] = state
 		if not origins.is_empty() or value.has(kind):
@@ -8204,6 +8463,37 @@ static func _inventory_item_id(entry: Variant) -> String:
 	if typeof(entry) == TYPE_DICTIONARY:
 		return str((entry as Dictionary).get("id", "")).strip_edges()
 	return str(entry).strip_edges()
+
+
+# Runtime item grants are unique by id, while meta-collection instances are
+# unique by their permanent instance id. Normalize impossible duplicate string
+# entries from legacy or edited saves without collapsing legitimate instances.
+static func _normalize_inventory_entries(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	var result: Array = []
+	var seen_string_ids := {}
+	var seen_instance_ids := {}
+	for entry_value in value as Array:
+		if typeof(entry_value) == TYPE_DICTIONARY:
+			var entry: Dictionary = (entry_value as Dictionary).duplicate(true)
+			var dictionary_item_id := _inventory_item_id(entry)
+			if dictionary_item_id.is_empty():
+				continue
+			var meta: Dictionary = entry.get("meta_collection", {}) if typeof(entry.get("meta_collection", {})) == TYPE_DICTIONARY else {}
+			var instance_id := int(meta.get("instance_id", entry.get("instance_id", 0)))
+			if instance_id > 0:
+				if seen_instance_ids.has(instance_id):
+					continue
+				seen_instance_ids[instance_id] = true
+			result.append(entry)
+			continue
+		var item_id := str(entry_value).strip_edges()
+		if item_id.is_empty() or seen_string_ids.has(item_id):
+			continue
+		seen_string_ids[item_id] = true
+		result.append(item_id)
+	return result
 
 
 static func _numeric_effect_value(effect: Dictionary, key: String) -> int:
@@ -8500,6 +8790,8 @@ static func _normalize_triggered_event_queue(entries: Array) -> Array:
 		var entry := _normalize_triggered_event_entry(entry_value)
 		if not entry.is_empty():
 			result.append(entry)
+			if result.size() >= MAX_PENDING_TRIGGERED_EVENTS:
+				break
 	return result
 
 
@@ -8602,6 +8894,8 @@ static func _normalize_pending_bag_markers(entries: Array) -> Array:
 				break
 		if not duplicate_found:
 			result.append(marker)
+			if result.size() >= MAX_PENDING_BAG_MARKERS:
+				break
 	return result
 
 

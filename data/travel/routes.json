@@ -8,7 +8,7 @@
       "offer": "Cheap supplies and a quiet route lead.",
       "tradeoff": "the louder money elsewhere"
     },
-    "cost": 1,
+    "cost": 0,
     "risk": "low",
     "distance": "near",
     "risk_decay": 18
@@ -22,7 +22,7 @@
       "offer": "Fast access and a chance to cut the line.",
       "tradeoff": "the safer road"
     },
-    "cost": 1,
+    "cost": 0,
     "risk": "high",
     "distance": "near",
     "risk_decay": 12,
@@ -74,7 +74,7 @@
       "offer": "Cash, loans, repairs, and Sal's shelf.",
       "tradeoff": "time at the tables"
     },
-    "cost": 2,
+    "cost": 0,
     "risk": "low",
     "distance": "near",
     "risk_decay": 28
@@ -181,7 +181,7 @@
       "offer": "The cleanest heat relief on the map.",
       "tradeoff": "a paying table"
     },
-    "cost": 3,
+    "cost": 0,
     "free_from_archetypes": [
       "delta_queen"
     ],

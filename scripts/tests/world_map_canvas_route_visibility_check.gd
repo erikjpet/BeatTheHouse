@@ -3,6 +3,14 @@ extends SceneTree
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const WorldMapOverlayControllerScript := preload("res://scripts/ui/world_map_overlay_controller.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
+const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")
+const WorldMapScript := preload("res://scripts/core/world_map.gd")
+
+class VisibilityHost:
+	var WorldMapScript: Script
+
+	func _init(world_map_script: Script) -> void:
+		WorldMapScript = world_map_script
 
 var failures: Array[String] = []
 
@@ -12,6 +20,7 @@ func _init() -> void:
 
 
 func _run() -> void:
+	_check_run_map_location_visibility_contract()
 	await _check_zoomed_route_geometry_survives()
 	await _check_scroll_zoom_and_drag_pan()
 	await _check_overlay_routes_navigation_events()
@@ -23,6 +32,15 @@ func _run() -> void:
 	for failure in failures:
 		push_error(failure)
 	quit(1)
+
+
+func _check_run_map_location_visibility_contract() -> void:
+	var host := VisibilityHost.new(WorldMapScript)
+	var revealed_seen := {"state": WorldMapScript.STATE_REVEALED, "seen": true}
+	var visited := {"state": WorldMapScript.STATE_VISITED, "seen": true}
+	_check(not FoundationTravelViewModelScript.world_map_node_should_render(host, revealed_seen, false, false), "Seen but unvisited locations should stay hidden when they are not currently travelable.")
+	_check(FoundationTravelViewModelScript.world_map_node_should_render(host, revealed_seen, false, true), "An unvisited location should appear while it is a currently travelable destination.")
+	_check(FoundationTravelViewModelScript.world_map_node_should_render(host, visited, false, false), "A visited location should remain visible when it is no longer reachable from the current stop.")
 
 
 func _check_zoomed_route_geometry_survives() -> void:
@@ -86,8 +104,24 @@ func _check_overlay_routes_navigation_events() -> void:
 	controller.holder = holder
 	controller.nodes_layer = canvas
 	var click_events: Array = []
-	controller.node_pressed.connect(func(node_id: String) -> void: click_events.append(node_id))
+	controller.node_pressed.connect(func(node_id: String) -> void:
+		click_events.append(node_id)
+		var selected_snapshot := map_snapshot.duplicate(true)
+		selected_snapshot["selected_node_id"] = node_id
+		canvas.set_map_snapshot(selected_snapshot)
+	)
 	controller.sync_node_buttons(map_snapshot)
+	var edge_popup := PanelContainer.new()
+	edge_popup.custom_minimum_size = Vector2(340.0, 110.0)
+	holder.add_child(edge_popup)
+	controller.detail_popup = edge_popup
+	controller.sync_from_host("east", "east", "East", "", "")
+	controller.position_detail_popup(map_snapshot)
+	await process_frame
+	var edge_icon_rect := controller.global_rect_for_node("east")
+	var edge_popup_rect := edge_popup.get_global_rect()
+	_check(holder.get_global_rect().encloses(edge_popup_rect), "Edge-location popup was cropped outside the map holder.")
+	_check(edge_icon_rect.has_area() and not edge_popup_rect.intersects(edge_icon_rect.grow(WorldMapOverlayController.WORLD_MAP_POPUP_ICON_GAP - 1.0)), "Edge-location popup covered the icon it represents or lost its visual gap instead of switching sides.")
 	var test_button: Button = null
 	for child in canvas.get_children():
 		if child is Button and (child as Button).visible and not (child as Button).disabled:
@@ -98,8 +132,14 @@ func _check_overlay_routes_navigation_events() -> void:
 		_check(test_button.get_signal_connection_list("mouse_entered").is_empty(), "Map location target still has a hover-selection callback.")
 		test_button.mouse_entered.emit()
 		await process_frame
+		var selection_start: Dictionary = canvas.current_view_snapshot().get("map_bounds", {})
 		test_button.pressed.emit()
 		_check(click_events.size() == 1, "Clicking a map location did not emit exactly one explicit selection.")
+		var selection_view := canvas.current_view_snapshot()
+		var selection_current: Dictionary = selection_view.get("map_bounds", {})
+		var selection_target: Dictionary = selection_view.get("target_map_bounds", {})
+		_check(_map_bounds_equal(selection_start, selection_current), "Clicking a map location snapped directly to its focused bounds instead of starting the zoom animation.")
+		_check(not _map_bounds_equal(selection_current, selection_target) and bool(selection_view.get("selected_focus_zoom_animating", false)), "Clicking a map location did not leave an active focus-zoom transition.")
 	var before: Dictionary = canvas.current_view_snapshot().get("map_bounds", {})
 	var wheel := InputEventMouseButton.new()
 	wheel.button_index = MOUSE_BUTTON_WHEEL_UP
@@ -112,6 +152,13 @@ func _check_overlay_routes_navigation_events() -> void:
 		await process_frame
 	var zoomed: Dictionary = canvas.current_view_snapshot().get("map_bounds", {})
 	_check(float(zoomed.get("width", 1.0)) < float(before.get("width", 0.0)), "Travel-map overlay wheel zoom did not animate toward its target.")
+	if test_button != null:
+		var manual_before_focus: Dictionary = canvas.current_view_snapshot().get("map_bounds", {})
+		test_button.pressed.emit()
+		var focused_after_manual: Dictionary = canvas.current_view_snapshot()
+		_check(not bool((focused_after_manual.get("navigation", {}) as Dictionary).get("user_view_active", true)), "Clicking a location did not release the manual camera override.")
+		_check(bool(focused_after_manual.get("selected_focus_zoom_active", false)), "Clicking a location after manual navigation did not restore selected-location focus.")
+		_check(_map_bounds_equal(manual_before_focus, focused_after_manual.get("map_bounds", {})) and bool(focused_after_manual.get("selected_focus_zoom_animating", false)), "Clicking a location after manual navigation snapped instead of animating from the player's current view.")
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
 	press.pressed = true
@@ -127,6 +174,20 @@ func _check_overlay_routes_navigation_events() -> void:
 	release.pressed = false
 	release.position = motion.position
 	_check(controller.handle_holder_gui_input(release), "Travel-map overlay did not finish the camera drag cleanly.")
+	var dragged_navigation: Dictionary = canvas.current_view_snapshot().get("navigation", {})
+	_check(bool(dragged_navigation.get("user_view_active", false)), "A completed map drag did not preserve the player's manual camera view.")
+	var blank_press := InputEventMouseButton.new()
+	blank_press.button_index = MOUSE_BUTTON_LEFT
+	blank_press.pressed = true
+	blank_press.position = Vector2(5.0, 5.0)
+	_check(controller.handle_holder_gui_input(blank_press), "Travel-map overlay did not begin a clean blank-map click.")
+	var blank_release := InputEventMouseButton.new()
+	blank_release.button_index = MOUSE_BUTTON_LEFT
+	blank_release.pressed = false
+	blank_release.position = blank_press.position
+	_check(controller.handle_holder_gui_input(blank_release), "Travel-map overlay did not resolve a clean blank-map click.")
+	var reset_navigation: Dictionary = canvas.current_view_snapshot().get("navigation", {})
+	_check(not bool(reset_navigation.get("user_view_active", true)), "A clean blank-map click did not restore the authored travel-area camera.")
 	holder.queue_free()
 	await process_frame
 
@@ -215,9 +276,14 @@ func _check_run_report_map_fits_missing_final_location() -> void:
 	_check(str(report_map.get("current_node_id", "")) == "missing_final_room", "Run report map did not mark the final location as current.")
 	_check(_node_ids(report_map).has("missing_final_room"), "Run report map dropped the final location when it was missing from source nodes.")
 	_check(bool(report_map.get("fit_all_nodes", false)), "Run report map was not generated in fit-all-locations mode.")
+	_check(str(report_map.get("background_path", "")) == RunReportViewModelScript.RUN_REPORT_MAP_BACKGROUND_PATH and bool(report_map.get("background_fill_canvas", false)), "Run report map did not fill the panel with the live map's geographic background.")
+	var report_positions := {}
 	for node_value in _array(report_map.get("nodes", [])):
-		var position: Dictionary = (node_value as Dictionary).get("position", {})
-		_check(float(position.get("x", 0.0)) >= 0.12 and float(position.get("x", 1.0)) <= 0.88 and float(position.get("y", 0.0)) >= 0.12 and float(position.get("y", 1.0)) <= 0.88, "Run report generation left a location in the cropped edge region.")
+		var node: Dictionary = node_value
+		report_positions[str(node.get("id", ""))] = (node.get("position", {}) as Dictionary).duplicate(true)
+	_check(report_positions.get("bar", {}) == {"x": 0.0, "y": 0.0}, "Run report moved the Bar away from its live-map coordinates.")
+	_check(report_positions.get("casino", {}) == {"x": 1.0, "y": 1.0}, "Run report moved the Casino away from its live-map coordinates.")
+	_check(report_positions.get("missing_final_room", {}) == {"x": 0.55, "y": 0.98}, "Run report moved the recovered final room away from its recorded map coordinates.")
 	var canvas: WorldMapCanvas = WorldMapCanvasScript.new()
 	canvas.size = Vector2(420, 260)
 	root.add_child(canvas)
@@ -228,6 +294,20 @@ func _check_run_report_map_fits_missing_final_location() -> void:
 	for node_id in ["bar", "casino", "missing_final_room"]:
 		_check(marker_ids.has(node_id), "Run report map did not fit/show visited location: %s." % node_id)
 	_check(_array(view.get("visible_route_segments", [])).size() >= 2, "Run report map did not preserve route lines between visited locations.")
+	_check(bool(view.get("background_fills_canvas", false)), "Run report background did not fill the complete initial map panel.")
+	# Exercise both navigation extremes directly. These requests intentionally
+	# exceed the authored 0..1 map border; the camera must clamp while the image
+	# still covers every pixel of the panel.
+	canvas.call("_set_navigation_bounds", Rect2(Vector2(-2.0, -2.0), Vector2(0.28, 0.28)), true)
+	var top_left_view := canvas.current_view_snapshot()
+	var top_left_bounds: Dictionary = top_left_view.get("map_bounds", {})
+	_check(float(top_left_bounds.get("x", -1.0)) >= 0.0 and float(top_left_bounds.get("y", -1.0)) >= 0.0, "Run report camera moved outside the existing top-left map border.")
+	_check(bool(top_left_view.get("background_fills_canvas", false)), "Run report background exposed an empty region at the top-left zoom/pan limit.")
+	canvas.call("_set_navigation_bounds", Rect2(Vector2(2.0, 2.0), Vector2(0.28, 0.28)), true)
+	var bottom_right_view := canvas.current_view_snapshot()
+	var bottom_right_bounds: Dictionary = bottom_right_view.get("map_bounds", {})
+	_check(float(bottom_right_bounds.get("x", 0.0)) + float(bottom_right_bounds.get("width", 0.0)) <= 1.0001 and float(bottom_right_bounds.get("y", 0.0)) + float(bottom_right_bounds.get("height", 0.0)) <= 1.0001, "Run report camera moved outside the existing bottom-right map border.")
+	_check(bool(bottom_right_view.get("background_fills_canvas", false)), "Run report background exposed an empty region at the bottom-right zoom/pan limit.")
 	canvas.queue_free()
 
 
@@ -249,6 +329,17 @@ func _marker_ids(view: Dictionary) -> Array:
 
 func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+
+func _map_bounds_equal(left_value: Variant, right_value: Variant) -> bool:
+	if typeof(left_value) != TYPE_DICTIONARY or typeof(right_value) != TYPE_DICTIONARY:
+		return false
+	var left: Dictionary = left_value
+	var right: Dictionary = right_value
+	return absf(float(left.get("x", 0.0)) - float(right.get("x", 0.0))) <= 0.0005 \
+		and absf(float(left.get("y", 0.0)) - float(right.get("y", 0.0))) <= 0.0005 \
+		and absf(float(left.get("width", 0.0)) - float(right.get("width", 0.0))) <= 0.0005 \
+		and absf(float(left.get("height", 0.0)) - float(right.get("height", 0.0))) <= 0.0005
 
 
 func _check(condition: bool, message: String) -> void:

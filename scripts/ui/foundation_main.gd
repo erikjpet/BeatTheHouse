@@ -49,6 +49,9 @@ const ENVIRONMENT_CANVAS_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_FOCUSED_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_PREVIEW_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC := 16
+const AUTOSAVE_INTERACTION_DEBOUNCE_MSEC := 250
+const AUTOSAVE_GAME_INTERACTION_DEBOUNCE_MSEC := 400
+const AUTOSAVE_MAX_DEFER_MSEC := 1500
 # Environment time is continuous: one in-game hour passes every 40 real
 # seconds while the player is on an active, unpaused run surface.
 const GAME_CLOCK_REAL_SECONDS_PER_GAME_HOUR := 40.0
@@ -62,13 +65,26 @@ const CLOSING_TIME_TALK_EVENT_ID := "dialogue:venue_closing_notice"
 const CLOSING_TIME_TALK_CHOICE_ID := "head_out"
 const TUTORIAL_PAL_DIALOGUE_ID := "tutorial_pal_guidance"
 const TUTORIAL_HEAT_DIALOGUE_NODE := "heat_99"
+const TUTORIAL_DRUNK_COFFEE_DIALOGUE_NODE := "drunk_coffee"
+const TUTORIAL_DRUNK_COFFEE_REPEAT_DIALOGUE_NODE := "drunk_coffee_repeat"
+const TUTORIAL_DRUNK_COFFEE_USED_DIALOGUE_NODE := "drunk_coffee_used"
+const TUTORIAL_HOST_DIALOGUE_ID := "tutorial_host_guidance"
+const TUTORIAL_LINDA_BUY_CHIPS_REMINDER_NODE := "buy_chips_reminder"
+const TUTORIAL_LINDA_CLAIM_CARD_REMINDER_NODE := "claim_card_reminder"
+const TUTORIAL_LINDA_COLLECT_CARD_REMINDER_NODE := "collect_card_reminder"
+const TUTORIAL_GRAND_TABLE_LESSON_ID := "tutorial_enter_grand_table"
+const TUTORIAL_GRAND_TABLE_OBJECT_ID := "game:blackjack"
+const TUTORIAL_CORNER_STORE_PURCHASE_LESSON_IDS := ["tutorial_buy_store_item", "tutorial_buy_remaining_store_item"]
+const TUTORIAL_META_HOME_CHALLENGE_ID := "tutorial_meta_home_handoff"
+const TUTORIAL_META_HOME_CARD_LESSON_ID := "tutorial_meta_home_card"
+const TUTORIAL_META_HOME_CONTAINER_ANCHOR_ID := "tutorial:meta_home_card_container"
 const ENVIRONMENT_RUNTIME_STATE_KEY_CACHE_LIMIT := 64
 const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
 const RESULT_FEEDBACK_HEIGHT := 46.0
 const RESULT_FEEDBACK_MAX_CHARS := 64
-const MAIN_MENU_COLLAPSED_SIZE := Vector2(780, 560)
-const MAIN_MENU_EXPANDED_SIZE := Vector2(940, 380)
+const MAIN_MENU_COLLAPSED_SIZE := Vector2(1200, 680)
+const MAIN_MENU_EXPANDED_SIZE := Vector2(1100, 620)
 const MAIN_MENU_VIEWPORT_MARGIN := Vector2(32, 24)
 const ACCESSIBILITY_BASE_FONT_META := "accessibility_base_font_size"
 const ACCESSIBILITY_BASE_MIN_SIZE_META := "accessibility_base_min_size"
@@ -122,6 +138,7 @@ const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environ
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const FoundationHudViewModelScript := preload("res://scripts/ui/foundation_hud_view_model.gd")
 const FoundationHudBarScript := preload("res://scripts/ui/foundation_hud_bar.gd")
+const HeatGainFeedbackOverlayScript := preload("res://scripts/ui/heat_gain_feedback_overlay.gd")
 const EnvironmentHeaderScript := preload("res://scripts/ui/environment_header.gd")
 const CheatDockScript := preload("res://scripts/ui/cheat_dock.gd")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
@@ -132,6 +149,7 @@ const WorldMapOverlayControllerScript := preload("res://scripts/ui/world_map_ove
 const WagerConfirmationControllerScript := preload("res://scripts/ui/wager_confirmation_controller.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const ItemFoundPopupScript := preload("res://scripts/ui/item_found_popup.gd")
+const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const CoachOverlayScript := preload("res://scripts/ui/coach_overlay.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
@@ -245,10 +263,13 @@ var autosave_slot_id := AUTOSAVE_SLOT
 var pending_autosave := false
 var pending_autosave_status_text := "Autosaved."
 var pending_autosave_after_frame := -1
+var pending_autosave_not_before_msec := 0
+var pending_autosave_first_queued_msec := 0
 var autosave_dirty_generation := 0
 var autosave_inflight_generation := 0
 var autosave_completed_generation := 0
 var autosave_loadable_available := false
+var tutorial_meta_home_handoff_scheduled := false
 
 var start_screen: Control
 var run_screen: Control
@@ -257,9 +278,17 @@ var run_ui_built := false
 var run_ui_build_stage := 0
 var run_ui_build_in_progress := false
 var main_menu_panel: PanelContainer
+var main_menu_logo: TextureRect
 var start_menu_controls: VBoxContainer
 var start_menu_intro: VBoxContainer
 var start_menu_stack: VBoxContainer
+var main_menu_action_row: HBoxContainer
+var run_config_button: Button
+var run_config_panel: PanelContainer
+var run_config_content_stack: VBoxContainer
+var delete_saved_run_button: Button
+var save_delete_confirmation: ConfirmationDialog
+var main_menu_background_environment: Dictionary = {}
 var release_framing_label: Label
 var release_version_label: Label
 var main_menu_background: Control
@@ -337,6 +366,8 @@ var event_choice_popup_panel: PanelContainer
 var event_choice_popup_icon: TextureRect
 var event_choice_popup_title_label: Label
 var event_choice_popup_summary_label: Label
+var event_choice_popup_scroll: ScrollContainer
+var event_choice_popup_content_stack: VBoxContainer
 var event_choice_popup_choices_list: VBoxContainer
 var talk_dock: TalkDock
 var talk_dock_avoid_sync_active := false
@@ -404,6 +435,7 @@ var interactable_object_view_cache_valid := false
 var interactable_object_view_cache_key := ""
 var run_hud_panel: Panel
 var structured_hud: FoundationHudBar
+var heat_gain_feedback_overlay
 var environment_header: EnvironmentHeader
 var cheat_dock: CheatDock
 var visual_panel_container: PanelContainer
@@ -567,6 +599,8 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
 		_invalidate_run_screen_layout()
 		_apply_run_screen_layout()
+		if _event_choice_popup_is_visible():
+			call_deferred("_position_event_choice_popup")
 	elif what == NOTIFICATION_WM_CLOSE_REQUEST and run_state != null and not _is_meta_session():
 		# Window-manager exits are durability boundaries just like the in-game
 		# Exit action. A worker generation is joined and the newest state is
@@ -603,6 +637,8 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_autosave = false
 	pending_autosave_status_text = "Autosaved."
 	pending_autosave_after_frame = -1
+	pending_autosave_not_before_msec = 0
+	pending_autosave_first_queued_msec = 0
 	environment_clock_fractional_minutes = 0.0
 	stored_grand_casino_runtime_last_msec = -100000
 	environment_runtime_state_key_cache.clear()
@@ -626,6 +662,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	var resolved_challenge_config := _challenge_with_meta_home_for_run(resolved_seed, challenge_config) if include_meta_home_modifiers else RunState.normalize_challenge(resolved_seed, challenge_config)
 	run_state = RunState.new()
 	run_state.start_new(resolved_seed, resolved_challenge_config)
+	_bind_run_state_presentation_signals()
 	_configure_coach_for_run()
 	_sync_scratch_ticket_discovery_to_run()
 	_sync_presented_bankroll_to_actual()
@@ -717,22 +754,32 @@ func enter_first_available_game() -> void:
 
 
 # Enters a game through its data-routed GameModule.
-func enter_game(game_id: String, state_key: String = "") -> void:
+func enter_game(game_id: String, state_key: String = "") -> bool:
 	var clean_game_id := game_id.strip_edges()
 	var clean_state_key := state_key.strip_edges()
 	if clean_state_key.is_empty():
 		clean_state_key = clean_game_id
 	var object_id := "game:%s" % clean_state_key
 	if _guard_player_input_route(false, object_id):
-		return
+		return false
+	return _enter_game_after_input_guard(clean_game_id, clean_state_key, object_id)
+
+
+# Opens a game after its originating click has already passed the modal,
+# closing-time, and tutorial-action gate. Environment activation used to run
+# that gate once in activate_interactable_object() and then a second time in
+# enter_game(). A slot click can complete an anchored lesson or refresh a modal
+# at that boundary; the duplicate pass then consumed the click without opening
+# the machine even though the same room's other games remained available.
+func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: String, object_id: String) -> bool:
 	var definition := library.game(clean_game_id)
 	if definition.is_empty():
 		_show_message("Game definition is missing.")
-		return
+		return false
 	var game_module := _game_module_for_id(clean_game_id)
 	if game_module == null:
 		_show_message("This game is not ready here.")
-		return
+		return false
 	if clean_state_key != clean_game_id or _environment_active_game_state_key(run_state.current_environment, clean_game_id) != clean_game_id:
 		_set_active_game_state_key(clean_game_id, clean_state_key)
 	_clear_recent_result_feedback()
@@ -752,6 +799,7 @@ func enter_game(game_id: String, state_key: String = "") -> void:
 	_refresh()
 	_clear_selected_stake()
 	_refresh_stake_input()
+	return current_screen == SCREEN_GAME and current_game == game_module
 
 
 func _enter_grand_casino_duel_surface() -> bool:
@@ -1263,6 +1311,10 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 	if command.is_empty() or not bool(command.get("handled", false)):
 		_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
 		return true
+	if not same_environment:
+		_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
+		_commit_offscreen_environment_runtime_command(environment_data, command, rng, frame_started_usec, schedule_finished_usec, resolve_started_usec, resolve_finished_usec)
+		return true
 	var audio_cue := str(command.get("audio_cue", ""))
 	if not audio_cue.is_empty():
 		_play_environment_audio_cue(audio_cue, float(command.get("audio_cue_volume_db", -1.0)))
@@ -1384,11 +1436,16 @@ func _environment_runtime_result_receipt(result: Dictionary) -> Dictionary:
 
 func _advance_grand_casino_stored_main_floor_slot_runtime(now_msec: int) -> bool:
 	var current_archetype_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
-	if current_archetype_id == RunState.GRAND_CASINO_ARCHETYPE_ID or not RunState.GRAND_CASINO_ARCHETYPE_IDS.has(current_archetype_id):
+	# The main-floor cabinets remain physically active while the player uses the
+	# Cage or High Limit Room. Every other destination pauses their autoplay.
+	if not [
+		RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID,
+		RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID,
+	].has(current_archetype_id):
 		return false
 	if OS.has_feature("web") and now_msec - stored_grand_casino_runtime_last_msec < WEB_STORED_GRAND_CASINO_RUNTIME_INTERVAL_MSEC:
 		return false
-	var main_floor := run_state.grand_casino_room_environment(RunState.GRAND_CASINO_ARCHETYPE_ID)
+	var main_floor := run_state.peek_grand_casino_room_environment(RunState.GRAND_CASINO_ARCHETYPE_ID)
 	var main_floor_slot_id := _main_floor_slot_game_id()
 	if main_floor_slot_id.is_empty() or main_floor.is_empty() or not _string_array(main_floor.get("game_ids", [])).has(main_floor_slot_id):
 		return false
@@ -1397,6 +1454,77 @@ func _advance_grand_casino_stored_main_floor_slot_runtime(now_msec: int) -> bool
 	if scanned:
 		run_state.store_grand_casino_room_environment(main_floor)
 	return scanned
+
+
+func _commit_offscreen_environment_runtime_command(_environment_data: Dictionary, command: Dictionary, rng: RngStream, frame_started_usec: int, schedule_finished_usec: int, resolve_started_usec: int, resolve_finished_usec: int) -> void:
+	var result_value: Variant = command.get("result", {})
+	var result: Dictionary = result_value as Dictionary if typeof(result_value) == TYPE_DICTIONARY else {}
+	if result.is_empty():
+		return
+	var commit_started_usec := Time.get_ticks_usec()
+	if bool(result.get("ok", false)):
+		_apply_offscreen_slot_result(result, rng)
+		_evaluate_run_terminal_state()
+	# Routine remote spins must not invalidate or rebuild the player's current
+	# environment snapshot. Only a feature that needs attention crosses rooms.
+	if bool(command.get("attention", false)) or bool(result.get("slot_pending_feature", false)):
+		last_environment_runtime_result = _environment_runtime_result_receipt(result)
+	# Offscreen spins have no surface state to checkpoint. Queueing directly
+	# coalesces all three cabinets into one async save without touching the frame.
+	_queue_pending_autosave("Autosaved.", 1)
+	environment_runtime_last_timing_usec = {
+		"schedule": schedule_finished_usec - frame_started_usec,
+		"resolve": resolve_finished_usec - resolve_started_usec,
+		"commit": Time.get_ticks_usec() - commit_started_usec,
+		"autosave_prepare": 0,
+		"total": Time.get_ticks_usec() - frame_started_usec,
+	}
+
+
+func _apply_offscreen_slot_result(result: Dictionary, rng: RngStream) -> void:
+	var deltas_value: Variant = result.get("deltas", {})
+	var deltas: Dictionary = (deltas_value as Dictionary).duplicate(false) if typeof(deltas_value) == TYPE_DICTIONARY else {}
+	deltas = run_state.route_grand_casino_game_currency(result, deltas)
+	var bankroll_delta := int(deltas.get("bankroll_delta", 0))
+	if bankroll_delta != 0:
+		run_state.change_bankroll(bankroll_delta)
+	var chips_delta := int(deltas.get("chips_delta", 0))
+	if chips_delta != 0:
+		run_state.change_grand_casino_chips(chips_delta)
+	if rng != null:
+		run_state.save_rng(rng)
+	# Keep one bounded aggregate instead of expanding global story/profile graphs
+	# for every invisible spin. Per-cabinet state remains the authoritative
+	# detailed ledger (spin count, coin in/out, latest outcome and feature).
+	var stats_value: Variant = run_state.narrative_flags.get("offscreen_slot_autoplay_stats", {})
+	var stats: Dictionary = (stats_value as Dictionary).duplicate(false) if typeof(stats_value) == TYPE_DICTIONARY else {}
+	stats["spins"] = maxi(0, int(stats.get("spins", 0))) + 1
+	stats["net"] = int(stats.get("net", 0)) + int(result.get("cash_equivalent_delta", chips_delta if chips_delta != 0 else bankroll_delta))
+	stats["wins"] = maxi(0, int(stats.get("wins", 0))) + (1 if bool(result.get("won", false)) else 0)
+	run_state.narrative_flags["offscreen_slot_autoplay_stats"] = stats
+	var profile_games_value: Variant = run_state.narrative_flags.get("profile_games_played", {})
+	var profile_games: Dictionary = (profile_games_value as Dictionary).duplicate(false) if typeof(profile_games_value) == TYPE_DICTIONARY else {}
+	var result_game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
+	if not result_game_id.is_empty():
+		profile_games[result_game_id] = maxi(0, int(profile_games.get(result_game_id, 0))) + 1
+	run_state.narrative_flags["profile_games_played"] = profile_games
+	var cash_delta := int(result.get("cash_equivalent_delta", chips_delta if chips_delta != 0 else bankroll_delta))
+	if cash_delta > 0:
+		run_state.narrative_flags["profile_bankroll_won"] = maxi(0, int(run_state.narrative_flags.get("profile_bankroll_won", 0))) + cash_delta
+		run_state.narrative_flags["profile_biggest_single_win"] = maxi(int(run_state.narrative_flags.get("profile_biggest_single_win", 0)), cash_delta)
+	elif cash_delta < 0:
+		run_state.narrative_flags["profile_bankroll_lost"] = maxi(0, int(run_state.narrative_flags.get("profile_bankroll_lost", 0))) + absi(cash_delta)
+	if str(result.get("environment_archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID:
+		run_state.narrative_flags["grand_casino_games_played"] = maxi(0, int(run_state.narrative_flags.get("grand_casino_games_played", 0))) + 1
+		var entry_money := int(run_state.narrative_flags.get("grand_casino_entry_bankroll", run_state.grand_casino_total_money()))
+		run_state.narrative_flags["grand_casino_net_winnings"] = run_state.grand_casino_total_money() - entry_money
+		run_state.narrative_flags["grand_casino_max_heat"] = maxi(int(run_state.narrative_flags.get("grand_casino_max_heat", 0)), run_state.suspicion_level())
+	if bool(result.get("slot_feature_triggered", false)):
+		var story_value: Variant = deltas.get("story_log", [])
+		if typeof(story_value) == TYPE_ARRAY:
+			for entry_value in story_value as Array:
+				if typeof(entry_value) == TYPE_DICTIONARY:
+					run_state.log_story(entry_value as Dictionary)
 
 
 func _main_floor_slot_game_id() -> String:
@@ -1624,9 +1752,15 @@ func _current_drunk_time_scale() -> float:
 
 func _apply_game_surface_time_fields(ui_state: Dictionary, real_time_msec: int = -1) -> Dictionary:
 	var now_msec := _environment_simulation_time_msec() if real_time_msec < 0 else real_time_msec
+	var presentation_msec := now_msec
+	if game_surface_canvas != null and current_game != null:
+		var rendered_surface := game_surface_canvas.realtime_surface_state()
+		if str(rendered_surface.get("game_id", "")) == current_game.get_id():
+			presentation_msec = maxi(now_msec, game_surface_canvas.surface_presentation_time_msec())
 	var time_scale := _current_drunk_time_scale()
 	var speed_percent := clampi(int(round(time_scale * 100.0)), int(round(RunState.DRUNK_TIME_SCALE_MIN * 100.0)), 100)
 	ui_state["surface_time_msec"] = now_msec
+	ui_state["surface_presentation_time_msec"] = presentation_msec
 	ui_state["drunk_time_scale"] = time_scale
 	ui_state["drunk_time_scale_percent"] = speed_percent
 	ui_state["drunk_world_speed_percent"] = speed_percent
@@ -1972,6 +2106,13 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 		run_state.complete_triggered_event_resolution(event_id)
 	if resolving_talk and run_state != null:
 		run_state.complete_talk_event_resolution(event_id)
+	# Pal may explain debt only after the player has seen and resolved the actual
+	# family offer. Debt itself is applied slightly earlier inside EventModule,
+	# so this explicit boundary prevents the guide from jumping ahead of the call.
+	var resolved_event_deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	var resolved_event_flags: Dictionary = resolved_event_deltas.get("flags_set", {}) if typeof(resolved_event_deltas.get("flags_set", {})) == TYPE_DICTIONARY else {}
+	if run_state != null and run_state.is_tutorial_run() and bool(result.get("ok", false)) and bool(resolved_event_flags.get("brother_in_law_loan_used", false)):
+		run_state.narrative_flags["tutorial_family_loan_dialogue_resolved"] = true
 	if had_event_popup and run_state != null:
 		run_state.event_cadence_note_modal_closed()
 	_hide_event_choice_popup()
@@ -2601,7 +2742,7 @@ func _show_triggered_event_popup(entry: Dictionary) -> bool:
 		event_choice_popup_title_label.text = str(event_option.get("display_name", event_id))
 	if event_choice_popup_summary_label != null:
 		event_choice_popup_summary_label.text = str(event_option.get("summary", "Something interrupts the room."))
-	_clear(event_choice_popup_choices_list)
+	_clear_event_choice_popup_choices()
 	for choice_value in _copy_array(event_option.get("choices", [])):
 		if typeof(choice_value) != TYPE_DICTIONARY:
 			continue
@@ -2654,9 +2795,14 @@ func _refresh_talk_dock() -> void:
 		talk_dock.clear_entry()
 		return
 	var entry_speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
+	var entry_context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+	var summary_override := str(entry_context.get("summary_override", "")).strip_edges()
 	var voice_line := str(entry_speaker.get("voice_line", "")).strip_edges()
 	var authored_guide_dialogue := bool(option.get("authored_guide_dialogue", false)) or (dialogue_id == "linda_cage_services" and run_state.is_tutorial_run())
-	if not voice_line.is_empty() and not authored_guide_dialogue:
+	# Dynamic dialogue summaries can contain exact run-state information such as
+	# Vince's next scratch-machine restock. Never replace that information with
+	# a generic randomized character bark.
+	if not voice_line.is_empty() and not authored_guide_dialogue and summary_override.is_empty():
 		option = option.duplicate(true)
 		var voice_name := str(entry_speaker.get("speaking_character_name", "")).strip_edges()
 		var spoken_summary := "%s: \"%s\"" % [voice_name, voice_line] if not voice_name.is_empty() else voice_line
@@ -2766,11 +2912,16 @@ func start_dialogue(dialogue_id: String, source_data: Dictionary = {}) -> bool:
 	return true
 
 
-func _enqueue_tutorial_dialogue_without_refresh(dialogue_id: String, node_id: String, event_id: String, source: String, speaker_name: String = "") -> bool:
+func _enqueue_tutorial_dialogue_without_refresh(dialogue_id: String, node_id: String, event_id: String, source: String, speaker_name: String = "", advance_existing: bool = false) -> bool:
 	if run_state == null or library == null or not run_state.is_tutorial_run():
 		return false
+	var pending_event := run_state.pending_talk_event(event_id)
+	if advance_existing and not pending_event.is_empty():
+		if str(pending_event.get("dialogue_id", "")) != dialogue_id:
+			return false
+		return run_state.update_pending_talk_dialogue_node(event_id, node_id)
 	var dialogue := library.dialogue(dialogue_id)
-	if dialogue.is_empty() or run_state.pending_talk_event(event_id).size() > 0:
+	if dialogue.is_empty() or not pending_event.is_empty():
 		return false
 	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
 	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), dialogue_id, str(speaker.get("voice_line_key", "")))
@@ -2921,6 +3072,8 @@ func _dialogue_choice_views(dialogue_id: String, node: Dictionary) -> Array:
 			if not service_status.is_empty():
 				option_choice["enabled"] = bool(service_status.get("enabled", true))
 				option_choice["disabled_reason"] = str(service_status.get("reason", ""))
+				if not bool(option_choice.get("enabled", true)) and bool(choice.get("hide_when_unmet", false)):
+					continue
 		elif dialogue_id == "sal_starter_offer" and choice_id == "sal_starter_sell_back":
 			var pending_offer := meta_collection_service.pending_starter_buyback() if meta_collection_service != null else {}
 			option_choice["label"] = "Sell it back · %d gold" % int(pending_offer.get("offer_price", 0))
@@ -3014,6 +3167,9 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 		if not source_event_id.is_empty():
 			run_state.resolve_event(source_event_id)
 		run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
+		if (dialogue_id == "linda_cage_services" and choice_id == "leave_counter") \
+				or (dialogue_id == "tutorial_linda_bronze_finish" and choice_id == "walk_away_card"):
+			_queue_tutorial_linda_exit_guardrail()
 		_notify_tutorial_guide_dialogue_finished(entry, choice_definition, true)
 		_show_message("")
 		_refresh_talk_dock()
@@ -3205,6 +3361,8 @@ func _ignore_talk_event(event_id: String, reason: String) -> bool:
 		return false
 	run_state.complete_talk_event_resolution(event_id)
 	_apply_talk_ignore_penalty([entry], reason)
+	if str(entry.get("dialogue_id", "")) in ["linda_cage_services", "tutorial_linda_bronze_finish"]:
+		_queue_tutorial_linda_exit_guardrail()
 	_refresh_talk_dock()
 	_show_message(_talk_ignore_message([entry], reason))
 	_autosave_foundation_run("Autosaved.")
@@ -3328,7 +3486,7 @@ func select_item_offer(item_id: String) -> bool:
 	selected_item_offer_price = int(offer.get("price", 0))
 	selected_action_category = ACTION_CATEGORY_ITEMS
 	_set_current_screen(SCREEN_ITEMS)
-	focus_interactable_object("item:%s" % selected_item_offer_id)
+	focus_interactable_object(str(offer.get("object_id", "item:%s" % selected_item_offer_id)))
 	_show_message("Selected item: %s." % selected_item_offer_label)
 	_refresh_after_environment_selection()
 	return true
@@ -3667,6 +3825,7 @@ func _use_global_active_item(item_id: String, detail: Dictionary) -> bool:
 	_show_message(message)
 	_set_current_screen(SCREEN_RESULT)
 	_advance_alcohol_absorption()
+	_queue_tutorial_coffee_use_acknowledgement(item_id)
 	_autosave_foundation_run("Autosaved.")
 	_apply_post_action_environment_interrupt("active_item")
 	_refresh()
@@ -3714,7 +3873,7 @@ func _show_active_item_confirmation_popup(item: Dictionary) -> void:
 		event_choice_popup_title_label.text = "Use %s" % display_name
 	if event_choice_popup_summary_label != null:
 		event_choice_popup_summary_label.text = summary
-	_clear(event_choice_popup_choices_list)
+	_clear_event_choice_popup_choices()
 	var impact := "Toggles this item." if mode == "toggle" else "Consumes this item." if mode == "consumable" else "Uses this item."
 	_add_wager_confirmation_card("Use Item", "Activate %s now." % display_name, impact, Callable(self, "confirm_pending_active_item_use"), true)
 	_add_wager_confirmation_card("Cancel", "Keep the item ready.", "No change.", Callable(self, "cancel_pending_active_item_use"), false)
@@ -4132,6 +4291,9 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 		pending_autosave = autosave_dirty_generation > requested_generation
 		pending_autosave_status_text = "Autosaved."
 		pending_autosave_after_frame = Engine.get_process_frames() + 1 if pending_autosave else -1
+		if not pending_autosave:
+			pending_autosave_not_before_msec = 0
+			pending_autosave_first_queued_msec = 0
 		save_status_message = status_text if synchronous else "Autosave writing."
 		if save_status_label != null:
 			save_status_label.text = _save_status_text()
@@ -4153,6 +4315,8 @@ func _flush_pending_autosave_if_ready() -> void:
 		return
 	if _game_surface_autosave_blocked():
 		return
+	if pending_autosave_not_before_msec > 0 and Time.get_ticks_msec() < pending_autosave_not_before_msec:
+		return
 	_write_foundation_run_save(pending_autosave_status_text)
 
 
@@ -4171,6 +4335,8 @@ func _poll_async_foundation_save() -> void:
 			pending_autosave_after_frame = Engine.get_process_frames() + 1
 		else:
 			save_status_message = "Autosaved."
+			pending_autosave_not_before_msec = 0
+			pending_autosave_first_queued_msec = 0
 	else:
 		autosave_inflight_generation = 0
 		save_status_message = "Autosave failed."
@@ -4181,10 +4347,20 @@ func _poll_async_foundation_save() -> void:
 
 
 func _queue_pending_autosave(status_text: String, defer_frames: int) -> void:
+	var now_msec := Time.get_ticks_msec()
+	if not pending_autosave or pending_autosave_first_queued_msec <= 0:
+		pending_autosave_first_queued_msec = now_msec
 	autosave_dirty_generation += 1
 	pending_autosave = true
 	pending_autosave_status_text = status_text
 	pending_autosave_after_frame = maxi(pending_autosave_after_frame, Engine.get_process_frames() + maxi(0, defer_frames))
+	# A late-run generation can require tens of milliseconds of worker CPU even
+	# though capture itself is asynchronous. Giving rapid table actions a short
+	# quiet window coalesces them instead of making serialization contend with
+	# input, animation, and audio after every click.
+	var debounce_msec := AUTOSAVE_GAME_INTERACTION_DEBOUNCE_MSEC if current_screen == SCREEN_GAME else AUTOSAVE_INTERACTION_DEBOUNCE_MSEC
+	var max_deadline_msec := pending_autosave_first_queued_msec + AUTOSAVE_MAX_DEFER_MSEC
+	pending_autosave_not_before_msec = mini(now_msec + debounce_msec, max_deadline_msec)
 	save_status_message = "Autosave pending."
 	# Async generation state is player-visible HUD state. Keep the rendered label
 	# synchronized at the mutation boundary so snapshots and the actual frame can
@@ -4244,12 +4420,15 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	pending_autosave = false
 	pending_autosave_status_text = "Autosaved."
 	pending_autosave_after_frame = -1
+	pending_autosave_not_before_msec = 0
+	pending_autosave_first_queued_msec = 0
 	environment_clock_fractional_minutes = 0.0
 	run_item_icon_texture_cache.clear()
 	environment_runtime_state_key_cache.clear()
 	environment_runtime_active_keys_scratch.clear()
 	environment_runtime_scheduler.clear()
 	run_state = loaded
+	_bind_run_state_presentation_signals()
 	_configure_coach_for_run()
 	_sync_presented_bankroll_to_actual()
 	dev_game_test_mode = false
@@ -4545,6 +4724,11 @@ func _linda_cage_choice_status(choice_id: String) -> Dictionary:
 			return {"enabled": run_state.grand_casino_chips > 0, "reason": "No chips to redeem."}
 		"cage_claim_card":
 			return {"enabled": bool(card.get("can_claim", false)), "reason": str(card.get("review_detail", "No tier is ready."))}
+		"cage_finish_tutorial_card":
+			var can_finish := run_state.is_tutorial_run() \
+				and str(run_state.demo_objective_status().get("players_card_tier", "")) == RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE \
+				and not bool(run_state.narrative_flags.get("demo_victory", false))
+			return {"enabled": can_finish, "reason": "Linda has not issued a tutorial card to collect."}
 		"cage_comp_drink":
 			var drink_status := run_state.grand_casino_players_card_comp_result("drink")
 			return {"enabled": bool(drink_status.get("ok", false)), "reason": str(drink_status.get("message", "No drink comp is ready."))}
@@ -4578,6 +4762,10 @@ func _resolve_linda_cage_service_choice(entry: Dictionary, choice_id: String) ->
 			run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
 			_refresh_talk_dock()
 			_complete_cage_players_card_review()
+		"cage_finish_tutorial_card":
+			run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
+			_refresh_talk_dock()
+			_resume_tutorial_linda_bronze_finish()
 		"cage_comp_drink":
 			_use_cage_players_card_comp("drink")
 		"cage_comp_suite":
@@ -4590,6 +4778,53 @@ func _resolve_linda_cage_service_choice(entry: Dictionary, choice_id: String) ->
 			_start_linda_ambient_dialogue({"object_id": "casino_fixture:cage_counter"})
 	_refresh_talk_dock()
 	_refresh()
+
+
+func _resume_tutorial_linda_bronze_finish() -> bool:
+	if run_state == null or not run_state.is_tutorial_run() \
+			or bool(run_state.narrative_flags.get("demo_victory", false)) \
+			or str(run_state.demo_objective_status().get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE:
+		return false
+	return start_dialogue("tutorial_linda_bronze_finish", {
+		"event_id": "dialogue:tutorial_linda_bronze_finish",
+		"source": "tutorial_bronze_review_resume",
+		"source_object_id": "casino_fixture:cage_counter",
+	})
+
+
+func _queue_tutorial_linda_exit_guardrail() -> bool:
+	var node_id := _tutorial_linda_exit_guardrail_node()
+	if node_id.is_empty():
+		return false
+	var serial := maxi(0, int(run_state.narrative_flags.get("tutorial_linda_exit_guardrail_serial", 0))) + 1
+	var queued := _enqueue_tutorial_dialogue_without_refresh(
+		TUTORIAL_HOST_DIALOGUE_ID,
+		node_id,
+		"tutorial_intervention:linda_exit:%d" % serial,
+		"tutorial_linda_exit_guardrail"
+	)
+	if queued:
+		run_state.narrative_flags["tutorial_linda_exit_guardrail_serial"] = serial
+	return queued
+
+
+func _tutorial_linda_exit_guardrail_node() -> String:
+	if run_state == null or not run_state.is_tutorial_run():
+		return ""
+	var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+	var objective := run_state.demo_objective_status()
+	if str(objective.get("players_card_tier", "")) == RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE \
+			and not bool(run_state.narrative_flags.get("demo_victory", false)):
+		return TUTORIAL_LINDA_COLLECT_CARD_REMINDER_NODE
+	if bool(completed.get("tutorial_reopen_linda", false)) \
+			and not bool(completed.get("tutorial_claim_bronze", false)) \
+			and bool(objective.get("players_card_ready_to_claim", false)):
+		return TUTORIAL_LINDA_CLAIM_CARD_REMINDER_NODE
+	if bool(completed.get("tutorial_open_linda", false)) \
+			and not bool(completed.get("tutorial_buy_cage_chips", false)) \
+			and run_state.grand_casino_chips <= 0:
+		return TUTORIAL_LINDA_BUY_CHIPS_REMINDER_NODE
+	return ""
 
 
 func _travel_result(target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary = {}, route_risk: Dictionary = {}) -> Dictionary:
@@ -4832,23 +5067,66 @@ func _refresh_run_action_service() -> void:
 
 
 func _main_menu_background_environment_id() -> String:
+	if not main_menu_background_environment.is_empty():
+		return str(main_menu_background_environment.get("id", ""))
+	main_menu_background_environment = _select_main_menu_background_environment()
+	return str(main_menu_background_environment.get("id", ""))
+
+
+func _select_main_menu_background_environment() -> Dictionary:
 	if library == null:
-		return ""
+		return {}
+	var candidates: Array = []
+	var included_asset_paths: Dictionary = {}
 	for archetype in library.environment_archetypes:
 		if typeof(archetype) != TYPE_DICTIONARY:
 			continue
 		var data: Dictionary = archetype
-		if bool(data.get("is_start", false)) and _string_array(data.get("moods", [])).has("wet"):
-			return str(data.get("id", ""))
-	for archetype in library.environment_archetypes:
-		if typeof(archetype) != TYPE_DICTIONARY:
+		var archetype_id := str(data.get("id", "")).strip_edges()
+		var asset_path := str(_copy_dict(data.get("visual_context", {})).get("asset_path", "")).strip_edges()
+		if archetype_id.is_empty() or asset_path.is_empty():
 			continue
-		var data: Dictionary = archetype
-		if bool(data.get("is_start", false)):
-			return str(data.get("id", ""))
-	if not library.environment_archetypes.is_empty() and typeof(library.environment_archetypes[0]) == TYPE_DICTIONARY:
-		return str((library.environment_archetypes[0] as Dictionary).get("id", ""))
-	return ""
+		# Several room variants deliberately share one fallback image. Only include
+		# the authored owner once so a menu roll always names and animates the room
+		# that actually appears in the texture.
+		if included_asset_paths.has(asset_path):
+			continue
+		included_asset_paths[asset_path] = true
+		candidates.append(data.duplicate(true))
+	if candidates.is_empty():
+		return {}
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(Time.get_unix_time_from_system() * 1000.0) ^ Time.get_ticks_usec()
+	return (candidates[rng.randi_range(0, candidates.size() - 1)] as Dictionary).duplicate(true)
+
+
+func _reroll_main_menu_background() -> void:
+	main_menu_background_environment = _select_main_menu_background_environment()
+	if main_menu_background == null or main_menu_background_environment.is_empty():
+		return
+	var background_snapshot := main_menu_background_environment.duplicate(true)
+	background_snapshot["archetype_id"] = str(background_snapshot.get("id", ""))
+	background_snapshot["display_name"] = str(background_snapshot.get("display_name", background_snapshot.get("name", background_snapshot.get("id", ""))))
+	background_snapshot["reduce_motion"] = _reduce_motion_enabled()
+	var asset_path := str(_copy_dict(background_snapshot.get("visual_context", {})).get("asset_path", "")).strip_edges()
+	var background_asset := load(asset_path) as Texture2D if not asset_path.is_empty() else null
+	main_menu_background.set("background_texture", background_asset)
+	main_menu_background.set("use_external_background", background_asset != null)
+	main_menu_background.render_environment_snapshot(background_snapshot)
+	main_menu_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	call_deferred("_fit_main_menu_background_to_viewport")
+
+
+func _fit_main_menu_background_to_viewport() -> void:
+	if main_menu_background == null or main_menu_background.size.x <= 0.0 or main_menu_background.size.y <= 0.0:
+		return
+	# Match the in-run room camera exactly. Cover-scaling cropped and magnified
+	# the production PNGs, making the menu look like a different, busier scene.
+	main_menu_background.set("camera_zoom", 1.0)
+	main_menu_background.set("target_camera_zoom", 1.0)
+	main_menu_background.set("camera_offset", Vector2.ZERO)
+	main_menu_background.set("target_camera_offset", Vector2.ZERO)
+	main_menu_background.queue_redraw()
 
 
 func _initialize_user_settings() -> void:
@@ -5043,6 +5321,7 @@ func _ensure_main_menu_background_built() -> void:
 	var menu_environment_id := _main_menu_background_environment_id()
 	if not menu_environment_id.is_empty():
 		main_menu_background.set("environment_id", menu_environment_id)
+	_reroll_main_menu_background()
 	start_screen.add_child(main_menu_background)
 	# PixelSceneCanvas initializes itself as an interactive room. The decorative
 	# menu preview must remain click-through after that ready hook has run.
@@ -5055,12 +5334,12 @@ func _defer_start_menu_secondary_panels() -> bool:
 
 
 func _ensure_start_menu_config_panels_built() -> void:
-	if start_menu_controls == null:
+	if run_config_content_stack == null:
 		return
 	if content_group_panel == null:
-		_build_content_group_controls(start_menu_controls)
+		_build_content_group_controls(run_config_content_stack)
 	if challenge_panel == null:
-		_build_challenge_controls(start_menu_controls)
+		_build_challenge_controls(run_config_content_stack)
 	_apply_accessibility_settings()
 
 
@@ -5208,6 +5487,10 @@ func _build_challenge_controls(parent: VBoxContainer) -> void:
 func _apply_main_menu_panel_size(size: Vector2) -> void:
 	if main_menu_panel == null:
 		return
+	# The redesigned menu is a transparent full-viewport composition. Legacy
+	# secondary pages still call this helper, but must not recreate the old card.
+	if main_menu_logo != null:
+		return
 	var viewport_size := Vector2(
 		float(ProjectSettings.get_setting("display/window/size/viewport_width", 1280)),
 		float(ProjectSettings.get_setting("display/window/size/viewport_height", 720))
@@ -5254,11 +5537,9 @@ func open_content_group_config() -> void:
 		career_stats_screen.visible = false
 	_ensure_menu_content_groups_initialized()
 	_refresh_content_group_controls()
-	if start_menu_intro != null:
-		start_menu_intro.visible = false
-	_set_start_menu_action_controls_visible(false)
+	open_run_configuration()
+	_set_run_config_base_controls_visible(false)
 	content_group_panel.visible = true
-	_apply_main_menu_panel_size(MAIN_MENU_EXPANDED_SIZE)
 
 
 func close_content_group_config() -> void:
@@ -5266,10 +5547,7 @@ func close_content_group_config() -> void:
 		content_group_panel.visible = false
 	if challenge_panel != null and challenge_panel.visible:
 		return
-	if start_menu_intro != null:
-		start_menu_intro.visible = true
-	_set_start_menu_action_controls_visible(true)
-	_apply_main_menu_panel_size(MAIN_MENU_COLLAPSED_SIZE)
+	_set_run_config_base_controls_visible(true)
 
 
 func toggle_challenge_selection() -> void:
@@ -5292,11 +5570,9 @@ func open_challenge_selection() -> void:
 		career_stats_screen.visible = false
 	_rebuild_challenge_options()
 	_refresh_challenge_controls()
-	if start_menu_intro != null:
-		start_menu_intro.visible = false
-	_set_start_menu_action_controls_visible(false)
+	open_run_configuration()
+	_set_run_config_base_controls_visible(false)
 	challenge_panel.visible = true
-	_apply_main_menu_panel_size(MAIN_MENU_EXPANDED_SIZE)
 
 
 func close_challenge_selection() -> void:
@@ -5304,10 +5580,46 @@ func close_challenge_selection() -> void:
 		challenge_panel.visible = false
 	if content_group_panel != null and content_group_panel.visible:
 		return
+	_set_run_config_base_controls_visible(true)
+
+
+func toggle_run_configuration() -> void:
+	if run_config_panel != null and run_config_panel.visible:
+		close_run_configuration()
+	else:
+		open_run_configuration()
+
+
+func open_run_configuration() -> void:
+	_ensure_start_menu_config_panels_built()
+	if run_config_panel == null:
+		return
+	if start_menu_intro != null:
+		start_menu_intro.visible = false
+	_set_start_menu_action_controls_visible(false)
+	run_config_panel.visible = true
+	_set_run_config_base_controls_visible(true)
+
+
+func close_run_configuration() -> void:
+	if content_group_panel != null:
+		content_group_panel.visible = false
+	if challenge_panel != null:
+		challenge_panel.visible = false
+	if run_config_panel != null:
+		run_config_panel.visible = false
 	if start_menu_intro != null:
 		start_menu_intro.visible = true
 	_set_start_menu_action_controls_visible(true)
-	_apply_main_menu_panel_size(MAIN_MENU_COLLAPSED_SIZE)
+
+
+func _set_run_config_base_controls_visible(is_visible: bool) -> void:
+	if run_config_content_stack == null:
+		return
+	for child in run_config_content_stack.get_children():
+		if child == content_group_panel or child == challenge_panel:
+			continue
+		child.visible = is_visible
 
 
 func _set_start_menu_action_controls_visible(is_visible: bool) -> void:
@@ -5638,6 +5950,7 @@ func _build_settings_overlay() -> void:
 	settings_menu.back_requested.connect(close_settings_menu)
 	settings_menu.settings_applied.connect(_on_settings_applied)
 	settings_menu.reset_tips_requested.connect(_on_reset_coach_tips_requested)
+	settings_menu.game_library_requested.connect(_on_settings_game_library_requested)
 	panel.add_child(settings_menu)
 
 
@@ -5654,16 +5967,23 @@ func _build_event_choice_popup_overlay() -> void:
 	event_choice_popup_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	event_choice_popup_overlay.add_child(event_choice_popup_panel)
 
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 7)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	event_choice_popup_panel.add_child(stack)
+	event_choice_popup_scroll = ScrollContainer.new()
+	event_choice_popup_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	event_choice_popup_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	event_choice_popup_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	event_choice_popup_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	event_choice_popup_panel.add_child(event_choice_popup_scroll)
+
+	event_choice_popup_content_stack = VBoxContainer.new()
+	event_choice_popup_content_stack.add_theme_constant_override("separation", 7)
+	event_choice_popup_content_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	event_choice_popup_content_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	event_choice_popup_scroll.add_child(event_choice_popup_content_stack)
 
 	var title_zone := HBoxContainer.new()
 	title_zone.add_theme_constant_override("separation", VisualStyle.SPACE_3)
 	title_zone.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.add_child(title_zone)
+	event_choice_popup_content_stack.add_child(title_zone)
 	event_choice_popup_icon = TextureRect.new()
 	event_choice_popup_icon.texture = UIArtScript.icon("alert")
 	event_choice_popup_icon.custom_minimum_size = VisualStyle.ICON_MEDIUM
@@ -5684,24 +6004,16 @@ func _build_event_choice_popup_overlay() -> void:
 	event_choice_popup_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	event_choice_popup_summary_label.max_lines_visible = EVENT_CHOICE_SUMMARY_MAX_LINES
 	event_choice_popup_summary_label.clip_text = true
-	stack.add_child(event_choice_popup_summary_label)
+	event_choice_popup_content_stack.add_child(event_choice_popup_summary_label)
 
 	var separator := HSeparator.new()
-	stack.add_child(separator)
-
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.custom_minimum_size = Vector2(0, 130)
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stack.add_child(scroll)
+	event_choice_popup_content_stack.add_child(separator)
 
 	event_choice_popup_choices_list = VBoxContainer.new()
 	event_choice_popup_choices_list.add_theme_constant_override("separation", 8)
 	event_choice_popup_choices_list.custom_minimum_size.x = EVENT_CHOICE_POPUP_BASE_SIZE.x - float(VisualStyle.SPACE_6 * 2)
 	event_choice_popup_choices_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(event_choice_popup_choices_list)
+	event_choice_popup_content_stack.add_child(event_choice_popup_choices_list)
 
 
 func _build_talk_dock() -> void:
@@ -6013,8 +6325,8 @@ func _build_world_map_overlay() -> void:
 
 	world_map_detail_popup = _panel_container(Color("#070915", 0.97), VisualStyle.CYAN_2)
 	world_map_detail_popup.name = "WorldMapDetailPopup"
-	world_map_detail_popup.custom_minimum_size = Vector2(276, 150)
-	world_map_detail_popup.size = Vector2(276, 150)
+	world_map_detail_popup.custom_minimum_size = Vector2(340, 0)
+	world_map_detail_popup.size = Vector2(340, 0)
 	world_map_detail_popup.mouse_filter = Control.MOUSE_FILTER_STOP
 	world_map_detail_popup.visible = false
 	world_map_holder.add_child(world_map_detail_popup)
@@ -6025,16 +6337,15 @@ func _build_world_map_overlay() -> void:
 
 	world_map_badge_slot = VBoxContainer.new()
 	world_map_badge_slot.add_theme_constant_override("separation", 4)
-	world_map_badge_slot.custom_minimum_size = Vector2(472, 0)
 	world_map_badge_slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	world_map_badge_slot.visible = false
 	popup_stack.add_child(world_map_badge_slot)
 
 	world_map_detail_label = _label("Select a revealed stop.", 13)
-	world_map_detail_label.custom_minimum_size = Vector2(472, 182)
+	world_map_detail_label.custom_minimum_size = Vector2(316, 84)
 	world_map_detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	world_map_detail_label.max_lines_visible = 6
-	world_map_detail_label.clip_text = true
+	world_map_detail_label.max_lines_visible = 8
+	world_map_detail_label.clip_text = false
 	world_map_detail_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	popup_stack.add_child(world_map_detail_label)
 
@@ -6311,6 +6622,35 @@ func _game_test_spin_group(label_text: String, target_id: String) -> VBoxContain
 
 func _build_run_screen() -> void:
 	FoundationScreenBuilderScript.build_run_screen(self)
+	heat_gain_feedback_overlay = HeatGainFeedbackOverlayScript.new()
+	heat_gain_feedback_overlay.name = "HeatGainFeedbackOverlay"
+	heat_gain_feedback_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	heat_gain_feedback_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	run_screen.add_child(heat_gain_feedback_overlay)
+
+
+func _bind_run_state_presentation_signals() -> void:
+	if run_state == null:
+		return
+	var heat_callback := Callable(self, "_on_run_state_heat_changed")
+	if not run_state.heat_changed.is_connected(heat_callback):
+		run_state.heat_changed.connect(heat_callback)
+	if heat_gain_feedback_overlay != null:
+		heat_gain_feedback_overlay.cancel()
+	if structured_hud != null:
+		structured_hud.cancel_heat_feedback()
+
+
+func _on_run_state_heat_changed(applied_amount: int, _level: int, _cue_id: String, _context: Dictionary) -> void:
+	if applied_amount <= 0 or current_screen == SCREEN_START or meta_session_active:
+		return
+	if heat_gain_feedback_overlay != null:
+		heat_gain_feedback_overlay.trigger(applied_amount)
+	if structured_hud != null:
+		structured_hud.present_heat_gain(applied_amount)
+	_ensure_environment_sfx_player()
+	if environment_sfx_player != null and environment_sfx_player.has_method("play_heat_gain"):
+		environment_sfx_player.call("play_heat_gain", applied_amount)
 
 
 func _build_run_menu_overlay() -> void:
@@ -6462,8 +6802,12 @@ func _build_run_report_screen(parent: BoxContainer) -> void:
 
 func _refresh() -> void:
 	_invalidate_run_screen_layout()
-	_invalidate_travel_view_cache()
-	interactable_object_view_cache_valid = false
+	# Travel view caches carry a complete dependency key. Clearing them on every
+	# broad UI refresh forced scouted destinations to rebuild cloned RunStates,
+	# once per route, after unrelated game/item/dialogue actions. In a mature run
+	# that turned an ordinary click into hundreds of milliseconds of main-thread
+	# work. True route topology/closing-time changes invalidate explicitly; other
+	# dependencies naturally change the cache key.
 	var has_run := run_state != null
 	if not has_run or current_screen == SCREEN_START:
 		_clear_run_guidance_for_start_screen()
@@ -6521,8 +6865,6 @@ func _refresh_after_embedded_game_action() -> void:
 		_refresh()
 		return
 	_invalidate_run_screen_layout()
-	_invalidate_travel_view_cache()
-	interactable_object_view_cache_valid = false
 	_evaluate_run_terminal_state()
 	if current_screen != SCREEN_GAME or current_game == null:
 		_refresh()
@@ -6568,11 +6910,14 @@ func _refresh_game_coach_after_draw() -> void:
 	if current_screen != SCREEN_GAME or current_game == null:
 		game_coach_refresh_scheduled = false
 		return
-	# Refresh immediately for actions whose target exists during presentation
-	# (entering a game and Buy are common examples).
-	_refresh_coach_at_boundary()
-	_refresh_talk_dock()
-	if tree != null and game_surface_canvas != null and game_surface_canvas.surface_transition_animation_active():
+	var transition_active := tree != null and game_surface_canvas != null and game_surface_canvas.surface_transition_animation_active()
+	# A settled surface can present its next instruction immediately (entering a
+	# game and Buy are common examples). After a finite table animation, wait for
+	# the visible result to finish before Pal starts the next voiced beat.
+	if not transition_active:
+		_refresh_coach_at_boundary()
+		_refresh_talk_dock()
+	if transition_active:
 		# Some actions expose their next exact hit target only after a finite
 		# presentation completes. Wait for that transition, not for idle renderer
 		# liveness, and cap the wait so a malformed channel cannot strand coach
@@ -6591,12 +6936,16 @@ func _refresh_game_coach_after_draw() -> void:
 	# first synchronous refresh therefore cannot anchor a newly-entered game's
 	# lesson. Re-evaluate once after that draw so dialogue and highlight share the
 	# real rendered action rectangle.
-	_refresh_coach_at_boundary()
+	# The bounded transition wait above is the animation gate. Do not re-enter the
+	# same gate here: long-lived interactive channels such as tutorial count
+	# bubbles would otherwise reschedule this coroutine forever and leave the
+	# completed Deal lesson's outline stranded over an in-hand control layout.
+	_refresh_coach_at_boundary(true)
 	_refresh_talk_dock()
 
 
 func _render_start_screen() -> void:
-	_stop_procedural_music()
+	_play_main_menu_music()
 	if start_screen != null:
 		start_screen.visible = true
 	if run_screen != null:
@@ -6724,16 +7073,27 @@ func _set_current_screen(screen_id: String) -> void:
 	current_screen = screen_id
 	if screen_id == SCREEN_START and previous_screen != SCREEN_START:
 		_refresh_menu_seed_text()
+		_reroll_main_menu_background()
+		_play_main_menu_music()
 
 
 func _update_procedural_music() -> void:
-	if run_state == null or current_screen == SCREEN_START:
+	if current_screen == SCREEN_START:
+		_play_main_menu_music()
+		return
+	if run_state == null:
 		if procedural_music_player != null:
 			procedural_music_player.stop()
 		return
 	_ensure_procedural_music_initialized()
 	_ensure_run_music_arrangement_state()
 	procedural_music_player.play_for_environment_state(run_state.current_environment, run_state.suspicion_level(), music_fx_state_snapshot())
+
+
+func _play_main_menu_music() -> void:
+	_ensure_procedural_music_initialized()
+	if procedural_music_player != null:
+		procedural_music_player.play_main_menu_theme()
 
 
 func _is_web_audio_unlock_gesture(event: InputEvent) -> bool:
@@ -6763,7 +7123,9 @@ func _run_web_audio_unlock_refresh() -> void:
 	if not OS.has_feature("web"):
 		web_audio_unlock_refresh_scheduled = false
 		return
-	if procedural_music_player != null and run_state != null and current_screen != SCREEN_START:
+	if procedural_music_player != null and current_screen == SCREEN_START:
+		procedural_music_player.refresh_after_web_audio_unlock(procedural_music_player.main_menu_theme_environment(), 0, {})
+	elif procedural_music_player != null and run_state != null:
 		procedural_music_player.refresh_after_web_audio_unlock(run_state.current_environment, run_state.suspicion_level(), music_fx_state_snapshot())
 	web_audio_unlock_refresh_count += 1
 	if web_audio_unlock_refresh_count >= WEB_AUDIO_UNLOCK_REFRESH_ATTEMPTS:
@@ -7001,6 +7363,8 @@ func _music_win_momentum_snapshot() -> Dictionary:
 
 func _schedule_game_result_music_outcome(result: Dictionary, action_id: String) -> Dictionary:
 	if procedural_music_player == null or run_state == null or result.is_empty():
+		return {}
+	if bool(result.get("suppress_music_outcome", false)):
 		return {}
 	var delta := _music_result_bankroll_delta(result)
 	var outcome_class := "neutral"
@@ -7815,9 +8179,15 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		return
 	if not wager_confirmed and _guard_player_input_route():
 		return
-	var stake := selected_stake
+	# A prior wager can leave the raw selection above the player's new capacity.
+	# The table and stake control already present the clamped value, so make that
+	# affordable value authoritative before validation and all-in confirmation.
+	var current_stake_range := _stake_range()
+	var stake := _selected_stake_for_range(current_stake_range) if bool(current_stake_range.get("has_valid", false)) else selected_stake
 	if stake <= 0:
 		stake = _default_stake()
+	if bool(current_stake_range.get("has_valid", false)):
+		selected_stake = stake
 	if not skip_stake_validation and not _is_valid_stake(stake):
 		var range := _stake_range()
 		_show_message("Stake must be between %d and %d." % [int(range.get("min", 1)), int(range.get("max", 1))])
@@ -7885,13 +8255,18 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			coach_overlay.begin_tutorial_run(tutorial_caught_transition.get("completed_lessons", {}))
 	var tutorial_dialogue_request := _copy_dict(result.get("tutorial_dialogue_request", {}))
 	if not tutorial_dialogue_request.is_empty():
-		_enqueue_tutorial_dialogue_without_refresh(
-			str(tutorial_dialogue_request.get("dialogue_id", "")),
-			str(tutorial_dialogue_request.get("node_id", "")),
-			str(tutorial_dialogue_request.get("queue_key", "")),
-			str(tutorial_dialogue_request.get("source_kind", "tutorial_intervention")),
-			str(tutorial_dialogue_request.get("speaker", "Dealer"))
-		)
+		var tutorial_dialogue_queue_key := str(tutorial_dialogue_request.get("queue_key", ""))
+		if bool(tutorial_dialogue_request.get("clear_existing", false)):
+			run_state.complete_talk_event_resolution(tutorial_dialogue_queue_key)
+		else:
+			_enqueue_tutorial_dialogue_without_refresh(
+				str(tutorial_dialogue_request.get("dialogue_id", "")),
+				str(tutorial_dialogue_request.get("node_id", "")),
+				tutorial_dialogue_queue_key,
+				str(tutorial_dialogue_request.get("source_kind", "tutorial_intervention")),
+				str(tutorial_dialogue_request.get("speaker", "Dealer")),
+				bool(tutorial_dialogue_request.get("advance_existing", false))
+			)
 	var embeds_result_feedback := _current_game_embeds_result_feedback()
 	if bool(result.get("ok", false)) and embeds_result_feedback and not runtime_tick_in_progress:
 		_begin_presented_bankroll_hold(result, bankroll_before_result, wager_cost)
@@ -8345,7 +8720,7 @@ func _ensure_environment_sfx_player() -> void:
 		return
 	environment_sfx_player = SfxPlayerScript.new()
 	if environment_sfx_player.has_method("set_prewarm_events"):
-		environment_sfx_player.call("set_prewarm_events", ["phone_call"])
+		environment_sfx_player.call("set_prewarm_events", ["phone_call", "phone_out_of_service", "heat_gain"])
 	add_child(environment_sfx_player)
 
 
@@ -8410,7 +8785,7 @@ func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: i
 		event_choice_popup_title_label.text = str(view.get("title", "All-in wager"))
 	if event_choice_popup_summary_label != null:
 		event_choice_popup_summary_label.text = str(view.get("summary", ""))
-	_clear(event_choice_popup_choices_list)
+	_clear_event_choice_popup_choices()
 	for card_value in _copy_array(view.get("cards", [])):
 		if typeof(card_value) != TYPE_DICTIONARY:
 			continue
@@ -8457,6 +8832,8 @@ func _add_wager_confirmation_card(label: String, text: String, _impact: String, 
 	if primary:
 		_style_selected_button(button)
 	stack.add_child(button)
+	if _event_choice_popup_is_visible():
+		call_deferred("_position_event_choice_popup")
 
 
 func _clear_pending_wager_confirmation() -> void:
@@ -8621,6 +8998,10 @@ func current_start_menu_snapshot() -> Dictionary:
 		"selected_challenge_id": selected_challenge_id,
 		"challenge_status": challenge_status_label.text if challenge_status_label != null else "",
 		"challenge_config_visible": challenge_panel.visible if challenge_panel != null else false,
+		"run_config_visible": run_config_panel.visible if run_config_panel != null else false,
+		"background_environment_id": str(main_menu_background_environment.get("id", "")),
+		"primary_action_text": new_run_button.text if new_run_button != null else "",
+		"logo_loaded": main_menu_logo != null and main_menu_logo.texture != null,
 		"release_version_text": release_version_label.text if release_version_label != null else "",
 		"career_stats": career_stats_screen.current_snapshot() if career_stats_screen != null else {"visible": false},
 		"menu_panel_size": main_menu_panel.custom_minimum_size if main_menu_panel != null else Vector2.ZERO,
@@ -8926,8 +9307,10 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 			_refresh_world_header(object_data)
 	if actions_list != null:
 		_schedule_action_panel_refresh(object_data)
-	if coach_overlay != null:
-		coach_overlay.notify_action("focus:%s" % object_id)
+	var coach_action_id := "focus:%s" % object_id
+	_record_tutorial_action_if_authored(coach_action_id)
+	if coach_overlay != null and coach_overlay.notify_action(coach_action_id):
+		_consume_recorded_tutorial_action(coach_action_id)
 	_sync_talk_dock_coach_avoid_rect()
 	return true
 
@@ -8966,8 +9349,6 @@ func activate_interactable_object(object_id: String) -> bool:
 		return _activate_event_response_action(object_id)
 	if object_id.begins_with("cage_atm_action:"):
 		return _activate_cage_atm_action(object_id)
-	if object_id.begins_with("cage_gift_action:"):
-		return _activate_cage_gift_shop_action(object_id)
 	if service_hook_resolution_locked and object_id.begins_with("service:"):
 		return false
 	if not focus_interactable_object(object_id):
@@ -8993,8 +9374,8 @@ func activate_interactable_object(object_id: String) -> bool:
 	var source_id := str(object_data.get("source_id", ""))
 	match object_type:
 		CONTEXT_MODE_GAME:
-			enter_game(source_id, _game_state_key_from_object_id(object_id, source_id))
-			return true
+			var state_key := _game_state_key_from_object_id(object_id, source_id)
+			return _enter_game_after_input_guard(source_id.strip_edges(), state_key, object_id)
 		CONTEXT_MODE_EVENT:
 			return _activate_event_object(source_id)
 		CONTEXT_MODE_ITEM:
@@ -9063,15 +9444,6 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 	if fixture_id == "cage_atm":
 		var atm := CageAtmViewModelScript.build(run_state)
 		_show_message(str(atm.get("summary", "The ATM shows the house marker account.")))
-		_refresh()
-		return true
-	if fixture_id == "cage_gift_shop":
-		var offers := _cage_gift_shop_offer_view_list()
-		var available_count := 0
-		for offer_value in offers:
-			if typeof(offer_value) == TYPE_DICTIONARY and not bool((offer_value as Dictionary).get("sold", false)):
-				available_count += 1
-		_show_message("The gift case has %d chip-priced item%s available." % [available_count, "" if available_count == 1 else "s"])
 		_refresh()
 		return true
 	if fixture_id == "host_desk":
@@ -9277,28 +9649,6 @@ func _activate_cage_atm_action(object_id: String) -> bool:
 	return bool(result.get("ok", false))
 
 
-func _cage_gift_shop_offer_view_list() -> Array:
-	_refresh_run_action_service()
-	return run_action_service.cage_gift_shop_offer_view_list() if run_action_service != null else []
-
-
-func _cage_gift_shop_inline_actions() -> Array:
-	var actions: Array = []
-	for offer_value in _cage_gift_shop_offer_view_list():
-		if typeof(offer_value) != TYPE_DICTIONARY:
-			continue
-		var offer: Dictionary = offer_value
-		actions.append({
-			"id": "buy_%s" % str(offer.get("item_id", "")),
-			"emit_object_id": "cage_gift_action:buy:%s" % str(offer.get("item_id", "")),
-			"label": "%s · %d chips" % [str(offer.get("display_name", "Gift")), int(offer.get("chip_price", 0))],
-			"detail": str(offer.get("purpose_summary", "A useful run item.")),
-			"enabled": bool(offer.get("enabled", false)),
-			"disabled_reason": str(offer.get("disabled_reason", "")),
-		})
-	return actions
-
-
 func _event_allows_canvas_inline_response(event_id: String, choices: Array) -> bool:
 	if event_id != RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID:
 		return true
@@ -9313,21 +9663,6 @@ func _event_allows_canvas_inline_response(event_id: String, choices: Array) -> b
 
 func _event_uses_canonical_popup_choice_surface(event_id: String) -> bool:
 	return event_id == RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID
-
-
-func _activate_cage_gift_shop_action(object_id: String) -> bool:
-	if run_state == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
-		return false
-	var parts := object_id.split(":", false, 3)
-	if parts.size() < 3 or str(parts[1]) != "buy":
-		return false
-	_refresh_run_action_service()
-	var result := run_action_service.buy_cage_gift_shop_offer(str(parts[2]))
-	if bool(result.get("ok", false)):
-		_autosave_foundation_run("Autosaved.")
-	_show_message(str(result.get("message", "The gift case declines the purchase.")))
-	_refresh_runtime_environment_views()
-	return bool(result.get("ok", false))
 
 
 func _start_linda_cage_services(object_data: Dictionary) -> bool:
@@ -9556,7 +9891,7 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 		event_choice_popup_title_label.text = str(event_option.get("display_name", event_id))
 	if event_choice_popup_summary_label != null:
 		event_choice_popup_summary_label.text = str(event_option.get("summary", "Something is available here."))
-	_clear(event_choice_popup_choices_list)
+	_clear_event_choice_popup_choices()
 	var has_explicit_dismissal := false
 	for choice_value in _copy_array(event_option.get("choices", [])):
 		if typeof(choice_value) != TYPE_DICTIONARY:
@@ -10011,12 +10346,20 @@ func _layout_spot_to_board_position(value: Variant) -> Vector2:
 func _current_environment_layout() -> Dictionary:
 	if run_state == null:
 		return {}
-	var serialized_layout: Variant = run_state.current_environment.get("layout", {})
-	if typeof(serialized_layout) == TYPE_DICTIONARY and not (serialized_layout as Dictionary).is_empty():
-		return serialized_layout as Dictionary
 	var archetype_id := str(run_state.current_environment.get("archetype_id", ""))
 	var archetype := _environment_archetype(archetype_id)
 	var archetype_layout: Variant = archetype.get("layout", {})
+	var serialized_layout: Variant = run_state.current_environment.get("layout", {})
+	if typeof(serialized_layout) == TYPE_DICTIONARY and not (serialized_layout as Dictionary).is_empty():
+		var resolved_layout := (serialized_layout as Dictionary).duplicate(true)
+		# A continued run may own a Cage layout saved before the shelf-item shop
+		# existed. Merge only the new authored shelf coordinates; all generated
+		# positions from that run remain stable.
+		if archetype_id == RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID and typeof(archetype_layout) == TYPE_DICTIONARY:
+			var saved_item_spots: Variant = resolved_layout.get("item_spots", [])
+			if typeof(saved_item_spots) != TYPE_ARRAY or (saved_item_spots as Array).is_empty():
+				resolved_layout["item_spots"] = _copy_array((archetype_layout as Dictionary).get("item_spots", []))
+		return resolved_layout
 	if typeof(archetype_layout) != TYPE_DICTIONARY:
 		return {}
 	return archetype_layout as Dictionary
@@ -10718,6 +11061,38 @@ func _on_start_pressed() -> void:
 	start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
 
 
+func start_or_continue_primary() -> void:
+	if _has_foundation_save():
+		load_foundation_run()
+	else:
+		_on_start_pressed()
+
+
+func request_delete_saved_run() -> void:
+	if save_service == null:
+		return
+	var slot_status := save_service.slot_status(autosave_slot_id)
+	if not bool(slot_status.get("primary_exists", false)) and not bool(slot_status.get("backup_exists", false)):
+		_show_message("There is no saved run to delete.")
+		return
+	if save_delete_confirmation != null:
+		save_delete_confirmation.popup_centered(Vector2i(470, 190))
+
+
+func confirm_delete_saved_run() -> void:
+	if save_service == null:
+		return
+	var error := save_service.clear_run(autosave_slot_id)
+	if error != OK:
+		_show_message("Could not delete the saved run.")
+		return
+	autosave_loadable_available = false
+	pending_autosave = false
+	save_status_message = "Saved run deleted."
+	_refresh_start_screen()
+	_show_message("Saved run deleted.")
+
+
 func start_tutorial_run() -> void:
 	var config := TutorialFlowScript.challenge_config(library)
 	if config.is_empty():
@@ -10851,6 +11226,7 @@ func _apply_meta_collection_loadout_to_run() -> void:
 			continue
 		if not run_state.inventory.has(item):
 			run_state.inventory.append(item.duplicate(true))
+	run_state.invalidate_inventory_effect_cache()
 
 
 func return_to_main_menu() -> void:
@@ -10875,8 +11251,7 @@ func return_to_main_menu() -> void:
 	meta_last_panel_message = ""
 	dev_game_test_mode = false
 	_refresh_run_action_service()
-	close_content_group_config()
-	close_challenge_selection()
+	close_run_configuration()
 	_hide_run_menu()
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()
@@ -10889,7 +11264,6 @@ func return_to_main_menu() -> void:
 	_clear_selected_stake()
 	clear_interaction_focus()
 	_set_current_screen(SCREEN_START)
-	_stop_procedural_music()
 	if run_screen != null:
 		run_screen.visible = false
 	if start_screen != null:
@@ -10905,7 +11279,25 @@ func return_to_main_menu() -> void:
 	if game_test_menu != null:
 		game_test_menu.visible = false
 	close_settings_menu()
+	_restore_main_menu_surface_visibility()
 	_refresh_start_screen()
+
+
+func _restore_main_menu_surface_visibility() -> void:
+	# Several menu-adjacent panels hide different branches of the start-screen
+	# tree. Restore the complete surface in one place so returning for a second
+	# (or later) visit cannot inherit a hidden action row from the prior panel.
+	if start_screen != null:
+		start_screen.visible = true
+	if main_menu_panel != null:
+		main_menu_panel.visible = true
+	if start_menu_stack != null:
+		start_menu_stack.visible = true
+	if start_menu_intro != null:
+		start_menu_intro.visible = true
+	if start_menu_controls != null:
+		start_menu_controls.visible = true
+	_set_start_menu_action_controls_visible(true)
 
 
 func exit_game() -> void:
@@ -10918,8 +11310,7 @@ func exit_game() -> void:
 func open_settings_menu() -> void:
 	if settings_menu == null or settings_overlay == null:
 		return
-	close_content_group_config()
-	close_challenge_selection()
+	close_run_configuration()
 	if start_menu_controls != null:
 		start_menu_controls.visible = false
 	if inventory_page != null:
@@ -10964,6 +11355,11 @@ func _on_settings_applied() -> void:
 		_refresh_world_header()
 
 
+func _on_settings_game_library_requested() -> void:
+	close_settings_menu()
+	open_game_test_menu()
+
+
 func _on_reset_coach_tips_requested() -> void:
 	if profile_inventory == null:
 		return
@@ -10987,12 +11383,22 @@ func _on_coach_lesson_completed(lesson_id: String) -> void:
 	var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
 	completed[lesson_id] = true
 	run_state.narrative_flags["tutorial_lessons_completed"] = completed
+	if lesson_id == "tutorial_buy_remaining_store_item":
+		# Its completion is inventory state (both items owned), so the second
+		# purchase does not flow through notify_action's normal consume path.
+		for action_id_value in TutorialFlowScript.lesson_allowed_action_ids(lesson_id, library.tutorial_lessons):
+			var action_id := str(action_id_value)
+			if action_id.begins_with("item:"):
+				_consume_recorded_tutorial_action(action_id)
 	call_deferred("_resume_after_completed_tutorial_action", lesson_id)
 
 
 func _resume_after_completed_tutorial_action(lesson_id: String) -> void:
 	_advance_completed_tutorial_action_dialogue(lesson_id)
 	_clear_stale_focus_before_dependent_tutorial_target(lesson_id)
+	if lesson_id == TUTORIAL_META_HOME_CARD_LESSON_ID and _is_meta_session():
+		run_state.narrative_flags["tutorial_meta_home_handoff_completed"] = true
+		run_state.challenge_config["tutorial"] = false
 	# Dialogue completion can refresh re-entrantly while CoachOverlay is still
 	# unwinding the prior lesson. Evaluate once more at the settled boundary so
 	# consecutive focus/action lessons never leave a blank guidance gap.
@@ -11009,7 +11415,7 @@ func _clear_stale_focus_before_dependent_tutorial_target(completed_lesson_id: St
 		var trigger: Dictionary = lesson.get("trigger", {}) if typeof(lesson.get("trigger", {})) == TYPE_DICTIONARY else {}
 		if not _string_array(trigger.get("depends_on", [])).has(completed_lesson_id):
 			continue
-		var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+		var anchor := CoachViewModelScript.resolved_anchor(lesson, _coach_context_snapshot())
 		if str(anchor.get("kind", "")) != "interactable_object":
 			continue
 		var next_object_id := str(anchor.get("id", "")).strip_edges()
@@ -11056,7 +11462,7 @@ func _on_coach_dialogue_requested(lesson_id: String, dialogue_id: String, dialog
 	if run_state == null or not run_state.is_tutorial_run() or dialogue_id.is_empty():
 		return
 	var lesson := library.tutorial_lesson(lesson_id) if library != null else {}
-	var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+	var anchor := CoachViewModelScript.resolved_anchor(lesson, _coach_context_snapshot())
 	var target_object_id := str(anchor.get("id", "")).strip_edges()
 	if str(anchor.get("kind", "")) == "interactable_object" and not selected_object_id.is_empty() and selected_object_id != target_object_id:
 		# A prior inspection card can cover the next authored object. Clear that
@@ -11122,7 +11528,7 @@ func open_meta_home() -> void:
 	_enter_meta_location(META_LOCATION_HOME)
 
 
-func _enter_meta_location(location_id: String) -> void:
+func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -> void:
 	var clean_location := location_id.strip_edges()
 	if clean_location == META_LOCATION_START_RUN:
 		start_meta_quick_run()
@@ -11142,9 +11548,27 @@ func _enter_meta_location(location_id: String) -> void:
 	_reset_game_surface_runtime_state()
 	if run_state == null or not _is_meta_session():
 		run_state = RunState.new()
-		run_state.start_new("META-HOME")
+		var meta_challenge := {
+			"id": TUTORIAL_META_HOME_CHALLENGE_ID,
+			"mode": "tutorial",
+			"tutorial": true,
+			"display_name": "First Night Home Handoff",
+		} if tutorial_handoff else {}
+		run_state.start_new("META-HOME", meta_challenge)
 		run_state.begin_act(1)
 		run_state.narrative_flags["_meta_home_session"] = true
+		run_state.narrative_flags["tutorial_meta_home_handoff"] = true if tutorial_handoff else false
+		if tutorial_handoff and library != null:
+			var completed_home_handoff_lessons := {}
+			for lesson_value in library.tutorial_lessons:
+				if typeof(lesson_value) != TYPE_DICTIONARY:
+					continue
+				var lesson_id := str((lesson_value as Dictionary).get("id", "")).strip_edges()
+				if str((lesson_value as Dictionary).get("scope", "")) == "tutorial_run" \
+						and not lesson_id.is_empty() \
+						and lesson_id != TUTORIAL_META_HOME_CARD_LESSON_ID:
+					completed_home_handoff_lessons[lesson_id] = true
+			run_state.narrative_flags["tutorial_lessons_completed"] = completed_home_handoff_lessons
 	meta_session_active = true
 	meta_session_location_id = clean_location
 	run_state.narrative_flags["_meta_home_session"] = true
@@ -11181,6 +11605,11 @@ func _enter_meta_location(location_id: String) -> void:
 	clear_interaction_focus()
 	_show_message("Home is ready." if clean_location == META_LOCATION_HOME else "Sal's Pawn Shop is open.")
 	_refresh()
+	if tutorial_handoff:
+		# The Meta Home room and its first container geometry are built during this
+		# refresh. Evaluate once more after the scene has settled so the forced
+		# handoff can anchor to the real Bag instead of disappearing at the seam.
+		call_deferred("_refresh_coach_at_boundary")
 	if clean_location == pawn_location and _sal_starter_offer_is_pending():
 		_resume_sal_starter_offer()
 
@@ -11342,14 +11771,15 @@ func _meta_pawn_interactable_objects() -> Array:
 
 
 func open_meta_container(container_id: String = "") -> void:
+	_record_tutorial_action_if_authored("open_meta_container")
+	if coach_overlay != null and coach_overlay.notify_action("open_meta_container"):
+		_consume_recorded_tutorial_action("open_meta_container")
 	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_CONTAINER, selected_meta_item_key, container_id)
 
 
 func open_meta_bag(instance_id: int) -> void:
-	if instance_id <= 0:
-		_show_message("Bag is not available.")
-		return
-	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_BAGS, "meta:bag:%d" % instance_id)
+	var selected_key := "meta:bag:%d" % instance_id if instance_id > 0 else ""
+	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_BAGS, selected_key)
 
 
 func buy_meta_home_upgrade() -> void:
@@ -11705,7 +12135,7 @@ func _show_meta_popup(title: String, summary: String, popup_type: String) -> voi
 		event_choice_popup_title_label.text = title
 	if event_choice_popup_summary_label != null:
 		event_choice_popup_summary_label.text = summary
-	_clear(event_choice_popup_choices_list)
+	_clear_event_choice_popup_choices()
 	event_choice_popup_overlay.visible = true
 	event_choice_popup_overlay.move_to_front()
 	_sync_coach_focus_visibility()
@@ -11733,6 +12163,8 @@ func _add_meta_popup_line(text: String) -> void:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_set_control_font_color(label, VisualStyle.SOFT)
 	event_choice_popup_choices_list.add_child(label)
+	if _event_choice_popup_is_visible():
+		call_deferred("_position_event_choice_popup")
 
 
 func _add_meta_close_card() -> void:
@@ -11860,6 +12292,7 @@ func start_game_test_session(game_id: String) -> void:
 	_reset_game_surface_runtime_state()
 	run_state = RunState.new()
 	run_state.start_new(_game_test_seed(game_id))
+	_bind_run_state_presentation_signals()
 	run_state.bankroll = _game_test_bankroll()
 	dev_game_test_mode = true
 	_refresh_run_action_service()
@@ -11949,27 +12382,28 @@ func _refresh_start_screen() -> void:
 	if release_version_label != null:
 		release_version_label.text = _release_version_text()
 	var has_save := _has_foundation_save()
+	var save_slot_status := save_service.slot_status(autosave_slot_id) if save_service != null else {}
 	if start_status_label != null:
-		var save_slot_status := save_service.slot_status(autosave_slot_id) if save_service != null else {}
 		if not content_validation_status_message.is_empty():
 			start_status_label.text = content_validation_status_message
 		elif has_save:
 			if bool(save_slot_status.get("primary_corrupt", false)) and bool(save_slot_status.get("backup_loadable", false)):
 				start_status_label.text = "Backup save available. Continue will recover the last good run."
 			else:
-				start_status_label.text = "Saved run available. Continue it, or enter a seed for a new run."
+				start_status_label.text = "Saved run ready. Run Setup can delete it or configure the next run."
 		elif bool(save_slot_status.get("primary_corrupt", false)) or bool(save_slot_status.get("backup_corrupt", false)):
 			start_status_label.text = "Saved run is corrupt and no backup can be loaded."
 		elif start_status_label.text.is_empty() or start_status_label.text.begins_with("Saved run") or start_status_label.text.begins_with("No saved"):
-			start_status_label.text = "No saved run yet. Enter a seed or use the generated one."
-	if continue_button != null:
-		continue_button.disabled = not has_save
-		continue_button.text = "Continue"
-		continue_button.tooltip_text = "Load the saved run." if has_save else "No saved run yet."
+			start_status_label.text = "Choose Play, or open Run Setup for a custom seed."
 	if new_run_button != null:
-		FoundationWidgetsScript.style_focusable(new_run_button, not has_save)
-	if continue_button != null:
-		FoundationWidgetsScript.style_focusable(continue_button, has_save)
+		new_run_button.disabled = false
+		new_run_button.text = "CONTINUE" if has_save else "PLAY"
+		new_run_button.tooltip_text = "Resume the current saved run." if has_save else "Begin a new run."
+		# The main-menu marquee owns its selected treatment. Reapplying the generic
+		# focus style here replaced the image plate with a plain rectangle.
+		_apply_main_menu_button_styles(new_run_button)
+	if delete_saved_run_button != null:
+		delete_saved_run_button.disabled = not bool(save_slot_status.get("primary_exists", false)) and not bool(save_slot_status.get("backup_exists", false))
 	_refresh_content_group_controls()
 	_refresh_challenge_controls()
 
@@ -12087,6 +12521,10 @@ func _refresh_run_menu() -> void:
 func _configure_coach_for_run() -> void:
 	if coach_overlay == null:
 		return
+	# Session boundaries restore the authored lesson catalog. Tests and focused
+	# preview tools may temporarily stage a subset, but that subset must never
+	# leak into the forced tutorial-to-Home handoff or a newly loaded run.
+	coach_overlay.set_lessons(library.tutorial_lessons if library != null else [])
 	coach_overlay.restore_seen(profile_inventory.tips_seen if profile_inventory != null else {})
 	coach_overlay.set_tips_enabled(user_settings == null or user_settings.coach_tips_enabled)
 	if run_state != null and run_state.is_tutorial_run():
@@ -12450,6 +12888,7 @@ func _evaluate_run_terminal_state(force: bool = false) -> Dictionary:
 	if run_state == null:
 		return {}
 	_queue_pending_tutorial_heat_intervention()
+	_queue_pending_tutorial_drunk_coffee_interventions()
 	if _all_in_result_terminal_check_is_pending() and not force:
 		return {
 			"failed": false,
@@ -12480,6 +12919,52 @@ func _queue_pending_tutorial_heat_intervention() -> void:
 		"tutorial_intervention:heat_99:%d" % serial,
 		"tutorial_intervention"
 	)
+
+
+func _queue_pending_tutorial_drunk_coffee_interventions() -> void:
+	if run_state == null or not run_state.is_tutorial_run():
+		return
+	for _index in range(16):
+		var intervention := run_state.consume_tutorial_drunk_coffee_intervention()
+		if intervention.is_empty():
+			return
+		var serial := maxi(1, int(intervention.get("serial", 1)))
+		var dialogue_node := TUTORIAL_DRUNK_COFFEE_DIALOGUE_NODE if serial == 1 else TUTORIAL_DRUNK_COFFEE_REPEAT_DIALOGUE_NODE
+		_enqueue_tutorial_dialogue_without_refresh(
+			TUTORIAL_PAL_DIALOGUE_ID,
+			dialogue_node,
+			"tutorial_intervention:drunk_coffee:%d" % serial,
+			"tutorial_intervention"
+		)
+
+
+func _queue_tutorial_coffee_use_acknowledgement(item_id: String) -> void:
+	if run_state == null \
+			or not run_state.is_tutorial_run() \
+			or not _tutorial_coffee_item_ids().has(item_id) \
+			or int(run_state.narrative_flags.get("tutorial_drunk_coffee_intervention_serial", 0)) <= 0 \
+			or bool(run_state.narrative_flags.get("tutorial_drunk_coffee_use_acknowledged", false)):
+		return
+	run_state.narrative_flags["tutorial_drunk_coffee_use_acknowledged"] = true
+	_enqueue_tutorial_dialogue_without_refresh(
+		TUTORIAL_PAL_DIALOGUE_ID,
+		TUTORIAL_DRUNK_COFFEE_USED_DIALOGUE_NODE,
+		"tutorial_intervention:drunk_coffee_used",
+		"tutorial_intervention"
+	)
+
+
+func _tutorial_coffee_item_ids() -> Array:
+	var result: Array = [RunState.TUTORIAL_DRUNK_COFFEE_ITEM_ID]
+	if library == null:
+		return result
+	var primary := library.item(RunState.TUTORIAL_DRUNK_COFFEE_ITEM_ID)
+	var effect: Dictionary = primary.get("effect", {}) if typeof(primary.get("effect", {})) == TYPE_DICTIONARY else {}
+	for item_id_value in effect.get("inventory_add", []):
+		var item_id := str(item_id_value).strip_edges()
+		if not item_id.is_empty() and not result.has(item_id):
+			result.append(item_id)
+	return result
 
 
 func _run_terminal_evaluator_evaluate_and_apply() -> Dictionary:
@@ -12551,7 +13036,36 @@ func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	if message.is_empty():
 		message = str(_run_report_outcome_snapshot().get("how", "The run is complete."))
 	_show_message(message)
+	if _tutorial_bronze_home_handoff_ready() and not tutorial_meta_home_handoff_scheduled:
+		tutorial_meta_home_handoff_scheduled = true
+		call_deferred("_enter_tutorial_meta_home_handoff")
 	return true
+
+
+func _tutorial_bronze_home_handoff_ready() -> bool:
+	return run_state != null \
+		and run_state.is_tutorial_run() \
+		and run_state.run_status == RunState.RUN_STATUS_ENDED \
+		and str(run_state.narrative_flags.get("demo_victory_route", "")) == "tutorial_bronze_card" \
+		and profile_inventory != null \
+		and profile_inventory.tutorial_completed \
+		and _starter_card_count() > 0
+
+
+func _enter_tutorial_meta_home_handoff() -> void:
+	if not tutorial_meta_home_handoff_scheduled:
+		return
+	tutorial_meta_home_handoff_scheduled = false
+	if not _tutorial_bronze_home_handoff_ready():
+		return
+	if save_service != null:
+		var clear_error := save_service.clear_run(autosave_slot_id)
+		if clear_error == OK:
+			autosave_loadable_available = false
+			pending_autosave = false
+		else:
+			_show_message("The Players Card was saved, but the completed tutorial Resume Slot could not be cleared.")
+	_enter_meta_location(META_LOCATION_HOME, true)
 
 
 func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
@@ -13168,13 +13682,14 @@ func _tutorial_forced_event_choice(event_id: String) -> String:
 
 
 func _position_event_choice_popup() -> void:
-	if event_choice_popup_overlay == null or event_choice_popup_panel == null:
+	if event_choice_popup_overlay == null or event_choice_popup_panel == null or event_choice_popup_scroll == null or event_choice_popup_content_stack == null:
 		return
 	var overlay_rect := event_choice_popup_overlay.get_global_rect()
 	if overlay_rect.size.x <= 0.0 or overlay_rect.size.y <= 0.0:
 		return
 	var margin := float(VisualStyle.SPACE_5)
 	var available_width := maxf(1.0, overlay_rect.size.x - margin * 2.0)
+	var available_height := maxf(1.0, overlay_rect.size.y - margin * 2.0)
 	var preferred_width := minf(EVENT_CHOICE_POPUP_BASE_SIZE.x, available_width)
 	event_choice_popup_panel.custom_minimum_size = Vector2(preferred_width, VisualStyle.FLEXIBLE_SIZE)
 	if event_choice_popup_choices_list != null:
@@ -13182,8 +13697,25 @@ func _position_event_choice_popup() -> void:
 			VisualStyle.FLEXIBLE_SIZE,
 			preferred_width - float(VisualStyle.SPACE_6 * 2)
 		)
-	var content_minimum := event_choice_popup_panel.get_combined_minimum_size()
-	var popup_size := FoundationWidgetsScript.autosize_popup(event_choice_popup_panel, overlay_rect.size, content_minimum)
+
+	# Let ordinary offers claim the height of every choice before deciding that a
+	# scrollbar is necessary. The old fixed-height action zone made even the two
+	# all-in choices scroll inside a needlessly short window.
+	var popup_content_minimum_height := event_choice_popup_content_stack.get_combined_minimum_size().y
+	event_choice_popup_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	event_choice_popup_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	event_choice_popup_scroll.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, popup_content_minimum_height)
+	var expanded_content_minimum := event_choice_popup_panel.get_combined_minimum_size()
+	var scroll_required := expanded_content_minimum.y > available_height
+	var popup_height := expanded_content_minimum.y
+	if scroll_required:
+		# Oversized offers use the complete safe screen height, with one scrollbar
+		# spanning the whole modal instead of a cramped nested action area.
+		event_choice_popup_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		event_choice_popup_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		event_choice_popup_scroll.custom_minimum_size = Vector2.ZERO
+		popup_height = available_height
+	var popup_size := Vector2(preferred_width, minf(popup_height, available_height))
 	var global_position := Vector2(
 		overlay_rect.position.x + (overlay_rect.size.x - popup_size.x) * 0.5,
 		overlay_rect.position.y + (overlay_rect.size.y - popup_size.y) * 0.5
@@ -13207,6 +13739,14 @@ func current_selection_popup_anatomy_snapshot() -> Dictionary:
 		"panel_size": event_choice_popup_panel.size,
 		"content_minimum": content_minimum,
 		"action_zone_width": event_choice_popup_choices_list.size.x if event_choice_popup_choices_list != null else 0.0,
+		"action_zone_height": event_choice_popup_choices_list.size.y if event_choice_popup_choices_list != null else 0.0,
+		"choices_minimum_height": event_choice_popup_choices_list.get_combined_minimum_size().y if event_choice_popup_choices_list != null else 0.0,
+		"scroll_viewport_height": event_choice_popup_scroll.size.y if event_choice_popup_scroll != null else 0.0,
+		"scroll_required": event_choice_popup_scroll != null and event_choice_popup_scroll.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED,
+		"uses_full_safe_height": event_choice_popup_overlay != null and is_equal_approx(
+			event_choice_popup_panel.size.y,
+			maxf(1.0, event_choice_popup_overlay.size.y - float(VisualStyle.SPACE_5 * 2))
+		),
 		"dead_space": Vector2(
 			maxf(0.0, event_choice_popup_panel.size.x - content_minimum.x),
 			maxf(0.0, event_choice_popup_panel.size.y - content_minimum.y)
@@ -13219,8 +13759,7 @@ func _hide_event_choice_popup(clear_snapshot: bool = true) -> void:
 	if event_choice_popup_overlay != null:
 		event_choice_popup_overlay.visible = false
 	_sync_coach_focus_visibility()
-	if event_choice_popup_choices_list != null:
-		_clear(event_choice_popup_choices_list)
+	_clear_event_choice_popup_choices()
 	if event_choice_popup_panel != null:
 		event_choice_popup_panel.position = Vector2.ZERO
 		event_choice_popup_panel.size = event_choice_popup_panel.custom_minimum_size
@@ -13230,6 +13769,17 @@ func _hide_event_choice_popup(clear_snapshot: bool = true) -> void:
 	if clear_snapshot:
 		pending_event_choice_popup_snapshot = {}
 	_clear_pending_wager_confirmation()
+
+
+func _clear_event_choice_popup_choices() -> void:
+	if event_choice_popup_choices_list != null:
+		# Detach immediately so a newly-built offer is never measured together
+		# with cards that are merely queued for deletion from the previous one.
+		for child in event_choice_popup_choices_list.get_children():
+			event_choice_popup_choices_list.remove_child(child)
+			child.queue_free()
+	if event_choice_popup_scroll != null:
+		event_choice_popup_scroll.scroll_vertical = 0
 
 
 func _event_choice_popup_is_visible() -> bool:
@@ -13829,57 +14379,11 @@ func _world_map_title_text(current_label: String) -> String:
 
 func _position_world_map_detail_popup(snapshot: Dictionary) -> void:
 	_ensure_world_map_overlay_controller()
+	var reserved_rect := Rect2()
+	if talk_dock != null and talk_dock.visible:
+		reserved_rect = talk_dock.environment_reserved_global_rect()
+	world_map_overlay_controller.set_reserved_overlay_global_rect(reserved_rect)
 	world_map_overlay_controller.position_detail_popup(snapshot)
-	_position_world_map_detail_popup_clear_of_talk_dock()
-
-
-func _position_world_map_detail_popup_clear_of_talk_dock() -> void:
-	if world_map_detail_popup == null or world_map_holder == null or talk_dock == null:
-		return
-	if not world_map_detail_popup.visible or not talk_dock.visible:
-		return
-	var reserved_global_rect := talk_dock.environment_reserved_global_rect()
-	var popup_global_rect := world_map_detail_popup.get_global_rect()
-	if not reserved_global_rect.has_area() or not popup_global_rect.intersects(reserved_global_rect):
-		return
-	var holder_global_rect := world_map_holder.get_global_rect()
-	var holder_size := world_map_holder.size
-	var popup_size := world_map_detail_popup.size
-	var margin := VisualStyle.SPACE_2
-	var reserved_local_rect := Rect2(reserved_global_rect.position - holder_global_rect.position, reserved_global_rect.size)
-	var current_rect := Rect2(world_map_detail_popup.position, popup_size)
-	var candidates: Array[Rect2] = []
-	if reserved_local_rect.get_center().x <= holder_size.x * 0.5:
-		candidates.append(Rect2(Vector2(reserved_local_rect.end.x + margin, current_rect.position.y), popup_size))
-	else:
-		candidates.append(Rect2(Vector2(reserved_local_rect.position.x - popup_size.x - margin, current_rect.position.y), popup_size))
-	candidates.append(Rect2(Vector2(current_rect.position.x, reserved_local_rect.position.y - popup_size.y - margin), popup_size))
-	var bounds := Rect2(Vector2(margin, margin), holder_size - Vector2(margin * 2.0, margin * 2.0))
-	var best_rect := current_rect
-	var best_overlap := _rect_overlap_area(current_rect, reserved_local_rect)
-	var best_movement := 0.0
-	for candidate in candidates:
-		var clamped := Rect2(
-			Vector2(
-				clampf(candidate.position.x, bounds.position.x, maxf(bounds.position.x, bounds.end.x - popup_size.x)),
-				clampf(candidate.position.y, bounds.position.y, maxf(bounds.position.y, bounds.end.y - popup_size.y))
-			),
-			popup_size
-		)
-		var overlap := _rect_overlap_area(clamped, reserved_local_rect)
-		var movement := clamped.position.distance_squared_to(current_rect.position)
-		if overlap < best_overlap or (is_equal_approx(overlap, best_overlap) and movement < best_movement):
-			best_rect = clamped
-			best_overlap = overlap
-			best_movement = movement
-	world_map_detail_popup.position = Vector2(roundf(best_rect.position.x), roundf(best_rect.position.y))
-
-
-func _rect_overlap_area(first: Rect2, second: Rect2) -> float:
-	if not first.has_area() or not second.has_area() or not first.intersects(second):
-		return 0.0
-	var intersection := first.intersection(second)
-	return intersection.size.x * intersection.size.y
 
 
 func _refresh_world_map_detail() -> void:
@@ -13888,28 +14392,19 @@ func _refresh_world_map_detail() -> void:
 	if _is_meta_session():
 		_refresh_meta_world_map_detail()
 		return
-	var lock_remaining := run_state.current_travel_lock_remaining()
-	var lines: Array = []
-	if lock_remaining > 0:
-		lines.append("Locked: %s" % str(run_state.travel_route_status({}).get("disabled_reason", "Travel is locked for now.")))
 	if selected_world_map_node_id.is_empty():
-		lines.append("Select a revealed stop.")
 		_set_world_map_confirm_enabled(false)
 		_set_world_map_detail_badges([])
-		world_map_detail_label.text = "\n".join(lines)
+		world_map_detail_label.text = "Select a revealed stop."
 		return
 	var current_id := run_state.current_world_node_id()
-	var node: Dictionary = WorldMapScript.node_by_id(run_state.world_map, selected_world_map_node_id)
+	var node: Dictionary = WorldMapScript.node_metadata_by_id(run_state.world_map, selected_world_map_node_id)
 	if node.is_empty() or not WorldMapScript.is_node_visible(run_state.world_map, selected_world_map_node_id):
-		lines.append("That stop is not visible from here.")
 		_set_world_map_confirm_enabled(false)
 		_set_world_map_detail_badges([])
-		world_map_detail_label.text = "\n".join(lines)
+		world_map_detail_label.text = "That stop is not visible from here."
 		return
 	var choice := {}
-	# Use the framed list consumed by the room travel UI so the map cannot fall
-	# back to an unframed one-off route dictionary and silently drop decision
-	# context. The raw lookup remains a compatibility fallback for legacy maps.
 	for choice_value in _travel_choice_view_list():
 		if typeof(choice_value) != TYPE_DICTIONARY:
 			continue
@@ -13919,67 +14414,30 @@ func _refresh_world_map_detail() -> void:
 			break
 	if choice.is_empty():
 		choice = _travel_choice(selected_world_map_node_id)
-	lines.append("Stop: %s" % str(node.get("label", selected_world_map_node_id)))
 	var node_archetype := _environment_archetype(str(node.get("archetype_id", selected_world_map_node_id)))
-	var destination_kind := str(node_archetype.get("kind", node.get("kind", "")))
-	var status_text := TutorialFlowScript.environment_status_text(run_state, node_archetype, run_state.game_minute_of_day())
-	if bool(choice.get("locked", false)):
-		lines.append("Hours: %s" % str(choice.get("open_status_text", status_text)))
-		lines.append(_world_map_travel_cost_line(choice))
-		var locked_blocks := int(choice.get("distance_blocks", 0))
-		var locked_distance := str(choice.get("distance", "near")).capitalize()
-		if locked_blocks > 0:
-			locked_distance = "%s / %d block%s" % [locked_distance, locked_blocks, "" if locked_blocks == 1 else "s"]
-		lines.append("Distance: %s" % locked_distance)
-		lines.append("Locked: %s" % str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
-		_set_world_map_confirm_enabled(false)
-		_set_world_map_detail_badges(AttributeBadgesScript.for_world_map_detail(destination_kind, choice))
-		world_map_detail_label.text = "\n".join(lines)
-		return
-	if selected_world_map_node_id == current_id:
-		lines.append("Status: You are here.")
-		lines.append("Hours: %s" % status_text)
-		_set_world_map_confirm_enabled(false)
-		_set_world_map_detail_badges(AttributeBadgesScript.for_world_map_detail(destination_kind))
-		world_map_detail_label.text = "\n".join(lines)
-		return
-	if choice.is_empty():
-		var path := WorldMapScript.path_between(run_state.world_map, current_id, selected_world_map_node_id, true)
-		lines.append("Hours: %s" % status_text)
-		lines.append("Travel: Unavailable from here · Cost: Not available")
-		lines.append("Distance: Not available")
-		if path.size() >= 2:
-			lines.append("Status: Not on the current route list.")
-		else:
-			lines.append("Status: No known path from here.")
-		_set_world_map_confirm_enabled(false)
-		_set_world_map_detail_badges(AttributeBadgesScript.for_world_map_detail(destination_kind))
-		world_map_detail_label.text = "\n".join(lines)
-		return
-	status_text = str(choice.get("open_status_text", status_text))
-	lines.append("Hours: %s" % status_text)
-	var decision_lines: Array = choice.get("decision_lines", []) if typeof(choice.get("decision_lines", [])) == TYPE_ARRAY else []
-	if decision_lines.size() == 3:
-		# The view model owns the offer, live commitment, and alternative-cost
-		# derivation. The map popup is only their production presentation seam.
-		lines.append_array(decision_lines)
-	else:
-		lines.append(_world_map_travel_cost_line(choice))
-		var distance_blocks := int(choice.get("distance_blocks", 0))
-		var distance_text := str(choice.get("distance", "near")).capitalize()
-		if distance_blocks > 0:
-			distance_text = "%s / %d block%s" % [distance_text, distance_blocks, "" if distance_blocks == 1 else "s"]
-		lines.append("Distance: %s" % distance_text)
-	var unlock_summary := str(choice.get("unlock_summary", "")).strip_edges()
-	if not bool(choice.get("enabled", true)) and not unlock_summary.is_empty():
-		lines.append("Status: %s" % unlock_summary)
-	elif bool(choice.get("enabled", true)):
-		lines.append("Status: Route open.")
-	else:
-		lines.append("Status: %s" % str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
-	_set_world_map_detail_badges(AttributeBadgesScript.for_world_map_detail(destination_kind, choice))
-	_set_world_map_confirm_enabled(bool(choice.get("enabled", true)))
-	world_map_detail_label.text = "\n".join(lines)
+	var arrival_minute := run_state.game_minute_of_day()
+	if not choice.is_empty():
+		arrival_minute = int(choice.get("arrival_minute", arrival_minute))
+	var open_status: Dictionary = choice.get("open_status", {}) if typeof(choice.get("open_status", {})) == TYPE_DICTIONARY else {}
+	if open_status.is_empty():
+		open_status = _environment_open_status_at(node_archetype, arrival_minute)
+	var description := str(choice.get("description", "")).strip_edges()
+	if description.is_empty():
+		description = _world_map_node_flavor(node)
+	if description.is_empty():
+		description = "A stop on the city map."
+	var travel_line := "0 min * 0$ * Walk"
+	if not choice.is_empty():
+		travel_line = _world_map_travel_summary_line(choice)
+	world_map_detail_label.text = "\n".join([
+		str(node.get("label", selected_world_map_node_id)),
+		_world_map_hours_line(open_status),
+		description,
+		travel_line,
+	])
+	var can_travel := selected_world_map_node_id != current_id and not choice.is_empty() and bool(choice.get("enabled", true)) and not bool(choice.get("locked", false))
+	_set_world_map_confirm_enabled(can_travel)
+	_set_world_map_detail_badges([])
 
 
 func _set_world_map_detail_badges(badges_value: Variant) -> void:
@@ -14041,7 +14499,27 @@ func _world_map_travel_method_kind(choice: Dictionary) -> String:
 
 
 func _world_map_travel_cost_line(choice: Dictionary) -> String:
-	return "Travel: %s · Cost: $%d" % [_world_map_travel_method(choice), maxi(0, int(choice.get("cost", 0)))]
+	return _world_map_travel_summary_line(choice)
+
+
+func _world_map_travel_summary_line(choice: Dictionary) -> String:
+	var method := _world_map_travel_method(choice)
+	var cost := 0 if _world_map_travel_method_kind(choice) == WorldMapScript.TRAVEL_METHOD_WALK else maxi(0, int(choice.get("cost", 0)))
+	return "%d min * %d$ * %s" % [maxi(0, int(choice.get("travel_minutes", 0))), cost, method]
+
+
+func _world_map_hours_line(open_status: Dictionary) -> String:
+	var is_open := bool(open_status.get("open", true))
+	var status_label := "OPEN" if is_open else "CLOSED"
+	if bool(open_status.get("tutorial_override", false)):
+		return "Hours: Open for lessons (%s)" % status_label
+	if bool(open_status.get("always_open", false)):
+		return "Hours: Open 24 hours (%s)" % status_label
+	var opens_at := str(open_status.get("opens_at", "")).strip_edges()
+	var closes_at := str(open_status.get("closes_at", "")).strip_edges()
+	if opens_at.is_empty() or closes_at.is_empty():
+		return "Hours: Open 24 hours (%s)" % status_label
+	return "Hours: %s to %s (%s)" % [opens_at, closes_at, status_label]
 
 
 func _meta_map_node_ids() -> Array:
@@ -14289,18 +14767,81 @@ func _compact_run_hud_enabled() -> bool:
 	return width > 0.0 and width <= RUN_HUD_COMPACT_MAX_WIDTH
 
 
-func _refresh_coach_at_boundary() -> void:
+func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false) -> void:
 	if coach_overlay == null or run_state == null or current_screen == SCREEN_START:
 		return
+	if TutorialFlowScript.repair_legacy_blackjack_count_skip(run_state):
+		var repaired_completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+		coach_overlay.begin_tutorial_run(repaired_completed)
 	# Opening Inventory can satisfy a tutorial action. Do not evaluate the next
 	# lesson until the inventory's close refresh, so Pal never talks over the
 	# item surface the player was just asked to inspect.
 	if _run_inventory_popup_is_visible():
 		return
+	# Completing a gated table action emits the lesson-completed signal before the
+	# resulting cards/reels have finished presenting. Keep the next tutorial voice
+	# beat at that finite visual boundary; ordinary runs, idle table animation, and
+	# simulation all remain unaffected.
+	if not surface_transition_wait_satisfied \
+			and run_state.is_tutorial_run() \
+			and current_screen == SCREEN_GAME \
+			and current_game != null \
+			and game_surface_canvas != null \
+			and game_surface_canvas.surface_transition_animation_active():
+		_schedule_game_coach_refresh_after_draw()
+		return
 	coach_overlay.evaluate_at_boundary(_coach_context_snapshot())
+	_focus_grand_casino_tutorial_table_lesson()
+	_focus_tutorial_meta_home_card_lesson()
 	_complete_preperformed_tutorial_actions()
+	_focus_tutorial_corner_store_purchase_lesson()
 	_sync_coach_focus_visibility()
 	_sync_talk_dock_coach_avoid_rect()
+
+
+func _focus_grand_casino_tutorial_table_lesson() -> void:
+	if coach_overlay == null \
+			or coach_overlay.active_lesson_id() != TUTORIAL_GRAND_TABLE_LESSON_ID \
+			or _coach_visible_surface_screen() != SCREEN_ENVIRONMENT \
+			or selected_object_id == TUTORIAL_GRAND_TABLE_OBJECT_ID:
+		return
+	# This one lesson promises a highlighted table after an interior-room move.
+	# Focus the authored object so the camera and the coach ring share the same
+	# visible target; focus:game:blackjack does not complete the enter-game action.
+	focus_interactable_object(TUTORIAL_GRAND_TABLE_OBJECT_ID)
+
+
+func _focus_tutorial_meta_home_card_lesson() -> void:
+	if coach_overlay == null \
+			or coach_overlay.active_lesson_id() != TUTORIAL_META_HOME_CARD_LESSON_ID \
+			or not _is_meta_session() \
+			or selected_object_id.begins_with("meta_container:"):
+		return
+	for object_value in _interactable_object_view_list():
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_id := str((object_value as Dictionary).get("object_id", ""))
+		if object_id.begins_with("meta_container:"):
+			focus_interactable_object(object_id)
+			return
+
+
+func _focus_tutorial_corner_store_purchase_lesson() -> void:
+	if coach_overlay == null \
+			or not TUTORIAL_CORNER_STORE_PURCHASE_LESSON_IDS.has(coach_overlay.active_lesson_id()) \
+			or _coach_visible_surface_screen() != SCREEN_ENVIRONMENT:
+		return
+	var lesson := library.tutorial_lesson(coach_overlay.active_lesson_id()) if library != null else {}
+	var anchor := CoachViewModelScript.resolved_anchor(lesson, _coach_context_snapshot())
+	if str(anchor.get("kind", "")) != "interactable_object":
+		return
+	var target_object_id := str(anchor.get("id", "")).strip_edges()
+	if target_object_id.is_empty() or target_object_id == selected_object_id or _interactable_object(target_object_id).is_empty():
+		return
+	# Inspection remains a deliberate player click. Once both item cards have
+	# been inspected, select the purchase target automatically so the camera,
+	# action card, tutorial ring, and Pal avoidance all transition together.
+	focus_interactable_object(target_object_id)
 
 
 func _record_tutorial_action_if_authored(action_id: String) -> void:
@@ -14310,11 +14851,14 @@ func _record_tutorial_action_if_authored(action_id: String) -> void:
 	if clean_action_id.is_empty():
 		return
 	var authored := false
+	var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
 	for lesson_value in library.tutorial_lessons:
 		if typeof(lesson_value) != TYPE_DICTIONARY:
 			continue
 		var lesson: Dictionary = lesson_value
 		if str(lesson.get("scope", "")) != "tutorial_run":
+			continue
+		if bool(completed.get(str(lesson.get("id", "")), false)):
 			continue
 		var completion: Dictionary = lesson.get("completion", {}) if typeof(lesson.get("completion", {})) == TYPE_DICTIONARY else {}
 		match str(completion.get("type", "")):
@@ -14357,6 +14901,13 @@ func _complete_preperformed_tutorial_actions() -> void:
 		if lesson_id.is_empty():
 			return
 		var lesson := library.tutorial_lesson(lesson_id)
+		var trigger: Dictionary = lesson.get("trigger", {}) if typeof(lesson.get("trigger", {})) == TYPE_DICTIONARY else {}
+		# Recovery exists for actions that land on the same UI boundary as a newly
+		# eligible lesson. It must never erase a voiced game lesson before the player
+		# can hear it; table gating will consume the action when it is performed under
+		# that active instruction.
+		if str(lesson.get("delivery", "coach")) == "dialogue" and not str(trigger.get("game_id", "")).strip_edges().is_empty():
+			return
 		var completion: Dictionary = lesson.get("completion", {}) if typeof(lesson.get("completion", {})) == TYPE_DICTIONARY else {}
 		var action_ids: Array = []
 		match str(completion.get("type", "")):
@@ -14415,12 +14966,30 @@ func _sync_talk_dock_coach_avoid_rect() -> void:
 		and current_game == null \
 		and environment_canvas != null \
 		and environment_canvas.visible
-	if environment_focus_visible and not selected_object_id.is_empty() and environment_canvas.has_method("global_rect_for_selected_composition"):
+	var coach_lesson_active := coach_overlay != null and not coach_overlay.active_lesson_id().is_empty()
+	var coach_anchor_kind := coach_overlay.active_anchor_kind() if coach_lesson_active else ""
+	var coach_anchor_id := coach_overlay.active_anchor_id() if coach_lesson_active else ""
+	var selection_matches_coach := not coach_lesson_active \
+		or coach_anchor_kind != "interactable_object" \
+		or coach_anchor_id == selected_object_id
+	if environment_focus_visible \
+			and not selected_object_id.is_empty() \
+			and selection_matches_coach \
+			and environment_canvas.has_method("global_rect_for_selected_composition"):
 		anchor_rect = environment_canvas.call("global_rect_for_selected_composition")
 		focus_x_hint = anchor_rect.get_center().x
-	elif coach_overlay != null and not coach_overlay.active_lesson_id().is_empty():
+	elif coach_lesson_active:
 		anchor_rect = coach_overlay.active_anchor_rect()
-		focus_boundary_id = "%s:%s" % [coach_overlay.active_anchor_kind(), coach_overlay.active_anchor_id()]
+		# Multi-object instructions reserve every highlighted shelf/object target,
+		# not just the primary ring. Otherwise Pal can move to the nominally clear
+		# side while still covering the second action named in the same lesson.
+		var coach_snapshot := coach_overlay.current_snapshot()
+		for additional_rect_value in coach_snapshot.get("additional_anchor_rects", []):
+			var additional_rect := _rect_from_dict(additional_rect_value)
+			if additional_rect.has_area():
+				anchor_rect = anchor_rect.merge(additional_rect) if anchor_rect.has_area() else additional_rect
+		focus_x_hint = anchor_rect.get_center().x if anchor_rect.has_area() else -1.0
+		focus_boundary_id = "%s:%s" % [coach_anchor_kind, coach_anchor_id]
 	# The player is free to open the map before Pal asks for travel. In that
 	# case the authored room/surface anchor is behind the modal and cannot keep
 	# selectable map nodes clear. Prefer any live map node currently covered by
@@ -14471,7 +15040,7 @@ func _coach_context_snapshot() -> Dictionary:
 	if current_game != null and run_state != null:
 		game_coach_state = current_game.coach_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
 	return {
-		"screen": current_screen,
+		"screen": _coach_visible_surface_screen(),
 		"environment_kind": str(environment.get("kind", archetype.get("kind", ""))),
 		"environment_archetype": archetype_id,
 		"game_id": current_game.get_id() if current_game != null else "",
@@ -14480,6 +15049,8 @@ func _coach_context_snapshot() -> Dictionary:
 			"tutorial": run_state.is_tutorial_run() if run_state != null else false,
 			"heat": run_state.suspicion_level() if run_state != null else 0,
 			"inventory_count": run_state.inventory.size() if run_state != null else 0,
+			"has_instant_coffee": _tutorial_inventory_predicate("has_instant_coffee"),
+			"has_ledger_pencil": _tutorial_inventory_predicate("has_ledger_pencil"),
 			"tutorial_friendly_choice_done": bool(run_state.narrative_flags.get("tutorial_friendly_choice_done", false)) if run_state != null else false,
 			"tutorial_invited": TutorialFlowScript.invitation_received(run_state),
 			"heat_gain_count": _coach_heat_gain_count(),
@@ -14512,6 +15083,24 @@ func _coach_context_snapshot() -> Dictionary:
 		"reduce_motion": _reduce_motion_enabled(),
 		"small_screen": _small_screen_enabled(),
 	}
+
+
+func _tutorial_inventory_predicate(predicate_name: String) -> bool:
+	if run_state == null or library == null:
+		return false
+	var item_id := predicate_name.strip_edges().trim_prefix("has_")
+	if item_id.is_empty() or library.item(item_id).is_empty():
+		return false
+	return run_state.inventory.has(item_id)
+
+
+func _coach_visible_surface_screen() -> String:
+	# RESULT is a presentation/status state layered over the room or active game,
+	# not a distinct surface with tutorial anchors. Match lessons against what the
+	# player can still see so post-action guidance is eligible on the same beat.
+	if current_screen == SCREEN_RESULT:
+		return SCREEN_GAME if current_game != null else SCREEN_ENVIRONMENT
+	return current_screen
 
 
 func _coach_available_cheat_action_count() -> int:
@@ -14549,6 +15138,7 @@ func _coach_anchor_rects(game_coach_state: Dictionary = {}) -> Dictionary:
 				hud["travel:%s" % node_id] = node_rect
 	var objects: Dictionary = {}
 	if environment_canvas != null:
+		var tutorial_meta_container_rect := Rect2()
 		for object_value in _interactable_object_view_list():
 			if typeof(object_value) != TYPE_DICTIONARY:
 				continue
@@ -14560,6 +15150,10 @@ func _coach_anchor_rects(game_coach_state: Dictionary = {}) -> Dictionary:
 			if not rendered_rect.has_area():
 				continue
 			objects[object_id] = rendered_rect
+			if tutorial_meta_container_rect == Rect2() and object_id.begins_with("meta_container:"):
+				tutorial_meta_container_rect = rendered_rect
+		if tutorial_meta_container_rect.has_area():
+			objects[TUTORIAL_META_HOME_CONTAINER_ANCHOR_ID] = tutorial_meta_container_rect
 	var surface_actions: Dictionary = {}
 	if game_surface_canvas != null:
 		for region_value in game_surface_canvas.hit_regions:
@@ -14637,6 +15231,8 @@ func _apply_accessibility_settings() -> void:
 	if coach_overlay != null:
 		coach_overlay.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 		coach_overlay.set_small_screen_mode(small_screen_enabled)
+	if heat_gain_feedback_overlay != null:
+		heat_gain_feedback_overlay.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 	if environment_canvas != null:
 		environment_canvas.set_small_screen_mode(small_screen_enabled)
 	if game_surface_canvas != null:
@@ -14794,10 +15390,44 @@ func _main_menu_button(title: String, subtitle: String, callback: Callable) -> B
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_set_control_font_size(button, 14)
 	_set_control_font_color(button, VisualStyle.WHITE)
-	button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#091025", 0.96), VisualStyle.CYAN, 2))
-	button.add_theme_stylebox_override("hover", VisualStyle.pixel_box(Color("#13142c", 0.98), VisualStyle.CYAN, 2))
-	button.add_theme_stylebox_override("pressed", VisualStyle.pixel_box(Color("#271538", 1.0), VisualStyle.YELLOW, 2))
-	button.add_theme_stylebox_override("disabled", VisualStyle.pixel_box(Color("#080814", 0.82), VisualStyle.SHADOW, 2))
+	_apply_main_menu_button_styles(button)
+	return button
+
+
+func _apply_main_menu_button_styles(button: Button) -> void:
+	button.add_theme_stylebox_override("normal", _main_menu_button_plate_style(Color.WHITE))
+	button.add_theme_stylebox_override("hover", _main_menu_button_plate_style(Color("#d8ffff")))
+	button.add_theme_stylebox_override("focus", _main_menu_button_plate_style(Color.WHITE))
+	button.add_theme_stylebox_override("pressed", _main_menu_button_plate_style(Color("#fff0a8")))
+	button.add_theme_stylebox_override("disabled", _main_menu_button_plate_style(Color("#55566b")))
+
+
+func _main_menu_button_plate_style(tint: Color) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = load("res://assets/art/ui/main_menu_button_plate.png") as Texture2D
+	style.texture_margin_left = 44.0
+	style.texture_margin_top = 36.0
+	style.texture_margin_right = 44.0
+	style.texture_margin_bottom = 36.0
+	style.content_margin_left = 24.0
+	style.content_margin_top = 14.0
+	style.content_margin_right = 24.0
+	style.content_margin_bottom = 14.0
+	style.modulate_color = tint
+	return style
+
+
+func _main_menu_icon_button(glyph: String, tooltip: String, callback: Callable, accent: Color) -> Button:
+	var button := _button(glyph, callback)
+	button.tooltip_text = tooltip
+	button.accessibility_name = tooltip
+	button.custom_minimum_size = Vector2(48, 48)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_END
+	_set_control_font_size(button, 21)
+	_set_control_font_color(button, VisualStyle.WHITE)
+	button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#070916", 0.90), accent, 2))
+	button.add_theme_stylebox_override("hover", VisualStyle.pixel_box(Color("#17132b", 0.98), VisualStyle.YELLOW, 2))
+	button.add_theme_stylebox_override("pressed", VisualStyle.pixel_box(Color("#251132", 1.0), VisualStyle.WHITE, 2))
 	return button
 
 

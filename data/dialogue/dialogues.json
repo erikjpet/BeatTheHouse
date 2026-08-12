@@ -545,6 +545,15 @@
             "goto": "card"
           },
           {
+            "id": "cage_finish_tutorial_card",
+            "label": "Collect Players Card",
+            "text": "Resume Linda's First Night handoff and take the Bronze card home.",
+            "effects": {},
+            "effects_hidden": true,
+            "goto": "card",
+            "hide_when_unmet": true
+          },
+          {
             "id": "cage_ambient",
             "label": "Ask Linda",
             "text": "Hear Linda's read of the floor.",
@@ -944,8 +953,20 @@
         "choices": [{"id": "continue", "label": "Choose corner store", "effects": {}, "end": true}]
       },
       "corner_items": {
-        "text": "Inspect both shelf items. Each card shows price and what your Bankroll will be after purchase. Buy either one.",
+        "text": "We're buying both shelf items, but inspect them first. Each card shows its price and your Bankroll after purchase. Start with the Instant Coffee.",
         "choices": [{"id": "continue", "label": "Check the shelf", "effects": {}, "end": true}]
+      },
+      "corner_pencil": {
+        "text": "Good. Now inspect the Ledger Pencil so you know what both items do before spending anything.",
+        "choices": [{"id": "continue", "label": "Inspect the pencil", "effects": {}, "end": true}]
+      },
+      "corner_buy_both": {
+        "text": "Buy both the Instant Coffee and the Ledger Pencil. Either order is fine; after the first purchase, I'll point you to the one that's left.",
+        "choices": [{"id": "continue", "label": "Buy both items", "effects": {}, "end": true}]
+      },
+      "corner_buy_remaining": {
+        "text": "One shelf item is still waiting. Buy the other one too, then we'll move on.",
+        "choices": [{"id": "continue", "label": "Buy the other item", "effects": {}, "end": true}]
       },
       "crew_warning": {
         "text": "That Crew cash isn't free. Take it, and sooner or later they'll put you to work for it.",
@@ -971,12 +992,32 @@
         "text": "Open the pull-tab machine. Outcomes are fixed when each ticket is bought; peeling only reveals them. Your glasses mark a real winner in the stack.",
         "choices": [{"id": "continue", "label": "Open the machine", "effects": {}, "end": true}]
       },
+      "gas_peek": {
+        "text": "Without a Tab Detector, that button says PEEK. Each Peek has a 50% chance to highlight the column with the nearest winner. It always adds Heat: 8% the first time, then 9%, 10%, 11%, and one more each try. Peek four times and watch both the machine and your Heat.",
+        "choices": [{"id": "continue", "label": "Try four Peeks", "effects": {}, "end": true}]
+      },
+      "gas_peek_again_3": {
+        "text": "That was one Peek. Keep going—three more attempts. A miss is part of the lesson; the next Peek still has its own 50% chance and adds more Heat.",
+        "choices": [{"id": "continue", "label": "Peek three more times", "effects": {}, "end": true}]
+      },
+      "gas_peek_again_2": {
+        "text": "Two Peeks down, two to go. Try it again so you see that the highlight is never guaranteed and the Heat cost keeps climbing.",
+        "choices": [{"id": "continue", "label": "Peek two more times", "effects": {}, "end": true}]
+      },
+      "gas_peek_again_1": {
+        "text": "One last Peek. Watch whether the machine finds the column, then compare this fourth Heat increase with the first one.",
+        "choices": [{"id": "continue", "label": "Take the final Peek", "effects": {}, "end": true}]
+      },
+      "gas_peek_heat": {
+        "text": "That was real Heat, even when Peek found nothing. Repeated cheats become harder to hide. An actual Tab Detector changes this control back to SCAN, toggles its reliable highlight in one press, and adds no Heat for switching it on or off.",
+        "choices": [{"id": "continue", "label": "Watch the Heat", "effects": {}, "end": true}]
+      },
       "gas_xray": {
         "text": "Read the yellow marker: it shows tickets left and total cost. Buy that column, then Collect each dropped ticket until the marked winner is purchased.",
         "choices": [{"id": "continue", "label": "Buy and collect", "effects": {}, "end": true}]
       },
       "gas_peel": {
-        "text": "Select the marked ticket, Peel all three windows, then File it into the winner pile. Piles shows sorted tickets; Leave only after the winner is filed.",
+        "text": "Select the marked ticket and Peel all three windows. When the result is showing, click the completed ticket itself to file it into the winner pile. Leave only after the winner is filed.",
         "choices": [{"id": "continue", "label": "Collect and peel", "effects": {}, "end": true}]
       },
       "gas_clerk": {
@@ -992,40 +1033,48 @@
         "choices": [{"id": "continue", "label": "Take a seat", "effects": {}, "end": true}]
       },
       "blackjack_normal": {
-        "text": "Choose the wager with the felt chips; Deal locks it. Hit takes a card. Stand keeps your total for dealer comparison. Deal this deterministic practice hand.",
-        "choices": [{"id": "continue", "label": "Deal clean", "effects": {}, "end": true}]
+        "text": "First hand, keep it simple. Set your wager on the felt and Deal. Hit asks for another card; Stand keeps what you have and lets the dealer finish.",
+        "choices": [{"id": "continue", "label": "Let's play it clean", "effects": {}, "end": true}]
       },
       "blackjack_finish": {
-        "text": "Your total is ready. Stand; the dealer then draws by house rules and compares totals. Going over 21 would bust immediately.",
-        "choices": [{"id": "continue", "label": "Stand", "effects": {}, "end": true}]
+        "text": "You have the idea. Play this hand out at your pace—Hit if you want another card, or Stand when you are ready to compare with the dealer.",
+        "choices": [{"id": "continue", "label": "I'll finish the hand", "effects": {}, "end": true}]
       },
       "blackjack_raise": {
-        "text": "Use the felt chips to raise your bet before DEAL locks it in.",
-        "choices": [{"id": "continue", "label": "Raise the bet", "effects": {}, "end": true}]
+        "text": "Good. For the second hand, raise the wager once. I want enough on the felt that the next lesson feels like a real decision.",
+        "choices": [{"id": "continue", "label": "Raise it once", "effects": {}, "end": true}]
       },
       "blackjack_deal_raised": {
-        "text": "Deal locks the raised wager. Risky actions spend their named prop or opportunity, reveal useful information, and can add Heat if mistimed.",
-        "choices": [{"id": "continue", "label": "Deal", "effects": {}, "end": true}]
+        "text": "Now Deal. This whole second hand is about learning Peek, so we will leave counting alone until the next one.",
+        "choices": [{"id": "continue", "label": "Deal the Peek hand", "effects": {}, "end": true}]
       },
       "heat_before_cheat": {
-        "text": "Before cheating, read Heat at the top. Full Heat ends the run. A caught Peek or missed count bubble adds Heat; clean play, leaving, or cooling off avoids more attention.",
-        "choices": [{"id": "continue", "label": "I understand Heat", "effects": {}, "end": true}]
+        "text": "See the Heat meter up top? That is how much attention you have drawn. Fill it and the run is over, so every cheat needs to earn its risk.",
+        "choices": [{"id": "continue", "label": "I'll watch the Heat", "effects": {}, "end": true}]
       },
       "blackjack_lookaway": {
-        "text": "The easiest cheat is the real lookaway: DRINK PASS spills a drink; CHIP SPILL is the backup opening. A caught Peek adds Heat. Travel or clean play can cool attention.",
+        "text": "The easiest cheat starts with a real lookaway. DRINK PASS spills a drink; CHIP SPILL is your backup. Make the opening first, then Peek.",
         "choices": [{"id": "continue", "label": "Create a lookaway", "effects": {}, "end": true}]
       },
       "blackjack_peek": {
-        "text": "PEEK only while the attention window is open; it reveals the dealer hole card for Hit or Stand. Getting caught will add heat and can close the table.",
-        "choices": [{"id": "continue", "label": "Peek now", "effects": {}, "end": true}]
+        "text": "There is your opening. Peek now and you will see the hole card before choosing Hit or Stand. Get caught and it can add heat or close the table.",
+        "choices": [{"id": "continue", "label": "Take the Peek", "effects": {}, "end": true}]
+      },
+      "blackjack_peek_finish": {
+        "text": "Now use what you saw. Finish this Peek hand before we move on—Hit if you need another card, or Stand when you are ready for the dealer.",
+        "choices": [{"id": "continue", "label": "Finish the Peek hand", "effects": {}, "end": true}]
       },
       "blackjack_count_start": {
-        "text": "COUNT uses Hi-Lo: 2-6 = +1, 7-9 = 0, 10-Ace = -1. Start it; every visible card creates one bubble.",
-        "choices": [{"id": "continue", "label": "Start counting", "effects": {}, "end": true}]
+        "text": "One more hand, and this one is only for counting. Turn Count on, then Deal. In Hi-Lo, 2-6 is +1, 7-9 is 0, and 10 through Ace is -1.",
+        "choices": [{"id": "continue", "label": "Count the third hand", "effects": {}, "end": true}]
       },
       "blackjack_count_bubbles": {
-        "text": "Select every bubble before it fades. A positive running count means more 10s and Aces may remain. A miss adds Heat; perfect counting avoids that penalty.",
-        "choices": [{"id": "continue", "label": "Clear every bubble", "effects": {}, "end": true}]
+        "text": "Now follow the cards and select each bubble before it fades. Miss one and you gain Heat; clear the full hand and you avoid that penalty.",
+        "choices": [{"id": "continue", "label": "I'll follow the cards", "effects": {}, "end": true}]
+      },
+      "blackjack_count_finish": {
+        "text": "Good. Keep watching for a new count marker if you Hit, then play this third hand out with Hit or Stand. The lesson is not finished until the hand settles.",
+        "choices": [{"id": "continue", "label": "Finish the counting hand", "effects": {}, "end": true}]
       },
       "heat": {
         "text": "That real mistake raised Heat. Full Heat ends the run and high Heat makes risky play harsher. Stop cheating, play clean, or travel to cool off before trying again.",
@@ -1034,6 +1083,18 @@
       "heat_99": {
         "text": "You really need to calm down. I pulled your Heat back to 75% so the lesson can continue, but I can't keep doing your breathing for you.",
         "choices": [{"id": "continue", "label": "Calm down", "effects": {}, "end": true}]
+      },
+      "drunk_coffee": {
+        "text": "Easy. You just crossed 33% Drunk, and that wobble can get disorienting. Take this Thermos of Black Coffee. Open Inventory, select it to equip it as your active item, then press Use Item and confirm when you want to lower Drunk and steady the room. It is your choice; active items wait until you use them.",
+        "choices": [{"id": "continue", "label": "Take the thermos", "effects": {}, "end": true}]
+      },
+      "drunk_coffee_repeat": {
+        "text": "You're over 33% Drunk again. Calm down. I've made sure you have another Thermos of Black Coffee; equip it from Inventory and use the active-item button whenever you want the room steady.",
+        "choices": [{"id": "continue", "label": "Easy does it", "effects": {}, "end": true}]
+      },
+      "drunk_coffee_used": {
+        "text": "There you go. The coffee lowered Drunk and steadied the distortion. Other active items work the same way: equip one from Inventory, then use it from the active-item slot when its effect matters.",
+        "choices": [{"id": "continue", "label": "Use active items deliberately", "effects": {}, "end": true}]
       },
       "invitation": {
         "text": "Before you leave, keep an eye on your environment. Open the Grand Casino invitation and accept it.",
@@ -1046,6 +1107,10 @@
       "grand_depart": {
         "text": "I'm banned from the Grand. Play clean around Rourke. Good luck.",
         "choices": [{"id": "continue", "label": "Head to the Grand", "effects": {}, "end": true}]
+      },
+      "meta_home_card": {
+        "text": "This is Home. Your new Bronze Players Card is already packed in the highlighted Bag. Open it to inspect the card. Packed collection items enter your next run; if a carried Players Card is destroyed on a loss, it is gone for good.",
+        "choices": [{"id": "continue", "label": "Open the Bag", "effects": {}, "end": true}]
       }
     }
   },
@@ -1100,16 +1165,32 @@
         "choices": [{"id": "continue", "label": "Go to the Cage", "effects": {}, "end": true}]
       },
       "shop": {
-        "text": "The gift case uses chips, not cash. Inspect the case and read one chip-priced offer; buying is optional.",
-        "choices": [{"id": "continue", "label": "Check the shop", "effects": {}, "end": true}]
+        "text": "Those goods are stocked on the shelves like any other shop. Pick an item to read its details; the price comes from your chips, not your cash. Buying is optional.",
+        "choices": [{"id": "continue", "label": "Inspect a shelf item", "effects": {}, "end": true}]
+      },
+      "return_main_floor": {
+        "text": "Your chips are ready. Head back to the Main Floor; I will point out the blackjack table there.",
+        "choices": [{"id": "continue", "label": "Return to the Main Floor", "effects": {}, "end": true}]
       },
       "table_play": {
-        "text": "Bronze progress is 0/1 Grand table games. Play one clean table hand with chips; at 1/1, return to Linda to claim Bronze.",
-        "choices": [{"id": "continue", "label": "Earn Bronze", "effects": {}, "end": true}]
+        "text": "That highlighted table is blackjack. Finish two hands with chips—wins or losses both count. Bronze becomes ready only after the second hand settles.",
+        "choices": [{"id": "continue", "label": "Play two blackjack hands", "effects": {}, "end": true}]
       },
       "return_linda": {
         "text": "Bronze is ready. Linda will hand it over at the Cage.",
         "choices": [{"id": "continue", "label": "Return to Linda", "effects": {}, "end": true}]
+      },
+      "buy_chips_reminder": {
+        "text": "You still need chips for the lesson. Go back to Linda and buy a chip bundle before you leave the Cage.",
+        "choices": [{"id": "continue", "label": "Buy chips from Linda", "effects": {}, "end": true}]
+      },
+      "claim_card_reminder": {
+        "text": "Bronze is ready. Go back to Linda and claim your Players Card before you leave the Cage.",
+        "choices": [{"id": "continue", "label": "Claim the Players Card", "effects": {}, "end": true}]
+      },
+      "collect_card_reminder": {
+        "text": "Don't leave your Players Card on Linda's counter. Go back, talk to her again, and choose Collect Players Card before you leave the Cage.",
+        "choices": [{"id": "continue", "label": "Get the card from Linda", "effects": {}, "end": true}]
       }
     }
   },
@@ -1198,21 +1279,31 @@
       },
       "next_goal": {
         "text": "Start a normal run, build Bankroll without filling Heat, improve your collection, and return to Linda after enough Grand Casino table play to earn the Gold Players Card.",
-        "choices": [{
-          "id": "finish_tutorial",
-          "label": "Finish First Night",
-          "text": "End the guided run and unlock normal play.",
-          "effects": {
-            "demo_finale": {
-              "event_id": "tutorial_bronze_complete",
-              "route": "tutorial_bronze_card",
-              "branch": "win",
-              "message": "Linda issues Bronze and leaves the Gold Players Card as your next goal."
-            }
+        "choices": [
+          {
+            "id": "finish_tutorial",
+            "label": "Take the Card Home",
+            "text": "Finish the guided run and enter Home with the new Players Card.",
+            "effects": {
+              "demo_finale": {
+                "event_id": "tutorial_bronze_complete",
+                "route": "tutorial_bronze_card",
+                "branch": "win",
+                "message": "Linda issues Bronze and leaves the Gold Players Card as your next goal."
+              }
+            },
+            "effects_hidden": true,
+            "end": true
           },
-          "effects_hidden": true,
-          "end": true
-        }]
+          {
+            "id": "walk_away_card",
+            "label": "Walk Away for Now",
+            "text": "Leave the card with Linda and return for it later.",
+            "effects": {},
+            "effects_hidden": true,
+            "end": true
+          }
+        ]
       }
     }
   },
@@ -1232,7 +1323,7 @@
     "start": "restock",
     "nodes": {
       "restock": {
-        "text": "I watch the route, not the screen. I know when the next drop lands.",
+        "text": "I keep the clerk's schedule. This machine resets every three hours; I'll give you the exact times.",
         "choices": [{"id": "continue", "label": "Leave him to it", "effects": {}, "end": true}]
       }
     }

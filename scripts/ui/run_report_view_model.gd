@@ -13,6 +13,11 @@ const SAL_STOCK_SUMMARY_FLAG := "_sal_resale_stock_summary"
 const TAKE_HOME_ITEM_EXTRACTED_FLAG := "victory_container_extracted"
 const TAKE_HOME_ITEM_ID_FLAG := "victory_container_extracted_item_id"
 const TAKE_HOME_ITEM_LINE_FLAG := "victory_container_extracted_line"
+const RUN_MAP_BACKGROUND_PATH := "res://assets/art/map_backgrounds/cyberpunk_city_overhead.png"
+# Compatibility name used by report capture/tests; it now deliberately points
+# at the same geography as the live travel map.
+const RUN_REPORT_MAP_BACKGROUND_PATH := RUN_MAP_BACKGROUND_PATH
+const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 
 
 static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary:
@@ -24,13 +29,15 @@ static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary
 		var won := str(run_data.get("run_status", "")) == "ended" and bool(_copy_dict(run_data.get("narrative_flags", {})).get("demo_victory", false))
 		var multiplier := RunState.TERMINAL_SCORE_VICTORY_MULTIPLIER if won else 1
 		score = {"base_spending": base, "multiplier": multiplier, "score": base * multiplier}
+	var end_game_clock_minutes := maxi(RunState.GAME_CLOCK_START_MINUTE, int(run_data.get("game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE)))
+	var timeline_heat_entries := _heat_entries_with_final_snapshot(run_data, end_game_clock_minutes)
 	var timeline := build_timeline(
-		_dict_array(run_data.get("heat_history", [])),
+		timeline_heat_entries,
 		_copy_dict(run_data.get("world_map", {})),
 		maxi(0, int(_copy_dict(run_data.get("event_cadence", {})).get("action_index", 0))),
 		story_log,
 		RunState.GAME_CLOCK_START_MINUTE,
-		maxi(RunState.GAME_CLOCK_START_MINUTE, int(run_data.get("game_clock_minutes", RunState.GAME_CLOCK_START_MINUTE))),
+		end_game_clock_minutes,
 		_dict_array(run_data.get("environment_history", [])),
 		_copy_dict(run_data.get("current_environment", {}))
 	)
@@ -52,7 +59,7 @@ static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary
 		"timeline": timeline,
 		"map_snapshot": report_map,
 		"seed": _player_facing_seed(run_data),
-		"tutorial_failure": str(run_data.get("run_status", "")) == RunState.RUN_STATUS_FAILED and bool(_copy_dict(run_data.get("challenge_config", {})).get("tutorial", false)),
+		"tutorial_failure": _is_tutorial_failure(run_data),
 	}
 
 
@@ -177,10 +184,20 @@ static func build_take_home_item_reward(run_data: Dictionary, item_catalog: Dict
 	}
 
 
+static func _is_tutorial_failure(run_data: Dictionary) -> bool:
+	if str(run_data.get("run_status", "")) != RunState.RUN_STATUS_FAILED:
+		return false
+	var config := _copy_dict(run_data.get("challenge_config", {}))
+	if TutorialFlowScript.is_tutorial_challenge(config):
+		return true
+	var modifiers := _copy_dict(config.get("modifiers", {}))
+	return bool(modifiers.get("tutorial_run", false))
+
+
 static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Dictionary:
 	var flags := _copy_dict(run_data.get("narrative_flags", {}))
 	var won := str(run_data.get("run_status", "")) == "ended" and bool(flags.get("demo_victory", false))
-	var tutorial_failure := str(run_data.get("run_status", "")) == RunState.RUN_STATUS_FAILED and bool(_copy_dict(run_data.get("challenge_config", {})).get("tutorial", false))
+	var tutorial_failure := _is_tutorial_failure(run_data)
 	var outcome_key := str(run_data.get("run_failure_reason", RunState.FAILURE_BANKROLL_ZERO))
 	if won:
 		outcome_key = "players_card" if str(flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID else "showdown_survived"
@@ -190,7 +207,7 @@ static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Diction
 	var how := str(run_data.get("run_failure_message", ""))
 	if tutorial_failure:
 		title = "First Night Interrupted"
-		how = "That hand got away. Replay the lesson, or start a normal run."
+		how = "That hand got away. Restart the tutorial, or start a normal run."
 	if won:
 		how = str(flags.get("demo_victory_message", definition.get("how", "You beat the house and made it out.")))
 	elif how.strip_edges().is_empty():
@@ -340,6 +357,37 @@ static func build_debt_ledger(live_debt: Array, story_log: Array) -> Array:
 	return rows
 
 
+static func _heat_entries_with_final_snapshot(run_data: Dictionary, end_game_clock_minutes: int) -> Array:
+	var entries := _dict_array(run_data.get("heat_history", []))
+	var current_environment := _copy_dict(run_data.get("current_environment", {}))
+	var current_environment_id := str(current_environment.get("id", current_environment.get("world_node_id", current_environment.get("archetype_id", "")))).strip_edges()
+	var current_world_node_id := _report_node_id_from_environment(current_environment)
+	var current_environment_name := str(current_environment.get("display_name", current_environment_id.replace("_", " ").capitalize())).strip_edges()
+	var cadence := _copy_dict(run_data.get("event_cadence", {}))
+	var suspicion := _copy_dict(run_data.get("suspicion", {}))
+	var final_sample := {
+		"action_index": maxi(0, int(cadence.get("action_index", 0))),
+		"game_clock_minutes": maxi(0, end_game_clock_minutes),
+		"heat_value": clampi(int(suspicion.get("level", 0)), 0, 100),
+		"environment_id": current_environment_id,
+		"world_node_id": current_world_node_id,
+		"environment_name": current_environment_name,
+		"transition": false,
+	}
+	if entries.is_empty():
+		entries.append(final_sample)
+		return entries
+	var last: Dictionary = entries[-1]
+	var last_clock := int(last.get("game_clock_minutes", -1))
+	var last_heat := int(last.get("heat_value", last.get("heat", -1)))
+	var last_node_id := str(last.get("world_node_id", "")).strip_edges()
+	if last_clock != int(final_sample["game_clock_minutes"]) \
+		or last_heat != int(final_sample["heat_value"]) \
+		or (not current_world_node_id.is_empty() and last_node_id != current_world_node_id):
+		entries.append(final_sample)
+	return entries
+
+
 static func build_timeline(heat_entries: Array, world_map: Dictionary, final_action_index: int = 0, story_log: Array = [], start_game_clock_minutes: int = RunState.GAME_CLOCK_START_MINUTE, end_game_clock_minutes: int = -1, environment_history: Array = [], current_environment: Dictionary = {}) -> Dictionary:
 	var samples := RunState.normalize_heat_history(heat_entries)
 	if samples.is_empty():
@@ -417,6 +465,23 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 		var only_node := _copy_dict(nodes_by_id.get(only_node_id, {}))
 		var only_label := str(only_node.get("display_name", only_node_id.replace("_", " ").capitalize()))
 		segments.append({"kind": "dwell", "node_id": only_node_id, "from_node_id": only_node_id, "to_node_id": only_node_id, "from_label": only_label, "to_label": only_label, "start_game_clock_minutes": start_clock, "end_game_clock_minutes": end_clock, "start_progress": 0.0, "end_progress": 1.0, "leg_index": 0})
+	# Exact compact visit clocks are the source of truth. The reconstruction
+	# above remains a migration fallback for old saves that lack complete visit
+	# boundaries, but must not override recorded multi-day dwell durations.
+	var recorded_visit_timeline := _recorded_visit_timeline(
+		environment_history,
+		current_environment,
+		travel_entries,
+		nodes_by_id,
+		start_clock,
+		end_clock,
+		duration_minutes,
+		max_action
+	)
+	if not recorded_visit_timeline.is_empty():
+		path = _string_array(recorded_visit_timeline.get("path", []))
+		keyframes = _dict_array(recorded_visit_timeline.get("keyframes", []))
+		segments = _dict_array(recorded_visit_timeline.get("segments", []))
 	var bands: Array = []
 	for segment_value in segments:
 		var segment: Dictionary = segment_value
@@ -549,8 +614,104 @@ static func _clock_progress(game_clock_minutes: int, start_clock: int, duration_
 	return clampf(float(game_clock_minutes - start_clock) / float(maxi(1, duration_minutes)), 0.0, 1.0)
 
 
+static func _recorded_visit_timeline(environment_history: Array, current_environment: Dictionary, travel_entries: Array, nodes_by_id: Dictionary, start_clock: int, end_clock: int, duration_minutes: int, max_action: int) -> Dictionary:
+	var source_visits := _dict_array(environment_history)
+	if not current_environment.is_empty():
+		var current_visit := current_environment.duplicate(false)
+		current_visit["_report_current"] = true
+		source_visits.append(current_visit)
+	if source_visits.is_empty():
+		return {}
+	var visits: Array = []
+	var previous_entered := -1
+	for source_index in range(source_visits.size()):
+		var source: Dictionary = source_visits[source_index]
+		var node_id := _report_node_id_from_environment(source)
+		var entered := int(source.get("entered_game_clock_minutes", -1))
+		if node_id.is_empty() or entered < 0 or (previous_entered >= 0 and entered < previous_entered):
+			return {}
+		var is_current := bool(source.get("_report_current", false))
+		var departed := end_clock if is_current else int(source.get("departed_game_clock_minutes", -1))
+		if departed < entered:
+			return {}
+		if source_index + 1 < source_visits.size():
+			var next_source: Dictionary = source_visits[source_index + 1]
+			var next_entered := int(next_source.get("entered_game_clock_minutes", -1))
+			if next_entered < entered or departed > next_entered:
+				return {}
+		var node := _copy_dict(nodes_by_id.get(node_id, {}))
+		var label := str(node.get("display_name", node.get("label", source.get("display_name", node_id.replace("_", " ").capitalize()))))
+		var position := _copy_dict(node.get("position", {}))
+		var visit := {
+			"node_id": node_id,
+			"label": label,
+			"entered": entered,
+			"departed": departed,
+			"position": {"x": float(position.get("x", 0.5)), "y": float(position.get("y", 0.5))},
+		}
+		if not visits.is_empty() and str((visits[-1] as Dictionary).get("node_id", "")) == node_id:
+			var previous: Dictionary = visits[-1]
+			previous["departed"] = maxi(int(previous.get("departed", entered)), departed)
+			visits[-1] = previous
+		else:
+			visits.append(visit)
+		previous_entered = entered
+	if visits.is_empty() or int((visits[0] as Dictionary).get("entered", start_clock + 1)) > start_clock:
+		# A capped legacy history does not cover the beginning of the run. Let the
+		# heat/travel migration reconstruction fill it instead of inventing time.
+		return {}
+	var path: Array = []
+	var keyframes: Array = []
+	var segments: Array = []
+	for index in range(visits.size()):
+		var visit: Dictionary = visits[index]
+		var node_id := str(visit.get("node_id", ""))
+		var label := str(visit.get("label", node_id.replace("_", " ").capitalize()))
+		var arrival_clock := clampi(int(visit.get("entered", start_clock)), start_clock, end_clock)
+		var departure_clock := clampi(int(visit.get("departed", end_clock)), arrival_clock, end_clock)
+		var next_visit: Dictionary = visits[index + 1] if index + 1 < visits.size() else {}
+		var next_arrival_clock := clampi(int(next_visit.get("entered", departure_clock)), departure_clock, end_clock) if not next_visit.is_empty() else departure_clock
+		if not next_visit.is_empty():
+			# Travel story rows retain the exact departure/arrival clocks in saves
+			# made while visit departures were accidentally closed at arrival. Use
+			# that compact ledger to repair zero-duration legs during report build.
+			var recorded_travel := _travel_entry_for_report_leg(
+				travel_entries,
+				node_id,
+				str(next_visit.get("node_id", "")),
+				index
+			)
+			var recorded_departure := int(recorded_travel.get("departed_game_clock_minutes", -1))
+			var recorded_arrival := int(recorded_travel.get("arrived_game_clock_minutes", -1))
+			if recorded_departure >= arrival_clock \
+				and recorded_arrival > recorded_departure \
+				and recorded_arrival == next_arrival_clock:
+				departure_clock = recorded_departure
+		path.append(node_id)
+		keyframes.append({
+			"node_id": node_id,
+			"label": label,
+			"action_index": int(round(_clock_progress(arrival_clock, start_clock, duration_minutes) * float(max_action))),
+			"game_clock_minutes": arrival_clock,
+			"progress": _clock_progress(arrival_clock, start_clock, duration_minutes),
+			"position": _copy_dict(visit.get("position", {})),
+		})
+		_append_replay_segment(segments, "dwell", node_id, node_id, label, label, arrival_clock, departure_clock, start_clock, duration_minutes, index)
+		if index + 1 >= visits.size():
+			continue
+		var next_node_id := str(next_visit.get("node_id", ""))
+		var next_label := str(next_visit.get("label", next_node_id.replace("_", " ").capitalize()))
+		_append_replay_segment(segments, "travel", node_id, next_node_id, label, next_label, departure_clock, next_arrival_clock, start_clock, duration_minutes, index)
+	return {"path": path, "keyframes": keyframes, "segments": segments}
+
+
 static func build_report_map_snapshot(world_map: Dictionary, timeline: Dictionary) -> Dictionary:
 	var report_map := world_map.duplicate(true)
+	# Keep the same geographic image and normalized coordinate system as the live
+	# travel map. The report may crop/scale it to its panel, but never remaps icons
+	# independently from the streets and landmarks underneath them.
+	report_map["background_path"] = str(world_map.get("background_path", RUN_MAP_BACKGROUND_PATH))
+	report_map["background_fill_canvas"] = true
 	var path := _string_array(timeline.get("visited_node_ids", world_map.get("visited_path", [])))
 	var visited_lookup := {}
 	var visited_focus_ids: Array = []
@@ -579,7 +740,6 @@ static func build_report_map_snapshot(world_map: Dictionary, timeline: Dictionar
 		node["travel_enabled"] = false
 		nodes.append(node)
 		added_node_ids[node_id] = true
-	_fit_report_node_positions(nodes)
 	var edges: Array = []
 	for edge_value in _dict_array(world_map.get("edges", [])):
 		if visited_lookup.has(str(edge_value.get("a", ""))) and visited_lookup.has(str(edge_value.get("b", ""))):
@@ -612,50 +772,6 @@ static func build_report_map_snapshot(world_map: Dictionary, timeline: Dictionar
 	return report_map
 
 
-static func _fit_report_node_positions(nodes: Array) -> void:
-	if nodes.is_empty():
-		return
-	var source_positions: Array[Vector2] = []
-	var source_min := Vector2(INF, INF)
-	var source_max := Vector2(-INF, -INF)
-	for node_value in nodes:
-		if typeof(node_value) != TYPE_DICTIONARY:
-			continue
-		var node: Dictionary = node_value
-		var position: Dictionary = node.get("position", {}) if typeof(node.get("position", {})) == TYPE_DICTIONARY else {}
-		var source := Vector2(
-			clampf(float(position.get("x", 0.5)), 0.0, 1.0),
-			clampf(float(position.get("y", 0.5)), 0.0, 1.0)
-		)
-		source_positions.append(source)
-		source_min = source_min.min(source)
-		source_max = source_max.max(source)
-	if source_positions.is_empty():
-		return
-	var source_center := (source_min + source_max) * 0.5
-	var source_span := source_max - source_min
-	var safe_span := Vector2(0.76, 0.76)
-	var scale := INF
-	if source_span.x > 0.0001:
-		scale = minf(scale, safe_span.x / source_span.x)
-	if source_span.y > 0.0001:
-		scale = minf(scale, safe_span.y / source_span.y)
-	if is_inf(scale):
-		scale = 1.0
-	scale = minf(1.0, scale)
-	var source_index := 0
-	for node_value in nodes:
-		if typeof(node_value) != TYPE_DICTIONARY:
-			continue
-		var node: Dictionary = node_value
-		var fitted := Vector2(0.5, 0.5) + (source_positions[source_index] - source_center) * scale
-		node["position"] = {
-			"x": clampf(fitted.x, 0.12, 0.88),
-			"y": clampf(fitted.y, 0.12, 0.88),
-		}
-		source_index += 1
-
-
 static func _timeline_positions_by_id(timeline: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
 	for frame_value in _dict_array(timeline.get("travel_keyframes", [])):
@@ -677,8 +793,8 @@ static func _synthetic_report_node(node_id: String, index: int, count: int, posi
 		"display_name": node_id.replace("_", " ").capitalize(),
 		"icon_path": "res://assets/art/map_icons/motel_room.png",
 		"position": {
-			"x": clampf(float(position.get("x", fallback_x)), 0.06, 0.94),
-			"y": clampf(float(position.get("y", fallback_y)), 0.08, 0.92),
+			"x": clampf(float(position.get("x", fallback_x)), 0.0, 1.0),
+			"y": clampf(float(position.get("y", fallback_y)), 0.0, 1.0),
 		},
 		"state": "visited",
 	}

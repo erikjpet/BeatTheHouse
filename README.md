@@ -9,16 +9,17 @@ and bad exit pushes the run state forward.
 
 Versions 0.2.0 through 0.3.3 are historical source releases; 0.4.0 was an Act 1
 candidate tag that was not published before development continued. Version
-0.5.0 is the current pre-human release-candidate source line. It keeps the Act
+0.5.0 is the current source-complete GitHub integration line. It keeps the Act
 1 foundation and reworks the Grand Casino into a three-room endgame with a living
 Rourke, a chips-and-Cage economy, Linda's Bronze/Silver/Gold Players Card
 ladder, a four-phase back-room showdown, a playable heads-up blackjack duel,
 and persistent card/chip meta rewards. Narration/audio, inventory cards,
-meaningful destination tradeoffs, trustworthy release gates, pre-human
-tutorial automation, native/Web performance, soak/storage, strict-input,
+meaningful destination tradeoffs, trustworthy release gates, automated
+tutorial coverage, native/Web performance, soak/storage, strict-input,
 visual, and exact-source Full gates are green on the technical baseline.
-Cold-player testing, owner Web/Windows play and release decisions, verified
-artifact packaging, uploads, and the release tag remain pending.
+The owner approved publishing the accumulated source to GitHub on 2026-08-12.
+Final packaged Web/Windows verification, public uploads, and the release tag
+remain separate publication steps.
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
 the repository.
@@ -31,8 +32,8 @@ the repository.
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
 | Prior release line | 0.3.3 public source release; 0.4.0 unpublished Act 1 candidate |
-| Active planning target | 0.5.0 pre-release verification and owner approval |
-| Current release readiness | Technical baseline green; see `docs/plans/0.5_final_rc_evidence.md` and `docs/todo/README_0_5_release_queue.md`; human/owner approval and publication pending |
+| Active planning target | 0.5.0 source integration and package publication |
+| Current release readiness | Source feature-complete and authorized for GitHub integration; see `docs/plans/0.5_source_completion_record.md`; final package verification, tag, and public release remain pending |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -69,17 +70,17 @@ Production content is JSON under `data/`.
 | --- | ---: | --- | --- |
 | Environments | 18 | `data/environments/archetypes.json` | Shops, homes, tier-1 casinos, tier-2 venues, jazz club, beach, pawn shop, and the Grand Casino's connected rooms plus Cage |
 | Games | 8 | `data/games/games.json` | All current games are full-simulation modules |
-| Items | 67 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, travel, slot, pinball, container, and build-synergy effects |
+| Items | 69 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, travel, slot, pinball, container, time, and build-synergy effects |
 | Content groups | 10 | `data/content_groups/groups.json` | Modular run packs that enable/disable games and their related item pools |
 | Events | 49 | `data/events/events.json` | Scoped room events with choices and consequences, including unavoidable pressure events, triggered follow-ups, and the boss-floor `the_house_calls` and `high_roller_cashout` |
 | Services | 14 | `data/services/services.json` | `cashier_tip`, `house_drink`, `call_brother_in_law`, jazz-club round/tip/show services, and tier-2 lounge/riverboat services |
 | Lenders | 5 | `data/debt/lenders.json` | `street_lender`, `motel_friend`, `the_crew`, `brother_in_law`, `sals_pawn_counter` |
 | Travel route templates | 12 | `data/travel/routes.json` | Destination templates for shops, casinos, tier-2 venues, the jazz club, beach, the underground casino, and the Grand Casino; `WorldMap` turns them into seeded graph paths with costs, unlocks, scouting previews, travel locks, and route-risk events |
 | Challenges | 8 | `data/challenges/challenges.json` | Act 1 authored challenge runs with profile completion flags |
-| Dialogues | 25 | `data/dialogue/dialogues.json` | TalkDock dialogue content for current Act 1, the guided first night, and 0.5 routes |
+| Dialogues | 29 | `data/dialogue/dialogues.json` | TalkDock dialogue content for current Act 1, the guided first night, and 0.5 routes |
 | Collection schemas | 1 collection | `data/collections/collections.json` | Local meta collection bags/items, housing data, and pawn-shop sale values |
 | Music tracks | 3 | `data/audio/music_manifest.json` | Authored music manifest used by the procedural music player |
-| Tutorial lessons | 49 | `data/tutorial/lessons.json` | Dialogue-guided tutorial sequence definitions, highlights, and gating contracts |
+| Tutorial lessons | 56 | `data/tutorial/lessons.json` | Dialogue-guided tutorial sequence definitions, highlights, pacing, and gating contracts |
 
 `data/art/art_manifest.json` maps art identities used by environments, events,
 items, games, and the UI. Asset files live under `assets/`.
@@ -365,7 +366,7 @@ powershell -ExecutionPolicy Bypass -File tools\ui05_popup_fit_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\ui05_asset_pipeline_check.ps1
 ```
 
-Current pre-human evidence and remaining final results:
+Current source-completion evidence and remaining publication results:
 
 - The integrated tutorial source has passed validation, every FoundationSuite,
   both scripted and real-pointer tutorial routes, the 100-seed traversal and
@@ -373,11 +374,12 @@ Current pre-human evidence and remaining final results:
   visual QA. The native performance/liveness battery, 180-minute/504-action
   soak, Scratch Ticket RTP audit, and Grand Casino Web runtime budgets are also
   green; see the current tutorial and performance reports below.
-- The final integrated Web source passes the unchanged 4x-throttled cold-ready
+- The integrated Web baseline passes the unchanged 4x-throttled cold-ready
   and broad L0.2 budgets with high-fidelity audio active: interactive ready is
   17.557 seconds against 20 seconds and slot autoplay is 88.312 ms against
-  100 ms. TUT-N17 and the owner's packaged Web/Windows playtest cannot be
-  replaced by automation.
+  100 ms. Later playtest fixes add targeted validation and exported-browser
+  evidence; the exact package verification still cannot be replaced by source
+  tests.
 - Only fresh reports linked by `docs/plans/0.5_release_checklist.md` are final
   0.5 release evidence; older candidate reports remain historical baselines.
 
@@ -416,6 +418,8 @@ context:
   notes.
 - `docs/plans/0.5_release_checklist.md` - current 0.5 source-prep and release
   readiness ledger.
+- `docs/plans/0.5_source_completion_record.md` - owner source-completion
+  decision, final playtest scope, current validation, and publication boundary.
 - `docs/plans/0.5_publish_copy.md` - paste-ready itch.io and GitHub release
   copy for 0.5.0 after owner approval.
 - `docs/plans/0.5_devlog_post.md` - draft 0.5 devlog copy for the owner.
@@ -490,9 +494,9 @@ before store submission.
   deterministically at build time into compact Web beds, so browser startup and
   playback no longer depend on PThreads or main-thread synthesis. Cross-origin
   isolation headers remain supported but are not required by the shipped build.
-- Tutorial requirement TUT-N17 is pending five cold players, including two
-  without Blackjack knowledge; agent-driven routes do not satisfy that human
-  comprehension gate.
+- The historical TUT-N17 plan requested five cold players, including two
+  without Blackjack knowledge. Any remaining sample gap must be recorded as an
+  accepted limitation or completed before the public package release.
 - The collection schema still uses `draft: true` pending the owner's explicit
   ship decision.
 - itch.io publishing remains a user action: install/login with butler and push

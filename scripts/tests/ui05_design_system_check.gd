@@ -3,6 +3,8 @@ extends SceneTree
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SegmentedMeterScript := preload("res://scripts/ui/segmented_meter.gd")
 const FoundationHudBarScript := preload("res://scripts/ui/foundation_hud_bar.gd")
+const FoundationHudViewModelScript := preload("res://scripts/ui/foundation_hud_view_model.gd")
+const RunStateScript := preload("res://scripts/core/run_state.gd")
 const EnvironmentHeaderScript := preload("res://scripts/ui/environment_header.gd")
 const CheatDockScript := preload("res://scripts/ui/cheat_dock.gd")
 const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
@@ -44,6 +46,24 @@ func _run() -> void:
 	var hud: FoundationHudBar = FoundationHudBarScript.new()
 	root.add_child(hud)
 	await process_frame
+	var clock_run: RunState = RunStateScript.new()
+	clock_run.start_new("HUD-QUARTER-HOUR-CLOCK")
+	clock_run.game_clock_minutes = 9 * 60 + 7
+	var quarter_clock := FoundationHudViewModelScript.clock_model(clock_run)
+	_check(str(quarter_clock.get("clock_exact_display", "")) == "9:00 AM", "HUD digital clock did not floor ordinary time to the current 15-minute mark.")
+	_check(int(quarter_clock.get("clock_minute_of_day", -1)) == 9 * 60 + 7, "Quarter-hour display changed the authoritative minute used by the analog hands.")
+	clock_run.game_clock_minutes = 9 * 60 + 15
+	_check(str(FoundationHudViewModelScript.clock_model(clock_run).get("clock_exact_display", "")) == "9:15 AM", "HUD digital clock did not advance at the next 15-minute boundary.")
+	clock_run.game_clock_minutes = 9 * 60 + 7
+	clock_run.add_item("pocket_watch")
+	var pocket_watch_clock := FoundationHudViewModelScript.clock_model(clock_run)
+	_check(str(pocket_watch_clock.get("clock_exact_display", "")) == "9:07 AM" and bool(pocket_watch_clock.get("clock_has_pocket_watch", false)), "Pocket Watch did not restore exact-minute digital time.")
+	hud.render_clock(quarter_clock)
+	var quarter_hud_snapshot := hud.current_snapshot()
+	_check(str(quarter_hud_snapshot.get("time_exact", "")) == "9:00 AM", "HUD ignored the quarter-hour digital clock model.")
+	_check(int((quarter_hud_snapshot.get("time_watch", {}) as Dictionary).get("minute_of_day", -1)) == 9 * 60 + 7, "Analog hands snapped to the quarter-hour digital display.")
+	hud.render_clock(pocket_watch_clock)
+	_check(str(hud.current_snapshot().get("time_exact", "")) == "9:07 AM", "HUD did not show the Pocket Watch exact-minute display.")
 	hud.render({
 		"bankroll": 240,
 		"bankroll_delta": 40,

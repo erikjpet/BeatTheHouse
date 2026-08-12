@@ -4,6 +4,8 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 
 
 static func build_start_screen(host: Variant) -> void:
+	_build_redesigned_start_screen(host)
+	return
 	# The menu is not interactive until its visible background is ready. Building
 	# it here prevents a deferred texture/cache burst from landing under input.
 	host._ensure_main_menu_background_built()
@@ -154,6 +156,224 @@ static func build_start_screen(host: Variant) -> void:
 	host.start_menu_action_controls.append(host.exit_game_button)
 	if not host._defer_start_menu_secondary_panels():
 		host._build_inventory_page(stack)
+		if host.show_game_library_launcher:
+			host._build_game_test_menu(stack)
+
+
+static func _build_redesigned_start_screen(host: Variant) -> void:
+	host._ensure_main_menu_background_built()
+	var shade := ColorRect.new()
+	# Keep the authored venue readable. The button plates supply their own contrast;
+	# the menu should not recolor the environment into a generic dark backdrop.
+	shade.color = Color("#05050c", 0.18)
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	host.start_screen.add_child(shade)
+
+	var menu_panel := PanelContainer.new()
+	host.main_menu_panel = menu_panel
+	menu_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	menu_panel.clip_contents = true
+	menu_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+	menu_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	host.start_screen.add_child(menu_panel)
+
+	var menu_margin := MarginContainer.new()
+	menu_margin.add_theme_constant_override("margin_left", 38)
+	menu_margin.add_theme_constant_override("margin_top", 24)
+	menu_margin.add_theme_constant_override("margin_right", 38)
+	menu_margin.add_theme_constant_override("margin_bottom", 20)
+	menu_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	menu_panel.add_child(menu_margin)
+
+	var stack := VBoxContainer.new()
+	host.start_menu_stack = stack
+	stack.add_theme_constant_override("separation", 8)
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	menu_margin.add_child(stack)
+
+	var top_bar := HBoxContainer.new()
+	top_bar.add_theme_constant_override("separation", 10)
+	top_bar.custom_minimum_size = Vector2(0, 48)
+	stack.add_child(top_bar)
+	var top_spacer := Control.new()
+	top_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_bar.add_child(top_spacer)
+	host.settings_button = host._main_menu_icon_button(String.chr(0x2699), "Settings", Callable(host, "open_settings_menu"), VisualStyle.CYAN)
+	top_bar.add_child(host.settings_button)
+	host.exit_game_button = host._main_menu_icon_button("X", "Exit Game", Callable(host, "exit_game"), VisualStyle.PINK)
+	top_bar.add_child(host.exit_game_button)
+
+	host.start_menu_intro = VBoxContainer.new()
+	host.start_menu_intro.add_theme_constant_override("separation", 1)
+	host.start_menu_intro.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.start_menu_intro.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	stack.add_child(host.start_menu_intro)
+	var logo_center := CenterContainer.new()
+	logo_center.custom_minimum_size = Vector2(0, 174)
+	logo_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.start_menu_intro.add_child(logo_center)
+	host.main_menu_logo = TextureRect.new()
+	host.main_menu_logo.texture = load("res://assets/art/ui/beat_the_house_logo.png") as Texture2D
+	host.main_menu_logo.custom_minimum_size = Vector2(520, 168)
+	host.main_menu_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	host.main_menu_logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	host.main_menu_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	logo_center.add_child(host.main_menu_logo)
+
+	host.start_menu_controls = VBoxContainer.new()
+	host.start_menu_controls.add_theme_constant_override("separation", 8)
+	host.start_menu_controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.start_menu_controls.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_child(host.start_menu_controls)
+
+	host.main_menu_action_row = HBoxContainer.new()
+	host.main_menu_action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.main_menu_action_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	host.start_menu_controls.add_child(host.main_menu_action_row)
+	host.start_menu_action_controls.append(host.main_menu_action_row)
+	var grid_left_spacer := Control.new()
+	grid_left_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.main_menu_action_row.add_child(grid_left_spacer)
+	var action_grid := VBoxContainer.new()
+	action_grid.add_theme_constant_override("separation", 12)
+	action_grid.custom_minimum_size = Vector2(916, 224)
+	action_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	action_grid.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	host.main_menu_action_row.add_child(action_grid)
+
+	# A fixed three-column marquee grid keeps every action on the same visual
+	# rails. PLAY spans two columns, preserving its primary weight without
+	# scattering the secondary actions around the room art.
+	var primary_row := HBoxContainer.new()
+	primary_row.add_theme_constant_override("separation", 12)
+	primary_row.custom_minimum_size = Vector2(916, 106)
+	action_grid.add_child(primary_row)
+	host.new_run_button = host._main_menu_button("PLAY", "Begin a new run", Callable(host, "start_or_continue_primary"))
+	host.new_run_button.custom_minimum_size = Vector2(608, 106)
+	host.new_run_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	host._set_control_font_size(host.new_run_button, 28)
+	primary_row.add_child(host.new_run_button)
+	# Continue replaces Play in place; this alias keeps old callers compatible.
+	host.continue_button = host.new_run_button
+	host.daily_run_button = host._main_menu_button("DAILY CHALLENGE", "Start today's hidden-seed challenge", Callable(host, "start_daily_challenge_run"))
+	host.daily_run_button.custom_minimum_size = Vector2(296, 106)
+	primary_row.add_child(host.daily_run_button)
+
+	var secondary_row := HBoxContainer.new()
+	secondary_row.add_theme_constant_override("separation", 12)
+	secondary_row.custom_minimum_size = Vector2(916, 106)
+	action_grid.add_child(secondary_row)
+	host.run_config_button = host._main_menu_button("%s  RUN SETUP" % String.chr(0x2699), "Seed, challenges, content, and saved run", Callable(host, "toggle_run_configuration"))
+	host.run_config_button.custom_minimum_size = Vector2(296, 106)
+	secondary_row.add_child(host.run_config_button)
+	host.replay_tutorial_button = host._main_menu_button("REPLAY LESSONS", "Replay the guided First Night", Callable(host, "start_tutorial_run"))
+	host.replay_tutorial_button.custom_minimum_size = Vector2(296, 106)
+	secondary_row.add_child(host.replay_tutorial_button)
+	host.collections_button = host._main_menu_button("TRAVEL HOME", "Enter your persistent home", Callable(host, "open_collection_browser"))
+	host.collections_button.custom_minimum_size = Vector2(296, 106)
+	host.collections_button.icon = load("res://assets/art/ui/travel.png") as Texture2D
+	host.collections_button.expand_icon = true
+	host.collections_button.add_theme_constant_override("icon_max_width", 34)
+	secondary_row.add_child(host.collections_button)
+	var grid_right_spacer := Control.new()
+	grid_right_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.main_menu_action_row.add_child(grid_right_spacer)
+
+	host.run_config_panel = host._panel_container(Color("#060713", 0.96), VisualStyle.CYAN)
+	host.run_config_panel.visible = false
+	host.run_config_panel.custom_minimum_size = Vector2(760, 292)
+	host.run_config_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.run_config_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	host.start_menu_controls.add_child(host.run_config_panel)
+	var config_margin := MarginContainer.new()
+	config_margin.add_theme_constant_override("margin_left", 18)
+	config_margin.add_theme_constant_override("margin_top", 14)
+	config_margin.add_theme_constant_override("margin_right", 18)
+	config_margin.add_theme_constant_override("margin_bottom", 14)
+	host.run_config_panel.add_child(config_margin)
+	host.run_config_content_stack = VBoxContainer.new()
+	host.run_config_content_stack.add_theme_constant_override("separation", 10)
+	host.run_config_content_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.run_config_content_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	config_margin.add_child(host.run_config_content_stack)
+	var config_header := HBoxContainer.new()
+	host.run_config_content_stack.add_child(config_header)
+	var config_title: Label = host._label("RUN CONFIGURATION", VisualStyle.TYPE_HEADING)
+	config_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host._set_control_font_color(config_title, VisualStyle.YELLOW)
+	config_header.add_child(config_title)
+	var config_done: Button = host._button("Done", Callable(host, "close_run_configuration"))
+	config_done.custom_minimum_size = Vector2(100, 42)
+	config_header.add_child(config_done)
+	var seed_row := HBoxContainer.new()
+	seed_row.add_theme_constant_override("separation", 10)
+	host.run_config_content_stack.add_child(seed_row)
+	var seed_label: Label = host._label("Seed", VisualStyle.TYPE_BODY_LARGE)
+	seed_label.custom_minimum_size = Vector2(72, 44)
+	seed_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	seed_row.add_child(seed_label)
+	host.seed_input = LineEdit.new()
+	host.seed_input.text = host._generate_menu_seed_text()
+	host.seed_input.placeholder_text = "Enter run seed"
+	host.seed_input.tooltip_text = "Set a deterministic seed for the next new run."
+	host.seed_input.custom_minimum_size = Vector2(0, 44)
+	host.seed_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host._set_control_font_color(host.seed_input, VisualStyle.WHITE)
+	host.seed_input.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#090b1b", 0.98), VisualStyle.CYAN_2, 2))
+	host.seed_input.add_theme_stylebox_override("focus", VisualStyle.pixel_box(Color("#15102a", 0.98), VisualStyle.YELLOW, 2))
+	seed_row.add_child(host.seed_input)
+	var config_actions := HBoxContainer.new()
+	config_actions.add_theme_constant_override("separation", 10)
+	host.run_config_content_stack.add_child(config_actions)
+	host.content_group_config_button = host._button("RUN CONTENT", Callable(host, "toggle_content_group_config"))
+	host.content_group_config_button.tooltip_text = "Choose which content groups can appear"
+	host.content_group_config_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	config_actions.add_child(host.content_group_config_button)
+	host.challenge_select_button = host._button("CHALLENGES", Callable(host, "toggle_challenge_selection"))
+	host.challenge_select_button.tooltip_text = "Choose an authored challenge"
+	host.challenge_select_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	config_actions.add_child(host.challenge_select_button)
+	host.delete_saved_run_button = host._button("DELETE SAVED RUN", Callable(host, "request_delete_saved_run"))
+	host.delete_saved_run_button.tooltip_text = "Permanently remove the current resume slot"
+	host.delete_saved_run_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.delete_saved_run_button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#1b0914", 0.96), VisualStyle.PINK_2, 2))
+	config_actions.add_child(host.delete_saved_run_button)
+
+	host.start_status_label = host._label("", VisualStyle.TYPE_SMALL)
+	host.start_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	host.start_status_label.max_lines_visible = 1
+	host.start_status_label.clip_text = true
+	host._set_control_font_color(host.start_status_label, VisualStyle.YELLOW)
+	stack.add_child(host.start_status_label)
+	var footer := HBoxContainer.new()
+	footer.add_theme_constant_override("separation", 12)
+	stack.add_child(footer)
+	host.release_framing_label = host._label(host.RELEASE_MENU_FRAMING, 10)
+	host.release_framing_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.release_framing_label.max_lines_visible = 1
+	host.release_framing_label.clip_text = true
+	host._set_control_font_color(host.release_framing_label, VisualStyle.CYAN_2)
+	footer.add_child(host.release_framing_label)
+	host.release_version_label = host._label(host._release_version_text(), 10)
+	host.release_version_label.custom_minimum_size = Vector2(86, 18)
+	host.release_version_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	host.release_version_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	host.release_version_label.clip_text = true
+	host._set_control_font_color(host.release_version_label, VisualStyle.CYAN_2)
+	footer.add_child(host.release_version_label)
+
+	host.save_delete_confirmation = ConfirmationDialog.new()
+	host.save_delete_confirmation.title = "Delete saved run?"
+	host.save_delete_confirmation.dialog_text = "Delete the current saved run? This cannot be undone."
+	host.save_delete_confirmation.ok_button_text = "Delete Run"
+	host.save_delete_confirmation.confirmed.connect(host.confirm_delete_saved_run)
+	host.add_child(host.save_delete_confirmation)
+
+	if not host._defer_start_menu_secondary_panels():
+		host._ensure_start_menu_config_panels_built()
 		if host.show_game_library_launcher:
 			host._build_game_test_menu(stack)
 

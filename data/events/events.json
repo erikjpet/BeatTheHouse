@@ -2392,6 +2392,8 @@
               "failure_flags": {
                 "brother_in_law_phone_ready": false
               },
+              "failure_audio_cue": "phone_out_of_service",
+              "failure_audio_cue_volume_db": -3.0,
               "failure_message": "No one picked up.",
               "failure_story_log": [
                 {

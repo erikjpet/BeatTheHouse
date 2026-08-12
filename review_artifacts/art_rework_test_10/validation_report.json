@@ -1,0 +1,21 @@
+{
+  "result": "pass",
+  "environments": 18,
+  "endpoints": 36,
+  "dimensions": [900, 430],
+  "logical_pixel_grid": [450, 215],
+  "colors_per_endpoint": 40,
+  "midnight_byte_identical_to_test04": true,
+  "day_night_palette_mapping_bijective": true,
+  "inverse_palette_reconstructs_midnight": true,
+  "moved_pixels": 0,
+  "resampled_pixels": 0,
+  "contrast_comparison": {
+    "metric": "OKLab distance between adjacent unequal logical pixels",
+    "test09_mean_edge_delta": 0.0709,
+    "test10_mean_edge_delta": 0.1149,
+    "test09_weak_edge_ratio": 0.3653,
+    "test10_weak_edge_ratio": 0.1171,
+    "weak_edge_threshold": 0.035
+  }
+}

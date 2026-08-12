@@ -16,6 +16,7 @@
 			"roadside_map",
 			"payment_calendar",
 			"pawn_receipt_sleeve",
+			"pocket_watch",
 			"jazz_sax_lucky_coin",
 			"jazz_cello_lucky_coin",
 			"jazz_drummer_lucky_coin",
@@ -140,6 +141,6 @@
 		"description": "Cabinet poker and card-note nerve.",
 		"default_enabled": true,
 		"game_ids": ["video_poker"],
-		"item_ids": ["scratch_pad", "odds_notebook", "holdout_wax", "sleeve_rig"]
+		"item_ids": ["scratch_pad", "freds_poker_hat", "odds_notebook", "holdout_wax", "sleeve_rig"]
 	}
 ]

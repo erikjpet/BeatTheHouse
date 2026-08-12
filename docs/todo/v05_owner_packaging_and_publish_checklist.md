@@ -1,18 +1,20 @@
 # Owner Checklist — Package and Publish Beat the House 0.5.0
 
-Last reconciled: 2026-08-05
-Status: NOT STARTED / OWNER-CONTROLLED EXTERNAL ACTIONS
+Last reconciled: 2026-08-12
+Status: GITHUB SOURCE INTEGRATION AUTHORIZED / PACKAGE PUBLICATION PENDING
 
 ## Authority boundary
 
 This checklist records final release actions. It does not authorize an agent
-to upload artifacts, publish pages/releases, or push a tag. Each external
-action requires the owner's explicit request or direct execution.
+to upload itch artifacts, publish a GitHub Release, or push a tag. The owner
+did explicitly authorize committing and pushing the complete 0.5 source to a
+GitHub integration branch on 2026-08-12.
 
 ## Entry conditions
 
 - [ ] `v05_final_release_candidate_approval_prompt.md` is archived complete.
-- [ ] The approved RC commit is recorded, clean, and on the intended remote.
+- [x] The complete source worktree is approved for GitHub integration.
+- [ ] The merged RC commit is recorded, clean, and on the intended remote.
 - [ ] Every final gate and owner playtest is green.
 - [ ] Copy, screenshots, changelog, limitations, safety framing, platforms, and
   the collection `draft` decision are approved.

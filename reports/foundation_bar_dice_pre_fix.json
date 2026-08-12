@@ -1,0 +1,28 @@
+{
+	"checks": [
+		{
+			"duration_msec": 4352,
+			"failure_count": 1,
+			"id": "content",
+			"passed": false
+		},
+		{
+			"duration_msec": 57589,
+			"failure_count": 1,
+			"id": "bar_dice_game_suite",
+			"passed": false
+		}
+	],
+	"duration_msec": 62020,
+	"failure_count": 2,
+	"failures": [
+		"Known Grand Casino map node did not persist as a seen, locked reference before invitation acceptance.",
+		"Bar Dice highest-stake canvas dispatch emitted bar_dice_stake[0] instead of bar_dice_stake[2]."
+	],
+	"last_started_check": "bar_dice_game_suite",
+	"passed": false,
+	"skipped": [],
+	"started_msec": 11797,
+	"suite": "bar_dice",
+	"tool": "foundation_check"
+}

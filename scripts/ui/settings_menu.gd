@@ -6,6 +6,7 @@ extends VBoxContainer
 signal back_requested
 signal settings_applied
 signal reset_tips_requested
+signal game_library_requested
 
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
@@ -43,6 +44,7 @@ var play_on_small_screen: CheckBox
 var coach_tips: CheckBox
 var reset_tips: Button
 var haptics_note: Label
+var game_library: Button
 
 
 # Stores the settings object and builds the view.
@@ -132,6 +134,12 @@ func _build() -> void:
 	reduce_motion = _check(box, "Reduce Motion")
 	reduce_motion.toggled.connect(_on_reduce_motion)
 	haptics_note = _note(box, "Haptics are not used by this demo's input stack.")
+
+	_section(box, "Developer")
+	game_library = _button("Game Library (Debug)")
+	game_library.tooltip_text = "Open the internal table-game practice library."
+	game_library.pressed.connect(game_library_requested.emit)
+	box.add_child(game_library)
 
 	status = Label.new()
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

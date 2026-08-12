@@ -9,6 +9,8 @@ const TICK_VALUES := [35.0, 70.0]
 var meter_value := VALUE_MIN
 var pending_value := VALUE_MIN
 var meter_kind := "heat"
+var feedback_pulse_strength := 0.0
+var feedback_pulse_amount := 0
 
 
 func _ready() -> void:
@@ -36,7 +38,19 @@ func current_snapshot() -> Dictionary:
 		"ticks": TICK_VALUES.duplicate(),
 		"band": _band_name(meter_value),
 		"ghost_visible": pending_value > VALUE_MIN,
+		"feedback_pulse_strength": feedback_pulse_strength,
+		"feedback_pulse_amount": feedback_pulse_amount,
 	}
+
+
+func set_feedback_pulse(amount: int, strength: float) -> void:
+	var next_amount := maxi(0, amount)
+	var next_strength := clampf(strength, 0.0, 1.0)
+	if feedback_pulse_amount == next_amount and is_equal_approx(feedback_pulse_strength, next_strength):
+		return
+	feedback_pulse_amount = next_amount
+	feedback_pulse_strength = next_strength
+	queue_redraw()
 
 
 func _draw() -> void:
@@ -64,6 +78,11 @@ func _draw() -> void:
 			VisualStyle.role("text_primary"),
 			VisualStyle.BORDER_HAIRLINE
 		)
+	if meter_kind == "heat" and feedback_pulse_strength > 0.0:
+		var intensity := pow(clampf(float(maxi(1, feedback_pulse_amount) - 1) / 19.0, 0.0, 1.0), 0.62)
+		var pulse_color := Color("#ffb14a").lerp(Color("#ffe082"), 0.28)
+		var alpha := lerpf(0.48, 0.90, intensity) * feedback_pulse_strength
+		draw_rect(Rect2(Vector2.ZERO, size), Color(pulse_color.r, pulse_color.g, pulse_color.b, alpha), false, 2.0)
 
 
 func _band_name(value: float) -> String:

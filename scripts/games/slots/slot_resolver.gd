@@ -40,7 +40,7 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	if normalize_machine:
 		machine = StateScript.normalize(machine)
 	var normalized_action := _normalize_action(action_id)
-	var resolved_item_effects: Dictionary = item_effects.duplicate(true)
+	var resolved_item_effects: Dictionary = item_effects.duplicate(false) if not include_presentation_payload else item_effects.duplicate(true)
 	var family_id := str(machine.get("type_id", "pinball"))
 	var family = _family_hook(family_id)
 	var stake := maxi(1, int(selected_bet.get("total_credits", 2)))
@@ -57,7 +57,7 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	var entry: Dictionary = {}
 	var grid: Array = []
 	var stops: Array = []
-	var previous_grid: Array = [] if audit_metrics_mode else _copy_array(machine.get("last_grid", []))
+	var previous_grid: Array = [] if audit_metrics_mode or not include_presentation_payload else _copy_array(machine.get("last_grid", []))
 	var nudge_applied := false
 	var nudge_event: Dictionary = {}
 	if had_offer:
@@ -148,9 +148,16 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 	if security_bankroll_delta != 0:
 		bankroll_delta += security_bankroll_delta
 	var finalized_classification := _final_classification(classification, immediate_payout, stake_cost, feature_triggered)
-	var win_attribution: Dictionary = _win_attribution(machine, grid, family_id, finalized_classification, immediate_payout, stake, stake_cost, feature_triggered, active_bonus, side_effects, entry)
-	_capture_previous_result(machine)
-	_apply_win_attribution(machine, win_attribution)
+	var win_attribution: Dictionary = {}
+	if include_presentation_payload:
+		win_attribution = _win_attribution(machine, grid, family_id, finalized_classification, immediate_payout, stake, stake_cost, feature_triggered, active_bonus, side_effects, entry)
+		_capture_previous_result(machine)
+		_apply_win_attribution(machine, win_attribution)
+	else:
+		machine["previous_result_payout"] = int(machine.get("last_payout", 0))
+		machine["previous_result_net"] = int(machine.get("last_net", 0))
+		machine["previous_result_classification"] = str(machine.get("last_classification", "idle"))
+		machine["previous_result_reason"] = str(machine.get("slot_win_reason", ""))
 	machine["spin_count"] = maxi(0, int(machine.get("spin_count", 0))) + 1
 	machine["coin_in"] = maxi(0, int(machine.get("coin_in", 0))) + stake_cost
 	machine["coin_out"] = maxi(0, int(machine.get("coin_out", 0))) + immediate_payout
@@ -181,21 +188,99 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 				"slot_gold_conversion": bool(side_effects.get("conversion", false)),
 			},
 		}
+	if not include_presentation_payload:
+		machine["last_tease_events"] = []
+		machine["last_nudge_offer"] = {}
+		machine.erase("slot_animation_plan")
+		machine.erase("slot_reel_stop_times")
+		machine.erase("slot_reel_timeline")
+		machine["slot_animation_id"] = ""
+		machine["slot_animation_duration_msec"] = 0
+		machine["slot_animation_started_msec"] = 0
+		machine["slot_bonus_start_time"] = 0.0
+		return {
+			"machine": machine,
+			"result": _offscreen_spin_result(machine, entry, stake, stake_cost, immediate_payout, bankroll_delta, feature_triggered, environment, cross_effects),
+		}
 	machine["last_tease_events"] = _tease_events(classification, nudge_applied, nudge_event)
 	machine["last_nudge_offer"] = _nudge_offer(machine, family, entry, grid, stops, classification, nudge_applied, selected_bet, definition, resolved_item_effects)
-	var animation_plan: Dictionary = _animation_plan(machine, finalized_classification, active_bonus, win_attribution)
-	if feature_triggered:
-		active_bonus["animation_duration_msec"] = int(animation_plan.get("feature_duration_msec", 0))
-		machine["active_bonus"] = active_bonus
-	machine["slot_animation_id"] = str(animation_plan.get("id", ""))
-	machine["slot_animation_duration_msec"] = int(animation_plan.get("duration_msec", 0))
-	machine["slot_animation_started_msec"] = 0
-	machine["slot_animation_plan"] = animation_plan.duplicate(true)
-	machine["slot_reel_stop_times"] = _copy_array(animation_plan.get("reel_stop_times", []))
-	machine["slot_reel_timeline"] = _copy_array(animation_plan.get("reel_timeline", []))
-	machine["slot_bonus_start_time"] = float(animation_plan.get("bonus_start_time", 0.0))
+	var animation_plan: Dictionary = {}
+	if include_presentation_payload:
+		animation_plan = _animation_plan(machine, finalized_classification, active_bonus, win_attribution)
+		if feature_triggered:
+			active_bonus["animation_duration_msec"] = int(animation_plan.get("feature_duration_msec", 0))
+			machine["active_bonus"] = active_bonus
+			machine["slot_bonus_trigger_revealed"] = false
+		machine["slot_animation_id"] = str(animation_plan.get("id", ""))
+		machine["slot_animation_duration_msec"] = int(animation_plan.get("duration_msec", 0))
+		machine["slot_animation_started_msec"] = 0
+		machine["slot_animation_plan"] = animation_plan.duplicate(true)
+		machine["slot_reel_stop_times"] = _copy_array(animation_plan.get("reel_stop_times", []))
+		machine["slot_reel_timeline"] = _copy_array(animation_plan.get("reel_timeline", []))
+		machine["slot_bonus_start_time"] = float(animation_plan.get("bonus_start_time", 0.0))
+	else:
+		# Offscreen autoplay has no surface to animate. Persisting or even building
+		# reel timelines here makes the player's foreground frame pay presentation
+		# work for an invisible cabinet.
+		machine.erase("slot_animation_plan")
+		machine.erase("slot_reel_stop_times")
+		machine.erase("slot_reel_timeline")
+		machine["slot_animation_id"] = ""
+		machine["slot_animation_duration_msec"] = 0
+		machine["slot_animation_started_msec"] = 0
+		machine["slot_bonus_start_time"] = 0.0
 	var result: Dictionary = _spin_result(machine, entry, normalized_action, stake, stake_cost, immediate_payout, bankroll_delta, suspicion_delta, environment, animation_plan, feature_triggered, active_bonus, side_effects, free_spin, nudge_applied, cross_effects, include_presentation_payload)
 	return {"machine": StateScript.normalize(machine) if normalize_machine else machine, "result": result}
+
+
+func _offscreen_spin_result(machine: Dictionary, entry: Dictionary, stake: int, stake_cost: int, payout: int, bankroll_delta: int, feature_triggered: bool, environment: Dictionary, cross_effects: Dictionary) -> Dictionary:
+	var classification := str(machine.get("last_classification", "zero_loss"))
+	var environment_id := str(environment.get("id", ""))
+	var story_entry := _compact_story_receipt({
+		"type": "game_action",
+		"slot_event": "slot_spin",
+		"game_id": "slot",
+		"action_id": "spin",
+		"family": str(machine.get("type_id", "")),
+		"format_id": str(machine.get("format_id", "")),
+		"outcome_id": str(entry.get("id", "")),
+		"classification": classification,
+		"stake_cost": stake_cost,
+		"payout": payout,
+		"bankroll_delta": bankroll_delta,
+		"luck_payout_bonus": int(cross_effects.get("luck_payout_bonus", 0)),
+		"item_payout_bonus": int(cross_effects.get("item_payout_bonus", 0)),
+		"item_loss_reduction": int(cross_effects.get("item_loss_reduction", 0)),
+		"slot_loss_refund": int(cross_effects.get("slot_loss_refund", 0)),
+		"environment_id": environment_id,
+	})
+	return {
+		"ok": true,
+		"type": "game_action",
+		"source_id": "slot",
+		"game_id": "slot",
+		"action_id": "spin",
+		"action_kind": "legal",
+		"stake": stake,
+		"environment_id": environment_id,
+		"environment_archetype_id": str(environment.get("archetype_id", "")),
+		"message": "",
+		"won": payout > stake_cost or feature_triggered,
+		"host_apply_result": true,
+		"deltas": {"bankroll_delta": bankroll_delta, "story_log": [story_entry]},
+		"slot_outcome_id": str(entry.get("id", "")),
+		"slot_classification": classification,
+		"slot_payout": payout,
+		"slot_stake": stake,
+		"slot_stake_cost": stake_cost,
+		"slot_net": bankroll_delta,
+		"slot_feature_triggered": feature_triggered,
+		"slot_luck_payout_bonus": int(cross_effects.get("luck_payout_bonus", 0)),
+		"slot_item_payout_bonus": int(cross_effects.get("item_payout_bonus", 0)),
+		"slot_item_loss_reduction": int(cross_effects.get("item_loss_reduction", 0)),
+		"slot_loss_refund": int(cross_effects.get("slot_loss_refund", 0)),
+		"slot_luck_win_chance_ignored": true,
+	}
 
 
 func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream, definition: Dictionary, environment: Dictionary = {}, run_state: RunState = null, item_effects: Dictionary = {}, ui_state: Dictionary = {}) -> Dictionary:
@@ -378,6 +463,7 @@ func _finalize_bonus_completion_state(machine: Dictionary, active_before: Dictio
 	machine["last_bonus_total"] = visual_total
 	machine["last_bonus_mode"] = str(completed_active.get("mode", active_before.get("mode", "")))
 	machine["active_bonus"] = {"active": false, "complete": true}
+	machine["slot_bonus_trigger_revealed"] = false
 	machine["slot_pending_feature_alert"] = false
 	machine.erase("slot_pending_feature_alert_msec")
 	machine.erase("slot_bonus_watchdog_since_msec")
@@ -1526,8 +1612,11 @@ func _slot_resolve_cross_effects(payout: int, stake: int, stake_cost: int, bankr
 		"pit_boss_heat_bonus": 0,
 	}
 	var stake_basis := maxi(1, stake_cost if stake_cost > 0 else stake)
-	if run_state != null and payout > 0:
-		effects["luck_payout_bonus"] = run_state.luck_payout_bonus(stake_basis, true)
+	if payout > 0:
+		if run_state != null:
+			effects["luck_payout_bonus"] = run_state.luck_payout_bonus(stake_basis, true)
+		else:
+			effects["luck_payout_bonus"] = int(round(float(stake_basis) * float(item_effects.get("runtime_effective_luck", 0)) * 0.03))
 		effects["item_payout_bonus"] = int(item_effects.get("win_bonus", 0)) + int(item_effects.get("payout_delta", 0))
 	elif bankroll_delta < 0:
 		effects["item_loss_reduction"] = maxi(0, int(item_effects.get("loss_reduction", 0)))

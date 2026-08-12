@@ -405,7 +405,6 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			"bar_dice_release": {"action": "bar_dice_release", "index": 0},
 			"bar_dice_palm": {"action": "bar_dice_palm", "index": 0},
 			"bar_dice_press": {"action": "bar_dice_press", "index": 0},
-			"bar_dice_stake": {"action": "bar_dice_stake", "index": 0},
 			"surface_stake_up": {"action": "bar_dice_stake", "index": 0},
 		},
 		"surface_audio": GameModule.surface_audio_spec({

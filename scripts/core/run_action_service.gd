@@ -81,6 +81,7 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 			"id": item_id,
 			"display_name": display_name,
 			"price": price,
+			"currency": "cash",
 			"pickup": pickup,
 			"action_label": "Pick Up" if pickup else "Buy",
 			"description": str(item_definition.get("description", "")),
@@ -97,6 +98,19 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 			"affordable": run_state.bankroll >= price,
 			"selected": item_id == selected_item_id,
 		})
+	# The Cage shop uses the same room-item contract as every other merchant.
+	# Its saved stock remains chips-only, but each unsold offer is presented as
+	# its own shelf object instead of being collapsed into one fixture popup.
+	if str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		for cage_offer_value in cage_gift_shop_offer_view_list():
+			if typeof(cage_offer_value) != TYPE_DICTIONARY:
+				continue
+			var cage_offer: Dictionary = cage_offer_value
+			if bool(cage_offer.get("sold", false)):
+				continue
+			var shelf_offer := cage_offer.duplicate(true)
+			shelf_offer["selected"] = str(shelf_offer.get("id", "")) == selected_item_id
+			offers.append(shelf_offer)
 	return offers
 
 
@@ -201,6 +215,8 @@ func buy_item_offer(item_id: String) -> Dictionary:
 	var offer := item_offer(item_id)
 	if offer.is_empty():
 		return _service_error("Item offer is not available.")
+	if str(offer.get("currency", "cash")) == "chips":
+		return buy_cage_gift_shop_offer(item_id)
 	var item_definition := library.item(item_id)
 	if item_definition.is_empty():
 		return _service_error("Item definition is missing.")
@@ -234,7 +250,9 @@ func cage_gift_shop_offer_view_list() -> Array:
 		return []
 	var shop_state: Dictionary = run_state.current_environment.get("cage_gift_shop_state", {}) if typeof(run_state.current_environment.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
 	var result: Array = []
-	for stock_value in _copy_array(shop_state.get("stock", [])):
+	var stock_entries := _copy_array(shop_state.get("stock", []))
+	for stock_index in range(stock_entries.size()):
+		var stock_value: Variant = stock_entries[stock_index]
 		if typeof(stock_value) != TYPE_DICTIONARY:
 			continue
 		var stock: Dictionary = stock_value
@@ -244,14 +262,29 @@ func cage_gift_shop_offer_view_list() -> Array:
 			continue
 		var price := maxi(1, int(stock.get("chip_price", 1)))
 		var sold := bool(stock.get("sold", false))
+		var item_context := definition.duplicate(true)
+		item_context["price"] = price
 		result.append({
 			"id": item_id,
 			"item_id": item_id,
+			"object_id": "cage_gift_item:%d" % stock_index,
+			"layout_index": stock_index,
 			"display_name": str(definition.get("display_name", item_id)),
 			"description": str(definition.get("description", "")),
 			"purpose_summary": _item_purpose_summary(definition),
 			"icon_key": str(definition.get("icon_key", item_id)),
 			"asset_path": str(definition.get("asset_path", "")),
+			"environment_prop": str(definition.get("environment_prop", "")),
+			"surface": "shelf",
+			"effect_summary": "",
+			"addition_count": _effect_addition_count(definition.get("effect", {})),
+			"attribute_badges": AttributeBadgesScript.for_item(item_context),
+			"game_affinity": AttributeBadgesScript.item_game_affinity_id(item_context),
+			"game_affinity_label": AttributeBadgesScript.item_game_affinity_label(item_context),
+			"price": price,
+			"currency": "chips",
+			"pickup": false,
+			"action_label": "Buy",
 			"chip_price": price,
 			"sold": sold,
 			"affordable": not sold and run_state.grand_casino_chips >= price,
@@ -347,8 +380,9 @@ func inventory_item_view_list() -> Array:
 	if not is_ready():
 		return []
 	var result: Array = []
-	for item_value in _copy_array(run_state.inventory):
-		var detail := inventory_item_detail(_inventory_value_id(item_value))
+	var selected_id := selected_active_item_id()
+	for item_value in run_state.inventory:
+		var detail := inventory_item_detail(_inventory_value_id(item_value), selected_id)
 		if not detail.is_empty():
 			result.append(detail)
 	return result
@@ -401,7 +435,7 @@ func set_active_item(item_id: String) -> Dictionary:
 
 
 # Returns display, type, effect, and sale data for one inventory item.
-func inventory_item_detail(item_id: String) -> Dictionary:
+func inventory_item_detail(item_id: String, selected_id_override: String = "__AUTO_SELECTED_ITEM__") -> Dictionary:
 	if item_id.is_empty() or library == null:
 		return {}
 	var definition := library.item(item_id)
@@ -415,7 +449,7 @@ func inventory_item_detail(item_id: String) -> Dictionary:
 	var sale_price := item_sale_price(definition)
 	var sale_breakdown := item_sale_price_breakdown(definition)
 	var is_active := _definition_is_active_item(definition)
-	var selected_id := selected_active_item_id() if run_state != null else ""
+	var selected_id := selected_active_item_id() if selected_id_override == "__AUTO_SELECTED_ITEM__" and run_state != null else selected_id_override
 	var item_context := definition.duplicate(true)
 	item_context["item_class"] = item_class
 	item_context["sale_price"] = sale_price

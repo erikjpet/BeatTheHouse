@@ -5,6 +5,7 @@ extends RefCounted
 
 const SETTINGS_PATH := "user://settings.json"
 const SETTINGS_PATH_ENV := "BTH_USER_SETTINGS_PATH"
+const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
 const MUSIC_BUS := "Music"
 const SFX_BUS := "SFX"
 const RESOLUTIONS := [
@@ -80,7 +81,7 @@ static func settings_path() -> String:
 	var override := OS.get_environment(SETTINGS_PATH_ENV).strip_edges()
 	if not override.is_empty():
 		return override
-	return SETTINGS_PATH
+	return PersistencePathsScript.file_path(SETTINGS_PATH, "settings.json")
 
 
 # Converts preferences to saveable data.

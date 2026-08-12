@@ -6,6 +6,7 @@ extends SceneTree
 #   Godot --path . --script res://tools/capture_end_run_social.gd -- --out=<absolute png path>
 
 const RunReportScreenScript := preload("res://scripts/ui/run_report_screen.gd")
+const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 
 var out_path := "res://branding/screenshots/19_end_of_run_report.png"
 
@@ -138,6 +139,8 @@ func _map_snapshot(route: Array) -> Dictionary:
 			"distance": "far" if index in [2, 5] else "near",
 		})
 	return {
+		"background_path": RunReportViewModelScript.RUN_REPORT_MAP_BACKGROUND_PATH,
+		"background_fill_canvas": true,
 		"nodes": nodes,
 		"edges": edges,
 		"visited_path": route,

@@ -47,6 +47,7 @@ const BET_LADDER := COIN_LEVELS
 const MAX_BET_LEVEL := 4
 const MAX_COIN_LEVEL := 4
 const DOUBLE_UP_CAP := 5
+const DOUBLE_UP_RESULT_HOLD_MSEC := 1500
 const PROGRESSIVE_BASE := 240
 const SEQUENTIAL_ROYAL_BONUS := 400
 const DRAW_CASCADE_CHANNEL := "video_poker_cascade"
@@ -73,6 +74,8 @@ const HOLDOUT_ITEM_EFFECT_KEYS := [
 	"video_poker_holdout_heat_delta",
 	"skill_cheat_drunk_window_offset_msec",
 ]
+const STRATEGY_SAMPLE_CAP := 1024
+const STRATEGY_CACHE_LIMIT := 128
 
 const COIN_DENOMINATION_SETS := [
 	[
@@ -295,6 +298,8 @@ const RANK_WORD := {
 const SUIT_WORD := {0: "Spades", 1: "Hearts", 2: "Clubs", 3: "Diamonds"}
 
 var machine_renderer := VideoPokerRendererScript.new()
+var _strategy_hold_cache: Dictionary = {}
+var _strategy_hold_cache_order: Array[String] = []
 
 
 # Creates the entry message for the cabinet.
@@ -318,14 +323,11 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 	var tier_id := str(cabinet.get("paytable_tier_id", "full_pay"))
 	var denomination_set: Array = (rng.pick(COIN_DENOMINATION_SETS, COIN_DENOMINATION_SETS[0]) as Array).duplicate(true)
 	var hand_count := int(cabinet.get("hand_count", 1))
-	var base_ceiling := int(_copy_dict(environment.get("economic_profile", {})).get("stake_ceiling", 20))
-	var wager_ceiling := run_state.wager_stake_ceiling(base_ceiling) if run_state != null else base_ceiling
-	var playable_indices: Array = _playable_denomination_indices(denomination_set, hand_count, wager_ceiling)
+	var wager_capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 20
+	var playable_indices: Array = _playable_denomination_indices(denomination_set, hand_count, wager_capacity)
 	if playable_indices.is_empty():
-		# Every real cabinet must support the complete one-to-five coin ladder.
-		# Low-limit rooms therefore fall back to the smallest credit denomination
-		# instead of generating a machine whose multi-hand max bet is impossible.
-		denomination_set = [{"label": "1c", "credits": 1}]
+		# Keep the authored cabinet intact even when the player arrives without
+		# enough cash for one coin. Affordability is re-evaluated live as funds move.
 		playable_indices = [0]
 	var denomination_index := int(rng.pick(playable_indices, 0))
 	var machine_name := str(cabinet.get("machine_name", cabinet.get("label", "Video Poker")))
@@ -366,9 +368,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var last_result: Dictionary = _copy_dict(state.get("last_result", {}))
 	var hand_active := bool(ui.get("hand_active", false))
 	var double_phase := bool(ui.get("double_active", false)) and _pending_double_credits(last_result) > 0
+	var double_result_phase := _double_up_result_visible(last_result, ui)
 	var showing_result := not hand_active and not last_result.is_empty()
-	var idle_phase := not hand_active and last_result.is_empty() and not double_phase
-	var phase := "double_up" if double_phase else ("idle" if idle_phase else ("settled" if showing_result else "hold"))
+	var idle_phase := not hand_active and last_result.is_empty() and not double_phase and not double_result_phase
+	var phase := "double_result" if double_result_phase else ("double_up" if double_phase else ("idle" if idle_phase else ("settled" if showing_result else "hold")))
 	var bet_level := _bet_level(ui)
 	var coin_count := _coin_count_for_level(bet_level)
 	var denomination_index := _denomination_index(ui, state)
@@ -387,7 +390,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var pay_mult := 0
 	if phase == "idle":
 		hand = _presentation_cards(HAND_SIZE)
-	elif phase == "settled" or phase == "double_up":
+	elif phase == "settled" or phase == "double_up" or phase == "double_result":
 		hand = CardShoeScript.card_array(last_result.get("hand", []))
 		final_hands = _hands_array(last_result.get("hands", []))
 		hand_results = _copy_array(last_result.get("hand_results", []))
@@ -403,17 +406,21 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		hand = _presentation_cards(HAND_SIZE) if phase == "idle" else _opening_hand(run_state, state)
 
 	var suggested: Array = _suggested_holds(hand, variant) if phase == "hold" else []
+	var poker_hat_strategy_active := phase == "hold" and _item_bonus("video_poker_strategy_hint", run_state, false) > 0
+	var recommended_holds: Array = []
+	if poker_hat_strategy_active:
+		recommended_holds = _best_odds_holds(hand, variant, state, coin_count, coin_value, bet_level >= MAX_BET_LEVEL)
 	var marked := bool(ui.get("marked", false)) and phase == "hold"
 	var holdout_challenge: Dictionary = _normalized_holdout_challenge(ui.get("holdout_challenge", {})) if marked else {}
 	var holdout_meter: Dictionary = _holdout_meter(holdout_challenge, ui) if not holdout_challenge.is_empty() else {}
-	var win_credits := int(last_result.get("win_credits", 0)) if (phase == "settled" or phase == "double_up") else 0
+	var win_credits := int(last_result.get("win_credits", 0)) if (phase == "settled" or phase == "double_up" or phase == "double_result") else 0
 	var pending_double := _pending_double_credits(last_result)
-	var double_view: Dictionary = _double_up_view(run_state, state, ui, last_result) if phase == "double_up" else {}
+	var double_view: Dictionary = _double_up_result_view(last_result) if phase == "double_result" else (_double_up_view(run_state, state, ui, last_result) if phase == "double_up" else {})
 	var flip: Dictionary = _active_flip(ui, last_result, hand_active)
 	var pit_boss: Dictionary = run_state.pit_boss_watch_status(environment)
 	var holdout_item_modifiers := skill_item_modifier_badges(run_state, HOLDOUT_ITEM_EFFECT_KEYS)
 	var display_hands: Array = []
-	if phase == "settled" or phase == "double_up":
+	if phase == "settled" or phase == "double_up" or phase == "double_result":
 		display_hands = final_hands
 	else:
 		for _hand_index in range(hand_count):
@@ -435,6 +442,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			outcome_headline = "WIN: %s • PAID %d CREDITS" % [pay_label.to_upper(), win_credits]
 		else:
 			outcome_headline = "NO PAY • SET YOUR BET AND PRESS DEAL"
+	elif phase == "double_result":
+		var double_outcome := str(last_result.get("double_outcome", "lose"))
+		var picked_rank := int(last_result.get("double_pick_rank", 0))
+		var dealer_rank := int(last_result.get("double_dealer_rank", 0))
+		outcome_headline = "DOUBLE UP %s: %s VS %s" % [double_outcome.to_upper(), _rank_word_single(picked_rank).to_upper(), _rank_word_single(dealer_rank).to_upper()]
 	elif phase == "hold":
 		outcome_headline = "TAP CARDS TO HOLD • THEN PRESS DRAW"
 	else:
@@ -460,7 +472,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": false,
 		"surface_embeds_outcomes": true,
 		"surface_animates_idle": true,
-		"surface_realtime_state_refresh": marked and str(holdout_challenge.get("skill_grade", "")).is_empty() and not bool(ui.get("reduce_motion", false)),
+		"surface_realtime_state_refresh": double_result_phase or (marked and str(holdout_challenge.get("skill_grade", "")).is_empty() and not bool(ui.get("reduce_motion", false))),
 		"reduce_motion": bool(ui.get("reduce_motion", false)),
 		"phase": phase,
 		"machine_name": str(state.get("machine_name", "Video Poker")),
@@ -501,6 +513,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"hand_results": hand_results,
 		"holds": holds,
 		"suggested_holds": suggested,
+		"poker_hat_strategy_active": poker_hat_strategy_active,
+		"recommended_holds": recommended_holds,
+		"recommended_hold_text": _recommended_hold_text(recommended_holds),
 		"scoring_indices": scoring_indices,
 		"drawn_indices": drawn_indices,
 		"marked": marked,
@@ -536,13 +551,15 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				FLIP_CHANNEL,
 				str(flip.get("id", "")),
 				FLIP_DURATION_MSEC if not str(flip.get("id", "")).is_empty() else 0,
-				int(flip.get("started", 0))
+				int(flip.get("started", 0)),
+				{"clock_source": "surface"}
 			),
 			GameModule.surface_animation_channel(
 				DRAW_CASCADE_CHANNEL,
 				str(flip.get("id", "")),
 				FLIP_DURATION_MSEC if not str(flip.get("id", "")).is_empty() else 0,
-				int(flip.get("started", 0))
+				int(flip.get("started", 0)),
+				{"clock_source": "surface"}
 			),
 		],
 		"surface_action_bindings": {},
@@ -656,8 +673,11 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			if bool(next.get("marked", false)) and not draw_challenge.is_empty():
 				var draw_challenge_complete := bool(draw_challenge.get("chain_complete", false)) or not str(draw_challenge.get("skill_grade", "")).is_empty() or _holdout_chain_complete(draw_challenge)
 				if not draw_challenge_complete:
+					# DRAW must never trap an active hand behind the optional skill UI.
+					# Unfinished beats become misses, so abandoning the attempt still
+					# resolves immediately and applies the holdout's Heat risk.
+					draw_challenge = _grade_holdout_challenge(draw_challenge)
 					next["holdout_challenge"] = draw_challenge
-					return _message_command(next, "Finish the timed holdout beat before the draw.")
 				return _immediate_action_command("mark_holds", "cheat", next, index, _wager_for(state, next), "Drawing with the armed holdout.")
 			next["marked"] = false
 			next.erase("holdout_challenge")
@@ -733,10 +753,11 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	var variant: Dictionary = _variant(state)
 	ui["denomination_index"] = _next_playable_denomination_index(state, _denomination_index(ui, state) - 1, run_state, environment)
 
-	# Step down the bet ladder until the wager fits the bankroll and economy ceiling.
+	# Step down only when the wager exceeds the player's available funds. Video
+	# poker cabinet denominations are not table limits: a $5 machine must allow
+	# all five coin levels whenever the player can pay the resulting wager.
 	var wager_capacity := run_state.wager_capacity_for_game(get_id(), environment)
-	var stake_ceiling := run_state.wager_stake_ceiling(int(_copy_dict(environment.get("economic_profile", {})).get("stake_ceiling", wager_capacity)))
-	var affordable := mini(stake_ceiling, maxi(0, wager_capacity))
+	var affordable := maxi(0, wager_capacity)
 	var bet_level := _bet_level(ui)
 	ui["bet_level"] = bet_level
 	while bet_level > 0 and _wager_for(state, ui) > affordable:
@@ -781,12 +802,14 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	var draw_removed_cards: Array = _draw_removed_cards_for_rule(opening, holds, hand_count)
 	var draw_base: Array = _deck_without_cards(_base_deck(variant), draw_removed_cards)
 	var draw_rule := "single_remaining_deck" if hand_count <= 1 else "independent_deck_minus_held"
+	var holds_key := JSON.stringify(holds)
+	var wild_ranks := _wild_ranks(variant)
 	for hand_index in range(hand_count):
 		var draw_stream_key := "draw:%s:%d:%d:%s" % [
 			str(state.get("cabinet_key", "")),
 			int(state.get("hands_played", 0)),
 			hand_index,
-			JSON.stringify(holds),
+			holds_key,
 		]
 		var hand_rng: RngStream = rng.fork(draw_stream_key)
 		# Advance the parent action stream once per hand while keeping each hand's
@@ -809,11 +832,11 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 					drawn_indices.append(i)
 		if is_cheat and hand_index == 0 and holdout_applied:
 			final_hand = _apply_committed_holdout(final_hand, holds, holdout_challenge)
-		var descriptor: Dictionary = _evaluate(final_hand, _wild_ranks(variant))
+		var descriptor: Dictionary = _evaluate(final_hand, wild_ranks)
 		var pay_row: Dictionary = _pay_for(descriptor, variant)
 		if not is_cheat and int(pay_row.get("mult", 0)) <= 0 and luck_bonus > 0 and rng.randi_range(1, 100) <= luck_bonus:
 			final_hand = _apply_holdout(final_hand, holds, variant)
-			descriptor = _evaluate(final_hand, _wild_ranks(variant))
+			descriptor = _evaluate(final_hand, wild_ranks)
 			pay_row = _pay_for(descriptor, variant)
 		var gross_payout := _row_pay(pay_row, coin_count, is_max_bet) * coin_value
 		var bonus_layer: Dictionary = _bonus_layer(final_hand, descriptor, pay_row, state, coin_count, coin_value, is_max_bet)
@@ -826,10 +849,11 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		if value > best_value:
 			best_value = value
 			best_index = hand_index
-		final_hands.append(final_hand.duplicate(true))
+		var stored_hand := CardShoeScript.card_array(final_hand)
+		final_hands.append(stored_hand)
 		hand_results.append({
 			"hand_index": hand_index,
-			"hand": final_hand.duplicate(true),
+			"hand": stored_hand,
 			"pay_key": str(pay_row.get("key", "")),
 			"pay_label": str(pay_row.get("label", "")),
 			"pay_mult": int(pay_row.get("mult", 0)),
@@ -842,13 +866,13 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 			"draw_deck_rule": draw_rule,
 			"draw_stream_key": draw_stream_key,
 			"draw_pool_size": draw_base.size(),
-			"draw_removed_cards": draw_removed_cards.duplicate(true),
+			"draw_removed_cards": draw_removed_cards,
 		})
 	if final_hands.is_empty():
 		return _empty_result(action_id, bet_credits, environment, "The machine failed to draw a hand.")
 	var primary_result: Dictionary = hand_results[clampi(best_index, 0, hand_results.size() - 1)]
-	var final_hand: Array = CardShoeScript.card_array(primary_result.get("hand", []))
-	var primary_descriptor: Dictionary = _evaluate(final_hand, _wild_ranks(variant))
+	var final_hand: Array = primary_result.get("hand", []) if typeof(primary_result.get("hand", [])) == TYPE_ARRAY else []
+	var primary_descriptor: Dictionary = _evaluate(final_hand, wild_ranks)
 	var pay_row: Dictionary = _pay_for(primary_descriptor, variant)
 	var gross_payout := total_gross
 	var bankroll_delta := gross_payout - bet_credits
@@ -859,6 +883,7 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		bankroll_delta = mini(0, bankroll_delta + _item_bonus("loss_reduction", run_state, is_cheat))
 
 	var suspicion_delta := 0
+	var poker_hat_heat := maxi(0, _item_bonus("video_poker_win_heat", run_state, is_cheat)) if gross_payout > 0 else 0
 	var security_message := ""
 	var pit_boss_summary := ""
 	var pit_boss_watched := false
@@ -871,7 +896,7 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		pit_boss_watched = bool(pit_boss_status.get("watched", false))
 		var grade_heat := _holdout_grade_heat_modifier(holdout_grade)
 		base_suspicion_delta = maxi(1, int(holdout_challenge.get("base_heat", _holdout_base_heat(run_state))) + _item_bonus("cheat_suspicion_delta", run_state, true) + grade_heat)
-		var raw_heat := maxi(1, base_suspicion_delta + run_state.security_risk_bonus("cheat") + pit_boss_heat_bonus)
+		var raw_heat := maxi(1, base_suspicion_delta + poker_hat_heat + run_state.security_risk_bonus("cheat") + pit_boss_heat_bonus)
 		suspicion_delta = run_state.alcohol_adjusted_suspicion_delta(raw_heat)
 		if bool(pit_boss_status.get("active", false)):
 			pit_boss_summary = str(pit_boss_status.get("summary", ""))
@@ -881,6 +906,8 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 			bankroll_delta += security_bankroll_delta
 		security_message = str(security_pressure.get("message", ""))
 		ended = bool(security_pressure.get("ended", false))
+	elif poker_hat_heat > 0:
+		suspicion_delta = run_state.alcohol_adjusted_suspicion_delta(poker_hat_heat)
 
 	var blurb := _hand_blurb(primary_descriptor, pay_row, variant)
 	if hand_count > 1:
@@ -958,6 +985,7 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		"base_suspicion_delta": base_suspicion_delta,
 		"pit_boss_watched": pit_boss_watched,
 		"pit_boss_heat_bonus": pit_boss_heat_bonus,
+		"poker_hat_heat": poker_hat_heat,
 		"pit_boss_summary": pit_boss_summary,
 		"security_message": security_message,
 		"skill_security_pressure_checked": is_cheat,
@@ -1003,6 +1031,7 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	result["video_poker_drawn_indices"] = _index_array(primary_result.get("drawn_indices", []))
 	result["video_poker_variant"] = str(state.get("variant_id", ""))
 	result["video_poker_paytable_tier"] = str(state.get("paytable_tier_id", ""))
+	result["video_poker_poker_hat_heat"] = poker_hat_heat
 	if is_cheat:
 		result["video_poker_pit_boss_watched"] = pit_boss_watched
 		result["video_poker_pit_boss_heat_bonus"] = pit_boss_heat_bonus
@@ -1042,6 +1071,9 @@ func _resolve_double_up(run_state: RunState, environment: Dictionary, rng: RngSt
 	var picks: Array = view.get("pick_ranks", [])
 	var pick_index := clampi(int(ui.get("double_pick", 0)), 0, picks.size() - 1) if not picks.is_empty() else 0
 	var pick_rank := int(picks[pick_index]) if not picks.is_empty() else 7
+	var pick_cards: Array = view.get("picks", []) if typeof(view.get("picks", [])) == TYPE_ARRAY else []
+	var picked_card: Dictionary = _copy_dict(pick_cards[pick_index]) if pick_index >= 0 and pick_index < pick_cards.size() else {}
+	var dealer_card: Dictionary = _copy_dict(view.get("dealer", {}))
 	# Consume the injected stream so the gamble advances the run RNG deterministically.
 	rng.randi_range(1, 100)
 
@@ -1064,7 +1096,13 @@ func _resolve_double_up(run_state: RunState, environment: Dictionary, rng: RngSt
 	last_result["double_dealer_rank"] = dealer_rank
 	last_result["double_pick_rank"] = pick_rank
 	last_result["double_outcome"] = outcome
-	last_result["resolved_at_msec"] = GameModule.deterministic_time_msec(run_state, ui)
+	var resolved_at_msec := GameModule.deterministic_time_msec(run_state, ui)
+	last_result["double_pick_index"] = pick_index
+	last_result["double_picked_card"] = picked_card
+	last_result["double_dealer_card"] = dealer_card
+	last_result["double_at_risk"] = at_risk
+	last_result["double_result_until_msec"] = resolved_at_msec + DOUBLE_UP_RESULT_HOLD_MSEC
+	last_result["resolved_at_msec"] = resolved_at_msec
 	state["last_result"] = last_result
 	_update_environment_state(environment, state)
 
@@ -1083,6 +1121,9 @@ func _resolve_double_up(run_state: RunState, environment: Dictionary, rng: RngSt
 	result["video_poker_double_outcome"] = outcome
 	result["video_poker_double_at_risk"] = at_risk
 	result["video_poker_double_next"] = next_double
+	result["video_poker_double_pick_index"] = pick_index
+	result["video_poker_double_pick_rank"] = pick_rank
+	result["video_poker_double_dealer_rank"] = dealer_rank
 	GameModule.apply_result(run_state, result, rng)
 	return result
 
@@ -1126,7 +1167,19 @@ func _machine_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var state: Dictionary = game_states.get(get_id(), {}) if typeof(game_states.get(get_id(), {})) == TYPE_DICTIONARY else {}
 	if state.is_empty():
 		state = _fallback_state(run_state, environment)
+	if _state_is_current(state):
+		# Draw replaces nested result data; double-up copies it before mutation. A
+		# shallow shell preserves caller snapshots without re-normalizing the whole
+		# prior multi-hand result on every click and surface read.
+		return state.duplicate(false)
 	return _normalize_state(state)
+
+
+func _state_is_current(state: Dictionary) -> bool:
+	return str(state.get("schema", "")) == STATE_SCHEMA \
+		and int(state.get("version", 0)) >= STATE_VERSION \
+		and typeof(state.get("coin_denominations", null)) == TYPE_ARRAY \
+		and typeof(state.get("last_result", null)) == TYPE_DICTIONARY
 
 
 func _cabinet_spec(cabinet_id: String) -> Dictionary:
@@ -1189,12 +1242,13 @@ func _normalize_state(state: Dictionary) -> Dictionary:
 
 func _update_environment_state(environment: Dictionary, state: Dictionary) -> void:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	game_states[get_id()] = state.duplicate(true)
-	environment["game_states"] = game_states
+	var writable_states := game_states.duplicate(false)
+	writable_states[get_id()] = state
+	environment["game_states"] = writable_states
 
 
 func _normalized_ui_state(ui_state: Dictionary) -> Dictionary:
-	var next: Dictionary = ui_state.duplicate(true)
+	var next: Dictionary = ui_state.duplicate(false)
 	next["holds"] = _index_array(next.get("holds", []))
 	next["hand_active"] = bool(next.get("hand_active", false))
 	next["marked"] = bool(next.get("marked", false))
@@ -1509,6 +1563,7 @@ func _record_holdout_chain_input(challenge: Dictionary, input_msec: int, selecte
 		beat["selected_slot"] = clampi(selected_index, -1, HAND_SIZE - 1)
 	beat = _grade_holdout_beat(beat, next)
 	beats[beat_index] = beat
+	_rebase_remaining_holdout_beats(beats, beat_index + 1, input_msec)
 	next["beats"] = beats
 	next["current_beat"] = _holdout_current_beat_index(beats, beat_index + 1)
 	next["chain_complete"] = _holdout_beats_complete(beats)
@@ -1530,7 +1585,10 @@ func _grade_holdout_beat(beat: Dictionary, challenge: Dictionary) -> Dictionary:
 		graded["margin_msec"] = 0
 		graded["skill_accuracy"] = 0
 		return graded
-	var margin := int(graded.get("input_msec", 0)) - int(graded.get("target_msec", 0))
+	# The visible sweep loops until the player responds. Grade its current
+	# position rather than time elapsed since the first pass so it can never
+	# freeze into an unwinnable state.
+	var margin := _holdout_sweep_margin_msec(graded, int(graded.get("input_msec", 0)))
 	var abs_margin := absi(margin)
 	var timing := GameModule.skill_timing_grade_from_distance(
 		abs_margin,
@@ -1543,6 +1601,35 @@ func _grade_holdout_beat(beat: Dictionary, challenge: Dictionary) -> Dictionary:
 	graded["margin_msec"] = margin
 	graded["skill_accuracy"] = clampi(int(timing.get("skill_accuracy", 0)), 0, 100)
 	return graded
+
+
+func _rebase_remaining_holdout_beats(beats: Array, first_index: int, input_msec: int) -> void:
+	var cursor := maxi(0, input_msec) + 120
+	for index in range(maxi(0, first_index), beats.size()):
+		var beat: Dictionary = beats[index] if typeof(beats[index]) == TYPE_DICTIONARY else {}
+		var duration := maxi(1, int(beat.get("duration_msec", HOLDOUT_BEAT_DURATIONS_MSEC[mini(index, HOLDOUT_BEAT_DURATIONS_MSEC.size() - 1)])))
+		beat["started_msec"] = cursor
+		beat["target_msec"] = cursor + int(round(float(duration) * HOLDOUT_BEAT_TARGETS[mini(index, HOLDOUT_BEAT_TARGETS.size() - 1)]))
+		beats[index] = beat
+		cursor += duration + 120
+
+
+func _holdout_sweep_progress(beat: Dictionary, current_msec: int) -> float:
+	var started := int(beat.get("started_msec", current_msec))
+	var duration := maxi(1, int(beat.get("duration_msec", HOLDOUT_PROMPT_BASE_MSEC + HOLDOUT_CLOSE_WINDOW_MSEC)))
+	if current_msec <= started:
+		return 0.0
+	var cycle_msec := posmod(current_msec - started, duration * 2)
+	var phase := float(cycle_msec) / float(duration)
+	return phase if phase <= 1.0 else 2.0 - phase
+
+
+func _holdout_sweep_margin_msec(beat: Dictionary, current_msec: int) -> int:
+	var started := int(beat.get("started_msec", current_msec))
+	var duration := maxi(1, int(beat.get("duration_msec", HOLDOUT_PROMPT_BASE_MSEC + HOLDOUT_CLOSE_WINDOW_MSEC)))
+	var target_msec := int(beat.get("target_msec", started + int(round(float(duration) * 0.58))))
+	var target_progress := clampf(float(target_msec - started) / float(duration), 0.0, 1.0)
+	return int(round((_holdout_sweep_progress(beat, current_msec) - target_progress) * float(duration)))
 
 
 func _aggregate_holdout_chain_grade(beats: Array) -> Dictionary:
@@ -1645,7 +1732,7 @@ func _holdout_meter(challenge: Dictionary, ui_state: Dictionary) -> Dictionary:
 	var started := int(beat.get("started_msec", challenge.get("started_msec", current_msec)))
 	var duration := maxi(1, int(beat.get("duration_msec", HOLDOUT_PROMPT_BASE_MSEC + HOLDOUT_CLOSE_WINDOW_MSEC)))
 	var perfect := int(beat.get("target_msec", challenge.get("perfect_msec", started + HOLDOUT_PROMPT_BASE_MSEC)))
-	var progress := clampf(float(current_msec - started) / float(duration), 0.0, 1.0)
+	var progress := _holdout_sweep_progress(beat, current_msec)
 	var target := clampf(float(perfect - started) / float(duration), 0.0, 1.0)
 	var input_progress := -1.0
 	if beat.has("input_msec"):
@@ -1667,6 +1754,8 @@ func _holdout_meter(challenge: Dictionary, ui_state: Dictionary) -> Dictionary:
 		"chain_complete": bool(challenge.get("chain_complete", false)),
 		"progress": progress,
 		"target": target,
+		"perfect_window": clampf(float(int(challenge.get("perfect_window_msec", HOLDOUT_PERFECT_WINDOW_MSEC))) / float(duration), 0.01, 0.45),
+		"good_window": clampf(float(int(challenge.get("good_window_msec", HOLDOUT_GOOD_WINDOW_MSEC))) / float(duration), 0.02, 0.48),
 		"input": input_progress,
 		"skill_grade": str(challenge.get("skill_grade", "")),
 		"beat_results": beats,
@@ -1801,6 +1890,20 @@ func _playable_denomination_indices(denominations: Array, hand_count: int, wager
 	var result: Array = []
 	for i in range(denominations.size()):
 		var entry: Dictionary = denominations[i] if typeof(denominations[i]) == TYPE_DICTIONARY else {}
+		# A denomination is valid when its one-coin wager can be played. Requiring
+		# all five coins to fit made 3-Play Triple Double Bonus skip valid 50c/$1
+		# choices and could leave its denomination button stuck. Bet-level clamping
+		# independently limits how many coins are affordable at the selected value.
+		var minimum_wager := maxi(1, int(entry.get("credits", 1))) * maxi(1, hand_count)
+		if minimum_wager <= wager_ceiling:
+			result.append(i)
+	return result
+
+
+func _full_ladder_denomination_indices(denominations: Array, hand_count: int, wager_ceiling: int) -> Array:
+	var result: Array = []
+	for i in range(denominations.size()):
+		var entry: Dictionary = denominations[i] if typeof(denominations[i]) == TYPE_DICTIONARY else {}
 		var max_wager := maxi(1, int(entry.get("credits", 1))) * maxi(1, hand_count) * _coin_count_for_level(MAX_BET_LEVEL)
 		if max_wager <= wager_ceiling:
 			result.append(i)
@@ -1809,11 +1912,8 @@ func _playable_denomination_indices(denominations: Array, hand_count: int, wager
 
 func _affordable_bet_level(state: Dictionary, ui: Dictionary, run_state: RunState, environment: Dictionary) -> int:
 	var level := _bet_level(ui)
-	var economic_profile: Dictionary = _copy_dict(environment.get("economic_profile", {}))
 	var wager_capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 20
-	var base_ceiling := int(economic_profile.get("stake_ceiling", wager_capacity))
-	var wager_ceiling := run_state.wager_stake_ceiling(base_ceiling) if run_state != null else base_ceiling
-	var affordable := mini(wager_ceiling, maxi(0, wager_capacity))
+	var affordable := maxi(0, wager_capacity)
 	var next: Dictionary = ui.duplicate(true)
 	while level > 0:
 		next["bet_level"] = level
@@ -1826,11 +1926,8 @@ func _affordable_bet_level(state: Dictionary, ui: Dictionary, run_state: RunStat
 
 func _next_playable_denomination_index(state: Dictionary, current_index: int, run_state: RunState, environment: Dictionary) -> int:
 	var denominations: Array = _coin_denominations(state)
-	var economic_profile: Dictionary = _copy_dict(environment.get("economic_profile", {}))
 	var wager_capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 20
-	var base_ceiling := int(economic_profile.get("stake_ceiling", wager_capacity))
-	var wager_ceiling := run_state.wager_stake_ceiling(base_ceiling) if run_state != null else base_ceiling
-	var playable: Array = _playable_denomination_indices(denominations, _hand_count(state), wager_ceiling)
+	var playable: Array = _playable_denomination_indices(denominations, _hand_count(state), maxi(0, wager_capacity))
 	if playable.is_empty():
 		return 0
 	for offset in range(1, denominations.size() + 1):
@@ -2354,6 +2451,100 @@ func _natural_scoring_indices(ranks: Array, base: String, rank_counts: Dictionar
 
 # --- Strategy / holds --------------------------------------------------------
 
+# Fred's hat uses the active cabinet's real paytable to compare every possible
+# hold. One- and two-card draws are exhaustive; larger draws use a deterministic
+# capped sample. Results are cached per dealt hand, paytable, bet, and progressive
+# so repeated surface redraws do no strategy work.
+func _best_odds_holds(hand: Array, variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int, is_max_bet: bool) -> Array:
+	if hand.size() != HAND_SIZE:
+		return []
+	var cache_key := "%s|%s|%d|%d|%d|%d" % [
+		str(variant.get("id", "")),
+		str(variant.get("paytable_tier_id", "")),
+		coin_count,
+		coin_value,
+		int(state.get("progressive_meter", PROGRESSIVE_BASE)),
+		_stable_hash(_hand_signature(hand)),
+	]
+	if _strategy_hold_cache.has(cache_key):
+		return _index_array(_strategy_hold_cache.get(cache_key, []))
+	var deck := _deck_without_cards(_base_deck(variant), hand)
+	var best_holds: Array = []
+	var best_average := -1.0
+	for mask in range(1 << HAND_SIZE):
+		var holds: Array = []
+		for index in range(HAND_SIZE):
+			if (mask & (1 << index)) != 0:
+				holds.append(index)
+		var score := _hold_expected_pay(hand, deck, holds, variant, state, coin_count, coin_value, is_max_bet, cache_key)
+		if score > best_average + 0.000001 or (is_equal_approx(score, best_average) and holds.size() > best_holds.size()):
+			best_average = score
+			best_holds = holds
+	_strategy_hold_cache[cache_key] = _index_array(best_holds)
+	_strategy_hold_cache_order.append(cache_key)
+	while _strategy_hold_cache_order.size() > STRATEGY_CACHE_LIMIT:
+		_strategy_hold_cache.erase(_strategy_hold_cache_order.pop_front())
+	return _index_array(best_holds)
+
+
+func _hold_expected_pay(hand: Array, deck: Array, holds: Array, variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int, is_max_bet: bool, seed_key: String) -> float:
+	var draw_slots: Array = []
+	for index in range(HAND_SIZE):
+		if not holds.has(index):
+			draw_slots.append(index)
+	var draw_count := draw_slots.size()
+	if draw_count == 0:
+		return float(_strategy_hand_pay(hand, variant, state, coin_count, coin_value, is_max_bet))
+	var total := 0.0
+	var samples := 0
+	if draw_count == 1:
+		for first in range(deck.size()):
+			total += _strategy_completion_pay(hand, draw_slots, [deck[first]], variant, state, coin_count, coin_value, is_max_bet)
+			samples += 1
+	elif draw_count == 2:
+		for first in range(deck.size() - 1):
+			for second in range(first + 1, deck.size()):
+				total += _strategy_completion_pay(hand, draw_slots, [deck[first], deck[second]], variant, state, coin_count, coin_value, is_max_bet)
+				samples += 1
+	else:
+		var sample_rng := RngStream.new()
+		sample_rng.configure(_stable_hash("%s|%s" % [seed_key, JSON.stringify(holds)]))
+		for _sample in range(STRATEGY_SAMPLE_CAP):
+			var pool := deck.duplicate(false)
+			var cards: Array = []
+			for _draw in range(draw_count):
+				var pick := sample_rng.randi_range(0, pool.size() - 1)
+				cards.append(pool[pick])
+				pool.remove_at(pick)
+			total += _strategy_completion_pay(hand, draw_slots, cards, variant, state, coin_count, coin_value, is_max_bet)
+			samples += 1
+	return total / float(maxi(1, samples))
+
+
+func _strategy_completion_pay(hand: Array, draw_slots: Array, cards: Array, variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int, is_max_bet: bool) -> int:
+	var completed := hand.duplicate(false)
+	for index in range(mini(draw_slots.size(), cards.size())):
+		completed[int(draw_slots[index])] = cards[index]
+	return _strategy_hand_pay(completed, variant, state, coin_count, coin_value, is_max_bet)
+
+
+func _strategy_hand_pay(hand: Array, variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int, is_max_bet: bool) -> int:
+	var descriptor := _evaluate(hand, _wild_ranks(variant))
+	var pay_row := _pay_for(descriptor, variant)
+	var base_pay := _row_pay(pay_row, coin_count, is_max_bet) * coin_value
+	return base_pay + int(_bonus_layer(hand, descriptor, pay_row, state, coin_count, coin_value, is_max_bet).get("bonus", 0))
+
+
+func _recommended_hold_text(holds: Array) -> String:
+	if holds.is_empty():
+		return "DRAW ALL FIVE"
+	if holds.size() >= HAND_SIZE:
+		return "HOLD ALL FIVE"
+	var positions: Array[String] = []
+	for hold_value in holds:
+		positions.append(str(int(hold_value) + 1))
+	return "HOLD CARDS %s" % ", ".join(positions)
+
 # Variant-aware suggested holds for the hint, the cheat mark, and the RTP check.
 func _suggested_holds(hand: Array, variant: Dictionary) -> Array:
 	var wild_ranks: Array = _wild_ranks(variant)
@@ -2538,6 +2729,34 @@ func _double_up_view(run_state: RunState, state: Dictionary, ui: Dictionary, las
 	}
 
 
+func _double_up_result_visible(last_result: Dictionary, ui: Dictionary) -> bool:
+	if str(last_result.get("double_outcome", "")).is_empty():
+		return false
+	var until_msec := maxi(0, int(last_result.get("double_result_until_msec", 0)))
+	var now_msec := _surface_time_msec(ui)
+	return until_msec > 0 and now_msec > 0 and now_msec < until_msec
+
+
+func _double_up_result_view(last_result: Dictionary) -> Dictionary:
+	var selected_pick := clampi(int(last_result.get("double_pick_index", 0)), 0, 3)
+	var picked_card := _copy_dict(last_result.get("double_picked_card", {}))
+	var picks: Array = []
+	for index in range(4):
+		picks.append(picked_card if index == selected_pick else {"hidden": true})
+	return {
+		"dealer": _copy_dict(last_result.get("double_dealer_card", {})),
+		"dealer_rank": int(last_result.get("double_dealer_rank", 0)),
+		"picks": picks,
+		"selected_pick": selected_pick,
+		"picked_card": picked_card,
+		"picked_rank": int(last_result.get("double_pick_rank", 0)),
+		"outcome": str(last_result.get("double_outcome", "")),
+		"at_risk": maxi(0, int(last_result.get("double_at_risk", 0))),
+		"result_message": str(last_result.get("summary", "")),
+		"resolved": true,
+	}
+
+
 func _double_up_message(outcome: String, pick_rank: int, dealer_rank: int, bankroll_delta: int) -> String:
 	var pick_word := _rank_word_single(pick_rank)
 	var dealer_word := _rank_word_single(dealer_rank)
@@ -2628,6 +2847,8 @@ func _info_text(phase: String, hand: Array, holds: Array, last_result: Dictionar
 		return "Deal ready."
 	if phase == "double_up":
 		return "Double or nothing: pick a card to beat the dealer."
+	if phase == "double_result":
+		return str(last_result.get("summary", "Double up resolved."))
 	if phase == "settled" and not last_result.is_empty():
 		var bet := int(last_result.get("bet_credits", 0))
 		var mult := int(last_result.get("pay_mult", 0))

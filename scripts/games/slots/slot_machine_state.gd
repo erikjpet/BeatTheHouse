@@ -160,6 +160,7 @@ static func normalize_owned(machine: Dictionary) -> Dictionary:
 	machine["slot_animation_id"] = str(machine.get("slot_animation_id", ""))
 	machine["slot_animation_duration_msec"] = maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
 	machine["slot_animation_started_msec"] = maxi(0, int(machine.get("slot_animation_started_msec", 0)))
+	machine["slot_bonus_trigger_revealed"] = bool(machine.get("slot_bonus_trigger_revealed", false))
 	if machine.has("slot_animation_resume_elapsed_msec"):
 		machine["slot_animation_resume_elapsed_msec"] = maxi(0, int(machine.get("slot_animation_resume_elapsed_msec", 0)))
 	machine["slot_autoplay_active"] = bool(machine.get("slot_autoplay_active", false))

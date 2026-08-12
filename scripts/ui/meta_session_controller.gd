@@ -12,6 +12,7 @@ const CONTEXT_MODE_META_TRADE_UP := "meta_trade_up"
 const CONTEXT_MODE_META_PAWN_COUNTER := "meta_pawn_counter"
 const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
 const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
+const MAX_VISIBLE_HOME_BAG_OBJECTS := 8
 const META_LOCATION_HOME := "home"
 const META_LOCATION_START_RUN := "start_run"
 
@@ -91,12 +92,12 @@ func interactable_object_view_list(location_id: String, run_state: RunState, hov
 	return objects
 
 
-func unopened_bag_rows() -> Array:
+func unopened_bag_rows(limit: int = -1) -> Array:
 	var rows: Array = []
 	if meta_collection_service == null:
 		return rows
 	var resolver: Variant = _collection_resolver()
-	for bag_value in meta_collection_service.unopened_bags():
+	for bag_value in meta_collection_service.unopened_bags(limit):
 		if typeof(bag_value) != TYPE_DICTIONARY:
 			continue
 		var bag: Dictionary = bag_value
@@ -405,37 +406,23 @@ func map_icon_archetype_id(node_id: String) -> String:
 
 
 func world_map_detail_view(location_id: String, selected_node_id: String) -> Dictionary:
-	var lines: Array = []
 	if selected_node_id.is_empty():
-		lines.append("Select a revealed stop.")
-		return {"text": "\n".join(lines), "confirm_enabled": false, "badges": []}
+		return {"text": "Select a revealed stop.", "confirm_enabled": false, "badges": []}
 	var label := "Home"
-	var destination_kind := "home"
+	var description := "Your room, storage, and loadout."
 	if selected_node_id == pawn_location_id():
 		label = "Sal's Pawn Shop"
-		destination_kind = "shop"
+		description = "Sal buys, repairs, and lends."
 	elif selected_node_id == META_LOCATION_START_RUN:
 		label = "Start Run"
-		destination_kind = "casino"
-	var route := travel_choice(selected_node_id, location_id)
-	lines.append("Stop: %s" % label)
-	if selected_node_id == META_LOCATION_START_RUN:
-		lines.append("Run: random seed")
-		lines.append("Challenge: none")
-		lines.append("Modifiers: none")
-		if selected_node_id == location_id:
-			lines.append("Status: You are here.")
-			return {"text": "\n".join(lines), "confirm_enabled": false, "badges": AttributeBadgesScript.for_world_map_detail(destination_kind)}
-		lines.append("Status: Ready.")
-		return {"text": "\n".join(lines), "confirm_enabled": true, "badges": AttributeBadgesScript.for_world_map_detail(destination_kind, route)}
-	lines.append("Travel: Walk · Cost: $0")
-	lines.append("Distance: Near / 1 block")
-	lines.append("Clock: no time passes")
-	if selected_node_id == location_id:
-		lines.append("Status: You are here.")
-		return {"text": "\n".join(lines), "confirm_enabled": false, "badges": AttributeBadgesScript.for_world_map_detail(destination_kind)}
-	lines.append("Status: Route open.")
-	return {"text": "\n".join(lines), "confirm_enabled": true, "badges": AttributeBadgesScript.for_world_map_detail(destination_kind, route)}
+		description = "Begin a new run through the city."
+	var lines: Array = [
+		label,
+		"Hours: Open 24 hours (OPEN)",
+		description,
+		"0 min * 0$ * Walk",
+	]
+	return {"text": "\n".join(lines), "confirm_enabled": selected_node_id != location_id, "badges": []}
 
 
 func _build_home_environment(run_state: RunState) -> Dictionary:
@@ -548,16 +535,7 @@ func _container_label(item_id: String) -> String:
 func _interactable_object_view_cache_key(location_id: String) -> String:
 	var parts: Array[String] = [location_id]
 	if meta_collection_service != null:
-		var snapshot: Dictionary = meta_collection_service.snapshot()
-		parts.append(str(snapshot.get("housing_tier", "")))
-		parts.append(str(snapshot.get("gold_balance", 0)))
-		parts.append(JSON.stringify(snapshot.get("owned_containers", [])))
-		parts.append(JSON.stringify(snapshot.get("owned_instances", [])))
-		parts.append(JSON.stringify(snapshot.get("unopened_bags", [])))
-		parts.append(JSON.stringify(snapshot.get("loadout", [])))
-		var resale := _copy_dict(snapshot.get("sal_resale", {}))
-		parts.append(str(resale.get("revision", 0)))
-		parts.append(str(not _copy_dict(resale.get("pending_starter_buyback", {})).is_empty()))
+		parts.append(str(meta_collection_service.state_revision()))
 	return "|".join(parts)
 
 
@@ -593,7 +571,9 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"confirm_action_id": "open_meta_container",
 			"focus_rect": _interaction_rect_for_object(run_state, "meta_container:%s" % container_id, CONTEXT_MODE_HOME_CONTAINER, index),
 		}, hover_target_id, focus_target_id, selected_object_id))
-	var bags := unopened_bag_rows()
+	var bag_count := meta_collection_service.unopened_bag_count() if meta_collection_service != null else 0
+	var direct_bag_limit := MAX_VISIBLE_HOME_BAG_OBJECTS if bag_count <= MAX_VISIBLE_HOME_BAG_OBJECTS else MAX_VISIBLE_HOME_BAG_OBJECTS - 1
+	var bags := unopened_bag_rows(direct_bag_limit)
 	for index in range(bags.size()):
 		var bag := _copy_dict(bags[index])
 		var bag_id := int(bag.get("instance_id", 0))
@@ -616,6 +596,27 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"available_actions": [{"id": "open_meta_bag", "label": "Open"}],
 			"confirm_action_id": "open_meta_bag",
 			"focus_rect": _interaction_rect_for_object(run_state, "meta_bag:%d" % bag_id, CONTEXT_MODE_META_BAG, index),
+		}, hover_target_id, focus_target_id, selected_object_id))
+	if bag_count > bags.size():
+		var hidden_bag_count := bag_count - bags.size()
+		objects.append(_make_interactable_object({
+			"object_id": "meta_bags:all",
+			"object_type": CONTEXT_MODE_META_BAG,
+			"visual_type": CONTEXT_MODE_META_BAG,
+			"source_id": "0",
+			"label": "Bag Shelf",
+			"short_description": "%d unopened bags are stored here." % bag_count,
+			"presence": "fixture",
+			"interactive": true,
+			"enabled": true,
+			"action_summary": "Browse every unopened bag.",
+			"status_summary": "+%d more" % hidden_bag_count,
+			"visual_key": "meta_bag",
+			"prop": "paper_bag",
+			"icon_key": "cashout_envelope",
+			"available_actions": [{"id": "open_meta_bag", "label": "Browse"}],
+			"confirm_action_id": "open_meta_bag",
+			"focus_rect": _interaction_rect_for_object(run_state, "meta_bags:all", CONTEXT_MODE_META_BAG, bags.size()),
 		}, hover_target_id, focus_target_id, selected_object_id))
 	var upgrade := _copy_dict(home.get("upgrade", {}))
 	var upgrade_enabled := not upgrade.is_empty() and bool(upgrade.get("affordable", false))
@@ -835,18 +836,22 @@ func _world_map_node(node_id: String, position: Vector2, selected_id: String, lo
 
 func _snapshot_carried_instance_ids(owned_instances: Array, loadout: Array, housing_tier: String) -> Array:
 	var owned_ids: Array = []
+	var owned_lookup := {}
 	for instance_value in owned_instances:
 		var instance := _copy_dict(instance_value)
 		var instance_id := int(instance.get("instance_id", 0))
-		if instance_id > 0 and not owned_ids.has(instance_id):
+		if instance_id > 0 and not owned_lookup.has(instance_id):
 			owned_ids.append(instance_id)
+			owned_lookup[instance_id] = true
 	if housing_tier == MetaCollectionServiceScript.HOUSING_BACK_ALLEY:
 		return owned_ids
 	var carried: Array = []
+	var carried_lookup := {}
 	for id_value in loadout:
 		var instance_id := int(id_value)
-		if instance_id > 0 and owned_ids.has(instance_id) and not carried.has(instance_id):
+		if instance_id > 0 and owned_lookup.has(instance_id) and not carried_lookup.has(instance_id):
 			carried.append(instance_id)
+			carried_lookup[instance_id] = true
 	return carried
 
 

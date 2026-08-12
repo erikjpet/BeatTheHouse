@@ -372,6 +372,34 @@ func play_for_environment(environment: Dictionary, heat_level: int) -> void:
 	play_for_environment_state(environment, heat_level, {})
 
 
+# A generated overture that moves through the sound vocabulary used by the
+# game's rooms while preserving a single memorable menu motif.
+func play_main_menu_theme() -> void:
+	play_for_environment_state(main_menu_theme_environment(), 0, {})
+
+
+func main_menu_theme_environment() -> Dictionary:
+	return {
+		"id": "main_menu_tour",
+		"archetype_id": "main_menu_tour",
+		"mood": "menu tour",
+		"music_profile": {
+			"theme": "menu tour",
+			"texture": "menu_tour",
+			"palette_id": "menu_tour",
+			"bpm": 84.0,
+			"mode": "dorian",
+			"root_midi": 45,
+			"safety": 0.72,
+			"ambience": 0.66,
+			"volume": 0.24,
+			"arrangement_phrases": 6,
+			"progression": [0, 3, 5, 4, 0, 6, 3, 4],
+			"motif": [0, 2, 4, 5, 4, 2, 1, 0, 3, 5, 6, 5, 3, 2, 1, 0],
+		},
+	}
+
+
 # Starts or updates the generated theme and live FX from one run-state snapshot.
 func play_for_environment_state(environment: Dictionary, heat_level: int, music_state: Dictionary) -> void:
 	var snapshot := _music_fx_state_from_environment(environment, heat_level, music_state)
@@ -3239,6 +3267,7 @@ func _ambient_stem_pcm_data(context: Dictionary, token: int = -1) -> Dictionary:
 		var step_index := int(t / step_period) % total_steps
 		var step_local := fposmod(t, step_period)
 		var phrase_index := int(step_index / phrase_steps) % maxi(1, phrase_count)
+		var active_palette := _menu_tour_palette_for_phrase(phrase_index) if texture_kind == "menu_tour" else palette
 		var phrase_step := step_index % phrase_steps
 		var bar_index := int(phrase_step / STEPS_PER_BAR) % maxi(1, chord_roots.size())
 		var beat_step := phrase_step % STEPS_PER_BAR
@@ -3250,13 +3279,13 @@ func _ambient_stem_pcm_data(context: Dictionary, token: int = -1) -> Dictionary:
 		var fill_amount := _phrase_fill_amount(phrase_step, phrase_index, phrase_count, phrase_energy)
 		var loop_edge := _loop_edge_envelope(t, duration)
 		var stem_scale := volume * loop_edge
-		var pad := _music_pad_voiced(root_midi, chord_voicing, chord_root, t, palette) * pad_gain * lerpf(0.94, 1.06, phrase_energy) * stem_scale
+		var pad := _music_pad_voiced(root_midi, chord_voicing, chord_root, t, active_palette) * pad_gain * lerpf(0.94, 1.06, phrase_energy) * stem_scale
 		var bass := 0.0
 		var bass_dark := 0.0
 		var bass_offset := _bass_offset_for_step(scale, progression_degrees, chord_roots, bar_index, beat_step, phrase_index, phrase_count, variation_seed)
 		if bass_offset > -900:
 			var bass_freq := _midi_freq(root_midi + bass_offset)
-			var bass_note := _music_bass(bass_freq, step_local) * bass_gain * lerpf(0.92, 1.13, phrase_energy) * _palette_value(palette, "bass_weight", 1.0)
+			var bass_note := _music_bass(bass_freq, step_local) * bass_gain * lerpf(0.92, 1.13, phrase_energy) * _palette_value(active_palette, "bass_weight", 1.0)
 			bass = bass_note * stem_scale
 			bass_dark = _music_dark_bass(bass_freq, step_local) * bass_gain * 1.08 * lerpf(0.95, 1.18, phrase_energy) * stem_scale
 		var lead := 0.0
@@ -3264,13 +3293,13 @@ func _ambient_stem_pcm_data(context: Dictionary, token: int = -1) -> Dictionary:
 		if lead_offset > -900:
 			var lead_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
 			var lead_velocity := _step_humanization(humanize_seed, phrase_step, phrase_index, 0.08)
-			lead = _music_lead(_midi_freq(root_midi + lead_offset), lead_local, palette) * lead_gain * lerpf(0.70, 1.28, phrase_energy) * lead_velocity * stem_scale
+			lead = _music_lead(_midi_freq(root_midi + lead_offset), lead_local, active_palette) * lead_gain * lerpf(0.70, 1.28, phrase_energy) * lead_velocity * stem_scale
 		var drum_frame := i + texture_seed
 		var drum_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
 		var hat_velocity := _step_humanization(humanize_seed + 29, phrase_step, phrase_index, 0.10)
-		var drums_low := _music_drums_low(beat_step, drum_local, drum_frame, phrase_index, phrase_count, variation_seed, fill_amount, palette) * drum_gain * stem_scale
-		var drums_high := _music_drums_high(beat_step, drum_local, step_period, drum_frame, phrase_index, phrase_count, variation_seed, fill_amount, palette) * drum_gain * hat_velocity * stem_scale
-		var drums_high_double := _music_drums_high_double(beat_step, drum_local, step_period, drum_frame + 17, phrase_index, phrase_count, variation_seed, fill_amount, palette) * drum_gain * 0.82 * hat_velocity * stem_scale
+		var drums_low := _music_drums_low(beat_step, drum_local, drum_frame, phrase_index, phrase_count, variation_seed, fill_amount, active_palette) * drum_gain * stem_scale
+		var drums_high := _music_drums_high(beat_step, drum_local, step_period, drum_frame, phrase_index, phrase_count, variation_seed, fill_amount, active_palette) * drum_gain * hat_velocity * stem_scale
+		var drums_high_double := _music_drums_high_double(beat_step, drum_local, step_period, drum_frame + 17, phrase_index, phrase_count, variation_seed, fill_amount, active_palette) * drum_gain * 0.82 * hat_velocity * stem_scale
 		var heartbeat := _heartbeat_shape(fposmod(t, beat_period), beat_period) * heartbeat_gain
 		var siren := _music_siren(t) * siren_gain
 		var tension := (heartbeat + siren) * stem_scale
@@ -5834,6 +5863,10 @@ func _pulse_train(t: float, rate: float, width: float) -> float:
 
 func _ambient_texture_sample(kind: String, rate: float, t: float, frame: int, seed: int) -> float:
 	match kind:
+		"menu_tour":
+			var tour_textures := ["fluorescent", "rain", "bar", "jazz", "highway", "boss"]
+			var tour_index := int(floor(t / 8.0)) % tour_textures.size()
+			return _ambient_texture_sample(str(tour_textures[tour_index]), rate, t, frame, seed + tour_index * 19)
 		"fluorescent":
 			var flicker := 0.55 + 0.45 * sin(TAU * rate * t)
 			return (sin(TAU * 123.0 * t) * 0.004 + sin(TAU * 246.0 * t) * 0.002) * flicker
@@ -5866,6 +5899,11 @@ func _ambient_texture_sample(kind: String, rate: float, t: float, frame: int, se
 			return floor_hum + camera_tick
 		_:
 			return 0.0
+
+
+func _menu_tour_palette_for_phrase(phrase_index: int) -> Dictionary:
+	var tour_themes := ["fluorescent casino", "wet alley", "local bar", "jazz club", "highway", "grand boss"]
+	return _theme_instrument_palette(str(tour_themes[phrase_index % tour_themes.size()]))
 
 
 func _soft_noise(frame: int, seed: int) -> float:
@@ -5910,6 +5948,8 @@ func _safety_from_security(security: Dictionary) -> float:
 
 func _theme_texture(theme: String) -> String:
 	var lowered := theme.to_lower()
+	if lowered.find("menu tour") != -1:
+		return "menu_tour"
 	if lowered.find("wet") != -1 or lowered.find("alley") != -1:
 		return "rain"
 	if lowered.find("bar") != -1 or lowered.find("local") != -1 or lowered.find("noisy") != -1:
@@ -5965,6 +6005,16 @@ func _theme_swing_amount(theme: String) -> float:
 
 func _theme_instrument_palette(theme: String) -> Dictionary:
 	match _theme_texture(theme):
+		"menu_tour":
+			return {
+				"id": "menu_tour_ensemble",
+				"pad_warmth": 1.08,
+				"pad_phaser": 0.14,
+				"lead_detune": 0.10,
+				"hat_softness": 0.82,
+				"bass_weight": 1.06,
+				"vibraphone": 0.24,
+			}
 		"jazz", "funk_jazz":
 			return {
 				"id": "jazz_brushes_upright",
@@ -6019,6 +6069,8 @@ func _theme_instrument_palette(theme: String) -> Dictionary:
 
 func _theme_bpm(theme: String) -> float:
 	match _theme_texture(theme):
+		"menu_tour":
+			return 84.0
 		"rain":
 			return 74.0
 		"bar":

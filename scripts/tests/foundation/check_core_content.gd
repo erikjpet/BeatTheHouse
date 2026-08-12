@@ -96,6 +96,8 @@ class SurfaceHarness:
 	var hovered_index: int = -1
 	var labels: Array = []
 	var label_records: Array = []
+	var draw_rect_records: Array = []
+	var record_draw_rects := false
 	var stake_control_count := 0
 	var native_stake_strip_count := 0
 	var animation_active := false
@@ -103,6 +105,8 @@ class SurfaceHarness:
 	var animation_duration := 2.4
 	var animation_progress := 1.0
 	var flicker_value := 0.0
+	var simulation_clock_msec := 0
+	var low_detail_idle := false
 	var design_size := Vector2(ArtContractsScript.GAME_BOARD_SIZE)
 
 	func setup(state: Dictionary) -> void:
@@ -112,6 +116,8 @@ class SurfaceHarness:
 		hovered_index = -1
 		labels = []
 		label_records = []
+		draw_rect_records = []
+		record_draw_rects = false
 		stake_control_count = 0
 		native_stake_strip_count = 0
 		animation_active = false
@@ -119,6 +125,8 @@ class SurfaceHarness:
 		animation_duration = 2.4
 		animation_progress = 1.0
 		flicker_value = 0.0
+		simulation_clock_msec = int(state.get("surface_time_msec", 0))
+		low_detail_idle = false
 		design_size = Vector2(ArtContractsScript.GAME_BOARD_SIZE)
 
 	func surface_board_size() -> Vector2:
@@ -136,6 +144,12 @@ class SurfaceHarness:
 
 	func surface_flicker() -> float:
 		return flicker_value
+
+	func surface_simulation_time_msec() -> int:
+		return simulation_clock_msec
+
+	func surface_low_detail_idle() -> bool:
+		return low_detail_idle and not animation_active
 
 	func surface_elapsed(_channel_id: String) -> float:
 		return animation_elapsed
@@ -179,6 +193,10 @@ class SurfaceHarness:
 	func surface_label_centered_plain(text: String, rect: Rect2, font_size: int, _color: Color) -> void:
 		labels.append(text)
 		label_records.append({"text": text, "rect": rect, "font_size": font_size})
+
+	func surface_reel_symbol_label(text: String, rect: Rect2, font_size: int, _color: Color) -> void:
+		labels.append(text)
+		label_records.append({"text": text, "rect": rect, "font_size": font_size, "reel_motion": true})
 
 	func surface_title(text: String, _pos: Vector2, _color: Color) -> void:
 		labels.append(text)
@@ -227,8 +245,9 @@ class SurfaceHarness:
 	func surface_add_drag_hit(rect: Rect2, action: String, index: int = -1) -> void:
 		hit_regions.append({"rect": rect, "action": action, "index": index, "drag": true, "exact": true})
 
-	func draw_rect(_rect: Rect2, _color: Color, _filled: bool = true, _width: float = -1.0, _antialiased: bool = false) -> void:
-		pass
+	func draw_rect(rect: Rect2, color: Color, filled: bool = true, width: float = -1.0, _antialiased: bool = false) -> void:
+		if record_draw_rects:
+			draw_rect_records.append({"rect": rect, "color": color, "filled": filled, "width": width})
 
 	func draw_texture_rect(_texture: Texture2D, _rect: Rect2, _tile: bool, _modulate: Color = Color(1, 1, 1, 1), _transpose: bool = false) -> void:
 		pass
@@ -2226,6 +2245,7 @@ func _t4_4_consumed_item_effect_keys() -> Dictionary:
 		"debt_grace_turns",
 		"drunk_delta",
 		"drunk_distortion_suppression_turns",
+		"exact_clock_minutes",
 		"inventory_add",
 		"inventory_remove",
 		"legal_win_chance",
@@ -2281,6 +2301,8 @@ func _t4_4_consumed_item_effect_keys() -> Dictionary:
 		"video_poker_holdout_good_msec",
 		"video_poker_holdout_heat_delta",
 		"video_poker_holdout_perfect_msec",
+		"video_poker_strategy_hint",
+		"video_poker_win_heat",
 		"win_bonus",
 		"win_chance",
 	])
@@ -2597,40 +2619,82 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 		if str(completion.get("action_id", "")) != "map" or not allowed_actions.has("travel:leave") or not allowed_actions.has("map"):
 			failures.append("Tutorial map lesson %s cannot open and complete through the real travel-object route." % map_lesson_id)
 	var state_lesson := library.tutorial_lesson("tutorial_blackjack_count_all")
-	if not CoachViewModelScript.state_completion_matches(state_lesson, {"game": {"count_all_selected": true}}):
-		failures.append("Coach state-predicate completion did not recognize a finished count challenge.")
+	if CoachViewModelScript.state_completion_matches(state_lesson, {"game": {"count_all_selected": false}}) \
+			or not CoachViewModelScript.state_completion_matches(state_lesson, {"game": {"count_all_selected": true}}):
+		failures.append("Coach state-predicate completion did not recognize all selected count bubbles.")
 	var raise_lesson := library.tutorial_lesson("tutorial_blackjack_raise")
 	if not CoachViewModelScript.completion_matches(raise_lesson, "blackjack_chip"):
 		failures.append("The tutorial wager lesson did not accept the real on-felt blackjack chip action.")
-	var blackjack_boundary_context := {"run": {"tutorial": true}, "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"hands_played": 0, "between_hands": false}}
+	var blackjack_boundary_context := {"run": {"tutorial": true}, "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"hands_played": 0, "between_hands": false}}
 	if CoachViewModelScript.trigger_matches(raise_lesson, blackjack_boundary_context, {"tutorial_blackjack_clean_finish": true}, false):
 		failures.append("The raised-bet Pal dialogue became eligible before the clean tutorial hand settled.")
 	blackjack_boundary_context["game"] = {"hands_played": 1, "between_hands": true}
 	if not CoachViewModelScript.trigger_matches(raise_lesson, blackjack_boundary_context, {"tutorial_blackjack_clean_finish": true}, false):
 		failures.append("The raised-bet Pal dialogue did not become eligible at the next hand boundary.")
-	for within_hand_lesson_id in ["tutorial_blackjack_clean_finish", "tutorial_blackjack_raised_deal", "tutorial_blackjack_heat_precheck", "tutorial_blackjack_lookaway", "tutorial_blackjack_count_start", "tutorial_blackjack_count_all"]:
-		if str(library.tutorial_lesson(within_hand_lesson_id).get("delivery", "dialogue")) == "dialogue":
-			failures.append("Within-hand blackjack lesson still chained a Pal dialogue: %s." % within_hand_lesson_id)
+	for blackjack_lesson_id in ["tutorial_blackjack_clean_deal", "tutorial_blackjack_clean_finish", "tutorial_blackjack_raise", "tutorial_blackjack_raised_deal", "tutorial_blackjack_heat_precheck", "tutorial_blackjack_lookaway", "tutorial_blackjack_peek", "tutorial_blackjack_peek_finish", "tutorial_blackjack_count_start", "tutorial_blackjack_count_all", "tutorial_blackjack_count_finish", "tutorial_heat_warning", "tutorial_leave_blackjack"]:
+		if str(library.tutorial_lesson(blackjack_lesson_id).get("delivery", "coach")) != "dialogue":
+			failures.append("Blackjack guidance regressed from conversational dialogue to a Pal tip: %s." % blackjack_lesson_id)
+	var clean_finish_lesson := library.tutorial_lesson("tutorial_blackjack_clean_finish")
+	if CoachViewModelScript.state_completion_matches(clean_finish_lesson, {"game": {"hands_played": 0, "between_hands": false}}) \
+		or not CoachViewModelScript.state_completion_matches(clean_finish_lesson, {"game": {"hands_played": 1, "between_hands": true}}):
+		failures.append("The clean-play lesson did not remain active through the complete first hand.")
 	var lookaway_lesson := library.tutorial_lesson("tutorial_blackjack_lookaway")
 	var lookaway_anchor: Dictionary = lookaway_lesson.get("anchor", {}) if typeof(lookaway_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
 	if str(lookaway_anchor.get("id", "")) != "blackjack_distraction:drink_pass":
 		failures.append("The tutorial lookaway lesson did not target the real Drink Pass control.")
+	var peek_finish_lesson := library.tutorial_lesson("tutorial_blackjack_peek_finish")
+	if not CoachViewModelScript.trigger_matches(peek_finish_lesson, {"run": {"tutorial": true}, "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"hands_played": 1, "hand_active": true, "peek_used": true}}, {"tutorial_blackjack_peek": true}, false) \
+		or CoachViewModelScript.state_completion_matches(peek_finish_lesson, {"game": {"hands_played": 1, "between_hands": false}}) \
+		or not CoachViewModelScript.state_completion_matches(peek_finish_lesson, {"game": {"hands_played": 2, "between_hands": true}}):
+		failures.append("The Peek-hand follow-up did not require the live second hand to settle before counting.")
 	var count_start_lesson := library.tutorial_lesson("tutorial_blackjack_count_start")
 	var count_start_anchor: Dictionary = count_start_lesson.get("anchor", {}) if typeof(count_start_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
-	if str(count_start_anchor.get("id", "")) != "blackjack_count_toggle" or not CoachViewModelScript.completion_matches(count_start_lesson, "blackjack_count_toggle"):
-		failures.append("The tutorial count lesson did not anchor and accept the real COUNT toggle.")
+	if str(count_start_anchor.get("id", "")) != "blackjack_count_toggle" \
+			or CoachViewModelScript.trigger_matches(count_start_lesson, {"run": {"tutorial": true}, "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"hands_played": 1, "between_hands": true}}, {"tutorial_blackjack_peek_finish": true}, false) \
+		or not CoachViewModelScript.trigger_matches(count_start_lesson, {"run": {"tutorial": true}, "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"hands_played": 2, "between_hands": true}}, {"tutorial_blackjack_peek_finish": true}, false):
+		failures.append("The tutorial count lesson did not wait for the third-hand boundary at the real COUNT toggle.")
+	var count_deal_anchor := CoachViewModelScript.resolved_anchor(count_start_lesson, {"game": {"counting_enabled": true, "count_started": false}})
+	if str(count_deal_anchor.get("id", "")) != "blackjack_deal":
+		failures.append("The third-hand count lesson did not move its highlight from COUNT to DEAL after arming.")
+	var count_finish_lesson := library.tutorial_lesson("tutorial_blackjack_count_finish")
+	if not CoachViewModelScript.trigger_matches(count_finish_lesson, {"run": {"tutorial": true}, "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"hands_played": 2, "hand_active": true, "count_all_selected": true}}, {"tutorial_blackjack_count_all": true}, false) \
+			or CoachViewModelScript.state_completion_matches(count_finish_lesson, {"game": {"tutorial_count_completed": false, "hands_played": 2, "between_hands": false}}) \
+			or not CoachViewModelScript.state_completion_matches(count_finish_lesson, {"game": {"tutorial_count_completed": true, "hands_played": 3, "between_hands": true}}):
+		failures.append("The counting hand did not require a real third-hand settlement before leaving blackjack.")
 	var cage_shop_lesson := library.tutorial_lesson("tutorial_cage_shop")
+	var cage_shop_anchor: Dictionary = cage_shop_lesson.get("anchor", {}) if typeof(cage_shop_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
 	var cage_shop_completion: Dictionary = cage_shop_lesson.get("completion", {}) if typeof(cage_shop_lesson.get("completion", {})) == TYPE_DICTIONARY else {}
-	if str(cage_shop_completion.get("action_id", "")) != "focus:casino_fixture:cage_gift_shop" or not CoachViewModelScript.completion_matches(cage_shop_lesson, "focus:casino_fixture:cage_gift_shop"):
-		failures.append("The tutorial gift-case lesson cannot complete from the real non-purchasing focus action.")
+	if str(cage_shop_anchor.get("id", "")) != "cage_gift_item:0" \
+		or str(cage_shop_completion.get("action_id", "")) != "focus:cage_gift_item:0" \
+		or not CoachViewModelScript.completion_matches(cage_shop_lesson, "focus:cage_gift_item:0"):
+		failures.append("The Cage shop tutorial does not highlight and complete from the first real shelf item.")
 	var heat_precheck := library.tutorial_lesson("tutorial_blackjack_heat_precheck")
 	var heat_mistake := library.tutorial_lesson("tutorial_heat_warning")
-	if heat_precheck.is_empty() or not CoachViewModelScript.trigger_matches(heat_precheck, {"run": {"tutorial": true}, "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"hand_active": true}}, {"tutorial_blackjack_raised_deal": true}, false):
+	if heat_precheck.is_empty() or not CoachViewModelScript.trigger_matches(heat_precheck, {"run": {"tutorial": true}, "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"hands_played": 1, "hand_active": true}}, {"tutorial_blackjack_raised_deal": true}, false):
 		failures.append("Perfect tutorial play did not guarantee a pre-cheat Heat explanation.")
-	if CoachViewModelScript.trigger_matches(heat_mistake, {"run": {"tutorial": true}, "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"count_answered": true, "count_perfect": true}}, {"tutorial_blackjack_count_start": true}, false):
+	if CoachViewModelScript.trigger_matches(heat_mistake, {"run": {"tutorial": true}, "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"tutorial_count_completed": true, "count_perfect": true}}, {"tutorial_blackjack_count_finish": true}, false):
 		failures.append("Perfect counting incorrectly triggered the mistake-only Heat follow-up.")
-	if not CoachViewModelScript.trigger_matches(heat_mistake, {"run": {"tutorial": true}, "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"count_answered": true, "count_perfect": false}}, {"tutorial_blackjack_count_start": true}, false):
+	if not CoachViewModelScript.trigger_matches(heat_mistake, {"run": {"tutorial": true}, "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"tutorial_count_completed": true, "count_perfect": false}}, {"tutorial_blackjack_count_finish": true}, false):
 		failures.append("A real count mistake did not trigger the contextual Heat follow-up.")
+	var drink_lesson_screen := library.tutorial_lesson("tutorial_drink_intro")
+	var drink_seen := {"tutorial_leave_blackjack": true}
+	if CoachViewModelScript.trigger_matches(drink_lesson_screen, {"run": {"tutorial": true}, "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack"}, drink_seen, false) \
+		or not CoachViewModelScript.trigger_matches(drink_lesson_screen, {"run": {"tutorial": true}, "screen": "ENVIRONMENT", "environment_archetype": "small_underground_casino", "game_id": ""}, drink_seen, false):
+		failures.append("The drink lesson was not gated to the room screen where its service highlight exists.")
+	for tutorial_lesson_value in library.tutorial_lessons:
+		if typeof(tutorial_lesson_value) != TYPE_DICTIONARY:
+			continue
+		var tutorial_lesson: Dictionary = tutorial_lesson_value
+		if str(tutorial_lesson.get("scope", "")) != "tutorial_run":
+			continue
+		var tutorial_trigger: Dictionary = tutorial_lesson.get("trigger", {}) if typeof(tutorial_lesson.get("trigger", {})) == TYPE_DICTIONARY else {}
+		var tutorial_anchor: Dictionary = tutorial_lesson.get("anchor", {}) if typeof(tutorial_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+		var authored_screen := str(tutorial_trigger.get("screen", ""))
+		var anchor_kind := str(tutorial_anchor.get("kind", ""))
+		var anchor_id := str(tutorial_anchor.get("id", ""))
+		var expected_screen := "GAME" if anchor_kind == "surface_action" else "TRAVEL" if anchor_kind == "hud_element" and anchor_id.begins_with("travel:") else "GAME" if not str(tutorial_trigger.get("game_id", "")).is_empty() else "ENVIRONMENT"
+		if authored_screen != expected_screen:
+			failures.append("Tutorial highlight %s targets %s on %s instead of its visible %s screen." % [str(tutorial_lesson.get("id", "")), anchor_id, authored_screen, expected_screen])
 	var hud_lesson := _coach_lesson_fixture("hud_anchor")
 	hud_lesson["anchor"] = {"kind": "hud_element", "id": "heat"}
 	var hud_context := {
@@ -2708,6 +2772,8 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var crew_copy := str((pal_nodes.get("crew_warning", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("crew_warning", {})) == TYPE_DICTIONARY else ""
 	var lookaway_copy := str((pal_nodes.get("blackjack_lookaway", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("blackjack_lookaway", {})) == TYPE_DICTIONARY else ""
 	var peek_copy := str((pal_nodes.get("blackjack_peek", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("blackjack_peek", {})) == TYPE_DICTIONARY else ""
+	var gas_peek_copy := str((pal_nodes.get("gas_peek", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("gas_peek", {})) == TYPE_DICTIONARY else ""
+	var gas_peek_heat_copy := str((pal_nodes.get("gas_peek_heat", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("gas_peek_heat", {})) == TYPE_DICTIONARY else ""
 	var heat_99_copy := str((pal_nodes.get("heat_99", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("heat_99", {})) == TYPE_DICTIONARY else ""
 	var invite_copy := str((pal_nodes.get("invitation", {}) as Dictionary).get("text", "")) if typeof(pal_nodes.get("invitation", {})) == TYPE_DICTIONARY else ""
 	if not parking_copy.contains("may lead somewhere useful later"):
@@ -2718,6 +2784,10 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		failures.append("Pal's lookaway lesson does not identify the easiest cheat and real spill-a-drink control.")
 	if not peek_copy.contains("add heat") or not peek_copy.contains("close the table"):
 		failures.append("Pal's peek lesson does not state the consequences of getting caught.")
+	if not gas_peek_copy.contains("50%") or not gas_peek_copy.contains("8%") or not gas_peek_copy.contains("9%") or not gas_peek_copy.contains("10%") or not gas_peek_copy.contains("11%") or not gas_peek_copy.contains("four times"):
+		failures.append("Pal's pull-tab Peek lesson does not teach its probability, escalating Heat, and four required attempts.")
+	if not gas_peek_heat_copy.contains("real Heat") or not gas_peek_heat_copy.contains("adds no Heat") or not gas_peek_heat_copy.contains("Tab Detector"):
+		failures.append("Pal's optional pull-tab Heat review does not contrast Peek with the owned detector.")
 	if not heat_99_copy.contains("calm down") or not heat_99_copy.contains("75%"):
 		failures.append("Pal's tutorial Heat intervention does not warn the player and explain the reset to 75%.")
 	var dealer_reprieve := library.dialogue("tutorial_blackjack_dealer_reprieve")
@@ -2735,6 +2805,37 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var entry_modifiers: Dictionary = entry_config.get("modifiers", {}) if typeof(entry_config.get("modifiers", {})) == TYPE_DICTIONARY else {}
 	if str(entry_config.get("id", "")) != "tutorial_first_card" or str(entry_modifiers.get("home_archetype_id", "")) != "apartment":
 		failures.append("Tutorial entry boundary did not enforce the authored Apartment identity.")
+	var tutorial_grand_override: Dictionary = library.environment_archetype_for_challenge(library.environment_archetype("grand_casino"), entry_config)
+	var tutorial_grand_objective: Dictionary = tutorial_grand_override.get("demo_objective", {}) if typeof(tutorial_grand_override.get("demo_objective", {})) == TYPE_DICTIONARY else {}
+	if int(tutorial_grand_objective.get("players_card_bronze_min_games", 0)) != 2:
+		failures.append("Tutorial Bronze objective does not require two resolved Main Floor hands.")
+	var tutorial_table_lesson := library.tutorial_lesson("tutorial_enter_grand_table")
+	var tutorial_table_anchor: Dictionary = tutorial_table_lesson.get("anchor", {}) if typeof(tutorial_table_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+	if str(tutorial_table_anchor.get("kind", "")) != "interactable_object" or str(tutorial_table_anchor.get("id", "")) != "game:blackjack":
+		failures.append("Grand Casino Bronze tutorial does not highlight the blackjack table before play.")
+	var tutorial_card_run := RunStateScript.new()
+	tutorial_card_run.start_new("TUTORIAL-BRONZE-SETTLEMENT", entry_config)
+	tutorial_grand_override["id"] = "tutorial_grand_casino"
+	tutorial_grand_override["archetype_id"] = "grand_casino"
+	tutorial_card_run.set_environment(tutorial_grand_override)
+	tutorial_card_run.record_grand_casino_game_result({"ok": true, "game_id": "blackjack", "action_id": "blackjack_place_bet", "action_kind": "legal", "stake": 5})
+	tutorial_card_run.evaluate_environment_objective_state()
+	if int(tutorial_card_run.narrative_flags.get("grand_casino_games_played", -1)) != 0 or bool(tutorial_card_run.demo_objective_status().get("players_card_ready_to_claim", false)):
+		failures.append("Blackjack Deal advanced tutorial Bronze progress before the hand settled.")
+	tutorial_card_run.record_grand_casino_game_result({"ok": true, "game_id": "blackjack", "action_id": "play_basic", "action_kind": "legal", "stake": 5, "won": false})
+	tutorial_card_run.evaluate_environment_objective_state()
+	if int(tutorial_card_run.narrative_flags.get("grand_casino_games_played", -1)) != 1 or bool(tutorial_card_run.demo_objective_status().get("players_card_ready_to_claim", false)):
+		failures.append("Tutorial Bronze became ready before the first settled blackjack hand reached 1/2.")
+	tutorial_card_run.record_grand_casino_game_result({"ok": true, "game_id": "blackjack", "action_id": "blackjack_place_bet", "action_kind": "legal", "stake": 5})
+	tutorial_card_run.evaluate_environment_objective_state()
+	if int(tutorial_card_run.narrative_flags.get("grand_casino_games_played", -1)) != 1 or bool(tutorial_card_run.demo_objective_status().get("players_card_ready_to_claim", false)):
+		failures.append("The second blackjack Deal advanced tutorial Bronze before payout or loss resolution.")
+	tutorial_card_run.record_grand_casino_game_result({"ok": true, "game_id": "blackjack", "action_id": "play_basic", "action_kind": "legal", "stake": 5, "won": true})
+	tutorial_card_run.evaluate_environment_objective_state()
+	if int(tutorial_card_run.narrative_flags.get("grand_casino_games_played", -1)) != 2 or not bool(tutorial_card_run.demo_objective_status().get("players_card_ready_to_claim", false)):
+		failures.append("Tutorial Bronze did not become ready after exactly two settled blackjack hands.")
+	if entry_modifiers.get("tutorial_pull_tab_peek_results", []) != [true, false, true, false]:
+		failures.append("Tutorial pull-tab Peek sequence does not showcase both the 50% success and miss outcomes.")
 	var closed_corner := _archetype_by_id(library, "corner_store")
 	var hours_run := RunStateScript.new()
 	hours_run.start_new("TUTORIAL-HOURS", config_a)
@@ -2743,11 +2844,23 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var caught_run := RunStateScript.new()
 	caught_run.start_new("TUTORIAL-CAUGHT", config_a)
 	var caught_transition := TutorialFlowScript.apply_caught_transition(caught_run, {"dealer_caught_cheat": true})
-	var caught_completed: Dictionary = caught_transition.get("completed_lessons", {}) if typeof(caught_transition.get("completed_lessons", {})) == TYPE_DICTIONARY else {}
-	if str(caught_transition.get("next_lesson_id", "")) != "tutorial_leave_blackjack" or not bool(caught_completed.get("tutorial_blackjack_count_all", false)):
-		failures.append("Caught tutorial blackjack outcome did not transition to the leave-table recovery lesson.")
-	if not TutorialFlowScript.apply_caught_transition(caught_run, {"dealer_caught_cheat": true, "blackjack_tutorial_peek_reprieve": true}).is_empty():
-		failures.append("The one-time tutorial Peek reprieve incorrectly skipped the remaining blackjack lessons.")
+	var caught_flags: Dictionary = caught_run.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(caught_run.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+	if not caught_transition.is_empty() or bool(caught_flags.get("tutorial_blackjack_count_all", false)):
+		failures.append("A caught tutorial Peek still administratively skipped the required counting lesson.")
+	caught_run.current_environment = {
+		"id": "legacy_tutorial_underground",
+		"archetype_id": "small_underground_casino",
+		"game_states": {"blackjack": {"barred": true, "hands_played": 1, "last_result": {"summary": "Caught."}}},
+	}
+	caught_run.narrative_flags["tutorial_caught_continue"] = true
+	caught_run.narrative_flags["tutorial_lessons_completed"] = {"tutorial_blackjack_peek": true, "tutorial_blackjack_count_start": true, "tutorial_blackjack_count_all": true}
+	if not TutorialFlowScript.repair_legacy_blackjack_count_skip(caught_run):
+		failures.append("A legacy tutorial save that skipped Count was not repaired.")
+	else:
+		var repaired_table: Dictionary = caught_run.current_environment.get("game_states", {}).get("blackjack", {})
+		var repaired_lessons: Dictionary = caught_run.narrative_flags.get("tutorial_lessons_completed", {})
+		if bool(repaired_table.get("barred", true)) or int(repaired_table.get("hands_played", 0)) < 2 or bool(repaired_lessons.get("tutorial_blackjack_count_all", false)) or not bool(repaired_lessons.get("tutorial_blackjack_peek_finish", false)):
+			failures.append("Legacy caught-Peek repair did not reopen blackjack at the real counting boundary.")
 	var heat_run := RunStateScript.new()
 	heat_run.start_new("TUTORIAL-HEAT-INTERVENTION", config_a)
 	heat_run.suspicion["level"] = 98
@@ -2759,6 +2872,30 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		failures.append("Tutorial Heat intervention did not publish the pending Pal warning contract.")
 	if heat_run.run_status != RunStateScript.RUN_STATUS_ACTIVE:
 		failures.append("Tutorial Heat intervention ended the run at the protected ceiling.")
+	var drunk_run := RunStateScript.new()
+	drunk_run.start_new("TUTORIAL-DRUNK-COFFEE", config_a)
+	drunk_run.drunk_level = RunStateScript.TUTORIAL_DRUNK_COFFEE_THRESHOLD
+	drunk_run.change_drunk(1)
+	var first_drunk_intervention := drunk_run.consume_tutorial_drunk_coffee_intervention()
+	if not drunk_run.inventory.has(RunStateScript.TUTORIAL_DRUNK_COFFEE_ITEM_ID) \
+			or int(first_drunk_intervention.get("serial", 0)) != 1 \
+			or int(first_drunk_intervention.get("threshold", 0)) != RunStateScript.TUTORIAL_DRUNK_COFFEE_THRESHOLD \
+			or not bool(first_drunk_intervention.get("item_granted", false)):
+		failures.append("Crossing above 33% Drunk in the tutorial did not grant Pal's coffee and publish the first warning.")
+	drunk_run.change_drunk(1)
+	if not drunk_run.consume_tutorial_drunk_coffee_intervention().is_empty():
+		failures.append("Remaining above 33% Drunk incorrectly repeated Pal's threshold warning without a new crossing.")
+	drunk_run.change_drunk(-2)
+	drunk_run.change_drunk(2)
+	var repeated_drunk_intervention := drunk_run.consume_tutorial_drunk_coffee_intervention()
+	if int(repeated_drunk_intervention.get("serial", 0)) != 2 or bool(repeated_drunk_intervention.get("item_granted", true)):
+		failures.append("A later tutorial Drunk crossing did not publish a repeat warning while preserving the coffee already carried.")
+	var normal_drunk_run := RunStateScript.new()
+	normal_drunk_run.start_new("NORMAL-DRUNK-COFFEE")
+	normal_drunk_run.drunk_level = RunStateScript.TUTORIAL_DRUNK_COFFEE_THRESHOLD
+	normal_drunk_run.change_drunk(1)
+	if normal_drunk_run.inventory.has(RunStateScript.TUTORIAL_DRUNK_COFFEE_ITEM_ID) or not normal_drunk_run.consume_tutorial_drunk_coffee_intervention().is_empty():
+		failures.append("The tutorial-only Drunk coffee intervention leaked into a normal run.")
 	var shelf_lesson := library.tutorial_lesson("tutorial_inspect_coffee")
 	var shelf_model := CoachViewModelScript.build(shelf_lesson, {
 		"viewport_rect": Rect2(Vector2.ZERO, Vector2(1280, 720)),
@@ -2766,6 +2903,40 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	})
 	if (shelf_model.get("additional_anchor_rects", []) as Array).size() != 1:
 		failures.append("Tutorial shelf lesson did not resolve both item highlights.")
+	var remaining_shelf_lesson := library.tutorial_lesson("tutorial_buy_remaining_store_item")
+	var remaining_after_pencil := CoachViewModelScript.build(remaining_shelf_lesson, {
+		"viewport_rect": Rect2(Vector2.ZERO, Vector2(1280, 720)),
+		"run": {"has_instant_coffee": false, "has_ledger_pencil": true},
+		"anchor_rects": {"interactable_objects": {"item:instant_coffee": Rect2(100, 200, 80, 60), "item:ledger_pencil": Rect2(200, 200, 80, 60)}},
+	})
+	var remaining_after_coffee := CoachViewModelScript.build(remaining_shelf_lesson, {
+		"viewport_rect": Rect2(Vector2.ZERO, Vector2(1280, 720)),
+		"run": {"has_instant_coffee": true, "has_ledger_pencil": false},
+		"anchor_rects": {"interactable_objects": {"item:instant_coffee": Rect2(100, 200, 80, 60), "item:ledger_pencil": Rect2(200, 200, 80, 60)}},
+	})
+	if str(remaining_after_pencil.get("anchor_id", "")) != "item:instant_coffee" or str(remaining_after_coffee.get("anchor_id", "")) != "item:ledger_pencil":
+		failures.append("Tutorial shelf follow-up did not highlight whichever required item remains.")
+	if not CoachViewModelScript.state_completion_matches(remaining_shelf_lesson, {"run": {"has_instant_coffee": true, "has_ledger_pencil": true}}) \
+			or CoachViewModelScript.state_completion_matches(remaining_shelf_lesson, {"run": {"has_instant_coffee": true, "has_ledger_pencil": false}}):
+		failures.append("Tutorial shelf follow-up did not require both purchases before advancing.")
+	var gas_peel_lesson := library.tutorial_lesson("tutorial_gas_peel")
+	var gas_peel_copy := str(gas_peel_lesson.get("copy", ""))
+	var gas_peel_dialogue := str((pal_nodes.get("gas_peel", {}) as Dictionary).get("text", ""))
+	if not gas_peel_copy.contains("click the completed ticket") or not gas_peel_dialogue.contains("click the completed ticket itself"):
+		failures.append("Pull-tab tutorial did not teach click-the-completed-ticket filing.")
+	var gas_peek_lesson := library.tutorial_lesson("tutorial_gas_peek")
+	var gas_peek_completion: Dictionary = gas_peek_lesson.get("completion", {}) if typeof(gas_peek_lesson.get("completion", {})) == TYPE_DICTIONARY else {}
+	var gas_peek_predicates: Array = gas_peek_completion.get("state_predicates", []) if typeof(gas_peek_completion.get("state_predicates", [])) == TYPE_ARRAY else []
+	if gas_peek_predicates.is_empty() or str((gas_peek_predicates[0] as Dictionary).get("path", "")) != "game.peek_count" or int((gas_peek_predicates[0] as Dictionary).get("value", 0)) != 4:
+		failures.append("Optional Path A Peek lesson does not require four real attempts.")
+	for remaining_peeks in [3, 2, 1]:
+		var reminder_node: Dictionary = pal_nodes.get("gas_peek_again_%d" % remaining_peeks, {}) if typeof(pal_nodes.get("gas_peek_again_%d" % remaining_peeks, {})) == TYPE_DICTIONARY else {}
+		if reminder_node.is_empty() or not str(reminder_node.get("text", "")).contains(str(remaining_peeks)):
+			failures.append("Optional Path A Peek lesson is missing Pal's %d-attempt progress reminder." % remaining_peeks)
+	var gas_peek_heat_lesson := library.tutorial_lesson("tutorial_gas_peek_heat")
+	var gas_peek_heat_anchor: Dictionary = gas_peek_heat_lesson.get("anchor", {}) if typeof(gas_peek_heat_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+	if str(gas_peek_heat_anchor.get("id", "")) != "heat":
+		failures.append("Optional Path A Peek lesson did not add a second Heat tutorial anchored to the meter.")
 	var phone_dialogue := library.dialogue("family_phone_exchange")
 	var phone_nodes: Dictionary = phone_dialogue.get("nodes", {}) if typeof(phone_dialogue.get("nodes", {})) == TYPE_DICTIONARY else {}
 	if phone_nodes.size() < 3 or str((phone_nodes.get("answer", {}) as Dictionary).get("text", "")).is_empty() or (phone_nodes.get("answer", {}) as Dictionary).get("choices", []).is_empty():
@@ -2774,6 +2945,13 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var drink_anchor: Dictionary = drink_lesson.get("anchor", {}) if typeof(drink_lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
 	if str(drink_anchor.get("id", "")) != "service:house_drink" or not str((pal_nodes.get("drink_intro", {}) as Dictionary).get("text", "")).contains("Drunk"):
 		failures.append("Tutorial drinking beat did not explain Drunk at the real drink service.")
+	for coffee_node_id in ["drunk_coffee", "drunk_coffee_repeat", "drunk_coffee_used"]:
+		var coffee_node: Dictionary = pal_nodes.get(coffee_node_id, {}) if typeof(pal_nodes.get(coffee_node_id, {})) == TYPE_DICTIONARY else {}
+		if coffee_node.is_empty() or str(coffee_node.get("text", "")).is_empty():
+			failures.append("Pal is missing the %s active-coffee tutorial dialogue." % coffee_node_id)
+	var coffee_intro_text := str((pal_nodes.get("drunk_coffee", {}) as Dictionary).get("text", ""))
+	if not coffee_intro_text.contains("33% Drunk") or not coffee_intro_text.contains("Open Inventory") or not coffee_intro_text.contains("Use Item"):
+		failures.append("Pal's first coffee warning does not teach the 33% threshold and the complete active-item use path.")
 	var filtered_overlay_badges := AttributeBadgesScript.for_object_overlay([{"glyph_id": "risk_tier"}, {"glyph_id": "class_event"}])
 	if filtered_overlay_badges.size() != 1 or str((filtered_overlay_badges[0] as Dictionary).get("glyph_id", "")) != "class_event":
 		failures.append("Object-overlay badge selection did not remove risk_tier at the source.")
@@ -2846,6 +3024,24 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var family_result: Dictionary = family_event.resolve(run_a, run_a.current_environment, "accept")
 	if not bool(phone_result.get("ok", false)) or not bool(family_result.get("ok", false)) or run_a.debt.is_empty():
 		failures.append("Tutorial forced family call did not produce real lender debt.")
+	var family_debt_lesson := library.tutorial_lesson("tutorial_family_debt")
+	var family_debt_context := {
+		"screen": "ENVIRONMENT",
+		"environment_archetype": "corner_store",
+		"run": {
+			"tutorial": true,
+			"debt_count": run_a.debt.size(),
+			"flags": run_a.narrative_flags.duplicate(true),
+		},
+	}
+	var completed_family_phone := {"tutorial_family_phone": true}
+	if CoachViewModelScript.trigger_matches(family_debt_lesson, family_debt_context, completed_family_phone, false):
+		failures.append("Pal's tutorial debt confirmation became eligible before the family-loan dialogue resolved.")
+	var resolved_family_debt_run_context: Dictionary = family_debt_context.get("run", {}).duplicate(true)
+	resolved_family_debt_run_context["flags"] = run_a.narrative_flags.merged({"tutorial_family_loan_dialogue_resolved": true}, true)
+	family_debt_context["run"] = resolved_family_debt_run_context
+	if not CoachViewModelScript.trigger_matches(family_debt_lesson, family_debt_context, completed_family_phone, false):
+		failures.append("Pal's tutorial debt confirmation did not become eligible after the family-loan dialogue resolved.")
 	var parking_event := EventModuleScript.new()
 	parking_event.setup(library.event("parking_lot_tip"), library)
 	var parking_result: Dictionary = parking_event.resolve(run_a, run_a.current_environment, "follow_tip")
@@ -2907,8 +3103,8 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	if str(run_a.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID or run_a.current_environment.get("game_ids", []) != ["blackjack"]:
 		failures.append("Tutorial finale did not generate exactly one Main Floor table game.")
 	var tutorial_status := run_a.demo_objective_status()
-	if int(tutorial_status.get("players_card_next_min_games", -1)) != 1 or int(tutorial_status.get("players_card_next_net_winnings", 0)) != -999 or int(tutorial_status.get("players_card_next_max_heat", -1)) != 100:
-		failures.append("Tutorial Grand Casino objective did not preserve the compressed one-game Bronze contract.")
+	if int(tutorial_status.get("players_card_next_min_games", -1)) != 2 or int(tutorial_status.get("players_card_next_net_winnings", 0)) != -999 or int(tutorial_status.get("players_card_next_max_heat", -1)) != 100:
+		failures.append("Tutorial Grand Casino objective did not preserve the two-settled-hand Bronze contract.")
 	var normal_grand := library.environment_archetype(RunState.GRAND_CASINO_ARCHETYPE_ID)
 	var normal_objective: Dictionary = normal_grand.get("demo_objective", {}) if typeof(normal_grand.get("demo_objective", {})) == TYPE_DICTIONARY else {}
 	if int(normal_objective.get("high_roller_net_winnings", -1)) != 30 or int(normal_objective.get("high_roller_min_grand_casino_games", -1)) != 5 or int(normal_objective.get("high_roller_max_heat", -1)) != 30:
@@ -2925,23 +3121,24 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	run_a.narrative_flags.erase("grand_casino_showdown_pending")
 	run_a.narrative_flags.erase("the_house_calls_pending")
 	run_a.suspicion["level"] = 0
-	GameModule.apply_result(run_a, {
-		"ok": true,
-		"type": "game_action",
-		"action_id": "stand",
-		"action_kind": "legal",
-		"game_id": "blackjack",
-		"environment_id": str(run_a.current_environment.get("id", "")),
-		"stake": 1,
-		"bankroll_delta": -1,
-		"suspicion_delta": 0,
-		"deltas": {"bankroll_delta": -1, "suspicion_delta": 0},
-		"state": GameModule.RESULT_CONTINUE,
-		"message": "Tutorial table hand complete.",
-	})
+	for settled_hand_index in range(2):
+		GameModule.apply_result(run_a, {
+			"ok": true,
+			"type": "game_action",
+			"action_id": "play_basic",
+			"action_kind": "legal",
+			"game_id": "blackjack",
+			"environment_id": str(run_a.current_environment.get("id", "")),
+			"stake": 1,
+			"bankroll_delta": -1,
+			"suspicion_delta": 0,
+			"deltas": {"bankroll_delta": -1, "suspicion_delta": 0},
+			"state": GameModule.RESULT_CONTINUE,
+			"message": "Tutorial table hand %d complete." % (settled_hand_index + 1),
+		})
 	var ready_status := run_a.demo_objective_status()
-	if int(ready_status.get("grand_casino_games_played", 0)) != 1 or str(ready_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_NONE or str(ready_status.get("players_card_next_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE or not bool(ready_status.get("players_card_ready_to_claim", false)):
-		failures.append("Tutorial Main Floor hand did not reach the compressed Bronze review: %s" % JSON.stringify(ready_status))
+	if int(ready_status.get("grand_casino_games_played", 0)) != 2 or str(ready_status.get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_NONE or str(ready_status.get("players_card_next_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE or not bool(ready_status.get("players_card_ready_to_claim", false)):
+		failures.append("Two settled tutorial Main Floor hands did not reach the Bronze review: %s" % JSON.stringify(ready_status))
 	if not generator_a.enter_grand_casino_room(run_a, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
 		failures.append("Tutorial did not permit the required return to Linda in the Cage.")
 	var bronze_claim := run_a.claim_grand_casino_players_card_tier()
@@ -3670,6 +3867,8 @@ func _check_slot_contract_smoke(library: ContentLibrary, failures: Array) -> voi
 		return
 	print("SLOT_CONTRACT_SMOKE single_apply")
 	_check_slot_single_apply_economy(library, definition, failures)
+	print("SLOT_CONTRACT_SMOKE one_click_spin")
+	call("_check_slot_one_click_spin", definition, failures)
 	print("SLOT_CONTRACT_SMOKE schema")
 	_check_slot_outcome_schema(definition, failures)
 	print("SLOT_CONTRACT_SMOKE runtime_storage")
@@ -3712,6 +3911,8 @@ func _check_slot_contract_smoke(library: ContentLibrary, failures: Array) -> voi
 	_check_slot_bonus_completion_recovery(library, definition, failures)
 	print("SLOT_CONTRACT_SMOKE pinball_sim_physics")
 	_check_slot_pinball_sim_physics(definition, failures)
+	print("SLOT_CONTRACT_SMOKE pinball_realtime_lifecycle")
+	_check_slot_pinball_feature_visual_manifest(definition, failures)
 	print("SLOT_CONTRACT_SMOKE economy_rng_discipline")
 	_check_slot_economy_rng_discipline(failures)
 

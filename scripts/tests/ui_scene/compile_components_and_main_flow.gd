@@ -94,6 +94,16 @@ func _check_run_report_screen_component() -> bool:
 	if (report_map.get("nodes", []) as Array).size() != 2 or JSON.stringify(report_map).find("Pawn Shop") != -1:
 		push_error("Run report map did not limit its fitted content to visited environments.")
 		return false
+	var report_positions := {}
+	for report_node_value in report_map.get("nodes", []):
+		if typeof(report_node_value) == TYPE_DICTIONARY:
+			var report_node: Dictionary = report_node_value
+			report_positions[str(report_node.get("id", ""))] = _copy_dict(report_node.get("position", {}))
+	if _copy_dict(report_positions.get("bar", {})) != {"x": 0.2, "y": 0.4} \
+		or _copy_dict(report_positions.get("casino", {})) != {"x": 0.8, "y": 0.5} \
+		or str(report_map.get("background_path", "")) != "res://assets/art/map_backgrounds/cyberpunk_city_overhead.png":
+		push_error("Run report map changed live-map coordinates or used a different geographic background: %s." % JSON.stringify(report_map))
+		return false
 	if (incomplete_loss_timeline.get("visited_node_ids", []) as Array) != ["bar", "corner_store", "casino"] or (incomplete_loss_report_map.get("nodes", []) as Array).size() != 3 or JSON.stringify(incomplete_loss_report_map).find("Pawn Shop") != -1:
 		push_error("Lost-run report map did not recover every traveled environment from recorded run history.")
 		return false
@@ -487,15 +497,31 @@ func _check_talk_dock_component() -> bool:
 		occupied_events["rect"] = rect
 	)
 	dock.set_entry(_talk_dock_entry_fixture(), _talk_dock_option_fixture(), 2)
+	dock.call("_toggle_expanded")
+	if not bool(dock.current_snapshot().get("expanded", false)):
+		parent.queue_free()
+		push_error("The input gesture that opened TalkDock was able to collapse it in the same frame.")
+		return false
 	await process_frame
+	var collapse_control := dock.get("collapse_button") as Button
+	if collapse_control == null or collapse_control.action_mode != BaseButton.ACTION_MODE_BUTTON_PRESS:
+		parent.queue_free()
+		push_error("TalkDock Hide still resolves on release and can catch the environment click that opened it.")
+		return false
+	dock.call("_toggle_expanded")
+	if bool(dock.current_snapshot().get("expanded", true)):
+		parent.queue_free()
+		push_error("TalkDock could not be intentionally collapsed after its opening input frame.")
+		return false
+	dock.call("_toggle_expanded")
 	var snapshot: Dictionary = dock.current_snapshot()
 	if not bool(snapshot.get("visible", false)) or not bool(snapshot.get("expanded", false)) or int(snapshot.get("choice_count", 0)) != 3:
 		parent.queue_free()
 		push_error("Talk dock fixture did not render an expanded timed entry.")
 		return false
-	if float(snapshot.get("choice_button_height", 0.0)) > VisualStyleScript.TALK_CHOICE_HEIGHT + 0.5:
+	if float(snapshot.get("choice_button_height", 0.0)) < VisualStyleScript.TALK_CHOICE_HEIGHT - 0.5:
 		parent.queue_free()
-		push_error("TalkDock response buttons expanded beyond their compact authored height.")
+		push_error("TalkDock response buttons fell below their minimum authored height.")
 		return false
 	var occupied_rect := _snapshot_rect(snapshot.get("occupied_rect", Rect2()))
 	var reserved_rect := _snapshot_rect(snapshot.get("environment_reserved_rect", Rect2()))
@@ -540,6 +566,32 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		return false
 	dock.set_small_screen_mode(false)
+	await process_frame
+	var standard_panel_height := _snapshot_rect(dock.current_snapshot().get("panel_rect", Rect2())).size.y
+	var long_choice_text := "Ask how the full arrangement works before agreeing"
+	var long_entry := _talk_dock_entry_fixture()
+	long_entry["event_id"] = "talk_long_choice_fixture"
+	var long_option := _talk_dock_option_fixture()
+	var long_choices: Array = (long_option.get("choices", []) as Array).duplicate(true)
+	(long_choices[0] as Dictionary)["label"] = long_choice_text
+	long_option["choices"] = long_choices
+	dock.set_entry(long_entry, long_option, 1)
+	await process_frame
+	await process_frame
+	var long_snapshot := dock.current_snapshot()
+	var long_panel_rect := _snapshot_rect(long_snapshot.get("panel_rect", Rect2()))
+	var long_choice_button := _talk_dock_choice_button(dock, long_choice_text)
+	if long_choice_button == null \
+		or long_choice_button.autowrap_mode == TextServer.AUTOWRAP_OFF \
+		or long_choice_button.clip_text \
+		or long_choice_button.size.y <= VisualStyleScript.TALK_CHOICE_HEIGHT + 0.5 \
+		or long_panel_rect.size.y <= standard_panel_height + 0.5 \
+		or not long_panel_rect.grow(1.0).encloses(long_choice_button.get_global_rect()) \
+		or not _snapshot_rect(long_snapshot.get("screen_rect", Rect2())).grow(1.0).encloses(long_panel_rect):
+		parent.queue_free()
+		push_error("TalkDock did not enlarge its response button and panel for wrapped choice text: %s." % str(long_snapshot))
+		return false
+	dock.set_entry(_talk_dock_entry_fixture(), _talk_dock_option_fixture(), 2)
 	await process_frame
 	var key_event := InputEventKey.new()
 	key_event.pressed = true
@@ -1025,6 +1077,16 @@ func _talk_dock_option_fixture() -> Dictionary:
 			{"id": "risk", "label": "Risk It", "text": "Push the room.", "consequence_summary": "Heat +3.", "requires_confirm": true},
 		],
 	}
+
+
+func _talk_dock_choice_button(node: Node, text: String) -> Button:
+	if node is Button and (node as Button).text == text:
+		return node as Button
+	for child in node.get_children():
+		var found := _talk_dock_choice_button(child, text)
+		if found != null:
+			return found
+	return null
 
 
 func _check_talk_dock_main_flow(app: Control) -> bool:
@@ -3090,8 +3152,9 @@ func _run() -> void:
 	var pinball_money_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("pinball_money_ding")
 	var drink_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("drink_consumed")
 	var phone_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("phone_call")
+	var phone_out_of_service_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("phone_out_of_service")
 	var scratch_paper_foley_sfx: AudioStreamWAV = slot_sfx.preview_event_stream("scratch_paper_foley_loop")
-	if lever_sfx == null or reel_loop_sfx == null or jackpot_sfx == null or pull_tab_thump_sfx == null or paper_peel_sfx == null or pinball_money_sfx == null or drink_sfx == null or phone_sfx == null or scratch_paper_foley_sfx == null:
+	if lever_sfx == null or reel_loop_sfx == null or jackpot_sfx == null or pull_tab_thump_sfx == null or paper_peel_sfx == null or pinball_money_sfx == null or drink_sfx == null or phone_sfx == null or phone_out_of_service_sfx == null or scratch_paper_foley_sfx == null:
 		push_error("SFX player did not generate required procedural streams.")
 		quit(1)
 		return
@@ -3127,6 +3190,10 @@ func _run() -> void:
 		return
 	if phone_sfx.data.size() <= 2048 or phone_sfx.loop_mode != AudioStreamWAV.LOOP_DISABLED or slot_sfx.debug_normalized_event_id("phone_call") != "phone_call":
 		push_error("Phone call SFX was not generated as a dedicated one-shot cue.")
+		quit(1)
+		return
+	if phone_out_of_service_sfx.data.size() <= phone_sfx.data.size() or phone_out_of_service_sfx.mix_rate != phone_sfx.mix_rate or phone_out_of_service_sfx.loop_mode != AudioStreamWAV.LOOP_DISABLED or slot_sfx.debug_normalized_event_id("phone_out_of_service") != "phone_out_of_service":
+		push_error("Unanswered phone call did not generate a distinct telephone-band out-of-service one-shot cue.")
 		quit(1)
 		return
 	var drink_has_signal := false
@@ -5896,8 +5963,8 @@ func _run() -> void:
 		return
 	var seen_fixture := revealed_fixture.duplicate(true)
 	seen_fixture["seen"] = true
-	if not bool(app.call("_world_map_node_should_render", seen_fixture, false, false)):
-		push_error("World map visibility contract hid a previously seen location that is not currently travelable.")
+	if bool(app.call("_world_map_node_should_render", seen_fixture, false, false)):
+		push_error("World map visibility contract exposed a seen-but-unvisited location that is not currently travelable.")
 		quit(1)
 		return
 	var visited_fixture := revealed_fixture.duplicate(true)
@@ -5938,6 +6005,17 @@ func _run() -> void:
 		quit(1)
 		return
 	var map_enabled_ids: Array = map_snapshot.get("travel_enabled_node_ids", []) if typeof(map_snapshot.get("travel_enabled_node_ids", [])) == TYPE_ARRAY else []
+	var current_map_node_id := str(map_snapshot.get("current_node_id", ""))
+	for map_node_value in map_snapshot.get("nodes", []):
+		if typeof(map_node_value) != TYPE_DICTIONARY:
+			continue
+		var rendered_map_node: Dictionary = map_node_value
+		var rendered_node_id := str(rendered_map_node.get("id", ""))
+		var rendered_node_state := str(rendered_map_node.get("state", WorldMapScript.STATE_HIDDEN))
+		if rendered_node_id != current_map_node_id and not map_enabled_ids.has(rendered_node_id) and rendered_node_state != WorldMapScript.STATE_VISITED:
+			push_error("World map rendered unvisited location %s even though it is not currently travelable." % rendered_node_id)
+			quit(1)
+			return
 	for enabled_id_value in map_enabled_ids:
 		var enabled_id := str(enabled_id_value)
 		if not map_focus_ids.has(enabled_id):
@@ -6038,8 +6116,9 @@ func _run() -> void:
 	for _layout_index in range(3):
 		await process_frame
 	var current_node_screen: Dictionary = app.call("current_screen_snapshot")
-	if not str(current_node_screen.get("world_map_detail_text", "")).contains("You are here."):
-		push_error("Selecting the current world-map node did not show the You are here state.")
+	var current_detail_lines := str(current_node_screen.get("world_map_detail_text", "")).split("\n")
+	if current_detail_lines.size() != 4 or not str(current_detail_lines[1]).begins_with("Hours:") or not str(current_detail_lines[3]).contains(" min * 0$ * Walk"):
+		push_error("Selecting the current world-map node did not show the compact four-field location card: %s" % str(current_detail_lines))
 		quit(1)
 		return
 	if not _world_map_detail_popup_fits(current_node_screen):
@@ -6065,6 +6144,11 @@ func _run() -> void:
 		push_error("World map first-open target icon button was missing for %s." % travel_target_id)
 		quit(1)
 		return
+	map_canvas.call("zoom_map", 1, map_canvas.size * 0.5)
+	if not bool((map_canvas.call("current_view_snapshot").get("navigation", {}) as Dictionary).get("user_view_active", false)):
+		push_error("Manual world-map zoom did not activate before testing location focus.")
+		quit(1)
+		return
 	target_node_button.emit_signal("pressed")
 	for _layout_index in range(3):
 		await process_frame
@@ -6074,6 +6158,10 @@ func _run() -> void:
 		quit(1)
 		return
 	var selected_map_view: Dictionary = map_canvas.call("current_view_snapshot")
+	if bool((selected_map_view.get("navigation", {}) as Dictionary).get("user_view_active", true)):
+		push_error("Clicking a world-map location did not release the manual camera override for location focus.")
+		quit(1)
+		return
 	var selected_map_bounds: Dictionary = selected_map_view.get("map_bounds", {}) if typeof(selected_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
 	if _map_bounds_equal(map_bounds, selected_map_bounds) or not bool(selected_map_view.get("selected_focus_zoom_active", false)):
 		push_error("Selecting a world-map target did not apply the selected-location focus zoom.")
@@ -6089,70 +6177,39 @@ func _run() -> void:
 		quit(1)
 		return
 	var detail_text := str(selected_map_screen.get("world_map_detail_text", ""))
-	var offer_line := ""
-	var commitment_line := ""
-	var forfeit_line := ""
-	for detail_line_value in detail_text.split("\n"):
-		var detail_line := str(detail_line_value)
-		if detail_line.begins_with("Offers:"):
-			offer_line = detail_line
-		elif detail_line.begins_with("Commits:"):
-			commitment_line = detail_line
-		elif detail_line.begins_with("Forfeits now:"):
-			forfeit_line = detail_line
-	if offer_line.is_empty() or commitment_line.is_empty() or forfeit_line.is_empty() \
-		or not commitment_line.contains(" min") or not commitment_line.contains("$"):
-		push_error("World map selection popup did not show offer, live commitment, and forfeited alternative: %s" % detail_text)
-		quit(1)
-		return
-	if detail_text.split("\n").size() > 6:
-		push_error("World map selection popup put required decision text below its six visible lines: %s" % detail_text)
+	var detail_lines := detail_text.split("\n")
+	if detail_lines.size() != 4 or str(detail_lines[0]).strip_edges().is_empty() \
+		or not str(detail_lines[1]).begins_with("Hours:") or str(detail_lines[2]).strip_edges().is_empty() \
+		or not str(detail_lines[3]).contains(" min * ") or not str(detail_lines[3]).contains("$ * ") or str(detail_lines[3]).count(" * ") != 2 \
+		or detail_text.contains("Forfeit") or detail_text.contains("Distance:") or detail_text.contains("Status:") or detail_text.contains("Offers:"):
+		push_error("World map selection popup did not contain exactly name, hours, description, and travel summary: %s" % detail_text)
 		quit(1)
 		return
 	if not _world_map_detail_popup_fits(selected_map_screen):
 		quit(1)
 		return
-	var detail_badges: Array = _copy_array(selected_map_screen.get("world_map_detail_badges", []))
-	if detail_badges.is_empty() or detail_badges.size() > 2:
-		push_error("World map selection popup should show only a location-type icon and one heat icon: %s" % str(detail_badges))
+	var map_selected_popup_rect := _snapshot_rect(selected_map_screen.get("world_map_detail_popup_rect", {}))
+	var selected_icon_rect: Rect2 = app.get("world_map_overlay_controller").call("global_rect_for_node", travel_target_id)
+	if not selected_icon_rect.has_area() or map_selected_popup_rect.intersects(selected_icon_rect.grow(4.0)):
+		push_error("World map detail popup covered the selected location icon instead of sitting beside it: popup=%s icon=%s" % [str(map_selected_popup_rect), str(selected_icon_rect)])
 		quit(1)
 		return
-	var heat_badge_count := 0
-	var location_badge_count := 0
-	for badge_value in detail_badges:
-		var glyph_id := str(_copy_dict(badge_value).get("glyph_id", ""))
-		if glyph_id == "suspicion":
-			heat_badge_count += 1
-		elif ["environment_casino", "environment_shop"].has(glyph_id):
-			location_badge_count += 1
-		else:
-			push_error("World map selection popup retained a redundant route icon: %s" % glyph_id)
-			quit(1)
-			return
-	if heat_badge_count != 1 or location_badge_count > 1:
-		push_error("World map selection popup did not reduce its icons to destination type plus heat: %s" % str(detail_badges))
+	var detail_badges: Array = _copy_array(selected_map_screen.get("world_map_detail_badges", []))
+	if not detail_badges.is_empty():
+		push_error("World map selection popup retained information badges outside the requested four fields: %s" % str(detail_badges))
 		quit(1)
 		return
 	var badge_slot := app.get("world_map_badge_slot") as VBoxContainer
-	if badge_slot == null or badge_slot.get_child_count() <= 0:
-		push_error("World map route glyph slot was empty after selecting a route.")
+	if badge_slot == null or badge_slot.visible:
+		push_error("World map route glyph slot remained visible after popup simplification.")
 		quit(1)
 		return
-	if not _badge_slot_icon_only_with_tooltips(badge_slot, "World map route glyphs"):
-		quit(1)
-		return
-	var badge_child_count := badge_slot.get_child_count()
-	var badge_child_instance_id := int(badge_slot.get_child(0).get_instance_id())
 	for _repeat_index in range(4):
 		if not bool(app.call("select_world_map_node", travel_target_id)):
 			push_error("World map repeated target selection unexpectedly failed.")
 			quit(1)
 			return
 		await process_frame
-	if badge_slot.get_child_count() != badge_child_count or int(badge_slot.get_child(0).get_instance_id()) != badge_child_instance_id:
-		push_error("World map route glyph row was rebuilt during an unchanged detail refresh.")
-		quit(1)
-		return
 	if not detail_text.contains("Hours:"):
 		push_error("World map selection popup did not show destination open-hours status.")
 		quit(1)
@@ -6165,7 +6222,13 @@ func _run() -> void:
 	blank_map_click.button_index = MOUSE_BUTTON_LEFT
 	blank_map_click.pressed = true
 	blank_map_click.position = Vector2(5.0, 5.0)
+	map_canvas.call("zoom_map", 1, map_canvas.size * 0.5)
 	app.call("_on_world_map_holder_gui_input", blank_map_click)
+	var blank_map_release := InputEventMouseButton.new()
+	blank_map_release.button_index = MOUSE_BUTTON_LEFT
+	blank_map_release.pressed = false
+	blank_map_release.position = blank_map_click.position
+	app.call("_on_world_map_holder_gui_input", blank_map_release)
 	await process_frame
 	var deselected_map_screen: Dictionary = app.call("current_screen_snapshot")
 	if not str(deselected_map_screen.get("selected_world_map_node_id", "")).is_empty() or bool(deselected_map_screen.get("world_map_detail_popup_visible", false)):
@@ -6277,6 +6340,10 @@ func _run() -> void:
 	failure_fixture_run.retire_pending_talk_events()
 	if not failure_fixture_run.enqueue_dialogue("pull_tab_clerk", "ui_failure_terminal_talk", terminal_talk_speaker, "greeting", "ui_terminal_fixture"):
 		push_error("Failure-screen fixture could not enqueue its pending conversation.")
+		quit(1)
+		return
+	if bool((deselected_map_view.get("navigation", {}) as Dictionary).get("user_view_active", true)):
+		push_error("Clicking blank world-map space did not restore the default travel-area framing.")
 		quit(1)
 		return
 	app.call("_refresh_talk_dock")

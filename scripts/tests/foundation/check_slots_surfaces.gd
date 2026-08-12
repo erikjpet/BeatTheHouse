@@ -18,6 +18,23 @@ class MotionSymbolHarness:
 		line_count += 1
 
 
+func _check_slot_one_click_spin(definition: Dictionary, failures: Array) -> void:
+	var run_state: RunState = _slot_run_state("SLOT-ONE-CLICK-SPIN", 100)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "pinball", "classic_3_reel", "standard", "plain")
+	_slot_store_machine(run_state, environment, machine)
+	var game = SlotGameScript.new()
+	game.setup(definition)
+	var before := JSON.stringify(run_state.to_dict())
+	var command: Dictionary = game.surface_action_command("slot_spin", 0, false, {}, run_state, environment)
+	if not bool(command.get("handled", false)) or str(command.get("action_id", "")) != "spin":
+		failures.append("Slot Spin button did not produce the normal spin action on its first click.")
+	if not bool(command.get("resolve", false)):
+		failures.append("Slot Spin button still required a second click before resolving.")
+	if JSON.stringify(run_state.to_dict()) != before:
+		failures.append("Slot Spin command mutated RunState before the host resolved the one-click action.")
+
+
 func _check_slot_runtime_storage_contract(definition: Dictionary, failures: Array) -> void:
 	var run_state: RunState = _slot_run_state("SLOT-RUNTIME-STORAGE", 100000)
 	var legacy: Dictionary = _slot_machine(definition, run_state, "pinball", "line_5x3", "standard", "plain")
@@ -90,6 +107,57 @@ func _check_slot_runtime_storage_contract(definition: Dictionary, failures: Arra
 	var pinball_cache: Dictionary = PinballFeatureScript.runtime_session_debug_snapshot()
 	if int(pinball_cache.get("board_template_cache_size", 0)) > int(pinball_cache.get("board_template_cache_cap", 0)):
 		failures.append("Pinball immutable board template cache exceeded its explicit bound.")
+	_check_slot_reel_motion_visibility(definition, failures)
+
+
+func _check_slot_reel_motion_visibility(definition: Dictionary, failures: Array) -> void:
+	var renderer = SlotRendererScript.new()
+	var harness := SurfaceHarness.new()
+	var state := {
+		"slot_animation_id": "reel-motion-visibility",
+		"slot_type_id": "pinball",
+		"slot_grid": [["A"], ["K"], ["Q"]],
+		"slot_reel_strips": [["A"], ["K"], ["Q"]],
+		"slot_reel_stops": [0, 0, 0],
+		"slot_reel_count": 3,
+		"slot_row_count": 1,
+		"slot_win_cells": [],
+	}
+	var skin := {"reel_window": {"x": 100, "y": 80, "w": 480, "h": 120}}
+	var signature := {
+		"reel_motion": [
+			{"phase": "settled", "scroll_cells": 0.0, "blur": 0.0},
+			{"phase": "spin", "scroll_cells": 8.35, "blur": 0.74},
+			{"phase": "decel", "scroll_cells": 2.60, "blur": 0.32},
+		],
+		"result_reveal_ready": false,
+		"gold_tease_active": false,
+		"buffalo_main_board_payload": {},
+	}
+	renderer.call("_draw_reels", harness, state, definition, skin, Color.MAGENTA, Color.CYAN, Color.LIGHT_BLUE, signature, 600)
+	for expected_label in ["A", "K", "Q"]:
+		if not harness.labels.has(expected_label):
+			failures.append("Slot reel motion hid the %s symbol instead of drawing it with its reel." % expected_label)
+	var moving_label_count := 0
+	for record_value in harness.label_records:
+		var record: Dictionary = record_value
+		if bool(record.get("reel_motion", false)):
+			moving_label_count += 1
+	if moving_label_count < 2:
+		failures.append("Slot moving reels did not use the lightweight labeled-symbol path.")
+	var warm_cache: Dictionary = renderer.cache_snapshot()
+	for _machine_index in range(6):
+		for frame_index in range(60):
+			var frame_signature: Dictionary = signature.duplicate(false)
+			frame_signature["reel_motion"] = [
+				{"phase": "spin", "scroll_cells": float(frame_index) * 0.25, "blur": 0.74},
+				{"phase": "spin", "scroll_cells": float(frame_index) * 0.28, "blur": 0.74},
+				{"phase": "spin", "scroll_cells": float(frame_index) * 0.31, "blur": 0.74},
+			]
+			renderer.call("_draw_reels", harness, state, definition, skin, Color.MAGENTA, Color.CYAN, Color.LIGHT_BLUE, frame_signature, frame_index * 16)
+	var after_cache: Dictionary = renderer.cache_snapshot()
+	if int(after_cache.get("symbol_metadata_cache_size", 0)) != int(warm_cache.get("symbol_metadata_cache_size", 0)) or int(after_cache.get("symbol_label_cache_size", 0)) != int(warm_cache.get("symbol_label_cache_size", 0)):
+		failures.append("Rendering six simultaneous slot reel streams grew symbol caches after warmup.")
 
 func _check_slot_free_games_carryover(definition: Dictionary, failures: Array) -> void:
 	var buffalo = SlotFamilyBuffaloScript.new()
@@ -273,8 +341,8 @@ func _check_slot_buffalo_feature_presentation(definition: Dictionary, failures: 
 	var hold_animation_surface: Dictionary = presentation.surface_state(animation_machine, run_state, definition, {"surface_time_msec": 240})
 	var hold_animation_scene: Dictionary = _slot_dict(hold_animation_surface.get("slot_feature_scene", {}))
 	var hold_auto_manifest: Dictionary = renderer.render_signature(hold_animation_surface, definition, 240)
-	if str(hold_auto_manifest.get("moving_symbol_treatment", "")) != "symbol_silhouette":
-		failures.append("Slot reel motion manifest did not require symbol-specific silhouettes.")
+	if str(hold_auto_manifest.get("moving_symbol_treatment", "")) != "labeled_symbol":
+		failures.append("Slot reel motion manifest did not require labeled moving symbols.")
 	if not bool(hold_animation_surface.get("slot_active_bonus_active", false)) or not bool(hold_animation_scene.get("active", false)) or str(hold_auto_manifest.get("mode", "")) != "feature":
 		failures.append("Slot buffalo hold respin reverted to base UI during the in-feature reel spin.")
 	var hold_spin_manifest: Dictionary = renderer.render_signature(hold_animation_surface, definition, 240, "feature")
@@ -673,6 +741,8 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 	prelaunch_machine["active_bonus"] = pinball.open_feature(prelaunch_machine, 10, prelaunch_run.create_rng("slot_pin_prelaunch_open"), definition)
 	prelaunch_machine["slot_pending_feature_alert"] = true
 	prelaunch_machine["slot_pending_feature_alert_msec"] = Time.get_ticks_msec()
+	# The takeover must not depend on a short-lived spin/bonus animation id.
+	prelaunch_machine["slot_animation_id"] = ""
 	var prelaunch_surface: Dictionary = presentation.surface_state(prelaunch_machine, prelaunch_run, definition, {"surface_time_msec": 240})
 	var prelaunch_manifest: Dictionary = renderer.render_signature(prelaunch_surface, definition, 240, "feature")
 	var prelaunch_scene: Dictionary = _slot_dict(prelaunch_surface.get("slot_feature_scene", {}))
@@ -683,8 +753,16 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 		failures.append("Slot pinball bonus alert music was not reduced to the quieter release volume.")
 	if not bool(prelaunch_manifest.get("pinball_guideline_active", false)):
 		failures.append("Slot pinball prelaunch visual manifest did not expose launch guideline.")
-	if float(prelaunch_manifest.get("pinball_playback_speed", 0.0)) <= 1.0:
-		failures.append("Slot pinball playback speed did not increase over real time.")
+	if not bool(prelaunch_manifest.get("pinball_takeover_active", false)) or not bool(prelaunch_surface.get("slot_active_bonus_active", false)):
+		failures.append("Slot pinball board disappeared when its entry animation id ended before launch.")
+	if bool(prelaunch_surface.get("slot_bonus_trigger_reveal_pending", true)):
+		failures.append("Slot pinball takeover retained the trigger reveal gate after entering prelaunch.")
+	if str(prelaunch_manifest.get("pinball_controls_mode", "")) != "launch" or not bool(prelaunch_manifest.get("pinball_launch_control_visible", false)) or bool(prelaunch_manifest.get("pinball_in_play_controls_visible", true)):
+		failures.append("Slot pinball prelaunch state kept in-play controls instead of showing launch controls.")
+	if not is_equal_approx(float(prelaunch_manifest.get("pinball_playback_speed", 0.0)), 3.5):
+		failures.append("Slot pinball replay speed did not match the doubled live speed.")
+	if not is_equal_approx(float(prelaunch_manifest.get("pinball_live_speed_multiplier", 0.0)), 2.0):
+		failures.append("Slot pinball visual manifest did not expose the 2x live speed multiplier.")
 	if float(prelaunch_manifest.get("pinball_gravity_y", 0.0)) < 2.5:
 		failures.append("Slot pinball gravity tuning still reads too floaty.")
 	if int(prelaunch_manifest.get("pinball_sampled_power", 0)) <= 0 or str(prelaunch_manifest.get("pinball_power_rating", "")).is_empty():
@@ -697,6 +775,43 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 		failures.append("Slot pinball prelaunch visual manifest did not expose plinko board style.")
 	if int(prelaunch_manifest.get("pinball_peg_count", 0)) <= 0 or int(prelaunch_manifest.get("pinball_trigger_count", 0)) <= 0:
 		failures.append("Slot pinball prelaunch visual manifest did not expose peg and trigger counts.")
+	var trigger_machine: Dictionary = prelaunch_machine.duplicate(true)
+	trigger_machine["slot_animation_id"] = "pinball_trigger_reveal"
+	trigger_machine["slot_animation_duration_msec"] = 1400
+	trigger_machine["slot_animation_plan"] = {
+		"reel_timeline": [{"reel": 0, "stop_time": 0.52, "settle_end": 0.64}],
+	}
+	var trigger_pending_surface: Dictionary = presentation.surface_state(trigger_machine, prelaunch_run, definition, {
+		"surface_time_msec": 100,
+		"surface_runtime_status": {"surface_animations": {"slot_spin": {"active_id": "pinball_trigger_reveal", "elapsed": 0.10}}},
+	})
+	if bool(trigger_pending_surface.get("slot_active_bonus_active", true)) or not bool(trigger_pending_surface.get("slot_bonus_trigger_reveal_pending", false)):
+		failures.append("Slot pinball trigger fixture did not remain on the reels before reveal completed.")
+	var stale_channel_surface: Dictionary = presentation.surface_state(trigger_machine, prelaunch_run, definition, {
+		"surface_time_msec": 100,
+		"surface_runtime_status": {"surface_animations": {"slot_spin": {"active_id": "previous_spin", "elapsed": 999.0}}},
+	})
+	if bool(stale_channel_surface.get("slot_active_bonus_active", true)) or not bool(stale_channel_surface.get("slot_bonus_trigger_reveal_pending", false)):
+		failures.append("Slot pinball accepted elapsed time from a stale spin channel and skipped its triggering reels.")
+	var takeover_patch: Dictionary = presentation.realtime_state_patch(trigger_machine, prelaunch_run, {
+		"surface_time_msec": 1000,
+		"surface_runtime_status": {"surface_animations": {"slot_spin": {"active_id": "pinball_trigger_reveal", "elapsed": 1.0}}},
+	}, trigger_pending_surface)
+	if not bool(takeover_patch.get("slot_active_bonus_active", false)) or bool(takeover_patch.get("slot_bonus_trigger_reveal_pending", true)):
+		failures.append("Slot pinball realtime reveal did not activate the takeover.")
+	if not takeover_patch.has("surface_animation_channels") or not takeover_patch.has("slot_skin") or not takeover_patch.has("surface_audio") or not _slot_array(takeover_patch.get("slot_grid", ["stale"])).is_empty():
+		failures.append("Slot pinball realtime reveal returned a partial patch, leaving stale cabinet layout or controls on screen.")
+	var takeover_manifest: Dictionary = renderer.render_signature(takeover_patch, definition, 1000, "feature")
+	if not bool(takeover_manifest.get("pinball_takeover_active", false)) or not bool(takeover_manifest.get("pinball_launch_control_visible", false)):
+		failures.append("Slot pinball realtime reveal did not produce an interactive launch takeover.")
+	var revealed_machine := trigger_machine.duplicate(true)
+	revealed_machine["slot_bonus_trigger_revealed"] = true
+	var latched_patch: Dictionary = presentation.realtime_state_patch(revealed_machine, prelaunch_run, {
+		"surface_time_msec": 1100,
+		"surface_runtime_status": {"surface_animations": {"slot_feature": {"active_id": "pinball:video_feature:0", "elapsed": 0.1}}},
+	}, takeover_patch)
+	if not bool(latched_patch.get("slot_active_bonus_active", false)) or bool(latched_patch.get("slot_bonus_trigger_reveal_pending", true)):
+		failures.append("Slot pinball reveal handoff regressed to reels after its spin timing channel was removed.")
 	var angled_machine: Dictionary = _slot_machine(definition, prelaunch_run, "pinball", "video_feature", "standard", "plain")
 	angled_machine["active_bonus"] = pinball.open_feature(angled_machine, 10, prelaunch_run.create_rng("slot_pin_angle_open"), definition)
 	var angle_step: Dictionary = pinball.step_bonus(angled_machine, "slot_bonus_left", prelaunch_run.create_rng("slot_pin_angle_left"), definition)
@@ -712,8 +827,10 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 	live_machine["active_bonus"] = _slot_dict(live_step.get("active_bonus", {}))
 	var live_surface: Dictionary = presentation.surface_state(live_machine, prelaunch_run, definition, {"surface_time_msec": 300})
 	var live_manifest: Dictionary = renderer.render_signature(live_surface, definition, 300, "feature")
-	if int(live_manifest.get("pinball_physics_tick_budget", 99)) > 3:
-		failures.append("Slot pinball live feature used a fast-forward physics tick budget instead of realtime-sized ticks.")
+	if int(live_manifest.get("pinball_physics_tick_budget", 99)) > 16:
+		failures.append("Slot pinball live feature exceeded its bounded realtime physics tick budget.")
+	if str(live_manifest.get("pinball_controls_mode", "")) != "in_play" or not bool(live_manifest.get("pinball_in_play_controls_visible", false)):
+		failures.append("Slot pinball live ball did not switch the takeover to in-play controls.")
 	var cue_machine: Dictionary = _slot_machine(definition, prelaunch_run, "pinball", "classic_3_reel", "standard", "plain")
 	var cue_active: Dictionary = pinball.open_feature(cue_machine, 10, prelaunch_run.create_rng("slot_pin_cue_open"), definition)
 	cue_active["launch_in_progress"] = true
@@ -765,18 +882,56 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 	var before_view: Dictionary = _slot_dict(realtime_before.get("pinball_view", {}))
 	var before_time: float = float(before_view.get("time", 0.0))
 	var before_positions: String = JSON.stringify(_slot_array(before_view.get("balls", [])))
-	realtime_machine["active_bonus"] = PinballFeatureScript.surface_refresh(realtime_before, 1064)
+	var tick_before_refresh := int(PinballFeatureScript.live_status(realtime_before).get("tick", 0))
+	var realtime_refresh: Dictionary = realtime_before
+	var refresh_budgets: Array[int] = []
+	for refresh_msec in [1016, 1032, 1048, 1064]:
+		realtime_refresh = PinballFeatureScript.surface_refresh(realtime_refresh, refresh_msec)
+		refresh_budgets.append(int(realtime_refresh.get("physics_tick_budget", 0)))
+	realtime_machine["active_bonus"] = realtime_refresh
 	var realtime_after: Dictionary = _slot_dict(realtime_machine.get("active_bonus", {}))
 	var after_view: Dictionary = _slot_dict(realtime_after.get("pinball_view", {}))
 	var tick_budget: int = int(realtime_after.get("physics_tick_budget", 0))
-	if tick_budget > 3:
-		failures.append("Slot pinball live launch used a fast-forward physics tick budget.")
+	var smooth_refresh_budgets := true
+	for refresh_budget in refresh_budgets:
+		if refresh_budget < 3 or refresh_budget > 4:
+			smooth_refresh_budgets = false
+			break
+	if not smooth_refresh_budgets:
+		failures.append("Slot pinball realtime accumulator did not distribute doubled physics smoothly across display frames: %s." % str(refresh_budgets))
+	var tick_after_refresh := int(PinballFeatureScript.live_status(realtime_after).get("tick", 0))
+	if tick_after_refresh - tick_before_refresh < 14 or tick_after_refresh - tick_before_refresh > 16:
+		failures.append("Slot pinball did not advance approximately 2x simulation time over 64 ms of realtime display.")
 	if float(after_view.get("time", 0.0)) <= before_time:
 		failures.append("Slot pinball surface refresh did not advance physics time.")
 	if JSON.stringify(_slot_array(after_view.get("balls", []))) == before_positions:
 		failures.append("Slot pinball surface refresh did not move live ball state.")
 	if int(realtime_after.get("last_physics_real_msec", 0)) != 1064:
 		failures.append("Slot pinball surface refresh did not track real surface time.")
+	var spam_tick_before := int(PinballFeatureScript.live_status(realtime_after).get("tick", 0))
+	var ignored_in_play: Dictionary = pinball.step_bonus(realtime_machine, "slot_bonus_launch", prelaunch_run.create_rng("slot_pin_realtime_in_play_spam"), definition, {"surface_time_msec": 1064, "drunk_scaled_surface_time_msec": 1064})
+	realtime_machine["active_bonus"] = _slot_dict(ignored_in_play.get("active_bonus", {}))
+	var spam_tick_after := int(PinballFeatureScript.live_status(_slot_dict(realtime_machine.get("active_bonus", {}))).get("tick", 0))
+	if spam_tick_after != spam_tick_before:
+		failures.append("Slot pinball IN PLAY input still accelerated live physics.")
+	var drained_active: Dictionary = _slot_dict(realtime_machine.get("active_bonus", {}))
+	var drained_msec := 1064
+	var drain_guard := 0
+	while int(PinballFeatureScript.live_status(drained_active).get("active_ball_count", 0)) > 0 and drain_guard < 160:
+		drained_msec += 64
+		drained_active = PinballFeatureScript.surface_refresh(drained_active, drained_msec)
+		drain_guard += 1
+	if int(drained_active.get("active_ball_count", -1)) != 0:
+		failures.append("Slot pinball realtime fixture did not reach the between-ball launch state.")
+	elif bool(drained_active.get("launch_in_progress", true)) or int(drained_active.get("balls_remaining", 0)) <= 0:
+		failures.append("Slot pinball drained ball retained in-play state instead of returning to launch state.")
+	else:
+		realtime_machine["active_bonus"] = drained_active
+		realtime_machine["slot_animation_id"] = ""
+		var drained_surface: Dictionary = presentation.surface_state(realtime_machine, prelaunch_run, definition, {"surface_time_msec": drained_msec})
+		var drained_manifest: Dictionary = renderer.render_signature(drained_surface, definition, drained_msec, "feature")
+		if not bool(drained_manifest.get("pinball_takeover_active", false)) or str(drained_manifest.get("pinball_controls_mode", "")) != "launch" or not bool(drained_manifest.get("pinball_launch_control_visible", false)):
+			failures.append("Slot pinball board or launch UI disappeared between balls.")
 	var watchdog_game: GameModule = SlotGameScript.new()
 	watchdog_game.setup(definition, null)
 	var watchdog_run: RunState = _slot_run_state("SLOT-LA4-PINBALL-WATCHDOG-READ", 100000)
@@ -931,8 +1086,9 @@ func _slot_pinball_visual_sample(definition: Dictionary, format_id: String, inpu
 		if input_index < inputs.size():
 			action_id = str(inputs[input_index])
 			input_index += 1
-		var step: Dictionary = pinball.step_bonus(machine, action_id, rng, definition, {"surface_time_msec": 240 + guard * 180})
+		var step: Dictionary = pinball.step_bonus(machine, action_id, rng, definition, {"surface_time_msec": 240 + guard * 64})
 		active = _slot_dict(step.get("active_bonus", {}))
+		active = PinballFeatureScript.surface_refresh(active, 304 + guard * 64)
 		machine["active_bonus"] = active
 		guard += 1
 	return {
@@ -944,7 +1100,7 @@ func _slot_pinball_visual_sample(definition: Dictionary, format_id: String, inpu
 
 func _slot_pinball_manifest_time_pair(trajectory: Array) -> Array:
 	var visual_start_msec := 520
-	var playback_speed := 1.75
+	var playback_speed := 3.5
 	var distinct_times: Array = _slot_pinball_distinct_times(trajectory)
 	if distinct_times.size() < 2:
 		return [visual_start_msec + 40, visual_start_msec + 240]
@@ -974,7 +1130,7 @@ func _slot_pinball_point_position(point: Dictionary) -> Vector2:
 
 func _slot_pinball_multiball_manifest_time(trajectory: Array) -> int:
 	var visual_start_msec := 520
-	var playback_speed := 1.75
+	var playback_speed := 3.5
 	var current_time := -1.0
 	var balls: Dictionary = {}
 	for point_value in trajectory:
@@ -1874,6 +2030,11 @@ func _check_cross_game_integration_matrix(library: ContentLibrary, failures: Arr
 			continue
 		var luck_pair: Dictionary = _xgame_luck_pair(game_id, game, failures)
 		_xgame_assert_shift(game_id, "luck", int(luck_pair.get("baseline", 0)), int(luck_pair.get("modified", 0)), "up", failures)
+		if game_id == "pull_tabs":
+			var exact_peek := _xgame_pull_tabs_heat_metric(game, "XGAME-EXACT-PULL-TAB-PEEK", false, true, "cheap_sunglasses")
+			if exact_peek != 8:
+				failures.append("Cross-game integration changed Pull Tabs' promised first-Peek Heat from 8 to %d." % exact_peek)
+			continue
 		var item_pair: Dictionary = _xgame_item_heat_pair(game_id, game, "cheap_sunglasses")
 		_xgame_assert_shift(game_id, "item", int(item_pair.get("baseline", 0)), int(item_pair.get("modified", 0)), "down", failures)
 		var alcohol_pair: Dictionary = _xgame_heat_pair(game_id, game, true, false, "")
@@ -2651,7 +2812,10 @@ func _check_premium_grand_casino_table_contract(library: ContentLibrary, game_id
 			failures.append("Grand Casino premium %s watched read did not mark watched cheat attention." % game_id)
 		if not bool(pressure_status.get("staff_attention_active", false)):
 			failures.append("Grand Casino premium %s watched read did not expose staff attention." % game_id)
-		if not bool(pressure_status.get("showdown_pending", false)) and not bool(pressure_status.get("showdown_active", false)):
+		if game_id == "roulette":
+			if int(pressure_result.get("suspicion_delta", -1)) != 0 or bool(pressure_status.get("showdown_pending", false)) or bool(pressure_status.get("showdown_active", false)):
+				failures.append("Grand Casino premium roulette successful read added Heat or incorrectly queued a showdown.")
+		elif not bool(pressure_status.get("showdown_pending", false)) and not bool(pressure_status.get("showdown_active", false)):
 			failures.append("Grand Casino premium %s watched read did not feed showdown pressure." % game_id)
 		var message := str(pressure_result.get("message", ""))
 		if message.find("Rourke") == -1 and message.find("staff") == -1 and message.find("patron") == -1 and message.find("Security") == -1:
@@ -2927,7 +3091,6 @@ func _xgame_pull_tabs_redeem_metric(game: GameModule, luck: int, item_id: String
 
 func _xgame_pull_tabs_heat_metric(game: GameModule, seed: String, drunk: bool, watched: bool, item_id: String) -> int:
 	var run_state: RunState = _xgame_pull_tabs_run(game, seed, 0, drunk, watched, item_id)
-	run_state.add_item("tab_detector")
 	var result: Dictionary = game.resolve_with_context("tab_detector_scan", 0, run_state, run_state.current_environment, run_state.create_rng("xgame_pull_tabs_heat"), {})
 	return int(result.get("suspicion_delta", 0))
 
@@ -3180,6 +3343,7 @@ func _check_ui_state_machine_input_fuzz_foundation(library: ContentLibrary, fail
 	_sb4_check_event_modal_routes(library, app, failures)
 	_sb4_check_rourke_showdown_single_choice_surface(library, app, failures)
 	_sb4_check_wager_modal_routes(library, app, failures)
+	_sb4_check_blackjack_stale_stake_all_in(library, app, failures)
 	_sb4_check_travel_transition_routes(app, failures)
 	_sb4_check_seeded_menu_canvas_routes(app, failures)
 	_sb4_check_background_runtime_does_not_block_active_game(library, app, failures)
@@ -3192,6 +3356,40 @@ func _sb4_dispose_app(app: Control) -> void:
 	if app.get_parent() != null:
 		app.get_parent().remove_child(app)
 	app.free()
+
+
+func _sb4_check_blackjack_stale_stake_all_in(library: ContentLibrary, app: Control, failures: Array) -> void:
+	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
+	if blackjack == null:
+		return
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SB4-BLACKJACK-STALE-STAKE-ALL-IN")
+	run_state.bankroll = 20
+	var environment := _surface_contract_environment()
+	environment["game_ids"] = ["blackjack"]
+	environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 100}
+	var table: Dictionary = blackjack.generate_environment_state(run_state, environment, run_state.create_rng("sb4_blackjack_stale_stake_table"))
+	table["patrons"] = []
+	table["side_bets"] = []
+	environment["game_states"] = {"blackjack": table}
+	run_state.set_environment(environment)
+	app.set("library", library)
+	app.set("run_state", run_state)
+	app.set("current_game", blackjack)
+	app.set("game_surface_ui_state", {})
+	# Reproduce a previous $60 selection after the bankroll has fallen to $20.
+	app.set("selected_stake", 60)
+	app.call("_set_current_screen", "GAME")
+	app.call("_hide_event_choice_popup")
+	app.call("_on_game_surface_action", "blackjack_deal", 0, false)
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if not bool(popup.get("visible", false)) or str(popup.get("popup_type", "")) != "wager_confirmation":
+		failures.append("Blackjack rejected the affordable $20 clamped all-in instead of opening confirmation for a stale $60 selection.")
+	elif int(app.get("pending_wager_confirm_stake")) != 20 or int(app.get("selected_stake")) != 20:
+		failures.append("Blackjack all-in confirmation retained the stale $60 stake instead of the displayed affordable $20 stake.")
+	if run_state.bankroll != 20:
+		failures.append("Blackjack stale-stake all-in changed bankroll before player confirmation.")
+	app.call("cancel_pending_wager_confirmation")
 
 
 func _sb4_check_background_runtime_does_not_block_active_game(library: ContentLibrary, app: Control, failures: Array) -> void:

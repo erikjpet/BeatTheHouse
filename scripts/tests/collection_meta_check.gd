@@ -4,6 +4,7 @@ const CollectionItemResolverScript := preload("res://scripts/core/collection_ite
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
+const MetaItemInteractionViewModelScript := preload("res://scripts/ui/meta_item_interaction_view_model.gd")
 const BagOpenReelViewModelScript := preload("res://scripts/ui/bag_open_reel_view_model.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
@@ -587,6 +588,8 @@ func _test_tutorial_starter_card_fragility() -> void:
 	_remove_user_file(TEST_STORE_PATH)
 	var service: Variant = MetaCollectionServiceScript.new()
 	service.load()
+	service.add_gold(60)
+	_check(bool(service.purchase_housing_upgrade().get("ok", false)), "Tutorial starter-card fixture could not prepare an upgraded home.")
 	var drop_service: Variant = CollectionDropServiceScript.new()
 	var tutorial_run: Variant = RunStateScript.new()
 	tutorial_run.start_new("FIRST-NIGHT-ACE-17", {
@@ -607,10 +610,38 @@ func _test_tutorial_starter_card_fragility() -> void:
 	var card := _copy_dict(owned[0]) if not owned.is_empty() else {}
 	var stamp := _copy_dict(card.get("instance_data", {}))
 	_check(bool(reward.get("mutated", false)) and owned.size() == 1 and bool(stamp.get("starter_card", false)) and bool(stamp.get("tutorial", false)), "Tutorial clean victory did not mint one starter-stamped Players Card.")
-	var normal_modifiers: Dictionary = service.normal_run_start_modifiers()
+	var card_id := int(card.get("instance_id", 0))
+	_check(service.carried_instance_ids().has(card_id), "Tutorial Players Card was stored at home instead of entering the held loadout.")
+	var repeated_card: Dictionary = service.mint_players_card(stamp)
+	_check(int(repeated_card.get("instance_id", 0)) == card_id and service.owned_instances().size() == 1, "Replaying the first-run reward duplicated the tutorial Players Card.")
+	_check(service.save() == OK, "Tutorial Players Card home/loadout save failed.")
+	var legacy_home: Dictionary = service.snapshot()
+	legacy_home["loadout"] = []
+	legacy_home.erase("starter_card_home_grant_applied")
+	var legacy_file := FileAccess.open(TEST_STORE_PATH, FileAccess.WRITE)
+	if legacy_file != null:
+		legacy_file.store_string(JSON.stringify(legacy_home))
+		legacy_file.close()
+	var restored: Variant = MetaCollectionServiceScript.new()
+	restored.load()
+	_check(restored.owned_instances().size() == 1 and restored.carried_instance_ids().has(card_id), "Tutorial Players Card disappeared from the held home inventory after restart.")
+	var home_inventory: Dictionary = MetaItemInteractionViewModelScript.build(restored, MetaItemInteractionViewModelScript.MODE_CONTAINER)
+	var home_items := _copy_array(home_inventory.get("items", []))
+	var home_card := _copy_dict(home_items[0]) if not home_items.is_empty() else {}
+	_check(home_items.size() == 1 and int(home_card.get("instance_id", 0)) == card_id and str(home_card.get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD and bool(home_card.get("packed", false)), "Home inventory did not render the exact tutorial Players Card as held.")
+	_check(bool(restored.unpack_instance(card_id).get("ok", false)) and restored.save() == OK, "Tutorial Players Card could not be deliberately unpacked after its initial home grant.")
+	var unpacked_restore: Variant = MetaCollectionServiceScript.new()
+	unpacked_restore.load()
+	_check(not unpacked_restore.carried_instance_ids().has(card_id), "Starter-card migration overrode the player's later choice to unpack it.")
+	unpacked_restore.ensure_players_card_carried(card_id)
+	restored = unpacked_restore
+	var normal_modifiers: Dictionary = restored.normal_run_start_modifiers()
+	var normal_loadout := _copy_array(normal_modifiers.get("meta_collection_loadout", []))
+	var carried_card := _copy_dict(normal_loadout[0]) if not normal_loadout.is_empty() else {}
+	_check(normal_loadout.size() == 1 and str(_copy_dict(carried_card.get("meta_collection", {})).get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD, "First normal run did not receive the held tutorial Players Card as an inventory item.")
 	var normal_loss: Variant = _terminal_run_with_modifiers("starter-card-loss", normal_modifiers, RunStateScript.RUN_STATUS_FAILED, "")
-	var loss_result: Dictionary = drop_service.apply_terminal_special_outcome(normal_loss, service)
-	_check(_copy_array(loss_result.get("destroyed_cards", [])).size() == 1 and service.owned_instances().is_empty(), "Starter Players Card did not use normal carried-card fragility on a later loss.")
+	var loss_result: Dictionary = drop_service.apply_terminal_special_outcome(normal_loss, restored)
+	_check(_copy_array(loss_result.get("destroyed_cards", [])).size() == 1 and restored.owned_instances().is_empty(), "Starter Players Card did not use normal carried-card fragility on a later loss.")
 	_remove_user_file(TEST_STORE_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, "")
 

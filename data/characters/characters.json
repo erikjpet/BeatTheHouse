@@ -1598,9 +1598,9 @@
       "style": "Defensive and watchful, always trying to sound less informed than he is.",
       "lines": {
         "knows": [
-          "I watch the route, not the screen. The next release has a time.",
-          "The clerk keeps a rhythm. I keep notes.",
-          "You want stock, you learn the route."
+          "The machine resets every three hours. I have the exact times.",
+          "I keep the clerk's schedule. I can tell you every reset.",
+          "You want stock, you show up at the exact reset time."
         ],
         "oblivious": [
           "Restock? I'm just standing here.",

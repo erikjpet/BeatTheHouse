@@ -1,0 +1,6014 @@
+{
+	"apartment_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/apartment_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Neon Apartment",
+		"environment_id": "apartment",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.78378378378378,
+						"h": 74.0,
+						"w": 132.0,
+						"x": 704.0,
+						"y": 133.0
+					},
+					"id": "home_tenure:status",
+					"rect": {
+						"aspect_ratio": 2.0,
+						"h": 58.0,
+						"w": 116.0,
+						"x": 712.0,
+						"y": 141.0
+					},
+					"type": "home_tenure"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.84444444444444,
+						"h": 90.0,
+						"w": 166.0,
+						"x": 347.0,
+						"y": 125.0
+					},
+					"id": "home_sleep:bed",
+					"rect": {
+						"aspect_ratio": 2.02702702702703,
+						"h": 74.0,
+						"w": 150.0,
+						"x": 355.0,
+						"y": 133.0
+					},
+					"type": "home_sleep"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.67567567567568,
+						"h": 74.0,
+						"w": 124.0,
+						"x": 128.0,
+						"y": 305.0
+					},
+					"id": "home_storage:place",
+					"rect": {
+						"aspect_ratio": 1.86206896551724,
+						"h": 58.0,
+						"w": 108.0,
+						"x": 136.0,
+						"y": 313.0
+					},
+					"type": "home_storage"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162162162162,
+						"h": 74.0,
+						"w": 120.0,
+						"x": 284.0,
+						"y": 305.0
+					},
+					"id": "home_container:backpack_01",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 292.0,
+						"y": 313.0
+					},
+					"type": "home_container"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 302.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 310.0
+					},
+					"type": "travel"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/apartment_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"apartment_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/apartment_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Walkup Apartment",
+		"environment_id": "apartment",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.78378378378378,
+						"h": 74.0,
+						"w": 132.0,
+						"x": 704.0,
+						"y": 133.0
+					},
+					"id": "home_tenure:status",
+					"rect": {
+						"aspect_ratio": 2.0,
+						"h": 58.0,
+						"w": 116.0,
+						"x": 712.0,
+						"y": 141.0
+					},
+					"type": "home_tenure"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.84444444444444,
+						"h": 90.0,
+						"w": 166.0,
+						"x": 347.0,
+						"y": 125.0
+					},
+					"id": "home_sleep:bed",
+					"rect": {
+						"aspect_ratio": 2.02702702702703,
+						"h": 74.0,
+						"w": 150.0,
+						"x": 355.0,
+						"y": 133.0
+					},
+					"type": "home_sleep"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.67567567567568,
+						"h": 74.0,
+						"w": 124.0,
+						"x": 128.0,
+						"y": 305.0
+					},
+					"id": "home_storage:place",
+					"rect": {
+						"aspect_ratio": 1.86206896551724,
+						"h": 58.0,
+						"w": 108.0,
+						"x": 136.0,
+						"y": 313.0
+					},
+					"type": "home_storage"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162162162162,
+						"h": 74.0,
+						"w": 120.0,
+						"x": 284.0,
+						"y": 305.0
+					},
+					"id": "home_container:backpack_01",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 292.0,
+						"y": 313.0
+					},
+					"type": "home_container"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 302.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 310.0
+					},
+					"type": "travel"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/apartment_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"back_alley_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/back_alley_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Wet Alley",
+		"environment_id": "back_alley",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 648.0,
+						"y": 52.0
+					},
+					"id": "event:parking_lot_tip",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 656.0,
+						"y": 60.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 246.0,
+						"y": 52.0
+					},
+					"id": "event:back_alley_offer",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 254.0,
+						"y": 60.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 281.0,
+						"y": 149.0
+					},
+					"id": "item:tilt_dampener",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 289.0,
+						"y": 157.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 391.0,
+						"y": 149.0
+					},
+					"id": "item:xray_glasses",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 399.0,
+						"y": 157.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186059302934,
+						"h": 85.9999923706055,
+						"w": 124.0,
+						"x": 388.0,
+						"y": 47.0000076293945
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 396.0,
+						"y": 55.0000076293945
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 320.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 328.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 618.0,
+						"y": 149.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 626.0,
+						"y": 157.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 305.0,
+						"y": 323.0
+					},
+					"id": "lender:street_lender",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 313.0,
+						"y": 331.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/back_alley_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"back_alley_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/back_alley_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Wet Alley",
+		"environment_id": "back_alley",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 246.0,
+						"y": 52.0
+					},
+					"id": "event:parking_lot_tip",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 254.0,
+						"y": 60.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 648.0,
+						"y": 52.0
+					},
+					"id": "event:back_alley_offer",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 656.0,
+						"y": 60.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 281.0,
+						"y": 149.0
+					},
+					"id": "item:suitcase",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 289.0,
+						"y": 157.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 391.0,
+						"y": 149.0
+					},
+					"id": "item:false_bottom_cup",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 399.0,
+						"y": 157.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 501.0,
+						"y": 149.0
+					},
+					"id": "item:lucky_keychain",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 509.0,
+						"y": 157.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186059302934,
+						"h": 85.9999923706055,
+						"w": 124.0,
+						"x": 388.0,
+						"y": 47.0000076293945
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 396.0,
+						"y": 55.0000076293945
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 320.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 328.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 618.0,
+						"y": 149.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 626.0,
+						"y": 157.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 45.0,
+						"y": 221.0
+					},
+					"id": "lender:the_crew",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 53.0,
+						"y": 229.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/back_alley_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"bar_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/bar_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Roadside Bar",
+		"environment_id": "bar",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 69.0,
+						"y": 158.0
+					},
+					"id": "game:slot",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 77.0,
+						"y": 166.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 255.0,
+						"y": 158.0
+					},
+					"id": "game:bar_dice",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 263.0,
+						"y": 166.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 745.0,
+						"y": 158.0
+					},
+					"id": "game:pull_tabs",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 753.0,
+						"y": 166.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44999961853027,
+						"h": 80.0,
+						"w": 115.999969482422,
+						"x": 428.000030517578,
+						"y": 52.0
+					},
+					"id": "event:side_door",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 436.000030517578,
+						"y": 60.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45000019073486,
+						"h": 80.0,
+						"w": 116.000015258789,
+						"x": 175.999984741211,
+						"y": 278.0
+					},
+					"id": "event:rowdy_regular",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 183.999984741211,
+						"y": 286.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162162162162,
+						"h": 74.0,
+						"w": 120.0,
+						"x": 460.0,
+						"y": 289.0
+					},
+					"id": "game_hook:pull_tabs:ticket_redeemer",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 468.0,
+						"y": 297.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.67948717948718,
+						"h": 78.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 336.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 344.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 568.0,
+						"y": 95.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 576.0,
+						"y": 103.0
+					},
+					"type": "drink"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/bar_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"bar_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/bar_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Low Tide Bar",
+		"environment_id": "bar",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 69.0,
+						"y": 158.0
+					},
+					"id": "game:slot",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 77.0,
+						"y": 166.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 255.0,
+						"y": 158.0
+					},
+					"id": "game:bar_dice",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 263.0,
+						"y": 166.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 745.0,
+						"y": 158.0
+					},
+					"id": "game:pull_tabs",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 753.0,
+						"y": 166.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45000019073486,
+						"h": 80.0,
+						"w": 116.000015258789,
+						"x": 175.999984741211,
+						"y": 278.0
+					},
+					"id": "event:rowdy_regular",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 183.999984741211,
+						"y": 286.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44999961853027,
+						"h": 80.0,
+						"w": 115.999969482422,
+						"x": 428.000030517578,
+						"y": 52.0
+					},
+					"id": "event:side_door",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 436.000030517578,
+						"y": 60.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162162162162,
+						"h": 74.0,
+						"w": 120.0,
+						"x": 460.0,
+						"y": 289.0
+					},
+					"id": "game_hook:pull_tabs:ticket_redeemer",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 468.0,
+						"y": 297.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.67948717948718,
+						"h": 78.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 336.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 344.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 568.0,
+						"y": 95.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 576.0,
+						"y": 103.0
+					},
+					"type": "drink"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/bar_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"beach_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/beach_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Neon Beach",
+		"environment_id": "beach",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 673.0,
+						"y": 127.0
+					},
+					"id": "game:slot",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 681.0,
+						"y": 135.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 745.0,
+						"y": 282.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 753.0,
+						"y": 290.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.5999997820173,
+						"h": 70.0,
+						"w": 111.999984741211,
+						"x": 168.000015258789,
+						"y": 249.0
+					},
+					"id": "service:beach_relax",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 176.000015258789,
+						"y": 257.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 572.0,
+						"y": 287.0
+					},
+					"id": "service:beach_sand_pile",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 580.0,
+						"y": 295.0
+					},
+					"type": "service"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/beach_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"beach_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/beach_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Low Tide Beach",
+		"environment_id": "beach",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 673.0,
+						"y": 127.0
+					},
+					"id": "game:slot",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 681.0,
+						"y": 135.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 745.0,
+						"y": 282.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 753.0,
+						"y": 290.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.5999997820173,
+						"h": 70.0,
+						"w": 111.999984741211,
+						"x": 168.000015258789,
+						"y": 249.0
+					},
+					"id": "service:beach_relax",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 176.000015258789,
+						"y": 257.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 572.0,
+						"y": 287.0
+					},
+					"id": "service:beach_sand_pile",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 580.0,
+						"y": 295.0
+					},
+					"type": "service"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/beach_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"corner_store_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/corner_store_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Neon Store",
+		"environment_id": "corner_store",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 202.0,
+						"y": 253.0
+					},
+					"id": "event:late_shift_discount",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 210.0,
+						"y": 261.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 534.0,
+						"y": 140.0
+					},
+					"id": "event:call_brother_in_law",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 542.0,
+						"y": 148.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428554924169,
+						"h": 70.0000076293945,
+						"w": 106.0,
+						"x": 30.0,
+						"y": 66.9999923706055
+					},
+					"id": "item:lock_jammer",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 38.0,
+						"y": 74.9999923706055
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428554924169,
+						"h": 70.0000076293945,
+						"w": 106.0,
+						"x": 137.0,
+						"y": 66.9999923706055
+					},
+					"id": "item:creased_luck_card",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 145.0,
+						"y": 74.9999923706055
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428554924169,
+						"h": 70.0000076293945,
+						"w": 106.0,
+						"x": 244.0,
+						"y": 66.9999923706055
+					},
+					"id": "item:payout_pamphlet",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 252.0,
+						"y": 74.9999923706055
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 77.0,
+						"y": 141.0
+					},
+					"id": "item:bag",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 85.0,
+						"y": 149.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186046511628,
+						"h": 86.0,
+						"w": 124.0,
+						"x": 408.0,
+						"y": 119.0
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 416.0,
+						"y": 127.0
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 713.0,
+						"y": 218.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 721.0,
+						"y": 226.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 294.0,
+						"y": 143.0
+					},
+					"id": "service:cashier_tip",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 302.0,
+						"y": 151.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 654.0,
+						"y": 145.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 662.0,
+						"y": 153.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 581.0,
+						"y": 265.0
+					},
+					"id": "lender:the_crew",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 589.0,
+						"y": 273.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/corner_store_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"corner_store_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/corner_store_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Neon Store",
+		"environment_id": "corner_store",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 391.0,
+						"y": 321.0
+					},
+					"id": "event:call_brother_in_law",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 399.0,
+						"y": 329.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 18.0,
+						"y": 306.0
+					},
+					"id": "event:chatty_clerk",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 26.0,
+						"y": 314.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 534.0,
+						"y": 140.0
+					},
+					"id": "event:parking_lot_tip",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 542.0,
+						"y": 148.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428554924169,
+						"h": 70.0000076293945,
+						"w": 106.0,
+						"x": 30.0,
+						"y": 66.9999923706055
+					},
+					"id": "item:high_roller_watch",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 38.0,
+						"y": 74.9999923706055
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428554924169,
+						"h": 70.0000076293945,
+						"w": 106.0,
+						"x": 137.0,
+						"y": 66.9999923706055
+					},
+					"id": "item:coin_return_shim",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 145.0,
+						"y": 74.9999923706055
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428554924169,
+						"h": 70.0000076293945,
+						"w": 106.0,
+						"x": 244.0,
+						"y": 66.9999923706055
+					},
+					"id": "item:false_bottom_cup",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 252.0,
+						"y": 74.9999923706055
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186046511628,
+						"h": 86.0,
+						"w": 124.0,
+						"x": 408.0,
+						"y": 119.0
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 416.0,
+						"y": 127.0
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 713.0,
+						"y": 218.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 721.0,
+						"y": 226.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 294.0,
+						"y": 143.0
+					},
+					"id": "service:cashier_tip",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 302.0,
+						"y": 151.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 654.0,
+						"y": 145.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 662.0,
+						"y": 153.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 753.0,
+						"y": 333.0
+					},
+					"id": "lender:the_crew",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 761.0,
+						"y": 341.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/corner_store_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"delta_queen_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/delta_queen_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "River Queen Riverboat Casino",
+		"environment_id": "delta_queen",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 116.0,
+						"y": 146.0
+					},
+					"id": "game:blackjack",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 124.0,
+						"y": 154.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272692593661,
+						"h": 88.0,
+						"w": 133.999969482422,
+						"x": 399.000030517578,
+						"y": 154.0
+					},
+					"id": "game:roulette",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 407.000030517578,
+						"y": 162.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 695.0,
+						"y": 150.0
+					},
+					"id": "game:video_poker",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 703.0,
+						"y": 158.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44999961853027,
+						"h": 80.0,
+						"w": 115.999969482422,
+						"x": 442.000030517578,
+						"y": 52.0
+					},
+					"id": "event:side_door",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 450.000030517578,
+						"y": 60.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 542.0,
+						"y": 170.0
+					},
+					"id": "event:grand_casino_invite",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 550.0,
+						"y": 178.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 597.0,
+						"y": 57.0
+					},
+					"id": "item:trunk",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 605.0,
+						"y": 65.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 547.0,
+						"y": 265.0
+					},
+					"id": "item:lucky_ladies_compact",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 555.0,
+						"y": 273.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186059302934,
+						"h": 85.9999923706055,
+						"w": 124.0,
+						"x": 758.0,
+						"y": 47.0000076293945
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 766.0,
+						"y": 55.0000076293945
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 282.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 290.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.5999997820173,
+						"h": 70.0,
+						"w": 111.999984741211,
+						"x": 184.000015258789,
+						"y": 257.0
+					},
+					"id": "service:riverboat_deck_walk",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 192.000015258789,
+						"y": 265.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.5999995640346,
+						"h": 70.0,
+						"w": 111.999969482422,
+						"x": 410.000030517578,
+						"y": 257.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 418.000030517578,
+						"y": 265.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 627.0,
+						"y": 339.0
+					},
+					"id": "lender:the_crew",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 635.0,
+						"y": 347.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/delta_queen_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"delta_queen_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/delta_queen_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "River Queen Riverboat Casino",
+		"environment_id": "delta_queen",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 116.0,
+						"y": 146.0
+					},
+					"id": "game:blackjack",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 124.0,
+						"y": 154.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272692593661,
+						"h": 88.0,
+						"w": 133.999969482422,
+						"x": 399.000030517578,
+						"y": 154.0
+					},
+					"id": "game:roulette",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 407.000030517578,
+						"y": 162.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 695.0,
+						"y": 150.0
+					},
+					"id": "game:video_poker",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 703.0,
+						"y": 158.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 542.0,
+						"y": 170.0
+					},
+					"id": "event:grand_casino_invite",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 550.0,
+						"y": 178.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 296.0,
+						"y": 310.0
+					},
+					"id": "event:side_door",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 304.0,
+						"y": 318.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 28.0,
+						"y": 46.0
+					},
+					"id": "event:rowdy_regular",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 36.0,
+						"y": 54.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 597.0,
+						"y": 57.0
+					},
+					"id": "item:card_counters_notes",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 605.0,
+						"y": 65.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186059302934,
+						"h": 85.9999923706055,
+						"w": 124.0,
+						"x": 758.0,
+						"y": 47.0000076293945
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 766.0,
+						"y": 55.0000076293945
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 282.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 290.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.5999997820173,
+						"h": 70.0,
+						"w": 111.999984741211,
+						"x": 184.000015258789,
+						"y": 257.0
+					},
+					"id": "service:riverboat_deck_walk",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 192.000015258789,
+						"y": 265.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 484.0,
+						"y": 291.799987792969
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 492.0,
+						"y": 299.799987792969
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 627.0,
+						"y": 339.0
+					},
+					"id": "lender:the_crew",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 635.0,
+						"y": 347.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/delta_queen_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"gas_station_casino_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/gas_station_casino_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Sunset Gas Casino",
+		"environment_id": "gas_station_casino",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 319.000030517578,
+						"y": 116.0
+					},
+					"id": "game:video_poker",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 327.000030517578,
+						"y": 124.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272700869352,
+						"h": 88.0000152587891,
+						"w": 134.0,
+						"x": 415.0,
+						"y": 209.999984741211
+					},
+					"id": "game:pull_tabs",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 423.0,
+						"y": 217.999984741211
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 511.0,
+						"y": 116.0
+					},
+					"id": "game:scratch_tickets",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 519.0,
+						"y": 124.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 762.0,
+						"y": 52.0
+					},
+					"id": "event:side_door",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 770.0,
+						"y": 60.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45000019073486,
+						"h": 80.0,
+						"w": 116.000015258789,
+						"x": 185.999984741211,
+						"y": 66.0
+					},
+					"id": "event:parking_lot_tip",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 193.999984741211,
+						"y": 74.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162162162162,
+						"h": 74.0,
+						"w": 120.0,
+						"x": 460.0,
+						"y": 323.0
+					},
+					"id": "game_hook:pull_tabs:ticket_redeemer",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 468.0,
+						"y": 331.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 308.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 316.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 646.0,
+						"y": 155.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 654.0,
+						"y": 163.0
+					},
+					"type": "drink"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/gas_station_casino_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"gas_station_casino_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/gas_station_casino_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Sunset Gas Casino",
+		"environment_id": "gas_station_casino",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 319.000030517578,
+						"y": 116.0
+					},
+					"id": "game:video_poker",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 327.000030517578,
+						"y": 124.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272700869352,
+						"h": 88.0000152587891,
+						"w": 134.0,
+						"x": 415.0,
+						"y": 209.999984741211
+					},
+					"id": "game:pull_tabs",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 423.0,
+						"y": 217.999984741211
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 511.0,
+						"y": 116.0
+					},
+					"id": "game:scratch_tickets",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 519.0,
+						"y": 124.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 302.0,
+						"y": 306.0
+					},
+					"id": "event:parking_lot_tip",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 310.0,
+						"y": 314.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 60.0,
+						"y": 288.0
+					},
+					"id": "event:side_door",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 68.0,
+						"y": 296.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162162162162,
+						"h": 74.0,
+						"w": 120.0,
+						"x": 460.0,
+						"y": 323.0
+					},
+					"id": "game_hook:pull_tabs:ticket_redeemer",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 468.0,
+						"y": 331.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 308.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 316.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 646.0,
+						"y": 155.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 654.0,
+						"y": 163.0
+					},
+					"type": "drink"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/gas_station_casino_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"grand_casino_back_room_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/grand_casino_back_room_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Grand Casino Back Room",
+		"environment_id": "grand_casino_back_room",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 383.0,
+						"y": 176.0
+					},
+					"id": "game:blackjack",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 391.0,
+						"y": 184.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 25.0,
+						"y": 310.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 33.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/grand_casino_back_room_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"grand_casino_back_room_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/grand_casino_back_room_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Grand Casino Back Room",
+		"environment_id": "grand_casino_back_room",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 383.0,
+						"y": 176.0
+					},
+					"id": "game:blackjack",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 391.0,
+						"y": 184.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 25.0,
+						"y": 310.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 33.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/grand_casino_back_room_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"grand_casino_cage_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/grand_casino_cage_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Grand Casino Cage",
+		"environment_id": "grand_casino_cage",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.32762321309603,
+						"h": 93.3999938964844,
+						"w": 124.0,
+						"x": 280.0,
+						"y": 251.300018310547
+					},
+					"id": "casino_fixture:cage_counter",
+					"rect": {
+						"aspect_ratio": 1.39534880970112,
+						"h": 77.4000015258789,
+						"w": 108.0,
+						"x": 288.0,
+						"y": 259.300018310547
+					},
+					"type": "casino_fixture"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.32762321309603,
+						"h": 93.3999938964844,
+						"w": 124.0,
+						"x": 662.0,
+						"y": 203.299987792969
+					},
+					"id": "casino_fixture:cage_atm",
+					"rect": {
+						"aspect_ratio": 1.39534880970112,
+						"h": 77.4000015258789,
+						"w": 108.0,
+						"x": 670.0,
+						"y": 211.299987792969
+					},
+					"type": "casino_fixture"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.3276229962018,
+						"h": 93.4000091552734,
+						"w": 124.0,
+						"x": 70.0,
+						"y": 211.300003051758
+					},
+					"id": "casino_fixture:cage_gift_shop",
+					"rect": {
+						"aspect_ratio": 1.39534880970112,
+						"h": 77.4000015258789,
+						"w": 108.0,
+						"x": 78.0,
+						"y": 219.300003051758
+					},
+					"type": "casino_fixture"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 80.0,
+						"w": 128.0,
+						"x": 756.0,
+						"y": 310.0
+					},
+					"id": "travel:grand_casino",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 764.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.5875,
+						"h": 80.0,
+						"w": 127.0,
+						"x": 757.0,
+						"y": 310.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 765.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				}
+			],
+			"overlap_count": 1,
+			"overlaps": [
+				{
+					"a": "travel:grand_casino",
+					"area": 10160.0,
+					"b": "travel:leave"
+				}
+			]
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/grand_casino_cage_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"grand_casino_cage_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/grand_casino_cage_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Grand Casino Cage",
+		"environment_id": "grand_casino_cage",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.32762321309603,
+						"h": 93.3999938964844,
+						"w": 124.0,
+						"x": 280.0,
+						"y": 251.300018310547
+					},
+					"id": "casino_fixture:cage_counter",
+					"rect": {
+						"aspect_ratio": 1.39534880970112,
+						"h": 77.4000015258789,
+						"w": 108.0,
+						"x": 288.0,
+						"y": 259.300018310547
+					},
+					"type": "casino_fixture"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.32762321309603,
+						"h": 93.3999938964844,
+						"w": 124.0,
+						"x": 662.0,
+						"y": 203.299987792969
+					},
+					"id": "casino_fixture:cage_atm",
+					"rect": {
+						"aspect_ratio": 1.39534880970112,
+						"h": 77.4000015258789,
+						"w": 108.0,
+						"x": 670.0,
+						"y": 211.299987792969
+					},
+					"type": "casino_fixture"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.3276229962018,
+						"h": 93.4000091552734,
+						"w": 124.0,
+						"x": 70.0,
+						"y": 211.300003051758
+					},
+					"id": "casino_fixture:cage_gift_shop",
+					"rect": {
+						"aspect_ratio": 1.39534880970112,
+						"h": 77.4000015258789,
+						"w": 108.0,
+						"x": 78.0,
+						"y": 219.300003051758
+					},
+					"type": "casino_fixture"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 80.0,
+						"w": 128.0,
+						"x": 756.0,
+						"y": 310.0
+					},
+					"id": "travel:grand_casino",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 764.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.5875,
+						"h": 80.0,
+						"w": 127.0,
+						"x": 757.0,
+						"y": 310.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 765.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				}
+			],
+			"overlap_count": 1,
+			"overlaps": [
+				{
+					"a": "travel:grand_casino",
+					"area": 10160.0,
+					"b": "travel:leave"
+				}
+			]
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/grand_casino_cage_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"grand_casino_high_limit_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/grand_casino_high_limit_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Grand Casino High-Limit Room",
+		"environment_id": "grand_casino_high_limit",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272709933194,
+						"h": 88.0,
+						"w": 133.999984741211,
+						"x": 163.000015258789,
+						"y": 146.0
+					},
+					"id": "game:blackjack",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 171.000015258789,
+						"y": 154.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 383.0,
+						"y": 116.0
+					},
+					"id": "game:baccarat",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 391.0,
+						"y": 124.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 603.0,
+						"y": 146.0
+					},
+					"id": "game:roulette",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 611.0,
+						"y": 154.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 25.0,
+						"y": 310.0
+					},
+					"id": "travel:grand_casino",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 33.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 741.0,
+						"y": 310.0
+					},
+					"id": "travel:grand_casino_cage",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 749.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 741.0,
+						"y": 310.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 749.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				}
+			],
+			"overlap_count": 1,
+			"overlaps": [
+				{
+					"a": "travel:grand_casino_cage",
+					"area": 10720.0,
+					"b": "travel:leave"
+				}
+			]
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/grand_casino_high_limit_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"grand_casino_high_limit_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/grand_casino_high_limit_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Grand Casino High-Limit Room",
+		"environment_id": "grand_casino_high_limit",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272709933194,
+						"h": 88.0,
+						"w": 133.999984741211,
+						"x": 163.000015258789,
+						"y": 146.0
+					},
+					"id": "game:blackjack",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 171.000015258789,
+						"y": 154.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 383.0,
+						"y": 116.0
+					},
+					"id": "game:baccarat",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 391.0,
+						"y": 124.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 603.0,
+						"y": 146.0
+					},
+					"id": "game:roulette",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 611.0,
+						"y": 154.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 25.0,
+						"y": 310.0
+					},
+					"id": "travel:grand_casino",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 33.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 741.0,
+						"y": 310.0
+					},
+					"id": "travel:grand_casino_cage",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 749.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 741.0,
+						"y": 310.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 749.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				}
+			],
+			"overlap_count": 1,
+			"overlaps": [
+				{
+					"a": "travel:grand_casino_cage",
+					"area": 10720.0,
+					"b": "travel:leave"
+				}
+			]
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/grand_casino_high_limit_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"grand_casino_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/grand_casino_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Grand Casino",
+		"environment_id": "grand_casino",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 18.0,
+						"y": 106.0
+					},
+					"id": "game:slot",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 26.0,
+						"y": 114.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 153.0,
+						"y": 106.0
+					},
+					"id": "game:slot:2",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 161.0,
+						"y": 114.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 288.000030517578,
+						"y": 106.0
+					},
+					"id": "game:slot:3",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 296.000030517578,
+						"y": 114.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 458.0,
+						"y": 106.0
+					},
+					"id": "game:video_poker",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 466.0,
+						"y": 114.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 608.0,
+						"y": 106.0
+					},
+					"id": "game:pull_tabs",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 616.0,
+						"y": 114.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45454545454545,
+						"h": 88.0,
+						"w": 128.0,
+						"x": 756.0,
+						"y": 106.0
+					},
+					"id": "game:blackjack",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 764.0,
+						"y": 114.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.56756756756757,
+						"h": 74.0,
+						"w": 116.0,
+						"x": 392.0,
+						"y": 340.0
+					},
+					"id": "event:comped_suite_offer",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 400.0,
+						"y": 348.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162162162162,
+						"h": 74.0,
+						"w": 120.0,
+						"x": 339.999969482422,
+						"y": 223.0
+					},
+					"id": "game_hook:pull_tabs:ticket_redeemer",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 347.999969482422,
+						"y": 231.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.43187056882859,
+						"h": 86.6000061035156,
+						"w": 124.0,
+						"x": 190.0,
+						"y": 327.399993896484
+					},
+					"id": "casino_fixture:host_desk",
+					"rect": {
+						"aspect_ratio": 1.39534880970112,
+						"h": 77.4000015258789,
+						"w": 108.0,
+						"x": 198.0,
+						"y": 335.399993896484
+					},
+					"type": "casino_fixture"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 741.0,
+						"y": 310.0
+					},
+					"id": "travel:grand_casino_high_limit",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 749.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 725.0,
+						"y": 226.600006103516
+					},
+					"id": "travel:grand_casino_back_room",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 733.0,
+						"y": 234.600006103516
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 473.0,
+						"y": 226.600006103516
+					},
+					"id": "travel:grand_casino_cage",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 481.0,
+						"y": 234.600006103516
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6125,
+						"h": 80.0,
+						"w": 129.0,
+						"x": 16.0,
+						"y": 310.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 19.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 340.0,
+						"y": 231.600006103516
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 348.0,
+						"y": 239.600006103516
+					},
+					"type": "drink"
+				}
+			],
+			"overlap_count": 1,
+			"overlaps": [
+				{
+					"a": "game_hook:pull_tabs:ticket_redeemer",
+					"area": 7324.79931640625,
+					"b": "service:house_drink"
+				}
+			]
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/grand_casino_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"grand_casino_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/grand_casino_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Grand Casino",
+		"environment_id": "grand_casino",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 18.0,
+						"y": 106.0
+					},
+					"id": "game:slot",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 26.0,
+						"y": 114.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 153.0,
+						"y": 106.0
+					},
+					"id": "game:slot:2",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 161.0,
+						"y": 114.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 288.000030517578,
+						"y": 106.0
+					},
+					"id": "game:slot:3",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 296.000030517578,
+						"y": 114.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 458.0,
+						"y": 106.0
+					},
+					"id": "game:video_poker",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 466.0,
+						"y": 114.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 608.0,
+						"y": 106.0
+					},
+					"id": "game:pull_tabs",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 616.0,
+						"y": 114.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45454545454545,
+						"h": 88.0,
+						"w": 128.0,
+						"x": 756.0,
+						"y": 106.0
+					},
+					"id": "game:blackjack",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 764.0,
+						"y": 114.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.56756756756757,
+						"h": 74.0,
+						"w": 116.0,
+						"x": 392.0,
+						"y": 340.0
+					},
+					"id": "event:comped_suite_offer",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 400.0,
+						"y": 348.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162162162162,
+						"h": 74.0,
+						"w": 120.0,
+						"x": 339.999969482422,
+						"y": 223.0
+					},
+					"id": "game_hook:pull_tabs:ticket_redeemer",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 347.999969482422,
+						"y": 231.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.43187056882859,
+						"h": 86.6000061035156,
+						"w": 124.0,
+						"x": 190.0,
+						"y": 327.399993896484
+					},
+					"id": "casino_fixture:host_desk",
+					"rect": {
+						"aspect_ratio": 1.39534880970112,
+						"h": 77.4000015258789,
+						"w": 108.0,
+						"x": 198.0,
+						"y": 335.399993896484
+					},
+					"type": "casino_fixture"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 741.0,
+						"y": 310.0
+					},
+					"id": "travel:grand_casino_high_limit",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 749.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 725.0,
+						"y": 226.600006103516
+					},
+					"id": "travel:grand_casino_back_room",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 733.0,
+						"y": 234.600006103516
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 473.0,
+						"y": 226.600006103516
+					},
+					"id": "travel:grand_casino_cage",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 481.0,
+						"y": 234.600006103516
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6125,
+						"h": 80.0,
+						"w": 129.0,
+						"x": 16.0,
+						"y": 310.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 19.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 340.0,
+						"y": 231.600006103516
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 348.0,
+						"y": 239.600006103516
+					},
+					"type": "drink"
+				}
+			],
+			"overlap_count": 1,
+			"overlaps": [
+				{
+					"a": "game_hook:pull_tabs:ticket_redeemer",
+					"area": 7324.79931640625,
+					"b": "service:house_drink"
+				}
+			]
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/grand_casino_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"house_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/house_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Quiet House",
+		"environment_id": "house",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.75675675675676,
+						"h": 74.0,
+						"w": 130.0,
+						"x": 754.0,
+						"y": 93.0
+					},
+					"id": "home_tenure:status",
+					"rect": {
+						"aspect_ratio": 2.0,
+						"h": 58.0,
+						"w": 116.0,
+						"x": 762.0,
+						"y": 101.0
+					},
+					"type": "home_tenure"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.84444461398655,
+						"h": 90.0,
+						"w": 166.000015258789,
+						"x": 160.999984741211,
+						"y": 139.0
+					},
+					"id": "home_sleep:bed",
+					"rect": {
+						"aspect_ratio": 2.02702702702703,
+						"h": 74.0,
+						"w": 150.0,
+						"x": 168.999984741211,
+						"y": 147.0
+					},
+					"type": "home_sleep"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.67567567567568,
+						"h": 74.0,
+						"w": 124.0,
+						"x": 598.0,
+						"y": 165.0
+					},
+					"id": "home_storage:place",
+					"rect": {
+						"aspect_ratio": 1.86206896551724,
+						"h": 58.0,
+						"w": 108.0,
+						"x": 606.0,
+						"y": 173.0
+					},
+					"type": "home_storage"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162162162162,
+						"h": 74.0,
+						"w": 120.0,
+						"x": 231.999969482422,
+						"y": 307.0
+					},
+					"id": "home_container:trunk_01",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 239.999969482422,
+						"y": 315.0
+					},
+					"type": "home_container"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 304.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 312.0
+					},
+					"type": "travel"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/house_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"house_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/house_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Quiet House",
+		"environment_id": "house",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.75675675675676,
+						"h": 74.0,
+						"w": 130.0,
+						"x": 754.0,
+						"y": 93.0
+					},
+					"id": "home_tenure:status",
+					"rect": {
+						"aspect_ratio": 2.0,
+						"h": 58.0,
+						"w": 116.0,
+						"x": 762.0,
+						"y": 101.0
+					},
+					"type": "home_tenure"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.84444461398655,
+						"h": 90.0,
+						"w": 166.000015258789,
+						"x": 160.999984741211,
+						"y": 139.0
+					},
+					"id": "home_sleep:bed",
+					"rect": {
+						"aspect_ratio": 2.02702702702703,
+						"h": 74.0,
+						"w": 150.0,
+						"x": 168.999984741211,
+						"y": 147.0
+					},
+					"type": "home_sleep"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.67567567567568,
+						"h": 74.0,
+						"w": 124.0,
+						"x": 598.0,
+						"y": 165.0
+					},
+					"id": "home_storage:place",
+					"rect": {
+						"aspect_ratio": 1.86206896551724,
+						"h": 58.0,
+						"w": 108.0,
+						"x": 606.0,
+						"y": 173.0
+					},
+					"type": "home_storage"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162162162162,
+						"h": 74.0,
+						"w": 120.0,
+						"x": 231.999969482422,
+						"y": 307.0
+					},
+					"id": "home_container:trunk_01",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 239.999969482422,
+						"y": 315.0
+					},
+					"type": "home_container"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 304.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 312.0
+					},
+					"type": "travel"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/house_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"jazz_club_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/jazz_club_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "After Hours Supper Club",
+		"environment_id": "jazz_club",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 677.0,
+						"y": 176.0
+					},
+					"id": "game:pull_tabs",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 685.0,
+						"y": 184.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.53623210519984,
+						"h": 69.0,
+						"w": 106.000015258789,
+						"x": 190.999984741211,
+						"y": 345.0
+					},
+					"id": "item:splitter_token",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 198.999984741211,
+						"y": 353.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.53623188405797,
+						"h": 69.0,
+						"w": 106.0,
+						"x": 327.0,
+						"y": 345.0
+					},
+					"id": "item:false_bottom_cup",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 335.0,
+						"y": 353.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186046511628,
+						"h": 86.0,
+						"w": 124.0,
+						"x": 580.0,
+						"y": 81.0
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 588.0,
+						"y": 89.0
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162120922192,
+						"h": 74.0,
+						"w": 119.999969482422,
+						"x": 440.000030517578,
+						"y": 133.0
+					},
+					"id": "game_hook:pull_tabs:ticket_redeemer",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 448.000030517578,
+						"y": 141.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 300.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 308.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 764.0,
+						"y": 91.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 772.0,
+						"y": 99.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 114.000015258789,
+						"y": 220.0
+					},
+					"id": "service:jazz_sax_round",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 122.000015258789,
+						"y": 228.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 266.0,
+						"y": 223.0
+					},
+					"id": "service:jazz_cello_round",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 274.0,
+						"y": 231.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.5999995640346,
+						"h": 70.0,
+						"w": 111.999969482422,
+						"x": 410.000030517578,
+						"y": 220.0
+					},
+					"id": "service:jazz_drummer_round",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 418.000030517578,
+						"y": 228.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 28.0,
+						"y": 307.0
+					},
+					"id": "service:jazz_band_tip_jar",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 36.0,
+						"y": 315.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.5999995640346,
+						"h": 70.0,
+						"w": 111.999969482422,
+						"x": 444.000030517578,
+						"y": 307.0
+					},
+					"id": "service:listen_to_jazz",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 452.000030517578,
+						"y": 315.0
+					},
+					"type": "service"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/jazz_club_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"jazz_club_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/jazz_club_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Blue Note Jazz Club",
+		"environment_id": "jazz_club",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 677.0,
+						"y": 176.0
+					},
+					"id": "game:pull_tabs",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 685.0,
+						"y": 184.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.53623210519984,
+						"h": 69.0,
+						"w": 106.000015258789,
+						"x": 190.999984741211,
+						"y": 345.0
+					},
+					"id": "item:high_roller_watch",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 198.999984741211,
+						"y": 353.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.53623188405797,
+						"h": 69.0,
+						"w": 106.0,
+						"x": 327.0,
+						"y": 345.0
+					},
+					"id": "item:jackpot_magnet",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 335.0,
+						"y": 353.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186046511628,
+						"h": 86.0,
+						"w": 124.0,
+						"x": 580.0,
+						"y": 81.0
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 588.0,
+						"y": 89.0
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162120922192,
+						"h": 74.0,
+						"w": 119.999969482422,
+						"x": 440.000030517578,
+						"y": 133.0
+					},
+					"id": "game_hook:pull_tabs:ticket_redeemer",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 448.000030517578,
+						"y": 141.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 300.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 308.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 764.0,
+						"y": 91.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 772.0,
+						"y": 99.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 114.000015258789,
+						"y": 220.0
+					},
+					"id": "service:jazz_sax_round",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 122.000015258789,
+						"y": 228.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 266.0,
+						"y": 223.0
+					},
+					"id": "service:jazz_cello_round",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 274.0,
+						"y": 231.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.5999995640346,
+						"h": 70.0,
+						"w": 111.999969482422,
+						"x": 410.000030517578,
+						"y": 220.0
+					},
+					"id": "service:jazz_drummer_round",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 418.000030517578,
+						"y": 228.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 28.0,
+						"y": 307.0
+					},
+					"id": "service:jazz_band_tip_jar",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 36.0,
+						"y": 315.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.5999995640346,
+						"h": 70.0,
+						"w": 111.999969482422,
+						"x": 444.000030517578,
+						"y": 307.0
+					},
+					"id": "service:listen_to_jazz",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 452.000030517578,
+						"y": 315.0
+					},
+					"type": "service"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/jazz_club_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"kitty_cat_lounge_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/kitty_cat_lounge_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Kitty Cat Lounge",
+		"environment_id": "kitty_cat_lounge",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 637.0,
+						"y": 230.0
+					},
+					"id": "game:roulette",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 645.0,
+						"y": 238.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 63.0,
+						"y": 232.0
+					},
+					"id": "game:slot",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 71.0,
+						"y": 240.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272700869352,
+						"h": 88.0000152587891,
+						"w": 134.0,
+						"x": 263.0,
+						"y": 205.999984741211
+					},
+					"id": "game:bar_dice",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 271.0,
+						"y": 213.999984741211
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 34.0,
+						"y": 60.0
+					},
+					"id": "event:side_door",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 42.0,
+						"y": 68.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 762.0,
+						"y": 32.0
+					},
+					"id": "event:rowdy_regular",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 770.0,
+						"y": 40.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44999980926514,
+						"h": 80.0,
+						"w": 115.999984741211,
+						"x": 192.000015258789,
+						"y": 72.0
+					},
+					"id": "event:grand_casino_invite",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 200.000015258789,
+						"y": 80.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 537.0,
+						"y": 37.0
+					},
+					"id": "item:return_spring",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 545.0,
+						"y": 45.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186046511628,
+						"h": 86.0,
+						"w": 124.0,
+						"x": 758.0,
+						"y": 137.0
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 766.0,
+						"y": 145.0
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.67948717948718,
+						"h": 78.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 336.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 344.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 582.0,
+						"y": 125.0
+					},
+					"id": "service:kitty_champagne",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 590.0,
+						"y": 133.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 464.0,
+						"y": 115.0
+					},
+					"id": "service:kitty_burlesque_show",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 472.0,
+						"y": 123.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 70.0,
+						"y": 149.900009155273
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 78.0,
+						"y": 157.900009155273
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 461.0,
+						"y": 339.0
+					},
+					"id": "lender:the_crew",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 469.0,
+						"y": 347.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/kitty_cat_lounge_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"kitty_cat_lounge_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/kitty_cat_lounge_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Kitty Cat Lounge",
+		"environment_id": "kitty_cat_lounge",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 637.0,
+						"y": 230.0
+					},
+					"id": "game:roulette",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 645.0,
+						"y": 238.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 63.0,
+						"y": 232.0
+					},
+					"id": "game:slot",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 71.0,
+						"y": 240.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44999980926514,
+						"h": 80.0,
+						"w": 115.999984741211,
+						"x": 192.000015258789,
+						"y": 72.0
+					},
+					"id": "event:side_door",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 200.000015258789,
+						"y": 80.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 462.0,
+						"y": 220.0
+					},
+					"id": "event:grand_casino_invite",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 470.0,
+						"y": 228.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 537.0,
+						"y": 37.0
+					},
+					"id": "item:pawn_receipt_sleeve",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 545.0,
+						"y": 45.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 647.0,
+						"y": 37.0
+					},
+					"id": "item:return_spring",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 655.0,
+						"y": 45.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186046511628,
+						"h": 86.0,
+						"w": 124.0,
+						"x": 758.0,
+						"y": 137.0
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 766.0,
+						"y": 145.0
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.67948717948718,
+						"h": 78.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 336.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 344.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 582.0,
+						"y": 125.0
+					},
+					"id": "service:kitty_champagne",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 590.0,
+						"y": 133.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 464.0,
+						"y": 115.0
+					},
+					"id": "service:kitty_burlesque_show",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 472.0,
+						"y": 123.0
+					},
+					"type": "service"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 70.0,
+						"y": 149.900009155273
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 78.0,
+						"y": 157.900009155273
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 631.0,
+						"y": 339.0
+					},
+					"id": "lender:the_crew",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 639.0,
+						"y": 347.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/kitty_cat_lounge_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"motel_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/motel_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Vacancy Motel",
+		"environment_id": "motel",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 28.0,
+						"y": 130.0
+					},
+					"id": "event:parking_lot_tip",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 36.0,
+						"y": 138.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 242.0,
+						"y": 310.0
+					},
+					"id": "event:call_brother_in_law",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 250.0,
+						"y": 318.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 97.0,
+						"y": 225.0
+					},
+					"id": "item:scratch_pad",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 105.0,
+						"y": 233.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 207.0,
+						"y": 225.0
+					},
+					"id": "item:lucky_penny",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 215.0,
+						"y": 233.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186046511628,
+						"h": 86.0,
+						"w": 124.0,
+						"x": 674.0,
+						"y": 119.0
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 682.0,
+						"y": 127.0
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 310.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 708.0,
+						"y": 43.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 716.0,
+						"y": 51.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 57.0,
+						"y": 313.0
+					},
+					"id": "lender:motel_friend",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 65.0,
+						"y": 321.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/motel_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"motel_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/motel_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Vacancy Motel",
+		"environment_id": "motel",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 28.0,
+						"y": 130.0
+					},
+					"id": "event:parking_lot_tip",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 36.0,
+						"y": 138.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 242.0,
+						"y": 310.0
+					},
+					"id": "event:call_brother_in_law",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 250.0,
+						"y": 318.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 97.0,
+						"y": 225.0
+					},
+					"id": "item:odds_notebook",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 105.0,
+						"y": 233.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 207.0,
+						"y": 225.0
+					},
+					"id": "item:coin_return_shim",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 215.0,
+						"y": 233.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186046511628,
+						"h": 86.0,
+						"w": 124.0,
+						"x": 674.0,
+						"y": 119.0
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 682.0,
+						"y": 127.0
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 310.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 318.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 708.0,
+						"y": 43.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 716.0,
+						"y": 51.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 57.0,
+						"y": 313.0
+					},
+					"id": "lender:motel_friend",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 65.0,
+						"y": 321.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/motel_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"motel_room_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/motel_room_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Flickering Motel Room",
+		"environment_id": "motel_room",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.78378378378378,
+						"h": 74.0,
+						"w": 132.0,
+						"x": 714.0,
+						"y": 129.0
+					},
+					"id": "home_tenure:status",
+					"rect": {
+						"aspect_ratio": 2.0,
+						"h": 58.0,
+						"w": 116.0,
+						"x": 722.0,
+						"y": 137.0
+					},
+					"type": "home_tenure"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.84444444444444,
+						"h": 90.0,
+						"w": 166.0,
+						"x": 412.0,
+						"y": 127.0
+					},
+					"id": "home_sleep:bed",
+					"rect": {
+						"aspect_ratio": 2.02702702702703,
+						"h": 74.0,
+						"w": 150.0,
+						"x": 420.0,
+						"y": 135.0
+					},
+					"type": "home_sleep"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.67567567567568,
+						"h": 74.0,
+						"w": 124.0,
+						"x": 148.0,
+						"y": 303.0
+					},
+					"id": "home_storage:place",
+					"rect": {
+						"aspect_ratio": 1.86206896551724,
+						"h": 58.0,
+						"w": 108.0,
+						"x": 156.0,
+						"y": 311.0
+					},
+					"type": "home_storage"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162162162162,
+						"h": 74.0,
+						"w": 120.0,
+						"x": 296.0,
+						"y": 303.0
+					},
+					"id": "home_container:backpack_01",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 304.0,
+						"y": 311.0
+					},
+					"type": "home_container"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 745.0,
+						"y": 300.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 753.0,
+						"y": 308.0
+					},
+					"type": "travel"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/motel_room_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"motel_room_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/motel_room_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Prepaid Motel Room",
+		"environment_id": "motel_room",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.78378378378378,
+						"h": 74.0,
+						"w": 132.0,
+						"x": 714.0,
+						"y": 129.0
+					},
+					"id": "home_tenure:status",
+					"rect": {
+						"aspect_ratio": 2.0,
+						"h": 58.0,
+						"w": 116.0,
+						"x": 722.0,
+						"y": 137.0
+					},
+					"type": "home_tenure"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.84444444444444,
+						"h": 90.0,
+						"w": 166.0,
+						"x": 412.0,
+						"y": 127.0
+					},
+					"id": "home_sleep:bed",
+					"rect": {
+						"aspect_ratio": 2.02702702702703,
+						"h": 74.0,
+						"w": 150.0,
+						"x": 420.0,
+						"y": 135.0
+					},
+					"type": "home_sleep"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.67567567567568,
+						"h": 74.0,
+						"w": 124.0,
+						"x": 148.0,
+						"y": 303.0
+					},
+					"id": "home_storage:place",
+					"rect": {
+						"aspect_ratio": 1.86206896551724,
+						"h": 58.0,
+						"w": 108.0,
+						"x": 156.0,
+						"y": 311.0
+					},
+					"type": "home_storage"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.62162162162162,
+						"h": 74.0,
+						"w": 120.0,
+						"x": 296.0,
+						"y": 303.0
+					},
+					"id": "home_container:backpack_01",
+					"rect": {
+						"aspect_ratio": 1.79310344827586,
+						"h": 58.0,
+						"w": 104.0,
+						"x": 304.0,
+						"y": 311.0
+					},
+					"type": "home_container"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.675,
+						"h": 80.0,
+						"w": 134.0,
+						"x": 745.0,
+						"y": 300.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 753.0,
+						"y": 308.0
+					},
+					"type": "travel"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/motel_room_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"pawn_shop_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/pawn_shop_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Sal's Pawn Shop",
+		"environment_id": "pawn_shop",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 583.0,
+						"y": 242.0
+					},
+					"id": "game:slot",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 591.0,
+						"y": 250.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 84.0,
+						"y": 246.0
+					},
+					"id": "event:chatty_clerk",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 92.0,
+						"y": 254.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428560529436,
+						"h": 70.0,
+						"w": 105.999992370605,
+						"x": 67.0000076293945,
+						"y": 129.0
+					},
+					"id": "item:lucky_keychain",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 75.0000076293945,
+						"y": 137.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 667.0,
+						"y": 121.0
+					},
+					"id": "item:creased_luck_card",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 675.0,
+						"y": 129.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 741.0,
+						"y": 197.0
+					},
+					"id": "item:lucky_ladies_compact",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 749.0,
+						"y": 205.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 262.0,
+						"y": 180.0
+					},
+					"id": "item:pawn_receipt_sleeve",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 270.0,
+						"y": 188.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 397.0,
+						"y": 180.0
+					},
+					"id": "item:lucky_reel_grease",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 405.0,
+						"y": 188.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 739.0,
+						"y": 291.799987792969
+					},
+					"id": "item:suitcase",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 747.0,
+						"y": 299.799987792969
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186046511628,
+						"h": 86.0,
+						"w": 124.0,
+						"x": 478.0,
+						"y": 43.0
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 486.0,
+						"y": 51.0
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.67500015974046,
+						"h": 79.9999923706055,
+						"w": 134.0,
+						"x": 203.0,
+						"y": 80.4000015258789
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 211.0,
+						"y": 88.4000015258789
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 274.0,
+						"y": 264.0
+					},
+					"id": "lender:sals_pawn_counter",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 282.0,
+						"y": 272.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/pawn_shop_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"pawn_shop_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/pawn_shop_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Sal's Pawn Shop",
+		"environment_id": "pawn_shop",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 583.0,
+						"y": 242.0
+					},
+					"id": "game:slot",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 591.0,
+						"y": 250.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 84.0,
+						"y": 246.0
+					},
+					"id": "event:chatty_clerk",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 92.0,
+						"y": 254.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428560529436,
+						"h": 70.0,
+						"w": 105.999992370605,
+						"x": 67.0000076293945,
+						"y": 129.0
+					},
+					"id": "item:jackpot_magnet",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 75.0000076293945,
+						"y": 137.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 667.0,
+						"y": 121.0
+					},
+					"id": "item:thermos_black_coffee",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 675.0,
+						"y": 129.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 741.0,
+						"y": 197.0
+					},
+					"id": "item:backpack",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 749.0,
+						"y": 205.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 262.0,
+						"y": 180.0
+					},
+					"id": "item:holdout_wax",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 270.0,
+						"y": 188.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 397.0,
+						"y": 180.0
+					},
+					"id": "item:side_bet_chart",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 405.0,
+						"y": 188.0
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.51428571428571,
+						"h": 70.0,
+						"w": 106.0,
+						"x": 739.0,
+						"y": 291.799987792969
+					},
+					"id": "item:splitter_token",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 54.0,
+						"w": 90.0,
+						"x": 747.0,
+						"y": 299.799987792969
+					},
+					"type": "item"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.44186046511628,
+						"h": 86.0,
+						"w": 124.0,
+						"x": 478.0,
+						"y": 43.0
+					},
+					"id": "shopkeeper:merchant",
+					"rect": {
+						"aspect_ratio": 1.54285714285714,
+						"h": 70.0,
+						"w": 108.0,
+						"x": 486.0,
+						"y": 51.0
+					},
+					"type": "character"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.67500015974046,
+						"h": 79.9999923706055,
+						"w": 134.0,
+						"x": 203.0,
+						"y": 80.4000015258789
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 211.0,
+						"y": 88.4000015258789
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 274.0,
+						"y": 264.0
+					},
+					"id": "lender:sals_pawn_counter",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 282.0,
+						"y": 272.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/pawn_shop_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"small_underground_casino_midnight": {
+		"background_path": "res://review_artifacts/art_rework_test_11/midnight/small_underground_casino_midnight.png",
+		"clock_minutes": 0,
+		"clock_text": "Day 1 12 AM",
+		"display_name": "Pink Room Underground Casino",
+		"environment_id": "small_underground_casino",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 731.0,
+						"y": 132.0
+					},
+					"id": "game:slot",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 739.0,
+						"y": 140.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 153.0,
+						"y": 158.0
+					},
+					"id": "game:blackjack",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 161.0,
+						"y": 166.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 501.0,
+						"y": 158.0
+					},
+					"id": "game:video_poker",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 509.0,
+						"y": 166.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 26.0,
+						"y": 46.0
+					},
+					"id": "event:side_door",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 34.0,
+						"y": 54.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 562.0,
+						"y": 260.0
+					},
+					"id": "event:rowdy_regular",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 570.0,
+						"y": 268.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 46.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 54.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 22.0,
+						"y": 185.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 30.0,
+						"y": 193.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 25.0,
+						"y": 263.0
+					},
+					"id": "lender:the_crew",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 33.0,
+						"y": 271.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "midnight",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/midnight/small_underground_casino_midnight.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	},
+	"small_underground_casino_noon": {
+		"background_path": "res://review_artifacts/art_rework_test_11/noon/small_underground_casino_noon.png",
+		"clock_minutes": 720,
+		"clock_text": "Day 1 12 PM",
+		"display_name": "Pink Room Underground Casino",
+		"environment_id": "small_underground_casino",
+		"object_layout": {
+			"gap": 8.0,
+			"margin": 16.0,
+			"objects": [
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 731.0,
+						"y": 132.0
+					},
+					"id": "game:slot",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 739.0,
+						"y": 140.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 153.0,
+						"y": 158.0
+					},
+					"id": "game:blackjack",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 161.0,
+						"y": 166.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.52272727272727,
+						"h": 88.0,
+						"w": 134.0,
+						"x": 501.0,
+						"y": 158.0
+					},
+					"id": "game:video_poker",
+					"rect": {
+						"aspect_ratio": 1.63888888888889,
+						"h": 72.0,
+						"w": 118.0,
+						"x": 509.0,
+						"y": 166.0
+					},
+					"type": "game"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 352.0,
+						"y": 260.0
+					},
+					"id": "event:rowdy_regular",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 360.0,
+						"y": 268.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.45,
+						"h": 80.0,
+						"w": 116.0,
+						"x": 352.0,
+						"y": 56.0
+					},
+					"id": "event:side_door",
+					"rect": {
+						"aspect_ratio": 1.5625,
+						"h": 64.0,
+						"w": 100.0,
+						"x": 360.0,
+						"y": 64.0
+					},
+					"type": "event"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6375,
+						"h": 80.0,
+						"w": 131.0,
+						"x": 753.0,
+						"y": 46.0
+					},
+					"id": "travel:leave",
+					"rect": {
+						"aspect_ratio": 1.84375,
+						"h": 64.0,
+						"w": 118.0,
+						"x": 761.0,
+						"y": 54.0
+					},
+					"type": "travel"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.6,
+						"h": 70.0,
+						"w": 112.0,
+						"x": 22.0,
+						"y": 185.0
+					},
+					"id": "service:house_drink",
+					"rect": {
+						"aspect_ratio": 1.77777777777778,
+						"h": 54.0,
+						"w": 96.0,
+						"x": 30.0,
+						"y": 193.0
+					},
+					"type": "drink"
+				},
+				{
+					"footprint": {
+						"aspect_ratio": 1.59459459459459,
+						"h": 74.0,
+						"w": 118.0,
+						"x": 731.0,
+						"y": 263.0
+					},
+					"id": "lender:street_lender",
+					"rect": {
+						"aspect_ratio": 1.75862068965517,
+						"h": 58.0,
+						"w": 102.0,
+						"x": 739.0,
+						"y": 271.0
+					},
+					"type": "character"
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": []
+		},
+		"phase": "noon",
+		"screenshot_path": "D:/Projects/Beat-The-House/review_artifacts/art_rework_test_11/in_game_screenshots/noon/small_underground_casino_noon.png",
+		"viewport_size": {
+			"x": 1600,
+			"y": 900
+		}
+	}
+}

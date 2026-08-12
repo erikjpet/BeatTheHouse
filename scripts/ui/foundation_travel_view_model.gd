@@ -199,8 +199,10 @@ static func _append_route_path_geometry(result: Array, nodes_by_id: Dictionary, 
 static func world_map_node_should_render(host: Variant, node: Dictionary, is_current: bool, is_available_target: bool) -> bool:
 	if is_current or is_available_target:
 		return true
+	# Discovery and scouting may mark a stop as seen before the player can use it.
+	# Keep that progression state private until the stop is travelable or visited.
 	var state = str(node.get("state", host.WorldMapScript.STATE_HIDDEN)).strip_edges().to_lower()
-	return state == host.WorldMapScript.STATE_VISITED or (state == host.WorldMapScript.STATE_REVEALED and bool(node.get("seen", false)))
+	return state == host.WorldMapScript.STATE_VISITED
 
 
 static func world_route_for_target(host: Variant, target_id: String) -> Dictionary:
@@ -225,7 +227,10 @@ static func travel_choice_view_list(host: Variant) -> Array:
 		return []
 	var cache_key = "%s|selected:%s" % [host._travel_base_cache_key(), host.selected_travel_target_id]
 	if host.travel_choice_cache_key == cache_key:
-		return host.travel_choice_cache.duplicate(true)
+		# View-model consumers are read-only and downstream snapshots transfer these
+		# rows without mutation. Deep-copying all route/world-path dictionaries on
+		# every HUD query made even a cache hit scale with the map size.
+		return host.travel_choice_cache
 	var ids = host._travel_target_ids()
 	var choices: Array = []
 	for target_id in ids:
@@ -236,7 +241,7 @@ static func travel_choice_view_list(host: Variant) -> Array:
 		choices.append(choice)
 	choices = decision_frame_choices(choices)
 	host.travel_choice_cache_key = cache_key
-	host.travel_choice_cache = choices.duplicate(true)
+	host.travel_choice_cache = choices
 	return choices
 
 
@@ -451,11 +456,18 @@ static func travel_target_ids(host: Variant) -> Array:
 static func travel_base_cache_key(host: Variant) -> String:
 	if host.run_state == null:
 		return "no-run"
-	var map_current_id = host.run_state.current_world_node_id() if host.run_state.has_world_map() else ""
-	var map_visited_count = 0
-	var map_node_count = 0
-	var map_revision = 0
-	var closing_status = host.run_state.closing_time_status()
+	# This key is evaluated throughout environment/HUD rendering. Reading the
+	# authoritative scalar fields directly keeps the cache check O(1); helper
+	# accessors and generic deep-copy helpers were measurable here once visited
+	# rooms and inventory entries accumulated.
+	var has_map: bool = not host.run_state.world_map.is_empty()
+	var map_current_id: String = str(host.run_state.world_map.get("current_node_id", host.run_state.world_map.get("start_node_id", ""))).strip_edges() if has_map else ""
+	var map_nodes_value: Variant = host.run_state.world_map.get("nodes", []) if has_map else []
+	var map_visited_value: Variant = host.run_state.world_map.get("visited_path", []) if has_map else []
+	var map_visited_count: int = (map_visited_value as Array).size() if typeof(map_visited_value) == TYPE_ARRAY else 0
+	var map_node_count: int = (map_nodes_value as Array).size() if typeof(map_nodes_value) == TYPE_ARRAY else 0
+	var map_revision: int = int(host.run_state.world_map.get("revision", 0)) if has_map else 0
+	var closing_status: Dictionary = host.run_state.closing_time_state
 	var tutorial_route_stage := ""
 	if host.run_state.is_tutorial_run():
 		tutorial_route_stage = "%s:%s:%s" % [
@@ -463,11 +475,7 @@ static func travel_base_cache_key(host: Variant) -> String:
 			str(bool(host.run_state.narrative_flags.get("underground_tip", false))),
 			str(bool(host.run_state.narrative_flags.get("grand_casino_invite", false))),
 		]
-	if host.run_state.has_world_map():
-		map_visited_count = host._copy_array(host.run_state.world_map.get("visited_path", [])).size()
-		map_node_count = host._copy_array(host.run_state.world_map.get("nodes", [])).size()
-		map_revision = int(host.run_state.world_map.get("revision", 0))
-	return "%s|%s|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%s|%d|%s" % [
+	return "%s|%s|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%d|%s|%d|%s" % [
 		host.current_screen,
 		host.run_state.seed_text,
 		str(host.run_state.current_environment.get("id", "")),
@@ -482,7 +490,9 @@ static func travel_base_cache_key(host: Variant) -> String:
 		host.run_state.unlocked_travel.size(),
 		host.run_state.narrative_flags.size(),
 		host.run_state.inventory.size(),
+		hash(host.run_state.inventory),
 		str(host.run_state.current_environment.get("travel_lock_remaining", "")),
+		int(host.run_state.current_environment.get("turns", 0)),
 		host.run_state.game_minute_of_day(),
 		str(closing_status.get("phase", "")),
 		int(closing_status.get("grace_actions_remaining", 0)),
@@ -578,12 +588,24 @@ static func travel_full_preview_enabled(host: Variant) -> bool:
 
 
 static func travel_full_preview_enabled_for(host: Variant, target_id: String) -> bool:
-	if host._travel_full_preview_enabled():
-		return true
 	if host.run_state == null or not host.run_state.has_world_map():
 		return false
-	var node: Dictionary = host.WorldMapScript.node_by_id(host.run_state.world_map, target_id)
-	return bool(node.get("scouted", false))
+	var node: Dictionary = host.WorldMapScript.node_metadata_by_id(host.run_state.world_map, target_id)
+	var scouting_available: bool = bool(host._travel_full_preview_enabled()) or bool(node.get("scouted", false))
+	if not scouting_available:
+		return false
+	if str(node.get("state", host.WorldMapScript.STATE_HIDDEN)) == host.WorldMapScript.STATE_VISITED:
+		# Visited nodes already have a stored, exact preview and are cheap to include.
+		return true
+	# Exact scouting generates the not-yet-visited room so its games and stock
+	# match arrival. Only do that work for the route the player is inspecting.
+	# HUD/object snapshots also request the route list, but do not display these
+	# details; generating every destination there made all late-run interactions
+	# scale with the full accumulated save.
+	var selected_target := target_id == str(host.selected_travel_target_id).strip_edges()
+	var selected_map_node := target_id == str(host.selected_world_map_node_id).strip_edges()
+	var map_visible: bool = host.world_map_overlay != null and bool(host.world_map_overlay.visible)
+	return selected_target or (map_visible and selected_map_node)
 
 
 static func travel_preview_summary(host: Variant, choice: Dictionary) -> String:
@@ -644,7 +666,7 @@ static func closing_time_walk_fallback_target_id(host: Variant) -> String:
 		var target_id = str(target_id_value).strip_edges()
 		if target_id.is_empty() or target_id == current_id:
 			continue
-		var node: Dictionary = host.WorldMapScript.node_by_id(host.run_state.world_map, target_id)
+		var node: Dictionary = host.WorldMapScript.node_metadata_by_id(host.run_state.world_map, target_id)
 		if str(node.get("state", host.WorldMapScript.STATE_HIDDEN)) != host.WorldMapScript.STATE_VISITED:
 			continue
 		var archetype = host._environment_archetype(target_id)

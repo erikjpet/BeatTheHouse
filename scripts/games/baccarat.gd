@@ -512,8 +512,9 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 
 	var edge_before := _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
 	var edge_used := _edge_sort_edge_used(edge_before, bets)
-	var hand := _resolve_baccarat_hand(table, rng, result_msec)
-	var settlement := _settle_baccarat_bets(bets, hand, _table_rules(table))
+	var rules := _table_rules(table)
+	var hand := _resolve_baccarat_hand(table, rng, result_msec, rules)
+	var settlement := _settle_baccarat_bets(bets, hand, rules)
 	var bankroll_delta := int(settlement.get("bankroll_delta", 0))
 	var message := _baccarat_result_message(hand, settlement, bankroll_delta)
 	if edge_used:
@@ -554,7 +555,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"message": message,
 	})
 	result["baccarat_winner"] = str(hand.get("winner", ""))
-	result["baccarat_hand"] = hand.duplicate(true)
+	result["baccarat_hand"] = hand
 	result["baccarat_bets"] = bets.duplicate(true)
 	result["baccarat_bet_results"] = _dictionary_array(settlement.get("bet_results", []))
 	result["baccarat_total_wager"] = total_wager
@@ -562,7 +563,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["baccarat_commission"] = int(settlement.get("commission", 0))
 	result["baccarat_animation_events"] = _dictionary_array(hand.get("animation_events", []))
 	result["baccarat_edge_sort_edge_used"] = edge_used
-	result["baccarat_edge_sort_prediction"] = edge_before.duplicate(true)
+	result["baccarat_edge_sort_prediction"] = edge_before
 	result["baccarat_edge_sort_edge_remaining"] = int(_copy_dict(table.get("edge_sort_edge", {})).get("hands_remaining", 0))
 	result["baccarat_road"] = _baccarat_road_state(table.get("hand_history", []))
 	result["baccarat_shoe_penetration"] = _baccarat_shoe_penetration(table)
@@ -692,8 +693,8 @@ func _resolve_read_shoe(action_id: String, stake: int, run_state: RunState, envi
 	return result
 
 
-func _resolve_baccarat_hand(table: Dictionary, rng: RngStream, result_msec: int = 0) -> Dictionary:
-	var rules := _table_rules(table)
+func _resolve_baccarat_hand(table: Dictionary, rng: RngStream, result_msec: int = 0, prepared_rules: Dictionary = {}) -> Dictionary:
+	var rules := prepared_rules if not prepared_rules.is_empty() else _table_rules(table)
 	if _needs_new_shoe(table):
 		var fresh := _fresh_shoe_state(int(table.get("deck_count", 8)), rules, rng)
 		for key in fresh.keys():
@@ -829,8 +830,11 @@ func _settle_baccarat_bets(bets_value: Variant, hand: Dictionary, rules: Diction
 func _update_table_after_hand(table: Dictionary, bets: Dictionary, hand: Dictionary, settlement: Dictionary, bankroll_delta: int, rng: RngStream, result_msec: int = 0) -> void:
 	table["hands_played"] = int(table.get("hands_played", 0)) + 1
 	GameModule.reset_table_round_timer(table)
-	table["last_bets"] = bets.duplicate(true)
-	table["last_hand"] = hand.duplicate(true)
+	var stored_bets := bets.duplicate(true)
+	var stored_hand := hand.duplicate(true)
+	var stored_bet_results := _dictionary_array(settlement.get("bet_results", []))
+	table["last_bets"] = stored_bets
+	table["last_hand"] = stored_hand
 	table["commission_owed"] = int(table.get("commission_owed", 0)) + int(settlement.get("commission", 0))
 	var summary := _baccarat_result_message(hand, settlement, bankroll_delta)
 	var result := {
@@ -844,15 +848,15 @@ func _update_table_after_hand(table: Dictionary, bets: Dictionary, hand: Diction
 		"bankroll_delta": bankroll_delta,
 		"commission": int(settlement.get("commission", 0)),
 		"summary": summary,
-		"bets": bets.duplicate(true),
-		"bet_results": _dictionary_array(settlement.get("bet_results", [])),
-		"hand": hand.duplicate(true),
-		"animation_events": _dictionary_array(hand.get("animation_events", [])),
+		"bets": stored_bets,
+		"bet_results": stored_bet_results,
+		"hand": stored_hand,
+		"animation_events": stored_hand.get("animation_events", []),
 		"resolved_at_msec": maxi(0, result_msec),
 		"rng_state": rng.snapshot() if rng != null else {},
 	}
 	table["last_result"] = result
-	var history := _dictionary_array(table.get("hand_history", []))
+	var history: Array = table.get("hand_history", []) if typeof(table.get("hand_history", [])) == TYPE_ARRAY else []
 	history.push_front({
 		"hand_id": str(hand.get("hand_id", "")),
 		"winner": str(hand.get("winner", "")),
@@ -864,7 +868,7 @@ func _update_table_after_hand(table: Dictionary, bets: Dictionary, hand: Diction
 	while history.size() > HISTORY_LIMIT:
 		history.pop_back()
 	table["hand_history"] = history
-	var shoe_history := _dictionary_array(table.get("shoe_history", []))
+	var shoe_history: Array = table.get("shoe_history", []) if typeof(table.get("shoe_history", [])) == TYPE_ARRAY else []
 	shoe_history.push_front({
 		"hand_id": str(hand.get("hand_id", "")),
 		"shoe_remaining": int(hand.get("shoe_remaining_after", 0)),
@@ -948,16 +952,16 @@ func _baccarat_squeeze_state(last_result: Dictionary) -> Dictionary:
 
 
 func _baccarat_road_state(history_value: Variant) -> Dictionary:
-	var history := _dictionary_array(history_value)
-	var ordered: Array = []
-	for i in range(history.size() - 1, -1, -1):
-		ordered.append(history[i])
+	var history: Array = history_value as Array if typeof(history_value) == TYPE_ARRAY else []
 	var max_beads := BACCARAT_ROAD_ROWS * BACCARAT_ROAD_COLUMNS
-	var start := maxi(0, ordered.size() - max_beads)
 	var beads: Array = []
 	var counts := {"player": 0, "banker": 0, "tie": 0}
-	for i in range(start, ordered.size()):
-		var hand: Dictionary = ordered[i]
+	# History is newest-first. Walk only the visible recent window in display
+	# order instead of cloning and reversing the entire road on every deal.
+	for i in range(mini(history.size(), max_beads) - 1, -1, -1):
+		if typeof(history[i]) != TYPE_DICTIONARY:
+			continue
+		var hand: Dictionary = history[i]
 		var winner := str(hand.get("winner", ""))
 		if not counts.has(winner):
 			continue
@@ -989,16 +993,22 @@ func _baccarat_road_state(history_value: Variant) -> Dictionary:
 func _baccarat_shoe_penetration(table: Dictionary) -> Dictionary:
 	var deck_count := maxi(1, int(table.get("deck_count", 8)))
 	var total_cards := deck_count * CardShoeScript.CARDS_PER_DECK
-	var remaining := clampi(int(table.get("shoe_remaining", CardShoeScript.remaining_count(table.get("shoe", [])))), 0, total_cards)
+	var shoe: Array = table.get("shoe", []) if typeof(table.get("shoe", [])) == TYPE_ARRAY else []
+	var remaining := clampi(int(table.get("shoe_remaining", shoe.size())), 0, total_cards)
 	var used := clampi(total_cards - remaining, 0, total_cards)
-	var cut_card_remaining := clampi(int(table.get("cut_card_remaining", CardShoeScript.cut_card_remaining(deck_count, float(_table_rules(table).get("cut_card_penetration", 0.72))))), 0, total_cards)
+	var cut_card_remaining := int(table.get("cut_card_remaining", -1))
+	if cut_card_remaining < 0:
+		cut_card_remaining = CardShoeScript.cut_card_remaining(deck_count, float(_table_rules(table).get("cut_card_penetration", 0.72)))
+	cut_card_remaining = clampi(cut_card_remaining, 0, total_cards)
+	var discard: Array = table.get("discard", []) if typeof(table.get("discard", [])) == TYPE_ARRAY else []
+	var burn_cards: Array = table.get("burn_cards", []) if typeof(table.get("burn_cards", [])) == TYPE_ARRAY else []
 	var penetration_percent := int(round((float(used) / float(total_cards)) * 100.0))
 	return {
 		"total_cards": total_cards,
 		"remaining": remaining,
 		"used": used,
-		"discard_count": _card_array(table.get("discard", [])).size(),
-		"burn_count": _card_array(table.get("burn_cards", [])).size(),
+		"discard_count": discard.size(),
+		"burn_count": burn_cards.size(),
 		"cut_card_remaining": cut_card_remaining,
 		"penetration_percent": penetration_percent,
 		"reshuffle_pending": bool(table.get("reshuffle_pending", false)),
@@ -1297,7 +1307,7 @@ func _opposing_baccarat_bet(bet_id: String) -> String:
 
 
 func _apply_patron_rapport_after_baccarat(table: Dictionary, session: Dictionary, bets: Dictionary, winner: String) -> void:
-	var patrons := _dictionary_array(table.get("patrons", []))
+	var patrons: Array = table.get("patrons", []) if typeof(table.get("patrons", [])) == TYPE_ARRAY else []
 	if patrons.is_empty():
 		return
 	var alignment := _copy_dict(session.get("table_social_alignment", {}))
@@ -2651,7 +2661,9 @@ func _refresh_shoe_remaining_metadata(table: Dictionary) -> void:
 
 
 func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_state: Dictionary, table: Dictionary) -> Dictionary:
-	var session := ui_state.duplicate(true)
+	# Every nested field changed below is replaced with a normalized copy. A shallow
+	# shell avoids cloning unrelated UI payload on every command/surface read.
+	var session := ui_state.duplicate(false)
 	var denoms := _chip_denominations(table)
 	var selected_chip := int(session.get("selected_chip", session.get("selected_stake", denoms[0])))
 	if not denoms.has(selected_chip):
@@ -2682,7 +2694,10 @@ func _update_environment_table(environment: Dictionary, table: Dictionary) -> vo
 
 
 func _table_rules(table: Dictionary) -> Dictionary:
-	return _copy_dict(table.get("rules", _default_rules(int(table.get("deck_count", 8)))))
+	var value: Variant = table.get("rules", null)
+	if typeof(value) == TYPE_DICTIONARY:
+		return value as Dictionary
+	return _default_rules(int(table.get("deck_count", 8)))
 
 
 func _chip_denominations(table: Dictionary) -> Array:

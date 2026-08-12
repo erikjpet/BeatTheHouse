@@ -7,7 +7,7 @@ extends GameModule
 const SYMBOLS := ["CHERRY", "LEMON", "BELL", "BAR", "7", "CROWN"]
 const TICKET_STACK_VIEW_LIMIT := 9
 const TRAY_COLUMN_VIEW_LIMIT := 8
-const SORTED_PILE_VIEW_LIMIT := 32
+const SORTED_PILE_VIEW_LIMIT := 10
 const ACTIVE_DISPENSE_EVENT_LIMIT := 48
 const DEFAULT_DEAL_COUNT := 150
 const MAX_DEAL_COUNT := 150
@@ -70,11 +70,18 @@ const PULL_TAB_AUTO_OPEN_ACTION := "pull_tab_auto_open"
 const PULL_TAB_AUTO_OPEN_INITIAL_DELAY_MSEC := 90
 const PULL_TAB_AUTO_OPEN_STEP_GAP_MSEC := 80
 const PULL_TAB_AUTO_TICK_STATE_KEYS := ["pull_tab_auto_open_active", "pull_tab_auto_open_next_msec"]
+const PULL_TAB_STACK_HEADER_BUTTON_WIDTHS := [18.0, 18.0, 34.0, 50.0]
+const PULL_TAB_STACK_HEADER_BUTTON_GAP := 2.0
+const PULL_TAB_STACK_HEADER_RIGHT_MARGIN := 8.0
+const PULL_TAB_STACK_HEADER_LEAVE_LEFT_X := 776.0
+const PULL_TAB_STACK_HEADER_LEAVE_GAP := 16.0
 const XRAY_GLASSES_ITEM_ID := "xray_glasses"
 const TAB_DETECTOR_ITEM_ID := "tab_detector"
 const TAROT_CARD_ITEM_ID := "tarot_card"
 const XRAY_TARGET_COUNT := 2
 const TAB_DETECTOR_BASE_HEAT := 4
+const TAB_PEEK_BASE_HEAT := 8
+const TAB_PEEK_SUCCESS_PERCENT := 50
 const TAROT_READING_COUNT := 5
 const PULL_TAB_LOW_TICKET_RATIO := 0.12
 const PULL_TAB_THIN_TICKET_RATIO := 0.25
@@ -117,6 +124,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var stack_count := _array_size(machine.get("ticket_stack", []))
 	var tray_count := _array_size(machine.get("tray_stack", []))
 	var winner_count := _array_size(machine.get("winner_pile", []))
+	var loser_count := _array_size(machine.get("loser_pile", [])) + maxi(0, int(machine.get("loser_archive_count", 0)))
 	var dispense_events := _dispense_event_view_list(machine, ui_state)
 	var dispense_duration_msec := _dispense_animation_duration_msec(dispense_events)
 	var last_dispense_id := str(machine.get("last_dispense_id", machine.get("last_ticket_id", "")))
@@ -129,6 +137,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var file_ticket := _pt_copy_dict(ui_state.get("pull_tab_file_animation_ticket", {}))
 	var file_pile := str(ui_state.get("pull_tab_file_animation_pile", ""))
 	var item_surface := _pull_tab_item_surface_state(machine, run_state)
+	var presentation_time_msec := _pull_tab_presentation_time_msec(ui_state, run_state)
+	# Build each visible receipt once. The old aggregate ripped-tabs field was
+	# unused by the renderer and rebuilt both piles a second time on every click.
+	var winner_pile_views := _ticket_pile_view_list(machine, "winner_pile")
+	var loser_pile_views := _ticket_pile_view_list(machine, "loser_pile")
 	return GameModule.surface_spec({
 		"surface_renderer": "pull_tab_machine",
 		"surface_life": "ticket_dispenser",
@@ -136,7 +149,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_controls_native": true,
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
+		"surface_time_msec": int(ui_state.get("surface_time_msec", dispense_started_msec)),
+		"surface_presentation_time_msec": presentation_time_msec,
 		"surface_animates_idle": true,
+		"surface_web_idle_animation_fps": 15.0,
 		"surface_embeds_outcomes": true,
 		"machine_name": str(machine.get("machine_name", "Bar Pull-Tab Dispenser")),
 		"pull_tab_rules": "Buy a ticket, then peel its three windows top to bottom. Match three symbols on a row to win.",
@@ -146,11 +162,12 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"pull_tab_stack": _ticket_stack_view(machine, ui_state),
 		"pull_tab_tray_stack": _tray_ticket_view_list(machine),
 		"pull_tab_tray_column_counts": _tray_column_counts(machine),
-		"pull_tab_ripped_tabs": _ripped_ticket_view_list(machine, ui_state),
-		"pull_tab_winner_pile": _ticket_pile_view_list(machine, "winner_pile"),
-		"pull_tab_loser_pile": _ticket_pile_view_list(machine, "loser_pile"),
+		"pull_tab_winner_pile": winner_pile_views,
+		"pull_tab_loser_pile": loser_pile_views,
 		"pull_tab_pending_payout": _pending_winner_payout(machine),
 		"pull_tab_redeemable_count": winner_count,
+		"pull_tab_winner_count": winner_count,
+		"pull_tab_loser_count": loser_count,
 		"pull_tab_stack_count": stack_count,
 		"pull_tab_tray_count": tray_count,
 		"pull_tab_stack_cursor": _stack_cursor(ui_state, stack_count),
@@ -175,7 +192,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				last_dispense_id,
 				dispense_duration_msec,
 				dispense_started_msec,
-				{"metadata": {"event_count": dispense_events.size(), "ticket_id": str(machine.get("last_ticket_id", ""))}}
+				{
+					"clock_source": "presentation",
+					"metadata": {"event_count": dispense_events.size(), "ticket_id": str(machine.get("last_ticket_id", ""))},
+				}
 			),
 			GameModule.surface_animation_channel(
 				PULL_TAB_REVEAL_CHANNEL,
@@ -383,26 +403,38 @@ func active_item_command(item_id: String, run_state: RunState, environment: Dict
 func _resolve_tab_detector_scan(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, true)
 	var item_state := _pull_tab_item_state(machine)
-	var action_def: Dictionary = _action("tab_detector_scan")
 	var has_detector := _run_has_item(run_state, TAB_DETECTOR_ITEM_ID)
 	var next_active := false
+	var peek_succeeded := false
+	var peek_count := maxi(0, int(item_state.get("tab_detector_peek_count", 0)))
+	var peek_highlight_index := -1
+	var base_heat := 0
 	if has_detector:
 		next_active = not bool(item_state.get("tab_detector_active", false))
 		item_state["tab_detector_active"] = next_active
-		machine["item_state"] = item_state
-		_write_machine_state(environment, machine, run_state)
-	var base_heat := int(action_def.get("suspicion_delta", TAB_DETECTOR_BASE_HEAT))
-	if has_detector and not next_active:
-		base_heat = 0
-	var heat: Dictionary = _pull_tab_cheat_heat(base_heat, 1, run_state, environment)
+		item_state["tab_detector_peek_highlight_index"] = -1
+	else:
+		base_heat = TAB_PEEK_BASE_HEAT + peek_count
+		peek_succeeded = _tab_peek_succeeds(run_state, peek_count, rng)
+		peek_count += 1
+		peek_highlight_index = _tab_detector_highlight_deal_index(machine) if peek_succeeded else -1
+		item_state["tab_detector_peek_count"] = peek_count
+		item_state["tab_detector_peek_success_count"] = maxi(0, int(item_state.get("tab_detector_peek_success_count", 0))) + (1 if peek_succeeded else 0)
+		item_state["tab_detector_peek_last_succeeded"] = peek_succeeded
+		item_state["tab_detector_peek_highlight_index"] = peek_highlight_index
+	machine["item_state"] = item_state
+	_write_machine_state(environment, machine, run_state)
+	var heat: Dictionary = _pull_tab_peek_heat(base_heat, run_state, environment) if not has_detector else _pull_tab_cheat_heat(0, 1, run_state, environment)
 	var suspicion_delta := int(heat.get("suspicion_delta", 0))
 	var bankroll_delta := int(heat.get("bankroll_delta", 0))
 	var security_message := str(heat.get("security_message", ""))
 	var message := ""
 	if has_detector:
-		message = "Tab Detector switched on. Winning buys will draw rising heat." if next_active else "Tab Detector switched off."
+		message = "Tab Detector switched on. The nearest live column is highlighted." if next_active else "Tab Detector switched off."
+	elif peek_succeeded:
+		message = "You peek through the flare case and catch a useful pulse on column %d." % (peek_highlight_index + 1)
 	else:
-		message = "You hand-scan the flare chart for loose prizes while the clerk watches."
+		message = "You peek through the flare case, but the ticket stacks give you nothing."
 	if suspicion_delta > 0:
 		message += " Heat rises +%d." % suspicion_delta
 	if not security_message.is_empty():
@@ -414,6 +446,9 @@ func _resolve_tab_detector_scan(run_state: RunState, environment: Dictionary, rn
 		"item_id": TAB_DETECTOR_ITEM_ID,
 		"item_owned": has_detector,
 		"active": next_active,
+		"peek_succeeded": peek_succeeded,
+		"peek_count": peek_count,
+		"peek_highlight_index": peek_highlight_index,
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"base_heat": base_heat,
@@ -445,10 +480,48 @@ func _resolve_tab_detector_scan(run_state: RunState, environment: Dictionary, rn
 		"message": message,
 	})
 	result["pull_tab_detector_active"] = next_active
+	result["pull_tab_peek_succeeded"] = peek_succeeded
+	result["pull_tab_peek_count"] = peek_count
+	result["pull_tab_peek_highlight_index"] = peek_highlight_index
 	result["pull_tab_base_heat"] = base_heat
 	result["pull_tab_pit_boss_watched"] = bool(heat.get("pit_boss_watched", false))
+	var tutorial_lessons_completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if run_state != null and typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+	if run_state != null \
+			and run_state.is_tutorial_run() \
+			and str(environment.get("archetype_id", "")) == "gas_station_casino" \
+			and not bool(tutorial_lessons_completed.get("tutorial_gas_peek", false)) \
+			and not has_detector \
+			and peek_count > 0 \
+			and peek_count <= 4:
+		var remaining_peeks := 4 - peek_count
+		# Keep repeated Peek coaching in one live event. Further Peeks advance that
+		# event in place, so input never leaves old reminders queued behind the current
+		# one. The final Peek retires it before the Heat follow-up is presented.
+		result["tutorial_dialogue_request"] = {
+			"dialogue_id": "tutorial_pal_guidance" if remaining_peeks > 0 else "",
+			"node_id": "gas_peek_again_%d" % remaining_peeks if remaining_peeks > 0 else "",
+			"queue_key": "tutorial_intervention:pull_tab_peek_progress",
+			"source_kind": "tutorial_intervention",
+			"speaker": "Pal",
+			"advance_existing": remaining_peeks > 0,
+			"clear_existing": remaining_peeks <= 0,
+		}
 	GameModule.apply_result(run_state, result, rng)
 	return result
+
+
+static func peek_succeeds_for_roll(roll: int) -> bool:
+	return clampi(roll, 1, 100) <= TAB_PEEK_SUCCESS_PERCENT
+
+
+func _tab_peek_succeeds(run_state: RunState, peek_index: int, rng: RngStream) -> bool:
+	if run_state != null and run_state.is_tutorial_run():
+		var scripted_results: Array = run_state.challenge_modifiers().get("tutorial_pull_tab_peek_results", []) if typeof(run_state.challenge_modifiers().get("tutorial_pull_tab_peek_results", [])) == TYPE_ARRAY else []
+		if peek_index >= 0 and peek_index < scripted_results.size():
+			return bool(scripted_results[peek_index])
+	if rng == null:
+		return false
+	return peek_succeeds_for_roll(rng.randi_range(1, 100))
 
 
 func coach_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
@@ -469,6 +542,9 @@ func coach_state(run_state: RunState, environment: Dictionary, ui_state: Diction
 		"play_stack_count": _array_size(machine.get("ticket_stack", [])),
 		"pending_payout": _pending_winner_payout(machine),
 		"redeemable_count": _array_size(machine.get("winner_pile", [])),
+		"peek_count": maxi(0, int(item_state.get("tab_detector_peek_count", 0))),
+		"peek_success_count": maxi(0, int(item_state.get("tab_detector_peek_success_count", 0))),
+		"peek_last_succeeded": bool(item_state.get("tab_detector_peek_last_succeeded", false)),
 	}
 
 
@@ -623,14 +699,19 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				"message": "The master button starts a four-column dispense cycle.",
 			}
 		"pull_tab_detector_scan":
-			return {
+			var detector_owned := _run_has_item(run_state, TAB_DETECTOR_ITEM_ID)
+			var command := {
 				"handled": true,
 				"action_id": "tab_detector_scan",
 				"action_kind": "cheat",
 				"skip_stake_validation": true,
 				"selected_index": 0,
-				"message": "Detector scan selected. Press SCAN again to accept the heat risk.",
+				"message": "Tab Detector toggled." if detector_owned else "Peek selected. Press PEEK again to risk drawing attention.",
 			}
+			if detector_owned:
+				command["resolve"] = true
+				command["direct_resolve"] = true
+			return command
 		PULL_TAB_COLLECT_TRAY_ACTION:
 			return _collect_tray_surface_command(machine, ui_state, run_state, environment)
 		"pull_tab_reveal_next":
@@ -714,7 +795,8 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 		command["surface_audio_cue"] = "ticket_navigation"
 		command["surface_audio_action"] = PULL_TAB_FILE_TICKET_ACTION
 	elif command.has("ui_state"):
-		command["surface_audio_cue"] = "ticket_peel"
+		if str(command.get("surface_audio_cue", "")).is_empty():
+			command["surface_audio_cue"] = "ticket_peel"
 		command["surface_audio_action"] = "pull_tab_reveal_next"
 	return GameModule.surface_command(command)
 
@@ -733,7 +815,7 @@ func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, 
 	if action_id != "buy_tab":
 		return 0
 	var machine := _ensure_machine_state(run_state, environment, false)
-	var deals := _deal_array(machine.get("deals", []))
+	var deals := _array_view(machine.get("deals", []))
 	if deals.is_empty():
 		return 0
 	var deal_index := clampi(int(ui_state.get("pull_tab_deal_index", 0)), 0, maxi(0, deals.size() - 1))
@@ -755,11 +837,14 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	if action.is_empty():
 		return _empty_result(action_id, 0, environment, "That pull-tab control is not live. Pick a stocked row.")
 	var machine := _ensure_machine_state(run_state, environment, true)
-	var deals := _deal_array(machine.get("deals", []))
+	var deals := _array_view(machine.get("deals", []))
 	var deal_index := clampi(int(ui_state.get("pull_tab_deal_index", 0)), 0, maxi(0, deals.size() - 1))
 	if deals.is_empty():
 		return _empty_result(action_id, 0, environment, "The pull-tab box is empty.")
-	var deal: Dictionary = deals[deal_index]
+	# Preserve the action-result/test snapshot boundary without cloning every
+	# other deal and sleeve in the machine. Mutated nested fields are replaced by
+	# _draw_ticket_from_deal before this shell is written back.
+	var deal: Dictionary = (deals[deal_index] as Dictionary).duplicate(false)
 	var price := maxi(1, int(deal.get("price", 1)))
 	if run_state.wager_capacity_for_game(get_id(), environment) < price:
 		return _empty_result(action_id, price, environment, "Not enough bankroll for this ticket.")
@@ -773,15 +858,16 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	ticket["deal_index"] = deal_index
 	_stamp_ticket_origin(ticket, environment)
 	var item_effects := _apply_pull_tab_item_purchase_effects(machine, deal, ticket, deal_index, run_state)
+	_clear_tab_peek_hint(machine)
 	deals[deal_index] = deal
 	machine["deals"] = deals
-	var tray_stack := _ticket_array(machine.get("tray_stack", []))
+	var tray_stack: Array = machine.get("tray_stack", []) if typeof(machine.get("tray_stack", [])) == TYPE_ARRAY else []
 	tray_stack.append(ticket)
 	machine["tray_stack"] = tray_stack
 	machine["tickets_sold"] = int(machine.get("tickets_sold", 0)) + 1
 	machine["last_ticket_id"] = str(ticket.get("id", ""))
 	machine["last_deal_id"] = str(deal.get("id", ""))
-	_queue_dispense_events(machine, [ticket], [deal_index], GameModule.deterministic_time_msec(run_state, ui_state))
+	_queue_dispense_events(machine, [ticket], [deal_index], _pull_tab_presentation_time_msec(ui_state, run_state))
 	_write_machine_state(environment, machine, run_state)
 
 	var payout := int(ticket.get("payout", 0))
@@ -854,6 +940,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	result["pull_tab_detector_base_heat"] = detector_base_heat
 	result["pull_tab_security_bankroll_delta"] = security_bankroll_delta
 	result["pull_tab_pit_boss_watched"] = bool(detector_heat.get("pit_boss_watched", false))
+	result["suppress_music_outcome"] = true
 	_advance_action_rng(rng)
 	GameModule.apply_result(run_state, result, rng)
 	return result
@@ -901,6 +988,7 @@ func _resolve_ticket_set_purchase(run_state: RunState, environment: Dictionary, 
 		total_price += price
 	if tickets.is_empty():
 		return _empty_result(PULL_TAB_BUY_SET_ACTION, 0, environment, "No four-column pull is affordable right now.")
+	_clear_tab_peek_hint(machine)
 	var tray_stack := _ticket_array(machine.get("tray_stack", []))
 	for ticket in tickets:
 		tray_stack.append((ticket as Dictionary).duplicate(true))
@@ -909,7 +997,7 @@ func _resolve_ticket_set_purchase(run_state: RunState, environment: Dictionary, 
 	machine["tickets_sold"] = int(machine.get("tickets_sold", 0)) + tickets.size()
 	machine["last_ticket_id"] = str((tickets[tickets.size() - 1] as Dictionary).get("id", ""))
 	machine["last_deal_id"] = str((ticket_deals[ticket_deals.size() - 1] as Dictionary).get("id", ""))
-	_queue_dispense_events(machine, tickets, deal_indices, GameModule.deterministic_time_msec(run_state, ui_state))
+	_queue_dispense_events(machine, tickets, deal_indices, _pull_tab_presentation_time_msec(ui_state, run_state))
 	_write_machine_state(environment, machine, run_state)
 
 	var story_log: Array = []
@@ -985,6 +1073,7 @@ func _resolve_ticket_set_purchase(run_state: RunState, environment: Dictionary, 
 	result["pull_tab_security_bankroll_delta"] = security_bankroll_delta
 	result["pull_tab_pit_boss_watched"] = bool(detector_heat.get("pit_boss_watched", false))
 	result["defer_bankroll_zero_failure"] = _should_defer_bankroll_zero_failure(run_state, bankroll_delta, machine)
+	result["suppress_music_outcome"] = true
 	_advance_action_rng(rng)
 	GameModule.apply_result(run_state, result, rng)
 	return result
@@ -1083,6 +1172,7 @@ func _resolve_ticket_sort(run_state: RunState, environment: Dictionary, rng: Rng
 		})
 		_add_ticket_result_fields(result, ticket, deal, payout, 0)
 		result["defer_bankroll_zero_failure"] = _should_defer_bankroll_zero_failure(run_state, 0, machine)
+		result["suppress_music_outcome"] = true
 		_advance_action_rng(rng)
 		GameModule.apply_result(run_state, result, rng)
 		return result
@@ -1249,12 +1339,16 @@ func _reveal_next_command(machine: Dictionary, ui_state: Dictionary, _run_state:
 		next_state["pull_tab_reveal_animation_ticket_id"] = ticket_id
 		next_state.erase("pull_tab_sort_ticket_id")
 		var message := "You catch the paper lip. Three windows peel open one after another."
-		return {
+		var command := {
 			"handled": true,
 			"ui_state": next_state,
 			"selected_index": ticket_index,
 			"message": message,
 		}
+		if int(ticket.get("payout", 0)) > 0:
+			command["surface_audio_cue"] = "ticket_win"
+			command["surface_audio_action"] = "pull_tab_reveal_next"
+		return command
 	return {"handled": true, "message": "Every ticket in the stack has been opened."}
 
 
@@ -1399,6 +1493,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng_o
 		"ticket_stack": [],
 		"winner_pile": [],
 		"loser_pile": [],
+		"loser_archive_count": 0,
 		"tickets_sold": 0,
 		"dispense_started_msec": 0,
 		"last_dispense_id": "",
@@ -1524,22 +1619,25 @@ func _machine_name_for_environment(environment: Dictionary) -> String:
 
 
 func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist: bool) -> Dictionary:
-	var game_states := _game_states_for_write(environment)
+	var states_value: Variant = environment.get("game_states", {})
+	var game_states: Dictionary = states_value as Dictionary if typeof(states_value) == TYPE_DICTIONARY else {}
 	var existing_value: Variant = game_states.get(get_id(), {})
 	if typeof(existing_value) == TYPE_DICTIONARY and not (existing_value as Dictionary).is_empty():
 		var existing: Dictionary = existing_value
 		if _machine_state_needs_normalization(existing):
 			existing = _normalize_machine_state(existing)
 			if persist:
-				game_states[get_id()] = existing
-				environment["game_states"] = game_states
+				var writable_states := game_states.duplicate(false)
+				writable_states[get_id()] = existing
+				environment["game_states"] = writable_states
 		_sync_portable_ticket_state(run_state, environment, existing)
 		return existing
 	var generated := _generate_machine_state(run_state, environment)
 	_sync_portable_ticket_state(run_state, environment, generated)
 	if persist:
-		game_states[get_id()] = generated
-		environment["game_states"] = game_states
+		var writable_states := game_states.duplicate(false)
+		writable_states[get_id()] = generated
+		environment["game_states"] = writable_states
 	return generated
 
 
@@ -1581,11 +1679,15 @@ func _machine_state_needs_normalization(machine: Dictionary) -> bool:
 
 
 func _write_machine_state(environment: Dictionary, machine: Dictionary, run_state: RunState = null) -> void:
+	var portable := RunState.compact_portable_ticket_state(get_id(), _portable_ticket_player_state(machine), false)
+	for field in ["tray_stack", "ticket_stack", "winner_pile", "loser_pile", "loser_archive_count"]:
+		if portable.has(field):
+			machine[field] = portable[field]
 	var game_states := _game_states_for_write(environment)
 	game_states[get_id()] = machine
 	environment["game_states"] = game_states
 	if run_state != null:
-		run_state.remember_portable_ticket_state(get_id(), environment, _portable_ticket_player_state(machine))
+		run_state.remember_portable_ticket_state(get_id(), environment, portable)
 
 
 func _sync_portable_ticket_state(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
@@ -1602,6 +1704,7 @@ func _sync_portable_ticket_state(run_state: RunState, environment: Dictionary, m
 		return
 	for field in ["tray_stack", "ticket_stack", "winner_pile", "loser_pile"]:
 		machine[field] = portable.get(field, [])
+	machine["loser_archive_count"] = maxi(0, int(portable.get("loser_archive_count", 0)))
 
 
 func _portable_ticket_player_state(machine: Dictionary) -> Dictionary:
@@ -1610,11 +1713,12 @@ func _portable_ticket_player_state(machine: Dictionary) -> Dictionary:
 		"ticket_stack": _array_view(machine.get("ticket_stack", [])),
 		"winner_pile": _array_view(machine.get("winner_pile", [])),
 		"loser_pile": _array_view(machine.get("loser_pile", [])),
+		"loser_archive_count": maxi(0, int(machine.get("loser_archive_count", 0))),
 	}
 
 
 func _portable_ticket_count(state: Dictionary) -> int:
-	return _array_size(state.get("tray_stack", [])) + _array_size(state.get("ticket_stack", [])) + _array_size(state.get("winner_pile", [])) + _array_size(state.get("loser_pile", []))
+	return _array_size(state.get("tray_stack", [])) + _array_size(state.get("ticket_stack", [])) + _array_size(state.get("winner_pile", [])) + _array_size(state.get("loser_pile", [])) + maxi(0, int(state.get("loser_archive_count", 0)))
 
 
 func _stamp_ticket_origin(ticket: Dictionary, environment: Dictionary) -> void:
@@ -1640,6 +1744,7 @@ func _normalize_machine_state(machine: Dictionary) -> Dictionary:
 	normalized["ticket_stack"] = _ticket_array(normalized.get("ticket_stack", []))
 	normalized["winner_pile"] = _ticket_array(normalized.get("winner_pile", []))
 	normalized["loser_pile"] = _ticket_array(normalized.get("loser_pile", []))
+	normalized["loser_archive_count"] = maxi(0, int(normalized.get("loser_archive_count", 0)))
 	normalized["redeemed_pile"] = _ticket_array(normalized.get("redeemed_pile", []))
 	normalized["environment_hooks"] = _environment_hook_array(normalized.get("environment_hooks", []))
 	normalized["tickets_sold"] = int(normalized.get("tickets_sold", 0))
@@ -1657,6 +1762,10 @@ func _initial_pull_tab_item_state(deals: Array, rng: RngStream) -> Dictionary:
 		"xray_targets": xray_targets,
 		"tab_detector_active": false,
 		"tab_detector_heat_triggers": 0,
+		"tab_detector_peek_count": 0,
+		"tab_detector_peek_success_count": 0,
+		"tab_detector_peek_last_succeeded": false,
+		"tab_detector_peek_highlight_index": -1,
 		"tarot_armed": false,
 		"tarot_read_count": TAROT_READING_COUNT,
 		"last_tarot_ticket_id": "",
@@ -1673,6 +1782,10 @@ func _normalize_pull_tab_item_state(machine: Dictionary) -> Dictionary:
 		"xray_targets": xray_targets,
 		"tab_detector_active": bool(source.get("tab_detector_active", false)),
 		"tab_detector_heat_triggers": maxi(0, int(source.get("tab_detector_heat_triggers", 0))),
+		"tab_detector_peek_count": maxi(0, int(source.get("tab_detector_peek_count", 0))),
+		"tab_detector_peek_success_count": maxi(0, int(source.get("tab_detector_peek_success_count", 0))),
+		"tab_detector_peek_last_succeeded": bool(source.get("tab_detector_peek_last_succeeded", false)),
+		"tab_detector_peek_highlight_index": clampi(int(source.get("tab_detector_peek_highlight_index", -1)), -1, maxi(-1, deals.size() - 1)),
 		"tarot_armed": bool(source.get("tarot_armed", false)),
 		"tarot_read_count": maxi(1, int(source.get("tarot_read_count", TAROT_READING_COUNT))),
 		"last_tarot_ticket_id": str(source.get("last_tarot_ticket_id", "")),
@@ -1785,6 +1898,7 @@ func _pull_tab_item_surface_state(machine: Dictionary, run_state: RunState) -> D
 	var item_state := _pull_tab_item_state(machine)
 	var xray_available := _run_has_item(run_state, XRAY_GLASSES_ITEM_ID)
 	var detector_available := _run_has_item(run_state, TAB_DETECTOR_ITEM_ID)
+	var peek_highlight_index := int(item_state.get("tab_detector_peek_highlight_index", -1)) if not detector_available else -1
 	var xray_targets := _visible_xray_targets(machine) if xray_available else []
 	var xray_target := (xray_targets[0] as Dictionary).duplicate(true) if not xray_targets.is_empty() else {}
 	return {
@@ -1793,8 +1907,11 @@ func _pull_tab_item_surface_state(machine: Dictionary, run_state: RunState) -> D
 		"xray_targets": xray_targets,
 		"tab_detector_available": detector_available,
 		"tab_detector_active": detector_available and bool(item_state.get("tab_detector_active", false)),
-		"tab_detector_highlight_index": _tab_detector_highlight_deal_index(machine) if detector_available and bool(item_state.get("tab_detector_active", false)) else -1,
+		"tab_detector_highlight_index": _tab_detector_highlight_deal_index(machine) if detector_available and bool(item_state.get("tab_detector_active", false)) else peek_highlight_index,
 		"tab_detector_next_heat": TAB_DETECTOR_BASE_HEAT + maxi(0, int(item_state.get("tab_detector_heat_triggers", 0))),
+		"tab_detector_peek_count": maxi(0, int(item_state.get("tab_detector_peek_count", 0))),
+		"tab_detector_peek_success_count": maxi(0, int(item_state.get("tab_detector_peek_success_count", 0))),
+		"tab_detector_peek_last_succeeded": bool(item_state.get("tab_detector_peek_last_succeeded", false)),
 		"tarot_armed": bool(item_state.get("tarot_armed", false)),
 	}
 
@@ -1886,6 +2003,14 @@ func _tab_detector_active(machine: Dictionary, run_state: RunState) -> bool:
 	if not _run_has_item(run_state, TAB_DETECTOR_ITEM_ID):
 		return false
 	return bool(_pull_tab_item_state(machine).get("tab_detector_active", false))
+
+
+func _clear_tab_peek_hint(machine: Dictionary) -> void:
+	var item_state := _pull_tab_item_state(machine)
+	if int(item_state.get("tab_detector_peek_highlight_index", -1)) < 0:
+		return
+	item_state["tab_detector_peek_highlight_index"] = -1
+	machine["item_state"] = item_state
 
 
 func _tab_detector_highlight_deal_index(machine: Dictionary) -> int:
@@ -2310,7 +2435,7 @@ func _deal_view_list(machine: Dictionary, run_state: RunState, item_surface: Dic
 			"prize_rows": _prize_rows_for_view(prizes),
 			"palette": _pt_copy_dict(deal.get("palette", {})),
 			"xray_target": xray_target,
-			"tab_detector_highlight": bool(item_surface.get("tab_detector_active", false)) and index == detector_highlight_index,
+			"tab_detector_highlight": index == detector_highlight_index,
 			"tab_detector_active": bool(item_surface.get("tab_detector_active", false)),
 			"tab_detector_next_heat": int(item_surface.get("tab_detector_next_heat", TAB_DETECTOR_BASE_HEAT)),
 		}
@@ -2531,12 +2656,18 @@ func _ticket_animation_payload(ticket: Dictionary) -> Dictionary:
 
 
 func _dispense_event_view_list(machine: Dictionary, ui_state: Dictionary = {}) -> Array:
-	if ui_state.has("surface_time_msec"):
-		return _active_dispense_events(machine, maxi(1, int(ui_state.get("surface_time_msec", 0))))
+	if ui_state.has("surface_presentation_time_msec") or ui_state.has("surface_time_msec"):
+		return _active_dispense_events(machine, maxi(1, _pull_tab_presentation_time_msec(ui_state)))
 	var started_msec := int(machine.get("dispense_started_msec", 0))
 	if started_msec > 0:
 		return _active_dispense_events(machine, started_msec)
 	return _active_dispense_events(machine, Time.get_ticks_msec())
+
+
+func _pull_tab_presentation_time_msec(ui_state: Dictionary, run_state: RunState = null) -> int:
+	if ui_state.has("surface_presentation_time_msec"):
+		return maxi(1, int(ui_state.get("surface_presentation_time_msec", 0)))
+	return GameModule.deterministic_time_msec(run_state, ui_state)
 
 
 func _active_dispense_events(machine: Dictionary, now_msec: int) -> Array:
@@ -2582,14 +2713,12 @@ func _ticket_pile_view_list(machine: Dictionary, pile_name: String) -> Array:
 		var ticket := _ticket_dict(tickets[ticket_index])
 		if ticket.is_empty():
 			continue
-		var rows := _pt_copy_array(ticket.get("rows", []))
-		var deal := _deal_for_ticket(machine, ticket)
-		var view := _ticket_display_payload(ticket, deal)
+		# Sorted tickets are rendered as miniature pile receipts. Rebuilding their
+		# full revealed rows and deal prize charts served no visible interaction.
+		var view := ticket.duplicate(true)
 		view["pile"] = pile_name
 		view["stack_index"] = ticket_index
-		view["pile_depth_index"] = ticket_index
-		view["revealed_count"] = rows.size()
-		view["fully_revealed"] = true
+		view["pile_depth_index"] = maxi(0, int(ticket.get("pile_depth_index", ticket_index)))
 		result.append(view)
 	return result
 
@@ -2659,7 +2788,7 @@ func _redemption_context(machine: Dictionary, tickets: Array, run_state: RunStat
 	var current_high_value_count := _high_value_ticket_count(winners)
 	var recent_history := _recent_ticket_history(redeemed_history, CASHOUT_HISTORY_LOOKBACK)
 	var recent_high_value_count := _high_value_ticket_count(recent_history)
-	var loser_count := losers.size()
+	var loser_count := losers.size() + maxi(0, int(machine.get("loser_archive_count", 0)))
 	var winner_count := winners.size()
 	var expected_loser_trail := _expected_cashout_loser_trail(winner_count)
 	var low_loser_trail := winner_count > 0 and loser_count < expected_loser_trail
@@ -2740,6 +2869,40 @@ func _pull_tab_cheat_heat(base_heat: int, stake: int, run_state: RunState, envir
 		"ended": bool(pressure.get("ended", false)),
 		"pit_boss_watched": bool(pit_boss_status.get("watched", false)),
 		"pit_boss_heat_bonus": pit_boss_bonus,
+	}
+
+
+# Peek owns an exact escalating Heat ladder. Generic cheat-pressure bonuses must
+# not silently turn the promised 8/9/10/11 sequence into larger values; room
+# security can still react to the resulting total through its normal pressure
+# outcome without changing the amount shown and charged by Peek itself.
+func _pull_tab_peek_heat(base_heat: int, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var exact_heat := maxi(0, base_heat)
+	if run_state == null:
+		return {
+			"suspicion_delta": exact_heat,
+			"base_suspicion_delta": exact_heat,
+			"bankroll_delta": 0,
+			"security_message": "",
+			"ended": false,
+			"pit_boss_watched": false,
+			"pit_boss_heat_bonus": 0,
+		}
+	var pressure: Dictionary = run_state.security_action_pressure("cheat", 1, run_state.suspicion_level() + exact_heat) if exact_heat > 0 else {}
+	var pit_boss_status: Dictionary = run_state.pit_boss_watch_status(environment)
+	var security_message := str(pressure.get("message", ""))
+	var pit_boss_summary := str(pit_boss_status.get("summary", "")) if bool(pit_boss_status.get("active", false)) else ""
+	if not pit_boss_summary.is_empty():
+		security_message = "%s %s" % [pit_boss_summary, security_message]
+		security_message = security_message.strip_edges()
+	return {
+		"suspicion_delta": exact_heat,
+		"base_suspicion_delta": exact_heat,
+		"bankroll_delta": int(pressure.get("bankroll_delta", 0)),
+		"security_message": security_message,
+		"ended": bool(pressure.get("ended", false)),
+		"pit_boss_watched": bool(pit_boss_status.get("watched", false)),
+		"pit_boss_heat_bonus": 0,
 	}
 
 
@@ -3200,15 +3363,15 @@ func _draw_pull_tab_control_panel(surface, rect: Rect2, deals: Array, surface_st
 		surface.surface_label_centered("TOTAL $%d" % int(tutorial_target.get("total_cost", 0)), Rect2(rect.position + Vector2(4, 91), Vector2(rect.size.x - 8, 16)), 8, C_YELLOW)
 	var scan_rect := Rect2(rect.position + Vector2(10, 124), Vector2(rect.size.x - 20, 30))
 	var item_state: Dictionary = surface_state.get("pull_tab_item_state", {})
+	var detector_available := bool(item_state.get("tab_detector_available", false))
 	var active := bool(item_state.get("tab_detector_active", false))
 	var armed := bool(surface.surface_native_action_selected("pull_tab_detector_scan"))
 	var hovered := bool(surface.surface_region_hovered("pull_tab_detector_scan", 0))
 	var scan_color := C_TEAL if active else C_YELLOW if armed else C_PINK
 	surface.draw_rect(scan_rect, Color(scan_color.r, scan_color.g, scan_color.b, 0.28 if active or armed or hovered else 0.12))
 	surface.draw_rect(scan_rect, C_WHITE if hovered else scan_color, false, 2 if hovered or active or armed else 1)
-	var scan_label := "ON" if active else "CONFIRM" if armed else "SCAN"
-	surface.surface_label_centered(scan_label, Rect2(scan_rect.position + Vector2(2, 2), Vector2(scan_rect.size.x - 4, 13)), 8, scan_color)
-	surface.surface_label_centered("HEAT +%d" % int(item_state.get("tab_detector_next_heat", TAB_DETECTOR_BASE_HEAT)), Rect2(scan_rect.position + Vector2(2, 15), Vector2(scan_rect.size.x - 4, 11)), 6, C_SOFT)
+	var scan_label := "SCAN" if detector_available else "CONFIRM" if armed else "PEEK"
+	surface.surface_label_centered(scan_label, Rect2(scan_rect.position + Vector2(2, 7), Vector2(scan_rect.size.x - 4, 16)), 9, scan_color)
 	surface.surface_add_hit(scan_rect, "pull_tab_detector_scan", 0)
 
 
@@ -3355,6 +3518,8 @@ func _draw_pull_tab_stack_panel(surface, rect: Rect2, surface_state: Dictionary,
 	var count := int(surface_state.get("pull_tab_stack_count", stack.size()))
 	var cursor := int(surface_state.get("pull_tab_stack_cursor", 0))
 	var pending_payout := int(surface_state.get("pull_tab_pending_payout", 0))
+	var winner_total := maxi(0, int(surface_state.get("pull_tab_winner_count", winner_pile.size())))
+	var loser_total := maxi(0, int(surface_state.get("pull_tab_loser_count", loser_pile.size())))
 	var active_rect := Rect2(rect.position + Vector2(42, 46), Vector2(310, 172))
 	var pile_rect := Rect2(rect.position + Vector2(20, 236), Vector2(rect.size.x - 40, 138))
 	var filing_ticket_id := ""
@@ -3380,18 +3545,17 @@ func _draw_pull_tab_stack_panel(surface, rect: Rect2, surface_state: Dictionary,
 			display_start_index = 1
 	var display_count := maxi(0, stack.size() - display_start_index)
 	var active_ticket: Dictionary = stack[display_start_index] as Dictionary if display_count > 0 else {}
-	var reveal_rows_complete := not bool(surface.surface_animation_active(PULL_TAB_REVEAL_CHANNEL)) \
-		or int(surface.surface_elapsed(PULL_TAB_REVEAL_CHANNEL) * 1000.0) >= (2 * PULL_TAB_REVEAL_STAGGER_MSEC + PULL_TAB_REVEAL_ROW_DURATION_MSEC)
-	var can_file := not active_ticket.is_empty() and bool(active_ticket.get("fully_revealed", false)) and reveal_rows_complete
-	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(132, 8), Vector2(24, 24)), "<", "pull_tab_prev", count > 1 and cursor > 0)
-	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(159, 8), Vector2(24, 24)), ">", "pull_tab_next", count > 1 and cursor < count - 1)
-	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(186, 8), Vector2(38, 24)), "OPEN", "pull_tab_next_unopened", count > 0)
+	# Keep the navigation strip in the safe span between the variable-width X/X
+	# pile counter and the shared native Leave control drawn over this header.
+	var header_button_rects := _pull_tab_stack_header_button_rects(rect)
+	_draw_pull_tab_nav_button(surface, header_button_rects[0], "<", "pull_tab_prev", count > 1 and cursor > 0)
+	_draw_pull_tab_nav_button(surface, header_button_rects[1], ">", "pull_tab_next", count > 1 and cursor < count - 1)
+	_draw_pull_tab_nav_button(surface, header_button_rects[2], "OPEN", "pull_tab_next_unopened", count > 0)
 	var auto_open_active := bool(surface_state.get("pull_tab_auto_open_active", false))
-	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(227, 8), Vector2(55, 24)), "STOP" if auto_open_active else "AUTO OPEN", PULL_TAB_AUTO_OPEN_ACTION, count > 0, auto_open_active)
-	_draw_pull_tab_nav_button(surface, Rect2(rect.position + Vector2(285, 8), Vector2(43, 24)), "FILE", PULL_TAB_FILE_TICKET_ACTION, can_file)
+	_draw_pull_tab_nav_button(surface, header_button_rects[3], "STOP" if auto_open_active else "AUTO OPEN", PULL_TAB_AUTO_OPEN_ACTION, count > 0, auto_open_active)
 	if display_count <= 0:
 		_draw_pull_tab_empty_pile(surface, Rect2(rect.position + Vector2(38, 56), Vector2(316, 148)), int(surface_state.get("pull_tab_tray_count", 0)))
-		_draw_pull_tab_sorted_piles(surface, pile_rect, winner_pile, loser_pile, winner_excluded_id, loser_excluded_id)
+		_draw_pull_tab_sorted_piles(surface, pile_rect, winner_pile, loser_pile, winner_excluded_id, loser_excluded_id, winner_total, loser_total)
 		_draw_pull_tab_file_animation(surface, surface_state, active_rect, pile_rect)
 		return
 	for view_index in range(mini(display_count - 1, 5), 0, -1):
@@ -3399,8 +3563,25 @@ func _draw_pull_tab_stack_panel(surface, rect: Rect2, surface_state: Dictionary,
 		_draw_pull_tab_mini_ticket(surface, ticket, Rect2(rect.position + Vector2(68 + view_index * 10, 56 + view_index * 5), Vector2(238, 138)), 0.18 + float(view_index) * 0.02)
 	var active: Dictionary = active_ticket
 	_draw_pull_tab_ticket(surface, active, active_rect, true)
-	_draw_pull_tab_sorted_piles(surface, pile_rect, winner_pile, loser_pile, winner_excluded_id, loser_excluded_id)
+	_draw_pull_tab_sorted_piles(surface, pile_rect, winner_pile, loser_pile, winner_excluded_id, loser_excluded_id, winner_total, loser_total)
 	_draw_pull_tab_file_animation(surface, surface_state, active_rect, pile_rect)
+
+
+func _pull_tab_stack_header_button_rects(panel_rect: Rect2) -> Array[Rect2]:
+	var total_width := PULL_TAB_STACK_HEADER_BUTTON_GAP * float(PULL_TAB_STACK_HEADER_BUTTON_WIDTHS.size() - 1)
+	for width_value in PULL_TAB_STACK_HEADER_BUTTON_WIDTHS:
+		total_width += float(width_value)
+	var safe_right_x := minf(
+		panel_rect.end.x - PULL_TAB_STACK_HEADER_RIGHT_MARGIN,
+		PULL_TAB_STACK_HEADER_LEAVE_LEFT_X - PULL_TAB_STACK_HEADER_LEAVE_GAP
+	)
+	var next_x := safe_right_x - total_width
+	var rects: Array[Rect2] = []
+	for width_value in PULL_TAB_STACK_HEADER_BUTTON_WIDTHS:
+		var width := float(width_value)
+		rects.append(Rect2(Vector2(next_x, panel_rect.position.y + 8.0), Vector2(width, 24.0)))
+		next_x += width + PULL_TAB_STACK_HEADER_BUTTON_GAP
+	return rects
 
 
 func _draw_pull_tab_nav_button(surface, rect: Rect2, label: String, action: String, enabled: bool, active: bool = false) -> void:
@@ -3409,7 +3590,7 @@ func _draw_pull_tab_nav_button(surface, rect: Rect2, label: String, action: Stri
 	surface.draw_rect(rect, base_color)
 	surface.draw_rect(rect, Color(border_color.r, border_color.g, border_color.b, 0.74 if active else 0.48 if enabled else 0.14), false, 2)
 	var font_size := 8 if label.length() > 6 else 10
-	surface.surface_label(label, rect.position + Vector2(7, 17), font_size, C_YELLOW if active else C_WHITE if enabled else C_SOFT)
+	surface.surface_label_centered(label, rect.grow(-2.0), font_size, C_YELLOW if active else C_WHITE if enabled else C_SOFT)
 	if enabled:
 		surface.surface_add_invisible_hit(rect, action)
 
@@ -3561,6 +3742,8 @@ func _draw_pull_tab_ticket(surface, ticket: Dictionary, rect: Rect2, interactive
 		if interactive:
 			var hovered := bool(surface.surface_region_hovered(PULL_TAB_FILE_TICKET_ACTION))
 			surface.draw_rect(rect.grow(3), Color(banner_color.r, banner_color.g, banner_color.b, 0.16 if hovered else 0.08), false, 3 if hovered else 2)
+			surface.surface_draw_ready_badge(rect, "CLICK TO FILE")
+			surface.surface_add_exact_invisible_hit(rect, PULL_TAB_FILE_TICKET_ACTION)
 	elif interactive and not bool(ticket.get("fully_revealed", false)):
 		var hovered_peel := bool(surface.surface_region_hovered("pull_tab_reveal_next"))
 		surface.draw_rect(rect.grow(3), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.16 if hovered_peel else 0.08), false, 3 if hovered_peel else 2)
@@ -3710,18 +3893,20 @@ func _draw_pull_tab_row(surface, ticket: Dictionary, row_index: int, row_rect: R
 		surface.surface_add_exact_invisible_hit(row_rect, "pull_tab_reveal_next", row_index)
 
 
-func _draw_pull_tab_sorted_piles(surface, rect: Rect2, winner_pile: Array, loser_pile: Array, winner_excluded_id: String = "", loser_excluded_id: String = "") -> void:
+func _draw_pull_tab_sorted_piles(surface, rect: Rect2, winner_pile: Array, loser_pile: Array, winner_excluded_id: String = "", loser_excluded_id: String = "", winner_total: int = -1, loser_total: int = -1) -> void:
 	var gap := 8.0
 	var pile_width := (rect.size.x - gap) * 0.5
-	_draw_pull_tab_ordered_winner_pile(surface, Rect2(rect.position, Vector2(pile_width, rect.size.y)), winner_pile, winner_excluded_id, not winner_excluded_id.is_empty())
-	_draw_pull_tab_messy_loser_pile(surface, Rect2(rect.position + Vector2(pile_width + gap, 0), Vector2(pile_width, rect.size.y)), loser_pile, loser_excluded_id, not loser_excluded_id.is_empty())
+	_draw_pull_tab_ordered_winner_pile(surface, Rect2(rect.position, Vector2(pile_width, rect.size.y)), winner_pile, winner_excluded_id, not winner_excluded_id.is_empty(), winner_total)
+	_draw_pull_tab_messy_loser_pile(surface, Rect2(rect.position + Vector2(pile_width + gap, 0), Vector2(pile_width, rect.size.y)), loser_pile, loser_excluded_id, not loser_excluded_id.is_empty(), loser_total)
 
 
-func _draw_pull_tab_ordered_winner_pile(surface, rect: Rect2, ripped_tabs: Array, excluded_ticket_id: String = "", excluded_ticket_present: bool = false) -> void:
+func _draw_pull_tab_ordered_winner_pile(surface, rect: Rect2, ripped_tabs: Array, excluded_ticket_id: String = "", excluded_ticket_present: bool = false, total_count: int = -1) -> void:
 	var accent := C_TEAL
 	surface.draw_rect(rect, Color("#05080b"))
 	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.22), false, 1)
 	var filtered_count := _pile_filtered_count(ripped_tabs, excluded_ticket_id, excluded_ticket_present)
+	if total_count >= 0:
+		filtered_count = maxi(0, total_count - (1 if excluded_ticket_present else 0))
 	surface.surface_label("WINNERS x%d" % filtered_count, rect.position + Vector2(7, 13), 9, accent)
 	if filtered_count <= 0:
 		_draw_pull_tab_empty_stack_ghost(surface, rect, accent)
@@ -3753,12 +3938,14 @@ func _draw_pull_tab_ordered_winner_pile(surface, rect: Rect2, ripped_tabs: Array
 		draw_index += 1
 
 
-func _draw_pull_tab_messy_loser_pile(surface, rect: Rect2, ripped_tabs: Array, excluded_ticket_id: String = "", excluded_ticket_present: bool = false) -> void:
+func _draw_pull_tab_messy_loser_pile(surface, rect: Rect2, ripped_tabs: Array, excluded_ticket_id: String = "", excluded_ticket_present: bool = false, total_count: int = -1) -> void:
 	var accent := C_AMBER
 	surface.draw_rect(rect, Color("#080607"))
 	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.24), false, 1)
 	surface.surface_label("LOSERS", rect.position + Vector2(7, 13), 9, accent)
 	var filtered_count := _pile_filtered_count(ripped_tabs, excluded_ticket_id, excluded_ticket_present)
+	if total_count >= 0:
+		filtered_count = maxi(0, total_count - (1 if excluded_ticket_present else 0))
 	surface.surface_label(str(filtered_count), rect.position + Vector2(rect.size.x - 18, 13), 9, accent)
 	if filtered_count <= 0:
 		_draw_pull_tab_empty_stack_ghost(surface, rect, accent)

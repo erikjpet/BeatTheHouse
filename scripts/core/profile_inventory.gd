@@ -5,6 +5,7 @@ extends RefCounted
 
 const INVENTORY_PATH := "user://profile_inventory.json"
 const INVENTORY_PATH_ENV := "BTH_PROFILE_INVENTORY_PATH"
+const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
 const SCHEMA_VERSION := 5
 const RUN_HISTORY_LIMIT := 20
 const REFERENCE_CHIP_ID := "profile_poker_chip"
@@ -136,7 +137,7 @@ static func store_path() -> String:
 	var override := OS.get_environment(INVENTORY_PATH_ENV).strip_edges()
 	if not override.is_empty():
 		return override
-	return INVENTORY_PATH
+	return PersistencePathsScript.file_path(INVENTORY_PATH, "profile_inventory.json")
 
 
 func reference_chip() -> Dictionary:

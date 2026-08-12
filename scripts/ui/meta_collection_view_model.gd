@@ -159,7 +159,7 @@ static func _owned_by_itemdef(instances: Array) -> Dictionary:
 		var itemdef_id := int(instance.get("itemdef_id", -1))
 		if itemdef_id < 0:
 			continue
-		var entries := _copy_array(grouped.get(itemdef_id, []))
+		var entries: Array = grouped.get(itemdef_id, []) if typeof(grouped.get(itemdef_id, [])) == TYPE_ARRAY else []
 		entries.append(instance)
 		grouped[itemdef_id] = entries
 	return grouped

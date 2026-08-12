@@ -9,14 +9,16 @@ const COLLAPSED_SIZE := Vector2(420, 58)
 const EXPANDED_PANEL_WIDTH := 400.0
 const SINGLE_CHOICE_PANEL_WIDTH := 360.0
 const EXPANDED_PANEL_BASE_HEIGHT := 160.0
-const EXPANDED_PANEL_EXTRA_ROW_HEIGHT := 40.0
 const EXPANDED_PANEL_EXTRA_BODY_LINE_HEIGHT := 23.0
-const SMALL_SCREEN_CHOICE_ROW_EXTRA := 12.0
 const SMALL_SCREEN_PANEL_WIDTH := 176.0
 const SMALL_SCREEN_PORTRAIT_SIZE := Vector2(64, 128)
 const EXPANDED_PORTRAIT_SIZE := Vector2(170, 250)
 const VIEWPORT_MARGIN := Vector2(18, 18)
 const LAYOUT_SIDE_HYSTERESIS := 12.0
+const CHOICE_TEXT_HORIZONTAL_PADDING := 24.0
+const CHOICE_TEXT_VERTICAL_PADDING := 10.0
+const CHOICE_ICON_FOOTPRINT := 34.0
+const CHOICE_LINE_SPACING := 3.0
 const MAX_CHOICES := 4
 const IGNORE_PENALTY_HEAT := 5
 const PRESENTATION_Z_INDEX := 100
@@ -270,6 +272,7 @@ var locked_layout_vertical := "bottom"
 var layout_boundary_key := ""
 var layout_side_change_count := 0
 var layout_position_change_count := 0
+var entry_open_input_frame := -1
 
 var panel: PanelContainer
 var stack: VBoxContainer
@@ -325,6 +328,7 @@ func set_entry(next_entry: Dictionary, next_option: Dictionary, next_queue_count
 		return
 	expanded = true
 	armed_choice_id = ""
+	entry_open_input_frame = Engine.get_process_frames()
 	rendered_entry_key = next_key
 	visible = true
 	conversation_active = true
@@ -342,6 +346,7 @@ func clear_entry() -> void:
 	queue_count = 0
 	expanded = false
 	armed_choice_id = ""
+	entry_open_input_frame = -1
 	rendered_entry_key = ""
 	visible = false
 	if conversation_active:
@@ -567,6 +572,7 @@ func _build() -> void:
 	stack.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	collapsed_button = FoundationWidgets.button("", Callable(self, "_toggle_expanded"))
+	collapsed_button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
 	collapsed_button.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	stack.add_child(collapsed_button)
 
@@ -621,6 +627,7 @@ func _build() -> void:
 	header_row.add_child(badge_label)
 
 	collapse_button = FoundationWidgets.button("Hide", Callable(self, "_toggle_expanded"))
+	collapse_button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
 	collapse_button.custom_minimum_size = Vector2(VisualStyle.TALK_COLLAPSE_WIDTH, VisualStyle.TALK_CHOICE_HEIGHT)
 	header_row.add_child(collapse_button)
 
@@ -728,9 +735,8 @@ func _render_choices() -> void:
 	if not expanded:
 		return
 	var choices := _choices()
-	var compact_columns := mini(3, choices.size()) if choices.size() <= 3 else 2
-	var maximum_columns := 1 if _compact_layout_enabled() else (4 if size.x >= 1040.0 else compact_columns)
-	choice_list.columns = maxi(1, mini(maximum_columns, choices.size()))
+	choice_list.columns = _choice_column_count(choices.size())
+	var anticipated_panel_width := _choice_layout_panel_width(choices.size())
 	for choice in choices:
 		if typeof(choice) != TYPE_DICTIONARY:
 			continue
@@ -752,17 +758,92 @@ func _render_choices() -> void:
 			response.add_child(response_icon)
 			rendered_response_icon_kinds.append(icon_kind)
 		var button := FoundationWidgets.button(label, Callable(self, "_on_choice_pressed").bind(choice_id))
-		button.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, SmallScreenPolicyScript.control_height(VisualStyle.TALK_CHOICE_HEIGHT, small_screen_mode))
+		button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+		button.custom_minimum_size = Vector2(
+			VisualStyle.FLEXIBLE_SIZE,
+			_choice_button_minimum_height(label, icon_kinds.size(), anticipated_panel_width, choice_list.columns)
+		)
 		FoundationWidgets.set_control_font_size(button, VisualStyle.TYPE_SMALL)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		button.clip_text = true
+		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		button.clip_text = false
 		var enabled := bool(choice_data.get("enabled", true))
 		var disabled_reason := str(choice_data.get("disabled_reason", "")).strip_edges()
 		button.disabled = not enabled
 		button.tooltip_text = disabled_reason if not enabled else _response_icon_descriptions(icon_kinds)
 		response.add_child(button)
 		choice_list.add_child(response)
+
+
+func _choice_column_count(choice_count: int) -> int:
+	if _compact_layout_enabled():
+		return 1
+	# The panel is intentionally compact. More than two columns makes the text
+	# cells narrower than their response copy and was the source of clipped labels.
+	return maxi(1, mini(2, choice_count))
+
+
+func _choice_layout_panel_width(choice_count: int) -> float:
+	var compact_layout := _compact_layout_enabled()
+	var portrait_width := SMALL_SCREEN_PORTRAIT_SIZE.x if compact_layout else minf(EXPANDED_PORTRAIT_SIZE.x, maxf(150.0, size.x * 0.18))
+	var desired_width := SMALL_SCREEN_PANEL_WIDTH if compact_layout else (EXPANDED_PANEL_WIDTH if choice_count > 1 else SINGLE_CHOICE_PANEL_WIDTH)
+	var minimum_panel_width := 160.0 if compact_layout else 280.0
+	var panel_available_width := maxf(minimum_panel_width, size.x - portrait_width - VIEWPORT_MARGIN.x * 2.0 + 12.0)
+	return minf(desired_width, panel_available_width)
+
+
+func _choice_button_minimum_height(label: String, icon_count: int, panel_width: float, columns: int) -> float:
+	var clean_columns := maxi(1, columns)
+	var grid_width := maxf(80.0, panel_width - VisualStyle.SPACE_4 * 2.0)
+	var response_width := (grid_width - float(clean_columns - 1) * VisualStyle.SPACE_3) / float(clean_columns)
+	var text_width := maxf(36.0, response_width - float(maxi(0, icon_count)) * CHOICE_ICON_FOOTPRINT - CHOICE_TEXT_HORIZONTAL_PADDING)
+	var line_count := _estimated_choice_line_count(label, text_width)
+	var wrapped_height := CHOICE_TEXT_VERTICAL_PADDING * 2.0
+	wrapped_height += float(line_count) * float(VisualStyle.TYPE_SMALL)
+	wrapped_height += float(maxi(0, line_count - 1)) * CHOICE_LINE_SPACING
+	return maxf(SmallScreenPolicyScript.control_height(VisualStyle.TALK_CHOICE_HEIGHT, small_screen_mode), wrapped_height)
+
+
+func _estimated_choice_line_count(label: String, available_width: float) -> int:
+	var average_character_width := maxf(6.0, float(VisualStyle.TYPE_SMALL) * 0.54)
+	var available_characters := maxi(1, int(floor(available_width / average_character_width)))
+	var line_count := 1
+	var line_characters := 0
+	for word_value in label.strip_edges().split(" ", false):
+		var word_characters := maxi(1, str(word_value).length())
+		if line_characters > 0 and line_characters + 1 + word_characters > available_characters:
+			line_count += 1
+			line_characters = 0
+		while word_characters > available_characters:
+			line_count += 1
+			word_characters -= available_characters
+		line_characters = word_characters if line_characters == 0 else line_characters + 1 + word_characters
+	return maxi(1, line_count)
+
+
+func _estimated_choice_grid_height(panel_width: float, columns: int, reserve_maximum_capacity: bool) -> float:
+	var choices := _choices()
+	var clean_columns := maxi(1, columns)
+	var choice_count := MAX_CHOICES if reserve_maximum_capacity else choices.size()
+	var choice_rows := maxi(1, ceili(float(maxi(1, choice_count)) / float(clean_columns)))
+	var grid_height := float(maxi(0, choice_rows - 1)) * VisualStyle.SPACE_2
+	for row in range(choice_rows):
+		var row_height := SmallScreenPolicyScript.control_height(VisualStyle.TALK_CHOICE_HEIGHT, small_screen_mode)
+		for column in range(clean_columns):
+			var choice_index := row * clean_columns + column
+			if choice_index >= choices.size():
+				continue
+			var choice_value: Variant = choices[choice_index]
+			if typeof(choice_value) != TYPE_DICTIONARY:
+				continue
+			var choice_data: Dictionary = choice_value
+			var label := _choice_display_label(choice_data)
+			if _choice_requires_confirm(choice_data) and armed_choice_id == str(choice_data.get("id", "")):
+				label = "Confirm: %s" % label
+			row_height = maxf(row_height, _choice_button_minimum_height(label, _response_icon_kinds(choice_data).size(), panel_width, clean_columns))
+		grid_height += row_height
+	return grid_height
 
 
 func _rendered_choice_button_height() -> float:
@@ -882,14 +963,24 @@ func _choices() -> Array:
 
 
 func _toggle_expanded() -> void:
+	if expanded and _entry_open_input_guard_active():
+		return
 	expanded = not expanded
 	armed_choice_id = ""
 	_render()
 
 
 func _on_choice_pressed(choice_id: String) -> void:
+	if _entry_open_input_guard_active():
+		return
 	var choice := _choice_by_id(choice_id)
 	_choose(choice_id, choice)
+
+
+func _entry_open_input_guard_active() -> bool:
+	# Room objects activate on press. If the new dock is laid out beneath that
+	# pointer, the opening gesture must not also reach Hide or a response control.
+	return entry_open_input_frame >= 0 and Engine.get_process_frames() <= entry_open_input_frame
 
 
 func _choose(choice_id: String, choice: Dictionary) -> void:
@@ -900,6 +991,8 @@ func _choose(choice_id: String, choice: Dictionary) -> void:
 	if _choice_requires_confirm(choice) and armed_choice_id != choice_id:
 		armed_choice_id = choice_id
 		_render_choices()
+		_position_panel()
+		call_deferred("_position_panel")
 		return
 	choice_requested.emit(str(entry.get("event_id", "")), choice_id)
 
@@ -996,14 +1089,6 @@ func _expanded_layout_rects_for(side: String, vertical: String, reserve_maximum_
 	)
 	var choice_count := MAX_CHOICES if reserve_maximum_capacity else _choices().size()
 	var desired_width := SMALL_SCREEN_PANEL_WIDTH if compact_layout else (EXPANDED_PANEL_WIDTH if reserve_maximum_capacity or choice_count > 1 else SINGLE_CHOICE_PANEL_WIDTH)
-	var choice_columns := (1 if compact_layout else 2) if reserve_maximum_capacity else maxi(1, choice_list.columns if choice_list != null else 1)
-	var choice_rows := maxi(1, ceili(float(maxi(1, choice_count)) / float(choice_columns)))
-	var desired_height := EXPANDED_PANEL_BASE_HEIGHT
-	desired_height += float(maxi(0, choice_rows - 1)) * EXPANDED_PANEL_EXTRA_ROW_HEIGHT
-	var body_line_count := reserved_body_line_count if reserve_maximum_capacity else _estimated_body_line_count(desired_width)
-	desired_height += float(maxi(0, body_line_count - 2)) * EXPANDED_PANEL_EXTRA_BODY_LINE_HEIGHT
-	if compact_layout:
-		desired_height += float(choice_rows) * SMALL_SCREEN_CHOICE_ROW_EXTRA
 	var portrait_x := VIEWPORT_MARGIN.x + 12.0
 	if side == "right":
 		portrait_x = maxf(VIEWPORT_MARGIN.x, size.x - portrait_size.x - VIEWPORT_MARGIN.x - 12.0)
@@ -1014,7 +1099,13 @@ func _expanded_layout_rects_for(side: String, vertical: String, reserve_maximum_
 	)
 	var minimum_panel_width := 160.0 if compact_layout else 280.0
 	var panel_available_width := maxf(minimum_panel_width, size.x - portrait_size.x - VIEWPORT_MARGIN.x * 2.0 + 12.0)
-	var panel_size := Vector2(minf(desired_width, panel_available_width), minf(desired_height, available_size.y))
+	var panel_width := minf(desired_width, panel_available_width)
+	var choice_columns := (1 if compact_layout else 2) if reserve_maximum_capacity else _choice_column_count(choice_count)
+	var desired_height := EXPANDED_PANEL_BASE_HEIGHT
+	desired_height += maxf(0.0, _estimated_choice_grid_height(panel_width, choice_columns, reserve_maximum_capacity) - VisualStyle.TALK_CHOICE_HEIGHT)
+	var body_line_count := reserved_body_line_count if reserve_maximum_capacity else _estimated_body_line_count(panel_width)
+	desired_height += float(maxi(0, body_line_count - 2)) * EXPANDED_PANEL_EXTRA_BODY_LINE_HEIGHT
+	var panel_size := Vector2(panel_width, minf(desired_height, available_size.y))
 	var panel_left := portrait_rect.position.x + portrait_size.x - 12.0
 	if side == "right":
 		panel_left = portrait_rect.position.x - panel_size.x + 12.0

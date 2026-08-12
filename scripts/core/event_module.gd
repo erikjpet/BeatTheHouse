@@ -308,7 +308,12 @@ static func _apply_trigger_event_hook(run_state: RunState, source_result: Dictio
 		return
 	var chance := clampf(float(hook_data.get("chance", 1.0)), 0.0, 1.0)
 	var chance_overrides: Dictionary = run_state.challenge_modifiers().get("tutorial_event_chain_chances", {}) if typeof(run_state.challenge_modifiers().get("tutorial_event_chain_chances", {})) == TYPE_DICTIONARY else {}
-	if chance_overrides.has(target_id):
+	# The guided family call is an authored tutorial beat, not a probability
+	# lesson. Guarantee the pickup even if an older/custom tutorial save is
+	# missing the challenge's chance override.
+	if run_state.is_tutorial_run() and target_id == "family_loan":
+		chance = 1.0
+	elif chance_overrides.has(target_id):
 		chance = clampf(float(chance_overrides.get(target_id, chance)), 0.0, 1.0)
 	var threshold := clampi(int(round(chance * 10000.0)), 0, 10000)
 	var rng := run_state.create_rng()
@@ -327,6 +332,10 @@ static func _apply_trigger_event_hook(run_state: RunState, source_result: Dictio
 		context["roll"] = roll
 		run_state.enqueue_triggered_event(target_id, "event_chain", context, _copy_dict(hook_data.get("entry_overrides", {})))
 	else:
+		var failure_audio_cue := str(hook_data.get("failure_audio_cue", "")).strip_edges()
+		if not failure_audio_cue.is_empty():
+			source_result["audio_cue"] = failure_audio_cue
+			source_result["audio_cue_volume_db"] = float(hook_data.get("failure_audio_cue_volume_db", source_result.get("audio_cue_volume_db", -1.0)))
 		var failure_message := str(hook_data.get("failure_message", "The follow-up does not land.")).strip_edges()
 		if not failure_message.is_empty():
 			source_result["event_chain_miss_message"] = failure_message

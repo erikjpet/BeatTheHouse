@@ -532,9 +532,9 @@
     "cheat_actions": [
       {
         "id": "tab_detector_scan",
-        "label": "Detector Scan",
-        "summary": "Switch the detector on. Winning buys draw heat.",
-        "suspicion_delta": 4
+        "label": "Peek / Scan",
+        "summary": "Peek without a detector for a risky 50/50 read, or toggle an owned detector safely.",
+        "suspicion_delta": 8
       }
     ]
   },
@@ -3034,18 +3034,14 @@
       {
         "id": "read_wheel_bias",
         "label": "Read Wheel",
-        "summary": "Track the rotor's low-side tick and call it. A missed read draws heat.",
+        "summary": "Time the rotor read to reveal this table's hidden skew. A failed read adds 20 Heat.",
         "win_chance": 0,
         "payout_mult": 0,
-        "suspicion_delta": 8,
+        "suspicion_delta": 20,
         "skill_period_msec": 1400,
         "skill_perfect_msec": 90,
         "skill_good_msec": 220,
-        "skill_close_msec": 360,
-        "skill_perfect_heat_reduction": 2,
-        "skill_partial_heat_bonus": 2,
-        "skill_miss_heat_bonus": 5,
-        "skill_blown_heat_bonus": 10
+        "skill_close_msec": 360
       },
       {
         "id": "past_post",

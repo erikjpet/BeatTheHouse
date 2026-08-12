@@ -1,18 +1,19 @@
 # Beat the House 0.5 Pre-Release Completion Queue
 
-Last reconciled: 2026-08-05
+Last reconciled: 2026-08-12
 Authoritative audit: `docs/plans/0.5_pre_release_audit.md`
 
 ## Current verdict
 
-**0.5.0 is implementation-complete on a green technical baseline, but it is
-not owner-approved, packaged, published, or tagged.**
+**0.5.0 is source feature-complete and owner-approved for GitHub integration.
+It is not yet package-verified, publicly released, or tagged.**
 
 Narration/audio, trustworthy gates, inventory cards, meaningful destinations,
 performance/storage, and exact-source automated acceptance are complete.
-Remaining work begins at the explicitly human/owner boundary: five cold-player
-tutorial trials, owner Web/Windows hands-on approval and release decisions,
-then packaging/publication and the `v0.5.0` tag.
+Remaining work is the publication boundary: merge the integration source,
+build and test Web/Windows from that exact commit, reconcile any remaining
+human evidence or accepted limitations, publish artifacts, and create
+`v0.5.0`.
 
 Current identity:
 
@@ -96,22 +97,23 @@ Binding prompt: `docs/todo/tutorial_first_time_player_completion_prompt.md`
   affected automation, and repeat invalidated human trials.
 - [ ] Archive only when TUT-N17 genuinely passes.
 
-### 6. Build and approve one exact release candidate
+### 6. Build and approve one exact source candidate
 
-Status: **AUTOMATED MATRIX/CAPTURES COMPLETE; BLOCKED BY STEP 5 AND OWNER DECISIONS**
+Status: **SOURCE APPROVED FOR GITHUB INTEGRATION; PACKAGE APPROVAL PENDING**
 Binding prompt: `docs/todo/v05_final_release_candidate_approval_prompt.md`
 
 - [x] Run the complete matrix on one clean commit, not a historical report or
   dirty tree.
 - [x] Refresh and inspect all player-facing captures.
-- [ ] Complete owner Web/Windows hands-on play and approve or reject the exact
-  hash.
+- [x] Owner approved the accumulated 0.5 source for GitHub integration on
+  2026-08-12.
+- [ ] Complete packaged Web/Windows hands-on play against the exact merged hash.
 - [ ] Record the collection `draft: true` decision, limitations, publish copy,
   screenshots, safety framing, and supported platforms.
 
 ### 7. Package and publish 0.5.0
 
-Status: **OWNER-CONTROLLED / NOT STARTED**
+Status: **GITHUB SOURCE PUSH AUTHORIZED / PACKAGE PUBLICATION NOT STARTED**
 Binding checklist: `docs/todo/v05_owner_packaging_and_publish_checklist.md`
 
 - [ ] Build and verify Web/Windows packages from the approved commit.
@@ -126,7 +128,10 @@ Binding checklist: `docs/todo/v05_owner_packaging_and_publish_checklist.md`
 - [x] All active implementation/regression prompts are archived with evidence.
 - [x] The final exact-source matrix is green with clean classified stderr and
   unchanged budgets/liveness floors.
-- [ ] TUT-N17 and owner Web/Windows hands-on play pass.
+- [x] Owner source-completion decision recorded.
+- [ ] Remaining TUT-N17 sample requirement is completed or explicitly accepted
+  as a limitation before public package publication.
+- [ ] Packaged Web/Windows hands-on play passes.
 - [ ] The collection decision and every accepted limitation are recorded.
 - [ ] Verified Web/Windows artifacts are published.
 - [ ] `v0.5.0` points to the exact published source and public records agree.

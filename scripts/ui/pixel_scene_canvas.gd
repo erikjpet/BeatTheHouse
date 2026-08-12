@@ -13,6 +13,7 @@ const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.g
 const IconSpriteRendererScript := preload("res://scripts/ui/icon_sprite_renderer.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion_overlay.gd")
+const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
 const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 
 const C_DARK := VisualStyleScript.DARK
@@ -774,21 +775,66 @@ func _draw_motel_room() -> void:
 
 
 func _draw_apartment() -> void:
-	draw_rect(Rect2(0, 0, 900, 246), Color("#111827"))
-	draw_rect(Rect2(56, 48, 210, 154), Color("#16263a"))
-	draw_rect(Rect2(76, 70, 170, 92), Color("#071727"))
-	for x in range(86, 236, 30):
-		draw_rect(Rect2(x, 82, 14, 70), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.16 + abs(sin(flicker * 2.0 + x)) * 0.12))
-	draw_rect(Rect2(312, 132, 238, 82), Color("#2a1835"))
-	draw_rect(Rect2(330, 110, 104, 38), Color("#362045"))
-	draw_rect(Rect2(462, 112, 74, 42), Color("#1e2438"))
-	draw_rect(Rect2(604, 76, 176, 150), Color("#1b1322"))
-	draw_rect(Rect2(624, 96, 136, 18), C_AMBER.darkened(0.2))
-	for y in [124, 152, 180]:
-		draw_rect(Rect2(628, y, 126, 7), Color("#392448"))
-		for x in range(638, 744, 34):
-			draw_rect(Rect2(x, y - 19, 18, 16), _cycle_color(x + y))
-	draw_rect(Rect2(132, 246, 606, 58), Color("#171221"))
+	# Compact city apartment: a curtained skyline window, lived-in sofa,
+	# framed print, floor lamp, and a small kitchenette make the room read as a
+	# home before any interactive storage or rent props are layered on top.
+	draw_rect(Rect2(0, 0, 900, 246), Color("#171a2a"))
+	draw_rect(Rect2(0, 34, 900, 212), Color("#202038"))
+	draw_rect(Rect2(0, 232, 900, 14), Color("#30213b"))
+	# Window, distant buildings, and curtains.
+	draw_rect(Rect2(42, 42, 230, 152), Color("#0b0c18"))
+	draw_rect(Rect2(52, 52, 210, 132), Color("#071727"))
+	for building_index in range(7):
+		var building_x := 58 + building_index * 29
+		var building_height := 42 + (building_index * 17) % 58
+		draw_rect(Rect2(building_x, 178 - building_height, 22, building_height), Color("#10283a"))
+		for light_y in range(144 - int(building_height / 2), 172, 16):
+			draw_rect(Rect2(building_x + 5, light_y, 4, 3), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.22))
+	draw_line(Vector2(157, 52), Vector2(157, 184), Color("#28485d"), 3)
+	draw_line(Vector2(52, 116), Vector2(262, 116), Color("#28485d"), 3)
+	draw_rect(Rect2(32, 38, 24, 166), Color("#44234c"))
+	draw_rect(Rect2(258, 38, 24, 166), Color("#44234c"))
+	draw_rect(Rect2(32, 116, 28, 8), Color("#b43a73"))
+	draw_rect(Rect2(254, 116, 28, 8), Color("#b43a73"))
+	# Framed Miami print above the sofa.
+	draw_rect(Rect2(354, 48, 146, 64), Color("#0c0d18"))
+	draw_rect(Rect2(362, 56, 130, 48), Color("#29304c"))
+	draw_rect(Rect2(370, 84, 114, 12), Color("#e95f77"))
+	draw_circle(Vector2(458, 72), 10, Color("#ffbf69"))
+	draw_line(Vector2(374, 84), Vector2(406, 64), Color("#34cfe0"), 3)
+	# Sofa with visible arms, cushions, and feet.
+	draw_rect(Rect2(304, 132, 252, 82), Color("#2b1835"))
+	draw_rect(Rect2(320, 118, 220, 70), Color("#46254d"))
+	draw_rect(Rect2(328, 126, 98, 46), Color("#54305b"))
+	draw_rect(Rect2(434, 126, 98, 46), Color("#3a294a"))
+	draw_rect(Rect2(312, 172, 236, 34), Color("#39203f"))
+	draw_rect(Rect2(296, 154, 24, 58), Color("#512a51"))
+	draw_rect(Rect2(540, 154, 24, 58), Color("#512a51"))
+	draw_rect(Rect2(326, 210, 12, 12), Color("#15101d"))
+	draw_rect(Rect2(522, 210, 12, 12), Color("#15101d"))
+	# Floor lamp beside the seating area.
+	draw_line(Vector2(592, 96), Vector2(592, 220), Color("#b75f75"), 4)
+	draw_rect(Rect2(568, 84, 48, 18), Color("#ffad66"))
+	draw_rect(Rect2(576, 72, 32, 14), Color("#ffd27d"))
+	draw_rect(Rect2(572, 218, 40, 8), Color("#3a2439"))
+	# Small kitchenette with upper cabinets, counter, sink, and fridge.
+	draw_rect(Rect2(626, 48, 224, 178), Color("#171722"))
+	draw_rect(Rect2(638, 60, 126, 62), Color("#3b2940"))
+	for cabinet_x in [642, 704]:
+		draw_rect(Rect2(cabinet_x, 66, 54, 48), Color("#51334e"))
+		draw_rect(Rect2(cabinet_x + 44, 88, 4, 4), Color("#e3b36b"))
+	draw_rect(Rect2(632, 132, 142, 14), Color("#d17a66"))
+	draw_rect(Rect2(644, 146, 126, 68), Color("#302334"))
+	draw_rect(Rect2(650, 150, 50, 8), Color("#172f3b"))
+	draw_line(Vector2(670, 150), Vector2(670, 140), C_CYAN.darkened(0.25), 3)
+	draw_rect(Rect2(784, 60, 54, 154), Color("#293141"))
+	draw_line(Vector2(788, 130), Vector2(834, 130), Color("#59606d"), 2)
+	draw_rect(Rect2(790, 94, 4, 24), Color("#d7c6b4"))
+	# Rug anchors the interactive belongings without adding another prop.
+	draw_rect(Rect2(260, 246, 374, 58), Color("#24162f"))
+	for stripe_x in range(278, 620, 44):
+		draw_rect(Rect2(stripe_x, 258, 26, 5), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.26))
+		draw_rect(Rect2(stripe_x + 12, 280, 26, 4), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.20))
 	_floor_reflections()
 
 
@@ -1180,11 +1226,8 @@ func _draw_grand_casino_cage() -> void:
 	for stock_value in shop_state.get("stock", []):
 		if typeof(stock_value) == TYPE_DICTIONARY and not bool((stock_value as Dictionary).get("sold", false)):
 			available_stock.append(stock_value)
-	for index in range(mini(4, available_stock.size())):
-		var item_x := 82 + (index % 2) * 86
-		var item_y := 144 + int(index / 2) * 44
-		draw_rect(Rect2(item_x, item_y, 34, 23), _cycle_color(index + 4).darkened(0.2))
-		draw_rect(Rect2(item_x + 7, item_y + 24, 20, 4), C_YELLOW)
+	# Live shelf stock is drawn by the normal item-object renderer so each offer
+	# uses its authored icon and owns an independent click target.
 	if available_stock.is_empty():
 		_neon_text("EMPTY", Vector2(116, 198), 13, C_SOFT.darkened(0.25))
 	draw_rect(Rect2(60, 246, 178, 20), Color("#241331"))
@@ -4275,45 +4318,14 @@ func _draw_drink_prop(rect: Rect2, selected: bool) -> void:
 func _draw_pressure_overlay() -> void:
 	# Heat reads as distant patrol lights, while the HUD carries exact status.
 	var level := clampi(suspicion_level, 0, 100)
-	if level <= 0:
-		return
-	var cycle := fposmod(flicker * 4.2, 2.0)
-	var red_active := cycle < 1.0
-	var strobe := 0.58 + 0.42 * absf(sin(flicker * 18.0))
-	var red_phase := strobe if red_active else 0.06
-	var blue_phase := strobe if not red_active else 0.06
-	if level < 50:
-		var subtle := clampf(float(level) / 50.0, 0.0, 1.0)
-		var alpha := 0.010 + subtle * 0.035
-		_draw_pressure_side_band(C_POLICE_BLUE, alpha * blue_phase, true)
-		if level >= 25:
-			_draw_pressure_side_band(C_POLICE_RED, alpha * 0.85 * red_phase, false)
-		return
-	var high := clampf(float(level - 50) / 50.0, 0.0, 1.0)
-	var base_alpha := 0.040 + high * 0.135
-	var active_color := C_POLICE_RED if red_active else C_POLICE_BLUE
-	var inactive_color := C_POLICE_BLUE if red_active else C_POLICE_RED
-	var active_phase := red_phase if red_active else blue_phase
-	var inactive_phase := blue_phase if red_active else red_phase
-	draw_rect(Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)), Color(active_color.r, active_color.g, active_color.b, 0.020 + high * 0.055 * active_phase))
-	_draw_pressure_side_band(C_POLICE_RED, base_alpha * red_phase, false)
-	_draw_pressure_side_band(C_POLICE_BLUE, base_alpha * blue_phase, true)
-	var top_alpha := base_alpha * (0.55 + active_phase * 0.32)
-	draw_rect(Rect2(0, 0, BOARD_SIZE.x, 10), Color(active_color.r, active_color.g, active_color.b, top_alpha * active_phase))
-	draw_rect(Rect2(0, 10, BOARD_SIZE.x, 8), Color(inactive_color.r, inactive_color.g, inactive_color.b, top_alpha * inactive_phase * 0.35))
-	draw_rect(Rect2(0, BOARD_SIZE.y - 12, BOARD_SIZE.x, 12), Color(active_color.r, active_color.g, active_color.b, top_alpha * active_phase * 0.55))
-	var sweep_x := fposmod(flicker * (180.0 + high * 120.0), float(BOARD_SIZE.x) + 220.0) - 110.0
-	draw_rect(Rect2(sweep_x, 0, 72 + high * 54, BOARD_SIZE.y), Color(active_color.r, active_color.g, active_color.b, base_alpha * 0.28 * active_phase))
+	HeatFeedbackVisualsScript.draw_police_pressure(self, Vector2(BOARD_SIZE), level, 0.0 if reduce_motion else flicker)
 	if level >= 70:
 		_silhouette(Vector2(846, 220), 1.4, Color("#05050b"))
 
 
-func _draw_pressure_side_band(color: Color, alpha: float, left_side: bool) -> void:
-	for i in range(5):
-		var width := 18.0 + float(i) * 12.0
-		var band_alpha := alpha * (1.0 - float(i) * 0.16)
-		var x := 0.0 if left_side else float(BOARD_SIZE.x) - width
-		draw_rect(Rect2(x, 0, width, BOARD_SIZE.y), Color(color.r, color.g, color.b, maxf(0.0, band_alpha)))
+func pressure_overlay_debug_profile(elapsed_sec: float = -1.0) -> Dictionary:
+	var sample_time := (0.0 if reduce_motion else flicker) if elapsed_sec < 0.0 else maxf(0.0, elapsed_sec)
+	return HeatFeedbackVisualsScript.police_pressure_profile(suspicion_level, sample_time)
 
 
 func _draw_drunk_overlay() -> void:

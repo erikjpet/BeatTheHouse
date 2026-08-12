@@ -20,6 +20,9 @@ const LAUNCH_METER_DEFAULT_SWEET_POWER := 82
 const LAUNCH_METER_SWEET_WIDTH := 3
 const LAUNCH_METER_GOOD_WIDTH := 8
 const LAUNCH_METER_WILD_WIDTH := 22
+const LIVE_SPEED_MULTIPLIER := 2.0
+const LIVE_FIXED_TICK_MSEC := SimScript.FIXED_DT * 1000.0
+const MAX_LIVE_TICKS_PER_REFRESH := 16
 
 static var _sessions: Dictionary = {}
 static var _runtime_sessions: Dictionary = {}
@@ -49,6 +52,7 @@ class RuntimeSession:
 	var layout_view: Dictionary = {}
 	var compiled: Dictionary = {}
 	var last_surface_msec := 0
+	var surface_tick_accumulator_msec := 0.0
 	var cached_view_tick := -1
 	var cached_view: Dictionary = {}
 
@@ -172,6 +176,7 @@ func step(machine: Dictionary, action_id: String, rng: RngStream, _definition: D
 		machine["active_bonus"] = active
 		return _bonus_step_result(false, 0, "Hard shot.", active)
 	var live_before: bool = sim.active_ball_count() > 0
+	var launched_now := false
 	if action_id == "slot_bonus_left":
 		if live_before:
 			sim.set_controls(-0.55, 0.0, true, false)
@@ -198,6 +203,7 @@ func step(machine: Dictionary, action_id: String, rng: RngStream, _definition: D
 		if not live_before and int(active.get("balls_remaining", 0)) > 0:
 			_refresh_launch_state(active, mode, true, ui_state)
 			sim.launch_ball(_launch_params(active, mode))
+			launched_now = true
 			if mode == "video_feature" and int(_dict(sim.compact_snapshot()).get("balls_launched", 0)) == 1:
 				sim.launch_ball({"power": 0.68, "aim": -0.28, "position": Vector2(0.42, 0.135)})
 				sim.launch_ball({"power": 0.72, "aim": 0.28, "position": Vector2(0.58, 0.135)})
@@ -214,13 +220,17 @@ func step(machine: Dictionary, action_id: String, rng: RngStream, _definition: D
 	if ticks_to_run > 0 and sim.active_ball_count() > 0:
 		active["physics_tick_budget"] = ticks_to_run
 		_run_ticks_with_trajectory(sim, ticks_to_run, local_trajectory, live_display)
-		if live_display:
-			var live_msec := maxi(0, int(ui_state.get("surface_time_msec", ui_state.get("slot_visual_time_msec", 0))))
-			_surface_refresh_msec[session_id] = live_msec
-			var runtime: RuntimeSession = _runtime_for_static(active)
-			if runtime != null:
-				runtime.last_surface_msec = live_msec
-				runtime.cached_view_tick = -1
+	if live_display and launched_now:
+		# Establish the wall-clock origin when the ball launches. Player input no
+		# longer advances or resets physics; only the realtime accumulator below
+		# owns simulation time while a ball is live.
+		var live_msec := maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", ui_state.get("slot_visual_time_msec", 0)))))
+		_surface_refresh_msec[session_id] = live_msec
+		var runtime: RuntimeSession = _runtime_for_static(active)
+		if runtime != null:
+			runtime.last_surface_msec = live_msec
+			runtime.surface_tick_accumulator_msec = 0.0
+			runtime.cached_view_tick = -1
 	if not live_display and bool(active.get("headless", false)):
 		var drain_deadline_tick := int(sim.tick) + int(sim.max_ticks)
 		while sim.active_ball_count() > 0 and int(sim.tick) < drain_deadline_tick:
@@ -275,31 +285,52 @@ static func surface_refresh(active: Dictionary, surface_time_msec: int) -> Dicti
 	var result := active.duplicate(false)
 	var runtime: RuntimeSession = _runtime_for_static(result)
 	var sim = runtime.sim if runtime != null else _session_for_static(result)
-	if sim != null and bool(result.get("active", false)) and sim.active_ball_count() > 0:
+	if sim != null and bool(result.get("active", false)):
 		var session_id := str(result.get("runtime_session_id", ""))
-		var stored_msec := maxi(0, int(_surface_refresh_msec.get(session_id, 0)))
-		var last_msec := maxi(stored_msec, runtime.last_surface_msec if runtime != null else 0)
-		var elapsed := 32 if last_msec <= 0 else clampi(surface_time_msec - last_msec, 0, 64)
-		var ticks_to_run := 1 if elapsed >= 56 else 0
-		if last_msec > 0:
-			result["last_physics_real_msec"] = last_msec
-			result["pinball_replay_query"] = surface_time_msec < last_msec
+		var ticks_to_run := 0
+		if sim.active_ball_count() > 0:
+			var stored_msec := maxi(0, int(_surface_refresh_msec.get(session_id, 0)))
+			var last_msec := maxi(stored_msec, runtime.last_surface_msec if runtime != null else 0)
+			if last_msec <= 0:
+				last_msec = surface_time_msec
+			if surface_time_msec < last_msec:
+				result["last_physics_real_msec"] = last_msec
+				result["pinball_replay_query"] = true
+			else:
+				var elapsed_msec := clampi(surface_time_msec - last_msec, 0, 64)
+				var accumulated_msec := float(elapsed_msec) * LIVE_SPEED_MULTIPLIER
+				if runtime != null:
+					runtime.surface_tick_accumulator_msec += accumulated_msec
+					accumulated_msec = runtime.surface_tick_accumulator_msec
+				ticks_to_run = mini(MAX_LIVE_TICKS_PER_REFRESH, int(floor(accumulated_msec / LIVE_FIXED_TICK_MSEC)))
+				if runtime != null:
+					runtime.surface_tick_accumulator_msec = maxf(0.0, accumulated_msec - float(ticks_to_run) * LIVE_FIXED_TICK_MSEC)
+					runtime.last_surface_msec = surface_time_msec
+				_surface_refresh_msec[session_id] = surface_time_msec
+				result["last_physics_real_msec"] = surface_time_msec
+				result["pinball_replay_query"] = false
 		for _i in range(ticks_to_run):
 			sim.step_tick()
 		if ticks_to_run > 0:
 			if runtime != null:
-				runtime.last_surface_msec = surface_time_msec
 				runtime.cached_view_tick = -1
-			_surface_refresh_msec[session_id] = surface_time_msec
-			result["last_physics_real_msec"] = surface_time_msec
-			result["pinball_replay_query"] = false
 		result["physics_tick_budget"] = ticks_to_run
-		result["active_ball_count"] = sim.active_ball_count()
+		var snapshot: Dictionary = sim.compact_snapshot()
+		var total_steps: int = maxi(1, int(result.get("total_steps", 1)))
+		var launched: int = clampi(int(snapshot.get("balls_launched", 0)), 0, total_steps)
+		var live_count: int = int(sim.active_ball_count())
+		var balls_remaining: int = maxi(0, total_steps - launched)
+		result["balls_remaining"] = balls_remaining
+		result["remaining_steps"] = balls_remaining + live_count
+		result["active_ball_count"] = live_count
+		result["launch_in_progress"] = live_count > 0
+		result["pinball_live_speed_multiplier"] = LIVE_SPEED_MULTIPLIER
 		result["pinball_view"] = _cached_live_view(runtime, result, sim)
 		result["event_log"] = _tail_array_shallow(result.get("event_log", []), 24)
-		result["trajectory"] = _tail_array_shallow(result.get("trajectory", []), 32)
+		var live_positions: Array = sim.active_position_log() if ticks_to_run > 0 else []
+		result["trajectory"] = _sampled_array_shallow(_array_static(result.get("trajectory", [])) + live_positions, 32)
 		result["display_event_log"] = _tail_array_shallow(result.get("display_event_log", []), 8)
-		result["display_trajectory"] = _tail_array_shallow(result.get("display_trajectory", []), 12)
+		result["display_trajectory"] = _sampled_array_shallow(_array_static(result.get("display_trajectory", [])) + live_positions, 12)
 		result["history"] = []
 	elif sim == null and bool(result.get("active", false)):
 		var balls_remaining := maxi(0, int(result.get("balls_remaining", result.get("remaining_steps", 0))))
@@ -907,7 +938,7 @@ func _ticks_for_step(active: Dictionary, sim, live_display: bool) -> int:
 	if bool(active.get("headless", false)):
 		return maxi(1, int(sim.max_ticks))
 	if live_display:
-		return 2
+		return 0
 	return clampi(int(round(float(sim.max_ticks) * 0.16)), 72, 132)
 
 

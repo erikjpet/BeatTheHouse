@@ -30,7 +30,7 @@ func draw(surface, state: Dictionary, _context: Dictionary = {}) -> bool:
 	var palette := _palette(state)
 	_draw_authored_cabinet(surface, state, palette)
 	_draw_paytable(surface, state, palette)
-	if str(state.get("phase", "idle")) == "double_up":
+	if ["double_up", "double_result"].has(str(state.get("phase", "idle"))):
 		_draw_double_up(surface, state, palette)
 	else:
 		_draw_hands(surface, state, palette)
@@ -212,6 +212,11 @@ func _draw_guidance(surface, state: Dictionary, palette: Dictionary) -> void:
 	var phase := str(state.get("phase", "idle"))
 	var primary: Color = palette["primary"]
 	var strip := Rect2(PLAYFIELD.position + Vector2(8, 7), Vector2(PLAYFIELD.size.x - 16, 24))
+	if phase == "hold" and bool(state.get("poker_hat_strategy_active", false)):
+		surface.draw_rect(strip, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.22))
+		surface.draw_rect(strip, C_TEAL, false, 2)
+		surface.surface_label_centered("FRED'S PICK  •  %s" % str(state.get("recommended_hold_text", "DRAW ALL FIVE")), strip.grow(-3), 10, C_TEAL)
+		return
 	if phase == "settled":
 		var result_detail := str(state.get("result_detail", state.get("outcome_headline", ""))).strip_edges()
 		surface.draw_rect(strip, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.20))
@@ -258,6 +263,8 @@ func _hand_layouts(hand_count: int) -> Array:
 func _draw_hand_panel(surface, state: Dictionary, palette: Dictionary, panel: Rect2, cards: Array, result: Dictionary, holds: Array, drawn_indices: Array, hand_index: int, hand_count: int, phase: String, flip_active: bool, flip_progress: float) -> void:
 	var primary: Color = palette["primary"]
 	var secondary: Color = palette["secondary"]
+	var recommended_holds: Array = state.get("recommended_holds", [])
+	var poker_hat_active := bool(state.get("poker_hat_strategy_active", false))
 	var winning := int(result.get("total", 0)) > 0
 	surface.draw_rect(panel, Color("#020611"))
 	surface.draw_rect(panel, C_YELLOW if winning else (primary if hand_index == 0 else secondary), false, 2)
@@ -277,6 +284,7 @@ func _draw_hand_panel(surface, state: Dictionary, palette: Dictionary, panel: Re
 		var rect := Rect2(start + Vector2(float(card_index) * (card_w + gap), 0), Vector2(card_w, card_h))
 		var card: Dictionary = cards[card_index] if card_index < cards.size() and typeof(cards[card_index]) == TYPE_DICTIONARY else {"hidden": true}
 		var held := phase == "hold" and holds.has(card_index)
+		var recommended := phase == "hold" and poker_hat_active and recommended_holds.has(card_index)
 		var sequence_index := hand_index * HAND_SIZE + card_index
 		var sequence_count := maxi(1, hand_count * HAND_SIZE)
 		var reveal_threshold := float(sequence_index + 1) / float(sequence_count)
@@ -290,8 +298,16 @@ func _draw_hand_panel(surface, state: Dictionary, palette: Dictionary, panel: Re
 		_draw_card(surface, card, rect, held, winning, face_down)
 		if phase == "hold":
 			var badge := Rect2(rect.position + Vector2(0, rect.size.y - 16), Vector2(rect.size.x, 16))
-			surface.draw_rect(badge, C_TEAL if held else Color(0.02, 0.05, 0.10, 0.88))
-			surface.surface_label_centered("HELD" if held else "TAP", badge.grow(-2), 8, C_WHITE if held else C_CYAN)
+			if poker_hat_active:
+				var matches_advice := held == recommended
+				var advice_label := ("RIGHT" if held else "DRAW") if matches_advice else ("HOLD" if recommended else "DROP")
+				var advice_color := C_TEAL if matches_advice else C_AMBER
+				surface.draw_rect(rect.grow(2), advice_color, false, 3)
+				surface.draw_rect(badge, advice_color)
+				surface.surface_label_centered(advice_label, badge.grow(-2), 8, C_WHITE)
+			else:
+				surface.draw_rect(badge, C_TEAL if held else Color(0.02, 0.05, 0.10, 0.88))
+				surface.surface_label_centered("HELD" if held else "TAP", badge.grow(-2), 8, C_WHITE if held else C_CYAN)
 			surface.surface_add_exact_hit(rect, "video_poker_hold", card_index)
 
 
@@ -308,6 +324,7 @@ func _draw_controls(surface, state: Dictionary, palette: Dictionary) -> void:
 	var secondary: Color = palette["secondary"]
 	var trim: Color = palette["trim"]
 	var betting := phase == "idle" or phase == "settled"
+	var result_hold := phase == "double_result"
 	var y := CONTROL_DECK.position.y + 10.0
 	_button(surface, Rect2(44, y, 76, 40), "BET -", "video_poker_bet_down", 0, trim, betting)
 	_button(surface, Rect2(128, y, 76, 40), "BET +", "video_poker_bet_one", 0, trim, betting)
@@ -315,13 +332,18 @@ func _draw_controls(surface, state: Dictionary, palette: Dictionary) -> void:
 	_button(surface, Rect2(312, y, 78, 40), str(state.get("coin_label", "1c")).to_upper(), "video_poker_denom", 0, secondary, betting)
 	var primary_label := "DRAW" if phase == "hold" else "DEAL"
 	var primary_action := "video_poker_draw" if phase == "hold" else "video_poker_deal"
-	_button(surface, Rect2(404, y - 3, 156, 46), primary_label, primary_action, 0, primary, phase != "double_up")
+	_button(surface, Rect2(404, y - 3, 156, 46), primary_label, primary_action, 0, primary, phase != "double_up" and not result_hold)
 	var cheat_label := "HOLDOUT"
 	var cheat_action := "video_poker_mark"
 	var cheat_enabled := phase == "hold"
 	if bool(state.get("holdout_ready", false)):
-		cheat_label = "PALM NOW"
-		cheat_action = "video_poker_palm"
+		var holdout_meter: Dictionary = state.get("holdout_meter", {}) if typeof(state.get("holdout_meter", {})) == TYPE_DICTIONARY else {}
+		if bool(holdout_meter.get("chain_complete", false)):
+			cheat_label = "HOLDOUT LOCKED"
+			cheat_enabled = false
+		else:
+			cheat_label = "HIT THE SWEEP"
+			cheat_action = "video_poker_palm"
 	if phase == "settled" and bool(state.get("double_up_available", false)):
 		cheat_label = "DOUBLE UP"
 		cheat_action = "video_poker_double"
@@ -350,27 +372,59 @@ func _button(surface, rect: Rect2, label: String, action: String, index: int, ac
 func _draw_double_up(surface, state: Dictionary, palette: Dictionary) -> void:
 	var view: Dictionary = state.get("double_up_view", {})
 	var primary: Color = palette["primary"]
-	surface.surface_label_centered("DOUBLE OR NOTHING  •  PICK A CARD HIGHER THAN THE DEALER", Rect2(PLAYFIELD.position + Vector2(12, 12), Vector2(PLAYFIELD.size.x - 24, 24)), 15, C_AMBER)
+	var resolved := bool(view.get("resolved", false))
+	var outcome := str(view.get("outcome", ""))
+	var title := "DOUBLE OR NOTHING  •  PICK A CARD HIGHER THAN THE DEALER"
+	var title_color := C_AMBER
+	if resolved:
+		title = "DOUBLE UP %s  •  RESULT SHOWN FOR 1.5 SECONDS" % outcome.to_upper()
+		title_color = C_TEAL if outcome == "win" else (C_AMBER if outcome == "push" else C_ORANGE)
+	surface.surface_label_centered(title, Rect2(PLAYFIELD.position + Vector2(12, 12), Vector2(PLAYFIELD.size.x - 24, 24)), 15, title_color)
 	var dealer_rect := Rect2(PLAYFIELD.position + Vector2(42, 62), Vector2(102, 142))
 	_draw_card(surface, view.get("dealer", {}) if typeof(view.get("dealer", {})) == TYPE_DICTIONARY else {}, dealer_rect, false, false)
 	surface.surface_label_centered("DEALER", Rect2(dealer_rect.position + Vector2(0, -20), Vector2(dealer_rect.size.x, 16)), 10, C_SOFT)
 	for index in range(4):
 		var rect := Rect2(PLAYFIELD.position + Vector2(226 + index * 148, 62), Vector2(102, 142))
-		_draw_card(surface, {"hidden": true}, rect, false, false)
-		surface.surface_add_exact_hit(rect, "video_poker_double_pick", index)
-		surface.surface_label_centered("PICK %d" % (index + 1), Rect2(rect.position + Vector2(0, rect.size.y + 4), Vector2(rect.size.x, 16)), 10, primary)
+		var selected := resolved and index == int(view.get("selected_pick", -1))
+		var picks: Array = view.get("picks", []) if typeof(view.get("picks", [])) == TYPE_ARRAY else []
+		var shown_card: Dictionary = picks[index] if index < picks.size() and typeof(picks[index]) == TYPE_DICTIONARY else {"hidden": true}
+		_draw_card(surface, shown_card if selected else {"hidden": true}, rect, false, selected)
+		if selected:
+			surface.draw_rect(rect.grow(5), title_color, false, 4)
+		else:
+			surface.draw_rect(rect.grow(2), Color(primary.r, primary.g, primary.b, 0.20), false, 1)
+		if not resolved:
+			surface.surface_add_exact_hit(rect, "video_poker_double_pick", index)
+		var pick_label := "YOUR PICK" if selected else ("PICK %d" % (index + 1))
+		surface.surface_label_centered(pick_label, Rect2(rect.position + Vector2(0, rect.size.y + 4), Vector2(rect.size.x, 16)), 10, title_color if selected else primary)
 
 
 func _draw_holdout(surface, state: Dictionary, palette: Dictionary) -> void:
 	if not bool(state.get("holdout_ready", false)):
 		return
 	var meter: Dictionary = state.get("holdout_meter", {})
+	if bool(meter.get("chain_complete", false)):
+		var locked := Rect2(PLAYFIELD.position + Vector2(166, 42), Vector2(PLAYFIELD.size.x - 332, 38))
+		surface.draw_rect(locked, Color(0.01, 0.05, 0.04, 0.94))
+		surface.draw_rect(locked, C_TEAL, false, 3)
+		surface.surface_label_centered("HOLDOUT LOCKED  •  PRESS DRAW TO RESOLVE", locked.grow(-5), 13, C_TEAL)
+		return
 	var overlay := Rect2(PLAYFIELD.position + Vector2(118, 48), Vector2(PLAYFIELD.size.x - 236, 142))
 	surface.draw_rect(overlay, Color(0.01, 0.01, 0.03, 0.94))
 	surface.draw_rect(overlay, C_YELLOW, false, 4)
-	var title := "%s  •  DRAW HOLDOUT" % str(state.get("cabinet_cheat_name", "HOLDOUT")).to_upper()
+	var beat_index := clampi(int(meter.get("beat_index", 0)), 0, maxi(0, int(meter.get("beat_count", 1)) - 1))
+	var beat_count := maxi(1, int(meter.get("beat_count", 1)))
+	var title := "%s  •  STAGE %d/%d: %s" % [
+		str(state.get("cabinet_cheat_name", "HOLDOUT")).to_upper(),
+		beat_index + 1,
+		beat_count,
+		str(meter.get("beat_label", "LINE UP")).to_upper(),
+	]
 	surface.surface_label_centered(title, Rect2(overlay.position + Vector2(10, 10), Vector2(overlay.size.x - 20, 24)), 17, C_YELLOW)
-	var instructions := "Time the sweep, then commit the highlighted card. The swap resolves during DRAW."
+	var target_slot := clampi(int(meter.get("target_slot", 0)), 0, HAND_SIZE - 1)
+	var instructions := "Stop the moving bar inside the yellow zone."
+	if str(meter.get("beat_kind", "timing")) == "target":
+		instructions = "Stop the sweep to commit highlighted card %d." % (target_slot + 1)
 	if bool(state.get("reduce_motion", false)):
 		instructions = "Reduced motion: one generous press commits the card during DRAW."
 	surface.surface_label_centered(instructions, Rect2(overlay.position + Vector2(12, 40), Vector2(overlay.size.x - 24, 20)), 10, C_SOFT)
@@ -378,9 +432,25 @@ func _draw_holdout(surface, state: Dictionary, palette: Dictionary) -> void:
 	surface.draw_rect(track, Color("#111827"))
 	surface.draw_rect(track, palette["primary"], false, 2)
 	var target := clampf(float(meter.get("target", 0.58)), 0.0, 1.0)
-	surface.draw_rect(Rect2(track.position.x + track.size.x * target - 3, track.position.y - 8, 6, track.size.y + 16), C_YELLOW)
+	var good_window := clampf(float(meter.get("good_window", 0.20)), 0.02, 0.48)
+	var perfect_window := clampf(float(meter.get("perfect_window", 0.08)), 0.01, good_window)
+	var good_left := clampf(target - good_window, 0.0, 1.0)
+	var good_right := clampf(target + good_window, 0.0, 1.0)
+	var perfect_left := clampf(target - perfect_window, 0.0, 1.0)
+	var perfect_right := clampf(target + perfect_window, 0.0, 1.0)
+	surface.draw_rect(Rect2(track.position.x + track.size.x * good_left, track.position.y + 2, track.size.x * (good_right - good_left), track.size.y - 4), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.28))
+	surface.draw_rect(Rect2(track.position.x + track.size.x * perfect_left, track.position.y, track.size.x * (perfect_right - perfect_left), track.size.y), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.72))
+	var sweep := clampf(float(meter.get("progress", 0.0)), 0.0, 1.0)
+	var sweep_x := track.position.x + track.size.x * sweep
+	surface.draw_rect(Rect2(sweep_x - 4, track.position.y - 10, 8, track.size.y + 20), C_WHITE)
+	surface.draw_rect(Rect2(sweep_x - 7, track.position.y - 6, 14, track.size.y + 12), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.35), false, 2)
 	var prompt := Rect2(overlay.position + Vector2(overlay.size.x * 0.5 - 92, 106), Vector2(184, 26))
 	surface.draw_rect(prompt, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.22))
 	surface.draw_rect(prompt, C_YELLOW, false, 2)
-	surface.surface_label_centered("PALM THE CARD", prompt.grow(-3), 12, C_YELLOW)
-	surface.surface_add_exact_hit(prompt, "video_poker_palm", int(meter.get("target_slot", 0)))
+	var prompt_label := "STOP SWEEP"
+	var prompt_index := 0
+	if str(meter.get("beat_kind", "timing")) == "target":
+		prompt_label = "COMMIT CARD %d" % (target_slot + 1)
+		prompt_index = target_slot
+	surface.surface_label_centered(prompt_label, prompt.grow(-3), 12, C_YELLOW)
+	surface.surface_add_exact_hit(prompt, "video_poker_palm", prompt_index)

@@ -240,25 +240,30 @@ func _check_cage_gift_shop(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Cage gift shop stock rerolled or lost sold state on save/load.")
 	var action_service := RunActionService.new()
 	action_service.setup(library, restored)
-	var offers := action_service.cage_gift_shop_offer_view_list()
+	var offers := action_service.item_offer_view_list()
 	if offers.is_empty():
-		failures.append("Cage gift shop generated stock but exposed no purchasable view entries.")
+		failures.append("Cage gift shop generated stock but exposed no normal shelf-item offers.")
 		return
 	var offer: Dictionary = offers[0]
-	var item_id := str(offer.get("item_id", ""))
-	var price := int(offer.get("chip_price", 0))
+	var item_id := str(offer.get("id", ""))
+	var price := int(offer.get("price", 0))
+	if str(offer.get("object_id", "")) != "cage_gift_item:0" or str(offer.get("currency", "")) != "chips" or bool(offer.get("pickup", true)):
+		failures.append("Cage gift stock did not enter the standard item-offer pipeline as a chips-only shelf object.")
 	restored.grand_casino_chips = maxi(0, price - 1)
 	var failed_before := JSON.stringify(restored.to_dict())
-	var failed_purchase := action_service.buy_cage_gift_shop_offer(item_id)
+	var failed_purchase := action_service.buy_item_offer(item_id)
 	if bool(failed_purchase.get("ok", true)) or JSON.stringify(restored.to_dict()) != failed_before:
 		failures.append("Failed Cage gift purchase mutated chips, inventory, or saved stock.")
 	restored.grand_casino_chips = price + 5
 	restored.borrow_from_grand_casino_atm(50)
 	var cash_before := restored.bankroll
 	var debt_before := restored.grand_casino_atm_debt()
-	var result := action_service.buy_cage_gift_shop_offer(item_id)
+	var result := action_service.buy_item_offer(item_id)
 	if not bool(result.get("ok", false)) or restored.bankroll != cash_before or restored.grand_casino_chips != 5 or restored.grand_casino_atm_debt() != debt_before or not restored.inventory.has(item_id):
 		failures.append("Cage gift purchase did not debit chips only through standard item acquisition while indebted.")
+	for remaining_offer_value in action_service.item_offer_view_list():
+		if typeof(remaining_offer_value) == TYPE_DICTIONARY and str((remaining_offer_value as Dictionary).get("id", "")) == item_id:
+			failures.append("Purchased Cage shelf item remained visible after its saved stock entry was sold.")
 	var after_purchase := RunStateScript.new()
 	after_purchase.from_dict(restored.to_dict())
 	var sold_found := false

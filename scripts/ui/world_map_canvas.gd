@@ -241,6 +241,19 @@ func local_position_for_node(node_id: String) -> Vector2:
 	return node_screen_position_cache.get(node_id, Vector2.ZERO) as Vector2
 
 
+func local_visual_rect_for_node(node_id: String) -> Rect2:
+	_ensure_layout_cache()
+	if not node_screen_position_cache.has(node_id):
+		return Rect2()
+	var center := node_screen_position_cache.get(node_id, Vector2.ZERO) as Vector2
+	var current := node_id == str(snapshot.get("current_node_id", ""))
+	var radius := MARKER_RADIUS + (13.0 if current else 5.0)
+	var visual_rect := Rect2(center - Vector2(radius, radius), Vector2(radius * 2.0, radius * 2.0))
+	if current:
+		visual_rect = visual_rect.merge(_current_node_label_rect(center))
+	return visual_rect
+
+
 func node_is_in_view(node_id: String) -> bool:
 	_ensure_layout_cache()
 	if not node_screen_position_cache.has(node_id):
@@ -284,6 +297,8 @@ func _draw_background(rect: Rect2) -> void:
 
 
 func _background_destination_rect(destination_rect: Rect2, bounds: Rect2) -> Rect2:
+	if bool(snapshot.get("background_fill_canvas", false)):
+		return destination_rect
 	var texture := _background_texture()
 	if texture == null:
 		return destination_rect
@@ -540,6 +555,20 @@ func _draw_current_node_pin(pos: Vector2, node: Dictionary) -> void:
 
 
 func _draw_current_node_label(pos: Vector2, node_label: String) -> void:
+	var label_rect := _current_node_label_rect(pos)
+	var label_pos := label_rect.position
+	var label_size := label_rect.size
+	var label := "YOU ARE HERE"
+	var font := ThemeDB.fallback_font
+	draw_rect(label_rect, CURRENT_MARKER_LABEL_BG)
+	draw_rect(label_rect, CURRENT_MARKER_RING, false, 1.5)
+	draw_string(font, label_pos + Vector2(9.0, 15.0), label, HORIZONTAL_ALIGNMENT_LEFT, label_size.x - 18.0, CURRENT_MARKER_LABEL_FONT_SIZE, CURRENT_MARKER_LABEL_TEXT)
+	var stop_text := node_label.left(24)
+	if not stop_text.strip_edges().is_empty():
+		draw_string(font, label_pos + Vector2(9.0, 31.0), stop_text, HORIZONTAL_ALIGNMENT_LEFT, 128.0, 9, Color("#b7f8ff", 0.86))
+
+
+func _current_node_label_rect(pos: Vector2) -> Rect2:
 	var label := "YOU ARE HERE"
 	var font := ThemeDB.fallback_font
 	var text_size := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1.0, CURRENT_MARKER_LABEL_FONT_SIZE)
@@ -551,13 +580,7 @@ func _draw_current_node_label(pos: Vector2, node_label: String) -> void:
 		label_pos.x = 8.0
 	if label_pos.y < 8.0:
 		label_pos.y = pos.y + MARKER_RADIUS + 12.0
-	var label_rect := Rect2(label_pos, label_size)
-	draw_rect(label_rect, CURRENT_MARKER_LABEL_BG)
-	draw_rect(label_rect, CURRENT_MARKER_RING, false, 1.5)
-	draw_string(font, label_pos + Vector2(9.0, 15.0), label, HORIZONTAL_ALIGNMENT_LEFT, label_size.x - 18.0, CURRENT_MARKER_LABEL_FONT_SIZE, CURRENT_MARKER_LABEL_TEXT)
-	var stop_text := node_label.left(24)
-	if not stop_text.strip_edges().is_empty():
-		draw_string(font, label_pos + Vector2(9.0, 31.0), stop_text, HORIZONTAL_ALIGNMENT_LEFT, 128.0, 9, Color("#b7f8ff", 0.86))
+	return Rect2(label_pos, label_size)
 
 
 func _current_marker_pulse_active() -> bool:
@@ -761,9 +784,20 @@ func end_navigation_drag() -> bool:
 
 
 func reset_navigation_view() -> void:
-	_reset_navigation_view_state()
-	map_view_bounds_signature = ""
+	# Releasing a manual camera override must preserve the current frame while
+	# the authored bounds become the new target. Treating this as a first layout
+	# copies target into current and makes location focus appear to skip its zoom.
+	var had_initialized_view := not map_view_bounds_signature.is_empty()
+	var transition_start := map_view_bounds_cache
+	navigation_user_view_active = false
+	navigation_user_view_bounds = Rect2(Vector2.ZERO, Vector2.ONE)
+	navigation_drag_active = false
+	navigation_drag_moved = false
+	map_view_bounds_signature = "__authored_transition__"
 	_rebuild_layout_cache()
+	if had_initialized_view:
+		map_view_bounds_cache = transition_start
+		_rebuild_node_screen_position_cache()
 	queue_redraw()
 
 

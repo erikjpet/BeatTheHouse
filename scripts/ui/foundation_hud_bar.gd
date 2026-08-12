@@ -6,6 +6,7 @@ signal time_requested
 const SegmentedMeterScript := preload("res://scripts/ui/segmented_meter.gd")
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const HudTimeWatchScript := preload("res://scripts/ui/hud_time_watch.gd")
+const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
 
 var wallet_value: Label
 var wallet_delta: Label
@@ -13,6 +14,7 @@ var chips_chip: HBoxContainer
 var chips_value: Label
 var heat_meter: SegmentedMeter
 var heat_value: Label
+var heat_delta_badge: Label
 var drunk_meter: SegmentedMeter
 var drunk_value: Label
 var status_tray: HBoxContainer
@@ -33,15 +35,20 @@ var _last_bankroll_delta := 0
 var _wallet_delta_tone := ""
 var _has_rendered := false
 var _status_icons_key := ""
+var _heat_feedback_elapsed_sec := HeatFeedbackVisualsScript.GAIN_DURATION_SEC
+var _heat_feedback_amount := 0
+var _heat_feedback_intensity := 0.0
 
 
 func _ready() -> void:
 	add_theme_stylebox_override("panel", VisualStyle.state_box("normal"))
 	_build()
+	set_process(false)
 
 
 func set_reduce_motion(enabled: bool) -> void:
 	reduce_motion = enabled
+	_update_heat_feedback_presentation()
 
 
 func reset_wallet_delta() -> void:
@@ -52,6 +59,24 @@ func reset_wallet_delta() -> void:
 	if wallet_delta != null:
 		wallet_delta.text = ""
 		wallet_delta.modulate = Color.WHITE
+	cancel_heat_feedback()
+
+
+func cancel_heat_feedback() -> void:
+	_cancel_heat_feedback()
+
+
+func present_heat_gain(applied_amount: int) -> void:
+	if applied_amount <= 0:
+		return
+	_heat_feedback_amount = mini(100, _heat_feedback_amount + applied_amount) if _heat_feedback_active() else mini(100, applied_amount)
+	_heat_feedback_intensity = HeatFeedbackVisualsScript.heat_gain_intensity(_heat_feedback_amount)
+	_heat_feedback_elapsed_sec = 0.0
+	if heat_delta_badge != null:
+		heat_delta_badge.text = "+%d" % _heat_feedback_amount
+		heat_delta_badge.visible = true
+	set_process(true)
+	_update_heat_feedback_presentation()
 
 
 func set_compact_mode(enabled: bool) -> void:
@@ -125,6 +150,12 @@ func current_snapshot() -> Dictionary:
 		"chips_visible": chips_chip != null and chips_chip.visible,
 		"chips": chips_value.text if chips_value != null else "",
 		"heat": heat_meter.current_snapshot() if heat_meter != null else {},
+		"heat_delta_badge": heat_delta_badge.text if heat_delta_badge != null and heat_delta_badge.visible else "",
+		"heat_feedback_active": _heat_feedback_active(),
+		"heat_feedback_amount": _heat_feedback_amount,
+		"heat_feedback_intensity": _heat_feedback_intensity,
+		"heat_feedback_elapsed_sec": _heat_feedback_elapsed_sec,
+		"heat_feedback_duration_sec": HeatFeedbackVisualsScript.GAIN_DURATION_SEC,
 		"drunk": drunk_meter.current_snapshot() if drunk_meter != null else {},
 		"status_icon_count": status_tray.get_child_count() if status_tray != null else 0,
 		"time_interactive": time_button != null and not time_button.disabled,
@@ -185,6 +216,13 @@ func _build() -> void:
 	var heat_group := _meter_group("heat", "Heat")
 	heat_meter = heat_group.get_meta("meter") as SegmentedMeter
 	heat_value = heat_group.get_meta("value_label") as Label
+	var heat_heading_row := heat_group.get_meta("heading_row") as HBoxContainer
+	heat_delta_badge = FoundationWidgets.label("", VisualStyle.TYPE_MICRO)
+	heat_delta_badge.autowrap_mode = TextServer.AUTOWRAP_OFF
+	heat_delta_badge.visible = false
+	heat_delta_badge.tooltip_text = "Heat gained by the last action."
+	FoundationWidgets.set_control_font_color(heat_delta_badge, Color("#ffd166"))
+	heat_heading_row.add_child(heat_delta_badge)
 	row.add_child(heat_group)
 
 	var drunk_group := _meter_group("drink", "Drunk")
@@ -327,7 +365,57 @@ func _meter_group(icon_id: String, title: String) -> HBoxContainer:
 	stack.add_child(meter)
 	group.set_meta("meter", meter)
 	group.set_meta("value_label", value_label)
+	group.set_meta("heading_row", heading_row)
 	return group
+
+
+func _process(delta: float) -> void:
+	if not _heat_feedback_active():
+		set_process(false)
+		return
+	_heat_feedback_elapsed_sec += maxf(0.0, delta)
+	if not _heat_feedback_active():
+		_cancel_heat_feedback()
+		return
+	_update_heat_feedback_presentation()
+
+
+func _update_heat_feedback_presentation() -> void:
+	if heat_meter == null:
+		return
+	if not _heat_feedback_active():
+		heat_meter.set_feedback_pulse(0, 0.0)
+		if heat_delta_badge != null:
+			heat_delta_badge.visible = false
+		return
+	var strength := 0.72 if reduce_motion else _heat_feedback_strength()
+	heat_meter.set_feedback_pulse(_heat_feedback_amount, strength)
+	if heat_delta_badge != null:
+		heat_delta_badge.visible = true
+		heat_delta_badge.text = "+%d" % _heat_feedback_amount
+		var badge_alpha := 1.0 if reduce_motion else clampf(strength * 1.35, 0.0, 1.0)
+		heat_delta_badge.modulate = Color(1.0, 1.0, 1.0, badge_alpha)
+
+
+func _heat_feedback_strength() -> float:
+	return HeatFeedbackVisualsScript.heat_gain_pulse_strength(_heat_feedback_elapsed_sec)
+
+
+func _heat_feedback_active() -> bool:
+	return _heat_feedback_amount > 0 and _heat_feedback_elapsed_sec < HeatFeedbackVisualsScript.GAIN_DURATION_SEC
+
+
+func _cancel_heat_feedback() -> void:
+	_heat_feedback_elapsed_sec = HeatFeedbackVisualsScript.GAIN_DURATION_SEC
+	_heat_feedback_amount = 0
+	_heat_feedback_intensity = 0.0
+	set_process(false)
+	if heat_meter != null:
+		heat_meter.set_feedback_pulse(0, 0.0)
+	if heat_delta_badge != null:
+		heat_delta_badge.visible = false
+		heat_delta_badge.text = ""
+		heat_delta_badge.modulate = Color.WHITE
 
 
 func _render_delta(delta: int) -> void:

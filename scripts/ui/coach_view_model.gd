@@ -28,6 +28,11 @@ static func trigger_matches(lesson: Dictionary, context: Dictionary, seen: Dicti
 		var expected := str(trigger.get(field, "")).strip_edges()
 		if not expected.is_empty() and str(_path_value(context, field)).strip_edges() != expected:
 			return false
+	# Guided highlights must be evaluated on the surface that can actually draw
+	# their target. This is a runtime backstop for authored data and prevents a
+	# room object lesson from opening over a table, map, or other covered view.
+	if tutorial_lesson and not _tutorial_anchor_screen_matches(lesson, context):
+		return false
 	var predicates: Variant = trigger.get("state_predicates", [])
 	if typeof(predicates) != TYPE_ARRAY:
 		return false
@@ -35,6 +40,31 @@ static func trigger_matches(lesson: Dictionary, context: Dictionary, seen: Dicti
 		if typeof(predicate_value) != TYPE_DICTIONARY or not _predicate_matches(predicate_value, context):
 			return false
 	return true
+
+
+static func _tutorial_anchor_screen_matches(lesson: Dictionary, context: Dictionary) -> bool:
+	var trigger := _dict(lesson.get("trigger", {}))
+	var anchor := _dict(lesson.get("anchor", {}))
+	var anchor_kind := str(anchor.get("kind", "")).strip_edges()
+	var anchor_id := str(anchor.get("id", "")).strip_edges()
+	var expected_screen := ""
+	match anchor_kind:
+		"interactable_object":
+			expected_screen = "ENVIRONMENT"
+		"surface_action":
+			expected_screen = "GAME"
+		"hud_element":
+			if anchor_id.begins_with("travel:"):
+				expected_screen = "TRAVEL"
+			elif not str(trigger.get("game_id", "")).strip_edges().is_empty():
+				expected_screen = "GAME"
+			else:
+				expected_screen = "ENVIRONMENT"
+		"none":
+			return true
+		_:
+			return false
+	return str(context.get("screen", "")).strip_edges() == expected_screen
 
 
 static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:

@@ -4,11 +4,14 @@ extends RefCounted
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
+const BADGE_CACHE_LIMIT := 256
 
 const MODE_CONTAINER := "meta_container"
 const MODE_BAGS := "meta_bags"
 const MODE_SALE := "meta_sale"
 const MODE_TRADE := "meta_trade"
+
+static var _badge_cache: Dictionary = {}
 
 
 static func build(meta_service: Variant, mode: String, selected_key: String = "", trade_selected_ids: Array = []) -> Dictionary:
@@ -94,6 +97,9 @@ static func _valid_trade_selection(resolver: Variant, owned: Array, requested_id
 
 static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: Array, carried_ids: Array, mode: String, trade_selected_ids: Array) -> Array:
 	var result: Array = []
+	var carried_lookup := {}
+	for carried_id in carried_ids:
+		carried_lookup[int(carried_id)] = true
 	var first_trade_definition: Dictionary = {}
 	if not trade_selected_ids.is_empty():
 		for instance_value in owned:
@@ -108,10 +114,9 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 		if definition.is_empty():
 			continue
 		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", "")))
-		var run_item: Dictionary = resolver.resolve_run_item(instance)
 		var item_class := str(definition.get("item_class", CollectionItemResolverScript.ITEM_CLASS_COLLECTION))
-		var quote: Dictionary = meta_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_ITEM, instance_id) if meta_service != null and meta_service.has_method("sale_quote") else {}
-		var packed := carried_ids.has(instance_id)
+		var quote: Dictionary = meta_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_ITEM, instance_id) if mode == MODE_SALE and meta_service != null and meta_service.has_method("sale_quote") else {}
+		var packed := carried_lookup.has(instance_id)
 		var packable := bool(definition.get("loadout_eligible", true))
 		var trade_visible := item_class == CollectionItemResolverScript.ITEM_CLASS_COLLECTION
 		var trade_compatible := trade_visible
@@ -147,12 +152,12 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 		if mode == MODE_CONTAINER and not packable:
 			item_disabled_reason = "This meta-only item stays in home storage."
 		result.append({
-			"id": str(run_item.get("id", definition.get("id", "meta_item"))),
+			"id": str(definition.get("id", "meta_item")),
 			"instance_id": instance_id,
 			"itemdef_id": int(instance.get("itemdef_id", -1)),
 			"selection_key": selection_key,
 			"display_name": str(definition.get("display_name", "Collection Item")),
-			"description": str(definition.get("flavor", run_item.get("description", ""))),
+			"description": str(definition.get("flavor", "")),
 			"collection_display_name": str(collection.get("display_name", "Grand Casino Rewards" if item_class != CollectionItemResolverScript.ITEM_CLASS_COLLECTION else "Collection")),
 			"collection_id": str(definition.get("collection_id", "")),
 			"tier": str(definition.get("tier", "")),
@@ -176,7 +181,7 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 				"resonance": clampf(float(instance.get("resonance", 0.0)), 0.0, 1.0),
 				"usage": clampf(float(instance.get("usage", 0.0)), 0.0, 1.0),
 			},
-			"attribute_badges": AttributeBadgesScript.for_item(badge_context),
+			"attribute_badges": _cached_attribute_badges(badge_context, mode, int(instance.get("itemdef_id", -1))),
 			"sale_eligible": bool(quote.get("ok", false)),
 			"sale_price": int(quote.get("price", 0)),
 			"sale_breakdown": quote.duplicate(true),
@@ -196,7 +201,7 @@ static func _bag_models(meta_service: Variant, resolver: Variant, bags: Array, m
 		var instance_id := int(bag.get("instance_id", 0))
 		var definition: Dictionary = resolver.bag_definition(int(bag.get("bagdef_id", -1)))
 		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", bag.get("collection_id", ""))))
-		var quote: Dictionary = meta_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_BAG, instance_id) if meta_service != null and meta_service.has_method("sale_quote") else {}
+		var quote: Dictionary = meta_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_BAG, instance_id) if mode == MODE_SALE and meta_service != null and meta_service.has_method("sale_quote") else {}
 		var actions: Array = []
 		if mode == MODE_BAGS:
 			actions.append({"id": "open_bag", "label": "Open", "payload": {"instance_id": instance_id}})
@@ -227,68 +232,10 @@ static func _bag_models(meta_service: Variant, resolver: Variant, bags: Array, m
 			"sale_eligible": bool(quote.get("ok", false)),
 			"sale_price": int(quote.get("price", 0)),
 			"sale_breakdown": quote.duplicate(true),
-			"attribute_badges": AttributeBadgesScript.for_item(bag_badge_context),
+			"attribute_badges": _cached_attribute_badges(bag_badge_context, mode, -int(bag.get("bagdef_id", -1)) - 1),
 			"actions": actions,
 		})
 	return result
-
-
-static func _loadout_containers(meta_service: Variant, snapshot: Dictionary, item_models: Array, carried_ids: Array) -> Array:
-	var items_by_id: Dictionary = {}
-	for item_value in item_models:
-		var item: Dictionary = item_value
-		items_by_id[int(item.get("instance_id", 0))] = item
-	var result: Array = []
-	var housing_tier := str(snapshot.get("housing_tier", "back_alley"))
-	if housing_tier == "back_alley":
-		var loose_items: Array = []
-		for id_value in carried_ids:
-			if items_by_id.has(int(id_value)):
-				loose_items.append(items_by_id[int(id_value)])
-		result.append(_dynamic_container("meta_loose_carry", "loose_carry", "Loose Carry", loose_items))
-	else:
-		var packed_index := 0
-		var carried_rows: Array = meta_service.carried_container_rows() if meta_service != null and meta_service.has_method("carried_container_rows") else []
-		for container_value in _dictionary_array(carried_rows):
-			var container: Dictionary = container_value
-			var capacity := maxi(0, int(container.get("capacity", 0)))
-			var assigned: Array = []
-			while packed_index < carried_ids.size() and assigned.size() < capacity:
-				var instance_id := int(carried_ids[packed_index])
-				packed_index += 1
-				if items_by_id.has(instance_id):
-					assigned.append(items_by_id[instance_id])
-			result.append(_finite_container(
-				"meta_container:%d" % int(container.get("meta_container_instance_id", result.size() + 1)),
-				str(container.get("item_id", "bag")),
-				str(container.get("item_id", "bag")).replace("_", " ").capitalize(),
-				capacity,
-				assigned
-			))
-		if packed_index < carried_ids.size():
-			var overflow: Array = []
-			while packed_index < carried_ids.size():
-				var overflow_id := int(carried_ids[packed_index])
-				packed_index += 1
-				if items_by_id.has(overflow_id):
-					overflow.append(items_by_id[overflow_id])
-			if not overflow.is_empty():
-				result.append(_dynamic_container("meta_loose_overflow", "loose_carry", "Loose Carry", overflow))
-	var stored: Array = []
-	for item_value in item_models:
-		var item: Dictionary = item_value
-		if not carried_ids.has(int(item.get("instance_id", 0))):
-			stored.append(item)
-	var storage_capacity := int(meta_service.storage_slots()) if meta_service != null and meta_service.has_method("storage_slots") else 0
-	if not stored.is_empty() or storage_capacity > 0:
-		result.append(_finite_container("meta_home_storage", "home_storage", "Home Storage", storage_capacity, stored))
-	if result.is_empty():
-		result.append(_dynamic_container("meta_loose_carry", "loose_carry", "Loose Carry", []))
-	return result
-
-
-static func _finite_container(key: String, container_type: String, display_name: String, capacity: int, items: Array) -> Dictionary:
-	return {"key": key, "container_type": container_type, "display_name": display_name, "capacity": maxi(0, capacity), "read_only": false, "slots": _slots(items)}
 
 
 static func _dynamic_container(key: String, container_type: String, display_name: String, items: Array) -> Dictionary:
@@ -305,7 +252,7 @@ static func _slots(items: Array) -> Array:
 			"slot_index": result.size(),
 			"occupied": true,
 			"selection_key": str(item.get("selection_key", "")),
-			"item": item.duplicate(true),
+			"item": item,
 			"actionable": not _dictionary_array(item.get("actions", [])).is_empty(),
 			"disabled_reason": str(item.get("disabled_reason", "")),
 			"state_marker": str(item.get("state_marker", "")),
@@ -317,7 +264,7 @@ static func _sorted_meta_items(items: Array) -> Array:
 	var result: Array = []
 	for item_value in items:
 		if typeof(item_value) == TYPE_DICTIONARY:
-			result.append((item_value as Dictionary).duplicate(true))
+			result.append(item_value)
 	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		var a_group := str(a.get("group_label", a.get("collection_display_name", "")))
 		var b_group := str(b.get("group_label", b.get("collection_display_name", "")))
@@ -358,7 +305,7 @@ static func _flatten_container_items(containers: Array) -> Array:
 				continue
 			seen[key] = true
 			if typeof(slot_value.get("item", {})) == TYPE_DICTIONARY:
-				result.append((slot_value.get("item") as Dictionary).duplicate(true))
+				result.append(slot_value.get("item"))
 	return result
 
 
@@ -405,6 +352,22 @@ static func _asset_path_for_icon(icon_key: String) -> String:
 		return ""
 	var path := "res://assets/art/items/%s.png" % clean_key
 	return path if ResourceLoader.exists(path) else ""
+
+
+static func _cached_attribute_badges(context: Dictionary, mode: String, definition_key: int) -> Array:
+	# Sale badges include an instance-specific quote. Other modes share authored
+	# definition badges, so building them once prevents a large stack of the same
+	# item from repeating identical formatting work thousands of times.
+	if mode == MODE_SALE:
+		return AttributeBadgesScript.for_item(context)
+	var cache_key := "%s|%d" % [mode, definition_key]
+	if _badge_cache.has(cache_key):
+		return _badge_cache.get(cache_key, [])
+	var badges := AttributeBadgesScript.for_item(context)
+	if _badge_cache.size() >= BADGE_CACHE_LIMIT:
+		_badge_cache.clear()
+	_badge_cache[cache_key] = badges
+	return badges
 
 
 static func _trade_selection_keys(ids: Array) -> Array:

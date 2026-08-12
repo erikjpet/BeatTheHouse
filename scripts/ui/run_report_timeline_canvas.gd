@@ -84,13 +84,25 @@ func _notification(what: int) -> void:
 func _rebuild_heat_points() -> void:
 	heat_points = PackedVector2Array()
 	var graph := _graph_rect()
+	var previous_point := Vector2.ZERO
+	var has_previous := false
 	for value in heat_samples:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var sample: Dictionary = value
-		heat_points.append(Vector2(
+		var point := Vector2(
 			graph.position.x + clampf(float(sample.get("progress", 0.0)), 0.0, 1.0) * graph.size.x,
 			graph.end.y - clampf(float(sample.get("heat_value", 0)) / 100.0, 0.0, 1.0) * graph.size.y
-		))
+		)
+		if has_previous:
+			# Heat is state changed by discrete events. Hold the previous value until
+			# the event timestamp, then move vertically; diagonal interpolation made
+			# heat look as though it accumulated in the wrong location over hours.
+			heat_points.append(Vector2(point.x, previous_point.y))
+		heat_points.append(point)
+		previous_point = point
+		has_previous = true
 	if heat_points.size() == 1:
 		heat_points.append(Vector2(graph.end.x, heat_points[0].y))
+	elif heat_points.size() >= 2 and heat_points[-1].x < graph.end.x:
+		heat_points.append(Vector2(graph.end.x, heat_points[-1].y))

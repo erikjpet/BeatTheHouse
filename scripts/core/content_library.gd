@@ -1021,6 +1021,7 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 		"tutorial_forced_event_choices": true,
 		"tutorial_event_chain_chances": true,
 		"tutorial_pull_tab_xray_offset": true,
+		"tutorial_pull_tab_peek_results": true,
 		"tutorial_initial_map_targets": true,
 		"tutorial_travel_cost_overrides": true,
 		"tutorial_environment_overrides": true,
@@ -1034,6 +1035,15 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 	for key in ["starting_bankroll", "starting_bankroll_delta", "baseline_luck_delta", "starting_heat", "local_risk_decay_percent_delta", "local_heat_turn_decay_interval_delta", "grand_casino_high_roller_net_delta", "grand_casino_high_roller_max_heat_delta", "tutorial_first_slot_net", "tutorial_pull_tab_xray_offset"]:
 		if modifiers.has(key) and not _variant_is_number(modifiers.get(key, 0)):
 			validation_errors.append("challenges %s modifiers.%s must be numeric." % [challenge_id, key])
+	if modifiers.has("tutorial_pull_tab_peek_results"):
+		var peek_results: Variant = modifiers.get("tutorial_pull_tab_peek_results", [])
+		if typeof(peek_results) != TYPE_ARRAY or (peek_results as Array).is_empty():
+			validation_errors.append("challenges %s modifiers.tutorial_pull_tab_peek_results must be a non-empty boolean array." % challenge_id)
+		else:
+			for result_value in peek_results as Array:
+				if typeof(result_value) != TYPE_BOOL:
+					validation_errors.append("challenges %s modifiers.tutorial_pull_tab_peek_results must contain only booleans." % challenge_id)
+					break
 	if modifiers.has("starting_bankroll") and int(modifiers.get("starting_bankroll", 0)) <= 0:
 		validation_errors.append("challenges %s modifiers.starting_bankroll must be positive." % challenge_id)
 	if modifiers.has("starting_heat"):

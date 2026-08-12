@@ -58,7 +58,7 @@ func _run() -> void:
 
 func _verify_authored_contract() -> Dictionary:
 	var ambient_ids: Array = []
-	var tutorial_delivery_count := 0
+	var authored_delivery_count := 0
 	var highlighted_count := 0
 	for lesson_value in library.tutorial_lessons:
 		if typeof(lesson_value) != TYPE_DICTIONARY:
@@ -68,13 +68,13 @@ func _verify_authored_contract() -> Dictionary:
 		if lesson_id.begins_with("tip_first_") or lesson_id == "tip_starter_card_home":
 			ambient_ids.append(lesson_id)
 		if str(lesson.get("scope", "")) == "tutorial_run":
-			if str(lesson.get("delivery", "")) == "dialogue":
-				tutorial_delivery_count += 1
+			if ["dialogue", "coach"].has(str(lesson.get("delivery", ""))) and not str(lesson.get("dialogue_id", "")).is_empty() and not str(lesson.get("dialogue_node", "")).is_empty():
+				authored_delivery_count += 1
 			var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
 			if str(anchor.get("kind", "none")) != "none" and not str(anchor.get("id", "")).is_empty():
 				highlighted_count += 1
 	_check(ambient_ids.is_empty(), "Removed ambient tutorial tips still exist: %s" % JSON.stringify(ambient_ids), failures)
-	_check(tutorial_delivery_count == library.tutorial_lessons.size(), "Not every shipped tutorial lesson uses dialogue delivery.", failures)
+	_check(authored_delivery_count == library.tutorial_lessons.size(), "Not every shipped tutorial lesson uses an authored dialogue or coach delivery.", failures)
 	_check(highlighted_count == library.tutorial_lessons.size(), "Not every shipped tutorial lesson owns a highlight anchor.", failures)
 
 	var pal: Dictionary = library.character("pal_tutorial_guide")
@@ -87,21 +87,30 @@ func _verify_authored_contract() -> Dictionary:
 	var inspect_coffee: Dictionary = library.tutorial_lesson("tutorial_inspect_coffee")
 	var inspect_pencil: Dictionary = library.tutorial_lesson("tutorial_inspect_pencil")
 	var buy_item: Dictionary = library.tutorial_lesson("tutorial_buy_store_item")
+	var buy_remaining_item: Dictionary = library.tutorial_lesson("tutorial_buy_remaining_store_item")
 	_check(str(_dict(inspect_coffee.get("anchor", {})).get("id", "")) == "item:instant_coffee", "Corner-store first item inspection is not authored.", failures)
 	_check(_string_array(_dict(inspect_pencil.get("trigger", {})).get("depends_on", [])).has("tutorial_inspect_coffee") and str(_dict(inspect_pencil.get("anchor", {})).get("id", "")) == "item:ledger_pencil", "Corner-store second item inspection does not follow the first.", failures)
 	_check(_string_array(_dict(buy_item.get("trigger", {})).get("depends_on", [])).has("tutorial_inspect_pencil"), "Corner-store purchase does not wait for both inspections.", failures)
+	_check(_string_array(_dict(buy_remaining_item.get("trigger", {})).get("depends_on", [])).has("tutorial_buy_store_item"), "Corner-store second purchase does not follow the first purchase.", failures)
+	_check(str(_dict(buy_remaining_item.get("completion", {})).get("type", "")) == "state_predicate" and (_dict(buy_remaining_item.get("completion", {})).get("state_predicates", []) as Array).size() == 2, "Corner-store tutorial does not require both shelf items.", failures)
 
 	var pal_nodes := _dict(library.dialogue("tutorial_pal_guidance").get("nodes", {}))
+	var corner_buy_copy := str(_dict(pal_nodes.get("corner_buy_both", {})).get("text", ""))
 	var route_copy := str(_dict(pal_nodes.get("route_split", {})).get("text", ""))
 	var crew_copy := str(_dict(pal_nodes.get("crew_warning", {})).get("text", ""))
 	var lookaway_copy := str(_dict(pal_nodes.get("blackjack_lookaway", {})).get("text", ""))
 	var peek_copy := str(_dict(pal_nodes.get("blackjack_peek", {})).get("text", ""))
+	var gas_peek_copy := str(_dict(pal_nodes.get("gas_peek", {})).get("text", ""))
+	var gas_peek_heat_copy := str(_dict(pal_nodes.get("gas_peek_heat", {})).get("text", ""))
 	var invitation_copy := str(_dict(pal_nodes.get("invitation", {})).get("text", ""))
 	var goodbye_copy := str(_dict(pal_nodes.get("grand_depart", {})).get("text", ""))
 	_check(route_copy.contains("tip opened two doors") and route_copy.contains("strongly recommend") and route_copy.contains("skip"), "Pal does not explain and strongly steer the skippable route split.", failures)
+	_check(corner_buy_copy.contains("Buy both") and corner_buy_copy.contains("Either order"), "Pal does not explicitly require both Corner Store items in either order.", failures)
 	_check(crew_copy.contains("isn't free") and crew_copy.contains("put you to work") and not crew_copy.contains("Avoid the Crew"), "Pal's Crew hint must imply the loan's work obligation without directly telling the player to avoid the Crew.", failures)
 	_check(lookaway_copy.contains("easiest cheat") and lookaway_copy.contains("DRINK PASS spills a drink") and lookaway_copy.contains("CHIP SPILL"), "Pal's lookaway copy is not accurate to the real controls.", failures)
 	_check(peek_copy.contains("add heat") and peek_copy.contains("close the table"), "Pal's peek copy omits caught consequences.", failures)
+	_check(gas_peek_copy.contains("50%") and gas_peek_copy.contains("8%") and gas_peek_copy.contains("9%") and gas_peek_copy.contains("10%") and gas_peek_copy.contains("11%") and gas_peek_copy.contains("four times"), "Pal's pull-tab Peek copy omits its chance, escalating Heat, or required attempts.", failures)
+	_check(gas_peek_heat_copy.contains("real Heat") and gas_peek_heat_copy.contains("adds no Heat") and gas_peek_heat_copy.contains("Tab Detector"), "Pal's optional pull-tab Heat review omits the owned-detector contrast.", failures)
 	_check(invitation_copy.contains("keep an eye on your environment") and invitation_copy.contains("accept"), "Pal's invitation copy omits environment scanning or acceptance.", failures)
 	_check(goodbye_copy.contains("banned") and goodbye_copy.contains("Rourke") and goodbye_copy.contains("Good luck"), "Pal's Grand Casino farewell is incomplete.", failures)
 
@@ -109,6 +118,7 @@ func _verify_authored_contract() -> Dictionary:
 	var forced_choices := _dict(modifiers.get("tutorial_forced_event_choices", {}))
 	_check(str(forced_choices.get("comped_suite_offer", "")) == "take_comp", "Tutorial comp is not forced to take_comp.", failures)
 	_check(int(modifiers.get("tutorial_pull_tab_xray_offset", -1)) == 2, "Tutorial X-ray pull-tab offset is not 2.", failures)
+	_check(modifiers.get("tutorial_pull_tab_peek_results", []) == [true, false, true, false], "Tutorial Peek sequence must deterministically showcase two successes and two misses.", failures)
 
 	var rourke_warning_levels: Array = []
 	for event_value in library.events:
@@ -122,7 +132,7 @@ func _verify_authored_contract() -> Dictionary:
 	_check(rourke_warning_levels == [85], "Rourke warning must be one heat-85 hook with no escalation ladder: %s" % JSON.stringify(rourke_warning_levels), failures)
 	return {
 		"ambient_tip_ids": ambient_ids,
-		"dialogue_lessons": tutorial_delivery_count,
+		"authored_delivery_lessons": authored_delivery_count,
 		"highlighted_lessons": highlighted_count,
 		"pal": str(pal.get("display_name", "")),
 		"host": str(host.get("display_name", "")),
@@ -329,6 +339,24 @@ func _play_scripted_pull_tab(run_state: RunState, route_failures: Array) -> Dict
 	var deal_index := int(target.get("deal_index", -1))
 	var tickets_until := int(target.get("tickets_until", 0))
 	_check(deal_index == 0 and int(target.get("offset", -1)) == 2 and int(target.get("payout", 0)) > 0, "Path A X-ray target was not the scripted near-bottom winner.", route_failures)
+	var heat_before_peeks := run_state.suspicion_level()
+	var peek_results: Array = []
+	var peek_successes: Array = []
+	var peek_base_heats: Array = []
+	for peek_index in range(4):
+		var peek_result := game.resolve_with_context("tab_detector_scan", 0, run_state, run_state.current_environment, run_state.create_rng("tutorial_pull_peek_%d" % peek_index), {})
+		peek_successes.append(bool(peek_result.get("pull_tab_peek_succeeded", false)))
+		peek_base_heats.append(int(peek_result.get("pull_tab_base_heat", 0)))
+		peek_results.append({
+			"succeeded": bool(peek_result.get("pull_tab_peek_succeeded", false)),
+			"base_heat": int(peek_result.get("pull_tab_base_heat", 0)),
+			"heat": int(peek_result.get("suspicion_delta", 0)),
+		})
+	_check(peek_successes == [true, false, true, false], "Path A Peek attempts did not showcase an exact two-success/two-miss split.", route_failures)
+	_check(peek_base_heats == [8, 9, 10, 11], "Path A Peek Heat did not escalate 8, 9, 10, 11.", route_failures)
+	var after_peeks := game.coach_state(run_state, run_state.current_environment, {})
+	_check(int(after_peeks.get("peek_count", 0)) == 4 and int(after_peeks.get("peek_success_count", 0)) == 2, "Path A coach state did not record all four Peek attempts and both outcomes.", route_failures)
+	_check(run_state.suspicion_level() > heat_before_peeks, "Path A Peek lesson did not raise the real Heat meter.", route_failures)
 	var bought_results: Array = []
 	for buy_index in range(tickets_until):
 		var command := game.surface_action_command("pull_tab_buy", deal_index, false, {}, run_state, run_state.current_environment)
@@ -353,7 +381,7 @@ func _play_scripted_pull_tab(run_state: RunState, route_failures: Array) -> Dict
 	if bool(redeem_result.get("ok", false)):
 		GameModuleScript.apply_result(run_state, redeem_result, run_state.create_rng("tutorial_pull_redeem_apply"))
 	_check(int(redeem_result.get("pull_tab_redeemed_payout", 0)) > 0 and run_state.bankroll > before_redeem, "Path A winner did not pay at the real clerk.", route_failures)
-	return {"skipped": false, "xray_target": target, "tickets_bought": bought_results, "redeemed_payout": int(redeem_result.get("pull_tab_redeemed_payout", 0))}
+	return {"skipped": false, "peek_results": peek_results, "xray_target": target, "tickets_bought": bought_results, "redeemed_payout": int(redeem_result.get("pull_tab_redeemed_payout", 0))}
 
 
 func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dictionary:
@@ -371,8 +399,17 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	var peek_state: Dictionary = peek.get("ui_state", {})
 	var peek_result := game.resolve_with_context("peek_hole_card", 0, run_state, run_state.current_environment, run_state.create_rng("tutorial_peek"), peek_state)
 	_check(bool(peek_state.get("peek_had_window", false)) and bool(peek_state.get("dealer_hole_visible", false)) and bool(peek_result.get("ok", false)), "Tutorial peek did not use the real distraction lookaway window.", route_failures)
-	var count_start := game.surface_action_command("blackjack_count", 0, false, peek_state, run_state, run_state.current_environment)
-	var count_state: Dictionary = count_start.get("ui_state", {})
+	var preserved_peek_state: Dictionary = peek_result.get("blackjack_surface_ui_state", peek_state) if typeof(peek_result.get("blackjack_surface_ui_state", peek_state)) == TYPE_DICTIONARY else peek_state
+	var peek_finish := game.surface_action_command("blackjack_stand", 0, false, preserved_peek_state, run_state, run_state.current_environment)
+	var peek_finish_result: Dictionary = {}
+	if bool(peek_finish.get("resolve", false)):
+		peek_finish_result = game.resolve_with_context(str(peek_finish.get("action_id", "play_basic")), 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_peek_hand_finish"), peek_finish.get("ui_state", {}))
+	var after_peek_hand := game.coach_state(run_state, run_state.current_environment, {})
+	_check(bool(peek_finish_result.get("ok", false)) and int(after_peek_hand.get("hands_played", 0)) == 2 and bool(after_peek_hand.get("between_hands", false)), "Tutorial Peek hand did not settle before the separate counting hand.", route_failures)
+	var count_toggle := game.surface_action_command("blackjack_count", 0, false, {"selected_stake": 4}, run_state, run_state.current_environment)
+	var count_deal := game.surface_action_command("blackjack_deal", 0, false, count_toggle.get("ui_state", {}), run_state, run_state.current_environment)
+	var count_deal_result := game.resolve_with_context(str(count_deal.get("action_id", "blackjack_place_bet")), 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_count_deal"), count_deal.get("ui_state", {}))
+	var count_state: Dictionary = count_deal_result.get("ui_state", count_deal.get("ui_state", {})) if typeof(count_deal_result.get("ui_state", count_deal.get("ui_state", {}))) == TYPE_DICTIONARY else count_deal.get("ui_state", {})
 	var challenge: Dictionary = count_state.get("count_challenge", {}) if typeof(count_state.get("count_challenge", {})) == TYPE_DICTIONARY else {}
 	var icons := _dict_array(challenge.get("icons", []))
 	var now := Time.get_ticks_msec()
@@ -412,7 +449,7 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	var stand := game.surface_action_command("blackjack_stand", 0, false, final_count_state, run_state, run_state.current_environment)
 	if bool(stand.get("resolve", false)):
 		game.resolve_with_context(str(stand.get("action_id", "play_basic")), 4, run_state, run_state.current_environment, run_state.create_rng("tutorial_raised_stand"), stand.get("ui_state", {}))
-	return {"normal_hand_settled": bool(clean.get("settled", false)), "raised_bet": 4, "lookaway_id": str(distracted_state.get("dealer_lookaway_id", "")), "peek_had_window": bool(peek_state.get("peek_had_window", false)), "count_icon_count": icons.size(), "count_all_selected": bool(coach_state.get("count_all_selected", false)), "count_miss_heat_delta": int(miss_result.get("suspicion_delta", 0)), "raised_deal_ok": bool(deal_result.get("ok", false))}
+	return {"normal_hand_settled": bool(clean.get("settled", false)), "peek_hand_settled": bool(peek_finish_result.get("ok", false)), "raised_bet": 4, "lookaway_id": str(distracted_state.get("dealer_lookaway_id", "")), "peek_had_window": bool(peek_state.get("peek_had_window", false)), "count_icon_count": icons.size(), "count_all_selected": bool(coach_state.get("count_all_selected", false)), "count_miss_heat_delta": int(miss_result.get("suspicion_delta", 0)), "raised_deal_ok": bool(deal_result.get("ok", false)), "count_deal_ok": bool(count_deal_result.get("ok", false))}
 
 
 func _deal_and_stand(game: GameModule, run_state: RunState, stake: int, rng_label: String) -> Dictionary:
@@ -437,7 +474,7 @@ func _settle_grand_blackjack_hand(run_state: RunState, route_failures: Array) ->
 func _normal_run_isolation() -> Dictionary:
 	var config: Dictionary = library.challenge_config_for("standard", "NORMAL-ISOLATION")
 	var modifiers: Dictionary = config.get("modifiers", {}) if typeof(config.get("modifiers", {})) == TYPE_DICTIONARY else {}
-	var tutorial_modifier_keys := ["tutorial_run", "home_archetype_id", "tutorial_environment_overrides", "tutorial_forced_event_choices", "tutorial_event_chain_chances", "tutorial_pull_tab_xray_offset", "tutorial_initial_map_targets", "tutorial_main_floor_only"]
+	var tutorial_modifier_keys := ["tutorial_run", "home_archetype_id", "tutorial_environment_overrides", "tutorial_forced_event_choices", "tutorial_event_chain_chances", "tutorial_pull_tab_xray_offset", "tutorial_pull_tab_peek_results", "tutorial_initial_map_targets", "tutorial_main_floor_only"]
 	var leaked_modifier_keys: Array = []
 	for key in tutorial_modifier_keys:
 		if modifiers.has(key):

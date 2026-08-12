@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate production scratch-ticket art from the actual gameplay layouts.
+"""Legacy generator for the unused *_background_v2.png scratch-ticket set.
 
 This is intentionally deterministic. The scratch ticket renderer composes three
 layers in-game:
@@ -10,9 +10,8 @@ layers in-game:
 3. foil: generated per ticket by scripts/games/scratch_tickets.gd from these
    same regions plus scratch_foil_tile_v1.png.
 
-The layout constants below mirror ScratchTickets._ticket_art_regions. If those
-GDScript regions change, update this file in the same commit so the artwork and
-mechanics continue to agree 1:1.
+The shipped *_background_pro.png art and its measured runtime geometry are not
+produced here; use scratch_ticket_alignment_audit.py for that source of truth.
 """
 
 from __future__ import annotations

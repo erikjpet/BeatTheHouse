@@ -6,6 +6,7 @@ const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 
 const STORE_PATH := "user://meta_collection.json"
 const STORE_PATH_ENV := "BTH_META_COLLECTION_PATH"
+const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
 const ITEMS_PATH := "res://data/items/items.json"
 const SCHEMA_VERSION := 3
 const FIRST_INSTANCE_ID := 1
@@ -13,6 +14,7 @@ const SAL_RESALE_SCHEMA_VERSION := 1
 const SAL_SHELF_SLOT_COUNT := 6
 const SAL_HISTORY_LIMIT := 64
 const SAL_RECEIPT_LIMIT := 256
+const META_TRANSACTION_HISTORY_LIMIT := 256
 const SAL_STARTER_CONDITION := 0.18
 const SAL_STARTER_RARE_VALUE := 0.01
 const REVEAL_BAG_KEY := "bag"
@@ -53,30 +55,45 @@ var _store: Dictionary = {}
 var _item_definitions_by_id: Dictionary = {}
 var _items_loaded := false
 var _shared_collection_resolver: CollectionItemResolver
+var _owned_instance_index: Dictionary = {}
+var _owned_instance_index_source_count := -1
+var _unopened_bag_index: Dictionary = {}
+var _unopened_bag_index_source_count := -1
+var _state_revision := 0
 
 
 func _init() -> void:
 	_store = _default_store()
+	_rebuild_owned_instance_index()
+	_state_revision = 1
 
 
 func load() -> Dictionary:
 	var path := store_path()
 	if not FileAccess.file_exists(path):
 		_store = _default_store()
+		_rebuild_owned_instance_index()
+		_state_revision += 1
 		return snapshot()
 	var text := FileAccess.get_file_as_string(path)
 	var parser := JSON.new()
 	var parse_error := parser.parse(text)
 	if parse_error != OK:
 		_store = _default_store()
+		_rebuild_owned_instance_index()
+		_state_revision += 1
 		return snapshot()
 	var parsed: Variant = parser.data
 	if typeof(parsed) != TYPE_DICTIONARY:
 		_store = _default_store()
+		_rebuild_owned_instance_index()
+		_state_revision += 1
 		return snapshot()
 	var data: Dictionary = parsed
 	var migration := _migrate_fixture_pollution(_normalize_store(data))
 	_store = _copy_dict(migration.get("store", {}))
+	_rebuild_owned_instance_index()
+	_state_revision += 1
 	if bool(migration.get("migrated", false)):
 		save()
 	return snapshot()
@@ -84,6 +101,8 @@ func load() -> Dictionary:
 
 func save() -> Error:
 	_store = _normalize_store(_store)
+	_rebuild_owned_instance_index()
+	_state_revision += 1
 	var path := store_path()
 	var absolute_path := ProjectSettings.globalize_path(path)
 	var directory := absolute_path.get_base_dir()
@@ -104,8 +123,8 @@ func save() -> Error:
 
 
 func grant_instance(instance: Dictionary) -> Dictionary:
-	_store = _normalize_store(_store)
-	var resolver: Variant = CollectionItemResolverScript.new()
+	_ensure_store_ready()
+	var resolver: Variant = _collection_resolver()
 	var normalized: Dictionary = resolver.normalize_instance_for_definition(instance)
 	var instance_id := _take_next_instance_id()
 	normalized["schema_version"] = SCHEMA_VERSION
@@ -113,10 +132,21 @@ func grant_instance(instance: Dictionary) -> Dictionary:
 	var instances := _copy_array(_store.get("owned_instances", []))
 	instances.append(normalized)
 	_store["owned_instances"] = instances
+	_owned_instance_index[instance_id] = normalized
+	_owned_instance_index_source_count = instances.size()
 	return normalized.duplicate(true)
 
 
 func mint_players_card(instance_data: Dictionary) -> Dictionary:
+	var starter_card := bool(instance_data.get("starter_card", false))
+	if starter_card:
+		for instance_value in owned_instances():
+			var existing := _copy_dict(instance_value)
+			var existing_stamp := _copy_dict(existing.get("instance_data", {}))
+			if _collection_resolver().is_players_card_instance(existing) and bool(existing_stamp.get("starter_card", false)):
+				ensure_players_card_carried(int(existing.get("instance_id", 0)))
+				_store["starter_card_home_grant_applied"] = true
+				return existing
 	var instance := {
 		"itemdef_id": PLAYERS_CARD_ITEMDEF_ID,
 		"potency": 1.0,
@@ -127,7 +157,44 @@ func mint_players_card(instance_data: Dictionary) -> Dictionary:
 		"source_id": str(instance_data.get("route", "high_roller_cashout")),
 		"instance_data": instance_data.duplicate(true),
 	}
-	return grant_instance(instance)
+	var granted := grant_instance(instance)
+	# The tutorial card is the player's first persistent possession. Keep that
+	# exact instance in the home loadout so upgraded/legacy homes cannot leave it
+	# silently in storage after the first run. Ordinary later cards still respect
+	# the player's explicit Pack/Unpack choice.
+	if starter_card:
+		ensure_players_card_carried(int(granted.get("instance_id", 0)))
+		_store["starter_card_home_grant_applied"] = true
+	return granted
+
+
+func ensure_players_card_carried(instance_id: int) -> Dictionary:
+	_ensure_store_ready()
+	var instance := _owned_instance(instance_id)
+	var resolver: Variant = _collection_resolver()
+	if instance.is_empty() or not resolver.is_players_card_instance(instance):
+		return {"ok": false, "carried": false, "message": "That Players Card is not owned."}
+	if housing_tier() == HOUSING_BACK_ALLEY:
+		return {"ok": true, "carried": true, "packed_instance_ids": carried_instance_ids()}
+	var capacity := carry_capacity()
+	if capacity <= 0:
+		return {"ok": false, "carried": false, "message": "The home has no carry container."}
+	var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
+	if loadout.has(instance_id):
+		return {"ok": true, "carried": true, "packed_instance_ids": loadout}
+	# Starter-card priority never deletes another possession. If the carry bag is
+	# full, its final item simply returns to home storage.
+	loadout.push_front(instance_id)
+	var displaced_instance_ids: Array = []
+	while loadout.size() > capacity:
+		displaced_instance_ids.append(int(loadout.pop_back()))
+	_store["loadout"] = loadout
+	return {
+		"ok": true,
+		"carried": true,
+		"packed_instance_ids": loadout.duplicate(),
+		"displaced_instance_ids": displaced_instance_ids,
+	}
 
 
 func mint_grand_casino_chip_stack(chip_amount: int, instance_data: Dictionary = {}) -> Dictionary:
@@ -153,7 +220,7 @@ func mint_grand_casino_chip_stack(chip_amount: int, instance_data: Dictionary = 
 
 
 func grant_bag(bagdef_id: int, rng_seed: String = "", metadata: Dictionary = {}) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var bag := metadata.duplicate(true)
 	bag["schema_version"] = SCHEMA_VERSION
 	bag["instance_id"] = _take_next_instance_id()
@@ -166,11 +233,13 @@ func grant_bag(bagdef_id: int, rng_seed: String = "", metadata: Dictionary = {})
 	var bags := _copy_array(_store.get("unopened_bags", []))
 	bags.append(bag)
 	_store["unopened_bags"] = bags
+	_unopened_bag_index[int(bag.get("instance_id", 0))] = bag
+	_unopened_bag_index_source_count = bags.size()
 	return bag.duplicate(true)
 
 
 func open_bag(instance_id: int) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	if not can_accept_owned_instance():
 		return {"ok": false, "message": "No room for another collection item."}
 	var bags := _copy_array(_store.get("unopened_bags", []))
@@ -184,7 +253,7 @@ func open_bag(instance_id: int) -> Dictionary:
 			break
 	if bag_index < 0:
 		return {"ok": false, "message": "That bag is no longer unopened."}
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	var options: Array = resolver.bag_item_options_for_bag(int(bag.get("bagdef_id", -1)))
 	if options.is_empty():
 		return {"ok": false, "message": "That bag definition has no item options."}
@@ -225,7 +294,7 @@ func open_bag(instance_id: int) -> Dictionary:
 
 
 func housing_tier() -> String:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	return str(_store.get("housing_tier", HOUSING_BACK_ALLEY))
 
 
@@ -239,7 +308,7 @@ func housing_definition(tier: String = "") -> Dictionary:
 
 
 func next_housing_upgrade() -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var order := _housing_order()
 	var current := housing_tier()
 	var current_index := order.find(current)
@@ -254,7 +323,7 @@ func next_housing_upgrade() -> Dictionary:
 
 
 func purchase_housing_upgrade() -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var upgrade := next_housing_upgrade()
 	if upgrade.is_empty():
 		return {"ok": false, "message": "No further home upgrade is available."}
@@ -284,7 +353,7 @@ func storage_slots() -> int:
 
 
 func carry_capacity() -> int:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var total := 0
 	for container_value in _copy_array(_store.get("owned_containers", [])):
 		var container := _copy_dict(container_value)
@@ -297,7 +366,7 @@ func total_owned_capacity() -> int:
 
 
 func can_accept_owned_instance() -> bool:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var capacity := total_owned_capacity()
 	return capacity <= 0 or owned_instances().size() < capacity
 
@@ -308,7 +377,7 @@ func trade_up_unlocked() -> bool:
 
 
 func grant_container(item_id: String) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var clean_id := item_id.strip_edges()
 	if clean_id.is_empty() or _container_capacity(clean_id) <= 0:
 		return {}
@@ -324,12 +393,12 @@ func grant_container(item_id: String) -> Dictionary:
 
 
 func pack_instance(instance_id: int) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	if housing_tier() == HOUSING_BACK_ALLEY:
 		return {"ok": true, "message": "Homeless runs carry every loadout-eligible item.", "packed_instance_ids": carried_instance_ids()}
 	if instance_id <= 0 or not _owned_instance_ids().has(instance_id):
 		return {"ok": false, "message": "That item is not owned."}
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	if not resolver.is_loadout_eligible(_owned_instance(instance_id)):
 		return {"ok": false, "message": "Grand Casino Chips stay in meta storage until Sal fences them."}
 	var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
@@ -343,7 +412,7 @@ func pack_instance(instance_id: int) -> Dictionary:
 
 
 func unpack_instance(instance_id: int) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	if housing_tier() == HOUSING_BACK_ALLEY:
 		return {"ok": false, "message": "Back alley starts carry every owned item."}
 	var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
@@ -353,7 +422,7 @@ func unpack_instance(instance_id: int) -> Dictionary:
 
 
 func carried_instance_ids() -> Array:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	if housing_tier() == HOUSING_BACK_ALLEY:
 		return _loadout_eligible_owned_instance_ids()
 	return _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
@@ -361,12 +430,15 @@ func carried_instance_ids() -> Array:
 
 func normal_run_start_modifiers() -> Dictionary:
 	var carried_ids := carried_instance_ids()
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var carried_lookup := {}
+	for carried_id in carried_ids:
+		carried_lookup[int(carried_id)] = true
+	var resolver: Variant = _collection_resolver()
 	var run_items: Array = []
 	var prestige_card_ids: Array = []
 	for instance_value in owned_instances():
 		var instance := _copy_dict(instance_value)
-		if not carried_ids.has(int(instance.get("instance_id", 0))):
+		if not carried_lookup.has(int(instance.get("instance_id", 0))):
 			continue
 		if resolver.is_players_card_instance(instance):
 			prestige_card_ids.append(int(instance.get("instance_id", 0)))
@@ -391,13 +463,16 @@ func normal_run_start_modifiers() -> Dictionary:
 
 
 func players_card_carried_instance_ids() -> Array:
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	var carried_ids := carried_instance_ids()
+	var carried_lookup := {}
+	for carried_id in carried_ids:
+		carried_lookup[int(carried_id)] = true
 	var result: Array = []
 	for instance_value in owned_instances():
 		var instance := _copy_dict(instance_value)
 		var instance_id := int(instance.get("instance_id", 0))
-		if carried_ids.has(instance_id) and resolver.is_players_card_instance(instance):
+		if carried_lookup.has(instance_id) and resolver.is_players_card_instance(instance):
 			result.append(instance_id)
 	return result
 
@@ -405,13 +480,16 @@ func players_card_carried_instance_ids() -> Array:
 # Builds the one authoritative packed-container manifest used by both the
 # meta-home room and the generated run home.
 func carried_container_rows() -> Array:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var carried_ids := carried_instance_ids()
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var carried_lookup := {}
+	for carried_id in carried_ids:
+		carried_lookup[int(carried_id)] = true
+	var resolver: Variant = _collection_resolver()
 	var packed_items: Array = []
 	for instance_value in owned_instances():
 		var instance := _copy_dict(instance_value)
-		if not carried_ids.has(int(instance.get("instance_id", 0))):
+		if not carried_lookup.has(int(instance.get("instance_id", 0))):
 			continue
 		var run_item: Dictionary = resolver.resolve_run_item(instance)
 		if not run_item.is_empty():
@@ -449,7 +527,7 @@ func carried_container_rows() -> Array:
 
 
 func apply_failure_decay(carried_ids: Array, rng_seed: String) -> Array:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var wanted_ids := {}
 	for id_value in carried_ids:
 		var instance_id := int(id_value)
@@ -460,7 +538,7 @@ func apply_failure_decay(carried_ids: Array, rng_seed: String) -> Array:
 	var next_instances: Array = []
 	var decayed: Array = []
 	var deleted_ids: Array = []
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	for instance_value in _copy_array(_store.get("owned_instances", [])):
 		var instance := _copy_dict(instance_value)
 		var instance_id := int(instance.get("instance_id", 0))
@@ -486,6 +564,7 @@ func apply_failure_decay(carried_ids: Array, rng_seed: String) -> Array:
 		else:
 			next_instances.append(instance)
 	_store["owned_instances"] = next_instances
+	_rebuild_owned_instance_index()
 	if not deleted_ids.is_empty():
 		var loadout := _filtered_packed_ids(_copy_array(_store.get("loadout", [])))
 		for deleted_id in deleted_ids:
@@ -495,7 +574,7 @@ func apply_failure_decay(carried_ids: Array, rng_seed: String) -> Array:
 
 
 func sale_quote(kind: String, instance_id: int) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var clean_kind := kind.strip_edges().to_lower()
 	if clean_kind == SALE_KIND_BAG:
 		return _bag_sale_quote(instance_id)
@@ -609,7 +688,7 @@ func sal_resale_rng_snapshot() -> Dictionary:
 
 
 func allocate_sal_run_receipt(seed_text: String) -> String:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var resale := _copy_dict(_store.get("sal_resale", {}))
 	var next_id := maxi(1, int(resale.get("next_run_receipt_id", 1)))
 	resale["next_run_receipt_id"] = next_id + 1
@@ -623,7 +702,7 @@ func sal_run_receipt_processed(receipt: String) -> bool:
 
 
 func generate_and_insert_sal_stock(run_receipt: String) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var receipt := run_receipt.strip_edges()
 	if receipt.is_empty():
 		return {"ok": false, "stocked": false, "message": "Sal stock needs a run receipt."}
@@ -698,7 +777,7 @@ func generate_and_insert_sal_stock(run_receipt: String) -> Dictionary:
 
 
 func arm_sal_shelf_purchase(slot_index: int) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var quote := _authoritative_sal_slot_quote(slot_index)
 	if not bool(quote.get("ok", false)):
 		return quote
@@ -723,7 +802,7 @@ func arm_sal_shelf_purchase(slot_index: int) -> Dictionary:
 
 
 func confirm_sal_shelf_purchase(token: String) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var resale := _copy_dict(_store.get("sal_resale", {}))
 	var pending := _copy_dict(resale.get("pending_purchase", {}))
 	if token.strip_edges().is_empty() or str(pending.get("token", "")) != token:
@@ -805,7 +884,7 @@ func pending_starter_buyback() -> Dictionary:
 
 
 func resolve_starter_buyback(choice: String) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var resale := _copy_dict(_store.get("sal_resale", {}))
 	var pending := _copy_dict(resale.get("pending_starter_buyback", {}))
 	if pending.is_empty() or bool(pending.get("resolved", false)) or bool(resale.get("starter_tutorial_resolved", false)):
@@ -913,7 +992,7 @@ func arm_sale(kind: String, instance_id: int) -> Dictionary:
 
 
 func confirm_sale(token: String) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var pending := _copy_dict(_store.get("pending_sale", {}))
 	if token.strip_edges().is_empty() or str(pending.get("token", "")) != token:
 		return {"ok": false, "message": "Sale confirmation expired."}
@@ -943,7 +1022,7 @@ func confirm_sale(token: String) -> Dictionary:
 	var record := pending.duplicate(true)
 	record["gold_balance"] = int(_store.get("gold_balance", 0))
 	history.append(record)
-	_store["sale_history"] = history
+	_store["sale_history"] = _bounded_array(history, META_TRANSACTION_HISTORY_LIMIT)
 	_store["pending_sale"] = {}
 	return {
 		"ok": true,
@@ -957,7 +1036,7 @@ func confirm_sale(token: String) -> Dictionary:
 
 
 func arm_trade_up(instance_ids: Array) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	if not trade_up_unlocked():
 		return {"ok": false, "message": "Trade-ups unlock with an apartment or house."}
 	var ids: Array = []
@@ -967,7 +1046,7 @@ func arm_trade_up(instance_ids: Array) -> Dictionary:
 			ids.append(id)
 	if ids.size() != 5:
 		return {"ok": false, "message": "Trade-up requires five matching items."}
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	var instances: Array = []
 	var collection_id := ""
 	var tier := ""
@@ -1002,7 +1081,7 @@ func arm_trade_up(instance_ids: Array) -> Dictionary:
 
 
 func confirm_trade_up(token: String) -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var pending := _copy_dict(_store.get("pending_trade_up", {}))
 	if token.strip_edges().is_empty() or str(pending.get("token", "")) != token:
 		return {"ok": false, "message": "Trade-up confirmation expired."}
@@ -1010,7 +1089,7 @@ func confirm_trade_up(token: String) -> Dictionary:
 		_store["pending_trade_up"] = {}
 		return {"ok": false, "message": "Trade-ups unlock with an apartment or house."}
 	var ids := _copy_array(pending.get("instance_ids", []))
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	var inputs: Array = []
 	for id_value in ids:
 		var instance := _owned_instance(int(id_value))
@@ -1034,28 +1113,40 @@ func confirm_trade_up(token: String) -> Dictionary:
 	record["output_instance_id"] = int(granted.get("instance_id", 0))
 	record["output_itemdef_id"] = int(granted.get("itemdef_id", -1))
 	history.append(record)
-	_store["trade_up_history"] = history
+	_store["trade_up_history"] = _bounded_array(history, META_TRANSACTION_HISTORY_LIMIT)
 	_store["pending_trade_up"] = {}
 	return {"ok": true, "message": "Trade-up complete.", "item": granted}
 
 
-func unopened_bags() -> Array:
-	_store = _normalize_store(_store)
-	return _copy_array(_store.get("unopened_bags", []))
+func unopened_bags(limit: int = -1) -> Array:
+	_ensure_store_ready()
+	var value: Variant = _store.get("unopened_bags", [])
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	var bags: Array = value
+	if limit >= 0 and bags.size() > limit:
+		return bags.slice(0, limit).duplicate(true)
+	return bags.duplicate(true)
+
+
+func unopened_bag_count() -> int:
+	_ensure_store_ready()
+	var value: Variant = _store.get("unopened_bags", [])
+	return (value as Array).size() if typeof(value) == TYPE_ARRAY else 0
 
 
 func meta_rng_snapshot() -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	return _copy_dict(_store.get("meta_rng", {}))
 
 
 func owned_instances() -> Array:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	return _copy_array(_store.get("owned_instances", []))
 
 
 func remove_instance(instance_id: int) -> bool:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	var instances := _copy_array(_store.get("owned_instances", []))
 	var next_instances: Array = []
 	var removed := false
@@ -1066,31 +1157,76 @@ func remove_instance(instance_id: int) -> bool:
 			continue
 		next_instances.append(instance)
 	_store["owned_instances"] = next_instances
+	_rebuild_owned_instance_index()
 	return removed
 
 
 func add_gold(amount: int) -> int:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	_store["gold_balance"] = maxi(0, int(_store.get("gold_balance", 0)) + amount)
 	return int(_store.get("gold_balance", 0))
 
 
 func snapshot() -> Dictionary:
-	_store = _normalize_store(_store)
+	_ensure_store_ready()
 	return _store.duplicate(true)
+
+
+# A constant-time invalidation token for UI caches. Persisted collection data
+# is intentionally not serialized merely to discover whether it changed.
+func state_revision() -> int:
+	_ensure_store_ready()
+	return _state_revision
 
 
 static func store_path() -> String:
 	var override := OS.get_environment(STORE_PATH_ENV).strip_edges()
 	if not override.is_empty():
 		return override
-	return STORE_PATH
+	return PersistencePathsScript.file_path(STORE_PATH, "meta_collection.json")
 
 
 func _take_next_instance_id() -> int:
 	var next_id := maxi(FIRST_INSTANCE_ID, int(_store.get("next_instance_id", FIRST_INSTANCE_ID)))
 	_store["next_instance_id"] = next_id + 1
 	return next_id
+
+
+func _ensure_store_ready() -> void:
+	if int(_store.get("schema_version", 0)) != SCHEMA_VERSION:
+		_store = _normalize_store(_store)
+		_rebuild_owned_instance_index()
+		_state_revision += 1
+		return
+	var instances_value: Variant = _store.get("owned_instances", [])
+	var source_count := (instances_value as Array).size() if typeof(instances_value) == TYPE_ARRAY else 0
+	var bags_value: Variant = _store.get("unopened_bags", [])
+	var bag_source_count := (bags_value as Array).size() if typeof(bags_value) == TYPE_ARRAY else 0
+	if source_count != _owned_instance_index_source_count or bag_source_count != _unopened_bag_index_source_count:
+		_rebuild_owned_instance_index()
+
+
+func _rebuild_owned_instance_index() -> void:
+	_owned_instance_index.clear()
+	_unopened_bag_index.clear()
+	var instances_value: Variant = _store.get("owned_instances", [])
+	var instances: Array = instances_value if typeof(instances_value) == TYPE_ARRAY else []
+	for instance_value in instances:
+		if typeof(instance_value) == TYPE_DICTIONARY:
+			var instance: Dictionary = instance_value
+			var instance_id := int(instance.get("instance_id", 0))
+			if instance_id > 0:
+				_owned_instance_index[instance_id] = instance
+	_owned_instance_index_source_count = instances.size()
+	var bags_value: Variant = _store.get("unopened_bags", [])
+	var bags: Array = bags_value if typeof(bags_value) == TYPE_ARRAY else []
+	for bag_value in bags:
+		if typeof(bag_value) == TYPE_DICTIONARY:
+			var bag: Dictionary = bag_value
+			var bag_id := int(bag.get("instance_id", 0))
+			if bag_id > 0:
+				_unopened_bag_index[bag_id] = bag
+	_unopened_bag_index_source_count = bags.size()
 
 
 func _normalize_store(data: Dictionary) -> Dictionary:
@@ -1107,9 +1243,19 @@ func _normalize_store(data: Dictionary) -> Dictionary:
 		str(normalized.get("housing_tier", HOUSING_BACK_ALLEY)),
 		_copy_array(normalized.get("owned_containers", []))
 	)
+	var starter_card_home_grant_applied := bool(normalized.get("starter_card_home_grant_applied", false))
+	if not starter_card_home_grant_applied and _starter_card_instance_id(_copy_array(normalized.get("owned_instances", []))) > 0:
+		normalized["loadout"] = _starter_card_prioritized_loadout(
+			_copy_array(normalized.get("loadout", [])),
+			_copy_array(normalized.get("owned_instances", [])),
+			str(normalized.get("housing_tier", HOUSING_BACK_ALLEY)),
+			_copy_array(normalized.get("owned_containers", []))
+		)
+		starter_card_home_grant_applied = true
+	normalized["starter_card_home_grant_applied"] = starter_card_home_grant_applied
 	normalized["meta_home"] = _normalize_meta_home(normalized.get("meta_home", {}), str(normalized.get("housing_tier", HOUSING_BACK_ALLEY)))
-	normalized["trade_up_history"] = _copy_array(normalized.get("trade_up_history", []))
-	normalized["sale_history"] = _copy_array(normalized.get("sale_history", []))
+	normalized["trade_up_history"] = _bounded_array(_copy_array(normalized.get("trade_up_history", [])), META_TRANSACTION_HISTORY_LIMIT)
+	normalized["sale_history"] = _bounded_array(_copy_array(normalized.get("sale_history", [])), META_TRANSACTION_HISTORY_LIMIT)
 	normalized["pending_sale"] = _copy_dict(normalized.get("pending_sale", {}))
 	normalized["pending_trade_up"] = _copy_dict(normalized.get("pending_trade_up", {}))
 	normalized["meta_rng"] = _normalize_meta_rng(normalized.get("meta_rng", {}))
@@ -1443,7 +1589,7 @@ func _normalized_containers(value: Variant) -> Array:
 
 func _normalized_instances(value: Variant) -> Array:
 	var normalized: Array = []
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	for instance_value in _copy_array(value):
 		var instance: Dictionary = resolver.normalize_instance_for_definition(_copy_dict(instance_value))
 		if int(instance.get("itemdef_id", -1)) < 0:
@@ -1487,7 +1633,7 @@ func _meta_rng() -> RngStream:
 
 
 func _meta_home_config() -> Dictionary:
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	var config: Dictionary = resolver.meta_home_config()
 	if config.is_empty():
 		return {
@@ -1524,18 +1670,22 @@ func _filtered_packed_ids(values: Array) -> Array:
 
 
 func _filtered_packed_ids_for(values: Array, owned_instances: Array, tier: String, containers: Array) -> Array:
+	if values.is_empty():
+		return []
 	var owned_lookup := {}
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	for instance_value in owned_instances:
 		var instance := _copy_dict(instance_value)
 		var instance_id := int(instance.get("instance_id", 0))
 		if instance_id > 0 and resolver.is_loadout_eligible(instance):
 			owned_lookup[instance_id] = true
 	var result: Array = []
+	var result_lookup := {}
 	for value in values:
 		var id := int(value)
-		if id > 0 and owned_lookup.has(id) and not result.has(id):
+		if id > 0 and owned_lookup.has(id) and not result_lookup.has(id):
 			result.append(id)
+			result_lookup[id] = true
 	var capacity := 0
 	for container_value in containers:
 		var container := _copy_dict(container_value)
@@ -1545,33 +1695,65 @@ func _filtered_packed_ids_for(values: Array, owned_instances: Array, tier: Strin
 	return result
 
 
+func _starter_card_prioritized_loadout(values: Array, owned_instances: Array, tier: String, containers: Array) -> Array:
+	if tier == HOUSING_BACK_ALLEY:
+		return values
+	var starter_card_id := _starter_card_instance_id(owned_instances)
+	if starter_card_id <= 0:
+		return values
+	var capacity := 0
+	for container_value in containers:
+		var container := _copy_dict(container_value)
+		capacity += maxi(0, int(container.get("capacity", _container_capacity(str(container.get("item_id", ""))))))
+	if capacity <= 0:
+		return values
+	var result := values.duplicate()
+	result.erase(starter_card_id)
+	result.push_front(starter_card_id)
+	if result.size() > capacity:
+		result.resize(capacity)
+	return result
+
+
+func _starter_card_instance_id(owned_instances: Array) -> int:
+	for instance_value in owned_instances:
+		var instance := _copy_dict(instance_value)
+		if int(instance.get("itemdef_id", -1)) != PLAYERS_CARD_ITEMDEF_ID:
+			continue
+		if bool(_copy_dict(instance.get("instance_data", {})).get("starter_card", false)):
+			return int(instance.get("instance_id", 0))
+	return 0
+
+
 func _owned_instance_ids() -> Array:
 	var ids: Array = []
+	var seen := {}
 	for instance_value in _copy_array(_store.get("owned_instances", [])):
 		var instance := _copy_dict(instance_value)
 		var id := int(instance.get("instance_id", 0))
-		if id > 0 and not ids.has(id):
+		if id > 0 and not seen.has(id):
 			ids.append(id)
+			seen[id] = true
 	return ids
 
 
 func _loadout_eligible_owned_instance_ids() -> Array:
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	var ids: Array = []
+	var seen := {}
 	for instance_value in _copy_array(_store.get("owned_instances", [])):
 		var instance := _copy_dict(instance_value)
 		var id := int(instance.get("instance_id", 0))
-		if id > 0 and resolver.is_loadout_eligible(instance) and not ids.has(id):
+		if id > 0 and resolver.is_loadout_eligible(instance) and not seen.has(id):
 			ids.append(id)
+			seen[id] = true
 	return ids
 
 
 func _owned_instance(instance_id: int) -> Dictionary:
-	for instance_value in _copy_array(_store.get("owned_instances", [])):
-		var instance := _copy_dict(instance_value)
-		if int(instance.get("instance_id", 0)) == instance_id:
-			return instance
-	return {}
+	_ensure_store_ready()
+	var value: Variant = _owned_instance_index.get(instance_id, {})
+	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
 
 
 func _remove_bag(instance_id: int) -> bool:
@@ -1585,6 +1767,8 @@ func _remove_bag(instance_id: int) -> bool:
 			continue
 		next_bags.append(bag)
 	_store["unopened_bags"] = next_bags
+	_unopened_bag_index.erase(instance_id)
+	_unopened_bag_index_source_count = next_bags.size()
 	return removed
 
 
@@ -1592,7 +1776,7 @@ func _item_sale_quote(instance_id: int) -> Dictionary:
 	var instance := _owned_instance(instance_id)
 	if instance.is_empty():
 		return {"ok": false, "message": "That item is not owned."}
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	var definition: Dictionary = resolver.item_definition(int(instance.get("itemdef_id", -1)))
 	if definition.is_empty():
 		return {"ok": false, "message": "That item cannot be sold."}
@@ -1619,15 +1803,11 @@ func _item_sale_quote(instance_id: int) -> Dictionary:
 
 
 func _bag_sale_quote(instance_id: int) -> Dictionary:
-	var bag := {}
-	for bag_value in _copy_array(_store.get("unopened_bags", [])):
-		var candidate := _copy_dict(bag_value)
-		if int(candidate.get("instance_id", 0)) == instance_id:
-			bag = candidate
-			break
+	_ensure_store_ready()
+	var bag := _copy_dict(_unopened_bag_index.get(instance_id, {}))
 	if bag.is_empty():
 		return {"ok": false, "message": "That bag is not unopened."}
-	var resolver: Variant = CollectionItemResolverScript.new()
+	var resolver: Variant = _collection_resolver()
 	var definition: Dictionary = resolver.bag_definition(int(bag.get("bagdef_id", -1)))
 	var tier := str(definition.get("tier", bag.get("tier", "blue")))
 	var prices := _copy_dict(_copy_dict(_meta_home_config().get("sale_prices", {})).get("bags", {}))
@@ -1718,6 +1898,7 @@ func _default_store() -> Dictionary:
 		"housing_tier": HOUSING_BACK_ALLEY,
 		"owned_containers": [{"item_id": "bag", "instance_id": 0, "capacity": 3}],
 		"loadout": [],
+		"starter_card_home_grant_applied": false,
 		"meta_home": {"housing_tier": HOUSING_BACK_ALLEY, "current_location": "home"},
 		"trade_up_history": [],
 		"sale_history": [],

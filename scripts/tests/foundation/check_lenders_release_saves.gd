@@ -1,6 +1,7 @@
 extends "res://scripts/tests/foundation/check_items_events_world.gd"
 
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
+const RunReportTimelineCanvasScript := preload("res://scripts/ui/run_report_timeline_canvas.gd")
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
@@ -41,6 +42,20 @@ func _check_run_report_foundation(failures: Array) -> void:
 		failures.append("Run report heat history did not timestamp transitions with the existing game clock.")
 	if run_state.environment_history.is_empty() or int((run_state.environment_history[0] as Dictionary).get("entered_game_clock_minutes", -1)) != RunState.GAME_CLOCK_START_MINUTE or int(run_state.current_environment.get("entered_game_clock_minutes", -1)) != run_state.game_clock_minutes:
 		failures.append("Run environment visits did not retain their game-clock entry times.")
+	if run_state.environment_history.is_empty() or int((run_state.environment_history[0] as Dictionary).get("departed_game_clock_minutes", -1)) != run_state.game_clock_minutes:
+		failures.append("RunState did not close a visit at the exact clock when the environment changed.")
+	var timed_travel_run: RunState = RunStateScript.new()
+	timed_travel_run.start_new("RUN-REPORT-TRAVEL-BOUNDARY")
+	timed_travel_run.set_environment({"id": "source", "world_node_id": "bar", "entered_game_clock_minutes": timed_travel_run.game_clock_minutes})
+	var exact_departure := timed_travel_run.game_clock_minutes
+	timed_travel_run.current_environment["departed_game_clock_minutes"] = exact_departure
+	timed_travel_run.advance_game_clock_minutes(23)
+	timed_travel_run.set_environment({"id": "destination", "world_node_id": "grand_casino", "departed_game_clock_minutes": exact_departure - 10})
+	if timed_travel_run.environment_history.is_empty() \
+		or int((timed_travel_run.environment_history[0] as Dictionary).get("departed_game_clock_minutes", -1)) != exact_departure \
+		or int(timed_travel_run.current_environment.get("entered_game_clock_minutes", -1)) != exact_departure + 23 \
+		or timed_travel_run.current_environment.has("departed_game_clock_minutes"):
+		failures.append("RunState collapsed a stamped travel departure into the destination arrival clock.")
 	var saved := run_state.to_dict()
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(saved)
@@ -126,9 +141,11 @@ func _check_run_report_foundation(failures: Array) -> void:
 		"current_node_id": "",
 	}
 	route_run_data["environment_history"] = [
-		{"id": "home_env", "world_node_id": "home", "archetype_id": "home", "display_name": "Home", "entered_game_clock_minutes": report_start_clock, "departed_game_clock_minutes": report_start_clock + 4},
-		{"id": "bar_env", "world_node_id": "bar", "archetype_id": "bar", "display_name": "Bar", "entered_game_clock_minutes": report_start_clock + 8, "departed_game_clock_minutes": report_start_clock + 12},
-		{"id": "casino_env", "world_node_id": "grand_casino", "archetype_id": "grand_casino", "display_name": "Grand Casino", "entered_game_clock_minutes": report_start_clock + 16, "departed_game_clock_minutes": report_start_clock + 20},
+		# Reproduce saves made by the former boundary bug: each visit was closed at
+		# the next arrival even though the travel story retained the exact clocks.
+		{"id": "home_env", "world_node_id": "home", "archetype_id": "home", "display_name": "Home", "entered_game_clock_minutes": report_start_clock, "departed_game_clock_minutes": report_start_clock + 8},
+		{"id": "bar_env", "world_node_id": "bar", "archetype_id": "bar", "display_name": "Bar", "entered_game_clock_minutes": report_start_clock + 8, "departed_game_clock_minutes": report_start_clock + 16},
+		{"id": "casino_env", "world_node_id": "grand_casino", "archetype_id": "grand_casino", "display_name": "Grand Casino", "entered_game_clock_minutes": report_start_clock + 16, "departed_game_clock_minutes": report_start_clock + 24},
 	]
 	route_run_data["current_environment"] = {"id": "bar_revisit_env", "world_node_id": "bar", "archetype_id": "bar", "display_name": "Bar Revisit", "entered_game_clock_minutes": report_start_clock + 24}
 	route_run_data["story_log"] = [
@@ -150,12 +167,101 @@ func _check_run_report_foundation(failures: Array) -> void:
 		failures.append("Run report route reconstruction did not preserve authoritative visits/revisit order: %s." % JSON.stringify(route_path))
 	var route_segments: Array = route_timeline.get("replay_segments", []) if typeof(route_timeline.get("replay_segments", [])) == TYPE_ARRAY else []
 	var travel_segment_count := 0
+	var route_travel_clocks: Array = []
 	for segment_value in route_segments:
 		if typeof(segment_value) == TYPE_DICTIONARY and str((segment_value as Dictionary).get("kind", "")) == "travel":
 			travel_segment_count += 1
+			route_travel_clocks.append([
+				int((segment_value as Dictionary).get("start_game_clock_minutes", -1)),
+				int((segment_value as Dictionary).get("end_game_clock_minutes", -1)),
+			])
 	var route_map := _copy_dict(route_report.get("map_snapshot", {}))
 	if travel_segment_count != 3 or _copy_array(route_map.get("route_path_geometry", [])).size() != 3 or _copy_array(route_map.get("nodes", [])).size() != 3:
 		failures.append("Run report map did not render the full movement path with unique nodes and all travel legs: segments=%d geometry=%d nodes=%d." % [travel_segment_count, _copy_array(route_map.get("route_path_geometry", [])).size(), _copy_array(route_map.get("nodes", [])).size()])
+	if JSON.stringify(route_travel_clocks) != JSON.stringify([
+		[report_start_clock + 4, report_start_clock + 8],
+		[report_start_clock + 12, report_start_clock + 16],
+		[report_start_clock + 20, report_start_clock + 24],
+	]):
+		failures.append("Run report did not recover animated travel intervals from the exact story clocks: %s." % JSON.stringify(route_travel_clocks))
+
+	# Multi-day reports must use the compact visit ledger directly. Heat samples
+	# and story rows are intentionally sparse here to reproduce the former bug
+	# that stretched the apartment across most of the run.
+	var multi_day_end := report_start_clock + 2880
+	var multi_day_data := run_state.to_dict()
+	multi_day_data["world_map"] = {
+		"visited_path": ["apartment", "gas_station_casino", "motel", "grand_casino"],
+		"nodes": [
+			{"id": "apartment", "display_name": "Apartment", "position": {"x": 0.1, "y": 0.2}},
+			{"id": "gas_station_casino", "display_name": "Gas Station Casino", "position": {"x": 0.3, "y": 0.6}},
+			{"id": "motel", "display_name": "Motel", "position": {"x": 0.55, "y": 0.35}},
+			{"id": "grand_casino", "display_name": "Grand Casino", "position": {"x": 0.85, "y": 0.5}},
+		],
+		"current_node_id": "grand_casino",
+	}
+	multi_day_data["environment_history"] = [
+		{"id": "apartment_001", "world_node_id": "apartment", "display_name": "Apartment", "entered_game_clock_minutes": report_start_clock, "departed_game_clock_minutes": report_start_clock + 180},
+		{"id": "gas_002", "world_node_id": "gas_station_casino", "display_name": "Gas Station Casino", "entered_game_clock_minutes": report_start_clock + 240, "departed_game_clock_minutes": report_start_clock + 780},
+		{"id": "motel_003", "world_node_id": "motel", "display_name": "Motel", "entered_game_clock_minutes": report_start_clock + 820, "departed_game_clock_minutes": report_start_clock + 1980},
+	]
+	multi_day_data["current_environment"] = {"id": "grand_004", "world_node_id": "grand_casino", "display_name": "Grand Casino", "entered_game_clock_minutes": report_start_clock + 2040}
+	multi_day_data["story_log"] = []
+	multi_day_data["heat_history"] = [
+		{"action_index": 0, "game_clock_minutes": report_start_clock, "heat_value": 0, "world_node_id": "apartment", "environment_name": "Apartment", "transition": true},
+		{"action_index": 20, "game_clock_minutes": report_start_clock + 500, "heat_value": 18, "world_node_id": "gas_station_casino", "environment_name": "Gas Station Casino", "transition": false},
+		{"action_index": 80, "game_clock_minutes": report_start_clock + 2500, "heat_value": 42, "world_node_id": "grand_casino", "environment_name": "Grand Casino", "transition": false},
+	]
+	multi_day_data["event_cadence"] = {"action_index": 100}
+	multi_day_data["suspicion"] = {"level": 42}
+	multi_day_data["game_clock_minutes"] = multi_day_end
+	var multi_day_timeline := _copy_dict(RunReportViewModelScript.build(multi_day_data).get("timeline", {}))
+	var multi_day_segments := _copy_array(multi_day_timeline.get("replay_segments", []))
+	var expected_segment_clocks := [
+		["dwell", "apartment", report_start_clock, report_start_clock + 180],
+		["travel", "", report_start_clock + 180, report_start_clock + 240],
+		["dwell", "gas_station_casino", report_start_clock + 240, report_start_clock + 780],
+		["travel", "", report_start_clock + 780, report_start_clock + 820],
+		["dwell", "motel", report_start_clock + 820, report_start_clock + 1980],
+		["travel", "", report_start_clock + 1980, report_start_clock + 2040],
+		["dwell", "grand_casino", report_start_clock + 2040, multi_day_end],
+	]
+	if multi_day_segments.size() != expected_segment_clocks.size():
+		failures.append("Multi-day run report did not retain every exact dwell/travel segment: %s." % JSON.stringify(multi_day_segments))
+	else:
+		for index in range(expected_segment_clocks.size()):
+			var expected: Array = expected_segment_clocks[index]
+			var actual: Dictionary = multi_day_segments[index]
+			if str(actual.get("kind", "")) != str(expected[0]) \
+				or (str(expected[1]) != "" and str(actual.get("node_id", "")) != str(expected[1])) \
+				or int(actual.get("start_game_clock_minutes", -1)) != int(expected[2]) \
+				or int(actual.get("end_game_clock_minutes", -1)) != int(expected[3]):
+				failures.append("Multi-day run report distorted segment %d: expected=%s actual=%s." % [index, JSON.stringify(expected), JSON.stringify(actual)])
+				break
+	var multi_day_heat := _copy_array(multi_day_timeline.get("heat_samples", []))
+	if multi_day_heat.is_empty() or int((multi_day_heat[-1] as Dictionary).get("game_clock_minutes", -1)) != multi_day_end or not is_equal_approx(float((multi_day_heat[-1] as Dictionary).get("progress", -1.0)), 1.0):
+		failures.append("Multi-day run report did not extend the final heat state through the exact run end time.")
+	var step_canvas: RunReportTimelineCanvas = RunReportTimelineCanvasScript.new()
+	step_canvas.size = Vector2(400.0, 120.0)
+	step_canvas.set_timeline({"heat_samples": [
+		{"progress": 0.0, "heat_value": 10},
+		{"progress": 0.5, "heat_value": 60},
+		{"progress": 1.0, "heat_value": 60},
+	]})
+	var step_points: PackedVector2Array = step_canvas.heat_points
+	if step_points.size() < 5 \
+		or not is_equal_approx(step_points[1].y, step_points[0].y) \
+		or not is_equal_approx(step_points[1].x, step_points[2].x) \
+		or is_equal_approx(step_points[1].y, step_points[2].y):
+		failures.append("Run report heat graph interpolated diagonally instead of applying heat at its recorded event time.")
+	step_canvas.free()
+	var missing_heat_save := run_state.to_dict()
+	missing_heat_save["heat_history"] = []
+	missing_heat_save["game_clock_minutes"] = multi_day_end
+	var restored_missing_heat: RunState = RunStateScript.new()
+	restored_missing_heat.from_dict(missing_heat_save)
+	if restored_missing_heat.heat_history.is_empty() or int((restored_missing_heat.heat_history[0] as Dictionary).get("game_clock_minutes", -1)) != multi_day_end:
+		failures.append("Legacy save repair timestamped missing heat history at Day 1 instead of the restored run clock.")
 
 	var registry := RunReportViewModelScript.load_outcome_registry()
 	var base_data := run_state.to_dict()
@@ -2408,6 +2514,10 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 		failures.append("Grand Casino 1:1 table buy-in did not conserve cash plus chips.")
 	if run_state.wager_balance_for_game("blackjack", run_state.current_environment) != 100 or run_state.wager_capacity_for_game("blackjack", run_state.current_environment) != 100:
 		failures.append("Grand Casino table wager balance did not include cash available for seamless chip fallback.")
+	if run_state.grand_casino_game_uses_chips("slot", run_state.current_environment) \
+		or run_state.wager_balance_for_game("slot", run_state.current_environment) != 60 \
+		or run_state.wager_capacity_for_game("slot", run_state.current_environment) != 60:
+		failures.append("Grand Casino slot wager capacity did not remain cash-only when casino chips were present.")
 	if run_state.run_spending_score != score_before:
 		failures.append("Grand Casino chip buy-in incorrectly counted a currency transfer as score spending.")
 	var fallback_run: RunState = RunStateScript.new()
@@ -2468,10 +2578,14 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 	machine_funding_run.start_new("GC-MACHINE-CASH-FALLBACK")
 	machine_funding_run.set_environment(environment.to_dict())
 	machine_funding_run.bankroll = 20
-	machine_funding_run.grand_casino_chips = 0
+	machine_funding_run.grand_casino_chips = 30
 	var machine_funding := machine_funding_run.fund_grand_casino_table_wager("slot", 10, machine_funding_run.current_environment)
-	if not bool(machine_funding.get("ok", false)) or int(machine_funding.get("cash_used", -1)) != 10 or machine_funding_run.bankroll != 10 or machine_funding_run.grand_casino_chips != 10:
-		failures.append("A Grand Casino machine did not use seamless cash fallback when its chip rack was empty.")
+	if not bool(machine_funding.get("ok", false)) \
+		or int(machine_funding.get("cash_used", -1)) != 0 \
+		or int(machine_funding.get("chips_bought", -1)) != 0 \
+		or machine_funding_run.bankroll != 20 \
+		or machine_funding_run.grand_casino_chips != 30:
+		failures.append("Grand Casino slot wager preparation incorrectly bought or reserved casino chips.")
 	var insufficient_run: RunState = RunStateScript.new()
 	insufficient_run.start_new("GC-CASH-FALLBACK-INSUFFICIENT")
 	insufficient_run.set_environment(environment.to_dict())
@@ -2515,13 +2629,32 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 		"stake": 1,
 		"deltas": machine_deltas,
 		"environment_id": str(run_state.current_environment.get("id", "")),
-		"message": "Casino machine chip fixture.",
+		"message": "Casino machine cash payout fixture.",
 	})
 	var machine_cash_before := run_state.bankroll
 	var machine_chips_before := run_state.grand_casino_chips
 	GameModule.apply_result(run_state, machine_result)
-	if run_state.bankroll != machine_cash_before or run_state.grand_casino_chips != machine_chips_before + 7 or int(machine_result.get("chips_delta", 0)) != 7 or str(machine_result.get("currency", "")) != "chips":
-		failures.append("Grand Casino machine payout did not remain in chips for Cage redemption.")
+	if run_state.bankroll != machine_cash_before + 7 or run_state.grand_casino_chips != machine_chips_before or machine_result.has("chips_delta") or str(machine_result.get("currency", "")) == "chips":
+		failures.append("Grand Casino slot payout did not settle directly into the player's cash bankroll.")
+	var machine_loss_deltas := GameModule.empty_result_deltas()
+	machine_loss_deltas["bankroll_delta"] = -3
+	var machine_loss_result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": "slot",
+		"game_id": "slot",
+		"action_id": "spin",
+		"action_kind": "legal",
+		"stake": 3,
+		"deltas": machine_loss_deltas,
+		"environment_id": str(run_state.current_environment.get("id", "")),
+		"message": "Casino machine cash wager fixture.",
+	})
+	machine_cash_before = run_state.bankroll
+	machine_chips_before = run_state.grand_casino_chips
+	GameModule.apply_result(run_state, machine_loss_result)
+	if run_state.bankroll != machine_cash_before - 3 or run_state.grand_casino_chips != machine_chips_before or machine_loss_result.has("chips_delta"):
+		failures.append("Grand Casino slot wager did not debit the player's cash bankroll.")
 
 	var outside_environment := run_state.current_environment.duplicate(true)
 	outside_environment["id"] = "outside_table_currency_fixture"
@@ -3020,9 +3153,12 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 		failures.append("Grand Casino room seam could not enter the freely accessible Cage.")
 		return
 	var cage_rects := _copy_dict(_copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {}))
-	for object_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "casino_fixture:cage_gift_shop", "travel:grand_casino"]:
+	for object_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "travel:grand_casino"]:
 		if not cage_rects.has(object_id):
 			failures.append("Grand Casino Cage layout is missing authored object placement: %s." % object_id)
+	var cage_item_spots := _copy_array(_copy_dict(run_state.current_environment.get("layout", {})).get("item_spots", []))
+	if cage_item_spots.size() != 4 or cage_rects.has("casino_fixture:cage_gift_shop"):
+		failures.append("Grand Casino Cage layout did not replace the gift popup fixture with four stable shelf-item spots.")
 	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID):
 		failures.append("Grand Casino Cage return door could not restore the Main Floor.")
 		return
@@ -3624,8 +3760,65 @@ func _check_tier_two_venue_progression(library: ContentLibrary, failures: Array)
 	var underground_targets := _unique_strings(_string_array(underground.get("next_archetypes", [])), _string_array(underground.get("travel_hooks", [])))
 	if not underground_targets.has("grand_casino"):
 		failures.append("Small Underground Casino lost its direct Grand Casino shortcut.")
+	_check_tier_two_world_spawn_thresholds(library, failures)
 	_check_grand_casino_invite_gate(library, kitty, delta, failures)
 	_check_tier_two_route_gates(library, delta, delta_route, failures)
+
+
+func _check_tier_two_world_spawn_thresholds(library: ContentLibrary, failures: Array) -> void:
+	var repeated_visit_run: RunState = RunStateScript.new()
+	repeated_visit_run.start_new("TIER2-REPEATED-VISIT")
+	repeated_visit_run.set_world_map(WorldMapScript.new(library).build(repeated_visit_run, repeated_visit_run.create_rng("map")))
+	repeated_visit_run.enter_world_node("bar", {})
+	repeated_visit_run.enter_world_node("bar", {})
+	for tier_two_id in ["kitty_cat_lounge", "delta_queen"]:
+		var repeated_node := WorldMapScript.node_by_id(repeated_visit_run.world_map, tier_two_id)
+		if bool(repeated_node.get("route_spawn_open", false)):
+			failures.append("Repeated visits to one Tier-1 casino incorrectly enabled spawning for %s." % tier_two_id)
+
+	var two_casino_run: RunState = RunStateScript.new()
+	two_casino_run.start_new("TIER2-TWO-CASINOS")
+	two_casino_run.set_world_map(WorldMapScript.new(library).build(two_casino_run, two_casino_run.create_rng("map")))
+	two_casino_run.enter_world_node("bar", {})
+	two_casino_run.enter_world_node("gas_station_casino", {})
+	for tier_two_id in ["kitty_cat_lounge", "delta_queen"]:
+		var eligible_node := WorldMapScript.node_by_id(two_casino_run.world_map, tier_two_id)
+		if not bool(eligible_node.get("route_spawn_open", false)):
+			failures.append("Two distinct Tier-1 casino visits did not enable spawning for %s." % tier_two_id)
+		if bool(eligible_node.get("unlocked", false)) or str(eligible_node.get("state", "")) != WorldMapScript.STATE_HIDDEN or bool(eligible_node.get("seen", false)):
+			failures.append("Tier-2 casino %s was revealed instead of only becoming spawn-eligible." % tier_two_id)
+	if str(two_casino_run.narrative_flags.get(RunState.TIER_TWO_LOCATION_SPAWN_REASON_FLAG, "")) != "two_tier_one_casinos":
+		failures.append("Two-casino Tier-2 spawn gate did not record its progression reason.")
+
+	var underground_run: RunState = RunStateScript.new()
+	underground_run.start_new("TIER2-UNDERGROUND")
+	underground_run.set_world_map(WorldMapScript.new(library).build(underground_run, underground_run.create_rng("map")))
+	underground_run.enter_world_node("small_underground_casino", {})
+	for tier_two_id in ["kitty_cat_lounge", "delta_queen"]:
+		var eligible_node := WorldMapScript.node_by_id(underground_run.world_map, tier_two_id)
+		if not bool(eligible_node.get("route_spawn_open", false)):
+			failures.append("Underground Casino visit did not enable spawning for %s." % tier_two_id)
+		if bool(eligible_node.get("unlocked", false)) or str(eligible_node.get("state", "")) != WorldMapScript.STATE_HIDDEN:
+			failures.append("Underground Casino visit revealed %s instead of only enabling its spawn." % tier_two_id)
+	if str(underground_run.narrative_flags.get(RunState.TIER_TWO_LOCATION_SPAWN_REASON_FLAG, "")) != "underground_visit":
+		failures.append("Underground Tier-2 spawn gate did not record its progression reason.")
+
+	# A pre-fix save can already contain the qualifying visits while both Tier-2
+	# nodes remain hidden. Loading it must reconcile that state automatically.
+	var legacy_run: RunState = RunStateScript.new()
+	legacy_run.start_new("TIER2-LEGACY-SAVE")
+	var legacy_map := WorldMapScript.new(library).build(legacy_run, legacy_run.create_rng("map"))
+	legacy_map = WorldMapScript.enter_node(legacy_map, "bar", {})
+	legacy_map = WorldMapScript.enter_node(legacy_map, "gas_station_casino", {})
+	legacy_run.set_world_map(legacy_map)
+	var loaded_legacy_run: RunState = RunStateScript.new()
+	loaded_legacy_run.from_dict(legacy_run.to_dict())
+	for tier_two_id in ["kitty_cat_lounge", "delta_queen"]:
+		var repaired_node := WorldMapScript.node_by_id(loaded_legacy_run.world_map, tier_two_id)
+		if not bool(repaired_node.get("route_spawn_open", false)):
+			failures.append("Qualifying legacy save did not repair Tier-2 casino spawn eligibility for %s on load." % tier_two_id)
+		if bool(repaired_node.get("unlocked", false)) or str(repaired_node.get("state", "")) != WorldMapScript.STATE_HIDDEN:
+			failures.append("Legacy save repair revealed Tier-2 casino %s instead of only enabling its spawn." % tier_two_id)
 
 
 func _check_tier_two_route_gates(library: ContentLibrary, delta: Dictionary, delta_route: Dictionary, failures: Array) -> void:
@@ -3910,8 +4103,8 @@ func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Diction
 		if str(node.get("id", "")) == "grand_casino":
 			grand_node = node
 			break
-	if grand_node.is_empty() or not bool(grand_node.get("seen", false)):
-		failures.append("Known Grand Casino map node did not persist as a seen, locked reference before invitation acceptance.")
+	if not grand_node.is_empty():
+		failures.append("Unvisited Grand Casino map node appeared before the invitation made it an available destination.")
 	if bool(app.call("select_world_map_node", "grand_casino")):
 		failures.append("Grand Casino locked map node was selectable for travel.")
 	if not str(app.get("selected_travel_target_id")).is_empty():

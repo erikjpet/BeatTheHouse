@@ -1,6 +1,12 @@
 {
   "icon_source": "call_74DnnqcTIhnlR3gbur8A8gi6.png",
   "portrait_source": "call_OlVJGR3J3Lc50pnVcWXCNrn4.png",
+  "main_menu_button_plate": {
+    "source": "C:/Users/theep/.codex/generated_images/019fd762-cd94-7fe3-86ac-14e1366ba6c4/exec-ad77004d-9c36-4e79-9792-b1aefed97553.png",
+    "export": "main_menu_button_plate.png",
+    "size": [384, 192],
+    "treatment": "nearest-neighbor downscale for a crisp nine-patch pixel marquee"
+  },
   "icon_grid": {
     "columns": 4,
     "rows": 3,

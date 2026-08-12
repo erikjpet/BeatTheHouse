@@ -44,11 +44,31 @@ const BLACKJACK_MAX_SIDE_BETS := 2
 const BLACKJACK_PAYOUT_LABEL := "3:2"
 const STRATEGY_DEVIATION_MAX_HEAT := 24
 const STRATEGY_DEVIATION_MAX_WATCH := 45
+const ORDINARY_STRATEGY_HEAT_MAX := 2
+const DIRTY_COUNT_BASE_HEAT := 10
+const DIRTY_COUNT_ERROR_HEAT := 4
+const COUNT_ADVANTAGE_BASE_HEAT := 8
+const HOLE_CARD_ADVANTAGE_BASE_HEAT := 12
 const COOLERS_CUFFLINKS_ITEM_ID := "coolers_cufflinks"
 const BROKEN_CUFFLINKS_ITEM_ID := "broken_cufflinks"
 const PLAYER_CARD_SCALE := 0.84
 const DEALER_CARD_SCALE := 0.78
 const PATRON_CARD_SCALE := 0.43
+const COMPACT_CARD_RANK_PATTERNS := {
+	2: ["111", "001", "111", "100", "111"],
+	3: ["111", "001", "111", "001", "111"],
+	4: ["101", "101", "111", "001", "001"],
+	5: ["111", "100", "111", "001", "111"],
+	6: ["111", "100", "111", "101", "111"],
+	7: ["111", "001", "001", "001", "001"],
+	8: ["111", "101", "111", "101", "111"],
+	9: ["111", "101", "111", "001", "111"],
+	10: ["111", "010", "010", "010", "010"],
+	11: ["011", "001", "001", "101", "111"],
+	12: ["111", "101", "101", "111", "001"],
+	13: ["101", "110", "100", "110", "101"],
+	14: ["010", "101", "111", "101", "101"],
+}
 const BJ_CONSOLE_Y := 342.0
 const BJ_CONSOLE_H := 84.0
 const BJ_TABLE_BOTTOM := 334.0
@@ -370,10 +390,19 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_animates_idle": true,
+		# Eight frames per second keeps the intentionally stepped pixel animation
+		# visible while the Web build is idle. Live deal channels still redraw at
+		# the active surface rate, using the lightweight Web cast below.
+		"surface_web_idle_animation_fps": 8.0,
 		"surface_dynamic_overlay_channels": [DEAL_ANIMATION_CHANNEL, ATTENTION_ANIMATION_CHANNEL, COUNT_ANIMATION_CHANNEL, PAYOUT_ANIMATION_CHANNEL],
 		"surface_realtime_state_refresh": false,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
 		"surface_ui_preference_keys": ["blackjack_side_bets"],
+		"surface_action_blocks": [{
+			"actions": ["blackjack_deal", "blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"],
+			"while_animation": DEAL_ANIMATION_CHANNEL,
+			"reason": "Let the cards finish moving before choosing the next play.",
+		}],
 		"surface_hover_ui_protected_regions": [
 			_blackjack_ui_rect(236, 202, 428, 108, "blackjack_side_bet"),
 		],
@@ -660,22 +689,30 @@ func _prepare_draw_deal_events_cache(surface_state: Dictionary) -> void:
 
 
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
-	# Per-frame check: operate on the live stored table (zero-copy) and only
-	# build the full normalized session when a count challenge is actually
-	# pending. Stored table state is already normalized by every mutation path.
+	# This is queried every frame. Keep the active-count path read-only and
+	# allocation-free; action boundaries already synchronize newly dealt cards.
 	var table: Dictionary = _peek_table_state(environment)
 	if table.is_empty():
 		return false
 	var raw_challenge: Variant = ui_state.get("count_challenge", {})
 	if typeof(raw_challenge) == TYPE_DICTIONARY and not (raw_challenge as Dictionary).is_empty() and not bool(ui_state.get("count_answered", false)):
-		var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
-		_sync_count_challenge_icons(session, run_state)
-		var challenge: Dictionary = _local_copy_dict(session.get("count_challenge", {}))
-		if _count_has_new_misses(challenge, _surface_time_for_count(session)):
+		var challenge: Dictionary = raw_challenge as Dictionary
+		if _count_has_new_misses(challenge, _surface_time_for_count(ui_state)):
 			return true
-	if _has_dealt_hand(ui_state) and (_all_hands_complete(ui_state) or _dealer_has_blackjack(_card_array(ui_state.get("dealer_cards", [])))):
+	var dealt := _has_dealt_hand(ui_state)
+	var dealer_cards_value: Variant = ui_state.get("dealer_cards", [])
+	var dealer_cards: Array = dealer_cards_value as Array if typeof(dealer_cards_value) == TYPE_ARRAY else []
+	if dealt and (_all_hands_complete(ui_state) or _dealer_has_blackjack(dealer_cards)):
+		if _tutorial_grand_casino_manual_settlement(run_state, environment):
+			return false
+		if bool(ui_state.get("presentation_timing_enforced", false)):
+			var now_msec := _surface_time_for_count(ui_state)
+			if _deal_presentation_active(ui_state, now_msec):
+				return false
+			if _count_settlement_bubbles_pending(ui_state, now_msec):
+				return false
 		return true
-	if _has_dealt_hand(ui_state) or bool(table.get("barred", false)):
+	if dealt or bool(table.get("barred", false)):
 		return false
 	# The guided table advances only from an explicit DEAL. Timed count misses and
 	# completed-hand settlement above remain live, but an idle lesson can never
@@ -701,6 +738,13 @@ func surface_auto_tick_state_keys() -> Array:
 		"blackjack_sit_out",
 		"count_challenge",
 		"count_answered",
+		"counting_enabled",
+		"deal_animation_id",
+		"deal_started_msec",
+		"deal_animation_events",
+		"settlement_count_revealed",
+		"settlement_pending",
+		"presentation_timing_enforced",
 	]
 
 
@@ -723,6 +767,12 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 	if not notice.is_empty():
 		return _message_command(next_state, notice)
 	if _has_dealt_hand(next_state) and (_all_hands_complete(next_state) or _dealer_has_blackjack(_card_array(next_state.get("dealer_cards", [])))):
+		if _tutorial_grand_casino_manual_settlement(run_state, environment):
+			return {"handled": false}
+		if bool(next_state.get("presentation_timing_enforced", false)):
+			var now_msec := _surface_time_for_count(next_state)
+			if _deal_presentation_active(next_state, now_msec) or _count_settlement_bubbles_pending(next_state, now_msec):
+				return {"handled": false}
 		return _settle_completed_round_command(next_state, int(next_state.get("active_hand_index", 0)), _terminal_round_message(next_state), table, run_state)
 	if _has_dealt_hand(next_state) or bool(table.get("barred", false)):
 		return {"handled": false}
@@ -756,6 +806,13 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 		"preserve_surface_ui_state": false,
 		"message": "The dealer deals the next hand; you watch without wagering.",
 	})
+
+
+func _tutorial_grand_casino_manual_settlement(run_state: RunState, environment: Dictionary) -> bool:
+	return run_state != null \
+		and run_state.is_tutorial_run() \
+		and str(environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID \
+		and not _is_rourke_duel(run_state, environment)
 
 
 func _blackjack_table_motion_active(table: Dictionary, now_msec: int) -> bool:
@@ -805,10 +862,12 @@ func coach_state(run_state: RunState, environment: Dictionary, ui_state: Diction
 		"hands_played": hands_played,
 		"hand_active": hand_active,
 		"between_hands": not hand_active and not _local_copy_dict(table.get("last_result", {})).is_empty(),
+		"counting_enabled": bool(ui_state.get("counting_enabled", table.get("counting_enabled", false))),
 		"count_started": not count_challenge.is_empty(),
 		"count_all_selected": not count_icons.is_empty() and clicked_icons.size() >= count_icons.size(),
-		"count_answered": bool(ui_state.get("count_answered", false)),
-		"count_perfect": bool(ui_state.get("count_perfect", false)),
+		"count_answered": bool(ui_state.get("count_answered", table.get("tutorial_count_completed", false))),
+		"count_perfect": bool(ui_state.get("count_perfect", table.get("tutorial_count_perfect", false))),
+		"tutorial_count_completed": bool(table.get("tutorial_count_completed", false)),
 		"lookaway_started": not str(ui_state.get("dealer_lookaway_id", "")).is_empty(),
 		"peek_used": bool(cheats.get("peek_hole_card", false)),
 		"surface_action_anchors": surface_action_anchors,
@@ -980,10 +1039,13 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 			if not peek_window_open:
 				next_state["peek_caught_watching"] = true
 				next_state["dealer_hole_visible"] = false
-				return _action_command("peek_hole_card", "cheat", true, next_state, index, "The dealer catches your eyes on the hole card.", true, false, true)
+				return _action_command("peek_hole_card", "cheat", true, next_state, index, "The dealer catches your eyes on the hole card.", true, run_state != null and run_state.is_tutorial_run(), true)
 			next_state["dealer_hole_visible"] = true
 			_sync_count_challenge_icons(next_state, run_state)
-			return _action_command("peek_hole_card", "cheat", confirm_requested, next_state, index, "You catch a glimpse of the down card. The dealer may notice.", false)
+			# Peek changes information inside the current hand; it is not a hand
+			# settlement. Preserve that exact session so the player can use the read and
+			# finish with Hit or Stand before another tutorial lesson becomes eligible.
+			return _action_command("peek_hole_card", "cheat", confirm_requested, next_state, index, "You catch a glimpse of the down card. The dealer may notice.", false, true)
 		"blackjack_count":
 			return _toggle_counting_command(index, next_state, table, environment, run_state)
 		"blackjack_count_icon":
@@ -1100,13 +1162,16 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	if not bool(session.get("count_answered", false)) and not _local_copy_dict(session.get("count_challenge", {})).is_empty():
 		_sync_count_challenge_icons(session, run_state, result_msec)
 		_finalize_count_challenge(session, run_state, result_msec)
+	_persist_tutorial_count_lesson_result(table, session, run_state, environment)
 	var cheat: Dictionary = {} if sit_out else _cheat_detection_for_hand(session, table, run_state, environment, rng, table_stake)
 	var cufflinks_broke := _coolers_cufflinks_absorbed_failed_peek(action_id, cheat, run_state)
 	var raw_suspicion_delta: int = int(cheat.get("suspicion_delta", 0))
 	if cufflinks_broke:
 		raw_suspicion_delta = 0
 	var suspicion_delta: int = run_state.alcohol_adjusted_suspicion_delta(raw_suspicion_delta) if raw_suspicion_delta > 0 else raw_suspicion_delta
-	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", stake, run_state.suspicion_level() + suspicion_delta) if suspicion_delta > 0 else {}
+	# A basic-strategy mistake may add a trace of local heat, but it must not
+	# cascade into the security penalties reserved for actual advantage play.
+	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", stake, run_state.suspicion_level() + suspicion_delta) if suspicion_delta > 0 and bool(cheat.get("advantage_play", false)) else {}
 	var security_bankroll_delta: int = int(security_pressure.get("bankroll_delta", 0))
 	var security_message := str(security_pressure.get("message", ""))
 
@@ -1129,7 +1194,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var result_action_kind := "legal"
 	if bool(cheat.get("used_peek", false)) or bool(cheat.get("used_count", false)):
 		result_action_kind = "cheat"
-	elif suspicion_delta > 0 or bool(cheat.get("used_strategy_deviation", false)):
+	elif bool(cheat.get("advantage_play", false)):
 		result_action_kind = "risky"
 	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, count_record_delta, rng, result_msec)
 	if not sit_out:
@@ -1455,6 +1520,8 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 			_start_count_challenge(session, table, run_state, result_msec)
 		if not bool(session.get("count_answered", false)):
 			_finalize_count_challenge(session, run_state, result_msec)
+		_persist_tutorial_count_lesson_result(table, session, run_state, environment)
+		_update_environment_table(environment, table)
 	var cheat: Dictionary = _cheat_detection_for_hand(session, table, run_state, environment, rng, _session_stake(maxi(1, int(ui_state.get("selected_stake", 1))), session))
 	var cufflinks_broke := _coolers_cufflinks_absorbed_failed_peek(action_id, cheat, run_state)
 	var raw_suspicion_delta: int = maxi(1, int(cheat.get("suspicion_delta", 0))) if action_id == "peek_hole_card" else maxi(0, int(cheat.get("suspicion_delta", 0)))
@@ -1519,6 +1586,9 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 		result["blackjack_count_delta"] = int(session.get("count_delta", 0))
 		result["preserve_surface_ui_state"] = true
 		result["blackjack_surface_ui_state"] = session.duplicate(true)
+	elif action_id == "peek_hole_card":
+		result["preserve_surface_ui_state"] = true
+		result["blackjack_surface_ui_state"] = session.duplicate(true)
 	result["blackjack_pit_boss_watched"] = pit_boss_watched
 	result["blackjack_pit_boss_heat_bonus"] = pit_boss_heat_bonus
 	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke
@@ -1528,7 +1598,17 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 
 func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary, run_state: RunState, environment: Dictionary, rng: RngStream, result_msec: int = 0) -> Dictionary:
 	var table_stake := _session_stake(maxi(1, int(session.get("selected_stake", session.get("locked_stake", 1)))), session)
-	var confiscated_bet := maxi(1, _wager_cost_from_session(table_stake, session, table, run_state))
+	var tutorial_practice_protected := run_state != null \
+		and run_state.is_tutorial_run() \
+		and str(environment.get("archetype_id", "")) == "small_underground_casino" \
+		and not bool(table.get("tutorial_count_completed", false))
+	var first_tutorial_warning := tutorial_practice_protected \
+		and not bool(run_state.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false))
+	# Every caught Peek before the real counting lesson is complete keeps the
+	# practice hand playable. The dealer's authored warning is still spoken once,
+	# but a resumed or repeated Peek can no longer fall through to the old barred
+	# table / skipped Count path.
+	var confiscated_bet := 0 if tutorial_practice_protected else maxi(1, _wager_cost_from_session(table_stake, session, table, run_state))
 	var current_heat := run_state.suspicion_level_for_environment_id(str(environment.get("id", ""))) if run_state != null else 0
 	var raw_heat := rng.randi_range(60, 80) if rng != null else 70
 	var desired_applied_heat := maxi(0, mini(raw_heat, 95 - current_heat))
@@ -1538,12 +1618,9 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 	var pit_boss_watched := bool(pit_boss_status.get("watched", false))
 	var pit_boss_heat_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
 	var dealer_name := str(table.get("dealer_name", "The dealer"))
-	var tutorial_reprieve := run_state != null \
-		and run_state.is_tutorial_run() \
-		and not bool(run_state.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false))
 	var message := "%s catches the peek cold, sweeps your bet, and tells you the blackjack table is closed to you for cheating." % dealer_name
-	if tutorial_reprieve:
-		message = "%s catches the bad peek and sweeps your bet, but stops short of closing the practice table." % dealer_name
+	if tutorial_practice_protected:
+		message = "%s catches the bad peek, but leaves this practice hand and the table open so you can finish learning." % dealer_name
 	var pit_boss_summary := str(pit_boss_status.get("summary", "")) if bool(pit_boss_status.get("active", false)) else ""
 	if not pit_boss_summary.is_empty():
 		message = "%s %s" % [message, pit_boss_summary]
@@ -1552,14 +1629,15 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 		heat_delta = 0
 		applied_heat_preview = 0
 		message = "%s Cooler's Cufflinks catch the heat, then snap into useless metal." % message
-	table["barred"] = not tutorial_reprieve
-	if tutorial_reprieve:
+	table["barred"] = not tutorial_practice_protected
+	if tutorial_practice_protected:
 		table.erase("barred_reason")
 		table.erase("barred_at_hand")
 		table.erase("barred_confiscated_bet")
 		table.erase("barred_scope")
 		table.erase("barred_heat_delta")
-		run_state.narrative_flags["tutorial_blackjack_peek_reprieve_used"] = true
+		if first_tutorial_warning:
+			run_state.narrative_flags["tutorial_blackjack_peek_reprieve_used"] = true
 	else:
 		table["barred_reason"] = "%s will not deal to you again after the caught hole-card peek." % dealer_name
 		table["barred_at_hand"] = int(table.get("hands_played", 0))
@@ -1568,7 +1646,7 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 		table["barred_heat_delta"] = applied_heat_preview
 	table["last_patron_action_events"] = []
 	table["last_result"] = {
-		"headline": "REPRIEVED" if tutorial_reprieve else "BARRED",
+		"headline": "REPRIEVED" if tutorial_practice_protected else "BARRED",
 		"summary": message,
 		"bankroll_delta": -confiscated_bet,
 		"suspicion_delta": applied_heat_preview,
@@ -1592,8 +1670,8 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 		"suspicion_delta": applied_heat_preview,
 		"base_suspicion_delta": heat_delta,
 		"dealer_caught_cheat": true,
-		"blackjack_table_barred": not tutorial_reprieve,
-		"blackjack_tutorial_peek_reprieve": tutorial_reprieve,
+		"blackjack_table_barred": not tutorial_practice_protected,
+		"blackjack_tutorial_peek_reprieve": tutorial_practice_protected,
 		"coolers_cufflinks_broke": cufflinks_broke,
 		"pit_boss_watched": pit_boss_watched,
 		"pit_boss_heat_bonus": pit_boss_heat_bonus,
@@ -1627,10 +1705,10 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 		"pit_boss_heat_bonus": pit_boss_heat_bonus,
 		"base_suspicion_delta": heat_delta,
 	})
-	result["blackjack_table_barred"] = not tutorial_reprieve
-	result["blackjack_tutorial_peek_reprieve"] = tutorial_reprieve
+	result["blackjack_table_barred"] = not tutorial_practice_protected
+	result["blackjack_tutorial_peek_reprieve"] = tutorial_practice_protected
 	result["blackjack_dealer_name"] = dealer_name
-	if tutorial_reprieve:
+	if first_tutorial_warning:
 		result["tutorial_dialogue_request"] = {
 			"dialogue_id": "tutorial_blackjack_dealer_reprieve",
 			"node_id": "warning",
@@ -1645,6 +1723,9 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 	result["blackjack_pit_boss_heat_bonus"] = pit_boss_heat_bonus
 	result["dealer_caught_cheat"] = true
 	result["defer_bankroll_zero_failure"] = true
+	if tutorial_practice_protected:
+		result["preserve_surface_ui_state"] = true
+		result["blackjack_surface_ui_state"] = session.duplicate(true)
 	GameModule.apply_result(run_state, result, rng)
 	return result
 
@@ -1729,7 +1810,9 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 	surface.draw_rect(Rect2(352, 54, 196, 104), Color("#0b0d16"))
 	surface.draw_rect(Rect2(352, 54, 196, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), false, 1)
 	if low_detail:
-		_draw_static_table_character(surface, Vector2(450, 156), 1.06, attention_color, Color("#1b2230"), str(surface_state.get("dealer_name", "Dealer")))
+		var dealer_foot := Vector2(450, 156) + Vector2(sin(idle * 1.8) * 2.0, 0)
+		_draw_dealer_gaze(surface, focus, Vector2(450, 91))
+		_draw_static_table_character(surface, dealer_foot, 1.06, attention_color, Color("#1b2230"), str(surface_state.get("dealer_name", "Dealer")), eye_offset, blink)
 	else:
 		_draw_dealer_gaze(surface, focus, Vector2(450, 91))
 		draw_dealer_character_style.clear()
@@ -1756,7 +1839,6 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 		surface.surface_label(str(focus.get("body_language", focus.get("tell", ""))).left(26), Vector2(566, 142), 9, C_SOFT)
 	_draw_card_row_for_table(surface, surface_state, _card_array(surface_state.get("dealer", [])), Vector2(386, 158), "dealer", 0, DEALER_CARD_SCALE)
 	_draw_shoe(surface, Vector2(706, 112), int(surface_state.get("shoe_remaining", 0)))
-	_draw_discard_tray(surface, Vector2(244, 118), surface_state)
 
 
 func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
@@ -1768,19 +1850,25 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 				continue
 			var patron: Dictionary = patrons[i]
 			var base_pos := _patron_seat_position(i)
+			var patron_clock := clock + float(int(patron.get("animation_offset", 0))) / 1000.0
+			var phase := fmod(patron_clock / 2.2, 1.0)
+			var bob := sin(phase * PI * 2.0) * (2.0 if bool(patron.get("watching_player", false)) else 1.0)
+			var lean := float(patron.get("lean", 0.0))
+			var pos := base_pos + Vector2(lean, bob)
 			var watching := bool(patron.get("watching_player", false))
 			var covered := bool(patron.get("covered", false))
 			var risk := int(patron.get("active_snitch_risk", 0))
 			var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
-			_draw_static_table_character(surface, base_pos + Vector2(0, 52), 0.86, accent, _patron_jacket_color(patron), str(patron.get("name", "Seat")))
+			_draw_static_table_character(surface, pos + Vector2(0, 52), 0.86, accent, _patron_jacket_color(patron), str(patron.get("name", "Seat")), -2.0 if covered else 2.0 if watching else 0.0, phase > 0.92)
 			var risk_width := clampf(float(risk) / 60.0, 0.0, 1.0) * 46.0
-			surface.draw_rect(Rect2(base_pos.x - 28, base_pos.y + 61, 56, 5), Color("#070810"))
-			surface.draw_rect(Rect2(base_pos.x - 28, base_pos.y + 61, risk_width, 5), accent)
+			surface.draw_rect(Rect2(pos.x - 28, pos.y + 61, 56, 5), Color("#070810"))
+			surface.draw_rect(Rect2(pos.x - 28, pos.y + 61, risk_width, 5), accent)
 			var patron_chip_count := clampi(int(patron.get("chip_stack", 0)) / 20, 1, 4)
 			for chip_index in range(patron_chip_count):
-				_draw_casino_chip(surface, base_pos + Vector2(30, 42 - float(chip_index) * 3.0 * 0.42), 5, 11.0 * 0.42, 0.92, false)
-			TableVisualsScript.draw_patron_wager_badge(surface, surface_state, patron, base_pos, i)
-			surface.surface_add_invisible_hit(Rect2(base_pos.x - 34, base_pos.y - 24, 68, 94), "blackjack_patron_cover", i)
+				_draw_casino_chip(surface, pos + Vector2(30, 42 - float(chip_index) * 3.0 * 0.42), 5, 11.0 * 0.42, 0.92, false)
+			TableVisualsScript.draw_patron_wager_badge(surface, surface_state, patron, pos, i)
+			_draw_patron_hand(surface, surface_state, patron, i)
+			surface.surface_add_invisible_hit(Rect2(pos.x - 34, pos.y - 24, 68, 94), "blackjack_patron_cover", i)
 		return
 	for i in range(patrons.size()):
 		if typeof(patrons[i]) != TYPE_DICTIONARY:
@@ -1823,33 +1911,71 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		for chip_index in range(patron_chip_count):
 			_draw_casino_chip(surface, pos + Vector2(30, 42 - float(chip_index) * 3.0 * 0.42), 5, 11.0 * 0.42, 0.92, false)
 		TableVisualsScript.draw_patron_wager_badge(surface, surface_state, patron, pos, i)
-		var patron_cards: Array = _card_array(patron.get("cards", []))
-		if not patron_cards.is_empty():
-			var action_event := _patron_active_action_event(surface, surface_state, i)
-			var card_start := _patron_hand_base_position(i)
-			var pad := Rect2(card_start.x - 5, card_start.y - 5, 86, 36)
-			surface.draw_rect(pad, Color(0, 0, 0, 0.24))
-			surface.draw_rect(pad, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.20), false, 1)
-			_draw_card_row_for_table(surface, surface_state, patron_cards, card_start, "patron", i, PATRON_CARD_SCALE)
-			var total := _hand_total(patron_cards)
-			var total_color := C_ORANGE if total > 21 else C_YELLOW if total == 21 else C_SOFT
-			surface.surface_label("%d" % total, card_start + Vector2(62, 29), 8, total_color)
-			_draw_patron_move_badge(surface, card_start + Vector2(-3, -23), patron, action_event)
+		_draw_patron_hand(surface, surface_state, patron, i)
 		surface.surface_label("cover", pos + Vector2(-18, 92), 8, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.62))
 		surface.surface_add_invisible_hit(Rect2(pos.x - 34, pos.y - 24, 68, 94), "blackjack_patron_cover", i)
 
 
 func _surface_low_detail_idle(surface) -> bool:
-	# Keep the live cards, count bubbles, wager controls, and dealer-state meters
-	# intact on Web, but use the static cast/room treatment during active hands as
-	# well as idle. The articulated background was the dominant non-gameplay draw
-	# cost under the shipping target's low-end throttle.
+	# The articulated cast is the dominant blackjack draw cost under browser CPU
+	# throttling. The lightweight cast now retains gaze/bob motion and shares the
+	# same live card renderer, so it is safe during both idle and deal channels.
 	if OS.has_feature("web"):
 		return true
 	return bool(surface.surface_low_detail_idle()) if surface != null and surface.has_method("surface_low_detail_idle") else false
 
 
-func _draw_static_table_character(surface, foot: Vector2, scale_value: float, accent: Color, jacket: Color, label: String = "") -> void:
+func _draw_patron_hand(surface, surface_state: Dictionary, patron: Dictionary, patron_index: int) -> void:
+	var patron_cards: Array = _card_array(patron.get("cards", []))
+	if patron_cards.is_empty():
+		return
+	var action_event := _patron_active_action_event(surface, surface_state, patron_index)
+	var card_start := _patron_hand_base_position(patron_index)
+	if _surface_low_detail_idle(surface):
+		_draw_compact_patron_card_row(surface, surface_state, patron_cards, card_start, patron_index)
+	else:
+		_draw_card_row_for_table(surface, surface_state, patron_cards, card_start, "patron", patron_index, PATRON_CARD_SCALE)
+	var total := _hand_total(patron_cards)
+	var total_color := C_ORANGE if total > 21 else C_YELLOW if total == 21 else C_SOFT
+	surface.surface_label("%d" % total, card_start + Vector2(62, 29), 8, total_color)
+	_draw_patron_move_badge(surface, card_start + Vector2(-3, -23), patron, action_event)
+
+
+func _draw_compact_patron_card_row(surface, surface_state: Dictionary, cards: Array, start: Vector2, patron_index: int) -> void:
+	var spacing := 54.0 * PATRON_CARD_SCALE
+	for card_index in range(cards.size()):
+		if _card_waiting_for_deal_animation(surface, surface_state, "patron", patron_index, card_index):
+			continue
+		_draw_compact_patron_card(surface, cards[card_index], start + Vector2(float(card_index) * spacing, 0), PATRON_CARD_SCALE)
+
+
+func _draw_compact_patron_card(surface, card_value: Variant, pos: Vector2, scale_value: float) -> void:
+	var card: Dictionary = card_value if typeof(card_value) == TYPE_DICTIONARY else {}
+	var rect := Rect2(pos, Vector2(42, 60) * scale_value)
+	if bool(card.get("hidden", false)):
+		PlayingCardRendererScript.draw_card_back(surface, rect)
+		return
+	# Background hands need a readable rank and suit, but creating a general-purpose
+	# text control for every tiny card dominates Web canvas time. This 3x5 pixel
+	# rank retains the information entirely through draw primitives.
+	surface.draw_rect(rect, Color("#ddd6c8"))
+	surface.draw_rect(Rect2(rect.position + Vector2(1, 1), rect.size - Vector2(2, 2)), Color("#fffaf0"))
+	surface.draw_rect(rect, Color("#251b2a"), false, 1.0)
+	var rank := clampi(int(card.get("rank", 2)), 2, 14)
+	var suit := int(card.get("suit", 0))
+	var ink := C_PINK if suit == 1 or suit == 3 else C_DARK
+	var pattern: Array = COMPACT_CARD_RANK_PATTERNS.get(rank, COMPACT_CARD_RANK_PATTERNS[2])
+	var pixel := 2.0 if rect.size.y >= 24.0 else 1.0
+	var rank_origin := rect.position + Vector2(3, 3)
+	for row_index in range(pattern.size()):
+		var row := str(pattern[row_index])
+		for column_index in range(mini(3, row.length())):
+			if row.substr(column_index, 1) == "1":
+				surface.draw_rect(Rect2(rank_origin + Vector2(column_index, row_index) * pixel, Vector2(pixel, pixel)), ink)
+	PlayingCardRendererScript.draw_suit(surface, rect.position + Vector2(rect.size.x * 0.66, rect.size.y * 0.69), suit, ink, maxf(0.20, scale_value * 0.52))
+
+
+func _draw_static_table_character(surface, foot: Vector2, scale_value: float, accent: Color, jacket: Color, label: String = "", eye_offset: float = 0.0, blink: bool = false) -> void:
 	var head := Rect2(foot + Vector2(-12, -78) * scale_value, Vector2(24, 24) * scale_value)
 	var body := Rect2(foot + Vector2(-22, -54) * scale_value, Vector2(44, 52) * scale_value)
 	surface.draw_rect(Rect2(foot.x - 24 * scale_value, foot.y - 6 * scale_value, 48 * scale_value, 5 * scale_value), Color(0, 0, 0, 0.30))
@@ -1858,8 +1984,9 @@ func _draw_static_table_character(surface, foot: Vector2, scale_value: float, ac
 	surface.draw_rect(Rect2(foot + Vector2(-17, -56) * scale_value, Vector2(34, 5) * scale_value), accent)
 	surface.draw_rect(head, Color("#c49371"))
 	surface.draw_rect(Rect2(head.position, Vector2(head.size.x, 8 * scale_value)), Color("#2a1a25"))
-	surface.draw_rect(Rect2(head.position + Vector2(6, 12) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
-	surface.draw_rect(Rect2(head.position + Vector2(16, 12) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
+	var eye_size := Vector2(4, 1 if blink else 3) * scale_value
+	surface.draw_rect(Rect2(head.position + Vector2(6 + eye_offset, 12) * scale_value, eye_size), Color("#05060a"))
+	surface.draw_rect(Rect2(head.position + Vector2(16 + eye_offset, 12) * scale_value, eye_size), Color("#05060a"))
 	if not label.is_empty():
 		surface.surface_label(label.left(10), foot + Vector2(-26, 10) * scale_value, int(10 * scale_value), accent)
 
@@ -2226,7 +2353,10 @@ func _draw_deal_animation(surface, surface_state: Dictionary) -> void:
 		var pos := start.lerp(target, eased) + Vector2(wiggle, lift)
 		var scale := float(event.get("scale", 0.62))
 		surface.draw_rect(Rect2(pos + Vector2(4, 5) * scale, Vector2(42, 60) * scale), Color(0, 0, 0, 0.22))
-		_draw_card(surface, _local_copy_dict(event.get("card", {})), pos, scale)
+		if str(event.get("zone", "")) == "patron" and _surface_low_detail_idle(surface):
+			_draw_compact_patron_card(surface, event.get("card", {}), pos, scale)
+		else:
+			_draw_card(surface, _local_copy_dict(event.get("card", {})), pos, scale)
 
 
 func _draw_chip_payout_animation(surface, surface_state: Dictionary) -> void:
@@ -2486,16 +2616,6 @@ func _draw_status_meter(surface, rect: Rect2, value: int, label: String, accent:
 	surface.surface_label(label.left(26), rect.position + Vector2(0, -4), 9, accent)
 
 
-func _draw_discard_tray(surface, pos: Vector2, surface_state: Dictionary) -> void:
-	surface.draw_rect(Rect2(pos, Vector2(62, 36)), Color("#080a12"))
-	surface.draw_rect(Rect2(pos + Vector2(6, 5), Vector2(50, 26)), Color("#171022"))
-	surface.draw_rect(Rect2(pos, Vector2(62, 36)), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.22), false, 1)
-	var result: Dictionary = _local_copy_dict(surface_state.get("last_result", {}))
-	var cards: Array = _card_array(result.get("dealer_cards", []))
-	for i in range(mini(cards.size(), 4)):
-		_draw_card(surface, cards[i], pos + Vector2(8 + i * 8, 7 + i * 2), 0.24)
-
-
 func _draw_table_character(surface, style: Dictionary, foot: Vector2, scale_value: float, clock: float) -> void:
 	var accent: Color = style.get("accent", C_CYAN) if typeof(style.get("accent", C_CYAN)) == TYPE_COLOR else C_CYAN
 	var skin: Color = style.get("skin", Color("#c49371")) if typeof(style.get("skin", Color("#c49371"))) == TYPE_COLOR else Color("#c49371")
@@ -2720,29 +2840,58 @@ func _patron_seat_position(index: int) -> Vector2:
 
 
 func _draw_count_challenge(surface, surface_state: Dictionary) -> void:
-	var challenge: Dictionary = _local_copy_dict(surface_state.get("count_challenge", {}))
-	if challenge.is_empty():
+	var challenge_value: Variant = surface_state.get("count_challenge", {})
+	if typeof(challenge_value) != TYPE_DICTIONARY or (challenge_value as Dictionary).is_empty():
 		return
-	var now_msec := _surface_time_for_count(surface_state)
-	var icons: Array = _dictionary_array(challenge.get("icons", []))
-	var clicked: Array = _string_array(challenge.get("clicked_icons", []))
-	var missed: Array = _count_missed_icon_ids(challenge, now_msec)
-	var current_delta := int(surface_state.get("count_delta", int(challenge.get("recorded_delta", 0))))
+	# The snapshot clock is intentionally static between actions. Bubble motion
+	# must use the canvas' live simulation clock, which advances without forcing
+	# an expensive full blackjack state rebuild every frame.
+	var challenge: Dictionary = challenge_value as Dictionary
+	var now_msec := int(surface.call("surface_simulation_time_msec")) if surface != null and surface.has_method("surface_simulation_time_msec") else _surface_time_for_count(surface_state)
+	var icons_value: Variant = challenge.get("icons", [])
+	var icons: Array = icons_value as Array if typeof(icons_value) == TYPE_ARRAY else []
+	var clicked_value: Variant = challenge.get("clicked_icons", [])
+	var clicked: Array = clicked_value as Array if typeof(clicked_value) == TYPE_ARRAY else []
+	var missed_value: Variant = challenge.get("missed_icons", [])
+	var missed: Array = missed_value as Array if typeof(missed_value) == TYPE_ARRAY else []
+	var resolved_times_value: Variant = challenge.get("resolved_icon_msec", {})
+	var resolved_times: Dictionary = resolved_times_value as Dictionary if typeof(resolved_times_value) == TYPE_DICTIONARY else {}
+	var visual_miss_count := missed.size()
+	for icon_value in icons:
+		if typeof(icon_value) != TYPE_DICTIONARY:
+			continue
+		var icon: Dictionary = icon_value as Dictionary
+		var icon_id := str(icon.get("id", ""))
+		if icon_id.is_empty() or clicked.has(icon_id) or missed.has(icon_id):
+			continue
+		var spawn := int(icon.get("spawn_msec", now_msec))
+		var duration := int(icon.get("duration_msec", COUNT_ICON_DURATION_MSEC))
+		if now_msec > spawn + duration:
+			visual_miss_count += 1
+	# The hand delta starts over on every deal. The badge represents the running
+	# count for the entire shoe, so it must include the count carried from prior
+	# hands and only return to zero when the shoe is shuffled.
+	var hand_delta := int(surface_state.get("count_delta", int(challenge.get("recorded_delta", 0))))
+	var current_count := int(surface_state.get(
+		"recorded_running_count",
+		int(challenge.get("recorded_running_count_start", 0)) + hand_delta
+	))
 	var badge := Rect2(620, 74, 150, 30)
 	surface.draw_rect(badge, Color(0.02, 0.025, 0.045, 0.72))
 	surface.draw_rect(badge, Color(C_PINK_2.r, C_PINK_2.g, C_PINK_2.b, 0.34), false, 1)
-	surface.surface_label("COUNT %+d" % current_delta, badge.position + Vector2(12, 20), 14, C_YELLOW)
-	if not missed.is_empty() or int(challenge.get("bad_hits", 0)) > 0:
-		surface.surface_label("MISS %d / BAD %d" % [missed.size(), int(challenge.get("bad_hits", 0))], badge.position + Vector2(90, 19), 8, C_ORANGE)
-	var resolved_times: Dictionary = _local_copy_dict(challenge.get("resolved_icon_msec", {}))
+	surface.surface_label("COUNT %+d" % current_count, badge.position + Vector2(12, 20), 14, C_YELLOW)
+	if visual_miss_count > 0 or int(challenge.get("bad_hits", 0)) > 0:
+		surface.surface_label("MISS %d / BAD %d" % [visual_miss_count, int(challenge.get("bad_hits", 0))], badge.position + Vector2(90, 19), 8, C_ORANGE)
 	for i in range(icons.size()):
-		var icon: Dictionary = icons[i]
+		if typeof(icons[i]) != TYPE_DICTIONARY:
+			continue
+		var icon: Dictionary = icons[i] as Dictionary
 		var icon_id := str(icon.get("id", "icon_%d" % i))
 		var spawn := int(icon.get("spawn_msec", int(challenge.get("started_msec", now_msec))))
 		var duration := int(icon.get("duration_msec", COUNT_ICON_DURATION_MSEC))
 		var age := now_msec - spawn
 		var clicked_icon := clicked.has(icon_id)
-		var missed_icon := missed.has(icon_id)
+		var missed_icon := missed.has(icon_id) or (not clicked_icon and age > duration)
 		var active := age >= 0 and age <= duration and not clicked_icon and not missed_icon and not bool(surface_state.get("count_answered", false))
 		var preview := age < 0 and age >= -360
 		var fade_elapsed := -1
@@ -3155,10 +3304,11 @@ func _initial_deal(session: Dictionary, table: Dictionary) -> Dictionary:
 
 
 func _has_dealt_hand(session: Dictionary) -> bool:
-	var dealer_cards: Array = _card_array(session.get("dealer_cards", []))
-	if dealer_cards.is_empty():
+	var dealer_cards_value: Variant = session.get("dealer_cards", [])
+	if typeof(dealer_cards_value) != TYPE_ARRAY or (dealer_cards_value as Array).is_empty():
 		return false
-	return not _hand_array(session.get("player_hands", [])).is_empty() or bool(session.get("blackjack_sit_out", false))
+	var player_hands_value: Variant = session.get("player_hands", [])
+	return (typeof(player_hands_value) == TYPE_ARRAY and not (player_hands_value as Array).is_empty()) or bool(session.get("blackjack_sit_out", false))
 
 
 func _start_initial_hand(session: Dictionary, table: Dictionary, stake: int = 1, run_state: RunState = null, result_msec: int = -1) -> void:
@@ -3435,6 +3585,45 @@ func _deal_animation_duration_msec(events: Array) -> int:
 		var event: Dictionary = event_value
 		duration = maxi(duration, int(event.get("delay_msec", 0)) + int(event.get("duration_msec", DEAL_CARD_DURATION_MSEC)) + 120)
 	return duration
+
+
+func _deal_presentation_active(session: Dictionary, now_msec: int = -1) -> bool:
+	var animation_id := str(session.get("deal_animation_id", ""))
+	if animation_id.is_empty():
+		return false
+	var events := _deal_animation_event_array(session.get("deal_animation_events", []))
+	if events.is_empty():
+		return false
+	var started_msec := int(session.get("deal_started_msec", 0))
+	if started_msec <= 0:
+		return false
+	now_msec = _surface_time_for_count(session, now_msec)
+	var duration_msec := _deal_animation_duration_msec(events)
+	return now_msec >= started_msec and now_msec < started_msec + duration_msec
+
+
+func _count_settlement_bubbles_pending(session: Dictionary, now_msec: int = -1) -> bool:
+	if not bool(session.get("settlement_count_revealed", false)) or bool(session.get("count_answered", false)):
+		return false
+	var challenge_value: Variant = session.get("count_challenge", {})
+	if typeof(challenge_value) != TYPE_DICTIONARY:
+		return false
+	var challenge: Dictionary = challenge_value as Dictionary
+	if challenge.is_empty():
+		return false
+	now_msec = _surface_time_for_count(session, now_msec)
+	var clicked := _string_array(challenge.get("clicked_icons", []))
+	var missed := _string_array(challenge.get("missed_icons", []))
+	for icon_value in _dictionary_array(challenge.get("icons", [])):
+		var icon: Dictionary = icon_value
+		var icon_id := str(icon.get("id", ""))
+		if icon_id.is_empty() or clicked.has(icon_id) or missed.has(icon_id):
+			continue
+		var spawn_msec := int(icon.get("spawn_msec", now_msec))
+		var duration_msec := int(icon.get("duration_msec", COUNT_ICON_DURATION_MSEC))
+		if now_msec <= spawn_msec + duration_msec:
+			return true
+	return false
 
 
 func _patron_action_event_array(value: Variant) -> Array:
@@ -3747,6 +3936,12 @@ func _stand_all_hands(session: Dictionary) -> void:
 
 func _dealer_final_cards(session: Dictionary, table: Dictionary) -> Array:
 	var dealer_cards: Array = _card_array(session.get("dealer_cards", []))
+	# A counting settlement preview already played the complete dealer/patron
+	# reveal. Resolution must reuse those cards without dealing or animating them
+	# a second time behind the payout.
+	if bool(session.get("settlement_preview_complete", false)):
+		session["settlement_deal_animation_events"] = []
+		return dealer_cards
 	var rules: Dictionary = _table_rules(table)
 	var settlement_events: Array = _dealer_hole_reveal_animation_events(dealer_cards)
 	if _dealer_has_blackjack(dealer_cards):
@@ -3866,7 +4061,7 @@ func _patron_decision_for_hand(cards: Array, hand: Dictionary, patron_index: int
 	var total := _hand_total(cards)
 	if cards.is_empty() or total > 21:
 		return {"action": "stand", "reason": "locked", "peek_informed": false}
-	if not _strategy_info_advantage_active(session):
+	if not _strategy_hole_card_advantage_active(session):
 		return {
 			"action": "hit" if baseline_hit else "stand",
 			"reason": _patron_baseline_reason(hand, patron_index),
@@ -4121,8 +4316,25 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 	if not used_peek and not used_count and not used_strategy:
 		return {"suspicion_delta": 0, "caught": false, "message": ""}
 	var base_heat := 0
-	var catch_chance: int = int(table.get("dealer_catch_base", 10))
+	var catch_chance := 0
+	var dirty_count := false
+	var ordinary_strategy_count := 0
+	var count_advantage_score := 0
+	var hole_card_advantage_score := 0
+	for event_value in strategy_events:
+		var event: Dictionary = event_value
+		var information_source := str(event.get("information_source", "ordinary"))
+		var event_score := maxi(1, int(event.get("score", 1)))
+		match information_source:
+			"count":
+				count_advantage_score += event_score
+			"hole_card":
+				hole_card_advantage_score += event_score
+			_:
+				ordinary_strategy_count += 1
+	var advantage_strategy_score := count_advantage_score + hole_card_advantage_score
 	if used_peek:
+		catch_chance = maxi(catch_chance, int(table.get("dealer_catch_base", 10)))
 		var snitch_risk: int = _patron_snitch_risk(table, session)
 		var dealer_focus: Dictionary = _dealer_focus_state(table, session, run_state, snitch_risk)
 		base_heat += 5
@@ -4141,8 +4353,10 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 		var challenge: Dictionary = _local_copy_dict(session.get("count_challenge", {}))
 		var missed_count := (_string_array(challenge.get("missed_icons", []))).size()
 		var bad_hits := int(challenge.get("bad_hits", 0))
-		var dirty_count: bool = not bool(session.get("count_correct", false)) or missed_count > 0 or bad_hits > 0
-		if not dirty_count and not used_peek:
+		dirty_count = not bool(session.get("count_correct", false)) or missed_count > 0 or bad_hits > 0
+		# Accurate counting is observation, not detectable behavior. If the player
+		# also follows an ordinary-looking line, the house has nothing to react to.
+		if not dirty_count and not used_peek and not used_strategy:
 			return {
 				"suspicion_delta": 0,
 				"caught": false,
@@ -4152,48 +4366,63 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 				"used_count": true,
 			}
 		if dirty_count:
-			base_heat += 3 + clampi(missed_count + bad_hits, 0, 6)
-			catch_chance += 6 + missed_count * 4 + bad_hits * 5
-			catch_chance += int(float(int(challenge.get("dealer_attention_risk", 0))) / 16.0)
+			var count_errors := clampi(missed_count + bad_hits, 1, 8)
+			base_heat += DIRTY_COUNT_BASE_HEAT + count_errors * DIRTY_COUNT_ERROR_HEAT
+			catch_chance = maxi(catch_chance, int(table.get("dealer_catch_base", 10)))
+			catch_chance += 14 + missed_count * 7 + bad_hits * 9
+			catch_chance += int(float(int(challenge.get("dealer_attention_risk", 0))) / 8.0)
 			base_heat += _item_effect_total("blackjack_count_heat_delta", run_state)
 	if used_strategy:
-		var strategy_score := maxi(1, int(session.get("strategy_deviation_score", strategy_events.size())))
 		var profile: Dictionary = _local_copy_dict(table.get("dealer_profile", {}))
 		var response := str(profile.get("strategy_response", "watch"))
 		var scrutiny := clampi(int(profile.get("strategy_scrutiny", 10)), 0, 30)
-		catch_chance += strategy_score * 7 + int(float(scrutiny) / 3.0)
-		if response == "watch":
-			base_heat += clampi(strategy_score, 1, 6)
-		elif response == "heat":
-			base_heat += 4 + strategy_score * 3
-		else:
-			base_heat += 2 + strategy_score * 2
+		if ordinary_strategy_count > 0:
+			# A player who simply does not know the book receives only a faint signal.
+			base_heat += mini(ORDINARY_STRATEGY_HEAT_MAX, ordinary_strategy_count)
+			catch_chance += mini(6, ordinary_strategy_count * 2 + int(float(scrutiny) / 12.0))
+		if count_advantage_score > 0:
+			base_heat += COUNT_ADVANTAGE_BASE_HEAT + count_advantage_score * 3
+			catch_chance = maxi(catch_chance, int(table.get("dealer_catch_base", 10)))
+			catch_chance += 14 + count_advantage_score * 8 + int(float(scrutiny) / 3.0)
+		if hole_card_advantage_score > 0:
+			base_heat += HOLE_CARD_ADVANTAGE_BASE_HEAT + hole_card_advantage_score * 4
+			catch_chance = maxi(catch_chance, int(table.get("dealer_catch_base", 10)))
+			catch_chance += 20 + hole_card_advantage_score * 9 + int(float(scrutiny) / 2.0)
+		if advantage_strategy_score > 0 and response == "heat":
+			base_heat += 5
+		elif advantage_strategy_score > 0 and response == "both":
+			base_heat += 3
 		if bool(session.get("strategy_confronted", false)):
 			base_heat += clampi(int(session.get("strategy_confrontation_heat", 0)), 0, STRATEGY_DEVIATION_MAX_HEAT)
-			catch_chance += 20
-	base_heat += run_state.security_risk_bonus("cheat")
-	catch_chance += run_state.security_risk_bonus("cheat") * 2
+			catch_chance += 20 if advantage_strategy_score > 0 else 4
+	var blatant_advantage_play := used_peek or dirty_count or advantage_strategy_score > 0
+	if blatant_advantage_play:
+		base_heat += run_state.security_risk_bonus("cheat")
+		catch_chance += run_state.security_risk_bonus("cheat") * 2
 	var pit_boss: Dictionary = run_state.pit_boss_watch_status(environment)
 	var pit_boss_heat_bonus := 0
-	if bool(pit_boss.get("active", false)):
+	if blatant_advantage_play and bool(pit_boss.get("active", false)):
 		pit_boss_heat_bonus = int(pit_boss.get("cheat_heat_bonus", 0))
 		catch_chance += pit_boss_heat_bonus
 		base_heat += pit_boss_heat_bonus
-	base_heat += _item_effect_total("cheat_suspicion_delta", run_state)
+	if blatant_advantage_play:
+		base_heat += _item_effect_total("cheat_suspicion_delta", run_state)
 	if used_peek:
 		base_heat += _item_effect_total("blackjack_peek_heat_delta", run_state)
 	catch_chance += _item_effect_total("blackjack_dealer_catch_chance", run_state)
-	catch_chance = clampi(catch_chance, 2, 95)
+	catch_chance = clampi(catch_chance, 0, 95)
 	var strategy_confronted := bool(session.get("strategy_confronted", false))
 	var caught := strategy_confronted or rng.randi_range(1, 100) <= catch_chance
 	var heat := maxi(0, base_heat)
 	if caught:
 		var catch_heat_bonus := maxi(6, int(table.get("catch_heat", 18)))
-		if strategy_confronted and not used_peek and not used_count:
-			catch_heat_bonus = maxi(4, int(round(float(int(table.get("catch_heat", 18))) * 0.5)))
+		if not blatant_advantage_play:
+			catch_heat_bonus = 1
 		heat += catch_heat_bonus
 	var message := "The dealer confronts the off-book line." if strategy_confronted else "The dealer clocks the move." if caught else "The risky move slides by."
-	if used_count and bool(session.get("count_correct", false)):
+	if used_count and bool(session.get("count_correct", false)) and advantage_strategy_score > 0:
+		message = "%s The count lands clean, but the information-driven play gives it away." % message
+	elif used_count and bool(session.get("count_correct", false)):
 		message = "%s The count lands clean." % message
 	elif used_count:
 		message = "%s The count drifts." % message
@@ -4207,6 +4436,10 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 		"used_peek": used_peek,
 		"used_count": used_count,
 		"used_strategy_deviation": used_strategy,
+		"ordinary_strategy_count": ordinary_strategy_count,
+		"count_advantage_score": count_advantage_score,
+		"hole_card_advantage_score": hole_card_advantage_score,
+		"advantage_play": blatant_advantage_play,
 		"strategy_confronted": strategy_confronted,
 		"strategy_deviation_events": strategy_events,
 		"pit_boss_watched": bool(pit_boss.get("watched", false)),
@@ -4259,16 +4492,23 @@ func _update_table_after_hand(table: Dictionary, session: Dictionary, dealer_car
 	var strategy_events: Array = _dictionary_array(session.get("strategy_deviation_events", []))
 	var strategy_score := maxi(0, int(session.get("strategy_deviation_score", 0)))
 	var profile: Dictionary = _local_copy_dict(table.get("dealer_profile", {}))
+	var advantage_strategy_score := 0
+	for event_value in strategy_events:
+		var event: Dictionary = event_value
+		if str(event.get("information_source", "ordinary")) != "ordinary":
+			advantage_strategy_score += maxi(1, int(event.get("score", 1)))
 	if strategy_score > 0:
-		table["strategy_deviation_strikes"] = maxi(0, int(table.get("strategy_deviation_strikes", 0))) + strategy_score
+		# Ordinary mistakes can cause a brief look this hand, but only decisions
+		# that reveal count/hole-card knowledge build persistent table scrutiny.
+		table["strategy_deviation_strikes"] = maxi(0, int(table.get("strategy_deviation_strikes", 0))) + advantage_strategy_score
 		var response := str(profile.get("strategy_response", "watch"))
-		var watch_add := clampi(int(session.get("strategy_attention_boost", 0)), 0, STRATEGY_DEVIATION_MAX_WATCH)
+		var watch_add := clampi(int(session.get("strategy_attention_boost", 0)), 0, STRATEGY_DEVIATION_MAX_WATCH) if advantage_strategy_score > 0 else 0
 		if response == "heat":
 			watch_add = int(ceil(float(watch_add) * 0.45))
 		elif response == "both":
 			watch_add = int(ceil(float(watch_add) * 0.70))
 		table["strategy_watch_pressure"] = clampi(int(table.get("strategy_watch_pressure", 0)) + watch_add, 0, STRATEGY_DEVIATION_MAX_WATCH)
-		table["strategy_last_notice"] = "Dealer questioned %d off-book play%s." % [strategy_events.size(), "" if strategy_events.size() == 1 else "s"]
+		table["strategy_last_notice"] = "Dealer questioned %d information-driven play%s." % [strategy_events.size(), "" if strategy_events.size() == 1 else "s"] if advantage_strategy_score > 0 else "Dealer noted an ordinary off-book play."
 		if bool(session.get("strategy_confronted", false)):
 			profile["attention_base"] = clampi(int(profile.get("attention_base", 12)) + 3, 8, 70)
 			table["dealer_profile"] = profile
@@ -4324,6 +4564,9 @@ func _action_command(action_id: String, action_kind: String, confirm_requested: 
 func _opening_deal_command(ui_state: Dictionary, index: int, message: String) -> Dictionary:
 	if not message.is_empty():
 		ui_state["table_notice"] = message
+	# Interactive surfaces always carry the simulation clock. Headless rules
+	# probes may omit it and should remain free to advance actions synchronously.
+	ui_state["presentation_timing_enforced"] = ui_state.has("surface_time_msec")
 	var compact_state: Dictionary = _compact_session_for_ui(ui_state)
 	return GameModule.surface_command({
 		"handled": true,
@@ -4346,6 +4589,12 @@ func _message_command(ui_state: Dictionary, message: String) -> Dictionary:
 
 
 func _settle_completed_round_command(ui_state: Dictionary, index: int, message: String, table: Dictionary, run_state: RunState) -> Dictionary:
+	if bool(ui_state.get("presentation_timing_enforced", false)) and _deal_presentation_active(ui_state):
+		ui_state["round_terminal"] = true
+		ui_state["settlement_pending"] = true
+		var reveal_message := "%s Cards finish moving before the payout." % message
+		ui_state["table_notice"] = reveal_message
+		return _message_command(ui_state, reveal_message)
 	if _count_settlement_preview_required(ui_state):
 		_prepare_count_settlement_preview(ui_state, table, run_state)
 		var preview_message := "Dealer reveals the table. Count every exposed card, then settle."
@@ -4369,12 +4618,38 @@ func _count_settlement_preview_required(ui_state: Dictionary) -> bool:
 
 
 func _prepare_count_settlement_preview(ui_state: Dictionary, table: Dictionary, run_state: RunState) -> void:
+	var now_msec := _surface_time_for_count(ui_state)
+	var challenge_before: Dictionary = _local_copy_dict(ui_state.get("count_challenge", {}))
+	var existing_icon_ids: Array = []
+	for icon_value in _dictionary_array(challenge_before.get("icons", [])):
+		var existing_icon: Dictionary = icon_value
+		existing_icon_ids.append(str(existing_icon.get("id", "")))
 	ui_state["dealer_hole_visible"] = true
 	ui_state["round_terminal"] = true
 	ui_state["settlement_pending"] = true
 	ui_state["settlement_count_revealed"] = true
 	_dealer_final_cards(ui_state, table)
-	_sync_count_challenge_icons(ui_state, run_state)
+	var settlement_events := _deal_animation_event_array(ui_state.get("settlement_deal_animation_events", []))
+	var reveal_duration_msec := _deal_animation_duration_msec(settlement_events)
+	if not settlement_events.is_empty():
+		_mark_deal_animation(ui_state, "count_settlement_preview", settlement_events, now_msec)
+	_sync_count_challenge_icons(ui_state, run_state, now_msec)
+	# Newly revealed cards create bubbles only after their card motion completes.
+	# This leaves the terminal hand readable and prevents payout from replacing
+	# bubbles that have not appeared yet.
+	var challenge: Dictionary = _local_copy_dict(ui_state.get("count_challenge", {}))
+	var icons := _dictionary_array(challenge.get("icons", []))
+	var terminal_icon_index := 0
+	for i in range(icons.size()):
+		var icon: Dictionary = icons[i]
+		if existing_icon_ids.has(str(icon.get("id", ""))):
+			continue
+		icon["spawn_msec"] = now_msec + reveal_duration_msec + 120 + terminal_icon_index * COUNT_ICON_STAGGER_MSEC
+		icons[i] = icon
+		terminal_icon_index += 1
+	challenge["icons"] = icons
+	ui_state["count_challenge"] = challenge
+	ui_state["settlement_preview_complete"] = true
 
 
 func _toggle_counting_command(index: int, ui_state: Dictionary, table: Dictionary, environment: Dictionary, run_state: RunState) -> Dictionary:
@@ -4534,12 +4809,18 @@ func _record_strategy_deviation(session: Dictionary, table: Dictionary, run_stat
 	session["strategy_deviation_events"] = events
 	var score := maxi(1, int(event.get("score", 1)))
 	session["strategy_deviation_score"] = maxi(0, int(session.get("strategy_deviation_score", 0))) + score
+	var information_source := str(event.get("information_source", "ordinary"))
 	var profile: Dictionary = _local_copy_dict(table.get("dealer_profile", {}))
 	var scrutiny := clampi(int(profile.get("strategy_scrutiny", 10)), 0, 30)
-	var attention_add := clampi(score * 4 + int(ceil(float(scrutiny) / 5.0)), 4, 20)
+	var attention_add := 1 if information_source == "ordinary" else clampi(score * 4 + int(ceil(float(scrutiny) / 5.0)), 4, 20)
 	session["strategy_attention_boost"] = clampi(int(session.get("strategy_attention_boost", 0)) + attention_add, 0, STRATEGY_DEVIATION_MAX_WATCH)
 	var threshold := clampi(int(profile.get("strategy_threshold", 4)), 1, 8)
-	var cumulative_score := maxi(0, int(table.get("strategy_deviation_strikes", 0))) + int(session.get("strategy_deviation_score", 0))
+	var current_advantage_score := 0
+	for recorded_value in events:
+		var recorded: Dictionary = recorded_value
+		if str(recorded.get("information_source", "ordinary")) != "ordinary":
+			current_advantage_score += maxi(1, int(recorded.get("score", 1)))
+	var cumulative_score := maxi(0, int(table.get("strategy_deviation_strikes", 0))) + current_advantage_score
 	if cumulative_score >= threshold and not bool(session.get("strategy_confronted", false)):
 		session["strategy_confronted"] = true
 		var response := str(profile.get("strategy_response", "watch"))
@@ -4550,12 +4831,14 @@ func _record_strategy_deviation(session: Dictionary, table: Dictionary, run_stat
 			heat += 5 + score
 		session["strategy_confrontation_heat"] = clampi(int(session.get("strategy_confrontation_heat", 0)) + heat, 0, STRATEGY_DEVIATION_MAX_HEAT)
 		return "The dealer pauses on the %s: \"That call was too cute. I'm watching you.\"" % str(event.get("chosen", chosen_action))
-	return "The dealer notes the off-book %s." % str(event.get("chosen", chosen_action))
+	if information_source == "count":
+		return "The dealer notes how precisely the %s tracks the shoe." % str(event.get("chosen", chosen_action))
+	if information_source == "hole_card":
+		return "The dealer notes how precisely the %s tracks the down card." % str(event.get("chosen", chosen_action))
+	return "The dealer briefly notes the off-book %s." % str(event.get("chosen", chosen_action))
 
 
 func _strategy_deviation_for_action(session: Dictionary, table: Dictionary, run_state: RunState, chosen_action: String) -> Dictionary:
-	if not _strategy_info_advantage_active(session):
-		return {}
 	var hands: Array = _hand_array(session.get("player_hands", []))
 	var active_index: int = clampi(int(session.get("active_hand_index", 0)), 0, maxi(0, hands.size() - 1))
 	if active_index < 0 or active_index >= hands.size():
@@ -4568,24 +4851,69 @@ func _strategy_deviation_for_action(session: Dictionary, table: Dictionary, run_
 	if recommended.is_empty() or recommended == chosen_action:
 		return {}
 	var dealer_cards: Array = _card_array(session.get("dealer_cards", []))
-	var benefit: Dictionary = _strategy_deviation_benefit(chosen_action, recommended, cards, dealer_cards)
+	var information_source := "ordinary"
+	var benefit: Dictionary = {}
+	if _strategy_hole_card_advantage_active(session):
+		benefit = _strategy_deviation_benefit(chosen_action, recommended, cards, dealer_cards)
+		if not benefit.is_empty():
+			information_source = "hole_card"
+	if benefit.is_empty() and _strategy_count_advantage_active(session, table):
+		benefit = _strategy_count_deviation_benefit(chosen_action, recommended, cards, dealer_cards, _recorded_count_for_surface(table, session))
+		if not benefit.is_empty():
+			information_source = "count"
 	if benefit.is_empty():
-		return {}
+		benefit = {"score": 1, "reason": "ordinary departure from basic strategy"}
 	return {
 		"hand_index": active_index,
 		"chosen": chosen_action,
 		"recommended": recommended,
 		"score": int(benefit.get("score", 1)),
 		"reason": str(benefit.get("reason", "")),
+		"information_source": information_source,
 		"player_total": _hand_total(cards),
 		"dealer_known_total": _hand_total(dealer_cards),
 		"timestamp_msec": GameModule.deterministic_time_msec(run_state, session),
 	}
 
 
-func _strategy_info_advantage_active(session: Dictionary) -> bool:
+func _strategy_hole_card_advantage_active(session: Dictionary) -> bool:
 	var cheats: Dictionary = _local_copy_dict(session.get("cheats_used", {}))
 	return bool(cheats.get("peek_hole_card", false)) and bool(session.get("dealer_hole_visible", false)) and not bool(session.get("peek_caught_watching", false))
+
+
+func _strategy_count_advantage_active(session: Dictionary, table: Dictionary) -> bool:
+	if not bool(session.get("counting_enabled", false)) and not bool(session.get("count_attempted", false)):
+		return false
+	var challenge: Dictionary = _local_copy_dict(session.get("count_challenge", {}))
+	if challenge.is_empty() or int(challenge.get("bad_hits", 0)) > 0 or not _string_array(challenge.get("missed_icons", [])).is_empty():
+		return false
+	var icons: Array = _dictionary_array(challenge.get("icons", []))
+	var clicked: Array = _string_array(challenge.get("clicked_icons", []))
+	if icons.is_empty() or clicked.size() < icons.size():
+		return false
+	var tolerance := maxi(0, int(challenge.get("tolerance", 0)))
+	var recorded_delta := int(challenge.get("recorded_delta", session.get("count_delta", 0)))
+	if abs(recorded_delta - int(challenge.get("target_delta", 0))) > tolerance:
+		return false
+	return abs(_recorded_count_for_surface(table, session)) >= 2
+
+
+func _strategy_count_deviation_benefit(chosen_action: String, recommended: String, player_cards: Array, dealer_cards: Array, running_count: int) -> Dictionary:
+	if dealer_cards.is_empty():
+		return {}
+	var player_total := int(_hand_total_info(player_cards).get("total", 0))
+	var dealer_value := _dealer_strategy_value(dealer_cards[0] as Dictionary)
+	if running_count >= 2:
+		if chosen_action == "stand" and ["hit", "surrender"].has(recommended) and player_total >= 12 and player_total <= 16:
+			return {"score": 2 if running_count >= 4 else 1, "reason": "a high count supports standing into the dealer upcard"}
+		if chosen_action == "double" and recommended == "hit" and player_total >= 9 and player_total <= 11:
+			return {"score": 2 if running_count >= 4 else 1, "reason": "a high count supports an otherwise aggressive double"}
+		if chosen_action == "split" and recommended != "split" and player_total >= 16:
+			return {"score": 2, "reason": "a high count supports an otherwise unusual split"}
+	elif running_count <= -2:
+		if chosen_action == "hit" and recommended == "stand" and player_total >= 12 and player_total <= 16 and dealer_value >= 2 and dealer_value <= 6:
+			return {"score": 2 if running_count <= -4 else 1, "reason": "a low count supports drawing against a weak dealer card"}
+	return {}
 
 
 func _strategy_deviation_benefit(chosen_action: String, recommended: String, player_cards: Array, dealer_cards: Array) -> Dictionary:
@@ -5349,10 +5677,25 @@ func _sync_count_challenge_icons(ui_state: Dictionary, run_state: RunState, now_
 func _count_has_new_misses(challenge: Dictionary, now_msec: int) -> bool:
 	if challenge.is_empty():
 		return false
-	var missed_before: Array = _string_array(challenge.get("missed_icons", []))
-	var refreshed: Dictionary = _refresh_count_challenge_misses(challenge, now_msec)
-	var missed_after: Array = _string_array(refreshed.get("missed_icons", []))
-	return missed_after.size() > missed_before.size()
+	var icons_value: Variant = challenge.get("icons", [])
+	if typeof(icons_value) != TYPE_ARRAY:
+		return false
+	var clicked_value: Variant = challenge.get("clicked_icons", [])
+	var clicked: Array = clicked_value as Array if typeof(clicked_value) == TYPE_ARRAY else []
+	var missed_value: Variant = challenge.get("missed_icons", [])
+	var missed: Array = missed_value as Array if typeof(missed_value) == TYPE_ARRAY else []
+	for icon_value in icons_value as Array:
+		if typeof(icon_value) != TYPE_DICTIONARY:
+			continue
+		var icon: Dictionary = icon_value as Dictionary
+		var icon_id := str(icon.get("id", ""))
+		if icon_id.is_empty() or clicked.has(icon_id) or missed.has(icon_id):
+			continue
+		var spawn := int(icon.get("spawn_msec", now_msec))
+		var duration := int(icon.get("duration_msec", COUNT_ICON_DURATION_MSEC))
+		if now_msec > spawn + duration:
+			return true
+	return false
 
 
 func _update_live_count_state(ui_state: Dictionary, _table: Dictionary, run_state: RunState, announce: bool = true) -> String:
@@ -5407,6 +5750,20 @@ func _finalize_count_challenge(ui_state: Dictionary, run_state: RunState, now_ms
 	ui_state["count_perfect"] = perfect
 	ui_state["count_delta"] = declared
 	ui_state["count_declared_delta"] = declared
+
+
+func _persist_tutorial_count_lesson_result(table: Dictionary, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+	if run_state == null \
+			or not run_state.is_tutorial_run() \
+			or str(environment.get("archetype_id", "")) != "small_underground_casino" \
+			or int(table.get("hands_played", 0)) < 2 \
+			or not bool(ui_state.get("count_answered", false)):
+		return
+	# Surface state is intentionally discarded after a settled hand. Store the
+	# lesson proof on the table so Coach observes the completed third-hand count
+	# at the following boundary instead of losing it with the transient bubbles.
+	table["tutorial_count_completed"] = true
+	table["tutorial_count_perfect"] = bool(ui_state.get("count_perfect", false))
 
 
 func _surface_time_for_count(ui_state: Dictionary, now_msec: int = -1) -> int:
@@ -5557,14 +5914,20 @@ func _side_bet_can_toggle_now(bet: Dictionary, session: Dictionary) -> bool:
 
 
 func _all_hands_complete(session: Dictionary) -> bool:
-	var hands: Array = _hand_array(session.get("player_hands", []))
+	var hands_value: Variant = session.get("player_hands", [])
+	var hands: Array = hands_value as Array if typeof(hands_value) == TYPE_ARRAY else []
 	if hands.is_empty():
-		return bool(session.get("blackjack_sit_out", false)) and not _card_array(session.get("dealer_cards", [])).is_empty()
+		var dealer_cards_value: Variant = session.get("dealer_cards", [])
+		return bool(session.get("blackjack_sit_out", false)) and typeof(dealer_cards_value) == TYPE_ARRAY and not (dealer_cards_value as Array).is_empty()
 	for hand_value in hands:
-		var hand: Dictionary = hand_value
+		if typeof(hand_value) != TYPE_DICTIONARY:
+			return false
+		var hand: Dictionary = hand_value as Dictionary
 		if bool(hand.get("stood", false)):
 			continue
-		if _hand_total(_card_array(hand.get("cards", []))) >= 21:
+		var cards_value: Variant = hand.get("cards", [])
+		var cards: Array = cards_value as Array if typeof(cards_value) == TYPE_ARRAY else []
+		if _hand_total(cards) >= 21:
 			continue
 		return false
 	return true

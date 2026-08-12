@@ -227,12 +227,16 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 		if item_id.is_empty():
 			continue
 		var enabled := bool(offer.get("affordable", true)) and not failed
-		var object_id := "item:%s" % item_id
+		var object_id := str(offer.get("object_id", "item:%s" % item_id))
 		var action_label := "Pickup" if bool(offer.get("pickup", false)) else str(offer.get("action_label", "Buy"))
 		var price := maxi(0, int(offer.get("price", 0)))
+		var currency := str(offer.get("currency", "cash"))
 		var cost_summary := "Pickup"
 		if not bool(offer.get("pickup", false)):
 			cost_summary = "Cost: $%d · Bankroll after: $%d" % [price, maxi(0, run_state.bankroll - price)]
+		if not bool(offer.get("pickup", false)) and currency == "chips":
+			cost_summary = "Cost: %d chips · Chips after: %d" % [price, maxi(0, run_state.grand_casino_chips - price)]
+		var layout_index := int(offer.get("layout_index", item_index))
 		objects.append(_object_with_rect({
 			"object_id": object_id,
 			"object_type": "item",
@@ -241,12 +245,14 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			"short_description": str(offer.get("description", "")),
 			"presence": "dynamic",
 			"enabled": enabled,
-			"disabled_reason": "" if enabled else failed_reason if failed else "Not enough bankroll.",
-			"action_summary": "" if enabled else "Needs more bankroll before it can be used.",
+			"disabled_reason": "" if enabled else failed_reason if failed else str(offer.get("disabled_reason", "Not enough chips." if currency == "chips" else "Not enough bankroll.")),
+			"action_summary": "" if enabled else "Needs more chips before it can be bought." if currency == "chips" else "Needs more bankroll before it can be used.",
 			"effect_summary": str(offer.get("effect_summary", "")),
 			"addition_count": maxi(0, int(offer.get("addition_count", 0))),
 			"impact_summary": str(offer.get("purpose_summary", "")).strip_edges(),
 			"cost_summary": cost_summary,
+			"currency": currency,
+			"price": price,
 			"attribute_badges": _copy_array(offer.get("attribute_badges", [])),
 			"visual_key": "item",
 			"prop": str(offer.get("environment_prop", "")),
@@ -255,7 +261,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			"asset_path": str(offer.get("asset_path", "")),
 			"available_actions": [{"id": "buy_item", "label": action_label}] if enabled else [],
 			"confirm_action_id": "buy_item" if enabled else "",
-		}, selection, layout, item_index))
+		}, selection, layout, layout_index))
 		item_index += 1
 	if bool(data.get("shopkeeper_should_draw", false)):
 		var enabled := bool(data.get("shopkeeper_available", false)) and not failed
@@ -457,6 +463,8 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"classification_summary": str(source.get("classification_summary", "")),
 		"addition_count": maxi(0, int(source.get("addition_count", 0))),
 		"cost_summary": str(source.get("cost_summary", "")),
+		"currency": str(source.get("currency", "")),
+		"price": maxi(0, int(source.get("price", 0))),
 		"attribute_badges": AttributeBadgesScript.for_object_overlay(_copy_array(source.get("attribute_badges", []))),
 		"runtime_state": _copy_dict(source.get("runtime_state", {})),
 		"visual_state": _copy_dict(source.get("visual_state", {})),

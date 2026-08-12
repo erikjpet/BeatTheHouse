@@ -2,6 +2,7 @@ extends "res://scripts/tests/foundation/check_lenders_release_saves.gd"
 
 const ScratchSfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ScratchRngStreamScript := preload("res://scripts/core/rng_stream.gd")
+const ScratchRegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
 const SCRATCH_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const SCRATCH_PRICES := [2, 5, 10, 15, 20, 50, 100]
 const SCRATCH_MECHANICS := ["match_two_of_three", "key_number_match", "tic_tac_toe", "crossword", "bingo", "beat_dealer_poker", "multi_game_vault"]
@@ -9,6 +10,7 @@ const SCRATCH_SECTION_COUNTS := [1, 2, 2, 2, 5, 3, 4]
 
 
 func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) -> void:
+	_check_scratch_measured_region_data(failures)
 	_check_scratch_gas_station_generation(failures)
 	_check_scratch_roster(game, failures)
 	var run_state: RunState = RunStateScript.new()
@@ -86,6 +88,30 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_portable_state(game, failures)
 
 
+func _check_scratch_measured_region_data(failures: Array) -> void:
+	var data_path := "res://data/games/scratch_ticket_regions.json"
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(data_path))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		failures.append("Scratch measured region source of truth is missing or invalid.")
+		return
+	var data: Dictionary = parsed
+	if int(data.get("layout_version", 0)) != ScratchRegionModelScript.LAYOUT_VERSION:
+		failures.append("Scratch measured region data does not match the runtime layout version.")
+	var source_art: Dictionary = data.get("source_art", {}) if typeof(data.get("source_art", {})) == TYPE_DICTIONARY else {}
+	var region_tables: Dictionary = data.get("regions", {}) if typeof(data.get("regions", {})) == TYPE_DICTIONARY else {}
+	for type_id in SCRATCH_IDS:
+		var source: Dictionary = source_art.get(type_id, {}) if typeof(source_art.get(type_id, {})) == TYPE_DICTIONARY else {}
+		var art_path := "res://assets/art/scratch_tickets/layers/%s" % str(source.get("file", ""))
+		if str(source.get("sha256", "")) != FileAccess.get_sha256(art_path):
+			failures.append("Scratch %s source art changed without regenerating measured regions." % type_id)
+		var art_size := Vector2(float(source.get("w", 0)), float(source.get("h", 0)))
+		var frame := ScratchRegionModelScript.art_frame(Rect2(Vector2.ZERO, Vector2(548, 356)), art_size)
+		if art_size.x <= 0.0 or art_size.y <= 0.0 or absf(frame.size.aspect() / art_size.aspect() - 1.0) > 0.005:
+			failures.append("Scratch %s art frame does not preserve source aspect within 0.5%%." % type_id)
+		if _dict_array(region_tables.get(type_id, [])).is_empty():
+			failures.append("Scratch %s has no measured per-well region table." % type_id)
+
+
 func _check_scratch_roster(game: GameModule, failures: Array) -> void:
 	var definitions := _dict_array(game.call("_ticket_types"))
 	if definitions.size() != SCRATCH_IDS.size():
@@ -114,8 +140,18 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 	var purchase := game.resolve_with_context("buy_scratch_ticket", int(buy_command.get("set_stake", 0)), run_state, environment, run_state.create_rng("scratch_purchase"), buy_command.get("ui_state", {}))
 	if not bool(purchase.get("scratch_outcome_fixed_at_purchase", false)) or run_state.bankroll != before - int(purchase.get("stake", 0)):
 		failures.append("Scratch Tickets purchase did not fix its outcome and charge cash once.")
+	if not bool(purchase.get("suppress_music_outcome", false)):
+		failures.append("Scratch ticket purchase exposed its hidden outcome to the win/loss music system.")
+	if str(purchase.get("surface_audio_cue", "")) != "ticket_dispenser" or str((purchase.get("surface_audio_context", {}) as Dictionary).get("action", "")) != "scratch_buy":
+		failures.append("Scratch ticket purchase did not emit the successful dispense cue.")
+	var result_ticket: Dictionary = purchase.get("scratch_ticket", {}) if typeof(purchase.get("scratch_ticket", {})) == TYPE_DICTIONARY else {}
+	if result_ticket.has("latex_mask") or result_ticket.has("scratch_regions"):
+		failures.append("Scratch ticket purchase duplicated its live foil mask into the action result.")
 	var ticket: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}) as Dictionary).get("active_ticket", {})
-	game.call("_ensure_ticket_regions", ticket)
+	var initial_scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
+	var initial_mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
+	if initial_mask.size() != int(initial_scratch.get("mask_columns", 0)) * int(initial_scratch.get("mask_rows", 0)) or _dict_array(ticket.get("scratch_regions", [])).is_empty():
+		failures.append("A newly purchased scratch ticket deferred its foil mask until the first drag.")
 	var original_mask := (ticket.get("latex_mask", []) as Array).duplicate()
 	var begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(400, 160), {}, run_state, environment)
 	game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(400, 160), begin.get("ui_state", {}), run_state, environment)
@@ -379,14 +415,18 @@ func _check_scratch_per_box_reveals(game: GameModule, failures: Array) -> void:
 		for region_index in range(regions.size()):
 			var values: Array = (regions[region_index] as Dictionary).get("rect", [])
 			var art_rect: Array = (regions[region_index] as Dictionary).get("art_rect", [])
-			if JSON.stringify(art_rect) != JSON.stringify(values):
-				failures.append("Scratch %s region/art rectangle drifted at box %d." % [type_id, region_index])
+			var expected := ScratchRegionModelScript.inset_rect(art_rect, ScratchRegionModelScript.MECHANIC_INSET_CELLS / ScratchRegionModelScript.MASK_COLUMNS, ScratchRegionModelScript.MECHANIC_INSET_CELLS / ScratchRegionModelScript.MASK_ROWS)
+			if not _scratch_rect_values_equal(values, expected):
+				failures.append("Scratch %s box %d mechanic rectangle is not the declared bounded inset of art_rect." % [type_id, region_index])
+				break
+			if type_id == "bonus_bingo" and region_index < 24 and str((regions[region_index] as Dictionary).get("mask_shape", "")) != "ellipse":
+				failures.append("Scratch Bonus Bingo caller %d did not preserve its measured circular foil shape." % region_index)
 				break
 		var sample_indices := _scratch_representative_region_indices(regions)
 		for region_index in sample_indices:
 			_prime_region_just_below_pop(game, ticket, region_index)
 			regions = _dict_array(ticket.get("scratch_regions", []))
-			var sample_values: Array = (regions[region_index] as Dictionary).get("rect", [])
+			var sample_values: Array = (regions[region_index] as Dictionary).get("art_rect", [])
 			var scratch_rect: Rect2 = game.call("_ticket_scratch_rect", ticket)
 			var region: Dictionary = regions[region_index]
 			if bool(region.get("revealed", false)) or float(region.get("coverage", 1.0)) >= 0.80:
@@ -412,7 +452,7 @@ func _prime_region_just_below_pop(game: GameModule, ticket: Dictionary, region_i
 	var mask: Array = ticket.get("latex_mask", [])
 	var regions: Array = ticket.get("scratch_regions", [])
 	var remaining := 0
-	var values: Array = (regions[region_index] as Dictionary).get("rect", [])
+	var values: Array = (regions[region_index] as Dictionary).get("art_rect", [])
 	var left := float(values[0])
 	var top := float(values[1])
 	var right := minf(1.0, left + float(values[2]))
@@ -482,7 +522,7 @@ func _check_scratch_result_and_queue_flow(game: GameModule, failures: Array) -> 
 	if _dict_array(machine.get("pending_queue", [])).size() != 2 or (machine.get("active_ticket", {}) as Dictionary).is_empty():
 		failures.append("Scratch multi-buy did not leave one active ticket plus a queued stack.")
 	var first_id := str((machine.get("active_ticket", {}) as Dictionary).get("id", ""))
-	game.surface_action_command("scratch_all", 0, false, {}, run_state, environment)
+	var scratch_all_command := game.surface_action_command("scratch_all", 0, false, {}, run_state, environment)
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	var active: Dictionary = machine.get("active_ticket", {})
 	if str(active.get("id", "")) != first_id or not bool(active.get("result_ready", false)):
@@ -494,15 +534,29 @@ func _check_scratch_result_and_queue_flow(game: GameModule, failures: Array) -> 
 		failures.append("Scratch completion did not showcase the purchase-fixed result before filing.")
 	if first_payout > 0 and int(surface.get("scratch_current_winnings", 0)) < first_payout:
 		failures.append("Scratch completion did not include the active win in the visible amount due.")
+	var expected_reveal_cue := "ticket_win" if first_payout > 0 else "scratch_box_pop"
+	if str(scratch_all_command.get("surface_audio_cue", "")) != expected_reveal_cue:
+		failures.append("Scratch completion did not time its winner cue to the reveal action.")
 	var harness := SurfaceHarness.new()
 	harness.setup(surface)
 	game.draw_surface(harness, surface, {"contract_harness": true})
-	if not _surface_harness_has_action(harness, "scratch_file_ticket"):
+	var ticket_rect_data: Dictionary = surface.get("scratch_ticket_rect", {}) if typeof(surface.get("scratch_ticket_rect", {})) == TYPE_DICTIONARY else {}
+	var ticket_rect := Rect2(float(ticket_rect_data.get("x", 0)), float(ticket_rect_data.get("y", 0)), float(ticket_rect_data.get("w", 0)), float(ticket_rect_data.get("h", 0)))
+	var file_hit_rect := Rect2()
+	for hit_value in harness.hit_regions:
+		if typeof(hit_value) == TYPE_DICTIONARY and str((hit_value as Dictionary).get("action", "")) == "scratch_file_ticket":
+			file_hit_rect = (hit_value as Dictionary).get("rect", Rect2()) as Rect2
+			break
+	if file_hit_rect.size == Vector2.ZERO or not file_hit_rect.has_point(ticket_rect.get_center()):
 		failures.append("Scratch result state did not expose a click-to-file hit region.")
+	if _surface_harness_label_contains(harness, "FILE WIN") or _surface_harness_label_contains(harness, "FILE NO-WIN"):
+		failures.append("Scratch result state retained the separate File button instead of using the completed ticket.")
 	if _surface_harness_label_contains(harness, "%") or _surface_harness_label_contains(harness, "COVERAGE"):
 		failures.append("Scratch surface rendered a progress/coverage readout.")
 	var file := game.surface_action_command("scratch_file_ticket", 0, false, {}, run_state, environment)
-	game.resolve_with_context("settle_scratch_ticket", 0, run_state, environment, _scratch_rng("queue-file"), file.get("ui_state", {}))
+	var file_result := game.resolve_with_context("settle_scratch_ticket", 0, run_state, environment, _scratch_rng("queue-file"), file.get("ui_state", {}))
+	if not bool(file_result.get("suppress_music_outcome", false)):
+		failures.append("Scratch filing replayed the winning-ticket sound after reveal.")
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	if _dict_array(machine.get("pending_queue", [])).size() != 1 or str((machine.get("active_ticket", {}) as Dictionary).get("id", "")) == first_id:
 		failures.append("Scratch filing did not advance to the next queued ticket.")
@@ -529,7 +583,8 @@ func _check_scratch_discard_flow(game: GameModule, failures: Array) -> void:
 	machine["pending_queue"] = [next_ticket]
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment
-	var before_outcome := JSON.stringify(dud.get("mechanic_result", {}))
+	var before_outcome_id := str(dud.get("outcome_id", ""))
+	var before_payout := int(dud.get("payout", 0))
 	game.call("_scratch_segment", machine, Vector2(450, 200), Vector2(520, 200))
 	var accidental_begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(450, 200), {}, run_state, environment)
 	var accidental_end := game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(248, 372), accidental_begin.get("ui_state", {}), run_state, environment)
@@ -547,8 +602,12 @@ func _check_scratch_discard_flow(game: GameModule, failures: Array) -> void:
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	if not bool(result.get("scratch_discarded_unfinished", false)) or str((machine.get("active_ticket", {}) as Dictionary).get("id", "")) != str(next_ticket.get("id", "")):
 		failures.append("Scratch waste basket did not remove the dud and advance the queue.")
-	if _dict_array(machine.get("loser_pile", [])).is_empty() or JSON.stringify((_dict_array(machine.get("loser_pile", [])).back() as Dictionary).get("mechanic_result", {})) != before_outcome:
+	var filed_duds := _dict_array(machine.get("loser_pile", []))
+	var filed_dud: Dictionary = filed_duds.back() if not filed_duds.is_empty() else {}
+	if filed_dud.is_empty() or str(filed_dud.get("id", "")) != str(dud.get("id", "")) or str(filed_dud.get("outcome_id", "")) != before_outcome_id or int(filed_dud.get("payout", -1)) != before_payout:
 		failures.append("Scratch discard changed the purchase-fixed dud or failed to file it.")
+	elif filed_dud.has("mechanic_result") or filed_dud.has("spots") or filed_dud.has("latex_mask"):
+		failures.append("Scratch discard retained resolved playfield data after filing the compact receipt.")
 	var surface := game.surface_state(run_state, environment, {})
 	var harness := SurfaceHarness.new()
 	harness.setup(surface)
@@ -613,7 +672,12 @@ func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
 	var scratch_origins: Dictionary = portable_snapshot.get("scratch_tickets", {})
 	var origin_key := RunState.portable_ticket_origin_key(environment)
 	var portable_state: Dictionary = scratch_origins.get(origin_key, {})
-	portable_state["loser_pile"] = [legacy_receipt]
+	var legacy_receipts: Array = []
+	for receipt_index in range(40):
+		var receipt := legacy_receipt.duplicate(true)
+		receipt["id"] = "legacy-receipt-%d" % receipt_index
+		legacy_receipts.append(receipt)
+	portable_state["loser_pile"] = legacy_receipts
 	portable_state["last_settled_ticket"] = legacy_receipt.duplicate(true)
 	scratch_origins[origin_key] = portable_state
 	portable_snapshot["scratch_tickets"] = scratch_origins
@@ -629,6 +693,8 @@ func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
 	var migrated_receipts := _dict_array(loaded_machine.get("loser_pile", []))
 	if migrated_receipts.is_empty() or (migrated_receipts[0] as Dictionary).has("latex_mask") or (migrated_receipts[0] as Dictionary).has("scratch_regions"):
 		failures.append("Scratch save migration did not compact a legacy completed-ticket mask.")
+	elif migrated_receipts.size() != RunState.PORTABLE_SCRATCH_TICKET_LOSER_RECEIPT_LIMIT or int(loaded_machine.get("loser_archive_count", 0)) != 40 - RunState.PORTABLE_SCRATCH_TICKET_LOSER_RECEIPT_LIMIT:
+		failures.append("Scratch save migration did not bound filed dud receipts while preserving their exact archived count.")
 	var migrated_node: Dictionary = ((restored.world_map.get("nodes", []) as Array)[0] as Dictionary)
 	var migrated_node_environment: Dictionary = migrated_node.get("environment", {})
 	var migrated_node_machine: Dictionary = (migrated_node_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
@@ -651,10 +717,10 @@ func _check_scratch_stale_region_upgrade(game: GameModule, failures: Array) -> v
 		return
 	var stale_first: Dictionary = old_regions[0]
 	stale_first["art_rect"] = [0.0, 0.0, 1.0, 1.0]
-	stale_first["layout_version"] = 1
+	stale_first["layout_version"] = 8
 	old_regions[0] = stale_first
 	ticket["scratch_regions"] = old_regions
-	ticket["region_layout_version"] = 1
+	ticket["region_layout_version"] = 8
 	var machine: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("scratch_stale_region_stock"))
 	machine["version"] = 2
 	machine["active_ticket"] = ticket
@@ -664,8 +730,8 @@ func _check_scratch_stale_region_upgrade(game: GameModule, failures: Array) -> v
 	var active: Dictionary = upgraded.get("active_ticket", {}) if typeof(upgraded.get("active_ticket", {})) == TYPE_DICTIONARY else {}
 	var regions := _dict_array(active.get("scratch_regions", []))
 	var expected := _dict_array(game.call("_ticket_art_regions", active))
-	if int(upgraded.get("version", 0)) < 3 or int(active.get("region_layout_version", 0)) < 3:
-		failures.append("Scratch stale-region upgrade did not stamp the current machine/ticket layout version.")
+	if int(upgraded.get("version", 0)) < 3 or int(active.get("region_layout_version", 0)) != ScratchRegionModelScript.LAYOUT_VERSION:
+		failures.append("Scratch v8-to-v9 region upgrade did not stamp the current machine/ticket layout version.")
 	if int(active.get("payout", -1)) != original_payout or str(active.get("outcome_id", "")) != original_outcome:
 		failures.append("Scratch stale-region upgrade changed the fixed-at-purchase outcome.")
 	if regions.size() != expected.size():
@@ -825,6 +891,23 @@ func _check_scratch_scalper(game: GameModule, failures: Array) -> void:
 		failures.append("Scratch scalper visit odds drifted from the configured 30%% encounter chance.")
 	if knows_count != 50:
 		failures.append("Scratch scalper dialogue odds are not an exact 50/50 split.")
+	var empty_spawn_found := false
+	for day in range(2048):
+		var spawn_run: RunState = RunStateScript.new()
+		spawn_run.start_new("SCRATCH-EMPTY-SPAWN-%d" % day)
+		var spawn_environment := _scratch_environment("scratch_empty_spawn_%d" % day)
+		spawn_environment["generated_day"] = day
+		spawn_environment["entered_game_clock_minutes"] = spawn_run.game_clock_minutes
+		var spawn_machine: Dictionary = game.call("_generate_machine_state", spawn_run, spawn_environment, _scratch_rng("empty-spawn:%d" % day))
+		if int(game.call("_stock_total", spawn_machine)) > 0:
+			continue
+		empty_spawn_found = true
+		if not bool(spawn_machine.get("scalper_present", false)) \
+				or str(spawn_machine.get("scalper_visit_token", "")).is_empty():
+			failures.append("A scratch machine generated fully empty without its guaranteed scalper encounter.")
+		break
+	if not empty_spawn_found:
+		failures.append("Scratch scalper regression could not produce an initially empty machine fixture.")
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("SCRATCH-SCALPER")
 	var environment := _scratch_environment("scratch_scalper")
@@ -847,8 +930,9 @@ func _check_scratch_scalper(game: GameModule, failures: Array) -> void:
 	var scalper_hook := _scratch_hook(hooks, "scratch_ticket_scalper")
 	if scalper_hook.is_empty() or str(scalper_hook.get("object_id", "")) != "dialogue:scratch_ticket_scalper" or str(scalper_hook.get("dialogue_id", "")) != "scratch_ticket_scalper_knows":
 		failures.append("Scratch scalper did not appear as a stable talk target with the informed dialogue branch.")
-	if not str(scalper_hook.get("dialogue_summary", "")).contains("Day ") or not (str(scalper_hook.get("dialogue_summary", "")).contains("AM") or str(scalper_hook.get("dialogue_summary", "")).contains("PM")):
-		failures.append("Informed scratch scalper dialogue did not reveal the exact next restock time.")
+	var informed_summary := str(scalper_hook.get("dialogue_summary", ""))
+	if not informed_summary.contains("Day ") or informed_summary.count("Day ") != 3 or not informed_summary.contains("every three hours") or not (informed_summary.contains("AM") or informed_summary.contains("PM")):
+		failures.append("Informed scratch scalper dialogue did not reveal the exact repeating restock schedule.")
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	machine["scalper_knows_schedule"] = false
 	environment["game_states"] = {"scratch_tickets": machine}
@@ -992,6 +1076,8 @@ func _check_scratch_sound(failures: Array) -> void:
 	if pop_stream == null or pop_stream.loop_mode != AudioStreamWAV.LOOP_DISABLED or sfx.debug_normalized_event_id("scratch_box_pop") != "scratch_box_pop":
 		failures.append("Scratch per-box pop is not routed as a one-shot procedural cue.")
 	var source := FileAccess.get_file_as_string("res://scripts/ui/sfx_player.gd")
+	if not source.contains('"ticket_win": true'):
+		failures.append("Winning ticket reveals are not routed to the music director cue boundary.")
 	if source.contains("scratch_scrape_loop") or source.contains("coin_edge") or source.contains("_sample_scratch_scrape"):
 		failures.append("Retired metallic scratch synthesis remains in the SFX source.")
 	if not source.contains("NATIVE_PREWARM_BUDGET_USEC") or source.contains("_event_stream(str(_prewarm_queue.pop_front()))"):

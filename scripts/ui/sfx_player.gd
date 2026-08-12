@@ -51,7 +51,9 @@ const ROULETTE_PREWARM_EVENTS := [
 ]
 const ENVIRONMENT_PREWARM_EVENTS := [
 	"phone_call",
+	"phone_out_of_service",
 	"drink_consumed",
+	"heat_gain",
 	"scratch_paper_foley_loop",
 	"scratch_box_pop",
 ]
@@ -68,7 +70,7 @@ const WEB_CRITICAL_PREWARM_EVENTS := [
 ]
 const WEB_DELIVERY_EVENT_IDS := [
 	"button", "button_pinball", "button_buffalo", "button_digital",
-	"drink_consumed", "phone_call", "scratch_paper_foley_loop", "scratch_box_pop",
+	"drink_consumed", "phone_call", "phone_out_of_service", "heat_gain", "scratch_paper_foley_loop", "scratch_box_pop",
 	"lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital",
 	"reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital",
 	"reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital",
@@ -101,6 +103,7 @@ const NATIVE_SLOT_DELIVERY_EVENTS := {
 const ROULETTE_RIM_TIMES := [0.42, 0.82, 1.26, 1.78, 2.34, 2.94, 3.32]
 const ROULETTE_SCATTER_TIMES := [3.66, 3.86, 4.08, 4.32]
 const MUSIC_DIRECTOR_CUES := {
+	"ticket_win": true,
 	"bonus_music_buffalo": true,
 	"bonus_music_pinball": true,
 	"pinball_feature_intro": true,
@@ -503,12 +506,37 @@ func play_slot_event(event_id: String, volume_db: float = -3.0, pitch: float = 1
 	_play(event_id, volume_db, pitch)
 
 
+# A restrained UI consequence cue: a soft radio chirp and muted pulse rather
+# than a siren or impact. Volume and pitch rise gently with the applied amount.
+func play_heat_gain(applied_amount: int) -> void:
+	if applied_amount <= 0 or not audio_enabled or _running_headless():
+		return
+	var profile := heat_gain_audio_profile(applied_amount)
+	_ensure_players()
+	_play("heat_gain", float(profile.get("volume_db", -15.0)), float(profile.get("pitch", 1.0)))
+
+
+func heat_gain_audio_profile(applied_amount: int) -> Dictionary:
+	var amount := clampi(applied_amount, 0, 100)
+	var intensity := 0.0
+	if amount > 0:
+		intensity = pow(clampf(float(amount - 1) / 19.0, 0.0, 1.0), 0.62)
+	return {
+		"event_id": "heat_gain",
+		"amount": amount,
+		"intensity": intensity,
+		"volume_db": lerpf(-16.0, -10.5, intensity),
+		"pitch": lerpf(0.92, 1.04, intensity),
+		"duration_sec": _event_seconds("heat_gain"),
+	}
+
+
 func play_pull_tab_event(action: String = "") -> void:
 	if not audio_enabled or _running_headless():
 		return
 	_ensure_players()
 	match action:
-		"pull_tab_buy", "pull_tab_buy_all":
+		"pull_tab_buy", "pull_tab_buy_all", "scratch_buy":
 			_play("pull_tab_click", -4.5, 1.0)
 		"pull_tab_peek":
 			_play("paper_peek", -5.0, 0.92)
@@ -1418,7 +1446,7 @@ func _audio_stream_from_pcm(event_id: String, sample_rate: int, frames: int, dat
 
 
 func _event_sample_rate(event_id: String) -> int:
-	if event_id == "phone_call":
+	if event_id in ["phone_call", "phone_out_of_service"]:
 		return TELEPHONE_SAMPLE_RATE
 	return SAMPLE_RATE
 
@@ -1508,7 +1536,7 @@ func _normalized_event_id_uncached(event_id: String) -> String:
 			"jackpot": "jackpot_buffalo",
 			"loss": "lose",
 		})
-	if family_event == "drink_consumed" or family_event == "phone_call":
+	if family_event == "drink_consumed" or family_event in ["phone_call", "phone_out_of_service"] or family_event == "heat_gain":
 		return family_event
 	if family_event == "scratch_paper_foley_loop" or family_event == "scratch_box_pop":
 		return family_event
@@ -1565,6 +1593,10 @@ func _event_seconds(event_id: String) -> float:
 			return 0.56
 		"phone_call":
 			return 1.08
+		"phone_out_of_service":
+			return 1.72
+		"heat_gain":
+			return 0.30
 		"scratch_paper_foley_loop":
 			return 0.28
 		"scratch_box_pop":
@@ -1683,6 +1715,10 @@ func _event_sample(event_id: String, t: float, frame: int, seconds: float) -> fl
 			return _sample_drink_consumed(t, frame, seconds)
 		"phone_call":
 			return _sample_phone_call(t, frame, seconds)
+		"phone_out_of_service":
+			return _sample_phone_out_of_service(t, frame, seconds)
+		"heat_gain":
+			return _sample_heat_gain(t, frame, seconds)
 		"scratch_paper_foley_loop":
 			return _sample_scratch_paper_foley_loop(t, frame, seconds)
 		"scratch_box_pop":
@@ -1864,6 +1900,47 @@ func _sample_phone_call(t: float, frame: int, seconds: float) -> float:
 		var cradle_env := 1.0 - clampf(cradle_tail_t / 0.12, 0.0, 1.0)
 		cradle = (sin(TAU * 135.0 * cradle_tail_t) * 0.060 + _noise(frame, 6053) * 0.012) * cradle_env
 	return dial_click + ring_one + ring_two + line_hiss + cradle
+
+
+func _sample_phone_out_of_service(t: float, frame: int, seconds: float) -> float:
+	# Preserve the established call sound up to the unanswered line, then replace
+	# its pickup/cradle tail with the three rising tones of a disconnected line.
+	var dial_click := 0.0
+	if t <= 0.040:
+		var click_env := 1.0 - clampf(t / 0.040, 0.0, 1.0)
+		dial_click = (sin(TAU * 880.0 * t) * 0.060 + _noise(frame, 6101) * 0.035) * click_env
+	var ring_one := _telephone_ring_segment(t, frame, 0.025, 0.315)
+	var ring_two := _telephone_ring_segment(t, frame + 2300, 0.425, 0.315)
+	var line_hiss := _noise(frame, 6113) * 0.004 * _pulse_window(t, 0.04, 0.76)
+	var disconnect_local := t - 0.775
+	var disconnect_click := 0.0
+	if disconnect_local >= 0.0 and disconnect_local <= 0.055:
+		var click_decay := 1.0 - clampf(disconnect_local / 0.055, 0.0, 1.0)
+		disconnect_click = (_noise(frame, 6121) * 0.050 + sin(TAU * 165.0 * disconnect_local) * 0.045) * click_decay
+	var service_tone := _telephone_out_of_service_tone(t - 0.840, frame)
+	return dial_click + ring_one + ring_two + line_hiss + disconnect_click + service_tone
+
+
+func _telephone_out_of_service_tone(local: float, frame: int) -> float:
+	if local < 0.0:
+		return 0.0
+	var tone_duration := 0.245
+	var gap_duration := 0.035
+	var segment_duration := tone_duration + gap_duration
+	var tone_index := int(floor(local / segment_duration))
+	if tone_index < 0 or tone_index >= 3:
+		return 0.0
+	var tone_local := local - float(tone_index) * segment_duration
+	if tone_local < 0.0 or tone_local > tone_duration:
+		return 0.0
+	var frequencies := [950.0, 1400.0, 1800.0]
+	var frequency := float(frequencies[tone_index])
+	var attack := clampf(tone_local / 0.012, 0.0, 1.0)
+	var release := clampf((tone_duration - tone_local) / 0.025, 0.0, 1.0)
+	var envelope := minf(attack, release)
+	var fundamental := sin(TAU * frequency * tone_local)
+	var telephone_grit := sin(TAU * frequency * 0.5 * tone_local + 0.23) * 0.11 + _noise(frame, 6131 + tone_index * 17) * 0.008
+	return (fundamental * 0.155 + telephone_grit) * envelope
 
 
 func _sample_scratch_paper_foley_loop(t: float, frame: int, seconds: float) -> float:
@@ -2163,6 +2240,19 @@ func _sample_blackjack_bust(t: float, frame: int, seconds: float) -> float:
 	var scrape := _soft_noise(frame, 191, 5) * 0.080 * _pulse_train(t, 34.0, 0.48) * _decay_env(t, seconds, 0.008, 0.260)
 	var low := _warm_tone(t, 42.0, 0.18) * 0.090 * _decay_env(t, seconds, 0.012, 0.320)
 	return thud + scrape + low
+
+
+func _sample_heat_gain(t: float, frame: int, seconds: float) -> float:
+	# Rounded two-note radio acknowledgement with a quiet low-frequency pulse.
+	# Avoiding sharp noise and heavy bass keeps it distinct from damage/blood SFX.
+	var progress := clampf(t / maxf(0.001, seconds), 0.0, 1.0)
+	var scan := _warm_tone(t, lerpf(310.0, 460.0, progress), 0.20) * 0.090 * _decay_env(t, seconds, 0.012, 0.250)
+	var first := _rounded_bell(t, 430.0, 0.14, 0.012) * 0.105
+	var second_local := t - 0.082
+	var second := _rounded_bell(second_local, 560.0, 0.13, 0.010) * 0.070 if second_local >= 0.0 else 0.0
+	var radio_texture := _soft_noise(frame, 607, 17) * 0.018 * _pulse_train(t, 25.0, 0.38) * _decay_env(t, seconds, 0.008, 0.220)
+	var pulse := _body_thump(t, seconds, 78.0, 0.10) * 0.105
+	return scan + first + second + radio_texture + pulse
 
 
 func _sample_blackjack_peek(t: float, frame: int, seconds: float) -> float:

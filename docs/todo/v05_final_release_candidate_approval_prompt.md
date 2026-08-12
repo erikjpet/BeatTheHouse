@@ -1,8 +1,16 @@
 # Agent Prompt — Build and Approve the Final 0.5 Release Candidate
 
-Last reconciled: 2026-08-05
+Last reconciled: 2026-08-12
 Release target: 0.5.0
-Status: BLOCKED ONLY BY TUT-N17 AND OWNER APPROVAL
+Status: SOURCE APPROVED FOR GITHUB INTEGRATION / PACKAGE APPROVAL PENDING
+
+## 2026-08-12 owner handoff
+
+The owner declared the accumulated 0.5 source and playtest-fix work complete
+and authorized a full GitHub source push. The remaining duties in this prompt
+apply to exact merged-package verification, any unresolved human evidence or
+accepted limitation, public artifact publication, and the final tag. Current
+source status is recorded in `docs/plans/0.5_source_completion_record.md`.
 
 ## 2026-08-05 technical baseline handoff
 

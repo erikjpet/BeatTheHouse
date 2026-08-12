@@ -22,15 +22,17 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	machine = _surface_machine_view(machine)
 	var stored_active_bonus: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
 	var surface_time_msec := maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
-	var spin_elapsed_msec := _surface_spin_elapsed_msec(ui_state, 0)
-	var fast_animation_id := str(machine.get("slot_animation_id", ""))
-	if str(stored_active_bonus.get("family", "")) == "pinball" and bool(stored_active_bonus.get("active", false)) and not bool(stored_active_bonus.get("complete", false)) and fast_animation_id.begins_with("bonus:"):
+	var animation_id := str(machine.get("slot_animation_id", ""))
+	var spin_elapsed_msec := _surface_spin_elapsed_msec(ui_state, animation_id, 0)
+	var trigger_reveal_msec := _trigger_bonus_reveal_msec(machine)
+	var trigger_reveal_pending := _trigger_bonus_reveal_pending(machine, stored_active_bonus, spin_elapsed_msec, trigger_reveal_msec)
+	# Once the triggering reels have revealed the feature, the live pinball board
+	# owns the surface until completion. A finite animation id may expire while the
+	# player is still aiming, so it cannot be the board's lifetime owner.
+	if str(stored_active_bonus.get("family", "")) == "pinball" and bool(stored_active_bonus.get("active", false)) and not bool(stored_active_bonus.get("complete", false)) and not trigger_reveal_pending:
 		return _pinball_active_surface_state(machine, stored_active_bonus, run_state, surface_time_msec, ui_state)
 	var selected_bet: Dictionary = StateScript.selected_bet(machine)
 	var animation_duration := maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
-	var animation_id := str(machine.get("slot_animation_id", ""))
-	var trigger_reveal_msec := _trigger_bonus_reveal_msec(machine)
-	var trigger_reveal_pending := _trigger_bonus_reveal_pending(machine, stored_active_bonus, spin_elapsed_msec, trigger_reveal_msec)
 	var active_bonus: Dictionary = _display_active_bonus(machine, stored_active_bonus, surface_time_msec, trigger_reveal_pending)
 	active_bonus = _with_pinball_alert_metadata(active_bonus, machine)
 	var spin_motion_active := not animation_id.is_empty() and animation_duration > 0
@@ -219,9 +221,17 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
 	var surface_time_msec := maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
 	var stored_active_bonus: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
-	var spin_elapsed_msec := _surface_spin_elapsed_msec(ui_state, 0)
+	var animation_id := str(machine.get("slot_animation_id", ""))
+	var spin_elapsed_msec := _surface_spin_elapsed_msec(ui_state, animation_id, 0)
 	var trigger_reveal_msec := _trigger_bonus_reveal_msec(machine)
 	var trigger_reveal_pending := _trigger_bonus_reveal_pending(machine, stored_active_bonus, spin_elapsed_msec, trigger_reveal_msec)
+	# The ordinary realtime patch only replaces time-dependent fields. Entering
+	# pinball is a structural surface change: reels, skin, animation channels,
+	# audio ownership, and native hit targets all change together. Returning the
+	# complete takeover spec keeps the first pinball frame visual and interactive
+	# state atomic instead of leaving a pinball scene inside the old cabinet.
+	if str(stored_active_bonus.get("family", "")) == "pinball" and bool(stored_active_bonus.get("active", false)) and not bool(stored_active_bonus.get("complete", false)) and not trigger_reveal_pending:
+		return _pinball_active_surface_state(machine, stored_active_bonus, run_state, surface_time_msec, ui_state)
 	var active_bonus := _display_active_bonus(machine, stored_active_bonus, surface_time_msec, trigger_reveal_pending)
 	active_bonus = _with_pinball_alert_metadata(active_bonus, machine)
 	if str(active_bonus.get("family", "")) == "pinball" and bool(active_bonus.get("active", false)):
@@ -351,6 +361,8 @@ func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary
 		"slot_animation_id": animation_id,
 		"slot_animation_duration_msec": int(machine.get("slot_animation_duration_msec", 0)),
 		"slot_visual_time_msec": surface_time_msec,
+		"slot_bonus_trigger_reveal_pending": false,
+		"slot_bonus_trigger_revealed": true,
 		"slot_attract_phase": 0.0,
 		"slot_bonus_start_time": 0,
 		"slot_audio_cues": [],
@@ -461,6 +473,8 @@ func _bonus_visible_on_surface(active_bonus: Dictionary) -> bool:
 func _trigger_bonus_reveal_pending(machine: Dictionary, active_bonus: Dictionary, spin_elapsed_msec: int, reveal_msec: int) -> bool:
 	if not _bonus_visible_on_surface(active_bonus):
 		return false
+	if bool(machine.get("slot_bonus_trigger_revealed", false)):
+		return false
 	if reveal_msec <= 0:
 		return false
 	var animation_id := str(machine.get("slot_animation_id", ""))
@@ -481,13 +495,20 @@ func _trigger_bonus_reveal_msec(machine: Dictionary) -> int:
 	return reveal_msec + SLOT_RESULT_REVEAL_BEAT_MSEC
 
 
-func _surface_spin_elapsed_msec(ui_state: Dictionary, missing_value: int = -1) -> int:
+func _surface_spin_elapsed_msec(ui_state: Dictionary, expected_active_id: String = "", missing_value: int = -1) -> int:
 	if int(ui_state.get("slot_tease_input_msec", -1)) >= 0:
 		return int(ui_state.get("slot_tease_input_msec", -1))
 	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
 	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
 	var spin: Dictionary = _copy_dict(animations.get("slot_spin", {}))
 	if spin.is_empty():
+		return missing_value
+	# The action boundary snapshot is built before the canvas installs the new
+	# channel. Its runtime status can still describe the prior idle/spin channel,
+	# whose 999-second inactive sentinel used to skip the triggering reels and
+	# jump straight into a one-frame takeover. Only elapsed time from this exact
+	# spin is authoritative.
+	if not expected_active_id.is_empty() and str(spin.get("active_id", "")) != expected_active_id:
 		return missing_value
 	return maxi(0, int(round(float(spin.get("elapsed", 0.0)) * 1000.0)))
 

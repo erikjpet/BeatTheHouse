@@ -24,7 +24,10 @@ const SYMBOLS := {
 }
 
 
-static func draw(surface, ticket: Dictionary, ticket_rect: Rect2) -> void:
+const SYMBOL_INSET := 0.92
+
+
+static func draw(surface, ticket: Dictionary, art_frame: Rect2) -> void:
 	if ticket.is_empty():
 		return
 	var face: Dictionary = ticket.get("face", {}) if typeof(ticket.get("face", {})) == TYPE_DICTIONARY else {}
@@ -41,19 +44,20 @@ static func draw(surface, ticket: Dictionary, ticket_rect: Rect2) -> void:
 		var spot_index := int(region.get("spot_index", -1))
 		if spot_index < 0 or spot_index >= spots.size() or typeof(spots[spot_index]) != TYPE_DICTIONARY:
 			continue
-		var spot: Dictionary = spots[spot_index]
-		var rect := RegionModelScript.rect_for(region, ticket_rect)
+		var spot: Dictionary = (spots[spot_index] as Dictionary).duplicate(false)
+		spot["content_split"] = region.get("content_split", [])
+		var rect := RegionModelScript.rect_for(region, art_frame)
 		_paint_result_icon(surface, str(ticket.get("type_id", "")), spot, rect, ink, accent, trim)
 	if bool(ticket.get("result_ready", false)):
-		_paint_validation_result(surface, ticket, ticket_rect, ink, accent, trim)
+		_paint_validation_result(surface, ticket, art_frame, ink, accent, trim)
 
 
-static func _paint_validation_result(surface, ticket: Dictionary, ticket_rect: Rect2, ink: Color, accent: Color, trim: Color) -> void:
+static func _paint_validation_result(surface, ticket: Dictionary, art_frame: Rect2, ink: Color, accent: Color, trim: Color) -> void:
 	var payout := maxi(0, int(ticket.get("payout", 0)))
 	var won := payout > 0
 	var stamp := Rect2(
-		ticket_rect.position + Vector2(ticket_rect.size.x * 0.31, ticket_rect.size.y * 0.902),
-		Vector2(ticket_rect.size.x * 0.38, ticket_rect.size.y * 0.068)
+		art_frame.position + Vector2(art_frame.size.x * 0.31, art_frame.size.y * 0.902),
+		Vector2(art_frame.size.x * 0.38, art_frame.size.y * 0.068)
 	)
 	var dark_base := ink if ink.get_luminance() < 0.48 else accent.darkened(0.56)
 	var fill := dark_base if won else dark_base.darkened(0.18)
@@ -85,7 +89,7 @@ static func _paint_result_icon(surface, type_id: String, spot: Dictionary, rect:
 
 static func _paint_two_fer_symbol(surface, symbol: String, rect: Rect2, _ink: Color, _accent: Color, _trim: Color) -> void:
 	var texture_id := "clover" if symbol == "CLOVER" else "bell" if symbol == "BELL" else "star" if symbol == "STAR" else "twofer"
-	_paint_symbol_texture(surface, texture_id, rect, 0.80, -0.05)
+	_paint_symbol_texture(surface, texture_id, rect)
 
 
 static func _paint_lucky_number(surface, spot: Dictionary, rect: Rect2, ink: Color, accent: Color, _trim: Color) -> void:
@@ -93,26 +97,26 @@ static func _paint_lucky_number(surface, spot: Dictionary, rect: Rect2, ink: Col
 	var seven := number == 7
 	var role := str(spot.get("role", ""))
 	var color := Color("#fff4a0") if role == "winning_number" else ink
-	_paint_symbol_texture(surface, "lucky_seven" if seven else "number_coin", rect, 0.90 if not spot.has("prize") else 0.74, -0.04 if not spot.has("prize") else -0.12)
-	var number_rect := Rect2(rect.position, Vector2(rect.size.x, rect.size.y * (0.72 if spot.has("prize") else 1.0)))
+	_paint_symbol_texture(surface, "lucky_seven" if seven else "number_coin", rect)
+	var number_rect := _content_rect(rect, spot, "number")
 	if not seven:
 		surface.surface_label_centered(str(number), number_rect, clampi(int(rect.size.y * 0.52), 10, 24), color)
 	if spot.has("prize") and str(spot.get("role", "")) != "winning_number":
 		var prize := int(spot.get("prize", 0))
-		surface.surface_label_centered("$%d" % prize if prize > 0 else "NO PRIZE", Rect2(rect.position + Vector2(0, rect.size.y * 0.69), Vector2(rect.size.x, rect.size.y * 0.28)), clampi(int(rect.size.y * 0.16), 5, 8), accent if prize > 0 else ink)
+		surface.surface_label_centered("$%d" % prize if prize > 0 else "NO PRIZE", _content_rect(rect, spot, "prize"), clampi(int(rect.size.y * 0.16), 5, 8), accent if prize > 0 else ink)
 
 
 static func _paint_tic_mark(surface, spot: Dictionary, rect: Rect2, ink: Color, _accent: Color, _trim: Color) -> void:
 	var mark := str(spot.get("mark", "MISS"))
 	if mark == "WIN":
 		var texture_ids := ["tic_circle", "tic_star", "tic_diamond"]
-		_paint_symbol_texture(surface, str(texture_ids[posmod(int(spot.get("variant", 0)), 3)]), rect, 0.92, 0.0)
+		_paint_symbol_texture(surface, str(texture_ids[posmod(int(spot.get("variant", 0)), 3)]), rect)
 		surface.surface_label_centered("WIN", rect, clampi(int(rect.size.y * 0.24), 6, 11), Color("#fff8d6"))
 	elif mark == "GOLD":
-		_paint_symbol_texture(surface, "tic_star", rect, 0.92, 0.0)
+		_paint_symbol_texture(surface, "tic_star", rect)
 		surface.surface_label_centered("GOLD", rect, clampi(int(rect.size.y * 0.20), 6, 10), Color("#fff8d6"))
 	else:
-		_paint_symbol_texture(surface, "tic_miss", rect, 0.82, -0.02)
+		_paint_symbol_texture(surface, "tic_miss", rect)
 		surface.surface_label_centered("MISS" if mark == "MISS" else "DUST", Rect2(rect.position + Vector2(0, rect.size.y * 0.74), Vector2(rect.size.x, rect.size.y * 0.20)), 6, ink)
 
 
@@ -129,7 +133,7 @@ static func _paint_bingo_number(surface, spot: Dictionary, rect: Rect2, ink: Col
 	var role := str(spot.get("role", ""))
 	var daubed := bool(spot.get("daubed", false)) or number == 0
 	if role == "caller":
-		_paint_symbol_texture(surface, "bingo_ball", rect, 1.04, 0.0)
+		_paint_symbol_texture(surface, "bingo_ball", rect)
 	elif daubed:
 		surface.draw_circle(rect.get_center(), minf(rect.size.x, rect.size.y) * 0.44, Color(accent.r, accent.g, accent.b, 0.72))
 	surface.surface_label_centered("FREE" if number == 0 else str(number), rect, clampi(int(rect.size.y * (0.42 if number == 0 else 0.62)), 5, 12), Color("#fffbe9") if daubed else ink)
@@ -139,7 +143,7 @@ static func _paint_holdem_icon(surface, spot: Dictionary, rect: Rect2, ink: Colo
 	if str(spot.get("role", "")) == "wild":
 		var wild := str(spot.get("card", "")) == "WILD"
 		if wild:
-			_paint_symbol_texture(surface, "wild_card", rect, 0.94, 0.0)
+			_paint_symbol_texture(surface, "wild_card", rect)
 		else:
 			surface.surface_label_centered("NO WILD", rect, clampi(int(rect.size.y * 0.52), 7, 14), ink)
 		return
@@ -150,7 +154,7 @@ static func _paint_holdem_icon(surface, spot: Dictionary, rect: Rect2, ink: Colo
 static func _paint_vault_icon(surface, spot: Dictionary, rect: Rect2, ink: Color, _accent: Color, trim: Color) -> void:
 	match str(spot.get("role", "")):
 		"multiplier":
-			_paint_symbol_texture(surface, "multiplier_coin", rect, 1.04, 0.0)
+			_paint_symbol_texture(surface, "multiplier_coin", rect)
 			surface.surface_label_centered("%dx" % int(spot.get("multiplier", 2)), rect, clampi(int(rect.size.y * 0.58), 8, 18), ink)
 		"ladder":
 			var match_win := bool(spot.get("match", false))
@@ -160,16 +164,28 @@ static func _paint_vault_icon(surface, spot: Dictionary, rect: Rect2, ink: Color
 			surface.surface_label_centered("%s  %s  %s" % [left, "=" if match_win else "!=", right], rect, clampi(int(rect.size.y * 0.45), 6, 10), trim if match_win else ink)
 		"gold_bar":
 			var gold := bool(spot.get("win_all", false))
-			_paint_symbol_texture(surface, "gold_bar" if gold else "brass_bar", rect, 1.04, 0.0)
+			_paint_symbol_texture(surface, "gold_bar" if gold else "brass_bar", rect)
 		_:
 			var open := str(spot.get("symbol", "")) == "OPEN"
-			_paint_symbol_texture(surface, "vault_open" if open else "vault_sealed", rect, 1.04, 0.0)
+			_paint_symbol_texture(surface, "vault_open" if open else "vault_sealed", rect)
 
 
-static func _paint_symbol_texture(surface, texture_id: String, rect: Rect2, scale: float, y_offset_ratio: float) -> void:
+static func _paint_symbol_texture(surface, texture_id: String, rect: Rect2) -> void:
 	var texture: Texture2D = SYMBOLS.get(texture_id)
 	if texture == null:
 		return
-	var side := minf(rect.size.x, rect.size.y) * scale
-	var center := rect.get_center() + Vector2(0, rect.size.y * y_offset_ratio)
-	surface.draw_texture_rect(texture, Rect2(center - Vector2(side, side) * 0.5, Vector2(side, side)), false)
+	# One conservative inset keeps every reveal inside its measured printed well.
+	var source := texture.get_size()
+	var scale := minf(rect.size.x / source.x, rect.size.y / source.y) * SYMBOL_INSET
+	var fitted := source * scale
+	surface.draw_texture_rect(texture, Rect2(rect.get_center() - fitted * 0.5, fitted), false)
+
+
+static func _content_rect(rect: Rect2, spot: Dictionary, portion: String) -> Rect2:
+	var split: Array = spot.get("content_split", []) if typeof(spot.get("content_split", [])) == TYPE_ARRAY else []
+	if split.size() < 4:
+		return rect
+	var top_height := clampf(float(split[3]), 0.05, 0.95)
+	if portion == "number":
+		return Rect2(rect.position, Vector2(rect.size.x, rect.size.y * top_height))
+	return Rect2(rect.position + Vector2(0, rect.size.y * top_height), Vector2(rect.size.x, rect.size.y * (1.0 - top_height)))

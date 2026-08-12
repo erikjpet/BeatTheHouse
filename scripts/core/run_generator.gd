@@ -37,10 +37,82 @@ func next_environment(run_state: RunState, target_archetype_id: String = "", tar
 func preview_environment(run_state: RunState, target_archetype_id: String = "") -> Dictionary:
 	if run_state == null:
 		return {}
+	var stored_preview := _stored_world_environment_preview(run_state, target_archetype_id)
+	if not stored_preview.is_empty():
+		return stored_preview
+	# Exact scouting only consumes the destination's public offers/hooks. Cloning
+	# the full run copied every portable ticket and every visited room for each
+	# route card. Build the deterministic preview from the same logical run fields
+	# with accumulated player-owned payloads and stored room bodies omitted.
 	var preview_state := RunState.new()
-	preview_state.from_dict(run_state.to_dict())
+	var preview_data := run_state.to_save_snapshot()
+	# Historical receipts and timeline samples are not generation inputs. Copying
+	# and normalizing them for each scouted route made preview cost grow with run
+	# age even though they cannot affect the destination. Progression remains in
+	# narrative/story flags, while environment_history is retained because its
+	# count participates in deterministic depth generation.
+	preview_data["story_log"] = []
+	preview_data["story_log_archive_count"] = run_state.story_log_entry_count()
+	# from_dict synthesizes a baseline when heat history is empty. Retain one
+	# compact sample so the preview clone remains read-only with respect to the
+	# authoritative current heat while avoiding the full timeline copy.
+	var preview_heat_sample: Dictionary = {}
+	if not run_state.heat_history.is_empty() and typeof(run_state.heat_history[run_state.heat_history.size() - 1]) == TYPE_DICTIONARY:
+		preview_heat_sample = (run_state.heat_history[run_state.heat_history.size() - 1] as Dictionary).duplicate(false)
+	else:
+		preview_heat_sample = {
+			"action_index": run_state.environment_travel_count(),
+			"game_clock_minutes": run_state.game_clock_minutes,
+			"heat_value": run_state.suspicion_level(),
+			"environment_id": str(run_state.current_environment.get("id", "")),
+		}
+	preview_data["heat_history"] = [preview_heat_sample]
+	preview_data["pending_triggered_events"] = []
+	preview_data["pending_bags"] = []
+	preview_data["active_triggered_event"] = {}
+	preview_data["grand_casino_atm_interest_notifications"] = []
+	preview_data["portable_ticket_piles"] = {}
+	preview_data["world_map"] = WorldMap.normalize_topology(run_state.world_map)
+	preview_data["current_environment"] = RunState.environment_context_snapshot(run_state.current_environment)
+	preview_data["grand_casino_room_states"] = {}
+	preview_state.from_dict(preview_data)
 	var environment := next_environment(preview_state, target_archetype_id)
-	return environment.to_dict()
+	return _travel_preview_environment_projection(environment.to_dict())
+
+
+func _stored_world_environment_preview(run_state: RunState, target_archetype_id: String) -> Dictionary:
+	if not run_state.has_world_map():
+		return {}
+	var clean_target := target_archetype_id.strip_edges()
+	var nodes_value: Variant = run_state.world_map.get("nodes", [])
+	if clean_target.is_empty() or typeof(nodes_value) != TYPE_ARRAY:
+		return {}
+	for node_value in nodes_value as Array:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		if str(node.get("id", "")) != clean_target:
+			continue
+		var environment_value: Variant = node.get("environment", {})
+		if typeof(environment_value) == TYPE_DICTIONARY and not (environment_value as Dictionary).is_empty():
+			return _travel_preview_environment_projection(environment_value as Dictionary)
+		return {}
+	return {}
+
+
+func _travel_preview_environment_projection(environment: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for key in ["tier", "kind", "game_ids", "service_ids", "lender_hooks", "item_offers", "travel_locked_actions"]:
+		if not environment.has(key):
+			continue
+		var value: Variant = environment.get(key)
+		if typeof(value) == TYPE_ARRAY:
+			result[key] = (value as Array).duplicate(true)
+		elif typeof(value) == TYPE_DICTIONARY:
+			result[key] = (value as Dictionary).duplicate(true)
+		else:
+			result[key] = value
+	return result
 
 
 # Swaps casino sub-environments without moving the world-map cursor.

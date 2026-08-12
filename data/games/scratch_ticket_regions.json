@@ -1,0 +1,2904 @@
+{
+  "layout_version": 9,
+  "source_art": {
+    "two_fer": {
+      "file": "two_fer_background_pro.png",
+      "w": 1872,
+      "h": 840,
+      "sha256": "b896362d9b14630afe9c062917b21442df5e515bb8144df0b0ee525af03de08d"
+    },
+    "lucky_7s": {
+      "file": "lucky_7s_background_pro.png",
+      "w": 1053,
+      "h": 1494,
+      "sha256": "a5a99f8a04793ce96c7953caaa53229c1fd32eeb3ed8d89d3efe381c6cc54550"
+    },
+    "tic_tac_gold": {
+      "file": "tic_tac_gold_background_pro.png",
+      "w": 1053,
+      "h": 1494,
+      "sha256": "a4d94e1fea031acbe594a6806d7fec8681c08b680744fd5c54bb5183fcf9efc4"
+    },
+    "crossword_corner": {
+      "file": "crossword_corner_background_pro.png",
+      "w": 1556,
+      "h": 1011,
+      "sha256": "9308d67d7e2dfb3ee6c4bfeecde05b333df67d66cbc9f23280fb331c47c3dbd9"
+    },
+    "bonus_bingo": {
+      "file": "bonus_bingo_background_pro.png",
+      "w": 1553,
+      "h": 1013,
+      "sha256": "80ccaa1ebbd3328c0e701ea50942de23d6f91dd908f76ca0802f377be4c95ec3"
+    },
+    "high_roller_holdem": {
+      "file": "high_roller_holdem_background_pro.png",
+      "w": 1122,
+      "h": 1402,
+      "sha256": "7229aaf293d57c2fe2f878388fe711a11759ce5f1837590d275f7c75f8e45a6a"
+    },
+    "golden_vault": {
+      "file": "golden_vault_background_pro.png",
+      "w": 1000,
+      "h": 1573,
+      "sha256": "b058031d633c47ed6885d3bb367c64d39cecf9998c3c86d6077d36f092a3d539"
+    }
+  },
+  "regions": {
+    "two_fer": [
+      {
+        "id": "play_00",
+        "section_id": "play",
+        "label": "SPOT 1",
+        "shape": "rect",
+        "art_rect": [
+          0.1063034,
+          0.5035714,
+          0.2297009,
+          0.2095238
+        ]
+      },
+      {
+        "id": "play_01",
+        "section_id": "play",
+        "label": "SPOT 2",
+        "shape": "rect",
+        "art_rect": [
+          0.4022436,
+          0.5035714,
+          0.2099359,
+          0.2095238
+        ]
+      },
+      {
+        "id": "play_02",
+        "section_id": "play",
+        "label": "SPOT 3",
+        "shape": "rect",
+        "art_rect": [
+          0.6837607,
+          0.5035714,
+          0.2104701,
+          0.2095238
+        ]
+      }
+    ],
+    "lucky_7s": [
+      {
+        "id": "winning_numbers_00",
+        "section_id": "winning_numbers",
+        "label": "WIN 1",
+        "shape": "ellipse",
+        "art_rect": [
+          0.0883191,
+          0.4337349,
+          0.1377018,
+          0.0983936
+        ]
+      },
+      {
+        "id": "winning_numbers_01",
+        "section_id": "winning_numbers",
+        "label": "WIN 2",
+        "shape": "ellipse",
+        "art_rect": [
+          0.0883191,
+          0.5749665,
+          0.1377018,
+          0.0990629
+        ]
+      },
+      {
+        "id": "your_numbers_02",
+        "section_id": "your_numbers",
+        "label": "YOUR 1",
+        "shape": "ellipse",
+        "art_rect": [
+          0.334283,
+          0.4310576,
+          0.1367521,
+          0.0983936
+        ],
+        "content_split": [
+          0.0,
+          0.0,
+          1.0,
+          0.68
+        ]
+      },
+      {
+        "id": "your_numbers_03",
+        "section_id": "your_numbers",
+        "label": "YOUR 2",
+        "shape": "ellipse",
+        "art_rect": [
+          0.5441595,
+          0.4310576,
+          0.1377018,
+          0.0977242
+        ],
+        "content_split": [
+          0.0,
+          0.0,
+          1.0,
+          0.68
+        ]
+      },
+      {
+        "id": "your_numbers_04",
+        "section_id": "your_numbers",
+        "label": "YOUR 3",
+        "shape": "ellipse",
+        "art_rect": [
+          0.7682811,
+          0.4310576,
+          0.1367521,
+          0.0983936
+        ],
+        "content_split": [
+          0.0,
+          0.0,
+          1.0,
+          0.68
+        ]
+      },
+      {
+        "id": "your_numbers_05",
+        "section_id": "your_numbers",
+        "label": "YOUR 4",
+        "shape": "ellipse",
+        "art_rect": [
+          0.334283,
+          0.5716198,
+          0.1367521,
+          0.0990629
+        ],
+        "content_split": [
+          0.0,
+          0.0,
+          1.0,
+          0.68
+        ]
+      },
+      {
+        "id": "your_numbers_06",
+        "section_id": "your_numbers",
+        "label": "YOUR 5",
+        "shape": "ellipse",
+        "art_rect": [
+          0.5441595,
+          0.5716198,
+          0.1377018,
+          0.0990629
+        ],
+        "content_split": [
+          0.0,
+          0.0,
+          1.0,
+          0.68
+        ]
+      },
+      {
+        "id": "your_numbers_07",
+        "section_id": "your_numbers",
+        "label": "YOUR 6",
+        "shape": "ellipse",
+        "art_rect": [
+          0.7682811,
+          0.5716198,
+          0.1367521,
+          0.0990629
+        ],
+        "content_split": [
+          0.0,
+          0.0,
+          1.0,
+          0.68
+        ]
+      },
+      {
+        "id": "bonus_08",
+        "section_id": "bonus",
+        "label": "BONUS",
+        "shape": "rect",
+        "art_rect": [
+          0.2792023,
+          0.7643909,
+          0.1899335,
+          0.0943775
+        ]
+      }
+    ],
+    "tic_tac_gold": [
+      {
+        "id": "board_00",
+        "section_id": "board",
+        "label": "GRID 1",
+        "shape": "rect",
+        "art_rect": [
+          0.1063628,
+          0.4196787,
+          0.1462488,
+          0.0903614
+        ]
+      },
+      {
+        "id": "board_01",
+        "section_id": "board",
+        "label": "GRID 2",
+        "shape": "rect",
+        "art_rect": [
+          0.305793,
+          0.4196787,
+          0.1519468,
+          0.0896921
+        ]
+      },
+      {
+        "id": "board_02",
+        "section_id": "board",
+        "label": "GRID 3",
+        "shape": "rect",
+        "art_rect": [
+          0.5090218,
+          0.4196787,
+          0.1547958,
+          0.0896921
+        ]
+      },
+      {
+        "id": "board_03",
+        "section_id": "board",
+        "label": "GRID 4",
+        "shape": "rect",
+        "art_rect": [
+          0.1063628,
+          0.538822,
+          0.1462488,
+          0.0903614
+        ]
+      },
+      {
+        "id": "board_04",
+        "section_id": "board",
+        "label": "GRID 5",
+        "shape": "rect",
+        "art_rect": [
+          0.305793,
+          0.538822,
+          0.1519468,
+          0.0903614
+        ]
+      },
+      {
+        "id": "board_05",
+        "section_id": "board",
+        "label": "GRID 6",
+        "shape": "rect",
+        "art_rect": [
+          0.5090218,
+          0.538822,
+          0.1547958,
+          0.0903614
+        ]
+      },
+      {
+        "id": "board_06",
+        "section_id": "board",
+        "label": "GRID 7",
+        "shape": "rect",
+        "art_rect": [
+          0.1063628,
+          0.6572959,
+          0.1462488,
+          0.0910308
+        ]
+      },
+      {
+        "id": "board_07",
+        "section_id": "board",
+        "label": "GRID 8",
+        "shape": "rect",
+        "art_rect": [
+          0.305793,
+          0.6572959,
+          0.1519468,
+          0.0910308
+        ]
+      },
+      {
+        "id": "board_08",
+        "section_id": "board",
+        "label": "GRID 9",
+        "shape": "rect",
+        "art_rect": [
+          0.5090218,
+          0.6572959,
+          0.1547958,
+          0.0910308
+        ]
+      },
+      {
+        "id": "bonus_09",
+        "section_id": "bonus",
+        "label": "BONUS",
+        "shape": "rect",
+        "art_rect": [
+          0.7340931,
+          0.5060241,
+          0.1908832,
+          0.1398929
+        ]
+      }
+    ],
+    "crossword_corner": [
+      {
+        "id": "letter_bank_00",
+        "section_id": "letter_bank",
+        "label": "LETTER 1",
+        "shape": "rect",
+        "art_rect": [
+          0.585,
+          0.42,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_01",
+        "section_id": "letter_bank",
+        "label": "LETTER 2",
+        "shape": "rect",
+        "art_rect": [
+          0.649,
+          0.42,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_02",
+        "section_id": "letter_bank",
+        "label": "LETTER 3",
+        "shape": "rect",
+        "art_rect": [
+          0.713,
+          0.42,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_03",
+        "section_id": "letter_bank",
+        "label": "LETTER 4",
+        "shape": "rect",
+        "art_rect": [
+          0.777,
+          0.42,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_04",
+        "section_id": "letter_bank",
+        "label": "LETTER 5",
+        "shape": "rect",
+        "art_rect": [
+          0.841,
+          0.42,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_05",
+        "section_id": "letter_bank",
+        "label": "LETTER 6",
+        "shape": "rect",
+        "art_rect": [
+          0.905,
+          0.42,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_06",
+        "section_id": "letter_bank",
+        "label": "LETTER 7",
+        "shape": "rect",
+        "art_rect": [
+          0.585,
+          0.5473333,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_07",
+        "section_id": "letter_bank",
+        "label": "LETTER 8",
+        "shape": "rect",
+        "art_rect": [
+          0.649,
+          0.5473333,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_08",
+        "section_id": "letter_bank",
+        "label": "LETTER 9",
+        "shape": "rect",
+        "art_rect": [
+          0.713,
+          0.5473333,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_09",
+        "section_id": "letter_bank",
+        "label": "LETTER 10",
+        "shape": "rect",
+        "art_rect": [
+          0.777,
+          0.5473333,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_10",
+        "section_id": "letter_bank",
+        "label": "LETTER 11",
+        "shape": "rect",
+        "art_rect": [
+          0.841,
+          0.5473333,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_11",
+        "section_id": "letter_bank",
+        "label": "LETTER 12",
+        "shape": "rect",
+        "art_rect": [
+          0.905,
+          0.5473333,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_12",
+        "section_id": "letter_bank",
+        "label": "LETTER 13",
+        "shape": "rect",
+        "art_rect": [
+          0.585,
+          0.6746667,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_13",
+        "section_id": "letter_bank",
+        "label": "LETTER 14",
+        "shape": "rect",
+        "art_rect": [
+          0.649,
+          0.6746667,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_14",
+        "section_id": "letter_bank",
+        "label": "LETTER 15",
+        "shape": "rect",
+        "art_rect": [
+          0.713,
+          0.6746667,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_15",
+        "section_id": "letter_bank",
+        "label": "LETTER 16",
+        "shape": "rect",
+        "art_rect": [
+          0.777,
+          0.6746667,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_16",
+        "section_id": "letter_bank",
+        "label": "LETTER 17",
+        "shape": "rect",
+        "art_rect": [
+          0.841,
+          0.6746667,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "letter_bank_17",
+        "section_id": "letter_bank",
+        "label": "LETTER 18",
+        "shape": "rect",
+        "art_rect": [
+          0.905,
+          0.6746667,
+          0.058,
+          0.1153333
+        ]
+      },
+      {
+        "id": "crossword_18",
+        "section_id": "crossword",
+        "label": "GRID 2,2",
+        "shape": "rect",
+        "art_rect": [
+          0.1054545,
+          0.368,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_19",
+        "section_id": "crossword",
+        "label": "GRID 2,10",
+        "shape": "rect",
+        "art_rect": [
+          0.1054545,
+          0.752,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_20",
+        "section_id": "crossword",
+        "label": "GRID 3,2",
+        "shape": "rect",
+        "art_rect": [
+          0.1509091,
+          0.368,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_21",
+        "section_id": "crossword",
+        "label": "GRID 3,8",
+        "shape": "rect",
+        "art_rect": [
+          0.1509091,
+          0.656,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_22",
+        "section_id": "crossword",
+        "label": "GRID 3,10",
+        "shape": "rect",
+        "art_rect": [
+          0.1509091,
+          0.752,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_23",
+        "section_id": "crossword",
+        "label": "GRID 4,2",
+        "shape": "rect",
+        "art_rect": [
+          0.1963636,
+          0.368,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_24",
+        "section_id": "crossword",
+        "label": "GRID 4,8",
+        "shape": "rect",
+        "art_rect": [
+          0.1963636,
+          0.656,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_25",
+        "section_id": "crossword",
+        "label": "GRID 4,10",
+        "shape": "rect",
+        "art_rect": [
+          0.1963636,
+          0.752,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_26",
+        "section_id": "crossword",
+        "label": "GRID 5,2",
+        "shape": "rect",
+        "art_rect": [
+          0.2418182,
+          0.368,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_27",
+        "section_id": "crossword",
+        "label": "GRID 5,3",
+        "shape": "rect",
+        "art_rect": [
+          0.2418182,
+          0.416,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_28",
+        "section_id": "crossword",
+        "label": "GRID 5,4",
+        "shape": "rect",
+        "art_rect": [
+          0.2418182,
+          0.464,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_29",
+        "section_id": "crossword",
+        "label": "GRID 5,5",
+        "shape": "rect",
+        "art_rect": [
+          0.2418182,
+          0.512,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_30",
+        "section_id": "crossword",
+        "label": "GRID 5,6",
+        "shape": "rect",
+        "art_rect": [
+          0.2418182,
+          0.56,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_31",
+        "section_id": "crossword",
+        "label": "GRID 5,8",
+        "shape": "rect",
+        "art_rect": [
+          0.2418182,
+          0.656,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_32",
+        "section_id": "crossword",
+        "label": "GRID 5,10",
+        "shape": "rect",
+        "art_rect": [
+          0.2418182,
+          0.752,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_33",
+        "section_id": "crossword",
+        "label": "GRID 6,5",
+        "shape": "rect",
+        "art_rect": [
+          0.2872727,
+          0.512,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_34",
+        "section_id": "crossword",
+        "label": "GRID 6,8",
+        "shape": "rect",
+        "art_rect": [
+          0.2872727,
+          0.656,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_35",
+        "section_id": "crossword",
+        "label": "GRID 7,4",
+        "shape": "rect",
+        "art_rect": [
+          0.3327273,
+          0.464,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_36",
+        "section_id": "crossword",
+        "label": "GRID 7,5",
+        "shape": "rect",
+        "art_rect": [
+          0.3327273,
+          0.512,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_37",
+        "section_id": "crossword",
+        "label": "GRID 7,6",
+        "shape": "rect",
+        "art_rect": [
+          0.3327273,
+          0.56,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_38",
+        "section_id": "crossword",
+        "label": "GRID 7,7",
+        "shape": "rect",
+        "art_rect": [
+          0.3327273,
+          0.608,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_39",
+        "section_id": "crossword",
+        "label": "GRID 8,5",
+        "shape": "rect",
+        "art_rect": [
+          0.3781818,
+          0.512,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_40",
+        "section_id": "crossword",
+        "label": "GRID 10,3",
+        "shape": "rect",
+        "art_rect": [
+          0.4690909,
+          0.416,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_41",
+        "section_id": "crossword",
+        "label": "GRID 10,4",
+        "shape": "rect",
+        "art_rect": [
+          0.4690909,
+          0.464,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_42",
+        "section_id": "crossword",
+        "label": "GRID 10,5",
+        "shape": "rect",
+        "art_rect": [
+          0.4690909,
+          0.512,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_43",
+        "section_id": "crossword",
+        "label": "GRID 10,6",
+        "shape": "rect",
+        "art_rect": [
+          0.4690909,
+          0.56,
+          0.0454545,
+          0.048
+        ]
+      },
+      {
+        "id": "crossword_44",
+        "section_id": "crossword",
+        "label": "GRID 10,7",
+        "shape": "rect",
+        "art_rect": [
+          0.4690909,
+          0.608,
+          0.0454545,
+          0.048
+        ]
+      }
+    ],
+    "bonus_bingo": [
+      {
+        "id": "callers_00",
+        "section_id": "callers",
+        "label": "CALL 1",
+        "shape": "ellipse",
+        "art_rect": [
+          0.1796523,
+          0.3030602,
+          0.0257566,
+          0.0394867
+        ]
+      },
+      {
+        "id": "callers_01",
+        "section_id": "callers",
+        "label": "CALL 2",
+        "shape": "ellipse",
+        "art_rect": [
+          0.235029,
+          0.3030602,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_02",
+        "section_id": "callers",
+        "label": "CALL 3",
+        "shape": "ellipse",
+        "art_rect": [
+          0.2910496,
+          0.3030602,
+          0.0264005,
+          0.0394867
+        ]
+      },
+      {
+        "id": "callers_03",
+        "section_id": "callers",
+        "label": "CALL 4",
+        "shape": "ellipse",
+        "art_rect": [
+          0.3470702,
+          0.3030602,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_04",
+        "section_id": "callers",
+        "label": "CALL 5",
+        "shape": "ellipse",
+        "art_rect": [
+          0.4030908,
+          0.3030602,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_05",
+        "section_id": "callers",
+        "label": "CALL 6",
+        "shape": "ellipse",
+        "art_rect": [
+          0.4591114,
+          0.3030602,
+          0.0257566,
+          0.0394867
+        ]
+      },
+      {
+        "id": "callers_06",
+        "section_id": "callers",
+        "label": "CALL 7",
+        "shape": "ellipse",
+        "art_rect": [
+          0.5157759,
+          0.3030602,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_07",
+        "section_id": "callers",
+        "label": "CALL 8",
+        "shape": "ellipse",
+        "art_rect": [
+          0.5717965,
+          0.3030602,
+          0.0264005,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_08",
+        "section_id": "callers",
+        "label": "CALL 9",
+        "shape": "ellipse",
+        "art_rect": [
+          0.6329684,
+          0.3030602,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_09",
+        "section_id": "callers",
+        "label": "CALL 10",
+        "shape": "ellipse",
+        "art_rect": [
+          0.689633,
+          0.3030602,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_10",
+        "section_id": "callers",
+        "label": "CALL 11",
+        "shape": "ellipse",
+        "art_rect": [
+          0.7456536,
+          0.3030602,
+          0.0257566,
+          0.0394867
+        ]
+      },
+      {
+        "id": "callers_11",
+        "section_id": "callers",
+        "label": "CALL 12",
+        "shape": "ellipse",
+        "art_rect": [
+          0.7978107,
+          0.3030602,
+          0.0257566,
+          0.0394867
+        ]
+      },
+      {
+        "id": "callers_12",
+        "section_id": "callers",
+        "label": "CALL 13",
+        "shape": "ellipse",
+        "art_rect": [
+          0.1796523,
+          0.3682132,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_13",
+        "section_id": "callers",
+        "label": "CALL 14",
+        "shape": "ellipse",
+        "art_rect": [
+          0.235029,
+          0.3682132,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_14",
+        "section_id": "callers",
+        "label": "CALL 15",
+        "shape": "ellipse",
+        "art_rect": [
+          0.2910496,
+          0.3682132,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_15",
+        "section_id": "callers",
+        "label": "CALL 16",
+        "shape": "ellipse",
+        "art_rect": [
+          0.3470702,
+          0.3682132,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_16",
+        "section_id": "callers",
+        "label": "CALL 17",
+        "shape": "ellipse",
+        "art_rect": [
+          0.4030908,
+          0.3682132,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_17",
+        "section_id": "callers",
+        "label": "CALL 18",
+        "shape": "ellipse",
+        "art_rect": [
+          0.4591114,
+          0.3682132,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_18",
+        "section_id": "callers",
+        "label": "CALL 19",
+        "shape": "ellipse",
+        "art_rect": [
+          0.5157759,
+          0.3682132,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_19",
+        "section_id": "callers",
+        "label": "CALL 20",
+        "shape": "ellipse",
+        "art_rect": [
+          0.5717965,
+          0.3682132,
+          0.0264005,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_20",
+        "section_id": "callers",
+        "label": "CALL 21",
+        "shape": "ellipse",
+        "art_rect": [
+          0.6329684,
+          0.3682132,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_21",
+        "section_id": "callers",
+        "label": "CALL 22",
+        "shape": "ellipse",
+        "art_rect": [
+          0.689633,
+          0.3682132,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_22",
+        "section_id": "callers",
+        "label": "CALL 23",
+        "shape": "ellipse",
+        "art_rect": [
+          0.7456536,
+          0.3682132,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "callers_23",
+        "section_id": "callers",
+        "label": "CALL 24",
+        "shape": "ellipse",
+        "art_rect": [
+          0.7978107,
+          0.3682132,
+          0.0257566,
+          0.0404738
+        ]
+      },
+      {
+        "id": "card_1_24",
+        "section_id": "card_1",
+        "label": "CARD 1-1",
+        "shape": "rect",
+        "art_rect": [
+          0.0540889,
+          0.5113524,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_1_25",
+        "section_id": "card_1",
+        "label": "CARD 1-2",
+        "shape": "rect",
+        "art_rect": [
+          0.0927238,
+          0.5113524,
+          0.0367032,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_1_26",
+        "section_id": "card_1",
+        "label": "CARD 1-3",
+        "shape": "rect",
+        "art_rect": [
+          0.1326465,
+          0.5113524,
+          0.0367032,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_1_27",
+        "section_id": "card_1",
+        "label": "CARD 1-4",
+        "shape": "rect",
+        "art_rect": [
+          0.1719253,
+          0.5113524,
+          0.0367032,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_1_28",
+        "section_id": "card_1",
+        "label": "CARD 1-5",
+        "shape": "rect",
+        "art_rect": [
+          0.2112041,
+          0.5113524,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_1_29",
+        "section_id": "card_1",
+        "label": "CARD 1-6",
+        "shape": "rect",
+        "art_rect": [
+          0.0540889,
+          0.5636723,
+          0.0360592,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_1_30",
+        "section_id": "card_1",
+        "label": "CARD 1-7",
+        "shape": "rect",
+        "art_rect": [
+          0.0927238,
+          0.5636723,
+          0.0367032,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_1_31",
+        "section_id": "card_1",
+        "label": "CARD 1-8",
+        "shape": "rect",
+        "art_rect": [
+          0.1326465,
+          0.5636723,
+          0.0367032,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_1_32",
+        "section_id": "card_1",
+        "label": "CARD 1-9",
+        "shape": "rect",
+        "art_rect": [
+          0.1719253,
+          0.5636723,
+          0.0367032,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_1_33",
+        "section_id": "card_1",
+        "label": "CARD 1-10",
+        "shape": "rect",
+        "art_rect": [
+          0.2112041,
+          0.5636723,
+          0.0360592,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_1_34",
+        "section_id": "card_1",
+        "label": "CARD 1-11",
+        "shape": "rect",
+        "art_rect": [
+          0.0540889,
+          0.6150049,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_1_35",
+        "section_id": "card_1",
+        "label": "CARD 1-12",
+        "shape": "rect",
+        "art_rect": [
+          0.0927238,
+          0.6150049,
+          0.0367032,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_1_36",
+        "section_id": "card_1",
+        "label": "CARD 1-13",
+        "shape": "rect",
+        "art_rect": [
+          0.1326465,
+          0.6150049,
+          0.0367032,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_1_37",
+        "section_id": "card_1",
+        "label": "CARD 1-14",
+        "shape": "rect",
+        "art_rect": [
+          0.1719253,
+          0.6150049,
+          0.0367032,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_1_38",
+        "section_id": "card_1",
+        "label": "CARD 1-15",
+        "shape": "rect",
+        "art_rect": [
+          0.2112041,
+          0.6150049,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_1_39",
+        "section_id": "card_1",
+        "label": "CARD 1-16",
+        "shape": "rect",
+        "art_rect": [
+          0.0540889,
+          0.6653504,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_1_40",
+        "section_id": "card_1",
+        "label": "CARD 1-17",
+        "shape": "rect",
+        "art_rect": [
+          0.0927238,
+          0.6653504,
+          0.0367032,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_1_41",
+        "section_id": "card_1",
+        "label": "CARD 1-18",
+        "shape": "rect",
+        "art_rect": [
+          0.1326465,
+          0.6653504,
+          0.0367032,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_1_42",
+        "section_id": "card_1",
+        "label": "CARD 1-19",
+        "shape": "rect",
+        "art_rect": [
+          0.1719253,
+          0.6653504,
+          0.0367032,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_1_43",
+        "section_id": "card_1",
+        "label": "CARD 1-20",
+        "shape": "rect",
+        "art_rect": [
+          0.2112041,
+          0.6653504,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_1_44",
+        "section_id": "card_1",
+        "label": "CARD 1-21",
+        "shape": "rect",
+        "art_rect": [
+          0.0540889,
+          0.715696,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_1_45",
+        "section_id": "card_1",
+        "label": "CARD 1-22",
+        "shape": "rect",
+        "art_rect": [
+          0.0927238,
+          0.715696,
+          0.0367032,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_1_46",
+        "section_id": "card_1",
+        "label": "CARD 1-23",
+        "shape": "rect",
+        "art_rect": [
+          0.1326465,
+          0.715696,
+          0.0367032,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_1_47",
+        "section_id": "card_1",
+        "label": "CARD 1-24",
+        "shape": "rect",
+        "art_rect": [
+          0.1719253,
+          0.715696,
+          0.0367032,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_1_48",
+        "section_id": "card_1",
+        "label": "CARD 1-25",
+        "shape": "rect",
+        "art_rect": [
+          0.2112041,
+          0.715696,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_2_49",
+        "section_id": "card_2",
+        "label": "CARD 2-1",
+        "shape": "rect",
+        "art_rect": [
+          0.2884739,
+          0.5113524,
+          0.0354153,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_2_50",
+        "section_id": "card_2",
+        "label": "CARD 2-2",
+        "shape": "rect",
+        "art_rect": [
+          0.3264649,
+          0.5113524,
+          0.0354153,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_2_51",
+        "section_id": "card_2",
+        "label": "CARD 2-3",
+        "shape": "rect",
+        "art_rect": [
+          0.3644559,
+          0.5113524,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_2_52",
+        "section_id": "card_2",
+        "label": "CARD 2-4",
+        "shape": "rect",
+        "art_rect": [
+          0.4030908,
+          0.5113524,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_2_53",
+        "section_id": "card_2",
+        "label": "CARD 2-5",
+        "shape": "rect",
+        "art_rect": [
+          0.4417257,
+          0.5113524,
+          0.0347714,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_2_54",
+        "section_id": "card_2",
+        "label": "CARD 2-6",
+        "shape": "rect",
+        "art_rect": [
+          0.2884739,
+          0.5636723,
+          0.0354153,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_2_55",
+        "section_id": "card_2",
+        "label": "CARD 2-7",
+        "shape": "rect",
+        "art_rect": [
+          0.3264649,
+          0.5636723,
+          0.0354153,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_2_56",
+        "section_id": "card_2",
+        "label": "CARD 2-8",
+        "shape": "rect",
+        "art_rect": [
+          0.3644559,
+          0.5636723,
+          0.0360592,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_2_57",
+        "section_id": "card_2",
+        "label": "CARD 2-9",
+        "shape": "rect",
+        "art_rect": [
+          0.4030908,
+          0.5636723,
+          0.0360592,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_2_58",
+        "section_id": "card_2",
+        "label": "CARD 2-10",
+        "shape": "rect",
+        "art_rect": [
+          0.4417257,
+          0.5636723,
+          0.0347714,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_2_59",
+        "section_id": "card_2",
+        "label": "CARD 2-11",
+        "shape": "rect",
+        "art_rect": [
+          0.2884739,
+          0.6150049,
+          0.0354153,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_2_60",
+        "section_id": "card_2",
+        "label": "CARD 2-12",
+        "shape": "rect",
+        "art_rect": [
+          0.3264649,
+          0.6150049,
+          0.0354153,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_2_61",
+        "section_id": "card_2",
+        "label": "CARD 2-13",
+        "shape": "rect",
+        "art_rect": [
+          0.3644559,
+          0.6150049,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_2_62",
+        "section_id": "card_2",
+        "label": "CARD 2-14",
+        "shape": "rect",
+        "art_rect": [
+          0.4030908,
+          0.6150049,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_2_63",
+        "section_id": "card_2",
+        "label": "CARD 2-15",
+        "shape": "rect",
+        "art_rect": [
+          0.4417257,
+          0.6150049,
+          0.0347714,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_2_64",
+        "section_id": "card_2",
+        "label": "CARD 2-16",
+        "shape": "rect",
+        "art_rect": [
+          0.2884739,
+          0.6653504,
+          0.0354153,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_2_65",
+        "section_id": "card_2",
+        "label": "CARD 2-17",
+        "shape": "rect",
+        "art_rect": [
+          0.3264649,
+          0.6653504,
+          0.0354153,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_2_66",
+        "section_id": "card_2",
+        "label": "CARD 2-18",
+        "shape": "rect",
+        "art_rect": [
+          0.3644559,
+          0.6653504,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_2_67",
+        "section_id": "card_2",
+        "label": "CARD 2-19",
+        "shape": "rect",
+        "art_rect": [
+          0.4030908,
+          0.6653504,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_2_68",
+        "section_id": "card_2",
+        "label": "CARD 2-20",
+        "shape": "rect",
+        "art_rect": [
+          0.4417257,
+          0.6653504,
+          0.0347714,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_2_69",
+        "section_id": "card_2",
+        "label": "CARD 2-21",
+        "shape": "rect",
+        "art_rect": [
+          0.2884739,
+          0.715696,
+          0.0354153,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_2_70",
+        "section_id": "card_2",
+        "label": "CARD 2-22",
+        "shape": "rect",
+        "art_rect": [
+          0.3264649,
+          0.715696,
+          0.0354153,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_2_71",
+        "section_id": "card_2",
+        "label": "CARD 2-23",
+        "shape": "rect",
+        "art_rect": [
+          0.3644559,
+          0.715696,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_2_72",
+        "section_id": "card_2",
+        "label": "CARD 2-24",
+        "shape": "rect",
+        "art_rect": [
+          0.4030908,
+          0.715696,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_2_73",
+        "section_id": "card_2",
+        "label": "CARD 2-25",
+        "shape": "rect",
+        "art_rect": [
+          0.4417257,
+          0.715696,
+          0.0347714,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_3_74",
+        "section_id": "card_3",
+        "label": "CARD 3-1",
+        "shape": "rect",
+        "art_rect": [
+          0.5183516,
+          0.5113524,
+          0.0354153,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_3_75",
+        "section_id": "card_3",
+        "label": "CARD 3-2",
+        "shape": "rect",
+        "art_rect": [
+          0.5563426,
+          0.5113524,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_3_76",
+        "section_id": "card_3",
+        "label": "CARD 3-3",
+        "shape": "rect",
+        "art_rect": [
+          0.5956214,
+          0.5113524,
+          0.0354153,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_3_77",
+        "section_id": "card_3",
+        "label": "CARD 3-4",
+        "shape": "rect",
+        "art_rect": [
+          0.6342563,
+          0.5113524,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_3_78",
+        "section_id": "card_3",
+        "label": "CARD 3-5",
+        "shape": "rect",
+        "art_rect": [
+          0.6735351,
+          0.5113524,
+          0.0354153,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_3_79",
+        "section_id": "card_3",
+        "label": "CARD 3-6",
+        "shape": "rect",
+        "art_rect": [
+          0.5183516,
+          0.5636723,
+          0.0354153,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_3_80",
+        "section_id": "card_3",
+        "label": "CARD 3-7",
+        "shape": "rect",
+        "art_rect": [
+          0.5563426,
+          0.5636723,
+          0.0360592,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_3_81",
+        "section_id": "card_3",
+        "label": "CARD 3-8",
+        "shape": "rect",
+        "art_rect": [
+          0.5956214,
+          0.5636723,
+          0.0354153,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_3_82",
+        "section_id": "card_3",
+        "label": "CARD 3-9",
+        "shape": "rect",
+        "art_rect": [
+          0.6342563,
+          0.5636723,
+          0.0360592,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_3_83",
+        "section_id": "card_3",
+        "label": "CARD 3-10",
+        "shape": "rect",
+        "art_rect": [
+          0.6735351,
+          0.5636723,
+          0.0360592,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_3_84",
+        "section_id": "card_3",
+        "label": "CARD 3-11",
+        "shape": "rect",
+        "art_rect": [
+          0.5183516,
+          0.6150049,
+          0.0354153,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_3_85",
+        "section_id": "card_3",
+        "label": "CARD 3-12",
+        "shape": "rect",
+        "art_rect": [
+          0.5563426,
+          0.6150049,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_3_86",
+        "section_id": "card_3",
+        "label": "CARD 3-13",
+        "shape": "rect",
+        "art_rect": [
+          0.5956214,
+          0.6150049,
+          0.0354153,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_3_87",
+        "section_id": "card_3",
+        "label": "CARD 3-14",
+        "shape": "rect",
+        "art_rect": [
+          0.6342563,
+          0.6150049,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_3_88",
+        "section_id": "card_3",
+        "label": "CARD 3-15",
+        "shape": "rect",
+        "art_rect": [
+          0.6735351,
+          0.6150049,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_3_89",
+        "section_id": "card_3",
+        "label": "CARD 3-16",
+        "shape": "rect",
+        "art_rect": [
+          0.5183516,
+          0.6653504,
+          0.0354153,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_3_90",
+        "section_id": "card_3",
+        "label": "CARD 3-17",
+        "shape": "rect",
+        "art_rect": [
+          0.5563426,
+          0.6653504,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_3_91",
+        "section_id": "card_3",
+        "label": "CARD 3-18",
+        "shape": "rect",
+        "art_rect": [
+          0.5956214,
+          0.6653504,
+          0.0354153,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_3_92",
+        "section_id": "card_3",
+        "label": "CARD 3-19",
+        "shape": "rect",
+        "art_rect": [
+          0.6342563,
+          0.6653504,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_3_93",
+        "section_id": "card_3",
+        "label": "CARD 3-20",
+        "shape": "rect",
+        "art_rect": [
+          0.6735351,
+          0.6653504,
+          0.0354153,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_3_94",
+        "section_id": "card_3",
+        "label": "CARD 3-21",
+        "shape": "rect",
+        "art_rect": [
+          0.5183516,
+          0.715696,
+          0.0354153,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_3_95",
+        "section_id": "card_3",
+        "label": "CARD 3-22",
+        "shape": "rect",
+        "art_rect": [
+          0.5563426,
+          0.715696,
+          0.0360592,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_3_96",
+        "section_id": "card_3",
+        "label": "CARD 3-23",
+        "shape": "rect",
+        "art_rect": [
+          0.5956214,
+          0.715696,
+          0.0354153,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_3_97",
+        "section_id": "card_3",
+        "label": "CARD 3-24",
+        "shape": "rect",
+        "art_rect": [
+          0.6342563,
+          0.715696,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_3_98",
+        "section_id": "card_3",
+        "label": "CARD 3-25",
+        "shape": "rect",
+        "art_rect": [
+          0.6735351,
+          0.715696,
+          0.0354153,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_4_99",
+        "section_id": "card_4",
+        "label": "CARD 4-1",
+        "shape": "rect",
+        "art_rect": [
+          0.7520927,
+          0.5113524,
+          0.0347714,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_4_100",
+        "section_id": "card_4",
+        "label": "CARD 4-2",
+        "shape": "rect",
+        "art_rect": [
+          0.7894398,
+          0.5113524,
+          0.0367032,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_4_101",
+        "section_id": "card_4",
+        "label": "CARD 4-3",
+        "shape": "rect",
+        "art_rect": [
+          0.8293625,
+          0.5113524,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_4_102",
+        "section_id": "card_4",
+        "label": "CARD 4-4",
+        "shape": "rect",
+        "art_rect": [
+          0.8679974,
+          0.5113524,
+          0.0367032,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_4_103",
+        "section_id": "card_4",
+        "label": "CARD 4-5",
+        "shape": "rect",
+        "art_rect": [
+          0.9072762,
+          0.5113524,
+          0.0360592,
+          0.0483712
+        ]
+      },
+      {
+        "id": "card_4_104",
+        "section_id": "card_4",
+        "label": "CARD 4-6",
+        "shape": "rect",
+        "art_rect": [
+          0.7520927,
+          0.5636723,
+          0.0347714,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_4_105",
+        "section_id": "card_4",
+        "label": "CARD 4-7",
+        "shape": "rect",
+        "art_rect": [
+          0.7894398,
+          0.5636723,
+          0.0367032,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_4_106",
+        "section_id": "card_4",
+        "label": "CARD 4-8",
+        "shape": "rect",
+        "art_rect": [
+          0.8293625,
+          0.5636723,
+          0.0360592,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_4_107",
+        "section_id": "card_4",
+        "label": "CARD 4-9",
+        "shape": "rect",
+        "art_rect": [
+          0.8679974,
+          0.5636723,
+          0.0367032,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_4_108",
+        "section_id": "card_4",
+        "label": "CARD 4-10",
+        "shape": "rect",
+        "art_rect": [
+          0.9072762,
+          0.5636723,
+          0.0360592,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_4_109",
+        "section_id": "card_4",
+        "label": "CARD 4-11",
+        "shape": "rect",
+        "art_rect": [
+          0.7520927,
+          0.6150049,
+          0.0347714,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_4_110",
+        "section_id": "card_4",
+        "label": "CARD 4-12",
+        "shape": "rect",
+        "art_rect": [
+          0.7894398,
+          0.6150049,
+          0.0373471,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_4_111",
+        "section_id": "card_4",
+        "label": "CARD 4-13",
+        "shape": "rect",
+        "art_rect": [
+          0.8293625,
+          0.6150049,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_4_112",
+        "section_id": "card_4",
+        "label": "CARD 4-14",
+        "shape": "rect",
+        "art_rect": [
+          0.8679974,
+          0.6150049,
+          0.0367032,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_4_113",
+        "section_id": "card_4",
+        "label": "CARD 4-15",
+        "shape": "rect",
+        "art_rect": [
+          0.9072762,
+          0.6150049,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_4_114",
+        "section_id": "card_4",
+        "label": "CARD 4-16",
+        "shape": "rect",
+        "art_rect": [
+          0.7520927,
+          0.6653504,
+          0.0347714,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_4_115",
+        "section_id": "card_4",
+        "label": "CARD 4-17",
+        "shape": "rect",
+        "art_rect": [
+          0.7894398,
+          0.6653504,
+          0.0367032,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_4_116",
+        "section_id": "card_4",
+        "label": "CARD 4-18",
+        "shape": "rect",
+        "art_rect": [
+          0.8293625,
+          0.6653504,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_4_117",
+        "section_id": "card_4",
+        "label": "CARD 4-19",
+        "shape": "rect",
+        "art_rect": [
+          0.8679974,
+          0.6653504,
+          0.0367032,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_4_118",
+        "section_id": "card_4",
+        "label": "CARD 4-20",
+        "shape": "rect",
+        "art_rect": [
+          0.9072762,
+          0.6653504,
+          0.0360592,
+          0.0463968
+        ]
+      },
+      {
+        "id": "card_4_119",
+        "section_id": "card_4",
+        "label": "CARD 4-21",
+        "shape": "rect",
+        "art_rect": [
+          0.7520927,
+          0.715696,
+          0.0347714,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_4_120",
+        "section_id": "card_4",
+        "label": "CARD 4-22",
+        "shape": "rect",
+        "art_rect": [
+          0.7894398,
+          0.715696,
+          0.0367032,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_4_121",
+        "section_id": "card_4",
+        "label": "CARD 4-23",
+        "shape": "rect",
+        "art_rect": [
+          0.8293625,
+          0.715696,
+          0.0360592,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_4_122",
+        "section_id": "card_4",
+        "label": "CARD 4-24",
+        "shape": "rect",
+        "art_rect": [
+          0.8679974,
+          0.715696,
+          0.0367032,
+          0.047384
+        ]
+      },
+      {
+        "id": "card_4_123",
+        "section_id": "card_4",
+        "label": "CARD 4-25",
+        "shape": "rect",
+        "art_rect": [
+          0.9072762,
+          0.715696,
+          0.0360592,
+          0.047384
+        ]
+      }
+    ],
+    "high_roller_holdem": [
+      {
+        "id": "your_hand_00",
+        "section_id": "your_hand",
+        "label": "YOUR CARD 1",
+        "shape": "rect",
+        "art_rect": [
+          0.1506239,
+          0.3466476,
+          0.0909091,
+          0.1455064
+        ]
+      },
+      {
+        "id": "your_hand_01",
+        "section_id": "your_hand",
+        "label": "YOUR CARD 2",
+        "shape": "rect",
+        "art_rect": [
+          0.298574,
+          0.3466476,
+          0.0900178,
+          0.1455064
+        ]
+      },
+      {
+        "id": "your_hand_02",
+        "section_id": "your_hand",
+        "label": "YOUR CARD 3",
+        "shape": "rect",
+        "art_rect": [
+          0.4509804,
+          0.3466476,
+          0.0953654,
+          0.1455064
+        ]
+      },
+      {
+        "id": "your_hand_03",
+        "section_id": "your_hand",
+        "label": "YOUR CARD 4",
+        "shape": "rect",
+        "art_rect": [
+          0.6060606,
+          0.3466476,
+          0.0926916,
+          0.1462197
+        ]
+      },
+      {
+        "id": "your_hand_04",
+        "section_id": "your_hand",
+        "label": "YOUR CARD 5",
+        "shape": "rect",
+        "art_rect": [
+          0.7540107,
+          0.3466476,
+          0.0918004,
+          0.1462197
+        ]
+      },
+      {
+        "id": "dealer_hand_05",
+        "section_id": "dealer_hand",
+        "label": "DEALER CARD 1",
+        "shape": "rect",
+        "art_rect": [
+          0.1497326,
+          0.564194,
+          0.0926916,
+          0.1319544
+        ]
+      },
+      {
+        "id": "dealer_hand_06",
+        "section_id": "dealer_hand",
+        "label": "DEALER CARD 2",
+        "shape": "rect",
+        "art_rect": [
+          0.298574,
+          0.564194,
+          0.0909091,
+          0.1319544
+        ]
+      },
+      {
+        "id": "dealer_hand_07",
+        "section_id": "dealer_hand",
+        "label": "DEALER CARD 3",
+        "shape": "rect",
+        "art_rect": [
+          0.4500891,
+          0.564194,
+          0.0962567,
+          0.1319544
+        ]
+      },
+      {
+        "id": "dealer_hand_08",
+        "section_id": "dealer_hand",
+        "label": "DEALER CARD 4",
+        "shape": "rect",
+        "art_rect": [
+          0.6051693,
+          0.564194,
+          0.0918004,
+          0.1319544
+        ]
+      },
+      {
+        "id": "dealer_hand_09",
+        "section_id": "dealer_hand",
+        "label": "DEALER CARD 5",
+        "shape": "rect",
+        "art_rect": [
+          0.7522282,
+          0.564194,
+          0.0918004,
+          0.1319544
+        ]
+      },
+      {
+        "id": "wild_10",
+        "section_id": "wild",
+        "label": "WILD",
+        "shape": "rect",
+        "art_rect": [
+          0.416221,
+          0.7546362,
+          0.1657754,
+          0.0627675
+        ]
+      }
+    ],
+    "golden_vault": [
+      {
+        "id": "multiplier_00",
+        "section_id": "multiplier",
+        "label": "MULTIPLIER",
+        "shape": "rect",
+        "art_rect": [
+          0.178,
+          0.4030515,
+          0.642,
+          0.0540369
+        ]
+      },
+      {
+        "id": "cash_ladder_01",
+        "section_id": "cash_ladder",
+        "label": "RUNG 1",
+        "shape": "rect",
+        "art_rect": [
+          0.138,
+          0.5104895,
+          0.721,
+          0.0381437
+        ]
+      },
+      {
+        "id": "cash_ladder_02",
+        "section_id": "cash_ladder",
+        "label": "RUNG 2",
+        "shape": "rect",
+        "art_rect": [
+          0.138,
+          0.5600763,
+          0.721,
+          0.0375079
+        ]
+      },
+      {
+        "id": "cash_ladder_03",
+        "section_id": "cash_ladder",
+        "label": "RUNG 3",
+        "shape": "rect",
+        "art_rect": [
+          0.138,
+          0.6090273,
+          0.721,
+          0.0375079
+        ]
+      },
+      {
+        "id": "cash_ladder_04",
+        "section_id": "cash_ladder",
+        "label": "RUNG 4",
+        "shape": "rect",
+        "art_rect": [
+          0.138,
+          0.6579784,
+          0.721,
+          0.0375079
+        ]
+      },
+      {
+        "id": "cash_ladder_05",
+        "section_id": "cash_ladder",
+        "label": "RUNG 5",
+        "shape": "rect",
+        "art_rect": [
+          0.138,
+          0.7069294,
+          0.721,
+          0.0375079
+        ]
+      },
+      {
+        "id": "gold_bar_06",
+        "section_id": "gold_bar",
+        "label": "GOLD BAR",
+        "shape": "rect",
+        "art_rect": [
+          0.118,
+          0.8022886,
+          0.325,
+          0.0635728
+        ]
+      },
+      {
+        "id": "final_vault_07",
+        "section_id": "final_vault",
+        "label": "FINAL VAULT",
+        "shape": "rect",
+        "art_rect": [
+          0.552,
+          0.8022886,
+          0.327,
+          0.0635728
+        ]
+      }
+    ]
+  },
+  "alignment_status": {
+    "two_fer": "measured",
+    "lucky_7s": "measured",
+    "tic_tac_gold": "measured",
+    "crossword_corner": "decision_required",
+    "bonus_bingo": "measured",
+    "high_roller_holdem": "measured",
+    "golden_vault": "measured"
+  },
+  "crossword_detected_reference": {
+    "printed_grid_wells": [
+      [
+        0.11375321336760925,
+        0.37289812067260136,
+        0.037917737789203085,
+        0.03956478733926805
+      ],
+      [
+        0.15681233933161953,
+        0.37289812067260136,
+        0.038560411311053984,
+        0.03956478733926805
+      ],
+      [
+        0.20051413881748073,
+        0.37289812067260136,
+        0.037917737789203085,
+        0.03956478733926805
+      ],
+      [
+        0.243573264781491,
+        0.37289812067260136,
+        0.037917737789203085,
+        0.03857566765578635
+      ],
+      [
+        0.243573264781491,
+        0.41938674579624136,
+        0.037917737789203085,
+        0.03857566765578635
+      ],
+      [
+        0.4607969151670951,
+        0.41938674579624136,
+        0.038560411311053984,
+        0.03857566765578635
+      ],
+      [
+        0.243573264781491,
+        0.4658753709198813,
+        0.037917737789203085,
+        0.03857566765578635
+      ],
+      [
+        0.3296915167095116,
+        0.4658753709198813,
+        0.038560411311053984,
+        0.03857566765578635
+      ],
+      [
+        0.4601542416452442,
+        0.4658753709198813,
+        0.03920308483290488,
+        0.03857566765578635
+      ],
+      [
+        0.243573264781491,
+        0.5123639960435212,
+        0.037917737789203085,
+        0.03857566765578635
+      ],
+      [
+        0.2866323907455013,
+        0.5123639960435212,
+        0.038560411311053984,
+        0.03857566765578635
+      ],
+      [
+        0.3296915167095116,
+        0.5123639960435212,
+        0.038560411311053984,
+        0.03857566765578635
+      ],
+      [
+        0.37339331619537275,
+        0.5123639960435212,
+        0.038560411311053984,
+        0.03857566765578635
+      ],
+      [
+        0.4601542416452442,
+        0.5123639960435212,
+        0.03920308483290488,
+        0.03857566765578635
+      ],
+      [
+        0.243573264781491,
+        0.5588526211671613,
+        0.037917737789203085,
+        0.03758654797230465
+      ],
+      [
+        0.3296915167095116,
+        0.5588526211671613,
+        0.038560411311053984,
+        0.03758654797230465
+      ],
+      [
+        0.4601542416452442,
+        0.5588526211671613,
+        0.03920308483290488,
+        0.03758654797230465
+      ],
+      [
+        0.3296915167095116,
+        0.6043521266073195,
+        0.038560411311053984,
+        0.03857566765578635
+      ],
+      [
+        0.4607969151670951,
+        0.6043521266073195,
+        0.038560411311053984,
+        0.03857566765578635
+      ],
+      [
+        0.2866323907455013,
+        0.6498516320474778,
+        0.038560411311053984,
+        0.03956478733926805
+      ],
+      [
+        0.15745501285347044,
+        0.6508407517309595,
+        0.037917737789203085,
+        0.03857566765578635
+      ],
+      [
+        0.20051413881748073,
+        0.6508407517309595,
+        0.037917737789203085,
+        0.03857566765578635
+      ],
+      [
+        0.243573264781491,
+        0.6508407517309595,
+        0.037917737789203085,
+        0.03857566765578635
+      ],
+      [
+        0.11375321336760925,
+        0.7438180019782393,
+        0.037917737789203085,
+        0.03956478733926805
+      ],
+      [
+        0.15681233933161953,
+        0.7438180019782393,
+        0.038560411311053984,
+        0.03956478733926805
+      ],
+      [
+        0.20051413881748073,
+        0.7438180019782393,
+        0.037917737789203085,
+        0.03956478733926805
+      ],
+      [
+        0.2442159383033419,
+        0.7438180019782393,
+        0.037275064267352186,
+        0.03956478733926805
+      ]
+    ],
+    "printed_letter_wells": [
+      [
+        0.5809768637532133,
+        0.42532146389713155,
+        0.05462724935732648,
+        0.11078140454995054
+      ],
+      [
+        0.6452442159383034,
+        0.42532146389713155,
+        0.05398457583547558,
+        0.11078140454995054
+      ],
+      [
+        0.7095115681233933,
+        0.42532146389713155,
+        0.05462724935732648,
+        0.11078140454995054
+      ],
+      [
+        0.7737789203084833,
+        0.42532146389713155,
+        0.05462724935732648,
+        0.11078140454995054
+      ],
+      [
+        0.8380462724935732,
+        0.42532146389713155,
+        0.05462724935732648,
+        0.11078140454995054
+      ],
+      [
+        0.9023136246786633,
+        0.42532146389713155,
+        0.055912596401028275,
+        0.11078140454995054
+      ],
+      [
+        0.5809768637532133,
+        0.5539070227497527,
+        0.05462724935732648,
+        0.11078140454995054
+      ],
+      [
+        0.6452442159383034,
+        0.5539070227497527,
+        0.05398457583547558,
+        0.11078140454995054
+      ],
+      [
+        0.7095115681233933,
+        0.5539070227497527,
+        0.05462724935732648,
+        0.11078140454995054
+      ],
+      [
+        0.7737789203084833,
+        0.5539070227497527,
+        0.05462724935732648,
+        0.11078140454995054
+      ],
+      [
+        0.8380462724935732,
+        0.5539070227497527,
+        0.05462724935732648,
+        0.11078140454995054
+      ],
+      [
+        0.9023136246786633,
+        0.5539070227497527,
+        0.055912596401028275,
+        0.11078140454995054
+      ],
+      [
+        0.5809768637532133,
+        0.6815034619188922,
+        0.05462724935732648,
+        0.10781404549950543
+      ],
+      [
+        0.6452442159383034,
+        0.6815034619188922,
+        0.05398457583547558,
+        0.10781404549950543
+      ],
+      [
+        0.7095115681233933,
+        0.6815034619188922,
+        0.05462724935732648,
+        0.10781404549950543
+      ],
+      [
+        0.7737789203084833,
+        0.6815034619188922,
+        0.05462724935732648,
+        0.10781404549950543
+      ],
+      [
+        0.8380462724935732,
+        0.6815034619188922,
+        0.05462724935732648,
+        0.10781404549950543
+      ],
+      [
+        0.9023136246786633,
+        0.6815034619188922,
+        0.055912596401028275,
+        0.10781404549950543
+      ]
+    ]
+  }
+}

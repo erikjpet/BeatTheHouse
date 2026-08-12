@@ -172,6 +172,7 @@
       "pickled_olive_jar",
       "cheap_sunglasses",
       "scratch_pad",
+      "freds_poker_hat",
       "card_counters_notes",
       "side_bet_chart",
       "xray_glasses",
@@ -673,6 +674,7 @@
       "ledger_pencil",
       "thermos_black_coffee",
       "scratch_pad",
+      "freds_poker_hat",
       "odds_notebook",
       "card_counters_notes",
       "side_bet_chart",
@@ -1728,6 +1730,7 @@
       "lucky_keychain",
       "lucky_bar_napkin",
       "scratch_pad",
+      "freds_poker_hat",
       "odds_notebook",
       "card_counters_notes",
       "side_bet_chart",
@@ -2247,6 +2250,7 @@
       "ledger_pencil",
       "cheap_sunglasses",
       "scratch_pad",
+      "freds_poker_hat",
       "odds_notebook",
       "shoe_cut_marker",
       "card_counters_notes",
@@ -2614,6 +2618,7 @@
       "lucky_penny",
       "lucky_keychain",
       "scratch_pad",
+      "freds_poker_hat",
       "side_bet_chart",
       "payment_calendar",
       "roadside_map"
@@ -3497,6 +3502,24 @@
       "finale_trigger_message": "Rourke calls you to the house table."
     },
     "layout": {
+      "item_spots": [
+        [
+          99,
+          155
+        ],
+        [
+          185,
+          155
+        ],
+        [
+          99,
+          199
+        ],
+        [
+          185,
+          199
+        ]
+      ],
       "casino_fixture_spots": [
         [
           342,
@@ -3505,10 +3528,6 @@
         [
           724,
           250
-        ],
-        [
-          132,
-          258
         ]
       ],
       "casino_door_spots": [
@@ -3685,16 +3704,6 @@
           "surface": "machine",
           "prop": "terminal",
           "icon_key": "debt"
-        },
-        {
-          "id": "cage_gift_shop",
-          "label": "Gift Shop",
-          "description": "A locked-glass case holds a few chip-priced, pat-down-safe goods.",
-          "action_summary": "Inspect the remaining stock.",
-          "interaction_message": "Every item sits tagged in chips behind locked glass.",
-          "surface": "glass_case",
-          "prop": "display",
-          "icon_key": "item"
         }
       ]
     },

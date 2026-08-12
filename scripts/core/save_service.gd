@@ -4,6 +4,7 @@ extends RefCounted
 # Saves and loads foundation RunState data by slot.
 
 const SAVE_DIR := "user://saves"
+const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
 const SAVE_SCHEMA := "beat_the_house.foundation_run"
 const SAVE_VERSION := 2
 const RunSaveCodecScript := preload("res://scripts/core/run_save_codec.gd")
@@ -101,10 +102,14 @@ func begin_save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	var runtime_snapshot := run_state.to_save_snapshot()
 	var path := run_save_path(clean_slot)
 	var backup_path := backup_save_path(clean_slot)
+	# Loaded and successfully written primaries are fingerprinted. Passing that
+	# trust into the worker avoids reparsing the entire previous save merely to
+	# decide whether it is safe to rotate into the backup generation.
+	var primary_trusted := _primary_fingerprint_is_trusted(clean_slot, path)
 	async_result_box = {"error": ERR_BUSY, "slot_id": clean_slot}
 	async_slot_id = clean_slot
 	async_task_id = WorkerThreadPool.add_task(
-		Callable(self, "_async_save_worker").bind(runtime_snapshot, clean_slot, path, backup_path, async_result_box),
+		Callable(self, "_async_save_worker").bind(runtime_snapshot, clean_slot, path, backup_path, primary_trusted, async_result_box),
 		false,
 		"Beat the House autosave"
 	)
@@ -146,7 +151,7 @@ func wait_for_async_save() -> Error:
 	return int(result.get("error", FAILED))
 
 
-func _async_save_worker(runtime_snapshot: Dictionary, slot_id: String, path: String, backup_path: String, result_box: Dictionary) -> void:
+func _async_save_worker(runtime_snapshot: Dictionary, slot_id: String, path: String, backup_path: String, primary_trusted: bool, result_box: Dictionary) -> void:
 	var payload := {
 		"schema": SAVE_SCHEMA,
 		"version": SAVE_VERSION,
@@ -155,11 +160,11 @@ func _async_save_worker(runtime_snapshot: Dictionary, slot_id: String, path: Str
 		"run_state": RunSaveCodecScript.encode(runtime_snapshot),
 	}
 	io_mutex.lock()
-	result_box["error"] = _write_payload_atomic(payload, path, backup_path)
+	result_box["error"] = _write_payload_atomic(payload, path, backup_path, primary_trusted)
 	io_mutex.unlock()
 
 
-static func _write_payload_atomic(payload: Dictionary, path: String, backup_path: String) -> Error:
+static func _write_payload_atomic(payload: Dictionary, path: String, backup_path: String, primary_trusted: bool = false) -> Error:
 	var absolute_path := ProjectSettings.globalize_path(path)
 	var backup_absolute := ProjectSettings.globalize_path(backup_path)
 	var directory_error := DirAccess.make_dir_recursive_absolute(absolute_path.get_base_dir())
@@ -175,7 +180,7 @@ static func _write_payload_atomic(payload: Dictionary, path: String, backup_path
 	if write_error != OK:
 		_remove_worker_file(temp_path)
 		return write_error
-	if FileAccess.file_exists(absolute_path) and _worker_payload_loadable(absolute_path):
+	if FileAccess.file_exists(absolute_path) and (primary_trusted or _worker_payload_loadable(absolute_path)):
 		if FileAccess.file_exists(backup_absolute):
 			var remove_backup_error := DirAccess.remove_absolute(backup_absolute)
 			if remove_backup_error != OK:
@@ -215,11 +220,17 @@ func load_run(slot_id: String = "autosave") -> Variant:
 		wait_for_async_save()
 	var clean_slot := _slot_id(slot_id)
 	var primary := _read_run_state_from_path(run_save_path(clean_slot))
-	var backup := _read_run_state_from_path(backup_save_path(clean_slot))
 	if bool(primary.get("loadable", false)):
+		# A valid primary is authoritative. Parsing and normalizing the complete
+		# backup as well doubled Continue time for accumulated late-run saves.
+		var backup := {
+			"exists": FileAccess.file_exists(backup_save_path(clean_slot)),
+			"loadable": false,
+		}
 		_remember_primary_fingerprint(clean_slot, run_save_path(clean_slot))
 		last_load_outcome = _load_outcome(clean_slot, LOAD_OUTCOME_PRIMARY, primary, backup)
 		return primary.get("run_state")
+	var backup := _read_run_state_from_path(backup_save_path(clean_slot))
 	if bool(backup.get("loadable", false)):
 		last_load_outcome = _load_outcome(clean_slot, LOAD_OUTCOME_BACKUP, primary, backup)
 		return backup.get("run_state")
@@ -279,7 +290,11 @@ func _slot_status_unlocked(clean_slot: String) -> Dictionary:
 
 # Builds the foundation run save path for a slot.
 func run_save_path(slot_id: String = "autosave") -> String:
-	return "%s/%s.json" % [SAVE_DIR, _slot_id(slot_id)]
+	return "%s/%s.json" % [save_dir(), _slot_id(slot_id)]
+
+
+func save_dir() -> String:
+	return PersistencePathsScript.directory_path(SAVE_DIR, "saves")
 
 
 func backup_save_path(slot_id: String = "autosave") -> String:

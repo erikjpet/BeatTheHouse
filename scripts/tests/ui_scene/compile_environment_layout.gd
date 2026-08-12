@@ -144,12 +144,13 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		return false
 	var selected_meta_screen: Dictionary = app.call("current_screen_snapshot")
 	var selected_meta_detail := str(selected_meta_screen.get("world_map_detail_text", ""))
-	if not selected_meta_detail.contains("Travel: Walk · Cost: $0") or not selected_meta_detail.contains("Distance: Near / 1 block"):
-		push_error("Meta world-map detail omitted its travel method, distance, or cost: %s" % selected_meta_detail)
+	var selected_meta_lines := selected_meta_detail.split("\n")
+	if selected_meta_lines.size() != 4 or not str(selected_meta_lines[1]).begins_with("Hours:") or str(selected_meta_lines[3]) != "0 min * 0$ * Walk":
+		push_error("Meta world-map detail did not use the compact four-field format: %s" % selected_meta_detail)
 		return false
 	var selected_meta_badges: Array = _copy_array(selected_meta_screen.get("world_map_detail_badges", []))
-	if selected_meta_badges.size() != 2 or str(_copy_dict(selected_meta_badges[0]).get("glyph_id", "")) != "environment_shop" or str(_copy_dict(selected_meta_badges[1]).get("glyph_id", "")) != "suspicion":
-		push_error("Meta pawn-shop detail should show only Shop and Heat icons: %s" % str(selected_meta_badges))
+	if not selected_meta_badges.is_empty():
+		push_error("Meta world-map detail retained badges outside the requested four fields: %s" % str(selected_meta_badges))
 		return false
 	app.call("close_world_map")
 	await process_frame

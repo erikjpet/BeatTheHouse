@@ -40,6 +40,7 @@ func _run() -> void:
 		await _capture_cabinet(cabinet_value)
 		print("VP_PROOF: complete %s" % str(cabinet_value.get("id", "")))
 	await _prove_holdout_feedback()
+	await _prove_abandoned_holdout_draw()
 	await _prove_double_up_pointer(false, "1280x720 mouse")
 	await _prove_small_screen_touch_loop()
 	await _capture_slot_reference()
@@ -183,6 +184,12 @@ func _prove_holdout_feedback() -> void:
 	if not bool(marked.get("holdout_ready", false)):
 		failures.append("Live HOLDOUT did not arm through its visible control.")
 		return
+	var initial_meter: Dictionary = marked.get("holdout_meter", {}) if typeof(marked.get("holdout_meter", {})) == TYPE_DICTIONARY else {}
+	await create_timer(0.18).timeout
+	await _settle(3)
+	var moved_meter: Dictionary = _surface_state(canvas).get("holdout_meter", {}) if typeof(_surface_state(canvas).get("holdout_meter", {})) == TYPE_DICTIONARY else {}
+	if is_equal_approx(float(initial_meter.get("progress", 0.0)), float(moved_meter.get("progress", 0.0))):
+		failures.append("Live HOLDOUT sweep did not move during realtime surface refresh.")
 	await _save_shot("jacks_or_better_holdout_armed")
 	var safety := 0
 	while safety < 4:
@@ -223,6 +230,30 @@ func _prove_holdout_feedback() -> void:
 		"blunt_feedback_visible": detail.find("SWAPPED IN ") >= 0 and detail.find("RESULT:") >= 0,
 	})
 	print("VP_PROOF: complete holdout feedback")
+
+
+func _prove_abandoned_holdout_draw() -> void:
+	print("VP_PROOF: begin unfinished holdout DRAW escape")
+	if not await _prepare_video_poker(CABINETS[0]):
+		return
+	var canvas: Control = app.get("game_surface_canvas")
+	_emit_surface_input("video_poker_deal", 0, false)
+	await _wait_card_reveal()
+	_emit_surface_input("video_poker_mark", 0, false)
+	await _settle(3)
+	_emit_surface_input("video_poker_draw", 0, false)
+	await _wait_card_reveal()
+	var result := _surface_state(canvas)
+	if str(result.get("phase", "")) != "settled":
+		failures.append("DRAW did not settle an unfinished HOLDOUT in one press.")
+	if int(result.get("result_suspicion_delta", 0)) <= 0:
+		failures.append("Unfinished HOLDOUT DRAW escape did not apply miss-grade Heat.")
+	proof_rows.append({
+		"control": "holdout_abandon_draw",
+		"single_press_resolution": str(result.get("phase", "")) == "settled",
+		"heat_applied": int(result.get("result_suspicion_delta", 0)),
+	})
+	print("VP_PROOF: complete unfinished holdout DRAW escape")
 
 
 func _prove_double_up_pointer(touch: bool, input_label: String) -> void:

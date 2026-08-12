@@ -52,6 +52,8 @@ func _init() -> void:
 		_audit_single_column_spam_budget(library, definition, failures)
 		_audit_bankroll_zero_deferred_ticket_flow(library, definition, failures)
 		_audit_active_item_mechanics(library, definition, failures)
+		_audit_peek_and_scan_modes(library, definition, failures)
+		_audit_stack_header_layout(library, definition, failures)
 		_audit_venue_deal_variety(library, definition, failures)
 		_audit_full_deal_integrity(library, definition, failures)
 		_audit_surface_state_timing(library, definition, failures)
@@ -72,6 +74,37 @@ func _init() -> void:
 		for failure in failures:
 			push_error(str(failure))
 		quit(1)
+
+
+func _audit_stack_header_layout(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
+	var module_script = load(str(definition.get("module_path", "")))
+	if module_script == null:
+		failures.append("Pull Tabs header layout audit could not load the game module.")
+		return
+	var game = module_script.new()
+	game.setup(definition, library)
+	var panel_rect := Rect2(430, 18, 448, 394)
+	var button_rects_value: Variant = game.call("_pull_tab_stack_header_button_rects", panel_rect)
+	var button_rects: Array = button_rects_value if typeof(button_rects_value) == TYPE_ARRAY else []
+	var pile_label_reservation := Rect2(panel_rect.position + Vector2(10, 2), Vector2(190, 30))
+	var native_leave_rect := Rect2(776, 22, 86, 34)
+	if button_rects.size() != 4:
+		failures.append("Pull Tabs header layout did not return four navigation controls.")
+		return
+	for button_index in range(button_rects.size()):
+		var button_rect_value: Variant = button_rects[button_index]
+		var button_rect: Rect2 = button_rect_value as Rect2
+		if button_rect.intersects(pile_label_reservation):
+			failures.append("Pull Tabs header navigation overlaps the TICKET PILE X/X label reservation: %s." % str(button_rect))
+			return
+		if button_rect.intersects(native_leave_rect):
+			failures.append("Pull Tabs header navigation overlaps the native Leave button: %s." % str(button_rect))
+			return
+		if button_index == 3 and button_rect.size.x > 50.0:
+			failures.append("Pull Tabs Auto Open control is wider than its compact 50px budget.")
+			return
+	if absf((button_rects.back() as Rect2).end.x - (native_leave_rect.position.x - 16.0)) > 0.1:
+		failures.append("Pull Tabs header navigation did not preserve its safety gap before Leave.")
 
 
 func _audit_seed(seed_index: int, library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
@@ -255,6 +288,55 @@ func _audit_active_item_mechanics(library: ContentLibrary, definition: Dictionar
 		failures.append("%s: tarot-converted ticket should pay $0." % label)
 	if (tarot_ticket.get("tarot_reading", []) as Array).size() != 5:
 		failures.append("%s: tarot ticket did not show five future results." % label)
+
+
+func _audit_peek_and_scan_modes(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
+	var label := "PULL-TABS-PEEK-SCAN"
+	var game: GameModule = load(str(definition.get("module_path", ""))).new()
+	game.setup(definition, library)
+	var chance_successes := 0
+	for roll in range(1, 101):
+		if bool(game.call("peek_succeeds_for_roll", roll)):
+			chance_successes += 1
+	if chance_successes != 50 or not bool(game.call("peek_succeeds_for_roll", 50)) or bool(game.call("peek_succeeds_for_roll", 51)):
+		failures.append("%s: Peek probability is not an exact 50/50 roll split." % label)
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(label)
+	run_state.bankroll = 10000
+	var environment := {
+		"id": label.to_lower(),
+		"archetype_id": "bar",
+		"visual_context": {"scene_type": "bar"},
+		"game_ids": ["pull_tabs"],
+		"game_states": {},
+	}
+	environment["game_states"] = {"pull_tabs": game.generate_environment_state(run_state, environment, run_state.create_rng("peek_machine"))}
+	run_state.set_environment(environment)
+	var peek_command := game.surface_action_command("pull_tab_detector_scan", 0, false, {}, run_state, run_state.current_environment)
+	if bool(peek_command.get("direct_resolve", false)) or bool(peek_command.get("resolve", false)):
+		failures.append("%s: unowned PEEK skipped its risk confirmation." % label)
+	for peek_index in range(3):
+		var result := game.resolve_with_context("tab_detector_scan", 0, run_state, run_state.current_environment, run_state.create_rng("peek_%d" % peek_index), {})
+		if int(result.get("pull_tab_base_heat", 0)) != 8 + peek_index:
+			failures.append("%s: Peek %d did not use base Heat %d." % [label, peek_index + 1, 8 + peek_index])
+		if int(result.get("pull_tab_peek_count", 0)) != peek_index + 1:
+			failures.append("%s: Peek count did not persist after attempt %d." % [label, peek_index + 1])
+		var surface := game.surface_state(run_state, run_state.current_environment, {})
+		var state: Dictionary = surface.get("pull_tab_item_state", {})
+		var highlight_index := int(state.get("tab_detector_highlight_index", -1))
+		if bool(result.get("pull_tab_peek_succeeded", false)) != (highlight_index >= 0):
+			failures.append("%s: Peek outcome and visible column highlight disagree." % label)
+	run_state.add_item("tab_detector")
+	var scan_command := game.surface_action_command("pull_tab_detector_scan", 0, false, {}, run_state, run_state.current_environment)
+	if not bool(scan_command.get("direct_resolve", false)) or not bool(scan_command.get("resolve", false)):
+		failures.append("%s: owned SCAN was not a one-press toggle." % label)
+	var heat_before_scan := run_state.suspicion_level()
+	var scan_on := game.resolve_with_context("tab_detector_scan", 0, run_state, run_state.current_environment, run_state.create_rng("scan_on"), {})
+	var scan_off := game.resolve_with_context("tab_detector_scan", 0, run_state, run_state.current_environment, run_state.create_rng("scan_off"), {})
+	if int(scan_on.get("suspicion_delta", -1)) != 0 or not bool(scan_on.get("pull_tab_detector_active", false)):
+		failures.append("%s: owned SCAN did not switch on for zero Heat." % label)
+	if int(scan_off.get("suspicion_delta", -1)) != 0 or bool(scan_off.get("pull_tab_detector_active", true)) or run_state.suspicion_level() != heat_before_scan:
+		failures.append("%s: owned SCAN did not switch off for zero Heat." % label)
 
 
 func _audit_venue_deal_variety(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:

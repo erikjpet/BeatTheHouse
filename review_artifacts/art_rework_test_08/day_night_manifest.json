@@ -1,0 +1,34 @@
+{
+  "version": 3,
+  "logical_size": [450, 215],
+  "display_size": [900, 430],
+  "texture_filter": "nearest",
+  "midnight_source": "exact_test_04",
+  "geometry_status": "endpoint_review_only_day_alignment_required",
+  "schedule": {
+    "sunrise_start_minute": 330,
+    "day_full_minute": 660,
+    "sunset_start_minute": 990,
+    "night_full_minute": 1260
+  },
+  "environments": [
+    {"id":"apartment","noon":"noon/apartment_noon.png","midnight":"midnight/apartment_midnight.png"},
+    {"id":"back_alley","noon":"noon/back_alley_noon.png","midnight":"midnight/back_alley_midnight.png"},
+    {"id":"bar","noon":"noon/bar_noon.png","midnight":"midnight/bar_midnight.png"},
+    {"id":"beach","noon":"noon/beach_noon.png","midnight":"midnight/beach_midnight.png"},
+    {"id":"corner_store","noon":"noon/corner_store_noon.png","midnight":"midnight/corner_store_midnight.png"},
+    {"id":"delta_queen","noon":"noon/delta_queen_noon.png","midnight":"midnight/delta_queen_midnight.png"},
+    {"id":"gas_station_casino","noon":"noon/gas_station_casino_noon.png","midnight":"midnight/gas_station_casino_midnight.png"},
+    {"id":"grand_casino","noon":"noon/grand_casino_noon.png","midnight":"midnight/grand_casino_midnight.png"},
+    {"id":"grand_casino_back_room","noon":"noon/grand_casino_back_room_noon.png","midnight":"midnight/grand_casino_back_room_midnight.png"},
+    {"id":"grand_casino_cage","noon":"noon/grand_casino_cage_noon.png","midnight":"midnight/grand_casino_cage_midnight.png"},
+    {"id":"grand_casino_high_limit","noon":"noon/grand_casino_high_limit_noon.png","midnight":"midnight/grand_casino_high_limit_midnight.png"},
+    {"id":"house","noon":"noon/house_noon.png","midnight":"midnight/house_midnight.png"},
+    {"id":"jazz_club","noon":"noon/jazz_club_noon.png","midnight":"midnight/jazz_club_midnight.png"},
+    {"id":"kitty_cat_lounge","noon":"noon/kitty_cat_lounge_noon.png","midnight":"midnight/kitty_cat_lounge_midnight.png"},
+    {"id":"motel","noon":"noon/motel_noon.png","midnight":"midnight/motel_midnight.png"},
+    {"id":"motel_room","noon":"noon/motel_room_noon.png","midnight":"midnight/motel_room_midnight.png"},
+    {"id":"pawn_shop","noon":"noon/pawn_shop_noon.png","midnight":"midnight/pawn_shop_midnight.png"},
+    {"id":"small_underground_casino","noon":"noon/small_underground_casino_noon.png","midnight":"midnight/small_underground_casino_midnight.png"}
+  ]
+}

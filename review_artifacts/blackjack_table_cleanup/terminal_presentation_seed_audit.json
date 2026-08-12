@@ -1,0 +1,81 @@
+{
+	"failure_count": 0,
+	"failures": [],
+	"passed": true,
+	"seed_count": 8,
+	"stats": {
+		"action_command_samples": 1403,
+		"avg_action_command_ms": 1.63001568068425,
+		"avg_resolve_ms": 4.64199107142858,
+		"clean_hands": 8,
+		"clean_resolves": 8,
+		"compact_ui_states": 1403,
+		"count_hands": 8,
+		"count_icons": 38,
+		"deck_counts": {
+			"2": 4,
+			"4": 4
+		},
+		"double_fixture_passes": 1,
+		"generated_tables": 8,
+		"max_action_command_ms": 9.024,
+		"max_resolve_ms": 13.236,
+		"natural_fixture_passes": 1,
+		"outcomes": {
+			"bust": 1,
+			"dealer_bust": 1,
+			"lose": 3,
+			"push": 1,
+			"win": 3
+		},
+		"p95_action_command_ms": 3.34,
+		"p95_resolve_ms": 7.789,
+		"patron_peek_adjustments": 1,
+		"payout_drift_edge": -0.0505069124423963,
+		"payout_drift_hands": 1000,
+		"payout_drift_main_delta": -274,
+		"payout_drift_outcomes": {
+			"blackjack": 40,
+			"bust": 146,
+			"dealer_blackjack": 42,
+			"dealer_bust": 247,
+			"lose": 297,
+			"push": 94,
+			"surrender": 28,
+			"win": 133
+		},
+		"payout_drift_total_wager": 5425,
+		"resolve_samples": 1008,
+		"rules": {
+			"das_false": 2,
+			"das_true": 6,
+			"h17_false": 6,
+			"h17_true": 2,
+			"surrender_false": 2,
+			"surrender_true": 6
+		},
+		"safe_peeks": 1,
+		"seed_count": 8,
+		"side_bet_resolves": 3,
+		"side_bet_tables": 8,
+		"side_bets": {
+			"buster": 5,
+			"insurance": 3,
+			"lucky_ladies": 3,
+			"perfect_pairs": 4,
+			"twenty_one_three": 1
+		},
+		"split_fixture_passes": 1,
+		"strategy_confrontations": 1,
+		"surface_state_avg_ms": 6.614104,
+		"surface_state_calls": 1000,
+		"surface_state_max_ms": 22.349,
+		"surface_state_p95_ms": 10.798,
+		"surrender_fixture_passes": 1,
+		"watched_peek_ejections": 1,
+		"zero_count_icons": 0
+	},
+	"tool": "blackjack_seed_audit",
+	"warning_count": 0,
+	"warnings": []
+}

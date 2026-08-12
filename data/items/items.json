@@ -429,6 +429,30 @@
     }
   },
   {
+    "id": "freds_poker_hat",
+    "display_name": "Fred's Poker Hat",
+    "class": "permanent",
+    "domain": "games",
+    "content_groups": [
+      "video_poker_pack"
+    ],
+    "rarity": "common",
+    "sellable": true,
+    "sale_price": 5,
+    "price_min": 7,
+    "price_max": 12,
+    "asset_path": "res://assets/art/items/freds_poker_hat.png",
+    "icon_key": "freds_poker_hat",
+    "environment_prop": "poker_hat",
+    "surface": "counter_case",
+    "description": "Fred did the math. The pit noticed.",
+    "effect_description": "Shows the recommended video-poker holds; winning hands gain 1 Heat.",
+    "effect": {
+      "video_poker_strategy_hint": 1,
+      "video_poker_win_heat": 1
+    }
+  },
+  {
     "id": "odds_notebook",
     "display_name": "Odds Notebook",
     "class": "permanent",
@@ -679,6 +703,28 @@
     "effect": {
       "blackjack_table_limit_multiplier": 2,
       "blackjack_table_minimum_to_previous_max": 1
+    }
+  },
+  {
+    "id": "pocket_watch",
+    "display_name": "Pocket Watch",
+    "class": "permanent",
+    "domain": "global",
+    "content_groups": [
+      "universal_passive_items"
+    ],
+    "sellable": true,
+    "sale_price": 3,
+    "price_min": 5,
+    "price_max": 9,
+    "asset_path": "res://assets/art/items/pocket_watch.png",
+    "icon_key": "pocket_watch",
+    "environment_prop": "keychain",
+    "surface": "counter_case",
+    "description": "Cheap brass. Honest to the minute.",
+    "effect_description": "Shows the exact minute on the HUD clock.",
+    "effect": {
+      "exact_clock_minutes": 1
     }
   },
   {

@@ -7,6 +7,7 @@ signal display_finished
 const DISPLAY_SECONDS := 3.0
 const POPUP_SIZE := Vector2(390, 112)
 const VIEWPORT_MARGIN := Vector2(18, 18)
+const MAX_PENDING_ITEMS := 32
 
 var pending_items: Array = []
 var current_item: Dictionary = {}
@@ -31,6 +32,8 @@ func _ready() -> void:
 func show_item(item: Dictionary, texture: Texture2D) -> void:
 	if item.is_empty():
 		return
+	if pending_items.size() >= MAX_PENDING_ITEMS:
+		pending_items.pop_front()
 	pending_items.append({
 		"item": item.duplicate(true),
 		"texture": texture,

@@ -1603,32 +1603,6 @@ func _first_buffalo_ways_violation(grid: Array, definition: Dictionary, protecte
 	return {}
 
 
-func _first_buffalo_ways_violation_legacy(grid: Array, definition: Dictionary, protected_cells: Dictionary) -> Dictionary:
-	var symbols: Dictionary = _buffalo_symbol_lookup(_buffalo_config(definition))
-	for candidate_value in symbols.keys():
-		var candidate := str(candidate_value)
-		var symbol_def: Dictionary = _copy_dict(symbols.get(candidate, {}))
-		if int(symbol_def.get("pay3", 0)) <= 0:
-			continue
-		for start_reel in range(grid.size()):
-			var consecutive := 0
-			var cells: Array = []
-			for reel_index in range(start_reel, grid.size()):
-				var column: Array = grid[reel_index] if typeof(grid[reel_index]) == TYPE_ARRAY else []
-				var reel_cells: Array = []
-				for row_index in range(column.size()):
-					var symbol := str(column[row_index])
-					if symbol == candidate or WILD_SYMBOLS.has(symbol):
-						reel_cells.append({"reel": reel_index, "row": row_index})
-				if reel_cells.is_empty():
-					break
-				consecutive += 1
-				cells.append_array(reel_cells)
-			if consecutive >= 3 and not _all_cells_protected(cells, protected_cells):
-				return {"cells": cells, "symbol": candidate, "start_reel": start_reel}
-	return {}
-
-
 func _limit_symbol_count(grid: Array, symbol_id: String, max_count: int, protected_cells: Dictionary) -> void:
 	var seen := 0
 	for reel_index in range(grid.size()):

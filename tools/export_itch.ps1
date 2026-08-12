@@ -72,6 +72,38 @@ function Clear-DirectoryContents {
     }
 }
 
+function Get-ExportPresetCustomFeatures {
+    param([string]$PresetName)
+    $presetPath = Join-Path $root "export_presets.cfg"
+    $activeName = ""
+    foreach ($line in Get-Content -LiteralPath $presetPath) {
+        if ($line -match '^name="([^"]+)"$') {
+            $activeName = $Matches[1]
+            continue
+        }
+        if ($activeName -eq $PresetName -and $line -match '^custom_features="([^"]*)"$') {
+            return @($Matches[1].Split(',', [System.StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object { $_.Trim() })
+        }
+    }
+    throw "Could not read custom features for export preset '$PresetName'."
+}
+
+function Assert-CleanDistributionOutput {
+    param([string]$Directory)
+    $forbiddenNames = @(
+        "profile_inventory.json",
+        "meta_collection.json",
+        "settings.json",
+        "autosave.json",
+        "autosave.json.bak"
+    )
+    $leakedFiles = @(Get-ChildItem -LiteralPath $Directory -File -Recurse -Force | Where-Object { $forbiddenNames -contains $_.Name })
+    if ($leakedFiles.Count -gt 0) {
+        $leakedPaths = ($leakedFiles | ForEach-Object { $_.FullName }) -join ", "
+        throw "Refusing to package persistent player data: $leakedPaths"
+    }
+}
+
 # Per-target configuration.
 $config = @{
     "web"     = @{ Preset = "Web";          Out = "builds/web/index.html";          Dir = "builds/web";     Zip = "BeatTheHouse-web.zip";     DefaultChannel = "html" }
@@ -84,8 +116,13 @@ $outFile = Join-Path $root $cfg.Out
 $distDir = Join-Path $root "builds/itch"
 $zipPath = Join-Path $distDir $cfg.Zip
 $projectVersion = Get-ProjectVersion
+$presetFeatures = Get-ExportPresetCustomFeatures $cfg.Preset
+if ($presetFeatures -notcontains "distribution_build") {
+    throw "Export preset '$($cfg.Preset)' must include the distribution_build feature so itch builds cannot read development saves."
+}
 
 Write-Host "Release version from project.godot: $projectVersion"
+Write-Host "Fresh-install storage namespace: user://distribution (isolated from editor saves)"
 
 # 1. Export from Godot.
 if (-not $SkipExport) {
@@ -106,6 +143,8 @@ else {
         throw "-SkipExport was set but no existing build was found at: $outFile"
     }
 }
+
+Assert-CleanDistributionOutput $outDir
 
 # 2. Package the uploadable zip.
 #    For web the zip MUST contain index.html at its root, so we archive the

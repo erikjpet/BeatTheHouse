@@ -167,12 +167,19 @@ func generate_environment_fixture_states(_run_state: RunState, environment: Dict
 		{"format_id": "classic_3_reel", "type_id": "pinball", "math_variant_id": "steady", "cabinet_variant_id": "neon_magenta", "bonus_variant_id": "plain"},
 		{"format_id": "line_5x3", "type_id": "buffalo", "math_variant_id": "standard", "cabinet_variant_id": "cyan_gold", "bonus_variant_id": "retrigger"},
 		{"format_id": "video_feature", "type_id": "pinball", "math_variant_id": "volatile", "cabinet_variant_id": "blacklight", "bonus_variant_id": "jackpot_chase"},
+		{"format_id": "classic_3_reel", "type_id": "buffalo", "math_variant_id": "steady", "cabinet_variant_id": "cyan_gold", "bonus_variant_id": "plain"},
+		{"format_id": "line_5x3", "type_id": "pinball", "math_variant_id": "standard", "cabinet_variant_id": "blacklight", "bonus_variant_id": "retrigger"},
+		{"format_id": "video_feature", "type_id": "buffalo", "math_variant_id": "volatile", "cabinet_variant_id": "neon_magenta", "bonus_variant_id": "jackpot_chase"},
 	]
 	var result: Dictionary = {}
 	for fixture_index in range(fixture_count):
 		var key := get_id() if fixture_index == 0 else "%s:%d" % [get_id(), fixture_index + 1]
 		var spec: Dictionary = fixture_specs[fixture_index % fixture_specs.size()]
 		var machine: Dictionary = generator.build_machine_from_ids(definition, spec, rng.fork("grand_casino_slot_fixture:%d" % fixture_index))
+		# Build the immutable family/format view during room generation, outside
+		# active play, so the first autoplay spin for a newly unique cabinet cannot
+		# pay a one-time strip/cache construction cost.
+		definition_cache.view_for_machine(machine)
 		result[key] = definition_cache.compact_machine_for_storage(machine)
 	return result
 
@@ -219,13 +226,16 @@ func active_item_command(item_id: String, run_state: RunState, environment: Dict
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	# Rendering is read-only. Once a machine exists, use its live stored snapshot
-	# instead of normalizing, deep-copying, and writing the entire environment's
-	# game-state map on every surface rebuild.
+	# Ordinary rendering is read-only. Once a machine exists, use its live stored
+	# snapshot instead of rewriting the environment on every rebuild. The sole
+	# exception below commits the one-time reels -> pinball lifecycle handoff.
 	var machine: Dictionary = _read_machine(environment)
 	if machine.is_empty():
 		machine = _ensure_machine_state(run_state, environment, run_state.create_rng("slot_surface") if run_state != null else null)
-	return presentation.surface_state(machine, run_state, definition, ui_state)
+	var surface: Dictionary = presentation.surface_state(machine, run_state, definition, ui_state)
+	if bool(surface.get("slot_bonus_trigger_revealed", false)):
+		_commit_bonus_trigger_reveal(environment, machine)
+	return surface
 
 
 func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
@@ -233,7 +243,27 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	# including reel strips, grids, audio cues, and bonus history, every frame.
 	# Machine mutations still rebuild canonically at action boundaries; frames in
 	# between only need the time-dependent presentation fields below.
-	return presentation.realtime_state_patch(_peek_machine(environment), run_state, ui_state, current_surface_state)
+	var machine := _peek_machine(environment)
+	var patch: Dictionary = presentation.realtime_state_patch(machine, run_state, ui_state, current_surface_state)
+	if bool(patch.get("slot_bonus_trigger_revealed", false)):
+		_commit_bonus_trigger_reveal(environment, machine)
+	return patch
+
+
+func _commit_bonus_trigger_reveal(environment: Dictionary, machine: Dictionary) -> void:
+	if bool(machine.get("slot_bonus_trigger_revealed", false)):
+		return
+	var active: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	if str(active.get("family", "")) != "pinball" or not bool(active.get("active", false)) or bool(active.get("complete", false)):
+		return
+	# This mutation happens exactly once per triggered feature. It is a lifecycle
+	# transition, not per-frame presentation state, and lets full refreshes, save /
+	# load, and re-entry agree that the triggering reels have yielded to pinball.
+	var committed := _read_machine(environment)
+	if committed.is_empty():
+		return
+	committed["slot_bonus_trigger_revealed"] = true
+	_write_owned_machine(environment, committed)
 
 
 func draw_surface(surface_canvas, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
@@ -400,10 +430,10 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				"handled": true,
 				"action_id": "spin",
 				"action_kind": "legal",
-				"resolve": confirm_requested or str(ui_state.get("selected_action_id", "")) == "spin",
+				"resolve": true,
 				"selected_index": index,
 				"set_stake": int(StateScript.selected_bet(machine).get("total_credits", 2)),
-				"message": "Spin selected.",
+				"message": "Spin.",
 			})
 		"nudge", "slot_nudge":
 			var nudge_ready := not _slot_copy_dict(machine.get("last_nudge_offer", {})).is_empty()

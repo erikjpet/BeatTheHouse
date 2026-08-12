@@ -1,25 +1,35 @@
 class_name FoundationHudViewModel
 extends RefCounted
 
+const CLOCK_DISPLAY_STEP_MINUTES := 15
+const EXACT_CLOCK_ITEM_EFFECT := "exact_clock_minutes"
+
 
 static func clock_model(run_state: RunState) -> Dictionary:
 	if run_state == null:
 		return {}
 	var minute_of_day := run_state.game_minute_of_day()
-	var hour_24 := int(floor(float(minute_of_day) / 60.0)) % 24
+	var exact_minutes := run_state.item_effect_total(EXACT_CLOCK_ITEM_EFFECT) > 0
+	var display_minute_of_day := minute_of_day if exact_minutes else int(floor(float(minute_of_day) / float(CLOCK_DISPLAY_STEP_MINUTES))) * CLOCK_DISPLAY_STEP_MINUTES
+	var hour_24 := int(floor(float(display_minute_of_day) / 60.0)) % 24
 	var hour_12 := hour_24 % 12
 	if hour_12 == 0:
 		hour_12 = 12
+	var exact_display := "%d:%02d %s" % [
+		hour_12,
+		display_minute_of_day % 60,
+		"AM" if hour_24 < 12 else "PM",
+	]
 	return {
-		"clock_display": run_state.clock_display_text(),
+		"clock_display": "Day %d %s" % [run_state.game_day(), exact_display],
 		"clock_day": run_state.game_day(),
+		# The watch face always receives the authoritative minute. Only the
+		# adjacent digital readout is intentionally less precise without the item.
 		"clock_minute_of_day": minute_of_day,
-		"clock_exact_display": "%d:%02d %s" % [
-			hour_12,
-			minute_of_day % 60,
-			"AM" if hour_24 < 12 else "PM",
-		],
-		"clock_tooltip": "Open the schedule for day/night timing and closing pressure.",
+		"clock_display_minute_of_day": display_minute_of_day,
+		"clock_exact_display": exact_display,
+		"clock_has_pocket_watch": exact_minutes,
+		"clock_tooltip": "Pocket Watch: exact minute. Open the schedule for day/night timing and closing pressure." if exact_minutes else "Time shown in 15-minute marks. A Pocket Watch reveals the exact minute.",
 	}
 
 

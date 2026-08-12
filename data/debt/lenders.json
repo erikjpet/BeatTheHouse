@@ -1,13 +1,12 @@
 [
   {
     "id": "street_lender",
-    "display_name": "Street Lender",
+    "display_name": "Vic Mercer",
     "lender_type": "criminal",
     "speaker": {
       "role": "lender",
-      "name": "Street Lender",
-      "presentation": "faceless_silhouette",
-      "silhouette": "coat",
+      "name": "Vic Mercer",
+      "silhouette": "rings",
       "portrait_count": 1,
       "face_layers": [],
       "bind": "none",

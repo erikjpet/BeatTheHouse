@@ -1279,12 +1279,37 @@ func _check_t4_7_chain_determinism(library: ContentLibrary, failures: Array) -> 
 	var miss_module := EventModule.new()
 	miss_module.setup(library.event("call_brother_in_law"), library)
 	var miss_result := miss_module.resolve(miss_run, miss_run.current_environment, "make_call")
-	if str(miss_result.get("audio_cue", "")) != "phone_call":
-		failures.append("T4.7 phone-chain miss did not request the phone_call audio cue.")
+	if str(miss_result.get("audio_cue", "")) != "phone_out_of_service":
+		failures.append("T4.7 phone-chain miss did not replace ringing with the out-of-service audio cue.")
 	if not miss_run.pending_triggered_events.is_empty():
 		failures.append("T4.7 phone-chain miss queued a triggered lender event.")
 	if str(miss_result.get("post_resolution_message", "")) != "No one picked up.":
 		failures.append("T4.7 phone-chain miss did not surface the no-answer toast.")
+	# Reuse the known normal-run miss seed without a chance override. Tutorial
+	# identity alone must make the authored family call pick up.
+	var tutorial_run: RunState = RunStateScript.new()
+	tutorial_run.start_new(failure_seed, {
+		"id": "tutorial_family_pickup_fixture",
+		"tutorial": true,
+		"modifiers": {"tutorial_run": true},
+	})
+	tutorial_run.set_environment(_t4_3_fixture_environment("motel", "shop", 1, [], ["call_brother_in_law"], ["bar"]))
+	var tutorial_phone_module := EventModule.new()
+	tutorial_phone_module.setup(library.event("call_brother_in_law"), library)
+	var tutorial_phone_result := tutorial_phone_module.resolve(tutorial_run, tutorial_run.current_environment, "make_call")
+	if str(tutorial_phone_result.get("audio_cue", "")) != "phone_call" \
+		or tutorial_run.pending_talk_event("family_loan").is_empty():
+		failures.append("Tutorial family call did not guarantee pickup without relying on a challenge chance override.")
+	tutorial_run.enqueue_dialogue(
+		"tutorial_pal_guidance",
+		"tutorial_guide:tutorial_family_debt",
+		{},
+		"family_debt",
+		"tutorial_guide",
+		{"tutorial_lesson_id": "tutorial_family_debt"}
+	)
+	if str(tutorial_run.next_pending_talk_event().get("event_id", "")) != "family_loan":
+		failures.append("Tutorial placed Pal's debt explanation ahead of the unresolved family phone offer.")
 
 
 func _t4_7_phone_chain_triggers(library: ContentLibrary, seed: String) -> bool:
@@ -1977,8 +2002,8 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 	if not bool(available_status.get("available", false)):
 		failures.append("Available travel route was unexpectedly disabled.")
 	var cost := int(available_status.get("cost", 0))
-	if cost <= 0:
-		failures.append("Travel cost fixture should apply a nonzero bankroll cost.")
+	if cost != 0:
+		failures.append("Walking travel should be free even when an older route carries a fare.")
 	var suspicion_delta := int(available_status.get("suspicion_delta", 0))
 	if str(available_status.get("distance", "")).is_empty():
 		failures.append("Travel route status did not expose distance metadata.")
@@ -2018,12 +2043,11 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 			failures.append("Travel from the Beach to the River Queen should be free and available during the boarding window even with low bankroll.")
 		var outside_run: RunState = RunStateScript.new()
 		outside_run.start_new("TRAVEL-BEACH-PAID-ELSEWHERE")
-		var normal_beach_cost := maxi(0, int(beach_free_route.get("cost", 0)))
-		outside_run.bankroll = maxi(0, normal_beach_cost - 1)
+		outside_run.bankroll = 0
 		outside_run.set_environment({"id": "fixture_bar", "archetype_id": "bar", "turns": 0})
 		var paid_beach_status := outside_run.travel_route_status(beach_free_route)
-		if normal_beach_cost <= 0 or bool(paid_beach_status.get("available", true)) or int(paid_beach_status.get("cost", 0)) != normal_beach_cost:
-			failures.append("Beach travel should keep its normal paid route cost outside the River Queen.")
+		if not bool(paid_beach_status.get("available", false)) or int(paid_beach_status.get("cost", -1)) != 0:
+			failures.append("Walking to the Beach should be free from every origin.")
 
 	var locked_run: RunState = RunStateScript.new()
 	locked_run.start_new("TRAVEL-LOCKED")
@@ -2150,8 +2174,8 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 	else:
 		if str(beach_route.get("destination_archetype", "")) != "beach":
 			failures.append("Beach route does not point to the beach archetype.")
-		if int(beach_route.get("cost", -1)) != 3 or str(beach_route.get("distance", "")) != "near" or str(beach_route.get("risk", "")) != "low":
-			failures.append("Beach route should be a near, low-risk, low-cost stop.")
+		if int(beach_route.get("cost", -1)) != 0 or str(beach_route.get("distance", "")) != "near" or str(beach_route.get("risk", "")) != "low":
+			failures.append("Beach route should be a free, near, low-risk walk.")
 		if not _string_array(delta_archetype.get("travel_hooks", [])).has("beach"):
 			failures.append("Delta Queen should expose the nearby beach travel hook.")
 		if not _string_array(beach_archetype.get("travel_hooks", [])).has("delta_queen"):
@@ -2240,6 +2264,55 @@ func _check_world_map_current_marker(snapshot: Dictionary, expected_node_id: Str
 	canvas.queue_free()
 
 
+func _check_world_map_payload_independent_read_paths(library: ContentLibrary, failures: Array) -> void:
+	var settled_tickets: Array = []
+	for index in range(256):
+		settled_tickets.append({"id": "ticket-%04d" % index, "rows": [["A", "B", "C"]]})
+	var heavy_environment := {
+		"id": "heavy_room",
+		"kind": "casino",
+		"tier": 2,
+		"game_ids": ["slot", "pull_tabs"],
+		"service_ids": ["cashier"],
+		"lender_hooks": ["house_credit"],
+		"item_offers": [{"id": "test_item", "price": 5}],
+		"game_states": {
+			"pull_tabs": {
+				"winner_pile": settled_tickets,
+			},
+		},
+	}
+	var map_data := {
+		"version": WorldMapScript.VERSION,
+		"seed_text": "WORLD-MAP-PAYLOAD-INDEPENDENCE",
+		"start_node_id": "home",
+		"current_node_id": "home",
+		"revision": 7,
+		"nodes": [
+			{"id": "home", "archetype_id": "home", "state": WorldMapScript.STATE_VISITED, "seen": true, "position": {"x": 0.2, "y": 0.5}, "environment": heavy_environment.duplicate(true)},
+			{"id": "bar", "archetype_id": "bar", "state": WorldMapScript.STATE_REVEALED, "seen": true, "position": {"x": 0.8, "y": 0.5}, "environment": heavy_environment.duplicate(true)},
+		],
+		"edges": [{"id": "bar|home", "a": "home", "b": "bar", "distance_blocks": 2, "cost": 4}],
+		"visited_path": ["home"],
+	}
+	var topology := WorldMapScript.normalize_topology(map_data)
+	for node_value in topology.get("nodes", []):
+		if typeof(node_value) == TYPE_DICTIONARY and (node_value as Dictionary).has("environment"):
+			failures.append("World-map topology normalization retained generated environment payloads.")
+			break
+	if not WorldMapScript.has_path(map_data, "home", "bar", true):
+		failures.append("World-map path evaluation changed when nodes retained large environment payloads.")
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("WORLD-MAP-PAYLOAD-INDEPENDENCE")
+	run_state.world_map = map_data
+	run_state.current_environment = heavy_environment.duplicate(true)
+	var preview := RunGeneratorScript.new(library).preview_environment(run_state, "bar")
+	if _string_array(preview.get("game_ids", [])) != ["slot", "pull_tabs"]:
+		failures.append("Stored world-room scouting preview did not preserve public game ids.")
+	if preview.has("game_states"):
+		failures.append("Stored world-room scouting preview leaked accumulated machine payloads.")
+
+
 func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> void:
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var run_a: RunState = RunStateScript.new()
@@ -2274,6 +2347,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	if _string_array(run_a.current_environment.get("travel_hooks", [])) != travel_targets or _string_array(run_a.current_environment.get("next_archetypes", [])) != travel_targets:
 		failures.append("Current environment travel hooks should mirror capped world-map travel targets.")
 	_check_world_map_current_marker(snapshot, start_node_id, failures)
+	_check_world_map_payload_independent_read_paths(library, failures)
 	_check_closing_soon_world_travel(library, failures)
 	var layout: Dictionary = run_a.current_environment.get("layout", {}) if typeof(run_a.current_environment.get("layout", {})) == TYPE_DICTIONARY else {}
 	var object_rects: Dictionary = layout.get("object_rects", {}) if typeof(layout.get("object_rects", {})) == TYPE_DICTIONARY else {}
@@ -2355,6 +2429,9 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 
 	var early_shop_offer_count := 0
 	var jazz_offer_count := 0
+	var initial_bar_offer_count := 0
+	var initial_pawn_offer_count := 0
+	var initial_pair_keys: Dictionary = {}
 	var early_shop_map_service := WorldMapScript.new(library)
 	for early_shop_seed_index in range(100):
 		var early_shop_run: RunState = RunStateScript.new()
@@ -2367,6 +2444,16 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 			early_shop_run.world_map,
 			early_shop_run.current_world_node_id()
 		)
+		if noon_targets.size() != WorldMapScript.TRAVEL_NEW_TARGET_LIMIT:
+			failures.append("World map should offer exactly two initial destinations for seed %03d; offered %s." % [early_shop_seed_index, str(noon_targets)])
+			break
+		var sorted_noon_targets := _string_array(noon_targets)
+		sorted_noon_targets.sort()
+		initial_pair_keys["|".join(sorted_noon_targets)] = true
+		if sorted_noon_targets.has("bar"):
+			initial_bar_offer_count += 1
+		if sorted_noon_targets.has("pawn_shop"):
+			initial_pawn_offer_count += 1
 		if _world_map_targets_include_kind(early_shop_run.world_map, noon_targets, "shop"):
 			early_shop_offer_count += 1
 
@@ -2381,6 +2468,12 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 			jazz_offer_count += 1
 	if early_shop_offer_count < 95:
 		failures.append("World map should offer an open shop early in at least 95%% of seeded runs; offered %d/100." % early_shop_offer_count)
+	if initial_bar_offer_count < 20:
+		failures.append("World map start variance should offer the Bar in at least 20%% of seeded runs; offered %d/100." % initial_bar_offer_count)
+	if initial_pawn_offer_count < 15:
+		failures.append("World map start variance should offer the Pawn Shop in at least 15%% of seeded runs; offered %d/100." % initial_pawn_offer_count)
+	if initial_pair_keys.size() < 6:
+		failures.append("World map start variance should produce at least six distinct first-destination pairs across 100 seeds; produced %d." % initial_pair_keys.size())
 	if jazz_offer_count < 20:
 		failures.append("World map should offer the open Jazz Club early in at least 20%% of seeded evening runs; offered %d/100." % jazz_offer_count)
 
@@ -2433,16 +2526,19 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	var return_route := generator.world_route_for_target(run_a, start_node_id)
 	if _string_array(return_route.get("world_path", [])).size() < 2:
 		failures.append("Return world-map route did not include a visible path.")
-	var return_cost := int(return_route.get("cost", 0))
-	if return_cost <= 0 and int(return_route.get("distance_blocks", 0)) > 0:
-		failures.append("Return world-map route did not charge a distance-based cost.")
+	var return_cost := int(run_a.travel_route_status(return_route).get("cost", 0))
+	var return_method := WorldMapScript.travel_method_kind(return_route, str(return_route.get("distance", "")))
+	if return_method == WorldMapScript.TRAVEL_METHOD_WALK and return_cost != 0:
+		failures.append("Generated return walk retained a travel cost.")
+	elif return_method != WorldMapScript.TRAVEL_METHOD_WALK and return_cost <= 0 and int(return_route.get("distance_blocks", 0)) > 0:
+		failures.append("Generated non-walking return route did not charge a distance-based cost.")
 	var bankroll_before_return := run_a.bankroll
 	var return_heat := run_a.begin_travel_suspicion_decay(return_route, start_node_id)
 	generator.next_environment(run_a, start_node_id)
 	run_a.finish_travel_suspicion_decay(return_heat)
 	GameModule.apply_result(run_a, _world_map_travel_charge_result(start_node_id, return_cost))
 	if run_a.bankroll != bankroll_before_return - return_cost:
-		failures.append("Return world-map travel did not charge the generated edge cost.")
+		failures.append("Return world-map travel did not apply the effective route cost.")
 	var revisit_route := generator.world_route_for_target(run_a, visited_node_id)
 	var revisit_heat := run_a.begin_travel_suspicion_decay(revisit_route, visited_node_id)
 	generator.next_environment(run_a, visited_node_id)
@@ -4066,6 +4162,25 @@ func _check_lender_debt_foundation(library: ContentLibrary, failures: Array) -> 
 				failures.append("Phone-only brother-in-law lender was placed as a physical environment actor.")
 			if str(speaker.get("presentation", "")) != "faceless_silhouette":
 				failures.append("Phone-only brother-in-law lender does not use a faceless conversation speaker.")
+		elif lender_id == "street_lender":
+			if str(lender.get("display_name", "")) != "Vic Mercer" or str(speaker.get("name", "")) != "Vic Mercer":
+				failures.append("Street lender does not expose Vic Mercer's authored identity.")
+			if str(speaker.get("character_id", "")) != "vic_street_lender" or str(speaker.get("presentation", "")) == "faceless_silhouette":
+				failures.append("Vic Mercer does not use his visible character model.")
+			if not bool(speaker.get("environment_actor", true)):
+				failures.append("Vic Mercer was not placed as a physical environment actor.")
+			var vic_run: RunState = RunStateScript.new()
+			vic_run.start_new("VIC-MERCER-VISIBLE-MODEL")
+			var resolved_vic := CharacterRosterScript.resolve_speaker(speaker, library, vic_run, lender_id, "loan_offer")
+			var vic_members: Array = resolved_vic.get("members", []) if typeof(resolved_vic.get("members", [])) == TYPE_ARRAY else []
+			var vic_model: Dictionary = (vic_members[0] as Dictionary).get("model", {}) if not vic_members.is_empty() and typeof(vic_members[0]) == TYPE_DICTIONARY else {}
+			if str(resolved_vic.get("speaking_character_id", "")) != "vic_street_lender" \
+				or str(resolved_vic.get("speaking_character_name", "")) != "Vic Mercer" \
+				or str(resolved_vic.get("presentation", "")) == "faceless_silhouette" \
+				or str(vic_model.get("skin_color", "")).is_empty() \
+				or str(vic_model.get("hair_color", "")).is_empty() \
+				or str(vic_model.get("jacket_color", "")).is_empty():
+				failures.append("Vic Mercer's resolved speaker lost his named, colored character model.")
 		elif str(speaker.get("presentation", "")) != "faceless_silhouette":
 			failures.append("Person lender %s does not define a faceless conversation speaker." % lender_id)
 		if clampi(int(speaker.get("portrait_count", 0)), 0, 3) != (3 if lender_id == "the_crew" else 1):

@@ -19,7 +19,6 @@ func _run_nonoverlap_check() -> void:
 	if run_state == null:
 		_fail("Tutorial target check could not start a run.")
 		return
-
 	_clear_guide_state()
 	_stage_environment("gas_station_casino")
 	if not run_state.inventory.has("xray_glasses"):
@@ -30,12 +29,33 @@ func _run_nonoverlap_check() -> void:
 	await _settle(8)
 	if not _active_target_is_clear("pull-tab Buy"):
 		return
+	var xray_talk_event_id := str((app.call("current_talk_dock_snapshot") as Dictionary).get("event_id", ""))
 	app.call("_on_game_surface_action", "pull_tab_buy", 0, false)
+	await _settle(3)
+	var pull_tab_canvas: Control = app.get("game_surface_canvas")
+	var pull_tab_game: GameModule = app.get("current_game")
+	var after_buy_state: Dictionary = pull_tab_game.coach_state(run_state, run_state.current_environment, {})
+	if int(after_buy_state.get("tray_count", 0)) <= 0 \
+			or str((app.call("current_talk_dock_snapshot") as Dictionary).get("event_id", "")) != xray_talk_event_id:
+		_fail("The X-ray purchase did not execute while Pal's instruction remained visible.")
+		return
+	# Advance presentation only. Pal must keep the run simulation frozen while the
+	# physical ticket-drop animation reaches its collection boundary.
+	for _frame_index in range(60):
+		pull_tab_canvas.call("_process", 1.0 / 60.0)
 	await _settle(8)
 	if str(app.get("coach_overlay").call("active_anchor_id")) != "pull_tab_collect_tray":
 		_fail("Pull-tab lesson did not move its highlight to the collection tray.")
 		return
 	if not _active_target_is_clear("pull-tab collection tray"):
+		return
+	app.call("_on_game_surface_action", "pull_tab_collect_tray", 0, false)
+	await _settle(5)
+	var after_collect_state: Dictionary = pull_tab_game.coach_state(run_state, run_state.current_environment, {})
+	if int(after_collect_state.get("tray_count", -1)) != 0 \
+			or int(after_collect_state.get("play_stack_count", 0)) <= 0 \
+			or str((app.call("current_talk_dock_snapshot") as Dictionary).get("event_id", "")) != xray_talk_event_id:
+		_fail("The X-ray collection action did not remain interactive beneath Pal's visible instruction.")
 		return
 
 	_clear_guide_state()
@@ -87,9 +107,10 @@ func _game_surface_freeze_keeps_presentation_alive() -> bool:
 		canvas.call("_process", 1.0 / 60.0)
 	var after: Dictionary = canvas.call("current_view_snapshot")
 	var simulation_frozen := int(after.get("surface_simulation_time_msec", -2)) == int(before.get("surface_simulation_time_msec", -1))
+	var presentation_advanced := int(after.get("surface_presentation_time_msec", -2)) > int(before.get("surface_presentation_time_msec", -1))
 	var presentation_alive := int(after.get("surface_animation_redraw_count", -2)) > int(before.get("surface_animation_redraw_count", -1))
 	canvas.queue_free()
-	if not simulation_frozen or not presentation_alive:
+	if not simulation_frozen or not presentation_advanced or not presentation_alive:
 		_fail("Pal freeze did not separate blackjack logic time from environment presentation animation: before=%s after=%s." % [str(before), str(after)])
 		return false
 	return true

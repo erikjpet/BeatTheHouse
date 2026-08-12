@@ -9,6 +9,7 @@ signal node_pressed(node_id: String)
 
 const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 24
 const WORLD_MAP_DETAIL_BADGE_CELL_POOL_SIZE := 6
+const WORLD_MAP_POPUP_ICON_GAP := 12.0
 const VisualStyle := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
@@ -58,7 +59,7 @@ func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_no
 	confirm_button = confirm_node
 	if holder != null:
 		holder.mouse_default_cursor_shape = Control.CURSOR_ARROW
-		holder.tooltip_text = "Scroll to zoom. Click and drag to move the map."
+		holder.tooltip_text = "Scroll to zoom. Drag to move. Click empty space to reset."
 	_apply_small_screen_button_sizes()
 
 
@@ -183,48 +184,81 @@ func position_detail_popup(snapshot: Dictionary) -> void:
 	var holder_size := holder.size
 	if holder_size.x <= 0.0 or holder_size.y <= 0.0:
 		holder_size = Vector2(800, 430)
-	detail_popup.custom_minimum_size = Vector2(VisualStyle.POPUP_MIN_WIDTH, VisualStyle.FLEXIBLE_SIZE)
+	detail_popup.custom_minimum_size = Vector2(340.0, VisualStyle.FLEXIBLE_SIZE)
 	var content_minimum := detail_popup.get_combined_minimum_size()
 	var popup_size := FoundationWidgetsScript.autosize_popup(detail_popup, holder_size, content_minimum)
-	# Route decisions deliberately use all six visible lines (stop, hours,
-	# offer, commitment, alternative, status). The generic popup helper caps
-	# height at 72% for transient prompts; a map-owned popup can safely use the
-	# holder's remaining height and must not clip the last decision lines.
-	var map_height_limit := maxf(0.0, holder_size.y - float(VisualStyle.SPACE_5 * 2))
-	var decision_height := minf(content_minimum.y + float(VisualStyle.SPACE_6 * 2), map_height_limit)
-	if decision_height > popup_size.y:
-		popup_size.y = decision_height
-		detail_popup.size.y = decision_height
 	detail_popup.visible = true
 	var center := holder_size * 0.5
 	if nodes_layer != null and nodes_layer.has_method("local_position_for_node") and bool(nodes_layer.call("node_is_in_view", node_id)):
 		center = nodes_layer.call("local_position_for_node", node_id) as Vector2
 	var margin := float(VisualStyle.SPACE_5)
-	var x := center.x + 30.0
-	if x + popup_size.x > holder_size.x - margin:
-		x = center.x - popup_size.x - 30.0
-	var y := center.y - popup_size.y * 0.5
-	x = clampf(x, margin, maxf(margin, holder_size.x - popup_size.x - margin))
-	y = clampf(y, margin, maxf(margin, holder_size.y - popup_size.y - margin))
-	var preferred_rect := Rect2(Vector2(x, y), popup_size)
+	var icon_rect := _node_visual_holder_rect(node_id)
+	if not icon_rect.has_area():
+		icon_rect = Rect2(center - Vector2(22.0, 22.0), Vector2(44.0, 44.0))
+	var icon_keepout := icon_rect.grow(WORLD_MAP_POPUP_ICON_GAP)
+	var icon_center := icon_rect.get_center()
+	var preferred_rect := Rect2(Vector2(icon_keepout.end.x, icon_center.y - popup_size.y * 0.5), popup_size)
 	var reserved_rect := _reserved_overlay_holder_rect()
-	var candidates: Array[Rect2] = [preferred_rect]
-	if reserved_rect.has_area():
-		candidates.append(Rect2(Vector2(x, reserved_rect.position.y - popup_size.y - margin), popup_size))
-		candidates.append(Rect2(Vector2(reserved_rect.position.x - popup_size.x - margin, y), popup_size))
-		candidates.append(Rect2(Vector2(reserved_rect.end.x + margin, y), popup_size))
+	var candidates: Array[Rect2] = [
+		preferred_rect,
+		Rect2(Vector2(icon_keepout.position.x - popup_size.x, icon_center.y - popup_size.y * 0.5), popup_size),
+		Rect2(Vector2(icon_center.x - popup_size.x * 0.5, icon_keepout.end.y), popup_size),
+		Rect2(Vector2(icon_center.x - popup_size.x * 0.5, icon_keepout.position.y - popup_size.y), popup_size),
+	]
 	var holder_rect := Rect2(Vector2(margin, margin), holder_size - Vector2(margin * 2.0, margin * 2.0))
 	var best_rect := _clamp_popup_rect(preferred_rect, holder_rect)
 	var best_score := INF
-	for candidate in candidates:
+	for candidate_index in range(candidates.size()):
+		var candidate := candidates[candidate_index]
 		var clamped := _clamp_popup_rect(candidate, holder_rect)
-		var overlap_area := _rect_overlap_area(clamped, reserved_rect)
+		var icon_overlap_area := _rect_overlap_area(clamped, icon_keepout)
+		var reserved_overlap_area := _rect_overlap_area(clamped, reserved_rect)
 		var movement_cost := clamped.position.distance_squared_to(preferred_rect.position) * 0.01
-		var score := overlap_area * 1000000.0 + movement_cost
+		var score := icon_overlap_area * 1000000000.0 + reserved_overlap_area * 1000000.0 + movement_cost + float(candidate_index)
 		if score < best_score:
 			best_score = score
 			best_rect = clamped
 	detail_popup.position = Vector2(roundf(best_rect.position.x), roundf(best_rect.position.y))
+
+
+func _node_button_holder_rect(node_id: String) -> Rect2:
+	if nodes_layer == null:
+		return Rect2()
+	var clean_id := node_id.strip_edges()
+	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
+		var button := _pool_button(index)
+		if button == null or not button.visible:
+			continue
+		if str(button.get_meta("node_id", "")).strip_edges() == clean_id:
+			return Rect2(nodes_layer.position + button.position, button.size)
+	return Rect2()
+
+
+func _node_visual_holder_rect(node_id: String) -> Rect2:
+	var result := _node_button_holder_rect(node_id)
+	if nodes_layer == null or holder == null or not nodes_layer.has_method("local_visual_rect_for_node"):
+		return result
+	var local_rect: Rect2 = nodes_layer.call("local_visual_rect_for_node", node_id) as Rect2
+	if not local_rect.has_area():
+		return result
+	var to_global := nodes_layer.get_global_transform()
+	var to_holder := holder.get_global_transform().affine_inverse()
+	var corners := [
+		local_rect.position,
+		Vector2(local_rect.end.x, local_rect.position.y),
+		local_rect.end,
+		Vector2(local_rect.position.x, local_rect.end.y),
+	]
+	var minimum := Vector2(INF, INF)
+	var maximum := Vector2(-INF, -INF)
+	for corner_value in corners:
+		var holder_point := to_holder * (to_global * (corner_value as Vector2))
+		minimum.x = minf(minimum.x, holder_point.x)
+		minimum.y = minf(minimum.y, holder_point.y)
+		maximum.x = maxf(maximum.x, holder_point.x)
+		maximum.y = maxf(maximum.y, holder_point.y)
+	var visual_rect := Rect2(minimum, maximum - minimum)
+	return result.merge(visual_rect) if result.has_area() else visual_rect
 
 
 func set_reserved_overlay_global_rect(rect: Rect2) -> void:
@@ -309,20 +343,21 @@ func handle_holder_gui_input(event: InputEvent) -> bool:
 				if _detail_popup_contains_local_position(mouse_event.position) or _node_button_contains_holder_position(mouse_event.position):
 					return false
 				if nodes_layer != null and nodes_layer.has_method("begin_navigation_drag"):
-					if not selected_node_id.is_empty():
-						clear_selection()
 					nodes_layer.call("begin_navigation_drag", mouse_event.position)
 					return true
 			elif _navigation_drag_in_progress():
 				var dragged := bool(nodes_layer.call("end_navigation_drag"))
 				if dragged:
 					reset_button_layout()
-				elif not selected_node_id.is_empty():
+				else:
 					clear_selection()
+					_reset_to_authored_map_view()
 				return true
 	if event is InputEventMouseMotion and _navigation_drag_in_progress():
 		var moved := bool(nodes_layer.call("update_navigation_drag", (event as InputEventMouseMotion).position))
 		if moved:
+			if not selected_node_id.is_empty():
+				clear_selection()
 			reset_button_layout()
 		return true
 	if event is InputEventScreenTouch:
@@ -331,20 +366,21 @@ func handle_holder_gui_input(event: InputEvent) -> bool:
 			if _detail_popup_contains_local_position(touch_event.position) or _node_button_contains_holder_position(touch_event.position):
 				return false
 			if nodes_layer != null and nodes_layer.has_method("begin_navigation_drag"):
-				if not selected_node_id.is_empty():
-					clear_selection()
 				nodes_layer.call("begin_navigation_drag", touch_event.position)
 				return true
 		elif _navigation_drag_in_progress():
 			var touch_dragged := bool(nodes_layer.call("end_navigation_drag"))
 			if touch_dragged:
 				reset_button_layout()
-			elif not selected_node_id.is_empty():
+			else:
 				clear_selection()
+				_reset_to_authored_map_view()
 			return true
 	if event is InputEventScreenDrag and _navigation_drag_in_progress():
 		var touch_moved := bool(nodes_layer.call("update_navigation_drag", (event as InputEventScreenDrag).position))
 		if touch_moved:
+			if not selected_node_id.is_empty():
+				clear_selection()
 			reset_button_layout()
 		return true
 	return false
@@ -352,6 +388,12 @@ func handle_holder_gui_input(event: InputEvent) -> bool:
 
 func _navigation_drag_in_progress() -> bool:
 	return nodes_layer != null and nodes_layer.has_method("navigation_drag_in_progress") and bool(nodes_layer.call("navigation_drag_in_progress"))
+
+
+func _reset_to_authored_map_view() -> void:
+	if nodes_layer != null and nodes_layer.has_method("reset_navigation_view"):
+		nodes_layer.call("reset_navigation_view")
+	reset_button_layout()
 
 
 func select_run_node(node_id: String, current_node_id: String, visible_node_ids: Array, choice: Dictionary) -> Dictionary:
@@ -698,6 +740,10 @@ func _on_pool_button_pressed(index: int) -> void:
 	if node_id.is_empty():
 		return
 	node_pressed.emit(node_id)
+	# The selection callback refreshes the canvas snapshot synchronously. Release
+	# any user camera override afterwards so the refreshed selected stop becomes
+	# the authored focus target again.
+	_reset_to_authored_map_view()
 
 
 func _detail_popup_contains_local_position(local_position: Vector2) -> bool:

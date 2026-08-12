@@ -13,6 +13,7 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion_overlay.gd")
+const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -41,6 +42,7 @@ const EMULATED_TOUCH_SUPPRESS_MS := 750
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 18.0
 const SURFACE_ANIMATION_FPS := 60.0
 const SURFACE_ANIMATION_INTERVAL_SEC := 1.0 / SURFACE_ANIMATION_FPS
+const DEFAULT_WEB_IDLE_ANIMATION_FPS := 1.0
 const TRANSIENT_SURFACE_LOOP_HOLD_MSEC := 95
 
 var game_id: String = ""
@@ -86,6 +88,7 @@ var surface_animation_redraw_count := 0
 var surface_animation_handoff_until_msec := 0
 var surface_render_elapsed_sec := 0.0
 var surface_simulation_clock_msec := 0.0
+var surface_presentation_clock_msec := 0.0
 var transient_surface_loop_deadline_msec := 0
 var transient_surface_loop_id := ""
 var environment_activity_paused := false
@@ -135,6 +138,7 @@ func clear_runtime_state() -> void:
 	surface_animation_handoff_until_msec = 0
 	surface_render_elapsed_sec = 0.0
 	surface_simulation_clock_msec = 0.0
+	surface_presentation_clock_msec = 0.0
 	transient_surface_loop_deadline_msec = 0
 	transient_surface_loop_id = ""
 	_update_drunk_distortion_overlay()
@@ -148,6 +152,7 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	game_id = str(view_data.get("game_id", game_id))
 	state = view_data
 	surface_simulation_clock_msec = float(state.get("surface_time_msec", surface_simulation_clock_msec))
+	surface_presentation_clock_msec = float(state.get("surface_presentation_time_msec", state.get("surface_time_msec", surface_presentation_clock_msec)))
 	reduce_motion = bool(state.get("reduce_motion", false))
 	drunk_time_scale = clampf(float(state.get("drunk_time_scale", 1.0)), DRUNK_TIME_SCALE_MIN, 1.0)
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
@@ -164,6 +169,8 @@ func apply_surface_state_patch(patch: Dictionary) -> void:
 	state = view_data
 	if patch.has("surface_time_msec"):
 		surface_simulation_clock_msec = float(state.get("surface_time_msec", surface_simulation_clock_msec))
+	if patch.has("surface_presentation_time_msec"):
+		surface_presentation_clock_msec = float(state.get("surface_presentation_time_msec", surface_presentation_clock_msec))
 	if patch.has("reduce_motion"):
 		reduce_motion = bool(state.get("reduce_motion", false))
 	if patch.has("drunk_time_scale"):
@@ -215,6 +222,7 @@ func current_view_snapshot() -> Dictionary:
 		"drunk_time_scale_percent": int(round(drunk_time_scale * 100.0)),
 		"reduce_motion": reduce_motion,
 		"surface_simulation_time_msec": surface_simulation_time_msec(),
+		"surface_presentation_time_msec": surface_presentation_time_msec(),
 		"surface_text_protected_rect_count": surface_text_protected_rects.size(),
 		"drunk_distortion_visible": drunk_distortion_overlay != null and drunk_distortion_overlay.visible,
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
@@ -253,6 +261,7 @@ func surface_runtime_status() -> Dictionary:
 		"drunk_time_scale_percent": int(round(drunk_time_scale * 100.0)),
 		"reduce_motion": reduce_motion,
 		"surface_simulation_time_msec": surface_simulation_time_msec(),
+		"surface_presentation_time_msec": surface_presentation_time_msec(),
 		"surface_text_protected_rect_count": surface_text_protected_rects.size(),
 		"drunk_distortion_visible": drunk_distortion_overlay != null and drunk_distortion_overlay.visible,
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
@@ -505,6 +514,10 @@ func surface_simulation_time_msec() -> int:
 	return maxi(0, int(round(surface_simulation_clock_msec)))
 
 
+func surface_presentation_time_msec() -> int:
+	return maxi(0, int(round(surface_presentation_clock_msec)))
+
+
 func surface_elapsed(channel_id: String) -> float:
 	var channel := _surface_animation_channel(channel_id)
 	if channel.is_empty() or not bool(channel.get("active", false)):
@@ -514,7 +527,17 @@ func surface_elapsed(channel_id: String) -> float:
 	var started_msec := int(channel.get("started_msec", 0))
 	if started_msec <= 0:
 		return 999.0
-	var elapsed_msec := maxi(0, Time.get_ticks_msec() - started_msec)
+	# Persistent game events are authored against the pause-safe surface clock,
+	# while UI-local transitions with no authored start time use engine time.
+	# Mixing the two makes an animation appear already over after a long run has
+	# accumulated time in dialogue, menus, or other paused presentation states.
+	var clock_source := str(channel.get("clock_source", "realtime"))
+	var now_msec := Time.get_ticks_msec()
+	if clock_source == "surface":
+		now_msec = surface_simulation_time_msec()
+	elif clock_source == "presentation":
+		now_msec = surface_presentation_time_msec()
+	var elapsed_msec := maxi(0, now_msec - started_msec)
 	return float(elapsed_msec) * drunk_time_scale / 1000.0
 
 
@@ -685,6 +708,17 @@ func surface_label_centered_plain(text: String, rect: Rect2, font_size: int, col
 	var descent := font.get_descent(fitted_size)
 	var baseline_y := rect.position.y + (rect.size.y - ascent - descent) * 0.5 + ascent
 	draw_string(font, Vector2(rect.position.x, baseline_y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, fitted_size, color)
+
+
+# Reel symbols redraw at 60 fps while a visible machine spins. Their labels are
+# already short and size-bounded by the renderer, so avoid general-purpose text
+# fitting, shadow, and protected-UI bookkeeping on this hot path.
+func surface_reel_symbol_label(text: String, rect: Rect2, font_size: int, color: Color) -> void:
+	var font := get_theme_default_font()
+	var ascent := font.get_ascent(font_size)
+	var descent := font.get_descent(font_size)
+	var baseline_y := rect.position.y + (rect.size.y - ascent - descent) * 0.5 + ascent
+	draw_string(font, Vector2(rect.position.x, baseline_y), text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, font_size, color)
 
 
 func _centered_label_fit_size(font: Font, text: String, rect: Rect2, font_size: int) -> int:
@@ -942,6 +976,10 @@ func _process(delta: float) -> void:
 	var clamped_delta := maxf(0.0, delta)
 	flicker += clamped_delta
 	surface_render_elapsed_sec += clamped_delta
+	# Presentation must remain live while a tutorial conversation freezes game
+	# logic. Channels opt into this clock explicitly; the simulation clock below
+	# still stops, so timers and automated game actions cannot advance.
+	surface_presentation_clock_msec += clamped_delta * 1000.0
 	if not environment_activity_paused:
 		surface_simulation_clock_msec += clamped_delta * 1000.0
 	_sync_surface_audio()
@@ -1078,6 +1116,7 @@ func _update_surface_animation_channels() -> void:
 			current["active_id"] = incoming_active_id
 			current["duration_msec"] = maxi(0, int(channel.get("duration_msec", current.get("duration_msec", 0))))
 			current["metadata"] = _copy_dict(channel.get("metadata", current.get("metadata", {})))
+			current["clock_source"] = str(channel.get("clock_source", current.get("clock_source", "realtime")))
 			if incoming_started > 0:
 				current["started_msec"] = incoming_started
 		current["id"] = channel_id
@@ -1177,7 +1216,7 @@ func _surface_animation_handoff_active() -> bool:
 
 func _surface_animation_redraw_due(delta: float) -> bool:
 	surface_animation_redraw_accumulator += maxf(0.0, delta)
-	var target_interval := 1.0 if surface_low_detail_idle() else SURFACE_ANIMATION_INTERVAL_SEC
+	var target_interval := _web_idle_animation_interval() if surface_low_detail_idle() else SURFACE_ANIMATION_INTERVAL_SEC
 	if surface_animation_redraw_accumulator < target_interval:
 		return false
 	surface_animation_redraw_accumulator = minf(
@@ -1186,6 +1225,11 @@ func _surface_animation_redraw_due(delta: float) -> bool:
 	)
 	surface_animation_redraw_count += 1
 	return true
+
+
+func _web_idle_animation_interval() -> float:
+	var requested_fps := clampf(float(state.get("surface_web_idle_animation_fps", DEFAULT_WEB_IDLE_ANIMATION_FPS)), DEFAULT_WEB_IDLE_ANIMATION_FPS, SURFACE_ANIMATION_FPS)
+	return 1.0 / requested_fps
 
 
 func _scale_canvas() -> void:
@@ -1684,48 +1728,13 @@ func _draw_foundation_result_burst() -> void:
 
 
 func _draw_pressure_overlay() -> void:
-	_draw_pressure_overlay_on(self)
-
-
-func _draw_pressure_overlay_on(canvas: Control) -> void:
 	var level := clampi(int(state.get("suspicion_level", 0)), 0, 100)
-	if level <= 0:
-		return
-	var board_size := _active_board_size()
-	var red_phase := 0.5 + 0.5 * sin(flicker * 8.4)
-	var blue_phase := 1.0 - red_phase
-	if level < 50:
-		var subtle := clampf(float(level) / 50.0, 0.0, 1.0)
-		var alpha := 0.010 + subtle * 0.030
-		_draw_pressure_side_band_on(canvas, C_BLUE, alpha * (0.65 + blue_phase * 0.35), true)
-		if level >= 25:
-			_draw_pressure_side_band_on(canvas, C_PINK, alpha * 0.65 * (0.65 + red_phase * 0.35), false)
-		return
-	var high := clampf(float(level - 50) / 50.0, 0.0, 1.0)
-	var base_alpha := 0.035 + high * 0.120
-	canvas.draw_rect(Rect2(Vector2.ZERO, board_size), Color(0.03, 0.02, 0.08, 0.030 + high * 0.060))
-	_draw_pressure_side_band_on(canvas, C_HOT, base_alpha * (0.72 + red_phase * 0.55), false)
-	_draw_pressure_side_band_on(canvas, C_BLUE, base_alpha * (0.72 + blue_phase * 0.55), true)
-	var top_alpha := base_alpha * (0.44 + maxf(red_phase, blue_phase) * 0.24)
-	canvas.draw_rect(Rect2(0, 0, board_size.x, 9), Color(C_HOT.r, C_HOT.g, C_HOT.b, top_alpha * red_phase))
-	canvas.draw_rect(Rect2(0, 9, board_size.x, 7), Color(C_BLUE.r, C_BLUE.g, C_BLUE.b, top_alpha * blue_phase))
-	canvas.draw_rect(Rect2(0, board_size.y - 10, board_size.x, 10), Color(C_BLUE.r, C_BLUE.g, C_BLUE.b, top_alpha * blue_phase * 0.60))
-	var sweep_x := fposmod(flicker * (180.0 + high * 120.0), board_size.x + 220.0) - 110.0
-	var sweep_color := C_HOT if red_phase > blue_phase else C_BLUE
-	canvas.draw_rect(Rect2(sweep_x, 0, 68 + high * 48, board_size.y), Color(sweep_color.r, sweep_color.g, sweep_color.b, base_alpha * 0.20))
+	HeatFeedbackVisualsScript.draw_police_pressure(self, _active_board_size(), level, 0.0 if reduce_motion else flicker)
 
 
-func _draw_pressure_side_band(color: Color, alpha: float, left_side: bool) -> void:
-	_draw_pressure_side_band_on(self, color, alpha, left_side)
-
-
-func _draw_pressure_side_band_on(canvas: Control, color: Color, alpha: float, left_side: bool) -> void:
-	var board_size := _active_board_size()
-	for i in range(5):
-		var width := 16.0 + float(i) * 11.0
-		var band_alpha := alpha * (1.0 - float(i) * 0.16)
-		var x := 0.0 if left_side else board_size.x - width
-		canvas.draw_rect(Rect2(x, 0, width, board_size.y), Color(color.r, color.g, color.b, maxf(0.0, band_alpha)))
+func pressure_overlay_debug_profile(elapsed_sec: float = -1.0) -> Dictionary:
+	var sample_time := (0.0 if reduce_motion else flicker) if elapsed_sec < 0.0 else maxf(0.0, elapsed_sec)
+	return HeatFeedbackVisualsScript.police_pressure_profile(int(state.get("suspicion_level", 0)), sample_time)
 
 
 func _draw_drunk_overlay() -> void:

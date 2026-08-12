@@ -107,7 +107,7 @@ func render_signature(surface_state: Dictionary, _definition: Dictionary, time_m
 		"reel_phase": reel_phase,
 		"reel_scroll_cells": reel_scroll_cells,
 		"reel_blur": reel_blur,
-		"moving_symbol_treatment": "symbol_silhouette",
+		"moving_symbol_treatment": "labeled_symbol",
 		"reel_stop_msec": reel_stop_msec,
 		"tease_active": bool(plan.get("tease_active", false)) or str(surface_state.get("slot_classification", "")) == "near_miss",
 		"tease_overlay_visible": result_reveal_ready and (bool(plan.get("tease_active", false)) or str(surface_state.get("slot_classification", "")) == "near_miss"),
@@ -494,7 +494,6 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 	var win_cells: Array = _read_array(state.get("slot_win_cells", []))
 	var win_lookup: Dictionary = _win_cell_lookup(win_cells)
 	var reels_landed := _all_reels_landed(motions)
-	var motion_symbols_simplified := not str(state.get("slot_animation_id", "")).is_empty() and not reels_landed
 	var reveal_ready := bool(signature.get("result_reveal_ready", false))
 	if not signature.has("result_reveal_ready"):
 		reveal_ready = _result_reveal_ready(state, time_msec)
@@ -527,11 +526,9 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 			var source_row := visual_row + whole_offset
 			var symbol := _visible_symbol(strips, stops, grid, reel_index, source_row, row_count, landing_slot)
 			symbol = _buffalo_display_symbol(family, symbol, grid, reel_index, source_row, landing_slot, time_msec, phase != "settle" and phase != "settled")
-			# Until the last reel lands, use the motion treatment consistently for
-			# every reel. Rebuilding labels and detailed vector glyphs on early-stop
-			# reels added a large Web hitch even though the result is not readable or
-			# actionable until the full grid settles.
-			_draw_symbol(surface, definition, family, symbol, visible_cell, motion_symbols_simplified or blur > 0.12)
+			# Treat motion per reel. Applying the blur path to the whole machine hid
+			# symbols on reels that had already stopped until the final reel landed.
+			_draw_symbol(surface, definition, family, symbol, visible_cell, blur > 0.12)
 			if family == "buffalo" and symbol == "GOLD_TOKEN" and (bool(motion.get("tease", false)) or bool(signature.get("gold_tease_active", false))):
 				var coin_pulse := 0.48 + 0.24 * sin(float(time_msec) * 0.018 + float(reel_index))
 				surface.draw_rect(_rect_intersection(visible_cell.grow(5), rect), Color("#ffd35a", coin_pulse), false, 4)
@@ -917,9 +914,11 @@ func _draw_symbol(surface, definition: Dictionary, family: String, symbol: Strin
 	var center := rect.position + rect.size * 0.5
 	var radius := minf(rect.size.x, rect.size.y) * 0.30
 	if blurred:
-		# Preserve each icon's shape in motion. The old one-line speed streak
-		# collapsed every Buffalo symbol into the same horizontal dash.
+		# Preserve identity while moving without invoking the full settled-symbol
+		# path. Metadata and labels are bounded caches, and the canvas uses a
+		# single-draw glyph helper that skips text fitting and protected-rect work.
 		_draw_moving_symbol_silhouette(surface, str(meta.get("shape", "")), rect, center, radius, primary, secondary, glow)
+		_draw_moving_symbol_label(surface, symbol, rect)
 		return
 	match str(meta.get("shape", "")):
 		"coin", "chrome_ball", "steel_ball":
@@ -977,6 +976,12 @@ func _draw_moving_symbol_silhouette(surface, shape: String, rect: Rect2, center:
 			var tile := Rect2(rect.position + inset, rect.size - inset * 2.0)
 			surface.draw_rect(tile, motion_primary)
 			surface.draw_rect(tile.grow(-3), motion_secondary, false, 2)
+
+
+func _draw_moving_symbol_label(surface, symbol: String, rect: Rect2) -> void:
+	var label := _symbol_label(symbol)
+	var font_size := int(clampf(rect.size.y * 0.28, 8.0, 18.0))
+	surface.surface_reel_symbol_label(label, rect.grow(-3), font_size, Color(1.0, 1.0, 1.0, 0.90))
 
 
 func _symbol_draw_metadata(definition: Dictionary, family: String, symbol: String) -> Dictionary:
@@ -1100,7 +1105,10 @@ func _draw_pinball_takeover_controls(surface, state: Dictionary, accent: Color, 
 		_draw_button(surface, Rect2(panel.position.x + 32, button_y, 150, 50), "LEFT FLIP", "slot_bonus_left", 0, accent)
 		_draw_button(surface, Rect2(panel.position.x + 214, button_y, 150, 50), "RIGHT FLIP", "slot_bonus_right", 0, accent)
 		_draw_button(surface, Rect2(panel.position.x + 396, button_y, 128, 50), "NUDGE", "slot_bonus_tilt", 0, trim)
-		_draw_button(surface, Rect2(panel.position.x + 556, button_y, 132, 50), "IN PLAY", "slot_bonus_launch", 0, light)
+		var in_play_rect := Rect2(panel.position.x + 556, button_y, 132, 50)
+		surface.draw_rect(in_play_rect, Color(light.r, light.g, light.b, 0.14))
+		surface.draw_rect(in_play_rect, Color(light.r, light.g, light.b, 0.72), false, 2)
+		surface.surface_label_centered("IN PLAY", in_play_rect, 12, light)
 		_draw_pinball_power_meter(surface, Rect2(panel.position.x + 718, panel.position.y + 13, 92, 52), active, light, trim)
 	else:
 		_draw_pinball_choice_strip(surface, Rect2(panel.position.x + 18, panel.position.y + 12, 238, 34), "START", "slot_bonus_start_", PINBALL_START_CHOICES, _pinball_start_choice_index(active), trim)
@@ -1268,6 +1276,9 @@ func _pinball_feature_manifest(surface_state: Dictionary, time_msec: int, mode: 
 		"pinball_event_flash_count": _pinball_recent_event_ids(_pinball_events(active), _pinball_playback_time(time_msec), 0.24).size(),
 		"pinball_feature_music_id": str(music.get("cue_id", "")),
 		"pinball_guideline_active": _pinball_guideline_active(active),
+		"pinball_controls_mode": "in_play" if bool(active.get("launch_in_progress", false)) else "launch",
+		"pinball_launch_control_visible": not bool(active.get("launch_in_progress", false)),
+		"pinball_in_play_controls_visible": bool(active.get("launch_in_progress", false)),
 		"pinball_aim_lane": lane,
 		"pinball_launch_power": int(active.get("launch_power", 0)),
 		"pinball_sampled_power": int(meter.get("sampled_power", active.get("launch_power", 0))),
@@ -1285,6 +1296,7 @@ func _pinball_feature_manifest(surface_state: Dictionary, time_msec: int, mode: 
 		"pinball_physics_tick_budget": int(active.get("physics_tick_budget", 0)),
 		"pinball_last_physics_real_msec": int(active.get("last_physics_real_msec", 0)),
 		"pinball_playback_speed": _pinball_playback_speed(),
+		"pinball_live_speed_multiplier": float(active.get("pinball_live_speed_multiplier", 2.0)),
 		"pinball_gravity_y": snappedf(_vector2_from_payload(layout.get("gravity", Vector2.ZERO), Vector2.ZERO).y, 0.001),
 		"pinball_combo_route": str(_read_dict(active.get("combo_state", {})).get("route_id", "")),
 		"pinball_combo_label": str(_read_dict(active.get("combo_state", {})).get("label", "")),
@@ -1419,7 +1431,7 @@ func _pinball_playback_time(time_msec: int) -> float:
 
 
 func _pinball_playback_speed() -> float:
-	return 1.75
+	return 3.5
 
 
 func _pinball_live_feature_active(active: Dictionary) -> bool:

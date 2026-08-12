@@ -301,7 +301,7 @@ static func _remaining_units(mask: Array, region: Dictionary) -> int:
 static func _sample_inside_region(region: Dictionary, column: int, row: int) -> bool:
 	if str(region.get("mask_shape", "rect")) != "ellipse":
 		return true
-	var values: Array = region.get("rect", []) if typeof(region.get("rect", [])) == TYPE_ARRAY else []
+	var values: Array = region.get("art_rect", []) if typeof(region.get("art_rect", [])) == TYPE_ARRAY else []
 	if values.size() < 4:
 		return true
 	var center_x := (float(values[0]) + float(values[2]) * 0.5) * MASK_COLUMNS
@@ -314,7 +314,10 @@ static func _sample_inside_region(region: Dictionary, column: int, row: int) -> 
 
 
 static func _region_ranges(region: Dictionary) -> Array:
-	var values: Array = region.get("rect", []) if typeof(region.get("rect", [])) == TYPE_ARRAY else [0.0, 0.0, 1.0, 1.0]
+	# Foil is rasterized from the measured printed well. The mechanic rect is a
+	# bounded inset; using art_rect here lets one mask cell over-cover the edge so
+	# 256x192 quantization cannot leave a visible residue crescent.
+	var values: Array = region.get("art_rect", []) if typeof(region.get("art_rect", [])) == TYPE_ARRAY else [0.0, 0.0, 1.0, 1.0]
 	var left := clampi(ceili(float(values[0]) * MASK_COLUMNS - 0.5), 0, MASK_COLUMNS)
 	var right := clampi(ceili((float(values[0]) + float(values[2])) * MASK_COLUMNS - 0.5), left, MASK_COLUMNS)
 	var top := clampi(ceili(float(values[1]) * MASK_ROWS - 0.5), 0, MASK_ROWS)

@@ -12,11 +12,11 @@ const BACKGROUNDS := {
 }
 
 
-static func draw(surface, ticket: Dictionary, ticket_rect: Rect2) -> void:
+static func draw(surface, ticket: Dictionary, art_frame: Rect2) -> void:
 	if ticket.is_empty():
 		return
 	var type_id := str(ticket.get("type_id", ""))
 	var background: Texture2D = BACKGROUNDS.get(type_id)
 	if background == null:
 		return
-	surface.draw_texture_rect(background, ticket_rect, false)
+	surface.draw_texture_rect(background, art_frame, false)

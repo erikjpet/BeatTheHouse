@@ -363,25 +363,6 @@ func _apply_small_screen_targets(node: Node) -> void:
 		_apply_small_screen_targets(child)
 
 
-func _add_item_card(item: Dictionary, merchant_mode: bool = false) -> void:
-	if _item_grid == null:
-		return
-	var item_id := str(item.get("id", ""))
-	var source := str(item.get("storage_source", "carried"))
-	var selected := item_id == _selected_item_id and source == _selected_item_source
-	var button_node := FoundationWidgets.button(_grid_button_text(item), Callable(self, "_on_item_button_pressed").bind(item_id, source))
-	button_node.custom_minimum_size = Vector2(124, 112)
-	button_node.size_flags_horizontal = Control.SIZE_FILL
-	button_node.size_flags_vertical = Control.SIZE_FILL
-	button_node.tooltip_text = str(item.get("display_name", item_id))
-	button_node.icon = _texture_for_item(item)
-	if selected:
-		FoundationWidgets.style_selected_button(button_node)
-	elif merchant_mode and bool(item.get("sellable", false)):
-		button_node.add_theme_stylebox_override("normal", VisualStyle.pixel_box(VisualStyle.DARK_2, VisualStyle.TEAL, 1))
-	_item_grid.add_child(button_node)
-
-
 func _render_detail(item: Dictionary, merchant_mode: bool = false) -> void:
 	if _detail_box == null:
 		return
@@ -663,18 +644,6 @@ func _position_popup() -> void:
 	_panel.size = final_popup_size
 
 
-func _configured_columns() -> int:
-	var layout_value: Variant = _model.get("layout", {})
-	if typeof(layout_value) != TYPE_DICTIONARY:
-		return 2
-	var layout: Dictionary = layout_value
-	return maxi(1, int(layout.get("columns", 2)))
-
-
-func _on_item_button_pressed(item_id: String, source: String) -> void:
-	select_item(item_id, source, true)
-
-
 func _on_surface_slot_selected(selection_key: String) -> void:
 	if _container_surface == null:
 		return
@@ -854,21 +823,6 @@ func _selection_key_for_item(item_id: String, source: String) -> String:
 			if str(item.get("id", "")) == item_id and str(item.get("storage_source", "carried")) == source:
 				return str(slot.get("selection_key", ""))
 	return "run:%s:%s" % [source, item_id]
-
-
-func _has_selection(items: Array) -> bool:
-	if _selected_item_id.is_empty():
-		return false
-	if not _selected_item_selection_key.is_empty():
-		for item_value in items:
-			var keyed_item: Dictionary = item_value
-			if str(keyed_item.get("selection_key", "")) == _selected_item_selection_key:
-				return true
-	for item_value in items:
-		var item: Dictionary = item_value
-		if str(item.get("id", "")) == _selected_item_id and str(item.get("storage_source", "carried")) == _selected_item_source:
-			return true
-	return false
 
 
 func _selected_item(items: Array) -> Dictionary:

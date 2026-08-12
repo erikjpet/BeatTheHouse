@@ -1114,10 +1114,6 @@ func _first_preferred_key(container_index: int) -> String:
 	return first_inspectable
 
 
-func _first_occupied_key(container_index: int) -> String:
-	return _first_preferred_key(container_index)
-
-
 func _first_preferred_key_on_page(container_index: int, page_index: int) -> String:
 	if container_index < 0 or container_index >= _containers.size():
 		return ""
@@ -1135,10 +1131,6 @@ func _first_preferred_key_on_page(container_index: int, page_index: int) -> Stri
 		if bool(slot.get("actionable", false)) and str(slot.get("disabled_reason", "")).is_empty():
 			return key
 	return first_inspectable
-
-
-func _first_occupied_key_on_page(container_index: int, page_index: int) -> String:
-	return _first_preferred_key_on_page(container_index, page_index)
 
 
 func _page_size(slot_count: int) -> int:

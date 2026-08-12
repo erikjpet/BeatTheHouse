@@ -117,6 +117,12 @@ foreach ($folder in $iconFolders) {
     }
 }
 
+# These are scalable menu surfaces stored beside the 32x32 UI icons. Keep
+# their authored source dimensions explicit so the generic icon contract does
+# not misclassify them as HUD glyphs.
+$assetDimensions["assets/art/ui/beat_the_house_logo.png"] = @(1141, 440)
+$assetDimensions["assets/art/ui/main_menu_button_plate.png"] = @(384, 192)
+
 foreach ($entry in $assetDimensions.GetEnumerator()) {
     $path = Join-Path $root $entry.Key
     if (-not (Test-Path -LiteralPath $path)) {
@@ -138,7 +144,8 @@ foreach ($entry in $assetDimensions.GetEnumerator()) {
 
 $objectJsonFiles = @(
     "data/art/art_manifest.json",
-    "data/art/attribute_glyphs.json"
+    "data/art/attribute_glyphs.json",
+    "data/games/scratch_ticket_regions.json"
 )
 
 $jsonFiles = Get-ChildItem -LiteralPath (Join-Path $root "data") -Filter "*.json" -File -Recurse -ErrorAction SilentlyContinue
