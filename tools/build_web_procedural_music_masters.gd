@@ -13,8 +13,14 @@ func _init() -> void:
 		quit(1)
 		return
 	var player = ProceduralMusicPlayerScript.new()
+	# Web cannot generate the menu tour at runtime, and unlike venue themes it is
+	# not present in archetypes.json. Treat the synthetic menu environment as a
+	# first-class prebuilt target so the Web export always ships the same theme
+	# that desktop generates on the main menu.
+	var environments: Array = (parsed as Array).duplicate(true)
+	environments.append(player.main_menu_theme_environment())
 	var rendered: Array = []
-	for archetype_value in parsed as Array:
+	for archetype_value in environments:
 		if typeof(archetype_value) != TYPE_DICTIONARY:
 			continue
 		var environment: Dictionary = (archetype_value as Dictionary).duplicate(true)

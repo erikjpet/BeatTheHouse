@@ -5875,6 +5875,9 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 
 
 func _travel_route_cost(route_data: Dictionary) -> int:
+	var tutorial_override := _tutorial_travel_route_cost_override(route_data)
+	if tutorial_override >= 0:
+		return tutorial_override
 	var base_cost := maxi(0, int(route_data.get("cost", 0)))
 	if _travel_route_is_walk(route_data):
 		return 0
@@ -5885,6 +5888,23 @@ func _travel_route_cost(route_data: Dictionary) -> int:
 	if free_from_archetypes.has(current_archetype_id):
 		return 0
 	return base_cost
+
+
+func _tutorial_travel_route_cost_override(route_data: Dictionary) -> int:
+	if not is_tutorial_run():
+		return -1
+	var modifiers := challenge_modifiers()
+	var overrides_value: Variant = modifiers.get("tutorial_travel_cost_overrides", {})
+	if typeof(overrides_value) != TYPE_DICTIONARY:
+		return -1
+	var overrides: Dictionary = overrides_value
+	var target_id := str(route_data.get(
+		"destination_archetype",
+		route_data.get("target_node_id", route_data.get("id", ""))
+	)).strip_edges()
+	if target_id.is_empty() or not overrides.has(target_id):
+		return -1
+	return maxi(0, int(overrides.get(target_id, 0)))
 
 
 func _travel_route_is_walk(route_data: Dictionary) -> bool:

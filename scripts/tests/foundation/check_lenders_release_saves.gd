@@ -594,11 +594,14 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 		failures.append("Web export must replace desktop masters with the bounded Web-authored delivery, not remove both copies.")
 	if desktop_preset_text.find("assets/audio/music/*") >= 0:
 		failures.append("Desktop export must retain the untouched authored music masters.")
-	if not FileAccess.file_exists("res://assets/audio/music_web/corner_store_sparse_fixture/pad.bthadpcm.gz") or not FileAccess.file_exists("res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Bass_UprightBass_1.bthadpcm.gz"):
+	if not FileAccess.file_exists("res://assets/audio/music_web/corner_store_sparse_fixture/pad.bthadpcm.gz") \
+			or not FileAccess.file_exists("res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Bass_UprightBass_1.bthadpcm.gz") \
+			or not FileAccess.file_exists("res://assets/audio/music_web/procedural/main_menu_tour.bthadpcm.gz"):
 		failures.append("Web-authored 22.05 kHz music delivery is incomplete.")
 	for web_music_path in [
 		"res://assets/audio/music_web/corner_store_sparse_fixture/pad.bthadpcm.gz",
 		"res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Bass_UprightBass_1.bthadpcm.gz",
+		"res://assets/audio/music_web/procedural/main_menu_tour.bthadpcm.gz",
 	]:
 		var web_music_info: Dictionary = ContentLibraryScript.inspect_web_music_delivery(web_music_path)
 		if not bool(web_music_info.get("valid", false)) or int(web_music_info.get("sample_rate", 0)) != 22050 or int(web_music_info.get("frames", 0)) <= 0:

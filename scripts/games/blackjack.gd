@@ -279,6 +279,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 	session["surface_time_msec"] = now_msec
+	var presentation_msec := _blackjack_presentation_time_msec(session, now_msec)
+	session["surface_presentation_time_msec"] = presentation_msec
 	var hands: Array = _hand_array(session.get("player_hands", []))
 	var active_index: int = clampi(int(session.get("active_hand_index", 0)), 0, maxi(0, hands.size() - 1))
 	var active_hand: Dictionary = hands[active_index] if active_index >= 0 and active_index < hands.size() else {}
@@ -384,6 +386,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var spec := GameModule.surface_spec({
 		"surface_renderer": "blackjack",
 		"surface_time_msec": now_msec,
+		"surface_presentation_time_msec": presentation_msec,
 		"surface_life": "immersive_table",
 		"surface_cast": "dealer_table",
 		"surface_controls_native": true,
@@ -413,25 +416,31 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				deal_active_id,
 				deal_duration_msec,
 				deal_started_msec,
-				{"metadata": {"event_count": deal_events.size()}}
+				{
+					"clock_source": "presentation",
+					"metadata": {"event_count": deal_events.size()},
+				}
 			),
 			GameModule.surface_animation_channel(
 				ATTENTION_ANIMATION_CHANNEL,
 				attention_active_id,
 				attention_duration_msec,
-				attention_started_msec
+				attention_started_msec,
+				{"clock_source": "surface"}
 			),
 			GameModule.surface_animation_channel(
 				COUNT_ANIMATION_CHANNEL,
 				str(count_challenge.get("challenge_id", "")),
 				0 if count_active else 2600,
-				int(count_challenge.get("started_msec", 0))
+				int(count_challenge.get("started_msec", 0)),
+				{"clock_source": "surface"}
 			),
 			GameModule.surface_animation_channel(
 				PAYOUT_ANIMATION_CHANNEL,
 				payout_active_id,
 				PAYOUT_ANIMATION_DURATION_MSEC if not payout_active_id.is_empty() else 0,
-				payout_started_msec
+				payout_started_msec,
+				{"clock_source": "presentation"}
 			),
 		],
 		"phase": "barred" if barred else "settling" if round_complete else "decision" if dealt else "betting",
@@ -707,7 +716,7 @@ func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environm
 			return false
 		if bool(ui_state.get("presentation_timing_enforced", false)):
 			var now_msec := _surface_time_for_count(ui_state)
-			if _deal_presentation_active(ui_state, now_msec):
+			if _deal_presentation_active(ui_state):
 				return false
 			if _count_settlement_bubbles_pending(ui_state, now_msec):
 				return false
@@ -771,7 +780,7 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 			return {"handled": false}
 		if bool(next_state.get("presentation_timing_enforced", false)):
 			var now_msec := _surface_time_for_count(next_state)
-			if _deal_presentation_active(next_state, now_msec) or _count_settlement_bubbles_pending(next_state, now_msec):
+			if _deal_presentation_active(next_state) or _count_settlement_bubbles_pending(next_state, now_msec):
 				return {"handled": false}
 		return _settle_completed_round_command(next_state, int(next_state.get("active_hand_index", 0)), _terminal_round_message(next_state), table, run_state)
 	if _has_dealt_hand(next_state) or bool(table.get("barred", false)):
@@ -1119,6 +1128,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	if action_id != "play_basic":
 		return _empty_blackjack_result(action_id, stake, environment, "That blackjack action is not available.")
 	var result_msec := GameModule.deterministic_time_msec(run_state, ui_state)
+	var presentation_msec := _blackjack_presentation_time_msec(ui_state, result_msec)
 	var table: Dictionary = _table_state(run_state, environment)
 	if bool(table.get("barred", false)):
 		return _empty_blackjack_result(action_id, stake, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
@@ -1196,10 +1206,10 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		result_action_kind = "cheat"
 	elif bool(cheat.get("advantage_play", false)):
 		result_action_kind = "risky"
-	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, count_record_delta, rng, result_msec)
+	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, count_record_delta, rng, presentation_msec)
 	if not sit_out:
 		_apply_patron_rapport_after_blackjack(table, session, table_stake, bankroll_delta)
-	table["last_result"] = _blackjack_last_result_payload(message, hand_results, side_results, main_delta, side_delta, bankroll_delta, suspicion_delta, dealer_cards, hands, patron_hands, patron_action_events, cheat, result_msec)
+	table["last_result"] = _blackjack_last_result_payload(message, hand_results, side_results, main_delta, side_delta, bankroll_delta, suspicion_delta, dealer_cards, hands, patron_hands, patron_action_events, cheat, presentation_msec)
 	_update_environment_table(environment, table)
 
 	var story_entry := {
@@ -1281,6 +1291,7 @@ func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environme
 		return _empty_blackjack_result(action_id, 0, environment, "Rourke is waiting for the hand to settle.")
 	var table := _table_state(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
+	var presentation_msec := _blackjack_presentation_time_msec(ui_state, run_state.grand_casino_duel_action_time_msec())
 	if not _has_dealt_hand(session):
 		return _empty_blackjack_result(action_id, 0, environment, "Deal a hand before settling Rourke's table.")
 	if not _all_hands_complete(session):
@@ -1331,8 +1342,8 @@ func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environme
 	var hand_index_for_rng := maxi(0, int(duel.get("hand_index", 0)))
 	var settlement_rng := run_state.create_rng("grand_casino_duel").fork("attempt:%d:hand:%d:settlement" % [maxi(1, int(duel.get("attempt", 1))), hand_index_for_rng])
 	var used_cards := _cards_used_for_counting(hands, dealer_cards, [])
-	_update_table_after_hand(table, session, dealer_cards, _count_cards_delta(used_cards), int(session.get("count_delta", 0)), settlement_rng, run_state.grand_casino_duel_action_time_msec())
-	table["last_result"] = _blackjack_last_result_payload(message, hand_results, [], transfer, 0, transfer - caught_penalty, 0, dealer_cards, hands, [], [], {"caught": caught}, run_state.simulation_time_msec())
+	_update_table_after_hand(table, session, dealer_cards, _count_cards_delta(used_cards), int(session.get("count_delta", 0)), settlement_rng, presentation_msec)
+	table["last_result"] = _blackjack_last_result_payload(message, hand_results, [], transfer, 0, transfer - caught_penalty, 0, dealer_cards, hands, [], [], {"caught": caught}, presentation_msec)
 	_update_environment_table(environment, table)
 	var applied := run_state.apply_grand_casino_duel_hand({
 		"transfer": transfer,
@@ -3587,7 +3598,7 @@ func _deal_animation_duration_msec(events: Array) -> int:
 	return duration
 
 
-func _deal_presentation_active(session: Dictionary, now_msec: int = -1) -> bool:
+func _deal_presentation_active(session: Dictionary) -> bool:
 	var animation_id := str(session.get("deal_animation_id", ""))
 	if animation_id.is_empty():
 		return false
@@ -3597,7 +3608,7 @@ func _deal_presentation_active(session: Dictionary, now_msec: int = -1) -> bool:
 	var started_msec := int(session.get("deal_started_msec", 0))
 	if started_msec <= 0:
 		return false
-	now_msec = _surface_time_for_count(session, now_msec)
+	var now_msec := _blackjack_presentation_time_msec(session)
 	var duration_msec := _deal_animation_duration_msec(events)
 	return now_msec >= started_msec and now_msec < started_msec + duration_msec
 
@@ -3765,7 +3776,7 @@ func _initial_deal_animation_events(hands: Array, dealer_cards: Array, patron_ha
 
 
 func _mark_deal_animation(session: Dictionary, suffix: String, events: Array = [], result_msec: int = -1) -> void:
-	var started_msec := Time.get_ticks_msec() if result_msec < 0 else result_msec
+	var started_msec := _blackjack_presentation_time_msec(session, result_msec)
 	session["deal_animation_id"] = "%s:%s:%d" % [get_id(), suffix, started_msec]
 	session["deal_started_msec"] = started_msec
 	session["deal_animation_events"] = _deal_animation_event_array(events)
@@ -4619,6 +4630,7 @@ func _count_settlement_preview_required(ui_state: Dictionary) -> bool:
 
 func _prepare_count_settlement_preview(ui_state: Dictionary, table: Dictionary, run_state: RunState) -> void:
 	var now_msec := _surface_time_for_count(ui_state)
+	var presentation_msec := _blackjack_presentation_time_msec(ui_state, now_msec)
 	var challenge_before: Dictionary = _local_copy_dict(ui_state.get("count_challenge", {}))
 	var existing_icon_ids: Array = []
 	for icon_value in _dictionary_array(challenge_before.get("icons", [])):
@@ -4632,7 +4644,7 @@ func _prepare_count_settlement_preview(ui_state: Dictionary, table: Dictionary, 
 	var settlement_events := _deal_animation_event_array(ui_state.get("settlement_deal_animation_events", []))
 	var reveal_duration_msec := _deal_animation_duration_msec(settlement_events)
 	if not settlement_events.is_empty():
-		_mark_deal_animation(ui_state, "count_settlement_preview", settlement_events, now_msec)
+		_mark_deal_animation(ui_state, "count_settlement_preview", settlement_events, presentation_msec)
 	_sync_count_challenge_icons(ui_state, run_state, now_msec)
 	# Newly revealed cards create bubbles only after their card motion completes.
 	# This leaves the terminal hand readable and prevents payout from replacing
@@ -5771,6 +5783,19 @@ func _surface_time_for_count(ui_state: Dictionary, now_msec: int = -1) -> int:
 		return now_msec
 	if ui_state.has("surface_time_msec"):
 		return maxi(0, int(ui_state.get("surface_time_msec", 0)))
+	return Time.get_ticks_msec()
+
+
+# Finite card and payout motion belongs to the presentation clock: it remains
+# live while Pal freezes tutorial logic. Peek windows, count bubbles, and every
+# automatic action continue to use surface_time_msec and therefore stay frozen.
+func _blackjack_presentation_time_msec(ui_state: Dictionary, fallback_msec: int = -1) -> int:
+	if ui_state.has("surface_presentation_time_msec"):
+		return maxi(1, int(ui_state.get("surface_presentation_time_msec", 0)))
+	if fallback_msec >= 0:
+		return maxi(1, fallback_msec)
+	if ui_state.has("surface_time_msec"):
+		return maxi(1, int(ui_state.get("surface_time_msec", 0)))
 	return Time.get_ticks_msec()
 
 

@@ -256,18 +256,6 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 		return local_door_choice
 	var route = host._world_route_for_target(target_id)
 	var archetype = host._environment_archetype(target_id)
-	# Guided-run fares are authored in the tutorial challenge. Apply an override
-	# to the same route dictionary used by the detail card, affordability check,
-	# and travel resolution so the displayed and charged amounts cannot diverge.
-	# Normal challenges do not carry this key and therefore keep generated fares
-	# byte-for-byte unchanged.
-	var challenge_modifiers: Dictionary = host.run_state.challenge_config.get("modifiers", {}) if typeof(host.run_state.challenge_config.get("modifiers", {})) == TYPE_DICTIONARY else {}
-	var tutorial_cost_overrides: Dictionary = challenge_modifiers.get("tutorial_travel_cost_overrides", {}) if typeof(challenge_modifiers.get("tutorial_travel_cost_overrides", {})) == TYPE_DICTIONARY else {}
-	if host.run_state.is_tutorial_run() and tutorial_cost_overrides.has(target_id):
-		var tutorial_cost := maxi(0, int(tutorial_cost_overrides.get(target_id, route.get("cost", 0))))
-		route = route.duplicate(true)
-		route["cost"] = tutorial_cost
-		route["base_cost"] = tutorial_cost
 	var forced_walk_target = host._closing_time_walk_fallback_target_id() if host._closing_time_blocks_environment_actions() else ""
 	var forced_walk = not forced_walk_target.is_empty() and forced_walk_target == target_id
 	if forced_walk:

@@ -1,6 +1,6 @@
 """Generate the v0.5 devlog social card in the established devlog #2-#4 style.
 
-Outputs branding/social/beat_the_house_v0_5_0_instagram.png (1080x1080) plus
+Outputs branding/social/0.5.0_beat_the_house_instagram.png (1080x1080) plus
 720x720 mobile png/jpg variants, matching the committed devlog #2/#3/#4 cards.
 Showcase panels use real 0.5 captures already committed under docs/screenshots/
 and review_artifacts/.
@@ -31,7 +31,7 @@ WHITE = (255, 255, 255, 255)
 SOFT = (216, 232, 234, 255)
 
 DEVLOG = {
-    "tag": "v0_5_0",
+    "tag": "0.5.0",
     "header_kicker": "DEVLOG #5",
     "hero": "v0.5 IS OUT",
     "subtitle": "Grand Casino, UI Rebuild, New Games",
@@ -42,10 +42,12 @@ DEVLOG = {
         ("BOSS FIGHT", ORANGE),
     ],
     # Crops are fractional (x0, y0, x1, y1) of the source image.
-    "panel_floor": {
-        "image": SHOTS_05 / "04_cheat_dock.png",
-        "crop": (0.040, 0.330, 0.985, 0.800),
-        "caption": "THE GRAND CASINO FLOOR",
+    "panel_tutorial": {
+        "image": SHOTS_05 / "0.5.0_tutorial_panel.png",
+        # Keep Pal, the guided prompt, and the highlighted in-world item in a
+        # single social-readable strip instead of returning to casino-floor art.
+        "crop": (0.050, 0.660, 0.950, 0.985),
+        "caption": "NEW: GUIDED FIRST NIGHT",
         "border": PINK,
     },
     "panel_cage": {
@@ -75,16 +77,16 @@ DEVLOG = {
         "caption_top": True,
     },
     "notes": [
-        (PINK, "Grand Casino reworked into 4 rooms"),
-        (YELLOW, "Take on Rourke in a boss fight"),
-        (TEAL, "Rebuilt interface and cheat dock"),
-        (AMBER, "Scratch Tickets: the eighth game"),
-        (CYAN, "Video Poker rebuilt as real cabinets"),
-        (ORANGE, "Characters talk in every venue"),
-        (PURPLE, "A guided first run gets you started"),
-        (CYAN, "Cash out and claim your Players Card"),
-        (TEAL, "New adaptive music and reworked SFX"),
-        (PINK, "Lots of fixes and smoother play"),
+        (PINK, "Grand Casino and Rourke overhaul"),
+        (YELLOW, "Added Scratch Tickets"),
+        (TEAL, "UI and main menu redesign"),
+        (AMBER, "New guided tutorial"),
+        (CYAN, "Map and travel overhaul"),
+        (ORANGE, "Video Poker and cheat updates"),
+        (PURPLE, "Improved all casino games"),
+        (CYAN, "New items and better Heat feedback"),
+        (TEAL, "Expanded cross-run progression"),
+        (PINK, "Audio, performance, balance and fixes"),
     ],
     "backdrop": SHOTS_05 / "05_game_surface.png",
     "footer": "THE GRAND CASINO IS OPEN - PLAY FREE",
@@ -214,8 +216,8 @@ def build():
     image_panel(canvas, d, (560, 532, 782, 640), c["panel_scratch"], 26, F_CAPTION_XS)
     image_panel(canvas, d, (794, 532, 1016, 640), c["panel_vpoker"], 26, F_CAPTION_XS)
 
-    # Wide panel with the Grand Casino floor.
-    image_panel(canvas, d, (64, 660, 1016, 832), c["panel_floor"], 40)
+    # Wide tutorial panel replaces the former Grand Casino floor showcase.
+    image_panel(canvas, d, (64, 660, 1016, 832), c["panel_tutorial"], 40)
 
     # Release notes: ten entries, two columns of five.
     notes = (64, 844, 1016, 1000)
@@ -239,7 +241,7 @@ def build():
     d.text((fx + 36, 1017), c["footer"], font=F_FOOTER, fill=AMBER)
 
     SOCIAL_DIR.mkdir(parents=True, exist_ok=True)
-    base = SOCIAL_DIR / f"beat_the_house_{c['tag']}_instagram"
+    base = SOCIAL_DIR / f"{c['tag']}_beat_the_house_instagram"
     flat = canvas.convert("RGB")
     flat.save(f"{base}.png", optimize=True)
     mobile = flat.resize((720, 720), Image.LANCZOS)

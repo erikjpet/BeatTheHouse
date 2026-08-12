@@ -2964,8 +2964,8 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		if str(discovery_event.get("type", "")) != "discovery" or str(discovery_event.get("presentation_class", "")) != "discovery" or str(discovery_event.get("discovery_summary", "")).is_empty():
 			failures.append("Event did not use discovery class and box copy: %s." % discovery_event_id)
 	var tutorial_travel_costs: Dictionary = entry_modifiers.get("tutorial_travel_cost_overrides", {}) if typeof(entry_modifiers.get("tutorial_travel_cost_overrides", {})) == TYPE_DICTIONARY else {}
-	if int(tutorial_travel_costs.get("corner_store", -1)) != 0 or int(tutorial_travel_costs.get("grand_casino", -1)) != 0:
-		failures.append("Tutorial fares did not preserve the affordable $0 Corner Store and Grand Casino route contracts.")
+	if int(tutorial_travel_costs.get("corner_store", -1)) != 0 or int(tutorial_travel_costs.get("grand_casino", -1)) != 5:
+		failures.append("Tutorial fares did not preserve the $0 Corner Store and $5 Grand Casino route contracts.")
 	var run_a := RunStateScript.new()
 	run_a.start_new("IGNORED", config_a)
 	run_a.begin_act(1)
@@ -3099,6 +3099,21 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 		failures.append("Tutorial end-to-end arc did not accept the Grand Casino invitation.")
 	elif not WorldMapScript.is_node_visible(run_a.world_map, "grand_casino"):
 		failures.append("Tutorial invitation did not reveal the Grand Casino on the real world map.")
+	var grand_casino_route := generator_a.world_route_for_target(run_a, "grand_casino")
+	var generated_grand_casino_cost := int(grand_casino_route.get("cost", -1))
+	run_a.bankroll = 5
+	var affordable_grand_casino_status := run_a.travel_route_status(grand_casino_route)
+	if generated_grand_casino_cost == 5:
+		failures.append("Tutorial Grand Casino regression fixture no longer exercises a generated fare that needs overriding.")
+	if int(affordable_grand_casino_status.get("cost", -1)) != 5 or not bool(affordable_grand_casino_status.get("available", false)):
+		failures.append("Tutorial Grand Casino route was not available for exactly $5 at its authoritative route-status boundary.")
+	if not generator_a.call("_world_target_is_available", run_a, run_a.world_map, run_a.current_world_node_id(), "grand_casino"):
+		failures.append("Tutorial Grand Casino was filtered out of map generation for a player holding exactly the $5 fare.")
+	run_a.bankroll = 4
+	var unaffordable_grand_casino_status := run_a.travel_route_status(grand_casino_route)
+	if int(unaffordable_grand_casino_status.get("cost", -1)) != 5 or bool(unaffordable_grand_casino_status.get("available", true)):
+		failures.append("Tutorial Grand Casino route did not enforce its exact $5 affordability threshold.")
+	run_a.bankroll = 5
 	generator_a.next_environment(run_a, "grand_casino", true)
 	if str(run_a.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID or run_a.current_environment.get("game_ids", []) != ["blackjack"]:
 		failures.append("Tutorial finale did not generate exactly one Main Floor table game.")

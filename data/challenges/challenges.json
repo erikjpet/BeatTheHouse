@@ -118,7 +118,7 @@
       ],
       "tutorial_travel_cost_overrides": {
         "corner_store": 0,
-        "grand_casino": 0
+        "grand_casino": 5
       },
       "starting_bankroll": 80,
       "tutorial_forced_event_choices": {

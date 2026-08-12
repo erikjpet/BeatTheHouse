@@ -421,7 +421,7 @@ context:
   decision, final playtest scope, current validation, and publication boundary.
 - `docs/plans/0.5_publish_copy.md` - paste-ready itch.io and GitHub release
   copy for 0.5.0 after owner approval.
-- `docs/plans/0.5_devlog_post.md` - draft 0.5 devlog copy for the owner.
+- `docs/plans/0.5.0_devlog_post.md` - ready-to-post 0.5.0 devlog and social carousel plan.
 - `docs/plans/0.5_prerelease_playtest_report.md` - 0.5 prerelease playtest
   findings and closure evidence.
 - `docs/plans/tutorial_completion_report.md` - current pre-human tutorial

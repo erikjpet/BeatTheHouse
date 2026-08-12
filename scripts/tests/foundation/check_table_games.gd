@@ -1823,6 +1823,81 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack result surface did not activate the settlement payout animation channel.")
 	if settle_deal_started_msec > 0 and settle_payout_started_msec - settle_deal_started_msec < int(settle_anim_surface.get("deal_animation_duration_msec", 0)):
 		failures.append("Blackjack payout animation started before the dealer reveal/deal sequence completed.")
+	var clock_run_state: RunState = RunStateScript.new()
+	clock_run_state.start_new("BLACKJACK-POST-DECISION-CLOCK")
+	clock_run_state.bankroll = 1000
+	var clock_environment := _surface_contract_environment()
+	var clock_table := generated_state.duplicate(true)
+	clock_table["patrons"] = []
+	clock_table["side_bets"] = []
+	clock_table["rules"] = {"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": false, "max_split_hands": 4, "late_surrender": true}
+	# Player 17 versus dealer 11 forces two visible dealer draws after Stand.
+	clock_table["shoe"] = [
+		{"rank": 10, "suit": 0}, {"rank": 6, "suit": 1},
+		{"rank": 7, "suit": 2}, {"rank": 5, "suit": 3},
+		{"rank": 4, "suit": 0}, {"rank": 3, "suit": 1},
+	]
+	clock_table["shoe_cursor"] = 0
+	clock_environment["game_states"] = {"blackjack": clock_table}
+	var clock_deal := game.surface_action_command("blackjack_deal", 0, false, {
+		"selected_stake": 5,
+		"surface_time_msec": 1000,
+		"surface_presentation_time_msec": 9000,
+	}, clock_run_state, clock_environment)
+	var clock_deal_ui: Dictionary = (clock_deal.get("ui_state", {}) as Dictionary).duplicate(true)
+	clock_deal_ui["surface_time_msec"] = 3000
+	clock_deal_ui["surface_presentation_time_msec"] = 11000
+	var clock_stand := game.surface_action_command("blackjack_stand", 0, true, clock_deal_ui, clock_run_state, clock_environment)
+	if not bool(clock_stand.get("resolve", false)):
+		failures.append("Blackjack post-decision clock fixture did not become settleable after the opening deal presentation.")
+	var clock_result := game.resolve_with_context("play_basic", 5, clock_run_state, clock_environment, clock_run_state.create_rng("blackjack_post_decision_clock_resolve"), clock_stand.get("ui_state", {}))
+	var clock_dealer: Array = clock_result.get("blackjack_dealer", []) if typeof(clock_result.get("blackjack_dealer", [])) == TYPE_ARRAY else []
+	if clock_dealer.size() != 4:
+		failures.append("Blackjack post-decision fixture did not execute both required dealer draws.")
+	var clock_surface := game.surface_state(clock_run_state, clock_environment, {
+		"surface_time_msec": 3000,
+		"surface_presentation_time_msec": 11000,
+	})
+	var clock_events: Array = clock_surface.get("deal_animation_events", []) if typeof(clock_surface.get("deal_animation_events", [])) == TYPE_ARRAY else []
+	var staged_dealer_indices: Array = []
+	for event_value in clock_events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = event_value
+		if str(event.get("zone", "")) == "dealer":
+			staged_dealer_indices.append(int(event.get("card_index", -1)))
+	if not staged_dealer_indices.has(1) or not staged_dealer_indices.has(2) or not staged_dealer_indices.has(3):
+		failures.append("Blackjack post-decision presentation omitted the hole reveal or a required dealer draw.")
+	var clock_deal_channel: Dictionary = {}
+	var clock_payout_channel: Dictionary = {}
+	var clock_attention_channel: Dictionary = {}
+	var clock_count_channel: Dictionary = {}
+	for channel_value in clock_surface.get("surface_animation_channels", []):
+		if typeof(channel_value) != TYPE_DICTIONARY:
+			continue
+		var channel: Dictionary = channel_value
+		match str(channel.get("id", "")):
+			"blackjack_deal":
+				clock_deal_channel = channel
+			"blackjack_payout":
+				clock_payout_channel = channel
+			"blackjack_attention":
+				clock_attention_channel = channel
+			"blackjack_count_rhythm":
+				clock_count_channel = channel
+	if str(clock_deal_channel.get("clock_source", "")) != "presentation" or int(clock_deal_channel.get("started_msec", 0)) != 11000:
+		failures.append("Blackjack dealer cards were not authored on the live presentation clock at the decision boundary.")
+	if str(clock_payout_channel.get("clock_source", "")) != "presentation":
+		failures.append("Blackjack payout motion did not share the card presentation clock.")
+	if str(clock_attention_channel.get("clock_source", "")) != "surface" or str(clock_count_channel.get("clock_source", "")) != "surface":
+		failures.append("Blackjack Peek/count timing was not kept on the freeze-safe game-logic clock.")
+	var clock_harness := SurfaceHarness.new()
+	clock_harness.setup(clock_surface)
+	clock_harness.animation_active = true
+	clock_harness.animation_elapsed = 0.05
+	if not bool(game.call("_card_waiting_for_deal_animation", clock_harness, clock_surface, "dealer", 0, 2)) \
+			or not bool(game.call("_card_waiting_for_deal_animation", clock_harness, clock_surface, "dealer", 0, 3)):
+		failures.append("Blackjack exposed final dealer cards before their post-decision deal events completed.")
 	var sit_run_state: RunState = RunStateScript.new()
 	sit_run_state.start_new("BLACKJACK-SITOUT-CONTRACT")
 	sit_run_state.bankroll = 1000
