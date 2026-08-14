@@ -281,6 +281,18 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   generation remain owned by normal travel. Package routes opt in; Hold and
   direct fixtures omit it. Declined or invalid ordinary travel never creates a
   board.
+- 2026-08-14 [streets06_1] Consumers may author
+  `fast_threshold_actions`, `spot_heat_per_new_spot`, and a success-side
+  `clean_speed_bonus_cash`. A speed bonus requires both a threshold-fast and
+  clean resolution; spot heat writes once per distinct spotted transition and
+  is hidden from snapshots. The shipped Crew favor leaves spot heat at zero so
+  its legacy +22/+4 success and +9 failure contracts remain exact.
+- 2026-08-14 [streets06_1] Clear-weather running crosses two cells; an
+  alley or blackout traversal crosses three with exposure or seeded-hazard
+  tradeoffs; adverse weather limits it to one while shrinking sight. Cruiser
+  Parked adds patrol density through an authored scenario field read from route
+  endpoints, without leaking scenario identity. The Streets pulse exists only
+  while its overlay is open and is killed/reset on hide.
 - 2026-08-14 [push06_1] Quarter Falls uses one deterministic action-boundary
   coarse-pile core. Corner Store may seed an optional zero-or-one game slot;
   no machine is forced into every node. Alarm tolerance remains hidden, and a
