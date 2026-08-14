@@ -160,6 +160,16 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   Scenario definitions may carry an optional top-level `layer_id`; it is
   omitted for ordinary venues and must survive scenario state normalization.
   Missing layer fields retain legacy single-layer behavior for compatibility.
+- 2026-08-14 [town06_2/town06_3] PM-approved shared town-content contract:
+  `TownState` owns registered rumor facts shaped as `{id, class,
+  target_node_id, source_id, payload, registered_action}` and exposes RunState
+  forwarding reads/writes `register_rumor_fact`, `rumor_fact`, `rumor_facts`,
+  `rumors_for_venue`, `hear_rumor`, and `heard_rumor_for_node`. Extension class
+  `sweep_sighting` is registered for town06_3. Heard previews remain distinct
+  from `scouted`. Traveler reads are `traveler_node` / `travelers_at`;
+  reputation uses `record_reputation_incident`, `local_reputation`, and
+  `reputation_value`. All three systems advance through the existing
+  `advance_environment_turns` action boundary, never per-frame or wall-clock.
 
 ## Work Log
 
