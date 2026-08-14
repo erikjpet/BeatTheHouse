@@ -71,10 +71,10 @@ Wave C games are intentionally parallel-friendly.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| env06_2 | `env06_2_tier1_scenarios_prompt.md` | TODO | env06_1 | crew06_5 | | | | |
+| env06_2 | `env06_2_tier1_scenarios_prompt.md` | IN_PROGRESS | env06_1 | crew06_5 | PM:Codex/sub:1 | 2026-08-14 | | PM-orchestrated Wave B Stage 1 execution. |
 | env06_3 | `env06_3_tier2_scenarios_prompt.md` | TODO | env06_1, env06_4 | crew06_5, crew06_8 | | | | |
-| env06_4 | `env06_4_punchline_rework_prompt.md` | TODO | env06_1 | env06_3, crew06_2, crew06_6 | | | | |
-| town06_2 | `town06_2_rumors_travelers_prompt.md` | TODO | env06_1, town06_1 | town06_3, crew06_3, crew06_9, chain06_1 | | | | |
+| env06_4 | `env06_4_punchline_rework_prompt.md` | IN_PROGRESS | env06_1 | env06_3, crew06_2, crew06_6 | PM:Codex/sub:2 | 2026-08-14 | | PM-orchestrated Wave B Stage 1 execution. |
+| town06_2 | `town06_2_rumors_travelers_prompt.md` | IN_PROGRESS | env06_1, town06_1 | town06_3, crew06_3, crew06_9, chain06_1 | PM:Codex/sub:3 | 2026-08-14 | | PM-orchestrated Wave B Stage 1 execution. |
 | town06_3 | `town06_3_police_sweep_prompt.md` | TODO | town06_1, town06_2 | streets06_1 (full), crew06_3 (full) | | | | |
 
 ### Wave C — Games
@@ -154,6 +154,12 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   manifest-classified separately from 32px icons; Pocket Watch fills its icon
   canvas; visual QA targets current semantic menu roles; and saved Cage gift
   shelf objects participate in generation-time layout to prevent overlap.
+- 2026-08-14 [env06_2/env06_4] PM arbitration: Punchline remains the single
+  `small_underground_casino` archetype with a data-driven `layers` dictionary
+  keyed `club`, `casino`, and `back_room`, plus `default_layer_id: "club"`.
+  Scenario definitions may carry an optional top-level `layer_id`; it is
+  omitted for ordinary venues and must survive scenario state normalization.
+  Missing layer fields retain legacy single-layer behavior for compatibility.
 
 ## Work Log
 
@@ -183,3 +189,6 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   town blackout flags/music texture consumers, Streets job payload seam, and
   Crew heist eligibility consumers. No owner decision is required. Stop before
   Wave B kickoff.
+- 2026-08-14 [Wave B Stage 1] PM-orchestrated execution claimed for env06_2,
+  env06_4, and town06_2; three isolated subagents assigned, with the PM owning
+  integration, board updates, verification, and archival.
