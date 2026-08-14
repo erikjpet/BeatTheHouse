@@ -75,7 +75,7 @@ Wave C games are intentionally parallel-friendly.
 | env06_3 | `env06_3_tier2_scenarios_prompt.md` | DONE | env06_1, env06_4 | crew06_5, crew06_8 | PM:Codex/sub:4 | 2026-08-14 | 2026-08-14 | PM verified 25 scenarios, production route contracts, all integrated gates, determinism, and 14/14 zero-overlap visual captures PASS. |
 | env06_4 | `env06_4_punchline_rework_prompt.md` | DONE | env06_1 | env06_3, crew06_2, crew06_6 | PM:Codex/sub:2 | 2026-08-14 | 2026-08-14 | PM verified scope/design, L2 compatibility and migration, systems/UI/determinism/visual gates, and three-layer zero-overlap smoke PASS. |
 | town06_2 | `town06_2_rumors_travelers_prompt.md` | DONE | env06_1, town06_1 | town06_3, crew06_3, crew06_9, chain06_1 | PM:Codex/sub:3 | 2026-08-14 | 2026-08-14 | PM verified truth traces, heard tier, itineraries, reputation propagation, save compatibility, and combined systems/UI/determinism/visual gates PASS. |
-| town06_3 | `town06_3_police_sweep_prompt.md` | IN_PROGRESS | town06_1, town06_2 | streets06_1 (full), crew06_3 (full) | PM:Codex/sub:5 | 2026-08-14 | | PM-orchestrated Wave B Stage 2 execution. |
+| town06_3 | `town06_3_police_sweep_prompt.md` | DONE | town06_1, town06_2 | streets06_1 (full), crew06_3 (full) | PM:Codex/sub:5 | 2026-08-14 | 2026-08-14 | PM verified hidden deterministic track, costed encounters, wake/pressure, save/UI contracts, full integrated gates, and Wave B composition PASS. |
 
 ### Wave C — Games
 
@@ -236,6 +236,15 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   inert identity flags; Audit additionally exposes the inert
   `heist_plan_a_criteria` anchor. Invite, chips, Players Card, and showdown
   flows retain their production gates and are covered under all three nights.
+- 2026-08-14 [town06_3] Sweep truth stays hidden until earned: public town
+  APIs remove its happening id, flag, current node, and heading; `sweep_status`
+  is capability-gated and read-only, while `report_sweep_intel_at_boundary`
+  explicitly records a stale last-known marker at an action boundary.
+- 2026-08-14 [town06_3] Sweep travel delays are source-owned. The production
+  wait action appears only for a `police_sweep` lock; an Engine Trouble or
+  other foreign lock is preserved and receives the tuned fine/debt fallback.
+  Knuckles stash, Numbers pause, and Streets patrol-density seams are
+  registered but inert for their owning slices.
 
 ## Work Log
 
@@ -289,3 +298,8 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   Debt Court and Estate Lot production interactions, and the Buyout, Whale,
   Festival, Estate Lot, and Audit heist/recruitment anchors. This completes
   crew06_5's environment dependency and advances crew06_8 toward claimable.
+- 2026-08-14 [town06_3] DONE; the seeded 58% Police Sweep now walks a bounded
+  3–6-action dwell track for 42–72 actions, never enters Grand Casino, emits
+  truth-sourced rumors and stale sightings, applies costed heat/contraband/debt
+  encounters, and leaves a five-action security wake. This unblocks
+  streets06_1 and the full Police Sweep scope of crew06_3.

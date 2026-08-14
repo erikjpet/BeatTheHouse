@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `town06_3` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-14
+- **Completion/implementation commits:** `bb7f2921`, `50c6a03e`, `ff464c42`, `84f6b82f`; PM integration `7e8c572b`
+- **Verification:** PM scope/design review PASS; integrated validation, Foundation systems + UI, 10-seed/320-checkpoint determinism (`1234044898`), visual QA, Police Sweep contract suite, and the one-run Wave B production composition probe PASS.
+- **Deviations:** None. The player-facing, source-owned `Wait out the sweep` action is the production proof for bounded worst-case escape; it cannot bypass foreign travel locks.
 
 # Agent Prompt — 0.6 town06_3: The Police Sweep (Full Feature)
 
