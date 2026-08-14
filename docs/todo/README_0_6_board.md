@@ -85,7 +85,7 @@ Wave C games are intentionally parallel-friendly.
 | craps06_2 | `craps06_2_street_craps_prompt.md` | TODO | craps06_1, env06_1 | — | | | | |
 | push06_1 | `push06_1_pusher_core_prompt.md` | IN_PROGRESS | env06_1 | push06_2 | PM:Codex/sub:2 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
 | push06_2 | `push06_2_pusher_variations_prompt.md` | TODO | push06_1, town06_1 | — | | | | |
-| streets06_1 | `streets06_1_streets_framework_prompt.md` | IN_PROGRESS | town06_1, crew06_1 | crew06_3/6/8 | PM:Codex/sub:3 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
+| streets06_1 | `streets06_1_streets_framework_prompt.md` | DONE | town06_1, crew06_1 | crew06_3/6/8 | PM:Codex/sub:3 | 2026-08-14 | 2026-08-14 | PM verified scope/design, systems/UI, 10-seed determinism, and package/multi-stop/Hold visual QA on the integrated tree. |
 | crew06_2 | `crew06_2_backroom_poker_prompt.md` | IN_PROGRESS | crew06_1, env06_4 | crew06_9 | PM:Codex/sub:4 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution; queued for first available subagent slot. |
 | crew06_3 | `crew06_3_numbers_prompt.md` | TODO | crew06_1, streets06_1, town06_2 | crew06_9 (grievance src) | | | | |
 
@@ -412,3 +412,8 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
 - 2026-08-14 [crew06_2] The queued Stage-1 slot opened and the isolated Poker
   owner started. PM froze the first L3 furniture and neutral tell-storage seams;
   board, archival, integration, runtime grants, and push remain PM-owned.
+- 2026-08-14 [streets06_1] DONE after PM integrated-tree scope/design review,
+  full systems/UI gates, 10-seed determinism, and player-facing visual QA for
+  package, ordered multi-stop progress, and Hold signal resolution. The frozen
+  multi-stop/Hold/chase APIs now unblock crew06_3, crew06_6, and crew06_8;
+  ordinary travel remains unchanged unless a consumer explicitly opts in.

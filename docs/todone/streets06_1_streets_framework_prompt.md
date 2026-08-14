@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `streets06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-14
+- **Completion/implementation commits:** `da4067a2` through `ef39897c` (12 reviewed integration commits)
+- **Verification:** PM integrated-tree PASS: systems (`.tmp/wave_c_pm/streets_integrated_systems/summary.json`), UI (`.tmp/wave_c_pm/streets_integrated_ui/summary.json`), 10-seed determinism (350 checkpoints, combined hash `973077643`), and visual QA (57 headless state snapshots; package, multi-stop progress, and Hold signal exit all covered).
+- **Deviations:** The repository visual harness captures structured headless state snapshots rather than raster screenshots; all three required player-facing modes are recorded in the visual report with zero warnings.
 
 # Agent Prompt — 0.6 streets06_1: The Streets Framework (Playable Town)
 
