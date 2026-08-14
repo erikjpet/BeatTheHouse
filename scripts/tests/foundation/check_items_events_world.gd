@@ -4475,6 +4475,12 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	if (event_run.current_environment.get("resolved_event_ids", []) as Array).count("crew_favor_delivery") != 1 \
 		or event_module.can_trigger(event_run, event_run.current_environment, {"trigger": "action", "turns": 3}):
 		failures.append("Completed Crew favor became eligible to retrigger.")
+	var favor_target_id := str(event_run.active_streets_run.get("destination_node_id", ""))
+	if not bool(event_run.streets_snapshot().get("travel_continuation_pending", false)):
+		failures.append("Resolved Crew favor did not expose its pending travel bridge.")
+	var favor_continuation := event_run.streets_take_travel_continuation()
+	if str(favor_continuation.get("target_id", "")) != favor_target_id or not event_run.streets_take_travel_continuation().is_empty():
+		failures.append("Resolved Crew favor travel bridge was not targeted and one-shot.")
 	event_run.streets_apply_action({"verb": "wait"})
 	if event_run.bankroll != 122 or event_run.suspicion_level() != 4 or event_run.crew_trust("crew_rook") != 5:
 		failures.append("Resolved Crew favor applied its reward more than once.")
@@ -4499,6 +4505,10 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	if (caught_run.current_environment.get("resolved_event_ids", []) as Array).count("crew_favor_delivery") != 1 \
 		or event_module.can_trigger(caught_run, caught_run.current_environment, {"trigger": "action", "turns": 3}):
 		failures.append("Failed Crew favor became eligible to retrigger.")
+	var caught_target_id := str(caught_run.active_streets_run.get("destination_node_id", ""))
+	var caught_continuation := caught_run.streets_take_travel_continuation()
+	if str(caught_continuation.get("target_id", "")) != caught_target_id:
+		failures.append("Caught Crew favor did not preserve its committed destination continuation.")
 
 	var refused_run: RunState = RunStateScript.new()
 	refused_run.start_new("CREW-FAVOR-REFUSE-REGRESSION")
@@ -4636,6 +4646,12 @@ func _check_streets_framework(failures: Array) -> void:
 		"stops": [{"id": "store", "label": "Store"}, {"id": "motel", "label": "Motel"}],
 		"deadline_actions": 12,
 		"order_mode": "ordered",
+		"travel_continuation": {
+			"enabled": true,
+			"target_id": "bar",
+			"target_label": "Bar",
+			"choice_data": {"enabled": true},
+		},
 	})
 	if not bool(multi.get("ok", false)) or str((multi.get("snapshot", {}) as Dictionary).get("mode", "")) != "multi_stop":
 		failures.append("Frozen multi-stop API rejected its documented required shape.")
@@ -4651,6 +4667,34 @@ func _check_streets_framework(failures: Array) -> void:
 	route_run.streets_apply_action({"verb": "wait"})
 	if int(route_run.streets_snapshot().get("deadline_remaining", 0)) != deadline_before - 1:
 		failures.append("Multi-stop deadline did not consume exactly one action boundary.")
+	if route_run.streets_snapshot().has("travel_continuation"):
+		failures.append("Streets public snapshot leaked raw travel continuation details.")
+
+	for terminal_reason in ["deadline", "ditched"]:
+		var terminal_run: RunState = RunStateScript.new()
+		terminal_run.start_new("STREETS-CONTINUATION-%s" % terminal_reason)
+		terminal_run.streets_begin({
+			"mode": "package",
+			"route_id": "continuation_%s" % terminal_reason,
+			"origin_node_id": "corner_store",
+			"destination_node_id": "bar",
+			"deadline_actions": 1,
+			"travel_continuation": {
+				"enabled": true,
+				"target_id": "bar",
+				"target_label": "Bar",
+				"choice_data": {"enabled": true},
+			},
+		})
+		var terminal_board: Dictionary = terminal_run.active_streets_run.get("board", {})
+		terminal_board["patrols"] = []
+		terminal_run.active_streets_run["board"] = terminal_board
+		var terminal_result := terminal_run.streets_apply_action({"verb": "wait"} if terminal_reason == "deadline" else {"verb": "ditch"})
+		var terminal_continuation := terminal_run.streets_take_travel_continuation()
+		if not bool(terminal_result.get("resolved", false)) \
+			or str((terminal_result.get("resolution", {}) as Dictionary).get("reason", "")) != terminal_reason \
+			or str(terminal_continuation.get("target_id", "")) != "bar":
+			failures.append("%s Streets outcome did not release its committed travel continuation." % terminal_reason.capitalize())
 
 	var hold_run: RunState = RunStateScript.new()
 	hold_run.start_new("STREETS-HOLD")
@@ -4669,6 +4713,8 @@ func _check_streets_framework(failures: Array) -> void:
 	var signal := hold_run.streets_apply_action({"verb": "signal"})
 	if not bool(signal.get("resolved", false)) or str((signal.get("resolution", {}) as Dictionary).get("outcome", "")) != "success":
 		failures.append("Hold mode did not resolve a signal inside its authored window.")
+	if not hold_run.streets_take_travel_continuation().is_empty():
+		failures.append("Hold mode opted into travel without an explicit continuation.")
 
 	var chase_run: RunState = RunStateScript.new()
 	chase_run.start_new("STREETS-CHASE")

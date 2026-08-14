@@ -6124,12 +6124,23 @@ func _on_streets_action_requested(action: Dictionary) -> void:
 	if not bool(result.get("ok", false)):
 		streets_controller.show_snapshot(run_state.streets_snapshot(), message)
 		return
-	_autosave_foundation_run("Route saved.")
 	if bool(result.get("resolved", false)):
+		var continuation := run_state.streets_take_travel_continuation()
+		# Persist the one-shot token as consumed before the existing travel
+		# pipeline performs its own arrival autosave.
+		_autosave_foundation_run("Route saved.")
 		streets_controller.hide()
 		_show_message(message)
+		if not continuation.is_empty():
+			_travel_to(
+				str(continuation.get("target_id", "")),
+				str(continuation.get("target_label", "the next stop")),
+				_copy_dict(continuation.get("choice_data", {}))
+			)
+			return
 		_refresh()
 		return
+	_autosave_foundation_run("Route saved.")
 	streets_controller.show_snapshot(run_state.streets_snapshot(), message)
 	_refresh_world_header()
 
