@@ -349,8 +349,12 @@ func _resolve_craps_setting(run_state: RunState, checkpoints: Array, seed: Strin
 	if not game_modules.has("craps"):
 		return
 	run_state.add_item("weighted_keyring")
+	var table := _game_state(run_state, "craps")
+	var line_bet := "pass_line" if int(table.get("point", 0)) == 0 else "come"
+	var pending_bets := {}
+	pending_bets[line_bet] = 20
 	var ui_state := _timed_ui(run_state, "craps_setting", {
-		"craps_pending_bets": {"pass_line": 20},
+		"craps_pending_bets": pending_bets,
 		"craps_setting_challenge": {"skill_grade": "perfect", "skill_margin_msec": 0},
 	})
 	_resolve_game(run_state, checkpoints, seed, "craps", "dice_setting", 20, ui_state)
