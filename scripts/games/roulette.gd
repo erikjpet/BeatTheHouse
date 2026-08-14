@@ -2333,7 +2333,7 @@ func _resolve_read_wheel(action_id: String, run_state: RunState, environment: Di
 	var grade := str(challenge.get("skill_grade", "miss"))
 	var read_applied := GameModule.skill_grade_applies(grade)
 	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
-	var pit_boss_bonus := 0
+	var pit_boss_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
 	var base_suspicion_delta := 0 if read_applied else WHEEL_READ_FAILED_HEAT
 	var suspicion_delta := base_suspicion_delta
 	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", 0, run_state.suspicion_level() + suspicion_delta) if run_state != null and suspicion_delta > 0 else {}
