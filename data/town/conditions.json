@@ -163,6 +163,53 @@
           },
           "town_flags": ["rolling_blackout", "power_unstable"]
         }
+      },
+      {
+        "id": "police_sweep",
+        "display_name": "Police Sweep",
+        "spawn_chance_percent": 58,
+        "start_action_range": [0, 96],
+        "duration_actions": [42, 72],
+        "modifiers": {
+          "town_flags": ["police_sweep"]
+        },
+        "sweep": {
+          "dwell_actions": [3, 6],
+          "swept_window_actions": 5,
+          "adjacent_sighting_chance_percent": 45,
+          "adjacent_scenario_pressure": {
+            "scenario_weight_by_id": {
+              "back_alley_cruiser_parked": 2.8,
+              "pawn_shop_serial_check_day": 2.8
+            },
+            "scenario_weight_by_tag": {
+              "law:pressure": 1.65
+            }
+          },
+          "encounter": {
+            "heat_bands": [
+              {"max": 24, "points": 0},
+              {"max": 49, "points": 2},
+              {"max": 74, "points": 4},
+              {"max": 100, "points": 6}
+            ],
+            "contraband_points_each": 2,
+            "street_debt_points_each": 1,
+            "pass_over_max_score": 1,
+            "shakedown_max_score": 4,
+            "confiscation_max_score": 7,
+            "pass_over_fee": [2, 6],
+            "pass_over_fallback_lock_actions": 1,
+            "shakedown_fee": [10, 28],
+            "shakedown_fallback_lock_actions": 1,
+            "empty_confiscation_fee": [8, 16],
+            "empty_confiscation_fallback_lock_actions": 2,
+            "travel_lock_actions": [2, 4],
+            "occupied_lock_fine": [6, 12],
+            "punchline_l2_heat_threshold": 75,
+            "punchline_near_miss_lock_actions": 2
+          }
+        }
       }
     ]
   }

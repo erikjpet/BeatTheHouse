@@ -396,17 +396,64 @@ static func town_conditions_validation_errors(value: Variant) -> Array:
 					errors.append("town happening definitions[%d] must be a dictionary." % index)
 					continue
 				var entry: Dictionary = entry_value
-				_append_unknown_keys("town happening %d" % index, entry, ["id", "display_name", "start_action_range", "duration_actions", "modifiers"], errors)
+				_append_unknown_keys("town happening %d" % index, entry, ["id", "display_name", "start_action_range", "duration_actions", "spawn_chance_percent", "modifiers", "sweep"], errors)
 				var id := str(entry.get("id", ""))
 				if not TownStateScript.HAPPENING_IDS.has(id) or happening_ids.has(id):
 					errors.append("town happening id must be unique and documented: %s." % id)
 				happening_ids.append(id)
 				_validate_nonnegative_range("town happening %s start_action_range" % id, entry.get("start_action_range", []), -1, errors)
 				_validate_positive_range("town happening %s duration_actions" % id, entry.get("duration_actions", []), errors)
+				var spawn_chance := int(entry.get("spawn_chance_percent", 100))
+				if spawn_chance < 0 or spawn_chance > 100:
+					errors.append("town happening %s spawn_chance_percent must be within 0..100." % id)
 				_validate_town_modifiers("town happening %s" % id, entry.get("modifiers", {}), false, false, errors, true)
+				if id == "police_sweep":
+					_validate_police_sweep_config(entry.get("sweep", {}), errors)
 			if happening_ids.size() != TownStateScript.HAPPENING_IDS.size():
-				errors.append("town happenings must define fight_night, festival_weekend, and rolling_blackout.")
+				errors.append("town happenings must define fight_night, festival_weekend, rolling_blackout, and police_sweep.")
 	return errors
+
+
+static func _validate_police_sweep_config(value: Variant, errors: Array) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		errors.append("town police_sweep sweep must be a dictionary.")
+		return
+	var sweep: Dictionary = value
+	_append_unknown_keys("town police_sweep sweep", sweep, ["dwell_actions", "swept_window_actions", "adjacent_sighting_chance_percent", "adjacent_scenario_pressure", "encounter"], errors)
+	_validate_positive_range("town police_sweep dwell_actions", sweep.get("dwell_actions", []), errors)
+	if int(sweep.get("swept_window_actions", 0)) <= 0:
+		errors.append("town police_sweep swept_window_actions must be positive.")
+	var sighting_chance := int(sweep.get("adjacent_sighting_chance_percent", -1))
+	if sighting_chance < 0 or sighting_chance > 100:
+		errors.append("town police_sweep adjacent_sighting_chance_percent must be within 0..100.")
+	var pressure := _as_dict(sweep.get("adjacent_scenario_pressure", {}))
+	_append_unknown_keys("town police_sweep adjacent_scenario_pressure", pressure, ["scenario_weight_by_id", "scenario_weight_by_tag"], errors)
+	_validate_positive_number_map("town police_sweep scenario_weight_by_id", pressure.get("scenario_weight_by_id", {}), errors)
+	_validate_positive_number_map("town police_sweep scenario_weight_by_tag", pressure.get("scenario_weight_by_tag", {}), errors)
+	var encounter := _as_dict(sweep.get("encounter", {}))
+	_append_unknown_keys("town police_sweep encounter", encounter, ["heat_bands", "contraband_points_each", "street_debt_points_each", "pass_over_max_score", "shakedown_max_score", "confiscation_max_score", "pass_over_fee", "pass_over_fallback_lock_actions", "shakedown_fee", "shakedown_fallback_lock_actions", "empty_confiscation_fee", "empty_confiscation_fallback_lock_actions", "travel_lock_actions", "occupied_lock_fine", "punchline_l2_heat_threshold", "punchline_near_miss_lock_actions"], errors)
+	_validate_positive_range("town police_sweep pass_over_fee", encounter.get("pass_over_fee", []), errors)
+	_validate_positive_range("town police_sweep shakedown_fee", encounter.get("shakedown_fee", []), errors)
+	_validate_positive_range("town police_sweep empty_confiscation_fee", encounter.get("empty_confiscation_fee", []), errors)
+	_validate_positive_range("town police_sweep travel_lock_actions", encounter.get("travel_lock_actions", []), errors)
+	_validate_positive_range("town police_sweep occupied_lock_fine", encounter.get("occupied_lock_fine", []), errors)
+	for action_key in ["pass_over_fallback_lock_actions", "shakedown_fallback_lock_actions", "empty_confiscation_fallback_lock_actions", "punchline_near_miss_lock_actions"]:
+		if int(encounter.get(action_key, 0)) <= 0:
+			errors.append("town police_sweep %s must be positive." % action_key)
+	var heat_bands_value: Variant = encounter.get("heat_bands", [])
+	if typeof(heat_bands_value) != TYPE_ARRAY:
+		errors.append("town police_sweep heat_bands must be an array.")
+		return
+	var previous_max := -1
+	for band_value in heat_bands_value as Array:
+		if typeof(band_value) != TYPE_DICTIONARY:
+			errors.append("town police_sweep heat_bands entries must be dictionaries.")
+			continue
+		var band: Dictionary = band_value
+		var band_max := int(band.get("max", -1))
+		if band_max <= previous_max or band_max > 100 or int(band.get("points", -1)) < 0:
+			errors.append("town police_sweep heat_bands must have ascending max values and non-negative points.")
+		previous_max = band_max
 
 
 static func _validate_town_modifiers(label: String, value: Variant, allow_travel: bool, allow_economy: bool, errors: Array, allow_flags: bool = false) -> void:

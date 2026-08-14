@@ -3,11 +3,12 @@ extends RefCounted
 
 const CONDITIONS_PATH := "res://data/town/conditions.json"
 const TownNetworkScript := preload("res://scripts/core/town_network.gd")
-const SCHEMA_VERSION := 1
+const PoliceSweepModelScript := preload("res://scripts/core/police_sweep_model.gd")
+const SCHEMA_VERSION := 2
 const DEFAULT_TURN_HORIZON := 240
 const WEATHER_IDS := ["clear", "rain", "fog", "storm"]
 const DAY_TYPE_IDS := ["payday", "midweek"]
-const HAPPENING_IDS := ["fight_night", "festival_weekend", "rolling_blackout"]
+const HAPPENING_IDS := ["fight_night", "festival_weekend", "rolling_blackout", "police_sweep"]
 const RISK_BANDS := ["low", "medium", "high"]
 
 static var _conditions_cache: Dictionary = {}
@@ -20,6 +21,7 @@ var calendar_cycle: Array = []
 var calendar_offset_actions: int = 0
 var happenings: Array = []
 var living_world: TownNetwork
+var police_sweep: PoliceSweepModel
 
 var _conditions: Dictionary = {}
 var _weather_by_action: PackedStringArray = PackedStringArray()
@@ -65,11 +67,14 @@ func generate(p_seed_value: int, source_conditions: Dictionary = {}) -> void:
 	_generate_happenings(root_rng.fork("town_happenings"))
 	living_world = TownNetworkScript.new()
 	living_world.generate(seed_value)
+	police_sweep = PoliceSweepModelScript.new()
+	police_sweep.reset(seed_value, _police_sweep_config())
 	_refresh_current_profiles()
 
 
 func restore(source: Dictionary, p_seed_value: int, source_conditions: Dictionary = {}) -> bool:
-	if int(source.get("schema_version", 0)) != SCHEMA_VERSION:
+	var source_schema := int(source.get("schema_version", 0))
+	if source_schema != 1 and source_schema != SCHEMA_VERSION:
 		generate(p_seed_value, source_conditions)
 		return false
 	seed_value = maxi(1, int(source.get("seed_value", p_seed_value)))
@@ -87,6 +92,13 @@ func restore(source: Dictionary, p_seed_value: int, source_conditions: Dictionar
 	else:
 		living_world.generate(seed_value)
 		living_world.advance_to(action_index)
+	police_sweep = PoliceSweepModelScript.new()
+	var sweep_value: Variant = source.get("police_sweep", {})
+	if source_schema >= SCHEMA_VERSION and typeof(sweep_value) == TYPE_DICTIONARY and not (sweep_value as Dictionary).is_empty():
+		police_sweep.restore(sweep_value as Dictionary, seed_value, _police_sweep_config())
+	else:
+		police_sweep.disable(seed_value, _police_sweep_config())
+	police_sweep.align_restored_action_index(action_index)
 	_index_definitions()
 	if weather_schedule.is_empty() or calendar_cycle.is_empty():
 		generate(p_seed_value, source_conditions)
@@ -102,8 +114,11 @@ func advance_actions(amount: int = 1) -> void:
 	action_index = maxi(0, action_index + amount)
 	if living_world != null:
 		living_world.advance_to(action_index)
+	if police_sweep != null:
+		police_sweep.advance_to(action_index)
 	_refresh_current_profiles()
 	_sync_condition_rumor_facts()
+	_sync_sweep_rumor_facts()
 
 
 func configure_world(map_data: Dictionary) -> void:
@@ -111,7 +126,70 @@ func configure_world(map_data: Dictionary) -> void:
 		living_world = TownNetworkScript.new()
 		living_world.generate(seed_value)
 	living_world.configure_world(map_data)
+	if police_sweep == null:
+		police_sweep = PoliceSweepModelScript.new()
+		police_sweep.reset(seed_value, _police_sweep_config())
+	police_sweep.configure_world(map_data, _police_sweep_happening(), _police_sweep_config(), action_index)
+	_refresh_current_profiles()
 	_sync_condition_rumor_facts()
+	_sync_sweep_rumor_facts()
+
+
+func disable_police_sweep_for_legacy_save() -> void:
+	if police_sweep == null:
+		police_sweep = PoliceSweepModelScript.new()
+	police_sweep.disable(seed_value, _police_sweep_config())
+	var retained: Array = []
+	for happening in happenings:
+		if str(happening.get("id", "")) != "police_sweep":
+			retained.append(happening)
+	happenings = retained
+	_refresh_current_profiles()
+	_sync_sweep_rumor_facts()
+
+
+func sweep_status(capabilities: Dictionary = {}) -> Dictionary:
+	return police_sweep.intel_status(capabilities) if police_sweep != null else {}
+
+
+func sweep_internal_status() -> Dictionary:
+	return police_sweep.status() if police_sweep != null else {}
+
+
+func sweep_map_marker(capabilities: Dictionary = {}) -> Dictionary:
+	return police_sweep.map_marker(capabilities) if police_sweep != null else {}
+
+
+func report_sweep_intel_at_boundary(capabilities: Dictionary = {}) -> Dictionary:
+	return police_sweep.report_intel_at_boundary(capabilities) if police_sweep != null else {}
+
+
+func record_sweep_sighting(source: String = "direct") -> Dictionary:
+	return police_sweep.record_personal_sighting(source) if police_sweep != null else {}
+
+
+func sweep_is_at(node_id: String) -> bool:
+	return police_sweep != null and police_sweep.is_at(node_id)
+
+
+func sweep_is_adjacent(node_id: String) -> bool:
+	return police_sweep != null and police_sweep.is_adjacent(node_id)
+
+
+func sweep_adjacent_sighting_due(node_id: String) -> bool:
+	return police_sweep != null and police_sweep.adjacent_sighting_due(node_id)
+
+
+func claim_sweep_encounter(node_id: String) -> Dictionary:
+	return police_sweep.claim_encounter(node_id) if police_sweep != null else {}
+
+
+func swept_window(node_id: String) -> Dictionary:
+	return police_sweep.swept_window(node_id) if police_sweep != null else {}
+
+
+func sweep_encounter_config() -> Dictionary:
+	return _dictionary(_police_sweep_config().get("encounter", {})).duplicate(true)
 
 
 func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
@@ -203,14 +281,20 @@ func day_type() -> String:
 
 
 func active_happenings() -> Array:
-	return _active_happening_ids
+	var visible := _active_happening_ids.duplicate()
+	visible.erase("police_sweep")
+	return visible
 
 
 func happening_active(id: String) -> bool:
+	if id.strip_edges() == "police_sweep":
+		return false
 	return _active_happening_lookup.has(id)
 
 
 func town_flag_active(id: String) -> bool:
+	if id.strip_edges() == "police_sweep":
+		return false
 	return _active_town_flags.has(id)
 
 
@@ -219,6 +303,8 @@ func scenario_weight_multiplier(archetype_id: String, scenario_id: String, tags:
 	multiplier *= float(_scenario_weight_by_id.get(scenario_id, 1.0))
 	for tag_value in tags:
 		multiplier *= float(_scenario_weight_by_tag.get(str(tag_value), 1.0))
+	if police_sweep != null:
+		multiplier *= police_sweep.scenario_pressure_multiplier(archetype_id, scenario_id, tags)
 	return maxf(0.0, multiplier)
 
 
@@ -249,16 +335,21 @@ func snapshot() -> Dictionary:
 		"calendar_offset_actions": calendar_offset_actions,
 		"happenings": happenings.duplicate(true),
 		"living_world": living_world.snapshot() if living_world != null else {},
+		"police_sweep": police_sweep.snapshot() if police_sweep != null else {},
 	}
 
 
 func public_snapshot() -> Dictionary:
+	var visible_happenings := active_happenings()
+	var visible_flags: Array = _active_town_flags.keys()
+	visible_flags.erase("police_sweep")
 	return {
 		"weather": _weather_id,
 		"day_type": _day_type_id,
-		"active_happenings": _active_happening_ids.duplicate(),
-		"active_town_flags": _active_town_flags.keys(),
+		"active_happenings": visible_happenings,
+		"active_town_flags": visible_flags,
 		"status_line": status_line(),
+		"sweep_marker": sweep_map_marker(),
 	}
 
 
@@ -324,7 +415,12 @@ func _generate_calendar(rng: RngStream) -> void:
 func _generate_happenings(rng: RngStream) -> void:
 	happenings = []
 	var happening_config := _dictionary(_conditions.get("happenings", {}))
-	var definitions := _dictionary_array(happening_config.get("definitions", []))
+	var definitions: Array = []
+	for definition in _dictionary_array(happening_config.get("definitions", [])):
+		var spawn_chance := clampi(int(definition.get("spawn_chance_percent", 100)), 0, 100)
+		if spawn_chance <= 0 or (spawn_chance < 100 and rng.randi_range(1, 100) > spawn_chance):
+			continue
+		definitions.append(definition)
 	var count_range := _int_range(happening_config.get("count_range", [0, 2]), 0, 2)
 	var count := clampi(rng.randi_range(int(count_range[0]), int(count_range[1])), 0, mini(2, definitions.size()))
 	for definition_value in rng.pick_many(definitions, count):
@@ -448,6 +544,36 @@ func _sync_condition_rumor_facts() -> void:
 		})
 
 
+func _sync_sweep_rumor_facts() -> void:
+	if living_world == null:
+		return
+	living_world.remove_rumor_facts(TownNetworkScript.RUMOR_CLASS_SWEEP)
+	var sweep := sweep_internal_status()
+	if not bool(sweep.get("active", false)):
+		return
+	var current_node := str(sweep.get("current_node_id", ""))
+	var previous_node := str(sweep.get("previous_node_id", ""))
+	var heading_node := str(sweep.get("heading_node_id", ""))
+	var recent_node := previous_node if not previous_node.is_empty() else current_node
+	var age := maxi(0, action_index - int(sweep.get("arrived_action", action_index)))
+	var heading_name := _living_world_node_label(heading_node) if not heading_node.is_empty() else "out of town"
+	living_world.register_rumor_fact(TownNetworkScript.RUMOR_CLASS_SWEEP, "sweep:recent", {
+		"target_node_id": recent_node,
+		"source_id": "police_sweep",
+		"fact_detail": "there %d turns ago, headed toward %s" % [age, heading_name],
+		"track_segment_index": int(sweep.get("segment_index", -1)),
+		"truth_node_id": current_node,
+	})
+	if not heading_node.is_empty():
+		living_world.register_rumor_fact(TownNetworkScript.RUMOR_CLASS_SWEEP, "sweep:heading", {
+			"target_node_id": heading_node,
+			"source_id": "police_sweep",
+			"fact_detail": "headed this way from %s" % _living_world_node_label(current_node),
+			"track_segment_index": int(sweep.get("segment_index", -1)),
+			"truth_node_id": current_node,
+		})
+
+
 func _rebuild_modifier_profiles() -> void:
 	_scenario_weight_by_tag = {}
 	_scenario_weight_by_archetype = {}
@@ -533,6 +659,24 @@ func _calendar_definition(id: String) -> Dictionary:
 		if str(definition.get("id", "")) == id:
 			return definition
 	return {}
+
+
+func _police_sweep_happening() -> Dictionary:
+	for happening in happenings:
+		if str(happening.get("id", "")) == "police_sweep":
+			return happening
+	return {}
+
+
+func _police_sweep_config() -> Dictionary:
+	var definition := _dictionary(_happening_definition_by_id.get("police_sweep", {}))
+	return _dictionary(definition.get("sweep", {})).duplicate(true)
+
+
+func _living_world_node_label(node_id: String) -> String:
+	if living_world == null:
+		return node_id.replace("_", " ").capitalize()
+	return str(_dictionary(living_world.node_metadata.get(node_id, {})).get("label", node_id.replace("_", " ").capitalize()))
 
 
 func _display_name(id: String) -> String:

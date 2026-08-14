@@ -187,6 +187,12 @@ func current_view_snapshot() -> Dictionary:
 			}
 	view["icon_markers"] = markers
 	view["current_marker"] = current_marker
+	var sweep_marker := _copy_dict(snapshot.get("sweep_marker", {}))
+	var sweep_node_id := str(sweep_marker.get("node_id", ""))
+	if not sweep_marker.is_empty() and node_screen_position_cache.has(sweep_node_id):
+		var sweep_center := node_screen_position_cache.get(sweep_node_id, Vector2.ZERO) as Vector2
+		sweep_marker["screen_center"] = {"x": sweep_center.x, "y": sweep_center.y}
+	view["sweep_marker"] = sweep_marker
 	var bounds := map_view_bounds_cache
 	view["canvas_size"] = {
 		"x": size.x,
@@ -277,6 +283,7 @@ func _draw() -> void:
 	_draw_route_path_geometry()
 	_draw_path()
 	_draw_nodes()
+	_draw_sweep_marker()
 	_draw_replay_marker()
 	draw_rect(rect.grow(-1.0), Color("#2ee9ff", 0.32), false, 2.0)
 
@@ -393,6 +400,24 @@ func _draw_path() -> void:
 		var replay_clipped := _clipped_segment_to_view(a, a.lerp(b, leg_progress))
 		if not replay_clipped.is_empty():
 			draw_line(replay_clipped[0] as Vector2, replay_clipped[1] as Vector2, Color("#ffd36a", 0.78), 4.0)
+
+
+func _draw_sweep_marker() -> void:
+	var marker := _copy_dict(snapshot.get("sweep_marker", {}))
+	var node_id := str(marker.get("node_id", "")).strip_edges()
+	if marker.is_empty() or node_id.is_empty() or not node_screen_position_cache.has(node_id):
+		return
+	var center := node_screen_position_cache.get(node_id, Vector2.ZERO) as Vector2
+	if not _point_in_view(center, 22.0):
+		return
+	var color := Color("#62a8ff", 0.94)
+	draw_circle(center, 17.0, Color("#071225", 0.86))
+	draw_arc(center, 15.0, 0.0, TAU, 24, color, 2.5)
+	draw_line(center + Vector2(-7.0, -3.0), center + Vector2(7.0, -3.0), color, 2.0)
+	draw_line(center + Vector2(-5.0, 3.0), center + Vector2(5.0, 3.0), color, 2.0)
+	var stale_actions := maxi(0, int(marker.get("stale_actions", 0)))
+	var label := "SWEEP · NOW" if bool(marker.get("live", false)) else "SWEEP · %d AGO" % stale_actions
+	draw_string(ThemeDB.fallback_font, center + Vector2(20.0, -14.0), label, HORIZONTAL_ALIGNMENT_LEFT, 150.0, 11, Color("#d8e8ff"))
 
 
 func _draw_replay_marker() -> void:

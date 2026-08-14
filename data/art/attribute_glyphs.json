@@ -1334,6 +1334,7 @@
       "debt": "class_event",
       "discovery": "class_event",
       "heat": "class_event",
+      "law": "class_event",
       "landmark": "class_event",
       "lender": "class_event",
       "opportunistic": "class_event",

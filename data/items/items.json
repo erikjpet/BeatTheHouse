@@ -893,6 +893,7 @@
     "id": "coin_return_shim",
     "display_name": "Coin-Return Shim",
     "class": "permanent",
+    "risk_flags": ["contraband"],
     "domain": "games",
     "content_groups": [
       "slot_pack"
@@ -1018,6 +1019,7 @@
     "id": "cold_quarters",
     "display_name": "Cold Quarters",
     "class": "consumable",
+    "risk_flags": ["contraband"],
     "domain": "games",
     "content_groups": [
       "slot_pack"
@@ -1652,6 +1654,7 @@
     "id": "xray_glasses",
     "display_name": "X-Ray Glasses",
     "class": "permanent",
+    "risk_flags": ["contraband"],
     "domain": "games",
     "content_groups": [
       "pull_tabs_pack",

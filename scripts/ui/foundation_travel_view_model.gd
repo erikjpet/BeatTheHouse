@@ -42,6 +42,8 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 	var route_path_geometry: Array = []
 	var displayed_lookup: Dictionary = {}
 	var visible_node_ids: Array = []
+	var sweep_marker: Dictionary = host.run_state.sweep_map_marker() if host.run_state.has_method("sweep_map_marker") else {}
+	var sweep_marker_node_id := str(sweep_marker.get("node_id", "")).strip_edges()
 	var nodes: Array = []
 	var source_nodes_by_id: Dictionary = {}
 	for source_node_value in host._copy_array(enriched.get("nodes", [])):
@@ -76,7 +78,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 			closing_soon = bool(open_status.get("closing_soon", false))
 			if not open_now:
 				enabled = false
-		if not host._world_map_node_should_render(node, is_current, enabled):
+		if not host._world_map_node_should_render(node, is_current, enabled) and node_id != sweep_marker_node_id:
 			continue
 		node["current"] = is_current
 		node["travel_target"] = visible_travel_target
@@ -169,6 +171,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 	enriched["travel_paths"] = travel_paths
 	enriched["route_path_geometry"] = route_path_geometry
 	enriched["map_focus_node_ids"] = focus_node_ids
+	enriched["sweep_marker"] = sweep_marker
 	if str(enriched.get("background_path", "")).strip_edges().is_empty():
 		enriched["background_path"] = host.WorldMapScript.MAP_BACKGROUND_PATH
 	return enriched
