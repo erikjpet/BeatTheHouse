@@ -2111,7 +2111,7 @@ func _verify_streets_surface() -> void:
 	var controller: Variant = app.get("streets_controller")
 	_require(controller != null and bool(controller.call("is_visible")), "Streets controller was not visible over the live run.")
 	_cover("streets_package_surface")
-	await get_tree().create_timer(0.15).timeout
+	await create_timer(0.15).timeout
 	_require(bool(controller.call("idle_animation_running")) and float(controller.call("measured_idle_liveness")) > 0.001, "Streets surface did not measure live idle movement.")
 	_cover("streets_idle_liveness")
 	_record_state("streets_package_surface", "Remote-distance package board with live weather, patrol, prop, deadline, and verb presentation.")
