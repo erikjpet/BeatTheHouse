@@ -268,6 +268,13 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   `streets_begin_hold`, `streets_begin_chase`, `streets_apply_action`,
   `streets_snapshot`, and `streets_has_active_run`. Numbers must consume these
   APIs unchanged; undeclared travel paths never enter a Streets board.
+- 2026-08-14 [streets06_1] Route-backed Streets boards serialize an optional
+  one-shot `travel_continuation` and expose only whether one is pending.
+  FoundationMain consumes it after any terminal Streets outcome through the
+  existing `_travel_to` pipeline, so destination, cost, risk, time, and
+  generation remain owned by normal travel. Package routes opt in; Hold and
+  direct fixtures omit it. Declined or invalid ordinary travel never creates a
+  board.
 - 2026-08-14 [push06_1] Quarter Falls uses one deterministic action-boundary
   coarse-pile core. Corner Store may seed an optional zero-or-one game slot;
   no machine is forced into every node. Alarm tolerance remains hidden, and a
