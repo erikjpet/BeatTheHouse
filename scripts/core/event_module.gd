@@ -157,9 +157,36 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 	if conclusion_animation.is_empty() and bankroll_delta > 0:
 		conclusion_animation = "bankroll_transfer"
 	result["conclusion_animation"] = conclusion_animation
+	if get_id() == "crew_favor_delivery" and choice_key == "run_package":
+		var streets_result := run_state.resolve_crew_favor_delivery_job(choice_key, {
+			"success": consequences,
+			"failure": _copy_dict(selected_choice.get("streets_failure", {})),
+		})
+		var start_message := str(streets_result.get("message", "The block is live. Keep your head down."))
+		var start_deltas := _copy_dict(result.get("deltas", {}))
+		start_deltas["bankroll_delta"] = 0
+		start_deltas["suspicion_delta"] = 0
+		start_deltas["flags_set"] = {}
+		start_deltas["messages"] = [start_message]
+		var start_story := _copy_array(start_deltas.get("story_log", []))
+		if not start_story.is_empty() and typeof(start_story[0]) == TYPE_DICTIONARY:
+			var entry := _copy_dict(start_story[0])
+			entry["bankroll_delta"] = 0
+			entry["suspicion_delta"] = 0
+			start_story[0] = entry
+		start_deltas["story_log"] = start_story
+		result["bankroll_delta"] = 0
+		result["suspicion_delta"] = 0
+		result["deltas"] = start_deltas
+		result["message"] = start_message
+		result["conclusion_animation"] = ""
+		result["streets_started"] = bool(streets_result.get("ok", false))
+		result["streets_snapshot"] = streets_result.get("snapshot", {})
+		apply_event_result(run_state, result)
+		return result
 	apply_event_result(run_state, result)
 	if get_id() == "crew_favor_delivery":
-		run_state.resolve_crew_favor_delivery_job(choice_key)
+		run_state.resolve_crew_favor_delivery_job(choice_key, {"success": consequences})
 	return result
 
 

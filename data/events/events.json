@@ -2275,6 +2275,13 @@
           "label": "Run the package",
           "text": "You run it exactly on their clock.",
           "consequence_summary": "Bankroll +22, heat +4",
+          "streets_failure": {
+            "suspicion_delta": 9,
+            "flags": {
+              "crew_favor_pending": false,
+              "crew_favor_failed": true
+            }
+          },
           "consequences": {
             "bankroll_delta": 22,
             "suspicion_delta": 4,
