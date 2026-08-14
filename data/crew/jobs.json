@@ -1,0 +1,21 @@
+[
+  {
+    "id": "crew_favor_delivery",
+    "member_id": "crew_rook",
+    "kind": "package_delivery",
+    "payload": {
+      "event_id": "crew_favor_delivery",
+      "streets_seam": "streets06_1"
+    },
+    "expiry_in_actions": 1,
+    "rewards": {
+      "cash": 0,
+      "trust": 5
+    },
+    "failure": {
+      "trust": -5,
+      "grievance_kind": "job_abandoned",
+      "grievance_weight": 1
+    }
+  }
+]

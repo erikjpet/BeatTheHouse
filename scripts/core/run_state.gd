@@ -2,12 +2,18 @@ class_name RunState
 extends RefCounted
 
 # Source of truth for one active run in the foundation path.
+# Crew API (hidden, within-run state): crew_trust(member) reads trust;
+# crew_rank(member) derives rank; crew_add_trust(member, amount, reason) mutates it;
+# crew_standing() derives shared gates; grievance_add(entry) writes The Turn ledger;
+# crew_grievances(member) is the private crew06_9 reader; job_offer(def),
+# job_accept(id), job_activate(id), and job_resolve(id, outcome) own job lifecycle.
 
 signal heat_changed(applied_amount: int, level: int, cue_id: String, context: Dictionary)
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
+const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 
 const DEFAULT_BANKROLL := 100
 const LOCAL_RISK_DECAY_BY_DISTANCE := {
@@ -283,6 +289,11 @@ var narrative_flags: Dictionary = {}
 var story_flags: Dictionary = {}
 var story_log: Array = []
 var story_log_archive_count: int = 0
+var crew_trust_by_member: Dictionary = {}
+var crew_grievance_ledger: Array = []
+var crew_jobs: Dictionary = {}
+var crew_grievance_sequence: int = 0
+var crew_job_sequence: int = 0
 var heat_history: Array = []
 var simulation_msec: int = 0
 var game_clock_minutes: int = GAME_CLOCK_START_MINUTE
@@ -359,6 +370,11 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	story_flags = {}
 	story_log = []
 	story_log_archive_count = 0
+	crew_trust_by_member = CrewStateModelScript.default_trust()
+	crew_grievance_ledger = []
+	crew_jobs = {}
+	crew_grievance_sequence = 0
+	crew_job_sequence = 0
 	heat_history = []
 	simulation_msec = 0
 	game_clock_minutes = GAME_CLOCK_START_MINUTE
@@ -5816,6 +5832,12 @@ func refuse_debt_favor(debt_id: String) -> Dictionary:
 	narrative_flags["crew_favor_pending"] = false
 	narrative_flags["crew_marker_converted_to_cash"] = true
 	debt[index] = debt_data
+	grievance_add({
+		"member_id": _crew_debt_lead_member(debt_data),
+		"kind": "favor_converted_unpaid",
+		"weight": maxi(1, favor_balance),
+		"source_ref": str(debt_data.get("id", debt_id)),
+	})
 	var message := "You refuse the Crew's favor; the marker becomes cash at brutal rates."
 	log_story({
 		"type": "debt_favor_refused",
@@ -5826,6 +5848,179 @@ func refuse_debt_favor(debt_id: String) -> Dictionary:
 	})
 	_refresh_economy()
 	return {"ok": true, "message": message, "debt_id": debt_id, "balance": cash_balance}
+
+
+# Returns one member's hidden within-run trust value.
+func crew_trust(member_id: String) -> int:
+	return maxi(0, int(crew_trust_by_member.get(member_id, 0))) if CrewStateModelScript.MEMBER_IDS.has(member_id) else 0
+
+
+# Returns one member's data-tuned trust rank.
+func crew_rank(member_id: String) -> String:
+	return CrewStateModelScript.rank_for_trust(crew_trust(member_id))
+
+
+# Changes hidden trust without emitting story, UI, or log copy.
+func crew_add_trust(member_id: String, amount: int, _reason: String = "") -> int:
+	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or amount == 0:
+		return crew_trust(member_id)
+	crew_trust_by_member[member_id] = maxi(0, crew_trust(member_id) + amount)
+	return crew_trust(member_id)
+
+
+# Derives crew-wide standing and the registered shared/heist gates.
+func crew_standing() -> Dictionary:
+	var total_trust := 0
+	var highest_rank_index := 0
+	var ranks := {}
+	var made_members: Array = []
+	var inner_circle_members: Array = []
+	for member_id in CrewStateModelScript.MEMBER_IDS:
+		var trust := crew_trust(member_id)
+		var rank_id := crew_rank(member_id)
+		total_trust += trust
+		ranks[member_id] = rank_id
+		highest_rank_index = maxi(highest_rank_index, CrewStateModelScript.RANK_IDS.find(rank_id))
+		if CrewStateModelScript.RANK_IDS.find(rank_id) >= CrewStateModelScript.RANK_IDS.find("made"):
+			made_members.append(member_id)
+		if rank_id == "inner_circle":
+			inner_circle_members.append(member_id)
+	var heist_eligibility := {}
+	var requirements: Dictionary = CrewStateModelScript.config().get("heist_requirements", {})
+	for plan_id_value in requirements.keys():
+		var plan_id := str(plan_id_value)
+		var eligible := true
+		for member_value in _copy_array(requirements.get(plan_id_value, [])):
+			if crew_rank(str(member_value)) != "inner_circle":
+				eligible = false
+				break
+		heist_eligibility[plan_id] = eligible
+	return {
+		"rank": CrewStateModelScript.RANK_IDS[highest_rank_index],
+		"total_trust": total_trust,
+		"average_trust": int(floor(float(total_trust) / float(CrewStateModelScript.MEMBER_IDS.size()))),
+		"member_ranks": ranks,
+		"made_members": made_members,
+		"inner_circle_members": inner_circle_members,
+		"layer_3_access": not made_members.is_empty(),
+		"heist_eligibility": heist_eligibility,
+	}
+
+
+# Adds one typed hidden grievance and returns its normalized stored shape.
+func grievance_add(entry: Dictionary) -> Dictionary:
+	var member_id := str(entry.get("member_id", "")).strip_edges()
+	var kind := str(entry.get("kind", "")).strip_edges()
+	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or not CrewStateModelScript.GRIEVANCE_KINDS.has(kind):
+		return {}
+	crew_grievance_sequence += 1
+	var grievance_id := str(entry.get("id", "")).strip_edges()
+	if grievance_id.is_empty():
+		grievance_id = "crew_grievance_%04d" % crew_grievance_sequence
+	var normalized := {
+		"id": grievance_id,
+		"member_id": member_id,
+		"kind": kind,
+		"weight": maxi(1, int(entry.get("weight", 1))),
+		"turn_recorded": maxi(0, int(entry.get("turn_recorded", _crew_action_index()))),
+		"source_ref": str(entry.get("source_ref", "")).strip_edges(),
+	}
+	crew_grievance_ledger.append(normalized)
+	return normalized.duplicate(true)
+
+
+# Returns a private ledger projection for crew06_9; presentation must not call it.
+func crew_grievances(member_id: String = "") -> Array:
+	var result: Array = []
+	for entry_value in crew_grievance_ledger:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		if member_id.is_empty() or str(entry.get("member_id", "")) == member_id:
+			result.append(entry.duplicate(true))
+	return result
+
+
+# Offers a data-shaped job and returns the immutable instance snapshot.
+func job_offer(job_definition: Dictionary) -> Dictionary:
+	var definition := CrewStateModelScript.normalize_job_definition(job_definition)
+	if definition.is_empty():
+		return {}
+	crew_job_sequence += 1
+	var action_index := _crew_action_index()
+	var instance_id := "%s:%04d" % [str(definition.get("id", "crew_job")), crew_job_sequence]
+	var job := definition.duplicate(true)
+	job["id"] = instance_id
+	job["definition_id"] = str(definition.get("id", ""))
+	job["status"] = "offered"
+	job["outcome"] = ""
+	job["offered_action"] = action_index
+	job["expires_at_action"] = action_index + maxi(1, int(definition.get("expiry_in_actions", 1)))
+	crew_jobs[instance_id] = job
+	return job.duplicate(true)
+
+
+# Accepts one offered job without consuming an action boundary.
+func job_accept(job_id: String) -> Dictionary:
+	var job := _crew_job(job_id)
+	if str(job.get("status", "")) != "offered":
+		return {}
+	job["status"] = "accepted"
+	job["accepted_action"] = _crew_action_index()
+	crew_jobs[job_id] = job
+	return job.duplicate(true)
+
+
+# Activates one accepted job; later gameplay slices own their active surface.
+func job_activate(job_id: String) -> Dictionary:
+	var job := _crew_job(job_id)
+	if str(job.get("status", "")) != "accepted":
+		return {}
+	job["status"] = "active"
+	job["active_action"] = _crew_action_index()
+	crew_jobs[job_id] = job
+	return job.duplicate(true)
+
+
+# Resolves one accepted/active job and applies configured success or failure effects.
+func job_resolve(job_id: String, outcome: String) -> Dictionary:
+	var job := _crew_job(job_id)
+	if job.is_empty() or not CrewStateModelScript.JOB_OUTCOMES.has(outcome):
+		return {}
+	if not ["accepted", "active"].has(str(job.get("status", ""))):
+		return {}
+	var member_id := str(job.get("member_id", ""))
+	if outcome == "success":
+		var rewards: Dictionary = job.get("rewards", {}) if typeof(job.get("rewards", {})) == TYPE_DICTIONARY else {}
+		var cash_reward := maxi(0, int(rewards.get("cash", 0)))
+		if cash_reward > 0:
+			change_bankroll(cash_reward, true)
+		crew_add_trust(member_id, int(rewards.get("trust", 0)), "job:%s" % str(job.get("definition_id", "")))
+	else:
+		var failure: Dictionary = job.get("failure", {}) if typeof(job.get("failure", {})) == TYPE_DICTIONARY else {}
+		crew_add_trust(member_id, int(failure.get("trust", 0)), "job:%s:%s" % [str(job.get("definition_id", "")), outcome])
+		var grievance_kind := str(failure.get("grievance_kind", "")).strip_edges()
+		if not grievance_kind.is_empty():
+			grievance_add({
+				"member_id": member_id,
+				"kind": grievance_kind,
+				"weight": maxi(1, int(failure.get("grievance_weight", 1))),
+				"source_ref": job_id,
+			})
+	job["status"] = "resolved"
+	job["outcome"] = outcome
+	job["resolved_action"] = _crew_action_index()
+	crew_jobs[job_id] = job
+	return job.duplicate(true)
+
+
+# Routes today's text-only favor through the job seam Streets replaces later.
+func resolve_crew_favor_delivery_job(choice_id: String) -> Dictionary:
+	var offered := job_offer(CrewStateModelScript.job_definition("crew_favor_delivery"))
+	var job_id := str(offered.get("id", ""))
+	if job_id.is_empty() or job_accept(job_id).is_empty() or job_activate(job_id).is_empty():
+		return {}
+	return job_resolve(job_id, "success" if choice_id == "run_package" else "failed")
 
 
 func default_debt(debt_id: String) -> Dictionary:
@@ -6723,6 +6918,30 @@ func advance_environment_turns(amount: int = 1) -> void:
 	_decrease_current_suspicion(next_decay_step - previous_decay_step)
 	_advance_heat_cooldown(safe_amount)
 	_advance_debt_clocks(safe_amount)
+	_advance_crew_jobs()
+
+
+func _advance_crew_jobs() -> void:
+	var action_index := _crew_action_index()
+	var expiring_ids: Array = []
+	for job_id_value in crew_jobs.keys():
+		var job := _crew_job(str(job_id_value))
+		if str(job.get("status", "")) == "resolved":
+			continue
+		if action_index >= int(job.get("expires_at_action", action_index + 1)):
+			expiring_ids.append(str(job_id_value))
+	for job_id in expiring_ids:
+		var job := _crew_job(str(job_id))
+		if str(job.get("status", "")) == "offered":
+			job["status"] = "accepted"
+			job["accepted_action"] = action_index
+			crew_jobs[str(job_id)] = job
+		job = _crew_job(str(job_id))
+		if str(job.get("status", "")) == "accepted":
+			job["status"] = "active"
+			job["active_action"] = action_index
+			crew_jobs[str(job_id)] = job
+		job_resolve(str(job_id), "abandoned")
 
 
 func start_heat_cooldown(actions: int, per_action: int = 1) -> void:
@@ -6980,6 +7199,23 @@ func _merge_stackable_debt(debt_entry: Dictionary) -> bool:
 		debt[index] = existing
 		return true
 	return false
+
+
+func _crew_debt_lead_member(debt_data: Dictionary) -> String:
+	for member_value in _copy_array(debt_data.get("crew_member_ids", [])):
+		var member_id := str(member_value)
+		if CrewStateModelScript.MEMBER_IDS.has(member_id):
+			return member_id
+	return "crew_rook"
+
+
+func _crew_job(job_id: String) -> Dictionary:
+	var value: Variant = crew_jobs.get(job_id, {})
+	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _crew_action_index() -> int:
+	return maxi(0, int(event_cadence.get("action_index", 0)))
 
 
 func _unique_lender_source_locations(first: Dictionary, second: Dictionary) -> Array:
@@ -7803,6 +8039,7 @@ func to_dict() -> Dictionary:
 		"story_flags": story_flags.duplicate(true),
 		"story_log": _normalize_story_log(story_log),
 		"story_log_archive_count": story_log_archive_count,
+		"crew_state": _crew_state_for_save(true),
 		"heat_history": normalize_heat_history(heat_history),
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
@@ -7875,6 +8112,7 @@ func to_save_snapshot() -> Dictionary:
 		"story_flags": story_flags.duplicate(false),
 		"story_log": story_log.duplicate(false),
 		"story_log_archive_count": story_log_archive_count,
+		"crew_state": _crew_state_for_save(false),
 		"heat_history": heat_history.duplicate(false),
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
@@ -7893,6 +8131,7 @@ func to_save_snapshot() -> Dictionary:
 
 # Restores the run from saved data.
 func from_dict(data: Dictionary) -> void:
+	var saved_crew_state: Dictionary = data.get("crew_state", {}) if typeof(data.get("crew_state", {})) == TYPE_DICTIONARY else {}
 	seed_text = str(data.get("seed_text", "FOUNDATION-SEED"))
 	seed_value = int(data.get("seed_value", text_to_seed(seed_text)))
 	rng_seed = int(data.get("rng_seed", seed_value))
@@ -7957,6 +8196,7 @@ func from_dict(data: Dictionary) -> void:
 	unlocked_travel = _copy_array(data.get("unlocked_travel", current_environment.get("travel_hooks", [])))
 	narrative_flags = _copy_dict(data.get("narrative_flags", {}))
 	story_flags = _copy_dict(data.get("story_flags", {}))
+	_restore_crew_state(saved_crew_state, not data.has("crew_state"))
 	for story_flag_key in story_flags.keys():
 		narrative_flags[str(story_flag_key)] = story_flags[story_flag_key]
 	# Repair saves made before Tier-2 casino spawning had an explicit progression
@@ -8309,6 +8549,49 @@ static func _world_map_for_save_snapshot(map_data: Dictionary) -> Dictionary:
 		nodes.append(node)
 	snapshot["nodes"] = nodes
 	return snapshot
+
+
+func _crew_state_for_save(deep_copy: bool) -> Dictionary:
+	return {
+		"schema_version": CrewStateModelScript.STATE_SCHEMA_VERSION,
+		"trust": crew_trust_by_member.duplicate(deep_copy),
+		"grievances": crew_grievance_ledger.duplicate(deep_copy),
+		"jobs": crew_jobs.duplicate(deep_copy),
+		"grievance_sequence": crew_grievance_sequence,
+		"job_sequence": crew_job_sequence,
+	}
+
+
+func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
+	crew_trust_by_member = CrewStateModelScript.normalize_trust(saved.get("trust", {}))
+	crew_grievance_ledger = CrewStateModelScript.normalize_grievances(saved.get("grievances", []))
+	crew_jobs = CrewStateModelScript.normalize_jobs(saved.get("jobs", {}))
+	crew_grievance_sequence = maxi(int(saved.get("grievance_sequence", crew_grievance_ledger.size())), crew_grievance_ledger.size())
+	crew_job_sequence = maxi(int(saved.get("job_sequence", crew_jobs.size())), crew_jobs.size())
+	if not legacy:
+		return
+	var has_legacy_marker := (
+		bool(narrative_flags.get("crew_favor_pending", false))
+		or bool(narrative_flags.get("crew_marker_converted_to_cash", false))
+		or (bool(narrative_flags.get("crew_marker_open", false)) and not bool(narrative_flags.get("crew_marker_clear", false)))
+	)
+	var legacy_members: Array = ["crew_rook"]
+	for debt_value in debt:
+		if typeof(debt_value) != TYPE_DICTIONARY:
+			continue
+		var debt_data: Dictionary = debt_value
+		if str(debt_data.get("lender_id", "")) != CREW_LENDER_ID:
+			continue
+		if ["active", "overdue", "favor_due"].has(str(debt_data.get("status", "active"))):
+			has_legacy_marker = true
+			legacy_members.append_array(_copy_array(debt_data.get("crew_member_ids", [])))
+	if not has_legacy_marker:
+		return
+	var marker_threshold := CrewStateModelScript.rank_threshold("marker")
+	for member_value in legacy_members:
+		var member_id := str(member_value)
+		if CrewStateModelScript.MEMBER_IDS.has(member_id):
+			crew_trust_by_member[member_id] = maxi(crew_trust(member_id), marker_threshold)
 
 
 static func environment_context_snapshot(environment: Dictionary) -> Dictionary:
