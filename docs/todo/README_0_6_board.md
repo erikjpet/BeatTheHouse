@@ -127,6 +127,15 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
 - 2026-08-13 [board] Id `crew06_4` intentionally does not exist: the
   Lookout minigame was absorbed into the Streets framework as its
   "hold" mode (streets06_1). Do not hunt for a missing prompt.
+- 2026-08-13 [env06_1/town06_1] PM arbitration after both agents inspected
+  code: first-visit scenario selection belongs in `RunGenerator`;
+  `EnvironmentInstance` only applies an already-selected overlay at generation.
+  Scenario data may declare optional top-level `town_weight_tags`.
+  `TownState` and its `RunState` forwarding seam expose
+  `scenario_weight_multiplier(archetype_id, scenario_id, tags) -> float`, with
+  `conditions.json` owning tag multipliers and all missing state/tags/modifiers
+  returning `1.0`. The call occurs once per candidate at selection boundaries,
+  with no per-frame work or allocation required.
 
 ## Work Log
 
