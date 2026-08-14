@@ -1724,6 +1724,8 @@ func enter_world_node(node_id: String, environment_data: Dictionary) -> void:
 		return
 	world_map = WorldMap.enter_node(world_map, node_id, _environment_for_persistent_storage(environment_data))
 	_reconcile_tier_two_casino_spawn_eligibility()
+	_apply_town_sweep_generation_context(current_environment)
+	_check_police_sweep_boundary()
 
 
 # Tier-2 casino routes are intentionally hidden at spawn. Open their spawn gates
@@ -6468,6 +6470,37 @@ func current_travel_lock_remaining() -> int:
 	return maxi(0, int(current_environment.get("travel_lock_remaining", 0)))
 
 
+func sweep_wait_action_status() -> Dictionary:
+	var remaining := current_travel_lock_remaining()
+	var visible := remaining > 0 and str(current_environment.get("travel_lock_source", "")) == "police_sweep" and not is_terminal()
+	return {
+		"id": "wait_out_police_sweep",
+		"label": "Wait out the sweep",
+		"visible": visible,
+		"enabled": visible,
+		"remaining_actions": remaining if visible else 0,
+		"action_cost": 1 if visible else 0,
+	}
+
+
+func perform_sweep_wait_action() -> Dictionary:
+	var status := sweep_wait_action_status()
+	if not bool(status.get("enabled", false)):
+		return {"ok": false, "message": "There is no sweep to wait out."}
+	var before := int(status.get("remaining_actions", 0))
+	advance_environment_turns(1)
+	var after := current_travel_lock_remaining()
+	return {
+		"ok": true,
+		"action_id": "wait_out_police_sweep",
+		"actions_advanced": 1,
+		"remaining_actions": after,
+		"travel_reopened": after <= 0,
+		"message": "The cruisers move on. Travel is open." if after <= 0 else "Keep your head down. %d more action%s." % [after, "" if after == 1 else "s"],
+		"previous_remaining_actions": before,
+	}
+
+
 func _travel_lock_disabled_reason(lock_remaining: int) -> String:
 	var actions := maxi(0, lock_remaining)
 	var noun := "action" if actions == 1 else "actions"
@@ -6559,6 +6592,65 @@ func town_snapshot() -> Dictionary:
 
 func town_public_snapshot() -> Dictionary:
 	return town_state.public_snapshot() if town_state != null else {}
+
+
+func set_crew_capability(capability_id: String, enabled: bool = true) -> void:
+	var clean_id := capability_id.strip_edges().to_lower()
+	if clean_id.is_empty():
+		return
+	var key := "crew_capability:%s" % clean_id
+	if enabled:
+		narrative_flags[key] = true
+	else:
+		narrative_flags.erase(key)
+
+
+func crew_capability_active(capability_id: String) -> bool:
+	var clean_id := capability_id.strip_edges().to_lower()
+	return not clean_id.is_empty() and bool(narrative_flags.get("crew_capability:%s" % clean_id, false))
+
+
+func sweep_status() -> Dictionary:
+	if town_state == null:
+		return {}
+	return town_state.sweep_status({"sweep_intel": crew_capability_active("sweep_intel")})
+
+
+func sweep_map_marker() -> Dictionary:
+	if town_state == null:
+		return {}
+	return town_state.sweep_map_marker({"sweep_intel": crew_capability_active("sweep_intel")})
+
+
+func report_sweep_intel_at_boundary() -> Dictionary:
+	if town_state == null:
+		return {}
+	return town_state.report_sweep_intel_at_boundary({"sweep_intel": crew_capability_active("sweep_intel")})
+
+
+func swept_window(node_id: String = "") -> Dictionary:
+	if town_state == null:
+		return {}
+	var target := node_id.strip_edges()
+	if target.is_empty():
+		target = current_world_node_id()
+	return town_state.swept_window(target)
+
+
+func sweep_interplay_seams(node_id: String = "") -> Dictionary:
+	var target := node_id.strip_edges()
+	if target.is_empty():
+		target = current_world_node_id()
+	return {
+		"node_id": target,
+		"knuckles_stash_registered": true,
+		"knuckles_stash_active": false,
+		"numbers_pause_registered": true,
+		"numbers_pause_active": false,
+		"streets_patrol_density_registered": true,
+		"streets_patrol_density_delta": 0,
+		"swept_window": swept_window(target),
+	}
 
 
 func town_status_line() -> String:
@@ -6720,7 +6812,88 @@ func apply_town_living_world_context(environment_data: Dictionary, rng: RngStrea
 		return
 	_apply_town_traveler_generation_context(environment_data)
 	_apply_town_reputation_generation_context(environment_data)
+	_apply_town_sweep_generation_context(environment_data)
 	_apply_town_rumor_generation_context(environment_data, rng)
+
+
+func _apply_town_sweep_generation_context(environment_data: Dictionary) -> void:
+	if town_state == null or environment_data.is_empty():
+		return
+	var node_id := str(environment_data.get("world_node_id", environment_data.get("archetype_id", environment_data.get("id", "")))).strip_edges()
+	if node_id.is_empty():
+		return
+	var security := _copy_dict(environment_data.get("security_profile", {}))
+	var channels := _copy_dict(security.get("security_override_channels", {}))
+	var existing := _copy_dict(channels.get("police_sweep", {}))
+	var window := town_state.swept_window(node_id)
+	if window.is_empty():
+		if not existing.is_empty():
+			_restore_sweep_security_value(security, existing, "strictness_band")
+			_restore_sweep_security_value(security, existing, "cheat_risk_window")
+			_restore_sweep_security_value(security, existing, "machine_alarm_tolerance_band")
+			security.erase("swept_window_remaining_actions")
+			security.erase("cheat_windows_open")
+			security.erase("pusher_alarm_tolerance_band_delta")
+			channels.erase("police_sweep")
+			security["security_override_channels"] = channels
+			environment_data["security_profile"] = security
+		return
+	if existing.is_empty():
+		existing = {
+			"source": "police_sweep",
+			"base_strictness_band": str(security.get("strictness_band", security.get("strictness", "low"))),
+			"base_cheat_risk_window": str(security.get("cheat_risk_window", "normal")),
+			"base_machine_alarm_tolerance_band": str(security.get("machine_alarm_tolerance_band", "normal")),
+		}
+	existing["strictness_band_delta"] = -1
+	existing["cheat_window_open"] = true
+	existing["pusher_alarm_tolerance_band_delta"] = 1
+	existing["remaining_actions"] = int(window.get("remaining_actions", 0))
+	channels["police_sweep"] = existing
+	security["strictness_band"] = _sweep_looser_strictness(str(existing.get("base_strictness_band", "low")))
+	security["cheat_risk_window"] = "open"
+	security["machine_alarm_tolerance_band"] = _sweep_looser_alarm_band(str(existing.get("base_machine_alarm_tolerance_band", "normal")))
+	security["swept_window_remaining_actions"] = int(window.get("remaining_actions", 0))
+	security["cheat_windows_open"] = true
+	security["pusher_alarm_tolerance_band_delta"] = 1
+	security["security_override_channels"] = channels
+	environment_data["security_profile"] = security
+
+
+func _restore_sweep_security_value(security: Dictionary, channel: Dictionary, key: String) -> void:
+	var base_key := "base_%s" % key
+	if channel.has(base_key):
+		security[key] = channel.get(base_key)
+	else:
+		security.erase(key)
+
+
+func _sweep_looser_strictness(value: String) -> String:
+	match value.strip_edges().to_lower():
+		"boss":
+			return "high"
+		"high":
+			return "tight"
+		"tight", "velvet":
+			return "moderate"
+		"moderate", "uneven", "private", "licensed-gray":
+			return "low"
+		"low", "distracted":
+			return "relaxed"
+		_:
+			return "relaxed"
+
+
+func _sweep_looser_alarm_band(value: String) -> String:
+	match value.strip_edges().to_lower():
+		"twitchy", "strict":
+			return "normal"
+		"normal":
+			return "lax"
+		"lax":
+			return "open"
+		_:
+			return "lax"
 
 
 func _apply_town_traveler_generation_context(environment_data: Dictionary) -> void:
@@ -7442,6 +7615,8 @@ func advance_environment_turns(amount: int = 1) -> void:
 	if ScenarioEngineScript.advance_environment(current_environment, safe_amount):
 		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 	_advance_travel_lock(safe_amount)
+	_apply_town_sweep_generation_context(current_environment)
+	_check_police_sweep_boundary()
 	_advance_narrative_action_timers(safe_amount)
 	_advance_grand_casino_living_floor(safe_amount)
 	drunk_distortion_suppression_turns = maxi(0, drunk_distortion_suppression_turns - safe_amount)
@@ -7529,7 +7704,240 @@ func _advance_travel_lock(amount: int) -> void:
 	var remaining := maxi(0, int(current_environment.get("travel_lock_remaining", 0)))
 	if remaining <= 0:
 		return
-	current_environment["travel_lock_remaining"] = maxi(0, remaining - amount)
+	var next_remaining := maxi(0, remaining - amount)
+	current_environment["travel_lock_remaining"] = next_remaining
+	if next_remaining <= 0:
+		current_environment.erase("travel_lock_source")
+
+
+func _check_police_sweep_boundary() -> Dictionary:
+	if town_state == null or current_environment.is_empty() or is_terminal():
+		return {}
+	var node_id := current_world_node_id()
+	if node_id.is_empty() or node_id.begins_with("grand_casino"):
+		return {}
+	if town_state.sweep_is_at(node_id):
+		town_state.record_sweep_sighting("direct")
+		var claim := town_state.claim_sweep_encounter(node_id)
+		return _resolve_police_sweep_encounter(claim) if not claim.is_empty() else {}
+	if town_state.sweep_adjacent_sighting_due(node_id):
+		var marker := town_state.record_sweep_sighting("adjacent")
+		enqueue_triggered_event("police_sweep_adjacent_sighting", "police_sweep", {
+			"sweep_marker": marker,
+			"node_id": node_id,
+		}, {"presentation": "talk"})
+		return {"outcome": "adjacent_sighting", "marker": marker}
+	return {}
+
+
+func resolve_police_sweep_encounter_for_test(claim: Dictionary) -> Dictionary:
+	return _resolve_police_sweep_encounter(claim)
+
+
+func _resolve_police_sweep_encounter(claim: Dictionary) -> Dictionary:
+	if claim.is_empty() or town_state == null:
+		return {}
+	var tuning := town_state.sweep_encounter_config()
+	var heat := suspicion_level()
+	var contraband_ids := _carried_contraband_ids()
+	var street_debt_count := _active_street_debt_count()
+	var score := _sweep_heat_points(heat, _copy_array(tuning.get("heat_bands", [])))
+	score += contraband_ids.size() * maxi(0, int(tuning.get("contraband_points_each", 2)))
+	score += street_debt_count * maxi(0, int(tuning.get("street_debt_points_each", 1)))
+	var node_id := str(claim.get("node_id", current_world_node_id()))
+	var archetype_id := str(current_environment.get("archetype_id", node_id))
+	var punchline := node_id == "small_underground_casino" or archetype_id == "small_underground_casino"
+	var punchline_threshold := clampi(int(tuning.get("punchline_l2_heat_threshold", 75)), 0, 100)
+	var outcome := "pass_over"
+	if not punchline:
+		if score <= int(tuning.get("pass_over_max_score", 1)):
+			outcome = "pass_over"
+		elif score <= int(tuning.get("shakedown_max_score", 4)):
+			outcome = "shakedown"
+		elif score <= int(tuning.get("confiscation_max_score", 7)):
+			outcome = "confiscation"
+		else:
+			outcome = "travel_lock"
+	elif heat >= punchline_threshold:
+		outcome = "punchline_l2_near_miss"
+	var result := {
+		"type": "police_sweep_encounter",
+		"outcome": outcome,
+		"score": score,
+		"heat": heat,
+		"contraband_count": contraband_ids.size(),
+		"street_debt_count": street_debt_count,
+		"node_id": node_id,
+		"segment_index": int(claim.get("segment_index", -1)),
+		"run_continues": true,
+		"punchline_layer": 2 if outcome == "punchline_l2_near_miss" else 1 if punchline else 0,
+	}
+	var encounter_rng := RngStream.new()
+	var encounter_seed := maxi(1, int(claim.get("encounter_seed", seed_value)))
+	encounter_rng.configure(encounter_seed, encounter_seed)
+	match outcome:
+		"pass_over":
+			_apply_sweep_fee_or_delay(
+				result,
+				tuning.get("pass_over_fee", [2, 6]),
+				maxi(1, int(tuning.get("pass_over_fallback_lock_actions", 1))),
+				claim,
+				encounter_rng
+			)
+		"shakedown":
+			_apply_sweep_fee_or_delay(
+				result,
+				tuning.get("shakedown_fee", [10, 28]),
+				maxi(1, int(tuning.get("shakedown_fallback_lock_actions", 1))),
+				claim,
+				encounter_rng
+			)
+		"confiscation":
+			if not contraband_ids.is_empty():
+				contraband_ids.sort()
+				var confiscated_id := str(contraband_ids[encounter_rng.randi_range(0, contraband_ids.size() - 1)])
+				remove_item(confiscated_id)
+				result["confiscated_item_id"] = confiscated_id
+				result["cost_kind"] = "contraband"
+				result["cost_amount"] = 1
+			else:
+				_apply_sweep_fee_or_delay(
+					result,
+					tuning.get("empty_confiscation_fee", [8, 16]),
+					maxi(1, int(tuning.get("empty_confiscation_fallback_lock_actions", 2))),
+					claim,
+					encounter_rng
+				)
+		"travel_lock":
+			if _sweep_foreign_travel_lock_active():
+				_apply_sweep_foreign_lock_cost(result, tuning, encounter_rng, claim)
+			else:
+				var lock_range := _sweep_int_range(tuning.get("travel_lock_actions", [2, 4]), 2, 4)
+				var rolled_lock := encounter_rng.randi_range(int(lock_range[0]), int(lock_range[1]))
+				var lock_actions := _apply_sweep_delay(rolled_lock, claim)
+				result["travel_lock_actions"] = lock_actions
+				result["escape_after_actions"] = lock_actions
+				result["cost_kind"] = "travel_delay"
+				result["cost_amount"] = lock_actions
+		"punchline_l2_near_miss":
+			if _sweep_foreign_travel_lock_active():
+				_apply_sweep_foreign_lock_cost(result, tuning, encounter_rng, claim)
+			else:
+				var near_miss_lock := _apply_sweep_delay(maxi(1, int(tuning.get("punchline_near_miss_lock_actions", 2))), claim)
+				result["travel_lock_actions"] = near_miss_lock
+				result["escape_after_actions"] = near_miss_lock
+				result["cost_kind"] = "travel_delay"
+				result["cost_amount"] = near_miss_lock
+		_:
+			pass
+	var event_id := "police_sweep_%s" % outcome
+	enqueue_triggered_event(event_id, "police_sweep", result, {"presentation": "talk"})
+	log_story(result)
+	return result
+
+
+func _sweep_heat_points(heat: int, bands: Array) -> int:
+	for band_value in bands:
+		if typeof(band_value) != TYPE_DICTIONARY:
+			continue
+		var band: Dictionary = band_value
+		if heat <= int(band.get("max", 100)):
+			return maxi(0, int(band.get("points", 0)))
+	return 0
+
+
+func _apply_sweep_fee_or_delay(result: Dictionary, fee_value: Variant, fallback_lock_actions: int, claim: Dictionary, rng: RngStream) -> void:
+	var fee_range := _sweep_int_range(fee_value, 1, 1)
+	var quoted_fee := rng.randi_range(int(fee_range[0]), int(fee_range[1]))
+	var paid := mini(quoted_fee, maxi(0, bankroll - 1))
+	if paid > 0:
+		change_bankroll(-paid)
+		result["fee"] = paid
+		result["cost_kind"] = "cash"
+		result["cost_amount"] = paid
+		return
+	if _sweep_foreign_travel_lock_active():
+		_apply_sweep_foreign_lock_cost(result, town_state.sweep_encounter_config(), rng, claim)
+		return
+	var lock_actions := _apply_sweep_delay(maxi(1, fallback_lock_actions), claim)
+	result["fee"] = 0
+	result["travel_lock_actions"] = lock_actions
+	result["escape_after_actions"] = lock_actions
+	result["cost_kind"] = "travel_delay"
+	result["cost_amount"] = lock_actions
+
+
+func _sweep_foreign_travel_lock_active() -> bool:
+	return maxi(0, int(current_environment.get("travel_lock_remaining", 0))) > 0 \
+		and str(current_environment.get("travel_lock_source", "")) != "police_sweep"
+
+
+func _apply_sweep_foreign_lock_cost(result: Dictionary, tuning: Dictionary, rng: RngStream, claim: Dictionary) -> void:
+	var fine_range := _sweep_int_range(tuning.get("occupied_lock_fine", [6, 12]), 6, 12)
+	var fine := rng.randi_range(int(fine_range[0]), int(fine_range[1]))
+	var paid := mini(fine, maxi(0, bankroll - 1))
+	result["foreign_lock_preserved"] = true
+	if paid > 0:
+		change_bankroll(-paid)
+		result["fee"] = paid
+		result["cost_kind"] = "cash"
+		result["cost_amount"] = paid
+		return
+	var debt_id := "police_sweep_fine_%d_%d" % [int(claim.get("segment_index", 0)), int(claim.get("action_index", town_state.action_index))]
+	add_debt({
+		"id": debt_id,
+		"lender_id": "police_sweep",
+		"debt_kind": "cash",
+		"principal": fine,
+		"balance": fine,
+		"status": "active",
+		"source_location_id": current_world_node_id(),
+	})
+	result["debt_id"] = debt_id
+	result["cost_kind"] = "street_debt"
+	result["cost_amount"] = fine
+
+
+func _apply_sweep_delay(requested_actions: int, claim: Dictionary) -> int:
+	var until_departure := maxi(1, int(claim.get("sweep_departure_action", town_state.action_index + 1)) - int(town_state.action_index))
+	var lock_actions := mini(maxi(1, requested_actions), until_departure)
+	current_environment["travel_locked_actions"] = maxi(int(current_environment.get("travel_locked_actions", 0)), lock_actions)
+	current_environment["travel_lock_remaining"] = maxi(int(current_environment.get("travel_lock_remaining", 0)), lock_actions)
+	current_environment["travel_lock_source"] = "police_sweep"
+	return lock_actions
+
+
+func _sweep_int_range(value: Variant, fallback_min: int, fallback_max: int) -> Array:
+	if typeof(value) == TYPE_ARRAY and (value as Array).size() >= 2:
+		var first := int((value as Array)[0])
+		var second := int((value as Array)[1])
+		return [mini(first, second), maxi(first, second)]
+	return [mini(fallback_min, fallback_max), maxi(fallback_min, fallback_max)]
+
+
+func _carried_contraband_ids() -> Array:
+	var definitions := _item_definition_index()
+	var result: Array = []
+	for inventory_entry in inventory:
+		var item_id := _inventory_item_id(inventory_entry)
+		var definition := _copy_dict(definitions.get(item_id, {}))
+		var risk_flags := _string_array(_copy_array(definition.get("risk_flags", [])))
+		if str(definition.get("class", "")).strip_edges().to_lower() == "contraband" or risk_flags.has("contraband"):
+			result.append(item_id)
+	return result
+
+
+func _active_street_debt_count() -> int:
+	var count := 0
+	for debt_value in debt:
+		if typeof(debt_value) != TYPE_DICTIONARY:
+			continue
+		var debt_data: Dictionary = debt_value
+		if str(debt_data.get("debt_kind", "")) == "casino_marker":
+			continue
+		if ["active", "overdue", "favor_due"].has(str(debt_data.get("status", "active"))):
+			count += 1
+	return count
 
 
 func _advance_narrative_action_timers(amount: int) -> void:
@@ -8692,6 +9100,7 @@ func from_dict(data: Dictionary) -> void:
 	var saved_town_value: Variant = data.get("town_state", {})
 	if typeof(saved_town_value) != TYPE_DICTIONARY or (saved_town_value as Dictionary).is_empty():
 		town_state.generate(seed_value)
+		town_state.disable_police_sweep_for_legacy_save()
 		print("RUN_SAVE_MIGRATION town_state regenerated from seed for a pre-0.6 save.")
 	else:
 		town_state.restore(saved_town_value as Dictionary, seed_value)

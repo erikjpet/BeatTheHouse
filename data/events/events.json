@@ -1532,6 +1532,186 @@
     }
   },
   {
+    "id": "police_sweep_pass_over",
+    "display_name": "The Sweep",
+    "type": "law",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Sweep Officer",
+      "character_id": "sweep_officer",
+      "voice_line_key": "sweep",
+      "silhouette": "cap",
+      "bind": "none"
+    },
+    "scopes": ["any"],
+    "asset_path": "res://assets/art/events/motel_knock.png",
+    "trigger": {"type": "manual", "unavoidable": true},
+    "cadence": {"bypass_budget": true},
+    "payload": {
+      "summary": "Blue lights stop. Then they move on.",
+      "choices": [
+        {
+          "id": "continue",
+          "label": "Keep moving",
+          "text": "The street opens again.",
+          "consequences": {"resolve_event": true}
+        }
+      ]
+    }
+  },
+  {
+    "id": "police_sweep_shakedown",
+    "display_name": "The Sweep",
+    "type": "law",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Sweep Officer",
+      "character_id": "sweep_officer",
+      "voice_line_key": "sweep",
+      "silhouette": "cap",
+      "bind": "none"
+    },
+    "scopes": ["any"],
+    "asset_path": "res://assets/art/events/motel_knock.png",
+    "trigger": {"type": "manual", "unavoidable": true},
+    "cadence": {"bypass_budget": true},
+    "payload": {
+      "summary": "They count your pocket and take their share.",
+      "choices": [
+        {
+          "id": "continue",
+          "label": "Take the loss",
+          "text": "Cash goes. You don't.",
+          "consequences": {"resolve_event": true}
+        }
+      ]
+    }
+  },
+  {
+    "id": "police_sweep_confiscation",
+    "display_name": "The Sweep",
+    "type": "law",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Sweep Officer",
+      "character_id": "sweep_officer",
+      "voice_line_key": "sweep",
+      "silhouette": "cap",
+      "bind": "none"
+    },
+    "scopes": ["any"],
+    "asset_path": "res://assets/art/events/motel_knock.png",
+    "trigger": {"type": "manual", "unavoidable": true},
+    "cadence": {"bypass_budget": true},
+    "payload": {
+      "summary": "Bad cargo finds a new pocket.",
+      "choices": [
+        {
+          "id": "continue",
+          "label": "Let it go",
+          "text": "The item stays. You walk.",
+          "consequences": {"resolve_event": true}
+        }
+      ]
+    }
+  },
+  {
+    "id": "police_sweep_travel_lock",
+    "display_name": "The Sweep",
+    "type": "law",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Sweep Officer",
+      "character_id": "sweep_officer",
+      "voice_line_key": "sweep",
+      "silhouette": "cap",
+      "bind": "none"
+    },
+    "scopes": ["any"],
+    "asset_path": "res://assets/art/events/motel_knock.png",
+    "trigger": {"type": "manual", "unavoidable": true},
+    "cadence": {"bypass_budget": true},
+    "payload": {
+      "summary": "The block closes. Not for long.",
+      "choices": [
+        {
+          "id": "continue",
+          "label": "Wait them out",
+          "text": "Their clock runs. Yours does too.",
+          "consequences": {"resolve_event": true}
+        }
+      ]
+    }
+  },
+  {
+    "id": "police_sweep_punchline_l2_near_miss",
+    "display_name": "The Sweep",
+    "type": "law",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Sweep Officer",
+      "character_id": "sweep_officer",
+      "voice_line_key": "sweep",
+      "silhouette": "cap",
+      "bind": "none"
+    },
+    "scopes": ["any"],
+    "asset_path": "res://assets/art/events/motel_knock.png",
+    "trigger": {"type": "manual", "unavoidable": true},
+    "cadence": {"bypass_budget": true},
+    "payload": {
+      "summary": "They pass. One hand finds the second door.",
+      "choices": [
+        {
+          "id": "continue",
+          "label": "Hold still",
+          "text": "The hand leaves. The door stays shut.",
+          "consequences": {"resolve_event": true}
+        }
+      ]
+    }
+  },
+  {
+    "id": "police_sweep_adjacent_sighting",
+    "display_name": "Blue Lights",
+    "type": "law",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Sweep Officer",
+      "character_id": "sweep_officer",
+      "voice_line_key": "sweep",
+      "silhouette": "cap",
+      "bind": "none"
+    },
+    "scopes": ["any"],
+    "asset_path": "res://assets/art/events/motel_knock.png",
+    "trigger": {"type": "manual", "unavoidable": true},
+    "cadence": {"bypass_budget": true},
+    "payload": {
+      "summary": "Blue light rolls across the next block.",
+      "choices": [
+        {
+          "id": "continue",
+          "label": "Mark the map",
+          "text": "Last known. Already aging.",
+          "consequences": {"resolve_event": true}
+        }
+      ]
+    }
+  },
+  {
     "id": "the_collector",
     "display_name": "The Collector",
     "type": "debt",

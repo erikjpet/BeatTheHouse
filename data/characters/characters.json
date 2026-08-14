@@ -1085,6 +1085,37 @@
     ]
   },
   {
+    "id": "sweep_officer",
+    "display_name": "Sweep Officer",
+    "title": "Patrol",
+    "role": "staff",
+    "model": {
+      "skin_color": "#8b5c45",
+      "hair_color": "#17141b",
+      "jacket_color": "#202b43",
+      "accent_color": "#62a8ff",
+      "silhouette": "cap",
+      "scale": 1.04
+    },
+    "voice": {
+      "style": "Flat, procedural, and already looking past you toward the next door.",
+      "lines": {
+        "sweep": [
+          "Hands out. This won't take long.",
+          "Every room gets checked tonight.",
+          "Hold still. Then keep moving."
+        ]
+      }
+    },
+    "encounters": [
+      {
+        "context": "sweep",
+        "line_key": "sweep",
+        "event_id": "police_sweep_pass_over"
+      }
+    ]
+  },
+  {
     "id": "marrow_collector",
     "display_name": "Marrow Keene",
     "title": "Debt Collector",
