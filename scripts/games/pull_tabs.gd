@@ -2832,14 +2832,15 @@ func _redemption_context(machine: Dictionary, tickets: Array, run_state: RunStat
 
 func _pull_tab_cheat_heat(base_heat: int, stake: int, run_state: RunState, environment: Dictionary) -> Dictionary:
 	if base_heat <= 0:
+		var zero_heat_watch: Dictionary = run_state.pit_boss_watch_status(environment) if run_state != null else {}
 		return {
 			"suspicion_delta": 0,
 			"base_suspicion_delta": 0,
 			"bankroll_delta": 0,
 			"security_message": "",
 			"ended": false,
-			"pit_boss_watched": false,
-			"pit_boss_heat_bonus": 0,
+			"pit_boss_watched": bool(zero_heat_watch.get("watched", false)),
+			"pit_boss_heat_bonus": int(zero_heat_watch.get("cheat_heat_bonus", 0)) if bool(zero_heat_watch.get("active", false)) else 0,
 		}
 	if run_state == null:
 		return {
