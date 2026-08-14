@@ -5,6 +5,7 @@ extends RefCounted
 
 const CREW_CONFIG_PATH := "res://data/crew/crew.json"
 const CREW_JOBS_PATH := "res://data/crew/jobs.json"
+const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const STATE_SCHEMA_VERSION := 1
 const MEMBER_IDS := [
 	"crew_rook",
@@ -197,6 +198,7 @@ static func validate_content() -> Array:
 		job_ids[job_id] = true
 	if not job_ids.has("crew_favor_delivery"):
 		failures.append("jobs.json is missing the Crew favor proof job.")
+	failures.append_array(CrewPokerModelScript.validate_content(MEMBER_IDS))
 	return failures
 
 

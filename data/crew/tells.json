@@ -1,0 +1,58 @@
+[
+  {
+    "schema_version": 1,
+    "member_id": "crew_rook",
+    "patterns": [
+      {"state_key": "p01", "condition": "strong", "frequency_percent": 72, "channel": "timing", "timing_msec": 520, "portrait_variant": "eyes_door", "line": "Rook glances once at the shut door.", "quirk": "His thumb stops tapping the table."},
+      {"state_key": "p02", "condition": "drawing_one", "frequency_percent": 60, "channel": "portrait", "timing_msec": 260, "portrait_variant": "chin_down", "line": "Rook lowers his chin toward the deck.", "quirk": "He leaves one card exactly square."}
+    ]
+  },
+  {
+    "schema_version": 1,
+    "member_id": "crew_velvet",
+    "patterns": [
+      {"state_key": "p03", "condition": "weak_aggression", "frequency_percent": 68, "channel": "line", "timing_msec": 340, "portrait_variant": "bright_smile", "line": "Velvet smiles a little wider. 'Whatever makes the hand prettier.'", "quirk": "She smooths an empty place in the felt."},
+      {"state_key": "p04", "condition": "strong", "frequency_percent": 64, "channel": "portrait", "timing_msec": 300, "portrait_variant": "still_smile", "line": "Velvet's smile settles instead of growing.", "quirk": "Her chips arrive in one quiet stack."}
+    ]
+  },
+  {
+    "schema_version": 1,
+    "member_id": "crew_knuckles",
+    "patterns": [
+      {"state_key": "p05", "condition": "strong", "frequency_percent": 76, "channel": "portrait", "timing_msec": 210, "portrait_variant": "rings_flat", "line": "Knuckles lays both ringed hands flat.", "quirk": "The usual chip roll stops."},
+      {"state_key": "p06", "condition": "drawing_three", "frequency_percent": 58, "channel": "line", "timing_msec": 180, "portrait_variant": "half_grin", "line": "Knuckles half-grins. 'Plenty of deck left.'", "quirk": "He flicks the discards instead of stacking them."}
+    ]
+  },
+  {
+    "schema_version": 1,
+    "member_id": "crew_switch",
+    "patterns": [
+      {"state_key": "p07", "condition": "weak_aggression", "frequency_percent": 66, "channel": "timing", "timing_msec": 120, "portrait_variant": "eyes_left", "line": "Switch's eyes cut left before the chips land.", "quirk": "The bet arrives too quickly."},
+      {"state_key": "p08", "condition": "pat", "frequency_percent": 70, "channel": "portrait", "timing_msec": 240, "portrait_variant": "shoulders_still", "line": "Switch sits still for one rare beat.", "quirk": "Not a single card edge gets checked twice."}
+    ]
+  },
+  {
+    "schema_version": 1,
+    "member_id": "crew_mags",
+    "patterns": [
+      {"state_key": "p09", "condition": "strong", "frequency_percent": 78, "channel": "timing", "timing_msec": 430, "portrait_variant": "glasses_low", "line": "Mags re-stacks her chips by height.", "quirk": "Every edge lines up before she bets."},
+      {"state_key": "p10", "condition": "drawing_one", "frequency_percent": 62, "channel": "line", "timing_msec": 360, "portrait_variant": "brow_counting", "line": "Mags says, 'One variable.'", "quirk": "She taps the replacement slot once."}
+    ]
+  },
+  {
+    "schema_version": 1,
+    "member_id": "crew_bishop",
+    "patterns": [
+      {"state_key": "p11", "condition": "strong", "frequency_percent": 70, "channel": "line", "timing_msec": 390, "portrait_variant": "coat_settled", "line": "Bishop says, 'The record is sufficient.'", "quirk": "He closes one coat button."},
+      {"state_key": "p12", "condition": "weak_aggression", "frequency_percent": 61, "channel": "portrait", "timing_msec": 320, "portrait_variant": "coat_open", "line": "Bishop leaves his coat open.", "quirk": "He counts the pot twice."}
+    ]
+  },
+  {
+    "schema_version": 1,
+    "member_id": "crew_lucky",
+    "patterns": [
+      {"state_key": "p13", "condition": "weak_aggression", "frequency_percent": 80, "channel": "timing", "timing_msec": 610, "portrait_variant": "mouth_still", "line": "Lucky goes quiet.", "quirk": "For once, the bet gets no story."},
+      {"state_key": "p14", "condition": "strong", "frequency_percent": 65, "channel": "line", "timing_msec": 170, "portrait_variant": "small_grin", "line": "Lucky says, 'Could be worse,' without laughing.", "quirk": "The chips click into a careful pair."}
+    ]
+  }
+]
