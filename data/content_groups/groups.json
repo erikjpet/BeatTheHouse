@@ -100,6 +100,14 @@
 		"item_ids": ["weighted_keyring", "dice_calipers", "false_bottom_cup"]
 	},
 	{
+		"id": "craps_pack",
+		"display_name": "Craps Pack",
+		"description": "Line wagers, practiced releases, and measured dice.",
+		"default_enabled": true,
+		"game_ids": ["craps"],
+		"item_ids": ["weighted_keyring", "dice_calipers", "false_bottom_cup"]
+	},
+	{
 		"id": "blackjack_pack",
 		"display_name": "Blackjack Pack",
 		"description": "Cards, counts, dealer shadows.",
