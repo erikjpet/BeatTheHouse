@@ -317,6 +317,12 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   pre-action tick, then records the action/deadline boundary without another
   patrol or sight pass. Clean resolution is historical: any earlier spotting
   prevents a later stash escape from restoring the clean-speed bonus.
+- 2026-08-14 [crew06_2/crew06_3] Back-Room Poker furnishes the existing empty
+  L3 shell with one stable game spot and accepts future `resident_member_ids`,
+  using a seeded 2-3 member rotation until crew itineraries land. Hidden tell
+  progress serializes only under neutral `p`/`m` keys; authored tell ids,
+  conditions, exposure labels, and counters remain absent from public results,
+  logs, and UI. Numbers must add a distinct reachable furniture spot later.
 
 ## Work Log
 
@@ -394,3 +400,6 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   rows and landed seams. Craps, pusher, and Streets take the three available
   subagent slots; poker is queued for the first released slot. PM retains
   single-writer board, integration, verification, archival, and push ownership.
+- 2026-08-14 [crew06_2] The queued Stage-1 slot opened and the isolated Poker
+  owner started. PM froze the first L3 furniture and neutral tell-storage seams;
+  board, archival, integration, runtime grants, and push remain PM-owned.
