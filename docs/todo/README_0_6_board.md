@@ -298,11 +298,15 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   no machine is forced into every node. Alarm tolerance remains hidden, and a
   hard alarm is nonterminal: it locks only that machine, writes heat/memory,
   and leaves the environment plus its other games playable.
-- 2026-08-14 [push06_1] Quarter Falls joins the existing default Slot Pack so
-  content validation can trace its registration. Cold Quarters and Coin-Return
-  Shim are accepted only with tests that consume their authored effect keys on
-  real drop/gutter actions; their shipped 3/3 fallback tunings remain unchanged
-  for legacy or disabled-content saves.
+- 2026-08-14 [push06_1] Quarter Falls uses its own default-enabled Coin Pusher
+  Pack; the shipped Slot Pack remains slot-only so One Machine is
+  behavior-identical. Cold Quarters and Coin-Return Shim are shared across both
+  packs and are accepted only with tests that consume their authored effect keys
+  on real drop/gutter actions; their shipped 3/3 fallback tunings remain
+  unchanged for legacy or disabled-content saves. World-map discovery capacity
+  counts only guaranteed machines: a required-free `[0, N]` pool stays optional
+  and cannot perturb shipped early-route ranking, while environment generation
+  still rolls its authored availability normally.
 - 2026-08-14 [craps06_1] Craps die sides and line-result totals are authored
   data consumed by both resolution and RTP probes. Payout-luck coverage must
   select a deterministic natural-producing stream and assert the exact shared
