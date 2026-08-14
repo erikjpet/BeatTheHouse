@@ -641,7 +641,7 @@ func _tell_label(rung: int) -> String:
 
 
 func _phase_distance(a: int, b: int) -> int:
-	var direct := abs(posmod(a, PHASE_STEPS) - posmod(b, PHASE_STEPS))
+	var direct: int = abs(posmod(a, PHASE_STEPS) - posmod(b, PHASE_STEPS))
 	return mini(direct, PHASE_STEPS - direct)
 
 
