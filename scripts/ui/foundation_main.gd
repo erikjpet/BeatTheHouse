@@ -1842,6 +1842,22 @@ func confirm_selected_travel() -> void:
 	_travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice)
 
 
+func wait_out_police_sweep() -> bool:
+	if run_state == null or _guard_player_input_route(false, "sweep_wait"):
+		return false
+	var result := run_state.perform_sweep_wait_action()
+	_show_message(str(result.get("message", "There is no sweep to wait out.")))
+	if not bool(result.get("ok", false)):
+		_refresh()
+		return false
+	_autosave_foundation_run("Autosaved.")
+	if _apply_post_action_environment_interrupt("sweep_wait"):
+		_refresh()
+		return true
+	_refresh()
+	return true
+
+
 func open_world_map(force_closing_allowed: bool = false) -> bool:
 	if run_state == null:
 		return false
@@ -7910,6 +7926,11 @@ func _add_context_game_hook_actions(card: VBoxContainer, object_data: Dictionary
 
 func _add_context_travel_actions(card: VBoxContainer, target_id: String) -> void:
 	if target_id == "leave":
+		var sweep_wait := run_state.sweep_wait_action_status() if run_state != null else {}
+		if bool(sweep_wait.get("visible", false)):
+			var wait_remaining := int(sweep_wait.get("remaining_actions", 0))
+			card.add_child(_muted_label("Cruisers hold the block for %d more action%s." % [wait_remaining, "" if wait_remaining == 1 else "s"], 13))
+			_add_card_button(card, str(sweep_wait.get("label", "Wait out the sweep")), Callable(self, "wait_out_police_sweep"), false, true)
 		var choices := _travel_choice_view_list()
 		for choice_value in choices.slice(0, 4):
 			if typeof(choice_value) != TYPE_DICTIONARY:
@@ -8037,6 +8058,8 @@ func _action_category_view_list() -> Array:
 	var service_count := _service_hook_view_list().size()
 	var lender_count := _lender_hook_view_list().size()
 	var travel_count := _travel_choice_view_list().size()
+	if run_state != null and bool(run_state.sweep_wait_action_status().get("visible", false)):
+		travel_count += 1
 	return [
 		{
 			"id": ACTION_CATEGORY_GAMES,
