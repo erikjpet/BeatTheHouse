@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `env06_4` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-14
+- **Completion/implementation commits:** `3c694d6f` (implementation), `16b322c1` (integration with tier-1 scenarios)
+- **Verification:** PM integrated-tree PASS: systems (`.tmp/pm_wave_b_env06_4_systems`), UI (`.tmp/pm_wave_b_env06_4_ui`), determinism 10 seeds / 320 checkpoints / hash `950792478`, visual QA, three-layer screenshot review with zero overlaps, L2 literal baseline SHA-256 `411a9b59089104975d1e45b7477b2ce103aeb4ce9bf617e5c73fe6f9be028624`, shortcut traversal, access, save/load, and eager legacy stored-node migration regressions.
+- **Deviations:** L1/L3 use registered art slots backed by the shipped underground raster plus distinct code-rendered scenes pending dedicated final raster art. L3 is the roadmap-authorized inert shell for `crew06_6`; no gameplay scope was added there.
 
 # Agent Prompt — 0.6 env06_4: The Punchline (3-Layer Venue Rework)
 
