@@ -2949,7 +2949,15 @@ func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 		game_states[get_id()] = table
 		environment["game_states"] = game_states
 	_apply_grand_casino_dealer_assignment(table, run_state, environment)
-	return _normalize_table_state(table)
+	var normalized := _normalize_table_state(table)
+	# Peek is a mandatory guided-run lesson, so its real setup controls cannot be
+	# sampled out of the table. Repair both newly generated tables and resumed
+	# saves whose old random distraction roll omitted DRINK PASS. Keep this scoped
+	# to Pal's underground table; normal blackjack retains the complete random
+	# distraction catalog and distribution.
+	if _ensure_tutorial_peek_distractions(normalized, run_state, environment):
+		_update_environment_table(environment, normalized)
+	return normalized
 
 
 func _apply_grand_casino_dealer_assignment(table: Dictionary, run_state: RunState, environment: Dictionary) -> void:
@@ -3048,13 +3056,57 @@ func _generate_table_patrons(rng: RngStream, depth: int) -> Array:
 
 
 func _generate_table_distractions(rng: RngStream) -> Array:
-	var catalog: Array = [
+	var catalog := _table_distraction_catalog()
+	return rng.pick_many(catalog, rng.randi_range(2, 3))
+
+
+func _table_distraction_catalog() -> Array:
+	return [
 		{"id": "chip_spill", "label": "Chip Spill", "summary": "short window; patrons look down", "duration_msec": 2600, "cover": 10, "noise": 7},
 		{"id": "payout_question", "label": "Payout Ask", "summary": "medium window; dealer checks felt", "duration_msec": 3400, "cover": 6, "noise": 4},
 		{"id": "pit_glance", "label": "Pit Glance", "summary": "long window; higher table heat", "duration_msec": 4200, "cover": 4, "noise": 10},
 		{"id": "drink_pass", "label": "Drink Pass", "summary": "covers patrons; brief dealer gap", "duration_msec": 3000, "cover": 16, "noise": 6},
 	]
-	return rng.pick_many(catalog, rng.randi_range(2, 3))
+
+
+func _ensure_tutorial_peek_distractions(table: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
+	if run_state == null \
+			or not run_state.is_tutorial_run() \
+			or str(environment.get("archetype_id", "")) != "small_underground_casino":
+		return false
+	var distractions := _dictionary_array(table.get("distractions", []))
+	var existing_ids: Array[String] = []
+	for distraction_value in distractions:
+		var distraction: Dictionary = distraction_value
+		var distraction_id := str(distraction.get("id", "")).strip_edges()
+		if not distraction_id.is_empty() and not existing_ids.has(distraction_id):
+			existing_ids.append(distraction_id)
+	var required_ids := ["drink_pass", "chip_spill"]
+	if existing_ids.size() >= 2 and existing_ids[0] == required_ids[0] and existing_ids[1] == required_ids[1]:
+		return false
+	var by_id := {}
+	for distraction_value in _table_distraction_catalog():
+		var distraction: Dictionary = distraction_value
+		by_id[str(distraction.get("id", ""))] = distraction.duplicate(true)
+	for distraction_value in distractions:
+		var distraction: Dictionary = distraction_value
+		var distraction_id := str(distraction.get("id", "")).strip_edges()
+		if not distraction_id.is_empty():
+			by_id[distraction_id] = distraction.duplicate(true)
+	var repaired: Array = []
+	for required_id in required_ids:
+		repaired.append((by_id.get(required_id, {}) as Dictionary).duplicate(true))
+	for distraction_value in distractions:
+		var distraction: Dictionary = distraction_value
+		if repaired.size() >= 3:
+			break
+		var distraction_id := str(distraction.get("id", "")).strip_edges()
+		if required_ids.has(distraction_id):
+			continue
+		repaired.append(distraction.duplicate(true))
+	table["distractions"] = repaired
+	table["tutorial_peek_distractions_repaired"] = true
+	return true
 
 
 func _default_table_rng(table: Dictionary, suffix: String) -> RngStream:

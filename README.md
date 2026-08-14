@@ -9,7 +9,7 @@ and bad exit pushes the run state forward.
 
 Versions 0.2.0 through 0.3.3 are historical source releases; 0.4.0 was an Act 1
 candidate tag that was not published before development continued. Version
-0.5.0 is the current source-complete GitHub integration line. It keeps the Act
+0.5.1 is the current source-complete GitHub integration line. It keeps the Act
 1 foundation and reworks the Grand Casino into a three-room endgame with a living
 Rourke, a chips-and-Cage economy, Linda's Bronze/Silver/Gold Players Card
 ladder, a four-phase back-room showdown, a playable heads-up blackjack duel,
@@ -18,7 +18,8 @@ meaningful destination tradeoffs, trustworthy release gates, automated
 tutorial coverage, native/Web performance, soak/storage, strict-input,
 visual, and exact-source Full gates are green on the technical baseline.
 The owner approved the tested baseline for public release on 2026-08-12. The
-`v0.5.0` tag and GitHub Release identify the official playtest-event baseline.
+`v0.5.1` tag and GitHub Release identify the final corrected 0.5 playtest baseline;
+`v0.5.0` remains the immutable original release boundary.
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
 the repository.
@@ -31,8 +32,8 @@ the repository.
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
 | Prior release line | 0.3.3 public source release; 0.4.0 unpublished Act 1 candidate |
-| Active planning target | 0.5.0 released baseline; future work begins after this tag |
-| Current release readiness | Official GitHub release approved; see `docs/plans/0.5_source_completion_record.md` and the `v0.5.0` release |
+| Active planning target | 0.5.1 final 0.5 patch; 0.6 work begins after this tag |
+| Current release readiness | Final 0.5 tutorial-recovery patch; see `docs/plans/0.5.1_release_checklist.md` and the `v0.5.1` release |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -480,7 +481,7 @@ historical release evidence.
 
 `tools/export_itch.ps1` packages the Web and Windows presets for itch.io upload
 after Godot export templates are installed. Project and export preset versions
-are currently stamped `0.5.0`. The tool supports `-Push -DryRun` for butler
+are currently stamped `0.5.1`. The tool supports `-Push -DryRun` for butler
 command verification and non-dry-run publishing after the user has installed
 butler and run `butler login` once. Fresh final 0.5 Web/Windows package hashes
 do not exist until the owner runs the final export packaging. Android

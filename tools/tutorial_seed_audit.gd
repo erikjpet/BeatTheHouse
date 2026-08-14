@@ -306,7 +306,7 @@ func _run_route(route_id: String) -> Dictionary:
 	_check(str(_dict(linda_nodes.get("main", {})).get("tutorial_text", "")).contains("Cash buys chips") and str(_dict(linda_nodes.get("chips", {})).get("tutorial_text", "")).contains("pays debt first"), "%s Linda conversation did not expose the extended tutorial chip/debt explanation." % route_id, route_failures)
 	var main_entered: bool = generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID)
 	_check(main_entered, "%s could not return to the Main Floor." % route_id, route_failures)
-	var grand_hand := _settle_grand_blackjack_hand(run_state, route_failures)
+	var grand_hand := _settle_grand_blackjack_hands(run_state, route_failures)
 	var ready_status := run_state.demo_objective_status()
 	_check(int(ready_status.get("grand_casino_games_played", 0)) >= 1 and bool(ready_status.get("players_card_ready_to_claim", false)), "%s did not reach the compressed Bronze review after real table play: %s" % [route_id, JSON.stringify(ready_status)], route_failures)
 	_check(generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID), "%s could not return to Linda after table play." % route_id, route_failures)
@@ -462,13 +462,16 @@ func _deal_and_stand(game: GameModule, run_state: RunState, stake: int, rng_labe
 	return {"deal_ok": bool(deal_result.get("ok", false)), "settled": bool(stand_result.get("ok", false)), "result": stand_result}
 
 
-func _settle_grand_blackjack_hand(run_state: RunState, route_failures: Array) -> Dictionary:
+func _settle_grand_blackjack_hands(run_state: RunState, route_failures: Array) -> Dictionary:
 	var game: GameModule = BlackjackScript.new()
 	game.setup(library.game("blackjack"), library)
 	game.enter(run_state, run_state.current_environment)
-	var hand := _deal_and_stand(game, run_state, 1, "tutorial_grand")
-	_check(bool(hand.get("settled", false)), "Grand Casino tutorial table hand did not settle through Blackjack.", route_failures)
-	return hand
+	var hands: Array = []
+	for hand_index in range(2):
+		var hand := _deal_and_stand(game, run_state, 1, "tutorial_grand_%d" % hand_index)
+		hands.append(hand)
+		_check(bool(hand.get("settled", false)), "Grand Casino tutorial table hand %d did not settle through Blackjack." % (hand_index + 1), route_failures)
+	return {"settled": hands.all(func(hand): return bool((hand as Dictionary).get("settled", false))), "hands": hands}
 
 
 func _normal_run_isolation() -> Dictionary:

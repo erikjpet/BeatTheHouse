@@ -2108,6 +2108,9 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var tutorial_peek_run: RunState = RunStateScript.new()
 	tutorial_peek_run.start_new("BLACKJACK-TUTORIAL-PEEK-REPRIEVE", {"tutorial": true, "modifiers": {"tutorial_run": true}})
 	var tutorial_peek_environment := _surface_contract_environment()
+	# The reprieve is a Pal-table tutorial rule, not a global tutorial Blackjack
+	# exemption. Model the production venue so this contract exercises that rule.
+	tutorial_peek_environment["archetype_id"] = "small_underground_casino"
 	var tutorial_peek_table := generated_state.duplicate(true)
 	tutorial_peek_table["dealer_profile"] = {"attention_base": 100, "gaze_speed": 95, "blink_offset": 0, "tell": "locks onto your hands"}
 	tutorial_peek_table["patrons"] = []
@@ -2136,15 +2139,25 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 			or (tutorial_peek_result.get("blackjack_surface_ui_state", {}) as Dictionary).get("player_hands", []).is_empty():
 		failures.append("The tutorial Peek reprieve did not preserve the current hand without confiscating its wager twice.")
 	if not bool(tutorial_peek_run.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false)):
-		failures.append("Tutorial blackjack did not persist consumption of the one-time Peek reprieve.")
+		failures.append("Tutorial blackjack did not persist the one-time dealer warning marker.")
 	var second_tutorial_table := tutorial_peek_table.duplicate(true)
 	second_tutorial_table["barred"] = false
 	tutorial_peek_environment["game_states"] = {"blackjack": second_tutorial_table}
 	var second_tutorial_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5, "surface_time_msec": 8000}, tutorial_peek_run, tutorial_peek_environment)
 	var second_tutorial_peek := game.surface_action_command("blackjack_peek", 0, false, second_tutorial_deal.get("ui_state", {}), tutorial_peek_run, tutorial_peek_environment)
 	var second_tutorial_result := game.resolve_with_context("peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_barred"), second_tutorial_peek.get("ui_state", {}))
-	if not bool(second_tutorial_result.get("blackjack_table_barred", false)):
-		failures.append("Tutorial blackjack granted more than one caught-Peek reprieve.")
+	if bool(second_tutorial_result.get("blackjack_table_barred", true)) \
+			or not bool(second_tutorial_result.get("blackjack_tutorial_peek_reprieve", false)):
+		failures.append("A repeated bad Peek barred the tutorial table before the player completed the counting lesson.")
+	var learned_tutorial_table := tutorial_peek_table.duplicate(true)
+	learned_tutorial_table["barred"] = false
+	learned_tutorial_table["tutorial_count_completed"] = true
+	tutorial_peek_environment["game_states"] = {"blackjack": learned_tutorial_table}
+	var learned_tutorial_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5, "surface_time_msec": 12000}, tutorial_peek_run, tutorial_peek_environment)
+	var learned_tutorial_peek := game.surface_action_command("blackjack_peek", 0, false, learned_tutorial_deal.get("ui_state", {}), tutorial_peek_run, tutorial_peek_environment)
+	var learned_tutorial_result := game.resolve_with_context("peek_hole_card", 0, tutorial_peek_run, tutorial_peek_environment, tutorial_peek_run.create_rng("blackjack_tutorial_peek_after_count"), learned_tutorial_peek.get("ui_state", {}))
+	if not bool(learned_tutorial_result.get("blackjack_table_barred", false)):
+		failures.append("Tutorial blackjack kept protecting bad Peeks after the counting lesson was complete.")
 	var cufflinks_run_state: RunState = RunStateScript.new()
 	cufflinks_run_state.start_new("BLACKJACK-COOLERS-CUFFLINKS")
 	cufflinks_run_state.add_item("coolers_cufflinks")

@@ -1,8 +1,13 @@
 # Scratch Ticket Art Alignment — Root Cause Analysis + Fix Prompt
 
-**Status:** analysed 2026-08-11, NOT fixed. Everything below is diagnosis and a
-plan; no gameplay code was changed. The only file added was the read-only
-diagnostic `tools/scratch_ticket_alignment_audit.py`.
+**Status:** analysed 2026-08-11, NOT fixed; explicitly deferred from the 0.5
+release line to 0.6 on 2026-08-13. Everything below is diagnosis and a plan;
+no gameplay code was changed. The only file added was the read-only diagnostic
+`tools/scratch_ticket_alignment_audit.py`.
+
+**Release target:** 0.6. This is not a 0.5.1 blocker. Phase 5 still requires the
+owner to choose how Crossword Corner reconciles printed art and mechanics; do
+not treat the 0.5 closeout decision as that art-direction choice.
 
 **Symptom (owner report):** the reveal icons/numbers are not inside the circles
 and boxes printed on the ticket. Confirmed on Bonus Bingo in-game; reproduced

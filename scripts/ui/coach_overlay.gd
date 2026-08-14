@@ -64,6 +64,8 @@ var live_anchor_change_count := 0
 var active_anchor_kind_value := ""
 var active_anchor_id_value := ""
 var active_dialogue_requested := false
+var active_dialogue_was_requested := false
+var active_dialogue_acknowledged := false
 var tips_enabled := true
 var reduce_motion := false
 var small_screen := false
@@ -105,6 +107,8 @@ func restore_seen(next_seen: Dictionary) -> void:
 	active_anchor_kind_value = ""
 	active_anchor_id_value = ""
 	active_dialogue_requested = false
+	active_dialogue_was_requested = false
+	active_dialogue_acknowledged = false
 	visible = false
 
 
@@ -170,6 +174,11 @@ func evaluate_at_boundary(context: Dictionary) -> void:
 		if not active_lesson.is_empty() and next_layout_key != active_layout_key:
 			active_context = observed_context.duplicate(true)
 			_render_active(false)
+	# A player can perform a state-based lesson before its dialogue becomes the
+	# active queue head (or save/reload on the same boundary). Reconcile durable
+	# outcomes before selecting the next lesson so already-achieved work never
+	# leaves the dependency graph waiting for a transient trigger that has passed.
+	_complete_satisfied_frontier_lessons(observed_context)
 	for lesson_value in lessons:
 		if typeof(lesson_value) != TYPE_DICTIONARY:
 			continue
@@ -180,6 +189,13 @@ func evaluate_at_boundary(context: Dictionary) -> void:
 		if CoachViewModelScript.trigger_matches(lesson, observed_context, seen, tips_enabled):
 			queued_lessons.append({"lesson": lesson.duplicate(true), "context": observed_context.duplicate(true)})
 			queued_ids[lesson_id] = true
+	# Exact predicates describe the ideal authored beat, but the tutorial must
+	# survive an extra click, an early hand, a closed map, or a reload. If the
+	# player is already on the lesson's surface, keep the real lesson active and
+	# let its completion contract observe the eventual outcome. If they are on a
+	# different surface, show a non-modal recovery step that guides them back.
+	if active_lesson.is_empty() and queued_lessons.is_empty():
+		_queue_frontier_guardrail(observed_context)
 	if active_lesson.is_empty():
 		_show_next()
 
@@ -194,11 +210,29 @@ func notify_action(action_id: String) -> bool:
 func notify_dialogue_completed(lesson_id: String) -> bool:
 	if active_lesson.is_empty() or str(active_lesson.get("id", "")) != lesson_id.strip_edges():
 		return false
+	active_dialogue_acknowledged = true
 	var completion := _dict(active_lesson.get("completion", {}))
 	if str(completion.get("type", "")) != "explicit_ok":
 		return true
 	_finish_active()
 	return true
+
+
+# Dialogue delivery is represented by a separate TalkDock queue entry. Travel,
+# old-save cleanup, or malformed queue data can remove that entry without
+# completing the coach lesson. Retry only an unacknowledged line; a player who
+# already pressed Continue must not hear the same instruction again.
+func reconcile_active_dialogue(pending: bool) -> bool:
+	if active_lesson.is_empty() \
+			or bool(active_lesson.get("runtime_recovery", false)) \
+			or str(prepared_snapshot.get("delivery", "coach")) != "dialogue" \
+			or not active_dialogue_was_requested \
+			or active_dialogue_acknowledged \
+			or pending:
+		return false
+	active_dialogue_requested = false
+	_request_active_dialogue_once(false)
+	return active_dialogue_requested
 
 
 func suspend() -> void:
@@ -214,6 +248,8 @@ func suspend() -> void:
 	active_anchor_kind_value = ""
 	active_anchor_id_value = ""
 	active_dialogue_requested = false
+	active_dialogue_was_requested = false
+	active_dialogue_acknowledged = false
 	visible = false
 	if panel != null:
 		panel.visible = false
@@ -291,6 +327,8 @@ func _show_next() -> void:
 		seen[lesson_id] = true
 	lesson_seen.emit(lesson_id)
 	active_dialogue_requested = false
+	active_dialogue_was_requested = false
+	active_dialogue_acknowledged = false
 	_render_active(true)
 
 
@@ -327,7 +365,8 @@ func _render_active(play_motion: bool) -> void:
 
 func _finish_active() -> void:
 	var completed_id := str(active_lesson.get("id", ""))
-	if not completed_id.is_empty():
+	var runtime_recovery := bool(active_lesson.get("runtime_recovery", false))
+	if not completed_id.is_empty() and not runtime_recovery:
 		seen[completed_id] = true
 	active_lesson = {}
 	active_context = {}
@@ -338,12 +377,14 @@ func _finish_active() -> void:
 	active_anchor_kind_value = ""
 	active_anchor_id_value = ""
 	active_dialogue_requested = false
+	active_dialogue_was_requested = false
+	active_dialogue_acknowledged = false
 	visible = false
 	if panel != null:
 		panel.visible = false
 	focus_layer.set_snapshot({})
 	_stop_attention_motion()
-	if not completed_id.is_empty():
+	if not completed_id.is_empty() and not runtime_recovery:
 		lesson_completed.emit(completed_id)
 
 
@@ -382,21 +423,181 @@ func update_active_anchor_rect(anchor_kind: String, anchor_id: String, next_rect
 	return true
 
 
-func _request_active_dialogue_once() -> void:
+func _request_active_dialogue_once(require_anchor: bool = true) -> void:
 	if active_dialogue_requested or active_lesson.is_empty():
 		return
 	if str(prepared_snapshot.get("delivery", "coach")) != "dialogue":
 		return
 	var anchor_kind := str(prepared_snapshot.get("anchor_kind", "none"))
 	var anchor_found := live_anchor_rect.has_area() if live_anchor_rect_valid else bool(prepared_snapshot.get("anchor_found", false))
-	if anchor_kind != "none" and not anchor_found:
+	if require_anchor and anchor_kind != "none" and not anchor_found:
 		return
 	active_dialogue_requested = true
+	active_dialogue_was_requested = true
 	dialogue_requested.emit(
 		str(active_lesson.get("id", "")),
 		str(active_lesson.get("dialogue_id", "")).strip_edges(),
 		str(active_lesson.get("dialogue_node", "")).strip_edges()
 	)
+
+
+func _complete_satisfied_frontier_lessons(context: Dictionary) -> void:
+	for _pass in range(lessons.size()):
+		var completed_one := false
+		for lesson_value in lessons:
+			if typeof(lesson_value) != TYPE_DICTIONARY:
+				continue
+			var lesson: Dictionary = lesson_value
+			var lesson_id := str(lesson.get("id", "")).strip_edges()
+			if lesson_id.is_empty() \
+					or bool(seen.get(lesson_id, false)) \
+					or not _tutorial_frontier_ready(lesson, context) \
+					or not CoachViewModelScript.state_completion_matches(lesson, context):
+				continue
+			seen[lesson_id] = true
+			lesson_completed.emit(lesson_id)
+			completed_one = true
+			break
+		if not completed_one:
+			return
+
+
+func _queue_frontier_guardrail(context: Dictionary) -> void:
+	var frontier: Array = []
+	for lesson_value in lessons:
+		if typeof(lesson_value) != TYPE_DICTIONARY:
+			continue
+		var lesson: Dictionary = lesson_value
+		var lesson_id := str(lesson.get("id", "")).strip_edges()
+		if lesson_id.is_empty() \
+				or bool(seen.get(lesson_id, false)) \
+				or bool(lesson.get("optional", false)) \
+				or not _tutorial_frontier_ready(lesson, context):
+			continue
+		frontier.append(lesson)
+	if frontier.is_empty():
+		return
+	for lesson_value in frontier:
+		var lesson: Dictionary = lesson_value
+		if _trigger_surface_matches(lesson, context):
+			_queue_lesson(lesson, context)
+			return
+	var recovery := _recovery_lesson(frontier[0], context)
+	if not recovery.is_empty():
+		_queue_lesson(recovery, context)
+
+
+func _queue_lesson(lesson: Dictionary, context: Dictionary) -> void:
+	var lesson_id := str(lesson.get("id", "")).strip_edges()
+	if lesson_id.is_empty() or bool(queued_ids.get(lesson_id, false)):
+		return
+	queued_lessons.append({"lesson": lesson.duplicate(true), "context": context.duplicate(true)})
+	queued_ids[lesson_id] = true
+
+
+func _tutorial_frontier_ready(lesson: Dictionary, context: Dictionary) -> bool:
+	if str(lesson.get("scope", "")).strip_edges() != "tutorial_run" or _path_value(context, "run.tutorial") != true:
+		return false
+	var trigger := _dict(lesson.get("trigger", {}))
+	for dependency_id in _string_array(trigger.get("depends_on", [])):
+		if not bool(seen.get(dependency_id, false)):
+			return false
+	# Challenge and meta-session predicates select separate tutorial graphs. They
+	# are identities, not momentary gameplay state, and must never be recovered
+	# across the wrong run type.
+	for predicate_value in trigger.get("state_predicates", []):
+		var predicate := _dict(predicate_value)
+		var path := str(predicate.get("path", ""))
+		if (path == "run.challenge_id" or path.begins_with("meta.")) \
+				and not CoachViewModelScript._predicate_matches(predicate, context):
+			return false
+	return true
+
+
+func _trigger_surface_matches(lesson: Dictionary, context: Dictionary) -> bool:
+	var trigger := _dict(lesson.get("trigger", {}))
+	for field in ["screen", "environment_kind", "environment_archetype", "game_id"]:
+		var expected := str(trigger.get(field, "")).strip_edges()
+		if not expected.is_empty() and str(_path_value(context, field)).strip_edges() != expected:
+			return false
+	return true
+
+
+func _recovery_lesson(target: Dictionary, context: Dictionary) -> Dictionary:
+	var trigger := _dict(target.get("trigger", {}))
+	var current_screen := str(context.get("screen", ""))
+	var current_environment := str(context.get("environment_archetype", ""))
+	var expected_screen := str(trigger.get("screen", "ENVIRONMENT")).strip_edges()
+	var expected_environment := str(trigger.get("environment_archetype", "")).strip_edges()
+	var expected_game := str(trigger.get("game_id", "")).strip_edges()
+	var anchor := {"kind": "none", "id": ""}
+	var completion_predicates: Array = []
+	var copy := "Pal's next lesson is still available."
+	if current_screen == "GAME":
+		anchor = {"kind": "surface_action", "id": "surface_back"}
+		completion_predicates = [{"path": "screen", "op": "equals", "value": "ENVIRONMENT"}]
+		copy = "Leave this table to return to Pal's next tutorial step."
+	elif current_screen == "TRAVEL":
+		if not expected_environment.is_empty():
+			anchor = {"kind": "hud_element", "id": "travel:%s" % expected_environment}
+			completion_predicates = [
+				{"path": "screen", "op": "equals", "value": "ENVIRONMENT"},
+				{"path": "environment_archetype", "op": "equals", "value": expected_environment},
+			]
+			copy = "Travel to %s to resume Pal's tutorial." % _friendly_id(expected_environment)
+		else:
+			completion_predicates = [{"path": "screen", "op": "not_equals", "value": "TRAVEL"}]
+			copy = "Close the map to return to Pal's next tutorial step."
+	else:
+		if expected_screen == "TRAVEL" or (not expected_environment.is_empty() and expected_environment != current_environment):
+			anchor = {"kind": "interactable_object", "id": "travel:leave"}
+			completion_predicates = [{"path": "screen", "op": "equals", "value": "TRAVEL"}]
+			copy = "Open the map to return to Pal's next tutorial step."
+		elif expected_screen == "GAME" and not expected_game.is_empty():
+			anchor = {"kind": "interactable_object", "id": "game:%s" % expected_game}
+			completion_predicates = [
+				{"path": "screen", "op": "equals", "value": "GAME"},
+				{"path": "game_id", "op": "equals", "value": expected_game},
+			]
+			copy = "Return to %s to resume Pal's tutorial." % _friendly_id(expected_game)
+	if completion_predicates.is_empty():
+		return {}
+	var target_id := str(target.get("id", "")).strip_edges()
+	return {
+		"id": "tutorial_recovery:%s" % target_id,
+		"scope": "tutorial_run",
+		"runtime_recovery": true,
+		"recovery_target_lesson_id": target_id,
+		"delivery": "coach",
+		"anchor": anchor,
+		"copy": copy,
+		"completion": {"type": "state_predicate", "state_predicates": completion_predicates},
+		"gating": {"allowed_action_ids": []},
+	}
+
+
+func _friendly_id(value: String) -> String:
+	return value.replace("_", " ").capitalize()
+
+
+func _path_value(source: Dictionary, path: String) -> Variant:
+	var current: Variant = source
+	for segment in path.split(".", false):
+		if typeof(current) != TYPE_DICTIONARY:
+			return null
+		current = (current as Dictionary).get(segment)
+	return current
+
+
+func _string_array(value: Variant) -> Array[String]:
+	var result: Array[String] = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for entry_value in value:
+		var entry := str(entry_value).strip_edges()
+		if not entry.is_empty() and not result.has(entry):
+			result.append(entry)
+	return result
 
 
 func _on_ok_pressed() -> void:

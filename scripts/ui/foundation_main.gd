@@ -429,6 +429,7 @@ var world_map_detail_badges_key: String = "__unset__"
 var rendered_environment_snapshot_signature: String = ""
 var action_panel_refresh_scheduled := false
 var game_coach_refresh_scheduled := false
+var tutorial_guardrail_dialogue_reconcile_active := false
 var pending_action_panel_object: Dictionary = {}
 var interactable_object_view_cache: Array = []
 var interactable_object_view_cache_valid := false
@@ -14791,12 +14792,31 @@ func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false)
 		_schedule_game_coach_refresh_after_draw()
 		return
 	coach_overlay.evaluate_at_boundary(_coach_context_snapshot())
+	_reconcile_tutorial_guardrail_dialogue()
 	_focus_grand_casino_tutorial_table_lesson()
 	_focus_tutorial_meta_home_card_lesson()
 	_complete_preperformed_tutorial_actions()
 	_focus_tutorial_corner_store_purchase_lesson()
 	_sync_coach_focus_visibility()
 	_sync_talk_dock_coach_avoid_rect()
+
+
+func _reconcile_tutorial_guardrail_dialogue() -> void:
+	if tutorial_guardrail_dialogue_reconcile_active \
+			or coach_overlay == null \
+			or run_state == null \
+			or not run_state.is_tutorial_run():
+		return
+	var lesson_id := coach_overlay.active_lesson_id()
+	if lesson_id.is_empty() or lesson_id.begins_with("tutorial_recovery:"):
+		return
+	var event_id := "tutorial_guide:%s" % lesson_id
+	var pending := not run_state.pending_talk_event(event_id).is_empty()
+	tutorial_guardrail_dialogue_reconcile_active = true
+	var requested := coach_overlay.reconcile_active_dialogue(pending)
+	tutorial_guardrail_dialogue_reconcile_active = false
+	if requested:
+		_refresh_talk_dock()
 
 
 func _focus_grand_casino_tutorial_table_lesson() -> void:
