@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `env06_3` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-14
+- **Completion/implementation commits:** `31edc627`, `4e9dd723`, `36db8c5c`, `246fe093`; PM integration `6a4355b2`
+- **Verification:** PM scope/design review PASS; integrated validation, Foundation systems + UI, 10-seed/320-checkpoint determinism (`3558257132`), visual QA, 25/25 content and selector contracts, Grand Casino clean/showdown regressions, and 14/14 zero-overlap scenario captures PASS.
+- **Deviations:** None. Generic structured debt-settlement deltas and resale-shelf offer mutations were required production seams within prompt scope; Grand Casino scenarios remain limited to presentation/crowd/comps/heat and inert hook flags.
 
 # Agent Prompt — 0.6 env06_3: Tier-2 + Grand Casino Scenario Set
 

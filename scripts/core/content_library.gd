@@ -2892,6 +2892,7 @@ func _validate_scenario_definitions() -> void:
 	var event_ids := _ids_for(events)
 	var service_ids := _ids_for(services)
 	var game_ids := _ids_for(games)
+	var item_ids := _ids_for(items)
 	var seen_ids: Dictionary = {}
 	for archetype_key_value in environment_scenarios.keys():
 		var archetype_key := str(archetype_key_value).strip_edges()
@@ -2927,7 +2928,7 @@ func _validate_scenario_definitions() -> void:
 				validation_errors.append("environment_scenarios %s weight must be positive." % scenario_id)
 			if definition.has("town_weight_tags") and typeof(definition.get("town_weight_tags")) != TYPE_ARRAY:
 				validation_errors.append("environment_scenarios %s town_weight_tags must be an array." % scenario_id)
-			_validate_scenario_mutations(scenario_id, "mutations", definition.get("mutations", {}), event_ids, service_ids, game_ids)
+			_validate_scenario_mutations(scenario_id, "mutations", definition.get("mutations", {}), event_ids, service_ids, game_ids, item_ids)
 			var phases_value: Variant = definition.get("phases", [])
 			if typeof(phases_value) != TYPE_ARRAY:
 				validation_errors.append("environment_scenarios %s phases must be an array." % scenario_id)
@@ -2944,10 +2945,10 @@ func _validate_scenario_definitions() -> void:
 					validation_errors.append("environment_scenarios %s phase[%d] advance_after_actions must be numeric." % [scenario_id, phase_index])
 				elif int(advance_value) < 0 or (phase_index < phases.size() - 1 and int(advance_value) <= 0):
 					validation_errors.append("environment_scenarios %s phase[%d] advance_after_actions is not sane." % [scenario_id, phase_index])
-				_validate_scenario_mutations(scenario_id, "phase[%d].mutations" % phase_index, phase.get("mutations", {}), event_ids, service_ids, game_ids)
+				_validate_scenario_mutations(scenario_id, "phase[%d].mutations" % phase_index, phase.get("mutations", {}), event_ids, service_ids, game_ids, item_ids)
 
 
-func _validate_scenario_mutations(scenario_id: String, label: String, value: Variant, event_ids: Dictionary, service_ids: Dictionary, game_ids: Dictionary) -> void:
+func _validate_scenario_mutations(scenario_id: String, label: String, value: Variant, event_ids: Dictionary, service_ids: Dictionary, game_ids: Dictionary, item_ids: Dictionary) -> void:
 	if typeof(value) != TYPE_DICTIONARY:
 		validation_errors.append("environment_scenarios %s %s must be a dictionary." % [scenario_id, label])
 		return
@@ -2960,6 +2961,19 @@ func _validate_scenario_mutations(scenario_id: String, label: String, value: Var
 	_validate_id_references("environment_scenarios %s %s event_pool_remove" % [scenario_id, label], mutations.get("event_pool_remove", []), event_ids)
 	_validate_id_references("environment_scenarios %s %s service_add" % [scenario_id, label], mutations.get("service_add", []), service_ids)
 	_validate_id_references("environment_scenarios %s %s service_remove" % [scenario_id, label], mutations.get("service_remove", []), service_ids)
+	_validate_id_references("environment_scenarios %s %s item_offer_remove" % [scenario_id, label], mutations.get("item_offer_remove", []), item_ids)
+	var offer_additions: Array = mutations.get("item_offer_add", []) if typeof(mutations.get("item_offer_add", [])) == TYPE_ARRAY else []
+	for offer_value in offer_additions:
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			validation_errors.append("environment_scenarios %s %s item_offer_add entries must be dictionaries." % [scenario_id, label])
+			continue
+		var offer_id := str((offer_value as Dictionary).get("id", "")).strip_edges()
+		if offer_id.is_empty() or not item_ids.has(offer_id):
+			validation_errors.append("environment_scenarios %s %s item_offer_add references unknown item: %s" % [scenario_id, label, offer_id])
+		if int((offer_value as Dictionary).get("price", 0)) <= 0:
+			validation_errors.append("environment_scenarios %s %s item_offer_add %s must define a positive price." % [scenario_id, label, offer_id])
+	if mutations.has("travel_lock_actions") and int(mutations.get("travel_lock_actions", -1)) < 0:
+		validation_errors.append("environment_scenarios %s %s travel_lock_actions must be non-negative." % [scenario_id, label])
 	var presentation := _as_dict(mutations.get("presentation", {}))
 	for presentation_key_value in presentation.keys():
 		if not ScenarioEngineScript.ALLOWED_PRESENTATION_KEYS.has(str(presentation_key_value)):

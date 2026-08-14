@@ -10,6 +10,8 @@ const ALLOWED_MUTATION_KEYS := [
 	"staff_set",
 	"event_pool_add",
 	"event_pool_remove",
+	"item_offer_add",
+	"item_offer_remove",
 	"economic_profile_overrides",
 	"game_modifier_hooks",
 	"service_add",
@@ -19,6 +21,7 @@ const ALLOWED_MUTATION_KEYS := [
 	"exclusive_opportunity",
 	"security_overrides",
 	"hook_flags",
+	"travel_lock_actions",
 ]
 const ALLOWED_PRESENTATION_KEYS := ["palette_tint", "lighting_key", "crowd_density", "signage_line"]
 const ALLOWED_EXCLUSIVE_KEYS := ["event_id", "offer_id", "game_id"]
@@ -193,6 +196,7 @@ static func _apply_mutations(target: Dictionary, mutations: Dictionary, generati
 		target["scenario_staff_ids"] = _string_array(mutations.get("staff_set", []))
 	_apply_id_delta(target, "event_pool" if generation else "event_ids", mutations.get("event_pool_add", []), mutations.get("event_pool_remove", []))
 	_apply_id_delta(target, "service_pool" if generation else "service_ids", mutations.get("service_add", []), mutations.get("service_remove", []))
+	_apply_item_offer_delta(target, "scenario_item_offers" if generation else "item_offers", mutations.get("item_offer_add", []), mutations.get("item_offer_remove", []))
 	if mutations.has("economic_profile_overrides"):
 		target["economic_profile"] = _deep_merge(_copy_dict(target.get("economic_profile", {})), _copy_dict(mutations.get("economic_profile_overrides", {})))
 	if mutations.has("game_modifier_hooks"):
@@ -209,6 +213,11 @@ static func _apply_mutations(target: Dictionary, mutations: Dictionary, generati
 		target["security_profile"] = _deep_merge(_copy_dict(target.get("security_profile", {})), _copy_dict(mutations.get("security_overrides", {})))
 	if mutations.has("hook_flags"):
 		target["scenario_hook_flags"] = _deep_merge(_copy_dict(target.get("scenario_hook_flags", {})), _copy_dict(mutations.get("hook_flags", {})))
+	if mutations.has("travel_lock_actions"):
+		var lock_actions := maxi(0, int(mutations.get("travel_lock_actions", 0)))
+		target["travel_locked_actions"] = lock_actions
+		if not generation:
+			target["travel_lock_remaining"] = lock_actions
 
 
 static func _apply_exclusive_opportunity(environment: Dictionary) -> void:
@@ -230,6 +239,26 @@ static func _apply_id_delta(target: Dictionary, key: String, additions_value: Va
 		if not values.has(add_id):
 			values.append(add_id)
 	target[key] = values
+
+
+static func _apply_item_offer_delta(target: Dictionary, key: String, additions_value: Variant, removals_value: Variant) -> void:
+	var offers := _copy_array(target.get(key, []))
+	var remove_ids := _string_array(removals_value)
+	for index in range(offers.size() - 1, -1, -1):
+		if typeof(offers[index]) == TYPE_DICTIONARY and remove_ids.has(str((offers[index] as Dictionary).get("id", ""))):
+			offers.remove_at(index)
+	for offer_value in _copy_array(additions_value):
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			continue
+		var offer := (offer_value as Dictionary).duplicate(true)
+		var item_id := str(offer.get("id", "")).strip_edges()
+		if item_id.is_empty():
+			continue
+		for index in range(offers.size() - 1, -1, -1):
+			if typeof(offers[index]) == TYPE_DICTIONARY and str((offers[index] as Dictionary).get("id", "")) == item_id:
+				offers.remove_at(index)
+		offers.append(offer)
+	target[key] = offers
 
 
 static func _deep_merge(base: Dictionary, overlay: Dictionary) -> Dictionary:

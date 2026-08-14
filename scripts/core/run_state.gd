@@ -5973,6 +5973,62 @@ func repay_debt(debt_id: String, amount: int = -1) -> Dictionary:
 	}
 
 
+# Returns the first Collector-eligible cash marker and its discounted payoff.
+# The ledger order is authoritative so the same save always receives the same offer.
+func discounted_debt_settlement_preview(discount_percent: int) -> Dictionary:
+	var discount := clampi(discount_percent, 0, 90)
+	for debt_value in debt:
+		if typeof(debt_value) != TYPE_DICTIONARY:
+			continue
+		var debt_data := debt_value as Dictionary
+		if bool(debt_data.get("no_collector", false)):
+			continue
+		if not ["active", "overdue"].has(str(debt_data.get("status", "active"))):
+			continue
+		if str(debt_data.get("debt_kind", "cash")) == "favor":
+			continue
+		var balance := maxi(0, int(debt_data.get("balance", 0)))
+		if balance <= 0:
+			continue
+		var payment := maxi(1, int(ceil(float(balance) * float(100 - discount) / 100.0)))
+		return {
+			"ok": bankroll >= payment,
+			"debt_id": str(debt_data.get("id", "")),
+			"lender_id": str(debt_data.get("lender_id", "")),
+			"balance": balance,
+			"payment": payment,
+			"discount_percent": discount,
+			"reason": "" if bankroll >= payment else "The Collector's discount still needs $%d." % payment,
+		}
+	return {"ok": false, "reason": "No active marker reaches the Collector."}
+
+
+# Clears a previously previewed marker before the event action advances clocks.
+# The event's shared bankroll delta applies the quoted payment immediately after.
+func apply_discounted_debt_settlement(preview: Dictionary) -> Dictionary:
+	var debt_id := str(preview.get("debt_id", "")).strip_edges()
+	var index := _debt_index(debt_id)
+	if index < 0 or typeof(debt[index]) != TYPE_DICTIONARY:
+		return {"ok": false, "message": "That marker changed before settlement."}
+	var debt_data := (debt[index] as Dictionary).duplicate(true)
+	var balance := maxi(0, int(debt_data.get("balance", 0)))
+	var payment := maxi(0, int(preview.get("payment", 0)))
+	if balance != int(preview.get("balance", -1)) or payment <= 0 or bankroll < payment:
+		return {"ok": false, "message": "That marker no longer matches the quoted settlement."}
+	var message := _settle_paid_debt(index, debt_data, payment)
+	narrative_flags["debt_court_last_debt_id"] = debt_id
+	narrative_flags["debt_court_last_discount_percent"] = clampi(int(preview.get("discount_percent", 0)), 0, 90)
+	_refresh_economy(true)
+	return {
+		"ok": true,
+		"message": message,
+		"debt_id": debt_id,
+		"balance": balance,
+		"payment": payment,
+		"discount_percent": int(narrative_flags.get("debt_court_last_discount_percent", 0)),
+	}
+
+
 func complete_debt_favor(debt_id: String) -> Dictionary:
 	var index := _debt_index(debt_id)
 	if index < 0:
