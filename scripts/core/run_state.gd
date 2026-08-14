@@ -6398,6 +6398,9 @@ func streets_apply_action(action: Dictionary) -> Dictionary:
 	applied.erase("state")
 	var new_spots := maxi(0, int(active_streets_run.get("times_spotted", 0)) - times_spotted_before)
 	var spot_heat := maxi(0, int(active_streets_run.get("spot_heat_per_new_spot", 0)))
+	# Action boundaries advance before their newly earned world effects. This keeps
+	# the same boundary from immediately decaying spotting or resolution heat.
+	advance_environment_turns(1)
 	if new_spots > 0 and spot_heat > 0:
 		add_suspicion("streets_spotted", new_spots * spot_heat, "contraband", true, {
 			"route_id": str(active_streets_run.get("route_id", "")),
@@ -6405,7 +6408,6 @@ func streets_apply_action(action: Dictionary) -> Dictionary:
 		}, true)
 	if bool(applied.get("resolved", false)):
 		_apply_streets_resolution()
-	advance_environment_turns(1)
 	applied["snapshot"] = streets_snapshot()
 	return applied
 
@@ -7945,7 +7947,15 @@ func _advance_crew_jobs() -> void:
 		var job := _crew_job(str(job_id_value))
 		if str(job.get("status", "")) == "resolved":
 			continue
-		if streets_has_active_run() and str(active_streets_run.get("job_id", "")) == str(job_id_value):
+		var linked_streets_job_pending := (
+			not active_streets_run.is_empty()
+			and str(active_streets_run.get("job_id", "")) == str(job_id_value)
+			and (
+				str(active_streets_run.get("status", "")) == "active"
+				or not bool(active_streets_run.get("world_applied", false))
+			)
+		)
+		if linked_streets_job_pending:
 			continue
 		if action_index >= int(job.get("expires_at_action", action_index + 1)):
 			expiring_ids.append(str(job_id_value))
