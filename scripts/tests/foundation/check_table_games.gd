@@ -250,7 +250,7 @@ func _check_craps_deterministic_surface_clock(game: GameModule, failures: Array)
 	if str(first_surface.get("phase", "")) != "rolling":
 		failures.append("Craps deterministic simulation clock did not keep the saved roll animation active.")
 	var channels := _craps_array(first_surface.get("surface_animation_channels", []))
-	if channels.is_empty() or str(_craps_dict(channels[0]).get("animation_id", "")) != "craps:clock-fixture:3-4":
+	if channels.is_empty() or str(_craps_dict(channels[0]).get("active_id", "")) != "craps:clock-fixture:3-4":
 		failures.append("Craps deterministic surface clock did not expose the active roll channel.")
 
 
@@ -309,12 +309,13 @@ func _check_craps_luck_contract(game: GameModule, failures: Array) -> void:
 	environment["game_states"] = {"craps": table}
 	run_state.current_environment = environment
 	var rules := _craps_dict(table.get("rules", {}))
+	var authored_naturals := _craps_int_array(rules.get("come_out_naturals", []))
 	var natural_seed := 0
 	for candidate_seed in range(1, 10000):
 		var probe := RngStream.new()
 		probe.configure(candidate_seed)
 		var probe_roll := CrapsRulesScript.roll_dice(probe, rules, 0)
-		if _craps_array(rules.get("come_out_naturals", [])).has(int(probe_roll.get("total", 0))):
+		if authored_naturals.has(int(probe_roll.get("total", 0))):
 			natural_seed = candidate_seed
 			break
 	if natural_seed == 0:
@@ -325,7 +326,7 @@ func _check_craps_luck_contract(game: GameModule, failures: Array) -> void:
 	var expected_bonus := run_state.luck_payout_bonus(10, true)
 	var result := game.resolve_with_context("roll_craps", 10, run_state, run_state.current_environment, resolution_rng, {"craps_pending_bets": {"pass_line": 10}})
 	var resolved_total := int(_craps_dict(result.get("craps_roll", {})).get("total", 0))
-	if not _craps_array(rules.get("come_out_naturals", [])).has(resolved_total):
+	if not authored_naturals.has(resolved_total):
 		failures.append("Craps luck fixture did not replay its deterministic authored natural.")
 	elif expected_bonus <= 0 or int(result.get("luck_payout_bonus", 0)) != expected_bonus:
 		failures.append("Craps win did not apply RunState's exact luck_payout_bonus seam.")
@@ -502,6 +503,13 @@ func _craps_dict(value: Variant) -> Dictionary:
 
 func _craps_array(value: Variant) -> Array:
 	return value if typeof(value) == TYPE_ARRAY else []
+
+
+func _craps_int_array(value: Variant) -> Array:
+	var result: Array = []
+	for entry in _craps_array(value):
+		result.append(int(entry))
+	return result
 
 func _check_roulette_surface_contract(game: GameModule, failures: Array, library: ContentLibrary = null) -> void:
 	var run_state: RunState = RunStateScript.new()
