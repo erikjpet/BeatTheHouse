@@ -212,6 +212,12 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   wash, density-scaled ambient silhouettes, and a width-bounded signage strip.
   It must perform no per-frame allocation/RNG/mutation/rebuild and draw nothing
   when fields are absent, preserving tutorial and empty-pool visuals.
+- 2026-08-14 [env06_4] Final three-layer visual smoke found the legacy
+  `Underground Casino` title plate leaking through public Punchline L1 even
+  though map copy was clean. PM required the generic environment header/title
+  projection and direct layer-generation display identity to consume the
+  flattened current-layer values. No layer/archetype-specific UI branch is
+  allowed; final systems/UI/determinism/visual gates must rerun after the fix.
 
 ## Work Log
 
