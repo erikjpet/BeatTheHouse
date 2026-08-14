@@ -46,6 +46,9 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 			continue
 		var choice_data: Dictionary = (choice_value as Dictionary).duplicate(true)
 		if _choice_conditions_allow(choice_data, run_state, environment):
+			choice_data = _rumor_delivery_choice(choice_data, run_state, environment)
+			choice_data = _traveler_context_choice(choice_data, run_state)
+			choice_data = _reputation_context_choice(choice_data, environment)
 			result.append(choice_data)
 	return result
 
@@ -157,9 +160,14 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 	if run_state == null or not bool(result.get("ok", false)):
 		return
+	var deltas: Dictionary = result.get("deltas", {})
+	# A heard fact is true at the action boundary where the player accepts it.
+	# Capture it before advancing town schedules could expire an incoming fact.
+	for hook in deltas.get("event_hooks", []):
+		if typeof(hook) == TYPE_DICTIONARY and str((hook as Dictionary).get("type", "")) == "hear_rumor":
+			run_state.hear_rumor(str((hook as Dictionary).get("rumor_id", "")))
 	run_state.advance_environment_turns(1)
 	GameModule.apply_result(run_state, result)
-	var deltas: Dictionary = result.get("deltas", {})
 	for hook in deltas.get("event_hooks", []):
 		if typeof(hook) != TYPE_DICTIONARY:
 			continue
@@ -169,6 +177,8 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				run_state.resolve_event(str(hook_data.get("event_id", "")))
 			"trigger_event":
 				_apply_trigger_event_hook(run_state, result, hook_data)
+			"hear_rumor":
+				pass
 
 
 # Returns a no-op event result for invalid choices.
@@ -260,6 +270,9 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 				"speaker": _copy_dict(target_event.get("speaker", {})),
 			}
 		deltas["event_hooks"].append(trigger_event)
+	var hear_rumor_id := str(consequences.get("hear_rumor_id", "")).strip_edges()
+	if not hear_rumor_id.is_empty():
+		deltas["event_hooks"].append({"type": "hear_rumor", "rumor_id": hear_rumor_id})
 	return deltas
 
 
@@ -493,6 +506,12 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	for archetype_id in _string_array(conditions.get("blocked_archetype_ids", [])):
 		if str(environment.get("archetype_id", "")) == archetype_id:
 			return false
+	for character_id in _string_array(conditions.get("requires_traveler_here", [])):
+		var environment_node_id := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
+		if run_state.traveler_node(character_id) != environment_node_id:
+			return false
+	if bool(conditions.get("requires_available_rumor", false)) and _next_environment_rumor(environment).is_empty():
+		return false
 	var requires_games := _string_array(conditions.get("requires_games", []))
 	if not requires_games.is_empty():
 		var environment_games := _string_array(environment.get("game_ids", []))
@@ -519,6 +538,63 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 		if context.get(str(key), null) != context_flags[key]:
 			return false
 	return true
+
+
+func _rumor_delivery_choice(choice_data: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var conditions := _copy_dict(definition.get("conditions", {}))
+	var required := bool(conditions.get("requires_available_rumor", false))
+	var speaker := _copy_dict(definition.get("speaker", {}))
+	var dave_delivery := str(speaker.get("character_id", "")) == "dave_bus_regular"
+	if not required and not bool(definition.get("rumor_delivery", false)) and not dave_delivery:
+		return choice_data
+	var rumor := _next_environment_rumor(environment)
+	if rumor.is_empty() or run_state == null:
+		return choice_data
+	var resolved := choice_data.duplicate(true)
+	if required:
+		resolved["scene_summary"] = str(rumor.get("line", ""))
+		resolved["text"] = str(rumor.get("line", ""))
+	else:
+		resolved["text"] = "%s %s" % [str(resolved.get("text", "")).strip_edges(), str(rumor.get("line", "")).strip_edges()]
+		resolved["text"] = str(resolved.get("text", "")).strip_edges()
+	var consequences := _copy_dict(resolved.get("consequences", {}))
+	consequences["hear_rumor_id"] = str(rumor.get("id", rumor.get("fact_id", "")))
+	resolved["consequences"] = consequences
+	return resolved
+
+
+func _traveler_context_choice(choice_data: Dictionary, run_state: RunState) -> Dictionary:
+	var speaker := _copy_dict(definition.get("speaker", {}))
+	var character_id := str(speaker.get("character_id", "")).strip_edges()
+	if run_state == null or character_id != "dave_bus_regular" or run_state.town_state == null:
+		return choice_data
+	var context_line := run_state.town_state.traveler_context_line(character_id)
+	if context_line.is_empty():
+		return choice_data
+	var resolved := choice_data.duplicate(true)
+	resolved["text"] = "%s %s" % [str(resolved.get("text", "")).strip_edges(), context_line]
+	resolved["traveler_context_line"] = context_line
+	return resolved
+
+
+func _reputation_context_choice(choice_data: Dictionary, environment: Dictionary) -> Dictionary:
+	if str(definition.get("id", "")) != "town_reputation_reaction":
+		return choice_data
+	var reputation := _copy_dict(environment.get("town_reputation", {}))
+	var staff_line := str(reputation.get("staff_line", "")).strip_edges()
+	if staff_line.is_empty():
+		return choice_data
+	var resolved := choice_data.duplicate(true)
+	resolved["text"] = staff_line
+	resolved["reputation_context_line"] = staff_line
+	return resolved
+
+
+func _next_environment_rumor(environment: Dictionary) -> Dictionary:
+	for rumor_value in _copy_array(environment.get("town_rumors", [])):
+		if typeof(rumor_value) == TYPE_DICTIONARY:
+			return (rumor_value as Dictionary).duplicate(true)
+	return {}
 
 
 func _story_flag_value(run_state: RunState, flag_id: String) -> Variant:

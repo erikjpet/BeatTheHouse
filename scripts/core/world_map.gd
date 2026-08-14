@@ -3,7 +3,7 @@ extends RefCounted
 
 # Persistent deterministic travel graph for Act 1 runs.
 
-const VERSION := 2
+const VERSION := 3
 const GRAND_CASINO_ID := "grand_casino"
 const JAZZ_CLUB_ID := "jazz_club"
 const UNDERGROUND_SHORTCUT_ID := "small_underground_casino"
@@ -16,6 +16,7 @@ const DISCOVERY_SOURCE_NONE := ""
 const DISCOVERY_SOURCE_SPAWN := "spawn"
 const DISCOVERY_SOURCE_EVENT := "event"
 const DISCOVERY_SOURCE_TRAVEL := "travel"
+const DISCOVERY_SOURCE_RUMOR := "rumor"
 const DISTANCE_NEAR := "near"
 const DISTANCE_LOCAL := "local"
 const DISTANCE_FAR := "far"
@@ -92,6 +93,7 @@ func build(run_state: RunState, rng: RngStream) -> Dictionary:
 			"icon_path": _map_icon_path(archetype_id),
 			"flavor": _archetype_flavor(archetype),
 			"scouted": false,
+			"heard": {},
 			"environment": {},
 		})
 	var map_data := normalize({
@@ -621,6 +623,29 @@ static func mark_scouted(map_data: Dictionary, node_id: String) -> Dictionary:
 			node["seen"] = true
 			nodes[index] = node
 			break
+	normalized["nodes"] = nodes
+	return _bump_revision(normalized)
+
+
+static func mark_heard(map_data: Dictionary, node_id: String, rumor: Dictionary) -> Dictionary:
+	var target_id := node_id.strip_edges()
+	if target_id.is_empty() or rumor.is_empty():
+		return normalize(map_data)
+	var normalized := normalize(map_data)
+	var nodes: Array = normalized.get("nodes", [])
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = nodes[index]
+		if str(node.get("id", "")) != target_id:
+			continue
+		node["heard"] = rumor.duplicate(true)
+		node["seen"] = true
+		if str(node.get("state", STATE_HIDDEN)) == STATE_HIDDEN:
+			node["state"] = STATE_REVEALED
+			node["discovery_source"] = DISCOVERY_SOURCE_RUMOR
+		nodes[index] = node
+		break
 	normalized["nodes"] = nodes
 	return _bump_revision(normalized)
 
@@ -1378,6 +1403,7 @@ static func _normalize_nodes(nodes: Array, include_environment: bool = true) -> 
 			"icon_path": str(source.get("icon_path", _map_icon_path(id))),
 			"flavor": str(source.get("flavor", "")),
 			"scouted": bool(source.get("scouted", false)),
+			"heard": _copy_dict(source.get("heard", {})),
 			"home_lost": bool(source.get("home_lost", false)),
 		}
 		if include_environment:
@@ -1455,6 +1481,7 @@ static func _snapshot_node(node: Dictionary) -> Dictionary:
 		"discovery_source": str(node.get("discovery_source", "")),
 		"route_spawn_open": bool(node.get("route_spawn_open", true)),
 		"scouted": bool(node.get("scouted", false)),
+		"heard": _copy_dict(node.get("heard", {})),
 		"icon_path": str(node.get("icon_path", _map_icon_path(str(node.get("archetype_id", node.get("id", "")))))),
 		"flavor": str(node.get("flavor", "")),
 		"home_lost": bool(node.get("home_lost", false)),

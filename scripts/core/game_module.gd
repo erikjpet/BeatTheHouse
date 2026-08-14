@@ -774,6 +774,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 		run_state.apply_demo_finale_result(demo_finale)
 	run_state.record_profile_game_result(result)
 	run_state.record_grand_casino_game_result(result)
+	run_state.record_reputation_from_result(result, deltas)
 	if bool(deltas.get("ended", false)) and bool(run_state.narrative_flags.get("demo_victory", false)):
 		run_state.run_status = RESULT_ENDED
 		run_state.run_failure_reason = RunState.FAILURE_NONE

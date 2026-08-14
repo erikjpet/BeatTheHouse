@@ -1,0 +1,80 @@
+[
+{
+  "schema_version": 1,
+  "truth_policy": "Rumors are true in 0.6. False rumors are reserved for future design space.",
+  "fact_classes": [
+    "scenario",
+    "town_condition",
+    "pusher_pile",
+    "numbers_whisper",
+    "sweep_sighting"
+  ],
+  "templates": {
+    "scenario": {
+      "street": [
+        "Word is {target_name} has {scenario_name} tonight.",
+        "Somebody came through {target_name}. Says it's {scenario_name}.",
+        "If you're headed to {target_name}, expect {scenario_name}."
+      ],
+      "house": [
+        "You may wish to know {target_name} is hosting {scenario_name}.",
+        "The word from {target_name} is {scenario_name} tonight.",
+        "For your convenience: {target_name} has {scenario_name}."
+      ],
+      "seam": [
+        "Word came in clean: {target_name} has {scenario_name}.",
+        "The room hears {target_name} is running {scenario_name}.",
+        "Courtesy says to mention {scenario_name} at {target_name}."
+      ],
+      "neutral": [
+        "Word is {target_name} has {scenario_name} tonight.",
+        "They say {target_name} is running {scenario_name}.",
+        "News from {target_name}: {scenario_name}."
+      ]
+    },
+    "town_condition": {
+      "street": [
+        "{condition_line} That's headed toward {target_name}.",
+        "Keep {target_name} in mind. {condition_line}",
+        "Town talk says {condition_line} Near {target_name}, too."
+      ],
+      "house": [
+        "A courtesy from the floor: {condition_line} Watch {target_name}.",
+        "You may plan around this: {condition_line} It reaches {target_name}.",
+        "The house has heard {condition_line} Including {target_name}."
+      ],
+      "seam": [
+        "The room passes this along: {condition_line} Watch {target_name}.",
+        "A careful word: {condition_line} It reaches {target_name}.",
+        "The worn wire says {condition_line} Near {target_name}."
+      ],
+      "neutral": [
+        "{condition_line} Watch {target_name}.",
+        "Town word says {condition_line} It reaches {target_name}.",
+        "News travels: {condition_line} Near {target_name}, too."
+      ]
+    },
+    "pusher_pile": {
+      "neutral": [
+        "The pusher at {target_name} is {fact_detail}.",
+        "Somebody left the pusher {fact_detail} at {target_name}.",
+        "Machine word from {target_name}: {fact_detail}."
+      ]
+    },
+    "numbers_whisper": {
+      "neutral": [
+        "The Numbers whisper around {target_name}: {fact_detail}.",
+        "A quiet number reached {target_name}: {fact_detail}.",
+        "Somebody at {target_name} heard {fact_detail}."
+      ]
+    },
+    "sweep_sighting": {
+      "neutral": [
+        "Cruisers were {fact_detail} near {target_name}.",
+        "The sweep was {fact_detail} by {target_name}.",
+        "Blue lights passed {target_name}, {fact_detail}."
+      ]
+    }
+  }
+}
+]

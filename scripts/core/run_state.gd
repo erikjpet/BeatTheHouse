@@ -1468,7 +1468,8 @@ func scenario_for_node(node_id: String) -> Dictionary:
 		return {}
 	var current_node := str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
 	if wanted == current_node or wanted == str(current_environment.get("id", "")):
-		return ScenarioEngineScript.public_snapshot(current_environment.get("scenario_state", {}))
+		var current_scenario := ScenarioEngineScript.public_snapshot(current_environment.get("scenario_state", {}))
+		return current_scenario if not current_scenario.is_empty() else seeded_scenario_for_node(wanted)
 	var nodes_value: Variant = world_map.get("nodes", [])
 	if typeof(nodes_value) != TYPE_ARRAY:
 		return {}
@@ -1480,9 +1481,12 @@ func scenario_for_node(node_id: String) -> Dictionary:
 			continue
 		var environment_value: Variant = node.get("environment", {})
 		if typeof(environment_value) != TYPE_DICTIONARY:
-			return {}
-		return ScenarioEngineScript.public_snapshot((environment_value as Dictionary).get("scenario_state", {}))
-	return {}
+			break
+		var stored_scenario := ScenarioEngineScript.public_snapshot((environment_value as Dictionary).get("scenario_state", {}))
+		if not stored_scenario.is_empty():
+			return stored_scenario
+		break
+	return seeded_scenario_for_node(wanted)
 
 
 func recent_scenario_ids(archetype_id: String) -> Array:
@@ -6240,6 +6244,11 @@ func travel_route_preview(route_data: Dictionary, destination_archetype: Diction
 	preview["travel_locked_actions"] = maxi(0, int(destination_archetype.get("travel_locked_actions", destination_environment.get("travel_locked_actions", 0))))
 	var lines: Array = []
 	lines.append("Preview: tier %d %s." % [tier, kind])
+	var heard := heard_rumor_for_node(archetype_id)
+	if not full_preview and not heard.is_empty():
+		preview["level"] = "heard"
+		preview["heard_rumor"] = heard.duplicate(true)
+		lines.append("Heard: %s" % str(heard.get("line", "")))
 	if full_preview:
 		preview["game_ids"] = game_ids.duplicate(true)
 		preview["service_ids"] = service_ids.duplicate(true)
@@ -6414,13 +6423,127 @@ func town_status_line() -> String:
 	return town_state.status_line() if town_state != null else "Clear outside · Midweek"
 
 
+func configure_town_world(map_data: Dictionary) -> void:
+	if town_state != null:
+		town_state.configure_world(map_data)
+
+
+func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
+	return town_state != null and town_state.seed_scenario_for_node(node_id, scenario)
+
+
+func seeded_scenario_for_node(node_id: String) -> Dictionary:
+	return town_state.seeded_scenario_for_node(node_id) if town_state != null else {}
+
+
+func register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:
+	return town_state != null and town_state.register_rumor_fact(fact_class, fact_id, payload)
+
+
+func rumor_fact(fact_id: String) -> Dictionary:
+	return town_state.rumor_fact(fact_id) if town_state != null else {}
+
+
+func rumor_facts(fact_class: String = "") -> Array:
+	return town_state.rumor_facts(fact_class) if town_state != null else []
+
+
+func rumors_for_venue(node_id: String, speaker_side: String, count: int = 1, rng: RngStream = null) -> Array:
+	return town_state.rumors_for_venue(node_id, speaker_side, count, rng) if town_state != null else []
+
+
+func hear_rumor(rumor_id: String) -> Dictionary:
+	if town_state == null:
+		return {}
+	var heard: Dictionary = {}
+	for rumor_value in _copy_array(current_environment.get("town_rumors", [])):
+		if typeof(rumor_value) != TYPE_DICTIONARY:
+			continue
+		var rumor: Dictionary = rumor_value
+		if str(rumor.get("id", "")) == rumor_id or str(rumor.get("fact_id", "")) == rumor_id:
+			heard = town_state.hear_rendered_rumor(rumor)
+			break
+	if heard.is_empty():
+		heard = town_state.hear_rumor(rumor_id)
+	if heard.is_empty():
+		return {}
+	var target_node_id := str(heard.get("target_node_id", "")).strip_edges()
+	if not world_map.is_empty() and not target_node_id.is_empty():
+		world_map = WorldMap.mark_heard(world_map, target_node_id, heard)
+	var remaining: Array = []
+	for rumor_value in _copy_array(current_environment.get("town_rumors", [])):
+		if typeof(rumor_value) == TYPE_DICTIONARY and str((rumor_value as Dictionary).get("id", "")) == str(heard.get("id", "")):
+			continue
+		remaining.append(rumor_value)
+	current_environment["town_rumors"] = remaining
+	return heard
+
+
+func heard_rumor_for_node(node_id: String) -> Dictionary:
+	return town_state.heard_rumor_for_node(node_id) if town_state != null else {}
+
+
+func traveler_node(character_id: String) -> String:
+	return town_state.traveler_node(character_id) if town_state != null else ""
+
+
+func travelers_at(node_id: String) -> Array:
+	return town_state.travelers_at(node_id) if town_state != null else []
+
+
+func traveler_state(character_id: String) -> Dictionary:
+	return town_state.traveler_state(character_id) if town_state != null else {}
+
+
+func register_reputation_incident_type(incident_type: String, definition: Dictionary) -> bool:
+	return town_state != null and town_state.register_reputation_incident_type(incident_type, definition)
+
+
+func record_reputation_incident(incident_type: String, node_id: String = "", magnitude: float = 1.0, context: Dictionary = {}) -> Dictionary:
+	if town_state == null:
+		return {}
+	var source_node_id := node_id.strip_edges()
+	if source_node_id.is_empty():
+		source_node_id = current_world_node_id()
+	return town_state.record_reputation_incident(incident_type, source_node_id, magnitude, context)
+
+
+func local_reputation(node_id: String) -> Dictionary:
+	return town_state.local_reputation(node_id) if town_state != null else {}
+
+
+func reputation_value(node_id: String, incident_type: String = "") -> float:
+	return town_state.reputation_value(node_id, incident_type) if town_state != null else 0.0
+
+
+func record_reputation_from_result(result: Dictionary, deltas: Dictionary) -> void:
+	if town_state == null or result.is_empty():
+		return
+	var node_id := current_world_node_id()
+	if node_id.is_empty():
+		return
+	var source_id := str(result.get("source_id", "")).strip_edges().to_lower()
+	var action_id := str(result.get("action_id", "")).strip_edges().to_lower()
+	var action_kind := str(result.get("action_kind", "")).strip_edges().to_lower()
+	var bankroll_delta := int(deltas.get("bankroll_delta", result.get("bankroll_delta", 0)))
+	var suspicion_delta := int(deltas.get("suspicion_delta", result.get("suspicion_delta", 0)))
+	var stake := maxi(0, int(result.get("stake", result.get("wager", 0))))
+	if bankroll_delta >= maxi(40, stake * 3):
+		record_reputation_incident("big_public_win", node_id, 1.0, {"source_id": source_id, "bankroll_delta": bankroll_delta})
+	if action_id.begins_with("tip_") or action_id == "tip_dealer":
+		record_reputation_incident("generous_tipper", node_id, 1.0, {"source_id": source_id, "bankroll_delta": bankroll_delta})
+	var alarm_named := source_id.contains("alarm") or source_id.contains("security") or action_id.contains("alarm")
+	if alarm_named or (action_kind in ["cheat", "risky"] and suspicion_delta >= 8):
+		record_reputation_incident("alarm_tripped", node_id, 1.0, {"source_id": source_id, "suspicion_delta": suspicion_delta})
+
+
 func scenario_weight_multiplier(archetype_id: String, scenario_id: String, tags: Array) -> float:
 	if town_state == null:
 		return 1.0
 	return town_state.scenario_weight_multiplier(archetype_id, scenario_id, tags)
 
 
-func apply_town_generation_modifiers(environment_data: Dictionary) -> void:
+func apply_town_generation_modifiers(environment_data: Dictionary, rng: RngStream = null) -> void:
 	if town_state == null or environment_data.is_empty():
 		return
 	var economic := _copy_dict(environment_data.get("economic_profile", {}))
@@ -6443,6 +6566,115 @@ func apply_town_generation_modifiers(environment_data: Dictionary) -> void:
 	music["town_modifiers"] = music_modifiers.duplicate(true)
 	environment_data["music_profile"] = music
 	environment_data["town_conditions"] = town_state.public_snapshot()
+	apply_town_living_world_context(environment_data, rng)
+
+
+func apply_town_living_world_context(environment_data: Dictionary, rng: RngStream = null) -> void:
+	if town_state == null or environment_data.is_empty():
+		return
+	_apply_town_traveler_generation_context(environment_data)
+	_apply_town_reputation_generation_context(environment_data)
+	_apply_town_rumor_generation_context(environment_data, rng)
+
+
+func _apply_town_traveler_generation_context(environment_data: Dictionary) -> void:
+	var node_id := str(environment_data.get("world_node_id", environment_data.get("archetype_id", environment_data.get("id", "")))).strip_edges()
+	if node_id.is_empty():
+		return
+	var presence := travelers_at(node_id)
+	environment_data["traveler_presence_ids"] = presence.duplicate()
+	var patrons := _string_array(_copy_array(environment_data.get("scenario_patron_ids", [])))
+	for character_id in presence:
+		if not patrons.has(character_id):
+			patrons.append(character_id)
+	environment_data["scenario_patron_ids"] = patrons
+	var flags := _copy_dict(environment_data.get("local_narrative_flags", {}))
+	flags.erase("rival_worked_here")
+	flags.erase("rival_worked_here_remaining_actions")
+	var security := _copy_dict(environment_data.get("security_profile", {}))
+	security.erase("rival_table_attention_delta")
+	var cass_modifier := town_state.departed_traveler_modifier(node_id, "cass_rival_counter")
+	if not cass_modifier.is_empty():
+		flags["rival_worked_here"] = true
+		flags["rival_worked_here_remaining_actions"] = int(cass_modifier.get("remaining_actions", 0))
+		security["rival_table_attention_delta"] = int(cass_modifier.get("table_attention_delta", 1))
+	environment_data["local_narrative_flags"] = flags
+	environment_data["security_profile"] = security
+
+
+func _apply_town_reputation_generation_context(environment_data: Dictionary) -> void:
+	var node_id := str(environment_data.get("world_node_id", environment_data.get("archetype_id", environment_data.get("id", "")))).strip_edges()
+	if node_id.is_empty():
+		return
+	var reputation := local_reputation(node_id)
+	environment_data["town_reputation"] = reputation.duplicate(true)
+	var security := _copy_dict(environment_data.get("security_profile", {}))
+	var base_strictness := str(security.get("town_base_strictness", security.get("strictness", "low"))).strip_edges().to_lower()
+	security["town_base_strictness"] = base_strictness
+	var strictness_bands := ["low", "moderate", "high", "boss"]
+	var band_index := 0
+	if ["uneven", "licensed-gray", "private", "moderate"].has(base_strictness):
+		band_index = 1
+	elif ["high", "velvet"].has(base_strictness):
+		band_index = 2
+	elif base_strictness == "boss":
+		band_index = 3
+	var effective_index := clampi(band_index + int(reputation.get("door_strictness_delta", 0)), 0, strictness_bands.size() - 1)
+	security["door_strictness_band"] = str(strictness_bands[effective_index])
+	security["town_door_strictness_delta"] = int(reputation.get("door_strictness_delta", 0))
+	security["town_reputation_attention"] = float(reputation.get("attention", 0.0))
+	environment_data["security_profile"] = security
+	var rare_reaction := _copy_dict(reputation.get("rare_reaction", {}))
+	if not rare_reaction.is_empty():
+		var event_ids := _string_array(_copy_array(environment_data.get("event_ids", [])))
+		if not event_ids.has("town_reputation_reaction"):
+			event_ids.append("town_reputation_reaction")
+		environment_data["event_ids"] = event_ids
+
+
+func _apply_town_rumor_generation_context(environment_data: Dictionary, rng: RngStream) -> void:
+	var node_id := str(environment_data.get("world_node_id", environment_data.get("archetype_id", environment_data.get("id", "")))).strip_edges()
+	if node_id.is_empty():
+		return
+	var rumors := _copy_array(environment_data.get("town_rumors", []))
+	if rumors.is_empty():
+		rumors = rumors_for_venue(node_id, _town_speaker_side(str(environment_data.get("archetype_id", node_id))), 1, rng)
+	environment_data["town_rumors"] = rumors
+	if rumors.is_empty():
+		return
+	var archetype_id := str(environment_data.get("archetype_id", node_id)).strip_edges()
+	if not _town_has_rumor_staff(archetype_id):
+		return
+	var event_ids := _string_array(_copy_array(environment_data.get("event_ids", [])))
+	var resolved := _string_array(_copy_array(environment_data.get("resolved_event_ids", [])))
+	if not event_ids.has("town_rumor_staff") and not resolved.has("town_rumor_staff"):
+		event_ids.append("town_rumor_staff")
+	environment_data["event_ids"] = event_ids
+
+
+func _town_has_rumor_staff(archetype_id: String) -> bool:
+	return [
+		"bar",
+		"corner_store",
+		"delta_queen",
+		"gas_station_casino",
+		"grand_casino",
+		"jazz_club",
+		"kitty_cat_lounge",
+		"motel",
+		"pawn_shop",
+		"small_underground_casino",
+	].has(archetype_id)
+
+
+func _town_speaker_side(archetype_id: String) -> String:
+	if ["corner_store", "back_alley", "motel", "bar", "gas_station_casino", "pawn_shop"].has(archetype_id):
+		return "street"
+	if ["grand_casino", "grand_casino_high_limit", "grand_casino_back_room", "grand_casino_cage", "delta_queen", "kitty_cat_lounge"].has(archetype_id):
+		return "house"
+	if ["small_underground_casino", "jazz_club", "beach"].has(archetype_id):
+		return "seam"
+	return "neutral"
 
 
 func _apply_town_stake_multiplier(profile: Dictionary, key: String, multiplier: float) -> void:
@@ -7845,6 +8077,8 @@ func fail_run(reason: String, message: String = "") -> void:
 	run_status = RUN_STATUS_FAILED
 	run_failure_reason = reason if not reason.strip_edges().is_empty() else FAILURE_BANKROLL_ZERO
 	run_failure_message = message if not message.strip_edges().is_empty() else _failure_message_for_reason(run_failure_reason)
+	if run_failure_reason == FAILURE_CASINO_TAKEN_OUT_BACK:
+		record_reputation_incident("thrown_out", current_world_node_id(), 1.0, {"reason": run_failure_reason})
 	retire_pending_talk_events()
 	if bankroll <= 0:
 		bankroll = 0
@@ -8331,6 +8565,7 @@ func from_dict(data: Dictionary) -> void:
 	_sync_portable_ticket_inventory_markers()
 	_apply_sals_forfeited_shelf_to_current_environment()
 	world_map = _compact_world_map_ticket_storage(WorldMap.normalize(_copy_dict(data.get("world_map", {}))))
+	configure_town_world(world_map)
 	scenario_recent_by_archetype = _normalize_scenario_recent(_copy_dict(data.get("scenario_recent_by_archetype", {})))
 	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
 	grand_casino_staffing = _normalize_grand_casino_staffing(_copy_dict(data.get("grand_casino_staffing", {})))

@@ -1,0 +1,56 @@
+[
+{
+  "schema_version": 1,
+  "travelers": [
+    {
+      "character_id": "dave_bus_regular",
+      "allowed_nodes": [
+        "corner_store",
+        "motel",
+        "bar",
+        "gas_station_casino",
+        "jazz_club",
+        "delta_queen"
+      ],
+      "dwell_actions": [5, 9],
+      "schedule_actions": 240,
+      "where_been_line_key": "where_been"
+    },
+    {
+      "character_id": "cass_rival_counter",
+      "allowed_nodes": [
+        "gas_station_casino",
+        "small_underground_casino",
+        "jazz_club",
+        "kitty_cat_lounge",
+        "delta_queen",
+        "grand_casino"
+      ],
+      "dwell_actions": [4, 7],
+      "schedule_actions": 240,
+      "departed_modifier": {
+        "id": "rival_worked_here",
+        "decay_actions": 10,
+        "table_attention_delta": 1
+      }
+    },
+    {
+      "character_id": "silas_snitch",
+      "allowed_nodes": [
+        "bar",
+        "small_underground_casino",
+        "jazz_club",
+        "kitty_cat_lounge",
+        "motel"
+      ],
+      "dwell_actions": [4, 8],
+      "schedule_actions": 240,
+      "where_been_lines": [
+        "Silas has been drinking at {current_name}.",
+        "Somebody saw Silas settle in at {current_name}.",
+        "Silas put his glass down at {current_name}."
+      ]
+    }
+  ]
+}
+]
