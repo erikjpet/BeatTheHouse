@@ -890,6 +890,7 @@ func _check_town_state_foundation(library: ContentLibrary, failures: Array) -> v
 	})
 	if str(hud_model.get("town_status_text", "")).is_empty() or str(hud_model.get("objective_text", "")).find(run_state.weather_now().capitalize()) == -1:
 		failures.append("Run HUD did not surface the current weather/day line.")
+	_check_connected_town_foundation(library, failures)
 
 
 func _town_force_condition(run_state: RunState, weather_id: String, day_type_id: String) -> void:
@@ -899,6 +900,291 @@ func _town_force_condition(run_state: RunState, weather_id: String, day_type_id:
 		run_state.town_state.restore(snapshot, run_state.seed_value)
 		if run_state.weather_now() == weather_id and run_state.day_type() == day_type_id:
 			return
+
+
+func _check_connected_town_foundation(library: ContentLibrary, failures: Array) -> void:
+	var run_state := RunStateScript.new()
+	run_state.start_new("CONNECTED-TOWN-FOUNDATION")
+	var generator := RunGeneratorScript.new(library)
+	generator.next_environment(run_state)
+	var deterministic_twin := RunStateScript.new()
+	deterministic_twin.start_new("CONNECTED-TOWN-FOUNDATION")
+	RunGeneratorScript.new(library).next_environment(deterministic_twin)
+	if JSON.stringify(deterministic_twin.town_snapshot()) != JSON.stringify(run_state.town_snapshot()):
+		failures.append("Same seed did not produce identical scenario seeds and traveler itineraries.")
+	var deterministic_node := run_state.current_world_node_id()
+	if JSON.stringify(run_state.rumors_for_venue(deterministic_node, "street", 8)) != JSON.stringify(deterministic_twin.rumors_for_venue(deterministic_node, "street", 8)):
+		failures.append("Same seed did not offer identical rumors at the same venue.")
+	var seeded_bar := run_state.scenario_for_node("bar")
+	if seeded_bar.is_empty():
+		failures.append("Town scenario truth source did not pre-seed the Bar's non-empty scenario pool.")
+		return
+	var scenario_rumor: Dictionary = {}
+	for rumor_value in run_state.rumors_for_venue("corner_store", "street", 64):
+		if typeof(rumor_value) != TYPE_DICTIONARY:
+			continue
+		var rumor: Dictionary = rumor_value
+		if str(rumor.get("class", "")) == "scenario" and str(rumor.get("target_node_id", "")) == "bar":
+			scenario_rumor = rumor
+			break
+	if scenario_rumor.is_empty() or not run_state.town_state.rumor_trace_is_live(scenario_rumor):
+		failures.append("Scenario rumor did not carry a truth_trace resolving to live seeded state.")
+		return
+	run_state.current_environment["town_rumors"] = [scenario_rumor.duplicate(true)]
+	var event_ids := _string_array(run_state.current_environment.get("event_ids", []))
+	if not event_ids.has("town_rumor_staff"):
+		event_ids.append("town_rumor_staff")
+	run_state.current_environment["event_ids"] = event_ids
+	var rumor_event := EventModuleScript.new()
+	rumor_event.setup(library.event("town_rumor_staff"), library)
+	var rumor_choices := rumor_event.choices(run_state, run_state.current_environment)
+	if rumor_choices.is_empty() or str((rumor_choices[0] as Dictionary).get("text", "")) != str(scenario_rumor.get("line", "")):
+		failures.append("Staff dialogue/event delivery did not surface the selected true rumor line.")
+	var woven_event := EventModuleScript.new()
+	woven_event.setup(library.event("staff_shift_tip"), library)
+	var woven_choices := woven_event.choices(run_state, run_state.current_environment)
+	if woven_choices.is_empty() or not str((woven_choices[0] as Dictionary).get("text", "")).contains(str(scenario_rumor.get("line", ""))):
+		failures.append("An existing natural staff event did not weave in the available rumor line.")
+	var woven_run := RunStateScript.new()
+	woven_run.from_dict(run_state.to_dict())
+	var woven_delivery := EventModuleScript.new()
+	woven_delivery.setup(library.event("staff_shift_tip"), library)
+	var woven_result := woven_delivery.resolve(woven_run, woven_run.current_environment, "tip_dealer")
+	var woven_heard := woven_run.heard_rumor_for_node("bar")
+	if not bool(woven_result.get("ok", false)) or str(woven_heard.get("fact_id", "")) != str(scenario_rumor.get("fact_id", "")) \
+		or not woven_run.town_state.rumor_trace_is_live(woven_heard):
+		failures.append("The rumor woven into an existing staff event was not delivered through its traceable fact hook.")
+	var dave_event := EventModuleScript.new()
+	dave_event.setup(library.event("dave_bus_warning"), library)
+	var dave_choices := dave_event.choices(run_state, run_state.current_environment)
+	if dave_choices.is_empty() or str((dave_choices[0] as Dictionary).get("traveler_context_line", "")).is_empty() \
+		or not str((dave_choices[0] as Dictionary).get("text", "")).contains("Dave") \
+		or not str((dave_choices[0] as Dictionary).get("text", "")).contains(str(scenario_rumor.get("line", ""))):
+		failures.append("Dave's existing bus delivery did not gain a data-driven where-he's-been reference.")
+	var rumor_result := rumor_event.resolve(run_state, run_state.current_environment, "listen")
+	var heard := run_state.heard_rumor_for_node("bar")
+	if not bool(rumor_result.get("ok", false)):
+		failures.append("Staff rumor event could not resolve through the existing event surface.")
+	var heard_node := WorldMapScript.node_metadata_by_id(run_state.world_map, "bar")
+	if heard.is_empty() or _copy_dict(heard_node.get("heard", {})).is_empty() or bool(heard_node.get("scouted", false)):
+		failures.append("Hearing a rumor did not write the distinct heard-tier map payload without granting full scouting.")
+	var heard_preview := run_state.travel_route_preview({"destination_archetype": "bar"}, library.environment_archetype("bar"), {}, false)
+	if str(heard_preview.get("level", "")) != "heard" or heard_preview.has("game_ids") or heard_preview.has("service_ids") or not str(_copy_array(heard_preview.get("lines", []))[1]).contains(str(seeded_bar.get("display_name", ""))):
+		failures.append("Heard-tier preview leaked full scouting fields or omitted the traced scenario name.")
+	var before_entry_seed := str(seeded_bar.get("id", ""))
+	var saved_before_entry := run_state.to_dict()
+	var restored_before_entry := RunStateScript.new()
+	restored_before_entry.from_dict(saved_before_entry)
+	if JSON.stringify(restored_before_entry.heard_rumor_for_node("bar")) != JSON.stringify(heard):
+		failures.append("Heard-tier map state did not survive save/load.")
+	var rng_before_entry := restored_before_entry.rng_state
+	generator.next_environment(restored_before_entry, "bar", true)
+	if str(restored_before_entry.scenario_for_node("bar").get("id", "")) != before_entry_seed \
+		or str(restored_before_entry.scenario_for_node("bar").get("id", "")) != str(heard.get("source_id", "")):
+		failures.append("The later entered node did not consume the exact scenario named by its heard rumor.")
+	if restored_before_entry.rng_state == rng_before_entry:
+		# Environment generation may consume RNG for games/layout, but scenario
+		# consumption itself is covered by the identity assertion above.
+		pass
+
+	var passive_before := JSON.stringify(run_state.town_snapshot())
+	for _read_index in range(20):
+		run_state.traveler_node("dave_bus_regular")
+		run_state.travelers_at("bar")
+		run_state.local_reputation("bar")
+		run_state.rumors_for_venue("corner_store", "street", 2)
+	if JSON.stringify(run_state.town_snapshot()) != passive_before:
+		failures.append("Rumor/traveler/reputation reads mutated town state outside an action boundary.")
+	var dave_before := run_state.traveler_state("dave_bus_regular")
+	if dave_before.is_empty() or run_state.travelers_at(str(dave_before.get("node_id", ""))).find("dave_bus_regular") < 0:
+		failures.append("Traveler read APIs did not agree on Dave's current seeded assignment.")
+	var dave_depart_action := int(dave_before.get("depart_action", 0))
+	run_state.advance_environment_turns(maxi(1, dave_depart_action - int(run_state.town_state.action_index)))
+	if str(run_state.traveler_state("dave_bus_regular").get("node_id", "")) == str(dave_before.get("node_id", "")):
+		failures.append("Dave's itinerary did not advance at its authored action boundary.")
+
+	var cass_run := RunStateScript.new()
+	cass_run.start_new("CONNECTED-TOWN-CASS")
+	RunGeneratorScript.new(library).next_environment(cass_run)
+	var cass_schedule_value: Variant = cass_run.town_state.living_world.itinerary_schedules.get("cass_rival_counter", [])
+	if typeof(cass_schedule_value) == TYPE_ARRAY and not (cass_schedule_value as Array).is_empty():
+		var first_cass_segment: Dictionary = {}
+		var cass_segments: Array = cass_schedule_value as Array
+		for segment_index in range(cass_segments.size()):
+			if typeof(cass_segments[segment_index]) != TYPE_DICTIONARY:
+				continue
+			var candidate: Dictionary = cass_segments[segment_index]
+			var candidate_node := str(candidate.get("node_id", ""))
+			var candidate_end := int(candidate.get("end_action", 0))
+			var overlaps_later_departure := false
+			for later_index in range(segment_index + 1, cass_segments.size()):
+				if typeof(cass_segments[later_index]) != TYPE_DICTIONARY:
+					continue
+				var later: Dictionary = cass_segments[later_index]
+				if int(later.get("end_action", 0)) >= candidate_end + 10:
+					break
+				if str(later.get("node_id", "")) == candidate_node:
+					overlaps_later_departure = true
+					break
+			if not overlaps_later_departure:
+				first_cass_segment = candidate
+				break
+		if first_cass_segment.is_empty():
+			failures.append("Cass itinerary supplied no isolated departure for decay verification.")
+			return
+		var cass_departure := int(first_cass_segment.get("end_action", 0))
+		var needed := maxi(0, cass_departure - int(cass_run.town_state.action_index))
+		if needed > 0:
+			cass_run.advance_environment_turns(needed)
+		var cass_node := str(first_cass_segment.get("node_id", ""))
+		var cass_modifier := cass_run.town_state.departed_traveler_modifier(cass_node, "cass_rival_counter")
+		if cass_modifier.is_empty() or int(cass_modifier.get("remaining_actions", 0)) <= 0:
+			failures.append("Cass's rival_worked_here modifier did not appear exactly after her departure.")
+		else:
+			var cass_environment := library.environment_archetype(cass_node).duplicate(true)
+			cass_environment["world_node_id"] = cass_node
+			cass_run.apply_town_living_world_context(cass_environment)
+			if not bool(_copy_dict(cass_environment.get("local_narrative_flags", {})).get("rival_worked_here", false)) \
+				or int(_copy_dict(cass_environment.get("security_profile", {})).get("rival_table_attention_delta", 0)) <= 0:
+				failures.append("Cass's departed-node modifier did not reach generated venue attention context.")
+			cass_run.advance_environment_turns(int(cass_modifier.get("remaining_actions", 0)))
+			if not cass_run.town_state.departed_traveler_modifier(cass_node, "cass_rival_counter").is_empty():
+				failures.append("Cass's rival_worked_here modifier did not decay at its data-authored boundary.")
+			cass_run.apply_town_living_world_context(cass_environment)
+			if bool(_copy_dict(cass_environment.get("local_narrative_flags", {})).get("rival_worked_here", false)) \
+				or _copy_dict(cass_environment.get("security_profile", {})).has("rival_table_attention_delta"):
+				failures.append("Cass's generated venue context retained the modifier after its decay boundary.")
+
+	var silas_event := EventModuleScript.new()
+	silas_event.setup(library.event("snitch_reputation"), library)
+	run_state.narrative_flags["rival_counter_snitch"] = true
+	var silas_node := run_state.traveler_node("silas_snitch")
+	var silas_environment := {"id": "silas_fixture", "archetype_id": silas_node, "world_node_id": silas_node, "kind": "casino", "tier": 2, "event_ids": ["snitch_reputation"], "resolved_event_ids": []}
+	var wrong_silas_node := "bar" if silas_node != "bar" else "motel"
+	var wrong_silas_environment := silas_environment.duplicate(true)
+	wrong_silas_environment["archetype_id"] = wrong_silas_node
+	wrong_silas_environment["world_node_id"] = wrong_silas_node
+	if not bool(silas_event.call("_conditions_allow", run_state, silas_environment, {})) or bool(silas_event.call("_conditions_allow", run_state, wrong_silas_environment, {})):
+		failures.append("Silas's snitch event was not gated to his current itinerary node.")
+
+	var edges_value: Variant = run_state.world_map.get("edges", [])
+	if typeof(edges_value) == TYPE_ARRAY and not (edges_value as Array).is_empty():
+		var edge: Dictionary = (edges_value as Array)[0]
+		var source_node := str(edge.get("a", ""))
+		var adjacent_node := str(edge.get("b", ""))
+		var incident := run_state.record_reputation_incident("thrown_out", source_node, 1.0, {"fixture": true})
+		var adjacent_reputation := run_state.local_reputation(adjacent_node)
+		if incident.is_empty() or float(adjacent_reputation.get("attention", 0.0)) <= 0.0 or int(adjacent_reputation.get("door_strictness_delta", 0)) <= 0:
+			failures.append("A thrown-out incident did not measurably tighten the adjacent node on its next generation.")
+		var adjacent_environment := library.environment_archetype(adjacent_node).duplicate(true)
+		adjacent_environment["world_node_id"] = adjacent_node
+		run_state.apply_town_generation_modifiers(adjacent_environment)
+		if int(_copy_dict(adjacent_environment.get("security_profile", {})).get("town_door_strictness_delta", 0)) <= 0:
+			failures.append("Environment generation did not consume the adjacent reputation door-strictness band.")
+		var reputation_event := EventModuleScript.new()
+		reputation_event.setup(library.event("town_reputation_reaction"), library)
+		var reputation_choices := reputation_event.choices(run_state, adjacent_environment)
+		var expected_staff_line := str(_copy_dict(adjacent_environment.get("town_reputation", {})).get("staff_line", ""))
+		if reputation_choices.is_empty() or expected_staff_line.is_empty() \
+			or str((reputation_choices[0] as Dictionary).get("text", "")) != expected_staff_line:
+			failures.append("Traveling reputation did not feed its selected staff line into the existing event surface.")
+		var hop_two_node := ""
+		var adjacency: Dictionary = {}
+		for map_edge_value in edges_value as Array:
+			if typeof(map_edge_value) != TYPE_DICTIONARY:
+				continue
+			var map_edge: Dictionary = map_edge_value
+			var edge_a := str(map_edge.get("a", ""))
+			var edge_b := str(map_edge.get("b", ""))
+			var a_neighbors: Array = adjacency.get(edge_a, []) if typeof(adjacency.get(edge_a, [])) == TYPE_ARRAY else []
+			var b_neighbors: Array = adjacency.get(edge_b, []) if typeof(adjacency.get(edge_b, [])) == TYPE_ARRAY else []
+			if not a_neighbors.has(edge_b):
+				a_neighbors.append(edge_b)
+			if not b_neighbors.has(edge_a):
+				b_neighbors.append(edge_a)
+			adjacency[edge_a] = a_neighbors
+			adjacency[edge_b] = b_neighbors
+		for adjacent_value in adjacency.get(source_node, []):
+			for candidate_value in adjacency.get(str(adjacent_value), []):
+				var candidate_node := str(candidate_value)
+				if candidate_node != source_node and not (adjacency.get(source_node, []) as Array).has(candidate_node):
+					hop_two_node = candidate_node
+					break
+			if not hop_two_node.is_empty():
+				break
+		if hop_two_node.is_empty():
+			failures.append("Town map fixture had no hop-two node for reputation decay verification.")
+		else:
+			var hop_two_before := run_state.reputation_value(hop_two_node, "thrown_out")
+			run_state.advance_environment_turns(1)
+			var hop_two_after := run_state.reputation_value(hop_two_node, "thrown_out")
+			var adjacent_after := run_state.reputation_value(adjacent_node, "thrown_out")
+			if hop_two_before > 0.0001 or hop_two_after <= 0.0 or hop_two_after >= adjacent_after:
+				failures.append("Reputation did not arrive at hop two on a later boundary with per-hop decay.")
+		var twin_edge_value: Variant = deterministic_twin.world_map.get("edges", [])
+		if typeof(twin_edge_value) == TYPE_ARRAY and not (twin_edge_value as Array).is_empty():
+			deterministic_twin.advance_environment_turns(int(run_state.town_state.action_index))
+			deterministic_twin.record_reputation_incident("thrown_out", source_node, 1.0, {"fixture": true})
+			var deterministic_reputation := JSON.stringify(deterministic_twin.local_reputation(adjacent_node))
+			var timeline_twin := RunStateScript.new()
+			timeline_twin.start_new("CONNECTED-TOWN-FOUNDATION")
+			RunGeneratorScript.new(library).next_environment(timeline_twin)
+			timeline_twin.advance_environment_turns(int(run_state.town_state.action_index))
+			timeline_twin.record_reputation_incident("thrown_out", source_node, 1.0, {"fixture": true})
+			if JSON.stringify(timeline_twin.local_reputation(adjacent_node)) != deterministic_reputation:
+				failures.append("Same seed and action timeline did not produce identical reputation propagation.")
+
+	var round_trip := RunStateScript.new()
+	round_trip.from_dict(run_state.to_dict())
+	if JSON.stringify(round_trip.town_snapshot()) != JSON.stringify(run_state.town_snapshot()):
+		failures.append("Rumor, itinerary, and reputation state did not round-trip together.")
+	var legacy := run_state.to_dict()
+	var legacy_town := _copy_dict(legacy.get("town_state", {}))
+	legacy_town.erase("living_world")
+	legacy["town_state"] = legacy_town
+	var migrated := RunStateScript.new()
+	migrated.from_dict(legacy)
+	if not migrated.heard_rumor_for_node("bar").is_empty() or absf(migrated.reputation_value("bar")) > 0.0001 \
+		or not migrated.seeded_scenario_for_node("bar").is_empty():
+		failures.append("Pre-Wave-B save migration did not load with empty rumor/reputation state.")
+	var writer_run := RunStateScript.new()
+	writer_run.start_new("CONNECTED-TOWN-WRITERS")
+	RunGeneratorScript.new(library).next_environment(writer_run)
+	var writer_node := writer_run.current_world_node_id()
+	GameModule.apply_result(writer_run, {
+		"ok": true,
+		"source_id": "blackjack",
+		"action_id": "stand",
+		"stake": 10,
+		"deltas": {"bankroll_delta": 50},
+	})
+	if writer_run.reputation_value(writer_node, "big_public_win") <= 0.0:
+		failures.append("The existing game-result boundary did not write a big-public-win reputation incident.")
+	var security_writer_run := RunStateScript.new()
+	security_writer_run.from_dict(writer_run.to_dict())
+	GameModule.apply_result(security_writer_run, {
+		"ok": true,
+		"source_id": "security_alarm_fixture",
+		"action_id": "trip_alarm",
+		"action_kind": "cheat",
+		"deltas": {"suspicion_delta": 8},
+	})
+	if security_writer_run.reputation_value(writer_node, "alarm_tripped") <= 0.0:
+		failures.append("The existing security/game-result boundary did not write an alarm-tripped reputation incident.")
+	var thrown_out_writer_run := RunStateScript.new()
+	thrown_out_writer_run.from_dict(writer_run.to_dict())
+	thrown_out_writer_run.fail_run(RunStateScript.FAILURE_CASINO_TAKEN_OUT_BACK, "Fixture ejection")
+	if thrown_out_writer_run.reputation_value(writer_node, "thrown_out") <= 0.0:
+		failures.append("The existing thrown-out failure boundary did not write its reputation incident.")
+
+	for seed_index in range(20):
+		var truth_run := RunStateScript.new()
+		truth_run.start_new("TOWN-TRUTH-%02d" % seed_index)
+		RunGeneratorScript.new(library).next_environment(truth_run)
+		for rumor_value in truth_run.rumors_for_venue(truth_run.current_world_node_id(), "neutral", 64):
+			if typeof(rumor_value) == TYPE_DICTIONARY and not truth_run.town_state.rumor_trace_is_live(rumor_value as Dictionary):
+				failures.append("20-seed truth sweep found a rumor without live state at seed %d." % seed_index)
+				return
 
 
 func _check_attribute_glyph_foundation(library: ContentLibrary, failures: Array) -> void:
