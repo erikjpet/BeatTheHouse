@@ -143,12 +143,12 @@ func _run() -> void:
 
 	_record_state("start_screen", "Fresh launch before a player starts or continues a run.")
 	_cover("start_screen")
-	_require(_has_visible_button_contains("New Run"), "Start screen does not expose the New Run button.")
+	_require(_has_visible_button_role("new_run_button", ["PLAY"]), "Start screen does not expose the PLAY action.")
 	_require(_has_visible_text(app, "Simulated gambling only"), "Start screen does not present simulated gambling framing.")
 	_require(_has_visible_text(app, "no real-money wagering"), "Start screen does not present no-real-money framing.")
 	_require(not _has_visible_text(app, "Game Test"), "Release start screen exposed the temporary Game Test launcher.")
-	_require(_has_visible_button_contains("Games"), "Start screen does not expose the Games page.")
-	_require(not _click_button_exact("Games").is_empty(), "Could not open the Games page through visible controls.")
+	_require(_has_visible_button_role("game_library_button", ["GAMES"]), "Start screen does not expose the GAMES page action.")
+	_require(not _click_visible_button_role("game_library_button", ["GAMES"]).is_empty(), "Could not open the Games page through its visible semantic control.")
 	await _settle()
 	_require(_has_visible_text(app, "Game Library"), "Games page did not show its title.")
 	_require(_has_visible_text(app, "Practice any available table"), "Games page did not show practice copy.")
@@ -157,9 +157,9 @@ func _run() -> void:
 	await _settle()
 	_cover("release_menu_framing")
 	_cover("release_menu_no_game_test")
-	_set_seed_text(visual_qa_seed)
+	await _set_seed_text(visual_qa_seed)
 	_select_new_run_home_type("motel_room")
-	_require(not _click_button_exact("New Run").is_empty(), "Could not click New Run through visible controls.")
+	_require(not _click_primary_run_action().is_empty(), "Could not start the configured run through its visible semantic control.")
 	_cover("new_run_button")
 	await _settle()
 
@@ -753,8 +753,8 @@ func _assert_no_triggered_event_objects(label: String) -> void:
 
 func _verify_t4_7_event_visual_model() -> void:
 	await _open_fresh_app()
-	_set_seed_text("FOUNDATION-PHONE-VISUAL-QA")
-	_require(not _click_button_exact("New Run").is_empty(), "Could not start phone-prop visual QA run.")
+	await _set_seed_text("FOUNDATION-PHONE-VISUAL-QA")
+	_require(not _click_primary_run_action().is_empty(), "Could not start phone-prop visual QA run through the visible primary run action.")
 	await _settle()
 	var run_state := app.get("run_state") as RunState
 	var library := app.get("library") as ContentLibrary
@@ -824,8 +824,8 @@ func _verify_t4_7_event_visual_model() -> void:
 
 func _verify_grand_casino_showdown_event_snapshot() -> void:
 	await _open_fresh_app()
-	_set_seed_text("FOUNDATION-SHOWDOWN-VISUAL-QA")
-	_require(not _click_button_exact("New Run").is_empty(), "Could not start showdown visual QA run through visible controls.")
+	await _set_seed_text("FOUNDATION-SHOWDOWN-VISUAL-QA")
+	_require(not _click_primary_run_action().is_empty(), "Could not start showdown visual QA run through the visible primary run action.")
 	await _settle()
 	var fixture_run := app.get("run_state") as RunState
 	var fixture_library := app.get("library") as ContentLibrary
@@ -904,8 +904,8 @@ func _verify_grand_casino_showdown_event_snapshot() -> void:
 
 func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	await _open_fresh_app()
-	_set_seed_text("FOUNDATION-HIGH-ROLLER-VISUAL-QA")
-	_require(not _click_button_exact("New Run").is_empty(), "Could not start Players Card visual QA run through visible controls.")
+	await _set_seed_text("FOUNDATION-HIGH-ROLLER-VISUAL-QA")
+	_require(not _click_primary_run_action().is_empty(), "Could not start Players Card visual QA run through the visible primary run action.")
 	await _settle()
 	var fixture_run := app.get("run_state") as RunState
 	var fixture_library := app.get("library") as ContentLibrary
@@ -948,11 +948,12 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 			"type": "game_action",
 			"source_id": "blackjack",
 			"game_id": "blackjack",
-			"action_id": "visual_clean_progress",
+			"action_id": "play_basic",
 			"action_kind": "legal",
 			"stake": 10 + game_index,
 			"deltas": deltas,
 			"environment_id": str(fixture_run.current_environment.get("id", "")),
+			"environment_archetype_id": str(fixture_run.current_environment.get("archetype_id", "")),
 			"message": "Clean Players Card visual progress.",
 		})
 		fixture_run.record_grand_casino_game_result(result)
@@ -994,7 +995,7 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	for shelf_index in range(3):
 		var shelf_id := "cage_gift_item:%d" % shelf_index
 		var shelf_item := _canvas_object_by_id(canvas, shelf_id)
-		_require(not shelf_item.is_empty() and str(shelf_item.get("object_type", "")) == "item" and not str(shelf_item.get("icon_key", "")).is_empty(), "Cage visual QA could not find icon-based shelf offer %s." % shelf_id)
+		_require(not shelf_item.is_empty() and _object_type_value(shelf_item) == "item" and not str(shelf_item.get("icon_key", "")).is_empty(), "Cage visual QA could not find icon-based shelf offer %s." % shelf_id)
 	var cage_model: Dictionary = CageCounterViewModelScript.build(fixture_run)
 	var cage_card: Dictionary = cage_model.get("card", {}) if typeof(cage_model.get("card", {})) == TYPE_DICTIONARY else {}
 	var cage_host: Dictionary = cage_model.get("host", {}) if typeof(cage_model.get("host", {})) == TYPE_DICTIONARY else {}
@@ -1093,8 +1094,8 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 
 func _verify_terminal_victory_summary_snapshot() -> void:
 	await _open_fresh_app()
-	_set_seed_text("FOUNDATION-VICTORY-SUMMARY-QA")
-	_require(not _click_button_exact("New Run").is_empty(), "Could not start victory summary visual QA run through visible controls.")
+	await _set_seed_text("FOUNDATION-VICTORY-SUMMARY-QA")
+	_require(not _click_primary_run_action().is_empty(), "Could not start victory summary visual QA run through the visible primary run action.")
 	await _settle()
 	var fixture_run := app.get("run_state") as RunState
 	_require(fixture_run != null, "Victory summary visual QA could not access foundation runtime state.")
@@ -1450,8 +1451,8 @@ func _verify_item_purchase_save_load(item_source_id: String) -> void:
 	_require(saved_inventory.has(item_source_id), "Purchased item was missing before item save/load verification.")
 	app.call("return_to_main_menu")
 	await _settle()
-	_require(_has_visible_button_contains("Continue"), "Main menu did not expose Continue after item purchase.")
-	_require(not _click_button_contains("Continue").is_empty(), "Could not load the item-purchase autosave through main-menu Continue.")
+	_require(_has_visible_button_role("new_run_button", ["CONTINUE"]), "Main menu did not expose CONTINUE after item purchase.")
+	_require(not _click_visible_button_role("new_run_button", ["CONTINUE"]).is_empty(), "Could not load the item-purchase autosave through the visible primary run control.")
 	await _settle()
 	var loaded_summary := _run_state_restore_summary(app.call("serialized_run_state"))
 	var loaded_inventory: Array = loaded_summary.get("inventory", []) as Array
@@ -1846,8 +1847,8 @@ func _try_lender_object_in_current_room(lender_object: Dictionary, prepared_fixt
 
 func _verify_mouse_only_recovery_pressure_flow() -> void:
 	await _open_fresh_app()
-	_set_seed_text(visual_qa_seed)
-	_require(not _click_button_exact("New Run").is_empty(), "Could not start recovery pressure QA run through visible controls.")
+	await _set_seed_text(visual_qa_seed)
+	_require(not _click_primary_run_action().is_empty(), "Could not start recovery pressure QA run through the visible primary run action.")
 	await _settle()
 	var before_lender := _run_state_restore_summary(app.call("serialized_run_state"))
 	var serialized_before_lender := _serialized_run_text()
@@ -1904,8 +1905,8 @@ func _save_and_load_flow() -> void:
 	var saved_summary := _run_state_restore_summary(app.call("serialized_run_state"))
 	app.call("return_to_main_menu")
 	await _settle()
-	_require(_has_visible_button_contains("Continue"), "Main menu did not expose Continue for the autosaved run.")
-	_require(not _click_button_contains("Continue").is_empty(), "Could not load the autosaved run through main-menu Continue.")
+	_require(_has_visible_button_role("new_run_button", ["CONTINUE"]), "Main menu did not expose CONTINUE for the autosaved run.")
+	_require(not _click_visible_button_role("new_run_button", ["CONTINUE"]).is_empty(), "Could not load the autosaved run through the visible primary run control.")
 	_cover("load")
 	await _settle()
 	var loaded_summary := _run_state_restore_summary(app.call("serialized_run_state"))
@@ -1925,8 +1926,8 @@ func _save_and_load_flow() -> void:
 func _continue_from_saved_flow() -> void:
 	await _open_fresh_app()
 	_record_state("continue_start_screen", "Fresh launch after a foundation save exists.")
-	_require(_has_visible_button_contains("Continue"), "Fresh launch did not expose Continue after saving.")
-	_require(not _click_button_contains("Continue").is_empty(), "Could not click visible Continue button.")
+	_require(_has_visible_button_role("new_run_button", ["CONTINUE"]), "Fresh launch did not expose CONTINUE after saving.")
+	_require(not _click_visible_button_role("new_run_button", ["CONTINUE"]).is_empty(), "Could not click the visible CONTINUE primary run control.")
 	_cover("continue")
 	await _settle()
 	_record_state("continued_state", "Continued saved foundation run through visible start-screen Continue.")
@@ -2323,14 +2324,16 @@ func _collect_visible_control_items(node: Node, result: Array) -> void:
 
 
 func _set_seed_text(seed_text: String) -> void:
-	for item in _visible_control_items(app):
-		var data := item as Dictionary
-		if str(data.get("kind", "")) == "line_edit":
-			var input := data.get("node") as LineEdit
-			input.text = seed_text
-			input.text_changed.emit(seed_text)
-			return
-	_require(false, "Could not find visible seed input.")
+	var input := app.get("seed_input") as LineEdit
+	if input == null or not input.is_visible_in_tree():
+		_require(not _click_visible_button_role("run_config_button", ["⚙  RUN SETUP"]).is_empty(), "Could not open Run Setup through its visible semantic control.")
+		await _settle()
+		input = app.get("seed_input") as LineEdit
+	_require(input != null and input.is_visible_in_tree(), "Run Setup did not expose its seed input.")
+	if input == null or not input.is_visible_in_tree():
+		return
+	input.text = seed_text
+	input.text_changed.emit(seed_text)
 
 
 func _select_new_run_home_type(preferred_home_id: String) -> void:
@@ -3695,6 +3698,41 @@ func _click_button_contains(fragment: String) -> String:
 			_emit_button(data)
 			return text
 	return ""
+
+
+func _click_primary_run_action() -> String:
+	var configured := _click_visible_button_role("run_config_start_button", ["START NEW RUN"])
+	if not configured.is_empty():
+		return configured
+	return _click_visible_button_role("new_run_button", ["PLAY", "CONTINUE"])
+
+
+func _click_visible_button_role(property_name: String, expected_labels: Array) -> String:
+	var data := _visible_button_role(property_name, expected_labels)
+	if data.is_empty():
+		return ""
+	_emit_button(data)
+	return str(data.get("text", ""))
+
+
+func _has_visible_button_role(property_name: String, expected_labels: Array) -> bool:
+	return not _visible_button_role(property_name, expected_labels).is_empty()
+
+
+func _visible_button_role(property_name: String, expected_labels: Array) -> Dictionary:
+	var role_button := app.get(property_name) as Button
+	if role_button == null:
+		return {}
+	for item in _visible_control_items(app):
+		var data := item as Dictionary
+		if str(data.get("kind", "")) != "button" or bool(data.get("disabled", false)):
+			continue
+		if data.get("node") != role_button:
+			continue
+		var label := str(data.get("text", ""))
+		if expected_labels.is_empty() or expected_labels.has(label):
+			return data
+	return {}
 
 
 func _emit_button(data: Dictionary) -> void:

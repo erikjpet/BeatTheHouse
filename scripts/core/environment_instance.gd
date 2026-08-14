@@ -236,6 +236,7 @@ static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
 	_assign_string_object_rects(object_rects, layout, "event", _copy_array(environment_data.get("event_ids", [])), "event_spots", active_object_ids)
 	if not prioritize_services:
 		_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
+	_assign_object_layout_entries(object_rects, layout, _cage_gift_layout_entries(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "shopkeeper:merchant", "shopkeeper", 0, "shopkeeper_spots", _shopkeeper_should_exist(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "travel:leave", "travel", 0, "travel_spots", not _travel_target_ids(environment_data).is_empty(), active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "casino_fixture", _casino_fixture_ids(environment_data), "casino_fixture_spots", active_object_ids)
@@ -921,6 +922,7 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 	var prioritize_services := bool(layout.get("prioritize_service_spots", false))
 	if not prioritize_services:
 		_append_item_offer_layout_entries(entries, _copy_array(environment_data.get("item_offers", [])))
+	entries.append_array(_cage_gift_layout_entries(environment_data))
 	if _shopkeeper_should_exist(environment_data):
 		entries.append({"object_id": "shopkeeper:merchant", "object_type": "shopkeeper", "index": 0, "spot_field": "shopkeeper_spots"})
 	if not _travel_target_ids(environment_data).is_empty():
@@ -968,6 +970,22 @@ static func _append_item_offer_layout_entries(entries: Array, offers: Array) -> 
 			"index": index,
 			"spot_field": "item_spots",
 		})
+
+
+static func _cage_gift_layout_entries(environment_data: Dictionary) -> Array:
+	var result: Array = []
+	var shop_state := _copy_dict(environment_data.get("cage_gift_shop_state", {}))
+	var stock := _copy_array(shop_state.get("stock", []))
+	for stock_index in range(stock.size()):
+		if typeof(stock[stock_index]) != TYPE_DICTIONARY or bool((stock[stock_index] as Dictionary).get("sold", false)):
+			continue
+		result.append({
+			"object_id": "cage_gift_item:%d" % stock_index,
+			"object_type": "item",
+			"index": stock_index,
+			"spot_field": "item_spots",
+		})
+	return result
 
 
 static func _active_object_ids_from_entries(entries: Array) -> Dictionary:
