@@ -214,22 +214,55 @@ func _check_coin_pusher_nudge_alarm(game: GameModule, library: ContentLibrary, f
 
 
 func _check_coin_pusher_persistence_and_reset(game: GameModule, failures: Array) -> void:
-	var fixture := _coin_pusher_fixture(game, "PUSHER-PERSIST")
-	var run_state: RunState = fixture.get("run_state")
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("PUSHER-PERSIST")
+	run_state.bankroll = 100000
+	var generator: RunGenerator = RunGeneratorScript.new(game.library)
+	generator.next_environment(run_state)
+	generator.next_environment(run_state, "bar", true)
+	var adjacent_node_id := _coin_pusher_adjacent_world_node(run_state.world_map, "bar")
+	if adjacent_node_id.is_empty():
+		failures.append("Production world map generated no real node adjacent to the Quarter Falls Bar fixture.")
+		return
 	var environment: Dictionary = run_state.current_environment
+	var game_ids: Array = environment.get("game_ids", []) if typeof(environment.get("game_ids", [])) == TYPE_ARRAY else []
+	if not game_ids.has("coin_pusher"):
+		game_ids.append("coin_pusher")
+		environment["game_ids"] = game_ids
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	if typeof(game_states.get("coin_pusher", {})) != TYPE_DICTIONARY or (game_states.get("coin_pusher", {}) as Dictionary).is_empty():
+		game_states["coin_pusher"] = game.generate_environment_state(run_state, environment, run_state.create_rng("pusher_persist_initial"))
+		environment["game_states"] = game_states
 	for index in range(12):
 		var result := game.resolve_with_context("drop_quarter", 1, run_state, environment, run_state.create_rng("persist_%d" % index), {"coin_pusher_lane": index % 5})
 		GameModule.apply_result(run_state, result, run_state.create_rng("persist_apply_%d" % index))
+	var alarm_machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	_machine_hanger_fixture(alarm_machine, 2)
+	alarm_machine["alarm_tolerance_remaining"] = 0
+	var alarm_result := game.resolve_with_context("nudge_machine", 0, run_state, environment, run_state.create_rng("persist_alarm"), {
+		"coin_pusher_force": "slam", "coin_pusher_direction": "front", "coin_pusher_lane": 2, "coin_pusher_timing_phase": 9,
+	})
+	GameModule.apply_result(run_state, alarm_result, run_state.create_rng("persist_alarm_apply"))
+	if not bool(alarm_result.get("coin_pusher_hard_alarm", false)):
+		failures.append("Production revisit fixture did not create a real persisted Quarter Falls lockdown.")
 	var persisted_digest: String = str(game.call("deterministic_state_digest", environment))
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(run_state.to_dict())
 	if game.deterministic_state_digest(restored.current_environment) != persisted_digest:
 		failures.append("Quarter Falls pile did not survive RunState save/load round-trip.")
-	var revisit_environment := restored.current_environment.duplicate(true)
-	restored.set_environment({"id": "away", "archetype_id": "motel", "world_node_id": "motel", "game_ids": []})
-	restored.set_environment(revisit_environment)
-	if game.deterministic_state_digest(restored.current_environment) != persisted_digest:
-		failures.append("Quarter Falls pile changed across leave/revisit without a scenario reset.")
+	var restored_generator: RunGenerator = RunGeneratorScript.new(game.library)
+	restored_generator.next_environment(restored, adjacent_node_id, true)
+	if restored.current_world_node_id() != adjacent_node_id:
+		failures.append("Quarter Falls production revisit fixture did not travel to its real adjacent node %s." % adjacent_node_id)
+	var stored_bar := WorldMapScript.node_by_id(restored.world_map, "bar")
+	var stored_bar_environment: Dictionary = stored_bar.get("environment", {}) if typeof(stored_bar.get("environment", {})) == TYPE_DICTIONARY else {}
+	if game.deterministic_state_digest(stored_bar_environment) != persisted_digest:
+		failures.append("Production world-node storage did not retain the exact Quarter Falls pile/lockdown/memory digest.")
+	restored_generator.next_environment(restored, "bar", true)
+	var revisited_machine: Dictionary = (restored.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	if restored.current_world_node_id() != "bar" or game.deterministic_state_digest(restored.current_environment) != persisted_digest \
+			or not bool(revisited_machine.get("locked_down", false)) or not bool(revisited_machine.get("staff_watch_memory", false)):
+		failures.append("Production RunGenerator revisit did not restore the exact Quarter Falls pile, lockdown, and staff memory.")
 	restored.current_environment["scenario_game_modifiers"] = {"coin_pusher": {"reset_pile": true, "reset_token": "someone_else_played_a"}}
 	game.enter(restored, restored.current_environment)
 	var reset_state: Dictionary = (restored.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
@@ -350,6 +383,20 @@ func _coin_pusher_environment(id: String) -> Dictionary:
 		"security_profile": {"strictness": "normal"},
 		"game_states": {},
 	}
+
+
+func _coin_pusher_adjacent_world_node(world_map: Dictionary, source_id: String) -> String:
+	for edge_value in world_map.get("edges", []):
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = edge_value
+		var a := str(edge.get("a", ""))
+		var b := str(edge.get("b", ""))
+		if a == source_id and not b.is_empty():
+			return b
+		if b == source_id and not a.is_empty():
+			return a
+	return ""
 
 
 func _machine_hanger_fixture(machine: Dictionary, lane: int) -> void:
