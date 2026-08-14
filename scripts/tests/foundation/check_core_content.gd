@@ -575,6 +575,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_challenge_pack_content(library, failures)
 	_check_s0_2_baseline_regression_fixtures(library, failures)
 	_check_sa_2_per_frame_contracts(failures)
+	_check_scenario_engine_foundation(library, failures)
 
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CONTENT-CHECK")
@@ -594,6 +595,159 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_environment_instance_shape(second_environment, false, failures)
 	if second_environment.id == first_environment.id:
 		failures.append("Travel did not generate a distinct second environment.")
+
+
+func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array) -> void:
+	if library.scenarios_for_archetype("bar").size() != 2 or library.scenarios_for_archetype("corner_store").size() != 1:
+		failures.append("Scenario engine-proof content must ship two bar placeholders and one corner-store placeholder.")
+	var motel := library.environment_archetype("motel")
+	var legacy_run := RunStateScript.new()
+	legacy_run.start_new("SCENARIO-EMPTY-POOL")
+	var legacy_environment := EnvironmentInstance.from_archetype(motel, 2, legacy_run.create_rng("empty_pool"), library).to_dict()
+	var explicit_empty := EnvironmentInstance.from_archetype(motel, 2, legacy_run.create_rng("empty_pool"), library, {}, {}).to_dict()
+	_assert_json_equal(legacy_environment, explicit_empty, "Scenario empty-pool path changed a legacy environment byte shape.", failures)
+
+	var bar_definition := library.scenario("bar_engine_proof_lock_in")
+	var phase_run := RunStateScript.new()
+	phase_run.start_new("SCENARIO-PHASE")
+	var phased := EnvironmentInstance.from_archetype(library.environment_archetype("bar"), 1, phase_run.create_rng("bar"), library, {}, bar_definition).to_dict()
+	phase_run.set_environment(phased)
+	if str(phase_run.current_environment.get("scenario_id", "")) != "bar_engine_proof_lock_in" or str(_copy_dict(phase_run.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "LAST ROUND STAYS IN THE ROOM":
+		failures.append("Selected scenario was not applied at environment generation time.")
+	phase_run.advance_environment_turns(1)
+	if int(phase_run.current_environment.get("scenario_phase_index", -1)) != 0 or int(phase_run.current_environment.get("scenario_phase_action_counter", -1)) != 1:
+		failures.append("Scenario phase advanced before its authored action boundary.")
+	var mid_phase := RunStateScript.new()
+	mid_phase.from_dict(phase_run.to_dict())
+	if JSON.stringify(mid_phase.scenario_for_node(str(mid_phase.current_environment.get("world_node_id", "bar")))) != JSON.stringify(phase_run.scenario_for_node(str(phase_run.current_environment.get("world_node_id", "bar")))):
+		failures.append("Scenario save/load did not restore a mid-phase counter exactly.")
+	mid_phase.advance_environment_turns(1)
+	if int(mid_phase.current_environment.get("scenario_phase_index", -1)) != 1 or int(mid_phase.current_environment.get("scenario_phase_action_counter", -1)) != 0:
+		failures.append("Scenario phase did not advance exactly on the authored Nth action boundary.")
+
+	var deterministic_a := _scenario_full_generation("SCENARIO-DETERMINISM", library)
+	var deterministic_b := _scenario_full_generation("SCENARIO-DETERMINISM", library)
+	_assert_json_equal(deterministic_a, deterministic_b, "Same-seed scenario assignments or phase schedule diverged.", failures)
+	var revisit_run := RunStateScript.new()
+	revisit_run.start_new("SCENARIO-REVISIT")
+	var revisit_generator := RunGeneratorScript.new(library)
+	revisit_generator.next_environment(revisit_run)
+	revisit_generator.next_environment(revisit_run, "bar", true)
+	var before_revisit := revisit_run.scenario_for_node("bar")
+	revisit_run.advance_environment_turns(2)
+	before_revisit = revisit_run.scenario_for_node("bar")
+	revisit_generator.next_environment(revisit_run, "motel", true)
+	var rng_before_read := revisit_run.rng_state
+	var stored_read := revisit_run.scenario_for_node("bar")
+	if revisit_run.rng_state != rng_before_read or JSON.stringify(stored_read) != JSON.stringify(before_revisit):
+		failures.append("Scenario read API regenerated state or node persistence changed the stored scenario.")
+	revisit_generator.next_environment(revisit_run, "bar", true)
+	if JSON.stringify(revisit_run.scenario_for_node("bar")) != JSON.stringify(before_revisit):
+		failures.append("World-node revisit did not restore the stored scenario unchanged.")
+
+	var repeat_library := ContentLibraryScript.new()
+	repeat_library.load(false)
+	var repeat_pool := repeat_library.scenarios_for_archetype("bar")
+	var third := bar_definition.duplicate(true)
+	third["id"] = "bar_engine_proof_third"
+	third["display_name"] = "Engine Proof: Third"
+	repeat_pool.append(third)
+	repeat_library.environment_scenarios["bar"] = repeat_pool
+	var repeat_run := RunStateScript.new()
+	repeat_run.start_new("SCENARIO-REPEAT")
+	var repeat_generator := RunGeneratorScript.new(repeat_library)
+	var repeat_rng := repeat_run.create_rng("forced_visits")
+	var previous_id := ""
+	for _visit in range(10):
+		var selected: Dictionary = repeat_generator.call("_select_scenario", repeat_run, "bar", repeat_rng)
+		var selected_id := str(selected.get("id", ""))
+		if selected_id.is_empty() or selected_id == previous_id:
+			failures.append("Scenario repeat protection allowed consecutive repeats in a three-scenario pool.")
+			break
+		previous_id = selected_id
+	var pinned_run := RunStateScript.new()
+	pinned_run.start_new("SCENARIO-PIN", RunStateScript.custom_challenge("scenario_pin", "SCENARIO-PIN", {"scenario_pins": {"bar": "bar_engine_proof_quiet_shift"}}))
+	var pinned: Dictionary = repeat_generator.call("_select_scenario", pinned_run, "bar", pinned_run.create_rng("pin"))
+	if str(pinned.get("id", "")) != "bar_engine_proof_quiet_shift":
+		failures.append("Challenge scenario pin did not select the configured scenario.")
+	var excluded_run := RunStateScript.new()
+	excluded_run.start_new("SCENARIO-EXCLUDE", RunStateScript.custom_challenge("scenario_exclude", "SCENARIO-EXCLUDE", {"scenario_excludes": {"bar": ["bar_engine_proof_lock_in", "bar_engine_proof_quiet_shift"]}}))
+	var excluded: Dictionary = RunGeneratorScript.new(library).call("_select_scenario", excluded_run, "bar", excluded_run.create_rng("exclude"))
+	if not excluded.is_empty():
+		failures.append("Challenge scenario exclusions did not remove every configured id.")
+
+	var all_axes := {
+		"id": "bar_all_axes_fixture",
+		"archetype_id": "bar",
+		"display_name": "All Axes",
+		"weight": 1,
+		"mutations": {
+			"patron_set": ["fixture_patron"],
+			"staff_set": ["fixture_staff"],
+			"event_pool_add": ["rowdy_regular"],
+			"economic_profile_overrides": {"scenario_fixture": 1},
+			"game_modifier_hooks": {"fixture": true},
+			"service_add": ["house_drink"],
+			"music_profile_override": {"scenario_fixture": "music"},
+			"presentation": {"palette_tint": "#ffffff", "lighting_key": "fixture", "crowd_density": "dense", "signage_line": "FIXTURE"},
+			"exclusive_opportunity": {"event_id": "rowdy_regular"},
+			"security_overrides": {"strictness_band": "fixture", "cheat_risk_window": "wide", "machine_alarm_tolerance_band": "high"},
+			"hook_flags": {"recruitment_anchor": true, "chain_anchor": true, "rumor_anchor": true},
+		},
+	}
+	var axes_run := RunStateScript.new()
+	axes_run.start_new("SCENARIO-AXES")
+	var axes_environment := EnvironmentInstance.from_archetype(library.environment_archetype("bar"), 1, axes_run.create_rng("axes"), library, {}, all_axes).to_dict()
+	if not _string_array(axes_environment.get("scenario_patron_ids", [])).has("fixture_patron") \
+		or not _string_array(axes_environment.get("scenario_staff_ids", [])).has("fixture_staff") \
+		or not _string_array(axes_environment.get("event_ids", [])).has("rowdy_regular") \
+		or not _string_array(axes_environment.get("service_ids", [])).has("house_drink") \
+		or not bool(_copy_dict(axes_environment.get("scenario_game_modifiers", {})).get("fixture", false)) \
+		or str(_copy_dict(axes_environment.get("scenario_presentation", {})).get("signage_line", "")) != "FIXTURE" \
+		or str(_copy_dict(axes_environment.get("security_profile", {})).get("strictness_band", "")) != "fixture" \
+		or not bool(_copy_dict(axes_environment.get("scenario_hook_flags", {})).get("rumor_anchor", false)):
+		failures.append("Scenario mutation application did not cover every allowed Tonight System axis.")
+
+	_check_scenario_validation_negative_fixture(library, "bad_archetype", {"missing_archetype": [{"id": "bad_archetype", "archetype_id": "missing_archetype", "display_name": "Bad", "weight": 1, "mutations": {}}]}, "unknown archetype", failures)
+	_check_scenario_validation_negative_fixture(library, "bad_event", {"bar": [{"id": "bad_event", "archetype_id": "bar", "display_name": "Bad", "weight": 1, "mutations": {"event_pool_add": ["missing_event"]}}]}, "unknown id", failures)
+	_check_scenario_validation_negative_fixture(library, "bad_key", {"bar": [{"id": "bad_key", "archetype_id": "bar", "display_name": "Bad", "weight": 1, "mutations": {"per_frame_weather": true}}]}, "unknown mutation key", failures)
+
+
+func _scenario_full_generation(seed: String, library: ContentLibrary) -> Dictionary:
+	var run_state := RunStateScript.new()
+	run_state.start_new(seed)
+	var generator := RunGeneratorScript.new(library)
+	generator.next_environment(run_state)
+	var node_ids: Array = []
+	for node_value in run_state.world_map.get("nodes", []):
+		if typeof(node_value) == TYPE_DICTIONARY:
+			node_ids.append(str((node_value as Dictionary).get("id", "")))
+	node_ids.sort()
+	for node_id_value in node_ids:
+		var node_id := str(node_id_value)
+		if node_id != run_state.current_world_node_id():
+			generator.next_environment(run_state, node_id, true)
+		if not run_state.scenario_for_node(node_id).is_empty():
+			run_state.advance_environment_turns(4)
+	var assignments: Dictionary = {}
+	for node_id_value in node_ids:
+		assignments[str(node_id_value)] = run_state.scenario_for_node(str(node_id_value))
+	return assignments
+
+
+func _check_scenario_validation_negative_fixture(library: ContentLibrary, fixture_id: String, scenarios: Dictionary, expected_fragment: String, failures: Array) -> void:
+	var fixture := ContentLibraryScript.new()
+	fixture.load(false)
+	fixture.environment_scenarios = scenarios.duplicate(true)
+	fixture.validation_errors = []
+	fixture.call("_validate_scenario_definitions")
+	var matched := false
+	for error_value in fixture.validation_errors:
+		if str(error_value).to_lower().contains(expected_fragment.to_lower()):
+			matched = true
+			break
+	if not matched:
+		failures.append("Scenario validation negative fixture %s did not fail for %s." % [fixture_id, expected_fragment])
 
 
 func _check_attribute_glyph_foundation(library: ContentLibrary, failures: Array) -> void:

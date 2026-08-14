@@ -145,7 +145,8 @@ foreach ($entry in $assetDimensions.GetEnumerator()) {
 $objectJsonFiles = @(
     "data/art/art_manifest.json",
     "data/art/attribute_glyphs.json",
-    "data/games/scratch_ticket_regions.json"
+    "data/games/scratch_ticket_regions.json",
+    "data/environments/scenarios.json"
 )
 
 $jsonFiles = Get-ChildItem -LiteralPath (Join-Path $root "data") -Filter "*.json" -File -Recurse -ErrorAction SilentlyContinue
@@ -193,6 +194,7 @@ $expectedClasses = @{
     "scripts/core/platform_services.gd" = "class_name PlatformServices"
     "scripts/core/profile_inventory.gd" = "class_name ProfileInventory"
     "scripts/core/content_library.gd" = "class_name ContentLibrary"
+    "scripts/core/scenario_engine.gd" = "class_name ScenarioEngine"
     "scripts/core/rng_stream.gd" = "class_name RngStream"
     "scripts/core/run_generator.gd" = "class_name RunGenerator"
     "scripts/core/save_service.gd" = "class_name SaveService"
