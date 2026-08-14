@@ -1996,8 +1996,13 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		var hit_hands_before := _copy_array(hit_run.grand_casino_duel_status().get("hands", [])).size()
 		var hit_command := game.surface_action_command("blackjack_hit", 0, false, hit_ui, hit_run, hit_run.current_environment)
 		var hit_command_ui := _copy_dict(hit_command.get("ui_state", {}))
-		if str(hit_command.get("action_id", "")) != "play_basic" or not bool(hit_command.get("resolve", false)) or not bool(hit_command_ui.get("settlement_pending", false)):
-			failures.append("Rourke hit-to-21 did not produce an immediately settleable hand: %s." % JSON.stringify(hit_command))
+		if not bool(hit_command.get("handled", false)) or bool(hit_command.get("resolve", false)) or not bool(hit_command_ui.get("settlement_pending", false)):
+			failures.append("Rourke hit-to-21 did not stage settlement behind its card animation: %s." % JSON.stringify(hit_command))
+		hit_command_ui["surface_presentation_time_msec"] = int(hit_command_ui.get("deal_started_msec", 0)) + 5000
+		var hit_settle_command := game.surface_auto_action_command(hit_command_ui, hit_run, hit_run.current_environment)
+		hit_command_ui = _copy_dict(hit_settle_command.get("ui_state", hit_command_ui))
+		if str(hit_settle_command.get("action_id", "")) != "play_basic" or not bool(hit_settle_command.get("resolve", hit_settle_command.get("direct_resolve", false))):
+			failures.append("Rourke hit-to-21 did not become settleable after its card animation: %s." % JSON.stringify(hit_settle_command))
 		elif game.wager_cost_for_context("play_basic", int(duel_state.get("ante", 20)), hit_run, hit_run.current_environment, hit_command_ui) != 0:
 			failures.append("Rourke hit-to-21 settlement incorrectly requested another cash/chip ante.")
 		else:
@@ -2030,8 +2035,13 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		var double_hands_before := _copy_array(double_run.grand_casino_duel_status().get("hands", [])).size()
 		var double_command := game.surface_action_command("blackjack_double", 0, false, double_ui, double_run, double_run.current_environment)
 		var double_command_ui := _copy_dict(double_command.get("ui_state", {}))
-		if str(double_command.get("action_id", "")) != "play_basic" or not bool(double_command.get("resolve", double_command.get("direct_resolve", false))) or not bool(double_command_ui.get("settlement_pending", false)):
-			failures.append("Rourke duel double did not produce a normal hand-settlement command: %s." % JSON.stringify(double_command))
+		if not bool(double_command.get("handled", false)) or bool(double_command.get("resolve", double_command.get("direct_resolve", false))) or not bool(double_command_ui.get("settlement_pending", false)):
+			failures.append("Rourke duel double did not stage settlement behind its card animation: %s." % JSON.stringify(double_command))
+		double_command_ui["surface_presentation_time_msec"] = int(double_command_ui.get("deal_started_msec", 0)) + 5000
+		var double_settle_command := game.surface_auto_action_command(double_command_ui, double_run, double_run.current_environment)
+		double_command_ui = _copy_dict(double_settle_command.get("ui_state", double_command_ui))
+		if str(double_settle_command.get("action_id", "")) != "play_basic" or not bool(double_settle_command.get("resolve", double_settle_command.get("direct_resolve", false))):
+			failures.append("Rourke duel double did not become settleable after its card animation: %s." % JSON.stringify(double_settle_command))
 		else:
 			var doubled_result := game.resolve_with_context("play_basic", int(duel_state.get("ante", 20)), double_run, double_run.current_environment, double_run.create_rng("duel_double_unused"), double_command_ui)
 			var doubled_status := double_run.grand_casino_duel_status()
@@ -2451,7 +2461,7 @@ func _record_players_card_clean_games(run_state: RunState, target_games: int) ->
 			"type": "game_action",
 			"source_id": "blackjack",
 			"game_id": "blackjack",
-			"action_id": "card_tier_clean_progress",
+			"action_id": "play_basic",
 			"action_kind": "legal",
 			"stake": 5 + game_index,
 			"deltas": deltas,

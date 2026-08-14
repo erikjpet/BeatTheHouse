@@ -4426,12 +4426,13 @@ func _check_pull_tab_late_run_animation_clock(surface: Dictionary, failures: Arr
 		if typeof(channel_value) == TYPE_DICTIONARY and str((channel_value as Dictionary).get("id", "")) == "pull_tab_dispense":
 			dispense_channel = channel_value as Dictionary
 			break
-	if dispense_channel.is_empty() or str(dispense_channel.get("clock_source", "")) != "surface":
-		failures.append("Pull Tabs dispense animation is not bound to the pause-safe surface clock.")
+	if dispense_channel.is_empty() or str(dispense_channel.get("clock_source", "")) != "presentation":
+		failures.append("Pull Tabs dispense animation is not bound to the live presentation clock.")
 		return
 	var skewed_start := 250000
 	var skewed_surface := surface.duplicate(true)
-	skewed_surface["surface_time_msec"] = skewed_start + 120
+	skewed_surface["surface_time_msec"] = 5000
+	skewed_surface["surface_presentation_time_msec"] = skewed_start + 120
 	var skewed_channels: Array = skewed_surface.get("surface_animation_channels", [])
 	for channel_index in range(skewed_channels.size()):
 		if typeof(skewed_channels[channel_index]) != TYPE_DICTIONARY:
@@ -4451,7 +4452,7 @@ func _check_pull_tab_late_run_animation_clock(surface: Dictionary, failures: Arr
 	var elapsed_msec := int(round(canvas.surface_elapsed("pull_tab_dispense") * 1000.0))
 	if elapsed_msec < 100 or elapsed_msec > 160 or not canvas.surface_animation_active("pull_tab_dispense"):
 		failures.append("Pull Tabs late-run dispense animation used engine uptime instead of its surface clock: %dms." % elapsed_msec)
-	canvas.apply_surface_state_patch({"surface_time_msec": skewed_start + 320})
+	canvas.apply_surface_state_patch({"surface_time_msec": 5000, "surface_presentation_time_msec": skewed_start + 320})
 	var advanced_msec := int(round(canvas.surface_elapsed("pull_tab_dispense") * 1000.0))
 	if advanced_msec < 290 or advanced_msec > 350:
 		failures.append("Pull Tabs dispense animation did not advance smoothly on the surface clock: %dms." % advanced_msec)

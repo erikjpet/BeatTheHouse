@@ -68,6 +68,11 @@ func gameplay_model() -> String:
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
+	# Rasterize each authored foil layout once when the machine opens. Purchases
+	# then clone a full-resolution template instead of rebuilding identical
+	# geometry while the ticket dispense animation is starting.
+	for ticket_type_value in _ticket_types():
+		MaskScript.prime(ticket_type_value as Dictionary)
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var result := super.enter(run_state, environment)
 	result["message"] = "The scratcher vending machine hums beside the clerk. Stock releases in small unposted batches; pick a live slot, then drag across the latex."

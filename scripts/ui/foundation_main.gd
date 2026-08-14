@@ -1464,7 +1464,7 @@ func _commit_offscreen_environment_runtime_command(_environment_data: Dictionary
 		return
 	var commit_started_usec := Time.get_ticks_usec()
 	if bool(result.get("ok", false)):
-		_apply_offscreen_slot_result(result, rng)
+		_apply_background_game_result(result, rng)
 		_evaluate_run_terminal_state()
 	# Routine remote spins must not invalidate or rebuild the player's current
 	# environment snapshot. Only a feature that needs attention crosses rooms.
@@ -1482,7 +1482,7 @@ func _commit_offscreen_environment_runtime_command(_environment_data: Dictionary
 	}
 
 
-func _apply_offscreen_slot_result(result: Dictionary, rng: RngStream) -> void:
+func _apply_background_game_result(result: Dictionary, rng: RngStream) -> void:
 	var deltas_value: Variant = result.get("deltas", {})
 	var deltas: Dictionary = (deltas_value as Dictionary).duplicate(false) if typeof(deltas_value) == TYPE_DICTIONARY else {}
 	deltas = run_state.route_grand_casino_game_currency(result, deltas)
@@ -1494,32 +1494,7 @@ func _apply_offscreen_slot_result(result: Dictionary, rng: RngStream) -> void:
 		run_state.change_grand_casino_chips(chips_delta)
 	if rng != null:
 		run_state.save_rng(rng)
-	# Keep one bounded aggregate instead of expanding global story/profile graphs
-	# for every invisible spin. Per-cabinet state remains the authoritative
-	# detailed ledger (spin count, coin in/out, latest outcome and feature).
-	var stats_value: Variant = run_state.narrative_flags.get("offscreen_slot_autoplay_stats", {})
-	var stats: Dictionary = (stats_value as Dictionary).duplicate(false) if typeof(stats_value) == TYPE_DICTIONARY else {}
-	stats["spins"] = maxi(0, int(stats.get("spins", 0))) + 1
-	stats["net"] = int(stats.get("net", 0)) + int(result.get("cash_equivalent_delta", chips_delta if chips_delta != 0 else bankroll_delta))
-	stats["wins"] = maxi(0, int(stats.get("wins", 0))) + (1 if bool(result.get("won", false)) else 0)
-	run_state.narrative_flags["offscreen_slot_autoplay_stats"] = stats
-	var profile_games_value: Variant = run_state.narrative_flags.get("profile_games_played", {})
-	var profile_games: Dictionary = (profile_games_value as Dictionary).duplicate(false) if typeof(profile_games_value) == TYPE_DICTIONARY else {}
-	var result_game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
-	if not result_game_id.is_empty():
-		profile_games[result_game_id] = maxi(0, int(profile_games.get(result_game_id, 0))) + 1
-	run_state.narrative_flags["profile_games_played"] = profile_games
-	var cash_delta := int(result.get("cash_equivalent_delta", chips_delta if chips_delta != 0 else bankroll_delta))
-	if cash_delta > 0:
-		run_state.narrative_flags["profile_bankroll_won"] = maxi(0, int(run_state.narrative_flags.get("profile_bankroll_won", 0))) + cash_delta
-		run_state.narrative_flags["profile_biggest_single_win"] = maxi(int(run_state.narrative_flags.get("profile_biggest_single_win", 0)), cash_delta)
-	elif cash_delta < 0:
-		run_state.narrative_flags["profile_bankroll_lost"] = maxi(0, int(run_state.narrative_flags.get("profile_bankroll_lost", 0))) + absi(cash_delta)
-	if str(result.get("environment_archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID:
-		run_state.narrative_flags["grand_casino_games_played"] = maxi(0, int(run_state.narrative_flags.get("grand_casino_games_played", 0))) + 1
-		var entry_money := int(run_state.narrative_flags.get("grand_casino_entry_bankroll", run_state.grand_casino_total_money()))
-		run_state.narrative_flags["grand_casino_net_winnings"] = run_state.grand_casino_total_money() - entry_money
-		run_state.narrative_flags["grand_casino_max_heat"] = maxi(int(run_state.narrative_flags.get("grand_casino_max_heat", 0)), run_state.suspicion_level())
+	run_state.record_background_game_result(result)
 	if bool(result.get("slot_feature_triggered", false)):
 		var story_value: Variant = deltas.get("story_log", [])
 		if typeof(story_value) == TYPE_ARRAY:
@@ -14771,7 +14746,7 @@ func _compact_run_hud_enabled() -> bool:
 func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false) -> void:
 	if coach_overlay == null or run_state == null or current_screen == SCREEN_START:
 		return
-	if TutorialFlowScript.repair_legacy_blackjack_count_skip(run_state):
+	if TutorialFlowScript.repair_legacy_frontier(run_state):
 		var repaired_completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
 		coach_overlay.begin_tutorial_run(repaired_completed)
 	# Opening Inventory can satisfy a tutorial action. Do not evaluate the next

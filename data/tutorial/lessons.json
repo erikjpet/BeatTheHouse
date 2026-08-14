@@ -190,7 +190,7 @@
     "dialogue_node": "gas_peek",
     "trigger": {"depends_on": ["tutorial_gas_machine"], "screen": "GAME", "environment_archetype": "gas_station_casino", "game_id": "pull_tabs", "state_predicates": []},
     "anchor": {"kind": "surface_action", "id": "pull_tab_detector_scan"},
-    "copy": "Try Peek four times. Each attempt adds more Heat and only has a 50% chance to reveal the best column.",
+    "copy": "Peek four times. Each try is 50/50 and adds escalating Heat: 8%, 9%, 10%, then 11%.",
     "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.peek_count", "op": "gte", "value": 4}]},
     "gating": {"allowed_action_ids": ["pull_tab_detector_scan"]}
   },

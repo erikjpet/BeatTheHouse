@@ -48,6 +48,10 @@ static func apply_caught_transition(run_state: RunState, result: Dictionary) -> 
 	return {}
 
 
+static func repair_legacy_frontier(run_state: RunState) -> bool:
+	return repair_legacy_blackjack_count_skip(run_state)
+
+
 static func repair_legacy_blackjack_count_skip(run_state: RunState) -> bool:
 	if run_state == null or not run_state.is_tutorial_run():
 		return false

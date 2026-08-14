@@ -2892,6 +2892,31 @@ func record_profile_game_result(result: Dictionary) -> void:
 	_try_spawn_grand_casino_invitation_from_table_win(game_id, bankroll_delta, result)
 
 
+# Background game runtime is committed by the host, but its durable metrics
+# belong to RunState rather than the UI shell. Keep one bounded per-game tally
+# and reuse the same profile/objective recorders as foreground results.
+func record_background_game_result(result: Dictionary) -> void:
+	if result.is_empty() or not bool(result.get("ok", false)):
+		return
+	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
+	if game_id.is_empty():
+		return
+	var all_stats := _copy_dict(narrative_flags.get("background_game_runtime_stats", {}))
+	var stats := _copy_dict(all_stats.get(game_id, {}))
+	if stats.is_empty() and game_id == "slot":
+		stats = _copy_dict(narrative_flags.get("offscreen_slot_autoplay_stats", {}))
+	stats["actions"] = maxi(0, int(stats.get("actions", stats.get("spins", 0)))) + 1
+	stats["net"] = int(stats.get("net", 0)) + int(result.get("cash_equivalent_delta", result.get("bankroll_delta", result.get("chips_delta", 0))))
+	stats["wins"] = maxi(0, int(stats.get("wins", 0))) + (1 if bool(result.get("won", false)) else 0)
+	stats.erase("spins")
+	all_stats[game_id] = stats
+	narrative_flags["background_game_runtime_stats"] = all_stats
+	narrative_flags.erase("offscreen_slot_autoplay_stats")
+	record_profile_game_result(result)
+	if str(result.get("environment_archetype_id", "")) == GRAND_CASINO_ARCHETYPE_ID:
+		record_grand_casino_game_result(result)
+
+
 func _try_spawn_grand_casino_invitation_from_table_win(game_id: String, bankroll_delta: int, result: Dictionary) -> bool:
 	if not GRAND_CASINO_TABLE_GAME_IDS.has(game_id):
 		return false

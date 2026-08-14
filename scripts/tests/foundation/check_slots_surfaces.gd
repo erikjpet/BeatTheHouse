@@ -2578,20 +2578,29 @@ func _check_grand_casino_game_endgame_contracts(library: ContentLibrary, failure
 		if not ["cheat", "risky", "advantage"].has(action_kind):
 			failures.append("Grand Casino %s fixture should report a cheat/risky action kind, got %s." % [game_id, action_kind])
 		var suspicion_delta := int(result.get("suspicion_delta", 0))
-		if suspicion_delta <= 0:
-			failures.append("Grand Casino %s fixture did not report positive heat." % game_id)
-		var message := str(result.get("message", ""))
-		if message.find("Rourke") == -1 and message.find("Security") == -1 and message.find("back room") == -1:
-			failures.append("Grand Casino %s result message did not explain staff/Rourke pressure." % game_id)
 		var status := run_state.demo_objective_status()
+		# Owned Tab Detector scans and successful roulette wheel reads are clean
+		# information actions. Their advantage classification does not imply Heat.
+		var clean_information_action := ["pull_tabs", "roulette"].has(game_id)
+		if clean_information_action:
+			if suspicion_delta != 0:
+				failures.append("Grand Casino %s clean information action unexpectedly reported heat." % game_id)
+			if bool(status.get("showdown_pending", false)) or bool(status.get("showdown_active", false)):
+				failures.append("Grand Casino %s clean information action unexpectedly queued the Pit Boss Showdown." % game_id)
+		else:
+			if suspicion_delta <= 0:
+				failures.append("Grand Casino %s fixture did not report positive heat." % game_id)
+			var message := str(result.get("message", ""))
+			if message.find("Rourke") == -1 and message.find("Security") == -1 and message.find("back room") == -1:
+				failures.append("Grand Casino %s result message did not explain staff/Rourke pressure." % game_id)
+			if not bool(status.get("showdown_pending", false)) and not bool(status.get("showdown_active", false)):
+				failures.append("Grand Casino %s high heat did not queue the Pit Boss Showdown." % game_id)
+			if not bool(status.get("staff_attention_active", false)):
+				failures.append("Grand Casino %s high heat did not preserve staff attention state." % game_id)
 		if run_state.run_status != RunState.RUN_STATUS_ACTIVE:
 			failures.append("Grand Casino %s high heat should leave the run active for showdown, status=%s." % [game_id, run_state.run_status])
 		if run_state.run_failure_reason == RunState.FAILURE_POLICE_CAPTURE:
 			failures.append("Grand Casino %s high heat bypassed the showdown reroute as police_capture." % game_id)
-		if not bool(status.get("showdown_pending", false)) and not bool(status.get("showdown_active", false)):
-			failures.append("Grand Casino %s high heat did not queue the Pit Boss Showdown." % game_id)
-		if not bool(status.get("staff_attention_active", false)):
-			failures.append("Grand Casino %s high heat did not preserve staff attention state." % game_id)
 		if action_kind == "cheat" and int(status.get("grand_casino_open_cheat_actions", 0)) <= 0:
 			failures.append("Grand Casino %s cheat result did not mark open cheat evidence." % game_id)
 		summaries.append("%s:%s:+%d:%s" % [game_id, action_kind, suspicion_delta, str(status.get("objective_state", ""))])

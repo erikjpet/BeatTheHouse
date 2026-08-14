@@ -8,6 +8,15 @@ const DEFAULT_BRUSH_RADIUS := 15.0
 const DEFAULT_PASS_REMOVAL := 0.66
 const DEFAULT_SWEEP_THRESHOLD := 0.80
 
+static var _layout_templates: Dictionary = {}
+
+
+static func prime(ticket_type: Dictionary) -> void:
+	var type_id := str(ticket_type.get("id", ""))
+	if type_id.is_empty():
+		return
+	_template_for(type_id, RegionModelScript.layout_template(type_id))
+
 
 static func initialize(ticket: Dictionary, ticket_type: Dictionary) -> void:
 	var scratch: Dictionary = ticket_type.get("scratch", {}) if typeof(ticket_type.get("scratch", {})) == TYPE_DICTIONARY else {}
@@ -20,12 +29,12 @@ static func initialize(ticket: Dictionary, ticket_type: Dictionary) -> void:
 	scratch["mask_kind"] = "continuous_high_resolution"
 	ticket["scratch"] = scratch
 	var regions := RegionModelScript.build(ticket)
-	var mask: Array = []
-	mask.resize(MASK_COLUMNS * MASK_ROWS)
-	mask.fill(0)
+	var template := _template_for(str(ticket.get("type_id", "")), regions)
+	var mask: Array = (template.get("mask", []) as Array).duplicate()
+	var sample_totals: Array = template.get("sample_totals", []) as Array
 	for region_index in range(regions.size()):
 		var region: Dictionary = regions[region_index]
-		var sample_total := _rasterize_region(mask, region, 255)
+		var sample_total := int(sample_totals[region_index]) if region_index < sample_totals.size() else 0
 		region["sample_total"] = sample_total
 		region["mask_remaining_units"] = sample_total * 255
 		region["coverage"] = 0.0
@@ -37,6 +46,23 @@ static func initialize(ticket: Dictionary, ticket_type: Dictionary) -> void:
 	ticket["mask_revision"] = 0
 	ticket["region_layout_version"] = RegionModelScript.LAYOUT_VERSION
 	ticket["result_ready"] = false
+
+
+static func _template_for(type_id: String, regions: Array) -> Dictionary:
+	var key := "%s:%d:%dx%d" % [type_id, RegionModelScript.LAYOUT_VERSION, MASK_COLUMNS, MASK_ROWS]
+	var cached_value: Variant = _layout_templates.get(key, {})
+	if typeof(cached_value) == TYPE_DICTIONARY and not (cached_value as Dictionary).is_empty():
+		return cached_value as Dictionary
+	var mask: Array = []
+	mask.resize(MASK_COLUMNS * MASK_ROWS)
+	mask.fill(0)
+	var sample_totals: Array = []
+	for region_value in regions:
+		var region: Dictionary = region_value
+		sample_totals.append(_rasterize_region(mask, region, 255))
+	var built := {"mask": mask, "sample_totals": sample_totals}
+	_layout_templates[key] = built
+	return built
 
 
 static func ensure(ticket: Dictionary) -> void:

@@ -993,23 +993,23 @@
         "choices": [{"id": "continue", "label": "Open the machine", "effects": {}, "end": true}]
       },
       "gas_peek": {
-        "text": "Without a Tab Detector, that button says PEEK. Each Peek has a 50% chance to highlight the column with the nearest winner. It always adds Heat: 8% the first time, then 9%, 10%, 11%, and one more each try. Peek four times and watch both the machine and your Heat.",
+        "text": "Without a Tab Detector, this says PEEK. Each try has a 50% chance to highlight the nearest winner, but always adds Heat: 8%, then 9%, 10%, and 11%. Peek four times and watch the meter.",
         "choices": [{"id": "continue", "label": "Try four Peeks", "effects": {}, "end": true}]
       },
       "gas_peek_again_3": {
-        "text": "That was one Peek. Keep going—three more attempts. A miss is part of the lesson; the next Peek still has its own 50% chance and adds more Heat.",
+        "text": "That was one Peek. Keep going: 3 attempts remain. A miss is normal; the next try still has its own 50% chance and adds more Heat.",
         "choices": [{"id": "continue", "label": "Peek three more times", "effects": {}, "end": true}]
       },
       "gas_peek_again_2": {
-        "text": "Two Peeks down, two to go. Try it again so you see that the highlight is never guaranteed and the Heat cost keeps climbing.",
+        "text": "Two Peeks down; 2 remain. Try again and watch the Heat cost climb whether the highlight appears or not.",
         "choices": [{"id": "continue", "label": "Peek two more times", "effects": {}, "end": true}]
       },
       "gas_peek_again_1": {
-        "text": "One last Peek. Watch whether the machine finds the column, then compare this fourth Heat increase with the first one.",
+        "text": "Only 1 Peek remains. Watch the machine, then compare this fourth Heat increase with the first.",
         "choices": [{"id": "continue", "label": "Take the final Peek", "effects": {}, "end": true}]
       },
       "gas_peek_heat": {
-        "text": "That was real Heat, even when Peek found nothing. Repeated cheats become harder to hide. An actual Tab Detector changes this control back to SCAN, toggles its reliable highlight in one press, and adds no Heat for switching it on or off.",
+        "text": "Even a failed Peek adds real Heat. Repeated cheats get harder to hide. A Tab Detector changes PEEK to SCAN, reliably toggles the highlight, and adds no Heat.",
         "choices": [{"id": "continue", "label": "Watch the Heat", "effects": {}, "end": true}]
       },
       "gas_xray": {
@@ -1085,7 +1085,7 @@
         "choices": [{"id": "continue", "label": "Calm down", "effects": {}, "end": true}]
       },
       "drunk_coffee": {
-        "text": "Easy. You just crossed 33% Drunk, and that wobble can get disorienting. Take this Thermos of Black Coffee. Open Inventory, select it to equip it as your active item, then press Use Item and confirm when you want to lower Drunk and steady the room. It is your choice; active items wait until you use them.",
+        "text": "Easy. You crossed 33% Drunk. Take this Thermos of Black Coffee. Open Inventory, equip it as your active item, then press Use Item to lower Drunk and steady the room.",
         "choices": [{"id": "continue", "label": "Take the thermos", "effects": {}, "end": true}]
       },
       "drunk_coffee_repeat": {

@@ -13,7 +13,21 @@ static var _data_cache: Dictionary = {}
 
 static func build(ticket: Dictionary) -> Array:
 	var spots := _dictionary_array(ticket.get("spots", []))
-	var definitions := _dictionary_array(_data().get("regions", {}).get(str(ticket.get("type_id", "")), []))
+	var definitions := _definitions(str(ticket.get("type_id", "")))
+	return _build_from_spots(spots, definitions)
+
+
+# Returns the stable geometry for a ticket type without requiring an outcome.
+# Roles and printed values vary per ticket, but foil coverage never does.
+static func layout_template(type_id: String) -> Array:
+	var definitions := _definitions(type_id)
+	var spots: Array = []
+	for index in range(definitions.size()):
+		spots.append({"index": index, "section_id": str((definitions[index] as Dictionary).get("section_id", "play")), "role": ""})
+	return _build_from_spots(spots, definitions)
+
+
+static func _build_from_spots(spots: Array, definitions: Array) -> Array:
 	var regions: Array = []
 	for index in range(mini(spots.size(), definitions.size())):
 		var definition: Dictionary = definitions[index]
@@ -39,6 +53,10 @@ static func build(ticket: Dictionary) -> Array:
 			"revealed": false,
 		})
 	return regions
+
+
+static func _definitions(type_id: String) -> Array:
+	return _dictionary_array(_data().get("regions", {}).get(type_id, []))
 
 
 static func rect_for(region: Dictionary, art_frame: Rect2, field: String = "art_rect") -> Rect2:
