@@ -109,7 +109,6 @@ func build(parent: Node) -> void:
 		button.pressed.connect(_request_verb.bind(str(verb)))
 		verb_buttons[verb] = button
 		verb_row.add_child(button)
-	_start_idle_pulse()
 
 
 func show_snapshot(snapshot: Dictionary, message: String = "") -> void:
@@ -126,11 +125,13 @@ func show_snapshot(snapshot: Dictionary, message: String = "") -> void:
 	_render()
 	if not message.is_empty():
 		message_label.text = message
+	_start_idle_pulse()
 	overlay.visible = true
 	overlay.move_to_front()
 
 
 func hide() -> void:
+	_stop_idle_pulse()
 	if overlay != null:
 		overlay.visible = false
 
@@ -232,9 +233,20 @@ func _request_verb(verb: String) -> void:
 func _start_idle_pulse() -> void:
 	if liveness_indicator == null:
 		return
+	if idle_animation_running():
+		return
+	_stop_idle_pulse()
 	pulse_tween = liveness_indicator.create_tween().set_loops()
 	pulse_tween.tween_property(liveness_indicator, "modulate:a", 1.0, 0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	pulse_tween.tween_property(liveness_indicator, "modulate:a", pulse_baseline_alpha, 0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+
+func _stop_idle_pulse() -> void:
+	if pulse_tween != null and pulse_tween.is_valid():
+		pulse_tween.kill()
+	pulse_tween = null
+	if liveness_indicator != null and is_instance_valid(liveness_indicator):
+		liveness_indicator.modulate.a = pulse_baseline_alpha
 
 
 static func _tone_color(tone: String) -> Color:

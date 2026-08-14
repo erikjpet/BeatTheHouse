@@ -2926,6 +2926,8 @@ func _validate_scenario_definitions() -> void:
 			var weight_value: Variant = definition.get("weight", null)
 			if not _variant_is_number(weight_value) or float(weight_value) <= 0.0:
 				validation_errors.append("environment_scenarios %s weight must be positive." % scenario_id)
+			if definition.has("streets_patrol_density_delta") and (not _variant_is_number(definition.get("streets_patrol_density_delta")) or int(definition.get("streets_patrol_density_delta", -1)) < 0):
+				validation_errors.append("environment_scenarios %s streets_patrol_density_delta must be non-negative numeric." % scenario_id)
 			if definition.has("town_weight_tags") and typeof(definition.get("town_weight_tags")) != TYPE_ARRAY:
 				validation_errors.append("environment_scenarios %s town_weight_tags must be an array." % scenario_id)
 			_validate_scenario_mutations(scenario_id, "mutations", definition.get("mutations", {}), event_ids, service_ids, game_ids, item_ids)

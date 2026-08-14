@@ -1146,9 +1146,13 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var library: ContentLibrary = app.get("library")
+	var streets_controller: Variant = app.get("streets_controller")
 	var event_definition := library.event("crew_favor_delivery") if library != null else {}
-	if run_state == null or event_definition.is_empty():
+	if run_state == null or event_definition.is_empty() or streets_controller == null:
 		push_error("Crew-favor talk fixture is unavailable.")
+		return false
+	if bool(streets_controller.call("is_visible")) or bool(streets_controller.call("idle_animation_running")):
+		push_error("Hidden Streets controller kept its idle tween alive before a board opened.")
 		return false
 	run_state.narrative_flags["crew_favor_pending"] = true
 	var overrides: Dictionary = app.call("_triggered_entry_overrides", event_definition)
@@ -1185,7 +1189,6 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		return false
 	app.call("resolve_event_choice", "crew_favor_delivery", "run_package")
 	await process_frame
-	var streets_controller: Variant = app.get("streets_controller")
 	if not run_state.streets_has_active_run() \
 		or not bool(run_state.narrative_flags.get("crew_favor_pending", false)) \
 		or bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
@@ -1228,7 +1231,9 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		or not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
 		or bool(run_state.narrative_flags.get("crew_favor_pending", true)) \
 		or run_state.environment_travel_count() != favor_travel_count_before + 1 \
-		or bool(streets_controller.call("is_visible")):
+		or bool(streets_controller.call("is_visible")) \
+		or bool(streets_controller.call("idle_animation_running")) \
+		or float(streets_controller.call("measured_idle_liveness")) > 0.001:
 		push_error("Played Crew-favor surface did not apply its authored outcome, travel once, and close cleanly.")
 		return false
 	for terminal_reason in ["caught", "deadline", "ditched"]:
@@ -1303,7 +1308,8 @@ func _check_streets_terminal_travel(app: Control, terminal_reason: String) -> bo
 		return false
 	if str((run_state.active_streets_run.get("resolution", {}) as Dictionary).get("reason", "")) != terminal_reason \
 		or run_state.environment_travel_count() != travel_count_before + 1 \
-		or bool(streets_controller.call("is_visible")):
+		or bool(streets_controller.call("is_visible")) \
+		or bool(streets_controller.call("idle_animation_running")):
 		push_error("%s Streets outcome did not complete exactly one travel transition and close its board." % terminal_reason.capitalize())
 		return false
 	return true

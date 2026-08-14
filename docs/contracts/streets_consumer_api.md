@@ -21,6 +21,8 @@ var started := run_state.streets_begin_multi_stop({
 		{"id": "motel_book", "node_id": "motel", "label": "Motel book"},
 	],
 	"deadline_actions": 18,
+	"fast_threshold_actions": 10,
+	"spot_heat_per_new_spot": 3,
 	"order_mode": "ordered",
 	"cargo_id": "numbers_slips",
 	"consumer_payload": {
@@ -46,6 +48,19 @@ places the stop reproducibly on the board.
 
 The return value is `{ok, message, snapshot}`. Failure to validate never
 mutates the run.
+
+`fast_threshold_actions` is optional and disabled when omitted. A successful
+resolution reports `fast: true` only when its action count is at or below that
+threshold. A `consumer_payload.success.clean_speed_bonus_cash` is paid only
+when the resolution is both `clean` (never spotted and no hazard hit) and
+`fast`.
+
+`spot_heat_per_new_spot` is also optional and defaults to zero. When positive,
+RunState writes that heat once when a board action changes the player from
+unspotted to spotted. Remaining in the same pursuit never repeats the write;
+escaping and being spotted again starts a distinct stake boundary. Consumers
+with authored terminal heat should choose this value so the combined total
+matches their content contract.
 
 ## Other mode entry points
 
@@ -84,6 +99,12 @@ Supported actions are:
 - `move` with one cardinal `direction` and `pace` of `walk` or `run`
 - `wait`, `duck`, `stash`, `ditch`, or `signal`
 - `assist` with an optional `assist_id` (chase only)
+
+In clear conditions, running normally crosses two cells in one action.
+Entering an alley or blackout block crosses three: alleys add sightline
+exposure, while blackout blocks may carry deterministic painted hazards.
+Rain, fog, and storms reduce running to one cell while also reducing patrol
+sight. These are action-boundary rules; no per-frame simulation is involved.
 
 `streets_apply_action` returns `{ok, message, resolved, resolution, snapshot}`.
 An invalid action returns `ok: false` and does not consume an action boundary.

@@ -4195,7 +4195,7 @@ func _check_lender_debt_foundation(library: ContentLibrary, failures: Array) -> 
 	_check_cash_lender_lifecycle(library, "motel_friend", "motel_friend_note", false, failures)
 	_check_crew_lender_lifecycle(library, failures)
 	_check_crew_trust_core(library, failures)
-	_check_streets_framework(failures)
+	_check_streets_framework(library, failures)
 	_check_family_lender_lifecycle(library, failures)
 	_check_pawn_lender_lifecycle(library, failures)
 	_check_pawn_shop_run_environment(library, failures)
@@ -4553,7 +4553,7 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Pre-0.6 save without active Crew debt did not migrate to Stranger.")
 
 
-func _check_streets_framework(failures: Array) -> void:
+func _check_streets_framework(library: ContentLibrary, failures: Array) -> void:
 	var package_spec := {
 		"mode": "package",
 		"route_id": "determinism_proof",
@@ -4595,6 +4595,46 @@ func _check_streets_framework(failures: Array) -> void:
 	var public_patrols: Array = (StreetsRunModelScript.snapshot(pressure).get("board", {}) as Dictionary).get("patrols", [])
 	if not public_patrols.is_empty() and (public_patrols[0] as Dictionary).has("route"):
 		failures.append("Streets public snapshot leaked future patrol routes.")
+	var cruiser_definition := library.scenario("back_alley_cruiser_parked")
+	var baseline_scenario_run: RunState = RunStateScript.new()
+	var pressured_scenario_run: RunState = RunStateScript.new()
+	baseline_scenario_run.start_new("STREETS-CRUISER-PRESSURE")
+	pressured_scenario_run.start_new("STREETS-CRUISER-PRESSURE")
+	pressured_scenario_run.seed_scenario_for_node("back_alley", cruiser_definition)
+	var scenario_edge_spec := {
+		"mode": "package",
+		"route_id": "cruiser_adjacent_edge",
+		"origin_node_id": "back_alley",
+		"destination_node_id": "bar",
+		"distance": "near",
+		"deadline_actions": 12,
+	}
+	baseline_scenario_run.streets_begin(scenario_edge_spec)
+	pressured_scenario_run.streets_begin(scenario_edge_spec)
+	var baseline_scenario_patrols: Array = (baseline_scenario_run.active_streets_run.get("board", {}) as Dictionary).get("patrols", [])
+	var pressured_scenario_patrols: Array = (pressured_scenario_run.active_streets_run.get("board", {}) as Dictionary).get("patrols", [])
+	var pressured_public_conditions: Dictionary = pressured_scenario_run.streets_snapshot().get("conditions", {})
+	if int(cruiser_definition.get("streets_patrol_density_delta", 0)) <= 0 \
+		or pressured_scenario_patrols.size() <= baseline_scenario_patrols.size():
+		failures.append("Cruiser Parked did not apply its authored patrol pressure to an adjacent Streets edge.")
+	if pressured_public_conditions.has("scenario_patrol_density_delta") or pressured_public_conditions.has("scenario_id"):
+		failures.append("Streets public snapshot leaked its endpoint scenario pressure source.")
+	var ordinary_stride := StreetsRunModelScript.apply_action(_streets_linear_surface_fixture("street", "clear"), {"verb": "move", "direction": "right", "pace": "run"})
+	var alley_stride := StreetsRunModelScript.apply_action(_streets_linear_surface_fixture("alley", "clear", false, true), {"verb": "move", "direction": "right", "pace": "run"})
+	var blackout_stride := StreetsRunModelScript.apply_action(_streets_linear_surface_fixture("blackout", "clear", true), {"verb": "move", "direction": "right", "pace": "run"})
+	var rainy_stride := StreetsRunModelScript.apply_action(_streets_linear_surface_fixture("alley", "rain"), {"verb": "move", "direction": "right", "pace": "run"})
+	var ordinary_state: Dictionary = ordinary_stride.get("state", {})
+	var alley_state: Dictionary = alley_stride.get("state", {})
+	var blackout_state: Dictionary = blackout_stride.get("state", {})
+	var rainy_state: Dictionary = rainy_stride.get("state", {})
+	if int((alley_state.get("player", {}) as Dictionary).get("x", 0)) <= int((ordinary_state.get("player", {}) as Dictionary).get("x", 0)) \
+		or int((blackout_state.get("player", {}) as Dictionary).get("x", 0)) <= int((ordinary_state.get("player", {}) as Dictionary).get("x", 0)) \
+		or int((rainy_state.get("player", {}) as Dictionary).get("x", 0)) >= int((ordinary_state.get("player", {}) as Dictionary).get("x", 0)):
+		failures.append("Alley/blackout traversal was not faster than street, or adverse weather did not keep running slower.")
+	if int(alley_state.get("times_spotted", 0)) != 1:
+		failures.append("Fast alley traversal did not carry its extra sightline exposure tradeoff.")
+	if int(blackout_state.get("hazards_hit", 0)) != 1:
+		failures.append("Fast blackout traversal did not retain its authored hazard tradeoff.")
 	var stash_proof := StreetsRunModelScript.begin(package_spec, clear_context, 9191)
 	var stash_board: Dictionary = stash_proof.get("board", {})
 	var stash_position := {}
@@ -4715,6 +4755,101 @@ func _check_streets_framework(failures: Array) -> void:
 		failures.append("Hold mode did not resolve a signal inside its authored window.")
 	if not hold_run.streets_take_travel_continuation().is_empty():
 		failures.append("Hold mode opted into travel without an explicit continuation.")
+	var adapter_run: RunState = RunStateScript.new()
+	adapter_run.start_new("STREETS-BONUS-ADAPTER")
+	adapter_run.resolve_crew_favor_delivery_job("run_package", {
+		"success": {"bankroll_delta": 22, "clean_speed_bonus_cash": 7},
+		"failure": {},
+	})
+	var adapter_payload: Dictionary = adapter_run.active_streets_run.get("consumer_payload", {})
+	var adapter_success: Dictionary = adapter_payload.get("success", {})
+	if int(adapter_success.get("cash", 0)) != 22 or int(adapter_success.get("clean_speed_bonus_cash", 0)) != 7:
+		failures.append("Crew Streets handoff stripped the authored clean-speed bonus payload.")
+	var spot_run: RunState = RunStateScript.new()
+	spot_run.start_new("STREETS-SPOT-HEAT")
+	spot_run.streets_begin({
+		"mode": "package",
+		"route_id": "spot_heat_boundary",
+		"origin_node_id": "back_alley",
+		"destination_node_id": "bar",
+		"deadline_actions": 10,
+		"pursuit_turns": 8,
+		"spot_heat_per_new_spot": 3,
+	})
+	var spot_board: Dictionary = spot_run.active_streets_run.get("board", {})
+	var spot_route_y := int(spot_board.get("route_y", 2))
+	var spot_cells: Array = spot_board.get("cells", [])
+	var spot_x := 3
+	var spot_index := (spot_route_y * int(spot_board.get("width", 8))) + spot_x
+	var spot_cell: Dictionary = spot_cells[spot_index]
+	spot_cell["kind"] = "stash"
+	spot_cell["cover"] = true
+	spot_cells[spot_index] = spot_cell
+	spot_board["cells"] = spot_cells
+	spot_board["patrols"] = [{
+		"id": "spot_heat_blue",
+		"route": [{"x": 0, "y": spot_route_y}, {"x": 1, "y": spot_route_y}, {"x": 2, "y": spot_route_y}],
+		"phase": 0,
+		"step": 1,
+		"sight": 3,
+	}]
+	spot_run.active_streets_run["board"] = spot_board
+	spot_run.active_streets_run["player"] = {"x": spot_x, "y": spot_route_y}
+	spot_run.streets_apply_action({"verb": "wait"})
+	var heat_after_first_spot := spot_run.suspicion_level()
+	spot_run.streets_apply_action({"verb": "wait"})
+	var heat_during_pursuit := spot_run.suspicion_level()
+	spot_run.streets_apply_action({"verb": "stash"})
+	spot_board = spot_run.active_streets_run.get("board", {})
+	var spot_patrols: Array = spot_board.get("patrols", [])
+	var reset_patrol: Dictionary = spot_patrols[0]
+	reset_patrol["phase"] = 0
+	spot_patrols[0] = reset_patrol
+	spot_board["patrols"] = spot_patrols
+	spot_run.active_streets_run["board"] = spot_board
+	spot_run.streets_apply_action({"verb": "stash"})
+	var spot_heat_cues := 0
+	for cue_value in spot_run.suspicion.get("cues", []):
+		if typeof(cue_value) == TYPE_DICTIONARY and str((cue_value as Dictionary).get("id", "")) == "streets_spotted":
+			spot_heat_cues += 1
+	if heat_after_first_spot != 3 or heat_during_pursuit != 3 or spot_run.suspicion_level() != 6 \
+		or int(spot_run.active_streets_run.get("times_spotted", 0)) != 2 or spot_heat_cues != 2:
+		failures.append("Streets spotted heat did not write once per distinct spotting and only once during continued pursuit.")
+
+	var bonus_cases := [
+		{"id": "fast_clean", "waits": 0, "spotted": false, "hazard": false, "cash": 117, "clean": true, "fast": true},
+		{"id": "slow_clean", "waits": 1, "spotted": false, "hazard": false, "cash": 110, "clean": true, "fast": false},
+		{"id": "fast_spotted", "waits": 0, "spotted": true, "hazard": false, "cash": 110, "clean": false, "fast": true},
+		{"id": "fast_hazard", "waits": 0, "spotted": false, "hazard": true, "cash": 110, "clean": false, "fast": true},
+	]
+	for bonus_case_value in bonus_cases:
+		var bonus_case: Dictionary = bonus_case_value
+		var bonus_run: RunState = RunStateScript.new()
+		bonus_run.start_new("STREETS-BONUS-%s" % str(bonus_case.get("id", "case")))
+		bonus_run.streets_begin({
+			"mode": "package",
+			"route_id": str(bonus_case.get("id", "bonus")),
+			"origin_node_id": "corner_store",
+			"destination_node_id": "bar",
+			"deadline_actions": 8,
+			"fast_threshold_actions": 1,
+			"consumer_payload": {"success": {"cash": 10, "clean_speed_bonus_cash": 7}},
+		})
+		var bonus_board: Dictionary = bonus_run.active_streets_run.get("board", {})
+		bonus_board["patrols"] = []
+		var bonus_destination: Dictionary = bonus_board.get("destination", {})
+		bonus_run.active_streets_run["board"] = bonus_board
+		bonus_run.active_streets_run["player"] = {"x": int(bonus_destination.get("x", 1)) - 1, "y": int(bonus_destination.get("y", 0))}
+		for _wait in range(int(bonus_case.get("waits", 0))):
+			bonus_run.streets_apply_action({"verb": "wait"})
+		bonus_run.active_streets_run["spotted"] = bool(bonus_case.get("spotted", false))
+		bonus_run.active_streets_run["hazards_hit"] = 1 if bool(bonus_case.get("hazard", false)) else 0
+		var bonus_result := bonus_run.streets_apply_action({"verb": "move", "direction": "right", "pace": "walk"})
+		var bonus_resolution: Dictionary = bonus_result.get("resolution", {})
+		if bonus_run.bankroll != int(bonus_case.get("cash", 0)) \
+			or bool(bonus_resolution.get("clean", false)) != bool(bonus_case.get("clean", false)) \
+			or bool(bonus_resolution.get("fast", false)) != bool(bonus_case.get("fast", false)):
+			failures.append("Streets clean+fast bonus gate failed case %s." % str(bonus_case.get("id", "case")))
 
 	var chase_run: RunState = RunStateScript.new()
 	chase_run.start_new("STREETS-CHASE")
@@ -4749,6 +4884,38 @@ func _streets_cell_kind_count(state: Dictionary, kind: String) -> int:
 		if typeof(cell_value) == TYPE_DICTIONARY and str((cell_value as Dictionary).get("kind", "")) == kind:
 			result += 1
 	return result
+
+
+func _streets_linear_surface_fixture(kind: String, weather: String, hazard: bool = false, exposed_patrol: bool = false) -> Dictionary:
+	var state := StreetsRunModelScript.begin({
+		"mode": "package",
+		"route_id": "linear_%s_%s" % [kind, weather],
+		"origin_node_id": "start",
+		"destination_node_id": "finish",
+		"distance": "same",
+		"deadline_actions": 8,
+	}, {"weather": weather, "day_type": "midweek", "happenings": [], "heat": 0, "reputation": 0}, 6061)
+	var board: Dictionary = state.get("board", {})
+	var route_y := int(board.get("route_y", 2))
+	var cells: Array = board.get("cells", [])
+	for x in range(int(board.get("width", 6))):
+		var index := (route_y * int(board.get("width", 6))) + x
+		var cell: Dictionary = cells[index]
+		cell["kind"] = kind if x == 1 else "street"
+		cell["cover"] = kind == "blackout" and x == 1
+		cell["hazard"] = hazard and x == 1
+		cells[index] = cell
+	board["cells"] = cells
+	board["patrols"] = [{
+		"id": "alley_exposure",
+		"route": [{"x": 4, "y": route_y}, {"x": 5, "y": route_y}, {"x": 4, "y": route_y}],
+		"phase": 0,
+		"step": 1,
+		"sight": 0,
+	}] if exposed_patrol else []
+	state["board"] = board
+	state["player"] = {"x": 0, "y": route_y}
+	return state
 
 
 func _check_family_lender_lifecycle(library: ContentLibrary, failures: Array) -> void:
