@@ -1,126 +1,372 @@
 {
+  "corner_store": [
+    {
+      "id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "display_name": "Delivery Day",
+      "weight": 12,
+      "mutations": {
+        "staff_set": ["delivery_clerk"],
+        "event_pool_add": ["scenario_delivery_day_stock"],
+        "economic_profile_overrides": {"shop_price_multiplier": 0.85},
+        "service_add": ["cashier_tip"],
+        "music_profile_override": {"ambience": 0.48, "texture": "fluorescent", "texture_rate": 0.31},
+        "presentation": {"palette_tint": "#fff1c9", "lighting_key": "delivery_day", "crowd_density": "medium", "signage_line": "FRESH STOCK. MIND THE BOXES."},
+        "exclusive_opportunity": {"event_id": "scenario_delivery_day_stock"},
+        "hook_flags": {"rumor_anchor": true, "delivery_day": true}
+      }
+    },
+    {
+      "id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "display_name": "Lotto Fever",
+      "weight": 10,
+      "town_weight_tags": ["calendar:payday"],
+      "mutations": {
+        "patron_set": ["ticket_regulars", "hopeful_crowd"],
+        "event_pool_add": ["scenario_lotto_fever_jackpot"],
+        "economic_profile_overrides": {"shop_price_multiplier": 1.05},
+        "game_modifier_hooks": {"ticket_demand": "sellout", "scratch_stock_pressure": "high"},
+        "music_profile_override": {"ambience": 0.38, "texture": "crowd", "texture_rate": 0.42},
+        "presentation": {"palette_tint": "#ffe66b", "lighting_key": "lotto_fever", "crowd_density": "dense", "signage_line": "JACKPOT TALK. TICKETS GO FAST."},
+        "exclusive_opportunity": {"event_id": "scenario_lotto_fever_jackpot"},
+        "hook_flags": {"rumor_anchor": true, "ticket_sellout": true}
+      }
+    },
+    {
+      "id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "display_name": "The Aftermath",
+      "weight": 6,
+      "mutations": {
+        "staff_set": ["jumpy_clerk"],
+        "patron_set": ["plainclothes_cop"],
+        "event_pool_add": ["scenario_aftermath_fence_offer"],
+        "economic_profile_overrides": {"shop_price_multiplier": 1.15},
+        "music_profile_override": {"ambience": 0.72, "mode": "harmonic_minor", "texture": "static"},
+        "presentation": {"palette_tint": "#9db4c0", "lighting_key": "robbery_aftermath", "crowd_density": "sparse", "signage_line": "SIDE WINDOW BOARDED. CASH ONLY."},
+        "exclusive_opportunity": {"event_id": "scenario_aftermath_fence_offer"},
+        "security_overrides": {"strictness_band": "tight", "cheat_risk_window": "narrow"},
+        "hook_flags": {"rumor_anchor": true, "quiet_fence_offer": true}
+      }
+    },
+    {
+      "id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "display_name": "Dead Shift",
+      "weight": 10,
+      "town_weight_tags": ["calendar:midweek"],
+      "mutations": {
+        "staff_set": ["chatty_night_clerk"],
+        "event_pool_add": ["scenario_dead_shift_rumor"],
+        "economic_profile_overrides": {"shop_price_multiplier": 0.95},
+        "service_add": ["cashier_tip"],
+        "music_profile_override": {"ambience": 0.8, "volume": 0.21, "texture": "fluorescent"},
+        "presentation": {"palette_tint": "#b8d8e8", "lighting_key": "dead_shift", "crowd_density": "empty", "signage_line": "NO LINE. PLENTY OF TALK."},
+        "exclusive_opportunity": {"event_id": "scenario_dead_shift_rumor"},
+        "security_overrides": {"strictness_band": "relaxed", "cheat_risk_window": "wide"},
+        "hook_flags": {"rumor_anchor": true, "best_rumor_source": true}
+      }
+    }
+  ],
+  "back_alley": [
+    {
+      "id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "display_name": "Street Craps",
+      "weight": 11,
+      "mutations": {
+        "patron_set": ["dice_circle", "sidewalk_shooter", "street_rail"],
+        "event_pool_add": ["scenario_street_craps_circle"],
+        "economic_profile_overrides": {"stake_floor": 2, "stake_ceiling": 20},
+        "game_modifier_hooks": {"game_hook": "street_craps", "table_tone": "street"},
+        "music_profile_override": {"bpm": 82, "ambience": 0.72, "texture": "rain"},
+        "presentation": {"palette_tint": "#d4a373", "lighting_key": "dice_circle", "crowd_density": "medium", "signage_line": "CHALK RING. CASH IN HAND."},
+        "exclusive_opportunity": {"event_id": "scenario_street_craps_circle"},
+        "security_overrides": {"strictness_band": "uneven", "cheat_risk_window": "brief"},
+        "hook_flags": {"craps_onramp": true, "rumor_anchor": true}
+      }
+    },
+    {
+      "id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "display_name": "Cruiser Parked",
+      "weight": 8,
+      "mutations": {
+        "patron_set": ["parked_officer", "watched_stranger"],
+        "event_pool_add": ["scenario_cruiser_parked_watch"],
+        "economic_profile_overrides": {"shop_price_multiplier": 1.1},
+        "music_profile_override": {"bpm": 68, "ambience": 0.92, "texture": "rain"},
+        "presentation": {"palette_tint": "#8aa1b1", "lighting_key": "cruiser_glow", "crowd_density": "sparse", "signage_line": "BLUE LIGHT. WRONG TARGET."},
+        "exclusive_opportunity": {"event_id": "scenario_cruiser_parked_watch"},
+        "security_overrides": {"strictness_band": "high", "cheat_risk_window": "closed"},
+        "hook_flags": {"rumor_anchor": true, "sweep_legibility": true}
+      }
+    },
+    {
+      "id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "display_name": "Fence Night",
+      "weight": 9,
+      "mutations": {
+        "patron_set": ["mags", "night_sellers"],
+        "event_pool_add": ["scenario_fence_night_mags"],
+        "economic_profile_overrides": {"shop_price_multiplier": 1.2},
+        "service_add": ["house_drink"],
+        "music_profile_override": {"bpm": 76, "ambience": 0.76, "texture": "rain"},
+        "presentation": {"palette_tint": "#c77dff", "lighting_key": "fence_night", "crowd_density": "medium", "signage_line": "HOT GOODS. REAL MONEY."},
+        "exclusive_opportunity": {"event_id": "scenario_fence_night_mags"},
+        "security_overrides": {"strictness_band": "relaxed", "cheat_risk_window": "wide"},
+        "hook_flags": {"recruitment_anchor": "mags", "fence_prices_real": true}
+      }
+    }
+  ],
+  "motel": [
+    {
+      "id": "motel_conventioneers",
+      "archetype_id": "motel",
+      "display_name": "Conventioneers",
+      "weight": 11,
+      "mutations": {
+        "patron_set": ["convention_delegates", "room_nine_players"],
+        "event_pool_add": ["scenario_conventioneers_room_nine"],
+        "economic_profile_overrides": {"stake_floor": 5, "stake_ceiling": 35, "shop_price_multiplier": 1.1},
+        "game_modifier_hooks": {"private_poker_hook": "room_9"},
+        "music_profile_override": {"bpm": 88, "ambience": 0.58, "texture": "hallway"},
+        "presentation": {"palette_tint": "#f4a261", "lighting_key": "convention_hall", "crowd_density": "dense", "signage_line": "ROOM NINE STAYS AWAKE."},
+        "exclusive_opportunity": {"event_id": "scenario_conventioneers_room_nine"},
+        "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "wide"},
+        "hook_flags": {"private_table": "room_9", "rumor_anchor": true}
+      }
+    },
+    {
+      "id": "motel_stakeout",
+      "archetype_id": "motel",
+      "display_name": "The Stakeout",
+      "weight": 7,
+      "town_weight_tags": ["weather:rain", "weather:fog"],
+      "mutations": {
+        "patron_set": ["plainclothes_pair", "watched_guest"],
+        "event_pool_add": ["scenario_stakeout_watch_or_leave"],
+        "economic_profile_overrides": {"shop_price_multiplier": 1.15},
+        "music_profile_override": {"bpm": 62, "ambience": 0.9, "texture": "static"},
+        "presentation": {"palette_tint": "#778da9", "lighting_key": "stakeout", "crowd_density": "sparse", "signage_line": "UNMARKED CAR. ENGINE WARM."},
+        "exclusive_opportunity": {"event_id": "scenario_stakeout_watch_or_leave"},
+        "security_overrides": {"strictness_band": "tight", "cheat_risk_window": "narrow"},
+        "hook_flags": {"rumor_anchor": true, "stakeout_active": true}
+      }
+    },
+    {
+      "id": "motel_weekly_rates",
+      "archetype_id": "motel",
+      "display_name": "Weekly Rates",
+      "weight": 10,
+      "mutations": {
+        "staff_set": ["nico"],
+        "patron_set": ["weekly_residents"],
+        "event_pool_add": ["scenario_weekly_rates_soft_terms"],
+        "economic_profile_overrides": {"shop_price_multiplier": 0.9},
+        "service_add": ["house_drink"],
+        "music_profile_override": {"bpm": 70, "ambience": 0.74, "texture": "static"},
+        "presentation": {"palette_tint": "#a8dadc", "lighting_key": "weekly_rates", "crowd_density": "medium", "signage_line": "WEEKLY RATE. DAILY PROBLEMS."},
+        "exclusive_opportunity": {"event_id": "scenario_weekly_rates_soft_terms"},
+        "security_overrides": {"strictness_band": "private", "cheat_risk_window": "brief"},
+        "hook_flags": {"chain_anchor": "nico", "soft_loan_source": true}
+      }
+    }
+  ],
   "bar": [
     {
-      "id": "bar_engine_proof_lock_in",
+      "id": "bar_wake",
       "archetype_id": "bar",
-      "display_name": "Engine Proof: Lock-In",
-      "weight": 10,
-      "placeholder": true,
-      "town_weight_tags": [
-        "happening:fight_night"
-      ],
+      "display_name": "The Wake",
+      "weight": 5,
       "mutations": {
-        "event_pool_add": [
-          "rowdy_regular"
-        ],
-        "economic_profile_overrides": {
-          "stake_multiplier": 1.1
-        },
-        "game_modifier_hooks": {
-          "table_tone": "loose"
-        },
-        "music_profile_override": {
-          "scenario_energy": "late"
-        },
-        "presentation": {
-          "lighting_key": "after_hours",
-          "crowd_density": "dense",
-          "signage_line": "DOOR LOCKED AFTER LAST CALL"
-        },
-        "security_overrides": {
-          "strictness_band": "relaxed"
-        },
-        "hook_flags": {
-          "rumor_anchor": true
-        }
+        "patron_set": ["mourners", "old_regulars"],
+        "event_pool_add": ["scenario_wake_route_story"],
+        "economic_profile_overrides": {"stake_floor": 5, "stake_ceiling": 40},
+        "service_add": ["house_drink"],
+        "music_profile_override": {"bpm": 58, "ambience": 0.88, "mode": "minor", "texture": "bar", "volume": 0.21},
+        "presentation": {"palette_tint": "#6d6875", "lighting_key": "wake", "crowd_density": "medium", "signage_line": "ONE STOOL STAYS EMPTY."},
+        "exclusive_opportunity": {"event_id": "scenario_wake_route_story"},
+        "security_overrides": {"strictness_band": "relaxed", "cheat_risk_window": "brief"},
+        "hook_flags": {"rumor_anchor": true, "route_story_source": true}
+      }
+    },
+    {
+      "id": "bar_fight_night",
+      "archetype_id": "bar",
+      "display_name": "Fight Night",
+      "weight": 10,
+      "town_weight_tags": ["happening:fight_night", "crowd:bar"],
+      "mutations": {
+        "patron_set": ["fight_crowd", "knuckles", "bar_book"],
+        "event_pool_add": ["scenario_fight_night_swing_bet"],
+        "economic_profile_overrides": {"stake_floor": 20, "stake_ceiling": 100},
+        "game_modifier_hooks": {"table_tone": "rowdy", "fight_book_open": true},
+        "music_profile_override": {"bpm": 104, "ambience": 0.42, "mode": "dorian", "texture": "bar", "volume": 0.34},
+        "presentation": {"palette_tint": "#e63946", "lighting_key": "fight_night", "crowd_density": "packed", "signage_line": "UNDERCARD STARTS SOON."},
+        "exclusive_opportunity": {"event_id": "scenario_fight_night_swing_bet"},
+        "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "wide"},
+        "hook_flags": {"recruitment_anchor": "knuckles", "fight_book": true}
       },
       "phases": [
         {
-          "advance_after_actions": 2,
-          "mutations": {
-            "presentation": {
-              "signage_line": "LAST ROUND STAYS IN THE ROOM"
-            }
-          }
-        },
-        {
+          "id": "prefight",
           "advance_after_actions": 3,
           "mutations": {
-            "presentation": {
-              "crowd_density": "medium",
-              "signage_line": "CHAIRS GO UP SOON"
-            }
+            "presentation": {"crowd_density": "dense", "signage_line": "UNDERCARD STARTS SOON."},
+            "game_modifier_hooks": {"fight_phase": "prefight"}
           }
         },
         {
+          "id": "bout",
+          "advance_after_actions": 4,
+          "mutations": {
+            "economic_profile_overrides": {"stake_floor": 25, "stake_ceiling": 120},
+            "presentation": {"crowd_density": "packed", "signage_line": "THE BOUT IS LIVE."},
+            "game_modifier_hooks": {"fight_phase": "bout"}
+          }
+        },
+        {
+          "id": "aftermath",
           "advance_after_actions": 0,
           "mutations": {
-            "event_pool_remove": [
-              "rowdy_regular"
-            ],
-            "presentation": {
-              "crowd_density": "sparse",
-              "signage_line": "LIGHTS ON"
-            }
+            "event_pool_remove": ["scenario_fight_night_swing_bet"],
+            "economic_profile_overrides": {"stake_floor": 10, "stake_ceiling": 60},
+            "presentation": {"crowd_density": "medium", "signage_line": "THE TAPE GETS SWEPT UP."},
+            "game_modifier_hooks": {"fight_phase": "aftermath", "fight_book_open": false}
           }
         }
       ]
     },
     {
-      "id": "bar_engine_proof_quiet_shift",
+      "id": "bar_payday_rush",
       "archetype_id": "bar",
-      "display_name": "Engine Proof: Quiet Shift",
-      "weight": 8,
-      "placeholder": true,
-      "town_weight_tags": [
-        "calendar:midweek"
-      ],
+      "display_name": "Payday Rush",
+      "weight": 11,
+      "town_weight_tags": ["calendar:payday"],
       "mutations": {
-        "event_pool_remove": [
-          "rowdy_regular"
-        ],
-        "service_add": [
-          "house_drink"
-        ],
-        "presentation": {
-          "lighting_key": "quiet_shift",
-          "crowd_density": "sparse",
-          "signage_line": "PLENTY OF ROOM"
+        "patron_set": ["payday_regulars", "loud_winners"],
+        "event_pool_add": ["scenario_payday_rush_side_pot"],
+        "economic_profile_overrides": {"stake_floor": 20, "stake_ceiling": 90},
+        "game_modifier_hooks": {"table_tone": "loose", "temper_band": "high"},
+        "music_profile_override": {"bpm": 96, "ambience": 0.5, "texture": "bar", "volume": 0.32},
+        "presentation": {"palette_tint": "#f4d35e", "lighting_key": "payday", "crowd_density": "packed", "signage_line": "PAY ENVELOPES OPEN HERE."},
+        "exclusive_opportunity": {"event_id": "scenario_payday_rush_side_pot"},
+        "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "brief"},
+        "hook_flags": {"rumor_anchor": true, "payday_rush": true}
+      },
+      "phases": [
+        {
+          "id": "surge",
+          "advance_after_actions": 5,
+          "mutations": {
+            "presentation": {"crowd_density": "packed", "signage_line": "PAY ENVELOPES OPEN HERE."},
+            "game_modifier_hooks": {"payday_phase": "surge"}
+          }
         },
-        "hook_flags": {
-          "chain_anchor": true
+        {
+          "id": "thinning",
+          "advance_after_actions": 0,
+          "mutations": {
+            "economic_profile_overrides": {"stake_floor": 10, "stake_ceiling": 55},
+            "presentation": {"crowd_density": "medium", "signage_line": "THE ENVELOPES GOT THINNER."},
+            "game_modifier_hooks": {"payday_phase": "thinning"}
+          }
         }
-      }
+      ]
+    },
+    {
+      "id": "bar_lock_in",
+      "archetype_id": "bar",
+      "display_name": "Lock-In",
+      "weight": 8,
+      "mutations": {
+        "staff_set": ["after_hours_host", "trusted_bartender"],
+        "patron_set": ["regulars_only"],
+        "event_pool_add": ["scenario_lock_in_private_game"],
+        "economic_profile_overrides": {"stake_floor": 25, "stake_ceiling": 110},
+        "game_modifier_hooks": {"private_games": true, "doors_bolted": false},
+        "service_add": ["house_drink"],
+        "music_profile_override": {"bpm": 78, "ambience": 0.68, "mode": "minor", "texture": "bar", "volume": 0.25},
+        "presentation": {"palette_tint": "#8338ec", "lighting_key": "after_hours", "crowd_density": "dense", "signage_line": "LAST CALL. DOORS STILL OPEN."},
+        "exclusive_opportunity": {"event_id": "scenario_lock_in_private_game"},
+        "security_overrides": {"strictness_band": "private", "cheat_risk_window": "wide"},
+        "hook_flags": {"private_game": true, "lock_in": true}
+      },
+      "phases": [
+        {
+          "id": "doors_open",
+          "advance_after_actions": 4,
+          "mutations": {
+            "presentation": {"signage_line": "LAST CALL. DOORS STILL OPEN."},
+            "game_modifier_hooks": {"lock_in_phase": "doors_open", "doors_bolted": false}
+          }
+        },
+        {
+          "id": "bolted",
+          "advance_after_actions": 0,
+          "mutations": {
+            "presentation": {"crowd_density": "medium", "signage_line": "DOOR BOLTED. REGULARS ONLY."},
+            "game_modifier_hooks": {"lock_in_phase": "bolted", "doors_bolted": true},
+            "security_overrides": {"strictness_band": "crew_rules", "cheat_risk_window": "brief"}
+          }
+        }
+      ]
     }
   ],
-  "corner_store": [
+  "gas_station_casino": [
     {
-      "id": "corner_store_engine_proof_delivery",
-      "archetype_id": "corner_store",
-      "display_name": "Engine Proof: Delivery",
+      "id": "gas_station_trucker_convoy",
+      "archetype_id": "gas_station_casino",
+      "display_name": "Trucker Convoy",
       "weight": 10,
-      "placeholder": true,
-      "town_weight_tags": [
-        "calendar:payday"
-      ],
       "mutations": {
-        "event_pool_add": [
-          "chatty_clerk"
-        ],
-        "service_add": [
-          "cashier_tip"
-        ],
-        "economic_profile_overrides": {
-          "shop_price_multiplier": 0.95
-        },
-        "presentation": {
-          "lighting_key": "delivery_day",
-          "crowd_density": "medium",
-          "signage_line": "FRESH STOCK"
-        },
-        "hook_flags": {
-          "rumor_anchor": true
-        }
+        "patron_set": ["convoy_drivers", "switch"],
+        "event_pool_add": ["scenario_trucker_convoy_route"],
+        "economic_profile_overrides": {"stake_floor": 15, "stake_ceiling": 75},
+        "game_modifier_hooks": {"machine_occupancy": "high", "travel_gossip": true},
+        "music_profile_override": {"bpm": 86, "ambience": 0.54, "texture": "highway", "volume": 0.3},
+        "presentation": {"palette_tint": "#ff9f1c", "lighting_key": "convoy", "crowd_density": "dense", "signage_line": "DIESEL IDLES. MACHINES DON'T."},
+        "exclusive_opportunity": {"event_id": "scenario_trucker_convoy_route"},
+        "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "brief"},
+        "hook_flags": {"recruitment_anchor": "switch", "travel_risk_rumor": true}
+      }
+    },
+    {
+      "id": "gas_station_tour_bus_stop",
+      "archetype_id": "gas_station_casino",
+      "display_name": "Tour Bus Stop",
+      "weight": 11,
+      "mutations": {
+        "patron_set": ["tour_bus_passengers", "ticket_hunters"],
+        "event_pool_add": ["scenario_tour_bus_ticket_rush"],
+        "economic_profile_overrides": {"stake_floor": 10, "stake_ceiling": 50},
+        "game_modifier_hooks": {"scratch_region_variety": "wide", "ticket_demand": "rush"},
+        "music_profile_override": {"bpm": 92, "ambience": 0.44, "texture": "highway", "volume": 0.31},
+        "presentation": {"palette_tint": "#2ec4b6", "lighting_key": "tour_bus", "crowd_density": "packed", "signage_line": "BUS PARKED. TICKETS MOVING."},
+        "exclusive_opportunity": {"event_id": "scenario_tour_bus_ticket_rush"},
+        "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "narrow"},
+        "hook_flags": {"rumor_anchor": true, "regional_ticket_stock": true}
+      }
+    },
+    {
+      "id": "gas_station_graveyard_shift",
+      "archetype_id": "gas_station_casino",
+      "display_name": "Graveyard Shift",
+      "weight": 8,
+      "town_weight_tags": ["calendar:midweek", "weather:fog"],
+      "mutations": {
+        "staff_set": ["graveyard_clerk", "machine_tech"],
+        "event_pool_add": ["scenario_graveyard_maintenance"],
+        "economic_profile_overrides": {"stake_floor": 5, "stake_ceiling": 45},
+        "game_modifier_hooks": {"maintenance_cheat_window": true, "machine_occupancy": "empty"},
+        "music_profile_override": {"bpm": 64, "ambience": 0.84, "texture": "fluorescent", "volume": 0.2},
+        "presentation": {"palette_tint": "#90e0ef", "lighting_key": "graveyard", "crowd_density": "empty", "signage_line": "MAINTENANCE LIGHT STAYS ON."},
+        "exclusive_opportunity": {"event_id": "scenario_graveyard_maintenance"},
+        "security_overrides": {"strictness_band": "relaxed", "cheat_risk_window": "wide", "machine_alarm_tolerance_band": "lax"},
+        "hook_flags": {"maintenance_cheat_window": true, "lax_machine_alarm_tolerance": true, "push06_1_seam": true}
       }
     }
   ]
