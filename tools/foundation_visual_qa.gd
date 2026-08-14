@@ -66,6 +66,10 @@ var report := {
 		"r100_stab_game_surface_no_overlap": false,
 		"r100_stab_result_useful_or_hidden": false,
 		"streets_package_surface": false,
+		"streets_multi_stop_surface": false,
+		"streets_multi_stop_progress": false,
+		"streets_hold_surface": false,
+		"streets_hold_signal_exit": false,
 		"streets_idle_liveness": false,
 		"streets_failure_exit": false,
 		"focused_environment_controls_visible": false,
@@ -2119,6 +2123,84 @@ func _verify_streets_surface() -> void:
 	await _settle()
 	_require(not run_state.streets_has_active_run() and not bool(controller.call("is_visible")), "Ditch did not fail and exit the Streets surface cleanly.")
 	_cover("streets_failure_exit")
+
+	var multi_started := run_state.streets_begin_multi_stop({
+		"route_id": "visual_qa_multi_stop",
+		"origin_node_id": "visual_qa_rounds_start",
+		"destination_node_id": "visual_qa_rounds_finish",
+		"distance": "near",
+		"deadline_actions": 12,
+		"order_mode": "ordered",
+		"stops": [
+			{"id": "numbers_store", "label": "Corner Store"},
+			{"id": "numbers_motel", "label": "Motel"},
+		],
+	})
+	_require(bool(multi_started.get("ok", false)), "Streets visual QA multi-stop fixture did not start.")
+	var multi_board: Dictionary = run_state.active_streets_run.get("board", {})
+	multi_board["patrols"] = []
+	var multi_stops: Array = run_state.active_streets_run.get("stops", [])
+	_require(multi_stops.size() == 2, "Streets visual QA multi-stop fixture did not expose two stops.")
+	var first_stop: Dictionary = multi_stops[0] if not multi_stops.is_empty() else {}
+	var first_stop_position: Dictionary = first_stop.get("position", {}) if typeof(first_stop.get("position", {})) == TYPE_DICTIONARY else {}
+	run_state.active_streets_run["board"] = multi_board
+	run_state.active_streets_run["player"] = {
+		"x": int(first_stop_position.get("x", 1)) - 1,
+		"y": int(first_stop_position.get("y", 0)),
+	}
+	app.call("_refresh")
+	await _settle()
+	_require(bool(controller.call("is_visible")), "Multi-stop Streets surface did not open through the production controller.")
+	_require(_has_visible_text(app, "THE ROUNDS") and _has_visible_text(app, "Make the rounds: 0/2 stops"), "Multi-stop Streets surface did not present its distinct title and stop objective.")
+	_require(_has_visible_button_exact("1") and _has_visible_button_exact("DITCH") and not _has_visible_button_exact("SIGNAL"), "Multi-stop Streets surface did not present its numbered stop and cargo controls.")
+	_cover("streets_multi_stop_surface")
+	_record_state("streets_multi_stop_surface", "Ordered two-stop rounds board with numbered stops, deadline, cargo controls, and no Hold signal.")
+	_require(not _click_button_exact("1").is_empty(), "Streets visual QA could not enter the first numbered stop through its visible board cell.")
+	await _settle()
+	var multi_progress := run_state.streets_snapshot()
+	var progressed_stops: Array = multi_progress.get("stops", []) if typeof(multi_progress.get("stops", [])) == TYPE_ARRAY else []
+	_require(run_state.streets_has_active_run() and not progressed_stops.is_empty() and bool((progressed_stops[0] as Dictionary).get("visited", false)), "Visible multi-stop movement did not complete the first ordered stop.")
+	_require(_has_visible_text(app, "Make the rounds: 1/2 stops"), "Multi-stop Streets surface did not refresh its player-facing stop progress.")
+	_cover("streets_multi_stop_progress")
+	_record_state("streets_multi_stop_progress", "The first numbered stop was entered through the live grid and the objective advanced to one of two stops.")
+	_require(not _click_button_exact("DITCH").is_empty(), "Streets visual QA could not exit the multi-stop fixture through its visible Ditch verb.")
+	await _settle()
+	_require(not run_state.streets_has_active_run() and not bool(controller.call("is_visible")), "Multi-stop Ditch did not exit the production Streets controller.")
+
+	var hold_started := run_state.streets_begin_hold({
+		"route_id": "visual_qa_hold",
+		"origin_node_id": "visual_qa_hold_corner",
+		"destination_node_id": "visual_qa_hold_corner",
+		"distance": "near",
+		"deadline_actions": 8,
+		"signal_window": {"start": 2, "end": 3},
+		"fast_threshold_actions": 3,
+	})
+	_require(bool(hold_started.get("ok", false)), "Streets visual QA Hold fixture did not start.")
+	var hold_board: Dictionary = run_state.active_streets_run.get("board", {})
+	hold_board["patrols"] = []
+	run_state.active_streets_run["board"] = hold_board
+	app.call("_refresh")
+	await _settle()
+	_require(bool(controller.call("is_visible")), "Hold Streets surface did not open through the production controller.")
+	_require(_has_visible_text(app, "HOLD THE CORNER") and _has_visible_text(app, "Signal on ticks 2-3"), "Hold Streets surface did not present its distinct title and signal window objective.")
+	_require(_has_visible_button_exact("WAIT") and _has_visible_button_exact("SIGNAL") and not _has_visible_button_exact("DITCH"), "Hold Streets surface did not present its distinct Wait/Signal controls.")
+	_cover("streets_hold_surface")
+	_record_state("streets_hold_surface", "Hold board at the authored mark with a visible tick-two-to-three signal window and distinct Wait/Signal controls.")
+	_require(not _click_button_exact("WAIT").is_empty(), "Streets visual QA could not wait through the first Hold tick.")
+	await _settle()
+	_require(not _click_button_exact("WAIT").is_empty(), "Streets visual QA could not wait into the Hold signal window.")
+	await _settle()
+	var hold_window_snapshot := run_state.streets_snapshot()
+	_require(run_state.streets_has_active_run() and int(hold_window_snapshot.get("turn", 0)) == 2 and int(hold_window_snapshot.get("deadline_remaining", 0)) == 6, "Visible Hold actions did not reach the authored signal window on exactly two boundaries.")
+	_record_state("streets_hold_signal_window", "Two visible Wait actions reached tick two with six deadline ticks left and Signal still available.")
+	_require(not _click_button_exact("SIGNAL").is_empty(), "Streets visual QA could not use Signal inside the visible Hold window.")
+	await _settle()
+	var hold_resolution: Dictionary = run_state.active_streets_run.get("resolution", {})
+	_require(not run_state.streets_has_active_run() and not bool(controller.call("is_visible")), "Successful Hold signal did not exit the production Streets controller.")
+	_require(str(hold_resolution.get("outcome", "")) == "success" and str(hold_resolution.get("reason", "")) == "signaled" and int(hold_resolution.get("turns_used", 0)) == 3, "Visible Hold signal did not resolve successfully on its third action.")
+	_cover("streets_hold_signal_exit")
+	_record_state("streets_hold_signal_exit", "Signal was pressed inside the authored window, resolved success on action three, and returned to the room.")
 
 
 func _screen_summary() -> Dictionary:
