@@ -3091,7 +3091,7 @@
     "id": "coin_pusher",
     "display_name": "Quarter Falls",
     "family": "coin_pusher",
-    "content_groups": ["slot_pack"],
+    "content_groups": ["coin_pusher_pack"],
     "gameplay_model": "full_simulation",
     "module_path": "res://scripts/games/coin_pusher.gd",
     "asset_path": "res://assets/art/games/slot.png",

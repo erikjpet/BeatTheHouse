@@ -896,7 +896,8 @@
     "risk_flags": ["contraband"],
     "domain": "games",
     "content_groups": [
-      "slot_pack"
+      "slot_pack",
+      "coin_pusher_pack"
     ],
     "sellable": true,
     "sale_price": 9,
@@ -1025,7 +1026,8 @@
     "risk_flags": ["contraband"],
     "domain": "games",
     "content_groups": [
-      "slot_pack"
+      "slot_pack",
+      "coin_pusher_pack"
     ],
     "sellable": true,
     "sale_price": 12,

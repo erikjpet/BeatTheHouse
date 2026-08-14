@@ -1306,17 +1306,34 @@ func _append_discovery_picks(discovered: Array, candidates: Array, remaining_cou
 
 
 func _archetype_has_games_for_discovery(archetype: Dictionary) -> bool:
-	return not _string_array(archetype.get("required_game_ids", [])).is_empty() or not _string_array(archetype.get("game_pool", [])).is_empty()
+	return _archetype_game_capacity(archetype) > 0
 
 
 func _archetype_game_capacity(archetype: Dictionary) -> int:
 	var game_ids := _string_array(archetype.get("game_pool", []))
-	for required_id in _string_array(archetype.get("required_game_ids", [])):
+	var required_ids := _string_array(archetype.get("required_game_ids", []))
+	for required_id in required_ids:
 		if not game_ids.has(str(required_id)):
 			game_ids.append(str(required_id))
 	if game_ids.is_empty():
 		return 0
-	return mini(game_ids.size(), maxi(_count_ceiling(archetype.get("game_count", 0)), _string_array(archetype.get("required_game_ids", [])).size()))
+	# An optional [0, N] machine must not turn a non-gambling stop into a
+	# guaranteed game destination or perturb shipped early-map reachability.
+	if required_ids.is_empty() and _count_floor(archetype.get("game_count", 0)) <= 0:
+		return 0
+	return mini(game_ids.size(), maxi(_count_ceiling(archetype.get("game_count", 0)), required_ids.size()))
+
+
+func _count_floor(value: Variant) -> int:
+	if typeof(value) == TYPE_ARRAY:
+		var values: Array = value
+		if values.is_empty():
+			return 0
+		var min_count := int(values[0])
+		for entry in values:
+			min_count = mini(min_count, int(entry))
+		return min_count
+	return int(value)
 
 
 func _count_ceiling(value: Variant) -> int:

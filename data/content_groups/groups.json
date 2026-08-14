@@ -65,7 +65,7 @@
 		"display_name": "Slot Pack",
 		"description": "Cabinets, coins, bright bad ideas.",
 		"default_enabled": true,
-		"game_ids": ["slot", "coin_pusher"],
+		"game_ids": ["slot"],
 		"item_ids": [
 			"foil_sleeve",
 			"coin_return_shim",
@@ -90,6 +90,14 @@
 			"plunger_tuner",
 			"lock_jammer"
 		]
+	},
+	{
+		"id": "coin_pusher_pack",
+		"display_name": "Coin Pusher Pack",
+		"description": "Quarter Falls, cold coins, and hungry gutters.",
+		"default_enabled": true,
+		"game_ids": ["coin_pusher"],
+		"item_ids": ["coin_return_shim", "cold_quarters"]
 	},
 	{
 		"id": "bar_dice_pack",

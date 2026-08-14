@@ -26,6 +26,11 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 func _check_coin_pusher_data_contract(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
 	if str(definition.get("module_path", "")) != "res://scripts/games/coin_pusher.gd" or str(definition.get("family", "")) != "coin_pusher":
 		failures.append("Quarter Falls is not registered as the data-routed coin_pusher family.")
+	if not _string_array(definition.get("content_groups", [])).has("coin_pusher_pack") or _string_array(definition.get("content_groups", [])).has("slot_pack"):
+		failures.append("Quarter Falls must use its own default-enabled content pack without entering the slot-only pack.")
+	var pusher_group := library.content_group("coin_pusher_pack")
+	if pusher_group.is_empty() or not bool(pusher_group.get("default_enabled", false)) or not _string_array(pusher_group.get("game_ids", [])).has("coin_pusher"):
+		failures.append("Quarter Falls coin_pusher_pack is missing, disabled by default, or does not trace to the game id.")
 	var tuning: Dictionary = definition.get("coin_pusher_tuning", {}) if typeof(definition.get("coin_pusher_tuning", {})) == TYPE_DICTIONARY else {}
 	for key in ["lane_count", "cell_count", "cell_capacity", "upper_phase_step", "lower_phase_step", "nudge_forces", "hard_alarm_heat", "documented_ev_band", "scenario_reset_contract", "prize_riders"]:
 		if not tuning.has(key):
