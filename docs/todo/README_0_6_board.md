@@ -245,6 +245,19 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   other foreign lock is preserved and receives the tuned fine/debt fallback.
   Knuckles stash, Numbers pause, and Streets patrol-density seams are
   registered but inert for their owning slices.
+- 2026-08-14 [Wave C] PM collision arbitration: the four Stage-1 game slices
+  keep `data/games/games.json` additions isolated by stable game id. PM merges
+  one reviewed branch at a time; every later branch must merge current `main`
+  and retain all earlier registrations before its integrated-tree gates run.
+  The existing Grand Casino result router remains the sole chips seam.
+- 2026-08-14 [streets06_1/crew06_3] Streets owns and freezes the public
+  multi-stop route contract at its acceptance review. Numbers consumes that
+  API without a parallel route engine. Normal travel remains untouched unless
+  an accepted job or route explicitly declares a Streets surface.
+- 2026-08-14 [crew06_2/crew06_3] Poker is the first L3 furniture owner. The
+  later Numbers desk must merge against the landed poker layout, use a distinct
+  generated spot, and prove both interactables remain reachable and clear of
+  overlay text at 1280×720.
 
 ## Work Log
 
