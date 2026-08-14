@@ -185,6 +185,13 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   `corner_store_delivery_day` only if its regression proves tutorial-sensitive
   pools and sequencing unchanged. The 20-seed audit must exercise the real
   scenario selector, including the landed town-weight seam.
+- 2026-08-14 [env06_2] Code reality showed a pinned scenario still applied its
+  overlay, conflicting with the tutorial's controlled environment. PM approved
+  generic challenge flag `scenario_pins_apply_mutations` (default `true`),
+  evaluated only at generation. The tutorial sets it false: the deterministic
+  scenario identity remains stored, while base/phase mutations, opportunities,
+  and hooks are an identity overlay. Non-tutorial pins retain existing behavior;
+  a byte-identical tutorial environment fixture is required.
 
 ## Work Log
 
