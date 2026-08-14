@@ -4,6 +4,7 @@ extends RefCounted
 # One generated location, regardless of venue type.
 
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const GENERATED_LAYOUT_VERSION := 11
@@ -48,12 +49,22 @@ var turns: int = 0
 var resolved_event_ids: Array = []
 var travel_locked_actions: int = 0
 var travel_lock_remaining: int = 0
+var scenario_state: Dictionary = {}
+var scenario_patron_ids: Array = []
+var scenario_staff_ids: Array = []
+var scenario_game_modifiers: Dictionary = {}
+var scenario_presentation: Dictionary = {}
+var scenario_exclusive_opportunity: Dictionary = {}
+var scenario_hook_flags: Dictionary = {}
 
 
 # Builds one environment from an archetype and content library.
-static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, library: ContentLibrary = null, challenge_config: Dictionary = {}) -> EnvironmentInstance:
+static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, library: ContentLibrary = null, challenge_config: Dictionary = {}, selected_scenario: Dictionary = {}) -> EnvironmentInstance:
 	if library != null:
 		archetype = library.environment_archetype_for_challenge(archetype, challenge_config)
+	var selected_state := ScenarioEngineScript.initial_state(selected_scenario) if not selected_scenario.is_empty() and not selected_scenario.has("schema_version") else ScenarioEngineScript.normalize_state(selected_scenario)
+	if not selected_state.is_empty():
+		archetype = ScenarioEngineScript.apply_to_archetype(archetype, selected_state)
 	var environment := EnvironmentInstance.new()
 	environment.depth = p_depth
 	environment.tier = int(archetype.get("tier", 1))
@@ -90,6 +101,17 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.mood = rng.pick(archetype.get("moods", ["watchful"]), "watchful")
 	environment.travel_locked_actions = maxi(0, int(archetype.get("travel_locked_actions", 0)))
 	environment.travel_lock_remaining = environment.travel_locked_actions
+	environment.scenario_patron_ids = _copy_array(archetype.get("scenario_patron_ids", []))
+	environment.scenario_staff_ids = _copy_array(archetype.get("scenario_staff_ids", []))
+	environment.scenario_game_modifiers = _copy_dict(archetype.get("scenario_game_modifiers", {}))
+	environment.scenario_presentation = _copy_dict(archetype.get("scenario_presentation", {}))
+	environment.scenario_exclusive_opportunity = _copy_dict(archetype.get("scenario_exclusive_opportunity", {}))
+	environment.scenario_hook_flags = _copy_dict(archetype.get("scenario_hook_flags", {}))
+	if not selected_state.is_empty():
+		environment.scenario_state = selected_state
+		var scenario_environment := environment.to_dict()
+		ScenarioEngineScript.attach_to_environment(scenario_environment, selected_state)
+		environment = from_dict(scenario_environment)
 	environment.layout = ensure_generated_layout(environment.to_dict())
 	return environment
 
@@ -134,12 +156,19 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.resolved_event_ids = _copy_array(data.get("resolved_event_ids", []))
 	environment.travel_locked_actions = maxi(0, int(data.get("travel_locked_actions", 0)))
 	environment.travel_lock_remaining = maxi(0, int(data.get("travel_lock_remaining", environment.travel_locked_actions)))
+	environment.scenario_state = ScenarioEngineScript.normalize_state(data.get("scenario_state", {}))
+	environment.scenario_patron_ids = _copy_array(data.get("scenario_patron_ids", []))
+	environment.scenario_staff_ids = _copy_array(data.get("scenario_staff_ids", []))
+	environment.scenario_game_modifiers = _copy_dict(data.get("scenario_game_modifiers", {}))
+	environment.scenario_presentation = _copy_dict(data.get("scenario_presentation", {}))
+	environment.scenario_exclusive_opportunity = _copy_dict(data.get("scenario_exclusive_opportunity", {}))
+	environment.scenario_hook_flags = _copy_dict(data.get("scenario_hook_flags", {}))
 	return environment
 
 
 # Converts the environment to saveable data.
 func to_dict() -> Dictionary:
-	return {
+	var result := {
 		"id": id,
 		"archetype_id": archetype_id,
 		"world_node_id": world_node_id,
@@ -178,6 +207,18 @@ func to_dict() -> Dictionary:
 		"travel_locked_actions": travel_locked_actions,
 		"travel_lock_remaining": travel_lock_remaining,
 	}
+	if not scenario_state.is_empty():
+		result["scenario_state"] = scenario_state.duplicate(true)
+		result["scenario_id"] = str(scenario_state.get("id", ""))
+		result["scenario_phase_index"] = int(scenario_state.get("phase_index", 0))
+		result["scenario_phase_action_counter"] = int(scenario_state.get("phase_action_counter", 0))
+		result["scenario_patron_ids"] = scenario_patron_ids.duplicate(true)
+		result["scenario_staff_ids"] = scenario_staff_ids.duplicate(true)
+		result["scenario_game_modifiers"] = scenario_game_modifiers.duplicate(true)
+		result["scenario_presentation"] = scenario_presentation.duplicate(true)
+		result["scenario_exclusive_opportunity"] = scenario_exclusive_opportunity.duplicate(true)
+		result["scenario_hook_flags"] = scenario_hook_flags.duplicate(true)
+	return result
 
 
 # Ensures a generated environment owns stable object placement keyed by object id.

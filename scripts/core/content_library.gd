@@ -4,8 +4,10 @@ extends RefCounted
 # Loads and validates README-defined foundation content packs.
 
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 
 const ENVIRONMENT_ARCHETYPES_PATH := "res://data/environments/archetypes.json"
+const ENVIRONMENT_SCENARIOS_PATH := "res://data/environments/scenarios.json"
 const GAMES_PATH := "res://data/games/games.json"
 const SCRATCH_TICKETS_PATH := "res://data/games/scratch_tickets.json"
 const ITEMS_PATH := "res://data/items/items.json"
@@ -37,6 +39,7 @@ static var _music_wav_info_cache_hits := 0
 static var _music_wav_info_cache_misses := 0
 
 var environment_archetypes: Array = []
+var environment_scenarios: Dictionary = {}
 var games: Array = []
 var scratch_ticket_types: Array = []
 var items: Array = []
@@ -64,6 +67,7 @@ var _load_pack_timings: Array = []
 static func required_pack_paths() -> Dictionary:
 	return {
 		"environment_archetypes": ENVIRONMENT_ARCHETYPES_PATH,
+		"environment_scenarios": ENVIRONMENT_SCENARIOS_PATH,
 		"games": GAMES_PATH,
 		"scratch_ticket_types": SCRATCH_TICKETS_PATH,
 		"items": ITEMS_PATH,
@@ -94,6 +98,7 @@ func load(run_validation: bool = true) -> Dictionary:
 	_load_pack_timings = []
 	validation_complete = false
 	environment_archetypes = _load_array(ENVIRONMENT_ARCHETYPES_PATH, true)
+	environment_scenarios = _load_dictionary(ENVIRONMENT_SCENARIOS_PATH, true)
 	games = _load_array(GAMES_PATH, true)
 	scratch_ticket_types = _load_array(SCRATCH_TICKETS_PATH, true)
 	items = _load_array(ITEMS_PATH, true)
@@ -127,6 +132,7 @@ func load(run_validation: bool = true) -> Dictionary:
 	}
 	return {
 		"environment_archetypes": environment_archetypes,
+		"environment_scenarios": environment_scenarios,
 		"games": games,
 		"scratch_ticket_types": scratch_ticket_types,
 		"items": items,
@@ -302,6 +308,7 @@ func validate() -> Array:
 	_validate_music_manifest_definitions()
 	_validate_tutorial_lesson_definitions()
 	_validate_environment_references()
+	_validate_scenario_definitions()
 	return validation_errors.duplicate(true)
 
 
@@ -317,6 +324,26 @@ func archetypes_for(tier: int) -> Array:
 # Finds an environment archetype definition by id.
 func environment_archetype(archetype_id: String) -> Dictionary:
 	return _lookup("environment_archetypes", environment_archetypes, archetype_id)
+
+
+# Returns scenario definitions for an archetype in authored order.
+func scenarios_for_archetype(archetype_id: String) -> Array:
+	var value: Variant = environment_scenarios.get(archetype_id, [])
+	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+
+# Finds one scenario definition without regenerating any environment state.
+func scenario(scenario_id: String) -> Dictionary:
+	var wanted := scenario_id.strip_edges()
+	if wanted.is_empty():
+		return {}
+	for pool_value in environment_scenarios.values():
+		if typeof(pool_value) != TYPE_ARRAY:
+			continue
+		for scenario_value in pool_value as Array:
+			if typeof(scenario_value) == TYPE_DICTIONARY and str((scenario_value as Dictionary).get("id", "")) == wanted:
+				return (scenario_value as Dictionary).duplicate(true)
+	return {}
 
 
 # Finds a game definition by id.
@@ -637,6 +664,27 @@ func _load_array(path: String, required: bool) -> Array:
 		"parse_ms": _elapsed_ms(parse_started_usec, parse_complete_usec),
 	})
 	return parsed
+
+
+# Reads one JSON dictionary content pack from disk.
+func _load_dictionary(path: String, required: bool) -> Dictionary:
+	var started_usec := Time.get_ticks_usec()
+	if not FileAccess.file_exists(path):
+		if required:
+			_load_errors.append("Missing required content pack: %s" % path)
+		_load_pack_timings.append({"path": path, "exists": false, "required": required, "bytes": 0, "entries": 0, "duration_ms": _elapsed_ms(started_usec, Time.get_ticks_usec()), "parse_ms": 0.0})
+		return {}
+	var text := FileAccess.get_file_as_string(path)
+	var parse_started_usec := Time.get_ticks_usec()
+	var parsed: Variant = JSON.parse_string(text)
+	var parse_complete_usec := Time.get_ticks_usec()
+	if typeof(parsed) != TYPE_DICTIONARY:
+		_load_errors.append("Content file must contain a JSON dictionary: %s" % path)
+		_load_pack_timings.append({"path": path, "exists": true, "required": required, "bytes": text.length(), "entries": 0, "duration_ms": _elapsed_ms(started_usec, parse_complete_usec), "parse_ms": _elapsed_ms(parse_started_usec, parse_complete_usec)})
+		return {}
+	var result: Dictionary = parsed
+	_load_pack_timings.append({"path": path, "exists": true, "required": required, "bytes": text.length(), "entries": result.size(), "duration_ms": _elapsed_ms(started_usec, parse_complete_usec), "parse_ms": _elapsed_ms(parse_started_usec, parse_complete_usec)})
+	return result
 
 
 static func _normalize_event_definitions(values: Array) -> Array:
@@ -2477,6 +2525,96 @@ func _validate_environment_references() -> void:
 		var authored_track_id := str(music_profile.get("authored_track_id", "")).strip_edges()
 		if not authored_track_id.is_empty() and music_track(authored_track_id).is_empty():
 			validation_warnings.append("environment %s references unavailable authored_track_id %s; procedural music will be used." % [archetype_id, authored_track_id])
+
+
+func _validate_scenario_definitions() -> void:
+	var archetype_ids := _ids_for(environment_archetypes)
+	var event_ids := _ids_for(events)
+	var service_ids := _ids_for(services)
+	var game_ids := _ids_for(games)
+	var seen_ids: Dictionary = {}
+	for archetype_key_value in environment_scenarios.keys():
+		var archetype_key := str(archetype_key_value).strip_edges()
+		if archetype_key.is_empty() or not archetype_ids.has(archetype_key):
+			validation_errors.append("environment_scenarios references unknown archetype: %s" % archetype_key)
+		var pool_value: Variant = environment_scenarios.get(archetype_key_value)
+		if typeof(pool_value) != TYPE_ARRAY:
+			validation_errors.append("environment_scenarios %s must be an array." % archetype_key)
+			continue
+		for index in range((pool_value as Array).size()):
+			var scenario_value: Variant = (pool_value as Array)[index]
+			if typeof(scenario_value) != TYPE_DICTIONARY:
+				validation_errors.append("environment_scenarios %s[%d] must be a dictionary." % [archetype_key, index])
+				continue
+			var definition: Dictionary = scenario_value
+			var scenario_id := str(definition.get("id", "")).strip_edges()
+			var declared_archetype := str(definition.get("archetype_id", "")).strip_edges()
+			if scenario_id.is_empty():
+				validation_errors.append("environment_scenarios %s[%d] is missing id." % [archetype_key, index])
+			elif seen_ids.has(scenario_id):
+				validation_errors.append("environment_scenarios contains duplicate id: %s" % scenario_id)
+			else:
+				seen_ids[scenario_id] = true
+			if declared_archetype != archetype_key or not archetype_ids.has(declared_archetype):
+				validation_errors.append("environment_scenarios %s references mismatched or unknown archetype_id: %s" % [scenario_id, declared_archetype])
+			if str(definition.get("display_name", "")).strip_edges().is_empty():
+				validation_errors.append("environment_scenarios %s is missing display_name." % scenario_id)
+			var weight_value: Variant = definition.get("weight", null)
+			if not _variant_is_number(weight_value) or float(weight_value) <= 0.0:
+				validation_errors.append("environment_scenarios %s weight must be positive." % scenario_id)
+			if definition.has("town_weight_tags") and typeof(definition.get("town_weight_tags")) != TYPE_ARRAY:
+				validation_errors.append("environment_scenarios %s town_weight_tags must be an array." % scenario_id)
+			_validate_scenario_mutations(scenario_id, "mutations", definition.get("mutations", {}), event_ids, service_ids, game_ids)
+			var phases_value: Variant = definition.get("phases", [])
+			if typeof(phases_value) != TYPE_ARRAY:
+				validation_errors.append("environment_scenarios %s phases must be an array." % scenario_id)
+				continue
+			var phases: Array = phases_value
+			for phase_index in range(phases.size()):
+				var phase_value: Variant = phases[phase_index]
+				if typeof(phase_value) != TYPE_DICTIONARY:
+					validation_errors.append("environment_scenarios %s phase[%d] must be a dictionary." % [scenario_id, phase_index])
+					continue
+				var phase: Dictionary = phase_value
+				var advance_value: Variant = phase.get("advance_after_actions", null)
+				if typeof(advance_value) != TYPE_INT and typeof(advance_value) != TYPE_FLOAT:
+					validation_errors.append("environment_scenarios %s phase[%d] advance_after_actions must be numeric." % [scenario_id, phase_index])
+				elif int(advance_value) < 0 or (phase_index < phases.size() - 1 and int(advance_value) <= 0):
+					validation_errors.append("environment_scenarios %s phase[%d] advance_after_actions is not sane." % [scenario_id, phase_index])
+				_validate_scenario_mutations(scenario_id, "phase[%d].mutations" % phase_index, phase.get("mutations", {}), event_ids, service_ids, game_ids)
+
+
+func _validate_scenario_mutations(scenario_id: String, label: String, value: Variant, event_ids: Dictionary, service_ids: Dictionary, game_ids: Dictionary) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		validation_errors.append("environment_scenarios %s %s must be a dictionary." % [scenario_id, label])
+		return
+	var mutations: Dictionary = value
+	for key_value in mutations.keys():
+		var key := str(key_value)
+		if not ScenarioEngineScript.ALLOWED_MUTATION_KEYS.has(key):
+			validation_errors.append("environment_scenarios %s %s contains unknown mutation key: %s" % [scenario_id, label, key])
+	_validate_id_references("environment_scenarios %s %s event_pool_add" % [scenario_id, label], mutations.get("event_pool_add", []), event_ids)
+	_validate_id_references("environment_scenarios %s %s event_pool_remove" % [scenario_id, label], mutations.get("event_pool_remove", []), event_ids)
+	_validate_id_references("environment_scenarios %s %s service_add" % [scenario_id, label], mutations.get("service_add", []), service_ids)
+	_validate_id_references("environment_scenarios %s %s service_remove" % [scenario_id, label], mutations.get("service_remove", []), service_ids)
+	var presentation := _as_dict(mutations.get("presentation", {}))
+	for presentation_key_value in presentation.keys():
+		if not ScenarioEngineScript.ALLOWED_PRESENTATION_KEYS.has(str(presentation_key_value)):
+			validation_errors.append("environment_scenarios %s %s presentation contains unknown key: %s" % [scenario_id, label, str(presentation_key_value)])
+	var security := _as_dict(mutations.get("security_overrides", {}))
+	for security_key_value in security.keys():
+		if not ScenarioEngineScript.ALLOWED_SECURITY_KEYS.has(str(security_key_value)):
+			validation_errors.append("environment_scenarios %s %s security_overrides contains unknown key: %s" % [scenario_id, label, str(security_key_value)])
+	var opportunity := _as_dict(mutations.get("exclusive_opportunity", {}))
+	for opportunity_key_value in opportunity.keys():
+		if not ScenarioEngineScript.ALLOWED_EXCLUSIVE_KEYS.has(str(opportunity_key_value)):
+			validation_errors.append("environment_scenarios %s %s exclusive_opportunity contains unknown key: %s" % [scenario_id, label, str(opportunity_key_value)])
+	var opportunity_event := str(opportunity.get("event_id", "")).strip_edges()
+	if not opportunity_event.is_empty() and not event_ids.has(opportunity_event):
+		validation_errors.append("environment_scenarios %s %s exclusive_opportunity references unknown event: %s" % [scenario_id, label, opportunity_event])
+	var opportunity_game := str(opportunity.get("game_id", "")).strip_edges()
+	if not opportunity_game.is_empty() and not game_ids.has(opportunity_game):
+		validation_errors.append("environment_scenarios %s %s exclusive_opportunity references unknown game: %s" % [scenario_id, label, opportunity_game])
 
 
 func _validate_tutorial_lesson_definitions() -> void:
