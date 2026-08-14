@@ -271,15 +271,13 @@ static func condition_matches(condition: String, cards: Array, action: String, d
 	var category := int(evaluate_hand(cards).get("category", 0))
 	match condition:
 		"strong":
-			return category >= 2
+			return category >= 2 and action != "draw"
 		"weak_aggression":
 			return category == 0 and action == "raise"
-		"drawing_one":
-			return draw_count == 1
-		"drawing_three":
-			return draw_count == 3
-		"pat":
-			return draw_count == 0
+		"one_pair":
+			return category == 1 and action == "draw"
+		"made_straight":
+			return category >= 4 and action == "draw"
 	return false
 
 
@@ -315,7 +313,7 @@ static func validate_content(member_ids: Array) -> Array:
 			if state_key.is_empty() or seen_keys.has(state_key):
 				failures.append("tells.json pattern keys must be unique neutral ids.")
 			seen_keys[state_key] = true
-			if not ["strong", "weak_aggression", "drawing_one", "drawing_three", "pat"].has(str(authored.get("condition", ""))):
+			if not ["strong", "weak_aggression", "one_pair", "made_straight"].has(str(authored.get("condition", ""))):
 				failures.append("tells.json %s has an unsupported condition." % state_key)
 			if int(authored.get("frequency_percent", 0)) <= 0 or int(authored.get("frequency_percent", 0)) > 100:
 				failures.append("tells.json %s frequency must be 1..100." % state_key)

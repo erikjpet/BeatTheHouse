@@ -6,12 +6,19 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 	if definition.is_empty():
 		failures.append("Crew draw poker is missing from production game content.")
 		return
+	var poker_archetype := _archetype_by_id(library, "small_underground_casino")
+	var poker_layers: Dictionary = poker_archetype.get("layers", {}) if typeof(poker_archetype.get("layers", {})) == TYPE_DICTIONARY else {}
+	var back_room: Dictionary = poker_layers.get("back_room", {}) if typeof(poker_layers.get("back_room", {})) == TYPE_DICTIONARY else {}
+	var back_layout: Dictionary = back_room.get("layout", {}) if typeof(back_room.get("layout", {})) == TYPE_DICTIONARY else {}
+	if (back_layout.get("game_spots", []) as Array).size() != 1 or back_room.get("game_pool", []) != ["crew_draw_poker"] or back_room.get("game_count", []) != [1, 1]:
+		failures.append("Crew poker must furnish exactly one stable table in the L3 back room.")
 	var game: GameModule = CrewDrawPokerGameScript.new()
 	game.setup(definition, library)
 	var straight_flush := [_poker_card(10, 1), _poker_card(11, 1), _poker_card(12, 1), _poker_card(13, 1), _poker_card(14, 1)]
 	var wheel := [_poker_card(14, 0), _poker_card(2, 1), _poker_card(3, 2), _poker_card(4, 3), _poker_card(5, 0)]
 	var six_high := [_poker_card(2, 0), _poker_card(3, 1), _poker_card(4, 2), _poker_card(5, 3), _poker_card(6, 0)]
 	var full_house := [_poker_card(9, 0), _poker_card(9, 1), _poker_card(9, 2), _poker_card(3, 0), _poker_card(3, 1)]
+	var one_pair := [_poker_card(11, 0), _poker_card(11, 1), _poker_card(9, 2), _poker_card(6, 3), _poker_card(3, 0)]
 	var two_pair_ace := [_poker_card(14, 0), _poker_card(14, 1), _poker_card(7, 2), _poker_card(7, 3), _poker_card(13, 0)]
 	var two_pair_queen := [_poker_card(14, 2), _poker_card(14, 3), _poker_card(7, 0), _poker_card(7, 1), _poker_card(12, 0)]
 	var weak_hand := [_poker_card(14, 0), _poker_card(10, 1), _poker_card(8, 2), _poker_card(6, 3), _poker_card(3, 0)]
@@ -58,9 +65,9 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 			if copy.to_lower().contains("tell"):
 				failures.append("Crew poker authored observation labels itself for %s." % member_id)
 			var condition := str(authored.get("condition", ""))
-			var fixture := two_pair_ace if condition == "strong" else weak_hand
-			var action := "raise" if condition == "weak_aggression" else "draw"
-			var draws := 1 if condition == "drawing_one" else 3 if condition == "drawing_three" else 0 if condition == "pat" else -1
+			var fixture := two_pair_ace if condition == "strong" else one_pair if condition == "one_pair" else six_high if condition == "made_straight" else weak_hand
+			var action := "call" if condition == "strong" else "raise" if condition == "weak_aggression" else "draw"
+			var draws := -1
 			if not CrewPokerModelScript.condition_matches(condition, fixture, action, draws):
 				failures.append("Crew poker authored observation condition fixture did not match %s/%s." % [member_id, condition])
 			var frequency_rng := RngStream.new()
@@ -74,108 +81,363 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 			if absi(shown - expected) > 80:
 				failures.append("Crew poker authored observation frequency drifted for %s: got %d/1000, expected %d/1000." % [member_id, shown, expected])
 
+	_check_crew_poker_rotation_and_gate(game, failures)
+	var production_evidence := _check_crew_poker_state_machine(game, one_pair, failures)
+	var public_surfaces: Array = production_evidence.get("surfaces", [])
+	var public_results: Array = production_evidence.get("results", [])
+
+	var threshold := int(CrewPokerModelScript.config().get("learned_exposures", 3))
+	var learned_member := "crew_mags"
 	var learning: RunState = RunStateScript.new()
 	learning.start_new("CREW-POKER-LEARNING")
-	var learned_member := "crew_mags"
-	var learned_key := str((CrewPokerModelScript.patterns(learned_member)[0] as Dictionary).get("state_key", ""))
-	var threshold := int(CrewPokerModelScript.config().get("learned_exposures", 3))
-	for count in range(threshold - 1):
-		game.call("_showdown", _poker_learning_showdown_state(learned_member, learned_key, weak_hand, two_pair_ace), learning)
-		if learning.tell_learned(learned_member):
-			failures.append("Crew poker observation learned before threshold at exposure %d." % (count + 1))
-	game.call("_showdown", _poker_learning_showdown_state(learned_member, learned_key, weak_hand, two_pair_ace), learning)
-	if not learning.tell_learned(learned_member):
-		failures.append("Crew poker observation did not learn exactly at threshold %d." % threshold)
-	var raw_crew_save := JSON.stringify(learning.to_dict().get("crew_state", {}))
-	for forbidden in [learned_key, "strong", "weak_aggression", "learned_exposures", "tell_learned"]:
-		if raw_crew_save.contains(forbidden):
-			failures.append("Crew poker hidden learning leaked '%s' into raw save data." % forbidden)
+	learning.bankroll = 10000
+	learning.crew_add_trust(learned_member, CrewPokerCrewStateScript.rank_threshold("associate"), "fixture")
+	var learned_at := -1
+	for session_index in range(48):
+		_poker_install_table(game, learning, "learn_session_%d" % session_index, [learned_member, "crew_lucky"])
+		for hand_index in range(int(CrewPokerModelScript.config().get("session_hand_cap", 5))):
+			if learning.tell_learned(learned_member):
+				break
+			var hand_actions := [
+				{"id": "deal", "ui": {}},
+				{"id": "call", "ui": {}},
+				{"id": "draw", "ui": {"poker_held": [0, 2]}},
+				{"id": "call", "ui": {}},
+			]
+			for action_value in hand_actions:
+				var action: Dictionary = action_value
+				var action_result := _poker_apply_action(game, learning, str(action.get("id", "")), action.get("ui", {}), "learn_%d_%d_%s" % [session_index, hand_index, str(action.get("id", ""))])
+				public_results.append(action_result.duplicate(true))
+				public_surfaces.append(game.surface_state(learning, learning.current_environment, action.get("ui", {})))
+				if not bool(action_result.get("ok", false)):
+					failures.append("Crew poker legal learning path failed at session %d hand %d action %s." % [session_index, hand_index, str(action.get("id", ""))])
+					break
+			if learning.tell_learned(learned_member):
+				learned_at = _poker_max_observation_count(learning, learned_member)
+				break
+		if learned_at >= 0:
+			break
+	if learned_at != threshold:
+		failures.append("Crew poker genuine-play learning did not flip exactly at %d verified showdowns; observed counter %d." % [threshold, learned_at])
+	var learning_save := learning.to_dict()
 	var restored: RunState = RunStateScript.new()
-	restored.from_dict(learning.to_dict())
+	restored.from_dict(learning_save)
 	if not restored.tell_learned(learned_member):
 		failures.append("Crew poker learned state did not survive save/load.")
+
 	var fold_heavy: RunState = RunStateScript.new()
 	fold_heavy.start_new("CREW-POKER-FOLDS")
-	for _fold in range(threshold * 4):
-		var folded_state := _poker_learning_showdown_state(learned_member, learned_key, weak_hand, two_pair_ace)
-		folded_state["phase"] = "after"
-		game.call("_finish_fold", folded_state, fold_heavy)
-	if fold_heavy.tell_learned(learned_member):
-		failures.append("Crew poker fold-heavy sessions taught a showdown-gated observation.")
+	fold_heavy.bankroll = 10000
+	fold_heavy.crew_add_trust(learned_member, CrewPokerCrewStateScript.rank_threshold("associate"), "fixture")
+	for session_index in range(4):
+		_poker_install_table(game, fold_heavy, "fold_session_%d" % session_index, [learned_member, "crew_lucky"])
+		for hand_index in range(int(CrewPokerModelScript.config().get("session_hand_cap", 5))):
+			_poker_apply_action(game, fold_heavy, "deal", {}, "fold_deal_%d_%d" % [session_index, hand_index])
+			var fold_result := _poker_apply_action(game, fold_heavy, "fold", {}, "fold_hand_%d_%d" % [session_index, hand_index])
+			public_results.append(fold_result)
+	if fold_heavy.tell_learned(learned_member) or _poker_max_observation_count(fold_heavy, learned_member) != 0:
+		failures.append("Crew poker production fold-heavy sessions taught a showdown-gated observation.")
 
 	var trust_run: RunState = RunStateScript.new()
 	trust_run.start_new("CREW-POKER-TRUST")
+	trust_run.bankroll = 1000
+	trust_run.crew_add_trust("crew_mags", CrewPokerCrewStateScript.rank_threshold("associate"), "fixture")
+	var trust_before := trust_run.crew_trust("crew_mags")
 	var grievance_before := JSON.stringify(trust_run.crew_grievances())
-	var settled_state := _poker_learning_showdown_state("crew_mags", learned_key, weak_hand, two_pair_ace)
-	settled_state["hand_number"] = int(CrewPokerModelScript.config().get("session_hand_cap", 5)) - 1
-	game.call("_showdown", settled_state, trust_run)
-	if trust_run.crew_trust("crew_mags") != int(CrewPokerModelScript.config().get("session_trust", 2)):
-		failures.append("Crew poker session settlement did not accrue trust through the Crew API.")
+	_poker_install_table(game, trust_run, "trust_session", ["crew_mags", "crew_lucky"])
+	for hand_index in range(int(CrewPokerModelScript.config().get("session_hand_cap", 5))):
+		_poker_apply_action(game, trust_run, "deal", {}, "trust_deal_%d" % hand_index)
+		_poker_apply_action(game, trust_run, "fold", {}, "trust_fold_%d" % hand_index)
+	if trust_run.crew_trust("crew_mags") - trust_before != int(CrewPokerModelScript.config().get("session_trust", 2)):
+		failures.append("Crew poker production session settlement did not accrue data-tuned trust.")
 	trust_run.crew_record_poker_session(["crew_mags", "crew_lucky"], 14)
 	trust_run.crew_record_poker_session(["crew_mags", "crew_lucky"], 14)
-	if trust_run.crew_trust("crew_mags") <= int(CrewPokerModelScript.config().get("session_trust", 2)) * 3:
+	if trust_run.crew_trust("crew_mags") <= trust_before + int(CrewPokerModelScript.config().get("session_trust", 2)) * 3:
 		failures.append("Crew poker repeated hustle did not add data-tuned respect.")
 	if JSON.stringify(trust_run.crew_grievances()) != grievance_before:
-		failures.append("Crew poker wrote a grievance during a trust session.")
+		failures.append("Crew poker wrote a grievance during trust-only sessions.")
 
-	var table_run: RunState = RunStateScript.new()
-	table_run.start_new("CREW-POKER-SAVE")
-	table_run.bankroll = 100
-	table_run.crew_add_trust("crew_mags", CrewPokerCrewStateScript.rank_threshold("associate"), "fixture")
-	var environment := {"id": "crew_poker_test", "archetype_id": "small_underground_casino", "kind": "crew", "resident_member_ids": ["crew_mags", "crew_lucky"], "game_ids": ["crew_draw_poker"], "game_states": {}}
-	var generated := game.generate_environment_state(table_run, environment, table_run.create_rng("crew_poker_table"))
-	environment["game_states"] = {"crew_draw_poker": generated}
-	table_run.current_environment = environment.duplicate(true)
-	var deal_rng := table_run.create_rng("crew_poker_deal")
-	var deal_result := game.resolve_with_context("deal", 2, table_run, table_run.current_environment, deal_rng, {})
-	var dealt_states: Dictionary = table_run.current_environment.get("game_states", {}) if typeof(table_run.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var dealt_table: Dictionary = dealt_states.get("crew_draw_poker", {}) if typeof(dealt_states.get("crew_draw_poker", {})) == TYPE_DICTIONARY else {}
-	if not bool(deal_result.get("ok", false)) or str(dealt_table.get("phase", "")) != "before":
-		failures.append("Crew poker could not enter a saveable mid-hand phase.")
-	var midhand_save := table_run.to_dict()
-	var midhand_restore: RunState = RunStateScript.new()
-	midhand_restore.from_dict(midhand_save)
-	if JSON.stringify(midhand_restore.current_environment.get("game_states", {})) != JSON.stringify(table_run.current_environment.get("game_states", {})):
-		failures.append("Crew poker save/load changed mid-hand table state.")
-	var cap := int(CrewPokerModelScript.config().get("session_swing_cap", 24))
-	var capped_state := generated.duplicate(true)
-	capped_state["session_swing"] = cap - 1
-	if int(game.call("_win_room", capped_state, 1000)) != 1:
-		failures.append("Crew poker positive session swing cap was not enforced.")
-	capped_state["session_swing"] = -cap + 1
-	if int(game.call("_loss_room", capped_state, 1000)) != 1:
-		failures.append("Crew poker negative session swing cap was not enforced.")
+	var save_projections: Array = production_evidence.get("saves", [])
+	save_projections.append(learning_save)
+	_check_crew_poker_hidden_leaks(learning, save_projections, public_surfaces, public_results, failures)
 
 
 func _poker_card(rank: int, suit: int) -> Dictionary:
 	return {"rank": rank, "suit": suit, "deck": 0}
 
 
-func _poker_learning_showdown_state(member_id: String, state_key: String, player_cards: Array, npc_cards: Array) -> Dictionary:
-	var pattern_index := 0
-	var authored := CrewPokerModelScript.patterns(member_id)
-	for index in range(authored.size()):
-		if str((authored[index] as Dictionary).get("state_key", "")) == state_key:
-			pattern_index = index
-			break
-	return {
-		"schema": "crew_draw_table",
-		"version": 1,
-		"members": [member_id, "crew_lucky"],
-		"phase": "after",
-		"hand_number": 0,
-		"session_swing": 0,
-		"session_settled": false,
-		"pot": 6,
-		"player_cards": player_cards.duplicate(true),
-		"seats": [
-			{"member_id": member_id, "cards": npc_cards.duplicate(true), "active": true, "revealed": false, "contribution": 2, "draw_count": 0, "last_action": "raise"},
-			{"member_id": "crew_lucky", "cards": player_cards.duplicate(true), "active": true, "revealed": false, "contribution": 2, "draw_count": 3, "last_action": "call"},
-		],
-		"x": [{"m": member_id, "i": pattern_index}],
-		"beat": {"m": member_id, "i": pattern_index},
-		"last_result": {},
+func _check_crew_poker_rotation_and_gate(game: GameModule, failures: Array) -> void:
+	var residents := ["crew_mags", "crew_lucky", "crew_rook"]
+	var rotations := {}
+	for seed in range(12):
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("CREW-POKER-ROTATION-%d" % seed)
+		var environment := _poker_environment(residents)
+		var first_rng := RngStream.new()
+		first_rng.configure(6200 + seed)
+		var second_rng := RngStream.new()
+		second_rng.configure(6200 + seed)
+		var first := game.generate_environment_state(run_state, environment, first_rng)
+		var second := game.generate_environment_state(run_state, environment, second_rng)
+		if JSON.stringify(first.get("members", [])) != JSON.stringify(second.get("members", [])):
+			failures.append("Crew poker resident rotation was not deterministic for seed %d." % seed)
+		var members: Array = first.get("members", [])
+		if members.size() < 2 or members.size() > 3:
+			failures.append("Crew poker rotation did not seat two or three residents.")
+		for member_id in members:
+			if not residents.has(str(member_id)):
+				failures.append("Crew poker ignored the L3 resident seam and seated %s." % str(member_id))
+		rotations[JSON.stringify(members)] = true
+	if rotations.size() < 2:
+		failures.append("Crew poker seeded rotation did not produce distinct resident tables.")
+	var fallback_run: RunState = RunStateScript.new()
+	fallback_run.start_new("CREW-POKER-FALLBACK")
+	var fallback_rng_a := RngStream.new()
+	fallback_rng_a.configure(7261)
+	var fallback_rng_b := RngStream.new()
+	fallback_rng_b.configure(7261)
+	var fallback_a := game.generate_environment_state(fallback_run, _poker_environment(["crew_mags"]), fallback_rng_a)
+	var fallback_b := game.generate_environment_state(fallback_run, _poker_environment(["crew_mags"]), fallback_rng_b)
+	var fallback_members: Array = fallback_a.get("members", [])
+	if fallback_members.size() < 2 or fallback_members.size() > 3 or JSON.stringify(fallback_members) != JSON.stringify(fallback_b.get("members", [])):
+		failures.append("Crew poker seeded all-Crew fallback did not deterministically seat two or three members.")
+
+	var gate_run: RunState = RunStateScript.new()
+	gate_run.start_new("CREW-POKER-GATE")
+	_poker_install_table(game, gate_run, "gate", ["crew_mags", "crew_lucky"])
+	gate_run.crew_add_trust("crew_rook", CrewPokerCrewStateScript.rank_threshold("associate"), "non_present_fixture")
+	if not game.legal_actions(gate_run, gate_run.current_environment).is_empty():
+		failures.append("Crew poker accepted an associate who was not at the table.")
+	gate_run.crew_add_trust("crew_lucky", CrewPokerCrewStateScript.rank_threshold("associate"), "present_fixture")
+	if game.legal_actions(gate_run, gate_run.current_environment).is_empty():
+		failures.append("Crew poker did not accept an associate who was present at the table.")
+
+
+func _check_crew_poker_state_machine(game: GameModule, tie_cards: Array, failures: Array) -> Dictionary:
+	var evidence := {"surfaces": [], "results": [], "saves": []}
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CREW-POKER-STATE-MACHINE")
+	run_state.bankroll = 500
+	run_state.grand_casino_chips = 777
+	run_state.crew_add_trust("crew_lucky", CrewPokerCrewStateScript.rank_threshold("associate"), "fixture")
+	var generated := _poker_install_table(game, run_state, "state_machine", ["crew_mags", "crew_lucky"])
+	var chips_before := run_state.grand_casino_chips
+	var cash_before := run_state.bankroll
+	var deal := _poker_apply_action(game, run_state, "deal", {}, "state_deal")
+	(evidence["results"] as Array).append(deal)
+	var dealt := _poker_table(run_state)
+	(evidence["surfaces"] as Array).append(game.surface_state(run_state, run_state.current_environment, {}))
+	if not bool(deal.get("ok", false)) or str(dealt.get("phase", "")) != "before":
+		failures.append("Crew poker production deal did not enter the first betting round.")
+	var contribution_total := int(dealt.get("player_contribution", 0))
+	for seat_value in dealt.get("seats", []):
+		contribution_total += int((seat_value as Dictionary).get("contribution", 0))
+	if int(dealt.get("pot", 0)) != contribution_total:
+		failures.append("Crew poker ante/first-bet pot did not equal all contributions.")
+	if run_state.bankroll != cash_before + int(deal.get("bankroll_delta", 0)) or run_state.grand_casino_chips != chips_before:
+		failures.append("Crew poker ante did not settle in cash only.")
+
+	var first_call_cost := int(dealt.get("to_call", 0))
+	var pot_before_call := int(dealt.get("pot", 0))
+	var first_call := _poker_apply_action(game, run_state, "call", {}, "state_first_call")
+	(evidence["results"] as Array).append(first_call)
+	var draw_state := _poker_table(run_state)
+	(evidence["surfaces"] as Array).append(game.surface_state(run_state, run_state.current_environment, {"poker_held": [0, 1]}))
+	if str(draw_state.get("phase", "")) != "draw" or int(draw_state.get("pot", 0)) != pot_before_call + first_call_cost:
+		failures.append("Crew poker first call did not advance to one draw with correct pot accounting.")
+	for seat_value in draw_state.get("seats", []):
+		if bool((seat_value as Dictionary).get("active", false)) and int((seat_value as Dictionary).get("draw_count", -1)) < 0:
+			failures.append("Crew poker active resident did not complete exactly one draw decision.")
+
+	var pot_before_draw := int(draw_state.get("pot", 0))
+	var contributions_before_draw := _poker_npc_contribution_total(draw_state)
+	var draw_result := _poker_apply_action(game, run_state, "draw", {"poker_held": [0, 1]}, "state_draw")
+	(evidence["results"] as Array).append(draw_result)
+	var after_state := _poker_table(run_state)
+	(evidence["surfaces"] as Array).append(game.surface_state(run_state, run_state.current_environment, {}))
+	var npc_after_bet := _poker_npc_contribution_total(after_state) - contributions_before_draw
+	if str(after_state.get("phase", "")) != "after" or int(after_state.get("pot", 0)) != pot_before_draw + npc_after_bet:
+		failures.append("Crew poker draw/second-bet pot transition was inconsistent.")
+	if typeof(after_state.get("player_cards", [])) != TYPE_ARRAY or (after_state.get("player_cards", []) as Array).size() != 5:
+		failures.append("Crew poker one-draw path did not preserve a five-card hand.")
+
+	# Keep the legal state-machine path intact, then pin the exposed hands and pot
+	# for a deterministic tie/remainder fixture through the production resolver.
+	after_state["player_cards"] = tie_cards.duplicate(true)
+	var seats: Array = after_state.get("seats", [])
+	for index in range(seats.size()):
+		var seat: Dictionary = seats[index]
+		seat["active"] = index == 0
+		seat["cards"] = tie_cards.duplicate(true)
+		seats[index] = seat
+	after_state["seats"] = seats
+	after_state["pot"] = 11
+	after_state["to_call"] = 0
+	after_state["session_swing"] = 0
+	_poker_write_table(run_state, after_state)
+	var showdown := _poker_apply_action(game, run_state, "call", {}, "state_showdown_tie")
+	(evidence["results"] as Array).append(showdown)
+	var settled := _poker_table(run_state)
+	(evidence["surfaces"] as Array).append(game.surface_state(run_state, run_state.current_environment, {}))
+	var last: Dictionary = settled.get("last_result", {}) if typeof(settled.get("last_result", {})) == TYPE_DICTIONARY else {}
+	if str(settled.get("phase", "")) != "idle" or int(last.get("payout", -1)) != 6:
+		failures.append("Crew poker production showdown did not split an odd $11 tie as $6/$5 in stable winner order.")
+	if (last.get("winners", []) as Array).size() != 2:
+		failures.append("Crew poker tie showdown did not retain both winners.")
+	if run_state.grand_casino_chips != chips_before:
+		failures.append("Crew poker touched casino chips instead of cash during a full hand.")
+
+	var midhand_run: RunState = RunStateScript.new()
+	midhand_run.start_new("CREW-POKER-MIDHAND")
+	midhand_run.bankroll = 100
+	midhand_run.crew_add_trust("crew_mags", CrewPokerCrewStateScript.rank_threshold("associate"), "fixture")
+	_poker_install_table(game, midhand_run, "midhand", ["crew_mags", "crew_lucky"])
+	_poker_apply_action(game, midhand_run, "deal", {}, "midhand_deal")
+	var midhand_save := midhand_run.to_dict()
+	(evidence["saves"] as Array).append(midhand_save)
+	var midhand_restore: RunState = RunStateScript.new()
+	midhand_restore.from_dict(midhand_save)
+	if JSON.stringify(midhand_restore.current_environment.get("game_states", {})) != JSON.stringify(midhand_run.current_environment.get("game_states", {})):
+		failures.append("Crew poker save/load changed mid-hand table state.")
+
+	var cap := int(CrewPokerModelScript.config().get("session_swing_cap", 24))
+	var blocked := _poker_table(midhand_run)
+	blocked["session_swing"] = -cap + 1
+	blocked["to_call"] = 2
+	_poker_write_table(midhand_run, blocked)
+	var blocked_before := JSON.stringify(_poker_table(midhand_run))
+	var blocked_cash := midhand_run.bankroll
+	var blocked_chips := midhand_run.grand_casino_chips
+	var rejected := _poker_apply_action(game, midhand_run, "call", {}, "full_swing_rejection")
+	if bool(rejected.get("ok", true)) or JSON.stringify(_poker_table(midhand_run)) != blocked_before or midhand_run.bankroll != blocked_cash or midhand_run.grand_casino_chips != blocked_chips:
+		failures.append("Crew poker did not reject a full wager beyond the remaining negative swing room atomically.")
+	var capped_state := generated.duplicate(true)
+	capped_state["session_swing"] = cap - 1
+	if int(game.call("_win_room", capped_state, 1000)) != 1:
+		failures.append("Crew poker positive session swing cap was not enforced.")
+	var idle_surface := game.surface_state(run_state, run_state.current_environment, {})
+	_check_idle_animation_liveness_contract(idle_surface, "Crew poker table surface", failures)
+	var harness := SurfaceHarness.new()
+	harness.setup(idle_surface)
+	game.draw_surface(harness, idle_surface, {"contract_harness": true, "viewport_size": Vector2(1280, 720)})
+	if not harness.labels.has("BACK-ROOM DRAW") or not _surface_harness_has_action(harness, "poker_deal") or not _surface_harness_has_action(harness, "poker_cash_out"):
+		failures.append("Crew poker 1280x720 renderer lost its title or idle action hit regions.")
+	var board := Rect2(Vector2.ZERO, Vector2(ArtContractsScript.GAME_BOARD_SIZE))
+	for hit_value in harness.hit_regions:
+		var hit: Dictionary = hit_value
+		var rect: Rect2 = hit.get("rect", Rect2())
+		if rect.size.x <= 0.0 or rect.size.y <= 0.0 or not board.encloses(rect):
+			failures.append("Crew poker renderer exposed an empty or out-of-board hit target: %s." % str(rect))
+	var draw_surface: Dictionary = (evidence["surfaces"] as Array)[1] if (evidence["surfaces"] as Array).size() > 1 else {}
+	var draw_harness := SurfaceHarness.new()
+	draw_harness.setup(draw_surface)
+	game.draw_surface(draw_harness, draw_surface, {"contract_harness": true, "viewport_size": Vector2(1280, 720)})
+	if _surface_hit_count(draw_harness, "poker_card") != 5 or not _surface_harness_has_action(draw_harness, "poker_draw") or not _surface_harness_has_action(draw_harness, "poker_fold"):
+		failures.append("Crew poker draw renderer did not expose five card targets plus draw/fold controls.")
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.size = Vector2(ArtContractsScript.GAME_BOARD_SIZE)
+	root.add_child(canvas)
+	canvas.call("set_game_module", game)
+	canvas.call("render_game_snapshot", idle_surface)
+	canvas.call("reset_performance_counters")
+	var motion_before: Dictionary = canvas.call("debug_surface_motion_sample")
+	for _frame_index in range(12):
+		canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
+	var motion_after: Dictionary = canvas.call("debug_surface_motion_sample")
+	var motion_runtime: Dictionary = canvas.call("surface_runtime_status")
+	if motion_before == motion_after or int(motion_runtime.get("surface_animation_redraw_count", 0)) <= 0:
+		failures.append("Crew poker renderer motion/liveness counter did not advance with zero input.")
+	var reduced_surface := idle_surface.duplicate(true)
+	reduced_surface["reduce_motion"] = true
+	canvas.call("render_game_snapshot", reduced_surface)
+	canvas.call("reset_performance_counters")
+	var reduced_before: Dictionary = canvas.call("debug_surface_motion_sample")
+	for _frame_index in range(12):
+		canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
+	var reduced_after: Dictionary = canvas.call("debug_surface_motion_sample")
+	var reduced_runtime: Dictionary = canvas.call("surface_runtime_status")
+	if reduced_before != reduced_after or int(reduced_runtime.get("surface_animation_redraw_count", 0)) != 0:
+		failures.append("Crew poker reduce-motion did not freeze renderer motion and idle redraws.")
+	root.remove_child(canvas)
+	canvas.free()
+	return evidence
+
+
+func _check_crew_poker_hidden_leaks(run_state: RunState, save_projection: Variant, surfaces: Array, results: Array, failures: Array) -> void:
+	var forbidden: Array = ["state_key", "condition", "frequency_percent", "learned_exposures", "tell_learned"]
+	for member_id in CrewPokerCrewStateScript.MEMBER_IDS:
+		for pattern_value in CrewPokerModelScript.patterns(member_id):
+			var pattern: Dictionary = pattern_value
+			for token in [str(pattern.get("state_key", "")), str(pattern.get("condition", ""))]:
+				if not token.is_empty() and not forbidden.has(token):
+					forbidden.append(token)
+	var projections := {
+		"surface": surfaces,
+		"action result": results,
+		"story/log": run_state.story_log,
+		"save": save_projection,
 	}
+	for projection_name in projections.keys():
+		var public_text := JSON.stringify(projections[projection_name])
+		for token_value in forbidden:
+			var token := str(token_value)
+			if public_text.contains(token):
+				failures.append("Crew poker hidden authored token '%s' leaked through the public %s projection." % [token, str(projection_name)])
+
+
+func _poker_install_table(game: GameModule, run_state: RunState, namespace: String, residents: Array) -> Dictionary:
+	var environment := _poker_environment(residents)
+	environment["id"] = "crew_poker_%s" % namespace
+	var table_rng := run_state.create_rng("crew_poker_table:%s" % namespace)
+	var generated := game.generate_environment_state(run_state, environment, table_rng)
+	run_state.save_rng(table_rng)
+	environment["game_states"] = {"crew_draw_poker": generated}
+	run_state.current_environment = environment.duplicate(true)
+	return generated
+
+
+func _poker_environment(residents: Array) -> Dictionary:
+	return {"id": "crew_poker_test", "archetype_id": "small_underground_casino", "kind": "crew", "layer_id": "back_room", "resident_member_ids": residents.duplicate(), "game_ids": ["crew_draw_poker"], "game_states": {}}
+
+
+func _poker_apply_action(game: GameModule, run_state: RunState, action_id: String, ui_state: Dictionary, namespace: String) -> Dictionary:
+	var rng := run_state.create_rng("crew_poker_action:%s" % namespace)
+	var result := game.resolve_with_context(action_id, 2, run_state, run_state.current_environment, rng, ui_state)
+	if bool(result.get("ok", false)):
+		if bool(result.get("host_apply_result", false)):
+			GameModule.apply_result(run_state, result, rng)
+		else:
+			run_state.save_rng(rng)
+	return result
+
+
+func _poker_table(run_state: RunState) -> Dictionary:
+	var states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Variant = states.get("crew_draw_poker", {})
+	return (table as Dictionary).duplicate(true) if typeof(table) == TYPE_DICTIONARY else {}
+
+
+func _poker_write_table(run_state: RunState, table: Dictionary) -> void:
+	var states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	states = states.duplicate(true)
+	states["crew_draw_poker"] = table.duplicate(true)
+	run_state.current_environment["game_states"] = states
+
+
+func _poker_npc_contribution_total(table: Dictionary) -> int:
+	var total := 0
+	for seat_value in table.get("seats", []):
+		if typeof(seat_value) == TYPE_DICTIONARY:
+			total += int((seat_value as Dictionary).get("contribution", 0))
+	return total
+
+
+func _poker_max_observation_count(run_state: RunState, member_id: String) -> int:
+	var counters: Dictionary = run_state.crew_pattern_memory.get(member_id, {}) if typeof(run_state.crew_pattern_memory.get(member_id, {})) == TYPE_DICTIONARY else {}
+	var maximum := 0
+	for value in counters.values():
+		maximum = maxi(maximum, int(value))
+	return maximum
 
 func _check_roulette_surface_contract(game: GameModule, failures: Array, library: ContentLibrary = null) -> void:
 	var run_state: RunState = RunStateScript.new()

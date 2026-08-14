@@ -4,7 +4,7 @@
     "member_id": "crew_rook",
     "patterns": [
       {"state_key": "p01", "condition": "strong", "frequency_percent": 72, "channel": "timing", "timing_msec": 520, "portrait_variant": "eyes_door", "line": "Rook glances once at the shut door.", "quirk": "His thumb stops tapping the table."},
-      {"state_key": "p02", "condition": "drawing_one", "frequency_percent": 60, "channel": "portrait", "timing_msec": 260, "portrait_variant": "chin_down", "line": "Rook lowers his chin toward the deck.", "quirk": "He leaves one card exactly square."}
+      {"state_key": "p02", "condition": "one_pair", "frequency_percent": 60, "channel": "portrait", "timing_msec": 260, "portrait_variant": "chin_down", "line": "Rook lowers his chin toward the deck.", "quirk": "He leaves one card exactly square."}
     ]
   },
   {
@@ -20,7 +20,7 @@
     "member_id": "crew_knuckles",
     "patterns": [
       {"state_key": "p05", "condition": "strong", "frequency_percent": 76, "channel": "portrait", "timing_msec": 210, "portrait_variant": "rings_flat", "line": "Knuckles lays both ringed hands flat.", "quirk": "The usual chip roll stops."},
-      {"state_key": "p06", "condition": "drawing_three", "frequency_percent": 58, "channel": "line", "timing_msec": 180, "portrait_variant": "half_grin", "line": "Knuckles half-grins. 'Plenty of deck left.'", "quirk": "He flicks the discards instead of stacking them."}
+      {"state_key": "p06", "condition": "one_pair", "frequency_percent": 58, "channel": "line", "timing_msec": 180, "portrait_variant": "half_grin", "line": "Knuckles half-grins. 'Plenty of deck left.'", "quirk": "He flicks the discards instead of stacking them."}
     ]
   },
   {
@@ -28,7 +28,7 @@
     "member_id": "crew_switch",
     "patterns": [
       {"state_key": "p07", "condition": "weak_aggression", "frequency_percent": 66, "channel": "timing", "timing_msec": 120, "portrait_variant": "eyes_left", "line": "Switch's eyes cut left before the chips land.", "quirk": "The bet arrives too quickly."},
-      {"state_key": "p08", "condition": "pat", "frequency_percent": 70, "channel": "portrait", "timing_msec": 240, "portrait_variant": "shoulders_still", "line": "Switch sits still for one rare beat.", "quirk": "Not a single card edge gets checked twice."}
+      {"state_key": "p08", "condition": "made_straight", "frequency_percent": 70, "channel": "portrait", "timing_msec": 240, "portrait_variant": "shoulders_still", "line": "Switch sits still for one rare beat.", "quirk": "Not a single card edge gets checked twice."}
     ]
   },
   {
@@ -36,7 +36,7 @@
     "member_id": "crew_mags",
     "patterns": [
       {"state_key": "p09", "condition": "strong", "frequency_percent": 78, "channel": "timing", "timing_msec": 430, "portrait_variant": "glasses_low", "line": "Mags re-stacks her chips by height.", "quirk": "Every edge lines up before she bets."},
-      {"state_key": "p10", "condition": "drawing_one", "frequency_percent": 62, "channel": "line", "timing_msec": 360, "portrait_variant": "brow_counting", "line": "Mags says, 'One variable.'", "quirk": "She taps the replacement slot once."}
+      {"state_key": "p10", "condition": "one_pair", "frequency_percent": 62, "channel": "line", "timing_msec": 360, "portrait_variant": "brow_counting", "line": "Mags says, 'One variable.'", "quirk": "She taps the replacement slot once."}
     ]
   },
   {

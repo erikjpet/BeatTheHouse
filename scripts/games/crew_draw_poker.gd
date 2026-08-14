@@ -144,6 +144,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": true,
+		"surface_realtime_state_refresh": false,
+		"reduce_motion": bool(ui_state.get("reduce_motion", false)),
 		"display_name": get_display_name(),
 		"phase": phase,
 		"members": members,
@@ -256,6 +258,17 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 	_draw_controls(surface, state)
 	surface.surface_end_design_space()
 	return true
+
+
+func surface_motion_signature(surface, state: Dictionary) -> Dictionary:
+	# The lamp is the table's deliberately small idle motion. This signature lets
+	# the shared liveness probe verify the renderer itself moves, and that the
+	# accessibility freeze is not merely stopping redraw scheduling.
+	var phase := float(surface.surface_flicker()) if surface != null and surface.has_method("surface_flicker") else 0.0
+	return {
+		"renderer": str(state.get("surface_renderer", "")),
+		"lamp_alpha_milli": int(round((0.50 + sin(phase * 1.7) * 0.08) * 1000.0)),
+	}
 
 
 func environment_object_state(_run_state: RunState, _environment: Dictionary) -> Dictionary:
