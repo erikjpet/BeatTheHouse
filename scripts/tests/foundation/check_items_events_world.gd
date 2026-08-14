@@ -4762,6 +4762,10 @@ func _check_streets_framework(library: ContentLibrary, failures: Array) -> void:
 			or str((terminal_result.get("resolution", {}) as Dictionary).get("reason", "")) != terminal_reason \
 			or str(terminal_continuation.get("target_id", "")) != "bar":
 			failures.append("%s Streets outcome did not release its committed travel continuation." % terminal_reason.capitalize())
+		if terminal_reason == "ditched" and (int(terminal_run.active_streets_run.get("turn", 0)) != 1 \
+			or int(terminal_run.active_streets_run.get("deadline_remaining", -1)) != 0 \
+			or int((terminal_result.get("resolution", {}) as Dictionary).get("turns_used", 0)) != 1):
+			failures.append("Ditch did not consume exactly one terminal model action without reopening resolution.")
 
 	var hold_run: RunState = RunStateScript.new()
 	hold_run.start_new("STREETS-HOLD")
@@ -4771,6 +4775,7 @@ func _check_streets_framework(library: ContentLibrary, failures: Array) -> void:
 		"destination_node_id": "bar_dock",
 		"deadline_actions": 8,
 		"signal_window": {"start": 2, "end": 3},
+		"fast_threshold_actions": 3,
 	})
 	var hold_board: Dictionary = hold_run.active_streets_run.get("board", {})
 	hold_board["patrols"] = []
@@ -4778,7 +4783,12 @@ func _check_streets_framework(library: ContentLibrary, failures: Array) -> void:
 	hold_run.streets_apply_action({"verb": "wait"})
 	hold_run.streets_apply_action({"verb": "wait"})
 	var signal := hold_run.streets_apply_action({"verb": "signal"})
-	if not bool(signal.get("resolved", false)) or str((signal.get("resolution", {}) as Dictionary).get("outcome", "")) != "success":
+	if not bool(signal.get("resolved", false)) \
+		or str((signal.get("resolution", {}) as Dictionary).get("outcome", "")) != "success" \
+		or int(hold_run.active_streets_run.get("turn", 0)) != 3 \
+		or int(hold_run.active_streets_run.get("deadline_remaining", 0)) != 5 \
+		or int((signal.get("resolution", {}) as Dictionary).get("turns_used", 0)) != 3 \
+		or not bool((signal.get("resolution", {}) as Dictionary).get("fast", false)):
 		failures.append("Hold mode did not resolve a signal inside its authored window.")
 	if not hold_run.streets_take_travel_continuation().is_empty():
 		failures.append("Hold mode opted into travel without an explicit continuation.")
@@ -4842,6 +4852,44 @@ func _check_streets_framework(library: ContentLibrary, failures: Array) -> void:
 	if heat_after_first_spot != 3 or heat_during_pursuit != 3 or spot_run.suspicion_level() != 6 \
 		or int(spot_run.active_streets_run.get("times_spotted", 0)) != 2 or spot_heat_cues != 2:
 		failures.append("Streets spotted heat did not write once per distinct spotting and only once during continued pursuit.")
+	var stash_clean_run: RunState = RunStateScript.new()
+	stash_clean_run.start_new("STREETS-STASH-CLEAN-HISTORY")
+	stash_clean_run.streets_begin({
+		"mode": "package",
+		"route_id": "stash_clean_history",
+		"origin_node_id": "back_alley",
+		"destination_node_id": "bar",
+		"deadline_actions": 10,
+		"fast_threshold_actions": 4,
+		"consumer_payload": {"success": {"cash": 10, "clean_speed_bonus_cash": 7}},
+	})
+	var stash_clean_board: Dictionary = stash_clean_run.active_streets_run.get("board", {})
+	stash_clean_board["patrols"] = []
+	var stash_clean_route_y := int(stash_clean_board.get("route_y", 2))
+	var stash_clean_cells: Array = stash_clean_board.get("cells", [])
+	var stash_clean_x := 2
+	var stash_clean_index := (stash_clean_route_y * int(stash_clean_board.get("width", 8))) + stash_clean_x
+	var stash_clean_cell: Dictionary = stash_clean_cells[stash_clean_index]
+	stash_clean_cell["kind"] = "stash"
+	stash_clean_cell["cover"] = true
+	stash_clean_cells[stash_clean_index] = stash_clean_cell
+	stash_clean_board["cells"] = stash_clean_cells
+	var stash_clean_destination: Dictionary = stash_clean_board.get("destination", {})
+	stash_clean_run.active_streets_run["board"] = stash_clean_board
+	stash_clean_run.active_streets_run["player"] = {"x": stash_clean_x, "y": stash_clean_route_y}
+	stash_clean_run.active_streets_run["spotted"] = true
+	stash_clean_run.active_streets_run["times_spotted"] = 1
+	stash_clean_run.active_streets_run["pursuit_remaining"] = 3
+	stash_clean_run.streets_apply_action({"verb": "stash"})
+	stash_clean_run.streets_apply_action({"verb": "stash"})
+	stash_clean_run.active_streets_run["player"] = {"x": int(stash_clean_destination.get("x", 1)) - 1, "y": int(stash_clean_destination.get("y", 0))}
+	var stash_clean_delivery := stash_clean_run.streets_apply_action({"verb": "move", "direction": "right", "pace": "walk"})
+	var stash_clean_resolution: Dictionary = stash_clean_delivery.get("resolution", {})
+	if not bool(stash_clean_delivery.get("resolved", false)) \
+		or bool(stash_clean_resolution.get("clean", true)) \
+		or not bool(stash_clean_resolution.get("fast", false)) \
+		or stash_clean_run.bankroll != 110:
+		failures.append("A spotted run regained an invalid clean-speed bonus after stash escape and delivery.")
 
 	var bonus_cases := [
 		{"id": "fast_clean", "waits": 0, "spotted": false, "hazard": false, "cash": 117, "clean": true, "fast": true},

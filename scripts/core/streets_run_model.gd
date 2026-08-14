@@ -160,8 +160,11 @@ static func apply_action(source_state: Dictionary, action: Dictionary) -> Dictio
 				return {"ok": false, "message": message.trim_prefix("BLOCKED:"), "state": state}
 		_:
 			counted_action = false
-	if counted_action and str(state.get("status", "")) == "active":
-		_advance_boundary(state, verb)
+	if counted_action:
+		if str(state.get("status", "")) == "active":
+			_advance_boundary(state, verb)
+		else:
+			_record_terminal_action_boundary(state)
 	if str(state.get("status", "")) == "active":
 		_check_mode_progress(state)
 	if str(state.get("status", "")) == "resolved":
@@ -473,6 +476,20 @@ static func _advance_boundary(state: Dictionary, verb: String) -> void:
 		_resolve(state, "failed", "deadline", "The route closes before you do.")
 
 
+# Signal-window eligibility is evaluated on the pre-action tick. A signal or
+# ditch that resolves immediately still owns one model action, matching the
+# RunState town boundary, but must not advance patrols or reopen detection.
+static func _record_terminal_action_boundary(state: Dictionary) -> void:
+	state["turn"] = int(state.get("turn", 0)) + 1
+	state["deadline_remaining"] = maxi(0, int(state.get("deadline_remaining", 0)) - 1)
+	var resolution := _dictionary(state.get("resolution", {})).duplicate(true)
+	var turns_used := int(state.get("turn", 0))
+	var fast_threshold := int(state.get("fast_threshold_actions", 0))
+	resolution["turns_used"] = turns_used
+	resolution["fast"] = str(resolution.get("outcome", "")) == "success" and fast_threshold > 0 and turns_used <= fast_threshold
+	state["resolution"] = resolution
+
+
 static func _advance_patrols(state: Dictionary) -> void:
 	var board := _dictionary(state.get("board", {}))
 	var patrols := _dictionary_array(board.get("patrols", []))
@@ -570,7 +587,7 @@ static func _resolve(state: Dictionary, outcome: String, reason: String, message
 		"reason": reason,
 		"message": message,
 		"turns_used": turns_used,
-		"clean": outcome == "success" and not bool(state.get("spotted", false)) and int(state.get("hazards_hit", 0)) == 0,
+		"clean": outcome == "success" and int(state.get("times_spotted", 0)) == 0 and int(state.get("hazards_hit", 0)) == 0,
 		"fast": outcome == "success" and fast_threshold > 0 and turns_used <= fast_threshold,
 		"cargo_state": str(state.get("cargo_state", "none")),
 		"snitch_seen": bool(state.get("snitch_seen", false)),

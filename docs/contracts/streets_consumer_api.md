@@ -72,6 +72,8 @@ run_state.streets_begin(spec)
 
 `streets_begin_hold` accepts `hold_zone: {x, y}` and
 `signal_window: {start, end}`. The zone is generated when omitted.
+Signal eligibility uses the pre-action tick; the terminal signal then consumes
+one model action and deadline tick without moving patrols or rerunning sight.
 
 `streets_begin_chase` starts pursuit hot and accepts `assists: Array[String]`.
 It rejects entry until either `spec.enabled` or the run flag
