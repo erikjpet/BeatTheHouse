@@ -127,12 +127,20 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var beat := _copy_dict(state.get("beat", {}))
 	var presentation := {}
 	if not beat.is_empty():
-		var authored_patterns := CrewPokerModelScript.patterns(str(beat.get("m", "")))
+		var presentation_member := str(beat.get("m", ""))
+		var authored_patterns := CrewPokerModelScript.patterns(presentation_member)
 		var authored_index := int(beat.get("i", -1))
 		if authored_index >= 0 and authored_index < authored_patterns.size():
 			var authored: Dictionary = authored_patterns[authored_index]
 			for presentation_key in ["channel", "timing_msec", "portrait_variant", "line", "quirk"]:
 				presentation[presentation_key] = authored.get(presentation_key)
+			presentation["member_id"] = presentation_member
+	if str(presentation.get("channel", "")) == "portrait":
+		for seat_index in range(seats.size()):
+			var presentation_seat: Dictionary = seats[seat_index]
+			if str(presentation_seat.get("member_id", "")) == str(presentation.get("member_id", "")):
+				presentation_seat["portrait_variant"] = str(presentation.get("portrait_variant", ""))
+				seats[seat_index] = presentation_seat
 	var last := _copy_dict(state.get("last_result", {}))
 	var actions_now := legal_actions(run_state, environment)
 	return GameModule.surface_spec({
@@ -206,6 +214,13 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	var state := _table_state(environment)
 	if not _buy_in_open(run_state, state):
 		return _result(action_id, environment, 0, "Nobody at the table can vouch for your buy-in.", false)
+	var legal_ids: Array = []
+	for action_value in legal_actions(run_state, environment):
+		if typeof(action_value) == TYPE_DICTIONARY:
+			legal_ids.append(str((action_value as Dictionary).get("id", "")))
+	if not legal_ids.has(action_id):
+		var blocked_message := "Finish the live hand before leaving the table." if action_id == "cash_out" and ["before", "draw", "after"].has(str(state.get("phase", ""))) else "That move is not open in this part of the hand."
+		return _result(action_id, environment, 0, blocked_message, false)
 	var bankroll_delta := 0
 	var message := ""
 	match action_id:
@@ -602,6 +617,9 @@ func _draw_seats(surface, state: Dictionary) -> void:
 		var name := str(MEMBER_NAMES.get(str(seat.get("member_id", "")), "Crew"))
 		var color := C_SOFT if bool(seat.get("active", true)) else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.4)
 		surface.surface_label(name.to_upper(), pos, 14, color)
+		var portrait_variant := str(seat.get("portrait_variant", ""))
+		if not portrait_variant.is_empty():
+			_draw_portrait_beat(surface, pos + Vector2(98, 6), portrait_variant, color)
 		var cards := _card_array(seat.get("cards", []))
 		for card_index in range(cards.size()):
 			PlayingCardRendererScript.draw_card(surface, cards[card_index], Rect2(pos + Vector2(card_index * 20, 10), Vector2(18, 27)))
@@ -622,11 +640,37 @@ func _draw_player(surface, state: Dictionary) -> void:
 
 func _draw_observation(surface, state: Dictionary) -> void:
 	var observation := _copy_dict(state.get("observation", {}))
-	var text := str(observation.get("line", observation.get("quirk", "")))
+	var channel := str(observation.get("channel", ""))
+	var text := ""
+	match channel:
+		"line":
+			text = str(observation.get("line", ""))
+		"portrait":
+			text = str(observation.get("quirk", ""))
+		"timing":
+			var elapsed_msec := int(surface.surface_render_elapsed_msec()) if surface != null and surface.has_method("surface_render_elapsed_msec") else int(observation.get("timing_msec", 0))
+			if elapsed_msec >= int(observation.get("timing_msec", 0)):
+				text = str(observation.get("line", ""))
+			else:
+				text = "The room holds one quiet beat."
+		_:
+			text = str(observation.get("quirk", observation.get("line", "")))
 	if text.is_empty():
 		text = str(state.get("banter", "The room keeps its own time."))
 	surface.draw_rect(Rect2(172, 325, 556, 38), Color(0.03, 0.03, 0.05, 0.88))
 	surface.surface_label(text.left(76), Vector2(188, 349), 12, C_SOFT)
+
+
+func _draw_portrait_beat(surface, pos: Vector2, variant: String, color: Color) -> void:
+	# A tiny posture portrait carries the authored variant without spelling out
+	# what it means. Different variants shift the eyes and shoulder line.
+	var variant_phase := absi(variant.hash()) % 5
+	surface.draw_circle(pos, 7.0, Color(C_DARK_2.r, C_DARK_2.g, C_DARK_2.b, 0.94))
+	surface.draw_rect(Rect2(pos + Vector2(-8, 7), Vector2(16, 7)), Color(color.r, color.g, color.b, 0.35))
+	var eye_y := -2.0 + float(variant_phase % 3)
+	var eye_x := -2.0 + float(variant_phase - 2) * 0.45
+	surface.draw_circle(pos + Vector2(eye_x, eye_y), 1.3, color)
+	surface.draw_line(pos + Vector2(-7, 13 - variant_phase), pos + Vector2(7, 10 + variant_phase), Color(color.r, color.g, color.b, 0.62), 1.0)
 
 
 func _draw_controls(surface, state: Dictionary) -> void:

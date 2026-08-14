@@ -85,6 +85,7 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 	var production_evidence := _check_crew_poker_state_machine(game, one_pair, failures)
 	var public_surfaces: Array = production_evidence.get("surfaces", [])
 	var public_results: Array = production_evidence.get("results", [])
+	public_surfaces.append_array(_check_crew_poker_presentation_channels(game, failures))
 
 	var threshold := int(CrewPokerModelScript.config().get("learned_exposures", 3))
 	var learned_member := "crew_mags"
@@ -236,6 +237,17 @@ func _check_crew_poker_state_machine(game: GameModule, tie_cards: Array, failure
 		failures.append("Crew poker ante/first-bet pot did not equal all contributions.")
 	if run_state.bankroll != cash_before + int(deal.get("bankroll_delta", 0)) or run_state.grand_casino_chips != chips_before:
 		failures.append("Crew poker ante did not settle in cash only.")
+	var irregular_before := JSON.stringify(run_state.to_dict())
+	for irregular_action in ["cash_out", "draw", "deal", "not_a_poker_move"]:
+		var irregular := _poker_apply_action(game, run_state, irregular_action, {}, "state_irregular_%s" % irregular_action)
+		(evidence["results"] as Array).append(irregular)
+		if bool(irregular.get("ok", true)) or bool(irregular.get("host_apply_result", true)):
+			failures.append("Crew poker accepted out-of-phase direct action %s." % irregular_action)
+		if JSON.stringify(run_state.to_dict()) != irregular_before:
+			failures.append("Crew poker out-of-phase action %s mutated state or cash." % irregular_action)
+	var after_irregular := _poker_table(run_state)
+	if str(after_irregular.get("phase", "")) != "before" or bool(after_irregular.get("session_settled", false)):
+		failures.append("Crew poker live-hand cash-out rejection left the table stuck or settled.")
 
 	var first_call_cost := int(dealt.get("to_call", 0))
 	var pot_before_call := int(dealt.get("pot", 0))
@@ -286,6 +298,11 @@ func _check_crew_poker_state_machine(game: GameModule, tie_cards: Array, failure
 		failures.append("Crew poker tie showdown did not retain both winners.")
 	if run_state.grand_casino_chips != chips_before:
 		failures.append("Crew poker touched casino chips instead of cash during a full hand.")
+	var idle_before_irregular := JSON.stringify(run_state.to_dict())
+	var idle_call := _poker_apply_action(game, run_state, "call", {}, "state_idle_call_rejection")
+	(evidence["results"] as Array).append(idle_call)
+	if bool(idle_call.get("ok", true)) or JSON.stringify(run_state.to_dict()) != idle_before_irregular:
+		failures.append("Crew poker accepted an out-of-phase call after showdown or mutated the settled hand.")
 
 	var midhand_run: RunState = RunStateScript.new()
 	midhand_run.start_new("CREW-POKER-MIDHAND")
@@ -361,6 +378,91 @@ func _check_crew_poker_state_machine(game: GameModule, tie_cards: Array, failure
 	root.remove_child(canvas)
 	canvas.free()
 	return evidence
+
+
+func _check_crew_poker_presentation_channels(game: GameModule, failures: Array) -> Array:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CREW-POKER-PRESENTATION")
+	run_state.bankroll = 100
+	run_state.crew_add_trust("crew_mags", CrewPokerCrewStateScript.rank_threshold("associate"), "fixture")
+	_poker_install_table(game, run_state, "presentation", ["crew_mags", "crew_lucky"])
+	_poker_apply_action(game, run_state, "deal", {}, "presentation_deal")
+	var base_table := _poker_table(run_state)
+	var surfaces: Array = []
+	var chosen := {}
+	for member_id in CrewPokerCrewStateScript.MEMBER_IDS:
+		var patterns := CrewPokerModelScript.patterns(member_id)
+		for index in range(patterns.size()):
+			var pattern: Dictionary = patterns[index]
+			var channel := str(pattern.get("channel", ""))
+			if ["line", "portrait", "timing"].has(channel) and not chosen.has(channel):
+				chosen[channel] = {"member_id": member_id, "index": index, "pattern": pattern}
+	for required_channel in ["line", "portrait", "timing"]:
+		if not chosen.has(required_channel):
+			failures.append("Crew poker has no authored production fixture for %s presentation." % required_channel)
+			continue
+		var fixture: Dictionary = chosen[required_channel]
+		var member_id := str(fixture.get("member_id", ""))
+		var pattern: Dictionary = fixture.get("pattern", {})
+		var table := base_table.duplicate(true)
+		var companion := "crew_lucky" if member_id != "crew_lucky" else "crew_mags"
+		table["members"] = [member_id, companion]
+		var source_seats: Array = table.get("seats", [])
+		var first_cards: Array = (source_seats[0] as Dictionary).get("cards", []).duplicate(true) if not source_seats.is_empty() else []
+		var second_cards: Array = (source_seats[1] as Dictionary).get("cards", []).duplicate(true) if source_seats.size() > 1 else first_cards.duplicate(true)
+		table["seats"] = [
+			{"member_id": member_id, "cards": first_cards, "active": true, "revealed": false, "contribution": 2, "draw_count": 0, "last_action": "call"},
+			{"member_id": companion, "cards": second_cards, "active": true, "revealed": false, "contribution": 2, "draw_count": 0, "last_action": "call"},
+		]
+		table["beat"] = {"m": member_id, "i": int(fixture.get("index", -1))}
+		_poker_write_table(run_state, table)
+		var surface := game.surface_state(run_state, run_state.current_environment, {})
+		surfaces.append(surface)
+		var observation: Dictionary = surface.get("observation", {}) if typeof(surface.get("observation", {})) == TYPE_DICTIONARY else {}
+		if str(observation.get("channel", "")) != required_channel:
+			failures.append("Crew poker production surface did not retain authored %s channel." % required_channel)
+		var surface_text := JSON.stringify(surface)
+		for hidden_token in [str(pattern.get("state_key", "")), str(pattern.get("condition", "")), "state_key", "condition", "frequency_percent", "learned_exposures"]:
+			if not hidden_token.is_empty() and surface_text.contains(hidden_token):
+				failures.append("Crew poker %s presentation leaked hidden token '%s'." % [required_channel, hidden_token])
+		var harness := SurfaceHarness.new()
+		harness.setup(surface)
+		match required_channel:
+			"line":
+				game.draw_surface(harness, surface, {"contract_harness": true})
+				if not harness.labels.has(str(pattern.get("line", "")).left(76)):
+					failures.append("Crew poker line channel did not select its authored spoken line.")
+			"portrait":
+				harness.record_draw_rects = true
+				game.draw_surface(harness, surface, {"contract_harness": true})
+				var variant_found := false
+				for seat_value in surface.get("seats", []):
+					if typeof(seat_value) == TYPE_DICTIONARY and str((seat_value as Dictionary).get("member_id", "")) == member_id:
+						variant_found = str((seat_value as Dictionary).get("portrait_variant", "")) == str(pattern.get("portrait_variant", ""))
+				if not variant_found or not harness.labels.has(str(pattern.get("quirk", "")).left(76)):
+					failures.append("Crew poker portrait channel did not project its pose and subtle quirk.")
+				var no_beat_table := table.duplicate(true)
+				no_beat_table["beat"] = {}
+				_poker_write_table(run_state, no_beat_table)
+				var no_beat_surface := game.surface_state(run_state, run_state.current_environment, {})
+				var no_beat_harness := SurfaceHarness.new()
+				no_beat_harness.setup(no_beat_surface)
+				no_beat_harness.record_draw_rects = true
+				game.draw_surface(no_beat_harness, no_beat_surface, {"contract_harness": true})
+				if harness.draw_rect_records.size() <= no_beat_harness.draw_rect_records.size():
+					failures.append("Crew poker portrait variant did not affect production renderer geometry.")
+			"timing":
+				harness.animation_elapsed = 0.0
+				game.draw_surface(harness, surface, {"contract_harness": true})
+				if harness.labels.has(str(pattern.get("line", "")).left(76)) or not harness.labels.has("The room holds one quiet beat."):
+					failures.append("Crew poker timing channel did not hold its authored beat before the line.")
+				var after_harness := SurfaceHarness.new()
+				after_harness.setup(surface)
+				after_harness.animation_elapsed = float(int(pattern.get("timing_msec", 0)) + 1) / 1000.0
+				game.draw_surface(after_harness, surface, {"contract_harness": true})
+				if not after_harness.labels.has(str(pattern.get("line", "")).left(76)):
+					failures.append("Crew poker timing channel did not surface its line after the authored beat.")
+	return surfaces
 
 
 func _check_crew_poker_hidden_leaks(run_state: RunState, save_projection: Variant, surfaces: Array, results: Array, failures: Array) -> void:

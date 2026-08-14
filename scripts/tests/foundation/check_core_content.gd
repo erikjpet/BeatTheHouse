@@ -174,6 +174,9 @@ class SurfaceHarness:
 	func surface_simulation_time_msec() -> int:
 		return simulation_clock_msec
 
+	func surface_render_elapsed_msec() -> int:
+		return maxi(0, int(round(animation_elapsed * 1000.0)))
+
 	func surface_low_detail_idle() -> bool:
 		return low_detail_idle and not animation_active
 
