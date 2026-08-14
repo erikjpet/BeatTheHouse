@@ -1,0 +1,170 @@
+[
+{
+  "schema_version": 1,
+  "turn_horizon": 240,
+  "weather_states": [
+    {
+      "id": "clear",
+      "display_name": "Clear",
+      "dwell_actions": [8, 14],
+      "modifiers": {
+        "scenario_weight_by_tag": {},
+        "travel_cost_multiplier": 1.0,
+        "travel_risk_multiplier": 1.0,
+        "travel_risk_band_delta": 0,
+        "music": {
+          "ambience_delta": 0.0,
+          "volume_multiplier": 1.0,
+          "texture_override": ""
+        }
+      }
+    },
+    {
+      "id": "rain",
+      "display_name": "Rain",
+      "dwell_actions": [6, 11],
+      "modifiers": {
+        "scenario_weight_by_tag": {
+          "weather:rain": 1.25,
+          "weather:wet": 1.15
+        },
+        "travel_cost_multiplier": 1.08,
+        "travel_risk_multiplier": 1.12,
+        "travel_risk_band_delta": 0,
+        "music": {
+          "ambience_delta": 0.08,
+          "volume_multiplier": 0.98,
+          "texture_override": "rain"
+        }
+      }
+    },
+    {
+      "id": "fog",
+      "display_name": "Fog",
+      "dwell_actions": [5, 9],
+      "modifiers": {
+        "scenario_weight_by_tag": {
+          "weather:fog": 1.3,
+          "weather:low_visibility": 1.2
+        },
+        "travel_cost_multiplier": 1.05,
+        "travel_risk_multiplier": 1.18,
+        "travel_risk_band_delta": 1,
+        "music": {
+          "ambience_delta": 0.1,
+          "volume_multiplier": 0.94,
+          "texture_override": "static"
+        }
+      }
+    },
+    {
+      "id": "storm",
+      "display_name": "Storm",
+      "dwell_actions": [4, 7],
+      "modifiers": {
+        "scenario_weight_by_tag": {
+          "weather:storm": 1.4,
+          "weather:rain": 1.15,
+          "weather:low_visibility": 1.15
+        },
+        "travel_cost_multiplier": 1.15,
+        "travel_risk_multiplier": 1.3,
+        "travel_risk_band_delta": 1,
+        "music": {
+          "ambience_delta": 0.14,
+          "volume_multiplier": 0.92,
+          "texture_override": "rain"
+        }
+      }
+    }
+  ],
+  "calendar": {
+    "cycle": [
+      {
+        "id": "payday",
+        "display_name": "Payday",
+        "duration_actions": 18,
+        "modifiers": {
+          "economy": {
+            "stake_floor_multiplier": 1.1,
+            "stake_ceiling_multiplier": 1.15,
+            "crowd_density_multiplier": 1.2
+          }
+        }
+      },
+      {
+        "id": "midweek",
+        "display_name": "Midweek",
+        "duration_actions": 24,
+        "modifiers": {
+          "economy": {
+            "stake_floor_multiplier": 0.9,
+            "stake_ceiling_multiplier": 0.9,
+            "crowd_density_multiplier": 0.78
+          }
+        }
+      }
+    ]
+  },
+  "happenings": {
+    "count_range": [0, 2],
+    "definitions": [
+      {
+        "id": "fight_night",
+        "display_name": "Fight Night",
+        "start_action_range": [0, 120],
+        "duration_actions": [28, 52],
+        "modifiers": {
+          "scenario_weight_by_tag": {
+            "happening:fight_night": 1.45,
+            "crowd:bar": 1.25
+          },
+          "music": {
+            "ambience_delta": -0.04,
+            "volume_multiplier": 1.04,
+            "texture_override": ""
+          },
+          "town_flags": ["fight_night"]
+        }
+      },
+      {
+        "id": "festival_weekend",
+        "display_name": "Festival Weekend",
+        "start_action_range": [0, 96],
+        "duration_actions": [42, 76],
+        "modifiers": {
+          "scenario_weight_by_tag": {
+            "happening:festival_weekend": 1.4,
+            "venue:beach": 1.2,
+            "venue:riverboat": 1.2
+          },
+          "music": {
+            "ambience_delta": -0.05,
+            "volume_multiplier": 1.05,
+            "texture_override": ""
+          },
+          "town_flags": ["festival_weekend"]
+        }
+      },
+      {
+        "id": "rolling_blackout",
+        "display_name": "Rolling Blackout",
+        "start_action_range": [18, 156],
+        "duration_actions": [18, 38],
+        "modifiers": {
+          "scenario_weight_by_tag": {
+            "happening:rolling_blackout": 1.5,
+            "power:blackout": 1.35
+          },
+          "music": {
+            "ambience_delta": 0.12,
+            "volume_multiplier": 0.88,
+            "texture_override": "static"
+          },
+          "town_flags": ["rolling_blackout", "power_unstable"]
+        }
+      }
+    ]
+  }
+}
+]

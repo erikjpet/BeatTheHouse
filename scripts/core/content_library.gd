@@ -5,6 +5,7 @@ extends RefCounted
 
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const TownStateScript := preload("res://scripts/core/town_state.gd")
 
 const ENVIRONMENT_ARCHETYPES_PATH := "res://data/environments/archetypes.json"
 const ENVIRONMENT_SCENARIOS_PATH := "res://data/environments/scenarios.json"
@@ -22,6 +23,7 @@ const SERVICES_PATH := "res://data/services/services.json"
 const TRAVEL_ROUTES_PATH := "res://data/travel/routes.json"
 const MUSIC_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const TUTORIAL_LESSONS_PATH := "res://data/tutorial/lessons.json"
+const TOWN_CONDITIONS_PATH := "res://data/town/conditions.json"
 const MUSIC_ASSET_ROOT := "res://assets/audio/music"
 const MUSIC_WEB_ASSET_ROOT := "res://assets/audio/music_web"
 const MUSIC_WEB_SAMPLE_RATE := 22050
@@ -54,6 +56,7 @@ var services: Array = []
 var travel_routes: Array = []
 var music_tracks: Array = []
 var tutorial_lessons: Array = []
+var town_conditions: Dictionary = {}
 var validation_errors: Array = []
 var validation_warnings: Array = []
 var validation_complete := false
@@ -77,6 +80,7 @@ static func required_pack_paths() -> Dictionary:
 		"characters": CHARACTERS_PATH,
 		"character_pools": CHARACTER_POOLS_PATH,
 		"tutorial_lessons": TUTORIAL_LESSONS_PATH,
+		"town_conditions": TOWN_CONDITIONS_PATH,
 	}
 
 
@@ -113,6 +117,8 @@ func load(run_validation: bool = true) -> Dictionary:
 	travel_routes = _load_array(TRAVEL_ROUTES_PATH, false)
 	music_tracks = _load_array(MUSIC_MANIFEST_PATH, false)
 	tutorial_lessons = _load_array(TUTORIAL_LESSONS_PATH, true)
+	var town_condition_entries := _load_array(TOWN_CONDITIONS_PATH, true)
+	town_conditions = town_condition_entries[0] if not town_condition_entries.is_empty() and typeof(town_condition_entries[0]) == TYPE_DICTIONARY else {}
 	var parse_complete_usec := Time.get_ticks_usec()
 	_rebuild_indexes()
 	var index_complete_usec := Time.get_ticks_usec()
@@ -147,6 +153,7 @@ func load(run_validation: bool = true) -> Dictionary:
 		"travel_routes": travel_routes,
 		"music_tracks": music_tracks,
 		"tutorial_lessons": tutorial_lessons,
+		"town_conditions": town_conditions,
 	}
 
 
@@ -307,9 +314,175 @@ func validate() -> Array:
 	_validate_travel_route_definitions()
 	_validate_music_manifest_definitions()
 	_validate_tutorial_lesson_definitions()
+	validation_errors.append_array(town_conditions_validation_errors(town_conditions))
 	_validate_environment_references()
 	_validate_scenario_definitions()
 	return validation_errors.duplicate(true)
+
+
+static func town_conditions_validation_errors(value: Variant) -> Array:
+	var errors: Array = []
+	if typeof(value) != TYPE_DICTIONARY:
+		return ["town conditions must be a dictionary."]
+	var data: Dictionary = value
+	var allowed_top := ["schema_version", "turn_horizon", "weather_states", "calendar", "happenings"]
+	_append_unknown_keys("town conditions", data, allowed_top, errors)
+	if int(data.get("schema_version", 0)) != 1:
+		errors.append("town conditions schema_version must be 1.")
+	if int(data.get("turn_horizon", 0)) <= 0:
+		errors.append("town conditions turn_horizon must be positive.")
+	var weather_value: Variant = data.get("weather_states", [])
+	if typeof(weather_value) != TYPE_ARRAY:
+		errors.append("town conditions weather_states must be an array.")
+	else:
+		var weather_ids: Array = []
+		for index in range((weather_value as Array).size()):
+			var entry_value: Variant = (weather_value as Array)[index]
+			if typeof(entry_value) != TYPE_DICTIONARY:
+				errors.append("town conditions weather_states[%d] must be a dictionary." % index)
+				continue
+			var entry: Dictionary = entry_value
+			_append_unknown_keys("town weather %d" % index, entry, ["id", "display_name", "dwell_actions", "modifiers"], errors)
+			var id := str(entry.get("id", ""))
+			if not TownStateScript.WEATHER_IDS.has(id) or weather_ids.has(id):
+				errors.append("town weather id must be unique and documented: %s." % id)
+			weather_ids.append(id)
+			_validate_positive_range("town weather %s dwell_actions" % id, entry.get("dwell_actions", []), errors)
+			_validate_town_modifiers("town weather %s" % id, entry.get("modifiers", {}), true, false, errors)
+		if weather_ids != TownStateScript.WEATHER_IDS:
+			errors.append("town weather_states must contain clear, rain, fog, storm in track order.")
+	var calendar_value: Variant = data.get("calendar", {})
+	if typeof(calendar_value) != TYPE_DICTIONARY:
+		errors.append("town conditions calendar must be a dictionary.")
+	else:
+		var calendar: Dictionary = calendar_value
+		_append_unknown_keys("town calendar", calendar, ["cycle"], errors)
+		var cycle_value: Variant = calendar.get("cycle", [])
+		if typeof(cycle_value) != TYPE_ARRAY:
+			errors.append("town calendar cycle must be an array.")
+		else:
+			var day_ids: Array = []
+			for index in range((cycle_value as Array).size()):
+				var entry_value: Variant = (cycle_value as Array)[index]
+				if typeof(entry_value) != TYPE_DICTIONARY:
+					errors.append("town calendar cycle[%d] must be a dictionary." % index)
+					continue
+				var entry: Dictionary = entry_value
+				_append_unknown_keys("town calendar entry %d" % index, entry, ["id", "display_name", "duration_actions", "modifiers"], errors)
+				var id := str(entry.get("id", ""))
+				if not TownStateScript.DAY_TYPE_IDS.has(id) or day_ids.has(id):
+					errors.append("town day type id must be unique and documented: %s." % id)
+				day_ids.append(id)
+				if int(entry.get("duration_actions", 0)) <= 0:
+					errors.append("town day type %s duration_actions must be positive." % id)
+				_validate_town_modifiers("town day type %s" % id, entry.get("modifiers", {}), false, true, errors)
+			if day_ids != TownStateScript.DAY_TYPE_IDS:
+				errors.append("town calendar cycle must contain payday and midweek in cycle order.")
+	var happenings_value: Variant = data.get("happenings", {})
+	if typeof(happenings_value) != TYPE_DICTIONARY:
+		errors.append("town conditions happenings must be a dictionary.")
+	else:
+		var happening_config: Dictionary = happenings_value
+		_append_unknown_keys("town happenings", happening_config, ["count_range", "definitions"], errors)
+		_validate_nonnegative_range("town happenings count_range", happening_config.get("count_range", []), 2, errors)
+		var definitions_value: Variant = happening_config.get("definitions", [])
+		if typeof(definitions_value) != TYPE_ARRAY:
+			errors.append("town happenings definitions must be an array.")
+		else:
+			var happening_ids: Array = []
+			for index in range((definitions_value as Array).size()):
+				var entry_value: Variant = (definitions_value as Array)[index]
+				if typeof(entry_value) != TYPE_DICTIONARY:
+					errors.append("town happening definitions[%d] must be a dictionary." % index)
+					continue
+				var entry: Dictionary = entry_value
+				_append_unknown_keys("town happening %d" % index, entry, ["id", "display_name", "start_action_range", "duration_actions", "modifiers"], errors)
+				var id := str(entry.get("id", ""))
+				if not TownStateScript.HAPPENING_IDS.has(id) or happening_ids.has(id):
+					errors.append("town happening id must be unique and documented: %s." % id)
+				happening_ids.append(id)
+				_validate_nonnegative_range("town happening %s start_action_range" % id, entry.get("start_action_range", []), -1, errors)
+				_validate_positive_range("town happening %s duration_actions" % id, entry.get("duration_actions", []), errors)
+				_validate_town_modifiers("town happening %s" % id, entry.get("modifiers", {}), false, false, errors, true)
+			if happening_ids.size() != TownStateScript.HAPPENING_IDS.size():
+				errors.append("town happenings must define fight_night, festival_weekend, and rolling_blackout.")
+	return errors
+
+
+static func _validate_town_modifiers(label: String, value: Variant, allow_travel: bool, allow_economy: bool, errors: Array, allow_flags: bool = false) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		errors.append("%s modifiers must be a dictionary." % label)
+		return
+	var modifiers: Dictionary = value
+	var allowed := ["scenario_weight_by_tag", "scenario_weight_by_archetype", "scenario_weight_by_id", "music"]
+	if allow_travel:
+		allowed.append_array(["travel_cost_multiplier", "travel_risk_multiplier", "travel_risk_band_delta"])
+	if allow_economy:
+		allowed.append("economy")
+	if allow_flags:
+		allowed.append("town_flags")
+	_append_unknown_keys("%s modifiers" % label, modifiers, allowed, errors)
+	for lookup_key in ["scenario_weight_by_tag", "scenario_weight_by_archetype", "scenario_weight_by_id"]:
+		_validate_positive_number_map("%s %s" % [label, lookup_key], modifiers.get(lookup_key, {}), errors)
+	if allow_travel:
+		for key in ["travel_cost_multiplier", "travel_risk_multiplier"]:
+			if not modifiers.has(key) or typeof(modifiers.get(key)) not in [TYPE_INT, TYPE_FLOAT] or float(modifiers.get(key, 0.0)) < 0.0:
+				errors.append("%s %s must be a non-negative number." % [label, key])
+		if typeof(modifiers.get("travel_risk_band_delta", 0)) not in [TYPE_INT, TYPE_FLOAT]:
+			errors.append("%s travel_risk_band_delta must be numeric." % label)
+	var music_value: Variant = modifiers.get("music", {})
+	if typeof(music_value) != TYPE_DICTIONARY:
+		errors.append("%s music modifier must be a dictionary." % label)
+	else:
+		var music: Dictionary = music_value
+		_append_unknown_keys("%s music" % label, music, ["ambience_delta", "volume_multiplier", "texture_override"], errors)
+		for key in ["ambience_delta", "volume_multiplier"]:
+			if typeof(music.get(key, 0.0)) not in [TYPE_INT, TYPE_FLOAT]:
+				errors.append("%s music.%s must be numeric." % [label, key])
+	if allow_economy:
+		var economy_value: Variant = modifiers.get("economy", {})
+		if typeof(economy_value) != TYPE_DICTIONARY:
+			errors.append("%s economy modifier must be a dictionary." % label)
+		else:
+			var economy: Dictionary = economy_value
+			_append_unknown_keys("%s economy" % label, economy, ["stake_floor_multiplier", "stake_ceiling_multiplier", "crowd_density_multiplier"], errors)
+			for key in ["stake_floor_multiplier", "stake_ceiling_multiplier", "crowd_density_multiplier"]:
+				if typeof(economy.get(key, 0.0)) not in [TYPE_INT, TYPE_FLOAT] or float(economy.get(key, 0.0)) < 0.0:
+					errors.append("%s economy.%s must be a non-negative number." % [label, key])
+	if allow_flags:
+		var flags_value: Variant = modifiers.get("town_flags", [])
+		if typeof(flags_value) != TYPE_ARRAY:
+			errors.append("%s town_flags must be an array." % label)
+		else:
+			for flag_value in flags_value as Array:
+				if str(flag_value).strip_edges().is_empty():
+					errors.append("%s town_flags must contain non-empty ids." % label)
+
+
+static func _append_unknown_keys(label: String, data: Dictionary, allowed: Array, errors: Array) -> void:
+	for key_value in data.keys():
+		if not allowed.has(str(key_value)):
+			errors.append("%s has unknown key: %s." % [label, str(key_value)])
+
+
+static func _validate_positive_number_map(label: String, value: Variant, errors: Array) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		errors.append("%s must be a dictionary." % label)
+		return
+	for key_value in (value as Dictionary).keys():
+		var number_value: Variant = (value as Dictionary).get(key_value)
+		if str(key_value).strip_edges().is_empty() or typeof(number_value) not in [TYPE_INT, TYPE_FLOAT] or float(number_value) <= 0.0:
+			errors.append("%s entries require non-empty ids and positive numeric multipliers." % label)
+
+
+static func _validate_positive_range(label: String, value: Variant, errors: Array) -> void:
+	if typeof(value) != TYPE_ARRAY or (value as Array).size() != 2 or int((value as Array)[0]) <= 0 or int((value as Array)[1]) < int((value as Array)[0]):
+		errors.append("%s must be an ordered positive [min, max] range." % label)
+
+
+static func _validate_nonnegative_range(label: String, value: Variant, maximum: int, errors: Array) -> void:
+	if typeof(value) != TYPE_ARRAY or (value as Array).size() != 2 or int((value as Array)[0]) < 0 or int((value as Array)[1]) < int((value as Array)[0]) or (maximum >= 0 and int((value as Array)[1]) > maximum):
+		errors.append("%s must be an ordered non-negative [min, max] range." % label)
 
 
 # Returns archetypes available at the requested progression tier.
