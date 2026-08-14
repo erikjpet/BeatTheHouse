@@ -103,6 +103,17 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.game_states = {}
 	environment.event_ids = _pick_events(archetype, rng.fork("events:%s" % environment.id), library)
 	environment.item_offers = _build_offers(archetype, rng, library, challenge_config)
+	for scenario_offer_value in _copy_array(archetype.get("scenario_item_offers", [])):
+		if typeof(scenario_offer_value) != TYPE_DICTIONARY:
+			continue
+		var scenario_offer := (scenario_offer_value as Dictionary).duplicate(true)
+		var scenario_item_id := str(scenario_offer.get("id", "")).strip_edges()
+		if scenario_item_id.is_empty():
+			continue
+		for offer_index in range(environment.item_offers.size() - 1, -1, -1):
+			if typeof(environment.item_offers[offer_index]) == TYPE_DICTIONARY and str((environment.item_offers[offer_index] as Dictionary).get("id", "")) == scenario_item_id:
+				environment.item_offers.remove_at(offer_index)
+		environment.item_offers.append(scenario_offer)
 	environment.home_profile = _copy_dict(archetype.get("home_profile", {}))
 	environment.home_containers = []
 	environment.parent_archetype = str(archetype.get("parent_archetype", ""))

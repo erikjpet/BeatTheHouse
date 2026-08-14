@@ -1335,6 +1335,7 @@
       "discovery": "class_event",
       "heat": "class_event",
       "landmark": "class_event",
+      "lender": "class_event",
       "opportunistic": "class_event",
       "pressure": "class_event",
       "progression": "class_event",
