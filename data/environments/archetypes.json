@@ -3623,6 +3623,7 @@
       "boss_floor": true,
       "grand_casino_room": "back_room",
       "blackjack_boss_variant": "rourke_duel",
+      "showdown_game_id": "blackjack",
       "casino_room_travel_minutes": 5,
       "casino_chip_cash_rate": 1,
       "casino_room_targets": []

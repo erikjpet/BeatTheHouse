@@ -381,7 +381,7 @@ func _check_craps_room_registration_and_duel(_game: GameModule, library: Content
 			failures.append("Craps is not guaranteed in Grand Casino table-game room %s." % archetype_id)
 	var back_room := _archetype_by_id(library, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
 	var flags := _craps_dict(back_room.get("local_narrative_flags", {}))
-	if str(flags.get("blackjack_boss_variant", "")) != "rourke_duel" or not _craps_array(back_room.get("required_game_ids", [])).has("blackjack"):
+	if str(flags.get("blackjack_boss_variant", "")) != "rourke_duel" or str(flags.get("showdown_game_id", "")) != "blackjack" or not _craps_array(back_room.get("required_game_ids", [])).has("blackjack"):
 		failures.append("Back Room Craps registration displaced the required Rourke blackjack duel contract.")
 	var ordinary_run: RunState = RunStateScript.new()
 	ordinary_run.start_new("CRAPS-BACK-ROOM-GENERATION")
