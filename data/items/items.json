@@ -906,11 +906,14 @@
     "icon_key": "coin_return_shim",
     "environment_prop": "coin",
     "surface": "box_stack",
-    "description": "Metal teeth for a stingy slot.",
+    "description": "Metal teeth for a stingy slot or a hungry gutter.",
     "effect": {
       "families": {
         "slots": {
           "slot_three_reel_loss_refund_percent": 35
+        },
+        "coin_pusher": {
+          "coin_pusher_gutter_recovery_uses": 3
         }
       }
     }
@@ -1032,12 +1035,13 @@
     "icon_key": "cold_quarters",
     "environment_prop": "coin",
     "surface": "counter_case",
-    "description": "Quiet coins, cooler hands.",
+    "description": "Cold, dense coins. A pusher feels every ounce.",
     "effect": {
       "active_item": true,
       "active_mode": "consumable",
       "active_target": "slot",
-      "slot_cold_quarter_heat_reduction": 6
+      "slot_cold_quarter_heat_reduction": 6,
+      "coin_pusher_drop_density": 3
     }
   },
   {
