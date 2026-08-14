@@ -134,7 +134,7 @@ func _check_coin_pusher_nudge_alarm(game: GameModule, library: ContentLibrary, f
 	machine["tolerance_modifier"] = 0
 	machine["alarm_tolerance_remaining"] = 3
 	machine["tell_rung"] = 0
-	var digest_before_clean := game.deterministic_state_digest(environment)
+	var digest_before_clean: String = str(game.call("deterministic_state_digest", environment))
 	var clean := game.resolve_with_context("nudge_machine", 0, run_state, environment, run_state.create_rng("clean_nudge"), {
 		"coin_pusher_force": "tap", "coin_pusher_direction": "front", "coin_pusher_lane": 2, "coin_pusher_timing_phase": 3,
 	})
@@ -207,7 +207,7 @@ func _check_coin_pusher_persistence_and_reset(game: GameModule, failures: Array)
 	for index in range(12):
 		var result := game.resolve_with_context("drop_quarter", 1, run_state, environment, run_state.create_rng("persist_%d" % index), {"coin_pusher_lane": index % 5})
 		GameModule.apply_result(run_state, result, run_state.create_rng("persist_apply_%d" % index))
-	var persisted_digest := game.deterministic_state_digest(environment)
+	var persisted_digest: String = str(game.call("deterministic_state_digest", environment))
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(run_state.to_dict())
 	if game.deterministic_state_digest(restored.current_environment) != persisted_digest:
@@ -222,7 +222,7 @@ func _check_coin_pusher_persistence_and_reset(game: GameModule, failures: Array)
 	var reset_state: Dictionary = (restored.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	if int(reset_state.get("action_count", -1)) != 0 or game.deterministic_state_digest(restored.current_environment) == persisted_digest:
 		failures.append("Quarter Falls scenario reset token did not replace the persisted pile.")
-	var reset_digest := game.deterministic_state_digest(restored.current_environment)
+	var reset_digest: String = str(game.call("deterministic_state_digest", restored.current_environment))
 	game.enter(restored, restored.current_environment)
 	if game.deterministic_state_digest(restored.current_environment) != reset_digest:
 		failures.append("Quarter Falls scenario reset token reapplied more than once.")
