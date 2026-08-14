@@ -50,6 +50,10 @@
     "video_poker": {"path": "res://assets/art/game_scenes/video_poker.png", "brief": "machine screen with five-card row"},
     "poker": {"path": "res://assets/art/game_scenes/poker.png", "brief": "felt table with player and house hand lanes"}
   },
+  "ui_surfaces": {
+    "main_menu_logo": {"path": "res://assets/art/ui/beat_the_house_logo.png", "size": [1141, 440]},
+    "main_menu_button_plate": {"path": "res://assets/art/ui/main_menu_button_plate.png", "size": [384, 192]}
+  },
   "icons": {
     "creased_luck_card": {"path": "res://assets/art/items/creased_luck_card.png"},
     "luck_card": {"path": "res://assets/art/items/creased_luck_card.png"},
