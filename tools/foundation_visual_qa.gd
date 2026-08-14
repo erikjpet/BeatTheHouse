@@ -38,6 +38,7 @@ var report := {
 	"architecture_checks": {},
 	"optional_hook_status": {},
 	"game_surface_status": {},
+	"coin_pusher_visual_status": {},
 	"warnings": [],
 	"coverage": {
 		"start_screen": false,
@@ -68,6 +69,12 @@ var report := {
 		"focused_environment_controls_visible": false,
 		"game_surface_click": false,
 		"game_surface_resolve_click": false,
+		"coin_pusher_normal_pile_rider": false,
+		"coin_pusher_tell_ladder": false,
+		"coin_pusher_hard_alarm_lockdown": false,
+		"coin_pusher_room_available_after_alarm": false,
+		"coin_pusher_idle_motion": false,
+		"coin_pusher_reduce_motion": false,
 		"screen_click_only_gameplay": false,
 		"stake_selector": false,
 		"legal_action_selection": false,
@@ -187,6 +194,7 @@ func _run() -> void:
 	await _settle()
 	await _prepare_multi_game_visual_qa_fixture()
 	await _verify_all_visible_game_objects_clickable()
+	await _verify_coin_pusher_visual_qa_fixture()
 	await _prepare_risky_game_visual_qa_fixture()
 	_record_state("risky_game_fixture_screen", "Focused deterministic game-surface fixture with immediate risky-action coverage.")
 
@@ -1209,6 +1217,125 @@ func _prepare_multi_game_visual_qa_fixture() -> void:
 	_record_state("multi_game_fixture_screen", "Focused deterministic room with multiple visible game objects for mouse clickability coverage.")
 
 
+func _verify_coin_pusher_visual_qa_fixture() -> void:
+	var viewport_size := root.get_viewport().get_visible_rect().size
+	_require(viewport_size.x >= 1279.0 and viewport_size.y >= 719.0, "Quarter Falls visual QA is not running at the required 1280x720 viewport: %s." % str(viewport_size))
+	await _prepare_visual_qa_fixture_environment("bar", "visual_coin_pusher_fixture", {
+		"game_ids": ["coin_pusher", "bar_dice"],
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"object_fixtures": [],
+	}, 500)
+	var fixture_run := app.get("run_state") as RunState
+	_require(fixture_run != null, "Quarter Falls visual QA could not access foundation runtime state.")
+	var machine: Dictionary = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	_require(not machine.is_empty(), "Quarter Falls visual QA fixture did not generate a persisted pusher pile.")
+	machine["riders"] = [{
+		"id": "visual_chip_rider",
+		"kind": "chip_stack",
+		"label": "chip stack",
+		"item_id": "",
+		"cash_value": 4,
+		"lane": 1,
+		"cell": 2,
+		"push": 1,
+	}]
+	machine["tell_rung"] = 0
+	machine["last_message"] = "Pick a lane. Read both shelves."
+	app.call("_refresh")
+	await _settle()
+	var room_canvas := app.get("environment_canvas") as Control
+	_require(room_canvas != null and room_canvas.visible and room_canvas.has_method("current_view_snapshot"), "Quarter Falls visual QA room did not render at 1280x720.")
+	var pusher_object := _canvas_object_by_id(room_canvas, "game:coin_pusher")
+	_require(not pusher_object.is_empty() and not bool(pusher_object.get("disabled", false)), "Quarter Falls visual QA room did not expose an enabled pusher object.")
+	_require(not (await _double_click_canvas_object_data(room_canvas, pusher_object, "game")).is_empty(), "Quarter Falls visual QA could not enter the pusher through its visible room object.")
+	await _settle()
+	await _refresh_game_surface_hit_regions()
+	var surface_canvas := app.get("game_surface_canvas") as Control
+	_require(surface_canvas != null and surface_canvas.visible and surface_canvas.has_method("realtime_surface_state"), "Quarter Falls visual QA did not render its canonical game surface.")
+	var normal_state: Dictionary = surface_canvas.call("realtime_surface_state")
+	_require(str(normal_state.get("surface_renderer", "")) == "coin_pusher", "Quarter Falls visual QA entered the wrong surface renderer.")
+	_require((normal_state.get("coin_pusher_cells", []) as Array).size() > 0 and (normal_state.get("coin_pusher_lanes", []) as Array).size() == 5, "Quarter Falls normal capture did not expose its pile and five lane approaches.")
+	_require((normal_state.get("coin_pusher_riders", []) as Array).size() == 1 and not bool(normal_state.get("coin_pusher_locked", true)), "Quarter Falls normal capture did not show its prize rider on an unlocked pile.")
+	_record_coin_pusher_visual_capture("normal_pile_rider_1280x720", surface_canvas)
+	_record_state("coin_pusher_normal_pile_rider_1280x720", "Quarter Falls shows five approach lanes, a persisted coin pile, and a prize rider on the shelf.")
+	_cover("coin_pusher_normal_pile_rider")
+
+	var motion_before: Dictionary = surface_canvas.call("debug_surface_motion_sample")
+	var motion_runtime: Dictionary = surface_canvas.call("debug_advance_idle_liveness", 0.5)
+	var motion_after: Dictionary = surface_canvas.call("debug_surface_motion_sample")
+	_require(JSON.stringify(motion_before) != JSON.stringify(motion_after), "Quarter Falls idle presentation did not visibly advance its shelf/rider motion sample.")
+	_require(bool(motion_runtime.get("surface_animation_liveness_active", false)), "Quarter Falls idle presentation did not keep its bounded liveness channel active.")
+	_record_coin_pusher_visual_capture("idle_motion_1280x720", surface_canvas, {"motion_before": motion_before, "motion_after": motion_after})
+	_record_state("coin_pusher_idle_motion_1280x720", "Quarter Falls shelf attract and prize-rider presentation advance while the persisted pile remains action-boundary state.")
+	_cover("coin_pusher_idle_motion")
+
+	machine = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	machine["tell_rung"] = 2
+	machine["last_message"] = "Alarm chirps. The attendant looks over."
+	app.call("_refresh")
+	await _settle()
+	var tell_state: Dictionary = surface_canvas.call("realtime_surface_state")
+	_require(int(tell_state.get("coin_pusher_tell_rung", 0)) == 2 and str(tell_state.get("coin_pusher_tell", "")) == "alarm chirps", "Quarter Falls tell-ladder capture did not expose the readable alarm-chirps rung.")
+	_record_coin_pusher_visual_capture("tell_ladder_alarm_chirps_1280x720", surface_canvas)
+	_record_state("coin_pusher_tell_ladder_1280x720", "Quarter Falls visibly reads Tell: alarm chirps before the cabinet reaches hard lockdown.")
+	_cover("coin_pusher_tell_ladder")
+
+	var settings: Variant = app.get("user_settings")
+	_require(settings != null, "Quarter Falls visual QA could not access reduced-motion settings.")
+	settings.reduce_motion = true
+	app.call("_apply_accessibility_settings")
+	await _settle()
+	var reduced_before: Dictionary = surface_canvas.call("debug_surface_motion_sample")
+	surface_canvas.call("debug_advance_idle_liveness", 0.5)
+	var reduced_after: Dictionary = surface_canvas.call("debug_surface_motion_sample")
+	var reduced_state: Dictionary = surface_canvas.call("realtime_surface_state")
+	var reduced_runtime: Dictionary = surface_canvas.call("surface_runtime_status")
+	_require(bool(reduced_runtime.get("reduce_motion", false)) and JSON.stringify(reduced_before) == JSON.stringify(reduced_after), "Quarter Falls reduced-motion mode did not freeze presentation-only motion.")
+	_require((reduced_state.get("coin_pusher_cells", []) as Array).size() > 0 and (reduced_state.get("coin_pusher_riders", []) as Array).size() == 1 and str(reduced_state.get("coin_pusher_tell", "")) == "alarm chirps", "Quarter Falls reduced-motion mode hid pile, rider, or tell information.")
+	_record_coin_pusher_visual_capture("reduced_motion_1280x720", surface_canvas, {"motion_before": reduced_before, "motion_after": reduced_after})
+	_record_state("coin_pusher_reduced_motion_1280x720", "Reduced motion freezes presentation bobbing while pile, rider, lanes, and tell state remain readable.")
+	_cover("coin_pusher_reduce_motion")
+	settings.reduce_motion = false
+	app.call("_apply_accessibility_settings")
+	await _settle()
+
+	machine = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	machine["alarm_tolerance_remaining"] = 0
+	machine["lower_phase"] = 9
+	app.call("_refresh")
+	await _settle()
+	_require(await _push_game_surface_action("coin_pusher_force", 2), "Quarter Falls visual QA could not select visible SLAM force.")
+	_require(await _confirm_game_surface_action("coin_pusher_nudge", 0), "Quarter Falls visual QA could not resolve the visible alarm-producing nudge.")
+	await _settle()
+	await _refresh_game_surface_hit_regions()
+	var alarm_state: Dictionary = surface_canvas.call("realtime_surface_state")
+	var alarm_hits: Array = (surface_canvas.call("current_view_snapshot") as Dictionary).get("surface_hit_actions", [])
+	_require(bool(alarm_state.get("coin_pusher_locked", false)) and int(alarm_state.get("coin_pusher_tell_rung", 0)) == 3, "Quarter Falls hard-alarm capture did not show machine-only lockdown and the top tell rung.")
+	_require(not _surface_hit_snapshot_has_action(alarm_hits, "coin_pusher_drop") and not _surface_hit_snapshot_has_action(alarm_hits, "coin_pusher_nudge"), "Quarter Falls locked capture still exposed machine play actions.")
+	_record_coin_pusher_visual_capture("hard_alarm_lockdown_1280x720", surface_canvas)
+	_record_state("coin_pusher_hard_alarm_lockdown_1280x720", "Quarter Falls shows LOCKED TONIGHT and tells the player that other room games remain open.")
+	_cover("coin_pusher_hard_alarm_lockdown")
+
+	_return_to_room_view()
+	await _settle()
+	room_canvas = app.get("environment_canvas") as Control
+	_require(room_canvas != null and room_canvas.visible, "Quarter Falls hard alarm forced the player out of the room instead of returning to room play.")
+	var bar_dice_object := _canvas_object_by_id(room_canvas, "game:bar_dice")
+	_require(not bar_dice_object.is_empty() and not bool(bar_dice_object.get("disabled", false)), "Quarter Falls hard alarm disabled the room's other game.")
+	_record_coin_pusher_room_capture("room_available_after_alarm_1280x720", fixture_run, bar_dice_object)
+	_record_state("coin_pusher_room_available_after_alarm_1280x720", "The alarmed pusher stays locked, but the bar and its other game remain available.")
+	_require(not (await _double_click_canvas_object_data(room_canvas, bar_dice_object, "game")).is_empty(), "Quarter Falls hard alarm left the other room game visible but unusable.")
+	await _settle()
+	_require(str(app.call("current_game_view_snapshot").get("game_id", "")) == "bar_dice", "Quarter Falls hard alarm did not preserve entry to the room's other game.")
+	_return_to_room_view()
+	await _settle()
+	_cover("coin_pusher_room_available_after_alarm")
+
+
 func _reset_fixed_price_surface_for_risky_action() -> void:
 	await _resolve_blocking_surface_interrupts()
 	_return_to_room_view()
@@ -1604,6 +1731,53 @@ func _set_game_surface_status(status_key: String, status: String, reason: String
 		"suspicion_delta": int(surface_data.get("suspicion_delta", 0)),
 	}
 	report["game_surface_status"] = statuses
+
+
+func _record_coin_pusher_visual_capture(capture_key: String, surface_canvas: Control, extra: Dictionary = {}) -> void:
+	var captures: Dictionary = report.get("coin_pusher_visual_status", {})
+	var surface_state: Dictionary = surface_canvas.call("realtime_surface_state") if surface_canvas != null and surface_canvas.has_method("realtime_surface_state") else {}
+	var runtime: Dictionary = surface_canvas.call("surface_runtime_status") if surface_canvas != null and surface_canvas.has_method("surface_runtime_status") else {}
+	var viewport_size := root.get_viewport().get_visible_rect().size
+	var capture := {
+		"viewport": {"width": int(round(viewport_size.x)), "height": int(round(viewport_size.y))},
+		"surface_renderer": str(surface_state.get("surface_renderer", "")),
+		"cell_count": (surface_state.get("coin_pusher_cells", []) as Array).size(),
+		"lane_count": (surface_state.get("coin_pusher_lanes", []) as Array).size(),
+		"rider_count": (surface_state.get("coin_pusher_riders", []) as Array).size(),
+		"tell_rung": int(surface_state.get("coin_pusher_tell_rung", 0)),
+		"tell": str(surface_state.get("coin_pusher_tell", "")),
+		"locked": bool(surface_state.get("coin_pusher_locked", false)),
+		"last_message": str(surface_state.get("coin_pusher_last_message", "")),
+		"reduce_motion": bool(runtime.get("reduce_motion", false)),
+		"idle_liveness_active": bool(runtime.get("surface_animation_liveness_active", false)),
+		"motion_sample": surface_canvas.call("debug_surface_motion_sample") if surface_canvas != null and surface_canvas.has_method("debug_surface_motion_sample") else {},
+	}
+	for key in extra.keys():
+		capture[key] = extra.get(key)
+	captures[capture_key] = capture
+	report["coin_pusher_visual_status"] = captures
+
+
+func _record_coin_pusher_room_capture(capture_key: String, fixture_run: RunState, other_game_object: Dictionary) -> void:
+	var captures: Dictionary = report.get("coin_pusher_visual_status", {})
+	var machine: Dictionary = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) if fixture_run != null else {}
+	var viewport_size := root.get_viewport().get_visible_rect().size
+	captures[capture_key] = {
+		"viewport": {"width": int(round(viewport_size.x)), "height": int(round(viewport_size.y))},
+		"room_environment_id": str(fixture_run.current_environment.get("id", "")) if fixture_run != null else "",
+		"pusher_locked": bool(machine.get("locked_down", false)),
+		"other_game_id": str(other_game_object.get("source_id", "")),
+		"other_game_disabled": bool(other_game_object.get("disabled", true)),
+		"room_screen_active": str(app.call("current_screen_snapshot").get("screen", "")) == "ENVIRONMENT",
+	}
+	report["coin_pusher_visual_status"] = captures
+
+
+func _surface_hit_snapshot_has_action(hit_actions: Array, action_id: String) -> bool:
+	for hit_value in hit_actions:
+		if typeof(hit_value) == TYPE_DICTIONARY and str((hit_value as Dictionary).get("action", "")) == action_id:
+			return true
+	return false
 
 
 func _verify_demo_objective_visible() -> void:
