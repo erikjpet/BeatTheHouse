@@ -323,6 +323,15 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   progress serializes only under neutral `p`/`m` keys; authored tell ids,
   conditions, exposure labels, and counters remain absent from public results,
   logs, and UI. Numbers must add a distinct reachable furniture spot later.
+- 2026-08-14 [streets06_1] A Streets verb advances its single environment/town
+  boundary before newly earned spotting or terminal effects are applied, so
+  fresh heat cannot decay on the action that created it. A linked Crew job is
+  protected from expiry only until the resolved board applies its world result,
+  then the existing job API owns trust exactly once.
+- 2026-08-14 [push06_1] The 200-action determinism session exercises exactly
+  one production hard alarm, normal heat, next-night unlock, and then completes
+  validated drops from sufficient up-front bankroll. It never resets heat,
+  bypasses wagering, or injects mid-session cash merely to keep the probe alive.
 
 ## Work Log
 
