@@ -55,7 +55,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var last_roll := _dict(table.get("last_roll", {}))
 	var roll_started := int(last_roll.get("resolved_at_msec", 0))
 	var duration := int(_config().get("roll_animation_duration_msec", 0))
-	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
+	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var roll_active := roll_started > 0 and now_msec >= roll_started and now_msec < roll_started + duration
 	var setting_challenge := _dict(ui_state.get("craps_setting_challenge", {}))
 	var switching_challenge := _dict(ui_state.get("craps_switching_challenge", {}))
@@ -330,6 +330,17 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"skill_security_pressure_checked": action_kind == "cheat",
 		"security_message": security_message,
 	})
+	# build_action_result intentionally normalizes only the shared action contract;
+	# restore the Craps-owned settlement payload for UI, audit, and luck consumers.
+	result["craps_total_wager"] = total_wager
+	result["luck_payout_bonus"] = luck_payout_bonus
+	result["craps_roll"] = last_roll.duplicate(true)
+	result["craps_point"] = int(table.get("point", 0))
+	result["craps_working_bets"] = _dict(table.get("working_bets", {})).duplicate(true)
+	result["craps_bet_results"] = _dictionary_array(settlement.get("bet_results", []))
+	result["craps_table_energy"] = int(table.get("table_energy", 0))
+	result["craps_room_energy"] = room_energy.duplicate(true)
+	result["craps_hot_shooter_streak"] = int(table.get("hot_shooter_streak", 0))
 	if action_kind == "cheat":
 		GameModule.normalize_skill_cheat_contract(result, result)
 	GameModule.apply_result(run_state, result, rng)

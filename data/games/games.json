@@ -3020,7 +3020,7 @@
     "scene_asset_path": "res://assets/art/game_scenes/bar_dice.png",
     "environment_prop": "dice_table",
     "intro": "The stickperson offers the dice with professional patience.",
-    "description": "Set the point, work the numbers, and keep the rail orderly.",
+    "description": "Set the point, work numbers, command the rail.",
     "legal_actions": [
       {
         "id": "roll_craps",

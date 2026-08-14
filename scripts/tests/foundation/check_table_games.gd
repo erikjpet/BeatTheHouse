@@ -55,6 +55,7 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 
 	_check_craps_rule_matrix(game, table, failures)
 	_check_craps_save_restore(game, run_state, environment, failures)
+	_check_craps_deterministic_surface_clock(game, failures)
 	_check_craps_cheat_contract(game, failures)
 	_check_craps_luck_contract(game, failures)
 	_check_craps_energy_projection(game, table, failures)
@@ -220,6 +221,39 @@ func _check_craps_save_restore(game: GameModule, run_state: RunState, environmen
 		failures.append("Craps restored surface did not expose the complete working layout.")
 
 
+func _check_craps_deterministic_surface_clock(game: GameModule, failures: Array) -> void:
+	var first: RunState = RunStateScript.new()
+	first.start_new("CRAPS-SURFACE-CLOCK")
+	first.simulation_msec = 26000
+	var environment := _surface_contract_environment()
+	environment["id"] = "craps_surface_clock_fixture"
+	environment["game_ids"] = ["craps"]
+	var table := game.generate_environment_state(first, environment, first.create_rng("craps_surface_clock_table"))
+	table["last_roll"] = {
+		"dice": [3, 4],
+		"total": 7,
+		"initial_total": 7,
+		"setting_bias_applied": false,
+		"point_before": 6,
+		"point_after": 0,
+		"animation_id": "craps:clock-fixture:3-4",
+		"resolved_at_msec": first.simulation_time_msec(),
+	}
+	environment["game_states"] = {"craps": table}
+	first.current_environment = environment
+	var second: RunState = RunStateScript.new()
+	second.from_dict(first.to_dict())
+	var first_surface := game.surface_state(first, first.current_environment, {})
+	var second_surface := game.surface_state(second, second.current_environment, {})
+	if JSON.stringify(first_surface) != JSON.stringify(second_surface):
+		failures.append("Craps identical run and UI inputs produced uptime-dependent surface snapshots.")
+	if str(first_surface.get("phase", "")) != "rolling":
+		failures.append("Craps deterministic simulation clock did not keep the saved roll animation active.")
+	var channels := _craps_array(first_surface.get("surface_animation_channels", []))
+	if channels.is_empty() or str(_craps_dict(channels[0]).get("animation_id", "")) != "craps:clock-fixture:3-4":
+		failures.append("Craps deterministic surface clock did not expose the active roll channel.")
+
+
 func _check_craps_cheat_contract(game: GameModule, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CRAPS-CHEAT-CONTRACT")
@@ -264,23 +298,37 @@ func _check_craps_cheat_contract(game: GameModule, failures: Array) -> void:
 
 
 func _check_craps_luck_contract(game: GameModule, failures: Array) -> void:
-	var saw_lucky_win := false
-	for seed_index in range(72):
-		var run_state: RunState = RunStateScript.new()
-		run_state.start_new("CRAPS-LUCK-%02d" % seed_index)
-		run_state.bankroll = 1000
-		run_state.baseline_luck = 5
-		var environment := _surface_contract_environment()
-		environment["id"] = "craps_luck_fixture"
-		environment["game_ids"] = ["craps"]
-		environment["game_states"] = {"craps": game.generate_environment_state(run_state, environment, run_state.create_rng("craps_luck_table"))}
-		run_state.current_environment = environment
-		var result := game.resolve_with_context("roll_craps", 10, run_state, run_state.current_environment, run_state.create_rng("craps_luck_roll"), {"craps_pending_bets": {"pass_line": 10}})
-		if int(result.get("luck_payout_bonus", 0)) > 0:
-			saw_lucky_win = true
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CRAPS-LUCK-CONTRACT")
+	run_state.bankroll = 1000
+	run_state.baseline_luck = 5
+	var environment := _surface_contract_environment()
+	environment["id"] = "craps_luck_fixture"
+	environment["game_ids"] = ["craps"]
+	var table := game.generate_environment_state(run_state, environment, run_state.create_rng("craps_luck_table"))
+	environment["game_states"] = {"craps": table}
+	run_state.current_environment = environment
+	var rules := _craps_dict(table.get("rules", {}))
+	var natural_seed := 0
+	for candidate_seed in range(1, 10000):
+		var probe := RngStream.new()
+		probe.configure(candidate_seed)
+		var probe_roll := CrapsRulesScript.roll_dice(probe, rules, 0)
+		if _craps_array(rules.get("come_out_naturals", [])).has(int(probe_roll.get("total", 0))):
+			natural_seed = candidate_seed
 			break
-	if not saw_lucky_win:
-		failures.append("Craps wins did not honor RunState's existing effective-luck payout seam.")
+	if natural_seed == 0:
+		failures.append("Craps luck fixture could not find a deterministic authored natural.")
+		return
+	var resolution_rng := RngStream.new()
+	resolution_rng.configure(natural_seed)
+	var expected_bonus := run_state.luck_payout_bonus(10, true)
+	var result := game.resolve_with_context("roll_craps", 10, run_state, run_state.current_environment, resolution_rng, {"craps_pending_bets": {"pass_line": 10}})
+	var resolved_total := int(_craps_dict(result.get("craps_roll", {})).get("total", 0))
+	if not _craps_array(rules.get("come_out_naturals", [])).has(resolved_total):
+		failures.append("Craps luck fixture did not replay its deterministic authored natural.")
+	elif expected_bonus <= 0 or int(result.get("luck_payout_bonus", 0)) != expected_bonus:
+		failures.append("Craps win did not apply RunState's exact luck_payout_bonus seam.")
 
 
 func _check_craps_energy_projection(game: GameModule, base_table: Dictionary, failures: Array) -> void:
