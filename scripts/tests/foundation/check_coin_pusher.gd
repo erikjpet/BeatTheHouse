@@ -15,6 +15,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_surface_liveness(game, failures)
 	_check_coin_pusher_determinism(game, failures)
 	_check_coin_pusher_security_bands(game, failures)
+	_check_coin_pusher_force_matrix(game, definition, failures)
 	_check_coin_pusher_nudge_alarm(game, library, failures)
 	_check_coin_pusher_persistence_and_reset(game, failures)
 	_check_coin_pusher_prize_items(game, failures)
@@ -26,7 +27,7 @@ func _check_coin_pusher_data_contract(library: ContentLibrary, definition: Dicti
 	if str(definition.get("module_path", "")) != "res://scripts/games/coin_pusher.gd" or str(definition.get("family", "")) != "coin_pusher":
 		failures.append("Quarter Falls is not registered as the data-routed coin_pusher family.")
 	var tuning: Dictionary = definition.get("coin_pusher_tuning", {}) if typeof(definition.get("coin_pusher_tuning", {})) == TYPE_DICTIONARY else {}
-	for key in ["lane_count", "cell_count", "cell_capacity", "upper_phase_step", "lower_phase_step", "hard_alarm_heat", "documented_ev_band", "scenario_reset_contract", "prize_riders"]:
+	for key in ["lane_count", "cell_count", "cell_capacity", "upper_phase_step", "lower_phase_step", "nudge_forces", "hard_alarm_heat", "documented_ev_band", "scenario_reset_contract", "prize_riders"]:
 		if not tuning.has(key):
 			failures.append("Quarter Falls tuning is missing %s." % key)
 	var reset_contract: Dictionary = tuning.get("scenario_reset_contract", {}) if typeof(tuning.get("scenario_reset_contract", {})) == TYPE_DICTIONARY else {}
@@ -62,6 +63,8 @@ func _check_coin_pusher_data_contract(library: ContentLibrary, definition: Dicti
 func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> void:
 	var fixture := _coin_pusher_fixture(game, "PUSHER-LIVENESS")
 	var run_state: RunState = fixture.get("run_state")
+	var machine: Dictionary = (run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	machine["riders"] = [{"id": "visible_rider", "kind": "chip_stack", "label": "chip stack", "item_id": "", "cash_value": 4, "lane": 1, "cell": 2, "push": 1}]
 	var surface := game.surface_state(run_state, run_state.current_environment, {"surface_time_msec": 1000})
 	if str(surface.get("surface_renderer", "")) != "coin_pusher" or not bool(surface.get("surface_controls_native", false)):
 		failures.append("Quarter Falls did not expose its native machine surface.")
@@ -69,23 +72,50 @@ func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> v
 		failures.append("Quarter Falls must not rebuild its pile snapshot per frame.")
 	_check_idle_animation_liveness_contract(surface, "Quarter Falls attract surface", failures)
 	_check_surface_visual_motion_advances(game, surface, "Quarter Falls attract surface", failures)
+	var approaches: Array = []
+	for lane_value in surface.get("coin_pusher_lanes", []):
+		if typeof(lane_value) == TYPE_DICTIONARY:
+			approaches.append(int((lane_value as Dictionary).get("approach", 99)))
+	if JSON.stringify(approaches) != JSON.stringify([-2, -1, 0, 1, 2]):
+		failures.append("Quarter Falls surface did not expose five distinct lane approach identities.")
+	if (surface.get("coin_pusher_riders", []) as Array).size() != 1:
+		failures.append("Quarter Falls surface did not expose the prize rider ON its pile.")
+	var digest_before_render := game.deterministic_state_digest(run_state.current_environment)
 	var harness := SurfaceHarness.new()
 	harness.setup(surface)
+	harness.flicker_value = 0.0
 	game.draw_surface(harness, surface, {"contract_harness": true})
 	for action in ["coin_pusher_lane", "coin_pusher_force", "coin_pusher_direction", "coin_pusher_drop", "coin_pusher_nudge"]:
 		if not _surface_harness_has_action(harness, action):
 			failures.append("Quarter Falls renderer is missing native action %s." % action)
+	for approach_label in ["L2", "L1", "C", "R1", "R2"]:
+		if not harness.labels.has(approach_label):
+			failures.append("Quarter Falls renderer did not visibly label approach %s." % approach_label)
+	var rider_position_a := _coin_pusher_label_position(harness, "R:")
+	var moving_harness := SurfaceHarness.new()
+	moving_harness.setup(surface)
+	moving_harness.flicker_value = 1.0
+	game.draw_surface(moving_harness, surface, {"contract_harness": true})
+	var rider_position_b := _coin_pusher_label_position(moving_harness, "R:")
+	if rider_position_a == Vector2.INF or rider_position_b == Vector2.INF:
+		failures.append("Quarter Falls renderer did not draw a visible prize-rider glyph/label.")
+	elif rider_position_a.is_equal_approx(rider_position_b):
+		failures.append("Quarter Falls visible prize rider did not move with presentation time.")
+	if game.deterministic_state_digest(run_state.current_environment) != digest_before_render:
+		failures.append("Quarter Falls rider/approach rendering mutated the persisted pile per frame.")
 
 
 func _check_coin_pusher_determinism(game: GameModule, failures: Array) -> void:
-	var first := _coin_pusher_scripted_session(game, "PUSHER-200", PUSHER_DETERMINISM_ACTIONS)
-	var second := _coin_pusher_scripted_session(game, "PUSHER-200", PUSHER_DETERMINISM_ACTIONS)
+	var first := _coin_pusher_mixed_scripted_session(game, "PUSHER-200", PUSHER_DETERMINISM_ACTIONS)
+	var second := _coin_pusher_mixed_scripted_session(game, "PUSHER-200", PUSHER_DETERMINISM_ACTIONS)
 	if str(first.get("digest", "")) != str(second.get("digest", "")):
 		failures.append("Quarter Falls 200-action pile evolution diverged for identical seed and inputs.")
 	if JSON.stringify(first.get("outcomes", [])) != JSON.stringify(second.get("outcomes", [])):
 		failures.append("Quarter Falls 200-action payouts/gutters diverged for identical seed and inputs.")
 	if int(first.get("actions", 0)) != PUSHER_DETERMINISM_ACTIONS:
 		failures.append("Quarter Falls deterministic fixture did not complete all 200 actions.")
+	if int(first.get("nudge_count", 0)) <= 0 or int(first.get("alarm_count", 0)) <= 0:
+		failures.append("Quarter Falls 200-action twin replay did not cover mixed nudges and alarm outcomes.")
 
 
 func _check_coin_pusher_security_bands(game: GameModule, failures: Array) -> void:
@@ -135,6 +165,86 @@ func _check_coin_pusher_security_bands(game: GameModule, failures: Array) -> voi
 	var public_surface := game.surface_state(run_state, {"id": "hidden", "game_states": {"coin_pusher": normal_state}}, {})
 	if public_surface.has("alarm_tolerance_remaining") or public_surface.has("base_alarm_tolerance"):
 		failures.append("Quarter Falls leaked hidden machine tolerance into its public surface.")
+	_check_coin_pusher_production_swept_window(game, base_seed, failures)
+
+
+func _check_coin_pusher_force_matrix(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	var tuning: Dictionary = definition.get("coin_pusher_tuning", {}) if typeof(definition.get("coin_pusher_tuning", {})) == TYPE_DICTIONARY else {}
+	var forces: Dictionary = tuning.get("nudge_forces", {}) if typeof(tuning.get("nudge_forces", {})) == TYPE_DICTIONARY else {}
+	var expected := {"tap": [1, 1, 1], "shove": [2, 2, 2], "slam": [4, 4, 6]}
+	for force_value in expected.keys():
+		var force := str(force_value)
+		var expected_values: Array = expected.get(force, [])
+		var force_data: Dictionary = forces.get(force, {}) if typeof(forces.get(force, {})) == TYPE_DICTIONARY else {}
+		if int(force_data.get("tolerance_cost", -1)) != int(expected_values[0]) or int(force_data.get("push_strength", -1)) != int(expected_values[1]):
+			failures.append("Quarter Falls %s force is not fully data-authored at tolerance/push %s." % [force, JSON.stringify(expected_values.slice(0, 2))])
+		var bad_fixture := _coin_pusher_fixture(game, "PUSHER-FORCE-BAD-%s" % force.to_upper())
+		var bad_run: RunState = bad_fixture.get("run_state")
+		var bad_machine: Dictionary = (bad_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+		bad_machine["alarm_tolerance_remaining"] = 10
+		var bad_result := game.resolve_with_context("nudge_machine", 0, bad_run, bad_run.current_environment, bad_run.create_rng("force_bad"), {
+			"coin_pusher_force": force, "coin_pusher_direction": "front", "coin_pusher_lane": 2, "coin_pusher_timing_phase": 9,
+		})
+		if int(bad_result.get("coin_pusher_tolerance_spent", -1)) != int(expected_values[0]) \
+				or int(bad_result.get("coin_pusher_force_push", -1)) != int(expected_values[1]) \
+				or int(bad_machine.get("alarm_tolerance_remaining", -1)) != 10 - int(expected_values[0]):
+			failures.append("Mistimed %s did not spend/publish its exact authored tolerance and push trade." % force)
+		var clean_fixture := _coin_pusher_fixture(game, "PUSHER-FORCE-CLEAN-%s" % force.to_upper())
+		var clean_run: RunState = clean_fixture.get("run_state")
+		var clean_machine: Dictionary = (clean_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+		_machine_hanger_fixture(clean_machine, 2)
+		clean_machine["alarm_tolerance_remaining"] = 10
+		var clean_result := game.resolve_with_context("nudge_machine", 0, clean_run, clean_run.current_environment, clean_run.create_rng("force_clean"), {
+			"coin_pusher_force": force, "coin_pusher_direction": "front", "coin_pusher_lane": 2, "coin_pusher_timing_phase": 3,
+		})
+		if not bool(clean_result.get("coin_pusher_clean_drop", false)) or int(clean_result.get("coin_pusher_tolerance_spent", -1)) != 0 \
+				or int(clean_result.get("coin_pusher_push_strength", -1)) != int(expected_values[2]):
+			failures.append("Clean %s did not preserve tolerance and apply its authored push trade." % force)
+
+
+func _check_coin_pusher_production_swept_window(game: GameModule, base_seed: int, failures: Array) -> void:
+	var town := TownStateScript.new()
+	town.generate(4021, _coin_pusher_sweep_conditions())
+	town.configure_world(_coin_pusher_sweep_map())
+	var status := town.sweep_internal_status()
+	if status.is_empty() or town.police_sweep.segments.is_empty():
+		failures.append("Quarter Falls production swept-window fixture did not spawn a Police Sweep track.")
+		return
+	var first_segment: Dictionary = town.police_sweep.segments[0] as Dictionary
+	var departed_node := str(first_segment.get("node_id", ""))
+	town.advance_actions(int(first_segment.get("end_action", 2)))
+	var window := town.swept_window(departed_node)
+	if window.is_empty():
+		failures.append("Quarter Falls production swept-window fixture did not create a wake window.")
+		return
+	var sweep_run: RunState = RunStateScript.new()
+	sweep_run.start_new("PUSHER-PRODUCTION-SWEEP")
+	sweep_run.town_state = town
+	var baseline_environment := _coin_pusher_environment(departed_node)
+	baseline_environment["world_node_id"] = departed_node
+	baseline_environment["security_profile"] = {"machine_alarm_tolerance_band": "normal"}
+	var baseline_state := game.generate_environment_state(sweep_run, baseline_environment, _configured_rng(base_seed))
+	var swept_environment := baseline_environment.duplicate(true)
+	sweep_run.apply_town_living_world_context(swept_environment)
+	var swept_security: Dictionary = swept_environment.get("security_profile", {}) if typeof(swept_environment.get("security_profile", {})) == TYPE_DICTIONARY else {}
+	var channels: Dictionary = swept_security.get("security_override_channels", {}) if typeof(swept_security.get("security_override_channels", {})) == TYPE_DICTIONARY else {}
+	if typeof(channels.get("police_sweep", {})) != TYPE_DICTIONARY or str(swept_security.get("machine_alarm_tolerance_band", "")) != "lax":
+		failures.append("Production Police Sweep did not compose its visible band and source channel for Quarter Falls.")
+	var swept_state := game.generate_environment_state(sweep_run, swept_environment, _configured_rng(base_seed))
+	if int(swept_state.get("alarm_tolerance_remaining", 0)) != int(baseline_state.get("alarm_tolerance_remaining", 0)) + 1:
+		failures.append("Production swept-window composition did not grant exactly baseline +1 pusher tolerance.")
+	var swept_surface := game.surface_state(sweep_run, {"id": departed_node, "game_states": {"coin_pusher": swept_state}}, {})
+	if swept_surface.has("alarm_tolerance_remaining") or swept_surface.has("base_alarm_tolerance"):
+		failures.append("Production swept-window tolerance leaked its hidden value into the pusher surface.")
+	town.advance_actions(int(window.get("remaining_actions", 0)))
+	sweep_run.apply_town_living_world_context(swept_environment)
+	var restored_security: Dictionary = swept_environment.get("security_profile", {}) if typeof(swept_environment.get("security_profile", {})) == TYPE_DICTIONARY else {}
+	var restored_channels: Dictionary = restored_security.get("security_override_channels", {}) if typeof(restored_security.get("security_override_channels", {})) == TYPE_DICTIONARY else {}
+	if str(restored_security.get("machine_alarm_tolerance_band", "")) != "normal" or restored_security.has("pusher_alarm_tolerance_band_delta") or restored_channels.has("police_sweep"):
+		failures.append("Expired Police Sweep window did not restore its authored security fields/channel.")
+	var restored_state := game.generate_environment_state(sweep_run, swept_environment, _configured_rng(base_seed))
+	if int(restored_state.get("alarm_tolerance_remaining", 0)) != int(baseline_state.get("alarm_tolerance_remaining", 0)):
+		failures.append("Expired Police Sweep window did not restore baseline pusher tolerance exactly.")
 
 
 func _check_coin_pusher_nudge_alarm(game: GameModule, library: ContentLibrary, failures: Array) -> void:
@@ -369,6 +479,56 @@ func _coin_pusher_scripted_session(game: GameModule, seed_text: String, action_c
 	return {"digest": game.deterministic_state_digest(run_state.current_environment), "outcomes": outcomes, "actions": outcomes.size(), "payout": payout, "cost": cost}
 
 
+func _coin_pusher_mixed_scripted_session(game: GameModule, seed_text: String, action_count: int) -> Dictionary:
+	var fixture := _coin_pusher_fixture(game, seed_text)
+	var run_state: RunState = fixture.get("run_state")
+	var rng := run_state.create_rng("mixed_scripted_session")
+	var outcomes: Array = []
+	var alarm_count := 0
+	var nudge_count := 0
+	var forces := ["tap", "shove", "slam"]
+	var directions := ["left", "right", "front"]
+	for index in range(action_count):
+		var result: Dictionary = {}
+		var action_id := "drop_quarter"
+		if index % 4 == 3:
+			action_id = "nudge_machine"
+			var nudge_index := int(index / 4)
+			var force := str(forces[nudge_index % forces.size()])
+			var direction := str(directions[nudge_index % directions.size()])
+			result = game.resolve_with_context(action_id, 0, run_state, run_state.current_environment, rng, {
+				"coin_pusher_force": force, "coin_pusher_direction": direction, "coin_pusher_lane": index % 5, "coin_pusher_timing_phase": 9,
+			})
+			nudge_count += 1
+		else:
+			result = game.resolve_with_context(action_id, 1, run_state, run_state.current_environment, rng, {"coin_pusher_lane": index % 5})
+		if not bool(result.get("ok", false)):
+			break
+		outcomes.append([
+			action_id,
+			int(result.get("coin_pusher_payout", 0)),
+			bool(result.get("coin_pusher_gutter", false)),
+			bool(result.get("coin_pusher_clean_drop", false)),
+			bool(result.get("coin_pusher_hard_alarm", false)),
+			int(result.get("coin_pusher_tolerance_spent", 0)),
+			int(result.get("coin_pusher_tell_rung", 0)),
+			int(result.get("coin_pusher_force_push", 0)),
+			int(result.get("coin_pusher_push_strength", 0)),
+		])
+		GameModule.apply_result(run_state, result, rng)
+		if bool(result.get("coin_pusher_hard_alarm", false)):
+			alarm_count += 1
+			run_state.advance_game_clock_minutes(1440)
+			game.enter(run_state, run_state.current_environment)
+	return {
+		"digest": game.deterministic_state_digest(run_state.current_environment),
+		"outcomes": outcomes,
+		"actions": outcomes.size(),
+		"alarm_count": alarm_count,
+		"nudge_count": nudge_count,
+	}
+
+
 func _coin_pusher_fixture(game: GameModule, seed_text: String) -> Dictionary:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed_text)
@@ -466,6 +626,62 @@ func _coin_pusher_seed_for_roll(gutter: bool) -> int:
 		if (gutter and roll <= 24) or (not gutter and roll > 12):
 			return seed_value
 	return 1
+
+
+func _coin_pusher_label_position(harness: SurfaceHarness, prefix: String) -> Vector2:
+	for record_value in harness.label_records:
+		if typeof(record_value) != TYPE_DICTIONARY:
+			continue
+		var record: Dictionary = record_value
+		if not str(record.get("text", "")).begins_with(prefix):
+			continue
+		var rect_value: Variant = record.get("rect", Rect2())
+		if typeof(rect_value) == TYPE_RECT2:
+			var rect: Rect2 = rect_value
+			return rect.position
+	return Vector2.INF
+
+
+func _coin_pusher_sweep_conditions() -> Dictionary:
+	return {
+		"schema_version": 1,
+		"turn_horizon": 24,
+		"weather_states": [{"id": "clear", "dwell_actions": [24, 24], "modifiers": {}}],
+		"calendar": {"cycle": [{"id": "midweek", "duration_actions": 24, "modifiers": {}}]},
+		"happenings": {
+			"count_range": [1, 1],
+			"definitions": [{
+				"id": "police_sweep",
+				"display_name": "Police Sweep",
+				"spawn_chance_percent": 100,
+				"start_action_range": [0, 0],
+				"duration_actions": [8, 8],
+				"modifiers": {"town_flags": ["police_sweep"]},
+				"sweep": {
+					"dwell_actions": [2, 2],
+					"swept_window_actions": 3,
+					"adjacent_sighting_chance_percent": 100,
+				},
+			}],
+		},
+	}
+
+
+func _coin_pusher_sweep_map() -> Dictionary:
+	return {
+		"start_node_id": "back_alley",
+		"current_node_id": "back_alley",
+		"nodes": [
+			{"id": "back_alley", "label": "Back Alley", "kind": "street", "tier": 1},
+			{"id": "pawn_shop", "label": "Pawn Shop", "kind": "shop", "tier": 1},
+			{"id": "bar", "label": "Bar", "kind": "casino", "tier": 1},
+		],
+		"edges": [
+			{"a": "back_alley", "b": "pawn_shop"},
+			{"a": "pawn_shop", "b": "bar"},
+		],
+		"visited_path": ["back_alley"],
+	}
 
 
 func _configured_rng(seed_value: int) -> RngStream:

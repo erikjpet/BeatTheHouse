@@ -3132,6 +3132,11 @@
       "lower_phase_step": 5,
       "clean_nudge_phase": 3,
       "clean_nudge_window_steps": 1,
+      "nudge_forces": {
+        "tap": {"tolerance_cost": 1, "push_strength": 1},
+        "shove": {"tolerance_cost": 2, "push_strength": 2},
+        "slam": {"tolerance_cost": 4, "push_strength": 4}
+      },
       "shelf_push_percent": 78,
       "nudge_push_percent": 94,
       "gutter_edge_percent": 24,

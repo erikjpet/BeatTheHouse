@@ -12,8 +12,6 @@ const RUMOR_CLASS := "pusher_pile"
 const PHASE_STEPS := 12
 const FORCE_ORDER := ["tap", "shove", "slam"]
 const DIRECTION_ORDER := ["left", "right", "front"]
-const FORCE_TOLERANCE := {"tap": 1, "shove": 2, "slam": 4}
-const FORCE_PUSH := {"tap": 1, "shove": 2, "slam": 4}
 const SECURITY_BAND_DELTA := {
 	"lax": 2,
 	"relaxed": 1,
@@ -111,6 +109,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_time_msec": int(ui_state.get("surface_time_msec", 1)),
 		"coin_pusher_cells": _cell_views(machine),
 		"coin_pusher_riders": _rider_views(machine),
+		"coin_pusher_lanes": _lane_views(machine),
 		"coin_pusher_lane": selected_lane,
 		"coin_pusher_force": force,
 		"coin_pusher_direction": direction,
@@ -182,6 +181,8 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 	_draw_shelf(surface, 80.0 + attract_shift, int(state.get("coin_pusher_upper_phase", 0)), C_TEAL)
 	_draw_shelf(surface, 225.0 - attract_shift, int(state.get("coin_pusher_lower_phase", 0)), Color("#ff8e5b"))
 	_draw_cells(surface, state)
+	_draw_lane_approaches(surface, state)
+	_draw_riders(surface, state)
 	_draw_console(surface, state)
 	surface.surface_end_design_space()
 	return true
@@ -295,11 +296,12 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 	var clean_window := _clean_window()
 	var aimed := _direction_matches_hanger(machine, direction, lane)
 	var clean := phase_distance <= clean_window and aimed
-	var tolerance_cost := 0 if clean else int(FORCE_TOLERANCE.get(force, 1))
+	var authored_push := _force_push_strength(force)
+	var tolerance_cost := 0 if clean else _force_tolerance_cost(force)
 	var tolerance_before := int(machine.get("alarm_tolerance_remaining", 1))
 	var previous_tell := int(machine.get("tell_rung", 0))
 	machine["alarm_tolerance_remaining"] = tolerance_before - tolerance_cost
-	var push_strength := int(FORCE_PUSH.get(force, 1)) if clean else maxi(0, int(FORCE_PUSH.get(force, 1)) - 2)
+	var push_strength := authored_push if clean else maxi(0, authored_push - 2)
 	if force == "slam":
 		push_strength += _slam_bonus_push()
 	var settle := _settle_shelves(machine, rng, push_strength, lane, true, direction)
@@ -356,6 +358,8 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 	result["coin_pusher_tell_rung"] = int(machine.get("tell_rung", 0))
 	result["coin_pusher_clean_drop"] = clean
 	result["coin_pusher_tolerance_spent"] = tolerance_cost
+	result["coin_pusher_force_push"] = authored_push
+	result["coin_pusher_push_strength"] = push_strength
 	result["coin_pusher_payout"] = payout
 	result["coin_pusher_prizes"] = prizes
 	result["preserve_surface_ui_state"] = true
@@ -592,7 +596,14 @@ func _nudge_affects_lane(direction: String, aimed_lane: int, lane: int) -> bool:
 func _security_tolerance_delta(environment: Dictionary, run_state: RunState = null) -> int:
 	var security: Dictionary = environment.get("security_profile", {}) if typeof(environment.get("security_profile", {})) == TYPE_DICTIONARY else {}
 	var band := str(security.get("machine_alarm_tolerance_band", security.get("strictness", "normal"))).to_lower()
-	var direct_delta := int(SECURITY_BAND_DELTA.get(band, 0)) + int(security.get("pusher_alarm_tolerance_band_delta", 0))
+	var channels: Dictionary = security.get("security_override_channels", {}) if typeof(security.get("security_override_channels", {})) == TYPE_DICTIONARY else {}
+	var sweep: Dictionary = channels.get("police_sweep", {}) if typeof(channels.get("police_sweep", {})) == TYPE_DICTIONARY else {}
+	var direct_delta := 0
+	if sweep.is_empty():
+		direct_delta = int(SECURITY_BAND_DELTA.get(band, 0)) + int(security.get("pusher_alarm_tolerance_band_delta", 0))
+	else:
+		var base_band := str(sweep.get("base_machine_alarm_tolerance_band", "normal")).to_lower()
+		direct_delta = int(SECURITY_BAND_DELTA.get(base_band, 0)) + int(sweep.get("pusher_alarm_tolerance_band_delta", security.get("pusher_alarm_tolerance_band_delta", 0)))
 	var adjacent_delta := _adjacent_scenario_tolerance_delta(run_state)
 	return direct_delta if adjacent_delta == 0 else mini(direct_delta, adjacent_delta)
 
@@ -814,7 +825,16 @@ func _rider_views(machine: Dictionary) -> Array:
 	for value in riders:
 		if typeof(value) == TYPE_DICTIONARY:
 			var rider: Dictionary = value
-			result.append({"label": str(rider.get("label", "prize")), "lane": int(rider.get("lane", 0)), "cell": int(rider.get("cell", 0)), "push": int(rider.get("push", 0))})
+			result.append({"label": str(rider.get("label", "prize")), "kind": str(rider.get("kind", "prize")), "lane": int(rider.get("lane", 0)), "cell": int(rider.get("cell", 0)), "push": int(rider.get("push", 0))})
+	return result
+
+
+func _lane_views(machine: Dictionary) -> Array:
+	var result: Array = []
+	var lanes: Array = machine.get("lanes", []) if typeof(machine.get("lanes", [])) == TYPE_ARRAY else []
+	for lane_index in range(lanes.size()):
+		var lane: Dictionary = lanes[lane_index] if typeof(lanes[lane_index]) == TYPE_DICTIONARY else {}
+		result.append({"lane": lane_index, "approach": int(lane.get("approach", lane_index - (_lane_count() / 2)))})
 	return result
 
 
@@ -859,6 +879,39 @@ func _draw_cells(surface, state: Dictionary) -> void:
 		surface.draw_rect(button, C_TEAL if lane == selected_lane else C_CASE)
 		surface.surface_label_centered("LANE %d" % (lane + 1), button, 8, C_BG if lane == selected_lane else C_TEXT)
 		surface.surface_add_exact_hit(button, "coin_pusher_lane", lane)
+
+
+func _draw_lane_approaches(surface, state: Dictionary) -> void:
+	for value in state.get("coin_pusher_lanes", []):
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var lane: Dictionary = value
+		var lane_index := int(lane.get("lane", 0))
+		var approach := int(lane.get("approach", 0))
+		var center := Vector2(125.0 + float(lane_index) * 103.0, 327.0)
+		surface.draw_line(center + Vector2(float(approach) * 5.0, -17.0), center, C_TEAL, 2.0)
+		var label := "C"
+		if approach < 0:
+			label = "L%d" % absi(approach)
+		elif approach > 0:
+			label = "R%d" % approach
+		surface.surface_label_centered(label, Rect2(center.x - 20.0, center.y - 14.0, 40.0, 12.0), 6, C_TEXT)
+
+
+func _draw_riders(surface, state: Dictionary) -> void:
+	var flicker := float(surface.surface_flicker())
+	for value in state.get("coin_pusher_riders", []):
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var rider: Dictionary = value
+		var lane := int(rider.get("lane", 0))
+		var cell := int(rider.get("cell", 0))
+		var progress := clampf(float(int(rider.get("push", 0))) / float(_rider_push_threshold()), 0.0, 1.0)
+		var bob := sin(flicker * 3.0 + float(lane) * 0.7) * 2.5
+		var position := Vector2(105.0 + float(lane) * 103.0, 276.0 - float(cell) * 38.0 + progress * 18.0 + bob)
+		surface.draw_circle(position, 8.0, C_HANG)
+		surface.draw_circle(position, 5.0, C_COIN)
+		surface.surface_label("R:%s" % str(rider.get("label", "prize")).left(9).to_upper(), position + Vector2(10.0, 3.0), 6, C_TEXT)
 
 
 func _draw_console(surface, state: Dictionary) -> void:
@@ -918,6 +971,20 @@ func _tuning() -> Dictionary:
 
 func _int_tuning(key: String, fallback: int) -> int:
 	return int(_tuning().get(key, fallback))
+
+
+func _force_tolerance_cost(force: String) -> int:
+	return maxi(0, int(_force_tuning(force).get("tolerance_cost", 1)))
+
+
+func _force_push_strength(force: String) -> int:
+	return maxi(0, int(_force_tuning(force).get("push_strength", 1)))
+
+
+func _force_tuning(force: String) -> Dictionary:
+	var forces: Dictionary = _tuning().get("nudge_forces", {}) if typeof(_tuning().get("nudge_forces", {})) == TYPE_DICTIONARY else {}
+	var value: Variant = forces.get(force, {})
+	return value if typeof(value) == TYPE_DICTIONARY else {}
 
 
 func _lane_count() -> int:
