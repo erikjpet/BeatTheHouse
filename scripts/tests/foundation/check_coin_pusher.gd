@@ -80,7 +80,7 @@ func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> v
 		failures.append("Quarter Falls surface did not expose five distinct lane approach identities.")
 	if (surface.get("coin_pusher_riders", []) as Array).size() != 1:
 		failures.append("Quarter Falls surface did not expose the prize rider ON its pile.")
-	var digest_before_render := game.deterministic_state_digest(run_state.current_environment)
+	var digest_before_render: String = game.deterministic_state_digest(run_state.current_environment)
 	var harness := SurfaceHarness.new()
 	harness.setup(surface)
 	harness.flicker_value = 0.0
