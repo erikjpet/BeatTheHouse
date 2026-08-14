@@ -74,7 +74,9 @@ func wager_cost_for_context(action_id: String, _stake: int, _run_state: RunState
 
 
 func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
-	return _generate_machine_state(run_state, environment, rng)
+	var machine := _generate_machine_state(run_state, environment, rng)
+	_initialize_owned_shim(run_state, machine)
+	return machine
 
 
 func environment_state_generated(run_state: RunState, environment: Dictionary, generated_state: Dictionary) -> void:
@@ -448,9 +450,7 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 		machine["tolerance_modifier"] = _security_tolerance_delta(environment, run_state)
 		machine["alarm_tolerance_remaining"] = maxi(1, int(machine.get("base_alarm_tolerance", _tolerance_min())) + int(machine.get("tolerance_modifier", 0)))
 		machine["tell_rung"] = 0
-	if run_state != null and not bool(machine.get("shim_initialized", false)) and run_state.inventory.has(SHIM_ITEM_ID):
-		machine["shim_initialized"] = true
-		machine["shim_uses_remaining"] = _shim_uses(run_state)
+	_initialize_owned_shim(run_state, machine)
 	if persist:
 		_write_machine_state(environment, machine)
 	return machine
@@ -464,6 +464,13 @@ func _write_machine_state(environment: Dictionary, machine: Dictionary) -> void:
 	var game_states := _game_states(environment).duplicate(false)
 	game_states[get_id()] = machine
 	environment["game_states"] = game_states
+
+
+func _initialize_owned_shim(run_state: RunState, machine: Dictionary) -> void:
+	if run_state == null or bool(machine.get("shim_initialized", false)) or not run_state.inventory.has(SHIM_ITEM_ID):
+		return
+	machine["shim_initialized"] = true
+	machine["shim_uses_remaining"] = _shim_uses(run_state)
 
 
 func _game_states(environment: Dictionary) -> Dictionary:

@@ -115,11 +115,15 @@ func _check_coin_pusher_read_boundaries(game: GameModule, failures: Array) -> vo
 	var fixture := _coin_pusher_fixture(game, "PUSHER-READ-BOUNDARY")
 	var run_state: RunState = fixture.get("run_state")
 	var environment: Dictionary = run_state.current_environment
+	run_state.add_item("coin_return_shim")
 	var generation_environment := _coin_pusher_environment("pusher_generation_boundary")
 	var generator := RunGeneratorScript.new(game.library)
 	var generated_states: Dictionary = generator._generated_game_states(run_state, generation_environment, run_state.create_rng("pusher_generation_boundary"))
 	if not generated_states.has("coin_pusher") or run_state.rumor_fact("pusher:bar").is_empty():
 		failures.append("Quarter Falls canonical environment generation did not publish its initial node-scoped pile rumor.")
+	var generated_machine: Dictionary = generated_states.get("coin_pusher", {}) if typeof(generated_states.get("coin_pusher", {})) == TYPE_DICTIONARY else {}
+	if not bool(generated_machine.get("shim_initialized", false)) or int(generated_machine.get("shim_uses_remaining", 0)) != 3:
+		failures.append("Quarter Falls canonical environment generation did not persist the owned Coin-Return Shim state.")
 	var machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	# Exercise every branch that previously wrote through a read alias.
 	machine["locked_down"] = true
@@ -133,6 +137,13 @@ func _check_coin_pusher_read_boundaries(game: GameModule, failures: Array) -> vo
 	var serialized_after := JSON.stringify(run_state.to_dict())
 	if serialized_before != serialized_after:
 		failures.append("Quarter Falls enter/actions/surface reads mutated serialized RunState.")
+	environment["scenario_game_modifiers"] = {"coin_pusher": {"reset_pile": true, "reset_token": "read_boundary_reset"}}
+	var serialized_before_reset_read := JSON.stringify(run_state.to_dict())
+	game.enter(run_state, environment)
+	game.actions(run_state, environment)
+	game.surface_state(run_state, environment, {})
+	if serialized_before_reset_read != JSON.stringify(run_state.to_dict()):
+		failures.append("Quarter Falls scenario-reset presentation reads mutated serialized RunState.")
 
 
 func _check_coin_pusher_determinism(game: GameModule, failures: Array) -> void:
@@ -351,6 +362,7 @@ func _check_coin_pusher_nudge_alarm(game: GameModule, library: ContentLibrary, f
 	game.enter(run_state, environment)
 	if serialized_before_watch_entry != JSON.stringify(run_state.to_dict()):
 		failures.append("Quarter Falls staff-watch revisit mutated serialized RunState during surface entry.")
+	run_state.advance_game_clock_minutes(1440)
 	var watched_drop := game.resolve_with_context("drop_quarter", 1, run_state, environment, run_state.create_rng("staff_watch_drop"), {"coin_pusher_lane": 2})
 	if int(watched_drop.get("suspicion_delta", 0)) < 12:
 		failures.append("Quarter Falls staff-watch memory did not restore its venue-scoped floor at the next action boundary.")
@@ -411,14 +423,18 @@ func _check_coin_pusher_persistence_and_reset(game: GameModule, failures: Array)
 			or not bool(revisited_machine.get("locked_down", false)) or not bool(revisited_machine.get("staff_watch_memory", false)):
 		failures.append("Production RunGenerator revisit did not restore the exact Quarter Falls pile, lockdown, and staff memory.")
 	restored.current_environment["scenario_game_modifiers"] = {"coin_pusher": {"reset_pile": true, "reset_token": "someone_else_played_a"}}
-	game.enter(restored, restored.current_environment)
+	var reset_result := game.resolve_with_context("drop_quarter", 1, restored, restored.current_environment, restored.create_rng("scenario_reset_action"), {"coin_pusher_lane": 2})
+	GameModule.apply_result(restored, reset_result, restored.create_rng("scenario_reset_action_apply"))
 	var reset_state: Dictionary = (restored.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
-	if int(reset_state.get("action_count", -1)) != 0 or game.deterministic_state_digest(restored.current_environment) == persisted_digest:
-		failures.append("Quarter Falls scenario reset token did not replace the persisted pile.")
-	var reset_digest: String = str(game.call("deterministic_state_digest", restored.current_environment))
-	game.enter(restored, restored.current_environment)
-	if game.deterministic_state_digest(restored.current_environment) != reset_digest:
-		failures.append("Quarter Falls scenario reset token reapplied more than once.")
+	if not bool(reset_result.get("ok", false)) or int(reset_state.get("action_count", -1)) != 1 \
+			or str(reset_state.get("scenario_reset_token", "")) != "someone_else_played_a" \
+			or game.deterministic_state_digest(restored.current_environment) == persisted_digest:
+		failures.append("Quarter Falls scenario reset token did not replace the persisted pile at the next action boundary.")
+	var second_reset_result := game.resolve_with_context("drop_quarter", 1, restored, restored.current_environment, restored.create_rng("scenario_reset_second_action"), {"coin_pusher_lane": 2})
+	GameModule.apply_result(restored, second_reset_result, restored.create_rng("scenario_reset_second_action_apply"))
+	reset_state = (restored.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	if int(reset_state.get("action_count", -1)) != 2 or str(reset_state.get("scenario_reset_token", "")) != "someone_else_played_a":
+		failures.append("Quarter Falls scenario reset token reapplied after its first persisted action boundary.")
 
 
 func _check_coin_pusher_prize_items(game: GameModule, failures: Array) -> void:
@@ -476,13 +492,17 @@ func _check_coin_pusher_items(game: GameModule, failures: Array) -> void:
 	var shim_fixture := _coin_pusher_fixture(game, "PUSHER-COIN-SHIM")
 	var shim_run: RunState = shim_fixture.get("run_state")
 	shim_run.add_item("coin_return_shim")
-	game.enter(shim_run, shim_run.current_environment)
+	var safe_shim_seed := _coin_pusher_seed_for_roll(false)
+	var shim_seed_drop := game.resolve_with_context("drop_quarter", 1, shim_run, shim_run.current_environment, _configured_rng(safe_shim_seed), {"coin_pusher_lane": 2})
+	GameModule.apply_result(shim_run, shim_seed_drop, shim_run.create_rng("shim_seed_drop_apply"))
 	var shim_state: Dictionary = (shim_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	var authored_uses := shim_run.item_effect_total("coin_pusher_gutter_recovery_uses", "coin_pusher")
-	if int(shim_state.get("shim_uses_remaining", 0)) != authored_uses or authored_uses != 3:
-		failures.append("Coin-Return Shim did not seed its authored limited-use recovery state.")
+	if not bool(shim_seed_drop.get("ok", false)) or bool(shim_seed_drop.get("coin_pusher_shim_recovered", false)) \
+			or not bool(shim_state.get("shim_initialized", false)) or int(shim_state.get("shim_uses_remaining", 0)) != authored_uses or authored_uses != 3:
+		failures.append("Coin-Return Shim did not seed its authored limited-use recovery state at the next real drop boundary.")
 	var gutter_seed := _coin_pusher_seed_for_roll(true)
 	var shim_drop := game.resolve_with_context("drop_quarter", 1, shim_run, shim_run.current_environment, _configured_rng(gutter_seed), {"coin_pusher_lane": 0})
+	GameModule.apply_result(shim_run, shim_drop, shim_run.create_rng("shim_gutter_drop_apply"))
 	shim_state = (shim_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	if not bool(shim_drop.get("coin_pusher_shim_recovered", false)) or bool(shim_drop.get("coin_pusher_gutter", true)) or int(shim_state.get("shim_uses_remaining", -1)) != authored_uses - 1:
 		failures.append("Coin-Return Shim effect was not consumed by a real edge-gutter drop action.")
