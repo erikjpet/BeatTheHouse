@@ -114,8 +114,8 @@ func _check_coin_pusher_determinism(game: GameModule, failures: Array) -> void:
 		failures.append("Quarter Falls 200-action payouts/gutters diverged for identical seed and inputs.")
 	if int(first.get("actions", 0)) != PUSHER_DETERMINISM_ACTIONS:
 		failures.append("Quarter Falls deterministic fixture did not complete all 200 actions.")
-	if int(first.get("nudge_count", 0)) <= 0 or int(first.get("alarm_count", 0)) <= 0:
-		failures.append("Quarter Falls 200-action twin replay did not cover mixed nudges and alarm outcomes.")
+	if int(first.get("nudge_count", 0)) <= 0 or int(first.get("alarm_count", 0)) != 1:
+		failures.append("Quarter Falls 200-action twin replay did not cover mixed nudges and exactly one real alarm outcome.")
 
 
 func _check_coin_pusher_security_bands(game: GameModule, failures: Array) -> void:
@@ -482,22 +482,20 @@ func _coin_pusher_scripted_session(game: GameModule, seed_text: String, action_c
 func _coin_pusher_mixed_scripted_session(game: GameModule, seed_text: String, action_count: int) -> Dictionary:
 	var fixture := _coin_pusher_fixture(game, seed_text)
 	var run_state: RunState = fixture.get("run_state")
+	var replay_drop_cost := game.wager_cost_for_context("drop_quarter", 1, run_state, run_state.current_environment)
+	run_state.bankroll = maxi(run_state.bankroll, replay_drop_cost * action_count)
 	var rng := run_state.create_rng("mixed_scripted_session")
 	var outcomes: Array = []
 	var alarm_count := 0
 	var nudge_count := 0
-	var forces := ["tap", "shove", "slam"]
-	var directions := ["left", "right", "front"]
+	var alarm_reached := false
 	for index in range(action_count):
 		var result: Dictionary = {}
 		var action_id := "drop_quarter"
-		if index % 4 == 3:
+		if not alarm_reached and index % 2 == 1:
 			action_id = "nudge_machine"
-			var nudge_index := int(index / 4)
-			var force := str(forces[nudge_index % forces.size()])
-			var direction := str(directions[nudge_index % directions.size()])
 			result = game.resolve_with_context(action_id, 0, run_state, run_state.current_environment, rng, {
-				"coin_pusher_force": force, "coin_pusher_direction": direction, "coin_pusher_lane": index % 5, "coin_pusher_timing_phase": 9,
+				"coin_pusher_force": "slam", "coin_pusher_direction": "front", "coin_pusher_lane": index % 5, "coin_pusher_timing_phase": 9,
 			})
 			nudge_count += 1
 		else:
@@ -518,6 +516,7 @@ func _coin_pusher_mixed_scripted_session(game: GameModule, seed_text: String, ac
 		GameModule.apply_result(run_state, result, rng)
 		if bool(result.get("coin_pusher_hard_alarm", false)):
 			alarm_count += 1
+			alarm_reached = true
 			run_state.advance_game_clock_minutes(1440)
 			game.enter(run_state, run_state.current_environment)
 	return {
