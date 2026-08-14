@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `town06_2` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-14
+- **Completion/implementation commits:** `0b8a59e7` (implementation), `aefa5c20` (acceptance coverage), `8f354383` (canonical pre-seed preservation), `d496b69b` / `471a2717` (Punchline and main integration)
+- **Verification:** PM combined-tree PASS: systems (`.tmp/pm_wave_b_town06_2_systems`), UI (`.tmp/pm_wave_b_town06_2_ui`), determinism 10 seeds / 320 checkpoints / hash `1634084723`, visual QA, 20-seed rumor truth sweep, heard-tier/scouting separation, traveler presence/decay, Silas gating, reputation hop propagation and writer coverage, save round-trip, and pre-0.6 migration.
+- **Deviations:** Code reality required a separate partial `heard` payload instead of setting the existing full-detail `scouted` boolean. Canonical pre-seeded scenario definitions are stored separately from public rumor snapshots so tutorial mutation suppression remains exact; both decisions are generic, serialized, and board-logged.
 
 # Agent Prompt — 0.6 town06_2: Rumors, Travelers, Traveling Reputation
 

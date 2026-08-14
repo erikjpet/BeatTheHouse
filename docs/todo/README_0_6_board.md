@@ -74,7 +74,7 @@ Wave C games are intentionally parallel-friendly.
 | env06_2 | `env06_2_tier1_scenarios_prompt.md` | DONE | env06_1 | crew06_5 | PM:Codex/sub:1 | 2026-08-14 | 2026-08-14 | PM verified all 17 scenarios/events, tutorial neutrality, real-selector reachability, full integrated gates, determinism, and zero-overlap visual QA PASS. |
 | env06_3 | `env06_3_tier2_scenarios_prompt.md` | TODO | env06_1, env06_4 | crew06_5, crew06_8 | | | | |
 | env06_4 | `env06_4_punchline_rework_prompt.md` | DONE | env06_1 | env06_3, crew06_2, crew06_6 | PM:Codex/sub:2 | 2026-08-14 | 2026-08-14 | PM verified scope/design, L2 compatibility and migration, systems/UI/determinism/visual gates, and three-layer zero-overlap smoke PASS. |
-| town06_2 | `town06_2_rumors_travelers_prompt.md` | IN_PROGRESS | env06_1, town06_1 | town06_3, crew06_3, crew06_9, chain06_1 | PM:Codex/sub:3 | 2026-08-14 | | PM-orchestrated Wave B Stage 1 execution. |
+| town06_2 | `town06_2_rumors_travelers_prompt.md` | DONE | env06_1, town06_1 | town06_3, crew06_3, crew06_9, chain06_1 | PM:Codex/sub:3 | 2026-08-14 | 2026-08-14 | PM verified truth traces, heard tier, itineraries, reputation propagation, save compatibility, and combined systems/UI/determinism/visual gates PASS. |
 | town06_3 | `town06_3_police_sweep_prompt.md` | TODO | town06_1, town06_2 | streets06_1 (full), crew06_3 (full) | | | | |
 
 ### Wave C — Games
@@ -222,6 +222,10 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   currently reuse the underground raster beneath distinct code-rendered club
   and back-room scenes. Dedicated final raster art remains an asset need; the
   L3 room is intentionally registered-but-inert until `crew06_6` furnishes it.
+- 2026-08-14 [town06_2/env06_2] First-visit pre-seeding must cache the exact
+  canonical selector result separately from its public rumor snapshot. This
+  preserves tutorial identity-only scenario pins with suppressed mutations and
+  preserves full authored mutations for ordinary pins without a second draw.
 
 ## Work Log
 
@@ -262,3 +266,7 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   hidden-casino, and crew-shell layers through generic boundary APIs while the
   shipped casino payload, tutorial entry, old saves, routes, and Grand Casino
   shortcut remain compatible. This unblocks env06_3, crew06_2, and crew06_6.
+- 2026-08-14 [town06_2] DONE; truth-traced rumors and heard previews, seeded
+  Dave/Cass/Silas itineraries, and edge-decayed traveling reputation now share
+  one serialized action-boundary town network. This unblocks town06_3,
+  crew06_3, crew06_9, and chain06_1.
