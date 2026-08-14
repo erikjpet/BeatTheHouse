@@ -4782,13 +4782,13 @@ func _check_streets_framework(library: ContentLibrary, failures: Array) -> void:
 	hold_run.active_streets_run["board"] = hold_board
 	hold_run.streets_apply_action({"verb": "wait"})
 	hold_run.streets_apply_action({"verb": "wait"})
-	var signal := hold_run.streets_apply_action({"verb": "signal"})
-	if not bool(signal.get("resolved", false)) \
-		or str((signal.get("resolution", {}) as Dictionary).get("outcome", "")) != "success" \
+	var signal_result := hold_run.streets_apply_action({"verb": "signal"})
+	if not bool(signal_result.get("resolved", false)) \
+		or str((signal_result.get("resolution", {}) as Dictionary).get("outcome", "")) != "success" \
 		or int(hold_run.active_streets_run.get("turn", 0)) != 3 \
 		or int(hold_run.active_streets_run.get("deadline_remaining", 0)) != 5 \
-		or int((signal.get("resolution", {}) as Dictionary).get("turns_used", 0)) != 3 \
-		or not bool((signal.get("resolution", {}) as Dictionary).get("fast", false)):
+		or int((signal_result.get("resolution", {}) as Dictionary).get("turns_used", 0)) != 3 \
+		or not bool((signal_result.get("resolution", {}) as Dictionary).get("fast", false)):
 		failures.append("Hold mode did not resolve a signal inside its authored window.")
 	if not hold_run.streets_take_travel_continuation().is_empty():
 		failures.append("Hold mode opted into travel without an explicit continuation.")
