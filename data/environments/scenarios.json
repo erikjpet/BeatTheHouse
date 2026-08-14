@@ -646,22 +646,20 @@
       "id": "grand_casino_gala_night", "archetype_id": "grand_casino", "display_name": "Gala Night", "weight": 8,
       "mutations": {
         "patron_set": ["charity_crowd", "borrowed_names"], "event_pool_add": ["scenario_gala_cover"],
-        "game_modifier_hooks": {"cover_identity": "easier", "comp_texture": "generous"},
+        "game_modifier_hooks": {"comp_texture": "generous"},
         "music_profile_override": {"bpm": 88, "ambience": 0.36, "texture": "gala"},
         "presentation": {"palette_tint": "#ffd60a", "lighting_key": "gala", "crowd_density": "packed", "signage_line": "THE HOUSE WELCOMES GENEROSITY."},
-        "exclusive_opportunity": {"event_id": "scenario_gala_cover"}, "security_overrides": {"strictness_band": "attentive", "cheat_risk_window": "narrow"},
-        "hook_flags": {"gala_night": true, "cover_identity_window": true}
+        "exclusive_opportunity": {"event_id": "scenario_gala_cover"}
       }
     },
     {
       "id": "grand_casino_convention_crowd", "archetype_id": "grand_casino", "display_name": "Convention Crowd", "weight": 11,
       "mutations": {
         "patron_set": ["badge_crowd", "floor_delegates"], "event_pool_add": ["scenario_convention_badge"],
-        "game_modifier_hooks": {"crowd_camouflage": "high", "comp_texture": "low"},
+        "game_modifier_hooks": {"comp_texture": "low"},
         "music_profile_override": {"bpm": 96, "ambience": 0.44, "texture": "ballroom"},
         "presentation": {"palette_tint": "#4cc9f0", "lighting_key": "convention", "crowd_density": "packed", "signage_line": "BADGES EVERYWHERE. COMPS THIN."},
-        "exclusive_opportunity": {"event_id": "scenario_convention_badge"}, "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "brief"},
-        "hook_flags": {"convention_crowd": true, "crowd_camouflage": true}
+        "exclusive_opportunity": {"event_id": "scenario_convention_badge"}
       }
     },
     {
@@ -671,8 +669,8 @@
         "game_modifier_hooks": {"comp_texture": "strict", "floor_heat": "nervous"},
         "music_profile_override": {"bpm": 66, "ambience": 0.72, "texture": "counting_room"},
         "presentation": {"palette_tint": "#e5e5e5", "lighting_key": "audit", "crowd_density": "medium", "signage_line": "EVERY DRAWER GETS COUNTED."},
-        "exclusive_opportunity": {"event_id": "scenario_audit_roster"}, "security_overrides": {"strictness_band": "strict", "cheat_risk_window": "closed"},
-        "hook_flags": {"heist_plan_a_criteria": true, "audit_night": true}
+        "exclusive_opportunity": {"event_id": "scenario_audit_roster"},
+        "hook_flags": {"heist_plan_a_criteria": true}
       }
     }
   ]

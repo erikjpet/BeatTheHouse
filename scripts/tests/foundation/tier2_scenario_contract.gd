@@ -2,6 +2,7 @@ extends RefCounted
 
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
+const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
@@ -17,6 +18,11 @@ const EXPECTED := {
 const SACRED_GRAND_FIELDS := [
 	"demo_objective", "game_ids", "service_ids", "lender_hooks", "travel_hooks",
 	"next_archetypes", "grand_casino_room", "grand_casino_room_links",
+	"economic_profile", "security_profile",
+]
+const ALLOWED_GRAND_MUTATION_KEYS := [
+	"staff_set", "patron_set", "event_pool_add", "game_modifier_hooks",
+	"music_profile_override", "presentation", "exclusive_opportunity", "hook_flags",
 ]
 
 
@@ -53,7 +59,8 @@ static func _check_catalog(library: ContentLibrary, failures: Array) -> void:
 					axis_count += 1
 			if axis_count < 3:
 				failures.append("Scenario %s has fewer than three mutation axes." % scenario_id)
-			if _dict(mutations.get("presentation", {})).is_empty() or _dict(mutations.get("exclusive_opportunity", {})).is_empty() or _dict(mutations.get("hook_flags", {})).is_empty():
+			var requires_hook := archetype_id != "grand_casino" or scenario_id == "grand_casino_audit_night"
+			if _dict(mutations.get("presentation", {})).is_empty() or _dict(mutations.get("exclusive_opportunity", {})).is_empty() or (requires_hook and _dict(mutations.get("hook_flags", {})).is_empty()):
 				failures.append("Scenario %s is missing presentation, exclusive content, or hook flags." % scenario_id)
 		if actual_ids != expected_ids:
 			failures.append("Scenario catalog mismatch for %s: %s." % [archetype_id, JSON.stringify(actual_ids)])
@@ -119,6 +126,15 @@ static func _check_jazz_arc(library: ContentLibrary, failures: Array) -> void:
 		var overlaid := EnvironmentInstanceScript.from_archetype(archetype, 2, scenario_run.create_rng("jazz"), library, {}, library.scenario(scenario_id)).to_dict()
 		var baseline_music := _dict(baseline.get("music_profile", {}))
 		var overlaid_music := _dict(overlaid.get("music_profile", {}))
+		var baseline_choreography := _dict(baseline_music.get("layer_choreography", {}))
+		var stage_ids: Array = []
+		for stage_value in _array(baseline_choreography.get("stages", [])):
+			if typeof(stage_value) == TYPE_DICTIONARY:
+				stage_ids.append(str((stage_value as Dictionary).get("id", "")))
+		if stage_ids != ["sparse", "build_bass", "build_drums", "peak", "release", "rebuild"]:
+			failures.append("Jazz baseline lost its sparse-build-peak-release-rebuild stage order.")
+		if not _json_equal(baseline_choreography, _dict(overlaid_music.get("layer_choreography", {}))):
+			failures.append("Jazz scenario %s changed layer_choreography stage timing or order." % scenario_id)
 		for field_name in ["choreography", "choreography_profile", "arrangement"]:
 			if baseline_music.has(field_name) and not _json_equal(baseline_music.get(field_name), overlaid_music.get(field_name)):
 				failures.append("Jazz scenario %s changed set-arc field %s." % [scenario_id, field_name])
@@ -182,13 +198,36 @@ static func _check_buyout_gate(library: ContentLibrary, failures: Array) -> void
 static func _check_estate_lot(library: ContentLibrary, failures: Array) -> void:
 	var run_state := RunStateScript.new()
 	run_state.start_new("ESTATE-LOT")
+	run_state.bankroll = 1000
 	var environment := EnvironmentInstanceScript.from_archetype(library.environment_archetype("pawn_shop"), 2, run_state.create_rng("estate"), library, {}, library.scenario("pawn_shop_estate_lot_day")).to_dict()
+	run_state.set_environment(environment)
 	var found := {}
-	for offer_value in _array(environment.get("item_offers", [])):
+	for offer_value in _array(run_state.current_environment.get("item_offers", [])):
 		if typeof(offer_value) == TYPE_DICTIONARY and bool((offer_value as Dictionary).get("estate_lot", false)):
 			found[str((offer_value as Dictionary).get("id", ""))] = offer_value
 	if not found.has("roadside_map") or not found.has("false_bottom_cup") or not bool(_dict(found.get("roadside_map", {})).get("chain06_1_component", false)) or not bool(_dict(found.get("false_bottom_cup", {})).get("heist_plan_b_component", false)):
 		failures.append("Estate Lot Day did not expose both one-off resale-shelf component offers.")
+		return
+	var resolver := RunActionServiceScript.new()
+	resolver.setup(library, run_state)
+	if not bool(resolver.buy_item_offer("roadside_map").get("ok", false)) or _offer_ids(run_state.current_environment).has("roadside_map"):
+		failures.append("Estate Lot production purchase did not consume the Roadside Map offer.")
+		return
+	var restored := RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	if _offer_ids(restored.current_environment).has("roadside_map") or not _offer_ids(restored.current_environment).has("false_bottom_cup"):
+		failures.append("Estate Lot save/load regenerated a purchased offer or lost the unpurchased offer.")
+		return
+	var restored_resolver := RunActionServiceScript.new()
+	restored_resolver.setup(library, restored)
+	if bool(restored_resolver.buy_item_offer("roadside_map").get("ok", false)) or not bool(restored_resolver.buy_item_offer("false_bottom_cup").get("ok", false)):
+		failures.append("Estate Lot one-off offers did not enforce production purchase/removal semantics.")
+		return
+	var twice_restored := RunStateScript.new()
+	twice_restored.from_dict(restored.to_dict())
+	var final_offer_ids := _offer_ids(twice_restored.current_environment)
+	if final_offer_ids.has("roadside_map") or final_offer_ids.has("false_bottom_cup"):
+		failures.append("Estate Lot purchased offers did not stay removed across a second save/load.")
 
 
 static func _check_anchor_ownership(library: ContentLibrary, failures: Array) -> void:
@@ -208,12 +247,33 @@ static func _check_grand_casino_routes(library: ContentLibrary, failures: Array)
 	var archetype := library.environment_archetype("grand_casino")
 	for scenario_id_value in EXPECTED["grand_casino"]:
 		var scenario_id := str(scenario_id_value)
+		var definition := library.scenario(scenario_id)
+		var mutations := _dict(definition.get("mutations", {}))
+		for mutation_key_value in mutations.keys():
+			if not ALLOWED_GRAND_MUTATION_KEYS.has(str(mutation_key_value)):
+				failures.append("Grand scenario %s exceeded texture/crowd/comps/heat scope with %s." % [scenario_id, str(mutation_key_value)])
+		for modifier_key_value in _dict(mutations.get("game_modifier_hooks", {})).keys():
+			if not ["comp_texture", "floor_heat"].has(str(modifier_key_value)):
+				failures.append("Grand scenario %s restored forbidden gameplay modifier %s." % [scenario_id, str(modifier_key_value)])
+		var hooks := _dict(mutations.get("hook_flags", {}))
+		if scenario_id == "grand_casino_audit_night":
+			if not _json_equal(hooks, {"heist_plan_a_criteria": true}):
+				failures.append("Audit Night must retain only its inert Plan A criterion.")
+		elif not hooks.is_empty():
+			failures.append("Grand scenario %s restored a non-required cross-system anchor." % scenario_id)
+		var event_id := str(_dict(mutations.get("exclusive_opportunity", {})).get("event_id", ""))
+		for choice_value in _array(_dict(library.event(event_id).get("payload", {})).get("choices", [])):
+			if typeof(choice_value) != TYPE_DICTIONARY:
+				continue
+			for consequence_key_value in _dict((choice_value as Dictionary).get("consequences", {})).keys():
+				if not ["suspicion_delta", "resolve_event"].has(str(consequence_key_value)):
+					failures.append("Grand scenario %s exclusive restored non-heat consequence %s." % [scenario_id, str(consequence_key_value)])
 		var baseline_run := RunStateScript.new()
 		baseline_run.start_new("GRAND-%s" % scenario_id)
 		var scenario_run := RunStateScript.new()
 		scenario_run.start_new("GRAND-%s" % scenario_id)
 		var baseline := EnvironmentInstanceScript.from_archetype(archetype, 3, baseline_run.create_rng("grand"), library).to_dict()
-		var environment := EnvironmentInstanceScript.from_archetype(archetype, 3, scenario_run.create_rng("grand"), library, {}, library.scenario(scenario_id)).to_dict()
+		var environment := EnvironmentInstanceScript.from_archetype(archetype, 3, scenario_run.create_rng("grand"), library, {}, definition).to_dict()
 		for field_name in SACRED_GRAND_FIELDS:
 			if baseline.has(field_name) and not _json_equal(baseline.get(field_name), environment.get(field_name)):
 				failures.append("Grand scenario %s changed sacred field %s." % [scenario_id, field_name])
@@ -294,6 +354,14 @@ static func _dict(value: Variant) -> Dictionary:
 
 static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+
+static func _offer_ids(environment: Dictionary) -> Array:
+	var result: Array = []
+	for offer_value in _array(environment.get("item_offers", [])):
+		if typeof(offer_value) == TYPE_DICTIONARY:
+			result.append(str((offer_value as Dictionary).get("id", "")))
+	return result
 
 
 static func _json_equal(left: Variant, right: Variant) -> bool:
