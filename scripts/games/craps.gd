@@ -742,8 +742,8 @@ func _draw_dice(surface, state: Dictionary) -> void:
 	var dice := _int_array(roll.get("dice", []))
 	if dice.size() != 2:
 		return
-	var progress := surface.surface_animation_progress(ROLL_CHANNEL) if surface.surface_animation_active(ROLL_CHANNEL) else 1.0
-	var wobble := sin(progress * TAU * 3.0) * (1.0 - progress) * 12.0
+	var progress: float = float(surface.surface_animation_progress(ROLL_CHANNEL)) if surface.surface_animation_active(ROLL_CHANNEL) else 1.0
+	var wobble: float = sin(progress * TAU * 3.0) * (1.0 - progress) * 12.0
 	for index in range(2):
 		var rect := Rect2(638 + index * 54 + wobble * (1.0 if index == 0 else -1.0), 140 + absf(wobble) * 0.5, 42, 42)
 		surface.draw_rect(rect, Color("#eee7d2"))
