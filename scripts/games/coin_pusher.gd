@@ -39,9 +39,9 @@ func gameplay_model() -> String:
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var machine := _ensure_machine_state(run_state, environment, true)
-	_apply_staff_watch_floor(run_state, environment, machine)
-	_register_pile_rumor(run_state, environment, machine)
+	# Surface entry is presentation-only. Machine normalization, rumor updates,
+	# and staff-watch consequences belong to generation/action boundaries.
+	var machine := _read_machine_state(run_state, environment)
 	var result := super.enter(run_state, environment)
 	if bool(machine.get("locked_down", false)):
 		result["message"] = "Red lights. This cabinet is done for tonight. The rest of the room is still yours."
@@ -75,6 +75,10 @@ func wager_cost_for_context(action_id: String, _stake: int, _run_state: RunState
 
 func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return _generate_machine_state(run_state, environment, rng)
+
+
+func environment_state_generated(run_state: RunState, environment: Dictionary, generated_state: Dictionary) -> void:
+	_register_pile_rumor(run_state, environment, generated_state)
 
 
 func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -266,13 +270,15 @@ func _resolve_drop(run_state: RunState, environment: Dictionary, machine: Dictio
 	_register_pile_rumor(run_state, environment, machine)
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = payout - cost
+	var staff_watch_heat := _staff_watch_suspicion_delta(run_state, machine)
+	deltas["suspicion_delta"] = staff_watch_heat
 	deltas["inventory_add"] = _inventory_prizes(prizes)
 	deltas["story_log"] = [_story_entry(DROP_ACTION, "legal", environment, payout - cost, 0, {"lane": lane, "gutter": gutter, "prizes": prizes})]
 	deltas["messages"] = [message]
 	var result := GameModule.build_action_result({
 		"source_id": get_id(), "game_id": get_id(), "action_id": DROP_ACTION, "action_kind": "legal", "stake": cost,
 		"environment_id": str(environment.get("id", "")), "environment_archetype_id": str(environment.get("archetype_id", "")),
-		"bankroll_delta": payout - cost, "deltas": deltas, "won": payout > cost or not prizes.is_empty(), "message": message,
+		"bankroll_delta": payout - cost, "suspicion_delta": staff_watch_heat, "deltas": deltas, "won": payout > cost or not prizes.is_empty(), "message": message,
 	})
 	result["host_apply_result"] = true
 	result["coin_pusher_payout"] = payout
@@ -284,6 +290,9 @@ func _resolve_drop(run_state: RunState, environment: Dictionary, machine: Dictio
 
 
 func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
+	# Staff memory predating this action may restore its floor. A hard alarm
+	# created by this action starts watching from the following action onward.
+	var staff_watch_heat := _staff_watch_suspicion_delta(run_state, machine)
 	var force := str(ui_state.get("coin_pusher_force", "tap"))
 	var direction := str(ui_state.get("coin_pusher_direction", "front"))
 	if not FORCE_ORDER.has(force):
@@ -333,7 +342,8 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 	_register_pile_rumor(run_state, environment, machine)
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = payout
-	deltas["suspicion_delta"] = heat
+	var total_heat := heat + staff_watch_heat
+	deltas["suspicion_delta"] = total_heat
 	deltas["inventory_add"] = _inventory_prizes(prizes)
 	deltas["story_log"] = [_story_entry(NUDGE_ACTION, "risky", environment, payout, heat, {
 		"force": force, "direction": direction, "clean": clean, "phase_distance": phase_distance,
@@ -344,7 +354,7 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 		"source_id": "coin_pusher_alarm" if alarmed else get_id(), "game_id": get_id(), "action_id": "nudge_alarm" if alarmed else NUDGE_ACTION,
 		"action_kind": "risky", "stake": 0, "environment_id": str(environment.get("id", "")),
 		"environment_archetype_id": str(environment.get("archetype_id", "")), "bankroll_delta": payout,
-		"suspicion_delta": heat, "deltas": deltas, "won": payout > 0, "message": message,
+		"suspicion_delta": total_heat, "deltas": deltas, "won": payout > 0, "message": message,
 		"skill_outcome": "clean_drop" if clean else "alarm" if alarmed else "wasted_tolerance",
 		"skill_grade": "perfect" if clean else "blown" if alarmed else "partial",
 		"skill_accuracy": 100 if clean else maxi(0, 70 - phase_distance * 12),
@@ -420,6 +430,10 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 	var game_states := _game_states(environment)
 	var value: Variant = game_states.get(get_id(), {})
 	var machine: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
+	# Read paths may normalize an old schema, roll a nightly lock forward, or
+	# initialize item state. Never let those operations write through an alias.
+	if not persist and not machine.is_empty():
+		machine = machine.duplicate(true)
 	var reset_token := _scenario_reset_token(environment)
 	if machine.is_empty() or str(machine.get("schema", "")) != STATE_SCHEMA:
 		machine = _generate_machine_state(run_state, environment)
@@ -681,9 +695,11 @@ func _night_id(run_state: RunState) -> String:
 func _register_pile_rumor(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
 	if run_state == null:
 		return
-	var node_id := run_state.current_world_node_id()
+	var node_id := str(environment.get("world_node_id", ""))
 	if node_id.is_empty():
-		node_id = str(environment.get("world_node_id", environment.get("id", "")))
+		node_id = str(environment.get("id", ""))
+	if node_id.is_empty():
+		node_id = run_state.current_world_node_id()
 	if node_id.is_empty():
 		return
 	var hangers := _hanger_count(machine)
@@ -697,19 +713,10 @@ func _register_pile_rumor(run_state: RunState, environment: Dictionary, machine:
 	})
 
 
-func _apply_staff_watch_floor(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
+func _staff_watch_suspicion_delta(run_state: RunState, machine: Dictionary) -> int:
 	if run_state == null or not bool(machine.get("staff_watch_memory", false)):
-		return
-	var missing := maxi(0, int(machine.get("suspicion_floor", 0)) - run_state.suspicion_level())
-	if missing <= 0:
-		return
-	run_state.add_suspicion(
-		"coin_pusher_staff_watch_floor",
-		missing,
-		"behavior",
-		false,
-		{"environment_id": str(environment.get("id", "")), "source_id": get_id(), "venue_scoped_floor": true}
-	)
+		return 0
+	return maxi(0, int(machine.get("suspicion_floor", 0)) - run_state.suspicion_level())
 
 
 func _seed_prize_riders(environment: Dictionary, rng: RngStream) -> Array:

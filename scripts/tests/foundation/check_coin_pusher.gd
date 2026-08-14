@@ -13,6 +13,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	game.setup(definition, library)
 	_check_coin_pusher_data_contract(library, definition, failures)
 	_check_coin_pusher_surface_liveness(game, failures)
+	_check_coin_pusher_read_boundaries(game, failures)
 	_check_coin_pusher_determinism(game, failures)
 	_check_coin_pusher_security_bands(game, failures)
 	_check_coin_pusher_force_matrix(game, definition, failures)
@@ -108,6 +109,30 @@ func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> v
 		failures.append("Quarter Falls visible prize rider did not move with presentation time.")
 	if game.deterministic_state_digest(run_state.current_environment) != digest_before_render:
 		failures.append("Quarter Falls rider/approach rendering mutated the persisted pile per frame.")
+
+
+func _check_coin_pusher_read_boundaries(game: GameModule, failures: Array) -> void:
+	var fixture := _coin_pusher_fixture(game, "PUSHER-READ-BOUNDARY")
+	var run_state: RunState = fixture.get("run_state")
+	var environment: Dictionary = run_state.current_environment
+	var generation_environment := _coin_pusher_environment("pusher_generation_boundary")
+	var generator := RunGeneratorScript.new(game.library)
+	var generated_states: Dictionary = generator._generated_game_states(run_state, generation_environment, run_state.create_rng("pusher_generation_boundary"))
+	if not generated_states.has("coin_pusher") or run_state.rumor_fact("pusher:bar").is_empty():
+		failures.append("Quarter Falls canonical environment generation did not publish its initial node-scoped pile rumor.")
+	var machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	# Exercise every branch that previously wrote through a read alias.
+	machine["locked_down"] = true
+	machine["lockdown_night"] = "stale-night"
+	machine["shim_initialized"] = false
+	var serialized_before := JSON.stringify(run_state.to_dict())
+	game.enter(run_state, environment)
+	game.actions(run_state, environment)
+	game.surface_state(run_state, environment, {"surface_time_msec": 1000})
+	game.environment_object_state(run_state, environment)
+	var serialized_after := JSON.stringify(run_state.to_dict())
+	if serialized_before != serialized_after:
+		failures.append("Quarter Falls enter/actions/surface reads mutated serialized RunState.")
 
 
 func _check_coin_pusher_determinism(game: GameModule, failures: Array) -> void:
@@ -321,11 +346,18 @@ func _check_coin_pusher_nudge_alarm(game: GameModule, library: ContentLibrary, f
 	if not bool(slam_result.get("coin_pusher_hard_alarm", false)) or int(slam_result.get("coin_pusher_payout", 0)) < 4:
 		failures.append("Quarter Falls slam-and-grab did not deliver a meaningful drop before/with the alarm.")
 	run_state.suspicion = {}
+	var serialized_before_watch_entry := JSON.stringify(run_state.to_dict())
 	game.enter(run_state, environment)
-	var floor_after_first_entry := run_state.suspicion_level()
 	game.enter(run_state, environment)
-	if floor_after_first_entry < 12 or run_state.suspicion_level() != floor_after_first_entry:
-		failures.append("Quarter Falls staff-watch suspicion floor was not venue-scoped and idempotent on revisit.")
+	if serialized_before_watch_entry != JSON.stringify(run_state.to_dict()):
+		failures.append("Quarter Falls staff-watch revisit mutated serialized RunState during surface entry.")
+	var watched_drop := game.resolve_with_context("drop_quarter", 1, run_state, environment, run_state.create_rng("staff_watch_drop"), {"coin_pusher_lane": 2})
+	if int(watched_drop.get("suspicion_delta", 0)) < 12:
+		failures.append("Quarter Falls staff-watch memory did not restore its venue-scoped floor at the next action boundary.")
+	GameModule.apply_result(run_state, watched_drop, run_state.create_rng("staff_watch_drop_apply"))
+	var repeated_watch_drop := game.resolve_with_context("drop_quarter", 1, run_state, environment, run_state.create_rng("staff_watch_repeat"), {"coin_pusher_lane": 2})
+	if int(repeated_watch_drop.get("suspicion_delta", 0)) != 0:
+		failures.append("Quarter Falls staff-watch action-boundary floor was not idempotent after it was restored.")
 
 
 func _check_coin_pusher_persistence_and_reset(game: GameModule, failures: Array) -> void:

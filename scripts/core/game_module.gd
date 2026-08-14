@@ -170,6 +170,13 @@ func generate_environment_state(_run_state: RunState, _environment: Dictionary, 
 	return {}
 
 
+# Commits effects that belong to canonical environment generation rather than
+# to a UI read. RunGenerator invokes this only after it creates and stores a
+# new game state; previews operate on their cloned RunState.
+func environment_state_generated(_run_state: RunState, _environment: Dictionary, _generated_state: Dictionary) -> void:
+	pass
+
+
 # Optional translation layer for visible game-surface clicks. Modules can
 # update UI-local state or nominate an existing legal/cheat action to resolve.
 func surface_action_command(_surface_action: String, _index: int, _confirm_requested: bool, _ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
