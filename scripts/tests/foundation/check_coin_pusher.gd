@@ -38,8 +38,21 @@ func _check_coin_pusher_data_contract(library: ContentLibrary, definition: Dicti
 		if not pool.has("coin_pusher"):
 			failures.append("Tier-1 venue %s does not seed Quarter Falls availability." % venue_id)
 	var corner := library.environment_archetype("corner_store")
-	if JSON.stringify(corner.get("game_count", [])) != JSON.stringify([0, 1]):
+	var corner_count: Array = corner.get("game_count", []) if typeof(corner.get("game_count", [])) == TYPE_ARRAY else []
+	if corner_count.size() != 2 or int(corner_count[0]) != 0 or int(corner_count[1]) != 1:
 		failures.append("Corner Store Quarter Falls placement must remain optional [0,1].")
+	var generated_corner_counts := {}
+	for sample_index in range(32):
+		var sample_run: RunState = RunStateScript.new()
+		sample_run.start_new("PUSHER-CORNER-%02d" % sample_index)
+		var generated_corner := EnvironmentInstance.from_archetype(corner, sample_index, sample_run.create_rng("pusher_corner_optional"), library)
+		var generated_count := generated_corner.game_ids.size()
+		generated_corner_counts[generated_count] = true
+		if generated_count > 1:
+			failures.append("Generated Corner Store exceeded its true one-machine maximum (%d)." % generated_count)
+			break
+	if not bool(generated_corner_counts.get(0, false)) or not bool(generated_corner_counts.get(1, false)):
+		failures.append("Generated Corner Stores did not exercise both optional Quarter Falls counts 0 and 1.")
 	for untouched_id in ["motel", "pawn_shop", "back_alley"]:
 		var pool: Array = library.environment_archetype(untouched_id).get("game_pool", [])
 		if pool.has("coin_pusher"):
@@ -244,22 +257,38 @@ func _check_coin_pusher_prize_items(game: GameModule, failures: Array) -> void:
 
 
 func _check_coin_pusher_items(game: GameModule, failures: Array) -> void:
-	var fixture := _coin_pusher_fixture(game, "PUSHER-ITEMS")
-	var run_state: RunState = fixture.get("run_state")
-	run_state.add_item("cold_quarters")
-	run_state.add_item("coin_return_shim")
-	var command := game.active_item_command("cold_quarters", run_state, run_state.current_environment, run_state.create_rng("cold_arm"))
+	var cold_fixture := _coin_pusher_fixture(game, "PUSHER-COLD-QUARTERS")
+	var cold_run: RunState = cold_fixture.get("run_state")
+	cold_run.add_item("cold_quarters")
+	var authored_density := cold_run.item_effect_total("coin_pusher_drop_density", "coin_pusher")
+	var command := game.active_item_command("cold_quarters", cold_run, cold_run.current_environment, cold_run.create_rng("cold_arm"))
 	if not bool(command.get("handled", false)):
 		failures.append("Cold Quarters could not arm the Quarter Falls dense drop.")
 	else:
-		GameModule.apply_result(run_state, command.get("result", {}), run_state.create_rng("cold_apply"))
-		var state: Dictionary = (run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
-		if not bool(state.get("cold_quarters_armed", false)) or run_state.inventory.has("cold_quarters"):
+		GameModule.apply_result(cold_run, command.get("result", {}), cold_run.create_rng("cold_apply"))
+		var state: Dictionary = (cold_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+		if not bool(state.get("cold_quarters_armed", false)) or int(state.get("cold_quarters_density_armed", 0)) != authored_density or authored_density != 3 or cold_run.inventory.has("cold_quarters"):
 			failures.append("Cold Quarters did not persist one dense armed drop and consume the item.")
-	game.enter(run_state, run_state.current_environment)
-	var item_state: Dictionary = (run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
-	if int(item_state.get("shim_uses_remaining", 0)) != 3:
-		failures.append("Coin-Return Shim did not seed its limited three-use recovery state.")
+		_clear_coin_pusher_lanes(state)
+		var safe_seed := _coin_pusher_seed_for_roll(false)
+		var cold_drop := game.resolve_with_context("drop_quarter", 1, cold_run, cold_run.current_environment, _configured_rng(safe_seed), {"coin_pusher_lane": 2})
+		var after_cold: Dictionary = (cold_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+		if not bool(cold_drop.get("ok", false)) or _coin_pusher_coin_count(after_cold) != authored_density or bool(after_cold.get("cold_quarters_armed", true)):
+			failures.append("Cold Quarters density was not consumed by the next real pusher drop action.")
+
+	var shim_fixture := _coin_pusher_fixture(game, "PUSHER-COIN-SHIM")
+	var shim_run: RunState = shim_fixture.get("run_state")
+	shim_run.add_item("coin_return_shim")
+	game.enter(shim_run, shim_run.current_environment)
+	var shim_state: Dictionary = (shim_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	var authored_uses := shim_run.item_effect_total("coin_pusher_gutter_recovery_uses", "coin_pusher")
+	if int(shim_state.get("shim_uses_remaining", 0)) != authored_uses or authored_uses != 3:
+		failures.append("Coin-Return Shim did not seed its authored limited-use recovery state.")
+	var gutter_seed := _coin_pusher_seed_for_roll(true)
+	var shim_drop := game.resolve_with_context("drop_quarter", 1, shim_run, shim_run.current_environment, _configured_rng(gutter_seed), {"coin_pusher_lane": 0})
+	shim_state = (shim_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	if not bool(shim_drop.get("coin_pusher_shim_recovered", false)) or bool(shim_drop.get("coin_pusher_gutter", true)) or int(shim_state.get("shim_uses_remaining", -1)) != authored_uses - 1:
+		failures.append("Coin-Return Shim effect was not consumed by a real edge-gutter drop action.")
 
 
 func _check_coin_pusher_economy(game: GameModule, definition: Dictionary, failures: Array) -> void:
@@ -338,6 +367,41 @@ func _machine_hanger_fixture(machine: Dictionary, lane: int) -> void:
 	lane_data["cells"] = cells
 	lanes[lane] = lane_data
 	machine["lanes"] = lanes
+
+
+func _clear_coin_pusher_lanes(machine: Dictionary) -> void:
+	var lanes: Array = machine.get("lanes", []) if typeof(machine.get("lanes", [])) == TYPE_ARRAY else []
+	for lane_index in range(lanes.size()):
+		if typeof(lanes[lane_index]) != TYPE_DICTIONARY:
+			continue
+		var lane: Dictionary = lanes[lane_index]
+		var cells: Array = lane.get("cells", []) if typeof(lane.get("cells", [])) == TYPE_ARRAY else []
+		for cell_index in range(cells.size()):
+			cells[cell_index] = {"height": 0, "edge_hang": false}
+		lane["cells"] = cells
+		lanes[lane_index] = lane
+	machine["lanes"] = lanes
+	machine["riders"] = []
+
+
+func _coin_pusher_coin_count(machine: Dictionary) -> int:
+	var total := 0
+	for lane_value in machine.get("lanes", []):
+		if typeof(lane_value) != TYPE_DICTIONARY:
+			continue
+		for cell_value in (lane_value as Dictionary).get("cells", []):
+			if typeof(cell_value) == TYPE_DICTIONARY:
+				total += int((cell_value as Dictionary).get("height", 0))
+	return total
+
+
+func _coin_pusher_seed_for_roll(gutter: bool) -> int:
+	for seed_value in range(1, 1000):
+		var probe := _configured_rng(seed_value)
+		var roll := probe.randi_range(1, 100)
+		if (gutter and roll <= 24) or (not gutter and roll > 12):
+			return seed_value
+	return 1
 
 
 func _configured_rng(seed_value: int) -> RngStream:

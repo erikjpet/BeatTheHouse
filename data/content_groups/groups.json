@@ -65,7 +65,7 @@
 		"display_name": "Slot Pack",
 		"description": "Cabinets, coins, bright bad ideas.",
 		"default_enabled": true,
-		"game_ids": ["slot"],
+		"game_ids": ["slot", "coin_pusher"],
 		"item_ids": [
 			"foil_sleeve",
 			"coin_return_shim",

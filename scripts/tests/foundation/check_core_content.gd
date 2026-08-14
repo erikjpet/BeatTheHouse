@@ -3053,6 +3053,8 @@ func _t4_4_consumed_item_effect_keys() -> Dictionary:
 		"blackjack_table_limit_multiplier",
 		"blackjack_table_minimum_to_previous_max",
 		"cheat_suspicion_delta",
+		"coin_pusher_drop_density",
+		"coin_pusher_gutter_recovery_uses",
 		"debt_default_heat_delta",
 		"debt_grace_turns",
 		"drunk_delta",
