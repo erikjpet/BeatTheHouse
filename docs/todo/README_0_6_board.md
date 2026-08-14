@@ -81,12 +81,12 @@ Wave C games are intentionally parallel-friendly.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| craps06_1 | `craps06_1_craps_core_prompt.md` | TODO | — | craps06_2, crew06_8 | | | | |
+| craps06_1 | `craps06_1_craps_core_prompt.md` | IN_PROGRESS | — | craps06_2, crew06_8 | PM:Codex/sub:1 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
 | craps06_2 | `craps06_2_street_craps_prompt.md` | TODO | craps06_1, env06_1 | — | | | | |
-| push06_1 | `push06_1_pusher_core_prompt.md` | TODO | env06_1 | push06_2 | | | | |
+| push06_1 | `push06_1_pusher_core_prompt.md` | IN_PROGRESS | env06_1 | push06_2 | PM:Codex/sub:2 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
 | push06_2 | `push06_2_pusher_variations_prompt.md` | TODO | push06_1, town06_1 | — | | | | |
-| streets06_1 | `streets06_1_streets_framework_prompt.md` | TODO | town06_1, crew06_1 | crew06_3/6/8 | | | | |
-| crew06_2 | `crew06_2_backroom_poker_prompt.md` | TODO | crew06_1, env06_4 | crew06_9 | | | | |
+| streets06_1 | `streets06_1_streets_framework_prompt.md` | IN_PROGRESS | town06_1, crew06_1 | crew06_3/6/8 | PM:Codex/sub:3 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
+| crew06_2 | `crew06_2_backroom_poker_prompt.md` | IN_PROGRESS | crew06_1, env06_4 | crew06_9 | PM:Codex/sub:4 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution; queued for first available subagent slot. |
 | crew06_3 | `crew06_3_numbers_prompt.md` | TODO | crew06_1, streets06_1, town06_2 | crew06_9 (grievance src) | | | | |
 
 ### Wave D — Crew depth
@@ -317,3 +317,8 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   inert until their owning prompts: `street_craps`, Punchline L3, recruitment
   consumers, heist consumers, Knuckles stash, Numbers pause, and Streets patrol
   density. No owner decision is required. Stop before Wave C/D kickoff.
+- 2026-08-14 [Wave C Stage 1] PM-orchestrated execution claimed for
+  craps06_1, push06_1, streets06_1, and crew06_2 after verifying all Wave A/B
+  rows and landed seams. Craps, pusher, and Streets take the three available
+  subagent slots; poker is queued for the first released slot. PM retains
+  single-writer board, integration, verification, archival, and push ownership.
