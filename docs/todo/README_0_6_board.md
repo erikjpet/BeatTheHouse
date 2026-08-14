@@ -303,3 +303,17 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   truth-sourced rumors and stale sightings, applies costed heat/contraband/debt
   encounters, and leaves a five-action security wake. This unblocks
   streets06_1 and the full Police Sweep scope of crew06_3.
+- 2026-08-14 [Wave B closure] PM final combined tree PASS: exhaustive
+  `foundation_all` plus all-script parse (`wave_b_final_full`), 10-seed / 320-
+  checkpoint determinism (`1234044898`), visual QA, and one-run production
+  composition. The launch catalog contains 42 scenarios: corner store 4,
+  back alley 3, motel 3, bar 4, gas-station casino 3, Punchline 6, jazz club 3,
+  Kitty Cat Lounge 3, Delta Queen 4, beach 3, pawn shop 3, Grand Casino 3.
+  Wave C/D-facing APIs and anchors now live: first-visit `scenario_for_node`;
+  truth-traced rumor registry/heard previews; traveler state; capability-gated
+  `sweep_status`, boundary reporting, and `swept_window`; Punchline layer
+  discovery/entry; recruitment anchors for Knuckles, Switch, Mags, Velvet, and
+  Lucky; Plan A Audit and Plan B Whale/Estate flags. Registered but intentionally
+  inert until their owning prompts: `street_craps`, Punchline L3, recruitment
+  consumers, heist consumers, Knuckles stash, Numbers pause, and Streets patrol
+  density. No owner decision is required. Stop before Wave C/D kickoff.
