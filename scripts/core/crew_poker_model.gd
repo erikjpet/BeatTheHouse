@@ -248,7 +248,7 @@ static func draw_indices(cards_value: Variant, policy_value: Dictionary = {}) ->
 	return result
 
 
-static func npc_action(member_id: String, cards: Array, phase: String, facing_raise: bool, rng) -> String:
+static func npc_action(member_id: String, cards: Array, phase: String, facing_raise: bool, rng: RngStream) -> String:
 	var profile := policy(member_id)
 	var score := evaluate_hand(cards)
 	var category := int(score.get("category", 0))
@@ -256,7 +256,7 @@ static func npc_action(member_id: String, cards: Array, phase: String, facing_ra
 	var tightness := int(profile.get("tightness", 50))
 	var aggression := int(profile.get("aggression", 50))
 	var bluff := int(profile.get("bluff", 20))
-	var roll := rng.randi_range(1, 100)
+	var roll: int = rng.randi_range(1, 100)
 	if facing_raise and category == 0 and roll <= clampi(tightness - 25, 8, 72):
 		return "fold"
 	var raise_chance := clampi(int(float(aggression) / 3.0) + strength + (int(float(bluff) / 2.0) if category == 0 else 0) - (10 if phase == "before" else 0), 4, 88)
@@ -281,7 +281,7 @@ static func condition_matches(condition: String, cards: Array, action: String, d
 	return false
 
 
-static func surface_pattern(member_id: String, cards: Array, action: String, draw_count: int, rng) -> Dictionary:
+static func surface_pattern(member_id: String, cards: Array, action: String, draw_count: int, rng: RngStream) -> Dictionary:
 	for authored_value in patterns(member_id):
 		var authored: Dictionary = authored_value
 		if not condition_matches(str(authored.get("condition", "")), cards, action, draw_count):
