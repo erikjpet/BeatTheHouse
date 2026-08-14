@@ -1199,7 +1199,7 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 	if bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
 		push_error("Crew-favor conversation remained open after resolution.")
 		return false
-	await get_tree().create_timer(0.15).timeout
+	await create_timer(0.15).timeout
 	if not bool(streets_controller.call("idle_animation_running")) or float(streets_controller.call("measured_idle_liveness")) <= 0.001:
 		push_error("Open Streets board did not register measured movement from its actual idle blue-light animation.")
 		return false
