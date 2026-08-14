@@ -1280,7 +1280,8 @@ func _run_craps_visual_qa() -> void:
 	environment = fixture_run.current_environment
 	states = environment.get("game_states", {})
 	table = states.get("craps", {})
-	var live_dice_start_msec := int((canvas.call("current_view_snapshot") as Dictionary).get("surface_simulation_time_msec", 1))
+	var live_surface_ui_state: Dictionary = app.call("_current_game_surface_ui_state")
+	var live_dice_start_msec := int(live_surface_ui_state.get("surface_time_msec", 1))
 	table["last_roll"] = _craps_visual_roll([5, 2], 7, 8, 0, "craps:visual:dice", live_dice_start_msec)
 	table["roll_history"].append(table["last_roll"].duplicate(true))
 	states["craps"] = table

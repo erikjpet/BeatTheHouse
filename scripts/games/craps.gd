@@ -65,6 +65,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_renderer": "craps",
 		"surface_life": "immersive_table",
 		"surface_cast": "dealer_table",
+		"surface_time_msec": now_msec,
+		"surface_presentation_time_msec": int(ui_state.get("surface_presentation_time_msec", now_msec)),
 		"surface_controls_native": true,
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
@@ -77,7 +79,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			str(last_roll.get("animation_id", "")) if roll_active else "",
 			duration if roll_active else 0,
 			roll_started,
-			{"metadata": {"dice": _int_array(last_roll.get("dice", []))}}
+			{"clock_source": "surface", "metadata": {"dice": _int_array(last_roll.get("dice", []))}}
 		)],
 		"surface_action_blocks": _surface_action_blocks(),
 		"surface_action_bindings": {

@@ -274,15 +274,34 @@ func _check_craps_deterministic_surface_clock(game: GameModule, failures: Array)
 	first.current_environment = environment
 	var second: RunState = RunStateScript.new()
 	second.from_dict(first.to_dict())
-	var first_surface := game.surface_state(first, first.current_environment, {})
-	var second_surface := game.surface_state(second, second.current_environment, {})
+	var active_ui := {
+		"surface_time_msec": first.simulation_time_msec() + 100,
+		"surface_presentation_time_msec": first.simulation_time_msec() + 5000,
+	}
+	var first_surface := game.surface_state(first, first.current_environment, active_ui)
+	var second_surface := game.surface_state(second, second.current_environment, active_ui)
 	if JSON.stringify(first_surface) != JSON.stringify(second_surface):
 		failures.append("Craps identical run and UI inputs produced uptime-dependent surface snapshots.")
+	if int(first_surface.get("surface_time_msec", 0)) != int(active_ui["surface_time_msec"]) \
+			or int(first_surface.get("surface_presentation_time_msec", 0)) != int(active_ui["surface_presentation_time_msec"]):
+		failures.append("Craps surface did not propagate the authoritative pause-safe simulation and presentation clocks.")
 	if str(first_surface.get("phase", "")) != "rolling":
 		failures.append("Craps deterministic simulation clock did not keep the saved roll animation active.")
 	var channels := _craps_array(first_surface.get("surface_animation_channels", []))
-	if channels.is_empty() or str(_craps_dict(channels[0]).get("active_id", "")) != "craps:clock-fixture:3-4":
+	var roll_channel := _craps_dict(channels[0]) if not channels.is_empty() else {}
+	if channels.is_empty() or str(roll_channel.get("active_id", "")) != "craps:clock-fixture:3-4":
 		failures.append("Craps deterministic surface clock did not expose the active roll channel.")
+	elif str(roll_channel.get("clock_source", "")) != "surface" \
+			or int(roll_channel.get("started_msec", 0)) != first.simulation_time_msec() \
+			or int(roll_channel.get("duration_msec", 0)) <= 0:
+		failures.append("Craps roll phase and finite dice channel did not share the pause-safe surface clock.")
+	var expired_ui := active_ui.duplicate(true)
+	expired_ui["surface_time_msec"] = first.simulation_time_msec() + int(roll_channel.get("duration_msec", 0))
+	var expired_surface := game.surface_state(first, first.current_environment, expired_ui)
+	var expired_channels := _craps_array(expired_surface.get("surface_animation_channels", []))
+	var expired_channel := _craps_dict(expired_channels[0]) if not expired_channels.is_empty() else {}
+	if str(expired_surface.get("phase", "")) != "betting" or not str(expired_channel.get("active_id", "")).is_empty():
+		failures.append("Craps roll phase and finite dice channel did not expire together on the pause-safe surface clock.")
 
 
 func _check_craps_cheat_contract(game: GameModule, failures: Array) -> void:

@@ -60,7 +60,8 @@ func _run() -> void:
 	if not await _capture("03_idle_liveness_after.png"):
 		return
 
-	var live_dice_start_msec := int((canvas.call("current_view_snapshot") as Dictionary).get("surface_simulation_time_msec", 1))
+	var live_surface_ui_state: Dictionary = app.call("_current_game_surface_ui_state")
+	var live_dice_start_msec := int(live_surface_ui_state.get("surface_time_msec", 1))
 	_configure_table(run_state, live_dice_start_msec, [5, 2], 7, "craps:capture:dice")
 	app.call("_refresh")
 	await _settle(3)
