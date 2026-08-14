@@ -87,7 +87,7 @@ Wave C games are intentionally parallel-friendly.
 | push06_2 | `push06_2_pusher_variations_prompt.md` | TODO | push06_1, town06_1 | — | | | | |
 | streets06_1 | `streets06_1_streets_framework_prompt.md` | DONE | town06_1, crew06_1 | crew06_3/6/8 | PM:Codex/sub:3 | 2026-08-14 | 2026-08-14 | PM verified scope/design, systems/UI, 10-seed determinism, and package/multi-stop/Hold visual QA on the integrated tree. |
 | crew06_2 | `crew06_2_backroom_poker_prompt.md` | IN_PROGRESS | crew06_1, env06_4 | crew06_9 | PM:Codex/sub:4 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution; queued for first available subagent slot. |
-| crew06_3 | `crew06_3_numbers_prompt.md` | TODO | crew06_1, streets06_1, town06_2 | crew06_9 (grievance src) | | | | |
+| crew06_3 | `crew06_3_numbers_prompt.md` | IN_PROGRESS | crew06_1, streets06_1, town06_2 | crew06_9 (grievance src) | PM:Codex/sub:7 | 2026-08-14 | | PM-orchestrated Wave C Stage 2 execution after integrated Streets acceptance. |
 
 ### Wave D — Crew depth
 
@@ -417,3 +417,7 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   package, ordered multi-stop progress, and Hold signal resolution. The frozen
   multi-stop/Hold/chase APIs now unblock crew06_3, crew06_6, and crew06_8;
   ordinary travel remains unchanged unless a consumer explicitly opts in.
+- 2026-08-14 [crew06_3] Wave C Stage 2 Numbers execution claimed after PM
+  accepted and archived Streets. The owner must consume the frozen multi-stop
+  API unchanged and add a distinct reachable L3 desk beside Poker's reserved
+  table position; PM retains board, integration, verification, and push.
