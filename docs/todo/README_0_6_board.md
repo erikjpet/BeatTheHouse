@@ -200,6 +200,12 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   draw. Empty-pool archetypes remain byte-identical. Authored themed security
   `strictness` strings also remain unchanged; traveling reputation supplies a
   separate derived `door_strictness_band` at generation.
+- 2026-08-14 [env06_4] The shipped guided tutorial enters
+  `small_underground_casino` expecting immediate blackjack, so PM approved a
+  generic, validated challenge-data `environment_layer_overrides` map that
+  selects Punchline L2 on tutorial entry without granting unrelated discovery
+  or changing public map copy. Ordinary runs still enter public L1; no runtime
+  tutorial/archetype special case is allowed.
 
 ## Work Log
 
