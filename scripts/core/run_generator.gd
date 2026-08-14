@@ -4,6 +4,7 @@ extends RefCounted
 # Builds deterministic environments from library data.
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 
 var library: ContentLibrary
@@ -148,6 +149,59 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.set_environment(environment_data)
 	return true
+
+
+# Changes floors inside one layered venue without world travel or route cost.
+func enter_environment_layer(run_state: RunState, target_layer_id: String, advance_action: bool = true) -> Dictionary:
+	if run_state == null or not run_state.is_layered_environment():
+		return {"ok": false, "message": "This venue has no interior layers."}
+	var target_id := target_layer_id.strip_edges()
+	var access := run_state.environment_layer_access_status(target_id)
+	if not bool(access.get("available", false)):
+		return {"ok": false, "hidden": bool(access.get("hidden", false)), "message": str(access.get("reason", "The door stays shut."))}
+	if bool(access.get("discover_on_enter", false)):
+		run_state.discover_environment_layer(target_id, str(access.get("access_method", "access")))
+	if advance_action:
+		run_state.advance_environment_turns(1)
+	var layer_state := run_state.environment_layer_state(target_id)
+	if layer_state.is_empty():
+		var archetype_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
+		var archetype := _archetype_by_id(archetype_id)
+		if archetype.is_empty():
+			return {"ok": false, "message": "The room definition is missing."}
+		var layer_rng := run_state.create_rng("environment_layer:%s:%s" % [str(run_state.current_environment.get("world_node_id", archetype_id)), target_id])
+		var scenario_state := ScenarioEngineScript.normalize_state(run_state.current_environment.get("scenario_state", {}))
+		var generated := EnvironmentInstance.from_archetype_layer(
+			archetype,
+			target_id,
+			int(run_state.current_environment.get("depth", 0)),
+			layer_rng,
+			library,
+			run_state.challenge_config,
+			scenario_state
+		)
+		layer_state = generated.to_dict()
+	if layer_state.is_empty():
+		return {"ok": false, "message": "The room could not be restored."}
+	if not layer_state.has("town_conditions"):
+		run_state.apply_town_generation_modifiers(layer_state)
+	var stored_game_states: Variant = layer_state.get("game_states", null)
+	if typeof(stored_game_states) != TYPE_DICTIONARY or (stored_game_states as Dictionary).is_empty() and not _copy_array(layer_state.get("game_ids", [])).is_empty():
+		var game_rng := run_state.create_rng("environment_layer_games:%s:%s" % [str(run_state.current_environment.get("world_node_id", run_state.current_environment.get("archetype_id", ""))), target_id])
+		layer_state["game_states"] = _generated_game_states(run_state, layer_state, game_rng)
+	if run_state.has_world_map():
+		_apply_world_travel_targets(layer_state, run_state, run_state.world_map, run_state.current_world_node_id())
+	layer_state["layout"] = EnvironmentInstance.ensure_generated_layout(layer_state)
+	if not run_state.install_environment_layer_state(target_id, layer_state):
+		return {"ok": false, "message": "The room could not be entered."}
+	if run_state.has_world_map():
+		run_state.store_current_world_node_environment()
+	return {
+		"ok": true,
+		"layer_id": target_id,
+		"access_method": str(access.get("access_method", "open")),
+		"message": str(layer_state.get("layer_entry_message", "You pass through the interior door.")),
+	}
 
 
 func _apply_cage_gift_shop_stock(run_state: RunState, environment_data: Dictionary) -> void:

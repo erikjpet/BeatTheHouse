@@ -34,6 +34,7 @@ const CONTEXT_MODE_HOME_TENURE := "home_tenure"
 const CONTEXT_MODE_HOME_SLEEP := "home_sleep"
 const CONTEXT_MODE_HOME_STORAGE := "home_storage"
 const CONTEXT_MODE_HOME_CONTAINER := "home_container"
+const CONTEXT_MODE_ENVIRONMENT_LAYER := "environment_layer"
 const CONTEXT_MODE_META_BAG := "meta_bag"
 const CONTEXT_MODE_META_UPGRADE := "meta_upgrade"
 const CONTEXT_MODE_META_TRADE_UP := "meta_trade_up"
@@ -2069,6 +2070,11 @@ func resolve_event_choice(event_id: String, choice_id: String) -> void:
 	var return_to_game_after_event := _event_resolution_returns_to_active_game(popup_type, event_context)
 	var inventory_before := _run_inventory_id_set()
 	var result := event_module.resolve(run_state, event_environment, choice_id)
+	var result_deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	var layer_discovery: Dictionary = result_deltas.get("environment_layer_discovery", {}) if typeof(result_deltas.get("environment_layer_discovery", {})) == TYPE_DICTIONARY else {}
+	var discovered_layer_id := str(layer_discovery.get("layer_id", "")).strip_edges()
+	if bool(result.get("ok", false)) and bool(layer_discovery.get("enter", false)) and not discovered_layer_id.is_empty():
+		generator.enter_environment_layer(run_state, discovered_layer_id, false)
 	var showdown_continues := (
 		event_id == RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID
 		and run_state != null
@@ -7710,6 +7716,8 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 				_add_card_button(card, "Open contents", Callable(self, "open_meta_container").bind(source_id), false, true)
 			else:
 				_add_card_button(card, "Open storage", Callable(self, "activate_interactable_object").bind(str(object_data.get("object_id", ""))), false, true)
+		CONTEXT_MODE_ENVIRONMENT_LAYER:
+			_add_card_button(card, "Enter Room", Callable(self, "_enter_environment_layer").bind(source_id), false, true)
 		CONTEXT_MODE_META_BAG:
 			_add_card_button(card, "Open bag", Callable(self, "open_meta_bag").bind(int(source_id)), false, true)
 		CONTEXT_MODE_META_UPGRADE:
@@ -9378,6 +9386,8 @@ func activate_interactable_object(object_id: String) -> bool:
 			return _show_place_container_popup()
 		CONTEXT_MODE_HOME_CONTAINER:
 			return _show_home_container_popup(source_id)
+		CONTEXT_MODE_ENVIRONMENT_LAYER:
+			return _enter_environment_layer(source_id)
 		CONTEXT_MODE_TRAVEL:
 			if source_id == "leave":
 				var direct_room_exit := _local_parent_home_door_travel_choice(_parent_home_parent_target_id())
@@ -9407,6 +9417,22 @@ func activate_interactable_object(object_id: String) -> bool:
 	_show_message("Inspect this first.")
 	_refresh()
 	return false
+
+
+func _enter_environment_layer(layer_id: String) -> bool:
+	if run_state == null or generator == null:
+		return false
+	var result := generator.enter_environment_layer(run_state, layer_id, true)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("message", "The door stays shut.")))
+		_refresh()
+		return false
+	clear_interaction_focus()
+	_set_current_screen(SCREEN_ENVIRONMENT)
+	_show_message(str(result.get("message", "You pass through the interior door.")))
+	_autosave_foundation_run("Autosaved.")
+	_refresh()
+	return true
 
 
 func _inspect_casino_fixture(object_data: Dictionary) -> bool:

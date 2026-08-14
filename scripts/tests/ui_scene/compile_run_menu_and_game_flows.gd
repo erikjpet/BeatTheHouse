@@ -379,7 +379,8 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 				framed_choice = choice_value
 				break
 		var decision_lines: Array = framed_choice.get("decision_lines", []) if typeof(framed_choice.get("decision_lines", [])) == TYPE_ARRAY else []
-		if decision_lines.size() != 3 or str(framed_choice.get("decision_commitment", "")).find("min") == -1 or str(framed_choice.get("decision_forfeit", "")).find("Casino") == -1:
+		var other_route_label := "The Punchline" if tutorial_target_id == "gas_station_casino" else "Gas Station Casino"
+		if decision_lines.size() != 3 or str(framed_choice.get("decision_commitment", "")).find("min") == -1 or str(framed_choice.get("decision_forfeit", "")).find(other_route_label) == -1:
 			push_error("Tutorial route %s did not expose offer, live commitment, and the other visible route's opportunity cost: %s." % [tutorial_target_id, str(framed_choice)])
 			return false
 	app.call("open_world_map")

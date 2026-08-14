@@ -1169,7 +1169,7 @@
   },
   {
     "id": "small_underground_casino",
-    "kind": "casino",
+    "kind": "club",
     "open_hours": null,
     "is_start": false,
     "next_archetypes": [
@@ -1184,159 +1184,100 @@
     ],
     "rare_next_chance_percent": 40,
     "tier": 1,
-    "name_prefixes": [
-      "Pink Room",
-      "Basement"
-    ],
+    "display_name": "The Punchline",
+    "name_prefixes": [],
     "name_nouns": [
-      "Underground Casino"
+      "The Punchline"
     ],
+    "art_key": "punchline_club",
     "visual_context": {
       "perspective": "first_person",
-      "scene_type": "underground",
+      "scene_type": "comedy_club",
       "asset_path": "res://assets/art/environments/small_underground_casino.png",
-      "description": "Low ceiling. Play kept close."
+      "description": "A tired comedy stage works for every laugh."
     },
-    "objective_hint": "Better tables are provided. Heat comes too.",
+    "objective_hint": "Two drinks buy a chair. The bad jokes come free.",
     "layout": {
-      "game_spots": [
-        [
-          798,
-          176
-        ],
-        [
-          220,
-          202
-        ],
-        [
-          568,
-          202
-        ]
-      ],
+      "game_spots": [],
       "event_spots": [
         [
-          84,
-          86
-        ],
-        [
-          410,
-          96
-        ],
-        [
-          220,
-          300
-        ],
-        [
-          410,
-          300
-        ],
-        [
-          620,
-          300
+          704,
+          214
         ]
       ],
       "service_spots": [
         [
-          78,
-          220
+          154,
+          264
         ]
       ],
-      "lender_spots": [
+      "lender_spots": [],
+      "layer_spots": [
         [
-          790,
-          300
+          410,
+          130
         ],
         [
-          84,
-          300
+          786,
+          302
         ]
       ],
       "travel_spots": [
         [
-          820,
-          86
-        ],
-        [
-          820,
-          380
-        ],
-        [
-          676,
-          82
-        ],
-        [
-          520,
-          380
-        ],
-        [
-          250,
-          380
-        ],
-        [
-          84,
-          380
+          842,
+          374
         ]
       ]
     },
     "security_profile": {
-      "strictness": "high",
+      "strictness": "low",
       "visible_cues": [
-      "Every return guest is remembered at the door."
+        "The door watches the room more closely than the comic."
       ]
     },
     "music_profile": {
-      "theme": "basement casino",
-      "ambience": 0.92,
-      "mode": "phrygian",
+      "theme": "tinny stage sound",
+      "ambience": 0.74,
+      "mode": "mixolydian",
       "progression": [
         0,
-        1,
-        5,
+        3,
+        4,
         4
       ],
       "motif": [
         0,
         -999,
-        1,
+        2,
         -999,
-        3,
+        4,
         -999,
-        1,
+        2,
         -999,
         0,
         -999,
-        4,
-        -999,
-        5,
+        3,
         -999,
         4,
+        -999,
+        2,
         -999
       ],
-      "root_midi": 41,
-      "safety": 0.14,
-      "texture": "basement",
-      "texture_rate": 0.19,
-      "volume": 0.25
+      "root_midi": 45,
+      "safety": 0.42,
+      "texture": "stage",
+      "texture_rate": 0.13,
+      "volume": 0.21
     },
     "economic_profile": {
-      "stake_floor": 10,
-      "stake_ceiling": 70,
-      "game_stake_floor_overrides": {
-        "blackjack": 5
-      },
-      "game_stake_ceiling_overrides": {
-        "blackjack": 60
-      },
-      "cashout_tone": "private"
+      "stake_floor": 0,
+      "stake_ceiling": 0,
+      "cashout_tone": "cover"
     },
-    "game_pool": [
-      "slot",
-      "blackjack",
-      "video_poker"
-    ],
+    "game_pool": [],
     "game_count": [
-      3,
-      3
+      0,
+      0
     ],
     "item_pool": [],
     "item_count": [
@@ -1344,40 +1285,28 @@
       0
     ],
     "event_pool": [
-      "rowdy_regular",
-      "machine_jam",
-      "side_door",
-      "heat_at_exit",
-      "suspicious_patron",
-      "rival_counter",
-      "counter_payoff",
-      "snitch_reputation",
-      "the_collector",
-      "lay_low_booth",
-      "door_bribe",
-      "lucky_streak_temptation",
-      "crew_favor_delivery"
+      "side_door"
+    ],
+    "required_event_ids": [
+      "side_door"
     ],
     "event_scopes": [
-      "casino"
+      "club"
     ],
     "event_count": [
-      2,
-      4
+      1,
+      1
     ],
     "service_pool": [
-      "house_drink"
+      "punchline_two_drink_minimum"
     ],
-    "lender_hooks": [
-      "the_crew",
-      "street_lender"
-    ],
+    "lender_hooks": [],
     "lender_count": [
-      1,
-      2
+      0,
+      0
     ],
     "suspicion_cues": [
-      "Security is personal. Courtesy is thin."
+      "The room performs. The side door does not."
     ],
     "travel_hooks": [
       "back_alley",
@@ -1387,13 +1316,259 @@
       "grand_casino"
     ],
     "local_narrative_flags": {
-      "underground_pressure": true
+      "punchline_public_cover": true,
+      "two_drink_minimum": 2
     },
     "moods": [
-      "tight",
-      "pink",
-      "dangerous"
-    ]
+      "thin",
+      "hopeful",
+      "performing"
+    ],
+    "environment_layer_schema_version": 1,
+    "default_layer_id": "club",
+    "compatibility_primary_layer_id": "casino",
+    "layer_discovery_defaults": {
+      "club": true,
+      "casino": false,
+      "back_room": false
+    },
+    "layers": {
+      "club": {
+        "kind": "club",
+        "layer_display_name": "Comedy Club",
+        "layer_entry_message": "The Punchline gives you a chair and keeps its other business quiet.",
+        "art_key": "punchline_club",
+        "visual_context": {
+          "perspective": "first_person",
+          "scene_type": "comedy_club",
+          "asset_path": "res://assets/art/environments/small_underground_casino.png",
+          "description": "A tired comedy stage works for every laugh."
+        },
+        "objective_hint": "Two drinks buy a chair. The bad jokes come free.",
+        "layout": {
+          "game_spots": [],
+          "event_spots": [[704, 214]],
+          "service_spots": [[154, 264]],
+          "lender_spots": [],
+          "layer_spots": [[410, 130], [786, 302]],
+          "travel_spots": [[842, 374]]
+        },
+        "security_profile": {
+          "strictness": "low",
+          "visible_cues": ["The door watches the room more closely than the comic."]
+        },
+        "music_profile": {
+          "theme": "tinny stage sound",
+          "ambience": 0.74,
+          "mode": "mixolydian",
+          "progression": [0, 3, 4, 4],
+          "motif": [0, -999, 2, -999, 4, -999, 2, -999, 0, -999, 3, -999, 4, -999, 2, -999],
+          "root_midi": 45,
+          "safety": 0.42,
+          "texture": "stage",
+          "texture_rate": 0.13,
+          "volume": 0.21
+        },
+        "economic_profile": {"stake_floor": 0, "stake_ceiling": 0, "cashout_tone": "cover"},
+        "game_pool": [],
+        "game_count": [0, 0],
+        "item_pool": [],
+        "item_count": [0, 0],
+        "event_pool": ["side_door"],
+        "required_event_ids": ["side_door"],
+        "event_scopes": ["club"],
+        "event_count": [1, 1],
+        "service_pool": ["punchline_two_drink_minimum"],
+        "lender_hooks": [],
+        "lender_count": [0, 0],
+        "suspicion_cues": ["The room performs. The side door does not."],
+        "travel_hooks": ["back_alley", "motel", "delta_queen", "kitty_cat_lounge", "grand_casino"],
+        "local_narrative_flags": {"punchline_public_cover": true, "two_drink_minimum": 2},
+        "moods": ["thin", "hopeful", "performing"],
+        "layer_transitions": [
+          {
+            "target_layer_id": "casino",
+            "label": "Side Door",
+            "description": "A plain door beside the tired stage.",
+            "prop": "side_door",
+            "requires_discovered": true,
+            "hidden_until_available": true,
+            "access_paths": [
+              {
+                "method": "crew_standing",
+                "min_crew_rank": "marker"
+              },
+              {
+                "method": "regular_nod",
+                "flags_any": [
+                  "punchline_regular_nod"
+                ]
+              }
+            ],
+            "locked_reason": "The side door looks like part of the wall."
+          }
+        ],
+        "ambient_label": "Tonight's Comic",
+        "ambient_prop": "stage",
+        "ambient_rotate_actions": 2,
+        "ambient_lines": [
+          "The comic asks for a raise. The ceiling stays low.",
+          "A slot walks into a bar. It leaves with the bar.",
+          "The room heard the good joke yesterday. This is not it.",
+          "The microphone works. Nobody else has that excuse."
+        ]
+      },
+      "casino": {
+        "kind": "casino",
+        "layer_display_name": "Hidden Casino",
+        "layer_entry_message": "The stage noise thins. Felt and low voices take over.",
+        "art_key": "small_underground_casino",
+        "name_prefixes": [
+          "Pink Room",
+          "Basement"
+        ],
+        "name_nouns": [
+          "Underground Casino"
+        ],
+        "visual_context": {
+          "perspective": "first_person",
+          "scene_type": "underground",
+          "asset_path": "res://assets/art/environments/small_underground_casino.png",
+          "description": "Low ceiling. Play kept close."
+        },
+        "objective_hint": "Better tables are provided. Heat comes too.",
+        "layout": {
+          "game_spots": [[798, 176], [220, 202], [568, 202]],
+          "event_spots": [[84, 86], [410, 96], [220, 300], [410, 300], [620, 300]],
+          "service_spots": [[78, 220]],
+          "lender_spots": [[790, 300], [84, 300]],
+          "travel_spots": [[820, 86], [820, 380], [676, 82], [520, 380], [250, 380], [84, 380]]
+        },
+        "security_profile": {
+          "strictness": "high",
+          "visible_cues": [
+            "Every return guest is remembered at the door."
+          ]
+        },
+        "music_profile": {
+          "theme": "basement casino",
+          "ambience": 0.92,
+          "mode": "phrygian",
+          "progression": [0, 1, 5, 4],
+          "motif": [0, -999, 1, -999, 3, -999, 1, -999, 0, -999, 4, -999, 5, -999, 4, -999],
+          "root_midi": 41,
+          "safety": 0.14,
+          "texture": "basement",
+          "texture_rate": 0.19,
+          "volume": 0.25
+        },
+        "economic_profile": {
+          "stake_floor": 10,
+          "stake_ceiling": 70,
+          "game_stake_floor_overrides": {"blackjack": 5},
+          "game_stake_ceiling_overrides": {"blackjack": 60},
+          "cashout_tone": "private"
+        },
+        "game_pool": ["slot", "blackjack", "video_poker"],
+        "game_count": [3, 3],
+        "item_pool": [],
+        "item_count": [0, 0],
+        "event_pool": ["rowdy_regular", "machine_jam", "side_door", "heat_at_exit", "suspicious_patron", "rival_counter", "counter_payoff", "snitch_reputation", "the_collector", "lay_low_booth", "door_bribe", "lucky_streak_temptation", "crew_favor_delivery"],
+        "event_scopes": ["casino"],
+        "event_count": [2, 4],
+        "service_pool": ["house_drink"],
+        "lender_hooks": ["the_crew", "street_lender"],
+        "lender_count": [1, 2],
+        "suspicion_cues": ["Security is personal. Courtesy is thin."],
+        "travel_hooks": ["back_alley", "motel", "delta_queen", "kitty_cat_lounge", "grand_casino"],
+        "local_narrative_flags": {"underground_pressure": true},
+        "moods": ["tight", "pink", "dangerous"],
+        "layer_transitions": [
+          {
+            "target_layer_id": "club",
+            "label": "Comedy Club",
+            "description": "Take the stairs back to the public room."
+          },
+          {
+            "target_layer_id": "back_room",
+            "label": "Crew Back Room",
+            "description": "A private door behind the tables.",
+            "requires_discovered": true,
+            "access_paths": [
+              {"method": "crew_rank", "min_crew_rank": "made"},
+              {"method": "rook_escort", "flags_any": ["rook_escort_punchline_back_room"]}
+            ],
+            "locked_reason": "Rook keeps this door for made company."
+          }
+        ]
+      },
+      "back_room": {
+        "kind": "crew",
+        "layer_display_name": "Crew Back Room",
+        "layer_entry_message": "Rook opens the private room. It is mostly promise for now.",
+        "art_key": "punchline_back_room",
+        "name_prefixes": [],
+        "name_nouns": ["The Punchline"],
+        "visual_context": {
+          "perspective": "first_person",
+          "scene_type": "crew_back_room",
+          "asset_path": "res://assets/art/environments/small_underground_casino.png",
+          "description": "A shut door. A bare table. Nobody else listening."
+        },
+        "objective_hint": "The room is unfinished. Rook is not.",
+        "layout": {
+          "game_spots": [],
+          "event_spots": [],
+          "service_spots": [],
+          "lender_spots": [],
+          "layer_spots": [[410, 168], [842, 374]],
+          "travel_spots": [[842, 374]]
+        },
+        "security_profile": {"strictness": "crew", "visible_cues": ["The door shuts. The ceiling stops counting."]},
+        "music_profile": {
+          "theme": "low and private",
+          "ambience": 0.46,
+          "mode": "dorian",
+          "progression": [0, 3, 1, 0],
+          "motif": [0, -999, -999, -999, 3, -999, -999, -999, 1, -999, -999, -999, 0, -999, -999, -999],
+          "root_midi": 38,
+          "safety": 0.78,
+          "texture": "private_room",
+          "texture_rate": 0.08,
+          "volume": 0.17
+        },
+        "economic_profile": {"stake_floor": 0, "stake_ceiling": 0, "cashout_tone": "none"},
+        "game_pool": [],
+        "game_count": [0, 0],
+        "item_pool": [],
+        "item_count": [0, 0],
+        "event_pool": [],
+        "event_scopes": ["crew"],
+        "event_count": [0, 0],
+        "service_pool": [],
+        "lender_hooks": [],
+        "lender_count": [0, 0],
+        "suspicion_cues": ["Nobody outside this room gets a vote."],
+        "travel_hooks": ["back_alley", "motel", "delta_queen", "kitty_cat_lounge", "grand_casino"],
+        "local_narrative_flags": {"punchline_back_room_shell": true},
+        "moods": ["private", "unfinished", "crew"],
+        "layer_transitions": [
+          {
+            "target_layer_id": "casino",
+            "label": "Hidden Casino",
+            "description": "Return to the tables."
+          }
+        ],
+        "ambient_label": "Rook",
+        "ambient_prop": "patron_talk",
+        "ambient_rotate_actions": 3,
+        "ambient_lines": [
+          "Rook looks over the bare room. 'We'll put the work here.'",
+          "Rook taps the table. 'Made company gets a chair.'",
+          "Rook keeps his voice low. 'This door remembers who opened it.'"
+        ]
+      }
+    }
   },
   {
     "id": "jazz_club",

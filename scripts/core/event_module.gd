@@ -219,6 +219,7 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 	for story_flag_id in _single_or_array_strings(consequences.get("set_story_flags", [])):
 		story_flags[str(story_flag_id)] = true
 	deltas["story_flags_set"] = story_flags
+	deltas["environment_layer_discovery"] = _copy_dict(consequences.get("environment_layer_discovery", {}))
 	var travel_hooks := _copy_array(consequences.get("travel_hooks_add", []))
 	for route_id in _single_or_array_strings(consequences.get("unlock_travel_route", consequences.get("unlock_travel_routes", []))):
 		var route_target := _destination_archetype_for_route(str(route_id))
@@ -492,6 +493,17 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 		return false
 	for archetype_id in _string_array(conditions.get("blocked_archetype_ids", [])):
 		if str(environment.get("archetype_id", "")) == archetype_id:
+			return false
+	var layer_ids := _string_array(conditions.get("layer_ids", []))
+	if not layer_ids.is_empty() and not layer_ids.has(str(environment.get("current_layer_id", ""))):
+		return false
+	for layer_id in _string_array(conditions.get("blocked_layer_ids", [])):
+		if str(environment.get("current_layer_id", "")) == layer_id:
+			return false
+	var minimum_crew_rank := str(conditions.get("min_crew_rank", "")).strip_edges()
+	if not minimum_crew_rank.is_empty():
+		var ranks := CrewStateModel.RANK_IDS
+		if not ranks.has(minimum_crew_rank) or ranks.find(str(run_state.crew_standing().get("rank", "stranger"))) < ranks.find(minimum_crew_rank):
 			return false
 	var requires_games := _string_array(conditions.get("requires_games", []))
 	if not requires_games.is_empty():

@@ -21,6 +21,7 @@ const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const EnvironmentHoursScript := preload("res://scripts/core/environment_hours.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
+const PunchlineLayerContractScript := preload("res://scripts/tests/foundation/punchline_layer_contract.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
@@ -596,6 +597,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_s0_2_baseline_regression_fixtures(library, failures)
 	_check_sa_2_per_frame_contracts(failures)
 	_check_scenario_engine_foundation(library, failures)
+	PunchlineLayerContractScript.check(library, failures)
 
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CONTENT-CHECK")
@@ -1057,7 +1059,7 @@ func _check_destination_decision_contract(library: ContentLibrary, failures: Arr
 		offers[offer] = route_id
 	var framed := FoundationTravelViewModelScript.decision_frame_choices([
 		{"id": "gas_station_casino", "label": "Gas Station Casino", "enabled": true, "cost": 3, "travel_minutes": 10, "risk": "medium", "suspicion_delta": 1, "decision": library.route("gas_station_casino").get("decision", {})},
-		{"id": "small_underground_casino", "label": "Underground Casino", "enabled": true, "cost": 5, "travel_minutes": 20, "risk": "high", "suspicion_delta": 3, "decision": library.route("small_underground_casino").get("decision", {})},
+		{"id": "small_underground_casino", "label": "The Punchline", "enabled": true, "cost": 5, "travel_minutes": 20, "risk": "high", "suspicion_delta": 3, "decision": library.route("small_underground_casino").get("decision", {})},
 	])
 	if framed.size() != 2:
 		failures.append("Travel decision framing did not preserve both tutorial route choices.")
@@ -1065,17 +1067,20 @@ func _check_destination_decision_contract(library: ContentLibrary, failures: Arr
 		for choice_value in framed:
 			var choice: Dictionary = choice_value
 			var lines: Array = choice.get("decision_lines", []) if typeof(choice.get("decision_lines", [])) == TYPE_ARRAY else []
-			if lines.size() != 3 or str(choice.get("decision_commitment", "")).find("min") == -1 or str(choice.get("decision_forfeit", "")).find("Casino") == -1:
+			var expected_forfeit := "The Punchline" if str(choice.get("id", "")) == "gas_station_casino" else "Gas Station Casino"
+			if lines.size() != 3 or str(choice.get("decision_commitment", "")).find("min") == -1 or str(choice.get("decision_forfeit", "")).find(expected_forfeit) == -1:
 				failures.append("Travel decision framing did not expose offer, live commitment, and visible-alternative forfeit for %s." % str(choice.get("id", "")))
 	var gas := _archetype_by_id(library, "gas_station_casino")
 	var underground := _archetype_by_id(library, "small_underground_casino")
+	var underground_layers: Dictionary = underground.get("layers", {}) if typeof(underground.get("layers", {})) == TYPE_DICTIONARY else {}
+	var underground_gameplay: Dictionary = underground_layers.get("casino", underground) if typeof(underground_layers.get("casino", underground)) == TYPE_DICTIONARY else underground
 	var gas_route := library.route("gas_station_casino")
 	var underground_route := library.route("small_underground_casino")
-	if _string_array(gas.get("game_pool", [])) == _string_array(underground.get("game_pool", [])):
+	if _string_array(gas.get("game_pool", [])) == _string_array(underground_gameplay.get("game_pool", [])):
 		failures.append("Tutorial route branches share the same game pool.")
-	if _string_array(gas.get("event_pool", [])) == _string_array(underground.get("event_pool", [])):
+	if _string_array(gas.get("event_pool", [])) == _string_array(underground_gameplay.get("event_pool", [])):
 		failures.append("Tutorial route branches share the same event pool.")
-	if str((gas.get("security_profile", {}) as Dictionary).get("strictness", "")) == str((underground.get("security_profile", {}) as Dictionary).get("strictness", "")):
+	if str((gas.get("security_profile", {}) as Dictionary).get("strictness", "")) == str((underground_gameplay.get("security_profile", {}) as Dictionary).get("strictness", "")):
 		failures.append("Tutorial route branches share the same security consequence.")
 	if int(gas_route.get("cost", 0)) >= int(underground_route.get("cost", 0)) or str(gas_route.get("risk", "")) == str(underground_route.get("risk", "")):
 		failures.append("Tutorial route branches lost their safer-versus-higher-stakes route shape.")
@@ -1656,7 +1661,12 @@ func _check_high_risk_table_limit_overrides(library: ContentLibrary, failures: A
 		if archetype.is_empty():
 			failures.append("High-risk table limit fixture is missing venue: %s." % str(venue_id))
 			continue
-		var profile: Dictionary = archetype.get("economic_profile", {}) if typeof(archetype.get("economic_profile", {})) == TYPE_DICTIONARY else {}
+		var effective_archetype := archetype
+		if str(venue_id) == "small_underground_casino":
+			var layers: Dictionary = archetype.get("layers", {}) if typeof(archetype.get("layers", {})) == TYPE_DICTIONARY else {}
+			if typeof(layers.get("casino", {})) == TYPE_DICTIONARY:
+				effective_archetype = layers.get("casino", {})
+		var profile: Dictionary = effective_archetype.get("economic_profile", {}) if typeof(effective_archetype.get("economic_profile", {})) == TYPE_DICTIONARY else {}
 		var base_limit := int(profile.get("stake_ceiling", 0))
 		var floor_overrides: Dictionary = profile.get("game_stake_floor_overrides", {}) if typeof(profile.get("game_stake_floor_overrides", {})) == TYPE_DICTIONARY else {}
 		var overrides: Dictionary = profile.get("game_stake_ceiling_overrides", {}) if typeof(profile.get("game_stake_ceiling_overrides", {})) == TYPE_DICTIONARY else {}
