@@ -1432,7 +1432,8 @@
     "class": "contraband",
     "domain": "games",
     "content_groups": [
-      "bar_dice_pack"
+      "bar_dice_pack",
+      "craps_pack"
     ],
     "sellable": true,
     "sale_price": 12,
@@ -1463,7 +1464,8 @@
     "class": "contraband",
     "domain": "games",
     "content_groups": [
-      "bar_dice_pack"
+      "bar_dice_pack",
+      "craps_pack"
     ],
     "sellable": true,
     "sale_price": 18,
@@ -1494,7 +1496,8 @@
     "class": "contraband",
     "domain": "games",
     "content_groups": [
-      "bar_dice_pack"
+      "bar_dice_pack",
+      "craps_pack"
     ],
     "build_tags": [
       "cheat_specialist"

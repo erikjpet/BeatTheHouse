@@ -77,8 +77,8 @@ const GRAND_CASINO_ARCHETYPE_IDS := [
 	GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID,
 	GRAND_CASINO_CAGE_ARCHETYPE_ID,
 ]
-const GRAND_CASINO_TABLE_GAME_IDS := ["blackjack", "baccarat", "roulette"]
-const GRAND_CASINO_CHIP_GAME_IDS := ["blackjack", "baccarat", "roulette", "video_poker", "pull_tabs", "bar_dice"]
+const GRAND_CASINO_TABLE_GAME_IDS := ["blackjack", "baccarat", "roulette", "craps"]
+const GRAND_CASINO_CHIP_GAME_IDS := ["blackjack", "baccarat", "roulette", "craps", "video_poker", "pull_tabs", "bar_dice"]
 const GRAND_CASINO_INVITATION_EVENT_ID := "grand_casino_invite"
 const TIER_TWO_LOCATION_SPAWN_FLAG := "tier_two_casino_spawns_enabled"
 const TIER_TWO_LOCATION_SPAWN_REASON_FLAG := "tier_two_casino_spawn_reason"
@@ -2224,6 +2224,8 @@ func _grand_casino_result_wager_funding_amount(result: Dictionary, bankroll_delt
 		wager = maxi(wager, int(result.get("roulette_total_wager", 0)))
 	elif game_id == "baccarat":
 		wager = maxi(wager, int(result.get("baccarat_total_wager", 0)))
+	elif game_id == "craps":
+		wager = maxi(wager, int(result.get("craps_total_wager", 0)))
 	return maxi(wager, maxi(0, -bankroll_delta))
 
 

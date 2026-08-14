@@ -201,6 +201,9 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var pending := _pending_bets(ui_state.get("craps_pending_bets", {}))
 	if pending.is_empty() and stake > 0:
 		pending["pass_line" if int(table.get("point", 0)) == 0 else "come"] = stake
+	var pending_validation := _validate_pending_bets(table, pending)
+	if not bool(pending_validation.get("ok", false)):
+		return _empty_result(action_id, CrapsRulesScript.pending_wager_total(pending), environment, str(pending_validation.get("message", "Those wagers are not available.")))
 	var total_wager := CrapsRulesScript.pending_wager_total(pending)
 	if total_wager > _wager_capacity(run_state, environment):
 		return _empty_result(action_id, total_wager, environment, "The wager exceeds the funds available at this table.")
@@ -213,7 +216,11 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var roll := CrapsRulesScript.roll_dice(rng, int(cheat.get("bias_permille", 0)))
 	var settlement := CrapsRulesScript.settle_roll(table, pending, roll, _dict(table.get("rules", {})))
 	var room_energy := _project_table_energy(environment, table)
-	var bankroll_delta := int(settlement.get("bankroll_delta", 0)) + int(cheat.get("bankroll_delta", 0))
+	var settlement_delta := int(settlement.get("bankroll_delta", 0))
+	var luck_payout_bonus := 0
+	if settlement_delta > 0 and run_state != null:
+		luck_payout_bonus = run_state.luck_payout_bonus(maxi(1, total_wager), true) + _item_effect_total("win_bonus", run_state)
+	var bankroll_delta := settlement_delta + luck_payout_bonus + int(cheat.get("bankroll_delta", 0))
 	var suspicion_delta := int(cheat.get("suspicion_delta", 0))
 	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var dice := _int_array(roll.get("dice", []))
@@ -289,6 +296,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"action_kind": action_kind,
 		"stake": total_wager,
 		"craps_total_wager": total_wager,
+		"luck_payout_bonus": luck_payout_bonus,
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"deltas": deltas,
@@ -517,6 +525,24 @@ func _security_band_multiplier(environment: Dictionary, config: Dictionary) -> f
 
 func _can_roll(table: Dictionary, pending: Dictionary) -> bool:
 	return CrapsRulesScript.pending_wager_total(pending) > 0 or not CrapsSurfaceViewModelScript.working_rows(table).is_empty()
+
+
+func _validate_pending_bets(table: Dictionary, pending: Dictionary) -> Dictionary:
+	var staged := {}
+	var ordered_ids := ["pass_line", "dont_pass", "come", "dont_come", "field", "place_4", "place_5", "place_6", "place_8", "place_9", "place_10", "pass_odds", "come_odds_4", "come_odds_5", "come_odds_6", "come_odds_8", "come_odds_9", "come_odds_10"]
+	for bet_id_value in ordered_ids:
+		var bet_id := str(bet_id_value)
+		var amount := int(pending.get(bet_id, 0))
+		if amount <= 0:
+			continue
+		var validation := CrapsRulesScript.can_place_bet(bet_id, amount, table, staged, _dict(table.get("rules", {})))
+		if not bool(validation.get("ok", false)):
+			return validation
+		staged[bet_id] = amount
+	for pending_id_value in pending.keys():
+		if not ordered_ids.has(str(pending_id_value)):
+			return {"ok": false, "message": "That wager is not offered at this table."}
+	return {"ok": true}
 
 
 func _wager_capacity(run_state: RunState, environment: Dictionary) -> int:

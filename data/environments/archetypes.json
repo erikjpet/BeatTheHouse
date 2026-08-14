@@ -3056,7 +3056,8 @@
       "stake_floor": 5,
       "stake_ceiling": 35,
       "game_stake_ceiling_overrides": {
-        "roulette": 150
+        "roulette": 150,
+        "craps": 150
       },
       "cashout_tone": "cage"
     },
@@ -3064,17 +3065,19 @@
       "slot",
       "video_poker",
       "pull_tabs",
-      "blackjack"
+      "blackjack",
+      "craps"
     ],
     "required_game_ids": [
       "slot",
       "video_poker",
       "pull_tabs",
-      "blackjack"
+      "blackjack",
+      "craps"
     ],
     "game_count": [
-      4,
-      4
+      5,
+      5
     ],
     "item_pool": [],
     "item_count": [
@@ -3306,6 +3309,10 @@
         [
           670,
           190
+        ],
+        [
+          450,
+          260
         ]
       ],
       "event_spots": [
@@ -3383,23 +3390,26 @@
       "game_stake_ceiling_overrides": {
         "blackjack": 1000,
         "baccarat": 1000,
-        "roulette": 1000
+        "roulette": 1000,
+        "craps": 1000
       },
       "cashout_tone": "cage"
     },
     "game_pool": [
       "blackjack",
       "baccarat",
-      "roulette"
+      "roulette",
+      "craps"
     ],
     "required_game_ids": [
       "blackjack",
       "baccarat",
-      "roulette"
+      "roulette",
+      "craps"
     ],
     "game_count": [
-      3,
-      3
+      4,
+      4
     ],
     "item_pool": [],
     "item_count": [
@@ -3510,6 +3520,10 @@
         [
           450,
           220
+        ],
+        [
+          650,
+          220
         ]
       ],
       "event_spots": [
@@ -3573,11 +3587,16 @@
       "cashout_tone": "locked"
     },
     "game_pool": [
-      "blackjack"
+      "blackjack",
+      "craps"
+    ],
+    "required_game_ids": [
+      "blackjack",
+      "craps"
     ],
     "game_count": [
-      1,
-      1
+      2,
+      2
     ],
     "item_pool": [],
     "item_count": [

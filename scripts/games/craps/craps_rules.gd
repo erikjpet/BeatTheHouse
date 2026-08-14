@@ -36,6 +36,12 @@ static func can_place_bet(bet_id: String, amount: int, table: Dictionary, pendin
 	var point := int(table.get("point", 0))
 	var working := _working(table)
 	var combined := _combined_stake(bet_id, working, pending)
+	var table_minimum := maxi(1, int(table.get("table_minimum", 1)))
+	var table_maximum := maxi(table_minimum, int(table.get("table_maximum", table_minimum)))
+	if combined == 0 and amount < table_minimum:
+		return {"ok": false, "message": "That wager is below the posted table minimum."}
+	if combined + amount > table_maximum:
+		return {"ok": false, "message": "That wager exceeds the posted table maximum."}
 	match bet_id:
 		"pass_line", "dont_pass":
 			if point != 0:

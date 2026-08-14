@@ -25,7 +25,7 @@ const SLOT_AUTOPLAY_PREWARM_BLOCKS := 3
 const PINBALL_CACHE_STRESS_SESSIONS := 40
 const SOAK_SAVE_SLOT := "foundation_soak_probe"
 const RETAINED_MEASUREMENT_SEED := "FOUNDATION-SOAK-RETAINED-MEASUREMENT"
-const SOAK_PREWARM_GAME_IDS := ["blackjack", "baccarat", "roulette", "video_poker", "bar_dice", "pull_tabs", "slot"]
+const SOAK_PREWARM_GAME_IDS := ["blackjack", "baccarat", "roulette", "craps", "video_poker", "bar_dice", "pull_tabs", "slot"]
 
 const MAX_SERIALIZED_RUN_STATE_BYTES := 1500000
 const MAX_POST_WARMUP_MEMORY_PEAK_GROWTH_BYTES := 32 * 1024 * 1024
@@ -370,6 +370,7 @@ func _preferred_game_action(game_id: String, actions: Array) -> Dictionary:
 		"blackjack": "play_basic",
 		"baccarat": "deal_baccarat",
 		"roulette": "spin_roulette",
+		"craps": "roll_craps",
 		"video_poker": "draw",
 	}
 	var preferred_id := str(preferred_ids.get(game_id, ""))

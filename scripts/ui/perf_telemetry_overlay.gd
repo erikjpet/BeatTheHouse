@@ -15,6 +15,7 @@ const REQUIRED_GAME_IDS := [
 	"blackjack",
 	"baccarat",
 	"roulette",
+	"craps",
 	"video_poker",
 ]
 const ACTIVE_ACTIONS := {
@@ -24,6 +25,7 @@ const ACTIVE_ACTIONS := {
 	"blackjack": "play_basic",
 	"baccarat": "deal_baccarat",
 	"roulette": "spin_roulette",
+	"craps": "roll_craps",
 	"video_poker": "draw",
 }
 const DEFAULT_SAMPLE_STRIDE_FRAMES := 30

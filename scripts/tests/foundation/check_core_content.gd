@@ -82,6 +82,7 @@ const FOUNDATION_SUITES := [
 	"blackjack",
 	"roulette",
 	"baccarat",
+	"craps",
 	"video_poker",
 	"bar_dice",
 	"pull_tabs",
@@ -448,7 +449,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 		"all":
 			_foundation_run_all_suite(content_library, fixture_library, failures, report)
 		_:
-			if ["blackjack", "roulette", "baccarat", "video_poker", "bar_dice", "pull_tabs", "scratch_tickets"].has(suite):
+			if ["blackjack", "roulette", "baccarat", "craps", "video_poker", "bar_dice", "pull_tabs", "scratch_tickets"].has(suite):
 				_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 				_foundation_run_check(report, failures, "%s_game_suite" % suite, Callable(self, "_check_target_game_suite"), [content_library, suite])
 			else:
@@ -2139,8 +2140,8 @@ func _check_high_risk_table_limit_overrides(library: ContentLibrary, failures: A
 		"small_underground_casino": {"blackjack": 60},
 		"delta_queen": {"blackjack": 200, "roulette": 250},
 		"kitty_cat_lounge": {"roulette": 200},
-		"grand_casino": {"roulette": 150},
-		"grand_casino_high_limit": {"blackjack": 1000, "baccarat": 1000, "roulette": 1000},
+		"grand_casino": {"roulette": 150, "craps": 150},
+		"grand_casino_high_limit": {"blackjack": 1000, "baccarat": 1000, "roulette": 1000, "craps": 1000},
 	}
 	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
 	var roulette: GameModule = _load_surface_contract_game(library, "roulette", failures)
@@ -3125,7 +3126,7 @@ func _check_content_group_modularity(library: ContentLibrary, failures: Array) -
 	var default_groups := library.default_content_group_ids()
 	if default_groups.is_empty():
 		failures.append("Content groups should expose default-enabled run packs.")
-	for required_group in ["universal_passive_items", "universal_active_items", "pull_tabs_pack", "scratch_tickets_pack", "slot_pack", "bar_dice_pack", "blackjack_pack", "baccarat_pack", "roulette_pack", "video_poker_pack"]:
+	for required_group in ["universal_passive_items", "universal_active_items", "pull_tabs_pack", "scratch_tickets_pack", "slot_pack", "bar_dice_pack", "blackjack_pack", "baccarat_pack", "roulette_pack", "craps_pack", "video_poker_pack"]:
 		if library.content_group(required_group).is_empty():
 			failures.append("Content group is missing: %s." % required_group)
 	if not library.game_enabled_for_challenge("pull_tabs", {}):
@@ -4370,6 +4371,9 @@ func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> 
 	var baccarat: GameModule = _load_surface_contract_game(library, "baccarat", failures)
 	if baccarat != null:
 		_check_baccarat_surface_contract(baccarat, failures, library)
+	var craps: GameModule = _load_surface_contract_game(library, "craps", failures)
+	if craps != null:
+		_check_craps_surface_contract(craps, failures, library)
 	var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 	if pull_tabs != null:
 		_check_pull_tabs_surface_contract(pull_tabs, failures)
@@ -4503,7 +4507,7 @@ func _check_table_environment_entry_contracts(library: ContentLibrary, failures:
 		_sb4_dispose_app(app)
 		return
 
-	for game_id in ["roulette", "blackjack", "baccarat", "bar_dice"]:
+	for game_id in ["roulette", "blackjack", "baccarat", "craps", "bar_dice"]:
 		_check_single_table_environment_entry_contract(library, app, str(game_id), failures)
 
 	_sb4_dispose_app(app)
@@ -4662,6 +4666,10 @@ func _check_target_game_suite(library: ContentLibrary, game_id: String, failures
 			var baccarat: GameModule = _load_surface_contract_game(library, "baccarat", failures)
 			if baccarat != null:
 				_check_baccarat_surface_contract(baccarat, failures, library)
+		"craps":
+			var craps: GameModule = _load_surface_contract_game(library, "craps", failures)
+			if craps != null:
+				_check_craps_surface_contract(craps, failures, library)
 		"video_poker":
 			var video_poker: GameModule = _load_surface_contract_game(library, "video_poker", failures)
 			if video_poker != null:

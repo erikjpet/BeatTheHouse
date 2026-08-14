@@ -12,7 +12,7 @@ const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const DEFAULT_SEED_COUNT := 10
 const DEFAULT_SEED_PREFIX := "FOUNDATION-DETERMINISM"
 const DEFAULT_OUTPUT_JSON := "res://.tmp/foundation_determinism_probe/report.json"
-const GAME_IDS := ["slot", "pull_tabs", "scratch_tickets", "blackjack", "baccarat", "roulette", "video_poker", "bar_dice"]
+const GAME_IDS := ["slot", "pull_tabs", "scratch_tickets", "blackjack", "baccarat", "roulette", "craps", "video_poker", "bar_dice"]
 const HASH_MOD := 4294967296
 
 var library: ContentLibrary
@@ -331,6 +331,7 @@ func _apply_all_game_resolves(run_state: RunState, checkpoints: Array, seed: Str
 	_resolve_game(run_state, checkpoints, seed, "blackjack", "play_basic", 20, _timed_ui(run_state, "blackjack_play", {"selected_stake": 20}))
 	_resolve_game(run_state, checkpoints, seed, "baccarat", "deal_baccarat", 20, _timed_ui(run_state, "baccarat_deal", {"baccarat_bets": {"player": 20}}))
 	_resolve_game(run_state, checkpoints, seed, "roulette", "spin_roulette", 20, _timed_ui(run_state, "roulette_spin", {"roulette_bets": [_roulette_bet(20)]}))
+	_resolve_game(run_state, checkpoints, seed, "craps", "roll_craps", 20, _timed_ui(run_state, "craps_roll", {"craps_pending_bets": {"pass_line": 20}}))
 	_resolve_game(run_state, checkpoints, seed, "video_poker", "draw", 0, _timed_ui(run_state, "video_poker_draw", {"bet_level": 1, "denomination_index": 0}))
 	_resolve_game(run_state, checkpoints, seed, "bar_dice", "roll", 20, _timed_ui(run_state, "bar_dice_roll"))
 
@@ -341,6 +342,18 @@ func _apply_skill_cheats(run_state: RunState, checkpoints: Array, seed: String) 
 	_resolve_bar_dice_controlled_roll(run_state, checkpoints, seed)
 	_resolve_roulette_past_post(run_state, checkpoints, seed)
 	_resolve_baccarat_edge_sort(run_state, checkpoints, seed)
+	_resolve_craps_setting(run_state, checkpoints, seed)
+
+
+func _resolve_craps_setting(run_state: RunState, checkpoints: Array, seed: String) -> void:
+	if not game_modules.has("craps"):
+		return
+	run_state.add_item("weighted_keyring")
+	var ui_state := _timed_ui(run_state, "craps_setting", {
+		"craps_pending_bets": {"pass_line": 20},
+		"craps_setting_challenge": {"skill_grade": "perfect", "skill_margin_msec": 0},
+	})
+	_resolve_game(run_state, checkpoints, seed, "craps", "dice_setting", 20, ui_state)
 
 
 func _apply_pinball_feature_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:

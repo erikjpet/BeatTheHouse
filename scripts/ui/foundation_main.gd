@@ -75,6 +75,7 @@ const TUTORIAL_LINDA_CLAIM_CARD_REMINDER_NODE := "claim_card_reminder"
 const TUTORIAL_LINDA_COLLECT_CARD_REMINDER_NODE := "collect_card_reminder"
 const TUTORIAL_GRAND_TABLE_LESSON_ID := "tutorial_enter_grand_table"
 const TUTORIAL_GRAND_TABLE_OBJECT_ID := "game:blackjack"
+const GRAND_CASINO_DUEL_GAME_ID := "blackjack"
 const TUTORIAL_CORNER_STORE_PURCHASE_LESSON_IDS := ["tutorial_buy_store_item", "tutorial_buy_remaining_store_item"]
 const TUTORIAL_META_HOME_CHALLENGE_ID := "tutorial_meta_home_handoff"
 const TUTORIAL_META_HOME_CARD_LESSON_ID := "tutorial_meta_home_card"
@@ -758,6 +759,8 @@ func enter_first_available_game() -> void:
 
 # Enters a game through its data-routed GameModule.
 func enter_game(game_id: String, state_key: String = "") -> bool:
+	if run_state != null and run_state.grand_casino_duel_active(run_state.current_environment):
+		return _enter_grand_casino_duel_surface()
 	var clean_game_id := game_id.strip_edges()
 	var clean_state_key := state_key.strip_edges()
 	if clean_state_key.is_empty():
@@ -813,9 +816,9 @@ func _enter_grand_casino_duel_surface() -> bool:
 		if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID):
 			return false
 	var duel_game_ids := _string_array(run_state.current_environment.get("game_ids", []))
-	if duel_game_ids.is_empty():
+	if not duel_game_ids.has(GRAND_CASINO_DUEL_GAME_ID):
 		return false
-	var duel_game_id := str(duel_game_ids[0])
+	var duel_game_id := GRAND_CASINO_DUEL_GAME_ID
 	var game_module := _game_module_for_id(duel_game_id)
 	if game_module == null:
 		return false
