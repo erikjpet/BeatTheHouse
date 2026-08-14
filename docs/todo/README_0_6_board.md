@@ -71,7 +71,7 @@ Wave C games are intentionally parallel-friendly.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| env06_2 | `env06_2_tier1_scenarios_prompt.md` | IN_PROGRESS | env06_1 | crew06_5 | PM:Codex/sub:1 | 2026-08-14 | | PM-orchestrated Wave B Stage 1 execution. |
+| env06_2 | `env06_2_tier1_scenarios_prompt.md` | DONE | env06_1 | crew06_5 | PM:Codex/sub:1 | 2026-08-14 | 2026-08-14 | PM verified all 17 scenarios/events, tutorial neutrality, real-selector reachability, full integrated gates, determinism, and zero-overlap visual QA PASS. |
 | env06_3 | `env06_3_tier2_scenarios_prompt.md` | TODO | env06_1, env06_4 | crew06_5, crew06_8 | | | | |
 | env06_4 | `env06_4_punchline_rework_prompt.md` | IN_PROGRESS | env06_1 | env06_3, crew06_2, crew06_6 | PM:Codex/sub:2 | 2026-08-14 | | PM-orchestrated Wave B Stage 1 execution. |
 | town06_2 | `town06_2_rumors_travelers_prompt.md` | IN_PROGRESS | env06_1, town06_1 | town06_3, crew06_3, crew06_9, chain06_1 | PM:Codex/sub:3 | 2026-08-14 | | PM-orchestrated Wave B Stage 1 execution. |
@@ -244,3 +244,7 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
 - 2026-08-14 [Wave B Stage 1] PM-orchestrated execution claimed for env06_2,
   env06_4, and town06_2; three isolated subagents assigned, with the PM owning
   integration, board updates, verification, and archival.
+- 2026-08-14 [env06_2] DONE; 17 mechanically distinct tier-1 scenarios,
+  exclusive events, recruitment/game hooks, phase arcs, town-weight tags, and
+  visible cached presentation now land the launch cut. This completes
+  crew06_5's tier-1 dependency; env06_3 remains before that row is claimable.

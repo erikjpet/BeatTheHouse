@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `env06_2` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-14
+- **Completion/implementation commits:** `ce6fb210`, `70886760`, `a3f03776`
+- **Verification:** PM scope/design review PASS; integrated `validate_project`, Foundation systems + UI, determinism 10 seeds / 320 checkpoints (`1208374390`), and visual QA PASS. Dedicated real-selector audit reached 17/17 across 20 seeds; Fight Night save/phase, tutorial identity overlay, and 10 production-order zero-overlap screenshots PASS.
+- **Deviations:** None. The generic tutorial pin-mutation switch and previously missing cached presentation renderer are board-recorded code-reality seams within prompt scope.
 
 # Agent Prompt — 0.6 env06_2: Tier-1 Scenario Set (Launch Cut)
 
