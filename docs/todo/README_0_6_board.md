@@ -258,6 +258,21 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   later Numbers desk must merge against the landed poker layout, use a distinct
   generated spot, and prove both interactables remain reachable and clear of
   overlay text at 1280×720.
+- 2026-08-14 [craps06_1] The prompt's three Grand Casino table rooms map to
+  `grand_casino`, `grand_casino_high_limit`, and `grand_casino_back_room`;
+  the Cage remains excluded. Craps registers alongside the Back Room payload,
+  while the sacred Rourke showdown must remain blackjack-only and receive an
+  explicit behavior-compatibility regression.
+- 2026-08-14 [streets06_1/crew06_3] Streets uses full mid-run serialization
+  and freezes one RunState-owned consumer surface: `streets_begin_multi_stop`,
+  `streets_begin_hold`, `streets_begin_chase`, `streets_apply_action`,
+  `streets_snapshot`, and `streets_has_active_run`. Numbers must consume these
+  APIs unchanged; undeclared travel paths never enter a Streets board.
+- 2026-08-14 [push06_1] Quarter Falls uses one deterministic action-boundary
+  coarse-pile core. Corner Store may seed an optional zero-or-one game slot;
+  no machine is forced into every node. Alarm tolerance remains hidden, and a
+  hard alarm is nonterminal: it locks only that machine, writes heat/memory,
+  and leaves the environment plus its other games playable.
 
 ## Work Log
 
