@@ -148,6 +148,8 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		conclusion_animation = "bankroll_transfer"
 	result["conclusion_animation"] = conclusion_animation
 	apply_event_result(run_state, result)
+	if get_id() == "crew_favor_delivery":
+		run_state.resolve_crew_favor_delivery_job(choice_key)
 	return result
 
 

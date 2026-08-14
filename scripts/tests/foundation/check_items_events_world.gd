@@ -1,6 +1,7 @@
 extends "res://scripts/tests/foundation/check_table_games.gd"
 
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
+const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 
 func _check_surface_command_non_mutating(game: GameModule, action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary, label: String, failures: Array) -> Dictionary:
 	var before := JSON.stringify(run_state.to_dict())
@@ -4192,6 +4193,7 @@ func _check_lender_debt_foundation(library: ContentLibrary, failures: Array) -> 
 	_check_cash_lender_lifecycle(library, "street_lender", "street_lender_note", true, failures)
 	_check_cash_lender_lifecycle(library, "motel_friend", "motel_friend_note", false, failures)
 	_check_crew_lender_lifecycle(library, failures)
+	_check_crew_trust_core(library, failures)
 	_check_family_lender_lifecycle(library, failures)
 	_check_pawn_lender_lifecycle(library, failures)
 	_check_pawn_shop_run_environment(library, failures)
@@ -4318,6 +4320,18 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	var debt_data: Dictionary = run_state.debt[0] as Dictionary
 	if str(debt_data.get("debt_kind", "")) != "favor" or int(debt_data.get("balance", 0)) != 2:
 		failures.append("The Crew debt was not denominated as two favors.")
+	var marked_members := 0
+	for member_id in CrewStateModelScript.MEMBER_IDS:
+		if run_state.crew_rank(str(member_id)) == "marker":
+			marked_members += 1
+	if run_state.crew_rank("crew_rook") != "marker" or marked_members < 3:
+		failures.append("The Crew loan did not retcon Rook plus its deterministic lender lineup to Marker.")
+	if debt_data.has("crew_member_ids"):
+		failures.append("The Crew trust retcon changed the shipped debt record shape.")
+	var borrow_deltas: Dictionary = borrow_result.get("deltas", {}) if typeof(borrow_result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	for borrow_debt_value in borrow_deltas.get("debt_changes", []):
+		if typeof(borrow_debt_value) == TYPE_DICTIONARY and (borrow_debt_value as Dictionary).has("crew_member_ids"):
+			failures.append("The Crew trust retcon changed the shipped lender result shape.")
 	run_state.advance_environment_turns(2)
 	debt_data = run_state.debt[0] as Dictionary
 	if str(debt_data.get("status", "")) != "favor_due" or not bool(run_state.narrative_flags.get("crew_favor_pending", false)):
@@ -4325,15 +4339,148 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	var favor := run_state.complete_debt_favor("the_crew_marker")
 	if not bool(favor.get("ok", false)):
 		failures.append("The Crew favor completion did not resolve.")
+	elif str(favor.get("message", "")) != "You do the Crew's favor and knock one marker off the slate.":
+		failures.append("The Crew favor completion changed its shipped message.")
 	debt_data = run_state.debt[0] as Dictionary
 	if int(debt_data.get("balance", 0)) != 1 or str(debt_data.get("status", "")) != "active":
 		failures.append("The Crew favor completion did not reduce and reset the marker.")
 	var refusal := run_state.refuse_debt_favor("the_crew_marker")
 	if not bool(refusal.get("ok", false)):
 		failures.append("The Crew favor refusal did not resolve.")
+	elif str(refusal.get("message", "")) != "You refuse the Crew's favor; the marker becomes cash at brutal rates.":
+		failures.append("The Crew favor refusal changed its shipped message.")
 	debt_data = run_state.debt[0] as Dictionary
 	if str(debt_data.get("debt_kind", "")) != "cash" or int(debt_data.get("balance", 0)) != 45:
 		failures.append("The Crew refusal did not convert the remaining favor to cash at the configured rate.")
+	if bool(run_state.narrative_flags.get("crew_favor_pending", true)) or not bool(run_state.narrative_flags.get("crew_marker_converted_to_cash", false)):
+		failures.append("The Crew conversion changed its shipped pending/conversion flags.")
+	var conversion_grievances := run_state.crew_grievances()
+	if conversion_grievances.size() != 1 or str((conversion_grievances[0] as Dictionary).get("kind", "")) != "favor_converted_unpaid":
+		failures.append("The Crew cash conversion did not write exactly one hidden favor_converted_unpaid grievance.")
+
+
+func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
+	for content_failure in CrewStateModelScript.validate_content():
+		failures.append("Crew content: %s" % str(content_failure))
+
+	var ladder: RunState = RunStateScript.new()
+	ladder.start_new("CREW-TRUST-LADDER")
+	if ladder.crew_rank("crew_rook") != "stranger":
+		failures.append("Fresh Crew trust did not start at Stranger.")
+	for rank_id in CrewStateModelScript.RANK_IDS:
+		ladder.crew_trust_by_member["crew_rook"] = CrewStateModelScript.rank_threshold(str(rank_id))
+		if ladder.crew_rank("crew_rook") != str(rank_id):
+			failures.append("Crew trust threshold did not promote Rook to %s." % rank_id)
+	ladder.crew_trust_by_member["crew_rook"] = CrewStateModelScript.rank_threshold("made")
+	var standing := ladder.crew_standing()
+	if not bool(standing.get("layer_3_access", false)) or str(standing.get("rank", "")) != "made":
+		failures.append("Crew standing did not unlock layer 3 at the first Made member.")
+	ladder.crew_trust_by_member["crew_bishop"] = CrewStateModelScript.rank_threshold("inner_circle")
+	standing = ladder.crew_standing()
+	var heist_eligibility: Dictionary = standing.get("heist_eligibility", {}) if typeof(standing.get("heist_eligibility", {})) == TYPE_DICTIONARY else {}
+	if not bool(heist_eligibility.get("the_count", false)) or bool(heist_eligibility.get("the_whale_game", false)):
+		failures.append("Crew standing did not derive plan-specific Inner Circle eligibility.")
+	ladder.crew_trust_by_member["crew_velvet"] = CrewStateModelScript.rank_threshold("inner_circle")
+	heist_eligibility = ladder.crew_standing().get("heist_eligibility", {})
+	if not bool(heist_eligibility.get("the_whale_game", false)) or ladder.crew_rank("crew_mags") != "stranger":
+		failures.append("The Whale Game did not gate on Velvet alone as required by the roadmap.")
+
+	var fulfilled_fixture := _lender_fixture(library, "CREW-FAVOR-FULFILLED", ["the_crew"], [], [])
+	var fulfilled_state: RunState = fulfilled_fixture.get("run_state", null)
+	var fulfilled_resolver: RunActionService = fulfilled_fixture.get("resolver", null)
+	fulfilled_resolver.use_hook("lender", "the_crew")
+	fulfilled_state.complete_debt_favor("the_crew_marker")
+	fulfilled_state.complete_debt_favor("the_crew_marker")
+	if not fulfilled_state.crew_grievances().is_empty():
+		failures.append("Fulfilling the Crew marker before conversion wrote a grievance.")
+
+	var job_run: RunState = RunStateScript.new()
+	job_run.start_new("CREW-JOB-LIFECYCLE")
+	job_run.current_environment = {"id": "crew_job_room", "turns": 0}
+	var expiry_definition := {
+		"id": "expiry_proof",
+		"member_id": "crew_mags",
+		"kind": "package_delivery",
+		"payload": {},
+		"expiry_in_actions": 3,
+		"rewards": {"cash": 0, "trust": 9},
+		"failure": {"trust": -4, "grievance_kind": "job_abandoned", "grievance_weight": 2},
+	}
+	job_run.crew_add_trust("crew_mags", 10, "fixture")
+	var offered := job_run.job_offer(expiry_definition)
+	var expiry_job_id := str(offered.get("id", ""))
+	job_run.advance_environment_turns(2)
+	if str((job_run.crew_jobs.get(expiry_job_id, {}) as Dictionary).get("status", "")) == "resolved":
+		failures.append("Crew job expired before its exact action boundary.")
+	job_run.advance_environment_turns(1)
+	var expired: Dictionary = job_run.crew_jobs.get(expiry_job_id, {}) if typeof(job_run.crew_jobs.get(expiry_job_id, {})) == TYPE_DICTIONARY else {}
+	if str(expired.get("status", "")) != "resolved" or str(expired.get("outcome", "")) != "abandoned":
+		failures.append("Crew job did not resolve abandoned at exactly N action boundaries.")
+	if job_run.crew_trust("crew_mags") != 6 or job_run.crew_grievances("crew_mags").size() != 1:
+		failures.append("Abandoned Crew job did not apply its configured trust and grievance effects.")
+
+	var success_definition := expiry_definition.duplicate(true)
+	success_definition["id"] = "success_proof"
+	success_definition["member_id"] = "crew_lucky"
+	success_definition["rewards"] = {"cash": 17, "trust": 11}
+	var cash_before := job_run.bankroll
+	var success_offer := job_run.job_offer(success_definition)
+	var success_job_id := str(success_offer.get("id", ""))
+	if job_run.job_accept(success_job_id).is_empty() or job_run.job_activate(success_job_id).is_empty():
+		failures.append("Crew job did not traverse offered to accepted to active.")
+	var success := job_run.job_resolve(success_job_id, "success")
+	if str(success.get("outcome", "")) != "success" or job_run.bankroll != cash_before + 17 or job_run.crew_trust("crew_lucky") != 11:
+		failures.append("Successful Crew job did not pay configured cash and trust.")
+
+	var event_run: RunState = RunStateScript.new()
+	event_run.start_new("CREW-FAVOR-EVENT-REGRESSION")
+	event_run.current_environment = {"id": "crew_event_room", "kind": "casino", "tier": 1, "turns": 0, "resolved_event_ids": []}
+	event_run.narrative_flags["crew_favor_pending"] = true
+	var event_module: EventModule = EventModuleScript.new()
+	event_module.setup(library.event("crew_favor_delivery"), library)
+	var event_result := event_module.resolve(event_run, event_run.current_environment, "run_package")
+	if event_run.bankroll != 122 or event_run.suspicion_level() != 4 \
+		or not bool(event_run.narrative_flags.get("crew_favor_completed", false)) \
+		or bool(event_run.narrative_flags.get("crew_favor_pending", true)) \
+		or str(event_result.get("message", "")) != "You run it exactly on their clock.":
+		failures.append("Crew favor delivery changed its shipped cash, heat, flags, or message behavior.")
+	var proof_jobs: Array = []
+	for proof_job_value in event_run.crew_jobs.values():
+		if typeof(proof_job_value) == TYPE_DICTIONARY and str((proof_job_value as Dictionary).get("definition_id", "")) == "crew_favor_delivery":
+			proof_jobs.append(proof_job_value)
+	if proof_jobs.size() != 1 or str((proof_jobs[0] as Dictionary).get("outcome", "")) != "success":
+		failures.append("Crew favor delivery did not route through the proof job seam.")
+
+	var round_trip_source := job_run.to_dict()
+	var round_trip: RunState = RunStateScript.new()
+	round_trip.from_dict(round_trip_source)
+	if JSON.stringify(round_trip.to_dict().get("crew_state", {})) != JSON.stringify(round_trip_source.get("crew_state", {})):
+		failures.append("Crew trust, grievance, and job state did not round-trip through RunState serialization.")
+	var save_service: SaveService = SaveServiceScript.new()
+	var slot_id := "foundation_check_crew_state"
+	if save_service.save_run(job_run, slot_id) != OK:
+		failures.append("SaveService could not persist Crew state.")
+	else:
+		var loaded_crew_state = save_service.load_run(slot_id)
+		if loaded_crew_state == null or JSON.stringify(loaded_crew_state.to_dict().get("crew_state", {})) != JSON.stringify(round_trip_source.get("crew_state", {})):
+			failures.append("SaveService did not round-trip Crew trust, ledger, and jobs.")
+	save_service.clear_run(slot_id)
+	var legacy := event_run.to_dict()
+	legacy.erase("crew_state")
+	legacy["debt"] = [{"id": "the_crew_marker", "lender_id": "the_crew", "balance": 1, "debt_kind": "cash", "status": "active"}]
+	legacy["narrative_flags"] = {"crew_marker_converted_to_cash": true}
+	var migrated: RunState = RunStateScript.new()
+	migrated.from_dict(legacy)
+	if migrated.crew_rank("crew_rook") != "marker":
+		failures.append("Pre-0.6 converted Crew loan did not derive Rook's Marker rank.")
+	var clean_legacy := event_run.to_dict()
+	clean_legacy.erase("crew_state")
+	clean_legacy["debt"] = []
+	clean_legacy["narrative_flags"] = {}
+	var clean_migrated: RunState = RunStateScript.new()
+	clean_migrated.from_dict(clean_legacy)
+	if clean_migrated.crew_rank("crew_rook") != "stranger":
+		failures.append("Pre-0.6 save without active Crew debt did not migrate to Stranger.")
 
 
 func _check_family_lender_lifecycle(library: ContentLibrary, failures: Array) -> void:

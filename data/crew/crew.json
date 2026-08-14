@@ -1,0 +1,39 @@
+[
+  {
+    "id": "crew_trust",
+    "schema_version": 1,
+    "member_ids": [
+      "crew_rook",
+      "crew_velvet",
+      "crew_knuckles",
+      "crew_switch",
+      "crew_mags",
+      "crew_bishop",
+      "crew_lucky"
+    ],
+    "rank_thresholds": [
+      {"id": "stranger", "trust": 0},
+      {"id": "marker", "trust": 10},
+      {"id": "associate", "trust": 30},
+      {"id": "made", "trust": 60},
+      {"id": "inner_circle", "trust": 90}
+    ],
+    "shared_unlocks": {
+      "layer_3_min_rank": "made"
+    },
+    "heist_requirements": {
+      "the_count": ["crew_bishop"],
+      "the_whale_game": ["crew_velvet"],
+      "the_jackpot_job": ["crew_switch"],
+      "lights_out": ["crew_knuckles"]
+    },
+    "grievance_kinds": [
+      "job_abandoned",
+      "stake_horse_loss_shrugged",
+      "distraction_heat_dumped",
+      "wrong_accusation",
+      "favor_converted_unpaid",
+      "numbers_past_posting_in_colors"
+    ]
+  }
+]

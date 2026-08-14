@@ -11,6 +11,8 @@ extends RefCounted
 
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
+const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
+const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 
 const JAZZ_CLUB_ARCHETYPE_ID := "jazz_club"
 const JAZZ_SAX_ROUND_SERVICE_ID := "jazz_sax_round"
@@ -942,6 +944,8 @@ func use_hook(kind: String, hook_id: String) -> Dictionary:
 		return _service_success(result)
 	_advance_hook_clock(kind, definition)
 	GameModule.apply_result(run_state, result)
+	if kind == "lender" and hook_id == "the_crew":
+		_apply_crew_loan_trust(definition)
 	return _service_success(result)
 
 
@@ -1464,6 +1468,21 @@ func _crew_lender_deltas(definition: Dictionary, profile: Dictionary) -> Diction
 	return _dynamic_lender_delta_payload(definition, loan_amount, [debt_change], {
 		"crew_marker_open": true,
 	}, ["The Crew wants favors, not interest."])
+
+
+func _apply_crew_loan_trust(definition: Dictionary) -> void:
+	var member_ids: Array = ["crew_rook"]
+	var speaker: Dictionary = definition.get("speaker", {}) if typeof(definition.get("speaker", {})) == TYPE_DICTIONARY else {}
+	var resolved_speaker := CharacterRosterScript.resolve_speaker(speaker, library, run_state, "the_crew", "loan_offer")
+	for member_value in resolved_speaker.get("members", []):
+		if typeof(member_value) != TYPE_DICTIONARY:
+			continue
+		var member_id := str((member_value as Dictionary).get("character_id", ""))
+		if CrewStateModelScript.MEMBER_IDS.has(member_id) and not member_ids.has(member_id):
+			member_ids.append(member_id)
+	var marker_threshold := CrewStateModelScript.rank_threshold("marker")
+	for member_id in member_ids:
+		run_state.crew_add_trust(str(member_id), maxi(0, marker_threshold - run_state.crew_trust(str(member_id))), "crew_loan")
 
 
 func _family_lender_deltas(definition: Dictionary, profile: Dictionary) -> Dictionary:
