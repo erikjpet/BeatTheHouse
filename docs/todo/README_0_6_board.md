@@ -192,6 +192,14 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   scenario identity remains stored, while base/phase mutations, opportunities,
   and hooks are an identity overlay. Non-tutorial pins retain existing behavior;
   a byte-identical tutorial environment fixture is required.
+- 2026-08-14 [town06_2] Code reality has only boolean/full-detail `scouted`
+  flags and does not seed unvisited scenarios. PM approved a separate `heard`
+  node payload exposing only its truth-traced line, plus canonical one-time
+  scenario selection for non-empty-pool nodes before a scenario rumor can be
+  generated; first visit consumes that stored selection without a second RNG
+  draw. Empty-pool archetypes remain byte-identical. Authored themed security
+  `strictness` strings also remain unchanged; traveling reputation supplies a
+  separate derived `door_strictness_band` at generation.
 
 ## Work Log
 
