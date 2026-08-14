@@ -71,6 +71,8 @@ func _check_craps_rule_matrix(game: GameModule, base_table: Dictionary, failures
 		{"label": "point establish", "point": 0, "working": {}, "pending": {"pass_line": 10}, "total": 6, "delta": -10, "point_after": 6},
 		{"label": "point make with odds", "point": 4, "working": {"pass_line": 10, "pass_odds": 10}, "pending": {}, "total": 4, "delta": 50, "point_after": 0},
 		{"label": "seven out", "point": 6, "working": {"pass_line": 10, "pass_odds": 10}, "pending": {}, "total": 7, "delta": 0, "point_after": 0},
+		{"label": "don't pass point win", "point": 4, "working": {"dont_pass": 10}, "pending": {}, "total": 7, "delta": 20, "point_after": 0},
+		{"label": "don't pass point loss", "point": 4, "working": {"dont_pass": 10}, "pending": {}, "total": 4, "delta": 0, "point_after": 0},
 		{"label": "place six", "point": 5, "working": {"place": {"6": 6}}, "pending": {}, "total": 6, "delta": 7, "point_after": 5},
 		{"label": "field twelve", "point": 6, "working": {}, "pending": {"field": 10}, "total": 12, "delta": 30, "point_after": 6},
 	]
@@ -87,6 +89,17 @@ func _check_craps_rule_matrix(game: GameModule, base_table: Dictionary, failures
 	var come_win := CrapsRulesScript.settle_roll(come_table, {}, _craps_roll(5), rules)
 	if int(come_win.get("bankroll_delta", 0)) != 20 or _craps_dict(_craps_dict(come_table.get("working_bets", {})).get("come", {})).has("5"):
 		failures.append("Craps established Come wager did not pay and clear on its number.")
+	var dont_come_table := _craps_rule_table(base_table, 6, {})
+	var dont_come_move := CrapsRulesScript.settle_roll(dont_come_table, {"dont_come": 10}, _craps_roll(5), rules)
+	if int(dont_come_move.get("bankroll_delta", 0)) != -10 or int(_craps_dict(_craps_dict(dont_come_table.get("working_bets", {})).get("dont_come", {})).get("5", 0)) != 10:
+		failures.append("Craps Don't Come wager did not move to its rolled number.")
+	var dont_come_win := CrapsRulesScript.settle_roll(dont_come_table, {}, _craps_roll(7), rules)
+	if int(dont_come_win.get("bankroll_delta", 0)) != 20 or _craps_dict(_craps_dict(dont_come_table.get("working_bets", {})).get("dont_come", {})).has("5"):
+		failures.append("Craps established Don't Come wager did not win and clear on seven.")
+	var dont_come_bar_table := _craps_rule_table(base_table, 6, {})
+	var dont_come_bar := CrapsRulesScript.settle_roll(dont_come_bar_table, {"dont_come": 10}, _craps_roll(12), rules)
+	if int(dont_come_bar.get("bankroll_delta", -1)) != 0 or not _craps_dict(_craps_dict(dont_come_bar_table.get("working_bets", {})).get("dont_come", {})).is_empty():
+		failures.append("Craps Don't Come bar twelve did not push without moving a number.")
 	var odds_off_table := _craps_rule_table(base_table, 0, {"come": {"4": 10}, "come_odds": {"4": 10}})
 	var odds_off := CrapsRulesScript.settle_roll(odds_off_table, {}, _craps_roll(4), rules)
 	if int(odds_off.get("bankroll_delta", 0)) != 30:
@@ -97,6 +110,16 @@ func _check_craps_rule_matrix(game: GameModule, base_table: Dictionary, failures
 	CrapsRulesScript.settle_roll(place_table, {}, _craps_roll(7), rules)
 	if not _craps_dict(_craps_dict(place_table.get("working_bets", {})).get("place", {})).is_empty():
 		failures.append("Craps Place wager did not clear on a point-on seven-out.")
+	var off_place_table := _craps_rule_table(base_table, 0, {"place": {"6": 6}})
+	var off_place := CrapsRulesScript.settle_roll(off_place_table, {}, _craps_roll(6), rules)
+	if int(off_place.get("bankroll_delta", -1)) != 0 or int(_craps_dict(_craps_dict(off_place_table.get("working_bets", {})).get("place", {})).get("6", 0)) != 6:
+		failures.append("Craps Place wager did not remain off and working through a come-out roll.")
+	var minimum := int(base_table.get("table_minimum", 1))
+	var maximum := int(base_table.get("table_maximum", minimum))
+	if bool(CrapsRulesScript.can_place_bet("pass_line", minimum - 1, base_table, {}, rules).get("ok", false)):
+		failures.append("Craps accepted a wager below the posted table minimum.")
+	if bool(CrapsRulesScript.can_place_bet("pass_line", maximum + 1, base_table, {}, rules).get("ok", false)):
+		failures.append("Craps accepted a wager above the posted table maximum.")
 
 
 func _check_craps_save_restore(game: GameModule, run_state: RunState, environment: Dictionary, failures: Array) -> void:
