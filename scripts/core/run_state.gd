@@ -6436,6 +6436,10 @@ func seeded_scenario_for_node(node_id: String) -> Dictionary:
 	return town_state.seeded_scenario_for_node(node_id) if town_state != null else {}
 
 
+func seeded_scenario_definition_for_node(node_id: String) -> Dictionary:
+	return town_state.seeded_scenario_definition_for_node(node_id) if town_state != null else {}
+
+
 func register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:
 	return town_state != null and town_state.register_rumor_fact(fact_class, fact_id, payload)
 

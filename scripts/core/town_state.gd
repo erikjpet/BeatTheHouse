@@ -122,6 +122,10 @@ func seeded_scenario_for_node(node_id: String) -> Dictionary:
 	return living_world.seeded_scenario_for_node(node_id) if living_world != null else {}
 
 
+func seeded_scenario_definition_for_node(node_id: String) -> Dictionary:
+	return living_world.seeded_scenario_definition_for_node(node_id) if living_world != null else {}
+
+
 func register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:
 	return living_world != null and living_world.register_rumor_fact(fact_class, fact_id, payload)
 

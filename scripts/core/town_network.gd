@@ -26,6 +26,7 @@ var itinerary_schedules: Dictionary = {}
 var rumor_registry: Dictionary = {}
 var heard_by_node: Dictionary = {}
 var seeded_scenarios_by_node: Dictionary = {}
+var seeded_scenario_definitions_by_node: Dictionary = {}
 var reputation_incidents: Array = []
 var reputation_type_registry: Dictionary = {}
 var reputation_sequence: int = 0
@@ -40,6 +41,7 @@ func generate(p_seed_value: int) -> void:
 	rumor_registry = {}
 	heard_by_node = {}
 	seeded_scenarios_by_node = {}
+	seeded_scenario_definitions_by_node = {}
 	reputation_incidents = []
 	reputation_sequence = 0
 	reputation_type_registry = _dictionary(_reputation_data().get("incident_types", {})).duplicate(true)
@@ -57,6 +59,7 @@ func restore(source: Dictionary, p_seed_value: int) -> bool:
 	rumor_registry = _normalize_fact_registry(source.get("rumor_registry", {}))
 	heard_by_node = _dictionary(source.get("heard_by_node", {})).duplicate(true)
 	seeded_scenarios_by_node = _dictionary(source.get("seeded_scenarios_by_node", {})).duplicate(true)
+	seeded_scenario_definitions_by_node = _dictionary(source.get("seeded_scenario_definitions_by_node", {})).duplicate(true)
 	reputation_incidents = _dictionary_array(source.get("reputation_incidents", []))
 	reputation_type_registry = _dictionary(source.get("reputation_type_registry", reputation_type_registry)).duplicate(true)
 	reputation_sequence = maxi(0, int(source.get("reputation_sequence", reputation_incidents.size())))
@@ -104,6 +107,7 @@ func snapshot() -> Dictionary:
 		"rumor_registry": rumor_registry.duplicate(true),
 		"heard_by_node": heard_by_node.duplicate(true),
 		"seeded_scenarios_by_node": seeded_scenarios_by_node.duplicate(true),
+		"seeded_scenario_definitions_by_node": seeded_scenario_definitions_by_node.duplicate(true),
 		"reputation_incidents": reputation_incidents.duplicate(true),
 		"reputation_type_registry": reputation_type_registry.duplicate(true),
 		"reputation_sequence": reputation_sequence,
@@ -122,6 +126,10 @@ func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
 		"tags": _string_array(scenario.get("tags", [])),
 	}
 	seeded_scenarios_by_node[clean_node] = public_scenario
+	# Cache the canonical selector output, not a later content-library lookup.
+	# Challenge pins can preserve identity while intentionally suppressing the
+	# authored mutation/phase payload for controlled tutorial rooms.
+	seeded_scenario_definitions_by_node[clean_node] = scenario.duplicate(true)
 	return register_rumor_fact(RUMOR_CLASS_SCENARIO, "scenario:%s" % clean_node, {
 		"target_node_id": clean_node,
 		"source_id": scenario_id,
@@ -132,6 +140,10 @@ func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
 
 func seeded_scenario_for_node(node_id: String) -> Dictionary:
 	return _dictionary(seeded_scenarios_by_node.get(node_id.strip_edges(), {})).duplicate(true)
+
+
+func seeded_scenario_definition_for_node(node_id: String) -> Dictionary:
+	return _dictionary(seeded_scenario_definitions_by_node.get(node_id.strip_edges(), {})).duplicate(true)
 
 
 func register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:

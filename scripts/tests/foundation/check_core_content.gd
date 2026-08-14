@@ -911,9 +911,34 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	stored_run.start_new("TIER1-TUTORIAL-STORED", tutorial_config)
 	var stored_generator := RunGeneratorScript.new(library)
 	stored_generator.next_environment(stored_run)
+	var tutorial_seeded_before_entry := stored_run.seeded_scenario_definition_for_node("corner_store")
+	var tutorial_seeded_bytes := JSON.stringify(tutorial_seeded_before_entry)
+	if tutorial_seeded_bytes != JSON.stringify(tutorial_pin):
+		failures.append("Tutorial pre-seed did not cache the canonical mutation-suppressed Delivery Day selection byte-for-byte.")
 	stored_generator.next_environment(stored_run, "corner_store", true)
 	if str(stored_run.scenario_for_node("corner_store").get("id", "")) != "corner_store_delivery_day" or not _copy_dict(stored_run.current_environment.get("scenario_exclusive_opportunity", {})).is_empty() or not _copy_dict(stored_run.current_environment.get("scenario_hook_flags", {})).is_empty():
 		failures.append("Tutorial neutral pin did not store scenario identity without opportunity or hook leakage.")
+	if JSON.stringify(stored_run.seeded_scenario_definition_for_node("corner_store")) != tutorial_seeded_bytes \
+		or not _copy_dict(tutorial_seeded_before_entry.get("mutations", {})).is_empty() \
+		or not _copy_array(tutorial_seeded_before_entry.get("phases", [])).is_empty():
+		failures.append("Tutorial pre-seed-to-entry did not preserve the canonical suppressed selection byte-identically.")
+	var ordinary_config := RunStateScript.standard_challenge("TIER1-ORDINARY-STORED")
+	var ordinary_modifiers := _copy_dict(ordinary_config.get("modifiers", {}))
+	ordinary_modifiers["scenario_pins"] = {"corner_store": "corner_store_delivery_day"}
+	ordinary_modifiers["scenario_pins_apply_mutations"] = true
+	ordinary_config["modifiers"] = ordinary_modifiers
+	var ordinary_run := RunStateScript.new()
+	ordinary_run.start_new("TIER1-ORDINARY-STORED", ordinary_config)
+	var ordinary_generator := RunGeneratorScript.new(library)
+	ordinary_generator.next_environment(ordinary_run)
+	var ordinary_seeded := ordinary_run.seeded_scenario_definition_for_node("corner_store")
+	var ordinary_seeded_bytes := JSON.stringify(ordinary_seeded)
+	ordinary_generator.next_environment(ordinary_run, "corner_store", true)
+	if _copy_dict(ordinary_seeded.get("mutations", {})).is_empty() \
+		or JSON.stringify(ordinary_run.seeded_scenario_definition_for_node("corner_store")) != ordinary_seeded_bytes \
+		or str(_copy_dict(ordinary_run.current_environment.get("scenario_exclusive_opportunity", {})).get("event_id", "")) != "scenario_delivery_day_stock" \
+		or not bool(_copy_dict(ordinary_run.current_environment.get("scenario_hook_flags", {})).get("delivery_day", false)):
+		failures.append("Ordinary pre-seeded Delivery Day did not preserve and apply its full authored mutations on entry.")
 
 
 func _scenario_full_generation(seed: String, library: ContentLibrary) -> Dictionary:

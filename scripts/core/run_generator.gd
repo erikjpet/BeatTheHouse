@@ -561,6 +561,9 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream)
 	var pool := library.scenarios_for_archetype(archetype_id)
 	if pool.is_empty():
 		return {}
+	var seeded_definition := run_state.seeded_scenario_definition_for_node(archetype_id)
+	if not seeded_definition.is_empty():
+		return seeded_definition
 	var seeded := run_state.seeded_scenario_for_node(archetype_id)
 	var seeded_id := str(seeded.get("id", "")).strip_edges()
 	if not seeded_id.is_empty():
