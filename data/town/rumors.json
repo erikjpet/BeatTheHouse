@@ -1,12 +1,13 @@
 [
 {
   "schema_version": 1,
-  "truth_policy": "Rumors are true in 0.6. False rumors are reserved for future design space.",
+  "truth_policy": "Rumors are true in 0.6. numbers_superstition is the sole non-factual class: its fact is truthfully that the town is saying a number is hot, never that the number will hit. All other rumor classes trace to factual world state.",
   "fact_classes": [
     "scenario",
     "town_condition",
     "pusher_pile",
     "numbers_whisper",
+    "numbers_superstition",
     "sweep_sighting"
   ],
   "templates": {
@@ -66,6 +67,13 @@
         "The Numbers whisper around {target_name}: {fact_detail}.",
         "A quiet number reached {target_name}: {fact_detail}.",
         "Somebody at {target_name} heard {fact_detail}."
+      ]
+    },
+    "numbers_superstition": {
+      "neutral": [
+        "Town talk calls {fact_detail} hot. Talk is not a promise.",
+        "Everybody's aunt likes {fact_detail}. The handle owes nobody.",
+        "The superstition going around {target_name} is {fact_detail}."
       ]
     },
     "sweep_sighting": {
