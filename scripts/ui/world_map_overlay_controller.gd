@@ -174,6 +174,32 @@ func global_rect_for_node(node_id: String) -> Rect2:
 	return Rect2()
 
 
+# Returns the map artwork/hit-target bounds even when the selected destination's
+# actionable tutorial anchor has advanced to the shared Travel button.
+func global_visual_rect_for_node(node_id: String) -> Rect2:
+	if holder == null:
+		return Rect2()
+	var holder_rect := _node_visual_holder_rect(node_id.strip_edges())
+	if not holder_rect.has_area():
+		return Rect2()
+	var transform := holder.get_global_transform()
+	var corners := [
+		holder_rect.position,
+		Vector2(holder_rect.end.x, holder_rect.position.y),
+		holder_rect.end,
+		Vector2(holder_rect.position.x, holder_rect.end.y),
+	]
+	var minimum := Vector2(INF, INF)
+	var maximum := Vector2(-INF, -INF)
+	for corner_value in corners:
+		var global_point := transform * (corner_value as Vector2)
+		minimum.x = minf(minimum.x, global_point.x)
+		minimum.y = minf(minimum.y, global_point.y)
+		maximum.x = maxf(maximum.x, global_point.x)
+		maximum.y = maxf(maximum.y, global_point.y)
+	return Rect2(minimum, maximum - minimum)
+
+
 func position_detail_popup(snapshot: Dictionary) -> void:
 	if detail_popup == null or holder == null:
 		return

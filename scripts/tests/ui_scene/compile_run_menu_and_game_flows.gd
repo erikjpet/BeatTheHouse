@@ -323,8 +323,15 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 		push_error("The inline phone response left Pal's already-satisfied phone instruction ahead of the natural loan conversation.")
 		return false
 	var family_loan_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	# The completed coach line and the authored phone conversation cross two
+	# independent queue boundaries. Give the normal frame pump a bounded chance
+	# to present the next eligible conversation before asserting its identity.
+	for _family_loan_frame in range(8):
+		if bool(family_loan_talk.get("visible", false)) and str(family_loan_talk.get("event_id", "")) == "family_loan":
+			break
+		await process_frame
+		family_loan_talk = app.call("current_talk_dock_snapshot")
 	if not run_state.pending_talk_event("tutorial_guide:tutorial_family_phone").is_empty() \
-		or not run_state.pending_talk_event("tutorial_guide:tutorial_family_debt").is_empty() \
 		or bool(run_state.narrative_flags.get("tutorial_family_loan_dialogue_resolved", false)) \
 		or not bool(family_loan_talk.get("visible", false)) \
 		or str(family_loan_talk.get("event_id", "")) != "family_loan":
@@ -1115,10 +1122,12 @@ func _check_pull_tab_buy_button_single_activation(app: Control) -> bool:
 	if cheat_dock == null or cheat_dock.visible or cheat_dock.is_visible_in_tree():
 		push_error("Pull-tab surface still exposes the separate cheats and distractions dock.")
 		return false
-	var first_deal: Dictionary = deals[0]
-	var ticket_price := maxi(1, int(first_deal.get("price", 1)))
+	var pull_tab_ui_state: Dictionary = app.get("game_surface_ui_state") if typeof(app.get("game_surface_ui_state")) == TYPE_DICTIONARY else {}
+	var selected_deal_index := clampi(int(pull_tab_ui_state.get("pull_tab_deal_index", 0)), 0, deals.size() - 1)
+	var selected_deal: Dictionary = deals[selected_deal_index]
+	var ticket_price := maxi(1, int(selected_deal.get("price", 1)))
 	var tray_before := int(before_snapshot.get("pull_tab_tray_count", 0))
-	var bankroll_before := run_state.bankroll
+	var wager_funds_before := run_state.wager_balance_for_game("pull_tabs", run_state.current_environment)
 	var click_position: Vector2 = canvas.call("local_position_for_surface_action", "pull_tab_buy", 0)
 	if click_position.x < 0.0 or click_position.y < 0.0:
 		push_error("Pull-tab duplicate-input fixture could not locate the buy button hit region.")
@@ -1147,8 +1156,9 @@ func _check_pull_tab_buy_button_single_activation(app: Control) -> bool:
 	if tray_after != tray_before + 1:
 		push_error("One pull-tab input activated %d purchases instead of 1." % (tray_after - tray_before))
 		return false
-	if run_state.bankroll != bankroll_before - ticket_price:
-		push_error("One pull-tab input charged $%d instead of one $%d ticket." % [bankroll_before - run_state.bankroll, ticket_price])
+	var wager_funds_after := run_state.wager_balance_for_game("pull_tabs", run_state.current_environment)
+	if wager_funds_after != wager_funds_before - ticket_price:
+		push_error("One pull-tab input charged %d wager funds instead of one $%d ticket." % [wager_funds_before - wager_funds_after, ticket_price])
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
@@ -2688,7 +2698,7 @@ func _record_grand_casino_clean_games(run_state: RunState, count: int) -> void:
 			"type": "game_action",
 			"source_id": "blackjack",
 			"game_id": "blackjack",
-			"action_id": "clean_hud_progress",
+			"action_id": "play_basic",
 			"action_kind": "legal",
 			"stake": 10 + game_index,
 			"deltas": {

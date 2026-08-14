@@ -80,17 +80,18 @@ func set_reduced_motion(enabled: bool) -> void:
 
 
 func open(model: Dictionary) -> void:
-	if not visible:
+	if not visible and is_inside_tree():
 		var focus_owner := get_viewport().gui_get_focus_owner() if get_viewport() != null else null
 		if focus_owner is Control and focus_owner != self and not is_ancestor_of(focus_owner):
 			_focus_return_target = focus_owner as Control
 	visible = true
 	update_model(model)
-	move_to_front()
-	if _container_surface != null and not _container_surface.selected_key().is_empty():
-		_container_surface.focus_selection(_container_surface.selected_key(), false)
-	else:
-		_close_button.grab_focus()
+	if is_inside_tree():
+		move_to_front()
+		if _container_surface != null and not _container_surface.selected_key().is_empty():
+			_container_surface.focus_selection(_container_surface.selected_key(), false)
+		else:
+			_close_button.grab_focus()
 	_position_popup()
 	call_deferred("_position_popup")
 

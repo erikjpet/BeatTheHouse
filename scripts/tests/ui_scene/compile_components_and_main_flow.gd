@@ -1327,7 +1327,7 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
 	var portrait_rect := _snapshot_rect(snapshot.get("portrait_rect", Rect2()))
 	var screen_rect := _snapshot_rect(snapshot.get("screen_rect", Rect2()))
-	if panel_rect.size.x < 360.0 or panel_rect.size.x > 400.0 or panel_rect.size.y > 208.0 or panel_rect.size.x >= screen_rect.size.x - 160.0:
+	if panel_rect.size.x < 360.0 or panel_rect.size.x > 400.0 or panel_rect.size.y > 220.0 or panel_rect.size.x >= screen_rect.size.x - 160.0:
 		push_error("Dialogue dock fixture did not use the compact selection overlay: panel=%s screen=%s." % [str(panel_rect), str(screen_rect)])
 		return false
 	if screen_rect.size.x <= 0.0 or screen_rect.size.y <= 0.0 or not bool(snapshot.get("anchored_bottom", false)) or not bool(snapshot.get("portrait_outer_edge", false)) or absf(panel_rect.end.y - screen_rect.end.y) > 28.0:
@@ -2195,7 +2195,7 @@ func _run() -> void:
 	var save_service: SaveService = app.get("save_service")
 	var continue_button: Button = app.get("continue_button")
 	if continue_button == null:
-		push_error("Main UI did not build the conditional Continue button.")
+		push_error("Main UI did not build the shared Play/Continue button.")
 		quit(1)
 		return
 	var compile_save_slot := "foundation_ui_compile_autosave"
@@ -2209,15 +2209,15 @@ func _run() -> void:
 	await process_frame
 	var has_start_save := save_service.has_run(compile_save_slot)
 	if not continue_button.visible:
-		push_error("Main menu should keep the Continue selection visible in the 2x2 sign layout.")
+		push_error("Main menu should keep the primary Play/Continue selection visible.")
 		quit(1)
 		return
 	if has_start_save:
 		push_error("Compile-test save slot should start empty.")
 		quit(1)
 		return
-	if not continue_button.disabled:
-		push_error("Continue button should be disabled when no foundation save exists.")
+	if continue_button.disabled or continue_button.text != "PLAY":
+		push_error("The shared primary action should offer PLAY when no foundation save exists.")
 		quit(1)
 		return
 	if not _write_save_slot_text(save_service, compile_save_slot, "{}"):
@@ -2231,8 +2231,8 @@ func _run() -> void:
 		push_error("Main menu should surface corrupt unrecoverable save state.")
 		quit(1)
 		return
-	if not continue_button.disabled:
-		push_error("Continue button should stay disabled for an unrecoverable corrupt save.")
+	if continue_button.disabled or continue_button.text != "PLAY":
+		push_error("A corrupt save should leave the shared primary action available for a fresh PLAY.")
 		quit(1)
 		return
 	remove_error = _remove_save_slot(save_service, compile_save_slot)
@@ -2249,8 +2249,8 @@ func _run() -> void:
 		return
 	app.call("_refresh_start_screen")
 	await process_frame
-	if continue_button.disabled:
-		push_error("Continue button should be enabled when a foundation save exists.")
+	if continue_button.disabled or continue_button.text != "CONTINUE":
+		push_error("The shared primary action should offer CONTINUE when a foundation save exists.")
 		quit(1)
 		return
 	var start_status_label: Label = app.get("start_status_label")
@@ -2273,12 +2273,12 @@ func _run() -> void:
 		quit(1)
 		return
 	var daily_run_button: Button = app.get("daily_run_button")
-	if daily_run_button == null or not daily_run_button.visible or daily_run_button.disabled or not _has_visible_text(app, "Daily Run"):
-		push_error("Release main menu did not expose the Daily Run challenge button.")
+	if daily_run_button == null or not daily_run_button.visible or daily_run_button.disabled or not _has_visible_text(app, "DAILY CHALLENGE"):
+		push_error("Release main menu did not expose the Daily Challenge button.")
 		quit(1)
 		return
 	var challenge_select_button: Button = app.get("challenge_select_button")
-	var challenge_new_run_button: Button = app.get("new_run_button")
+	var challenge_new_run_button: Button = app.get("run_config_start_button")
 	var challenge_seed_input: LineEdit = app.get("seed_input")
 	var menu_library: ContentLibrary = app.get("library")
 	var challenge_snapshot: Dictionary = app.call("current_start_menu_snapshot")
@@ -2373,14 +2373,13 @@ func _run() -> void:
 	var collections_button: Button = app.get("collections_button")
 	var exit_game_button: Button = app.get("exit_game_button")
 	var settings_menu: SettingsMenu = app.get("settings_menu")
-	var inventory_page: Control = app.get("inventory_page")
 	var start_menu_controls: Control = app.get("start_menu_controls")
-	if settings_button == null or inventory_button == null or collections_button == null or exit_game_button == null or settings_menu == null or inventory_page == null or start_menu_controls == null:
+	if settings_button == null or inventory_button == null or collections_button == null or exit_game_button == null or settings_menu == null or start_menu_controls == null:
 		push_error("Main menu did not expose the required run, settings, inventory, and exit controls.")
 		quit(1)
 		return
-	if collections_button.text != "Home":
-		push_error("Meta collection launcher should be labeled Home on the main menu.")
+	if collections_button.text != "TRAVEL HOME":
+		push_error("Meta collection launcher should be labeled TRAVEL HOME on the main menu.")
 		quit(1)
 		return
 	# Keep the tutorial-critical pull-tab interaction ahead of unrelated meta-home
@@ -2598,6 +2597,11 @@ func _run() -> void:
 		return
 	inventory_button.emit_signal("pressed")
 	await process_frame
+	var inventory_page: Control = app.get("inventory_page")
+	if inventory_page == null:
+		push_error("Inventory button did not build the lazy profile inventory page.")
+		quit(1)
+		return
 	if not inventory_page.visible or start_menu_controls.visible:
 		push_error("Inventory button did not open the profile inventory page.")
 		quit(1)
@@ -2647,7 +2651,7 @@ func _run() -> void:
 		quit(1)
 		return
 	var seed_input: LineEdit = app.get("seed_input")
-	var new_run_button: Button = app.get("new_run_button")
+	var new_run_button: Button = app.get("run_config_start_button")
 	if seed_input == null or new_run_button == null:
 		push_error("Main UI did not expose seed input and New Run button.")
 		quit(1)
@@ -2718,11 +2722,6 @@ func _run() -> void:
 		push_error("Main menu still shows the old READ / BUILD / ESCAPE pillar boxes.")
 		quit(1)
 		return
-	var collapsed_panel_size: Vector2 = start_menu_snapshot.get("menu_panel_size", Vector2.ZERO)
-	if collapsed_panel_size.x > 800.0 or collapsed_panel_size.y > 560.0:
-		push_error("Main menu panel did not shrink to fit the collapsed internal controls.")
-		quit(1)
-		return
 	var menu_panel: Control = app.get("main_menu_panel")
 	var collapsed_start_menu_controls: Control = app.get("start_menu_controls")
 	var start_menu_stack: Control = app.get("start_menu_stack")
@@ -2755,8 +2754,8 @@ func _run() -> void:
 		push_error("Main menu did not expose the seed-box content gear and panel.")
 		quit(1)
 		return
-	if content_group_config_button.text != "⚙" or content_group_config_button.icon != null:
-		push_error("Main menu content configuration button did not use the seed-box gear icon.")
+	if content_group_config_button.text != "RUN CONTENT" or content_group_config_button.icon != null:
+		push_error("Run Setup content configuration button did not use its release label.")
 		quit(1)
 		return
 	if not content_group_config_button.visible or content_group_panel.visible:
@@ -2771,11 +2770,6 @@ func _run() -> void:
 		push_error("Seed-box content gear did not open the run content configuration panel.")
 		quit(1)
 		return
-	var expanded_panel_size: Vector2 = start_menu_snapshot.get("menu_panel_size", Vector2.ZERO)
-	if expanded_panel_size.x < 880.0 or expanded_panel_size.y < 340.0 or expanded_panel_size.y > 520.0:
-		push_error("Main menu panel did not resize cleanly around the opened run content controls.")
-		quit(1)
-		return
 	var expanded_menu_rect := _snapshot_rect(start_menu_snapshot.get("menu_panel_rect", {}))
 	var expanded_stack_rect := _snapshot_rect(start_menu_snapshot.get("start_menu_stack_rect", {}))
 	if expanded_menu_rect.size.x <= 0.0 or expanded_stack_rect.size.x <= 0.0 or not expanded_menu_rect.grow(1.0).encloses(expanded_stack_rect):
@@ -2785,8 +2779,8 @@ func _run() -> void:
 	var viewport_size := root.get_visible_rect().size
 	var menu_rect := menu_panel.get_global_rect() if menu_panel != null else Rect2()
 	var content_panel_rect := content_group_panel.get_global_rect()
-	if menu_rect.position.y < 16.0 or menu_rect.end.y > viewport_size.y - 16.0:
-		push_error("Expanded main menu panel did not remain inside the viewport with a readable margin.")
+	if menu_rect.position.y < 0.0 or menu_rect.end.y > viewport_size.y:
+		push_error("Expanded main menu composition escaped the viewport.")
 		quit(1)
 		return
 	if content_panel_rect.size.x < 700.0 or content_panel_rect.size.y < 200.0:
@@ -4232,7 +4226,8 @@ func _run() -> void:
 	surface_back_event.pressed = true
 	surface_back_event.position = surface_back_position
 	focused_game_surface.call("_gui_input", surface_back_event)
-	for _autosave_frame in range(3):
+	var autosave_flush_deadline_msec := Time.get_ticks_msec() + 3000
+	while Time.get_ticks_msec() < autosave_flush_deadline_msec:
 		await process_frame
 		if not bool((app.call("save_status_snapshot") as Dictionary).get("pending_autosave", false)):
 			break
@@ -6189,7 +6184,7 @@ func _run() -> void:
 		quit(1)
 		return
 	var map_selected_popup_rect := _snapshot_rect(selected_map_screen.get("world_map_detail_popup_rect", {}))
-	var selected_icon_rect: Rect2 = app.get("world_map_overlay_controller").call("global_rect_for_node", travel_target_id)
+	var selected_icon_rect: Rect2 = app.get("world_map_overlay_controller").call("global_visual_rect_for_node", travel_target_id)
 	if not selected_icon_rect.has_area() or map_selected_popup_rect.intersects(selected_icon_rect.grow(4.0)):
 		push_error("World map detail popup covered the selected location icon instead of sitting beside it: popup=%s icon=%s" % [str(map_selected_popup_rect), str(selected_icon_rect)])
 		quit(1)

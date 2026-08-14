@@ -201,6 +201,19 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	var top_spacer := Control.new()
 	top_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_bar.add_child(top_spacer)
+	if host.show_game_library_launcher:
+		host.game_library_button = host._main_menu_button("GAMES", "Practice any available table", Callable(host, "open_game_test_menu"))
+		host.game_library_button.custom_minimum_size = Vector2(132, 48)
+		host._set_control_font_size(host.game_library_button, 15)
+		top_bar.add_child(host.game_library_button)
+	host.inventory_button = host._main_menu_button("INVENTORY", "Open the profile inventory", Callable(host, "open_inventory_page"))
+	host.inventory_button.custom_minimum_size = Vector2(148, 48)
+	host._set_control_font_size(host.inventory_button, 15)
+	top_bar.add_child(host.inventory_button)
+	host.career_button = host._main_menu_button("CAREER", "View career statistics", Callable(host, "open_career_stats_screen"))
+	host.career_button.custom_minimum_size = Vector2(124, 48)
+	host._set_control_font_size(host.career_button, 15)
+	top_bar.add_child(host.career_button)
 	host.settings_button = host._main_menu_icon_button(String.chr(0x2699), "Settings", Callable(host, "open_settings_menu"), VisualStyle.CYAN)
 	top_bar.add_child(host.settings_button)
 	host.exit_game_button = host._main_menu_icon_button("X", "Exit Game", Callable(host, "exit_game"), VisualStyle.PINK)
@@ -341,6 +354,12 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	host.delete_saved_run_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.delete_saved_run_button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#1b0914", 0.96), VisualStyle.PINK_2, 2))
 	config_actions.add_child(host.delete_saved_run_button)
+	host.run_config_start_button = host._button("START NEW RUN", Callable(host, "_on_start_pressed"))
+	host.run_config_start_button.tooltip_text = "Start a new run with this seed, content, and challenge configuration"
+	host.run_config_start_button.custom_minimum_size = Vector2(0, 48)
+	host.run_config_start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.run_config_start_button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#10172b", 0.98), VisualStyle.CYAN, 2))
+	host.run_config_content_stack.add_child(host.run_config_start_button)
 
 	host.start_status_label = host._label("", VisualStyle.TYPE_SMALL)
 	host.start_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

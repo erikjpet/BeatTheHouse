@@ -7,7 +7,7 @@
     "dialogue_node": "apartment_intro",
     "trigger": {"screen": "ENVIRONMENT", "environment_archetype": "apartment", "state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_first_card"}]},
     "anchor": {"kind": "interactable_object", "id": "item:xray_glasses"},
-    "copy": "Pal points out the X-ray Glasses waiting in the apartment.",
+    "copy": "Pick up the highlighted X-ray Glasses.",
     "completion": {"type": "anchored_action", "action_id": "item:xray_glasses"},
     "gating": {"allowed_action_ids": ["ui:any", "item:xray_glasses"]}
   },
@@ -19,7 +19,7 @@
     "dialogue_node": "inventory_check",
     "trigger": {"depends_on": ["tutorial_apartment_xray"], "screen": "ENVIRONMENT", "environment_archetype": "apartment", "state_predicates": [{"path": "run.inventory_count", "op": "gte", "value": 1}]},
     "anchor": {"kind": "hud_element", "id": "inventory"},
-    "copy": "Pal asks you to confirm the glasses in carried inventory.",
+    "copy": "Open Inventory and inspect the X-ray Glasses.",
     "completion": {"type": "anchored_action", "action_id": "inventory"},
     "gating": {"allowed_action_ids": ["inventory"]}
   },
@@ -43,7 +43,7 @@
     "dialogue_node": "map_destination",
     "trigger": {"depends_on": ["tutorial_open_map_corner"], "screen": "TRAVEL", "state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]},
     "anchor": {"kind": "hud_element", "id": "travel:corner_store"},
-    "copy": "Corner Store is the only first stop; its card shows $0, time, and open state.",
+    "copy": "Travel to the Corner Store. It costs $0.",
     "completion": {"type": "anchored_action", "action_id": "travel:corner_store"},
     "gating": {"allowed_action_ids": ["travel:corner_store"]}
   },
@@ -56,7 +56,7 @@
     "trigger": {"depends_on": ["tutorial_travel_corner"], "screen": "ENVIRONMENT", "environment_archetype": "corner_store", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "item:instant_coffee"},
     "additional_anchor_ids": ["item:ledger_pencil"],
-    "copy": "Inspect both shelf items before buying. Start with Instant Coffee.",
+    "copy": "Inspect Instant Coffee first, then the other shelf item.",
     "completion": {"type": "anchored_action", "action_id": "focus:item:instant_coffee"},
     "gating": {"allowed_action_ids": ["item:instant_coffee"]}
   },
@@ -96,7 +96,7 @@
       {"state_predicates": [{"path": "run.has_ledger_pencil", "op": "equals", "value": true}], "anchor": {"kind": "interactable_object", "id": "item:instant_coffee"}},
       {"state_predicates": [{"path": "run.has_instant_coffee", "op": "equals", "value": true}], "anchor": {"kind": "interactable_object", "id": "item:ledger_pencil"}}
     ],
-    "copy": "Buy the remaining shelf item so you leave with both.",
+    "copy": "Buy the remaining shelf item.",
     "completion": {"type": "state_predicate", "state_predicates": [{"path": "run.has_instant_coffee", "op": "equals", "value": true}, {"path": "run.has_ledger_pencil", "op": "equals", "value": true}]},
     "gating": {"allowed_action_ids": ["item:instant_coffee", "item:ledger_pencil"]}
   },
@@ -108,7 +108,7 @@
     "dialogue_node": "crew_warning",
     "trigger": {"depends_on": ["tutorial_buy_remaining_store_item"], "screen": "ENVIRONMENT", "environment_archetype": "corner_store", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "lender:the_crew"},
-    "copy": "Pal explains that the Crew's cash comes with work attached.",
+    "copy": "Pal warns that Crew cash comes with work.",
     "completion": {"type": "explicit_ok"}
   },
   {
@@ -154,7 +154,7 @@
     "dialogue_node": "route_split",
     "trigger": {"depends_on": ["tutorial_parking_tip"], "screen": "ENVIRONMENT", "environment_archetype": "corner_store", "state_predicates": [{"path": "run.flags.underground_tip", "op": "equals", "value": true}]},
     "anchor": {"kind": "interactable_object", "id": "travel:leave"},
-    "copy": "Pal explains the optional gas detour and direct underground route.",
+    "copy": "Choose the gas detour or go directly underground.",
     "completion": {"type": "anchored_action", "action_id": "map"},
     "gating": {"allowed_action_ids": ["travel:leave", "map"]}
   },
@@ -166,7 +166,7 @@
     "dialogue_node": "route_split",
     "trigger": {"depends_on": ["tutorial_route_map"], "screen": "TRAVEL", "state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]},
     "anchor": {"kind": "hud_element", "id": "travel:gas_station_casino"},
-    "copy": "Gas Casino is recommended; Underground is the optional authored skip route.",
+    "copy": "Choose Gas Casino, or skip to Underground.",
     "completion": {"type": "one_of_actions", "action_ids": ["travel:gas_station_casino", "travel:small_underground_casino"]},
     "gating": {"allowed_action_ids": ["travel:gas_station_casino", "travel:small_underground_casino"]}
   },
@@ -190,7 +190,7 @@
     "dialogue_node": "gas_peek",
     "trigger": {"depends_on": ["tutorial_gas_machine"], "screen": "GAME", "environment_archetype": "gas_station_casino", "game_id": "pull_tabs", "state_predicates": []},
     "anchor": {"kind": "surface_action", "id": "pull_tab_detector_scan"},
-    "copy": "Peek four times. Each try is 50/50 and adds escalating Heat: 8%, 9%, 10%, then 11%.",
+    "copy": "Peek four times. Each try is 50/50 and adds Heat: 8%, 9%, 10%, then 11%.",
     "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.peek_count", "op": "gte", "value": 4}]},
     "gating": {"allowed_action_ids": ["pull_tab_detector_scan"]}
   },
@@ -396,7 +396,7 @@
     "dialogue_node": "blackjack_peek_finish",
     "trigger": {"depends_on": ["tutorial_blackjack_peek"], "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": [{"path": "game.hands_played", "op": "gte", "value": 1}, {"path": "game.hand_active", "op": "equals", "value": true}, {"path": "game.peek_used", "op": "equals", "value": true}]},
     "anchor": {"kind": "surface_action", "id": "blackjack_stand"},
-    "copy": "Use what you learned, then finish the Peek hand with Hit or Stand.",
+    "copy": "Finish the Peek hand with Hit or Stand.",
     "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.hands_played", "op": "gte", "value": 2}, {"path": "game.between_hands", "op": "equals", "value": true}]},
     "gating": {"allowed_action_ids": ["blackjack_hit", "blackjack_stand"]}
   },
@@ -438,7 +438,7 @@
     "dialogue_node": "blackjack_count_finish",
     "trigger": {"depends_on": ["tutorial_blackjack_count_all"], "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": [{"path": "game.hands_played", "op": "gte", "value": 2}, {"path": "game.hand_active", "op": "equals", "value": true}, {"path": "game.count_all_selected", "op": "equals", "value": true}]},
     "anchor": {"kind": "surface_action", "id": "blackjack_stand"},
-    "copy": "Keep selecting any new count bubbles, then finish hand three with Hit or Stand.",
+    "copy": "Select remaining count bubbles, then finish hand three.",
     "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.tutorial_count_completed", "op": "equals", "value": true}, {"path": "game.hands_played", "op": "gte", "value": 3}, {"path": "game.between_hands", "op": "equals", "value": true}]},
     "gating": {"allowed_action_ids": ["blackjack_count_icon", "blackjack_hit", "blackjack_stand"]}
   },
@@ -474,7 +474,7 @@
     "dialogue_node": "drink_intro",
     "trigger": {"depends_on": ["tutorial_leave_blackjack"], "screen": "ENVIRONMENT", "environment_archetype": "small_underground_casino", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "service:house_drink"},
-    "copy": "Learn what buying a drink does and what Drunk changes.",
+    "copy": "Buy a drink and watch the Drunk meter.",
     "completion": {"type": "explicit_ok"},
     "gating": {"allowed_action_ids": ["service:house_drink", "ui:any"]}
   },
@@ -544,7 +544,7 @@
     "dialogue_node": "comp",
     "trigger": {"depends_on": ["tutorial_rourke_intro"], "screen": "ENVIRONMENT", "environment_archetype": "grand_casino", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "event:comped_suite_offer"},
-    "copy": "Vivienne requires the free comp before the Cage visit.",
+    "copy": "Take the free comp before visiting the Cage.",
     "completion": {"type": "anchored_action", "action_id": "event:comped_suite_offer"},
     "gating": {"allowed_action_ids": ["event:comped_suite_offer", "ui:any"]}
   },
@@ -568,7 +568,7 @@
     "dialogue_node": "cage",
     "trigger": {"depends_on": ["tutorial_enter_cage"], "screen": "ENVIRONMENT", "environment_archetype": "grand_casino_cage", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "casino_fixture:cage_counter"},
-    "copy": "Talk to Linda for the full chips, cashout, and debt explanation.",
+    "copy": "Talk to Linda about chips and the Players Card.",
     "completion": {"type": "anchored_action", "action_id": "casino_fixture:cage_counter"},
     "gating": {"allowed_action_ids": ["casino_fixture:cage_counter"]}
   },
@@ -688,7 +688,7 @@
     "dialogue_node": "meta_home_card",
     "trigger": {"screen": "ENVIRONMENT", "state_predicates": [{"path": "run.challenge_id", "op": "equals", "value": "tutorial_meta_home_handoff"}, {"path": "meta.home", "op": "equals", "value": true}, {"path": "meta.starter_card_count", "op": "gt", "value": 0}]},
     "anchor": {"kind": "interactable_object", "id": "tutorial:meta_home_card_container"},
-    "copy": "Open the highlighted Bag and inspect the newly acquired Bronze Players Card.",
+    "copy": "Open Bag and inspect the Bronze Players Card.",
     "completion": {"type": "anchored_action", "action_id": "open_meta_container"},
     "gating": {"allowed_action_ids": ["open_meta_container", "ui:any"]}
   }

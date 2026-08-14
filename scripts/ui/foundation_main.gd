@@ -286,6 +286,7 @@ var main_menu_action_row: HBoxContainer
 var run_config_button: Button
 var run_config_panel: PanelContainer
 var run_config_content_stack: VBoxContainer
+var run_config_start_button: Button
 var delete_saved_run_button: Button
 var save_delete_confirmation: ConfirmationDialog
 var main_menu_background_environment: Dictionary = {}
@@ -8980,7 +8981,10 @@ func current_start_menu_snapshot() -> Dictionary:
 		"logo_loaded": main_menu_logo != null and main_menu_logo.texture != null,
 		"release_version_text": release_version_label.text if release_version_label != null else "",
 		"career_stats": career_stats_screen.current_snapshot() if career_stats_screen != null else {"visible": false},
-		"menu_panel_size": main_menu_panel.custom_minimum_size if main_menu_panel != null else Vector2.ZERO,
+		# The redesigned menu is a full-viewport composition and intentionally has
+		# no card-style custom minimum. Report its laid-out size, which is the
+		# meaningful geometry for first-frame and responsive-layout checks.
+		"menu_panel_size": main_menu_panel.size if main_menu_panel != null else Vector2.ZERO,
 	}
 	if main_menu_panel != null:
 		snapshot["menu_panel_rect"] = _rect_to_dict(main_menu_panel.get_global_rect())
