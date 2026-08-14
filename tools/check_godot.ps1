@@ -34,6 +34,7 @@ $validFoundationSuites = @(
     "bar_dice",
     "pull_tabs",
     "scratch_tickets",
+    "coin_pusher",
     "audit",
     "all",
     "full"
@@ -234,7 +235,8 @@ function Get-FoundationSplitRunnerPath {
         "scripts/tests/foundation/check_items_events_world.gd",
         "scripts/tests/foundation/check_lenders_release_saves.gd",
         "scripts/tests/foundation/check_scratch_tickets.gd",
-        "scripts/tests/foundation/check_cage_environment_rework.gd"
+        "scripts/tests/foundation/check_cage_environment_rework.gd",
+        "scripts/tests/foundation/check_coin_pusher.gd"
     )
 }
 
