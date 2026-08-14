@@ -1,11 +1,11 @@
 extends SceneTree
 
-# Captures two contrasting authored nights per tier-1 archetype in the real app.
+# Captures two contrasting authored nights per selected archetype in the real app.
 # Run windowed so the viewport texture contains the rendered room.
 
 const MainScene := preload("res://scenes/main.tscn")
 
-const SMOKE_SCENARIOS := {
+const TIER1_SMOKE_SCENARIOS := {
 	"corner_store": ["corner_store_delivery_day", "corner_store_aftermath"],
 	"back_alley": ["back_alley_street_craps", "back_alley_cruiser_parked"],
 	"motel": ["motel_conventioneers", "motel_stakeout"],
@@ -13,16 +13,31 @@ const SMOKE_SCENARIOS := {
 	"gas_station_casino": ["gas_station_trucker_convoy", "gas_station_graveyard_shift"],
 }
 
+const TIER2_SMOKE_SCENARIOS := {
+	"small_underground_casino": ["punchline_open_mic_night", "punchline_high_stakes_night"],
+	"jazz_club": ["jazz_club_guest_legend", "jazz_club_recording_night"],
+	"kitty_cat_lounge": ["kitty_cat_lounge_amateur_night", "kitty_cat_lounge_buyout"],
+	"delta_queen": ["delta_queen_wedding_charter", "delta_queen_engine_trouble"],
+	"beach": ["beach_bonfire_night", "beach_storm_coming"],
+	"pawn_shop": ["pawn_shop_estate_lot_day", "pawn_shop_serial_check_day"],
+	"grand_casino": ["grand_casino_gala_night", "grand_casino_audit_night"],
+}
+
 var app: Control
 var out_dir := "res://.tmp/tier1_scenario_screenshots"
 var report: Dictionary = {}
 var failed := false
+var tier2_mode := false
 
 
 func _init() -> void:
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--out="):
 			out_dir = argument.trim_prefix("--out=").strip_edges()
+		elif argument == "--tier2":
+			tier2_mode = true
+			if out_dir == "res://.tmp/tier1_scenario_screenshots":
+				out_dir = "res://.tmp/tier2_scenario_screenshots"
 	call_deferred("_run")
 
 
@@ -37,29 +52,33 @@ func _run() -> void:
 	var library: Variant = app.get("library")
 	var run_state: Variant = app.get("run_state")
 	if library == null or run_state == null:
-		push_error("Tier-1 screenshot QA could not start the real app run.")
+		push_error("Scenario screenshot QA could not start the real app run.")
 		quit(1)
 		return
-	for archetype_id_value in SMOKE_SCENARIOS.keys():
+	var smoke_scenarios: Dictionary = TIER2_SMOKE_SCENARIOS if tier2_mode else TIER1_SMOKE_SCENARIOS
+	for archetype_id_value in smoke_scenarios.keys():
 		var archetype_id := str(archetype_id_value)
-		for scenario_id_value in SMOKE_SCENARIOS.get(archetype_id, []):
+		for scenario_id_value in smoke_scenarios.get(archetype_id, []):
 			await _capture(archetype_id, str(scenario_id_value), library, run_state, absolute_dir)
 	var report_path := "%s/report.json" % absolute_dir
 	var file := FileAccess.open(report_path, FileAccess.WRITE)
 	if file == null:
-		push_error("Could not write tier-1 screenshot report.")
+		push_error("Could not write scenario screenshot report.")
 		quit(1)
 		return
 	file.store_string(JSON.stringify(report, "\t"))
 	file.close()
-	print("TIER1_SCENARIO_SCREENSHOTS %s count=%d out=%s" % ["FAIL" if failed else "PASS", report.size(), absolute_dir])
+	var suite_label := "TIER2_SCENARIO_SCREENSHOTS" if tier2_mode else "TIER1_SCENARIO_SCREENSHOTS"
+	print("%s %s count=%d out=%s" % [suite_label, "FAIL" if failed else "PASS", report.size(), absolute_dir])
 	quit(1 if failed else 0)
 
 
 func _capture(archetype_id: String, scenario_id: String, library: Variant, run_state: Variant, absolute_dir: String) -> void:
 	var definition: Dictionary = library.scenario(scenario_id)
 	var rng: RngStream = run_state.create_rng("visual:%s" % scenario_id)
-	var environment: Variant = EnvironmentInstance.from_archetype(library.environment_archetype(archetype_id), 1, rng, library, {}, definition)
+	var layer_id := str(definition.get("layer_id", ""))
+	var archetype: Dictionary = library.environment_archetype(archetype_id)
+	var environment: Variant = EnvironmentInstance.from_archetype_layer(archetype, layer_id, 1, rng, library, {}, definition) if not layer_id.is_empty() else EnvironmentInstance.from_archetype(archetype, 1, rng, library, {}, definition)
 	var data: Dictionary = environment.to_dict()
 	data["world_node_id"] = archetype_id
 	# Match the production RunGenerator boundary: machine state owns dynamic
@@ -89,7 +108,7 @@ func _capture(archetype_id: String, scenario_id: String, library: Variant, run_s
 		and overlap_count == 0
 	if not capture_ok:
 		failed = true
-		push_error("Tier-1 scenario screenshot failed presentation/layout QA: %s (overlaps=%d)" % [scenario_id, overlap_count])
+		push_error("Scenario screenshot failed presentation/layout QA: %s (overlaps=%d)" % [scenario_id, overlap_count])
 	report[scenario_id] = {
 		"passed": capture_ok,
 		"file": file_name,
