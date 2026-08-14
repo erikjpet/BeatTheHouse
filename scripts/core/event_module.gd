@@ -98,6 +98,13 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 	var consequences := _consequences(selected_choice)
 	consequences = _resolved_checked_consequences(run_state, environment, selected_choice, consequences)
 	consequences = _resolved_lender_hook_consequences(run_state, consequences)
+	var debt_settlement: Dictionary = {}
+	if consequences.has("debt_settlement_discount_percent"):
+		debt_settlement = run_state.discounted_debt_settlement_preview(int(consequences.get("debt_settlement_discount_percent", 0)))
+		if not bool(debt_settlement.get("ok", false)):
+			return _empty_result(choice_id, environment, str(debt_settlement.get("reason", "The marker cannot be settled.")))
+		consequences["bankroll_delta"] = int(consequences.get("bankroll_delta", 0)) - int(debt_settlement.get("payment", 0))
+		consequences["discounted_debt_settlement"] = debt_settlement.duplicate(true)
 	var bankroll_delta := int(consequences.get("bankroll_delta", 0))
 	var suspicion_delta := int(consequences.get("suspicion_delta", 0))
 	var alcohol_intake := int(consequences.get("alcohol_intake", 0))
@@ -161,6 +168,13 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 	if run_state == null or not bool(result.get("ok", false)):
 		return
 	var deltas: Dictionary = result.get("deltas", {})
+	var debt_settlement := _copy_dict(deltas.get("discounted_debt_settlement", {}))
+	if not debt_settlement.is_empty():
+		var settlement_result := run_state.apply_discounted_debt_settlement(debt_settlement)
+		if not bool(settlement_result.get("ok", false)):
+			result["ok"] = false
+			result["message"] = str(settlement_result.get("message", "The marker settlement failed."))
+			return
 	# A heard fact is true at the action boundary where the player accepts it.
 	# Capture it before advancing town schedules could expire an incoming fact.
 	for hook in deltas.get("event_hooks", []):
@@ -253,6 +267,7 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 	deltas["messages"] = messages
 	deltas["event_hooks"] = _copy_array(consequences.get("event_hooks", []))
 	deltas["demo_finale"] = _copy_dict(consequences.get("demo_finale", {}))
+	deltas["discounted_debt_settlement"] = _copy_dict(consequences.get("discounted_debt_settlement", {}))
 	if bool(consequences.get("resolve_event", false)):
 		deltas["event_hooks"].append({
 			"type": "resolve_event",
@@ -533,6 +548,10 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	if conditions.has("requires_debt"):
 		var requires_debt := bool(conditions.get("requires_debt", false))
 		if requires_debt != (run_state.debt.size() > 0):
+			return false
+	if conditions.has("requires_collectible_debt"):
+		var has_collectible_debt := not str(run_state.discounted_debt_settlement_preview(0).get("debt_id", "")).is_empty()
+		if bool(conditions.get("requires_collectible_debt", false)) != has_collectible_debt:
 			return false
 	if conditions.has("requires_overdue_debt") and bool(conditions.get("requires_overdue_debt", false)) != _has_debt_with_status(run_state, ["overdue", "favor_due"]):
 		return false

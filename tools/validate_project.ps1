@@ -714,7 +714,8 @@ $eventConsequenceKeys = $resultDeltaKeys + @(
     "check",
     "resolve_event",
     "trigger_event",
-    "lender_hook"
+    "lender_hook",
+    "debt_settlement_discount_percent"
 )
 $objectInfoTextLimit = 64
 
