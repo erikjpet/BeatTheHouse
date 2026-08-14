@@ -4466,12 +4466,25 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	var favor_destination: Dictionary = favor_board.get("destination", {})
 	event_run.active_streets_run["board"] = favor_board
 	event_run.active_streets_run["player"] = {"x": int(favor_destination.get("x", 1)) - 1, "y": int(favor_destination.get("y", 0))}
+	var favor_terminal_action_before := event_run.town_state.action_index
 	var favor_complete := event_run.streets_apply_action({"verb": "move", "direction": "right", "pace": "walk"})
 	if not bool(favor_complete.get("resolved", false)) or event_run.bankroll != 122 or event_run.suspicion_level() != 4 \
 		or not bool(event_run.narrative_flags.get("crew_favor_completed", false)) \
 		or bool(event_run.narrative_flags.get("crew_favor_pending", true)) \
-		or event_run.crew_trust("crew_rook") != 5:
-		failures.append("Completed Crew favor did not apply its authored cash/heat/flags and job trust exactly once.")
+		or event_run.crew_trust("crew_rook") != 5 \
+		or event_run.town_state.action_index != favor_terminal_action_before + 1:
+		failures.append("Completed Crew favor did not apply its authored cash/heat/flags and job trust exactly once (resolved=%s bankroll=%d heat=%d completed=%s pending=%s trust=%d town=%d expected_town=%d jobs=%s resolution=%s)." % [
+			str(bool(favor_complete.get("resolved", false))),
+			event_run.bankroll,
+			event_run.suspicion_level(),
+			str(bool(event_run.narrative_flags.get("crew_favor_completed", false))),
+			str(bool(event_run.narrative_flags.get("crew_favor_pending", true))),
+			event_run.crew_trust("crew_rook"),
+			event_run.town_state.action_index,
+			favor_terminal_action_before + 1,
+			JSON.stringify(event_run.crew_jobs),
+			JSON.stringify(favor_complete.get("resolution", {})),
+		])
 	if (event_run.current_environment.get("resolved_event_ids", []) as Array).count("crew_favor_delivery") != 1 \
 		or event_module.can_trigger(event_run, event_run.current_environment, {"trigger": "action", "turns": 3}):
 		failures.append("Completed Crew favor became eligible to retrigger.")
@@ -4483,12 +4496,18 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Resolved Crew favor travel bridge was not targeted and one-shot.")
 	event_run.streets_apply_action({"verb": "wait"})
 	if event_run.bankroll != 122 or event_run.suspicion_level() != 4 or event_run.crew_trust("crew_rook") != 5:
-		failures.append("Resolved Crew favor applied its reward more than once.")
+		failures.append("Resolved Crew favor applied its reward more than once (bankroll=%d heat=%d trust=%d jobs=%s)." % [
+			event_run.bankroll,
+			event_run.suspicion_level(),
+			event_run.crew_trust("crew_rook"),
+			JSON.stringify(event_run.crew_jobs),
+		])
 
 	var caught_run: RunState = RunStateScript.new()
 	caught_run.start_new("CREW-FAVOR-CAUGHT-REGRESSION")
 	caught_run.current_environment = {"id": "crew_event_room", "kind": "casino", "tier": 1, "turns": 0, "resolved_event_ids": []}
 	caught_run.narrative_flags["crew_favor_pending"] = true
+	caught_run.crew_add_trust("crew_rook", 5, "fixture")
 	event_module.resolve(caught_run, caught_run.current_environment, "run_package")
 	var caught_board: Dictionary = caught_run.active_streets_run.get("board", {})
 	caught_board["patrols"] = []
@@ -4500,8 +4519,18 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 		or caught_run.bankroll != 100 or caught_run.suspicion_level() != 9 \
 		or not bool(caught_run.narrative_flags.get("crew_favor_failed", false)) \
 		or bool(caught_run.narrative_flags.get("crew_favor_completed", false)) \
-		or caught_run.crew_trust("crew_rook") != -5:
-		failures.append("Caught Crew favor did not confiscate/fail with its authored failure consequence and job trust hit.")
+		or caught_run.crew_trust("crew_rook") != 0:
+		failures.append("Caught Crew favor did not confiscate/fail with its authored failure consequence and job trust hit (resolved=%s reason=%s bankroll=%d heat=%d failed=%s completed=%s trust=%d jobs=%s resolution=%s)." % [
+			str(bool(caught.get("resolved", false))),
+			str((caught.get("resolution", {}) as Dictionary).get("reason", "")),
+			caught_run.bankroll,
+			caught_run.suspicion_level(),
+			str(bool(caught_run.narrative_flags.get("crew_favor_failed", false))),
+			str(bool(caught_run.narrative_flags.get("crew_favor_completed", false))),
+			caught_run.crew_trust("crew_rook"),
+			JSON.stringify(caught_run.crew_jobs),
+			JSON.stringify(caught.get("resolution", {})),
+		])
 	if (caught_run.current_environment.get("resolved_event_ids", []) as Array).count("crew_favor_delivery") != 1 \
 		or event_module.can_trigger(caught_run, caught_run.current_environment, {"trigger": "action", "turns": 3}):
 		failures.append("Failed Crew favor became eligible to retrigger.")
@@ -4514,12 +4543,21 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	refused_run.start_new("CREW-FAVOR-REFUSE-REGRESSION")
 	refused_run.current_environment = {"id": "crew_event_room", "kind": "casino", "tier": 1, "turns": 0, "resolved_event_ids": []}
 	refused_run.narrative_flags["crew_favor_pending"] = true
+	refused_run.crew_add_trust("crew_rook", 5, "fixture")
 	var refused := event_module.resolve(refused_run, refused_run.current_environment, "refuse")
 	if refused_run.streets_has_active_run() or refused_run.bankroll != 100 or refused_run.suspicion_level() != 9 \
 		or not bool(refused_run.narrative_flags.get("crew_favor_refused", false)) \
-		or refused_run.crew_trust("crew_rook") != -5 \
+		or refused_run.crew_trust("crew_rook") != 0 \
 		or str(refused.get("message", "")) != "The night stays quiet. Quieter, even.":
-		failures.append("Refusing the Crew favor did not preserve its shipped immediate consequence.")
+		failures.append("Refusing the Crew favor did not preserve its shipped immediate consequence (active=%s bankroll=%d heat=%d refused=%s trust=%d message=%s jobs=%s)." % [
+			str(refused_run.streets_has_active_run()),
+			refused_run.bankroll,
+			refused_run.suspicion_level(),
+			str(bool(refused_run.narrative_flags.get("crew_favor_refused", false))),
+			refused_run.crew_trust("crew_rook"),
+			str(refused.get("message", "")),
+			JSON.stringify(refused_run.crew_jobs),
+		])
 
 	var round_trip_source := job_run.to_dict()
 	var round_trip: RunState = RunStateScript.new()
@@ -4918,6 +4956,7 @@ func _check_streets_framework(library: ContentLibrary, failures: Array) -> void:
 		for _wait in range(int(bonus_case.get("waits", 0))):
 			bonus_run.streets_apply_action({"verb": "wait"})
 		bonus_run.active_streets_run["spotted"] = bool(bonus_case.get("spotted", false))
+		bonus_run.active_streets_run["times_spotted"] = 1 if bool(bonus_case.get("spotted", false)) else 0
 		bonus_run.active_streets_run["hazards_hit"] = 1 if bool(bonus_case.get("hazard", false)) else 0
 		var bonus_result := bonus_run.streets_apply_action({"verb": "move", "direction": "right", "pace": "walk"})
 		var bonus_resolution: Dictionary = bonus_result.get("resolution", {})
