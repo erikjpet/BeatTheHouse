@@ -25,12 +25,13 @@ func next_environment(run_state: RunState, target_archetype_id: String = "", tar
 		depth += 1
 	var archetype := _pick_archetype(run_state, depth, rng, target_archetype_id)
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
-	environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
 	var environment_data := environment.to_dict()
-	environment.layout = EnvironmentInstance.ensure_generated_layout(environment_data)
+	run_state.apply_town_generation_modifiers(environment_data)
+	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
+	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.save_rng(rng)
-	run_state.set_environment(environment.to_dict())
-	return environment
+	run_state.set_environment(environment_data)
+	return EnvironmentInstance.from_dict(run_state.current_environment)
 
 
 # Builds the next environment from a cloned run so route previews do not mutate state.
@@ -135,8 +136,9 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 		var rng := run_state.create_rng()
 		var depth := maxi(0, int(run_state.current_environment.get("depth", run_state.environment_travel_count())))
 		var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
-		environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
 		environment_data = environment.to_dict()
+		run_state.apply_town_generation_modifiers(environment_data)
+		environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 		run_state.save_rng(rng)
 	_apply_cage_gift_shop_stock(run_state, environment_data)
 	environment_data["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
@@ -307,12 +309,13 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 		depth += 1
 	var archetype := _pick_archetype(run_state, depth, rng, target_archetype_id)
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
-	environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
 	var environment_data := environment.to_dict()
-	environment.layout = EnvironmentInstance.ensure_generated_layout(environment_data)
+	run_state.apply_town_generation_modifiers(environment_data)
+	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
+	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.save_rng(rng)
-	run_state.set_environment(environment.to_dict())
-	return environment
+	run_state.set_environment(environment_data)
+	return EnvironmentInstance.from_dict(run_state.current_environment)
 
 
 func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary, node: Dictionary, rng: RngStream) -> Dictionary:
@@ -331,8 +334,9 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	if archetype.is_empty():
 		archetype = _pick_archetype(run_state, depth, rng, node_id)
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
-	environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
 	var environment_data := environment.to_dict()
+	run_state.apply_town_generation_modifiers(environment_data)
+	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	environment_data["world_node_id"] = node_id
 	if str(archetype.get("kind", "")) == "home":
 		_apply_home_profile(run_state, environment_data, archetype, node_id, rng.fork("home_profile:%s" % node_id))

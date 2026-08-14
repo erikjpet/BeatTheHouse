@@ -88,6 +88,9 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 	var next_text := "Next: %s" % next_hint if not next_hint.is_empty() else "Next: inspect the room"
 	var pressure_text := objective_pressure_text(pressure)
 	var objective_parts := ["Goal: %s" % goal_text, economy_text, heat_summary_text, alcohol_summary_text, environment_text, inventory_text, next_text]
+	var town_status_line := run_state.town_status_line()
+	if not town_status_line.is_empty():
+		objective_parts.insert(5, town_status_line)
 	if not pressure_text.is_empty():
 		objective_parts.insert(3, "Status: %s" % hud_short(pressure_text, 38, player_text))
 	if not pit_boss_text.is_empty():
@@ -114,6 +117,7 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 		"clock_day": int(clock.get("clock_day", 1)),
 		"clock_minute_of_day": int(clock.get("clock_minute_of_day", 0)),
 		"clock_exact_display": str(clock.get("clock_exact_display", "12:00 AM")),
+		"town_status_text": town_status_line,
 		"home_text": home_text,
 		"bankroll_text": bankroll_text,
 		"bankroll": bankroll,

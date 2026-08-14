@@ -8,6 +8,7 @@ signal heat_changed(applied_amount: int, level: int, cue_id: String, context: Di
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
+const TownStateScript := preload("res://scripts/core/town_state.gd")
 
 const DEFAULT_BANKROLL := 100
 const LOCAL_RISK_DECAY_BY_DISTANCE := {
@@ -284,6 +285,7 @@ var story_flags: Dictionary = {}
 var story_log: Array = []
 var story_log_archive_count: int = 0
 var heat_history: Array = []
+var town_state: TownState
 var simulation_msec: int = 0
 var game_clock_minutes: int = GAME_CLOCK_START_MINUTE
 var grand_casino_atm_interest_boundary_index: int = -1
@@ -360,6 +362,8 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	story_log = []
 	story_log_archive_count = 0
 	heat_history = []
+	town_state = TownStateScript.new()
+	town_state.generate(seed_value)
 	simulation_msec = 0
 	game_clock_minutes = GAME_CLOCK_START_MINUTE
 	grand_casino_atm_interest_boundary_index = CageEconomyModelScript.boundary_index_at_or_before(game_clock_minutes)
@@ -5847,7 +5851,7 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 		"available": true,
 		"disabled_reason": "",
 		"cost": cost,
-		"risk": str(route_data.get("risk", "")),
+		"risk": _town_adjusted_travel_risk_band(str(route_data.get("risk", ""))),
 		"suspicion_delta": int(route_data.get("suspicion_delta", 0)),
 		"distance": str(route_data.get("distance", "near")),
 		"risk_decay": travel_risk_decay(route_data),
@@ -5912,7 +5916,10 @@ func _travel_route_cost(route_data: Dictionary) -> int:
 	var free_from_archetypes := _string_array(_copy_array(route_data.get("free_from_archetypes", [])))
 	if free_from_archetypes.has(current_archetype_id):
 		return 0
-	return base_cost
+	var multiplier := 1.0
+	if town_state != null:
+		multiplier = maxf(0.0, float(town_state.travel_modifier_profile().get("cost_multiplier", 1.0)))
+	return maxi(0, int(round(float(base_cost) * multiplier)))
 
 
 func _tutorial_travel_route_cost_override(route_data: Dictionary) -> int:
@@ -6020,7 +6027,10 @@ func travel_route_risk_preview(route_data: Dictionary) -> Dictionary:
 	var risk_event := _copy_dict(route_data.get("risk_event", {}))
 	if risk_event.is_empty():
 		return {}
-	var chance := clampi(int(risk_event.get("chance_percent", 0)), 0, 100)
+	var chance_multiplier := 1.0
+	if town_state != null:
+		chance_multiplier = maxf(0.0, float(town_state.travel_modifier_profile().get("risk_multiplier", 1.0)))
+	var chance := clampi(int(round(float(risk_event.get("chance_percent", 0)) * chance_multiplier)), 0, 100)
 	if chance <= 0:
 		return {}
 	var event_id := str(risk_event.get("id", "travel_risk")).strip_edges()
@@ -6102,6 +6112,8 @@ func _route_availability_status(route_data: Dictionary) -> Dictionary:
 
 func _finalize_travel_route_status(status: Dictionary, route_data: Dictionary) -> Dictionary:
 	var finalized := status.duplicate(true)
+	if town_state != null:
+		finalized["weather"] = town_state.weather_now()
 	var risk_preview := travel_route_risk_preview(route_data)
 	if not risk_preview.is_empty():
 		finalized["risk_event"] = risk_preview
@@ -6118,6 +6130,100 @@ func _finalize_travel_route_status(status: Dictionary, route_data: Dictionary) -
 	else:
 		finalized["unlock_summary"] = ""
 	return finalized
+
+
+func _town_adjusted_travel_risk_band(base_band: String) -> String:
+	if town_state == null:
+		return base_band
+	var normalized := base_band.strip_edges().to_lower()
+	var index := TownStateScript.RISK_BANDS.find(normalized)
+	if index < 0:
+		return base_band
+	var delta := int(town_state.travel_modifier_profile().get("risk_band_delta", 0))
+	return str(TownStateScript.RISK_BANDS[clampi(index + delta, 0, TownStateScript.RISK_BANDS.size() - 1)])
+
+
+func weather_now() -> String:
+	return town_state.weather_now() if town_state != null else "clear"
+
+
+func day_type() -> String:
+	return town_state.day_type() if town_state != null else "midweek"
+
+
+func active_happenings() -> Array:
+	return town_state.active_happenings() if town_state != null else []
+
+
+func happening_active(id: String) -> bool:
+	return town_state != null and town_state.happening_active(id)
+
+
+func town_flag_active(id: String) -> bool:
+	return town_state != null and town_state.town_flag_active(id)
+
+
+func town_snapshot() -> Dictionary:
+	return town_state.snapshot() if town_state != null else {}
+
+
+func town_public_snapshot() -> Dictionary:
+	return town_state.public_snapshot() if town_state != null else {}
+
+
+func town_status_line() -> String:
+	return town_state.status_line() if town_state != null else "Clear outside · Midweek"
+
+
+func scenario_weight_multiplier(archetype_id: String, scenario_id: String, tags: Array) -> float:
+	if town_state == null:
+		return 1.0
+	return town_state.scenario_weight_multiplier(archetype_id, scenario_id, tags)
+
+
+func apply_town_generation_modifiers(environment_data: Dictionary) -> void:
+	if town_state == null or environment_data.is_empty():
+		return
+	var economic := _copy_dict(environment_data.get("economic_profile", {}))
+	var economic_modifiers := town_state.economic_modifier_profile()
+	_apply_town_stake_multiplier(economic, "stake_floor", float(economic_modifiers.get("stake_floor_multiplier", 1.0)))
+	_apply_town_stake_multiplier(economic, "stake_ceiling", float(economic_modifiers.get("stake_ceiling_multiplier", 1.0)))
+	_apply_town_stake_override_multipliers(economic, "game_stake_floor_overrides", float(economic_modifiers.get("stake_floor_multiplier", 1.0)))
+	_apply_town_stake_override_multipliers(economic, "game_stake_ceiling_overrides", float(economic_modifiers.get("stake_ceiling_multiplier", 1.0)))
+	environment_data["economic_profile"] = economic
+	var visual := _copy_dict(environment_data.get("visual_context", {}))
+	visual["crowd_density_multiplier"] = maxf(0.0, float(economic_modifiers.get("crowd_density_multiplier", 1.0)))
+	environment_data["visual_context"] = visual
+	var music := _copy_dict(environment_data.get("music_profile", {}))
+	var music_modifiers := town_state.music_modifier_profile()
+	music["ambience"] = clampf(float(music.get("ambience", 0.7)) + float(music_modifiers.get("ambience_delta", 0.0)), 0.0, 1.0)
+	music["volume"] = maxf(0.0, float(music.get("volume", 0.26)) * float(music_modifiers.get("volume_multiplier", 1.0)))
+	var texture_override := str(music_modifiers.get("texture_override", "")).strip_edges()
+	if not texture_override.is_empty():
+		music["texture"] = texture_override
+	music["town_modifiers"] = music_modifiers.duplicate(true)
+	environment_data["music_profile"] = music
+	environment_data["town_conditions"] = town_state.public_snapshot()
+
+
+func _apply_town_stake_multiplier(profile: Dictionary, key: String, multiplier: float) -> void:
+	if not profile.has(key):
+		return
+	var value := maxi(0, int(profile.get(key, 0)))
+	if value <= 0:
+		return
+	profile[key] = maxi(1, int(round(float(value) * maxf(0.0, multiplier))))
+
+
+func _apply_town_stake_override_multipliers(profile: Dictionary, key: String, multiplier: float) -> void:
+	var overrides := _copy_dict(profile.get(key, {}))
+	if overrides.is_empty():
+		return
+	for game_id_value in overrides.keys():
+		var value := maxi(0, int(overrides.get(game_id_value, 0)))
+		if value > 0:
+			overrides[game_id_value] = maxi(1, int(round(float(value) * maxf(0.0, multiplier))))
+	profile[key] = overrides
 
 
 func _travel_unlock_conditions(route_data: Dictionary, status: Dictionary) -> Array:
@@ -6705,6 +6811,8 @@ func advance_environment_turns(amount: int = 1) -> void:
 	if current_environment.is_empty() or is_terminal():
 		return
 	var safe_amount := maxi(0, amount)
+	if town_state != null:
+		town_state.advance_actions(safe_amount)
 	simulation_msec = maxi(0, simulation_msec + safe_amount * SIMULATION_ACTION_MSEC)
 	event_cadence_advance_actions(safe_amount)
 	var alcohol_decay := safe_amount * DRUNK_TURN_DECAY
@@ -7804,6 +7912,7 @@ func to_dict() -> Dictionary:
 		"story_log": _normalize_story_log(story_log),
 		"story_log_archive_count": story_log_archive_count,
 		"heat_history": normalize_heat_history(heat_history),
+		"town_state": town_state.snapshot() if town_state != null else {},
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
 		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,
@@ -7876,6 +7985,7 @@ func to_save_snapshot() -> Dictionary:
 		"story_log": story_log.duplicate(false),
 		"story_log_archive_count": story_log_archive_count,
 		"heat_history": heat_history.duplicate(false),
+		"town_state": town_state.snapshot() if town_state != null else {},
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
 		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,
@@ -7898,6 +8008,13 @@ func from_dict(data: Dictionary) -> void:
 	rng_seed = int(data.get("rng_seed", seed_value))
 	rng_state = int(data.get("rng_state", rng_seed))
 	challenge_config = normalize_challenge(seed_text, _copy_dict(data.get("challenge_config", standard_challenge(seed_text))))
+	town_state = TownStateScript.new()
+	var saved_town_value: Variant = data.get("town_state", {})
+	if typeof(saved_town_value) != TYPE_DICTIONARY or (saved_town_value as Dictionary).is_empty():
+		town_state.generate(seed_value)
+		print("RUN_SAVE_MIGRATION town_state regenerated from seed for a pre-0.6 save.")
+	else:
+		town_state.restore(saved_town_value as Dictionary, seed_value)
 	bankroll = int(data.get("bankroll", DEFAULT_BANKROLL))
 	grand_casino_chips = maxi(0, int(data.get("grand_casino_chips", 0)))
 	economic_state = str(data.get("economic_state", "stable"))
