@@ -65,6 +65,9 @@ var report := {
 		"r100_stab_no_scroll_critical_path": false,
 		"r100_stab_game_surface_no_overlap": false,
 		"r100_stab_result_useful_or_hidden": false,
+		"streets_package_surface": false,
+		"streets_idle_liveness": false,
+		"streets_failure_exit": false,
 		"focused_environment_controls_visible": false,
 		"game_surface_click": false,
 		"game_surface_resolve_click": false,
@@ -185,6 +188,7 @@ func _run() -> void:
 	_require(await _try_travel_object_flow("home-first start"), "Could not travel from the home start into the world.")
 	_return_to_room_view()
 	await _settle()
+	await _verify_streets_surface()
 	await _prepare_multi_game_visual_qa_fixture()
 	await _verify_all_visible_game_objects_clickable()
 	await _prepare_risky_game_visual_qa_fixture()
@@ -2083,7 +2087,38 @@ func _record_state(name: String, description: String) -> void:
 		"spatial": app.call("current_spatial_interaction_snapshot") if app.has_method("current_spatial_interaction_snapshot") else {},
 		"popup": app.call("current_event_choice_popup_snapshot") if app.has_method("current_event_choice_popup_snapshot") else {},
 		"talk": app.call("current_talk_dock_snapshot") if app.has_method("current_talk_dock_snapshot") else {},
+		"streets": (app.get("run_state") as RunState).streets_snapshot() if app.get("run_state") != null else {},
 	})
+
+
+func _verify_streets_surface() -> void:
+	var run_state: RunState = app.get("run_state")
+	_require(run_state != null, "Streets visual QA could not access the active run.")
+	var started := run_state.streets_begin({
+		"mode": "package",
+		"route_id": "visual_qa_package",
+		"origin_node_id": run_state.current_world_node_id() if not run_state.current_world_node_id().is_empty() else "back_alley",
+		"destination_node_id": "visual_qa_drop",
+		"distance": "remote",
+		"deadline_actions": 24,
+		"cargo_id": "visual_qa_package",
+	})
+	_require(bool(started.get("ok", false)), "Streets visual QA package fixture did not start.")
+	app.call("_refresh")
+	await _settle()
+	_require(_has_visible_text(app, "RUN THE PACKAGE"), "Streets package title was not visible.")
+	_require(_has_visible_button_exact("DITCH"), "Streets surface did not expose its clean failure verb.")
+	var controller: Variant = app.get("streets_controller")
+	_require(controller != null and bool(controller.call("is_visible")), "Streets controller was not visible over the live run.")
+	_cover("streets_package_surface")
+	await get_tree().create_timer(0.15).timeout
+	_require(bool(controller.call("idle_animation_running")) and float(controller.call("measured_idle_liveness")) > 0.001, "Streets surface did not measure live idle movement.")
+	_cover("streets_idle_liveness")
+	_record_state("streets_package_surface", "Remote-distance package board with live weather, patrol, prop, deadline, and verb presentation.")
+	_require(not _click_button_exact("DITCH").is_empty(), "Streets visual QA could not use the visible Ditch verb.")
+	await _settle()
+	_require(not run_state.streets_has_active_run() and not bool(controller.call("is_visible")), "Ditch did not fail and exit the Streets surface cleanly.")
+	_cover("streets_failure_exit")
 
 
 func _screen_summary() -> Dictionary:

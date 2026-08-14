@@ -126,6 +126,7 @@ func _simulate_seed(seed: String, seed_index: int) -> Dictionary:
 	_apply_triggered_event_chain(run_state, checkpoints, seed)
 	_apply_dialogue_sequence(run_state, checkpoints, seed)
 	_apply_talk_content_sequence(run_state, checkpoints, seed)
+	_apply_streets_sequence(run_state, checkpoints, seed)
 	_install_all_game_environment(run_state, seed_index)
 	_checkpoint(run_state, checkpoints, seed, "all_games_fixture")
 	_apply_all_game_resolves(run_state, checkpoints, seed)
@@ -137,6 +138,30 @@ func _simulate_seed(seed: String, seed_index: int) -> Dictionary:
 		"final_hash": str((checkpoints.back() as Dictionary).get("hash", "")) if not checkpoints.is_empty() else "",
 		"checkpoints": checkpoints,
 	}
+
+
+func _apply_streets_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
+	var started := run_state.streets_begin_multi_stop({
+		"route_id": "determinism_numbers_route",
+		"origin_node_id": run_state.current_world_node_id() if not run_state.current_world_node_id().is_empty() else "back_alley",
+		"destination_node_id": "determinism_drop",
+		"distance": "local",
+		"attempt": 3,
+		"stops": [{"id": "first_book"}, {"id": "second_book"}],
+		"deadline_actions": 20,
+		"order_mode": "free",
+	})
+	if not bool(started.get("ok", false)):
+		failures.append("%s could not start the deterministic Streets fixture." % seed)
+		return
+	_checkpoint(run_state, checkpoints, seed, "streets_board_generated")
+	run_state.streets_apply_action({"verb": "wait"})
+	run_state.streets_apply_action({"verb": "wait"})
+	_checkpoint(run_state, checkpoints, seed, "streets_patrol_timeline")
+	var ditched := run_state.streets_apply_action({"verb": "ditch"})
+	if not bool(ditched.get("resolved", false)) or str((ditched.get("resolution", {}) as Dictionary).get("reason", "")) != "ditched":
+		failures.append("%s deterministic Streets fixture did not resolve its scripted outcome." % seed)
+	_checkpoint(run_state, checkpoints, seed, "streets_scripted_outcome")
 
 
 func _apply_alcohol_timing(run_state: RunState, checkpoints: Array, seed: String) -> void:
