@@ -206,6 +206,12 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   selects Punchline L2 on tutorial entry without granting unrelated discovery
   or changing public map copy. Ordinary runs still enter public L1; no runtime
   tutorial/archetype special case is allowed.
+- 2026-08-14 [env06_2] Scenario presentation fields were persisted but had no
+  renderer, so authored palette/crowd/signage differences were invisible. PM
+  approved one generic cached-snapshot consumer in `PixelSceneCanvas`: palette
+  wash, density-scaled ambient silhouettes, and a width-bounded signage strip.
+  It must perform no per-frame allocation/RNG/mutation/rebuild and draw nothing
+  when fields are absent, preserving tutorial and empty-pool visuals.
 
 ## Work Log
 
