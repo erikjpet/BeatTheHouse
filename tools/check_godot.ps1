@@ -32,6 +32,7 @@ $validFoundationSuites = @(
     "baccarat",
     "video_poker",
     "bar_dice",
+    "crew_poker",
     "pull_tabs",
     "scratch_tickets",
     "audit",
