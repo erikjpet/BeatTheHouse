@@ -4014,24 +4014,24 @@
     "id": "scenario_gala_cover", "display_name": "A Borrowed Name", "type": "social", "interaction_mode": "interactable", "scopes": ["boss"],
     "asset_path": "res://assets/art/events/comped_suite_offer.png", "icon_key": "suite_key", "environment_prop": "host_station", "start_summary": "The gala accepts names before it checks them.", "trigger": {"type": "manual"},
     "payload": {"summary": "The gala accepts names before it checks them.", "choices": [
-      {"id": "wear_the_name", "label": "Wear the name", "text": "The house welcomes the mask and notes the fit.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "flags": {"gala_cover_identity": true}, "resolve_event": true}},
-      {"id": "keep_your_own_name", "label": "Keep your own name", "text": "The file remains exact and courteous.", "consequences": {"flags": {"gala_cover_declined": true}, "resolve_event": true}}
+      {"id": "wear_the_name", "label": "Wear the name", "text": "The house welcomes the mask and notes the fit.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "resolve_event": true}},
+      {"id": "keep_your_own_name", "label": "Keep your own name", "text": "The file remains exact and courteous.", "consequences": {"resolve_event": true}}
     ]}
   },
   {
     "id": "scenario_convention_badge", "display_name": "Borrowed Badge", "type": "security", "interaction_mode": "interactable", "scopes": ["boss"],
     "asset_path": "res://assets/art/events/eye_in_the_sky.png", "icon_key": "camera", "environment_prop": "security_camera", "start_summary": "Badges fill the floor. The ceiling cannot love them all.", "trigger": {"type": "manual"},
     "payload": {"summary": "Badges fill the floor. The ceiling cannot love them all.", "choices": [
-      {"id": "join_the_badges", "label": "Join the badges", "text": "The crowd provides a careful little absence.", "consequence_summary": "Heat -4", "consequences": {"suspicion_delta": -4, "flags": {"convention_badge_cover": true}, "resolve_event": true}},
-      {"id": "stay_unbadged", "label": "Stay unbadged", "text": "The floor remembers one face more clearly.", "consequence_summary": "Heat +2", "consequences": {"suspicion_delta": 2, "flags": {"convention_badge_declined": true}, "resolve_event": true}}
+      {"id": "join_the_badges", "label": "Join the badges", "text": "The crowd provides a careful little absence.", "consequence_summary": "Heat -4", "consequences": {"suspicion_delta": -4, "resolve_event": true}},
+      {"id": "stay_unbadged", "label": "Stay unbadged", "text": "The floor remembers one face more clearly.", "consequence_summary": "Heat +2", "consequences": {"suspicion_delta": 2, "resolve_event": true}}
     ]}
   },
   {
     "id": "scenario_audit_roster", "display_name": "The Audit Roster", "type": "security", "interaction_mode": "interactable", "scopes": ["boss"],
     "asset_path": "res://assets/art/events/eye_in_the_sky.png", "icon_key": "camera", "environment_prop": "security_camera", "start_summary": "Every drawer is counted. Every shift is named.", "trigger": {"type": "manual"},
     "payload": {"summary": "Every drawer is counted. Every shift is named.", "choices": [
-      {"id": "read_the_shift", "label": "Read the shift", "text": "The roster keeps one corridor politely exposed.", "consequence_summary": "Heat +3", "consequences": {"suspicion_delta": 3, "flags": {"heist_plan_a_audit_roster": true, "audit_night_criteria_seen": true}, "resolve_event": true}},
-      {"id": "leave_the_count_clean", "label": "Leave the count clean", "text": "The house finishes counting itself.", "consequences": {"flags": {"audit_roster_passed": true}, "resolve_event": true}}
+      {"id": "read_the_shift", "label": "Read the shift", "text": "The roster keeps one corridor politely exposed.", "consequence_summary": "Heat +3", "consequences": {"suspicion_delta": 3, "resolve_event": true}},
+      {"id": "leave_the_count_clean", "label": "Leave the count clean", "text": "The house finishes counting itself.", "consequences": {"resolve_event": true}}
     ]}
   }
 ]
