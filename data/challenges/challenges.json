@@ -136,6 +136,10 @@
       },
       "tutorial_pull_tab_xray_offset": 2,
       "tutorial_pull_tab_peek_results": [true, false, true, false],
+      "scenario_pins": {
+        "corner_store": "corner_store_delivery_day"
+      },
+      "scenario_pins_apply_mutations": false,
       "tutorial_environment_overrides": {
         "apartment": {
           "home_profile": {

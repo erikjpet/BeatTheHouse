@@ -71,7 +71,7 @@ Wave C games are intentionally parallel-friendly.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| env06_2 | `env06_2_tier1_scenarios_prompt.md` | IN_PROGRESS | env06_1 | crew06_5 | PM:Codex/sub:1 | 2026-08-14 | | PM-orchestrated Wave B Stage 1 execution. |
+| env06_2 | `env06_2_tier1_scenarios_prompt.md` | DONE | env06_1 | crew06_5 | PM:Codex/sub:1 | 2026-08-14 | 2026-08-14 | PM verified all 17 scenarios/events, tutorial neutrality, real-selector reachability, full integrated gates, determinism, and zero-overlap visual QA PASS. |
 | env06_3 | `env06_3_tier2_scenarios_prompt.md` | TODO | env06_1, env06_4 | crew06_5, crew06_8 | | | | |
 | env06_4 | `env06_4_punchline_rework_prompt.md` | IN_PROGRESS | env06_1 | env06_3, crew06_2, crew06_6 | PM:Codex/sub:2 | 2026-08-14 | | PM-orchestrated Wave B Stage 1 execution. |
 | town06_2 | `town06_2_rumors_travelers_prompt.md` | IN_PROGRESS | env06_1, town06_1 | town06_3, crew06_3, crew06_9, chain06_1 | PM:Codex/sub:3 | 2026-08-14 | | PM-orchestrated Wave B Stage 1 execution. |
@@ -160,6 +160,64 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   Scenario definitions may carry an optional top-level `layer_id`; it is
   omitted for ordinary venues and must survive scenario state normalization.
   Missing layer fields retain legacy single-layer behavior for compatibility.
+- 2026-08-14 [town06_2/town06_3] PM-approved shared town-content contract:
+  `TownState` owns registered rumor facts shaped as `{id, class,
+  target_node_id, source_id, payload, registered_action}` and exposes RunState
+  forwarding reads/writes `register_rumor_fact`, `rumor_fact`, `rumor_facts`,
+  `rumors_for_venue`, `hear_rumor`, and `heard_rumor_for_node`. Extension class
+  `sweep_sighting` is registered for town06_3. Heard previews remain distinct
+  from `scouted`. Traveler reads are `traveler_node` / `travelers_at`;
+  reputation uses `record_reputation_incident`, `local_reputation`, and
+  `reputation_value`. All three systems advance through the existing
+  `advance_environment_turns` action boundary, never per-frame or wall-clock.
+- 2026-08-14 [env06_4] PM-approved layer runtime contract: environment
+  snapshots add a schema version, `current_layer_id`, `default_layer_id`,
+  layer ids/transitions/discovery, and lazily populated `layer_states`; the
+  current layer remains flattened at the top level for legacy consumers.
+  Generic RunGenerator/RunState seams enter layers, query access, and record
+  discovery only at action boundaries. Legacy Punchline snapshots migrate to
+  discovered L2 while missing L1/L3 state is seed-forked lazily. Scenario
+  `layer_id` survives normalization; Grand Casino room structures stay out of
+  scope. L3 remains a registered minimal shell for crew06_6.
+- 2026-08-14 [env06_2] Tier-1 scenario ids use stable archetype-prefixed
+  slugs; each scenario owns one `scenario_<scenario_slug>_<beat>` exclusive
+  event absent from every base pool. The tutorial pins
+  `corner_store_delivery_day` only if its regression proves tutorial-sensitive
+  pools and sequencing unchanged. The 20-seed audit must exercise the real
+  scenario selector, including the landed town-weight seam.
+- 2026-08-14 [env06_2] Code reality showed a pinned scenario still applied its
+  overlay, conflicting with the tutorial's controlled environment. PM approved
+  generic challenge flag `scenario_pins_apply_mutations` (default `true`),
+  evaluated only at generation. The tutorial sets it false: the deterministic
+  scenario identity remains stored, while base/phase mutations, opportunities,
+  and hooks are an identity overlay. Non-tutorial pins retain existing behavior;
+  a byte-identical tutorial environment fixture is required.
+- 2026-08-14 [town06_2] Code reality has only boolean/full-detail `scouted`
+  flags and does not seed unvisited scenarios. PM approved a separate `heard`
+  node payload exposing only its truth-traced line, plus canonical one-time
+  scenario selection for non-empty-pool nodes before a scenario rumor can be
+  generated; first visit consumes that stored selection without a second RNG
+  draw. Empty-pool archetypes remain byte-identical. Authored themed security
+  `strictness` strings also remain unchanged; traveling reputation supplies a
+  separate derived `door_strictness_band` at generation.
+- 2026-08-14 [env06_4] The shipped guided tutorial enters
+  `small_underground_casino` expecting immediate blackjack, so PM approved a
+  generic, validated challenge-data `environment_layer_overrides` map that
+  selects Punchline L2 on tutorial entry without granting unrelated discovery
+  or changing public map copy. Ordinary runs still enter public L1; no runtime
+  tutorial/archetype special case is allowed.
+- 2026-08-14 [env06_2] Scenario presentation fields were persisted but had no
+  renderer, so authored palette/crowd/signage differences were invisible. PM
+  approved one generic cached-snapshot consumer in `PixelSceneCanvas`: palette
+  wash, density-scaled ambient silhouettes, and a width-bounded signage strip.
+  It must perform no per-frame allocation/RNG/mutation/rebuild and draw nothing
+  when fields are absent, preserving tutorial and empty-pool visuals.
+- 2026-08-14 [env06_4] Final three-layer visual smoke found the legacy
+  `Underground Casino` title plate leaking through public Punchline L1 even
+  though map copy was clean. PM required the generic environment header/title
+  projection and direct layer-generation display identity to consume the
+  flattened current-layer values. No layer/archetype-specific UI branch is
+  allowed; final systems/UI/determinism/visual gates must rerun after the fix.
 
 ## Work Log
 
@@ -192,3 +250,7 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
 - 2026-08-14 [Wave B Stage 1] PM-orchestrated execution claimed for env06_2,
   env06_4, and town06_2; three isolated subagents assigned, with the PM owning
   integration, board updates, verification, and archival.
+- 2026-08-14 [env06_2] DONE; 17 mechanically distinct tier-1 scenarios,
+  exclusive events, recruitment/game hooks, phase arcs, town-weight tags, and
+  visible cached presentation now land the launch cut. This completes
+  crew06_5's tier-1 dependency; env06_3 remains before that row is claimable.

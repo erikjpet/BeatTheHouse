@@ -100,6 +100,8 @@ const SCENE_SPARKLES_UNDERGROUND := [Vector2(154, 134), Vector2(505, 136), Vecto
 const SCENE_SPARKLES_GRAND_CASINO := [Vector2(132, 118), Vector2(728, 118), Vector2(444, 154)]
 const SCENE_SPARKLES_PAWN_SHOP := [Vector2(150, 84), Vector2(414, 118), Vector2(690, 154)]
 const LINDA_CAGE_FEET := [Vector2(330, 252), Vector2(420, 252), Vector2(512, 252), Vector2(590, 252)]
+const SCENARIO_CROWD_POINTS := [Vector2(82, 254), Vector2(219, 271), Vector2(356, 288), Vector2(493, 271), Vector2(630, 254), Vector2(767, 271), Vector2(164, 288), Vector2(301, 254), Vector2(438, 288), Vector2(575, 271)]
+const SCENARIO_CROWD_COLOR := Color(0.02, 0.025, 0.05, 0.56)
 
 var environment_id: String = "corner_store"
 var environment_name: String = "Corner Store"
@@ -149,6 +151,10 @@ var last_touch_press_position: Vector2 = Vector2(-100000.0, -100000.0)
 var reserved_overlay_global_rect := Rect2()
 var overlay_repositioned_object_ids: Array[String] = []
 var environment_activity_paused := false
+var scenario_presentation: Dictionary = {}
+var scenario_palette_overlay := Color.TRANSPARENT
+var scenario_crowd_count := 0
+var scenario_signage := ""
 
 
 func _ready() -> void:
@@ -188,6 +194,9 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 		item_icon_texture_cache.clear()
 		item_icon_texture_cache_scope_key = texture_scope_key
 	environment_name = str(foundation_snapshot.get("display_name", foundation_snapshot.get("name", environment_name)))
+	var presentation_value: Variant = foundation_snapshot.get("scenario_presentation", {})
+	scenario_presentation = (presentation_value as Dictionary).duplicate(true) if typeof(presentation_value) == TYPE_DICTIONARY else {}
+	_cache_scenario_presentation()
 	suspicion_level = int(foundation_snapshot.get("suspicion_level", suspicion_level))
 	drunk_level = int(foundation_snapshot.get("drunk_level", drunk_level))
 	drunk_time_scale = clampf(float(foundation_snapshot.get("drunk_time_scale", 1.0)), DRUNK_TIME_SCALE_MIN, 1.0)
@@ -346,6 +355,10 @@ func current_view_snapshot() -> Dictionary:
 	return {
 		"environment_id": environment_id,
 		"environment_name": environment_name,
+		"scenario_presentation": scenario_presentation.duplicate(true),
+		"scenario_palette_active": scenario_palette_overlay.a > 0.0,
+		"scenario_crowd_count": scenario_crowd_count,
+		"scenario_signage": scenario_signage,
 		"suspicion_level": suspicion_level,
 		"drunk_level": drunk_level,
 		"drunk_time_scale": drunk_time_scale,
@@ -617,8 +630,11 @@ func _draw() -> void:
 				_draw_grand_casino_cage()
 			_:
 				_draw_corner_store()
+	_draw_scenario_palette()
+	_draw_scenario_crowd()
 	_draw_scene_life()
 	_draw_familiar_characters()
+	_draw_scenario_signage()
 	_draw_focus_dim_overlay()
 	_draw_scene_objects()
 	_draw_scene_outcome_highlight()
@@ -626,6 +642,49 @@ func _draw() -> void:
 	_draw_drunk_overlay()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_update_drunk_distortion_protected_rects()
+
+
+func _draw_scenario_palette() -> void:
+	if scenario_palette_overlay.a <= 0.0:
+		return
+	draw_rect(Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)), scenario_palette_overlay)
+
+
+func _draw_scenario_crowd() -> void:
+	for index in range(scenario_crowd_count):
+		var point: Vector2 = SCENARIO_CROWD_POINTS[index]
+		var scale := 0.72 + float(index % 3) * 0.08
+		draw_circle(Vector2(point.x, point.y - 12.0 * scale), 6.0 * scale, SCENARIO_CROWD_COLOR)
+		draw_rect(Rect2(point.x - 7.0 * scale, point.y - 6.0 * scale, 14.0 * scale, 24.0 * scale), SCENARIO_CROWD_COLOR)
+
+
+func _draw_scenario_signage() -> void:
+	if scenario_signage.is_empty():
+		return
+	var font := ThemeDB.fallback_font
+	var rect := Rect2(190, 12, 520, 24)
+	draw_rect(rect, Color(0.02, 0.02, 0.05, 0.84))
+	draw_rect(rect, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.72), false, 2.0)
+	draw_string(font, rect.position + Vector2(8, 16), _fit_draw_text(scenario_signage, font, 11, rect.size.x - 16.0), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 16.0, 11, C_WHITE)
+
+
+func _cache_scenario_presentation() -> void:
+	scenario_palette_overlay = Color.TRANSPARENT
+	scenario_crowd_count = 0
+	scenario_signage = str(scenario_presentation.get("signage_line", "")).strip_edges().left(64)
+	var tint_text := str(scenario_presentation.get("palette_tint", "")).strip_edges()
+	if not tint_text.is_empty() and Color.html_is_valid(tint_text):
+		var tint := Color.from_string(tint_text, Color.TRANSPARENT)
+		scenario_palette_overlay = Color(tint.r, tint.g, tint.b, 0.12)
+	match str(scenario_presentation.get("crowd_density", "")).strip_edges().to_lower():
+		"sparse":
+			scenario_crowd_count = 2
+		"medium":
+			scenario_crowd_count = 4
+		"dense":
+			scenario_crowd_count = 7
+		"packed":
+			scenario_crowd_count = 10
 
 
 # Maps all drawings to a stable low-resolution art board.

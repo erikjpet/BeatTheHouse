@@ -1247,6 +1247,9 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 		"tutorial_travel_cost_overrides": true,
 		"tutorial_environment_overrides": true,
 		"environment_layer_overrides": true,
+		"scenario_pins": true,
+		"scenario_excludes": true,
+		"scenario_pins_apply_mutations": true,
 	}
 	for key_value in modifiers.keys():
 		var key := str(key_value)
@@ -1280,9 +1283,13 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 		_validate_challenge_service_cost_multipliers(challenge_id, modifiers.get("service_cost_multipliers", {}))
 	if modifiers.has("disable_cheat_actions") and typeof(modifiers.get("disable_cheat_actions", false)) != TYPE_BOOL:
 		validation_errors.append("challenges %s modifiers.disable_cheat_actions must be a boolean." % challenge_id)
-	for boolean_key in ["tutorial_run", "tutorial_main_floor_only", "tutorial_shop_item_pool_strict"]:
+	for boolean_key in ["tutorial_run", "tutorial_main_floor_only", "tutorial_shop_item_pool_strict", "scenario_pins_apply_mutations"]:
 		if modifiers.has(boolean_key) and typeof(modifiers.get(boolean_key)) != TYPE_BOOL:
 			validation_errors.append("challenges %s modifiers.%s must be a boolean." % [challenge_id, boolean_key])
+	if modifiers.has("scenario_pins"):
+		_validate_challenge_scenario_pins(challenge_id, modifiers.get("scenario_pins", {}), environment_ids)
+	if modifiers.has("scenario_excludes"):
+		_validate_challenge_scenario_excludes(challenge_id, modifiers.get("scenario_excludes", {}), environment_ids)
 	if modifiers.has("home_archetype_id"):
 		_validate_id_references("challenges %s modifiers.home_archetype_id" % challenge_id, [modifiers.get("home_archetype_id", "")], environment_ids)
 	if modifiers.has("tutorial_initial_map_targets"):
@@ -1323,6 +1330,41 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 				var layer_id := str((layer_overrides as Dictionary).get(environment_id_value, "")).strip_edges()
 				if not _as_dict(archetype.get("layers", {})).has(layer_id):
 					validation_errors.append("challenges %s environment_layer_overrides.%s references unknown layer: %s" % [challenge_id, environment_id, layer_id])
+
+
+func _validate_challenge_scenario_pins(challenge_id: String, value: Variant, environment_ids: Dictionary) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		validation_errors.append("challenges %s modifiers.scenario_pins must be a dictionary." % challenge_id)
+		return
+	for archetype_id_value in (value as Dictionary).keys():
+		var archetype_id := str(archetype_id_value).strip_edges()
+		var scenario_id := str((value as Dictionary).get(archetype_id_value, "")).strip_edges()
+		if not environment_ids.has(archetype_id):
+			validation_errors.append("challenges %s modifiers.scenario_pins references unknown archetype: %s" % [challenge_id, archetype_id])
+			continue
+		var definition := scenario(scenario_id)
+		if definition.is_empty() or str(definition.get("archetype_id", "")) != archetype_id:
+			validation_errors.append("challenges %s modifiers.scenario_pins.%s references unknown or mismatched scenario: %s" % [challenge_id, archetype_id, scenario_id])
+
+
+func _validate_challenge_scenario_excludes(challenge_id: String, value: Variant, environment_ids: Dictionary) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		validation_errors.append("challenges %s modifiers.scenario_excludes must be a dictionary." % challenge_id)
+		return
+	for archetype_id_value in (value as Dictionary).keys():
+		var archetype_id := str(archetype_id_value).strip_edges()
+		if not environment_ids.has(archetype_id):
+			validation_errors.append("challenges %s modifiers.scenario_excludes references unknown archetype: %s" % [challenge_id, archetype_id])
+			continue
+		var excluded_value: Variant = (value as Dictionary).get(archetype_id_value, [])
+		if typeof(excluded_value) != TYPE_ARRAY:
+			validation_errors.append("challenges %s modifiers.scenario_excludes.%s must be an array." % [challenge_id, archetype_id])
+			continue
+		for scenario_id_value in excluded_value as Array:
+			var scenario_id := str(scenario_id_value).strip_edges()
+			var definition := scenario(scenario_id)
+			if definition.is_empty() or str(definition.get("archetype_id", "")) != archetype_id:
+				validation_errors.append("challenges %s modifiers.scenario_excludes.%s references unknown or mismatched scenario: %s" % [challenge_id, archetype_id, scenario_id])
 
 
 func _validate_challenge_starting_debt(challenge_id: String, debts: Variant) -> void:

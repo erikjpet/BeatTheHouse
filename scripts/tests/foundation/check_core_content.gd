@@ -27,6 +27,7 @@ const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangem
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
@@ -620,32 +621,37 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 
 
 func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array) -> void:
-	if library.scenarios_for_archetype("bar").size() != 2 or library.scenarios_for_archetype("corner_store").size() != 1:
-		failures.append("Scenario engine-proof content must ship two bar placeholders and one corner-store placeholder.")
-	var motel := library.environment_archetype("motel")
+	_check_tier1_scenario_content(library, failures)
+	var motel := library.environment_archetype("pawn_shop")
 	var legacy_run := RunStateScript.new()
 	legacy_run.start_new("SCENARIO-EMPTY-POOL")
 	var legacy_environment := EnvironmentInstance.from_archetype(motel, 2, legacy_run.create_rng("empty_pool"), library).to_dict()
 	var explicit_empty := EnvironmentInstance.from_archetype(motel, 2, legacy_run.create_rng("empty_pool"), library, {}, {}).to_dict()
 	_assert_json_equal(legacy_environment, explicit_empty, "Scenario empty-pool path changed a legacy environment byte shape.", failures)
 
-	var bar_definition := library.scenario("bar_engine_proof_lock_in")
+	var bar_definition := library.scenario("bar_fight_night")
 	var phase_run := RunStateScript.new()
 	phase_run.start_new("SCENARIO-PHASE")
 	var phased := EnvironmentInstance.from_archetype(library.environment_archetype("bar"), 1, phase_run.create_rng("bar"), library, {}, bar_definition).to_dict()
 	phase_run.set_environment(phased)
-	if str(phase_run.current_environment.get("scenario_id", "")) != "bar_engine_proof_lock_in" or str(_copy_dict(phase_run.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "LAST ROUND STAYS IN THE ROOM":
+	if str(phase_run.current_environment.get("scenario_id", "")) != "bar_fight_night" or str(_copy_dict(phase_run.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "UNDERCARD STARTS SOON.":
 		failures.append("Selected scenario was not applied at environment generation time.")
 	phase_run.advance_environment_turns(1)
 	if int(phase_run.current_environment.get("scenario_phase_index", -1)) != 0 or int(phase_run.current_environment.get("scenario_phase_action_counter", -1)) != 1:
 		failures.append("Scenario phase advanced before its authored action boundary.")
+	phase_run.advance_environment_turns(2)
+	if int(phase_run.current_environment.get("scenario_phase_index", -1)) != 1 or str(_copy_dict(phase_run.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "THE BOUT IS LIVE.":
+		failures.append("Fight Night did not advance from prefight to bout on its third action boundary.")
+	phase_run.advance_environment_turns(1)
 	var mid_phase := RunStateScript.new()
 	mid_phase.from_dict(phase_run.to_dict())
 	if JSON.stringify(mid_phase.scenario_for_node(str(mid_phase.current_environment.get("world_node_id", "bar")))) != JSON.stringify(phase_run.scenario_for_node(str(phase_run.current_environment.get("world_node_id", "bar")))):
 		failures.append("Scenario save/load did not restore a mid-phase counter exactly.")
-	mid_phase.advance_environment_turns(1)
-	if int(mid_phase.current_environment.get("scenario_phase_index", -1)) != 1 or int(mid_phase.current_environment.get("scenario_phase_action_counter", -1)) != 0:
-		failures.append("Scenario phase did not advance exactly on the authored Nth action boundary.")
+	if int(mid_phase.current_environment.get("scenario_phase_index", -1)) != 1 or int(mid_phase.current_environment.get("scenario_phase_action_counter", -1)) != 1:
+		failures.append("Fight Night save/load did not preserve the mid-bout action counter.")
+	mid_phase.advance_environment_turns(3)
+	if int(mid_phase.current_environment.get("scenario_phase_index", -1)) != 2 or int(mid_phase.current_environment.get("scenario_phase_action_counter", -1)) != 0 or str(_copy_dict(mid_phase.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "THE TAPE GETS SWEPT UP.":
+		failures.append("Fight Night did not advance from bout to aftermath on its fourth bout action boundary.")
 
 	var deterministic_a := _scenario_full_generation("SCENARIO-DETERMINISM", library)
 	var deterministic_b := _scenario_full_generation("SCENARIO-DETERMINISM", library)
@@ -688,12 +694,12 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 			break
 		previous_id = selected_id
 	var pinned_run := RunStateScript.new()
-	pinned_run.start_new("SCENARIO-PIN", RunStateScript.custom_challenge("scenario_pin", "SCENARIO-PIN", {"scenario_pins": {"bar": "bar_engine_proof_quiet_shift"}}))
+	pinned_run.start_new("SCENARIO-PIN", RunStateScript.custom_challenge("scenario_pin", "SCENARIO-PIN", {"scenario_pins": {"bar": "bar_lock_in"}}))
 	var pinned: Dictionary = repeat_generator.call("_select_scenario", pinned_run, "bar", pinned_run.create_rng("pin"))
-	if str(pinned.get("id", "")) != "bar_engine_proof_quiet_shift":
+	if str(pinned.get("id", "")) != "bar_lock_in" or _copy_dict(pinned.get("mutations", {})).is_empty():
 		failures.append("Challenge scenario pin did not select the configured scenario.")
 	var excluded_run := RunStateScript.new()
-	excluded_run.start_new("SCENARIO-EXCLUDE", RunStateScript.custom_challenge("scenario_exclude", "SCENARIO-EXCLUDE", {"scenario_excludes": {"bar": ["bar_engine_proof_lock_in", "bar_engine_proof_quiet_shift"]}}))
+	excluded_run.start_new("SCENARIO-EXCLUDE", RunStateScript.custom_challenge("scenario_exclude", "SCENARIO-EXCLUDE", {"scenario_excludes": {"bar": ["bar_wake", "bar_fight_night", "bar_payday_rush", "bar_lock_in"]}}))
 	var excluded: Dictionary = RunGeneratorScript.new(library).call("_select_scenario", excluded_run, "bar", excluded_run.create_rng("exclude"))
 	if not excluded.is_empty():
 		failures.append("Challenge scenario exclusions did not remove every configured id.")
@@ -741,6 +747,175 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	_check_scenario_validation_negative_fixture(library, "bad_archetype", {"missing_archetype": [{"id": "bad_archetype", "archetype_id": "missing_archetype", "display_name": "Bad", "weight": 1, "mutations": {}}]}, "unknown archetype", failures)
 	_check_scenario_validation_negative_fixture(library, "bad_event", {"bar": [{"id": "bad_event", "archetype_id": "bar", "display_name": "Bad", "weight": 1, "mutations": {"event_pool_add": ["missing_event"]}}]}, "unknown id", failures)
 	_check_scenario_validation_negative_fixture(library, "bad_key", {"bar": [{"id": "bad_key", "archetype_id": "bar", "display_name": "Bad", "weight": 1, "mutations": {"per_frame_weather": true}}]}, "unknown mutation key", failures)
+
+
+func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> void:
+	var expected := {
+		"corner_store": ["corner_store_delivery_day", "corner_store_lotto_fever", "corner_store_aftermath", "corner_store_dead_shift"],
+		"back_alley": ["back_alley_street_craps", "back_alley_cruiser_parked", "back_alley_fence_night"],
+		"motel": ["motel_conventioneers", "motel_stakeout", "motel_weekly_rates"],
+		"bar": ["bar_wake", "bar_fight_night", "bar_payday_rush", "bar_lock_in"],
+		"gas_station_casino": ["gas_station_trucker_convoy", "gas_station_tour_bus_stop", "gas_station_graveyard_shift"],
+	}
+	var expected_ids: Array = []
+	for ids_value in expected.values():
+		expected_ids.append_array(ids_value as Array)
+	var base_event_ids: Dictionary = {}
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		for event_id_value in _string_array((archetype_value as Dictionary).get("event_pool", [])):
+			base_event_ids[str(event_id_value)] = true
+	var found_ids: Array = []
+	var exclusive_ids: Array = []
+	for archetype_id_value in expected.keys():
+		var archetype_id := str(archetype_id_value)
+		var pool := library.scenarios_for_archetype(archetype_id)
+		var expected_pool: Array = expected.get(archetype_id, [])
+		if pool.size() != expected_pool.size():
+			failures.append("Tier-1 scenario pool %s has %d entries; expected %d." % [archetype_id, pool.size(), expected_pool.size()])
+		for scenario_value in pool:
+			if typeof(scenario_value) != TYPE_DICTIONARY:
+				continue
+			var scenario: Dictionary = scenario_value
+			var scenario_id := str(scenario.get("id", ""))
+			found_ids.append(scenario_id)
+			if not expected_pool.has(scenario_id):
+				failures.append("Tier-1 scenario pool %s contains unexpected id %s." % [archetype_id, scenario_id])
+			if bool(scenario.get("placeholder", false)):
+				failures.append("Tier-1 scenario %s is still marked as placeholder content." % scenario_id)
+			if scenario.has("layer_id"):
+				failures.append("Ordinary tier-1 scenario %s must omit the Punchline-only layer_id field." % scenario_id)
+			var mutations := _copy_dict(scenario.get("mutations", {}))
+			var axis_count := 0
+			if mutations.has("patron_set") or mutations.has("staff_set"):
+				axis_count += 1
+			if mutations.has("event_pool_add") or mutations.has("event_pool_remove"):
+				axis_count += 1
+			for axis_key in ["economic_profile_overrides", "game_modifier_hooks", "service_add", "service_remove", "music_profile_override", "presentation", "exclusive_opportunity", "security_overrides", "hook_flags"]:
+				if mutations.has(axis_key):
+					axis_count += 1
+			if axis_count < 3:
+				failures.append("Tier-1 scenario %s mutates only %d Tonight axes." % [scenario_id, axis_count])
+			var presentation := _copy_dict(mutations.get("presentation", {}))
+			for presentation_key in ["palette_tint", "crowd_density", "signage_line"]:
+				if str(presentation.get(presentation_key, "")).strip_edges().is_empty():
+					failures.append("Tier-1 scenario %s is missing presentation.%s." % [scenario_id, presentation_key])
+			if _copy_dict(mutations.get("music_profile_override", {})).is_empty():
+				failures.append("Tier-1 scenario %s has no music-profile distinction." % scenario_id)
+			var scenario_events := _string_array(mutations.get("event_pool_add", []))
+			if scenario_events.size() < 1 or scenario_events.size() > 3:
+				failures.append("Tier-1 scenario %s must author one to three exclusive events." % scenario_id)
+			var opportunity_id := str(_copy_dict(mutations.get("exclusive_opportunity", {})).get("event_id", ""))
+			if opportunity_id.is_empty() or not scenario_events.has(opportunity_id):
+				failures.append("Tier-1 scenario %s does not guarantee one of its exclusive events." % scenario_id)
+			for event_id_value in scenario_events:
+				var event_id := str(event_id_value)
+				exclusive_ids.append(event_id)
+				if bool(base_event_ids.get(event_id, false)):
+					failures.append("Scenario-exclusive event %s leaked into an archetype base pool." % event_id)
+				var event_definition := library.event(event_id)
+				var choices := _copy_array(_copy_dict(event_definition.get("payload", {})).get("choices", []))
+				if event_definition.is_empty() or choices.is_empty():
+					failures.append("Scenario-exclusive event %s has no usable current-engine choice." % event_id)
+					continue
+				var event_run := RunStateScript.new()
+				event_run.start_new("TIER1-EVENT-%s" % event_id)
+				event_run.bankroll = 100
+				var event_environment := {"id": "tier1_event_fixture", "archetype_id": archetype_id, "world_node_id": archetype_id, "kind": "casino" if ["bar", "gas_station_casino"].has(archetype_id) else "shop", "tier": 1, "event_ids": [event_id], "resolved_event_ids": []}
+				event_run.set_environment(event_environment)
+				var event_module := EventModuleScript.new()
+				event_module.setup(event_definition, library)
+				var first_choice := choices[0] as Dictionary
+				var event_result := event_module.resolve(event_run, event_run.current_environment, str(first_choice.get("id", "")))
+				if not bool(event_result.get("ok", false)):
+					failures.append("Scenario-exclusive event %s could not resolve through the current event engine." % event_id)
+	if found_ids.size() != 17 or exclusive_ids.size() != 17:
+		failures.append("Tier-1 launch cut must contain exactly 17 scenarios and 17 scenario-exclusive events.")
+	for expected_id_value in expected_ids:
+		if not found_ids.has(str(expected_id_value)):
+			failures.append("Tier-1 launch scenario is missing: %s." % str(expected_id_value))
+	if str(_copy_dict(library.scenario("back_alley_street_craps").get("mutations", {})).get("game_modifier_hooks", {}).get("game_hook", "")) != "street_craps":
+		failures.append("Street Craps scenario shell lost its inert game_hook seam.")
+	var required_anchors := {
+		"bar_fight_night": ["recruitment_anchor", "knuckles"],
+		"gas_station_trucker_convoy": ["recruitment_anchor", "switch"],
+		"back_alley_fence_night": ["recruitment_anchor", "mags"],
+	}
+	for scenario_id_value in required_anchors.keys():
+		var anchor: Array = required_anchors.get(scenario_id_value, [])
+		var hooks := _copy_dict(_copy_dict(library.scenario(str(scenario_id_value)).get("mutations", {})).get("hook_flags", {}))
+		if str(hooks.get(str(anchor[0]), "")) != str(anchor[1]):
+			failures.append("Tier-1 scenario %s lost its %s anchor." % [str(scenario_id_value), str(anchor[1])])
+	var graveyard := _copy_dict(library.scenario("gas_station_graveyard_shift").get("mutations", {}))
+	var graveyard_security := _copy_dict(graveyard.get("security_overrides", {}))
+	var graveyard_hooks := _copy_dict(graveyard.get("hook_flags", {}))
+	if str(graveyard_security.get("machine_alarm_tolerance_band", "")) != "lax" or not bool(graveyard_hooks.get("maintenance_cheat_window", false)):
+		failures.append("Graveyard Shift lost its lax alarm band or maintenance cheat-window seam.")
+	var expected_phases := {
+		"bar_fight_night": ["prefight", "bout", "aftermath"],
+		"bar_payday_rush": ["surge", "thinning"],
+		"bar_lock_in": ["doors_open", "bolted"],
+	}
+	for scenario_id_value in expected_phases.keys():
+		var phase_ids: Array = []
+		for phase_value in _copy_array(library.scenario(str(scenario_id_value)).get("phases", [])):
+			phase_ids.append(str((phase_value as Dictionary).get("id", "")))
+		if phase_ids != expected_phases.get(scenario_id_value, []):
+			failures.append("Scenario %s lost its authored phase arc." % str(scenario_id_value))
+	var reached: Dictionary = {}
+	for seed_index in range(20):
+		var reach_run := RunStateScript.new()
+		reach_run.start_new("TIER1-REACH-%02d" % seed_index)
+		var reach_generator := RunGeneratorScript.new(library)
+		for archetype_id_value in expected.keys():
+			var archetype_id := str(archetype_id_value)
+			var selected: Dictionary = reach_generator.call("_select_scenario", reach_run, archetype_id, reach_run.create_rng("tier1_reach:%s" % archetype_id))
+			var selected_id := str(selected.get("id", ""))
+			if not selected_id.is_empty():
+				reached[selected_id] = true
+	for expected_id_value in expected_ids:
+		if not bool(reached.get(str(expected_id_value), false)):
+			failures.append("Tier-1 scenario was starved across the real 20-seed selector sweep: %s." % str(expected_id_value))
+	var tutorial_config := library.challenge_config_for("tutorial_first_card", "TIER1-TUTORIAL-PIN")
+	var tutorial_modifiers := _copy_dict(tutorial_config.get("modifiers", {}))
+	if bool(tutorial_modifiers.get("scenario_pins_apply_mutations", true)) or str(_copy_dict(tutorial_modifiers.get("scenario_pins", {})).get("corner_store", "")) != "corner_store_delivery_day":
+		failures.append("Tutorial challenge does not pin the neutral Delivery Day identity overlay.")
+	var tutorial_run := RunStateScript.new()
+	tutorial_run.start_new("TIER1-TUTORIAL-PIN", tutorial_config)
+	var tutorial_generator := RunGeneratorScript.new(library)
+	var tutorial_pin: Dictionary = tutorial_generator.call("_select_scenario", tutorial_run, "corner_store", tutorial_run.create_rng("tutorial_pin"))
+	if str(tutorial_pin.get("id", "")) != "corner_store_delivery_day" or not _copy_dict(tutorial_pin.get("mutations", {})).is_empty() or not _copy_array(tutorial_pin.get("phases", [])).is_empty():
+		failures.append("Tutorial neutral pin did not preserve identity while suppressing every scenario mutation and phase.")
+	var controlled_run := RunStateScript.new()
+	controlled_run.start_new("TIER1-TUTORIAL-CONTROLLED", tutorial_config)
+	var neutral_environment := EnvironmentInstance.from_archetype(library.environment_archetype("corner_store"), 1, controlled_run.create_rng("controlled_corner"), library, tutorial_config, {}).to_dict()
+	var pinned_run := RunStateScript.new()
+	pinned_run.start_new("TIER1-TUTORIAL-CONTROLLED", tutorial_config)
+	var pinned_environment := EnvironmentInstance.from_archetype(library.environment_archetype("corner_store"), 1, pinned_run.create_rng("controlled_corner"), library, tutorial_config, tutorial_pin).to_dict()
+	for sensitive_key in ["game_ids", "event_ids", "item_offers", "service_ids", "economic_profile", "security_profile", "visual_context", "next_archetypes", "travel_hooks", "object_fixtures", "local_narrative_flags"]:
+		if JSON.stringify(pinned_environment.get(sensitive_key)) != JSON.stringify(neutral_environment.get(sensitive_key)):
+			failures.append("Tutorial neutral scenario pin changed controlled environment field %s." % sensitive_key)
+	if not _copy_dict(pinned_environment.get("scenario_presentation", {})).is_empty() or not _copy_dict(neutral_environment.get("scenario_presentation", {})).is_empty():
+		failures.append("Tutorial neutral scenario pin leaked presentation values into the controlled room.")
+	var presentation_canvas := PixelSceneCanvasScript.new()
+	presentation_canvas.render_environment_snapshot(neutral_environment)
+	var neutral_view := presentation_canvas.current_view_snapshot()
+	if bool(neutral_view.get("scenario_palette_active", false)) or int(neutral_view.get("scenario_crowd_count", 0)) != 0 or not str(neutral_view.get("scenario_signage", "")).is_empty():
+		failures.append("Empty/neutral scenario presentation changed the legacy room canvas.")
+	var fight_view_environment := EnvironmentInstance.from_archetype(library.environment_archetype("bar"), 1, controlled_run.create_rng("fight_view"), library, {}, library.scenario("bar_fight_night")).to_dict()
+	presentation_canvas.render_environment_snapshot(fight_view_environment)
+	var fight_view := presentation_canvas.current_view_snapshot()
+	if not bool(fight_view.get("scenario_palette_active", false)) or int(fight_view.get("scenario_crowd_count", 0)) != 7 or str(fight_view.get("scenario_signage", "")) != "UNDERCARD STARTS SOON.":
+		failures.append("Generic room canvas did not consume cached scenario palette, crowd, and signage values.")
+	presentation_canvas.free()
+	var stored_run := RunStateScript.new()
+	stored_run.start_new("TIER1-TUTORIAL-STORED", tutorial_config)
+	var stored_generator := RunGeneratorScript.new(library)
+	stored_generator.next_environment(stored_run)
+	stored_generator.next_environment(stored_run, "corner_store", true)
+	if str(stored_run.scenario_for_node("corner_store").get("id", "")) != "corner_store_delivery_day" or not _copy_dict(stored_run.current_environment.get("scenario_exclusive_opportunity", {})).is_empty() or not _copy_dict(stored_run.current_environment.get("scenario_hook_flags", {})).is_empty():
+		failures.append("Tutorial neutral pin did not store scenario identity without opportunity or hook leakage.")
 
 
 func _scenario_full_generation(seed: String, library: ContentLibrary) -> Dictionary:

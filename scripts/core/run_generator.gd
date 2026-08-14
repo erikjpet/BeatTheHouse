@@ -598,7 +598,13 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream)
 			var pinned: Dictionary = definition_value
 			if str(pinned.get("id", "")) == pinned_id:
 				run_state.remember_scenario_selection(archetype_id, pinned_id)
-				return pinned.duplicate(true)
+				var selected_pin := pinned.duplicate(true)
+				# Challenge authors may pin the name of tonight without letting its
+				# overlay disturb a controlled teaching or test environment.
+				if not bool(modifiers.get("scenario_pins_apply_mutations", true)):
+					selected_pin["mutations"] = {}
+					selected_pin["phases"] = []
+				return selected_pin
 		return {}
 	var excludes := _copy_dict(modifiers.get("scenario_excludes", {}))
 	var excluded_ids := _string_array(excludes.get(archetype_id, []))
