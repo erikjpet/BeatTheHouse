@@ -303,6 +303,20 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   Shim are accepted only with tests that consume their authored effect keys on
   real drop/gutter actions; their shipped 3/3 fallback tunings remain unchanged
   for legacy or disabled-content saves.
+- 2026-08-14 [craps06_1] Craps die sides and line-result totals are authored
+  data consumed by both resolution and RTP probes. Payout-luck coverage must
+  select a deterministic natural-producing stream and assert the exact shared
+  payout seam; surface animation state may not depend on process uptime.
+- 2026-08-14 [push06_1] Pusher force/push maps, lane approach identity, and
+  visible prize riders are framework-owned data/surface contracts. During a
+  Police Sweep, the channel's recorded base tolerance plus the explicit pusher
+  delta is authoritative; adding that delta to TownState's already-loosened
+  visible band would double-count the same override.
+- 2026-08-14 [streets06_1/crew06_3] Every accepted Streets verb consumes one
+  model action. A terminal Hold signal evaluates its authored window on the
+  pre-action tick, then records the action/deadline boundary without another
+  patrol or sight pass. Clean resolution is historical: any earlier spotting
+  prevents a later stash escape from restoring the clean-speed bonus.
 
 ## Work Log
 
