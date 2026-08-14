@@ -131,6 +131,37 @@ func _check_craps_rule_matrix(game: GameModule, base_table: Dictionary, failures
 		failures.append("Craps accepted a wager below the posted table minimum.")
 	if bool(CrapsRulesScript.can_place_bet("pass_line", maximum + 1, base_table, {}, rules).get("ok", false)):
 		failures.append("Craps accepted a wager above the posted table maximum.")
+	_check_craps_traveled_come_validation(game, base_table, failures)
+
+
+func _check_craps_traveled_come_validation(game: GameModule, base_table: Dictionary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CRAPS-TRAVELED-COME-VALIDATION")
+	run_state.bankroll = 1000
+	var environment := _surface_contract_environment()
+	environment["id"] = "craps_traveled_come_validation"
+	environment["game_ids"] = ["craps"]
+	var table := _craps_rule_table(base_table, 6, {"come": {"5": 10}, "dont_come": {"9": 10}})
+	environment["game_states"] = {"craps": table}
+	run_state.current_environment = environment
+	var resolution_rng := RngStream.new()
+	resolution_rng.configure(2)
+	var result := game.resolve_with_context(
+		"roll_craps",
+		20,
+		run_state,
+		run_state.current_environment,
+		resolution_rng,
+		{"craps_pending_bets": {"come": 10, "dont_come": 10}}
+	)
+	var working := _craps_dict(result.get("craps_working_bets", {}))
+	var traveled_come := _craps_dict(working.get("come", {}))
+	var traveled_dont_come := _craps_dict(working.get("dont_come", {}))
+	if not bool(result.get("ok", false)) or int(_craps_dict(result.get("craps_roll", {})).get("total", 0)) != 4:
+		failures.append("Craps real resolve path rejected new Come wagers beside traveled-number maps.")
+	elif int(traveled_come.get("5", 0)) != 10 or int(traveled_come.get("4", 0)) != 10 \
+			or int(traveled_dont_come.get("9", 0)) != 10 or int(traveled_dont_come.get("4", 0)) != 10:
+		failures.append("Craps real resolve path did not preserve traveled Come maps while moving new apron wagers.")
 
 
 func _check_craps_authored_die_sides(failures: Array) -> void:

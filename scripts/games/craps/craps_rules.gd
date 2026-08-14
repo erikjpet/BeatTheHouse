@@ -330,7 +330,9 @@ static func _combined_stake(bet_id: String, working: Dictionary, pending: Dictio
 		value += int(_dict(working.get("place", {})).get(bet_id.trim_prefix("place_"), 0))
 	elif bet_id.begins_with("come_odds_"):
 		value += int(_dict(working.get("come_odds", {})).get(bet_id.trim_prefix("come_odds_"), 0))
-	else:
+	elif bet_id != "come" and bet_id != "dont_come":
+		# Come and Don't Come working state is a traveled-number map. A new
+		# apron wager is scalar and must not coerce that collection to an int.
 		value += int(working.get(bet_id, 0))
 	return value
 
