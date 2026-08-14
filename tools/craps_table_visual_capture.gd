@@ -30,7 +30,7 @@ func _run() -> void:
 		_fail("Craps capture could not access RunState.")
 		return
 	run_state.simulation_msec = 40000
-	_configure_table(run_state, 37000, [3, 5], 8, "craps:capture:idle")
+	_configure_table(run_state, 0, [3, 5], 8, "craps:capture:idle")
 	app.set("game_surface_ui_state", {"selected_chip": 5, "craps_pending_bets": {"field": 5}, "surface_time_msec": 40000})
 	app.call("_refresh")
 	await _settle(5)
@@ -60,7 +60,8 @@ func _run() -> void:
 	if not await _capture("03_idle_liveness_after.png"):
 		return
 
-	_configure_table(run_state, 40000, [5, 2], 7, "craps:capture:dice")
+	var live_dice_start_msec := int((canvas.call("current_view_snapshot") as Dictionary).get("surface_simulation_time_msec", 1))
+	_configure_table(run_state, live_dice_start_msec, [5, 2], 7, "craps:capture:dice")
 	app.call("_refresh")
 	await _settle(3)
 	var dice_state: Dictionary = (canvas.call("current_view_snapshot") as Dictionary).get("state", {})
@@ -70,7 +71,7 @@ func _run() -> void:
 	if not await _capture("04_dice_presentation.png"):
 		return
 
-	_configure_table(run_state, 37000, [3, 5], 8, "craps:capture:reduced")
+	_configure_table(run_state, 0, [3, 5], 8, "craps:capture:reduced")
 	var settings: Variant = app.get("user_settings")
 	settings.reduce_motion = true
 	app.call("_apply_accessibility_settings")
@@ -93,6 +94,7 @@ func _run() -> void:
 		"idle_motion_after": idle_after,
 		"reduced_motion_before": reduced_before,
 		"reduced_motion_after": reduced_after,
+		"live_dice_start_msec": live_dice_start_msec,
 	}
 	_write_manifest()
 	print("CRAPS_TABLE_VISUAL_CAPTURE_PASS files=%d dir=%s" % [saved_files.size(), ProjectSettings.globalize_path(OUTPUT_DIR)])
