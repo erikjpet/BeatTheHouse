@@ -226,6 +226,11 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   canonical selector result separately from its public rumor snapshot. This
   preserves tutorial identity-only scenario pins with suppressed mutations and
   preserves full authored mutations for ordinary pins without a second draw.
+- 2026-08-14 [env06_3/town06_3] PM scenario-pressure seam: Police Sweep
+  adjacency targets stable ids `back_alley_cruiser_parked` and
+  `pawn_shop_serial_check_day` through the existing scenario-weight API.
+  Serial-Check Day may also declare `law:pressure`; missing ids/tags remain
+  inert so either branch integrates independently and Grand Casino stays out.
 
 ## Work Log
 
