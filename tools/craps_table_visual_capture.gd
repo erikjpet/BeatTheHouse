@@ -1,7 +1,7 @@
 extends SceneTree
 
 const MainScene := preload("res://scenes/main.tscn")
-const OUTPUT_DIR := "res://review_artifacts/craps_table_visual_qa"
+const OUTPUT_DIR := "res://.tmp/craps_table_visual_qa"
 const MANIFEST_PATH := OUTPUT_DIR + "/manifest.json"
 const CAPTURE_SIZE := Vector2i(1280, 720)
 
