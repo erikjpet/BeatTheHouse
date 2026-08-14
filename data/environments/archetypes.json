@@ -1505,7 +1505,7 @@
       "back_room": {
         "kind": "crew",
         "layer_display_name": "Crew Back Room",
-        "layer_entry_message": "Rook opens the private room. It is mostly promise for now.",
+        "layer_entry_message": "Rook opens the private room. Green felt waits under one low lamp.",
         "art_key": "punchline_back_room",
         "name_prefixes": [],
         "name_nouns": ["The Punchline"],
@@ -1513,11 +1513,11 @@
           "perspective": "first_person",
           "scene_type": "crew_back_room",
           "asset_path": "res://assets/art/environments/small_underground_casino.png",
-          "description": "A shut door. A bare table. Nobody else listening."
+          "description": "A shut door. A friendly card table. Nobody else listening."
         },
-        "objective_hint": "The room is unfinished. Rook is not.",
+        "objective_hint": "The cards are honest and the money stays friendly.",
         "layout": {
-          "game_spots": [],
+          "game_spots": [[450, 218]],
           "event_spots": [],
           "service_spots": [],
           "lender_spots": [],
@@ -1537,9 +1537,10 @@
           "texture_rate": 0.08,
           "volume": 0.17
         },
-        "economic_profile": {"stake_floor": 0, "stake_ceiling": 0, "cashout_tone": "none"},
-        "game_pool": [],
-        "game_count": [0, 0],
+        "economic_profile": {"stake_floor": 2, "stake_ceiling": 6, "game_stake_floor_overrides": {"crew_draw_poker": 2}, "game_stake_ceiling_overrides": {"crew_draw_poker": 6}, "cashout_tone": "friendly"},
+        "game_pool": ["crew_draw_poker"],
+        "required_game_ids": ["crew_draw_poker"],
+        "game_count": [1, 1],
         "item_pool": [],
         "item_count": [0, 0],
         "event_pool": [],
@@ -1550,7 +1551,7 @@
         "lender_count": [0, 0],
         "suspicion_cues": ["Nobody outside this room gets a vote."],
         "travel_hooks": ["back_alley", "motel", "delta_queen", "kitty_cat_lounge", "grand_casino"],
-        "local_narrative_flags": {"punchline_back_room_shell": true},
+        "local_narrative_flags": {"punchline_back_room_shell": true, "crew_poker_table": true},
         "moods": ["private", "unfinished", "crew"],
         "layer_transitions": [
           {
@@ -1563,8 +1564,8 @@
         "ambient_prop": "patron_talk",
         "ambient_rotate_actions": 3,
         "ambient_lines": [
-          "Rook looks over the bare room. 'We'll put the work here.'",
-          "Rook taps the table. 'Made company gets a chair.'",
+          "Rook cuts the cards. 'Work can wait one hand.'",
+          "Rook taps the felt. 'Made company gets a chair.'",
           "Rook keeps his voice low. 'This door remembers who opened it.'"
         ]
       }

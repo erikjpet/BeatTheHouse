@@ -100,6 +100,14 @@
 		"item_ids": ["weighted_keyring", "dice_calipers", "false_bottom_cup"]
 	},
 	{
+		"id": "crew_poker_pack",
+		"display_name": "Crew Poker Pack",
+		"description": "Friendly back-room draw poker and the Crew's table habits.",
+		"default_enabled": true,
+		"game_ids": ["crew_draw_poker"],
+		"item_ids": []
+	},
+	{
 		"id": "blackjack_pack",
 		"display_name": "Blackjack Pack",
 		"description": "Cards, counts, dealer shadows.",

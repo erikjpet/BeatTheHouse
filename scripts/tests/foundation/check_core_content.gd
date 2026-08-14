@@ -9,6 +9,9 @@ const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const PlatformServicesScript := preload("res://scripts/core/platform_services.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
+const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
+const CrewDrawPokerGameScript := preload("res://scripts/games/crew_draw_poker.gd")
+const CrewPokerCrewStateScript := preload("res://scripts/core/crew_state_model.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
@@ -84,6 +87,7 @@ const FOUNDATION_SUITES := [
 	"baccarat",
 	"video_poker",
 	"bar_dice",
+	"crew_poker",
 	"pull_tabs",
 	"scratch_tickets",
 	"audit",
@@ -448,7 +452,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 		"all":
 			_foundation_run_all_suite(content_library, fixture_library, failures, report)
 		_:
-			if ["blackjack", "roulette", "baccarat", "video_poker", "bar_dice", "pull_tabs", "scratch_tickets"].has(suite):
+			if ["blackjack", "roulette", "baccarat", "video_poker", "bar_dice", "crew_poker", "pull_tabs", "scratch_tickets"].has(suite):
 				_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 				_foundation_run_check(report, failures, "%s_game_suite" % suite, Callable(self, "_check_target_game_suite"), [content_library, suite])
 			else:
@@ -3357,6 +3361,7 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 		_check_all_game_module_contracts(library, failures)
 		return
 	_check_bar_dice_contract(library, failures)
+	_check_crew_poker_contract(library, failures)
 	_check_video_poker_contract(library, failures)
 	if suite == "audit":
 		_check_slot_acceptance(library, failures)
@@ -4379,6 +4384,7 @@ func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> 
 	var bar_dice: GameModule = _load_surface_contract_game(library, "bar_dice", failures)
 	if bar_dice != null:
 		_check_bar_dice_surface_contract(bar_dice, failures)
+	_check_crew_poker_contract(library, failures)
 	_check_process_fanout_guards(library, failures)
 
 
@@ -4669,6 +4675,8 @@ func _check_target_game_suite(library: ContentLibrary, game_id: String, failures
 			_check_video_poker_contract(library, failures)
 		"bar_dice":
 			_check_bar_dice_contract(library, failures)
+		"crew_poker":
+			_check_crew_poker_contract(library, failures)
 		"pull_tabs":
 			var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 			if pull_tabs != null:
