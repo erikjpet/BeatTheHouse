@@ -1185,12 +1185,48 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		return false
 	app.call("resolve_event_choice", "crew_favor_delivery", "run_package")
 	await process_frame
-	if not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
-		or bool(run_state.narrative_flags.get("crew_favor_pending", true)):
-		push_error("Crew-favor conversation changed the authoritative Run Package outcome.")
+	var streets_controller: Variant = app.get("streets_controller")
+	if not run_state.streets_has_active_run() \
+		or not bool(run_state.narrative_flags.get("crew_favor_pending", false)) \
+		or bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
+		or streets_controller == null \
+		or not bool(streets_controller.call("is_visible")):
+		push_error("Crew-favor conversation did not hand off to the played Streets surface before applying its outcome.")
 		return false
 	if bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
 		push_error("Crew-favor conversation remained open after resolution.")
+		return false
+	await get_tree().create_timer(0.15).timeout
+	if not bool(streets_controller.call("idle_animation_running")) or float(streets_controller.call("measured_idle_liveness")) <= 0.001:
+		push_error("Open Streets board did not register measured movement from its actual idle blue-light animation.")
+		return false
+	var distance_sizes := [{"x": 6, "y": 5}, {"x": 8, "y": 6}, {"x": 10, "y": 7}, {"x": 12, "y": 8}, {"x": 14, "y": 9}]
+	for size_value in distance_sizes:
+		var size: Dictionary = size_value
+		streets_controller.call("_build_board", int(size.get("x", 1)), int(size.get("y", 1)))
+		var buttons: Array = streets_controller.get("cell_buttons")
+		var cell_size := (buttons[0] as Button).custom_minimum_size if not buttons.is_empty() else Vector2.ZERO
+		var board_width := (cell_size.x * int(size.get("x", 1))) + (maxi(0, int(size.get("x", 1)) - 1) * 3.0)
+		var board_height := (cell_size.y * int(size.get("y", 1))) + (maxi(0, int(size.get("y", 1)) - 1) * 3.0)
+		if board_width > 790.1 or board_height > 360.1:
+			push_error("Streets %dx%d board exceeded its 1280x720 layout budget: %.1fx%.1f." % [int(size.get("x", 1)), int(size.get("y", 1)), board_width, board_height])
+			return false
+	streets_controller.set("board_key", "")
+	streets_controller.call("show_snapshot", run_state.streets_snapshot())
+	var favor_board: Dictionary = run_state.active_streets_run.get("board", {})
+	favor_board["patrols"] = []
+	var destination: Dictionary = favor_board.get("destination", {})
+	run_state.active_streets_run["board"] = favor_board
+	run_state.active_streets_run["player"] = {"x": int(destination.get("x", 1)) - 1, "y": int(destination.get("y", 0))}
+	app.call("_on_streets_action_requested", {"verb": "move", "direction": "right", "pace": "walk"})
+	await process_frame
+	if run_state.streets_has_active_run() \
+		or not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
+		or bool(run_state.narrative_flags.get("crew_favor_pending", true)) \
+		or run_state.bankroll != 122 \
+		or run_state.suspicion_level() != 4 \
+		or bool(streets_controller.call("is_visible")):
+		push_error("Played Crew-favor surface did not apply its authored outcome once and close cleanly.")
 		return false
 	return true
 

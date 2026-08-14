@@ -6369,6 +6369,7 @@ func streets_apply_action(action: Dictionary) -> Dictionary:
 	applied.erase("state")
 	if bool(applied.get("resolved", false)):
 		_apply_streets_resolution()
+	advance_environment_turns(1)
 	applied["snapshot"] = streets_snapshot()
 	return applied
 
