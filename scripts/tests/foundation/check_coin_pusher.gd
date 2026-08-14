@@ -290,6 +290,23 @@ func _check_coin_pusher_prize_items(game: GameModule, failures: Array) -> void:
 
 
 func _check_coin_pusher_items(game: GameModule, failures: Array) -> void:
+	var cold_item := game.library.item("cold_quarters")
+	var cold_effect: Dictionary = cold_item.get("effect", {}) if typeof(cold_item.get("effect", {})) == TYPE_DICTIONARY else {}
+	if str(cold_effect.get("active_target", "")) != "machine":
+		failures.append("Cold Quarters must advertise its shared machine target instead of one cabinet family.")
+	var slot_definition := game.library.game("slot")
+	var slot_game: GameModule = SlotGameScript.new()
+	slot_game.setup(slot_definition, game.library)
+	var slot_run: RunState = _slot_run_state("PUSHER-COLD-SHARED-SLOT", 100000)
+	var slot_environment: Dictionary = _slot_environment()
+	var slot_machine: Dictionary = _slot_machine(slot_definition, slot_run, "buffalo", "line_5x3", "standard", "plain")
+	_slot_store_machine(slot_run, slot_environment, slot_machine)
+	slot_run.add_item("cold_quarters")
+	var slot_command := slot_game.active_item_command("cold_quarters", slot_run, slot_environment, slot_run.create_rng("cold_shared_slot"))
+	var slot_result: Dictionary = slot_command.get("result", {}) if typeof(slot_command.get("result", {})) == TYPE_DICTIONARY else {}
+	if not bool(slot_command.get("handled", false)) or not bool(slot_result.get("ok", false)):
+		failures.append("Cold Quarters shared machine target no longer reached Slot's existing active-item handler.")
+
 	var cold_fixture := _coin_pusher_fixture(game, "PUSHER-COLD-QUARTERS")
 	var cold_run: RunState = cold_fixture.get("run_state")
 	cold_run.add_item("cold_quarters")

@@ -1039,7 +1039,7 @@
     "effect": {
       "active_item": true,
       "active_mode": "consumable",
-      "active_target": "slot",
+      "active_target": "machine",
       "slot_cold_quarter_heat_reduction": 6,
       "coin_pusher_drop_density": 3
     }
