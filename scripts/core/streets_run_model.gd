@@ -69,10 +69,12 @@ static func begin(spec: Dictionary, world_context: Dictionary, run_seed: int) ->
 		"turn": 0,
 		"deadline_actions": deadline,
 		"deadline_remaining": deadline,
+		"fast_threshold_actions": maxi(0, int(spec.get("fast_threshold_actions", 0))),
 		"pursuit_turns": maxi(2, int(spec.get("pursuit_turns", 4))),
 		"pursuit_remaining": maxi(2, int(spec.get("pursuit_turns", 4))) if hot_start else -1,
 		"spotted": hot_start,
 		"times_spotted": 1 if hot_start else 0,
+		"spot_heat_per_new_spot": maxi(0, int(spec.get("spot_heat_per_new_spot", 0))),
 		"ducked": false,
 		"cargo_id": str(spec.get("cargo_id", "package" if mode in ["package", "multi_stop"] else "")).strip_edges(),
 		"cargo_state": "carried" if mode in ["package", "multi_stop"] else "none",
@@ -87,6 +89,7 @@ static func begin(spec: Dictionary, world_context: Dictionary, run_seed: int) ->
 		"snitch_seen": false,
 		"hazards_hit": 0,
 		"noise": 0,
+		"exposed": false,
 		"resolution": {},
 		"consumer_payload": _dictionary(spec.get("consumer_payload", {})).duplicate(true),
 		"travel_continuation": _normalize_travel_continuation(spec.get("travel_continuation", {})),
@@ -105,7 +108,10 @@ static func normalize_state(value: Variant) -> Dictionary:
 	var normalized := source.duplicate(true)
 	normalized["turn"] = maxi(0, int(source.get("turn", 0)))
 	normalized["deadline_remaining"] = maxi(0, int(source.get("deadline_remaining", 0)))
+	normalized["fast_threshold_actions"] = maxi(0, int(source.get("fast_threshold_actions", 0)))
 	normalized["pursuit_remaining"] = int(source.get("pursuit_remaining", -1))
+	normalized["spot_heat_per_new_spot"] = maxi(0, int(source.get("spot_heat_per_new_spot", 0)))
+	normalized["exposed"] = bool(source.get("exposed", false))
 	normalized["player"] = _position(source.get("player", {}))
 	normalized["stash_position"] = _position(source.get("stash_position", {}), true)
 	normalized["stops"] = _dictionary_array(source.get("stops", []))
@@ -182,6 +188,7 @@ static func snapshot(source_state: Dictionary) -> Dictionary:
 		"happenings": _string_array(conditions.get("happenings", [])),
 	}
 	result.erase("consumer_payload")
+	result.erase("spot_heat_per_new_spot")
 	var continuation := _dictionary(state.get("travel_continuation", {}))
 	result["travel_continuation_pending"] = str(state.get("status", "")) == "resolved" \
 		and bool(continuation.get("enabled", false)) \
@@ -348,9 +355,21 @@ static func _apply_move(state: Dictionary, action: Dictionary) -> String:
 	if not ["walk", "run"].has(pace):
 		pace = "walk"
 	var steps := 1
+	var weather := str(_dictionary(state.get("conditions", {})).get("weather", "clear"))
+	var adverse_weather := weather in ["rain", "fog", "storm"]
 	if pace == "run":
-		steps = 1 if str(_dictionary(state.get("conditions", {})).get("weather", "clear")) in ["rain", "fog", "storm"] else 2
+		steps = 1 if adverse_weather else 2
+		var player := _dictionary(state.get("player", {}))
+		var probe := player.duplicate(true)
+		var fast_surface := _cell_kind(state, player) in ["alley", "blackout"]
+		for _probe_step in range(steps):
+			probe = {"x": int(probe.get("x", 0)) + int(direction.get("x", 0)), "y": int(probe.get("y", 0)) + int(direction.get("y", 0))}
+			if _cell_kind(state, probe) in ["alley", "blackout"]:
+				fast_surface = true
+		if fast_surface and not adverse_weather:
+			steps += 1
 		state["noise"] = int(state.get("noise", 0)) + 2
+	state["exposed"] = false
 	state["ducked"] = false
 	var moved := 0
 	for _step in range(steps):
@@ -371,6 +390,7 @@ static func _apply_move(state: Dictionary, action: Dictionary) -> String:
 			state["snitch_seen"] = true
 		if kind == "alley" and pace == "run":
 			state["noise"] = int(state.get("noise", 0)) + 1
+			state["exposed"] = true
 	if moved == 0:
 		return "BLOCKED:Brick wall. Pick another corner."
 	return "You cut %s through the block." % ("quick" if pace == "run" else "quiet")
@@ -433,7 +453,7 @@ static func _advance_boundary(state: Dictionary, verb: String) -> void:
 	state["turn"] = int(state.get("turn", 0)) + 1
 	state["deadline_remaining"] = maxi(0, int(state.get("deadline_remaining", 0)) - 1)
 	_advance_patrols(state)
-	var newly_spotted := _player_is_seen(state, verb == "move" and int(state.get("noise", 0)) > 0)
+	var newly_spotted := _player_is_seen(state, verb == "move" and int(state.get("noise", 0)) > 0, bool(state.get("exposed", false)))
 	if newly_spotted and not bool(state.get("spotted", false)):
 		state["spotted"] = true
 		state["times_spotted"] = int(state.get("times_spotted", 0)) + 1
@@ -441,6 +461,7 @@ static func _advance_boundary(state: Dictionary, verb: String) -> void:
 	elif int(state.get("pursuit_remaining", -1)) >= 0:
 		state["pursuit_remaining"] = int(state.get("pursuit_remaining", 0)) - 1
 	state["noise"] = maxi(0, int(state.get("noise", 0)) - 1)
+	state["exposed"] = false
 	if int(state.get("pursuit_remaining", -1)) == 0:
 		if _destination_ready(state):
 			_resolve(state, "success", "escaped", "You beat the blue lights by one clean corner.")
@@ -466,7 +487,7 @@ static func _advance_patrols(state: Dictionary) -> void:
 	state["board"] = board
 
 
-static func _player_is_seen(state: Dictionary, noisy: bool) -> bool:
+static func _player_is_seen(state: Dictionary, noisy: bool, exposed: bool) -> bool:
 	if bool(state.get("ducked", false)):
 		return false
 	var player := _dictionary(state.get("player", {}))
@@ -482,7 +503,7 @@ static func _player_is_seen(state: Dictionary, noisy: bool) -> bool:
 		var facing := {"x": int(next_position.get("x", 0)) - int(patrol_position.get("x", 0)), "y": int(next_position.get("y", 0)) - int(patrol_position.get("y", 0))}
 		var delta := {"x": int(player.get("x", 0)) - int(patrol_position.get("x", 0)), "y": int(player.get("y", 0)) - int(patrol_position.get("y", 0))}
 		var aligned := (int(delta.get("x", 0)) == 0 or int(delta.get("y", 0)) == 0) and (int(delta.get("x", 0)) * int(facing.get("x", 0)) + int(delta.get("y", 0)) * int(facing.get("y", 0))) > 0
-		var sight := int(patrol.get("sight", 3)) + (1 if noisy else 0)
+		var sight := int(patrol.get("sight", 3)) + (1 if noisy else 0) + (1 if exposed else 0)
 		if aligned and distance <= sight and not _line_blocked(board, patrol_position, player):
 			return true
 		if noisy and distance <= 1:
@@ -542,12 +563,15 @@ static func _resolve(state: Dictionary, outcome: String, reason: String, message
 		return
 	state["status"] = "resolved"
 	state["outcome"] = outcome
+	var turns_used := int(state.get("turn", 0))
+	var fast_threshold := int(state.get("fast_threshold_actions", 0))
 	state["resolution"] = {
 		"outcome": outcome,
 		"reason": reason,
 		"message": message,
-		"turns_used": int(state.get("turn", 0)),
+		"turns_used": turns_used,
 		"clean": outcome == "success" and not bool(state.get("spotted", false)) and int(state.get("hazards_hit", 0)) == 0,
+		"fast": outcome == "success" and fast_threshold > 0 and turns_used <= fast_threshold,
 		"cargo_state": str(state.get("cargo_state", "none")),
 		"snitch_seen": bool(state.get("snitch_seen", false)),
 	}
@@ -561,7 +585,8 @@ static func _normalize_conditions(source: Dictionary) -> Dictionary:
 	var heat := clampi(int(source.get("heat", 0)), 0, 100)
 	var reputation := clampi(int(round(float(source.get("reputation", 0.0)))), -100, 100)
 	var sweep_delta := clampi(int(source.get("sweep_density_delta", 0)), 0, 4)
-	var patrol_density := (heat / 30) + (maxi(0, reputation) / 35) + sweep_delta
+	var scenario_patrol_delta := clampi(int(source.get("scenario_patrol_density_delta", 0)), 0, 6)
+	var patrol_density := (heat / 30) + (maxi(0, reputation) / 35) + sweep_delta + scenario_patrol_delta
 	var crowd_density := 0
 	if happenings.has("fight_night"):
 		crowd_density += 3
@@ -578,6 +603,7 @@ static func _normalize_conditions(source: Dictionary) -> Dictionary:
 		"heat": heat,
 		"reputation": reputation,
 		"sweep_density_delta": sweep_delta,
+		"scenario_patrol_density_delta": scenario_patrol_delta,
 		"patrol_density": patrol_density,
 		"crowd_density": crowd_density,
 		"blackout_blocks": blackout_blocks,

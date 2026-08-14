@@ -6309,6 +6309,7 @@ func _streets_event_consumer_payload(consequences: Dictionary) -> Dictionary:
 	return {
 		"success": {
 			"cash": maxi(0, int(succeeded.get("bankroll_delta", 0))),
+			"clean_speed_bonus_cash": maxi(0, int(succeeded.get("clean_speed_bonus_cash", 0))),
 			"heat": maxi(0, int(succeeded.get("suspicion_delta", 0))),
 			"flags": _copy_dict(succeeded.get("flags", {})),
 		},
@@ -6388,12 +6389,20 @@ func streets_take_travel_continuation() -> Dictionary:
 func streets_apply_action(action: Dictionary) -> Dictionary:
 	if not streets_has_active_run():
 		return {"ok": false, "message": "No live route is waiting on you."}
+	var times_spotted_before := int(active_streets_run.get("times_spotted", 0))
 	var applied := StreetsRunModelScript.apply_action(active_streets_run, action)
 	if not bool(applied.get("ok", false)):
 		applied.erase("state")
 		return applied
 	active_streets_run = _copy_dict(applied.get("state", {}))
 	applied.erase("state")
+	var new_spots := maxi(0, int(active_streets_run.get("times_spotted", 0)) - times_spotted_before)
+	var spot_heat := maxi(0, int(active_streets_run.get("spot_heat_per_new_spot", 0)))
+	if new_spots > 0 and spot_heat > 0:
+		add_suspicion("streets_spotted", new_spots * spot_heat, "contraband", true, {
+			"route_id": str(active_streets_run.get("route_id", "")),
+			"new_spots": new_spots,
+		}, true)
 	if bool(applied.get("resolved", false)):
 		_apply_streets_resolution()
 	advance_environment_turns(1)
@@ -6410,7 +6419,7 @@ func _apply_streets_resolution() -> void:
 	var effects := _copy_dict(payload.get("success" if succeeded else "failure", {}))
 	var reason := str(resolution.get("reason", ""))
 	var cash := maxi(0, int(effects.get("cash", 0)))
-	if succeeded and bool(resolution.get("clean", false)):
+	if succeeded and bool(resolution.get("clean", false)) and bool(resolution.get("fast", false)):
 		cash += maxi(0, int(effects.get("clean_speed_bonus_cash", 0)))
 	if cash > 0:
 		change_bankroll(cash, true)
@@ -6450,14 +6459,35 @@ func _streets_world_context(spec: Dictionary) -> Dictionary:
 			sweep_delta += 2
 		if not town_state.swept_window(origin_id).is_empty() or not town_state.swept_window(destination_id).is_empty():
 			sweep_delta += 1
+	var scenario_patrol_delta := _streets_scenario_patrol_delta([origin_id, destination_id])
 	return {
-		"weather": town_weather(),
-		"day_type": town_day_type(),
-		"happenings": town_active_happenings(),
+		"weather": weather_now(),
+		"day_type": day_type(),
+		"happenings": active_happenings(),
 		"heat": suspicion_level(),
 		"reputation": int(round(reputation * 25.0)),
 		"sweep_density_delta": sweep_delta,
+		"scenario_patrol_density_delta": scenario_patrol_delta,
 	}
+
+
+func _streets_scenario_patrol_delta(node_ids: Array) -> int:
+	var total := 0
+	var visited := {}
+	for node_id_value in node_ids:
+		var node_id := str(node_id_value).strip_edges()
+		if node_id.is_empty() or visited.has(node_id):
+			continue
+		visited[node_id] = true
+		var public_scenario := scenario_for_node(node_id)
+		var scenario_id := str(public_scenario.get("id", "")).strip_edges()
+		if scenario_id.is_empty():
+			continue
+		var definition := seeded_scenario_definition_for_node(node_id)
+		if str(definition.get("id", "")) != scenario_id:
+			continue
+		total += clampi(int(definition.get("streets_patrol_density_delta", 0)), 0, 4)
+	return clampi(total, 0, 6)
 
 
 func _streets_default_edge() -> Dictionary:

@@ -92,6 +92,7 @@
       "archetype_id": "back_alley",
       "display_name": "Cruiser Parked",
       "weight": 8,
+      "streets_patrol_density_delta": 2,
       "mutations": {
         "patron_set": ["parked_officer", "watched_stranger"],
         "event_pool_add": ["scenario_cruiser_parked_watch"],
