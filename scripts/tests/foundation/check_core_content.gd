@@ -87,6 +87,22 @@ const FOUNDATION_SUITES := [
 var _foundation_active_suite := "contracts"
 
 
+class ScenarioModifierProbeGame:
+	extends GameModule
+
+	func generate_environment_state(_run_state: RunState, environment: Dictionary, _rng: RngStream) -> Dictionary:
+		var modifiers_value: Variant = environment.get("scenario_game_modifiers", {})
+		var modifiers := (modifiers_value as Dictionary).duplicate(true) if typeof(modifiers_value) == TYPE_DICTIONARY else {}
+		return {"received_scenario_game_modifiers": modifiers}
+
+
+class ScenarioModifierProbeGenerator:
+	extends RunGenerator
+
+	func _create_game_module(_definition: Dictionary) -> GameModule:
+		return ScenarioModifierProbeGame.new()
+
+
 class SurfaceHarness:
 	extends RefCounted
 
@@ -707,6 +723,14 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 		or str(_copy_dict(axes_environment.get("security_profile", {})).get("strictness_band", "")) != "fixture" \
 		or not bool(_copy_dict(axes_environment.get("scenario_hook_flags", {})).get("rumor_anchor", false)):
 		failures.append("Scenario mutation application did not cover every allowed Tonight System axis.")
+	var probe_environment := axes_environment.duplicate(true)
+	probe_environment["game_ids"] = ["blackjack"]
+	var probe_generator := ScenarioModifierProbeGenerator.new(library)
+	var probe_states: Dictionary = probe_generator.call("_generated_game_states", axes_run, probe_environment, axes_run.create_rng("scenario_game_modifier_probe"))
+	var probe_state := _copy_dict(probe_states.get("blackjack", {}))
+	var received_modifiers := _copy_dict(probe_state.get("received_scenario_game_modifiers", {}))
+	if not bool(received_modifiers.get("fixture", false)):
+		failures.append("Scenario game modifier hooks did not reach GameModule.generate_environment_state.")
 
 	_check_scenario_validation_negative_fixture(library, "bad_archetype", {"missing_archetype": [{"id": "bad_archetype", "archetype_id": "missing_archetype", "display_name": "Bad", "weight": 1, "mutations": {}}]}, "unknown archetype", failures)
 	_check_scenario_validation_negative_fixture(library, "bad_event", {"bar": [{"id": "bad_event", "archetype_id": "bar", "display_name": "Bad", "weight": 1, "mutations": {"event_pool_add": ["missing_event"]}}]}, "unknown id", failures)
