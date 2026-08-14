@@ -98,6 +98,27 @@ func _check_coin_pusher_security_bands(game: GameModule, failures: Array) -> voi
 		failures.append("Serial-Check/strict adjacency band did not remove two pusher tolerance steps.")
 	if int(swept_state.get("alarm_tolerance_remaining", 0)) != normal_tolerance + 1:
 		failures.append("Swept-window pusher tolerance modifier did not add one band step.")
+	var adjacency_run: RunState = RunStateScript.new()
+	adjacency_run.start_new("PUSHER-SERIAL-ADJACENCY")
+	adjacency_run.world_map = {
+		"current_node_id": "bar_node",
+		"start_node_id": "bar_node",
+		"nodes": [
+			{"id": "bar_node", "archetype_id": "bar", "label": "Roadside Bar", "kind": "casino", "tier": 1},
+			{"id": "pawn_node", "archetype_id": "pawn_shop", "label": "Sal's Pawn", "kind": "shop", "tier": 1},
+		],
+		"edges": [{"a": "bar_node", "b": "pawn_node"}],
+	}
+	adjacency_run.town_state.configure_world(adjacency_run.world_map)
+	var adjacency_environment := _coin_pusher_environment("bar_node")
+	adjacency_environment["world_node_id"] = "bar_node"
+	adjacency_run.set_environment(adjacency_environment)
+	var adjacency_baseline := game.generate_environment_state(adjacency_run, adjacency_run.current_environment, _configured_rng(base_seed))
+	var serial_definition := game.library.scenario("pawn_shop_serial_check_day")
+	adjacency_run.seed_scenario_for_node("pawn_node", serial_definition)
+	var adjacency_strict := game.generate_environment_state(adjacency_run, adjacency_run.current_environment, _configured_rng(base_seed))
+	if int(adjacency_strict.get("alarm_tolerance_remaining", 0)) != int(adjacency_baseline.get("alarm_tolerance_remaining", 0)) - 2:
+		failures.append("Authored nearby_alarm_tolerance_band on an adjacent production Serial-Check scenario did not tighten pusher tolerance.")
 	var public_surface := game.surface_state(run_state, {"id": "hidden", "game_states": {"coin_pusher": normal_state}}, {})
 	if public_surface.has("alarm_tolerance_remaining") or public_surface.has("base_alarm_tolerance"):
 		failures.append("Quarter Falls leaked hidden machine tolerance into its public surface.")
@@ -159,8 +180,18 @@ func _check_coin_pusher_nudge_alarm(game: GameModule, library: ContentLibrary, f
 		failures.append("Quarter Falls locked cabinet still offered machine actions.")
 	if run_state.rumor_fact("pusher:%s" % run_state.current_world_node_id()).is_empty():
 		failures.append("Quarter Falls pile did not publish its truth-traced pusher rumor fact.")
-	if run_state.local_reputation(run_state.current_world_node_id()).is_empty():
+	if run_state.reputation_value(run_state.current_world_node_id(), "alarm_tripped") <= 0.0:
 		failures.append("Quarter Falls alarm did not flow through the existing reputation writer.")
+	var slam_fixture := _coin_pusher_fixture(game, "PUSHER-SLAM-GRAB")
+	var slam_run: RunState = slam_fixture.get("run_state")
+	var slam_machine: Dictionary = (slam_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	_machine_hanger_fixture(slam_machine, 2)
+	slam_machine["alarm_tolerance_remaining"] = 0
+	var slam_result := game.resolve_with_context("nudge_machine", 0, slam_run, slam_run.current_environment, slam_run.create_rng("slam_grab"), {
+		"coin_pusher_force": "slam", "coin_pusher_direction": "front", "coin_pusher_lane": 2, "coin_pusher_timing_phase": 9,
+	})
+	if not bool(slam_result.get("coin_pusher_hard_alarm", false)) or int(slam_result.get("coin_pusher_payout", 0)) < 4:
+		failures.append("Quarter Falls slam-and-grab did not deliver a meaningful drop before/with the alarm.")
 	run_state.suspicion = {}
 	game.enter(run_state, environment)
 	var floor_after_first_entry := run_state.suspicion_level()

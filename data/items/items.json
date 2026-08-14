@@ -906,7 +906,7 @@
     "icon_key": "coin_return_shim",
     "environment_prop": "coin",
     "surface": "box_stack",
-    "description": "Metal teeth for a stingy slot or a hungry gutter.",
+    "description": "Metal teeth for slots and hungry gutters.",
     "effect": {
       "families": {
         "slots": {

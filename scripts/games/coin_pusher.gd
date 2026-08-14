@@ -379,7 +379,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 			cells.append({"height": base_height, "edge_hang": cell_index == 0 and base_height >= _cell_capacity()})
 		lanes.append({"cells": cells, "approach": lane_index - (_lane_count() / 2)})
 	var base_tolerance := local_rng.randi_range(_tolerance_min(), _tolerance_max())
-	var tolerance := maxi(1, base_tolerance + _security_tolerance_delta(environment))
+	var tolerance := maxi(1, base_tolerance + _security_tolerance_delta(environment, run_state))
 	var machine := {
 		"schema": STATE_SCHEMA,
 		"version": STATE_VERSION,
@@ -427,7 +427,7 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 	if bool(machine.get("locked_down", false)) and run_state != null and str(machine.get("lockdown_night", "")) != _night_id(run_state):
 		machine["locked_down"] = false
 		machine["lockdown_night"] = ""
-		machine["tolerance_modifier"] = _security_tolerance_delta(environment)
+		machine["tolerance_modifier"] = _security_tolerance_delta(environment, run_state)
 		machine["alarm_tolerance_remaining"] = maxi(1, int(machine.get("base_alarm_tolerance", _tolerance_min())) + int(machine.get("tolerance_modifier", 0)))
 		machine["tell_rung"] = 0
 	if run_state != null and not bool(machine.get("shim_initialized", false)) and run_state.inventory.has(SHIM_ITEM_ID):
@@ -589,10 +589,39 @@ func _nudge_affects_lane(direction: String, aimed_lane: int, lane: int) -> bool:
 	return lane >= _lane_count() / 2
 
 
-func _security_tolerance_delta(environment: Dictionary) -> int:
+func _security_tolerance_delta(environment: Dictionary, run_state: RunState = null) -> int:
 	var security: Dictionary = environment.get("security_profile", {}) if typeof(environment.get("security_profile", {})) == TYPE_DICTIONARY else {}
 	var band := str(security.get("machine_alarm_tolerance_band", security.get("strictness", "normal"))).to_lower()
-	return int(SECURITY_BAND_DELTA.get(band, 0)) + int(security.get("pusher_alarm_tolerance_band_delta", 0))
+	var direct_delta := int(SECURITY_BAND_DELTA.get(band, 0)) + int(security.get("pusher_alarm_tolerance_band_delta", 0))
+	var adjacent_delta := _adjacent_scenario_tolerance_delta(run_state)
+	return direct_delta if adjacent_delta == 0 else mini(direct_delta, adjacent_delta)
+
+
+func _adjacent_scenario_tolerance_delta(run_state: RunState) -> int:
+	if run_state == null or library == null or run_state.world_map.is_empty():
+		return 0
+	var current_node := run_state.current_world_node_id()
+	if current_node.is_empty():
+		return 0
+	var strictest_delta := 0
+	var edges: Array = run_state.world_map.get("edges", []) if typeof(run_state.world_map.get("edges", [])) == TYPE_ARRAY else []
+	for edge_value in edges:
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = edge_value
+		var a := str(edge.get("a", ""))
+		var b := str(edge.get("b", ""))
+		var neighbor := b if a == current_node else a if b == current_node else ""
+		if neighbor.is_empty():
+			continue
+		var public_scenario := run_state.scenario_for_node(neighbor)
+		var scenario_definition := library.scenario(str(public_scenario.get("id", "")))
+		var mutations: Dictionary = scenario_definition.get("mutations", {}) if typeof(scenario_definition.get("mutations", {})) == TYPE_DICTIONARY else {}
+		var hooks: Dictionary = mutations.get("hook_flags", {}) if typeof(mutations.get("hook_flags", {})) == TYPE_DICTIONARY else {}
+		var nearby_band := str(hooks.get("nearby_alarm_tolerance_band", "")).to_lower()
+		if not nearby_band.is_empty():
+			strictest_delta = mini(strictest_delta, int(SECURITY_BAND_DELTA.get(nearby_band, 0)))
+	return strictest_delta
 
 
 func _tell_rung(machine: Dictionary) -> int:

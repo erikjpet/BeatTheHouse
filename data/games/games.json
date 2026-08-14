@@ -3098,7 +3098,7 @@
     "scene_asset_path": "res://assets/art/game_scenes/slot.png",
     "environment_prop": "slot_machine",
     "intro": "Two shelves shove a pile somebody else started.",
-    "description": "Aim the lane. Read the shelves. Walk the alarm line.",
+    "description": "Aim. Read the shelves. Walk the alarm line.",
     "legal_actions": [
       {
         "id": "drop_quarter",
