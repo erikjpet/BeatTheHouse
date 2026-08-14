@@ -32,6 +32,7 @@ static func initial_state(definition: Dictionary) -> Dictionary:
 		"schema_version": STATE_SCHEMA_VERSION,
 		"id": str(definition.get("id", "")).strip_edges(),
 		"archetype_id": str(definition.get("archetype_id", "")).strip_edges(),
+		"layer_id": str(definition.get("layer_id", "")).strip_edges(),
 		"display_name": str(definition.get("display_name", "")).strip_edges(),
 		"placeholder": bool(definition.get("placeholder", false)),
 		"phase_index": 0,
@@ -59,6 +60,7 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"schema_version": STATE_SCHEMA_VERSION,
 		"id": scenario_id,
 		"archetype_id": str(source.get("archetype_id", "")).strip_edges(),
+		"layer_id": str(source.get("layer_id", "")).strip_edges(),
 		"display_name": str(source.get("display_name", scenario_id)).strip_edges(),
 		"placeholder": bool(source.get("placeholder", false)),
 		"phase_index": phase_index,
@@ -74,6 +76,8 @@ static func apply_to_archetype(archetype: Dictionary, state_value: Variant) -> D
 	if state.is_empty():
 		return archetype
 	var result := archetype.duplicate(true)
+	if not _state_targets_layer(state, result):
+		return result
 	_apply_mutations(result, _copy_dict(state.get("mutations", {})), true)
 	var phases := _copy_array(state.get("phases", []))
 	var phase_index := mini(maxi(0, int(state.get("phase_index", 0))), phases.size() - 1)
@@ -91,6 +95,7 @@ static func attach_to_environment(environment: Dictionary, state_value: Variant)
 	environment["scenario_id"] = str(state.get("id", ""))
 	environment["scenario_phase_index"] = int(state.get("phase_index", 0))
 	environment["scenario_phase_action_counter"] = int(state.get("phase_action_counter", 0))
+	environment["scenario_applied_phase_index"] = int(state.get("phase_index", 0)) if _state_targets_layer(state, environment) else -1
 	_apply_exclusive_opportunity(environment)
 
 
@@ -104,6 +109,7 @@ static func advance_environment(environment: Dictionary, amount: int) -> bool:
 	if phases.is_empty():
 		return false
 	var changed := false
+	var applies_here := _state_targets_layer(state, environment)
 	var remaining := amount
 	while remaining > 0:
 		var phase_index := mini(maxi(0, int(state.get("phase_index", 0))), phases.size() - 1)
@@ -124,14 +130,37 @@ static func advance_environment(environment: Dictionary, amount: int) -> bool:
 		state["phase_index"] = phase_index
 		state["phase_action_counter"] = 0
 		var next_phase: Dictionary = phases[phase_index] if typeof(phases[phase_index]) == TYPE_DICTIONARY else {}
-		_apply_mutations(environment, _copy_dict(next_phase.get("mutations", {})), false)
-		_apply_exclusive_opportunity(environment)
+		if applies_here:
+			_apply_mutations(environment, _copy_dict(next_phase.get("mutations", {})), false)
+			environment["scenario_applied_phase_index"] = phase_index
+			_apply_exclusive_opportunity(environment)
 		changed = true
 	environment["scenario_state"] = state
 	environment["scenario_id"] = str(state.get("id", ""))
 	environment["scenario_phase_index"] = int(state.get("phase_index", 0))
 	environment["scenario_phase_action_counter"] = int(state.get("phase_action_counter", 0))
 	return changed
+
+
+# Synchronizes a stored layer with the authoritative node scenario cursor.
+static func reconcile_environment(environment: Dictionary, state_value: Variant) -> void:
+	var state := normalize_state(state_value)
+	if state.is_empty():
+		return
+	environment["scenario_state"] = state
+	environment["scenario_id"] = str(state.get("id", ""))
+	environment["scenario_phase_index"] = int(state.get("phase_index", 0))
+	environment["scenario_phase_action_counter"] = int(state.get("phase_action_counter", 0))
+	if not _state_targets_layer(state, environment):
+		return
+	var phases := _copy_array(state.get("phases", []))
+	var applied_index := int(environment.get("scenario_applied_phase_index", -1))
+	var target_index := mini(maxi(0, int(state.get("phase_index", 0))), phases.size() - 1) if not phases.is_empty() else -1
+	for index in range(applied_index + 1, target_index + 1):
+		if index >= 0 and index < phases.size() and typeof(phases[index]) == TYPE_DICTIONARY:
+			_apply_mutations(environment, _copy_dict((phases[index] as Dictionary).get("mutations", {})), false)
+	environment["scenario_applied_phase_index"] = target_index
+	_apply_exclusive_opportunity(environment)
 
 
 static func public_snapshot(state_value: Variant) -> Dictionary:
@@ -141,10 +170,18 @@ static func public_snapshot(state_value: Variant) -> Dictionary:
 	return {
 		"id": str(state.get("id", "")),
 		"archetype_id": str(state.get("archetype_id", "")),
+		"layer_id": str(state.get("layer_id", "")),
 		"display_name": str(state.get("display_name", "")),
 		"phase_index": int(state.get("phase_index", 0)),
 		"phase_action_counter": int(state.get("phase_action_counter", 0)),
 	}
+
+
+static func _state_targets_layer(state: Dictionary, target: Dictionary) -> bool:
+	var wanted := str(state.get("layer_id", "")).strip_edges()
+	if wanted.is_empty():
+		return true
+	return str(target.get("current_layer_id", "")).strip_edges() == wanted
 
 
 static func _apply_mutations(target: Dictionary, mutations: Dictionary, generation: bool) -> void:

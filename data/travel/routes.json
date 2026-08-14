@@ -100,7 +100,7 @@
     "description": "Machines under tired eyes.",
     "decision": {
       "offer": "Gentler stakes, machines, and cheap tickets.",
-      "tradeoff": "the Underground's faster money"
+      "tradeoff": "the Punchline's stranger room"
     },
     "cost": 3,
     "risk": "medium",
@@ -110,11 +110,11 @@
   },
   {
     "id": "small_underground_casino",
-    "label": "Underground Casino",
+    "label": "The Punchline",
     "destination_archetype": "small_underground_casino",
-    "description": "Better action. Hotter exits.",
+    "description": "A comedy club working a thin room.",
     "decision": {
-      "offer": "More tables, faster money, and the Grand's attention.",
+      "offer": "A cheap chair, bad jokes, and a room keeping quiet.",
       "tradeoff": "the gas stop's gentler lesson"
     },
     "cost": 5,

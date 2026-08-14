@@ -112,6 +112,9 @@
       "tutorial_run": true,
       "tutorial_main_floor_only": true,
       "tutorial_shop_item_pool_strict": true,
+      "environment_layer_overrides": {
+        "small_underground_casino": "casino"
+      },
       "home_archetype_id": "apartment",
       "tutorial_initial_map_targets": [
         "corner_store"

@@ -1193,7 +1193,7 @@ func _prepare_risky_game_visual_qa_fixture() -> void:
 		"service_ids": [],
 		"lender_hooks": [],
 		"object_fixtures": [],
-	}, 100)
+	}, 100, "casino")
 
 
 func _prepare_multi_game_visual_qa_fixture() -> void:
@@ -1205,7 +1205,7 @@ func _prepare_multi_game_visual_qa_fixture() -> void:
 		"service_ids": [],
 		"lender_hooks": [],
 		"object_fixtures": [],
-	}, 100)
+	}, 100, "casino")
 	_record_state("multi_game_fixture_screen", "Focused deterministic room with multiple visible game objects for mouse clickability coverage.")
 
 
@@ -1252,13 +1252,14 @@ func _prepare_lender_pressure_visual_qa_fixture() -> void:
 	}, 30)
 
 
-func _prepare_visual_qa_fixture_environment(archetype_id: String, fixture_id: String, overrides: Dictionary, bankroll_override: int = -1) -> void:
+func _prepare_visual_qa_fixture_environment(archetype_id: String, fixture_id: String, overrides: Dictionary, bankroll_override: int = -1, layer_id: String = "") -> void:
 	var fixture_run := app.get("run_state") as RunState
 	var fixture_library := app.get("library") as ContentLibrary
 	_require(fixture_run != null and fixture_library != null, "Visual QA fixture could not access foundation runtime state.")
 	var archetype := _visual_qa_archetype(archetype_id, fixture_library)
 	_require(not archetype.is_empty(), "Visual QA fixture could not find environment archetype: %s." % archetype_id)
-	var fixture_environment := EnvironmentInstance.from_archetype(archetype, 0, fixture_run.create_rng("visual_fixture:%s" % fixture_id), fixture_library).to_dict()
+	var fixture_rng := fixture_run.create_rng("visual_fixture:%s" % fixture_id)
+	var fixture_environment := EnvironmentInstance.from_archetype_layer(archetype, layer_id, 0, fixture_rng, fixture_library).to_dict() if not layer_id.is_empty() else EnvironmentInstance.from_archetype(archetype, 0, fixture_rng, fixture_library).to_dict()
 	fixture_environment["id"] = fixture_id
 	fixture_environment["archetype_id"] = archetype_id
 	for key_value in overrides.keys():

@@ -1506,6 +1506,148 @@ func remember_scenario_selection(archetype_id: String, scenario_id: String) -> v
 	scenario_recent_by_archetype[clean_archetype] = recent
 
 
+func is_layered_environment(environment: Dictionary = {}) -> bool:
+	var source := current_environment if environment.is_empty() else environment
+	return int(source.get("environment_layer_schema_version", 0)) > 0 \
+		and not str(source.get("current_layer_id", "")).strip_edges().is_empty()
+
+
+func environment_layer_access_status(target_layer_id: String) -> Dictionary:
+	var target_id := target_layer_id.strip_edges()
+	if not is_layered_environment() or not _string_array(_copy_array(current_environment.get("layer_ids", []))).has(target_id):
+		return {"available": false, "hidden": true, "reason": "That room is not part of this venue."}
+	if target_id == str(current_environment.get("current_layer_id", "")):
+		return {"available": false, "hidden": true, "reason": "You are already here."}
+	var transition: Dictionary = {}
+	for transition_value in _copy_array(current_environment.get("layer_transitions", [])):
+		if typeof(transition_value) == TYPE_DICTIONARY and str((transition_value as Dictionary).get("target_layer_id", "")) == target_id:
+			transition = (transition_value as Dictionary).duplicate(true)
+			break
+	if transition.is_empty():
+		return {"available": false, "hidden": true, "reason": "There is no door that way."}
+	var discovery := _copy_dict(current_environment.get("layer_discovery", {}))
+	var already_discovered := bool(discovery.get(target_id, false))
+	if already_discovered or not bool(transition.get("requires_discovered", false)) and _copy_array(transition.get("access_paths", [])).is_empty():
+		return {"available": true, "hidden": false, "access_method": "discovered" if already_discovered else "open", "discover_on_enter": false}
+	for path_value in _copy_array(transition.get("access_paths", [])):
+		if typeof(path_value) != TYPE_DICTIONARY:
+			continue
+		var path: Dictionary = path_value
+		if not _environment_layer_access_path_allows(path, discovery, target_id):
+			continue
+		return {
+			"available": true,
+			"hidden": false,
+			"access_method": str(path.get("method", "access")),
+			"discover_on_enter": not already_discovered,
+		}
+	var hidden := bool(transition.get("hidden_until_available", false))
+	return {
+		"available": false,
+		"hidden": hidden,
+		"locked": not hidden,
+		"reason": str(transition.get("locked_reason", "The door stays shut.")),
+	}
+
+
+func discover_environment_layer(layer_id: String, method: String = "discovery") -> bool:
+	var clean_id := layer_id.strip_edges()
+	if not is_layered_environment() or not _string_array(_copy_array(current_environment.get("layer_ids", []))).has(clean_id):
+		return false
+	var discovery := _copy_dict(current_environment.get("layer_discovery", {}))
+	var was_discovered := bool(discovery.get(clean_id, false))
+	discovery[clean_id] = true
+	current_environment["layer_discovery"] = discovery
+	var states := _copy_dict(current_environment.get("layer_states", {}))
+	for state_id_value in states.keys():
+		var state := _copy_dict(states.get(state_id_value, {}))
+		state["layer_discovery"] = discovery.duplicate(true)
+		states[state_id_value] = state
+	current_environment["layer_states"] = states
+	if not was_discovered:
+		log_story({
+			"type": "environment_layer_discovered",
+			"environment_id": str(current_environment.get("id", "")),
+			"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+			"layer": clean_id,
+			"method": method.strip_edges(),
+			"message": "A room inside the venue opens.",
+		})
+	return true
+
+
+func store_current_environment_layer_state() -> void:
+	if not is_layered_environment():
+		return
+	var current_id := str(current_environment.get("current_layer_id", "")).strip_edges()
+	var states := _copy_dict(current_environment.get("layer_states", {}))
+	var body := current_environment.duplicate(true)
+	body.erase("layer_states")
+	states[current_id] = body
+	current_environment["layer_states"] = states
+
+
+func environment_layer_state(layer_id: String) -> Dictionary:
+	if not is_layered_environment():
+		return {}
+	store_current_environment_layer_state()
+	return _copy_dict(_copy_dict(current_environment.get("layer_states", {})).get(layer_id.strip_edges(), {}))
+
+
+func install_environment_layer_state(layer_id: String, layer_state: Dictionary) -> bool:
+	var target_id := layer_id.strip_edges()
+	if not is_layered_environment() or layer_state.is_empty():
+		return false
+	store_current_environment_layer_state()
+	var source := current_environment
+	var states := _copy_dict(source.get("layer_states", {}))
+	var target := layer_state.duplicate(true)
+	for key in ["environment_layer_schema_version", "default_layer_id", "layer_ids", "layer_discovery"]:
+		target[key] = source.get(key)
+	target["current_layer_id"] = target_id
+	target["layer_states"] = states
+	target["world_node_id"] = str(source.get("world_node_id", source.get("archetype_id", "")))
+	target["world_map_travel"] = bool(source.get("world_map_travel", false))
+	target["display_name"] = str(source.get("display_name", target.get("display_name", "")))
+	target["turns"] = int(source.get("turns", target.get("turns", 0)))
+	for clock_key in ["entered_game_clock_minutes", "departed_game_clock_minutes"]:
+		if source.has(clock_key):
+			target[clock_key] = source.get(clock_key)
+	var scenario_state := ScenarioEngineScript.normalize_state(source.get("scenario_state", {}))
+	if not scenario_state.is_empty():
+		ScenarioEngineScript.reconcile_environment(target, scenario_state)
+	current_environment = _normalize_environment(target)
+	return true
+
+
+func _environment_layer_access_path_allows(path: Dictionary, discovery: Dictionary, target_id: String) -> bool:
+	if bool(path.get("requires_discovered", false)) and not bool(discovery.get(target_id, false)):
+		return false
+	var minimum_rank := str(path.get("min_crew_rank", "")).strip_edges()
+	if not minimum_rank.is_empty():
+		var rank_ids := CrewStateModelScript.RANK_IDS
+		if not rank_ids.has(minimum_rank) or rank_ids.find(str(crew_standing().get("rank", "stranger"))) < rank_ids.find(minimum_rank):
+			return false
+	for flag_id in _string_array(_copy_array(path.get("flags_all", []))):
+		if not _environment_layer_flag_truthy(flag_id):
+			return false
+	var flags_any := _string_array(_copy_array(path.get("flags_any", [])))
+	if not flags_any.is_empty():
+		var found := false
+		for flag_id in flags_any:
+			if _environment_layer_flag_truthy(flag_id):
+				found = true
+				break
+		if not found:
+			return false
+	return true
+
+
+func _environment_layer_flag_truthy(flag_id: String) -> bool:
+	var value: Variant = story_flags.get(flag_id, narrative_flags.get(flag_id, false))
+	return bool(value) if typeof(value) == TYPE_BOOL else int(value) != 0 if typeof(value) == TYPE_INT else not str(value).strip_edges().is_empty()
+
+
 func store_current_world_node_environment() -> void:
 	if world_map.is_empty() or current_environment.is_empty():
 		return
@@ -7296,6 +7438,7 @@ func advance_environment_turns(amount: int = 1) -> void:
 	var previous_turns := int(current_environment.get("turns", 0))
 	var next_turns := previous_turns + safe_amount
 	current_environment["turns"] = next_turns
+	_advance_environment_layer_ambient(next_turns)
 	if ScenarioEngineScript.advance_environment(current_environment, safe_amount):
 		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 	_advance_travel_lock(safe_amount)
@@ -7309,6 +7452,16 @@ func advance_environment_turns(amount: int = 1) -> void:
 	_advance_heat_cooldown(safe_amount)
 	_advance_debt_clocks(safe_amount)
 	_advance_crew_jobs()
+
+
+func _advance_environment_layer_ambient(total_turns: int) -> void:
+	var lines := _string_array(_copy_array(current_environment.get("layer_ambient_lines", [])))
+	if lines.is_empty():
+		return
+	var interval := maxi(1, int(current_environment.get("layer_ambient_rotate_actions", 1)))
+	var index := posmod(int(floor(float(maxi(0, total_turns)) / float(interval))), lines.size())
+	current_environment["layer_ambient_index"] = index
+	current_environment["layer_ambient_line"] = str(lines[index])
 
 
 func _advance_crew_jobs() -> void:
@@ -8568,7 +8721,9 @@ func from_dict(data: Dictionary) -> void:
 	restore_portable_ticket_piles_to_environment(current_environment)
 	_sync_portable_ticket_inventory_markers()
 	_apply_sals_forfeited_shelf_to_current_environment()
-	world_map = _compact_world_map_ticket_storage(WorldMap.normalize(_copy_dict(data.get("world_map", {}))))
+	world_map = _normalize_world_map_environment_snapshots(
+		_compact_world_map_ticket_storage(WorldMap.normalize(_copy_dict(data.get("world_map", {}))))
+	)
 	configure_town_world(world_map)
 	scenario_recent_by_archetype = _normalize_scenario_recent(_copy_dict(data.get("scenario_recent_by_archetype", {})))
 	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
@@ -9033,6 +9188,22 @@ static func _compact_world_map_ticket_storage(map_data: Dictionary) -> Dictionar
 	return map_data
 
 
+static func _normalize_world_map_environment_snapshots(map_data: Dictionary) -> Dictionary:
+	if map_data.is_empty():
+		return {}
+	var nodes := _copy_array(map_data.get("nodes", []))
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var node := _copy_dict(nodes[index])
+		var environment := _copy_dict(node.get("environment", {}))
+		if not environment.is_empty():
+			node["environment"] = _normalize_environment(environment)
+		nodes[index] = node
+	map_data["nodes"] = nodes
+	return map_data
+
+
 static func _persistent_copy_value(value: Variant) -> Variant:
 	if typeof(value) == TYPE_DICTIONARY:
 		return (value as Dictionary).duplicate(true)
@@ -9342,7 +9513,7 @@ static func _normalize_environment_history(entries: Array) -> Array:
 # each trip, making autosaves grow throughout a run and eventually stall play.
 static func _environment_history_entry(environment: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	for key in ["id", "archetype_id", "world_node_id", "display_name", "kind", "entered_game_clock_minutes", "departed_game_clock_minutes"]:
+	for key in ["id", "archetype_id", "world_node_id", "display_name", "kind", "current_layer_id", "entered_game_clock_minutes", "departed_game_clock_minutes"]:
 		if environment.has(key):
 			result[key] = environment.get(key)
 	return result
@@ -9747,7 +9918,56 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 			environment[scenario_array_key] = _copy_array(environment.get(scenario_array_key, []))
 		for scenario_dict_key in ["scenario_game_modifiers", "scenario_presentation", "scenario_exclusive_opportunity", "scenario_hook_flags"]:
 			environment[scenario_dict_key] = _copy_dict(environment.get(scenario_dict_key, {}))
+	_normalize_environment_layers(environment)
 	return environment
+
+
+static func _normalize_environment_layers(environment: Dictionary) -> void:
+	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	var has_schema := int(environment.get("environment_layer_schema_version", 0)) > 0
+	if not has_schema and archetype_id == TIER_TWO_UNDERGROUND_SOURCE_ID:
+		environment["display_name"] = "The Punchline"
+		environment["environment_layer_schema_version"] = EnvironmentInstance.ENVIRONMENT_LAYER_SCHEMA_VERSION
+		environment["current_layer_id"] = "casino"
+		environment["default_layer_id"] = "club"
+		environment["layer_ids"] = ["club", "casino", "back_room"]
+		environment["layer_display_name"] = "Hidden Casino"
+		environment["layer_discovery"] = {"club": true, "casino": true, "back_room": false}
+		environment["layer_transitions"] = [
+			{"target_layer_id": "club", "label": "Comedy Club", "description": "Take the stairs back to the public room."},
+			{"target_layer_id": "back_room", "label": "Crew Back Room", "description": "A private door behind the tables.", "requires_discovered": true, "access_paths": [{"method": "crew_rank", "min_crew_rank": "made"}, {"method": "rook_escort", "flags_any": ["rook_escort_punchline_back_room"]}], "locked_reason": "Rook keeps this door for made company."},
+		]
+		environment["layer_ambient_lines"] = []
+		environment["layer_ambient_label"] = ""
+		environment["layer_ambient_prop"] = ""
+		environment["layer_ambient_rotate_actions"] = 1
+		environment["layer_ambient_index"] = 0
+		environment["layer_ambient_line"] = ""
+		var legacy_body := environment.duplicate(true)
+		legacy_body.erase("layer_states")
+		environment["layer_states"] = {"casino": legacy_body}
+		has_schema = true
+	if not has_schema:
+		return
+	environment["environment_layer_schema_version"] = EnvironmentInstance.ENVIRONMENT_LAYER_SCHEMA_VERSION
+	environment["current_layer_id"] = str(environment.get("current_layer_id", environment.get("default_layer_id", ""))).strip_edges()
+	environment["default_layer_id"] = str(environment.get("default_layer_id", environment.get("current_layer_id", ""))).strip_edges()
+	environment["layer_ids"] = _string_array(_copy_array(environment.get("layer_ids", [])))
+	environment["layer_display_name"] = str(environment.get("layer_display_name", "")).strip_edges()
+	environment["layer_transitions"] = _copy_array(environment.get("layer_transitions", []))
+	environment["layer_discovery"] = _copy_dict(environment.get("layer_discovery", {}))
+	var states := _copy_dict(environment.get("layer_states", {}))
+	for state_id_value in states.keys():
+		var body := _copy_dict(states.get(state_id_value, {}))
+		body.erase("layer_states")
+		states[str(state_id_value)] = body
+	environment["layer_states"] = states
+	environment["layer_ambient_lines"] = _string_array(_copy_array(environment.get("layer_ambient_lines", [])))
+	environment["layer_ambient_label"] = str(environment.get("layer_ambient_label", "")).strip_edges()
+	environment["layer_ambient_prop"] = str(environment.get("layer_ambient_prop", "")).strip_edges()
+	environment["layer_ambient_rotate_actions"] = maxi(1, int(environment.get("layer_ambient_rotate_actions", 1)))
+	environment["layer_ambient_index"] = maxi(0, int(environment.get("layer_ambient_index", 0)))
+	environment["layer_ambient_line"] = str(environment.get("layer_ambient_line", "")).strip_edges()
 
 
 static func _normalize_scenario_recent(value: Dictionary) -> Dictionary:

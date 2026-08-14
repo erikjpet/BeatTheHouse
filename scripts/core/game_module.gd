@@ -309,6 +309,7 @@ static func empty_result_deltas() -> Dictionary:
 		"inventory_remove": [],
 		"flags_set": {},
 		"story_flags_set": {},
+		"environment_layer_discovery": {},
 		"travel_hooks_add": [],
 		"travel_changes": {},
 		"story_log": [],
@@ -755,6 +756,10 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	var story_flags := _copy_dict(deltas.get("story_flags_set", {}))
 	for key in story_flags.keys():
 		run_state.set_story_flag(str(key), story_flags[key])
+	var layer_discovery := _copy_dict(deltas.get("environment_layer_discovery", {}))
+	var discovered_layer_id := str(layer_discovery.get("layer_id", "")).strip_edges()
+	if not discovered_layer_id.is_empty():
+		run_state.discover_environment_layer(discovered_layer_id, str(layer_discovery.get("method", "event")))
 	var travel_hooks := _copy_array(deltas.get("travel_hooks_add", []))
 	if not travel_hooks.is_empty():
 		run_state.add_next_archetypes(travel_hooks)
@@ -1262,7 +1267,7 @@ static func _normalize_result_deltas(value: Variant) -> Dictionary:
 			result[key] = int(source[key])
 		elif key == "ended":
 			result[key] = bool(source[key])
-		elif key == "flags_set" or key == "story_flags_set" or key == "travel_changes" or key == "demo_finale":
+		elif key == "flags_set" or key == "story_flags_set" or key == "travel_changes" or key == "demo_finale" or key == "environment_layer_discovery":
 			result[key] = _copy_dict(source[key])
 		else:
 			result[key] = _copy_array(source[key])

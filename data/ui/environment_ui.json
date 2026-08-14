@@ -26,8 +26,19 @@
   },
   {
     "id": "small_underground_casino",
-    "blurb": "Low ceiling, close tables. Nothing is missed.",
-    "options": ["Choose table", "Read room", "Leave"]
+    "title_mode": "text",
+    "blurb": "A tired stage, a two-drink minimum, and a plain side door.",
+    "options": ["Watch the stage", "Order", "Read the door", "Leave"],
+    "layer_blurbs": {
+      "club": "A tired stage, a two-drink minimum, and a plain side door.",
+      "casino": "Low tables, loose rules, and the hush below the stage.",
+      "back_room": "A private table, one guarded door, and no audience."
+    },
+    "layer_options": {
+      "club": ["Watch the stage", "Order", "Read the door", "Leave"],
+      "casino": ["Choose a game", "Read the room", "Take the stairs", "Leave"],
+      "back_room": ["Talk to Rook", "Return to the casino", "Leave"]
+    }
   },
   {
     "id": "jazz_club",

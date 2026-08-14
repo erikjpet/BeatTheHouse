@@ -26,17 +26,23 @@ func render(environment: Dictionary, goal_text: String) -> void:
 	var archetype_id := str(environment.get("archetype_id", environment.get("kind", ""))).strip_edges()
 	var display_name := str(environment.get("display_name", archetype_id.replace("_", " ").capitalize()))
 	var config := _config_for(archetype_id)
+	var text_title := str(config.get("title_mode", "art")) == "text"
+	var layer_id := str(environment.get("current_layer_id", "")).strip_edges()
+	var layer_blurbs := _dict(config.get("layer_blurbs", {}))
+	var layer_options := _dict(config.get("layer_options", {}))
 	current_archetype_id = archetype_id
-	title_art.texture = UIArtScript.environment_title(archetype_id)
+	title_art.visible = not text_title
+	title_art.texture = null if text_title else UIArtScript.environment_title(archetype_id)
 	accessible_title.text = display_name
+	accessible_title.visible = text_title
 	accessible_title.tooltip_text = "%s title plate" % display_name
-	blurb_label.text = str(config.get("blurb", display_name))
+	blurb_label.text = str(layer_blurbs.get(layer_id, config.get("blurb", display_name)))
 	var rendered_goal := goal_text.strip_edges()
 	if rendered_goal.is_empty():
 		rendered_goal = "Inspect the room and choose an available action."
 	goal_label.text = "Goal · %s" % rendered_goal
 	FoundationWidgets.clear(options_row)
-	for option_value in _array(config.get("options", [])):
+	for option_value in _array(layer_options.get(layer_id, config.get("options", []))):
 		var option_label := FoundationWidgets.muted_label(str(option_value), VisualStyle.TYPE_CAPTION)
 		option_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		options_row.add_child(option_label)
@@ -79,6 +85,11 @@ func _build() -> void:
 	title_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	title_stack.add_child(title_art)
 	accessible_title = FoundationWidgets.label("", VisualStyle.TYPE_MICRO)
+	accessible_title.custom_minimum_size = VisualStyle.ENVIRONMENT_TITLE_COMPACT_SIZE
+	accessible_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	accessible_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	FoundationWidgets.set_control_font_size(accessible_title, VisualStyle.TYPE_TITLE)
+	FoundationWidgets.set_control_font_color(accessible_title, VisualStyle.YELLOW)
 	accessible_title.autowrap_mode = TextServer.AUTOWRAP_OFF
 	accessible_title.clip_text = true
 	accessible_title.visible = false
@@ -131,3 +142,7 @@ static func _load_config() -> Dictionary:
 
 static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+
+static func _dict(value: Variant) -> Dictionary:
+	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}

@@ -763,7 +763,8 @@
     "discovery_summary": "A route out back",
     "interaction_mode": "interactable",
     "scopes": [
-      "casino"
+      "casino",
+      "club"
     ],
     "asset_path": "res://assets/art/events/side_door.png",
     "icon_key": "side_door",
@@ -776,9 +777,68 @@
       "summary": "A runner knows two ways off the floor.",
       "choices": [
         {
+          "id": "punchline_password",
+          "label": "Try the word",
+          "text": "The latch gives. The club has a basement after all.",
+          "conditions": {
+            "archetype_ids": ["small_underground_casino"],
+            "layer_ids": ["club"]
+          },
+          "consequences": {
+            "environment_layer_discovery": {"layer_id": "casino", "method": "password", "enter": true},
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "punchline_bribe",
+          "label": "Fold a bill",
+          "text": "The bill disappears. So does the lock.",
+          "conditions": {
+            "archetype_ids": ["small_underground_casino"],
+            "layer_ids": ["club"],
+            "min_bankroll": 12
+          },
+          "consequences": {
+            "bankroll_delta": -12,
+            "environment_layer_discovery": {"layer_id": "casino", "method": "bribe", "enter": true},
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "punchline_regular_nod",
+          "label": "Follow the nod",
+          "text": "A regular looks once. The door understands.",
+          "conditions": {
+            "archetype_ids": ["small_underground_casino"],
+            "layer_ids": ["club"]
+          },
+          "consequences": {
+            "environment_layer_discovery": {"layer_id": "casino", "method": "regular_nod", "enter": true},
+            "set_story_flag": "punchline_regular_nod",
+            "resolve_event": true
+          }
+        },
+        {
+          "id": "punchline_crew_standing",
+          "label": "Let the marker show",
+          "text": "The Crew's mark settles the question.",
+          "conditions": {
+            "archetype_ids": ["small_underground_casino"],
+            "layer_ids": ["club"],
+            "min_crew_rank": "marker"
+          },
+          "consequences": {
+            "environment_layer_discovery": {"layer_id": "casino", "method": "crew_standing", "enter": true},
+            "resolve_event": true
+          }
+        },
+        {
           "id": "cheap_route",
           "label": "Clean stop",
           "text": "A quiet shop stop comes into view.",
+          "conditions": {
+            "blocked_layer_ids": ["club"]
+          },
           "consequences": {
             "set_next_archetypes": [
               "corner_store",
@@ -791,6 +851,9 @@
           "id": "dark_route",
           "label": "Back-alley lead",
           "text": "The Back Alley route opens. Heat follows.",
+          "conditions": {
+            "blocked_layer_ids": ["club"]
+          },
           "consequences": {
             "add_next_archetypes": [
               "back_alley"

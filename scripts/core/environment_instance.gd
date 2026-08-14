@@ -8,6 +8,7 @@ const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const GENERATED_LAYOUT_VERSION := 11
+const ENVIRONMENT_LAYER_SCHEMA_VERSION := 1
 const EMPTY_MUSIC_NOTE := -999
 const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
 const PAWN_SHOP_ARCHETYPE_ID := "pawn_shop"
@@ -56,10 +57,26 @@ var scenario_game_modifiers: Dictionary = {}
 var scenario_presentation: Dictionary = {}
 var scenario_exclusive_opportunity: Dictionary = {}
 var scenario_hook_flags: Dictionary = {}
+var environment_layer_schema_version: int = 0
+var current_layer_id: String = ""
+var default_layer_id: String = ""
+var layer_ids: Array = []
+var layer_display_name: String = ""
+var layer_transitions: Array = []
+var layer_discovery: Dictionary = {}
+var layer_states: Dictionary = {}
+var layer_ambient_lines: Array = []
+var layer_ambient_label: String = ""
+var layer_ambient_prop: String = ""
+var layer_ambient_rotate_actions: int = 1
+var layer_ambient_index: int = 0
+var layer_ambient_line: String = ""
 
 
 # Builds one environment from an archetype and content library.
 static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, library: ContentLibrary = null, challenge_config: Dictionary = {}, selected_scenario: Dictionary = {}) -> EnvironmentInstance:
+	if _is_layered_archetype(archetype):
+		return _from_layered_archetype(archetype, p_depth, rng, library, challenge_config, selected_scenario)
 	if library != null:
 		archetype = library.environment_archetype_for_challenge(archetype, challenge_config)
 	var selected_state := ScenarioEngineScript.initial_state(selected_scenario) if not selected_scenario.is_empty() and not selected_scenario.has("schema_version") else ScenarioEngineScript.normalize_state(selected_scenario)
@@ -163,6 +180,20 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.scenario_presentation = _copy_dict(data.get("scenario_presentation", {}))
 	environment.scenario_exclusive_opportunity = _copy_dict(data.get("scenario_exclusive_opportunity", {}))
 	environment.scenario_hook_flags = _copy_dict(data.get("scenario_hook_flags", {}))
+	environment.environment_layer_schema_version = maxi(0, int(data.get("environment_layer_schema_version", 0)))
+	environment.current_layer_id = str(data.get("current_layer_id", "")).strip_edges()
+	environment.default_layer_id = str(data.get("default_layer_id", "")).strip_edges()
+	environment.layer_ids = _string_array(data.get("layer_ids", []))
+	environment.layer_display_name = str(data.get("layer_display_name", "")).strip_edges()
+	environment.layer_transitions = _copy_array(data.get("layer_transitions", []))
+	environment.layer_discovery = _copy_dict(data.get("layer_discovery", {}))
+	environment.layer_states = _copy_dict(data.get("layer_states", {}))
+	environment.layer_ambient_lines = _string_array(data.get("layer_ambient_lines", []))
+	environment.layer_ambient_label = str(data.get("layer_ambient_label", "")).strip_edges()
+	environment.layer_ambient_prop = str(data.get("layer_ambient_prop", "")).strip_edges()
+	environment.layer_ambient_rotate_actions = maxi(1, int(data.get("layer_ambient_rotate_actions", 1)))
+	environment.layer_ambient_index = maxi(0, int(data.get("layer_ambient_index", 0)))
+	environment.layer_ambient_line = str(data.get("layer_ambient_line", "")).strip_edges()
 	return environment
 
 
@@ -218,7 +249,123 @@ func to_dict() -> Dictionary:
 		result["scenario_presentation"] = scenario_presentation.duplicate(true)
 		result["scenario_exclusive_opportunity"] = scenario_exclusive_opportunity.duplicate(true)
 		result["scenario_hook_flags"] = scenario_hook_flags.duplicate(true)
+	if environment_layer_schema_version > 0 and not current_layer_id.is_empty():
+		result["environment_layer_schema_version"] = environment_layer_schema_version
+		result["current_layer_id"] = current_layer_id
+		result["default_layer_id"] = default_layer_id
+		result["layer_ids"] = layer_ids.duplicate(true)
+		result["layer_display_name"] = layer_display_name
+		result["layer_transitions"] = layer_transitions.duplicate(true)
+		result["layer_discovery"] = layer_discovery.duplicate(true)
+		result["layer_states"] = layer_states.duplicate(true)
+		result["layer_ambient_lines"] = layer_ambient_lines.duplicate(true)
+		result["layer_ambient_label"] = layer_ambient_label
+		result["layer_ambient_prop"] = layer_ambient_prop
+		result["layer_ambient_rotate_actions"] = layer_ambient_rotate_actions
+		result["layer_ambient_index"] = layer_ambient_index
+		result["layer_ambient_line"] = layer_ambient_line
 	return result
+
+
+# Generates every layer from independent deterministic data while exposing the
+# active layer through the unchanged flat environment contract.
+static func _from_layered_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, library: ContentLibrary, challenge_config: Dictionary, selected_scenario: Dictionary) -> EnvironmentInstance:
+	var layers := _copy_dict(archetype.get("layers", {}))
+	var ids := _string_array(layers.keys())
+	if ids.is_empty():
+		return EnvironmentInstance.new()
+	var configured_default := str(archetype.get("default_layer_id", ids[0])).strip_edges()
+	var modifiers := _copy_dict(challenge_config.get("modifiers", {}))
+	var overrides := _copy_dict(modifiers.get("environment_layer_overrides", {}))
+	var default_id := str(overrides.get(str(archetype.get("id", "")), configured_default)).strip_edges()
+	if not ids.has(default_id):
+		default_id = configured_default if ids.has(configured_default) else str(ids[0])
+	var discovery := _copy_dict(archetype.get("layer_discovery_defaults", {}))
+	discovery[default_id] = true
+	var generated_states: Dictionary = {}
+	var primary_layer_id := str(archetype.get("compatibility_primary_layer_id", default_id)).strip_edges()
+	if not ids.has(primary_layer_id):
+		primary_layer_id = default_id
+	var forked_rngs: Dictionary = {}
+	for layer_id_value in ids:
+		var layer_id := str(layer_id_value)
+		if layer_id != primary_layer_id:
+			forked_rngs[layer_id] = rng.fork("environment_layer:%s:%s" % [str(archetype.get("id", "")), layer_id])
+	var generation_order: Array = [primary_layer_id]
+	for layer_id_value in ids:
+		if str(layer_id_value) != primary_layer_id:
+			generation_order.append(str(layer_id_value))
+	for layer_id_value in generation_order:
+		var layer_id := str(layer_id_value)
+		var layer_rng: RngStream = rng if layer_id == primary_layer_id else forked_rngs.get(layer_id) as RngStream
+		var flat := _archetype_for_layer(archetype, layer_id)
+		var layer_environment := from_archetype(flat, p_depth, layer_rng, library, challenge_config, selected_scenario)
+		var layer_data := layer_environment.to_dict()
+		_apply_layer_metadata(layer_data, archetype, layer_id, ids, discovery)
+		generated_states[layer_id] = _layer_state_body(layer_data)
+	var active_data := _copy_dict(generated_states.get(default_id, {}))
+	_apply_layer_metadata(active_data, archetype, default_id, ids, discovery)
+	active_data["layer_states"] = generated_states
+	active_data["display_name"] = str(archetype.get("display_name", "The Punchline"))
+	return from_dict(active_data)
+
+
+# Generates one missing layer for schema migration without rebuilding the node.
+static func from_archetype_layer(archetype: Dictionary, layer_id: String, p_depth: int, rng: RngStream, library: ContentLibrary = null, challenge_config: Dictionary = {}, selected_scenario: Dictionary = {}) -> EnvironmentInstance:
+	if not _is_layered_archetype(archetype):
+		return from_archetype(archetype, p_depth, rng, library, challenge_config, selected_scenario)
+	var layers := _copy_dict(archetype.get("layers", {}))
+	var ids := _string_array(layers.keys())
+	var clean_layer_id := layer_id.strip_edges()
+	if not ids.has(clean_layer_id):
+		return EnvironmentInstance.new()
+	var flat := _archetype_for_layer(archetype, clean_layer_id)
+	var environment := from_archetype(flat, p_depth, rng, library, challenge_config, selected_scenario)
+	var data := environment.to_dict()
+	var discovery := _copy_dict(archetype.get("layer_discovery_defaults", {}))
+	_apply_layer_metadata(data, archetype, clean_layer_id, ids, discovery)
+	return from_dict(data)
+
+
+static func _archetype_for_layer(archetype: Dictionary, layer_id: String) -> Dictionary:
+	var result := archetype.duplicate(true)
+	var layers := _copy_dict(result.get("layers", {}))
+	var overlay := _copy_dict(layers.get(layer_id, {}))
+	for key_value in ["layers", "default_layer_id", "layer_discovery_defaults", "compatibility_primary_layer_id", "environment_layer_schema_version"]:
+		result.erase(key_value)
+	result = _deep_merge(result, overlay)
+	result["current_layer_id"] = layer_id
+	return result
+
+
+static func _apply_layer_metadata(target: Dictionary, archetype: Dictionary, layer_id: String, ids: Array, discovery: Dictionary) -> void:
+	var layers := _copy_dict(archetype.get("layers", {}))
+	var layer := _copy_dict(layers.get(layer_id, {}))
+	target["display_name"] = str(archetype.get("display_name", target.get("display_name", "")))
+	target["environment_layer_schema_version"] = ENVIRONMENT_LAYER_SCHEMA_VERSION
+	target["current_layer_id"] = layer_id
+	target["default_layer_id"] = str(archetype.get("default_layer_id", ids[0] if not ids.is_empty() else layer_id))
+	target["layer_ids"] = ids.duplicate(true)
+	target["layer_display_name"] = str(layer.get("layer_display_name", layer_id.replace("_", " ").capitalize()))
+	target["layer_transitions"] = _copy_array(layer.get("layer_transitions", []))
+	target["layer_discovery"] = discovery.duplicate(true)
+	target["layer_ambient_lines"] = _string_array(layer.get("ambient_lines", []))
+	target["layer_ambient_label"] = str(layer.get("ambient_label", "")).strip_edges()
+	target["layer_ambient_prop"] = str(layer.get("ambient_prop", "")).strip_edges()
+	target["layer_ambient_rotate_actions"] = maxi(1, int(layer.get("ambient_rotate_actions", 1)))
+	target["layer_ambient_index"] = 0
+	var ambient_lines := _string_array(target.get("layer_ambient_lines", []))
+	target["layer_ambient_line"] = str(ambient_lines[0]) if not ambient_lines.is_empty() else ""
+
+
+static func _layer_state_body(environment: Dictionary) -> Dictionary:
+	var result := environment.duplicate(true)
+	result.erase("layer_states")
+	return result
+
+
+static func _is_layered_archetype(archetype: Dictionary) -> bool:
+	return not _copy_dict(archetype.get("layers", {})).is_empty()
 
 
 # Ensures a generated environment owns stable object placement keyed by object id.
@@ -234,6 +381,7 @@ static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
 	_prune_inactive_object_rects(object_rects, active_object_ids)
 	_assign_object_layout_entries(object_rects, layout, _game_layout_entries(environment_data), active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "event", _copy_array(environment_data.get("event_ids", [])), "event_spots", active_object_ids)
+	_assign_object_layout_entries(object_rects, layout, _environment_layer_layout_entries(environment_data), active_object_ids)
 	if not prioritize_services:
 		_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
 	_assign_object_layout_entries(object_rects, layout, _cage_gift_layout_entries(environment_data), active_object_ids)
@@ -716,6 +864,9 @@ static func _fallback_object_rect(object_type: String, index: int) -> Rect2:
 			var lender_columns := 5
 			center = Vector2(0.22 + float(index % lender_columns) * 0.15, 0.70 + float(index / lender_columns) * 0.12)
 			size = Vector2(102.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"environment_layer":
+			center = Vector2(0.80, 0.26 + float(index % 3) * 0.24)
+			size = Vector2(118.0 / ENVIRONMENT_BOARD_SIZE.x, 72.0 / ENVIRONMENT_BOARD_SIZE.y)
 		"home_tenure":
 			center = Vector2(0.78, 0.46)
 			size = Vector2(116.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
@@ -918,6 +1069,7 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 	var entries: Array = []
 	entries.append_array(_game_layout_entries(environment_data))
 	_append_string_layout_entries(entries, "event", _copy_array(environment_data.get("event_ids", [])), "event_spots")
+	entries.append_array(_environment_layer_layout_entries(environment_data))
 	var layout := _copy_dict(environment_data.get("layout", {}))
 	var prioritize_services := bool(layout.get("prioritize_service_spots", false))
 	if not prioritize_services:
@@ -942,6 +1094,23 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 	if prioritize_services:
 		_append_item_offer_layout_entries(entries, _copy_array(environment_data.get("item_offers", [])))
 	return _filter_unique_object_layout_entries(entries)
+
+
+static func _environment_layer_layout_entries(environment_data: Dictionary) -> Array:
+	var entries: Array = []
+	var index := 0
+	if not str(environment_data.get("layer_ambient_line", "")).strip_edges().is_empty():
+		entries.append({"object_id": "environment_layer:ambient", "object_type": "environment_layer", "index": index, "spot_field": "layer_spots"})
+		index += 1
+	for transition_value in _copy_array(environment_data.get("layer_transitions", [])):
+		if typeof(transition_value) != TYPE_DICTIONARY:
+			continue
+		var target_id := str((transition_value as Dictionary).get("target_layer_id", "")).strip_edges()
+		if target_id.is_empty():
+			continue
+		entries.append({"object_id": "environment_layer:%s" % target_id, "object_type": "environment_layer", "index": index, "spot_field": "layer_spots"})
+		index += 1
+	return entries
 
 
 static func _append_string_layout_entries(entries: Array, object_type: String, ids: Array, spot_field: String) -> void:
@@ -1027,6 +1196,9 @@ static func _active_object_ids(environment_data: Dictionary) -> Dictionary:
 		result["service:%s" % service_id] = true
 	for lender_id in _string_array(environment_data.get("lender_hooks", [])):
 		result["lender:%s" % lender_id] = true
+	for entry_value in _environment_layer_layout_entries(environment_data):
+		if typeof(entry_value) == TYPE_DICTIONARY:
+			result[str((entry_value as Dictionary).get("object_id", ""))] = true
 	for entry_value in _game_hook_layout_entries(environment_data):
 		if typeof(entry_value) != TYPE_DICTIONARY:
 			continue
@@ -1052,7 +1224,7 @@ static func _prune_inactive_object_rects(object_rects: Dictionary, active_object
 
 
 static func _is_managed_object_id(object_id: String) -> bool:
-	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "dialogue:", "casino_fixture:", "home_tenure:", "home_sleep:", "home_storage:", "home_container:"]:
+	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "dialogue:", "casino_fixture:", "home_tenure:", "home_sleep:", "home_storage:", "home_container:", "environment_layer:"]:
 		if object_id.begins_with(prefix):
 			return true
 	return false
@@ -1189,6 +1361,21 @@ static func _object_fixture_declared(environment_data: Dictionary, object_id: St
 		if fixture_id == object_id:
 			return true
 	return false
+
+
+static func _deep_merge(base: Dictionary, overlay: Dictionary) -> Dictionary:
+	var result := base.duplicate(true)
+	for key_value in overlay.keys():
+		var value: Variant = overlay.get(key_value)
+		if typeof(value) == TYPE_DICTIONARY and typeof(result.get(key_value)) == TYPE_DICTIONARY:
+			result[key_value] = _deep_merge(result.get(key_value, {}) as Dictionary, value as Dictionary)
+		elif typeof(value) == TYPE_DICTIONARY:
+			result[key_value] = (value as Dictionary).duplicate(true)
+		elif typeof(value) == TYPE_ARRAY:
+			result[key_value] = (value as Array).duplicate(true)
+		else:
+			result[key_value] = value
+	return result
 
 
 # Safely duplicates array content.

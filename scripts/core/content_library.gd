@@ -1246,6 +1246,7 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 		"tutorial_initial_map_targets": true,
 		"tutorial_travel_cost_overrides": true,
 		"tutorial_environment_overrides": true,
+		"environment_layer_overrides": true,
 		"scenario_pins": true,
 		"scenario_excludes": true,
 		"scenario_pins_apply_mutations": true,
@@ -1317,6 +1318,18 @@ func _validate_challenge_modifiers(challenge_id: String, modifiers: Dictionary, 
 				_validate_id_references("challenges %s tutorial_environment_overrides" % challenge_id, [environment_id], environment_ids)
 				if typeof((overrides_value as Dictionary).get(environment_id_value)) != TYPE_DICTIONARY:
 					validation_errors.append("challenges %s tutorial_environment_overrides.%s must be a dictionary." % [challenge_id, environment_id])
+	if modifiers.has("environment_layer_overrides"):
+		var layer_overrides: Variant = modifiers.get("environment_layer_overrides", {})
+		if typeof(layer_overrides) != TYPE_DICTIONARY:
+			validation_errors.append("challenges %s modifiers.environment_layer_overrides must be a dictionary." % challenge_id)
+		else:
+			for environment_id_value in (layer_overrides as Dictionary).keys():
+				var environment_id := str(environment_id_value).strip_edges()
+				_validate_id_references("challenges %s environment_layer_overrides" % challenge_id, [environment_id], environment_ids)
+				var archetype := environment_archetype(environment_id)
+				var layer_id := str((layer_overrides as Dictionary).get(environment_id_value, "")).strip_edges()
+				if not _as_dict(archetype.get("layers", {})).has(layer_id):
+					validation_errors.append("challenges %s environment_layer_overrides.%s references unknown layer: %s" % [challenge_id, environment_id, layer_id])
 
 
 func _validate_challenge_scenario_pins(challenge_id: String, value: Variant, environment_ids: Dictionary) -> void:
@@ -1504,6 +1517,8 @@ func _validate_event_definitions() -> void:
 				seen_choices[choice_id] = true
 			if not choice.has("label"):
 				validation_errors.append("events %s choice %s is missing label." % [event_id, choice_id])
+			var conditions := _as_dict(choice.get("conditions", {}))
+			_validate_event_layer_references(event_id, choice_id, conditions, _as_dict(choice.get("consequences", {})))
 			var consequences: Dictionary = _as_dict(choice.get("consequences", {}))
 			_validate_id_references("events %s choice %s set_next_archetypes" % [event_id, choice_id], consequences.get("set_next_archetypes", []), archetype_ids)
 			_validate_id_references("events %s choice %s add_next_archetypes" % [event_id, choice_id], consequences.get("add_next_archetypes", []), archetype_ids)
@@ -1524,6 +1539,35 @@ func _validate_event_definitions() -> void:
 					var chance := float(chance_value)
 					if chance < 0.0 or chance > 1.0:
 						validation_errors.append("events %s choice %s trigger_event chance must be between 0 and 1." % [event_id, choice_id])
+
+
+func _validate_event_layer_references(event_id: String, choice_id: String, conditions: Dictionary, consequences: Dictionary) -> void:
+	var scoped_archetypes := _string_array(conditions.get("archetype_ids", []))
+	var declared_layers: Dictionary = {}
+	var candidate_archetypes := environment_archetypes
+	if not scoped_archetypes.is_empty():
+		candidate_archetypes = []
+		for archetype_id in scoped_archetypes:
+			var archetype := environment_archetype(archetype_id)
+			if not archetype.is_empty():
+				candidate_archetypes.append(archetype)
+	for archetype_value in candidate_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		for layer_id_value in _as_dict((archetype_value as Dictionary).get("layers", {})).keys():
+			declared_layers[str(layer_id_value)] = true
+	for field_name in ["layer_ids", "blocked_layer_ids"]:
+		for layer_id in _string_array(conditions.get(field_name, [])):
+			if not declared_layers.has(layer_id):
+				validation_errors.append("events %s choice %s %s references unknown layer: %s" % [event_id, choice_id, field_name, layer_id])
+	var discovery := _as_dict(consequences.get("environment_layer_discovery", {}))
+	if discovery.is_empty():
+		return
+	var target_layer_id := str(discovery.get("layer_id", "")).strip_edges()
+	if target_layer_id.is_empty() or not declared_layers.has(target_layer_id):
+		validation_errors.append("events %s choice %s environment_layer_discovery references unknown layer: %s" % [event_id, choice_id, target_layer_id])
+	if discovery.has("enter") and typeof(discovery.get("enter")) != TYPE_BOOL:
+		validation_errors.append("events %s choice %s environment_layer_discovery.enter must be a boolean." % [event_id, choice_id])
 
 
 # Validates dialogue graph structure and consequence references.
@@ -2699,6 +2743,7 @@ func _validate_environment_references() -> void:
 		if typeof(archetype) != TYPE_DICTIONARY:
 			continue
 		var archetype_id := str(archetype.get("id", "")).strip_edges()
+		_validate_environment_layers(archetype, archetype_ids, route_ids, game_ids, item_ids, event_ids, service_ids, lender_ids)
 		_validate_environment_open_hours(archetype_id, archetype.get("open_hours", null))
 		_validate_id_references("environment %s game_pool" % archetype_id, archetype.get("game_pool", []), game_ids)
 		_validate_id_references("environment %s required_game_ids" % archetype_id, archetype.get("required_game_ids", []), game_ids)
@@ -2742,6 +2787,59 @@ func _validate_environment_references() -> void:
 			validation_warnings.append("environment %s references unavailable authored_track_id %s; procedural music will be used." % [archetype_id, authored_track_id])
 
 
+func _validate_environment_layers(archetype: Dictionary, archetype_ids: Dictionary, route_ids: Dictionary, game_ids: Dictionary, item_ids: Dictionary, event_ids: Dictionary, service_ids: Dictionary, lender_ids: Dictionary) -> void:
+	var layers := _as_dict(archetype.get("layers", {}))
+	if layers.is_empty():
+		return
+	var archetype_id := str(archetype.get("id", "")).strip_edges()
+	var default_layer_id := str(archetype.get("default_layer_id", "")).strip_edges()
+	if default_layer_id.is_empty() or not layers.has(default_layer_id):
+		validation_errors.append("environment %s default_layer_id must reference a declared layer." % archetype_id)
+	var primary_layer_id := str(archetype.get("compatibility_primary_layer_id", default_layer_id)).strip_edges()
+	if primary_layer_id.is_empty() or not layers.has(primary_layer_id):
+		validation_errors.append("environment %s compatibility_primary_layer_id must reference a declared layer." % archetype_id)
+	var discovery_defaults := _as_dict(archetype.get("layer_discovery_defaults", {}))
+	for discovery_id_value in discovery_defaults.keys():
+		var discovery_id := str(discovery_id_value).strip_edges()
+		if not layers.has(discovery_id) or typeof(discovery_defaults.get(discovery_id_value)) != TYPE_BOOL:
+			validation_errors.append("environment %s layer_discovery_defaults.%s must reference a declared layer with a boolean." % [archetype_id, discovery_id])
+	for layer_id_value in layers.keys():
+		var layer_id := str(layer_id_value).strip_edges()
+		var layer_value: Variant = layers.get(layer_id_value)
+		if layer_id.is_empty() or typeof(layer_value) != TYPE_DICTIONARY:
+			validation_errors.append("environment %s layers must use non-empty ids and dictionary values." % archetype_id)
+			continue
+		var layer: Dictionary = layer_value
+		var layer_visual := _as_dict(layer.get("visual_context", {}))
+		_validate_art_asset("environment %s layer %s" % [archetype_id, layer_id], {"asset_path": layer_visual.get("asset_path", "")})
+		_validate_id_references("environment %s layer %s game_pool" % [archetype_id, layer_id], layer.get("game_pool", []), game_ids)
+		_validate_id_references("environment %s layer %s required_game_ids" % [archetype_id, layer_id], layer.get("required_game_ids", []), game_ids)
+		_validate_required_game_pool("%s layer %s" % [archetype_id, layer_id], layer)
+		_validate_id_references("environment %s layer %s item_pool" % [archetype_id, layer_id], layer.get("item_pool", []), item_ids)
+		_validate_id_references("environment %s layer %s event_pool" % [archetype_id, layer_id], layer.get("event_pool", []), event_ids)
+		_validate_id_references("environment %s layer %s required_event_ids" % [archetype_id, layer_id], layer.get("required_event_ids", []), event_ids)
+		_validate_id_references("environment %s layer %s service_pool" % [archetype_id, layer_id], layer.get("service_pool", []), service_ids)
+		_validate_id_references("environment %s layer %s lender_hooks" % [archetype_id, layer_id], layer.get("lender_hooks", []), lender_ids)
+		_validate_id_references("environment %s layer %s travel_hooks" % [archetype_id, layer_id], layer.get("travel_hooks", []), archetype_ids)
+		if not route_ids.is_empty():
+			_validate_id_references("environment %s layer %s travel_hooks route metadata" % [archetype_id, layer_id], layer.get("travel_hooks", []), route_ids)
+		_validate_count_range("environment %s layer %s game_count" % [archetype_id, layer_id], layer.get("game_count", null), _string_array(layer.get("game_pool", [])).size())
+		_validate_count_range("environment %s layer %s item_count" % [archetype_id, layer_id], layer.get("item_count", null), _string_array(layer.get("item_pool", [])).size())
+		_validate_count_range("environment %s layer %s event_count" % [archetype_id, layer_id], layer.get("event_count", null), _string_array(layer.get("event_pool", [])).size())
+		_validate_count_range("environment %s layer %s lender_count" % [archetype_id, layer_id], layer.get("lender_count", null), _string_array(layer.get("lender_hooks", [])).size())
+		for required_event_id in _string_array(layer.get("required_event_ids", [])):
+			if not _string_array(layer.get("event_pool", [])).has(required_event_id):
+				validation_errors.append("environment %s layer %s required_event_ids includes %s but event_pool does not." % [archetype_id, layer_id, required_event_id])
+		var transitions: Array = layer.get("layer_transitions", []) if typeof(layer.get("layer_transitions", [])) == TYPE_ARRAY else []
+		for transition_value in transitions:
+			if typeof(transition_value) != TYPE_DICTIONARY:
+				validation_errors.append("environment %s layer %s transitions must be dictionaries." % [archetype_id, layer_id])
+				continue
+			var target_id := str((transition_value as Dictionary).get("target_layer_id", "")).strip_edges()
+			if target_id.is_empty() or not layers.has(target_id):
+				validation_errors.append("environment %s layer %s transition references unknown layer: %s" % [archetype_id, layer_id, target_id])
+
+
 func _validate_scenario_definitions() -> void:
 	var archetype_ids := _ids_for(environment_archetypes)
 	var event_ids := _ids_for(events)
@@ -2772,6 +2870,9 @@ func _validate_scenario_definitions() -> void:
 				seen_ids[scenario_id] = true
 			if declared_archetype != archetype_key or not archetype_ids.has(declared_archetype):
 				validation_errors.append("environment_scenarios %s references mismatched or unknown archetype_id: %s" % [scenario_id, declared_archetype])
+			var declared_layer_id := str(definition.get("layer_id", "")).strip_edges()
+			if not declared_layer_id.is_empty() and not _as_dict(environment_archetype(archetype_key).get("layers", {})).has(declared_layer_id):
+				validation_errors.append("environment_scenarios %s references unknown layer_id: %s" % [scenario_id, declared_layer_id])
 			if str(definition.get("display_name", "")).strip_edges().is_empty():
 				validation_errors.append("environment_scenarios %s is missing display_name." % scenario_id)
 			var weight_value: Variant = definition.get("weight", null)

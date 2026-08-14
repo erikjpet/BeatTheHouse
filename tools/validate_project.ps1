@@ -697,6 +697,7 @@ $resultDeltaKeys = @(
     "ended",
     "item_hooks",
     "event_hooks",
+    "environment_layer_discovery",
     "demo_finale"
 )
 $eventConsequenceKeys = $resultDeltaKeys + @(

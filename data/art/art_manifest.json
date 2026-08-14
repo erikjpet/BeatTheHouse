@@ -36,6 +36,8 @@
     "jazz_club": {"path": "res://assets/art/environments/jazz_club.png", "brief": "late-1960s jazz club, amber stage, smoky tables, trio players, bar pull-tab machine"},
     "gas_station_casino": {"path": "res://assets/art/environments/gas_station_casino.png", "brief": "converted gas station, slot rows, cage counter, highway view"},
     "small_underground_casino": {"path": "res://assets/art/environments/small_underground_casino.png", "brief": "basement casino, green felt tables, bouncer, string lights"},
+    "punchline_club": {"path": "res://assets/art/environments/small_underground_casino.png", "brief": "comedy-club cover, tired stage, small tables, side door"},
+    "punchline_back_room": {"path": "res://assets/art/environments/small_underground_casino.png", "brief": "private crew room, bare table, guarded door"},
     "grand_casino": {"path": "res://assets/art/environments/grand_casino.png", "brief": "boss casino floor, velvet ropes, cameras, polished tables, active pit boss"}
   },
   "game_surfaces": {

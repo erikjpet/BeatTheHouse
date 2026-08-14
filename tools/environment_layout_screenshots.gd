@@ -13,6 +13,7 @@ var app: Control
 var out_dir := "user://layout_survey"
 var report := {}
 var meta_home_review := false
+var punchline_layer_review := false
 
 
 func _init() -> void:
@@ -21,6 +22,8 @@ func _init() -> void:
 			out_dir = argument.trim_prefix("--out=")
 		elif argument == "--meta-home-review":
 			meta_home_review = true
+		elif argument == "--punchline-layers-only":
+			punchline_layer_review = true
 	call_deferred("_run")
 
 
@@ -47,6 +50,8 @@ func _run() -> void:
 		var archetype: Dictionary = archetype_value
 		var archetype_id := str(archetype.get("id", ""))
 		if archetype_id.is_empty():
+			continue
+		if punchline_layer_review and archetype_id != "small_underground_casino":
 			continue
 		await _capture_archetype(archetype, archetype_id, run_state, library)
 	var file := FileAccess.open("%s/layout_report.json" % out_dir, FileAccess.WRITE)
@@ -220,15 +225,51 @@ func _capture_archetype(archetype: Dictionary, archetype_id: String, run_state: 
 	await _settle(4)
 	await RenderingServer.frame_post_draw
 	var image := root.get_viewport().get_texture().get_image()
-	image.save_png("%s/%s.png" % [out_dir, archetype_id])
-	report[archetype_id] = {
-		"name": str(data.get("name", archetype_id)),
+	var default_layer_id := str(data.get("current_layer_id", "")).strip_edges()
+	var file_id := "%s_%s" % [archetype_id, default_layer_id] if punchline_layer_review and not default_layer_id.is_empty() else archetype_id
+	image.save_png("%s/%s.png" % [out_dir, file_id])
+	report[file_id] = {
+		"name": str(data.get("display_name", archetype_id)),
+		"layer_id": default_layer_id,
 		"scene_type": str((data.get("visual_context", {}) as Dictionary).get("scene_type", "")),
 		"game_ids": data.get("game_ids", []),
 		"event_ids": data.get("event_ids", []),
 		"service_ids": data.get("service_ids", []),
 		"lender_hooks": data.get("lender_hooks", []),
 		"authored_layout": archetype.get("layout", {}),
+		"canvas_object_layout": _canvas_object_layout(),
+	}
+	if punchline_layer_review:
+		for layer_id_value in data.get("layer_ids", []):
+			var layer_id := str(layer_id_value)
+			if layer_id != default_layer_id:
+				await _capture_archetype_layer(archetype, archetype_id, layer_id, run_state, library)
+
+
+func _capture_archetype_layer(archetype: Dictionary, archetype_id: String, layer_id: String, run_state: Variant, library: Variant) -> void:
+	var rng: Variant = run_state.create_rng("layout_survey_layer:%s:%s" % [archetype_id, layer_id])
+	var environment: Variant = EnvironmentInstance.from_archetype_layer(archetype, layer_id, 1, rng, library, run_state.challenge_config)
+	var data: Dictionary = environment.to_dict()
+	data["world_node_id"] = archetype_id
+	data["layer_discovery"] = {"club": true, "casino": true, "back_room": true}
+	data["layout"] = EnvironmentInstance.ensure_generated_layout(data)
+	run_state.set_environment(data)
+	app.call("_clear_selected_game_action")
+	app.call("_refresh")
+	await _settle(4)
+	await RenderingServer.frame_post_draw
+	var image := root.get_viewport().get_texture().get_image()
+	var file_id := "%s_%s" % [archetype_id, layer_id]
+	image.save_png("%s/%s.png" % [out_dir, file_id])
+	report[file_id] = {
+		"name": str(data.get("display_name", archetype_id)),
+		"layer_id": layer_id,
+		"scene_type": str((data.get("visual_context", {}) as Dictionary).get("scene_type", "")),
+		"game_ids": data.get("game_ids", []),
+		"event_ids": data.get("event_ids", []),
+		"service_ids": data.get("service_ids", []),
+		"lender_hooks": data.get("lender_hooks", []),
+		"authored_layout": data.get("layout", {}),
 		"canvas_object_layout": _canvas_object_layout(),
 	}
 

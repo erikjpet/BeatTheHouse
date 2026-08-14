@@ -31,6 +31,24 @@
     }
   },
   {
+    "id": "punchline_two_drink_minimum",
+    "display_name": "Two-Drink Minimum",
+    "category": "alcohol",
+    "description": "The chair is cheap. The glass is not.",
+    "cost": 8,
+    "message": "The club counts another drink toward the chair.",
+    "effect": {
+      "alcohol_intake": 16,
+      "suspicion_delta": 1,
+      "flags_set": {
+        "punchline_drink_minimum_started": true
+      },
+      "messages": [
+        "Tinny music, warm glass. The stage keeps trying."
+      ]
+    }
+  },
+  {
     "id": "call_brother_in_law",
     "display_name": "Call Brother-in-Law",
     "category": "family",

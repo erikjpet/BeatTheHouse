@@ -183,7 +183,10 @@ func _notification(what: int) -> void:
 func render_environment_snapshot(snapshot: Dictionary) -> void:
 	uses_foundation_snapshot = true
 	foundation_snapshot = snapshot.duplicate(true)
-	environment_id = str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id)))
+	var archetype_id := str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id)))
+	var visual_context: Dictionary = foundation_snapshot.get("visual_context", {}) if typeof(foundation_snapshot.get("visual_context", {})) == TYPE_DICTIONARY else {}
+	var art_key := str(visual_context.get("art_key", archetype_id)).strip_edges()
+	environment_id = art_key if ["punchline_club", "punchline_back_room"].has(art_key) else archetype_id
 	var texture_scope_key := str(foundation_snapshot.get("world_node_id", foundation_snapshot.get("id", environment_id))).strip_edges()
 	if texture_scope_key.is_empty():
 		texture_scope_key = environment_id
@@ -617,6 +620,10 @@ func _draw() -> void:
 				_draw_gas_station()
 			"small_underground_casino":
 				_draw_underground()
+			"punchline_club":
+				_draw_punchline_club()
+			"punchline_back_room":
+				_draw_punchline_back_room()
 			"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
 				_draw_grand_casino()
 			"grand_casino_cage":
@@ -1223,6 +1230,61 @@ func _draw_underground() -> void:
 	draw_rect(Rect2(78, 142, 12, 26), C_TEAL)
 	for i in range(8):
 		draw_rect(Rect2(i * 120, 96 + i % 3 * 16, 240, 28), Color(1.0, 0.45, 0.7, 0.035))
+	_floor_reflections()
+
+
+func _draw_punchline_club() -> void:
+	# Public-facing comedy room: a small stage, bad brickwork, two-drink tables,
+	# and one deliberately unremarkable side door.
+	draw_rect(Rect2(0, 0, 900, 245), Color("#130d18"))
+	for y in range(18, 238, 28):
+		for x in range(-12 if int(y / 28) % 2 == 0 else 20, 900, 64):
+			draw_rect(Rect2(x, y, 58, 22), Color("#321b26"))
+	draw_rect(Rect2(248, 62, 404, 192), Color("#08070d"))
+	draw_rect(Rect2(264, 80, 372, 150), Color("#50142d"))
+	draw_rect(Rect2(302, 202, 296, 50), Color("#25121f"))
+	draw_circle(Vector2(450, 138), 36, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.14))
+	draw_line(Vector2(450, 120), Vector2(450, 192), C_SOFT, 3)
+	draw_circle(Vector2(450, 116), 8, C_SHADOW)
+	_neon_text("THE PUNCHLINE", Vector2(319, 42), 24, C_YELLOW)
+	_draw_punchline_table(Vector2(108, 194))
+	_draw_punchline_table(Vector2(202, 222))
+	_draw_punchline_table(Vector2(704, 194))
+	_draw_punchline_table(Vector2(790, 222))
+	_silhouette(Vector2(122, 168), 0.72, C_SHADOW)
+	_silhouette(Vector2(716, 166), 0.78, C_SHADOW)
+	_silhouette(Vector2(798, 192), 0.66, C_SHADOW)
+	draw_rect(Rect2(814, 78, 64, 164), Color("#17121d"))
+	draw_rect(Rect2(826, 96, 40, 108), Color("#23182b"))
+	draw_circle(Vector2(854, 156), 3, C_AMBER)
+	_floor_reflections()
+
+
+func _draw_punchline_table(position: Vector2) -> void:
+	draw_circle(position, 28, Color("#241628"))
+	draw_circle(position, 20, Color("#563247"))
+	draw_rect(Rect2(position.x - 3, position.y - 15, 6, 18), C_AMBER)
+
+
+func _draw_punchline_back_room() -> void:
+	# Restricted shell for Rook: storage, a work table, and a guarded return door.
+	draw_rect(Rect2(0, 0, 900, 245), Color("#090b10"))
+	for x in range(0, 900, 76):
+		draw_rect(Rect2(x, 0, 38, 245), Color("#10151d"))
+		draw_rect(Rect2(x + 38, 0, 38, 245), Color("#0c1117"))
+	_neon_text("STAFF ONLY", Vector2(348, 40), 24, C_PINK)
+	draw_rect(Rect2(250, 148, 400, 82), Color("#1b2027"))
+	draw_rect(Rect2(270, 162, 360, 48), Color("#343b43"))
+	for x in [308, 384, 506, 582]:
+		_card_back(Rect2(x, 132 + (x % 3) * 4, 26, 36))
+	draw_rect(Rect2(52, 66, 154, 174), Color("#121820"))
+	for y in [82, 126, 170]:
+		draw_rect(Rect2(66, y, 126, 9), Color("#3b2e26"))
+		draw_rect(Rect2(76, y - 28, 22, 28), C_SHADOW)
+		draw_rect(Rect2(112, y - 22, 14, 22), C_AMBER.darkened(0.35))
+	_silhouette(Vector2(738, 184), 1.25, C_SHADOW)
+	draw_rect(Rect2(790, 70, 80, 174), Color("#12151b"))
+	draw_circle(Vector2(808, 158), 3, C_AMBER)
 	_floor_reflections()
 
 

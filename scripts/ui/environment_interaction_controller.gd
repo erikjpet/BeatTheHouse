@@ -26,6 +26,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	before_travel_objects.append_array(host._game_hook_interactable_objects())
 	before_travel_objects.append_array(host._home_interactable_objects())
 	before_travel_objects.append_array(casino_spatial_interactable_objects(host))
+	before_travel_objects.append_array(environment_layer_interactable_objects(host))
 	var after_travel_objects: Array = []
 	var room_return_object = host._parent_home_return_interactable_object()
 	if not room_return_object.is_empty():
@@ -439,6 +440,68 @@ static func casino_spatial_interactable_objects(host: Variant) -> Array:
 			"focus_rect": host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_TRAVEL, door_index + 1),
 		}))
 		door_index += 1
+	return objects
+
+
+static func environment_layer_interactable_objects(host: Variant) -> Array:
+	var objects: Array = []
+	if host.run_state == null or not host.run_state.is_layered_environment():
+		return objects
+	var ambient_line := str(host.run_state.current_environment.get("layer_ambient_line", "")).strip_edges()
+	var ambient_label := str(host.run_state.current_environment.get("layer_ambient_label", "")).strip_edges()
+	if not ambient_line.is_empty() and not ambient_label.is_empty():
+		objects.append(host._make_interactable_object({
+			"object_id": "environment_layer:ambient",
+			"object_type": host.CONTEXT_MODE_ENVIRONMENT_LAYER,
+			"source_id": "ambient",
+			"label": ambient_label,
+			"short_description": ambient_line,
+			"presence": "fixture",
+			"interactive": false,
+			"enabled": false,
+			"disabled_reason": ambient_line,
+			"action_summary": ambient_line,
+			"visual_key": "environment_layer_ambient",
+			"prop": str(host.run_state.current_environment.get("layer_ambient_prop", "stage")),
+			"icon_key": "service",
+			"available_actions": [],
+			"confirm_action_id": "",
+			"focus_rect": host._interaction_rect_for_object("environment_layer:ambient", host.CONTEXT_MODE_ENVIRONMENT_LAYER, 0),
+		}))
+	var transition_index := 1
+	for transition_value in host._copy_array(host.run_state.current_environment.get("layer_transitions", [])):
+		if typeof(transition_value) != TYPE_DICTIONARY:
+			continue
+		var transition: Dictionary = transition_value
+		var target_id := str(transition.get("target_layer_id", "")).strip_edges()
+		if target_id.is_empty():
+			continue
+		var status: Dictionary = host.run_state.environment_layer_access_status(target_id)
+		if bool(status.get("hidden", false)):
+			continue
+		var enabled := bool(status.get("available", false))
+		var object_id := "environment_layer:%s" % target_id
+		objects.append(host._make_interactable_object({
+			"object_id": object_id,
+			"object_type": host.CONTEXT_MODE_ENVIRONMENT_LAYER,
+			"source_id": target_id,
+			"label": str(transition.get("label", host._label_from_id(target_id))),
+			"short_description": str(transition.get("description", "An interior door.")),
+			"presence": "fixture",
+			"interactive": true,
+			"enabled": enabled,
+			"disabled_reason": "" if enabled else str(status.get("reason", transition.get("locked_reason", "The door stays shut."))),
+			"action_summary": "Enter room." if enabled else str(status.get("reason", transition.get("locked_reason", "The door stays shut."))),
+			"impact_summary": "No fare. No street exposure.",
+			"cost_summary": "Cost: 0",
+			"visual_key": "environment_layer_door",
+			"prop": str(transition.get("prop", "door")),
+			"icon_key": str(transition.get("icon_key", "travel")),
+			"available_actions": [{"id": "enter_environment_layer", "label": "Enter Room"}] if enabled else [],
+			"confirm_action_id": "enter_environment_layer" if enabled else "",
+			"focus_rect": host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_ENVIRONMENT_LAYER, transition_index),
+		}))
+		transition_index += 1
 	return objects
 
 

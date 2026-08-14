@@ -1,0 +1,56 @@
+{
+  "baseline_sha256": "411a9b59089104975d1e45b7477b2ce103aeb4ce9bf617e5c73fe6f9be028624",
+  "canonical_fields": {
+    "visual_context": {
+      "perspective": "first_person",
+      "scene_type": "underground",
+      "asset_path": "res://assets/art/environments/small_underground_casino.png",
+      "description": "Low ceiling. Play kept close."
+    },
+    "objective_hint": "Better tables are provided. Heat comes too.",
+    "layout": {
+      "game_spots": [[798, 176], [220, 202], [568, 202]],
+      "event_spots": [[84, 86], [410, 96], [220, 300], [410, 300], [620, 300]],
+      "service_spots": [[78, 220]],
+      "lender_spots": [[790, 300], [84, 300]],
+      "travel_spots": [[820, 86], [820, 380], [676, 82], [520, 380], [250, 380], [84, 380]]
+    },
+    "security_profile": {
+      "strictness": "high",
+      "visible_cues": ["Every return guest is remembered at the door."]
+    },
+    "music_profile": {
+      "theme": "basement casino",
+      "ambience": 0.92,
+      "mode": "phrygian",
+      "progression": [0, 1, 5, 4],
+      "motif": [0, -999, 1, -999, 3, -999, 1, -999, 0, -999, 4, -999, 5, -999, 4, -999],
+      "root_midi": 41,
+      "safety": 0.14,
+      "texture": "basement",
+      "texture_rate": 0.19,
+      "volume": 0.25
+    },
+    "economic_profile": {
+      "stake_floor": 10,
+      "stake_ceiling": 70,
+      "game_stake_floor_overrides": {"blackjack": 5},
+      "game_stake_ceiling_overrides": {"blackjack": 60},
+      "cashout_tone": "private"
+    },
+    "game_pool": ["slot", "blackjack", "video_poker"],
+    "game_count": [3, 3],
+    "item_pool": [],
+    "item_count": [0, 0],
+    "event_pool": ["rowdy_regular", "machine_jam", "side_door", "heat_at_exit", "suspicious_patron", "rival_counter", "counter_payoff", "snitch_reputation", "the_collector", "lay_low_booth", "door_bribe", "lucky_streak_temptation", "crew_favor_delivery"],
+    "event_scopes": ["casino"],
+    "event_count": [2, 4],
+    "service_pool": ["house_drink"],
+    "lender_hooks": ["the_crew", "street_lender"],
+    "lender_count": [1, 2],
+    "suspicion_cues": ["Security is personal. Courtesy is thin."],
+    "travel_hooks": ["back_alley", "motel", "delta_queen", "kitty_cat_lounge", "grand_casino"],
+    "local_narrative_flags": {"underground_pressure": true},
+    "moods": ["tight", "pink", "dangerous"]
+  }
+}
