@@ -1,0 +1,57 @@
+[
+{
+  "schema_version": 1,
+  "max_incidents": 32,
+  "incident_types": {
+    "thrown_out": {
+      "attention": 3.0,
+      "hop_decay": 0.55,
+      "duration_actions": 24,
+      "max_hops": 4
+    },
+    "alarm_tripped": {
+      "attention": 2.5,
+      "hop_decay": 0.6,
+      "duration_actions": 20,
+      "max_hops": 4
+    },
+    "generous_tipper": {
+      "attention": -1.5,
+      "hop_decay": 0.5,
+      "duration_actions": 18,
+      "max_hops": 3
+    },
+    "big_public_win": {
+      "attention": 1.5,
+      "hop_decay": 0.5,
+      "duration_actions": 16,
+      "max_hops": 3
+    }
+  },
+  "door_thresholds": {
+    "looser_max": -0.75,
+    "stricter_min": 0.75
+  },
+  "rare_reaction": {
+    "minimum_attention": 0.75,
+    "chance_percent": 12
+  },
+  "staff_lines": {
+    "warm": [
+      "Word got here before you did. It was kind.",
+      "The room heard you leave something on the counter.",
+      "They know your name. Tonight, that helps."
+    ],
+    "watchful": [
+      "The room heard about you. Hands where they can see them.",
+      "Your name beat you through the door.",
+      "Somebody called ahead. Nobody says who."
+    ],
+    "neutral": [
+      "Nobody here has a story about you yet.",
+      "Your name hasn't reached this room.",
+      "The staff give you the ordinary look."
+    ]
+  }
+}
+]

@@ -1398,6 +1398,9 @@
       "requires_flags": {
         "rival_counter_snitch": true
       },
+      "requires_traveler_here": [
+        "silas_snitch"
+      ],
       "missing_flags": [
         "snitch_reputation_resolved"
       ]
@@ -1860,6 +1863,7 @@
     "id": "staff_shift_tip",
     "display_name": "Staff Shift Tip",
     "type": "security",
+    "rumor_delivery": true,
     "interaction_mode": "triggered",
     "presentation": "talk",
     "speaker": {
@@ -3175,6 +3179,80 @@
             "flags": {
               "tutorial_friendly_choice_done": true
             },
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "town_rumor_staff",
+    "display_name": "Word from Across Town",
+    "type": "social",
+    "interaction_mode": "interactable",
+    "presentation": "talk",
+    "speaker": {
+      "role": "staff",
+      "name": "Staff",
+      "character_pool_id": "shop_staff",
+      "voice_line_key": "shop_greeting",
+      "silhouette": "vest",
+      "bind": "none"
+    },
+    "scopes": [
+      "any"
+    ],
+    "asset_path": "res://assets/art/events/late_shift_discount.png",
+    "visual_key": "social",
+    "icon_key": "conversation",
+    "environment_prop": "staff",
+    "start_summary": "Somebody working the room has heard something.",
+    "trigger": {
+      "type": "manual"
+    },
+    "conditions": {
+      "requires_available_rumor": true
+    },
+    "payload": {
+      "summary": "Word has traveled from another room.",
+      "choices": [
+        {
+          "id": "listen",
+          "label": "Listen",
+          "text": "The word reaches you clean.",
+          "consequence_summary": "Map preview gains what you heard",
+          "consequences": {
+            "resolve_event": true
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "town_reputation_reaction",
+    "display_name": "Your Name Got Here First",
+    "type": "social",
+    "interaction_mode": "interactable",
+    "scopes": [
+      "any"
+    ],
+    "asset_path": "res://assets/art/events/suspicious_patron.png",
+    "visual_key": "social",
+    "icon_key": "conversation",
+    "environment_prop": "patron",
+    "start_summary": "Somebody recognizes the story before the face.",
+    "trigger": {
+      "type": "manual"
+    },
+    "payload": {
+      "summary": "The room heard about you before you arrived.",
+      "choices": [
+        {
+          "id": "let_it_sit",
+          "label": "Let It Sit",
+          "text": "The look passes. The story stays.",
+          "consequence_summary": "No direct change",
+          "consequences": {
             "resolve_event": true
           }
         }

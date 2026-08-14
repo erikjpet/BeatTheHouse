@@ -934,6 +934,11 @@
       "lines": {
         "bus_warning": [
           "Seek out the cruel and unusual."
+        ],
+        "where_been": [
+          "Came through {previous_name}. Bus knew the turns better than the driver.",
+          "Was over by {previous_name}. Everybody got off with a different story.",
+          "Left {previous_name} behind. Kept the part that made me laugh."
         ]
       }
     },

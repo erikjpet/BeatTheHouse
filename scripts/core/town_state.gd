@@ -2,6 +2,7 @@ class_name TownState
 extends RefCounted
 
 const CONDITIONS_PATH := "res://data/town/conditions.json"
+const TownNetworkScript := preload("res://scripts/core/town_network.gd")
 const SCHEMA_VERSION := 1
 const DEFAULT_TURN_HORIZON := 240
 const WEATHER_IDS := ["clear", "rain", "fog", "storm"]
@@ -18,6 +19,7 @@ var weather_schedule: Array = []
 var calendar_cycle: Array = []
 var calendar_offset_actions: int = 0
 var happenings: Array = []
+var living_world: TownNetwork
 
 var _conditions: Dictionary = {}
 var _weather_by_action: PackedStringArray = PackedStringArray()
@@ -61,6 +63,8 @@ func generate(p_seed_value: int, source_conditions: Dictionary = {}) -> void:
 	_generate_weather_schedule(root_rng.fork("town_weather"))
 	_generate_calendar(root_rng.fork("town_calendar"))
 	_generate_happenings(root_rng.fork("town_happenings"))
+	living_world = TownNetworkScript.new()
+	living_world.generate(seed_value)
 	_refresh_current_profiles()
 
 
@@ -76,6 +80,13 @@ func restore(source: Dictionary, p_seed_value: int, source_conditions: Dictionar
 	calendar_cycle = _dictionary_array(source.get("calendar_cycle", []))
 	calendar_offset_actions = maxi(0, int(source.get("calendar_offset_actions", 0)))
 	happenings = _dictionary_array(source.get("happenings", []))
+	living_world = TownNetworkScript.new()
+	var living_world_value: Variant = source.get("living_world", {})
+	if typeof(living_world_value) == TYPE_DICTIONARY and not (living_world_value as Dictionary).is_empty():
+		living_world.restore(living_world_value as Dictionary, seed_value)
+	else:
+		living_world.generate(seed_value)
+		living_world.advance_to(action_index)
 	_index_definitions()
 	if weather_schedule.is_empty() or calendar_cycle.is_empty():
 		generate(p_seed_value, source_conditions)
@@ -89,7 +100,98 @@ func advance_actions(amount: int = 1) -> void:
 	if amount <= 0:
 		return
 	action_index = maxi(0, action_index + amount)
+	if living_world != null:
+		living_world.advance_to(action_index)
 	_refresh_current_profiles()
+	_sync_condition_rumor_facts()
+
+
+func configure_world(map_data: Dictionary) -> void:
+	if living_world == null:
+		living_world = TownNetworkScript.new()
+		living_world.generate(seed_value)
+	living_world.configure_world(map_data)
+	_sync_condition_rumor_facts()
+
+
+func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
+	return living_world != null and living_world.seed_scenario_for_node(node_id, scenario)
+
+
+func seeded_scenario_for_node(node_id: String) -> Dictionary:
+	return living_world.seeded_scenario_for_node(node_id) if living_world != null else {}
+
+
+func seeded_scenario_definition_for_node(node_id: String) -> Dictionary:
+	return living_world.seeded_scenario_definition_for_node(node_id) if living_world != null else {}
+
+
+func register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:
+	return living_world != null and living_world.register_rumor_fact(fact_class, fact_id, payload)
+
+
+func rumor_fact(fact_id: String) -> Dictionary:
+	return living_world.rumor_fact(fact_id) if living_world != null else {}
+
+
+func rumor_facts(fact_class: String = "") -> Array:
+	return living_world.rumor_facts(fact_class) if living_world != null else []
+
+
+func rumors_for_venue(node_id: String, speaker_side: String, count: int = 1, rng: RngStream = null) -> Array:
+	return living_world.rumors_for_venue(node_id, speaker_side, count, rng) if living_world != null else []
+
+
+func hear_rumor(rumor_id: String) -> Dictionary:
+	return living_world.hear_rumor(rumor_id) if living_world != null else {}
+
+
+func hear_rendered_rumor(rumor: Dictionary) -> Dictionary:
+	return living_world.hear_rendered_rumor(rumor) if living_world != null else {}
+
+
+func heard_rumor_for_node(node_id: String) -> Dictionary:
+	return living_world.heard_rumor_for_node(node_id) if living_world != null else {}
+
+
+func rumor_trace_is_live(rumor: Dictionary) -> bool:
+	return living_world != null and living_world.rumor_trace_is_live(rumor)
+
+
+func traveler_node(character_id: String) -> String:
+	return living_world.traveler_node(character_id) if living_world != null else ""
+
+
+func travelers_at(node_id: String) -> Array:
+	return living_world.travelers_at(node_id) if living_world != null else []
+
+
+func traveler_state(character_id: String) -> Dictionary:
+	return living_world.traveler_state(character_id) if living_world != null else {}
+
+
+func traveler_context_line(character_id: String) -> String:
+	return living_world.traveler_context_line(character_id) if living_world != null else ""
+
+
+func departed_traveler_modifier(node_id: String, character_id: String) -> Dictionary:
+	return living_world.departed_traveler_modifier(node_id, character_id) if living_world != null else {}
+
+
+func register_reputation_incident_type(incident_type: String, definition: Dictionary) -> bool:
+	return living_world != null and living_world.register_reputation_incident_type(incident_type, definition)
+
+
+func record_reputation_incident(incident_type: String, node_id: String, magnitude: float = 1.0, context: Dictionary = {}) -> Dictionary:
+	return living_world.record_reputation_incident(incident_type, node_id, magnitude, context) if living_world != null else {}
+
+
+func local_reputation(node_id: String) -> Dictionary:
+	return living_world.local_reputation(node_id) if living_world != null else {}
+
+
+func reputation_value(node_id: String, incident_type: String = "") -> float:
+	return living_world.reputation_value(node_id, incident_type) if living_world != null else 0.0
 
 
 func weather_now() -> String:
@@ -146,6 +248,7 @@ func snapshot() -> Dictionary:
 		"calendar_cycle": calendar_cycle.duplicate(true),
 		"calendar_offset_actions": calendar_offset_actions,
 		"happenings": happenings.duplicate(true),
+		"living_world": living_world.snapshot() if living_world != null else {},
 	}
 
 
@@ -265,6 +368,84 @@ func _refresh_current_profiles() -> void:
 			if not flag_id.is_empty():
 				_active_town_flags[flag_id] = true
 	_rebuild_modifier_profiles()
+
+
+func _sync_condition_rumor_facts() -> void:
+	if living_world == null or living_world.node_metadata.is_empty():
+		return
+	living_world.remove_rumor_facts(TownNetworkScript.RUMOR_CLASS_CONDITION)
+	var sources: Array = []
+	for happening in happenings:
+		var start_action := maxi(0, int(happening.get("start_action", 0)))
+		var end_action := maxi(start_action + 1, int(happening.get("end_action", start_action + 1)))
+		if action_index >= end_action or start_action > action_index + 12:
+			continue
+		var happening_id := str(happening.get("id", "")).strip_edges()
+		if happening_id.is_empty():
+			continue
+		sources.append({
+			"source_id": happening_id,
+			"display_name": str(happening.get("display_name", happening_id.replace("_", " ").capitalize())),
+			"condition_line": "%s is moving through town." % str(happening.get("display_name", happening_id.replace("_", " ").capitalize())),
+			"start_action": start_action,
+			"end_action": end_action,
+			"incoming_window_actions": 12,
+		})
+	for segment in weather_schedule:
+		var start_action := maxi(0, int(segment.get("start_action", 0)))
+		var end_action := maxi(start_action + 1, int(segment.get("end_action", start_action + 1)))
+		if action_index >= end_action or start_action > action_index + 12:
+			continue
+		var weather_id := str(segment.get("id", "clear")).strip_edges()
+		if weather_id == "clear":
+			continue
+		sources.append({
+			"source_id": "weather:%s:%d" % [weather_id, start_action],
+			"display_name": _display_name(weather_id),
+			"condition_line": "%s is moving in." % _display_name(weather_id),
+			"start_action": start_action,
+			"end_action": end_action,
+			"incoming_window_actions": 12,
+		})
+	var node_ids: Array = living_world.node_metadata.keys()
+	node_ids.sort()
+	for source in sources:
+		for node_id_value in node_ids:
+			var node_id := str(node_id_value)
+			var source_id := str(source.get("source_id", ""))
+			var payload: Dictionary = (source as Dictionary).duplicate(true)
+			payload["target_node_id"] = node_id
+			living_world.register_rumor_fact(
+				TownNetworkScript.RUMOR_CLASS_CONDITION,
+				"condition:%s:%s" % [source_id.replace(":", "_"), node_id],
+				payload
+			)
+	for node_id_value in node_ids:
+		var node_id := str(node_id_value)
+		var cass_modifier := living_world.departed_traveler_modifier(node_id, "cass_rival_counter")
+		if cass_modifier.is_empty():
+			continue
+		living_world.register_rumor_fact(TownNetworkScript.RUMOR_CLASS_CONDITION, "condition:cass_left:%s" % node_id, {
+			"target_node_id": node_id,
+			"source_id": "cass_rival_counter",
+			"display_name": "Cass Venn",
+			"condition_line": "Cass Venn already worked that room.",
+			"start_action": int(cass_modifier.get("departed_action", action_index)),
+			"end_action": action_index + maxi(1, int(cass_modifier.get("remaining_actions", 1))),
+			"incoming_window_actions": 0,
+		})
+	var silas_state := living_world.traveler_state("silas_snitch")
+	var silas_node := str(silas_state.get("node_id", ""))
+	if not silas_node.is_empty():
+		living_world.register_rumor_fact(TownNetworkScript.RUMOR_CLASS_CONDITION, "condition:silas_drinks:%s" % silas_node, {
+			"target_node_id": silas_node,
+			"source_id": "silas_snitch",
+			"display_name": "Silas Crow",
+			"condition_line": "Silas Crow is drinking there.",
+			"start_action": int(silas_state.get("arrived_action", action_index)),
+			"end_action": int(silas_state.get("depart_action", action_index + 1)),
+			"incoming_window_actions": 0,
+		})
 
 
 func _rebuild_modifier_profiles() -> void:

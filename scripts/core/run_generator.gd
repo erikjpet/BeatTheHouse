@@ -28,7 +28,7 @@ func next_environment(run_state: RunState, target_archetype_id: String = "", tar
 	var scenario := _select_scenario(run_state, str(archetype.get("id", "")), rng)
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
-	run_state.apply_town_generation_modifiers(environment_data)
+	run_state.apply_town_generation_modifiers(environment_data, rng)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.save_rng(rng)
@@ -139,7 +139,7 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 		var depth := maxi(0, int(run_state.current_environment.get("depth", run_state.environment_travel_count())))
 		var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
 		environment_data = environment.to_dict()
-		run_state.apply_town_generation_modifiers(environment_data)
+		run_state.apply_town_generation_modifiers(environment_data, rng)
 		environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 		run_state.save_rng(rng)
 	_apply_cage_gift_shop_stock(run_state, environment_data)
@@ -271,6 +271,8 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 		run_state.set_world_map(_apply_tutorial_initial_map_targets(initial_map, run_state))
 		initialized_tutorial_map = run_state.is_tutorial_run()
 	var map_data := run_state.world_map
+	run_state.configure_town_world(map_data)
+	_prime_town_scenarios(run_state, map_data)
 	var target_id := target_archetype_id.strip_edges()
 	var current_node_id := run_state.current_world_node_id()
 	if run_state.current_environment.is_empty() and target_id.is_empty():
@@ -366,7 +368,7 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 	var scenario := _select_scenario(run_state, str(archetype.get("id", "")), rng)
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
-	run_state.apply_town_generation_modifiers(environment_data)
+	run_state.apply_town_generation_modifiers(environment_data, rng)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.save_rng(rng)
@@ -379,6 +381,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	var stored_environment: Dictionary = node.get("environment", {}) if typeof(node.get("environment", {})) == TYPE_DICTIONARY else {}
 	if not stored_environment.is_empty() and str(node.get("state", "")) == WorldMap.STATE_VISITED:
 		var restored := stored_environment.duplicate(true)
+		run_state.apply_town_living_world_context(restored, rng.fork("town_reentry:%s" % node_id))
 		_apply_world_travel_targets(restored, run_state, map_data, node_id)
 		restored["world_node_id"] = node_id
 		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored)
@@ -392,7 +395,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	var scenario := _select_scenario(run_state, str(archetype.get("id", node_id)), rng)
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
-	run_state.apply_town_generation_modifiers(environment_data)
+	run_state.apply_town_generation_modifiers(environment_data, rng)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	environment_data["world_node_id"] = node_id
 	if str(archetype.get("kind", "")) == "home":
@@ -582,12 +585,48 @@ func _archetype_by_id(id: String) -> Dictionary:
 	return {}
 
 
+func _prime_town_scenarios(run_state: RunState, map_data: Dictionary) -> void:
+	if run_state == null or library == null:
+		return
+	var node_ids: Array = []
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return
+	for node_value in nodes_value as Array:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node_id := str((node_value as Dictionary).get("id", "")).strip_edges()
+		if not node_id.is_empty():
+			node_ids.append(node_id)
+	node_ids.sort()
+	for node_id_value in node_ids:
+		var node_id := str(node_id_value)
+		if not run_state.seeded_scenario_for_node(node_id).is_empty():
+			continue
+		var scenario_rng := run_state.create_rng("town_scenario_seed:%s" % node_id)
+		var scenario := _select_scenario(run_state, node_id, scenario_rng)
+		if not scenario.is_empty():
+			run_state.seed_scenario_for_node(node_id, scenario)
+
+
 func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream) -> Dictionary:
 	if run_state == null or library == null or rng == null:
 		return {}
 	var pool := library.scenarios_for_archetype(archetype_id)
 	if pool.is_empty():
 		return {}
+	var seeded_definition := run_state.seeded_scenario_definition_for_node(archetype_id)
+	if not seeded_definition.is_empty():
+		return seeded_definition
+	var seeded := run_state.seeded_scenario_for_node(archetype_id)
+	var seeded_id := str(seeded.get("id", "")).strip_edges()
+	if not seeded_id.is_empty():
+		for definition_value in pool:
+			if typeof(definition_value) != TYPE_DICTIONARY:
+				continue
+			var definition: Dictionary = definition_value
+			if str(definition.get("id", "")) == seeded_id:
+				return definition.duplicate(true)
 	var modifiers := _copy_dict(run_state.challenge_config.get("modifiers", {}))
 	var pins := _copy_dict(modifiers.get("scenario_pins", {}))
 	var pinned_id := str(pins.get(archetype_id, "")).strip_edges()
