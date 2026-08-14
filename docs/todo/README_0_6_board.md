@@ -72,7 +72,7 @@ Wave C games are intentionally parallel-friendly.
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | env06_2 | `env06_2_tier1_scenarios_prompt.md` | DONE | env06_1 | crew06_5 | PM:Codex/sub:1 | 2026-08-14 | 2026-08-14 | PM verified all 17 scenarios/events, tutorial neutrality, real-selector reachability, full integrated gates, determinism, and zero-overlap visual QA PASS. |
-| env06_3 | `env06_3_tier2_scenarios_prompt.md` | IN_PROGRESS | env06_1, env06_4 | crew06_5, crew06_8 | PM:Codex/sub:4 | 2026-08-14 | | PM-orchestrated Wave B Stage 2 execution. |
+| env06_3 | `env06_3_tier2_scenarios_prompt.md` | DONE | env06_1, env06_4 | crew06_5, crew06_8 | PM:Codex/sub:4 | 2026-08-14 | 2026-08-14 | PM verified 25 scenarios, production route contracts, all integrated gates, determinism, and 14/14 zero-overlap visual captures PASS. |
 | env06_4 | `env06_4_punchline_rework_prompt.md` | DONE | env06_1 | env06_3, crew06_2, crew06_6 | PM:Codex/sub:2 | 2026-08-14 | 2026-08-14 | PM verified scope/design, L2 compatibility and migration, systems/UI/determinism/visual gates, and three-layer zero-overlap smoke PASS. |
 | town06_2 | `town06_2_rumors_travelers_prompt.md` | DONE | env06_1, town06_1 | town06_3, crew06_3, crew06_9, chain06_1 | PM:Codex/sub:3 | 2026-08-14 | 2026-08-14 | PM verified truth traces, heard tier, itineraries, reputation propagation, save compatibility, and combined systems/UI/determinism/visual gates PASS. |
 | town06_3 | `town06_3_police_sweep_prompt.md` | IN_PROGRESS | town06_1, town06_2 | streets06_1 (full), crew06_3 (full) | PM:Codex/sub:5 | 2026-08-14 | | PM-orchestrated Wave B Stage 2 execution. |
@@ -231,6 +231,11 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   `pawn_shop_serial_check_day` through the existing scenario-weight API.
   Serial-Check Day may also declare `law:pressure`; missing ids/tags remain
   inert so either branch integrates independently and Grand Casino stays out.
+- 2026-08-14 [env06_3] Grand Casino scenario mutations are constrained to
+  presentation, crowd, comps, and heat. Gala and Convention expose only their
+  inert identity flags; Audit additionally exposes the inert
+  `heist_plan_a_criteria` anchor. Invite, chips, Players Card, and showdown
+  flows retain their production gates and are covered under all three nights.
 
 ## Work Log
 
@@ -279,3 +284,8 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   and town06_3 after env06_4 and town06_2 passed independent integrated-tree
   acceptance; two isolated subagents assigned, with PM retaining board,
   integration, verification, and archival ownership.
+- 2026-08-14 [env06_3] DONE; 25 mechanically distinct Tier-2/Grand Casino
+  scenarios now supply layer-aware events, deterministic phase/lock behavior,
+  Debt Court and Estate Lot production interactions, and the Buyout, Whale,
+  Festival, Estate Lot, and Audit heist/recruitment anchors. This completes
+  crew06_5's environment dependency and advances crew06_8 toward claimable.
