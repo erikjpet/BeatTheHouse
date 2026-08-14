@@ -23,6 +23,7 @@ var last_encounter_segment: int = -1
 var last_encounter_node_id: String = ""
 var last_adjacent_sighting_segment: int = -1
 var config: Dictionary = {}
+var reroute_history: Array = []
 
 var _node_metadata: Dictionary = {}
 var _neighbors_by_node: Dictionary = {}
@@ -43,6 +44,7 @@ func reset(p_seed_value: int, source_config: Dictionary = {}) -> void:
 	last_encounter_node_id = ""
 	last_adjacent_sighting_segment = -1
 	config = source_config.duplicate(true)
+	reroute_history = []
 	_node_metadata = {}
 	_neighbors_by_node = {}
 
@@ -218,6 +220,59 @@ func swept_window(node_id: String) -> Dictionary:
 	return result
 
 
+# Narrow landed-consumer seam: deterministically rewrites future segments along
+# the graph toward one eligible target. Current/past segments never move.
+func request_reroute_toward(candidate_ids: Array, request_token: String) -> Dictionary:
+	var current := status()
+	var request := {
+		"token": request_token.strip_edges(),
+		"requested_action": action_index,
+		"from_node_id": str(current.get("current_node_id", "")),
+		"target_node_id": "",
+		"path": [],
+		"applied_segment_indices": [],
+		"applied": false,
+	}
+	if disabled or not bool(current.get("active", false)) or segment_index + 1 >= segments.size():
+		reroute_history.append(request)
+		return request.duplicate(true)
+	var resolved_candidates: Array = []
+	for candidate_value in candidate_ids:
+		var candidate := str(candidate_value).strip_edges()
+		for node_id_value in _node_metadata.keys():
+			var node_id := str(node_id_value)
+			var metadata := _dictionary(_node_metadata.get(node_id, {}))
+			if node_id == candidate or str(metadata.get("archetype_id", "")) == candidate:
+				if not resolved_candidates.has(node_id) and node_id != str(current.get("current_node_id", "")):
+					resolved_candidates.append(node_id)
+	resolved_candidates.sort()
+	if resolved_candidates.is_empty():
+		reroute_history.append(request)
+		return request.duplicate(true)
+	var token := request_token.strip_edges()
+	var target := str(resolved_candidates[_stable_hash("%d:%s:numbers_reroute" % [seed_value, token]) % resolved_candidates.size()])
+	var path := _shortest_path(str(current.get("current_node_id", "")), target)
+	request["target_node_id"] = target
+	request["path"] = path.duplicate()
+	if path.size() < 2:
+		reroute_history.append(request)
+		return request.duplicate(true)
+	var applied_indices: Array = []
+	for path_index in range(1, path.size()):
+		var future_index := segment_index + path_index
+		if future_index >= segments.size():
+			break
+		var segment := _dictionary(segments[future_index]).duplicate(true)
+		segment["node_id"] = str(path[path_index])
+		segment["reroute_token"] = token
+		segments[future_index] = segment
+		applied_indices.append(future_index)
+	request["applied_segment_indices"] = applied_indices
+	request["applied"] = not applied_indices.is_empty()
+	reroute_history.append(request)
+	return request.duplicate(true)
+
+
 func scenario_pressure_multiplier(node_id: String, scenario_id: String, tags: Array) -> float:
 	if GRAND_CASINO_IDS.has(node_id) or not is_adjacent(node_id):
 		return 1.0
@@ -248,6 +303,7 @@ func snapshot() -> Dictionary:
 		"last_encounter_node_id": last_encounter_node_id,
 		"last_adjacent_sighting_segment": last_adjacent_sighting_segment,
 		"config": config.duplicate(true),
+		"reroute_history": reroute_history.duplicate(true),
 	}
 
 
@@ -270,6 +326,7 @@ func restore(source: Dictionary, p_seed_value: int, source_config: Dictionary = 
 	last_encounter_node_id = str(source.get("last_encounter_node_id", ""))
 	last_adjacent_sighting_segment = int(source.get("last_adjacent_sighting_segment", -1))
 	config = _dictionary(source.get("config", source_config)).duplicate(true)
+	reroute_history = _dictionary_array(source.get("reroute_history", []))
 	_sync_segment_index()
 	_prune_windows()
 	return true
@@ -358,6 +415,7 @@ func _index_world(map_data: Dictionary) -> void:
 			continue
 		_node_metadata[node_id] = {
 			"id": node_id,
+			"archetype_id": str(node_value.get("archetype_id", node_id)),
 			"kind": str(node_value.get("kind", "")),
 			"tier": maxi(1, int(node_value.get("tier", 1))),
 		}
@@ -398,6 +456,35 @@ func _prune_windows() -> void:
 		var window := _dictionary(swept_windows_by_node.get(node_id, {}))
 		if window.is_empty() or action_index >= int(window.get("end_action", action_index)):
 			swept_windows_by_node.erase(node_id)
+
+
+func _shortest_path(start_node: String, target_node: String) -> Array:
+	if start_node.is_empty() or target_node.is_empty() or not _node_metadata.has(start_node) or not _node_metadata.has(target_node):
+		return []
+	if start_node == target_node:
+		return [start_node]
+	var queue: Array = [start_node]
+	var previous := {start_node: ""}
+	while not queue.is_empty():
+		var node_id := str(queue.pop_front())
+		var neighbors := _string_array(_neighbors_by_node.get(node_id, []))
+		neighbors.sort()
+		for neighbor_value in neighbors:
+			var neighbor := str(neighbor_value)
+			if previous.has(neighbor):
+				continue
+			previous[neighbor] = node_id
+			if neighbor == target_node:
+				var path: Array = [target_node]
+				var cursor := target_node
+				while cursor != start_node:
+					cursor = str(previous.get(cursor, ""))
+					if cursor.is_empty():
+						return []
+					path.push_front(cursor)
+				return path
+			queue.append(neighbor)
+	return []
 
 
 static func _dictionary(value: Variant) -> Dictionary:

@@ -17,6 +17,7 @@ const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const StreetsRunModelScript := preload("res://scripts/core/streets_run_model.gd")
+const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
 
 const DEFAULT_BANKROLL := 100
 const LOCAL_RISK_DECAY_BY_DISTANCE := {
@@ -299,6 +300,7 @@ var crew_jobs: Dictionary = {}
 var crew_grievance_sequence: int = 0
 var crew_job_sequence: int = 0
 var active_streets_run: Dictionary = {}
+var numbers_state: NumbersModel
 var heat_history: Array = []
 var town_state: TownState
 var simulation_msec: int = 0
@@ -383,6 +385,8 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	crew_grievance_sequence = 0
 	crew_job_sequence = 0
 	active_streets_run = {}
+	numbers_state = NumbersModelScript.new()
+	numbers_state.reset(seed_value)
 	heat_history = []
 	town_state = TownStateScript.new()
 	town_state.generate(seed_value)
@@ -6320,6 +6324,267 @@ func _streets_event_consumer_payload(consequences: Dictionary) -> Dictionary:
 	}
 
 
+# Returns the hidden, saved Numbers state projection used by venue and desk surfaces.
+func numbers_status() -> Dictionary:
+	if numbers_state == null:
+		return {}
+	return numbers_state.status()
+
+
+# Buys one physical slip at the current Numbers venue. The model owns the slip;
+# inventory carries one contraband stack marker so sweep handling stays canonical.
+func numbers_buy_slip(digits: String, stake: int, play_type: String) -> Dictionary:
+	if numbers_state == null:
+		return {"ok": false, "message": "The book is not running."}
+	var venue_id := str(current_environment.get("archetype_id", current_world_node_id())).strip_edges()
+	if numbers_state.venue_definition(venue_id).is_empty():
+		return {"ok": false, "message": "There is no Numbers book here."}
+	if bankroll < stake:
+		return {"ok": false, "message": "That stake is not in your pocket."}
+	var result := numbers_state.buy_slip(venue_id, digits, stake, play_type, numbers_state.known_number())
+	if not bool(result.get("ok", false)):
+		return result
+	change_bankroll(-stake)
+	_sync_numbers_inventory_marker()
+	return result
+
+
+# Silas is an encounter, not a menu. This call succeeds only at his current node.
+func numbers_buy_silas_tip(today_number: bool = false) -> Dictionary:
+	if numbers_state == null or town_state == null:
+		return {"ok": false, "message": "Silas is not here."}
+	var current_node := current_world_node_id()
+	if town_state.traveler_node("silas_snitch") != current_node:
+		return {"ok": false, "message": "Silas is drinking somewhere else."}
+	var tuning := _copy_dict(NumbersModelScript.tuning().get("past_posting", {}))
+	var price := int(tuning.get("silas_today_number_price", 24)) if today_number else int(tuning.get("silas_tip_price", 12))
+	if bankroll < price:
+		return {"ok": false, "message": "Silas does not extend credit."}
+	change_bankroll(-price)
+	var result := numbers_state.buy_silas_tip(today_number)
+	result["price"] = price
+	result["message"] = "Silas sells a time and a place, not an apology."
+	return result
+
+
+# Lucky's associate route consumes the frozen Streets multi-stop entry point.
+func numbers_begin_collection_route() -> Dictionary:
+	if numbers_state == null or CrewStateModelScript.RANK_IDS.find(crew_rank("crew_lucky")) < CrewStateModelScript.RANK_IDS.find("associate"):
+		return {"ok": false, "message": "Lucky does not hand that bag to strangers."}
+	var tuning := _copy_dict(NumbersModelScript.tuning().get("runner", {}))
+	var remaining := numbers_state.post_action(numbers_state.day_at(_crew_action_index())) - _crew_action_index()
+	if remaining <= 0:
+		return {"ok": false, "message": "Today's collection clock is already gone."}
+	var venue_ids: Array = []
+	for venue_value in NumbersModelScript.tuning().get("venues", []):
+		if typeof(venue_value) != TYPE_DICTIONARY:
+			continue
+		var venue_id := str((venue_value as Dictionary).get("id", ""))
+		if venue_id != "small_underground_casino":
+			venue_ids.append(venue_id)
+	venue_ids.sort()
+	var stop_count_range := _copy_array(tuning.get("stop_count", [3, 4]))
+	var stop_count := clampi(3 + posmod(seed_value + numbers_state.day_at(_crew_action_index()), 2), 3, mini(4, venue_ids.size()))
+	if stop_count_range.size() >= 2:
+		stop_count = clampi(stop_count, int(stop_count_range[0]), int(stop_count_range[1]))
+	var rotation := posmod(seed_value + numbers_state.day_at(_crew_action_index()), maxi(1, venue_ids.size()))
+	var stops: Array = []
+	var bag_value := 0
+	var bag_range := _copy_array(tuning.get("bag_value_per_venue", [35, 70]))
+	var bag_min := int(bag_range[0]) if not bag_range.is_empty() else 35
+	var bag_max := int(bag_range[1]) if bag_range.size() > 1 else bag_min
+	for index in range(stop_count):
+		var venue_id := str(venue_ids[(rotation + index) % venue_ids.size()])
+		stops.append({"id": "numbers_book_%s" % venue_id, "node_id": venue_id, "label": str(numbers_state.venue_definition(venue_id).get("label", venue_id.replace("_", " ").capitalize()))})
+		bag_value += bag_min + posmod(seed_value + numbers_state.day_at(_crew_action_index()) * 31 + index * 17, maxi(1, bag_max - bag_min + 1))
+	var pay := int(floor(float(bag_value) * float(int(tuning.get("pay_percent", 18))) / 100.0))
+	var offered := job_offer({
+		"id": "numbers_collection",
+		"member_id": "crew_lucky",
+		"kind": "numbers_collection",
+		"payload": {"bag_value": bag_value, "stops": stops.duplicate(true)},
+		"expiry_in_actions": remaining,
+		"rewards": {"cash": 0, "trust": int(tuning.get("trust_on_time", 5))},
+		"failure": {"trust": int(tuning.get("trust_late", -6)), "grievance_kind": "", "grievance_weight": 1},
+	})
+	var job_id := str(offered.get("id", ""))
+	if job_id.is_empty() or job_accept(job_id).is_empty() or job_activate(job_id).is_empty():
+		return {"ok": false, "message": "Lucky keeps the bag."}
+	var started := streets_begin_multi_stop({
+		"route_id": "numbers_collection:%d" % numbers_state.day_at(_crew_action_index()),
+		"job_id": job_id,
+		"origin_node_id": current_world_node_id(),
+		"destination_node_id": "small_underground_casino",
+		"distance": "local",
+		"attempt": numbers_state.day_at(_crew_action_index()),
+		"stops": stops,
+		"deadline_actions": remaining,
+		"fast_threshold_actions": maxi(1, remaining - 4),
+		"spot_heat_per_new_spot": 3,
+		"order_mode": "free",
+		"cargo_id": "numbers_slips",
+		"consumer_payload": {
+			"success": {"cash": pay, "heat": 0, "flags": {"numbers_route_paid": true}},
+			"failure": {"cash": 0, "heat": 7, "flags": {"numbers_route_failed": true}},
+		},
+		"travel_continuation": {"enabled": true, "target_id": "small_underground_casino", "target_label": "The Punchline", "choice_data": {"enabled": true}},
+	})
+	if not bool(started.get("ok", false)):
+		job_resolve(job_id, "failed")
+		return started
+	numbers_state.begin_collection(stops, bag_value, job_id)
+	started["job_id"] = job_id
+	started["bag_value"] = bag_value
+	started["pay"] = pay
+	return started
+
+
+# Starts the high-trust fix through the frozen Streets package mode.
+func numbers_begin_fix_bribe() -> Dictionary:
+	if numbers_state == null:
+		return {"ok": false, "message": "The desk is dark."}
+	numbers_state.fix_unlock(_numbers_fix_eligible())
+	var begun := numbers_state.fix_begin_bribe()
+	if not bool(begun.get("ok", false)):
+		return begun
+	var bribe := _copy_dict(_copy_dict(NumbersModelScript.tuning().get("fix", {})).get("bribe_run", {}))
+	var route := _streets_default_edge()
+	var started := streets_begin({
+		"mode": "package",
+		"route_id": "numbers_fix_bribe:%d" % int(_copy_dict(begun.get("fix", {})).get("target_day", 0)),
+		"origin_node_id": str(route.get("origin_node_id", current_world_node_id())),
+		"destination_node_id": str(route.get("destination_node_id", "back_alley")),
+		"distance": "far",
+		"deadline_actions": int(bribe.get("deadline_actions", 22)),
+		"spot_heat_per_new_spot": int(bribe.get("spot_heat_per_new_spot", 6)),
+		"scenario_patrol_density_delta": int(bribe.get("scenario_patrol_density_delta", 3)),
+		"cargo_id": "numbers_bribe_envelope",
+		"consumer_payload": {"success": {"cash": 0, "heat": 0}, "failure": {"cash": 0, "heat": 12}},
+	})
+	if not bool(started.get("ok", false)):
+		numbers_state.fix_record_bribe(false)
+	return started
+
+
+# Desk allocation surface: venue ids map to integer stakes.
+func numbers_fix_allocate(allocations: Dictionary) -> Dictionary:
+	if numbers_state == null:
+		return {"ok": false, "message": "The desk is dark."}
+	var result := numbers_state.fix_allocate(allocations)
+	var operation_heat := maxi(0, int(result.get("operation_heat", 0)))
+	if operation_heat > 0:
+		add_suspicion("numbers_fix_concentration", operation_heat, "contraband", true, {}, true)
+	return result
+
+
+func _numbers_fix_eligible() -> bool:
+	var ranks := _copy_dict(_copy_dict(NumbersModelScript.tuning().get("fix", {})).get("member_ranks", {}))
+	for member_value in ranks.keys():
+		var required := str(ranks.get(member_value, "made"))
+		if CrewStateModelScript.RANK_IDS.find(crew_rank(str(member_value))) < CrewStateModelScript.RANK_IDS.find(required):
+			return false
+	return not ranks.is_empty()
+
+
+func _apply_numbers_events(events: Array) -> void:
+	if numbers_state == null:
+		return
+	for event_value in events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = event_value
+		match str(event.get("type", "")):
+			"numbers_post":
+				if str(current_environment.get("archetype_id", "")) == "small_underground_casino":
+					numbers_state.reveal_number(int(event.get("day", 0)), "punchline_post")
+				register_rumor_fact("numbers_whisper", "numbers_post:%d" % int(event.get("day", 0)), {
+					"target_node_id": "small_underground_casino",
+					"source_id": "numbers_handle",
+					"fact_detail": "the handle posted %s" % str(event.get("number", "000")),
+					"number": str(event.get("number", "000")),
+				})
+			"numbers_day_rumors":
+				var day := int(event.get("day", 0))
+				var yesterday := str(event.get("yesterday_number", ""))
+				if not yesterday.is_empty():
+					register_rumor_fact("numbers_whisper", "numbers_yesterday:%d" % day, {
+						"target_node_id": "bar", "source_id": "numbers_yesterday", "fact_detail": "yesterday's handle was %s" % yesterday, "number": yesterday,
+					})
+				register_rumor_fact("numbers_superstition", "numbers_hot_talk:%d" % day, {
+					"target_node_id": "corner_store", "source_id": "numbers_hot_talk", "fact_detail": str(event.get("hot_number", "000")), "non_factual_prediction": true,
+				})
+			"numbers_settlement":
+				var payout := maxi(0, int(event.get("payout", 0)))
+				if payout > 0:
+					change_bankroll(payout, true)
+			"numbers_past_post_success":
+				var past_payout := maxi(0, int(event.get("payout", 0)))
+				if past_payout > 0:
+					change_bankroll(past_payout, true)
+			"numbers_past_post_detected":
+				var slip := _copy_dict(event.get("slip", {}))
+				var penalty := maxi(1, int(event.get("penalty", 1)))
+				var debt_id := "numbers_past_post_%s" % str(slip.get("id", numbers_state.action_index))
+				add_debt({
+					"id": debt_id,
+					"lender_id": "crew_knuckles",
+					"debt_kind": "street_debt",
+					"principal": penalty,
+					"balance": penalty,
+					"status": "active",
+					"source_location_id": str(slip.get("venue_id", current_world_node_id())),
+				})
+				enqueue_triggered_event("numbers_knuckles_collection", "numbers", {"debt_id": debt_id, "penalty": penalty, "slip_id": str(slip.get("id", ""))}, {"presentation": "talk"})
+				if _numbers_on_crew_path():
+					grievance_add({"member_id": "crew_knuckles", "kind": "numbers_past_posting_in_colors", "weight": 2, "source_ref": str(slip.get("id", ""))})
+			"numbers_fix_payday":
+				var cut := maxi(0, int(event.get("player_cut", 0)))
+				if cut > 0:
+					change_bankroll(cut, true)
+				crew_add_trust("crew_lucky", 4, "numbers_fix_payday")
+				crew_add_trust("crew_mags", 4, "numbers_fix_payday")
+			"numbers_leak_active":
+				_apply_numbers_leak(_copy_dict(event.get("leak", {})))
+	_sync_numbers_inventory_marker()
+
+
+func _apply_numbers_leak(leak: Dictionary) -> void:
+	var number := str(leak.get("number", "000"))
+	for venue_value in NumbersModelScript.tuning().get("venues", []):
+		if typeof(venue_value) != TYPE_DICTIONARY:
+			continue
+		var venue_id := str((venue_value as Dictionary).get("id", ""))
+		register_rumor_fact("numbers_whisper", "numbers_leak:%d:%s" % [int(leak.get("active_day", 0)), venue_id], {
+			"target_node_id": venue_id,
+			"source_id": "numbers_fix_leak",
+			"fact_detail": "everybody is piling onto %s" % number,
+			"number": number,
+			"pattern": number,
+			"declared_pool_multiplier_percent": int(leak.get("declared_pool_multiplier_percent", 100)),
+			"strictness_delta": int(leak.get("strictness_delta", 0)),
+		})
+	if bool(leak.get("sweep_reroute_requested", false)) and town_state != null:
+		var target_ids: Array = []
+		for venue_value in NumbersModelScript.tuning().get("venues", []):
+			if typeof(venue_value) == TYPE_DICTIONARY:
+				target_ids.append(str((venue_value as Dictionary).get("id", "")))
+		town_state.request_sweep_reroute(target_ids, "numbers_leak:%d" % int(leak.get("successes", 0)))
+
+
+func _numbers_on_crew_path() -> bool:
+	for member_id in CrewStateModelScript.MEMBER_IDS:
+		if crew_trust(member_id) > 0:
+			return true
+	return false
+
+
+func _sync_numbers_inventory_marker() -> void:
+	if numbers_state != null and numbers_state.open_slip_count() > 0:
+		add_item("numbers_slips")
+	else:
+		remove_item("numbers_slips")
+
+
 # Generic mode-owned entry point. Callers opt in explicitly; the world-map
 # travel path never calls this method.
 func streets_begin(spec: Dictionary) -> Dictionary:
@@ -6389,6 +6654,21 @@ func streets_take_travel_continuation() -> Dictionary:
 func streets_apply_action(action: Dictionary) -> Dictionary:
 	if not streets_has_active_run():
 		return {"ok": false, "message": "No live route is waiting on you."}
+	var route_id := str(active_streets_run.get("route_id", ""))
+	if route_id.begins_with("numbers_fix_bribe:") and str(action.get("verb", "")) == "stash":
+		return {"ok": false, "message": "The envelope is radioactive. It never leaves your hand."}
+	if route_id.begins_with("numbers_collection:"):
+		if bool(narrative_flags.get("numbers_collection_sweep_confiscation_pending", false)):
+			narrative_flags.erase("numbers_collection_sweep_confiscation_pending")
+			action = {"verb": "ditch"}
+		else:
+			var visited_ids: Array = []
+			for stop_value in _copy_array(streets_snapshot().get("stops", [])):
+				if typeof(stop_value) == TYPE_DICTIONARY and bool((stop_value as Dictionary).get("visited", false)):
+					visited_ids.append(str((stop_value as Dictionary).get("id", "")))
+			var next_node := numbers_state.collection_next_node(visited_ids) if numbers_state != null else ""
+			if town_state != null and not next_node.is_empty() and not town_state.swept_window(next_node).is_empty() and str(action.get("verb", "")) != "wait":
+				return {"ok": false, "paused": true, "wait_available": true, "message": "The book at %s is swept. Wait a boundary for the unit to move." % next_node.replace("_", " ").capitalize(), "snapshot": streets_snapshot()}
 	var times_spotted_before := int(active_streets_run.get("times_spotted", 0))
 	var applied := StreetsRunModelScript.apply_action(active_streets_run, action)
 	if not bool(applied.get("ok", false)):
@@ -6435,6 +6715,15 @@ func _apply_streets_resolution() -> void:
 	var job_id := str(active_streets_run.get("job_id", ""))
 	if not job_id.is_empty():
 		job_resolve(job_id, "success" if succeeded else "failed")
+	if numbers_state != null:
+		var route_id := str(active_streets_run.get("route_id", ""))
+		if route_id.begins_with("numbers_collection:"):
+			numbers_state.resolve_collection(succeeded, reason, resolution)
+			if not succeeded and reason == "ditched" and not bool(narrative_flags.get("numbers_collection_was_swept", false)):
+				grievance_add({"member_id": "crew_lucky", "kind": "job_abandoned", "weight": 1, "source_ref": str(active_streets_run.get("job_id", route_id))})
+			narrative_flags.erase("numbers_collection_was_swept")
+		elif route_id.begins_with("numbers_fix_bribe:"):
+			numbers_state.fix_record_bribe(succeeded, resolution)
 	if bool(resolution.get("snitch_seen", false)):
 		var destination_id := str(active_streets_run.get("destination_node_id", current_world_node_id()))
 		register_rumor_fact("numbers_whisper", "streets_snitch:%s:%d" % [str(active_streets_run.get("route_id", "run")), int(active_streets_run.get("turn", 0))], {
@@ -6961,6 +7250,16 @@ func town_status_line() -> String:
 func configure_town_world(map_data: Dictionary) -> void:
 	if town_state != null:
 		town_state.configure_world(map_data)
+		_register_numbers_discovery_rumors()
+
+
+func _register_numbers_discovery_rumors() -> void:
+	register_rumor_fact("numbers_whisper", "numbers_stagger:gas_late", {
+		"target_node_id": "gas_station_casino", "source_id": "numbers_staggered_close", "fact_detail": "the gas book writes two ticks after the Punchline posts", "numbers_knowledge_fragment": true,
+	})
+	register_rumor_fact("numbers_whisper", "numbers_stagger:corner_late", {
+		"target_node_id": "corner_store", "source_id": "numbers_staggered_close", "fact_detail": "the corner jar stays open four ticks past the first post", "numbers_knowledge_fragment": true,
+	})
 
 
 func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
@@ -7015,6 +7314,10 @@ func hear_rumor(rumor_id: String) -> Dictionary:
 			continue
 		remaining.append(rumor_value)
 	current_environment["town_rumors"] = remaining
+	var fact := rumor_fact(str(heard.get("fact_id", "")))
+	var payload := _copy_dict(fact.get("payload", {}))
+	if numbers_state != null and bool(payload.get("numbers_knowledge_fragment", false)):
+		numbers_state.hear_staggered_close_rumor(str(heard.get("fact_id", "")))
 	return heard
 
 
@@ -7906,6 +8209,8 @@ func advance_environment_turns(amount: int = 1) -> void:
 		town_state.advance_actions(safe_amount)
 	simulation_msec = maxi(0, simulation_msec + safe_amount * SIMULATION_ACTION_MSEC)
 	event_cadence_advance_actions(safe_amount)
+	if numbers_state != null:
+		_apply_numbers_events(numbers_state.advance_to(_crew_action_index()))
 	var alcohol_decay := safe_amount * DRUNK_TURN_DECAY
 	if alcohol_decay > 0:
 		change_drunk(-alcohol_decay)
@@ -8141,6 +8446,26 @@ func _resolve_police_sweep_encounter(claim: Dictionary) -> Dictionary:
 				result["cost_amount"] = near_miss_lock
 		_:
 			pass
+	if numbers_state != null and str(numbers_state.collection_state.get("status", "")) == "active":
+		var swept_bag_value := maxi(0, int(numbers_state.collection_state.get("bag_value", 0)))
+		var swept_collection := numbers_state.confiscate_open_slips("collection_sweep")
+		var collection := numbers_state.resolve_collection(false, "swept", result)
+		var collection_job_id := str(collection.get("job_id", ""))
+		if not collection_job_id.is_empty():
+			job_resolve(collection_job_id, "failed")
+		narrative_flags["numbers_collection_sweep_confiscation_pending"] = true
+		narrative_flags["numbers_collection_was_swept"] = true
+		var swept_heat := maxi(0, int(_copy_dict(NumbersModelScript.tuning().get("runner", {})).get("swept_heat", 14)))
+		if swept_heat > 0:
+			add_suspicion("numbers_collection_swept", swept_heat, "contraband", true, {"node_id": node_id}, true)
+		register_rumor_fact("numbers_whisper", "numbers_collection_swept:%d" % _crew_action_index(), {
+			"target_node_id": node_id, "source_id": "numbers_collection_swept", "fact_detail": "the collector lost the whole bag under blue lights",
+		})
+		result["numbers_collection_confiscated"] = swept_collection
+		result["numbers_collection_bag_value_confiscated"] = swept_bag_value
+	if str(result.get("confiscated_item_id", "")) == "numbers_slips" and numbers_state != null:
+		result["numbers_slips_confiscated"] = numbers_state.confiscate_open_slips("police_sweep")
+	_sync_numbers_inventory_marker()
 	var event_id := "police_sweep_%s" % outcome
 	enqueue_triggered_event(event_id, "police_sweep", result, {"presentation": "talk"})
 	log_story(result)
@@ -9307,6 +9632,7 @@ func to_dict() -> Dictionary:
 		"story_log_archive_count": story_log_archive_count,
 		"crew_state": _crew_state_for_save(true),
 		"active_streets_run": active_streets_run.duplicate(true),
+		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": normalize_heat_history(heat_history),
 		"town_state": town_state.snapshot() if town_state != null else {},
 		"simulation_msec": simulation_msec,
@@ -9384,6 +9710,7 @@ func to_save_snapshot() -> Dictionary:
 		"story_log_archive_count": story_log_archive_count,
 		"crew_state": _crew_state_for_save(false),
 		"active_streets_run": active_streets_run.duplicate(false),
+		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": heat_history.duplicate(false),
 		"town_state": town_state.snapshot() if town_state != null else {},
 		"simulation_msec": simulation_msec,
@@ -9482,6 +9809,14 @@ func from_dict(data: Dictionary) -> void:
 	story_flags = _copy_dict(data.get("story_flags", {}))
 	_restore_crew_state(saved_crew_state, not data.has("crew_state"))
 	active_streets_run = StreetsRunModelScript.normalize_state(data.get("active_streets_run", {}))
+	numbers_state = NumbersModelScript.new()
+	var saved_numbers_value: Variant = data.get("numbers_state", {})
+	if typeof(saved_numbers_value) == TYPE_DICTIONARY and not (saved_numbers_value as Dictionary).is_empty():
+		numbers_state.restore(saved_numbers_value as Dictionary, seed_value)
+	else:
+		numbers_state.reset(seed_value)
+		numbers_state.advance_to(_crew_action_index())
+	_sync_numbers_inventory_marker()
 	for story_flag_key in story_flags.keys():
 		narrative_flags[str(story_flag_key)] = story_flags[story_flag_key]
 	# Repair saves made before Tier-2 casino spawning had an explicit progression

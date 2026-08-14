@@ -188,6 +188,14 @@ func swept_window(node_id: String) -> Dictionary:
 	return police_sweep.swept_window(node_id) if police_sweep != null else {}
 
 
+func request_sweep_reroute(candidate_node_ids: Array, request_token: String) -> Dictionary:
+	if police_sweep == null:
+		return {}
+	var result := police_sweep.request_reroute_toward(candidate_node_ids, request_token)
+	_sync_sweep_rumor_facts()
+	return result
+
+
 func sweep_encounter_config() -> Dictionary:
 	return _dictionary(_police_sweep_config().get("encounter", {})).duplicate(true)
 
