@@ -1403,9 +1403,10 @@ func _check_m2_system_interaction_scenario(library: ContentLibrary, failures: Ar
 
 	var before_travel_bankroll := run_state.bankroll
 	var before_travel_suspicion := run_state.suspicion_level()
+	var travel_status := run_state.travel_route_status(underground_route)
 	var travel_result := _fixture_travel_result(run_state, underground_route, "small_underground_casino")
 	GameModule.apply_result(run_state, travel_result)
-	if run_state.bankroll != before_travel_bankroll - int(underground_route.get("cost", 0)):
+	if run_state.bankroll != before_travel_bankroll - int(travel_status.get("cost", underground_route.get("cost", 0))):
 		failures.append("M2 scenario travel cost did not apply through result-delta.")
 	if run_state.suspicion_level() != before_travel_suspicion + int(underground_route.get("suspicion_delta", 0)):
 		failures.append("M2 scenario travel risk did not apply through result-delta.")

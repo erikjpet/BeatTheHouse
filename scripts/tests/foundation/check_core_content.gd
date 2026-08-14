@@ -20,6 +20,7 @@ const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const EnvironmentHoursScript := preload("res://scripts/core/environment_hours.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
+const TownStateScript := preload("res://scripts/core/town_state.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
@@ -29,6 +30,7 @@ const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")
+const FoundationHudViewModelScript := preload("res://scripts/ui/foundation_hud_view_model.gd")
 const PullTabsGameScript := preload("res://scripts/games/pull_tabs.gd")
 const SlotGameScript := preload("res://scripts/games/slot.gd")
 const SlotMachineGeneratorScript := preload("res://scripts/games/slots/slot_machine_generator.gd")
@@ -463,6 +465,7 @@ func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_lib
 
 func _foundation_run_system_suite(content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
 	_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+	_foundation_run_check(report, failures, "town_state_foundation", Callable(self, "_check_town_state_foundation"), [content_library])
 	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
 	_foundation_run_check(report, failures, "onboarding_tutorial_arc", Callable(self, "_check_onboarding_tutorial_arc"), [content_library])
 	_foundation_run_check(report, failures, "attribute_glyph_foundation", Callable(self, "_check_attribute_glyph_foundation"), [content_library])
@@ -511,6 +514,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 
 func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
 	_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+	_foundation_run_check(report, failures, "town_state_foundation", Callable(self, "_check_town_state_foundation"), [content_library])
 	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
 	_foundation_run_check(report, failures, "onboarding_tutorial_arc", Callable(self, "_check_onboarding_tutorial_arc"), [content_library])
 	_foundation_run_check(report, failures, "attribute_glyph_foundation", Callable(self, "_check_attribute_glyph_foundation"), [content_library])
@@ -772,6 +776,129 @@ func _check_scenario_validation_negative_fixture(library: ContentLibrary, fixtur
 			break
 	if not matched:
 		failures.append("Scenario validation negative fixture %s did not fail for %s." % [fixture_id, expected_fragment])
+
+
+func _check_town_state_foundation(library: ContentLibrary, failures: Array) -> void:
+	if not ContentLibraryScript.town_conditions_validation_errors(library.town_conditions).is_empty():
+		failures.append("Town conditions production data did not pass its focused schema validator.")
+	var invalid_conditions := library.town_conditions.duplicate(true)
+	var invalid_weather: Array = invalid_conditions.get("weather_states", [])
+	if not invalid_weather.is_empty() and typeof(invalid_weather[0]) == TYPE_DICTIONARY:
+		var invalid_entry: Dictionary = invalid_weather[0]
+		var invalid_modifiers: Dictionary = invalid_entry.get("modifiers", {})
+		invalid_modifiers["per_frame_weather_roll"] = true
+		invalid_entry["modifiers"] = invalid_modifiers
+		invalid_weather[0] = invalid_entry
+		invalid_conditions["weather_states"] = invalid_weather
+	if ContentLibraryScript.town_conditions_validation_errors(invalid_conditions).is_empty():
+		failures.append("Town conditions validator accepted an undocumented modifier key.")
+
+	var seed := RunStateScript.text_to_seed("TOWN-STATE-FOUNDATION")
+	var town_a: TownState = TownStateScript.new()
+	var town_b: TownState = TownStateScript.new()
+	town_a.generate(seed, library.town_conditions)
+	town_b.generate(seed, library.town_conditions)
+	if JSON.stringify(town_a.snapshot()) != JSON.stringify(town_b.snapshot()):
+		failures.append("Town state schedules were not deterministic for one seed and config.")
+	if town_a.weather_schedule.is_empty() or not TownStateScript.WEATHER_IDS.has(town_a.weather_now()):
+		failures.append("Town state did not expose a valid seeded weather schedule.")
+	if not TownStateScript.DAY_TYPE_IDS.has(town_a.day_type()):
+		failures.append("Town state did not expose a valid seeded calendar day type.")
+	if town_a.happenings.size() > 2:
+		failures.append("Town state selected more than two citywide happenings.")
+	var passive_before := JSON.stringify(town_a.snapshot())
+	for _read_index in range(32):
+		town_a.weather_now()
+		town_a.day_type()
+		town_a.active_happenings()
+		town_a.happening_active("rolling_blackout")
+	if JSON.stringify(town_a.snapshot()) != passive_before:
+		failures.append("Town state changed outside an action boundary.")
+	town_a.advance_actions(17)
+	town_b.advance_actions(17)
+	if JSON.stringify(town_a.snapshot()) != JSON.stringify(town_b.snapshot()):
+		failures.append("Town state boundary advancement depended on elapsed process time.")
+
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("TOWN-HOOKS")
+	run_state.current_environment = {"id": "town_fixture", "archetype_id": "bar", "turns": 0}
+	var route := {
+		"id": "town_route",
+		"cost": 20,
+		"risk": "medium",
+		"distance": "local",
+		"risk_event": {"id": "town_risk", "chance_percent": 40},
+	}
+	_town_force_condition(run_state, "clear", "midweek")
+	var clear_status := run_state.travel_route_status(route)
+	var clear_risk := run_state.travel_route_risk_preview(route)
+	if int(clear_status.get("cost", -1)) != 20 or str(clear_status.get("risk", "")) != "medium" or int(clear_risk.get("chance_percent", -1)) != 40:
+		failures.append("Clear weather did not preserve baseline travel cost/risk behavior.")
+	_town_force_condition(run_state, "storm", "midweek")
+	var storm_status := run_state.travel_route_status(route)
+	var storm_risk := run_state.travel_route_risk_preview(route)
+	if int(storm_status.get("cost", 0)) <= int(clear_status.get("cost", 0)) or str(storm_status.get("risk", "")) != "high" or int(storm_risk.get("chance_percent", 0)) <= int(clear_risk.get("chance_percent", 0)):
+		failures.append("Storm weather did not raise travel cost, risk band, and risk-roll input.")
+	if run_state.scenario_weight_multiplier("bar", "storm_fixture", ["weather:storm"]) <= 1.0:
+		failures.append("Town scenario-weight seam did not boost a matching storm tag.")
+	if absf(run_state.scenario_weight_multiplier("bar", "plain_fixture", []) - 1.0) > 0.0001:
+		failures.append("Town scenario-weight seam did not no-op for an untagged scenario.")
+
+	var base_environment := {
+		"id": "town_economy_fixture",
+		"archetype_id": "bar",
+		"economic_profile": {"stake_floor": 10, "stake_ceiling": 100},
+		"visual_context": {},
+		"music_profile": {"ambience": 0.5, "volume": 0.25, "texture": "bar"},
+	}
+	_town_force_condition(run_state, "clear", "payday")
+	var payday_environment := base_environment.duplicate(true)
+	run_state.apply_town_generation_modifiers(payday_environment)
+	_town_force_condition(run_state, "clear", "midweek")
+	var midweek_environment := base_environment.duplicate(true)
+	run_state.apply_town_generation_modifiers(midweek_environment)
+	var payday_economy: Dictionary = payday_environment.get("economic_profile", {})
+	var midweek_economy: Dictionary = midweek_environment.get("economic_profile", {})
+	var payday_visual: Dictionary = payday_environment.get("visual_context", {})
+	var midweek_visual: Dictionary = midweek_environment.get("visual_context", {})
+	if int(payday_economy.get("stake_floor", 0)) <= 10 or int(payday_economy.get("stake_ceiling", 0)) <= 100 or float(payday_visual.get("crowd_density_multiplier", 0.0)) <= 1.0:
+		failures.append("Payday generation did not nudge stakes and crowd density upward.")
+	if int(midweek_economy.get("stake_floor", 99)) >= 10 or int(midweek_economy.get("stake_ceiling", 999)) >= 100 or float(midweek_visual.get("crowd_density_multiplier", 1.0)) >= 1.0:
+		failures.append("Midweek generation did not replace payday with inverse economy/crowd modifiers.")
+	if not payday_environment.has("town_conditions") or not (payday_environment.get("music_profile", {}) as Dictionary).has("town_modifiers"):
+		failures.append("Environment generation did not persist town presentation/music hook seams.")
+
+	var save_data := run_state.to_dict()
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(save_data)
+	if JSON.stringify(restored.town_snapshot()) != JSON.stringify(run_state.town_snapshot()):
+		failures.append("Town state did not round-trip exactly through RunState save/load.")
+	var legacy_data := save_data.duplicate(true)
+	legacy_data.erase("town_state")
+	var migrated: RunState = RunStateScript.new()
+	migrated.from_dict(legacy_data)
+	var expected_legacy: RunState = RunStateScript.new()
+	expected_legacy.start_new(str(legacy_data.get("seed_text", "TOWN-HOOKS")), legacy_data.get("challenge_config", {}))
+	if JSON.stringify(migrated.town_snapshot()) != JSON.stringify(expected_legacy.town_snapshot()):
+		failures.append("Pre-0.6 save migration did not regenerate town state from the run seed.")
+	var hud_model := FoundationHudViewModelScript.run_status_model(run_state, {
+		"pressure": {},
+		"demo_objective": {},
+		"pit_boss_watch": {},
+		"debt_items": [],
+		"inventory_items": [],
+	})
+	if str(hud_model.get("town_status_text", "")).is_empty() or str(hud_model.get("objective_text", "")).find(run_state.weather_now().capitalize()) == -1:
+		failures.append("Run HUD did not surface the current weather/day line.")
+
+
+func _town_force_condition(run_state: RunState, weather_id: String, day_type_id: String) -> void:
+	var snapshot := run_state.town_snapshot()
+	for action in range(maxi(1, int(snapshot.get("turn_horizon", 240)))):
+		snapshot["action_index"] = action
+		run_state.town_state.restore(snapshot, run_state.seed_value)
+		if run_state.weather_now() == weather_id and run_state.day_type() == day_type_id:
+			return
 
 
 func _check_attribute_glyph_foundation(library: ContentLibrary, failures: Array) -> void:
