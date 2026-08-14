@@ -147,6 +147,7 @@ const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_tr
 const FoundationScreenBuilderScript := preload("res://scripts/ui/foundation_screen_builder.gd")
 const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_controller.gd")
 const WorldMapOverlayControllerScript := preload("res://scripts/ui/world_map_overlay_controller.gd")
+const StreetsControllerScript := preload("res://scripts/ui/streets_controller.gd")
 const WagerConfirmationControllerScript := preload("res://scripts/ui/wager_confirmation_controller.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const ItemFoundPopupScript := preload("res://scripts/ui/item_found_popup.gd")
@@ -413,6 +414,7 @@ var world_map_badge_row: HFlowContainer
 var world_map_badge_cells: Array = []
 var world_map_confirm_button: Button
 var world_map_overlay_controller: WorldMapOverlayController
+var streets_controller: StreetsController
 var wager_confirmation_controller: WagerConfirmationController
 var selected_world_map_node_id: String = ""
 var world_map_button_ids: Array = []
@@ -5300,6 +5302,8 @@ func _build_next_run_ui_stage() -> void:
 			_build_item_found_popup()
 		12:
 			_build_coach_overlay()
+		13:
+			_build_streets_overlay()
 		_:
 			run_ui_built = true
 			run_ui_build_in_progress = false
@@ -6097,6 +6101,39 @@ func _build_coach_overlay() -> void:
 	coach_overlay.set_tips_enabled(user_settings == null or user_settings.coach_tips_enabled)
 
 
+func _build_streets_overlay() -> void:
+	streets_controller = StreetsControllerScript.new()
+	streets_controller.action_requested.connect(Callable(self, "_on_streets_action_requested"))
+	streets_controller.build(self)
+
+
+func _sync_streets_overlay() -> void:
+	if streets_controller == null:
+		return
+	if run_state == null or not run_state.streets_has_active_run() or current_screen == SCREEN_START or meta_session_active:
+		streets_controller.hide()
+		return
+	streets_controller.show_snapshot(run_state.streets_snapshot())
+
+
+func _on_streets_action_requested(action: Dictionary) -> void:
+	if run_state == null or not run_state.streets_has_active_run() or streets_controller == null:
+		return
+	var result := run_state.streets_apply_action(action)
+	var message := str(result.get("message", "The block keeps moving."))
+	if not bool(result.get("ok", false)):
+		streets_controller.show_snapshot(run_state.streets_snapshot(), message)
+		return
+	_autosave_foundation_run("Route saved.")
+	if bool(result.get("resolved", false)):
+		streets_controller.hide()
+		_show_message(message)
+		_refresh()
+		return
+	streets_controller.show_snapshot(run_state.streets_snapshot(), message)
+	_refresh_world_header()
+
+
 func _on_item_found_display_started(_item_id: String) -> void:
 	if talk_dock != null and talk_dock.visible:
 		item_found_talk_dock_suspended = true
@@ -6809,6 +6846,8 @@ func _refresh() -> void:
 	# dependencies naturally change the cache key.
 	var has_run := run_state != null
 	if not has_run or current_screen == SCREEN_START:
+		if streets_controller != null:
+			streets_controller.hide()
 		_clear_run_guidance_for_start_screen()
 		_hide_run_menu()
 		_set_current_screen(SCREEN_START)
@@ -6816,6 +6855,7 @@ func _refresh() -> void:
 		return
 	_evaluate_run_terminal_state()
 	_render_environment_screen()
+	_sync_streets_overlay()
 	if _run_menu_is_visible():
 		_refresh_run_menu()
 	_refresh_coach_at_boundary()
@@ -8489,7 +8529,7 @@ func _blocking_decision_popup_is_visible() -> bool:
 
 
 func _modal_contract_blocks_player_input() -> bool:
-	return travel_transition_active or (talk_dock != null and talk_dock.conversation_active) or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
+	return travel_transition_active or _streets_overlay_is_visible() or (talk_dock != null and talk_dock.conversation_active) or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
 
 
 func _simulation_progression_paused() -> bool:
@@ -8497,6 +8537,7 @@ func _simulation_progression_paused() -> bool:
 	# time-freeze contract. Natural dealer, patron, and event conversations keep
 	# normal-run clocks and autonomous systems moving behind the dialogue.
 	return travel_transition_active \
+		or _streets_overlay_is_visible() \
 		or _pal_tutorial_time_freeze_active() \
 		or _event_choice_popup_is_visible() \
 		or _meta_item_interaction_is_visible() \
@@ -8515,12 +8556,14 @@ func _pal_tutorial_time_freeze_active() -> bool:
 func _talk_dock_input_is_blocked() -> bool:
 	# A map can intentionally host a tutorial conversation. It remains modal to
 	# the room behind it, but must not make its own TalkDock unresponsive.
-	return travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible()
+	return travel_transition_active or _streets_overlay_is_visible() or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible()
 
 
 func _blocking_modal_message() -> String:
 	if travel_transition_active:
 		return "Travel is already in progress."
+	if _streets_overlay_is_visible():
+		return "Finish the block in front of you."
 	if _event_choice_popup_is_visible():
 		return "Choose a response before doing anything else."
 	if _world_map_overlay_is_visible():
@@ -8624,6 +8667,10 @@ func _world_map_overlay_is_visible() -> bool:
 	return world_map_overlay != null and world_map_overlay.visible
 
 
+func _streets_overlay_is_visible() -> bool:
+	return streets_controller != null and streets_controller.is_visible()
+
+
 func current_overlay_state_snapshot() -> Dictionary:
 	var snapshot := {
 		"screen": current_screen,
@@ -8631,6 +8678,7 @@ func current_overlay_state_snapshot() -> Dictionary:
 		"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
 		"event_choice_popup_blocking": _blocking_decision_popup_is_visible(),
 		"talk_dock_visible": talk_dock != null and talk_dock.visible,
+		"streets_visible": _streets_overlay_is_visible(),
 		"world_map_visible": _world_map_overlay_is_visible(),
 		"meta_item_interaction_visible": _meta_item_interaction_is_visible(),
 		"run_inventory_visible": _run_inventory_popup_is_visible(),
@@ -8653,6 +8701,7 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 			"screen": current_screen,
 			"event_choice_popup_visible": _event_choice_popup_is_visible(),
 			"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
+			"streets_visible": _streets_overlay_is_visible(),
 			"world_map_visible": _world_map_overlay_is_visible(),
 			"run_inventory_visible": _run_inventory_popup_is_visible(),
 			"run_journal_visible": _run_journal_popup_is_visible(),
@@ -8662,6 +8711,7 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 		}
 	var violations: Array = []
 	var event_visible := bool(snapshot.get("event_choice_popup_visible", false))
+	var streets_visible := bool(snapshot.get("streets_visible", false))
 	var world_map_visible := bool(snapshot.get("world_map_visible", false))
 	var inventory_visible := bool(snapshot.get("run_inventory_visible", false))
 	var journal_visible := bool(snapshot.get("run_journal_visible", false))
@@ -8669,13 +8719,17 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 	var run_menu_visible := bool(snapshot.get("run_menu_visible", false))
 	var travel_visible := bool(snapshot.get("travel_transition_active", false))
 	if travel_visible:
-		for label in ["event_choice_popup_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+		for label in ["event_choice_popup_visible", "streets_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
 				violations.append("travel_transition overlaps %s" % label)
 	if event_visible:
-		for label in ["world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+		for label in ["streets_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
 				violations.append("decision_popup overlaps %s" % label)
+	if streets_visible:
+		for label in ["world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+			if bool(snapshot.get(label, false)):
+				violations.append("streets overlaps %s" % label)
 	if world_map_visible:
 		for label in ["run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
