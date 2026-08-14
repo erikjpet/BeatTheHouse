@@ -2,6 +2,7 @@ extends "res://scripts/tests/foundation/check_table_games.gd"
 
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const StreetsRunModelScript := preload("res://scripts/core/streets_run_model.gd")
 
 func _check_surface_command_non_mutating(game: GameModule, action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary, label: String, failures: Array) -> Dictionary:
 	var before := JSON.stringify(run_state.to_dict())
@@ -4194,6 +4195,7 @@ func _check_lender_debt_foundation(library: ContentLibrary, failures: Array) -> 
 	_check_cash_lender_lifecycle(library, "motel_friend", "motel_friend_note", false, failures)
 	_check_crew_lender_lifecycle(library, failures)
 	_check_crew_trust_core(library, failures)
+	_check_streets_framework(failures)
 	_check_family_lender_lifecycle(library, failures)
 	_check_pawn_lender_lifecycle(library, failures)
 	_check_pawn_shop_run_environment(library, failures)
@@ -4438,18 +4440,76 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	event_run.narrative_flags["crew_favor_pending"] = true
 	var event_module: EventModule = EventModuleScript.new()
 	event_module.setup(library.event("crew_favor_delivery"), library)
+	var before_favor := {"bankroll": event_run.bankroll, "heat": event_run.suspicion_level(), "trust": event_run.crew_trust("crew_rook"), "town_action": event_run.town_state.action_index}
 	var event_result := event_module.resolve(event_run, event_run.current_environment, "run_package")
-	if event_run.bankroll != 122 or event_run.suspicion_level() != 4 \
-		or not bool(event_run.narrative_flags.get("crew_favor_completed", false)) \
-		or bool(event_run.narrative_flags.get("crew_favor_pending", true)) \
-		or str(event_result.get("message", "")) != "You run it exactly on their clock.":
-		failures.append("Crew favor delivery changed its shipped cash, heat, flags, or message behavior.")
+	if not bool(event_result.get("streets_started", false)) or not event_run.streets_has_active_run():
+		failures.append("Crew favor delivery did not open its declared Streets package board.")
+	if event_run.bankroll != int(before_favor.get("bankroll", 0)) or event_run.suspicion_level() != int(before_favor.get("heat", 0)) \
+		or event_run.crew_trust("crew_rook") != int(before_favor.get("trust", 0)) \
+		or not bool(event_run.narrative_flags.get("crew_favor_pending", false)) \
+		or bool(event_run.narrative_flags.get("crew_favor_completed", false)):
+		failures.append("Starting the played Crew favor applied its authored reward before delivery.")
+	var favor_resolved_ids: Array = event_run.current_environment.get("resolved_event_ids", [])
+	if int(event_run.current_environment.get("turns", 0)) != 1 \
+		or event_run.town_state.action_index != int(before_favor.get("town_action", 0)) + 1 \
+		or favor_resolved_ids.count("crew_favor_delivery") != 1 \
+		or event_module.can_trigger(event_run, event_run.current_environment, {"trigger": "action", "turns": 2}):
+		failures.append("Starting the played Crew favor did not preserve exactly one event boundary and resolve lifecycle.")
 	var proof_jobs: Array = []
 	for proof_job_value in event_run.crew_jobs.values():
 		if typeof(proof_job_value) == TYPE_DICTIONARY and str((proof_job_value as Dictionary).get("definition_id", "")) == "crew_favor_delivery":
 			proof_jobs.append(proof_job_value)
-	if proof_jobs.size() != 1 or str((proof_jobs[0] as Dictionary).get("outcome", "")) != "success":
-		failures.append("Crew favor delivery did not route through the proof job seam.")
+	if proof_jobs.size() != 1 or str((proof_jobs[0] as Dictionary).get("status", "")) != "active" or not str((proof_jobs[0] as Dictionary).get("outcome", "")).is_empty():
+		failures.append("Crew favor delivery did not remain active while its Streets board was live.")
+	var favor_board: Dictionary = event_run.active_streets_run.get("board", {})
+	favor_board["patrols"] = []
+	var favor_destination: Dictionary = favor_board.get("destination", {})
+	event_run.active_streets_run["board"] = favor_board
+	event_run.active_streets_run["player"] = {"x": int(favor_destination.get("x", 1)) - 1, "y": int(favor_destination.get("y", 0))}
+	var favor_complete := event_run.streets_apply_action({"verb": "move", "direction": "right", "pace": "walk"})
+	if not bool(favor_complete.get("resolved", false)) or event_run.bankroll != 122 or event_run.suspicion_level() != 4 \
+		or not bool(event_run.narrative_flags.get("crew_favor_completed", false)) \
+		or bool(event_run.narrative_flags.get("crew_favor_pending", true)) \
+		or event_run.crew_trust("crew_rook") != 5:
+		failures.append("Completed Crew favor did not apply its authored cash/heat/flags and job trust exactly once.")
+	if (event_run.current_environment.get("resolved_event_ids", []) as Array).count("crew_favor_delivery") != 1 \
+		or event_module.can_trigger(event_run, event_run.current_environment, {"trigger": "action", "turns": 3}):
+		failures.append("Completed Crew favor became eligible to retrigger.")
+	event_run.streets_apply_action({"verb": "wait"})
+	if event_run.bankroll != 122 or event_run.suspicion_level() != 4 or event_run.crew_trust("crew_rook") != 5:
+		failures.append("Resolved Crew favor applied its reward more than once.")
+
+	var caught_run: RunState = RunStateScript.new()
+	caught_run.start_new("CREW-FAVOR-CAUGHT-REGRESSION")
+	caught_run.current_environment = {"id": "crew_event_room", "kind": "casino", "tier": 1, "turns": 0, "resolved_event_ids": []}
+	caught_run.narrative_flags["crew_favor_pending"] = true
+	event_module.resolve(caught_run, caught_run.current_environment, "run_package")
+	var caught_board: Dictionary = caught_run.active_streets_run.get("board", {})
+	caught_board["patrols"] = []
+	caught_run.active_streets_run["board"] = caught_board
+	caught_run.active_streets_run["spotted"] = true
+	caught_run.active_streets_run["pursuit_remaining"] = 1
+	var caught := caught_run.streets_apply_action({"verb": "wait"})
+	if not bool(caught.get("resolved", false)) or str((caught.get("resolution", {}) as Dictionary).get("reason", "")) != "caught" \
+		or caught_run.bankroll != 100 or caught_run.suspicion_level() != 9 \
+		or not bool(caught_run.narrative_flags.get("crew_favor_failed", false)) \
+		or bool(caught_run.narrative_flags.get("crew_favor_completed", false)) \
+		or caught_run.crew_trust("crew_rook") != -5:
+		failures.append("Caught Crew favor did not confiscate/fail with its authored failure consequence and job trust hit.")
+	if (caught_run.current_environment.get("resolved_event_ids", []) as Array).count("crew_favor_delivery") != 1 \
+		or event_module.can_trigger(caught_run, caught_run.current_environment, {"trigger": "action", "turns": 3}):
+		failures.append("Failed Crew favor became eligible to retrigger.")
+
+	var refused_run: RunState = RunStateScript.new()
+	refused_run.start_new("CREW-FAVOR-REFUSE-REGRESSION")
+	refused_run.current_environment = {"id": "crew_event_room", "kind": "casino", "tier": 1, "turns": 0, "resolved_event_ids": []}
+	refused_run.narrative_flags["crew_favor_pending"] = true
+	var refused := event_module.resolve(refused_run, refused_run.current_environment, "refuse")
+	if refused_run.streets_has_active_run() or refused_run.bankroll != 100 or refused_run.suspicion_level() != 9 \
+		or not bool(refused_run.narrative_flags.get("crew_favor_refused", false)) \
+		or refused_run.crew_trust("crew_rook") != -5 \
+		or str(refused.get("message", "")) != "The night stays quiet. Quieter, even.":
+		failures.append("Refusing the Crew favor did not preserve its shipped immediate consequence.")
 
 	var round_trip_source := job_run.to_dict()
 	var round_trip: RunState = RunStateScript.new()
@@ -4481,6 +4541,168 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	clean_migrated.from_dict(clean_legacy)
 	if clean_migrated.crew_rank("crew_rook") != "stranger":
 		failures.append("Pre-0.6 save without active Crew debt did not migrate to Stranger.")
+
+
+func _check_streets_framework(failures: Array) -> void:
+	var package_spec := {
+		"mode": "package",
+		"route_id": "determinism_proof",
+		"origin_node_id": "back_alley",
+		"destination_node_id": "corner_store",
+		"distance": "local",
+		"attempt": 2,
+		"deadline_actions": 30,
+	}
+	var clear_context := {"weather": "clear", "day_type": "midweek", "happenings": [], "heat": 0, "reputation": 0, "sweep_density_delta": 0}
+	var first := StreetsRunModelScript.begin(package_spec, clear_context, 8181)
+	var twin := StreetsRunModelScript.begin(package_spec, clear_context, 8181)
+	if first.is_empty() or StreetsRunModelScript.board_signature(first) != StreetsRunModelScript.board_signature(twin):
+		failures.append("Streets same seed/edge/attempt did not reproduce its board and patrol seed.")
+	for _turn in range(4):
+		first = (StreetsRunModelScript.apply_action(first, {"verb": "wait"}).get("state", {}) as Dictionary)
+		twin = (StreetsRunModelScript.apply_action(twin, {"verb": "wait"}).get("state", {}) as Dictionary)
+	if StreetsRunModelScript.board_signature(first) != StreetsRunModelScript.board_signature(twin) or JSON.stringify(first.get("resolution", {})) != JSON.stringify(twin.get("resolution", {})):
+		failures.append("Streets scripted patrol timeline/outcome was not reproducible.")
+
+	var rain := StreetsRunModelScript.begin(package_spec, {"weather": "rain", "day_type": "midweek", "happenings": [], "heat": 0, "reputation": 0}, 8181)
+	var fog := StreetsRunModelScript.begin(package_spec, {"weather": "fog", "day_type": "midweek", "happenings": [], "heat": 0, "reputation": 0}, 8181)
+	var blackout := StreetsRunModelScript.begin(package_spec, {"weather": "clear", "day_type": "midweek", "happenings": ["rolling_blackout"], "heat": 0, "reputation": 0}, 8181)
+	var crowds := StreetsRunModelScript.begin(package_spec, {"weather": "clear", "day_type": "payday", "happenings": ["fight_night", "festival_weekend"], "heat": 0, "reputation": 0}, 8181)
+	var pressure := StreetsRunModelScript.begin(package_spec, {"weather": "clear", "day_type": "midweek", "happenings": [], "heat": 90, "reputation": 80, "sweep_density_delta": 2}, 8181)
+	var clear_patrols: Array = (first.get("board", {}) as Dictionary).get("patrols", [])
+	var pressure_patrols: Array = (pressure.get("board", {}) as Dictionary).get("patrols", [])
+	var rain_patrols: Array = (rain.get("board", {}) as Dictionary).get("patrols", [])
+	var fog_patrols: Array = (fog.get("board", {}) as Dictionary).get("patrols", [])
+	if pressure_patrols.size() <= clear_patrols.size() \
+		or int((rain_patrols[0] as Dictionary).get("sight", 0)) >= int((clear_patrols[0] as Dictionary).get("sight", 0)) \
+		or int((fog_patrols[0] as Dictionary).get("sight", 0)) >= int((rain_patrols[0] as Dictionary).get("sight", 0)) \
+		or _streets_cell_kind_count(blackout, "blackout") == 0 \
+		or _streets_cell_kind_count(crowds, "crowd") == 0:
+		failures.append("Streets painting matrix did not measurably react to weather, blackout, crowds, reputation, heat, and sweep pressure.")
+	var public_conditions: Dictionary = StreetsRunModelScript.snapshot(pressure).get("conditions", {})
+	if public_conditions.has("sweep_density_delta") or public_conditions.has("heat") or public_conditions.has("reputation"):
+		failures.append("Streets public snapshot leaked hidden sweep/heat/reputation generation inputs.")
+	var public_patrols: Array = (StreetsRunModelScript.snapshot(pressure).get("board", {}) as Dictionary).get("patrols", [])
+	if not public_patrols.is_empty() and (public_patrols[0] as Dictionary).has("route"):
+		failures.append("Streets public snapshot leaked future patrol routes.")
+	var stash_proof := StreetsRunModelScript.begin(package_spec, clear_context, 9191)
+	var stash_board: Dictionary = stash_proof.get("board", {})
+	var stash_position := {}
+	for cell_value in stash_board.get("cells", []):
+		if typeof(cell_value) == TYPE_DICTIONARY and str((cell_value as Dictionary).get("kind", "")) == "stash":
+			stash_position = {"x": int((cell_value as Dictionary).get("x", 0)), "y": int((cell_value as Dictionary).get("y", 0))}
+			break
+	stash_board["patrols"] = []
+	stash_proof["board"] = stash_board
+	stash_proof["player"] = stash_position
+	stash_proof["spotted"] = true
+	stash_proof["times_spotted"] = 1
+	stash_proof["pursuit_remaining"] = 1
+	var stashed := StreetsRunModelScript.apply_action(stash_proof, {"verb": "stash"})
+	stash_proof = stashed.get("state", {})
+	if str(stash_proof.get("cargo_state", "")) != "stashed" or int(stash_proof.get("pursuit_remaining", 0)) != -1 or bool(stash_proof.get("spotted", true)):
+		failures.append("Stash did not break an active pursuit while retaining the live route.")
+	stash_board = stash_proof.get("board", {})
+	stash_board["patrols"] = [{
+		"id": "restash_blue",
+		"route": [
+			{"x": int(stash_position.get("x", 1)) - 1, "y": int(stash_position.get("y", 0))},
+			stash_position.duplicate(true),
+		],
+		"phase": 1,
+		"step": -1,
+		"sight": 4,
+	}]
+	stash_proof["board"] = stash_board
+	var emerged := StreetsRunModelScript.apply_action(stash_proof, {"verb": "stash"})
+	stash_proof = emerged.get("state", {})
+	if int(stash_proof.get("times_spotted", 0)) != 2 or int(stash_proof.get("pursuit_remaining", -1)) < 1:
+		failures.append("Re-emerging from a stash could not start a second pursuit.")
+	stash_board = stash_proof.get("board", {})
+	stash_board["patrols"] = []
+	stash_proof["board"] = stash_board
+	stash_proof["pursuit_remaining"] = 1
+	var restash_caught := StreetsRunModelScript.apply_action(stash_proof, {"verb": "wait"})
+	if str(((restash_caught.get("state", {}) as Dictionary).get("resolution", {}) as Dictionary).get("reason", "")) != "caught":
+		failures.append("Second pursuit after a stash escape did not reach the caught outcome.")
+
+	var route_run: RunState = RunStateScript.new()
+	route_run.start_new("STREETS-MULTI-SAVE")
+	var multi := route_run.streets_begin_multi_stop({
+		"route_id": "numbers_collection",
+		"origin_node_id": "back_alley",
+		"destination_node_id": "bar",
+		"distance": "near",
+		"stops": [{"id": "store", "label": "Store"}, {"id": "motel", "label": "Motel"}],
+		"deadline_actions": 12,
+		"order_mode": "ordered",
+	})
+	if not bool(multi.get("ok", false)) or str((multi.get("snapshot", {}) as Dictionary).get("mode", "")) != "multi_stop":
+		failures.append("Frozen multi-stop API rejected its documented required shape.")
+	var saved_streets := route_run.to_dict()
+	var restored_streets: RunState = RunStateScript.new()
+	restored_streets.from_dict(saved_streets)
+	if JSON.stringify(restored_streets.active_streets_run) != JSON.stringify(route_run.active_streets_run):
+		failures.append("Active Streets board did not round-trip through full mid-run serialization.")
+	var deadline_before := int(route_run.streets_snapshot().get("deadline_remaining", 0))
+	var route_board: Dictionary = route_run.active_streets_run.get("board", {})
+	route_board["patrols"] = []
+	route_run.active_streets_run["board"] = route_board
+	route_run.streets_apply_action({"verb": "wait"})
+	if int(route_run.streets_snapshot().get("deadline_remaining", 0)) != deadline_before - 1:
+		failures.append("Multi-stop deadline did not consume exactly one action boundary.")
+
+	var hold_run: RunState = RunStateScript.new()
+	hold_run.start_new("STREETS-HOLD")
+	hold_run.streets_begin_hold({
+		"route_id": "lookout_hold",
+		"origin_node_id": "bar",
+		"destination_node_id": "bar_dock",
+		"deadline_actions": 8,
+		"signal_window": {"start": 2, "end": 3},
+	})
+	var hold_board: Dictionary = hold_run.active_streets_run.get("board", {})
+	hold_board["patrols"] = []
+	hold_run.active_streets_run["board"] = hold_board
+	hold_run.streets_apply_action({"verb": "wait"})
+	hold_run.streets_apply_action({"verb": "wait"})
+	var signal := hold_run.streets_apply_action({"verb": "signal"})
+	if not bool(signal.get("resolved", false)) or str((signal.get("resolution", {}) as Dictionary).get("outcome", "")) != "success":
+		failures.append("Hold mode did not resolve a signal inside its authored window.")
+
+	var chase_run: RunState = RunStateScript.new()
+	chase_run.start_new("STREETS-CHASE")
+	var gated_chase := chase_run.streets_begin_chase({"route_id": "getaway", "origin_node_id": "casino", "destination_node_id": "rooks_car", "deadline_actions": 10})
+	if bool(gated_chase.get("ok", false)):
+		failures.append("Getaway chase ignored its shipping flag.")
+	chase_run.narrative_flags["streets_chase_enabled"] = true
+	var chase := chase_run.streets_begin_chase({"route_id": "getaway", "origin_node_id": "casino", "destination_node_id": "rooks_car", "deadline_actions": 10, "assists": ["rook_cutoff"]})
+	if not bool(chase.get("ok", false)) or int(chase_run.streets_snapshot().get("pursuit_remaining", -1)) < 0:
+		failures.append("Enabled chase harness did not start hot.")
+	var pursuit_before := int(chase_run.streets_snapshot().get("pursuit_remaining", 0))
+	chase_run.streets_apply_action({"verb": "assist", "assist_id": "rook_cutoff"})
+	if int(chase_run.streets_snapshot().get("pursuit_remaining", 0)) <= pursuit_before:
+		failures.append("One-use chase assist did not buy pursuit time.")
+
+	var travel_a: RunState = RunStateScript.new()
+	var travel_b: RunState = RunStateScript.new()
+	travel_a.start_new("STREETS-NORMAL-TRAVEL")
+	travel_b.start_new("STREETS-NORMAL-TRAVEL")
+	travel_a.current_environment = {"id": "travel_room", "turns": 0}
+	travel_b.current_environment = {"id": "travel_room", "turns": 0}
+	var ordinary_route := {"id": "ordinary", "distance": "near", "cost": 4, "risk": "medium", "suspicion_delta": 3}
+	if not travel_a.active_streets_run.is_empty() or JSON.stringify(travel_a.travel_route_status(ordinary_route)) != JSON.stringify(travel_b.travel_route_status(ordinary_route)) \
+		or JSON.stringify(travel_a.travel_route_risk(ordinary_route)) != JSON.stringify(travel_b.travel_route_risk(ordinary_route)):
+		failures.append("Normal WorldMap travel changed without an explicitly declared Streets surface.")
+
+
+func _streets_cell_kind_count(state: Dictionary, kind: String) -> int:
+	var result := 0
+	var board: Dictionary = state.get("board", {}) if typeof(state.get("board", {})) == TYPE_DICTIONARY else {}
+	for cell_value in board.get("cells", []):
+		if typeof(cell_value) == TYPE_DICTIONARY and str((cell_value as Dictionary).get("kind", "")) == kind:
+			result += 1
+	return result
 
 
 func _check_family_lender_lifecycle(library: ContentLibrary, failures: Array) -> void:

@@ -16,6 +16,7 @@ const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.g
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const StreetsRunModelScript := preload("res://scripts/core/streets_run_model.gd")
 
 const DEFAULT_BANKROLL := 100
 const LOCAL_RISK_DECAY_BY_DISTANCE := {
@@ -297,6 +298,7 @@ var crew_grievance_ledger: Array = []
 var crew_jobs: Dictionary = {}
 var crew_grievance_sequence: int = 0
 var crew_job_sequence: int = 0
+var active_streets_run: Dictionary = {}
 var heat_history: Array = []
 var town_state: TownState
 var simulation_msec: int = 0
@@ -380,6 +382,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	crew_jobs = {}
 	crew_grievance_sequence = 0
 	crew_job_sequence = 0
+	active_streets_run = {}
 	heat_history = []
 	town_state = TownStateScript.new()
 	town_state.generate(seed_value)
@@ -6266,13 +6269,195 @@ func job_resolve(job_id: String, outcome: String) -> Dictionary:
 	return job.duplicate(true)
 
 
-# Routes today's text-only favor through the job seam Streets replaces later.
-func resolve_crew_favor_delivery_job(choice_id: String) -> Dictionary:
+# Starts or declines the Crew favor without changing ordinary travel. The
+# shipped event rewards are applied only after its declared Streets board ends.
+func resolve_crew_favor_delivery_job(choice_id: String, authored_consequences: Dictionary = {}) -> Dictionary:
 	var offered := job_offer(CrewStateModelScript.job_definition("crew_favor_delivery"))
 	var job_id := str(offered.get("id", ""))
 	if job_id.is_empty() or job_accept(job_id).is_empty() or job_activate(job_id).is_empty():
 		return {}
-	return job_resolve(job_id, "success" if choice_id == "run_package" else "failed")
+	if choice_id != "run_package":
+		return job_resolve(job_id, "failed")
+	var route := _streets_default_edge()
+	return streets_begin({
+		"mode": "package",
+		"route_id": "crew_favor_delivery",
+		"job_id": job_id,
+		"source_event_id": "crew_favor_delivery",
+		"origin_node_id": str(route.get("origin_node_id", current_world_node_id())),
+		"destination_node_id": str(route.get("destination_node_id", "crew_drop")),
+		"destination_label": str(route.get("destination_label", "the Crew's drop")),
+		"distance": str(route.get("distance", "near")),
+		"attempt": int(offered.get("offered_action", 0)),
+		"deadline_actions": maxi(10, int(route.get("distance_blocks", 2)) * 5 + 8),
+		"cargo_id": "crew_package",
+		"consumer_payload": _streets_event_consumer_payload(authored_consequences),
+	})
+
+
+func _streets_event_consumer_payload(consequences: Dictionary) -> Dictionary:
+	var succeeded := _copy_dict(consequences.get("success", {}))
+	var failed := _copy_dict(consequences.get("failure", {}))
+	return {
+		"success": {
+			"cash": maxi(0, int(succeeded.get("bankroll_delta", 0))),
+			"heat": maxi(0, int(succeeded.get("suspicion_delta", 0))),
+			"flags": _copy_dict(succeeded.get("flags", {})),
+		},
+		"failure": {
+			"heat": maxi(0, int(failed.get("suspicion_delta", 0))),
+			"flags": _copy_dict(failed.get("flags", {})),
+		},
+	}
+
+
+# Generic mode-owned entry point. Callers opt in explicitly; the world-map
+# travel path never calls this method.
+func streets_begin(spec: Dictionary) -> Dictionary:
+	if streets_has_active_run():
+		return {"ok": false, "message": "Finish the route already under your coat."}
+	var mode := str(spec.get("mode", "package")).strip_edges().to_lower()
+	if mode == "chase" and not bool(spec.get("enabled", false)) and not bool(narrative_flags.get("streets_chase_enabled", false)):
+		return {"ok": false, "message": "The getaway board is still under a tarp."}
+	var state := StreetsRunModelScript.begin(spec, _streets_world_context(spec), seed_value)
+	if state.is_empty():
+		return {"ok": false, "message": "That route does not draw on this town."}
+	active_streets_run = state
+	return {"ok": true, "snapshot": streets_snapshot(), "message": "The block is live. Keep your head down."}
+
+
+# Frozen Numbers consumer API. Required: route/origin/destination ids, stops,
+# and deadline_actions. Stops are dictionaries with stable id and optional
+# node_id/label/position; order_mode is ordered or free.
+func streets_begin_multi_stop(spec: Dictionary) -> Dictionary:
+	var normalized := spec.duplicate(true)
+	normalized["mode"] = "multi_stop"
+	var stops: Array = normalized.get("stops", []) if typeof(normalized.get("stops", [])) == TYPE_ARRAY else []
+	if stops.is_empty() or int(normalized.get("deadline_actions", 0)) <= 0:
+		return {"ok": false, "message": "A route needs stops and a closing clock."}
+	return streets_begin(normalized)
+
+
+func streets_begin_hold(spec: Dictionary) -> Dictionary:
+	var normalized := spec.duplicate(true)
+	normalized["mode"] = "hold"
+	return streets_begin(normalized)
+
+
+func streets_begin_chase(spec: Dictionary) -> Dictionary:
+	var normalized := spec.duplicate(true)
+	normalized["mode"] = "chase"
+	return streets_begin(normalized)
+
+
+func streets_has_active_run() -> bool:
+	return not active_streets_run.is_empty() and str(active_streets_run.get("status", "")) == "active"
+
+
+func streets_snapshot() -> Dictionary:
+	return StreetsRunModelScript.snapshot(active_streets_run)
+
+
+func streets_apply_action(action: Dictionary) -> Dictionary:
+	if not streets_has_active_run():
+		return {"ok": false, "message": "No live route is waiting on you."}
+	var applied := StreetsRunModelScript.apply_action(active_streets_run, action)
+	if not bool(applied.get("ok", false)):
+		applied.erase("state")
+		return applied
+	active_streets_run = _copy_dict(applied.get("state", {}))
+	applied.erase("state")
+	if bool(applied.get("resolved", false)):
+		_apply_streets_resolution()
+	applied["snapshot"] = streets_snapshot()
+	return applied
+
+
+func _apply_streets_resolution() -> void:
+	if active_streets_run.is_empty() or bool(active_streets_run.get("world_applied", false)):
+		return
+	var resolution := _copy_dict(active_streets_run.get("resolution", {}))
+	var succeeded := str(resolution.get("outcome", "")) == "success"
+	var payload := _copy_dict(active_streets_run.get("consumer_payload", {}))
+	var effects := _copy_dict(payload.get("success" if succeeded else "failure", {}))
+	var reason := str(resolution.get("reason", ""))
+	var cash := maxi(0, int(effects.get("cash", 0)))
+	if succeeded and bool(resolution.get("clean", false)):
+		cash += maxi(0, int(effects.get("clean_speed_bonus_cash", 0)))
+	if cash > 0:
+		change_bankroll(cash, true)
+	var heat := maxi(0, int(effects.get("heat", 0)))
+	if reason == "ditched":
+		heat = 0
+	if heat > 0:
+		add_suspicion("streets:%s" % reason, heat, "contraband", true, {"route_id": str(active_streets_run.get("route_id", ""))}, true)
+	for flag_value in _copy_dict(effects.get("flags", {})).keys():
+		narrative_flags[str(flag_value)] = _copy_dict(effects.get("flags", {})).get(flag_value)
+	var job_id := str(active_streets_run.get("job_id", ""))
+	if not job_id.is_empty():
+		job_resolve(job_id, "success" if succeeded else "failed")
+	if bool(resolution.get("snitch_seen", false)):
+		var destination_id := str(active_streets_run.get("destination_node_id", current_world_node_id()))
+		register_rumor_fact("numbers_whisper", "streets_snitch:%s:%d" % [str(active_streets_run.get("route_id", "run")), int(active_streets_run.get("turn", 0))], {
+			"target_node_id": destination_id,
+			"source_id": "silas_snitch_window",
+			"route_id": str(active_streets_run.get("route_id", "")),
+		})
+		record_reputation_incident("alarm_tripped", destination_id, 0.5, {"source_id": "snitch_window"})
+	active_streets_run["world_applied"] = true
+
+
+func _streets_world_context(spec: Dictionary) -> Dictionary:
+	var origin_id := str(spec.get("origin_node_id", current_world_node_id())).strip_edges()
+	var destination_id := str(spec.get("destination_node_id", origin_id)).strip_edges()
+	var reputation := 0.0
+	if town_state != null:
+		reputation = float(town_state.local_reputation(origin_id).get("attention", 0.0))
+	var sweep_delta := 0
+	if town_state != null:
+		var sweep := town_state.sweep_internal_status()
+		var sweep_node := str(sweep.get("current_node_id", ""))
+		var sweep_heading := str(sweep.get("heading_node_id", ""))
+		if bool(sweep.get("active", false)) and (sweep_node in [origin_id, destination_id] or sweep_heading in [origin_id, destination_id]):
+			sweep_delta += 2
+		if not town_state.swept_window(origin_id).is_empty() or not town_state.swept_window(destination_id).is_empty():
+			sweep_delta += 1
+	return {
+		"weather": town_weather(),
+		"day_type": town_day_type(),
+		"happenings": town_active_happenings(),
+		"heat": suspicion_level(),
+		"reputation": int(round(reputation * 25.0)),
+		"sweep_density_delta": sweep_delta,
+	}
+
+
+func _streets_default_edge() -> Dictionary:
+	var origin_id := current_world_node_id()
+	var edges: Array = world_map.get("edges", []) if typeof(world_map.get("edges", [])) == TYPE_ARRAY else []
+	for edge_value in edges:
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = edge_value
+		var a := str(edge.get("a", ""))
+		var b := str(edge.get("b", ""))
+		if a != origin_id and b != origin_id:
+			continue
+		var destination_id := b if a == origin_id else a
+		return {
+			"origin_node_id": origin_id,
+			"destination_node_id": destination_id,
+			"destination_label": destination_id.replace("_", " ").capitalize(),
+			"distance": str(edge.get("distance", "near")),
+			"distance_blocks": int(edge.get("distance_blocks", 2)),
+		}
+	return {
+		"origin_node_id": origin_id if not origin_id.is_empty() else "street_start",
+		"destination_node_id": "%s_drop" % origin_id if not origin_id.is_empty() else "crew_drop",
+		"destination_label": "the Crew's drop",
+		"distance": "near",
+		"distance_blocks": 2,
+	}
 
 
 func default_debt(debt_id: String) -> Dictionary:
@@ -7702,6 +7887,8 @@ func _advance_crew_jobs() -> void:
 		var job := _crew_job(str(job_id_value))
 		if str(job.get("status", "")) == "resolved":
 			continue
+		if streets_has_active_run() and str(active_streets_run.get("job_id", "")) == str(job_id_value):
+			continue
 		if action_index >= int(job.get("expires_at_action", action_index + 1)):
 			expiring_ids.append(str(job_id_value))
 	for job_id in expiring_ids:
@@ -9051,6 +9238,7 @@ func to_dict() -> Dictionary:
 		"story_log": _normalize_story_log(story_log),
 		"story_log_archive_count": story_log_archive_count,
 		"crew_state": _crew_state_for_save(true),
+		"active_streets_run": active_streets_run.duplicate(true),
 		"heat_history": normalize_heat_history(heat_history),
 		"town_state": town_state.snapshot() if town_state != null else {},
 		"simulation_msec": simulation_msec,
@@ -9127,6 +9315,7 @@ func to_save_snapshot() -> Dictionary:
 		"story_log": story_log.duplicate(false),
 		"story_log_archive_count": story_log_archive_count,
 		"crew_state": _crew_state_for_save(false),
+		"active_streets_run": active_streets_run.duplicate(false),
 		"heat_history": heat_history.duplicate(false),
 		"town_state": town_state.snapshot() if town_state != null else {},
 		"simulation_msec": simulation_msec,
@@ -9224,6 +9413,7 @@ func from_dict(data: Dictionary) -> void:
 	narrative_flags = _copy_dict(data.get("narrative_flags", {}))
 	story_flags = _copy_dict(data.get("story_flags", {}))
 	_restore_crew_state(saved_crew_state, not data.has("crew_state"))
+	active_streets_run = StreetsRunModelScript.normalize_state(data.get("active_streets_run", {}))
 	for story_flag_key in story_flags.keys():
 		narrative_flags[str(story_flag_key)] = story_flags[story_flag_key]
 	# Repair saves made before Tier-2 casino spawning had an explicit progression
