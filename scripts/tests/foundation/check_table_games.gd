@@ -65,6 +65,7 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 
 func _check_craps_rule_matrix(game: GameModule, base_table: Dictionary, failures: Array) -> void:
 	var rules := _craps_dict(base_table.get("rules", {}))
+	_check_craps_authored_die_sides(failures)
 	var matrix := [
 		{"label": "pass natural", "point": 0, "working": {}, "pending": {"pass_line": 10}, "total": 7, "delta": 10, "point_after": 0},
 		{"label": "pass craps", "point": 0, "working": {}, "pending": {"pass_line": 10}, "total": 3, "delta": -10, "point_after": 0},
@@ -129,6 +130,39 @@ func _check_craps_rule_matrix(game: GameModule, base_table: Dictionary, failures
 		failures.append("Craps accepted a wager below the posted table minimum.")
 	if bool(CrapsRulesScript.can_place_bet("pass_line", maximum + 1, base_table, {}, rules).get("ok", false)):
 		failures.append("Craps accepted a wager above the posted table maximum.")
+
+
+func _check_craps_authored_die_sides(failures: Array) -> void:
+	var two_sided_rules := {"die_sides": 2, "seven_total": 7}
+	var rng_a := RngStream.new()
+	var rng_b := RngStream.new()
+	rng_a.configure(60612)
+	rng_b.configure(60612)
+	var sequence_a: Array = []
+	var sequence_b: Array = []
+	var saw_authored_max := false
+	for _roll_index in range(64):
+		var roll_a := CrapsRulesScript.roll_dice(rng_a, two_sided_rules, 0)
+		var roll_b := CrapsRulesScript.roll_dice(rng_b, two_sided_rules, 0)
+		sequence_a.append(roll_a)
+		sequence_b.append(roll_b)
+		for die_value in _craps_array(roll_a.get("dice", [])):
+			var die := int(die_value)
+			if die < 1 or die > 2:
+				failures.append("Craps ignored authored non-default die_sides during a deterministic throw.")
+				return
+			if die == 2:
+				saw_authored_max = true
+	if JSON.stringify(sequence_a) != JSON.stringify(sequence_b) or not saw_authored_max:
+		failures.append("Craps non-default die-sides fixture was not deterministic across identical streams.")
+	var four_sided_rules := {"die_sides": 4, "seven_total": 7}
+	var biased_rng := RngStream.new()
+	biased_rng.configure(60614)
+	for _roll_index in range(64):
+		for die_value in _craps_array(CrapsRulesScript.roll_dice(biased_rng, four_sided_rules, 1000).get("dice", [])):
+			if int(die_value) < 1 or int(die_value) > 4:
+				failures.append("Craps setting reroll escaped authored non-default die_sides.")
+				return
 
 
 func _check_craps_idle_motion(game: GameModule, surface: Dictionary, failures: Array) -> void:

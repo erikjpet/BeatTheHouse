@@ -2,16 +2,17 @@ class_name CrapsRules
 extends RefCounted
 
 
-static func roll_dice(rng: RngStream, setting_bias_permille: int = 0) -> Dictionary:
-	var first := rng.randi_range(1, 6)
-	var second := rng.randi_range(1, 6)
+static func roll_dice(rng: RngStream, rules: Dictionary, setting_bias_permille: int = 0) -> Dictionary:
+	var die_sides := maxi(2, int(rules.get("die_sides", 6)))
+	var first := rng.randi_range(1, die_sides)
+	var second := rng.randi_range(1, die_sides)
 	var initial_total := first + second
 	var bias_applied := false
-	if initial_total == 7 and setting_bias_permille > 0 and rng.randi_range(1, 1000) <= setting_bias_permille:
+	if initial_total == int(rules.get("seven_total", 7)) and setting_bias_permille > 0 and rng.randi_range(1, 1000) <= setting_bias_permille:
 		if rng.randi_range(0, 1) == 0:
-			first = rng.randi_range(1, 6)
+			first = rng.randi_range(1, die_sides)
 		else:
-			second = rng.randi_range(1, 6)
+			second = rng.randi_range(1, die_sides)
 		bias_applied = true
 	return {
 		"dice": [first, second],

@@ -12,6 +12,8 @@ var config: Dictionary = {}
 var rules: Dictionary = {}
 var documentation: Dictionary = {}
 var point_numbers: Array = []
+var come_out_naturals: Array = []
+var come_out_craps: Array = []
 var tolerance := 0.0035
 
 
@@ -33,6 +35,8 @@ func _run() -> void:
 	rules = config.get("rules", {}) if typeof(config.get("rules", {})) == TYPE_DICTIONARY else {}
 	documentation = config.get("house_edge_documentation", {}) if typeof(config.get("house_edge_documentation", {})) == TYPE_DICTIONARY else {}
 	point_numbers = _int_array(rules.get("point_numbers", []))
+	come_out_naturals = _int_array(rules.get("come_out_naturals", []))
+	come_out_craps = _int_array(rules.get("come_out_craps", []))
 	var audit: Dictionary = config.get("rtp_audit", {}) if typeof(config.get("rtp_audit", {})) == TYPE_DICTIONARY else {}
 	tolerance = float(audit.get("tolerance_percent", 0.35)) / 100.0
 	if definition.is_empty() or rules.is_empty() or documentation.is_empty():
@@ -92,11 +96,11 @@ func _audit_line(bet_id: String, documentation_key: String, lay_side: bool, mini
 	for _roll_index in range(minimum_rolls):
 		var total := _roll_total(rng)
 		if point == 0:
-			if [7, 11].has(total):
+			if come_out_naturals.has(total):
 				returned += 0 if lay_side else 20
 				decisions += 1
 				staked += 10
-			elif [2, 3, 12].has(total):
+			elif come_out_craps.has(total):
 				if lay_side and total == int(rules.get("dont_pass_bar", 12)):
 					returned += 10
 				elif lay_side:
@@ -172,9 +176,9 @@ func _audit_setting_bias(rolls: int, audit: Dictionary, run_state: RunState) -> 
 	var perfect := _dict(grades.get("perfect", {}))
 	var bias := int(perfect.get("bias_permille", 0))
 	for _roll_index in range(rolls):
-		if int(CrapsRulesScript.roll_dice(fair_rng, 0).get("total", 0)) == 7:
+		if int(CrapsRulesScript.roll_dice(fair_rng, rules, 0).get("total", 0)) == int(rules.get("seven_total", 7)):
 			fair_sevens += 1
-		if int(CrapsRulesScript.roll_dice(biased_rng, bias).get("total", 0)) == 7:
+		if int(CrapsRulesScript.roll_dice(biased_rng, rules, bias).get("total", 0)) == int(rules.get("seven_total", 7)):
 			biased_sevens += 1
 	var fair_probability := float(fair_sevens) / float(rolls)
 	var biased_probability := float(biased_sevens) / float(rolls)

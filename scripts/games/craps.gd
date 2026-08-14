@@ -5,8 +5,6 @@ const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
 const CrapsSurfaceViewModelScript := preload("res://scripts/games/craps/craps_surface_view_model.gd")
 
 const ROLL_CHANNEL := "craps_roll"
-const DICE_CALIPERS_ITEM_ID := "dice_calipers"
-const FALSE_BOTTOM_CUP_ITEM_ID := "false_bottom_cup"
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -224,7 +222,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var cheat := _cheat_context(action_id, ui_state, run_state, environment, table)
 	if not bool(cheat.get("ok", false)):
 		return _empty_result(action_id, total_wager, environment, str(cheat.get("message", "That move is not ready.")))
-	var roll := CrapsRulesScript.roll_dice(rng, int(cheat.get("bias_permille", 0)))
+	var roll := CrapsRulesScript.roll_dice(rng, _dict(table.get("rules", {})), int(cheat.get("bias_permille", 0)))
 	var settlement := CrapsRulesScript.settle_roll(table, pending, roll, _dict(table.get("rules", {})))
 	var room_energy := _project_table_energy(environment, table)
 	var settlement_delta := int(settlement.get("bankroll_delta", 0))
