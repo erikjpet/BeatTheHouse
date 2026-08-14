@@ -263,6 +263,12 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   the Cage remains excluded. Craps registers alongside the Back Room payload,
   while the sacred Rourke showdown must remain blackjack-only and receive an
   explicit behavior-compatibility regression.
+- 2026-08-14 [craps06_1] PM rules/liveness review required pre-roll pending
+  Come odds to join already-working Come odds before settlement, without
+  treating a newly placed Come bet as established. Craps idle liveness must be
+  a visibly moving, reduce-motion-safe surface element with a changing
+  game-specific signature and zero full-snapshot refreshes, not only a generic
+  redraw counter or `surface_animates_idle` declaration.
 - 2026-08-14 [streets06_1/crew06_3] Streets uses full mid-run serialization
   and freezes one RunState-owned consumer surface: `streets_begin_multi_stop`,
   `streets_begin_hold`, `streets_begin_chase`, `streets_apply_action`,
@@ -280,6 +286,11 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   no machine is forced into every node. Alarm tolerance remains hidden, and a
   hard alarm is nonterminal: it locks only that machine, writes heat/memory,
   and leaves the environment plus its other games playable.
+- 2026-08-14 [push06_1] Quarter Falls joins the existing default Slot Pack so
+  content validation can trace its registration. Cold Quarters and Coin-Return
+  Shim are accepted only with tests that consume their authored effect keys on
+  real drop/gutter actions; their shipped 3/3 fallback tunings remain unchanged
+  for legacy or disabled-content saves.
 
 ## Work Log
 
