@@ -4709,6 +4709,33 @@ func _check_streets_framework(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Multi-stop deadline did not consume exactly one action boundary.")
 	if route_run.streets_snapshot().has("travel_continuation"):
 		failures.append("Streets public snapshot leaked raw travel continuation details.")
+	var ordered_route := _streets_ordering_fixture("ordered")
+	var free_route := _streets_ordering_fixture("free")
+	ordered_route = (StreetsRunModelScript.apply_action(ordered_route, {"verb": "wait"}).get("state", {}) as Dictionary)
+	free_route = (StreetsRunModelScript.apply_action(free_route, {"verb": "wait"}).get("state", {}) as Dictionary)
+	var ordered_stops: Array = ordered_route.get("stops", [])
+	var free_stops: Array = free_route.get("stops", [])
+	if bool((ordered_stops[1] as Dictionary).get("visited", false)) \
+		or not bool((free_stops[1] as Dictionary).get("visited", false)):
+		failures.append("Multi-stop ordered/free modes did not differ when stop 2 was reached before stop 1.")
+	for route_mode in ["ordered", "free"]:
+		var completion_route := ordered_route if route_mode == "ordered" else free_route
+		var completion_stops: Array = completion_route.get("stops", [])
+		completion_route["player"] = (completion_stops[0] as Dictionary).get("position", {}).duplicate(true)
+		completion_route = (StreetsRunModelScript.apply_action(completion_route, {"verb": "wait"}).get("state", {}) as Dictionary)
+		if route_mode == "ordered":
+			completion_stops = completion_route.get("stops", [])
+			completion_route["player"] = (completion_stops[1] as Dictionary).get("position", {}).duplicate(true)
+			completion_route = (StreetsRunModelScript.apply_action(completion_route, {"verb": "wait"}).get("state", {}) as Dictionary)
+		completion_route["player"] = ((completion_route.get("board", {}) as Dictionary).get("destination", {}) as Dictionary).duplicate(true)
+		var completed_route := StreetsRunModelScript.apply_action(completion_route, {"verb": "wait"})
+		var completed_state: Dictionary = completed_route.get("state", {})
+		var completed_stops: Array = completed_state.get("stops", [])
+		if not bool(completed_route.get("resolved", false)) \
+			or str((completed_route.get("resolution", {}) as Dictionary).get("outcome", "")) != "success" \
+			or not bool((completed_stops[0] as Dictionary).get("visited", false)) \
+			or not bool((completed_stops[1] as Dictionary).get("visited", false)):
+			failures.append("Multi-stop %s mode could not complete both stops and resolve at its destination." % route_mode)
 
 	for terminal_reason in ["deadline", "ditched"]:
 		var terminal_run: RunState = RunStateScript.new()
@@ -4915,6 +4942,29 @@ func _streets_linear_surface_fixture(kind: String, weather: String, hazard: bool
 	}] if exposed_patrol else []
 	state["board"] = board
 	state["player"] = {"x": 0, "y": route_y}
+	return state
+
+
+func _streets_ordering_fixture(order_mode: String) -> Dictionary:
+	var state := StreetsRunModelScript.begin({
+		"mode": "multi_stop",
+		"route_id": "ordering_%s" % order_mode,
+		"origin_node_id": "start",
+		"destination_node_id": "finish",
+		"distance": "same",
+		"deadline_actions": 10,
+		"order_mode": order_mode,
+		"stops": [{"id": "first", "label": "First"}, {"id": "second", "label": "Second"}],
+	}, {"weather": "clear", "day_type": "midweek", "happenings": [], "heat": 0, "reputation": 0}, 6062)
+	var board: Dictionary = state.get("board", {})
+	var route_y := int(board.get("route_y", 2))
+	board["patrols"] = []
+	state["board"] = board
+	state["stops"] = [
+		{"id": "first", "node_id": "", "label": "First", "position": {"x": 1, "y": route_y}, "visited": false, "visited_turn": -1},
+		{"id": "second", "node_id": "", "label": "Second", "position": {"x": 2, "y": route_y}, "visited": false, "visited_turn": -1},
+	]
+	state["player"] = {"x": 2, "y": route_y}
 	return state
 
 
