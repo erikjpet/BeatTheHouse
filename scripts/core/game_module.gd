@@ -319,6 +319,7 @@ static func empty_result_deltas() -> Dictionary:
 		"item_hooks": [],
 		"event_hooks": [],
 		"demo_finale": {},
+		"discounted_debt_settlement": {},
 	}
 
 
@@ -1267,7 +1268,7 @@ static func _normalize_result_deltas(value: Variant) -> Dictionary:
 			result[key] = int(source[key])
 		elif key == "ended":
 			result[key] = bool(source[key])
-		elif key == "flags_set" or key == "story_flags_set" or key == "travel_changes" or key == "demo_finale" or key == "environment_layer_discovery":
+		elif key == "flags_set" or key == "story_flags_set" or key == "travel_changes" or key == "demo_finale" or key == "environment_layer_discovery" or key == "discounted_debt_settlement":
 			result[key] = _copy_dict(source[key])
 		else:
 			result[key] = _copy_array(source[key])

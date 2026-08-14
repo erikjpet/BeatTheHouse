@@ -2,6 +2,7 @@ extends RefCounted
 
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
+const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
@@ -279,7 +280,7 @@ static func _check_grand_casino_routes(library: ContentLibrary, failures: Array)
 			if baseline.has(field_name) and not _json_equal(baseline.get(field_name), environment.get(field_name)):
 				failures.append("Grand scenario %s changed sacred field %s." % [scenario_id, field_name])
 		_check_clean_route(library, scenario_id, environment, failures)
-		_check_showdown_route(scenario_id, environment, failures)
+		_check_showdown_route(library, scenario_id, environment, failures)
 
 
 static func _check_clean_route(library: ContentLibrary, scenario_id: String, environment: Dictionary, failures: Array) -> void:
@@ -315,26 +316,43 @@ static func _check_clean_route(library: ContentLibrary, scenario_id: String, env
 static func _qualify_card_segment(run_state: RunState, game_count: int, net_winnings: int) -> void:
 	var start_games := maxi(0, int(run_state.narrative_flags.get("grand_casino_games_played", 0)))
 	for game_index in range(start_games, start_games + maxi(0, game_count)):
-		run_state.record_grand_casino_game_result({"source_id": "blackjack", "game_id": "blackjack", "action_kind": "legal", "bankroll_delta": 0, "cash_equivalent_delta": 0, "suspicion_delta": 0, "hand_index": game_index, "ended": true})
+		var deltas := GameModuleScript.empty_result_deltas()
+		deltas["story_log"] = [{"type": "game_action", "game_id": "blackjack", "stake_cost": 5 + game_index}]
+		var result := GameModuleScript.build_action_result({
+			"ok": true,
+			"type": "game_action",
+			"source_id": "blackjack",
+			"game_id": "blackjack",
+			"action_id": "play_basic",
+			"action_kind": "legal",
+			"stake": 5 + game_index,
+			"deltas": deltas,
+			"environment_id": str(run_state.current_environment.get("id", "")),
+			"environment_archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+			"message": "Clean scenario Players Card progress.",
+		})
+		run_state.record_grand_casino_game_result(result)
 	var entry_bankroll := int(run_state.narrative_flags.get("grand_casino_entry_bankroll", run_state.grand_casino_total_money()))
 	var segment_start_net := int(run_state.narrative_flags.get("grand_casino_players_card_segment_start_net_winnings", 0))
 	run_state.bankroll = maxi(0, entry_bankroll + segment_start_net + net_winnings - run_state.grand_casino_chips)
 	run_state.evaluate_environment_objective_state()
 
 
-static func _check_showdown_route(scenario_id: String, environment: Dictionary, failures: Array) -> void:
+static func _check_showdown_route(library: ContentLibrary, scenario_id: String, environment: Dictionary, failures: Array) -> void:
 	var run_state := RunStateScript.new()
 	run_state.start_new("SHOWDOWN-%s" % scenario_id)
 	run_state.set_environment(environment.duplicate(true))
 	run_state.narrative_flags["grand_casino_showdown_pending"] = true
-	if not bool(run_state.start_grand_casino_showdown().get("ok", false)):
+	var module := EventModuleScript.new()
+	module.setup(library.event(RunStateScript.GRAND_CASINO_SHOWDOWN_EVENT_ID), library)
+	if not bool(module.resolve(run_state, run_state.current_environment, "enter_back_room").get("ok", false)):
 		failures.append("Grand scenario %s blocked showdown start." % scenario_id)
 		return
-	if not bool(run_state.resolve_grand_casino_showdown_walk("keep", "").get("ok", false)) or not bool(run_state.continue_grand_casino_showdown_pat_down().get("ok", false)):
+	if not bool(module.resolve(run_state, run_state.current_environment, "keep_everything").get("ok", false)) or not bool(module.resolve(run_state, run_state.current_environment, "face_rourke").get("ok", false)):
 		failures.append("Grand scenario %s blocked showdown walk or pat-down." % scenario_id)
 		return
 	while str(run_state.narrative_flags.get("grand_casino_showdown_step", "")) == RunStateScript.GRAND_CASINO_SHOWDOWN_STEP_INTERROGATION:
-		if not bool(run_state.resolve_grand_casino_showdown_interrogation("hold_steady").get("ok", false)):
+		if not bool(module.resolve(run_state, run_state.current_environment, "hold_steady").get("ok", false)):
 			failures.append("Grand scenario %s blocked showdown interrogation." % scenario_id)
 			return
 	var duel := run_state.grand_casino_duel_status()
