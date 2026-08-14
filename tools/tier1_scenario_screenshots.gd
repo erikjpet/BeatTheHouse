@@ -58,9 +58,15 @@ func _run() -> void:
 
 func _capture(archetype_id: String, scenario_id: String, library: Variant, run_state: Variant, absolute_dir: String) -> void:
 	var definition: Dictionary = library.scenario(scenario_id)
-	var environment: Variant = EnvironmentInstance.from_archetype(library.environment_archetype(archetype_id), 1, run_state.create_rng("visual:%s" % scenario_id), library, {}, definition)
+	var rng: RngStream = run_state.create_rng("visual:%s" % scenario_id)
+	var environment: Variant = EnvironmentInstance.from_archetype(library.environment_archetype(archetype_id), 1, rng, library, {}, definition)
 	var data: Dictionary = environment.to_dict()
 	data["world_node_id"] = archetype_id
+	# Match the production RunGenerator boundary: machine state owns dynamic
+	# environment hooks, so it must exist before stable object rects are resolved.
+	var generator := RunGenerator.new(library)
+	data["game_states"] = generator._generated_game_states(run_state, data, rng)
+	var layout_stress_fixture := _apply_layout_stress_fixture(data, scenario_id)
 	data["layout"] = EnvironmentInstance.ensure_generated_layout(data)
 	run_state.set_environment(data)
 	app.call("_clear_selected_game_action")
@@ -73,10 +79,17 @@ func _capture(archetype_id: String, scenario_id: String, library: Variant, run_s
 	var canvas: Variant = app.get("environment_canvas")
 	var view: Dictionary = canvas.call("current_view_snapshot") if canvas != null else {}
 	var presentation: Dictionary = data.get("scenario_presentation", {}) if typeof(data.get("scenario_presentation", {})) == TYPE_DICTIONARY else {}
-	var capture_ok := save_error == OK and image.get_width() >= 1280 and image.get_height() >= 720 and str(view.get("scenario_signage", "")) == str(presentation.get("signage_line", "")) and bool(view.get("scenario_palette_active", false))
+	var object_layout: Dictionary = view.get("object_layout", {}) if typeof(view.get("object_layout", {})) == TYPE_DICTIONARY else {}
+	var overlap_count := int(object_layout.get("overlap_count", 0))
+	var capture_ok := save_error == OK \
+		and image.get_width() >= 1280 \
+		and image.get_height() >= 720 \
+		and str(view.get("scenario_signage", "")) == str(presentation.get("signage_line", "")) \
+		and bool(view.get("scenario_palette_active", false)) \
+		and overlap_count == 0
 	if not capture_ok:
 		failed = true
-		push_error("Tier-1 scenario screenshot did not preserve its presentation: %s" % scenario_id)
+		push_error("Tier-1 scenario screenshot failed presentation/layout QA: %s (overlaps=%d)" % [scenario_id, overlap_count])
 	report[scenario_id] = {
 		"passed": capture_ok,
 		"file": file_name,
@@ -87,8 +100,31 @@ func _capture(archetype_id: String, scenario_id: String, library: Variant, run_s
 		"stake_ceiling": int((data.get("economic_profile", {}) as Dictionary).get("stake_ceiling", 0)),
 		"scenario_presentation": presentation,
 		"canvas_scenario_presentation": view.get("scenario_presentation", {}),
-		"canvas_object_layout": view.get("object_layout", {}),
+		"canvas_object_layout": object_layout,
+		"environment_object_rects": ((run_state.current_environment.get("layout", {}) as Dictionary).get("object_rects", {}) as Dictionary).duplicate(true),
+		"layout_stress_fixture": layout_stress_fixture,
 	}
+
+
+# Keeps one valid, reachable late-hook state in the visual matrix. Empty scratch
+# machines always spawn the Scalper, which previously exposed a fallback-layout
+# overlap that the screenshot harness silently ignored.
+func _apply_layout_stress_fixture(data: Dictionary, scenario_id: String) -> String:
+	if scenario_id != "gas_station_graveyard_shift":
+		return ""
+	var states: Dictionary = data.get("game_states", {}) if typeof(data.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var scratch_state: Dictionary = states.get("scratch_tickets", {}) if typeof(states.get("scratch_tickets", {})) == TYPE_DICTIONARY else {}
+	if scratch_state.is_empty():
+		return ""
+	var stock: Array = scratch_state.get("stock", []) if typeof(scratch_state.get("stock", [])) == TYPE_ARRAY else []
+	for slot_value in stock:
+		if typeof(slot_value) == TYPE_DICTIONARY:
+			(slot_value as Dictionary)["remaining"] = 0
+	scratch_state["stock"] = stock
+	scratch_state["scalper_present"] = true
+	states["scratch_tickets"] = scratch_state
+	data["game_states"] = states
+	return "empty_scratch_machine_with_scalper"
 
 
 func _settle(frames: int) -> void:
