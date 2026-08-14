@@ -428,6 +428,15 @@ func _surface_model(ids: Array, selected_id: String) -> Dictionary:
 
 
 func _audit_icon_models() -> void:
+	var manifest_value: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/art/art_manifest.json"))
+	var manifest: Dictionary = manifest_value if typeof(manifest_value) == TYPE_DICTIONARY else {}
+	var ui_surfaces: Dictionary = manifest.get("ui_surfaces", {}) if typeof(manifest.get("ui_surfaces", {})) == TYPE_DICTIONARY else {}
+	var ui_surface_paths := {}
+	for surface_value in ui_surfaces.values():
+		if typeof(surface_value) == TYPE_DICTIONARY:
+			var surface_path := str((surface_value as Dictionary).get("path", "")).strip_edges()
+			if not surface_path.is_empty():
+				ui_surface_paths[surface_path] = true
 	var directories := [
 		"res://assets/art/items",
 		"res://assets/art/events",
@@ -446,6 +455,8 @@ func _audit_icon_models() -> void:
 			if not filename.ends_with(".png"):
 				continue
 			var path := "%s/%s" % [directory_path, filename]
+			if ui_surface_paths.has(path):
+				continue
 			var texture := load(path) as Texture2D
 			var image := texture.get_image() if texture != null else Image.new()
 			_check(texture != null and not image.is_empty(), "Icon model could not be loaded: %s" % path)
@@ -462,6 +473,19 @@ func _audit_icon_models() -> void:
 			_check(used_rect.has_area(), "Icon model has no visible object: %s" % path)
 			_check(maxi(used_rect.size.x, used_rect.size.y) >= 28, "Icon model leaves excessive dead margin instead of filling its space: %s" % path)
 	_check(checked >= 130, "Icon-model audit did not cover the complete item/event/game/environment/outcome/UI set.")
+	_check(ui_surfaces.size() >= 2, "Art manifest did not classify the complete scalable UI-surface set.")
+	for surface_id_value in ui_surfaces.keys():
+		var surface_id := str(surface_id_value)
+		var surface: Dictionary = ui_surfaces.get(surface_id_value, {}) if typeof(ui_surfaces.get(surface_id_value, {})) == TYPE_DICTIONARY else {}
+		var path := str(surface.get("path", "")).strip_edges()
+		var expected_size: Array = surface.get("size", []) if typeof(surface.get("size", [])) == TYPE_ARRAY else []
+		var texture := load(path) as Texture2D
+		var image := texture.get_image() if texture != null else Image.new()
+		_check(path.begins_with("res://assets/art/ui/") and texture != null and not image.is_empty(), "UI surface could not be loaded: %s (%s)" % [surface_id, path])
+		if texture == null or image.is_empty():
+			continue
+		_check(expected_size.size() == 2 and image.get_width() == int(expected_size[0]) and image.get_height() == int(expected_size[1]), "UI surface left its authored canvas contract: %s" % path)
+		_check(image.get_used_rect().has_area(), "UI surface has no visible art: %s" % path)
 
 
 func _audit_collection_icon_coverage() -> void:
