@@ -136,6 +136,14 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   `conditions.json` owning tag multipliers and all missing state/tags/modifiers
   returning `1.0`. The call occurs once per candidate at selection boundaries,
   with no per-frame work or allocation required.
+- 2026-08-14 [Wave A gates] PM integrated-tree systems verification passed all
+  Wave A scenario, town, crew, save, and compatibility checks, but reproduced
+  six inherited gate failures: the Web SFX bank omitted `heat_gain`; watched
+  `pull_tabs/tab_detector_scan` omitted four canonical watched-state/heat
+  outputs; and watched `roulette/read_wheel_bias` omitted its pit-boss heat
+  bonus. The gate is not waived. Root-level remediation is delegated across
+  the three Wave A subagents and must pass the unchanged assertions before any
+  row is marked DONE.
 
 ## Work Log
 
@@ -143,3 +151,6 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
 - 2026-08-13 [Wave A] PM-orchestrated execution claimed for env06_1,
   town06_1, and crew06_1; three isolated subagents assigned, with the PM
   owning integration, board updates, verification, and archival.
+- 2026-08-14 [Wave A] Integrated engine commits accepted provisionally after
+  scope/design review; board completion remains blocked on inherited systems,
+  UI-art-contract, and visual-QA failures reproduced by PM gates.
