@@ -63,9 +63,9 @@ Wave C games are intentionally parallel-friendly.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| env06_1 | `env06_1_scenario_engine_prompt.md` | IN_PROGRESS | — | env06_2/3/4, town06_2/3, craps06_2, push06_1 | PM:Codex/sub:1 | 2026-08-13 | | PM-orchestrated Wave A execution. |
-| town06_1 | `town06_1_town_state_prompt.md` | IN_PROGRESS | — | town06_2/3, push06_2, streets06_1 | PM:Codex/sub:2 | 2026-08-13 | | PM-orchestrated Wave A execution. |
-| crew06_1 | `crew06_1_trust_core_prompt.md` | IN_PROGRESS | — | streets06_1, crew06_2/3/5/6/7/8/9 | PM:Codex/sub:3 | 2026-08-13 | | PM-orchestrated Wave A execution. |
+| env06_1 | `env06_1_scenario_engine_prompt.md` | DONE | — | env06_2/3/4, town06_2/3, craps06_2, push06_1 | PM:Codex/sub:1 | 2026-08-13 | 2026-08-14 | PM verified scope/design, all gates, determinism, visual QA, and coexistence PASS. |
+| town06_1 | `town06_1_town_state_prompt.md` | DONE | — | town06_2/3, push06_2, streets06_1 | PM:Codex/sub:2 | 2026-08-13 | 2026-08-14 | PM verified scope/design, all gates, determinism, visual QA, and coexistence PASS. |
+| crew06_1 | `crew06_1_trust_core_prompt.md` | DONE | — | streets06_1, crew06_2/3/5/6/7/8/9 | PM:Codex/sub:3 | 2026-08-13 | 2026-08-14 | PM verified lender compatibility, hidden-state design, all gates, determinism, and coexistence PASS. |
 
 ### Wave B — World content
 
@@ -144,6 +144,16 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   bonus. The gate is not waived. Root-level remediation is delegated across
   the three Wave A subagents and must pass the unchanged assertions before any
   row is marked DONE.
+- 2026-08-14 [town06_1] `data/town/conditions.json` retains the repository's
+  required root-array pack shape; `ContentLibrary` loads its sole schema-v1
+  object as the TownState dictionary. This is a storage-shape accommodation,
+  not a public API deviation.
+- 2026-08-14 [Wave A gates] Root remediation completed without waivers: the
+  generated Web bank now includes `heat_gain`; watched Pull Tabs and Roulette
+  actions preserve canonical Pit Boss metadata; scalable menu surfaces are
+  manifest-classified separately from 32px icons; Pocket Watch fills its icon
+  canvas; visual QA targets current semantic menu roles; and saved Cage gift
+  shelf objects participate in generation-time layout to prevent overlap.
 
 ## Work Log
 
@@ -154,3 +164,22 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
 - 2026-08-14 [Wave A] Integrated engine commits accepted provisionally after
   scope/design review; board completion remains blocked on inherited systems,
   UI-art-contract, and visual-QA failures reproduced by PM gates.
+- 2026-08-14 [env06_1] DONE; deterministic first-visit scenario selection,
+  phase/snapshot APIs, mutation hooks, and seed-audit tooling now unblock
+  env06_2/3/4, town06_2/3, craps06_2, and push06_1.
+- 2026-08-14 [town06_1] DONE; run-owned weather/calendar/happenings plus
+  scenario, travel, music, economy, and ambient-status read seams now unblock
+  town06_2/3, push06_2, and streets06_1.
+- 2026-08-14 [crew06_1] DONE; hidden trust/rank/standing, grievance ledger,
+  action-boundary jobs, and behavior-identical Crew lender retcon now unblock
+  streets06_1 and crew06_2/3/5/6/7/8/9.
+- 2026-08-14 [Wave A closure] PM final combined tree PASS: complete
+  `foundation_all`, dedicated systems + UI, 10-seed/320-checkpoint determinism
+  (`38535979`), visual QA, and headless coexistence. Wave B APIs available:
+  `scenario_for_node` plus generation-time scenario overlays;
+  `scenario_weight_multiplier`, TownState weather/day/happening/travel/music/
+  economy reads; and Crew trust/rank/standing/grievance/job APIs. Registered
+  but intentionally inert until later prompts: scenario opportunity/hook flags,
+  town blackout flags/music texture consumers, Streets job payload seam, and
+  Crew heist eligibility consumers. No owner decision is required. Stop before
+  Wave B kickoff.

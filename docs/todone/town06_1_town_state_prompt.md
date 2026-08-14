@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `town06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-14
+- **Completion/implementation commits:** `8aad861d`, `91d82eaf`
+- **Verification:** PM scope/design review; integrated `validate_project`, systems, UI, all-foundation, 10-seed determinism (`38535979`), visual QA, and Wave A coexistence probe all PASS.
+- **Deviations:** `conditions.json` uses the repository-required one-object root array while the loaded service exposes the inner schema-v1 dictionary; behavior and API are unchanged.
 
 # Agent Prompt — 0.6 town06_1: Town State Core (One Town, One Night)
 

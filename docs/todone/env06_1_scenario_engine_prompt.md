@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `env06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-14
+- **Completion/implementation commits:** `bcef1f5f`, `36782852`, `f992835f`
+- **Verification:** PM scope/design review; integrated `validate_project`, systems, UI, all-foundation, 10-seed determinism (`38535979`), visual QA, and Wave A coexistence probe all PASS.
+- **Deviations:** None. Shared pre-existing gate defects were root-fixed during PM integration without weakening coverage.
 
 # Agent Prompt — 0.6 env06_1: The Tonight System (Scenario Engine)
 

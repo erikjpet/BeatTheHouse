@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `crew06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-14
+- **Completion/implementation commits:** `2b3f91da`
+- **Verification:** PM scope/design review; lender/favor compatibility, hidden ledger/jobs, save migration, integrated systems/UI/all-foundation, 10-seed determinism (`38535979`), and Wave A coexistence probe all PASS.
+- **Deviations:** None. No Crew trust, grievance, or job state is exposed in UI or logs.
 
 # Agent Prompt — 0.6 crew06_1: Crew Trust Core (Ladder, Ledger, Jobs)
 
