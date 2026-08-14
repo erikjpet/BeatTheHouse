@@ -61,6 +61,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var roll_active := roll_started > 0 and now_msec >= roll_started and now_msec < roll_started + duration
 	var setting_challenge := _dict(ui_state.get("craps_setting_challenge", {}))
 	var switching_challenge := _dict(ui_state.get("craps_switching_challenge", {}))
+	var setting_active := not setting_challenge.is_empty() and str(setting_challenge.get("skill_grade", "")).is_empty()
+	var switching_active := not switching_challenge.is_empty() and str(switching_challenge.get("skill_grade", "")).is_empty()
 	return GameModule.surface_spec({
 		"surface_renderer": "craps",
 		"surface_life": "immersive_table",
@@ -70,7 +72,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": true,
-		"surface_realtime_state_refresh": not setting_challenge.is_empty() or not switching_challenge.is_empty(),
+		"surface_realtime_state_refresh": setting_active or switching_active,
 		"surface_dynamic_overlay_channels": [ROLL_CHANNEL],
 		"surface_animation_channels": [GameModule.surface_animation_channel(
 			ROLL_CHANNEL,

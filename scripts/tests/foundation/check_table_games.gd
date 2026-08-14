@@ -162,10 +162,15 @@ func _check_craps_cheat_contract(game: GameModule, failures: Array) -> void:
 	environment["game_states"] = {"craps": game.generate_environment_state(run_state, environment, run_state.create_rng("craps_cheat_table"))}
 	run_state.set_environment(environment)
 	run_state.add_item("weighted_keyring")
+	var active_setting_ui := {"craps_pending_bets": {"pass_line": 5}, "craps_setting_challenge": {"skill_grade": "", "target_msec": 20000}, "surface_time_msec": 19500}
+	if not bool(game.surface_state(run_state, run_state.current_environment, active_setting_ui).get("surface_realtime_state_refresh", false)):
+		failures.append("Active Craps timing meter did not request the bounded realtime snapshot refresh it needs.")
 	var setting_ui := {"craps_pending_bets": {"pass_line": 5}, "craps_setting_challenge": {"skill_grade": "perfect", "skill_margin_msec": 0}, "surface_time_msec": 20000}
 	var setting := game.resolve_with_context("dice_setting", 5, run_state, run_state.current_environment, run_state.create_rng("craps_setting"), setting_ui)
 	if not bool(setting.get("skill_cheat_contract", false)) or str(setting.get("skill_grade", "")) != "perfect" or int(setting.get("base_suspicion_delta", 0)) <= 0:
 		failures.append("Craps dice setting did not expose the shared skill-cheat contract and security-scaled cost.")
+	if bool(game.surface_state(run_state, run_state.current_environment, setting_ui).get("surface_realtime_state_refresh", false)):
+		failures.append("Resolved Craps timing state kept rebuilding full snapshots after its action boundary.")
 	var untrained: RunState = RunStateScript.new()
 	untrained.start_new("CRAPS-SETTING-GATE")
 	untrained.bankroll = 100000
