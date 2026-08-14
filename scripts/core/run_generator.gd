@@ -24,7 +24,8 @@ func next_environment(run_state: RunState, target_archetype_id: String = "", tar
 	if not run_state.current_environment.is_empty():
 		depth += 1
 	var archetype := _pick_archetype(run_state, depth, rng, target_archetype_id)
-	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
+	var scenario := _select_scenario(run_state, str(archetype.get("id", "")), rng)
+	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
 	var environment_data := environment.to_dict()
 	environment.layout = EnvironmentInstance.ensure_generated_layout(environment_data)
@@ -306,7 +307,8 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 	if not run_state.current_environment.is_empty():
 		depth += 1
 	var archetype := _pick_archetype(run_state, depth, rng, target_archetype_id)
-	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
+	var scenario := _select_scenario(run_state, str(archetype.get("id", "")), rng)
+	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
 	var environment_data := environment.to_dict()
 	environment.layout = EnvironmentInstance.ensure_generated_layout(environment_data)
@@ -330,7 +332,8 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	var archetype := _archetype_by_id(node_id)
 	if archetype.is_empty():
 		archetype = _pick_archetype(run_state, depth, rng, node_id)
-	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
+	var scenario := _select_scenario(run_state, str(archetype.get("id", node_id)), rng)
+	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	environment.game_states = _generated_game_states(run_state, environment.to_dict(), rng)
 	var environment_data := environment.to_dict()
 	environment_data["world_node_id"] = node_id
@@ -519,6 +522,73 @@ func _archetype_by_id(id: String) -> Dictionary:
 		if archetype.get("id", "") == id:
 			return archetype
 	return {}
+
+
+func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream) -> Dictionary:
+	if run_state == null or library == null or rng == null:
+		return {}
+	var pool := library.scenarios_for_archetype(archetype_id)
+	if pool.is_empty():
+		return {}
+	var modifiers := _copy_dict(run_state.challenge_config.get("modifiers", {}))
+	var pins := _copy_dict(modifiers.get("scenario_pins", {}))
+	var pinned_id := str(pins.get(archetype_id, "")).strip_edges()
+	if not pinned_id.is_empty():
+		for definition_value in pool:
+			if typeof(definition_value) != TYPE_DICTIONARY:
+				continue
+			var pinned: Dictionary = definition_value
+			if str(pinned.get("id", "")) == pinned_id:
+				run_state.remember_scenario_selection(archetype_id, pinned_id)
+				return pinned.duplicate(true)
+		return {}
+	var excludes := _copy_dict(modifiers.get("scenario_excludes", {}))
+	var excluded_ids := _string_array(excludes.get(archetype_id, []))
+	var candidates: Array = []
+	for definition_value in pool:
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var definition: Dictionary = definition_value
+		var scenario_id := str(definition.get("id", "")).strip_edges()
+		if scenario_id.is_empty() or excluded_ids.has(scenario_id):
+			continue
+		candidates.append(definition)
+	if candidates.is_empty():
+		return {}
+	var recent := run_state.recent_scenario_ids(archetype_id)
+	var weighted: Array = []
+	var total_weight := 0
+	for definition_value in candidates:
+		var definition: Dictionary = definition_value
+		var scenario_id := str(definition.get("id", ""))
+		var repeat_multiplier := 1.0
+		var recent_index := recent.find(scenario_id)
+		if recent_index == 0 and candidates.size() > 1:
+			repeat_multiplier = 0.0
+		elif recent_index == 1:
+			repeat_multiplier = 0.35
+		elif recent_index >= 2:
+			repeat_multiplier = 0.60
+		var town_multiplier := 1.0
+		if run_state.has_method("scenario_weight_multiplier"):
+			town_multiplier = maxf(0.0, float(run_state.call("scenario_weight_multiplier", archetype_id, scenario_id, _string_array(definition.get("town_weight_tags", [])))))
+		var scaled_weight := maxi(0, int(round(float(definition.get("weight", 1.0)) * repeat_multiplier * town_multiplier * 1000.0)))
+		if scaled_weight <= 0:
+			continue
+		total_weight += scaled_weight
+		weighted.append({"definition": definition, "ceiling": total_weight})
+	if weighted.is_empty() or total_weight <= 0:
+		return {}
+	var roll := rng.randi_range(1, total_weight)
+	var selected: Dictionary = weighted[weighted.size() - 1].get("definition", {})
+	for entry_value in weighted:
+		var entry: Dictionary = entry_value
+		if roll <= int(entry.get("ceiling", total_weight)):
+			selected = entry.get("definition", {})
+			break
+	var selected_id := str(selected.get("id", ""))
+	run_state.remember_scenario_selection(archetype_id, selected_id)
+	return selected.duplicate(true)
 
 
 # Picks one archetype while respecting optional low-weight rare venues.

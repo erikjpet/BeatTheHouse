@@ -8,6 +8,7 @@ signal heat_changed(applied_amount: int, level: int, cue_id: String, context: Di
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 
 const DEFAULT_BANKROLL := 100
 const LOCAL_RISK_DECAY_BY_DISTANCE := {
@@ -256,6 +257,7 @@ var pending_drunk_absorption: Array = []
 var drunk_distortion_suppression_turns: int = 0
 var current_environment: Dictionary = {}
 var world_map: Dictionary = {}
+var scenario_recent_by_archetype: Dictionary = {}
 var grand_casino_room_states: Dictionary = {}
 var grand_casino_staffing: Dictionary = {}
 var rourke_current_room: String = ""
@@ -332,6 +334,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	drunk_distortion_suppression_turns = 0
 	current_environment = {}
 	world_map = {}
+	scenario_recent_by_archetype = {}
 	grand_casino_room_states = {}
 	grand_casino_staffing = {}
 	rourke_current_room = ""
@@ -1436,6 +1439,47 @@ func current_world_node_id() -> String:
 	if world_map.is_empty():
 		return str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
 	return WorldMap.current_node_id(world_map)
+
+
+# Returns compact scenario identity for a node without selecting or regenerating.
+func scenario_for_node(node_id: String) -> Dictionary:
+	var wanted := node_id.strip_edges()
+	if wanted.is_empty():
+		return {}
+	var current_node := str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
+	if wanted == current_node or wanted == str(current_environment.get("id", "")):
+		return ScenarioEngineScript.public_snapshot(current_environment.get("scenario_state", {}))
+	var nodes_value: Variant = world_map.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return {}
+	for node_value in nodes_value as Array:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		if str(node.get("id", "")) != wanted:
+			continue
+		var environment_value: Variant = node.get("environment", {})
+		if typeof(environment_value) != TYPE_DICTIONARY:
+			return {}
+		return ScenarioEngineScript.public_snapshot((environment_value as Dictionary).get("scenario_state", {}))
+	return {}
+
+
+func recent_scenario_ids(archetype_id: String) -> Array:
+	var value: Variant = scenario_recent_by_archetype.get(archetype_id, [])
+	return (value as Array).duplicate(false) if typeof(value) == TYPE_ARRAY else []
+
+
+func remember_scenario_selection(archetype_id: String, scenario_id: String) -> void:
+	var clean_archetype := archetype_id.strip_edges()
+	var clean_scenario := scenario_id.strip_edges()
+	if clean_archetype.is_empty() or clean_scenario.is_empty():
+		return
+	var recent := recent_scenario_ids(clean_archetype)
+	recent.push_front(clean_scenario)
+	while recent.size() > 3:
+		recent.pop_back()
+	scenario_recent_by_archetype[clean_archetype] = recent
 
 
 func store_current_world_node_environment() -> void:
@@ -6713,6 +6757,8 @@ func advance_environment_turns(amount: int = 1) -> void:
 	var previous_turns := int(current_environment.get("turns", 0))
 	var next_turns := previous_turns + safe_amount
 	current_environment["turns"] = next_turns
+	if ScenarioEngineScript.advance_environment(current_environment, safe_amount):
+		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 	_advance_travel_lock(safe_amount)
 	_advance_narrative_action_timers(safe_amount)
 	_advance_grand_casino_living_floor(safe_amount)
@@ -7776,6 +7822,8 @@ func to_dict() -> Dictionary:
 		# The current/world-node machine copies retain only location-owned stock.
 		"current_environment": _environment_for_persistent_storage(current_environment),
 		"world_map": _compact_world_map_ticket_storage(WorldMap.normalize(world_map)),
+		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
+		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(true),
 		"grand_casino_room_states": _grand_casino_room_states_for_save(),
 		"grand_casino_staffing": grand_casino_staffing.duplicate(true),
 		"rourke_current_room": rourke_current_room,
@@ -7848,6 +7896,8 @@ func to_save_snapshot() -> Dictionary:
 		"drunk_distortion_suppression_turns": drunk_distortion_suppression_turns,
 		"current_environment": _environment_for_persistent_storage(current_environment, false),
 		"world_map": _world_map_for_save_snapshot(world_map),
+		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
+		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(false),
 		"grand_casino_room_states": _grand_casino_room_states_for_save(false),
 		"grand_casino_staffing": grand_casino_staffing.duplicate(false),
 		"rourke_current_room": rourke_current_room,
@@ -7925,6 +7975,7 @@ func from_dict(data: Dictionary) -> void:
 	_sync_portable_ticket_inventory_markers()
 	_apply_sals_forfeited_shelf_to_current_environment()
 	world_map = _compact_world_map_ticket_storage(WorldMap.normalize(_copy_dict(data.get("world_map", {}))))
+	scenario_recent_by_archetype = _normalize_scenario_recent(_copy_dict(data.get("scenario_recent_by_archetype", {})))
 	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
 	grand_casino_staffing = _normalize_grand_casino_staffing(_copy_dict(data.get("grand_casino_staffing", {})))
 	rourke_current_room = _normalize_grand_casino_room_id(str(data.get("rourke_current_room", "")))
@@ -9044,7 +9095,34 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	environment["economic_profile"] = _normalize_economic_profile(_copy_dict(environment.get("economic_profile", {})))
 	environment["objective_hint"] = str(environment.get("objective_hint", ""))
 	environment["demo_objective"] = _copy_dict(environment.get("demo_objective", {}))
+	var scenario_state := ScenarioEngineScript.normalize_state(environment.get("scenario_state", {}))
+	if scenario_state.is_empty():
+		for legacy_key in ["scenario_state", "scenario_id", "scenario_phase_index", "scenario_phase_action_counter"]:
+			environment.erase(legacy_key)
+	else:
+		environment["scenario_state"] = scenario_state
+		environment["scenario_id"] = str(scenario_state.get("id", ""))
+		environment["scenario_phase_index"] = int(scenario_state.get("phase_index", 0))
+		environment["scenario_phase_action_counter"] = int(scenario_state.get("phase_action_counter", 0))
+		for scenario_array_key in ["scenario_patron_ids", "scenario_staff_ids"]:
+			environment[scenario_array_key] = _copy_array(environment.get(scenario_array_key, []))
+		for scenario_dict_key in ["scenario_game_modifiers", "scenario_presentation", "scenario_exclusive_opportunity", "scenario_hook_flags"]:
+			environment[scenario_dict_key] = _copy_dict(environment.get(scenario_dict_key, {}))
 	return environment
+
+
+static func _normalize_scenario_recent(value: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for archetype_value in value.keys():
+		var archetype_id := str(archetype_value).strip_edges()
+		if archetype_id.is_empty():
+			continue
+		var recent := _string_array(_copy_array(value.get(archetype_value, [])))
+		if recent.size() > 3:
+			recent = recent.slice(0, 3)
+		if not recent.is_empty():
+			result[archetype_id] = recent
+	return result
 
 
 static func _normalize_closing_time_state(data: Dictionary) -> Dictionary:
