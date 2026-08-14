@@ -89,6 +89,7 @@ static func begin(spec: Dictionary, world_context: Dictionary, run_seed: int) ->
 		"noise": 0,
 		"resolution": {},
 		"consumer_payload": _dictionary(spec.get("consumer_payload", {})).duplicate(true),
+		"travel_continuation": _normalize_travel_continuation(spec.get("travel_continuation", {})),
 	}
 	return normalize_state(state)
 
@@ -111,6 +112,7 @@ static func normalize_state(value: Variant) -> Dictionary:
 	normalized["assists"] = _string_array(source.get("assists", []))
 	normalized["used_assists"] = _string_array(source.get("used_assists", []))
 	normalized["resolution"] = _dictionary(source.get("resolution", {})).duplicate(true)
+	normalized["travel_continuation"] = _normalize_travel_continuation(source.get("travel_continuation", {}))
 	return normalized
 
 
@@ -180,6 +182,11 @@ static func snapshot(source_state: Dictionary) -> Dictionary:
 		"happenings": _string_array(conditions.get("happenings", [])),
 	}
 	result.erase("consumer_payload")
+	var continuation := _dictionary(state.get("travel_continuation", {}))
+	result["travel_continuation_pending"] = str(state.get("status", "")) == "resolved" \
+		and bool(continuation.get("enabled", false)) \
+		and not bool(continuation.get("consumed", false))
+	result.erase("travel_continuation")
 	result.erase("job_id")
 	result.erase("source_event_id")
 	result.erase("world_applied")
@@ -700,6 +707,22 @@ static func _position(value: Variant, allow_empty: bool = false) -> Dictionary:
 	if allow_empty and (not source.has("x") or not source.has("y")):
 		return {}
 	return {"x": int(source.get("x", 0)), "y": int(source.get("y", 0))}
+
+
+static func _normalize_travel_continuation(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var source: Dictionary = value
+	var target_id := str(source.get("target_id", "")).strip_edges()
+	if not bool(source.get("enabled", false)) or target_id.is_empty():
+		return {}
+	return {
+		"enabled": true,
+		"target_id": target_id,
+		"target_label": str(source.get("target_label", target_id.replace("_", " ").capitalize())).strip_edges(),
+		"choice_data": _dictionary(source.get("choice_data", {})).duplicate(true),
+		"consumed": bool(source.get("consumed", false)),
+	}
 
 
 static func _edge_key(origin_id: String, destination_id: String) -> String:

@@ -1216,17 +1216,126 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 	var favor_board: Dictionary = run_state.active_streets_run.get("board", {})
 	favor_board["patrols"] = []
 	var destination: Dictionary = favor_board.get("destination", {})
+	var favor_target_id := str(run_state.active_streets_run.get("destination_node_id", ""))
+	var favor_travel_count_before := run_state.environment_travel_count()
 	run_state.active_streets_run["board"] = favor_board
 	run_state.active_streets_run["player"] = {"x": int(destination.get("x", 1)) - 1, "y": int(destination.get("y", 0))}
 	app.call("_on_streets_action_requested", {"verb": "move", "direction": "right", "pace": "walk"})
-	await process_frame
+	if not await _wait_for_streets_destination(app, run_state, favor_target_id):
+		push_error("Successful Crew-favor Streets outcome did not resume canonical travel to %s." % favor_target_id)
+		return false
 	if run_state.streets_has_active_run() \
 		or not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
 		or bool(run_state.narrative_flags.get("crew_favor_pending", true)) \
-		or run_state.bankroll != 122 \
-		or run_state.suspicion_level() != 4 \
+		or run_state.environment_travel_count() != favor_travel_count_before + 1 \
 		or bool(streets_controller.call("is_visible")):
-		push_error("Played Crew-favor surface did not apply its authored outcome once and close cleanly.")
+		push_error("Played Crew-favor surface did not apply its authored outcome, travel once, and close cleanly.")
+		return false
+	for terminal_reason in ["caught", "deadline", "ditched"]:
+		if not await _check_streets_terminal_travel(app, terminal_reason):
+			return false
+	if not await _check_streets_decline_and_invalid_travel(app):
+		return false
+	return true
+
+
+func _wait_for_streets_destination(app: Control, run_state: RunState, target_id: String) -> bool:
+	for _settle_frame in range(12):
+		await process_frame
+		if run_state.current_world_node_id() == target_id and not bool(app.get("travel_transition_active")):
+			# Let the travel coroutine finish any same-frame event/refresh work
+			# before another fixture replaces the run.
+			await process_frame
+			return run_state.current_world_node_id() == target_id
+	return false
+
+
+func _enabled_streets_travel_choice(app: Control) -> Dictionary:
+	var choices: Array = app.call("_travel_choice_view_list")
+	for choice_value in choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		if bool(choice.get("enabled", true)) and not str(choice.get("id", "")).strip_edges().is_empty():
+			return choice.duplicate(true)
+	return {}
+
+
+func _check_streets_terminal_travel(app: Control, terminal_reason: String) -> bool:
+	app.call("start_foundation_run", "UI-STREETS-TRAVEL-%s" % terminal_reason)
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	var streets_controller: Variant = app.get("streets_controller")
+	var choice := _enabled_streets_travel_choice(app)
+	if run_state == null or streets_controller == null or choice.is_empty():
+		push_error("%s Streets travel fixture could not find an enabled real edge." % terminal_reason.capitalize())
+		return false
+	var target_id := str(choice.get("id", ""))
+	var route: Dictionary = choice.get("route", {}) if typeof(choice.get("route", {})) == TYPE_DICTIONARY else {}
+	var started := run_state.streets_begin({
+		"mode": "package",
+		"route_id": "ui_%s_continuation" % terminal_reason,
+		"origin_node_id": run_state.current_world_node_id(),
+		"destination_node_id": target_id,
+		"distance": str(choice.get("distance", route.get("distance", "near"))),
+		"deadline_actions": 1 if terminal_reason == "deadline" else 12,
+		"travel_continuation": {
+			"enabled": true,
+			"target_id": target_id,
+			"target_label": str(choice.get("label", target_id)),
+			"choice_data": {"enabled": true},
+		},
+	})
+	if not bool(started.get("ok", false)):
+		push_error("%s Streets travel fixture could not start its board." % terminal_reason.capitalize())
+		return false
+	var board: Dictionary = run_state.active_streets_run.get("board", {})
+	board["patrols"] = []
+	run_state.active_streets_run["board"] = board
+	if terminal_reason == "caught":
+		run_state.active_streets_run["spotted"] = true
+		run_state.active_streets_run["pursuit_remaining"] = 1
+	var travel_count_before := run_state.environment_travel_count()
+	var action := {"verb": "ditch"} if terminal_reason == "ditched" else {"verb": "wait"}
+	app.call("_on_streets_action_requested", action)
+	if not await _wait_for_streets_destination(app, run_state, target_id):
+		push_error("%s Streets outcome did not resume canonical travel to %s." % [terminal_reason.capitalize(), target_id])
+		return false
+	if str((run_state.active_streets_run.get("resolution", {}) as Dictionary).get("reason", "")) != terminal_reason \
+		or run_state.environment_travel_count() != travel_count_before + 1 \
+		or bool(streets_controller.call("is_visible")):
+		push_error("%s Streets outcome did not complete exactly one travel transition and close its board." % terminal_reason.capitalize())
+		return false
+	return true
+
+
+func _check_streets_decline_and_invalid_travel(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-STREETS-DECLINE-INVALID")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	var library: ContentLibrary = app.get("library")
+	if run_state == null or library == null:
+		push_error("Streets decline/invalid travel fixture could not access run state.")
+		return false
+	run_state.narrative_flags["crew_favor_pending"] = true
+	var event_module: EventModule = EventModuleScript.new()
+	event_module.setup(library.event("crew_favor_delivery"), library)
+	event_module.resolve(run_state, run_state.current_environment, "refuse")
+	var invalid := run_state.streets_begin({
+		"mode": "package",
+		"route_id": "invalid_empty_origin",
+		"origin_node_id": "",
+		"destination_node_id": "nowhere",
+	})
+	var choice := _enabled_streets_travel_choice(app)
+	if bool(invalid.get("ok", false)) or run_state.streets_has_active_run() or choice.is_empty():
+		push_error("Declined or invalid Streets entry blocked the ordinary travel surface.")
+		return false
+	var target_id := str(choice.get("id", ""))
+	var travel_count_before := run_state.environment_travel_count()
+	app.call("_travel_to", target_id, str(choice.get("label", target_id)), choice)
+	if not await _wait_for_streets_destination(app, run_state, target_id) or run_state.environment_travel_count() != travel_count_before + 1:
+		push_error("Declined or invalid Streets entry left ordinary travel unusable.")
 		return false
 	return true
 

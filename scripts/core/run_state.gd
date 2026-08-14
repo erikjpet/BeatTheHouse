@@ -6292,6 +6292,14 @@ func resolve_crew_favor_delivery_job(choice_id: String, authored_consequences: D
 		"deadline_actions": maxi(10, int(route.get("distance_blocks", 2)) * 5 + 8),
 		"cargo_id": "crew_package",
 		"consumer_payload": _streets_event_consumer_payload(authored_consequences),
+		"travel_continuation": {
+			"enabled": true,
+			"target_id": str(route.get("destination_node_id", "crew_drop")),
+			"target_label": str(route.get("destination_label", "the Crew's drop")),
+			# This package commits to the real edge when it starts. Route details,
+			# cost, risk, time, and generation remain owned by FoundationMain.
+			"choice_data": {"enabled": true},
+		},
 	})
 
 
@@ -6356,6 +6364,25 @@ func streets_has_active_run() -> bool:
 
 func streets_snapshot() -> Dictionary:
 	return StreetsRunModelScript.snapshot(active_streets_run)
+
+
+# Hands a resolved board's optional travel bridge to its UI consumer exactly
+# once. The consumer must pass this back into its existing travel pipeline.
+func streets_take_travel_continuation() -> Dictionary:
+	if active_streets_run.is_empty() or str(active_streets_run.get("status", "")) != "resolved":
+		return {}
+	var continuation := _copy_dict(active_streets_run.get("travel_continuation", {}))
+	var target_id := str(continuation.get("target_id", "")).strip_edges()
+	if not bool(continuation.get("enabled", false)) or bool(continuation.get("consumed", false)) or target_id.is_empty():
+		return {}
+	continuation["consumed"] = true
+	active_streets_run["travel_continuation"] = continuation
+	return {
+		"enabled": true,
+		"target_id": target_id,
+		"target_label": str(continuation.get("target_label", target_id.replace("_", " ").capitalize())),
+		"choice_data": _copy_dict(continuation.get("choice_data", {})),
+	}
 
 
 func streets_apply_action(action: Dictionary) -> Dictionary:

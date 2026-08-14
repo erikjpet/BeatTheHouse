@@ -27,6 +27,12 @@ var started := run_state.streets_begin_multi_stop({
 		"success": {"cash": 35, "heat": 0, "flags": {"numbers_route_paid": true}},
 		"failure": {"cash": 0, "heat": 7, "flags": {"numbers_route_failed": true}},
 	},
+	"travel_continuation": {
+		"enabled": true,
+		"target_id": "the_punchline",
+		"target_label": "The Punchline",
+		"choice_data": {"enabled": true},
+	},
 })
 ```
 
@@ -84,11 +90,20 @@ An invalid action returns `ok: false` and does not consume an action boundary.
 A valid action consumes exactly one Streets deadline boundary and one town
 action boundary.
 
+When a run represents committed travel, the consumer may include a
+`travel_continuation`. After any terminal outcome, call
+`streets_take_travel_continuation()` once and pass its target and `choice_data`
+to the existing travel entry point. The returned token is one-shot. Hold jobs
+and other boards that should end in place omit this field. Streets never owns
+route availability, cost, risk, clock time, environment generation, or travel
+events; those remain in the canonical travel pipeline.
+
 The public snapshot contains mode/status/outcome, player position, visited
 stops, deadline and pursuit counters, current board cells, current patrol
 positions/facing, legal actions, and an opaque deterministic board signature.
 It intentionally excludes consumer effects, job identity, hidden sweep/heat
 generation inputs, and future patrol routes.
+The only continuation detail it exposes is `travel_continuation_pending`.
 
 ## Outcome and save ownership
 
