@@ -108,6 +108,12 @@ Wave C games are intentionally parallel-friendly.
 | voice06_1 | `voice06_1_voice_pass_prompt.md` | TODO | all content-bearing tasks DONE | release06_1 | | | | |
 | release06_1 | `release06_1_ship_prompt.md` | TODO | ALL rows DONE | — | | | | |
 
+### Defects (owner-reported / PM-found; claimable like any row)
+
+| ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| fix06_1 | `fix06_1_dead_event_interactions_prompt.md` | TODO | env06_2, env06_3 (landed) | crew06_5+ inherit the class guard | | | | Owner-reported dead event icons; root-caused to normalization-injected speakers vs room-actor denial at the beach. Run before or alongside Wave D. |
+
 ### Fixed checkpoint
 
 A **human playtest round runs between Wave D completion and voice06_1 /
@@ -336,6 +342,40 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   one production hard alarm, normal heat, next-night unlock, and then completes
   validated drops from sufficient up-front bankroll. It never resets heat,
   bypasses wagering, or injects mid-session cash merely to keep the probe alive.
+- 2026-08-14 [crew06_2] PM scope review rejected a data-only tell-channel
+  projection: authored `line`, `portrait`, and `timing` channels must each alter
+  the production table presentation while keeping the learning model hidden.
+  Direct/out-of-phase resolver calls must also reject atomically so an irregular
+  mid-hand cash-out cannot strand the table. The correction is committed, but
+  integrated acceptance remains pending a clean runtime compile and full gates.
+- 2026-08-14 [crew06_3] PM scope review rejected an API-only Numbers slice as
+  not player-playable. Venue slips, Silas, Lucky's route/fix entry, and the L3
+  allocation step must be reachable through production interactions and visual
+  QA; tests calling RunState APIs directly do not satisfy the zero-trust playable
+  route or operation requirements. Hidden past-posting must remain unadvertised.
+- 2026-08-14 [push06_1] Presentation entry and surface reads are serialized-
+  state-pure. Pile-rumor publication belongs to generation/action boundaries;
+  staff-watch, scenario-reset, and owned-shim normalization persist only when a
+  real action begins (or in the canonical generated state), never while opening
+  or sweeping a surface. Dedicated runtime acceptance is pending rerun.
+- 2026-08-14 [craps06_1] Canonical visual acceptance remains red because the
+  deterministic dice fixture is not entering the production rolling phase.
+  The assertion stays binding; PM returned the slice for exact clock/state-path
+  diagnosis rather than accepting a timing guess or weakening visual coverage.
+
+- 2026-08-14 [fix06_1] Owner reported scenario event icons with no apparent
+  action. PM headless probes (15 seeds, all archetypes + Punchline L2): 39/42
+  scenario events pass the real interaction chain (`can_trigger` + `choices`);
+  the 3 beach events are confirmed dead icons. Root cause: ContentLibrary
+  normalization injects a default speaker with `environment_actor: true`, and
+  `EventModule._environment_allows_room_actor` hard-denies kind `recovery` and
+  archetype `beach`, so `can_trigger` silently fails after icon placement.
+  Earlier static suspicion about Punchline L2 scope was a false alarm — layer
+  flattening presents kind `casino` at runtime and all 3 L2 events verify OK.
+  Remediation prompt `fix06_1` authored (generic normalization fix + permanent
+  interactability class-guard test + UI click-through). The class gap that let
+  this survive Wave B acceptance: no automated test walked authored
+  interactable events through `can_trigger` in generated host environments.
 
 ## Work Log
 
