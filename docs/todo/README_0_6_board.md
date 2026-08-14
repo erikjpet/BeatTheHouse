@@ -170,6 +170,21 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   reputation uses `record_reputation_incident`, `local_reputation`, and
   `reputation_value`. All three systems advance through the existing
   `advance_environment_turns` action boundary, never per-frame or wall-clock.
+- 2026-08-14 [env06_4] PM-approved layer runtime contract: environment
+  snapshots add a schema version, `current_layer_id`, `default_layer_id`,
+  layer ids/transitions/discovery, and lazily populated `layer_states`; the
+  current layer remains flattened at the top level for legacy consumers.
+  Generic RunGenerator/RunState seams enter layers, query access, and record
+  discovery only at action boundaries. Legacy Punchline snapshots migrate to
+  discovered L2 while missing L1/L3 state is seed-forked lazily. Scenario
+  `layer_id` survives normalization; Grand Casino room structures stay out of
+  scope. L3 remains a registered minimal shell for crew06_6.
+- 2026-08-14 [env06_2] Tier-1 scenario ids use stable archetype-prefixed
+  slugs; each scenario owns one `scenario_<scenario_slug>_<beat>` exclusive
+  event absent from every base pool. The tutorial pins
+  `corner_store_delivery_day` only if its regression proves tutorial-sensitive
+  pools and sequencing unchanged. The 20-seed audit must exercise the real
+  scenario selector, including the landed town-weight seam.
 
 ## Work Log
 
