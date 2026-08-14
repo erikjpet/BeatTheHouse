@@ -80,8 +80,11 @@ static func settle_roll(table: Dictionary, pending_value: Variant, roll: Diction
 	var results: Array = []
 	var existing_come := _dict(working.get("come", {})).duplicate(true)
 	var existing_dont_come := _dict(working.get("dont_come", {})).duplicate(true)
-	var existing_come_odds := _dict(working.get("come_odds", {})).duplicate(true)
 	_merge_pending_persistent(working, pending)
+	# Pending odds are attached to already-established Come numbers before this
+	# throw and must settle on an immediate number or seven. New Come wagers are
+	# still excluded because _merge_pending_persistent never merges the apron bet.
+	var existing_come_odds := _dict(working.get("come_odds", {})).duplicate(true)
 
 	var line_result := _settle_line_bets(working, total, point_before, rules, results)
 	bankroll_delta += int(line_result.get("credit", 0))

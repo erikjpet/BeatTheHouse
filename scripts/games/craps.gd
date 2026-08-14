@@ -133,6 +133,7 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 	surface.draw_rect(Rect2(54, 52, 704, 332), Color("#0b513c"))
 	surface.draw_rect(Rect2(54, 52, 704, 332), Color("#e3c675"), false, 2)
 	surface.surface_title(str(state.get("table_name", "CRAPS")).to_upper(), Vector2(68, 38), Color("#f5e6a8"))
+	_draw_idle_rail_motion(surface)
 	_draw_targets(surface, state)
 	_draw_point_puck(surface, state)
 	_draw_dice(surface, state)
@@ -141,6 +142,14 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 	_draw_controls(surface, state)
 	surface.surface_end_design_space()
 	return true
+
+
+func surface_motion_signature(surface, _surface_state: Dictionary) -> Dictionary:
+	var motion := _idle_rail_motion(surface)
+	return {
+		"rail_marker_x_tenth": int(round(float(motion.get("marker_x", 0.0)) * 10.0)),
+		"rail_glow_milli": int(round(float(motion.get("glow", 0.0)) * 1000.0)),
+	}
 
 
 func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -701,6 +710,25 @@ func _draw_targets(surface, state: Dictionary) -> void:
 		surface.surface_label_centered(str(target.get("payout", "")), Rect2(rect.position + Vector2(2, rect.size.y - 15), Vector2(rect.size.x - 4, 11)), 7, Color("#d1dfd7"))
 		if enabled:
 			surface.surface_add_exact_hit(rect, "craps_bet", index)
+
+
+func _idle_rail_motion(surface) -> Dictionary:
+	var clock := float(surface.surface_flicker()) if surface != null and surface.has_method("surface_flicker") else 0.0
+	var sweep := (sin(clock * 1.35) + 1.0) * 0.5
+	return {
+		"marker_x": 92.0 + sweep * 492.0,
+		"glow": 0.34 + 0.16 * sin(clock * 2.1),
+	}
+
+
+func _draw_idle_rail_motion(surface) -> void:
+	var motion := _idle_rail_motion(surface)
+	var marker := Vector2(float(motion.get("marker_x", 338.0)), 65.0)
+	var glow := clampf(float(motion.get("glow", 0.34)), 0.18, 0.55)
+	# One moving brass rail marker is enough to keep the table alive without
+	# allocating snapshots or maintaining another runtime animation channel.
+	surface.draw_circle(marker, 6.0, Color(0.94, 0.77, 0.35, glow * 0.45))
+	surface.draw_circle(marker, 3.0, Color(0.98, 0.89, 0.58, glow))
 
 
 func _draw_point_puck(surface, state: Dictionary) -> void:

@@ -41,6 +41,7 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 		failures.append("Craps draw_surface returned false.")
 	if _surface_hit_count(harness, "craps_bet") < 9:
 		failures.append("Craps renderer did not register the core readable bet targets.")
+	_check_craps_idle_motion(game, surface, failures)
 	var pass_index := _craps_target_index(surface.get("bet_targets", []), "pass_line")
 	var bet_command := game.surface_action_command("craps_bet", pass_index, false, {"selected_chip": 5}, run_state, environment)
 	var bet_ui: Dictionary = bet_command.get("ui_state", {})
@@ -104,6 +105,14 @@ func _check_craps_rule_matrix(game: GameModule, base_table: Dictionary, failures
 	var odds_off := CrapsRulesScript.settle_roll(odds_off_table, {}, _craps_roll(4), rules)
 	if int(odds_off.get("bankroll_delta", 0)) != 30:
 		failures.append("Craps Come odds did not return without profit while off on the come-out roll.")
+	var pending_odds_win_table := _craps_rule_table(base_table, 6, {"come": {"5": 10}})
+	var pending_odds_win := CrapsRulesScript.settle_roll(pending_odds_win_table, {"come_odds_5": 10}, _craps_roll(5), rules)
+	if int(pending_odds_win.get("bankroll_delta", 0)) != 35 or _craps_dict(_craps_dict(pending_odds_win_table.get("working_bets", {})).get("come", {})).has("5") or _craps_dict(_craps_dict(pending_odds_win_table.get("working_bets", {})).get("come_odds", {})).has("5"):
+		failures.append("Newly placed Come odds were charged but not paid and cleared on an immediate number.")
+	var pending_odds_loss_table := _craps_rule_table(base_table, 6, {"come": {"5": 10}})
+	var pending_odds_loss := CrapsRulesScript.settle_roll(pending_odds_loss_table, {"come_odds_5": 10}, _craps_roll(7), rules)
+	if int(pending_odds_loss.get("bankroll_delta", 0)) != -10 or _craps_dict(_craps_dict(pending_odds_loss_table.get("working_bets", {})).get("come", {})).has("5") or _craps_dict(_craps_dict(pending_odds_loss_table.get("working_bets", {})).get("come_odds", {})).has("5"):
+		failures.append("Newly placed Come odds were not accounted as a charged loss on immediate seven-out.")
 	if CrapsRulesScript.true_odds_profit(10, 4, rules) != 20 or CrapsRulesScript.true_odds_profit(10, 5, rules) != 15 or CrapsRulesScript.true_odds_profit(10, 6, rules) != 12:
 		failures.append("Craps free-odds payouts are not true odds for 4/5/6.")
 	var place_table := _craps_rule_table(base_table, 5, {"place": {"6": 6}})
@@ -120,6 +129,35 @@ func _check_craps_rule_matrix(game: GameModule, base_table: Dictionary, failures
 		failures.append("Craps accepted a wager below the posted table minimum.")
 	if bool(CrapsRulesScript.can_place_bet("pass_line", maximum + 1, base_table, {}, rules).get("ok", false)):
 		failures.append("Craps accepted a wager above the posted table maximum.")
+
+
+func _check_craps_idle_motion(game: GameModule, surface: Dictionary, failures: Array) -> void:
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.size = Vector2(ArtContractsScript.GAME_BOARD_SIZE)
+	root.add_child(canvas)
+	canvas.call("set_game_module", game)
+	canvas.call("render_game_snapshot", surface)
+	if canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var first: Dictionary = canvas.call("debug_surface_motion_sample")
+	canvas.call("debug_advance_idle_liveness", 0.5)
+	var second: Dictionary = canvas.call("debug_surface_motion_sample")
+	if JSON.stringify(first) == JSON.stringify(second):
+		failures.append("Craps-specific brass rail marker remained visually frozen across two idle times.")
+	if canvas.has_method("performance_counters"):
+		var counters: Dictionary = canvas.call("performance_counters")
+		if int(counters.get("full_snapshot_calls", 0)) != 0:
+			failures.append("Craps visible idle motion rebuilt full snapshots instead of using the surface clock.")
+	var reduced := surface.duplicate(true)
+	reduced["reduce_motion"] = true
+	canvas.call("render_game_snapshot", reduced)
+	var reduced_first: Dictionary = canvas.call("debug_surface_motion_sample")
+	canvas.call("debug_advance_idle_liveness", 0.5)
+	var reduced_second: Dictionary = canvas.call("debug_surface_motion_sample")
+	if JSON.stringify(reduced_first) != JSON.stringify(reduced_second):
+		failures.append("Craps idle rail motion ignored reduce-motion mode.")
+	root.remove_child(canvas)
+	canvas.free()
 
 
 func _check_craps_save_restore(game: GameModule, run_state: RunState, environment: Dictionary, failures: Array) -> void:
