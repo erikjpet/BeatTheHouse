@@ -72,10 +72,10 @@ Wave C games are intentionally parallel-friendly.
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | env06_2 | `env06_2_tier1_scenarios_prompt.md` | DONE | env06_1 | crew06_5 | PM:Codex/sub:1 | 2026-08-14 | 2026-08-14 | PM verified all 17 scenarios/events, tutorial neutrality, real-selector reachability, full integrated gates, determinism, and zero-overlap visual QA PASS. |
-| env06_3 | `env06_3_tier2_scenarios_prompt.md` | TODO | env06_1, env06_4 | crew06_5, crew06_8 | | | | |
+| env06_3 | `env06_3_tier2_scenarios_prompt.md` | IN_PROGRESS | env06_1, env06_4 | crew06_5, crew06_8 | PM:Codex/sub:4 | 2026-08-14 | | PM-orchestrated Wave B Stage 2 execution. |
 | env06_4 | `env06_4_punchline_rework_prompt.md` | DONE | env06_1 | env06_3, crew06_2, crew06_6 | PM:Codex/sub:2 | 2026-08-14 | 2026-08-14 | PM verified scope/design, L2 compatibility and migration, systems/UI/determinism/visual gates, and three-layer zero-overlap smoke PASS. |
 | town06_2 | `town06_2_rumors_travelers_prompt.md` | DONE | env06_1, town06_1 | town06_3, crew06_3, crew06_9, chain06_1 | PM:Codex/sub:3 | 2026-08-14 | 2026-08-14 | PM verified truth traces, heard tier, itineraries, reputation propagation, save compatibility, and combined systems/UI/determinism/visual gates PASS. |
-| town06_3 | `town06_3_police_sweep_prompt.md` | TODO | town06_1, town06_2 | streets06_1 (full), crew06_3 (full) | | | | |
+| town06_3 | `town06_3_police_sweep_prompt.md` | IN_PROGRESS | town06_1, town06_2 | streets06_1 (full), crew06_3 (full) | PM:Codex/sub:5 | 2026-08-14 | | PM-orchestrated Wave B Stage 2 execution. |
 
 ### Wave C — Games
 
@@ -270,3 +270,7 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   Dave/Cass/Silas itineraries, and edge-decayed traveling reputation now share
   one serialized action-boundary town network. This unblocks town06_3,
   crew06_3, crew06_9, and chain06_1.
+- 2026-08-14 [Wave B Stage 2] PM-orchestrated execution claimed for env06_3
+  and town06_3 after env06_4 and town06_2 passed independent integrated-tree
+  acceptance; two isolated subagents assigned, with PM retaining board,
+  integration, verification, and archival ownership.
