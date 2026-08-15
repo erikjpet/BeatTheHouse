@@ -2,6 +2,7 @@ extends SceneTree
 
 const PUSHER_DETERMINISM_ACTIONS := 200
 const PUSHER_EV_ACTIONS := 2400
+const PUSHER_VARIATION_EV_ACTIONS := 600
 
 
 func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> void:
@@ -26,6 +27,11 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_prize_items(game, failures)
 	_check_coin_pusher_items(game, failures)
 	_check_coin_pusher_economy(game, definition, failures)
+	_check_pusher_variation_data(definition, failures)
+	_check_jackpot_ridge_lifecycle(definition, failures)
+	_check_vault_drop_contract(game, definition, failures)
+	_check_pusher_variation_distribution(game, failures)
+	_check_pusher_variation_determinism_and_ev(game, definition, failures)
 
 
 func _check_coin_pusher_data_contract(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
@@ -661,6 +667,192 @@ func _check_coin_pusher_economy(game: GameModule, definition: Dictionary, failur
 		failures.append("Quarter Falls long-run coin EV %.4f fell outside documented band %s." % [ev, JSON.stringify(band)])
 
 
+func _check_pusher_variation_data(definition: Dictionary, failures: Array) -> void:
+	var tuning: Dictionary = definition.get("coin_pusher_tuning", {})
+	var ids: Array = []
+	for value in tuning.get("variation_distribution", []):
+		if typeof(value) == TYPE_DICTIONARY:
+			ids.append(str((value as Dictionary).get("id", "")))
+	if JSON.stringify(ids) != JSON.stringify(["quarter_falls", "jackpot_ridge", "vault_drop"]):
+		failures.append("Coin Pusher distribution must author all three launch variations in stable order.")
+	var variations: Dictionary = tuning.get("variations", {})
+	var ridge: Dictionary = variations.get("jackpot_ridge", {})
+	var vault: Dictionary = variations.get("vault_drop", {})
+	for key in ["schedule_count", "multiplier_values", "multiplier_drop_count", "lock_cycles", "ridge_run_cycles", "alarm_tolerance_bonus", "tolerance_band_size", "force_trim_order", "force_trim_push_delta", "force_trim_tolerance_delta", "documented_ev_band"]:
+		if not ridge.has(key):
+			failures.append("Jackpot Ridge tuning is missing %s." % key)
+	for key in ["fragment_push_threshold", "progressive_floor", "progressive_growth_per_action", "progressive_crowded_growth_per_action", "reset_cell_count", "reset_odds_floor", "vault_cells", "documented_ev_by_meter"]:
+		if not vault.has(key):
+			failures.append("Vault Drop tuning is missing %s." % key)
+	var total_cells := 0
+	var reset_cells := 0
+	for value in vault.get("vault_cells", []):
+		if typeof(value) == TYPE_DICTIONARY:
+			var count := maxi(1, int((value as Dictionary).get("count", 1)))
+			total_cells += count
+			if str((value as Dictionary).get("kind", "")) == "reset":
+				reset_cells += count
+	if total_cells != 9 or reset_cells != int(vault.get("reset_cell_count", -1)) or float(vault.get("reset_odds_floor", 0.0)) > float(reset_cells) / float(total_cells) + 0.00001:
+		failures.append("Vault Drop RESET odds do not match the documented honest 1-in-9 floor.")
+
+
+func _check_jackpot_ridge_lifecycle(definition: Dictionary, failures: Array) -> void:
+	var variations: Dictionary = (definition.get("coin_pusher_tuning", {}) as Dictionary).get("variations", {})
+	var config: Dictionary = variations.get("jackpot_ridge", {})
+	var state := JackpotRidgeVariation.initial_state(config, _configured_rng(173), 5, 6)
+	state["pucks"] = [
+		{"id": "m2", "kind": "multiplier", "multiplier": 2, "charges": 2, "lane": 2, "cell": 0, "push": 1},
+		{"id": "m3", "kind": "multiplier", "multiplier": 3, "charges": 2, "lane": 2, "cell": 0, "push": 1},
+		{"id": "m5", "kind": "multiplier", "multiplier": 5, "charges": 2, "lane": 2, "cell": 0, "push": 1},
+	]
+	var ridge := JackpotRidgeVariation.apply_movement(state, [{"lane": 2, "cell": 0, "moved": 1}], {"aimed_lane": 2, "push_strength": 0, "from_nudge": false}, config)
+	if not bool(ridge.get("ridge_run_triggered", false)) or int(ridge.get("multiplier_drops", 0)) != 3 or int(state.get("cascade_remaining", 0)) != int(config.get("ridge_run_cycles", -1)):
+		failures.append("Jackpot Ridge did not trigger exactly on three multiplier pucks in one shelf cycle with authored duration.")
+	if JackpotRidgeVariation.payout_multiplier(state) != 5:
+		failures.append("Jackpot Ridge armed multipliers did not expose the strongest truthful multiplier.")
+	JackpotRidgeVariation.finish_drop(state)
+	JackpotRidgeVariation.finish_drop(state)
+	if JackpotRidgeVariation.payout_multiplier(state) != 1:
+		failures.append("Jackpot Ridge multiplier charges did not expire after the authored drops.")
+	state["pucks"] = [
+		{"id": "lock", "kind": "lock", "shelf": "upper", "lane": 1, "cell": 0, "push": 1},
+		{"id": "dud", "kind": "dud", "lane": 3, "cell": 0, "push": 1},
+	]
+	state["jammed_lanes"] = [3]
+	JackpotRidgeVariation.apply_movement(state, [{"lane": 1, "cell": 0, "moved": 1}, {"lane": 3, "cell": 0, "moved": 1}], {"aimed_lane": 2, "push_strength": 0, "from_nudge": false}, config)
+	if not JackpotRidgeVariation.shelf_locked(state, "upper") or JackpotRidgeVariation.lane_is_jammed(state, 3):
+		failures.append("Jackpot Ridge lock/dud lifecycle did not freeze the shelf and clear the jam.")
+	var two_state := state.duplicate(true)
+	two_state["pucks"] = [
+		{"kind": "multiplier", "multiplier": 2, "charges": 1, "lane": 0, "cell": 0, "push": 1},
+		{"kind": "multiplier", "multiplier": 3, "charges": 1, "lane": 0, "cell": 0, "push": 1},
+	]
+	var two := JackpotRidgeVariation.apply_movement(two_state, [{"lane": 0, "cell": 0, "moved": 1}], {"aimed_lane": 0, "push_strength": 0, "from_nudge": false}, config)
+	if bool(two.get("ridge_run_triggered", true)):
+		failures.append("Jackpot Ridge cascade triggered below the exact three-puck threshold.")
+
+
+func _check_vault_drop_contract(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	var variations: Dictionary = (definition.get("coin_pusher_tuning", {}) as Dictionary).get("variations", {})
+	var config: Dictionary = variations.get("vault_drop", {})
+	var normal_state := TownState.new()
+	normal_state.generate(9101)
+	normal_state.register_progressive_meter("normal", {"target_node_id": "bar", "initial_value": 160, "floor": 120, "growth_per_action": 2})
+	if int(normal_state.progressive_meter("normal").get("value", 0)) != 160:
+		failures.append("Vault progressive changed outside an action boundary.")
+	normal_state.advance_actions(3)
+	if int(normal_state.progressive_meter("normal").get("value", 0)) != 166:
+		failures.append("Vault progressive did not grow once per action boundary.")
+	var crowded_state := TownState.new()
+	crowded_state.generate(9101)
+	crowded_state.register_progressive_meter("crowded", {"target_node_id": "gas", "initial_value": 160, "floor": 120, "growth_per_action": 4, "crowded": true})
+	crowded_state.advance_actions(3)
+	if int(crowded_state.progressive_meter("crowded").get("value", 0)) != 172:
+		failures.append("Vault progressive did not grow faster under the crowded fixture.")
+	var fixture := _pusher_variation_fixture(game, "VAULT-CONTRACT", "vault_drop")
+	var run_state: RunState = fixture.get("run_state")
+	var environment: Dictionary = run_state.current_environment
+	var machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	var state: Dictionary = machine.get("variation_state", {})
+	state["fragments"] = [{"id": "proof_fragment", "lane": 2, "cell": 0, "push": 1}]
+	VaultDropVariation.apply_movement(state, [{"lane": 2, "cell": 0, "moved": 1}], {"aimed_lane": 2, "push_strength": 0, "from_nudge": false}, config)
+	if int(state.get("banked_fragments", 0)) != 1:
+		failures.append("Vault fragment did not bank after crossing the shared pile ledge.")
+	run_state.add_item("xray_glasses")
+	var cells: Array = state.get("vault_cells", [])
+	var reset_index := -1
+	for index in range(cells.size()):
+		if str((cells[index] as Dictionary).get("kind", "")) == "reset":
+			reset_index = index
+			break
+	var peek_result := game.resolve_with_context("peek_vault_cell", 0, run_state, environment, run_state.create_rng("vault_peek"), {"coin_pusher_vault_cell": reset_index})
+	var peek_outcome: Dictionary = peek_result.get("coin_pusher_vault_outcome", {})
+	if not bool(peek_result.get("ok", false)) or str((peek_outcome.get("cell", {}) as Dictionary).get("kind", "")) != "reset" or int(state.get("peeked_cell", -1)) != reset_index:
+		failures.append("X-Ray Glasses did not reveal exactly one selected truthful Vault cell.")
+	state["banked_fragments"] = 2
+	var start_result := game.resolve_with_context("start_vault_round", 0, run_state, environment, run_state.create_rng("vault_start"), {})
+	var reset_result := game.resolve_with_context("open_vault_cell", 0, run_state, environment, run_state.create_rng("vault_reset"), {"coin_pusher_vault_cell": reset_index})
+	if not bool(start_result.get("ok", false)) or not bool(reset_result.get("ok", false)) or int(run_state.progressive_meter(str(state.get("meter_id", ""))).get("value", -1)) != int(config.get("progressive_floor", -2)):
+		failures.append("Vault RESET cell did not slam the TownState progressive to its floor.")
+	var digest: String = str(game.call("deterministic_state_digest", environment))
+	var restored := RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	if game.deterministic_state_digest(restored.current_environment) != digest or int(restored.progressive_meter(str(state.get("meter_id", ""))).get("value", -1)) != int(config.get("progressive_floor", -2)):
+		failures.append("Vault fragments/cells/progressive did not survive save/load.")
+	if run_state.rumor_facts("vault_progressive").is_empty():
+		failures.append("Vault progressive did not register its truthful rumor fact class.")
+
+
+func _check_pusher_variation_distribution(game: GameModule, failures: Array) -> void:
+	var reached: Array = []
+	for seed_index in range(20):
+		var run_state := RunStateScript.new()
+		run_state.start_new("PUSHER-DISTRIBUTION-%02d" % seed_index)
+		var environment := _coin_pusher_environment("distribution_%02d" % seed_index)
+		environment.erase("scenario_game_modifiers")
+		var machine := game.generate_environment_state(run_state, environment, run_state.create_rng("variation_distribution"))
+		var variation_id := str(machine.get("variation_id", ""))
+		if not reached.has(variation_id):
+			reached.append(variation_id)
+	for required in ["quarter_falls", "jackpot_ridge", "vault_drop"]:
+		if not reached.has(required):
+			failures.append("20-seed Coin Pusher distribution never reached %s." % required)
+	var busy_fixture := _pusher_variation_fixture(game, "PUSHER-BUSY", "vault_drop")
+	var busy_run: RunState = busy_fixture.get("run_state")
+	busy_run.current_environment["scenario_game_modifiers"] = {"machine_occupancy": "high", "coin_pusher": {"variation_id": "vault_drop"}}
+	if not game.legal_actions(busy_run, busy_run.current_environment).is_empty() or bool(game.resolve_with_context("drop_quarter", 1, busy_run, busy_run.current_environment, busy_run.create_rng("busy"), {}).get("ok", true)):
+		failures.append("Trucker Convoy machine-busy mutation did not block pusher play.")
+
+
+func _check_pusher_variation_determinism_and_ev(game: GameModule, definition: Dictionary, failures: Array) -> void:
+	for variation_id in ["jackpot_ridge", "vault_drop"]:
+		var first := _pusher_variation_session(game, "PUSHER-VARIATION-DETERMINISM", variation_id, 80)
+		var second := _pusher_variation_session(game, "PUSHER-VARIATION-DETERMINISM", variation_id, 80)
+		if JSON.stringify(first) != JSON.stringify(second):
+			failures.append("%s scripted session diverged for identical seed and actions." % variation_id)
+	var ridge_session := _pusher_variation_session(game, "RIDGE-EV", "jackpot_ridge", PUSHER_VARIATION_EV_ACTIONS)
+	var variations: Dictionary = (definition.get("coin_pusher_tuning", {}) as Dictionary).get("variations", {})
+	var ridge_band: Array = (variations.get("jackpot_ridge", {}) as Dictionary).get("documented_ev_band", [])
+	var ridge_ev := float(ridge_session.get("payout", 0)) / float(maxi(1, int(ridge_session.get("cost", 0))))
+	if ridge_band.size() != 2 or ridge_ev < float(ridge_band[0]) or ridge_ev > float(ridge_band[1]):
+		failures.append("Jackpot Ridge long-run EV %.4f fell outside documented band %s." % [ridge_ev, JSON.stringify(ridge_band)])
+	var meter_bands: Dictionary = (variations.get("vault_drop", {}) as Dictionary).get("documented_ev_by_meter", {})
+	for meter_key in ["thin_120", "building_200", "fat_300"]:
+		var band: Array = meter_bands.get(meter_key, [])
+		if band.size() != 2 or float(band[0]) > float(band[1]):
+			failures.append("Vault meter-dependent EV band %s is missing or inverted." % meter_key)
+
+
+func _pusher_variation_session(game: GameModule, seed_text: String, variation_id: String, action_count: int) -> Dictionary:
+	var fixture := _pusher_variation_fixture(game, seed_text, variation_id)
+	var run_state: RunState = fixture.get("run_state")
+	var environment: Dictionary = run_state.current_environment
+	var payout := 0
+	var outcomes: Array = []
+	for index in range(action_count):
+		var result := game.resolve_with_context("drop_quarter", 1, run_state, environment, run_state.create_rng("variation_drop_%d" % index), {"coin_pusher_lane": index % 5})
+		payout += int(result.get("coin_pusher_payout", 0))
+		outcomes.append([int(result.get("coin_pusher_payout", 0)), game.deterministic_state_digest(environment)])
+		GameModule.apply_result(run_state, result, run_state.create_rng("variation_apply_%d" % index))
+	return {"payout": payout, "cost": action_count, "outcomes": outcomes, "digest": game.deterministic_state_digest(environment)}
+
+
+func _pusher_variation_fixture(game: GameModule, seed_text: String, variation_id: String, crowd_density: String = "") -> Dictionary:
+	var run_state := RunStateScript.new()
+	run_state.start_new(seed_text)
+	run_state.bankroll = 100000
+	run_state.town_state.configure_world({"nodes": [{"id": "bar", "label": "Roadside Bar", "kind": "casino", "tier": 1}], "edges": []})
+	var environment := _coin_pusher_environment("%s_%s" % [seed_text.to_lower().replace("-", "_"), variation_id])
+	environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": variation_id}}
+	if not crowd_density.is_empty():
+		environment["scenario_presentation"] = {"crowd_density": crowd_density}
+	var machine := game.generate_environment_state(run_state, environment, run_state.create_rng("coin_pusher_initial"))
+	environment["game_states"] = {"coin_pusher": machine}
+	game.environment_state_generated(run_state, environment, machine)
+	run_state.set_environment(environment)
+	return {"run_state": run_state, "environment": run_state.current_environment}
+
+
 func _coin_pusher_scripted_session(game: GameModule, seed_text: String, action_count: int) -> Dictionary:
 	var fixture := _coin_pusher_fixture(game, seed_text)
 	var run_state: RunState = fixture.get("run_state")
@@ -757,6 +949,7 @@ func _coin_pusher_environment(id: String) -> Dictionary:
 		"game_ids": ["coin_pusher", "bar_dice"],
 		"economic_profile": {"stake_floor": 1, "stake_ceiling": 100},
 		"security_profile": {"strictness": "normal"},
+		"scenario_game_modifiers": {"coin_pusher": {"variation_id": "quarter_falls"}},
 		"game_states": {},
 	}
 

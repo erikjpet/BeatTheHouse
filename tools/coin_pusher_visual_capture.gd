@@ -116,6 +116,17 @@ func _run() -> void:
 	app.call("_refresh")
 	await _settle(5)
 	await _capture_room("05_room_available_after_alarm_1280x720.png")
+	for variation_id in ["jackpot_ridge", "vault_drop"]:
+		if not _install_variation_fixture(variation_id):
+			continue
+		await _settle(3)
+		if not bool(app.call("enter_game", "coin_pusher")):
+			_fail("Could not enter %s for focused visual capture." % variation_id)
+			continue
+		await _settle(4)
+		await _capture_variation_surface("06_jackpot_ridge_1280x720.png" if variation_id == "jackpot_ridge" else "07_vault_drop_1280x720.png", variation_id)
+		app.call("back_to_environment")
+		await _settle(2)
 	_write_manifest()
 	_finish(1 if failed else 0)
 
@@ -142,6 +153,7 @@ func _install_fixture_environment() -> bool:
 	environment["service_ids"] = []
 	environment["lender_hooks"] = []
 	environment["object_fixtures"] = []
+	environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": "quarter_falls"}}
 	var states: Dictionary = {}
 	for game_id in environment.get("game_ids", []):
 		var definition := library.game(str(game_id))
@@ -161,6 +173,58 @@ func _install_fixture_environment() -> bool:
 	app.call("back_to_environment")
 	app.call("_refresh")
 	return not _machine(run_state).is_empty()
+
+
+func _install_variation_fixture(variation_id: String) -> bool:
+	var run_state := app.get("run_state") as RunState
+	var library := app.get("library") as ContentLibrary
+	if run_state == null or library == null:
+		_fail("Could not access runtime for %s capture." % variation_id)
+		return false
+	var definition := library.game("coin_pusher")
+	var module: Variant = app.call("_create_game_module", definition)
+	if module == null or not module is GameModule:
+		_fail("Could not create Coin Pusher module for %s capture." % variation_id)
+		return false
+	run_state.current_environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": variation_id}}
+	var game := module as GameModule
+	var machine := game.generate_environment_state(run_state, run_state.current_environment, run_state.create_rng("coin_pusher_visual:%s" % variation_id))
+	if variation_id == "vault_drop":
+		var vault_state: Dictionary = machine.get("variation_state", {})
+		vault_state["banked_fragments"] = 3
+	var states: Dictionary = run_state.current_environment.get("game_states", {})
+	states["coin_pusher"] = machine
+	run_state.current_environment["game_states"] = states
+	game.environment_state_generated(run_state, run_state.current_environment, machine)
+	app.call("_refresh")
+	return str(machine.get("variation_id", "")) == variation_id
+
+
+func _capture_variation_surface(file_name: String, variation_id: String) -> void:
+	var canvas := app.get("game_surface_canvas") as Control
+	if canvas == null or not canvas.visible or not canvas.has_method("realtime_surface_state"):
+		_fail("%s surface was unavailable." % variation_id)
+		return
+	canvas.set_process(false)
+	canvas.set("flicker", 0.75)
+	canvas.queue_redraw()
+	await RenderingServer.frame_post_draw
+	var state: Dictionary = canvas.call("realtime_surface_state")
+	var features: Array = state.get("coin_pusher_features", []) if typeof(state.get("coin_pusher_features", [])) == TYPE_ARRAY else []
+	var valid := str(state.get("coin_pusher_variation_id", "")) == variation_id and not features.is_empty()
+	if variation_id == "jackpot_ridge":
+		valid = valid and str(state.get("coin_pusher_variation_name", "")) == "Jackpot Ridge" and state.has("coin_pusher_cascade_remaining")
+	else:
+		valid = valid and str(state.get("coin_pusher_variation_name", "")) == "The Vault Drop" and (state.get("coin_pusher_vault_cells", []) as Array).size() == 9 and int(state.get("coin_pusher_vault_fragments", 0)) == 3
+	if not valid:
+		_fail("%s surface did not expose its unique feature state." % variation_id)
+	var saved := await _save_viewport(file_name)
+	captures.append({
+		"id": variation_id, "file": file_name, "saved": saved, "state_valid": valid,
+		"variation_id": str(state.get("coin_pusher_variation_id", "")), "feature_count": features.size(),
+		"vault_cell_count": (state.get("coin_pusher_vault_cells", []) as Array).size(),
+		"vault_meter": int(state.get("coin_pusher_vault_meter", 0)),
+	})
 
 
 func _capture_surface(file_name: String, capture_id: String, expected: Dictionary) -> void:
