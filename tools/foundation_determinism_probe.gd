@@ -12,7 +12,7 @@ const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const DEFAULT_SEED_COUNT := 10
 const DEFAULT_SEED_PREFIX := "FOUNDATION-DETERMINISM"
 const DEFAULT_OUTPUT_JSON := "res://.tmp/foundation_determinism_probe/report.json"
-const GAME_IDS := ["slot", "pull_tabs", "scratch_tickets", "blackjack", "baccarat", "roulette", "video_poker", "bar_dice"]
+const GAME_IDS := ["slot", "pull_tabs", "scratch_tickets", "blackjack", "baccarat", "roulette", "video_poker", "bar_dice", "coin_pusher"]
 const HASH_MOD := 4294967296
 
 var library: ContentLibrary
@@ -129,6 +129,7 @@ func _simulate_seed(seed: String, seed_index: int) -> Dictionary:
 	_install_all_game_environment(run_state, seed_index)
 	_checkpoint(run_state, checkpoints, seed, "all_games_fixture")
 	_apply_all_game_resolves(run_state, checkpoints, seed)
+	_apply_coin_pusher_sequence(run_state, checkpoints, seed)
 	_apply_skill_cheats(run_state, checkpoints, seed)
 	_apply_pinball_feature_sequence(run_state, checkpoints, seed)
 	return {
@@ -333,6 +334,27 @@ func _apply_all_game_resolves(run_state: RunState, checkpoints: Array, seed: Str
 	_resolve_game(run_state, checkpoints, seed, "roulette", "spin_roulette", 20, _timed_ui(run_state, "roulette_spin", {"roulette_bets": [_roulette_bet(20)]}))
 	_resolve_game(run_state, checkpoints, seed, "video_poker", "draw", 0, _timed_ui(run_state, "video_poker_draw", {"bet_level": 1, "denomination_index": 0}))
 	_resolve_game(run_state, checkpoints, seed, "bar_dice", "roll", 20, _timed_ui(run_state, "bar_dice_roll"))
+
+
+func _apply_coin_pusher_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
+	_resolve_game(run_state, checkpoints, seed, "coin_pusher", "drop_quarter", 1, _timed_ui(run_state, "coin_pusher_drop", {"coin_pusher_lane": 2}))
+	var game_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var machine: Dictionary = game_states.get("coin_pusher", {}) if typeof(game_states.get("coin_pusher", {})) == TYPE_DICTIONARY else {}
+	var lane := clampi(int(machine.get("last_lane", 2)), 0, 4)
+	var lanes: Array = machine.get("lanes", []) if typeof(machine.get("lanes", [])) == TYPE_ARRAY else []
+	for lane_index in range(lanes.size()):
+		if typeof(lanes[lane_index]) != TYPE_DICTIONARY:
+			continue
+		var cells: Array = (lanes[lane_index] as Dictionary).get("cells", []) if typeof((lanes[lane_index] as Dictionary).get("cells", [])) == TYPE_ARRAY else []
+		if not cells.is_empty() and typeof(cells[0]) == TYPE_DICTIONARY and bool((cells[0] as Dictionary).get("edge_hang", false)):
+			lane = lane_index
+			break
+	_resolve_game(run_state, checkpoints, seed, "coin_pusher", "nudge_machine", 0, _timed_ui(run_state, "coin_pusher_nudge", {
+		"coin_pusher_force": "tap",
+		"coin_pusher_direction": "front",
+		"coin_pusher_lane": lane,
+		"coin_pusher_timing_phase": int(machine.get("lower_phase", 0)),
+	}))
 
 
 func _apply_skill_cheats(run_state: RunState, checkpoints: Array, seed: String) -> void:

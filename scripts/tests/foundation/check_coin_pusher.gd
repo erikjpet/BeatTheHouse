@@ -15,6 +15,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_definition_routing(library, definition, failures)
 	_check_coin_pusher_production_rider(game, library, failures)
 	_check_coin_pusher_alarm_audio(failures)
+	_check_coin_pusher_canonical_probe(failures)
 	_check_coin_pusher_surface_liveness(game, failures)
 	_check_coin_pusher_read_boundaries(game, failures)
 	_check_coin_pusher_determinism(game, failures)
@@ -161,6 +162,13 @@ func _check_coin_pusher_alarm_audio(failures: Array) -> void:
 	if sfx.debug_normalized_event_id("alarm_chirp") != "heat_gain" or stream == null or stream.data.is_empty():
 		failures.append("Quarter Falls alarm_chirp is not registered to the authored non-generic radio-chirp SFX bank.")
 	sfx.free()
+
+
+func _check_coin_pusher_canonical_probe(failures: Array) -> void:
+	var probe_source := FileAccess.get_file_as_string("res://tools/foundation_determinism_probe.gd")
+	if probe_source.is_empty() or not probe_source.contains('"coin_pusher"') \
+			or not probe_source.contains('"drop_quarter"') or not probe_source.contains('"nudge_machine"'):
+		failures.append("Canonical determinism does not include a real Quarter Falls drop-and-nudge sequence.")
 
 
 func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> void:
