@@ -190,6 +190,7 @@ func _install_variation_fixture(variation_id: String) -> bool:
 	var game := module as GameModule
 	var machine := game.generate_environment_state(run_state, run_state.current_environment, run_state.create_rng("coin_pusher_visual:%s" % variation_id))
 	if variation_id == "vault_drop":
+		run_state.add_item("xray_glasses")
 		var vault_state: Dictionary = machine.get("variation_state", {})
 		vault_state["banked_fragments"] = 3
 	var states: Dictionary = run_state.current_environment.get("game_states", {})

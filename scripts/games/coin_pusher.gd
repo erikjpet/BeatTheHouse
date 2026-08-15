@@ -191,6 +191,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			result["coin_pusher_vault_fragments"] = int(variation_state.get("banked_fragments", 0))
 			result["coin_pusher_vault_active"] = bool(variation_state.get("vault_round_active", false))
 			result["coin_pusher_vault_meter"] = int(variation_state.get("meter_value", 0))
+			result["coin_pusher_vault_xray_available"] = run_state != null and run_state.inventory.has("xray_glasses")
 			result["coin_pusher_vault_selected_cell"] = clampi(int(ui_state.get("coin_pusher_vault_cell", 0)), 0, maxi(0, (vault_views.get("cells", []) as Array).size() - 1))
 			result["coin_pusher_feature_message"] = str(variation_state.get("last_feature_message", ""))
 			result["native_selected_surface_actions"] = [DROP_ACTION, NUDGE_ACTION, VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION]
@@ -1311,6 +1312,8 @@ func _draw_vault_console(surface, state: Dictionary) -> void:
 		{"label": "STOP", "action": "coin_pusher_vault_stop"},
 	]
 	for index in range(vault_buttons.size()):
+		if str((vault_buttons[index] as Dictionary).get("action", "")) == "coin_pusher_vault_peek" and not bool(state.get("coin_pusher_vault_xray_available", false)):
+			continue
 		var rect := Rect2(674 + (index % 2) * 101, 197 + (index / 2) * 31, 95, 26)
 		surface.draw_rect(rect, C_HANG if index == 1 and active else C_CASE)
 		surface.surface_label_centered(str((vault_buttons[index] as Dictionary).get("label", "")), rect, 7, C_TEXT)

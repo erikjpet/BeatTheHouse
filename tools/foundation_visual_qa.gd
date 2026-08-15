@@ -1725,6 +1725,8 @@ func _verify_coin_pusher_visual_qa_fixture() -> void:
 	if pusher_module_value != null and pusher_module_value is GameModule:
 		var pusher_module := pusher_module_value as GameModule
 		for variation_id in ["jackpot_ridge", "vault_drop"]:
+			if variation_id == "vault_drop":
+				fixture_run.add_item("xray_glasses")
 			fixture_run.current_environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": variation_id}}
 			var generated := pusher_module.generate_environment_state(fixture_run, fixture_run.current_environment, fixture_run.create_rng("visual_pusher_%s" % variation_id))
 			if variation_id == "vault_drop":
