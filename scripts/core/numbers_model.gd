@@ -101,7 +101,7 @@ func advance_to(target_action: int) -> Array:
 			events.append_array(_activate_leaks(day))
 			events.append(_day_rumor_event(day))
 		if boundary == post_action(day):
-			var draw := _draw(day)
+			var draw := _handle_record_at_boundary(day)
 			draw["resolved"] = true
 			draw["posted"] = true
 			draw["resolved_action"] = boundary
@@ -116,7 +116,7 @@ func advance_to(target_action: int) -> Array:
 
 func status() -> Dictionary:
 	var day := day_at(action_index)
-	var draw := _draw(day)
+	var draw := _handle_record_at_boundary(day)
 	return {
 		"action_index": action_index,
 		"day": day,
@@ -159,7 +159,7 @@ func buy_slip(venue_id: String, digits_value: Variant, stake: int, play_type: St
 	var close := close_action(venue_id, day)
 	if action_index >= close:
 		return {"ok": false, "message": "%s's book is closed for today's handle." % str(venue.get("label", venue_id))}
-	var draw := _draw(day)
+	var draw := _handle_record_at_boundary(day)
 	var is_past_post := bool(draw.get("posted", false)) and not known_number.is_empty()
 	if is_past_post:
 		if not bool(knowledge.get("assembled", false)):
@@ -237,7 +237,7 @@ func buy_silas_tip(today_number: bool = false) -> Dictionary:
 
 
 func reveal_number(day: int, source: String) -> String:
-	var draw := _draw(day)
+	var draw := _handle_record_at_boundary(day)
 	if not bool(draw.get("posted", false)) and source != "silas":
 		return ""
 	var known := _dictionary(knowledge.get("known_numbers_by_day", {})).duplicate(true)
@@ -252,7 +252,7 @@ func known_number(day: int = -1) -> String:
 	if not known.is_empty():
 		return str(known.get("number", ""))
 	if action_index >= settlement_action(target_day):
-		return str(_draw(target_day).get("number", ""))
+		return str(_handle_record_at_boundary(target_day).get("number", ""))
 	return ""
 
 
@@ -361,7 +361,7 @@ func fix_allocate(allocations_value: Variant) -> Dictionary:
 	var allocations := _dictionary(quote.get("allocations", {})).duplicate(true)
 	var target_day := scheduled_day
 	var fixed_number := _three_digits(_stable_hash("%d:%d:crew_fix_number" % [seed_value, target_day]) % 1000)
-	var draw := _draw(target_day)
+	var draw := _handle_record_at_boundary(target_day)
 	draw["number"] = fixed_number
 	draw["fixed_by_crew"] = true
 	draws_by_day[str(target_day)] = draw
@@ -489,7 +489,7 @@ func yesterday_number(day: int = -1) -> String:
 	var target_day := day_at(action_index) if day < 0 else day
 	if target_day <= 0:
 		return ""
-	return str(_draw(target_day - 1).get("number", ""))
+	return str(_handle_record_at_boundary(target_day - 1).get("number", ""))
 
 
 func open_slip_count() -> int:
@@ -500,7 +500,7 @@ func open_slip_count() -> int:
 	return count
 
 
-func _draw(day: int) -> Dictionary:
+func _handle_record_at_boundary(day: int) -> Dictionary:
 	var saved := _dictionary(draws_by_day.get(str(maxi(0, day)), {}))
 	if not saved.is_empty():
 		return saved.duplicate(true)
@@ -517,7 +517,7 @@ func _draw(day: int) -> Dictionary:
 
 func _settle_day(day: int) -> Array:
 	var events: Array = []
-	var draw := _draw(day)
+	var draw := _handle_record_at_boundary(day)
 	var winning_number := str(draw.get("number", "000"))
 	var authored_pool_cap := maxi(0, int(_dictionary(config.get("slips", {})).get("declared_pool_payout_cap", 9000)))
 	var pile_on_multiplier := maxi(100, int(active_leak.get("declared_pool_multiplier_percent", 100)))
