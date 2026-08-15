@@ -9,7 +9,10 @@ const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const OUTPUT_DIR := "res://.tmp/crew_poker_visual_qa"
 const MANIFEST_PATH := OUTPUT_DIR + "/manifest.json"
 const CAPTURE_SIZE := Vector2i(1280, 720)
-const TABLE_MEMBERS := ["crew_rook", "crew_velvet"]
+const FIXTURE_SEED := "CREW-POKER-PUNCHLINE-VISUAL-CAPTURE"
+const PUNCHLINE_ARCHETYPE_ID := "small_underground_casino"
+const PUNCHLINE_DISPLAY_NAME := "The Punchline"
+const PUNCHLINE_BACK_ROOM_LAYER := "back_room"
 const MIN_HIT_SIZE := 44.0
 
 var app: Control
@@ -19,6 +22,8 @@ var captures: Array[Dictionary] = []
 var failed := false
 var liveness_evidence: Dictionary = {}
 var reduced_motion_evidence: Dictionary = {}
+var acceptance_context: Dictionary = {}
+var tell_expected_actions: Array[String] = []
 
 
 func _init() -> void:
@@ -30,28 +35,26 @@ func _run() -> void:
 	root.size = CAPTURE_SIZE
 	RenderingServer.set_default_clear_color(Color("#08070d"))
 	app = MainScene.instantiate()
-	app.set("show_game_library_launcher", true)
 	app.set("autosave_slot_id", "crew_poker_visual_capture")
 	root.add_child(app)
 	await _settle(8)
-	app.call("start_game_test_session", "crew_draw_poker")
+	app.call("start_foundation_run", FIXTURE_SEED)
 	await _settle(8)
 	run_state = app.get("run_state") as RunState
+	if run_state == null:
+		_fail("Crew poker capture could not access the production run.")
+		_finish()
+		return
+	for member_id in CrewStateModelScript.MEMBER_IDS:
+		run_state.crew_add_trust(str(member_id), CrewStateModelScript.rank_threshold("made"), "visual_capture_l3_access")
+	if not await _enter_punchline_poker_from_l3():
+		_finish()
+		return
 	canvas = app.get("game_surface_canvas") as Control
-	if run_state == null or canvas == null:
-		_fail("Crew poker capture could not access the production run or table canvas.")
+	if canvas == null:
+		_fail("Crew poker capture could not access the production table canvas.")
 		_finish()
 		return
-	var table := _table()
-	if table.is_empty():
-		_fail("Crew poker capture could not access the generated table state.")
-		_finish()
-		return
-	table["members"] = TABLE_MEMBERS.duplicate()
-	for member_id in TABLE_MEMBERS:
-		run_state.crew_add_trust(str(member_id), CrewStateModelScript.rank_threshold("associate"), "visual_capture_fixture")
-	app.call("_refresh")
-	await _settle(5)
 	if not canvas.visible or str((canvas.call("realtime_surface_state") as Dictionary).get("surface_renderer", "")) != "crew_draw_poker":
 		_fail("Crew poker capture did not route through the production table renderer.")
 		_finish()
@@ -83,26 +86,21 @@ func _run() -> void:
 			5
 		)
 
-	if not failed and not bool(app.call("_handle_module_surface_action", "poker_draw", 0, false)):
-		_fail("Crew poker capture could not resolve the draw through the production action path.")
 	if not failed:
-		await _settle(4)
-		table = _table()
-		# Rook's second authored pattern is the portrait-channel chin/posture beat.
-		table["beat"] = {"m": "crew_rook", "i": 1}
-		app.call("_refresh")
-		await _settle(4)
+		if not await _advance_to_authored_observation():
+			_fail("Crew poker production actions did not surface an authored subtle presentation within the session cap.")
+	if not failed:
 		var tell_state := canvas.call("realtime_surface_state") as Dictionary
 		var observation: Dictionary = tell_state.get("observation", {}) if typeof(tell_state.get("observation", {})) == TYPE_DICTIONARY else {}
-		if str(observation.get("channel", "")) != "portrait" \
-				or str(observation.get("member_id", "")) != "crew_rook" \
-				or str(observation.get("portrait_variant", "")) != "chin_down":
-			_fail("Crew poker capture did not surface the authored subtle portrait presentation.")
+		if not ["line", "portrait", "timing"].has(str(observation.get("channel", ""))) \
+				or str(observation.get("member_id", "")).is_empty():
+			_fail("Crew poker capture did not retain the production-authored subtle presentation.")
+		tell_expected_actions = ["poker_draw", "poker_fold"] if str(tell_state.get("phase", "")) == "draw" else ["poker_call", "poker_raise", "poker_fold"]
 		await _capture_surface(
 			"03_authored_subtle_tell_1280x720.png",
 			"authored_subtle_tell",
-			["poker_call", "poker_raise", "poker_fold"],
-			0
+			tell_expected_actions,
+			5 if str(tell_state.get("phase", "")) == "draw" else 0
 		)
 
 	if not failed:
@@ -114,11 +112,215 @@ func _run() -> void:
 		await _capture_surface(
 			"04_reduced_motion_static_1280x720.png",
 			"reduced_motion_static",
-			["poker_call", "poker_raise", "poker_fold"],
-			0
+			tell_expected_actions,
+			5 if str(reduced_state.get("phase", "")) == "draw" else 0
 		)
 
+	if not failed:
+		await _verify_session_exit_to_l3()
 	_finish()
+
+
+func _enter_punchline_poker_from_l3() -> bool:
+	var library := app.get("library") as ContentLibrary
+	if library == null:
+		_fail("Crew poker capture could not access production content.")
+		return false
+	var archetype := library.environment_archetype(PUNCHLINE_ARCHETYPE_ID)
+	if archetype.is_empty():
+		_fail("Crew poker capture could not load The Punchline archetype.")
+		return false
+	var fixture_rng := run_state.create_rng("crew_poker_visual_capture:punchline")
+	var environment := EnvironmentInstance.from_archetype(
+		archetype,
+		0,
+		fixture_rng,
+		library,
+		run_state.challenge_config
+	).to_dict()
+	run_state.save_rng(fixture_rng)
+	run_state.set_environment(environment)
+	run_state.bankroll = 500
+	run_state.drunk_level = 0
+	run_state.pending_drunk_absorption = []
+	app.call("back_to_environment")
+	app.call("_refresh")
+	await _settle(5)
+	var initial_layer := str(run_state.current_environment.get("current_layer_id", ""))
+	var navigation: Array[Dictionary] = []
+	for target_layer in ["casino", PUNCHLINE_BACK_ROOM_LAYER]:
+		var layer_object := _environment_interactable("environment_layer", str(target_layer))
+		var object_id := _interactable_id(layer_object)
+		var activated := not object_id.is_empty() and bool(app.call("activate_interactable_object", object_id))
+		await _settle(5)
+		app.call("_refresh")
+		await _settle(3)
+		navigation.append({
+			"from_layer": initial_layer if navigation.is_empty() else str((navigation[navigation.size() - 1] as Dictionary).get("arrived_layer", "")),
+			"target_layer": str(target_layer),
+			"object_id": object_id,
+			"source_id": str(layer_object.get("source_id", "")),
+			"enabled": not bool(layer_object.get("disabled", false)),
+			"activated": activated,
+			"arrived_layer": str(run_state.current_environment.get("current_layer_id", "")),
+		})
+		if not activated or str(run_state.current_environment.get("current_layer_id", "")) != str(target_layer):
+			_fail("Crew poker capture could not navigate The Punchline layer door to %s." % str(target_layer))
+			return false
+
+	# Force one final production refresh so the visible title plate and layer blurb
+	# are sourced from The Punchline back-room environment before table entry.
+	app.call("_refresh")
+	await _settle(5)
+	var header := app.call("current_environment_header_snapshot") as Dictionary
+	var game_object := _environment_interactable("game", "crew_draw_poker")
+	var game_object_id := _interactable_id(game_object)
+	var environment_context := {
+		"archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+		"display_name": str(run_state.current_environment.get("display_name", "")),
+		"layer_id": str(run_state.current_environment.get("current_layer_id", "")),
+		"layer_display_name": str(run_state.current_environment.get("layer_display_name", "")),
+		"kind": str(run_state.current_environment.get("kind", "")),
+		"game_ids": (run_state.current_environment.get("game_ids", []) as Array).duplicate(true) if typeof(run_state.current_environment.get("game_ids", [])) == TYPE_ARRAY else [],
+	}
+	var navigation_passed := initial_layer == "club" and navigation.size() == 2 \
+		and str((navigation[0] as Dictionary).get("from_layer", "")) == "club" \
+		and str((navigation[0] as Dictionary).get("object_id", "")) == "environment_layer:casino" \
+		and str((navigation[0] as Dictionary).get("arrived_layer", "")) == "casino" \
+		and str((navigation[1] as Dictionary).get("from_layer", "")) == "casino" \
+		and str((navigation[1] as Dictionary).get("object_id", "")) == "environment_layer:back_room" \
+		and str((navigation[1] as Dictionary).get("arrived_layer", "")) == PUNCHLINE_BACK_ROOM_LAYER
+	var header_passed := str(header.get("archetype_id", "")) == PUNCHLINE_ARCHETYPE_ID \
+		and str(header.get("accessible_title", "")) == PUNCHLINE_DISPLAY_NAME \
+		and str(header.get("blurb", "")).findn("private table") >= 0 \
+		and not JSON.stringify(header).to_lower().contains("grand casino")
+	var environment_passed := str(environment_context.get("archetype_id", "")) == PUNCHLINE_ARCHETYPE_ID \
+		and str(environment_context.get("display_name", "")) == PUNCHLINE_DISPLAY_NAME \
+		and str(environment_context.get("layer_id", "")) == PUNCHLINE_BACK_ROOM_LAYER \
+		and str(environment_context.get("layer_display_name", "")) == "Crew Back Room" \
+		and (environment_context.get("game_ids", []) as Array).has("crew_draw_poker")
+	var interactable_passed := not game_object_id.is_empty() \
+		and game_object_id.begins_with("game:crew_draw_poker") \
+		and str(game_object.get("source_id", "")) == "crew_draw_poker" \
+		and not bool(game_object.get("disabled", false))
+	acceptance_context = {
+		"seed": FIXTURE_SEED,
+		"initial_layer": initial_layer,
+		"layer_navigation": navigation,
+		"environment": environment_context,
+		"header": header,
+		"header_refreshed_from_production_environment": header_passed,
+		"layer_navigation_passed": navigation_passed,
+		"l3_game_interactable": {
+			"object_id": game_object_id,
+			"source_id": str(game_object.get("source_id", "")),
+			"label": str(game_object.get("label", "")),
+			"enabled": not bool(game_object.get("disabled", false)),
+		},
+		"entry_method": "activate_interactable_object",
+		"environment_passed": environment_passed,
+		"interactable_passed": interactable_passed,
+	}
+	if not navigation_passed or not header_passed or not environment_passed or not interactable_passed:
+		_fail("Crew poker capture did not establish the real Punchline L3 environment/header/interactable context.")
+		return false
+	var entered := bool(app.call("activate_interactable_object", game_object_id))
+	await _settle(6)
+	var game_view := app.call("current_game_view_snapshot") as Dictionary
+	var screen := app.call("current_screen_snapshot") as Dictionary
+	var entry_passed := entered \
+		and str(game_view.get("surface_renderer", "")) == "crew_draw_poker" \
+		and str(screen.get("screen", "")) == "GAME"
+	acceptance_context["entry"] = {
+		"activated": entered,
+		"screen": str(screen.get("screen", "")),
+		"renderer": str(game_view.get("surface_renderer", "")),
+		"passed": entry_passed,
+	}
+	acceptance_context["passed"] = navigation_passed and header_passed and environment_passed and interactable_passed and entry_passed
+	if not entry_passed:
+		_fail("Crew poker capture could not enter the table through its L3 game interactable.")
+	return entry_passed
+
+
+func _advance_to_authored_observation() -> bool:
+	for attempt in range(5):
+		var state := canvas.call("realtime_surface_state") as Dictionary
+		if str(state.get("phase", "")) != "draw":
+			return false
+		var current_observation: Dictionary = state.get("observation", {}) if typeof(state.get("observation", {})) == TYPE_DICTIONARY else {}
+		if not current_observation.is_empty():
+			acceptance_context["authored_observation_attempts"] = attempt
+			return true
+		if not bool(app.call("_handle_module_surface_action", "poker_draw", 0, false)):
+			return false
+		await _settle(4)
+		state = canvas.call("realtime_surface_state") as Dictionary
+		var observation: Dictionary = state.get("observation", {}) if typeof(state.get("observation", {})) == TYPE_DICTIONARY else {}
+		if not observation.is_empty():
+			acceptance_context["authored_observation_attempts"] = attempt + 1
+			return true
+		if str(state.get("phase", "")) != "after" \
+				or not bool(app.call("_handle_module_surface_action", "poker_call", 0, false)):
+			return false
+		await _settle(4)
+		var table := _table()
+		if bool(table.get("session_settled", false)):
+			return false
+		if not bool(app.call("_handle_module_surface_action", "poker_deal", 0, false)):
+			return false
+		await _settle(4)
+		if not bool(app.call("_handle_module_surface_action", "poker_call", 0, false)):
+			return false
+		await _settle(4)
+	return false
+
+
+func _verify_session_exit_to_l3() -> void:
+	app.call("back_to_environment")
+	app.call("_refresh")
+	await _settle(6)
+	var environment_canvas := app.get("environment_canvas") as Control
+	var header := app.call("current_environment_header_snapshot") as Dictionary
+	var screen := app.call("current_screen_snapshot") as Dictionary
+	var poker_object := _environment_interactable("game", "crew_draw_poker")
+	var exit_passed := environment_canvas != null and environment_canvas.visible \
+		and str(screen.get("screen", "")) == "ENVIRONMENT" \
+		and str(run_state.current_environment.get("archetype_id", "")) == PUNCHLINE_ARCHETYPE_ID \
+		and str(run_state.current_environment.get("current_layer_id", "")) == PUNCHLINE_BACK_ROOM_LAYER \
+		and str(header.get("accessible_title", "")) == PUNCHLINE_DISPLAY_NAME \
+		and not _interactable_id(poker_object).is_empty()
+	acceptance_context["exit"] = {
+		"method": "back_to_environment",
+		"screen": str(screen.get("screen", "")),
+		"archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+		"layer_id": str(run_state.current_environment.get("current_layer_id", "")),
+		"header_title": str(header.get("accessible_title", "")),
+		"poker_interactable_restored": not _interactable_id(poker_object).is_empty(),
+		"passed": exit_passed,
+	}
+	acceptance_context["passed"] = bool(acceptance_context.get("passed", false)) and exit_passed
+	if not exit_passed:
+		_fail("Crew poker session exit did not return to the Punchline L3 table interactable.")
+
+
+func _environment_interactable(object_type: String, source_id: String) -> Dictionary:
+	var environment_canvas := app.get("environment_canvas") as Control
+	if environment_canvas == null or not environment_canvas.visible or not environment_canvas.has_method("current_view_snapshot"):
+		return {}
+	var snapshot := environment_canvas.call("current_view_snapshot") as Dictionary
+	for object_value in snapshot.get("objects", []):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		var resolved_type := str(object_data.get("interaction_type", object_data.get("type", object_data.get("object_type", ""))))
+		if resolved_type == object_type and str(object_data.get("source_id", "")) == source_id:
+			return object_data.duplicate(true)
+	return {}
+
+
+func _interactable_id(object_data: Dictionary) -> String:
+	return str(object_data.get("id", object_data.get("object_id", ""))).strip_edges()
 
 
 func _capture_idle_liveness() -> void:
@@ -322,18 +524,21 @@ func _write_manifest() -> void:
 		hidden_labels_passed = hidden_labels_passed and bool(capture.get("hidden_labels_absent", false))
 	var manifest := {
 		"tool": "crew_poker_visual_capture",
-		"fixture": "Crew five-card draw production renderer",
+		"fixture": "The Punchline L3 Crew five-card draw production renderer",
 		"capture_size": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y},
 		"passed": not failed and files_passed and layout_and_targets_passed and hidden_labels_passed \
 			and bool(liveness_evidence.get("passed", false)) \
-			and bool(reduced_motion_evidence.get("passed", false)),
+			and bool(reduced_motion_evidence.get("passed", false)) \
+			and bool(acceptance_context.get("passed", false)),
 		"captures": captures,
+		"acceptance_context": acceptance_context,
 		"assertions": {
 			"all_pngs_saved": files_passed,
 			"bounds_no_overlap_and_hit_targets": layout_and_targets_passed,
 			"idle_liveness_advances": liveness_evidence,
 			"reduced_motion_static": reduced_motion_evidence,
 			"hidden_authored_labels_absent": hidden_labels_passed,
+			"punchline_l3_header_entry_and_exit": acceptance_context,
 		},
 	}
 	var file := FileAccess.open(MANIFEST_PATH, FileAccess.WRITE)
