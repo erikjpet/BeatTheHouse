@@ -81,7 +81,7 @@ Wave C games are intentionally parallel-friendly.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| craps06_1 | `craps06_1_craps_core_prompt.md` | IN_PROGRESS | — | craps06_2, crew06_8 | PM:Codex/sub:1 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
+| craps06_1 | `craps06_1_craps_core_prompt.md` | DONE | — | craps06_2, crew06_8 | PM:Codex/sub:1 | 2026-08-14 | 2026-08-14 | PM verified full rules/chips/save/cheat scope, RTP, systems/UI, 10-seed determinism, and focused/canonical visual QA PASS. |
 | craps06_2 | `craps06_2_street_craps_prompt.md` | TODO | craps06_1, env06_1 | — | | | | |
 | push06_1 | `push06_1_pusher_core_prompt.md` | IN_PROGRESS | env06_1 | push06_2 | PM:Codex/sub:2 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
 | push06_2 | `push06_2_pusher_variations_prompt.md` | TODO | push06_1, town06_1 | — | | | | |
@@ -362,6 +362,12 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   deterministic dice fixture is not entering the production rolling phase.
   The assertion stays binding; PM returned the slice for exact clock/state-path
   diagnosis rather than accepting a timing guess or weakening visual coverage.
+- 2026-08-14 [craps06_1] Final acceptance preserved the production clock and
+  corrected it to remain live while the run is paused, propagated the shared
+  reduced-motion setting through the game-surface snapshot, and matched Grand
+  Casino placement capacity to all seven authored objects (7/7, 4/4, and 2/2
+  rooms now prove zero overlap). PM independently verified the complete bet
+  surface, dice motion, idle liveness, and static reduced-motion capture.
 
 - 2026-08-14 [fix06_1] Owner reported scenario event icons with no apparent
   action. PM headless probes (15 seeds, all archetypes + Punchline L2): 39/42
@@ -465,6 +471,11 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   accepted and archived Streets. The owner must consume the frozen multi-stop
   API unchanged and add a distinct reachable L3 desk beside Poker's reserved
   table position; PM retains board, integration, verification, and push.
+- 2026-08-14 [craps06_1] DONE after integrated PM acceptance of the complete
+  Craps rules/chips/save/cheat surface, million-roll RTP, systems/UI, 10-seed
+  determinism, canonical visual QA, and focused table/liveness captures. The
+  stable rules engine and Grand Casino surface now unblock craps06_2 and the
+  Craps dependency of crew06_8.
 - 2026-08-14 [fix06_1] Codex claimed the dead scenario event interaction fix;
   implementation will repair the generic normalization seam and add a permanent
   generated-environment interactability class guard plus UI click-through.
