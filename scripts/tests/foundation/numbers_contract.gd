@@ -467,6 +467,7 @@ static func _check_swept_collection_consequences(failures: Array) -> void:
 	var consequence_evidence := {
 		"collection_reason": str(run_state.numbers_state.collection_state.get("reason", "")),
 		"job_status": str(job.get("status", "")),
+		"job_outcome": str(job.get("outcome", "")),
 		"trust_before": trust_before,
 		"trust_after": run_state.crew_trust("crew_lucky"),
 		"heat_before": heat_before,
@@ -481,7 +482,8 @@ static func _check_swept_collection_consequences(failures: Array) -> void:
 		"pending_after_ditch": bool(run_state.narrative_flags.get("numbers_collection_sweep_confiscation_pending", false)),
 	}
 	if str(run_state.numbers_state.collection_state.get("reason", "")) != "swept" \
-		or str(job.get("status", "")) != "failed" \
+		or str(job.get("status", "")) != "resolved" \
+		or str(job.get("outcome", "")) != "failed" \
 		or run_state.crew_trust("crew_lucky") >= trust_before \
 		or run_state.suspicion_level() < heat_before + 14 \
 		or int(_dictionary(result.get("numbers_collection_confiscated", {})).get("count", 0)) != 1 \
@@ -556,17 +558,25 @@ static func _check_consequences_and_independence(failures: Array) -> void:
 static func _check_midstate_save_load(failures: Array) -> void:
 	var open_run: RunState = RunStateScript.new()
 	open_run.start_new("NUMBERS-SAVE-OPEN")
-	open_run.current_environment = {"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0}
+	# Use the production setter so the pre-save environment is already canonical;
+	# direct fixture assignment is intentionally normalized during from_dict.
+	open_run.set_environment({"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0})
+	open_run.configure_town_world(open_run.world_map)
 	open_run.numbers_buy_slip("123", 4, "box")
 	open_run.advance_environment_turns(15)
 	var open_saved: Dictionary = open_run.to_dict()
 	var open_saved_json := JSON.stringify(open_saved)
+	var rumor_registry_before := JSON.stringify(_dictionary(_dictionary(open_saved.get("town_state", {})).get("living_world", {})).get("rumor_registry", {}))
 	var open_restored: RunState = RunStateScript.new()
 	open_restored.from_dict(open_saved)
 	if JSON.stringify(open_restored.numbers_state.snapshot()) != JSON.stringify(open_run.numbers_state.snapshot()) or open_restored.bankroll != open_run.bankroll:
 		failures.append("RunState save/load changed the pre-post open-slip Numbers state.")
-	if JSON.stringify(open_restored.to_dict()) != open_saved_json:
+	var open_restored_saved: Dictionary = open_restored.to_dict()
+	var rumor_registry_after := JSON.stringify(_dictionary(_dictionary(open_restored_saved.get("town_state", {})).get("living_world", {})).get("rumor_registry", {}))
+	if rumor_registry_after != rumor_registry_before:
 		failures.append("RunState save/load mutated restored town discovery facts or their registration metadata.")
+	if JSON.stringify(open_restored_saved) != open_saved_json:
+		failures.append("Canonical RunState save/load was not byte-identical after restored town wiring.")
 	var collection_fixture := _runner_fixture("NUMBERS-SAVE-COLLECTION")
 	if not bool(collection_fixture.get("ok", false)):
 		failures.append("RunState save/load fixture could not start the active Lucky collection.")
