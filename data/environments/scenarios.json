@@ -82,7 +82,7 @@
         "game_modifier_hooks": {"game_hook": "street_craps", "table_tone": "street"},
         "music_profile_override": {"bpm": 82, "ambience": 0.72, "texture": "rain"},
         "presentation": {"palette_tint": "#d4a373", "lighting_key": "dice_circle", "crowd_density": "medium", "signage_line": "CHALK RING. CASH IN HAND."},
-        "exclusive_opportunity": {"event_id": "scenario_street_craps_circle"},
+        "exclusive_opportunity": {"event_id": "scenario_street_craps_circle", "game_id": "craps"},
         "security_overrides": {"strictness_band": "uneven", "cheat_risk_window": "brief"},
         "hook_flags": {"craps_onramp": true, "rumor_anchor": true}
       }

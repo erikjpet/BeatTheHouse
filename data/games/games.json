@@ -3376,6 +3376,61 @@
           "craps_switching_bias_permille",
           "cheat_suspicion_delta"
         ]
+      },
+      "variants": {
+        "street_craps": {
+          "scenario_hook_key": "game_hook",
+          "scenario_hook_value": "street_craps",
+          "presentation": "street_circle",
+          "currency": "cash",
+          "allowed_bets": [
+            "pass_line",
+            "dont_pass"
+          ],
+          "minimum_stake": 2,
+          "maximum_stake": 20,
+          "denominations": [
+            1,
+            2,
+            5,
+            10,
+            20
+          ],
+          "circle_names": [
+            "The Chalk Ring",
+            "Brick-Side Dice",
+            "Rain Gutter Circle"
+          ],
+          "caller_names": [
+            "June",
+            "Lowell",
+            "Teeth"
+          ],
+          "guidance": {
+            "seen_flag": "street_craps_guidance_seen",
+            "lines": [
+              "Line cash on Pass if you ride with the shooter; Don't Pass if you ride with seven.",
+              "First throw sets a number unless seven or eleven pays Pass, or two, three, twelve cuts it.",
+              "Once a point lands, it has to repeat before seven. Pick your side and call the dice."
+            ]
+          },
+          "disperse": {
+            "sweep_adjacent": true,
+            "heat_spike_delta": 8,
+            "working_wager_rule": "refund_at_face_value",
+            "pending_wager_rule": "return_uncommitted_cash",
+            "message": "Blue light catches the brick. The circle breaks and every unresolved stake goes back at face value."
+          },
+          "training": {
+            "progress_flag": "craps_setting_street_progress",
+            "trained_flag": "craps_setting_trained",
+            "completed_line_resolutions_required": 2,
+            "grant_outcomes": [
+              "win"
+            ],
+            "completion_line": "The circle nods at your release. You can carry that touch to a casino table."
+          }
+        }
       }
     }
   },
