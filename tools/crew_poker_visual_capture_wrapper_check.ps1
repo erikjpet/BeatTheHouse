@@ -31,12 +31,22 @@ foreach ($requiredCaptureControl in @(
     'app.call("start_foundation_run", FIXTURE_SEED, {}, false)',
     '"production_action_before"',
     '"production_action_after"',
+    '"natural_tell_surface_read"',
+    '"capture_surface_state_read"',
+    '"capture_surface_view_read"',
+    '"capture_surface_image_read"',
+    "authored_tell_state",
+    "authored_tell_observation",
     "fixture_rng_untouched",
     'int(table.get("hand_number", -1)) == 0'
 )) {
     if (-not $captureSource.Contains($requiredCaptureControl)) {
         throw "Crew poker capture is missing bounded natural-tell control: $requiredCaptureControl"
     }
+}
+if ($captureSource.Contains('var tell_state := canvas.call("realtime_surface_state")') -or
+        $captureSource.Contains('var reduced_state := (canvas.call("realtime_surface_state")')) {
+    throw "Crew poker capture must reuse the already-audited authored-tell state for captures 03 and 04."
 }
 if ($captureSource.Contains("run_state.save_rng(") -or
         $captureSource.Contains("_advance_to_authored_observation") -or
