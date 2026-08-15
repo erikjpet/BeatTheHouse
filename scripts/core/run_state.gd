@@ -9641,7 +9641,11 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	crew_match_marks = {}
 	var saved_marks: Dictionary = saved.get("m", {}) if typeof(saved.get("m", {})) == TYPE_DICTIONARY else {}
 	for member_id in CrewStateModelScript.MEMBER_IDS:
-		crew_match_marks[member_id] = maxi(0, int(saved_marks.get(member_id, 0)))
+		# Keep an empty/sparse save projection sparse. Session recording already
+		# treats a missing mark as zero, so materializing neutral keys only breaks
+		# byte-identical save/load without improving runtime behavior.
+		if saved_marks.has(member_id):
+			crew_match_marks[member_id] = maxi(0, int(saved_marks.get(member_id, 0)))
 	if not legacy:
 		return
 	var has_legacy_marker := (

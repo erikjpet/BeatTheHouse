@@ -47,6 +47,7 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 	var split := CrewPokerModelScript.split_pot(11, ["a", "b", "c"])
 	if int(split.get("a", 0)) != 4 or int(split.get("b", 0)) != 4 or int(split.get("c", 0)) != 3:
 		failures.append("Crew poker split-pot remainder math was not deterministic: %s." % JSON.stringify(split))
+	_check_crew_poker_save_compat(failures)
 	var property_rng := RngStream.new()
 	property_rng.configure(8062)
 	for sample in range(300):
@@ -220,6 +221,43 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 	var save_projections: Array = production_evidence.get("saves", [])
 	save_projections.append(learning_save)
 	_check_crew_poker_hidden_leaks(learning, save_projections, public_surfaces, public_results, failures)
+
+
+func _check_crew_poker_save_compat(failures: Array) -> void:
+	var fresh: RunState = RunStateScript.new()
+	fresh.start_new("CREW-POKER-SAVE-COMPAT")
+	if fresh.crew_pattern_memory.is_empty():
+		failures.append("Fresh runs did not initialize neutral Crew poker observation memory.")
+	var fresh_save := fresh.to_dict()
+	var fresh_restored: RunState = RunStateScript.new()
+	fresh_restored.from_dict(fresh_save)
+	if JSON.stringify(fresh_restored.to_dict()) != JSON.stringify(fresh_save):
+		failures.append("Fresh neutral Crew poker memory was not byte-identical across save/load.")
+
+	var minimal_save := fresh_save.duplicate(true)
+	var minimal_crew: Dictionary = minimal_save.get("crew_state", {})
+	minimal_crew["p"] = {}
+	minimal_crew["m"] = {}
+	minimal_save["crew_state"] = minimal_crew
+	var minimal_restored: RunState = RunStateScript.new()
+	minimal_restored.from_dict(minimal_save)
+	if JSON.stringify(minimal_restored.to_dict()) != JSON.stringify(minimal_save):
+		failures.append("Empty legacy Crew poker projections acquired neutral member keys during save/load.")
+	if not minimal_restored.crew_pattern_memory.is_empty() or not minimal_restored.crew_match_marks.is_empty():
+		failures.append("Empty legacy Crew poker projections were expanded in runtime memory during load.")
+
+	var authored_patterns := CrewPokerModelScript.patterns("crew_mags")
+	if authored_patterns.is_empty():
+		failures.append("Crew poker save compatibility fixture could not find an authored observation.")
+		return
+	var state_key := str((authored_patterns[0] as Dictionary).get("state_key", ""))
+	minimal_restored.crew_record_pattern("crew_mags", state_key)
+	var counters: Dictionary = minimal_restored.crew_pattern_memory.get("crew_mags", {})
+	if int(counters.get(state_key, 0)) != 1:
+		failures.append("Gameplay did not lazily initialize an empty legacy Crew poker observation projection.")
+	minimal_restored.crew_record_poker_session(["crew_mags"], 999)
+	if int(minimal_restored.crew_match_marks.get("crew_mags", 0)) != 1:
+		failures.append("Gameplay did not lazily initialize an empty legacy Crew poker match projection.")
 
 
 func _poker_card(rank: int, suit: int) -> Dictionary:
