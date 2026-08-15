@@ -79,6 +79,9 @@ var report := {
 		"numbers_runner_surface": false,
 		"numbers_fix_surface": false,
 		"numbers_allocation_surface": false,
+		"numbers_published_handle": false,
+		"numbers_zero_trust_past_post": false,
+		"numbers_fix_payday": false,
 		"numbers_1280_visible": false,
 		"numbers_reduce_motion": false,
 		"focused_environment_controls_visible": false,
@@ -2200,6 +2203,48 @@ func _verify_numbers_surfaces() -> void:
 	# fixture advanced only its isolated Numbers model to exercise the post gate.
 	run_state.numbers_state.reset(run_state.seed_value)
 	run_state.call("_sync_numbers_inventory_marker")
+	for member_value in run_state.crew_trust_by_member.keys():
+		run_state.crew_trust_by_member[member_value] = 0
+	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:gas_late")
+	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:corner_late")
+	run_state.numbers_state.buy_silas_tip(false)
+	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_numbers_posted_board", {
+		"event_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [],
+	}, 200)
+	run_state.advance_environment_turns(run_state.numbers_state.post_action(0) - int(run_state.numbers_state.action_index))
+	app.call("_refresh")
+	await _settle()
+	canvas = app.get("environment_canvas") as Control
+	book_object = _canvas_object_by_id(canvas, "numbers:book")
+	_require(not (await _double_click_canvas_object_data(canvas, book_object, "numbers")).is_empty(), "Posted Punchline book did not open through its visible board prop.")
+	await _settle()
+	var published_handle := str(run_state.numbers_status().get("published_number", ""))
+	_require(published_handle.length() == 3 and _has_visible_text(app, "posted board reads %s" % published_handle), "Zero-trust Punchline arrival did not render the public posted handle diegetically.")
+	_cover("numbers_published_handle")
+	_require(not _click_button_exact("Back").is_empty(), "Posted Punchline board could not close through Back.")
+	await _settle()
+	await _prepare_visual_qa_fixture_environment("corner_store", "visual_numbers_zero_trust_late_book", {
+		"event_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [],
+	}, 200)
+	canvas = app.get("environment_canvas") as Control
+	book_object = _canvas_object_by_id(canvas, "numbers:book")
+	_require(not (await _double_click_canvas_object_data(canvas, book_object, "numbers")).is_empty(), "Zero-trust late book did not open through its visible prop.")
+	await _settle()
+	_require(_has_visible_text(app, "handle you carried here is %s" % published_handle), "Late-book UI did not preserve the physically learned handle.")
+	digit_options = app.get("numbers_digit_options")
+	for digit_index in range(3):
+		(digit_options[digit_index] as OptionButton).select(int(published_handle.substr(digit_index, 1)))
+	(app.get("numbers_stake_input") as SpinBox).value = 10.0
+	(app.get("numbers_play_type_option") as OptionButton).select(0)
+	_require(not _click_visible_button_role("numbers_slip_submit_button", ["Write Slip"]).is_empty(), "Zero-trust late-book exploit could not submit through the visible slip form.")
+	await _settle()
+	var late_slip := run_state.numbers_state.slips.back() as Dictionary
+	_require(bool(late_slip.get("past_post", false)) and run_state.crew_standing().get("total_trust", 1) == 0, "Visible zero-trust exploit did not create a genuine past-post slip without crew standing.")
+	_cover("numbers_zero_trust_past_post")
+	_require(not _click_button_exact("Back").is_empty(), "Zero-trust late-book popup could not close through Back.")
+	await _settle()
+	run_state.numbers_state.reset(run_state.seed_value)
+	run_state.call("_sync_numbers_inventory_marker")
 
 	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_numbers_desk", {
 		"event_ids": ["numbers_desk"],
@@ -2218,6 +2263,10 @@ func _verify_numbers_surfaces() -> void:
 	var desk_rect := _snapshot_rect(desk_object.get("focus_rect", {}))
 	var accepted_desk_point := Vector2(680.0 / BOARD_SIZE.x, 240.0 / BOARD_SIZE.y)
 	_require(desk_rect.has_point(accepted_desk_point), "Numbers desk moved away from the authored L3 spot at [680,240].")
+	var poker_object := _canvas_object_by_id(canvas, "game:poker")
+	if not poker_object.is_empty():
+		var poker_rect := _snapshot_rect(poker_object.get("focus_rect", {}))
+		_require(not poker_rect.intersects(desk_rect) and not (await _click_canvas_object_data(canvas, poker_object, "game")).is_empty(), "Combined L3 scene made Poker and Numbers overlap or left Poker unreachable.")
 	_require(not (await _double_click_canvas_object_data(canvas, desk_object, "numbers")).is_empty(), "Numbers desk did not open through its visible back-room prop.")
 	await _settle()
 	var desk_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
@@ -2254,10 +2303,15 @@ func _verify_numbers_surfaces() -> void:
 	await _settle()
 	_require(run_state.streets_has_active_run() and str(run_state.numbers_desk_status().get("fix_stage", "")) == "bribe_running", "Visible fix entry did not enter the frozen package Streets surface.")
 	_cover("numbers_fix_surface")
-	_require(not _click_button_exact("DITCH").is_empty(), "Numbers fix fixture could not leave the Streets surface through its visible Ditch action.")
+	var fix_board := (run_state.active_streets_run.get("board", {}) as Dictionary).duplicate(true)
+	fix_board["patrols"] = []
+	run_state.active_streets_run["board"] = fix_board
+	run_state.active_streets_run["player"] = (fix_board.get("destination", {}) as Dictionary).duplicate(true)
+	app.call("_refresh")
 	await _settle()
-
-	run_state.numbers_state.fix_state = {"status": "camouflage", "target_day": run_state.numbers_state.day_at(run_state.numbers_state.action_index) + 1, "bribe_score": 80}
+	_require(not _click_button_exact("WAIT").is_empty(), "Numbers fix fixture could not complete its visible successful Streets delivery.")
+	await _settle()
+	_require(str(run_state.numbers_desk_status().get("fix_stage", "")) == "camouflage", "Visible successful fix delivery did not reach camouflage.")
 	app.call("_refresh")
 	await _settle()
 	canvas = app.get("environment_canvas") as Control
@@ -2265,14 +2319,28 @@ func _verify_numbers_surfaces() -> void:
 	_require(not (await _double_click_canvas_object_data(canvas, desk_object, "numbers")).is_empty(), "Numbers desk could not reopen for allocation QA.")
 	await _settle()
 	_require((app.get("numbers_surface_allocation_inputs") as Dictionary).size() == 5 and app.get("numbers_allocation_submit_button") != null, "Camouflage desk did not expose the five-book allocation form.")
+	var allocation_inputs := app.get("numbers_surface_allocation_inputs") as Dictionary
+	for input_value in allocation_inputs.values():
+		var allocation_input := input_value as SpinBox
+		_require(allocation_input != null and int(allocation_input.value) == 0 and int(allocation_input.max_value) == 20, "Camouflage allocation did not start empty at the ordinary $20 cap.")
+	var funded_values := {"small_underground_casino": 18, "bar": 16, "motel": 14, "gas_station_casino": 12}
+	for venue_value in funded_values.keys():
+		(allocation_inputs.get(venue_value) as SpinBox).value = float(funded_values.get(venue_value, 0))
 	_require(_control_fits_viewport(app.get("event_choice_popup_panel"), "Numbers allocation popup"), "Numbers allocation form did not fit the 1280x720 viewport with its shared scrollbar.")
+	var allocation_bankroll_before := run_state.bankroll
 	_require(not _click_visible_button_role("numbers_allocation_submit_button", ["Place the Crew Paper"]).is_empty(), "Numbers allocation could not be submitted through its visible desk control.")
 	await _settle()
-	_require(str(run_state.numbers_desk_status().get("fix_stage", "")) == "payday", "Visible deterministic allocation did not advance the crew fix to payday.")
+	_require(str(run_state.numbers_desk_status().get("fix_stage", "")) == "payday" and run_state.bankroll == allocation_bankroll_before - 60 and run_state.numbers_state.open_slip_count() == 4, "Visible funded allocation did not charge $60 and create four real slips in payday.")
 	_cover("numbers_allocation_surface")
-	_record_state("numbers_allocation_surface", "Five-book deterministic camouflage form at the Punchline desk after a balanced visible allocation.")
+	_record_state("numbers_allocation_surface", "Empty-by-default five-book camouflage form after the player funds a visible four-book spread.")
 	_require(not _click_button_exact("Back").is_empty(), "Numbers allocation popup could not close through its visible Back button.")
 	await _settle()
+	var fix_target_day := int(run_state.numbers_state.fix_state.get("target_day", 1))
+	run_state.advance_environment_turns(run_state.numbers_state.settlement_action(fix_target_day) - int(run_state.numbers_state.action_index))
+	app.call("_refresh")
+	await _settle()
+	_require(str(run_state.numbers_state.fix_state.get("status", "")) == "completed" and run_state.bankroll > allocation_bankroll_before, "Visible successful fix chain did not pay slip winnings plus the performance cut.")
+	_cover("numbers_fix_payday")
 
 
 func _verify_streets_surface() -> void:

@@ -600,6 +600,17 @@ func advance_action_clock(amount: int = 1) -> void:
 	advance_game_clock_minutes(actions * ACTION_CLOCK_MINUTES)
 
 
+# Converts an already-measured physical route duration into the canonical action
+# clock after arrival. The UI owns route selection; RunState owns all boundary
+# effects so Numbers, jobs, sweeps, heat, and crew timers move together.
+func advance_travel_actions(travel_minutes: int) -> int:
+	if travel_minutes <= 0 or is_terminal():
+		return 0
+	var actions := maxi(1, int(ceil(float(travel_minutes) / float(ACTION_CLOCK_MINUTES))))
+	advance_environment_turns(actions)
+	return actions
+
+
 func closing_time_status() -> Dictionary:
 	return _normalize_closing_time_state(closing_time_state)
 
