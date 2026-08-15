@@ -112,7 +112,7 @@ Wave C games are intentionally parallel-friendly.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| fix06_1 | `fix06_1_dead_event_interactions_prompt.md` | IN_PROGRESS | env06_2, env06_3 (landed) | crew06_5+ inherit the class guard | Codex | 2026-08-14 | | Owner-reported dead event icons; root-caused to normalization-injected speakers vs room-actor denial at the beach. Run before or alongside Wave D. |
+| fix06_1 | `fix06_1_dead_event_interactions_prompt.md` | DONE | env06_2, env06_3 (landed) | crew06_5+ inherit the class guard | Codex | 2026-08-14 | 2026-08-14 | Generic synthesized-speaker fix; 99-event audit shifted only 3 beach events; permanent generated-environment guard, systems/UI/all, determinism, and visual QA PASS. |
 
 ### Fixed checkpoint
 
@@ -383,6 +383,18 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   this survive Wave B acceptance: no automated test walked authored
   interactable events through `can_trigger` in generated host environments.
 
+- 2026-08-14 [fix06_1] Full catalog audit found 99 events: 32 authored-speaker
+  and 67 synthesized-speaker definitions. The generic normalization correction
+  changed `can_trigger` only for the three recovery-hosted beach scenario events
+  (`false` to `true` with choices); every other host observation was unchanged,
+  and `_environment_allows_room_actor` remains intact.
+- 2026-08-14 [fix06_1] The permanent `interactable_event_class_guard` now runs
+  in foundation `systems` and `all`: ten seeded base generations cover every
+  archetype, every authored scenario overlay is exhausted, all Punchline layers
+  are entered, authored conditional dormancy is isolated through the condition
+  override diagnostic, and a broken synthesized-speaker fixture proves the
+  guard fails when the defect returns.
+
 ## Work Log
 
 - 2026-08-13 [board] Queue authored: 24 prompts across waves A–E.
@@ -483,3 +495,7 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
 - 2026-08-14 [fix06_1] Codex claimed the dead scenario event interaction fix;
   implementation will repair the generic normalization seam and add a permanent
   generated-environment interactability class guard plus UI click-through.
+- 2026-08-14 [fix06_1] DONE; generic actor-free speaker synthesis, exhaustive
+  catalog audit, beach consequence resolution, permanent icon-to-action guard,
+  and generated Bonfire context-card mouse click-through passed all required
+  gates. Crew06_5 and later event-bearing rows now inherit the class guard.
