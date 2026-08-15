@@ -36,6 +36,8 @@ var acceptance_context: Dictionary = {}
 var seed_audit_evidence: Dictionary = {}
 var foundation_action_rng: Dictionary = {}
 var foundation_rng_matches_audit := false
+var authored_tell_state: Dictionary = {}
+var authored_tell_observation: Dictionary = {}
 var tell_expected_actions: Array[String] = []
 var current_stage := "not_started"
 var current_attempt: Dictionary = {}
@@ -110,6 +112,7 @@ func _run() -> void:
 		_fail("Crew poker capture could not access the production table canvas.")
 		_finish()
 		return
+	_stage("production_renderer_validation", {"source": "realtime_surface_state"})
 	if not canvas.visible or str((canvas.call("realtime_surface_state") as Dictionary).get("surface_renderer", "")) != "crew_draw_poker":
 		_fail("Crew poker capture did not route through the production table renderer.")
 		_finish()
@@ -148,8 +151,8 @@ func _run() -> void:
 		if not _has_authored_observation():
 			_fail("Crew poker audited deal/call sequence did not naturally surface an authored subtle presentation in its single hand.")
 	if not failed:
-		var tell_state := canvas.call("realtime_surface_state") as Dictionary
-		var observation: Dictionary = tell_state.get("observation", {}) if typeof(tell_state.get("observation", {})) == TYPE_DICTIONARY else {}
+		var tell_state := authored_tell_state.duplicate(true)
+		var observation := authored_tell_observation.duplicate(true)
 		if not ["line", "portrait", "timing"].has(str(observation.get("channel", ""))) \
 				or str(observation.get("member_id", "")).is_empty():
 			_fail("Crew poker capture did not retain the production-authored subtle presentation.")
@@ -159,13 +162,15 @@ func _run() -> void:
 			"03_authored_subtle_tell_1280x720.png",
 			"authored_subtle_tell",
 			tell_expected_actions,
-			5 if str(tell_state.get("phase", "")) == "draw" else 0
+			5 if str(tell_state.get("phase", "")) == "draw" else 0,
+			tell_state
 		)
 
 	if not failed:
-		_stage("capture_reduced_motion")
-		var reduced_state := (canvas.call("realtime_surface_state") as Dictionary).duplicate(true)
+		_stage("capture_reduced_motion", {"state_source": "cached_authored_tell"})
+		var reduced_state := authored_tell_state.duplicate(true)
 		reduced_state["reduce_motion"] = true
+		_stage("reduced_motion_render_snapshot", {"state_source": "cached_authored_tell"})
 		canvas.call("render_game_snapshot", reduced_state)
 		await _settle(3)
 		_capture_reduced_motion_stability()
@@ -173,7 +178,8 @@ func _run() -> void:
 			"04_reduced_motion_static_1280x720.png",
 			"reduced_motion_static",
 			tell_expected_actions,
-			5 if str(reduced_state.get("phase", "")) == "draw" else 0
+			5 if str(reduced_state.get("phase", "")) == "draw" else 0,
+			reduced_state
 		)
 
 	if not failed:
@@ -353,7 +359,6 @@ func _clear_stale_capture_files() -> bool:
 
 
 func _perform_production_action(action: String, index: int, confirm_requested: bool, expected_phase: String, ordinal: int) -> bool:
-	var before := _production_action_snapshot()
 	var attempt := {
 		"kind": "production_action",
 		"action": action,
@@ -362,12 +367,15 @@ func _perform_production_action(action: String, index: int, confirm_requested: b
 		"limit": PRODUCTION_ACTION_LIMIT,
 		"expected_phase": expected_phase,
 		"budget_msec": PRODUCTION_ACTION_BUDGET_MSEC,
-		"before": before,
 	}
+	_stage("production_action_snapshot_before", attempt)
+	var before := _production_action_snapshot()
+	attempt["before"] = before
 	_stage("production_action_before", attempt)
 	var action_started_msec := Time.get_ticks_msec()
 	var handled := bool(app.call("_handle_module_surface_action", action, index, confirm_requested))
 	var action_elapsed_msec := Time.get_ticks_msec() - action_started_msec
+	_stage("production_action_snapshot_after", attempt)
 	var after := _production_action_snapshot()
 	var phase_passed := expected_phase.is_empty() or str(after.get("table_phase", "")) == expected_phase
 	var within_budget := action_elapsed_msec <= PRODUCTION_ACTION_BUDGET_MSEC
@@ -411,8 +419,11 @@ func _production_action_snapshot() -> Dictionary:
 
 func _has_authored_observation() -> bool:
 	var table := _table()
+	_stage("natural_tell_surface_read", {"source": "realtime_surface_state"})
 	var surface := canvas.call("realtime_surface_state") as Dictionary
 	var observation: Dictionary = surface.get("observation", {}) if typeof(surface.get("observation", {})) == TYPE_DICTIONARY else {}
+	authored_tell_state = surface.duplicate(true)
+	authored_tell_observation = observation.duplicate(true)
 	var beat: Dictionary = table.get("beat", {}) if typeof(table.get("beat", {})) == TYPE_DICTIONARY else {}
 	var passed := int(table.get("hand_number", -1)) == 0 \
 		and str(table.get("phase", "")) == "draw" \
@@ -519,7 +530,8 @@ func _capture_reduced_motion_stability() -> void:
 		_fail("Crew poker reduced-motion renderer did not remain static.")
 
 
-func _capture_surface(file_name: String, capture_id: String, expected_actions: Array, expected_card_targets: int) -> void:
+func _capture_surface(file_name: String, capture_id: String, expected_actions: Array, expected_card_targets: int, state_override: Dictionary = {}) -> void:
+	_stage("capture_surface_redraw", {"capture_id": capture_id})
 	canvas.queue_redraw()
 	# `RenderingServer.frame_post_draw` can remain pending when a Windows capture
 	# process is hidden. A fixed process-frame budget still gives the queued draw
@@ -527,15 +539,23 @@ func _capture_surface(file_name: String, capture_id: String, expected_actions: A
 	await _settle(3)
 	if finishing:
 		return
-	var state := canvas.call("realtime_surface_state") as Dictionary
+	var state: Dictionary
+	if state_override.is_empty():
+		_stage("capture_surface_state_read", {"capture_id": capture_id, "source": "realtime_surface_state"})
+		state = canvas.call("realtime_surface_state") as Dictionary
+	else:
+		state = state_override.duplicate(true)
+	_stage("capture_surface_view_read", {"capture_id": capture_id, "source": "current_view_snapshot"})
 	var view := canvas.call("current_view_snapshot") as Dictionary
 	var poker_hits := _poker_hit_regions(view.get("surface_hit_actions", []))
+	_stage("capture_surface_hit_region_assertion", {"capture_id": capture_id, "source": "surface_board_size"})
 	var target_evidence := _assert_hit_regions(poker_hits, expected_actions, expected_card_targets)
 	var hidden_leaks := _hidden_label_leaks(state)
 	if not bool(target_evidence.get("passed", false)):
 		_fail("Crew poker %s capture failed hit-target bounds/overlap assertions." % capture_id)
 	if not hidden_leaks.is_empty():
 		_fail("Crew poker %s capture exposed hidden authored labels." % capture_id)
+	_stage("capture_surface_image_read", {"capture_id": capture_id, "source": "viewport_texture"})
 	var image := root.get_viewport().get_texture().get_image()
 	var saved := false
 	if image == null:
