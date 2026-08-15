@@ -464,6 +464,22 @@ static func _check_swept_collection_consequences(failures: Array) -> void:
 	var job := _dictionary(run_state.crew_jobs.get(job_id, {}))
 	var pending_ditch := bool(run_state.narrative_flags.get("numbers_collection_sweep_confiscation_pending", false))
 	var forced_resolution := run_state.streets_apply_action({"verb": "wait"})
+	var consequence_evidence := {
+		"collection_reason": str(run_state.numbers_state.collection_state.get("reason", "")),
+		"job_status": str(job.get("status", "")),
+		"trust_before": trust_before,
+		"trust_after": run_state.crew_trust("crew_lucky"),
+		"heat_before": heat_before,
+		"heat_after": run_state.suspicion_level(),
+		"confiscated_count": int(_dictionary(result.get("numbers_collection_confiscated", {})).get("count", 0)),
+		"bag_value": int(result.get("numbers_collection_bag_value_confiscated", 0)),
+		"pending_before_ditch": pending_ditch,
+		"queued_ids": queued_ids,
+		"rumor_found": rumor_found,
+		"forced_resolution": forced_resolution,
+		"grievances": run_state.crew_grievances("crew_lucky"),
+		"pending_after_ditch": bool(run_state.narrative_flags.get("numbers_collection_sweep_confiscation_pending", false)),
+	}
 	if str(run_state.numbers_state.collection_state.get("reason", "")) != "swept" \
 		or str(job.get("status", "")) != "failed" \
 		or run_state.crew_trust("crew_lucky") >= trust_before \
@@ -476,7 +492,7 @@ static func _check_swept_collection_consequences(failures: Array) -> void:
 		or not bool(forced_resolution.get("resolved", false)) \
 		or not run_state.crew_grievances("crew_lucky").is_empty() \
 		or bool(run_state.narrative_flags.get("numbers_collection_sweep_confiscation_pending", false)):
-		failures.append("Swept Numbers collection missed bag/slip confiscation, failed job, Lucky trust, +14 heat, rumor, pending ditch, or Lucky worst-talk.")
+		failures.append("Swept Numbers collection missed a documented consequence: %s." % JSON.stringify(consequence_evidence))
 
 
 static func _check_consequences_and_independence(failures: Array) -> void:
@@ -551,19 +567,6 @@ static func _check_midstate_save_load(failures: Array) -> void:
 		failures.append("RunState save/load changed the pre-post open-slip Numbers state.")
 	if JSON.stringify(open_restored.to_dict()) != open_saved_json:
 		failures.append("RunState save/load mutated restored town discovery facts or their registration metadata.")
-	var legacy_saved := open_saved.duplicate(true)
-	var legacy_town: Dictionary = _dictionary(legacy_saved.get("town_state", {})).duplicate(true)
-	var legacy_living_world: Dictionary = _dictionary(legacy_town.get("living_world", {})).duplicate(true)
-	var legacy_registry: Dictionary = _dictionary(legacy_living_world.get("rumor_registry", {})).duplicate(true)
-	legacy_registry.erase("numbers_stagger:gas_late")
-	legacy_registry.erase("numbers_stagger:corner_late")
-	legacy_living_world["rumor_registry"] = legacy_registry
-	legacy_town["living_world"] = legacy_living_world
-	legacy_saved["town_state"] = legacy_town
-	var legacy_restored: RunState = RunStateScript.new()
-	legacy_restored.from_dict(legacy_saved)
-	if legacy_restored.rumor_fact("numbers_stagger:gas_late").is_empty() or legacy_restored.rumor_fact("numbers_stagger:corner_late").is_empty():
-		failures.append("A pre-Numbers town save did not receive the discovery rumor chain during migration.")
 	var collection_fixture := _runner_fixture("NUMBERS-SAVE-COLLECTION")
 	if not bool(collection_fixture.get("ok", false)):
 		failures.append("RunState save/load fixture could not start the active Lucky collection.")
@@ -693,7 +696,7 @@ static func _winning_straight_payout_with_leak(seed_value: int, leak: Dictionary
 	var model: NumbersModel = NumbersModelScript.new()
 	model.reset(seed_value)
 	model.active_leak = leak.duplicate(true)
-	var winning := str(_dictionary(model.call("_draw", 0)).get("number", "000"))
+	var winning := str(_dictionary(model.call("_handle_record_at_boundary", 0)).get("number", "000"))
 	model.buy_slip("bar", winning, 20, "straight")
 	var event := _first_event(model.advance_to(21), "numbers_settlement")
 	return int(event.get("payout", 0))

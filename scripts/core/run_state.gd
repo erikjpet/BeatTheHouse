@@ -9956,9 +9956,9 @@ func from_dict(data: Dictionary) -> void:
 	world_map = _normalize_world_map_environment_snapshots(
 		_compact_world_map_ticket_storage(WorldMap.normalize(_copy_dict(data.get("world_map", {}))))
 	)
-	# Idempotent discovery registration preserves modern save metadata while
-	# introducing Numbers facts into saves created before this feature existed.
-	configure_town_world(world_map)
+	# Restored town state is authoritative. Discovery facts are registered on
+	# fresh world generation, never injected during a byte-identical restore.
+	configure_town_world(world_map, false)
 	scenario_recent_by_archetype = _normalize_scenario_recent(_copy_dict(data.get("scenario_recent_by_archetype", {})))
 	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
 	grand_casino_staffing = _normalize_grand_casino_staffing(_copy_dict(data.get("grand_casino_staffing", {})))
