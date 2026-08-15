@@ -6324,11 +6324,71 @@ func _streets_event_consumer_payload(consequences: Dictionary) -> Dictionary:
 	}
 
 
-# Returns the hidden, saved Numbers state projection used by venue and desk surfaces.
+# Returns the player-safe Numbers projection used by venue surfaces.
 func numbers_status() -> Dictionary:
 	if numbers_state == null:
 		return {}
 	return numbers_state.status()
+
+
+# Player-safe crew desk projection. Hidden solo knowledge, future handles, raw
+# leak state, and detection rolls never cross this presentation seam.
+func numbers_desk_status() -> Dictionary:
+	if numbers_state == null:
+		return {}
+	var fix_stage := str(numbers_state.fix_state.get("status", "locked"))
+	var current_day := numbers_state.day_at(numbers_state.action_index)
+	var retry_ready := current_day >= int(numbers_state.fix_state.get("retry_day", 0))
+	var public_stage := fix_stage if ["bribe_running", "camouflage", "payday"].has(fix_stage) else "ready" if _numbers_fix_eligible() and retry_ready else "locked"
+	var venues: Array = []
+	for venue_value in _copy_array(numbers_status().get("venue_status", [])):
+		if typeof(venue_value) != TYPE_DICTIONARY:
+			continue
+		var venue: Dictionary = venue_value
+		venues.append({
+			"id": str(venue.get("id", "")),
+			"label": str(venue.get("label", "Book")),
+			"open": bool(venue.get("open", false)),
+		})
+	var lucky_rank := crew_rank("crew_lucky")
+	var mags_rank := crew_rank("crew_mags")
+	return {
+		"runner_available": CrewStateModelScript.RANK_IDS.find(lucky_rank) >= CrewStateModelScript.RANK_IDS.find("associate")
+			and numbers_state.action_index < numbers_state.post_action(current_day)
+			and str(numbers_state.collection_state.get("status", "")) != "active"
+			and not streets_has_active_run(),
+		"runner_active": str(numbers_state.collection_state.get("status", "")) == "active",
+		"lucky_rank": lucky_rank,
+		"mags_rank": mags_rank,
+		"fix_eligible": _numbers_fix_eligible(),
+		"fix_available": public_stage == "ready" and not streets_has_active_run(),
+		"fix_stage": public_stage,
+		"allocation_available": public_stage == "camouflage",
+		"venues": venues,
+	}
+
+
+# Narrow Silas presentation seam. The surface learns only whether the optional
+# handle exchange belongs in the current encounter; it never receives the
+# discovery counters, assembled flag, or unpublished number.
+func numbers_silas_status() -> Dictionary:
+	if numbers_state == null:
+		return {"handle_available": false}
+	var public_status := numbers_status()
+	var late_book_open := false
+	for venue_value in _copy_array(public_status.get("venue_status", [])):
+		if typeof(venue_value) != TYPE_DICTIONARY:
+			continue
+		var venue: Dictionary = venue_value
+		if bool(venue.get("open", false)) and int(venue.get("close_action", 0)) > int(public_status.get("post_action", 0)):
+			late_book_open = true
+			break
+	return {
+		"handle_available": bool(numbers_state.knowledge.get("assembled", false))
+			and bool(public_status.get("posted", false))
+			and late_book_open
+			and numbers_state.known_number().is_empty(),
+	}
 
 
 # Buys one physical slip at the current Numbers venue. The model owns the slip;
@@ -6356,6 +6416,8 @@ func numbers_buy_silas_tip(today_number: bool = false) -> Dictionary:
 	var current_node := current_world_node_id()
 	if town_state.traveler_node("silas_snitch") != current_node:
 		return {"ok": false, "message": "Silas is drinking somewhere else."}
+	if today_number and not bool(numbers_silas_status().get("handle_available", false)):
+		return {"ok": false, "message": "Silas has no handle for you."}
 	var tuning := _copy_dict(NumbersModelScript.tuning().get("past_posting", {}))
 	var price := int(tuning.get("silas_today_number_price", 24)) if today_number else int(tuning.get("silas_tip_price", 12))
 	if bankroll < price:

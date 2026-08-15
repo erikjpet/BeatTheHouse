@@ -12,6 +12,7 @@ static func run(failures: Array) -> void:
 	_check_read_purity_and_boundary_determinism(failures)
 	_check_slip_lifecycle_and_confiscation(failures)
 	_check_hidden_discovery_and_race(failures)
+	_check_silas_availability_seam(failures)
 	_check_fix_and_leak_economy(failures)
 	_check_runner_outcomes(failures)
 	_check_runner_pause_production_path(failures)
@@ -127,6 +128,31 @@ static func _check_hidden_discovery_and_race(failures: Array) -> void:
 	solo.advance_to(20)
 	if bool(solo.buy_slip("corner_store", number, 10, "straight", number).get("ok", false)):
 		failures.append("Solo past-post race still succeeded at the corner close boundary.")
+
+
+static func _check_silas_availability_seam(failures: Array) -> void:
+	var run_state = RunStateScript.new()
+	run_state.start_new("NUMBERS-SILAS-SURFACE")
+	var first_view := run_state.numbers_silas_status()
+	if bool(first_view.get("handle_available", true)) or first_view.keys() != ["handle_available"]:
+		failures.append("First Silas view advertised hidden handle knowledge or leaked extra discovery state.")
+	var silas_node := run_state.traveler_node("silas_snitch")
+	run_state.current_environment = {"id": silas_node, "archetype_id": silas_node, "world_node_id": silas_node, "turns": 0}
+	var bankroll_before := run_state.bankroll
+	if bool(run_state.numbers_buy_silas_tip(true).get("ok", false)) or run_state.bankroll != bankroll_before:
+		failures.append("Production Silas API sold the handle before hidden discovery.")
+	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:gas_late")
+	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:corner_late")
+	run_state.numbers_state.buy_silas_tip(false)
+	if bool(run_state.numbers_silas_status().get("handle_available", true)):
+		failures.append("Silas handle exchange appeared before the authored post boundary.")
+	run_state.numbers_state.advance_to(run_state.numbers_state.post_action(0))
+	if not bool(run_state.numbers_silas_status().get("handle_available", false)):
+		failures.append("Silas handle exchange did not unlock after genuine rumor-plus-tip discovery and post timing.")
+	if not bool(run_state.numbers_buy_silas_tip(true).get("ok", false)):
+		failures.append("Production Silas API rejected the discovered, correctly timed handle exchange.")
+	if bool(run_state.numbers_silas_status().get("handle_available", true)):
+		failures.append("Silas offered the same handle again after it was already known.")
 
 
 static func _check_fix_and_leak_economy(failures: Array) -> void:

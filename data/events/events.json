@@ -4239,7 +4239,7 @@
     "start_summary": "Carbon paper, five books, one closing clock.",
     "trigger": {"type": "manual"},
     "payload": {"summary": "The handle is honest. Every hand around it is negotiable.", "choices": [
-      {"id": "read_the_closes", "label": "Read the closes", "text": "Punchline, bar, motel, gas, corner. The last two clocks are why nobody writes the order in public.", "consequences": {"flags": {"numbers_desk_closes_read": true}, "resolve_event": true}},
+      {"id": "read_the_books", "label": "Read the books", "text": "Five books report to the desk. Each clerk says only whether today's window is open.", "consequences": {"flags": {"numbers_desk_books_read": true}, "resolve_event": true}},
       {"id": "leave_the_book", "label": "Leave the book", "text": "The carbon stays facedown.", "consequences": {"resolve_event": true}}
     ]}
   },
