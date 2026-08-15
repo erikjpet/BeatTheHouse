@@ -82,7 +82,7 @@ Wave C games are intentionally parallel-friendly.
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | craps06_1 | `craps06_1_craps_core_prompt.md` | DONE | — | craps06_2, crew06_8 | PM:Codex/sub:1 | 2026-08-14 | 2026-08-14 | PM verified full rules/chips/save/cheat scope, RTP, systems/UI, 10-seed determinism, and focused/canonical visual QA PASS. |
-| craps06_2 | `craps06_2_street_craps_prompt.md` | TODO | craps06_1, env06_1 | — | | | | |
+| craps06_2 | `craps06_2_street_craps_prompt.md` | IN_PROGRESS | craps06_1, env06_1 | — | PM:Codex/sub:5 | 2026-08-14 | | PM-orchestrated Wave C Stage 2 execution after integrated Craps-core acceptance. |
 | push06_1 | `push06_1_pusher_core_prompt.md` | IN_PROGRESS | env06_1 | push06_2 | PM:Codex/sub:2 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
 | push06_2 | `push06_2_pusher_variations_prompt.md` | TODO | push06_1, town06_1 | — | | | | |
 | streets06_1 | `streets06_1_streets_framework_prompt.md` | DONE | town06_1, crew06_1 | crew06_3/6/8 | PM:Codex/sub:3 | 2026-08-14 | 2026-08-14 | PM verified scope/design, systems/UI, 10-seed determinism, and package/multi-stop/Hold visual QA on the integrated tree. |
@@ -476,6 +476,10 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   determinism, canonical visual QA, and focused table/liveness captures. The
   stable rules engine and Grand Casino surface now unblock craps06_2 and the
   Craps dependency of crew06_8.
+- 2026-08-14 [craps06_2] Wave C Stage 2 Street Craps execution claimed after
+  PM accepted the shared Craps rules engine and env06_1 modifier seam. The
+  subagent owns implementation in isolation; PM retains board, archival,
+  integration, runtime verification, and push ownership.
 - 2026-08-14 [fix06_1] Codex claimed the dead scenario event interaction fix;
   implementation will repair the generic normalization seam and add a permanent
   generated-environment interactability class guard plus UI click-through.
