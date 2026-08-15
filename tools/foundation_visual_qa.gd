@@ -2793,19 +2793,24 @@ func _verify_numbers_surfaces() -> void:
 	_record_state("numbers_silas_surface", "Silas encounter keeps the handle exchange absent until its ordinary hidden discovery conditions are met.")
 	_require(not _click_button_exact("Back").is_empty(), "Silas popup could not be closed through its visible Back button.")
 	await _settle()
-	# Each visual fixture starts from the same day-one clock; the prior Silas
-	# fixture advanced only its isolated Numbers model to exercise the post gate.
+	# Isolate the prior Silas discovery state before exercising a fresh handle.
 	run_state.numbers_state.reset(run_state.seed_value)
 	run_state.call("_sync_numbers_inventory_marker")
+	# This is a long-lived production run, so resynchronize the isolated Numbers
+	# fixture to the authoritative action clock before choosing a future post.
+	run_state.advance_environment_turns(0)
 	for member_value in run_state.crew_trust_by_member.keys():
 		run_state.crew_trust_by_member[member_value] = 0
 	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:gas_late")
 	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:corner_late")
 	run_state.numbers_state.buy_silas_tip(false)
+	var late_book_day := run_state.numbers_state.day_at(run_state.numbers_state.action_index)
+	if run_state.numbers_state.action_index >= run_state.numbers_state.post_action(late_book_day):
+		late_book_day += 1
 	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_numbers_posted_board", {
 		"event_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [],
 	}, 200)
-	run_state.advance_environment_turns(run_state.numbers_state.post_action(0) - int(run_state.numbers_state.action_index))
+	run_state.advance_environment_turns(run_state.numbers_state.post_action(late_book_day) - int(run_state.numbers_state.action_index))
 	app.call("_refresh")
 	await _settle()
 	canvas = app.get("environment_canvas") as Control
@@ -2820,10 +2825,15 @@ func _verify_numbers_surfaces() -> void:
 	await _prepare_visual_qa_fixture_environment("corner_store", "visual_numbers_zero_trust_late_book", {
 		"event_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [],
 	}, 200)
+	_require(run_state.advance_numbers_past_post_travel_actions(8) == 1, "Zero-trust late-book fixture did not spend the authored eight-minute physical travel tick.")
+	app.call("_refresh")
+	await _settle()
 	canvas = app.get("environment_canvas") as Control
 	book_object = _canvas_object_by_id(canvas, "numbers:book")
 	_require(not (await _double_click_canvas_object_data(canvas, book_object, "numbers")).is_empty(), "Zero-trust late book did not open through its visible prop.")
 	await _settle()
+	var late_book_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	_require(bool(late_book_popup.get("book_open", false)), "Zero-trust Corner Store form was not inside its authored post-plus-four close window.")
 	_require(_has_visible_text(app, "handle you carried here is %s" % published_handle), "Late-book UI did not preserve the physically learned handle.")
 	digit_options = app.get("numbers_digit_options")
 	for digit_index in range(3):
