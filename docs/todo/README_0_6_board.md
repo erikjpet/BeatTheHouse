@@ -82,8 +82,8 @@ Wave C games are intentionally parallel-friendly.
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | craps06_1 | `craps06_1_craps_core_prompt.md` | DONE | — | craps06_2, crew06_8 | PM:Codex/sub:1 | 2026-08-14 | 2026-08-14 | PM verified full rules/chips/save/cheat scope, RTP, systems/UI, 10-seed determinism, and focused/canonical visual QA PASS. |
-| craps06_2 | `craps06_2_street_craps_prompt.md` | IN_PROGRESS | craps06_1, env06_1 | — | PM:Codex/sub:5 | 2026-08-14 | | PM-orchestrated Wave C Stage 2 execution after integrated Craps-core acceptance. |
-| push06_1 | `push06_1_pusher_core_prompt.md` | IN_PROGRESS | env06_1 | push06_2 | PM:Codex/sub:2 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
+| craps06_2 | `craps06_2_street_craps_prompt.md` | DONE | craps06_1, env06_1 | — | PM:Codex/sub:5 | 2026-08-14 | 2026-08-14 | PM verified shared rules, cash-only teaching/dispersal/training, save/UI, RTP parity, determinism, and focused/canonical visual QA PASS. |
+| push06_1 | `push06_1_pusher_core_prompt.md` | DONE | env06_1 | push06_2 | PM:Codex/sub:2 | 2026-08-14 | 2026-08-14 | PM verified action-boundary pile/nudge/alarm/persistence/economy, all integrated gates, determinism, and focused/canonical visual QA PASS. |
 | push06_2 | `push06_2_pusher_variations_prompt.md` | TODO | push06_1, town06_1 | — | | | | |
 | streets06_1 | `streets06_1_streets_framework_prompt.md` | DONE | town06_1, crew06_1 | crew06_3/6/8 | PM:Codex/sub:3 | 2026-08-14 | 2026-08-14 | PM verified scope/design, systems/UI, 10-seed determinism, and package/multi-stop/Hold visual QA on the integrated tree. |
 | crew06_2 | `crew06_2_backroom_poker_prompt.md` | IN_PROGRESS | crew06_1, env06_4 | crew06_9 | PM:Codex/sub:4 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution; queued for first available subagent slot. |
@@ -368,6 +368,16 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   Casino placement capacity to all seven authored objects (7/7, 4/4, and 2/2
   rooms now prove zero overlap). PM independently verified the complete bet
   surface, dice motion, idle liveness, and static reduced-motion capture.
+- 2026-08-14 [craps06_2] The scenario's exclusive `game_id` correctly makes
+  Street Craps playable in a seeded starting Back Alley; this exposed a UI
+  victory fixture that assumed finding a game always required travel. The
+  fixture now explicitly performs real travel before asserting replay timing,
+  preserving both production injection and every travel/report assertion.
+- 2026-08-14 [push06_1] Reduced-motion acceptance uses the real settings-apply
+  boundary, because the lower-level accessibility styling helper does not
+  rebuild active game snapshots. Focused and canonical proofs now require a
+  frozen motion signature, zero redraws, no continuous redraw, and unchanged
+  visible pile/rider/tell state.
 
 - 2026-08-14 [fix06_1] Owner reported scenario event icons with no apparent
   action. PM headless probes (15 seeds, all archetypes + Punchline L2): 39/42
@@ -492,6 +502,14 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   PM accepted the shared Craps rules engine and env06_1 modifier seam. The
   subagent owns implementation in isolation; PM retains board, archival,
   integration, runtime verification, and push ownership.
+- 2026-08-14 [craps06_2] DONE; the scenario-only cash circle reuses the casino
+  rules engine, teaches Pass/Don't, fairly refunds on sweep/heat dispersal,
+  grants optional setting practice, and proves exact core RTP parity. Focused
+  and canonical visuals, systems/UI, and 10-seed determinism pass.
+- 2026-08-14 [push06_1] DONE; Quarter Falls now supplies the deterministic
+  action-boundary pile, universal nudge/tell/alarm system, node persistence,
+  prize riders, rumor/reputation seams, and machine-only lockdown. All gates
+  and five focused visual states pass, unblocking push06_2.
 - 2026-08-14 [fix06_1] Codex claimed the dead scenario event interaction fix;
   implementation will repair the generic normalization seam and add a permanent
   generated-environment interactability class guard plus UI click-through.

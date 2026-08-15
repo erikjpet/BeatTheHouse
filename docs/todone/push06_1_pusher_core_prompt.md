@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `push06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-14
+- **Completion/implementation commits:** `7e445f3a..67237a63`; integrated by `1147b11b`; reduced-motion proofs `fac1a038`, `6cc0b7f3`
+- **Verification:** PM line-by-line scope/design review; project validation; dedicated Coin Pusher, systems, and full UI suites; 10-seed determinism (430 checkpoints, hash `4169024088`); canonical visual QA; and five-image focused pile/tell/reduced-motion/alarm/room smoke all PASS on the integrated tree.
+- **Deviations:** None. The core ships Quarter Falls only; the additional two authored variations remain owned by `push06_2`.
 
 # Agent Prompt — 0.6 push06_1: Coin Pusher Core + Nudge System + Quarter Falls
 
