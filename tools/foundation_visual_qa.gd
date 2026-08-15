@@ -1655,20 +1655,33 @@ func _verify_coin_pusher_visual_qa_fixture() -> void:
 	var settings: Variant = app.get("user_settings")
 	_require(settings != null, "Quarter Falls visual QA could not access reduced-motion settings.")
 	settings.reduce_motion = true
-	app.call("_apply_accessibility_settings")
+	# Match the real settings boundary so host-owned accessibility state is
+	# rebuilt into the active game snapshot before the canonical proof samples it.
+	app.call("_on_settings_applied")
 	await _settle()
+	surface_canvas.call("reset_performance_counters")
+	var reduced_state_before: Dictionary = surface_canvas.call("realtime_surface_state").duplicate(true)
 	var reduced_before: Dictionary = surface_canvas.call("debug_surface_motion_sample")
-	surface_canvas.call("debug_advance_idle_liveness", 0.5)
+	for _frame_index in range(18):
+		surface_canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
 	var reduced_after: Dictionary = surface_canvas.call("debug_surface_motion_sample")
 	var reduced_state: Dictionary = surface_canvas.call("realtime_surface_state")
 	var reduced_runtime: Dictionary = surface_canvas.call("surface_runtime_status")
 	_require(bool(reduced_runtime.get("reduce_motion", false)) and JSON.stringify(reduced_before) == JSON.stringify(reduced_after), "Quarter Falls reduced-motion mode did not freeze presentation-only motion.")
-	_require((reduced_state.get("coin_pusher_cells", []) as Array).size() > 0 and (reduced_state.get("coin_pusher_riders", []) as Array).size() == 1 and str(reduced_state.get("coin_pusher_tell", "")) == "alarm chirps", "Quarter Falls reduced-motion mode hid pile, rider, or tell information.")
-	_record_coin_pusher_visual_capture("reduced_motion_1280x720", surface_canvas, {"motion_before": reduced_before, "motion_after": reduced_after})
+	_require(int(reduced_runtime.get("surface_animation_redraw_count", -1)) == 0 and not bool(reduced_runtime.get("surface_continuous_redraw_active", true)), "Quarter Falls reduced-motion mode still scheduled animation redraws.")
+	_require(JSON.stringify(reduced_state_before) == JSON.stringify(reduced_state) and (reduced_state.get("coin_pusher_cells", []) as Array).size() > 0 and (reduced_state.get("coin_pusher_riders", []) as Array).size() == 1 and str(reduced_state.get("coin_pusher_tell", "")) == "alarm chirps", "Quarter Falls reduced-motion mode hid or changed pile, rider, or tell information.")
+	_record_coin_pusher_visual_capture("reduced_motion_1280x720", surface_canvas, {
+		"motion_before": reduced_before,
+		"motion_after": reduced_after,
+		"motion_frozen": JSON.stringify(reduced_before) == JSON.stringify(reduced_after),
+		"state_intact": JSON.stringify(reduced_state_before) == JSON.stringify(reduced_state),
+		"animation_redraw_count": int(reduced_runtime.get("surface_animation_redraw_count", -1)),
+		"continuous_redraw_active": bool(reduced_runtime.get("surface_continuous_redraw_active", true)),
+	})
 	_record_state("coin_pusher_reduced_motion_1280x720", "Reduced motion freezes presentation bobbing while pile, rider, lanes, and tell state remain readable.")
 	_cover("coin_pusher_reduce_motion")
 	settings.reduce_motion = false
-	app.call("_apply_accessibility_settings")
+	app.call("_on_settings_applied")
 	await _settle()
 
 	machine = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
