@@ -35,7 +35,12 @@ foreach ($requiredCaptureControl in @(
     '"capture_surface_state_read"',
     '"capture_surface_view_read"',
     '"capture_surface_image_read"',
-    "authored_tell_proof",
+    'var authored_tell_channel: String = ""',
+    'var authored_tell_member_id: String = ""',
+    'var authored_tell_surface_phase: String = ""',
+    'var authored_tell_table_phase: String = ""',
+    "var authored_tell_hand_number: int = -1",
+    "var authored_tell_beat_present: bool = false",
     "authored_tell_render_state",
     "authored_tell_capture_state",
     "reduced_motion_render_state",
@@ -43,7 +48,7 @@ foreach ($requiredCaptureControl in @(
     "authored_tell_hidden_leaks",
     "latest_action_surface_state",
     "fixture_rng_untouched",
-    'int(proof.get("hand_number", -1)) == 0'
+    'authored_tell_hand_number == 0'
 )) {
     if (-not $captureSource.Contains($requiredCaptureControl)) {
         throw "Crew poker capture is missing bounded natural-tell control: $requiredCaptureControl"
@@ -61,6 +66,9 @@ if ([string]::IsNullOrWhiteSpace($authoredObservationFunction) -or
         $authoredObservationFunction.Contains("realtime_surface_state") -or
         $authoredObservationFunction.Contains("duplicate(true)")) {
     throw "Crew poker authored-tell assertion must use the compact verified post-action proof without live reads or deep copies."
+}
+if ($captureSource.Contains("authored_tell_proof") -or $captureSource.Contains("var tell_proof")) {
+    throw "Crew poker post-image authored-tell checks must use typed primitives without a dictionary alias."
 }
 if ($captureSource -match '(authored_tell_(render|capture)_state|reduced_motion_(render|capture)_state|latest_action_surface_state|state_override)\.duplicate\(true\)') {
     throw "Crew poker cached renderer state must never be deep-copied across the viewport capture boundary."
