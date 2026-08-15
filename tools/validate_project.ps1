@@ -40,6 +40,7 @@ $requiredFiles = @(
     "scripts/ui/attribute_badge_row.gd",
     "scripts/ui/visual_style.gd",
     "scripts/tests/foundation/check_lenders_release_saves.gd",
+    "scripts/tests/foundation/interactable_event_class_guard.gd",
     "scripts/tests/foundation/check_scratch_tickets.gd",
     "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd",
     "tools/check_godot.ps1",

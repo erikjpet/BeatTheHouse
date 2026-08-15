@@ -923,7 +923,10 @@ static func _normalize_event_definition(event_def: Dictionary) -> Dictionary:
 	if not ["talk", "modal"].has(presentation):
 		presentation = "modal"
 	normalized["presentation"] = presentation
-	normalized["speaker"] = _normalize_event_speaker(normalized.get("speaker", {}))
+	# A missing speaker is presentation fallback, not an authored requirement for
+	# a physical room actor. Preserve the historical default for every event that
+	# actually declared a speaker while marking synthesized speakers actor-free.
+	normalized["speaker"] = _normalize_event_speaker(normalized.get("speaker", {}), normalized.has("speaker"))
 	var trigger := _as_dict(normalized.get("trigger", {"type": "manual"}))
 	if trigger.is_empty():
 		trigger = {"type": "manual"}
@@ -963,7 +966,7 @@ static func _normalize_dialogue_definition(dialogue_def: Dictionary) -> Dictiona
 	return normalized
 
 
-static func _normalize_event_speaker(value: Variant) -> Dictionary:
+static func _normalize_event_speaker(value: Variant, environment_actor_default: bool = true) -> Dictionary:
 	var source := _as_dict(value)
 	var role := str(source.get("role", "stranger")).strip_edges().to_lower()
 	if not ["patron", "staff", "stranger", "lender"].has(role):
@@ -976,7 +979,7 @@ static func _normalize_event_speaker(value: Variant) -> Dictionary:
 		"name": str(source.get("name", "")).strip_edges(),
 		"silhouette": str(source.get("silhouette", "")).strip_edges(),
 		"bind": bind,
-		"environment_actor": bool(source.get("environment_actor", true)),
+		"environment_actor": bool(source.get("environment_actor", environment_actor_default)),
 	}
 	var presentation := str(source.get("presentation", "")).strip_edges()
 	if not presentation.is_empty():

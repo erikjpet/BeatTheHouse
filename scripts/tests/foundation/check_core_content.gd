@@ -24,6 +24,7 @@ const TownStateScript := preload("res://scripts/core/town_state.gd")
 const PunchlineLayerContractScript := preload("res://scripts/tests/foundation/punchline_layer_contract.gd")
 const PoliceSweepContractScript := preload("res://scripts/tests/foundation/police_sweep_contract.gd")
 const Tier2ScenarioContractScript := preload("res://scripts/tests/foundation/tier2_scenario_contract.gd")
+const InteractableEventClassGuardScript := preload("res://scripts/tests/foundation/interactable_event_class_guard.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
@@ -486,6 +487,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "item_build_interaction_foundation", Callable(self, "_check_item_build_interaction_foundation"), [content_library])
 	_foundation_run_check(report, failures, "event_module_foundation", Callable(self, "_check_event_module_foundation"), [content_library])
 	_foundation_run_check(report, failures, "event_system_state_foundation", Callable(self, "_check_event_system_state_foundation"), [content_library])
+	_foundation_run_check(report, failures, "interactable_event_class_guard", Callable(InteractableEventClassGuardScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "lottery_redemption_clerk_merge", Callable(self, "_check_lottery_redemption_clerk_merge"), [])
 	_foundation_run_check(report, failures, "talk_decision_system_foundation", Callable(self, "_check_talk_decision_system_foundation"), [content_library])
 	_foundation_run_check(report, failures, "dialogue_system_foundation", Callable(self, "_check_dialogue_system_foundation"), [content_library])
@@ -532,6 +534,7 @@ func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library:
 	_foundation_run_check(report, failures, "ui_state_machine_input_fuzz_foundation", Callable(self, "_check_ui_state_machine_input_fuzz_foundation"), [content_library])
 	_foundation_run_check(report, failures, "talk_decision_system_foundation", Callable(self, "_check_talk_decision_system_foundation"), [content_library])
 	_foundation_run_check(report, failures, "dialogue_system_foundation", Callable(self, "_check_dialogue_system_foundation"), [content_library])
+	_foundation_run_check(report, failures, "interactable_event_class_guard", Callable(InteractableEventClassGuardScript, "check"), [content_library])
 
 
 func _foundation_run_check(report: Dictionary, failures: Array, check_id: String, callable: Callable, args: Array) -> void:
