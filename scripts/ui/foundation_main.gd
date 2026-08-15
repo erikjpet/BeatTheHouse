@@ -41,6 +41,7 @@ const CONTEXT_MODE_META_TRADE_UP := "meta_trade_up"
 const CONTEXT_MODE_META_PAWN_COUNTER := "meta_pawn_counter"
 const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
 const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
+const CONTEXT_MODE_NUMBERS := "numbers"
 const META_LOCATION_HOME := "home"
 const META_LOCATION_START_RUN := "start_run"
 const RUN_INFO_BAND_RATIO := 0.10
@@ -372,6 +373,15 @@ var event_choice_popup_summary_label: Label
 var event_choice_popup_scroll: ScrollContainer
 var event_choice_popup_content_stack: VBoxContainer
 var event_choice_popup_choices_list: VBoxContainer
+var numbers_surface_source_id: String = ""
+var numbers_digit_options: Array = []
+var numbers_stake_input: SpinBox
+var numbers_play_type_option: OptionButton
+var numbers_surface_allocation_inputs: Dictionary = {}
+var numbers_slip_submit_button: Button
+var numbers_runner_button: Button
+var numbers_fix_button: Button
+var numbers_allocation_submit_button: Button
 var talk_dock: TalkDock
 var talk_dock_avoid_sync_active := false
 var item_found_popup: ItemFoundPopup
@@ -4625,6 +4635,10 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			run_state.narrative_flags["grand_casino_high_limit_access_method"] = "cash_buy_in"
 	else:
 		generator.next_environment(run_state, target_id, true)
+	if not local_casino_room_move:
+		var numbers_travel_actions := run_state.advance_numbers_past_post_travel_actions(travel_minutes)
+		if numbers_travel_actions > 0:
+			route["numbers_past_post_travel_actions"] = numbers_travel_actions
 	run_state.clear_closing_time_state()
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	_update_procedural_music()
@@ -7775,6 +7789,8 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_card_button(card, "Talk", Callable(self, "start_dialogue").bind(source_id, object_data), false, true)
 		CONTEXT_MODE_CASINO_FIXTURE:
 			_add_card_button(card, "Inspect", Callable(self, "_inspect_casino_fixture").bind(object_data), false, true)
+		CONTEXT_MODE_NUMBERS:
+			_add_card_button(card, "Talk Business" if source_id == "silas" else "Work the Desk" if source_id == "desk" else "Open Book", Callable(self, "_open_numbers_surface").bind(source_id), false, true)
 		CONTEXT_MODE_HOME_TENURE:
 			_add_card_button(card, str(object_data.get("label", "Pay")), Callable(self, "confirm_home_tenure_action"), false, true)
 		CONTEXT_MODE_HOME_SLEEP:
@@ -9469,6 +9485,8 @@ func activate_interactable_object(object_id: String) -> bool:
 			return start_dialogue(source_id, object_data)
 		CONTEXT_MODE_CASINO_FIXTURE:
 			return _inspect_casino_fixture(object_data)
+		CONTEXT_MODE_NUMBERS:
+			return _open_numbers_surface(source_id)
 		CONTEXT_MODE_HOME_TENURE:
 			return confirm_home_tenure_action()
 		CONTEXT_MODE_HOME_SLEEP:
@@ -13852,6 +13870,260 @@ func current_selection_popup_anatomy_snapshot() -> Dictionary:
 	}
 
 
+func _open_numbers_surface(source_id: String) -> bool:
+	if run_state == null or event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
+		return false
+	numbers_surface_source_id = source_id
+	_render_numbers_surface()
+	return true
+
+
+func _render_numbers_surface(result_message: String = "") -> void:
+	if run_state == null or event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
+		return
+	var source_id := numbers_surface_source_id
+	var status := run_state.numbers_status()
+	var desk := run_state.numbers_desk_status() if source_id == "desk" else {}
+	var silas := run_state.numbers_silas_status() if source_id == "silas" else {}
+	var venue: Dictionary = {}
+	var venue_id := str(run_state.current_environment.get("archetype_id", run_state.current_world_node_id()))
+	for venue_value in _copy_array(status.get("venue_status", [])):
+		if typeof(venue_value) == TYPE_DICTIONARY and str((venue_value as Dictionary).get("id", "")) == venue_id:
+			venue = (venue_value as Dictionary).duplicate(true)
+			break
+	pending_event_choice_popup_event_id = ""
+	pending_event_choice_popup_focus_choice_id = ""
+	pending_event_choice_popup_snapshot = {
+		"visible": true,
+		"popup_type": "numbers_surface",
+		"blocking": true,
+		"source_id": source_id,
+		"venue_id": venue_id,
+		"book_open": bool(venue.get("open", false)),
+		"desk": desk.duplicate(true),
+		"silas": silas.duplicate(true),
+		"reduce_motion": user_settings != null and user_settings.reduce_motion,
+	}
+	if event_choice_popup_title_label != null:
+		event_choice_popup_title_label.text = "Silas Crow" if source_id == "silas" else "The Numbers Desk" if source_id == "desk" else "%s Numbers Book" % str(venue.get("label", "Local"))
+	if event_choice_popup_summary_label != null:
+		if not result_message.strip_edges().is_empty():
+			event_choice_popup_summary_label.text = result_message
+		elif source_id == "silas":
+			event_choice_popup_summary_label.text = "Silas keeps the exchange short and the paper out of sight."
+		elif source_id == "desk":
+			event_choice_popup_summary_label.text = "Write a slip, take Lucky's route, or prepare crew paper."
+		elif bool(venue.get("post_source", false)) and not str(status.get("published_number", "")).is_empty():
+			event_choice_popup_summary_label.text = "The posted board reads %s." % str(status.get("published_number", ""))
+		elif not str(status.get("published_number", "")).is_empty():
+			event_choice_popup_summary_label.text = "The handle you carried here is %s. This window is still open." % str(status.get("published_number", "")) if bool(venue.get("open", false)) else "The handle you carried here is %s. This window is closed." % str(status.get("published_number", ""))
+		else:
+			event_choice_popup_summary_label.text = "Today's window is open." if bool(venue.get("open", false)) else "Today's window is closed."
+	_clear_event_choice_popup_choices()
+	numbers_digit_options = []
+	numbers_surface_allocation_inputs = {}
+	numbers_stake_input = null
+	numbers_play_type_option = null
+	numbers_slip_submit_button = null
+	numbers_runner_button = null
+	numbers_fix_button = null
+	numbers_allocation_submit_button = null
+	if source_id == "silas":
+		_build_numbers_silas_controls(silas)
+	else:
+		_build_numbers_slip_controls(venue)
+		if source_id == "desk":
+			_build_numbers_desk_controls(desk)
+	_add_card_button(event_choice_popup_choices_list, "Back", Callable(self, "_hide_event_choice_popup"))
+	event_choice_popup_overlay.visible = true
+	event_choice_popup_overlay.move_to_front()
+	_sync_coach_focus_visibility()
+	_position_event_choice_popup()
+	call_deferred("_position_event_choice_popup")
+
+
+func _build_numbers_slip_controls(venue: Dictionary) -> void:
+	var form := VBoxContainer.new()
+	form.name = "NumbersSlipForm"
+	form.add_theme_constant_override("separation", 6)
+	event_choice_popup_choices_list.add_child(form)
+	form.add_child(_label("Three-digit slip", 14))
+	var digits_row := HBoxContainer.new()
+	digits_row.add_theme_constant_override("separation", 8)
+	form.add_child(digits_row)
+	for digit_index in range(3):
+		var digit_option := OptionButton.new()
+		digit_option.name = "NumbersDigit%d" % (digit_index + 1)
+		digit_option.custom_minimum_size = Vector2(72, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+		for digit in range(10):
+			digit_option.add_item(str(digit), digit)
+		digit_option.select(0)
+		digits_row.add_child(digit_option)
+		numbers_digit_options.append(digit_option)
+	var terms_row := HBoxContainer.new()
+	terms_row.add_theme_constant_override("separation", 8)
+	form.add_child(terms_row)
+	numbers_play_type_option = OptionButton.new()
+	numbers_play_type_option.name = "NumbersPlayType"
+	numbers_play_type_option.add_item("Straight")
+	numbers_play_type_option.add_item("Box")
+	numbers_play_type_option.custom_minimum_size = Vector2(150, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	numbers_play_type_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	terms_row.add_child(numbers_play_type_option)
+	numbers_stake_input = SpinBox.new()
+	numbers_stake_input.name = "NumbersStakeInput"
+	numbers_stake_input.min_value = 1.0
+	numbers_stake_input.max_value = 20.0
+	numbers_stake_input.step = 1.0
+	numbers_stake_input.rounded = true
+	numbers_stake_input.value = 1.0
+	numbers_stake_input.prefix = "$"
+	numbers_stake_input.custom_minimum_size = Vector2(130, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	terms_row.add_child(numbers_stake_input)
+	var book_open := bool(venue.get("open", false))
+	numbers_slip_submit_button = _add_card_button(form, "Write Slip", Callable(self, "_confirm_numbers_slip"), not book_open, true)
+	numbers_slip_submit_button.name = "NumbersSlipSubmit"
+	if not book_open:
+		form.add_child(_muted_label("This clerk is no longer taking today's paper.", 12))
+
+
+func _build_numbers_silas_controls(silas: Dictionary) -> void:
+	var tip_button := _add_card_button(event_choice_popup_choices_list, "Buy a quiet route tip — $12", Callable(self, "_buy_numbers_silas_tip").bind(false), run_state.bankroll < 12, true)
+	tip_button.name = "NumbersSilasTip"
+	if bool(silas.get("handle_available", false)):
+		var handle_button := _add_card_button(event_choice_popup_choices_list, "Buy today's handle — $24", Callable(self, "_buy_numbers_silas_tip").bind(true), run_state.bankroll < 24)
+		handle_button.name = "NumbersSilasHandle"
+
+
+func _build_numbers_desk_controls(desk: Dictionary) -> void:
+	var runner_rank := str(desk.get("lucky_rank", "outsider")).capitalize()
+	var runner_active := bool(desk.get("runner_active", false))
+	numbers_runner_button = _add_card_button(event_choice_popup_choices_list, "Lucky's Collection Route" if not runner_active else "Lucky's Route Is Moving", Callable(self, "_start_numbers_collection"), not bool(desk.get("runner_available", false)))
+	numbers_runner_button.name = "NumbersRunnerStart"
+	if not bool(desk.get("runner_available", false)):
+		event_choice_popup_choices_list.add_child(_muted_label("Lucky rank: %s. Collection work opens at Associate and only while the streets are clear." % runner_rank, 12))
+	var fix_stage := str(desk.get("fix_stage", "locked"))
+	if fix_stage == "ready":
+		numbers_fix_button = _add_card_button(event_choice_popup_choices_list, "Move the Fix Package", Callable(self, "_start_numbers_fix"), not bool(desk.get("fix_available", false)), true)
+		numbers_fix_button.name = "NumbersFixStart"
+		if not bool(desk.get("fix_available", false)):
+			event_choice_popup_choices_list.add_child(_muted_label("Finish the active streets work before moving the fix package.", 12))
+	elif fix_stage == "camouflage":
+		_build_numbers_allocation_controls(_copy_array(desk.get("venues", [])))
+	elif fix_stage == "bribe_running":
+		event_choice_popup_choices_list.add_child(_muted_label("The fix package is moving through the streets.", 12))
+	elif fix_stage == "payday":
+		event_choice_popup_choices_list.add_child(_muted_label("The crew paper is placed. The desk is waiting on the handle.", 12))
+	else:
+		event_choice_popup_choices_list.add_child(_muted_label("The fix requires Lucky and Mags at Made rank. Lucky: %s. Mags: %s." % [runner_rank, str(desk.get("mags_rank", "outsider")).capitalize()], 12))
+
+
+func _build_numbers_allocation_controls(venues: Array) -> void:
+	var allocation_card := VBoxContainer.new()
+	allocation_card.name = "NumbersAllocationForm"
+	allocation_card.add_theme_constant_override("separation", 5)
+	event_choice_popup_choices_list.add_child(allocation_card)
+	allocation_card.add_child(_label("Camouflage allocation", 14))
+	allocation_card.add_child(_muted_label("Choose up to $20 per book and fund at least three books from your bankroll. Concentrated paper draws heat.", 12))
+	for venue_value in venues:
+		if typeof(venue_value) != TYPE_DICTIONARY:
+			continue
+		var venue: Dictionary = venue_value
+		var venue_id := str(venue.get("id", ""))
+		if venue_id.is_empty():
+			continue
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		var venue_label := _label(str(venue.get("label", "Book")), 12)
+		venue_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(venue_label)
+		var input := SpinBox.new()
+		input.name = "NumbersAllocation_%s" % venue_id
+		input.min_value = 0.0
+		input.max_value = 20.0
+		input.step = 1.0
+		input.rounded = true
+		input.value = 0.0
+		input.custom_minimum_size = Vector2(120, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+		row.add_child(input)
+		allocation_card.add_child(row)
+		numbers_surface_allocation_inputs[venue_id] = input
+	numbers_allocation_submit_button = _add_card_button(allocation_card, "Place the Crew Paper", Callable(self, "_submit_numbers_allocation"), false, true)
+	numbers_allocation_submit_button.name = "NumbersAllocationSubmit"
+
+
+func _confirm_numbers_slip() -> void:
+	if run_state == null or numbers_digit_options.size() != 3 or numbers_stake_input == null or numbers_play_type_option == null:
+		return
+	var digits := ""
+	for option_value in numbers_digit_options:
+		if option_value is OptionButton:
+			digits += str((option_value as OptionButton).get_selected_id())
+	var play_type := numbers_play_type_option.get_item_text(numbers_play_type_option.selected).to_lower()
+	var result := run_state.numbers_buy_slip(digits, int(numbers_stake_input.value), play_type)
+	if bool(result.get("ok", false)):
+		_autosave_foundation_run("Numbers slip saved.")
+		_refresh_world_header()
+	_render_numbers_surface(str(result.get("message", "The clerk returns the pencil.")))
+
+
+func _buy_numbers_silas_tip(today_number: bool) -> void:
+	if run_state == null:
+		return
+	var result := run_state.numbers_buy_silas_tip(today_number)
+	if bool(result.get("ok", false)):
+		_autosave_foundation_run("Silas exchange saved.")
+		_refresh_world_header()
+	var message := str(result.get("message", "Silas folds the paper away."))
+	if bool(result.get("ok", false)) and today_number and not str(result.get("number", "")).is_empty():
+		message = "%s Today's handle: %s." % [message, str(result.get("number", ""))]
+	_render_numbers_surface(message)
+
+
+func _start_numbers_collection() -> void:
+	if run_state == null:
+		return
+	var result := run_state.numbers_begin_collection_route()
+	if not bool(result.get("ok", false)):
+		_render_numbers_surface(str(result.get("message", "Lucky keeps the bag.")))
+		return
+	_hide_event_choice_popup()
+	_autosave_foundation_run("Numbers route saved.")
+	_show_message("Lucky hands over a sealed collection bag.")
+	_sync_streets_overlay()
+	_refresh()
+
+
+func _start_numbers_fix() -> void:
+	if run_state == null:
+		return
+	var result := run_state.numbers_begin_fix_bribe()
+	if not bool(result.get("ok", false)):
+		_render_numbers_surface(str(result.get("message", "Lucky leaves the envelope facedown.")))
+		return
+	_hide_event_choice_popup()
+	_autosave_foundation_run("Fix package saved.")
+	_show_message("The bribe package is live. Finish the streets run, then return to this desk.")
+	_sync_streets_overlay()
+	_refresh()
+
+
+func _submit_numbers_allocation() -> void:
+	if run_state == null:
+		return
+	var allocations: Dictionary = {}
+	for venue_value in numbers_surface_allocation_inputs.keys():
+		var venue_id := str(venue_value)
+		var input: Variant = numbers_surface_allocation_inputs.get(venue_value)
+		if input is SpinBox and int((input as SpinBox).value) > 0:
+			allocations[venue_id] = int((input as SpinBox).value)
+	var result := run_state.numbers_fix_allocate(allocations)
+	if bool(result.get("ok", false)):
+		_autosave_foundation_run("Numbers allocation saved.")
+		_refresh_world_header()
+	_render_numbers_surface(str(result.get("message", "The crew paper is placed." if bool(result.get("ok", false)) else "The desk rejects that spread.")))
+
+
 func _hide_event_choice_popup(clear_snapshot: bool = true) -> void:
 	if event_choice_popup_overlay != null:
 		event_choice_popup_overlay.visible = false
@@ -13863,6 +14135,15 @@ func _hide_event_choice_popup(clear_snapshot: bool = true) -> void:
 	pending_event_choice_popup_event_id = ""
 	pending_event_choice_popup_focus_choice_id = ""
 	pending_active_item_id = ""
+	numbers_surface_source_id = ""
+	numbers_digit_options = []
+	numbers_surface_allocation_inputs = {}
+	numbers_stake_input = null
+	numbers_play_type_option = null
+	numbers_slip_submit_button = null
+	numbers_runner_button = null
+	numbers_fix_button = null
+	numbers_allocation_submit_button = null
 	if clear_snapshot:
 		pending_event_choice_popup_snapshot = {}
 	_clear_pending_wager_confirmation()

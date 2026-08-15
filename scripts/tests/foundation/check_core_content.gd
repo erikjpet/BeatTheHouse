@@ -26,6 +26,7 @@ const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 const PunchlineLayerContractScript := preload("res://scripts/tests/foundation/punchline_layer_contract.gd")
 const PoliceSweepContractScript := preload("res://scripts/tests/foundation/police_sweep_contract.gd")
+const NumbersContractScript := preload("res://scripts/tests/foundation/numbers_contract.gd")
 const Tier2ScenarioContractScript := preload("res://scripts/tests/foundation/tier2_scenario_contract.gd")
 const InteractableEventClassGuardScript := preload("res://scripts/tests/foundation/interactable_event_class_guard.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
@@ -1003,6 +1004,7 @@ func _check_scenario_validation_negative_fixture(library: ContentLibrary, fixtur
 
 func _check_town_state_foundation(library: ContentLibrary, failures: Array) -> void:
 	PoliceSweepContractScript.run(failures)
+	NumbersContractScript.run(failures)
 	if not ContentLibraryScript.town_conditions_validation_errors(library.town_conditions).is_empty():
 		failures.append("Town conditions production data did not pass its focused schema validator.")
 	var invalid_conditions := library.town_conditions.duplicate(true)

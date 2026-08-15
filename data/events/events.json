@@ -4213,6 +4213,50 @@
     ]}
   },
   {
+    "id": "numbers_knuckles_collection",
+    "display_name": "Knuckles Collects",
+    "type": "debt",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "scopes": ["any"],
+    "asset_path": "res://assets/art/events/motel_knock.png",
+    "start_summary": "Knuckles arrives for street paper, not police paper.",
+    "trigger": {"type": "manual"},
+    "payload": {"summary": "The winnings went back in the bag. The penalty stayed with you.", "choices": [
+      {"id": "take_the_marker", "label": "Take the marker", "text": "Knuckles writes the street debt once.", "consequences": {"flags": {"numbers_knuckles_collection_seen": true}, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "numbers_lucky_swept_collection",
+    "display_name": "Lucky's Whole Bag",
+    "type": "crew",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "scopes": ["any"],
+    "asset_path": "res://assets/art/events/motel_knock.png",
+    "start_summary": "Lucky has already heard how the blue lights took the whole collection bag.",
+    "trigger": {"type": "manual"},
+    "payload": {"summary": "Every book is short. Lucky puts the whole loss on you.", "choices": [
+      {"id": "take_luckys_blame", "label": "Take Lucky's blame", "text": "There is no good version of losing the entire bag under a sweep.", "consequences": {"flags": {"numbers_lucky_swept_talk_seen": true}, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "numbers_desk",
+    "display_name": "The Numbers Desk",
+    "type": "crew",
+    "interaction_mode": "interactable",
+    "scopes": ["crew"],
+    "asset_path": "res://assets/art/events/back_alley_offer.png",
+    "icon_key": "parking_note",
+    "environment_prop": "paper_note",
+    "start_summary": "Carbon paper, five books, one closing clock.",
+    "trigger": {"type": "manual"},
+    "payload": {"summary": "The handle is honest. Every hand around it is negotiable.", "choices": [
+      {"id": "read_the_books", "label": "Read the books", "text": "Five books report to the desk. Each clerk says only whether today's window is open.", "consequences": {"flags": {"numbers_desk_books_read": true}, "resolve_event": true}},
+      {"id": "leave_the_book", "label": "Leave the book", "text": "The carbon stays facedown.", "consequences": {"resolve_event": true}}
+    ]}
+  },
+  {
     "id": "scenario_audit_roster", "display_name": "The Audit Roster", "type": "security", "interaction_mode": "interactable", "scopes": ["boss"],
     "asset_path": "res://assets/art/events/eye_in_the_sky.png", "icon_key": "camera", "environment_prop": "security_camera", "start_summary": "Every drawer is counted. Every shift is named.", "trigger": {"type": "manual"},
     "payload": {"summary": "Every drawer is counted. Every shift is named.", "choices": [

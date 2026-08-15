@@ -126,6 +126,7 @@ func _simulate_seed(seed: String, seed_index: int) -> Dictionary:
 	_apply_triggered_event_chain(run_state, checkpoints, seed)
 	_apply_dialogue_sequence(run_state, checkpoints, seed)
 	_apply_talk_content_sequence(run_state, checkpoints, seed)
+	_apply_numbers_sequence(run_state, checkpoints, seed)
 	_apply_streets_sequence(run_state, checkpoints, seed)
 	_install_all_game_environment(run_state, seed_index)
 	_checkpoint(run_state, checkpoints, seed, "all_games_fixture")
@@ -140,6 +141,52 @@ func _simulate_seed(seed: String, seed_index: int) -> Dictionary:
 		"final_hash": str((checkpoints.back() as Dictionary).get("hash", "")) if not checkpoints.is_empty() else "",
 		"checkpoints": checkpoints,
 	}
+
+
+func _apply_numbers_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
+	run_state.set_environment({"id": "corner_store", "archetype_id": "corner_store", "world_node_id": "corner_store", "turns": 0})
+	var day := run_state.numbers_state.day_at(run_state.numbers_state.action_index)
+	if run_state.numbers_state.action_index >= run_state.numbers_state.close_action("corner_store", day):
+		day += 1
+		run_state.advance_environment_turns(run_state.numbers_state.day_start_action(day) - int(run_state.numbers_state.action_index))
+	var honest := run_state.numbers_buy_slip("123", 3, "box")
+	if not bool(honest.get("ok", false)):
+		failures.append("%s could not write the deterministic honest Numbers slip." % seed)
+		return
+	_checkpoint(run_state, checkpoints, seed, "numbers_open_slip")
+	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:gas_late")
+	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:corner_late")
+	run_state.numbers_state.buy_silas_tip(false)
+	var post := run_state.numbers_state.post_action(day)
+	run_state.advance_environment_turns(post - int(run_state.numbers_state.action_index))
+	run_state.set_environment({"id": "small_underground_casino", "archetype_id": "small_underground_casino", "world_node_id": "small_underground_casino", "turns": 0})
+	var handle := str(run_state.numbers_status().get("published_number", ""))
+	if handle.length() != 3:
+		failures.append("%s did not reveal the deterministic Punchline post." % seed)
+		return
+	_checkpoint(run_state, checkpoints, seed, "numbers_punchline_post")
+	run_state.set_environment({"id": "corner_store", "archetype_id": "corner_store", "world_node_id": "corner_store", "turns": 0})
+	run_state.advance_numbers_past_post_travel_actions(8)
+	var past_post := run_state.numbers_buy_slip(handle, 10, "straight")
+	if not bool(past_post.get("ok", false)):
+		failures.append("%s could not write the deterministic late-book Numbers slip." % seed)
+		return
+	_checkpoint(run_state, checkpoints, seed, "numbers_past_post_detection")
+	run_state.advance_environment_turns(run_state.numbers_state.settlement_action(day) - int(run_state.numbers_state.action_index))
+	_checkpoint(run_state, checkpoints, seed, "numbers_slip_settlement")
+	run_state.numbers_state.fix_unlock(true)
+	run_state.numbers_state.fix_begin_bribe()
+	run_state.numbers_state.fix_record_bribe(true, {"clean": true, "fast": true})
+	var allocation := run_state.numbers_fix_allocate({"bar": 20, "motel": 20, "corner_store": 20})
+	if not bool(allocation.get("ok", false)):
+		failures.append("%s could not fund the deterministic Numbers camouflage." % seed)
+		return
+	_checkpoint(run_state, checkpoints, seed, "numbers_fix_funded")
+	var target_day := int(run_state.numbers_state.fix_state.get("target_day", day + 1))
+	run_state.advance_environment_turns(run_state.numbers_state.settlement_action(target_day) - int(run_state.numbers_state.action_index))
+	_checkpoint(run_state, checkpoints, seed, "numbers_fix_payday")
+	run_state.advance_environment_turns(run_state.numbers_state.day_start_action(target_day + 1) - int(run_state.numbers_state.action_index))
+	_checkpoint(run_state, checkpoints, seed, "numbers_leak_registered")
 
 
 func _apply_streets_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:

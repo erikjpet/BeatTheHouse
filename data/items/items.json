@@ -1909,6 +1909,24 @@
     "effect": {}
   },
   {
+    "id": "numbers_slips",
+    "display_name": "Numbers Slips",
+    "class": "contraband",
+    "domain": "street_lottery",
+    "content_groups": [],
+    "sellable": false,
+    "sale_price": 0,
+    "price_min": 0,
+    "price_max": 0,
+    "asset_path": "res://assets/art/items/odds_notebook.png",
+    "icon_key": "odds_notebook",
+    "environment_prop": "paper_stack",
+    "surface": "counter",
+    "description": "Three digits and enough paper to make a sweep personal.",
+    "risk_flags": ["contraband", "sweep_sensitive"],
+    "effect": {}
+  },
+  {
     "id": "trunk",
     "display_name": "Trunk",
     "class": "container",
