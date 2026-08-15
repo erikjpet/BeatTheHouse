@@ -1439,7 +1439,8 @@
     "domain": "games",
     "content_groups": [
       "bar_dice_pack",
-      "craps_pack"
+      "craps_pack",
+      "coin_pusher_pack"
     ],
     "sellable": true,
     "sale_price": 12,
@@ -1667,7 +1668,8 @@
     "domain": "games",
     "content_groups": [
       "pull_tabs_pack",
-      "scratch_tickets_pack"
+      "scratch_tickets_pack",
+      "coin_pusher_pack"
     ],
     "sellable": true,
     "sale_price": 18,
