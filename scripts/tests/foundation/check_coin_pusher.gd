@@ -816,11 +816,29 @@ func _check_pusher_variation_determinism_and_ev(game: GameModule, definition: Di
 	var ridge_ev := float(ridge_session.get("payout", 0)) / float(maxi(1, int(ridge_session.get("cost", 0))))
 	if ridge_band.size() != 2 or ridge_ev < float(ridge_band[0]) or ridge_ev > float(ridge_band[1]):
 		failures.append("Jackpot Ridge long-run EV %.4f fell outside documented band %s." % [ridge_ev, JSON.stringify(ridge_band)])
-	var meter_bands: Dictionary = (variations.get("vault_drop", {}) as Dictionary).get("documented_ev_by_meter", {})
-	for meter_key in ["thin_120", "building_200", "fat_300"]:
+	var vault_config: Dictionary = variations.get("vault_drop", {})
+	var meter_bands: Dictionary = vault_config.get("documented_ev_by_meter", {})
+	var base_cash_total := 0
+	var cell_count := 0
+	var jackpot_count := 0
+	for value in vault_config.get("vault_cells", []):
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var definition_value: Dictionary = value
+		var count := maxi(1, int(definition_value.get("count", 1)))
+		cell_count += count
+		if str(definition_value.get("kind", "")) == "cash":
+			base_cash_total += maxi(0, int(definition_value.get("cash", 0))) * count
+		elif str(definition_value.get("kind", "")) == "jackpot":
+			jackpot_count += count
+	var meter_values := [120, 200, 300]
+	var meter_keys := ["thin_120", "building_200", "fat_300"]
+	for meter_index in range(meter_keys.size()):
+		var meter_key := str(meter_keys[meter_index])
 		var band: Array = meter_bands.get(meter_key, [])
-		if band.size() != 2 or float(band[0]) > float(band[1]):
-			failures.append("Vault meter-dependent EV band %s is missing or inverted." % meter_key)
+		var cash_ev := float(base_cash_total + int(meter_values[meter_index]) * jackpot_count) / float(maxi(1, cell_count))
+		if band.size() != 2 or cash_ev < float(band[0]) or cash_ev > float(band[1]):
+			failures.append("Vault cash EV %.4f at meter %d fell outside documented band %s." % [cash_ev, int(meter_values[meter_index]), JSON.stringify(band)])
 
 
 func _pusher_variation_session(game: GameModule, seed_text: String, variation_id: String, action_count: int) -> Dictionary:

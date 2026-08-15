@@ -75,8 +75,8 @@ static func finish_drop(state: Dictionary) -> void:
 	state["armed_multipliers"] = remaining
 
 
-static func push_strength_bonus(state: Dictionary, run_state: RunState, from_nudge: bool) -> int:
-	var bonus := 1 if int(state.get("cascade_remaining", 0)) > 0 else 0
+static func push_strength_bonus(state: Dictionary, run_state: RunState, from_nudge: bool, base_strength: int) -> int:
+	var bonus := maxi(0, base_strength) if int(state.get("cascade_remaining", 0)) > 0 else 0
 	if from_nudge and run_state != null and run_state.inventory.has("weighted_keyring"):
 		bonus += 1
 	return bonus

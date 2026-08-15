@@ -3622,10 +3622,11 @@
             {"kind": "reset", "count": 1}
           ],
           "documented_ev_by_meter": {
-            "thin_120": [0.70, 0.92],
-            "building_200": [0.88, 1.16],
-            "fat_300": [1.10, 1.48]
-          }
+            "thin_120": [20.50, 21.50],
+            "building_200": [29.40, 30.40],
+            "fat_300": [40.50, 41.50]
+          },
+          "vault_ev_basis": "Cash-only expected value per spent fragment before item and fragment-refund option value."
         }
       },
       "phase_steps": 12,

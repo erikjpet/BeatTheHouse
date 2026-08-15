@@ -338,7 +338,7 @@ func _resolve_drop(run_state: RunState, environment: Dictionary, machine: Dictio
 		gutter = true
 	if not gutter:
 		_add_coins(machine, lane, _cell_count() - 1, density)
-		var drop_strength := density + _variation_push_strength_bonus(machine, run_state, false)
+		var drop_strength := density + _variation_push_strength_bonus(machine, run_state, false, density)
 		var settle := _settle_shelves(machine, rng, drop_strength, lane, false)
 		payout = int(settle.get("payout", 0))
 		prizes = settle.get("prizes", []) if typeof(settle.get("prizes", [])) == TYPE_ARRAY else []
@@ -416,7 +416,7 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 	if str(machine.get("variation_id", "")) == "jackpot_ridge":
 		var trim_push: Dictionary = _variation_config("jackpot_ridge").get("force_trim_push_delta", {})
 		push_strength = maxi(0, push_strength + int(trim_push.get(str(ui_state.get("coin_pusher_ridge_trim", "balanced")), 0)))
-	push_strength += _variation_push_strength_bonus(machine, run_state, true)
+	push_strength += _variation_push_strength_bonus(machine, run_state, true, push_strength)
 	if force == "slam":
 		push_strength += _slam_bonus_push()
 	var settle := _settle_shelves(machine, rng, push_strength, lane, true, direction)
@@ -869,10 +869,10 @@ func _apply_variation_movement(machine: Dictionary, _rng: RngStream, movement_ev
 	return {}
 
 
-func _variation_push_strength_bonus(machine: Dictionary, run_state: RunState, from_nudge: bool) -> int:
+func _variation_push_strength_bonus(machine: Dictionary, run_state: RunState, from_nudge: bool, base_strength: int) -> int:
 	if str(machine.get("variation_id", "")) != "jackpot_ridge":
 		return 0
-	return JackpotRidgeScript.push_strength_bonus(_variation_state(machine), run_state, from_nudge)
+	return JackpotRidgeScript.push_strength_bonus(_variation_state(machine), run_state, from_nudge, base_strength)
 
 
 func _register_vault_progressive(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
