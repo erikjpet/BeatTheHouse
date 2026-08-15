@@ -495,6 +495,28 @@ func _apply_coin_pusher_sequence(run_state: RunState, checkpoints: Array, seed: 
 		"coin_pusher_lane": lane,
 		"coin_pusher_timing_phase": int(machine.get("lower_phase", 0)),
 	}))
+	var game: GameModule = game_modules.get("coin_pusher", null)
+	if game == null:
+		return
+	for variation_id in ["jackpot_ridge", "vault_drop"]:
+		run_state.current_environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": variation_id}}
+		var generated := game.generate_environment_state(run_state, run_state.current_environment, run_state.create_rng("determinism_pusher_%s" % variation_id))
+		var states: Dictionary = run_state.current_environment.get("game_states", {})
+		states["coin_pusher"] = generated
+		run_state.current_environment["game_states"] = states
+		game.environment_state_generated(run_state, run_state.current_environment, generated)
+		_resolve_game(run_state, checkpoints, seed, "coin_pusher", "drop_quarter", 1, _timed_ui(run_state, "%s_drop" % variation_id, {"coin_pusher_lane": 2}))
+		_resolve_game(run_state, checkpoints, seed, "coin_pusher", "nudge_machine", 0, _timed_ui(run_state, "%s_nudge" % variation_id, {
+			"coin_pusher_force": "tap", "coin_pusher_direction": "front", "coin_pusher_lane": 2,
+			"coin_pusher_timing_phase": int(generated.get("lower_phase", 0)),
+		}))
+		if variation_id == "vault_drop":
+			run_state.add_item("xray_glasses")
+			var vault_state: Dictionary = generated.get("variation_state", {})
+			vault_state["banked_fragments"] = 2
+			_resolve_game(run_state, checkpoints, seed, "coin_pusher", "start_vault_round", 0, _timed_ui(run_state, "vault_start"))
+			_resolve_game(run_state, checkpoints, seed, "coin_pusher", "peek_vault_cell", 0, _timed_ui(run_state, "vault_peek", {"coin_pusher_vault_cell": 0}))
+			_resolve_game(run_state, checkpoints, seed, "coin_pusher", "open_vault_cell", 0, _timed_ui(run_state, "vault_open", {"coin_pusher_vault_cell": 0}))
 
 
 func _apply_skill_cheats(run_state: RunState, checkpoints: Array, seed: String) -> void:

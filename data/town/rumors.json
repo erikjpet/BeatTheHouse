@@ -8,7 +8,8 @@
     "pusher_pile",
     "numbers_whisper",
     "numbers_superstition",
-    "sweep_sighting"
+    "sweep_sighting",
+    "vault_progressive"
   ],
   "templates": {
     "scenario": {
@@ -60,6 +61,13 @@
         "The pusher at {target_name} is {fact_detail}.",
         "Somebody left the pusher {fact_detail} at {target_name}.",
         "Machine word from {target_name}: {fact_detail}."
+      ]
+    },
+    "vault_progressive": {
+      "neutral": [
+        "The vault at {target_name} is {fact_detail}.",
+        "Machine word says the vault at {target_name} is {fact_detail}.",
+        "If you're crossing town, the vault at {target_name} is {fact_detail}."
       ]
     },
     "numbers_whisper": {

@@ -103,6 +103,8 @@ var report := {
 		"coin_pusher_room_available_after_alarm": false,
 		"coin_pusher_idle_motion": false,
 		"coin_pusher_reduce_motion": false,
+		"coin_pusher_jackpot_ridge": false,
+		"coin_pusher_vault_drop": false,
 		"screen_click_only_gameplay": false,
 		"stake_selector": false,
 		"legal_action_selection": false,
@@ -1609,6 +1611,7 @@ func _verify_coin_pusher_visual_qa_fixture() -> void:
 		"service_ids": [],
 		"lender_hooks": [],
 		"object_fixtures": [],
+		"scenario_game_modifiers": {"coin_pusher": {"variation_id": "quarter_falls"}},
 	}, 500)
 	var fixture_run := app.get("run_state") as RunState
 	_require(fixture_run != null, "Quarter Falls visual QA could not access foundation runtime state.")
@@ -1728,6 +1731,45 @@ func _verify_coin_pusher_visual_qa_fixture() -> void:
 	_return_to_room_view()
 	await _settle()
 	_cover("coin_pusher_room_available_after_alarm")
+	var fixture_library := app.get("library") as ContentLibrary
+	var pusher_definition := fixture_library.game("coin_pusher") if fixture_library != null else {}
+	var pusher_module_value: Variant = app.call("_create_game_module", pusher_definition) if not pusher_definition.is_empty() else null
+	_require(pusher_module_value != null and pusher_module_value is GameModule, "Coin Pusher variation visual QA could not create the shared module.")
+	if pusher_module_value != null and pusher_module_value is GameModule:
+		var pusher_module := pusher_module_value as GameModule
+		for variation_id in ["jackpot_ridge", "vault_drop"]:
+			if variation_id == "vault_drop":
+				fixture_run.add_item("xray_glasses")
+			fixture_run.current_environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": variation_id}}
+			var generated := pusher_module.generate_environment_state(fixture_run, fixture_run.current_environment, fixture_run.create_rng("visual_pusher_%s" % variation_id))
+			if variation_id == "vault_drop":
+				var vault_state: Dictionary = generated.get("variation_state", {})
+				vault_state["banked_fragments"] = 3
+			var states: Dictionary = fixture_run.current_environment.get("game_states", {})
+			states["coin_pusher"] = generated
+			fixture_run.current_environment["game_states"] = states
+			pusher_module.environment_state_generated(fixture_run, fixture_run.current_environment, generated)
+			app.call("_refresh")
+			await _settle()
+			room_canvas = app.get("environment_canvas") as Control
+			pusher_object = _canvas_object_by_id(room_canvas, "game:coin_pusher")
+			_require(not pusher_object.is_empty() and not bool(pusher_object.get("disabled", false)), "%s visual fixture did not expose an enabled room machine." % variation_id)
+			_require(not (await _double_click_canvas_object_data(room_canvas, pusher_object, "game")).is_empty(), "%s visual fixture could not enter its machine." % variation_id)
+			await _settle()
+			await _refresh_game_surface_hit_regions()
+			surface_canvas = app.get("game_surface_canvas") as Control
+			var variation_state: Dictionary = surface_canvas.call("realtime_surface_state")
+			var hits: Array = (surface_canvas.call("current_view_snapshot") as Dictionary).get("surface_hit_actions", [])
+			_require(str(variation_state.get("coin_pusher_variation_id", "")) == variation_id and not (variation_state.get("coin_pusher_features", []) as Array).is_empty(), "%s surface did not render its unique pile features." % variation_id)
+			if variation_id == "jackpot_ridge":
+				_require(str(variation_state.get("coin_pusher_variation_name", "")) == "Jackpot Ridge" and variation_state.has("coin_pusher_cascade_remaining"), "Jackpot Ridge visual state omitted puck sequencing or Ridge Run status.")
+				_cover("coin_pusher_jackpot_ridge")
+			else:
+				_require((variation_state.get("coin_pusher_vault_cells", []) as Array).size() == 9 and _surface_hit_snapshot_has_action(hits, "coin_pusher_vault_start") and _surface_hit_snapshot_has_action(hits, "coin_pusher_vault_peek"), "Vault Drop visual state omitted its 3x3 vault or native vault controls.")
+				_cover("coin_pusher_vault_drop")
+			_record_coin_pusher_visual_capture("%s_1280x720" % variation_id, surface_canvas, {"variation_id": variation_id, "feature_count": (variation_state.get("coin_pusher_features", []) as Array).size(), "vault_cell_count": (variation_state.get("coin_pusher_vault_cells", []) as Array).size()})
+			_return_to_room_view()
+			await _settle()
 
 
 func _reset_fixed_price_surface_for_risky_action() -> void:

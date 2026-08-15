@@ -7440,6 +7440,18 @@ func register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionar
 	return town_state != null and town_state.register_rumor_fact(fact_class, fact_id, payload)
 
 
+func register_progressive_meter(meter_id: String, payload: Dictionary) -> Dictionary:
+	return town_state.register_progressive_meter(meter_id, payload) if town_state != null else {}
+
+
+func progressive_meter(meter_id: String) -> Dictionary:
+	return town_state.progressive_meter(meter_id) if town_state != null else {}
+
+
+func set_progressive_meter_value(meter_id: String, value: int) -> Dictionary:
+	return town_state.set_progressive_meter_value(meter_id, value) if town_state != null else {}
+
+
 func rumor_fact(fact_id: String) -> Dictionary:
 	return town_state.rumor_fact(fact_id) if town_state != null else {}
 

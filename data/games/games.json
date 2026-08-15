@@ -3571,8 +3571,64 @@
       }
     ],
     "coin_pusher_tuning": {
-      "state_schema_version": 1,
+      "state_schema_version": 2,
       "variation_id": "quarter_falls",
+      "variation_distribution": [
+        {"id": "quarter_falls", "weight": 40},
+        {"id": "jackpot_ridge", "weight": 30},
+        {"id": "vault_drop", "weight": 30}
+      ],
+      "variations": {
+        "jackpot_ridge": {
+          "display_name": "Jackpot Ridge",
+          "schedule_count": 18,
+          "spawn_gap_min": 2,
+          "spawn_gap_max": 5,
+          "multiplier_values": [2, 3, 5],
+          "multiplier_drop_count": 2,
+          "puck_push_threshold": 2,
+          "lock_cycles": 1,
+          "ridge_run_cycles": 3,
+          "alarm_tolerance_bonus": 3,
+          "tolerance_band_size": 2,
+          "nudge_force_granularity": 1,
+          "force_trim_order": ["feather", "balanced", "heavy"],
+          "force_trim_push_delta": {"feather": -1, "balanced": 0, "heavy": 1},
+          "force_trim_tolerance_delta": {"feather": -1, "balanced": 0, "heavy": 1},
+          "documented_ev_band": [0.70, 1.08]
+        },
+        "vault_drop": {
+          "display_name": "The Vault Drop",
+          "opening_fragment_count": 6,
+          "schedule_count": 16,
+          "spawn_gap_min": 2,
+          "spawn_gap_max": 5,
+          "fragment_push_threshold": 2,
+          "alarm_tolerance_delta": -2,
+          "progressive_floor": 120,
+          "progressive_initial_min": 160,
+          "progressive_initial_max": 260,
+          "progressive_growth_per_action": 2,
+          "progressive_crowded_growth_per_action": 4,
+          "reset_cell_count": 1,
+          "reset_odds_floor": 0.111111,
+          "vault_cells": [
+            {"kind": "cash", "cash": 8, "count": 2},
+            {"kind": "cash", "cash": 18, "count": 1},
+            {"kind": "cash", "cash": 35, "count": 1},
+            {"kind": "fragment_refund", "fragments": 2, "count": 2},
+            {"kind": "item", "item_id": "lucky_penny", "count": 1},
+            {"kind": "jackpot", "count": 1},
+            {"kind": "reset", "count": 1}
+          ],
+          "documented_ev_by_meter": {
+            "thin_120": [20.50, 21.50],
+            "building_200": [29.40, 30.40],
+            "fat_300": [40.50, 41.50]
+          },
+          "vault_ev_basis": "Cash-only expected value per spent fragment before item and fragment-refund option value."
+        }
+      },
       "phase_steps": 12,
       "force_order": ["tap", "shove", "slam"],
       "default_force": "tap",
