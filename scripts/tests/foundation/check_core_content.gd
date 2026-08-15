@@ -587,6 +587,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_tier_two_venue_progression(library, failures)
 	_check_baccarat_grand_casino_only(library, failures)
 	_check_environment_game_pool_distribution(library, failures)
+	_check_grand_casino_game_fixture_capacity(library, failures)
 	_check_environment_encounter_freshness(library, failures)
 	_check_travel_unlock_event_copy(library, failures)
 	_check_high_risk_table_limit_overrides(library, failures)
@@ -2133,6 +2134,76 @@ func _check_environment_game_pool_distribution(library: ContentLibrary, failures
 			failures.append("Game %s is defined but absent from every environment game_pool." % game_id)
 		elif not bool(non_rare_placed_by_game.get(game_id, false)):
 			failures.append("Game %s only appears in rare environment game pools." % game_id)
+
+
+func _check_grand_casino_game_fixture_capacity(library: ContentLibrary, failures: Array) -> void:
+	var expected_counts := {
+		"grand_casino": {"logical": 5, "rendered": 7},
+		"grand_casino_high_limit": {"logical": 4, "rendered": 4},
+		"grand_casino_back_room": {"logical": 2, "rendered": 2},
+	}
+	var main_environment: Dictionary = {}
+	var main_run: RunState = null
+	for room_id_value in expected_counts.keys():
+		var room_id := str(room_id_value)
+		var archetype := _archetype_by_id(library, room_id)
+		if archetype.is_empty():
+			failures.append("Grand Casino fixture-capacity regression is missing room: %s." % room_id)
+			continue
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("GRAND-CASINO-CAPACITY-%s" % room_id.to_upper())
+		var environment := EnvironmentInstance.from_archetype(archetype, 5, run_state.create_rng("grand_casino_capacity"), library).to_dict()
+		var layout := _copy_dict(environment.get("layout", {}))
+		var fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
+		var logical_count := _string_array(environment.get("game_ids", [])).size()
+		var rendered_count := 0
+		for game_id in _string_array(environment.get("game_ids", [])):
+			rendered_count += maxi(1, int(fixture_counts.get(game_id, 1)))
+		var authored_capacity := _copy_array(layout.get("game_spots", [])).size()
+		var expected := _copy_dict(expected_counts.get(room_id, {}))
+		if logical_count != int(expected.get("logical", -1)) or rendered_count != int(expected.get("rendered", -1)):
+			failures.append("Grand Casino %s game fixture counts changed: logical=%d rendered=%d expected=%s." % [room_id, logical_count, rendered_count, JSON.stringify(expected)])
+		if rendered_count != authored_capacity:
+			failures.append("Grand Casino %s authored game capacity does not match rendered fixtures: logical=%d rendered=%d spots=%d." % [room_id, logical_count, rendered_count, authored_capacity])
+		if room_id == RunState.GRAND_CASINO_ARCHETYPE_ID:
+			main_environment = environment
+			main_run = run_state
+	if main_environment.is_empty() or main_run == null:
+		return
+	main_environment["event_ids"] = [RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID]
+	main_environment["item_offers"] = []
+	main_environment["service_ids"] = []
+	main_environment["lender_hooks"] = []
+	main_environment["travel_hooks"] = []
+	var game_states: Dictionary = {}
+	for game_id in _string_array(main_environment.get("game_ids", [])):
+		var game: GameModule = _load_surface_contract_game(library, game_id, failures)
+		if game == null:
+			continue
+		var state_rng := main_run.create_rng("grand_casino_layout_state:%s" % game_id)
+		var generated := game.generate_environment_state(main_run, main_environment, state_rng)
+		if not generated.is_empty():
+			game_states[game_id] = generated.duplicate(true)
+	main_environment["game_states"] = game_states
+	main_environment["world_map_travel"] = true
+	main_environment["layout"] = EnvironmentInstance.ensure_generated_layout(main_environment)
+	var object_rects := _copy_dict(_copy_dict(main_environment.get("layout", {})).get("object_rects", {}))
+	for required_id in ["game:craps", "game_hook:pull_tabs:ticket_redeemer", "casino_fixture:host_desk"]:
+		if not object_rects.has(required_id):
+			failures.append("Grand Casino production-order layout regression is missing %s." % required_id)
+	var object_ids := object_rects.keys()
+	for index in range(object_ids.size()):
+		var object_id := str(object_ids[index])
+		var rect := _layout_rect_from_dict(object_rects.get(object_id, {}))
+		if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+			continue
+		for other_index in range(index + 1, object_ids.size()):
+			var other_id := str(object_ids[other_index])
+			var other_rect := _layout_rect_from_dict(object_rects.get(other_id, {}))
+			if other_rect.size.x <= 0.0 or other_rect.size.y <= 0.0:
+				continue
+			if _layout_rects_overlap_with_gap(rect, other_rect):
+				failures.append("Grand Casino production-order layout overlaps: %s and %s." % [object_id, other_id])
 
 
 func _check_high_risk_table_limit_overrides(library: ContentLibrary, failures: Array) -> void:

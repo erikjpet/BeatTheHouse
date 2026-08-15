@@ -852,6 +852,8 @@ func _verify_grand_casino_showdown_event_snapshot() -> void:
 	grand_environment["service_ids"] = []
 	grand_environment["lender_hooks"] = []
 	grand_environment["travel_hooks"] = []
+	_populate_visual_fixture_game_states(grand_environment, fixture_run, fixture_library, "visual_showdown")
+	grand_environment["layout"] = EnvironmentInstance.ensure_generated_layout(grand_environment)
 	fixture_run.set_environment(grand_environment)
 	fixture_run.current_environment["turns"] = 0
 	fixture_run.add_item("marked_cards")
@@ -932,6 +934,8 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	grand_environment["service_ids"] = []
 	grand_environment["lender_hooks"] = []
 	grand_environment["travel_hooks"] = []
+	_populate_visual_fixture_game_states(grand_environment, fixture_run, fixture_library, "visual_high_roller")
+	grand_environment["layout"] = EnvironmentInstance.ensure_generated_layout(grand_environment)
 	fixture_run.set_environment(grand_environment)
 	var objective: Dictionary = {}
 	var objective_value: Variant = grand_environment.get("demo_objective", {})
