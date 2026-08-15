@@ -551,6 +551,19 @@ static func _check_midstate_save_load(failures: Array) -> void:
 		failures.append("RunState save/load changed the pre-post open-slip Numbers state.")
 	if JSON.stringify(open_restored.to_dict()) != open_saved_json:
 		failures.append("RunState save/load mutated restored town discovery facts or their registration metadata.")
+	var legacy_saved := open_saved.duplicate(true)
+	var legacy_town: Dictionary = _dictionary(legacy_saved.get("town_state", {})).duplicate(true)
+	var legacy_living_world: Dictionary = _dictionary(legacy_town.get("living_world", {})).duplicate(true)
+	var legacy_registry: Dictionary = _dictionary(legacy_living_world.get("rumor_registry", {})).duplicate(true)
+	legacy_registry.erase("numbers_stagger:gas_late")
+	legacy_registry.erase("numbers_stagger:corner_late")
+	legacy_living_world["rumor_registry"] = legacy_registry
+	legacy_town["living_world"] = legacy_living_world
+	legacy_saved["town_state"] = legacy_town
+	var legacy_restored: RunState = RunStateScript.new()
+	legacy_restored.from_dict(legacy_saved)
+	if legacy_restored.rumor_fact("numbers_stagger:gas_late").is_empty() or legacy_restored.rumor_fact("numbers_stagger:corner_late").is_empty():
+		failures.append("A pre-Numbers town save did not receive the discovery rumor chain during migration.")
 	var collection_fixture := _runner_fixture("NUMBERS-SAVE-COLLECTION")
 	if not bool(collection_fixture.get("ok", false)):
 		failures.append("RunState save/load fixture could not start the active Lucky collection.")
