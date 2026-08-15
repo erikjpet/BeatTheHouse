@@ -7406,19 +7406,22 @@ func town_status_line() -> String:
 	return town_state.status_line() if town_state != null else "Clear outside · Midweek"
 
 
-func configure_town_world(map_data: Dictionary) -> void:
+func configure_town_world(map_data: Dictionary, initialize_numbers_rumors: bool = true) -> void:
 	if town_state != null:
 		town_state.configure_world(map_data)
-		_register_numbers_discovery_rumors()
+		if initialize_numbers_rumors:
+			_register_numbers_discovery_rumors()
 
 
 func _register_numbers_discovery_rumors() -> void:
-	register_rumor_fact("numbers_whisper", "numbers_stagger:gas_late", {
-		"target_node_id": "gas_station_casino", "source_id": "numbers_staggered_close", "fact_detail": "the gas book writes two ticks after the Punchline posts", "numbers_knowledge_fragment": true,
-	})
-	register_rumor_fact("numbers_whisper", "numbers_stagger:corner_late", {
-		"target_node_id": "corner_store", "source_id": "numbers_staggered_close", "fact_detail": "the corner jar stays open four ticks past the first post", "numbers_knowledge_fragment": true,
-	})
+	if rumor_fact("numbers_stagger:gas_late").is_empty():
+		register_rumor_fact("numbers_whisper", "numbers_stagger:gas_late", {
+			"target_node_id": "gas_station_casino", "source_id": "numbers_staggered_close", "fact_detail": "the gas book writes two ticks after the Punchline posts", "numbers_knowledge_fragment": true,
+		})
+	if rumor_fact("numbers_stagger:corner_late").is_empty():
+		register_rumor_fact("numbers_whisper", "numbers_stagger:corner_late", {
+			"target_node_id": "corner_store", "source_id": "numbers_staggered_close", "fact_detail": "the corner jar stays open four ticks past the first post", "numbers_knowledge_fragment": true,
+		})
 
 
 func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
@@ -9953,7 +9956,9 @@ func from_dict(data: Dictionary) -> void:
 	world_map = _normalize_world_map_environment_snapshots(
 		_compact_world_map_ticket_storage(WorldMap.normalize(_copy_dict(data.get("world_map", {}))))
 	)
-	configure_town_world(world_map)
+	# Restored town state is already authoritative. World wiring must not register
+	# new discovery facts or rewrite their original registered_action metadata.
+	configure_town_world(world_map, false)
 	scenario_recent_by_archetype = _normalize_scenario_recent(_copy_dict(data.get("scenario_recent_by_archetype", {})))
 	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
 	grand_casino_staffing = _normalize_grand_casino_staffing(_copy_dict(data.get("grand_casino_staffing", {})))

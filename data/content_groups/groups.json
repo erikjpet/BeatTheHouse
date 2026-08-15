@@ -166,5 +166,13 @@
 		"default_enabled": true,
 		"game_ids": ["video_poker"],
 		"item_ids": ["scratch_pad", "freds_poker_hat", "odds_notebook", "holdout_wax", "sleeve_rig"]
+	},
+	{
+		"id": "numbers_pack",
+		"display_name": "Numbers Pack",
+		"description": "Street lottery paper and collection tools.",
+		"default_enabled": true,
+		"game_ids": [],
+		"item_ids": ["numbers_slips"]
 	}
 ]

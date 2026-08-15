@@ -56,8 +56,11 @@ static func _check_data_and_closes(failures: Array) -> void:
 		var layout := _dictionary(back_room.get("layout", {}))
 		desk_found = _dictionary_array_from_positions(layout.get("event_spots", [])).has({"x": 680, "y": 240}) \
 			and _string_array(back_room.get("required_event_ids", [])).has("numbers_desk")
-		var game_spots := _dictionary_array_from_positions(layout.get("game_spots", []))
-		var game_ids := _string_array(back_room.get("game_ids", back_room.get("game_pool", [])))
+		var game_spots: Array = _dictionary_array_from_positions(layout.get("game_spots", []))
+		var game_ids: Array = _string_array(back_room.get("game_ids", []))
+		for game_id_value in _string_array(back_room.get("game_pool", [])) + _string_array(back_room.get("required_game_ids", [])):
+			if not game_ids.has(game_id_value):
+				game_ids.append(game_id_value)
 		poker_found = game_spots.has({"x": 450, "y": 218}) and game_ids.has("crew_draw_poker")
 		seam_clear = desk_found and Vector2(450, 218).distance_to(Vector2(680, 240)) >= 160.0
 	if not desk_found:
@@ -67,7 +70,7 @@ static func _check_data_and_closes(failures: Array) -> void:
 
 
 static func _check_read_purity_and_boundary_determinism(failures: Array) -> void:
-	var first = NumbersModelScript.new()
+	var first: NumbersModel = NumbersModelScript.new()
 	first.reset(71623)
 	var before := JSON.stringify(first.snapshot())
 	var public_status := first.status()
@@ -80,7 +83,7 @@ static func _check_read_purity_and_boundary_determinism(failures: Array) -> void
 	if not _dictionary(first.snapshot().get("draws_by_day", {})).is_empty():
 		failures.append("Numbers persisted the handle before its post boundary.")
 	var around_post := first.snapshot()
-	var restored = NumbersModelScript.new()
+	var restored: NumbersModel = NumbersModelScript.new()
 	restored.restore(around_post, 71623)
 	var events_a := first.advance_to(16)
 	var events_b := restored.advance_to(16)
@@ -88,7 +91,7 @@ static func _check_read_purity_and_boundary_determinism(failures: Array) -> void
 		failures.append("Numbers save/load around post time changed deterministic draw timing.")
 	if _dictionary(first.snapshot().get("draws_by_day", {})).size() != 1 or str(_first_event(events_a, "numbers_post").get("number", "")).length() != 3:
 		failures.append("Numbers did not persist exactly one three-digit handle at the post boundary.")
-	var repeat = NumbersModelScript.new()
+	var repeat: NumbersModel = NumbersModelScript.new()
 	repeat.reset(71623)
 	repeat.advance_to(16)
 	if JSON.stringify(repeat.snapshot().get("draws_by_day", {})) != JSON.stringify(first.snapshot().get("draws_by_day", {})):
@@ -98,7 +101,7 @@ static func _check_read_purity_and_boundary_determinism(failures: Array) -> void
 static func _check_slip_lifecycle_and_confiscation(failures: Array) -> void:
 	for venue_value in _dictionary_array(NumbersModelScript.tuning().get("venues", [])):
 		var venue_id := str(venue_value.get("id", ""))
-		var model = NumbersModelScript.new()
+		var model: NumbersModel = NumbersModelScript.new()
 		model.reset(90210)
 		var close := model.close_action(venue_id, 0)
 		model.advance_to(close - 1)
@@ -108,15 +111,15 @@ static func _check_slip_lifecycle_and_confiscation(failures: Array) -> void:
 		model.advance_to(close)
 		if bool(model.buy_slip(venue_id, "123", 2, "box").get("ok", false)):
 			failures.append("Numbers accepted a slip at/after %s close." % venue_id)
-	var confiscation = NumbersModelScript.new()
+	var confiscation: NumbersModel = NumbersModelScript.new()
 	confiscation.reset(44)
 	confiscation.buy_slip("bar", "111", 3, "straight")
 	var confiscated := confiscation.confiscate_open_slips("test_sweep")
 	if int(confiscated.get("count", 0)) != 1 or confiscation.open_slip_count() != 0:
 		failures.append("Numbers sweep confiscation did not remove open slip cargo.")
-	var settle = NumbersModelScript.new()
+	var settle: NumbersModel = NumbersModelScript.new()
 	settle.reset(88)
-	var winning := str(_dictionary(settle.call("_draw", 0)).get("number", "000"))
+	var winning := str(_dictionary(settle.call("_handle_record_at_boundary", 0)).get("number", "000"))
 	settle.buy_slip("bar", winning, 2, "straight")
 	var settlement_events := settle.advance_to(21)
 	var settlement := _first_event(settlement_events, "numbers_settlement")
@@ -125,7 +128,7 @@ static func _check_slip_lifecycle_and_confiscation(failures: Array) -> void:
 
 
 static func _check_hidden_discovery_and_race(failures: Array) -> void:
-	var solo = NumbersModelScript.new()
+	var solo: NumbersModel = NumbersModelScript.new()
 	solo.reset(5150)
 	solo.hear_staggered_close_rumor("numbers_stagger:gas_late")
 	solo.hear_staggered_close_rumor("numbers_stagger:corner_late")
@@ -145,7 +148,7 @@ static func _check_hidden_discovery_and_race(failures: Array) -> void:
 
 
 static func _check_physical_travel_race(failures: Array) -> void:
-	var inactive = RunStateScript.new()
+	var inactive: RunState = RunStateScript.new()
 	inactive.start_new("NUMBERS-TRAVEL-INACTIVE")
 	inactive.current_environment = {
 		"id": "motel", "archetype_id": "motel", "world_node_id": "motel", "turns": 0,
@@ -178,7 +181,7 @@ static func _check_physical_travel_race(failures: Array) -> void:
 	var local_room_before := JSON.stringify(local_room.to_dict())
 	if local_room.advance_numbers_past_post_travel_actions(16, true) != 0 or JSON.stringify(local_room.to_dict()) != local_room_before:
 		failures.append("Local casino-room travel consumed the opt-in Numbers street-race clock.")
-	var arrival = RunStateScript.new()
+	var arrival: RunState = RunStateScript.new()
 	arrival.start_new("NUMBERS-PUNCHLINE-ARRIVAL")
 	arrival.current_environment = {"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0}
 	arrival.advance_environment_turns(arrival.numbers_state.post_action(0))
@@ -190,9 +193,9 @@ static func _check_physical_travel_race(failures: Array) -> void:
 
 
 static func _check_silas_availability_seam(failures: Array) -> void:
-	var run_state = RunStateScript.new()
+	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("NUMBERS-SILAS-SURFACE")
-	var first_view := run_state.numbers_silas_status()
+	var first_view: Dictionary = run_state.numbers_silas_status()
 	if bool(first_view.get("handle_available", true)) or first_view.keys() != ["handle_available"]:
 		failures.append("First Silas view advertised hidden handle knowledge or leaked extra discovery state.")
 	var silas_node := run_state.traveler_node("silas_snitch")
@@ -221,7 +224,7 @@ static func _check_fix_and_leak_economy(failures: Array) -> void:
 	var weak_payday := _first_event(weak.get("events", []), "numbers_fix_payday")
 	if int(strong_payday.get("player_cut", 0)) <= int(weak_payday.get("player_cut", 0)) or int(weak_payday.get("player_cut", 0)) <= 0:
 		failures.append("Numbers fix cut did not stay positive and scale with bribe/camouflage performance.")
-	var abort = NumbersModelScript.new()
+	var abort: NumbersModel = NumbersModelScript.new()
 	abort.reset(8)
 	abort.fix_unlock(true)
 	abort.fix_begin_bribe()
@@ -234,9 +237,9 @@ static func _check_fix_and_leak_economy(failures: Array) -> void:
 	var leak := _dictionary(_first_event(leak_events, "numbers_leak_active").get("leak", {}))
 	if str(leak.get("number", "")).is_empty() or int(leak.get("strictness_delta", 0)) <= 0 or int(leak.get("declared_pool_multiplier_percent", 100)) <= 100:
 		failures.append("Numbers next-day leak did not carry number, pool growth, and strictness.")
-	var baseline = NumbersModelScript.new()
+	var baseline: NumbersModel = NumbersModelScript.new()
 	baseline.reset(999)
-	var stricter = NumbersModelScript.new()
+	var stricter: NumbersModel = NumbersModelScript.new()
 	stricter.reset(999)
 	stricter.active_leak = {"strictness_delta": 3}
 	if stricter.detection_chance(10, 1) <= baseline.detection_chance(10, 1):
@@ -251,7 +254,7 @@ static func _check_fix_and_leak_economy(failures: Array) -> void:
 		strong_slip_payout += int(_dictionary(slip_value).get("payout", 0))
 	if strong_slips.size() != 4 or strong_slip_payout <= 0:
 		failures.append("Numbers camouflage did not create and settle one real winning fixed-number slip per chosen book.")
-	var over_cap = NumbersModelScript.new()
+	var over_cap: NumbersModel = NumbersModelScript.new()
 	over_cap.reset(19)
 	over_cap.fix_unlock(true)
 	over_cap.fix_begin_bribe()
@@ -261,32 +264,32 @@ static func _check_fix_and_leak_economy(failures: Array) -> void:
 
 
 static func _check_runstate_fix_chain(failures: Array) -> void:
-	var run_state = RunStateScript.new()
+	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("NUMBERS-PRODUCTION-FIX")
 	run_state.current_environment = {"id": "small_underground_casino", "archetype_id": "small_underground_casino", "world_node_id": "small_underground_casino", "turns": 0}
 	run_state.crew_add_trust("crew_lucky", 60, "numbers_fixture")
 	run_state.crew_add_trust("crew_mags", 60, "numbers_fixture")
-	var begun := run_state.numbers_begin_fix_bribe()
+	var begun: Dictionary = run_state.numbers_begin_fix_bribe()
 	if not bool(begun.get("ok", false)):
 		failures.append("Made-rank production desk could not begin the real Streets fix package.")
 		return
-	var board := _dictionary(run_state.active_streets_run.get("board", {})).duplicate(true)
+	var board: Dictionary = _dictionary(run_state.active_streets_run.get("board", {})).duplicate(true)
 	board["patrols"] = []
 	run_state.active_streets_run["board"] = board
 	run_state.active_streets_run["player"] = _dictionary(board.get("destination", {})).duplicate(true)
-	var delivered := run_state.streets_apply_action({"verb": "wait"})
+	var delivered: Dictionary = run_state.streets_apply_action({"verb": "wait"})
 	if not bool(delivered.get("resolved", false)) or str(run_state.numbers_desk_status().get("fix_stage", "")) != "camouflage":
 		failures.append("Successful production Streets delivery did not hand the fix into camouflage allocation.")
 		return
-	var allocations := {"small_underground_casino": 18, "bar": 16, "motel": 14, "gas_station_casino": 12}
+	var allocations: Dictionary = {"small_underground_casino": 18, "bar": 16, "motel": 14, "gas_station_casino": 12}
 	var bankroll_before := run_state.bankroll
 	run_state.bankroll = 59
 	var unfunded_snapshot := JSON.stringify(run_state.numbers_state.snapshot())
-	var unfunded := run_state.numbers_fix_allocate(allocations)
+	var unfunded: Dictionary = run_state.numbers_fix_allocate(allocations)
 	if bool(unfunded.get("ok", false)) or run_state.bankroll != 59 or JSON.stringify(run_state.numbers_state.snapshot()) != unfunded_snapshot:
 		failures.append("An unfunded production camouflage attempt mutated bankroll or Numbers state.")
 	run_state.bankroll = bankroll_before
-	var result := run_state.numbers_fix_allocate(allocations)
+	var result: Dictionary = run_state.numbers_fix_allocate(allocations)
 	if not bool(result.get("ok", false)) or run_state.bankroll != bankroll_before - 60 or int(result.get("slip_count", 0)) != 4 or result.has("fix"):
 		failures.append("Production fix allocation did not charge $60, create four slips, or keep the fixed handle private.")
 		return
@@ -297,7 +300,7 @@ static func _check_runstate_fix_chain(failures: Array) -> void:
 
 
 static func _check_repeated_leak_rumors(failures: Array) -> void:
-	var run_state = RunStateScript.new()
+	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("NUMBERS-REPEATED-LEAK")
 	run_state.numbers_state.reset(1)
 	run_state.current_environment = {"id": "corner_store", "archetype_id": "corner_store", "world_node_id": "corner_store", "turns": 0}
@@ -308,7 +311,7 @@ static func _check_repeated_leak_rumors(failures: Array) -> void:
 		var post := run_state.numbers_state.post_action(day)
 		run_state.call("_apply_numbers_events", run_state.numbers_state.advance_to(post))
 		var number := run_state.numbers_state.reveal_number(day, "punchline_post")
-		var purchase := run_state.numbers_state.buy_slip("corner_store", number, 10, "straight", number)
+		var purchase: Dictionary = run_state.numbers_state.buy_slip("corner_store", number, 10, "straight", number)
 		if not bool(purchase.get("ok", false)) or bool(_dictionary(purchase.get("slip", {})).get("detected", true)):
 			failures.append("Seeded repeated-leak fixture did not create an undetected qualifying past-post success.")
 			return
@@ -334,11 +337,11 @@ static func _check_sampled_ev_bands(failures: Array) -> void:
 	var straight_payout := 0
 	var box_payout := 0
 	for seed_value in range(1, sample_count + 1):
-		var straight_model = NumbersModelScript.new()
+		var straight_model: NumbersModel = NumbersModelScript.new()
 		straight_model.reset(seed_value)
 		straight_model.buy_slip("bar", "000", 1, "straight")
 		straight_payout += int(_first_event(straight_model.advance_to(21), "numbers_settlement").get("payout", 0))
-		var box_model = NumbersModelScript.new()
+		var box_model: NumbersModel = NumbersModelScript.new()
 		box_model.reset(seed_value)
 		box_model.buy_slip("bar", "123", 1, "box")
 		box_payout += int(_first_event(box_model.advance_to(21), "numbers_settlement").get("payout", 0))
@@ -360,7 +363,7 @@ static func _check_sampled_ev_bands(failures: Array) -> void:
 	var undetected_count := 0
 	var undetected_net := 0
 	for past_seed in range(1, 101):
-		var past_model = NumbersModelScript.new()
+		var past_model: NumbersModel = NumbersModelScript.new()
 		past_model.reset(past_seed)
 		past_model.hear_staggered_close_rumor("numbers_stagger:gas_late")
 		past_model.hear_staggered_close_rumor("numbers_stagger:corner_late")
@@ -380,13 +383,13 @@ static func _check_sampled_ev_bands(failures: Array) -> void:
 
 
 static func _check_runner_pause_production_path(failures: Array) -> void:
-	var run_state = RunStateScript.new()
+	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("NUMBERS-PAUSE")
 	run_state.current_environment = {"id": "bar", "archetype_id": "bar", "turns": 0}
 	run_state.town_state.police_sweep.swept_windows_by_node["corner_store"] = {"node_id": "corner_store", "start_action": 0, "end_action": 4}
 	run_state.town_state.police_sweep.action_index = 0
 	var stops := [{"id": "corner", "node_id": "corner_store", "label": "Corner"}]
-	var started := run_state.streets_begin_multi_stop({
+	var started: Dictionary = run_state.streets_begin_multi_stop({
 		"route_id": "numbers_collection:test", "origin_node_id": "bar", "destination_node_id": "small_underground_casino",
 		"stops": stops, "deadline_actions": 10, "cargo_id": "numbers_slips",
 	})
@@ -437,7 +440,7 @@ static func _check_runner_outcomes(failures: Array) -> void:
 
 
 static func _check_swept_collection_consequences(failures: Array) -> void:
-	var run_state = RunStateScript.new()
+	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("NUMBERS-SWEPT-COMPLETE")
 	run_state.current_environment = {"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0}
 	run_state.numbers_buy_slip("123", 3, "straight")
@@ -477,7 +480,7 @@ static func _check_swept_collection_consequences(failures: Array) -> void:
 
 
 static func _check_consequences_and_independence(failures: Array) -> void:
-	var solo = RunStateScript.new()
+	var solo: RunState = RunStateScript.new()
 	solo.start_new("NUMBERS-SOLO-DEBT")
 	solo.numbers_state.reset(7)
 	solo.current_environment = {"id": "corner_store", "archetype_id": "corner_store", "world_node_id": "corner_store", "turns": 0}
@@ -494,7 +497,7 @@ static func _check_consequences_and_independence(failures: Array) -> void:
 	solo.call("_apply_numbers_events", solo.numbers_state.advance_to(solo.numbers_state.settlement_action(0)))
 	if solo.debt.is_empty() or not solo.crew_grievances().is_empty():
 		failures.append("Real seeded solo detection did not create production street debt without an in-colors grievance.")
-	var crew = RunStateScript.new()
+	var crew: RunState = RunStateScript.new()
 	crew.start_new("NUMBERS-CREW-DEBT")
 	crew.numbers_state.reset(7)
 	crew.crew_add_trust("crew_lucky", 1, "fixture")
@@ -522,9 +525,9 @@ static func _check_consequences_and_independence(failures: Array) -> void:
 	var ui_end := ui_source.find("func _hide_event_choice_popup", ui_begin)
 	if ui_begin < 0 or ui_end <= ui_begin or ui_source.substr(ui_begin, ui_end - ui_begin).to_lower().find(forbidden) >= 0:
 		failures.append("Numbers-owned production UI surface contains forbidden cross-system coupling.")
-	var untouched = RunStateScript.new()
+	var untouched: RunState = RunStateScript.new()
 	untouched.start_new("NUMBERS-INDEPENDENCE")
-	var exercised = RunStateScript.new()
+	var exercised: RunState = RunStateScript.new()
 	exercised.start_new("NUMBERS-INDEPENDENCE")
 	var before_projection := _independence_projection(exercised)
 	exercised.current_environment = {"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0}
@@ -535,32 +538,36 @@ static func _check_consequences_and_independence(failures: Array) -> void:
 
 
 static func _check_midstate_save_load(failures: Array) -> void:
-	var open_run = RunStateScript.new()
+	var open_run: RunState = RunStateScript.new()
 	open_run.start_new("NUMBERS-SAVE-OPEN")
 	open_run.current_environment = {"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0}
 	open_run.numbers_buy_slip("123", 4, "box")
 	open_run.advance_environment_turns(15)
-	var open_restored = RunStateScript.new()
-	open_restored.from_dict(open_run.to_dict())
+	var open_saved: Dictionary = open_run.to_dict()
+	var open_saved_json := JSON.stringify(open_saved)
+	var open_restored: RunState = RunStateScript.new()
+	open_restored.from_dict(open_saved)
 	if JSON.stringify(open_restored.numbers_state.snapshot()) != JSON.stringify(open_run.numbers_state.snapshot()) or open_restored.bankroll != open_run.bankroll:
 		failures.append("RunState save/load changed the pre-post open-slip Numbers state.")
+	if JSON.stringify(open_restored.to_dict()) != open_saved_json:
+		failures.append("RunState save/load mutated restored town discovery facts or their registration metadata.")
 	var collection_fixture := _runner_fixture("NUMBERS-SAVE-COLLECTION")
 	if not bool(collection_fixture.get("ok", false)):
 		failures.append("RunState save/load fixture could not start the active Lucky collection.")
 		return
 	var collection_run: RunState = collection_fixture.get("run") as RunState
-	var collection_restored = RunStateScript.new()
+	var collection_restored: RunState = RunStateScript.new()
 	collection_restored.from_dict(collection_run.to_dict())
 	if JSON.stringify(collection_restored.numbers_state.snapshot()) != JSON.stringify(collection_run.numbers_state.snapshot()) or JSON.stringify(collection_restored.streets_snapshot()) != JSON.stringify(collection_run.streets_snapshot()):
 		failures.append("RunState save/load changed active Lucky collection cargo or its frozen Streets board.")
-	var fix_run = RunStateScript.new()
+	var fix_run: RunState = RunStateScript.new()
 	fix_run.start_new("NUMBERS-SAVE-FIX")
 	fix_run.current_environment = {"id": "small_underground_casino", "archetype_id": "small_underground_casino", "world_node_id": "small_underground_casino", "turns": 0}
 	fix_run.numbers_state.fix_unlock(true)
 	fix_run.numbers_state.fix_begin_bribe()
 	fix_run.numbers_state.fix_record_bribe(true, {"clean": true, "fast": true})
 	fix_run.numbers_fix_allocate({"bar": 20, "motel": 20, "corner_store": 20})
-	var fix_restored = RunStateScript.new()
+	var fix_restored: RunState = RunStateScript.new()
 	fix_restored.from_dict(fix_run.to_dict())
 	if JSON.stringify(fix_restored.numbers_state.snapshot()) != JSON.stringify(fix_run.numbers_state.snapshot()) or fix_restored.bankroll != fix_run.bankroll:
 		failures.append("RunState save/load changed funded camouflage slips in payday state.")
@@ -606,7 +613,7 @@ static func _check_sweep_reroute_determinism(failures: Array) -> void:
 	var consumer_sweep = PoliceSweepModelScript.new()
 	consumer_sweep.reset(71, {"dwell_actions": [3, 3]})
 	consumer_sweep.configure_world(map_data, happening, {"dwell_actions": [3, 3]}, 0)
-	var consumer_run = RunStateScript.new()
+	var consumer_run: RunState = RunStateScript.new()
 	consumer_run.start_new("NUMBERS-REROUTE-CONSUMER")
 	consumer_run.town_state.police_sweep = consumer_sweep
 	consumer_run.call("_apply_numbers_leak", {"active_day": 1, "number": "318", "successes": 3, "sweep_reroute_requested": true})
@@ -615,7 +622,7 @@ static func _check_sweep_reroute_determinism(failures: Array) -> void:
 
 
 static func _completed_fix(seed_value: int, strong: bool, allocations: Dictionary) -> Dictionary:
-	var model = NumbersModelScript.new()
+	var model: NumbersModel = NumbersModelScript.new()
 	model.reset(seed_value)
 	model.fix_unlock(true)
 	model.fix_begin_bribe()
@@ -636,7 +643,7 @@ static func _fix_slips(fix: Dictionary, slips: Array) -> Array:
 
 
 static func _zero_trust_posted_run(seed_text: String) -> RunState:
-	var run_state = RunStateScript.new()
+	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed_text)
 	run_state.current_environment = {"id": "small_underground_casino", "archetype_id": "small_underground_casino", "world_node_id": "small_underground_casino", "turns": 0}
 	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:gas_late")
@@ -661,7 +668,7 @@ static func _independence_projection(run_state: RunState) -> Dictionary:
 
 
 static func _runner_fixture(seed_text: String) -> Dictionary:
-	var run_state = RunStateScript.new()
+	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed_text)
 	run_state.current_environment = {"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0}
 	run_state.crew_add_trust("crew_lucky", 30, "fixture")
@@ -670,7 +677,7 @@ static func _runner_fixture(seed_text: String) -> Dictionary:
 
 
 static func _winning_straight_payout_with_leak(seed_value: int, leak: Dictionary) -> int:
-	var model = NumbersModelScript.new()
+	var model: NumbersModel = NumbersModelScript.new()
 	model.reset(seed_value)
 	model.active_leak = leak.duplicate(true)
 	var winning := str(_dictionary(model.call("_draw", 0)).get("number", "000"))
