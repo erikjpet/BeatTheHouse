@@ -34,6 +34,19 @@ if (-not $ManifestOnly) {
     if (Test-Path -LiteralPath $ManifestPath) {
         Remove-Item -LiteralPath $ManifestPath -Force
     }
+    # Remove every expected image before launch so a parse/startup failure can
+    # never leave later captures (especially 03/04) looking current.
+    foreach ($captureFileName in @(
+        "01_entry_idle_1280x720.png",
+        "02_active_draw_1280x720.png",
+        "03_authored_subtle_tell_1280x720.png",
+        "04_reduced_motion_static_1280x720.png"
+    )) {
+        $capturePath = Join-Path $outputDir $captureFileName
+        if (Test-Path -LiteralPath $capturePath) {
+            Remove-Item -LiteralPath $capturePath -Force
+        }
+    }
     $arguments = @("--path", "`"$root`"", "--script", "res://tools/crew_poker_visual_capture.gd")
     $godotProcess = Start-Process `
         -FilePath $windowedGodot `
