@@ -614,6 +614,12 @@
           190
         ]
       ],
+      "numbers_silas_spots": [
+        [
+          440,
+          60
+        ]
+      ],
       "travel_spots": [
         [
           820,
@@ -838,6 +844,12 @@
         [
           780,
           100
+        ]
+      ],
+      "numbers_silas_spots": [
+        [
+          300,
+          80
         ]
       ],
       "travel_spots": [
@@ -1246,6 +1258,12 @@
           220
         ]
       ],
+      "numbers_silas_spots": [
+        [
+          250,
+          80
+        ]
+      ],
       "layer_spots": [
         [
           410,
@@ -1385,6 +1403,7 @@
           "service_spots": [[154, 264]],
           "lender_spots": [],
           "numbers_spots": [[570, 220]],
+          "numbers_silas_spots": [[250, 80]],
           "layer_spots": [[410, 130], [786, 302]],
           "travel_spots": [[842, 374]]
         },
@@ -1478,6 +1497,7 @@
           "service_spots": [[78, 220]],
           "lender_spots": [[790, 300], [84, 300]],
           "numbers_spots": [[394, 200]],
+          "numbers_silas_spots": [[280, 100]],
           "travel_spots": [[820, 86], [820, 380], [676, 82], [520, 380], [250, 380], [84, 380]]
         },
         "security_profile": {
@@ -1557,6 +1577,7 @@
           "event_spots": [[680, 240]],
           "service_spots": [],
           "lender_spots": [],
+          "numbers_silas_spots": [[250, 80]],
           "layer_spots": [[410, 168], [842, 374]],
           "travel_spots": [[842, 374]]
         },
@@ -1737,6 +1758,12 @@
         [
           500,
           170
+        ]
+      ],
+      "numbers_silas_spots": [
+        [
+          300,
+          160
         ]
       ]
     },
@@ -2119,6 +2146,12 @@
         [
           820,
           180
+        ]
+      ],
+      "numbers_silas_spots": [
+        [
+          110,
+          186
         ]
       ]
     },

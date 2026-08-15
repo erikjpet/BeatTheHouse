@@ -551,6 +551,7 @@ static func layout_spot_field_name(object_type: String) -> String:
 		"home_storage": return "home_storage_spots"
 		"home_container": return "home_container_spots"
 		"numbers": return "numbers_spots"
+		"numbers_silas": return "numbers_silas_spots"
 		"meta_bag": return "home_bag_spots"
 		"meta_upgrade": return "home_upgrade_spots"
 		"meta_trade_up": return "home_trade_up_spots"
@@ -600,7 +601,7 @@ static func normalized_interaction_rect(object_type: String, index: int) -> Rect
 		"lender":
 			center = Vector2(0.62 + float(index % 2) * 0.12, 0.72)
 			size = Vector2(102.0 / board_size.x, 58.0 / board_size.y)
-		"numbers":
+		"numbers", "numbers_silas":
 			center = Vector2(0.42 + float(index % 2) * 0.24, 0.68)
 			size = Vector2(106.0 / board_size.x, 62.0 / board_size.y)
 		"home_tenure":
