@@ -75,8 +75,7 @@ func _run() -> void:
 	_configure_table(run_state, 0, [3, 5], 8, "craps:capture:reduced")
 	var settings: Variant = app.get("user_settings")
 	settings.reduce_motion = true
-	app.call("_apply_accessibility_settings")
-	app.call("_refresh")
+	app.call("_on_settings_applied")
 	await _settle(3)
 	var reduced_before: Dictionary = canvas.call("debug_surface_motion_sample")
 	canvas.call("debug_advance_idle_liveness", 0.5)

@@ -1298,7 +1298,7 @@ func _run_craps_visual_qa() -> void:
 	var settings: Variant = app.get("user_settings")
 	_require(settings != null, "Craps visual QA could not access reduced-motion settings.")
 	settings.reduce_motion = true
-	app.call("_apply_accessibility_settings")
+	app.call("_on_settings_applied")
 	await _settle()
 	var reduced_before: Dictionary = canvas.call("debug_surface_motion_sample")
 	canvas.call("debug_advance_idle_liveness", 0.5)
@@ -1308,7 +1308,7 @@ func _run_craps_visual_qa() -> void:
 	_record_craps_visual_state("craps_reduced_motion_surface", "Reduced motion preserves the full Craps table, point, working bets, history, and dice without animated rail drift.", reduced_snapshot, {"motion_before": reduced_before, "motion_after": reduced_after})
 	_cover("craps_reduced_motion")
 	settings.reduce_motion = false
-	app.call("_apply_accessibility_settings")
+	app.call("_on_settings_applied")
 	report["craps_visual_qa"] = {
 		"viewport": {"width": 1280, "height": 720},
 		"target_ids": target_ids,
