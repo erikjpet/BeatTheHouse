@@ -3426,6 +3426,31 @@
     ]
   },
   {
+    "id": "crew_draw_poker",
+    "display_name": "Back-Room Poker",
+    "family": "cards",
+    "content_groups": [
+      "crew_poker_pack"
+    ],
+    "gameplay_model": "full_simulation",
+    "module_path": "res://scripts/games/crew_draw_poker.gd",
+    "asset_path": "res://assets/art/games/poker.png",
+    "scene_asset_path": "res://assets/art/game_scenes/poker.png",
+    "environment_prop": "card_table",
+    "intro": "The back-room table keeps the stakes small and the cards honest.",
+    "description": "Friendly five-card draw: bet, draw, bet, showdown.",
+    "legal_actions": [
+      {
+        "id": "deal",
+        "label": "Ante & Deal",
+        "summary": "Ante cash, deal five, bet once, draw once, and bet once more.",
+        "win_chance": 0,
+        "payout_mult": 0
+      }
+    ],
+    "cheat_actions": []
+  },
+  {
     "id": "video_poker",
     "display_name": "Video Poker",
     "family": "cards",

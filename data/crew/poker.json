@@ -1,0 +1,35 @@
+[
+  {
+    "id": "back_room_draw",
+    "schema_version": 1,
+    "ante": 2,
+    "bet_unit": 2,
+    "raise_unit": 2,
+    "session_hand_cap": 5,
+    "session_swing_cap": 60,
+    "session_trust": 2,
+    "hustle_threshold": 12,
+    "hustle_sessions_required": 2,
+    "hustle_respect_bonus": 1,
+    "opponent_count": [2, 3],
+    "learned_exposures": 3,
+    "policies": {
+      "crew_rook": {"style_summary": "Patient driver: medium-tight, rarely bluffs, releases weak hands early.", "tightness": 72, "aggression": 34, "bluff": 14, "draw_caution": 70},
+      "crew_velvet": {"style_summary": "Polished trap player: selective openings, persuasive raises, well-timed bluffs.", "tightness": 62, "aggression": 56, "bluff": 35, "draw_caution": 58},
+      "crew_knuckles": {"style_summary": "Direct pressure player: aggressive with any made hand and unwilling to be pushed off pairs.", "tightness": 38, "aggression": 84, "bluff": 24, "draw_caution": 30},
+      "crew_switch": {"style_summary": "Fast adaptive player: middling range, frequent small probes, escapes expensive traps.", "tightness": 50, "aggression": 62, "bluff": 31, "draw_caution": 46},
+      "crew_mags": {"style_summary": "Exacting and tight: protects strong ranges, almost never pays to chase, raises for value.", "tightness": 86, "aggression": 48, "bluff": 9, "draw_caution": 85},
+      "crew_bishop": {"style_summary": "Formal counterpuncher: conservative before the draw, more forceful when the record is clear.", "tightness": 76, "aggression": 54, "bluff": 17, "draw_caution": 74},
+      "crew_lucky": {"style_summary": "Joyfully loose: enters nearly every pot, bluffs often, and treats thin draws as invitations.", "tightness": 24, "aggression": 65, "bluff": 48, "draw_caution": 18}
+    },
+    "banter": {
+      "crew_rook": ["Rook cuts the deck. 'No hurry. That's how money gets ideas.'", "'Road rules,' Rook says. 'Leave yourself an exit.'"],
+      "crew_velvet": ["Velvet smiles at the pot. 'Friendly money still deserves manners.'", "'Darling, if you must raise, at least make it graceful.'"],
+      "crew_knuckles": ["Knuckles nudges the ante in. 'Cards first. Speeches lose.'", "'You can fold without apologizing,' Knuckles says. 'Please do.'"],
+      "crew_switch": ["Switch is already dealing. 'Window's open. Keep up.'", "'Long think means bad news or bad acting,' Switch says."],
+      "crew_mags": ["Mags squares the deck. 'Five cards. One draw. No creative accounting.'", "'The pot is correct,' Mags says. 'Try to keep it that way.'"],
+      "crew_bishop": ["Bishop antes precisely. 'Let the record show optimism.'", "'A call is an answer,' Bishop says. 'Not always a good one.'"],
+      "crew_lucky": ["Lucky splashes in the ante. 'Tiny money, enormous biography.'", "'I had a plan,' Lucky says. 'Then the cards got interesting.'"]
+    }
+  }
+]

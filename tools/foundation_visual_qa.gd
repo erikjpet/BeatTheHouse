@@ -386,6 +386,7 @@ func _run() -> void:
 	await _settle()
 	_require(_environment_canvas_is_primary(), "Back to room did not restore the environment canvas as the primary surface.")
 	_assert_environment_canvas_contained("returned environment screen")
+	await _verify_crew_poker_visual_qa_fixture()
 	var claimed_victory := false
 	await _try_follow_visible_objective_once()
 	await _try_service_hook_flow()
@@ -1432,6 +1433,80 @@ func _prepare_multi_game_visual_qa_fixture() -> void:
 		"object_fixtures": [],
 	}, 100, "casino")
 	_record_state("multi_game_fixture_screen", "Focused deterministic room with multiple visible game objects for mouse clickability coverage.")
+
+
+func _prepare_crew_poker_visual_qa_fixture() -> void:
+	var fixture_run := app.get("run_state") as RunState
+	_require(fixture_run != null, "Crew poker visual fixture could not access RunState.")
+	fixture_run.crew_add_trust("crew_lucky", 30, "visual_qa_fixture")
+	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_crew_poker_fixture", {
+		"game_ids": ["crew_draw_poker"],
+		"resident_member_ids": ["crew_mags", "crew_lucky"],
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"object_fixtures": [],
+	}, 100, "back_room")
+
+
+func _verify_crew_poker_visual_qa_fixture() -> void:
+	_return_to_room_view()
+	await _settle()
+	var fixture_run := app.get("run_state") as RunState
+	var lucky_trust_before := fixture_run.crew_trust("crew_lucky") if fixture_run != null else 0
+	await _prepare_crew_poker_visual_qa_fixture()
+	_record_state("crew_poker_l3_room", "The singular back-room five-card draw table in its real L3 room fixture.")
+	var entered_label := await _double_click_first_play_object_type("game")
+	_require(not entered_label.is_empty(), "Could not enter the L3 Crew poker table from its room object.")
+	await _settle()
+	var entered: Dictionary = app.call("current_game_view_snapshot")
+	_require(str(entered.get("surface_renderer", "")) == "crew_draw_poker", "L3 Crew poker did not route to its production renderer.")
+	var canvas := app.get("game_surface_canvas") as Control
+	_require(_game_surface_is_primary(canvas), "L3 Crew poker did not make its table surface primary.")
+	_require(canvas != null and canvas.size.x > 0.0 and canvas.size.y > 0.0, "L3 Crew poker surface has no drawable viewport area.")
+	var live: Dictionary = canvas.call("realtime_surface_state") if canvas != null and canvas.has_method("realtime_surface_state") else {}
+	_require(str(live.get("display_name", "")).findn("poker") >= 0, "L3 Crew poker surface lost its readable game identity.")
+	_require(_surface_action_available("poker_deal", 0) and _surface_action_available("poker_cash_out", 1), "L3 Crew poker idle controls are not both readable/clickable.")
+	if canvas != null and canvas.has_method("reset_performance_counters") and canvas.has_method("debug_surface_motion_sample"):
+		canvas.call("reset_performance_counters")
+		var motion_before: Dictionary = canvas.call("debug_surface_motion_sample")
+		for _frame_index in range(12):
+			canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
+		var motion_after: Dictionary = canvas.call("debug_surface_motion_sample")
+		var runtime_after: Dictionary = canvas.call("surface_runtime_status")
+		_require(motion_before != motion_after, "L3 Crew poker lamp motion did not advance at idle.")
+		_require(int(runtime_after.get("surface_animation_redraw_count", 0)) > 0, "L3 Crew poker idle liveness did not schedule redraws.")
+		var reduced := live.duplicate(true)
+		reduced["reduce_motion"] = true
+		canvas.call("render_game_snapshot", reduced)
+		canvas.call("reset_performance_counters")
+		var reduced_before: Dictionary = canvas.call("debug_surface_motion_sample")
+		for _frame_index in range(12):
+			canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
+		var reduced_after: Dictionary = canvas.call("debug_surface_motion_sample")
+		var reduced_runtime: Dictionary = canvas.call("surface_runtime_status")
+		_require(reduced_before == reduced_after, "L3 Crew poker reduce-motion mode did not freeze renderer motion.")
+		_require(int(reduced_runtime.get("surface_animation_redraw_count", 0)) == 0, "L3 Crew poker reduce-motion mode still scheduled idle redraws.")
+		canvas.call("render_game_snapshot", live)
+		await _settle()
+	_record_state("crew_poker_idle_surface", "Readable production poker renderer and native table controls at the 1280x720 target.")
+	_require(await _push_game_surface_action("poker_deal", 0), "Could not ante and deal from the L3 Crew poker surface.")
+	await _settle()
+	_require(_surface_action_available("poker_call", 0) and _surface_action_available("poker_raise", 1) and _surface_action_available("poker_fold", 2), "Crew poker first betting controls were not clickable after the deal.")
+	_require(await _push_game_surface_action("poker_call", 0), "Could not call the first Crew poker betting round.")
+	await _settle()
+	var draw_hits := 0
+	for index in range(5):
+		if _surface_action_available("poker_card", index):
+			draw_hits += 1
+	_require(draw_hits == 5 and _surface_action_available("poker_draw", 0) and _surface_action_available("poker_fold", 1), "Crew poker draw surface did not expose five card hit targets plus draw/fold controls.")
+	_record_state("crew_poker_draw_surface", "Production five-card draw state with five readable card targets and native controls.")
+	_return_to_room_view()
+	await _settle()
+	if fixture_run != null:
+		fixture_run.crew_add_trust("crew_lucky", lucky_trust_before - fixture_run.crew_trust("crew_lucky"), "visual_qa_restore")
 
 
 func _reset_fixed_price_surface_for_risky_action() -> void:

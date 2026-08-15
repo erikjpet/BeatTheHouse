@@ -94,7 +94,8 @@
         "universal_active_items",
         "blackjack_pack",
         "baccarat_pack",
-        "video_poker_pack"
+        "video_poker_pack",
+        "crew_poker_pack"
       ],
       "grand_casino_high_roller_net_delta": 20
     }

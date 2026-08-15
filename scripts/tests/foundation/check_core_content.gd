@@ -9,6 +9,9 @@ const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const PlatformServicesScript := preload("res://scripts/core/platform_services.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
+const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
+const CrewDrawPokerGameScript := preload("res://scripts/games/crew_draw_poker.gd")
+const CrewPokerCrewStateScript := preload("res://scripts/core/crew_state_model.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
@@ -86,6 +89,7 @@ const FOUNDATION_SUITES := [
 	"craps",
 	"video_poker",
 	"bar_dice",
+	"crew_poker",
 	"pull_tabs",
 	"scratch_tickets",
 	"audit",
@@ -171,6 +175,9 @@ class SurfaceHarness:
 
 	func surface_simulation_time_msec() -> int:
 		return simulation_clock_msec
+
+	func surface_render_elapsed_msec() -> int:
+		return maxi(0, int(round(animation_elapsed * 1000.0)))
 
 	func surface_low_detail_idle() -> bool:
 		return low_detail_idle and not animation_active
@@ -450,7 +457,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 		"all":
 			_foundation_run_all_suite(content_library, fixture_library, failures, report)
 		_:
-			if ["blackjack", "roulette", "baccarat", "craps", "video_poker", "bar_dice", "pull_tabs", "scratch_tickets"].has(suite):
+			if ["blackjack", "roulette", "baccarat", "craps", "video_poker", "bar_dice", "crew_poker", "pull_tabs", "scratch_tickets"].has(suite):
 				_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 				_foundation_run_check(report, failures, "%s_game_suite" % suite, Callable(self, "_check_target_game_suite"), [content_library, suite])
 			else:
@@ -2092,40 +2099,52 @@ func _check_environment_game_pool_distribution(library: ContentLibrary, failures
 			continue
 		var archetype: Dictionary = archetype_value
 		var archetype_id := str(archetype.get("id", ""))
-		var game_pool := _string_array(archetype.get("game_pool", []))
-		var required_games := _string_array(archetype.get("required_game_ids", []))
 		var is_rare := str(archetype.get("rarity", "")).to_lower() == "rare"
-		var game_count_ceiling := _item_count_ceiling(archetype.get("game_count", 0))
-		if game_pool.is_empty():
-			if game_count_ceiling > 0:
-				failures.append("Environment %s has no game_pool but requests game_count %d." % [archetype_id, game_count_ceiling])
-			continue
-		if game_count_ceiling <= 0:
-			failures.append("Environment %s has game_pool options but never requests games." % archetype_id)
-		for game_id in game_pool:
-			placed_by_game[game_id] = true
-			if not is_rare:
-				non_rare_placed_by_game[game_id] = true
-		for required_id in required_games:
-			if not game_pool.has(required_id):
-				failures.append("Environment %s requires %s but does not include it in game_pool." % [archetype_id, required_id])
-			if game_count_ceiling < required_games.size():
-				failures.append("Environment %s game_count cannot fit all required games." % archetype_id)
-		var seen_generated := {}
-		for sample_index in range(12):
-			var sample_run: RunState = RunStateScript.new()
-			sample_run.start_new("POOL-%s-%02d" % [archetype_id.to_upper(), sample_index])
-			var sample_environment := EnvironmentInstance.from_archetype(archetype, sample_index, sample_run.create_rng("game_pool_distribution"), library)
-			var generated_games := _string_array(sample_environment.game_ids)
-			for required_id in required_games:
-				if not generated_games.has(required_id):
-					failures.append("Environment %s failed to generate required game %s." % [archetype_id, required_id])
-			for generated_game_id in generated_games:
-				seen_generated[generated_game_id] = true
-		if game_count_ceiling >= game_pool.size():
+		var pool_sources: Array = [{"label": archetype_id, "layer_id": "", "definition": archetype}]
+		var layers: Dictionary = archetype.get("layers", {}) if typeof(archetype.get("layers", {})) == TYPE_DICTIONARY else {}
+		for layer_id_value in layers.keys():
+			var layer_value: Variant = layers.get(layer_id_value)
+			if typeof(layer_value) == TYPE_DICTIONARY:
+				pool_sources.append({"label": "%s layer %s" % [archetype_id, str(layer_id_value)], "layer_id": str(layer_id_value), "definition": layer_value})
+		for source_value in pool_sources:
+			var source: Dictionary = source_value
+			var source_label := str(source.get("label", archetype_id))
+			var layer_id := str(source.get("layer_id", ""))
+			var definition: Dictionary = source.get("definition", {})
+			var game_pool := _string_array(definition.get("game_pool", []))
+			var required_games := _string_array(definition.get("required_game_ids", []))
+			var game_count_ceiling := _item_count_ceiling(definition.get("game_count", 0))
+			if game_pool.is_empty():
+				if game_count_ceiling > 0:
+					failures.append("Environment %s has no game_pool but requests game_count %d." % [source_label, game_count_ceiling])
+				continue
+			if game_count_ceiling <= 0:
+				failures.append("Environment %s has game_pool options but never requests games." % source_label)
 			for game_id in game_pool:
-				if not bool(seen_generated.get(game_id, false)):
-					failures.append("Environment %s did not generate declared game option %s." % [archetype_id, game_id])
+				placed_by_game[game_id] = true
+				if not is_rare:
+					non_rare_placed_by_game[game_id] = true
+			for required_id in required_games:
+				if not game_pool.has(required_id):
+					failures.append("Environment %s requires %s but does not include it in game_pool." % [source_label, required_id])
+				if game_count_ceiling < required_games.size():
+					failures.append("Environment %s game_count cannot fit all required games." % source_label)
+			var seen_generated := {}
+			for sample_index in range(12):
+				var sample_run: RunState = RunStateScript.new()
+				sample_run.start_new("POOL-%s-%s-%02d" % [archetype_id.to_upper(), layer_id.to_upper(), sample_index])
+				var sample_rng := sample_run.create_rng("game_pool_distribution")
+				var sample_environment := EnvironmentInstance.from_archetype(archetype, sample_index, sample_rng, library) if layer_id.is_empty() else EnvironmentInstance.from_archetype_layer(archetype, layer_id, sample_index, sample_rng, library)
+				var generated_games := _string_array(sample_environment.game_ids)
+				for required_id in required_games:
+					if not generated_games.has(required_id):
+						failures.append("Environment %s failed to generate required game %s." % [source_label, required_id])
+				for generated_game_id in generated_games:
+					seen_generated[generated_game_id] = true
+			if game_count_ceiling >= game_pool.size():
+				for game_id in game_pool:
+					if not bool(seen_generated.get(game_id, false)):
+						failures.append("Environment %s did not generate declared game option %s." % [source_label, game_id])
 
 	for game_value in library.games:
 		if typeof(game_value) != TYPE_DICTIONARY:
@@ -3432,6 +3451,7 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 		_check_all_game_module_contracts(library, failures)
 		return
 	_check_bar_dice_contract(library, failures)
+	_check_crew_poker_contract(library, failures)
 	_check_video_poker_contract(library, failures)
 	if suite == "audit":
 		_check_slot_acceptance(library, failures)
@@ -4457,6 +4477,7 @@ func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> 
 	var bar_dice: GameModule = _load_surface_contract_game(library, "bar_dice", failures)
 	if bar_dice != null:
 		_check_bar_dice_surface_contract(bar_dice, failures)
+	_check_crew_poker_contract(library, failures)
 	_check_process_fanout_guards(library, failures)
 
 
@@ -4772,6 +4793,8 @@ func _check_target_game_suite(library: ContentLibrary, game_id: String, failures
 			_check_video_poker_contract(library, failures)
 		"bar_dice":
 			_check_bar_dice_contract(library, failures)
+		"crew_poker":
+			_check_crew_poker_contract(library, failures)
 		"pull_tabs":
 			var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 			if pull_tabs != null:

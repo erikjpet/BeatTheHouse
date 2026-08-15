@@ -17,6 +17,7 @@ const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const StreetsRunModelScript := preload("res://scripts/core/streets_run_model.gd")
+const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 
 const DEFAULT_BANKROLL := 100
 const LOCAL_RISK_DECAY_BY_DISTANCE := {
@@ -299,6 +300,8 @@ var crew_jobs: Dictionary = {}
 var crew_grievance_sequence: int = 0
 var crew_job_sequence: int = 0
 var active_streets_run: Dictionary = {}
+var crew_pattern_memory: Dictionary = {}
+var crew_match_marks: Dictionary = {}
 var heat_history: Array = []
 var town_state: TownState
 var simulation_msec: int = 0
@@ -383,6 +386,8 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	crew_grievance_sequence = 0
 	crew_job_sequence = 0
 	active_streets_run = {}
+	crew_pattern_memory = CrewPokerModelScript.default_observations()
+	crew_match_marks = {}
 	heat_history = []
 	town_state = TownStateScript.new()
 	town_state.generate(seed_value)
@@ -6198,6 +6203,40 @@ func crew_grievances(member_id: String = "") -> Array:
 	return result
 
 
+# Private reader used by The Turn. Presentation and journal code must not call it.
+func tell_learned(member_id: String) -> bool:
+	return CrewPokerModelScript.learned(crew_pattern_memory, member_id)
+
+
+# Records one condition-verified showdown exposure under neutral persisted ids.
+func crew_record_pattern(member_id: String, state_key: String) -> bool:
+	var before := tell_learned(member_id)
+	crew_pattern_memory = CrewPokerModelScript.record_verified(crew_pattern_memory, member_id, state_key)
+	return not before and tell_learned(member_id)
+
+
+# Settles one friendly poker session. This is deliberately trust-only: poker
+# has no path to the grievance ledger, regardless of win/loss or hustle streak.
+func crew_record_poker_session(member_ids: Array, session_swing: int) -> Dictionary:
+	var tuning := CrewPokerModelScript.config()
+	var base_trust := maxi(0, int(tuning.get("session_trust", 2)))
+	var threshold := maxi(1, int(tuning.get("hustle_threshold", 12)))
+	var repeats := maxi(1, int(tuning.get("hustle_sessions_required", 2)))
+	var bonus := maxi(0, int(tuning.get("hustle_respect_bonus", 1)))
+	var applied := {}
+	for member_value in member_ids:
+		var member_id := str(member_value)
+		if not CrewStateModelScript.MEMBER_IDS.has(member_id):
+			continue
+		var mark := int(crew_match_marks.get(member_id, 0))
+		mark = mark + 1 if session_swing >= threshold else 0
+		crew_match_marks[member_id] = mark
+		var amount := base_trust + (bonus if mark >= repeats else 0)
+		crew_add_trust(member_id, amount, "crew_poker_session")
+		applied[member_id] = amount
+	return applied
+
+
 # Offers a data-shaped job and returns the immutable instance snapshot.
 func job_offer(job_definition: Dictionary) -> Dictionary:
 	var definition := CrewStateModelScript.normalize_job_definition(job_definition)
@@ -9846,6 +9885,9 @@ func _crew_state_for_save(deep_copy: bool) -> Dictionary:
 		"jobs": crew_jobs.duplicate(deep_copy),
 		"grievance_sequence": crew_grievance_sequence,
 		"job_sequence": crew_job_sequence,
+		# Neutral keys keep the hidden learning model opaque in raw saves.
+		"p": CrewPokerModelScript.pack_observations(crew_pattern_memory),
+		"m": crew_match_marks.duplicate(deep_copy),
 	}
 
 
@@ -9855,6 +9897,11 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	crew_jobs = CrewStateModelScript.normalize_jobs(saved.get("jobs", {}))
 	crew_grievance_sequence = maxi(int(saved.get("grievance_sequence", crew_grievance_ledger.size())), crew_grievance_ledger.size())
 	crew_job_sequence = maxi(int(saved.get("job_sequence", crew_jobs.size())), crew_jobs.size())
+	crew_pattern_memory = CrewPokerModelScript.unpack_observations(saved.get("p", {}))
+	crew_match_marks = {}
+	var saved_marks: Dictionary = saved.get("m", {}) if typeof(saved.get("m", {})) == TYPE_DICTIONARY else {}
+	for member_id in CrewStateModelScript.MEMBER_IDS:
+		crew_match_marks[member_id] = maxi(0, int(saved_marks.get(member_id, 0)))
 	if not legacy:
 		return
 	var has_legacy_marker := (
