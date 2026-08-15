@@ -6,7 +6,7 @@
     "bet_unit": 2,
     "raise_unit": 2,
     "session_hand_cap": 5,
-    "session_swing_cap": 24,
+    "session_swing_cap": 60,
     "session_trust": 2,
     "hustle_threshold": 12,
     "hustle_sessions_required": 2,

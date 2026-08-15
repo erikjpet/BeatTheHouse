@@ -21,6 +21,9 @@ const C_TEAL := VisualStyleScript.TEAL
 const C_YELLOW := VisualStyleScript.YELLOW
 const C_WHITE := VisualStyleScript.WHITE
 const C_SOFT := VisualStyleScript.SOFT
+const SEAT_LEFT_POSITION := Vector2(92, 104)
+const SEAT_CENTER_POSITION := Vector2(354, 78)
+const SEAT_RIGHT_POSITION := Vector2(664, 104)
 const MEMBER_NAMES := {
 	"crew_rook": "Rook", "crew_velvet": "Velvet", "crew_knuckles": "Knuckles",
 	"crew_switch": "Switch", "crew_mags": "Mags", "crew_bishop": "Bishop", "crew_lucky": "Lucky",
@@ -165,7 +168,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"hand_number": int(state.get("hand_number", 0)),
 		"hand_cap": int(CrewPokerModelScript.config().get("session_hand_cap", 5)),
 		"session_swing": int(state.get("session_swing", 0)),
-		"swing_cap": int(CrewPokerModelScript.config().get("session_swing_cap", 24)),
+		"swing_cap": int(CrewPokerModelScript.config().get("session_swing_cap", 60)),
 		"buy_in_open": _buy_in_open(run_state, state),
 		"observation": presentation,
 		"banter": _banter_for_state(state),
@@ -266,7 +269,7 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_room(surface)
 	surface.surface_title("BACK-ROOM DRAW", Vector2(330, 30), C_YELLOW)
-	surface.surface_label("POT $%d   SESSION %+$d / %d" % [int(state.get("pot", 0)), int(state.get("session_swing", 0)), int(state.get("swing_cap", 24))], Vector2(312, 54), 14, C_SOFT)
+	surface.surface_label("POT $%d   SESSION %s / %d" % [int(state.get("pot", 0)), _signed_cash(int(state.get("session_swing", 0))), int(state.get("swing_cap", 60))], Vector2(312, 54), 14, C_SOFT)
 	_draw_seats(surface, state)
 	_draw_player(surface, state)
 	_draw_observation(surface, state)
@@ -525,7 +528,7 @@ func _settle_session(state: Dictionary, run_state: RunState) -> String:
 	if int(state.get("hand_number", 0)) > 0:
 		run_state.crew_record_poker_session(_string_array(state.get("members", [])), int(state.get("session_swing", 0)))
 	state["session_settled"] = true
-	return "The table settles at %+$d. Nobody makes it bigger than it is." % int(state.get("session_swing", 0))
+	return "The table settles at %s. Nobody makes it bigger than it is." % _signed_cash(int(state.get("session_swing", 0)))
 
 
 func _buy_in_open(run_state: RunState, state: Dictionary) -> bool:
@@ -538,12 +541,12 @@ func _buy_in_open(run_state: RunState, state: Dictionary) -> bool:
 
 
 func _loss_room(state: Dictionary, wanted: int) -> int:
-	var cap := int(CrewPokerModelScript.config().get("session_swing_cap", 24))
+	var cap := int(CrewPokerModelScript.config().get("session_swing_cap", 60))
 	return mini(maxi(0, wanted), maxi(0, cap + int(state.get("session_swing", 0))))
 
 
 func _win_room(state: Dictionary, wanted: int) -> int:
-	var cap := int(CrewPokerModelScript.config().get("session_swing_cap", 24))
+	var cap := int(CrewPokerModelScript.config().get("session_swing_cap", 60))
 	return mini(maxi(0, wanted), maxi(0, cap - int(state.get("session_swing", 0))))
 
 
@@ -571,6 +574,10 @@ func _result(action_id: String, environment: Dictionary, delta: int, message: St
 
 func _poker_action(id: String, label: String, summary: String) -> Dictionary:
 	return {"id": id, "label": label, "summary": summary, "win_chance": 0, "payout_mult": 0}
+
+
+func _signed_cash(value: int) -> String:
+	return "+%d" % value if value >= 0 else "%d" % value
 
 
 func _seat_active(seats: Array, member_id: String) -> bool:
@@ -608,12 +615,11 @@ func _draw_room(surface) -> void:
 
 
 func _draw_seats(surface, state: Dictionary) -> void:
-	var positions := [Vector2(92, 104), Vector2(354, 78), Vector2(664, 104)]
-	var seats := _dict_array(state.get("seats", []))
-	var members := _string_array(state.get("members", []))
-	for index in range(maxi(seats.size(), members.size())):
+	var seats: Array = state.get("seats", []) if typeof(state.get("seats", [])) == TYPE_ARRAY else []
+	var members: Array = state.get("members", []) if typeof(state.get("members", [])) == TYPE_ARRAY else []
+	for index in range(mini(3, maxi(seats.size(), members.size()))):
 		var seat: Dictionary = seats[index] if index < seats.size() else {"member_id": members[index], "cards": _hidden_cards(5), "active": true}
-		var pos: Vector2 = positions[index]
+		var pos := SEAT_LEFT_POSITION if index == 0 else SEAT_CENTER_POSITION if index == 1 else SEAT_RIGHT_POSITION
 		var name := str(MEMBER_NAMES.get(str(seat.get("member_id", "")), "Crew"))
 		var color := C_SOFT if bool(seat.get("active", true)) else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.4)
 		surface.surface_label(name.to_upper(), pos, 14, color)

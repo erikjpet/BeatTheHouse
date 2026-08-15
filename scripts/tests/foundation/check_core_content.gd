@@ -2094,40 +2094,52 @@ func _check_environment_game_pool_distribution(library: ContentLibrary, failures
 			continue
 		var archetype: Dictionary = archetype_value
 		var archetype_id := str(archetype.get("id", ""))
-		var game_pool := _string_array(archetype.get("game_pool", []))
-		var required_games := _string_array(archetype.get("required_game_ids", []))
 		var is_rare := str(archetype.get("rarity", "")).to_lower() == "rare"
-		var game_count_ceiling := _item_count_ceiling(archetype.get("game_count", 0))
-		if game_pool.is_empty():
-			if game_count_ceiling > 0:
-				failures.append("Environment %s has no game_pool but requests game_count %d." % [archetype_id, game_count_ceiling])
-			continue
-		if game_count_ceiling <= 0:
-			failures.append("Environment %s has game_pool options but never requests games." % archetype_id)
-		for game_id in game_pool:
-			placed_by_game[game_id] = true
-			if not is_rare:
-				non_rare_placed_by_game[game_id] = true
-		for required_id in required_games:
-			if not game_pool.has(required_id):
-				failures.append("Environment %s requires %s but does not include it in game_pool." % [archetype_id, required_id])
-			if game_count_ceiling < required_games.size():
-				failures.append("Environment %s game_count cannot fit all required games." % archetype_id)
-		var seen_generated := {}
-		for sample_index in range(12):
-			var sample_run: RunState = RunStateScript.new()
-			sample_run.start_new("POOL-%s-%02d" % [archetype_id.to_upper(), sample_index])
-			var sample_environment := EnvironmentInstance.from_archetype(archetype, sample_index, sample_run.create_rng("game_pool_distribution"), library)
-			var generated_games := _string_array(sample_environment.game_ids)
-			for required_id in required_games:
-				if not generated_games.has(required_id):
-					failures.append("Environment %s failed to generate required game %s." % [archetype_id, required_id])
-			for generated_game_id in generated_games:
-				seen_generated[generated_game_id] = true
-		if game_count_ceiling >= game_pool.size():
+		var pool_sources: Array = [{"label": archetype_id, "layer_id": "", "definition": archetype}]
+		var layers: Dictionary = archetype.get("layers", {}) if typeof(archetype.get("layers", {})) == TYPE_DICTIONARY else {}
+		for layer_id_value in layers.keys():
+			var layer_value: Variant = layers.get(layer_id_value)
+			if typeof(layer_value) == TYPE_DICTIONARY:
+				pool_sources.append({"label": "%s layer %s" % [archetype_id, str(layer_id_value)], "layer_id": str(layer_id_value), "definition": layer_value})
+		for source_value in pool_sources:
+			var source: Dictionary = source_value
+			var source_label := str(source.get("label", archetype_id))
+			var layer_id := str(source.get("layer_id", ""))
+			var definition: Dictionary = source.get("definition", {})
+			var game_pool := _string_array(definition.get("game_pool", []))
+			var required_games := _string_array(definition.get("required_game_ids", []))
+			var game_count_ceiling := _item_count_ceiling(definition.get("game_count", 0))
+			if game_pool.is_empty():
+				if game_count_ceiling > 0:
+					failures.append("Environment %s has no game_pool but requests game_count %d." % [source_label, game_count_ceiling])
+				continue
+			if game_count_ceiling <= 0:
+				failures.append("Environment %s has game_pool options but never requests games." % source_label)
 			for game_id in game_pool:
-				if not bool(seen_generated.get(game_id, false)):
-					failures.append("Environment %s did not generate declared game option %s." % [archetype_id, game_id])
+				placed_by_game[game_id] = true
+				if not is_rare:
+					non_rare_placed_by_game[game_id] = true
+			for required_id in required_games:
+				if not game_pool.has(required_id):
+					failures.append("Environment %s requires %s but does not include it in game_pool." % [source_label, required_id])
+				if game_count_ceiling < required_games.size():
+					failures.append("Environment %s game_count cannot fit all required games." % source_label)
+			var seen_generated := {}
+			for sample_index in range(12):
+				var sample_run: RunState = RunStateScript.new()
+				sample_run.start_new("POOL-%s-%s-%02d" % [archetype_id.to_upper(), layer_id.to_upper(), sample_index])
+				var sample_rng := sample_run.create_rng("game_pool_distribution")
+				var sample_environment := EnvironmentInstance.from_archetype(archetype, sample_index, sample_rng, library) if layer_id.is_empty() else EnvironmentInstance.from_archetype_layer(archetype, layer_id, sample_index, sample_rng, library)
+				var generated_games := _string_array(sample_environment.game_ids)
+				for required_id in required_games:
+					if not generated_games.has(required_id):
+						failures.append("Environment %s failed to generate required game %s." % [source_label, required_id])
+				for generated_game_id in generated_games:
+					seen_generated[generated_game_id] = true
+			if game_count_ceiling >= game_pool.size():
+				for game_id in game_pool:
+					if not bool(seen_generated.get(game_id, false)):
+						failures.append("Environment %s did not generate declared game option %s." % [source_label, game_id])
 
 	for game_value in library.games:
 		if typeof(game_value) != TYPE_DICTIONARY:

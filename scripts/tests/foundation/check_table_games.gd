@@ -6,12 +6,26 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 	if definition.is_empty():
 		failures.append("Crew draw poker is missing from production game content.")
 		return
-	var poker_archetype := _archetype_by_id(library, "small_underground_casino")
+	var poker_archetype := library.environment_archetype("small_underground_casino")
 	var poker_layers: Dictionary = poker_archetype.get("layers", {}) if typeof(poker_archetype.get("layers", {})) == TYPE_DICTIONARY else {}
+	var club: Dictionary = poker_layers.get("club", {}) if typeof(poker_layers.get("club", {})) == TYPE_DICTIONARY else {}
 	var back_room: Dictionary = poker_layers.get("back_room", {}) if typeof(poker_layers.get("back_room", {})) == TYPE_DICTIONARY else {}
 	var back_layout: Dictionary = back_room.get("layout", {}) if typeof(back_room.get("layout", {})) == TYPE_DICTIONARY else {}
-	if (back_layout.get("game_spots", []) as Array).size() != 1 or back_room.get("game_pool", []) != ["crew_draw_poker"] or back_room.get("game_count", []) != [1, 1]:
+	var game_spots: Array = back_layout.get("game_spots", []) if typeof(back_layout.get("game_spots", [])) == TYPE_ARRAY else []
+	var stable_position := false
+	if game_spots.size() == 1 and typeof(game_spots[0]) == TYPE_ARRAY:
+		var position: Array = game_spots[0]
+		stable_position = position.size() == 2 and int(position[0]) == 450 and int(position[1]) == 218
+	var game_count: Array = back_room.get("game_count", []) if typeof(back_room.get("game_count", [])) == TYPE_ARRAY else []
+	var exact_count := game_count.size() == 2 and int(game_count[0]) == 1 and int(game_count[1]) == 1
+	var back_pool := _string_array(back_room.get("game_pool", []))
+	var back_required := _string_array(back_room.get("required_game_ids", []))
+	var exact_pool := back_pool.size() == 1 and str(back_pool[0]) == "crew_draw_poker"
+	var exact_required := back_required.size() == 1 and str(back_required[0]) == "crew_draw_poker"
+	if not stable_position or not exact_pool or not exact_required or not exact_count:
 		failures.append("Crew poker must furnish exactly one stable table in the L3 back room.")
+	if _string_array(poker_archetype.get("game_pool", [])).has("crew_draw_poker") or _string_array(club.get("game_pool", [])).has("crew_draw_poker"):
+		failures.append("Crew poker leaked out of the nested L3 game pool into the public Punchline layer.")
 	var game: GameModule = CrewDrawPokerGameScript.new()
 	game.setup(definition, library)
 	var straight_flush := [_poker_card(10, 1), _poker_card(11, 1), _poker_card(12, 1), _poker_card(13, 1), _poker_card(14, 1)]
@@ -83,11 +97,56 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 
 	_check_crew_poker_rotation_and_gate(game, failures)
 	var production_evidence := _check_crew_poker_state_machine(game, one_pair, failures)
+	_check_crew_poker_signed_cash(game, failures)
 	var public_surfaces: Array = production_evidence.get("surfaces", [])
 	var public_results: Array = production_evidence.get("results", [])
 	public_surfaces.append_array(_check_crew_poker_presentation_channels(game, failures))
 
-	var threshold := int(CrewPokerModelScript.config().get("learned_exposures", 3))
+	var tuning := CrewPokerModelScript.config()
+	var hand_cap := int(tuning.get("session_hand_cap", 5))
+	var swing_cap := int(tuning.get("session_swing_cap", 60))
+	var maximum_call_hand_cost := int(tuning.get("ante", 2)) + 2 * (int(tuning.get("bet_unit", 2)) + int(tuning.get("raise_unit", 2)))
+	if swing_cap < hand_cap * maximum_call_hand_cost:
+		failures.append("Crew poker session swing cap cannot fund legal calls through the authored hand cap.")
+	var capped_session: RunState = RunStateScript.new()
+	capped_session.start_new("CREW-POKER-CAPPED-SESSION")
+	capped_session.bankroll = 10000
+	capped_session.crew_add_trust("crew_mags", CrewPokerCrewStateScript.rank_threshold("associate"), "fixture")
+	_poker_install_table(game, capped_session, "capped_session", ["crew_mags", "crew_lucky"])
+	var capped_path_ok := true
+	for hand_index in range(hand_cap):
+		for action_value in [
+			{"id": "deal", "ui": {}},
+			{"id": "call", "ui": {}},
+			{"id": "draw", "ui": {"poker_held": [0, 2]}},
+			{"id": "call", "ui": {}},
+		]:
+			var action: Dictionary = action_value
+			var legal_ids: Array = []
+			for legal_value in game.legal_actions(capped_session, capped_session.current_environment):
+				if typeof(legal_value) == TYPE_DICTIONARY:
+					legal_ids.append(str((legal_value as Dictionary).get("id", "")))
+			var action_id := str(action.get("id", ""))
+			if not legal_ids.has(action_id):
+				failures.append("Crew poker capped session lost legal action %s on hand %d before resolution." % [action_id, hand_index])
+				capped_path_ok = false
+				break
+			var capped_result := _poker_apply_action(game, capped_session, action_id, action.get("ui", {}), "cap_%d_%s" % [hand_index, action_id])
+			if not bool(capped_result.get("ok", false)):
+				failures.append("Crew poker capped session rejected legal action %s on hand %d." % [action_id, hand_index])
+				capped_path_ok = false
+				break
+		if not capped_path_ok:
+			break
+		var capped_table := _poker_table(capped_session)
+		if hand_index < hand_cap - 1 and (str(capped_table.get("phase", "")) != "idle" or bool(capped_table.get("session_settled", false))):
+			failures.append("Crew poker capped session settled before its authored final hand.")
+			capped_path_ok = false
+			break
+		if hand_index == hand_cap - 1 and (int(capped_table.get("hand_number", 0)) != hand_cap or not bool(capped_table.get("session_settled", false))):
+			failures.append("Crew poker capped session did not settle exactly after its authored final hand.")
+
+	var threshold := int(tuning.get("learned_exposures", 3))
 	var learned_member := "crew_mags"
 	var learning: RunState = RunStateScript.new()
 	learning.start_new("CREW-POKER-LEARNING")
@@ -96,7 +155,7 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 	var learned_at := -1
 	for session_index in range(48):
 		_poker_install_table(game, learning, "learn_session_%d" % session_index, [learned_member, "crew_lucky"])
-		for hand_index in range(int(CrewPokerModelScript.config().get("session_hand_cap", 5))):
+		for hand_index in range(hand_cap):
 			if learning.tell_learned(learned_member):
 				break
 			var hand_actions := [
@@ -132,7 +191,7 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 	fold_heavy.crew_add_trust(learned_member, CrewPokerCrewStateScript.rank_threshold("associate"), "fixture")
 	for session_index in range(4):
 		_poker_install_table(game, fold_heavy, "fold_session_%d" % session_index, [learned_member, "crew_lucky"])
-		for hand_index in range(int(CrewPokerModelScript.config().get("session_hand_cap", 5))):
+		for hand_index in range(hand_cap):
 			_poker_apply_action(game, fold_heavy, "deal", {}, "fold_deal_%d_%d" % [session_index, hand_index])
 			var fold_result := _poker_apply_action(game, fold_heavy, "fold", {}, "fold_hand_%d_%d" % [session_index, hand_index])
 			public_results.append(fold_result)
@@ -146,7 +205,7 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 	var trust_before := trust_run.crew_trust("crew_mags")
 	var grievance_before := JSON.stringify(trust_run.crew_grievances())
 	_poker_install_table(game, trust_run, "trust_session", ["crew_mags", "crew_lucky"])
-	for hand_index in range(int(CrewPokerModelScript.config().get("session_hand_cap", 5))):
+	for hand_index in range(hand_cap):
 		_poker_apply_action(game, trust_run, "deal", {}, "trust_deal_%d" % hand_index)
 		_poker_apply_action(game, trust_run, "fold", {}, "trust_fold_%d" % hand_index)
 	if trust_run.crew_trust("crew_mags") - trust_before != int(CrewPokerModelScript.config().get("session_trust", 2)):
@@ -378,6 +437,30 @@ func _check_crew_poker_state_machine(game: GameModule, tie_cards: Array, failure
 	root.remove_child(canvas)
 	canvas.free()
 	return evidence
+
+
+func _check_crew_poker_signed_cash(game: GameModule, failures: Array) -> void:
+	var swing_cap := int(CrewPokerModelScript.config().get("session_swing_cap", 60))
+	for swing in [-7, 0, 7]:
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("CREW-POKER-SIGNED-%d" % (swing + 10))
+		run_state.bankroll = 100
+		run_state.crew_add_trust("crew_mags", CrewPokerCrewStateScript.rank_threshold("associate"), "fixture")
+		_poker_install_table(game, run_state, "signed_%d" % (swing + 10), ["crew_mags", "crew_lucky"])
+		var table := _poker_table(run_state)
+		table["hand_number"] = 1
+		table["session_swing"] = swing
+		_poker_write_table(run_state, table)
+		var surface := game.surface_state(run_state, run_state.current_environment, {})
+		var harness := SurfaceHarness.new()
+		harness.setup(surface)
+		game.draw_surface(harness, surface, {"contract_harness": true})
+		var signed := "+%d" % swing if swing >= 0 else "%d" % swing
+		if not harness.labels.has("POT $0   SESSION %s / %d" % [signed, swing_cap]):
+			failures.append("Crew poker surface did not render supported signed session cash for %d." % swing)
+		var settled := _poker_apply_action(game, run_state, "cash_out", {}, "signed_cash_%d" % (swing + 10))
+		if not bool(settled.get("ok", false)) or not str(settled.get("message", "")).contains("at %s." % signed):
+			failures.append("Crew poker settlement did not render supported signed session cash for %d." % swing)
 
 
 func _check_crew_poker_presentation_channels(game: GameModule, failures: Array) -> Array:
