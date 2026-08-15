@@ -487,10 +487,10 @@ func _check_crew_poker_hidden_leaks(run_state: RunState, save_projection: Varian
 				failures.append("Crew poker hidden authored token '%s' leaked through the public %s projection." % [token, str(projection_name)])
 
 
-func _poker_install_table(game: GameModule, run_state: RunState, namespace: String, residents: Array) -> Dictionary:
+func _poker_install_table(game: GameModule, run_state: RunState, rng_scope: String, residents: Array) -> Dictionary:
 	var environment := _poker_environment(residents)
-	environment["id"] = "crew_poker_%s" % namespace
-	var table_rng := run_state.create_rng("crew_poker_table:%s" % namespace)
+	environment["id"] = "crew_poker_%s" % rng_scope
+	var table_rng := run_state.create_rng("crew_poker_table:%s" % rng_scope)
 	var generated := game.generate_environment_state(run_state, environment, table_rng)
 	run_state.save_rng(table_rng)
 	environment["game_states"] = {"crew_draw_poker": generated}
@@ -502,8 +502,8 @@ func _poker_environment(residents: Array) -> Dictionary:
 	return {"id": "crew_poker_test", "archetype_id": "small_underground_casino", "kind": "crew", "layer_id": "back_room", "resident_member_ids": residents.duplicate(), "game_ids": ["crew_draw_poker"], "game_states": {}}
 
 
-func _poker_apply_action(game: GameModule, run_state: RunState, action_id: String, ui_state: Dictionary, namespace: String) -> Dictionary:
-	var rng := run_state.create_rng("crew_poker_action:%s" % namespace)
+func _poker_apply_action(game: GameModule, run_state: RunState, action_id: String, ui_state: Dictionary, rng_scope: String) -> Dictionary:
+	var rng := run_state.create_rng("crew_poker_action:%s" % rng_scope)
 	var result := game.resolve_with_context(action_id, 2, run_state, run_state.current_environment, rng, ui_state)
 	if bool(result.get("ok", false)):
 		if bool(result.get("host_apply_result", false)):
