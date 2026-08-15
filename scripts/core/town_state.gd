@@ -121,7 +121,7 @@ func advance_actions(amount: int = 1) -> void:
 	_sync_sweep_rumor_facts()
 
 
-func configure_world(map_data: Dictionary) -> void:
+func configure_world(map_data: Dictionary, synchronize_rumor_facts: bool = true) -> void:
 	if living_world == null:
 		living_world = TownNetworkScript.new()
 		living_world.generate(seed_value)
@@ -131,8 +131,9 @@ func configure_world(map_data: Dictionary) -> void:
 		police_sweep.reset(seed_value, _police_sweep_config())
 	police_sweep.configure_world(map_data, _police_sweep_happening(), _police_sweep_config(), action_index)
 	_refresh_current_profiles()
-	_sync_condition_rumor_facts()
-	_sync_sweep_rumor_facts()
+	if synchronize_rumor_facts:
+		_sync_condition_rumor_facts()
+		_sync_sweep_rumor_facts()
 
 
 func disable_police_sweep_for_legacy_save() -> void:

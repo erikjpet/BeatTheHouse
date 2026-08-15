@@ -7365,10 +7365,10 @@ func town_status_line() -> String:
 	return town_state.status_line() if town_state != null else "Clear outside · Midweek"
 
 
-func configure_town_world(map_data: Dictionary, initialize_numbers_rumors: bool = true) -> void:
+func configure_town_world(map_data: Dictionary, initialize_discovery_facts: bool = true) -> void:
 	if town_state != null:
-		town_state.configure_world(map_data)
-		if initialize_numbers_rumors:
+		town_state.configure_world(map_data, initialize_discovery_facts)
+		if initialize_discovery_facts:
 			_register_numbers_discovery_rumors()
 
 
