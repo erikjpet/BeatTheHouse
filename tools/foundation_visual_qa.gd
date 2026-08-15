@@ -39,6 +39,7 @@ var report := {
 	"optional_hook_status": {},
 	"game_surface_status": {},
 	"craps_visual_qa": {},
+	"street_craps_visual_qa": {},
 	"warnings": [],
 	"coverage": {
 		"start_screen": false,
@@ -81,6 +82,8 @@ var report := {
 		"craps_dice_presentation": false,
 		"craps_idle_liveness": false,
 		"craps_reduced_motion": false,
+		"street_craps_circle": false,
+		"street_craps_dispersed": false,
 		"screen_click_only_gameplay": false,
 		"stake_selector": false,
 		"legal_action_selection": false,
@@ -1370,6 +1373,71 @@ func _run_craps_visual_qa() -> void:
 		"idle_motion_changed": JSON.stringify(idle_before) != JSON.stringify(idle_after),
 		"reduced_motion_stable": JSON.stringify(reduced_before) == JSON.stringify(reduced_after),
 		"live_dice_start_msec": live_dice_start_msec,
+	}
+	await _run_street_craps_visual_qa()
+
+
+func _run_street_craps_visual_qa() -> void:
+	var fixture_run := app.get("run_state") as RunState
+	var game := app.get("current_game") as GameModule
+	_require(fixture_run != null and game != null and game.get_id() == "craps", "Street Craps visual QA could not reuse the live Craps module.")
+	var environment := {
+		"id": "visual_street_craps_fixture",
+		"archetype_id": "back_alley",
+		"world_node_id": "back_alley",
+		"kind": "shop",
+		"game_ids": ["craps"],
+		"economic_profile": {"stake_floor": 2, "stake_ceiling": 20},
+		"scenario_id": "back_alley_street_craps",
+		"scenario_game_modifiers": {"game_hook": "street_craps", "table_tone": "street"},
+		"scenario_hook_flags": {"craps_onramp": true},
+		"music_profile": {"volume": 0.24, "ambience": 0.72, "bpm": 82.0},
+		"game_states": {},
+	}
+	var table := game.generate_environment_state(fixture_run, environment, fixture_run.create_rng("visual_street_craps_table"))
+	table["point"] = 6
+	table["working_bets"] = {"pass_line": 5, "dont_pass": 0, "pass_odds": 0, "come": {}, "dont_come": {}, "come_odds": {}, "place": {}}
+	table["roll_history"] = [
+		_craps_visual_roll([2, 4], 6, 0, 6, "street:visual:1", 35000),
+		_craps_visual_roll([2, 3], 5, 6, 6, "street:visual:2", 37000),
+	]
+	table["last_roll"] = (table["roll_history"] as Array)[-1]
+	environment["game_states"] = {"craps": table}
+	fixture_run.current_environment = environment
+	app.set("game_surface_ui_state", {"selected_chip": 2, "surface_time_msec": 40000})
+	app.call("_refresh")
+	await _settle()
+	var canvas := app.get("game_surface_canvas") as Control
+	var live_snapshot: Dictionary = canvas.call("current_view_snapshot")
+	var live_state: Dictionary = live_snapshot.get("state", {})
+	var target_ids := _craps_visual_target_ids(live_state.get("bet_targets", []))
+	_require(target_ids == ["pass_line", "dont_pass"], "Street Craps visual QA did not reduce the betting surface to Pass/Don't Pass.")
+	_require(str(live_state.get("surface_cast", "")) == "circle_of_players" and str(live_state.get("currency", "")) == "cash", "Street Craps visual QA did not expose its circle-of-players cash presentation.")
+	_require(int(live_state.get("table_minimum", 0)) == 2 and int(live_state.get("table_maximum", 0)) == 20, "Street Craps visual QA did not preserve gutter stake bounds.")
+	_record_craps_visual_state("street_craps_circle", "Street Craps presents a chalk circle, two line wagers, cash controls, point, dice, and surrounding players.", live_snapshot)
+	_cover("street_craps_circle")
+
+	var states: Dictionary = fixture_run.current_environment.get("game_states", {})
+	table = states.get("craps", {})
+	table["point"] = 0
+	table["working_bets"] = {"pass_line": 0, "dont_pass": 0, "pass_odds": 0, "come": {}, "dont_come": {}, "come_odds": {}, "place": {}}
+	table["street_dispersed"] = true
+	table["street_disperse_reason"] = "sweep_adjacent"
+	states["craps"] = table
+	fixture_run.current_environment["game_states"] = states
+	app.call("_refresh")
+	await _settle()
+	var dispersed_snapshot: Dictionary = canvas.call("current_view_snapshot")
+	var dispersed_state: Dictionary = dispersed_snapshot.get("state", {})
+	_require(str(dispersed_state.get("phase", "")) == "dispersed" and not bool(dispersed_state.get("can_roll", true)), "Street Craps visual QA left the dispersed circle interactive.")
+	_record_craps_visual_state("street_craps_dispersed", "Adjacent sweep or a heat spike empties the chalk ring and closes every wager control.", dispersed_snapshot)
+	_cover("street_craps_dispersed")
+	report["street_craps_visual_qa"] = {
+		"viewport": {"width": 1280, "height": 720},
+		"target_ids": target_ids,
+		"currency": live_state.get("currency", ""),
+		"table_bounds": [live_state.get("table_minimum", 0), live_state.get("table_maximum", 0)],
+		"disperse_reason": dispersed_state.get("street_disperse_reason", ""),
 	}
 
 
