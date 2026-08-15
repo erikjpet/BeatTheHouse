@@ -1,5 +1,7 @@
 extends SceneTree
 
+const REQUIRED_CAPTURE_IDS := ["normal_pile_rider", "tell_alarm_chirps", "reduced_motion", "hard_alarm_lockdown", "room_available_after_alarm", "jackpot_ridge", "vault_drop"]
+
 # Deterministic, test-only Quarter Falls evidence capture.
 # Run windowed so the viewport texture contains real rendered pixels:
 #   Godot --path . --script res://tools/coin_pusher_visual_capture.gd
@@ -336,7 +338,7 @@ func _save_viewport(file_name: String) -> bool:
 
 
 func _write_manifest() -> void:
-	var required_capture_ids := ["normal_pile_rider", "tell_alarm_chirps", "reduced_motion", "hard_alarm_lockdown", "room_available_after_alarm"]
+	var required_capture_ids := REQUIRED_CAPTURE_IDS
 	var valid_capture_count := 0
 	var saved_capture_count := 0
 	var captured_ids: Array = []
