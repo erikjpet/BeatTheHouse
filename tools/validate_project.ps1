@@ -1063,6 +1063,7 @@ foreach ($methodName in $environmentInteractionControllerApi) {
     }
 }
 Require-Text $environmentInteractionController 'var silas_here: bool =' "Silas itinerary presence must keep an explicit bool type so the controller compiles under warnings-as-errors."
+Require-Text "scripts/core/run_state.gd" "func numbers_silas_is_here" "Silas interactable generation and paid exchange must share the production physical-presence predicate."
 Require-Text "scripts/ui/foundation_main.gd" "EnvironmentInteractionControllerScript.game_hook_interactable_objects" "Foundation UI must route Poker and other game hooks through the controller public API."
 Require-Text "scripts/ui/foundation_main.gd" "EnvironmentInteractionControllerScript.interactable_object_view_list" "Foundation UI must route Numbers and room interactables through the controller public API."
 Require-Text $visualQa '"interaction_mode": "visible_controls"' "Foundation visual QA must identify visible control interaction mode."

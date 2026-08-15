@@ -6471,6 +6471,17 @@ func numbers_silas_status() -> Dictionary:
 	}
 
 
+# Silas is physically present in the rendered room. The environment is the
+# authority during room restore/installation; the map cursor is its fallback.
+func numbers_silas_is_here() -> bool:
+	if town_state == null:
+		return false
+	var physical_node_id: String = str(current_environment.get("world_node_id", "")).strip_edges()
+	if physical_node_id.is_empty():
+		physical_node_id = current_world_node_id()
+	return town_state.traveler_node("silas_snitch") == physical_node_id
+
+
 # Buys one physical slip at the current Numbers venue. The model owns the slip;
 # inventory carries one contraband stack marker so sweep handling stays canonical.
 func numbers_buy_slip(digits: String, stake: int, play_type: String) -> Dictionary:
@@ -6493,8 +6504,7 @@ func numbers_buy_slip(digits: String, stake: int, play_type: String) -> Dictiona
 func numbers_buy_silas_tip(today_number: bool = false) -> Dictionary:
 	if numbers_state == null or town_state == null:
 		return {"ok": false, "message": "Silas is not here."}
-	var current_node := current_world_node_id()
-	if town_state.traveler_node("silas_snitch") != current_node:
+	if not numbers_silas_is_here():
 		return {"ok": false, "message": "Silas is drinking somewhere else."}
 	if today_number and not bool(numbers_silas_status().get("handle_available", false)):
 		return {"ok": false, "message": "Silas has no handle for you."}

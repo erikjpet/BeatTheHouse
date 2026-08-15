@@ -2777,6 +2777,7 @@ func _verify_numbers_surfaces() -> void:
 	_require(not _click_button_exact("Buy a quiet route tip — $12").is_empty(), "Silas encounter did not expose its visible paid tip exchange.")
 	await _settle()
 	_require(run_state.bankroll == bankroll_before - 12, "Visible Silas exchange did not call the paid tip path.")
+	_require(_has_visible_text(app, "Silas sells a time and a place, not an apology."), "Visible Silas exchange did not render its authored transaction result on the production surface.")
 	_require(not _has_visible_text(app, "today's handle"), "Silas tip alone advertised the hidden handle exchange before rumor discovery.")
 	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:gas_late")
 	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:corner_late")
