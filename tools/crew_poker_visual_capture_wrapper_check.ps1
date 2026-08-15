@@ -35,6 +35,12 @@ foreach ($requiredCaptureControl in @(
     '"capture_surface_state_read"',
     '"capture_surface_view_read"',
     '"capture_surface_image_read"',
+    '"capture_output_flush_start"',
+    '"capture_output_write"',
+    '"capture_output_flush_complete"',
+    "queued_capture_outputs",
+    "CAPTURE_OUTPUT_BUDGET_MSEC",
+    "per-state capture reused a viewport Image",
     'var authored_tell_channel: String = ""',
     'var authored_tell_member_id: String = ""',
     'var authored_tell_surface_phase: String = ""',
@@ -69,6 +75,30 @@ if ([string]::IsNullOrWhiteSpace($authoredObservationFunction) -or
 }
 if ($captureSource.Contains("authored_tell_proof") -or $captureSource.Contains("var tell_proof")) {
     throw "Crew poker post-image authored-tell checks must use typed primitives without a dictionary alias."
+}
+$captureSurfaceFunction = [regex]::Match(
+    $captureSource,
+    '(?ms)^func _capture_surface\(.*?(?=^func |\z)'
+).Value
+$captureFlushFunction = [regex]::Match(
+    $captureSource,
+    '(?ms)^func _flush_capture_outputs\(\).*?(?=^func |\z)'
+).Value
+if ([string]::IsNullOrWhiteSpace($captureSurfaceFunction) -or
+        $captureSurfaceFunction.Contains("save_png") -or
+        $captureSurfaceFunction.Contains("captures.append")) {
+    throw "Crew poker per-state capture must queue distinct Images without writing PNGs or final records."
+}
+if ([string]::IsNullOrWhiteSpace($captureFlushFunction) -or
+        -not $captureFlushFunction.Contains("save_png") -or
+        -not $captureFlushFunction.Contains("captures.append")) {
+    throw "Crew poker final bounded output phase must own every PNG write and final capture record."
+}
+if ([regex]::Matches($captureSource, 'save_png\(').Count -ne 1) {
+    throw "Crew poker harness must have exactly one PNG write site in the final output flush."
+}
+if ($captureSource.IndexOf('await _verify_session_exit_to_l3()') -gt $captureSource.IndexOf("`t`t_flush_capture_outputs()")) {
+    throw "Crew poker PNG output flush must run only after the production session exit assertion."
 }
 if ($captureSource -match '(authored_tell_(render|capture)_state|reduced_motion_(render|capture)_state|latest_action_surface_state|state_override)\.duplicate\(true\)') {
     throw "Crew poker cached renderer state must never be deep-copied across the viewport capture boundary."
