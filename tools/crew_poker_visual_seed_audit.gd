@@ -1,9 +1,9 @@
 extends RefCounted
 
-# Pure production-model proof for the visual capture fixture. Candidate seed
-# strings traverse the same RunState + initial RunGenerator path as the capture.
-# The resulting untouched action RNG is then proven against both possible seat
-# orders. No live table beat, cards, or RNG state is ever written.
+# Pure production-model proof for the pinned visual capture seed. The seed
+# traverses the same RunState + initial RunGenerator path as the capture. Its
+# untouched action RNG is then proven against both possible seat orders. No live
+# table beat, cards, or RNG state is ever written.
 
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
@@ -12,32 +12,19 @@ const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const CrewDrawPokerGameScript := preload("res://scripts/games/crew_draw_poker.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 
-const SEED_PREFIX := "CREW-POKER-PUNCHLINE-VISUAL"
-const MAX_SEED_CANDIDATES := 32
+const FIXTURE_SEED := "CREW-POKER-PUNCHLINE-VISUAL-00"
 const TABLE_GAME_RNG_KEY := "environment_layer_games::back_room"
 const TABLE_STATE_RNG_KEY := "environment_game_state:small_underground_casino_001:crew_draw_poker"
 const RESIDENTS: Array[String] = ["crew_mags", "crew_rook"]
 const INPUT_SEQUENCE: Array[String] = ["poker_deal", "poker_call"]
 
 
-static func find_seed(library: ContentLibrary) -> Dictionary:
+static func audit_pinned_seed(library: ContentLibrary) -> Dictionary:
 	if library == null:
-		return {"passed": false, "failure": "Content library is unavailable.", "tested_candidates": 0}
-	for candidate_index in range(MAX_SEED_CANDIDATES):
-		var seed_text := "%s-%02d" % [SEED_PREFIX, candidate_index]
-		var candidate := _audit_candidate(library, seed_text)
-		if bool(candidate.get("passed", false)):
-			candidate["tested_candidates"] = candidate_index + 1
-			candidate["candidate_limit"] = MAX_SEED_CANDIDATES
-			return candidate
-	return {
-		"passed": false,
-		"failure": "No first-hand natural-tell seed passed the bounded candidate audit.",
-		"tested_candidates": MAX_SEED_CANDIDATES,
-		"candidate_limit": MAX_SEED_CANDIDATES,
-		"residents": RESIDENTS.duplicate(),
-		"input_sequence": INPUT_SEQUENCE.duplicate(),
-	}
+		return {"passed": false, "failure": "Content library is unavailable.", "seed": FIXTURE_SEED}
+	var result := _audit_candidate(library, FIXTURE_SEED)
+	result["pinned_seed_assertion"] = true
+	return result
 
 
 static func _audit_candidate(library: ContentLibrary, seed_text: String) -> Dictionary:
@@ -98,6 +85,7 @@ static func _audit_order(library: ContentLibrary, seed_text: String, action_rng:
 	var order_passed := bool(deal.get("ok", false)) \
 		and bool(call.get("ok", false)) \
 		and str(surface.get("phase", "")) == "draw" \
+		and int(surface.get("hand_number", -1)) == 0 \
 		and ["line", "portrait", "timing"].has(str(observation.get("channel", ""))) \
 		and generated_members.has(str(observation.get("member_id", "")))
 	return {
@@ -107,6 +95,7 @@ static func _audit_order(library: ContentLibrary, seed_text: String, action_rng:
 		"deal_ok": bool(deal.get("ok", false)),
 		"call_ok": bool(call.get("ok", false)),
 		"phase": str(surface.get("phase", "")),
+		"hand_number": int(surface.get("hand_number", -1)),
 		"observation_member_id": str(observation.get("member_id", "")),
 		"observation_channel": str(observation.get("channel", "")),
 	}

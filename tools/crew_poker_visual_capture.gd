@@ -10,6 +10,13 @@ const CrewPokerVisualSeedAuditScript := preload("res://tools/crew_poker_visual_s
 const OUTPUT_DIR := "res://.tmp/crew_poker_visual_qa"
 const MANIFEST_PATH := OUTPUT_DIR + "/manifest.json"
 const CAPTURE_SIZE := Vector2i(1280, 720)
+const FIXTURE_SEED := CrewPokerVisualSeedAuditScript.FIXTURE_SEED
+const CAPTURE_FILE_NAMES: Array[String] = [
+	"01_entry_idle_1280x720.png",
+	"02_active_draw_1280x720.png",
+	"03_authored_subtle_tell_1280x720.png",
+	"04_reduced_motion_static_1280x720.png",
+]
 const PUNCHLINE_ARCHETYPE_ID := "small_underground_casino"
 const PUNCHLINE_DISPLAY_NAME := "The Punchline"
 const PUNCHLINE_BACK_ROOM_LAYER := "back_room"
@@ -30,11 +37,11 @@ var seed_audit_evidence: Dictionary = {}
 var foundation_action_rng: Dictionary = {}
 var foundation_rng_matches_audit := false
 var tell_expected_actions: Array[String] = []
-var fixture_seed := ""
 var current_stage := "not_started"
 var current_attempt: Dictionary = {}
 var stage_history: Array[Dictionary] = []
 var failure_messages: Array[String] = []
+var removed_stale_capture_files: Array[String] = []
 var started_msec := 0
 var finishing := false
 
@@ -47,6 +54,10 @@ func _init() -> void:
 func _run() -> void:
 	started_msec = Time.get_ticks_msec()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUTPUT_DIR))
+	if not _clear_stale_capture_files():
+		_fail("Crew poker capture could not remove stale PNG evidence before starting.")
+		_finish()
+		return
 	_stage("boot", {"capture_timeout_msec": CAPTURE_TIMEOUT_MSEC})
 	root.size = CAPTURE_SIZE
 	RenderingServer.set_default_clear_color(Color("#08070d"))
@@ -55,22 +66,21 @@ func _run() -> void:
 	root.add_child(app)
 	await _settle(8)
 	var library := app.get("library") as ContentLibrary
-	_stage("natural_tell_seed_audit_start", {"candidate_limit": CrewPokerVisualSeedAuditScript.MAX_SEED_CANDIDATES})
-	seed_audit_evidence = CrewPokerVisualSeedAuditScript.find_seed(library)
-	fixture_seed = str(seed_audit_evidence.get("seed", ""))
+	_stage("natural_tell_seed_audit_start", {"seed": FIXTURE_SEED})
+	seed_audit_evidence = CrewPokerVisualSeedAuditScript.audit_pinned_seed(library)
 	_stage("natural_tell_seed_audit_complete", {
 		"passed": bool(seed_audit_evidence.get("passed", false)),
-		"seed": fixture_seed,
-		"tested_candidates": int(seed_audit_evidence.get("tested_candidates", 0)),
+		"seed": str(seed_audit_evidence.get("seed", "")),
+		"pinned_seed_assertion": bool(seed_audit_evidence.get("pinned_seed_assertion", false)),
 	})
-	if not bool(seed_audit_evidence.get("passed", false)) or fixture_seed.is_empty():
-		_fail("Crew poker capture could not find a bounded production seed for a first-hand authored tell.")
+	if not bool(seed_audit_evidence.get("passed", false)) or str(seed_audit_evidence.get("seed", "")) != FIXTURE_SEED:
+		_fail("Crew poker capture pinned seed no longer produces a first-hand authored tell through production actions.")
 		_finish()
 		return
-	_stage("foundation_run_start", {"seed": fixture_seed})
+	_stage("foundation_run_start", {"seed": FIXTURE_SEED})
 	# Disable profile-derived home modifiers so the pure seed audit and runtime
 	# traverse the same standard foundation generation path.
-	app.call("start_foundation_run", fixture_seed, {}, false)
+	app.call("start_foundation_run", FIXTURE_SEED, {}, false)
 	await _settle(8)
 	run_state = app.get("run_state") as RunState
 	if run_state == null:
@@ -266,7 +276,7 @@ func _enter_punchline_poker_from_l3() -> bool:
 		and str(game_object.get("source_id", "")) == "crew_draw_poker" \
 		and not bool(game_object.get("disabled", false))
 	acceptance_context = {
-		"seed": fixture_seed,
+		"seed": FIXTURE_SEED,
 		"natural_tell_seed_audit": seed_audit_evidence.duplicate(true),
 		"fixture_resident_input": CrewPokerVisualSeedAuditScript.RESIDENTS.duplicate(),
 		"generated_table_members": table_members.duplicate(),
@@ -327,6 +337,18 @@ func _install_fixture_residents(environment: Dictionary) -> bool:
 	back_room["resident_member_ids"] = CrewPokerVisualSeedAuditScript.RESIDENTS.duplicate()
 	layer_states[PUNCHLINE_BACK_ROOM_LAYER] = back_room
 	environment["layer_states"] = layer_states
+	return true
+
+
+func _clear_stale_capture_files() -> bool:
+	for file_name in CAPTURE_FILE_NAMES:
+		var capture_path := OUTPUT_DIR + "/" + file_name
+		if not FileAccess.file_exists(capture_path):
+			continue
+		var error := DirAccess.remove_absolute(ProjectSettings.globalize_path(capture_path))
+		if error != OK:
+			return false
+		removed_stale_capture_files.append(file_name)
 	return true
 
 
@@ -392,14 +414,15 @@ func _has_authored_observation() -> bool:
 	var surface := canvas.call("realtime_surface_state") as Dictionary
 	var observation: Dictionary = surface.get("observation", {}) if typeof(surface.get("observation", {})) == TYPE_DICTIONARY else {}
 	var beat: Dictionary = table.get("beat", {}) if typeof(table.get("beat", {})) == TYPE_DICTIONARY else {}
-	var passed := int(table.get("hand_number", 0)) == 1 \
+	var passed := int(table.get("hand_number", -1)) == 0 \
 		and str(table.get("phase", "")) == "draw" \
 		and not beat.is_empty() \
 		and ["line", "portrait", "timing"].has(str(observation.get("channel", ""))) \
 		and CrewPokerVisualSeedAuditScript.RESIDENTS.has(str(observation.get("member_id", "")))
 	acceptance_context["natural_tell"] = {
 		"passed": passed,
-		"hand_number": int(table.get("hand_number", 0)),
+		"hand_number": int(table.get("hand_number", -1)),
+		"hand_number_contract": "zero_based_active_first_hand",
 		"phase": str(table.get("phase", "")),
 		"member_id": str(observation.get("member_id", "")),
 		"channel": str(observation.get("channel", "")),
@@ -659,6 +682,7 @@ func _diagnostics_snapshot() -> Dictionary:
 		"current_attempt": current_attempt.duplicate(true),
 		"stage_history": stage_history.duplicate(true),
 		"failures": failure_messages.duplicate(),
+		"removed_stale_capture_files": removed_stale_capture_files.duplicate(),
 		"elapsed_msec": maxi(0, Time.get_ticks_msec() - started_msec) if started_msec > 0 else 0,
 		"timeout_msec": CAPTURE_TIMEOUT_MSEC,
 	}

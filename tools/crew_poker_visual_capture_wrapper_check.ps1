@@ -27,11 +27,12 @@ if ($wrapperSource -match '&\s+\$windowedGodot') {
 $captureSource = Get-Content -LiteralPath $capture -Raw
 $seedAuditSource = Get-Content -LiteralPath $seedAudit -Raw
 foreach ($requiredCaptureControl in @(
-    "CrewPokerVisualSeedAuditScript.find_seed",
-    'app.call("start_foundation_run", fixture_seed, {}, false)',
+    "CrewPokerVisualSeedAuditScript.audit_pinned_seed",
+    'app.call("start_foundation_run", FIXTURE_SEED, {}, false)',
     '"production_action_before"',
     '"production_action_after"',
-    "fixture_rng_untouched"
+    "fixture_rng_untouched",
+    'int(table.get("hand_number", -1)) == 0'
 )) {
     if (-not $captureSource.Contains($requiredCaptureControl)) {
         throw "Crew poker capture is missing bounded natural-tell control: $requiredCaptureControl"
@@ -46,7 +47,8 @@ if ([regex]::Matches($captureSource, '_handle_module_surface_action').Count -ne 
     throw "Every Crew poker production action must route through the one before/after diagnostic helper."
 }
 foreach ($requiredAuditControl in @(
-    "MAX_SEED_CANDIDATES := 32",
+    'FIXTURE_SEED := "CREW-POKER-PUNCHLINE-VISUAL-00"',
+    "audit_pinned_seed(library: ContentLibrary)",
     "source_run.start_new(seed_text)",
     "RunGeneratorScript.new(library)",
     "generator.next_environment(source_run)",
@@ -59,6 +61,14 @@ foreach ($requiredAuditControl in @(
 }
 if (($captureSource + $seedAuditSource) -match '\["beat"\]\s*=') {
     throw "Crew poker visual evidence must never inject a table beat."
+}
+foreach ($staleCaptureName in @(
+    "03_authored_subtle_tell_1280x720.png",
+    "04_reduced_motion_static_1280x720.png"
+)) {
+    if (-not $wrapperSource.Contains($staleCaptureName) -or -not $captureSource.Contains($staleCaptureName)) {
+        throw "Crew poker harness does not remove stale capture evidence: $staleCaptureName"
+    }
 }
 
 if (Test-Path -LiteralPath $manifestPath) {
