@@ -1035,6 +1035,35 @@ Require-TextInAny $foundationCheckFiles "_check_event_system_state_foundation" "
 Require-TextInAny $foundationCheckFiles "_check_m2_system_interaction_scenario" "Foundation tests must cover an M2 system interaction scenario."
 
 $visualQa = "tools/foundation_visual_qa.gd"
+$environmentInteractionController = "scripts/ui/environment_interaction_controller.gd"
+$environmentInteractionControllerText = Get-ProjectText $environmentInteractionController
+$environmentInteractionControllerApi = @(
+    "interactable_object_view_list",
+    "numbers_interactable_objects",
+    "game_hook_interactable_objects",
+    "home_interactable_objects",
+    "hook_interactable_objects",
+    "interactable_object",
+    "parent_home_return_interactable_object",
+    "casino_spatial_interactable_objects",
+    "environment_layer_interactable_objects",
+    "travel_leave_interactable_object",
+    "local_parent_home_door_travel_choice",
+    "casino_room_door_travel_choice",
+    "local_parent_home_door_kind",
+    "current_environment_archetype_id",
+    "parent_home_node_id",
+    "parent_home_parent_target_id"
+)
+foreach ($methodName in $environmentInteractionControllerApi) {
+    $methodPattern = "(?m)^static func " + [regex]::Escape($methodName) + "\("
+    if ($environmentInteractionControllerText -notmatch $methodPattern) {
+        $failures.Add("Environment interaction controller must expose public static API method: $methodName")
+    }
+}
+Require-Text $environmentInteractionController 'var silas_here: bool =' "Silas itinerary presence must keep an explicit bool type so the controller compiles under warnings-as-errors."
+Require-Text "scripts/ui/foundation_main.gd" "EnvironmentInteractionControllerScript.game_hook_interactable_objects" "Foundation UI must route Poker and other game hooks through the controller public API."
+Require-Text "scripts/ui/foundation_main.gd" "EnvironmentInteractionControllerScript.interactable_object_view_list" "Foundation UI must route Numbers and room interactables through the controller public API."
 Require-Text $visualQa '"interaction_mode": "visible_controls"' "Foundation visual QA must identify visible control interaction mode."
 Require-Text $visualQa '"core_flow_driver": "visible_canvas_and_controls"' "Foundation visual QA must drive the core flow through visible controls."
 Require-Text $visualQa '"direct_debug_helper_methods_used": false' "Foundation visual QA must declare that it avoids debug helper gameplay paths."
