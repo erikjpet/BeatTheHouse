@@ -2,28 +2,11 @@ class_name CoinPusherGame
 extends GameModule
 
 const STATE_SCHEMA := "coin_pusher_pile"
-const STATE_VERSION := 1
-const VARIATION_ID := "quarter_falls"
 const DROP_ACTION := "drop_quarter"
 const NUDGE_ACTION := "nudge_machine"
 const COLD_QUARTERS_ITEM_ID := "cold_quarters"
 const SHIM_ITEM_ID := "coin_return_shim"
 const RUMOR_CLASS := "pusher_pile"
-const PHASE_STEPS := 12
-const FORCE_ORDER := ["tap", "shove", "slam"]
-const DIRECTION_ORDER := ["left", "right", "front"]
-const SECURITY_BAND_DELTA := {
-	"lax": 2,
-	"relaxed": 1,
-	"loose": 1,
-	"normal": 0,
-	"low": 0,
-	"attentive": -1,
-	"tight": -1,
-	"strict": -2,
-	"high": -2,
-}
-const TELL_LABELS := ["steady", "cabinet rocks", "alarm chirps", "attendant looks over"]
 const SURFACE_SIZE := Vector2(900, 430)
 const C_BG := Color("#070b14")
 const C_CASE := Color("#182338")
@@ -95,12 +78,14 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var machine := _read_machine_state(run_state, environment)
 	var selected_lane := clampi(int(ui_state.get("coin_pusher_lane", int(machine.get("last_lane", _lane_count() / 2)))), 0, _lane_count() - 1)
-	var force := str(ui_state.get("coin_pusher_force", "tap"))
-	var direction := str(ui_state.get("coin_pusher_direction", "front"))
-	if not FORCE_ORDER.has(force):
-		force = "tap"
-	if not DIRECTION_ORDER.has(direction):
-		direction = "front"
+	var force_order := _force_order()
+	var direction_order := _direction_order()
+	var force := str(ui_state.get("coin_pusher_force", _default_force()))
+	var direction := str(ui_state.get("coin_pusher_direction", _default_direction()))
+	if not force_order.has(force):
+		force = _default_force()
+	if not direction_order.has(direction):
+		direction = _default_direction()
 	return GameModule.surface_spec({
 		"surface_renderer": "coin_pusher",
 		"surface_life": "coin_pusher_attract",
@@ -119,6 +104,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"coin_pusher_lane": selected_lane,
 		"coin_pusher_force": force,
 		"coin_pusher_direction": direction,
+		"coin_pusher_force_order": force_order,
+		"coin_pusher_direction_order": direction_order,
+		"coin_pusher_variation_id": _variation_id(),
+		"coin_pusher_phase_steps": _phase_steps(),
 		"coin_pusher_upper_phase": int(machine.get("upper_phase", 0)),
 		"coin_pusher_lower_phase": int(machine.get("lower_phase", 0)),
 		"coin_pusher_tray_value": int(machine.get("tray_value", 0)),
@@ -160,10 +149,12 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			next["coin_pusher_lane"] = clampi(index, 0, _lane_count() - 1)
 			return GameModule.surface_command({"ui_state": next, "preserve_surface_ui_state": true, "message": "Lane %d lined up." % (clampi(index, 0, _lane_count() - 1) + 1)})
 		"coin_pusher_force":
-			next["coin_pusher_force"] = str(FORCE_ORDER[clampi(index, 0, FORCE_ORDER.size() - 1)])
+			var force_order := _force_order()
+			next["coin_pusher_force"] = str(force_order[clampi(index, 0, force_order.size() - 1)])
 			return GameModule.surface_command({"ui_state": next, "preserve_surface_ui_state": true, "message": "%s force ready." % str(next["coin_pusher_force"]).capitalize()})
 		"coin_pusher_direction":
-			next["coin_pusher_direction"] = str(DIRECTION_ORDER[clampi(index, 0, DIRECTION_ORDER.size() - 1)])
+			var direction_order := _direction_order()
+			next["coin_pusher_direction"] = str(direction_order[clampi(index, 0, direction_order.size() - 1)])
 			return GameModule.surface_command({"ui_state": next, "preserve_surface_ui_state": true, "message": "%s nudge lined up." % str(next["coin_pusher_direction"]).capitalize()})
 		"coin_pusher_drop":
 			return GameModule.surface_command({"ui_state": next, "action_id": DROP_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "set_stake": _drop_cost(), "preserve_surface_ui_state": true, "message": "Quarter committed."})
@@ -295,12 +286,14 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 	# Staff memory predating this action may restore its floor. A hard alarm
 	# created by this action starts watching from the following action onward.
 	var staff_watch_heat := _staff_watch_suspicion_delta(run_state, machine)
-	var force := str(ui_state.get("coin_pusher_force", "tap"))
-	var direction := str(ui_state.get("coin_pusher_direction", "front"))
-	if not FORCE_ORDER.has(force):
-		force = "tap"
-	if not DIRECTION_ORDER.has(direction):
-		direction = "front"
+	var force_order := _force_order()
+	var direction_order := _direction_order()
+	var force := str(ui_state.get("coin_pusher_force", _default_force()))
+	var direction := str(ui_state.get("coin_pusher_direction", _default_direction()))
+	if not force_order.has(force):
+		force = _default_force()
+	if not direction_order.has(direction):
+		direction = _default_direction()
 	var lane := clampi(int(ui_state.get("coin_pusher_lane", machine.get("last_lane", _lane_count() / 2))), 0, _lane_count() - 1)
 	var timing_phase := int(ui_state.get("coin_pusher_timing_phase", machine.get("lower_phase", 0)))
 	var phase_distance := _phase_distance(timing_phase, _clean_nudge_phase())
@@ -312,7 +305,7 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 	var tolerance_before := int(machine.get("alarm_tolerance_remaining", 1))
 	var previous_tell := int(machine.get("tell_rung", 0))
 	machine["alarm_tolerance_remaining"] = tolerance_before - tolerance_cost
-	var push_strength := authored_push if clean else maxi(0, authored_push - 2)
+	var push_strength := authored_push if clean else maxi(0, authored_push - _mistimed_push_penalty())
 	if force == "slam":
 		push_strength += _slam_bonus_push()
 	var settle := _settle_shelves(machine, rng, push_strength, lane, true, direction)
@@ -359,7 +352,7 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 		"suspicion_delta": total_heat, "deltas": deltas, "won": payout > 0, "message": message,
 		"skill_outcome": "clean_drop" if clean else "alarm" if alarmed else "wasted_tolerance",
 		"skill_grade": "perfect" if clean else "blown" if alarmed else "partial",
-		"skill_accuracy": 100 if clean else maxi(0, 70 - phase_distance * 12),
+		"skill_accuracy": 100 if clean else maxi(0, _skill_accuracy_base() - phase_distance * _skill_accuracy_phase_penalty()),
 		"base_suspicion_delta": heat,
 	})
 	result["host_apply_result"] = true
@@ -398,12 +391,12 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	var tolerance := maxi(1, base_tolerance + _security_tolerance_delta(environment, run_state))
 	var machine := {
 		"schema": STATE_SCHEMA,
-		"version": STATE_VERSION,
-		"variation_id": VARIATION_ID,
+		"version": _state_version(),
+		"variation_id": _variation_id(),
 		"lanes": lanes,
 		"riders": _seed_prize_riders(environment, local_rng),
-		"upper_phase": local_rng.randi_range(0, PHASE_STEPS - 1),
-		"lower_phase": local_rng.randi_range(0, PHASE_STEPS - 1),
+		"upper_phase": local_rng.randi_range(0, _phase_steps() - 1),
+		"lower_phase": local_rng.randi_range(0, _phase_steps() - 1),
 		"action_count": 0,
 		"last_lane": _lane_count() / 2,
 		"tray_value": 0,
@@ -439,7 +432,7 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 	var reset_token := _scenario_reset_token(environment)
 	if machine.is_empty() or str(machine.get("schema", "")) != STATE_SCHEMA:
 		machine = _generate_machine_state(run_state, environment)
-	elif int(machine.get("version", 0)) < STATE_VERSION:
+	elif int(machine.get("version", 0)) < _state_version():
 		machine = _normalize_machine_state(machine)
 	elif not reset_token.is_empty() and reset_token != str(machine.get("scenario_reset_token", "")):
 		machine = _generate_machine_state(run_state, environment)
@@ -481,7 +474,7 @@ func _game_states(environment: Dictionary) -> Dictionary:
 func _normalize_machine_state(source: Dictionary) -> Dictionary:
 	var machine := source.duplicate(true)
 	machine["schema"] = STATE_SCHEMA
-	machine["version"] = STATE_VERSION
+	machine["version"] = _state_version()
 	for key in ["tray_value", "total_cost", "total_payout", "action_count", "tell_rung", "suspicion_floor"]:
 		machine[key] = maxi(0, int(machine.get(key, 0)))
 	machine["staff_watch_memory"] = bool(machine.get("staff_watch_memory", false))
@@ -492,7 +485,7 @@ func _normalize_machine_state(source: Dictionary) -> Dictionary:
 func _settle_shelves(machine: Dictionary, rng: RngStream, push_strength: int, aimed_lane: int, from_nudge: bool, direction: String = "front") -> Dictionary:
 	var payout := 0
 	var prizes: Array = []
-	var passes := clampi(push_strength, 0, 6)
+	var passes := clampi(push_strength, 0, _max_settle_passes())
 	for pass_index in range(passes):
 		for lane_index in range(_lane_count()):
 			if from_nudge and not _nudge_affects_lane(direction, aimed_lane, lane_index):
@@ -500,10 +493,10 @@ func _settle_shelves(machine: Dictionary, rng: RngStream, push_strength: int, ai
 			for cell_index in range(_cell_count()):
 				var cell := _cell(machine, lane_index, cell_index)
 				var phase := int(machine.get("lower_phase" if cell_index < _cell_count() / 2 else "upper_phase", 0))
-				var threshold := _cell_capacity() + (1 if not _phase_is_forward(phase) else 0)
+				var threshold := _cell_capacity() + (_retracted_stack_threshold_bonus() if not _phase_is_forward(phase) else 0)
 				if int(cell.get("height", 0)) <= threshold:
 					continue
-				var move_count := mini(int(cell.get("height", 0)) - threshold, 1 + (1 if push_strength >= 4 and pass_index == 0 else 0))
+				var move_count := mini(int(cell.get("height", 0)) - threshold, 1 + (_strong_push_extra_coins() if push_strength >= _strong_push_threshold() and pass_index == 0 else 0))
 				if rng.randi_range(1, 100) > _push_chance(phase, from_nudge):
 					continue
 				cell["height"] = maxi(0, int(cell.get("height", 0)) - move_count)
@@ -580,8 +573,8 @@ func _update_edge_hangers(machine: Dictionary) -> void:
 
 
 func _advance_shelves(machine: Dictionary) -> void:
-	machine["upper_phase"] = posmod(int(machine.get("upper_phase", 0)) + _upper_phase_step(), PHASE_STEPS)
-	machine["lower_phase"] = posmod(int(machine.get("lower_phase", 0)) + _lower_phase_step(), PHASE_STEPS)
+	machine["upper_phase"] = posmod(int(machine.get("upper_phase", 0)) + _upper_phase_step(), _phase_steps())
+	machine["lower_phase"] = posmod(int(machine.get("lower_phase", 0)) + _lower_phase_step(), _phase_steps())
 
 
 func _drop_hits_gutter(lane: int, phase: int, rng: RngStream) -> bool:
@@ -608,7 +601,7 @@ func _direction_matches_hanger(machine: Dictionary, direction: String, lane: int
 
 func _nudge_affects_lane(direction: String, aimed_lane: int, lane: int) -> bool:
 	if direction == "front":
-		return abs(lane - aimed_lane) <= 1
+		return abs(lane - aimed_lane) <= _front_nudge_lane_radius()
 	if direction == "left":
 		return lane <= _lane_count() / 2
 	return lane >= _lane_count() / 2
@@ -621,10 +614,10 @@ func _security_tolerance_delta(environment: Dictionary, run_state: RunState = nu
 	var sweep: Dictionary = channels.get("police_sweep", {}) if typeof(channels.get("police_sweep", {})) == TYPE_DICTIONARY else {}
 	var direct_delta := 0
 	if sweep.is_empty():
-		direct_delta = int(SECURITY_BAND_DELTA.get(band, 0)) + int(security.get("pusher_alarm_tolerance_band_delta", 0))
+		direct_delta = _security_band_delta(band) + int(security.get("pusher_alarm_tolerance_band_delta", 0))
 	else:
 		var base_band := str(sweep.get("base_machine_alarm_tolerance_band", "normal")).to_lower()
-		direct_delta = int(SECURITY_BAND_DELTA.get(base_band, 0)) + int(sweep.get("pusher_alarm_tolerance_band_delta", security.get("pusher_alarm_tolerance_band_delta", 0)))
+		direct_delta = _security_band_delta(base_band) + int(sweep.get("pusher_alarm_tolerance_band_delta", security.get("pusher_alarm_tolerance_band_delta", 0)))
 	var adjacent_delta := _adjacent_scenario_tolerance_delta(run_state)
 	return direct_delta if adjacent_delta == 0 else mini(direct_delta, adjacent_delta)
 
@@ -652,7 +645,7 @@ func _adjacent_scenario_tolerance_delta(run_state: RunState) -> int:
 		var hooks: Dictionary = mutations.get("hook_flags", {}) if typeof(mutations.get("hook_flags", {})) == TYPE_DICTIONARY else {}
 		var nearby_band := str(hooks.get("nearby_alarm_tolerance_band", "")).to_lower()
 		if not nearby_band.is_empty():
-			strictest_delta = mini(strictest_delta, int(SECURITY_BAND_DELTA.get(nearby_band, 0)))
+			strictest_delta = mini(strictest_delta, _security_band_delta(nearby_band))
 	return strictest_delta
 
 
@@ -669,16 +662,18 @@ func _tell_rung(machine: Dictionary) -> int:
 
 
 func _tell_label(rung: int) -> String:
-	return str(TELL_LABELS[clampi(rung, 0, TELL_LABELS.size() - 1)])
+	var labels := _tell_labels()
+	return str(labels[clampi(rung, 0, labels.size() - 1)])
 
 
 func _phase_distance(a: int, b: int) -> int:
-	var direct: int = abs(posmod(a, PHASE_STEPS) - posmod(b, PHASE_STEPS))
-	return mini(direct, PHASE_STEPS - direct)
+	var steps := _phase_steps()
+	var direct: int = abs(posmod(a, steps) - posmod(b, steps))
+	return mini(direct, steps - direct)
 
 
 func _phase_is_forward(phase: int) -> bool:
-	return _phase_distance(phase, _clean_nudge_phase()) <= 2
+	return _phase_distance(phase, _clean_nudge_phase()) <= _forward_phase_window()
 
 
 func _shim_available(run_state: RunState, machine: Dictionary) -> bool:
@@ -752,7 +747,7 @@ func _seed_prize_riders(environment: Dictionary, rng: RngStream) -> Array:
 			"item_id": item_id,
 			"cash_value": maxi(0, int(picked.get("cash_value", 0))),
 			"lane": rng.randi_range(0, _lane_count() - 1),
-			"cell": rng.randi_range(1, mini(3, _cell_count() - 1)),
+			"cell": rng.randi_range(1, mini(_prize_initial_cell_max(), _cell_count() - 1)),
 			"push": rng.randi_range(0, maxi(0, _rider_push_threshold() - 1)),
 		})
 	return riders
@@ -866,7 +861,7 @@ func _digest_state(machine: Dictionary) -> Dictionary:
 
 
 func _draw_shelf(surface, y: float, phase: int, color: Color) -> void:
-	var offset := sin(float(phase) / float(PHASE_STEPS) * TAU) * 14.0
+	var offset := sin(float(phase) / float(_phase_steps()) * TAU) * 14.0
 	surface.draw_rect(Rect2(82 + offset, y, 505, 14), color)
 	surface.draw_rect(Rect2(82 + offset, y, 505, 14), C_TEXT, false, 1)
 
@@ -939,17 +934,19 @@ func _draw_console(surface, state: Dictionary) -> void:
 		surface.surface_label("LOCKED TONIGHT", Vector2(678, 128), 13, C_HANG)
 		surface.surface_label("Back out. Other games stay open.", Vector2(678, 152), 7, C_TEXT)
 		return
-	for index in range(FORCE_ORDER.size()):
+	var force_order: Array = state.get("coin_pusher_force_order", _force_order()) if typeof(state.get("coin_pusher_force_order", [])) == TYPE_ARRAY else _force_order()
+	for index in range(force_order.size()):
 		var rect := Rect2(676 + index * 67, 130, 61, 28)
-		var selected := str(state.get("coin_pusher_force", "tap")) == str(FORCE_ORDER[index])
+		var selected := str(state.get("coin_pusher_force", _default_force())) == str(force_order[index])
 		surface.draw_rect(rect, C_HANG if selected else C_CASE)
-		surface.surface_label_centered(str(FORCE_ORDER[index]).to_upper(), rect, 7, C_BG if selected else C_TEXT)
+		surface.surface_label_centered(str(force_order[index]).to_upper(), rect, 7, C_BG if selected else C_TEXT)
 		surface.surface_add_exact_hit(rect, "coin_pusher_force", index)
-	for index in range(DIRECTION_ORDER.size()):
+	var direction_order: Array = state.get("coin_pusher_direction_order", _direction_order()) if typeof(state.get("coin_pusher_direction_order", [])) == TYPE_ARRAY else _direction_order()
+	for index in range(direction_order.size()):
 		var rect := Rect2(676 + index * 67, 168, 61, 28)
-		var selected := str(state.get("coin_pusher_direction", "front")) == str(DIRECTION_ORDER[index])
+		var selected := str(state.get("coin_pusher_direction", _default_direction())) == str(direction_order[index])
 		surface.draw_rect(rect, C_TEAL if selected else C_CASE)
-		surface.surface_label_centered(str(DIRECTION_ORDER[index]).to_upper(), rect, 7, C_BG if selected else C_TEXT)
+		surface.surface_label_centered(str(direction_order[index]).to_upper(), rect, 7, C_BG if selected else C_TEXT)
 		surface.surface_add_exact_hit(rect, "coin_pusher_direction", index)
 	var drop_rect := Rect2(676, 218, 194, 54)
 	surface.draw_rect(drop_rect, C_COIN)
@@ -985,6 +982,59 @@ func _tuning() -> Dictionary:
 
 func _int_tuning(key: String, fallback: int) -> int:
 	return int(_tuning().get(key, fallback))
+
+
+func _string_array_tuning(key: String, fallback: Array) -> Array:
+	var source: Variant = _tuning().get(key, [])
+	var result: Array = []
+	if typeof(source) == TYPE_ARRAY:
+		for value in source:
+			var text := str(value)
+			if not text.is_empty() and not result.has(text):
+				result.append(text)
+	return result if not result.is_empty() else fallback.duplicate()
+
+
+func _state_version() -> int:
+	return maxi(1, _int_tuning("state_schema_version", 1))
+
+
+func _variation_id() -> String:
+	var authored := str(_tuning().get("variation_id", "quarter_falls"))
+	return authored if not authored.is_empty() else "quarter_falls"
+
+
+func _phase_steps() -> int:
+	return maxi(2, _int_tuning("phase_steps", 12))
+
+
+func _force_order() -> Array:
+	return _string_array_tuning("force_order", ["tap", "shove", "slam"])
+
+
+func _direction_order() -> Array:
+	return _string_array_tuning("direction_order", ["left", "right", "front"])
+
+
+func _default_force() -> String:
+	var order := _force_order()
+	var authored := str(_tuning().get("default_force", order[0]))
+	return authored if order.has(authored) else str(order[0])
+
+
+func _default_direction() -> String:
+	var order := _direction_order()
+	var authored := str(_tuning().get("default_direction", order[0]))
+	return authored if order.has(authored) else str(order[0])
+
+
+func _tell_labels() -> Array:
+	return _string_array_tuning("tell_labels", ["steady", "cabinet rocks", "alarm chirps", "attendant looks over"])
+
+
+func _security_band_delta(band: String) -> int:
+	var deltas: Dictionary = _tuning().get("security_band_deltas", {}) if typeof(_tuning().get("security_band_deltas", {})) == TYPE_DICTIONARY else {}
+	return int(deltas.get(band, 0))
 
 
 func _force_tolerance_cost(force: String) -> int:
@@ -1038,16 +1088,64 @@ func _lower_phase_step() -> int:
 
 
 func _clean_nudge_phase() -> int:
-	return posmod(_int_tuning("clean_nudge_phase", 3), PHASE_STEPS)
+	return posmod(_int_tuning("clean_nudge_phase", 3), _phase_steps())
 
 
 func _clean_window() -> int:
-	return clampi(_int_tuning("clean_nudge_window_steps", 1), 0, PHASE_STEPS / 2)
+	return clampi(_int_tuning("clean_nudge_window_steps", 1), 0, _phase_steps() / 2)
 
 
 func _push_chance(phase: int, from_nudge: bool) -> int:
 	var base := _int_tuning("nudge_push_percent", 94) if from_nudge else _int_tuning("shelf_push_percent", 78)
-	return clampi(base + (8 if _phase_is_forward(phase) else -10), 1, 100)
+	return clampi(base + (_forward_push_bonus() if _phase_is_forward(phase) else -_retracted_push_penalty()), 1, 100)
+
+
+func _mistimed_push_penalty() -> int:
+	return maxi(0, _int_tuning("mistimed_push_penalty", 2))
+
+
+func _skill_accuracy_base() -> int:
+	return clampi(_int_tuning("skill_accuracy_base", 70), 0, 100)
+
+
+func _skill_accuracy_phase_penalty() -> int:
+	return maxi(0, _int_tuning("skill_accuracy_phase_penalty", 12))
+
+
+func _max_settle_passes() -> int:
+	return maxi(1, _int_tuning("max_settle_passes", 6))
+
+
+func _retracted_stack_threshold_bonus() -> int:
+	return maxi(0, _int_tuning("retracted_stack_threshold_bonus", 1))
+
+
+func _strong_push_threshold() -> int:
+	return maxi(1, _int_tuning("strong_push_threshold", 4))
+
+
+func _strong_push_extra_coins() -> int:
+	return maxi(0, _int_tuning("strong_push_extra_coins", 1))
+
+
+func _front_nudge_lane_radius() -> int:
+	return maxi(0, _int_tuning("front_nudge_lane_radius", 1))
+
+
+func _forward_phase_window() -> int:
+	return clampi(_int_tuning("forward_phase_window_steps", 2), 0, _phase_steps() / 2)
+
+
+func _forward_push_bonus() -> int:
+	return maxi(0, _int_tuning("forward_push_bonus_percent", 8))
+
+
+func _retracted_push_penalty() -> int:
+	return maxi(0, _int_tuning("retracted_push_penalty_percent", 10))
+
+
+func _prize_initial_cell_max() -> int:
+	return maxi(1, _int_tuning("prize_initial_cell_max", 3))
 
 
 func _gutter_edge_percent() -> int:

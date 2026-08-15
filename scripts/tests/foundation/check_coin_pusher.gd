@@ -12,6 +12,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	var game: GameModule = CoinPusherGameScript.new()
 	game.setup(definition, library)
 	_check_coin_pusher_data_contract(library, definition, failures)
+	_check_coin_pusher_definition_routing(library, definition, failures)
 	_check_coin_pusher_surface_liveness(game, failures)
 	_check_coin_pusher_read_boundaries(game, failures)
 	_check_coin_pusher_determinism(game, failures)
@@ -33,7 +34,15 @@ func _check_coin_pusher_data_contract(library: ContentLibrary, definition: Dicti
 	if pusher_group.is_empty() or not bool(pusher_group.get("default_enabled", false)) or not _string_array(pusher_group.get("game_ids", [])).has("coin_pusher"):
 		failures.append("Quarter Falls coin_pusher_pack is missing, disabled by default, or does not trace to the game id.")
 	var tuning: Dictionary = definition.get("coin_pusher_tuning", {}) if typeof(definition.get("coin_pusher_tuning", {})) == TYPE_DICTIONARY else {}
-	for key in ["lane_count", "cell_count", "cell_capacity", "upper_phase_step", "lower_phase_step", "nudge_forces", "hard_alarm_heat", "documented_ev_band", "scenario_reset_contract", "prize_riders"]:
+	for key in [
+		"state_schema_version", "variation_id", "phase_steps", "force_order", "default_force", "direction_order", "default_direction",
+		"security_band_deltas", "tell_labels", "lane_count", "cell_count", "cell_capacity", "upper_phase_step", "lower_phase_step",
+		"clean_nudge_phase", "clean_nudge_window_steps", "forward_phase_window_steps", "nudge_forces", "shelf_push_percent",
+		"nudge_push_percent", "forward_push_bonus_percent", "retracted_push_penalty_percent", "mistimed_push_penalty",
+		"max_settle_passes", "retracted_stack_threshold_bonus", "strong_push_threshold", "strong_push_extra_coins",
+		"front_nudge_lane_radius", "skill_accuracy_base", "skill_accuracy_phase_penalty", "hard_alarm_heat",
+		"prize_initial_cell_max", "documented_ev_band", "scenario_reset_contract", "prize_riders",
+	]:
 		if not tuning.has(key):
 			failures.append("Quarter Falls tuning is missing %s." % key)
 	var reset_contract: Dictionary = tuning.get("scenario_reset_contract", {}) if typeof(tuning.get("scenario_reset_contract", {})) == TYPE_DICTIONARY else {}
@@ -64,6 +73,55 @@ func _check_coin_pusher_data_contract(library: ContentLibrary, definition: Dicti
 		var pool: Array = library.environment_archetype(untouched_id).get("game_pool", [])
 		if pool.has("coin_pusher"):
 			failures.append("Quarter Falls leaked into non-target venue %s." % untouched_id)
+
+
+func _check_coin_pusher_definition_routing(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
+	var fixture_definition := definition.duplicate(true)
+	var tuning: Dictionary = fixture_definition.get("coin_pusher_tuning", {}).duplicate(true)
+	tuning["state_schema_version"] = 7
+	tuning["variation_id"] = "fixture_route_identity"
+	tuning["phase_steps"] = 8
+	tuning["force_order"] = ["shove", "tap", "slam"]
+	tuning["default_force"] = "shove"
+	tuning["direction_order"] = ["right", "front", "left"]
+	tuning["default_direction"] = "right"
+	tuning["tell_labels"] = ["quiet", "tilting", "authored chirp", "watched"]
+	tuning["security_band_deltas"] = {"normal": 0, "lax": 4, "strict": -3}
+	tuning["prize_count_min"] = 0
+	tuning["prize_count_max"] = 0
+	fixture_definition["coin_pusher_tuning"] = tuning
+	var routed_game: GameModule = CoinPusherGameScript.new()
+	routed_game.setup(fixture_definition, library)
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("PUSHER-DEFINITION-ROUTING")
+	var environment := _coin_pusher_environment("pusher_definition_routing")
+	var generated := routed_game.generate_environment_state(run_state, environment, _configured_rng(1701))
+	environment["game_states"] = {"coin_pusher": generated}
+	run_state.set_environment(environment)
+	var surface := routed_game.surface_state(run_state, run_state.current_environment)
+	if int(generated.get("version", 0)) != 7 or str(generated.get("variation_id", "")) != "fixture_route_identity":
+		failures.append("Quarter Falls generated state ignored its authored schema version or variation identity.")
+	if int(generated.get("upper_phase", -1)) >= 8 or int(generated.get("lower_phase", -1)) >= 8 \
+			or int(surface.get("coin_pusher_phase_steps", 0)) != 8 or str(surface.get("coin_pusher_variation_id", "")) != "fixture_route_identity":
+		failures.append("Quarter Falls phase domain or surface identity was not routed from the game definition.")
+	if str(surface.get("coin_pusher_force", "")) != "shove" or str(surface.get("coin_pusher_direction", "")) != "right" \
+			or JSON.stringify(surface.get("coin_pusher_force_order", [])) != JSON.stringify(["shove", "tap", "slam"]) \
+			or JSON.stringify(surface.get("coin_pusher_direction_order", [])) != JSON.stringify(["right", "front", "left"]):
+		failures.append("Quarter Falls controls ignored authored force/direction defaults or ordering.")
+	var force_command := routed_game.surface_action_command("coin_pusher_force", 0, false, {}, run_state, run_state.current_environment)
+	var direction_command := routed_game.surface_action_command("coin_pusher_direction", 0, false, {}, run_state, run_state.current_environment)
+	if str((force_command.get("ui_state", {}) as Dictionary).get("coin_pusher_force", "")) != "shove" \
+			or str((direction_command.get("ui_state", {}) as Dictionary).get("coin_pusher_direction", "")) != "right":
+		failures.append("Quarter Falls action selection did not consume authored force/direction ordering.")
+	generated["tell_rung"] = 2
+	surface = routed_game.surface_state(run_state, run_state.current_environment)
+	if str(surface.get("coin_pusher_tell", "")) != "authored chirp":
+		failures.append("Quarter Falls tell presentation ignored its authored label ladder.")
+	var lax_environment := _coin_pusher_environment("pusher_definition_lax")
+	lax_environment["security_profile"] = {"machine_alarm_tolerance_band": "lax"}
+	var lax_machine := routed_game.generate_environment_state(run_state, lax_environment, _configured_rng(1701))
+	if int(lax_machine.get("tolerance_modifier", 0)) != 4:
+		failures.append("Quarter Falls security-band tolerance ignored the authored delta table.")
 
 
 func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> void:
