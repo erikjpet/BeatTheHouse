@@ -163,6 +163,18 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 	return {"handled": false}
 
 
+func surface_motion_signature(surface, surface_state: Dictionary) -> Dictionary:
+	var motion_phase := float(surface.surface_flicker()) if surface != null and surface.has_method("surface_flicker") else 0.0
+	var rider_lane := 0
+	var riders: Array = surface_state.get("coin_pusher_riders", []) if typeof(surface_state.get("coin_pusher_riders", [])) == TYPE_ARRAY else []
+	if not riders.is_empty() and typeof(riders[0]) == TYPE_DICTIONARY:
+		rider_lane = int((riders[0] as Dictionary).get("lane", 0))
+	return {
+		"attract_shift_milli": int(round(sin(motion_phase * 2.0) * 2500.0)),
+		"rider_bob_milli": int(round(sin(motion_phase * 3.0 + float(rider_lane) * 0.7) * 2500.0)),
+	}
+
+
 func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(state.get("surface_renderer", "")) != "coin_pusher":
 		return false

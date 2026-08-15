@@ -82,7 +82,10 @@ func _run() -> void:
 		_fail("Could not access reduced-motion settings.")
 	else:
 		settings.reduce_motion = true
-		app.call("_apply_accessibility_settings")
+		# Exercise the same settings boundary as a real user. The low-level
+		# accessibility helper styles controls, while this boundary also rebuilds
+		# the active game snapshot with the live host-owned preference.
+		app.call("_on_settings_applied")
 		await _settle(3)
 		await _capture_surface(
 			"03_reduced_motion_1280x720.png",
@@ -90,7 +93,7 @@ func _run() -> void:
 			{"expected_tell_rung": 2, "expected_locked": false, "expected_reduce_motion": true}
 		)
 		settings.reduce_motion = false
-		app.call("_apply_accessibility_settings")
+		app.call("_on_settings_applied")
 		await _settle(3)
 
 	machine = _machine(run_state)
@@ -172,13 +175,30 @@ func _capture_surface(file_name: String, capture_id: String, expected: Dictionar
 	await RenderingServer.frame_post_draw
 	var state: Dictionary = canvas.call("realtime_surface_state")
 	var runtime: Dictionary = canvas.call("surface_runtime_status")
+	var expected_reduce_motion := bool(expected.get("expected_reduce_motion", false))
+	var motion_before: Dictionary = {}
+	var motion_after: Dictionary = {}
+	var animation_redraw_count := -1
+	var motion_frozen := not expected_reduce_motion
+	if expected_reduce_motion:
+		canvas.call("reset_performance_counters")
+		motion_before = canvas.call("debug_surface_motion_sample")
+		for _frame_index in range(18):
+			canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
+		motion_after = canvas.call("debug_surface_motion_sample")
+		runtime = canvas.call("surface_runtime_status")
+		animation_redraw_count = int(runtime.get("surface_animation_redraw_count", -1))
+		motion_frozen = JSON.stringify(motion_before) == JSON.stringify(motion_after) \
+			and animation_redraw_count == 0 \
+			and not bool(runtime.get("surface_continuous_redraw_active", true))
 	var valid := str(state.get("surface_renderer", "")) == "coin_pusher" \
 		and (state.get("coin_pusher_cells", []) as Array).size() == 30 \
 		and (state.get("coin_pusher_lanes", []) as Array).size() == 5 \
 		and (state.get("coin_pusher_riders", []) as Array).size() == 1 \
 		and int(state.get("coin_pusher_tell_rung", -1)) == int(expected.get("expected_tell_rung", -2)) \
 		and bool(state.get("coin_pusher_locked", false)) == bool(expected.get("expected_locked", false)) \
-		and bool(runtime.get("reduce_motion", false)) == bool(expected.get("expected_reduce_motion", false))
+		and bool(runtime.get("reduce_motion", false)) == expected_reduce_motion \
+		and motion_frozen
 	if not valid:
 		_fail("Quarter Falls surface state did not match %s expectations." % capture_id)
 	var saved := await _save_viewport(file_name)
@@ -194,7 +214,13 @@ func _capture_surface(file_name: String, capture_id: String, expected: Dictionar
 		"tell_rung": int(state.get("coin_pusher_tell_rung", -1)),
 		"tell": str(state.get("coin_pusher_tell", "")),
 		"locked": bool(state.get("coin_pusher_locked", false)),
+		"expected_reduce_motion": expected_reduce_motion,
 		"reduce_motion": bool(runtime.get("reduce_motion", false)),
+		"motion_before": motion_before,
+		"motion_after": motion_after,
+		"motion_frozen": motion_frozen,
+		"animation_redraw_count": animation_redraw_count,
+		"continuous_redraw_active": bool(runtime.get("surface_continuous_redraw_active", false)),
 	})
 
 
@@ -245,13 +271,42 @@ func _save_viewport(file_name: String) -> bool:
 
 
 func _write_manifest() -> void:
+	var required_capture_ids := ["normal_pile_rider", "tell_alarm_chirps", "reduced_motion", "hard_alarm_lockdown", "room_available_after_alarm"]
+	var valid_capture_count := 0
+	var saved_capture_count := 0
+	var captured_ids: Array = []
+	var reduced_motion_proof_passed := false
+	for capture in captures:
+		var capture_id := str(capture.get("id", ""))
+		captured_ids.append(capture_id)
+		if bool(capture.get("state_valid", false)):
+			valid_capture_count += 1
+		if bool(capture.get("saved", false)):
+			saved_capture_count += 1
+		if capture_id == "reduced_motion":
+			reduced_motion_proof_passed = bool(capture.get("reduce_motion", false)) \
+				and bool(capture.get("motion_frozen", false)) \
+				and int(capture.get("animation_redraw_count", -1)) == 0 \
+				and not bool(capture.get("continuous_redraw_active", true))
+	var manifest_authoritative_pass := captures.size() == required_capture_ids.size() \
+		and JSON.stringify(captured_ids) == JSON.stringify(required_capture_ids) \
+		and valid_capture_count == required_capture_ids.size() \
+		and saved_capture_count == required_capture_ids.size() \
+		and reduced_motion_proof_passed
+	if not manifest_authoritative_pass:
+		_fail("Quarter Falls focused capture manifest did not satisfy every required visual proof.")
 	var manifest := {
 		"fixture": "Quarter Falls canonical visual QA",
 		"seed": FIXTURE_SEED,
 		"environment_id": FIXTURE_ID,
 		"capture_size": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y},
 		"deterministic_presentation_flicker": 0.75,
-		"passed": not failed and captures.size() == 5,
+		"required_capture_ids": required_capture_ids,
+		"required_capture_count": required_capture_ids.size(),
+		"valid_capture_count": valid_capture_count,
+		"saved_capture_count": saved_capture_count,
+		"reduced_motion_proof_passed": reduced_motion_proof_passed,
+		"passed": not failed and manifest_authoritative_pass,
 		"captures": captures,
 	}
 	var file := FileAccess.open("%s/manifest.json" % out_dir, FileAccess.WRITE)

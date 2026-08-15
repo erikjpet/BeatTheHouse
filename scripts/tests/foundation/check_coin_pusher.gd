@@ -170,6 +170,10 @@ func _check_coin_pusher_canonical_probe(failures: Array) -> void:
 	if probe_source.is_empty() or not probe_source.contains('"coin_pusher"') \
 			or not probe_source.contains('"drop_quarter"') or not probe_source.contains('"nudge_machine"'):
 		failures.append("Canonical determinism does not include a real Quarter Falls drop-and-nudge sequence.")
+	var capture_source := FileAccess.get_file_as_string("res://tools/coin_pusher_visual_capture.gd")
+	for required_text in ["_on_settings_applied", "debug_surface_motion_sample", "motion_before", "motion_after", "animation_redraw_count == 0", "manifest_authoritative_pass"]:
+		if not capture_source.contains(required_text):
+			failures.append("Quarter Falls focused capture is missing reduced-motion proof seam %s." % required_text)
 
 
 func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> void:
@@ -215,6 +219,39 @@ func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> v
 		failures.append("Quarter Falls visible prize rider did not move with presentation time.")
 	if game.deterministic_state_digest(run_state.current_environment) != digest_before_render:
 		failures.append("Quarter Falls rider/approach rendering mutated the persisted pile per frame.")
+	_check_coin_pusher_reduced_motion_freeze(game, surface, failures)
+
+
+func _check_coin_pusher_reduced_motion_freeze(game: GameModule, surface: Dictionary, failures: Array) -> void:
+	var reduced_surface := surface.duplicate(true)
+	reduced_surface["reduce_motion"] = true
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.size = Vector2(ArtContractsScript.GAME_BOARD_SIZE)
+	root.add_child(canvas)
+	canvas.call("set_game_module", game)
+	canvas.call("render_game_snapshot", reduced_surface)
+	canvas.call("reset_performance_counters")
+	var state_before: Dictionary = canvas.call("realtime_surface_state").duplicate(true)
+	var motion_before: Dictionary = canvas.call("debug_surface_motion_sample")
+	for _frame_index in range(18):
+		canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
+	var state_after: Dictionary = canvas.call("realtime_surface_state")
+	var motion_after: Dictionary = canvas.call("debug_surface_motion_sample")
+	var runtime: Dictionary = canvas.call("surface_runtime_status")
+	if not bool(runtime.get("reduce_motion", false)):
+		failures.append("Quarter Falls reduced-motion preference did not reach the live surface canvas.")
+	if JSON.stringify(motion_before) != JSON.stringify(motion_after):
+		failures.append("Quarter Falls reduced motion did not freeze its real shelf/rider presentation sample.")
+	if int(runtime.get("surface_animation_redraw_count", -1)) != 0 or bool(runtime.get("surface_continuous_redraw_active", true)):
+		failures.append("Quarter Falls reduced motion still scheduled continuous surface redraws.")
+	if JSON.stringify(state_before) != JSON.stringify(state_after) \
+			or str(state_after.get("surface_renderer", "")) != "coin_pusher" \
+			or (state_after.get("coin_pusher_cells", []) as Array).size() != (state_before.get("coin_pusher_cells", []) as Array).size() \
+			or (state_after.get("coin_pusher_riders", []) as Array).size() != (state_before.get("coin_pusher_riders", []) as Array).size() \
+			or int(state_after.get("coin_pusher_tell_rung", -1)) != int(state_before.get("coin_pusher_tell_rung", -2)):
+		failures.append("Quarter Falls reduced motion hid or changed the visible pile state.")
+	root.remove_child(canvas)
+	canvas.free()
 
 
 func _check_coin_pusher_read_boundaries(game: GameModule, failures: Array) -> void:
