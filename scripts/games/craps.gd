@@ -10,6 +10,22 @@ const ROLL_CHANNEL := "craps_roll"
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result := super.enter(run_state, environment)
 	var table := _table_state_preview(run_state, environment)
+	if _is_street_variant(environment):
+		var variant := _street_config()
+		var guidance := _dict(variant.get("guidance", {}))
+		var seen_flag := str(guidance.get("seen_flag", "street_craps_guidance_seen"))
+		var lines := _string_array(guidance.get("lines", []))
+		if run_state != null and not bool(run_state.narrative_flags.get(seen_flag, false)) and not lines.is_empty():
+			var line_index := _stable_hash("%s:%s" % [str(run_state.seed_value), seen_flag]) % lines.size()
+			result["message"] = "%s palms the dice. \"%s\"" % [str(table.get("dealer_name", "The caller")), str(lines[line_index])]
+			run_state.narrative_flags[seen_flag] = true
+		else:
+			result["message"] = "%s opens the chalk ring. Cash only, %d to %d." % [
+				str(table.get("dealer_name", "The caller")),
+				int(table.get("table_minimum", 0)),
+				int(table.get("table_maximum", 0)),
+			]
+		return result
 	result["message"] = "%s sets the dice at %s. The minimum is %d chips." % [
 		str(table.get("dealer_name", "The stickperson")),
 		str(table.get("table_name", "the craps table")),
@@ -20,18 +36,22 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 
 func generate_environment_state(_run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var config := _config()
+	var street := _is_street_variant(environment)
+	var variant := _street_config() if street else {}
 	var rules := _dict(config.get("rules", {})).duplicate(true)
 	var economic: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
-	var table_minimum := maxi(int(config.get("minimum_stake", 1)), GameModule.stake_floor_for_game(environment, get_id(), int(config.get("minimum_stake", 1))))
-	var table_maximum := maxi(table_minimum, GameModule.stake_ceiling_for_game(environment, get_id(), int(config.get("maximum_stake", table_minimum))))
-	return {
+	var authored_minimum := int(variant.get("minimum_stake", config.get("minimum_stake", 1)))
+	var authored_maximum := int(variant.get("maximum_stake", config.get("maximum_stake", authored_minimum)))
+	var table_minimum := maxi(authored_minimum, GameModule.stake_floor_for_game(environment, get_id(), authored_minimum))
+	var table_maximum := maxi(table_minimum, mini(authored_maximum, GameModule.stake_ceiling_for_game(environment, get_id(), authored_maximum)))
+	var table := {
 		"schema": "craps_table_state",
 		"version": int(config.get("state_version", 1)),
-		"table_name": str(rng.pick(_array(config.get("table_names", [])), "Marble Dice")),
-		"dealer_name": str(rng.pick(_array(config.get("dealer_names", [])), "The stickperson")),
+		"table_name": str(rng.pick(_array(variant.get("circle_names", config.get("table_names", []))), "The Chalk Ring" if street else "Marble Dice")),
+		"dealer_name": str(rng.pick(_array(variant.get("caller_names", config.get("dealer_names", []))), "The caller" if street else "The stickperson")),
 		"table_minimum": maxi(table_minimum, int(economic.get("stake_floor", table_minimum))),
-		"table_maximum": maxi(table_maximum, int(economic.get("stake_ceiling", table_maximum))),
-		"chip_denominations": _int_array(config.get("chip_denominations", [])),
+		"table_maximum": table_maximum if street else maxi(table_maximum, int(economic.get("stake_ceiling", table_maximum))),
+		"chip_denominations": _int_array(variant.get("denominations", config.get("chip_denominations", []))),
 		"rules": rules,
 		"point": 0,
 		"working_bets": _empty_working_bets(),
@@ -43,14 +63,36 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 		"table_energy": int(rules.get("table_energy_min", 0)),
 		"normalized_version": int(config.get("state_version", 1)),
 	}
+	if street:
+		table["variant_id"] = "street_craps"
+		table["street_dispersed"] = false
+		table["street_disperse_reason"] = ""
+	return table
+
+
+func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
+	var actions := super.cheat_actions(run_state, environment)
+	if not _is_street_variant(environment):
+		return actions
+	var street_actions: Array = []
+	for action_value in actions:
+		if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == "dice_setting":
+			street_actions.append((action_value as Dictionary).duplicate(true))
+	return street_actions
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var table := _table_state_preview(run_state, environment)
+	var street := _is_street_table(table, environment)
+	var dispersed := street and bool(table.get("street_dispersed", false))
 	var rules := _dict(table.get("rules", {}))
 	var pending := _pending_bets(ui_state.get("craps_pending_bets", {}))
 	var selected_chip := int(ui_state.get("selected_chip", _first_chip(table)))
-	var targets := CrapsSurfaceViewModelScript.bet_targets(table, rules)
+	var targets := _street_bet_targets(table, rules) if street else CrapsSurfaceViewModelScript.bet_targets(table, rules)
+	if dispersed:
+		for target_value in targets:
+			if typeof(target_value) == TYPE_DICTIONARY:
+				(target_value as Dictionary)["enabled"] = false
 	var total_wager := CrapsRulesScript.pending_wager_total(pending)
 	var last_roll := _dict(table.get("last_roll", {}))
 	var roll_started := int(last_roll.get("resolved_at_msec", 0))
@@ -61,10 +103,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var switching_challenge := _dict(ui_state.get("craps_switching_challenge", {}))
 	var setting_active := not setting_challenge.is_empty() and str(setting_challenge.get("skill_grade", "")).is_empty()
 	var switching_active := not switching_challenge.is_empty() and str(switching_challenge.get("skill_grade", "")).is_empty()
-	return GameModule.surface_spec({
+	var spec := GameModule.surface_spec({
 		"surface_renderer": "craps",
-		"surface_life": "immersive_table",
-		"surface_cast": "dealer_table",
+		"surface_life": "street_circle" if street else "immersive_table",
+		"surface_cast": "circle_of_players" if street else "dealer_table",
 		"surface_time_msec": now_msec,
 		"surface_presentation_time_msec": int(ui_state.get("surface_presentation_time_msec", now_msec)),
 		"reduce_motion": bool(ui_state.get("reduce_motion", false)),
@@ -90,10 +132,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"native_selected_surface_actions": _selected_surface_actions(setting_challenge, switching_challenge),
 		"surface_state_labels": [
 			{"label": "Point", "value": "OFF" if int(table.get("point", 0)) == 0 else str(table.get("point", 0))},
-			{"label": "New wagers", "value": "%d chips" % total_wager},
-			{"label": "Energy", "value": str(table.get("table_energy", 0))},
+			{"label": "New wagers", "value": "%d cash" % total_wager if street else "%d chips" % total_wager},
+			{"label": "Circle", "value": "SCATTERED" if dispersed else "LIVE"} if street else {"label": "Energy", "value": str(table.get("table_energy", 0))},
 		],
-		"phase": "rolling" if roll_active else "betting",
+		"phase": "dispersed" if dispersed else "rolling" if roll_active else "betting",
 		"table_name": str(table.get("table_name", "Craps")),
 		"dealer_name": str(table.get("dealer_name", "Stickperson")),
 		"point": int(table.get("point", 0)),
@@ -109,25 +151,34 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"craps_total_wager": total_wager,
 		"table_minimum": int(table.get("table_minimum", 0)),
 		"table_maximum": int(table.get("table_maximum", 0)),
-		"can_roll": _can_roll(table, pending) and not roll_active,
-		"can_clear": not pending.is_empty() and not roll_active,
+		"can_roll": _can_roll(table, pending) and not roll_active and not dispersed,
+		"can_clear": not pending.is_empty() and not roll_active and not dispersed,
 		"last_roll": last_roll.duplicate(true),
 		"last_result": _dict(table.get("last_result", {})).duplicate(true),
 		"roll_history": CrapsSurfaceViewModelScript.roll_history_rows(table.get("roll_history", []), int(_config().get("visible_history_limit", 0))),
 		"hot_shooter_streak": int(table.get("hot_shooter_streak", 0)),
 		"table_energy": int(table.get("table_energy", 0)),
-		"craps_setting_available": _setting_available(run_state),
-		"craps_switching_available": _switching_available(run_state),
+		"craps_setting_available": _setting_available(run_state, environment) and not dispersed,
+		"craps_switching_available": _switching_available(run_state) and not street and not dispersed,
 		"craps_setting_challenge": setting_challenge.duplicate(true),
 		"craps_switching_challenge": switching_challenge.duplicate(true),
 		"craps_setting_item_modifiers": skill_item_modifier_badges(run_state, _string_array(_dict(_config().get("setting", {})).get("item_effect_keys", []))),
 		"craps_switching_item_modifiers": skill_item_modifier_badges(run_state, _string_array(_dict(_config().get("switching", {})).get("item_effect_keys", []))),
 		"result_message": str(_dict(table.get("last_result", {})).get("message", "")),
-		"table_notice": _table_notice(table, pending),
+		"table_notice": _table_notice(table, pending, street),
 	})
+	if street:
+		spec["craps_variant"] = "street_craps"
+		spec["street_presentation"] = str(_street_config().get("presentation", "street_circle"))
+		spec["currency"] = str(_street_config().get("currency", "cash"))
+		spec["street_dispersed"] = dispersed
+		spec["street_disperse_reason"] = str(table.get("street_disperse_reason", ""))
+	return spec
 
 
 func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
+	if str(state.get("craps_variant", "")) == "street_craps":
+		return _draw_street_surface(surface, state)
 	var board := Vector2(900, 430)
 	surface.surface_begin_design_space(board)
 	surface.draw_rect(Rect2(Vector2.ZERO, board), Color("#071713"))
@@ -156,10 +207,13 @@ func surface_motion_signature(surface, _surface_state: Dictionary) -> Dictionary
 func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var table := _table_state_preview(run_state, environment)
 	var session := ui_state.duplicate(true)
+	var street := _is_street_table(table, environment)
+	if street and bool(table.get("street_dispersed", false)):
+		return _message_command(session, "The chalk ring is empty for the rest of tonight.")
 	var pending := _pending_bets(session.get("craps_pending_bets", {}))
 	match surface_action:
 		"craps_bet":
-			var targets := CrapsSurfaceViewModelScript.bet_targets(table, _dict(table.get("rules", {})))
+			var targets := _street_bet_targets(table, _dict(table.get("rules", {}))) if street else CrapsSurfaceViewModelScript.bet_targets(table, _dict(table.get("rules", {})))
 			if index < 0 or index >= targets.size():
 				return _message_command(session, "That wager is not available.")
 			var target: Dictionary = targets[index]
@@ -191,9 +245,11 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				return _message_command(session, "Place a wager before the dice are offered.")
 			return GameModule.surface_command({"ui_state": session, "action_id": "roll_craps", "action_kind": "legal", "resolve": true, "set_stake": CrapsRulesScript.pending_wager_total(pending)})
 		"craps_setting":
-			return _timing_command("setting", session, run_state, table)
+			return _timing_command("setting", session, run_state, table, environment)
 		"craps_switch":
-			return _timing_command("switching", session, run_state, table)
+			if street:
+				return _message_command(session, "Nobody in this circle lets a second pair near the brick.")
+			return _timing_command("switching", session, run_state, table, environment)
 	return {"handled": false}
 
 
@@ -210,10 +266,19 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	if not ["roll_craps", "dice_setting", "dice_switching"].has(action_id):
 		return _empty_result(action_id, stake, environment, "The stickperson does not recognize that call.")
 	var table := _table_state(run_state, environment)
+	var street := _is_street_table(table, environment)
+	if street and action_id == "dice_switching":
+		return _empty_result(action_id, stake, environment, "Street Craps offers the house dice only; no switch is available.")
+	if street and bool(table.get("street_dispersed", false)):
+		return _empty_result(action_id, stake, environment, "The chalk ring is empty for the rest of tonight.")
 	var pending := _pending_bets(ui_state.get("craps_pending_bets", {}))
 	if pending.is_empty() and stake > 0:
-		pending["pass_line" if int(table.get("point", 0)) == 0 else "come"] = stake
-	var pending_validation := _validate_pending_bets(table, pending)
+		if not street or int(table.get("point", 0)) == 0:
+			pending["pass_line" if int(table.get("point", 0)) == 0 else "come"] = stake
+	var pre_disperse_reason := _street_disperse_reason(run_state, environment, 0) if street else ""
+	if not pre_disperse_reason.is_empty():
+		return _resolve_street_disperse(run_state, environment, table, pending, pre_disperse_reason, rng)
+	var pending_validation := _validate_pending_bets(table, pending, street)
 	if not bool(pending_validation.get("ok", false)):
 		return _empty_result(action_id, CrapsRulesScript.pending_wager_total(pending), environment, str(pending_validation.get("message", "Those wagers are not available.")))
 	var total_wager := CrapsRulesScript.pending_wager_total(pending)
@@ -234,9 +299,24 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		luck_payout_bonus = run_state.luck_payout_bonus(maxi(1, total_wager), true) + _item_effect_total("win_bonus", run_state)
 	var bankroll_delta := settlement_delta + luck_payout_bonus + int(cheat.get("bankroll_delta", 0))
 	var suspicion_delta := int(cheat.get("suspicion_delta", 0))
+	var post_disperse_reason := _street_disperse_reason(run_state, environment, suspicion_delta) if street else ""
+	var disperse_refund := 0
+	if not post_disperse_reason.is_empty():
+		disperse_refund = _working_wager_total(table.get("working_bets", {}))
+		bankroll_delta += disperse_refund
+		var disperse_results := _dictionary_array(settlement.get("bet_results", []))
+		if disperse_refund > 0:
+			disperse_results.append({"label": "Street interruption", "stake": disperse_refund, "profit": 0, "outcome": "refund"})
+		settlement["bet_results"] = disperse_results
+		_mark_street_dispersed(table, post_disperse_reason)
 	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var dice := _int_array(roll.get("dice", []))
 	var message := _roll_message(roll, settlement, bankroll_delta, table)
+	var training := _street_training_delta(run_state, settlement) if street else {}
+	if not training.is_empty() and not str(training.get("message", "")).is_empty():
+		message = "%s %s" % [message, str(training.get("message", ""))]
+	if not post_disperse_reason.is_empty():
+		message = "%s %s" % [message, str(_dict(_street_config().get("disperse", {})).get("message", "The circle breaks and unresolved stakes come back."))]
 	var patron_line := str(room_energy.get("patron_line", ""))
 	if not patron_line.is_empty():
 		message = "%s %s" % [message, patron_line]
@@ -275,6 +355,8 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	deltas["suspicion_delta"] = suspicion_delta
 	deltas["inventory_remove"] = _string_array(cheat.get("inventory_remove", []))
 	deltas["messages"] = [message]
+	if not training.is_empty():
+		deltas["flags_set"] = _dict(training.get("flags_set", {})).duplicate(true)
 	var story_entry := {
 		"type": "game_action",
 		"game_id": get_id(),
@@ -297,6 +379,10 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 		"environment_id": environment.get("id", ""),
 		"environment_archetype_id": environment.get("archetype_id", ""),
 	}
+	if street:
+		story_entry["craps_variant"] = "street_craps"
+		story_entry["street_disperse_reason"] = post_disperse_reason
+		story_entry["street_disperse_refund"] = disperse_refund
 	deltas["story_log"] = [story_entry]
 	deltas["ended"] = bool(cheat.get("ended", false))
 	var result := GameModule.build_action_result({
@@ -344,6 +430,12 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	result["craps_table_energy"] = int(table.get("table_energy", 0))
 	result["craps_room_energy"] = room_energy.duplicate(true)
 	result["craps_hot_shooter_streak"] = int(table.get("hot_shooter_streak", 0))
+	if street:
+		result["craps_variant"] = "street_craps"
+		result["currency"] = "cash"
+		result["street_dispersed"] = not post_disperse_reason.is_empty()
+		result["street_disperse_reason"] = post_disperse_reason
+		result["street_disperse_refund"] = disperse_refund
 	if action_kind == "cheat":
 		GameModule.normalize_skill_cheat_contract(result, result)
 	GameModule.apply_result(run_state, result, rng)
@@ -420,6 +512,18 @@ func _project_table_energy(environment: Dictionary, table: Dictionary) -> Dictio
 
 func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var table := _table_state_preview(run_state, environment)
+	if _is_street_table(table, environment):
+		var dispersed := bool(table.get("street_dispersed", false))
+		var status_label := "CHALK RING OPEN"
+		if dispersed:
+			status_label = "CIRCLE SCATTERED"
+		elif int(table.get("point", 0)) != 0:
+			status_label = "POINT %d" % int(table.get("point", 0))
+		return {
+			"status_label": status_label,
+			"status_detail": "Cash returned; gone for tonight" if dispersed else "$%d-$%d · Pass / Don't Pass" % [int(table.get("table_minimum", 0)), int(table.get("table_maximum", 0))],
+			"active": not dispersed,
+		}
 	return {
 		"status_label": "POINT %d" % int(table.get("point", 0)) if int(table.get("point", 0)) != 0 else "COME-OUT",
 		"status_detail": "Table energy %d" % int(table.get("table_energy", 0)),
@@ -430,7 +534,7 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 func _cheat_context(action_id: String, ui_state: Dictionary, run_state: RunState, environment: Dictionary, table: Dictionary) -> Dictionary:
 	if action_id == "roll_craps":
 		return {"ok": true}
-	if action_id == "dice_setting" and not _setting_available(run_state):
+	if action_id == "dice_setting" and not _setting_available(run_state, environment):
 		return {"ok": false, "message": "Dice setting requires practice or a listed training aid."}
 	if action_id == "dice_switching" and not _switching_available(run_state):
 		return {"ok": false, "message": "Dice switching requires both the calipers and false-bottom cup."}
@@ -474,8 +578,8 @@ func _cheat_context(action_id: String, ui_state: Dictionary, run_state: RunState
 	}
 
 
-func _timing_command(kind: String, session: Dictionary, run_state: RunState, table: Dictionary) -> Dictionary:
-	if kind == "setting" and not _setting_available(run_state):
+func _timing_command(kind: String, session: Dictionary, run_state: RunState, table: Dictionary, environment: Dictionary) -> Dictionary:
+	if kind == "setting" and not _setting_available(run_state, environment):
 		return _message_command(session, "Practice or a listed training aid is required before setting dice.")
 	if kind == "switching" and not _switching_available(run_state):
 		return _message_command(session, "The switch requires Dice Calipers and a False-Bottom Cup.")
@@ -514,9 +618,11 @@ func _timing_command(kind: String, session: Dictionary, run_state: RunState, tab
 	})
 
 
-func _setting_available(run_state: RunState) -> bool:
+func _setting_available(run_state: RunState, environment: Dictionary = {}) -> bool:
 	if run_state == null:
 		return false
+	if _is_street_variant(environment):
+		return true
 	if bool(run_state.narrative_flags.get(str(_dict(_config().get("setting", {})).get("practice_flag", "")), false)):
 		return true
 	return _has_any_item(run_state, _string_array(_dict(_config().get("setting", {})).get("practice_item_ids", [])))
@@ -550,9 +656,9 @@ func _can_roll(table: Dictionary, pending: Dictionary) -> bool:
 	return CrapsRulesScript.pending_wager_total(pending) > 0 or not CrapsSurfaceViewModelScript.working_rows(table).is_empty()
 
 
-func _validate_pending_bets(table: Dictionary, pending: Dictionary) -> Dictionary:
+func _validate_pending_bets(table: Dictionary, pending: Dictionary, street: bool = false) -> Dictionary:
 	var staged := {}
-	var ordered_ids := ["pass_line", "dont_pass", "come", "dont_come", "field", "place_4", "place_5", "place_6", "place_8", "place_9", "place_10", "pass_odds", "come_odds_4", "come_odds_5", "come_odds_6", "come_odds_8", "come_odds_9", "come_odds_10"]
+	var ordered_ids := _string_array(_street_config().get("allowed_bets", [])) if street else ["pass_line", "dont_pass", "come", "dont_come", "field", "place_4", "place_5", "place_6", "place_8", "place_9", "place_10", "pass_odds", "come_odds_4", "come_odds_5", "come_odds_6", "come_odds_8", "come_odds_9", "come_odds_10"]
 	for bet_id_value in ordered_ids:
 		var bet_id := str(bet_id_value)
 		var amount := int(pending.get(bet_id, 0))
@@ -572,12 +678,16 @@ func _wager_capacity(run_state: RunState, environment: Dictionary) -> int:
 	return run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 0
 
 
-func _table_notice(table: Dictionary, pending: Dictionary) -> String:
+func _table_notice(table: Dictionary, pending: Dictionary, street: bool = false) -> String:
 	var point := int(table.get("point", 0))
+	if street and bool(table.get("street_dispersed", false)):
+		return "The chalk ring is empty. Every unresolved stake was returned."
 	if CrapsRulesScript.pending_wager_total(pending) > 0:
-		return "%d chips ready. The dice move only on your call." % CrapsRulesScript.pending_wager_total(pending)
+		return "%d cash ready. The dice move only on your call." % CrapsRulesScript.pending_wager_total(pending) if street else "%d chips ready. The dice move only on your call." % CrapsRulesScript.pending_wager_total(pending)
 	if point == 0:
 		return "The puck is OFF. Pass and Don't Pass are open."
+	if street:
+		return "The point is %d. The line rides until the point or seven." % point
 	return "The point is %d. Come, Place, and Odds are open." % point
 
 
@@ -590,7 +700,8 @@ func _roll_message(roll: Dictionary, settlement: Dictionary, bankroll_delta: int
 		prefix = "Seven out. The house clears the layout."
 	elif int(settlement.get("point_before", 0)) == 0 and int(settlement.get("point_after", 0)) != 0:
 		prefix = "%d is the point. The puck turns ON." % total
-	return "%s Net %s%d chips." % [prefix, "+" if bankroll_delta >= 0 else "", bankroll_delta]
+	var currency := "cash" if str(table.get("variant_id", "")) == "street_craps" else "chips"
+	return "%s Net %s%d %s." % [prefix, "+" if bankroll_delta >= 0 else "", bankroll_delta, currency]
 
 
 func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -627,6 +738,10 @@ func _normalize_table_state(value: Variant, environment: Dictionary) -> Dictiona
 	table["chip_denominations"] = _int_array(table.get("chip_denominations", _config().get("chip_denominations", [])))
 	table["table_minimum"] = maxi(1, int(table.get("table_minimum", GameModule.stake_floor_for_game(environment, get_id(), 1))))
 	table["table_maximum"] = maxi(int(table.get("table_minimum", 1)), int(table.get("table_maximum", GameModule.stake_ceiling_for_game(environment, get_id(), 1))))
+	if _is_street_variant(environment) or str(table.get("variant_id", "")) == "street_craps":
+		table["variant_id"] = "street_craps"
+		table["street_dispersed"] = bool(table.get("street_dispersed", false))
+		table["street_disperse_reason"] = str(table.get("street_disperse_reason", ""))
 	return table
 
 
@@ -680,6 +795,143 @@ func _config() -> Dictionary:
 	return _dict(definition.get("craps_config", {}))
 
 
+func _street_config() -> Dictionary:
+	return _dict(_dict(_config().get("variants", {})).get("street_craps", {}))
+
+
+func _is_street_variant(environment: Dictionary) -> bool:
+	var variant := _street_config()
+	if variant.is_empty():
+		return false
+	var modifiers := _dict(environment.get("scenario_game_modifiers", {}))
+	var hook_key := str(variant.get("scenario_hook_key", "game_hook"))
+	return str(modifiers.get(hook_key, "")) == str(variant.get("scenario_hook_value", "street_craps"))
+
+
+func _is_street_table(table: Dictionary, environment: Dictionary) -> bool:
+	return str(table.get("variant_id", "")) == "street_craps" or _is_street_variant(environment)
+
+
+func _street_bet_targets(table: Dictionary, rules: Dictionary) -> Array:
+	var allowed := _string_array(_street_config().get("allowed_bets", []))
+	var targets: Array = []
+	for target_value in CrapsSurfaceViewModelScript.bet_targets(table, rules):
+		if typeof(target_value) != TYPE_DICTIONARY:
+			continue
+		var target: Dictionary = (target_value as Dictionary).duplicate(true)
+		if not allowed.has(str(target.get("id", ""))):
+			continue
+		target["rect"] = Rect2(178, 224 if str(target.get("id", "")) == "pass_line" else 292, 420, 52)
+		target["payout"] = "Even cash" if str(target.get("id", "")) == "pass_line" else "Even cash · 12 bars"
+		targets.append(target)
+	return targets
+
+
+func _street_disperse_reason(run_state: RunState, environment: Dictionary, heat_delta: int) -> String:
+	var disperse := _dict(_street_config().get("disperse", {}))
+	if bool(disperse.get("sweep_adjacent", false)):
+		var modifiers := _dict(environment.get("scenario_game_modifiers", {}))
+		if bool(modifiers.get("sweep_adjacent", false)):
+			return "sweep_adjacent"
+		var node_id := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
+		if run_state != null and run_state.town_state != null and run_state.town_state.sweep_is_adjacent(node_id):
+			return "sweep_adjacent"
+	if heat_delta >= maxi(1, int(disperse.get("heat_spike_delta", 8))):
+		return "heat_spike"
+	return ""
+
+
+func _working_wager_total(value: Variant) -> int:
+	var working := _dict(value)
+	var total := maxi(0, int(working.get("pass_line", 0))) + maxi(0, int(working.get("dont_pass", 0))) + maxi(0, int(working.get("pass_odds", 0)))
+	for group_key in ["come", "dont_come", "come_odds", "place"]:
+		for stake_value in _dict(working.get(group_key, {})).values():
+			total += maxi(0, int(stake_value))
+	return total
+
+
+func _mark_street_dispersed(table: Dictionary, reason: String) -> void:
+	table["point"] = 0
+	table["working_bets"] = _empty_working_bets()
+	table["street_dispersed"] = true
+	table["street_disperse_reason"] = reason
+	table["hot_shooter_streak"] = 0
+	table["table_energy"] = int(_dict(table.get("rules", {})).get("table_energy_min", 0))
+
+
+func _resolve_street_disperse(run_state: RunState, environment: Dictionary, table: Dictionary, pending: Dictionary, reason: String, rng: RngStream) -> Dictionary:
+	var refund := _working_wager_total(table.get("working_bets", {}))
+	_mark_street_dispersed(table, reason)
+	var message := str(_dict(_street_config().get("disperse", {})).get("message", "The circle breaks and unresolved stakes come back."))
+	table["last_result"] = {"message": message, "bankroll_delta": refund, "bet_results": []}
+	_update_environment_table(environment, table)
+	var deltas := GameModule.empty_result_deltas()
+	deltas["bankroll_delta"] = refund
+	deltas["messages"] = [message]
+	deltas["story_log"] = [{
+		"type": "game_action",
+		"game_id": get_id(),
+		"action_id": "street_craps_disperse",
+		"action_kind": "environment",
+		"stake": CrapsRulesScript.pending_wager_total(pending),
+		"bankroll_delta": refund,
+		"street_disperse_reason": reason,
+		"street_disperse_refund": refund,
+		"environment_id": environment.get("id", ""),
+		"environment_archetype_id": environment.get("archetype_id", ""),
+	}]
+	var result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": get_id(),
+		"game_id": get_id(),
+		"action_id": "street_craps_disperse",
+		"action_kind": "environment",
+		"stake": CrapsRulesScript.pending_wager_total(pending),
+		"bankroll_delta": refund,
+		"deltas": deltas,
+		"environment_id": environment.get("id", ""),
+		"environment_archetype_id": environment.get("archetype_id", ""),
+		"message": message,
+	})
+	result["craps_variant"] = "street_craps"
+	result["currency"] = "cash"
+	result["street_dispersed"] = true
+	result["street_disperse_reason"] = reason
+	result["street_disperse_refund"] = refund
+	result["street_pending_returned"] = CrapsRulesScript.pending_wager_total(pending)
+	GameModule.apply_result(run_state, result, rng)
+	return result
+
+
+func _street_training_delta(run_state: RunState, settlement: Dictionary) -> Dictionary:
+	if run_state == null:
+		return {}
+	var training := _dict(_street_config().get("training", {}))
+	var trained_flag := str(training.get("trained_flag", "craps_setting_trained"))
+	if bool(run_state.narrative_flags.get(trained_flag, false)):
+		return {}
+	var grant_outcomes := _string_array(training.get("grant_outcomes", []))
+	var completed_line := false
+	for result_value in _dictionary_array(settlement.get("bet_results", [])):
+		var result: Dictionary = result_value
+		if ["Pass Line", "Don't Pass"].has(str(result.get("label", ""))) and grant_outcomes.has(str(result.get("outcome", ""))):
+			completed_line = true
+			break
+	if not completed_line:
+		return {}
+	var progress_flag := str(training.get("progress_flag", "craps_setting_street_progress"))
+	var progress := maxi(0, int(run_state.narrative_flags.get(progress_flag, 0))) + 1
+	var required := maxi(1, int(training.get("completed_line_resolutions_required", 1)))
+	var flags: Dictionary = {}
+	flags[progress_flag] = mini(progress, required)
+	var message := ""
+	if progress >= required:
+		flags[trained_flag] = true
+		message = str(training.get("completion_line", ""))
+	return {"flags_set": flags, "message": message}
+
+
 func _item_effect_total(key: String, run_state: RunState) -> int:
 	return run_state.item_effect_total(key, get_family(), "cheat") if run_state != null and run_state.has_method("item_effect_total") else 0
 
@@ -705,6 +957,98 @@ func _selected_surface_actions(setting: Dictionary, switching: Dictionary) -> Ar
 	if not switching.is_empty() and str(switching.get("skill_grade", "")).is_empty():
 		result.append("craps_switch")
 	return result
+
+
+func _draw_street_surface(surface, state: Dictionary) -> bool:
+	var board := Vector2(900, 430)
+	surface.surface_begin_design_space(board)
+	surface.draw_rect(Rect2(Vector2.ZERO, board), Color("#121416"))
+	for y in range(42, 390, 42):
+		surface.draw_line(Vector2(24, y), Vector2(876, y), Color(0.24, 0.20, 0.19, 0.44), 2.0)
+		var offset := 22.0 if int(y / 42) % 2 == 0 else 62.0
+		for x in range(int(offset), 880, 84):
+			surface.draw_line(Vector2(x, y - 40), Vector2(x, y), Color(0.24, 0.20, 0.19, 0.34), 1.0)
+	surface.surface_title(str(state.get("table_name", "THE CHALK RING")).to_upper(), Vector2(58, 38), Color("#f0d3a1"))
+	var circle_center := Vector2(388, 210)
+	surface.draw_circle(circle_center, 168.0, Color(0.09, 0.10, 0.10, 0.72))
+	surface.draw_arc(circle_center, 168.0, 0.0, TAU, 72, Color("#d9c5a4"), 3.0)
+	surface.draw_arc(circle_center, 154.0, 0.0, TAU, 72, Color(0.76, 0.70, 0.60, 0.30), 1.0)
+	for angle_index in range(7):
+		var angle := -2.75 + float(angle_index) * 0.68
+		var person := circle_center + Vector2(cos(angle), sin(angle)) * 188.0
+		surface.draw_circle(person, 15.0, Color("#2a2524"))
+		surface.draw_circle(person + Vector2(0, 24), 21.0, Color("#201d1d"))
+	if bool(state.get("street_dispersed", false)):
+		surface.surface_label_centered("THE CIRCLE SCATTERED", Rect2(170, 176, 436, 34), 18, Color("#e5b07b"))
+		surface.surface_label_centered("UNRESOLVED CASH RETURNED", Rect2(170, 214, 436, 24), 11, Color("#c5b8a5"))
+	else:
+		_draw_targets(surface, state)
+		_draw_street_point(surface, state)
+		_draw_street_dice(surface, state)
+	_draw_street_side_panel(surface, state)
+	_draw_street_controls(surface, state)
+	surface.surface_end_design_space()
+	return true
+
+
+func _draw_street_point(surface, state: Dictionary) -> void:
+	var point := int(state.get("point", 0))
+	var center := Vector2(388, 180)
+	surface.draw_circle(center, 28.0, Color("#d8c8a9") if point != 0 else Color("#262626"))
+	surface.draw_circle(center, 28.0, Color("#efe1c4"), false, 2.0)
+	surface.surface_label_centered("OPEN" if point == 0 else "POINT %d" % point, Rect2(center - Vector2(42, 9), Vector2(84, 18)), 11, Color("#171717") if point != 0 else Color("#efe1c4"))
+
+
+func _draw_street_dice(surface, state: Dictionary) -> void:
+	var dice := _int_array(_dict(state.get("last_roll", {})).get("dice", []))
+	if dice.size() != 2:
+		return
+	var progress: float = float(surface.surface_animation_progress(ROLL_CHANNEL)) if surface.surface_animation_active(ROLL_CHANNEL) else 1.0
+	var wobble := sin(progress * TAU * 3.0) * (1.0 - progress) * 10.0
+	for index in range(2):
+		var rect := Rect2(350 + index * 56 + wobble * (1.0 if index == 0 else -1.0), 124 + absf(wobble) * 0.5, 44, 44)
+		surface.draw_rect(rect, Color("#d7c9ad"))
+		surface.draw_rect(rect, Color("#4a4034"), false, 2.0)
+		surface.surface_label_centered(str(dice[index]), rect, 20, Color("#171717"))
+
+
+func _draw_street_side_panel(surface, state: Dictionary) -> void:
+	var rect := Rect2(650, 64, 220, 278)
+	surface.draw_rect(rect, Color(0.05, 0.06, 0.06, 0.90))
+	surface.draw_rect(rect, Color("#8f775b"), false, 1.0)
+	surface.surface_label_centered("CASH IN HAND", Rect2(658, 76, 204, 20), 12, Color("#f0d3a1"))
+	var working_rows := _dictionary_array(state.get("working_bet_rows", []))
+	var working_text := "No line working"
+	if not working_rows.is_empty():
+		var row: Dictionary = working_rows[0]
+		working_text = "%s  $%d" % [str(row.get("label", "LINE")).to_upper(), int(row.get("stake", 0))]
+	surface.surface_label_centered(working_text, Rect2(658, 106, 204, 20), 10, Color("#d8c8a9"))
+	surface.surface_label_centered(str(state.get("table_notice", "")), Rect2(666, 140, 188, 64), 9, Color("#bcb3a5"))
+	surface.surface_label_centered("LAST THROWS", Rect2(658, 214, 204, 18), 10, Color("#f0d3a1"))
+	var rows := _dictionary_array(state.get("roll_history", []))
+	for index in range(mini(rows.size(), 4)):
+		var row: Dictionary = rows[index]
+		var dice := _int_array(row.get("dice", []))
+		if dice.size() == 2:
+			surface.surface_label_centered("%d   %d + %d" % [int(row.get("total", 0)), int(dice[0]), int(dice[1])], Rect2(670, 238 + index * 22, 180, 18), 9, Color("#c5b8a5"))
+
+
+func _draw_street_controls(surface, state: Dictionary) -> void:
+	var actions := [
+		{"id": "craps_chip", "label": "CASH %d" % int(state.get("selected_chip", 0)), "rect": Rect2(64, 384, 118, 32), "enabled": not bool(state.get("street_dispersed", false))},
+		{"id": "craps_clear", "label": "CLEAR", "rect": Rect2(192, 384, 96, 32), "enabled": bool(state.get("can_clear", false))},
+		{"id": "craps_setting", "label": "SET DICE", "rect": Rect2(298, 384, 116, 32), "enabled": bool(state.get("craps_setting_available", false))},
+		{"id": "craps_roll", "label": "THROW", "rect": Rect2(470, 380, 138, 38), "enabled": bool(state.get("can_roll", false))},
+	]
+	for action_value in actions:
+		var action: Dictionary = action_value
+		var rect: Rect2 = action.get("rect", Rect2())
+		var enabled := bool(action.get("enabled", false))
+		surface.draw_rect(rect, Color("#855f31") if enabled else Color("#303130"))
+		surface.draw_rect(rect, Color("#f0d3a1") if enabled else Color("#67645f"), false, 1.0)
+		surface.surface_label_centered(str(action.get("label", "")), rect, 10, Color("#fff0d0") if enabled else Color("#88847d"))
+		if enabled:
+			surface.surface_add_exact_hit(rect, str(action.get("id", "")))
 
 
 func _draw_targets(surface, state: Dictionary) -> void:

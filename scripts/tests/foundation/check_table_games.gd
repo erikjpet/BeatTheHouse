@@ -60,9 +60,195 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 	_check_craps_cheat_contract(game, failures)
 	_check_craps_luck_contract(game, failures)
 	_check_craps_energy_projection(game, table, failures)
+	_check_craps_street_variant(game, library, failures)
 	_check_craps_currency_routing(failures)
 	if library != null:
 		_check_craps_room_registration_and_duel(game, library, failures)
+
+
+func _check_craps_street_variant(game: GameModule, library: ContentLibrary, failures: Array) -> void:
+	if library == null:
+		failures.append("Street Craps contract requires the content library.")
+		return
+	var scenario := library.scenario("back_alley_street_craps")
+	var mutations := _craps_dict(scenario.get("mutations", {}))
+	var modifiers := _craps_dict(mutations.get("game_modifier_hooks", {}))
+	var opportunity := _craps_dict(mutations.get("exclusive_opportunity", {}))
+	if str(modifiers.get("game_hook", "")) != "street_craps" or str(opportunity.get("game_id", "")) != "craps":
+		failures.append("Street Craps scenario does not activate the shared Craps module through its shipped hook and exclusive-opportunity seam.")
+	var cruiser := library.scenario("back_alley_cruiser_parked")
+	if str(_craps_dict(_craps_dict(cruiser.get("mutations", {})).get("game_modifier_hooks", {})).get("game_hook", "")) == "street_craps":
+		failures.append("Cruiser Parked and Street Craps lost their single-scenario exclusivity boundary.")
+
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("STREET-CRAPS-CONTRACT")
+	run_state.bankroll = 100
+	run_state.grand_casino_chips = 50
+	var environment := _street_craps_environment()
+	var table := game.generate_environment_state(run_state, environment, run_state.create_rng("street_craps_table"))
+	if str(table.get("variant_id", "")) != "street_craps" or int(table.get("table_minimum", 0)) != 2 or int(table.get("table_maximum", 0)) != 20:
+		failures.append("Street Craps did not generate its data-authored gutter-stake variant.")
+	if JSON.stringify(table.get("rules", {})) != JSON.stringify(_craps_dict(game.definition.get("craps_config", {})).get("rules", {})):
+		failures.append("Street Craps forked the core rules dictionary instead of reusing it exactly.")
+	environment["game_states"] = {"craps": table}
+	run_state.current_environment = environment
+	var first_enter := game.enter(run_state, run_state.current_environment)
+	var second_enter := game.enter(run_state, run_state.current_environment)
+	if not bool(run_state.narrative_flags.get("street_craps_guidance_seen", false)) or str(first_enter.get("message", "")) == str(second_enter.get("message", "")):
+		failures.append("Street Craps did not deliver exactly one first-session diegetic guidance line per run.")
+	var surface := game.surface_state(run_state, run_state.current_environment, {})
+	var target_ids: Array = []
+	for target_value in _craps_array(surface.get("bet_targets", [])):
+		if typeof(target_value) == TYPE_DICTIONARY:
+			target_ids.append(str((target_value as Dictionary).get("id", "")))
+	if target_ids != ["pass_line", "dont_pass"] or str(surface.get("surface_cast", "")) != "circle_of_players" or str(surface.get("currency", "")) != "cash":
+		failures.append("Street Craps surface is not the cash-only, Pass/Don't Pass circle presentation.")
+	var invalid := game.resolve_with_context("roll_craps", 2, run_state, run_state.current_environment, run_state.create_rng("street_invalid"), {"craps_pending_bets": {"field": 2}})
+	if bool(invalid.get("ok", false)):
+		failures.append("Street Craps accepted a Field wager outside its two-line surface.")
+	var before_chips := run_state.grand_casino_chips
+	var cash_result := game.resolve_with_context("roll_craps", 2, run_state, run_state.current_environment, run_state.create_rng("street_cash"), {"craps_pending_bets": {"pass_line": 2}})
+	if not bool(cash_result.get("ok", false)) or str(cash_result.get("currency", "")) != "cash" or run_state.grand_casino_chips != before_chips:
+		failures.append("Street Craps did not route its real wager through cash while leaving casino chips untouched.")
+	if not bool(game.surface_state(run_state, run_state.current_environment, {}).get("craps_setting_available", false)):
+		failures.append("Street Craps retained the casino practice gate at gutter stakes.")
+	var street_cheats := game.cheat_actions(run_state, run_state.current_environment)
+	if street_cheats.size() != 1 or str(_craps_dict(street_cheats[0]).get("id", "")) != "dice_setting":
+		failures.append("Street Craps exposed a cheat action other than its shared dice-setting window.")
+
+	_check_street_craps_disperse(game, failures)
+	_check_street_craps_training(game, failures)
+	_check_street_craps_save_restore(game, failures)
+	var core_environment := _surface_contract_environment()
+	var core_table := game.generate_environment_state(run_state, core_environment, run_state.create_rng("street_trace_isolation"))
+	var core_surface := game.surface_state(run_state, core_environment, {})
+	if core_table.has("variant_id") or core_surface.has("craps_variant"):
+		failures.append("An environment without Street Craps retained variant traces.")
+
+
+func _check_street_craps_disperse(game: GameModule, failures: Array) -> void:
+	var sweep_a: RunState = RunStateScript.new()
+	sweep_a.start_new("STREET-CRAPS-SWEEP")
+	sweep_a.bankroll = 90
+	var sweep_environment := _street_craps_environment()
+	var sweep_modifiers := _craps_dict(sweep_environment.get("scenario_game_modifiers", {}))
+	sweep_modifiers["sweep_adjacent"] = true
+	sweep_environment["scenario_game_modifiers"] = sweep_modifiers
+	var sweep_table := game.generate_environment_state(sweep_a, sweep_environment, sweep_a.create_rng("street_sweep_table"))
+	sweep_table["point"] = 6
+	sweep_table["working_bets"] = {"pass_line": 10, "dont_pass": 0, "pass_odds": 0, "come": {}, "dont_come": {}, "come_odds": {}, "place": {}}
+	sweep_environment["game_states"] = {"craps": sweep_table}
+	sweep_a.current_environment = sweep_environment
+	var sweep_b: RunState = RunStateScript.new()
+	sweep_b.from_dict(sweep_a.to_dict())
+	var first := game.resolve_with_context("roll_craps", 0, sweep_a, sweep_a.current_environment, sweep_a.create_rng("street_sweep_resolve"), {})
+	var second := game.resolve_with_context("roll_craps", 0, sweep_b, sweep_b.current_environment, sweep_b.create_rng("street_sweep_resolve"), {})
+	if JSON.stringify(first) != JSON.stringify(second) or int(first.get("street_disperse_refund", 0)) != 10 or sweep_a.bankroll != 100:
+		failures.append("Street Craps sweep-adjacent interruption was not deterministic or did not refund working cash at face value.")
+	var dispersed_table := _craps_dict(_craps_dict(sweep_a.current_environment.get("game_states", {})).get("craps", {}))
+	if not bool(dispersed_table.get("street_dispersed", false)) or int(_craps_dict(dispersed_table.get("working_bets", {})).get("pass_line", 0)) != 0:
+		failures.append("Street Craps sweep interruption left the circle or a line wager active.")
+
+	var heat_run: RunState = RunStateScript.new()
+	heat_run.start_new("STREET-CRAPS-HEAT")
+	heat_run.bankroll = 90
+	var heat_environment := _street_craps_environment()
+	var heat_table := game.generate_environment_state(heat_run, heat_environment, heat_run.create_rng("street_heat_table"))
+	heat_table["point"] = 6
+	heat_table["working_bets"] = {"pass_line": 10, "dont_pass": 0, "pass_odds": 0, "come": {}, "dont_come": {}, "come_odds": {}, "place": {}}
+	heat_environment["game_states"] = {"craps": heat_table}
+	heat_run.current_environment = heat_environment
+	var heat_rng := _craps_rng_avoiding_totals(_craps_dict(heat_table.get("rules", {})), [6, 7])
+	var heat_result := game.resolve_with_context("dice_setting", 0, heat_run, heat_run.current_environment, heat_rng, {"craps_setting_challenge": {"skill_grade": "blown", "skill_margin_msec": 999}})
+	if str(heat_result.get("street_disperse_reason", "")) != "heat_spike" or int(heat_result.get("street_disperse_refund", 0)) != 10:
+		failures.append("Street Craps heat-spike interruption did not refund the unresolved line deterministically.")
+
+
+func _check_street_craps_training(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("STREET-CRAPS-TRAINING")
+	run_state.bankroll = 100
+	var environment := _street_craps_environment()
+	environment["game_states"] = {"craps": game.generate_environment_state(run_state, environment, run_state.create_rng("street_training_table"))}
+	run_state.current_environment = environment
+	for lesson_index in range(2):
+		var table := _craps_dict(_craps_dict(run_state.current_environment.get("game_states", {})).get("craps", {}))
+		table["point"] = 0
+		table["working_bets"] = {"pass_line": 0, "dont_pass": 0, "pass_odds": 0, "come": {}, "dont_come": {}, "come_odds": {}, "place": {}}
+		var states := _craps_dict(run_state.current_environment.get("game_states", {}))
+		states["craps"] = table
+		run_state.current_environment["game_states"] = states
+		var lesson_rng := _craps_rng_for_total(_craps_dict(table.get("rules", {})), 7)
+		game.resolve_with_context("roll_craps", 2, run_state, run_state.current_environment, lesson_rng, {"craps_pending_bets": {"pass_line": 2}})
+	if int(run_state.narrative_flags.get("craps_setting_street_progress", 0)) != 2 or not bool(run_state.narrative_flags.get("craps_setting_trained", false)):
+		failures.append("Completed Street Craps line sessions did not grant the authored shared setting-training flag.")
+	var casino_environment := _surface_contract_environment()
+	casino_environment["game_states"] = {"craps": game.generate_environment_state(run_state, casino_environment, run_state.create_rng("street_training_casino"))}
+	if not bool(game.surface_state(run_state, casino_environment, {}).get("craps_setting_available", false)):
+		failures.append("Casino dice setting did not honor training earned through Street Craps.")
+	var rig_run: RunState = RunStateScript.new()
+	rig_run.start_new("CRAPS-PRACTICE-RIG-COMPAT")
+	rig_run.narrative_flags["craps_setting_trained"] = true
+	if not bool(game.surface_state(rig_run, casino_environment, {}).get("craps_setting_available", false)):
+		failures.append("Casino dice setting no longer honors the shared Practice Rig training flag.")
+
+
+func _check_street_craps_save_restore(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("STREET-CRAPS-SAVE")
+	var environment := _street_craps_environment()
+	var table := game.generate_environment_state(run_state, environment, run_state.create_rng("street_save_table"))
+	table["point"] = 8
+	table["working_bets"] = {"pass_line": 6, "dont_pass": 0, "pass_odds": 0, "come": {}, "dont_come": {}, "come_odds": {}, "place": {}}
+	environment["game_states"] = {"craps": table}
+	run_state.current_environment = environment
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	var restored_table := _craps_dict(_craps_dict(restored.current_environment.get("game_states", {})).get("craps", {}))
+	if str(restored_table.get("variant_id", "")) != "street_craps" or int(restored_table.get("point", 0)) != 8 or int(_craps_dict(restored_table.get("working_bets", {})).get("pass_line", 0)) != 6:
+		failures.append("Street Craps mid-round save/load did not restore the variant, point, and unresolved cash.")
+
+
+func _street_craps_environment() -> Dictionary:
+	return {
+		"id": "back_alley_street_craps_fixture",
+		"archetype_id": "back_alley",
+		"world_node_id": "back_alley",
+		"kind": "shop",
+		"game_ids": ["craps"],
+		"economic_profile": {"stake_floor": 2, "stake_ceiling": 20},
+		"scenario_id": "back_alley_street_craps",
+		"scenario_game_modifiers": {"game_hook": "street_craps", "table_tone": "street"},
+		"scenario_hook_flags": {"craps_onramp": true},
+		"music_profile": {"volume": 0.24, "ambience": 0.72, "bpm": 82.0},
+		"game_states": {},
+	}
+
+
+func _craps_rng_for_total(rules: Dictionary, wanted_total: int) -> RngStream:
+	for seed in range(1, 1000):
+		var probe := RngStream.new()
+		probe.configure(seed)
+		if int(CrapsRulesScript.roll_dice(probe, rules, 0).get("total", 0)) == wanted_total:
+			var result := RngStream.new()
+			result.configure(seed)
+			return result
+	var fallback := RngStream.new()
+	fallback.configure(1)
+	return fallback
+
+
+func _craps_rng_avoiding_totals(rules: Dictionary, blocked: Array) -> RngStream:
+	for seed in range(1, 1000):
+		var probe := RngStream.new()
+		probe.configure(seed)
+		if not blocked.has(int(CrapsRulesScript.roll_dice(probe, rules, 0).get("total", 0))):
+			var result := RngStream.new()
+			result.configure(seed)
+			return result
+	var fallback := RngStream.new()
+	fallback.configure(1)
+	return fallback
 
 
 func _check_craps_rule_matrix(game: GameModule, base_table: Dictionary, failures: Array) -> void:

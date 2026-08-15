@@ -54,6 +54,7 @@ func _run() -> void:
 	rows.append(_audit_place("place_5_9", 5, rolls_per_bet, run_state.create_rng("rtp:place_5_9")))
 	rows.append(_audit_place("place_6_8", 6, rolls_per_bet, run_state.create_rng("rtp:place_6_8")))
 	rows.append(_audit_field(rolls_per_bet, run_state.create_rng("rtp:field")))
+	var street_parity := _audit_street_pass_parity(rolls_per_bet, run_state)
 	var setting_row := _audit_setting_bias(rolls_per_bet, audit, run_state)
 
 	var report := {
@@ -63,6 +64,7 @@ func _run() -> void:
 		"requested_rolls_per_bet": rolls_per_bet,
 		"tolerance": tolerance,
 		"rows": rows,
+		"street_pass_parity": street_parity,
 		"setting_bias": setting_row,
 		"failures": failures,
 		"passed": failures.is_empty(),
@@ -83,6 +85,11 @@ func _run() -> void:
 		float(setting_row.get("biased_seven_probability", 0.0)),
 		float(setting_row.get("seven_probability_reduction", 0.0)),
 		str(bool(setting_row.get("passed", false))),
+	])
+	print("STREET_CRAPS_RTP_PARITY core=%.6f street=%.6f exact=%s" % [
+		float(street_parity.get("core_rtp", 0.0)),
+		float(street_parity.get("street_rtp", 0.0)),
+		str(bool(street_parity.get("passed", false))),
 	])
 	await process_frame
 	quit(0 if failures.is_empty() else 1)
@@ -196,6 +203,28 @@ func _audit_setting_bias(rolls: int, audit: Dictionary, run_state: RunState) -> 
 		"seven_probability_reduction": reduction,
 		"documented_reduction_band": [minimum, maximum],
 		"passed": passed,
+	}
+
+
+func _audit_street_pass_parity(rolls: int, run_state: RunState) -> Dictionary:
+	var variants := _dict(config.get("variants", {}))
+	var street := _dict(variants.get("street_craps", {}))
+	var allowed: Array = street.get("allowed_bets", []) if typeof(street.get("allowed_bets", [])) == TYPE_ARRAY else []
+	var structural_match := str(street.get("scenario_hook_value", "")) == "street_craps" and allowed == ["pass_line", "dont_pass"]
+	var core_row := _audit_line("core_pass_parity", "pass_line", false, rolls, run_state.create_rng("rtp:street_pass_parity"))
+	var street_row := _audit_line("street_pass_parity", "pass_line", false, rolls, run_state.create_rng("rtp:street_pass_parity"))
+	var exact := structural_match \
+		and int(core_row.get("total_staked", -1)) == int(street_row.get("total_staked", -2)) \
+		and int(core_row.get("total_returned", -1)) == int(street_row.get("total_returned", -2)) \
+		and is_equal_approx(float(core_row.get("rtp", -1.0)), float(street_row.get("rtp", -2.0)))
+	if not exact:
+		failures.append("Street Craps Pass Line diverged from the core Pass Line under identical deterministic rolls.")
+	return {
+		"rolls": rolls,
+		"core_rtp": float(core_row.get("rtp", 0.0)),
+		"street_rtp": float(street_row.get("rtp", 0.0)),
+		"same_rules_engine": structural_match,
+		"passed": exact,
 	}
 
 
