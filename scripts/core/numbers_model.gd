@@ -303,25 +303,26 @@ func fix_record_bribe(success: bool, resolution: Dictionary = {}) -> Dictionary:
 	return {"ok": true, "fix": fix_state.duplicate(true)}
 
 
-func fix_allocate(allocations_value: Variant) -> Dictionary:
+func fix_allocation_quote(allocations_value: Variant) -> Dictionary:
 	if str(fix_state.get("status", "")) != "camouflage":
 		return {"ok": false, "message": "The camouflage is not on the desk."}
 	var scheduled_day := int(fix_state.get("target_day", day_at(action_index) + 1))
 	if action_index >= post_action(scheduled_day):
-		fix_state["status"] = "aborted"
-		fix_state["aborted_action"] = action_index
-		fix_state["retry_day"] = day_at(action_index) + maxi(1, int(_dictionary(config.get("fix", {})).get("retry_delay_days", 1)))
-		return {"ok": false, "aborted": true, "message": "The handle posted before the spread was covered."}
+		return {"ok": false, "late": true, "message": "The handle posted before the spread was covered."}
 	var allocations := _normalize_allocations(allocations_value)
 	var camouflage := _dictionary(_dictionary(config.get("fix", {})).get("camouflage", {}))
 	var minimum_venues := maxi(1, int(camouflage.get("minimum_venues", 3)))
 	if allocations.size() < minimum_venues:
 		return {"ok": false, "message": "Spread the paper across at least %d books." % minimum_venues}
+	var stake_limit := maxi(1, int(_dictionary(config.get("slips", {})).get("stake_max", 20)))
 	var total := 0
 	var maximum := 0
 	var thin_count := 0
-	for stake_value in allocations.values():
+	for venue_id in allocations.keys():
+		var stake_value: Variant = allocations.get(venue_id, 0)
 		var allocation_stake := maxi(0, int(stake_value))
+		if allocation_stake > stake_limit:
+			return {"ok": false, "message": "%s will only write up to $%d on one slip." % [str(venue_definition(str(venue_id)).get("label", venue_id)), stake_limit]}
 		total += allocation_stake
 		maximum = maxi(maximum, allocation_stake)
 		if allocation_stake < int(camouflage.get("thin_venue_stake", 4)):
@@ -335,22 +336,73 @@ func fix_allocate(allocations_value: Variant) -> Dictionary:
 	var volume_score := clampi(int(round(float(total) * 100.0 / float(target_total))), 0, 100)
 	var spread_score := clampi(100 - maxi(0, concentration - int(100.0 / float(allocations.size()))) * 2 - thin_count * 12, 0, 100)
 	var camouflage_score := clampi(int(round((float(volume_score) + float(spread_score)) * 0.5)), 0, 100)
+	return {
+		"ok": true,
+		"allocations": allocations,
+		"total": total,
+		"venue_count": allocations.size(),
+		"concentration_percent": concentration,
+		"too_concentrated": too_concentrated,
+		"camouflage_score": camouflage_score,
+		"operation_heat": int(camouflage.get("operation_heat_too_concentrated", 18)) if too_concentrated else 0,
+	}
+
+
+func fix_allocate(allocations_value: Variant) -> Dictionary:
+	var quote := fix_allocation_quote(allocations_value)
+	if not bool(quote.get("ok", false)):
+		if bool(quote.get("late", false)):
+			fix_state["status"] = "aborted"
+			fix_state["aborted_action"] = action_index
+			fix_state["retry_day"] = day_at(action_index) + maxi(1, int(_dictionary(config.get("fix", {})).get("retry_delay_days", 1)))
+			quote["aborted"] = true
+		return quote
+	var scheduled_day := int(fix_state.get("target_day", day_at(action_index) + 1))
+	var allocations := _dictionary(quote.get("allocations", {})).duplicate(true)
 	var target_day := scheduled_day
 	var fixed_number := _three_digits(_stable_hash("%d:%d:crew_fix_number" % [seed_value, target_day]) % 1000)
 	var draw := _draw(target_day)
 	draw["number"] = fixed_number
 	draw["fixed_by_crew"] = true
 	draws_by_day[str(target_day)] = draw
+	var slip_ids: Array = []
+	var venue_ids := allocations.keys()
+	venue_ids.sort()
+	for venue_id_value in venue_ids:
+		var venue_id := str(venue_id_value)
+		var stake := int(allocations.get(venue_id_value, 0))
+		slip_sequence += 1
+		var slip_id := "numbers_slip_%05d" % slip_sequence
+		slips.append({
+			"id": slip_id,
+			"day": target_day,
+			"venue_id": venue_id,
+			"digits": fixed_number,
+			"stake": stake,
+			"play_type": "straight",
+			"placed_action": action_index,
+			"close_action": close_action(venue_id, target_day),
+			"status": "open",
+			"past_post": false,
+			"detection_percent": 0,
+			"detected": false,
+			"crew_fix": true,
+		})
+		slip_ids.append(slip_id)
 	fix_state["status"] = "payday"
 	fix_state["allocations"] = allocations
-	fix_state["allocation_total"] = total
-	fix_state["concentration_percent"] = concentration
-	fix_state["too_concentrated"] = too_concentrated
-	fix_state["camouflage_score"] = camouflage_score
+	fix_state["allocation_total"] = int(quote.get("total", 0))
+	fix_state["concentration_percent"] = int(quote.get("concentration_percent", 0))
+	fix_state["too_concentrated"] = bool(quote.get("too_concentrated", false))
+	fix_state["camouflage_score"] = int(quote.get("camouflage_score", 0))
+	fix_state["slip_ids"] = slip_ids
 	fix_state["fixed_number"] = fixed_number
 	return {
 		"ok": true,
-		"operation_heat": int(camouflage.get("operation_heat_too_concentrated", 18)) if too_concentrated else 0,
+		"message": "$%d in crew paper is spread across %d books." % [int(quote.get("total", 0)), allocations.size()],
+		"total": int(quote.get("total", 0)),
+		"slip_count": slip_ids.size(),
+		"operation_heat": int(quote.get("operation_heat", 0)),
 		"fix": fix_state.duplicate(true),
 	}
 

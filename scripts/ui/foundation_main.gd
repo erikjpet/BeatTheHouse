@@ -13906,6 +13906,10 @@ func _render_numbers_surface(result_message: String = "") -> void:
 			event_choice_popup_summary_label.text = "Silas keeps the exchange short and the paper out of sight."
 		elif source_id == "desk":
 			event_choice_popup_summary_label.text = "Write a slip, take Lucky's route, or prepare crew paper."
+		elif bool(venue.get("post_source", false)) and not str(status.get("published_number", "")).is_empty():
+			event_choice_popup_summary_label.text = "The posted board reads %s." % str(status.get("published_number", ""))
+		elif not str(status.get("published_number", "")).is_empty():
+			event_choice_popup_summary_label.text = "The handle you carried here is %s. This window is still open." % str(status.get("published_number", "")) if bool(venue.get("open", false)) else "The handle you carried here is %s. This window is closed." % str(status.get("published_number", ""))
 		else:
 			event_choice_popup_summary_label.text = "Today's window is open." if bool(venue.get("open", false)) else "Today's window is closed."
 	_clear_event_choice_popup_choices()
@@ -14013,7 +14017,7 @@ func _build_numbers_allocation_controls(venues: Array) -> void:
 	allocation_card.add_theme_constant_override("separation", 5)
 	event_choice_popup_choices_list.add_child(allocation_card)
 	allocation_card.add_child(_label("Camouflage allocation", 14))
-	allocation_card.add_child(_muted_label("Spread at least one unit across three or more books. Concentrated paper draws heat.", 12))
+	allocation_card.add_child(_muted_label("Choose up to $20 per book and fund at least three books from your bankroll. Concentrated paper draws heat.", 12))
 	for venue_value in venues:
 		if typeof(venue_value) != TYPE_DICTIONARY:
 			continue
@@ -14029,10 +14033,10 @@ func _build_numbers_allocation_controls(venues: Array) -> void:
 		var input := SpinBox.new()
 		input.name = "NumbersAllocation_%s" % venue_id
 		input.min_value = 0.0
-		input.max_value = 99.0
+		input.max_value = 20.0
 		input.step = 1.0
 		input.rounded = true
-		input.value = 12.0
+		input.value = 0.0
 		input.custom_minimum_size = Vector2(120, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 		row.add_child(input)
 		allocation_card.add_child(row)

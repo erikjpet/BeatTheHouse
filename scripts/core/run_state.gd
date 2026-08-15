@@ -1329,6 +1329,12 @@ func set_environment(environment_data: Dictionary) -> void:
 		environment_history.append(_environment_history_entry(current_environment))
 		_compact_environment_history()
 	current_environment = _normalize_environment(environment_data)
+	# The Punchline's posted board is a physical source. Arriving after the post
+	# reveals only the current published handle; it does not grant solo-route lore.
+	if numbers_state != null and str(current_environment.get("archetype_id", "")) == "small_underground_casino":
+		var posted_status := numbers_state.status()
+		if bool(posted_status.get("posted", false)):
+			numbers_state.reveal_number(int(posted_status.get("day", 0)), "punchline_post")
 	# Stored/revisited environments may contain the boundary from their prior
 	# visit. The destination is active now and must begin with an open visit.
 	current_environment.erase("departed_game_clock_minutes")
@@ -6532,11 +6538,28 @@ func numbers_begin_fix_bribe() -> Dictionary:
 func numbers_fix_allocate(allocations: Dictionary) -> Dictionary:
 	if numbers_state == null:
 		return {"ok": false, "message": "The desk is dark."}
+	var quote := numbers_state.fix_allocation_quote(allocations)
+	if not bool(quote.get("ok", false)):
+		# Preserve the model's authored late-abort transition.
+		return numbers_state.fix_allocate(allocations) if bool(quote.get("late", false)) else quote
+	var total := maxi(0, int(quote.get("total", 0)))
+	if bankroll < total:
+		return {"ok": false, "message": "The desk needs $%d in real bankroll for that spread." % total}
 	var result := numbers_state.fix_allocate(allocations)
+	if not bool(result.get("ok", false)):
+		return result
+	change_bankroll(-total)
+	_sync_numbers_inventory_marker()
 	var operation_heat := maxi(0, int(result.get("operation_heat", 0)))
 	if operation_heat > 0:
 		add_suspicion("numbers_fix_concentration", operation_heat, "contraband", true, {}, true)
-	return result
+	return {
+		"ok": true,
+		"message": str(result.get("message", "The crew paper is placed.")),
+		"total": total,
+		"slip_count": int(result.get("slip_count", 0)),
+		"operation_heat": operation_heat,
+	}
 
 
 func _numbers_fix_eligible() -> bool:
@@ -8525,6 +8548,11 @@ func _resolve_police_sweep_encounter(claim: Dictionary) -> Dictionary:
 		})
 		result["numbers_collection_confiscated"] = swept_collection
 		result["numbers_collection_bag_value_confiscated"] = swept_bag_value
+		enqueue_triggered_event("numbers_lucky_swept_collection", "numbers", {
+			"bag_value": swept_bag_value,
+			"node_id": node_id,
+			"job_id": collection_job_id,
+		}, {"presentation": "talk"})
 	if str(result.get("confiscated_item_id", "")) == "numbers_slips" and numbers_state != null:
 		result["numbers_slips_confiscated"] = numbers_state.confiscate_open_slips("police_sweep")
 	_sync_numbers_inventory_marker()

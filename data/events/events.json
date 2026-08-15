@@ -4228,6 +4228,20 @@
     ]}
   },
   {
+    "id": "numbers_lucky_swept_collection",
+    "display_name": "Lucky's Whole Bag",
+    "type": "crew",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "scopes": ["any"],
+    "asset_path": "res://assets/art/events/motel_knock.png",
+    "start_summary": "Lucky has already heard how the blue lights took the whole collection bag.",
+    "trigger": {"type": "manual"},
+    "payload": {"summary": "Every book is short. Lucky puts the whole loss on you.", "choices": [
+      {"id": "take_luckys_blame", "label": "Take Lucky's blame", "text": "There is no good version of losing the entire bag under a sweep.", "consequences": {"flags": {"numbers_lucky_swept_talk_seen": true}, "resolve_event": true}}
+    ]}
+  },
+  {
     "id": "numbers_desk",
     "display_name": "The Numbers Desk",
     "type": "crew",
