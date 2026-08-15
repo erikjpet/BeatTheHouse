@@ -452,7 +452,7 @@ func venue_statuses(day: int, at_action: int) -> Array:
 	for venue in _dictionary_array(config.get("venues", [])):
 		var venue_id := str(venue.get("id", ""))
 		var close := close_action(venue_id, day)
-		var row := venue.duplicate(true)
+		var row: Dictionary = venue.duplicate(true)
 		row["close_action"] = close
 		row["open"] = at_action < close
 		row["strictness_delta"] = int(active_leak.get("strictness_delta", 0))

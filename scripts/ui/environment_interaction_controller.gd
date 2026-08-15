@@ -85,7 +85,7 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 		var venue_label := str(venue_row.get("label", host._label_from_id(venue_id)))
 		var book_source := "desk" if at_desk else "book"
 		var object_id := "event:numbers_desk" if at_desk else "numbers:book"
-		var focus_rect := host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_EVENT if at_desk else host.CONTEXT_MODE_NUMBERS, 0)
+		var focus_rect: Rect2 = host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_EVENT if at_desk else host.CONTEXT_MODE_NUMBERS, 0)
 		objects.append(host._make_interactable_object({
 			"object_id": object_id,
 			"object_type": host.CONTEXT_MODE_NUMBERS,
@@ -103,7 +103,7 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 			"confirm_action_id": "open_numbers",
 			"focus_rect": focus_rect,
 		}))
-	var silas_here := host.run_state.traveler_node("silas_snitch") == host.run_state.current_world_node_id()
+	var silas_here: bool = host.run_state.traveler_node("silas_snitch") == host.run_state.current_world_node_id()
 	if silas_here:
 		objects.append(host._make_interactable_object({
 			"object_id": "numbers:silas",
