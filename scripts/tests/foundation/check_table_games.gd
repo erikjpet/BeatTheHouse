@@ -41,7 +41,8 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 		failures.append("Craps draw_surface returned false.")
 	if _surface_hit_count(harness, "craps_bet") < 9:
 		failures.append("Craps renderer did not register the core readable bet targets.")
-	_check_craps_idle_motion(game, surface, failures)
+	var reduced_surface := game.surface_state(run_state, environment, {"reduce_motion": true})
+	_check_craps_idle_motion(game, surface, reduced_surface, failures)
 	var pass_index := _craps_target_index(surface.get("bet_targets", []), "pass_line")
 	var bet_command := game.surface_action_command("craps_bet", pass_index, false, {"selected_chip": 5}, run_state, environment)
 	var bet_ui: Dictionary = bet_command.get("ui_state", {})
@@ -197,7 +198,7 @@ func _check_craps_authored_die_sides(failures: Array) -> void:
 				return
 
 
-func _check_craps_idle_motion(game: GameModule, surface: Dictionary, failures: Array) -> void:
+func _check_craps_idle_motion(game: GameModule, surface: Dictionary, reduced_surface: Dictionary, failures: Array) -> void:
 	var canvas: Control = GameSurfaceCanvasScript.new()
 	canvas.size = Vector2(ArtContractsScript.GAME_BOARD_SIZE)
 	root.add_child(canvas)
@@ -214,9 +215,9 @@ func _check_craps_idle_motion(game: GameModule, surface: Dictionary, failures: A
 		var counters: Dictionary = canvas.call("performance_counters")
 		if int(counters.get("full_snapshot_calls", 0)) != 0:
 			failures.append("Craps visible idle motion rebuilt full snapshots instead of using the surface clock.")
-	var reduced := surface.duplicate(true)
-	reduced["reduce_motion"] = true
-	canvas.call("render_game_snapshot", reduced)
+	if not bool(reduced_surface.get("reduce_motion", false)):
+		failures.append("Craps production surface did not propagate the reduced-motion preference.")
+	canvas.call("render_game_snapshot", reduced_surface)
 	var reduced_first: Dictionary = canvas.call("debug_surface_motion_sample")
 	canvas.call("debug_advance_idle_liveness", 0.5)
 	var reduced_second: Dictionary = canvas.call("debug_surface_motion_sample")

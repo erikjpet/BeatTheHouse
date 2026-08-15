@@ -67,6 +67,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_cast": "dealer_table",
 		"surface_time_msec": now_msec,
 		"surface_presentation_time_msec": int(ui_state.get("surface_presentation_time_msec", now_msec)),
+		"reduce_motion": bool(ui_state.get("reduce_motion", false)),
 		"surface_controls_native": true,
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
