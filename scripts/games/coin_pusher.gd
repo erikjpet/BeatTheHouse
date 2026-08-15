@@ -432,7 +432,7 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 	var reset_token := _scenario_reset_token(environment)
 	if machine.is_empty() or str(machine.get("schema", "")) != STATE_SCHEMA:
 		machine = _generate_machine_state(run_state, environment)
-	elif int(machine.get("version", 0)) < _state_version():
+	elif int(machine.get("version", 0)) < _state_version() or str(machine.get("variation_id", "")) != _variation_id():
 		machine = _normalize_machine_state(machine)
 	elif not reset_token.is_empty() and reset_token != str(machine.get("scenario_reset_token", "")):
 		machine = _generate_machine_state(run_state, environment)
@@ -475,6 +475,7 @@ func _normalize_machine_state(source: Dictionary) -> Dictionary:
 	var machine := source.duplicate(true)
 	machine["schema"] = STATE_SCHEMA
 	machine["version"] = _state_version()
+	machine["variation_id"] = _variation_id()
 	for key in ["tray_value", "total_cost", "total_payout", "action_count", "tell_rung", "suspicion_floor"]:
 		machine[key] = maxi(0, int(machine.get(key, 0)))
 	machine["staff_watch_memory"] = bool(machine.get("staff_watch_memory", false))
@@ -849,7 +850,7 @@ func _lane_views(machine: Dictionary) -> Array:
 
 func _digest_state(machine: Dictionary) -> Dictionary:
 	return {
-		"schema": str(machine.get("schema", "")), "version": int(machine.get("version", 0)),
+		"schema": str(machine.get("schema", "")), "version": int(machine.get("version", 0)), "variation_id": str(machine.get("variation_id", "")),
 		"lanes": machine.get("lanes", []), "riders": machine.get("riders", []),
 		"upper_phase": int(machine.get("upper_phase", 0)), "lower_phase": int(machine.get("lower_phase", 0)),
 		"action_count": int(machine.get("action_count", 0)), "tray_value": int(machine.get("tray_value", 0)),

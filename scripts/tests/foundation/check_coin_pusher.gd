@@ -116,7 +116,8 @@ func _check_coin_pusher_definition_routing(library: ContentLibrary, definition: 
 	if str((force_command.get("ui_state", {}) as Dictionary).get("coin_pusher_force", "")) != "shove" \
 			or str((direction_command.get("ui_state", {}) as Dictionary).get("coin_pusher_direction", "")) != "right":
 		failures.append("Quarter Falls action selection did not consume authored force/direction ordering.")
-	generated["tell_rung"] = 2
+	var current_machine: Dictionary = (run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	current_machine["tell_rung"] = 2
 	surface = routed_game.surface_state(run_state, run_state.current_environment)
 	if str(surface.get("coin_pusher_tell", "")) != "authored chirp":
 		failures.append("Quarter Falls tell presentation ignored its authored label ladder.")
