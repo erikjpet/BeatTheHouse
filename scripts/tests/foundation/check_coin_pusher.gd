@@ -180,6 +180,9 @@ func _check_coin_pusher_canonical_probe(failures: Array) -> void:
 	for required_text in ["_on_settings_applied", "debug_surface_motion_sample", "motion_before", "motion_after", "animation_redraw_count == 0", "manifest_authoritative_pass"]:
 		if not capture_source.contains(required_text):
 			failures.append("Quarter Falls focused capture is missing reduced-motion proof seam %s." % required_text)
+	var required_capture_contract := 'const REQUIRED_CAPTURE_IDS := ["normal_pile_rider", "tell_alarm_chirps", "reduced_motion", "hard_alarm_lockdown", "room_available_after_alarm", "jackpot_ridge", "vault_drop"]'
+	if not capture_source.contains(required_capture_contract):
+		failures.append("Coin Pusher focused capture does not require both Jackpot Ridge and The Vault Drop alongside the five base proofs.")
 
 
 func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> void:
