@@ -70,6 +70,10 @@ static func normalize_observations(value: Variant) -> Dictionary:
 # Save projection packs both neutral counters into one masked integer per member;
 # raw saves contain neither authored ids nor a readable progress counter.
 static func pack_observations(value: Dictionary) -> Dictionary:
+	# An empty projection is meaningful for saves that have not observed poker
+	# yet. Do not expand it into authored neutral member keys during a round-trip.
+	if value.is_empty():
+		return {}
 	var source := normalize_observations(value)
 	var result := {}
 	var member_index := 0
@@ -88,6 +92,10 @@ static func pack_observations(value: Dictionary) -> Dictionary:
 
 static func unpack_observations(value: Variant) -> Dictionary:
 	var source: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
+	# start_new() owns initialization of full neutral memory. Loads preserve an
+	# explicitly empty legacy/minimal projection until gameplay records a pattern.
+	if source.is_empty():
+		return {}
 	var result := default_observations()
 	var member_index := 0
 	for member_id in result.keys():
