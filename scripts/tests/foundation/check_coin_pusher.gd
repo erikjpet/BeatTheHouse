@@ -846,13 +846,28 @@ func _pusher_variation_session(game: GameModule, seed_text: String, variation_id
 	var run_state: RunState = fixture.get("run_state")
 	var environment: Dictionary = run_state.current_environment
 	var payout := 0
+	var cost := 0
 	var outcomes: Array = []
 	for index in range(action_count):
-		var result := game.resolve_with_context("drop_quarter", 1, run_state, environment, run_state.create_rng("variation_drop_%d" % index), {"coin_pusher_lane": index % 5})
+		var action_id := "drop_quarter"
+		var ui_state := {"coin_pusher_lane": index % 5}
+		# Ridge's documented EV policy spends only readable, clean nudges;
+		# drop-only play intentionally ignores its sequencing advantage.
+		if variation_id == "jackpot_ridge" and index % 10 == 9:
+			var machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+			var lanes: Array = machine.get("lanes", [])
+			for lane_index in range(lanes.size()):
+				var cells: Array = (lanes[lane_index] as Dictionary).get("cells", []) if typeof(lanes[lane_index]) == TYPE_DICTIONARY else []
+				if not cells.is_empty() and bool((cells[0] as Dictionary).get("edge_hang", false)):
+					action_id = "nudge_machine"
+					ui_state = {"coin_pusher_lane": lane_index, "coin_pusher_force": "tap", "coin_pusher_direction": "front", "coin_pusher_timing_phase": 3, "coin_pusher_ridge_trim": "balanced"}
+					break
+		var result := game.resolve_with_context(action_id, 1 if action_id == "drop_quarter" else 0, run_state, environment, run_state.create_rng("variation_action_%d" % index), ui_state)
 		payout += int(result.get("coin_pusher_payout", 0))
-		outcomes.append([int(result.get("coin_pusher_payout", 0)), game.deterministic_state_digest(environment)])
+		cost += 1 if action_id == "drop_quarter" else 0
+		outcomes.append([action_id, int(result.get("coin_pusher_payout", 0)), game.deterministic_state_digest(environment)])
 		GameModule.apply_result(run_state, result, run_state.create_rng("variation_apply_%d" % index))
-	return {"payout": payout, "cost": action_count, "outcomes": outcomes, "digest": game.deterministic_state_digest(environment)}
+	return {"payout": payout, "cost": cost, "outcomes": outcomes, "digest": game.deterministic_state_digest(environment)}
 
 
 func _pusher_variation_fixture(game: GameModule, seed_text: String, variation_id: String, crowd_density: String = "") -> Dictionary:

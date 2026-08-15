@@ -58,8 +58,10 @@ func legal_actions(run_state: RunState, environment: Dictionary) -> Array:
 
 
 func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
-	var result := super.cheat_actions(run_state, environment)
 	var machine := _read_machine_state(run_state, environment)
+	if _machine_busy(environment) or bool(machine.get("locked_down", false)):
+		return []
+	var result := super.cheat_actions(run_state, environment)
 	if not _machine_busy(environment) and str(machine.get("variation_id", "")) == "vault_drop" and run_state != null and run_state.inventory.has("xray_glasses"):
 		result.append({"id": VAULT_PEEK_ACTION, "label": "X-Ray Peek", "summary": "Reveal exactly one selected vault cell truthfully.", "win_chance": 100, "payout_mult": 0, "suspicion_delta": 0})
 	return result
