@@ -81,6 +81,7 @@ var report := {
 		"cheat_action_selection": false,
 		"consequence_result_card": false,
 		"event_card": false,
+		"scenario_event_context_card": false,
 		"item_card": false,
 		"item_focus_no_mutation": false,
 		"item_object_double_click": false,
@@ -394,6 +395,7 @@ func _run() -> void:
 	await _verify_grand_casino_showdown_event_snapshot()
 	await _verify_terminal_victory_summary_snapshot()
 	await _verify_t4_7_event_visual_model()
+	await _verify_scenario_event_context_card()
 	await _verify_sal_resale_shelf_visual_states()
 
 	_write_report()
@@ -739,6 +741,38 @@ func _try_event_card_flow(prepared_fixture: bool = false) -> void:
 	_record_state("event_result_screen", "Resolved a visible event response through the popup path.")
 	_assert_objective_hud("event result")
 	_assert_m2_player_feedback_clarity("event result")
+
+
+func _verify_scenario_event_context_card() -> void:
+	await _open_fresh_app()
+	await _set_seed_text("FOUNDATION-SCENARIO-EVENT-VISUAL-QA")
+	_require(not _click_primary_run_action().is_empty(), "Could not start scenario-event visual QA through the visible primary run action.")
+	await _settle()
+	await _prepare_visual_qa_fixture_environment("beach", "visual_scenario_event_fixture", {}, -1, "", "beach_bonfire_night")
+	var fixture_run := app.get("run_state") as RunState
+	var fixture_event_ids: Array = fixture_run.current_environment.get("event_ids", []) if fixture_run != null and typeof(fixture_run.current_environment.get("event_ids", [])) == TYPE_ARRAY else []
+	_require(fixture_run != null and fixture_event_ids.has("scenario_bonfire_story"), "Generated beach scenario visual fixture did not place its authored event icon.")
+	var clicked_label := await _click_first_canvas_object_type("event")
+	_require(not clicked_label.is_empty(), "Could not click the generated beach scenario event icon.")
+	await _settle()
+	var spatial: Dictionary = app.call("current_spatial_interaction_snapshot")
+	_require(str(spatial.get("selected_object_id", "")) == "event:scenario_bonfire_story", "Scenario event click did not open the bonfire context card.")
+	var option := _event_option_by_id("scenario_bonfire_story")
+	var choices: Array = option.get("choices", [])
+	_require(choices.size() == 2, "Scenario event context card did not expose both authored response choices.")
+	var canvas := app.get("environment_canvas") as Control
+	var canvas_snapshot: Dictionary = canvas.call("current_view_snapshot") if canvas != null and canvas.has_method("current_view_snapshot") else {}
+	var selected_info: Dictionary = canvas_snapshot.get("selected_info", {}) if typeof(canvas_snapshot.get("selected_info", {})) == TYPE_DICTIONARY else {}
+	var actions: Array = selected_info.get("actions", []) if typeof(selected_info.get("actions", [])) == TYPE_ARRAY else []
+	var action_labels: Array = []
+	for action_value in actions:
+		if typeof(action_value) == TYPE_DICTIONARY:
+			action_labels.append(str((action_value as Dictionary).get("label", "")))
+	for choice_value in choices:
+		if typeof(choice_value) == TYPE_DICTIONARY and not action_labels.has(str((choice_value as Dictionary).get("label", ""))):
+			_require(false, "Scenario event context card omitted authored choice button %s." % str((choice_value as Dictionary).get("label", "")))
+	_cover("scenario_event_context_card")
+	_record_state("scenario_event_context_card", "Clicked a generated beach scenario icon and opened its context card with both authored choice buttons.")
 
 
 func _assert_no_triggered_event_objects(label: String) -> void:
@@ -1260,14 +1294,15 @@ func _prepare_lender_pressure_visual_qa_fixture() -> void:
 	}, 30)
 
 
-func _prepare_visual_qa_fixture_environment(archetype_id: String, fixture_id: String, overrides: Dictionary, bankroll_override: int = -1, layer_id: String = "") -> void:
+func _prepare_visual_qa_fixture_environment(archetype_id: String, fixture_id: String, overrides: Dictionary, bankroll_override: int = -1, layer_id: String = "", scenario_id: String = "") -> void:
 	var fixture_run := app.get("run_state") as RunState
 	var fixture_library := app.get("library") as ContentLibrary
 	_require(fixture_run != null and fixture_library != null, "Visual QA fixture could not access foundation runtime state.")
 	var archetype := _visual_qa_archetype(archetype_id, fixture_library)
 	_require(not archetype.is_empty(), "Visual QA fixture could not find environment archetype: %s." % archetype_id)
 	var fixture_rng := fixture_run.create_rng("visual_fixture:%s" % fixture_id)
-	var fixture_environment := EnvironmentInstance.from_archetype_layer(archetype, layer_id, 0, fixture_rng, fixture_library).to_dict() if not layer_id.is_empty() else EnvironmentInstance.from_archetype(archetype, 0, fixture_rng, fixture_library).to_dict()
+	var scenario := fixture_library.scenario(scenario_id) if not scenario_id.is_empty() else {}
+	var fixture_environment := EnvironmentInstance.from_archetype_layer(archetype, layer_id, 0, fixture_rng, fixture_library, {}, scenario).to_dict() if not layer_id.is_empty() else EnvironmentInstance.from_archetype(archetype, 0, fixture_rng, fixture_library, {}, scenario).to_dict()
 	fixture_environment["id"] = fixture_id
 	fixture_environment["archetype_id"] = archetype_id
 	for key_value in overrides.keys():
