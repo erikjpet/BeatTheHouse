@@ -84,7 +84,7 @@ Wave C games are intentionally parallel-friendly.
 | craps06_1 | `craps06_1_craps_core_prompt.md` | DONE | — | craps06_2, crew06_8 | PM:Codex/sub:1 | 2026-08-14 | 2026-08-14 | PM verified full rules/chips/save/cheat scope, RTP, systems/UI, 10-seed determinism, and focused/canonical visual QA PASS. |
 | craps06_2 | `craps06_2_street_craps_prompt.md` | DONE | craps06_1, env06_1 | — | PM:Codex/sub:5 | 2026-08-14 | 2026-08-14 | PM verified shared rules, cash-only teaching/dispersal/training, save/UI, RTP parity, determinism, and focused/canonical visual QA PASS. |
 | push06_1 | `push06_1_pusher_core_prompt.md` | DONE | env06_1 | push06_2 | PM:Codex/sub:2 | 2026-08-14 | 2026-08-14 | PM verified action-boundary pile/nudge/alarm/persistence/economy, all integrated gates, determinism, and focused/canonical visual QA PASS. |
-| push06_2 | `push06_2_pusher_variations_prompt.md` | TODO | push06_1, town06_1 | — | | | | |
+| push06_2 | `push06_2_pusher_variations_prompt.md` | IN_PROGRESS | push06_1, town06_1 | — | PM:Codex/sub:6 | 2026-08-14 | | PM-orchestrated Wave C Stage 2 execution after integrated Pusher-core acceptance. |
 | streets06_1 | `streets06_1_streets_framework_prompt.md` | DONE | town06_1, crew06_1 | crew06_3/6/8 | PM:Codex/sub:3 | 2026-08-14 | 2026-08-14 | PM verified scope/design, systems/UI, 10-seed determinism, and package/multi-stop/Hold visual QA on the integrated tree. |
 | crew06_2 | `crew06_2_backroom_poker_prompt.md` | IN_PROGRESS | crew06_1, env06_4 | crew06_9 | PM:Codex/sub:4 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution; queued for first available subagent slot. |
 | crew06_3 | `crew06_3_numbers_prompt.md` | IN_PROGRESS | crew06_1, streets06_1, town06_2 | crew06_9 (grievance src) | PM:Codex/sub:7 | 2026-08-14 | | PM-orchestrated Wave C Stage 2 execution after integrated Streets acceptance. |
@@ -510,6 +510,10 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   action-boundary pile, universal nudge/tell/alarm system, node persistence,
   prize riders, rumor/reputation seams, and machine-only lockdown. All gates
   and five focused visual states pass, unblocking push06_2.
+- 2026-08-14 [push06_2] Wave C Stage 2 Pusher variations execution claimed
+  after PM accepted the shared pile/nudge/alarm engine and town-state seams.
+  The subagent owns isolated implementation; PM retains board, archival,
+  integration, runtime verification, and push ownership.
 - 2026-08-14 [fix06_1] Codex claimed the dead scenario event interaction fix;
   implementation will repair the generic normalization seam and add a permanent
   generated-environment interactability class guard plus UI click-through.
