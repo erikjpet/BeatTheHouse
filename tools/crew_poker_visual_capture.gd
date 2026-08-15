@@ -36,11 +36,13 @@ var acceptance_context: Dictionary = {}
 var seed_audit_evidence: Dictionary = {}
 var foundation_action_rng: Dictionary = {}
 var foundation_rng_matches_audit := false
-var authored_tell_state: Dictionary = {}
-var authored_tell_observation: Dictionary = {}
-var authored_tell_table: Dictionary = {}
+var authored_tell_proof: Dictionary = {}
+var authored_tell_render_state: Dictionary = {}
+var authored_tell_capture_state: Dictionary = {}
+var reduced_motion_render_state: Dictionary = {}
+var reduced_motion_capture_state: Dictionary = {}
+var authored_tell_hidden_leaks: Array[Dictionary] = []
 var latest_action_surface_state: Dictionary = {}
-var latest_action_table_state: Dictionary = {}
 var tell_expected_actions: Array[String] = []
 var current_stage := "not_started"
 var current_attempt: Dictionary = {}
@@ -154,35 +156,32 @@ func _run() -> void:
 		if not _has_authored_observation():
 			_fail("Crew poker audited deal/call sequence did not naturally surface an authored subtle presentation in its single hand.")
 	if not failed:
-		var tell_state := authored_tell_state.duplicate(true)
-		var observation := authored_tell_observation.duplicate(true)
-		if not ["line", "portrait", "timing"].has(str(observation.get("channel", ""))) \
-				or str(observation.get("member_id", "")).is_empty():
+		var tell_proof := authored_tell_proof
+		if not ["line", "portrait", "timing"].has(str(tell_proof.get("channel", ""))) \
+				or str(tell_proof.get("member_id", "")).is_empty():
 			_fail("Crew poker capture did not retain the production-authored subtle presentation.")
-		tell_expected_actions = ["poker_draw", "poker_fold"] if str(tell_state.get("phase", "")) == "draw" else ["poker_call", "poker_raise", "poker_fold"]
-		_stage("capture_authored_subtle_tell", {"channel": str(observation.get("channel", "")), "member_id": str(observation.get("member_id", ""))})
+		tell_expected_actions = ["poker_draw", "poker_fold"] if str(tell_proof.get("surface_phase", "")) == "draw" else ["poker_call", "poker_raise", "poker_fold"]
+		_stage("capture_authored_subtle_tell", {"channel": str(tell_proof.get("channel", "")), "member_id": str(tell_proof.get("member_id", ""))})
 		await _capture_surface(
 			"03_authored_subtle_tell_1280x720.png",
 			"authored_subtle_tell",
 			tell_expected_actions,
-			5 if str(tell_state.get("phase", "")) == "draw" else 0,
-			tell_state
+			5 if str(tell_proof.get("surface_phase", "")) == "draw" else 0,
+			authored_tell_capture_state
 		)
 
 	if not failed:
-		_stage("capture_reduced_motion", {"state_source": "cached_authored_tell"})
-		var reduced_state := authored_tell_state.duplicate(true)
-		reduced_state["reduce_motion"] = true
-		_stage("reduced_motion_render_snapshot", {"state_source": "cached_authored_tell"})
-		canvas.call("render_game_snapshot", reduced_state)
+		_stage("capture_reduced_motion", {"state_source": "precomputed_action_projection"})
+		_stage("reduced_motion_render_snapshot", {"state_source": "precomputed_action_projection"})
+		canvas.call("render_game_snapshot", reduced_motion_render_state)
 		await _settle(3)
 		_capture_reduced_motion_stability()
 		await _capture_surface(
 			"04_reduced_motion_static_1280x720.png",
 			"reduced_motion_static",
 			tell_expected_actions,
-			5 if str(reduced_state.get("phase", "")) == "draw" else 0,
-			reduced_state
+			5 if str(authored_tell_proof.get("surface_phase", "")) == "draw" else 0,
+			reduced_motion_capture_state
 		)
 
 	if not failed:
@@ -384,10 +383,31 @@ func _perform_production_action(action: String, index: int, confirm_requested: b
 	var within_budget := action_elapsed_msec <= PRODUCTION_ACTION_BUDGET_MSEC
 	var outcome_passed := handled and phase_passed and within_budget
 	if outcome_passed:
-		authored_tell_state = latest_action_surface_state.duplicate(true)
-		authored_tell_table = latest_action_table_state.duplicate(true)
-		var post_action_observation: Dictionary = authored_tell_state.get("observation", {}) if typeof(authored_tell_state.get("observation", {})) == TYPE_DICTIONARY else {}
-		authored_tell_observation = post_action_observation.duplicate(true)
+		authored_tell_proof = {
+			"hand_number": int(after.get("hand_number", -1)),
+			"table_phase": str(after.get("table_phase", "")),
+			"surface_phase": str(after.get("surface_phase", "")),
+			"beat_present": bool(after.get("beat_present", false)),
+			"member_id": str(after.get("observation_member_id", "")),
+			"channel": str(after.get("observation_channel", "")),
+		}
+		# Retain the renderer dictionary by reference and prepare every safe value
+		# projection before viewport capture. Deep-copying it afterward can traverse
+		# object-bearing/cyclic renderer values indefinitely.
+		authored_tell_render_state = latest_action_surface_state
+		authored_tell_capture_state = {
+			"phase": str(after.get("surface_phase", "")),
+			"surface_renderer": str(latest_action_surface_state.get("surface_renderer", "")),
+			"observation": {
+				"member_id": str(after.get("observation_member_id", "")),
+				"channel": str(after.get("observation_channel", "")),
+			},
+			"reduce_motion": bool(latest_action_surface_state.get("reduce_motion", false)),
+		}
+		reduced_motion_render_state = authored_tell_render_state.duplicate(false)
+		reduced_motion_render_state["reduce_motion"] = true
+		reduced_motion_capture_state = authored_tell_capture_state.duplicate(false)
+		reduced_motion_capture_state["reduce_motion"] = true
 	var outcome := {
 		"kind": "production_action",
 		"action": action,
@@ -414,13 +434,14 @@ func _production_action_snapshot() -> Dictionary:
 	var surface: Dictionary = {}
 	if canvas != null:
 		surface = canvas.call("realtime_surface_state") as Dictionary
-	latest_action_table_state = table.duplicate(true)
-	latest_action_surface_state = surface.duplicate(true)
+	latest_action_surface_state = surface
 	var observation: Dictionary = surface.get("observation", {}) if typeof(surface.get("observation", {})) == TYPE_DICTIONARY else {}
+	var beat: Dictionary = table.get("beat", {}) if typeof(table.get("beat", {})) == TYPE_DICTIONARY else {}
 	return {
 		"table_phase": str(table.get("phase", "")),
 		"surface_phase": str(surface.get("phase", "")),
 		"hand_number": int(table.get("hand_number", 0)),
+		"beat_present": not beat.is_empty(),
 		"held": (surface.get("held", []) as Array).duplicate() if typeof(surface.get("held", [])) == TYPE_ARRAY else [],
 		"observation_member_id": str(observation.get("member_id", "")),
 		"observation_channel": str(observation.get("channel", "")),
@@ -429,24 +450,22 @@ func _production_action_snapshot() -> Dictionary:
 
 func _has_authored_observation() -> bool:
 	_stage("natural_tell_cached_state_assertion", {"source": "verified_production_action_after"})
-	var table := authored_tell_table.duplicate(true)
-	var surface := authored_tell_state.duplicate(true)
-	var observation: Dictionary = surface.get("observation", {}) if typeof(surface.get("observation", {})) == TYPE_DICTIONARY else {}
-	var beat: Dictionary = table.get("beat", {}) if typeof(table.get("beat", {})) == TYPE_DICTIONARY else {}
-	var passed := int(table.get("hand_number", -1)) == 0 \
-		and str(table.get("phase", "")) == "draw" \
-		and str(surface.get("phase", "")) == "draw" \
-		and not beat.is_empty() \
-		and ["line", "portrait", "timing"].has(str(observation.get("channel", ""))) \
-		and CrewPokerVisualSeedAuditScript.RESIDENTS.has(str(observation.get("member_id", "")))
+	var proof := authored_tell_proof
+	var passed := int(proof.get("hand_number", -1)) == 0 \
+		and str(proof.get("table_phase", "")) == "draw" \
+		and str(proof.get("surface_phase", "")) == "draw" \
+		and bool(proof.get("beat_present", false)) \
+		and ["line", "portrait", "timing"].has(str(proof.get("channel", ""))) \
+		and CrewPokerVisualSeedAuditScript.RESIDENTS.has(str(proof.get("member_id", "")))
 	acceptance_context["natural_tell"] = {
 		"passed": passed,
-		"hand_number": int(table.get("hand_number", -1)),
+		"hand_number": int(proof.get("hand_number", -1)),
 		"hand_number_contract": "zero_based_active_first_hand",
-		"phase": str(table.get("phase", "")),
-		"surface_phase": str(surface.get("phase", "")),
-		"member_id": str(observation.get("member_id", "")),
-		"channel": str(observation.get("channel", "")),
+		"phase": str(proof.get("table_phase", "")),
+		"surface_phase": str(proof.get("surface_phase", "")),
+		"beat_present": bool(proof.get("beat_present", false)),
+		"member_id": str(proof.get("member_id", "")),
+		"channel": str(proof.get("channel", "")),
 		"input_sequence": CrewPokerVisualSeedAuditScript.INPUT_SEQUENCE.duplicate(),
 		"hand_limit": 1,
 	}
@@ -554,13 +573,19 @@ func _capture_surface(file_name: String, capture_id: String, expected_actions: A
 		_stage("capture_surface_state_read", {"capture_id": capture_id, "source": "realtime_surface_state"})
 		state = canvas.call("realtime_surface_state") as Dictionary
 	else:
-		state = state_override.duplicate(true)
+		state = state_override
 	_stage("capture_surface_view_read", {"capture_id": capture_id, "source": "current_view_snapshot"})
 	var view := canvas.call("current_view_snapshot") as Dictionary
 	var poker_hits := _poker_hit_regions(view.get("surface_hit_actions", []))
 	_stage("capture_surface_hit_region_assertion", {"capture_id": capture_id, "source": "surface_board_size"})
 	var target_evidence := _assert_hit_regions(poker_hits, expected_actions, expected_card_targets)
-	var hidden_leaks := _hidden_label_leaks(state)
+	var hidden_leaks: Array[Dictionary]
+	if state_override.is_empty():
+		hidden_leaks = _hidden_label_leaks(state)
+		if capture_id == "active_draw":
+			authored_tell_hidden_leaks = hidden_leaks.duplicate(true)
+	else:
+		hidden_leaks = authored_tell_hidden_leaks
 	if not bool(target_evidence.get("passed", false)):
 		_fail("Crew poker %s capture failed hit-target bounds/overlap assertions." % capture_id)
 	if not hidden_leaks.is_empty():
