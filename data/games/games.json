@@ -3595,7 +3595,7 @@
           "force_trim_order": ["feather", "balanced", "heavy"],
           "force_trim_push_delta": {"feather": -1, "balanced": 0, "heavy": 1},
           "force_trim_tolerance_delta": {"feather": -1, "balanced": 0, "heavy": 1},
-          "documented_ev_band": [0.68, 1.35]
+          "documented_ev_band": [0.70, 1.08]
         },
         "vault_drop": {
           "display_name": "The Vault Drop",
