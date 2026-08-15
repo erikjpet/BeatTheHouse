@@ -74,15 +74,15 @@ func legal_actions(run_state: RunState, environment: Dictionary) -> Array:
 		"idle":
 			if bool(state.get("session_settled", false)):
 				return []
-			return [_action("deal", "Ante & Deal", "Ante the friendly stake and deal five cards."), _action("cash_out", "Leave Table", "Settle the session and stand up.")]
+			return [_poker_action("deal", "Ante & Deal", "Ante the friendly stake and deal five cards."), _poker_action("cash_out", "Leave Table", "Settle the session and stand up.")]
 		"before", "after":
 			return [
-				_action("call", "Check / Call", "Match the live bet and continue."),
-				_action("raise", "Raise", "Make one friendly raise; the Crew may call or fold."),
-				_action("fold", "Fold", "Release the hand. Hidden cards teach nothing."),
+				_poker_action("call", "Check / Call", "Match the live bet and continue."),
+				_poker_action("raise", "Raise", "Make one friendly raise; the Crew may call or fold."),
+				_poker_action("fold", "Fold", "Release the hand. Hidden cards teach nothing."),
 			]
 		"draw":
-			return [_action("draw", "Draw", "Keep selected cards and draw replacements."), _action("fold", "Fold", "Release the hand without a showdown.")]
+			return [_poker_action("draw", "Draw", "Keep selected cards and draw replacements."), _poker_action("fold", "Fold", "Release the hand without a showdown.")]
 	return []
 
 
@@ -124,7 +124,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			seat["cards"] = _hidden_cards(5)
 		seat.erase("policy")
 		seats.append(seat)
-	var beat := _copy_dict(state.get("beat", {}))
+	var beat := _poker_dict(state.get("beat", {}))
 	var presentation := {}
 	if not beat.is_empty():
 		var presentation_member := str(beat.get("m", ""))
@@ -141,7 +141,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			if str(presentation_seat.get("member_id", "")) == str(presentation.get("member_id", "")):
 				presentation_seat["portrait_variant"] = str(presentation.get("portrait_variant", ""))
 				seats[seat_index] = presentation_seat
-	var last := _copy_dict(state.get("last_result", {}))
+	var last := _poker_dict(state.get("last_result", {}))
 	var actions_now := legal_actions(run_state, environment)
 	return GameModule.surface_spec({
 		"surface_renderer": "crew_draw_poker",
@@ -569,7 +569,7 @@ func _result(action_id: String, environment: Dictionary, delta: int, message: St
 	return result
 
 
-func _action(id: String, label: String, summary: String) -> Dictionary:
+func _poker_action(id: String, label: String, summary: String) -> Dictionary:
 	return {"id": id, "label": label, "summary": summary, "win_chance": 0, "payout_mult": 0}
 
 
@@ -639,7 +639,7 @@ func _draw_player(surface, state: Dictionary) -> void:
 
 
 func _draw_observation(surface, state: Dictionary) -> void:
-	var observation := _copy_dict(state.get("observation", {}))
+	var observation := _poker_dict(state.get("observation", {}))
 	var channel := str(observation.get("channel", ""))
 	var text := ""
 	match channel:
@@ -734,5 +734,5 @@ func _dict_array(value: Variant) -> Array:
 	return result
 
 
-func _copy_dict(value: Variant) -> Dictionary:
+func _poker_dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
