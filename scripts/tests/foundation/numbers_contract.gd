@@ -267,6 +267,12 @@ static func _check_runstate_fix_chain(failures: Array) -> void:
 		return
 	var allocations := {"small_underground_casino": 18, "bar": 16, "motel": 14, "gas_station_casino": 12}
 	var bankroll_before := run_state.bankroll
+	run_state.bankroll = 59
+	var unfunded_snapshot := JSON.stringify(run_state.numbers_state.snapshot())
+	var unfunded := run_state.numbers_fix_allocate(allocations)
+	if bool(unfunded.get("ok", false)) or run_state.bankroll != 59 or JSON.stringify(run_state.numbers_state.snapshot()) != unfunded_snapshot:
+		failures.append("An unfunded production camouflage attempt mutated bankroll or Numbers state.")
+	run_state.bankroll = bankroll_before
 	var result := run_state.numbers_fix_allocate(allocations)
 	if not bool(result.get("ok", false)) or run_state.bankroll != bankroll_before - 60 or int(result.get("slip_count", 0)) != 4 or result.has("fix"):
 		failures.append("Production fix allocation did not charge $60, create four slips, or keep the fixed handle private.")
@@ -440,15 +446,20 @@ static func _check_swept_collection_consequences(failures: Array) -> void:
 			rumor_found = true
 			break
 	var job := _dictionary(run_state.crew_jobs.get(job_id, {}))
+	var pending_ditch := bool(run_state.narrative_flags.get("numbers_collection_sweep_confiscation_pending", false))
+	var forced_resolution := run_state.streets_apply_action({"verb": "wait"})
 	if str(run_state.numbers_state.collection_state.get("reason", "")) != "swept" \
 		or str(job.get("status", "")) != "failed" \
 		or run_state.crew_trust("crew_lucky") >= trust_before \
 		or run_state.suspicion_level() < heat_before + 14 \
 		or int(_dictionary(result.get("numbers_collection_confiscated", {})).get("count", 0)) != 1 \
 		or int(result.get("numbers_collection_bag_value_confiscated", 0)) <= 0 \
-		or not bool(run_state.narrative_flags.get("numbers_collection_sweep_confiscation_pending", false)) \
+		or not pending_ditch \
 		or not queued_ids.has("numbers_lucky_swept_collection") \
-		or not rumor_found:
+		or not rumor_found \
+		or not bool(forced_resolution.get("resolved", false)) \
+		or not run_state.crew_grievances("crew_lucky").is_empty() \
+		or bool(run_state.narrative_flags.get("numbers_collection_sweep_confiscation_pending", false)):
 		failures.append("Swept Numbers collection missed bag/slip confiscation, failed job, Lucky trust, +14 heat, rumor, pending ditch, or Lucky worst-talk.")
 
 
@@ -485,7 +496,7 @@ static func _check_consequences_and_independence(failures: Array) -> void:
 	if crew.debt.is_empty() or crew.crew_grievances("crew_knuckles").size() != 1 or str(crew.crew_grievances("crew_knuckles")[0].get("kind", "")) != "numbers_past_posting_in_colors":
 		failures.append("Real seeded crew-path detection missed production debt or the typed in-colors grievance.")
 	var forbidden := "hei" + "st"
-	for path in ["res://data/crew/numbers.json", "res://scripts/core/numbers_model.gd", "res://scripts/tests/foundation/numbers_contract.gd"]:
+	for path in ["res://data/crew/numbers.json", "res://scripts/core/numbers_model.gd", "res://scripts/ui/environment_interaction_controller.gd", "res://scripts/ui/environment_interaction_view_model.gd"]:
 		if FileAccess.get_file_as_string(path).to_lower().find(forbidden) >= 0:
 			failures.append("Numbers implementation contains forbidden cross-system vocabulary in %s." % path)
 	var run_source := FileAccess.get_file_as_string("res://scripts/core/run_state.gd")
@@ -493,6 +504,11 @@ static func _check_consequences_and_independence(failures: Array) -> void:
 	var numbers_end := run_source.find("func streets_begin", numbers_begin)
 	if numbers_begin < 0 or numbers_end <= numbers_begin or run_source.substr(numbers_begin, numbers_end - numbers_begin).to_lower().find(forbidden) >= 0:
 		failures.append("Numbers-owned RunState surface contains forbidden cross-system coupling.")
+	var ui_source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	var ui_begin := ui_source.find("func _open_numbers_surface")
+	var ui_end := ui_source.find("func _hide_event_choice_popup", ui_begin)
+	if ui_begin < 0 or ui_end <= ui_begin or ui_source.substr(ui_begin, ui_end - ui_begin).to_lower().find(forbidden) >= 0:
+		failures.append("Numbers-owned production UI surface contains forbidden cross-system coupling.")
 	var untouched = RunStateScript.new()
 	untouched.start_new("NUMBERS-INDEPENDENCE")
 	var exercised = RunStateScript.new()
