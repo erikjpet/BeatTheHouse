@@ -406,6 +406,8 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 	var phase_distance := _phase_distance(timing_phase, _clean_nudge_phase())
 	var clean_window := _clean_window()
 	var aimed := _direction_matches_hanger(machine, direction, lane)
+	if not aimed and str(machine.get("variation_id", "")) == "jackpot_ridge":
+		aimed = JackpotRidgeScript.has_nudge_target(_variation_state(machine), lane, direction, _lane_count())
 	var clean := phase_distance <= clean_window and aimed
 	var authored_push := _force_push_strength(force)
 	var tolerance_cost := 0 if clean else _force_tolerance_cost(force)

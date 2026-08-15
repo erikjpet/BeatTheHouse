@@ -55,6 +55,20 @@ static func lane_is_jammed(state: Dictionary, lane: int) -> bool:
 	return _int_array(state.get("jammed_lanes", [])).has(lane)
 
 
+static func has_nudge_target(state: Dictionary, aimed_lane: int, direction: String, lane_count: int) -> bool:
+	for value in state.get("pucks", []):
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var puck_lane := int((value as Dictionary).get("lane", -1))
+		if direction == "front" and puck_lane == aimed_lane:
+			return true
+		if direction == "left" and puck_lane <= lane_count / 2:
+			return true
+		if direction == "right" and puck_lane >= lane_count / 2:
+			return true
+	return false
+
+
 static func payout_multiplier(state: Dictionary) -> int:
 	var multiplier := 1
 	for value in state.get("armed_multipliers", []):
