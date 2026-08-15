@@ -853,7 +853,7 @@ func _pusher_variation_session(game: GameModule, seed_text: String, variation_id
 		var ui_state := {"coin_pusher_lane": index % 5}
 		# Ridge's documented EV policy spends only readable, clean nudges;
 		# drop-only play intentionally ignores its sequencing advantage.
-		if variation_id == "jackpot_ridge" and index % 10 == 9:
+		if variation_id == "jackpot_ridge" and index % 5 == 4:
 			var machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 			var lanes: Array = machine.get("lanes", [])
 			for lane_index in range(lanes.size()):
