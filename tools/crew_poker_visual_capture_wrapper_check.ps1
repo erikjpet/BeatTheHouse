@@ -40,6 +40,7 @@ foreach ($requiredCaptureControl in @(
     '"capture_output_flush_complete"',
     "queued_capture_outputs",
     "CAPTURE_OUTPUT_BUDGET_MSEC",
+    'const DRAW_ACTIONS: Array[String] = ["poker_draw", "poker_fold"]',
     "per-state capture reused a viewport Image",
     'var authored_tell_channel: String = ""',
     'var authored_tell_member_id: String = ""',
@@ -66,6 +67,9 @@ if ($captureSource.Contains('var tell_state := canvas.call("realtime_surface_sta
 }
 if ($captureSource.Contains("_has_authored_observation")) {
     throw "Crew poker natural-tell assertion must remain inline in the async capture sequence without a nested helper return."
+}
+if ($captureSource.Contains("tell_expected_actions")) {
+    throw "Crew poker draw captures must use the immutable draw-action constant without a mutable typed-array assignment."
 }
 $naturalTellAssertionIndex = $captureSource.IndexOf('_stage("natural_tell_first_hand_assertion"')
 $activeDrawCaptureIndex = $captureSource.IndexOf('_stage("capture_active_draw"')

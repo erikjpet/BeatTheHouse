@@ -17,6 +17,7 @@ const CAPTURE_FILE_NAMES: Array[String] = [
 	"03_authored_subtle_tell_1280x720.png",
 	"04_reduced_motion_static_1280x720.png",
 ]
+const DRAW_ACTIONS: Array[String] = ["poker_draw", "poker_fold"]
 const PUNCHLINE_ARCHETYPE_ID := "small_underground_casino"
 const PUNCHLINE_DISPLAY_NAME := "The Punchline"
 const PUNCHLINE_BACK_ROOM_LAYER := "back_room"
@@ -50,7 +51,6 @@ var reduced_motion_render_state: Dictionary = {}
 var reduced_motion_capture_state: Dictionary = {}
 var authored_tell_hidden_leaks: Array[Dictionary] = []
 var latest_action_surface_state: Dictionary = {}
-var tell_expected_actions: Array[String] = []
 var current_stage := "not_started"
 var current_attempt: Dictionary = {}
 var stage_history: Array[Dictionary] = []
@@ -173,7 +173,6 @@ func _run() -> void:
 			"hand_limit": 1,
 		}
 		acceptance_context["passed"] = bool(acceptance_context.get("passed", false)) and natural_tell_passed
-		tell_expected_actions = ["poker_draw", "poker_fold"] if authored_tell_surface_phase == "draw" else ["poker_call", "poker_raise", "poker_fold"]
 		if not natural_tell_passed:
 			_fail("Crew poker audited deal/call sequence did not naturally surface an authored subtle presentation in its single hand.")
 	if not failed:
@@ -182,7 +181,7 @@ func _run() -> void:
 		await _capture_surface(
 			"02_active_draw_1280x720.png",
 			"active_draw",
-			["poker_draw", "poker_fold"],
+			DRAW_ACTIONS,
 			5
 		)
 
@@ -191,8 +190,8 @@ func _run() -> void:
 		await _capture_surface(
 			"03_authored_subtle_tell_1280x720.png",
 			"authored_subtle_tell",
-			tell_expected_actions,
-			5 if authored_tell_surface_phase == "draw" else 0,
+			DRAW_ACTIONS,
+			5,
 			authored_tell_capture_state
 		)
 
@@ -205,8 +204,8 @@ func _run() -> void:
 		await _capture_surface(
 			"04_reduced_motion_static_1280x720.png",
 			"reduced_motion_static",
-			tell_expected_actions,
-			5 if authored_tell_surface_phase == "draw" else 0,
+			DRAW_ACTIONS,
+			5,
 			reduced_motion_capture_state
 		)
 
