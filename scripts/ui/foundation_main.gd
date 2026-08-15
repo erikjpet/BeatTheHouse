@@ -760,6 +760,8 @@ func enter_first_available_game() -> void:
 
 # Enters a game through its data-routed GameModule.
 func enter_game(game_id: String, state_key: String = "") -> bool:
+	if run_state != null and run_state.grand_casino_duel_active(run_state.current_environment):
+		return _enter_grand_casino_duel_surface()
 	var clean_game_id := game_id.strip_edges()
 	var clean_state_key := state_key.strip_edges()
 	if clean_state_key.is_empty():
@@ -815,9 +817,10 @@ func _enter_grand_casino_duel_surface() -> bool:
 		if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID):
 			return false
 	var duel_game_ids := _string_array(run_state.current_environment.get("game_ids", []))
-	if duel_game_ids.is_empty():
+	var local_flags := _copy_dict(run_state.current_environment.get("local_narrative_flags", {}))
+	var duel_game_id := str(local_flags.get("showdown_game_id", "")).strip_edges()
+	if duel_game_id.is_empty() or not duel_game_ids.has(duel_game_id):
 		return false
-	var duel_game_id := str(duel_game_ids[0])
 	var game_module := _game_module_for_id(duel_game_id)
 	if game_module == null:
 		return false

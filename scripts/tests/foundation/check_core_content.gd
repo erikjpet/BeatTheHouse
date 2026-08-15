@@ -83,6 +83,7 @@ const FOUNDATION_SUITES := [
 	"blackjack",
 	"roulette",
 	"baccarat",
+	"craps",
 	"video_poker",
 	"bar_dice",
 	"pull_tabs",
@@ -449,7 +450,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 		"all":
 			_foundation_run_all_suite(content_library, fixture_library, failures, report)
 		_:
-			if ["blackjack", "roulette", "baccarat", "video_poker", "bar_dice", "pull_tabs", "scratch_tickets"].has(suite):
+			if ["blackjack", "roulette", "baccarat", "craps", "video_poker", "bar_dice", "pull_tabs", "scratch_tickets"].has(suite):
 				_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 				_foundation_run_check(report, failures, "%s_game_suite" % suite, Callable(self, "_check_target_game_suite"), [content_library, suite])
 			else:
@@ -589,6 +590,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_tier_two_venue_progression(library, failures)
 	_check_baccarat_grand_casino_only(library, failures)
 	_check_environment_game_pool_distribution(library, failures)
+	_check_grand_casino_game_fixture_capacity(library, failures)
 	_check_environment_encounter_freshness(library, failures)
 	_check_travel_unlock_event_copy(library, failures)
 	_check_high_risk_table_limit_overrides(library, failures)
@@ -2137,13 +2139,83 @@ func _check_environment_game_pool_distribution(library: ContentLibrary, failures
 			failures.append("Game %s only appears in rare environment game pools." % game_id)
 
 
+func _check_grand_casino_game_fixture_capacity(library: ContentLibrary, failures: Array) -> void:
+	var expected_counts := {
+		"grand_casino": {"logical": 5, "rendered": 7},
+		"grand_casino_high_limit": {"logical": 4, "rendered": 4},
+		"grand_casino_back_room": {"logical": 2, "rendered": 2},
+	}
+	var main_environment: Dictionary = {}
+	var main_run: RunState = null
+	for room_id_value in expected_counts.keys():
+		var room_id := str(room_id_value)
+		var archetype := _archetype_by_id(library, room_id)
+		if archetype.is_empty():
+			failures.append("Grand Casino fixture-capacity regression is missing room: %s." % room_id)
+			continue
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("GRAND-CASINO-CAPACITY-%s" % room_id.to_upper())
+		var environment := EnvironmentInstance.from_archetype(archetype, 5, run_state.create_rng("grand_casino_capacity"), library).to_dict()
+		var layout := _copy_dict(environment.get("layout", {}))
+		var fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
+		var logical_count := _string_array(environment.get("game_ids", [])).size()
+		var rendered_count := 0
+		for game_id in _string_array(environment.get("game_ids", [])):
+			rendered_count += maxi(1, int(fixture_counts.get(game_id, 1)))
+		var authored_capacity := _copy_array(layout.get("game_spots", [])).size()
+		var expected := _copy_dict(expected_counts.get(room_id, {}))
+		if logical_count != int(expected.get("logical", -1)) or rendered_count != int(expected.get("rendered", -1)):
+			failures.append("Grand Casino %s game fixture counts changed: logical=%d rendered=%d expected=%s." % [room_id, logical_count, rendered_count, JSON.stringify(expected)])
+		if rendered_count != authored_capacity:
+			failures.append("Grand Casino %s authored game capacity does not match rendered fixtures: logical=%d rendered=%d spots=%d." % [room_id, logical_count, rendered_count, authored_capacity])
+		if room_id == RunState.GRAND_CASINO_ARCHETYPE_ID:
+			main_environment = environment
+			main_run = run_state
+	if main_environment.is_empty() or main_run == null:
+		return
+	main_environment["event_ids"] = [RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID]
+	main_environment["item_offers"] = []
+	main_environment["service_ids"] = []
+	main_environment["lender_hooks"] = []
+	main_environment["travel_hooks"] = []
+	var game_states: Dictionary = {}
+	for game_id in _string_array(main_environment.get("game_ids", [])):
+		var game: GameModule = _load_surface_contract_game(library, game_id, failures)
+		if game == null:
+			continue
+		var state_rng := main_run.create_rng("grand_casino_layout_state:%s" % game_id)
+		var generated := game.generate_environment_state(main_run, main_environment, state_rng)
+		if not generated.is_empty():
+			game_states[game_id] = generated.duplicate(true)
+	main_environment["game_states"] = game_states
+	main_environment["world_map_travel"] = true
+	main_environment["layout"] = EnvironmentInstance.ensure_generated_layout(main_environment)
+	var object_rects := _copy_dict(_copy_dict(main_environment.get("layout", {})).get("object_rects", {}))
+	for required_id in ["game:craps", "game_hook:pull_tabs:ticket_redeemer", "casino_fixture:host_desk"]:
+		if not object_rects.has(required_id):
+			failures.append("Grand Casino production-order layout regression is missing %s." % required_id)
+	var object_ids := object_rects.keys()
+	for index in range(object_ids.size()):
+		var object_id := str(object_ids[index])
+		var rect := _layout_rect_from_dict(object_rects.get(object_id, {}))
+		if rect.size.x <= 0.0 or rect.size.y <= 0.0:
+			continue
+		for other_index in range(index + 1, object_ids.size()):
+			var other_id := str(object_ids[other_index])
+			var other_rect := _layout_rect_from_dict(object_rects.get(other_id, {}))
+			if other_rect.size.x <= 0.0 or other_rect.size.y <= 0.0:
+				continue
+			if _layout_rects_overlap_with_gap(rect, other_rect):
+				failures.append("Grand Casino production-order layout overlaps: %s and %s." % [object_id, other_id])
+
+
 func _check_high_risk_table_limit_overrides(library: ContentLibrary, failures: Array) -> void:
 	var expected := {
 		"small_underground_casino": {"blackjack": 60},
 		"delta_queen": {"blackjack": 200, "roulette": 250},
 		"kitty_cat_lounge": {"roulette": 200},
-		"grand_casino": {"roulette": 150},
-		"grand_casino_high_limit": {"blackjack": 1000, "baccarat": 1000, "roulette": 1000},
+		"grand_casino": {"roulette": 150, "craps": 150},
+		"grand_casino_high_limit": {"blackjack": 1000, "baccarat": 1000, "roulette": 1000, "craps": 1000},
 	}
 	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
 	var roulette: GameModule = _load_surface_contract_game(library, "roulette", failures)
@@ -3128,7 +3200,7 @@ func _check_content_group_modularity(library: ContentLibrary, failures: Array) -
 	var default_groups := library.default_content_group_ids()
 	if default_groups.is_empty():
 		failures.append("Content groups should expose default-enabled run packs.")
-	for required_group in ["universal_passive_items", "universal_active_items", "pull_tabs_pack", "scratch_tickets_pack", "slot_pack", "bar_dice_pack", "blackjack_pack", "baccarat_pack", "roulette_pack", "video_poker_pack"]:
+	for required_group in ["universal_passive_items", "universal_active_items", "pull_tabs_pack", "scratch_tickets_pack", "slot_pack", "bar_dice_pack", "blackjack_pack", "baccarat_pack", "roulette_pack", "craps_pack", "video_poker_pack"]:
 		if library.content_group(required_group).is_empty():
 			failures.append("Content group is missing: %s." % required_group)
 	if not library.game_enabled_for_challenge("pull_tabs", {}):
@@ -4373,6 +4445,9 @@ func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> 
 	var baccarat: GameModule = _load_surface_contract_game(library, "baccarat", failures)
 	if baccarat != null:
 		_check_baccarat_surface_contract(baccarat, failures, library)
+	var craps: GameModule = _load_surface_contract_game(library, "craps", failures)
+	if craps != null:
+		_check_craps_surface_contract(craps, failures, library)
 	var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 	if pull_tabs != null:
 		_check_pull_tabs_surface_contract(pull_tabs, failures)
@@ -4506,7 +4581,7 @@ func _check_table_environment_entry_contracts(library: ContentLibrary, failures:
 		_sb4_dispose_app(app)
 		return
 
-	for game_id in ["roulette", "blackjack", "baccarat", "bar_dice"]:
+	for game_id in ["roulette", "blackjack", "baccarat", "craps", "bar_dice"]:
 		_check_single_table_environment_entry_contract(library, app, str(game_id), failures)
 
 	_sb4_dispose_app(app)
@@ -4580,6 +4655,27 @@ func _check_single_table_environment_entry_contract(library: ContentLibrary, app
 	var legal_actions: Array = legal_actions_value if typeof(legal_actions_value) == TYPE_ARRAY else []
 	if legal_actions.is_empty():
 		failures.append("Table environment entry has no visible legal action for %s." % game_id)
+	if game_id == "craps":
+		var settings: Variant = app.get("user_settings")
+		if settings == null:
+			failures.append("Craps reduced-motion view-model contract could not access user settings.")
+		else:
+			var previous_reduce_motion := bool(settings.reduce_motion)
+			var previous_surface_ui_state: Dictionary = (app.get("game_surface_ui_state") as Dictionary).duplicate(true)
+			var stale_surface_ui_state := previous_surface_ui_state.duplicate(true)
+			stale_surface_ui_state["reduce_motion"] = false
+			app.set("game_surface_ui_state", stale_surface_ui_state)
+			settings.reduce_motion = true
+			app.call("_on_settings_applied")
+			var reduced_surface_ui_state: Dictionary = app.call("_current_game_surface_ui_state")
+			var reduced_game_snapshot: Dictionary = app.call("current_game_view_snapshot")
+			if not bool(reduced_surface_ui_state.get("reduce_motion", false)):
+				failures.append("Foundation surface UI context did not propagate the live reduced-motion preference to Craps.")
+			if not bool(reduced_game_snapshot.get("reduce_motion", false)):
+				failures.append("Foundation final Craps snapshot allowed stale module UI state to override reduced motion.")
+			app.set("game_surface_ui_state", previous_surface_ui_state)
+			settings.reduce_motion = previous_reduce_motion
+			app.call("_on_settings_applied")
 	_check_idle_surface_automation_snapshot_contract(app, game_id, failures)
 
 	var actions := game.actions(run_state, run_state.current_environment)
@@ -4665,6 +4761,10 @@ func _check_target_game_suite(library: ContentLibrary, game_id: String, failures
 			var baccarat: GameModule = _load_surface_contract_game(library, "baccarat", failures)
 			if baccarat != null:
 				_check_baccarat_surface_contract(baccarat, failures, library)
+		"craps":
+			var craps: GameModule = _load_surface_contract_game(library, "craps", failures)
+			if craps != null:
+				_check_craps_surface_contract(craps, failures, library)
 		"video_poker":
 			var video_poker: GameModule = _load_surface_contract_game(library, "video_poker", failures)
 			if video_poker != null:

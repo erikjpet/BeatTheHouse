@@ -57,6 +57,44 @@ $runB = "res://.tmp/foundation_determinism_probe/run_b.json"
 $runAPath = Join-Path $outputDir "run_a.json"
 $runBPath = Join-Path $outputDir "run_b.json"
 
+function Invoke-DeterminismGodot {
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $consoleGodot
+    $startInfo.Arguments = "--headless --path `"$root`" --script `"res://tools/foundation_determinism_probe.gd`""
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $startInfo.CreateNoWindow = $true
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $startInfo
+    [void]$process.Start()
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+    $process.WaitForExit()
+    [void]$stdoutTask.Wait(5000)
+    [void]$stderrTask.Wait(5000)
+    $stdoutText = $stdoutTask.Result
+    $stderrText = $stderrTask.Result
+    if (-not [string]::IsNullOrEmpty($stdoutText)) {
+        [Console]::Out.Write($stdoutText)
+    }
+    if (-not [string]::IsNullOrEmpty($stderrText)) {
+        [Console]::Error.Write($stderrText)
+    }
+    $issues = @($stderrText -split "`r?`n" | Where-Object {
+        $_ -match '^\s*(SCRIPT ERROR|ERROR|WARNING):'
+    })
+    $exitCode = [int]$process.ExitCode
+    if ($exitCode -eq 0 -and $issues.Count -gt 0) {
+        $exitCode = 127
+        [Console]::Error.WriteLine("Determinism probe rejected $($issues.Count) Godot stderr issue line(s) despite native exit code 0.")
+    }
+    return [pscustomobject]@{
+        ExitCode = $exitCode
+        StderrIssues = $issues
+    }
+}
+
 $oldSeedCount = $env:BTH_DETERMINISM_SEED_COUNT
 $oldSeedPrefix = $env:BTH_DETERMINISM_SEED_PREFIX
 $oldOutput = $env:BTH_DETERMINISM_OUTPUT
@@ -65,15 +103,15 @@ try {
     $env:BTH_DETERMINISM_SEED_PREFIX = $SeedPrefix
 
     $env:BTH_DETERMINISM_OUTPUT = $runA
-    & $consoleGodot --headless --path $root --script "res://tools/foundation_determinism_probe.gd"
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
+    $runAResult = Invoke-DeterminismGodot
+    if ($runAResult.ExitCode -ne 0) {
+        exit $runAResult.ExitCode
     }
 
     $env:BTH_DETERMINISM_OUTPUT = $runB
-    & $consoleGodot --headless --path $root --script "res://tools/foundation_determinism_probe.gd"
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
+    $runBResult = Invoke-DeterminismGodot
+    if ($runBResult.ExitCode -ne 0) {
+        exit $runBResult.ExitCode
     }
 }
 finally {

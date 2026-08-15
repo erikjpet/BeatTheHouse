@@ -1,5 +1,567 @@
 extends "res://scripts/tests/foundation/check_slots_surfaces.gd"
 
+const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
+
+
+func _check_craps_surface_contract(game: GameModule, failures: Array, library: ContentLibrary = null) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CRAPS-SURFACE-CONTRACT")
+	run_state.bankroll = 100000
+	var environment := _surface_contract_environment()
+	environment["archetype_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+	environment["id"] = "grand_casino_craps_contract"
+	environment["kind"] = "boss"
+	environment["game_ids"] = ["craps"]
+	environment["music_profile"] = {"volume": 0.25, "ambience": 0.40, "bpm": 82.0}
+	var table := game.generate_environment_state(run_state, environment, run_state.create_rng("craps_contract_table"))
+	if str(table.get("schema", "")) != "craps_table_state":
+		failures.append("Craps generated table state did not expose the craps schema.")
+		return
+	for key in ["point", "working_bets", "roll_history", "hot_shooter_streak", "table_energy", "rules"]:
+		if not table.has(key):
+			failures.append("Craps generated table state is missing %s." % key)
+	environment["game_states"] = {"craps": table}
+	run_state.set_environment(environment)
+	run_state.grand_casino_chips = 10000
+	environment = run_state.current_environment
+	var surface := game.surface_state(run_state, environment, {})
+	if str(surface.get("surface_renderer", "")) != "craps":
+		failures.append("Craps surface did not route to its module-owned renderer.")
+	_check_idle_animation_liveness_contract(surface, "Craps betting surface", failures)
+	if not bool(surface.get("surface_controls_native", false)) or not bool(surface.get("surface_animates_idle", false)):
+		failures.append("Craps surface did not expose native controls and idle liveness.")
+	if bool(surface.get("surface_realtime_state_refresh", false)):
+		failures.append("Craps idle betting surface requested full per-frame snapshot rebuilds.")
+	for target_id in ["pass_line", "dont_pass", "field", "place_4", "place_5", "place_6", "place_8", "place_9", "place_10"]:
+		if _craps_target_index(surface.get("bet_targets", []), target_id) < 0:
+			failures.append("Craps readable betting layout is missing %s." % target_id)
+	var harness := SurfaceHarness.new()
+	harness.setup(surface)
+	if not game.draw_surface(harness, surface, {"contract_harness": true}):
+		failures.append("Craps draw_surface returned false.")
+	if _surface_hit_count(harness, "craps_bet") < 9:
+		failures.append("Craps renderer did not register the core readable bet targets.")
+	var reduced_surface := game.surface_state(run_state, environment, {"reduce_motion": true})
+	_check_craps_idle_motion(game, surface, reduced_surface, failures)
+	var pass_index := _craps_target_index(surface.get("bet_targets", []), "pass_line")
+	var bet_command := game.surface_action_command("craps_bet", pass_index, false, {"selected_chip": 5}, run_state, environment)
+	var bet_ui: Dictionary = bet_command.get("ui_state", {})
+	if int(_craps_dict(bet_ui.get("craps_pending_bets", {})).get("pass_line", 0)) != 5:
+		failures.append("Craps Pass Line placement did not stage exactly one selected chip.")
+	if game.wager_cost_for_context("roll_craps", 0, run_state, environment, bet_ui) != 5:
+		failures.append("Craps wager cost did not reflect newly staged bets only.")
+	var roll_command := game.surface_action_command("craps_roll", 0, false, bet_ui, run_state, environment)
+	if not bool(roll_command.get("resolve", false)) or str(roll_command.get("action_id", "")) != "roll_craps":
+		failures.append("Craps Roll did not resolve through the normal legal action boundary.")
+
+	_check_craps_rule_matrix(game, table, failures)
+	_check_craps_save_restore(game, run_state, environment, failures)
+	_check_craps_deterministic_surface_clock(game, failures)
+	_check_craps_cheat_contract(game, failures)
+	_check_craps_luck_contract(game, failures)
+	_check_craps_energy_projection(game, table, failures)
+	_check_craps_currency_routing(failures)
+	if library != null:
+		_check_craps_room_registration_and_duel(game, library, failures)
+
+
+func _check_craps_rule_matrix(game: GameModule, base_table: Dictionary, failures: Array) -> void:
+	var rules := _craps_dict(base_table.get("rules", {}))
+	_check_craps_authored_die_sides(failures)
+	var matrix := [
+		{"label": "pass natural", "point": 0, "working": {}, "pending": {"pass_line": 10}, "total": 7, "delta": 10, "point_after": 0},
+		{"label": "pass craps", "point": 0, "working": {}, "pending": {"pass_line": 10}, "total": 3, "delta": -10, "point_after": 0},
+		{"label": "don't pass bar", "point": 0, "working": {}, "pending": {"dont_pass": 10}, "total": 12, "delta": 0, "point_after": 0},
+		{"label": "point establish", "point": 0, "working": {}, "pending": {"pass_line": 10}, "total": 6, "delta": -10, "point_after": 6},
+		{"label": "point make with odds", "point": 4, "working": {"pass_line": 10, "pass_odds": 10}, "pending": {}, "total": 4, "delta": 50, "point_after": 0},
+		{"label": "seven out", "point": 6, "working": {"pass_line": 10, "pass_odds": 10}, "pending": {}, "total": 7, "delta": 0, "point_after": 0},
+		{"label": "don't pass point win", "point": 4, "working": {"dont_pass": 10}, "pending": {}, "total": 7, "delta": 20, "point_after": 0},
+		{"label": "don't pass point loss", "point": 4, "working": {"dont_pass": 10}, "pending": {}, "total": 4, "delta": 0, "point_after": 0},
+		{"label": "place six", "point": 5, "working": {"place": {"6": 6}}, "pending": {}, "total": 6, "delta": 7, "point_after": 5},
+		{"label": "field twelve", "point": 6, "working": {}, "pending": {"field": 10}, "total": 12, "delta": 30, "point_after": 6},
+	]
+	for fixture_value in matrix:
+		var fixture: Dictionary = fixture_value
+		var table := _craps_rule_table(base_table, int(fixture.get("point", 0)), _craps_dict(fixture.get("working", {})))
+		var settlement := CrapsRulesScript.settle_roll(table, fixture.get("pending", {}), _craps_roll(int(fixture.get("total", 0))), rules)
+		if int(settlement.get("bankroll_delta", 999999)) != int(fixture.get("delta", 0)) or int(table.get("point", -1)) != int(fixture.get("point_after", 0)):
+			failures.append("Craps %s fixture settled incorrectly: %s." % [str(fixture.get("label", "rules")), JSON.stringify(settlement)])
+	var come_table := _craps_rule_table(base_table, 6, {})
+	var come_move := CrapsRulesScript.settle_roll(come_table, {"come": 10}, _craps_roll(5), rules)
+	if int(come_move.get("bankroll_delta", 0)) != -10 or int(_craps_dict(_craps_dict(come_table.get("working_bets", {})).get("come", {})).get("5", 0)) != 10:
+		failures.append("Craps Come wager did not move from the apron to its rolled number.")
+	var come_win := CrapsRulesScript.settle_roll(come_table, {}, _craps_roll(5), rules)
+	if int(come_win.get("bankroll_delta", 0)) != 20 or _craps_dict(_craps_dict(come_table.get("working_bets", {})).get("come", {})).has("5"):
+		failures.append("Craps established Come wager did not pay and clear on its number.")
+	var dont_come_table := _craps_rule_table(base_table, 6, {})
+	var dont_come_move := CrapsRulesScript.settle_roll(dont_come_table, {"dont_come": 10}, _craps_roll(5), rules)
+	if int(dont_come_move.get("bankroll_delta", 0)) != -10 or int(_craps_dict(_craps_dict(dont_come_table.get("working_bets", {})).get("dont_come", {})).get("5", 0)) != 10:
+		failures.append("Craps Don't Come wager did not move to its rolled number.")
+	var dont_come_win := CrapsRulesScript.settle_roll(dont_come_table, {}, _craps_roll(7), rules)
+	if int(dont_come_win.get("bankroll_delta", 0)) != 20 or _craps_dict(_craps_dict(dont_come_table.get("working_bets", {})).get("dont_come", {})).has("5"):
+		failures.append("Craps established Don't Come wager did not win and clear on seven.")
+	var dont_come_bar_table := _craps_rule_table(base_table, 6, {})
+	var dont_come_bar := CrapsRulesScript.settle_roll(dont_come_bar_table, {"dont_come": 10}, _craps_roll(12), rules)
+	if int(dont_come_bar.get("bankroll_delta", -1)) != 0 or not _craps_dict(_craps_dict(dont_come_bar_table.get("working_bets", {})).get("dont_come", {})).is_empty():
+		failures.append("Craps Don't Come bar twelve did not push without moving a number.")
+	var odds_off_table := _craps_rule_table(base_table, 0, {"come": {"4": 10}, "come_odds": {"4": 10}})
+	var odds_off := CrapsRulesScript.settle_roll(odds_off_table, {}, _craps_roll(4), rules)
+	if int(odds_off.get("bankroll_delta", 0)) != 30:
+		failures.append("Craps Come odds did not return without profit while off on the come-out roll.")
+	var pending_odds_win_table := _craps_rule_table(base_table, 6, {"come": {"5": 10}})
+	var pending_odds_win := CrapsRulesScript.settle_roll(pending_odds_win_table, {"come_odds_5": 10}, _craps_roll(5), rules)
+	if int(pending_odds_win.get("bankroll_delta", 0)) != 35 or _craps_dict(_craps_dict(pending_odds_win_table.get("working_bets", {})).get("come", {})).has("5") or _craps_dict(_craps_dict(pending_odds_win_table.get("working_bets", {})).get("come_odds", {})).has("5"):
+		failures.append("Newly placed Come odds were charged but not paid and cleared on an immediate number.")
+	var pending_odds_loss_table := _craps_rule_table(base_table, 6, {"come": {"5": 10}})
+	var pending_odds_loss := CrapsRulesScript.settle_roll(pending_odds_loss_table, {"come_odds_5": 10}, _craps_roll(7), rules)
+	if int(pending_odds_loss.get("bankroll_delta", 0)) != -10 or _craps_dict(_craps_dict(pending_odds_loss_table.get("working_bets", {})).get("come", {})).has("5") or _craps_dict(_craps_dict(pending_odds_loss_table.get("working_bets", {})).get("come_odds", {})).has("5"):
+		failures.append("Newly placed Come odds were not accounted as a charged loss on immediate seven-out.")
+	if CrapsRulesScript.true_odds_profit(10, 4, rules) != 20 or CrapsRulesScript.true_odds_profit(10, 5, rules) != 15 or CrapsRulesScript.true_odds_profit(10, 6, rules) != 12:
+		failures.append("Craps free-odds payouts are not true odds for 4/5/6.")
+	var place_table := _craps_rule_table(base_table, 5, {"place": {"6": 6}})
+	CrapsRulesScript.settle_roll(place_table, {}, _craps_roll(7), rules)
+	if not _craps_dict(_craps_dict(place_table.get("working_bets", {})).get("place", {})).is_empty():
+		failures.append("Craps Place wager did not clear on a point-on seven-out.")
+	var off_place_table := _craps_rule_table(base_table, 0, {"place": {"6": 6}})
+	var off_place := CrapsRulesScript.settle_roll(off_place_table, {}, _craps_roll(6), rules)
+	if int(off_place.get("bankroll_delta", -1)) != 0 or int(_craps_dict(_craps_dict(off_place_table.get("working_bets", {})).get("place", {})).get("6", 0)) != 6:
+		failures.append("Craps Place wager did not remain off and working through a come-out roll.")
+	var minimum := int(base_table.get("table_minimum", 1))
+	var maximum := int(base_table.get("table_maximum", minimum))
+	if bool(CrapsRulesScript.can_place_bet("pass_line", minimum - 1, base_table, {}, rules).get("ok", false)):
+		failures.append("Craps accepted a wager below the posted table minimum.")
+	if bool(CrapsRulesScript.can_place_bet("pass_line", maximum + 1, base_table, {}, rules).get("ok", false)):
+		failures.append("Craps accepted a wager above the posted table maximum.")
+	_check_craps_traveled_come_validation(game, base_table, failures)
+
+
+func _check_craps_traveled_come_validation(game: GameModule, base_table: Dictionary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CRAPS-TRAVELED-COME-VALIDATION")
+	run_state.bankroll = 1000
+	var environment := _surface_contract_environment()
+	environment["id"] = "craps_traveled_come_validation"
+	environment["game_ids"] = ["craps"]
+	var table := _craps_rule_table(base_table, 6, {"come": {"5": 10}, "dont_come": {"9": 10}})
+	environment["game_states"] = {"craps": table}
+	run_state.current_environment = environment
+	var resolution_rng := RngStream.new()
+	resolution_rng.configure(2)
+	var result := game.resolve_with_context(
+		"roll_craps",
+		20,
+		run_state,
+		run_state.current_environment,
+		resolution_rng,
+		{"craps_pending_bets": {"come": 10, "dont_come": 10}}
+	)
+	var working := _craps_dict(result.get("craps_working_bets", {}))
+	var traveled_come := _craps_dict(working.get("come", {}))
+	var traveled_dont_come := _craps_dict(working.get("dont_come", {}))
+	if not bool(result.get("ok", false)) or int(_craps_dict(result.get("craps_roll", {})).get("total", 0)) != 4:
+		failures.append("Craps real resolve path rejected new Come wagers beside traveled-number maps.")
+	elif int(traveled_come.get("5", 0)) != 10 or int(traveled_come.get("4", 0)) != 10 \
+			or int(traveled_dont_come.get("9", 0)) != 10 or int(traveled_dont_come.get("4", 0)) != 10:
+		failures.append("Craps real resolve path did not preserve traveled Come maps while moving new apron wagers.")
+
+
+func _check_craps_authored_die_sides(failures: Array) -> void:
+	var two_sided_rules := {"die_sides": 2, "seven_total": 7}
+	var rng_a := RngStream.new()
+	var rng_b := RngStream.new()
+	rng_a.configure(60612)
+	rng_b.configure(60612)
+	var sequence_a: Array = []
+	var sequence_b: Array = []
+	var saw_authored_max := false
+	for _roll_index in range(64):
+		var roll_a := CrapsRulesScript.roll_dice(rng_a, two_sided_rules, 0)
+		var roll_b := CrapsRulesScript.roll_dice(rng_b, two_sided_rules, 0)
+		sequence_a.append(roll_a)
+		sequence_b.append(roll_b)
+		for die_value in _craps_array(roll_a.get("dice", [])):
+			var die := int(die_value)
+			if die < 1 or die > 2:
+				failures.append("Craps ignored authored non-default die_sides during a deterministic throw.")
+				return
+			if die == 2:
+				saw_authored_max = true
+	if JSON.stringify(sequence_a) != JSON.stringify(sequence_b) or not saw_authored_max:
+		failures.append("Craps non-default die-sides fixture was not deterministic across identical streams.")
+	var four_sided_rules := {"die_sides": 4, "seven_total": 7}
+	var biased_rng := RngStream.new()
+	biased_rng.configure(60614)
+	for _roll_index in range(64):
+		for die_value in _craps_array(CrapsRulesScript.roll_dice(biased_rng, four_sided_rules, 1000).get("dice", [])):
+			if int(die_value) < 1 or int(die_value) > 4:
+				failures.append("Craps setting reroll escaped authored non-default die_sides.")
+				return
+
+
+func _check_craps_idle_motion(game: GameModule, surface: Dictionary, reduced_surface: Dictionary, failures: Array) -> void:
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.size = Vector2(ArtContractsScript.GAME_BOARD_SIZE)
+	root.add_child(canvas)
+	canvas.call("set_game_module", game)
+	canvas.call("render_game_snapshot", surface)
+	if canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var first: Dictionary = canvas.call("debug_surface_motion_sample")
+	canvas.call("debug_advance_idle_liveness", 0.5)
+	var second: Dictionary = canvas.call("debug_surface_motion_sample")
+	if JSON.stringify(first) == JSON.stringify(second):
+		failures.append("Craps-specific brass rail marker remained visually frozen across two idle times.")
+	if canvas.has_method("performance_counters"):
+		var counters: Dictionary = canvas.call("performance_counters")
+		if int(counters.get("full_snapshot_calls", 0)) != 0:
+			failures.append("Craps visible idle motion rebuilt full snapshots instead of using the surface clock.")
+	if not bool(reduced_surface.get("reduce_motion", false)):
+		failures.append("Craps production surface did not propagate the reduced-motion preference.")
+	canvas.call("render_game_snapshot", reduced_surface)
+	var reduced_first: Dictionary = canvas.call("debug_surface_motion_sample")
+	canvas.call("debug_advance_idle_liveness", 0.5)
+	var reduced_second: Dictionary = canvas.call("debug_surface_motion_sample")
+	if JSON.stringify(reduced_first) != JSON.stringify(reduced_second):
+		failures.append("Craps idle rail motion ignored reduce-motion mode.")
+	root.remove_child(canvas)
+	canvas.free()
+
+
+func _check_craps_save_restore(game: GameModule, run_state: RunState, environment: Dictionary, failures: Array) -> void:
+	var states: Dictionary = environment.get("game_states", {})
+	var table: Dictionary = states.get("craps", {})
+	table["point"] = 8
+	table["working_bets"] = {
+		"pass_line": 25,
+		"dont_pass": 0,
+		"pass_odds": 50,
+		"come": {"5": 10},
+		"dont_come": {"9": 10},
+		"come_odds": {"5": 15},
+		"place": {"6": 12, "10": 10},
+	}
+	states["craps"] = table
+	environment["game_states"] = states
+	run_state.current_environment = environment
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	var restored_table: Dictionary = _craps_dict(_craps_dict(restored.current_environment.get("game_states", {})).get("craps", {}))
+	if int(restored_table.get("point", 0)) != 8 or JSON.stringify(restored_table.get("working_bets", {})) != JSON.stringify(table.get("working_bets", {})):
+		failures.append("Craps mid-point save/load did not restore point, working bets, and odds exactly.")
+	var restored_surface := game.surface_state(restored, restored.current_environment, {})
+	if int(restored_surface.get("point", 0)) != 8 or (_craps_array(restored_surface.get("working_bet_rows", []))).size() < 6:
+		failures.append("Craps restored surface did not expose the complete working layout.")
+
+
+func _check_craps_deterministic_surface_clock(game: GameModule, failures: Array) -> void:
+	var first: RunState = RunStateScript.new()
+	first.start_new("CRAPS-SURFACE-CLOCK")
+	first.simulation_msec = 26000
+	var environment := _surface_contract_environment()
+	environment["id"] = "craps_surface_clock_fixture"
+	environment["game_ids"] = ["craps"]
+	var table := game.generate_environment_state(first, environment, first.create_rng("craps_surface_clock_table"))
+	table["last_roll"] = {
+		"dice": [3, 4],
+		"total": 7,
+		"initial_total": 7,
+		"setting_bias_applied": false,
+		"point_before": 6,
+		"point_after": 0,
+		"animation_id": "craps:clock-fixture:3-4",
+		"resolved_at_msec": first.simulation_time_msec(),
+	}
+	environment["game_states"] = {"craps": table}
+	first.current_environment = environment
+	var second: RunState = RunStateScript.new()
+	second.from_dict(first.to_dict())
+	var active_ui := {
+		"surface_time_msec": first.simulation_time_msec() + 100,
+		"surface_presentation_time_msec": first.simulation_time_msec() + 5000,
+	}
+	var first_surface := game.surface_state(first, first.current_environment, active_ui)
+	var second_surface := game.surface_state(second, second.current_environment, active_ui)
+	if JSON.stringify(first_surface) != JSON.stringify(second_surface):
+		failures.append("Craps identical run and UI inputs produced uptime-dependent surface snapshots.")
+	if int(first_surface.get("surface_time_msec", 0)) != int(active_ui["surface_time_msec"]) \
+			or int(first_surface.get("surface_presentation_time_msec", 0)) != int(active_ui["surface_presentation_time_msec"]):
+		failures.append("Craps surface did not propagate the authoritative pause-safe simulation and presentation clocks.")
+	if str(first_surface.get("phase", "")) != "rolling":
+		failures.append("Craps deterministic simulation clock did not keep the saved roll animation active.")
+	var channels := _craps_array(first_surface.get("surface_animation_channels", []))
+	var roll_channel := _craps_dict(channels[0]) if not channels.is_empty() else {}
+	if channels.is_empty() or str(roll_channel.get("active_id", "")) != "craps:clock-fixture:3-4":
+		failures.append("Craps deterministic surface clock did not expose the active roll channel.")
+	elif str(roll_channel.get("clock_source", "")) != "surface" \
+			or int(roll_channel.get("started_msec", 0)) != first.simulation_time_msec() \
+			or int(roll_channel.get("duration_msec", 0)) <= 0:
+		failures.append("Craps roll phase and finite dice channel did not share the pause-safe surface clock.")
+	var expired_ui := active_ui.duplicate(true)
+	expired_ui["surface_time_msec"] = first.simulation_time_msec() + int(roll_channel.get("duration_msec", 0))
+	var expired_surface := game.surface_state(first, first.current_environment, expired_ui)
+	var expired_channels := _craps_array(expired_surface.get("surface_animation_channels", []))
+	var expired_channel := _craps_dict(expired_channels[0]) if not expired_channels.is_empty() else {}
+	if str(expired_surface.get("phase", "")) != "betting" or not str(expired_channel.get("active_id", "")).is_empty():
+		failures.append("Craps roll phase and finite dice channel did not expire together on the pause-safe surface clock.")
+
+
+func _check_craps_cheat_contract(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CRAPS-CHEAT-CONTRACT")
+	run_state.bankroll = 100000
+	run_state.grand_casino_chips = 10000
+	var environment := _surface_contract_environment()
+	environment["id"] = "grand_casino_craps_cheat"
+	environment["archetype_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+	environment["kind"] = "boss"
+	environment["security_profile"] = {"strictness": "boss", "pit_boss": {"enabled": false}}
+	environment["game_ids"] = ["craps"]
+	environment["game_states"] = {"craps": game.generate_environment_state(run_state, environment, run_state.create_rng("craps_cheat_table"))}
+	run_state.set_environment(environment)
+	run_state.add_item("weighted_keyring")
+	var active_setting_ui := {"craps_pending_bets": {"pass_line": 5}, "craps_setting_challenge": {"skill_grade": "", "target_msec": 20000}, "surface_time_msec": 19500}
+	if not bool(game.surface_state(run_state, run_state.current_environment, active_setting_ui).get("surface_realtime_state_refresh", false)):
+		failures.append("Active Craps timing meter did not request the bounded realtime snapshot refresh it needs.")
+	var setting_ui := {"craps_pending_bets": {"pass_line": 5}, "craps_setting_challenge": {"skill_grade": "perfect", "skill_margin_msec": 0}, "surface_time_msec": 20000}
+	var setting := game.resolve_with_context("dice_setting", 5, run_state, run_state.current_environment, run_state.create_rng("craps_setting"), setting_ui)
+	if not bool(setting.get("skill_cheat_contract", false)) or str(setting.get("skill_grade", "")) != "perfect" or int(setting.get("base_suspicion_delta", 0)) <= 0:
+		failures.append("Craps dice setting did not expose the shared skill-cheat contract and security-scaled cost.")
+	if bool(game.surface_state(run_state, run_state.current_environment, setting_ui).get("surface_realtime_state_refresh", false)):
+		failures.append("Resolved Craps timing state kept rebuilding full snapshots after its action boundary.")
+	var untrained: RunState = RunStateScript.new()
+	untrained.start_new("CRAPS-SETTING-GATE")
+	untrained.bankroll = 100000
+	untrained.grand_casino_chips = 10000
+	var untrained_environment := environment.duplicate(true)
+	untrained_environment["game_states"] = {"craps": game.generate_environment_state(untrained, untrained_environment, untrained.create_rng("craps_untrained_table"))}
+	untrained.set_environment(untrained_environment)
+	var blocked := game.resolve_with_context("dice_setting", 5, untrained, untrained.current_environment, untrained.create_rng("craps_untrained"), setting_ui)
+	if bool(blocked.get("ok", false)):
+		failures.append("Craps dice setting bypassed the practice flag/item gate.")
+	for item_id in ["dice_calipers", "false_bottom_cup"]:
+		untrained.add_item(item_id)
+	var switch_ui := {"craps_pending_bets": {"pass_line": 5}, "craps_switching_challenge": {"skill_grade": "blown", "skill_margin_msec": 999}, "surface_time_msec": 24000}
+	var switching := game.resolve_with_context("dice_switching", 5, untrained, untrained.current_environment, untrained.create_rng("craps_switching"), switch_ui)
+	if not bool(switching.get("skill_cheat_contract", false)) or str(switching.get("skill_outcome", "")) != "caught":
+		failures.append("Craps dice switching failure did not expose a caught skill challenge.")
+	if untrained.inventory.has("dice_calipers") or untrained.inventory.has("false_bottom_cup"):
+		failures.append("Craps failed dice switch did not confiscate both required shipped items.")
+
+
+func _check_craps_luck_contract(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CRAPS-LUCK-CONTRACT")
+	run_state.bankroll = 1000
+	run_state.baseline_luck = 5
+	var environment := _surface_contract_environment()
+	environment["id"] = "craps_luck_fixture"
+	environment["game_ids"] = ["craps"]
+	var table := game.generate_environment_state(run_state, environment, run_state.create_rng("craps_luck_table"))
+	environment["game_states"] = {"craps": table}
+	run_state.current_environment = environment
+	var rules := _craps_dict(table.get("rules", {}))
+	var authored_naturals := _craps_int_array(rules.get("come_out_naturals", []))
+	var natural_seed := 0
+	for candidate_seed in range(1, 10000):
+		var probe := RngStream.new()
+		probe.configure(candidate_seed)
+		var probe_roll := CrapsRulesScript.roll_dice(probe, rules, 0)
+		if authored_naturals.has(int(probe_roll.get("total", 0))):
+			natural_seed = candidate_seed
+			break
+	if natural_seed == 0:
+		failures.append("Craps luck fixture could not find a deterministic authored natural.")
+		return
+	var resolution_rng := RngStream.new()
+	resolution_rng.configure(natural_seed)
+	var expected_bonus := run_state.luck_payout_bonus(10, true)
+	var result := game.resolve_with_context("roll_craps", 10, run_state, run_state.current_environment, resolution_rng, {"craps_pending_bets": {"pass_line": 10}})
+	var resolved_total := int(_craps_dict(result.get("craps_roll", {})).get("total", 0))
+	if not authored_naturals.has(resolved_total):
+		failures.append("Craps luck fixture did not replay its deterministic authored natural.")
+	elif expected_bonus <= 0 or int(result.get("luck_payout_bonus", 0)) != expected_bonus:
+		failures.append("Craps win did not apply RunState's exact luck_payout_bonus seam.")
+
+
+func _check_craps_energy_projection(game: GameModule, base_table: Dictionary, failures: Array) -> void:
+	var rules := _craps_dict(base_table.get("rules", {}))
+	var table := _craps_rule_table(base_table, 4, {"pass_line": 5})
+	var environment := {"music_profile": {"volume": 0.25, "ambience": 0.4, "bpm": 80.0}, "scenario_game_modifiers": {"craps_table_energy": {"energy_multiplier": 2.0, "hot_threshold": 8, "max_bpm_nudge": 12.0, "patron_lines": ["The scenario rail answers the point."]}}}
+	var zero_music := JSON.stringify(environment.get("music_profile", {}))
+	var zero_projection: Dictionary = game.call("_project_table_energy", environment, table)
+	if not zero_projection.is_empty() or JSON.stringify(environment.get("music_profile", {})) != zero_music:
+		failures.append("Zero-energy Craps projection changed the room.")
+	CrapsRulesScript.settle_roll(table, {}, _craps_roll(4), rules)
+	var first_energy := int(table.get("table_energy", 0))
+	var first_projection: Dictionary = game.call("_project_table_energy", environment, table)
+	if first_energy <= 0 or float(first_projection.get("intensity", 0.0)) <= 0.0 or not bool(first_projection.get("scenario_tuning_applied", false)) or str(first_projection.get("patron_line", "")).is_empty():
+		failures.append("First made point did not produce scenario-tuned room energy, music intensity, and a patron line.")
+	table["point"] = 5
+	var working: Dictionary = table.get("working_bets", {})
+	working["pass_line"] = 5
+	table["working_bets"] = working
+	CrapsRulesScript.settle_roll(table, {}, _craps_roll(5), rules)
+	if int(table.get("hot_shooter_streak", 0)) != 2 or int(table.get("table_energy", 0)) <= first_energy:
+		failures.append("Consecutive made points did not accelerate Craps table energy.")
+	table["point"] = 6
+	working = table.get("working_bets", {})
+	working["pass_line"] = 5
+	table["working_bets"] = working
+	var before_seven := int(table.get("table_energy", 0))
+	CrapsRulesScript.settle_roll(table, {}, _craps_roll(7), rules)
+	if int(table.get("hot_shooter_streak", -1)) != 0 or int(table.get("table_energy", 0)) >= before_seven:
+		failures.append("Craps seven-out did not reset the hot-shooter streak and reduce energy by tuning.")
+	var unrelated_run: RunState = RunStateScript.new()
+	unrelated_run.start_new("CRAPS-ENERGY-ISOLATION")
+	unrelated_run.bankroll = 100
+	var unrelated := {
+		"id": "roulette_energy_isolation",
+		"archetype_id": "small_underground_casino",
+		"kind": "casino",
+		"game_ids": ["roulette"],
+		"game_states": {},
+		"music_profile": {"volume": 0.2, "ambience": 0.31, "bpm": 76.0},
+		"patron_state": {"line": "The rail watches the wheel."},
+	}
+	unrelated_run.current_environment = unrelated
+	var unrelated_before := JSON.stringify(unrelated_run.current_environment)
+	var unrelated_deltas := GameModule.empty_result_deltas()
+	var unrelated_result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": "roulette",
+		"game_id": "roulette",
+		"action_id": "spin",
+		"action_kind": "legal",
+		"stake": 0,
+		"bankroll_delta": 0,
+		"deltas": unrelated_deltas,
+		"environment_id": "roulette_energy_isolation",
+		"environment_archetype_id": "small_underground_casino",
+		"message": "Roulette isolation boundary.",
+	})
+	GameModule.apply_result(unrelated_run, unrelated_result, unrelated_run.create_rng("roulette_energy_boundary"))
+	if JSON.stringify(unrelated_run.current_environment) != unrelated_before or unrelated_run.current_environment.has("craps_room_energy"):
+		failures.append("An unrelated Roulette result boundary leaked Craps music or patron projection state.")
+
+
+func _check_craps_currency_routing(failures: Array) -> void:
+	for game_id in ["blackjack", "baccarat", "roulette", "craps"]:
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("CRAPS-CHIPS-REGRESSION-%s" % game_id)
+		run_state.bankroll = 100
+		run_state.grand_casino_chips = 50
+		run_state.current_environment = {"id": "grand_casino_currency", "archetype_id": RunState.GRAND_CASINO_ARCHETYPE_ID, "kind": "boss"}
+		var deltas := GameModule.empty_result_deltas()
+		deltas["bankroll_delta"] = -5
+		var result := GameModule.build_action_result({"ok": true, "type": "game_action", "source_id": game_id, "game_id": game_id, "action_id": "blackjack_place_bet" if game_id == "blackjack" else "settle", "action_kind": "legal", "stake": 5, "bankroll_delta": -5, "deltas": deltas, "environment_id": "grand_casino_currency", "environment_archetype_id": RunState.GRAND_CASINO_ARCHETYPE_ID, "message": "Currency seam fixture."})
+		result["baccarat_total_wager"] = 5
+		result["roulette_total_wager"] = 5
+		result["craps_total_wager"] = 5
+		GameModule.apply_result(run_state, result, run_state.create_rng("currency_apply"))
+		if run_state.bankroll != 100 or run_state.grand_casino_chips != 45 or str(result.get("currency", "")) != "chips":
+			failures.append("Grand Casino %s no longer routes through the shared chips seam." % game_id)
+	var outside: RunState = RunStateScript.new()
+	outside.start_new("CRAPS-CASH-ISOLATION")
+	outside.bankroll = 100
+	outside.grand_casino_chips = 50
+	outside.current_environment = {"id": "tier_two_craps_fixture", "archetype_id": "small_underground_casino", "kind": "casino"}
+	var outside_deltas := GameModule.empty_result_deltas()
+	outside_deltas["bankroll_delta"] = -5
+	var outside_result := GameModule.build_action_result({"ok": true, "type": "game_action", "source_id": "craps", "game_id": "craps", "action_id": "roll_craps", "action_kind": "legal", "stake": 5, "craps_total_wager": 5, "bankroll_delta": -5, "deltas": outside_deltas, "environment_id": "tier_two_craps_fixture", "environment_archetype_id": "small_underground_casino", "message": "Cash isolation fixture."})
+	GameModule.apply_result(outside, outside_result, outside.create_rng("cash_apply"))
+	if outside.bankroll != 95 or outside.grand_casino_chips != 50 or str(outside_result.get("currency", "cash")) == "chips":
+		failures.append("Craps outside the Grand Casino touched chips instead of cash in the isolation fixture.")
+
+
+func _check_craps_room_registration_and_duel(_game: GameModule, library: ContentLibrary, failures: Array) -> void:
+	for archetype_id in [RunState.GRAND_CASINO_ARCHETYPE_ID, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID]:
+		var archetype := _archetype_by_id(library, archetype_id)
+		if not _craps_array(archetype.get("game_pool", [])).has("craps") or not _craps_array(archetype.get("required_game_ids", [])).has("craps"):
+			failures.append("Craps is not guaranteed in Grand Casino table-game room %s." % archetype_id)
+	var back_room := _archetype_by_id(library, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
+	var flags := _craps_dict(back_room.get("local_narrative_flags", {}))
+	if str(flags.get("blackjack_boss_variant", "")) != "rourke_duel" or str(flags.get("showdown_game_id", "")) != "blackjack" or not _craps_array(back_room.get("required_game_ids", [])).has("blackjack"):
+		failures.append("Back Room Craps registration displaced the required Rourke blackjack duel contract.")
+	var ordinary_run: RunState = RunStateScript.new()
+	ordinary_run.start_new("CRAPS-BACK-ROOM-GENERATION")
+	var generated_back_room := EnvironmentInstance.from_archetype(back_room, 0, ordinary_run.create_rng("craps_back_room_generation"), library)
+	if not generated_back_room.game_ids.has("blackjack") or not generated_back_room.game_ids.has("craps"):
+		failures.append("Ordinary Back Room generation did not retain both registered table modules.")
+	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
+	if blackjack == null:
+		return
+	var duel_run: RunState = RunStateScript.new()
+	duel_run.start_new("CRAPS-BACK-ROOM-DUEL-REGRESSION")
+	var duel_environment := back_room.duplicate(true)
+	duel_environment["id"] = "grand_casino_back_room_duel_regression"
+	duel_environment["archetype_id"] = RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID
+	duel_run.current_environment = duel_environment
+	duel_run.narrative_flags["grand_casino_showdown_active"] = true
+	duel_run.narrative_flags["grand_casino_showdown_step"] = RunState.GRAND_CASINO_SHOWDOWN_STEP_DUEL
+	duel_run.narrative_flags["grand_casino_duel_state"] = {"status": "active"}
+	if not bool(blackjack.call("_is_rourke_duel", duel_run, duel_environment)):
+		failures.append("Rourke's Back Room still contains blackjack but no longer forces its boss-duel path.")
+	var app_value: Variant = MainScene.instantiate()
+	if not app_value is Control:
+		failures.append("Back Room duel selection regression could not instantiate FoundationMain.")
+		return
+	var app: Control = app_value
+	root.add_child(app)
+	if not bool(app.call("uses_foundation_runtime")):
+		app.call("_ready")
+	duel_environment["game_ids"] = ["craps", "blackjack"]
+	duel_run.current_environment = duel_environment
+	app.set("run_state", duel_run)
+	var entered := bool(app.call("enter_game", "craps", "craps"))
+	var active_game_value: Variant = app.get("current_game")
+	var active_game_id := ""
+	if active_game_value is GameModule:
+		active_game_id = str((active_game_value as GameModule).definition.get("id", ""))
+	if not entered or active_game_id != "blackjack" or str(app.get("current_game_state_key")) != "blackjack":
+		failures.append("DUEL allowed the registered Craps table to present or launch instead of forcing Rourke's blackjack surface.")
+	_sb4_dispose_app(app)
+
+
+func _craps_rule_table(base_table: Dictionary, point: int, working_overrides: Dictionary) -> Dictionary:
+	var table := base_table.duplicate(true)
+	table["point"] = point
+	var working := {"pass_line": 0, "dont_pass": 0, "pass_odds": 0, "come": {}, "dont_come": {}, "come_odds": {}, "place": {}}
+	for key in working_overrides.keys():
+		working[key] = working_overrides[key]
+	table["working_bets"] = working
+	table["hot_shooter_streak"] = 0
+	table["table_energy"] = 0
+	return table
+
+
+func _craps_roll(total: int) -> Dictionary:
+	var first := clampi(total - 1, 1, 6)
+	return {"dice": [first, total - first], "total": total, "initial_total": total, "setting_bias_applied": false}
+
+
+func _craps_target_index(targets_value: Variant, target_id: String) -> int:
+	var targets := _craps_array(targets_value)
+	for index in range(targets.size()):
+		if typeof(targets[index]) == TYPE_DICTIONARY and str((targets[index] as Dictionary).get("id", "")) == target_id:
+			return index
+	return -1
+
+
+func _craps_dict(value: Variant) -> Dictionary:
+	return value if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _craps_array(value: Variant) -> Array:
+	return value if typeof(value) == TYPE_ARRAY else []
+
+
+func _craps_int_array(value: Variant) -> Array:
+	var result: Array = []
+	for entry in _craps_array(value):
+		result.append(int(entry))
+	return result
+
 func _check_roulette_surface_contract(game: GameModule, failures: Array, library: ContentLibrary = null) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("ROULETTE-SURFACE-CONTRACT")

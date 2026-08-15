@@ -2051,7 +2051,7 @@ func _check_skill_cheat_contract_foundation(library: ContentLibrary, failures: A
 		return
 	var objective: Dictionary = boss_archetype.get("demo_objective", {}) if typeof(boss_archetype.get("demo_objective", {})) == TYPE_DICTIONARY else {}
 	var showdown_threshold := clampi(int(objective.get("showdown_heat_threshold", 70)), 1, 100)
-	var game_ids := ["pull_tabs", "slot", "bar_dice", "blackjack", "baccarat", "roulette", "video_poker"]
+	var game_ids := ["pull_tabs", "slot", "bar_dice", "blackjack", "baccarat", "roulette", "craps", "video_poker"]
 	var summaries: Array[String] = []
 	for game_id in game_ids:
 		var game: GameModule = _load_surface_contract_game(library, game_id, failures)
@@ -2150,6 +2150,7 @@ func _check_skill_cheat_item_content_reachability(library: ContentLibrary, failu
 	var expectations := [
 		{"group": "video_poker_pack", "items": ["holdout_wax"]},
 		{"group": "bar_dice_pack", "items": ["weighted_keyring", "dice_calipers"]},
+		{"group": "craps_pack", "items": ["weighted_keyring", "dice_calipers", "false_bottom_cup"]},
 		{"group": "roulette_pack", "items": ["foil_sleeve", "chip_slide_wax"]},
 		{"group": "baccarat_pack", "items": ["marked_cards", "edge_sort_loupe"]},
 	]
@@ -2547,6 +2548,8 @@ func _skill_cheat_clean_result(game_id: String, game: GameModule, run_state: Run
 			return game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("c5_baccarat_clean"), {"baccarat_bets": {"player": 20}})
 		"roulette":
 			return game.resolve_with_context("spin_roulette", 10, run_state, environment, run_state.create_rng("c5_roulette_clean"), {"roulette_bets": [game.call("_default_smoke_bet", 10)]})
+		"craps":
+			return game.resolve_with_context("roll_craps", 10, run_state, environment, run_state.create_rng("c5_craps_clean"), {"craps_pending_bets": {"pass_line": 10}})
 	return {}
 
 
@@ -2557,7 +2560,7 @@ func _check_grand_casino_game_endgame_contracts(library: ContentLibrary, failure
 		return
 	var objective: Dictionary = boss_archetype.get("demo_objective", {}) if typeof(boss_archetype.get("demo_objective", {})) == TYPE_DICTIONARY else {}
 	var showdown_threshold := clampi(int(objective.get("showdown_heat_threshold", 70)), 1, 100)
-	var game_ids := ["pull_tabs", "slot", "bar_dice", "blackjack", "baccarat", "roulette", "video_poker"]
+	var game_ids := ["pull_tabs", "slot", "bar_dice", "blackjack", "baccarat", "roulette", "craps", "video_poker"]
 	var summaries: Array[String] = []
 	for game_id in game_ids:
 		var game: GameModule = _load_surface_contract_game(library, game_id, failures)
@@ -2660,6 +2663,9 @@ func _grand_casino_game_fixture_run(library: ContentLibrary, boss_archetype: Dic
 	run_state.bankroll = 100000
 	if game_id == "pull_tabs":
 		run_state.add_item("tab_detector")
+	if game_id == "craps":
+		for item_id in ["weighted_keyring", "dice_calipers", "false_bottom_cup"]:
+			run_state.add_item(item_id)
 	var environment := EnvironmentInstance.from_archetype(boss_archetype, 3, run_state.create_rng("c1_grand_environment"), library).to_dict()
 	environment["id"] = "c1_grand_%s_fixture" % game_id
 	environment["display_name"] = "Grand Casino"
@@ -2720,6 +2726,12 @@ func _grand_casino_game_cheat_result_for_action(game_id: String, action_id: Stri
 			if action_id == "past_post":
 				return _roulette_past_post_contract_result(game, run_state, environment, rng)
 			return _skill_contract_roulette_wheel_read_result(game, run_state, environment, rng)
+		"craps":
+			var cheat_id := action_id if not action_id.is_empty() else "dice_setting"
+			var challenge_key := "craps_switching_challenge" if cheat_id == "dice_switching" else "craps_setting_challenge"
+			var craps_ui := {"craps_pending_bets": {"pass_line": 10}}
+			craps_ui[challenge_key] = {"skill_grade": "blown" if cheat_id == "dice_switching" else "perfect", "skill_margin_msec": 999 if cheat_id == "dice_switching" else 0}
+			return game.resolve_with_context(cheat_id, 10, run_state, environment, rng, craps_ui)
 	return {}
 
 
@@ -3323,7 +3335,7 @@ func _check_run_action_service_boundary(library: ContentLibrary, failures: Array
 
 
 func _check_mutation_firewall_foundation(library: ContentLibrary, failures: Array) -> void:
-	var game_ids := ["pull_tabs", "slot", "bar_dice", "blackjack", "baccarat", "roulette", "video_poker"]
+	var game_ids := ["pull_tabs", "slot", "bar_dice", "blackjack", "baccarat", "roulette", "craps", "video_poker"]
 	for game_id_value in game_ids:
 		var game_id := str(game_id_value)
 		var game: GameModule = _load_surface_contract_game(library, game_id, failures)

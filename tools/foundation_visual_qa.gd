@@ -38,6 +38,7 @@ var report := {
 	"architecture_checks": {},
 	"optional_hook_status": {},
 	"game_surface_status": {},
+	"craps_visual_qa": {},
 	"warnings": [],
 	"coverage": {
 		"start_screen": false,
@@ -75,6 +76,11 @@ var report := {
 		"focused_environment_controls_visible": false,
 		"game_surface_click": false,
 		"game_surface_resolve_click": false,
+		"craps_full_bet_surface": false,
+		"craps_point_working_history": false,
+		"craps_dice_presentation": false,
+		"craps_idle_liveness": false,
+		"craps_reduced_motion": false,
 		"screen_click_only_gameplay": false,
 		"stake_selector": false,
 		"legal_action_selection": false,
@@ -373,6 +379,7 @@ func _run() -> void:
 	strict_game_surface_only_active = false
 	_assert_screen_click_only_gameplay_events()
 	_cover("screen_click_only_gameplay")
+	await _run_craps_visual_qa()
 
 	await _resolve_blocking_event_popups()
 	_return_to_room_view()
@@ -894,6 +901,8 @@ func _verify_grand_casino_showdown_event_snapshot() -> void:
 	grand_environment["service_ids"] = []
 	grand_environment["lender_hooks"] = []
 	grand_environment["travel_hooks"] = []
+	_populate_visual_fixture_game_states(grand_environment, fixture_run, fixture_library, "visual_showdown")
+	grand_environment["layout"] = EnvironmentInstance.ensure_generated_layout(grand_environment)
 	fixture_run.set_environment(grand_environment)
 	fixture_run.current_environment["turns"] = 0
 	fixture_run.add_item("marked_cards")
@@ -974,6 +983,8 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	grand_environment["service_ids"] = []
 	grand_environment["lender_hooks"] = []
 	grand_environment["travel_hooks"] = []
+	_populate_visual_fixture_game_states(grand_environment, fixture_run, fixture_library, "visual_high_roller")
+	grand_environment["layout"] = EnvironmentInstance.ensure_generated_layout(grand_environment)
 	fixture_run.set_environment(grand_environment)
 	var objective: Dictionary = {}
 	var objective_value: Variant = grand_environment.get("demo_objective", {})
@@ -1243,6 +1254,171 @@ func _prepare_risky_game_visual_qa_fixture() -> void:
 		"lender_hooks": [],
 		"object_fixtures": [],
 	}, 100, "casino")
+
+
+func _run_craps_visual_qa() -> void:
+	await _resolve_blocking_surface_interrupts()
+	_return_to_room_view()
+	await _settle()
+	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_craps_fixture", {
+		"game_ids": ["craps"],
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"object_fixtures": [],
+	}, 1000, "casino")
+	var fixture_run := app.get("run_state") as RunState
+	_require(fixture_run != null, "Craps visual QA fixture could not access RunState.")
+	fixture_run.simulation_msec = 40000
+	var environment := fixture_run.current_environment
+	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = states.get("craps", {}) if typeof(states.get("craps", {})) == TYPE_DICTIONARY else {}
+	_require(not table.is_empty(), "Craps visual QA fixture did not generate a table state.")
+	table["point"] = 8
+	table["working_bets"] = {
+		"pass_line": 25,
+		"dont_pass": 25,
+		"pass_odds": 50,
+		"come": {"5": 10},
+		"dont_come": {"9": 10},
+		"come_odds": {"5": 15},
+		"place": {"6": 12, "10": 10},
+	}
+	var history: Array = [
+		_craps_visual_roll([2, 4], 6, 5, 5, "craps:visual:1", 31000),
+		_craps_visual_roll([3, 5], 8, 5, 8, "craps:visual:2", 33000),
+		_craps_visual_roll([4, 3], 7, 8, 0, "craps:visual:3", 35000),
+		_craps_visual_roll([3, 5], 8, 0, 8, "craps:visual:4", 37000),
+	]
+	table["roll_count"] = history.size()
+	table["roll_history"] = history
+	table["last_roll"] = history[-1].duplicate(true)
+	table["last_result"] = {"message": "Eight is the point. The full rail remains readable.", "bankroll_delta": 0, "bet_results": []}
+	table["hot_shooter_streak"] = 2
+	table["table_energy"] = 24
+	states["craps"] = table
+	environment["game_states"] = states
+	fixture_run.current_environment = environment
+	app.call("_refresh")
+	await _settle()
+	var entered_label := await _double_click_first_play_object_type("game")
+	_require(not entered_label.is_empty(), "Could not enter the focused Craps visual QA surface.")
+	await _settle()
+	app.set("game_surface_ui_state", {"selected_chip": 5, "craps_pending_bets": {"field": 5}, "surface_time_msec": 40000})
+	app.call("_refresh")
+	await _settle()
+	var canvas := app.get("game_surface_canvas") as Control
+	_require(canvas != null and canvas.visible and canvas.has_method("current_view_snapshot"), "Craps visual QA surface canvas is unavailable.")
+	var full_snapshot: Dictionary = canvas.call("current_view_snapshot")
+	var full_state: Dictionary = full_snapshot.get("state", {}) if typeof(full_snapshot.get("state", {})) == TYPE_DICTIONARY else {}
+	_require(str(full_snapshot.get("surface_renderer", "")) == "craps", "Focused Craps visual QA fixture did not render the Craps surface.")
+	var target_ids := _craps_visual_target_ids(full_state.get("bet_targets", []))
+	for expected_target in ["field", "come", "dont_come", "pass_line", "dont_pass", "place_4", "place_5", "place_6", "place_8", "place_9", "place_10", "pass_odds", "come_odds_5"]:
+		_require(target_ids.has(expected_target), "Craps visual QA surface is missing readable bet target %s." % expected_target)
+	_require(int(full_state.get("point", 0)) == 8 and bool((full_state.get("point_puck", {}) as Dictionary).get("on", false)), "Craps visual QA surface did not show its point puck.")
+	_require((full_state.get("working_bet_rows", []) as Array).size() >= 8, "Craps visual QA surface did not show all working-bet families.")
+	_require((full_state.get("roll_history", []) as Array).size() >= 4 and (full_state.get("last_roll", {}) as Dictionary).get("dice", []) == [3, 5], "Craps visual QA surface did not show deterministic dice/history.")
+	_record_craps_visual_state("craps_full_bet_surface", "1280x720 Craps table shows every supported bet family, selected Field chip, and readable payouts.", full_snapshot)
+	_cover("craps_full_bet_surface")
+	_cover("craps_point_working_history")
+	var idle_before: Dictionary = canvas.call("debug_surface_motion_sample")
+	canvas.call("debug_advance_idle_liveness", 0.5)
+	var idle_after: Dictionary = canvas.call("debug_surface_motion_sample")
+	_require(JSON.stringify(idle_before) != JSON.stringify(idle_after), "Craps visual QA idle brass-rail motion remained frozen.")
+	_record_craps_visual_state("craps_idle_liveness", "Craps brass-rail marker advances on the surface clock without replacing the table snapshot.", canvas.call("current_view_snapshot"), {"motion_before": idle_before, "motion_after": idle_after})
+	_cover("craps_idle_liveness")
+
+	environment = fixture_run.current_environment
+	states = environment.get("game_states", {})
+	table = states.get("craps", {})
+	var live_surface_ui_state: Dictionary = app.call("_current_game_surface_ui_state")
+	var live_dice_start_msec := int(live_surface_ui_state.get("surface_time_msec", 1))
+	table["last_roll"] = _craps_visual_roll([5, 2], 7, 8, 0, "craps:visual:dice", live_dice_start_msec)
+	table["roll_history"].append(table["last_roll"].duplicate(true))
+	states["craps"] = table
+	environment["game_states"] = states
+	fixture_run.current_environment = environment
+	app.call("_refresh")
+	await _settle()
+	var dice_snapshot: Dictionary = canvas.call("current_view_snapshot")
+	var dice_state: Dictionary = dice_snapshot.get("state", {})
+	_require(str(dice_state.get("phase", "")) == "rolling" and (dice_state.get("last_roll", {}) as Dictionary).get("dice", []) == [5, 2], "Craps visual QA did not expose deterministic active dice presentation.")
+	_record_craps_visual_state("craps_dice_presentation", "Deterministic seven-out dice are visibly presented through the active Craps animation channel.", dice_snapshot)
+	_cover("craps_dice_presentation")
+
+	var settings: Variant = app.get("user_settings")
+	_require(settings != null, "Craps visual QA could not access reduced-motion settings.")
+	settings.reduce_motion = true
+	app.call("_on_settings_applied")
+	await _settle()
+	var reduced_before: Dictionary = canvas.call("debug_surface_motion_sample")
+	canvas.call("debug_advance_idle_liveness", 0.5)
+	var reduced_after: Dictionary = canvas.call("debug_surface_motion_sample")
+	var reduced_snapshot: Dictionary = canvas.call("current_view_snapshot")
+	_require(bool(reduced_snapshot.get("reduce_motion", false)) and JSON.stringify(reduced_before) == JSON.stringify(reduced_after), "Craps reduced-motion visual state still advanced idle motion.")
+	_record_craps_visual_state("craps_reduced_motion_surface", "Reduced motion preserves the full Craps table, point, working bets, history, and dice without animated rail drift.", reduced_snapshot, {"motion_before": reduced_before, "motion_after": reduced_after})
+	_cover("craps_reduced_motion")
+	settings.reduce_motion = false
+	app.call("_on_settings_applied")
+	report["craps_visual_qa"] = {
+		"viewport": {"width": 1280, "height": 720},
+		"target_ids": target_ids,
+		"working_row_count": (full_state.get("working_bet_rows", []) as Array).size(),
+		"history_count": (full_state.get("roll_history", []) as Array).size(),
+		"idle_motion_changed": JSON.stringify(idle_before) != JSON.stringify(idle_after),
+		"reduced_motion_stable": JSON.stringify(reduced_before) == JSON.stringify(reduced_after),
+		"live_dice_start_msec": live_dice_start_msec,
+	}
+
+
+func _craps_visual_roll(dice: Array, total: int, point_before: int, point_after: int, animation_id: String, resolved_at_msec: int) -> Dictionary:
+	return {
+		"dice": dice.duplicate(),
+		"total": total,
+		"initial_total": total,
+		"setting_bias_applied": false,
+		"point_before": point_before,
+		"point_after": point_after,
+		"animation_id": animation_id,
+		"resolved_at_msec": resolved_at_msec,
+	}
+
+
+func _craps_visual_target_ids(targets_value: Variant) -> Array:
+	var result: Array = []
+	if typeof(targets_value) != TYPE_ARRAY:
+		return result
+	for target_value in targets_value as Array:
+		if typeof(target_value) == TYPE_DICTIONARY:
+			result.append(str((target_value as Dictionary).get("id", "")))
+	return result
+
+
+func _record_craps_visual_state(name: String, description: String, canvas_snapshot: Dictionary, evidence: Dictionary = {}) -> void:
+	_record_state(name, description)
+	var states: Array = report.get("states", [])
+	if states.is_empty() or typeof(states[-1]) != TYPE_DICTIONARY:
+		return
+	var entry: Dictionary = states[-1]
+	var surface_state: Dictionary = canvas_snapshot.get("state", {}) if typeof(canvas_snapshot.get("state", {})) == TYPE_DICTIONARY else {}
+	entry["craps_surface"] = {
+		"viewport": {"width": 1280, "height": 720},
+		"board_rect": canvas_snapshot.get("board_rect", {}),
+		"board_size": canvas_snapshot.get("board_size", {}),
+		"target_ids": _craps_visual_target_ids(surface_state.get("bet_targets", [])),
+		"point_puck": surface_state.get("point_puck", {}),
+		"working_bet_rows": surface_state.get("working_bet_rows", []),
+		"roll_history": surface_state.get("roll_history", []),
+		"last_roll": surface_state.get("last_roll", {}),
+		"phase": str(surface_state.get("phase", "")),
+		"reduce_motion": bool(canvas_snapshot.get("reduce_motion", false)),
+		"surface_animation_liveness_active": bool(canvas_snapshot.get("surface_animation_liveness_active", false)),
+		"evidence": evidence.duplicate(true),
+	}
+	states[-1] = entry
+	report["states"] = states
 
 
 func _prepare_multi_game_visual_qa_fixture() -> void:
