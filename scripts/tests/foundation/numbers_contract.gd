@@ -151,20 +151,39 @@ static func _check_hidden_discovery_and_race(failures: Array) -> void:
 
 
 static func _check_physical_travel_race(failures: Array) -> void:
+	var inactive = RunStateScript.new()
+	inactive.start_new("NUMBERS-TRAVEL-INACTIVE")
+	inactive.current_environment = {
+		"id": "motel", "archetype_id": "motel", "world_node_id": "motel", "turns": 0,
+		"scenario_state": {"phase": "generated", "clock": 0},
+	}
+	var inactive_before := JSON.stringify(inactive.to_dict())
+	var inactive_cost := inactive.advance_numbers_past_post_travel_actions(16)
+	if inactive_cost != 0 or JSON.stringify(inactive.to_dict()) != inactive_before:
+		failures.append("Inactive Numbers changed ordinary travel state instead of remaining byte-identical.")
 	var fast = _zero_trust_posted_run("NUMBERS-TRAVEL-FAST")
-	fast.set_environment({"id": "gas_station_casino", "archetype_id": "gas_station_casino", "world_node_id": "gas_station_casino", "turns": 0})
-	var fast_cost := fast.advance_travel_actions(8)
+	fast.set_environment({
+		"id": "gas_station_casino", "archetype_id": "gas_station_casino", "world_node_id": "gas_station_casino", "turns": 0,
+		"scenario_state": {"phase": "generated", "clock": 0},
+	})
+	var fast_local_before := JSON.stringify(fast.current_environment)
+	var fast_global_before := int(fast.numbers_state.action_index)
+	var fast_cost := fast.advance_numbers_past_post_travel_actions(8)
 	var fast_number := str(fast.numbers_status().get("published_number", ""))
 	var fast_buy := fast.numbers_buy_slip(fast_number, 10, "straight")
-	if fast_cost != 1 or not bool(fast_buy.get("ok", false)) or not bool(_dictionary(fast_buy.get("slip", {})).get("past_post", false)):
+	if fast_cost != 1 or int(fast.numbers_state.action_index) != fast_global_before + 1 or JSON.stringify(fast.current_environment) != fast_local_before or not bool(fast_buy.get("ok", false)) or not bool(_dictionary(fast_buy.get("slip", {})).get("past_post", false)):
 		failures.append("An eight-minute physical trip did not reach the Gas book before its late close.")
 	var slow = _zero_trust_posted_run("NUMBERS-TRAVEL-SLOW")
 	slow.set_environment({"id": "gas_station_casino", "archetype_id": "gas_station_casino", "world_node_id": "gas_station_casino", "turns": 0})
-	var slow_cost := slow.advance_travel_actions(16)
+	var slow_cost := slow.advance_numbers_past_post_travel_actions(9)
 	var slow_number := str(slow.numbers_status().get("published_number", ""))
 	var slow_buy := slow.numbers_buy_slip(slow_number, 10, "straight")
 	if slow_cost != 2 or bool(slow_buy.get("ok", false)):
-		failures.append("A sixteen-minute physical trip still beat the Gas book's close boundary.")
+		failures.append("A nine-minute physical trip did not ceil to two ticks and miss the Gas book's close boundary.")
+	var local_room = _zero_trust_posted_run("NUMBERS-TRAVEL-LOCAL-ROOM")
+	var local_room_before := JSON.stringify(local_room.to_dict())
+	if local_room.advance_numbers_past_post_travel_actions(16, true) != 0 or JSON.stringify(local_room.to_dict()) != local_room_before:
+		failures.append("Local casino-room travel consumed the opt-in Numbers street-race clock.")
 	var arrival = RunStateScript.new()
 	arrival.start_new("NUMBERS-PUNCHLINE-ARRIVAL")
 	arrival.current_environment = {"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0}

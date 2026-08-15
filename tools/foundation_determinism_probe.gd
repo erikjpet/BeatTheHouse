@@ -164,7 +164,7 @@ func _apply_numbers_sequence(run_state: RunState, checkpoints: Array, seed: Stri
 		return
 	_checkpoint(run_state, checkpoints, seed, "numbers_punchline_post")
 	run_state.set_environment({"id": "corner_store", "archetype_id": "corner_store", "world_node_id": "corner_store", "turns": 0})
-	run_state.advance_travel_actions(8)
+	run_state.advance_numbers_past_post_travel_actions(8)
 	var past_post := run_state.numbers_buy_slip(handle, 10, "straight")
 	if not bool(past_post.get("ok", false)):
 		failures.append("%s could not write the deterministic late-book Numbers slip." % seed)

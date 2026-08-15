@@ -4632,7 +4632,10 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			run_state.narrative_flags["grand_casino_high_limit_access_method"] = "cash_buy_in"
 	else:
 		generator.next_environment(run_state, target_id, true)
-	route["travel_actions"] = run_state.advance_travel_actions(travel_minutes)
+	if not local_casino_room_move:
+		var numbers_travel_actions := run_state.advance_numbers_past_post_travel_actions(travel_minutes)
+		if numbers_travel_actions > 0:
+			route["numbers_past_post_travel_actions"] = numbers_travel_actions
 	run_state.clear_closing_time_state()
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	_update_procedural_music()

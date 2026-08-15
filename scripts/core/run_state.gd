@@ -600,14 +600,36 @@ func advance_action_clock(amount: int = 1) -> void:
 	advance_game_clock_minutes(actions * ACTION_CLOCK_MINUTES)
 
 
-# Converts an already-measured physical route duration into the canonical action
-# clock after arrival. The UI owns route selection; RunState owns all boundary
-# effects so Numbers, jobs, sweeps, heat, and crew timers move together.
-func advance_travel_actions(travel_minutes: int) -> int:
-	if travel_minutes <= 0 or is_terminal():
+# True only during the discovered solo race between a published handle and the
+# last authored late-book close. This is an opt-in travel consumer; normal travel
+# never advances action boundaries.
+func _numbers_past_post_race_active() -> bool:
+	if numbers_state == null or not bool(numbers_state.knowledge.get("assembled", false)):
+		return false
+	var status := numbers_state.status()
+	if not bool(status.get("posted", false)) or str(status.get("published_number", "")).is_empty():
+		return false
+	var post := int(status.get("post_action", 0))
+	for venue_value in _copy_array(status.get("venue_status", [])):
+		if typeof(venue_value) != TYPE_DICTIONARY:
+			continue
+		var venue: Dictionary = venue_value
+		if bool(venue.get("open", false)) and int(venue.get("close_action", 0)) > post:
+			return true
+	return false
+
+
+# Converts route duration into global boundary ticks only for the live Numbers
+# race. It deliberately leaves both origin and generated destination local state
+# untouched; local casino-room moves are never a physical street race.
+func advance_numbers_past_post_travel_actions(travel_minutes: int, local_casino_room_move: bool = false) -> int:
+	if travel_minutes <= 0 or local_casino_room_move or is_terminal() or not _numbers_past_post_race_active():
 		return 0
 	var actions := maxi(1, int(ceil(float(travel_minutes) / float(ACTION_CLOCK_MINUTES))))
-	advance_environment_turns(actions)
+	_advance_global_boundary_start(actions)
+	_advance_global_boundary_after_encounter(actions)
+	_advance_global_boundary_before_local_cooldown(actions)
+	_advance_global_boundary_finish(actions)
 	return actions
 
 
@@ -8301,15 +8323,7 @@ func advance_environment_turns(amount: int = 1) -> void:
 	if current_environment.is_empty() or is_terminal():
 		return
 	var safe_amount := maxi(0, amount)
-	if town_state != null:
-		town_state.advance_actions(safe_amount)
-	simulation_msec = maxi(0, simulation_msec + safe_amount * SIMULATION_ACTION_MSEC)
-	event_cadence_advance_actions(safe_amount)
-	if numbers_state != null:
-		_apply_numbers_events(numbers_state.advance_to(_crew_action_index()))
-	var alcohol_decay := safe_amount * DRUNK_TURN_DECAY
-	if alcohol_decay > 0:
-		change_drunk(-alcohol_decay)
+	_advance_global_boundary_start(safe_amount)
 	var previous_turns := int(current_environment.get("turns", 0))
 	var next_turns := previous_turns + safe_amount
 	current_environment["turns"] = next_turns
@@ -8319,14 +8333,38 @@ func advance_environment_turns(amount: int = 1) -> void:
 	_advance_travel_lock(safe_amount)
 	_apply_town_sweep_generation_context(current_environment)
 	_check_police_sweep_boundary()
-	_advance_narrative_action_timers(safe_amount)
+	_advance_global_boundary_after_encounter(safe_amount)
 	_advance_grand_casino_living_floor(safe_amount)
-	drunk_distortion_suppression_turns = maxi(0, drunk_distortion_suppression_turns - safe_amount)
+	_advance_global_boundary_before_local_cooldown(safe_amount)
 	var decay_interval := maxi(1, LOCAL_RISK_TURN_DECAY_INTERVAL + int(challenge_modifiers().get("local_heat_turn_decay_interval_delta", 0)))
 	var previous_decay_step := int(floor(float(previous_turns) / float(decay_interval)))
 	var next_decay_step := int(floor(float(next_turns) / float(decay_interval)))
 	_decrease_current_suspicion(next_decay_step - previous_decay_step)
 	_advance_heat_cooldown(safe_amount)
+	_advance_global_boundary_finish(safe_amount)
+
+
+func _advance_global_boundary_start(safe_amount: int) -> void:
+	if town_state != null:
+		town_state.advance_actions(safe_amount)
+	simulation_msec = maxi(0, simulation_msec + safe_amount * SIMULATION_ACTION_MSEC)
+	event_cadence_advance_actions(safe_amount)
+	if numbers_state != null:
+		_apply_numbers_events(numbers_state.advance_to(_crew_action_index()))
+	var alcohol_decay := safe_amount * DRUNK_TURN_DECAY
+	if alcohol_decay > 0:
+		change_drunk(-alcohol_decay)
+
+
+func _advance_global_boundary_after_encounter(safe_amount: int) -> void:
+	_advance_narrative_action_timers(safe_amount)
+
+
+func _advance_global_boundary_before_local_cooldown(safe_amount: int) -> void:
+	drunk_distortion_suppression_turns = maxi(0, drunk_distortion_suppression_turns - safe_amount)
+
+
+func _advance_global_boundary_finish(safe_amount: int) -> void:
 	_advance_debt_clocks(safe_amount)
 	_advance_crew_jobs()
 
