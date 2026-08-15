@@ -40,6 +40,7 @@ const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")
 const FoundationHudViewModelScript := preload("res://scripts/ui/foundation_hud_view_model.gd")
 const PullTabsGameScript := preload("res://scripts/games/pull_tabs.gd")
+const CoinPusherGameScript := preload("res://scripts/games/coin_pusher.gd")
 const SlotGameScript := preload("res://scripts/games/slot.gd")
 const SlotMachineGeneratorScript := preload("res://scripts/games/slots/slot_machine_generator.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
@@ -92,6 +93,7 @@ const FOUNDATION_SUITES := [
 	"crew_poker",
 	"pull_tabs",
 	"scratch_tickets",
+	"coin_pusher",
 	"audit",
 	"all",
 ]
@@ -443,6 +445,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 			_foundation_run_check(report, failures, "all_game_module_contracts", Callable(self, "_check_all_game_module_contracts"), [content_library])
 			_foundation_run_check(report, failures, "cross_game_integration_matrix", Callable(self, "_check_cross_game_integration_matrix"), [content_library])
 			_foundation_run_check(report, failures, "slot_contract_smoke", Callable(self, "_check_slot_contract_smoke"), [content_library])
+			_foundation_run_check(report, failures, "coin_pusher_contract", Callable(self, "_check_coin_pusher_contract"), [content_library])
 		"systems":
 			_foundation_run_system_suite(content_library, fixture_library, failures, report)
 		"slot", "slots":
@@ -454,6 +457,9 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 		"audit":
 			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
 			_foundation_run_check(report, failures, "slot_acceptance_deep", Callable(self, "_check_slot_acceptance"), [content_library])
+		"coin_pusher":
+			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+			_foundation_run_check(report, failures, "coin_pusher_contract", Callable(self, "_check_coin_pusher_contract"), [content_library])
 		"all":
 			_foundation_run_all_suite(content_library, fixture_library, failures, report)
 		_:
@@ -3141,6 +3147,8 @@ func _t4_4_consumed_item_effect_keys() -> Dictionary:
 		"blackjack_table_limit_multiplier",
 		"blackjack_table_minimum_to_previous_max",
 		"cheat_suspicion_delta",
+		"coin_pusher_drop_density",
+		"coin_pusher_gutter_recovery_uses",
 		"debt_default_heat_delta",
 		"debt_grace_turns",
 		"drunk_delta",
@@ -3453,6 +3461,7 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 	_check_bar_dice_contract(library, failures)
 	_check_crew_poker_contract(library, failures)
 	_check_video_poker_contract(library, failures)
+	_check_coin_pusher_contract(library, failures)
 	if suite == "audit":
 		_check_slot_acceptance(library, failures)
 	else:

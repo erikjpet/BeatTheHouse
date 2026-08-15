@@ -92,6 +92,14 @@
 		]
 	},
 	{
+		"id": "coin_pusher_pack",
+		"display_name": "Coin Pusher Pack",
+		"description": "Quarter Falls, cold coins, and hungry gutters.",
+		"default_enabled": true,
+		"game_ids": ["coin_pusher"],
+		"item_ids": ["coin_return_shim", "cold_quarters"]
+	},
+	{
 		"id": "bar_dice_pack",
 		"display_name": "Bar Dice Pack",
 		"description": "Dice, cups, careful wrists.",

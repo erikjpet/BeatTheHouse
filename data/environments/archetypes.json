@@ -158,10 +158,12 @@
       "stake_floor": 0,
       "stake_ceiling": 0
     },
-    "game_pool": [],
+    "game_pool": [
+      "coin_pusher"
+    ],
     "game_count": [
       0,
-      0
+      1
     ],
     "item_pool": [
       "creased_luck_card",
@@ -895,7 +897,8 @@
     "game_pool": [
       "slot",
       "bar_dice",
-      "pull_tabs"
+      "pull_tabs",
+      "coin_pusher"
     ],
     "required_game_ids": [
       "pull_tabs"
@@ -1111,7 +1114,8 @@
       "slot",
       "video_poker",
       "pull_tabs",
-      "scratch_tickets"
+      "scratch_tickets",
+      "coin_pusher"
     ],
     "required_game_ids": [
       "pull_tabs",

@@ -396,8 +396,10 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
 	run_state.apply_town_generation_modifiers(environment_data, rng)
-	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
+	# Game generation hooks may publish node-scoped facts. Give them the stable
+	# world-node identity before generating their canonical machine state.
 	environment_data["world_node_id"] = node_id
+	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	if str(archetype.get("kind", "")) == "home":
 		_apply_home_profile(run_state, environment_data, archetype, node_id, rng.fork("home_profile:%s" % node_id))
 	_apply_world_travel_targets(environment_data, run_state, map_data, node_id)
@@ -857,6 +859,7 @@ func _generated_game_states(run_state: RunState, environment_data: Dictionary, r
 			var generated: Dictionary = game.generate_environment_state(run_state, environment_data, state_rng)
 			if typeof(generated) == TYPE_DICTIONARY and not (generated as Dictionary).is_empty():
 				states[game_id] = (generated as Dictionary).duplicate(true)
+				game.environment_state_generated(run_state, environment_data, states[game_id] as Dictionary)
 				generated_base = true
 		var fixture_count := maxi(1, int(_copy_dict(_copy_dict(environment_data.get("layout", {})).get("game_fixture_counts", {})).get(game_id, 1)))
 		if fixture_count <= 1 or not game.has_method("generate_environment_fixture_states"):

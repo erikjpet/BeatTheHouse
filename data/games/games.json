@@ -3538,5 +3538,114 @@
         "suspicion_delta": 14
       }
     ]
+  },
+  {
+    "id": "coin_pusher",
+    "display_name": "Quarter Falls",
+    "family": "coin_pusher",
+    "content_groups": ["coin_pusher_pack"],
+    "gameplay_model": "full_simulation",
+    "module_path": "res://scripts/games/coin_pusher.gd",
+    "asset_path": "res://assets/art/games/slot.png",
+    "scene_asset_path": "res://assets/art/game_scenes/slot.png",
+    "environment_prop": "slot_machine",
+    "intro": "Two shelves shove a pile somebody else started.",
+    "description": "Aim. Read the shelves. Walk the alarm line.",
+    "legal_actions": [
+      {
+        "id": "drop_quarter",
+        "label": "Drop Quarter",
+        "summary": "Pick a lane and drop on the shelf beat.",
+        "win_chance": 0,
+        "payout_mult": 0
+      }
+    ],
+    "cheat_actions": [
+      {
+        "id": "nudge_machine",
+        "label": "Nudge",
+        "summary": "Choose tap, shove, or slam; aim left, right, or front. The cabinet warns before it bites.",
+        "win_chance": 0,
+        "payout_mult": 0,
+        "suspicion_delta": 0
+      }
+    ],
+    "coin_pusher_tuning": {
+      "state_schema_version": 1,
+      "variation_id": "quarter_falls",
+      "phase_steps": 12,
+      "force_order": ["tap", "shove", "slam"],
+      "default_force": "tap",
+      "direction_order": ["left", "right", "front"],
+      "default_direction": "front",
+      "security_band_deltas": {
+        "lax": 2,
+        "relaxed": 1,
+        "loose": 1,
+        "normal": 0,
+        "low": 0,
+        "attentive": -1,
+        "tight": -1,
+        "strict": -2,
+        "high": -2
+      },
+      "tell_labels": ["steady", "cabinet rocks", "alarm chirps", "attendant looks over"],
+      "lane_count": 5,
+      "cell_count": 6,
+      "cell_capacity": 4,
+      "initial_height_min": 2,
+      "initial_height_max": 5,
+      "drop_cost": 1,
+      "coin_value": 1,
+      "upper_phase_step": 3,
+      "lower_phase_step": 5,
+      "clean_nudge_phase": 3,
+      "clean_nudge_window_steps": 1,
+      "forward_phase_window_steps": 2,
+      "nudge_forces": {
+        "tap": {"tolerance_cost": 1, "push_strength": 1},
+        "shove": {"tolerance_cost": 2, "push_strength": 2},
+        "slam": {"tolerance_cost": 4, "push_strength": 4}
+      },
+      "shelf_push_percent": 78,
+      "nudge_push_percent": 94,
+      "forward_push_bonus_percent": 8,
+      "retracted_push_penalty_percent": 10,
+      "mistimed_push_penalty": 2,
+      "max_settle_passes": 6,
+      "retracted_stack_threshold_bonus": 1,
+      "strong_push_threshold": 4,
+      "strong_push_extra_coins": 1,
+      "front_nudge_lane_radius": 1,
+      "skill_accuracy_base": 70,
+      "skill_accuracy_phase_penalty": 12,
+      "gutter_edge_percent": 24,
+      "gutter_center_percent": 4,
+      "gutter_retracted_bonus_percent": 8,
+      "alarm_tolerance_min": 6,
+      "alarm_tolerance_max": 9,
+      "hard_alarm_heat": 22,
+      "staff_watch_suspicion_floor": 12,
+      "attendant_glance_heat": 2,
+      "slam_bonus_push": 2,
+      "cold_quarters_density": 3,
+      "coin_return_shim_uses": 3,
+      "rider_push_threshold": 2,
+      "prize_count_min": 1,
+      "prize_count_max": 3,
+      "prize_initial_cell_max": 3,
+      "documented_ev_band": [0.72, 0.94],
+      "scenario_reset_contract": {
+        "path": "scenario_game_modifiers.coin_pusher",
+        "flag": "reset_pile",
+        "token": "reset_token",
+        "meaning": "Someone else played it; replace the persisted pile once per token."
+      },
+      "prize_riders": [
+        {"kind": "chip_stack", "label": "chip stack", "cash_value": 4, "weight": 55},
+        {"kind": "ticket_roll", "label": "ticket roll", "cash_value": 7, "weight": 35},
+        {"kind": "scenario_item", "label": "wrapped prize", "item_id": "", "cash_value": 0, "weight": 10}
+      ]
+    }
   }
 ]
