@@ -4581,6 +4581,27 @@ func _check_single_table_environment_entry_contract(library: ContentLibrary, app
 	var legal_actions: Array = legal_actions_value if typeof(legal_actions_value) == TYPE_ARRAY else []
 	if legal_actions.is_empty():
 		failures.append("Table environment entry has no visible legal action for %s." % game_id)
+	if game_id == "craps":
+		var settings: Variant = app.get("user_settings")
+		if settings == null:
+			failures.append("Craps reduced-motion view-model contract could not access user settings.")
+		else:
+			var previous_reduce_motion := bool(settings.reduce_motion)
+			var previous_surface_ui_state: Dictionary = (app.get("game_surface_ui_state") as Dictionary).duplicate(true)
+			var stale_surface_ui_state := previous_surface_ui_state.duplicate(true)
+			stale_surface_ui_state["reduce_motion"] = false
+			app.set("game_surface_ui_state", stale_surface_ui_state)
+			settings.reduce_motion = true
+			app.call("_on_settings_applied")
+			var reduced_surface_ui_state: Dictionary = app.call("_current_game_surface_ui_state")
+			var reduced_game_snapshot: Dictionary = app.call("current_game_view_snapshot")
+			if not bool(reduced_surface_ui_state.get("reduce_motion", false)):
+				failures.append("Foundation surface UI context did not propagate the live reduced-motion preference to Craps.")
+			if not bool(reduced_game_snapshot.get("reduce_motion", false)):
+				failures.append("Foundation final Craps snapshot allowed stale module UI state to override reduced motion.")
+			app.set("game_surface_ui_state", previous_surface_ui_state)
+			settings.reduce_motion = previous_reduce_motion
+			app.call("_on_settings_applied")
 	_check_idle_surface_automation_snapshot_contract(app, game_id, failures)
 
 	var actions := game.actions(run_state, run_state.current_environment)

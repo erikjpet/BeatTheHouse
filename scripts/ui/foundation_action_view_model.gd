@@ -111,6 +111,9 @@ static func game_view_snapshot(host: Variant) -> Dictionary:
 	snapshot["stake_max"] = int(stake_range.get("max", 1))
 	snapshot["selected_stake"] = snapshot_selected_stake
 	snapshot["has_valid_stake"] = bool(stake_range.get("has_valid", false))
+	# Accessibility is host-owned live state. A module may consume it while
+	# building its surface, but stale UI-local data must not override the setting.
+	snapshot["reduce_motion"] = host._reduce_motion_enabled()
 	for key in result.keys():
 		var result_key = str(key)
 		if not snapshot.has(result_key):
@@ -125,6 +128,7 @@ static func current_game_surface_ui_state(host: Variant) -> Dictionary:
 	ui_state["selected_stake"] = host._current_selected_stake()
 	ui_state["surface_runtime_status"] = host._current_game_surface_status()
 	ui_state["focused_talk_speaker"] = host._focused_talk_speaker_snapshot()
+	ui_state["reduce_motion"] = host._reduce_motion_enabled()
 	return host._apply_game_surface_time_fields(ui_state)
 
 
