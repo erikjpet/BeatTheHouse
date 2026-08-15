@@ -38,6 +38,9 @@ var foundation_action_rng: Dictionary = {}
 var foundation_rng_matches_audit := false
 var authored_tell_state: Dictionary = {}
 var authored_tell_observation: Dictionary = {}
+var authored_tell_table: Dictionary = {}
+var latest_action_surface_state: Dictionary = {}
+var latest_action_table_state: Dictionary = {}
 var tell_expected_actions: Array[String] = []
 var current_stage := "not_started"
 var current_attempt: Dictionary = {}
@@ -380,6 +383,11 @@ func _perform_production_action(action: String, index: int, confirm_requested: b
 	var phase_passed := expected_phase.is_empty() or str(after.get("table_phase", "")) == expected_phase
 	var within_budget := action_elapsed_msec <= PRODUCTION_ACTION_BUDGET_MSEC
 	var outcome_passed := handled and phase_passed and within_budget
+	if outcome_passed:
+		authored_tell_state = latest_action_surface_state.duplicate(true)
+		authored_tell_table = latest_action_table_state.duplicate(true)
+		var post_action_observation: Dictionary = authored_tell_state.get("observation", {}) if typeof(authored_tell_state.get("observation", {})) == TYPE_DICTIONARY else {}
+		authored_tell_observation = post_action_observation.duplicate(true)
 	var outcome := {
 		"kind": "production_action",
 		"action": action,
@@ -406,6 +414,8 @@ func _production_action_snapshot() -> Dictionary:
 	var surface: Dictionary = {}
 	if canvas != null:
 		surface = canvas.call("realtime_surface_state") as Dictionary
+	latest_action_table_state = table.duplicate(true)
+	latest_action_surface_state = surface.duplicate(true)
 	var observation: Dictionary = surface.get("observation", {}) if typeof(surface.get("observation", {})) == TYPE_DICTIONARY else {}
 	return {
 		"table_phase": str(table.get("phase", "")),
@@ -418,15 +428,14 @@ func _production_action_snapshot() -> Dictionary:
 
 
 func _has_authored_observation() -> bool:
-	var table := _table()
-	_stage("natural_tell_surface_read", {"source": "realtime_surface_state"})
-	var surface := canvas.call("realtime_surface_state") as Dictionary
+	_stage("natural_tell_cached_state_assertion", {"source": "verified_production_action_after"})
+	var table := authored_tell_table.duplicate(true)
+	var surface := authored_tell_state.duplicate(true)
 	var observation: Dictionary = surface.get("observation", {}) if typeof(surface.get("observation", {})) == TYPE_DICTIONARY else {}
-	authored_tell_state = surface.duplicate(true)
-	authored_tell_observation = observation.duplicate(true)
 	var beat: Dictionary = table.get("beat", {}) if typeof(table.get("beat", {})) == TYPE_DICTIONARY else {}
 	var passed := int(table.get("hand_number", -1)) == 0 \
 		and str(table.get("phase", "")) == "draw" \
+		and str(surface.get("phase", "")) == "draw" \
 		and not beat.is_empty() \
 		and ["line", "portrait", "timing"].has(str(observation.get("channel", ""))) \
 		and CrewPokerVisualSeedAuditScript.RESIDENTS.has(str(observation.get("member_id", "")))
@@ -435,6 +444,7 @@ func _has_authored_observation() -> bool:
 		"hand_number": int(table.get("hand_number", -1)),
 		"hand_number_contract": "zero_based_active_first_hand",
 		"phase": str(table.get("phase", "")),
+		"surface_phase": str(surface.get("phase", "")),
 		"member_id": str(observation.get("member_id", "")),
 		"channel": str(observation.get("channel", "")),
 		"input_sequence": CrewPokerVisualSeedAuditScript.INPUT_SEQUENCE.duplicate(),
