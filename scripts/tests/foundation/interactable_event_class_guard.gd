@@ -53,7 +53,11 @@ static func _check_generated_environment_sweep(library: ContentLibrary, failures
 			var archetype_id := str(archetype.get("id", "")).strip_edges()
 			covered_archetypes[archetype_id] = true
 			var scenarios: Array = [{}]
-			scenarios.append_array(library.scenarios_for_archetype(archetype_id))
+			# Base event pools are seed-selected, so sweep them at the full seed
+			# count. Scenario event_pool_add overlays are deterministic; exhaust
+			# every authored overlay once without multiplying identical work.
+			if seed_index == 0:
+				scenarios.append_array(library.scenarios_for_archetype(archetype_id))
 			for scenario_value in scenarios:
 				var scenario := _dict(scenario_value)
 				var scenario_id := str(scenario.get("id", "baseline"))
