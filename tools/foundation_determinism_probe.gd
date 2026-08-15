@@ -174,12 +174,24 @@ func _apply_numbers_sequence(run_state: RunState, checkpoints: Array, seed: Stri
 	_checkpoint(run_state, checkpoints, seed, "numbers_past_post_detection")
 	run_state.advance_environment_turns(run_state.numbers_state.settlement_action(day) - int(run_state.numbers_state.action_index))
 	_checkpoint(run_state, checkpoints, seed, "numbers_slip_settlement")
-	run_state.numbers_state.fix_unlock(true)
-	run_state.numbers_state.fix_begin_bribe()
-	run_state.numbers_state.fix_record_bribe(true, {"clean": true, "fast": true})
-	var allocation := run_state.numbers_fix_allocate({"bar": 20, "motel": 20, "corner_store": 20})
+	var fix_unlock := run_state.numbers_state.fix_unlock(true)
+	var fix_begin := run_state.numbers_state.fix_begin_bribe()
+	var fix_bribe := run_state.numbers_state.fix_record_bribe(true, {"clean": true, "fast": true})
+	var allocation_input := {"bar": 20, "motel": 20, "corner_store": 20}
+	var allocation_quote := run_state.numbers_state.fix_allocation_quote(allocation_input)
+	var allocation := run_state.numbers_fix_allocate(allocation_input)
 	if not bool(allocation.get("ok", false)):
-		failures.append("%s could not fund the deterministic Numbers camouflage." % seed)
+		failures.append("%s could not fund the deterministic Numbers camouflage: %s" % [seed, JSON.stringify({
+			"allocation": allocation,
+			"allocation_input": allocation_input,
+			"allocation_quote": allocation_quote,
+			"bankroll": run_state.bankroll,
+			"fix_begin": fix_begin,
+			"fix_bribe": fix_bribe,
+			"fix_state": run_state.numbers_state.fix_state,
+			"fix_unlock": fix_unlock,
+			"numbers_action_index": run_state.numbers_state.action_index,
+		})])
 		return
 	_checkpoint(run_state, checkpoints, seed, "numbers_fix_funded")
 	var target_day := int(run_state.numbers_state.fix_state.get("target_day", day + 1))

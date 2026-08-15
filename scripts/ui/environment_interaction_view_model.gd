@@ -550,7 +550,7 @@ static func layout_spot_field_name(object_type: String) -> String:
 		"home_sleep": return "home_sleep_spots"
 		"home_storage": return "home_storage_spots"
 		"home_container": return "home_container_spots"
-		"numbers": return ""
+		"numbers": return "numbers_spots"
 		"meta_bag": return "home_bag_spots"
 		"meta_upgrade": return "home_upgrade_spots"
 		"meta_trade_up": return "home_trade_up_spots"

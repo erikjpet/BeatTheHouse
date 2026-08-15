@@ -2708,6 +2708,7 @@ func _verify_numbers_surfaces() -> void:
 		"lender_hooks": [],
 	}, 200)
 	var canvas := app.get("environment_canvas") as Control
+	_assert_environment_canvas_contained("Corner Store Numbers book")
 	var book_object := _canvas_object_by_id(canvas, "numbers:book")
 	_require(not book_object.is_empty(), "Corner Store did not expose its physical Numbers book.")
 	var before_open := _serialized_run_text()
@@ -2742,6 +2743,7 @@ func _verify_numbers_surfaces() -> void:
 			"lender_hooks": [],
 		}, 200)
 		canvas = app.get("environment_canvas") as Control
+		_assert_environment_canvas_contained("%s Numbers book" % venue_id)
 		book_object = _canvas_object_by_id(canvas, "numbers:book")
 		_require(not book_object.is_empty(), "%s did not expose its authored physical Numbers book." % venue_id)
 		_require(not (await _double_click_canvas_object_data(canvas, book_object, "numbers")).is_empty(), "%s Numbers book did not open through its visible prop." % venue_id)

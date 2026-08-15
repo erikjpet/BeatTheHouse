@@ -477,7 +477,7 @@ function Assert-EnvironmentLayoutSpots {
         $failures.Add("environment $ArchetypeId layout must be an object when present.")
         return
     }
-    $spotFields = @("game_spots", "event_spots", "item_spots", "shopkeeper_spots", "travel_spots", "service_spots", "lender_spots")
+    $spotFields = @("game_spots", "event_spots", "item_spots", "shopkeeper_spots", "travel_spots", "service_spots", "lender_spots", "numbers_spots")
     foreach ($field in $spotFields) {
         $spots = Get-JsonProperty $Layout $field
         if ($null -eq $spots) {
