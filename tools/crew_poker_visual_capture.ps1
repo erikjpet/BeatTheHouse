@@ -1,7 +1,9 @@
 param(
     [switch]$RequireGodot,
     [switch]$ManifestOnly,
-    [string]$ManifestPath
+    [string]$ManifestPath,
+    [ValidateRange(5, 600)]
+    [int]$TimeoutSec = 90
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,8 +34,29 @@ if (-not $ManifestOnly) {
     if (Test-Path -LiteralPath $ManifestPath) {
         Remove-Item -LiteralPath $ManifestPath -Force
     }
-    & $windowedGodot --path $root --script "res://tools/crew_poker_visual_capture.gd"
-    $godotExitCode = $LASTEXITCODE
+    $arguments = @("--path", "`"$root`"", "--script", "res://tools/crew_poker_visual_capture.gd")
+    $godotProcess = Start-Process `
+        -FilePath $windowedGodot `
+        -ArgumentList $arguments `
+        -PassThru `
+        -WindowStyle Hidden
+    if (-not $godotProcess.WaitForExit($TimeoutSec * 1000)) {
+        # Kill only the exact process tree created above. Never sweep by image
+        # name: other serialized or editor Godot processes may be legitimate.
+        & taskkill.exe /PID $godotProcess.Id /T /F 2>$null | Out-Null
+        $terminated = $godotProcess.WaitForExit(10000)
+        if (-not $terminated) {
+            & taskkill.exe /PID $godotProcess.Id /T /F 2>$null | Out-Null
+            $terminated = $godotProcess.WaitForExit(5000)
+        }
+        if (-not $terminated) {
+            Write-Host "CREW_POKER_VISUAL_CAPTURE_WRAPPER_FAIL timeout=${TimeoutSec}s pid=$($godotProcess.Id) spawned process tree could not be terminated"
+            exit 1
+        }
+        Write-Host "CREW_POKER_VISUAL_CAPTURE_WRAPPER_FAIL timeout=${TimeoutSec}s pid=$($godotProcess.Id) spawned process tree terminated"
+        exit 1
+    }
+    $godotExitCode = $godotProcess.ExitCode
 }
 
 if (-not (Test-Path -LiteralPath $ManifestPath -PathType Leaf)) {
