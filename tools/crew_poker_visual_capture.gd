@@ -191,6 +191,7 @@ func _capture_surface(file_name: String, capture_id: String, expected_actions: A
 		"renderer": str(state.get("surface_renderer", "")),
 		"hit_targets": target_evidence,
 		"hidden_labels_absent": hidden_leaks.is_empty(),
+		"hidden_label_offenders": hidden_leaks,
 		"observation_channel": str((state.get("observation", {}) as Dictionary).get("channel", "")) if typeof(state.get("observation", {})) == TYPE_DICTIONARY else "",
 		"reduce_motion": bool(state.get("reduce_motion", false)),
 	})
@@ -253,23 +254,54 @@ func _poker_hit_regions(value: Variant) -> Array:
 	return result
 
 
-func _hidden_label_leaks(surface_state: Dictionary) -> Array[String]:
-	var public_text := JSON.stringify(surface_state)
-	var forbidden: Array[String] = ["state_key", "condition", "frequency_percent", "learned_exposures", "tell_learned"]
+func _hidden_label_leaks(surface_state: Dictionary) -> Array[Dictionary]:
+	# Hidden schema names must be exact dictionary keys. A substring scan would
+	# incorrectly classify public fields such as `alcohol_condition` as the
+	# private authored `condition` key.
+	var forbidden_keys: Array[String] = ["state_key", "condition", "frequency_percent", "learned_exposures", "tell_learned"]
+	var state_tokens: Array[String] = []
+	var condition_tokens: Array[String] = []
 	for member_id in CrewStateModelScript.MEMBER_IDS:
 		for pattern_value in CrewPokerModelScript.patterns(member_id):
 			if typeof(pattern_value) != TYPE_DICTIONARY:
 				continue
 			var pattern: Dictionary = pattern_value
-			for key in ["state_key", "condition"]:
-				var token := str(pattern.get(key, ""))
-				if not token.is_empty() and not forbidden.has(token):
-					forbidden.append(token)
-	var leaks: Array[String] = []
-	for token in forbidden:
-		if public_text.contains(token):
-			leaks.append(token)
+			var state_token := str(pattern.get("state_key", ""))
+			var condition_token := str(pattern.get("condition", ""))
+			if not state_token.is_empty() and not state_tokens.has(state_token):
+				state_tokens.append(state_token)
+			if not condition_token.is_empty() and not condition_tokens.has(condition_token):
+				condition_tokens.append(condition_token)
+	var leaks: Array[Dictionary] = []
+	_audit_hidden_labels(surface_state, "$", forbidden_keys, state_tokens, condition_tokens, leaks)
 	return leaks
+
+
+func _audit_hidden_labels(value: Variant, path: String, forbidden_keys: Array[String], state_tokens: Array[String], condition_tokens: Array[String], leaks: Array[Dictionary]) -> void:
+	match typeof(value):
+		TYPE_DICTIONARY:
+			var source := value as Dictionary
+			for raw_key in source.keys():
+				var key := str(raw_key)
+				var child_path := "%s.%s" % [path, key]
+				if forbidden_keys.has(key):
+					leaks.append({"kind": "hidden_field", "path": child_path, "token": key})
+				_audit_hidden_labels(source.get(raw_key), child_path, forbidden_keys, state_tokens, condition_tokens, leaks)
+		TYPE_ARRAY:
+			var source := value as Array
+			for index in range(source.size()):
+				_audit_hidden_labels(source[index], "%s[%d]" % [path, index], forbidden_keys, state_tokens, condition_tokens, leaks)
+		TYPE_STRING, TYPE_STRING_NAME:
+			var text := str(value)
+			# Opaque state ids are unique and remain forbidden even when accidentally
+			# embedded in a longer public label. Generic authored conditions are only
+			# failures when projected as their own structured/public string value.
+			for token in state_tokens:
+				if text.contains(token):
+					leaks.append({"kind": "authored_state_token", "path": path, "token": token})
+			for token in condition_tokens:
+				if text == token:
+					leaks.append({"kind": "authored_condition_value", "path": path, "token": token})
 
 
 func _table() -> Dictionary:
