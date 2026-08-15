@@ -22,6 +22,7 @@ const PUNCHLINE_DISPLAY_NAME := "The Punchline"
 const PUNCHLINE_BACK_ROOM_LAYER := "back_room"
 const MIN_HIT_SIZE := 44.0
 const CAPTURE_TIMEOUT_MSEC := 75000
+const CAPTURE_OUTPUT_BUDGET_MSEC := 15000
 const PRODUCTION_ACTION_BUDGET_MSEC := 5000
 const PRODUCTION_ACTION_LIMIT := 4
 
@@ -29,6 +30,7 @@ var app: Control
 var canvas: Control
 var run_state: RunState
 var captures: Array[Dictionary] = []
+var queued_capture_outputs: Array[Dictionary] = []
 var failed := false
 var liveness_evidence: Dictionary = {}
 var reduced_motion_evidence: Dictionary = {}
@@ -191,6 +193,13 @@ func _run() -> void:
 	if not failed:
 		_stage("session_exit_to_l3", {"kind": "l3_session_exit", "attempt": 1, "limit": 1})
 		await _verify_session_exit_to_l3()
+	if not failed:
+		_stage("capture_output_flush_start", {
+			"queued_capture_count": queued_capture_outputs.size(),
+			"expected_capture_count": CAPTURE_FILE_NAMES.size(),
+			"budget_msec": CAPTURE_OUTPUT_BUDGET_MSEC,
+		})
+		_flush_capture_outputs()
 	_finish()
 
 
@@ -593,27 +602,78 @@ func _capture_surface(file_name: String, capture_id: String, expected_actions: A
 		_fail("Crew poker %s capture exposed hidden authored labels." % capture_id)
 	_stage("capture_surface_image_read", {"capture_id": capture_id, "source": "viewport_texture"})
 	var image := root.get_viewport().get_texture().get_image()
-	var saved := false
 	if image == null:
 		_fail("Crew poker viewport capture is unavailable; run the helper windowed.")
-	else:
-		if image.get_size() != CAPTURE_SIZE:
-			image.resize(CAPTURE_SIZE.x, CAPTURE_SIZE.y, Image.INTERPOLATE_NEAREST)
+		return
+	if image.get_size() != CAPTURE_SIZE:
+		image.resize(CAPTURE_SIZE.x, CAPTURE_SIZE.y, Image.INTERPOLATE_NEAREST)
+	for queued_output_value in queued_capture_outputs:
+		var queued_output: Dictionary = queued_output_value
+		if queued_output.get("image") == image:
+			_fail("Crew poker per-state capture reused a viewport Image instead of retaining a distinct render.")
+			return
+	# Each state owns the Image returned by its own viewport read. Keep the
+	# renderer/state assertions synchronous, but defer every PNG encoder/file
+	# boundary until all four states and the production exit have passed.
+	queued_capture_outputs.append({
+		"image": image,
+		"record": {
+			"id": capture_id,
+			"file": file_name,
+			"saved": false,
+			"phase": str(state.get("phase", "")),
+			"renderer": str(state.get("surface_renderer", "")),
+			"hit_targets": target_evidence,
+			"hidden_labels_absent": hidden_leaks.is_empty(),
+			"hidden_label_offenders": hidden_leaks,
+			"observation_channel": str((state.get("observation", {}) as Dictionary).get("channel", "")) if typeof(state.get("observation", {})) == TYPE_DICTIONARY else "",
+			"reduce_motion": bool(state.get("reduce_motion", false)),
+		},
+	})
+
+
+func _flush_capture_outputs() -> void:
+	if queued_capture_outputs.size() != CAPTURE_FILE_NAMES.size():
+		_fail("Crew poker output flush expected %d distinct queued images, found %d." % [CAPTURE_FILE_NAMES.size(), queued_capture_outputs.size()])
+		return
+	var flush_started_msec := Time.get_ticks_msec()
+	for output_index in range(queued_capture_outputs.size()):
+		if Time.get_ticks_msec() - flush_started_msec > CAPTURE_OUTPUT_BUDGET_MSEC:
+			_fail("Crew poker PNG output exceeded its %d ms bounded phase before image %d." % [CAPTURE_OUTPUT_BUDGET_MSEC, output_index + 1])
+			return
+		var output: Dictionary = queued_capture_outputs[output_index]
+		var image := output.get("image") as Image
+		var record: Dictionary = output.get("record", {}) if typeof(output.get("record", {})) == TYPE_DICTIONARY else {}
+		var file_name := str(record.get("file", ""))
+		var capture_id := str(record.get("id", ""))
+		_stage("capture_output_write", {
+			"capture_id": capture_id,
+			"file": file_name,
+			"output_index": output_index + 1,
+			"output_count": queued_capture_outputs.size(),
+			"budget_msec": CAPTURE_OUTPUT_BUDGET_MSEC,
+		})
+		if image == null or file_name.is_empty():
+			record["saved"] = false
+			captures.append(record)
+			_fail("Crew poker queued capture %d lost its distinct in-memory image or output name." % [output_index + 1])
+			continue
+		var write_started_msec := Time.get_ticks_msec()
 		var error := image.save_png("%s/%s" % [OUTPUT_DIR, file_name])
-		saved = error == OK
-		if not saved:
+		record["write_elapsed_msec"] = Time.get_ticks_msec() - write_started_msec
+		record["saved"] = error == OK
+		captures.append(record)
+		if error != OK:
 			_fail("Could not save Crew poker capture %s (error %d)." % [file_name, error])
-	captures.append({
-		"id": capture_id,
-		"file": file_name,
-		"saved": saved,
-		"phase": str(state.get("phase", "")),
-		"renderer": str(state.get("surface_renderer", "")),
-		"hit_targets": target_evidence,
-		"hidden_labels_absent": hidden_leaks.is_empty(),
-		"hidden_label_offenders": hidden_leaks,
-		"observation_channel": str((state.get("observation", {}) as Dictionary).get("channel", "")) if typeof(state.get("observation", {})) == TYPE_DICTIONARY else "",
-		"reduce_motion": bool(state.get("reduce_motion", false)),
+	queued_capture_outputs.clear()
+	var flush_elapsed_msec := Time.get_ticks_msec() - flush_started_msec
+	if flush_elapsed_msec > CAPTURE_OUTPUT_BUDGET_MSEC:
+		_fail("Crew poker PNG output exceeded its %d ms bounded phase (%d ms)." % [CAPTURE_OUTPUT_BUDGET_MSEC, flush_elapsed_msec])
+		return
+	_stage("capture_output_flush_complete", {
+		"capture_count": captures.size(),
+		"elapsed_msec": flush_elapsed_msec,
+		"budget_msec": CAPTURE_OUTPUT_BUDGET_MSEC,
 	})
 
 
@@ -739,6 +799,7 @@ func _diagnostics_snapshot() -> Dictionary:
 		"stage_history": stage_history.duplicate(true),
 		"failures": failure_messages.duplicate(),
 		"removed_stale_capture_files": removed_stale_capture_files.duplicate(),
+		"queued_capture_count": queued_capture_outputs.size(),
 		"elapsed_msec": maxi(0, Time.get_ticks_msec() - started_msec) if started_msec > 0 else 0,
 		"timeout_msec": CAPTURE_TIMEOUT_MSEC,
 	}
