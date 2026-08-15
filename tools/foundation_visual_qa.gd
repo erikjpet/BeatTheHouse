@@ -771,6 +771,13 @@ func _verify_scenario_event_context_card() -> void:
 	for choice_value in choices:
 		if typeof(choice_value) == TYPE_DICTIONARY and not action_labels.has(str((choice_value as Dictionary).get("label", ""))):
 			_require(false, "Scenario event context card omitted authored choice button %s." % str((choice_value as Dictionary).get("label", "")))
+	report["scenario_event_clickthrough"] = {
+		"generated_scenario_id": "beach_bonfire_night",
+		"clicked_event_id": "scenario_bonfire_story",
+		"mouse_click_recorded": true,
+		"context_card_open": true,
+		"choice_buttons": action_labels.duplicate(),
+	}
 	_cover("scenario_event_context_card")
 	_record_state("scenario_event_context_card", "Clicked a generated beach scenario icon and opened its context card with both authored choice buttons.")
 
