@@ -112,7 +112,7 @@ Wave C games are intentionally parallel-friendly.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| fix06_1 | `fix06_1_dead_event_interactions_prompt.md` | TODO | env06_2, env06_3 (landed) | crew06_5+ inherit the class guard | | | | Owner-reported dead event icons; root-caused to normalization-injected speakers vs room-actor denial at the beach. Run before or alongside Wave D. |
+| fix06_1 | `fix06_1_dead_event_interactions_prompt.md` | IN_PROGRESS | env06_2, env06_3 (landed) | crew06_5+ inherit the class guard | Codex | 2026-08-14 | | Owner-reported dead event icons; root-caused to normalization-injected speakers vs room-actor denial at the beach. Run before or alongside Wave D. |
 
 ### Fixed checkpoint
 
@@ -465,3 +465,6 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   accepted and archived Streets. The owner must consume the frozen multi-stop
   API unchanged and add a distinct reachable L3 desk beside Poker's reserved
   table position; PM retains board, integration, verification, and push.
+- 2026-08-14 [fix06_1] Codex claimed the dead scenario event interaction fix;
+  implementation will repair the generic normalization seam and add a permanent
+  generated-environment interactability class guard plus UI click-through.
