@@ -28,7 +28,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_items(game, failures)
 	_check_coin_pusher_economy(game, definition, failures)
 	_check_pusher_variation_data(definition, failures)
-	_check_jackpot_ridge_lifecycle(definition, failures)
+	_check_jackpot_ridge_lifecycle(game, definition, failures)
 	_check_vault_drop_contract(game, definition, failures)
 	_check_pusher_variation_distribution(game, failures)
 	_check_pusher_variation_determinism_and_ev(game, definition, failures)
@@ -696,7 +696,7 @@ func _check_pusher_variation_data(definition: Dictionary, failures: Array) -> vo
 		failures.append("Vault Drop RESET odds do not match the documented honest 1-in-9 floor.")
 
 
-func _check_jackpot_ridge_lifecycle(definition: Dictionary, failures: Array) -> void:
+func _check_jackpot_ridge_lifecycle(game: GameModule, definition: Dictionary, failures: Array) -> void:
 	var variations: Dictionary = (definition.get("coin_pusher_tuning", {}) as Dictionary).get("variations", {})
 	var config: Dictionary = variations.get("jackpot_ridge", {})
 	var state := JackpotRidgeVariation.initial_state(config, _configured_rng(173), 5, 6)
@@ -730,6 +730,45 @@ func _check_jackpot_ridge_lifecycle(definition: Dictionary, failures: Array) -> 
 	var two := JackpotRidgeVariation.apply_movement(two_state, [{"lane": 0, "cell": 0, "moved": 1}], {"aimed_lane": 0, "push_strength": 0, "from_nudge": false}, config)
 	if bool(two.get("ridge_run_triggered", true)):
 		failures.append("Jackpot Ridge cascade triggered below the exact three-puck threshold.")
+	var nudge_fixture := _pusher_variation_fixture(game, "RIDGE-PUCK-NUDGE", "jackpot_ridge")
+	var nudge_run: RunState = nudge_fixture.get("run_state")
+	var nudge_environment: Dictionary = nudge_run.current_environment
+	var nudge_machine: Dictionary = (nudge_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	var nudge_state: Dictionary = nudge_machine.get("variation_state", {})
+	nudge_state["pucks"] = [{"id": "visible_multiplier", "kind": "multiplier", "multiplier": 3, "charges": 2, "lane": 2, "cell": 1, "push": 0}]
+	nudge_state["jammed_lanes"] = []
+	for lane_value in nudge_machine.get("lanes", []):
+		if typeof(lane_value) != TYPE_DICTIONARY:
+			continue
+		for cell_value in (lane_value as Dictionary).get("cells", []):
+			if typeof(cell_value) == TYPE_DICTIONARY:
+				(cell_value as Dictionary)["edge_hang"] = false
+	var tolerance_before := int(nudge_machine.get("alarm_tolerance_remaining", 0))
+	var nudge_result := game.resolve_with_context("nudge_machine", 0, nudge_run, nudge_environment, nudge_run.create_rng("ridge_puck_nudge"), {
+		"coin_pusher_lane": 2, "coin_pusher_force": "tap", "coin_pusher_direction": "front",
+		"coin_pusher_timing_phase": 3, "coin_pusher_ridge_trim": "balanced",
+	})
+	if not bool(nudge_result.get("coin_pusher_clean_drop", false)) \
+			or int(nudge_result.get("coin_pusher_tolerance_spent", -1)) != 0 \
+			or int(nudge_machine.get("alarm_tolerance_remaining", -1)) != tolerance_before:
+		failures.append("Jackpot Ridge rejected a clean nudge aimed at a visible feature puck when no base coin was hanging.")
+	var policy_fixture := _pusher_variation_fixture(game, "RIDGE-POLICY", "jackpot_ridge")
+	var policy_machine: Dictionary = ((policy_fixture.get("environment") as Dictionary).get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	var policy_state: Dictionary = policy_machine.get("variation_state", {})
+	policy_state["pucks"] = [
+		{"id": "dud_near", "kind": "dud", "lane": 1, "cell": 0, "push": 1},
+		{"id": "multiplier_near", "kind": "multiplier", "multiplier": 5, "lane": 3, "cell": 1, "push": 0},
+	]
+	policy_state["jammed_lanes"] = [1]
+	var nudge_decision := _ridge_strategy_decision(policy_machine, 4)
+	var drop_decision := _ridge_strategy_decision(policy_machine, 5)
+	if str(nudge_decision.get("action_id", "")) != "nudge_machine" \
+			or str(nudge_decision.get("target_kind", "")) != "multiplier" \
+			or int((nudge_decision.get("ui_state", {}) as Dictionary).get("coin_pusher_lane", -1)) != 3:
+		failures.append("Jackpot Ridge strategy did not prioritize its readable multiplier puck for a clean nudge.")
+	if str(drop_decision.get("action_id", "")) != "drop_quarter" \
+			or int((drop_decision.get("ui_state", {}) as Dictionary).get("coin_pusher_lane", -1)) == 1:
+		failures.append("Jackpot Ridge strategy knowingly paid into a dud-jammed lane.")
 
 
 func _check_vault_drop_contract(game: GameModule, definition: Dictionary, failures: Array) -> void:
@@ -850,24 +889,67 @@ func _pusher_variation_session(game: GameModule, seed_text: String, variation_id
 	var outcomes: Array = []
 	for index in range(action_count):
 		var action_id := "drop_quarter"
-		var ui_state := {"coin_pusher_lane": index % 5}
-		# Ridge's documented EV policy spends only readable, clean nudges;
-		# drop-only play intentionally ignores its sequencing advantage.
-		if variation_id == "jackpot_ridge" and index % 5 == 4:
+		var ui_state: Dictionary = {"coin_pusher_lane": index % 5}
+		var target_kind := ""
+		if variation_id == "jackpot_ridge":
 			var machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
-			var lanes: Array = machine.get("lanes", [])
-			for lane_index in range(lanes.size()):
-				var cells: Array = (lanes[lane_index] as Dictionary).get("cells", []) if typeof(lanes[lane_index]) == TYPE_DICTIONARY else []
-				if not cells.is_empty() and bool((cells[0] as Dictionary).get("edge_hang", false)):
-					action_id = "nudge_machine"
-					ui_state = {"coin_pusher_lane": lane_index, "coin_pusher_force": "tap", "coin_pusher_direction": "front", "coin_pusher_timing_phase": 3, "coin_pusher_ridge_trim": "balanced"}
-					break
+			var decision := _ridge_strategy_decision(machine, index)
+			action_id = str(decision.get("action_id", "drop_quarter"))
+			ui_state = decision.get("ui_state", {}) as Dictionary
+			target_kind = str(decision.get("target_kind", ""))
 		var result := game.resolve_with_context(action_id, 1 if action_id == "drop_quarter" else 0, run_state, environment, run_state.create_rng("variation_action_%d" % index), ui_state)
 		payout += int(result.get("coin_pusher_payout", 0))
 		cost += 1 if action_id == "drop_quarter" else 0
-		outcomes.append([action_id, int(result.get("coin_pusher_payout", 0)), game.deterministic_state_digest(environment)])
+		outcomes.append([action_id, target_kind, int(ui_state.get("coin_pusher_lane", -1)), int(result.get("coin_pusher_payout", 0)), game.deterministic_state_digest(environment)])
 		GameModule.apply_result(run_state, result, run_state.create_rng("variation_apply_%d" % index))
 	return {"payout": payout, "cost": cost, "outcomes": outcomes, "digest": game.deterministic_state_digest(environment)}
+
+
+func _ridge_strategy_decision(machine: Dictionary, action_index: int) -> Dictionary:
+	var state: Dictionary = machine.get("variation_state", {}) if typeof(machine.get("variation_state", {})) == TYPE_DICTIONARY else {}
+	var pucks: Array = state.get("pucks", []) if typeof(state.get("pucks", [])) == TYPE_ARRAY else []
+	var target: Dictionary = {}
+	var kind_priority := {"multiplier": 0, "lock": 1, "dud": 2}
+	for value in pucks:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var puck: Dictionary = value
+		if target.is_empty():
+			target = puck
+			continue
+		var puck_priority := int(kind_priority.get(str(puck.get("kind", "dud")), 3))
+		var target_priority := int(kind_priority.get(str(target.get("kind", "dud")), 3))
+		var puck_key := [puck_priority, int(puck.get("cell", 99)), -int(puck.get("push", 0)), int(puck.get("lane", 99)), str(puck.get("id", ""))]
+		var target_key := [target_priority, int(target.get("cell", 99)), -int(target.get("push", 0)), int(target.get("lane", 99)), str(target.get("id", ""))]
+		if _ridge_strategy_key_before(puck_key, target_key):
+			target = puck
+	if action_index % 5 == 4 and not target.is_empty():
+		return {
+			"action_id": "nudge_machine",
+			"target_kind": str(target.get("kind", "")),
+			"ui_state": {
+				"coin_pusher_lane": int(target.get("lane", 2)), "coin_pusher_force": "tap",
+				"coin_pusher_direction": "front", "coin_pusher_timing_phase": 3,
+				"coin_pusher_ridge_trim": "balanced",
+			},
+		}
+	var jammed_lanes: Array = state.get("jammed_lanes", []) if typeof(state.get("jammed_lanes", [])) == TYPE_ARRAY else []
+	var preferred_lane := int(target.get("lane", action_index % 5)) if str(target.get("kind", "")) == "multiplier" else action_index % 5
+	if jammed_lanes.has(preferred_lane):
+		for offset in range(5):
+			var candidate := posmod(action_index + offset, 5)
+			if not jammed_lanes.has(candidate):
+				preferred_lane = candidate
+				break
+	return {"action_id": "drop_quarter", "target_kind": str(target.get("kind", "")), "ui_state": {"coin_pusher_lane": preferred_lane}}
+
+
+func _ridge_strategy_key_before(left: Array, right: Array) -> bool:
+	for index in range(mini(left.size(), right.size())):
+		if left[index] == right[index]:
+			continue
+		return left[index] < right[index]
+	return left.size() < right.size()
 
 
 func _pusher_variation_fixture(game: GameModule, seed_text: String, variation_id: String, crowd_density: String = "") -> Dictionary:
