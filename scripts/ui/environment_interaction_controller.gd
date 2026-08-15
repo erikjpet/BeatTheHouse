@@ -103,12 +103,7 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 			"confirm_action_id": "open_numbers",
 			"focus_rect": focus_rect,
 		}))
-	# The rendered environment is the physical encounter authority. During a
-	# direct room restore it can be installed before the map overlay catches up.
-	var physical_node_id: String = str(host.run_state.current_environment.get("world_node_id", "")).strip_edges()
-	if physical_node_id.is_empty():
-		physical_node_id = host.run_state.current_world_node_id()
-	var silas_here: bool = host.run_state.traveler_node("silas_snitch") == physical_node_id
+	var silas_here: bool = host.run_state.numbers_silas_is_here()
 	if silas_here:
 		objects.append(host._make_interactable_object({
 			"object_id": "numbers:silas",

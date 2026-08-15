@@ -200,12 +200,16 @@ static func _check_silas_availability_seam(failures: Array) -> void:
 		failures.append("First Silas view advertised hidden handle knowledge or leaked extra discovery state.")
 	var silas_node := run_state.traveler_node("silas_snitch")
 	run_state.current_environment = {"id": silas_node, "archetype_id": silas_node, "world_node_id": silas_node, "turns": 0}
+	if not run_state.numbers_silas_is_here():
+		failures.append("Production Silas presence did not follow the rendered itinerary room while the map cursor lagged.")
 	var bankroll_before := run_state.bankroll
 	if bool(run_state.numbers_buy_silas_tip(true).get("ok", false)) or run_state.bankroll != bankroll_before:
 		failures.append("Production Silas API sold the handle before hidden discovery.")
+	var tip_result := run_state.numbers_buy_silas_tip(false)
+	if not bool(tip_result.get("ok", false)) or int(tip_result.get("price", 0)) != 12 or str(tip_result.get("message", "")).is_empty() or run_state.bankroll != bankroll_before - 12 or not bool(run_state.numbers_state.knowledge.get("silas_tip", false)):
+		failures.append("Visible Silas route-tip exchange did not charge $12 and save the authored hidden knowledge through production.")
 	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:gas_late")
 	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:corner_late")
-	run_state.numbers_state.buy_silas_tip(false)
 	if bool(run_state.numbers_silas_status().get("handle_available", true)):
 		failures.append("Silas handle exchange appeared before the authored post boundary.")
 	run_state.numbers_state.advance_to(run_state.numbers_state.post_action(0))
