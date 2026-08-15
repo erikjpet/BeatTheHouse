@@ -14,6 +14,7 @@ const PUNCHLINE_ARCHETYPE_ID := "small_underground_casino"
 const PUNCHLINE_DISPLAY_NAME := "The Punchline"
 const PUNCHLINE_BACK_ROOM_LAYER := "back_room"
 const MIN_HIT_SIZE := 44.0
+const CAPTURE_TIMEOUT_MSEC := 75000
 
 var app: Control
 var canvas: Control
@@ -24,20 +25,30 @@ var liveness_evidence: Dictionary = {}
 var reduced_motion_evidence: Dictionary = {}
 var acceptance_context: Dictionary = {}
 var tell_expected_actions: Array[String] = []
+var current_stage := "not_started"
+var current_attempt: Dictionary = {}
+var stage_history: Array[Dictionary] = []
+var failure_messages: Array[String] = []
+var started_msec := 0
+var finishing := false
 
 
 func _init() -> void:
 	call_deferred("_run")
+	call_deferred("_watchdog")
 
 
 func _run() -> void:
+	started_msec = Time.get_ticks_msec()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUTPUT_DIR))
+	_stage("boot", {"capture_timeout_msec": CAPTURE_TIMEOUT_MSEC})
 	root.size = CAPTURE_SIZE
 	RenderingServer.set_default_clear_color(Color("#08070d"))
 	app = MainScene.instantiate()
 	app.set("autosave_slot_id", "crew_poker_visual_capture")
 	root.add_child(app)
 	await _settle(8)
+	_stage("foundation_run_start")
 	app.call("start_foundation_run", FIXTURE_SEED)
 	await _settle(8)
 	run_state = app.get("run_state") as RunState
@@ -47,6 +58,7 @@ func _run() -> void:
 		return
 	for member_id in CrewStateModelScript.MEMBER_IDS:
 		run_state.crew_add_trust(str(member_id), CrewStateModelScript.rank_threshold("made"), "visual_capture_l3_access")
+	_stage("punchline_l3_navigation_start")
 	if not await _enter_punchline_poker_from_l3():
 		_finish()
 		return
@@ -60,6 +72,7 @@ func _run() -> void:
 		_finish()
 		return
 
+	_stage("capture_entry_idle")
 	await _capture_surface(
 		"01_entry_idle_1280x720.png",
 		"entry_idle",
@@ -68,10 +81,12 @@ func _run() -> void:
 	)
 	_capture_idle_liveness()
 
+	_stage("gameplay_opening_deal", {"kind": "production_action", "action": "poker_deal", "attempt": 1, "limit": 1})
 	if not bool(app.call("_handle_module_surface_action", "poker_deal", 0, false)):
 		_fail("Crew poker capture could not resolve Ante & Deal through the production action path.")
 	if not failed:
 		await _settle(4)
+		_stage("gameplay_opening_call", {"kind": "production_action", "action": "poker_call", "attempt": 1, "limit": 1})
 		if not bool(app.call("_handle_module_surface_action", "poker_call", 0, false)):
 			_fail("Crew poker capture could not resolve the opening call through the production action path.")
 	if not failed:
@@ -79,6 +94,7 @@ func _run() -> void:
 		app.call("_handle_module_surface_action", "poker_card", 0, false)
 		app.call("_handle_module_surface_action", "poker_card", 2, false)
 		await _settle(3)
+		_stage("capture_active_draw")
 		await _capture_surface(
 			"02_active_draw_1280x720.png",
 			"active_draw",
@@ -87,6 +103,7 @@ func _run() -> void:
 		)
 
 	if not failed:
+		_stage("natural_tell_search")
 		if not await _advance_to_authored_observation():
 			_fail("Crew poker production actions did not surface an authored subtle presentation within the session cap.")
 	if not failed:
@@ -96,6 +113,7 @@ func _run() -> void:
 				or str(observation.get("member_id", "")).is_empty():
 			_fail("Crew poker capture did not retain the production-authored subtle presentation.")
 		tell_expected_actions = ["poker_draw", "poker_fold"] if str(tell_state.get("phase", "")) == "draw" else ["poker_call", "poker_raise", "poker_fold"]
+		_stage("capture_authored_subtle_tell", {"channel": str(observation.get("channel", "")), "member_id": str(observation.get("member_id", ""))})
 		await _capture_surface(
 			"03_authored_subtle_tell_1280x720.png",
 			"authored_subtle_tell",
@@ -104,6 +122,7 @@ func _run() -> void:
 		)
 
 	if not failed:
+		_stage("capture_reduced_motion")
 		var reduced_state := (canvas.call("realtime_surface_state") as Dictionary).duplicate(true)
 		reduced_state["reduce_motion"] = true
 		canvas.call("render_game_snapshot", reduced_state)
@@ -117,6 +136,7 @@ func _run() -> void:
 		)
 
 	if not failed:
+		_stage("session_exit_to_l3", {"kind": "l3_session_exit", "attempt": 1, "limit": 1})
 		await _verify_session_exit_to_l3()
 	_finish()
 
@@ -149,6 +169,8 @@ func _enter_punchline_poker_from_l3() -> bool:
 	var initial_layer := str(run_state.current_environment.get("current_layer_id", ""))
 	var navigation: Array[Dictionary] = []
 	for target_layer in ["casino", PUNCHLINE_BACK_ROOM_LAYER]:
+		current_attempt = {"kind": "layer_navigation", "target_layer": str(target_layer), "attempt": navigation.size() + 1, "limit": 2}
+		_stage("layer_navigation_attempt", current_attempt)
 		var layer_object := _environment_interactable("environment_layer", str(target_layer))
 		var object_id := _interactable_id(layer_object)
 		var activated := not object_id.is_empty() and bool(app.call("activate_interactable_object", object_id))
@@ -224,6 +246,8 @@ func _enter_punchline_poker_from_l3() -> bool:
 	if not navigation_passed or not header_passed or not environment_passed or not interactable_passed:
 		_fail("Crew poker capture did not establish the real Punchline L3 environment/header/interactable context.")
 		return false
+	current_attempt = {"kind": "l3_game_entry", "attempt": 1, "limit": 1, "object_id": game_object_id}
+	_stage("l3_game_entry_attempt", current_attempt)
 	var entered := bool(app.call("activate_interactable_object", game_object_id))
 	await _settle(6)
 	var game_view := app.call("current_game_view_snapshot") as Dictionary
@@ -245,6 +269,8 @@ func _enter_punchline_poker_from_l3() -> bool:
 
 func _advance_to_authored_observation() -> bool:
 	for attempt in range(5):
+		current_attempt = {"kind": "natural_tell", "attempt": attempt + 1, "limit": 5}
+		_stage("natural_tell_attempt", current_attempt)
 		var state := canvas.call("realtime_surface_state") as Dictionary
 		if str(state.get("phase", "")) != "draw":
 			return false
@@ -364,7 +390,12 @@ func _capture_reduced_motion_stability() -> void:
 
 func _capture_surface(file_name: String, capture_id: String, expected_actions: Array, expected_card_targets: int) -> void:
 	canvas.queue_redraw()
-	await RenderingServer.frame_post_draw
+	# `RenderingServer.frame_post_draw` can remain pending when a Windows capture
+	# process is hidden. A fixed process-frame budget still gives the queued draw
+	# time to land while keeping this state machine watchdog-visible and bounded.
+	await _settle(3)
+	if finishing:
+		return
 	var state := canvas.call("realtime_surface_state") as Dictionary
 	var view := canvas.call("current_view_snapshot") as Dictionary
 	var poker_hits := _poker_hit_regions(view.get("surface_hit_actions", []))
@@ -514,7 +545,52 @@ func _table() -> Dictionary:
 	return value if typeof(value) == TYPE_DICTIONARY else {}
 
 
-func _write_manifest() -> void:
+func _diagnostics_snapshot() -> Dictionary:
+	return {
+		"current_stage": current_stage,
+		"current_attempt": current_attempt.duplicate(true),
+		"stage_history": stage_history.duplicate(true),
+		"failures": failure_messages.duplicate(),
+		"elapsed_msec": maxi(0, Time.get_ticks_msec() - started_msec) if started_msec > 0 else 0,
+		"timeout_msec": CAPTURE_TIMEOUT_MSEC,
+	}
+
+
+func _stage(stage: String, detail: Dictionary = {}) -> void:
+	if finishing:
+		return
+	current_stage = stage
+	current_attempt = detail.duplicate(true) if detail.has("attempt") else {}
+	var entry := {
+		"stage": stage,
+		"elapsed_msec": maxi(0, Time.get_ticks_msec() - started_msec) if started_msec > 0 else 0,
+		"detail": detail.duplicate(true),
+	}
+	stage_history.append(entry)
+	print("CREW_POKER_VISUAL_CAPTURE_STAGE stage=%s elapsed_msec=%d detail=%s" % [stage, int(entry.get("elapsed_msec", 0)), JSON.stringify(detail)])
+	_write_checkpoint_manifest()
+
+
+func _write_checkpoint_manifest() -> void:
+	var checkpoint := {
+		"tool": "crew_poker_visual_capture",
+		"fixture": "The Punchline L3 Crew five-card draw production renderer",
+		"capture_size": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y},
+		"passed": false,
+		"in_progress": not finishing,
+		"captures": captures,
+		"acceptance_context": acceptance_context,
+		"diagnostics": _diagnostics_snapshot(),
+	}
+	var file := FileAccess.open(MANIFEST_PATH, FileAccess.WRITE)
+	if file == null:
+		push_error("Could not write Crew poker visual capture diagnostic checkpoint.")
+		return
+	file.store_string(JSON.stringify(checkpoint, "\t") + "\n")
+	file.close()
+
+
+func _write_manifest() -> bool:
 	var files_passed := captures.size() == 4
 	var layout_and_targets_passed := captures.size() == 4
 	var hidden_labels_passed := captures.size() == 4
@@ -522,16 +598,19 @@ func _write_manifest() -> void:
 		files_passed = files_passed and bool(capture.get("saved", false))
 		layout_and_targets_passed = layout_and_targets_passed and bool((capture.get("hit_targets", {}) as Dictionary).get("passed", false))
 		hidden_labels_passed = hidden_labels_passed and bool(capture.get("hidden_labels_absent", false))
+	var manifest_passed := not failed and files_passed and layout_and_targets_passed and hidden_labels_passed \
+		and bool(liveness_evidence.get("passed", false)) \
+		and bool(reduced_motion_evidence.get("passed", false)) \
+		and bool(acceptance_context.get("passed", false))
 	var manifest := {
 		"tool": "crew_poker_visual_capture",
 		"fixture": "The Punchline L3 Crew five-card draw production renderer",
 		"capture_size": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y},
-		"passed": not failed and files_passed and layout_and_targets_passed and hidden_labels_passed \
-			and bool(liveness_evidence.get("passed", false)) \
-			and bool(reduced_motion_evidence.get("passed", false)) \
-			and bool(acceptance_context.get("passed", false)),
+		"passed": manifest_passed,
+		"in_progress": false,
 		"captures": captures,
 		"acceptance_context": acceptance_context,
+		"diagnostics": _diagnostics_snapshot(),
 		"assertions": {
 			"all_pngs_saved": files_passed,
 			"bounds_no_overlap_and_hit_targets": layout_and_targets_passed,
@@ -543,24 +622,58 @@ func _write_manifest() -> void:
 	}
 	var file := FileAccess.open(MANIFEST_PATH, FileAccess.WRITE)
 	if file == null:
-		_fail("Could not write Crew poker visual capture manifest.")
-		return
+		failed = true
+		var message := "Could not write Crew poker visual capture manifest."
+		if not failure_messages.has(message):
+			failure_messages.append(message)
+		push_error(message)
+		return false
 	file.store_string(JSON.stringify(manifest, "\t") + "\n")
 	file.close()
+	return manifest_passed
+
+
+func _watchdog() -> void:
+	while not finishing:
+		await create_timer(0.25).timeout
+		if started_msec <= 0:
+			continue
+		var elapsed_msec := Time.get_ticks_msec() - started_msec
+		if elapsed_msec < CAPTURE_TIMEOUT_MSEC:
+			continue
+		_fail("Crew poker visual capture exceeded its %d ms deadline at stage '%s' with attempt %s." % [CAPTURE_TIMEOUT_MSEC, current_stage, JSON.stringify(current_attempt)])
+		_finish()
+		return
 
 
 func _settle(frame_count: int) -> void:
 	for _index in range(frame_count):
+		if finishing:
+			return
 		await process_frame
 
 
 func _fail(message: String) -> void:
+	if finishing:
+		return
 	failed = true
+	if not failure_messages.has(message):
+		failure_messages.append(message)
+	print("CREW_POKER_VISUAL_CAPTURE_FAILURE stage=%s attempt=%s message=%s" % [current_stage, JSON.stringify(current_attempt), message])
 	push_error(message)
+	_write_checkpoint_manifest()
 
 
 func _finish() -> void:
-	_write_manifest()
-	var exit_code := 1 if failed else 0
+	if finishing:
+		return
+	finishing = true
+	stage_history.append({
+		"stage": "finalizing",
+		"elapsed_msec": maxi(0, Time.get_ticks_msec() - started_msec) if started_msec > 0 else 0,
+		"detail": {"failed": failed, "terminal_stage": current_stage},
+	})
+	var manifest_passed := _write_manifest()
+	var exit_code := 0 if manifest_passed else 1
 	print("CREW_POKER_VISUAL_CAPTURE_%s captures=%d dir=%s" % ["PASS" if exit_code == 0 else "FAIL", captures.size(), ProjectSettings.globalize_path(OUTPUT_DIR)])
 	quit(exit_code)

@@ -5,6 +5,23 @@ $contractDir = Join-Path $root ".tmp\crew_poker_wrapper_contract"
 $manifestPath = Join-Path $contractDir "manifest.json"
 New-Item -ItemType Directory -Path $contractDir -Force | Out-Null
 
+$wrapperSource = Get-Content -LiteralPath $wrapper -Raw
+$requiredProcessControls = @(
+    "Start-Process",
+    "-PassThru",
+    "-WindowStyle Hidden",
+    ".WaitForExit(",
+    "taskkill.exe /PID `$godotProcess.Id /T /F"
+)
+foreach ($requiredControl in $requiredProcessControls) {
+    if (-not $wrapperSource.Contains($requiredControl)) {
+        throw "Crew poker wrapper is missing owned-process control: $requiredControl"
+    }
+}
+if ($wrapperSource -match '&\s+\$windowedGodot') {
+    throw "Crew poker wrapper must not invoke the windowed executable without an exact process handle."
+}
+
 if (Test-Path -LiteralPath $manifestPath) {
     Remove-Item -LiteralPath $manifestPath -Force
 }
