@@ -177,6 +177,25 @@ func _apply_numbers_sequence(run_state: RunState, checkpoints: Array, seed: Stri
 	var fix_bribe := run_state.numbers_state.fix_record_bribe(true, {"clean": true, "fast": true})
 	var allocation_input := {"bar": 20, "motel": 20, "corner_store": 20}
 	var allocation_quote := run_state.numbers_state.fix_allocation_quote(allocation_input)
+	if not bool(allocation_quote.get("ok", false)):
+		failures.append("%s could not quote the deterministic Numbers camouflage: %s" % [seed, JSON.stringify(allocation_quote)])
+		return
+	var required_total := maxi(0, int(allocation_quote.get("total", 0)))
+	var bankroll_before_fixture := run_state.bankroll
+	var fixture_funding := maxi(0, required_total - bankroll_before_fixture)
+	if fixture_funding > 0:
+		run_state.change_bankroll(fixture_funding)
+	_checkpoint(run_state, checkpoints, seed, "numbers_fix_fixture_funding")
+	var expected_bankroll := bankroll_before_fixture + fixture_funding
+	if required_total <= 0 or fixture_funding != maxi(0, required_total - bankroll_before_fixture) or run_state.bankroll != expected_bankroll or run_state.bankroll < required_total:
+		failures.append("%s deterministic Numbers fixture did not fund the quoted total: %s" % [seed, JSON.stringify({
+			"bankroll_after": run_state.bankroll,
+			"bankroll_before": bankroll_before_fixture,
+			"expected_bankroll": expected_bankroll,
+			"fixture_funding": fixture_funding,
+			"required_total": required_total,
+		})])
+		return
 	var allocation := run_state.numbers_fix_allocate(allocation_input)
 	if not bool(allocation.get("ok", false)):
 		failures.append("%s could not fund the deterministic Numbers camouflage: %s" % [seed, JSON.stringify({

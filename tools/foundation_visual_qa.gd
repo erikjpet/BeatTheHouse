@@ -2177,6 +2177,7 @@ func _verify_numbers_surfaces() -> void:
 	canvas = app.get("environment_canvas") as Control
 	var silas_object := _canvas_object_by_id(canvas, "numbers:silas")
 	_require(not silas_object.is_empty(), "Silas's current venue did not expose his physical encounter prop.")
+	_assert_environment_canvas_contained("Silas encounter")
 	_require(not (await _double_click_canvas_object_data(canvas, silas_object, "numbers")).is_empty(), "Silas encounter did not open through the visible room prop.")
 	await _settle()
 	var silas_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
