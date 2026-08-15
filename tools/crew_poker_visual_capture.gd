@@ -149,6 +149,34 @@ func _run() -> void:
 	if not failed:
 		_perform_production_action("poker_card", 2, false, "draw", 4)
 	if not failed:
+		_stage("natural_tell_first_hand_assertion", {
+			"source": "verified_production_action_after",
+			"hand_limit": 1,
+			"input_sequence": CrewPokerVisualSeedAuditScript.INPUT_SEQUENCE.duplicate(),
+		})
+		var natural_tell_passed := authored_tell_hand_number == 0 \
+			and authored_tell_table_phase == "draw" \
+			and authored_tell_surface_phase == "draw" \
+			and authored_tell_beat_present \
+			and ["line", "portrait", "timing"].has(authored_tell_channel) \
+			and CrewPokerVisualSeedAuditScript.RESIDENTS.has(authored_tell_member_id)
+		acceptance_context["natural_tell"] = {
+			"passed": natural_tell_passed,
+			"hand_number": authored_tell_hand_number,
+			"hand_number_contract": "zero_based_active_first_hand",
+			"phase": authored_tell_table_phase,
+			"surface_phase": authored_tell_surface_phase,
+			"beat_present": authored_tell_beat_present,
+			"member_id": authored_tell_member_id,
+			"channel": authored_tell_channel,
+			"input_sequence": CrewPokerVisualSeedAuditScript.INPUT_SEQUENCE.duplicate(),
+			"hand_limit": 1,
+		}
+		acceptance_context["passed"] = bool(acceptance_context.get("passed", false)) and natural_tell_passed
+		tell_expected_actions = ["poker_draw", "poker_fold"] if authored_tell_surface_phase == "draw" else ["poker_call", "poker_raise", "poker_fold"]
+		if not natural_tell_passed:
+			_fail("Crew poker audited deal/call sequence did not naturally surface an authored subtle presentation in its single hand.")
+	if not failed:
 		await _settle(3)
 		_stage("capture_active_draw")
 		await _capture_surface(
@@ -159,14 +187,6 @@ func _run() -> void:
 		)
 
 	if not failed:
-		_stage("natural_tell_first_hand_assertion", {"hand_limit": 1, "input_sequence": CrewPokerVisualSeedAuditScript.INPUT_SEQUENCE.duplicate()})
-		if not _has_authored_observation():
-			_fail("Crew poker audited deal/call sequence did not naturally surface an authored subtle presentation in its single hand.")
-	if not failed:
-		if not ["line", "portrait", "timing"].has(authored_tell_channel) \
-				or authored_tell_member_id.is_empty():
-			_fail("Crew poker capture did not retain the production-authored subtle presentation.")
-		tell_expected_actions = ["poker_draw", "poker_fold"] if authored_tell_surface_phase == "draw" else ["poker_call", "poker_raise", "poker_fold"]
 		_stage("capture_authored_subtle_tell", {"channel": authored_tell_channel, "member_id": authored_tell_member_id})
 		await _capture_surface(
 			"03_authored_subtle_tell_1280x720.png",
@@ -457,30 +477,6 @@ func _production_action_snapshot() -> Dictionary:
 		"observation_member_id": str(observation.get("member_id", "")),
 		"observation_channel": str(observation.get("channel", "")),
 	}
-
-
-func _has_authored_observation() -> bool:
-	_stage("natural_tell_cached_state_assertion", {"source": "verified_production_action_after"})
-	var passed := authored_tell_hand_number == 0 \
-		and authored_tell_table_phase == "draw" \
-		and authored_tell_surface_phase == "draw" \
-		and authored_tell_beat_present \
-		and ["line", "portrait", "timing"].has(authored_tell_channel) \
-		and CrewPokerVisualSeedAuditScript.RESIDENTS.has(authored_tell_member_id)
-	acceptance_context["natural_tell"] = {
-		"passed": passed,
-		"hand_number": authored_tell_hand_number,
-		"hand_number_contract": "zero_based_active_first_hand",
-		"phase": authored_tell_table_phase,
-		"surface_phase": authored_tell_surface_phase,
-		"beat_present": authored_tell_beat_present,
-		"member_id": authored_tell_member_id,
-		"channel": authored_tell_channel,
-		"input_sequence": CrewPokerVisualSeedAuditScript.INPUT_SEQUENCE.duplicate(),
-		"hand_limit": 1,
-	}
-	acceptance_context["passed"] = bool(acceptance_context.get("passed", false)) and passed
-	return passed
 
 
 func _verify_session_exit_to_l3() -> void:
