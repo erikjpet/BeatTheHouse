@@ -13,6 +13,8 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	game.setup(definition, library)
 	_check_coin_pusher_data_contract(library, definition, failures)
 	_check_coin_pusher_definition_routing(library, definition, failures)
+	_check_coin_pusher_production_rider(game, library, failures)
+	_check_coin_pusher_alarm_audio(failures)
 	_check_coin_pusher_surface_liveness(game, failures)
 	_check_coin_pusher_read_boundaries(game, failures)
 	_check_coin_pusher_determinism(game, failures)
@@ -122,6 +124,43 @@ func _check_coin_pusher_definition_routing(library: ContentLibrary, definition: 
 	var lax_machine := routed_game.generate_environment_state(run_state, lax_environment, _configured_rng(1701))
 	if int(lax_machine.get("tolerance_modifier", 0)) != 4:
 		failures.append("Quarter Falls security-band tolerance ignored the authored delta table.")
+
+
+func _check_coin_pusher_production_rider(game: GameModule, library: ContentLibrary, failures: Array) -> void:
+	var scenario := library.scenario("gas_station_graveyard_shift")
+	var mutations: Dictionary = scenario.get("mutations", {}) if typeof(scenario.get("mutations", {})) == TYPE_DICTIONARY else {}
+	var hooks: Dictionary = mutations.get("game_modifier_hooks", {}) if typeof(mutations.get("game_modifier_hooks", {})) == TYPE_DICTIONARY else {}
+	var pusher: Dictionary = hooks.get("coin_pusher", {}) if typeof(hooks.get("coin_pusher", {})) == TYPE_DICTIONARY else {}
+	var prize_item_ids := _string_array(pusher.get("prize_item_ids", []))
+	if prize_item_ids != ["lucky_penny"] or library.item("lucky_penny").is_empty():
+		failures.append("Graveyard Shift does not author its Quarter Falls rider with a valid production inventory item.")
+	var exclusive: Dictionary = mutations.get("exclusive_opportunity", {}) if typeof(mutations.get("exclusive_opportunity", {})) == TYPE_DICTIONARY else {}
+	var gas_station := library.environment_archetype("gas_station_casino")
+	if not str(exclusive.get("game_id", "")).is_empty() or _string_array(gas_station.get("required_game_ids", [])).has("coin_pusher"):
+		failures.append("Graveyard Shift must not force Quarter Falls availability to provide its optional rider config.")
+	var rider_seen := false
+	for sample_index in range(96):
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("PUSHER-PRODUCTION-RIDER-%02d" % sample_index)
+		var environment := _coin_pusher_environment("pusher_production_rider_%02d" % sample_index)
+		environment["scenario_game_modifiers"] = hooks.duplicate(true)
+		var machine := game.generate_environment_state(run_state, environment, run_state.create_rng("production_scenario_rider"))
+		for rider_value in machine.get("riders", []):
+			if typeof(rider_value) == TYPE_DICTIONARY and str((rider_value as Dictionary).get("item_id", "")) == "lucky_penny":
+				rider_seen = true
+				break
+		if rider_seen:
+			break
+	if not rider_seen:
+		failures.append("Graveyard Shift's authored lucky-penny rider never entered a real generated Quarter Falls pile.")
+
+
+func _check_coin_pusher_alarm_audio(failures: Array) -> void:
+	var sfx := SfxPlayerScript.new()
+	var stream: AudioStreamWAV = sfx.render_event_master_stream("alarm_chirp")
+	if sfx.debug_normalized_event_id("alarm_chirp") != "heat_gain" or stream == null or stream.data.is_empty():
+		failures.append("Quarter Falls alarm_chirp is not registered to the authored non-generic radio-chirp SFX bank.")
+	sfx.free()
 
 
 func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> void:
