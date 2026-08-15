@@ -6,15 +6,17 @@ extends SceneTree
 const MainScene := preload("res://scenes/main.tscn")
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const CrewPokerVisualSeedAuditScript := preload("res://tools/crew_poker_visual_seed_audit.gd")
 const OUTPUT_DIR := "res://.tmp/crew_poker_visual_qa"
 const MANIFEST_PATH := OUTPUT_DIR + "/manifest.json"
 const CAPTURE_SIZE := Vector2i(1280, 720)
-const FIXTURE_SEED := "CREW-POKER-PUNCHLINE-VISUAL-CAPTURE"
 const PUNCHLINE_ARCHETYPE_ID := "small_underground_casino"
 const PUNCHLINE_DISPLAY_NAME := "The Punchline"
 const PUNCHLINE_BACK_ROOM_LAYER := "back_room"
 const MIN_HIT_SIZE := 44.0
 const CAPTURE_TIMEOUT_MSEC := 75000
+const PRODUCTION_ACTION_BUDGET_MSEC := 5000
+const PRODUCTION_ACTION_LIMIT := 4
 
 var app: Control
 var canvas: Control
@@ -24,7 +26,11 @@ var failed := false
 var liveness_evidence: Dictionary = {}
 var reduced_motion_evidence: Dictionary = {}
 var acceptance_context: Dictionary = {}
+var seed_audit_evidence: Dictionary = {}
+var foundation_action_rng: Dictionary = {}
+var foundation_rng_matches_audit := false
 var tell_expected_actions: Array[String] = []
+var fixture_seed := ""
 var current_stage := "not_started"
 var current_attempt: Dictionary = {}
 var stage_history: Array[Dictionary] = []
@@ -48,12 +54,39 @@ func _run() -> void:
 	app.set("autosave_slot_id", "crew_poker_visual_capture")
 	root.add_child(app)
 	await _settle(8)
-	_stage("foundation_run_start")
-	app.call("start_foundation_run", FIXTURE_SEED)
+	var library := app.get("library") as ContentLibrary
+	_stage("natural_tell_seed_audit_start", {"candidate_limit": CrewPokerVisualSeedAuditScript.MAX_SEED_CANDIDATES})
+	seed_audit_evidence = CrewPokerVisualSeedAuditScript.find_seed(library)
+	fixture_seed = str(seed_audit_evidence.get("seed", ""))
+	_stage("natural_tell_seed_audit_complete", {
+		"passed": bool(seed_audit_evidence.get("passed", false)),
+		"seed": fixture_seed,
+		"tested_candidates": int(seed_audit_evidence.get("tested_candidates", 0)),
+	})
+	if not bool(seed_audit_evidence.get("passed", false)) or fixture_seed.is_empty():
+		_fail("Crew poker capture could not find a bounded production seed for a first-hand authored tell.")
+		_finish()
+		return
+	_stage("foundation_run_start", {"seed": fixture_seed})
+	# Disable profile-derived home modifiers so the pure seed audit and runtime
+	# traverse the same standard foundation generation path.
+	app.call("start_foundation_run", fixture_seed, {}, false)
 	await _settle(8)
 	run_state = app.get("run_state") as RunState
 	if run_state == null:
 		_fail("Crew poker capture could not access the production run.")
+		_finish()
+		return
+	foundation_action_rng = {"seed": run_state.rng_seed, "state": run_state.rng_state}
+	var audited_action_rng: Dictionary = seed_audit_evidence.get("action_rng_after_foundation_generation", {}) if typeof(seed_audit_evidence.get("action_rng_after_foundation_generation", {})) == TYPE_DICTIONARY else {}
+	foundation_rng_matches_audit = foundation_action_rng == audited_action_rng
+	_stage("foundation_rng_audit_match", {
+		"passed": foundation_rng_matches_audit,
+		"actual": foundation_action_rng.duplicate(),
+		"audited": audited_action_rng.duplicate(),
+	})
+	if not foundation_rng_matches_audit:
+		_fail("Crew poker capture foundation action RNG did not match the production seed audit.")
 		_finish()
 		return
 	for member_id in CrewStateModelScript.MEMBER_IDS:
@@ -81,18 +114,16 @@ func _run() -> void:
 	)
 	_capture_idle_liveness()
 
-	_stage("gameplay_opening_deal", {"kind": "production_action", "action": "poker_deal", "attempt": 1, "limit": 1})
-	if not bool(app.call("_handle_module_surface_action", "poker_deal", 0, false)):
-		_fail("Crew poker capture could not resolve Ante & Deal through the production action path.")
+	_perform_production_action("poker_deal", 0, false, "before", 1)
 	if not failed:
 		await _settle(4)
-		_stage("gameplay_opening_call", {"kind": "production_action", "action": "poker_call", "attempt": 1, "limit": 1})
-		if not bool(app.call("_handle_module_surface_action", "poker_call", 0, false)):
-			_fail("Crew poker capture could not resolve the opening call through the production action path.")
+		_perform_production_action("poker_call", 0, false, "draw", 2)
 	if not failed:
 		await _settle(4)
-		app.call("_handle_module_surface_action", "poker_card", 0, false)
-		app.call("_handle_module_surface_action", "poker_card", 2, false)
+		_perform_production_action("poker_card", 0, false, "draw", 3)
+	if not failed:
+		_perform_production_action("poker_card", 2, false, "draw", 4)
+	if not failed:
 		await _settle(3)
 		_stage("capture_active_draw")
 		await _capture_surface(
@@ -103,9 +134,9 @@ func _run() -> void:
 		)
 
 	if not failed:
-		_stage("natural_tell_search")
-		if not await _advance_to_authored_observation():
-			_fail("Crew poker production actions did not surface an authored subtle presentation within the session cap.")
+		_stage("natural_tell_first_hand_assertion", {"hand_limit": 1, "input_sequence": CrewPokerVisualSeedAuditScript.INPUT_SEQUENCE.duplicate()})
+		if not _has_authored_observation():
+			_fail("Crew poker audited deal/call sequence did not naturally surface an authored subtle presentation in its single hand.")
 	if not failed:
 		var tell_state := canvas.call("realtime_surface_state") as Dictionary
 		var observation: Dictionary = tell_state.get("observation", {}) if typeof(tell_state.get("observation", {})) == TYPE_DICTIONARY else {}
@@ -158,7 +189,9 @@ func _enter_punchline_poker_from_l3() -> bool:
 		library,
 		run_state.challenge_config
 	).to_dict()
-	run_state.save_rng(fixture_rng)
+	if not _install_fixture_residents(environment):
+		_fail("Crew poker capture could not author the audited Punchline resident input.")
+		return false
 	run_state.set_environment(environment)
 	run_state.bankroll = 500
 	run_state.drunk_level = 0
@@ -197,6 +230,13 @@ func _enter_punchline_poker_from_l3() -> bool:
 	var header := app.call("current_environment_header_snapshot") as Dictionary
 	var game_object := _environment_interactable("game", "crew_draw_poker")
 	var game_object_id := _interactable_id(game_object)
+	var generated_table := _table()
+	var table_members: Array = generated_table.get("members", []) if typeof(generated_table.get("members", [])) == TYPE_ARRAY else []
+	var residents_passed := table_members.size() == CrewPokerVisualSeedAuditScript.RESIDENTS.size()
+	for resident_id in CrewPokerVisualSeedAuditScript.RESIDENTS:
+		residents_passed = residents_passed and table_members.has(resident_id)
+	var rng_before_gameplay := {"seed": run_state.rng_seed, "state": run_state.rng_state}
+	var fixture_rng_untouched := rng_before_gameplay == foundation_action_rng
 	var environment_context := {
 		"archetype_id": str(run_state.current_environment.get("archetype_id", "")),
 		"display_name": str(run_state.current_environment.get("display_name", "")),
@@ -226,7 +266,15 @@ func _enter_punchline_poker_from_l3() -> bool:
 		and str(game_object.get("source_id", "")) == "crew_draw_poker" \
 		and not bool(game_object.get("disabled", false))
 	acceptance_context = {
-		"seed": FIXTURE_SEED,
+		"seed": fixture_seed,
+		"natural_tell_seed_audit": seed_audit_evidence.duplicate(true),
+		"fixture_resident_input": CrewPokerVisualSeedAuditScript.RESIDENTS.duplicate(),
+		"generated_table_members": table_members.duplicate(),
+		"fixture_residents_passed": residents_passed,
+		"foundation_action_rng": foundation_action_rng.duplicate(),
+		"rng_before_gameplay": rng_before_gameplay,
+		"fixture_rng_untouched": fixture_rng_untouched,
+		"foundation_rng_matches_audit": foundation_rng_matches_audit,
 		"initial_layer": initial_layer,
 		"layer_navigation": navigation,
 		"environment": environment_context,
@@ -243,7 +291,7 @@ func _enter_punchline_poker_from_l3() -> bool:
 		"environment_passed": environment_passed,
 		"interactable_passed": interactable_passed,
 	}
-	if not navigation_passed or not header_passed or not environment_passed or not interactable_passed:
+	if not navigation_passed or not header_passed or not environment_passed or not interactable_passed or not residents_passed or not fixture_rng_untouched or not foundation_rng_matches_audit:
 		_fail("Crew poker capture did not establish the real Punchline L3 environment/header/interactable context.")
 		return false
 	current_attempt = {"kind": "l3_game_entry", "attempt": 1, "limit": 1, "object_id": game_object_id}
@@ -261,45 +309,105 @@ func _enter_punchline_poker_from_l3() -> bool:
 		"renderer": str(game_view.get("surface_renderer", "")),
 		"passed": entry_passed,
 	}
-	acceptance_context["passed"] = navigation_passed and header_passed and environment_passed and interactable_passed and entry_passed
+	acceptance_context["passed"] = navigation_passed and header_passed and environment_passed and interactable_passed and residents_passed and fixture_rng_untouched and foundation_rng_matches_audit \
+		and bool(seed_audit_evidence.get("passed", false)) and entry_passed
 	if not entry_passed:
 		_fail("Crew poker capture could not enter the table through its L3 game interactable.")
 	return entry_passed
 
 
-func _advance_to_authored_observation() -> bool:
-	for attempt in range(5):
-		current_attempt = {"kind": "natural_tell", "attempt": attempt + 1, "limit": 5}
-		_stage("natural_tell_attempt", current_attempt)
-		var state := canvas.call("realtime_surface_state") as Dictionary
-		if str(state.get("phase", "")) != "draw":
-			return false
-		var current_observation: Dictionary = state.get("observation", {}) if typeof(state.get("observation", {})) == TYPE_DICTIONARY else {}
-		if not current_observation.is_empty():
-			acceptance_context["authored_observation_attempts"] = attempt
-			return true
-		if not bool(app.call("_handle_module_surface_action", "poker_draw", 0, false)):
-			return false
-		await _settle(4)
-		state = canvas.call("realtime_surface_state") as Dictionary
-		var observation: Dictionary = state.get("observation", {}) if typeof(state.get("observation", {})) == TYPE_DICTIONARY else {}
-		if not observation.is_empty():
-			acceptance_context["authored_observation_attempts"] = attempt + 1
-			return true
-		if str(state.get("phase", "")) != "after" \
-				or not bool(app.call("_handle_module_surface_action", "poker_call", 0, false)):
-			return false
-		await _settle(4)
-		var table := _table()
-		if bool(table.get("session_settled", false)):
-			return false
-		if not bool(app.call("_handle_module_surface_action", "poker_deal", 0, false)):
-			return false
-		await _settle(4)
-		if not bool(app.call("_handle_module_surface_action", "poker_call", 0, false)):
-			return false
-		await _settle(4)
-	return false
+func _install_fixture_residents(environment: Dictionary) -> bool:
+	var layer_states: Dictionary = environment.get("layer_states", {}) if typeof(environment.get("layer_states", {})) == TYPE_DICTIONARY else {}
+	var back_room: Dictionary = layer_states.get(PUNCHLINE_BACK_ROOM_LAYER, {}) if typeof(layer_states.get(PUNCHLINE_BACK_ROOM_LAYER, {})) == TYPE_DICTIONARY else {}
+	var existing_game_states: Dictionary = back_room.get("game_states", {}) if typeof(back_room.get("game_states", {})) == TYPE_DICTIONARY else {}
+	if back_room.is_empty() or not existing_game_states.is_empty():
+		return false
+	layer_states = layer_states.duplicate(true)
+	back_room = back_room.duplicate(true)
+	back_room["resident_member_ids"] = CrewPokerVisualSeedAuditScript.RESIDENTS.duplicate()
+	layer_states[PUNCHLINE_BACK_ROOM_LAYER] = back_room
+	environment["layer_states"] = layer_states
+	return true
+
+
+func _perform_production_action(action: String, index: int, confirm_requested: bool, expected_phase: String, ordinal: int) -> bool:
+	var before := _production_action_snapshot()
+	var attempt := {
+		"kind": "production_action",
+		"action": action,
+		"index": index,
+		"attempt": ordinal,
+		"limit": PRODUCTION_ACTION_LIMIT,
+		"expected_phase": expected_phase,
+		"budget_msec": PRODUCTION_ACTION_BUDGET_MSEC,
+		"before": before,
+	}
+	_stage("production_action_before", attempt)
+	var action_started_msec := Time.get_ticks_msec()
+	var handled := bool(app.call("_handle_module_surface_action", action, index, confirm_requested))
+	var action_elapsed_msec := Time.get_ticks_msec() - action_started_msec
+	var after := _production_action_snapshot()
+	var phase_passed := expected_phase.is_empty() or str(after.get("table_phase", "")) == expected_phase
+	var within_budget := action_elapsed_msec <= PRODUCTION_ACTION_BUDGET_MSEC
+	var outcome_passed := handled and phase_passed and within_budget
+	var outcome := {
+		"kind": "production_action",
+		"action": action,
+		"index": index,
+		"attempt": ordinal,
+		"limit": PRODUCTION_ACTION_LIMIT,
+		"handled": handled,
+		"expected_phase": expected_phase,
+		"phase_passed": phase_passed,
+		"elapsed_msec": action_elapsed_msec,
+		"budget_msec": PRODUCTION_ACTION_BUDGET_MSEC,
+		"within_budget": within_budget,
+		"outcome_passed": outcome_passed,
+		"after": after,
+	}
+	_stage("production_action_after", outcome)
+	if not outcome_passed:
+		_fail("Crew poker production action '%s' failed its bounded outcome: %s" % [action, JSON.stringify(outcome)])
+	return outcome_passed
+
+
+func _production_action_snapshot() -> Dictionary:
+	var table := _table()
+	var surface: Dictionary = {}
+	if canvas != null:
+		surface = canvas.call("realtime_surface_state") as Dictionary
+	var observation: Dictionary = surface.get("observation", {}) if typeof(surface.get("observation", {})) == TYPE_DICTIONARY else {}
+	return {
+		"table_phase": str(table.get("phase", "")),
+		"surface_phase": str(surface.get("phase", "")),
+		"hand_number": int(table.get("hand_number", 0)),
+		"held": (surface.get("held", []) as Array).duplicate() if typeof(surface.get("held", [])) == TYPE_ARRAY else [],
+		"observation_member_id": str(observation.get("member_id", "")),
+		"observation_channel": str(observation.get("channel", "")),
+	}
+
+
+func _has_authored_observation() -> bool:
+	var table := _table()
+	var surface := canvas.call("realtime_surface_state") as Dictionary
+	var observation: Dictionary = surface.get("observation", {}) if typeof(surface.get("observation", {})) == TYPE_DICTIONARY else {}
+	var beat: Dictionary = table.get("beat", {}) if typeof(table.get("beat", {})) == TYPE_DICTIONARY else {}
+	var passed := int(table.get("hand_number", 0)) == 1 \
+		and str(table.get("phase", "")) == "draw" \
+		and not beat.is_empty() \
+		and ["line", "portrait", "timing"].has(str(observation.get("channel", ""))) \
+		and CrewPokerVisualSeedAuditScript.RESIDENTS.has(str(observation.get("member_id", "")))
+	acceptance_context["natural_tell"] = {
+		"passed": passed,
+		"hand_number": int(table.get("hand_number", 0)),
+		"phase": str(table.get("phase", "")),
+		"member_id": str(observation.get("member_id", "")),
+		"channel": str(observation.get("channel", "")),
+		"input_sequence": CrewPokerVisualSeedAuditScript.INPUT_SEQUENCE.duplicate(),
+		"hand_limit": 1,
+	}
+	acceptance_context["passed"] = bool(acceptance_context.get("passed", false)) and passed
+	return passed
 
 
 func _verify_session_exit_to_l3() -> void:
