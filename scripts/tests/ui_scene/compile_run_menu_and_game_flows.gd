@@ -954,17 +954,17 @@ func _check_run_menu_open_resume(app: Control, expected_screen: String, label: S
 	return true
 
 
-func _travel_to_first_game_environment(app: Control) -> bool:
-	return await _travel_to_first_game_environment_depth(app, 0, {})
+func _travel_to_first_game_environment(app: Control, require_travel: bool = false) -> bool:
+	return await _travel_to_first_game_environment_depth(app, 0, {}, require_travel)
 
 
-func _travel_to_first_game_environment_depth(app: Control, depth: int, visited_targets: Dictionary) -> bool:
+func _travel_to_first_game_environment_depth(app: Control, depth: int, visited_targets: Dictionary, require_travel: bool = false) -> bool:
 	var current_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var current_game_ids_value: Variant = current_snapshot.get("game_ids", [])
 	var current_game_ids: Array = []
 	if typeof(current_game_ids_value) == TYPE_ARRAY:
 		current_game_ids = current_game_ids_value
-	if not current_game_ids.is_empty():
+	if not current_game_ids.is_empty() and not require_travel:
 		return true
 	if depth >= 3:
 		return false

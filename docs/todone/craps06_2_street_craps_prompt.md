@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `craps06_2` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-14
+- **Completion/implementation commits:** `206666a6`, `a8f87882`; integrated by `341967b5`; victory-travel fixture correction `0ba1842a`
+- **Verification:** PM line-by-line scope/design review; project validation; integrated Craps, systems, and full UI suites; 10-seed determinism (430 checkpoints, hash `4169024088`); canonical visual QA; three-image focused street-circle smoke; and million-roll RTP/fairness with exact core/street pass parity (`0.988326`) all PASS.
+- **Deviations:** None. Cruiser Parked remains mutually exclusive through the one-scenario-per-node selector; Street Craps is injected only by its exclusive scenario opportunity.
 
 # Agent Prompt — 0.6 craps06_2: Street Craps (Back-Alley Variant)
 

@@ -38,6 +38,9 @@ var report := {
 	"architecture_checks": {},
 	"optional_hook_status": {},
 	"game_surface_status": {},
+	"craps_visual_qa": {},
+	"street_craps_visual_qa": {},
+	"coin_pusher_visual_status": {},
 	"warnings": [],
 	"coverage": {
 		"start_screen": false,
@@ -72,9 +75,36 @@ var report := {
 		"streets_hold_signal_exit": false,
 		"streets_idle_liveness": false,
 		"streets_failure_exit": false,
+		"numbers_book_surface": false,
+		"numbers_slip_purchase": false,
+		"numbers_silas_surface": false,
+		"numbers_desk_surface": false,
+		"numbers_runner_surface": false,
+		"numbers_fix_surface": false,
+		"numbers_allocation_surface": false,
+		"numbers_published_handle": false,
+		"numbers_zero_trust_past_post": false,
+		"numbers_fix_payday": false,
+		"numbers_1280_visible": false,
+		"numbers_reduce_motion": false,
 		"focused_environment_controls_visible": false,
 		"game_surface_click": false,
 		"game_surface_resolve_click": false,
+		"craps_full_bet_surface": false,
+		"craps_point_working_history": false,
+		"craps_dice_presentation": false,
+		"craps_idle_liveness": false,
+		"craps_reduced_motion": false,
+		"street_craps_circle": false,
+		"street_craps_dispersed": false,
+		"coin_pusher_normal_pile_rider": false,
+		"coin_pusher_tell_ladder": false,
+		"coin_pusher_hard_alarm_lockdown": false,
+		"coin_pusher_room_available_after_alarm": false,
+		"coin_pusher_idle_motion": false,
+		"coin_pusher_reduce_motion": false,
+		"coin_pusher_jackpot_ridge": false,
+		"coin_pusher_vault_drop": false,
 		"screen_click_only_gameplay": false,
 		"stake_selector": false,
 		"legal_action_selection": false,
@@ -194,8 +224,10 @@ func _run() -> void:
 	_return_to_room_view()
 	await _settle()
 	await _verify_streets_surface()
+	await _verify_numbers_surfaces()
 	await _prepare_multi_game_visual_qa_fixture()
 	await _verify_all_visible_game_objects_clickable()
+	await _verify_coin_pusher_visual_qa_fixture()
 	await _prepare_risky_game_visual_qa_fixture()
 	_record_state("risky_game_fixture_screen", "Focused deterministic game-surface fixture with immediate risky-action coverage.")
 
@@ -373,12 +405,14 @@ func _run() -> void:
 	strict_game_surface_only_active = false
 	_assert_screen_click_only_gameplay_events()
 	_cover("screen_click_only_gameplay")
+	await _run_craps_visual_qa()
 
 	await _resolve_blocking_event_popups()
 	_return_to_room_view()
 	await _settle()
 	_require(_environment_canvas_is_primary(), "Back to room did not restore the environment canvas as the primary surface.")
 	_assert_environment_canvas_contained("returned environment screen")
+	await _verify_crew_poker_visual_qa_fixture()
 	var claimed_victory := false
 	await _try_follow_visible_objective_once()
 	await _try_service_hook_flow()
@@ -894,6 +928,8 @@ func _verify_grand_casino_showdown_event_snapshot() -> void:
 	grand_environment["service_ids"] = []
 	grand_environment["lender_hooks"] = []
 	grand_environment["travel_hooks"] = []
+	_populate_visual_fixture_game_states(grand_environment, fixture_run, fixture_library, "visual_showdown")
+	grand_environment["layout"] = EnvironmentInstance.ensure_generated_layout(grand_environment)
 	fixture_run.set_environment(grand_environment)
 	fixture_run.current_environment["turns"] = 0
 	fixture_run.add_item("marked_cards")
@@ -974,6 +1010,8 @@ func _verify_grand_casino_high_roller_cashout_snapshot() -> void:
 	grand_environment["service_ids"] = []
 	grand_environment["lender_hooks"] = []
 	grand_environment["travel_hooks"] = []
+	_populate_visual_fixture_game_states(grand_environment, fixture_run, fixture_library, "visual_high_roller")
+	grand_environment["layout"] = EnvironmentInstance.ensure_generated_layout(grand_environment)
 	fixture_run.set_environment(grand_environment)
 	var objective: Dictionary = {}
 	var objective_value: Variant = grand_environment.get("demo_objective", {})
@@ -1245,6 +1283,236 @@ func _prepare_risky_game_visual_qa_fixture() -> void:
 	}, 100, "casino")
 
 
+func _run_craps_visual_qa() -> void:
+	await _resolve_blocking_surface_interrupts()
+	_return_to_room_view()
+	await _settle()
+	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_craps_fixture", {
+		"game_ids": ["craps"],
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"object_fixtures": [],
+	}, 1000, "casino")
+	var fixture_run := app.get("run_state") as RunState
+	_require(fixture_run != null, "Craps visual QA fixture could not access RunState.")
+	fixture_run.simulation_msec = 40000
+	var environment := fixture_run.current_environment
+	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = states.get("craps", {}) if typeof(states.get("craps", {})) == TYPE_DICTIONARY else {}
+	_require(not table.is_empty(), "Craps visual QA fixture did not generate a table state.")
+	table["point"] = 8
+	table["working_bets"] = {
+		"pass_line": 25,
+		"dont_pass": 25,
+		"pass_odds": 50,
+		"come": {"5": 10},
+		"dont_come": {"9": 10},
+		"come_odds": {"5": 15},
+		"place": {"6": 12, "10": 10},
+	}
+	var history: Array = [
+		_craps_visual_roll([2, 4], 6, 5, 5, "craps:visual:1", 31000),
+		_craps_visual_roll([3, 5], 8, 5, 8, "craps:visual:2", 33000),
+		_craps_visual_roll([4, 3], 7, 8, 0, "craps:visual:3", 35000),
+		_craps_visual_roll([3, 5], 8, 0, 8, "craps:visual:4", 37000),
+	]
+	table["roll_count"] = history.size()
+	table["roll_history"] = history
+	table["last_roll"] = history[-1].duplicate(true)
+	table["last_result"] = {"message": "Eight is the point. The full rail remains readable.", "bankroll_delta": 0, "bet_results": []}
+	table["hot_shooter_streak"] = 2
+	table["table_energy"] = 24
+	states["craps"] = table
+	environment["game_states"] = states
+	fixture_run.current_environment = environment
+	app.call("_refresh")
+	await _settle()
+	var entered_label := await _double_click_first_play_object_type("game")
+	_require(not entered_label.is_empty(), "Could not enter the focused Craps visual QA surface.")
+	await _settle()
+	app.set("game_surface_ui_state", {"selected_chip": 5, "craps_pending_bets": {"field": 5}, "surface_time_msec": 40000})
+	app.call("_refresh")
+	await _settle()
+	var canvas := app.get("game_surface_canvas") as Control
+	_require(canvas != null and canvas.visible and canvas.has_method("current_view_snapshot"), "Craps visual QA surface canvas is unavailable.")
+	var full_snapshot: Dictionary = canvas.call("current_view_snapshot")
+	var full_state: Dictionary = full_snapshot.get("state", {}) if typeof(full_snapshot.get("state", {})) == TYPE_DICTIONARY else {}
+	_require(str(full_snapshot.get("surface_renderer", "")) == "craps", "Focused Craps visual QA fixture did not render the Craps surface.")
+	var target_ids := _craps_visual_target_ids(full_state.get("bet_targets", []))
+	for expected_target in ["field", "come", "dont_come", "pass_line", "dont_pass", "place_4", "place_5", "place_6", "place_8", "place_9", "place_10", "pass_odds", "come_odds_5"]:
+		_require(target_ids.has(expected_target), "Craps visual QA surface is missing readable bet target %s." % expected_target)
+	_require(int(full_state.get("point", 0)) == 8 and bool((full_state.get("point_puck", {}) as Dictionary).get("on", false)), "Craps visual QA surface did not show its point puck.")
+	_require((full_state.get("working_bet_rows", []) as Array).size() >= 8, "Craps visual QA surface did not show all working-bet families.")
+	_require((full_state.get("roll_history", []) as Array).size() >= 4 and (full_state.get("last_roll", {}) as Dictionary).get("dice", []) == [3, 5], "Craps visual QA surface did not show deterministic dice/history.")
+	_record_craps_visual_state("craps_full_bet_surface", "1280x720 Craps table shows every supported bet family, selected Field chip, and readable payouts.", full_snapshot)
+	_cover("craps_full_bet_surface")
+	_cover("craps_point_working_history")
+	var idle_before: Dictionary = canvas.call("debug_surface_motion_sample")
+	canvas.call("debug_advance_idle_liveness", 0.5)
+	var idle_after: Dictionary = canvas.call("debug_surface_motion_sample")
+	_require(JSON.stringify(idle_before) != JSON.stringify(idle_after), "Craps visual QA idle brass-rail motion remained frozen.")
+	_record_craps_visual_state("craps_idle_liveness", "Craps brass-rail marker advances on the surface clock without replacing the table snapshot.", canvas.call("current_view_snapshot"), {"motion_before": idle_before, "motion_after": idle_after})
+	_cover("craps_idle_liveness")
+
+	environment = fixture_run.current_environment
+	states = environment.get("game_states", {})
+	table = states.get("craps", {})
+	var live_surface_ui_state: Dictionary = app.call("_current_game_surface_ui_state")
+	var live_dice_start_msec := int(live_surface_ui_state.get("surface_time_msec", 1))
+	table["last_roll"] = _craps_visual_roll([5, 2], 7, 8, 0, "craps:visual:dice", live_dice_start_msec)
+	table["roll_history"].append(table["last_roll"].duplicate(true))
+	states["craps"] = table
+	environment["game_states"] = states
+	fixture_run.current_environment = environment
+	app.call("_refresh")
+	await _settle()
+	var dice_snapshot: Dictionary = canvas.call("current_view_snapshot")
+	var dice_state: Dictionary = dice_snapshot.get("state", {})
+	_require(str(dice_state.get("phase", "")) == "rolling" and (dice_state.get("last_roll", {}) as Dictionary).get("dice", []) == [5, 2], "Craps visual QA did not expose deterministic active dice presentation.")
+	_record_craps_visual_state("craps_dice_presentation", "Deterministic seven-out dice are visibly presented through the active Craps animation channel.", dice_snapshot)
+	_cover("craps_dice_presentation")
+
+	var settings: Variant = app.get("user_settings")
+	_require(settings != null, "Craps visual QA could not access reduced-motion settings.")
+	settings.reduce_motion = true
+	app.call("_on_settings_applied")
+	await _settle()
+	var reduced_before: Dictionary = canvas.call("debug_surface_motion_sample")
+	canvas.call("debug_advance_idle_liveness", 0.5)
+	var reduced_after: Dictionary = canvas.call("debug_surface_motion_sample")
+	var reduced_snapshot: Dictionary = canvas.call("current_view_snapshot")
+	_require(bool(reduced_snapshot.get("reduce_motion", false)) and JSON.stringify(reduced_before) == JSON.stringify(reduced_after), "Craps reduced-motion visual state still advanced idle motion.")
+	_record_craps_visual_state("craps_reduced_motion_surface", "Reduced motion preserves the full Craps table, point, working bets, history, and dice without animated rail drift.", reduced_snapshot, {"motion_before": reduced_before, "motion_after": reduced_after})
+	_cover("craps_reduced_motion")
+	settings.reduce_motion = false
+	app.call("_on_settings_applied")
+	report["craps_visual_qa"] = {
+		"viewport": {"width": 1280, "height": 720},
+		"target_ids": target_ids,
+		"working_row_count": (full_state.get("working_bet_rows", []) as Array).size(),
+		"history_count": (full_state.get("roll_history", []) as Array).size(),
+		"idle_motion_changed": JSON.stringify(idle_before) != JSON.stringify(idle_after),
+		"reduced_motion_stable": JSON.stringify(reduced_before) == JSON.stringify(reduced_after),
+		"live_dice_start_msec": live_dice_start_msec,
+	}
+	await _run_street_craps_visual_qa()
+
+
+func _run_street_craps_visual_qa() -> void:
+	var fixture_run := app.get("run_state") as RunState
+	var game := app.get("current_game") as GameModule
+	_require(fixture_run != null and game != null and game.get_id() == "craps", "Street Craps visual QA could not reuse the live Craps module.")
+	var environment := {
+		"id": "visual_street_craps_fixture",
+		"archetype_id": "back_alley",
+		"world_node_id": "back_alley",
+		"kind": "shop",
+		"game_ids": ["craps"],
+		"economic_profile": {"stake_floor": 2, "stake_ceiling": 20},
+		"scenario_id": "back_alley_street_craps",
+		"scenario_game_modifiers": {"game_hook": "street_craps", "table_tone": "street"},
+		"scenario_hook_flags": {"craps_onramp": true},
+		"music_profile": {"volume": 0.24, "ambience": 0.72, "bpm": 82.0},
+		"game_states": {},
+	}
+	var table := game.generate_environment_state(fixture_run, environment, fixture_run.create_rng("visual_street_craps_table"))
+	table["point"] = 6
+	table["working_bets"] = {"pass_line": 5, "dont_pass": 0, "pass_odds": 0, "come": {}, "dont_come": {}, "come_odds": {}, "place": {}}
+	table["roll_history"] = [
+		_craps_visual_roll([2, 4], 6, 0, 6, "street:visual:1", 35000),
+		_craps_visual_roll([2, 3], 5, 6, 6, "street:visual:2", 37000),
+	]
+	table["last_roll"] = (table["roll_history"] as Array)[-1]
+	environment["game_states"] = {"craps": table}
+	fixture_run.current_environment = environment
+	app.set("game_surface_ui_state", {"selected_chip": 2, "surface_time_msec": 40000})
+	app.call("_refresh")
+	await _settle()
+	var canvas := app.get("game_surface_canvas") as Control
+	var live_snapshot: Dictionary = canvas.call("current_view_snapshot")
+	var live_state: Dictionary = live_snapshot.get("state", {})
+	var target_ids := _craps_visual_target_ids(live_state.get("bet_targets", []))
+	_require(target_ids == ["pass_line", "dont_pass"], "Street Craps visual QA did not reduce the betting surface to Pass/Don't Pass.")
+	_require(str(live_state.get("surface_cast", "")) == "circle_of_players" and str(live_state.get("currency", "")) == "cash", "Street Craps visual QA did not expose its circle-of-players cash presentation.")
+	_require(int(live_state.get("table_minimum", 0)) == 2 and int(live_state.get("table_maximum", 0)) == 20, "Street Craps visual QA did not preserve gutter stake bounds.")
+	_record_craps_visual_state("street_craps_circle", "Street Craps presents a chalk circle, two line wagers, cash controls, point, dice, and surrounding players.", live_snapshot)
+	_cover("street_craps_circle")
+
+	var states: Dictionary = fixture_run.current_environment.get("game_states", {})
+	table = states.get("craps", {})
+	table["point"] = 0
+	table["working_bets"] = {"pass_line": 0, "dont_pass": 0, "pass_odds": 0, "come": {}, "dont_come": {}, "come_odds": {}, "place": {}}
+	table["street_dispersed"] = true
+	table["street_disperse_reason"] = "sweep_adjacent"
+	states["craps"] = table
+	fixture_run.current_environment["game_states"] = states
+	app.call("_refresh")
+	await _settle()
+	var dispersed_snapshot: Dictionary = canvas.call("current_view_snapshot")
+	var dispersed_state: Dictionary = dispersed_snapshot.get("state", {})
+	_require(str(dispersed_state.get("phase", "")) == "dispersed" and not bool(dispersed_state.get("can_roll", true)), "Street Craps visual QA left the dispersed circle interactive.")
+	_record_craps_visual_state("street_craps_dispersed", "Adjacent sweep or a heat spike empties the chalk ring and closes every wager control.", dispersed_snapshot)
+	_cover("street_craps_dispersed")
+	report["street_craps_visual_qa"] = {
+		"viewport": {"width": 1280, "height": 720},
+		"target_ids": target_ids,
+		"currency": live_state.get("currency", ""),
+		"table_bounds": [live_state.get("table_minimum", 0), live_state.get("table_maximum", 0)],
+		"disperse_reason": dispersed_state.get("street_disperse_reason", ""),
+	}
+
+
+func _craps_visual_roll(dice: Array, total: int, point_before: int, point_after: int, animation_id: String, resolved_at_msec: int) -> Dictionary:
+	return {
+		"dice": dice.duplicate(),
+		"total": total,
+		"initial_total": total,
+		"setting_bias_applied": false,
+		"point_before": point_before,
+		"point_after": point_after,
+		"animation_id": animation_id,
+		"resolved_at_msec": resolved_at_msec,
+	}
+
+
+func _craps_visual_target_ids(targets_value: Variant) -> Array:
+	var result: Array = []
+	if typeof(targets_value) != TYPE_ARRAY:
+		return result
+	for target_value in targets_value as Array:
+		if typeof(target_value) == TYPE_DICTIONARY:
+			result.append(str((target_value as Dictionary).get("id", "")))
+	return result
+
+
+func _record_craps_visual_state(name: String, description: String, canvas_snapshot: Dictionary, evidence: Dictionary = {}) -> void:
+	_record_state(name, description)
+	var states: Array = report.get("states", [])
+	if states.is_empty() or typeof(states[-1]) != TYPE_DICTIONARY:
+		return
+	var entry: Dictionary = states[-1]
+	var surface_state: Dictionary = canvas_snapshot.get("state", {}) if typeof(canvas_snapshot.get("state", {})) == TYPE_DICTIONARY else {}
+	entry["craps_surface"] = {
+		"viewport": {"width": 1280, "height": 720},
+		"board_rect": canvas_snapshot.get("board_rect", {}),
+		"board_size": canvas_snapshot.get("board_size", {}),
+		"target_ids": _craps_visual_target_ids(surface_state.get("bet_targets", [])),
+		"point_puck": surface_state.get("point_puck", {}),
+		"working_bet_rows": surface_state.get("working_bet_rows", []),
+		"roll_history": surface_state.get("roll_history", []),
+		"last_roll": surface_state.get("last_roll", {}),
+		"phase": str(surface_state.get("phase", "")),
+		"reduce_motion": bool(canvas_snapshot.get("reduce_motion", false)),
+		"surface_animation_liveness_active": bool(canvas_snapshot.get("surface_animation_liveness_active", false)),
+		"evidence": evidence.duplicate(true),
+	}
+	states[-1] = entry
+	report["states"] = states
+
+
 func _prepare_multi_game_visual_qa_fixture() -> void:
 	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_multi_game_fixture", {
 		"game_ids": ["bar_dice", "blackjack"],
@@ -1256,6 +1524,252 @@ func _prepare_multi_game_visual_qa_fixture() -> void:
 		"object_fixtures": [],
 	}, 100, "casino")
 	_record_state("multi_game_fixture_screen", "Focused deterministic room with multiple visible game objects for mouse clickability coverage.")
+
+
+func _prepare_crew_poker_visual_qa_fixture() -> void:
+	var fixture_run := app.get("run_state") as RunState
+	_require(fixture_run != null, "Crew poker visual fixture could not access RunState.")
+	fixture_run.crew_add_trust("crew_lucky", 30, "visual_qa_fixture")
+	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_crew_poker_fixture", {
+		"game_ids": ["crew_draw_poker"],
+		"resident_member_ids": ["crew_mags", "crew_lucky"],
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"object_fixtures": [],
+	}, 100, "back_room")
+
+
+func _verify_crew_poker_visual_qa_fixture() -> void:
+	_return_to_room_view()
+	await _settle()
+	var fixture_run := app.get("run_state") as RunState
+	var lucky_trust_before := fixture_run.crew_trust("crew_lucky") if fixture_run != null else 0
+	await _prepare_crew_poker_visual_qa_fixture()
+	_record_state("crew_poker_l3_room", "The singular back-room five-card draw table in its real L3 room fixture.")
+	var entered_label := await _double_click_first_play_object_type("game")
+	_require(not entered_label.is_empty(), "Could not enter the L3 Crew poker table from its room object.")
+	await _settle()
+	var entered: Dictionary = app.call("current_game_view_snapshot")
+	_require(str(entered.get("surface_renderer", "")) == "crew_draw_poker", "L3 Crew poker did not route to its production renderer.")
+	var canvas := app.get("game_surface_canvas") as Control
+	_require(_game_surface_is_primary(canvas), "L3 Crew poker did not make its table surface primary.")
+	_require(canvas != null and canvas.size.x > 0.0 and canvas.size.y > 0.0, "L3 Crew poker surface has no drawable viewport area.")
+	var live: Dictionary = canvas.call("realtime_surface_state") if canvas != null and canvas.has_method("realtime_surface_state") else {}
+	_require(str(live.get("display_name", "")).findn("poker") >= 0, "L3 Crew poker surface lost its readable game identity.")
+	_require(_surface_action_available("poker_deal", 0) and _surface_action_available("poker_cash_out", 1), "L3 Crew poker idle controls are not both readable/clickable.")
+	if canvas != null and canvas.has_method("reset_performance_counters") and canvas.has_method("debug_surface_motion_sample"):
+		canvas.call("reset_performance_counters")
+		var motion_before: Dictionary = canvas.call("debug_surface_motion_sample")
+		for _frame_index in range(12):
+			canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
+		var motion_after: Dictionary = canvas.call("debug_surface_motion_sample")
+		var runtime_after: Dictionary = canvas.call("surface_runtime_status")
+		_require(motion_before != motion_after, "L3 Crew poker lamp motion did not advance at idle.")
+		_require(int(runtime_after.get("surface_animation_redraw_count", 0)) > 0, "L3 Crew poker idle liveness did not schedule redraws.")
+		var reduced := live.duplicate(true)
+		reduced["reduce_motion"] = true
+		canvas.call("render_game_snapshot", reduced)
+		canvas.call("reset_performance_counters")
+		var reduced_before: Dictionary = canvas.call("debug_surface_motion_sample")
+		for _frame_index in range(12):
+			canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
+		var reduced_after: Dictionary = canvas.call("debug_surface_motion_sample")
+		var reduced_runtime: Dictionary = canvas.call("surface_runtime_status")
+		_require(reduced_before == reduced_after, "L3 Crew poker reduce-motion mode did not freeze renderer motion.")
+		_require(int(reduced_runtime.get("surface_animation_redraw_count", 0)) == 0, "L3 Crew poker reduce-motion mode still scheduled idle redraws.")
+		canvas.call("render_game_snapshot", live)
+		await _settle()
+	_record_state("crew_poker_idle_surface", "Readable production poker renderer and native table controls at the 1280x720 target.")
+	_require(await _push_game_surface_action("poker_deal", 0), "Could not ante and deal from the L3 Crew poker surface.")
+	await _settle()
+	_require(_surface_action_available("poker_call", 0) and _surface_action_available("poker_raise", 1) and _surface_action_available("poker_fold", 2), "Crew poker first betting controls were not clickable after the deal.")
+	_require(await _push_game_surface_action("poker_call", 0), "Could not call the first Crew poker betting round.")
+	await _settle()
+	var draw_hits := 0
+	for index in range(5):
+		if _surface_action_available("poker_card", index):
+			draw_hits += 1
+	_require(draw_hits == 5 and _surface_action_available("poker_draw", 0) and _surface_action_available("poker_fold", 1), "Crew poker draw surface did not expose five card hit targets plus draw/fold controls.")
+	_record_state("crew_poker_draw_surface", "Production five-card draw state with five readable card targets and native controls.")
+	_return_to_room_view()
+	await _settle()
+	if fixture_run != null:
+		fixture_run.crew_add_trust("crew_lucky", lucky_trust_before - fixture_run.crew_trust("crew_lucky"), "visual_qa_restore")
+
+
+func _verify_coin_pusher_visual_qa_fixture() -> void:
+	var viewport_size := root.get_viewport().get_visible_rect().size
+	_require(viewport_size.x >= 1279.0 and viewport_size.y >= 719.0, "Quarter Falls visual QA is not running at the required 1280x720 viewport: %s." % str(viewport_size))
+	await _prepare_visual_qa_fixture_environment("bar", "visual_coin_pusher_fixture", {
+		"game_ids": ["coin_pusher", "bar_dice"],
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"object_fixtures": [],
+		"scenario_game_modifiers": {"coin_pusher": {"variation_id": "quarter_falls"}},
+	}, 500)
+	var fixture_run := app.get("run_state") as RunState
+	_require(fixture_run != null, "Quarter Falls visual QA could not access foundation runtime state.")
+	var machine: Dictionary = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	_require(not machine.is_empty(), "Quarter Falls visual QA fixture did not generate a persisted pusher pile.")
+	machine["riders"] = [{
+		"id": "visual_chip_rider",
+		"kind": "chip_stack",
+		"label": "chip stack",
+		"item_id": "",
+		"cash_value": 4,
+		"lane": 1,
+		"cell": 2,
+		"push": 1,
+	}]
+	machine["tell_rung"] = 0
+	machine["last_message"] = "Pick a lane. Read both shelves."
+	app.call("_refresh")
+	await _settle()
+	var room_canvas := app.get("environment_canvas") as Control
+	_require(room_canvas != null and room_canvas.visible and room_canvas.has_method("current_view_snapshot"), "Quarter Falls visual QA room did not render at 1280x720.")
+	var pusher_object := _canvas_object_by_id(room_canvas, "game:coin_pusher")
+	_require(not pusher_object.is_empty() and not bool(pusher_object.get("disabled", false)), "Quarter Falls visual QA room did not expose an enabled pusher object.")
+	_require(not (await _double_click_canvas_object_data(room_canvas, pusher_object, "game")).is_empty(), "Quarter Falls visual QA could not enter the pusher through its visible room object.")
+	await _settle()
+	await _refresh_game_surface_hit_regions()
+	var surface_canvas := app.get("game_surface_canvas") as Control
+	_require(surface_canvas != null and surface_canvas.visible and surface_canvas.has_method("realtime_surface_state"), "Quarter Falls visual QA did not render its canonical game surface.")
+	var normal_state: Dictionary = surface_canvas.call("realtime_surface_state")
+	_require(str(normal_state.get("surface_renderer", "")) == "coin_pusher", "Quarter Falls visual QA entered the wrong surface renderer.")
+	_require((normal_state.get("coin_pusher_cells", []) as Array).size() > 0 and (normal_state.get("coin_pusher_lanes", []) as Array).size() == 5, "Quarter Falls normal capture did not expose its pile and five lane approaches.")
+	_require((normal_state.get("coin_pusher_riders", []) as Array).size() == 1 and not bool(normal_state.get("coin_pusher_locked", true)), "Quarter Falls normal capture did not show its prize rider on an unlocked pile.")
+	_record_coin_pusher_visual_capture("normal_pile_rider_1280x720", surface_canvas)
+	_record_state("coin_pusher_normal_pile_rider_1280x720", "Quarter Falls shows five approach lanes, a persisted coin pile, and a prize rider on the shelf.")
+	_cover("coin_pusher_normal_pile_rider")
+
+	var motion_before: Dictionary = surface_canvas.call("debug_surface_motion_sample")
+	var motion_runtime: Dictionary = surface_canvas.call("debug_advance_idle_liveness", 0.5)
+	var motion_after: Dictionary = surface_canvas.call("debug_surface_motion_sample")
+	_require(JSON.stringify(motion_before) != JSON.stringify(motion_after), "Quarter Falls idle presentation did not visibly advance its shelf/rider motion sample.")
+	_require(bool(motion_runtime.get("surface_animation_liveness_active", false)), "Quarter Falls idle presentation did not keep its bounded liveness channel active.")
+	_record_coin_pusher_visual_capture("idle_motion_1280x720", surface_canvas, {"motion_before": motion_before, "motion_after": motion_after})
+	_record_state("coin_pusher_idle_motion_1280x720", "Quarter Falls shelf attract and prize-rider presentation advance while the persisted pile remains action-boundary state.")
+	_cover("coin_pusher_idle_motion")
+
+	machine = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	machine["tell_rung"] = 2
+	machine["last_message"] = "Alarm chirps. The attendant looks over."
+	app.call("_refresh")
+	await _settle()
+	var tell_state: Dictionary = surface_canvas.call("realtime_surface_state")
+	_require(int(tell_state.get("coin_pusher_tell_rung", 0)) == 2 and str(tell_state.get("coin_pusher_tell", "")) == "alarm chirps", "Quarter Falls tell-ladder capture did not expose the readable alarm-chirps rung.")
+	_record_coin_pusher_visual_capture("tell_ladder_alarm_chirps_1280x720", surface_canvas)
+	_record_state("coin_pusher_tell_ladder_1280x720", "Quarter Falls visibly reads Tell: alarm chirps before the cabinet reaches hard lockdown.")
+	_cover("coin_pusher_tell_ladder")
+
+	var settings: Variant = app.get("user_settings")
+	_require(settings != null, "Quarter Falls visual QA could not access reduced-motion settings.")
+	settings.reduce_motion = true
+	# Match the real settings boundary so host-owned accessibility state is
+	# rebuilt into the active game snapshot before the canonical proof samples it.
+	app.call("_on_settings_applied")
+	await _settle()
+	surface_canvas.call("reset_performance_counters")
+	var reduced_state_before: Dictionary = surface_canvas.call("realtime_surface_state").duplicate(true)
+	var reduced_before: Dictionary = surface_canvas.call("debug_surface_motion_sample")
+	for _frame_index in range(18):
+		surface_canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
+	var reduced_after: Dictionary = surface_canvas.call("debug_surface_motion_sample")
+	var reduced_state: Dictionary = surface_canvas.call("realtime_surface_state")
+	var reduced_runtime: Dictionary = surface_canvas.call("surface_runtime_status")
+	_require(bool(reduced_runtime.get("reduce_motion", false)) and JSON.stringify(reduced_before) == JSON.stringify(reduced_after), "Quarter Falls reduced-motion mode did not freeze presentation-only motion.")
+	_require(int(reduced_runtime.get("surface_animation_redraw_count", -1)) == 0 and not bool(reduced_runtime.get("surface_continuous_redraw_active", true)), "Quarter Falls reduced-motion mode still scheduled animation redraws.")
+	_require(JSON.stringify(reduced_state_before) == JSON.stringify(reduced_state) and (reduced_state.get("coin_pusher_cells", []) as Array).size() > 0 and (reduced_state.get("coin_pusher_riders", []) as Array).size() == 1 and str(reduced_state.get("coin_pusher_tell", "")) == "alarm chirps", "Quarter Falls reduced-motion mode hid or changed pile, rider, or tell information.")
+	_record_coin_pusher_visual_capture("reduced_motion_1280x720", surface_canvas, {
+		"motion_before": reduced_before,
+		"motion_after": reduced_after,
+		"motion_frozen": JSON.stringify(reduced_before) == JSON.stringify(reduced_after),
+		"state_intact": JSON.stringify(reduced_state_before) == JSON.stringify(reduced_state),
+		"animation_redraw_count": int(reduced_runtime.get("surface_animation_redraw_count", -1)),
+		"continuous_redraw_active": bool(reduced_runtime.get("surface_continuous_redraw_active", true)),
+	})
+	_record_state("coin_pusher_reduced_motion_1280x720", "Reduced motion freezes presentation bobbing while pile, rider, lanes, and tell state remain readable.")
+	_cover("coin_pusher_reduce_motion")
+	settings.reduce_motion = false
+	app.call("_on_settings_applied")
+	await _settle()
+
+	machine = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	machine["alarm_tolerance_remaining"] = 0
+	machine["lower_phase"] = 9
+	app.call("_refresh")
+	await _settle()
+	_require(await _push_game_surface_action("coin_pusher_force", 2), "Quarter Falls visual QA could not select visible SLAM force.")
+	_require(await _confirm_game_surface_action("coin_pusher_nudge", 0), "Quarter Falls visual QA could not resolve the visible alarm-producing nudge.")
+	await _settle()
+	await _refresh_game_surface_hit_regions()
+	var alarm_state: Dictionary = surface_canvas.call("realtime_surface_state")
+	var alarm_hits: Array = (surface_canvas.call("current_view_snapshot") as Dictionary).get("surface_hit_actions", [])
+	_require(bool(alarm_state.get("coin_pusher_locked", false)) and int(alarm_state.get("coin_pusher_tell_rung", 0)) == 3, "Quarter Falls hard-alarm capture did not show machine-only lockdown and the top tell rung.")
+	_require(not _surface_hit_snapshot_has_action(alarm_hits, "coin_pusher_drop") and not _surface_hit_snapshot_has_action(alarm_hits, "coin_pusher_nudge"), "Quarter Falls locked capture still exposed machine play actions.")
+	_record_coin_pusher_visual_capture("hard_alarm_lockdown_1280x720", surface_canvas)
+	_record_state("coin_pusher_hard_alarm_lockdown_1280x720", "Quarter Falls shows LOCKED TONIGHT and tells the player that other room games remain open.")
+	_cover("coin_pusher_hard_alarm_lockdown")
+
+	_return_to_room_view()
+	await _settle()
+	room_canvas = app.get("environment_canvas") as Control
+	_require(room_canvas != null and room_canvas.visible, "Quarter Falls hard alarm forced the player out of the room instead of returning to room play.")
+	var bar_dice_object := _canvas_object_by_id(room_canvas, "game:bar_dice")
+	_require(not bar_dice_object.is_empty() and not bool(bar_dice_object.get("disabled", false)), "Quarter Falls hard alarm disabled the room's other game.")
+	_record_coin_pusher_room_capture("room_available_after_alarm_1280x720", fixture_run, bar_dice_object)
+	_record_state("coin_pusher_room_available_after_alarm_1280x720", "The alarmed pusher stays locked, but the bar and its other game remain available.")
+	_require(not (await _double_click_canvas_object_data(room_canvas, bar_dice_object, "game")).is_empty(), "Quarter Falls hard alarm left the other room game visible but unusable.")
+	await _settle()
+	_require(str(app.call("current_game_view_snapshot").get("game_id", "")) == "bar_dice", "Quarter Falls hard alarm did not preserve entry to the room's other game.")
+	_return_to_room_view()
+	await _settle()
+	_cover("coin_pusher_room_available_after_alarm")
+	var fixture_library := app.get("library") as ContentLibrary
+	var pusher_definition := fixture_library.game("coin_pusher") if fixture_library != null else {}
+	var pusher_module_value: Variant = app.call("_create_game_module", pusher_definition) if not pusher_definition.is_empty() else null
+	_require(pusher_module_value != null and pusher_module_value is GameModule, "Coin Pusher variation visual QA could not create the shared module.")
+	if pusher_module_value != null and pusher_module_value is GameModule:
+		var pusher_module := pusher_module_value as GameModule
+		for variation_id in ["jackpot_ridge", "vault_drop"]:
+			if variation_id == "vault_drop":
+				fixture_run.add_item("xray_glasses")
+			fixture_run.current_environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": variation_id}}
+			var generated := pusher_module.generate_environment_state(fixture_run, fixture_run.current_environment, fixture_run.create_rng("visual_pusher_%s" % variation_id))
+			if variation_id == "vault_drop":
+				var vault_state: Dictionary = generated.get("variation_state", {})
+				vault_state["banked_fragments"] = 3
+			var states: Dictionary = fixture_run.current_environment.get("game_states", {})
+			states["coin_pusher"] = generated
+			fixture_run.current_environment["game_states"] = states
+			pusher_module.environment_state_generated(fixture_run, fixture_run.current_environment, generated)
+			app.call("_refresh")
+			await _settle()
+			room_canvas = app.get("environment_canvas") as Control
+			pusher_object = _canvas_object_by_id(room_canvas, "game:coin_pusher")
+			_require(not pusher_object.is_empty() and not bool(pusher_object.get("disabled", false)), "%s visual fixture did not expose an enabled room machine." % variation_id)
+			_require(not (await _double_click_canvas_object_data(room_canvas, pusher_object, "game")).is_empty(), "%s visual fixture could not enter its machine." % variation_id)
+			await _settle()
+			await _refresh_game_surface_hit_regions()
+			surface_canvas = app.get("game_surface_canvas") as Control
+			var variation_state: Dictionary = surface_canvas.call("realtime_surface_state")
+			var hits: Array = (surface_canvas.call("current_view_snapshot") as Dictionary).get("surface_hit_actions", [])
+			_require(str(variation_state.get("coin_pusher_variation_id", "")) == variation_id and not (variation_state.get("coin_pusher_features", []) as Array).is_empty(), "%s surface did not render its unique pile features." % variation_id)
+			if variation_id == "jackpot_ridge":
+				_require(str(variation_state.get("coin_pusher_variation_name", "")) == "Jackpot Ridge" and variation_state.has("coin_pusher_cascade_remaining"), "Jackpot Ridge visual state omitted puck sequencing or Ridge Run status.")
+				_cover("coin_pusher_jackpot_ridge")
+			else:
+				_require((variation_state.get("coin_pusher_vault_cells", []) as Array).size() == 9 and _surface_hit_snapshot_has_action(hits, "coin_pusher_vault_start") and _surface_hit_snapshot_has_action(hits, "coin_pusher_vault_peek"), "Vault Drop visual state omitted its 3x3 vault or native vault controls.")
+				_cover("coin_pusher_vault_drop")
+			_record_coin_pusher_visual_capture("%s_1280x720" % variation_id, surface_canvas, {"variation_id": variation_id, "feature_count": (variation_state.get("coin_pusher_features", []) as Array).size(), "vault_cell_count": (variation_state.get("coin_pusher_vault_cells", []) as Array).size()})
+			_return_to_room_view()
+			await _settle()
 
 
 func _reset_fixed_price_surface_for_risky_action() -> void:
@@ -1654,6 +2168,53 @@ func _set_game_surface_status(status_key: String, status: String, reason: String
 		"suspicion_delta": int(surface_data.get("suspicion_delta", 0)),
 	}
 	report["game_surface_status"] = statuses
+
+
+func _record_coin_pusher_visual_capture(capture_key: String, surface_canvas: Control, extra: Dictionary = {}) -> void:
+	var captures: Dictionary = report.get("coin_pusher_visual_status", {})
+	var surface_state: Dictionary = surface_canvas.call("realtime_surface_state") if surface_canvas != null and surface_canvas.has_method("realtime_surface_state") else {}
+	var runtime: Dictionary = surface_canvas.call("surface_runtime_status") if surface_canvas != null and surface_canvas.has_method("surface_runtime_status") else {}
+	var viewport_size := root.get_viewport().get_visible_rect().size
+	var capture := {
+		"viewport": {"width": int(round(viewport_size.x)), "height": int(round(viewport_size.y))},
+		"surface_renderer": str(surface_state.get("surface_renderer", "")),
+		"cell_count": (surface_state.get("coin_pusher_cells", []) as Array).size(),
+		"lane_count": (surface_state.get("coin_pusher_lanes", []) as Array).size(),
+		"rider_count": (surface_state.get("coin_pusher_riders", []) as Array).size(),
+		"tell_rung": int(surface_state.get("coin_pusher_tell_rung", 0)),
+		"tell": str(surface_state.get("coin_pusher_tell", "")),
+		"locked": bool(surface_state.get("coin_pusher_locked", false)),
+		"last_message": str(surface_state.get("coin_pusher_last_message", "")),
+		"reduce_motion": bool(runtime.get("reduce_motion", false)),
+		"idle_liveness_active": bool(runtime.get("surface_animation_liveness_active", false)),
+		"motion_sample": surface_canvas.call("debug_surface_motion_sample") if surface_canvas != null and surface_canvas.has_method("debug_surface_motion_sample") else {},
+	}
+	for key in extra.keys():
+		capture[key] = extra.get(key)
+	captures[capture_key] = capture
+	report["coin_pusher_visual_status"] = captures
+
+
+func _record_coin_pusher_room_capture(capture_key: String, fixture_run: RunState, other_game_object: Dictionary) -> void:
+	var captures: Dictionary = report.get("coin_pusher_visual_status", {})
+	var machine: Dictionary = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) if fixture_run != null else {}
+	var viewport_size := root.get_viewport().get_visible_rect().size
+	captures[capture_key] = {
+		"viewport": {"width": int(round(viewport_size.x)), "height": int(round(viewport_size.y))},
+		"room_environment_id": str(fixture_run.current_environment.get("id", "")) if fixture_run != null else "",
+		"pusher_locked": bool(machine.get("locked_down", false)),
+		"other_game_id": str(other_game_object.get("source_id", "")),
+		"other_game_disabled": bool(other_game_object.get("disabled", true)),
+		"room_screen_active": str(app.call("current_screen_snapshot").get("screen", "")) == "ENVIRONMENT",
+	}
+	report["coin_pusher_visual_status"] = captures
+
+
+func _surface_hit_snapshot_has_action(hit_actions: Array, action_id: String) -> bool:
+	for hit_value in hit_actions:
+		if typeof(hit_value) == TYPE_DICTIONARY and str((hit_value as Dictionary).get("action", "")) == action_id:
+			return true
+	return false
 
 
 func _verify_demo_objective_visible() -> void:
@@ -2135,6 +2696,293 @@ func _record_state(name: String, description: String) -> void:
 		"talk": app.call("current_talk_dock_snapshot") if app.has_method("current_talk_dock_snapshot") else {},
 		"streets": (app.get("run_state") as RunState).streets_snapshot() if app.get("run_state") != null else {},
 	})
+
+
+func _verify_numbers_surfaces() -> void:
+	var run_state := app.get("run_state") as RunState
+	_require(run_state != null, "Numbers visual QA could not access the active run.")
+	await _prepare_visual_qa_fixture_environment("corner_store", "visual_numbers_book", {
+		"event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+	}, 200)
+	var canvas := app.get("environment_canvas") as Control
+	_assert_environment_canvas_contained("Corner Store Numbers book")
+	var book_object := _canvas_object_by_id(canvas, "numbers:book")
+	_require(not book_object.is_empty(), "Corner Store did not expose its physical Numbers book.")
+	var before_open := _serialized_run_text()
+	_require(not (await _double_click_canvas_object_data(canvas, book_object, "numbers")).is_empty(), "Numbers book did not open through its visible room prop.")
+	await _settle()
+	var book_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	_require(str(book_popup.get("popup_type", "")) == "numbers_surface" and str(book_popup.get("source_id", "")) == "book", "Numbers book opened the wrong production surface.")
+	_require(before_open == _serialized_run_text(), "Opening the Numbers book mutated serialized RunState.")
+	_cover("numbers_book_surface")
+	var digit_options: Array = app.get("numbers_digit_options")
+	_require(digit_options.size() == 3 and app.get("numbers_stake_input") != null and app.get("numbers_play_type_option") != null, "Numbers book did not expose three digits, stake, and type controls.")
+	(digit_options[0] as OptionButton).select(1)
+	(digit_options[1] as OptionButton).select(2)
+	(digit_options[2] as OptionButton).select(3)
+	(app.get("numbers_stake_input") as SpinBox).value = 2.0
+	(app.get("numbers_play_type_option") as OptionButton).select(1)
+	var bankroll_before := run_state.bankroll
+	_require(not _click_visible_button_role("numbers_slip_submit_button", ["Write Slip"]).is_empty(), "Numbers QA could not press the visible slip button.")
+	await _settle()
+	_require(run_state.bankroll == bankroll_before - 2 and int(run_state.numbers_status().get("open_slip_count", 0)) == 1, "Visible Numbers slip purchase did not charge and save the physical slip.")
+	_cover("numbers_slip_purchase")
+	_record_state("numbers_book_surface", "Corner Store book with visible three-digit, straight-or-box, and stake controls after a saved purchase.")
+	_require(_control_fits_viewport(app.get("event_choice_popup_panel"), "Numbers book popup"), "Numbers book popup did not fit the 1280x720 viewport.")
+	_cover("numbers_1280_visible")
+	_require(not _click_button_exact("Back").is_empty(), "Numbers book popup could not be closed through its visible Back button.")
+	await _settle()
+	for venue_id in ["bar", "motel", "gas_station_casino", "small_underground_casino"]:
+		await _prepare_visual_qa_fixture_environment(venue_id, "visual_numbers_book_%s" % venue_id, {
+			"event_ids": [],
+			"item_offers": [],
+			"service_ids": [],
+			"lender_hooks": [],
+		}, 200)
+		canvas = app.get("environment_canvas") as Control
+		_assert_environment_canvas_contained("%s Numbers book" % venue_id)
+		book_object = _canvas_object_by_id(canvas, "numbers:book")
+		_require(not book_object.is_empty(), "%s did not expose its authored physical Numbers book." % venue_id)
+		_require(not (await _double_click_canvas_object_data(canvas, book_object, "numbers")).is_empty(), "%s Numbers book did not open through its visible prop." % venue_id)
+		await _settle()
+		var slip_count_before := int(run_state.numbers_status().get("open_slip_count", 0))
+		_require(not _click_visible_button_role("numbers_slip_submit_button", ["Write Slip"]).is_empty(), "%s Numbers book did not accept a visible ordinary slip." % venue_id)
+		await _settle()
+		_require(int(run_state.numbers_status().get("open_slip_count", 0)) == slip_count_before + 1, "%s visible book did not save its slip through production." % venue_id)
+		_require(not _click_button_exact("Back").is_empty(), "%s Numbers book could not close through Back." % venue_id)
+		await _settle()
+
+	var silas_node := run_state.traveler_node("silas_snitch")
+	_require(not silas_node.is_empty(), "Numbers visual QA could not locate Silas's authored itinerary stop.")
+	await _prepare_visual_qa_fixture_environment(silas_node, "visual_numbers_silas", {
+		"world_node_id": silas_node,
+		"event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+	}, 200)
+	canvas = app.get("environment_canvas") as Control
+	var silas_object := _canvas_object_by_id(canvas, "numbers:silas")
+	_require(not silas_object.is_empty(), "Silas's current venue did not expose his physical encounter prop.")
+	_assert_environment_canvas_contained("Silas encounter")
+	_require(not (await _double_click_canvas_object_data(canvas, silas_object, "numbers")).is_empty(), "Silas encounter did not open through the visible room prop.")
+	await _settle()
+	var silas_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	_require(str(silas_popup.get("source_id", "")) == "silas" and _has_visible_button_role("numbers_slip_submit_button", []) == false, "Silas encounter exposed the wrong Numbers controls.")
+	_require(not _has_visible_text(app, "today's handle") and not _has_visible_text(app, "past-post") and not _has_visible_text(app, "past post"), "First Silas encounter advertised undiscovered Numbers information.")
+	bankroll_before = run_state.bankroll
+	_require(not _click_button_exact("Buy a quiet route tip — $12").is_empty(), "Silas encounter did not expose its visible paid tip exchange.")
+	await _settle()
+	_require(run_state.bankroll == bankroll_before - 12, "Visible Silas exchange did not call the paid tip path.")
+	_require(_has_visible_text(app, "Silas sells a time and a place, not an apology."), "Visible Silas exchange did not render its authored transaction result on the production surface.")
+	_require(not _has_visible_text(app, "today's handle"), "Silas tip alone advertised the hidden handle exchange before rumor discovery.")
+	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:gas_late")
+	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:corner_late")
+	run_state.numbers_state.advance_to(run_state.numbers_state.post_action(run_state.numbers_state.day_at(run_state.numbers_state.action_index)))
+	_require(not _click_button_exact("Back").is_empty(), "Silas popup could not close for discovered-handle verification.")
+	await _settle()
+	canvas = app.get("environment_canvas") as Control
+	silas_object = _canvas_object_by_id(canvas, "numbers:silas")
+	_require(not (await _double_click_canvas_object_data(canvas, silas_object, "numbers")).is_empty(), "Ordinary Silas surface did not reopen after genuine discovery.")
+	await _settle()
+	_require(_has_visible_text(app, "Buy today's handle — $24"), "Silas handle exchange did not unlock after the real rumor-plus-tip discovery and post timing.")
+	_cover("numbers_silas_surface")
+	_record_state("numbers_silas_surface", "Silas encounter keeps the handle exchange absent until its ordinary hidden discovery conditions are met.")
+	_require(not _click_button_exact("Back").is_empty(), "Silas popup could not be closed through its visible Back button.")
+	await _settle()
+	# Isolate the prior Silas discovery state before exercising a fresh handle.
+	run_state.numbers_state.reset(run_state.seed_value)
+	run_state.call("_sync_numbers_inventory_marker")
+	# This is a long-lived production run, so resynchronize the isolated Numbers
+	# fixture to the authoritative action clock before choosing a future post.
+	run_state.advance_environment_turns(0)
+	for member_value in run_state.crew_trust_by_member.keys():
+		run_state.crew_trust_by_member[member_value] = 0
+	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:gas_late")
+	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:corner_late")
+	run_state.numbers_state.buy_silas_tip(false)
+	var late_book_day := run_state.numbers_state.day_at(run_state.numbers_state.action_index)
+	if run_state.numbers_state.action_index >= run_state.numbers_state.post_action(late_book_day):
+		late_book_day += 1
+	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_numbers_posted_board", {
+		"event_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [],
+	}, 200)
+	run_state.advance_environment_turns(run_state.numbers_state.post_action(late_book_day) - int(run_state.numbers_state.action_index))
+	app.call("_refresh")
+	await _settle()
+	canvas = app.get("environment_canvas") as Control
+	book_object = _canvas_object_by_id(canvas, "numbers:book")
+	_require(not (await _double_click_canvas_object_data(canvas, book_object, "numbers")).is_empty(), "Posted Punchline book did not open through its visible board prop.")
+	await _settle()
+	var published_handle := str(run_state.numbers_status().get("published_number", ""))
+	_require(published_handle.length() == 3 and _has_visible_text(app, "posted board reads %s" % published_handle), "Zero-trust Punchline arrival did not render the public posted handle diegetically.")
+	_cover("numbers_published_handle")
+	_require(not _click_button_exact("Back").is_empty(), "Posted Punchline board could not close through Back.")
+	await _settle()
+	await _prepare_visual_qa_fixture_environment("corner_store", "visual_numbers_zero_trust_late_book", {
+		"event_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [],
+	}, 200)
+	_require(run_state.advance_numbers_past_post_travel_actions(8) == 1, "Zero-trust late-book fixture did not spend the authored eight-minute physical travel tick.")
+	app.call("_refresh")
+	await _settle()
+	canvas = app.get("environment_canvas") as Control
+	book_object = _canvas_object_by_id(canvas, "numbers:book")
+	_require(not (await _double_click_canvas_object_data(canvas, book_object, "numbers")).is_empty(), "Zero-trust late book did not open through its visible prop.")
+	await _settle()
+	var late_book_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	_require(bool(late_book_popup.get("book_open", false)), "Zero-trust Corner Store form was not inside its authored post-plus-four close window.")
+	_require(_has_visible_text(app, "handle you carried here is %s" % published_handle), "Late-book UI did not preserve the physically learned handle.")
+	digit_options = app.get("numbers_digit_options")
+	for digit_index in range(3):
+		(digit_options[digit_index] as OptionButton).select(int(published_handle.substr(digit_index, 1)))
+	(app.get("numbers_stake_input") as SpinBox).value = 10.0
+	(app.get("numbers_play_type_option") as OptionButton).select(0)
+	_require(not _click_visible_button_role("numbers_slip_submit_button", ["Write Slip"]).is_empty(), "Zero-trust late-book exploit could not submit through the visible slip form.")
+	await _settle()
+	var late_slip := run_state.numbers_state.slips.back() as Dictionary
+	_require(bool(late_slip.get("past_post", false)) and run_state.crew_standing().get("total_trust", 1) == 0, "Visible zero-trust exploit did not create a genuine past-post slip without crew standing.")
+	_cover("numbers_zero_trust_past_post")
+	_require(not _click_button_exact("Back").is_empty(), "Zero-trust late-book popup could not close through Back.")
+	await _settle()
+	# The desk fixture starts a fresh Numbers day after the late-book checks have
+	# advanced the shared action clock. Reset both authorities together so the
+	# visible runner exercises a real before-post collection window.
+	run_state.event_cadence["action_index"] = 0
+	run_state.numbers_state.reset(run_state.seed_value)
+	run_state.call("_sync_numbers_inventory_marker")
+
+	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_numbers_desk", {
+		"event_ids": ["numbers_desk"],
+		"required_event_ids": ["numbers_desk"],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+	}, 200, "back_room")
+	run_state.crew_trust_by_member["crew_lucky"] = 30
+	run_state.crew_trust_by_member["crew_mags"] = 0
+	app.call("_refresh")
+	await _settle()
+	canvas = app.get("environment_canvas") as Control
+	var desk_object := _canvas_object_by_id(canvas, "event:numbers_desk")
+	_require(not desk_object.is_empty() and str(desk_object.get("type", "")) == "numbers", "Punchline back room did not replace the copy-only event with the production Numbers desk.")
+	var desk_rect := _canvas_object_normalized_rect(desk_object)
+	var accepted_desk_point := Vector2(680.0 / BOARD_SIZE.x, 240.0 / BOARD_SIZE.y)
+	_require(desk_rect.has_point(accepted_desk_point), "Numbers desk moved away from the authored L3 spot at [680,240].")
+	var poker_object := _canvas_object_by_id(canvas, "game:crew_draw_poker")
+	_require(not poker_object.is_empty(), "Combined L3 scene did not expose its authored Crew Poker table.")
+	if not poker_object.is_empty():
+		var poker_rect := _canvas_object_normalized_rect(poker_object)
+		_require(not poker_rect.intersects(desk_rect) and not (await _click_canvas_object_data(canvas, poker_object, "game")).is_empty(), "Combined L3 scene made Poker and Numbers overlap or left Poker unreachable.")
+		await _settle()
+		app.call("clear_interaction_focus", true)
+		await _settle()
+		canvas = app.get("environment_canvas") as Control
+		desk_object = _canvas_object_by_id(canvas, "event:numbers_desk")
+	_require(not (await _double_click_canvas_object_data(canvas, desk_object, "numbers")).is_empty(), "Numbers desk did not open through its visible back-room prop.")
+	await _settle()
+	var desk_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	_require(str(desk_popup.get("source_id", "")) == "desk" and app.get("numbers_runner_button") != null, "Numbers desk did not expose Lucky's trust-gated runner control.")
+	_cover("numbers_desk_surface")
+	var settings := app.get("user_settings") as UserSettings
+	settings.reduce_motion = true
+	_require(not _click_button_exact("Back").is_empty(), "Numbers desk could not close for reduced-motion verification.")
+	await _settle()
+	desk_object = _canvas_object_by_id(canvas, "event:numbers_desk")
+	_require(not (await _double_click_canvas_object_data(canvas, desk_object, "numbers")).is_empty(), "Numbers desk could not reopen in reduced-motion mode.")
+	await _settle()
+	_require(bool(app.call("current_event_choice_popup_snapshot").get("reduce_motion", false)), "Numbers desk did not preserve its information in reduced-motion mode.")
+	_cover("numbers_reduce_motion")
+	settings.reduce_motion = false
+	_require(not _click_visible_button_role("numbers_runner_button", ["Lucky's Collection Route"]).is_empty(), "Associate Lucky runner did not start through the visible desk control.")
+	await _settle()
+	_require(run_state.streets_has_active_run() and _has_visible_text(app, "THE ROUNDS"), "Visible Lucky runner did not enter the frozen multi-stop Streets surface.")
+	_cover("numbers_runner_surface")
+	_record_state("numbers_runner_surface", "Lucky's associate collection entered the live multi-stop Streets surface from the L3 desk.")
+	_require(not _click_button_exact("DITCH").is_empty(), "Numbers runner fixture could not leave the Streets surface through its visible Ditch action.")
+	await _settle()
+	var ditched_runner := run_state.active_streets_run
+	_require(
+		str(ditched_runner.get("status", "")) == "resolved"
+			and str((ditched_runner.get("resolution", {}) as Dictionary).get("reason", "")) == "ditched",
+		"Numbers runner Ditch did not resolve through the authored Streets failure path."
+	)
+	_require(
+		str(run_state.current_environment.get("archetype_id", "")) == "small_underground_casino"
+			and str(run_state.current_environment.get("current_layer_id", "")) == "club",
+		"Numbers runner Ditch did not consume its authored Punchline travel continuation."
+	)
+	_require(
+		run_state.run_status == "failed" and run_state.run_failure_reason == "stranded",
+		"Numbers runner Ditch did not preserve its terminal stranded consequence."
+	)
+
+	# The made-rank fix is an independent desk contract. After proving the Ditch
+	# consequence above, install a fresh L3 fixture rather than pretending the
+	# failed runner route left the player inside the back room.
+	run_state.run_status = "active"
+	run_state.run_failure_reason = ""
+	run_state.run_failure_message = ""
+	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_numbers_fix_desk", {
+		"event_ids": ["numbers_desk"],
+		"required_event_ids": ["numbers_desk"],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+	}, 200, "back_room")
+	run_state.crew_trust_by_member["crew_lucky"] = 60
+	run_state.crew_trust_by_member["crew_mags"] = 60
+	run_state.numbers_state.fix_state = {"status": "ready", "retry_day": 0}
+	app.call("_refresh")
+	await _settle()
+	canvas = app.get("environment_canvas") as Control
+	desk_object = _canvas_object_by_id(canvas, "event:numbers_desk")
+	_require(not (await _double_click_canvas_object_data(canvas, desk_object, "numbers")).is_empty(), "Made-rank desk could not reopen for fix QA.")
+	await _settle()
+	_require(not _click_visible_button_role("numbers_fix_button", ["Move the Fix Package"]).is_empty(), "Made-rank fix did not start through the visible desk control.")
+	await _settle()
+	_require(run_state.streets_has_active_run() and str(run_state.numbers_desk_status().get("fix_stage", "")) == "bribe_running", "Visible fix entry did not enter the frozen package Streets surface.")
+	_cover("numbers_fix_surface")
+	var fix_board := (run_state.active_streets_run.get("board", {}) as Dictionary).duplicate(true)
+	fix_board["patrols"] = []
+	run_state.active_streets_run["board"] = fix_board
+	run_state.active_streets_run["player"] = (fix_board.get("destination", {}) as Dictionary).duplicate(true)
+	app.call("_refresh")
+	await _settle()
+	_require(not _click_button_exact("WAIT").is_empty(), "Numbers fix fixture could not complete its visible successful Streets delivery.")
+	await _settle()
+	_require(str(run_state.numbers_desk_status().get("fix_stage", "")) == "camouflage", "Visible successful fix delivery did not reach camouflage.")
+	app.call("_refresh")
+	await _settle()
+	canvas = app.get("environment_canvas") as Control
+	desk_object = _canvas_object_by_id(canvas, "event:numbers_desk")
+	_require(not (await _double_click_canvas_object_data(canvas, desk_object, "numbers")).is_empty(), "Numbers desk could not reopen for allocation QA.")
+	await _settle()
+	_require((app.get("numbers_surface_allocation_inputs") as Dictionary).size() == 5 and app.get("numbers_allocation_submit_button") != null, "Camouflage desk did not expose the five-book allocation form.")
+	var allocation_inputs := app.get("numbers_surface_allocation_inputs") as Dictionary
+	for input_value in allocation_inputs.values():
+		var allocation_input := input_value as SpinBox
+		_require(allocation_input != null and int(allocation_input.value) == 0 and int(allocation_input.max_value) == 20, "Camouflage allocation did not start empty at the ordinary $20 cap.")
+	var funded_values := {"small_underground_casino": 18, "bar": 16, "motel": 14, "gas_station_casino": 12}
+	for venue_value in funded_values.keys():
+		(allocation_inputs.get(venue_value) as SpinBox).value = float(funded_values.get(venue_value, 0))
+	_require(_control_fits_viewport(app.get("event_choice_popup_panel"), "Numbers allocation popup"), "Numbers allocation form did not fit the 1280x720 viewport with its shared scrollbar.")
+	var allocation_bankroll_before := run_state.bankroll
+	_require(not _click_visible_button_role("numbers_allocation_submit_button", ["Place the Crew Paper"]).is_empty(), "Numbers allocation could not be submitted through its visible desk control.")
+	await _settle()
+	_require(str(run_state.numbers_desk_status().get("fix_stage", "")) == "payday" and run_state.bankroll == allocation_bankroll_before - 60 and run_state.numbers_state.open_slip_count() == 4, "Visible funded allocation did not charge $60 and create four real slips in payday.")
+	_cover("numbers_allocation_surface")
+	_record_state("numbers_allocation_surface", "Empty-by-default five-book camouflage form after the player funds a visible four-book spread.")
+	_require(not _click_button_exact("Back").is_empty(), "Numbers allocation popup could not close through its visible Back button.")
+	await _settle()
+	var fix_target_day := int(run_state.numbers_state.fix_state.get("target_day", 1))
+	run_state.advance_environment_turns(run_state.numbers_state.settlement_action(fix_target_day) - int(run_state.numbers_state.action_index))
+	app.call("_refresh")
+	await _settle()
+	_require(str(run_state.numbers_state.fix_state.get("status", "")) == "completed" and run_state.bankroll > allocation_bankroll_before, "Visible successful fix chain did not pay slip winnings plus the performance cut.")
+	_cover("numbers_fix_payday")
 
 
 func _verify_streets_surface() -> void:
@@ -3079,6 +3927,18 @@ func _snapshot_rect(value: Variant) -> Rect2:
 		Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))),
 		Vector2(float(data.get("w", 0.0)), float(data.get("h", 0.0)))
 	)
+
+
+func _canvas_object_normalized_rect(object_data: Dictionary) -> Rect2:
+	var center_value: Variant = object_data.get("position", Vector2.ZERO)
+	var size_value: Variant = object_data.get("size", Vector2.ZERO)
+	if typeof(center_value) != TYPE_VECTOR2 or typeof(size_value) != TYPE_VECTOR2:
+		return Rect2()
+	var normalized_size := Vector2(
+		float((size_value as Vector2).x) / BOARD_SIZE.x,
+		float((size_value as Vector2).y) / BOARD_SIZE.y
+	)
+	return Rect2((center_value as Vector2) - normalized_size * 0.5, normalized_size)
 
 
 func _environment_canvas_is_primary() -> bool:

@@ -1538,6 +1538,8 @@ func _normalized_event_id_uncached(event_id: String) -> String:
 		})
 	if family_event == "drink_consumed" or family_event in ["phone_call", "phone_out_of_service"] or family_event == "heat_gain":
 		return family_event
+	if family_event == "alarm_chirp":
+		return "heat_gain"
 	if family_event == "scratch_paper_foley_loop" or family_event == "scratch_box_pop":
 		return family_event
 	match family_event:

@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `crew06_3` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-16
+- **Completion/implementation commits:** `de6cd225`, `d048fd86`, `eb373969`, `514e2907`, `42438b5d`, and integrated visual-contract repair `6ea9f4a9`.
+- **Verification:** PM line-by-line scope/design review; draw/slip/runner/fix/past-post/leak/economy contracts; exact-tree full matrix; 10-seed/580-checkpoint determinism (`231360296`); canonical visual QA with all 12 Numbers coverage markers PASS.
+- **Deviations:** The Numbers delivery consumers currently target the owner-rejected synthetic Streets API from the original dependency. `rework06_1` must re-point them to the binding real-map delivery API before Wave D; no owner-locked behavior was guessed here.
 
 # Agent Prompt — 0.6 crew06_3: The Numbers (Lottery Racket: Play, Run, Rig)
 

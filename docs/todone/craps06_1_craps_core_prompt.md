@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `craps06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-14
+- **Completion/implementation commits:** `c4db52a9..c3c728c5`; integrated by `fca2e38c`
+- **Verification:** PM line-by-line scope/design review; project validation; dedicated Craps, systems, and UI suites; 10-seed determinism (370 checkpoints, hash `2195661966`); million-roll RTP/fairness harness; canonical visual QA; and five-image focused table/liveness/reduced-motion review all PASS on the integrated tree.
+- **Deviations:** None. The scenario modifier seam is consumed through the shipped environment API; `craps06_2`, crew practice, and heist consumers remain intentionally downstream.
 
 # Agent Prompt — 0.6 craps06_1: Craps Core (Grand Casino Table Game)
 

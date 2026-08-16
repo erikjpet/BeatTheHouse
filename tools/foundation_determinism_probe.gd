@@ -12,7 +12,7 @@ const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const DEFAULT_SEED_COUNT := 10
 const DEFAULT_SEED_PREFIX := "FOUNDATION-DETERMINISM"
 const DEFAULT_OUTPUT_JSON := "res://.tmp/foundation_determinism_probe/report.json"
-const GAME_IDS := ["slot", "pull_tabs", "scratch_tickets", "blackjack", "baccarat", "roulette", "video_poker", "bar_dice"]
+const GAME_IDS := ["slot", "pull_tabs", "scratch_tickets", "blackjack", "baccarat", "roulette", "craps", "video_poker", "bar_dice", "crew_draw_poker", "coin_pusher"]
 const HASH_MOD := 4294967296
 
 var library: ContentLibrary
@@ -126,10 +126,13 @@ func _simulate_seed(seed: String, seed_index: int) -> Dictionary:
 	_apply_triggered_event_chain(run_state, checkpoints, seed)
 	_apply_dialogue_sequence(run_state, checkpoints, seed)
 	_apply_talk_content_sequence(run_state, checkpoints, seed)
+	_apply_numbers_sequence(run_state, checkpoints, seed)
 	_apply_streets_sequence(run_state, checkpoints, seed)
 	_install_all_game_environment(run_state, seed_index)
 	_checkpoint(run_state, checkpoints, seed, "all_games_fixture")
 	_apply_all_game_resolves(run_state, checkpoints, seed)
+	_apply_crew_poker_sequence(run_state, checkpoints, seed)
+	_apply_coin_pusher_sequence(run_state, checkpoints, seed)
 	_apply_skill_cheats(run_state, checkpoints, seed)
 	_apply_pinball_feature_sequence(run_state, checkpoints, seed)
 	return {
@@ -138,6 +141,83 @@ func _simulate_seed(seed: String, seed_index: int) -> Dictionary:
 		"final_hash": str((checkpoints.back() as Dictionary).get("hash", "")) if not checkpoints.is_empty() else "",
 		"checkpoints": checkpoints,
 	}
+
+
+func _apply_numbers_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
+	run_state.set_environment({"id": "corner_store", "archetype_id": "corner_store", "world_node_id": "corner_store", "turns": 0})
+	var day := run_state.numbers_state.day_at(run_state.numbers_state.action_index)
+	if run_state.numbers_state.action_index >= run_state.numbers_state.close_action("corner_store", day):
+		day += 1
+		run_state.advance_environment_turns(run_state.numbers_state.day_start_action(day) - int(run_state.numbers_state.action_index))
+	var honest := run_state.numbers_buy_slip("123", 3, "box")
+	if not bool(honest.get("ok", false)):
+		failures.append("%s could not write the deterministic honest Numbers slip." % seed)
+		return
+	_checkpoint(run_state, checkpoints, seed, "numbers_open_slip")
+	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:gas_late")
+	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:corner_late")
+	run_state.numbers_state.buy_silas_tip(false)
+	var post := run_state.numbers_state.post_action(day)
+	run_state.advance_environment_turns(post - int(run_state.numbers_state.action_index))
+	run_state.set_environment({"id": "small_underground_casino", "archetype_id": "small_underground_casino", "world_node_id": "small_underground_casino", "turns": 0})
+	var handle := str(run_state.numbers_status().get("published_number", ""))
+	if handle.length() != 3:
+		failures.append("%s did not reveal the deterministic Punchline post." % seed)
+		return
+	_checkpoint(run_state, checkpoints, seed, "numbers_punchline_post")
+	run_state.set_environment({"id": "corner_store", "archetype_id": "corner_store", "world_node_id": "corner_store", "turns": 0})
+	run_state.advance_numbers_past_post_travel_actions(8)
+	var past_post := run_state.numbers_buy_slip(handle, 10, "straight")
+	if not bool(past_post.get("ok", false)):
+		failures.append("%s could not write the deterministic late-book Numbers slip." % seed)
+		return
+	_checkpoint(run_state, checkpoints, seed, "numbers_past_post_detection")
+	run_state.advance_environment_turns(run_state.numbers_state.settlement_action(day) - int(run_state.numbers_state.action_index))
+	_checkpoint(run_state, checkpoints, seed, "numbers_slip_settlement")
+	var fix_unlock := run_state.numbers_state.fix_unlock(true)
+	var fix_begin := run_state.numbers_state.fix_begin_bribe()
+	var fix_bribe := run_state.numbers_state.fix_record_bribe(true, {"clean": true, "fast": true})
+	var allocation_input := {"bar": 20, "motel": 20, "corner_store": 20}
+	var allocation_quote := run_state.numbers_state.fix_allocation_quote(allocation_input)
+	if not bool(allocation_quote.get("ok", false)):
+		failures.append("%s could not quote the deterministic Numbers camouflage: %s" % [seed, JSON.stringify(allocation_quote)])
+		return
+	var required_total := maxi(0, int(allocation_quote.get("total", 0)))
+	var bankroll_before_fixture := run_state.bankroll
+	var fixture_funding := maxi(0, required_total - bankroll_before_fixture)
+	if fixture_funding > 0:
+		run_state.change_bankroll(fixture_funding)
+	_checkpoint(run_state, checkpoints, seed, "numbers_fix_fixture_funding")
+	var expected_bankroll := bankroll_before_fixture + fixture_funding
+	if required_total <= 0 or fixture_funding != maxi(0, required_total - bankroll_before_fixture) or run_state.bankroll != expected_bankroll or run_state.bankroll < required_total:
+		failures.append("%s deterministic Numbers fixture did not fund the quoted total: %s" % [seed, JSON.stringify({
+			"bankroll_after": run_state.bankroll,
+			"bankroll_before": bankroll_before_fixture,
+			"expected_bankroll": expected_bankroll,
+			"fixture_funding": fixture_funding,
+			"required_total": required_total,
+		})])
+		return
+	var allocation := run_state.numbers_fix_allocate(allocation_input)
+	if not bool(allocation.get("ok", false)):
+		failures.append("%s could not fund the deterministic Numbers camouflage: %s" % [seed, JSON.stringify({
+			"allocation": allocation,
+			"allocation_input": allocation_input,
+			"allocation_quote": allocation_quote,
+			"bankroll": run_state.bankroll,
+			"fix_begin": fix_begin,
+			"fix_bribe": fix_bribe,
+			"fix_state": run_state.numbers_state.fix_state,
+			"fix_unlock": fix_unlock,
+			"numbers_action_index": run_state.numbers_state.action_index,
+		})])
+		return
+	_checkpoint(run_state, checkpoints, seed, "numbers_fix_funded")
+	var target_day := int(run_state.numbers_state.fix_state.get("target_day", day + 1))
+	run_state.advance_environment_turns(run_state.numbers_state.settlement_action(target_day) - int(run_state.numbers_state.action_index))
+	_checkpoint(run_state, checkpoints, seed, "numbers_fix_payday")
+	run_state.advance_environment_turns(run_state.numbers_state.day_start_action(target_day + 1) - int(run_state.numbers_state.action_index))
+	_checkpoint(run_state, checkpoints, seed, "numbers_leak_registered")
 
 
 func _apply_streets_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
@@ -325,12 +405,16 @@ func _install_all_game_environment(run_state: RunState, seed_index: int) -> void
 	environment["kind"] = "boss"
 	environment["tier"] = 3
 	environment["game_ids"] = GAME_IDS.duplicate()
+	environment["resident_member_ids"] = ["crew_mags", "crew_lucky"]
 	environment["travel_lock_remaining"] = 0
 	environment["economic_profile"] = {
 		"stake_floor": 1,
 		"stake_ceiling": 500,
 	}
 	var game_states: Dictionary = {}
+	# The production table admits the player when any seated member is an
+	# associate. Granting only one resident exercises that real gate.
+	run_state.crew_add_trust("crew_lucky", 30, "determinism_fixture")
 	var fixture_rng := run_state.create_rng("determinism_game_fixture")
 	for game_id_value in GAME_IDS:
 		var game_id := str(game_id_value)
@@ -356,8 +440,114 @@ func _apply_all_game_resolves(run_state: RunState, checkpoints: Array, seed: Str
 	_resolve_game(run_state, checkpoints, seed, "blackjack", "play_basic", 20, _timed_ui(run_state, "blackjack_play", {"selected_stake": 20}))
 	_resolve_game(run_state, checkpoints, seed, "baccarat", "deal_baccarat", 20, _timed_ui(run_state, "baccarat_deal", {"baccarat_bets": {"player": 20}}))
 	_resolve_game(run_state, checkpoints, seed, "roulette", "spin_roulette", 20, _timed_ui(run_state, "roulette_spin", {"roulette_bets": [_roulette_bet(20)]}))
+	_resolve_game(run_state, checkpoints, seed, "craps", "roll_craps", 20, _timed_ui(run_state, "craps_roll", {"craps_pending_bets": {"pass_line": 20}}))
 	_resolve_game(run_state, checkpoints, seed, "video_poker", "draw", 0, _timed_ui(run_state, "video_poker_draw", {"bet_level": 1, "denomination_index": 0}))
 	_resolve_game(run_state, checkpoints, seed, "bar_dice", "roll", 20, _timed_ui(run_state, "bar_dice_roll"))
+
+
+func _apply_crew_poker_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
+	var game: GameModule = game_modules.get("crew_draw_poker", null)
+	if game == null:
+		return
+	var prior_environment := run_state.current_environment.duplicate(true)
+	var poker_environment := {
+		"id": "determinism_crew_back_room",
+		"display_name": "Back Room",
+		"archetype_id": "small_underground_casino",
+		"kind": "crew",
+		"layer_id": "back_room",
+		"resident_member_ids": ["crew_mags", "crew_lucky"],
+		"game_ids": ["crew_draw_poker"],
+		"economic_profile": {"stake_floor": 2, "stake_ceiling": 6},
+		"game_states": {},
+	}
+	var table_rng := run_state.create_rng("determinism:crew_draw_poker:table")
+	poker_environment["game_states"] = {"crew_draw_poker": game.generate_environment_state(run_state, poker_environment, table_rng)}
+	run_state.save_rng(table_rng)
+	run_state.current_environment = poker_environment
+	var scripted_inputs := [
+		{"action": "deal", "ui": {}},
+		{"action": "call", "ui": {}},
+		{"action": "draw", "ui": {"poker_held": [0, 2]}},
+		{"action": "call", "ui": {}},
+	]
+	for input_value in scripted_inputs:
+		var input: Dictionary = input_value
+		var action_id := str(input.get("action", ""))
+		var ui_state: Dictionary = input.get("ui", {}) if typeof(input.get("ui", {})) == TYPE_DICTIONARY else {}
+		var rng := run_state.create_rng("determinism:crew_draw_poker:%s:%d" % [action_id, checkpoints.size()])
+		var result: Dictionary = game.resolve_with_context(action_id, 2, run_state, run_state.current_environment, rng, ui_state)
+		if not bool(result.get("ok", false)):
+			failures.append("%s crew_draw_poker/%s failed: %s" % [seed, action_id, str(result.get("message", "no message"))])
+			run_state.current_environment = prior_environment
+			return
+		var state_before_apply := _copy_dict(_game_state(run_state, "crew_draw_poker"))
+		var surface_before_apply := game.surface_state(run_state, run_state.current_environment, ui_state)
+		_apply_game_result(run_state, result, rng)
+		run_state.advance_environment_turns(1)
+		_checkpoint_with_evidence(run_state, checkpoints, seed, "game_crew_draw_poker_%s" % action_id, {
+			"input": input,
+			"table": state_before_apply,
+			"policy_decisions": _poker_policy_decisions(state_before_apply),
+			"surface_observation": _copy_dict(surface_before_apply.get("observation", {})),
+			"surface": surface_before_apply,
+			"outcome": result,
+		})
+	run_state.current_environment = prior_environment
+
+
+func _poker_policy_decisions(table: Dictionary) -> Array:
+	var result: Array = []
+	for seat_value in _dictionary_array(table.get("seats", [])):
+		result.append({
+			"member_id": str(seat_value.get("member_id", "")),
+			"last_action": str(seat_value.get("last_action", "")),
+			"draw_count": int(seat_value.get("draw_count", -1)),
+		})
+	return result
+
+
+func _apply_coin_pusher_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
+	_resolve_game(run_state, checkpoints, seed, "coin_pusher", "drop_quarter", 1, _timed_ui(run_state, "coin_pusher_drop", {"coin_pusher_lane": 2}))
+	var game_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var machine: Dictionary = game_states.get("coin_pusher", {}) if typeof(game_states.get("coin_pusher", {})) == TYPE_DICTIONARY else {}
+	var lanes: Array = machine.get("lanes", []) if typeof(machine.get("lanes", [])) == TYPE_ARRAY else []
+	var lane := clampi(int(machine.get("last_lane", 0)), 0, maxi(0, lanes.size() - 1))
+	for lane_index in range(lanes.size()):
+		if typeof(lanes[lane_index]) != TYPE_DICTIONARY:
+			continue
+		var cells: Array = (lanes[lane_index] as Dictionary).get("cells", []) if typeof((lanes[lane_index] as Dictionary).get("cells", [])) == TYPE_ARRAY else []
+		if not cells.is_empty() and typeof(cells[0]) == TYPE_DICTIONARY and bool((cells[0] as Dictionary).get("edge_hang", false)):
+			lane = lane_index
+			break
+	_resolve_game(run_state, checkpoints, seed, "coin_pusher", "nudge_machine", 0, _timed_ui(run_state, "coin_pusher_nudge", {
+		"coin_pusher_force": "tap",
+		"coin_pusher_direction": "front",
+		"coin_pusher_lane": lane,
+		"coin_pusher_timing_phase": int(machine.get("lower_phase", 0)),
+	}))
+	var game: GameModule = game_modules.get("coin_pusher", null)
+	if game == null:
+		return
+	for variation_id in ["jackpot_ridge", "vault_drop"]:
+		run_state.current_environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": variation_id}}
+		var generated := game.generate_environment_state(run_state, run_state.current_environment, run_state.create_rng("determinism_pusher_%s" % variation_id))
+		var states: Dictionary = run_state.current_environment.get("game_states", {})
+		states["coin_pusher"] = generated
+		run_state.current_environment["game_states"] = states
+		game.environment_state_generated(run_state, run_state.current_environment, generated)
+		_resolve_game(run_state, checkpoints, seed, "coin_pusher", "drop_quarter", 1, _timed_ui(run_state, "%s_drop" % variation_id, {"coin_pusher_lane": 2}))
+		_resolve_game(run_state, checkpoints, seed, "coin_pusher", "nudge_machine", 0, _timed_ui(run_state, "%s_nudge" % variation_id, {
+			"coin_pusher_force": "tap", "coin_pusher_direction": "front", "coin_pusher_lane": 2,
+			"coin_pusher_timing_phase": int(generated.get("lower_phase", 0)),
+		}))
+		if variation_id == "vault_drop":
+			run_state.add_item("xray_glasses")
+			var vault_state: Dictionary = generated.get("variation_state", {})
+			vault_state["banked_fragments"] = 2
+			_resolve_game(run_state, checkpoints, seed, "coin_pusher", "start_vault_round", 0, _timed_ui(run_state, "vault_start"))
+			_resolve_game(run_state, checkpoints, seed, "coin_pusher", "peek_vault_cell", 0, _timed_ui(run_state, "vault_peek", {"coin_pusher_vault_cell": 0}))
+			_resolve_game(run_state, checkpoints, seed, "coin_pusher", "open_vault_cell", 0, _timed_ui(run_state, "vault_open", {"coin_pusher_vault_cell": 0}))
 
 
 func _apply_skill_cheats(run_state: RunState, checkpoints: Array, seed: String) -> void:
@@ -366,6 +556,22 @@ func _apply_skill_cheats(run_state: RunState, checkpoints: Array, seed: String) 
 	_resolve_bar_dice_controlled_roll(run_state, checkpoints, seed)
 	_resolve_roulette_past_post(run_state, checkpoints, seed)
 	_resolve_baccarat_edge_sort(run_state, checkpoints, seed)
+	_resolve_craps_setting(run_state, checkpoints, seed)
+
+
+func _resolve_craps_setting(run_state: RunState, checkpoints: Array, seed: String) -> void:
+	if not game_modules.has("craps"):
+		return
+	run_state.add_item("weighted_keyring")
+	var table := _game_state(run_state, "craps")
+	var line_bet := "pass_line" if int(table.get("point", 0)) == 0 else "come"
+	var pending_bets := {}
+	pending_bets[line_bet] = 20
+	var ui_state := _timed_ui(run_state, "craps_setting", {
+		"craps_pending_bets": pending_bets,
+		"craps_setting_challenge": {"skill_grade": "perfect", "skill_margin_msec": 0},
+	})
+	_resolve_game(run_state, checkpoints, seed, "craps", "dice_setting", 20, ui_state)
 
 
 func _apply_pinball_feature_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
@@ -558,6 +764,18 @@ func _checkpoint(run_state: RunState, checkpoints: Array, seed: String, label: S
 		"label": label,
 		"hash": _stable_hash_text(canonical),
 		"bytes": canonical.length(),
+	})
+
+
+func _checkpoint_with_evidence(run_state: RunState, checkpoints: Array, seed: String, label: String, evidence: Dictionary) -> void:
+	var canonical := _canonical_text({"run": run_state.to_dict(), "evidence": evidence})
+	checkpoints.append({
+		"seed": seed,
+		"index": checkpoints.size(),
+		"label": label,
+		"hash": _stable_hash_text(canonical),
+		"bytes": canonical.length(),
+		"evidence_hash": _stable_hash_text(_canonical_text(evidence)),
 	})
 
 

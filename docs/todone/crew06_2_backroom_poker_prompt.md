@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `crew06_2` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-16
+- **Completion/implementation commits:** `fc0196b5`, `69af73aa`, `511091cb`, `ff254d9c`, `b260a89b`, and `842b439c`.
+- **Verification:** PM line-by-line scope/design review; deterministic policy, hidden-tell, showdown-learning, trust, swing-cap, and save contracts; exact-tree full matrix; 10-seed/580-checkpoint determinism (`231360296`); canonical visual QA and four focused Poker captures all PASS.
+- **Deviations:** None. The shipped Crew lender flow remains behavior-identical and tell/learning state remains hidden from player-facing surfaces.
 
 # Agent Prompt — 0.6 crew06_2: Back-Room Poker (Crew Table + Tells)
 

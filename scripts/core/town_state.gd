@@ -4,12 +4,13 @@ extends RefCounted
 const CONDITIONS_PATH := "res://data/town/conditions.json"
 const TownNetworkScript := preload("res://scripts/core/town_network.gd")
 const PoliceSweepModelScript := preload("res://scripts/core/police_sweep_model.gd")
-const SCHEMA_VERSION := 2
+const SCHEMA_VERSION := 3
 const DEFAULT_TURN_HORIZON := 240
 const WEATHER_IDS := ["clear", "rain", "fog", "storm"]
 const DAY_TYPE_IDS := ["payday", "midweek"]
 const HAPPENING_IDS := ["fight_night", "festival_weekend", "rolling_blackout", "police_sweep"]
 const RISK_BANDS := ["low", "medium", "high"]
+const VAULT_PROGRESSIVE_RUMOR_CLASS := "vault_progressive"
 
 static var _conditions_cache: Dictionary = {}
 
@@ -22,6 +23,7 @@ var calendar_offset_actions: int = 0
 var happenings: Array = []
 var living_world: TownNetwork
 var police_sweep: PoliceSweepModel
+var progressive_meters: Dictionary = {}
 
 var _conditions: Dictionary = {}
 var _weather_by_action: PackedStringArray = PackedStringArray()
@@ -65,6 +67,7 @@ func generate(p_seed_value: int, source_conditions: Dictionary = {}) -> void:
 	_generate_weather_schedule(root_rng.fork("town_weather"))
 	_generate_calendar(root_rng.fork("town_calendar"))
 	_generate_happenings(root_rng.fork("town_happenings"))
+	progressive_meters = {}
 	living_world = TownNetworkScript.new()
 	living_world.generate(seed_value)
 	police_sweep = PoliceSweepModelScript.new()
@@ -74,7 +77,7 @@ func generate(p_seed_value: int, source_conditions: Dictionary = {}) -> void:
 
 func restore(source: Dictionary, p_seed_value: int, source_conditions: Dictionary = {}) -> bool:
 	var source_schema := int(source.get("schema_version", 0))
-	if source_schema != 1 and source_schema != SCHEMA_VERSION:
+	if source_schema < 1 or source_schema > SCHEMA_VERSION:
 		generate(p_seed_value, source_conditions)
 		return false
 	seed_value = maxi(1, int(source.get("seed_value", p_seed_value)))
@@ -85,6 +88,7 @@ func restore(source: Dictionary, p_seed_value: int, source_conditions: Dictionar
 	calendar_cycle = _dictionary_array(source.get("calendar_cycle", []))
 	calendar_offset_actions = maxi(0, int(source.get("calendar_offset_actions", 0)))
 	happenings = _dictionary_array(source.get("happenings", []))
+	progressive_meters = _dictionary(source.get("progressive_meters", {})).duplicate(true) if source_schema >= 3 else {}
 	living_world = TownNetworkScript.new()
 	var living_world_value: Variant = source.get("living_world", {})
 	if typeof(living_world_value) == TYPE_DICTIONARY and not (living_world_value as Dictionary).is_empty():
@@ -94,7 +98,7 @@ func restore(source: Dictionary, p_seed_value: int, source_conditions: Dictionar
 		living_world.advance_to(action_index)
 	police_sweep = PoliceSweepModelScript.new()
 	var sweep_value: Variant = source.get("police_sweep", {})
-	if source_schema >= SCHEMA_VERSION and typeof(sweep_value) == TYPE_DICTIONARY and not (sweep_value as Dictionary).is_empty():
+	if source_schema >= 2 and typeof(sweep_value) == TYPE_DICTIONARY and not (sweep_value as Dictionary).is_empty():
 		police_sweep.restore(sweep_value as Dictionary, seed_value, _police_sweep_config())
 	else:
 		police_sweep.disable(seed_value, _police_sweep_config())
@@ -116,12 +120,58 @@ func advance_actions(amount: int = 1) -> void:
 		living_world.advance_to(action_index)
 	if police_sweep != null:
 		police_sweep.advance_to(action_index)
+	_advance_progressive_meters(amount)
 	_refresh_current_profiles()
 	_sync_condition_rumor_facts()
 	_sync_sweep_rumor_facts()
+	_sync_progressive_rumor_facts()
 
 
-func configure_world(map_data: Dictionary) -> void:
+func register_progressive_meter(meter_id: String, payload: Dictionary) -> Dictionary:
+	var clean_id := meter_id.strip_edges()
+	var node_id := str(payload.get("target_node_id", "")).strip_edges()
+	if clean_id.is_empty() or node_id.is_empty():
+		return {}
+	if not progressive_meters.has(clean_id):
+		var floor_value := maxi(0, int(payload.get("floor", 0)))
+		progressive_meters[clean_id] = {
+			"id": clean_id,
+			"target_node_id": node_id,
+			"target_name": str(payload.get("target_name", node_id)),
+			"value": maxi(floor_value, int(payload.get("initial_value", floor_value))),
+			"floor": floor_value,
+			"growth_per_action": maxi(0, int(payload.get("growth_per_action", 0))),
+			"crowded": bool(payload.get("crowded", false)),
+			"registered_action": action_index,
+		}
+	_sync_progressive_rumor_fact(clean_id)
+	return progressive_meter(clean_id)
+
+
+func progressive_meter(meter_id: String) -> Dictionary:
+	return _dictionary(progressive_meters.get(meter_id.strip_edges(), {})).duplicate(true)
+
+
+func set_progressive_meter_value(meter_id: String, value: int) -> Dictionary:
+	var clean_id := meter_id.strip_edges()
+	var meter := _dictionary(progressive_meters.get(clean_id, {}))
+	if meter.is_empty():
+		return {}
+	meter["value"] = maxi(int(meter.get("floor", 0)), value)
+	progressive_meters[clean_id] = meter
+	_sync_progressive_rumor_fact(clean_id)
+	return meter.duplicate(true)
+
+
+func _advance_progressive_meters(amount: int) -> void:
+	for meter_id_value in progressive_meters.keys():
+		var meter_id := str(meter_id_value)
+		var meter := _dictionary(progressive_meters.get(meter_id, {}))
+		meter["value"] = maxi(int(meter.get("floor", 0)), int(meter.get("value", 0)) + maxi(0, int(meter.get("growth_per_action", 0))) * amount)
+		progressive_meters[meter_id] = meter
+
+
+func configure_world(map_data: Dictionary, synchronize_rumor_facts: bool = true) -> void:
 	if living_world == null:
 		living_world = TownNetworkScript.new()
 		living_world.generate(seed_value)
@@ -131,8 +181,9 @@ func configure_world(map_data: Dictionary) -> void:
 		police_sweep.reset(seed_value, _police_sweep_config())
 	police_sweep.configure_world(map_data, _police_sweep_happening(), _police_sweep_config(), action_index)
 	_refresh_current_profiles()
-	_sync_condition_rumor_facts()
-	_sync_sweep_rumor_facts()
+	if synchronize_rumor_facts:
+		_sync_condition_rumor_facts()
+		_sync_sweep_rumor_facts()
 
 
 func disable_police_sweep_for_legacy_save() -> void:
@@ -186,6 +237,14 @@ func claim_sweep_encounter(node_id: String) -> Dictionary:
 
 func swept_window(node_id: String) -> Dictionary:
 	return police_sweep.swept_window(node_id) if police_sweep != null else {}
+
+
+func request_sweep_reroute(candidate_node_ids: Array, request_token: String) -> Dictionary:
+	if police_sweep == null:
+		return {}
+	var result := police_sweep.request_reroute_toward(candidate_node_ids, request_token)
+	_sync_sweep_rumor_facts()
+	return result
 
 
 func sweep_encounter_config() -> Dictionary:
@@ -334,6 +393,7 @@ func snapshot() -> Dictionary:
 		"calendar_cycle": calendar_cycle.duplicate(true),
 		"calendar_offset_actions": calendar_offset_actions,
 		"happenings": happenings.duplicate(true),
+		"progressive_meters": progressive_meters.duplicate(true),
 		"living_world": living_world.snapshot() if living_world != null else {},
 		"police_sweep": police_sweep.snapshot() if police_sweep != null else {},
 	}
@@ -572,6 +632,31 @@ func _sync_sweep_rumor_facts() -> void:
 			"track_segment_index": int(sweep.get("segment_index", -1)),
 			"truth_node_id": current_node,
 		})
+
+
+func _sync_progressive_rumor_facts() -> void:
+	if living_world == null:
+		return
+	for meter_id_value in progressive_meters.keys():
+		_sync_progressive_rumor_fact(str(meter_id_value))
+
+
+func _sync_progressive_rumor_fact(meter_id: String) -> void:
+	if living_world == null:
+		return
+	var meter := _dictionary(progressive_meters.get(meter_id, {}))
+	if meter.is_empty():
+		return
+	var value := maxi(0, int(meter.get("value", 0)))
+	var detail := "fat at $%d" % value if value >= 240 else "building at $%d" % value if value >= 170 else "thin at $%d" % value
+	living_world.register_rumor_fact(VAULT_PROGRESSIVE_RUMOR_CLASS, "vault:%s" % str(meter.get("target_node_id", meter_id)), {
+		"target_node_id": str(meter.get("target_node_id", "")),
+		"target_name": str(meter.get("target_name", meter.get("target_node_id", ""))),
+		"source_id": meter_id,
+		"fact_detail": detail,
+		"meter_value": value,
+		"meter_id": meter_id,
+	})
 
 
 func _rebuild_modifier_profiles() -> void:

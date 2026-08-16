@@ -153,8 +153,13 @@ static func _check_back_room_access(library: ContentLibrary, archetype: Dictiona
 	if not bool(run_state.environment_layer_access_status("back_room").get("available", false)):
 		failures.append("Punchline L3 did not open at made Crew standing.")
 	var generator := RunGeneratorScript.new(library)
-	if not bool(generator.enter_environment_layer(run_state, "back_room", false).get("ok", false)) or not _array(run_state.current_environment.get("game_ids", [])).is_empty() or not str(run_state.current_environment.get("layer_ambient_line", "")).contains("Rook"):
-		failures.append("Punchline L3 did not enter as the minimal Rook shell.")
+	var entered_back_room := bool(generator.enter_environment_layer(run_state, "back_room", false).get("ok", false))
+	var back_room_games := _array(run_state.current_environment.get("game_ids", []))
+	var rook_ambient_ok := str(run_state.current_environment.get("layer_ambient_label", "")) == "Rook" \
+		and str(run_state.current_environment.get("layer_ambient_prop", "")) == "patron_talk" \
+		and str(run_state.current_environment.get("layer_ambient_line", "")).contains("Rook")
+	if not entered_back_room or not _json_equal(back_room_games, ["crew_draw_poker"]) or not rook_ambient_ok:
+		failures.append("Punchline L3 did not enter with its single Crew poker table and compatible Rook ambient shell.")
 	var escort_run := RunStateScript.new()
 	escort_run.start_new("PUNCHLINE-L3-ESCORT")
 	escort_run.set_environment(casino)

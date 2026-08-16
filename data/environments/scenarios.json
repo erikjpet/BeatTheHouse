@@ -82,7 +82,7 @@
         "game_modifier_hooks": {"game_hook": "street_craps", "table_tone": "street"},
         "music_profile_override": {"bpm": 82, "ambience": 0.72, "texture": "rain"},
         "presentation": {"palette_tint": "#d4a373", "lighting_key": "dice_circle", "crowd_density": "medium", "signage_line": "CHALK RING. CASH IN HAND."},
-        "exclusive_opportunity": {"event_id": "scenario_street_craps_circle"},
+        "exclusive_opportunity": {"event_id": "scenario_street_craps_circle", "game_id": "craps"},
         "security_overrides": {"strictness_band": "uneven", "cheat_risk_window": "brief"},
         "hook_flags": {"craps_onramp": true, "rumor_anchor": true}
       }
@@ -362,7 +362,7 @@
         "staff_set": ["graveyard_clerk", "machine_tech"],
         "event_pool_add": ["scenario_graveyard_maintenance"],
         "economic_profile_overrides": {"stake_floor": 5, "stake_ceiling": 45},
-        "game_modifier_hooks": {"maintenance_cheat_window": true, "machine_occupancy": "empty"},
+        "game_modifier_hooks": {"maintenance_cheat_window": true, "machine_occupancy": "empty", "coin_pusher": {"prize_item_ids": ["lucky_penny"]}},
         "music_profile_override": {"bpm": 64, "ambience": 0.84, "texture": "fluorescent", "volume": 0.2},
         "presentation": {"palette_tint": "#90e0ef", "lighting_key": "graveyard", "crowd_density": "empty", "signage_line": "MAINTENANCE LIGHT STAYS ON."},
         "exclusive_opportunity": {"event_id": "scenario_graveyard_maintenance"},

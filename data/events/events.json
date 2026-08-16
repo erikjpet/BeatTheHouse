@@ -3634,11 +3634,10 @@
       "summary": "Dice hit brick. Cash changes hands.",
       "choices": [
         {
-          "id": "buy_the_next_throw",
-          "label": "Buy the next throw",
-          "text": "The circle makes room. The real table comes later.",
-          "consequence_summary": "Bankroll -4",
-          "consequences": {"bankroll_delta": -4, "flags": {"street_craps_interest": true}, "resolve_event": true}
+          "id": "join_the_circle",
+          "label": "Join the circle",
+          "text": "The players open the chalk ring and point out where the line cash goes.",
+          "consequences": {"flags": {"street_craps_interest": true}, "resolve_event": true}
         },
         {
           "id": "read_the_circle",
@@ -4211,6 +4210,70 @@
     "payload": {"summary": "Badges fill the floor. The ceiling blinks.", "choices": [
       {"id": "join_the_badges", "label": "Join the badges", "text": "The crowd provides a careful little absence.", "consequence_summary": "Heat -4", "consequences": {"suspicion_delta": -4, "resolve_event": true}},
       {"id": "stay_unbadged", "label": "Stay unbadged", "text": "The floor remembers one face more clearly.", "consequence_summary": "Heat +2", "consequences": {"suspicion_delta": 2, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "numbers_knuckles_collection",
+    "display_name": "Knuckles Collects",
+    "type": "debt",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "lender",
+      "name": "Knuckles",
+      "silhouette": "coat",
+      "portrait_count": 1,
+      "face_layers": [],
+      "bind": "none",
+      "character_id": "crew_knuckles",
+      "voice_line_key": "favor_due"
+    },
+    "scopes": ["any"],
+    "asset_path": "res://assets/art/events/motel_knock.png",
+    "start_summary": "Knuckles comes for the penalty.",
+    "trigger": {"type": "manual"},
+    "payload": {"summary": "The win is gone. Your marker remains.", "choices": [
+      {"id": "take_the_marker", "label": "Take the marker", "text": "Knuckles writes the street debt once.", "consequences": {"flags": {"numbers_knuckles_collection_seen": true}, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "numbers_lucky_swept_collection",
+    "display_name": "Lucky's Whole Bag",
+    "type": "crew",
+    "interaction_mode": "triggered",
+    "presentation": "talk",
+    "speaker": {
+      "role": "stranger",
+      "name": "Lucky",
+      "silhouette": "coat",
+      "portrait_count": 1,
+      "face_layers": [],
+      "bind": "none",
+      "character_id": "crew_lucky",
+      "voice_line_key": "favor_due"
+    },
+    "scopes": ["any"],
+    "asset_path": "res://assets/art/events/motel_knock.png",
+    "start_summary": "Lucky heard the whole bag was swept.",
+    "trigger": {"type": "manual"},
+    "payload": {"summary": "Lucky puts the whole loss on you.", "choices": [
+      {"id": "take_luckys_blame", "label": "Take Lucky's blame", "text": "There is no good version of losing the entire bag under a sweep.", "consequences": {"flags": {"numbers_lucky_swept_talk_seen": true}, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "numbers_desk",
+    "display_name": "The Numbers Desk",
+    "type": "crew",
+    "interaction_mode": "interactable",
+    "scopes": ["crew"],
+    "asset_path": "res://assets/art/events/back_alley_offer.png",
+    "icon_key": "parking_note",
+    "environment_prop": "paper_note",
+    "start_summary": "Carbon paper, five books, one closing clock.",
+    "trigger": {"type": "manual"},
+    "payload": {"summary": "The handle is honest. Every hand is negotiable.", "choices": [
+      {"id": "read_the_books", "label": "Read the books", "text": "Five books report to the desk. Each clerk says only whether today's window is open.", "consequences": {"flags": {"numbers_desk_books_read": true}, "resolve_event": true}},
+      {"id": "leave_the_book", "label": "Leave the book", "text": "The carbon stays facedown.", "consequences": {"resolve_event": true}}
     ]}
   },
   {

@@ -6583,7 +6583,9 @@ func _run() -> void:
 			return
 	app.call("start_foundation_run", "UI-VICTORY-SEED")
 	await process_frame
-	if not await _travel_to_first_game_environment(app):
+	# A scenario-exclusive game may now be valid in the seeded start room. This
+	# report fixture specifically exercises a real timed travel replay first.
+	if not await _travel_to_first_game_environment(app, true):
 		push_error("Victory screen check could not reach a gambling environment after the shop start.")
 		quit(1)
 		return

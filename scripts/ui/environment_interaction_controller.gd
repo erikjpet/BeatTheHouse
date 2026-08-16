@@ -27,6 +27,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	before_travel_objects.append_array(host._home_interactable_objects())
 	before_travel_objects.append_array(casino_spatial_interactable_objects(host))
 	before_travel_objects.append_array(environment_layer_interactable_objects(host))
+	before_travel_objects.append_array(numbers_interactable_objects(host))
 	var after_travel_objects: Array = []
 	var room_return_object = host._parent_home_return_interactable_object()
 	if not room_return_object.is_empty():
@@ -34,6 +35,10 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	after_travel_objects.append_array(host._hook_interactable_objects(host.CONTEXT_MODE_SERVICE, host._service_hook_view_list()))
 	after_travel_objects.append_array(host._hook_interactable_objects(host.CONTEXT_MODE_LENDER, host._lender_hook_view_list()))
 	var travel_choices = host._travel_choice_view_list()
+	var event_options: Array = []
+	for event_value in host._eligible_event_option_view_list():
+		if typeof(event_value) != TYPE_DICTIONARY or str((event_value as Dictionary).get("id", "")) != "numbers_desk":
+			event_options.append(event_value)
 	return host.EnvironmentInteractionViewModelScript.interactable_object_view_list(host.run_state, host.library, {
 		"run_failed_without_recovery": failed,
 		"failed_reason": failed_reason,
@@ -45,7 +50,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"layout": host._current_environment_layout(),
 		"risk_cue": host._risk_cue_text(),
 		"game_sources": game_sources,
-		"event_options": host._eligible_event_option_view_list(),
+		"event_options": event_options,
 		"event_choice_summary": Callable(host, "_event_choice_list_summary"),
 		"event_inline_actions": Callable(host, "_event_inline_response_actions"),
 		"item_offers": host._item_offer_view_list(),
@@ -62,6 +67,62 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_locked": host._closing_time_blocks_environment_actions(),
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	})
+
+
+static func numbers_interactable_objects(host: Variant) -> Array:
+	var objects: Array = []
+	if host.run_state == null:
+		return objects
+	var venue_id := str(host.run_state.current_environment.get("archetype_id", host.run_state.current_world_node_id())).strip_edges()
+	var venue_row: Dictionary = {}
+	for venue_value in host._copy_array(host.run_state.numbers_status().get("venue_status", [])):
+		if typeof(venue_value) == TYPE_DICTIONARY and str((venue_value as Dictionary).get("id", "")) == venue_id:
+			venue_row = (venue_value as Dictionary).duplicate(true)
+			break
+	var current_layer := str(host.run_state.current_environment.get("current_layer_id", "")).strip_edges()
+	var at_desk := venue_id == "small_underground_casino" and current_layer == "back_room"
+	if not venue_row.is_empty():
+		var venue_label := str(venue_row.get("label", host._label_from_id(venue_id)))
+		var book_source := "desk" if at_desk else "book"
+		var object_id := "event:numbers_desk" if at_desk else "numbers:book"
+		var focus_rect: Rect2 = host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_EVENT if at_desk else host.CONTEXT_MODE_NUMBERS, 0)
+		objects.append(host._make_interactable_object({
+			"object_id": object_id,
+			"object_type": host.CONTEXT_MODE_NUMBERS,
+			"source_id": book_source,
+			"label": "The Numbers Desk" if at_desk else "%s Numbers Book" % venue_label,
+			"short_description": "Five books, runner work, and crew paper." if at_desk else "A local book taking three-digit slips.",
+			"presence": "fixture",
+			"interactive": true,
+			"enabled": true,
+			"action_summary": "Work the desk." if at_desk else "Write a straight or box slip.",
+			"visual_key": "event",
+			"prop": "paper_note",
+			"icon_key": "parking_note",
+			"available_actions": [{"id": "open_numbers", "label": "Work the Desk" if at_desk else "Open Book"}],
+			"confirm_action_id": "open_numbers",
+			"focus_rect": focus_rect,
+		}))
+	var silas_here: bool = host.run_state.numbers_silas_is_here()
+	if silas_here:
+		objects.append(host._make_interactable_object({
+			"object_id": "numbers:silas",
+			"object_type": host.CONTEXT_MODE_NUMBERS,
+			"source_id": "silas",
+			"label": "Silas Crow",
+			"short_description": "Silas has something quiet to sell.",
+			"presence": "character",
+			"interactive": true,
+			"enabled": true,
+			"action_summary": "Talk business.",
+			"visual_key": "character",
+			"prop": "patron_talk",
+			"icon_key": "dialogue",
+			"available_actions": [{"id": "open_numbers", "label": "Talk Business"}],
+			"confirm_action_id": "open_numbers",
+			"focus_rect": host._interaction_rect_for_object("numbers:silas", "numbers_silas", 0),
+		}))
+	return objects
 
 
 static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bool = true) -> Array:

@@ -92,12 +92,36 @@
 		]
 	},
 	{
+		"id": "coin_pusher_pack",
+		"display_name": "Coin Pusher Pack",
+		"description": "Quarter Falls, Jackpot Ridge, The Vault Drop, and their machine tools.",
+		"default_enabled": true,
+		"game_ids": ["coin_pusher"],
+		"item_ids": ["coin_return_shim", "cold_quarters", "weighted_keyring", "xray_glasses"]
+	},
+	{
 		"id": "bar_dice_pack",
 		"display_name": "Bar Dice Pack",
 		"description": "Dice, cups, careful wrists.",
 		"default_enabled": true,
 		"game_ids": ["bar_dice"],
 		"item_ids": ["weighted_keyring", "dice_calipers", "false_bottom_cup"]
+	},
+	{
+		"id": "craps_pack",
+		"display_name": "Craps Pack",
+		"description": "Line wagers, practiced releases, and measured dice.",
+		"default_enabled": true,
+		"game_ids": ["craps"],
+		"item_ids": ["weighted_keyring", "dice_calipers", "false_bottom_cup"]
+	},
+	{
+		"id": "crew_poker_pack",
+		"display_name": "Crew Poker Pack",
+		"description": "Friendly back-room draw poker and the Crew's table habits.",
+		"default_enabled": true,
+		"game_ids": ["crew_draw_poker"],
+		"item_ids": []
 	},
 	{
 		"id": "blackjack_pack",
@@ -142,5 +166,13 @@
 		"default_enabled": true,
 		"game_ids": ["video_poker"],
 		"item_ids": ["scratch_pad", "freds_poker_hat", "odds_notebook", "holdout_wax", "sleeve_rig"]
+	},
+	{
+		"id": "numbers_pack",
+		"display_name": "Numbers Pack",
+		"description": "Street lottery paper and collection tools.",
+		"default_enabled": true,
+		"game_ids": [],
+		"item_ids": ["numbers_slips"]
 	}
 ]

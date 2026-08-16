@@ -3008,6 +3008,433 @@
     ]
   },
   {
+    "id": "craps",
+    "display_name": "Craps",
+    "family": "dice",
+    "content_groups": [
+      "craps_pack"
+    ],
+    "gameplay_model": "full_simulation",
+    "module_path": "res://scripts/games/craps.gd",
+    "asset_path": "res://assets/art/games/bar_dice.png",
+    "scene_asset_path": "res://assets/art/game_scenes/bar_dice.png",
+    "environment_prop": "dice_table",
+    "intro": "The stickperson offers the dice with professional patience.",
+    "description": "Set the point, work numbers, command the rail.",
+    "legal_actions": [
+      {
+        "id": "roll_craps",
+        "label": "Roll Dice",
+        "summary": "Place line, Come, Odds, Place, or Field wagers before the throw.",
+        "win_chance": 0,
+        "payout_mult": 0
+      }
+    ],
+    "cheat_actions": [
+      {
+        "id": "dice_setting",
+        "label": "Set Dice",
+        "summary": "Use the practiced release window to bias, never fix, the throw.",
+        "win_chance": 0,
+        "payout_mult": 0,
+        "suspicion_delta": 5
+      },
+      {
+        "id": "dice_switching",
+        "label": "Switch Dice",
+        "summary": "Measure and switch the pair under the cup before the house sees it.",
+        "win_chance": 0,
+        "payout_mult": 0,
+        "suspicion_delta": 12
+      }
+    ],
+    "craps_config": {
+      "state_version": 1,
+      "minimum_stake": 5,
+      "maximum_stake": 1000,
+      "chip_denominations": [
+        1,
+        5,
+        10,
+        25,
+        50,
+        100
+      ],
+      "table_names": [
+        "Marble Rail",
+        "Golden Puck",
+        "House Courtesy",
+        "Midnight Dice"
+      ],
+      "dealer_names": [
+        "Avery",
+        "Camille",
+        "Noor",
+        "Vega"
+      ],
+      "roll_animation_duration_msec": 1450,
+      "stored_history_limit": 24,
+      "visible_history_limit": 8,
+      "rules": {
+        "dice_count": 2,
+        "die_sides": 6,
+        "seven_total": 7,
+        "come_out_naturals": [
+          7,
+          11
+        ],
+        "come_out_craps": [
+          2,
+          3,
+          12
+        ],
+        "point_numbers": [
+          4,
+          5,
+          6,
+          8,
+          9,
+          10
+        ],
+        "dont_pass_bar": 12,
+        "max_odds_multiple": 3,
+        "odds_work_on_come_out": false,
+        "place_bets_work_on_come_out": false,
+        "even_money_payout": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "odds_payouts": {
+          "4": {
+            "numerator": 2,
+            "denominator": 1
+          },
+          "5": {
+            "numerator": 3,
+            "denominator": 2
+          },
+          "6": {
+            "numerator": 6,
+            "denominator": 5
+          },
+          "8": {
+            "numerator": 6,
+            "denominator": 5
+          },
+          "9": {
+            "numerator": 3,
+            "denominator": 2
+          },
+          "10": {
+            "numerator": 2,
+            "denominator": 1
+          }
+        },
+        "place_payouts": {
+          "4": {
+            "numerator": 9,
+            "denominator": 5
+          },
+          "5": {
+            "numerator": 7,
+            "denominator": 5
+          },
+          "6": {
+            "numerator": 7,
+            "denominator": 6
+          },
+          "8": {
+            "numerator": 7,
+            "denominator": 6
+          },
+          "9": {
+            "numerator": 7,
+            "denominator": 5
+          },
+          "10": {
+            "numerator": 9,
+            "denominator": 5
+          }
+        },
+        "field_payouts": {
+          "2": {
+            "numerator": 2,
+            "denominator": 1
+          },
+          "3": {
+            "numerator": 1,
+            "denominator": 1
+          },
+          "4": {
+            "numerator": 1,
+            "denominator": 1
+          },
+          "9": {
+            "numerator": 1,
+            "denominator": 1
+          },
+          "10": {
+            "numerator": 1,
+            "denominator": 1
+          },
+          "11": {
+            "numerator": 1,
+            "denominator": 1
+          },
+          "12": {
+            "numerator": 3,
+            "denominator": 1
+          }
+        },
+        "table_energy_min": 0,
+        "table_energy_max": 100,
+        "table_energy_per_point": 8,
+        "table_energy_seven_out_loss": 18
+      },
+      "crowd_energy": {
+        "scenario_modifier_key": "craps_table_energy",
+        "hot_threshold": 16,
+        "energy_multiplier": 1.0,
+        "music_intensity_scale": 1.0,
+        "max_volume_nudge": 0.08,
+        "max_ambience_nudge": 0.12,
+        "max_bpm_nudge": 10.0,
+        "patron_lines": [
+          "The rail answers the point with a courteous roar.",
+          "The table leans toward the shooter without losing its manners.",
+          "Even the quiet patrons have begun to count the points aloud."
+        ]
+      },
+      "house_edge_documentation": {
+        "pass_line": {
+          "house_edge_percent": 1.414,
+          "rtp_percent": 98.586,
+          "note": "Come-out naturals and craps, then point before seven."
+        },
+        "dont_pass": {
+          "house_edge_percent": 1.364,
+          "rtp_percent": 98.636,
+          "note": "Twelve pushes; otherwise the inverse line wager."
+        },
+        "come": {
+          "house_edge_percent": 1.414,
+          "rtp_percent": 98.586,
+          "note": "Pass-line rules beginning after a point is on."
+        },
+        "dont_come": {
+          "house_edge_percent": 1.364,
+          "rtp_percent": 98.636,
+          "note": "Don't-pass rules beginning after a point is on."
+        },
+        "odds": {
+          "house_edge_percent": 0.0,
+          "rtp_percent": 100.0,
+          "note": "Free odds pay exact mathematical odds with no house edge."
+        },
+        "place_4_10": {
+          "house_edge_percent": 6.667,
+          "rtp_percent": 93.333,
+          "note": "Nine-to-five profit; the wager remains working after a hit."
+        },
+        "place_5_9": {
+          "house_edge_percent": 4.0,
+          "rtp_percent": 96.0,
+          "note": "Seven-to-five profit; the wager remains working after a hit."
+        },
+        "place_6_8": {
+          "house_edge_percent": 1.515,
+          "rtp_percent": 98.485,
+          "note": "Seven-to-six profit; the wager remains working after a hit."
+        },
+        "field": {
+          "house_edge_percent": 2.778,
+          "rtp_percent": 97.222,
+          "note": "Single roll; two pays double and twelve pays triple."
+        }
+      },
+      "rtp_audit": {
+        "sample_rolls": 1000000,
+        "tolerance_percent": 0.35,
+        "setting_sample_rolls": 1000000,
+        "setting_max_seven_probability_reduction": 0.03,
+        "setting_min_seven_probability_reduction": 0.005
+      },
+      "setting": {
+        "practice_flag": "craps_setting_trained",
+        "practice_item_ids": [
+          "weighted_keyring"
+        ],
+        "skill_period_msec": 1500,
+        "skill_perfect_msec": 80,
+        "skill_good_msec": 180,
+        "skill_close_msec": 320,
+        "base_suspicion": 5,
+        "max_bias_permille": 180,
+        "default_security_multiplier": 1.0,
+        "security_band_multipliers": {
+          "low": 0.8,
+          "standard": 1.0,
+          "high": 1.25,
+          "boss": 1.5
+        },
+        "grades": {
+          "perfect": {
+            "bias_permille": 180,
+            "suspicion_modifier": -2,
+            "accuracy": 100,
+            "success": true
+          },
+          "good": {
+            "bias_permille": 110,
+            "suspicion_modifier": 0,
+            "accuracy": 78,
+            "success": true
+          },
+          "close": {
+            "bias_permille": 50,
+            "suspicion_modifier": 2,
+            "accuracy": 48,
+            "success": true
+          },
+          "miss": {
+            "bias_permille": 0,
+            "suspicion_modifier": 5,
+            "accuracy": 20,
+            "success": false
+          },
+          "blown": {
+            "bias_permille": 0,
+            "suspicion_modifier": 9,
+            "accuracy": 0,
+            "success": false
+          }
+        },
+        "item_effect_keys": [
+          "craps_setting_window_msec",
+          "craps_setting_bias_permille",
+          "cheat_suspicion_delta"
+        ]
+      },
+      "switching": {
+        "required_item_ids": [
+          "dice_calipers",
+          "false_bottom_cup"
+        ],
+        "loaded_dice_item_ids": [
+          "precision_loaded_dice",
+          "mags_loaded_dice"
+        ],
+        "loaded_dice_bias_bonus_permille": 80,
+        "skill_period_msec": 1200,
+        "skill_perfect_msec": 55,
+        "skill_good_msec": 125,
+        "skill_close_msec": 240,
+        "base_suspicion": 12,
+        "max_bias_permille": 320,
+        "confiscate_on_failure": true,
+        "default_security_multiplier": 1.0,
+        "security_band_multipliers": {
+          "low": 0.85,
+          "standard": 1.0,
+          "high": 1.35,
+          "boss": 1.65
+        },
+        "grades": {
+          "perfect": {
+            "bias_permille": 240,
+            "suspicion_modifier": -4,
+            "accuracy": 100,
+            "success": true
+          },
+          "good": {
+            "bias_permille": 160,
+            "suspicion_modifier": 0,
+            "accuracy": 76,
+            "success": true
+          },
+          "close": {
+            "bias_permille": 0,
+            "suspicion_modifier": 5,
+            "accuracy": 42,
+            "success": false
+          },
+          "miss": {
+            "bias_permille": 0,
+            "suspicion_modifier": 9,
+            "accuracy": 16,
+            "success": false
+          },
+          "blown": {
+            "bias_permille": 0,
+            "suspicion_modifier": 14,
+            "accuracy": 0,
+            "success": false
+          }
+        },
+        "item_effect_keys": [
+          "craps_switching_window_msec",
+          "craps_switching_bias_permille",
+          "cheat_suspicion_delta"
+        ]
+      },
+      "variants": {
+        "street_craps": {
+          "scenario_hook_key": "game_hook",
+          "scenario_hook_value": "street_craps",
+          "presentation": "street_circle",
+          "currency": "cash",
+          "allowed_bets": [
+            "pass_line",
+            "dont_pass"
+          ],
+          "minimum_stake": 2,
+          "maximum_stake": 20,
+          "denominations": [
+            1,
+            2,
+            5,
+            10,
+            20
+          ],
+          "circle_names": [
+            "The Chalk Ring",
+            "Brick-Side Dice",
+            "Rain Gutter Circle"
+          ],
+          "caller_names": [
+            "June",
+            "Lowell",
+            "Teeth"
+          ],
+          "guidance": {
+            "seen_flag": "street_craps_guidance_seen",
+            "lines": [
+              "Line cash on Pass if you ride with the shooter; Don't Pass if you ride with seven.",
+              "First throw sets a number unless seven or eleven pays Pass, or two, three, twelve cuts it.",
+              "Once a point lands, it has to repeat before seven. Pick your side and call the dice."
+            ]
+          },
+          "disperse": {
+            "sweep_adjacent": true,
+            "heat_spike_delta": 8,
+            "working_wager_rule": "refund_at_face_value",
+            "pending_wager_rule": "return_uncommitted_cash",
+            "message": "Blue light catches the brick. The circle breaks and every unresolved stake goes back at face value."
+          },
+          "training": {
+            "progress_flag": "craps_setting_street_progress",
+            "trained_flag": "craps_setting_trained",
+            "completed_line_resolutions_required": 2,
+            "grant_outcomes": [
+              "win"
+            ],
+            "completion_line": "The circle nods at your release. You can carry that touch to a casino table."
+          }
+        }
+      }
+    }
+  },
+  {
     "id": "roulette",
     "display_name": "Roulette",
     "family": "wheel",
@@ -3054,6 +3481,31 @@
     ]
   },
   {
+    "id": "crew_draw_poker",
+    "display_name": "Back-Room Poker",
+    "family": "cards",
+    "content_groups": [
+      "crew_poker_pack"
+    ],
+    "gameplay_model": "full_simulation",
+    "module_path": "res://scripts/games/crew_draw_poker.gd",
+    "asset_path": "res://assets/art/games/poker.png",
+    "scene_asset_path": "res://assets/art/game_scenes/poker.png",
+    "environment_prop": "card_table",
+    "intro": "The back-room table keeps the stakes small and the cards honest.",
+    "description": "Friendly five-card draw: bet, draw, bet, showdown.",
+    "legal_actions": [
+      {
+        "id": "deal",
+        "label": "Ante & Deal",
+        "summary": "Ante cash, deal five, bet once, draw once, and bet once more.",
+        "win_chance": 0,
+        "payout_mult": 0
+      }
+    ],
+    "cheat_actions": []
+  },
+  {
     "id": "video_poker",
     "display_name": "Video Poker",
     "family": "cards",
@@ -3086,5 +3538,170 @@
         "suspicion_delta": 14
       }
     ]
+  },
+  {
+    "id": "coin_pusher",
+    "display_name": "Quarter Falls",
+    "family": "coin_pusher",
+    "content_groups": ["coin_pusher_pack"],
+    "gameplay_model": "full_simulation",
+    "module_path": "res://scripts/games/coin_pusher.gd",
+    "asset_path": "res://assets/art/games/slot.png",
+    "scene_asset_path": "res://assets/art/game_scenes/slot.png",
+    "environment_prop": "slot_machine",
+    "intro": "Two shelves shove a pile somebody else started.",
+    "description": "Aim. Read the shelves. Walk the alarm line.",
+    "legal_actions": [
+      {
+        "id": "drop_quarter",
+        "label": "Drop Quarter",
+        "summary": "Pick a lane and drop on the shelf beat.",
+        "win_chance": 0,
+        "payout_mult": 0
+      }
+    ],
+    "cheat_actions": [
+      {
+        "id": "nudge_machine",
+        "label": "Nudge",
+        "summary": "Choose tap, shove, or slam; aim left, right, or front. The cabinet warns before it bites.",
+        "win_chance": 0,
+        "payout_mult": 0,
+        "suspicion_delta": 0
+      }
+    ],
+    "coin_pusher_tuning": {
+      "state_schema_version": 2,
+      "variation_id": "quarter_falls",
+      "variation_distribution": [
+        {"id": "quarter_falls", "weight": 40},
+        {"id": "jackpot_ridge", "weight": 30},
+        {"id": "vault_drop", "weight": 30}
+      ],
+      "variations": {
+        "jackpot_ridge": {
+          "display_name": "Jackpot Ridge",
+          "schedule_count": 18,
+          "spawn_gap_min": 2,
+          "spawn_gap_max": 5,
+          "multiplier_values": [2, 3, 5],
+          "multiplier_drop_count": 2,
+          "puck_push_threshold": 2,
+          "lock_cycles": 1,
+          "ridge_run_cycles": 3,
+          "alarm_tolerance_bonus": 3,
+          "tolerance_band_size": 2,
+          "nudge_force_granularity": 1,
+          "force_trim_order": ["feather", "balanced", "heavy"],
+          "force_trim_push_delta": {"feather": -1, "balanced": 0, "heavy": 1},
+          "force_trim_tolerance_delta": {"feather": -1, "balanced": 0, "heavy": 1},
+          "documented_ev_band": [0.70, 1.08]
+        },
+        "vault_drop": {
+          "display_name": "The Vault Drop",
+          "opening_fragment_count": 6,
+          "schedule_count": 16,
+          "spawn_gap_min": 2,
+          "spawn_gap_max": 5,
+          "fragment_push_threshold": 2,
+          "alarm_tolerance_delta": -2,
+          "progressive_floor": 120,
+          "progressive_initial_min": 160,
+          "progressive_initial_max": 260,
+          "progressive_growth_per_action": 2,
+          "progressive_crowded_growth_per_action": 4,
+          "reset_cell_count": 1,
+          "reset_odds_floor": 0.111111,
+          "vault_cells": [
+            {"kind": "cash", "cash": 8, "count": 2},
+            {"kind": "cash", "cash": 18, "count": 1},
+            {"kind": "cash", "cash": 35, "count": 1},
+            {"kind": "fragment_refund", "fragments": 2, "count": 2},
+            {"kind": "item", "item_id": "lucky_penny", "count": 1},
+            {"kind": "jackpot", "count": 1},
+            {"kind": "reset", "count": 1}
+          ],
+          "documented_ev_by_meter": {
+            "thin_120": [20.50, 21.50],
+            "building_200": [29.40, 30.40],
+            "fat_300": [40.50, 41.50]
+          },
+          "vault_ev_basis": "Cash-only expected value per spent fragment before item and fragment-refund option value."
+        }
+      },
+      "phase_steps": 12,
+      "force_order": ["tap", "shove", "slam"],
+      "default_force": "tap",
+      "direction_order": ["left", "right", "front"],
+      "default_direction": "front",
+      "security_band_deltas": {
+        "lax": 2,
+        "relaxed": 1,
+        "loose": 1,
+        "normal": 0,
+        "low": 0,
+        "attentive": -1,
+        "tight": -1,
+        "strict": -2,
+        "high": -2
+      },
+      "tell_labels": ["steady", "cabinet rocks", "alarm chirps", "attendant looks over"],
+      "lane_count": 5,
+      "cell_count": 6,
+      "cell_capacity": 4,
+      "initial_height_min": 2,
+      "initial_height_max": 5,
+      "drop_cost": 1,
+      "coin_value": 1,
+      "upper_phase_step": 3,
+      "lower_phase_step": 5,
+      "clean_nudge_phase": 3,
+      "clean_nudge_window_steps": 1,
+      "forward_phase_window_steps": 2,
+      "nudge_forces": {
+        "tap": {"tolerance_cost": 1, "push_strength": 1},
+        "shove": {"tolerance_cost": 2, "push_strength": 2},
+        "slam": {"tolerance_cost": 4, "push_strength": 4}
+      },
+      "shelf_push_percent": 78,
+      "nudge_push_percent": 94,
+      "forward_push_bonus_percent": 8,
+      "retracted_push_penalty_percent": 10,
+      "mistimed_push_penalty": 2,
+      "max_settle_passes": 6,
+      "retracted_stack_threshold_bonus": 1,
+      "strong_push_threshold": 4,
+      "strong_push_extra_coins": 1,
+      "front_nudge_lane_radius": 1,
+      "skill_accuracy_base": 70,
+      "skill_accuracy_phase_penalty": 12,
+      "gutter_edge_percent": 24,
+      "gutter_center_percent": 4,
+      "gutter_retracted_bonus_percent": 8,
+      "alarm_tolerance_min": 6,
+      "alarm_tolerance_max": 9,
+      "hard_alarm_heat": 22,
+      "staff_watch_suspicion_floor": 12,
+      "attendant_glance_heat": 2,
+      "slam_bonus_push": 2,
+      "cold_quarters_density": 3,
+      "coin_return_shim_uses": 3,
+      "rider_push_threshold": 2,
+      "prize_count_min": 1,
+      "prize_count_max": 3,
+      "prize_initial_cell_max": 3,
+      "documented_ev_band": [0.72, 0.94],
+      "scenario_reset_contract": {
+        "path": "scenario_game_modifiers.coin_pusher",
+        "flag": "reset_pile",
+        "token": "reset_token",
+        "meaning": "Someone else played it; replace the persisted pile once per token."
+      },
+      "prize_riders": [
+        {"kind": "chip_stack", "label": "chip stack", "cash_value": 4, "weight": 55},
+        {"kind": "ticket_roll", "label": "ticket roll", "cash_value": 7, "weight": 35},
+        {"kind": "scenario_item", "label": "wrapped prize", "item_id": "", "cash_value": 0, "weight": 10}
+      ]
+    }
   }
 ]

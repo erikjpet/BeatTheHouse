@@ -81,13 +81,13 @@ Wave C games are intentionally parallel-friendly.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| craps06_1 | `craps06_1_craps_core_prompt.md` | IN_PROGRESS | — | craps06_2, crew06_8 | PM:Codex/sub:1 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
-| craps06_2 | `craps06_2_street_craps_prompt.md` | IN_PROGRESS | craps06_1, env06_1 | — | PM:Codex/sub:5 | 2026-08-14 | | Built and consolidated on `codex/wave-c-integration`; final PM acceptance pending. |
-| push06_1 | `push06_1_pusher_core_prompt.md` | IN_PROGRESS | env06_1 | push06_2 | PM:Codex/sub:2 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
-| push06_2 | `push06_2_pusher_variations_prompt.md` | IN_PROGRESS | push06_1, town06_1 | — | PM:Codex/sub:6 | 2026-08-14 | | Built and consolidated on `codex/wave-c-integration`; final PM acceptance pending before superseding rework06_2. |
+| craps06_1 | `craps06_1_craps_core_prompt.md` | DONE | — | craps06_2, crew06_8 | PM:Codex/sub:1 | 2026-08-14 | 2026-08-16 | PM verified full rules/chips/save/cheat scope, million-roll RTP, exact-tree full matrix, 10-seed determinism, and focused/canonical visual QA PASS. |
+| craps06_2 | `craps06_2_street_craps_prompt.md` | DONE | craps06_1, env06_1 | — | PM:Codex/sub:5 | 2026-08-14 | 2026-08-16 | PM verified shared rules, cash-only teaching/dispersal/training, save/UI, RTP parity, exact-tree full matrix, determinism, and focused/canonical visual QA PASS. |
+| push06_1 | `push06_1_pusher_core_prompt.md` | DONE | env06_1 | push06_2 | PM:Codex/sub:2 | 2026-08-14 | 2026-08-16 | PM verified action-boundary pile/nudge/alarm/persistence/economy, exact-tree full matrix, determinism, and focused/canonical visual QA PASS; simulation model is superseded by rework06_2. |
+| push06_2 | `push06_2_pusher_variations_prompt.md` | DONE | push06_1, town06_1 | — | PM:Codex/sub:6 | 2026-08-14 | 2026-08-16 | PM verified Ridge/Vault mechanics, persistence, seeded reachability, EV, exact-tree full matrix, determinism, and visual QA PASS; simulation model is superseded by rework06_2. |
 | streets06_1 | `streets06_1_streets_framework_prompt.md` | DONE | town06_1, crew06_1 | crew06_3/6/8 | PM:Codex/sub:3 | 2026-08-14 | 2026-08-14 | PM verified scope/design, systems/UI, 10-seed determinism, and package/multi-stop/Hold visual QA on the integrated tree. |
-| crew06_2 | `crew06_2_backroom_poker_prompt.md` | IN_PROGRESS | crew06_1, env06_4 | crew06_9 | PM:Codex/sub:4 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution; queued for first available subagent slot. |
-| crew06_3 | `crew06_3_numbers_prompt.md` | IN_PROGRESS | crew06_1, streets06_1, town06_2 | crew06_9 (grievance src) | PM:Codex/sub:7 | 2026-08-14 | | Built against the now-superseded Streets multi-stop API; final acceptance pending, then rework06_1 must re-point Numbers onto the real-map delivery API before Wave D. |
+| crew06_2 | `crew06_2_backroom_poker_prompt.md` | DONE | crew06_1, env06_4 | crew06_9 | PM:Codex/sub:4 | 2026-08-14 | 2026-08-16 | PM verified deterministic policies, hidden tells, showdown-gated learning, trust/caps/save, exact-tree full matrix, determinism, and focused/canonical visual QA PASS. |
+| crew06_3 | `crew06_3_numbers_prompt.md` | DONE | crew06_1, streets06_1, town06_2 | crew06_9 (grievance src) | PM:Codex/sub:7 | 2026-08-14 | 2026-08-16 | PM verified slips/routes/fix/past-post/leak/economy, exact-tree full matrix, determinism, and 12/12 Numbers visual coverage PASS; rework06_1 must re-point delivery consumers onto the real-map API before Wave D. |
 
 ### Reworks — owner-rejected systems (round-5, 2026-08-14)
 
@@ -402,6 +402,22 @@ What happens then is the owner's, not an agent's:
   deterministic dice fixture is not entering the production rolling phase.
   The assertion stays binding; PM returned the slice for exact clock/state-path
   diagnosis rather than accepting a timing guess or weakening visual coverage.
+- 2026-08-14 [craps06_1] Final acceptance preserved the production clock and
+  corrected it to remain live while the run is paused, propagated the shared
+  reduced-motion setting through the game-surface snapshot, and matched Grand
+  Casino placement capacity to all seven authored objects (7/7, 4/4, and 2/2
+  rooms now prove zero overlap). PM independently verified the complete bet
+  surface, dice motion, idle liveness, and static reduced-motion capture.
+- 2026-08-14 [craps06_2] The scenario's exclusive `game_id` correctly makes
+  Street Craps playable in a seeded starting Back Alley; this exposed a UI
+  victory fixture that assumed finding a game always required travel. The
+  fixture now explicitly performs real travel before asserting replay timing,
+  preserving both production injection and every travel/report assertion.
+- 2026-08-14 [push06_1] Reduced-motion acceptance uses the real settings-apply
+  boundary, because the lower-level accessibility styling helper does not
+  rebuild active game snapshots. Focused and canonical proofs now require a
+  frozen motion signature, zero redraws, no continuous redraw, and unchanged
+  visible pile/rider/tell state.
 
 - 2026-08-14 [fix06_1] Owner reported scenario event icons with no apparent
   action. PM headless probes (15 seeds, all archetypes + Punchline L2): 39/42
@@ -469,6 +485,19 @@ What happens then is the owner's, not an agent's:
   missing `game_action` ActionResult identity, and Scratch Ticket resolve average
   1.708 ms > 1.500 ms. Acceptance repair is delegated; no assertion or budget is
   waived. Numbers' old Streets dependency remains explicitly pending rework06_1.
+- 2026-08-16 [Wave C acceptance] Root repairs landed without weakening gates:
+  canonical Punchline L2 data was restored while L3 now explicitly owns the
+  Numbers desk at `[680,240]`; Roulette final/settled motion is continuous;
+  Coin Pusher surface commands match their advertised bindings; omitted game
+  action types again default to `game_action`; and Craps now has an explicit
+  nonzero idle-liveness floor. The Numbers visual QA was corrected to the
+  established PixelSceneCanvas schema and strengthened to exercise the real
+  Crew Poker object plus DITCH/travel/stranded consequences.
+- 2026-08-16 [Wave C acceptance] One isolated default performance run produced
+  a non-reproducible Scratch Ticket max spike (5.395 ms > 4.000 ms). No budget
+  or assertion changed. The next two PM runs passed with max 1.875/1.424 ms;
+  agent runs also passed (max 1.270 ms and focused max 1.615 ms). Acceptance is
+  based on the unchanged gate's repeated clean results, not a waiver.
 
 ## Work Log
 
@@ -558,6 +587,27 @@ What happens then is the owner's, not an agent's:
   accepted and archived Streets. The owner must consume the frozen multi-stop
   API unchanged and add a distinct reachable L3 desk beside Poker's reserved
   table position; PM retains board, integration, verification, and push.
+- 2026-08-14 [craps06_1] DONE after integrated PM acceptance of the complete
+  Craps rules/chips/save/cheat surface, million-roll RTP, systems/UI, 10-seed
+  determinism, canonical visual QA, and focused table/liveness captures. The
+  stable rules engine and Grand Casino surface now unblock craps06_2 and the
+  Craps dependency of crew06_8.
+- 2026-08-14 [craps06_2] Wave C Stage 2 Street Craps execution claimed after
+  PM accepted the shared Craps rules engine and env06_1 modifier seam. The
+  subagent owns implementation in isolation; PM retains board, archival,
+  integration, runtime verification, and push ownership.
+- 2026-08-14 [craps06_2] DONE; the scenario-only cash circle reuses the casino
+  rules engine, teaches Pass/Don't, fairly refunds on sweep/heat dispersal,
+  grants optional setting practice, and proves exact core RTP parity. Focused
+  and canonical visuals, systems/UI, and 10-seed determinism pass.
+- 2026-08-14 [push06_1] DONE; Quarter Falls now supplies the deterministic
+  action-boundary pile, universal nudge/tell/alarm system, node persistence,
+  prize riders, rumor/reputation seams, and machine-only lockdown. All gates
+  and five focused visual states pass, unblocking push06_2.
+- 2026-08-14 [push06_2] Wave C Stage 2 Pusher variations execution claimed
+  after PM accepted the shared pile/nudge/alarm engine and town-state seams.
+  The subagent owns isolated implementation; PM retains board, archival,
+  integration, runtime verification, and push ownership.
 - 2026-08-14 [fix06_1] Codex claimed the dead scenario event interaction fix;
   implementation will repair the generic normalization seam and add a permanent
   generated-environment interactability class guard plus UI click-through.
@@ -569,3 +619,14 @@ What happens then is the owner's, not an agent's:
   the missing zero-trust Numbers visual correction, reproduced six combined-tree
   gate failures against clean `main` baselines, and delegated exact root-cause
   repair before determinism, visual QA, merge, or closure can proceed.
+- 2026-08-16 [Wave C original implementation closure] Six consolidated rows
+  are DONE and merged after an exact-tree full matrix, all-script parse,
+  10-seed/580-checkpoint determinism (`231360296`), canonical visual QA, and
+  focused 1280x720 review all passed. APIs now available downstream: shared
+  Craps rules/table state plus Street Craps training/dispersal; Coin Pusher
+  variation content and nudge/alarm/persistence contracts; deterministic Crew
+  Poker policies, hidden tells, learning, and trust writes; and Numbers
+  draw/slip/fix/past-post/leak/economy state. Two seams remain explicitly
+  superseded rather than silently accepted: rework06_1 replaces synthetic
+  Streets and must re-point Numbers delivery consumers; rework06_2 replaces
+  the abstract pusher simulation while preserving visible features.

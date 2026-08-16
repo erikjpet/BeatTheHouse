@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `push06_2` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-16
+- **Completion/implementation commits:** `819547ae`, `2ccee5c4`, `d33ed7a1`, with integrated acceptance repairs `91a9a3d7` and `2af97740`.
+- **Verification:** PM line-by-line scope/design review; Ridge/Vault lifecycle, persistence, seeded distribution, and EV contracts; exact-tree full matrix; two consecutive default performance passes after one non-reproducible host spike; 10-seed/580-checkpoint determinism (`231360296`); canonical and focused visual QA all PASS.
+- **Deviations:** The implementation satisfies this original prompt, but the owner rejected its abstract pile model on design grounds. `rework06_2` supersedes the simulation core while preserving the required visible features and variation identities.
 
 # Agent Prompt — 0.6 push06_2: Jackpot Ridge + The Vault Drop
 
