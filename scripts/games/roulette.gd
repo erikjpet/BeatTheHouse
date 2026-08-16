@@ -2505,8 +2505,6 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary, low_detail: bool =
 		if trajectory.is_empty() and winning_index >= 0 and winning_index < count:
 			ball_angle = fposmod(wheel_angle + (float(winning_index) + 0.5) / float(count) * TAU, TAU)
 			ball_radius = WHEEL_RADIUS * 0.58
-		else:
-			ball_angle = fposmod(ball_angle + float(motion.get("settled_drift", 0.0)), TAU)
 		bounce = 0.0
 	var ball_pos := WHEEL_CENTER + Vector2(cos(ball_angle), sin(ball_angle)) * (ball_radius + bounce)
 	surface.draw_circle(ball_pos, 6.0, Color("#e9f2f2"))
@@ -2524,11 +2522,11 @@ func _roulette_wheel_motion(surface, surface_state: Dictionary) -> Dictionary:
 	var wheel_default_angle := clock * -0.5 if spin_active else 0.0
 	var wheel_angle := float(keyframe.get("wheel_angle", wheel_default_angle))
 	var settled_time_msec := int(surface_state.get("surface_time_msec", Time.get_ticks_msec()))
-	if surface != null and surface.has_method("surface_render_elapsed_msec"):
-		settled_time_msec += maxi(0, int(surface.surface_render_elapsed_msec()))
-	var settled_elapsed := maxf(0.0, float(settled_time_msec - int(last_result.get("resolved_at_msec", 0)) - SPIN_ANIMATION_DURATION_MSEC) / 1000.0) if settled_spin else 0.0
-	var settled_drift := fposmod(settled_elapsed * -0.18, TAU) if settled_spin else 0.0
-	if settled_spin:
+	var settled_elapsed := maxf(0.0, float(settled_time_msec - int(last_result.get("resolved_at_msec", 0)) - SPIN_ANIMATION_DURATION_MSEC) / 1000.0) if settled_spin or progress >= 1.0 else 0.0
+	if (settled_spin or progress >= 1.0) and surface != null and surface.has_method("surface_render_elapsed_msec"):
+		settled_elapsed += float(maxi(0, int(surface.surface_render_elapsed_msec()))) / 1000.0
+	var settled_drift := fposmod(settled_elapsed * -0.18, TAU) if settled_spin or progress >= 1.0 else 0.0
+	if settled_spin or progress >= 1.0:
 		wheel_angle = fposmod(wheel_angle + settled_drift, TAU)
 	elif not spin_active:
 		wheel_angle = fposmod(wheel_angle + clock * -0.16, TAU)
@@ -2537,6 +2535,13 @@ func _roulette_wheel_motion(surface, surface_state: Dictionary) -> Dictionary:
 	var ball_radius := float(keyframe.get("ball_radius", WHEEL_RADIUS - 9.0))
 	if not spin_active and not settled_spin:
 		ball_angle = ball_default_angle
+	elif settled_spin or progress >= 1.0:
+		ball_angle += settled_drift
+	# Keyframes may end just below zero while the settled drift path wraps into
+	# [0, TAU). Canonicalize both paths so the identical visible angle also has
+	# an identical handoff signature.
+	wheel_angle = fposmod(wheel_angle, TAU)
+	ball_angle = fposmod(ball_angle, TAU)
 	return {
 		"spin_active": spin_active,
 		"keyframe": keyframe,

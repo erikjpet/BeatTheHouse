@@ -526,7 +526,7 @@ static func build_action_result(payload: Dictionary = {}) -> Dictionary:
 	var ended := bool(deltas.get("ended", false))
 	var result := {
 		"ok": bool(payload.get("ok", true)),
-		"type": str(payload.get("type", "action_result")),
+		"type": str(payload.get("type", "game_action")),
 		"source_id": str(payload.get("source_id", "")),
 		"game_id": str(payload.get("game_id", "")),
 		"action_id": str(payload.get("action_id", "")),
