@@ -99,8 +99,8 @@ the implementations. Wave C cannot close until both are DONE.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| rework06_1 | `rework06_1_map_delivery_prompt.md` | TODO | town06_1/2/3, crew06_1 (all DONE) | crew06_3 re-point, crew06_6, crew06_8 | | | | Deletes the synthetic Streets grid. Delivery becomes a variation of the real world map: targets are real nodes with generatable environments, movement is normal travel, drops are in-venue beats. |
-| rework06_2 | `rework06_2_coin_pusher_simulation_prompt.md` | TODO | env06_1, town06_1 (DONE) | Wave C closure | | | | Replaces the coarse height-grid with a real discrete-coin simulation: individual coins, stacking, gravity, multi-level falls, cascades, plus a unique bonus sub-game per variation. Deterministic fixed-point solver, not an off-the-shelf engine. |
+| rework06_1 | `rework06_1_map_delivery_prompt.md` | IN_PROGRESS | town06_1/2/3, crew06_1 (all DONE) | crew06_3 re-point, crew06_6, crew06_8 | PM:Codex/sub:8 | 2026-08-16 | | PM-orchestrated isolated execution; subagent owns implementation only, PM owns board, integration, verification, archival, and push. |
+| rework06_2 | `rework06_2_coin_pusher_simulation_prompt.md` | IN_PROGRESS | env06_1, town06_1 (DONE) | Wave C closure | PM:Codex/sub:9 | 2026-08-16 | | PM-orchestrated isolated execution; subagent owns implementation only, PM owns board, integration, verification, archival, and push. |
 
 ### Wave D — Crew depth
 
@@ -630,3 +630,9 @@ What happens then is the owner's, not an agent's:
   superseded rather than silently accepted: rework06_1 replaces synthetic
   Streets and must re-point Numbers delivery consumers; rework06_2 replaces
   the abstract pusher simulation while preserving visible features.
+- 2026-08-16 [Rework Stage] PM claimed rework06_1 and rework06_2 for parallel
+  isolated execution after the original Wave C merge passed post-merge
+  validation. Delivery must replace the synthetic grid with normal real-map
+  travel and re-point Numbers consumers; Coin Pusher must replace the height
+  grid with deterministic fixed-point individual-coin simulation. PM retains
+  single-writer board, integration, acceptance, archival, and push ownership.
