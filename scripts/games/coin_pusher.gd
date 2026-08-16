@@ -158,8 +158,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"coin_pusher_shim_uses": int(machine.get("shim_uses_remaining", 0)),
 		"native_selected_surface_actions": [DROP_ACTION, NUDGE_ACTION],
 		"surface_action_bindings": {
-			"legal": {"action": DROP_ACTION, "index": 0},
-			"cheat": {"action": NUDGE_ACTION, "index": 0},
+			"legal": {"action": "coin_pusher_drop", "index": 0},
+			"cheat": {"action": "coin_pusher_nudge", "index": 0},
 		},
 		"surface_animation_channels": [
 			GameModule.surface_animation_channel(
