@@ -42,6 +42,7 @@ const GAME_IDLE_LIVENESS := {
 	"scratch_tickets": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"slot": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 0, "zero_reason": "The idle slot cabinet is static until autoplay or a spin animation starts."},
 	"bar_dice": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
+	"craps": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"blackjack": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"baccarat": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"roulette": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
