@@ -2847,6 +2847,10 @@ func _verify_numbers_surfaces() -> void:
 	_cover("numbers_zero_trust_past_post")
 	_require(not _click_button_exact("Back").is_empty(), "Zero-trust late-book popup could not close through Back.")
 	await _settle()
+	# The desk fixture starts a fresh Numbers day after the late-book checks have
+	# advanced the shared action clock. Reset both authorities together so the
+	# visible runner exercises a real before-post collection window.
+	run_state.event_cadence["action_index"] = 0
 	run_state.numbers_state.reset(run_state.seed_value)
 	run_state.call("_sync_numbers_inventory_marker")
 
@@ -2863,14 +2867,20 @@ func _verify_numbers_surfaces() -> void:
 	await _settle()
 	canvas = app.get("environment_canvas") as Control
 	var desk_object := _canvas_object_by_id(canvas, "event:numbers_desk")
-	_require(not desk_object.is_empty() and str(desk_object.get("object_type", "")) == "numbers", "Punchline back room did not replace the copy-only event with the production Numbers desk.")
-	var desk_rect := _snapshot_rect(desk_object.get("focus_rect", {}))
+	_require(not desk_object.is_empty() and str(desk_object.get("type", "")) == "numbers", "Punchline back room did not replace the copy-only event with the production Numbers desk.")
+	var desk_rect := _canvas_object_normalized_rect(desk_object)
 	var accepted_desk_point := Vector2(680.0 / BOARD_SIZE.x, 240.0 / BOARD_SIZE.y)
 	_require(desk_rect.has_point(accepted_desk_point), "Numbers desk moved away from the authored L3 spot at [680,240].")
-	var poker_object := _canvas_object_by_id(canvas, "game:poker")
+	var poker_object := _canvas_object_by_id(canvas, "game:crew_draw_poker")
+	_require(not poker_object.is_empty(), "Combined L3 scene did not expose its authored Crew Poker table.")
 	if not poker_object.is_empty():
-		var poker_rect := _snapshot_rect(poker_object.get("focus_rect", {}))
+		var poker_rect := _canvas_object_normalized_rect(poker_object)
 		_require(not poker_rect.intersects(desk_rect) and not (await _click_canvas_object_data(canvas, poker_object, "game")).is_empty(), "Combined L3 scene made Poker and Numbers overlap or left Poker unreachable.")
+		await _settle()
+		app.call("clear_interaction_focus", true)
+		await _settle()
+		canvas = app.get("environment_canvas") as Control
+		desk_object = _canvas_object_by_id(canvas, "event:numbers_desk")
 	_require(not (await _double_click_canvas_object_data(canvas, desk_object, "numbers")).is_empty(), "Numbers desk did not open through its visible back-room prop.")
 	await _settle()
 	var desk_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
@@ -2893,7 +2903,35 @@ func _verify_numbers_surfaces() -> void:
 	_record_state("numbers_runner_surface", "Lucky's associate collection entered the live multi-stop Streets surface from the L3 desk.")
 	_require(not _click_button_exact("DITCH").is_empty(), "Numbers runner fixture could not leave the Streets surface through its visible Ditch action.")
 	await _settle()
+	var ditched_runner := run_state.active_streets_run
+	_require(
+		str(ditched_runner.get("status", "")) == "resolved"
+			and str((ditched_runner.get("resolution", {}) as Dictionary).get("reason", "")) == "ditched",
+		"Numbers runner Ditch did not resolve through the authored Streets failure path."
+	)
+	_require(
+		str(run_state.current_environment.get("archetype_id", "")) == "small_underground_casino"
+			and str(run_state.current_environment.get("current_layer_id", "")) == "club",
+		"Numbers runner Ditch did not consume its authored Punchline travel continuation."
+	)
+	_require(
+		run_state.run_status == "failed" and run_state.run_failure_reason == "stranded",
+		"Numbers runner Ditch did not preserve its terminal stranded consequence."
+	)
 
+	# The made-rank fix is an independent desk contract. After proving the Ditch
+	# consequence above, install a fresh L3 fixture rather than pretending the
+	# failed runner route left the player inside the back room.
+	run_state.run_status = "active"
+	run_state.run_failure_reason = ""
+	run_state.run_failure_message = ""
+	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_numbers_fix_desk", {
+		"event_ids": ["numbers_desk"],
+		"required_event_ids": ["numbers_desk"],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+	}, 200, "back_room")
 	run_state.crew_trust_by_member["crew_lucky"] = 60
 	run_state.crew_trust_by_member["crew_mags"] = 60
 	run_state.numbers_state.fix_state = {"status": "ready", "retry_day": 0}
@@ -3889,6 +3927,18 @@ func _snapshot_rect(value: Variant) -> Rect2:
 		Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))),
 		Vector2(float(data.get("w", 0.0)), float(data.get("h", 0.0)))
 	)
+
+
+func _canvas_object_normalized_rect(object_data: Dictionary) -> Rect2:
+	var center_value: Variant = object_data.get("position", Vector2.ZERO)
+	var size_value: Variant = object_data.get("size", Vector2.ZERO)
+	if typeof(center_value) != TYPE_VECTOR2 or typeof(size_value) != TYPE_VECTOR2:
+		return Rect2()
+	var normalized_size := Vector2(
+		float((size_value as Vector2).x) / BOARD_SIZE.x,
+		float((size_value as Vector2).y) / BOARD_SIZE.y
+	)
+	return Rect2((center_value as Vector2) - normalized_size * 0.5, normalized_size)
 
 
 func _environment_canvas_is_primary() -> bool:
