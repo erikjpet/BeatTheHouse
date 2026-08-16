@@ -82,12 +82,25 @@ Wave C games are intentionally parallel-friendly.
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | craps06_1 | `craps06_1_craps_core_prompt.md` | IN_PROGRESS | — | craps06_2, crew06_8 | PM:Codex/sub:1 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
-| craps06_2 | `craps06_2_street_craps_prompt.md` | TODO | craps06_1, env06_1 | — | | | | |
+| craps06_2 | `craps06_2_street_craps_prompt.md` | IN_PROGRESS | craps06_1, env06_1 | — | PM:Codex/sub:5 | 2026-08-14 | | Built and consolidated on `codex/wave-c-integration`; final PM acceptance pending. |
 | push06_1 | `push06_1_pusher_core_prompt.md` | IN_PROGRESS | env06_1 | push06_2 | PM:Codex/sub:2 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution. |
-| push06_2 | `push06_2_pusher_variations_prompt.md` | TODO | push06_1, town06_1 | — | | | | |
+| push06_2 | `push06_2_pusher_variations_prompt.md` | IN_PROGRESS | push06_1, town06_1 | — | PM:Codex/sub:6 | 2026-08-14 | | Built and consolidated on `codex/wave-c-integration`; final PM acceptance pending before superseding rework06_2. |
 | streets06_1 | `streets06_1_streets_framework_prompt.md` | DONE | town06_1, crew06_1 | crew06_3/6/8 | PM:Codex/sub:3 | 2026-08-14 | 2026-08-14 | PM verified scope/design, systems/UI, 10-seed determinism, and package/multi-stop/Hold visual QA on the integrated tree. |
 | crew06_2 | `crew06_2_backroom_poker_prompt.md` | IN_PROGRESS | crew06_1, env06_4 | crew06_9 | PM:Codex/sub:4 | 2026-08-14 | | PM-orchestrated Wave C Stage 1 execution; queued for first available subagent slot. |
-| crew06_3 | `crew06_3_numbers_prompt.md` | IN_PROGRESS | crew06_1, streets06_1, town06_2 | crew06_9 (grievance src) | PM:Codex/sub:7 | 2026-08-14 | | PM-orchestrated Wave C Stage 2 execution after integrated Streets acceptance. |
+| crew06_3 | `crew06_3_numbers_prompt.md` | IN_PROGRESS | crew06_1, streets06_1, town06_2 | crew06_9 (grievance src) | PM:Codex/sub:7 | 2026-08-14 | | Built against the now-superseded Streets multi-stop API; final acceptance pending, then rework06_1 must re-point Numbers onto the real-map delivery API before Wave D. |
+
+### Reworks — owner-rejected systems (round-5, 2026-08-14)
+
+Two Wave C deliverables were built to spec, played, and **rejected on
+design grounds**. The specs were wrong, not the execution: both
+prompts told the agents to abstract away the thing that makes the
+system good. The roadmap sections are rewritten; these rows replace
+the implementations. Wave C cannot close until both are DONE.
+
+| ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| rework06_1 | `rework06_1_map_delivery_prompt.md` | TODO | town06_1/2/3, crew06_1 (all DONE) | crew06_3 re-point, crew06_6, crew06_8 | | | | Deletes the synthetic Streets grid. Delivery becomes a variation of the real world map: targets are real nodes with generatable environments, movement is normal travel, drops are in-venue beats. |
+| rework06_2 | `rework06_2_coin_pusher_simulation_prompt.md` | TODO | env06_1, town06_1 (DONE) | Wave C closure | | | | Replaces the coarse height-grid with a real discrete-coin simulation: individual coins, stacking, gravity, multi-level falls, cascades, plus a unique bonus sub-game per variation. Deterministic fixed-point solver, not an off-the-shelf engine. |
 
 ### Wave D — Crew depth
 
@@ -99,14 +112,30 @@ Wave C games are intentionally parallel-friendly.
 | crew06_8 | `crew06_8_heist_prompt.md` | TODO | crew06_5/6/7, craps06_1, streets06_1, env06_3 | crew06_9 | | | | |
 | crew06_9 | `crew06_9_the_turn_prompt.md` | TODO | crew06_8, crew06_2, town06_2, crew06_3 | release06_1 | | | | |
 
-### Wave E — Narrative + ship
+### Wave E — Narrative + playtest handoff
+
+**This wave does NOT ship anything.** Its terminus is a stable,
+complete-enough build handed to the owner for extensive playtest.
+0.6 is expected to be roughly 50% done at that moment; the polish and
+cleanup pass that follows the owner's playtest is the second half of
+the release, and it is where release activity finally happens.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| chain06_1 | `chain06_1_character_chains_prompt.md` | TODO | town06_2, env06_2, env06_3 | release06_1 | | | | |
-| content06_1 | `content06_1_items_events_expansion_prompt.md` | TODO | env06_2, env06_3, crew06_6 | release06_1 | | | | |
-| voice06_1 | `voice06_1_voice_pass_prompt.md` | TODO | all content-bearing tasks DONE | release06_1 | | | | |
-| release06_1 | `release06_1_ship_prompt.md` | TODO | ALL rows DONE | — | | | | |
+| chain06_1 | `chain06_1_character_chains_prompt.md` | TODO | town06_2, env06_2, env06_3 | playtest06_1 | | | | |
+| content06_1 | `content06_1_items_events_expansion_prompt.md` | TODO | env06_2, env06_3, crew06_6 | playtest06_1 | | | | |
+| playtest06_1 | `playtest06_1_playtest_readiness_prompt.md` | TODO | ALL other rows DONE (except parked) | owner playtest | | | | Verification, playability sweep, honest handoff report, local build. No version bump, no tag, no packaging, no publish, no final balance tuning. |
+
+### Parked until after the owner's playtest
+
+These are polish-wave tasks. They are deliberately NOT claimable now:
+their inputs are the strings, numbers, and direction decisions that
+the owner's playtest is expected to change.
+
+| ID | Prompt | Status | Depends on | Notes |
+| --- | --- | --- | --- | --- |
+| voice06_1 | `voice06_1_voice_pass_prompt.md` | PARKED | post-playtest final content | A full register pass must read final strings. Running it before the playtest burns effort on copy that is about to be rewritten. |
+| release06_1 | `release06_1_ship_prompt.md` | PARKED | post-polish | The only task that performs release activity (version, balance, packaging, tag, publish, owner gates). Unpark when the owner declares the polish pass complete. |
 
 ### Defects (owner-reported / PM-found; claimable like any row)
 
@@ -114,11 +143,22 @@ Wave C games are intentionally parallel-friendly.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | fix06_1 | `fix06_1_dead_event_interactions_prompt.md` | DONE | env06_2, env06_3 (landed) | crew06_5+ inherit the class guard | Codex | 2026-08-14 | 2026-08-14 | Generic synthesized-speaker fix; 99-event audit shifted only 3 beach events; permanent generated-environment guard, systems/UI/all, determinism, and visual QA PASS. |
 
-### Fixed checkpoint
+### The owner playtest is the terminus of this board
 
-A **human playtest round runs between Wave D completion and voice06_1 /
-release06_1** (0.5 precedent). The owner triggers it; defects it finds
-become new scoped prompts added to this board under a `fix06_*` prefix.
+Superseded plan note: the playtest was originally a mid-wave
+checkpoint before shipping. It is now the **end state of the entire
+board** (owner decision 2026-08-14). Agent work stops when
+`playtest06_1` hands off.
+
+What happens then is the owner's, not an agent's:
+
+- The owner plays extensively and forms their own judgment on feel,
+  balance, direction, and what went askew during development.
+- Their findings become `fix06_*` rows and, where the design itself
+  changes, **owner decisions recorded in the roadmap** — an agent
+  never redirects locked design on its own reading of a playtest note.
+- The polish and cleanup pass that follows is the second half of 0.6.
+  `voice06_1` and `release06_1` unpark there, in that order.
 
 ## Owner Questions (needs owner; do not guess)
 
@@ -377,6 +417,17 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   this survive Wave B acceptance: no automated test walked authored
   interactable events through `can_trigger` in generated host environments.
 
+- 2026-08-14 [board] OWNER DECISION — Wave E is no longer a ship wave. It
+  terminates in an owner playtest handoff, not a release. 0.6 is expected to be
+  ~50% complete at handoff; the post-playtest polish and cleanup pass is the
+  second half of the update. `release06_1` is PARKED (it holds all release
+  activity: version, balance, packaging, tag, publish, owner gates).
+  `voice06_1` is PARKED because a register pass must read final strings and the
+  playtest is expected to rewrite them. New terminal task `playtest06_1`
+  authored: verification, playability sweep, honest state-of-the-update handoff
+  report, local owner build — explicitly no version bump, no tag, no packaging
+  for distribution, no publish copy, and no final balance tuning (the owner's
+  feel notes are the intended input and pre-tuning destroys that signal).
 - 2026-08-14 [fix06_1] Full catalog audit found 99 events: 32 authored-speaker
   and 67 synthesized-speaker definitions. The generic normalization correction
   changed `can_trigger` only for the three recovery-hosted beach scenario events
@@ -388,6 +439,36 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   are entered, authored conditional dormancy is isolated through the condition
   override diagnostic, and a broken synthesized-speaker fixture proves the
   guard fails when the defect returns.
+
+- 2026-08-14 [board] STATE AUDIT (owner-requested). On `main`: Wave A (3),
+  Wave B (5), `streets06_1`, `fix06_1` = 10 rows. Wave C's remaining six rows
+  (`craps06_1`, `craps06_2`, `push06_1`, `push06_2`, `crew06_2`, `crew06_3`)
+  are built on per-task branches consolidated at `codex/wave-c-integration`
+  (`daca04d3`) and are **not merged to `main`** — `data/games/games.json` on
+  `main` still lists only the original 8 games. Board rows for `push06_2` and
+  `craps06_2` also read stale vs. actual branch work. Wave C is
+  complete-but-unaccepted, not stalled: remaining work is determinism, visual
+  QA, the final matrix, then merge/closure.
+- 2026-08-14 [board] OWNER REJECTION — two Wave C systems fail in play and are
+  being reworked, with the roadmap design sections rewritten first. (1) The
+  Streets board: a synthetic `{x,y,kind}` grid disconnected from the world;
+  replaced by delivery-on-the-real-map (`rework06_1`). (2) The coin pusher: an
+  abstract per-lane integer height grid with an edge-hang boolean; replaced by
+  a real discrete-coin simulation with stacking, gravity, multi-level falls,
+  and per-variation bonus sub-games (`rework06_2`). Root cause in both cases is
+  the original prompt spec, not agent execution — `streets06_1` was told to
+  build a "stylized block board" and `push06_1` was told to build a "coarse
+  pile model… not free physics". Craps, poker, and Numbers are not implicated;
+  Numbers must re-point its route consumption onto the new delivery API.
+- 2026-08-16 [Wave C acceptance] Code audit confirmed all six remaining Wave C
+  slices are consolidated at `codex/wave-c-integration`; post-consolidation
+  Numbers visual correction `b7d18f68` was missing and was integrated as
+  `42438b5d`. The unchanged final matrix is red only on the combined tree while
+  `main` passes the focused baselines: Punchline L2 canonical layout drift,
+  Roulette settled-frame continuity, two unhandled Coin Pusher action bindings,
+  missing `game_action` ActionResult identity, and Scratch Ticket resolve average
+  1.708 ms > 1.500 ms. Acceptance repair is delegated; no assertion or budget is
+  waived. Numbers' old Streets dependency remains explicitly pending rework06_1.
 
 ## Work Log
 
@@ -484,3 +565,7 @@ become new scoped prompts added to this board under a `fix06_*` prefix.
   catalog audit, beach consequence resolution, permanent icon-to-action guard,
   and generated Bonfire context-card mouse click-through passed all required
   gates. Crew06_5 and later event-bearing rows now inherit the class guard.
+- 2026-08-16 [Wave C acceptance] PM resumed the consolidated tree, integrated
+  the missing zero-trust Numbers visual correction, reproduced six combined-tree
+  gate failures against clean `main` baselines, and delegated exact root-cause
+  repair before determinism, visual QA, merge, or closure can proceed.
