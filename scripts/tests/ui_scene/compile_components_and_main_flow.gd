@@ -1483,7 +1483,7 @@ func _talk_dock_choice_button(node: Node, text: String) -> Button:
 
 
 func _check_talk_dock_main_flow(app: Control) -> bool:
-	if not _check_post_action_interrupt_fast_paths(app):
+	if not await _check_post_action_interrupt_fast_paths(app):
 		return false
 	var modal_heat := await _resolve_talk_event_fixture(app, "modal")
 	if modal_heat < 0:
