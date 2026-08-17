@@ -83,6 +83,23 @@ class ByteOrderActivationFixture:
 		return super.environment_object_state(run_state, environment)
 
 
+class SourceAliasProbeFixture:
+	extends GameModule
+
+	func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+		var payload_value: Variant = run_state.narrative_flags.get("game_activation_source_alias_probe", {})
+		if typeof(payload_value) == TYPE_DICTIONARY:
+			var nested_value: Variant = (payload_value as Dictionary).get("entries", [])
+			if typeof(nested_value) == TYPE_ARRAY and not (nested_value as Array).is_empty() and typeof((nested_value as Array)[0]) == TYPE_DICTIONARY:
+				((nested_value as Array)[0] as Dictionary)["value"] = "mutated-through-alias"
+		# Restore the live serialized graph exactly. If from_dict received the
+		# canonical dictionary directly, only that source retains the hostile write.
+		run_state.narrative_flags["game_activation_source_alias_probe"] = {
+			"entries": [{"value": "original"}],
+		}
+		return super.environment_object_state(run_state, environment)
+
+
 static func check(library: ContentLibrary, failures: Array) -> void:
 	var covered_game_ids := {}
 	var checked_contexts := {}
@@ -463,6 +480,20 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 		if byte_order_violation.find("environment_object_state changed canonical byte order/type changed") == -1:
 			failures.append("Game activation class guard did not detect a byte-only dictionary reorder: %s" % byte_order_violation)
 
+	var source_alias_run := RunStateScript.new()
+	source_alias_run.start_new("GAME-ACTIVATION-SOURCE-ALIAS-FIXTURE")
+	source_alias_run.set_environment(environment)
+	source_alias_run.narrative_flags["game_activation_source_alias_probe"] = {
+		"entries": [{"value": "original"}],
+	}
+	source_alias_run = _json_round_trip_run_state(source_alias_run, "source-alias isolation fixture", failures)
+	if source_alias_run != null:
+		var source_alias_game := SourceAliasProbeFixture.new()
+		source_alias_game.setup({"id": "game_activation_fixture", "display_name": "Activation Fixture", "legal_actions": [], "cheat_actions": []})
+		var source_alias_violation := _activation_violation(source_alias_game, source_alias_run)
+		if not source_alias_violation.is_empty():
+			failures.append("Game activation class guard did not isolate its immutable parsed source from live hook state: %s" % source_alias_violation)
+
 
 static func _activation_violation(game: GameModule, run_state: RunState, cached_source_snapshot: Dictionary = {}, cached_source_text: String = "") -> String:
 	var source_snapshot := cached_source_snapshot if not cached_source_snapshot.is_empty() else run_state.to_dict()
@@ -473,11 +504,11 @@ static func _activation_violation(game: GameModule, run_state: RunState, cached_
 	if typeof(cold_source_value) != TYPE_DICTIONARY:
 		return "could not parse canonical activation fixture"
 	var cold_source := cold_source_value as Dictionary
-	# Validate one pristine cold clone exactly. This verified object belongs only
-	# to hook one; hooks two through seven each construct a new RunState from the
-	# same cold source and never share live metadata or caches.
+	# Validate one pristine cold clone exactly. RunState.from_dict retains some
+	# nested references, so every live fixture receives its own deep source copy;
+	# hooks never share state with each other or with the canonical dictionary.
 	var first_method_run := RunStateScript.new()
-	first_method_run.from_dict(cold_source)
+	first_method_run.from_dict(cold_source.duplicate(true))
 	var canonical_snapshot := first_method_run.to_dict()
 	var canonical_text := JSON.stringify(canonical_snapshot)
 	if canonical_text != source_text:
@@ -490,7 +521,7 @@ static func _activation_violation(game: GameModule, run_state: RunState, cached_
 			first_method_available = false
 		else:
 			method_run = RunStateScript.new()
-			method_run.from_dict(cold_source)
+			method_run.from_dict(cold_source.duplicate(true))
 		match method:
 			"environment_runtime_state":
 				game.environment_runtime_state(method_run, method_run.current_environment)
