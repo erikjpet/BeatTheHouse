@@ -68,6 +68,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 
 
 static func _check_generated_environment_sweep(library: ContentLibrary, covered_game_ids: Dictionary, checked_contexts: Dictionary, failures: Array) -> void:
+	var generator := RunGeneratorScript.new(library)
 	for seed_index in range(SEED_COUNT):
 		for archetype_value in library.environment_archetypes:
 			if typeof(archetype_value) != TYPE_DICTIONARY:
@@ -90,7 +91,6 @@ static func _check_generated_environment_sweep(library: ContentLibrary, covered_
 					{},
 					scenario
 				).to_dict()
-				var generator := RunGeneratorScript.new(library)
 				environment["game_states"] = generator._generated_game_states(
 					run_state,
 					environment,
@@ -103,13 +103,12 @@ static func _check_generated_environment_sweep(library: ContentLibrary, covered_
 				run_state = restored_run
 				_check_environment(library, run_state, scenario_id, covered_game_ids, checked_contexts, failures)
 				if run_state.is_layered_environment():
-					_enter_and_check_remaining_layers(library, run_state, scenario_id, covered_game_ids, checked_contexts, failures)
+					_enter_and_check_remaining_layers(library, generator, run_state, scenario_id, covered_game_ids, checked_contexts, failures)
 
 
-static func _enter_and_check_remaining_layers(library: ContentLibrary, run_state: RunState, scenario_id: String, covered_game_ids: Dictionary, checked_contexts: Dictionary, failures: Array) -> void:
+static func _enter_and_check_remaining_layers(library: ContentLibrary, generator: RunGenerator, run_state: RunState, scenario_id: String, covered_game_ids: Dictionary, checked_contexts: Dictionary, failures: Array) -> void:
 	var remaining := _string_array(run_state.current_environment.get("layer_ids", []))
 	remaining.erase(str(run_state.current_environment.get("current_layer_id", "")))
-	var generator := RunGeneratorScript.new(library)
 	while not remaining.is_empty():
 		var entered := false
 		for transition_value in _array(run_state.current_environment.get("layer_transitions", [])):
@@ -140,6 +139,11 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 	var environment := source_run.current_environment
 	var archetype_id := str(environment.get("archetype_id", ""))
 	var layer_id := str(environment.get("current_layer_id", "base"))
+	# Every checked context in this environment starts from the same cold-restored
+	# run. Build its canonical representation lazily: most later seed contexts are
+	# already covered, so eagerly encoding them would add work without assertions.
+	var source_snapshot: Dictionary = {}
+	var source_text := ""
 	for game_id_value in _string_array(environment.get("game_ids", [])):
 		var game_id := str(game_id_value)
 		covered_game_ids[game_id] = true
@@ -149,6 +153,9 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 			if checked_contexts.has(context_key):
 				continue
 			checked_contexts[context_key] = true
+			if source_snapshot.is_empty():
+				source_snapshot = source_run.to_dict()
+				source_text = JSON.stringify(source_snapshot)
 			var game := _load_game(library, game_id, failures)
 			if game == null:
 				continue
@@ -156,7 +163,7 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 			# opens a non-default generated fixture. It must select presentation
 			# without recording that selection in the serialized environment.
 			game.set_transient_state_key_context(state_key)
-			var violation := _activation_violation(game, source_run)
+			var violation := _activation_violation(game, source_run, source_snapshot, source_text)
 			game.set_transient_state_key_context("")
 			if not violation.is_empty():
 				failures.append("Game activation mutated serialized RunState for %s (%s) in %s/%s/%s: %s" % [game_id, state_key, archetype_id, layer_id, scenario_id, violation])
@@ -377,19 +384,21 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 			failures.append("Game activation class guard did not detect the reintroduced mutate-on-%s fixture: %s" % [method, defect_violation])
 
 
-static func _activation_violation(game: GameModule, run_state: RunState) -> String:
-	var source_snapshot := run_state.to_dict()
-	var source_text := JSON.stringify(source_snapshot)
+static func _activation_violation(game: GameModule, run_state: RunState, cached_source_snapshot: Dictionary = {}, cached_source_text: String = "") -> String:
+	var source_snapshot := cached_source_snapshot if not cached_source_snapshot.is_empty() else run_state.to_dict()
+	var source_text := cached_source_text if not cached_source_text.is_empty() else JSON.stringify(source_snapshot)
+	# One cold reconstruction is sufficient for the complete activation
+	# sequence. Each hook still receives the exact canonical state left by the
+	# previous hook, and every hook retains its own before/after assertion.
+	var method_run := RunStateScript.new()
+	method_run.from_dict(source_snapshot)
+	var current_snapshot := method_run.to_dict()
+	var current_text := JSON.stringify(current_snapshot)
 	var post_hook_restore_checked := false
 	for method in ACTIVATION_METHODS:
-		# The outer fixture has already crossed the JSON codec. Preserve cold
-		# per-hook isolation without paying for seven redundant JSON parses.
-		var method_run := RunStateScript.new()
-		method_run.from_dict(source_snapshot.duplicate(true))
-		var before := method_run.to_dict()
-		var before_text := JSON.stringify(before)
-		if before_text != source_text:
+		if current_text != source_text:
 			return "%s could not cold-clone its canonical activation fixture" % method
+		var before := current_snapshot
 		match method:
 			"environment_runtime_state":
 				game.environment_runtime_state(method_run, method_run.current_environment)
@@ -406,15 +415,18 @@ static func _activation_violation(game: GameModule, run_state: RunState) -> Stri
 			"coach_state":
 				game.coach_state(method_run, method_run.current_environment, {})
 		var after := method_run.to_dict()
-		if before_text != JSON.stringify(after):
+		var after_text := JSON.stringify(after)
+		if current_text != after_text:
 			var paths: Array = []
 			_collect_changed_paths(before, after, "", paths)
 			return "%s changed %s" % [method, ", ".join(paths)]
 		if not post_hook_restore_checked:
 			var restored_after_open := _run_state_from_json_snapshot(after)
-			if restored_after_open == null or JSON.stringify(restored_after_open.to_dict()) != before_text:
+			if restored_after_open == null or JSON.stringify(restored_after_open.to_dict()) != current_text:
 				return "%s changed after serialize/restore" % method
 			post_hook_restore_checked = true
+		current_snapshot = after
+		current_text = after_text
 	if JSON.stringify(source_snapshot) != source_text:
 		return "cold activation clones mutated their canonical source fixture"
 	return ""
