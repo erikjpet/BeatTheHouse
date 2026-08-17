@@ -100,7 +100,31 @@ the implementations. Wave C cannot close until both are DONE.
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | rework06_1 | `rework06_1_map_delivery_prompt.md` | DONE | town06_1/2/3, crew06_1 (all DONE) | crew06_3 re-point, crew06_6, crew06_8 | PM:Codex/sub:8 | 2026-08-16 | 2026-08-16 | PM verified synthetic-board deletion, real-node targets and ordinary-travel routing, all four modes, Numbers re-pointing, migration, exact crew-favor behavior, full 235-stage matrix, 10-seed determinism, and zero-warning visual QA. |
-| rework06_2 | `rework06_2_coin_pusher_simulation_prompt.md` | IN_PROGRESS | env06_1, town06_1 (DONE) | Wave C closure | PM:Codex/sub:9 | 2026-08-16 | | PM-orchestrated isolated execution; subagent owns implementation only, PM owns board, integration, verification, archival, and push. |
+| rework06_2 | `rework06_2_coin_pusher_simulation_prompt.md` | IN_PROGRESS | env06_1, town06_1 (DONE) | Wave C closure, pusher06_2/3/4 | PM:Codex/sub:9 | 2026-08-16 | | PM-orchestrated isolated execution; subagent owns implementation only, PM owns board, integration, verification, archival, and push. **Do not restart or redirect this row** — it already contains the real fixed-point discrete-body solver (`coin_pusher_solver.gd`) the follow-on plan calls for. |
+
+### Coin pusher depth (staged; continues AFTER rework06_2 is accepted)
+
+Design contract: `docs/plans/0.6_coin_pusher_simulation_plan.md`.
+Written in answer to the owner's question about a full physics/3D
+rebuild. **Read that plan's "Status correction" section first:**
+`rework06_2` already delivers the solver, so `pusher06_0` and
+`pusher06_1` are largely absorbed and must not be re-run against
+existing work. Verify by code, claim only what is genuinely missing.
+
+The plan's headline judgment for the owner: a 3D rebuild is a
+project-level commitment (this repo has zero `Node3D`, zero 3D
+assets, and a `mobile`/`gl_compatibility` renderer) and is **not**
+what produces the feel — authoritative simulation plus layered audio
+is. The snapshot boundary (`body_views`) keeps 3D available later as
+a *rendering* project rather than a gameplay rewrite.
+
+| ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| pusher06_0 | `pusher06_0_physics_lab_prompt.md` | OPTIONAL | rework06_2 accepted | — | | | | Measurement/hardening only: coin cap, frame/solver/render p95, pathology counts, Windows-vs-Web parity, adversarial + long-run. Claim ONLY if rework06_2 did not measure these rigorously. |
+| pusher06_1 | `pusher06_1_solver_core_prompt.md` | REFERENCE | rework06_2 accepted | — | | | | Substance delivered by rework06_2. Use as an acceptance checklist against the landed solver — especially the authority rule (what crosses the tray edge is what pays; no steered outcomes) and emergent-RTP-by-machine-tuning. |
+| pusher06_2 | `pusher06_2_presentation_audio_prompt.md` | TODO | rework06_2 accepted | pusher06_3 | | | | **The V2 headline task.** Coin density first (`coin_cap` 48 → 150–300, packed/overlapping/random placement), then stacking + edge-hanger legibility, then layered audio. Owner-verified defect: the sim is real but the render is a sparse dot scatter. |
+| pusher06_3 | `pusher06_3_variations_prompt.md` | TODO | pusher06_2 | pusher06_4 | | | | Prove Ridge and Vault are genuinely different machines on the new solver, with physical pucks/fragments. Distinctness is the acceptance bar. |
+| pusher06_4 | `pusher06_4_environment_integration_prompt.md` | TODO | pusher06_1/2/3 landed | coin pusher closure | | | | Venue presence, persistence at run scale with measured save-size, rumor/sweep/scenario/reputation wiring, class guard. |
 
 ### Wave D — Crew depth
 
@@ -498,6 +522,57 @@ What happens then is the owner's, not an agent's:
   or assertion changed. The next two PM runs passed with max 1.875/1.424 ms;
   agent runs also passed (max 1.270 ms and focused max 1.615 ms). Acceptance is
   based on the unchanged gate's repeated clean results, not a waiver.
+
+- 2026-08-16 [pusher] Owner asked what a full physics/3D coin pusher rebuild
+  would take, against an external analysis recommending 3D with "hybrid"
+  physics (physics runs; the old model still decides payouts; a reconciliation
+  layer resolves divergence) at 7–18 months. Assessment recorded in
+  `docs/plans/0.6_coin_pusher_simulation_plan.md`. Headline judgments: (1) the
+  hybrid recommendation reproduces the rejected defect — a coin that visibly
+  lands in the tray while a reconciler decides otherwise is the most visible
+  way a machine can lie, so the simulation must be AUTHORITATIVE; (2)
+  determinism is solved by owning a small fixed-point solver, not by
+  reconciling non-deterministic engine physics; (3) 3D is a project-level
+  commitment here (zero `Node3D`, zero 3D assets, `mobile`/`gl_compatibility`
+  renderer, 5 ms surface budget) and is not what produces the feel —
+  authoritative simulation plus layered audio is. Recommended path: 2.5D
+  authoritative solver behind a renderer-agnostic snapshot, which keeps 3D
+  available later as a rendering project rather than a gameplay rewrite.
+- 2026-08-16 [pusher] PLAN CORRECTION: the phase plan was drafted assuming the
+  rebuild had not started — it had. `rework06_2` already contains a real
+  fixed-point discrete-body solver (60 Hz fixed step, integer coordinates, two
+  tiers with gravity/drag, spatial-hash collisions, support resolution for
+  stacking, sleeping, `body_views` snapshot, `canonical_digest`, height-grid
+  migration, cross-platform export parity runner) with the surface consuming
+  it. `pusher06_0` is therefore demoted to optional measurement/hardening and
+  `pusher06_1` to a reference acceptance checklist; only `pusher06_2` (feel and
+  audio depth), `pusher06_3` (variation distinctness) and `pusher06_4` (venue
+  integration and persistence at scale) are genuinely remaining. Do not restart
+  or redirect `rework06_2`.
+
+- 2026-08-16 [rework06_2] OWNER CLARIFICATION: not literal 3D. The requirement
+  is **3D-logical behavior with 2D representative graphics** — coins pushing
+  each other with random placement, stacked coins, coins hanging off the edge,
+  all driven by a complex simulation and drawn in 2D. The landed solver already
+  satisfies the logic side: bodies carry x/y/z, two floor tiers with
+  `upper_to_lower` transitions, support resolution for stacking, and edge-hanger
+  tracking. No architecture change needed.
+- 2026-08-16 [rework06_2] STATE + VISUAL AUDIT. Branch `codex/rework06-2`:
+  8 commits ahead of main plus uncommitted work and a new
+  `coin_pusher_solver_api.gd`. Gates recorded green — `final_all_green`,
+  `merged_all`, focused `foundation_coin_pusher` (0 failures), Windows-vs-Web
+  export parity with a comparison report, and six feel captures. **Close to
+  commit on correctness.** However, inspecting the captures directly: the
+  simulation is genuinely running (`PHYSICAL PROOF collisions/moved/topples`
+  counters are real) but the machine **does not look like a coin pusher**.
+  `coin_cap` is 48 across 5 lanes, so the playfield renders as a sparse
+  scatter of isolated dots; stacking is simulated but not legible; edge hangers
+  are tracked but not visually readable; the lane grid dominates. The gap is
+  density and rendering, not simulation. `pusher06_2` retargeted as the V2
+  headline task: raise the cap toward 150–300, pack/overlap/randomize
+  placement, make stacking and ledge-hang legible, then audio. Acceptance bar
+  raised from "counters incremented" to "a person shown the capture calls it a
+  coin pusher."
 
 ## Work Log
 
