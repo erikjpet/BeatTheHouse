@@ -516,6 +516,17 @@ What happens then is the owner's, not an agent's:
   normalized locals for geometry/trace, publish only under the reference
   conditions, and add exact locked missing/non-integer phase fixtures across
   reference, forced GDScript, and native paths.
+- 2026-08-17 [pusher06_2 kernel parity] Native writeback also replaces the
+  `bodies` Array, while the GDScript hot path compacts the original container in
+  place. External array aliases therefore observe exits only on the fallback.
+  Preserve the oracle's container-alias behavior and add a unique-ID exit
+  fixture across reference, forced GDScript, and native paths.
+- 2026-08-17 [pusher06_2 opening density] The trace audit found no implementation
+  or assertion for the prompt's explicit "packed near the pusher, thinning
+  toward the ledge" opening gradient. Current seeding splits 110 coins evenly,
+  samples full shelf depth uniformly, and maximizes spacing. Dense captures do
+  not prove the required distribution; deterministic depth bias plus a gradient
+  test is required without reducing the 160/150 shipped density.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1224,3 +1235,6 @@ What happens then is the owner's, not an agent's:
 - 2026-08-17 [pusher06_2] Native locked-phase publication also differs from the
   reference solver; exact missing/non-integer locked-state fixtures and a
   conditional write repair are required before backend acceptance.
+- 2026-08-17 [pusher06_2] Native bodies-array alias semantics and the authored
+  opening depth gradient remain unproven. Both require exact regressions before
+  closeout; dense appearance alone is not accepted as evidence.
