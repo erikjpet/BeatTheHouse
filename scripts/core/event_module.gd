@@ -230,6 +230,8 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				run_state.crew_recruit_member(str(hook_data.get("member_id", "")))
 			"crew_meet":
 				run_state.crew_meet_member(str(hook_data.get("member_id", "")))
+			"crew_rook_lead_closed":
+				run_state.crew_close_rook_leads_event()
 
 
 # Returns a no-op event result for invalid choices.

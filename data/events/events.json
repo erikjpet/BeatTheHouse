@@ -4321,7 +4321,7 @@
   {
     "id": "recruitment_knuckles", "display_name": "Knuckles", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
     "speaker": {"role": "crew", "name": "Knuckles", "character_id": "crew_knuckles", "voice_line_key": "favor_due", "environment_actor": true},
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Knuckles watches the room choose the hard way.", "trigger": {"type": "manual"},
+    "asset_path": "res://assets/art/events/side_door.png", "icon_key": "side_door", "environment_prop": "side_door", "start_summary": "Knuckles watches the room choose the hard way.", "trigger": {"type": "manual"},
     "conditions": {"min_crew_rank": "marker", "crew_member_rank_at_most": {"crew_knuckles": "marker"}},
     "payload": {"summary": "Knuckles points from the mess to the exit.", "choices": [
       {"id": "work_with_knuckles", "label": "Keep it simple", "text": "Good. Carry what matters. Drop the speech.", "consequences": {"crew_recruit_member": "crew_knuckles", "resolve_event": true}},

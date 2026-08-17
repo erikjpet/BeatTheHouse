@@ -140,8 +140,11 @@ static func _check_rook_signposts(library: ContentLibrary, failures: Array) -> v
 		module.setup(library.event("recruitment_rook_leads"), library)
 		var first := module.resolve(presence_run, presence_run.current_environment, "ask_switch")
 		if not bool(first.get("ok", false)) or _string_array(presence_run.current_environment.get("resolved_event_ids", [])).has("recruitment_rook_leads") \
-			or not module.can_trigger(presence_run, presence_run.current_environment) or module.choice("ask_switch", presence_run, presence_run.current_environment).is_empty():
-			failures.append("Rook's presence-bound leads encounter was not reusable after one question.")
+			or not bool(presence_run.narrative_flags.get("crew_rook_lead_heard:crew_switch", false)) \
+			or not module.choice("ask_switch", presence_run, presence_run.current_environment).is_empty() \
+			or _string_array(presence_run.current_environment.get("event_ids", [])).has("recruitment_rook_leads") \
+			or module.can_trigger(presence_run, presence_run.current_environment):
+			failures.append("Rook's presence-bound lead did not retire after its one authored hearing.")
 
 
 static func _check_perks_and_save(failures: Array) -> void:

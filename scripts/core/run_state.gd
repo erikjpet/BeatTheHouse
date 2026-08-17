@@ -6214,6 +6214,13 @@ func crew_member_job_available(member_id: String) -> bool:
 	return crew_rank_perks(member_id).has("member_jobs")
 
 
+func crew_close_rook_leads_event() -> void:
+	var event_ids := _copy_array(current_environment.get("event_ids", []))
+	event_ids.erase("recruitment_rook_leads")
+	current_environment["event_ids"] = event_ids
+	store_current_world_node_environment()
+
+
 func crew_switch_intel_status() -> Dictionary:
 	var available := crew_rank_perks("crew_switch").has("remote_scenario_reveal")
 	var services := _copy_dict(CrewStateModelScript.config().get("member_services", {}))
