@@ -23,6 +23,7 @@ const C_TEXT := Color("#e9f4ff")
 const JackpotRidgeScript := preload("res://scripts/games/coin_pusher/jackpot_ridge.gd")
 const VaultDropScript := preload("res://scripts/games/coin_pusher/vault_drop.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
+const CoinPusherPackedTraceReaderScript := preload("res://scripts/games/coin_pusher/coin_pusher_packed_trace_reader.gd")
 const PHYSICS_REPLAY_DURATION_MSEC := CoinPusherSolverScript.ACTION_TICKS * 1000 / CoinPusherSolverScript.FIXED_HZ
 const RIDGE_JAM_ZONE_MIN_Y := CoinPusherSolverScript.FRONT_EDGE + 52000
 const RIDGE_JAM_ZONE_MIN_Z := CoinPusherSolverScript.UPPER_FLOOR_Z - CoinPusherSolverScript.OBJECT_HEIGHT
@@ -33,6 +34,7 @@ const CONSOLE_TITLE_RECT := Rect2(668, 22, 100, 34)
 const CONSOLE_TITLE_MAX_FONT_SIZE := 13
 
 var coin_glyph_textures: Dictionary = {}
+var _packed_trace_reader = CoinPusherPackedTraceReaderScript.new()
 
 
 func setup(p_definition: Dictionary, p_library: ContentLibrary = null) -> void:
@@ -1387,6 +1389,8 @@ func _presentation_snapshot(machine: Dictionary, upper_phase_milli: int, lower_p
 		"locked": bool(machine.get("locked_down", false)),
 		"events": [],
 		"trace": [],
+		"trace_packed": {},
+		"trace_frame_count": 0,
 	}
 
 
@@ -1438,7 +1442,16 @@ func _tell_presentation_event(tell_rung: int, alarmed: bool) -> Dictionary:
 	}
 
 
-func _finalized_presentation_trace(physics: Dictionary, machine: Dictionary) -> Array:
+func _finalized_presentation_trace(physics: Dictionary, machine: Dictionary) -> Variant:
+	var packed_value: Variant = physics.get("presentation_trace_packed", {})
+	if typeof(packed_value) == TYPE_DICTIONARY and not (packed_value as Dictionary).is_empty():
+		var finalized_packed: Dictionary = CoinPusherSolverScript.finalize_packed_presentation_trace(
+			packed_value as Dictionary,
+			_simulation(machine),
+			CoinPusherSolverScript.ACTION_TICKS + 1
+		)
+		if not finalized_packed.is_empty():
+			return finalized_packed
 	var trace: Array = physics.get("presentation_trace", []) if typeof(physics.get("presentation_trace", [])) == TYPE_ARRAY else []
 	if trace.is_empty():
 		return []
@@ -1452,18 +1465,27 @@ func _finalized_presentation_trace(physics: Dictionary, machine: Dictionary) -> 
 
 
 func _presentation_action_snapshot_patch(machine: Dictionary, action_id: String, events: Variant, trace: Variant) -> Dictionary:
-	return {
-		# Both arrays are freshly authored by this action and are immutable after
+	var patch := {
+		# These payloads are freshly authored by this action and immutable after
 		# handoff. Preserve ownership through the presentation boundary instead of
-		# cloning the dense physical trace before the host receives it.
+		# cloning the dense physical replay before the host receives it.
 		"events": events as Array if typeof(events) == TYPE_ARRAY else [],
-		"trace": trace as Array if typeof(trace) == TYPE_ARRAY else [],
+		"trace": [],
+		"trace_packed": {},
+		"trace_frame_count": 0,
 		"action_state": {
 			"action_count": int(machine.get("action_count", 0)),
 			"replay_active_id": "action_%d" % int(machine.get("action_count", 0)),
 			"action_id": action_id,
 		},
 	}
+	if typeof(trace) == TYPE_DICTIONARY and not (trace as Dictionary).is_empty():
+		patch["trace_packed"] = trace
+		patch["trace_frame_count"] = int((trace as Dictionary).get("frame_count", 0))
+	elif typeof(trace) == TYPE_ARRAY:
+		patch["trace"] = trace
+		patch["trace_frame_count"] = (trace as Array).size()
+	return patch
 
 
 func _rider_views(machine: Dictionary) -> Array:
@@ -1569,6 +1591,25 @@ func _presentation_bodies(surface, state: Dictionary) -> Array:
 	var final_bodies: Array = snapshot.get("bodies", []) if typeof(snapshot.get("bodies", [])) == TYPE_ARRAY else []
 	if bool(state.get("reduce_motion", false)):
 		return final_bodies
+	var packed_value: Variant = snapshot.get("trace_packed", {})
+	var has_packed_trace := typeof(packed_value) == TYPE_DICTIONARY and int(snapshot.get("trace_frame_count", 0)) > 0
+	if has_packed_trace:
+		if surface != null and surface.has_method("surface_animation_progress"):
+			var packed: Dictionary = packed_value
+			var packed_progress := clampf(float(surface.surface_animation_progress(PHYSICS_REPLAY_CHANNEL)), 0.0, 1.0)
+			var action_state: Dictionary = snapshot.get("action_state", {}) if typeof(snapshot.get("action_state", {})) == TYPE_DICTIONARY else {}
+			var replay_id := str(action_state.get("replay_active_id", ""))
+			var packed_sample: Dictionary = _packed_trace_reader.sample(packed, replay_id, packed_progress)
+			if not packed_sample.is_empty():
+				var packed_frame: Dictionary = packed_sample.get("frame", {}) if typeof(packed_sample.get("frame", {})) == TYPE_DICTIONARY else {}
+				var packed_next_frame: Dictionary = packed_sample.get("next_frame", {}) if typeof(packed_sample.get("next_frame", {})) == TYPE_DICTIONARY else {}
+				var packed_bodies: Array = packed_frame.get("bodies", final_bodies) if typeof(packed_frame.get("bodies", final_bodies)) == TYPE_ARRAY else final_bodies
+				var packed_next_bodies: Array = packed_next_frame.get("bodies", packed_bodies) if typeof(packed_next_frame.get("bodies", packed_bodies)) == TYPE_ARRAY else packed_bodies
+				return _interpolated_body_views(packed_bodies, packed_next_bodies, float(packed_sample.get("weight", 0.0)))
+	else:
+		# A new cabinet/run can reuse action_1; clear the transient reader when no
+		# packed replay is active so that identifier reuse cannot expose old frames.
+		_packed_trace_reader.clear()
 	var trace: Array = snapshot.get("trace", []) if typeof(snapshot.get("trace", [])) == TYPE_ARRAY else []
 	if trace.is_empty() or surface == null or not surface.has_method("surface_animation_progress"):
 		return final_bodies
