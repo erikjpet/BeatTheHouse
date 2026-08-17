@@ -487,6 +487,14 @@ What happens then is the owner's, not an agent's:
   missing, mixed-case, or unrelated-preset values before resolving Godot,
   building native code, or exporting. Windows/Web build, load, export, and boot
   remain runtime acceptance gates.
+- 2026-08-17 [pusher06_2 native adapter] Independent static review returned the
+  first native dispatch for a fail-closed contract repair. Class-name
+  instantiation and a non-empty result do not prove backend identity, ABI, or
+  result shape; passing authoritative state also lets an incompatible backend
+  mutate before a fallback double-step. Native execution must use a deep
+  candidate, validate exact backend identity/methods/result schema, and publish
+  only after full acceptance. Injected stale and partial-mutating invalid
+  backends must prove original state/result remain exact and fallback runs once.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1182,3 +1190,7 @@ What happens then is the owner's, not an agent's:
   lender compatibility, manual voice, Contract, Systems, UI, determinism, and
   visual reviews. Deterministic recruitment/presence and rank-service APIs now
   unblock `crew06_6`, `crew06_7`, and `crew06_8`.
+- 2026-08-17 [pusher06_2] Static kernel review found the native adapter was not
+  transactional or identity/schema-validated. The row remains IN_PROGRESS and
+  runtime results are diagnostic until candidate-state execution and hostile
+  stale/mutating backend tests close that seam without weakening fallback.
