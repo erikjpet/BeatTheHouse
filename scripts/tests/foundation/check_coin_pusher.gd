@@ -429,6 +429,12 @@ func _check_coin_pusher_canonical_probe(failures: Array) -> void:
 	]:
 		if not performance_source.contains(required_text):
 			failures.append("Canonical performance coverage is missing the Coin Pusher acceptance seam %s." % required_text)
+	var game_source := FileAccess.get_file_as_string("res://scripts/games/coin_pusher.gd")
+	var actions_source := _source_function(game_source, "actions")
+	var ensure_source := _source_function(game_source, "_ensure_machine_state")
+	if actions_source.contains("_read_machine_state") or not ensure_source.contains("not _machine_read_requires_reconciliation") \
+			or not ensure_source.contains("return machine"):
+		failures.append("Coin Pusher action/stake reads no longer preserve the scalar readonly no-simulation-copy fast path.")
 
 
 func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> void:
@@ -948,6 +954,26 @@ func _check_coin_pusher_read_boundaries(game: GameModule, failures: Array) -> vo
 	var generated_machine: Dictionary = generated_states.get("coin_pusher", {}) if typeof(generated_states.get("coin_pusher", {})) == TYPE_DICTIONARY else {}
 	if not bool(generated_machine.get("shim_initialized", false)) or int(generated_machine.get("shim_uses_remaining", 0)) != 3:
 		failures.append("Quarter Falls canonical environment generation did not persist the owned Coin-Return Shim state.")
+	var fast_outputs := {
+		"legal": game.legal_actions(run_state, environment),
+		"cheat": game.cheat_actions(run_state, environment),
+		"actions": game.actions(run_state, environment),
+		"surface": game.surface_state(run_state, environment, {"surface_time_msec": 1000}),
+	}
+	var normalized_copy_environment := environment.duplicate(true)
+	var normalized_copy_machine: Dictionary = ((normalized_copy_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary)
+	normalized_copy_machine["version"] = maxi(0, int(normalized_copy_machine.get("version", 1)) - 1)
+	var copied_outputs := {
+		"legal": game.legal_actions(run_state, normalized_copy_environment),
+		"cheat": game.cheat_actions(run_state, normalized_copy_environment),
+		"actions": game.actions(run_state, normalized_copy_environment),
+		"surface": game.surface_state(run_state, normalized_copy_environment, {"surface_time_msec": 1000}),
+	}
+	for output_key in fast_outputs.keys():
+		if JSON.stringify(fast_outputs.get(output_key)) != JSON.stringify(copied_outputs.get(output_key)):
+			failures.append("Quarter Falls scalar readonly fast path changed byte-identical %s output versus normalized-copy reads." % output_key)
+	if game.deterministic_state_digest(environment) != game.deterministic_state_digest(normalized_copy_environment):
+		failures.append("Quarter Falls scalar readonly fast path changed the canonical machine digest.")
 	var machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	# Exercise every branch that previously wrote through a read alias.
 	machine["locked_down"] = true

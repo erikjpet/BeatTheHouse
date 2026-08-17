@@ -82,7 +82,6 @@ func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
 
 
 func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var machine := _read_machine_state(run_state, environment)
 	var capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 0
 	return {
 		"ok": true,
@@ -635,6 +634,8 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 	var game_states := _game_states(environment)
 	var value: Variant = game_states.get(get_id(), {})
 	var machine: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
+	if not persist and not machine.is_empty() and not _machine_read_requires_reconciliation(machine, run_state, environment):
+		return machine
 	# Read paths may normalize an old schema, roll a nightly lock forward, or
 	# initialize item state. Never let those operations write through an alias.
 	if not persist and not machine.is_empty():
@@ -683,6 +684,56 @@ func _initialize_owned_shim(run_state: RunState, machine: Dictionary) -> void:
 func _game_states(environment: Dictionary) -> Dictionary:
 	var value: Variant = environment.get("game_states", {})
 	return value if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _machine_read_requires_reconciliation(machine: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
+	if str(machine.get("schema", "")) != STATE_SCHEMA or int(machine.get("version", 0)) < _state_version():
+		return true
+	var reset_token := _scenario_reset_token(environment)
+	if not reset_token.is_empty() and reset_token != str(machine.get("scenario_reset_token", "")):
+		return true
+	if typeof(machine.get("simulation", {})) != TYPE_DICTIONARY \
+			or str((machine.get("simulation", {}) as Dictionary).get("schema", "")) != CoinPusherSolverScript.SCHEMA \
+			or typeof(machine.get("variation_state", {})) != TYPE_DICTIONARY:
+		return true
+	if bool(machine.get("locked_down", false)) and run_state != null and str(machine.get("lockdown_night", "")) != _night_id(run_state):
+		return true
+	if run_state != null and not bool(machine.get("shim_initialized", false)) and run_state.inventory.has(SHIM_ITEM_ID):
+		return true
+	if run_state != null and str(machine.get("variation_id", "")) == "vault_drop":
+		var variation_state: Dictionary = machine.get("variation_state", {})
+		var meter := run_state.progressive_meter(str(variation_state.get("meter_id", "")))
+		if not meter.is_empty() and int(variation_state.get("meter_value", 0)) != int(meter.get("value", variation_state.get("meter_value", 0))):
+			return true
+	return not _physical_features_reconciled(machine)
+
+
+func _physical_features_reconciled(machine: Dictionary) -> bool:
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	if simulation.is_empty():
+		return false
+	var variation_id := str(machine.get("variation_id", "quarter_falls"))
+	var variation_state: Dictionary = machine.get("variation_state", {}) if typeof(machine.get("variation_state", {})) == TYPE_DICTIONARY else {}
+	var features: Array = machine.get("riders", []) if variation_id == "quarter_falls" else variation_state.get("pucks", []) if variation_id == "jackpot_ridge" else variation_state.get("fragments", [])
+	var kind := "rider" if variation_id == "quarter_falls" else "puck" if variation_id == "jackpot_ridge" else "fragment"
+	var desired := {}
+	for feature_value in features:
+		if typeof(feature_value) != TYPE_DICTIONARY:
+			continue
+		var feature_id := str((feature_value as Dictionary).get("id", ""))
+		if not feature_id.is_empty():
+			desired[feature_id] = true
+	var seen := {}
+	var bodies: Array = simulation.get("bodies", []) if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else []
+	for body_value in bodies:
+		if typeof(body_value) != TYPE_DICTIONARY or str((body_value as Dictionary).get("kind", "")) != kind:
+			continue
+		var metadata: Dictionary = (body_value as Dictionary).get("metadata", {}) if typeof((body_value as Dictionary).get("metadata", {})) == TYPE_DICTIONARY else {}
+		var feature_id := str(metadata.get("feature_id", ""))
+		if feature_id.is_empty() or not desired.has(feature_id) or seen.has(feature_id):
+			return false
+		seen[feature_id] = true
+	return seen.size() == desired.size()
 
 
 func _normalize_machine_state(source: Dictionary, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
@@ -873,7 +924,8 @@ func _feature_views(machine: Dictionary, kind: String) -> Array:
 func _physical_jammed_lanes(machine: Dictionary) -> Array:
 	var result: Array = []
 	var lane_width := CoinPusherSolverScript.WIDTH / maxi(1, _lane_count())
-	for body_value in CoinPusherSolverScript.body_views(_simulation(machine)):
+	var simulation := _simulation(machine)
+	for body_value in simulation.get("bodies", []):
 		if typeof(body_value) != TYPE_DICTIONARY:
 			continue
 		var body: Dictionary = body_value
@@ -894,7 +946,8 @@ func _physical_jammed_lanes(machine: Dictionary) -> Array:
 
 func _physical_puck_target(machine: Dictionary, aimed_lane: int, direction: String) -> bool:
 	var lane_width := CoinPusherSolverScript.WIDTH / maxi(1, _lane_count())
-	for body_value in CoinPusherSolverScript.body_views(_simulation(machine)):
+	var simulation := _simulation(machine)
+	for body_value in simulation.get("bodies", []):
 		if typeof(body_value) != TYPE_DICTIONARY or str((body_value as Dictionary).get("kind", "")) != "puck":
 			continue
 		var lane := clampi(int((body_value as Dictionary).get("x", 0)) / maxi(1, lane_width), 0, _lane_count() - 1)
@@ -909,7 +962,8 @@ func _physical_puck_target(machine: Dictionary, aimed_lane: int, direction: Stri
 
 func _direction_matches_hanger(machine: Dictionary, direction: String, lane: int) -> bool:
 	var lane_width := CoinPusherSolverScript.WIDTH / maxi(1, _lane_count())
-	for body_value in CoinPusherSolverScript.body_views(_simulation(machine)):
+	var simulation := _simulation(machine)
+	for body_value in simulation.get("bodies", []):
 		if typeof(body_value) != TYPE_DICTIONARY:
 			continue
 		var body: Dictionary = body_value
