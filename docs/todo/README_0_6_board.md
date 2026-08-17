@@ -122,7 +122,7 @@ a *rendering* project rather than a gameplay rewrite.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | pusher06_0 | `pusher06_0_physics_lab_prompt.md` | OPTIONAL | rework06_2 accepted | — | | | | Measurement/hardening only: coin cap, frame/solver/render p95, pathology counts, Windows-vs-Web parity, adversarial + long-run. Claim ONLY if rework06_2 did not measure these rigorously. |
 | pusher06_1 | `pusher06_1_solver_core_prompt.md` | REFERENCE | rework06_2 accepted | — | | | | Substance delivered by rework06_2. Use as an acceptance checklist against the landed solver — especially the authority rule (what crosses the tray edge is what pays; no steered outcomes) and emergent-RTP-by-machine-tuning. |
-| pusher06_2 | `pusher06_2_presentation_audio_prompt.md` | IN_PROGRESS | rework06_2 accepted | pusher06_3 | PM:Codex/sub:pusher-depth | 2026-08-17 | | PM-orchestrated isolated execution from the accepted rework integration tree; density/presentation/audio only, with snapshot authority, unchanged outcomes, performance, and player-readable feel captures independently verified by PM. |
+| pusher06_2 | `pusher06_2_presentation_audio_prompt.md` | DONE | rework06_2 accepted | pusher06_3 | PM:Codex/sub:pusher-depth | 2026-08-17 | 2026-08-17 | PM verified the 160/150 dense snapshot-authoritative render/audio pass, unchanged deterministic outcomes, sub-16 ms shipped-cap actions, exact 200-action Windows/Web native parity, clean exports, seven player-readable feel captures, and the complete green prompt gate matrix. |
 | pusher06_3 | `pusher06_3_variations_prompt.md` | TODO | pusher06_2 | pusher06_4 | | | | Prove Ridge and Vault are genuinely different machines on the new solver, with physical pucks/fragments. Distinctness is the acceptance bar. |
 | pusher06_4 | `pusher06_4_environment_integration_prompt.md` | TODO | pusher06_1/2/3 landed | coin pusher closure | | | | Venue presence, persistence at run scale with measured save-size, rumor/sweep/scenario/reputation wiring, class guard. |
 
@@ -1117,6 +1117,41 @@ What happens then is the owner's, not an agent's:
 - 2026-08-16 [teach06_1] Discovery/deviation: the systems wrapper exceeded its stored wall-time budget on both the feature branch (50.095s) and untouched main (51.283s), while all assertions passed; the budget and gate were not changed or waived. Serialized owner acceptance supplied the final UI PASS, 10-seed/590-checkpoint determinism hash `3483570349`, and canonical 75-state/zero-warning visual result.
 - 2026-08-16 [teach06_1] Decision: normal-run advice admits at most one contextual beat, yields without consuming the player's next action, and uses deterministic public-control geometry to keep its clickable Skip tip away from gameplay where a clear standard placement exists. Guided tutorial queue, pointer, and completion behavior remain unchanged.
 
+- 2026-08-17 [pusher06_2 final performance] The shipped target is cap 160
+  with a 150-body uneven opening pile. The authoritative post-fix probe passes
+  without reductions: Drop resolve 15.798 ms, draw p95 4.249 ms, frame p95
+  6.923 ms; collapse Nudge resolve 14.820 ms, draw p95 4.090 ms, frame p95
+  6.922 ms; raw native p95 10.276 ms across 32/32 native samples. Both actions
+  retain 14 replay frames, zero full snapshots, and physical collapse. The
+  renderer/audio consume packed snapshot/event publication only; batched 2.5D
+  drawing remains presentation-only, while the exact transactional native core
+  retains the dictionary solver as oracle/fallback.
+- 2026-08-17 [pusher06_2 export parity] Exact 200-action Windows and Web
+  release replays pass 200/200 through the native backend with identical input
+  `1941cd44d4352625f155fb577bfc9be1d1c562c8a3094dfcc9683ac7f0a6c992`,
+  outcomes `8826fed66846ee2e1dec7ec03eb6b6571678855e12f799300cb23efb36866b9a`,
+  backend `5ea048d38c166330d5f537d4f59e029eedf2819fa6dc0ec04fd791d25f7e51af`,
+  and captured final frame
+  `a5331a9a5610d065edf6bf337a4b5db334049b3c4fa6fbddb8a2537ed697950a`.
+  The Web-only out-of-bounds crash was traced to cached packed-array writable
+  pointers crossing Godot `String` operations; `9bbdd037` now owns rows in a
+  native vector and scopes every primitive pointer fill, with string columns
+  published through safe setters. Fresh itch packages contain exactly one
+  byte-identical release native module and no saves/debug/development material.
+- 2026-08-17 [pusher06_2 feel verdict] All seven required scenarios, five
+  advancing 14-frame replay sheets, and five tell-ladder stages pass in
+  `.tmp/pusher06_2_final_feel_captures` at 1280x720. Independent visual review
+  calls the packed, overlapping, stacked field, two shelves, edge hangers,
+  tray/gutters, and alarm progression unmistakably a real coin pusher. Unused
+  black canvas in composite evidence sheets is non-blocking and not in-game.
+- 2026-08-17 [pusher06_2 Web diagnostic] Optional global Web smoke evidence is
+  preserved without waivers or unrelated edits. Grand Casino gameplay frame
+  and memory scenarios pass, with cold startup 20,013 ms versus 20,000 ms;
+  `l02` also reports startup 20,503 ms, Corner Store open 2,193.790 ms, and
+  Blackjack idle p95 50.000 ms against their existing global budgets. These
+  systems are outside this density/presentation/audio row and none of the
+  binding prompt gates or coin-pusher budgets failed.
+
 ## Work Log
 
 - 2026-08-17 [fix06_2] Reproduced mutation diff and call path: info-card activation routes `activate_interactable_object()` → `enter_game()` → `_enter_game_after_input_guard()` → `CrapsGame.enter()`, which changed `narrative_flags.street_craps_guidance_seen` from absent to `true` solely while composing the first-entry message. The generated Craps table and RNG state were otherwise unchanged. Diagnosis: craps06_2 attached once-only teaching consumption to navigation instead of a successful action boundary. The Grand Casino sibling uses the same rules/table module but not the Street guidance branch and did not mutate.
@@ -1485,3 +1520,8 @@ What happens then is the owner's, not an agent's:
   raw native p95 is 8.938 ms, draw p95 is 4.120/4.013 ms, frame p95 is
   6.914/6.916 ms, 14 replay frames and zero full snapshots are intact. Final
   root work is limited to output-identical native result/host boundary costs.
+- 2026-08-17 [pusher06_2] DONE. PM independently reran every supported prompt
+  gate on the final combined tree, verified exact Windows/Web native replay,
+  inspected fresh save-free packages, accepted shipped-cap performance, and
+  confirmed the seven player-facing captures read as a real coin pusher.
+  `pusher06_3` is unblocked; it has not been claimed or started.
