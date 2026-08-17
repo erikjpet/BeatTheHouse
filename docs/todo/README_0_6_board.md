@@ -316,6 +316,61 @@ What happens then is the owner's, not an agent's:
   support ties, 48 ticks, trace, density, outcomes, and synchronous semantics
   remain unchanged; a hostile center-crossing oracle fixture covers the lazy
   path. Runtime exactness and the 16 ms performance gates remain pending.
+- 2026-08-17 [systems gate] The corrected integrated systems matrix now has
+  zero assertion/stderr failures, including Crew recruitment and the complete
+  seven-hook activation guard, but the unchanged wall gate remains red at
+  58.496 s versus 43.712 s (48.515 s internal plus about 9.98 s process
+  overhead). In-check setup reuse saved roughly 2.9 s but cannot close the
+  remaining wall gap. The accepted next harness direction is deterministic
+  multi-process sharding of the existing systems registration: every check
+  must run exactly once, aggregate failures/stderr/timeouts must remain honest,
+  and no suite, seed, assertion, registration, or budget may move or change.
+- 2026-08-17 [systems gate] Independent pre-runtime review returned the first
+  sharded launcher for correction before integration: raw child failures must
+  outrank synthesized stderr code 127; launcher/cache/report exceptions must
+  still emit an honest stage summary; missing-report exit-zero children must
+  retain stdout-derived `last_started_check`; hostile contracts must exercise
+  those cases plus launch cleanup and mutex contention rather than inspect
+  source strings; and shard processes must be prevented from racing on shared
+  `.godot` cache files, not merely detect a write afterward. The unchanged
+  registration, assertions, timeout, and 43.712 s wall budget still bind.
+- 2026-08-17 [integrated UI] The UI gate currently stops before assertions
+  because `New-SplitTestRunner` concatenates descendant implementations with a
+  contiguous parent-only fallback-stub block, producing duplicate function
+  declarations. The parent stubs remain necessary for standalone inheritance;
+  the generic correction will mark and omit only that block in generated split
+  runners, with balanced-marker and exact-once generation checks. No UI
+  assertion or implementation function may be removed.
+- 2026-08-17 [crew06_5/integrated UI] After the split-runner correction, the
+  integrated UI suite reached its assertions and exposed a real compatibility
+  regression: accepting the shipped Crew loan retires its lender entry but
+  `RunActionService.use_hook()` immediately enqueues `recruitment_rook_signpost`,
+  so the talk dock remains visible and the formerly empty triggered-event queue
+  changes. The Wave kickoff requires the shipped Crew lender flow to remain
+  behavior-identical. Crew06_5 already supplies the prompt-required diegetic
+  leads through the seeded, presence-bound `recruitment_rook_leads` encounter;
+  the redundant automatic post-loan enqueue must be removed while that
+  contextual path and its one-hearing/save contracts remain intact.
+- 2026-08-17 [pusher06_2] Exact runtime at `4159f393` is green across the 80
+  carried hot actions and all hostile/fallback twins. Raw p95 improved 43.9%
+  from 283.293 to 159.000 ms, but remains 9.94x over the 16 ms gate; production
+  drop/nudge are 223.999/253.298 ms while draw and frame budgets pass. Eager
+  candidate priming moved the dominant cost to grid/cache construction
+  (62.612 ms mean). A lazy allocation-stable cache pass is in progress, but
+  profiling already shows current GDScript cannot credibly close 16 ms without
+  a native packed-core seam if that pass remains over budget; no threshold,
+  density, trace, ordering, or outcome change is authorized.
+- 2026-08-17 [pusher06_2] The allocation-stable lazy-cache pass at `c0a7ad26`
+  plus fixture correction `054698bd` remains exact across the full Coin Pusher
+  contract (0 failures; 80/80 carried actions and hostile fallbacks), but its
+  unchanged shipped-cap performance gate still fails: raw solver p95 is
+  123.578 ms and production drop/nudge resolves are 183.537 / 205.508 ms versus
+  16.0 ms. Collision, support, and 48-tick integration alone exceed budget;
+  presentation draw/frame gates pass. Further GDScript tuning cannot credibly
+  close the remaining 7.72x gap. The root correction therefore advances to a
+  native deterministic packed core behind the existing GDScript oracle/fallback,
+  with Windows and Web export compatibility, density, trace, order, outcomes,
+  and synchronous action semantics unchanged.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:

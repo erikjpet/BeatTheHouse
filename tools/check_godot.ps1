@@ -15,6 +15,7 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "foundation_systems_shards.ps1")
+. (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
 $suiteKey = $Suite.ToLowerInvariant()
 $foundationSuiteKey = $FoundationSuite.Trim().ToLowerInvariant()
 $validFoundationSuites = @(
@@ -203,29 +204,7 @@ function New-SplitTestRunner {
     $generatedRoot = Join-Path $root ".tmp\generated_tests"
     New-Item -ItemType Directory -Force -Path $generatedRoot | Out-Null
     $destination = Join-Path $generatedRoot $Name
-    $lines = New-Object System.Collections.Generic.List[string]
-    $sourceIndex = 0
-    foreach ($relativePath in $SourceRelativePaths) {
-        $source = Join-Path $root $relativePath
-        if (-not (Test-Path -LiteralPath $source)) {
-            throw "Split test source not found: $relativePath"
-        }
-        if ($sourceIndex -gt 0) {
-            $lines.Add("")
-            $lines.Add("# --- split source: $relativePath ---")
-        }
-        $fileLines = [System.IO.File]::ReadAllLines($source)
-        $lineIndex = 0
-        foreach ($line in $fileLines) {
-            if ($sourceIndex -gt 0 -and $lineIndex -eq 0 -and ($line -match '^extends\s+' -or $line -match '^class_name\s+')) {
-                $lineIndex += 1
-                continue
-            }
-            $lines.Add($line)
-            $lineIndex += 1
-        }
-        $sourceIndex += 1
-    }
+    $lines = @(Get-SplitTestRunnerLines -ProjectRoot $root -SourceRelativePaths $SourceRelativePaths)
     [System.IO.File]::WriteAllLines($destination, $lines)
     return Convert-ProjectResourcePath $destination
 }
@@ -695,8 +674,12 @@ function Invoke-FoundationSystemsSharded {
 
     # Generate the composite source once, then copy it into each private
     # project. No child traverses the parent report tree through res://.tmp.
-    $runnerPath = Get-FoundationSplitRunnerPath
-    $runnerRelativePath = Get-ProjectRelativePath $runnerPath
+    $runnerResourcePath = Get-FoundationSplitRunnerPath
+    if (-not $runnerResourcePath.StartsWith("res://")) {
+        throw "Foundation split runner did not return a project resource path: $runnerResourcePath"
+    }
+    $runnerRelativePath = $runnerResourcePath.Substring("res://".Length)
+    $runnerPath = Join-Path $root ($runnerRelativePath.Replace("/", "\"))
     $cacheBefore = Get-ProjectCacheWriteState
     foreach ($shardIdValue in $plan.Keys) {
         $shardId = [string]$shardIdValue
@@ -719,7 +702,7 @@ function Invoke-FoundationSystemsSharded {
         $arguments = @(
             "--headless", "--path", $shardProjectRoot,
             "--log-file", $logPath,
-            "--script", $shardRunnerPath,
+            "--script", $runnerResourcePath,
             "--",
             "--suite=systems",
             "--report=$resourceReport",

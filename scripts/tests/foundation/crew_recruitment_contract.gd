@@ -175,6 +175,11 @@ static func _check_rook_paths(library: ContentLibrary, failures: Array) -> void:
 	var loan_result := resolver.use_hook("lender", "the_crew")
 	if not bool(loan_result.get("ok", false)) or primary.crew_rank("crew_rook") != "marker":
 		failures.append("Rook's primary Crew-loan path did not resolve through the shipped lender action and reach Marker.")
+	if not primary.pending_triggered_events.is_empty() \
+			or not primary.next_pending_triggered_event().is_empty() \
+			or primary.pending_talk_event_count() != 0 \
+			or not primary.next_pending_talk_event().is_empty():
+		failures.append("The shipped Crew lender action enqueued a post-loan triggered or talk event instead of ending at Marker.")
 	var legacy_data := RunStateScript.new().to_dict()
 	legacy_data.erase("crew_state")
 	legacy_data["narrative_flags"] = {"crew_marker_open": true}
