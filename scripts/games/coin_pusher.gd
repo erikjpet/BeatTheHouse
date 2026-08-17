@@ -28,6 +28,9 @@ const RIDGE_JAM_ZONE_MIN_Y := CoinPusherSolverScript.FRONT_EDGE + 52000
 const RIDGE_JAM_ZONE_MIN_Z := CoinPusherSolverScript.UPPER_FLOOR_Z - CoinPusherSolverScript.OBJECT_HEIGHT
 const COIN_GLYPH_SIZE := 48
 const COIN_GLYPH_RADIUS := 18.0
+const SHARED_LEAVE_RECT := Rect2(776, 22, 86, 34)
+const CONSOLE_TITLE_RECT := Rect2(668, 22, 100, 34)
+const CONSOLE_TITLE_MAX_FONT_SIZE := 13
 
 var coin_glyph_textures: Dictionary = {}
 
@@ -1796,10 +1799,10 @@ func _draw_console(surface, state: Dictionary) -> void:
 	var panel := Rect2(660, 18, 222, 390)
 	surface.draw_rect(panel, Color("#111826"))
 	var variation_id := str(state.get("coin_pusher_variation_id", "quarter_falls"))
+	_draw_console_title(surface, str(state.get("coin_pusher_variation_name", "Quarter Falls")))
 	if variation_id == "vault_drop":
 		_draw_vault_console(surface, state)
 		return
-	surface.surface_label(str(state.get("coin_pusher_variation_name", "Quarter Falls")).to_upper(), Vector2(678, 48), 13, C_COIN)
 	surface.surface_label("Tray $%d" % int(state.get("coin_pusher_tray_value", 0)), Vector2(678, 74), 11, C_TEAL)
 	var snapshot := _snapshot_view(state)
 	surface.surface_label("Tell: %s" % str(snapshot.get("tell_label", "steady")), Vector2(678, 96), 8, C_HANG if int(snapshot.get("tell_rung", 0)) > 0 else C_TEXT)
@@ -1842,6 +1845,29 @@ func _draw_console(surface, state: Dictionary) -> void:
 	surface.surface_label_centered("NUDGE", nudge_rect, 13, C_BG)
 	surface.surface_add_exact_hit(nudge_rect, "coin_pusher_nudge", 0)
 	surface.surface_label(str(state.get("coin_pusher_last_message", "")).left(34), Vector2(678, 366), 7, C_TEXT)
+
+
+func _draw_console_title(surface, display_name: String) -> void:
+	var geometry := coin_pusher_title_geometry(display_name)
+	surface.surface_label_centered(
+		str(geometry.get("text", "COIN PUSHER")),
+		geometry.get("rect", CONSOLE_TITLE_RECT),
+		int(geometry.get("max_font_size", CONSOLE_TITLE_MAX_FONT_SIZE)),
+		C_COIN
+	)
+
+
+func coin_pusher_title_geometry(display_name: String) -> Dictionary:
+	var title := display_name.strip_edges().to_upper()
+	if title.is_empty():
+		title = "COIN PUSHER"
+	return {
+		"text": title,
+		"rect": CONSOLE_TITLE_RECT,
+		"max_font_size": CONSOLE_TITLE_MAX_FONT_SIZE,
+		"alignment": "center",
+		"leave_rect": SHARED_LEAVE_RECT,
+	}
 
 
 func _draw_variation_features(surface, state: Dictionary, bodies: Array, final_bodies: Array, geometry: Dictionary) -> void:
@@ -1936,7 +1962,6 @@ func _presentation_particles_active(surface, state: Dictionary) -> bool:
 
 func _draw_vault_console(surface, state: Dictionary) -> void:
 	var snapshot := _snapshot_view(state)
-	surface.surface_label("THE VAULT DROP", Vector2(674, 42), 12, C_COIN)
 	surface.surface_label("Vault $%d · Keys %d" % [int(state.get("coin_pusher_vault_meter", 0)), int(state.get("coin_pusher_vault_fragments", 0))], Vector2(674, 64), 8, C_TEAL)
 	surface.surface_label("Tell: %s" % str(snapshot.get("tell_label", "steady")), Vector2(674, 82), 7, C_HANG if int(snapshot.get("tell_rung", 0)) > 0 else C_TEXT)
 	var selected := int(state.get("coin_pusher_vault_selected_cell", 0))
