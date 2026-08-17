@@ -126,6 +126,19 @@ a *rendering* project rather than a gameplay rewrite.
 | pusher06_3 | `pusher06_3_variations_prompt.md` | TODO | pusher06_2 | pusher06_4 | | | | Prove Ridge and Vault are genuinely different machines on the new solver, with physical pucks/fragments. Distinctness is the acceptance bar. |
 | pusher06_4 | `pusher06_4_environment_integration_prompt.md` | TODO | pusher06_1/2/3 landed | coin pusher closure | | | | Venue presence, persistence at run scale with measured save-size, rumor/sweep/scenario/reputation wiring, class guard. |
 
+### Concurrent track — parallel-safe, no dependency on the pusher or crew waves
+
+These were scoped specifically to run alongside the coin pusher and
+Wave D/E work without contention. **File ownership is binding and
+stated in each prompt** — `events.json` in particular is shared, and
+`env06_5` may only add `scenario_`-prefixed events.
+
+| ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| teach06_1 | `teach06_1_onboarding_prompt.md` | TODO | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | | | | All 56 shipped lessons teach 0.5 content only; zero cover crew, delivery, Numbers, pushers, craps, or Punchline layers. Must NOT teach discovery-gated systems (past-posting, crew fix, the Turn, hidden layers). |
+| env06_5 | `env06_5_scenario_backlog_prompt.md` | TODO | env06_1/2/3 (DONE) | playtest variety | | | | 13 backlog scenarios from the roadmap catalog. Owns `scenarios.json`; may only add `scenario_`-prefixed events to `events.json`. |
+| art06_1 | `art06_1_punchline_layers_prompt.md` | TODO | env06_4 (DONE) | — | | | | Punchline L1/L3 still reuse the underground raster (art debt logged by env06_4). Owns assets + manifest + `visual_context` only; L3 must leave crew06_6 furniture spots clear. |
+
 ### Wave D — Crew depth
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
