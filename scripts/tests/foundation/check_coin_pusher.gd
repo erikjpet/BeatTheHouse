@@ -127,9 +127,9 @@ func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:
 	crossing_hostile["bodies"] = [_solver_body("grid_crossing_hostile", "coin", 50000, 30000, 190000, false)]
 	var crossing_body: Dictionary = (crossing_hostile.get("bodies", []) as Array)[0]
 	crossing_body["vz"] = 10000000
-	if CoinPusherSolverScript.hot_state_eligible_for_test(crossing_hostile):
-		failures.append("Packed Coin Pusher accepted high vertical motion that can leave its canonical grid envelope mid-action.")
-	_assert_coin_pusher_hot_solver_twin(crossing_hostile, {"upper_locked": true, "lower_locked": true}, "in-range-entry high-motion grid fallback", failures)
+	if not CoinPusherSolverScript.hot_state_eligible_for_test(crossing_hostile):
+		failures.append("Packed Coin Pusher high-motion oracle did not exercise the exact-order overflow-grid path.")
+	_assert_coin_pusher_hot_solver_twin(crossing_hostile, {"upper_locked": true, "lower_locked": true}, "in-range-entry high-motion overflow grid", failures)
 
 	var sequence_source := CoinPusherSolverScript.create(_configured_rng(8805), 160, 150, 5)
 	CoinPusherSolverScript.add_coin(sequence_source, _configured_rng(8905), 4, 5)
