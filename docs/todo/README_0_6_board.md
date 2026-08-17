@@ -581,6 +581,12 @@ What happens then is the owner's, not an agent's:
   The candidate lock now records truthful commit provenance, exact payload
   hashes, API 4.6, and bootstrap verification after clearing mixed generated
   caches. Independent provenance re-audit and a clean load test remain.
+- 2026-08-17 [pusher06_2 4.6 binding pin] Independent re-audit ACCEPTS exact
+  `58d1de72...` pin/provenance/hash semantics. At that commit `extension_api.json`
+  is intentionally the consumed 4.6 payload (4.6.0 stable/official/single), the
+  API and interface hashes match the lock, and the source commit is the official
+  exact sync from engine `89cea143...`. No fabricated tag or master/Beta risk
+  remains. Windows/Web runtime load and smoke are still separate required gates.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1311,3 +1317,5 @@ What happens then is the owner's, not an agent's:
 - 2026-08-17 [pusher06_2] Exact official 4.6 sync commit `58d1de72...` supersedes
   the rejected master candidate; payload provenance is independently re-auditing
   while a fully clean Windows load build runs.
+- 2026-08-17 [pusher06_2] Exact 4.6 pin/provenance is independently ACCEPTED;
+  clean Windows/Web runtime evidence remains before native acceptance.
