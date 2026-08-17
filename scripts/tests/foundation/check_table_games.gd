@@ -6067,7 +6067,27 @@ func _check_pull_tab_portable_inventory(game: GameModule, failures: Array) -> vo
 	loaded.remember_portable_ticket_state("pull_tabs", loaded.current_environment, portable)
 	game.surface_state(loaded, loaded.current_environment, {})
 	origin_return = loaded.current_environment.duplicate(true)
+	# The portable registry is newer than this deliberately stale live machine.
+	# Departure must not capture the stale machine back over the action-authored
+	# winner; this is the navigation seam that passive previews exposed.
+	var stale_game_states: Dictionary = origin_return.get("game_states", {}) if typeof(origin_return.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var stale_machine: Dictionary = stale_game_states.get("pull_tabs", {}) if typeof(stale_game_states.get("pull_tabs", {})) == TYPE_DICTIONARY else {}
+	var stale_winners: Array = stale_machine.get("winner_pile", []) if typeof(stale_machine.get("winner_pile", [])) == TYPE_ARRAY else []
+	var stale_has_forced_winner := false
+	for stale_winner_value in stale_winners:
+		if typeof(stale_winner_value) == TYPE_DICTIONARY and str((stale_winner_value as Dictionary).get("id", "")) == "portable-tab-winner":
+			stale_has_forced_winner = true
+	if stale_has_forced_winner:
+		failures.append("Pull Tabs stale-machine travel fixture unexpectedly synchronized the newer portable winner before departure.")
 	loaded.set_environment(elsewhere)
+	var retained_portable := loaded.portable_ticket_state("pull_tabs", origin_return)
+	var retained_winners: Array = retained_portable.get("winner_pile", []) if typeof(retained_portable.get("winner_pile", [])) == TYPE_ARRAY else []
+	var retained_forced_winner := false
+	for retained_winner_value in retained_winners:
+		if typeof(retained_winner_value) == TYPE_DICTIONARY and str((retained_winner_value as Dictionary).get("id", "")) == "portable-tab-winner":
+			retained_forced_winner = true
+	if not retained_forced_winner:
+		failures.append("Travel overwrote a newer portable Pull Tabs winner with stale environment machine state.")
 	var wrong_cash_before := loaded.bankroll
 	var wrong_cash: Dictionary = game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", loaded, loaded.current_environment, loaded.create_rng("portable-tabs-wrong-clerk")).get("result", {})
 	if int(wrong_cash.get("bankroll_delta", 0)) != 0 or loaded.bankroll != wrong_cash_before:

@@ -2948,18 +2948,32 @@ func _check_grand_casino_staff_game_state_reset(library: ContentLibrary, main_en
 	run_state.narrative_flags["grand_casino_players_card_highest_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
 	run_state.narrative_flags["grand_casino_comp_drink_tokens"] = 2
 	var rotated := false
+	var rotated_surface: Dictionary = {}
 	for _day_index in range(20):
 		run_state.advance_game_clock_minutes(1440)
 		if str(run_state.grand_casino_staff_member_for_game("blackjack").get("id", "")) == first_blackjack_id:
 			continue
-		blackjack.surface_state(run_state, run_state.current_environment, {})
+		var before_surface_json := JSON.stringify(_save_load_canonical_run_snapshot(run_state.to_dict()))
+		rotated_surface = blackjack.surface_state(run_state, run_state.current_environment, {})
+		var after_surface_json := JSON.stringify(_save_load_canonical_run_snapshot(run_state.to_dict()))
+		if after_surface_json != before_surface_json:
+			failures.append("Fresh blackjack dealer preview mutated serialized RunState before play.")
 		rotated = true
 		break
 	if not rotated:
 		failures.append("Grand Casino staff reset fixture did not reach a seeded blackjack dealer rotation.")
 		return
+	var rotated_assignment := run_state.grand_casino_staff_member_for_game("blackjack")
+	var rotated_profile: Dictionary = rotated_surface.get("dealer_profile", {}) if typeof(rotated_surface.get("dealer_profile", {})) == TYPE_DICTIONARY else {}
+	if str(rotated_surface.get("dealer_name", "")) != str(rotated_assignment.get("name", "")) or str(rotated_profile.get("identity_id", "")) != str(rotated_assignment.get("id", "")) or int(rotated_surface.get("strategy_watch_pressure", -1)) != 0:
+		failures.append("Fresh blackjack dealer preview did not project the rotated identity with cleared strategy pressure.")
+	# Resolution is the write boundary. The durable ban intentionally rejects the
+	# wager after _table_state() commits the dealer-local reset, without dealing a
+	# hand or disturbing the physical table history this contract also protects.
+	run_state.bankroll = maxi(run_state.bankroll, 100)
+	blackjack.resolve_with_context("blackjack_place_bet", 1, run_state, run_state.current_environment, run_state.create_rng("gc_staff_reset_action"), {"selected_stake": 1})
 	if int(blackjack_table.get("strategy_deviation_strikes", -1)) != 0 or int(blackjack_table.get("strategy_watch_pressure", -1)) != 0 or not str(blackjack_table.get("strategy_last_notice", "missing")).is_empty():
-		failures.append("Fresh blackjack dealer did not reset exactly the existing dealer-local strategy familiarity state.")
+		failures.append("Fresh blackjack dealer action boundary did not reset exactly the existing dealer-local strategy familiarity state.")
 	if int(blackjack_table.get("hands_played", 0)) != 9 or int(blackjack_table.get("running_count", 0)) != 4 or not bool(blackjack_table.get("barred", false)) or str(blackjack_table.get("barred_reason", "")) != "Casino memory persists.":
 		failures.append("Dealer rotation reset physical table history or durable casino ban state.")
 	if run_state.suspicion_level() != 28 or int(run_state.narrative_flags.get("grand_casino_games_played", 0)) != 4 or not bool(run_state.narrative_flags.get("grand_casino_cheat_evidence", false)) or str(run_state.narrative_flags.get("grand_casino_players_card_highest_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER or int(run_state.narrative_flags.get("grand_casino_comp_drink_tokens", 0)) != 2:
