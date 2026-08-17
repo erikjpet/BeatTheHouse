@@ -212,22 +212,34 @@ func evaluate_at_boundary(context: Dictionary) -> void:
 
 
 func notify_action(action_id: String) -> bool:
+	# Ambient advice yields to the player's very next action. It may evaluate the
+	# newly focused public context, but it never consumes that same input. Guided
+	# tutorial lessons retain their authored completion contracts below.
+	if not active_lesson.is_empty() and str(active_lesson.get("scope", "")).strip_edges() != "tutorial_run":
+		_finish_active()
+		if action_id == "coach:skip":
+			return true
+		return false
 	# Normal-run tips may meet their first genuine encounter on focus rather than
 	# on an action-consuming run boundary (the Numbers book is the canonical
 	# case). Re-read only public host state at that explicit input boundary. The
 	# input that revealed a lesson never dismisses the lesson in the same call.
 	if active_lesson.is_empty():
 		if _path_value(latest_context, "run.tutorial") != true:
-			var interaction_context := latest_context.duplicate(true)
-			var action_context := _dict(interaction_context.get("action", {})).duplicate(true)
-			action_context["last_action_id"] = action_id
-			interaction_context["action"] = action_context
-			evaluate_at_boundary(interaction_context)
+			_evaluate_normal_action_boundary(action_id)
 		return false
 	if not CoachViewModelScript.completion_matches(active_lesson, action_id):
 		return false
 	_finish_active()
 	return true
+
+
+func _evaluate_normal_action_boundary(action_id: String) -> void:
+	var interaction_context := latest_context.duplicate(true)
+	var action_context := _dict(interaction_context.get("action", {})).duplicate(true)
+	action_context["last_action_id"] = action_id
+	interaction_context["action"] = action_context
+	evaluate_at_boundary(interaction_context)
 
 
 # Contextual 0.6 lessons deliberately consume public presentation state only.
@@ -347,6 +359,7 @@ func current_snapshot() -> Dictionary:
 
 
 func _build() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_layer = FocusLayer.new()
 	focus_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	focus_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -356,6 +369,7 @@ func _build() -> void:
 	panel.clip_contents = true
 	add_child(panel)
 	var margin := MarginContainer.new()
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", VisualStyle.SPACE_5)
 	margin.add_theme_constant_override("margin_right", VisualStyle.SPACE_5)
@@ -363,17 +377,21 @@ func _build() -> void:
 	margin.add_theme_constant_override("margin_bottom", VisualStyle.SPACE_3)
 	panel.add_child(margin)
 	var stack := VBoxContainer.new()
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stack.add_theme_constant_override("separation", VisualStyle.SPACE_3)
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_child(stack)
 	eyebrow_label = FoundationWidgets.label("DEALER'S ADVICE", VisualStyle.TYPE_SMALL)
+	eyebrow_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	FoundationWidgets.set_control_font_color(eyebrow_label, VisualStyle.YELLOW)
 	stack.add_child(eyebrow_label)
 	copy_label = FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE + VisualStyle.BORDER_HAIRLINE)
+	copy_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	copy_label.max_lines_visible = 4
 	stack.add_child(copy_label)
 	var action_spacer := Control.new()
+	action_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	action_spacer.custom_minimum_size.y = float(VisualStyle.SPACE_4)
 	action_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(action_spacer)
@@ -398,6 +416,11 @@ func _show_next() -> void:
 			continue
 		active_lesson = candidate
 		active_context = display_context
+		# Contextual advice is genuinely non-modal: its bubble cannot intercept a
+		# room prop or surface control underneath it. Any player action dismisses
+		# the tip, while guided tutorial panels keep their authored pointer behavior
+		# and action gates.
+		panel.mouse_filter = Control.MOUSE_FILTER_STOP if tutorial_lesson else Control.MOUSE_FILTER_IGNORE
 		if not tutorial_lesson:
 			seen[lesson_id] = true
 		lesson_seen.emit(lesson_id)
@@ -440,6 +463,7 @@ func _render_active(play_motion: bool) -> void:
 	copy_label.text = str(prepared_snapshot.get("copy", ""))
 	ok_button.text = str(prepared_snapshot.get("dismiss_label", "Got it"))
 	ok_button.visible = bool(prepared_snapshot.get("dismissible", true))
+	ok_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	ok_button.custom_minimum_size.y = float(prepared_snapshot.get("minimum_control_height", 40.0))
 	var bubble_rect := CoachViewModelScript._rect(prepared_snapshot.get("bubble_rect", {}))
 	panel.position = bubble_rect.position
