@@ -42,6 +42,8 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 		return CrewRecruitmentModelScript.rook_signpost_choices(run_state) if run_state != null else []
 	if str(payload.get("kind", "")) == "crew_rook_leads":
 		return CrewRecruitmentModelScript.rook_signpost_choices(run_state, false) if run_state != null else []
+	if str(payload.get("kind", "")) == "crew_contact":
+		return CrewRecruitmentModelScript.contact_choices(run_state, environment, str(payload.get("member_id", "")), content_library) if run_state != null else []
 	if str(payload.get("kind", "")) == "grand_casino_showdown":
 		return _grand_casino_showdown_choices(payload, run_state, environment)
 	if str(payload.get("kind", "")) == "grand_casino_high_roller_cashout":
@@ -208,11 +210,31 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 			result["ok"] = false
 			result["message"] = str(settlement_result.get("message", "The marker settlement failed."))
 			return
-	# A heard fact is true at the action boundary where the player accepts it.
-	# Capture it before advancing town schedules could expire an incoming fact.
+	# Facts and storage services take effect on the side of the boundary where
+	# the player chose them. In particular, a sweep advanced by this action must
+	# see an item after Knuckles hid it, never confiscate it first.
 	for hook in deltas.get("event_hooks", []):
-		if typeof(hook) == TYPE_DICTIONARY and str((hook as Dictionary).get("type", "")) == "hear_rumor":
-			run_state.hear_rumor(str((hook as Dictionary).get("rumor_id", "")))
+		if typeof(hook) != TYPE_DICTIONARY:
+			continue
+		var pre_hook: Dictionary = hook
+		var service_result: Dictionary = {}
+		match str(pre_hook.get("type", "")):
+			"hear_rumor":
+				run_state.hear_rumor(str(pre_hook.get("rumor_id", "")))
+			"crew_switch_reveal":
+				service_result = run_state.crew_switch_reveal_node(str(pre_hook.get("node_id", "")))
+			"crew_knuckles_stash":
+				service_result = run_state.crew_knuckles_stash_inventory_entry(int(pre_hook.get("inventory_index", -1)), str(pre_hook.get("item_id", "")))
+			"crew_knuckles_retrieve":
+				service_result = run_state.crew_knuckles_retrieve_stash_entry(int(pre_hook.get("stash_index", -1)), str(pre_hook.get("item_id", "")))
+			"crew_lucky_collection":
+				service_result = run_state.numbers_begin_collection_route()
+		if not service_result.is_empty():
+			if not bool(service_result.get("ok", false)):
+				result["ok"] = false
+				result["message"] = "That Crew service is no longer available."
+				return
+			result["crew_service_result"] = service_result
 	run_state.advance_environment_turns(1)
 	GameModule.apply_result(run_state, result)
 	for hook in deltas.get("event_hooks", []):
@@ -232,6 +254,8 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				run_state.crew_meet_member(str(hook_data.get("member_id", "")))
 			"crew_rook_lead_closed":
 				run_state.crew_close_rook_leads_event()
+			"crew_switch_reveal", "crew_lucky_collection", "crew_knuckles_stash", "crew_knuckles_retrieve":
+				pass
 
 
 # Returns a no-op event result for invalid choices.

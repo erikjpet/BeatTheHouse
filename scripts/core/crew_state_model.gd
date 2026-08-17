@@ -45,6 +45,20 @@ static func job_definition(job_id: String) -> Dictionary:
 	return (definition as Dictionary).duplicate(true) if typeof(definition) == TYPE_DICTIONARY else {}
 
 
+static func job_definitions_for_member(member_id: String) -> Array:
+	_ensure_job_cache()
+	var result: Array = []
+	for job_id_value in _job_cache.keys():
+		var definition_value: Variant = _job_cache.get(job_id_value, {})
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var definition: Dictionary = definition_value
+		if str(definition.get("member_id", "")) == member_id:
+			result.append(definition.duplicate(true))
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("id", "")) < str(b.get("id", "")))
+	return result
+
+
 static func default_trust() -> Dictionary:
 	var result := {}
 	for member_id in MEMBER_IDS:

@@ -8,6 +8,8 @@
       {
         "member_id": "crew_rook",
         "event_id": "recruitment_rook_signpost",
+        "contact_event_id": "crew_contact_rook",
+        "job_offer_line": "Rook keeps the next handoff short and the terms shorter.",
         "primary": {"kind": "crew_loan"},
         "fallback": {"kind": "legacy_marker"},
         "presence": ["small_underground_casino", "gas_station_casino", "back_alley"],
@@ -21,6 +23,8 @@
       {
         "member_id": "crew_switch",
         "event_id": "recruitment_switch",
+        "contact_event_id": "crew_contact_switch",
+        "job_offer_line": "Switch has a route open now, not later.",
         "primary": {"archetype_ids": ["gas_station_casino"], "scenario_ids": ["gas_station_trucker_convoy"]},
         "fallback": {"archetype_ids": ["back_alley"]},
         "presence": ["gas_station_casino", "back_alley", "small_underground_casino"],
@@ -35,6 +39,8 @@
       {
         "member_id": "crew_mags",
         "event_id": "recruitment_mags",
+        "contact_event_id": "crew_contact_mags",
+        "job_offer_line": "Mags has the work ordered before she names it.",
         "primary": {"archetype_ids": ["back_alley"], "scenario_ids": ["back_alley_fence_night"]},
         "fallback": {"archetype_ids": ["small_underground_casino"], "layer_ids": ["casino"]},
         "presence": ["pawn_shop", "back_alley", "small_underground_casino"],
@@ -49,6 +55,8 @@
       {
         "member_id": "crew_knuckles",
         "event_id": "recruitment_knuckles",
+        "contact_event_id": "crew_contact_knuckles",
+        "job_offer_line": "Knuckles has work that improves when nobody explains it.",
         "primary": {"archetype_ids": ["bar"], "scenario_ids": ["bar_fight_night"]},
         "fallback": {"archetype_ids": ["small_underground_casino"], "layer_ids": ["club"]},
         "presence": ["bar", "small_underground_casino", "back_alley"],
@@ -63,8 +71,10 @@
       {
         "member_id": "crew_velvet",
         "event_id": "recruitment_velvet",
+        "contact_event_id": "crew_contact_velvet",
+        "job_offer_line": "Velvet has an introduction that needs a steady guest.",
         "primary": {"archetype_ids": ["kitty_cat_lounge"], "scenario_ids": ["kitty_cat_lounge_buyout"]},
-        "fallback": {"archetype_ids": ["kitty_cat_lounge"], "scenario_ids": ["kitty_cat_lounge_slow_night"]},
+        "fallback": {"archetype_ids": ["kitty_cat_lounge"], "preferred_scenario_ids": ["kitty_cat_lounge_slow_night"]},
         "presence": ["kitty_cat_lounge", "delta_queen", "small_underground_casino"],
         "presence_lines": {
           "marker": "Velvet makes the worn room feel invited.",
@@ -77,6 +87,8 @@
       {
         "member_id": "crew_bishop",
         "event_id": "recruitment_bishop",
+        "contact_event_id": "crew_contact_bishop",
+        "job_offer_line": "Bishop has an appointment the floor must never notice.",
         "primary": {"archetype_ids": ["grand_casino"]},
         "fallback": {"archetype_ids": ["grand_casino_cage"], "available_with_primary": true},
         "presence": ["grand_casino", "grand_casino_cage", "grand_casino_high_limit"],
@@ -91,6 +103,8 @@
       {
         "member_id": "crew_lucky",
         "event_id": "recruitment_lucky",
+        "contact_event_id": "crew_contact_lucky",
+        "job_offer_line": "Lucky has a short run and a dangerous definition of short.",
         "primary": {"archetype_ids": ["beach"], "scenario_ids": ["beach_festival_weekend"]},
         "fallback": {"archetype_ids": ["small_underground_casino", "bar", "motel", "gas_station_casino", "corner_store"], "requires_system": "numbers"},
         "presence": ["small_underground_casino", "bar", "gas_station_casino"],

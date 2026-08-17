@@ -6240,6 +6240,17 @@ func crew_member_job_available(member_id: String) -> bool:
 	return crew_rank_perks(member_id).has("member_jobs")
 
 
+func crew_job_definition_pending(definition_id: String) -> bool:
+	var clean_id := definition_id.strip_edges()
+	for job_value in crew_jobs.values():
+		if typeof(job_value) != TYPE_DICTIONARY:
+			continue
+		var job: Dictionary = job_value
+		if str(job.get("definition_id", "")) == clean_id and str(job.get("status", "")) != "resolved":
+			return true
+	return false
+
+
 func crew_close_rook_leads_event() -> void:
 	var event_ids := _copy_array(current_environment.get("event_ids", []))
 	event_ids.erase("recruitment_rook_leads")
@@ -6255,6 +6266,29 @@ func crew_switch_intel_status() -> Dictionary:
 	var stored_visit_id := str(current_environment.get("crew_switch_intel_visit_id", ""))
 	var used := maxi(0, int(current_environment.get("crew_switch_intel_uses", 0))) if not visit_id.is_empty() and stored_visit_id == visit_id else 0
 	return {"available": available and used < cap, "rank_gated": not available, "uses": used, "uses_remaining": maxi(0, cap - used), "cap": cap, "visit_id": visit_id}
+
+
+func crew_switch_reveal_candidates() -> Array:
+	if not bool(crew_switch_intel_status().get("available", false)):
+		return []
+	var result: Array = []
+	for node_value in _copy_array(world_map.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", "")).strip_edges()
+		if node_id.is_empty() or node_id == current_world_node_id() or bool(node.get("scouted", false)):
+			continue
+		var scenario := seeded_scenario_for_node(node_id)
+		if scenario.is_empty():
+			continue
+		result.append({
+			"node_id": node_id,
+			"display_name": str(node.get("display_name", node.get("name", node_id.replace("_", " ").capitalize()))),
+			"scenario_id": str(scenario.get("id", "")),
+		})
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("node_id", "")) < str(b.get("node_id", "")))
+	return result
 
 
 # Switch upgrades a true seeded scenario fact through the existing heard/scouted
@@ -6284,37 +6318,85 @@ func crew_knuckles_stash_status() -> Dictionary:
 	return {"available": available and crew_contraband_stash.size() < cap, "rank_gated": not available, "count": crew_contraband_stash.size(), "cap": cap, "item_ids": crew_contraband_stash.duplicate(true)}
 
 
+func crew_knuckles_stash_candidates() -> Array:
+	var result: Array = []
+	var definitions := _item_definition_index()
+	for inventory_index in range(inventory.size()):
+		var item_id := _inventory_item_id(inventory[inventory_index])
+		var definition := _copy_dict(definitions.get(item_id, {}))
+		var risk_flags := _string_array(_copy_array(definition.get("risk_flags", [])))
+		if str(definition.get("class", "")).strip_edges().to_lower() == "contraband" or risk_flags.has("contraband"):
+			result.append({"candidate_id": "inventory:%d" % inventory_index, "inventory_index": inventory_index, "item_id": item_id})
+	return result
+
+
+func crew_knuckles_retrieve_candidates() -> Array:
+	var result: Array = []
+	for stash_index in range(crew_contraband_stash.size()):
+		result.append({"candidate_id": "stash:%d" % stash_index, "stash_index": stash_index, "item_id": _inventory_item_id(crew_contraband_stash[stash_index])})
+	return result
+
+
 # Moves carried contraband out of sweep-visible inventory. Stashed entries keep
 # their exact inventory shape and therefore survive confiscation encounters.
 func crew_knuckles_stash_item(item_id: String) -> Dictionary:
-	var status := crew_knuckles_stash_status()
 	var clean_id := item_id.strip_edges()
-	if not bool(status.get("available", false)) or clean_id.is_empty() or not _carried_contraband_ids().has(clean_id):
+	for candidate_value in crew_knuckles_stash_candidates():
+		if typeof(candidate_value) == TYPE_DICTIONARY and str((candidate_value as Dictionary).get("item_id", "")) == clean_id:
+			return crew_knuckles_stash_inventory_entry(int((candidate_value as Dictionary).get("inventory_index", -1)), clean_id)
+	return {"ok": false, "item_id": clean_id, "status": crew_knuckles_stash_status()}
+
+
+func crew_knuckles_stash_inventory_entry(inventory_index: int, expected_item_id: String) -> Dictionary:
+	var status := crew_knuckles_stash_status()
+	var clean_id := expected_item_id.strip_edges()
+	if not bool(status.get("available", false)) or inventory_index < 0 or inventory_index >= inventory.size() \
+		or _inventory_item_id(inventory[inventory_index]) != clean_id:
 		return {"ok": false, "item_id": clean_id, "status": status}
-	for index in range(inventory.size()):
-		if _inventory_item_id(inventory[index]) != clean_id:
-			continue
-		crew_contraband_stash.append(_persistent_copy_value(inventory[index]))
-		inventory.remove_at(index)
-		invalidate_inventory_effect_cache()
-		if active_item_id == clean_id:
-			active_item_id = ""
-		return {"ok": true, "item_id": clean_id, "status": crew_knuckles_stash_status()}
-	return {"ok": false, "item_id": clean_id, "status": status}
+	var valid_candidate := false
+	for candidate_value in crew_knuckles_stash_candidates():
+		if typeof(candidate_value) == TYPE_DICTIONARY and int((candidate_value as Dictionary).get("inventory_index", -1)) == inventory_index:
+			valid_candidate = true
+			break
+	if not valid_candidate:
+		return {"ok": false, "item_id": clean_id, "status": status}
+	crew_contraband_stash.append(_persistent_copy_value(inventory[inventory_index]))
+	inventory.remove_at(inventory_index)
+	invalidate_inventory_effect_cache()
+	if active_item_id == clean_id:
+		active_item_id = ""
+	return {"ok": true, "item_id": clean_id, "status": crew_knuckles_stash_status()}
 
 
 func crew_knuckles_retrieve_item(item_id: String) -> Dictionary:
 	var clean_id := item_id.strip_edges()
-	if not crew_rank_perks("crew_knuckles").has("contraband_stash"):
-		return {"ok": false, "item_id": clean_id}
-	for index in range(crew_contraband_stash.size()):
-		if _inventory_item_id(crew_contraband_stash[index]) != clean_id:
-			continue
-		inventory.append(_persistent_copy_value(crew_contraband_stash[index]))
-		crew_contraband_stash.remove_at(index)
-		invalidate_inventory_effect_cache()
-		return {"ok": true, "item_id": clean_id, "status": crew_knuckles_stash_status()}
+	for candidate_value in crew_knuckles_retrieve_candidates():
+		if typeof(candidate_value) == TYPE_DICTIONARY and str((candidate_value as Dictionary).get("item_id", "")) == clean_id:
+			return crew_knuckles_retrieve_stash_entry(int((candidate_value as Dictionary).get("stash_index", -1)), clean_id)
 	return {"ok": false, "item_id": clean_id}
+
+
+func crew_knuckles_retrieve_stash_entry(stash_index: int, expected_item_id: String) -> Dictionary:
+	var clean_id := expected_item_id.strip_edges()
+	if not crew_rank_perks("crew_knuckles").has("contraband_stash") or stash_index < 0 or stash_index >= crew_contraband_stash.size() \
+		or _inventory_item_id(crew_contraband_stash[stash_index]) != clean_id:
+		return {"ok": false, "item_id": clean_id}
+	inventory.append(_persistent_copy_value(crew_contraband_stash[stash_index]))
+	crew_contraband_stash.remove_at(stash_index)
+	invalidate_inventory_effect_cache()
+	return {"ok": true, "item_id": clean_id, "status": crew_knuckles_stash_status()}
+
+
+func triggered_event_pending(event_id: String) -> bool:
+	var clean_id := event_id.strip_edges()
+	if clean_id.is_empty():
+		return false
+	if str(active_triggered_event.get("event_id", "")) == clean_id:
+		return true
+	for entry_value in pending_triggered_events:
+		if typeof(entry_value) == TYPE_DICTIONARY and str((entry_value as Dictionary).get("event_id", "")) == clean_id:
+			return true
+	return false
 
 
 func _reconcile_crew_recruitment_perks() -> void:
