@@ -185,15 +185,50 @@ static func _check_rook_paths(library: ContentLibrary, failures: Array) -> void:
 
 
 static func _check_bishop_grand_casino_presence(library: ContentLibrary, failures: Array) -> void:
-	var run_state := _marked_run("CREW-BISHOP-CAGE-PRESENCE")
+	var selected_seed := ""
+	for seed_index in range(128):
+		var candidate := _marked_run("CREW-BISHOP-CAGE-PRESENCE-%03d" % seed_index)
+		candidate.crew_recruit_member("crew_bishop")
+		_set_fixture_world(candidate, [RunState.GRAND_CASINO_ARCHETYPE_ID])
+		var cage_probe := {
+			"id": "bishop_cage_seed_probe",
+			"archetype_id": RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID,
+			"world_node_id": RunState.GRAND_CASINO_ARCHETYPE_ID,
+			"kind": "casino",
+			"event_ids": [],
+			"resolved_event_ids": [],
+			"scenario_patron_ids": [],
+		}
+		CrewRecruitmentModelScript.apply_to_environment(candidate, cage_probe)
+		if _presence_has_member(cage_probe, "crew_bishop"):
+			selected_seed = candidate.seed_text
+			break
+	if selected_seed.is_empty():
+		failures.append("No deterministic Bishop itinerary seed selected the Grand Casino cage window.")
+		return
+	var run_state := _marked_run(selected_seed)
 	run_state.crew_recruit_member("crew_bishop")
 	_set_fixture_world(run_state, [RunState.GRAND_CASINO_ARCHETYPE_ID])
+	run_state.narrative_flags["grand_casino_high_limit_access"] = true
 	var generator := RunGeneratorScript.new(library)
 	generator.next_environment(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID, true)
-	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID) \
-		or not _presence_has_member(run_state.current_environment, "crew_bishop"):
-		failures.append("Met Bishop did not seed at the production Grand Casino cage window.")
+	var selected_rooms: Array = []
+	if _presence_has_member(run_state.current_environment, "crew_bishop"):
+		selected_rooms.append(RunState.GRAND_CASINO_ARCHETYPE_ID)
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+		failures.append("Bishop cage presence fixture could not enter the production cage room.")
 		return
+	if _presence_has_member(run_state.current_environment, "crew_bishop"):
+		selected_rooms.append(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
+	if not _presence_has_contact(run_state.current_environment, "crew_bishop"):
+		failures.append("Bishop's selected cage presence did not retain its contextual contact seam.")
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID):
+		failures.append("Bishop cage presence fixture could not enter the production high-limit room.")
+		return
+	if _presence_has_member(run_state.current_environment, "crew_bishop"):
+		selected_rooms.append(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)
+	if selected_rooms != [RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID]:
+		failures.append("Bishop itinerary must select exactly one physical Grand Casino room; got %s." % JSON.stringify(selected_rooms))
 	# Re-entry must recompute from canonical world-node identity rather than
 	# trusting a stale serialized room actor snapshot.
 	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID):
@@ -204,6 +239,7 @@ static func _check_bishop_grand_casino_presence(library: ContentLibrary, failure
 	stored_cage["scenario_patron_ids"] = ["crew_rook"]
 	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID) \
 		or not _presence_has_member(run_state.current_environment, "crew_bishop") \
+		or not _presence_has_contact(run_state.current_environment, "crew_bishop") \
 		or _presence_has_member(run_state.current_environment, "crew_rook"):
 		failures.append("Restored Grand Casino cage did not refresh Bishop's seeded presence on revisit.")
 
@@ -441,7 +477,10 @@ static func _check_crew_ignoring_regression(library: ContentLibrary, failures: A
 	if typeof(baseline) != TYPE_DICTIONARY:
 		failures.append("Crew-ignoring accepted-main golden fixture is missing or invalid.")
 	else:
-		_append_ignored_capture_diff(_dict((baseline as Dictionary).get("capture", {})), generated_a, failures)
+		var expected_capture := _dict((baseline as Dictionary).get("capture", {}))
+		if JSON.stringify(generated_a) != JSON.stringify(expected_capture):
+			failures.append("Crew-ignoring full RunState/current/world environment bytes shifted from accepted main outside authorized anchor ambience.")
+			_append_ignored_capture_diff(expected_capture, generated_a, failures)
 
 
 static func _check_presence_determinism(failures: Array) -> void:
@@ -610,6 +649,15 @@ static func _event_member_id(event_id: String) -> String:
 static func _presence_has_member(environment: Dictionary, member_id: String) -> bool:
 	for presence_value in _array(environment.get("crew_presence", [])):
 		if typeof(presence_value) == TYPE_DICTIONARY and str((presence_value as Dictionary).get("member_id", "")) == member_id:
+			return true
+	return false
+
+
+static func _presence_has_contact(environment: Dictionary, member_id: String) -> bool:
+	var expected_contact := str(CrewRecruitmentModelScript.member_definition(member_id).get("contact_event_id", ""))
+	for presence_value in _array(environment.get("crew_presence", [])):
+		if typeof(presence_value) == TYPE_DICTIONARY and str((presence_value as Dictionary).get("member_id", "")) == member_id \
+			and str((presence_value as Dictionary).get("contact_event_id", "")) == expected_contact:
 			return true
 	return false
 

@@ -13,6 +13,7 @@ const MEMBER_IDS := [
 	"crew_rook", "crew_switch", "crew_mags", "crew_knuckles",
 	"crew_velvet", "crew_bishop", "crew_lucky",
 ]
+const GRAND_CASINO_ROOM_IDS := ["grand_casino", "grand_casino_cage", "grand_casino_high_limit"]
 
 static var _config_cache: Dictionary = {}
 
@@ -92,9 +93,9 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 		if not member_id.is_empty() and not patrons.has(member_id):
 			patrons.append(member_id)
 		var contact_event_id := str(member_definition(member_id).get("contact_event_id", "")).strip_edges()
-		if not contact_event_id.is_empty() and not contact_choices(run_state, environment, member_id).is_empty():
+		if not contact_event_id.is_empty() and _rank_at_least(run_state.crew_rank(member_id), "associate"):
 			entry["contact_event_id"] = contact_event_id
-			if not event_ids.has(contact_event_id):
+			if not contact_choices(run_state, environment, member_id).is_empty() and not event_ids.has(contact_event_id):
 				event_ids.append(contact_event_id)
 	environment["scenario_patron_ids"] = patrons
 	for entry_value in presence:
@@ -125,7 +126,9 @@ static func placement_kind(run_state: RunState, environment: Dictionary, definit
 	if not _location_matches(fallback, environment):
 		return ""
 	var selected_node := fallback_node_id(run_state, definition)
-	var current_node := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
+	var canonical_node := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
+	var physical_location := str(environment.get("archetype_id", canonical_node)).strip_edges()
+	var current_location := physical_location if canonical_node == "grand_casino" and GRAND_CASINO_ROOM_IDS.has(physical_location) else canonical_node
 	return "fallback" if selected_node.is_empty() or selected_node == current_node else ""
 
 
@@ -304,14 +307,15 @@ static func presence_for_environment(run_state: RunState, environment: Dictionar
 		var available: Array = []
 		var nodes := _world_node_ids(run_state)
 		for location in locations:
-			if nodes.is_empty() or nodes.has(location):
+			var grand_child_available := nodes.has("grand_casino") and GRAND_CASINO_ROOM_IDS.has(location)
+			if nodes.is_empty() or nodes.has(location) or grand_child_available:
 				available.append(location)
 		if available.is_empty():
 			continue
 		var rng := RngStream.new()
 		rng.configure(run_state.seed_value, run_state.seed_value)
 		rng = rng.fork("crew_presence:%s:%d" % [member_id, segment])
-		if str(rng.pick(available, available[0])) != current_node:
+		if str(rng.pick(available, available[0])) != current_location:
 			continue
 		var lines := _dict(definition.get("presence_lines", {}))
 		var line := str(lines.get(rank, lines.get("marker", ""))).strip_edges()
