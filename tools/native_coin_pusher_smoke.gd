@@ -9,6 +9,7 @@ class ScriptedNativeSubclass:
 	var can_step_called := false
 	var step_action_called := false
 
+	@warning_ignore("native_method_override")
 	func can_step(state: Dictionary, _config: Dictionary) -> bool:
 		can_step_called = true
 		var bodies: Array = state.get("bodies", [])
@@ -18,6 +19,7 @@ class ScriptedNativeSubclass:
 			nested["sentinel"] = "scripted_mutation"
 		return false
 
+	@warning_ignore("native_method_override")
 	func step_action(_state: Dictionary, _config: Dictionary) -> Dictionary:
 		step_action_called = true
 		return {}
@@ -226,7 +228,7 @@ func _check_trusted_contract_negatives(core: Object, source: Dictionary, config:
 	var reorder_candidate := candidate.duplicate(true)
 	var reorder_bodies: Array = reorder_candidate.get("bodies", [])
 	if reorder_bodies.size() >= 2:
-		var reordered := reorder_bodies[0]
+		var reordered: Variant = reorder_bodies[0]
 		reorder_bodies[0] = reorder_bodies[1]
 		reorder_bodies[1] = reordered
 	fixtures.append(["reordered body", reorder_candidate, result.duplicate(true)])
