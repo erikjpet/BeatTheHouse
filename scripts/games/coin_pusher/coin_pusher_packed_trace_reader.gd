@@ -110,6 +110,8 @@ func _decode_frame(packed: Dictionary, frame_index: int) -> Dictionary:
 	var xs: Variant = packed.get("row_x", PackedInt32Array())
 	var ys: Variant = packed.get("row_y", PackedInt32Array())
 	var zs: Variant = packed.get("row_z", PackedInt32Array())
+	var row_radii: Variant = packed.get("row_radius", PackedInt32Array())
+	var row_heights: Variant = packed.get("row_height", PackedInt32Array())
 	var sleeping: Variant = packed.get("row_sleeping", PackedByteArray())
 	var rest_states: Variant = packed.get("row_rest_states", PackedStringArray())
 	var has_levels: Variant = packed.get("row_has_level", PackedByteArray())
@@ -118,7 +120,7 @@ func _decode_frame(packed: Dictionary, frame_index: int) -> Dictionary:
 	for descriptor_values in [kinds, radii, heights, masses, metadata]:
 		if descriptor_values.size() != body_ids.size():
 			return {}
-	for row_values in [material, xs, ys, zs, sleeping, rest_states, has_levels, levels, leans]:
+	for row_values in [material, xs, ys, zs, row_radii, row_heights, sleeping, rest_states, has_levels, levels, leans]:
 		if row_values.size() < row_end:
 			return {}
 	var bodies: Array = []
@@ -133,8 +135,8 @@ func _decode_frame(packed: Dictionary, frame_index: int) -> Dictionary:
 			"x": int(xs[row_index]),
 			"y": int(ys[row_index]),
 			"z": int(zs[row_index]),
-			"radius": int(radii[descriptor_index]),
-			"height": int(heights[descriptor_index]),
+			"radius": int(row_radii[row_index]),
+			"height": int(row_heights[row_index]),
 			"mass": int(masses[descriptor_index]),
 			"sleeping": int(sleeping[row_index]) != 0,
 			"rest_state": str(rest_states[row_index]),
