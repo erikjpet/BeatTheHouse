@@ -450,6 +450,14 @@ What happens then is the owner's, not an agent's:
   native deterministic packed core behind the existing GDScript oracle/fallback,
   with Windows and Web export compatibility, density, trace, order, outcomes,
   and synchronous action semantics unchanged.
+- 2026-08-17 [pusher06_2 native hardening] Independent re-audit of `ad11f2fa`
+  accepted the Git-environment hostile, non-traversing junction cleanup,
+  abandoned-mutex recovery, verified-toolchain-only build path, quiet Git, and
+  full environment restoration. It returned one release blocker: the committed
+  Web preset still has `variant/extensions_support=false`. Web export must set
+  extension support true and fail before build/export unless that exact preset
+  option is enabled; a side-module filename check alone cannot prove the engine
+  template can load it.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1126,3 +1134,7 @@ What happens then is the owner's, not an agent's:
 - 2026-08-17 [crew06_5] PM completed the prompt-required manual voice review of
   all new lines against the seven authored character styles; each member keeps
   a distinct conforming register, with no tracker copy or system leakage.
+- 2026-08-17 [pusher06_2] Native provisioning/export hardening `ad11f2fa` passed
+  every re-audited hostile except the actual Web-preset capability: extension
+  support remains disabled. The row stays IN_PROGRESS until the preset is
+  extension-capable and export rejects that mismatch before doing work.
