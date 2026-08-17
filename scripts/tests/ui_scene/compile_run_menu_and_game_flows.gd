@@ -1712,6 +1712,13 @@ func _check_multi_slot_reentry_uses_selected_fixture(app: Control) -> bool:
 	if not _install_multi_slot_fixture_room(app, run_state):
 		return false
 	var before_fixture_3_open := JSON.stringify(run_state.to_dict())
+	var canonical_before_value: Variant = JSON.parse_string(before_fixture_3_open)
+	if typeof(canonical_before_value) != TYPE_DICTIONARY:
+		push_error("Multi-slot reentry fixture could not canonicalize its pre-open baseline.")
+		return false
+	var canonical_before_open := RunState.new()
+	canonical_before_open.from_dict(canonical_before_value as Dictionary)
+	var canonical_before_fixture_3_open := JSON.stringify(canonical_before_open.to_dict())
 	if not bool(app.call("activate_interactable_object", "game:slot:3")):
 		push_error("Multi-slot reentry fixture could not enter slot fixture 3.")
 		return false
@@ -1729,7 +1736,7 @@ func _check_multi_slot_reentry_uses_selected_fixture(app: Control) -> bool:
 		push_error("Opening slot fixture 3 produced an invalid serialized RunState snapshot.")
 		return false
 	restored_after_open.from_dict(serialized_after_open as Dictionary)
-	if JSON.stringify(restored_after_open.to_dict()) != before_fixture_3_open:
+	if JSON.stringify(restored_after_open.to_dict()) != canonical_before_fixture_3_open:
 		push_error("Slot fixture 3 open did not survive serialize/restore byte-identically.")
 		return false
 	app.call("back_to_environment")
