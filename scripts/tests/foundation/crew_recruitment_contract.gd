@@ -127,6 +127,11 @@ static func _check_perks_and_save(failures: Array) -> void:
 		or not bool(WorldMapScript.node_by_id(run_state.world_map, "gas_station_casino").get("scouted", false)) \
 		or int(run_state.crew_switch_intel_status().get("uses", 0)) != 2:
 		failures.append("Switch remote reveal did not use the heard/scouted pipeline with its per-visit cap.")
+	var exhausted_visit := run_state.current_environment.duplicate(true)
+	run_state.set_environment({"id": "motel_visit_fixture", "archetype_id": "motel", "world_node_id": "motel"})
+	run_state.set_environment(exhausted_visit)
+	if not bool(run_state.crew_switch_intel_status().get("available", false)) or int(run_state.crew_switch_intel_status().get("uses", -1)) != 0:
+		failures.append("Switch remote reveal uses did not reset on a later visit to the same venue.")
 	run_state.crew_add_trust("crew_rook", CrewStateModelScript.rank_threshold("made") - run_state.crew_trust("crew_rook"), "made_fixture")
 	if not run_state.crew_rook_escort_available() or not bool(run_state.narrative_flags.get("rook_escort_punchline_back_room", false)):
 		failures.append("Rook Made did not wire the Punchline L3 escort flag.")

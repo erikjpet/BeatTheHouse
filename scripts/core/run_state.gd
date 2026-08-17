@@ -6218,8 +6218,10 @@ func crew_switch_intel_status() -> Dictionary:
 	var available := crew_rank_perks("crew_switch").has("remote_scenario_reveal")
 	var services := _copy_dict(CrewStateModelScript.config().get("member_services", {}))
 	var cap := maxi(1, int(services.get("switch_intel_uses_per_visit", 2)))
-	var used := maxi(0, int(current_environment.get("crew_switch_intel_uses", 0)))
-	return {"available": available and used < cap, "rank_gated": not available, "uses": used, "uses_remaining": maxi(0, cap - used), "cap": cap}
+	var visit_id := _event_cadence_visit_key(current_environment)
+	var stored_visit_id := str(current_environment.get("crew_switch_intel_visit_id", ""))
+	var used := maxi(0, int(current_environment.get("crew_switch_intel_uses", 0))) if not visit_id.is_empty() and stored_visit_id == visit_id else 0
+	return {"available": available and used < cap, "rank_gated": not available, "uses": used, "uses_remaining": maxi(0, cap - used), "cap": cap, "visit_id": visit_id}
 
 
 # Switch upgrades a true seeded scenario fact through the existing heard/scouted
@@ -6233,6 +6235,7 @@ func crew_switch_reveal_node(node_id: String) -> Dictionary:
 	if heard.is_empty():
 		return {"ok": false, "node_id": target, "status": status}
 	world_map = WorldMap.mark_scouted(world_map, target)
+	current_environment["crew_switch_intel_visit_id"] = str(status.get("visit_id", ""))
 	current_environment["crew_switch_intel_uses"] = int(status.get("uses", 0)) + 1
 	store_current_world_node_environment()
 	return {"ok": true, "node_id": target, "heard": heard, "status": crew_switch_intel_status()}
@@ -11445,6 +11448,8 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 		environment["crew_presence"] = _copy_array(environment.get("crew_presence", []))
 	if environment.has("crew_switch_intel_uses"):
 		environment["crew_switch_intel_uses"] = maxi(0, int(environment.get("crew_switch_intel_uses", 0)))
+	if environment.has("crew_switch_intel_visit_id"):
+		environment["crew_switch_intel_visit_id"] = str(environment.get("crew_switch_intel_visit_id", ""))
 	environment["game_states"] = _normalize_game_states(_copy_dict(environment.get("game_states", {})))
 	environment["visual_context"] = _copy_dict(environment.get("visual_context", {}))
 	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
