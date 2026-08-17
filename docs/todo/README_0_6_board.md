@@ -254,6 +254,16 @@ What happens then is the owner's, not an agent's:
   every action. Hostile int64/high-motion states must safely fall back; density,
   ordering, outcomes, presentation, save semantics, and the 16 ms gate remain
   unchanged.
+- 2026-08-17 [pusher06_2] The packed solver's exact gate is green (80/80
+  carried actions used the hot path and matched the dictionary oracle after
+  every action), but it is not a performance fix: raw p95 regressed from
+  246.554 ms to 272.698 ms; production drop/nudge resolves measured 319.607 /
+  391.200 ms against the unchanged 16 ms limit. Draw and post-action frame p95
+  remain green, confirming the synchronous solver is the blocker. Trace is off
+  in the raw probe, and the packed path writes dictionaries only once at the
+  end; the next root pass targets repeated 27-cell collision/support walks,
+  unconditional sparse-grid rebuilds, per-tick Packed allocations, and hot-loop
+  Variant/call overhead while keeping the dictionary oracle and all hard limits.
 - 2026-08-17 [fix06_2] The integrated games matrix passed after the portable-
   ticket travel correction, but broader systems acceptance exposed two test-
   machinery defects: the Blackjack rotation fixture had not first persisted
