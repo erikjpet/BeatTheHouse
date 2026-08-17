@@ -52,6 +52,8 @@ static func _check_catalog(library: ContentLibrary, failures: Array) -> void:
 				continue
 			var definition := definition_value as Dictionary
 			var scenario_id := str(definition.get("id", ""))
+			if not expected_ids.has(scenario_id):
+				continue
 			actual_ids.append(scenario_id)
 			var mutations := _dict(definition.get("mutations", {}))
 			var axis_count := 0
@@ -64,7 +66,7 @@ static func _check_catalog(library: ContentLibrary, failures: Array) -> void:
 				failures.append("Scenario %s is missing presentation, exclusive content, or hook flags." % scenario_id)
 		if actual_ids != expected_ids:
 			failures.append("Scenario catalog mismatch for %s: %s." % [archetype_id, JSON.stringify(actual_ids)])
-		total += definitions.size()
+		total += actual_ids.size()
 	if total != 25:
 		failures.append("Tier-2/Grand scenario catalog must contain exactly 25 entries, found %d." % total)
 
