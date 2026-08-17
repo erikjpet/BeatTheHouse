@@ -1,0 +1,12 @@
+[configuration]
+
+entry_symbol = "coin_pusher_native_library_init"
+compatibility_minimum = "4.5"
+reloadable = false
+
+[libraries]
+
+windows.debug.x86_64 = "res://addons/coin_pusher_native/bin/coin_pusher_native.windows.template_debug.x86_64.nothreads.dll"
+windows.release.x86_64 = "res://addons/coin_pusher_native/bin/coin_pusher_native.windows.template_release.x86_64.nothreads.dll"
+web.debug.wasm32 = "res://addons/coin_pusher_native/bin/coin_pusher_native.web.template_debug.wasm32.nothreads.wasm"
+web.release.wasm32 = "res://addons/coin_pusher_native/bin/coin_pusher_native.web.template_release.wasm32.nothreads.wasm"

@@ -17,6 +17,9 @@ tools/__pycache__/
 __pycache__/
 *.pyc
 builds/
+/addons/coin_pusher_native/
+**/.sconsign.dblite
+/native/coin_pusher/**/*.os
 user/
 user://
 
