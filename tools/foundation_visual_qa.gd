@@ -1641,7 +1641,7 @@ func _verify_coin_pusher_visual_qa_fixture() -> void:
 	_require(surface_canvas != null and surface_canvas.visible and surface_canvas.has_method("realtime_surface_state"), "Quarter Falls visual QA did not render its canonical game surface.")
 	var normal_state: Dictionary = surface_canvas.call("realtime_surface_state")
 	_require(str(normal_state.get("surface_renderer", "")) == "coin_pusher", "Quarter Falls visual QA entered the wrong surface renderer.")
-	_require((normal_state.get("coin_pusher_cells", []) as Array).size() > 0 and (normal_state.get("coin_pusher_lanes", []) as Array).size() == 5, "Quarter Falls normal capture did not expose its pile and five lane approaches.")
+	_require((normal_state.get("coin_pusher_bodies", []) as Array).size() >= 24 and (normal_state.get("coin_pusher_lanes", []) as Array).size() == 5, "Quarter Falls normal capture did not expose its populated individual-body pile and five lane approaches.")
 	_require((normal_state.get("coin_pusher_riders", []) as Array).size() == 1 and not bool(normal_state.get("coin_pusher_locked", true)), "Quarter Falls normal capture did not show its prize rider on an unlocked pile.")
 	_record_coin_pusher_visual_capture("normal_pile_rider_1280x720", surface_canvas)
 	_record_state("coin_pusher_normal_pile_rider_1280x720", "Quarter Falls shows five approach lanes, a persisted coin pile, and a prize rider on the shelf.")
@@ -1684,7 +1684,7 @@ func _verify_coin_pusher_visual_qa_fixture() -> void:
 	var reduced_runtime: Dictionary = surface_canvas.call("surface_runtime_status")
 	_require(bool(reduced_runtime.get("reduce_motion", false)) and JSON.stringify(reduced_before) == JSON.stringify(reduced_after), "Quarter Falls reduced-motion mode did not freeze presentation-only motion.")
 	_require(int(reduced_runtime.get("surface_animation_redraw_count", -1)) == 0 and not bool(reduced_runtime.get("surface_continuous_redraw_active", true)), "Quarter Falls reduced-motion mode still scheduled animation redraws.")
-	_require(JSON.stringify(reduced_state_before) == JSON.stringify(reduced_state) and (reduced_state.get("coin_pusher_cells", []) as Array).size() > 0 and (reduced_state.get("coin_pusher_riders", []) as Array).size() == 1 and str(reduced_state.get("coin_pusher_tell", "")) == "alarm chirps", "Quarter Falls reduced-motion mode hid or changed pile, rider, or tell information.")
+	_require(JSON.stringify(reduced_state_before) == JSON.stringify(reduced_state) and (reduced_state.get("coin_pusher_bodies", []) as Array).size() > 0 and (reduced_state.get("coin_pusher_riders", []) as Array).size() == 1 and str(reduced_state.get("coin_pusher_tell", "")) == "alarm chirps", "Quarter Falls reduced-motion mode hid or changed pile, rider, or tell information.")
 	_record_coin_pusher_visual_capture("reduced_motion_1280x720", surface_canvas, {
 		"motion_before": reduced_before,
 		"motion_after": reduced_after,
@@ -2177,7 +2177,7 @@ func _record_coin_pusher_visual_capture(capture_key: String, surface_canvas: Con
 	var capture := {
 		"viewport": {"width": int(round(viewport_size.x)), "height": int(round(viewport_size.y))},
 		"surface_renderer": str(surface_state.get("surface_renderer", "")),
-		"cell_count": (surface_state.get("coin_pusher_cells", []) as Array).size(),
+		"body_count": (surface_state.get("coin_pusher_bodies", []) as Array).size(),
 		"lane_count": (surface_state.get("coin_pusher_lanes", []) as Array).size(),
 		"rider_count": (surface_state.get("coin_pusher_riders", []) as Array).size(),
 		"tell_rung": int(surface_state.get("coin_pusher_tell_rung", 0)),

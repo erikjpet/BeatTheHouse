@@ -1,0 +1,10 @@
+{
+  "schema": "coin_pusher_export_parity_input",
+  "version": 1,
+  "seed": "REWORK06-2-CROSS-EXPORT",
+  "action_count": 200,
+  "action_id": "drop_quarter",
+  "lane_cycle": [0, 1, 2, 3, 4, 3, 2, 1],
+  "upper_phase_cycle": [0, 2, 4, 6, 8, 10, 3, 9],
+  "lower_phase_cycle": [1, 5, 9, 3, 7, 11, 0, 6]
+}

@@ -435,6 +435,109 @@ static func path_between(map_data: Dictionary, a: String, b: String, visible_onl
 	return _path_between_normalized(normalized, a, b, visible_only)
 
 
+# Prepares every shortest path from one source with a single topology
+# projection and one ordered breadth-first traversal. The adjacency lists are
+# built in normalized edge order, exactly matching _neighbor_ids_with_visible_lookup,
+# so each returned path is byte-identical to path_between for the same inputs.
+# The query owns topology-only dictionaries and never retains environment
+# payloads from the source map.
+static func prepare_path_query(map_data: Dictionary, source_node_id: String, visible_only: bool = true) -> Dictionary:
+	var normalized := normalize_topology(map_data)
+	var source_id := source_node_id.strip_edges()
+	var visible_lookup := _visible_node_lookup(normalized)
+	var previous_by_node_id: Dictionary = {}
+	var query := {
+		"source_node_id": source_id,
+		"visible_only": visible_only,
+		"previous_by_node_id": previous_by_node_id,
+		"edges_by_id": _edge_lookup(normalized),
+		"visible_node_ids": visible_lookup,
+	}
+	if source_id.is_empty():
+		return query
+	# path_between returns the source singleton before applying visibility
+	# checks, including for a source id absent from the map.
+	previous_by_node_id[source_id] = ""
+	if visible_only and not visible_lookup.has(source_id):
+		return query
+	var adjacency: Dictionary = {}
+	var edges_value: Variant = normalized.get("edges", [])
+	if typeof(edges_value) == TYPE_ARRAY:
+		for edge_value in edges_value as Array:
+			if typeof(edge_value) != TYPE_DICTIONARY:
+				continue
+			var edge: Dictionary = edge_value
+			var a := str(edge.get("a", ""))
+			var b := str(edge.get("b", ""))
+			_append_query_neighbor(adjacency, a, b, visible_only, visible_lookup)
+			_append_query_neighbor(adjacency, b, a, visible_only, visible_lookup)
+	var queue: Array = [source_id]
+	var head := 0
+	while head < queue.size():
+		var current_id := str(queue[head])
+		head += 1
+		var neighbors_value: Variant = adjacency.get(current_id, [])
+		if typeof(neighbors_value) != TYPE_ARRAY:
+			continue
+		for neighbor_value in neighbors_value as Array:
+			var neighbor_id := str(neighbor_value)
+			if previous_by_node_id.has(neighbor_id):
+				continue
+			previous_by_node_id[neighbor_id] = current_id
+			queue.append(neighbor_id)
+	query["previous_by_node_id"] = previous_by_node_id
+	return query
+
+
+static func prepared_path(query: Dictionary, target_node_id: String) -> Array:
+	var source_id := str(query.get("source_node_id", "")).strip_edges()
+	var target_id := target_node_id.strip_edges()
+	var previous_value: Variant = query.get("previous_by_node_id", {})
+	if source_id.is_empty() or target_id.is_empty() or typeof(previous_value) != TYPE_DICTIONARY:
+		return []
+	var previous_by_node_id: Dictionary = previous_value
+	if not previous_by_node_id.has(target_id):
+		return []
+	return _reconstruct_path(previous_by_node_id, source_id, target_id)
+
+
+static func prepared_has_path(query: Dictionary, target_node_id: String) -> bool:
+	var source_id := str(query.get("source_node_id", "")).strip_edges()
+	var target_id := target_node_id.strip_edges()
+	var previous_value: Variant = query.get("previous_by_node_id", {})
+	if target_id.is_empty() or target_id == source_id or typeof(previous_value) != TYPE_DICTIONARY:
+		return false
+	return (previous_value as Dictionary).has(target_id)
+
+
+static func prepared_is_node_visible(query: Dictionary, node_id: String) -> bool:
+	var visible_value: Variant = query.get("visible_node_ids", {})
+	return typeof(visible_value) == TYPE_DICTIONARY and (visible_value as Dictionary).has(node_id.strip_edges())
+
+
+static func prepared_path_uses_real_edges(query: Dictionary, path: Array) -> bool:
+	if path.size() == 1:
+		return true
+	var edges_value: Variant = query.get("edges_by_id", {})
+	if typeof(edges_value) != TYPE_DICTIONARY:
+		return false
+	var edges_by_id: Dictionary = edges_value
+	for index in range(path.size() - 1):
+		if not edges_by_id.has(_edge_id(str(path[index]), str(path[index + 1]))):
+			return false
+	return path.size() >= 2
+
+
+static func _append_query_neighbor(adjacency: Dictionary, source_id: String, neighbor_id: String, visible_only: bool, visible_lookup: Dictionary) -> void:
+	if source_id.is_empty() or neighbor_id.is_empty() or (visible_only and not visible_lookup.has(neighbor_id)):
+		return
+	var neighbors_value: Variant = adjacency.get(source_id, [])
+	var neighbors: Array = neighbors_value as Array if typeof(neighbors_value) == TYPE_ARRAY else []
+	if not neighbors.has(neighbor_id):
+		neighbors.append(neighbor_id)
+	adjacency[source_id] = neighbors
+
+
 static func _path_between_normalized(normalized: Dictionary, a: String, b: String, visible_only: bool = true) -> Array:
 	var visible_lookup: Dictionary = _visible_node_lookup(normalized) if visible_only else {}
 	return _path_between_prepared(normalized, a, b, visible_only, visible_lookup)

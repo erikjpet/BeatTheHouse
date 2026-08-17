@@ -2,6 +2,38 @@ extends "res://scripts/tests/foundation/check_items_events_world.gd"
 
 const DeliveryRunModelTestScript := preload("res://scripts/core/delivery_run_model.gd")
 const DeliveryWorldMapTestScript := preload("res://scripts/core/world_map.gd")
+# SHA-256 of canonical [target_id, path] arrays captured from the public
+# WorldMap.path_between implementation at integration baseline 6523054b.
+# Entry order: all, visible, hidden-source all, hidden-source visible.
+const DELIVERY_PATH_COMPAT_SHA256 := {
+	"DELIVERY-PROPERTY-00": ["8dd3f440291825d7fdeb5dafbd9dabbbd812f5f2cc18449c75512bfc7b2f36b3", "bbaac96850c406c7d2f1a72b2b82a8158a7fb4442048f9abebd09775117ee082", "d438edd91519497fe320c5a1da17f12ebb6915af9472d1837144b4ac05da25ce", "8cd7847d0aaaa81432ddb44d88496eb40b66a5a40f09c38f2d51626dbf19f5de"],
+	"DELIVERY-PROPERTY-01": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
+	"DELIVERY-PROPERTY-02": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
+	"DELIVERY-PROPERTY-03": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
+	"DELIVERY-PROPERTY-04": ["047c51f66440cc9ac35a5994bf6bb60a73336af842d7f0080832476c6cb5c2a1", "0ec74c2514acf700c0413424188a65cc4be446f9d204fe5318fb33cc47943fb8", "a456f590c93b64ab4aefc9c226b4792241154b18bf51e7d39a613d84e5ada9ff", "c50d4e44675a199ed20522ae7186e05b1f95cb42443320578e57bcb69399d192"],
+	"DELIVERY-PROPERTY-05": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
+	"DELIVERY-PROPERTY-06": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
+	"DELIVERY-PROPERTY-07": ["8dd3f440291825d7fdeb5dafbd9dabbbd812f5f2cc18449c75512bfc7b2f36b3", "bbaac96850c406c7d2f1a72b2b82a8158a7fb4442048f9abebd09775117ee082", "d438edd91519497fe320c5a1da17f12ebb6915af9472d1837144b4ac05da25ce", "8cd7847d0aaaa81432ddb44d88496eb40b66a5a40f09c38f2d51626dbf19f5de"],
+	"DELIVERY-PROPERTY-08": ["8dd3f440291825d7fdeb5dafbd9dabbbd812f5f2cc18449c75512bfc7b2f36b3", "bbaac96850c406c7d2f1a72b2b82a8158a7fb4442048f9abebd09775117ee082", "d438edd91519497fe320c5a1da17f12ebb6915af9472d1837144b4ac05da25ce", "8cd7847d0aaaa81432ddb44d88496eb40b66a5a40f09c38f2d51626dbf19f5de"],
+	"DELIVERY-PROPERTY-09": ["8dd3f440291825d7fdeb5dafbd9dabbbd812f5f2cc18449c75512bfc7b2f36b3", "bbaac96850c406c7d2f1a72b2b82a8158a7fb4442048f9abebd09775117ee082", "d438edd91519497fe320c5a1da17f12ebb6915af9472d1837144b4ac05da25ce", "8cd7847d0aaaa81432ddb44d88496eb40b66a5a40f09c38f2d51626dbf19f5de"],
+	"DELIVERY-PROPERTY-10": ["047c51f66440cc9ac35a5994bf6bb60a73336af842d7f0080832476c6cb5c2a1", "0ec74c2514acf700c0413424188a65cc4be446f9d204fe5318fb33cc47943fb8", "8dd63a0d61962fad6397407d9fe07aa4208fc6f33dbf04172d6349309412ff10", "af65cee6fe1ae77a42a4da7dd4226ac6ff4bcc0758622633eba70db137b8acba"],
+	"DELIVERY-PROPERTY-11": ["8dd3f440291825d7fdeb5dafbd9dabbbd812f5f2cc18449c75512bfc7b2f36b3", "bbaac96850c406c7d2f1a72b2b82a8158a7fb4442048f9abebd09775117ee082", "d438edd91519497fe320c5a1da17f12ebb6915af9472d1837144b4ac05da25ce", "8cd7847d0aaaa81432ddb44d88496eb40b66a5a40f09c38f2d51626dbf19f5de"],
+	"DELIVERY-PROPERTY-12": ["047c51f66440cc9ac35a5994bf6bb60a73336af842d7f0080832476c6cb5c2a1", "0ec74c2514acf700c0413424188a65cc4be446f9d204fe5318fb33cc47943fb8", "8dd63a0d61962fad6397407d9fe07aa4208fc6f33dbf04172d6349309412ff10", "af65cee6fe1ae77a42a4da7dd4226ac6ff4bcc0758622633eba70db137b8acba"],
+	"DELIVERY-PROPERTY-13": ["8dd3f440291825d7fdeb5dafbd9dabbbd812f5f2cc18449c75512bfc7b2f36b3", "bbaac96850c406c7d2f1a72b2b82a8158a7fb4442048f9abebd09775117ee082", "d438edd91519497fe320c5a1da17f12ebb6915af9472d1837144b4ac05da25ce", "8cd7847d0aaaa81432ddb44d88496eb40b66a5a40f09c38f2d51626dbf19f5de"],
+	"DELIVERY-PROPERTY-14": ["047c51f66440cc9ac35a5994bf6bb60a73336af842d7f0080832476c6cb5c2a1", "0ec74c2514acf700c0413424188a65cc4be446f9d204fe5318fb33cc47943fb8", "8dd63a0d61962fad6397407d9fe07aa4208fc6f33dbf04172d6349309412ff10", "af65cee6fe1ae77a42a4da7dd4226ac6ff4bcc0758622633eba70db137b8acba"],
+	"DELIVERY-PROPERTY-15": ["047c51f66440cc9ac35a5994bf6bb60a73336af842d7f0080832476c6cb5c2a1", "0ec74c2514acf700c0413424188a65cc4be446f9d204fe5318fb33cc47943fb8", "8dd63a0d61962fad6397407d9fe07aa4208fc6f33dbf04172d6349309412ff10", "af65cee6fe1ae77a42a4da7dd4226ac6ff4bcc0758622633eba70db137b8acba"],
+	"DELIVERY-PROPERTY-16": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
+	"DELIVERY-PROPERTY-17": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
+	"DELIVERY-PROPERTY-18": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
+	"DELIVERY-PROPERTY-19": ["9e3cb7201b39af731c589534be55edbe768f6024cc564f8aaebf337871041670", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
+}
+const DELIVERY_PATH_PUBLIC_SPOT_SEEDS := [
+	"DELIVERY-PROPERTY-00",
+	"DELIVERY-PROPERTY-01",
+	"DELIVERY-PROPERTY-04",
+	"DELIVERY-PROPERTY-10",
+	"DELIVERY-PROPERTY-19",
+]
 
 var delivery_test_library: ContentLibrary
 
@@ -26,6 +58,7 @@ func _check_delivery_target_properties(library: ContentLibrary, failures: Array)
 	for seed_index in range(20):
 		var seed := "DELIVERY-PROPERTY-%02d" % seed_index
 		var first := _delivery_map_only_test_run(seed, false)
+		_check_prepared_path_query_equivalence(first.world_map, seed, failures)
 		var twin := _delivery_selection_twin(first, seed)
 		var first_start := first.delivery_begin_multi_stop({"run_id": "property", "target_count": 3, "deadline_actions": 20})
 		var twin_start := twin.delivery_begin_multi_stop({"run_id": "property", "target_count": 3, "deadline_actions": 20})
@@ -94,6 +127,95 @@ func _check_delivery_target_properties(library: ContentLibrary, failures: Array)
 		var preferred_target: Dictionary = (preference_run.delivery_snapshot().get("targets", []) as Array)[0] if bool(preferred.get("ok", false)) else {}
 		if not has_unvisited_candidate or str(preferred_target.get("node_id", "")) != visited_id or not bool(preferred_target.get("was_visited_at_offer", false)):
 			failures.append("Delivery did not prefer the visited real node when visited and unvisited candidates coexisted.")
+
+
+func _check_prepared_path_query_equivalence(map_data: Dictionary, seed: String, failures: Array) -> void:
+	var source_id := DeliveryWorldMapTestScript.current_node_id(map_data)
+	var all_node_ids: Array = []
+	var hidden_source_id := ""
+	for node_value in map_data.get("nodes", []):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node_id := str((node_value as Dictionary).get("id", "")).strip_edges()
+		if not node_id.is_empty():
+			all_node_ids.append(node_id)
+			if hidden_source_id.is_empty() and str((node_value as Dictionary).get("state", "hidden")) == DeliveryWorldMapTestScript.STATE_HIDDEN:
+				hidden_source_id = node_id
+	all_node_ids.sort()
+	if not all_node_ids.has(source_id):
+		all_node_ids.append(source_id)
+	var payload_map := map_data.duplicate(true)
+	var payload_nodes: Array = payload_map.get("nodes", [])
+	if not payload_nodes.is_empty() and typeof(payload_nodes[0]) == TYPE_DICTIONARY:
+		var payload_node: Dictionary = payload_nodes[0]
+		payload_node["environment"] = {"delivery_query_sentinel": {"seed": seed, "values": [3, 1, 4]}}
+		payload_nodes[0] = payload_node
+		payload_map["nodes"] = payload_nodes
+	var before := JSON.stringify(payload_map)
+	var expected_value: Variant = DELIVERY_PATH_COMPAT_SHA256.get(seed, [])
+	if typeof(expected_value) != TYPE_ARRAY or (expected_value as Array).size() != 4:
+		failures.append("Prepared path query has no 6523054b compatibility golden for seed %s." % seed)
+		return
+	var expected: Array = expected_value
+	for visible_only in [false, true]:
+		var query := DeliveryWorldMapTestScript.prepare_path_query(payload_map, source_id, visible_only)
+		if JSON.stringify(payload_map) != before:
+			failures.append("Prepared path query mutated map/environment payloads for seed %s visible=%s." % [seed, str(visible_only)])
+		var serialized_query := JSON.stringify(query)
+		if serialized_query.contains("\"environment\"") or serialized_query.contains("delivery_query_sentinel"):
+			failures.append("Prepared path query retained an environment payload for seed %s visible=%s." % [seed, str(visible_only)])
+		var digest := _delivery_prepared_path_digest(query, all_node_ids)
+		var expected_digest := str(expected[1 if visible_only else 0])
+		if digest != expected_digest:
+			failures.append("Prepared all-node paths differ from 6523054b for seed %s visible=%s: actual=%s expected=%s." % [seed, str(visible_only), digest, expected_digest])
+		for target_id_value in all_node_ids:
+			var target_id := str(target_id_value)
+			var batch_path := DeliveryWorldMapTestScript.prepared_path(query, target_id)
+			var expected_real := _delivery_test_path_uses_real_edges(payload_map, batch_path)
+			if DeliveryWorldMapTestScript.prepared_path_uses_real_edges(query, batch_path) != expected_real:
+				failures.append("Prepared real-edge legality differs for seed %s visible=%s source=%s target=%s." % [seed, str(visible_only), source_id, target_id])
+		if DELIVERY_PATH_PUBLIC_SPOT_SEEDS.has(seed):
+			var spot_target := hidden_source_id if not hidden_source_id.is_empty() else str(all_node_ids[0])
+			for spot_id in [source_id, spot_target]:
+				var public_path := DeliveryWorldMapTestScript.path_between(payload_map, source_id, spot_id, visible_only)
+				if JSON.stringify(DeliveryWorldMapTestScript.prepared_path(query, spot_id)) != JSON.stringify(public_path):
+					failures.append("Prepared path lost public path_between linkage for seed %s visible=%s target=%s." % [seed, str(visible_only), spot_id])
+	if not hidden_source_id.is_empty():
+		var hidden_targets: Array = [hidden_source_id, source_id]
+		for visible_only in [false, true]:
+			var hidden_query := DeliveryWorldMapTestScript.prepare_path_query(payload_map, hidden_source_id, visible_only)
+			var hidden_digest := _delivery_prepared_path_digest(hidden_query, hidden_targets)
+			var expected_hidden_digest := str(expected[3 if visible_only else 2])
+			if hidden_digest != expected_hidden_digest:
+				failures.append("Prepared hidden-source paths differ from 6523054b for seed %s visible=%s: actual=%s expected=%s." % [seed, str(visible_only), hidden_digest, expected_hidden_digest])
+			if DELIVERY_PATH_PUBLIC_SPOT_SEEDS.has(seed):
+				var public_singleton := DeliveryWorldMapTestScript.path_between(payload_map, hidden_source_id, hidden_source_id, visible_only)
+				if JSON.stringify(DeliveryWorldMapTestScript.prepared_path(hidden_query, hidden_source_id)) != JSON.stringify(public_singleton):
+					failures.append("Prepared hidden-source singleton lost public path_between linkage for seed %s visible=%s." % [seed, str(visible_only)])
+	else:
+		failures.append("Prepared path compatibility fixture has no hidden source for seed %s." % seed)
+	if JSON.stringify(payload_map) != before:
+		failures.append("Prepared path query/accessors leaked a mutation into the source map for seed %s." % seed)
+
+
+func _delivery_prepared_path_digest(query: Dictionary, target_ids: Array) -> String:
+	var canonical: Array = []
+	for target_id_value in target_ids:
+		var target_id := str(target_id_value)
+		canonical.append([target_id, DeliveryWorldMapTestScript.prepared_path(query, target_id)])
+	var context := HashingContext.new()
+	context.start(HashingContext.HASH_SHA256)
+	context.update(JSON.stringify(canonical).to_utf8_buffer())
+	return context.finish().hex_encode()
+
+
+func _delivery_test_path_uses_real_edges(map_data: Dictionary, path: Array) -> bool:
+	if path.size() == 1:
+		return true
+	for path_index in range(path.size() - 1):
+		if DeliveryWorldMapTestScript.edge_between(map_data, str(path[path_index]), str(path[path_index + 1])).is_empty():
+			return false
+	return path.size() >= 2
 
 
 func _check_delivery_modes(failures: Array) -> void:

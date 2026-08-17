@@ -8,6 +8,7 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 
 const DEFAULT_SEED_COUNT := 10
 const DEFAULT_SEED_PREFIX := "FOUNDATION-DETERMINISM"
@@ -519,14 +520,19 @@ func _apply_coin_pusher_sequence(run_state: RunState, checkpoints: Array, seed: 
 	_resolve_game(run_state, checkpoints, seed, "coin_pusher", "drop_quarter", 1, _timed_ui(run_state, "coin_pusher_drop", {"coin_pusher_lane": 2}))
 	var game_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var machine: Dictionary = game_states.get("coin_pusher", {}) if typeof(game_states.get("coin_pusher", {})) == TYPE_DICTIONARY else {}
-	var lanes: Array = machine.get("lanes", []) if typeof(machine.get("lanes", [])) == TYPE_ARRAY else []
-	var lane := clampi(int(machine.get("last_lane", 0)), 0, maxi(0, lanes.size() - 1))
-	for lane_index in range(lanes.size()):
-		if typeof(lanes[lane_index]) != TYPE_DICTIONARY:
+	var tuning: Dictionary = library.game("coin_pusher").get("coin_pusher_tuning", {}) if typeof(library.game("coin_pusher").get("coin_pusher_tuning", {})) == TYPE_DICTIONARY else {}
+	var lane_count := maxi(1, int(tuning.get("lane_count", 5)))
+	var lane_width := maxi(1, CoinPusherSolverScript.WIDTH / lane_count)
+	var lane := clampi(int(machine.get("last_lane", 0)), 0, lane_count - 1)
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	for body_value in simulation.get("bodies", []):
+		if typeof(body_value) != TYPE_DICTIONARY:
 			continue
-		var cells: Array = (lanes[lane_index] as Dictionary).get("cells", []) if typeof((lanes[lane_index] as Dictionary).get("cells", [])) == TYPE_ARRAY else []
-		if not cells.is_empty() and typeof(cells[0]) == TYPE_DICTIONARY and bool((cells[0] as Dictionary).get("edge_hang", false)):
-			lane = lane_index
+		var body: Dictionary = body_value
+		var radius := int(body.get("radius", CoinPusherSolverScript.COIN_RADIUS))
+		var y := int(body.get("y", CoinPusherSolverScript.FRONT_EDGE + radius))
+		if y >= CoinPusherSolverScript.FRONT_EDGE and y < CoinPusherSolverScript.FRONT_EDGE + radius:
+			lane = clampi(int(body.get("x", 0)) / lane_width, 0, lane_count - 1)
 			break
 	_resolve_game(run_state, checkpoints, seed, "coin_pusher", "nudge_machine", 0, _timed_ui(run_state, "coin_pusher_nudge", {
 		"coin_pusher_force": "tap",
