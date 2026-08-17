@@ -587,6 +587,15 @@ What happens then is the owner's, not an agent's:
   API and interface hashes match the lock, and the source commit is the official
   exact sync from engine `89cea143...`. No fabricated tag or master/Beta risk
   remains. Windows/Web runtime load and smoke are still separate required gates.
+- 2026-08-17 [pusher06_2 Windows native] A fully clean exact-4.6 debug build
+  linked and registered in Godot 4.6 with exit 0, proving the prior crash came
+  from the 4.5 binding payload/mixed cache. Direct real-core smoke passed backend/
+  ABI identity, signed-division and nudge extrema, reject-without-mutation,
+  reference=forced-GDScript=native twins, +48 tick/no production clock leakage,
+  duplicate-ID, and hostile fallback. The sole authoritative focused run at
+  `.tmp/test_reports/20260817_063025_smoke` passed with 0 failures: validation
+  41.703 s, load 21.966 s, Coin Pusher 51.734 s, all exits 0 and no stderr/
+  timeouts. An earlier no-GODOT_BIN setup directory is discarded, not evidence.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1319,3 +1328,6 @@ What happens then is the owner's, not an agent's:
   while a fully clean Windows load build runs.
 - 2026-08-17 [pusher06_2] Exact 4.6 pin/provenance is independently ACCEPTED;
   clean Windows/Web runtime evidence remains before native acceptance.
+- 2026-08-17 [pusher06_2] Clean Windows debug load, direct native smoke, and the
+  focused exactness matrix are green on the accepted 4.6 pin. Raw/production
+  <=16 ms performance and Windows release/Web acceptance remain.
