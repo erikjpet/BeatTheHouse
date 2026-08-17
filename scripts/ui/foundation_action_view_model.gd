@@ -133,7 +133,18 @@ static func game_view_snapshot(host: Variant, read_only_render_result: bool = fa
 		# The module surface spec is owned by this snapshot construction, so merge
 		# the action patch into it without cloning its body arrays a second time.
 		var presentation_snapshot: Dictionary = snapshot.get(presentation_snapshot_key, {}) as Dictionary
-		host._deep_merge_dict(presentation_snapshot, presentation_patch as Dictionary)
+		var presentation_patch_dict: Dictionary = presentation_patch
+		var merge_patch := presentation_patch_dict
+		if presentation_patch_dict.has("trace_packed"):
+			# Compact traces are immutable renderer payloads, not nested authored
+			# configuration. Treat the payload atomically so the ordinary deep merge
+			# cannot reconstruct its descriptor Dictionary key-by-key and break the
+			# stored/action/realtime read-only identity contract.
+			merge_patch = presentation_patch_dict.duplicate(false)
+			merge_patch.erase("trace_packed")
+		host._deep_merge_dict(presentation_snapshot, merge_patch)
+		if presentation_patch_dict.has("trace_packed"):
+			presentation_snapshot["trace_packed"] = presentation_patch_dict["trace_packed"]
 		snapshot[presentation_snapshot_key] = presentation_snapshot
 		snapshot.erase("surface_presentation_snapshot_patch")
 	return snapshot
