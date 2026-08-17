@@ -220,6 +220,21 @@ function New-FoundationHarnessExceptionStage {
     }
 }
 
+function Add-FoundationCleanupFailuresToReport {
+    param(
+        [object]$Report,
+        [string[]]$CleanupFailures
+    )
+    foreach ($failure in @($CleanupFailures)) {
+        if (-not [string]::IsNullOrWhiteSpace([string]$failure)) {
+            $Report.failures += [string]$failure
+        }
+    }
+    $Report.failure_count = @($Report.failures).Count
+    $Report.passed = ($Report.failure_count -eq 0)
+    return $Report
+}
+
 function Get-FoundationCacheFingerprint {
     param([string]$CacheRoot)
     if (-not (Test-Path -LiteralPath $CacheRoot)) {

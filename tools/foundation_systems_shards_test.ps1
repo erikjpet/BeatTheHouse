@@ -161,6 +161,20 @@ Assert-True ($checkGodotSource.Contains('New-FoundationConcurrencyGuardStage -Me
 $exceptionStage = New-FoundationHarnessExceptionStage -GodotPath "godot" -Message "hostile launch failure" -DurationMsec 2500 -BaselineSec 10.0 -BudgetSec 20.0 -StdoutPath "out" -StderrPath "err"
 Assert-True ($exceptionStage.name -eq "foundation_systems" -and $exceptionStage.exit_code -eq 1 -and $exceptionStage.error -eq "hostile launch failure" -and $exceptionStage.duration_sec -eq 2.5) "Harness exception did not retain honest foundation_systems stage evidence."
 Assert-True ($checkGodotSource.Contains('New-FoundationHarnessExceptionStage')) "Shard exception path does not consume the validated failure-stage contract."
+$cleanupFailureReport = [pscustomobject]@{ passed = $true; failure_count = 0; failures = @() }
+$cleanupFailureReport = Add-FoundationCleanupFailuresToReport -Report $cleanupFailureReport -CleanupFailures @("hostile cleanup failure")
+Assert-True (-not $cleanupFailureReport.passed -and $cleanupFailureReport.failure_count -eq 1 -and $cleanupFailureReport.failures[0] -eq "hostile cleanup failure") "Cleanup failure did not deterministically fail the aggregate report."
+$cleanupFailureExit = Resolve-FoundationSystemsExitCode -ShardResults @([pscustomobject]@{ exit_code = 0; raw_exit_code = 0; timed_out = $false }) -AggregatePassed ([bool]$cleanupFailureReport.passed) -BudgetExceeded $false
+Assert-True ($cleanupFailureExit -eq 1) "Cleanup failure report did not force a nonzero systems stage exit."
+Assert-True ($checkGodotSource.Contains('Add-FoundationCleanupFailuresToReport -Report $aggregateReport -CleanupFailures $cleanupFailures')) "Shard launcher does not consume the validated cleanup-failure report contract."
+$cleanupIndex = $checkGodotSource.IndexOf('$cleanupFailures = @(Invoke-FoundationShardResourceCleanup -Records $records)')
+$clockStopIndex = $checkGodotSource.IndexOf('$wall.Stop()', $cleanupIndex)
+$budgetIndex = $checkGodotSource.IndexOf('$budgetExceeded =', $clockStopIndex)
+Assert-True ($cleanupIndex -ge 0 -and $clockStopIndex -gt $cleanupIndex -and $budgetIndex -gt $clockStopIndex) "Systems stage clock/budget no longer includes private-project cleanup."
+$exceptionCleanupIndex = $checkGodotSource.IndexOf('$exceptionCleanupFailures = @(Invoke-FoundationShardResourceCleanup -Records $records)')
+$exceptionClockStopIndex = $checkGodotSource.IndexOf('$wall.Stop()', $exceptionCleanupIndex)
+$exceptionStageIndex = $checkGodotSource.IndexOf('New-FoundationHarnessExceptionStage', $exceptionClockStopIndex)
+Assert-True ($exceptionCleanupIndex -ge 0 -and $exceptionClockStopIndex -gt $exceptionCleanupIndex -and $exceptionStageIndex -gt $exceptionClockStopIndex) "Harness-exception stage timing/result no longer includes its cleanup attempt."
 
 $fakeProject = Join-Path $projectRoot ".tmp/test_reports/fake_shard"
 Assert-True (-not (Test-FoundationJunctionTargetSafe -ProjectRoot $fakeProject -TargetPath (Join-Path $projectRoot ".tmp"))) "Ancestor .tmp junction cycle was accepted."
