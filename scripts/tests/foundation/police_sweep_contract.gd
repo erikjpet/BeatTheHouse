@@ -39,7 +39,7 @@ static func _check_track_and_legibility(failures: Array) -> void:
 		for segment_index in range(property_model.segments.size() - 1):
 			var source_node := str((property_model.segments[segment_index] as Dictionary).get("node_id", ""))
 			var target_node := str((property_model.segments[segment_index + 1] as Dictionary).get("node_id", ""))
-			if _fixture_node_tier(source_node) == 1 and _fixture_node_tier(target_node) != 2:
+			if _fixture_node_tier(source_node, map_data) == 1 and _fixture_node_tier(target_node, map_data) != 2:
 				failures.append("Police Sweep did not prefer a tier-2 neighbor after tier 1 at seed %d." % seed_index)
 				return
 	if not first.intel_status({}).is_empty() or not first.map_marker().is_empty():
@@ -103,7 +103,8 @@ static func _check_pressure_and_wake(failures: Array) -> void:
 	var conditions := _town_conditions_fixture()
 	var town := TownStateScript.new()
 	town.generate(4021, conditions)
-	town.configure_world(_map_fixture())
+	var map_data := _map_fixture()
+	town.configure_world(map_data)
 	var status := town.sweep_internal_status()
 	if status.is_empty():
 		failures.append("Guaranteed Police Sweep fixture did not spawn a track.")
@@ -118,7 +119,7 @@ static func _check_pressure_and_wake(failures: Array) -> void:
 	if town.active_happenings().has("police_sweep") or town.happening_active("police_sweep") or town.town_flag_active("police_sweep"):
 		failures.append("Active Police Sweep leaked through player-facing town status accessors.")
 	var current_node := str(status.get("current_node_id", ""))
-	var adjacent_node := _first_adjacent_node(current_node, _map_fixture())
+	var adjacent_node := _first_adjacent_node(current_node, map_data)
 	if adjacent_node.is_empty():
 		failures.append("Police Sweep fixture did not expose an adjacent scenario-pressure node.")
 		return
@@ -395,8 +396,8 @@ static func _first_adjacent_node(node_id: String, map_data: Dictionary) -> Strin
 	return ""
 
 
-static func _fixture_node_tier(node_id: String) -> int:
-	for node_value in _map_fixture().get("nodes", []):
+static func _fixture_node_tier(node_id: String, map_data: Dictionary) -> int:
+	for node_value in map_data.get("nodes", []):
 		if str((node_value as Dictionary).get("id", "")) == node_id:
 			return int((node_value as Dictionary).get("tier", 0))
 	return 0

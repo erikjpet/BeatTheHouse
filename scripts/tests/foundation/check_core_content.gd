@@ -104,6 +104,7 @@ const FOUNDATION_SUITES := [
 ]
 
 var _foundation_active_suite := "contracts"
+var _surface_contract_script_cache: Dictionary = {}
 
 
 class ScenarioModifierProbeGame:
@@ -651,6 +652,13 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 
 
 func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array) -> void:
+	var production_references_text := JSON.stringify({
+		"environment_archetypes": library.environment_archetypes,
+		"events": library.events,
+		"games": library.games,
+		"items": library.items,
+		"services": library.services,
+	})
 	_check_tier1_scenario_content(library, failures)
 	var motel := library.environment_archetype("pawn_shop")
 	var legacy_run := RunStateScript.new()
@@ -704,7 +712,7 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 		failures.append("World-node revisit did not restore the stored scenario unchanged.")
 
 	var repeat_library := ContentLibraryScript.new()
-	repeat_library.load(false)
+	repeat_library.environment_scenarios = {"bar": library.scenarios_for_archetype("bar").duplicate(true)}
 	var repeat_pool := repeat_library.scenarios_for_archetype("bar")
 	var third := bar_definition.duplicate(true)
 	third["id"] = "bar_engine_proof_third"
@@ -781,6 +789,14 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	_check_scenario_validation_negative_fixture(library, "bad_archetype", {"missing_archetype": [{"id": "bad_archetype", "archetype_id": "missing_archetype", "display_name": "Bad", "weight": 1, "mutations": {}}]}, "unknown archetype", failures)
 	_check_scenario_validation_negative_fixture(library, "bad_event", {"bar": [{"id": "bad_event", "archetype_id": "bar", "display_name": "Bad", "weight": 1, "mutations": {"event_pool_add": ["missing_event"]}}]}, "unknown id", failures)
 	_check_scenario_validation_negative_fixture(library, "bad_key", {"bar": [{"id": "bad_key", "archetype_id": "bar", "display_name": "Bad", "weight": 1, "mutations": {"per_frame_weather": true}}]}, "unknown mutation key", failures)
+	if JSON.stringify({
+		"environment_archetypes": library.environment_archetypes,
+		"events": library.events,
+		"games": library.games,
+		"items": library.items,
+		"services": library.services,
+	}) != production_references_text:
+		failures.append("Scenario validation fixtures mutated the production content-library references.")
 
 
 func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> void:
@@ -1001,7 +1017,14 @@ func _scenario_full_generation(seed: String, library: ContentLibrary) -> Diction
 
 func _check_scenario_validation_negative_fixture(library: ContentLibrary, fixture_id: String, scenarios: Dictionary, expected_fragment: String, failures: Array) -> void:
 	var fixture := ContentLibraryScript.new()
-	fixture.load(false)
+	# The scenario validator only reads these reference catalogs. Reusing their
+	# loaded definitions avoids three redundant full library parses; the caller's
+	# exact before/after sentinel proves the production library remains immutable.
+	fixture.environment_archetypes = library.environment_archetypes
+	fixture.events = library.events
+	fixture.games = library.games
+	fixture.items = library.items
+	fixture.services = library.services
 	fixture.environment_scenarios = scenarios.duplicate(true)
 	fixture.validation_errors = []
 	fixture.call("_validate_scenario_definitions")
@@ -1067,12 +1090,13 @@ func _check_town_state_foundation(library: ContentLibrary, failures: Array) -> v
 		"distance": "local",
 		"risk_event": {"id": "town_risk", "chance_percent": 40},
 	}
-	_town_force_condition(run_state, "clear", "midweek")
+	var condition_actions := _town_condition_action_indices(run_state, [["clear", "midweek"], ["storm", "midweek"], ["clear", "payday"]])
+	_town_force_condition(run_state, "clear", "midweek", condition_actions)
 	var clear_status := run_state.travel_route_status(route)
 	var clear_risk := run_state.travel_route_risk_preview(route)
 	if int(clear_status.get("cost", -1)) != 20 or str(clear_status.get("risk", "")) != "medium" or int(clear_risk.get("chance_percent", -1)) != 40:
 		failures.append("Clear weather did not preserve baseline travel cost/risk behavior.")
-	_town_force_condition(run_state, "storm", "midweek")
+	_town_force_condition(run_state, "storm", "midweek", condition_actions)
 	var storm_status := run_state.travel_route_status(route)
 	var storm_risk := run_state.travel_route_risk_preview(route)
 	if int(storm_status.get("cost", 0)) <= int(clear_status.get("cost", 0)) or str(storm_status.get("risk", "")) != "high" or int(storm_risk.get("chance_percent", 0)) <= int(clear_risk.get("chance_percent", 0)):
@@ -1089,10 +1113,10 @@ func _check_town_state_foundation(library: ContentLibrary, failures: Array) -> v
 		"visual_context": {},
 		"music_profile": {"ambience": 0.5, "volume": 0.25, "texture": "bar"},
 	}
-	_town_force_condition(run_state, "clear", "payday")
+	_town_force_condition(run_state, "clear", "payday", condition_actions)
 	var payday_environment := base_environment.duplicate(true)
 	run_state.apply_town_generation_modifiers(payday_environment)
-	_town_force_condition(run_state, "clear", "midweek")
+	_town_force_condition(run_state, "clear", "midweek", condition_actions)
 	var midweek_environment := base_environment.duplicate(true)
 	run_state.apply_town_generation_modifiers(midweek_environment)
 	var payday_economy: Dictionary = payday_environment.get("economic_profile", {})
@@ -1132,8 +1156,29 @@ func _check_town_state_foundation(library: ContentLibrary, failures: Array) -> v
 	_check_connected_town_foundation(library, failures)
 
 
-func _town_force_condition(run_state: RunState, weather_id: String, day_type_id: String) -> void:
+func _town_condition_action_indices(run_state: RunState, conditions: Array) -> Dictionary:
+	var original := run_state.town_snapshot()
+	var result: Dictionary = {}
+	for action in range(maxi(1, int(original.get("turn_horizon", 240)))):
+		var probe := original.duplicate(true)
+		probe["action_index"] = action
+		run_state.town_state.restore(probe, run_state.seed_value)
+		var key := "%s|%s" % [run_state.weather_now(), run_state.day_type()]
+		for condition_value in conditions:
+			var condition: Array = condition_value
+			if key == "%s|%s" % [str(condition[0]), str(condition[1])] and not result.has(key):
+				result[key] = action
+	run_state.town_state.restore(original, run_state.seed_value)
+	return result
+
+
+func _town_force_condition(run_state: RunState, weather_id: String, day_type_id: String, action_indices: Dictionary = {}) -> void:
 	var snapshot := run_state.town_snapshot()
+	var key := "%s|%s" % [weather_id, day_type_id]
+	if action_indices.has(key):
+		snapshot["action_index"] = int(action_indices[key])
+		run_state.town_state.restore(snapshot, run_state.seed_value)
+		return
 	for action in range(maxi(1, int(snapshot.get("turn_horizon", 240)))):
 		snapshot["action_index"] = action
 		run_state.town_state.restore(snapshot, run_state.seed_value)
@@ -4429,7 +4474,11 @@ func _check_production_game_module_load(library: ContentLibrary, run_state: RunS
 	if module_path.begins_with("res://data/runtime/") or module_path.ends_with("_ui.gd"):
 		failures.append("Smoke game module points at demo runtime/UI path: %s." % module_path)
 		return
-	var module_script: Script = load(module_path)
+	var module_script: Script = _surface_contract_script_cache.get(module_path, null) as Script
+	if module_script == null:
+		module_script = load(module_path)
+		if module_script != null:
+			_surface_contract_script_cache[module_path] = module_script
 	if module_script == null:
 		failures.append("Smoke game module could not be loaded: %s." % module_path)
 		return

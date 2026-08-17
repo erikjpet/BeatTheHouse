@@ -200,6 +200,8 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 	# already covered, so eagerly encoding them would add work without assertions.
 	var source_snapshot: Dictionary = {}
 	var source_text := ""
+	var cold_source: Dictionary = {}
+	var cold_source_text := ""
 	for game_id_value in _string_array(environment.get("game_ids", [])):
 		var game_id := str(game_id_value)
 		covered_game_ids[game_id] = true
@@ -212,6 +214,10 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 			if source_snapshot.is_empty():
 				source_snapshot = source_run.to_dict()
 				source_text = JSON.stringify(source_snapshot)
+				var parsed_source: Variant = JSON.parse_string(source_text)
+				if typeof(parsed_source) == TYPE_DICTIONARY:
+					cold_source = parsed_source as Dictionary
+					cold_source_text = JSON.stringify(cold_source)
 			var game := _load_game(library, game_id, failures)
 			if game == null:
 				continue
@@ -219,7 +225,7 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 			# opens a non-default generated fixture. It must select presentation
 			# without recording that selection in the serialized environment.
 			game.set_transient_state_key_context(state_key)
-			var violation := _activation_violation(game, source_run, source_snapshot, source_text)
+			var violation := _activation_violation(game, source_run, source_snapshot, source_text, cold_source, cold_source_text)
 			game.set_transient_state_key_context("")
 			if not violation.is_empty():
 				failures.append("Game activation mutated serialized RunState for %s (%s) in %s/%s/%s: %s" % [game_id, state_key, archetype_id, layer_id, scenario_id, violation])
@@ -499,19 +505,21 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 			failures.append("Game activation class guard did not isolate its immutable parsed source from live hook state: %s" % source_alias_violation)
 
 
-static func _activation_violation(game: GameModule, run_state: RunState, cached_source_snapshot: Dictionary = {}, cached_source_text: String = "") -> String:
+static func _activation_violation(game: GameModule, run_state: RunState, cached_source_snapshot: Dictionary = {}, cached_source_text: String = "", cached_cold_source: Dictionary = {}, cached_cold_source_text: String = "") -> String:
 	var source_snapshot := cached_source_snapshot if not cached_source_snapshot.is_empty() else run_state.to_dict()
 	var source_text := cached_source_text if not cached_source_text.is_empty() else JSON.stringify(source_snapshot)
 	# Parse the canonical bytes once. Every hook restores from this immutable
 	# dictionary, so hooks remain isolated without seven repeated JSON parses.
-	var cold_source_value: Variant = JSON.parse_string(source_text)
-	if typeof(cold_source_value) != TYPE_DICTIONARY:
-		return "could not parse canonical activation fixture"
-	var cold_source := cold_source_value as Dictionary
+	var cold_source := cached_cold_source
+	if cold_source.is_empty():
+		var cold_source_value: Variant = JSON.parse_string(source_text)
+		if typeof(cold_source_value) != TYPE_DICTIONARY:
+			return "could not parse canonical activation fixture"
+		cold_source = cold_source_value as Dictionary
 	# JSON parsing may normalize representation details that RunState.to_dict()
 	# later canonicalizes back to source_text. Preserve the parser's own exact
 	# baseline solely for detecting retained-reference writes into cold_source.
-	var cold_source_text := JSON.stringify(cold_source)
+	var cold_source_text := cached_cold_source_text if not cached_cold_source_text.is_empty() else JSON.stringify(cold_source)
 	# Validate one pristine cold clone exactly. RunState.from_dict retains some
 	# nested references, so every live fixture receives its own deep source copy;
 	# hooks never share state with each other or with the canonical dictionary.
