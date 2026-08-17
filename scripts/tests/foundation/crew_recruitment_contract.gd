@@ -12,6 +12,7 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const IGNORED_BASELINE_PATH := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
+const JSON_EXACT_INTEGER_LIMIT := 9007199254740991.0
 
 
 static func check(library: ContentLibrary, failures: Array) -> void:
@@ -462,6 +463,7 @@ static func _check_contact_surfaces(library: ContentLibrary, failures: Array) ->
 
 
 static func _check_crew_ignoring_regression(library: ContentLibrary, failures: Array) -> void:
+	_check_ignored_numeric_normalizer(failures)
 	var run_state := RunStateScript.new()
 	run_state.start_new("CREW-IGNORED")
 	var environment := {"id": "ignored", "archetype_id": "bar", "kind": "casino", "event_ids": ["rowdy_regular"], "scenario_patron_ids": ["fight_crowd"]}
@@ -707,7 +709,7 @@ static func _normalize_ignored_capture_numeric_types(value: Dictionary) -> Dicti
 	# the following JSON equality remains a full exact-structure golden.
 	var result := value.duplicate(true)
 	if result.has("schema_version"):
-		result["schema_version"] = int(result.get("schema_version", 0))
+		result["schema_version"] = _normalized_json_integer(result.get("schema_version"))
 	var runs := _array(result.get("runs", []))
 	for run_index in range(runs.size()):
 		if typeof(runs[run_index]) != TYPE_DICTIONARY:
@@ -720,12 +722,52 @@ static func _normalize_ignored_capture_numeric_types(value: Dictionary) -> Dicti
 			var checkpoint: Dictionary = checkpoints[checkpoint_index]
 			for field in ["run_state_bytes", "current_environment_bytes", "world_environments_bytes"]:
 				if checkpoint.has(field):
-					checkpoint[field] = int(checkpoint.get(field, 0))
+					checkpoint[field] = _normalized_json_integer(checkpoint.get(field))
 			checkpoints[checkpoint_index] = checkpoint
 		run["checkpoints"] = checkpoints
 		runs[run_index] = run
 	result["runs"] = runs
 	return result
+
+
+static func _normalized_json_integer(value: Variant) -> Variant:
+	if typeof(value) != TYPE_FLOAT:
+		return value
+	var number: float = value
+	if not is_finite(number) or floor(number) != number or absf(number) > JSON_EXACT_INTEGER_LIMIT:
+		return value
+	return int(number)
+
+
+static func _check_ignored_numeric_normalizer(failures: Array) -> void:
+	var hostile := {
+		"schema_version": "1",
+		"runs": [{"seed": "HOSTILE", "checkpoints": [{
+			"label": "hostile",
+			"run_state_bytes": true,
+			"current_environment_bytes": 1.5,
+			"world_environments_bytes": "2",
+		}]}],
+	}
+	var hostile_normalized := _normalize_ignored_capture_numeric_types(hostile)
+	if JSON.stringify(hostile_normalized) != JSON.stringify(hostile):
+		failures.append("Crew-ignoring golden numeric normalization coerced hostile string, bool, or fractional fixture data.")
+	var valid_float := {
+		"schema_version": 1.0,
+		"runs": [{"seed": "VALID", "checkpoints": [{
+			"label": "valid",
+			"run_state_bytes": 42.0,
+			"current_environment_bytes": 43.0,
+			"world_environments_bytes": 44.0,
+		}]}],
+	}
+	var valid_normalized := _normalize_ignored_capture_numeric_types(valid_float)
+	var valid_checkpoint := _dict(_array(_dict(_array(valid_normalized.get("runs", []))[0]).get("checkpoints", []))[0])
+	if typeof(valid_normalized.get("schema_version")) != TYPE_INT \
+		or typeof(valid_checkpoint.get("run_state_bytes")) != TYPE_INT \
+		or typeof(valid_checkpoint.get("current_environment_bytes")) != TYPE_INT \
+		or typeof(valid_checkpoint.get("world_environments_bytes")) != TYPE_INT:
+		failures.append("Crew-ignoring golden numeric normalization did not restore exact integral JSON fixture types.")
 
 
 static func _dict(value: Variant) -> Dictionary:
