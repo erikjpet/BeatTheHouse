@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `env06_5` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-17 by Codex
+- **Completion/implementation commits:** `9325ce87`, `488aacd4`, `767d762d`, `dbd42a0d`, `0572377b`
+- **Verification:** Content/audit PASS at 55 scenarios (42 launch + 13 backlog), 13 exclusive events, 20-seed full reach with no starvation/crowd-out, phase/save-load/layer/tutorial contracts PASS; systems and UI assertions 0; 10-seed determinism PASS (590 checkpoints, hash `3567232055`); canonical visual QA PASS (75 states, zero warnings); three 1600x900 cross-venue smoke captures PASS with zero overlaps.
+- **Deviations:** None. The blocking shipped Street Craps activation defect was repaired under `fix06_2`; the two exact ordinary-travel environment/world-map digests were then recaptured for the authorized scenario catalog expansion while all locked route, cost, clock, RNG, story, heat, and travel-count fields remained unchanged. The systems wrapper retained its pre-existing same-load timing exception with no budget or assertion change.
 
 # Agent Prompt — env06_5: Scenario Backlog (wave 2 authoring)
 

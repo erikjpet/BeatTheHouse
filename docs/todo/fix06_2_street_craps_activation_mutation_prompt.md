@@ -3,10 +3,10 @@ Board row: `fix06_2` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** — (reopened 2026-08-17 after stronger guard reproduction)
+- **Completion/implementation commits:** Prior partial repair: `4a4201b7`, `314b2d04`, `0572377b`, `30993c92`; root repair pending integration.
+- **Verification:** Pending. The earlier M1.6/Craps evidence remains valid, but the prior guard did not cover passive presentation hooks, cold restored state, or non-default fixture keys.
+- **Deviations:** The earlier closeout was reopened when the stronger guard reproduced seven passive Grand Casino dealer-day mutations. No test or assertion is waived.
 
 # Agent Prompt — fix06_2: Street Craps Mutates RunState on Activation
 
