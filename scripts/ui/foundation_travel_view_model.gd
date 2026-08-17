@@ -42,6 +42,15 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 	var route_path_geometry: Array = []
 	var displayed_lookup: Dictionary = {}
 	var visible_node_ids: Array = []
+	var courier_layer: Dictionary = host.run_state.delivery_map_layer() if host.run_state.has_method("delivery_map_layer") else {}
+	var courier_targets_by_id: Dictionary = {}
+	for courier_target_value in host._copy_array(courier_layer.get("targets", [])):
+		if typeof(courier_target_value) != TYPE_DICTIONARY:
+			continue
+		var courier_target: Dictionary = courier_target_value
+		var courier_node_id := str(courier_target.get("node_id", "")).strip_edges()
+		if not courier_node_id.is_empty():
+			courier_targets_by_id[courier_node_id] = courier_target
 	var sweep_marker: Dictionary = host.run_state.sweep_map_marker() if host.run_state.has_method("sweep_map_marker") else {}
 	var sweep_marker_node_id := str(sweep_marker.get("node_id", "")).strip_edges()
 	var nodes: Array = []
@@ -78,9 +87,15 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 			closing_soon = bool(open_status.get("closing_soon", false))
 			if not open_now:
 				enabled = false
-		if not host._world_map_node_should_render(node, is_current, enabled) and node_id != sweep_marker_node_id:
+		if not host._world_map_node_should_render(node, is_current, enabled) and node_id != sweep_marker_node_id and not courier_targets_by_id.has(node_id):
 			continue
 		node["current"] = is_current
+		if courier_targets_by_id.has(node_id):
+			var courier_target: Dictionary = courier_targets_by_id.get(node_id, {})
+			node["delivery_target"] = true
+			node["delivery_target_status"] = str(courier_target.get("status", "pending"))
+			node["delivery_deadline_remaining"] = int(courier_layer.get("deadline_remaining", 0))
+			node["delivery_marker_label"] = "DONE" if str(courier_target.get("status", "pending")) == "delivered" else "DROP · %d" % int(courier_layer.get("deadline_remaining", 0))
 		node["travel_target"] = visible_travel_target
 		node["travel_enabled"] = enabled
 		node["travel_disabled_reason"] = ""
@@ -159,6 +174,10 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 		var enabled_id = str(enabled_id_value)
 		if displayed_lookup.has(enabled_id) and not focus_node_ids.has(enabled_id):
 			focus_node_ids.append(enabled_id)
+	for courier_node_id_value in courier_targets_by_id.keys():
+		var courier_node_id := str(courier_node_id_value)
+		if displayed_lookup.has(courier_node_id) and not focus_node_ids.has(courier_node_id):
+			focus_node_ids.append(courier_node_id)
 	if not displayed_lookup.has(str(enriched.get("selected_node_id", ""))):
 		enriched["selected_node_id"] = ""
 	enriched["visible_node_ids"] = visible_node_ids
@@ -172,6 +191,8 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 	enriched["route_path_geometry"] = route_path_geometry
 	enriched["map_focus_node_ids"] = focus_node_ids
 	enriched["sweep_marker"] = sweep_marker
+	if not courier_layer.is_empty():
+		enriched["courier_layer"] = courier_layer
 	if str(enriched.get("background_path", "")).strip_edges().is_empty():
 		enriched["background_path"] = host.WorldMapScript.MAP_BACKGROUND_PATH
 	return enriched
@@ -439,8 +460,51 @@ static func travel_target_ids(host: Variant) -> Array:
 		if not result.has(local_target_id):
 			result.append(local_target_id)
 	result = host.TutorialFlowScript.travel_target_ids(host.run_state, result)
+	result = _retain_delivery_next_hops(host, result)
 	host.travel_target_ids_cache_key = cache_key
 	host.travel_target_ids_cache = result.duplicate()
+	return result
+
+
+static func _retain_delivery_next_hops(host: Variant, ordinary_target_ids: Array) -> Array:
+	# Delivery runs still use the ordinary map choices and route execution. The
+	# capped presentation list must not hide the first real edge toward every
+	# pending handoff, though, or an otherwise reachable job can appear stuck.
+	var result := ordinary_target_ids.duplicate()
+	if not host.run_state.has_world_map() or not host.run_state.has_method("delivery_has_active_run") \
+			or not host.run_state.delivery_has_active_run():
+		return result
+	var delivery: Dictionary = host.run_state.delivery_snapshot()
+	var target_values: Variant = delivery.get("targets", [])
+	if typeof(target_values) != TYPE_ARRAY:
+		return result
+	var source_id: String = host.run_state.current_world_node_id()
+	var required_next_hops: Array = []
+	for target_value in target_values as Array:
+		if typeof(target_value) != TYPE_DICTIONARY:
+			continue
+		var target: Dictionary = target_value
+		if str(target.get("status", "pending")) != "pending":
+			continue
+		var target_id := str(target.get("node_id", "")).strip_edges()
+		var path: Array = host.WorldMapScript.path_between(host.run_state.world_map, source_id, target_id, true)
+		if path.size() < 2:
+			continue
+		var next_hop := str(path[1]).strip_edges()
+		if not next_hop.is_empty() and not required_next_hops.has(next_hop):
+			required_next_hops.append(next_hop)
+	for next_hop_value in required_next_hops:
+		var next_hop := str(next_hop_value)
+		if result.has(next_hop):
+			continue
+		if result.size() < host.WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
+			result.append(next_hop)
+			continue
+		for replace_index in range(result.size() - 1, -1, -1):
+			if required_next_hops.has(result[replace_index]):
+				continue
+			result[replace_index] = next_hop
+			break
 	return result
 
 
@@ -466,7 +530,18 @@ static func travel_base_cache_key(host: Variant) -> String:
 			str(bool(host.run_state.narrative_flags.get("underground_tip", false))),
 			str(bool(host.run_state.narrative_flags.get("grand_casino_invite", false))),
 		]
-	return "%s|%s|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%d|%s|%d|%s" % [
+	var delivery_cache_key := ""
+	if host.run_state.has_method("delivery_snapshot"):
+		var delivery: Dictionary = host.run_state.delivery_snapshot()
+		if not delivery.is_empty():
+			delivery_cache_key = "%s:%s:%d:%d:%s" % [
+				str(delivery.get("run_id", "")),
+				str(delivery.get("status", "")),
+				int(delivery.get("deadline_remaining", 0)),
+				int(delivery.get("delivered_count", 0)),
+				str(delivery.get("handoff_pending_node_id", "")),
+			]
+	return "%s|%s|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%d|%s|%d|%s|%s" % [
 		host.current_screen,
 		host.run_state.seed_text,
 		str(host.run_state.current_environment.get("id", "")),
@@ -488,6 +563,7 @@ static func travel_base_cache_key(host: Variant) -> String:
 		str(closing_status.get("phase", "")),
 		int(closing_status.get("grace_actions_remaining", 0)),
 		tutorial_route_stage,
+		delivery_cache_key,
 	]
 
 

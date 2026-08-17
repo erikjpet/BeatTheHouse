@@ -1142,206 +1142,266 @@ func _check_family_loan_unknown_caller(app: Control) -> bool:
 
 
 func _check_crew_favor_conversation(app: Control) -> bool:
+	if not await _check_delivery_ordinary_travel_baseline(app, "before delivery lifecycle"):
+		return false
 	app.call("start_foundation_run", "UI-CREW-FAVOR-TALK")
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var library: ContentLibrary = app.get("library")
-	var streets_controller: Variant = app.get("streets_controller")
 	var event_definition := library.event("crew_favor_delivery") if library != null else {}
-	if run_state == null or event_definition.is_empty() or streets_controller == null:
+	if run_state == null or event_definition.is_empty():
 		push_error("Crew-favor talk fixture is unavailable.")
 		return false
-	if bool(streets_controller.call("is_visible")) or bool(streets_controller.call("idle_animation_running")):
-		push_error("Hidden Streets controller kept its idle tween alive before a board opened.")
+	# Model a real earlier visit without spending test time on an unrelated
+	# round trip. Offer selection must prefer this open, visited venue.
+	var delivery_origin_id := run_state.current_world_node_id()
+	var visited_delivery_target_id := "gas_station_casino"
+	if WorldMapScript.node_metadata_by_id(run_state.world_map, visited_delivery_target_id).is_empty() \
+			or not WorldMapScript.has_path(run_state.world_map, delivery_origin_id, visited_delivery_target_id, false):
+		push_error("Crew-favor fixture does not contain its real open visited target.")
 		return false
+	run_state.world_map = WorldMapScript.enter_node(run_state.world_map, visited_delivery_target_id)
+	run_state.world_map = WorldMapScript.enter_node(run_state.world_map, delivery_origin_id, run_state.current_environment)
 	run_state.narrative_flags["crew_favor_pending"] = true
 	var overrides: Dictionary = app.call("_triggered_entry_overrides", event_definition)
-	var trigger_context := {"trigger": "action", "type": "action", "turns": 1}
-	if not run_state.enqueue_triggered_event("crew_favor_delivery", "ui_fixture", trigger_context, overrides):
+	if not run_state.enqueue_triggered_event("crew_favor_delivery", "ui_fixture", {"trigger": "action", "type": "action", "turns": 1}, overrides):
 		push_error("Crew-favor talk fixture could not be queued.")
 		return false
 	app.call("_refresh")
 	await process_frame
 	var talk: Dictionary = app.call("current_talk_dock_snapshot")
-	if not bool(talk.get("visible", false)) \
-		or str(talk.get("event_id", "")) != "crew_favor_delivery" \
-		or str(talk.get("speaker", "")) != "The Crew" \
-		or str(talk.get("topic", "")) != "Crew Favor" \
-		or int(talk.get("choice_count", 0)) != 2:
-		push_error("Crew favor did not use the standard title/topic/options conversation: %s" % JSON.stringify(talk))
-		return false
 	var crew_character_ids: Array = talk.get("character_ids", []) if typeof(talk.get("character_ids", [])) == TYPE_ARRAY else []
-	var unique_crew_character_ids := {}
+	var unique_ids := {}
 	for character_id_value in crew_character_ids:
-		unique_crew_character_ids[str(character_id_value)] = true
-	if str(talk.get("character_pool_id", "")) != "crew_regulars" \
-		or str(talk.get("portrait_presentation", "")) == "faceless_silhouette" \
-		or str(talk.get("portrait_renderer", "")) != "animated_character_model" \
-		or int(talk.get("portrait_count", 0)) != 3 \
-		or crew_character_ids.size() != 3 \
-		or unique_crew_character_ids.size() != 3 \
-		or str(talk.get("voice_line_key", "")) != "favor_due" \
-		or str(talk.get("voice_line", "")).is_empty() \
-		or str(talk.get("speaking_character_title", "")).is_empty() \
-		or not str(talk.get("speaker_text", "")).contains(str(talk.get("speaking_character_name", ""))) \
-		or not bool(talk.get("portrait_animation_active", false)):
-		push_error("Crew favor did not show three unique animated Crew identities with an authored voice line: %s" % JSON.stringify(talk))
+		unique_ids[str(character_id_value)] = true
+	if not bool(talk.get("visible", false)) or str(talk.get("event_id", "")) != "crew_favor_delivery" \
+		or str(talk.get("speaker", "")) != "The Crew" or int(talk.get("choice_count", 0)) != 2 \
+		or str(talk.get("character_pool_id", "")) != "crew_regulars" or crew_character_ids.size() != 3 \
+		or unique_ids.size() != 3 or not bool(talk.get("portrait_animation_active", false)):
+		push_error("Crew favor did not preserve its three-person conversation presentation: %s" % JSON.stringify(talk))
 		return false
 	app.call("resolve_event_choice", "crew_favor_delivery", "run_package")
 	await process_frame
-	if not run_state.streets_has_active_run() \
-		or not bool(run_state.narrative_flags.get("crew_favor_pending", false)) \
-		or bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
-		or streets_controller == null \
-		or not bool(streets_controller.call("is_visible")):
-		push_error("Crew-favor conversation did not hand off to the played Streets surface before applying its outcome.")
+	if not run_state.delivery_has_active_run() or bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
+		push_error("Crew-favor conversation did not hand off to the real-map delivery state.")
 		return false
-	if bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
-		push_error("Crew-favor conversation remained open after resolution.")
+	if not bool(app.call("open_world_map")):
+		push_error("Active delivery could not open the existing world map.")
 		return false
-	await create_timer(0.15).timeout
-	if not bool(streets_controller.call("idle_animation_running")) or float(streets_controller.call("measured_idle_liveness")) <= 0.001:
-		push_error("Open Streets board did not register measured movement from its actual idle blue-light animation.")
+	await process_frame
+	var map_snapshot: Dictionary = app.call("_world_map_snapshot")
+	var courier_layer: Dictionary = map_snapshot.get("courier_layer", {}) if typeof(map_snapshot.get("courier_layer", {})) == TYPE_DICTIONARY else {}
+	var target_id := str(((run_state.delivery_snapshot().get("targets", []) as Array)[0] as Dictionary).get("node_id", ""))
+	if target_id != visited_delivery_target_id:
+		push_error("Crew-favor offer did not prefer the real visited destination: %s" % target_id)
 		return false
-	var distance_sizes := [{"x": 6, "y": 5}, {"x": 8, "y": 6}, {"x": 10, "y": 7}, {"x": 12, "y": 8}, {"x": 14, "y": 9}]
-	for size_value in distance_sizes:
-		var size: Dictionary = size_value
-		streets_controller.call("_build_board", int(size.get("x", 1)), int(size.get("y", 1)))
-		var buttons: Array = streets_controller.get("cell_buttons")
-		var cell_size := (buttons[0] as Button).custom_minimum_size if not buttons.is_empty() else Vector2.ZERO
-		var board_width := (cell_size.x * int(size.get("x", 1))) + (maxi(0, int(size.get("x", 1)) - 1) * 3.0)
-		var board_height := (cell_size.y * int(size.get("y", 1))) + (maxi(0, int(size.get("y", 1)) - 1) * 3.0)
-		if board_width > 790.1 or board_height > 360.1:
-			push_error("Streets %dx%d board exceeded its 1280x720 layout budget: %.1fx%.1f." % [int(size.get("x", 1)), int(size.get("y", 1)), board_width, board_height])
-			return false
-	streets_controller.set("board_key", "")
-	streets_controller.call("show_snapshot", run_state.streets_snapshot())
-	var favor_board: Dictionary = run_state.active_streets_run.get("board", {})
-	favor_board["patrols"] = []
-	var destination: Dictionary = favor_board.get("destination", {})
-	var favor_target_id := str(run_state.active_streets_run.get("destination_node_id", ""))
-	var favor_travel_count_before := run_state.environment_travel_count()
-	run_state.active_streets_run["board"] = favor_board
-	run_state.active_streets_run["player"] = {"x": int(destination.get("x", 1)) - 1, "y": int(destination.get("y", 0))}
-	app.call("_on_streets_action_requested", {"verb": "move", "direction": "right", "pace": "walk"})
-	if not await _wait_for_streets_destination(app, run_state, favor_target_id):
-		push_error("Successful Crew-favor Streets outcome did not resume canonical travel to %s." % favor_target_id)
+	var target_marked := false
+	for node_value in map_snapshot.get("nodes", []):
+		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == target_id:
+			target_marked = bool((node_value as Dictionary).get("delivery_target", false))
+			break
+	if not bool(courier_layer.get("active", false)) or (courier_layer.get("edge_reads", []) as Array).is_empty() or not target_marked:
+		push_error("Existing world map did not render the active courier targets/risk layer.")
 		return false
-	if run_state.streets_has_active_run() \
-		or not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
-		or bool(run_state.narrative_flags.get("crew_favor_pending", true)) \
-		or run_state.environment_travel_count() != favor_travel_count_before + 1 \
-		or bool(streets_controller.call("is_visible")) \
-		or bool(streets_controller.call("idle_animation_running")) \
-		or float(streets_controller.call("measured_idle_liveness")) > 0.001:
-		push_error("Played Crew-favor surface did not apply its authored outcome, travel once, and close cleanly.")
+	var target_node := WorldMapScript.node_metadata_by_id(run_state.world_map, target_id)
+	var travel_count_before := run_state.environment_travel_count()
+	var clock_before := run_state.game_clock_minutes
+	var delivery_path := WorldMapScript.path_between(run_state.world_map, run_state.current_world_node_id(), target_id, true)
+	if target_node.is_empty() or delivery_path.size() < 2:
+		push_error("Crew-favor target did not have a revealed real-map path: %s" % target_id)
 		return false
-	for terminal_reason in ["caught", "deadline", "ditched"]:
-		if not await _check_streets_terminal_travel(app, terminal_reason):
-			return false
-	if not await _check_streets_decline_and_invalid_travel(app):
-		return false
-	return true
-
-
-func _wait_for_streets_destination(app: Control, run_state: RunState, target_id: String) -> bool:
-	for _settle_frame in range(12):
-		await process_frame
-		if run_state.current_world_node_id() == target_id and not bool(app.get("travel_transition_active")):
-			# Let the travel coroutine finish any same-frame event/refresh work
-			# before another fixture replaces the run.
+	for path_index in range(1, delivery_path.size()):
+		var segment_id := str(delivery_path[path_index])
+		if path_index > 1:
+			if not bool(app.call("open_world_map")):
+				push_error("Crew-favor route could not reopen the existing map for segment %s." % segment_id)
+				return false
 			await process_frame
-			return run_state.current_world_node_id() == target_id
-	return false
+		var segment_choice: Dictionary = app.call("_travel_choice", segment_id)
+		if segment_choice.is_empty() or not bool(segment_choice.get("enabled", false)) or not bool(app.call("select_world_map_node", segment_id)):
+			push_error("Crew-favor route segment was not a normal open map choice: id=%s choice=%s ids=%s time=%d" % [segment_id, JSON.stringify(segment_choice), JSON.stringify(app.call("_travel_target_ids")), run_state.game_minute_of_day()])
+			return false
+		app.call("confirm_world_map_travel")
+		for _travel_frame in range(24):
+			await process_frame
+			if run_state.current_world_node_id() == segment_id and not bool(app.get("travel_transition_active")):
+				break
+		if run_state.current_world_node_id() != segment_id:
+			push_error("Crew-favor route did not arrive at real segment %s." % segment_id)
+			return false
+		app.call("back_to_environment")
+		await process_frame
+	var generated_environment: Dictionary = run_state.current_environment
+	if run_state.current_world_node_id() != target_id or run_state.environment_travel_count() != travel_count_before + delivery_path.size() - 1 \
+		or str(generated_environment.get("world_node_id", "")) != target_id \
+		or str(generated_environment.get("archetype_id", "")) != str(target_node.get("archetype_id", "")) \
+		or (generated_environment.get("layout", {}) as Dictionary).is_empty() \
+		or run_state.game_clock_minutes <= clock_before:
+		push_error("Crew favor did not use normal travel and RunGenerator for its marked destination: %s" % JSON.stringify(generated_environment))
+		return false
+	var handoff_object_id := "delivery:handoff:%s" % target_id
+	var handoff_visible := false
+	for object_value in app.call("_interactable_object_view_list"):
+		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")) == handoff_object_id:
+			handoff_visible = true
+			break
+	var arrival_interaction := run_state.delivery_arrival_interaction()
+	if str(arrival_interaction.get("object_id", "")) != handoff_object_id or str(arrival_interaction.get("node_id", "")) != target_id or not handoff_visible:
+		push_error("Delivery arrival did not expose a physical handoff in the generated room: active=%s delivery=%s interaction=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), JSON.stringify(arrival_interaction), JSON.stringify(app.call("_interactable_object_view_list"))])
+		return false
+	var bankroll_before_handoff := run_state.bankroll
+	var heat_before_handoff := run_state.suspicion_level()
+	if not bool(app.call("activate_interactable_object", handoff_object_id)) or run_state.delivery_has_active_run() \
+		or not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
+		or run_state.bankroll != bankroll_before_handoff + 22 or run_state.suspicion_level() != heat_before_handoff + 4:
+		push_error("Physical handoff did not resolve the Crew favor with exact shipped rewards.")
+		return false
+	var inactive_snapshot: Dictionary = app.call("_world_map_snapshot")
+	if inactive_snapshot.has("courier_layer"):
+		push_error("Courier layer remained on the ordinary map after delivery resolution.")
+		return false
+	var invalid := run_state.delivery_begin_package({"run_id": "invalid", "targets": [{"node_id": "nowhere"}]})
+	if bool(invalid.get("ok", false)) or run_state.delivery_has_active_run():
+		push_error("Invalid synthetic delivery target entered active state.")
+		return false
+	if not await _check_delivery_closed_next_hop_nonblocking(app):
+		return false
+	if not await _check_delivery_ordinary_travel_baseline(app, "after delivery lifecycle"):
+		return false
+	return await _check_delivery_ordinary_travel_baseline(app, "same-process restart")
 
 
-func _enabled_streets_travel_choice(app: Control) -> Dictionary:
-	var choices: Array = app.call("_travel_choice_view_list")
-	for choice_value in choices:
-		if typeof(choice_value) != TYPE_DICTIONARY:
-			continue
-		var choice: Dictionary = choice_value
-		if bool(choice.get("enabled", true)) and not str(choice.get("id", "")).strip_edges().is_empty():
-			return choice.duplicate(true)
-	return {}
-
-
-func _check_streets_terminal_travel(app: Control, terminal_reason: String) -> bool:
-	app.call("start_foundation_run", "UI-STREETS-TRAVEL-%s" % terminal_reason)
+func _check_delivery_closed_next_hop_nonblocking(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-CREW-FAVOR-TALK")
 	await process_frame
 	var run_state: RunState = app.get("run_state")
-	var streets_controller: Variant = app.get("streets_controller")
-	var choice := _enabled_streets_travel_choice(app)
-	if run_state == null or streets_controller == null or choice.is_empty():
-		push_error("%s Streets travel fixture could not find an enabled real edge." % terminal_reason.capitalize())
-		return false
-	var target_id := str(choice.get("id", ""))
-	var route: Dictionary = choice.get("route", {}) if typeof(choice.get("route", {})) == TYPE_DICTIONARY else {}
-	var started := run_state.streets_begin({
-		"mode": "package",
-		"route_id": "ui_%s_continuation" % terminal_reason,
-		"origin_node_id": run_state.current_world_node_id(),
-		"destination_node_id": target_id,
-		"distance": str(choice.get("distance", route.get("distance", "near"))),
-		"deadline_actions": 1 if terminal_reason == "deadline" else 12,
-		"travel_continuation": {
-			"enabled": true,
-			"target_id": target_id,
-			"target_label": str(choice.get("label", target_id)),
-			"choice_data": {"enabled": true},
-		},
+	var target_id := "jazz_club"
+	var started := run_state.delivery_begin_package({
+		"run_id": "ui_closed_next_hop",
+		"targets": [{"node_id": target_id}],
+		"deadline_actions": 2,
+		"cargo_heat_per_travel": 0,
 	})
 	if not bool(started.get("ok", false)):
-		push_error("%s Streets travel fixture could not start its board." % terminal_reason.capitalize())
+		push_error("Closed-next-hop delivery fixture could not begin on its real route.")
 		return false
-	var board: Dictionary = run_state.active_streets_run.get("board", {})
-	board["patrols"] = []
-	run_state.active_streets_run["board"] = board
-	if terminal_reason == "caught":
-		run_state.active_streets_run["spotted"] = true
-		run_state.active_streets_run["pursuit_remaining"] = 1
-	var travel_count_before := run_state.environment_travel_count()
-	var action := {"verb": "ditch"} if terminal_reason == "ditched" else {"verb": "wait"}
-	app.call("_on_streets_action_requested", action)
-	if not await _wait_for_streets_destination(app, run_state, target_id):
-		push_error("%s Streets outcome did not resume canonical travel to %s." % [terminal_reason.capitalize(), target_id])
+	app.call("_invalidate_travel_view_cache")
+	var ordinary_capped_ids := WorldMapScript.travel_target_ids(
+		run_state.world_map,
+		run_state.current_world_node_id(),
+		WorldMapScript.TRAVEL_NEW_TARGET_LIMIT,
+		WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT,
+		app.call("_enabled_world_route_ids", run_state.current_world_node_id())
+	)
+	if ordinary_capped_ids.has(target_id):
+		push_error("Closed-next-hop fixture no longer proves the ordinary capped omission: %s" % JSON.stringify(ordinary_capped_ids))
 		return false
-	if str((run_state.active_streets_run.get("resolution", {}) as Dictionary).get("reason", "")) != terminal_reason \
-		or run_state.environment_travel_count() != travel_count_before + 1 \
-		or bool(streets_controller.call("is_visible")) \
-		or bool(streets_controller.call("idle_animation_running")):
-		push_error("%s Streets outcome did not complete exactly one travel transition and close its board." % terminal_reason.capitalize())
+	if not (app.call("_travel_target_ids") as Array).has(target_id):
+		push_error("Active delivery did not retain its real adjacent next hop in the capped map choices.")
+		return false
+	var closed_choice: Dictionary = app.call("_travel_choice", target_id)
+	if bool(closed_choice.get("enabled", true)) or not str(closed_choice.get("disabled_reason", "")).begins_with("Closed"):
+		push_error("Delivery bypassed normal venue hours for its closed next hop: %s" % JSON.stringify(closed_choice))
+		return false
+	if not bool(run_state.delivery_abandon("ui_closed_route").get("ok", false)) or run_state.delivery_has_active_run():
+		push_error("Closed delivery could not be abandoned cleanly.")
+		return false
+	app.call("_invalidate_travel_view_cache")
+	if (app.call("_travel_target_ids") as Array).has(target_id):
+		push_error("Abandoned delivery left its forced courier choice on the ordinary map.")
+		return false
+	var expiring := run_state.delivery_begin_package({
+		"run_id": "ui_closed_next_hop_expiry",
+		"targets": [{"node_id": target_id}],
+		"deadline_actions": 1,
+		"cargo_heat_per_travel": 0,
+	})
+	if not bool(expiring.get("ok", false)):
+		push_error("Closed-next-hop expiry fixture could not restart.")
+		return false
+	run_state.advance_environment_turns(1)
+	var expired_snapshot := run_state.delivery_snapshot()
+	var resolution: Dictionary = expired_snapshot.get("resolution", {}) if typeof(expired_snapshot.get("resolution", {})) == TYPE_DICTIONARY else {}
+	if run_state.delivery_has_active_run() or str(expired_snapshot.get("status", "")) != "resolved" \
+			or str(resolution.get("reason", "")) != "deadline":
+		push_error("Closed delivery did not expire cleanly at its action boundary: %s" % JSON.stringify(expired_snapshot))
 		return false
 	return true
 
 
-func _check_streets_decline_and_invalid_travel(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-STREETS-DECLINE-INVALID")
-	await process_frame
+func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bool:
+	# The first capture at f4a66f679d1d507c5f79aa02960fb65760d0646b
+	# accidentally inherited the owner's apartment career store. This replacement
+	# was captured on that detached commit with meta injection explicitly disabled,
+	# then reproduced byte-for-byte on the delivery tree. Hashes cover each full
+	# serialized value; there are no field exclusions or post-change twin values.
+	const EXPECTED := {
+		"bankroll_delta": -4,
+		"clock_delta": 42,
+		"current_environment_sha256": "5bb556d6d8c42411355f571dbc7b4bdbffb3461b3291b1aa4691a52bb8ffb1a1",
+		"current_world_node_id": "bar",
+		"heat_delta": 0,
+		"provenance_commit": "f4a66f679d1d507c5f79aa02960fb65760d0646b",
+		"rng_state": 70883311,
+		"route_choice_sha256": "3fd96381385eb4ba8868bddac39f233b6c62d586e0cd4b249f45e050cb10657b",
+		"seed": "DELIVERY-ORDINARY-BASELINE",
+		"target_id": "bar",
+		"town_action_index": 0,
+		"travel_count_delta": 1,
+		"travel_story_sha256": "0801d8c617e0ab15f304eae949a7c70fae01fc4031f24580d34f74e2dedd72ce",
+		"world_map_sha256": "8db6efc4c8ca6fc8b5d0562de76a96c2091e72bb77fe4c87ca8dec22c9c79f68",
+	}
+	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
+	for _start_frame in range(3):
+		await process_frame
 	var run_state: RunState = app.get("run_state")
-	var library: ContentLibrary = app.get("library")
-	if run_state == null or library == null:
-		push_error("Streets decline/invalid travel fixture could not access run state.")
+	if run_state == null or run_state.delivery_has_active_run() or not run_state.delivery_map_layer().is_empty():
+		push_error("Ordinary-travel baseline did not begin with delivery fully inactive.")
 		return false
-	run_state.narrative_flags["crew_favor_pending"] = true
-	var event_module: EventModule = EventModuleScript.new()
-	event_module.setup(library.event("crew_favor_delivery"), library)
-	event_module.resolve(run_state, run_state.current_environment, "refuse")
-	var invalid := run_state.streets_begin({
-		"mode": "package",
-		"route_id": "invalid_empty_origin",
-		"origin_node_id": "",
-		"destination_node_id": "nowhere",
-	})
-	var choice := _enabled_streets_travel_choice(app)
-	if bool(invalid.get("ok", false)) or run_state.streets_has_active_run() or choice.is_empty():
-		push_error("Declined or invalid Streets entry blocked the ordinary travel surface.")
+	var choices: Array = app.call("current_environment_view_snapshot").get("travel_choices", [])
+	var choice: Dictionary = {}
+	for choice_value in choices:
+		if typeof(choice_value) == TYPE_DICTIONARY and bool((choice_value as Dictionary).get("enabled", false)):
+			choice = (choice_value as Dictionary).duplicate(true)
+			break
+	if choice.is_empty():
+		push_error("Ordinary-travel baseline no longer exposes its pre-change route.")
 		return false
 	var target_id := str(choice.get("id", ""))
+	var bankroll_before := run_state.bankroll
+	var heat_before := run_state.suspicion_level()
+	var clock_before := run_state.game_clock_minutes
 	var travel_count_before := run_state.environment_travel_count()
-	app.call("_travel_to", target_id, str(choice.get("label", target_id)), choice)
-	if not await _wait_for_streets_destination(app, run_state, target_id) or run_state.environment_travel_count() != travel_count_before + 1:
-		push_error("Declined or invalid Streets entry left ordinary travel unusable.")
+	if not bool(app.call("select_travel_option", target_id)):
+		push_error("Ordinary-travel baseline route could not be selected through the public UI.")
+		return false
+	app.call("confirm_selected_travel")
+	for _travel_frame in range(30):
+		await process_frame
+		if run_state.current_world_node_id() == target_id and not bool(app.get("travel_transition_active")):
+			break
+	var travel_story: Dictionary = {}
+	for entry_value in run_state.story_log:
+		if typeof(entry_value) == TYPE_DICTIONARY and str((entry_value as Dictionary).get("type", "")) == "travel":
+			travel_story = (entry_value as Dictionary).duplicate(true)
+	var actual := {
+		"bankroll_delta": run_state.bankroll - bankroll_before,
+		"clock_delta": run_state.game_clock_minutes - clock_before,
+		"current_environment_sha256": JSON.stringify(run_state.current_environment).sha256_text(),
+		"current_world_node_id": run_state.current_world_node_id(),
+		"heat_delta": run_state.suspicion_level() - heat_before,
+		"provenance_commit": "f4a66f679d1d507c5f79aa02960fb65760d0646b",
+		"rng_state": run_state.rng_state,
+		"route_choice_sha256": JSON.stringify(choice).sha256_text(),
+		"seed": "DELIVERY-ORDINARY-BASELINE",
+		"target_id": target_id,
+		"town_action_index": int(run_state.town_state.action_index),
+		"travel_count_delta": run_state.environment_travel_count() - travel_count_before,
+		"travel_story_sha256": JSON.stringify(travel_story).sha256_text(),
+		"world_map_sha256": JSON.stringify(run_state.world_map).sha256_text(),
+	}
+	if JSON.stringify(actual) != JSON.stringify(EXPECTED):
+		push_error("Inactive delivery path is not byte-identical to the hermetic pre-change ordinary-travel behavior (%s): expected=%s actual=%s" % [phase, JSON.stringify(EXPECTED), JSON.stringify(actual)])
 		return false
 	return true
 

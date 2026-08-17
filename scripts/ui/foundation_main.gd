@@ -42,6 +42,7 @@ const CONTEXT_MODE_META_PAWN_COUNTER := "meta_pawn_counter"
 const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
 const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
 const CONTEXT_MODE_NUMBERS := "numbers"
+const CONTEXT_MODE_DELIVERY := "delivery"
 const META_LOCATION_HOME := "home"
 const META_LOCATION_START_RUN := "start_run"
 const RUN_INFO_BAND_RATIO := 0.10
@@ -148,7 +149,6 @@ const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_tr
 const FoundationScreenBuilderScript := preload("res://scripts/ui/foundation_screen_builder.gd")
 const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_controller.gd")
 const WorldMapOverlayControllerScript := preload("res://scripts/ui/world_map_overlay_controller.gd")
-const StreetsControllerScript := preload("res://scripts/ui/streets_controller.gd")
 const WagerConfirmationControllerScript := preload("res://scripts/ui/wager_confirmation_controller.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const ItemFoundPopupScript := preload("res://scripts/ui/item_found_popup.gd")
@@ -424,7 +424,6 @@ var world_map_badge_row: HFlowContainer
 var world_map_badge_cells: Array = []
 var world_map_confirm_button: Button
 var world_map_overlay_controller: WorldMapOverlayController
-var streets_controller: StreetsController
 var wager_confirmation_controller: WagerConfirmationController
 var selected_world_map_node_id: String = ""
 var world_map_button_ids: Array = []
@@ -4641,6 +4640,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			route["numbers_past_post_travel_actions"] = numbers_travel_actions
 	run_state.clear_closing_time_state()
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
+	var delivery_arrival := run_state.delivery_resolve_travel_arrival(route, route_risk) if run_state.delivery_has_active_run() else {}
 	_update_procedural_music()
 	current_game = null
 	last_game_result = {}
@@ -4656,6 +4656,12 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	clear_interaction_focus()
 	var destination_name := str(run_state.current_environment.get("display_name", target_label))
 	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
+	if bool(delivery_arrival.get("handoff_ready", false)):
+		var delivery_message := " The marked hand is waiting inside."
+		travel_result["message"] = "%s%s" % [str(travel_result.get("message", "")), delivery_message]
+		var delivery_deltas: Dictionary = travel_result.get("deltas", {}) if typeof(travel_result.get("deltas", {})) == TYPE_DICTIONARY else {}
+		delivery_deltas["messages"] = [str(travel_result.get("message", ""))]
+		travel_result["deltas"] = delivery_deltas
 	var grand_casino_entry_cue := run_state.consume_grand_casino_entry_cue()
 	if not grand_casino_entry_cue.is_empty():
 		var cue_message := str(grand_casino_entry_cue.get("message", "")).strip_edges()
@@ -5319,8 +5325,6 @@ func _build_next_run_ui_stage() -> void:
 			_build_item_found_popup()
 		12:
 			_build_coach_overlay()
-		13:
-			_build_streets_overlay()
 		_:
 			run_ui_built = true
 			run_ui_build_in_progress = false
@@ -6118,50 +6122,6 @@ func _build_coach_overlay() -> void:
 	coach_overlay.set_tips_enabled(user_settings == null or user_settings.coach_tips_enabled)
 
 
-func _build_streets_overlay() -> void:
-	streets_controller = StreetsControllerScript.new()
-	streets_controller.action_requested.connect(Callable(self, "_on_streets_action_requested"))
-	streets_controller.build(self)
-
-
-func _sync_streets_overlay() -> void:
-	if streets_controller == null:
-		return
-	if run_state == null or not run_state.streets_has_active_run() or current_screen == SCREEN_START or meta_session_active:
-		streets_controller.hide()
-		return
-	streets_controller.show_snapshot(run_state.streets_snapshot())
-
-
-func _on_streets_action_requested(action: Dictionary) -> void:
-	if run_state == null or not run_state.streets_has_active_run() or streets_controller == null:
-		return
-	var result := run_state.streets_apply_action(action)
-	var message := str(result.get("message", "The block keeps moving."))
-	if not bool(result.get("ok", false)):
-		streets_controller.show_snapshot(run_state.streets_snapshot(), message)
-		return
-	if bool(result.get("resolved", false)):
-		var continuation := run_state.streets_take_travel_continuation()
-		# Persist the one-shot token as consumed before the existing travel
-		# pipeline performs its own arrival autosave.
-		_autosave_foundation_run("Route saved.")
-		streets_controller.hide()
-		_show_message(message)
-		if not continuation.is_empty():
-			_travel_to(
-				str(continuation.get("target_id", "")),
-				str(continuation.get("target_label", "the next stop")),
-				_copy_dict(continuation.get("choice_data", {}))
-			)
-			return
-		_refresh()
-		return
-	_autosave_foundation_run("Route saved.")
-	streets_controller.show_snapshot(run_state.streets_snapshot(), message)
-	_refresh_world_header()
-
-
 func _on_item_found_display_started(_item_id: String) -> void:
 	if talk_dock != null and talk_dock.visible:
 		item_found_talk_dock_suspended = true
@@ -6874,8 +6834,6 @@ func _refresh() -> void:
 	# dependencies naturally change the cache key.
 	var has_run := run_state != null
 	if not has_run or current_screen == SCREEN_START:
-		if streets_controller != null:
-			streets_controller.hide()
 		_clear_run_guidance_for_start_screen()
 		_hide_run_menu()
 		_set_current_screen(SCREEN_START)
@@ -6883,7 +6841,6 @@ func _refresh() -> void:
 		return
 	_evaluate_run_terminal_state()
 	_render_environment_screen()
-	_sync_streets_overlay()
 	if _run_menu_is_visible():
 		_refresh_run_menu()
 	_refresh_coach_at_boundary()
@@ -8559,7 +8516,7 @@ func _blocking_decision_popup_is_visible() -> bool:
 
 
 func _modal_contract_blocks_player_input() -> bool:
-	return travel_transition_active or _streets_overlay_is_visible() or (talk_dock != null and talk_dock.conversation_active) or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
+	return travel_transition_active or (talk_dock != null and talk_dock.conversation_active) or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
 
 
 func _simulation_progression_paused() -> bool:
@@ -8567,7 +8524,6 @@ func _simulation_progression_paused() -> bool:
 	# time-freeze contract. Natural dealer, patron, and event conversations keep
 	# normal-run clocks and autonomous systems moving behind the dialogue.
 	return travel_transition_active \
-		or _streets_overlay_is_visible() \
 		or _pal_tutorial_time_freeze_active() \
 		or _event_choice_popup_is_visible() \
 		or _meta_item_interaction_is_visible() \
@@ -8586,14 +8542,12 @@ func _pal_tutorial_time_freeze_active() -> bool:
 func _talk_dock_input_is_blocked() -> bool:
 	# A map can intentionally host a tutorial conversation. It remains modal to
 	# the room behind it, but must not make its own TalkDock unresponsive.
-	return travel_transition_active or _streets_overlay_is_visible() or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible()
+	return travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible()
 
 
 func _blocking_modal_message() -> String:
 	if travel_transition_active:
 		return "Travel is already in progress."
-	if _streets_overlay_is_visible():
-		return "Finish the block in front of you."
 	if _event_choice_popup_is_visible():
 		return "Choose a response before doing anything else."
 	if _world_map_overlay_is_visible():
@@ -8697,10 +8651,6 @@ func _world_map_overlay_is_visible() -> bool:
 	return world_map_overlay != null and world_map_overlay.visible
 
 
-func _streets_overlay_is_visible() -> bool:
-	return streets_controller != null and streets_controller.is_visible()
-
-
 func current_overlay_state_snapshot() -> Dictionary:
 	var snapshot := {
 		"screen": current_screen,
@@ -8708,7 +8658,6 @@ func current_overlay_state_snapshot() -> Dictionary:
 		"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
 		"event_choice_popup_blocking": _blocking_decision_popup_is_visible(),
 		"talk_dock_visible": talk_dock != null and talk_dock.visible,
-		"streets_visible": _streets_overlay_is_visible(),
 		"world_map_visible": _world_map_overlay_is_visible(),
 		"meta_item_interaction_visible": _meta_item_interaction_is_visible(),
 		"run_inventory_visible": _run_inventory_popup_is_visible(),
@@ -8731,7 +8680,6 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 			"screen": current_screen,
 			"event_choice_popup_visible": _event_choice_popup_is_visible(),
 			"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
-			"streets_visible": _streets_overlay_is_visible(),
 			"world_map_visible": _world_map_overlay_is_visible(),
 			"run_inventory_visible": _run_inventory_popup_is_visible(),
 			"run_journal_visible": _run_journal_popup_is_visible(),
@@ -8741,7 +8689,6 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 		}
 	var violations: Array = []
 	var event_visible := bool(snapshot.get("event_choice_popup_visible", false))
-	var streets_visible := bool(snapshot.get("streets_visible", false))
 	var world_map_visible := bool(snapshot.get("world_map_visible", false))
 	var inventory_visible := bool(snapshot.get("run_inventory_visible", false))
 	var journal_visible := bool(snapshot.get("run_journal_visible", false))
@@ -8749,17 +8696,13 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 	var run_menu_visible := bool(snapshot.get("run_menu_visible", false))
 	var travel_visible := bool(snapshot.get("travel_transition_active", false))
 	if travel_visible:
-		for label in ["event_choice_popup_visible", "streets_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+		for label in ["event_choice_popup_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
 				violations.append("travel_transition overlaps %s" % label)
 	if event_visible:
-		for label in ["streets_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
-			if bool(snapshot.get(label, false)):
-				violations.append("decision_popup overlaps %s" % label)
-	if streets_visible:
 		for label in ["world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
-				violations.append("streets overlaps %s" % label)
+				violations.append("decision_popup overlaps %s" % label)
 	if world_map_visible:
 		for label in ["run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
@@ -9487,6 +9430,8 @@ func activate_interactable_object(object_id: String) -> bool:
 			return _inspect_casino_fixture(object_data)
 		CONTEXT_MODE_NUMBERS:
 			return _open_numbers_surface(source_id)
+		CONTEXT_MODE_DELIVERY:
+			return _complete_delivery_handoff(source_id)
 		CONTEXT_MODE_HOME_TENURE:
 			return confirm_home_tenure_action()
 		CONTEXT_MODE_HOME_SLEEP:
@@ -9526,6 +9471,21 @@ func activate_interactable_object(object_id: String) -> bool:
 	_show_message("Inspect this first.")
 	_refresh()
 	return false
+
+
+func _complete_delivery_handoff(node_id: String) -> bool:
+	if run_state == null:
+		return false
+	var result := run_state.delivery_complete_handoff(node_id)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("message", "This is not the marked handoff.")))
+		_refresh()
+		return false
+	clear_interaction_focus()
+	_show_message(str(result.get("message", "The package changes hands.")))
+	_autosave_foundation_run("Delivery saved.")
+	_refresh()
+	return true
 
 
 func _enter_environment_layer(layer_id: String) -> bool:
@@ -14090,7 +14050,6 @@ func _start_numbers_collection() -> void:
 	_hide_event_choice_popup()
 	_autosave_foundation_run("Numbers route saved.")
 	_show_message("Lucky hands over a sealed collection bag.")
-	_sync_streets_overlay()
 	_refresh()
 
 
@@ -14104,7 +14063,6 @@ func _start_numbers_fix() -> void:
 	_hide_event_choice_popup()
 	_autosave_foundation_run("Fix package saved.")
 	_show_message("The bribe package is live. Finish the streets run, then return to this desk.")
-	_sync_streets_overlay()
 	_refresh()
 
 
@@ -14748,11 +14706,14 @@ func _world_map_node_ids(snapshot: Dictionary) -> Array:
 func _world_map_title_text(current_label: String) -> String:
 	if run_state == null:
 		return "World Map"
-	return "World Map | Day %d %s | Here: %s" % [
+	var title := "World Map | Day %d %s | Here: %s" % [
 		run_state.game_day(),
 		run_state.clock_display_text(),
 		current_label,
 	]
+	if run_state.delivery_has_active_run():
+		title += " | Courier: %d actions" % int(run_state.delivery_snapshot().get("deadline_remaining", 0))
+	return title
 
 
 func _position_world_map_detail_popup(snapshot: Dictionary) -> void:
@@ -14807,12 +14768,22 @@ func _refresh_world_map_detail() -> void:
 	var travel_line := "0 min * 0$ * Walk"
 	if not choice.is_empty():
 		travel_line = _world_map_travel_summary_line(choice)
-	world_map_detail_label.text = "\n".join([
+	var detail_lines: Array = [
 		str(node.get("label", selected_world_map_node_id)),
 		_world_map_hours_line(open_status),
 		description,
 		travel_line,
-	])
+	]
+	var delivery_layer := run_state.delivery_map_layer()
+	if not delivery_layer.is_empty():
+		for target_value in _copy_array(delivery_layer.get("targets", [])):
+			if typeof(target_value) == TYPE_DICTIONARY and str((target_value as Dictionary).get("node_id", "")) == selected_world_map_node_id:
+				detail_lines.append("Courier target · %d actions · %s" % [
+					int(delivery_layer.get("deadline_remaining", 0)),
+					str((target_value as Dictionary).get("status", "pending")),
+				])
+				break
+	world_map_detail_label.text = "\n".join(detail_lines)
 	var can_travel := selected_world_map_node_id != current_id and not choice.is_empty() and bool(choice.get("enabled", true)) and not bool(choice.get("locked", false))
 	_set_world_map_confirm_enabled(can_travel)
 	_set_world_map_detail_badges([])

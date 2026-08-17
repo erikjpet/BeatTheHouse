@@ -35,6 +35,13 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	after_travel_objects.append_array(host._hook_interactable_objects(host.CONTEXT_MODE_SERVICE, host._service_hook_view_list()))
 	after_travel_objects.append_array(host._hook_interactable_objects(host.CONTEXT_MODE_LENDER, host._lender_hook_view_list()))
 	var travel_choices = host._travel_choice_view_list()
+	var delivery_occupied := before_travel_objects + after_travel_objects
+	for travel_index in range(travel_choices.size()):
+		var travel_choice: Dictionary = travel_choices[travel_index] if typeof(travel_choices[travel_index]) == TYPE_DICTIONARY else {}
+		delivery_occupied.append({
+			"focus_rect": host._interaction_rect_for_object("travel:%s" % str(travel_choice.get("id", "")), host.CONTEXT_MODE_TRAVEL, travel_index),
+		})
+	before_travel_objects.append_array(delivery_interactable_objects(host, delivery_occupied))
 	var event_options: Array = []
 	for event_value in host._eligible_event_option_view_list():
 		if typeof(event_value) != TYPE_DICTIONARY or str((event_value as Dictionary).get("id", "")) != "numbers_desk":
@@ -67,6 +74,63 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_locked": host._closing_time_blocks_environment_actions(),
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	})
+
+
+static func delivery_interactable_objects(host: Variant, occupied_objects: Array = []) -> Array:
+	if host.run_state == null:
+		return []
+	var handoff: Dictionary = host.run_state.delivery_arrival_interaction()
+	if handoff.is_empty():
+		return []
+	var node_id := str(handoff.get("node_id", "")).strip_edges()
+	var object_id := "delivery:handoff:%s" % node_id
+	var occupied_rects: Array[Rect2] = []
+	var layout: Dictionary = host._current_environment_layout()
+	var object_rects: Variant = layout.get("object_rects", {})
+	if typeof(object_rects) == TYPE_DICTIONARY:
+		for rect_value in (object_rects as Dictionary).values():
+			var rect: Rect2 = host.EnvironmentInteractionViewModelScript.rect_from_dict(rect_value)
+			if rect.size.x > 0.0 and rect.size.y > 0.0:
+				occupied_rects.append(rect)
+	for occupied_value in occupied_objects:
+		if typeof(occupied_value) != TYPE_DICTIONARY:
+			continue
+		var occupied: Dictionary = occupied_value
+		var rect_value: Variant = occupied.get("focus_rect", Rect2())
+		if typeof(rect_value) == TYPE_RECT2 and (rect_value as Rect2).size.x > 0.0 and (rect_value as Rect2).size.y > 0.0:
+			occupied_rects.append(rect_value as Rect2)
+	var focus_rect: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, 0)
+	var best_overlap := INF
+	for candidate_index in range(8):
+		var candidate: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, candidate_index)
+		var overlap := 0.0
+		for occupied_rect in occupied_rects:
+			overlap += candidate.intersection(occupied_rect).get_area()
+		if overlap < best_overlap:
+			best_overlap = overlap
+			focus_rect = candidate
+		if is_zero_approx(overlap):
+			break
+	return [host._make_interactable_object({
+		"object_id": object_id,
+		"object_type": host.CONTEXT_MODE_DELIVERY,
+		"visual_type": "character",
+		"source_id": node_id,
+		"label": str(handoff.get("label", "Make the handoff")),
+		"short_description": str(handoff.get("message", "A quiet hand waits inside the room.")),
+		"presence": "character",
+		"interactive": true,
+		"enabled": true,
+		"action_summary": "Pass the contraband over.",
+		"status_summary": str(handoff.get("cargo_label", "Crew package")),
+		"risk_summary": "The room is still watching.",
+		"visual_key": "character",
+		"prop": "patron_talk",
+		"icon_key": "dialogue",
+		"available_actions": [{"id": "complete_delivery_handoff", "label": "Hand Over"}],
+		"confirm_action_id": "complete_delivery_handoff",
+		"focus_rect": focus_rect,
+	})]
 
 
 static func numbers_interactable_objects(host: Variant) -> Array:
