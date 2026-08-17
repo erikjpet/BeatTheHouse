@@ -4,10 +4,14 @@ extends RefCounted
 # optionality, rank perks, save migration, and hidden deterministic presence.
 
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
+const CrewIgnoredGoldenProbeScript := preload("res://scripts/tests/foundation/crew_ignored_golden_probe.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
+const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
+const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const IGNORED_BASELINE_PATH := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
 
 
 static func check(library: ContentLibrary, failures: Array) -> void:
@@ -15,16 +19,19 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Crew recruitment content: %s" % str(failure))
 	_check_event_presentation_contract(library, failures)
 	_check_placement_matrix(library, failures)
-	_check_rook_paths(failures)
+	_check_production_reachability(library, failures)
+	_check_rook_paths(library, failures)
 	_check_rook_signposts(library, failures)
 	_check_perks_and_save(failures)
-	_check_crew_ignoring_regression(failures)
+	_check_contact_surfaces(library, failures)
+	_check_crew_ignoring_regression(library, failures)
 	_check_presence_determinism(failures)
 
 
 static func _check_event_presentation_contract(library: ContentLibrary, failures: Array) -> void:
 	var event_ids := CrewRecruitmentModelScript.recruitment_event_ids()
 	event_ids.append("recruitment_rook_leads")
+	event_ids.append_array(CrewRecruitmentModelScript.contact_event_ids())
 	for event_id_value in event_ids:
 		var event_id := str(event_id_value)
 		var definition := library.event(event_id)
@@ -36,6 +43,8 @@ static func _check_event_presentation_contract(library: ContentLibrary, failures
 		var speaker := _dict(definition.get("speaker", {}))
 		if str(speaker.get("role", "")) != "crew":
 			failures.append("Crew recruitment event %s must retain a Crew speaker." % event_id)
+		if event_id.begins_with("crew_contact_") and bool(speaker.get("environment_actor", true)):
+			failures.append("Crew contact %s must reuse its seeded presence actor." % event_id)
 	var knuckles := library.event("recruitment_knuckles")
 	var knuckles_speaker := _dict(knuckles.get("speaker", {}))
 	if str(knuckles.get("asset_path", "")) != "res://assets/art/events/rowdy_regular.png" \
@@ -104,13 +113,50 @@ static func _check_placement_matrix(library: ContentLibrary, failures: Array) ->
 				failures.append("Crew recruitment %s %s did not survive its post-intro save/load." % [member_id, path_kind])
 
 
-static func _check_rook_paths(failures: Array) -> void:
+static func _check_production_reachability(library: ContentLibrary, failures: Array) -> void:
+	for member_id in CrewRecruitmentModelScript.MEMBER_IDS:
+		if member_id == "crew_rook":
+			continue
+		for path_kind in ["primary", "fallback"]:
+			var generated := _generated_path(library, member_id, path_kind)
+			var run_state: RunState = generated.get("run_state") as RunState
+			var event_id := str(CrewRecruitmentModelScript.member_definition(member_id).get("event_id", ""))
+			if run_state == null or not bool(generated.get("entered", false)) \
+				or not _string_array(run_state.current_environment.get("event_ids", [])).has(event_id):
+				failures.append("Production generation did not expose %s's %s recruitment path." % [member_id, path_kind])
+				continue
+			var module := EventModuleScript.new()
+			module.setup(library.event(event_id), library)
+			if not module.can_trigger(run_state, run_state.current_environment):
+				failures.append("Production %s %s encounter was not actionable." % [member_id, path_kind])
+				continue
+			if member_id == "crew_bishop":
+				var first := module.resolve(run_state, run_state.current_environment, "wait_for_bishop")
+				if not bool(first.get("ok", false)):
+					failures.append("Production Bishop %s first beat did not resolve." % path_kind)
+					continue
+			var result := module.resolve(run_state, run_state.current_environment, "work_with_%s" % member_id.trim_prefix("crew_"))
+			if not bool(result.get("ok", false)) or run_state.crew_rank(member_id) != "associate":
+				failures.append("Production %s %s path did not complete through the real event action." % [member_id, path_kind])
+
+
+static func _check_rook_paths(library: ContentLibrary, failures: Array) -> void:
 	var primary := RunStateScript.new()
 	primary.start_new("CREW-ROOK-LOAN")
-	var marker := CrewStateModelScript.rank_threshold("marker")
-	primary.crew_add_trust("crew_rook", marker, "crew_loan_fixture")
-	if primary.crew_rank("crew_rook") != "marker":
-		failures.append("Rook's primary Crew-loan path did not reach Marker.")
+	primary.set_environment({
+		"id": "crew_rook_loan_fixture",
+		"archetype_id": "delta_queen",
+		"world_node_id": "delta_queen",
+		"kind": "casino",
+		"lender_hooks": ["the_crew"],
+		"event_ids": [],
+		"resolved_event_ids": [],
+	})
+	var resolver := RunActionServiceScript.new()
+	resolver.setup(library, primary)
+	var loan_result := resolver.use_hook("lender", "the_crew")
+	if not bool(loan_result.get("ok", false)) or primary.crew_rank("crew_rook") != "marker":
+		failures.append("Rook's primary Crew-loan path did not resolve through the shipped lender action and reach Marker.")
 	var legacy_data := RunStateScript.new().to_dict()
 	legacy_data.erase("crew_state")
 	legacy_data["narrative_flags"] = {"crew_marker_open": true}
@@ -236,7 +282,105 @@ static func _check_perks_and_save(failures: Array) -> void:
 		failures.append("Pre-recruitment crew saves did not migrate to an empty stash.")
 
 
-static func _check_crew_ignoring_regression(failures: Array) -> void:
+static func _check_contact_surfaces(library: ContentLibrary, failures: Array) -> void:
+	for member_id in CrewRecruitmentModelScript.MEMBER_IDS:
+		var event_id := str(CrewRecruitmentModelScript.member_definition(member_id).get("contact_event_id", ""))
+		if library.event(event_id).is_empty():
+			failures.append("Crew contact event is missing for %s." % member_id)
+		var below := _marked_run("CREW-CONTACT-BELOW-%s" % member_id)
+		if member_id != "crew_rook":
+			below.crew_meet_member(member_id)
+		if not CrewRecruitmentModelScript.contact_choices(below, {}, member_id, library).is_empty():
+			failures.append("Crew contact actions leaked below Associate for %s." % member_id)
+
+	var rook_run := _marked_run("CREW-CONTACT-ROOK")
+	rook_run.crew_add_trust("crew_rook", CrewStateModelScript.rank_threshold("associate") - rook_run.crew_trust("crew_rook"), "contact_fixture")
+	var rook_environment := _presence_environment(rook_run, "crew_rook")
+	if not _contact_is_embedded(rook_environment, "crew_rook"):
+		failures.append("Rook's generated presence did not expose his Associate work contact.")
+	else:
+		rook_run.set_environment(rook_environment)
+		var rook_module := EventModuleScript.new()
+		rook_module.setup(library.event("crew_contact_rook"), library)
+		var rook_result := rook_module.resolve(rook_run, rook_run.current_environment, "job_crew_favor_delivery")
+		if not bool(rook_result.get("ok", false)) or not rook_run.triggered_event_pending("crew_favor_delivery"):
+			failures.append("Rook's contextual contact did not offer the existing Crew job through the real event pipeline.")
+
+	var switch_run := _marked_run("CREW-CONTACT-SWITCH")
+	switch_run.crew_recruit_member("crew_switch")
+	var switch_nodes := ["bar", "gas_station_casino", "back_alley", "motel", "corner_store"]
+	_set_fixture_world(switch_run, switch_nodes)
+	for node_id in switch_nodes:
+		switch_run.seed_scenario_for_node(node_id, {"id": "fixture_%s" % node_id, "archetype_id": node_id, "display_name": node_id.replace("_", " ").capitalize()})
+	var switch_environment := _presence_environment(switch_run, "crew_switch", false)
+	if not _contact_is_embedded(switch_environment, "crew_switch"):
+		failures.append("Switch's seeded presence did not become her player-facing Associate contact.")
+	else:
+		switch_run.set_environment(switch_environment)
+		var switch_module := EventModuleScript.new()
+		switch_module.setup(library.event("crew_contact_switch"), library)
+		var initial_choices := switch_module.choices(switch_run, switch_run.current_environment)
+		var reveal_ids: Array = []
+		for choice_value in initial_choices:
+			if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")).begins_with("reveal_"):
+				reveal_ids.append(str((choice_value as Dictionary).get("id", "")))
+		if switch_module.choice("read_sweep", switch_run, switch_run.current_environment).is_empty() or reveal_ids.size() < 2:
+			failures.append("Switch's contact did not expose sweep intel plus capped remote reveals.")
+		else:
+			for reveal_index in range(2):
+				var reveal_id := str(reveal_ids[reveal_index])
+				if not switch_module.can_trigger(switch_run, switch_run.current_environment) \
+					or switch_module.choice(reveal_id, switch_run, switch_run.current_environment).is_empty():
+					failures.append("Switch's normal contact surface closed before its per-visit reveal cap was spent.")
+					break
+				var reveal_result := switch_module.resolve(switch_run, switch_run.current_environment, str(reveal_id))
+				if not bool(reveal_result.get("ok", false)) or not bool(_dict(reveal_result.get("crew_service_result", {})).get("ok", false)):
+					failures.append("Switch's contact reveal did not invoke the real scouting pipeline.")
+			var switch_status := switch_run.crew_switch_intel_status()
+			if int(switch_status.get("uses", 0)) != int(switch_status.get("cap", -1)) or bool(switch_status.get("available", true)):
+				failures.append("Switch's contact did not enforce its data-capped per-visit reveal allowance.")
+
+	var knuckles_run := _marked_run("CREW-CONTACT-KNUCKLES")
+	knuckles_run.crew_recruit_member("crew_knuckles")
+	knuckles_run.inventory = [{"id": "marked_cards", "copy": "first"}, {"id": "marked_cards", "copy": "second"}]
+	var knuckles_environment := _presence_environment(knuckles_run, "crew_knuckles")
+	if not _contact_is_embedded(knuckles_environment, "crew_knuckles"):
+		failures.append("Knuckles' seeded presence did not become his player-facing stash contact.")
+	else:
+		knuckles_run.set_environment(knuckles_environment)
+		var knuckles_module := EventModuleScript.new()
+		knuckles_module.setup(library.event("crew_contact_knuckles"), library)
+		var stash_result := knuckles_module.resolve(knuckles_run, knuckles_run.current_environment, "stash_marked_cards_1")
+		if not bool(stash_result.get("ok", false)) or knuckles_run.inventory.size() != 1 or knuckles_run.crew_contraband_stash.size() != 1 \
+			or str(_dict(knuckles_run.inventory[0]).get("copy", "")) != "first" \
+			or str(_dict(knuckles_run.crew_contraband_stash[0]).get("copy", "")) != "second":
+			failures.append("Knuckles' contact did not stash the selected exact entry before the action boundary.")
+		else:
+			if not knuckles_module.can_trigger(knuckles_run, knuckles_run.current_environment) \
+				or knuckles_module.choice("retrieve_marked_cards_0", knuckles_run, knuckles_run.current_environment).is_empty():
+				failures.append("Knuckles' normal contact surface did not expose retrieval after stashing.")
+			var retrieve_result := knuckles_module.resolve(knuckles_run, knuckles_run.current_environment, "retrieve_marked_cards_0")
+			if not bool(retrieve_result.get("ok", false)) or not bool(_dict(retrieve_result.get("crew_service_result", {})).get("ok", false)) \
+				or not knuckles_run.crew_contraband_stash.is_empty() or knuckles_run.inventory.size() != 2:
+				failures.append("Knuckles' contact did not expose retrieval through the same normal interaction surface.")
+
+	var lucky_run := _marked_run("CREW-CONTACT-LUCKY")
+	lucky_run.crew_recruit_member("crew_lucky")
+	_set_fixture_world(lucky_run, ["small_underground_casino", "bar", "motel", "gas_station_casino", "corner_store"])
+	var lucky_environment := _presence_environment(lucky_run, "crew_lucky", false)
+	if not _contact_is_embedded(lucky_environment, "crew_lucky"):
+		failures.append("Lucky's seeded presence did not expose his available Numbers work.")
+	else:
+		lucky_run.set_environment(lucky_environment)
+		var lucky_module := EventModuleScript.new()
+		lucky_module.setup(library.event("crew_contact_lucky"), library)
+		var lucky_result := lucky_module.resolve(lucky_run, lucky_run.current_environment, "start_numbers_collection")
+		if not bool(lucky_result.get("ok", false)) or not bool(_dict(lucky_result.get("crew_service_result", {})).get("ok", false)) \
+			or not lucky_run.delivery_has_active_run():
+			failures.append("Lucky's contextual contact did not start the existing Numbers route work.")
+
+
+static func _check_crew_ignoring_regression(library: ContentLibrary, failures: Array) -> void:
 	var run_state := RunStateScript.new()
 	run_state.start_new("CREW-IGNORED")
 	var environment := {"id": "ignored", "archetype_id": "bar", "kind": "casino", "event_ids": ["rowdy_regular"], "scenario_patron_ids": ["fight_crowd"]}
@@ -248,6 +392,15 @@ static func _check_crew_ignoring_regression(failures: Array) -> void:
 	for member_id in CrewRecruitmentModelScript.MEMBER_IDS:
 		if run_state.crew_trust(member_id) != 0:
 			failures.append("Crew-ignoring run moved hidden trust for %s." % member_id)
+	var generated_a := CrewIgnoredGoldenProbeScript.capture(library)
+	var generated_b := CrewIgnoredGoldenProbeScript.capture(library)
+	if JSON.stringify(generated_a) != JSON.stringify(generated_b):
+		failures.append("Crew-ignoring production capture was not byte-identical for same-seed twins.")
+	var baseline: Variant = JSON.parse_string(FileAccess.get_file_as_string(IGNORED_BASELINE_PATH)) if FileAccess.file_exists(IGNORED_BASELINE_PATH) else null
+	if typeof(baseline) != TYPE_DICTIONARY:
+		failures.append("Crew-ignoring accepted-main golden fixture is missing or invalid.")
+	elif JSON.stringify(generated_a) != JSON.stringify(_dict((baseline as Dictionary).get("capture", {}))):
+		failures.append("Crew-ignoring full RunState/current/world environment bytes shifted from accepted main outside authorized anchor ambience.")
 
 
 static func _check_presence_determinism(failures: Array) -> void:
@@ -331,6 +484,76 @@ static func _set_fixture_world(run_state: RunState, node_ids: Array) -> void:
 			edges.append({"from": str(node_ids[index - 1]), "to": node_id})
 	var start_id := str(node_ids[0]) if not node_ids.is_empty() else ""
 	run_state.set_world_map({"version": 3, "seed_text": run_state.seed_text, "start_node_id": start_id, "current_node_id": start_id, "nodes": nodes, "edges": edges, "visited_path": [start_id] if not start_id.is_empty() else []})
+
+
+static func _generated_path(library: ContentLibrary, member_id: String, path_kind: String) -> Dictionary:
+	var run_state := _marked_run("CREW-PRODUCTION-%s-%s" % [member_id, path_kind])
+	var definition := CrewRecruitmentModelScript.member_definition(member_id)
+	var location := _dict(definition.get(path_kind, {}))
+	var archetypes := _string_array(location.get("archetype_ids", []))
+	if archetypes.is_empty():
+		return {"run_state": run_state, "entered": false}
+	var generator := RunGeneratorScript.new(library)
+	if member_id == "crew_bishop" and path_kind == "fallback":
+		_set_fixture_world(run_state, ["grand_casino"])
+		generator.next_environment(run_state, "grand_casino", true)
+		return {"run_state": run_state, "entered": generator.enter_grand_casino_room(run_state, "grand_casino_cage")}
+	var archetype_id := str(archetypes[0])
+	_set_fixture_world(run_state, [archetype_id])
+	var scenarios := _string_array(location.get("scenario_ids", []))
+	if scenarios.is_empty():
+		scenarios = _string_array(location.get("preferred_scenario_ids", []))
+	if not scenarios.is_empty():
+		var scenario := library.scenario(str(scenarios[0]))
+		if not scenario.is_empty():
+			run_state.seed_scenario_for_node(archetype_id, scenario)
+	generator.next_environment(run_state, archetype_id, true)
+	var entered := true
+	var layers := _string_array(location.get("layer_ids", []))
+	if not layers.is_empty() and str(run_state.current_environment.get("current_layer_id", "")) != str(layers[0]):
+		entered = bool(generator.enter_environment_layer(run_state, str(layers[0]), false).get("ok", false))
+	return {"run_state": run_state, "entered": entered}
+
+
+static func _presence_environment(run_state: RunState, member_id: String, configure_world: bool = true) -> Dictionary:
+	var definition := CrewRecruitmentModelScript.member_definition(member_id)
+	var locations := _string_array(definition.get("presence", []))
+	if configure_world:
+		_set_fixture_world(run_state, locations)
+	var world_ids: Array = []
+	for node_value in _array(run_state.world_map.get("nodes", [])):
+		if typeof(node_value) == TYPE_DICTIONARY:
+			world_ids.append(str((node_value as Dictionary).get("id", "")))
+	for location in locations:
+		if not world_ids.is_empty() and not world_ids.has(location):
+			continue
+		var environment := {
+			"id": "%s_contact_fixture" % location,
+			"archetype_id": location,
+			"world_node_id": location,
+			"kind": "casino",
+			"event_ids": [],
+			"resolved_event_ids": [],
+			"scenario_patron_ids": [],
+		}
+		CrewRecruitmentModelScript.apply_to_environment(run_state, environment)
+		for presence_value in _array(environment.get("crew_presence", [])):
+			if typeof(presence_value) == TYPE_DICTIONARY and str((presence_value as Dictionary).get("member_id", "")) == member_id:
+				return environment
+	return {}
+
+
+static func _contact_is_embedded(environment: Dictionary, member_id: String) -> bool:
+	if environment.is_empty():
+		return false
+	var contact_event_id := str(CrewRecruitmentModelScript.member_definition(member_id).get("contact_event_id", ""))
+	if not _string_array(environment.get("event_ids", [])).has(contact_event_id):
+		return false
+	for presence_value in _array(environment.get("crew_presence", [])):
+		if typeof(presence_value) == TYPE_DICTIONARY and str((presence_value as Dictionary).get("member_id", "")) == member_id \
+			and str((presence_value as Dictionary).get("contact_event_id", "")) == contact_event_id:
+			return true
+	return false
 
 
 static func _dict(value: Variant) -> Dictionary:
