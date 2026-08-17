@@ -128,11 +128,13 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	var events: Array = []
 	var motion_events: Array = []
 	var capture_trace := bool(config.get("capture_presentation_trace", false))
+	var emit_presentation_events := bool(config.get("emit_presentation_events", true))
 	var presentation_trace: Array = []
 	var exit_trails: Array = []
 	if capture_trace:
 		presentation_trace.append(_presentation_trace_frame(state, 0, []))
 	var start_positions := _positions_by_id(state)
+	var peak_z_by_id := _peak_z_by_id(state) if emit_presentation_events else {}
 	var nudge_x := int(config.get("nudge_x", 0))
 	var nudge_y := int(config.get("nudge_y", 0))
 	var aimed_x := int(config.get("aimed_x", _divi(WIDTH, 2)))
@@ -165,7 +167,7 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 		var woke_this_tick := _apply_pushers(state, old_upper, new_upper, old_lower, new_lower, push_scale, integration_indices)
 		wake_count += woke_this_tick
 		if not integration_indices.is_empty():
-			_integrate(state, integration_indices, events, motion_events, tick_index + 1)
+			_integrate(state, integration_indices, events, motion_events, peak_z_by_id, tick_index + 1)
 			var awake_indices := PackedInt32Array()
 			var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
 			var spatial_keys := _spatial_keys(bodies, awake_indices)
@@ -185,7 +187,7 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 				if resolved <= 0:
 					break
 			support_indices.sort()
-			_resolve_supports(state, cached_spatial_buckets, cached_neighbor_indices, support_indices, motion_events)
+			_resolve_supports(state, cached_spatial_buckets, cached_neighbor_indices, support_indices, motion_events, peak_z_by_id, tick_index + 1)
 		state["tick"] = int(state.get("tick", 0)) + 1
 		if capture_trace:
 			for event_index in range(event_count_before, events.size()):
@@ -225,7 +227,7 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 		"topple_count": _motion_event_count(motion_events, "topple"),
 		"upper_lower_fall_count": _motion_event_count(motion_events, "upper_to_lower"),
 	}
-	var presentation_events := _presentation_event_views(state, events, motion_events, state["last_step_metrics"], config)
+	var presentation_events := _presentation_event_views(state, events, motion_events, state["last_step_metrics"], config) if emit_presentation_events else []
 	return {
 		"events": events,
 		"motion_events": motion_events,
@@ -544,7 +546,7 @@ static func _apply_pushers(state: Dictionary, old_upper: int, new_upper: int, ol
 	return count
 
 
-static func _integrate(state: Dictionary, active_indices: PackedInt32Array, events: Array, motion_events: Array, tick_offset: int) -> void:
+static func _integrate(state: Dictionary, active_indices: PackedInt32Array, events: Array, motion_events: Array, peak_z_by_id: Dictionary, tick_offset: int) -> void:
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
 	var exit_indices: Array = []
 	for body_index_value in active_indices:
@@ -555,6 +557,10 @@ static func _integrate(state: Dictionary, active_indices: PackedInt32Array, even
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var body: Dictionary = value
+		var body_id := str(body.get("id", ""))
+		var previous_z := int(body.get("z", 0))
+		if not peak_z_by_id.is_empty():
+			peak_z_by_id[body_id] = maxi(int(peak_z_by_id.get(body_id, previous_z)), previous_z)
 		var cap_pressure_ticks := maxi(0, int(body.get("cap_pressure_ticks", 0)))
 		if cap_pressure_ticks > 0:
 			body["vy"] = int(body.get("vy", 0)) - maxi(0, int(body.get("cap_pressure_accel", 0)))
@@ -575,6 +581,9 @@ static func _integrate(state: Dictionary, active_indices: PackedInt32Array, even
 		if was_upper and int(body.get("y", 0)) < UPPER_EDGE:
 			motion_events.append({"kind": "upper_to_lower", "body_id": str(body.get("id", "")), "x": int(body.get("x", 0)), "y": int(body.get("y", 0)), "z": int(body.get("z", 0)), "tick_offset": tick_offset})
 		if int(body.get("z", 0)) <= base_z:
+			var fall_height := maxi(0, int(peak_z_by_id.get(body_id, previous_z)) - base_z)
+			if not peak_z_by_id.is_empty() and previous_z > base_z and fall_height > 0:
+				_append_impact_motion_event(motion_events, body, "coin_on_metal", 0, fall_height, tick_offset)
 			body["z"] = base_z
 			body["vz"] = 0
 			body["vx"] = _divi(int(body.get("vx", 0)) * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
@@ -643,7 +652,7 @@ static func _resolve_collisions(state: Dictionary, buckets: Dictionary, visited_
 	return resolved
 
 
-static func _resolve_supports(state: Dictionary, buckets: Dictionary, neighbor_cache: Dictionary, active_indices: PackedInt32Array, motion_events: Array) -> void:
+static func _resolve_supports(state: Dictionary, buckets: Dictionary, neighbor_cache: Dictionary, active_indices: PackedInt32Array, motion_events: Array, peak_z_by_id: Dictionary, tick_offset: int) -> void:
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
 	for body_index_value in active_indices:
 		var body_index := int(body_index_value)
@@ -683,6 +692,10 @@ static func _resolve_supports(state: Dictionary, buckets: Dictionary, neighbor_c
 			continue
 		var target_z := int(support.get("z", 0)) + int(support.get("height", COIN_HEIGHT))
 		if int(body.get("vz", 0)) <= 0 and int(body.get("z", 0)) <= target_z + COIN_HEIGHT:
+			var fall_height := maxi(0, int(peak_z_by_id.get(str(body.get("id", "")), int(body.get("z", 0)))) - target_z)
+			if not peak_z_by_id.is_empty() and fall_height > 0:
+				var stack_depth := maxi(1, _divi(target_z - _floor_z(body), COIN_HEIGHT))
+				_append_impact_motion_event(motion_events, body, "coin_on_coin", stack_depth, fall_height, tick_offset)
 			body["z"] = target_z
 			body["vz"] = 0
 			var dx := int(body.get("x", 0)) - int(support.get("x", 0))
@@ -751,15 +764,7 @@ static func _exit_event(body: Dictionary, outcome: String, cause: String, tick_o
 static func _presentation_event_views(state: Dictionary, exits: Array, motion_events: Array, metrics: Dictionary, config: Dictionary) -> Array:
 	var result: Array = []
 	var focus := _presentation_focus_body(state)
-	var collision_count := int(metrics.get("collision_count", 0))
 	var moved_count := int(metrics.get("moved_count", 0))
-	if collision_count > 0:
-		result.append(_presentation_event("impact", focus, mini(1000, 280 + collision_count * 36), ACTION_TICKS / 4, {
-			"material": "coin_on_coin" if int(focus.get("z", 0)) > _floor_z(focus) else "coin_on_metal",
-			"stack_depth": maxi(0, _divi(int(focus.get("z", 0)) - _floor_z(focus), COIN_HEIGHT)),
-			"fall_height_milli": maxi(0, _divi(int(focus.get("z", 0)) - _floor_z(focus), COIN_HEIGHT) * FP),
-			"collision_count": collision_count,
-		}))
 	if moved_count > 1:
 		result.append(_presentation_event("slide", focus, mini(1000, 180 + moved_count * 24), ACTION_TICKS / 2, {"moved_count": moved_count}))
 	for motion_value in motion_events:
@@ -770,7 +775,10 @@ static func _presentation_event_views(state: Dictionary, exits: Array, motion_ev
 		var body := _presentation_body_by_id(state, str(motion.get("body_id", "")))
 		if body.is_empty():
 			body = motion
-		result.append(_presentation_event(kind, body, 720 if kind == "topple" else 820, int(motion.get("tick_offset", ACTION_TICKS / 2)), motion))
+		var intensity := 720 if kind == "topple" else 820
+		if kind == "impact":
+			intensity = mini(1000, 320 + int(motion.get("fall_height_milli", 0)) / 8 + int(motion.get("stack_depth", 0)) * 70)
+		result.append(_presentation_event(kind, body, intensity, int(motion.get("tick_offset", ACTION_TICKS / 2)), motion))
 	var outcome_totals := {"tray": 0, "gutter": 0}
 	for exit_value in exits:
 		if typeof(exit_value) == TYPE_DICTIONARY:
@@ -844,6 +852,32 @@ static func _positions_by_id(state: Dictionary) -> Dictionary:
 			var body: Dictionary = value
 			result[str(body.get("id", ""))] = [int(body.get("x", 0)), int(body.get("y", 0)), int(body.get("z", 0))]
 	return result
+
+
+static func _peak_z_by_id(state: Dictionary) -> Dictionary:
+	var result := {}
+	for value in state.get("bodies", []):
+		if typeof(value) == TYPE_DICTIONARY:
+			var body: Dictionary = value
+			result[str(body.get("id", ""))] = int(body.get("z", 0))
+	return result
+
+
+static func _append_impact_motion_event(events: Array, body: Dictionary, material: String, stack_depth: int, fall_height: int, tick_offset: int) -> void:
+	var body_id := str(body.get("id", ""))
+	if body_id.is_empty() or _motion_event_has_body(events, "impact", body_id):
+		return
+	events.append({
+		"kind": "impact",
+		"body_id": body_id,
+		"x": int(body.get("x", 0)),
+		"y": int(body.get("y", 0)),
+		"z": int(body.get("z", 0)),
+		"tick_offset": tick_offset,
+		"material": material,
+		"stack_depth": maxi(0, stack_depth),
+		"fall_height_milli": maxi(0, _divi(fall_height * FP, COIN_HEIGHT)),
+	})
 
 
 static func _motion_event_count(events: Array, kind: String) -> int:

@@ -75,6 +75,7 @@ var surface_text_protected_rects: Array = []
 var hit_region_group_cache: Dictionary = {}
 var active_design_scale := Vector2.ONE
 var active_design_offset := Vector2.ZERO
+var active_design_local_offset := Vector2.ZERO
 var design_space_active := false
 var reduce_motion := false
 var small_screen_mode := false
@@ -479,6 +480,39 @@ func surface_begin_design_space(design_size: Vector2) -> void:
 
 
 func surface_begin_design_space_inset(design_size: Vector2, inset: Vector2) -> void:
+	var transform := _design_space_transform_values(design_size, inset, Vector2.ZERO)
+	active_design_scale = transform.get("design_scale", Vector2.ONE)
+	active_design_offset = transform.get("design_offset", Vector2.ZERO)
+	active_design_local_offset = Vector2.ZERO
+	design_space_active = true
+	draw_set_transform(transform.get("position", Vector2.ZERO), 0.0, transform.get("scale", Vector2.ONE))
+
+
+func surface_set_design_space_local_offset(local_offset: Vector2) -> void:
+	if not design_space_active:
+		return
+	active_design_local_offset = local_offset
+	var scale := _board_scale()
+	draw_set_transform(
+		_board_offset(scale) + active_design_offset * scale + local_offset * active_design_scale * scale,
+		0.0,
+		active_design_scale * scale
+	)
+
+
+func debug_design_space_transform(design_size: Vector2, local_offset: Vector2 = Vector2.ZERO) -> Dictionary:
+	return _design_space_transform_values(design_size, Vector2.ZERO, local_offset)
+
+
+func surface_end_design_space() -> void:
+	active_design_scale = Vector2.ONE
+	active_design_offset = Vector2.ZERO
+	active_design_local_offset = Vector2.ZERO
+	design_space_active = false
+	_scale_canvas()
+
+
+func _design_space_transform_values(design_size: Vector2, inset: Vector2, local_offset: Vector2) -> Dictionary:
 	var safe_design := Vector2(maxf(1.0, design_size.x), maxf(1.0, design_size.y))
 	var board_size := _active_board_size()
 	var scale := _board_scale()
@@ -490,18 +524,16 @@ func surface_begin_design_space_inset(design_size: Vector2, inset: Vector2) -> v
 		maxf(1.0, board_size.x - safe_inset.x * 2.0),
 		maxf(1.0, board_size.y - safe_inset.y * 2.0)
 	)
-	var design_scale := minf(usable_size.x / safe_design.x, usable_size.y / safe_design.y)
-	active_design_scale = Vector2(design_scale, design_scale)
-	active_design_offset = safe_inset + (usable_size - safe_design * design_scale) * 0.5
-	design_space_active = true
-	draw_set_transform(_board_offset(scale) + active_design_offset * scale, 0.0, Vector2(scale * design_scale, scale * design_scale))
-
-
-func surface_end_design_space() -> void:
-	active_design_scale = Vector2.ONE
-	active_design_offset = Vector2.ZERO
-	design_space_active = false
-	_scale_canvas()
+	var design_scale_value := minf(usable_size.x / safe_design.x, usable_size.y / safe_design.y)
+	var design_scale := Vector2(design_scale_value, design_scale_value)
+	var design_offset := safe_inset + (usable_size - safe_design * design_scale_value) * 0.5
+	return {
+		"position": _board_offset(scale) + design_offset * scale + local_offset * design_scale * scale,
+		"scale": design_scale * scale,
+		"design_scale": design_scale,
+		"design_offset": design_offset,
+		"local_offset": local_offset,
+	}
 
 
 func surface_flicker() -> float:
@@ -1267,7 +1299,7 @@ func _active_board_aspect_ratio() -> float:
 func _design_rect_to_board(rect: Rect2) -> Rect2:
 	if not design_space_active:
 		return rect
-	return Rect2(active_design_offset + rect.position * active_design_scale, rect.size * active_design_scale)
+	return Rect2(active_design_offset + (rect.position + active_design_local_offset) * active_design_scale, rect.size * active_design_scale)
 
 
 func _touch_hit_rect(rect: Rect2, expand_touch_hit: bool) -> Rect2:

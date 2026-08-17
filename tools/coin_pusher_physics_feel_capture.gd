@@ -63,49 +63,39 @@ func _run() -> void:
 
 
 func _drop_fixture() -> Dictionary:
-	var state := SolverScript.create(_rng(7101), 48, 0, 5)
+	var state := _packed_state(7101)
 	var incoming := SolverScript.add_coin(state, _rng(7102), 2, 5, 1)
 	incoming["id"] = "incoming_drop"
-	var landing_x := int(incoming.get("x", 50000))
-	var landing_y := int(incoming.get("y", SolverScript.REAR_EDGE - 3500))
-	(state["bodies"] as Array).push_front(_body("drop_stack", landing_x, landing_y, SolverScript.UPPER_FLOOR_Z + SolverScript.COIN_HEIGHT, true))
-	(state["bodies"] as Array).push_front(_body("drop_support", landing_x, landing_y, SolverScript.UPPER_FLOOR_Z, true))
 	var before := state.duplicate(true)
 	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
 	var metrics: Dictionary = step.get("metrics", {})
-	return _fixture("drop_disturbs_pile", "01_drop_disturbs_pile_1280x720.png", "DROP LANDS AND DISTURBS THE PILE", before, state, step, int(metrics.get("collision_count", 0)) > 0 and int(metrics.get("moved_count", 0)) >= 2)
+	return _fixture("drop_disturbs_pile", "01_drop_disturbs_pile_1280x720.png", "DROP LANDS AND DISTURBS THE PACKED PILE", before, state, step, int(metrics.get("collision_count", 0)) > 0 and int(metrics.get("moved_count", 0)) >= 2)
 
 
 func _topple_fixture() -> Dictionary:
-	var state := SolverScript.create(_rng(7201), 48, 0, 5)
-	state["bodies"] = [
+	var state := _packed_state(7201)
+	(state["bodies"] as Array).append_array([
 		_body("topple_support", 50000, 30000, 0, true),
 		_body("topple_leaner", 50000, 30000, SolverScript.COIN_HEIGHT, false),
 		_body("topple_landing", 52700, 30000, 9000, false),
-	]
+	])
 	var before := state.duplicate(true)
 	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
 	return _fixture("stack_topples", "02_stack_topples_1280x720.png", "LEANING STACK TOPPLES", before, state, step, int((step.get("metrics", {}) as Dictionary).get("topple_count", 0)) > 0)
 
 
 func _upper_lower_fixture() -> Dictionary:
-	var state := SolverScript.create(_rng(7301), 48, 0, 5)
-	state["bodies"] = [
+	var state := _packed_state(7301)
+	(state["bodies"] as Array).append_array([
 		_body("upper_fall", 50000, SolverScript.UPPER_EDGE - 1000, SolverScript.UPPER_FLOOR_Z, false),
-		_body("lower_landing", 50000, SolverScript.UPPER_EDGE - 9000, 0, true),
-	]
+	])
 	var before := state.duplicate(true)
 	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
 	return _fixture("upper_to_lower", "03_upper_to_lower_1280x720.png", "UPPER SHELF FALLS TO LOWER FIELD", before, state, step, int((step.get("metrics", {}) as Dictionary).get("upper_lower_fall_count", 0)) > 0)
 
 
 func _nudge_fixture() -> Dictionary:
-	var state := SolverScript.create(_rng(7401), 48, 0, 5)
-	state["bodies"] = [
-		_body("nudge_base", 50000, 9000, 0, true),
-		_body("nudge_top", 52000, 9000, SolverScript.COIN_HEIGHT, true),
-		_body("nudge_neighbor", 42000, 10000, 0, true),
-	]
+	var state := _packed_state(7401)
 	var before := state.duplicate(true)
 	var before_digest := JSON.stringify(SolverScript.canonical_digest(state))
 	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "nudge_x": 12000, "nudge_y": -22000, "aimed_x": 50000, "nudge_radius": 14000, "capture_presentation_trace": true})
@@ -113,16 +103,16 @@ func _nudge_fixture() -> Dictionary:
 
 
 func _tray_fixture() -> Dictionary:
-	var state := SolverScript.create(_rng(7501), 48, 0, 5)
-	state["bodies"] = [_body("tray_hanger", 50000, 2000, 0, false)]
+	var state := _packed_state(7501)
+	(state["bodies"] as Array).append(_body("tray_hanger", 50000, 2000, 0, false))
 	var before := state.duplicate(true)
 	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
 	return _fixture("tray_fall", "05_tray_fall_1280x720.png", "EDGE HANGER FALLS INTO THE TRAY", before, state, step, _has_outcome(step, "tray"))
 
 
 func _gutter_fixture() -> Dictionary:
-	var state := SolverScript.create(_rng(7601), 48, 0, 5)
-	state["bodies"] = [_body("gutter_coin", 1000, 2000, 0, false)]
+	var state := _packed_state(7601)
+	(state["bodies"] as Array).append(_body("gutter_coin", 1000, 2000, 0, false))
 	var before := state.duplicate(true)
 	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
 	return _fixture("gutter_loss", "06_gutter_loss_1280x720.png", "GREEDY SIDE SHOT FALLS INTO THE GUTTER", before, state, step, _has_outcome(step, "gutter"))
@@ -133,13 +123,8 @@ func _fixture(id: String, file_name: String, title: String, before: Dictionary, 
 
 
 func _capture_fixture(fixture: Dictionary) -> void:
-	var background := SolverScript.create(_rng(8000 + captures.size()), SHIPPED_COIN_CAP, SHIPPED_OPENING_COIN_COUNT, 5)
-	var before_visual := background.duplicate(true)
-	var after_visual := background.duplicate(true)
-	(before_visual["bodies"] as Array).append_array(((fixture.get("before", {}) as Dictionary).get("bodies", []) as Array).duplicate(true))
-	(after_visual["bodies"] as Array).append_array(((fixture.get("after", {}) as Dictionary).get("bodies", []) as Array).duplicate(true))
-	var before_surface := _surface_for_simulation(before_visual, 0)
-	var after_surface := _surface_for_simulation(after_visual, 900)
+	var before_surface := _surface_for_simulation(fixture.get("before", {}), 0)
+	var after_surface := _surface_for_simulation(fixture.get("after", {}), 900)
 	var panel := ColorRect.new()
 	panel.color = Color("#070b14")
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -162,12 +147,19 @@ func _capture_fixture(fixture: Dictionary) -> void:
 	await RenderingServer.frame_post_draw
 	var image := root.get_viewport().get_texture().get_image()
 	var saved := image != null and image.save_png("%s/%s" % [out_dir, str(fixture.get("file", "capture.png"))]) == OK
-	var valid := bool(fixture.get("valid", false)) and saved
+	var before_body_count := ((fixture.get("before", {}) as Dictionary).get("bodies", []) as Array).size()
+	var trace: Array = ((fixture.get("step", {}) as Dictionary).get("presentation_trace", []) as Array)
+	var trace_starts_from_same_pile := not trace.is_empty() and typeof(trace.front()) == TYPE_DICTIONARY \
+		and ((trace.front() as Dictionary).get("bodies", []) as Array).size() == before_body_count
+	var valid := bool(fixture.get("valid", false)) and before_body_count >= SHIPPED_OPENING_COIN_COUNT and trace_starts_from_same_pile and saved
 	if not valid:
 		failed = true
 		push_error("Physics feel capture failed: %s" % str(fixture.get("id", "unknown")))
 	captures.append({
 		"id": str(fixture.get("id", "")), "file": str(fixture.get("file", "")), "saved": saved, "state_valid": bool(fixture.get("valid", false)),
+		"before_body_count": before_body_count,
+		"after_body_count": ((fixture.get("after", {}) as Dictionary).get("bodies", []) as Array).size(),
+		"same_state_evidence": trace_starts_from_same_pile,
 		"before": SolverScript.canonical_digest(fixture.get("before", {})), "after": SolverScript.canonical_digest(fixture.get("after", {})),
 		"events": (fixture.get("step", {}) as Dictionary).get("events", []), "motion_events": (fixture.get("step", {}) as Dictionary).get("motion_events", []),
 		"metrics": (fixture.get("step", {}) as Dictionary).get("metrics", {}),
@@ -200,10 +192,9 @@ func _capture_replay_sequence(fixture: Dictionary) -> void:
 	proof.add_theme_color_override("font_color", Color("#58e1d4"))
 	panel.add_child(proof)
 	var frame_indices := _sequence_frame_indices(trace)
-	var background := SolverScript.create(_rng(9000 + sequences.size()), SHIPPED_COIN_CAP, SHIPPED_OPENING_COIN_COUNT, 5)
 	for panel_index in range(frame_indices.size()):
 		var trace_frame: Dictionary = trace[int(frame_indices[panel_index])] if typeof(trace[int(frame_indices[panel_index])]) == TYPE_DICTIONARY else {}
-		var snapshot := _surface_for_trace_frame(background, trace_frame, panel_index * 267)
+		var snapshot := _surface_for_trace_frame(fixture.get("after", {}), trace_frame, panel_index * 267)
 		_add_sequence_surface_panel(panel, snapshot, Vector2(12 + panel_index * 316, 94), "TICK %d" % int(trace_frame.get("tick_offset", 0)))
 	await process_frame
 	await RenderingServer.frame_post_draw
@@ -229,17 +220,44 @@ func _capture_replay_sequence(fixture: Dictionary) -> void:
 	await process_frame
 
 
-func _surface_for_trace_frame(background: Dictionary, trace_frame: Dictionary, surface_time_msec: int) -> Dictionary:
-	var snapshot := _surface_for_simulation(background, surface_time_msec)
-	var bodies := SolverScript.body_views(background)
-	for body_value in trace_frame.get("bodies", []):
-		bodies.append(body_value)
-	(snapshot.get("coin_pusher_snapshot", {}) as Dictionary)["bodies"] = bodies
+func _surface_for_trace_frame(simulation: Dictionary, trace_frame: Dictionary, surface_time_msec: int) -> Dictionary:
+	var snapshot := _surface_for_simulation(simulation, surface_time_msec)
+	(snapshot.get("coin_pusher_snapshot", {}) as Dictionary)["bodies"] = (trace_frame.get("bodies", []) as Array).duplicate(true)
 	return snapshot
 
 
 func _capture_tell_ladder() -> void:
-	var background := SolverScript.create(_rng(9701), SHIPPED_COIN_CAP, SHIPPED_OPENING_COIN_COUNT, 5)
+	var packed := _packed_state(9701)
+	var machine: Dictionary = ((run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary)
+	machine["simulation"] = packed.duplicate(true)
+	machine["riders"] = []
+	machine["base_alarm_tolerance"] = 3
+	machine["tolerance_modifier"] = 0
+	machine["alarm_tolerance_remaining"] = 3
+	machine["tell_rung"] = 0
+	machine["locked_down"] = false
+	var before := packed.duplicate(true)
+	var first_result: Dictionary = {}
+	var alarm_result: Dictionary = {}
+	var first_warning: Dictionary = {}
+	var alarm: Dictionary = {}
+	for nudge_index in range(4):
+		var result := game.resolve_with_context("nudge_machine", 0, run_state, run_state.current_environment, _rng(9702 + nudge_index), {
+			"coin_pusher_lane": 2, "coin_pusher_force": "tap", "coin_pusher_direction": "front",
+			"coin_pusher_upper_input_phase": 2, "coin_pusher_lower_input_phase": 9,
+			"coin_pusher_capture_presentation_trace": true,
+		})
+		GameModule.apply_result(run_state, result, _rng(9802 + nudge_index))
+		if nudge_index == 0:
+			first_result = result
+			first_warning = _surface_with_result_events(result, nudge_index * 900)
+		if bool(result.get("coin_pusher_hard_alarm", false)):
+			alarm_result = result
+			alarm = _surface_with_result_events(result, nudge_index * 900)
+	if first_warning.is_empty():
+		first_warning = game.surface_state(run_state, run_state.current_environment, {"surface_time_msec": 0})
+	if alarm.is_empty():
+		alarm = game.surface_state(run_state, run_state.current_environment, {"surface_time_msec": 2700})
 	var panel := ColorRect.new()
 	panel.color = Color("#070b14")
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -256,8 +274,6 @@ func _capture_tell_ladder() -> void:
 	proof.add_theme_font_size_override("font_size", 14)
 	proof.add_theme_color_override("font_color", Color("#ff8e5b"))
 	panel.add_child(proof)
-	var first_warning := _tell_surface(background, 1, false, 0)
-	var alarm := _tell_surface(background, 3, true, 900)
 	_add_surface_panel(panel, first_warning, Vector2(20, 92), "RUNG 1 — ROCK / FIRST LAMP")
 	_add_surface_panel(panel, alarm, Vector2(650, 92), "RUNG 3 — ATTENDANT / ALARM / LOCK")
 	await process_frame
@@ -267,16 +283,29 @@ func _capture_tell_ladder() -> void:
 	var saved := image != null and image.save_png("%s/%s" % [out_dir, file_name]) == OK
 	var first_snapshot: Dictionary = first_warning.get("coin_pusher_snapshot", {})
 	var alarm_snapshot: Dictionary = alarm.get("coin_pusher_snapshot", {})
+	var first_trace: Array = ((first_result.get("surface_presentation_snapshot_patch", {}) as Dictionary).get("trace", []) as Array)
+	var trace_starts_from_same_pile := not first_trace.is_empty() and typeof(first_trace.front()) == TYPE_DICTIONARY \
+		and ((first_trace.front() as Dictionary).get("bodies", []) as Array).size() == (before.get("bodies", []) as Array).size()
 	var state_valid := int(first_snapshot.get("tell_rung", 0)) == 1 \
 		and int(alarm_snapshot.get("tell_rung", 0)) == 3 \
-		and bool(alarm_snapshot.get("locked", false))
+		and bool(alarm_snapshot.get("locked", false)) \
+		and bool(alarm_result.get("coin_pusher_hard_alarm", false)) \
+		and (before.get("bodies", []) as Array).size() >= SHIPPED_OPENING_COIN_COUNT \
+		and trace_starts_from_same_pile
 	if not saved or not state_valid:
 		failed = true
 	captures.append({
 		"id": "tell_ladder_alarm", "file": file_name, "saved": saved, "state_valid": state_valid,
+		"before_body_count": (before.get("bodies", []) as Array).size(),
+		"after_body_count": (((machine.get("simulation", {}) as Dictionary).get("bodies", []) as Array).size()),
+		"same_state_evidence": trace_starts_from_same_pile,
+		"before": SolverScript.canonical_digest(before),
+		"after": SolverScript.canonical_digest(machine.get("simulation", {})),
+		"first_events": ((first_result.get("surface_presentation_snapshot_patch", {}) as Dictionary).get("events", []) as Array).duplicate(true),
+		"alarm_events": ((alarm_result.get("surface_presentation_snapshot_patch", {}) as Dictionary).get("events", []) as Array).duplicate(true),
+		"metrics": alarm_result.get("coin_pusher_solver_metrics", {}),
 		"rungs": ["steady", "cabinet_rock", "chirp", "attendant_glance", "alarm_lock"],
 	})
-	var machine: Dictionary = ((run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary)
 	machine["tell_rung"] = 0
 	machine["locked_down"] = false
 	machine["last_message"] = "Pick a lane. Read both shelves."
@@ -285,19 +314,14 @@ func _capture_tell_ladder() -> void:
 	await process_frame
 
 
-func _tell_surface(simulation: Dictionary, tell_rung: int, alarmed: bool, surface_time_msec: int) -> Dictionary:
-	var machine: Dictionary = ((run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary)
-	machine["tell_rung"] = tell_rung
-	machine["locked_down"] = alarmed
-	machine["last_message"] = "Attendant looks over. Alarm line crossed." if alarmed else "The cabinet rocks under the first warning."
-	var snapshot := _surface_for_simulation(simulation, surface_time_msec)
-	(snapshot.get("coin_pusher_snapshot", {}) as Dictionary)["events"] = [{
-		"kind": "alarm" if alarmed else "tell_rock", "body_id": "cabinet",
-		"x": SolverScript.WIDTH / 2, "y": SolverScript.UPPER_EDGE, "z": 0,
-		"intensity_milli": 1000 if alarmed else 540, "tick_offset": SolverScript.ACTION_TICKS,
-		"metadata": {"tell_rung": tell_rung},
-	}]
-	return snapshot
+func _surface_with_result_events(result: Dictionary, surface_time_msec: int) -> Dictionary:
+	var surface := game.surface_state(run_state, run_state.current_environment, {"coin_pusher_lane": 2, "surface_time_msec": surface_time_msec})
+	var snapshot: Dictionary = surface.get("coin_pusher_snapshot", {}) if typeof(surface.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	var patch: Dictionary = result.get("surface_presentation_snapshot_patch", {}) if typeof(result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
+	for key in patch.keys():
+		var value: Variant = patch.get(key)
+		snapshot[key] = (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else value
+	return surface
 
 
 func _add_sequence_surface_panel(parent: Control, snapshot: Dictionary, position: Vector2, caption: String) -> void:
@@ -370,6 +394,10 @@ func _has_outcome(step: Dictionary, outcome: String) -> bool:
 		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("outcome", "")) == outcome and str((value as Dictionary).get("cause", "")) == "physical_fall":
 			return true
 	return false
+
+
+func _packed_state(seed_value: int) -> Dictionary:
+	return SolverScript.create(_rng(seed_value), SHIPPED_COIN_CAP, SHIPPED_OPENING_COIN_COUNT, 5)
 
 
 func _body(id: String, x: int, y: int, z: int, sleeping: bool) -> Dictionary:

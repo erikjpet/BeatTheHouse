@@ -196,6 +196,7 @@ var _roulette_payout_id: String = ""
 var _baccarat_deal_id: String = ""
 var _baccarat_payout_id: String = ""
 var _coin_pusher_action_id: String = ""
+var _coin_pusher_action_observed_active := false
 var _web_surface_loop_active := false
 var _surface_loop_event_id := ""
 var _surface_loop_fade_tween: Tween
@@ -401,12 +402,18 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 	elif _loop_player != null:
 		_loop_player.volume_db = motor_volume
 		_loop_player.pitch_scale = motor_pitch
-	if active_id.is_empty() or not animation_active:
+	if active_id.is_empty():
 		_coin_pusher_action_id = ""
+		_coin_pusher_action_observed_active = false
 		return
 	if active_id != _coin_pusher_action_id:
 		_coin_pusher_action_id = active_id
+		_coin_pusher_action_observed_active = animation_active
 		_clear_markers_with_prefix("coin_pusher_event_")
+	elif animation_active:
+		_coin_pusher_action_observed_active = true
+	if not animation_active and not _coin_pusher_action_observed_active:
+		return
 	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
 	var events := _dictionary_array(snapshot.get("events", []))
 	for index in range(events.size()):
@@ -422,7 +429,7 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 		var context := _coin_pusher_event_mix(event, intensity)
 		_trigger(
 			"coin_pusher_event_%s_%d" % [active_id, index],
-			elapsed >= event_time,
+			not animation_active or elapsed >= event_time,
 			cue,
 			float(context.get("volume_db", -5.0)),
 			float(context.get("pitch", 1.0))
@@ -906,6 +913,7 @@ func stop_all() -> void:
 	_baccarat_deal_id = ""
 	_baccarat_payout_id = ""
 	_coin_pusher_action_id = ""
+	_coin_pusher_action_observed_active = false
 	_played_markers.clear()
 	for player in _players:
 		if player is AudioStreamPlayer:
@@ -958,6 +966,21 @@ func debug_coin_pusher_event_schedule(surface_state: Dictionary) -> Array:
 			"volume_db": float(mix.get("volume_db", -5.0)),
 			"pitch": float(mix.get("pitch", 1.0)),
 		})
+	return result
+
+
+func debug_coin_pusher_runtime_event_markers(surface_state: Dictionary, elapsed: float, animation_active: bool, active_id: String, reset_state: bool = true) -> Array:
+	if reset_state:
+		_coin_pusher_action_id = ""
+		_coin_pusher_action_observed_active = false
+		_clear_markers_with_prefix("coin_pusher_event_")
+	sync_coin_pusher_state(surface_state, elapsed, animation_active, active_id)
+	var result: Array = []
+	for marker_value in _played_markers.keys():
+		var marker := str(marker_value)
+		if marker.begins_with("coin_pusher_event_"):
+			result.append(marker)
+	result.sort()
 	return result
 
 

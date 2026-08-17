@@ -130,6 +130,8 @@ class SurfaceHarness:
 	var labels: Array = []
 	var label_records: Array = []
 	var draw_rect_records: Array = []
+	var draw_transform_records: Array = []
+	var draw_texture_rect_count := 0
 	var record_draw_rects := false
 	var stake_control_count := 0
 	var native_stake_strip_count := 0
@@ -150,6 +152,8 @@ class SurfaceHarness:
 		labels = []
 		label_records = []
 		draw_rect_records = []
+		draw_transform_records = []
+		draw_texture_rect_count = 0
 		record_draw_rects = false
 		stake_control_count = 0
 		native_stake_strip_count = 0
@@ -286,7 +290,7 @@ class SurfaceHarness:
 			draw_rect_records.append({"rect": rect, "color": color, "filled": filled, "width": width})
 
 	func draw_texture_rect(_texture: Texture2D, _rect: Rect2, _tile: bool, _modulate: Color = Color(1, 1, 1, 1), _transpose: bool = false) -> void:
-		pass
+		draw_texture_rect_count += 1
 
 	func draw_circle(_position: Vector2, _radius: float, _color: Color, _filled: bool = true, _width: float = -1.0, _antialiased: bool = false) -> void:
 		pass
@@ -296,6 +300,12 @@ class SurfaceHarness:
 
 	func draw_polygon(_points: Array, _colors: Array, _uvs: Array = [], _texture: Texture2D = null) -> void:
 		pass
+
+	func draw_set_transform(position: Vector2, rotation: float = 0.0, scale: Vector2 = Vector2.ONE) -> void:
+		draw_transform_records.append({"position": position, "rotation": rotation, "scale": scale})
+
+	func surface_set_design_space_local_offset(local_offset: Vector2) -> void:
+		draw_transform_records.append({"position": local_offset, "rotation": 0.0, "scale": Vector2.ONE})
 
 
 class HostileInputAllInFixtureGame:
