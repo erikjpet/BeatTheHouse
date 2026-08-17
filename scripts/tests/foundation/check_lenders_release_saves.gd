@@ -4956,8 +4956,9 @@ func _save_load_checkpoint(library: ContentLibrary, run_state: RunState, label: 
 	if JSON.stringify(before_signature) != JSON.stringify(after_signature):
 		failures.append("SB.3 %s legal action signature changed after save/load." % label)
 	if assert_continuation and not restored.is_terminal():
-		var continuation: RunState = RunStateScript.new()
-		continuation.from_dict(restored.to_dict())
+		# `second` is already the exact, independently loaded continuation clone
+		# proven above; a third serialization/load adds no new assertion.
+		var continuation: RunState = second
 		var continuation_generator: RunGenerator = RunGeneratorScript.new(library)
 		for step in range(SAVE_LOAD_FUZZ_CONTINUATION_STEPS):
 			if continuation.is_terminal():

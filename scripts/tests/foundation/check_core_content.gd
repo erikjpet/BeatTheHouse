@@ -104,6 +104,7 @@ const FOUNDATION_SUITES := [
 ]
 
 var _foundation_active_suite := "contracts"
+var _surface_contract_script_cache: Dictionary = {}
 
 
 class ScenarioModifierProbeGame:
@@ -4473,7 +4474,11 @@ func _check_production_game_module_load(library: ContentLibrary, run_state: RunS
 	if module_path.begins_with("res://data/runtime/") or module_path.ends_with("_ui.gd"):
 		failures.append("Smoke game module points at demo runtime/UI path: %s." % module_path)
 		return
-	var module_script: Script = load(module_path)
+	var module_script: Script = _surface_contract_script_cache.get(module_path, null) as Script
+	if module_script == null:
+		module_script = load(module_path)
+		if module_script != null:
+			_surface_contract_script_cache[module_path] = module_script
 	if module_script == null:
 		failures.append("Smoke game module could not be loaded: %s." % module_path)
 		return
