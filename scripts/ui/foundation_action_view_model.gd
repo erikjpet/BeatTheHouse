@@ -120,12 +120,12 @@ static func game_view_snapshot(host: Variant, read_only_render_result: bool = fa
 		# This patch is merged into its named presentation snapshot below. Copying
 		# it into the generic result bag first duplicates the complete physics
 		# trace only to erase that duplicate immediately afterward.
-		if result_key == "surface_presentation_snapshot_patch":
+		if result_key == "surface_presentation_snapshot_patch" or result_key == "surface_action_view_patch":
 			continue
 		if not snapshot.has(result_key):
 			# The internal canvas render owns a read-only action-boundary result.
 			# Public snapshots still take the deep-copy path below.
-			snapshot[result_key] = result[key] if read_only_render_result and game_id == "coin_pusher" else host._snapshot_copy_value(result[key])
+			snapshot[result_key] = result[key] if read_only_render_result and game_id in ["slot", "coin_pusher"] else host._snapshot_copy_value(result[key])
 	var presentation_snapshot_key := str(snapshot.get("surface_presentation_snapshot_key", ""))
 	var presentation_patch: Variant = result.get("surface_presentation_snapshot_patch", {})
 	if not presentation_snapshot_key.is_empty() and typeof(presentation_patch) == TYPE_DICTIONARY \
@@ -133,21 +133,140 @@ static func game_view_snapshot(host: Variant, read_only_render_result: bool = fa
 		# The module surface spec is owned by this snapshot construction, so merge
 		# the action patch into it without cloning its body arrays a second time.
 		var presentation_snapshot: Dictionary = snapshot.get(presentation_snapshot_key, {}) as Dictionary
-		var presentation_patch_dict: Dictionary = presentation_patch
-		var merge_patch := presentation_patch_dict
-		if presentation_patch_dict.has("trace_packed"):
-			# Compact traces are immutable renderer payloads, not nested authored
-			# configuration. Treat the payload atomically so the ordinary deep merge
-			# cannot reconstruct its descriptor Dictionary key-by-key and break the
-			# stored/action/realtime read-only identity contract.
-			merge_patch = presentation_patch_dict.duplicate(false)
-			merge_patch.erase("trace_packed")
-		host._deep_merge_dict(presentation_snapshot, merge_patch)
-		if presentation_patch_dict.has("trace_packed"):
-			presentation_snapshot["trace_packed"] = presentation_patch_dict["trace_packed"]
+		_merge_presentation_patch_atomic(presentation_snapshot, presentation_patch as Dictionary)
 		snapshot[presentation_snapshot_key] = presentation_snapshot
 		snapshot.erase("surface_presentation_snapshot_patch")
 	return snapshot
+
+
+# Builds the same player-facing action/result fields as a full game snapshot,
+# but reuses the canvas-owned static module state. A game opts in by publishing
+# a complete, shallow `surface_action_view_patch`; absent/malformed patches make
+# the host fall back to the full entry/public snapshot path.
+static func embedded_action_view_patch(host: Variant, current_state: Dictionary) -> Dictionary:
+	if host.current_game == null or host.run_state == null or host.game_surface_canvas == null:
+		return {}
+	var result := current_game_result_snapshot(host, true)
+	var module_patch_value: Variant = result.get("surface_action_view_patch", {})
+	if typeof(module_patch_value) != TYPE_DICTIONARY or (module_patch_value as Dictionary).is_empty():
+		return {}
+	if str(current_state.get("game_id", "")) != host.current_game.get_id():
+		return {}
+	var module_patch: Dictionary = module_patch_value
+	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	var legal_actions = host._game_action_view_list("legal")
+	var cheat_actions = host._game_action_view_list("cheat")
+	var stake_range: Dictionary = host._stake_range()
+	var snapshot_selected_stake = host._selected_stake_for_range(stake_range)
+	var result_message = host._player_facing_text(str(result.get("message", "")))
+	var result_bankroll_delta = host._visible_recent_bankroll_delta(int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0))))
+	if host.presented_bankroll_hold_active:
+		result_message = ""
+	if result_message.is_empty() and host.message_label != null:
+		result_message = host._player_facing_text(host.message_label.text)
+	var drunk_time_scale = host.run_state.drunk_time_scale()
+	var drunk_world_speed_percent = host.run_state.drunk_time_scale_percent()
+	var patch := {
+		"legal_actions": legal_actions,
+		"cheat_actions": cheat_actions,
+		"legal_action_count": legal_actions.size(),
+		"cheat_action_count": cheat_actions.size(),
+		"stake_min": int(stake_range.get("min", 1)),
+		"stake_max": int(stake_range.get("max", 1)),
+		"selected_stake": snapshot_selected_stake,
+		"has_valid_stake": bool(stake_range.get("has_valid", false)),
+		"selected_action_id": host.selected_action_id,
+		"selected_action_kind": host.selected_action_kind,
+		"selected_action_label": host.selected_action_label,
+		"selected_action_summary": host._selected_action_summary() if not host.selected_action_id.is_empty() else "",
+		"risk_cue": host._cheat_action_risk_cue(cheat_actions),
+		"has_recent_outcome": true,
+		"outcome_message": result_message,
+		"outcome_bankroll_delta": result_bankroll_delta,
+		"outcome_suspicion_delta": int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0))),
+		"result_message": result_message,
+		"bankroll": host._presented_bankroll(),
+		"suspicion_level": host.run_state.suspicion_level(),
+		"drunk_level": host.run_state.drunk_level,
+		"drunk_time_scale": drunk_time_scale,
+		"drunk_time_scale_percent": drunk_world_speed_percent,
+		"drunk_world_speed_percent": drunk_world_speed_percent,
+		"pending_drunk_absorption": host.run_state.pending_drunk_absorption_amount(),
+		"drunk_distortion_suppression_turns": host.run_state.drunk_distortion_suppression_turns,
+		"drunk_effect_mode": host._drunk_effect_mode(),
+		"reduce_motion": host._reduce_motion_enabled(),
+		"high_contrast": host._high_contrast_enabled(),
+		"accessibility": host.current_accessibility_snapshot(),
+		"alcoholic_level": host.run_state.alcoholic_level,
+		"baseline_luck": host.run_state.baseline_luck,
+		"luck_modifier": host.run_state.effective_luck(),
+		"alcohol_condition": host.run_state.alcohol_condition_label(),
+		"bankroll_delta": result_bankroll_delta,
+		"suspicion_delta": int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0))),
+		"result_stake": int(result.get("stake", 0)),
+		"ticket_symbols": host._copy_array(result.get("ticket_symbols", [])),
+		"won": bool(result.get("won", false)),
+		"state": str(result.get("state", GameModule.RESULT_CONTINUE)),
+		"summary_source": str(result.get("summary_source", "active_game")),
+	}
+	for key in result.keys():
+		var result_key := str(key)
+		if result_key in ["surface_presentation_snapshot_patch", "surface_action_view_patch"] or patch.has(result_key):
+			continue
+		patch[result_key] = result[key]
+	var presentation_snapshot_key := str(module_patch.get(
+		"surface_presentation_snapshot_key",
+		current_state.get("surface_presentation_snapshot_key", "")
+	))
+	for key in module_patch.keys():
+		if str(key) != presentation_snapshot_key:
+			patch[key] = module_patch[key]
+	if not presentation_snapshot_key.is_empty():
+		var current_presentation_value: Variant = current_state.get(presentation_snapshot_key, {})
+		if typeof(current_presentation_value) != TYPE_DICTIONARY:
+			return {}
+		var presentation_snapshot: Dictionary = (current_presentation_value as Dictionary).duplicate(false)
+		var module_presentation_value: Variant = module_patch.get(presentation_snapshot_key, {})
+		if module_patch.has(presentation_snapshot_key) and typeof(module_presentation_value) != TYPE_DICTIONARY:
+			return {}
+		if typeof(module_presentation_value) == TYPE_DICTIONARY:
+			_merge_dict_copy_on_write(presentation_snapshot, module_presentation_value as Dictionary)
+		var presentation_patch_value: Variant = result.get("surface_presentation_snapshot_patch", {})
+		if typeof(presentation_patch_value) == TYPE_DICTIONARY:
+			_merge_presentation_patch_atomic(presentation_snapshot, presentation_patch_value as Dictionary)
+		patch[presentation_snapshot_key] = presentation_snapshot
+	elif typeof(result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY \
+			and not (result.get("surface_presentation_snapshot_patch", {}) as Dictionary).is_empty():
+		return {}
+	return patch
+
+
+static func _merge_presentation_patch_atomic(target: Dictionary, patch: Dictionary) -> void:
+	var merge_patch := patch
+	if patch.has("trace_packed"):
+		# Compact traces are immutable renderer payloads, not nested authored
+		# configuration. Treat the payload atomically so the ordinary deep merge
+		# cannot reconstruct its descriptor Dictionary key-by-key and break the
+		# stored/action/realtime read-only identity contract.
+		merge_patch = patch.duplicate(false)
+		merge_patch.erase("trace_packed")
+	_merge_dict_copy_on_write(target, merge_patch)
+	if patch.has("trace_packed"):
+		target["trace_packed"] = patch["trace_packed"]
+
+
+# A shallow canvas snapshot may still share small nested dictionaries with the
+# previous frame. Clone only the branches touched by a patch; dense untouched
+# arrays and packed replay payloads retain their read-only identity.
+static func _merge_dict_copy_on_write(target: Dictionary, overrides: Dictionary) -> void:
+	for key in overrides.keys():
+		var override_value: Variant = overrides.get(key)
+		if target.has(key) and typeof(target.get(key)) == TYPE_DICTIONARY and typeof(override_value) == TYPE_DICTIONARY:
+			var nested: Dictionary = (target.get(key) as Dictionary).duplicate(false)
+			_merge_dict_copy_on_write(nested, override_value as Dictionary)
+			target[key] = nested
+		else:
+			target[key] = override_value
 
 
 static func current_game_surface_ui_state(host: Variant) -> Dictionary:

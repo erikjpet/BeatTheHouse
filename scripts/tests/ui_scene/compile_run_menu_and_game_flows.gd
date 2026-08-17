@@ -98,6 +98,8 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 		return false
 	probe.set("coach_schedule_count", 0)
 	(probe.get("coach_boundary_calls") as Array).clear()
+	probe.set("embedded_incremental_snapshot_count", 0)
+	probe.set("embedded_full_snapshot_fallback_count", 0)
 	var canvas: Control = probe.get("game_surface_canvas")
 	if canvas == null:
 		push_error("Embedded coach probe did not own a GameSurfaceCanvas.")
@@ -112,12 +114,17 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 		action_frames += 1
 		await process_frame
 	var boundary_calls: Array = probe.get("coach_boundary_calls")
+	var fallback_canvas_state: Dictionary = canvas.call("realtime_surface_state")
 	var passed := armed_after_action \
 			and action_schedule_count == 1 \
 			and not bool(probe.get("game_coach_refresh_scheduled")) \
-			and boundary_calls == [false, true]
+			and boundary_calls == [false, true] \
+			and int(probe.get("embedded_incremental_snapshot_count")) == 0 \
+			and int(probe.get("embedded_full_snapshot_fallback_count")) == 1 \
+			and int(fallback_canvas_state.get("runtime_serial", 0)) == 1 \
+			and str(fallback_canvas_state.get("outcome_message", "")) == "Deferred coach fixture completed."
 	if not passed:
-		push_error("Completed embedded action did not execute its real deferred coach callback: armed=%s schedules=%d frames=%d calls=%s." % [str(armed_after_action), action_schedule_count, action_frames, JSON.stringify(boundary_calls)])
+		push_error("Completed embedded action did not execute its real deferred coach callback and conservative full-snapshot fallback: armed=%s schedules=%d frames=%d calls=%s incremental=%d fallback=%d canvas=%s." % [str(armed_after_action), action_schedule_count, action_frames, JSON.stringify(boundary_calls), int(probe.get("embedded_incremental_snapshot_count")), int(probe.get("embedded_full_snapshot_fallback_count")), JSON.stringify(fallback_canvas_state)])
 	probe.queue_free()
 	await process_frame
 	return passed
@@ -178,6 +185,10 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var draw_soak_before: Dictionary = canvas.call("debug_soak_snapshot")
 	var draw_sample_count_before := int(draw_soak_before.get("draw_sample_count", 0))
 	for counter_name in [
+		"input_route_guard_visit_count",
+		"input_route_coach_notification_visit_count",
+		"embedded_incremental_snapshot_count",
+		"embedded_full_snapshot_fallback_count",
 		"post_interrupt_talk_boundary_visit_count",
 		"post_interrupt_closing_visit_count",
 		"post_interrupt_forced_travel_visit_count",
@@ -191,12 +202,27 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	# the draw callback itself is never invoked directly by this test.
 	canvas.queue_redraw()
 	await process_frame
-	var refresh_contract_passed := int(probe.get("post_interrupt_talk_boundary_visit_count")) == 1 \
-			and int(probe.get("post_interrupt_closing_visit_count")) == 1 \
-			and int(probe.get("post_interrupt_forced_travel_visit_count")) == 1 \
-			and int(probe.get("post_interrupt_talk_enqueue_visit_count")) == 1 \
-			and int(probe.get("post_interrupt_unavoidable_visit_count")) == 1 \
-			and int(probe.get("recent_result_deep_snapshot_call_count")) == 0
+	var next_frame_hud_model: Dictionary = probe.call("_run_status_hud_model")
+	var next_frame_status_label: Label = probe.get("status_label")
+	var next_frame_hud_passed: bool = next_frame_status_label != null \
+			and next_frame_status_label.text == str(next_frame_hud_model.get("status_text", ""))
+	var failed_invariants: Array[String] = []
+	var refresh_invariants := {
+		"input_guard_once": int(probe.get("input_route_guard_visit_count")) == 1,
+		"coach_notification_once": int(probe.get("input_route_coach_notification_visit_count")) == 1,
+		"incremental_snapshot_once": int(probe.get("embedded_incremental_snapshot_count")) == 1,
+		"no_full_snapshot_fallback": int(probe.get("embedded_full_snapshot_fallback_count")) == 0,
+		"talk_boundary_once": int(probe.get("post_interrupt_talk_boundary_visit_count")) == 1,
+		"closing_boundary_once": int(probe.get("post_interrupt_closing_visit_count")) == 1,
+		"forced_travel_boundary_once": int(probe.get("post_interrupt_forced_travel_visit_count")) == 1,
+		"talk_enqueue_boundary_once": int(probe.get("post_interrupt_talk_enqueue_visit_count")) == 1,
+		"unavoidable_boundary_once": int(probe.get("post_interrupt_unavoidable_visit_count")) == 1,
+		"no_deep_result_snapshot": int(probe.get("recent_result_deep_snapshot_call_count")) == 0,
+	}
+	for invariant_name in refresh_invariants.keys():
+		if not bool(refresh_invariants.get(invariant_name, false)):
+			failed_invariants.append(str(invariant_name))
+	var refresh_contract_passed := failed_invariants.is_empty()
 	await process_frame
 	var stored: Dictionary = probe.get("last_game_result")
 	var stored_patch: Dictionary = stored.get("surface_presentation_snapshot_patch", {}) if typeof(stored.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
@@ -208,6 +234,37 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var action_canvas_state: Dictionary = canvas.call("realtime_surface_state")
 	var action_canvas_snapshot: Dictionary = action_canvas_state.get("coin_pusher_snapshot", {}) if typeof(action_canvas_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
 	var action_canvas_trace: Variant = action_canvas_snapshot.get("trace_packed", {}) if typeof(action_canvas_snapshot.get("trace_packed", {})) == TYPE_DICTIONARY and not (action_canvas_snapshot.get("trace_packed", {}) as Dictionary).is_empty() else action_canvas_snapshot.get("trace", [])
+	var stored_action_patch: Dictionary = stored.get("surface_action_view_patch", {}) if typeof(stored.get("surface_action_view_patch", {})) == TYPE_DICTIONARY else {}
+	var stored_action_snapshot_patch: Dictionary = stored_action_patch.get("coin_pusher_snapshot", {}) if typeof(stored_action_patch.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	var stored_action_state: Dictionary = stored_patch.get("action_state", {}) if typeof(stored_patch.get("action_state", {})) == TYPE_DICTIONARY else {}
+	var canvas_action_state: Dictionary = action_canvas_snapshot.get("action_state", {}) if typeof(action_canvas_snapshot.get("action_state", {})) == TYPE_DICTIONARY else {}
+	var animation_channels: Array = action_canvas_state.get("surface_animation_channels", []) if typeof(action_canvas_state.get("surface_animation_channels", [])) == TYPE_ARRAY else []
+	var replay_channel: Dictionary = animation_channels[0] if not animation_channels.is_empty() and typeof(animation_channels[0]) == TYPE_DICTIONARY else {}
+	var live_run_state: RunState = probe.get("run_state")
+	var expected_realtime_patch: Dictionary = game.surface_realtime_state_patch(live_run_state, live_run_state.current_environment, {
+		"surface_time_msec": int(action_canvas_state.get("surface_time_msec", 0)),
+	}, action_canvas_state)
+	var expected_realtime_snapshot: Dictionary = expected_realtime_patch.get("coin_pusher_snapshot", {}) if typeof(expected_realtime_patch.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	var action_view_invariants := {
+		"next_frame_hud": next_frame_hud_passed,
+		"action_patch_present": not stored_action_patch.is_empty(),
+		"top_level_action_count": int(action_canvas_state.get("coin_pusher_action_count", 0)) == int(stored_action_patch.get("coin_pusher_action_count", -1)),
+		"authoritative_upper_phase": int(action_canvas_snapshot.get("upper_phase_milli", -1)) == int(expected_realtime_snapshot.get("upper_phase_milli", -2)),
+		"authoritative_lower_phase": int(action_canvas_snapshot.get("lower_phase_milli", -1)) == int(expected_realtime_snapshot.get("lower_phase_milli", -2)),
+		"tell_rung": int(action_canvas_snapshot.get("tell_rung", -1)) == int(stored_action_snapshot_patch.get("tell_rung", -2)),
+		"lock_state": bool(action_canvas_snapshot.get("locked", false)) == bool(stored_action_snapshot_patch.get("locked", true)),
+		"authoritative_body_count": int(action_canvas_snapshot.get("body_count", -1)) == int(stored_action_snapshot_patch.get("body_count", -2)),
+		"step_metrics": JSON.stringify(action_canvas_state.get("coin_pusher_last_step_metrics", {})) == JSON.stringify(stored_action_patch.get("coin_pusher_last_step_metrics", {})),
+		"nested_action_count": int(canvas_action_state.get("action_count", 0)) == int(stored_action_state.get("action_count", -1)),
+		"outcome_message": str(action_canvas_state.get("outcome_message", "")) == str(stored.get("message", "")),
+		"presented_bankroll": live_run_state != null and int(action_canvas_state.get("bankroll", -1)) == int(probe.call("_presented_bankroll")),
+		"replay_channel_active": bool(replay_channel.get("active", false)),
+		"replay_channel_id": str(replay_channel.get("active_id", "")) == "action_%d" % int(stored_action_state.get("action_count", 0)),
+	}
+	for invariant_name in action_view_invariants.keys():
+		if not bool(action_view_invariants.get(invariant_name, false)):
+			failed_invariants.append(str(invariant_name))
+	var action_view_passed := failed_invariants.is_empty()
 	var draw_soak_after: Dictionary = canvas.call("debug_soak_snapshot")
 	var draw_sample_count_after := int(draw_soak_after.get("draw_sample_count", 0))
 	var rendered_drop_hit := false
@@ -219,17 +276,26 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		var hit_action := str((region_value as Dictionary).get("action", ""))
 		rendered_drop_hit = rendered_drop_hit or hit_action == "coin_pusher_drop"
 		rendered_nudge_hit = rendered_nudge_hit or hit_action == "coin_pusher_nudge"
-	var render_passed := refresh_contract_passed and str(stored.get("action_id", "")) == "drop_quarter" \
-			and not stored_trace.is_empty() \
-			and (typeof(stored_trace) != TYPE_DICTIONARY or int((stored_trace as Dictionary).get("frame_count", 0)) == 14) \
-			and not draw_snapshots.is_empty() \
-			and JSON.stringify(draw_trace) == JSON.stringify(stored_trace) \
-			and JSON.stringify(action_canvas_trace) == JSON.stringify(stored_trace) \
-			and is_same(action_canvas_trace, stored_trace) \
-			and draw_sample_count_after > draw_sample_count_before \
-			and rendered_drop_hit and rendered_nudge_hit
+	var render_invariants := {
+		"refresh_contract": refresh_contract_passed,
+		"action_view_contract": action_view_passed,
+		"drop_action_result": str(stored.get("action_id", "")) == "drop_quarter",
+		"stored_trace_present": not stored_trace.is_empty(),
+		"stored_trace_frame_count": typeof(stored_trace) != TYPE_DICTIONARY or int((stored_trace as Dictionary).get("frame_count", 0)) == 14,
+		"draw_snapshot_present": not draw_snapshots.is_empty(),
+		"draw_trace_value": JSON.stringify(draw_trace) == JSON.stringify(stored_trace),
+		"canvas_trace_value": JSON.stringify(action_canvas_trace) == JSON.stringify(stored_trace),
+		"canvas_trace_identity": is_same(action_canvas_trace, stored_trace),
+		"draw_sample_recorded": draw_sample_count_after > draw_sample_count_before,
+		"drop_hit_region": rendered_drop_hit,
+		"nudge_hit_region": rendered_nudge_hit,
+	}
+	for invariant_name in render_invariants.keys():
+		if not bool(render_invariants.get(invariant_name, false)) and not failed_invariants.has(str(invariant_name)):
+			failed_invariants.append(str(invariant_name))
+	var render_passed := failed_invariants.is_empty()
 	if not render_passed:
-		push_error("Coin Pusher owned canvas did not interrupt-check and render its completed host action without cloning the dense result on a real viewport draw frame.")
+		push_error("Coin Pusher owned canvas contract failed invariants=%s counters=%s action=%s." % [JSON.stringify(failed_invariants), JSON.stringify(refresh_invariants), JSON.stringify(action_view_invariants)])
 
 	var guard_canvas_json := JSON.stringify(action_canvas_state)
 	probe.set("last_game_surface_realtime_refresh_msec", 0)

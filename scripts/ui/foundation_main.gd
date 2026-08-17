@@ -227,6 +227,10 @@ var recent_result_deep_snapshot_call_count := 0
 var action_trigger_candidate_visit_count := 0
 var heat_talk_candidate_visit_count := 0
 var table_talk_candidate_visit_count := 0
+var input_route_guard_visit_count := 0
+var input_route_coach_notification_visit_count := 0
+var embedded_incremental_snapshot_count := 0
+var embedded_full_snapshot_fallback_count := 0
 var post_interrupt_talk_boundary_visit_count := 0
 var post_interrupt_closing_visit_count := 0
 var post_interrupt_forced_travel_visit_count := 0
@@ -894,11 +898,11 @@ func _clear_recent_result_feedback() -> void:
 
 
 # Selects a GameModule action without mutating simulation state.
-func select_game_action(action_id: String, action_kind: String) -> void:
+func select_game_action(action_id: String, action_kind: String, input_route_guarded: bool = false) -> void:
 	if current_game == null:
 		_show_message("Enter a game before choosing an action.")
 		return
-	if _guard_player_input_route(false, "game_action:%s" % action_id):
+	if not input_route_guarded and _guard_player_input_route(false, "game_action:%s" % action_id):
 		return
 	var action := _available_game_action(action_id, action_kind)
 	if action.is_empty():
@@ -922,29 +926,29 @@ func _on_game_surface_action(action: String, index: int, confirm_requested: bool
 	if _surface_action_uses_game_binding(action):
 		var bound_action := _current_game_bound_surface_action(action, index)
 		if str(bound_action.get("action", action)) != action or int(bound_action.get("index", index)) != index:
-			if _handle_module_surface_action(str(bound_action.get("action", action)), int(bound_action.get("index", index)), confirm_requested):
+			if _handle_module_surface_action(str(bound_action.get("action", action)), int(bound_action.get("index", index)), confirm_requested, true):
 				return
 	match action:
 		"surface_back":
 			back_to_environment()
 			return
 		"surface_stake_down":
-			_adjust_surface_stake(-1)
+			_adjust_surface_stake(-1, true)
 			return
 		"surface_stake_up":
-			_adjust_surface_stake(1)
+			_adjust_surface_stake(1, true)
 			return
 		"surface_stake_max":
-			_set_surface_stake_to_bound("max")
+			_set_surface_stake_to_bound("max", true)
 			return
-	if _handle_module_surface_action(action, index, confirm_requested):
+	if _handle_module_surface_action(action, index, confirm_requested, true):
 		return
 	match action:
 		"surface_legal":
-			if _select_or_resolve_surface_game_action("legal", index, confirm_requested):
+			if _select_or_resolve_surface_game_action("legal", index, confirm_requested, true):
 				return
 		"surface_cheat":
-			if _select_or_resolve_surface_game_action("cheat", index, confirm_requested):
+			if _select_or_resolve_surface_game_action("cheat", index, confirm_requested, true):
 				return
 	if game_surface_canvas != null:
 		game_surface_canvas.set_selected_index(index)
@@ -1000,10 +1004,10 @@ func _on_game_surface_pointer_action(action: String, index: int, phase: String, 
 	ui_state["selected_stake"] = _current_selected_stake()
 	var command := current_game.surface_pointer_command(action, index, phase, board_position, ui_state, run_state, run_state.current_environment)
 	command["_resolved_surface_ui_state"] = ui_state
-	_apply_game_surface_command(command, index, false, notify_coach)
+	_apply_game_surface_command(command, index, false, notify_coach, true)
 
 
-func _handle_module_surface_action(action: String, index: int, confirm_requested: bool) -> bool:
+func _handle_module_surface_action(action: String, index: int, confirm_requested: bool, input_route_guarded: bool = false) -> bool:
 	if current_game == null:
 		return false
 	var debug_coin_pusher_outer := bool(game_surface_ui_state.get("coin_pusher_debug_profile_stages", false))
@@ -1019,7 +1023,7 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 	var debug_outer_command_usec := Time.get_ticks_usec() - debug_outer_stage_started_usec if debug_coin_pusher_outer else 0
 	command["_resolved_surface_ui_state"] = ui_state
 	debug_outer_stage_started_usec = Time.get_ticks_usec() if debug_coin_pusher_outer else 0
-	var handled := _apply_game_surface_command(command, index, confirm_requested)
+	var handled := _apply_game_surface_command(command, index, confirm_requested, true, input_route_guarded)
 	if debug_coin_pusher_outer and typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY:
 		var debug_host_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {})
 		debug_host_timing["outer_ui_state"] = debug_outer_ui_state_usec
@@ -1029,10 +1033,12 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 	return handled
 
 
-func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_requested: bool = false, notify_coach: bool = true) -> bool:
+# `input_route_guarded` is trusted call-stack context only. It is never read
+# from a module-authored command Dictionary, so content cannot bypass locks.
+func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_requested: bool = false, notify_coach: bool = true, input_route_guarded: bool = false) -> bool:
 	if command.is_empty() or not bool(command.get("handled", false)):
 		return false
-	if not game_surface_auto_resolving and _guard_player_input_route(false, "ui:any", notify_coach):
+	if not game_surface_auto_resolving and not input_route_guarded and _guard_player_input_route(false, "ui:any", notify_coach):
 		return true
 	if command.has("ui_state") and typeof(command.get("ui_state")) == TYPE_DICTIONARY:
 		_store_current_game_surface_ui_state(command.get("ui_state", {}) as Dictionary, not bool(command.get("surface_transient", false)))
@@ -1040,23 +1046,23 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 		game_surface_canvas.set_selected_index(int(command.get("selected_index", index)))
 	if command.has("stake_multiplier"):
 		var multiplied_stake := _current_selected_stake() * int(command.get("stake_multiplier", 1))
-		set_selected_stake(multiplied_stake)
+		set_selected_stake(multiplied_stake, true)
 	if command.has("set_stake"):
-		set_selected_stake(int(command.get("set_stake", _current_selected_stake())))
+		set_selected_stake(int(command.get("set_stake", _current_selected_stake())), true)
 	_play_surface_command_audio(command, index)
 	var environment_changed := bool(command.get("environment_changed", false))
 	var action_id := str(command.get("action_id", ""))
 	var action_kind := str(command.get("action_kind", ""))
 	var resolved_surface_ui_state := _surface_command_resolution_ui_state(command)
 	if bool(command.get("direct_resolve", false)) and not action_id.is_empty():
-		_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state)
+		_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state, true)
 		return true
 	if not action_id.is_empty() and not action_kind.is_empty():
 		var already_selected := selected_action_id == action_id and selected_action_kind == action_kind
 		if not already_selected:
-			select_game_action(action_id, action_kind)
+			select_game_action(action_id, action_kind, true)
 		if bool(command.get("resolve", false)) or confirm_requested or already_selected:
-			_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state)
+			_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state, true)
 			return true
 	elif command.has("message"):
 		_show_message(str(command.get("message", "")))
@@ -1107,7 +1113,7 @@ func _play_surface_command_audio(command: Dictionary, fallback_index: int) -> vo
 	game_surface_canvas.surface_play_audio_cue(cue_id, context)
 
 
-func _select_or_resolve_surface_game_action(action_kind: String, index: int, confirm_requested: bool) -> bool:
+func _select_or_resolve_surface_game_action(action_kind: String, index: int, confirm_requested: bool, input_route_guarded: bool = false) -> bool:
 	var actions := _game_action_view_list(action_kind)
 	if index < 0 or index >= actions.size():
 		_show_message("That table spot is only scenery. Pick a lit action.")
@@ -1124,28 +1130,28 @@ func _select_or_resolve_surface_game_action(action_kind: String, index: int, con
 	var already_selected := selected_action_id == action_id and selected_action_kind == action_kind
 	if already_selected or confirm_requested:
 		if not already_selected:
-			select_game_action(action_id, action_kind)
-		_resolve_game_action(action_id)
+			select_game_action(action_id, action_kind, input_route_guarded)
+		_resolve_game_action(action_id, false, false, false, {}, input_route_guarded)
 		return true
-	select_game_action(action_id, action_kind)
+	select_game_action(action_id, action_kind, input_route_guarded)
 	return true
 
 
-func _adjust_surface_stake(delta: int) -> bool:
+func _adjust_surface_stake(delta: int, input_route_guarded: bool = false) -> bool:
 	var current_stake := _current_selected_stake()
-	var changed := set_selected_stake(current_stake + delta)
+	var changed := set_selected_stake(current_stake + delta, input_route_guarded)
 	_refresh()
 	return changed
 
 
-func _set_surface_stake_to_bound(bound_name: String) -> bool:
+func _set_surface_stake_to_bound(bound_name: String, input_route_guarded: bool = false) -> bool:
 	var range := _stake_range()
 	if not bool(range.get("has_valid", false)):
 		_show_message("No valid stake is available.")
 		_refresh()
 		return false
 	var stake := int(range.get(bound_name, range.get("default", 1)))
-	var changed := set_selected_stake(stake)
+	var changed := set_selected_stake(stake, input_route_guarded)
 	_refresh()
 	return changed
 
@@ -1825,12 +1831,12 @@ func resolve_selected_game_action() -> void:
 		return
 	if _guard_player_input_route(false, "game_action:%s" % selected_action_id):
 		return
-	_resolve_game_action(selected_action_id)
+	_resolve_game_action(selected_action_id, false, false, false, {}, true)
 
 
 # Selects a stake as UI-local input without mutating simulation state.
-func set_selected_stake(stake: int) -> bool:
-	if _guard_player_input_route():
+func set_selected_stake(stake: int, input_route_guarded: bool = false) -> bool:
+	if not input_route_guarded and _guard_player_input_route():
 		return false
 	var range := _stake_range()
 	if not bool(range.get("has_valid", false)):
@@ -2490,7 +2496,12 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 	# Pal made invisible conversations accrue abandonment Heat on travel.
 	if run_state.is_tutorial_run():
 		return false
-	var ordered_candidates := library.action_trigger_event_candidates_readonly()
+	# Content generation preindexes immutable trigger/scope facts. An empty
+	# shortlist is a deterministic proof that this boundary cannot fire an event,
+	# so avoid constructing every EventModule on the overwhelmingly common no-op
+	# path. Non-empty shortlists retain the exact authored order and the unchanged
+	# synchronous can-trigger/cadence/RNG authority below.
+	var ordered_candidates := library.action_trigger_event_candidates_for_context_readonly(source, context, environment)
 	if ordered_candidates.is_empty():
 		return false
 	var candidates: Array = []
@@ -7002,9 +7013,15 @@ func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false) -
 	if debug_enabled:
 		debug_timing["refresh_feedback"] = Time.get_ticks_usec() - debug_stage_started_usec
 		debug_stage_started_usec = Time.get_ticks_usec()
-	_render_foundation_snapshots()
+	var incremental_snapshot_used := _render_embedded_action_snapshot_patch()
+	if not incremental_snapshot_used:
+		embedded_full_snapshot_fallback_count += 1
+		_render_foundation_snapshots()
 	if debug_enabled:
-		debug_timing["refresh_snapshots"] = Time.get_ticks_usec() - debug_stage_started_usec
+		var snapshot_refresh_usec := Time.get_ticks_usec() - debug_stage_started_usec
+		debug_timing["refresh_snapshots"] = snapshot_refresh_usec
+		debug_timing["refresh_snapshot_patch"] = snapshot_refresh_usec if incremental_snapshot_used else 0
+		debug_timing["refresh_snapshot_full_fallback"] = 0 if incremental_snapshot_used else snapshot_refresh_usec
 		debug_stage_started_usec = Time.get_ticks_usec()
 	_refresh_talk_dock()
 	_update_procedural_music()
@@ -8315,10 +8332,10 @@ func _add_current_game_panel(environment: Dictionary) -> void:
 	actions_list = previous_actions_list
 
 
-func _resolve_game_action(action_id: String, skip_stake_validation: bool = false, preserve_surface_ui_state: bool = false, wager_confirmed: bool = false, resolved_surface_ui_state: Dictionary = {}) -> void:
+func _resolve_game_action(action_id: String, skip_stake_validation: bool = false, preserve_surface_ui_state: bool = false, wager_confirmed: bool = false, resolved_surface_ui_state: Dictionary = {}, input_route_guarded: bool = false) -> void:
 	if action_id.is_empty() or current_game == null:
 		return
-	if not wager_confirmed and _guard_player_input_route():
+	if not wager_confirmed and not input_route_guarded and _guard_player_input_route():
 		return
 	var debug_coin_pusher_host := bool(resolved_surface_ui_state.get("coin_pusher_debug_profile_stages", false))
 	var debug_host_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
@@ -8701,6 +8718,7 @@ func _blocking_modal_message() -> String:
 
 
 func _guard_player_input_route(force_closing_allowed: bool = false, coach_action_id: String = "ui:any", notify_coach: bool = true) -> bool:
+	input_route_guard_visit_count += 1
 	var message := _blocking_modal_message()
 	if message.is_empty():
 		if not force_closing_allowed and _closing_time_blocks_environment_actions():
@@ -8708,6 +8726,7 @@ func _guard_player_input_route(force_closing_allowed: bool = false, coach_action
 				_show_message(_closing_time_disabled_reason())
 			return true
 		if notify_coach:
+			input_route_coach_notification_visit_count += 1
 			_record_tutorial_action_if_authored(coach_action_id)
 			if coach_overlay != null:
 				if coach_overlay.notify_action(coach_action_id):
@@ -10317,6 +10336,29 @@ func _render_foundation_snapshots() -> void:
 			game_surface_canvas.render_game_snapshot(game_snapshot)
 	if cheat_dock != null:
 		cheat_dock.render(game_snapshot)
+
+
+func _render_embedded_action_snapshot_patch() -> bool:
+	if game_surface_canvas == null or current_game == null or run_state == null:
+		return false
+	var current_state := game_surface_canvas.realtime_surface_state()
+	var patch := FoundationActionViewModelScript.embedded_action_view_patch(self, current_state)
+	if patch.is_empty():
+		return false
+	game_surface_canvas.set_game_module(current_game)
+	game_surface_canvas.apply_surface_state_patch(patch)
+	# Shelf clocks and other lightweight real-time fields read the authoritative
+	# post-action machine state. Apply them after the action patch so nested
+	# presentation state is extended rather than replaced from the old frame.
+	var now_msec := _environment_simulation_time_msec()
+	var realtime_patch := _game_surface_realtime_state_patch(now_msec)
+	if not realtime_patch.is_empty():
+		game_surface_canvas.apply_surface_state_patch(realtime_patch)
+		last_game_surface_realtime_refresh_msec = now_msec
+	if cheat_dock != null:
+		cheat_dock.render(game_surface_canvas.realtime_surface_state())
+	embedded_incremental_snapshot_count += 1
+	return true
 
 
 func _render_environment_canvas_snapshot() -> void:
