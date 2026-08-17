@@ -127,6 +127,7 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 		state["lower_phase_fp"] = posmod(int(config.get("captured_lower_phase_fp", 0)), PHASE_PERIOD)
 	var events: Array = []
 	var motion_events: Array = []
+	var motion_event_keys := {}
 	var capture_trace := bool(config.get("capture_presentation_trace", false))
 	var emit_presentation_events := bool(config.get("emit_presentation_events", true))
 	var presentation_trace: Array = []
@@ -145,7 +146,7 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	var ridge_double := bool(config.get("ridge_double", false))
 	var wake_count := 0
 	var collision_count := 0
-	var collision_visited := PackedByteArray()
+	var collision_visited := PackedInt32Array()
 	var starting_body_count := (state.get("bodies", []) as Array).size()
 	collision_visited.resize(starting_body_count * starting_body_count)
 	var cached_spatial_keys := PackedInt32Array()
@@ -167,7 +168,7 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 		var woke_this_tick := _apply_pushers(state, old_upper, new_upper, old_lower, new_lower, push_scale, integration_indices)
 		wake_count += woke_this_tick
 		if not integration_indices.is_empty():
-			_integrate(state, integration_indices, events, motion_events, peak_z_by_id, tick_index + 1)
+			_integrate(state, integration_indices, events, motion_events, motion_event_keys, peak_z_by_id, tick_index + 1)
 			var awake_indices := PackedInt32Array()
 			var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
 			var spatial_keys := _spatial_keys(bodies, awake_indices)
@@ -181,13 +182,13 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 			for awake_index in awake_indices:
 				support_seen[int(awake_index)] = 1
 			for _pass_index in range(MAX_COLLISION_PASSES):
-				collision_visited.fill(0)
-				var resolved := _resolve_collisions(state, cached_spatial_buckets, collision_visited, awake_indices, cached_neighbor_indices, support_indices, support_seen)
+				var visit_generation := tick_index * MAX_COLLISION_PASSES + _pass_index + 1
+				var resolved := _resolve_collisions(state, cached_spatial_buckets, collision_visited, visit_generation, awake_indices, cached_neighbor_indices, support_indices, support_seen)
 				collision_count += resolved
 				if resolved <= 0:
 					break
 			support_indices.sort()
-			_resolve_supports(state, cached_spatial_buckets, cached_neighbor_indices, support_indices, motion_events, peak_z_by_id, tick_index + 1)
+			_resolve_supports(state, cached_spatial_buckets, cached_neighbor_indices, support_indices, motion_events, motion_event_keys, peak_z_by_id, tick_index + 1)
 		state["tick"] = int(state.get("tick", 0)) + 1
 		if capture_trace:
 			for event_index in range(event_count_before, events.size()):
@@ -507,11 +508,11 @@ static func _apply_nudge(state: Dictionary, x_impulse: int, y_impulse: int, aime
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var body: Dictionary = value
-		if absi(int(body.get("x", 0)) - aimed_x) > radius:
+		if absi(int(body["x"]) - aimed_x) > radius:
 			continue
-		var mass := maxi(1, int(body.get("mass", 1)))
-		body["vx"] = int(body.get("vx", 0)) + _divi(x_impulse, mass)
-		body["vy"] = int(body.get("vy", 0)) + _divi(y_impulse, mass)
+		var mass := maxi(1, int(body["mass"]))
+		body["vx"] = int(body["vx"]) + _divi(x_impulse, mass)
+		body["vy"] = int(body["vy"]) + _divi(y_impulse, mass)
 		_wake(body)
 		count += 1
 	return count
@@ -527,26 +528,26 @@ static func _apply_pushers(state: Dictionary, old_upper: int, new_upper: int, ol
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var body: Dictionary = value
-		var y := int(body.get("y", 0))
-		var z := int(body.get("z", 0))
+		var y := int(body["y"])
+		var z := int(body["z"])
 		var upper := y >= UPPER_EDGE and z >= UPPER_FLOOR_Z
 		var active := upper_active if upper else lower_active
 		var old_face := old_upper if upper else old_lower
 		var new_face := new_upper if upper else new_lower
 		var floor_z := UPPER_FLOOR_Z if upper else LOWER_FLOOR_Z
 		var eligible := active and (upper or (y >= FRONT_EDGE and y < UPPER_EDGE and z < UPPER_FLOOR_Z + COIN_HEIGHT))
-		var radius := int(body.get("radius", COIN_RADIUS))
-		if eligible and y > new_face - radius and y < old_face + radius and z <= floor_z + int(body.get("height", COIN_HEIGHT)) * 5:
+		var radius := int(body["radius"])
+		if eligible and y > new_face - radius and y < old_face + radius and z <= floor_z + int(body["height"]) * 5:
 			body["y"] = mini(y, new_face - radius)
-			body["vy"] = int(body.get("vy", 0)) - (old_face - new_face) * push_scale
+			body["vy"] = int(body["vy"]) - (old_face - new_face) * push_scale
 			_wake(body)
 			count += 1
-		if not bool(body.get("sleeping", false)):
+		if not bool(body["sleeping"]):
 			active_indices.append(body_index)
 	return count
 
 
-static func _integrate(state: Dictionary, active_indices: PackedInt32Array, events: Array, motion_events: Array, peak_z_by_id: Dictionary, tick_offset: int) -> void:
+static func _integrate(state: Dictionary, active_indices: PackedInt32Array, events: Array, motion_events: Array, motion_event_keys: Dictionary, peak_z_by_id: Dictionary, tick_offset: int) -> void:
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
 	var exit_indices: Array = []
 	for body_index_value in active_indices:
@@ -557,37 +558,37 @@ static func _integrate(state: Dictionary, active_indices: PackedInt32Array, even
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var body: Dictionary = value
-		var body_id := str(body.get("id", ""))
-		var previous_z := int(body.get("z", 0))
+		var body_id := str(body["id"])
+		var previous_z := int(body["z"])
 		if not peak_z_by_id.is_empty():
 			peak_z_by_id[body_id] = maxi(int(peak_z_by_id.get(body_id, previous_z)), previous_z)
 		var cap_pressure_ticks := maxi(0, int(body.get("cap_pressure_ticks", 0)))
 		if cap_pressure_ticks > 0:
-			body["vy"] = int(body.get("vy", 0)) - maxi(0, int(body.get("cap_pressure_accel", 0)))
+			body["vy"] = int(body["vy"]) - maxi(0, int(body.get("cap_pressure_accel", 0)))
 			body["cap_pressure_ticks"] = cap_pressure_ticks - 1
-		var was_upper := int(body.get("z", 0)) >= UPPER_FLOOR_Z
-		body["vz"] = int(body.get("vz", 0)) - GRAVITY
-		body["vx"] = _divi(int(body.get("vx", 0)) * AIR_DRAG_NUM, AIR_DRAG_DEN)
-		body["vy"] = _divi(int(body.get("vy", 0)) * AIR_DRAG_NUM, AIR_DRAG_DEN)
-		body["x"] = int(body.get("x", 0)) + _divi(int(body.get("vx", 0)), FIXED_HZ)
-		body["y"] = int(body.get("y", 0)) + _divi(int(body.get("vy", 0)), FIXED_HZ)
-		body["z"] = int(body.get("z", 0)) + _divi(int(body.get("vz", 0)), FIXED_HZ)
+		var was_upper := int(body["z"]) >= UPPER_FLOOR_Z
+		body["vz"] = int(body["vz"]) - GRAVITY
+		body["vx"] = _divi(int(body["vx"]) * AIR_DRAG_NUM, AIR_DRAG_DEN)
+		body["vy"] = _divi(int(body["vy"]) * AIR_DRAG_NUM, AIR_DRAG_DEN)
+		body["x"] = int(body["x"]) + _divi(int(body["vx"]), FIXED_HZ)
+		body["y"] = int(body["y"]) + _divi(int(body["vy"]), FIXED_HZ)
+		body["z"] = int(body["z"]) + _divi(int(body["vz"]), FIXED_HZ)
 		var exit := _exit_kind(body)
 		if not exit.is_empty():
 			events.append(_exit_event(body, exit, "physical_fall", tick_offset))
 			exit_indices.append(body_index)
 			continue
 		var base_z := _floor_z(body)
-		if was_upper and int(body.get("y", 0)) < UPPER_EDGE:
-			motion_events.append({"kind": "upper_to_lower", "body_id": str(body.get("id", "")), "x": int(body.get("x", 0)), "y": int(body.get("y", 0)), "z": int(body.get("z", 0)), "tick_offset": tick_offset})
-		if int(body.get("z", 0)) <= base_z:
+		if was_upper and int(body["y"]) < UPPER_EDGE:
+			motion_events.append({"kind": "upper_to_lower", "body_id": str(body["id"]), "x": int(body["x"]), "y": int(body["y"]), "z": int(body["z"]), "tick_offset": tick_offset})
+		if int(body["z"]) <= base_z:
 			var fall_height := maxi(0, int(peak_z_by_id.get(body_id, previous_z)) - base_z)
 			if not peak_z_by_id.is_empty() and previous_z > base_z and fall_height > 0:
-				_append_impact_motion_event(motion_events, body, "coin_on_metal", 0, fall_height, tick_offset)
+				_append_impact_motion_event(motion_events, motion_event_keys, body, "coin_on_metal", 0, fall_height, tick_offset)
 			body["z"] = base_z
 			body["vz"] = 0
-			body["vx"] = _divi(int(body.get("vx", 0)) * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
-			body["vy"] = _divi(int(body.get("vy", 0)) * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
+			body["vx"] = _divi(int(body["vx"]) * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
+			body["vy"] = _divi(int(body["vy"]) * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
 			_update_sleep(body)
 		else:
 			body["rest_state"] = "falling"
@@ -596,7 +597,7 @@ static func _integrate(state: Dictionary, active_indices: PackedInt32Array, even
 		bodies.remove_at(int(exit_indices[exit_index]))
 
 
-static func _resolve_collisions(state: Dictionary, buckets: Dictionary, visited_pairs: PackedByteArray, awake_indices: PackedInt32Array, neighbor_cache: Dictionary, support_indices: PackedInt32Array, support_seen: PackedByteArray) -> int:
+static func _resolve_collisions(state: Dictionary, buckets: Dictionary, visited_pairs: PackedInt32Array, visit_generation: int, awake_indices: PackedInt32Array, neighbor_cache: Dictionary, support_indices: PackedInt32Array, support_seen: PackedByteArray) -> int:
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
 	if awake_indices.is_empty():
 		return 0
@@ -604,9 +605,9 @@ static func _resolve_collisions(state: Dictionary, buckets: Dictionary, visited_
 	for left_index_value in awake_indices:
 		var left_index := int(left_index_value)
 		var left: Dictionary = bodies[left_index]
-		var center_x := _divi(int(left.get("x", 0)), BROADPHASE_CELL)
-		var center_y := _divi(int(left.get("y", 0)), BROADPHASE_CELL)
-		var center_z := _divi(int(left.get("z", 0)), BROADPHASE_CELL)
+		var center_x := _divi(int(left["x"]), BROADPHASE_CELL)
+		var center_y := _divi(int(left["y"]), BROADPHASE_CELL)
+		var center_z := _divi(int(left["z"]), BROADPHASE_CELL)
 		for right_index_value in _neighbor_indices(buckets, neighbor_cache, center_x, center_y, center_z):
 			var right_index := int(right_index_value)
 			if right_index == left_index:
@@ -614,36 +615,36 @@ static func _resolve_collisions(state: Dictionary, buckets: Dictionary, visited_
 			var low := mini(left_index, right_index)
 			var high := maxi(left_index, right_index)
 			var pair_key := low * bodies.size() + high
-			if visited_pairs[pair_key] != 0:
+			if visited_pairs[pair_key] == visit_generation:
 				continue
-			visited_pairs[pair_key] = 1
+			visited_pairs[pair_key] = visit_generation
 			if typeof(bodies[right_index]) != TYPE_DICTIONARY:
 				continue
 			var right: Dictionary = bodies[right_index]
-			var dx := int(right.get("x", 0)) - int(left.get("x", 0))
-			var dy := int(right.get("y", 0)) - int(left.get("y", 0))
-			var min_distance := int(left.get("radius", COIN_RADIUS)) + int(right.get("radius", COIN_RADIUS))
+			var dx := int(right["x"]) - int(left["x"])
+			var dy := int(right["y"]) - int(left["y"])
+			var min_distance := int(left["radius"]) + int(right["radius"])
 			if absi(dx) >= min_distance or absi(dy) >= min_distance or dx * dx + dy * dy >= min_distance * min_distance:
 				continue
-			var z_gap := absi(int(left.get("z", 0)) - int(right.get("z", 0)))
-			if z_gap >= mini(int(left.get("height", COIN_HEIGHT)), int(right.get("height", COIN_HEIGHT))):
+			var z_gap := absi(int(left["z"]) - int(right["z"]))
+			if z_gap >= mini(int(left["height"]), int(right["height"])):
 				continue
 			var overlap := min_distance - maxi(absi(dx), absi(dy))
 			if overlap <= 0:
 				continue
 			if absi(dx) >= absi(dy):
 				var sign_x := 1 if dx >= 0 else -1
-				right["x"] = int(right.get("x", 0)) + _divi(sign_x * overlap, 2)
-				left["x"] = int(left.get("x", 0)) - _divi(sign_x * overlap, 2)
-				right["vx"] = int(right.get("vx", 0)) + sign_x * overlap * 5
-				left["vx"] = int(left.get("vx", 0)) - sign_x * overlap * 5
+				right["x"] = int(right["x"]) + _divi(sign_x * overlap, 2)
+				left["x"] = int(left["x"]) - _divi(sign_x * overlap, 2)
+				right["vx"] = int(right["vx"]) + sign_x * overlap * 5
+				left["vx"] = int(left["vx"]) - sign_x * overlap * 5
 			else:
 				var sign_y := 1 if dy >= 0 else -1
-				right["y"] = int(right.get("y", 0)) + _divi(sign_y * overlap, 2)
-				left["y"] = int(left.get("y", 0)) - _divi(sign_y * overlap, 2)
-				right["vy"] = int(right.get("vy", 0)) + sign_y * overlap * 5
-				left["vy"] = int(left.get("vy", 0)) - sign_y * overlap * 5
-			if bool(right.get("sleeping", false)) and support_seen[right_index] == 0:
+				right["y"] = int(right["y"]) + _divi(sign_y * overlap, 2)
+				left["y"] = int(left["y"]) - _divi(sign_y * overlap, 2)
+				right["vy"] = int(right["vy"]) + sign_y * overlap * 5
+				left["vy"] = int(left["vy"]) - sign_y * overlap * 5
+			if bool(right["sleeping"]) and support_seen[right_index] == 0:
 				support_seen[right_index] = 1
 				support_indices.append(right_index)
 			_wake(left)
@@ -652,7 +653,7 @@ static func _resolve_collisions(state: Dictionary, buckets: Dictionary, visited_
 	return resolved
 
 
-static func _resolve_supports(state: Dictionary, buckets: Dictionary, neighbor_cache: Dictionary, active_indices: PackedInt32Array, motion_events: Array, peak_z_by_id: Dictionary, tick_offset: int) -> void:
+static func _resolve_supports(state: Dictionary, buckets: Dictionary, neighbor_cache: Dictionary, active_indices: PackedInt32Array, motion_events: Array, motion_event_keys: Dictionary, peak_z_by_id: Dictionary, tick_offset: int) -> void:
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
 	for body_index_value in active_indices:
 		var body_index := int(body_index_value)
@@ -663,26 +664,26 @@ static func _resolve_supports(state: Dictionary, buckets: Dictionary, neighbor_c
 			continue
 		var body: Dictionary = value
 		var base_z := _floor_z(body)
-		if int(body.get("z", 0)) <= base_z:
+		if int(body["z"]) <= base_z:
 			body["lean_milli"] = 0
 			continue
 		var support: Dictionary = {}
 		var support_distance := 1 << 30
-		var center_x := _divi(int(body.get("x", 0)), BROADPHASE_CELL)
-		var center_y := _divi(int(body.get("y", 0)), BROADPHASE_CELL)
-		var center_z := _divi(int(body.get("z", 0)), BROADPHASE_CELL)
+		var center_x := _divi(int(body["x"]), BROADPHASE_CELL)
+		var center_y := _divi(int(body["y"]), BROADPHASE_CELL)
+		var center_z := _divi(int(body["z"]), BROADPHASE_CELL)
 		for candidate_index_value in _neighbor_indices(buckets, neighbor_cache, center_x, center_y, center_z):
 			var candidate_index := int(candidate_index_value)
 			if candidate_index < 0 or candidate_index >= bodies.size() or bodies[candidate_index] == value or typeof(bodies[candidate_index]) != TYPE_DICTIONARY:
 				continue
 			var candidate: Dictionary = bodies[candidate_index]
-			var target_z := int(candidate.get("z", 0)) + int(candidate.get("height", COIN_HEIGHT))
-			if target_z > int(body.get("z", 0)) + COIN_HEIGHT or target_z < int(body.get("z", 0)) - COIN_HEIGHT * 2:
+			var target_z := int(candidate["z"]) + int(candidate["height"])
+			if target_z > int(body["z"]) + COIN_HEIGHT or target_z < int(body["z"]) - COIN_HEIGHT * 2:
 				continue
-			var dx := int(body.get("x", 0)) - int(candidate.get("x", 0))
-			var dy := int(body.get("y", 0)) - int(candidate.get("y", 0))
+			var dx := int(body["x"]) - int(candidate["x"])
+			var dy := int(body["y"]) - int(candidate["y"])
 			var distance := dx * dx + dy * dy
-			var support_radius := mini(int(body.get("radius", COIN_RADIUS)), int(candidate.get("radius", COIN_RADIUS)))
+			var support_radius := mini(int(body["radius"]), int(candidate["radius"]))
 			if distance < support_radius * support_radius and distance < support_distance:
 				support = candidate
 				support_distance = distance
@@ -690,23 +691,25 @@ static func _resolve_supports(state: Dictionary, buckets: Dictionary, neighbor_c
 			body["rest_state"] = "falling"
 			body["sleeping"] = false
 			continue
-		var target_z := int(support.get("z", 0)) + int(support.get("height", COIN_HEIGHT))
-		if int(body.get("vz", 0)) <= 0 and int(body.get("z", 0)) <= target_z + COIN_HEIGHT:
-			var fall_height := maxi(0, int(peak_z_by_id.get(str(body.get("id", "")), int(body.get("z", 0)))) - target_z)
+		var target_z := int(support["z"]) + int(support["height"])
+		if int(body["vz"]) <= 0 and int(body["z"]) <= target_z + COIN_HEIGHT:
+			var fall_height := maxi(0, int(peak_z_by_id.get(str(body["id"]), int(body["z"]))) - target_z)
 			if not peak_z_by_id.is_empty() and fall_height > 0:
 				var stack_depth := maxi(1, _divi(target_z - _floor_z(body), COIN_HEIGHT))
-				_append_impact_motion_event(motion_events, body, "coin_on_coin", stack_depth, fall_height, tick_offset)
+				_append_impact_motion_event(motion_events, motion_event_keys, body, "coin_on_coin", stack_depth, fall_height, tick_offset)
 			body["z"] = target_z
 			body["vz"] = 0
-			var dx := int(body.get("x", 0)) - int(support.get("x", 0))
-			var dy := int(body.get("y", 0)) - int(support.get("y", 0))
-			var lean := _divi(maxi(absi(dx), absi(dy)) * FP, maxi(1, int(body.get("radius", COIN_RADIUS))))
+			var dx := int(body["x"]) - int(support["x"])
+			var dy := int(body["y"]) - int(support["y"])
+			var lean := _divi(maxi(absi(dx), absi(dy)) * FP, maxi(1, int(body["radius"])))
 			body["lean_milli"] = lean
 			if lean > 620:
-				if not _motion_event_has_body(motion_events, "topple", str(body.get("id", ""))):
-					motion_events.append({"kind": "topple", "body_id": str(body.get("id", "")), "support_id": str(support.get("id", "")), "lean_milli": lean})
-				body["vx"] = int(body.get("vx", 0)) + (120 if dx >= 0 else -120)
-				body["vy"] = int(body.get("vy", 0)) + (120 if dy >= 0 else -120)
+				var topple_key := "topple|%s" % str(body["id"])
+				if not motion_event_keys.has(topple_key):
+					motion_events.append({"kind": "topple", "body_id": str(body["id"]), "support_id": str(support["id"]), "lean_milli": lean})
+					motion_event_keys[topple_key] = true
+				body["vx"] = int(body["vx"]) + (120 if dx >= 0 else -120)
+				body["vy"] = int(body["vy"]) + (120 if dy >= 0 else -120)
 				body["z"] = target_z + 80
 				body["rest_state"] = "toppling"
 				body["sleeping"] = false
@@ -715,10 +718,10 @@ static func _resolve_supports(state: Dictionary, buckets: Dictionary, neighbor_c
 
 
 static func _update_sleep(body: Dictionary) -> void:
-	var speed := absi(int(body.get("vx", 0))) + absi(int(body.get("vy", 0))) + absi(int(body.get("vz", 0)))
+	var speed := absi(int(body["vx"])) + absi(int(body["vy"])) + absi(int(body["vz"]))
 	if speed <= SLEEP_SPEED:
-		body["sleep_ticks"] = int(body.get("sleep_ticks", 0)) + 1
-		if int(body.get("sleep_ticks", 0)) >= SLEEP_TICKS:
+		body["sleep_ticks"] = int(body["sleep_ticks"]) + 1
+		if int(body["sleep_ticks"]) >= SLEEP_TICKS:
 			body["vx"] = 0
 			body["vy"] = 0
 			body["vz"] = 0
@@ -736,7 +739,7 @@ static func _wake(body: Dictionary) -> void:
 
 
 static func _floor_z(body: Dictionary) -> int:
-	return UPPER_FLOOR_Z if int(body.get("y", 0)) >= UPPER_EDGE else LOWER_FLOOR_Z
+	return UPPER_FLOOR_Z if int(body["y"]) >= UPPER_EDGE else LOWER_FLOOR_Z
 
 
 static func _exit_kind(body: Dictionary) -> String:
@@ -863,9 +866,10 @@ static func _peak_z_by_id(state: Dictionary) -> Dictionary:
 	return result
 
 
-static func _append_impact_motion_event(events: Array, body: Dictionary, material: String, stack_depth: int, fall_height: int, tick_offset: int) -> void:
+static func _append_impact_motion_event(events: Array, event_keys: Dictionary, body: Dictionary, material: String, stack_depth: int, fall_height: int, tick_offset: int) -> void:
 	var body_id := str(body.get("id", ""))
-	if body_id.is_empty() or _motion_event_has_body(events, "impact", body_id):
+	var event_key := "impact|%s" % body_id
+	if body_id.is_empty() or event_keys.has(event_key):
 		return
 	events.append({
 		"kind": "impact",
@@ -878,6 +882,7 @@ static func _append_impact_motion_event(events: Array, body: Dictionary, materia
 		"stack_depth": maxi(0, stack_depth),
 		"fall_height_milli": maxi(0, _divi(fall_height * FP, COIN_HEIGHT)),
 	})
+	event_keys[event_key] = true
 
 
 static func _motion_event_count(events: Array, kind: String) -> int:
@@ -888,13 +893,6 @@ static func _motion_event_count(events: Array, kind: String) -> int:
 	return count
 
 
-static func _motion_event_has_body(events: Array, kind: String, body_id: String) -> bool:
-	for value in events:
-		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("kind", "")) == kind and str((value as Dictionary).get("body_id", "")) == body_id:
-			return true
-	return false
-
-
 static func _spatial_keys(bodies: Array, awake_indices: PackedInt32Array) -> PackedInt32Array:
 	var result := PackedInt32Array()
 	for index in range(bodies.size()):
@@ -902,9 +900,9 @@ static func _spatial_keys(bodies: Array, awake_indices: PackedInt32Array) -> Pac
 			result.append(0)
 			continue
 		var body: Dictionary = bodies[index]
-		if not bool(body.get("sleeping", false)):
+		if not bool(body["sleeping"]):
 			awake_indices.append(index)
-		var key := _bucket_key(_divi(int(body.get("x", 0)), BROADPHASE_CELL), _divi(int(body.get("y", 0)), BROADPHASE_CELL), _divi(int(body.get("z", 0)), BROADPHASE_CELL))
+		var key := _bucket_key(_divi(int(body["x"]), BROADPHASE_CELL), _divi(int(body["y"]), BROADPHASE_CELL), _divi(int(body["z"]), BROADPHASE_CELL))
 		result.append(key)
 	return result
 
