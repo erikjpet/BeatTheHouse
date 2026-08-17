@@ -443,17 +443,26 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 static func _activation_violation(game: GameModule, run_state: RunState, cached_source_snapshot: Dictionary = {}, cached_source_text: String = "") -> String:
 	var source_snapshot := cached_source_snapshot if not cached_source_snapshot.is_empty() else run_state.to_dict()
 	var source_text := cached_source_text if not cached_source_text.is_empty() else JSON.stringify(source_snapshot)
+	# Canonicalize one pristine restore for the context. It is also the first
+	# hook's independent fixture; inspecting it does not share it with any later
+	# hook. Remaining hooks each construct their own RunState from the same
+	# immutable source dictionary.
+	var first_method_run := RunStateScript.new()
+	first_method_run.from_dict(source_snapshot)
+	var canonical_snapshot := first_method_run.to_dict()
+	var canonical_text := JSON.stringify(canonical_snapshot)
+	if canonical_text != source_text:
+		return "%s could not cold-clone its canonical activation fixture" % str(ACTIVATION_METHODS[0])
+	var first_method_available := true
 	var post_hook_restore_checked := false
 	for method in ACTIVATION_METHODS:
-		# Every hook gets an independent cold RunState. The shared source dictionary
-		# is immutable; from_dict() copies its serialized fields, avoiding a deep
-		# duplicate without sharing live caches or object metadata.
-		var method_run := RunStateScript.new()
-		method_run.from_dict(source_snapshot)
-		var before := method_run.to_dict()
-		var before_text := JSON.stringify(before)
-		if before_text != source_text:
-			return "%s could not cold-clone its canonical activation fixture" % method
+		var method_run: RunState
+		if first_method_available:
+			method_run = first_method_run
+			first_method_available = false
+		else:
+			method_run = RunStateScript.new()
+			method_run.from_dict(source_snapshot)
 		match method:
 			"environment_runtime_state":
 				game.environment_runtime_state(method_run, method_run.current_environment)
@@ -470,14 +479,16 @@ static func _activation_violation(game: GameModule, run_state: RunState, cached_
 			"coach_state":
 				game.coach_state(method_run, method_run.current_environment, {})
 		var after := method_run.to_dict()
-		var after_text := JSON.stringify(after)
-		if before_text != after_text:
+		# Dictionary equality is recursive for the JSON-compatible RunState save
+		# graph. Keep the immutable canonical byte string for restore/alias proof,
+		# and allocate per-hook JSON text only on a detected mismatch.
+		if after != canonical_snapshot:
 			var paths: Array = []
-			_collect_changed_paths(before, after, "", paths)
+			_collect_changed_paths(canonical_snapshot, after, "", paths)
 			return "%s changed %s" % [method, ", ".join(paths)]
 		if not post_hook_restore_checked:
-			var restored_after_open := _run_state_from_json_snapshot(after, after_text)
-			if restored_after_open == null or JSON.stringify(restored_after_open.to_dict()) != before_text:
+			var restored_after_open := _run_state_from_json_snapshot(after, canonical_text)
+			if restored_after_open == null or JSON.stringify(restored_after_open.to_dict()) != canonical_text:
 				return "%s changed after serialize/restore" % method
 			post_hook_restore_checked = true
 	if JSON.stringify(source_snapshot) != source_text:
