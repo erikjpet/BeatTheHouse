@@ -22,6 +22,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_production_reachability(library, failures)
 	_check_rook_paths(library, failures)
 	_check_rook_signposts(library, failures)
+	_check_bishop_grand_casino_presence(library, failures)
 	_check_perks_and_save(failures)
 	_check_contact_surfaces(library, failures)
 	_check_crew_ignoring_regression(library, failures)
@@ -41,8 +42,10 @@ static func _check_event_presentation_contract(library: ContentLibrary, failures
 		if str(definition.get("type", "")) != "crew":
 			failures.append("Crew recruitment event %s must use the crew event class." % event_id)
 		var speaker := _dict(definition.get("speaker", {}))
-		if str(speaker.get("role", "")) != "crew":
-			failures.append("Crew recruitment event %s must retain a Crew speaker." % event_id)
+		var expected_member_id := _event_member_id(event_id)
+		if not ["patron", "staff", "stranger", "lender"].has(str(speaker.get("role", ""))) \
+			or expected_member_id.is_empty() or str(speaker.get("character_id", "")) != expected_member_id:
+			failures.append("Crew recruitment event %s must retain its exact Crew character through normalized speaker schema." % event_id)
 		if event_id.begins_with("crew_contact_") and bool(speaker.get("environment_actor", true)):
 			failures.append("Crew contact %s must reuse its seeded presence actor." % event_id)
 	var knuckles := library.event("recruitment_knuckles")
@@ -111,6 +114,20 @@ static func _check_placement_matrix(library: ContentLibrary, failures: Array) ->
 			recruited_round_trip.from_dict(run_state.to_dict())
 			if recruited_round_trip.crew_rank(member_id) != "associate" or not recruited_round_trip.crew_member_job_available(member_id):
 				failures.append("Crew recruitment %s %s did not survive its post-intro save/load." % [member_id, path_kind])
+	var velvet_negative := _marked_run("CREW-RECRUIT-VELVET-NOT-SLOW")
+	_set_fixture_world(velvet_negative, ["kitty_cat_lounge"])
+	var non_slow_environment := {
+		"id": "crew_velvet_non_slow_fixture",
+		"archetype_id": "kitty_cat_lounge",
+		"world_node_id": "kitty_cat_lounge",
+		"kind": "casino",
+		"scenario_id": "kitty_cat_lounge_regular_night",
+		"event_ids": [],
+		"resolved_event_ids": [],
+	}
+	CrewRecruitmentModelScript.apply_to_environment(velvet_negative, non_slow_environment)
+	if _string_array(non_slow_environment.get("event_ids", [])).has("recruitment_velvet"):
+		failures.append("Velvet fallback leaked outside the authored Slow Night beat.")
 
 
 static func _check_production_reachability(library: ContentLibrary, failures: Array) -> void:
@@ -164,7 +181,31 @@ static func _check_rook_paths(library: ContentLibrary, failures: Array) -> void:
 	var fallback := RunStateScript.new()
 	fallback.from_dict(legacy_data)
 	if fallback.crew_rank("crew_rook") != "marker":
-		failures.append("Rook's legacy-marker fallback migration did not preserve meetability.")
+		failures.append("Rook's legacy Marker compatibility migration did not preserve meetability.")
+
+
+static func _check_bishop_grand_casino_presence(library: ContentLibrary, failures: Array) -> void:
+	var run_state := _marked_run("CREW-BISHOP-CAGE-PRESENCE")
+	run_state.crew_recruit_member("crew_bishop")
+	_set_fixture_world(run_state, [RunState.GRAND_CASINO_ARCHETYPE_ID])
+	var generator := RunGeneratorScript.new(library)
+	generator.next_environment(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID, true)
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID) \
+		or not _presence_has_member(run_state.current_environment, "crew_bishop"):
+		failures.append("Met Bishop did not seed at the production Grand Casino cage window.")
+		return
+	# Re-entry must recompute from canonical world-node identity rather than
+	# trusting a stale serialized room actor snapshot.
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID):
+		failures.append("Bishop cage presence fixture could not return to the main floor.")
+		return
+	var stored_cage := run_state.peek_grand_casino_room_environment(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
+	stored_cage["crew_presence"] = [{"member_id": "crew_rook", "rank": "marker", "line": "stale"}]
+	stored_cage["scenario_patron_ids"] = ["crew_rook"]
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID) \
+		or not _presence_has_member(run_state.current_environment, "crew_bishop") \
+		or _presence_has_member(run_state.current_environment, "crew_rook"):
+		failures.append("Restored Grand Casino cage did not refresh Bishop's seeded presence on revisit.")
 
 
 static func _check_rook_signposts(library: ContentLibrary, failures: Array) -> void:
@@ -399,8 +440,8 @@ static func _check_crew_ignoring_regression(library: ContentLibrary, failures: A
 	var baseline: Variant = JSON.parse_string(FileAccess.get_file_as_string(IGNORED_BASELINE_PATH)) if FileAccess.file_exists(IGNORED_BASELINE_PATH) else null
 	if typeof(baseline) != TYPE_DICTIONARY:
 		failures.append("Crew-ignoring accepted-main golden fixture is missing or invalid.")
-	elif JSON.stringify(generated_a) != JSON.stringify(_dict((baseline as Dictionary).get("capture", {}))):
-		failures.append("Crew-ignoring full RunState/current/world environment bytes shifted from accepted main outside authorized anchor ambience.")
+	else:
+		_append_ignored_capture_diff(_dict((baseline as Dictionary).get("capture", {})), generated_a, failures)
 
 
 static func _check_presence_determinism(failures: Array) -> void:
@@ -554,6 +595,57 @@ static func _contact_is_embedded(environment: Dictionary, member_id: String) -> 
 			and str((presence_value as Dictionary).get("contact_event_id", "")) == contact_event_id:
 			return true
 	return false
+
+
+static func _event_member_id(event_id: String) -> String:
+	if event_id in ["recruitment_rook_signpost", "recruitment_rook_leads"]:
+		return "crew_rook"
+	if event_id.begins_with("crew_contact_"):
+		return "crew_%s" % event_id.trim_prefix("crew_contact_")
+	if event_id.begins_with("recruitment_"):
+		return "crew_%s" % event_id.trim_prefix("recruitment_")
+	return ""
+
+
+static func _presence_has_member(environment: Dictionary, member_id: String) -> bool:
+	for presence_value in _array(environment.get("crew_presence", [])):
+		if typeof(presence_value) == TYPE_DICTIONARY and str((presence_value as Dictionary).get("member_id", "")) == member_id:
+			return true
+	return false
+
+
+static func _append_ignored_capture_diff(expected: Dictionary, actual: Dictionary, failures: Array) -> void:
+	if int(expected.get("schema_version", -1)) != int(actual.get("schema_version", -2)):
+		failures.append("Crew-ignoring golden schema changed: expected %s, actual %s." % [expected.get("schema_version"), actual.get("schema_version")])
+	var actual_runs := {}
+	for run_value in _array(actual.get("runs", [])):
+		if typeof(run_value) == TYPE_DICTIONARY:
+			actual_runs[str((run_value as Dictionary).get("seed", ""))] = run_value
+	for expected_run_value in _array(expected.get("runs", [])):
+		if typeof(expected_run_value) != TYPE_DICTIONARY:
+			continue
+		var expected_run: Dictionary = expected_run_value
+		var seed := str(expected_run.get("seed", ""))
+		var actual_run := _dict(actual_runs.get(seed, {}))
+		if actual_run.is_empty():
+			failures.append("Crew-ignoring golden lost seed %s." % seed)
+			continue
+		var actual_checkpoints := {}
+		for checkpoint_value in _array(actual_run.get("checkpoints", [])):
+			if typeof(checkpoint_value) == TYPE_DICTIONARY:
+				actual_checkpoints[str((checkpoint_value as Dictionary).get("label", ""))] = checkpoint_value
+		for expected_checkpoint_value in _array(expected_run.get("checkpoints", [])):
+			if typeof(expected_checkpoint_value) != TYPE_DICTIONARY:
+				continue
+			var expected_checkpoint: Dictionary = expected_checkpoint_value
+			var label := str(expected_checkpoint.get("label", ""))
+			var actual_checkpoint := _dict(actual_checkpoints.get(label, {}))
+			if actual_checkpoint.is_empty():
+				failures.append("Crew-ignoring golden %s lost checkpoint %s." % [seed, label])
+				continue
+			for field in ["run_state_bytes", "run_state_sha256", "current_environment_bytes", "current_environment_sha256", "world_environments_bytes", "world_environments_sha256"]:
+				if expected_checkpoint.get(field) != actual_checkpoint.get(field):
+					failures.append("Crew-ignoring golden %s/%s %s changed: expected %s, actual %s." % [seed, label, field, expected_checkpoint.get(field), actual_checkpoint.get(field)])
 
 
 static func _dict(value: Variant) -> Dictionary:

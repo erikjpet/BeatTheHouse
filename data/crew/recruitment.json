@@ -74,7 +74,7 @@
         "contact_event_id": "crew_contact_velvet",
         "job_offer_line": "Velvet has an introduction that needs a steady guest.",
         "primary": {"archetype_ids": ["kitty_cat_lounge"], "scenario_ids": ["kitty_cat_lounge_buyout"]},
-        "fallback": {"archetype_ids": ["kitty_cat_lounge"], "preferred_scenario_ids": ["kitty_cat_lounge_slow_night"]},
+        "fallback": {"archetype_ids": ["kitty_cat_lounge"], "scenario_ids": ["kitty_cat_lounge_slow_night"]},
         "presence": ["kitty_cat_lounge", "delta_queen", "small_underground_casino"],
         "presence_lines": {
           "marker": "Velvet makes the worn room feel invited.",

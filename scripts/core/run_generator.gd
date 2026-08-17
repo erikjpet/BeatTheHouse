@@ -142,13 +142,16 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 		var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
 		environment_data = environment.to_dict()
 		run_state.apply_town_generation_modifiers(environment_data, rng)
-		CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 		environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 		run_state.save_rng(rng)
 	_apply_cage_gift_shop_stock(run_state, environment_data)
 	environment_data["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
 	environment_data["world_map_travel"] = true
 	_apply_world_travel_targets(environment_data, run_state, run_state.world_map, RunState.GRAND_CASINO_ARCHETYPE_ID)
+	# Grand Casino subrooms share one canonical world node. Apply seeded Crew
+	# placement only after that identity is present, and reapply it for restored
+	# rooms so itinerary rotation happens at the same revisit boundary as town.
+	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.set_environment(environment_data)
 	return true
@@ -188,7 +191,6 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 		return {"ok": false, "message": "The room could not be restored."}
 	if not layer_state.has("town_conditions"):
 		run_state.apply_town_generation_modifiers(layer_state)
-	CrewRecruitmentModelScript.apply_to_environment(run_state, layer_state)
 	var stored_game_states: Variant = layer_state.get("game_states", null)
 	if typeof(stored_game_states) != TYPE_DICTIONARY or (stored_game_states as Dictionary).is_empty() and not _copy_array(layer_state.get("game_ids", [])).is_empty():
 		var game_rng := run_state.create_rng("environment_layer_games:%s:%s" % [str(run_state.current_environment.get("world_node_id", run_state.current_environment.get("archetype_id", ""))), target_id])
@@ -198,6 +200,10 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 	layer_state["layout"] = EnvironmentInstance.ensure_generated_layout(layer_state)
 	if not run_state.install_environment_layer_state(target_id, layer_state):
 		return {"ok": false, "message": "The room could not be entered."}
+	# Scenario reconciliation and layer installation can replace flat event
+	# arrays. Recompute recruitment/presence against the final active layer so
+	# real side-door entries and restored revisits expose the authored fallback.
+	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
 	if run_state.has_world_map():
 		run_state.store_current_world_node_environment()
 	return {
