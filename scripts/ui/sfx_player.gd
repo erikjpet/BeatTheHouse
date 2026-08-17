@@ -386,12 +386,14 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 	var profile := _surface_sfx_profile("coin_pusher")
 	if profile.is_empty():
 		return
+	var snapshot := _dict(surface_state.get("coin_pusher_snapshot", {}))
 	var motor: Dictionary = _dict(profile.get("motor_loop", {}))
 	var motor_event := str(motor.get("event_id", "coin_pusher_motor"))
-	var body_count := _dictionary_array(surface_state.get("coin_pusher_bodies", [])).size()
+	var body_count := _dictionary_array(snapshot.get("bodies", [])).size()
 	var loaded := body_count >= 80
-	var phase_milli := int(surface_state.get("coin_pusher_lower_phase_milli", 0))
-	var phase_energy := absf(sin(float(phase_milli) / 8000.0 * TAU))
+	var phase_milli := int(snapshot.get("lower_phase_milli", 0))
+	var phase_domain_milli := maxi(1, int(snapshot.get("phase_domain_milli", 8000)))
+	var phase_energy := absf(sin(float(phase_milli) / float(phase_domain_milli) * TAU))
 	var motor_volume := float(motor.get("loaded_volume_db", -13.0) if loaded else motor.get("idle_volume_db", -18.0))
 	var motor_pitch := float(motor.get("loaded_pitch", 0.96) if loaded else motor.get("idle_pitch", 0.88)) + phase_energy * 0.035
 	if _surface_loop_event_id != motor_event or (_loop_player != null and not _loop_player.playing and not _web_surface_loop_active):
@@ -406,7 +408,7 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 		_coin_pusher_action_id = active_id
 		_clear_markers_with_prefix("coin_pusher_event_")
 	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
-	var events := _dictionary_array(surface_state.get("coin_pusher_presentation_events", []))
+	var events := _dictionary_array(snapshot.get("events", []))
 	for index in range(events.size()):
 		var event: Dictionary = events[index]
 		if not _coin_pusher_event_is_audio_primary(event):
@@ -942,7 +944,8 @@ func debug_coin_pusher_event_schedule(surface_state: Dictionary) -> Array:
 	var profile := _surface_sfx_profile("coin_pusher")
 	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
 	var result: Array = []
-	for event_value in _dictionary_array(surface_state.get("coin_pusher_presentation_events", [])):
+	var snapshot := _dict(surface_state.get("coin_pusher_snapshot", {}))
+	for event_value in _dictionary_array(snapshot.get("events", [])):
 		var event: Dictionary = event_value
 		if not _coin_pusher_event_is_audio_primary(event):
 			continue

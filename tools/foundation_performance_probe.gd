@@ -610,7 +610,8 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 	var draw_p95_ms := float(counters.get("draw_p95_ms", 0.0))
 	var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
 	var metrics: Dictionary = result.get("coin_pusher_solver_metrics", {}) if typeof(result.get("coin_pusher_solver_metrics", {})) == TYPE_DICTIONARY else {}
-	var trace: Array = result.get("coin_pusher_presentation_trace", []) if typeof(result.get("coin_pusher_presentation_trace", [])) == TYPE_ARRAY else []
+	var presentation_patch: Dictionary = result.get("surface_presentation_snapshot_patch", {}) if typeof(result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
+	var trace: Array = presentation_patch.get("trace", []) if typeof(presentation_patch.get("trace", [])) == TYPE_ARRAY else []
 	var collapse_seen := int(metrics.get("topple_count", 0)) > 0 or int(metrics.get("upper_lower_fall_count", 0)) > 0
 	var observation := {
 		"seed": "practice:coin_pusher_full_cap",

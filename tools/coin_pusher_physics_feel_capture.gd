@@ -234,7 +234,6 @@ func _surface_for_trace_frame(background: Dictionary, trace_frame: Dictionary, s
 	var bodies := SolverScript.body_views(background)
 	for body_value in trace_frame.get("bodies", []):
 		bodies.append(body_value)
-	snapshot["coin_pusher_bodies"] = bodies
 	(snapshot.get("coin_pusher_snapshot", {}) as Dictionary)["bodies"] = bodies
 	return snapshot
 
@@ -266,9 +265,11 @@ func _capture_tell_ladder() -> void:
 	var file_name := "07_tell_ladder_alarm_1280x720.png"
 	var image := root.get_viewport().get_texture().get_image()
 	var saved := image != null and image.save_png("%s/%s" % [out_dir, file_name]) == OK
-	var state_valid := int(first_warning.get("coin_pusher_tell_rung", 0)) == 1 \
-		and int(alarm.get("coin_pusher_tell_rung", 0)) == 3 \
-		and bool(alarm.get("coin_pusher_locked", false))
+	var first_snapshot: Dictionary = first_warning.get("coin_pusher_snapshot", {})
+	var alarm_snapshot: Dictionary = alarm.get("coin_pusher_snapshot", {})
+	var state_valid := int(first_snapshot.get("tell_rung", 0)) == 1 \
+		and int(alarm_snapshot.get("tell_rung", 0)) == 3 \
+		and bool(alarm_snapshot.get("locked", false))
 	if not saved or not state_valid:
 		failed = true
 	captures.append({
@@ -290,7 +291,7 @@ func _tell_surface(simulation: Dictionary, tell_rung: int, alarmed: bool, surfac
 	machine["locked_down"] = alarmed
 	machine["last_message"] = "Attendant looks over. Alarm line crossed." if alarmed else "The cabinet rocks under the first warning."
 	var snapshot := _surface_for_simulation(simulation, surface_time_msec)
-	snapshot["coin_pusher_presentation_events"] = [{
+	(snapshot.get("coin_pusher_snapshot", {}) as Dictionary)["events"] = [{
 		"kind": "alarm" if alarmed else "tell_rock", "body_id": "cabinet",
 		"x": SolverScript.WIDTH / 2, "y": SolverScript.UPPER_EDGE, "z": 0,
 		"intensity_milli": 1000 if alarmed else 540, "tick_offset": SolverScript.ACTION_TICKS,

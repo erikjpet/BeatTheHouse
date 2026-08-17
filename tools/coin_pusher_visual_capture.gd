@@ -213,7 +213,8 @@ func _capture_variation_surface(file_name: String, variation_id: String) -> void
 	canvas.queue_redraw()
 	await RenderingServer.frame_post_draw
 	var state: Dictionary = canvas.call("realtime_surface_state")
-	var features: Array = state.get("coin_pusher_features", []) if typeof(state.get("coin_pusher_features", [])) == TYPE_ARRAY else []
+	var presentation := _presentation_snapshot(state)
+	var features: Array = presentation.get("features", []) if typeof(presentation.get("features", [])) == TYPE_ARRAY else []
 	var valid := str(state.get("coin_pusher_variation_id", "")) == variation_id and not features.is_empty()
 	if variation_id == "jackpot_ridge":
 		valid = valid and str(state.get("coin_pusher_variation_name", "")) == "Jackpot Ridge" and state.has("coin_pusher_cascade_remaining")
@@ -241,6 +242,7 @@ func _capture_surface(file_name: String, capture_id: String, expected: Dictionar
 	canvas.queue_redraw()
 	await RenderingServer.frame_post_draw
 	var state: Dictionary = canvas.call("realtime_surface_state")
+	var presentation := _presentation_snapshot(state)
 	var runtime: Dictionary = canvas.call("surface_runtime_status")
 	var expected_reduce_motion := bool(expected.get("expected_reduce_motion", false))
 	var motion_before: Dictionary = {}
@@ -259,11 +261,11 @@ func _capture_surface(file_name: String, capture_id: String, expected: Dictionar
 			and animation_redraw_count == 0 \
 			and not bool(runtime.get("surface_continuous_redraw_active", true))
 	var valid := str(state.get("surface_renderer", "")) == "coin_pusher" \
-		and (state.get("coin_pusher_bodies", []) as Array).size() >= 24 \
+		and (presentation.get("bodies", []) as Array).size() >= 24 \
 		and (state.get("coin_pusher_lanes", []) as Array).size() == 5 \
-		and (state.get("coin_pusher_riders", []) as Array).size() == 1 \
-		and int(state.get("coin_pusher_tell_rung", -1)) == int(expected.get("expected_tell_rung", -2)) \
-		and bool(state.get("coin_pusher_locked", false)) == bool(expected.get("expected_locked", false)) \
+		and (presentation.get("riders", []) as Array).size() == 1 \
+		and int(presentation.get("tell_rung", -1)) == int(expected.get("expected_tell_rung", -2)) \
+		and bool(presentation.get("locked", false)) == bool(expected.get("expected_locked", false)) \
 		and bool(runtime.get("reduce_motion", false)) == expected_reduce_motion \
 		and motion_frozen
 	if not valid:
@@ -275,10 +277,10 @@ func _capture_surface(file_name: String, capture_id: String, expected: Dictionar
 		"saved": saved,
 		"state_valid": valid,
 		"surface_renderer": str(state.get("surface_renderer", "")),
-		"body_count": (state.get("coin_pusher_bodies", []) as Array).size(),
+		"body_count": (presentation.get("bodies", []) as Array).size(),
 		"lane_count": (state.get("coin_pusher_lanes", []) as Array).size(),
-		"rider_count": (state.get("coin_pusher_riders", []) as Array).size(),
-		"tell_rung": int(state.get("coin_pusher_tell_rung", -1)),
+		"rider_count": (presentation.get("riders", []) as Array).size(),
+		"tell_rung": int(presentation.get("tell_rung", -1)),
 		"tell": str(state.get("coin_pusher_tell", "")),
 		"locked": bool(state.get("coin_pusher_locked", false)),
 		"expected_reduce_motion": expected_reduce_motion,
@@ -389,6 +391,11 @@ func _machine(run_state: RunState) -> Dictionary:
 		return {}
 	var states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var value: Variant = states.get("coin_pusher", {})
+	return value if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _presentation_snapshot(surface_state: Dictionary) -> Dictionary:
+	var value: Variant = surface_state.get("coin_pusher_snapshot", {})
 	return value if typeof(value) == TYPE_DICTIONARY else {}
 
 

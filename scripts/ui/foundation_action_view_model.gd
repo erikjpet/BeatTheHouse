@@ -118,6 +118,14 @@ static func game_view_snapshot(host: Variant) -> Dictionary:
 		var result_key = str(key)
 		if not snapshot.has(result_key):
 			snapshot[result_key] = host._snapshot_copy_value(result[key])
+	var presentation_snapshot_key := str(snapshot.get("surface_presentation_snapshot_key", ""))
+	var presentation_patch: Variant = result.get("surface_presentation_snapshot_patch", {})
+	if not presentation_snapshot_key.is_empty() and typeof(presentation_patch) == TYPE_DICTIONARY \
+			and typeof(snapshot.get(presentation_snapshot_key, {})) == TYPE_DICTIONARY:
+		var presentation_snapshot: Dictionary = (snapshot.get(presentation_snapshot_key, {}) as Dictionary).duplicate(true)
+		host._deep_merge_dict(presentation_snapshot, presentation_patch as Dictionary)
+		snapshot[presentation_snapshot_key] = presentation_snapshot
+		snapshot.erase("surface_presentation_snapshot_patch")
 	return snapshot
 
 

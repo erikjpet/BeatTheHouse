@@ -239,7 +239,7 @@ func _check_coin_pusher_definition_routing(library: ContentLibrary, definition: 
 	var current_machine: Dictionary = (run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	current_machine["tell_rung"] = 2
 	surface = routed_game.surface_state(run_state, run_state.current_environment)
-	if str(surface.get("coin_pusher_tell", "")) != "authored chirp":
+	if str(_presentation_snapshot(surface).get("tell_label", "")) != "authored chirp":
 		failures.append("Quarter Falls tell presentation ignored its authored label ladder.")
 	var lax_environment := _coin_pusher_environment("pusher_definition_lax")
 	lax_environment["security_profile"] = {"machine_alarm_tolerance_band": "lax"}
@@ -292,7 +292,7 @@ func _check_coin_pusher_alarm_audio(failures: Array) -> void:
 		var stream: AudioStreamWAV = sfx.render_event_master_stream(cue)
 		if cue.is_empty() or sfx.debug_normalized_event_id(cue) != cue or stream == null or stream.data.is_empty():
 			failures.append("Coin Pusher audio event class %s is missing its authored central-bank cue." % event_class)
-	var schedule := sfx.debug_coin_pusher_event_schedule({"coin_pusher_presentation_events": [
+	var schedule := sfx.debug_coin_pusher_event_schedule({"coin_pusher_snapshot": {"events": [
 		{"kind": "impact", "tick_offset": 2, "intensity_milli": 400, "metadata": {"material": "coin_on_metal", "stack_depth": 0, "fall_height_milli": 0}},
 		{"kind": "impact", "tick_offset": 3, "intensity_milli": 700, "metadata": {"material": "coin_on_coin", "stack_depth": 3, "fall_height_milli": 3000}},
 		{"kind": "slide", "tick_offset": 5, "intensity_milli": 500, "metadata": {}},
@@ -306,22 +306,22 @@ func _check_coin_pusher_alarm_audio(failures: Array) -> void:
 		{"kind": "tell_chirp", "tick_offset": 1, "intensity_milli": 600, "metadata": {"tell_rung": 2}},
 		{"kind": "attendant_glance", "tick_offset": 1, "intensity_milli": 700, "metadata": {"tell_rung": 3}},
 		{"kind": "alarm", "tick_offset": 1, "intensity_milli": 1000, "metadata": {"tell_rung": 3}},
-	]})
+	]}})
 	if schedule.size() != 13 or str((schedule[0] as Dictionary).get("cue", "")) != "coin_pusher_coin_metal" or str((schedule[1] as Dictionary).get("cue", "")) != "coin_pusher_coin_stack" \
 			or float((schedule[1] as Dictionary).get("pitch", 0.0)) <= float((schedule[0] as Dictionary).get("pitch", 0.0)) \
 			or str((schedule[6] as Dictionary).get("cue", "")) != "coin_pusher_tray" or str((schedule[7] as Dictionary).get("cue", "")) != "coin_pusher_gutter" \
 			or str((schedule[12] as Dictionary).get("cue", "")) != "coin_pusher_alarm":
 		failures.append("Coin Pusher snapshot events did not schedule the full layered impact/slide/motor/tray/gutter/tell/alarm audio map.")
-	var height_schedule := sfx.debug_coin_pusher_event_schedule({"coin_pusher_presentation_events": [
+	var height_schedule := sfx.debug_coin_pusher_event_schedule({"coin_pusher_snapshot": {"events": [
 		{"kind": "impact", "tick_offset": 1, "intensity_milli": 500, "metadata": {"material": "coin_on_metal", "stack_depth": 0, "fall_height_milli": 0}},
 		{"kind": "impact", "tick_offset": 1, "intensity_milli": 500, "metadata": {"material": "coin_on_metal", "stack_depth": 0, "fall_height_milli": 4000}},
-	]})
+	]}})
 	if height_schedule.size() != 2 or float((height_schedule[1] as Dictionary).get("volume_db", -99.0)) <= float((height_schedule[0] as Dictionary).get("volume_db", -99.0)):
 		failures.append("Coin Pusher impact mix does not respond to physical fall height.")
-	var cascade_schedule := sfx.debug_coin_pusher_event_schedule({"coin_pusher_presentation_events": [
+	var cascade_schedule := sfx.debug_coin_pusher_event_schedule({"coin_pusher_snapshot": {"events": [
 		{"kind": "tray_landing", "tick_offset": 2, "intensity_milli": 700, "metadata": {"group_count": 3, "group_index": 0}},
 		{"kind": "tray_landing", "tick_offset": 3, "intensity_milli": 700, "metadata": {"group_count": 3, "group_index": 1}},
-	]})
+	]}})
 	if cascade_schedule.size() != 1 or float((cascade_schedule[0] as Dictionary).get("volume_db", -99.0)) <= -7.0:
 		failures.append("Coin Pusher tray payout did not collapse physical landings into one count-scaled cascade.")
 	var alarm_stream: AudioStreamWAV = sfx.render_event_master_stream("coin_pusher_alarm")
@@ -378,7 +378,8 @@ func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> v
 			approaches.append(int((lane_value as Dictionary).get("approach", 99)))
 	if JSON.stringify(approaches) != JSON.stringify([-2, -1, 0, 1, 2]):
 		failures.append("Quarter Falls surface did not expose five distinct lane approach identities.")
-	if (surface.get("coin_pusher_riders", []) as Array).size() != 1:
+	var presentation_snapshot: Dictionary = surface.get("coin_pusher_snapshot", {}) if typeof(surface.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	if (presentation_snapshot.get("riders", []) as Array).size() != 1:
 		failures.append("Quarter Falls surface did not expose the prize rider ON its pile.")
 	var digest_before_render: String = game.deterministic_state_digest(run_state.current_environment)
 	var harness := SurfaceHarness.new()
@@ -412,26 +413,57 @@ func _check_coin_pusher_snapshot_renderer_boundary(game: GameModule, failures: A
 		"radius": 4300, "height": 1700, "mass": 1, "sleeping": true,
 		"rest_state": "resting", "level": "lower", "material_category": "coin", "lean_milli": 340, "metadata": {},
 	}
+	var synthetic_rider := synthetic_body.duplicate(true)
+	synthetic_rider.merge({"id": "synthetic_rider", "kind": "rider", "material_category": "prize_rider", "x": 39000, "y": 61000, "metadata": {"label": "watch"}}, true)
+	var synthetic_feature := synthetic_body.duplicate(true)
+	synthetic_feature.merge({"id": "synthetic_puck", "kind": "puck", "material_category": "feature_puck", "x": 61000, "y": 66000, "metadata": {"kind": "multiplier", "multiplier": 3}}, true)
+	var synthetic_event := {"kind": "impact", "body_id": "synthetic_coin", "x": 50000, "y": 32000, "z": 1700, "intensity_milli": 700, "tick_offset": 12, "metadata": {"material": "coin_on_coin", "stack_depth": 1}}
+	var moved_body := synthetic_body.duplicate(true)
+	moved_body["x"] = 53000
+	var synthetic_trace := [
+		{"tick_offset": 0, "bodies": [synthetic_feature, synthetic_rider, synthetic_body]},
+		{"tick_offset": 48, "bodies": [synthetic_feature, synthetic_rider, moved_body]},
+	]
 	var synthetic := {
-		"surface_renderer": "coin_pusher", "surface_time_msec": 1, "reduce_motion": true,
+		"surface_renderer": "coin_pusher", "surface_time_msec": 1, "reduce_motion": false,
 		"coin_pusher_snapshot": {
 			"schema": "coin_pusher_presentation_snapshot", "version": 1,
 			"geometry": {"width": 100000, "front_edge": 7000, "upper_edge": 52000, "rear_edge": 95000, "coin_radius": 4300, "coin_height": 1700},
-			"bodies": [synthetic_body], "depth_ordered": true, "upper_phase_milli": 0, "lower_phase_milli": 0, "phase_domain_milli": 8000,
-			"action_state": {"action_count": 0, "replay_active_id": ""}, "tell_rung": 0, "locked": false,
+			"bodies": [synthetic_feature, synthetic_rider, synthetic_body], "depth_ordered": true,
+			"upper_phase_milli": 1600, "lower_phase_milli": 3200, "phase_domain_milli": 8000,
+			"riders": [synthetic_rider], "features": [synthetic_feature], "events": [synthetic_event], "trace": synthetic_trace,
+			"action_state": {"action_count": 1, "replay_active_id": "synthetic_action", "action_id": "drop_quarter"},
+			"tell_rung": 2, "tell_label": "alarm chirps", "locked": false,
 		},
-		"coin_pusher_bodies": [synthetic_body], "coin_pusher_lanes": [{"lane": 0, "approach": 0}],
-		"coin_pusher_lane": 0, "coin_pusher_tell_rung": 0, "coin_pusher_upper_phase_milli": 0,
-		"coin_pusher_lower_phase_milli": 0, "coin_pusher_force_order": ["tap", "shove", "slam"],
-		"coin_pusher_direction_order": ["left", "right", "front"], "coin_pusher_variation_id": "quarter_falls",
-		"coin_pusher_variation_name": "Quarter Falls", "coin_pusher_last_message": "Synthetic snapshot.",
+		"coin_pusher_lanes": [{"lane": 0, "approach": 0}],
+		"coin_pusher_lane": 0, "coin_pusher_force_order": ["tap", "shove", "slam"],
+		"coin_pusher_direction_order": ["left", "right", "front"], "coin_pusher_variation_id": "jackpot_ridge",
+		"coin_pusher_variation_name": "Jackpot Ridge", "coin_pusher_multiplier": 3,
+		"coin_pusher_cascade_remaining": 1, "coin_pusher_jammed_lanes": [], "coin_pusher_tray_value": 0,
+		"coin_pusher_last_message": "Synthetic snapshot.",
 	}
 	var harness := SurfaceHarness.new()
 	harness.setup(synthetic)
 	if not game.draw_surface(harness, synthetic, {"synthetic_snapshot_without_solver": true}):
 		failures.append("Coin Pusher renderer did not run from a synthetic pure-data snapshot without a solver state.")
-	elif not harness.labels.has("QUARTER FALLS") or not _surface_harness_has_action(harness, "coin_pusher_drop"):
+	elif not harness.labels.has("JACKPOT RIDGE") or not harness.labels.has("R:WATCH") or not harness.labels.has("x3") \
+			or not harness.labels.has("Tell: alarm chirps") or not _surface_harness_has_action(harness, "coin_pusher_drop"):
 		failures.append("Coin Pusher synthetic snapshot renderer did not retain its identity and input affordances.")
+	harness.animation_active = true
+	harness.animation_progress = 0.0
+	var motion_start: Dictionary = game.surface_motion_signature(harness, synthetic)
+	harness.animation_progress = 1.0
+	var motion_end: Dictionary = game.surface_motion_signature(harness, synthetic)
+	if int(motion_start.get("physics_body_checksum", 0)) == int(motion_end.get("physics_body_checksum", 0)):
+		failures.append("Coin Pusher renderer did not consume synthetic replay frames from the presentation snapshot.")
+	var synthetic_sfx := SfxPlayerScript.new()
+	var synthetic_audio_schedule := synthetic_sfx.debug_coin_pusher_event_schedule(synthetic)
+	if synthetic_audio_schedule.size() != 1 or str((synthetic_audio_schedule[0] as Dictionary).get("cue", "")) != "coin_pusher_coin_stack":
+		failures.append("Coin Pusher audio did not consume the synthetic physical event from the presentation snapshot.")
+	synthetic_sfx.free()
+	for forbidden_legacy_field in ["coin_pusher_bodies", "coin_pusher_riders", "coin_pusher_features", "coin_pusher_upper_phase_milli", "coin_pusher_lower_phase_milli", "coin_pusher_tell_rung", "coin_pusher_presentation_events", "coin_pusher_presentation_trace"]:
+		if synthetic.has(forbidden_legacy_field):
+			failures.append("Synthetic snapshot boundary still duplicates physical field %s outside the snapshot." % forbidden_legacy_field)
 	var narrow_geometry: Dictionary = ((synthetic.get("coin_pusher_snapshot", {}) as Dictionary).get("geometry", {}) as Dictionary).duplicate(true)
 	var wide_geometry: Dictionary = narrow_geometry.duplicate(true)
 	wide_geometry["width"] = 200000
@@ -440,12 +472,14 @@ func _check_coin_pusher_snapshot_renderer_boundary(game: GameModule, failures: A
 	if narrow_position.is_equal_approx(wide_position):
 		failures.append("Coin Pusher renderer ignored synthetic snapshot geometry and therefore still depends on solver geometry.")
 	var source := FileAccess.get_file_as_string("res://scripts/games/coin_pusher.gd")
-	var render_start := source.find("func _draw_cells")
-	var render_end := source.find("func _draw_vault_console")
-	if render_start < 0 or render_end <= render_start or source.substr(render_start, render_end - render_start).contains("CoinPusherSolverScript"):
+	var render_cells := _source_function(source, "_draw_cells")
+	if render_cells.is_empty() or render_cells.contains("CoinPusherSolverScript"):
 		failures.append("Coin Pusher render helpers reach through the renderer-agnostic snapshot into solver internals.")
-	if source.substr(render_start, render_end - render_start).contains("sort_custom"):
+	if render_cells.contains("sort_custom"):
 		failures.append("Coin Pusher renderer still sorts every physical body per frame instead of consuming snapshot depth order.")
+	for renderer_function in ["draw_surface", "surface_motion_signature", "_presentation_geometry", "_presentation_bodies", "_draw_perspective_cabinet", "_draw_presentation_particles", "_draw_riders", "_draw_variation_features"]:
+		if _source_function(source, renderer_function).contains("CoinPusherSolverScript"):
+			failures.append("Coin Pusher renderer function %s reaches through its snapshot into solver internals." % renderer_function)
 
 
 func _check_coin_pusher_visible_timing(game: GameModule, failures: Array) -> void:
@@ -463,8 +497,8 @@ func _check_coin_pusher_visible_timing(game: GameModule, failures: Array) -> voi
 	var early_ui: Dictionary = early_command.get("ui_state", {})
 	var late_ui: Dictionary = late_command.get("ui_state", {})
 	var replay_ui: Dictionary = replay_command.get("ui_state", {})
-	if int(early_ui.get("coin_pusher_upper_input_phase", -1)) != int(early_surface.get("coin_pusher_upper_phase", -2)) \
-			or int(late_ui.get("coin_pusher_upper_input_phase", -1)) != int(late_surface.get("coin_pusher_upper_phase", -2)):
+	if int(early_ui.get("coin_pusher_upper_input_phase", -1)) != int(_presentation_snapshot(early_surface).get("upper_phase_milli", -2000)) / 1000 \
+			or int(late_ui.get("coin_pusher_upper_input_phase", -1)) != int(_presentation_snapshot(late_surface).get("upper_phase_milli", -2000)) / 1000:
 		failures.append("Quarter Falls click did not capture the exact shelf phase shown to the player.")
 	if int(early_ui.get("coin_pusher_upper_input_phase", -1)) == int(late_ui.get("coin_pusher_upper_input_phase", -1)):
 		failures.append("Quarter Falls visible pusher phase did not sweep as surface time advanced.")
@@ -487,7 +521,7 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 	var drop_run: RunState = drop_fixture.get("run_state")
 	var drop_ui := {"coin_pusher_lane": 2, "coin_pusher_upper_input_phase": 2, "coin_pusher_lower_input_phase": 5, "coin_pusher_capture_presentation_trace": true}
 	var drop_result := game.resolve_with_context("drop_quarter", 1, drop_run, drop_run.current_environment, drop_run.create_rng("presentation_drop"), drop_ui)
-	var drop_trace: Array = drop_result.get("coin_pusher_presentation_trace", []) if typeof(drop_result.get("coin_pusher_presentation_trace", [])) == TYPE_ARRAY else []
+	var drop_trace := _presentation_trace(drop_result)
 	if not bool(drop_result.get("ok", false)) or drop_trace.size() < 4 or drop_trace.size() > 15 or not _trace_visibly_moves(drop_trace):
 		failures.append("Quarter Falls drop did not expose a bounded authoritative body-motion replay.")
 	var drop_machine: Dictionary = (drop_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
@@ -499,7 +533,7 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 		failures.append("Quarter Falls drop replay did not end on the exact authoritative persisted pile.")
 	var persisted_digest: String = game.deterministic_state_digest(drop_run.current_environment)
 	var replay_surface := game.surface_state(drop_run, drop_run.current_environment, {"surface_time_msec": 1000})
-	replay_surface["coin_pusher_presentation_trace"] = drop_trace
+	_presentation_snapshot(replay_surface)["trace"] = drop_trace
 	var replay_harness := SurfaceHarness.new()
 	replay_harness.setup(replay_surface)
 	replay_harness.animation_active = true
@@ -524,7 +558,7 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 	var headless_fixture := _coin_pusher_fixture(game, "PUSHER-NO-PRESENTATION-TRACE")
 	var headless_run: RunState = headless_fixture.get("run_state")
 	var headless_result := game.resolve_with_context("drop_quarter", 1, headless_run, headless_run.current_environment, headless_run.create_rng("no_presentation_trace"), {"coin_pusher_lane": 2})
-	if not (headless_result.get("coin_pusher_presentation_trace", []) as Array).is_empty():
+	if not _presentation_trace(headless_result).is_empty():
 		failures.append("Quarter Falls generated replay frames for a non-presented headless action.")
 
 	var nudge_fixture := _coin_pusher_fixture(game, "PUSHER-PRESENTATION-NUDGE")
@@ -533,7 +567,7 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 		"coin_pusher_lane": 2, "coin_pusher_force": "slam", "coin_pusher_direction": "front",
 		"coin_pusher_upper_input_phase": 2, "coin_pusher_lower_input_phase": 5, "coin_pusher_capture_presentation_trace": true,
 	})
-	var nudge_trace: Array = nudge_result.get("coin_pusher_presentation_trace", []) if typeof(nudge_result.get("coin_pusher_presentation_trace", [])) == TYPE_ARRAY else []
+	var nudge_trace := _presentation_trace(nudge_result)
 	if not bool(nudge_result.get("ok", false)) or not _trace_visibly_moves(nudge_trace):
 		failures.append("Quarter Falls nudge did not expose visible real-pile movement from the authoritative solver.")
 
@@ -651,9 +685,9 @@ func _check_coin_pusher_reduced_motion_freeze(game: GameModule, surface: Diction
 		failures.append("Quarter Falls reduced motion still scheduled continuous surface redraws.")
 	if JSON.stringify(state_before) != JSON.stringify(state_after) \
 			or str(state_after.get("surface_renderer", "")) != "coin_pusher" \
-			or (state_after.get("coin_pusher_bodies", []) as Array).size() != (state_before.get("coin_pusher_bodies", []) as Array).size() \
-			or (state_after.get("coin_pusher_riders", []) as Array).size() != (state_before.get("coin_pusher_riders", []) as Array).size() \
-			or int(state_after.get("coin_pusher_tell_rung", -1)) != int(state_before.get("coin_pusher_tell_rung", -2)):
+			or (_presentation_snapshot(state_after).get("bodies", []) as Array).size() != (_presentation_snapshot(state_before).get("bodies", []) as Array).size() \
+			or (_presentation_snapshot(state_after).get("riders", []) as Array).size() != (_presentation_snapshot(state_before).get("riders", []) as Array).size() \
+			or int(_presentation_snapshot(state_after).get("tell_rung", -1)) != int(_presentation_snapshot(state_before).get("tell_rung", -2)):
 		failures.append("Quarter Falls reduced motion hid or changed the visible pile state.")
 	root.remove_child(canvas)
 	canvas.free()
@@ -1052,13 +1086,16 @@ func _check_coin_pusher_items(game: GameModule, failures: Array) -> void:
 	var shim_fixture := _coin_pusher_fixture(game, "PUSHER-COIN-SHIM")
 	var shim_run: RunState = shim_fixture.get("run_state")
 	shim_run.add_item("coin_return_shim")
+	var shim_state: Dictionary = (shim_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	_clear_coin_pusher_lanes(shim_state)
 	var safe_shim_seed := _coin_pusher_seed_for_roll(false)
 	var shim_seed_drop := game.resolve_with_context("drop_quarter", 1, shim_run, shim_run.current_environment, _configured_rng(safe_shim_seed), {"coin_pusher_lane": 2})
 	GameModule.apply_result(shim_run, shim_seed_drop, shim_run.create_rng("shim_seed_drop_apply"))
-	var shim_state: Dictionary = (shim_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	shim_state = (shim_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	var authored_uses := shim_run.item_effect_total("coin_pusher_gutter_recovery_uses", "coin_pusher")
 	if not bool(shim_seed_drop.get("ok", false)) or bool(shim_seed_drop.get("coin_pusher_shim_recovered", false)) \
-			or not bool(shim_state.get("shim_initialized", false)) or int(shim_state.get("shim_uses_remaining", 0)) != authored_uses or authored_uses != 3:
+			or not bool(shim_state.get("shim_initialized", false)) or bool(shim_state.get("shim_activation_pending", true)) \
+			or int(shim_state.get("shim_uses_remaining", 0)) != authored_uses or authored_uses != 3:
 		failures.append("Coin-Return Shim did not seed its authored limited-use recovery state at the next real drop boundary.")
 	var gutter_seed := _coin_pusher_seed_for_roll(true)
 	var shim_simulation: Dictionary = shim_state.get("simulation", {}) if typeof(shim_state.get("simulation", {})) == TYPE_DICTIONARY else {}
@@ -1640,6 +1677,27 @@ func _coin_pusher_sweep_map() -> Dictionary:
 		],
 		"visited_path": ["back_alley"],
 	}
+
+
+func _presentation_snapshot(surface_state: Dictionary) -> Dictionary:
+	var value: Variant = surface_state.get("coin_pusher_snapshot", {})
+	return value if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _presentation_trace(result: Dictionary) -> Array:
+	var patch: Variant = result.get("surface_presentation_snapshot_patch", {})
+	if typeof(patch) != TYPE_DICTIONARY:
+		return []
+	var trace: Variant = (patch as Dictionary).get("trace", [])
+	return trace if typeof(trace) == TYPE_ARRAY else []
+
+
+func _source_function(source: String, function_name: String) -> String:
+	var start := source.find("func %s(" % function_name)
+	if start < 0:
+		return ""
+	var next := source.find("\nfunc ", start + 6)
+	return source.substr(start) if next < 0 else source.substr(start, next - start)
 
 
 func _configured_rng(seed_value: int) -> RngStream:
