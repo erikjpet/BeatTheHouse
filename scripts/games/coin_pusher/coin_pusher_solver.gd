@@ -1476,61 +1476,186 @@ static func canonical_digest(state: Dictionary) -> Dictionary:
 
 
 static func _seed_opening_pile(state: Dictionary, rng: RngStream, opening_coins: int, _lane_count: int) -> void:
-	# Best-candidate sampling gives each seeded cabinet a natural, compressed
-	# field without reintroducing the old lane/height-grid model. It is performed
-	# once at generation time and consumes only the run-scoped RNG.
+	# Generation owns the depth gradient. Fixed quotas make every shipped
+	# cabinet visibly packed at the pusher and progressively thinner toward the
+	# ledge, while best-candidate placement and stack lean remain run-seeded.
 	var shelf_specs := [
-		{"min_y": 8500, "max_y": 48500, "upper": false},
-		{"min_y": 55000, "max_y": 92500, "upper": true},
+		{"id": "lower", "min_y": 8500, "max_y": 48500, "upper": false},
+		{"id": "upper", "min_y": 55000, "max_y": 92500, "upper": true},
 	]
-	var base_target := mini(opening_coins, 110)
-	var base_bodies: Array = []
+	var shelf_targets := _opening_balanced_counts(opening_coins, shelf_specs.size())
+	var shelf_base_targets := _opening_balanced_counts(mini(opening_coins, 110), shelf_specs.size())
+	var shelf_supports: Array = []
+	var shelf_depth_targets: Array = []
+	var shelf_base_depth_targets: Array = []
 	for shelf_index in range(shelf_specs.size()):
 		var shelf: Dictionary = shelf_specs[shelf_index]
-		var count := base_target / shelf_specs.size()
-		if shelf_index < base_target % shelf_specs.size():
-			count += 1
-		var shelf_bodies: Array = []
-		for _coin_index in range(count):
-			var candidate := _opening_best_candidate(rng, shelf, shelf_bodies)
-			var base_z := UPPER_FLOOR_Z if bool(shelf.get("upper", false)) else LOWER_FLOOR_Z
-			var body := _body(state, "coin", candidate.x, candidate.y, base_z, COIN_RADIUS, COIN_HEIGHT, 1, {"opening_pile": true})
-			_set_opening_body_rest(body)
-			(state["bodies"] as Array).append(body)
-			base_bodies.append(body)
-			shelf_bodies.append(body)
+		var depth_targets := _opening_gradient_targets(int(shelf_targets[shelf_index]))
+		var base_depth_targets := _opening_scaled_targets(depth_targets, int(shelf_base_targets[shelf_index]))
+		var bands := _opening_depth_bands(shelf)
+		var supports := {"rear": [], "mid": [], "front": []}
+		for band_value in bands:
+			var band: Dictionary = band_value
+			var band_id := str(band.get("id", "front"))
+			var band_bodies: Array = []
+			for _coin_index in range(int(base_depth_targets.get(band_id, 0))):
+				var candidate := _opening_best_candidate(rng, band, band_bodies)
+				var base_z := UPPER_FLOOR_Z if bool(shelf.get("upper", false)) else LOWER_FLOOR_Z
+				var body := _body(state, "coin", candidate.x, candidate.y, base_z, COIN_RADIUS, COIN_HEIGHT, 1, {
+					"opening_pile": true,
+					"opening_shelf": str(shelf.get("id", "lower")),
+					"opening_depth_band": band_id,
+				})
+				_set_opening_body_rest(body)
+				(state["bodies"] as Array).append(body)
+				band_bodies.append(body)
+				(supports[band_id] as Array).append(body)
+		shelf_supports.append(supports)
+		shelf_depth_targets.append(depth_targets)
+		shelf_base_depth_targets.append(base_depth_targets)
 	var stack_layers := {}
-	while (state["bodies"] as Array).size() < opening_coins and not base_bodies.is_empty():
-		var candidates: Array = []
-		for base_value in base_bodies:
-			var base: Dictionary = base_value
-			var base_id := str(base.get("id", ""))
-			var layers := int(stack_layers.get(base_id, 0))
-			var y := int(base.get("y", 0))
-			if layers < 2 and (y >= 26000 and y < UPPER_EDGE or y >= 72000):
-				candidates.append(base)
-		if candidates.is_empty():
-			break
-		var support: Dictionary = candidates[rng.randi_range(0, candidates.size() - 1)]
-		var support_id := str(support.get("id", ""))
-		var layer := int(stack_layers.get(support_id, 0)) + 1
-		stack_layers[support_id] = layer
-		var lean_x := rng.randi_range(-1900, 1900)
-		var lean_y := rng.randi_range(-1450, 1450)
-		var stacked := _body(
-			state,
-			"coin",
-			clampi(int(support.get("x", 0)) + lean_x, COIN_RADIUS, WIDTH - COIN_RADIUS),
-			int(support.get("y", 0)) + lean_y,
-			int(support.get("z", 0)) + layer * COIN_HEIGHT,
-			COIN_RADIUS,
-			COIN_HEIGHT,
-			1,
-			{"opening_pile": true, "opening_stack_layer": layer}
+	for shelf_index in range(shelf_specs.size()):
+		var shelf: Dictionary = shelf_specs[shelf_index]
+		var bands := _opening_depth_bands(shelf)
+		var supports: Dictionary = shelf_supports[shelf_index]
+		var depth_targets: Dictionary = shelf_depth_targets[shelf_index]
+		var base_depth_targets: Dictionary = shelf_base_depth_targets[shelf_index]
+		for band_value in bands:
+			var band: Dictionary = band_value
+			var band_id := str(band.get("id", "front"))
+			var stack_count := int(depth_targets.get(band_id, 0)) - int(base_depth_targets.get(band_id, 0))
+			for _stack_index in range(stack_count):
+				var candidates: Array = []
+				for support_value in supports.get(band_id, []):
+					var support: Dictionary = support_value
+					if int(stack_layers.get(str(support.get("id", "")), 0)) < 2:
+						candidates.append(support)
+				if candidates.is_empty():
+					break
+				var support: Dictionary = candidates[rng.randi_range(0, candidates.size() - 1)]
+				var support_id := str(support.get("id", ""))
+				var layer := int(stack_layers.get(support_id, 0)) + 1
+				stack_layers[support_id] = layer
+				var lean_x := rng.randi_range(-1900, 1900)
+				var lean_y := rng.randi_range(-1450, 1450)
+				var stacked := _body(
+					state,
+					"coin",
+					clampi(int(support.get("x", 0)) + lean_x, COIN_RADIUS, WIDTH - COIN_RADIUS),
+					clampi(int(support.get("y", 0)) + lean_y, int(band.get("min_y", FRONT_EDGE)), int(band.get("max_y", REAR_EDGE))),
+					int(support.get("z", 0)) + layer * COIN_HEIGHT,
+					COIN_RADIUS,
+					COIN_HEIGHT,
+					1,
+					{
+						"opening_pile": true,
+						"opening_shelf": str(shelf.get("id", "lower")),
+						"opening_depth_band": band_id,
+						"opening_stack_layer": layer,
+					}
+				)
+				stacked["lean_milli"] = _divi(maxi(absi(lean_x), absi(lean_y)) * FP, COIN_RADIUS)
+				_set_opening_body_rest(stacked)
+				(state["bodies"] as Array).append(stacked)
+
+
+static func _opening_balanced_counts(total: int, bucket_count: int) -> Array:
+	var result: Array = []
+	for bucket_index in range(maxi(1, bucket_count)):
+		var count := maxi(0, total) / maxi(1, bucket_count)
+		if bucket_index < maxi(0, total) % maxi(1, bucket_count):
+			count += 1
+		result.append(count)
+	return result
+
+
+static func _opening_gradient_targets(total: int) -> Dictionary:
+	var safe_total := maxi(0, total)
+	if safe_total < 6:
+		var front_small := safe_total / 5
+		var mid_small := safe_total / 3
+		return {"rear": safe_total - front_small - mid_small, "mid": mid_small, "front": front_small}
+	var front := maxi(1, safe_total / 5)
+	var mid := maxi(front + 1, safe_total / 3)
+	var rear := safe_total - front - mid
+	while rear <= mid and front > 1:
+		front -= 1
+		rear += 1
+	while rear <= mid and mid > front + 1:
+		mid -= 1
+		rear += 1
+	return {"rear": rear, "mid": mid, "front": front}
+
+
+static func _opening_scaled_targets(full_targets: Dictionary, total: int) -> Dictionary:
+	var full_total := maxi(1, int(full_targets.get("rear", 0)) + int(full_targets.get("mid", 0)) + int(full_targets.get("front", 0)))
+	var result := {"rear": 0, "mid": 0, "front": 0}
+	for band_id in ["rear", "mid", "front"]:
+		result[band_id] = mini(
+			int(full_targets.get(band_id, 0)),
+			_opening_mul_div_round(int(full_targets.get(band_id, 0)), clampi(total, 0, full_total), full_total)
 		)
-		stacked["lean_milli"] = _divi(maxi(absi(lean_x), absi(lean_y)) * FP, COIN_RADIUS)
-		_set_opening_body_rest(stacked)
-		(state["bodies"] as Array).append(stacked)
+	var assigned := int(result.get("rear", 0)) + int(result.get("mid", 0)) + int(result.get("front", 0))
+	while assigned < total:
+		for band_id in ["rear", "mid", "front"]:
+			if assigned >= total:
+				break
+			if int(result.get(band_id, 0)) < int(full_targets.get(band_id, 0)):
+				result[band_id] = int(result.get(band_id, 0)) + 1
+				assigned += 1
+	while assigned > total:
+		for band_id in ["front", "mid", "rear"]:
+			if assigned <= total:
+				break
+			if int(result.get(band_id, 0)) > 0:
+				result[band_id] = int(result.get(band_id, 0)) - 1
+				assigned -= 1
+	return result
+
+
+static func _opening_mul_div_round(value: int, multiplier: int, divisor: int) -> int:
+	# Exact quotient/remainder accumulation avoids an overflowing value*multiplier
+	# numerator. Rounding is the deterministic integer half-denominator rule.
+	var safe_divisor := maxi(1, divisor)
+	var remaining := clampi(multiplier, 0, safe_divisor)
+	var term_quotient := clampi(value, 0, safe_divisor) / safe_divisor
+	var term_remainder := clampi(value, 0, safe_divisor) % safe_divisor
+	var result_quotient := 0
+	var result_remainder := 0
+	while remaining > 0:
+		if (remaining & 1) != 0:
+			var remainder_gap := safe_divisor - term_remainder
+			if result_remainder >= remainder_gap:
+				result_remainder -= remainder_gap
+				result_quotient += term_quotient + 1
+			else:
+				result_remainder += term_remainder
+				result_quotient += term_quotient
+		remaining = remaining >> 1
+		if remaining <= 0:
+			break
+		var doubled_remainder_gap := safe_divisor - term_remainder
+		if term_remainder >= doubled_remainder_gap:
+			term_remainder -= doubled_remainder_gap
+			term_quotient = term_quotient * 2 + 1
+		else:
+			term_remainder += term_remainder
+			term_quotient *= 2
+	var half_denominator := safe_divisor / 2 + safe_divisor % 2
+	return result_quotient + (1 if result_remainder >= half_denominator else 0)
+
+
+static func _opening_depth_bands(shelf: Dictionary) -> Array:
+	var min_y := int(shelf.get("min_y", FRONT_EDGE))
+	var max_y := maxi(min_y + 2, int(shelf.get("max_y", UPPER_EDGE - COIN_RADIUS)))
+	var span := max_y - min_y + 1
+	var mid_start := min_y + span / 3
+	var rear_start := min_y + span * 2 / 3
+	return [
+		{"id": "rear", "min_y": rear_start, "max_y": max_y},
+		{"id": "mid", "min_y": mid_start, "max_y": rear_start - 1},
+		{"id": "front", "min_y": min_y, "max_y": mid_start - 1},
+	]
 
 
 static func _opening_best_candidate(rng: RngStream, shelf: Dictionary, existing: Array) -> Vector2i:

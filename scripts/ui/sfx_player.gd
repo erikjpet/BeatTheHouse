@@ -197,6 +197,8 @@ var _baccarat_deal_id: String = ""
 var _baccarat_payout_id: String = ""
 var _coin_pusher_action_id: String = ""
 var _coin_pusher_action_observed_active := false
+var _coin_pusher_audio_baseline_initialized := false
+var _coin_pusher_silent_baseline_action_id := ""
 var _web_surface_loop_active := false
 var _surface_loop_event_id := ""
 var _surface_loop_fade_tween: Tween
@@ -402,16 +404,33 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 	elif _loop_player != null:
 		_loop_player.volume_db = motor_volume
 		_loop_player.pitch_scale = motor_pitch
+	if not _coin_pusher_audio_baseline_initialized:
+		# The first observed snapshot may be a restored, already-complete action.
+		# Establish state without replaying it. Every later action id is live and
+		# may legitimately arrive as a reduced-motion terminal jump.
+		_coin_pusher_audio_baseline_initialized = true
+		_coin_pusher_action_id = active_id
+		_coin_pusher_action_observed_active = animation_active
+		_coin_pusher_silent_baseline_action_id = active_id
+		_clear_markers_with_prefix("coin_pusher_event_")
+		return
 	if active_id.is_empty():
 		_coin_pusher_action_id = ""
 		_coin_pusher_action_observed_active = false
 		return
 	if active_id != _coin_pusher_action_id:
 		_coin_pusher_action_id = active_id
-		_coin_pusher_action_observed_active = animation_active
+		# Once the initial snapshot has established the baseline, a new action id
+		# is itself the action boundary. Reduced motion can publish it already at
+		# terminal time, so it must be eligible without an intermediate frame.
+		_coin_pusher_action_observed_active = true
+		if active_id != _coin_pusher_silent_baseline_action_id:
+			_coin_pusher_silent_baseline_action_id = ""
 		_clear_markers_with_prefix("coin_pusher_event_")
 	elif animation_active:
 		_coin_pusher_action_observed_active = true
+	if not _coin_pusher_silent_baseline_action_id.is_empty() and active_id == _coin_pusher_silent_baseline_action_id:
+		return
 	if not animation_active and not _coin_pusher_action_observed_active:
 		return
 	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
@@ -915,6 +934,8 @@ func stop_all() -> void:
 	_baccarat_payout_id = ""
 	_coin_pusher_action_id = ""
 	_coin_pusher_action_observed_active = false
+	_coin_pusher_audio_baseline_initialized = false
+	_coin_pusher_silent_baseline_action_id = ""
 	_played_markers.clear()
 	for player in _players:
 		if player is AudioStreamPlayer:
@@ -974,6 +995,8 @@ func debug_coin_pusher_runtime_event_markers(surface_state: Dictionary, elapsed:
 	if reset_state:
 		_coin_pusher_action_id = ""
 		_coin_pusher_action_observed_active = false
+		_coin_pusher_audio_baseline_initialized = false
+		_coin_pusher_silent_baseline_action_id = ""
 		_clear_markers_with_prefix("coin_pusher_event_")
 	sync_coin_pusher_state(surface_state, elapsed, animation_active, active_id, true)
 	var result: Array = []
