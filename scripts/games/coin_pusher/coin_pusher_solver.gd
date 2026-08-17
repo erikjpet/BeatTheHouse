@@ -409,12 +409,33 @@ static func _step_action_dictionary_reference(state: Dictionary, config: Diction
 
 
 static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionary:
+	# Test-only timings are returned with the action result and never written into
+	# authoritative state. Production calls perform no clock reads and return no
+	# timing data.
+	var debug_profile_stages := bool(config.get("_debug_profile_stages", false))
+	var debug_stage_timing_usec: Dictionary = {
+		"pack": 0,
+		"push_integrate_48_ticks": 0,
+		"collision_visited_setup": 0,
+		"grid": 0,
+		"collisions": 0,
+		"supports": 0,
+		"trace_construction": 0,
+		"final_scan": 0,
+		"writeback": 0,
+		"solver_result_assembly": 0,
+		"solver_total": 0,
+	} if debug_profile_stages else {}
+	var debug_total_started_usec := Time.get_ticks_usec() if debug_profile_stages else 0
+	var debug_stage_started_usec := Time.get_ticks_usec() if debug_profile_stages else 0
 	if config.has("captured_upper_phase_fp"):
 		state["upper_phase_fp"] = posmod(int(config.get("captured_upper_phase_fp", 0)), PHASE_PERIOD)
 	if config.has("captured_lower_phase_fp"):
 		state["lower_phase_fp"] = posmod(int(config.get("captured_lower_phase_fp", 0)), PHASE_PERIOD)
 	var hot := HotBodies.new()
 	hot.load_from(state)
+	if debug_profile_stages:
+		debug_stage_timing_usec["pack"] = Time.get_ticks_usec() - debug_stage_started_usec
 	var events: Array = []
 	var motion_events: Array = []
 	var motion_event_keys := {}
@@ -423,7 +444,10 @@ static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionar
 	var presentation_trace: Array = []
 	var exit_trails: Array = []
 	if capture_trace:
+		debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 		presentation_trace.append(_hot_presentation_trace_frame(hot, state, 0, []))
+		if debug_profile_stages:
+			debug_stage_timing_usec["trace_construction"] = Time.get_ticks_usec() - debug_stage_started_usec
 	var start_x := hot.x.duplicate()
 	var start_y := hot.y.duplicate()
 	var start_z := hot.z.duplicate()
@@ -438,11 +462,20 @@ static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionar
 	var ridge_double := bool(config.get("ridge_double", false))
 	var wake_count := 0
 	var collision_count := 0
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 	var collision_visited := PackedInt32Array()
 	collision_visited.resize(hot.size() * hot.size())
+	if debug_profile_stages:
+		debug_stage_timing_usec["collision_visited_setup"] = Time.get_ticks_usec() - debug_stage_started_usec
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 	var hot_grid := HotGrid.new()
+	if debug_profile_stages:
+		debug_stage_timing_usec["grid"] = Time.get_ticks_usec() - debug_stage_started_usec
 	if nudge_x != 0 or nudge_y != 0:
+		debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 		wake_count += _hot_apply_nudge(hot, nudge_x, nudge_y, aimed_x, nudge_radius)
+		if debug_profile_stages:
+			debug_stage_timing_usec["push_integrate_48_ticks"] = Time.get_ticks_usec() - debug_stage_started_usec
 	for tick_index in range(ACTION_TICKS):
 		var event_count_before := events.size()
 		var old_upper := _pusher_face_y(int(state.get("upper_phase_fp", 0)), true)
@@ -454,26 +487,43 @@ static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionar
 		var new_upper := _pusher_face_y(int(state.get("upper_phase_fp", 0)), true)
 		var new_lower := _pusher_face_y(int(state.get("lower_phase_fp", 0)), false)
 		var integration_indices := PackedInt32Array()
+		debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 		wake_count += _hot_apply_pushers(hot, old_upper, new_upper, old_lower, new_lower, push_scale, integration_indices)
 		if not integration_indices.is_empty():
 			_hot_integrate(hot, integration_indices, events, motion_events, motion_event_keys, peak_z, tick_index + 1, start_x, start_y, start_z)
+		if debug_profile_stages:
+			debug_stage_timing_usec["push_integrate_48_ticks"] = int(debug_stage_timing_usec.get("push_integrate_48_ticks", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
+		if not integration_indices.is_empty():
+			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 			var awake_indices := _hot_awake_indices(hot)
 			hot_grid.rebuild(hot)
+			if debug_profile_stages:
+				debug_stage_timing_usec["grid"] = int(debug_stage_timing_usec.get("grid", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
+			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 			var support_indices := awake_indices.duplicate()
 			var support_seen := PackedByteArray()
 			support_seen.resize(hot.size())
 			for awake_index in awake_indices:
 				support_seen[int(awake_index)] = 1
+			if debug_profile_stages:
+				debug_stage_timing_usec["supports"] = int(debug_stage_timing_usec.get("supports", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
+			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 			for _pass_index in range(MAX_COLLISION_PASSES):
 				var visit_generation := tick_index * MAX_COLLISION_PASSES + _pass_index + 1
 				var resolved := _hot_resolve_collisions(hot, hot_grid, collision_visited, visit_generation, awake_indices, support_indices, support_seen)
 				collision_count += resolved
 				if resolved <= 0:
 					break
+			if debug_profile_stages:
+				debug_stage_timing_usec["collisions"] = int(debug_stage_timing_usec.get("collisions", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
+			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 			support_indices.sort()
 			_hot_resolve_supports(hot, hot_grid, support_indices, motion_events, motion_event_keys, peak_z, tick_index + 1)
+			if debug_profile_stages:
+				debug_stage_timing_usec["supports"] = int(debug_stage_timing_usec.get("supports", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
 		state["tick"] = int(state.get("tick", 0)) + 1
 		if capture_trace:
+			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 			for event_index in range(event_count_before, events.size()):
 				exit_trails.append({"views": _presentation_exit_views(events[event_index]), "index": 0})
 			if (tick_index + 1) % PRESENTATION_TRACE_INTERVAL_TICKS == 0 or tick_index + 1 == ACTION_TICKS:
@@ -490,11 +540,20 @@ static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionar
 							remaining_trails.append(trail)
 				exit_trails = remaining_trails
 				presentation_trace.append(_hot_presentation_trace_frame(hot, state, tick_index + 1, exit_views))
+			if debug_profile_stages:
+				debug_stage_timing_usec["trace_construction"] = int(debug_stage_timing_usec.get("trace_construction", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 	var moved_count := 0
 	for index in range(hot.size()):
 		if absi(start_x[index] - hot.x[index]) > 180 or absi(start_y[index] - hot.y[index]) > 180 or absi(start_z[index] - hot.z[index]) > 180:
 			moved_count += 1
+	if debug_profile_stages:
+		debug_stage_timing_usec["final_scan"] = Time.get_ticks_usec() - debug_stage_started_usec
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 	hot.write_back(state)
+	if debug_profile_stages:
+		debug_stage_timing_usec["writeback"] = Time.get_ticks_usec() - debug_stage_started_usec
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 	state["last_events"] = events
 	state["last_motion_events"] = motion_events
 	state["last_step_metrics"] = {
@@ -509,13 +568,18 @@ static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionar
 		"upper_lower_fall_count": _motion_event_count(motion_events, "upper_to_lower"),
 	}
 	var presentation_events := _presentation_event_views(state, events, motion_events, state["last_step_metrics"], config) if emit_presentation_events else []
-	return {
+	var result := {
 		"events": events,
 		"motion_events": motion_events,
 		"presentation_events": presentation_events,
 		"metrics": state["last_step_metrics"],
 		"presentation_trace": presentation_trace,
 	}
+	if debug_profile_stages:
+		debug_stage_timing_usec["solver_result_assembly"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_timing_usec["solver_total"] = Time.get_ticks_usec() - debug_total_started_usec
+		result["debug_stage_timing_usec"] = debug_stage_timing_usec
+	return result
 
 
 static func apply_nudge_only(state: Dictionary, x_impulse: int, y_impulse: int, aimed_x: int, radius: int) -> int:

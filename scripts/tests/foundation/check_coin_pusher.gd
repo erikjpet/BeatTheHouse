@@ -20,6 +20,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_alarm_audio(failures)
 	_check_coin_pusher_canonical_probe(failures)
 	_check_coin_pusher_hot_solver_exact_twin(failures)
+	_check_coin_pusher_profile_invariance(failures)
 	_check_coin_pusher_surface_liveness(game, failures)
 	_check_coin_pusher_snapshot_renderer_boundary(game, failures)
 	if not coin_pusher_snapshot_boundary_exercised:
@@ -43,6 +44,31 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_vault_drop_contract(game, definition, failures)
 	_check_pusher_variation_distribution(game, failures)
 	_check_pusher_variation_determinism_and_ev(game, definition, failures)
+
+
+func _check_coin_pusher_profile_invariance(failures: Array) -> void:
+	var source := CoinPusherSolverScript.create(_configured_rng(8799), 48, 32, 5)
+	var normal_state := source.duplicate(true)
+	var profiled_state := source.duplicate(true)
+	var config := {
+		"captured_upper_phase_fp": 1700,
+		"captured_lower_phase_fp": 2300,
+		"push_scale": 3,
+		"capture_presentation_trace": true,
+	}
+	var normal_result := CoinPusherSolverScript.step_action(normal_state, config)
+	var profiled_config := config.duplicate(true)
+	profiled_config["_debug_profile_stages"] = true
+	var profiled_result := CoinPusherSolverScript.step_action(profiled_state, profiled_config)
+	var profile: Dictionary = profiled_result.get("debug_stage_timing_usec", {}) if typeof(profiled_result.get("debug_stage_timing_usec", {})) == TYPE_DICTIONARY else {}
+	profiled_result.erase("debug_stage_timing_usec")
+	if JSON.stringify(normal_state) != JSON.stringify(profiled_state) or JSON.stringify(normal_result) != JSON.stringify(profiled_result):
+		failures.append("Coin Pusher test-only stage profiling changed authoritative state or the production action result.")
+	for stage in ["pack", "push_integrate_48_ticks", "collision_visited_setup", "grid", "collisions", "supports", "trace_construction", "final_scan", "writeback", "solver_result_assembly", "solver_total"]:
+		if not profile.has(stage) or int(profile.get(stage, -1)) < 0:
+			failures.append("Coin Pusher test-only stage profile omitted the nonnegative %s measurement." % stage)
+	if normal_state.has("debug_stage_timing_usec") or normal_result.has("debug_stage_timing_usec"):
+		failures.append("Coin Pusher stage profiling leaked into an authoritative state or non-profiled result.")
 
 
 func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:

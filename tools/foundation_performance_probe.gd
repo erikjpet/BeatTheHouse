@@ -530,6 +530,7 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 	var opening_rng := run_state.create_rng("performance_coin_pusher_raw_solver").fork("opening")
 	var baseline := CoinPusherSolverScript.create(opening_rng, cap, cap, lane_count)
 	var samples: Array = []
+	var stage_samples: Dictionary = {}
 	var fixed_tick_samples := 0
 	var capped_samples := 0
 	for sample_index in range(COIN_PUSHER_SOLVER_SAMPLE_COUNT):
@@ -541,8 +542,10 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 			"captured_upper_phase_fp": (sample_index * 1700) % CoinPusherSolverScript.PHASE_PERIOD,
 			"captured_lower_phase_fp": (sample_index * 2300) % CoinPusherSolverScript.PHASE_PERIOD,
 			"push_scale": 3 + sample_index % 3,
+			"_debug_profile_stages": true,
 		})
 		samples.append(float(Time.get_ticks_usec() - start_usec) / 1000.0)
+		_append_coin_pusher_stage_samples(stage_samples, step.get("debug_stage_timing_usec", {}))
 		var metrics: Dictionary = step.get("metrics", {}) if typeof(step.get("metrics", {})) == TYPE_DICTIONARY else {}
 		if int(metrics.get("fixed_ticks", 0)) == CoinPusherSolverScript.ACTION_TICKS:
 			fixed_tick_samples += 1
@@ -559,6 +562,7 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 	stats["capped_samples"] = capped_samples
 	stats["coin_cap"] = cap
 	stats["p95_budget_ms"] = COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS
+	stats["stage_timing_ms"] = _coin_pusher_stage_timing_stats(stage_samples)
 	observations.append(stats)
 	coin_pusher_performance_status["raw_solver_timing"] = stats.duplicate(true)
 	coin_pusher_solver_timing_checked = samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT \
@@ -609,6 +613,9 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 		return false
 	if canvas.has_method("reset_performance_counters"):
 		canvas.call("reset_performance_counters")
+	var debug_ui_state: Dictionary = app.get("game_surface_ui_state").duplicate(true) if typeof(app.get("game_surface_ui_state")) == TYPE_DICTIONARY else {}
+	debug_ui_state["coin_pusher_debug_profile_stages"] = true
+	app.set("game_surface_ui_state", debug_ui_state)
 	var call_start_usec := Time.get_ticks_usec()
 	var handled := bool(app.call("_handle_module_surface_action", surface_action, 0, true))
 	var resolve_call_ms := float(Time.get_ticks_usec() - call_start_usec) / 1000.0
@@ -640,6 +647,7 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 		"draw_p95_budget_ms": MAX_SURFACE_DRAW_P95_MS,
 		"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
 		"solver_metrics": metrics,
+		"stage_timing_ms": _coin_pusher_stage_profile_msec(result.get("coin_pusher_debug_stage_timing_usec", {})),
 		"presentation_trace_frames": trace.size(),
 		"collapse_seen": collapse_seen,
 	}
@@ -1770,6 +1778,40 @@ func _array_size(value: Variant) -> int:
 
 func _dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _append_coin_pusher_stage_samples(samples_by_stage: Dictionary, profile_value: Variant) -> void:
+	if typeof(profile_value) != TYPE_DICTIONARY:
+		return
+	var profile: Dictionary = profile_value
+	for stage_value in profile.keys():
+		var stage := str(stage_value)
+		var samples: Array = samples_by_stage.get(stage, []) if typeof(samples_by_stage.get(stage, [])) == TYPE_ARRAY else []
+		samples.append(float(profile.get(stage_value, 0)) / 1000.0)
+		samples_by_stage[stage] = samples
+
+
+func _coin_pusher_stage_timing_stats(samples_by_stage: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	var stages: Array = samples_by_stage.keys()
+	stages.sort()
+	for stage_value in stages:
+		var stage := str(stage_value)
+		var samples: Array = samples_by_stage.get(stage, []) if typeof(samples_by_stage.get(stage, [])) == TYPE_ARRAY else []
+		result[stage] = _timing_stats(samples)
+	return result
+
+
+func _coin_pusher_stage_profile_msec(profile_value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	if typeof(profile_value) != TYPE_DICTIONARY:
+		return result
+	var profile: Dictionary = profile_value
+	var stages: Array = profile.keys()
+	stages.sort()
+	for stage_value in stages:
+		result[str(stage_value)] = float(profile.get(stage_value, 0)) / 1000.0
+	return result
 
 
 func _timing_stats(samples: Array) -> Dictionary:

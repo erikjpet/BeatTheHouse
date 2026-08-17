@@ -383,7 +383,12 @@ func _resolve_drop(run_state: RunState, environment: Dictionary, machine: Dictio
 	var lower_input_phase := _captured_input_phase(ui_state, "lower", int(machine.get("lower_phase", 0)))
 	var phase_accuracy := _phase_distance(input_phase, _clean_nudge_phase())
 	var drop_push := density + _variation_push_strength_bonus(machine, run_state, false, density)
-	var physics := CoinPusherSolverScript.step_action(simulation, _solver_action_config(machine, drop_push, lane, false, "front", phase_accuracy, input_phase, lower_input_phase, _presentation_trace_requested(ui_state)))
+	var debug_profile_stages := bool(ui_state.get("coin_pusher_debug_profile_stages", false))
+	var solver_config := _solver_action_config(machine, drop_push, lane, false, "front", phase_accuracy, input_phase, lower_input_phase, _presentation_trace_requested(ui_state))
+	if debug_profile_stages:
+		solver_config["_debug_profile_stages"] = true
+	var physics := CoinPusherSolverScript.step_action(simulation, solver_config)
+	var debug_production_started_usec := Time.get_ticks_usec() if debug_profile_stages else 0
 	_sync_phase_views(machine)
 	var physical_outcome := _consume_physics_events(run_state, machine, physics.get("events", []), rng)
 	var payout := int(physical_outcome.get("payout", 0))
@@ -440,6 +445,10 @@ func _resolve_drop(run_state: RunState, environment: Dictionary, machine: Dictio
 		machine, DROP_ACTION, physics.get("presentation_events", []), _finalized_presentation_trace(physics, machine)
 	)
 	result["preserve_surface_ui_state"] = true
+	if debug_profile_stages:
+		var debug_stage_timing: Dictionary = (physics.get("debug_stage_timing_usec", {}) as Dictionary).duplicate(true)
+		debug_stage_timing["production_result_assembly"] = Time.get_ticks_usec() - debug_production_started_usec
+		result["coin_pusher_debug_stage_timing_usec"] = debug_stage_timing
 	return result
 
 
@@ -482,7 +491,12 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 	push_strength += _variation_push_strength_bonus(machine, run_state, true, push_strength)
 	if force == "slam":
 		push_strength += _slam_bonus_push()
-	var physics := CoinPusherSolverScript.step_action(_simulation(machine), _solver_action_config(machine, push_strength, lane, true, direction, phase_distance, upper_input_phase, timing_phase, _presentation_trace_requested(ui_state)))
+	var debug_profile_stages := bool(ui_state.get("coin_pusher_debug_profile_stages", false))
+	var solver_config := _solver_action_config(machine, push_strength, lane, true, direction, phase_distance, upper_input_phase, timing_phase, _presentation_trace_requested(ui_state))
+	if debug_profile_stages:
+		solver_config["_debug_profile_stages"] = true
+	var physics := CoinPusherSolverScript.step_action(_simulation(machine), solver_config)
+	var debug_production_started_usec := Time.get_ticks_usec() if debug_profile_stages else 0
 	_sync_phase_views(machine)
 	var physical_outcome := _consume_physics_events(run_state, machine, physics.get("events", []), rng)
 	var payout := int(physical_outcome.get("payout", 0))
@@ -554,6 +568,10 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 		machine, NUDGE_ACTION, presentation_events, _finalized_presentation_trace(physics, machine)
 	)
 	result["preserve_surface_ui_state"] = true
+	if debug_profile_stages:
+		var debug_stage_timing: Dictionary = (physics.get("debug_stage_timing_usec", {}) as Dictionary).duplicate(true)
+		debug_stage_timing["production_result_assembly"] = Time.get_ticks_usec() - debug_production_started_usec
+		result["coin_pusher_debug_stage_timing_usec"] = debug_stage_timing
 	return result
 
 
