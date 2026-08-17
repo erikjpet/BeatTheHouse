@@ -3,6 +3,8 @@ extends RefCounted
 
 # Data-backed event contract for conditional run consequences.
 
+const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
+
 var definition: Dictionary = {}
 var content_library: ContentLibrary = null
 
@@ -36,6 +38,8 @@ func get_interaction_mode() -> String:
 # Returns available event choices.
 func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 	var payload := _copy_dict(definition.get("payload", {}))
+	if str(payload.get("kind", "")) == "crew_rook_signpost":
+		return CrewRecruitmentModelScript.rook_signpost_choices(run_state) if run_state != null else []
 	if str(payload.get("kind", "")) == "grand_casino_showdown":
 		return _grand_casino_showdown_choices(payload, run_state, environment)
 	if str(payload.get("kind", "")) == "grand_casino_high_roller_cashout":
@@ -220,6 +224,10 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				_apply_trigger_event_hook(run_state, result, hook_data)
 			"hear_rumor":
 				pass
+			"crew_recruit":
+				run_state.crew_recruit_member(str(hook_data.get("member_id", "")))
+			"crew_meet":
+				run_state.crew_meet_member(str(hook_data.get("member_id", "")))
 
 
 # Returns a no-op event result for invalid choices.
@@ -293,6 +301,12 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 		messages.push_front(message)
 	deltas["messages"] = messages
 	deltas["event_hooks"] = _copy_array(consequences.get("event_hooks", []))
+	var recruit_member_id := str(consequences.get("crew_recruit_member", "")).strip_edges()
+	if not recruit_member_id.is_empty():
+		deltas["event_hooks"].append({"type": "crew_recruit", "member_id": recruit_member_id})
+	var meet_member_id := str(consequences.get("crew_meet_member", "")).strip_edges()
+	if not meet_member_id.is_empty():
+		deltas["event_hooks"].append({"type": "crew_meet", "member_id": meet_member_id})
 	deltas["demo_finale"] = _copy_dict(consequences.get("demo_finale", {}))
 	deltas["discounted_debt_settlement"] = _copy_dict(consequences.get("discounted_debt_settlement", {}))
 	if bool(consequences.get("resolve_event", false)):
@@ -565,6 +579,13 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	if not minimum_crew_rank.is_empty():
 		var ranks := CrewStateModel.RANK_IDS
 		if not ranks.has(minimum_crew_rank) or ranks.find(str(run_state.crew_standing().get("rank", "stranger"))) < ranks.find(minimum_crew_rank):
+			return false
+	var member_rank_maximum := _copy_dict(conditions.get("crew_member_rank_at_most", {}))
+	for member_id_value in member_rank_maximum.keys():
+		var member_id := str(member_id_value)
+		var maximum := str(member_rank_maximum.get(member_id_value, "stranger"))
+		var ranks := CrewStateModel.RANK_IDS
+		if not CrewStateModel.MEMBER_IDS.has(member_id) or not ranks.has(maximum) or ranks.find(run_state.crew_rank(member_id)) > ranks.find(maximum):
 			return false
 	var requires_games := _string_array(conditions.get("requires_games", []))
 	if not requires_games.is_empty():
