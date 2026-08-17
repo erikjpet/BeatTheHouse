@@ -1,0 +1,130 @@
+[
+  {
+    "id": "crew_coordinated_plays",
+    "schema_version": 1,
+    "active_window_cap": 1,
+    "pairing_exceptions": ["spotter:big_player"],
+    "security_consequence_heat": 65,
+    "plays": [
+      {
+        "id": "spotter",
+        "display_name": "Spotter",
+        "member_ids": ["crew_switch"],
+        "member_count": 1,
+        "minimum_rank": "made",
+        "game_ids": ["blackjack"],
+        "uses_per_run": 2,
+        "cash_cost": 8,
+        "cooldown_boundaries": 6,
+        "window_boundaries": 4,
+        "detection_chance_percent": 16,
+        "detection_heat": 14,
+        "effect": {
+          "blackjack_count_tolerance": 1,
+          "blackjack_count_confidence": "Switch taps once when your count is within one.",
+          "suspicion_multiplier_percent": 65
+        },
+        "voice_lines": {
+          "crew_switch": "Switch takes the rail. 'Count your cards. I'll count the room.'"
+        },
+        "intent": "Four blackjack boundaries of assistance; meaningful relief without erasing dirty-count heat."
+      },
+      {
+        "id": "distraction",
+        "display_name": "Distraction",
+        "member_ids": ["crew_velvet", "crew_lucky"],
+        "member_count": 1,
+        "minimum_rank": "made",
+        "game_ids": ["blackjack", "baccarat", "roulette", "craps", "video_poker"],
+        "uses_per_run": 1,
+        "cash_cost": 10,
+        "cooldown_boundaries": 8,
+        "window_boundaries": 0,
+        "detection_chance_percent": 0,
+        "detection_heat": 0,
+        "effect": {"suspicion_dump": 18},
+        "voice_lines": {
+          "crew_velvet": "Velvet turns the whole rail toward her smile. 'You were never the story.'",
+          "crew_lucky": "Lucky clips a chair and catches three drinks. 'Good news: everybody saw me.'"
+        },
+        "intent": "One immediate local heat release; its long spent window keeps the security consequence meaningful."
+      },
+      {
+        "id": "big_player",
+        "display_name": "Big Player Call-In",
+        "member_ids": ["*"],
+        "member_count": 1,
+        "exclude_active_members": true,
+        "minimum_rank": "made",
+        "game_ids": ["blackjack"],
+        "requires_active_play": "spotter",
+        "uses_per_run": 1,
+        "cash_cost": 14,
+        "cooldown_boundaries": 8,
+        "window_boundaries": 1,
+        "detection_chance_percent": 0,
+        "detection_heat": 0,
+        "effect": {"minimum_warm_count": 3, "maximum_warm_count": 5},
+        "voice_lines": {
+          "crew_rook": "Rook brings the buy-in without looking at the shoe.",
+          "crew_velvet": "Velvet arrives late enough to look expensive.",
+          "crew_knuckles": "Knuckles sits. The empty chair beside him stays empty.",
+          "crew_mags": "Mags takes the warmed seat like it was assigned.",
+          "crew_bishop": "Bishop crosses the rope on somebody else's name.",
+          "crew_lucky": "Lucky drops into the hot seat. 'About time.'"
+        },
+        "intent": "Consumes the spotted count into the current pre-warmed shoe; only legal while Spotter is live."
+      },
+      {
+        "id": "chip_dump",
+        "display_name": "Chip Dump",
+        "member_ids": ["*"],
+        "member_count": 1,
+        "minimum_rank": "made",
+        "game_ids": ["baccarat"],
+        "uses_per_run": 2,
+        "cash_cost": 0,
+        "cooldown_boundaries": 5,
+        "window_boundaries": 0,
+        "detection_chance_percent": 20,
+        "detection_heat": 12,
+        "effect": {"transfer_amount": 40, "transfer_fee": 6, "direction": "cash_to_chips"},
+        "voice_lines": {
+          "crew_rook": "Rook palms the rack. 'Forty went in. Don't ask how it came out.'",
+          "crew_switch": "Switch breaks the stack across two hands and one blind angle.",
+          "crew_mags": "Mags squares the chips. 'Forty clean, six gone.'",
+          "crew_knuckles": "Knuckles nudges the stack over without looking down.",
+          "crew_velvet": "Velvet makes the transfer look like a tip.",
+          "crew_bishop": "Bishop moves the chips under a perfectly ordinary receipt.",
+          "crew_lucky": "Lucky loses the stack to you with theatrical disappointment."
+        },
+        "intent": "Moves $40 cash into casino chips for a $6 fee; detection preserves laundering risk and never creates value."
+      },
+      {
+        "id": "table_flood",
+        "display_name": "Table Flood",
+        "member_ids": ["*"],
+        "member_count": 2,
+        "minimum_rank": "made",
+        "game_ids": ["blackjack", "baccarat", "roulette", "craps", "video_poker"],
+        "uses_per_run": 2,
+        "cash_cost": 16,
+        "cooldown_boundaries": 6,
+        "window_boundaries": 3,
+        "detection_chance_percent": 10,
+        "detection_heat": 10,
+        "effect": {"cheat_detection_multiplier_percent": 60},
+        "voice_lines": {
+          "crew_rook": "Rook fills the rail with elbows and small talk.",
+          "crew_switch": "Switch turns one table into six moving sightlines.",
+          "crew_mags": "Mags places the crew where the cameras overlap least.",
+          "crew_knuckles": "Knuckles crowds the felt. Nobody asks for room.",
+          "crew_velvet": "Velvet brings a crowd that knows exactly when to laugh.",
+          "crew_bishop": "Bishop makes the busy table look house-approved.",
+          "crew_lucky": "Lucky starts three arguments and loses track of none of them."
+        },
+        "intent": "Three cheat boundaries at 60% detection odds; costs two members and does not reduce heat itself."
+      }
+    ]
+  }
+]

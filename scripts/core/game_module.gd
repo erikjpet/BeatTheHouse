@@ -72,8 +72,11 @@ func enter(_run_state: RunState, environment: Dictionary) -> Dictionary:
 
 
 # Returns legal actions from the game definition.
-func legal_actions(_run_state: RunState, _environment: Dictionary) -> Array:
-	return _copy_array(definition.get("legal_actions", []))
+func legal_actions(run_state: RunState, environment: Dictionary) -> Array:
+	var result := _copy_array(definition.get("legal_actions", []))
+	if run_state != null:
+		result.append_array(run_state.crew_play_actions(get_id(), environment))
+	return result
 
 
 # Returns cheat actions from the game definition.
@@ -294,12 +297,16 @@ func active_item_command(_item_id: String, _run_state: RunState, _environment: D
 # Optional resolve entry point that receives UI-local surface context. The
 # default preserves the existing foundation GameModule behavior.
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, _ui_state: Dictionary = {}) -> Dictionary:
+	if action_id.begins_with("crew_play:"):
+		return run_state.crew_play_activate(action_id.trim_prefix("crew_play:"), get_id(), environment)
 	return resolve(action_id, stake, run_state, environment, rng)
 
 
 # Returns the bankroll at risk for a selected action before the result is known.
 # Concrete games can override this when free plays or fixed-price tickets apply.
-func wager_cost_for_context(_action_id: String, stake: int, _run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+func wager_cost_for_context(action_id: String, stake: int, _run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+	if action_id.begins_with("crew_play:"):
+		return 0
 	return maxi(0, stake)
 
 

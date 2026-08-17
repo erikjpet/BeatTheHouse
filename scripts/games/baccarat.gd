@@ -210,6 +210,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"patron_wager_action": "baccarat_patron_bet",
 		"snitch_pressure": _patron_snitch_pressure(surface_patrons),
 		"suspicion_level": run_state.suspicion_level() if run_state != null else 0,
+		"crew_play_status": run_state.crew_play_active_status(get_id(), environment) if run_state != null else [],
 		"dealer_attention_pressure": 10 if deal_active else 6 if payout_active else 0,
 		"rules": rules,
 		"bet_targets": targets,
@@ -368,6 +369,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_round_timer(surface, surface_state)
 	_draw_chip_rack(surface, surface_state)
 	_draw_action_console(surface, surface_state)
+	_draw_crew_play_status(surface, surface_state)
 	surface.surface_end_design_space()
 	return true
 
@@ -486,6 +488,8 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 
 
 func wager_cost_for_context(action_id: String, stake: int, _run_state: RunState, _environment: Dictionary, ui_state: Dictionary = {}) -> int:
+	if action_id.begins_with("crew_play:"):
+		return 0
 	if action_id == "deal_baccarat":
 		return _total_wager(_bet_dict(ui_state.get("baccarat_bets", {})))
 	return maxi(0, stake)
@@ -3233,6 +3237,19 @@ func _draw_table_notice(surface, state: Dictionary) -> void:
 	var rect := Rect2(238, 314, 424, 26)
 	_draw_neon_panel(surface, rect, C_TEAL, 0.18)
 	surface.surface_label_centered(notice.left(78), Rect2(rect.position + Vector2(8, 5), rect.size - Vector2(16, 8)), 11, C_TEAL)
+
+
+func _draw_crew_play_status(surface, state: Dictionary) -> void:
+	var statuses := _dictionary_array(state.get("crew_play_status", []))
+	if statuses.is_empty():
+		return
+	var labels: Array = []
+	for status in statuses:
+		labels.append("%s · %d" % [str(status.get("display_name", "PLAY")).to_upper(), int(status.get("remaining_boundaries", 0))])
+	var rect := Rect2(620, 4, 268, 18)
+	surface.draw_rect(rect, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.16))
+	surface.draw_rect(rect, C_CYAN, false, 1)
+	surface.surface_label_centered("  ".join(labels), rect.grow(-2), 8, C_CYAN)
 
 
 func _draw_round_timer(surface, state: Dictionary) -> void:
