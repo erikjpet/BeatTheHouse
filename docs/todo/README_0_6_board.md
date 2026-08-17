@@ -613,6 +613,15 @@ What happens then is the owner's, not an agent's:
   a silent first/restored baseline, keeps restored active state silent through
   terminal, emits a later action once, and syncs before frozen visual clocks/
   redraws. Focused runtime remains before merge.
+- 2026-08-17 [pusher06_2 density authority] PM arbitration records the narrow
+  interpretation required by the prompt's specific Task 0 over its general
+  zero-outcome-change rule: the explicitly required generation-time coin-cap,
+  opening-density, and opening-depth-gradient changes are authorized physical
+  initial-state changes. "Unchanged outcomes" means presentation/audio may not
+  steer, fabricate, reconcile, or feed back into a payout; the deterministic
+  authoritative solver still decides solely from the generated pile and player
+  inputs, and exactly what physically crosses the payout edge pays. This is not
+  authority to alter action rules, payout classification, or solver semantics.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
