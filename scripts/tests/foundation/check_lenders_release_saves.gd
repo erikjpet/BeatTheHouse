@@ -3597,7 +3597,7 @@ func _check_terminal_evaluator_behavior_matrix(library: ContentLibrary, failures
 	}), RunState.RUN_STATUS_ACTIVE, RunState.FAILURE_NONE, "event recovery", failures)
 
 	var merchant_run := _terminal_recovery_run("TERMINAL-PUBLIC-MERCHANT", {
-		"kind": "shop", "item_offers": ["fixture_offer"],
+		"kind": "shop", "item_offers": [{"id": "fixture_offer"}],
 	})
 	merchant_run.add_item("creased_luck_card")
 	_assert_public_terminal_result(merchant_run, library, _terminal_expected({
@@ -3623,6 +3623,7 @@ func _check_terminal_evaluator_behavior_matrix(library: ContentLibrary, failures
 		local_room_run.current_environment["item_offers"] = []
 		local_room_run.current_environment["travel_hooks"] = []
 		local_room_run.current_environment["next_archetypes"] = []
+		local_room_run.unlocked_travel = []
 		local_room_run.current_environment["lender_hooks"] = []
 		local_room_run.current_environment["economic_profile"] = {"stake_floor": 5, "stake_ceiling": 5}
 		local_room_run.change_bankroll(-(local_room_run.bankroll - 1))
