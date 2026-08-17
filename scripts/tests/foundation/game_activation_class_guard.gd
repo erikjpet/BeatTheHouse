@@ -443,18 +443,22 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 static func _activation_violation(game: GameModule, run_state: RunState, cached_source_snapshot: Dictionary = {}, cached_source_text: String = "") -> String:
 	var source_snapshot := cached_source_snapshot if not cached_source_snapshot.is_empty() else run_state.to_dict()
 	var source_text := cached_source_text if not cached_source_text.is_empty() else JSON.stringify(source_snapshot)
-	# Canonicalize one pristine restore for the context. It is also the first
-	# hook's independent fixture; inspecting it does not share it with any later
-	# hook. Remaining hooks each construct their own RunState from the same
-	# immutable source dictionary.
+	# Parse the canonical bytes once. Every hook restores from this immutable
+	# dictionary, so hooks remain isolated without seven repeated JSON parses.
+	var cold_source_value: Variant = JSON.parse_string(source_text)
+	if typeof(cold_source_value) != TYPE_DICTIONARY:
+		return "could not parse canonical activation fixture"
+	var cold_source := cold_source_value as Dictionary
+	# Validate one pristine cold clone exactly. This verified object belongs only
+	# to hook one; hooks two through seven each construct a new RunState from the
+	# same cold source and never share live metadata or caches.
 	var first_method_run := RunStateScript.new()
-	first_method_run.from_dict(source_snapshot)
+	first_method_run.from_dict(cold_source)
 	var canonical_snapshot := first_method_run.to_dict()
 	var canonical_text := JSON.stringify(canonical_snapshot)
 	if canonical_text != source_text:
 		return "%s could not cold-clone its canonical activation fixture" % str(ACTIVATION_METHODS[0])
 	var first_method_available := true
-	var post_hook_restore_checked := false
 	for method in ACTIVATION_METHODS:
 		var method_run: RunState
 		if first_method_available:
@@ -462,7 +466,7 @@ static func _activation_violation(game: GameModule, run_state: RunState, cached_
 			first_method_available = false
 		else:
 			method_run = RunStateScript.new()
-			method_run.from_dict(source_snapshot)
+			method_run.from_dict(cold_source)
 		match method:
 			"environment_runtime_state":
 				game.environment_runtime_state(method_run, method_run.current_environment)
@@ -479,18 +483,18 @@ static func _activation_violation(game: GameModule, run_state: RunState, cached_
 			"coach_state":
 				game.coach_state(method_run, method_run.current_environment, {})
 		var after := method_run.to_dict()
-		# Dictionary equality is recursive for the JSON-compatible RunState save
-		# graph. Keep the immutable canonical byte string for restore/alias proof,
-		# and allocate per-hook JSON text only on a detected mismatch.
-		if after != canonical_snapshot:
+		var after_text := JSON.stringify(after)
+		# Exact canonical bytes remain the invariant after every individual hook.
+		if after_text != source_text:
 			var paths: Array = []
 			_collect_changed_paths(canonical_snapshot, after, "", paths)
 			return "%s changed %s" % [method, ", ".join(paths)]
-		if not post_hook_restore_checked:
-			var restored_after_open := _run_state_from_json_snapshot(after, canonical_text)
-			if restored_after_open == null or JSON.stringify(restored_after_open.to_dict()) != canonical_text:
-				return "%s changed after serialize/restore" % method
-			post_hook_restore_checked = true
+	# The sentinel proves cold_source -> from_dict -> to_dict is byte-canonical;
+	# every hook proves its post-state has those same bytes. A redundant eighth
+	# restore cannot strengthen that transitive proof, so retain only both source
+	# immutability checks here.
+	if JSON.stringify(cold_source) != source_text:
+		return "activation hooks mutated their parsed cold source fixture"
 	if JSON.stringify(source_snapshot) != source_text:
 		return "cold activation clones mutated their canonical source fixture"
 	return ""
@@ -527,14 +531,6 @@ static func _json_round_trip_snapshot(run_state: RunState, label: String, failur
 		failures.append("Game activation class guard could not JSON-roundtrip %s." % label)
 		return {}
 	return parsed as Dictionary
-
-
-static func _run_state_from_json_snapshot(snapshot: Dictionary, cached_text: String = "") -> RunState:
-	var snapshot_text := cached_text if not cached_text.is_empty() else JSON.stringify(snapshot)
-	var parsed: Variant = JSON.parse_string(snapshot_text)
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return null
-	return _run_state_from_parsed_snapshot(parsed as Dictionary)
 
 
 static func _run_state_from_parsed_snapshot(snapshot: Dictionary) -> RunState:
