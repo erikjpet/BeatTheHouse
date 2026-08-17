@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `rework06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-16
+- **Completion/implementation commits:** `1fcbd3b4`, `2c653473`; PM integration merge `970ec941`
+- **Verification:** PM line-by-line scope and roadmap review passed. Integrated-tree full matrix passed 235/235 stages (`.tmp/test_reports/20260816_201528_full/summary.json`); determinism passed 10 seeds / 590 checkpoints with exact combined hash `3483570349`; canonical visual QA passed with zero warnings and confirmed the delivery map layer, target marker, in-venue handoff, and failure exit (`.tmp/rework06_1_pm_visual_qa_report.json`). Ordinary inactive travel matched the pre-change golden byte-for-byte, the 20-seed real-node property sweep passed, all four modes and no-soft-lock cases passed, and `crew_favor_delivery` retained exact +22 cash/+4 heat success and +9 heat failure behavior.
+- **Deviations:** None. Legacy authored identifiers containing `streets` remain only where changing them would alter ordinary seeded content; the synthetic geography, public API, runtime model, UI, tests, and compatibility shim were removed.
 
 # Agent Prompt — 0.6 rework06_1: Delivery Runs on the Real Map (replaces the Streets board)
 

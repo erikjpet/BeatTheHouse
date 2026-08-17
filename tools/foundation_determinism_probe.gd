@@ -128,7 +128,7 @@ func _simulate_seed(seed: String, seed_index: int) -> Dictionary:
 	_apply_dialogue_sequence(run_state, checkpoints, seed)
 	_apply_talk_content_sequence(run_state, checkpoints, seed)
 	_apply_numbers_sequence(run_state, checkpoints, seed)
-	_apply_streets_sequence(run_state, checkpoints, seed)
+	_apply_delivery_sequence(run_state, checkpoints, seed)
 	_install_all_game_environment(run_state, seed_index)
 	_checkpoint(run_state, checkpoints, seed, "all_games_fixture")
 	_apply_all_game_resolves(run_state, checkpoints, seed)
@@ -221,28 +221,36 @@ func _apply_numbers_sequence(run_state: RunState, checkpoints: Array, seed: Stri
 	_checkpoint(run_state, checkpoints, seed, "numbers_leak_registered")
 
 
-func _apply_streets_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
-	var started := run_state.streets_begin_multi_stop({
-		"route_id": "determinism_numbers_route",
-		"origin_node_id": run_state.current_world_node_id() if not run_state.current_world_node_id().is_empty() else "back_alley",
-		"destination_node_id": "determinism_drop",
-		"distance": "local",
-		"attempt": 3,
-		"stops": [{"id": "first_book"}, {"id": "second_book"}],
+func _apply_delivery_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
+	var started := run_state.delivery_begin_multi_stop({
+		"run_id": "determinism_delivery_route",
+		"target_count": 2,
 		"deadline_actions": 20,
-		"order_mode": "free",
+		"cargo_id": "determinism_case",
 	})
 	if not bool(started.get("ok", false)):
-		failures.append("%s could not start the deterministic Streets fixture." % seed)
+		failures.append("%s could not start the deterministic real-map delivery fixture." % seed)
 		return
-	_checkpoint(run_state, checkpoints, seed, "streets_board_generated")
-	run_state.streets_apply_action({"verb": "wait"})
-	run_state.streets_apply_action({"verb": "wait"})
-	_checkpoint(run_state, checkpoints, seed, "streets_patrol_timeline")
-	var ditched := run_state.streets_apply_action({"verb": "ditch"})
-	if not bool(ditched.get("resolved", false)) or str((ditched.get("resolution", {}) as Dictionary).get("reason", "")) != "ditched":
-		failures.append("%s deterministic Streets fixture did not resolve its scripted outcome." % seed)
-	_checkpoint(run_state, checkpoints, seed, "streets_scripted_outcome")
+	_checkpoint(run_state, checkpoints, seed, "delivery_targets_selected")
+	var layer := run_state.delivery_map_layer()
+	if (layer.get("edge_reads", []) as Array).is_empty():
+		failures.append("%s deterministic delivery fixture produced no real-map risk reads." % seed)
+		return
+	_checkpoint(run_state, checkpoints, seed, "delivery_map_layer")
+	var targets: Array = run_state.delivery_snapshot().get("targets", [])
+	var target_id := str((targets[0] as Dictionary).get("node_id", ""))
+	var target_node := WorldMapScript.node_metadata_by_id(run_state.world_map, target_id)
+	run_state.world_map = WorldMapScript.enter_node(run_state.world_map, target_id, {})
+	run_state.set_environment({"id": target_id, "archetype_id": str(target_node.get("archetype_id", target_id)), "world_node_id": target_id, "turns": 0, "security_profile": {}})
+	var arrival := run_state.delivery_resolve_travel_arrival({"target_node_id": target_id}, {})
+	if not bool(arrival.get("handoff_ready", false)) or not bool(run_state.delivery_complete_handoff(target_id).get("ok", false)):
+		failures.append("%s deterministic delivery fixture could not complete its physical first handoff." % seed)
+		return
+	_checkpoint(run_state, checkpoints, seed, "delivery_first_handoff")
+	var abandoned := run_state.delivery_abandon("scripted_probe")
+	if not bool(abandoned.get("resolved", false)) or str((run_state.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "scripted_probe":
+		failures.append("%s deterministic delivery fixture did not resolve its scripted outcome." % seed)
+	_checkpoint(run_state, checkpoints, seed, "delivery_scripted_outcome")
 
 
 func _apply_alcohol_timing(run_state: RunState, checkpoints: Array, seed: String) -> void:

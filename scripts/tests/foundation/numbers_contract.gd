@@ -5,6 +5,11 @@ const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 const PoliceSweepModelScript := preload("res://scripts/core/police_sweep_model.gd")
+const NumbersWorldMapScript := preload("res://scripts/core/world_map.gd")
+const NumbersContentLibraryScript := preload("res://scripts/core/content_library.gd")
+const NumbersRunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+
+static var delivery_fixture_library: ContentLibrary
 
 
 static func run(failures: Array) -> void:
@@ -270,20 +275,17 @@ static func _check_fix_and_leak_economy(failures: Array) -> void:
 static func _check_runstate_fix_chain(failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("NUMBERS-PRODUCTION-FIX")
+	_initialize_delivery_world(run_state)
 	run_state.current_environment = {"id": "small_underground_casino", "archetype_id": "small_underground_casino", "world_node_id": "small_underground_casino", "turns": 0}
 	run_state.crew_add_trust("crew_lucky", 60, "numbers_fixture")
 	run_state.crew_add_trust("crew_mags", 60, "numbers_fixture")
 	var begun: Dictionary = run_state.numbers_begin_fix_bribe()
 	if not bool(begun.get("ok", false)):
-		failures.append("Made-rank production desk could not begin the real Streets fix package.")
+		failures.append("Made-rank production desk could not begin the real-map fix package.")
 		return
-	var board: Dictionary = _dictionary(run_state.active_streets_run.get("board", {})).duplicate(true)
-	board["patrols"] = []
-	run_state.active_streets_run["board"] = board
-	run_state.active_streets_run["player"] = _dictionary(board.get("destination", {})).duplicate(true)
-	var delivered: Dictionary = run_state.streets_apply_action({"verb": "wait"})
-	if not bool(delivered.get("resolved", false)) or str(run_state.numbers_desk_status().get("fix_stage", "")) != "camouflage":
-		failures.append("Successful production Streets delivery did not hand the fix into camouflage allocation.")
+	var delivered := _complete_delivery_targets(run_state)
+	if not delivered or str(run_state.numbers_desk_status().get("fix_stage", "")) != "camouflage":
+		failures.append("Successful production delivery did not hand the fix into camouflage allocation.")
 		return
 	var allocations: Dictionary = {"small_underground_casino": 18, "bar": 16, "motel": 14, "gas_station_casino": 12}
 	var bankroll_before := run_state.bankroll
@@ -389,74 +391,63 @@ static func _check_sampled_ev_bands(failures: Array) -> void:
 static func _check_runner_pause_production_path(failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("NUMBERS-PAUSE")
-	run_state.current_environment = {"id": "bar", "archetype_id": "bar", "turns": 0}
+	_initialize_delivery_world(run_state)
+	run_state.current_environment = {"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0}
 	run_state.town_state.police_sweep.swept_windows_by_node["corner_store"] = {"node_id": "corner_store", "start_action": 0, "end_action": 4}
 	run_state.town_state.police_sweep.action_index = 0
 	var stops := [{"id": "corner", "node_id": "corner_store", "label": "Corner"}]
-	var started: Dictionary = run_state.streets_begin_multi_stop({
-		"route_id": "numbers_collection:test", "origin_node_id": "bar", "destination_node_id": "small_underground_casino",
-		"stops": stops, "deadline_actions": 10, "cargo_id": "numbers_slips",
-	})
+	var started := run_state.delivery_begin_multi_stop({"run_id": "numbers_collection:test", "targets": stops, "deadline_actions": 10, "cargo_id": "numbers_slips"})
 	run_state.numbers_state.begin_collection(stops, 100, "")
 	if not bool(started.get("ok", false)):
-		failures.append("Numbers production runner fixture could not start frozen multi-stop Streets.")
+		failures.append("Numbers production runner fixture could not start a real-map route.")
 		return
-	var blocked := run_state.streets_apply_action({"verb": "move", "direction": {"x": 1, "y": 0}, "pace": "walk"})
-	if not bool(blocked.get("paused", false)) or not bool(blocked.get("wait_available", false)):
-		failures.append("Numbers swept stop did not pause travel while offering a boundary wait.")
-	var before_action := run_state.town_state.action_index
-	var waited := run_state.streets_apply_action({"verb": "wait"})
-	if not bool(waited.get("ok", false)) or run_state.town_state.action_index != before_action + 1 or str(run_state.numbers_state.collection_state.get("status", "")) != "active":
-		failures.append("Numbers swept-stop wait did not advance town/sweep time while preserving collection cargo.")
+	var deadline_before := int(run_state.delivery_snapshot().get("deadline_remaining", 0))
+	var action_before := run_state.town_state.action_index
+	run_state.advance_environment_turns(1)
+	if run_state.town_state.action_index != action_before + 1 or int(run_state.delivery_snapshot().get("deadline_remaining", 0)) != deadline_before - 1 \
+		or str(run_state.numbers_state.collection_state.get("status", "")) != "active":
+		failures.append("Waiting out a swept destination did not advance the shared town/delivery boundary while preserving cargo.")
 
 
 static func _check_runner_outcomes(failures: Array) -> void:
 	var success = _runner_fixture("NUMBERS-RUNNER-SUCCESS")
 	if not bool(success.get("ok", false)):
-		failures.append("Lucky associate production route did not enter frozen multi-stop Streets.")
+		failures.append("Lucky associate production route did not enter real-map multi-stop delivery.")
 		return
 	var success_run: RunState = success.get("run") as RunState
 	var cash_before := success_run.bankroll
 	var trust_before := success_run.crew_trust("crew_lucky")
-	var board := _dictionary(success_run.active_streets_run.get("board", {})).duplicate(true)
-	board["patrols"] = []
-	success_run.active_streets_run["board"] = board
-	var stops := _dictionary_array(success_run.active_streets_run.get("stops", []))
-	for index in range(stops.size()):
-		stops[index]["visited"] = true
-	success_run.active_streets_run["stops"] = stops
-	success_run.active_streets_run["player"] = _dictionary(board.get("destination", {})).duplicate(true)
-	var completed := success_run.streets_apply_action({"verb": "wait"})
-	if not bool(completed.get("resolved", false)) or success_run.bankroll <= cash_before or success_run.crew_trust("crew_lucky") <= trust_before:
-		failures.append("On-time Numbers collection did not pay its bag percentage and Lucky trust.")
+	if not _complete_delivery_targets(success_run) or success_run.bankroll <= cash_before or success_run.crew_trust("crew_lucky") <= trust_before:
+		failures.append("On-time Numbers collection did not pay its bag percentage and Lucky trust after physical handoffs.")
 	var late = _runner_fixture("NUMBERS-RUNNER-LATE")
 	var late_run: RunState = late.get("run") as RunState
 	var late_trust := late_run.crew_trust("crew_lucky")
-	late_run.active_streets_run["deadline_remaining"] = 1
-	late_run.streets_apply_action({"verb": "wait"})
-	if late_run.crew_trust("crew_lucky") >= late_trust or not late_run.crew_grievances("crew_lucky").is_empty():
+	late_run.active_delivery_run["deadline_remaining"] = 1
+	late_run.advance_environment_turns(1)
+	if late_run.delivery_has_active_run() or late_run.crew_trust("crew_lucky") >= late_trust or not late_run.crew_grievances("crew_lucky").is_empty():
 		failures.append("Late Numbers collection did not hit trust cleanly without an abandonment grievance.")
 	var ditched = _runner_fixture("NUMBERS-RUNNER-DITCH")
 	var ditched_run: RunState = ditched.get("run") as RunState
-	ditched_run.streets_apply_action({"verb": "ditch"})
+	ditched_run.delivery_abandon()
 	if ditched_run.crew_grievances("crew_lucky").is_empty() or str(ditched_run.crew_grievances("crew_lucky")[0].get("kind", "")) != "job_abandoned":
-		failures.append("Ditched Numbers collection did not write job_abandoned.")
+		failures.append("Abandoned Numbers collection did not write job_abandoned.")
 
 
 static func _check_swept_collection_consequences(failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("NUMBERS-SWEPT-COMPLETE")
+	_initialize_delivery_world(run_state)
 	run_state.current_environment = {"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0}
-	run_state.numbers_buy_slip("123", 3, "straight")
 	run_state.crew_add_trust("crew_lucky", 30, "fixture")
 	var started := run_state.numbers_begin_collection_route()
 	if not bool(started.get("ok", false)):
 		failures.append("Complete swept-consequence fixture could not start Lucky's collection.")
 		return
 	var trust_before := run_state.crew_trust("crew_lucky")
+	run_state.add_suspicion("fixture", 50, "test", false)
 	var heat_before := run_state.suspicion_level()
 	var job_id := str(started.get("job_id", ""))
-	var result := _dictionary(run_state.call("_resolve_police_sweep_encounter", {"node_id": "bar", "segment_index": 0, "encounter_seed": 27}))
+	var result := run_state.resolve_police_sweep_encounter_for_test({"node_id": "bar", "segment_index": 0, "encounter_seed": 27})
 	var queued_ids: Array = []
 	for pending_value in run_state.pending_triggered_events:
 		queued_ids.append(str(_dictionary(pending_value).get("event_id", "")))
@@ -466,39 +457,12 @@ static func _check_swept_collection_consequences(failures: Array) -> void:
 			rumor_found = true
 			break
 	var job := _dictionary(run_state.crew_jobs.get(job_id, {}))
-	var pending_ditch := bool(run_state.narrative_flags.get("numbers_collection_sweep_confiscation_pending", false))
-	var forced_resolution := run_state.streets_apply_action({"verb": "wait"})
-	var consequence_evidence := {
-		"collection_reason": str(run_state.numbers_state.collection_state.get("reason", "")),
-		"job_status": str(job.get("status", "")),
-		"job_outcome": str(job.get("outcome", "")),
-		"trust_before": trust_before,
-		"trust_after": run_state.crew_trust("crew_lucky"),
-		"heat_before": heat_before,
-		"heat_after": run_state.suspicion_level(),
-		"confiscated_count": int(_dictionary(result.get("numbers_collection_confiscated", {})).get("count", 0)),
-		"bag_value": int(result.get("numbers_collection_bag_value_confiscated", 0)),
-		"pending_before_ditch": pending_ditch,
-		"queued_ids": queued_ids,
-		"rumor_found": rumor_found,
-		"forced_resolution": forced_resolution,
-		"grievances": run_state.crew_grievances("crew_lucky"),
-		"pending_after_ditch": bool(run_state.narrative_flags.get("numbers_collection_sweep_confiscation_pending", false)),
-	}
-	if str(run_state.numbers_state.collection_state.get("reason", "")) != "swept" \
-		or str(job.get("status", "")) != "resolved" \
-		or str(job.get("outcome", "")) != "failed" \
-		or run_state.crew_trust("crew_lucky") >= trust_before \
-		or run_state.suspicion_level() < heat_before + 14 \
-		or int(_dictionary(result.get("numbers_collection_confiscated", {})).get("count", 0)) != 1 \
-		or int(result.get("numbers_collection_bag_value_confiscated", 0)) <= 0 \
-		or not pending_ditch \
-		or not queued_ids.has("numbers_lucky_swept_collection") \
-		or not rumor_found \
-		or not bool(forced_resolution.get("resolved", false)) \
-		or not run_state.crew_grievances("crew_lucky").is_empty() \
-		or bool(run_state.narrative_flags.get("numbers_collection_sweep_confiscation_pending", false)):
-		failures.append("Swept Numbers collection missed a documented consequence: %s." % JSON.stringify(consequence_evidence))
+	if str(result.get("outcome", "")) != "confiscation" or not str(result.get("confiscated_item_id", "")).begins_with("delivery:numbers_slips") \
+		or run_state.delivery_has_active_run() or str(run_state.numbers_state.collection_state.get("reason", "")) != "swept" \
+		or str(job.get("status", "")) != "resolved" or str(job.get("outcome", "")) != "failed" \
+		or run_state.crew_trust("crew_lucky") >= trust_before or run_state.suspicion_level() < heat_before + 14 \
+		or not queued_ids.has("numbers_lucky_swept_collection") or not rumor_found or not run_state.crew_grievances("crew_lucky").is_empty():
+		failures.append("Swept Numbers delivery missed its immediate confiscation/job/heat/rumor consequences: %s." % JSON.stringify(result))
 
 
 static func _check_consequences_and_independence(failures: Array) -> void:
@@ -539,7 +503,7 @@ static func _check_consequences_and_independence(failures: Array) -> void:
 			failures.append("Numbers implementation contains forbidden cross-system vocabulary in %s." % path)
 	var run_source := FileAccess.get_file_as_string("res://scripts/core/run_state.gd")
 	var numbers_begin := run_source.find("func numbers_status")
-	var numbers_end := run_source.find("func streets_begin", numbers_begin)
+	var numbers_end := run_source.find("func delivery_begin", numbers_begin)
 	if numbers_begin < 0 or numbers_end <= numbers_begin or run_source.substr(numbers_begin, numbers_end - numbers_begin).to_lower().find(forbidden) >= 0:
 		failures.append("Numbers-owned RunState surface contains forbidden cross-system coupling.")
 	var ui_source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
@@ -588,8 +552,8 @@ static func _check_midstate_save_load(failures: Array) -> void:
 	var collection_run: RunState = collection_fixture.get("run") as RunState
 	var collection_restored: RunState = RunStateScript.new()
 	collection_restored.from_dict(collection_run.to_dict())
-	if JSON.stringify(collection_restored.numbers_state.snapshot()) != JSON.stringify(collection_run.numbers_state.snapshot()) or JSON.stringify(collection_restored.streets_snapshot()) != JSON.stringify(collection_run.streets_snapshot()):
-		failures.append("RunState save/load changed active Lucky collection cargo or its frozen Streets board.")
+	if JSON.stringify(collection_restored.numbers_state.snapshot()) != JSON.stringify(collection_run.numbers_state.snapshot()) or JSON.stringify(collection_restored.delivery_snapshot()) != JSON.stringify(collection_run.delivery_snapshot()):
+		failures.append("RunState save/load changed active Lucky collection cargo or its real-map delivery state.")
 	var fix_run: RunState = RunStateScript.new()
 	fix_run.start_new("NUMBERS-SAVE-FIX")
 	fix_run.current_environment = {"id": "small_underground_casino", "archetype_id": "small_underground_casino", "world_node_id": "small_underground_casino", "turns": 0}
@@ -700,10 +664,43 @@ static func _independence_projection(run_state: RunState) -> Dictionary:
 static func _runner_fixture(seed_text: String) -> Dictionary:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed_text)
+	_initialize_delivery_world(run_state)
 	run_state.current_environment = {"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0}
 	run_state.crew_add_trust("crew_lucky", 30, "fixture")
 	var started := run_state.numbers_begin_collection_route()
 	return {"ok": bool(started.get("ok", false)), "run": run_state, "started": started}
+
+
+static func _initialize_delivery_world(run_state: RunState) -> void:
+	if delivery_fixture_library == null:
+		delivery_fixture_library = NumbersContentLibraryScript.new()
+		delivery_fixture_library.load()
+	var generator: RunGenerator = NumbersRunGeneratorScript.new(delivery_fixture_library)
+	generator.next_environment(run_state)
+
+
+static func _complete_delivery_targets(run_state: RunState) -> bool:
+	var target_ids: Array = []
+	for target_value in run_state.delivery_snapshot().get("targets", []):
+		if typeof(target_value) == TYPE_DICTIONARY:
+			target_ids.append(str((target_value as Dictionary).get("node_id", "")))
+	for node_id_value in target_ids:
+		var node_id := str(node_id_value)
+		var node := NumbersWorldMapScript.node_metadata_by_id(run_state.world_map, node_id)
+		run_state.world_map = NumbersWorldMapScript.enter_node(run_state.world_map, node_id, {})
+		run_state.current_environment = {
+			"id": node_id,
+			"archetype_id": str(node.get("archetype_id", node_id)),
+			"world_node_id": node_id,
+			"turns": 0,
+			"security_profile": {},
+		}
+		var arrival := run_state.delivery_resolve_travel_arrival({"target_node_id": node_id}, {})
+		if not bool(arrival.get("handoff_ready", false)) or run_state.delivery_arrival_interaction().is_empty():
+			return false
+		if not bool(run_state.delivery_complete_handoff(node_id).get("ok", false)):
+			return false
+	return not run_state.delivery_has_active_run()
 
 
 static func _winning_straight_payout_with_leak(seed_value: int, leak: Dictionary) -> int:

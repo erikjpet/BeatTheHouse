@@ -604,6 +604,15 @@ static func normalized_interaction_rect(object_type: String, index: int) -> Rect
 		"numbers", "numbers_silas":
 			center = Vector2(0.42 + float(index % 2) * 0.24, 0.68)
 			size = Vector2(106.0 / board_size.x, 62.0 / board_size.y)
+		"delivery":
+			var delivery_centers := [
+				Vector2(0.72, 0.28), Vector2(0.84, 0.48),
+				Vector2(0.68, 0.66), Vector2(0.42, 0.28),
+				Vector2(0.30, 0.48), Vector2(0.46, 0.66),
+				Vector2(0.82, 0.72), Vector2(0.20, 0.28),
+			]
+			center = delivery_centers[index % delivery_centers.size()]
+			size = Vector2(100.0 / board_size.x, 70.0 / board_size.y)
 		"home_tenure":
 			center = Vector2(0.78, 0.46)
 			size = Vector2(116.0 / board_size.x, 58.0 / board_size.y)

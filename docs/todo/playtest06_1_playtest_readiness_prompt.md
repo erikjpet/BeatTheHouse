@@ -93,10 +93,10 @@ where not) and fix anything that blocks or wastes play:
   every interactable event/object placed in any generated environment
   yields a working interaction. Extend the sweep to the systems that
   landed after that guard (crew jobs, plays, heist beats, chains,
-  Numbers, pushers, craps, Streets boards) — an icon that does
+  Numbers, pushers, craps, active delivery map layers and in-room handoffs) — an icon that does
   nothing is the single worst playtest experience and this project
   has already shipped that bug once.
-- **No soft-locks.** Sweep travel locks, Streets failures, heist
+- **No soft-locks.** Sweep travel locks, delivery failures, heist
   aborts, layer transitions, Engine Trouble, sweep encounters, and
   every job/chain failure path for states the player cannot leave.
 - **Every major path reachable.** In seeded runs, prove the player
@@ -106,7 +106,7 @@ where not) and fix anything that blocks or wastes play:
   craps, back-room poker, all three Punchline layers, and each of the
   three victory routes. Report seeds that reach each — the owner will
   use them.
-- **Save/load anywhere.** Mid-heist, mid-Streets, mid-hand, mid-layer.
+- **Save/load anywhere.** Mid-heist, mid-delivery, mid-hand, mid-layer.
 
 ### 3. Truthful state-of-the-update report
 

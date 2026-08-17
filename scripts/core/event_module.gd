@@ -158,11 +158,11 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		conclusion_animation = "bankroll_transfer"
 	result["conclusion_animation"] = conclusion_animation
 	if get_id() == "crew_favor_delivery" and choice_key == "run_package":
-		var streets_result := run_state.resolve_crew_favor_delivery_job(choice_key, {
+		var delivery_result := run_state.resolve_crew_favor_delivery_job(choice_key, {
 			"success": consequences,
 			"failure": _copy_dict(selected_choice.get("streets_failure", {})),
 		})
-		var start_message := str(streets_result.get("message", "The block is live. Keep your head down."))
+		var start_message := str(delivery_result.get("message", "The route is marked. Keep your head down."))
 		var start_deltas := _copy_dict(result.get("deltas", {}))
 		start_deltas["bankroll_delta"] = 0
 		start_deltas["suspicion_delta"] = 0
@@ -180,8 +180,8 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		result["deltas"] = start_deltas
 		result["message"] = start_message
 		result["conclusion_animation"] = ""
-		result["streets_started"] = bool(streets_result.get("ok", false))
-		result["streets_snapshot"] = streets_result.get("snapshot", {})
+		result["delivery_started"] = bool(delivery_result.get("ok", false))
+		result["delivery_snapshot"] = delivery_result.get("snapshot", {})
 		apply_event_result(run_state, result)
 		return result
 	apply_event_result(run_state, result)

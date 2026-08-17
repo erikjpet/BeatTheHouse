@@ -235,6 +235,7 @@ function Get-FoundationSplitRunnerPath {
         "scripts/tests/foundation/check_slots_surfaces.gd",
         "scripts/tests/foundation/check_table_games.gd",
         "scripts/tests/foundation/check_items_events_world.gd",
+        "scripts/tests/foundation/check_delivery_runs.gd",
         "scripts/tests/foundation/check_lenders_release_saves.gd",
         "scripts/tests/foundation/check_scratch_tickets.gd",
         "scripts/tests/foundation/check_cage_environment_rework.gd",
