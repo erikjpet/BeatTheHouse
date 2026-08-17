@@ -1632,6 +1632,7 @@ func _clone_library_for_validation(library: ContentLibrary) -> ContentLibrary:
 	clone.lenders = library.lenders.duplicate(true)
 	clone.services = library.services.duplicate(true)
 	clone.travel_routes = library.travel_routes.duplicate(true)
+	clone.rebuild_content_indexes()
 	return clone
 
 

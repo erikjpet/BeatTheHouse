@@ -385,12 +385,12 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 	var activity := clampf(distance / 24.0, 0.0, 1.0)
 	var command := {
 		"environment_changed": false,
-		"message": str(scratch_result.get("message", "Latex flakes away.")),
 		"surface_audio_loop_start": SCRATCH_AUDIO_LOOP,
 		"surface_audio_loop_volume_db": lerpf(-19.0, -10.5, activity),
 		"surface_audio_loop_pitch": lerpf(0.92, 1.06, activity),
 	}
 	if not swept_sections.is_empty():
+		command["message"] = str(scratch_result.get("message", "That spot clears clean."))
 		command["surface_audio_cue"] = SCRATCH_POP_CUE
 	if completed:
 		command.erase("surface_audio_loop_start")
@@ -400,6 +400,7 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 		if int(_dict_ref(machine.get("active_ticket", {})).get("payout", 0)) > 0:
 			command["surface_audio_cue"] = "ticket_win"
 	elif penalty > 0:
+		command["message"] = str(scratch_result.get("message", "The coating tears."))
 		command.erase("surface_audio_loop_start")
 		command["surface_audio_loop_stop"] = SCRATCH_AUDIO_LOOP
 		command["action_id"] = REVEAL_ACTION

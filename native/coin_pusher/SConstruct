@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+
+import os
+
+godot_cpp_dir = ARGUMENTS.get("godot_cpp_dir", "")
+if not godot_cpp_dir or not os.path.isfile(os.path.join(godot_cpp_dir, "SConstruct")):
+    raise RuntimeError("godot_cpp_dir must identify the pinned godot-cpp checkout")
+del ARGUMENTS["godot_cpp_dir"]
+
+env = SConscript(os.path.join(godot_cpp_dir, "SConstruct"))
+env.Append(CPPPATH=["src"])
+env.Append(CXXFLAGS=["-std=c++17"])
+
+sources = Glob("src/*.cpp")
+library = env.SharedLibrary(
+    "../../addons/coin_pusher_native/bin/coin_pusher_native{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+    source=sources,
+)
+env.NoCache(library)
+Default(library)

@@ -64,9 +64,10 @@ const FOCUS_PROBE_FRAMES := 18
 const MAX_FOCUS_OBJECTS_PER_SEED := 4
 const GRAND_CASINO_LIVING_FLOOR_FRAME_P95_BUDGET_MS := 16.0
 const NEW_SURFACE_SAMPLE_FRAMES := 120
-const COIN_PUSHER_SHIPPED_COIN_CAP := 48
+const COIN_PUSHER_SHIPPED_COIN_CAP := 160
 const COIN_PUSHER_SOLVER_SAMPLE_COUNT := 32
 const COIN_PUSHER_ACTIVE_SAMPLE_FRAMES := 60
+const COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS := 16.0
 const COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS := 16.0
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
@@ -529,8 +530,10 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 	var opening_rng := run_state.create_rng("performance_coin_pusher_raw_solver").fork("opening")
 	var baseline := CoinPusherSolverScript.create(opening_rng, cap, cap, lane_count)
 	var samples: Array = []
+	var stage_samples: Dictionary = {}
 	var fixed_tick_samples := 0
 	var capped_samples := 0
+	var native_backend_samples := 0
 	for sample_index in range(COIN_PUSHER_SOLVER_SAMPLE_COUNT):
 		var sample_state: Dictionary = baseline.duplicate(true)
 		var drop_rng := run_state.create_rng("performance_coin_pusher_raw_solver:%d" % sample_index)
@@ -540,13 +543,17 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 			"captured_upper_phase_fp": (sample_index * 1700) % CoinPusherSolverScript.PHASE_PERIOD,
 			"captured_lower_phase_fp": (sample_index * 2300) % CoinPusherSolverScript.PHASE_PERIOD,
 			"push_scale": 3 + sample_index % 3,
+			"_debug_profile_stages": true,
 		})
 		samples.append(float(Time.get_ticks_usec() - start_usec) / 1000.0)
+		_append_coin_pusher_stage_samples(stage_samples, step.get("debug_stage_timing_usec", {}))
 		var metrics: Dictionary = step.get("metrics", {}) if typeof(step.get("metrics", {})) == TYPE_DICTIONARY else {}
 		if int(metrics.get("fixed_ticks", 0)) == CoinPusherSolverScript.ACTION_TICKS:
 			fixed_tick_samples += 1
 		if CoinPusherSolverScript.coin_count(sample_state) <= cap:
 			capped_samples += 1
+		if CoinPusherSolverScript.last_step_backend_for_test() == "native":
+			native_backend_samples += 1
 	var stats := _timing_stats(samples)
 	stats["seed"] = "practice:coin_pusher_full_cap"
 	stats["run_index"] = -1
@@ -556,12 +563,25 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 	stats["sample_count"] = samples.size()
 	stats["fixed_tick_samples"] = fixed_tick_samples
 	stats["capped_samples"] = capped_samples
+	stats["native_backend_samples"] = native_backend_samples
+	stats["solver_backend"] = "native" if native_backend_samples == samples.size() else "mixed_or_fallback"
 	stats["coin_cap"] = cap
+	stats["p95_budget_ms"] = COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS
+	stats["stage_timing_ms"] = _coin_pusher_stage_timing_stats(stage_samples)
 	observations.append(stats)
 	coin_pusher_performance_status["raw_solver_timing"] = stats.duplicate(true)
-	coin_pusher_solver_timing_checked = samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT and fixed_tick_samples == samples.size() and capped_samples == samples.size()
+	coin_pusher_solver_timing_checked = samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT \
+		and fixed_tick_samples == samples.size() \
+		and capped_samples == samples.size() \
+		and native_backend_samples == samples.size() \
+		and float(stats.get("p95_ms", 0.0)) <= COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS
 	if not coin_pusher_solver_timing_checked:
-		failures.append("Raw Coin Pusher solver timing did not preserve all %d fixed-tick, capped samples." % COIN_PUSHER_SOLVER_SAMPLE_COUNT)
+		if samples.size() != COIN_PUSHER_SOLVER_SAMPLE_COUNT or fixed_tick_samples != samples.size() or capped_samples != samples.size():
+			failures.append("Raw Coin Pusher solver timing did not preserve all %d fixed-tick, capped samples." % COIN_PUSHER_SOLVER_SAMPLE_COUNT)
+		if native_backend_samples != samples.size():
+			failures.append("Raw Coin Pusher solver timing selected native for %d/%d samples." % [native_backend_samples, samples.size()])
+		if float(stats.get("p95_ms", 0.0)) > COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS:
+			failures.append("Raw full-cap Coin Pusher solver p95 %.3f ms exceeded %.3f ms." % [float(stats.get("p95_ms", 0.0)), COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS])
 
 
 func _probe_coin_pusher_active_sequence(run_state: RunState, game: GameModule, environment_id: String) -> void:
@@ -601,6 +621,9 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 		return false
 	if canvas.has_method("reset_performance_counters"):
 		canvas.call("reset_performance_counters")
+	var debug_ui_state: Dictionary = app.get("game_surface_ui_state").duplicate(true) if typeof(app.get("game_surface_ui_state")) == TYPE_DICTIONARY else {}
+	debug_ui_state["coin_pusher_debug_profile_stages"] = true
+	app.set("game_surface_ui_state", debug_ui_state)
 	var call_start_usec := Time.get_ticks_usec()
 	var handled := bool(app.call("_handle_module_surface_action", surface_action, 0, true))
 	var resolve_call_ms := float(Time.get_ticks_usec() - call_start_usec) / 1000.0
@@ -610,8 +633,16 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 	var draw_p95_ms := float(counters.get("draw_p95_ms", 0.0))
 	var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
 	var metrics: Dictionary = result.get("coin_pusher_solver_metrics", {}) if typeof(result.get("coin_pusher_solver_metrics", {})) == TYPE_DICTIONARY else {}
-	var trace: Array = result.get("coin_pusher_presentation_trace", []) if typeof(result.get("coin_pusher_presentation_trace", [])) == TYPE_ARRAY else []
+	var presentation_patch: Dictionary = result.get("surface_presentation_snapshot_patch", {}) if typeof(result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
+	var trace: Array = presentation_patch.get("trace", []) if typeof(presentation_patch.get("trace", [])) == TYPE_ARRAY else []
+	var packed_trace: Dictionary = presentation_patch.get("trace_packed", {}) if typeof(presentation_patch.get("trace_packed", {})) == TYPE_DICTIONARY else {}
+	var trace_frame_count := int(packed_trace.get("frame_count", 0)) if not packed_trace.is_empty() else trace.size()
 	var collapse_seen := int(metrics.get("topple_count", 0)) > 0 or int(metrics.get("upper_lower_fall_count", 0)) > 0
+	var solver_backend := CoinPusherSolverScript.last_step_backend_for_test()
+	var combined_stage_timing: Dictionary = (result.get("coin_pusher_debug_stage_timing_usec", {}) as Dictionary).duplicate(false)
+	var host_stage_timing: Dictionary = result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	for host_stage in host_stage_timing:
+		combined_stage_timing[host_stage] = host_stage_timing[host_stage]
 	var observation := {
 		"seed": "practice:coin_pusher_full_cap",
 		"run_index": -1,
@@ -621,6 +652,7 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 		"mode": mode,
 		"frames": COIN_PUSHER_ACTIVE_SAMPLE_FRAMES,
 		"resolve_call_ms": resolve_call_ms,
+		"resolve_call_budget_ms": COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS,
 		"frame_time": frame_stats,
 		"frame_p95_budget_ms": COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS,
 		"draw_avg_ms": float(counters.get("draw_avg_ms", 0.0)),
@@ -630,14 +662,19 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 		"draw_p95_budget_ms": MAX_SURFACE_DRAW_P95_MS,
 		"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
 		"solver_metrics": metrics,
-		"presentation_trace_frames": trace.size(),
+		"solver_backend": solver_backend,
+		"stage_timing_ms": _coin_pusher_stage_profile_msec(combined_stage_timing),
+		"presentation_trace_frames": trace_frame_count,
 		"collapse_seen": collapse_seen,
 	}
 	observations.append(observation)
 	coin_pusher_performance_status[mode] = observation.duplicate(true)
-	var passed := handled and bool(result.get("ok", false)) and int(metrics.get("fixed_ticks", 0)) == CoinPusherSolverScript.ACTION_TICKS and not trace.is_empty()
+	var passed := handled and bool(result.get("ok", false)) and int(metrics.get("fixed_ticks", 0)) == CoinPusherSolverScript.ACTION_TICKS and trace_frame_count == 14 and solver_backend == "native"
 	if not passed:
-		failures.append("Coin Pusher %s did not resolve through the production surface with a complete fixed-tick presentation replay." % mode)
+		failures.append("Coin Pusher %s did not resolve through the production surface with the exact 14-frame fixed-tick presentation replay." % mode)
+	if resolve_call_ms > COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS:
+		failures.append("Coin Pusher %s synchronous resolve %.3f ms exceeded %.3f ms." % [mode, resolve_call_ms, COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS])
+		passed = false
 	if float(frame_stats.get("p95_ms", 0.0)) > COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS:
 		failures.append("Coin Pusher %s frame p95 %.3f ms exceeded %.3f ms." % [mode, float(frame_stats.get("p95_ms", 0.0)), COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS])
 		passed = false
@@ -1472,7 +1509,7 @@ func _resolve_probe_ui_state(game_id: String, sample_index: int, game: GameModul
 		"pull_tabs":
 			return {"pull_tab_deal_index": sample_index % 4}
 		"scratch_tickets":
-			return {"scratch_stock_index": _stocked_scratch_index(run_state, environment, sample_index)}
+			return {"scratch_stock_index": _stocked_scratch_index(game, run_state, environment, sample_index)}
 		"bar_dice":
 			var roll_command := game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, environment)
 			var ui: Dictionary = roll_command.get("ui_state", {})
@@ -1670,26 +1707,33 @@ func _interactable_object_by_id(objects: Array, object_id: String) -> Dictionary
 	return {}
 
 
-func _stocked_scratch_index(run_state: RunState, environment: Dictionary, sample_index: int) -> int:
-	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var machine: Dictionary = game_states.get("scratch_tickets", {}) if typeof(game_states.get("scratch_tickets", {})) == TYPE_DICTIONARY else {}
+func _stocked_scratch_index(game: GameModule, run_state: RunState, environment: Dictionary, sample_index: int) -> int:
+	# Enter-time presentation projects a visit-scoped scalper on an observational
+	# copy. Resolve must project that same state at its mutation boundary, so raw
+	# environment stock can say "available" immediately before the scalper clears
+	# it. This microbenchmark measures a real purchase, not the sold-out branch:
+	# commit the visit projection first, then prepare one deterministic available
+	# ticket without changing ticket definitions, odds, inventory, or the seed.
+	var machine: Dictionary = game.call("_ensure_machine_state", run_state, environment, true)
+	machine["scalper_present"] = false
+	machine["scalper_knows_schedule"] = false
 	var stock: Array = machine.get("stock", []) if typeof(machine.get("stock", [])) == TYPE_ARRAY else []
 	if stock.is_empty():
 		return 0
+	var selected_index := -1
 	for offset in range(stock.size()):
 		var index := (sample_index + offset) % stock.size()
 		if typeof(stock[index]) == TYPE_DICTIONARY and int((stock[index] as Dictionary).get("remaining", 0)) > 0:
-			return index
-	if typeof(stock[0]) == TYPE_DICTIONARY:
+			selected_index = index
+			break
+	if selected_index < 0 and typeof(stock[0]) == TYPE_DICTIONARY:
 		var slot: Dictionary = stock[0]
 		slot["remaining"] = 1
 		stock[0] = slot
 		machine["stock"] = stock
-		game_states["scratch_tickets"] = machine
-		environment["game_states"] = game_states
-		if run_state != null:
-			run_state.current_environment = environment
-	return 0
+		selected_index = 0
+	game.call("_write_machine_state", environment, machine, run_state, false)
+	return maxi(0, selected_index)
 
 
 func _open_fresh_app() -> void:
@@ -1757,6 +1801,40 @@ func _array_size(value: Variant) -> int:
 
 func _dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _append_coin_pusher_stage_samples(samples_by_stage: Dictionary, profile_value: Variant) -> void:
+	if typeof(profile_value) != TYPE_DICTIONARY:
+		return
+	var profile: Dictionary = profile_value
+	for stage_value in profile.keys():
+		var stage := str(stage_value)
+		var samples: Array = samples_by_stage.get(stage, []) if typeof(samples_by_stage.get(stage, [])) == TYPE_ARRAY else []
+		samples.append(float(profile.get(stage_value, 0)) / 1000.0)
+		samples_by_stage[stage] = samples
+
+
+func _coin_pusher_stage_timing_stats(samples_by_stage: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	var stages: Array = samples_by_stage.keys()
+	stages.sort()
+	for stage_value in stages:
+		var stage := str(stage_value)
+		var samples: Array = samples_by_stage.get(stage, []) if typeof(samples_by_stage.get(stage, [])) == TYPE_ARRAY else []
+		result[stage] = _timing_stats(samples)
+	return result
+
+
+func _coin_pusher_stage_profile_msec(profile_value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	if typeof(profile_value) != TYPE_DICTIONARY:
+		return result
+	var profile: Dictionary = profile_value
+	var stages: Array = profile.keys()
+	stages.sort()
+	for stage_value in stages:
+		result[str(stage_value)] = float(profile.get(stage_value, 0)) / 1000.0
+	return result
 
 
 func _timing_stats(samples: Array) -> Dictionary:

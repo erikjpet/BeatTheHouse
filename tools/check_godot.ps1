@@ -224,11 +224,7 @@ function Get-FoundationSplitRunnerPath {
 }
 
 function Get-UiSceneSplitRunnerPath {
-    return New-SplitTestRunner -Name "ui_scene_compile_split_runner.gd" -SourceRelativePaths @(
-        "scripts/tests/ui_scene/compile_components_and_main_flow.gd",
-        "scripts/tests/ui_scene/compile_environment_layout.gd",
-        "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd"
-    )
+    return Convert-ProjectResourcePath (Join-Path $root "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd")
 }
 
 function Get-ReportKeepCount {

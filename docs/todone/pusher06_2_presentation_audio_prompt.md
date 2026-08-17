@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `pusher06_2` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-17
+- **Completion/implementation commits:** `f70bb326..9bbdd037` (dense snapshot-driven presentation, strict presentation seam, audio/tell delivery, native deterministic solver and export support, output-identical shipped-cap performance work, packed-trace regression coverage, and Web-safe trace-row ownership).
+- **Verification:** Current-HEAD supported gates all pass: Systems (`.tmp/test_reports/20260817_pusher06_2_postfix_systems_retry/summary.json`, 49 checks/4 shards), UI (`.tmp/test_reports/20260817_pusher06_2_postfix_ui_retry/summary.json`), Contracts (`.tmp/test_reports/20260817_pusher06_2_postfix_contracts_retry/summary.json`, 10/10), and Coin Pusher (`.tmp/test_reports/20260817_pusher06_2_postfix_coin_pusher/summary.json`), each with zero failures/stderr issues. Ten-seed determinism produced 590 byte-identical checkpoints and hash `1022775515`; visual QA passed. Shipped-cap performance report `.tmp/test_reports/20260817_pusher06_2_postfix_performance/foundation_performance_probe_report.json` passes: Drop resolve 15.798 ms, collapse Nudge 14.820 ms, raw native p95 10.276 ms, draw p95 4.249/4.090 ms, frame p95 6.923/6.922 ms, 14 replay frames, zero full snapshots. Exact 200-action Windows/Web release parity passes with input `1941cd44...c992`, outcomes `8826fed6...b9a`, backend `5ea048d3...1af`, final captured frame `a5331a9a...950a`, and 200/200 native actions. Fresh Windows/Web itch exports and package inventories pass with no saves/debug/development material and byte-identical source/output/archive native modules. Seven required feel captures plus five advancing replay sheets and five tell stages pass at `.tmp/pusher06_2_final_feel_captures`; independent visual review says the dense, stacked, hanging field now reads unmistakably as a real coin pusher. Additional global Web diagnostics were preserved without weakening budgets: Grand Casino gameplay scenarios pass but cold startup was 13 ms over its 20 s budget; `l02` also reported unrelated startup/Corner Store/Blackjack baseline misses.
+- **Deviations:** Shipped `coin_cap=160` with a 150-coin uneven opening pile, the densest target sustained inside all binding action/draw/frame budgets. An exact transactional native packed core and owned packed-trace rows preserve the synchronous 48-tick/14-frame result while meeting the budget and preventing Web pointer lifetime faults. No outcome, feature, animation, audio, render, replay, or budget reduction; no owner-locked design change.
 
 # Agent Prompt — pusher06_2: Presentation + Audio (the feel pass)
 

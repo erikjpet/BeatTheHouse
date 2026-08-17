@@ -64,6 +64,15 @@ var validation_warnings: Array = []
 var validation_complete := false
 var _load_errors: Array = []
 var _indexes: Dictionary = {}
+var _action_trigger_event_candidates: Array = []
+var _action_trigger_event_candidate_buckets: Dictionary = {}
+var _heat_threshold_talk_event_candidates: Array = []
+var _table_approach_talk_event_candidates: Array = []
+var _table_approach_game_targets: Dictionary = {}
+var _table_approach_has_wildcard := false
+var _trigger_event_indexed_events: Array = []
+var _trigger_event_index_full_pack_scan_count := 0
+var _content_index_generation := 0
 var _load_timing: Dictionary = {}
 var _load_pack_timings: Array = []
 
@@ -124,7 +133,7 @@ func load(run_validation: bool = true) -> Dictionary:
 	town_conditions = town_condition_entries[0] if not town_condition_entries.is_empty() and typeof(town_condition_entries[0]) == TYPE_DICTIONARY else {}
 	character_chains = _load_dictionary(CHARACTER_CHAINS_PATH, true)
 	var parse_complete_usec := Time.get_ticks_usec()
-	_rebuild_indexes()
+	rebuild_content_indexes()
 	var index_complete_usec := Time.get_ticks_usec()
 	if run_validation:
 		validate()
@@ -167,6 +176,9 @@ func validate() -> Array:
 	validation_complete = true
 	events = _normalize_event_definitions(events)
 	dialogues = _normalize_dialogue_definitions(dialogues)
+	# Validation replaces normalized content arrays. Publish that mutation through
+	# the supported index boundary before any validator or fixture reads content.
+	rebuild_content_indexes()
 	validation_errors = _load_errors.duplicate(true)
 	validation_warnings = []
 	_validate_collection("environment_archetypes", environment_archetypes, [
@@ -745,6 +757,54 @@ func event(event_id: String) -> Dictionary:
 	return _lookup("events", events, event_id)
 
 
+# Returns whether authored talk cadence can target a game without walking the
+# event pack. Ordered candidate views preserve authored order and seeded rolls.
+func has_table_approach_talk_event_for_game(game_id: String) -> bool:
+	_ensure_trigger_event_indexes()
+	var clean_id := game_id.strip_edges()
+	return not clean_id.is_empty() and (_table_approach_has_wildcard or bool(_table_approach_game_targets.get(clean_id, false)))
+
+
+# Immutable authored-order views used by action boundaries. Callers may iterate
+# these arrays but must never mutate them or their event definitions.
+func action_trigger_event_candidates_readonly() -> Array:
+	_ensure_trigger_event_indexes()
+	return _action_trigger_event_candidates
+
+
+# Returns a conservative authored-order view for one automatic event boundary.
+# An empty result proves that EventModule cannot accept any action-trigger
+# definition for these immutable context/environment facts. A non-empty result
+# is intentionally only a shortlist: live run conditions, cadence, and RNG stay
+# owned by the existing synchronous EventModule path.
+func action_trigger_event_candidates_for_context_readonly(source: String, context: Dictionary, environment: Dictionary) -> Array:
+	_ensure_trigger_event_indexes()
+	var trigger_signal := str(context.get("trigger", context.get("type", "")))
+	var bucket_signal := trigger_signal if trigger_signal in ["action", "travel"] else "other"
+	var environment_kind := str(environment.get("kind", ""))
+	var bucket_key := "%s|%s" % [bucket_signal, environment_kind]
+	var bucket_value: Variant = _action_trigger_event_candidate_buckets.get(bucket_key, _action_trigger_event_candidate_buckets.get("%s|*" % bucket_signal, []))
+	var bucket: Array = bucket_value if typeof(bucket_value) == TYPE_ARRAY else []
+	var result: Array = []
+	for event_definition_value in bucket:
+		if typeof(event_definition_value) != TYPE_DICTIONARY:
+			continue
+		var event_definition: Dictionary = event_definition_value
+		if _action_trigger_candidate_matches_boundary(event_definition, source, context, environment):
+			result.append(event_definition)
+	return result
+
+
+func heat_threshold_talk_event_candidates_readonly() -> Array:
+	_ensure_trigger_event_indexes()
+	return _heat_threshold_talk_event_candidates
+
+
+func table_approach_talk_event_candidates_readonly() -> Array:
+	_ensure_trigger_event_indexes()
+	return _table_approach_talk_event_candidates
+
+
 # Finds a dialogue definition by id.
 func dialogue(dialogue_id: String) -> Dictionary:
 	return _lookup("dialogues", dialogues, dialogue_id)
@@ -1057,8 +1117,28 @@ static func _normalize_event_timing(value: Variant) -> Dictionary:
 	}
 
 
-# Rebuilds id indexes for loaded content arrays. Fixture tests can still assign
-# arrays directly; _lookup refreshes a stale or missing index on demand.
+# Supported invalidation boundary for tools and fixtures that edit public content
+# arrays after load. Production content is immutable between calls to load(); an
+# editor that mutates an Array or one of its nested definitions in place must call
+# this method once after the edit. Runtime action paths never rescan content.
+func rebuild_content_indexes() -> void:
+	_rebuild_indexes()
+	_content_index_generation += 1
+
+
+func content_index_generation() -> int:
+	return _content_index_generation
+
+
+# Test/diagnostic seam for proving that immutable runtime reads do not rebuild
+# or rescan the authored event pack. Each trigger-index rebuild is one full pass.
+func trigger_event_index_full_pack_scan_count() -> int:
+	return _trigger_event_index_full_pack_scan_count
+
+
+# Rebuilds id indexes for loaded content arrays. Fixture tests can still replace
+# arrays directly; _lookup and the trigger-index identity guard refresh replacements
+# on demand. In-place fixture edits use rebuild_content_indexes() above.
 func _rebuild_indexes() -> void:
 	_indexes = {
 		"environment_archetypes": _index_by_id(environment_archetypes),
@@ -1076,6 +1156,219 @@ func _rebuild_indexes() -> void:
 		"music_tracks": _index_by_id(music_tracks),
 		"tutorial_lessons": _index_by_id(tutorial_lessons),
 	}
+	_rebuild_trigger_event_indexes()
+
+
+func _ensure_trigger_event_indexes() -> void:
+	# Production content is immutable after load. This identity check keeps the
+	# long-standing direct-array replacement seam honest without rescanning on
+	# play. In-place tool/fixture edits use rebuild_content_indexes().
+	if not is_same(_trigger_event_indexed_events, events):
+		_rebuild_trigger_event_indexes()
+
+
+func _rebuild_trigger_event_indexes() -> void:
+	_trigger_event_index_full_pack_scan_count += 1
+	_action_trigger_event_candidates = []
+	_action_trigger_event_candidate_buckets = {}
+	_heat_threshold_talk_event_candidates = []
+	_table_approach_talk_event_candidates = []
+	_table_approach_game_targets = {}
+	_table_approach_has_wildcard = false
+	for event_value in events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event_definition: Dictionary = event_value
+		if str(event_definition.get("interaction_mode", "interactable")) != "triggered":
+			continue
+		var trigger_value: Variant = event_definition.get("trigger", {})
+		var trigger: Dictionary = trigger_value if typeof(trigger_value) == TYPE_DICTIONARY else {}
+		var trigger_type := str(trigger.get("type", "manual"))
+		if trigger_type in ["manual", "timed", "travel", "random"]:
+			_action_trigger_event_candidates.append(event_definition)
+		if str(event_definition.get("presentation", "modal")) != "talk":
+			continue
+		if trigger_type == "heat_threshold":
+			_heat_threshold_talk_event_candidates.append(event_definition)
+			continue
+		if trigger_type != "table_approach":
+			continue
+		_table_approach_talk_event_candidates.append(event_definition)
+		var game_ids := _string_array(trigger.get("games", []))
+		if game_ids.is_empty():
+			_table_approach_has_wildcard = true
+			continue
+		for game_id_value in game_ids:
+			var target_id := str(game_id_value).strip_edges()
+			if not target_id.is_empty():
+				_table_approach_game_targets[target_id] = true
+	_rebuild_action_trigger_event_candidate_buckets()
+	_trigger_event_indexed_events = events
+
+
+# Precombines trigger-signal and environment-scope facts at content generation
+# time. Every bucket retains the original event-pack order.
+func _rebuild_action_trigger_event_candidate_buckets() -> void:
+	var environment_kinds: Dictionary = {}
+	for event_definition_value in _action_trigger_event_candidates:
+		if typeof(event_definition_value) != TYPE_DICTIONARY:
+			continue
+		var event_definition: Dictionary = event_definition_value
+		var scopes_value: Variant = event_definition.get("scopes", [])
+		if typeof(scopes_value) != TYPE_ARRAY:
+			continue
+		for scope_value in scopes_value:
+			var scope := str(scope_value)
+			if scope != "any":
+				environment_kinds[scope] = true
+	for trigger_signal in ["action", "travel", "other"]:
+		var wildcard_bucket: Array = []
+		for event_definition_value in _action_trigger_event_candidates:
+			if typeof(event_definition_value) != TYPE_DICTIONARY:
+				continue
+			var event_definition: Dictionary = event_definition_value
+			if _action_trigger_definition_matches_signal(event_definition, trigger_signal) and _event_definition_has_universal_scope(event_definition):
+				wildcard_bucket.append(event_definition)
+		_action_trigger_event_candidate_buckets["%s|*" % trigger_signal] = wildcard_bucket
+		for kind_value in environment_kinds.keys():
+			var kind := str(kind_value)
+			var scoped_bucket: Array = []
+			for event_definition_value in _action_trigger_event_candidates:
+				if typeof(event_definition_value) != TYPE_DICTIONARY:
+					continue
+				var event_definition: Dictionary = event_definition_value
+				if _action_trigger_definition_matches_signal(event_definition, trigger_signal) and _event_definition_matches_environment_scope(event_definition, kind):
+					scoped_bucket.append(event_definition)
+			_action_trigger_event_candidate_buckets["%s|%s" % [trigger_signal, kind]] = scoped_bucket
+
+
+func _action_trigger_definition_matches_signal(event_definition: Dictionary, trigger_signal: String) -> bool:
+	var trigger_value: Variant = event_definition.get("trigger", {})
+	var trigger: Dictionary = trigger_value if typeof(trigger_value) == TYPE_DICTIONARY else {}
+	match str(trigger.get("type", "manual")):
+		"manual", "timed":
+			return true
+		"travel":
+			return trigger_signal == "travel"
+		"random":
+			return trigger_signal == "action"
+	return false
+
+
+func _event_definition_matches_environment_scope(event_definition: Dictionary, environment_kind: String) -> bool:
+	var scopes_value: Variant = event_definition.get("scopes", [])
+	if typeof(scopes_value) != TYPE_ARRAY or (scopes_value as Array).is_empty():
+		return true
+	for scope_value in scopes_value:
+		var scope := str(scope_value)
+		if scope == "any" or scope == environment_kind:
+			return true
+	return false
+
+
+func _event_definition_has_universal_scope(event_definition: Dictionary) -> bool:
+	var scopes_value: Variant = event_definition.get("scopes", [])
+	if typeof(scopes_value) != TYPE_ARRAY or (scopes_value as Array).is_empty():
+		return true
+	return (scopes_value as Array).has("any")
+
+
+# Mirrors only cheap, read-only EventModule rejections. Every condition not
+# represented here deliberately falls through so this index cannot hide an
+# eligible or firing event.
+func _action_trigger_candidate_matches_boundary(event_definition: Dictionary, source: String, context: Dictionary, environment: Dictionary) -> bool:
+	var event_id := str(event_definition.get("id", ""))
+	var resolved_value: Variant = environment.get("resolved_event_ids", [])
+	if typeof(resolved_value) == TYPE_ARRAY and (resolved_value as Array).has(event_id):
+		return false
+	if int(environment.get("tier", 1)) < int(event_definition.get("tier_min", 1)):
+		return false
+	var trigger_value: Variant = event_definition.get("trigger", {})
+	var trigger: Dictionary = trigger_value if typeof(trigger_value) == TYPE_DICTIONARY else {}
+	var turns := int(context.get("turns", environment.get("turns", 0)))
+	match str(trigger.get("type", "manual")):
+		"timed":
+			if turns < int(trigger.get("turns", 0)):
+				return false
+		"random":
+			if turns < int(trigger.get("turns", trigger.get("min_turns", 0))):
+				return false
+	var speaker_value: Variant = event_definition.get("speaker", {})
+	if str(context.get("trigger", context.get("type", ""))) != "travel" and typeof(speaker_value) == TYPE_DICTIONARY:
+		var speaker: Dictionary = speaker_value
+		if not speaker.is_empty() and (not speaker.has("environment_actor") or bool(speaker.get("environment_actor", true))):
+			var kind := str(environment.get("kind", "")).strip_edges().to_lower()
+			var speaker_archetype_id := str(environment.get("archetype_id", "")).strip_edges().to_lower()
+			if kind in ["home", "recovery"] or speaker_archetype_id == "beach":
+				return false
+	var conditions_value: Variant = event_definition.get("conditions", {})
+	if context.has("conditions_override"):
+		var override_value: Variant = context.get("conditions_override")
+		conditions_value = override_value if typeof(override_value) == TYPE_DICTIONARY else {}
+	if typeof(conditions_value) != TYPE_DICTIONARY:
+		return true
+	var conditions: Dictionary = conditions_value
+	var tier := int(environment.get("tier", 1))
+	if conditions.has("min_tier") and tier < int(conditions.get("min_tier", 1)):
+		return false
+	if conditions.has("max_tier") and tier > int(conditions.get("max_tier", 99)):
+		return false
+	var archetype_id := str(environment.get("archetype_id", ""))
+	if not _readonly_string_constraint_allows(conditions.get("archetype_ids", []), archetype_id, true):
+		return false
+	if _readonly_string_array_has(conditions.get("blocked_archetype_ids", []), archetype_id):
+		return false
+	var layer_id := str(environment.get("current_layer_id", ""))
+	if not _readonly_string_constraint_allows(conditions.get("layer_ids", []), layer_id, true):
+		return false
+	if _readonly_string_array_has(conditions.get("blocked_layer_ids", []), layer_id):
+		return false
+	var requires_games_value: Variant = conditions.get("requires_games", [])
+	var environment_games_value: Variant = environment.get("game_ids", [])
+	if typeof(requires_games_value) == TYPE_ARRAY:
+		for game_id_value in requires_games_value:
+			var game_id := str(game_id_value)
+			if game_id.is_empty():
+				continue
+			if not _readonly_string_array_has(environment_games_value, game_id):
+				return false
+	var requires_context_value: Variant = conditions.get("requires_context", {})
+	if typeof(requires_context_value) == TYPE_DICTIONARY:
+		var requires_context: Dictionary = requires_context_value
+		for key_value in requires_context.keys():
+			var key := str(key_value)
+			var actual: Variant = context.get(key, source if key == "source" and not context.has(key) else null)
+			if actual != requires_context.get(key_value):
+				return false
+	return true
+
+
+func _readonly_string_constraint_allows(value: Variant, actual: String, empty_allows: bool) -> bool:
+	if typeof(value) != TYPE_ARRAY:
+		return empty_allows
+	var found_authored_value := false
+	for entry_value in value:
+		# EventModule._string_array stringifies authored entries without trimming,
+		# then its condition checks compare that value to the exact environment
+		# string. Whitespace-only ids are therefore meaningful; only "" is absent.
+		var entry := str(entry_value)
+		if entry.is_empty():
+			continue
+		found_authored_value = true
+		if entry == actual:
+			return true
+	return empty_allows and not found_authored_value
+
+
+func _readonly_string_array_has(value: Variant, actual: String) -> bool:
+	if typeof(value) != TYPE_ARRAY:
+		return false
+	for entry_value in value:
+		# Keep EventModule._string_array's exact, untrimmed string membership.
+		var entry := str(entry_value)
+		if not entry.is_empty() and entry == actual:
+			return true
+	return false
 
 
 func debug_soak_snapshot() -> Dictionary:

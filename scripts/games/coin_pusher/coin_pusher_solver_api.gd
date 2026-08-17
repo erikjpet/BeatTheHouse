@@ -17,6 +17,7 @@ const COIN_HEIGHT := 1700
 const OBJECT_RADIUS := 5200
 const OBJECT_HEIGHT := 2800
 const ACTION_TICKS := 48
+const PRESENTATION_TRACE_INTERVAL_TICKS := 4
 const PHASE_PERIOD := 12000
 const TRAY_LEFT := 2000
 const TRAY_RIGHT := 98000
@@ -46,6 +47,42 @@ static func add_recovered_coin(state: Dictionary, rng: RngStream, lane_count: in
 
 static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	return _implementation_script().call("step_action", state, config) as Dictionary
+
+
+static func step_action_reference_for_test(state: Dictionary, config: Dictionary) -> Dictionary:
+	return _implementation_script().call("step_action_reference_for_test", state, config) as Dictionary
+
+
+static func hot_state_eligible_for_test(state: Dictionary, config: Dictionary = {}) -> bool:
+	return bool(_implementation_script().call("hot_state_eligible_for_test", state, config))
+
+
+static func native_backend_available_for_test() -> bool:
+	return bool(_implementation_script().call("native_backend_available_for_test"))
+
+
+static func last_step_backend_for_test() -> String:
+	return str(_implementation_script().call("last_step_backend_for_test"))
+
+
+static func reset_native_backend_for_test() -> void:
+	_implementation_script().call("reset_native_backend_for_test")
+
+
+static func install_native_backend_for_test(backend: Object) -> void:
+	_implementation_script().call("install_native_backend_for_test", backend)
+
+
+static func native_step_contract_valid_for_test(before: Dictionary, candidate: Dictionary, result: Dictionary, config: Dictionary, trusted_native: bool = true) -> bool:
+	return bool(_implementation_script().call("native_step_contract_valid_for_test", before, candidate, result, config, trusted_native))
+
+
+static func finalize_packed_presentation_trace(packed_trace: Dictionary, state: Dictionary, tick_offset: int) -> Dictionary:
+	return _implementation_script().call("finalize_packed_presentation_trace", packed_trace, state, tick_offset) as Dictionary
+
+
+static func decode_packed_presentation_trace(packed_trace: Dictionary) -> Array:
+	return _implementation_script().call("decode_packed_presentation_trace", packed_trace) as Array
 
 
 static func body_views(state: Dictionary) -> Array:

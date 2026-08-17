@@ -42,6 +42,13 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets redemption control did not use the Cash In label.")
 	if not bool(surface.get("surface_pointer_coalesce_moves", false)) or not game.surface_pointer_uses_lightweight_ui_state("scratch_scrub"):
 		failures.append("Scratch Tickets did not retain coalesced lightweight pointer input.")
+	var main_source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	if not main_source.contains('var notify_coach := phase != "move"') \
+			or not main_source.contains("_guard_player_input_route(false, action, notify_coach)") \
+			or not main_source.contains("_apply_game_surface_command(command, index, false, notify_coach, true)") \
+			or not main_source.contains('not input_route_guarded and _guard_player_input_route(false, "ui:any", notify_coach)') \
+			or not main_source.contains("if notify_coach:"):
+		failures.append("Coalesced Scratch pointer moves no longer retain one trusted modal/closing guard while reserving coach action notification for begin/end boundaries.")
 	if bool(surface.get("scratch_core_surface_scroll", true)) or str(surface.get("scratch_ui_mode", "")) != "machine_surface_split":
 		failures.append("Scratch Tickets desktop UI lost its non-scrolling machine/surface split.")
 	var compact_surface := game.surface_state(run_state, environment, {"surface_runtime_status": {"small_screen_mode": true}})
@@ -164,6 +171,8 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 	var drag_move := game.surface_pointer_command("scratch_scrub", 0, "move", drag_to, drag_begin.get("ui_state", {}), run_state, environment)
 	if not bool(drag_move.get("surface_transient", false)) or str(drag_move.get("surface_audio_loop_start", "")) != "scratch_paper_foley_loop":
 		failures.append("Scratch drag did not use its transient paper-foley route.")
+	if drag_move.has("message"):
+		failures.append("Ordinary Scratch pointer movement still routed a non-visible global status update through the hot path.")
 	var drag_end := game.surface_pointer_command("scratch_scrub", 0, "end", drag_to, drag_move.get("ui_state", {}), run_state, environment)
 	if str(drag_end.get("surface_audio_loop_stop", "")) != "scratch_paper_foley_loop":
 		failures.append("Scratch pointer release did not stop the paper-foley loop.")
