@@ -145,8 +145,8 @@ stated in each prompt** — `events.json` in particular is shared, and
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | crew06_5 | `crew06_5_recruitment_prompt.md` | DONE | crew06_1, env06_2, env06_3 | crew06_6/7/8 | PM:Codex/sub:crew-recruitment | 2026-08-17 | 2026-08-17 | PM verified all seven primary/fallback recruitment paths, diegetic signposting, rank services, seeded presence, save/ignored-run compatibility, lender behavior, authored voices, and clean Contract/Systems/UI/determinism/75-state visual gates. |
-| crew06_6 | `crew06_6_layer3_jobs_prompt.md` | TODO | crew06_1, env06_4, streets06_1, crew06_5 | crew06_8 | | | | |
-| crew06_7 | `crew06_7_coordinated_plays_prompt.md` | TODO | crew06_1, crew06_5 | crew06_8 | | | | |
+| crew06_6 | `crew06_6_layer3_jobs_prompt.md` | IN_PROGRESS | crew06_1, env06_4, streets06_1, crew06_5 | crew06_8 | PM:Codex/sub:crew-jobs | 2026-08-17 | | PM-orchestrated isolated implementation; PM owns integration, cross-feature review, combined gates, and landing. |
+| crew06_7 | `crew06_7_coordinated_plays_prompt.md` | IN_PROGRESS | crew06_1, crew06_5 | crew06_8 | PM:Codex/sub:crew-plays | 2026-08-17 | | PM-orchestrated isolated implementation; PM owns integration, cross-feature review, combined gates, and landing. |
 | crew06_8 | `crew06_8_heist_prompt.md` | TODO | crew06_5/6/7, craps06_1, streets06_1, env06_3 | crew06_9 | | | | |
 | crew06_9 | `crew06_9_the_turn_prompt.md` | TODO | crew06_8, crew06_2, town06_2, crew06_3 | release06_1 | | | | |
 
@@ -160,7 +160,7 @@ the release, and it is where release activity finally happens.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| chain06_1 | `chain06_1_character_chains_prompt.md` | TODO | town06_2, env06_2, env06_3 | playtest06_1 | | | | |
+| chain06_1 | `chain06_1_character_chains_prompt.md` | IN_PROGRESS | town06_2, env06_2, env06_3 | playtest06_1 | PM:Codex/sub:character-chains | 2026-08-17 | | PM-orchestrated isolated implementation; PM owns integration, cross-feature review, combined gates, and landing. |
 | content06_1 | `content06_1_items_events_expansion_prompt.md` | TODO | env06_2, env06_3, crew06_6 | playtest06_1 | | | | |
 | playtest06_1 | `playtest06_1_playtest_readiness_prompt.md` | TODO | ALL other rows DONE (except parked) | owner playtest | | | | Verification, playability sweep, honest handoff report, local build. No version bump, no tag, no packaging, no publish, no final balance tuning. |
 
@@ -1460,3 +1460,9 @@ What happens then is the owner's, not an agent's:
   19.369 ms / drop 104.976 ms / nudge 124.424 ms against 16 ms; root profiling
   continues without waivers. The isolated presentation-gap patch is static
   ACCEPT and now owns the focused runtime window.
+- 2026-08-17 [crew06_6/crew06_7/chain06_1] PM claimed all three unblocked
+  release rows for parallel isolated execution. Crew jobs owns layer 3, jobs,
+  services, and the Practice Rig; coordinated plays owns the five explicit
+  in-venue play windows; character chains owns six flag-driven narrative arcs.
+  The PM owns integration order, shared presence seams, board closeout, and the
+  complete combined acceptance matrix before any row is marked DONE.
