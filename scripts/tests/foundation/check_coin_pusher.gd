@@ -296,6 +296,17 @@ func _check_coin_pusher_canonical_probe(failures: Array) -> void:
 	var required_capture_contract := 'const REQUIRED_CAPTURE_IDS := ["normal_pile_rider", "tell_alarm_chirps", "reduced_motion", "hard_alarm_lockdown", "room_available_after_alarm", "jackpot_ridge", "vault_drop"]'
 	if not capture_source.contains(required_capture_contract):
 		failures.append("Coin Pusher focused capture does not require both Jackpot Ridge and The Vault Drop alongside the five base proofs.")
+	var performance_source := FileAccess.get_file_as_string("res://tools/foundation_performance_probe.gd")
+	for required_text in [
+		'"coin_pusher": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8}',
+		'"mode"] = "coin_pusher_solver_action_raw"',
+		'"coin_pusher_active_drop"',
+		'"coin_pusher_active_nudge"',
+		'COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS := 16.0',
+		'MAX_SURFACE_DRAW_P95_MS := 5.0',
+	]:
+		if not performance_source.contains(required_text):
+			failures.append("Canonical performance coverage is missing the Coin Pusher acceptance seam %s." % required_text)
 
 
 func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> void:

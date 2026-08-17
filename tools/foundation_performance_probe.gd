@@ -14,6 +14,7 @@ const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_ove
 const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
+const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const REPORT_PATH := "user://foundation_performance_probe_report.json"
 const PERF_SAVE_SLOT := "foundation_performance_probe_autosave"
 const TEST_META_COLLECTION_PATH := "user://foundation_performance_probe_meta_collection.json"
@@ -47,6 +48,7 @@ const GAME_IDLE_LIVENESS := {
 	"baccarat": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"roulette": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"video_poker": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
+	"coin_pusher": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 }
 const ENVIRONMENT_IDLE_LIVENESS := {
 	"counter": "scene_idle_animation_redraw_count",
@@ -62,7 +64,22 @@ const FOCUS_PROBE_FRAMES := 18
 const MAX_FOCUS_OBJECTS_PER_SEED := 4
 const GRAND_CASINO_LIVING_FLOOR_FRAME_P95_BUDGET_MS := 16.0
 const NEW_SURFACE_SAMPLE_FRAMES := 120
+const COIN_PUSHER_SHIPPED_COIN_CAP := 48
+const COIN_PUSHER_SOLVER_SAMPLE_COUNT := 32
+const COIN_PUSHER_ACTIVE_SAMPLE_FRAMES := 60
+const COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS := 16.0
 const REQUIRED_GAME_IDS := [
+	"pull_tabs",
+	"scratch_tickets",
+	"slot",
+	"bar_dice",
+	"blackjack",
+	"baccarat",
+	"roulette",
+	"video_poker",
+	"coin_pusher",
+]
+const REQUIRED_RESOLVE_GAME_IDS := [
 	"pull_tabs",
 	"scratch_tickets",
 	"slot",
@@ -129,6 +146,10 @@ var overlay_cost_observations: Array = []
 var slot_autoplay_checked := false
 var casino_slot_preview_checked := false
 var grand_casino_living_floor_idle_checked := false
+var coin_pusher_full_cap_checked := false
+var coin_pusher_active_sequence_checked := false
+var coin_pusher_solver_timing_checked := false
+var coin_pusher_performance_status: Dictionary = {}
 var run_count := DEFAULT_RUN_COUNT
 var frames_per_surface := DEFAULT_FRAMES_PER_SURFACE
 var resolve_sample_count := DEFAULT_RESOLVE_SAMPLE_COUNT
@@ -161,6 +182,7 @@ func _run() -> void:
 	await _probe_liveness_guard_regression()
 	await _probe_new_surface_budgets()
 	await _probe_overlay_cost()
+	await _probe_coin_pusher_full_cap_performance()
 	_assert_required_game_surface_coverage()
 	_assert_required_resolve_coverage()
 	_assert_required_new_surface_coverage()
@@ -428,6 +450,8 @@ func _probe_slot_offscreen_autoplay(seed: String, game_id: String) -> void:
 func _probe_practice_game_surface_coverage() -> void:
 	for game_id_value in REQUIRED_GAME_IDS:
 		var game_id := str(game_id_value)
+		if game_id == "coin_pusher":
+			continue
 		app.call("start_game_test_session", game_id)
 		await _settle(4)
 		var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
@@ -436,6 +460,197 @@ func _probe_practice_game_surface_coverage() -> void:
 			failures.append("Practice performance probe could not build a %s environment." % game_id)
 			continue
 		await _probe_game("practice:%s" % game_id, -1, environment_id, game_id)
+
+
+func _probe_coin_pusher_full_cap_performance() -> void:
+	app.call("start_game_test_session", "coin_pusher")
+	await _settle(4)
+	var run_state: RunState = app.get("run_state")
+	var game: GameModule = app.get("current_game") as GameModule
+	if run_state == null or game == null:
+		failures.append("Full-cap Coin Pusher performance probe could not build its practice session.")
+		return
+	var environment_id := str(run_state.current_environment.get("id", "practice_coin_pusher"))
+	_install_coin_pusher_full_cap_fixture(run_state, game, false)
+	var machine := game.call("_ensure_machine_state", run_state, run_state.current_environment, false) as Dictionary
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var loaded_coin_count := CoinPusherSolverScript.coin_count(simulation)
+	coin_pusher_full_cap_checked = int(game.call("_coin_cap")) == COIN_PUSHER_SHIPPED_COIN_CAP and loaded_coin_count == COIN_PUSHER_SHIPPED_COIN_CAP
+	coin_pusher_performance_status["loaded_coin_count"] = loaded_coin_count
+	coin_pusher_performance_status["shipped_coin_cap"] = int(game.call("_coin_cap"))
+	if not coin_pusher_full_cap_checked:
+		failures.append("Coin Pusher performance fixture loaded %d coins at authored cap %d; expected shipped cap %d." % [loaded_coin_count, int(game.call("_coin_cap")), COIN_PUSHER_SHIPPED_COIN_CAP])
+	await _probe_game("practice:coin_pusher_full_cap", -1, environment_id, "coin_pusher")
+	_probe_coin_pusher_raw_solver_timing(run_state, game)
+	await _probe_coin_pusher_active_sequence(run_state, game, environment_id)
+
+
+func _install_coin_pusher_full_cap_fixture(run_state: RunState, game: GameModule, nudge_stack: bool) -> void:
+	var lane_count := int(game.call("_lane_count"))
+	var cap := int(game.call("_coin_cap"))
+	var fixture_rng := run_state.create_rng("performance_coin_pusher_full_cap").fork("nudge" if nudge_stack else "drop")
+	var simulation := CoinPusherSolverScript.create(fixture_rng, cap, cap, lane_count)
+	if nudge_stack:
+		var bodies: Array = simulation.get("bodies", []) if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else []
+		if bodies.size() >= 2:
+			_set_coin_pusher_probe_body(bodies[0] as Dictionary, 50000, 9000, 0)
+			_set_coin_pusher_probe_body(bodies[1] as Dictionary, 52000, 9000, CoinPusherSolverScript.COIN_HEIGHT)
+	var machine := game.call("_ensure_machine_state", run_state, run_state.current_environment, true) as Dictionary
+	machine["variation_id"] = "quarter_falls"
+	machine["variation_state"] = {}
+	machine["simulation"] = simulation
+	machine["riders"] = []
+	machine["locked_down"] = false
+	machine["staff_watch_memory"] = false
+	machine["alarm_tolerance_remaining"] = 100
+	machine["tell_rung"] = 0
+	game.call("_sync_physical_features", machine)
+	game.call("_sync_phase_views", machine)
+	game.call("_write_machine_state", run_state.current_environment, machine)
+	app.call("_refresh")
+
+
+func _set_coin_pusher_probe_body(body: Dictionary, x: int, y: int, z: int) -> void:
+	body["x"] = x
+	body["y"] = y
+	body["z"] = z
+	body["vx"] = 0
+	body["vy"] = 0
+	body["vz"] = 0
+	body["sleep_ticks"] = 8
+	body["sleeping"] = true
+	body["rest_state"] = "resting"
+	body["lean_milli"] = 0
+
+
+func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule) -> void:
+	var lane_count := int(game.call("_lane_count"))
+	var cap := int(game.call("_coin_cap"))
+	var opening_rng := run_state.create_rng("performance_coin_pusher_raw_solver").fork("opening")
+	var baseline := CoinPusherSolverScript.create(opening_rng, cap, cap, lane_count)
+	var samples: Array = []
+	var fixed_tick_samples := 0
+	var capped_samples := 0
+	for sample_index in range(COIN_PUSHER_SOLVER_SAMPLE_COUNT):
+		var sample_state: Dictionary = baseline.duplicate(true)
+		var drop_rng := run_state.create_rng("performance_coin_pusher_raw_solver:%d" % sample_index)
+		CoinPusherSolverScript.add_coin(sample_state, drop_rng, sample_index % lane_count, lane_count)
+		var start_usec := Time.get_ticks_usec()
+		var step := CoinPusherSolverScript.step_action(sample_state, {
+			"captured_upper_phase_fp": (sample_index * 1700) % CoinPusherSolverScript.PHASE_PERIOD,
+			"captured_lower_phase_fp": (sample_index * 2300) % CoinPusherSolverScript.PHASE_PERIOD,
+			"push_scale": 3 + sample_index % 3,
+		})
+		samples.append(float(Time.get_ticks_usec() - start_usec) / 1000.0)
+		var metrics: Dictionary = step.get("metrics", {}) if typeof(step.get("metrics", {})) == TYPE_DICTIONARY else {}
+		if int(metrics.get("fixed_ticks", 0)) == CoinPusherSolverScript.ACTION_TICKS:
+			fixed_tick_samples += 1
+		if CoinPusherSolverScript.coin_count(sample_state) <= cap:
+			capped_samples += 1
+	var stats := _timing_stats(samples)
+	stats["seed"] = "practice:coin_pusher_full_cap"
+	stats["run_index"] = -1
+	stats["game_id"] = "coin_pusher"
+	stats["action_id"] = "loaded_sweep_drop"
+	stats["mode"] = "coin_pusher_solver_action_raw"
+	stats["sample_count"] = samples.size()
+	stats["fixed_tick_samples"] = fixed_tick_samples
+	stats["capped_samples"] = capped_samples
+	stats["coin_cap"] = cap
+	observations.append(stats)
+	coin_pusher_performance_status["raw_solver_timing"] = stats.duplicate(true)
+	coin_pusher_solver_timing_checked = samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT and fixed_tick_samples == samples.size() and capped_samples == samples.size()
+	if not coin_pusher_solver_timing_checked:
+		failures.append("Raw Coin Pusher solver timing did not preserve all %d fixed-tick, capped samples." % COIN_PUSHER_SOLVER_SAMPLE_COUNT)
+
+
+func _probe_coin_pusher_active_sequence(run_state: RunState, game: GameModule, environment_id: String) -> void:
+	_install_coin_pusher_full_cap_fixture(run_state, game, false)
+	app.call("enter_game", "coin_pusher")
+	await _settle(3)
+	var drop_ok := await _probe_coin_pusher_active_action("coin_pusher_drop", "coin_pusher_active_drop", environment_id, false)
+	app.call("back_to_environment")
+	await _settle(2)
+	_install_coin_pusher_full_cap_fixture(run_state, game, true)
+	app.call("enter_game", "coin_pusher")
+	await _settle(3)
+	var snapshot: Dictionary = app.call("current_game_view_snapshot")
+	var force_order := _string_array(snapshot.get("coin_pusher_force_order", []))
+	var direction_order := _string_array(snapshot.get("coin_pusher_direction_order", []))
+	var slam_index := force_order.find("slam")
+	var front_index := direction_order.find("front")
+	if slam_index < 0 or front_index < 0:
+		failures.append("Coin Pusher active probe could not select the authored slam/front nudge.")
+		app.call("back_to_environment")
+		await _settle(2)
+		return
+	app.call("_handle_module_surface_action", "coin_pusher_lane", 2, false)
+	app.call("_handle_module_surface_action", "coin_pusher_force", slam_index, false)
+	app.call("_handle_module_surface_action", "coin_pusher_direction", front_index, false)
+	var nudge_ok := await _probe_coin_pusher_active_action("coin_pusher_nudge", "coin_pusher_active_nudge", environment_id, true)
+	coin_pusher_active_sequence_checked = drop_ok and nudge_ok
+	coin_pusher_performance_status["active_sequence_checked"] = coin_pusher_active_sequence_checked
+	app.call("back_to_environment")
+	await _settle(2)
+
+
+func _probe_coin_pusher_active_action(surface_action: String, mode: String, environment_id: String, require_collapse: bool) -> bool:
+	var canvas := _game_surface_canvas()
+	if canvas == null:
+		failures.append("Coin Pusher %s probe could not access its rendered surface." % mode)
+		return false
+	if canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var call_start_usec := Time.get_ticks_usec()
+	var handled := bool(app.call("_handle_module_surface_action", surface_action, 0, true))
+	var resolve_call_ms := float(Time.get_ticks_usec() - call_start_usec) / 1000.0
+	var result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
+	var frame_stats := await _measure_frame_phase(COIN_PUSHER_ACTIVE_SAMPLE_FRAMES)
+	var counters := _canvas_counters(canvas)
+	var draw_p95_ms := float(counters.get("draw_p95_ms", 0.0))
+	var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
+	var metrics: Dictionary = result.get("coin_pusher_solver_metrics", {}) if typeof(result.get("coin_pusher_solver_metrics", {})) == TYPE_DICTIONARY else {}
+	var trace: Array = result.get("coin_pusher_presentation_trace", []) if typeof(result.get("coin_pusher_presentation_trace", [])) == TYPE_ARRAY else []
+	var collapse_seen := int(metrics.get("topple_count", 0)) > 0 or int(metrics.get("upper_lower_fall_count", 0)) > 0
+	var observation := {
+		"seed": "practice:coin_pusher_full_cap",
+		"run_index": -1,
+		"environment_id": environment_id,
+		"game_id": "coin_pusher",
+		"renderer": "coin_pusher",
+		"mode": mode,
+		"frames": COIN_PUSHER_ACTIVE_SAMPLE_FRAMES,
+		"resolve_call_ms": resolve_call_ms,
+		"frame_time": frame_stats,
+		"frame_p95_budget_ms": COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS,
+		"draw_avg_ms": float(counters.get("draw_avg_ms", 0.0)),
+		"draw_p95_ms": draw_p95_ms,
+		"draw_max_ms": float(counters.get("draw_max_ms", 0.0)),
+		"draw_samples": draw_samples,
+		"draw_p95_budget_ms": MAX_SURFACE_DRAW_P95_MS,
+		"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
+		"solver_metrics": metrics,
+		"presentation_trace_frames": trace.size(),
+		"collapse_seen": collapse_seen,
+	}
+	observations.append(observation)
+	coin_pusher_performance_status[mode] = observation.duplicate(true)
+	var passed := handled and bool(result.get("ok", false)) and int(metrics.get("fixed_ticks", 0)) == CoinPusherSolverScript.ACTION_TICKS and not trace.is_empty()
+	if not passed:
+		failures.append("Coin Pusher %s did not resolve through the production surface with a complete fixed-tick presentation replay." % mode)
+	if float(frame_stats.get("p95_ms", 0.0)) > COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS:
+		failures.append("Coin Pusher %s frame p95 %.3f ms exceeded %.3f ms." % [mode, float(frame_stats.get("p95_ms", 0.0)), COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS])
+		passed = false
+	_assert_draw_budget("Coin Pusher %s" % mode, draw_p95_ms, draw_samples)
+	if draw_samples <= 0 or draw_p95_ms > MAX_SURFACE_DRAW_P95_MS:
+		passed = false
+	if int(counters.get("full_snapshot_calls", 0)) > 0:
+		failures.append("Coin Pusher %s rebuilt full snapshots %d times during active replay." % [mode, int(counters.get("full_snapshot_calls", 0))])
+		passed = false
+	if require_collapse and not collapse_seen:
+		failures.append("Coin Pusher full-cap slam/front nudge did not produce a physical topple or shelf collapse.")
+		passed = false
+	return passed
 
 
 func _probe_casino_slot_preview_coverage() -> void:
@@ -520,7 +735,7 @@ func _probe_grand_casino_living_floor_idle() -> void:
 
 
 func _probe_game_resolve_budgets() -> void:
-	for game_id_value in REQUIRED_GAME_IDS:
+	for game_id_value in REQUIRED_RESOLVE_GAME_IDS:
 		var game_id := str(game_id_value)
 		var config := _dict(RESOLVE_PROBE_CONFIGS.get(game_id, {}))
 		var action_id := str(config.get("action_id", ""))
@@ -1294,10 +1509,16 @@ func _assert_required_game_surface_coverage() -> void:
 		failures.append("Performance probe did not exercise slot autoplay.")
 	if not casino_slot_preview_checked:
 		failures.append("Performance probe did not exercise casino slot preview coverage.")
+	if not coin_pusher_full_cap_checked:
+		failures.append("Performance probe did not build and verify the shipped full-cap Coin Pusher fixture.")
+	if not coin_pusher_active_sequence_checked:
+		failures.append("Performance probe did not exercise the full-cap Coin Pusher drop-and-nudge active sequence.")
+	if not coin_pusher_solver_timing_checked:
+		failures.append("Performance probe did not report raw full-cap Coin Pusher solver timing.")
 
 
 func _assert_required_resolve_coverage() -> void:
-	for game_id_value in REQUIRED_GAME_IDS:
+	for game_id_value in REQUIRED_RESOLVE_GAME_IDS:
 		var game_id := str(game_id_value)
 		if int(resolve_coverage.get(game_id, 0)) <= 0:
 			failures.append("Performance probe did not cover resolve path %s." % game_id)
@@ -1576,6 +1797,10 @@ func _write_report() -> void:
 		"slot_autoplay_checked": slot_autoplay_checked,
 		"casino_slot_preview_checked": casino_slot_preview_checked,
 		"grand_casino_living_floor_idle_checked": grand_casino_living_floor_idle_checked,
+		"coin_pusher_full_cap_checked": coin_pusher_full_cap_checked,
+		"coin_pusher_active_sequence_checked": coin_pusher_active_sequence_checked,
+		"coin_pusher_solver_timing_checked": coin_pusher_solver_timing_checked,
+		"coin_pusher_performance_status": coin_pusher_performance_status,
 		"observations": observations,
 		"resolve_observations": resolve_observations,
 		"resolve_sample_count": resolve_sample_count,

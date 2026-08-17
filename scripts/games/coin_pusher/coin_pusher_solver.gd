@@ -143,6 +143,12 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	var ridge_double := bool(config.get("ridge_double", false))
 	var wake_count := 0
 	var collision_count := 0
+	var collision_visited := PackedByteArray()
+	var starting_body_count := (state.get("bodies", []) as Array).size()
+	collision_visited.resize(starting_body_count * starting_body_count)
+	var cached_spatial_keys := PackedInt32Array()
+	var cached_spatial_buckets := {}
+	var cached_neighbor_indices := {}
 	if nudge_x != 0 or nudge_y != 0:
 		wake_count += _apply_nudge(state, nudge_x, nudge_y, aimed_x, nudge_radius)
 	for tick_index in range(ACTION_TICKS):
@@ -155,18 +161,31 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 			state["lower_phase_fp"] = posmod(int(state.get("lower_phase_fp", 0)) + 360 * (2 if ridge_double else 1), PHASE_PERIOD)
 		var new_upper := _pusher_face_y(int(state.get("upper_phase_fp", 0)), true)
 		var new_lower := _pusher_face_y(int(state.get("lower_phase_fp", 0)), false)
-		var woke_this_tick := _apply_pusher(state, old_upper, new_upper, true, push_scale)
-		woke_this_tick += _apply_pusher(state, old_lower, new_lower, false, push_scale)
+		var integration_indices := PackedInt32Array()
+		var woke_this_tick := _apply_pushers(state, old_upper, new_upper, old_lower, new_lower, push_scale, integration_indices)
 		wake_count += woke_this_tick
-		if woke_this_tick > 0 or awake_count(state) > 0:
-			_integrate(state, events, motion_events)
-			var tick_buckets := _spatial_buckets(state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else [])
+		if not integration_indices.is_empty():
+			_integrate(state, integration_indices, events, motion_events)
+			var awake_indices := PackedInt32Array()
+			var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
+			var spatial_keys := _spatial_keys(bodies, awake_indices)
+			if spatial_keys != cached_spatial_keys:
+				cached_spatial_keys = spatial_keys
+				cached_spatial_buckets = _spatial_buckets(spatial_keys)
+				cached_neighbor_indices = {}
+			var support_indices := awake_indices.duplicate()
+			var support_seen := PackedByteArray()
+			support_seen.resize(bodies.size())
+			for awake_index in awake_indices:
+				support_seen[int(awake_index)] = 1
 			for _pass_index in range(MAX_COLLISION_PASSES):
-				var resolved := _resolve_collisions(state, tick_buckets)
+				collision_visited.fill(0)
+				var resolved := _resolve_collisions(state, cached_spatial_buckets, collision_visited, awake_indices, cached_neighbor_indices, support_indices, support_seen)
 				collision_count += resolved
 				if resolved <= 0:
 					break
-			_resolve_supports(state, tick_buckets, motion_events)
+			support_indices.sort()
+			_resolve_supports(state, cached_spatial_buckets, cached_neighbor_indices, support_indices, motion_events)
 		state["tick"] = int(state.get("tick", 0)) + 1
 		if capture_trace:
 			for event_index in range(event_count_before, events.size()):
@@ -415,39 +434,46 @@ static func _apply_nudge(state: Dictionary, x_impulse: int, y_impulse: int, aime
 	return count
 
 
-static func _apply_pusher(state: Dictionary, old_face: int, new_face: int, upper: bool, push_scale: int) -> int:
-	if new_face >= old_face:
-		return 0
+static func _apply_pushers(state: Dictionary, old_upper: int, new_upper: int, old_lower: int, new_lower: int, push_scale: int, active_indices: PackedInt32Array) -> int:
+	var upper_active := new_upper < old_upper
+	var lower_active := new_lower < old_lower
 	var count := 0
-	var floor_z := UPPER_FLOOR_Z if upper else LOWER_FLOOR_Z
-	for value in state.get("bodies", []):
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var body: Dictionary = value
-		var y := int(body.get("y", 0))
-		var z := int(body.get("z", 0))
-		if upper != (y >= UPPER_EDGE and z >= UPPER_FLOOR_Z):
-			continue
-		if not upper and (y < FRONT_EDGE or y >= UPPER_EDGE or z >= UPPER_FLOOR_Z + COIN_HEIGHT):
-			continue
-		if y > new_face - int(body.get("radius", COIN_RADIUS)) and y < old_face + int(body.get("radius", COIN_RADIUS)) and z <= floor_z + int(body.get("height", COIN_HEIGHT)) * 5:
-			body["y"] = mini(y, new_face - int(body.get("radius", COIN_RADIUS)))
-			body["vy"] = int(body.get("vy", 0)) - (old_face - new_face) * push_scale
-			_wake(body)
-			count += 1
-	return count
-
-
-static func _integrate(state: Dictionary, events: Array, motion_events: Array) -> void:
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	var exit_indices: Array = []
 	for body_index in range(bodies.size()):
 		var value: Variant = bodies[body_index]
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var body: Dictionary = value
-		if bool(body.get("sleeping", false)):
+		var y := int(body.get("y", 0))
+		var z := int(body.get("z", 0))
+		var upper := y >= UPPER_EDGE and z >= UPPER_FLOOR_Z
+		var active := upper_active if upper else lower_active
+		var old_face := old_upper if upper else old_lower
+		var new_face := new_upper if upper else new_lower
+		var floor_z := UPPER_FLOOR_Z if upper else LOWER_FLOOR_Z
+		var eligible := active and (upper or (y >= FRONT_EDGE and y < UPPER_EDGE and z < UPPER_FLOOR_Z + COIN_HEIGHT))
+		var radius := int(body.get("radius", COIN_RADIUS))
+		if eligible and y > new_face - radius and y < old_face + radius and z <= floor_z + int(body.get("height", COIN_HEIGHT)) * 5:
+			body["y"] = mini(y, new_face - radius)
+			body["vy"] = int(body.get("vy", 0)) - (old_face - new_face) * push_scale
+			_wake(body)
+			count += 1
+		if not bool(body.get("sleeping", false)):
+			active_indices.append(body_index)
+	return count
+
+
+static func _integrate(state: Dictionary, active_indices: PackedInt32Array, events: Array, motion_events: Array) -> void:
+	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
+	var exit_indices: Array = []
+	for body_index_value in active_indices:
+		var body_index := int(body_index_value)
+		if body_index < 0 or body_index >= bodies.size():
 			continue
+		var value: Variant = bodies[body_index]
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = value
 		var cap_pressure_ticks := maxi(0, int(body.get("cap_pressure_ticks", 0)))
 		if cap_pressure_ticks > 0:
 			body["vy"] = int(body.get("vy", 0)) - maxi(0, int(body.get("cap_pressure_accel", 0)))
@@ -480,16 +506,10 @@ static func _integrate(state: Dictionary, events: Array, motion_events: Array) -
 		bodies.remove_at(int(exit_indices[exit_index]))
 
 
-static func _resolve_collisions(state: Dictionary, buckets: Dictionary) -> int:
+static func _resolve_collisions(state: Dictionary, buckets: Dictionary, visited_pairs: PackedByteArray, awake_indices: PackedInt32Array, neighbor_cache: Dictionary, support_indices: PackedInt32Array, support_seen: PackedByteArray) -> int:
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	var awake_indices := PackedInt32Array()
-	for index in range(bodies.size()):
-		if typeof(bodies[index]) == TYPE_DICTIONARY and not bool((bodies[index] as Dictionary).get("sleeping", false)):
-			awake_indices.append(index)
 	if awake_indices.is_empty():
 		return 0
-	var visited_pairs := PackedByteArray()
-	visited_pairs.resize(bodies.size() * bodies.size())
 	var resolved := 0
 	for left_index_value in awake_indices:
 		var left_index := int(left_index_value)
@@ -497,62 +517,61 @@ static func _resolve_collisions(state: Dictionary, buckets: Dictionary) -> int:
 		var center_x := _divi(int(left.get("x", 0)), BROADPHASE_CELL)
 		var center_y := _divi(int(left.get("y", 0)), BROADPHASE_CELL)
 		var center_z := _divi(int(left.get("z", 0)), BROADPHASE_CELL)
-		for z_offset in range(-1, 2):
-			for y_offset in range(-1, 2):
-				for x_offset in range(-1, 2):
-					var bucket_value: Variant = buckets.get(_bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset), null)
-					if typeof(bucket_value) != TYPE_ARRAY:
-						continue
-					for right_index_value in bucket_value as Array:
-						var right_index := int(right_index_value)
-						if right_index == left_index:
-							continue
-						var low := mini(left_index, right_index)
-						var high := maxi(left_index, right_index)
-						var pair_key := low * bodies.size() + high
-						if visited_pairs[pair_key] != 0:
-							continue
-						visited_pairs[pair_key] = 1
-						if typeof(bodies[right_index]) != TYPE_DICTIONARY:
-							continue
-						var right: Dictionary = bodies[right_index]
-						var dx := int(right.get("x", 0)) - int(left.get("x", 0))
-						var dy := int(right.get("y", 0)) - int(left.get("y", 0))
-						var min_distance := int(left.get("radius", COIN_RADIUS)) + int(right.get("radius", COIN_RADIUS))
-						if absi(dx) >= min_distance or absi(dy) >= min_distance or dx * dx + dy * dy >= min_distance * min_distance:
-							continue
-						var z_gap := absi(int(left.get("z", 0)) - int(right.get("z", 0)))
-						if z_gap >= mini(int(left.get("height", COIN_HEIGHT)), int(right.get("height", COIN_HEIGHT))):
-							continue
-						var overlap := min_distance - maxi(absi(dx), absi(dy))
-						if overlap <= 0:
-							continue
-						if absi(dx) >= absi(dy):
-							var sign_x := 1 if dx >= 0 else -1
-							right["x"] = int(right.get("x", 0)) + _divi(sign_x * overlap, 2)
-							left["x"] = int(left.get("x", 0)) - _divi(sign_x * overlap, 2)
-							right["vx"] = int(right.get("vx", 0)) + sign_x * overlap * 5
-							left["vx"] = int(left.get("vx", 0)) - sign_x * overlap * 5
-						else:
-							var sign_y := 1 if dy >= 0 else -1
-							right["y"] = int(right.get("y", 0)) + _divi(sign_y * overlap, 2)
-							left["y"] = int(left.get("y", 0)) - _divi(sign_y * overlap, 2)
-							right["vy"] = int(right.get("vy", 0)) + sign_y * overlap * 5
-							left["vy"] = int(left.get("vy", 0)) - sign_y * overlap * 5
-						_wake(left)
-						_wake(right)
-						resolved += 1
+		for right_index_value in _neighbor_indices(buckets, neighbor_cache, center_x, center_y, center_z):
+			var right_index := int(right_index_value)
+			if right_index == left_index:
+				continue
+			var low := mini(left_index, right_index)
+			var high := maxi(left_index, right_index)
+			var pair_key := low * bodies.size() + high
+			if visited_pairs[pair_key] != 0:
+				continue
+			visited_pairs[pair_key] = 1
+			if typeof(bodies[right_index]) != TYPE_DICTIONARY:
+				continue
+			var right: Dictionary = bodies[right_index]
+			var dx := int(right.get("x", 0)) - int(left.get("x", 0))
+			var dy := int(right.get("y", 0)) - int(left.get("y", 0))
+			var min_distance := int(left.get("radius", COIN_RADIUS)) + int(right.get("radius", COIN_RADIUS))
+			if absi(dx) >= min_distance or absi(dy) >= min_distance or dx * dx + dy * dy >= min_distance * min_distance:
+				continue
+			var z_gap := absi(int(left.get("z", 0)) - int(right.get("z", 0)))
+			if z_gap >= mini(int(left.get("height", COIN_HEIGHT)), int(right.get("height", COIN_HEIGHT))):
+				continue
+			var overlap := min_distance - maxi(absi(dx), absi(dy))
+			if overlap <= 0:
+				continue
+			if absi(dx) >= absi(dy):
+				var sign_x := 1 if dx >= 0 else -1
+				right["x"] = int(right.get("x", 0)) + _divi(sign_x * overlap, 2)
+				left["x"] = int(left.get("x", 0)) - _divi(sign_x * overlap, 2)
+				right["vx"] = int(right.get("vx", 0)) + sign_x * overlap * 5
+				left["vx"] = int(left.get("vx", 0)) - sign_x * overlap * 5
+			else:
+				var sign_y := 1 if dy >= 0 else -1
+				right["y"] = int(right.get("y", 0)) + _divi(sign_y * overlap, 2)
+				left["y"] = int(left.get("y", 0)) - _divi(sign_y * overlap, 2)
+				right["vy"] = int(right.get("vy", 0)) + sign_y * overlap * 5
+				left["vy"] = int(left.get("vy", 0)) - sign_y * overlap * 5
+			if bool(right.get("sleeping", false)) and support_seen[right_index] == 0:
+				support_seen[right_index] = 1
+				support_indices.append(right_index)
+			_wake(left)
+			_wake(right)
+			resolved += 1
 	return resolved
 
 
-static func _resolve_supports(state: Dictionary, buckets: Dictionary, motion_events: Array) -> void:
+static func _resolve_supports(state: Dictionary, buckets: Dictionary, neighbor_cache: Dictionary, active_indices: PackedInt32Array, motion_events: Array) -> void:
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	for value in bodies:
+	for body_index_value in active_indices:
+		var body_index := int(body_index_value)
+		if body_index < 0 or body_index >= bodies.size():
+			continue
+		var value: Variant = bodies[body_index]
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var body: Dictionary = value
-		if bool(body.get("sleeping", false)):
-			continue
 		var base_z := _floor_z(body)
 		if int(body.get("z", 0)) <= base_z:
 			body["lean_milli"] = 0
@@ -562,27 +581,21 @@ static func _resolve_supports(state: Dictionary, buckets: Dictionary, motion_eve
 		var center_x := _divi(int(body.get("x", 0)), BROADPHASE_CELL)
 		var center_y := _divi(int(body.get("y", 0)), BROADPHASE_CELL)
 		var center_z := _divi(int(body.get("z", 0)), BROADPHASE_CELL)
-		for z_offset in range(-1, 2):
-			for y_offset in range(-1, 2):
-				for x_offset in range(-1, 2):
-					var bucket_value: Variant = buckets.get(_bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset), null)
-					if typeof(bucket_value) != TYPE_ARRAY:
-						continue
-					for candidate_index_value in bucket_value as Array:
-						var candidate_index := int(candidate_index_value)
-						if candidate_index < 0 or candidate_index >= bodies.size() or bodies[candidate_index] == value or typeof(bodies[candidate_index]) != TYPE_DICTIONARY:
-							continue
-						var candidate: Dictionary = bodies[candidate_index]
-						var target_z := int(candidate.get("z", 0)) + int(candidate.get("height", COIN_HEIGHT))
-						if target_z > int(body.get("z", 0)) + COIN_HEIGHT or target_z < int(body.get("z", 0)) - COIN_HEIGHT * 2:
-							continue
-						var dx := int(body.get("x", 0)) - int(candidate.get("x", 0))
-						var dy := int(body.get("y", 0)) - int(candidate.get("y", 0))
-						var distance := dx * dx + dy * dy
-						var support_radius := mini(int(body.get("radius", COIN_RADIUS)), int(candidate.get("radius", COIN_RADIUS)))
-						if distance < support_radius * support_radius and distance < support_distance:
-							support = candidate
-							support_distance = distance
+		for candidate_index_value in _neighbor_indices(buckets, neighbor_cache, center_x, center_y, center_z):
+			var candidate_index := int(candidate_index_value)
+			if candidate_index < 0 or candidate_index >= bodies.size() or bodies[candidate_index] == value or typeof(bodies[candidate_index]) != TYPE_DICTIONARY:
+				continue
+			var candidate: Dictionary = bodies[candidate_index]
+			var target_z := int(candidate.get("z", 0)) + int(candidate.get("height", COIN_HEIGHT))
+			if target_z > int(body.get("z", 0)) + COIN_HEIGHT or target_z < int(body.get("z", 0)) - COIN_HEIGHT * 2:
+				continue
+			var dx := int(body.get("x", 0)) - int(candidate.get("x", 0))
+			var dy := int(body.get("y", 0)) - int(candidate.get("y", 0))
+			var distance := dx * dx + dy * dy
+			var support_radius := mini(int(body.get("radius", COIN_RADIUS)), int(candidate.get("radius", COIN_RADIUS)))
+			if distance < support_radius * support_radius and distance < support_distance:
+				support = candidate
+				support_distance = distance
 		if support.is_empty():
 			body["rest_state"] = "falling"
 			body["sleeping"] = false
@@ -677,17 +690,43 @@ static func _motion_event_has_body(events: Array, kind: String, body_id: String)
 	return false
 
 
-static func _spatial_buckets(bodies: Array) -> Dictionary:
-	var result := {}
+static func _spatial_keys(bodies: Array, awake_indices: PackedInt32Array) -> PackedInt32Array:
+	var result := PackedInt32Array()
 	for index in range(bodies.size()):
 		if typeof(bodies[index]) != TYPE_DICTIONARY:
+			result.append(0)
 			continue
 		var body: Dictionary = bodies[index]
+		if not bool(body.get("sleeping", false)):
+			awake_indices.append(index)
 		var key := _bucket_key(_divi(int(body.get("x", 0)), BROADPHASE_CELL), _divi(int(body.get("y", 0)), BROADPHASE_CELL), _divi(int(body.get("z", 0)), BROADPHASE_CELL))
+		result.append(key)
+	return result
+
+
+static func _spatial_buckets(spatial_keys: PackedInt32Array) -> Dictionary:
+	var result := {}
+	for index in range(spatial_keys.size()):
+		var key := int(spatial_keys[index])
 		if result.has(key):
 			(result[key] as Array).append(index)
 		else:
 			result[key] = [index]
+	return result
+
+
+static func _neighbor_indices(buckets: Dictionary, cache: Dictionary, center_x: int, center_y: int, center_z: int) -> Array:
+	var center_key := _bucket_key(center_x, center_y, center_z)
+	if cache.has(center_key):
+		return cache[center_key] as Array
+	var result: Array = []
+	for z_offset in range(-1, 2):
+		for y_offset in range(-1, 2):
+			for x_offset in range(-1, 2):
+				var bucket_value: Variant = buckets.get(_bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset), null)
+				if typeof(bucket_value) == TYPE_ARRAY:
+					result.append_array(bucket_value as Array)
+	cache[center_key] = result
 	return result
 
 
