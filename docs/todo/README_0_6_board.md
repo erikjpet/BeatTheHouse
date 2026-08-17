@@ -527,6 +527,13 @@ What happens then is the owner's, not an agent's:
   samples full shelf depth uniformly, and maximizes spacing. Dense captures do
   not prove the required distribution; deterministic depth bias plus a gradient
   test is required without reducing the 160/150 shipped density.
+- 2026-08-17 [pusher06_2 native adapter] The first transactional correction is
+  still rejected: deep-copying the whole state then clearing/merging it on
+  success invalidates every nested body/array alias even without exits and puts
+  full-cap GDScript copying back on the <=16 ms path. Publish through
+  alias-equivalent in-place reconciliation (prefer a compact validated packed
+  candidate/output seam), prove body and container aliases with and without
+  exits, and remeasure raw plus production budgets.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1238,3 +1245,6 @@ What happens then is the owner's, not an agent's:
 - 2026-08-17 [pusher06_2] Native bodies-array alias semantics and the authored
   opening depth gradient remain unproven. Both require exact regressions before
   closeout; dense appearance alone is not accepted as evidence.
+- 2026-08-17 [pusher06_2] Whole-state copy/replace is not an acceptable
+  transactional repair: it breaks aliases and risks the 16 ms budget. The
+  corrected seam must reconcile in place and be remeasured.
