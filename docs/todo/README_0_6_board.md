@@ -210,6 +210,15 @@ What happens then is the owner's, not an agent's:
 
 ## Discovery & Decision Log
 
+- 2026-08-17 [crew06_5] PM scope review returned the row for correction:
+  rank/perk APIs alone do not satisfy the prompt's temporary pre-job-board
+  contract. Associate work, Switch intel/reveal, and Knuckles stash/retrieve
+  must be reachable through normal member contact/encounter surfaces, with
+  production-path tests rather than direct API-only fixtures. Code reality
+  also resolves the prompt's Mags wording drift: env06_2 shipped the authored
+  Fence Night anchor as `back_alley_fence_night`, not a pawn-shop scenario.
+  Crew06_5 consumes that existing primary anchor and may not invent a new
+  scenario outside its placement scope.
 - 2026-08-17 [fix06_2] An external Codex process merged and pushed the
   still-unverified repair through `91e0a6c4` as merge `9d92f49f`. It changed
   no board or prompt records. The merge is provisional integration only: the
