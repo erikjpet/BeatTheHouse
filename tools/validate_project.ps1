@@ -1150,6 +1150,13 @@ foreach ($searchRoot in $simulationSearchRoots) {
     }
 }
 
+try {
+    & (Join-Path $root "tools/foundation_systems_shards_test.ps1") -Quiet
+}
+catch {
+    $failures.Add("Foundation systems shard hostile contracts failed: $($_.Exception.Message)")
+}
+
 if ($failures.Count -gt 0) {
     foreach ($failure in $failures) {
         Write-Error $failure
