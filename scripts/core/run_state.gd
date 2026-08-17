@@ -4776,7 +4776,7 @@ func grand_casino_staff_member_for_game(game_id: String, environment: Dictionary
 	var source := current_environment if environment.is_empty() else environment
 	if not _is_grand_casino_environment(source):
 		return {}
-	_initialize_grand_casino_staffing()
+	_initialize_grand_casino_staffing(source)
 	var role_id := "bartender" if game_id == "bar_dice" else game_id.strip_edges()
 	var assignments: Dictionary = grand_casino_staffing.get("assignments", {}) if typeof(grand_casino_staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
 	var assignment: Variant = assignments.get(role_id, {})
@@ -4802,8 +4802,9 @@ func consume_grand_casino_entry_cue() -> Dictionary:
 	return cue
 
 
-func _initialize_grand_casino_staffing() -> void:
-	if not _is_grand_casino_environment(current_environment):
+func _initialize_grand_casino_staffing(environment: Dictionary = {}) -> void:
+	var source := current_environment if environment.is_empty() else environment
+	if not _is_grand_casino_environment(source):
 		return
 	var current_day := game_day()
 	if int(grand_casino_staffing.get("day", 0)) == current_day and not _grand_casino_staff_assignments(grand_casino_staffing).is_empty():

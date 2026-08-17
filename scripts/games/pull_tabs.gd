@@ -1623,17 +1623,23 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 	var game_states: Dictionary = states_value as Dictionary if typeof(states_value) == TYPE_DICTIONARY else {}
 	var existing_value: Variant = game_states.get(get_id(), {})
 	if typeof(existing_value) == TYPE_DICTIONARY and not (existing_value as Dictionary).is_empty():
-		var existing: Dictionary = existing_value
+		var existing: Dictionary = existing_value as Dictionary if persist else (existing_value as Dictionary).duplicate(true)
 		if _machine_state_needs_normalization(existing):
 			existing = _normalize_machine_state(existing)
 			if persist:
 				var writable_states := game_states.duplicate(false)
 				writable_states[get_id()] = existing
 				environment["game_states"] = writable_states
-		_sync_portable_ticket_state(run_state, environment, existing)
+		if persist:
+			_sync_portable_ticket_state(run_state, environment, existing)
+		else:
+			_merge_portable_ticket_state_readonly(run_state, environment, existing)
 		return existing
 	var generated := _generate_machine_state(run_state, environment)
-	_sync_portable_ticket_state(run_state, environment, generated)
+	if persist:
+		_sync_portable_ticket_state(run_state, environment, generated)
+	else:
+		_merge_portable_ticket_state_readonly(run_state, environment, generated)
 	if persist:
 		var writable_states := game_states.duplicate(false)
 		writable_states[get_id()] = generated
@@ -1647,11 +1653,11 @@ func _read_machine_state(run_state: RunState, environment: Dictionary) -> Dictio
 		var game_states: Dictionary = game_states_value
 		var machine_value: Variant = game_states.get(get_id(), {})
 		if typeof(machine_value) == TYPE_DICTIONARY and not (machine_value as Dictionary).is_empty():
-			var machine := machine_value as Dictionary
-			_sync_portable_ticket_state(run_state, environment, machine)
+			var machine := _normalize_machine_state((machine_value as Dictionary).duplicate(true))
+			_merge_portable_ticket_state_readonly(run_state, environment, machine)
 			return machine
 	var generated := _generate_machine_state(run_state, environment)
-	_sync_portable_ticket_state(run_state, environment, generated)
+	_merge_portable_ticket_state_readonly(run_state, environment, generated)
 	return generated
 
 
@@ -1700,6 +1706,17 @@ func _sync_portable_ticket_state(run_state: RunState, environment: Dictionary, m
 		if _portable_ticket_count(legacy) > 0:
 			run_state.remember_portable_ticket_state(get_id(), environment, legacy)
 			portable = run_state.portable_ticket_state(get_id(), environment)
+	if portable.is_empty():
+		return
+	for field in ["tray_stack", "ticket_stack", "winner_pile", "loser_pile"]:
+		machine[field] = portable.get(field, [])
+	machine["loser_archive_count"] = maxi(0, int(portable.get("loser_archive_count", 0)))
+
+
+func _merge_portable_ticket_state_readonly(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
+	if run_state == null:
+		return
+	var portable := run_state.portable_ticket_state(get_id(), environment)
 	if portable.is_empty():
 		return
 	for field in ["tray_stack", "ticket_stack", "winner_pile", "loser_pile"]:

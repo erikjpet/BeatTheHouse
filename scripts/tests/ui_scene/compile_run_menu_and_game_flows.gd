@@ -1711,23 +1711,39 @@ func _check_multi_slot_reentry_uses_selected_fixture(app: Control) -> bool:
 		return false
 	if not _install_multi_slot_fixture_room(app, run_state):
 		return false
+	var before_fixture_3_open := JSON.stringify(run_state.to_dict())
 	if not bool(app.call("activate_interactable_object", "game:slot:3")):
 		push_error("Multi-slot reentry fixture could not enter slot fixture 3.")
 		return false
 	await process_frame
-	var active_keys: Dictionary = run_state.current_environment.get("active_game_state_keys", {}) if typeof(run_state.current_environment.get("active_game_state_keys", {})) == TYPE_DICTIONARY else {}
-	if str(active_keys.get("slot", "")) != "slot:3":
-		push_error("Entering slot fixture 3 did not select state key slot:3.")
+	var after_fixture_3_open := JSON.stringify(run_state.to_dict())
+	if after_fixture_3_open != before_fixture_3_open:
+		push_error("Opening slot fixture 3 mutated serialized RunState.")
+		return false
+	if str(app.get("current_game_state_key")) != "slot:3":
+		push_error("Entering slot fixture 3 did not keep state key slot:3 in transient host state.")
+		return false
+	var restored_after_open := RunState.new()
+	var serialized_after_open: Variant = JSON.parse_string(after_fixture_3_open)
+	if typeof(serialized_after_open) != TYPE_DICTIONARY:
+		push_error("Opening slot fixture 3 produced an invalid serialized RunState snapshot.")
+		return false
+	restored_after_open.from_dict(serialized_after_open as Dictionary)
+	if JSON.stringify(restored_after_open.to_dict()) != before_fixture_3_open:
+		push_error("Slot fixture 3 open did not survive serialize/restore byte-identically.")
 		return false
 	app.call("back_to_environment")
 	await process_frame
+	var before_fixture_1_open := JSON.stringify(run_state.to_dict())
 	if not bool(app.call("activate_interactable_object", "game:slot")):
 		push_error("Multi-slot reentry fixture could not re-enter slot fixture 1.")
 		return false
 	await process_frame
-	active_keys = run_state.current_environment.get("active_game_state_keys", {}) if typeof(run_state.current_environment.get("active_game_state_keys", {})) == TYPE_DICTIONARY else {}
-	if str(active_keys.get("slot", "")) != "slot":
-		push_error("Re-entering the first slot left the previous fixture active: %s." % JSON.stringify(active_keys))
+	if JSON.stringify(run_state.to_dict()) != before_fixture_1_open:
+		push_error("Re-entering slot fixture 1 mutated serialized RunState.")
+		return false
+	if str(app.get("current_game_state_key")) != "slot":
+		push_error("Re-entering slot fixture 1 left the previous transient fixture selected.")
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
@@ -1758,8 +1774,16 @@ func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 		machine["slot_autoplay_next_msec"] = 1
 		machine["spin_count"] = 10 if state_key == "slot" else 20 if state_key == "slot:2" else 30
 		SlotMachineStateScript.write_machine(run_state.current_environment, state_key, machine)
+	var active_keys_before_open := JSON.stringify(run_state.current_environment.get("active_game_state_keys", {}))
+	var run_before_open := JSON.stringify(run_state.to_dict())
 	if not bool(app.call("activate_interactable_object", "game:slot:2")):
 		push_error("Multi-slot autoplay fixture could not enter foreground slot fixture 2.")
+		return false
+	if JSON.stringify(run_state.to_dict()) != run_before_open:
+		push_error("Opening foreground slot fixture 2 mutated serialized RunState.")
+		return false
+	if str(app.get("current_game_state_key")) != "slot:2":
+		push_error("Foreground slot fixture 2 was not selected in transient host state.")
 		return false
 	app.call("_advance_environment_game_runtime")
 	var after_first_slot_1 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot").get("spin_count", 0))
@@ -1775,9 +1799,12 @@ func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 	if after_second_slot_1 != 11 or after_second_slot_2 != 20 or after_second_slot_3 != 31:
 		push_error("Second multi-slot runtime tick should advance only background slot 3; got %d/%d/%d." % [after_second_slot_1, after_second_slot_2, after_second_slot_3])
 		return false
-	var active_keys: Dictionary = run_state.current_environment.get("active_game_state_keys", {}) if typeof(run_state.current_environment.get("active_game_state_keys", {})) == TYPE_DICTIONARY else {}
-	if str(active_keys.get("slot", "")) != "slot:2":
-		push_error("Background multi-slot runtime did not restore the foreground slot fixture: %s." % JSON.stringify(active_keys))
+	var active_keys_after_runtime := JSON.stringify(run_state.current_environment.get("active_game_state_keys", {}))
+	if active_keys_after_runtime != active_keys_before_open:
+		push_error("Background multi-slot runtime leaked its fixture selection into serialized RunState: %s." % active_keys_after_runtime)
+		return false
+	if str(app.get("current_game_state_key")) != "slot:2":
+		push_error("Background multi-slot runtime did not restore the transient foreground slot fixture.")
 		return false
 	app.call("return_to_main_menu")
 	await process_frame

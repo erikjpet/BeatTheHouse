@@ -217,6 +217,10 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 	return _configure_rourke_duel_table(state, run_state, environment)
 
 
+func environment_state_generated(run_state: RunState, environment: Dictionary, generated_state: Dictionary) -> void:
+	_apply_grand_casino_dealer_assignment(generated_state, run_state, environment)
+
+
 func _configure_rourke_duel_table(table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	if not _is_rourke_duel(run_state, environment):
 		return table
@@ -3199,7 +3203,7 @@ func _chip_denominations(table: Dictionary) -> Array:
 
 
 func _normalize_table_state(table: Dictionary) -> Dictionary:
-	var normalized := table.duplicate(false)
+	var normalized := table.duplicate(true)
 	normalized["schema"] = str(normalized.get("schema", "blackjack_table_state"))
 	normalized["version"] = maxi(2, int(normalized.get("version", 2)))
 	normalized["deck_count"] = clampi(int(normalized.get("deck_count", 6)), 1, 8)

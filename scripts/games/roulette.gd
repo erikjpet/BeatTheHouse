@@ -173,6 +173,10 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 	}
 
 
+func environment_state_generated(run_state: RunState, environment: Dictionary, generated_state: Dictionary) -> void:
+	_apply_grand_casino_dealer_assignment(generated_state, run_state, environment)
+
+
 func _roulette_room_ceiling(environment: Dictionary, fallback_ceiling: int) -> int:
 	return maxi(0, GameModule.stake_ceiling_for_game(environment, get_id(), fallback_ceiling))
 

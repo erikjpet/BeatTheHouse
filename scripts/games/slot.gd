@@ -186,6 +186,9 @@ func generate_environment_fixture_states(_run_state: RunState, environment: Dict
 
 func _machine_state_key(environment: Dictionary) -> String:
 	var default_key := get_id()
+	var transient_key := transient_state_key_context()
+	if transient_key == default_key or transient_key.begins_with("%s:" % default_key):
+		return transient_key
 	var active_keys_value: Variant = environment.get("active_game_state_keys", {})
 	if typeof(active_keys_value) != TYPE_DICTIONARY:
 		return default_key

@@ -200,6 +200,10 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 	return _normalize_state(state)
 
 
+func environment_state_generated(run_state: RunState, environment: Dictionary, generated_state: Dictionary) -> void:
+	_apply_grand_casino_bartender_assignment(generated_state, run_state, environment)
+
+
 func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
 	if action_id == "press":
 		return maxi(0, stake)

@@ -796,12 +796,11 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	if game_module == null:
 		_show_message("This game is not ready here.")
 		return false
-	if clean_state_key != clean_game_id or _environment_active_game_state_key(run_state.current_environment, clean_game_id) != clean_game_id:
-		_set_active_game_state_key(clean_game_id, clean_state_key)
 	_clear_recent_result_feedback()
 	_reset_game_surface_runtime_state()
 	current_game = game_module
 	current_game_state_key = clean_state_key
+	current_game.set_transient_state_key_context(clean_state_key)
 	_invalidate_environment_runtime_schedule(run_state.current_environment)
 	_sync_presented_bankroll_to_actual()
 	selected_action_category = ACTION_CATEGORY_GAMES
@@ -835,6 +834,7 @@ func _enter_grand_casino_duel_surface() -> bool:
 		return false
 	current_game = game_module
 	current_game_state_key = duel_game_id
+	current_game.set_transient_state_key_context(duel_game_id)
 	_sync_presented_bankroll_to_actual()
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_GAME)
@@ -1299,6 +1299,8 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 		return false
 	if _environment_runtime_state_is_foreground(environment_data, game_id, state_key, same_environment):
 		return false
+	var previous_state_key_context := game.transient_state_key_context()
+	game.set_transient_state_key_context(state_key)
 	var active_keys_value: Variant = environment_data.get("active_game_state_keys", null)
 	var using_scratch_active_keys := typeof(active_keys_value) != TYPE_DICTIONARY
 	var active_keys: Dictionary
@@ -1318,6 +1320,7 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 		_show_wager_confirmation_popup("spin", runtime_wager_cost, runtime_wager_cost, true, false, game_id, state_key)
 		_show_message("%s autoplay needs your approval before risking your last cash." % game.get_display_name())
 		_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
+		game.set_transient_state_key_context(previous_state_key_context)
 		_refresh_runtime_environment_views()
 		return true
 	var rng := run_state.create_rng()
@@ -1327,9 +1330,11 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 	_reschedule_environment_runtime_fixture(environment_data, game, game_id, state_key, now_msec)
 	if command.is_empty() or not bool(command.get("handled", false)):
 		_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
+		game.set_transient_state_key_context(previous_state_key_context)
 		return true
 	if not same_environment:
 		_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
+		game.set_transient_state_key_context(previous_state_key_context)
 		_commit_offscreen_environment_runtime_command(environment_data, command, rng, frame_started_usec, schedule_finished_usec, resolve_started_usec, resolve_finished_usec)
 		return true
 	var audio_cue := str(command.get("audio_cue", ""))
@@ -1345,6 +1350,7 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 			_evaluate_run_terminal_state()
 			if run_state.is_terminal():
 				_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
+				game.set_transient_state_key_context(previous_state_key_context)
 				_render_environment_screen()
 				return true
 		var receipt := _environment_runtime_result_receipt(result)
@@ -1370,6 +1376,7 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 		_show_message(str(command.get("message", "")))
 		_refresh_runtime_environment_views()
 	_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
+	game.set_transient_state_key_context(previous_state_key_context)
 	return true
 
 
@@ -1391,12 +1398,14 @@ func _rebuild_environment_runtime_schedule(environment_data: Dictionary, game_id
 		var game := _game_module_for_id(game_id)
 		if game == null or not game.environment_runtime_enabled():
 			continue
+		var previous_state_key_context := game.transient_state_key_context()
 		var had_active_key := active_keys.has(game_id)
 		var previous_active_key: Variant = active_keys.get(game_id)
 		for state_key_value in _environment_runtime_state_keys(environment_data, game_id):
 			var state_key := str(state_key_value)
 			if _environment_runtime_state_is_foreground(environment_data, game_id, state_key, same_environment):
 				continue
+			game.set_transient_state_key_context(state_key)
 			active_keys[game_id] = state_key
 			var due_msec := game.environment_runtime_next_due_msec(run_state, environment_data, now_msec)
 			if due_msec >= 0:
@@ -1408,6 +1417,7 @@ func _rebuild_environment_runtime_schedule(environment_data: Dictionary, game_id
 				})
 			order_index += 1
 		_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, false)
+		game.set_transient_state_key_context(previous_state_key_context)
 	if using_scratch_active_keys:
 		environment_data.erase("active_game_state_keys")
 		environment_runtime_active_keys_scratch.clear()
@@ -1721,6 +1731,8 @@ func _checkpoint_current_game_surface_ui_state() -> void:
 
 func _reset_game_surface_runtime_state() -> void:
 	_checkpoint_current_game_surface_ui_state()
+	if current_game != null:
+		current_game.set_transient_state_key_context("")
 	if game_surface_canvas != null:
 		game_surface_canvas.clear_runtime_state()
 	_stop_surface_feature_music()
@@ -8470,7 +8482,9 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 		_refresh()
 		return
 	var original_active_game_state_keys := _copy_dict(run_state.current_environment.get("active_game_state_keys", {}))
+	var previous_state_key_context := game.transient_state_key_context()
 	if not state_key.strip_edges().is_empty():
+		game.set_transient_state_key_context(state_key)
 		_set_environment_active_game_state_key(run_state.current_environment, game_id, state_key)
 	var wager_cost := maxi(0, game.wager_cost_for_context(action_id, 0, run_state, run_state.current_environment, {}))
 	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(game, action_id, 0, wager_cost, {})
@@ -8501,6 +8515,7 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 	if bool(result.get("ok", false)):
 		_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
+	game.set_transient_state_key_context(previous_state_key_context)
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("environment_game"):
 		_restore_environment_active_game_state_keys(run_state.current_environment, original_active_game_state_keys)
 		_refresh_runtime_environment_views()

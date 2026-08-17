@@ -137,6 +137,10 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 	return table
 
 
+func environment_state_generated(run_state: RunState, environment: Dictionary, generated_state: Dictionary) -> void:
+	_apply_grand_casino_dealer_assignment(generated_state, run_state, environment)
+
+
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var table := _table_state_preview(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
