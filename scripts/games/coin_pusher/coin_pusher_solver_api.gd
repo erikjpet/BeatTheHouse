@@ -56,6 +56,22 @@ static func hot_state_eligible_for_test(state: Dictionary, config: Dictionary = 
 	return bool(_implementation_script().call("hot_state_eligible_for_test", state, config))
 
 
+static func native_backend_available_for_test() -> bool:
+	return bool(_implementation_script().call("native_backend_available_for_test"))
+
+
+static func last_step_backend_for_test() -> String:
+	return str(_implementation_script().call("last_step_backend_for_test"))
+
+
+static func reset_native_backend_for_test() -> void:
+	_implementation_script().call("reset_native_backend_for_test")
+
+
+static func install_native_backend_for_test(backend: Object) -> void:
+	_implementation_script().call("install_native_backend_for_test", backend)
+
+
 static func body_views(state: Dictionary) -> Array:
 	return _implementation_script().call("body_views", state) as Array
 

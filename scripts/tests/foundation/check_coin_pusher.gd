@@ -7,6 +7,92 @@ const PUSHER_VARIATION_EV_ACTIONS := 600
 var coin_pusher_snapshot_boundary_exercised := false
 
 
+class StaleNativeBackend:
+	extends RefCounted
+
+	func backend_id() -> String:
+		return "coin_pusher_native_integer_stale"
+
+	func solver_contract() -> Dictionary:
+		return {"abi_version": 1, "schema": "coin_pusher_fixed_point", "state_version": 1, "fixed_point_scale": 1000, "action_ticks": 48}
+
+	func can_step(_state: Dictionary, _config: Dictionary) -> bool:
+		return true
+
+	func step_action(_state: Dictionary, _config: Dictionary) -> Dictionary:
+		return {"events": []}
+
+
+class MutatingInvalidNativeBackend:
+	extends StaleNativeBackend
+
+	func backend_id() -> String:
+		return "coin_pusher_native_integer_v1"
+
+	func step_action(state: Dictionary, _config: Dictionary) -> Dictionary:
+		state["tick"] = int(state.get("tick", 0)) + 999
+		var bodies: Array = state.get("bodies", [])
+		if not bodies.is_empty():
+			(bodies[0] as Dictionary)["x"] = -999999
+		return {"events": []}
+
+
+class ImmutableSmugglingNativeBackend:
+	extends StaleNativeBackend
+
+	func backend_id() -> String:
+		return "coin_pusher_native_integer_v1"
+
+	func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
+		state["tick"] = int(state.get("tick", 0)) + 48
+		state["upper_phase_fp"] = int(config.get("captured_upper_phase_fp", state.get("upper_phase_fp", 0)))
+		state["lower_phase_fp"] = int(config.get("captured_lower_phase_fp", state.get("lower_phase_fp", 0)))
+		var bodies: Array = state.get("bodies", [])
+		if not bodies.is_empty():
+			(bodies[0] as Dictionary)["metadata"] = {"smuggled": true}
+		var metrics := {
+			"fixed_ticks": 48, "body_count": bodies.size(), "awake_count": 0, "woken_count": 0,
+			"moved_count": 0, "collision_passes": 1, "collision_count": 0, "topple_count": 0, "upper_lower_fall_count": 0,
+		}
+		state["last_events"] = []
+		state["last_motion_events"] = []
+		state["last_step_metrics"] = metrics
+		return {"events": [], "motion_events": [], "presentation_events": [], "metrics": metrics, "presentation_trace": []}
+
+
+class MalformedMutableNativeBackend:
+	extends StaleNativeBackend
+
+	var mode := 0
+
+	func _init(p_mode: int) -> void:
+		mode = p_mode
+
+	func backend_id() -> String:
+		return "coin_pusher_native_integer_v1"
+
+	func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
+		state["tick"] = int(state.get("tick", 0)) + 48
+		state["upper_phase_fp"] = int(config.get("captured_upper_phase_fp", state.get("upper_phase_fp", 0)))
+		state["lower_phase_fp"] = int(config.get("captured_lower_phase_fp", state.get("lower_phase_fp", 0)))
+		var bodies: Array = state.get("bodies", [])
+		if not bodies.is_empty():
+			if mode == 1:
+				(bodies[0] as Dictionary)["sleeping"] = "false"
+			elif mode == 0:
+				(bodies[0] as Dictionary).erase("x")
+		var events: Array = []
+		var motion_events: Array = []
+		var metrics := {"fixed_ticks": "48", "body_count": bodies.size()} if mode == 2 else {
+			"fixed_ticks": 48, "body_count": bodies.size(), "awake_count": 0, "woken_count": 0,
+			"moved_count": 0, "collision_passes": 1, "collision_count": 0, "topple_count": 0, "upper_lower_fall_count": 0,
+		}
+		state["last_events"] = events
+		state["last_motion_events"] = motion_events
+		state["last_step_metrics"] = metrics
+		return {"events": events, "motion_events": motion_events, "presentation_events": [], "metrics": metrics, "presentation_trace": []}
+
+
 func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> void:
 	var definition := library.game("coin_pusher")
 	if definition.is_empty():
@@ -20,6 +106,8 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_alarm_audio(failures)
 	_check_coin_pusher_canonical_probe(failures)
 	_check_coin_pusher_hot_solver_exact_twin(failures)
+	_check_coin_pusher_native_adapter_fail_closed(failures)
+	_check_coin_pusher_native_alias_publication(failures)
 	_check_coin_pusher_profile_invariance(failures)
 	_check_coin_pusher_surface_liveness(game, failures)
 	_check_coin_pusher_snapshot_renderer_boundary(game, failures)
@@ -113,6 +201,18 @@ func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:
 		"upper_locked": true, "lower_locked": true,
 		"nudge_x": 1200, "nudge_y": -900, "aimed_x": 50000, "nudge_radius": 100000,
 	}, "empty-body cabinet-shake presentation defaults", failures)
+	var locked_missing_phase := CoinPusherSolverScript.create(_configured_rng(8819), 48, 4, 5)
+	locked_missing_phase.erase("upper_phase_fp")
+	locked_missing_phase.erase("lower_phase_fp")
+	_assert_coin_pusher_hot_solver_twin(locked_missing_phase, {
+		"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true,
+	}, "locked uncaptured missing phase keys", failures)
+	var locked_text_phase := CoinPusherSolverScript.create(_configured_rng(8820), 48, 4, 5)
+	locked_text_phase["upper_phase_fp"] = "1700"
+	locked_text_phase["lower_phase_fp"] = "2300"
+	_assert_coin_pusher_hot_solver_twin(locked_text_phase, {
+		"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true,
+	}, "locked uncaptured int-convertible phase types", failures)
 	var duplicate_ids := CoinPusherSolverScript.create(_configured_rng(8806), 48, 0, 5)
 	duplicate_ids["bodies"] = [
 		_solver_body("duplicate_oracle", "coin", 48000, 30000, 0, false),
@@ -250,6 +350,9 @@ func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:
 				break
 			var reference_action := CoinPusherSolverScript.step_action_reference_for_test(reference_state, sequence_config)
 			var hot_action := CoinPusherSolverScript.step_action(hot_state, sequence_config)
+			if CoinPusherSolverScript.native_backend_available_for_test() and CoinPusherSolverScript.last_step_backend_for_test() != "native":
+				failures.append("Coin Pusher carried oracle seed %d action %d silently left the native backend." % [seed_index, action_index])
+				break
 			var state_equal := JSON.stringify(reference_state) == JSON.stringify(hot_state)
 			var result_equal := JSON.stringify(reference_action) == JSON.stringify(hot_action)
 			if not state_equal or not result_equal:
@@ -260,11 +363,74 @@ func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:
 				hot_state = JSON.parse_string(JSON.stringify(hot_state)) as Dictionary
 
 
+func _check_coin_pusher_native_adapter_fail_closed(failures: Array) -> void:
+	var source := CoinPusherSolverScript.create(_configured_rng(8818), 48, 8, 5)
+	var config := {"captured_upper_phase_fp": 1700, "captured_lower_phase_fp": 2300, "push_scale": 3, "capture_presentation_trace": true}
+	var oracle_state := source.duplicate(true)
+	var oracle_result := CoinPusherSolverScript.step_action_reference_for_test(oracle_state, config)
+	for fixture in [
+		StaleNativeBackend.new(), MutatingInvalidNativeBackend.new(), ImmutableSmugglingNativeBackend.new(),
+		MalformedMutableNativeBackend.new(0), MalformedMutableNativeBackend.new(1), MalformedMutableNativeBackend.new(2),
+	]:
+		CoinPusherSolverScript.install_native_backend_for_test(fixture)
+		var actual_state := source.duplicate(true)
+		var actual_result := CoinPusherSolverScript.step_action(actual_state, config)
+		if JSON.stringify(actual_state) != JSON.stringify(oracle_state) or JSON.stringify(actual_result) != JSON.stringify(oracle_result):
+			failures.append("Coin Pusher native adapter published or double-stepped a stale/mutating-invalid backend candidate.")
+		if CoinPusherSolverScript.last_step_backend_for_test() != "gdscript":
+			failures.append("Coin Pusher native adapter marked a stale/mutating-invalid backend as authoritative.")
+	CoinPusherSolverScript.reset_native_backend_for_test()
+
+
+func _check_coin_pusher_native_alias_publication(failures: Array) -> void:
+	var source := CoinPusherSolverScript.create(_configured_rng(8821), 48, 0, 5)
+	source["bodies"] = [
+		_solver_body("alias_exit", "coin", 50000, CoinPusherSolverScript.FRONT_EDGE - CoinPusherSolverScript.COIN_RADIUS - 10, 0, false),
+		_solver_body("alias_survivor", "coin", 50000, 30000, 0, false),
+	]
+	((source["bodies"] as Array)[1] as Dictionary)["metadata"] = {"nested": {"sentinel": "live"}}
+	var base_config := {
+		"upper_locked": true, "lower_locked": true,
+		"nudge_x": 1200, "nudge_y": -900, "aimed_x": 50000, "nudge_radius": 100000,
+	}
+	for backend in ["reference", "gdscript", "native"]:
+		CoinPusherSolverScript.reset_native_backend_for_test()
+		if backend == "native" and not CoinPusherSolverScript.native_backend_available_for_test():
+			continue
+		var state := source.duplicate(true)
+		var bodies_alias: Array = state["bodies"]
+		var survivor_alias: Dictionary = bodies_alias[1]
+		var metadata_alias: Dictionary = survivor_alias["metadata"]
+		var nested_metadata_alias: Dictionary = metadata_alias["nested"]
+		var config := base_config.duplicate(true)
+		if backend == "reference":
+			CoinPusherSolverScript.step_action_reference_for_test(state, config)
+		else:
+			if backend == "gdscript":
+				config["_debug_force_solver_backend"] = "gdscript"
+			CoinPusherSolverScript.step_action(state, config)
+		if bodies_alias.size() != 1 or str((bodies_alias[0] as Dictionary).get("id", "")) != "alias_survivor":
+			failures.append("Coin Pusher %s backend replaced or failed to compact the externally aliased bodies Array." % backend)
+			continue
+		var published_bodies: Array = state.get("bodies", [])
+		nested_metadata_alias["after_action"] = backend
+		if published_bodies.size() != 1 or JSON.stringify(bodies_alias) != JSON.stringify(published_bodies) \
+				or JSON.stringify(survivor_alias) != JSON.stringify(published_bodies[0]) \
+				or str((((published_bodies[0] as Dictionary)["metadata"] as Dictionary)["nested"] as Dictionary).get("after_action", "")) != backend:
+			failures.append("Coin Pusher %s backend broke live body/Array aliases while publishing an action." % backend)
+		if backend == "native" and CoinPusherSolverScript.last_step_backend_for_test() != "native":
+			failures.append("Coin Pusher native alias fixture did not execute through the native backend.")
+	CoinPusherSolverScript.reset_native_backend_for_test()
+
+
 func _assert_coin_pusher_hot_solver_twin(source: Dictionary, config: Dictionary, label: String, failures: Array) -> void:
 	var reference_state := source.duplicate(true)
 	var hot_state := source.duplicate(true)
+	var native_expected := CoinPusherSolverScript.native_backend_available_for_test() and CoinPusherSolverScript.hot_state_eligible_for_test(hot_state, config)
 	var reference_result := CoinPusherSolverScript.step_action_reference_for_test(reference_state, config)
 	var hot_result := CoinPusherSolverScript.step_action(hot_state, config)
+	if native_expected and CoinPusherSolverScript.last_step_backend_for_test() != "native":
+		failures.append("Coin Pusher production adapter did not select the native backend for eligible fixture %s." % label)
 	if JSON.stringify(reference_state) != JSON.stringify(hot_state):
 		failures.append("Packed Coin Pusher solver changed exact authoritative state for %s versus the dictionary oracle." % label)
 	if JSON.stringify(reference_result) != JSON.stringify(hot_result):

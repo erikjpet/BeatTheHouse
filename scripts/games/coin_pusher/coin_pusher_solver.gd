@@ -44,6 +44,12 @@ const HOT_CANDIDATE_POOL_CAPACITY := HOT_BODY_COUNT_LIMIT * HOT_BODY_COUNT_LIMIT
 const HOT_CACHE_GENERATION_MAX := 2147483647
 const HOT_CONFIG_IMPULSE_ABS_LIMIT := 100000000
 const HOT_PUSH_SCALE_ABS_LIMIT := 1000
+const NATIVE_BACKEND_ID := "coin_pusher_native_integer_v1"
+const NATIVE_ABI_VERSION := 1
+
+static var _native_backend: Object = null
+static var _native_backend_checked := false
+static var _last_step_backend_for_test := "uninitialized"
 
 
 class HotBodies:
@@ -334,7 +340,22 @@ static func add_recovered_coin(state: Dictionary, rng: RngStream, lane_count: in
 static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	_normalize_hot_body_fields(state)
 	if _hot_state_requires_reference(state, config):
+		_last_step_backend_for_test = "reference"
 		return _step_action_dictionary_reference(state, config)
+	var forced_backend := str(config.get("_debug_force_solver_backend", ""))
+	if forced_backend != "gdscript":
+		var native := _native_solver_backend()
+		if native != null:
+			var native_state := _native_candidate_state(state)
+			var native_config := config.duplicate(true)
+			if bool(native.call("can_step", native_state, native_config)):
+				var native_result_value: Variant = native.call("step_action", native_state, native_config)
+				var native_result: Dictionary = native_result_value if typeof(native_result_value) == TYPE_DICTIONARY else {}
+				if _native_step_contract_valid(state, native_state, native_result, config):
+					_publish_native_state(state, native_state)
+					_last_step_backend_for_test = "native"
+					return native_result
+	_last_step_backend_for_test = "gdscript"
 	return _step_action_hot(state, config)
 
 
@@ -346,6 +367,196 @@ static func hot_state_eligible_for_test(state: Dictionary, config: Dictionary = 
 	var candidate := state.duplicate(true)
 	_normalize_hot_body_fields(candidate)
 	return not _hot_state_requires_reference(candidate, config)
+
+
+static func native_backend_available_for_test() -> bool:
+	return _native_solver_backend() != null
+
+
+static func last_step_backend_for_test() -> String:
+	return _last_step_backend_for_test
+
+
+static func reset_native_backend_for_test() -> void:
+	_native_backend = null
+	_native_backend_checked = false
+	_last_step_backend_for_test = "uninitialized"
+
+
+static func install_native_backend_for_test(backend: Object) -> void:
+	_native_backend = backend if _native_backend_contract_valid(backend) else null
+	_native_backend_checked = true
+	_last_step_backend_for_test = "uninitialized"
+
+
+static func _native_solver_backend() -> Object:
+	if _native_backend_checked:
+		return _native_backend
+	_native_backend_checked = true
+	if not ClassDB.class_exists("CoinPusherNativeCore"):
+		return null
+	var candidate: Object = ClassDB.instantiate("CoinPusherNativeCore")
+	if _native_backend_contract_valid(candidate):
+		_native_backend = candidate
+	return _native_backend
+
+
+static func _native_backend_contract_valid(backend: Object) -> bool:
+	if backend == null:
+		return false
+	for method_name in ["backend_id", "solver_contract", "can_step", "step_action"]:
+		if not backend.has_method(method_name):
+			return false
+	if str(backend.call("backend_id")) != NATIVE_BACKEND_ID:
+		return false
+	var contract_value: Variant = backend.call("solver_contract")
+	if typeof(contract_value) != TYPE_DICTIONARY:
+		return false
+	var contract: Dictionary = contract_value
+	return int(contract.get("abi_version", -1)) == NATIVE_ABI_VERSION \
+		and str(contract.get("schema", "")) == SCHEMA \
+		and int(contract.get("state_version", -1)) == VERSION \
+		and int(contract.get("fixed_point_scale", -1)) == FP \
+		and int(contract.get("action_ticks", -1)) == ACTION_TICKS
+
+
+static func _native_candidate_state(state: Dictionary) -> Dictionary:
+	var candidate := {}
+	for key in ["schema", "version", "fixed_hz", "fixed_point_scale", "tick", "upper_phase_fp", "lower_phase_fp"]:
+		if state.has(key):
+			candidate[key] = state[key]
+	var candidate_bodies: Array = []
+	for body_value in state.get("bodies", []):
+		candidate_bodies.append((body_value as Dictionary).duplicate(true))
+	candidate["bodies"] = candidate_bodies
+	return candidate
+
+
+static func _publish_native_state(state: Dictionary, candidate: Dictionary) -> void:
+	var original_bodies: Array = state.get("bodies", [])
+	var candidate_by_id := {}
+	for candidate_value in candidate.get("bodies", []):
+		var candidate_body: Dictionary = candidate_value
+		candidate_by_id[str(candidate_body.get("id", ""))] = candidate_body
+	for index in range(original_bodies.size() - 1, -1, -1):
+		var original_body: Dictionary = original_bodies[index]
+		var body_id := str(original_body.get("id", ""))
+		if candidate_by_id.has(body_id):
+			var candidate_body: Dictionary = candidate_by_id[body_id]
+			for mutable_key in ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "sleeping", "rest_state", "lean_milli"]:
+				original_body[mutable_key] = candidate_body[mutable_key]
+			for pressure_key in ["cap_pressure_ticks", "cap_pressure_accel"]:
+				if original_body.has(pressure_key) or int(candidate_body.get(pressure_key, 0)) > 0:
+					original_body[pressure_key] = candidate_body.get(pressure_key, 0)
+		else:
+			original_bodies.remove_at(index)
+	state["bodies"] = original_bodies
+	state["tick"] = candidate["tick"]
+	for phase_key in ["upper_phase_fp", "lower_phase_fp"]:
+		if candidate.has(phase_key):
+			state[phase_key] = candidate[phase_key]
+	state["last_events"] = candidate["last_events"]
+	state["last_motion_events"] = candidate["last_motion_events"]
+	state["last_step_metrics"] = candidate["last_step_metrics"]
+
+
+static func _native_step_contract_valid(before: Dictionary, candidate: Dictionary, result: Dictionary, config: Dictionary) -> bool:
+	if result.is_empty() or typeof(candidate.get("bodies", null)) != TYPE_ARRAY:
+		return false
+	if typeof(candidate.get("tick", null)) != TYPE_INT or int(candidate.get("tick", -1)) != int(before.get("tick", 0)) + ACTION_TICKS:
+		return false
+	if str(candidate.get("schema", "")) != SCHEMA or int(candidate.get("version", -1)) != VERSION:
+		return false
+	for phase_spec in [["upper_phase_fp", "upper_locked"], ["lower_phase_fp", "lower_locked"]]:
+		var phase_key: String = phase_spec[0]
+		var captured := config.has("captured_%s" % phase_key)
+		var publishes := captured or not bool(config.get(phase_spec[1], false))
+		if publishes:
+			var phase := int(candidate.get(phase_key, -1))
+			if typeof(candidate.get(phase_key, null)) != TYPE_INT or phase < 0 or phase >= PHASE_PERIOD:
+				return false
+		elif candidate.has(phase_key) != before.has(phase_key) \
+				or (candidate.has(phase_key) and (typeof(candidate[phase_key]) != typeof(before[phase_key]) or candidate[phase_key] != before[phase_key])):
+			return false
+	var required_types := {
+		"events": TYPE_ARRAY,
+		"motion_events": TYPE_ARRAY,
+		"presentation_events": TYPE_ARRAY,
+		"metrics": TYPE_DICTIONARY,
+		"presentation_trace": TYPE_ARRAY,
+	}
+	for key in required_types:
+		if typeof(result.get(key, null)) != int(required_types[key]):
+			return false
+	var allowed_keys := required_types.keys()
+	if bool(config.get("_debug_profile_stages", false)):
+		if typeof(result.get("debug_stage_timing_usec", null)) != TYPE_DICTIONARY:
+			return false
+		allowed_keys.append("debug_stage_timing_usec")
+	elif result.has("debug_stage_timing_usec"):
+		return false
+	if result.size() != allowed_keys.size():
+		return false
+	for key in result:
+		if not allowed_keys.has(key):
+			return false
+	var metrics: Dictionary = result.get("metrics", {})
+	var metric_keys := ["fixed_ticks", "body_count", "awake_count", "woken_count", "moved_count", "collision_passes", "collision_count", "topple_count", "upper_lower_fall_count"]
+	if metrics.size() != metric_keys.size():
+		return false
+	for metric_key in metric_keys:
+		if typeof(metrics.get(metric_key, null)) != TYPE_INT:
+			return false
+	if int(metrics.get("fixed_ticks", -1)) != ACTION_TICKS or int(metrics.get("body_count", -1)) != (candidate.get("bodies", []) as Array).size():
+		return false
+	if typeof(candidate.get("last_events", null)) != TYPE_ARRAY \
+			or typeof(candidate.get("last_motion_events", null)) != TYPE_ARRAY \
+			or typeof(candidate.get("last_step_metrics", null)) != TYPE_DICTIONARY:
+		return false
+	if candidate["last_events"] != result["events"] \
+			or candidate["last_motion_events"] != result["motion_events"] \
+			or candidate["last_step_metrics"] != result["metrics"]:
+		return false
+	var before_bodies: Array = before.get("bodies", [])
+	var candidate_bodies: Array = candidate.get("bodies", [])
+	var candidate_ids := {}
+	var before_by_id := {}
+	for before_value in before_bodies:
+		before_by_id[str((before_value as Dictionary).get("id", ""))] = before_value
+	var mutable_body_keys := ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "sleeping", "rest_state", "lean_milli", "cap_pressure_ticks", "cap_pressure_accel"]
+	for candidate_value in candidate_bodies:
+		if typeof(candidate_value) != TYPE_DICTIONARY:
+			return false
+		var candidate_id := str((candidate_value as Dictionary).get("id", ""))
+		if candidate_ids.has(candidate_id):
+			return false
+		candidate_ids[candidate_id] = true
+		if not before_by_id.has(candidate_id):
+			return false
+		var candidate_body: Dictionary = candidate_value
+		var before_body: Dictionary = before_by_id[candidate_id]
+		for int_key in ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "lean_milli"]:
+			if typeof(candidate_body.get(int_key, null)) != TYPE_INT:
+				return false
+		if typeof(candidate_body.get("sleeping", null)) != TYPE_BOOL or typeof(candidate_body.get("rest_state", null)) != TYPE_STRING:
+			return false
+		for pressure_key in ["cap_pressure_ticks", "cap_pressure_accel"]:
+			if before_body.has(pressure_key) and not candidate_body.has(pressure_key):
+				return false
+			if candidate_body.has(pressure_key) and typeof(candidate_body[pressure_key]) != TYPE_INT:
+				return false
+		for key in before_body:
+			if not mutable_body_keys.has(key) and (not candidate_body.has(key) or typeof(candidate_body[key]) != typeof(before_body[key]) or candidate_body[key] != before_body[key]):
+				return false
+		for key in candidate_body:
+			if not mutable_body_keys.has(key) and not before_body.has(key):
+				return false
+	var candidate_index := 0
+	for before_value in before_bodies:
+		if candidate_index < candidate_bodies.size() \
+				and str((before_value as Dictionary).get("id", "")) == str((candidate_bodies[candidate_index] as Dictionary).get("id", "")):
+			candidate_index += 1
+	return candidate_index == candidate_bodies.size()
 
 
 static func _step_action_dictionary_reference(state: Dictionary, config: Dictionary) -> Dictionary:
