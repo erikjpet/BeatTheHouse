@@ -999,6 +999,10 @@ func _process(delta: float) -> void:
 	_flush_captured_pointer_move()
 	if transient_surface_loop_deadline_msec > 0 and Time.get_ticks_msec() >= transient_surface_loop_deadline_msec:
 		surface_stop_audio_loop(transient_surface_loop_id)
+	# Reduced motion freezes presentation clocks and redraws, not state-driven
+	# audio. Sync before the visual early return so completed actions still land
+	# their terminal cues without advancing any presentation state.
+	_sync_surface_audio()
 	if reduce_motion:
 		flicker = 0.0
 		surface_render_elapsed_sec = 0.0
@@ -1014,7 +1018,6 @@ func _process(delta: float) -> void:
 	surface_presentation_clock_msec += clamped_delta * 1000.0
 	if not environment_activity_paused:
 		surface_simulation_clock_msec += clamped_delta * 1000.0
-	_sync_surface_audio()
 	_schedule_surface_animation_redraws(clamped_delta)
 
 
