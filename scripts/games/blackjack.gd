@@ -495,6 +495,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"blackjack_soft": bool(total_info.get("soft", false)),
 		"basic_strategy_advice": _basic_strategy_advice(session, table, run_state),
 		"count_hint": _count_hint(run_state, table, session),
+		"crew_play_status": run_state.crew_play_active_status(get_id(), environment) if run_state != null else [],
 		"counting_enabled": bool(table.get("counting_enabled", false)),
 		"table_modifier": _table_summary(table),
 		"side_bets_available": available_side_bets,
@@ -686,6 +687,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_deal_animation(surface, surface_state)
 	_draw_chip_payout_animation(surface, surface_state)
 	_draw_count_challenge(surface, surface_state)
+	_draw_crew_play_status(surface, surface_state)
 	return true
 
 
@@ -1123,6 +1125,8 @@ func resolve(action_id: String, stake: int, run_state: RunState, environment: Di
 
 
 func resolve_with_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	if action_id.begins_with("crew_play:"):
+		return super.resolve_with_context(action_id, stake, run_state, environment, rng, ui_state)
 	if _is_rourke_duel(run_state, environment):
 		return _resolve_rourke_duel_hand(action_id, run_state, environment, ui_state)
 	if action_id == "blackjack_place_bet":
@@ -1334,6 +1338,7 @@ func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environme
 			2,
 			95
 		)
+		catch_chance = run_state.crew_play_adjust_detection_chance(catch_chance, environment)
 		var attempt := maxi(1, int(duel.get("attempt", 1)))
 		var hand_index := maxi(0, int(duel.get("hand_index", 0)))
 		var detection_rng := run_state.create_rng("grand_casino_duel").fork("attempt:%d:hand:%d:player_cheat_detection" % [attempt, hand_index])
@@ -4489,7 +4494,7 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 	if used_peek:
 		base_heat += _item_effect_total("blackjack_peek_heat_delta", run_state)
 	catch_chance += _item_effect_total("blackjack_dealer_catch_chance", run_state)
-	catch_chance = clampi(catch_chance, 0, 95)
+	catch_chance = run_state.crew_play_adjust_detection_chance(clampi(catch_chance, 0, 95), environment)
 	var strategy_confronted := bool(session.get("strategy_confronted", false))
 	var caught := strategy_confronted or rng.randi_range(1, 100) <= catch_chance
 	var heat := maxi(0, base_heat)
@@ -4498,6 +4503,7 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 		if not blatant_advantage_play:
 			catch_heat_bonus = 1
 		heat += catch_heat_bonus
+	heat = run_state.crew_play_adjust_suspicion(heat, get_id(), environment)
 	var message := "The dealer confronts the off-book line." if strategy_confronted else "The dealer clocks the move." if caught else "The risky move slides by."
 	if used_count and bool(session.get("count_correct", false)) and advantage_strategy_score > 0:
 		message = "%s The count lands clean, but the information-driven play gives it away." % message
@@ -5526,7 +5532,8 @@ func _start_count_challenge(ui_state: Dictionary, table: Dictionary, run_state: 
 		"bad_hits": 0,
 		"correct_hits": 0,
 		"target_delta": target_delta,
-		"tolerance": maxi(0, _item_effect_total("blackjack_count_tolerance", run_state)),
+		"tolerance": maxi(0, _item_effect_total("blackjack_count_tolerance", run_state)) \
+			+ (run_state.crew_play_effect_int("spotter", "blackjack_count_tolerance", 0) if run_state != null else 0),
 		"dealer_attention_risk": clampi(18 + icons.size() * 5 - _item_effect_total("blackjack_count_cover", run_state), 4, 78),
 		"recorded_delta": 0,
 		"recorded_running_count_start": int(table.get("recorded_running_count", 0)),
@@ -6524,12 +6531,15 @@ func _surface_state_labels(table: Dictionary, session: Dictionary) -> Array:
 
 func _count_hint(run_state: RunState, table: Dictionary, session: Dictionary) -> String:
 	var recorded := _recorded_count_for_surface(table, session)
+	var spotter_line := ""
+	if run_state != null and run_state.crew_play_active("spotter"):
+		spotter_line = " Switch signals confidence within one."
 	if bool(session.get("count_correct", false)):
-		return "Recorded count %+d." % recorded
+		return ("Recorded count %+d." % recorded) + spotter_line
 	if bool(session.get("count_answered", false)):
-		return "Recorded dirty count %+d; true shoe may disagree." % recorded
+		return ("Recorded dirty count %+d; true shoe may disagree." % recorded) + spotter_line
 	if not _local_copy_dict(session.get("count_challenge", {})).is_empty():
-		return "Live hand delta %+d; shoe count %+d." % [int(session.get("count_delta", 0)), recorded]
+		return ("Live hand delta %+d; shoe count %+d." % [int(session.get("count_delta", 0)), recorded]) + spotter_line
 	if run_state != null and run_state.suspicion_level() >= 65:
 		return "The dealer is tracking your eyes."
 	if recorded >= 4:
@@ -6537,6 +6547,19 @@ func _count_hint(run_state: RunState, table: Dictionary, session: Dictionary) ->
 	if recorded <= -4:
 		return "Low recorded count. Shoe runs small."
 	return "Count is neutral unless you can track it."
+
+
+func _draw_crew_play_status(surface, state: Dictionary) -> void:
+	var statuses := _dictionary_array(state.get("crew_play_status", []))
+	if statuses.is_empty():
+		return
+	var labels: Array = []
+	for status in statuses:
+		labels.append("%s · %d" % [str(status.get("display_name", "PLAY")).to_upper(), int(status.get("remaining_boundaries", 0))])
+	var rect := Rect2(620, 4, 268, 18)
+	surface.draw_rect(rect, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.16))
+	surface.draw_rect(rect, C_CYAN, false, 1)
+	surface.surface_label_centered("  ".join(labels), rect.grow(-2), 8, C_CYAN)
 
 
 func _recorded_count_for_surface(table: Dictionary, session: Dictionary) -> int:

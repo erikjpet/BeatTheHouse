@@ -17,6 +17,7 @@ const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
+const CrewPlayModelScript := preload("res://scripts/core/crew_play_model.gd")
 const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
@@ -305,6 +306,7 @@ var active_delivery_run: Dictionary = {}
 var crew_pattern_memory: Dictionary = {}
 var crew_match_marks: Dictionary = {}
 var crew_contraband_stash: Array = []
+var crew_play_state: Dictionary = {}
 var numbers_state: NumbersModel
 var heat_history: Array = []
 var town_state: TownState
@@ -393,6 +395,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	crew_pattern_memory = CrewPokerModelScript.default_observations()
 	crew_match_marks = {}
 	crew_contraband_stash = []
+	crew_play_state = CrewPlayModelScript.default_state()
 	numbers_state = NumbersModelScript.new()
 	numbers_state.reset(seed_value)
 	heat_history = []
@@ -2444,6 +2447,17 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 	suspicion["cues"] = cues
 	if applied_amount > 0:
 		record_grand_casino_room_heat_gain(_grand_casino_room_id_from_context(context), applied_amount)
+		var distraction_liability := CrewPlayModelScript.distraction_grievance_candidate(
+			crew_play_state, _crew_action_index(), base_level, level
+		)
+		if not distraction_liability.is_empty():
+			grievance_add({
+				"member_id": str(distraction_liability.get("member_id", "")),
+				"kind": "distraction_heat_dumped",
+				"weight": 2,
+				"source_ref": str(distraction_liability.get("source_ref", "crew_play:distraction")),
+			})
+			crew_play_state = CrewPlayModelScript.mark_distraction_grievance_recorded(crew_play_state)
 	if tutorial_heat_intervention:
 		_apply_tutorial_heat_intervention(location_id, cue_id)
 	if applied_amount != 0 and active_location:
@@ -6243,6 +6257,59 @@ func crew_member_job_available(member_id: String) -> bool:
 	return crew_rank_perks(member_id).has("member_jobs")
 
 
+# Shared read-only physical-presence projection. CrewRecruitmentModel remains
+# the sole owner of itinerary selection and room placement.
+func crew_present_member_ids(environment: Dictionary = current_environment) -> Array:
+	var result: Array = []
+	for entry_value in _copy_array(environment.get("crew_presence", [])):
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var member_id := str((entry_value as Dictionary).get("member_id", "")).strip_edges()
+		if CrewStateModelScript.MEMBER_IDS.has(member_id) and not result.has(member_id):
+			result.append(member_id)
+	return result
+
+
+func crew_member_present(member_id: String, environment: Dictionary = current_environment) -> bool:
+	return crew_present_member_ids(environment).has(member_id.strip_edges())
+
+
+func crew_action_index() -> int:
+	return _crew_action_index()
+
+
+func crew_play_actions(game_id: String, environment: Dictionary = current_environment) -> Array:
+	return CrewPlayModelScript.available_actions(self, environment, game_id)
+
+
+func crew_play_activate(play_id: String, game_id: String, environment: Dictionary = current_environment) -> Dictionary:
+	return CrewPlayModelScript.activate(self, environment, game_id, play_id)
+
+
+func crew_play_active(play_id: String, environment: Dictionary = current_environment) -> bool:
+	return CrewPlayModelScript.is_active(crew_play_state, play_id, _crew_action_index(), environment)
+
+
+func crew_play_active_status(game_id: String = "", environment: Dictionary = current_environment) -> Array:
+	return CrewPlayModelScript.active_status(crew_play_state, _crew_action_index(), environment, game_id)
+
+
+func crew_play_effect_int(play_id: String, effect_key: String, fallback: int, environment: Dictionary = current_environment) -> int:
+	return CrewPlayModelScript.effect_int(crew_play_state, play_id, effect_key, _crew_action_index(), environment, fallback)
+
+
+func crew_play_adjust_suspicion(amount: int, game_id: String, environment: Dictionary = current_environment) -> int:
+	if amount <= 0 or game_id != "blackjack":
+		return amount
+	var multiplier := crew_play_effect_int("spotter", "suspicion_multiplier_percent", 100, environment)
+	return maxi(0, int(ceil(float(amount) * float(multiplier) / 100.0)))
+
+
+func crew_play_adjust_detection_chance(chance: int, environment: Dictionary = current_environment) -> int:
+	var multiplier := crew_play_effect_int("table_flood", "cheat_detection_multiplier_percent", 100, environment)
+	return clampi(int(ceil(float(maxi(0, chance)) * float(multiplier) / 100.0)), 0, 100)
+
+
 func crew_job_definition_pending(definition_id: String) -> bool:
 	var clean_id := definition_id.strip_edges()
 	for job_value in crew_jobs.values():
@@ -8810,6 +8877,8 @@ func _advance_global_boundary_before_local_cooldown(safe_amount: int) -> void:
 func _advance_global_boundary_finish(safe_amount: int) -> void:
 	_advance_debt_clocks(safe_amount)
 	_advance_crew_jobs()
+	if safe_amount > 0:
+		CrewPlayModelScript.advance_boundary(self, current_environment)
 
 
 func _advance_environment_layer_ambient(total_turns: int) -> void:
@@ -10776,6 +10845,11 @@ func _crew_state_for_save(deep_copy: bool) -> Dictionary:
 	if not crew_contraband_stash.is_empty():
 		result["recruitment_schema_version"] = CrewRecruitmentModelScript.SCHEMA_VERSION
 		result["stash"] = crew_contraband_stash.duplicate(deep_copy)
+	var normalized_plays := CrewPlayModelScript.normalize_state(crew_play_state)
+	if not (normalized_plays.get("uses", {}) as Dictionary).is_empty() \
+		or not (normalized_plays.get("active", []) as Array).is_empty() \
+		or not (normalized_plays.get("member_cooldowns", {}) as Dictionary).is_empty():
+		result["plays"] = normalized_plays.duplicate(deep_copy)
 	return result
 
 
@@ -10788,6 +10862,7 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	crew_pattern_memory = CrewPokerModelScript.unpack_observations(saved.get("p", {}))
 	crew_match_marks = {}
 	crew_contraband_stash = _normalize_inventory_entries(saved.get("stash", []))
+	crew_play_state = CrewPlayModelScript.normalize_state(saved.get("plays", {}))
 	var saved_marks: Dictionary = saved.get("m", {}) if typeof(saved.get("m", {})) == TYPE_DICTIONARY else {}
 	for member_id in CrewStateModelScript.MEMBER_IDS:
 		# Keep an empty/sparse save projection sparse. Session recording already

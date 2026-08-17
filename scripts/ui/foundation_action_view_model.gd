@@ -472,6 +472,9 @@ static func action_kind_label(host: Variant, action_kind: String) -> String:
 static func game_action_choice_summary(host: Variant, action: Dictionary, action_kind: String = "") -> String:
 	if action.is_empty():
 		return ""
+	var authored_summary := str(action.get("summary", action.get("cost_summary", ""))).strip_edges()
+	if not authored_summary.is_empty():
+		return authored_summary
 	var parts: Array = []
 	var win_chance = int(action.get("win_chance", 0))
 	if win_chance > 0:
