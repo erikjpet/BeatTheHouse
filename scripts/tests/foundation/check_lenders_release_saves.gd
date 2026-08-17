@@ -3275,6 +3275,7 @@ func _check_recovery_loss_pressure_foundation(library: ContentLibrary, failures:
 		"lender_hooks": ["street_lender"],
 	})
 	recovery_run.change_bankroll(-(recovery_run.bankroll - 1))
+	_assert_terminal_fast_parity(recovery_run, library, "street-lender recovery", true, failures)
 	var recovery_status := RunTerminalEvaluatorScript.evaluate(recovery_run, library)
 	if bool(recovery_status.get("failed", false)) or not bool(recovery_status.get("lender_available", false)):
 		failures.append("Low-bankroll lender recovery was not recognized before zero cash.")
@@ -3288,6 +3289,7 @@ func _check_recovery_loss_pressure_foundation(library: ContentLibrary, failures:
 		"lender_hooks": ["the_crew"],
 	})
 	crew_recovery_run.change_bankroll(-(crew_recovery_run.bankroll - 1))
+	_assert_terminal_fast_parity(crew_recovery_run, library, "Crew recovery", true, failures)
 	var crew_recovery_status := RunTerminalEvaluatorScript.evaluate(crew_recovery_run, library)
 	if bool(crew_recovery_status.get("failed", false)) or not bool(crew_recovery_status.get("lender_available", false)):
 		failures.append("Debt-profile Crew recovery was falsely classified as stranded.")
@@ -3350,7 +3352,8 @@ func _check_recovery_loss_pressure_foundation(library: ContentLibrary, failures:
 		"lender_hooks": [],
 	})
 	stranded_run.change_bankroll(-(stranded_run.bankroll - 1))
-	var stranded_status := RunTerminalEvaluatorScript.evaluate_and_apply(stranded_run, library)
+	_assert_terminal_fast_parity(stranded_run, library, "stranded run", true, failures)
+	var stranded_status := RunTerminalEvaluatorScript.evaluate_terminal_and_apply(stranded_run, library)
 	if not bool(stranded_status.get("failed", false)) or stranded_run.run_failure_reason != RunState.FAILURE_STRANDED:
 		failures.append("No-wager/no-recovery state did not fail as stranded.")
 
@@ -3369,9 +3372,25 @@ func _check_recovery_loss_pressure_foundation(library: ContentLibrary, failures:
 		"lender_hooks": [],
 	})
 	travel_escape_run.change_bankroll(-(travel_escape_run.bankroll - 2))
-	var travel_escape_status := RunTerminalEvaluatorScript.evaluate_and_apply(travel_escape_run, library)
+	_assert_terminal_fast_parity(travel_escape_run, library, "travel recovery", true, failures)
+	var travel_escape_status := RunTerminalEvaluatorScript.evaluate_terminal_and_apply(travel_escape_run, library)
 	if bool(travel_escape_status.get("failed", false)) or not bool(travel_escape_status.get("travel_available", false)):
 		failures.append("Affordable travel was not preserved as a low-bankroll recovery path.")
+	var wager_run: RunState = RunStateScript.new()
+	wager_run.start_new("M2-FUN-TERMINAL-FAST-WAGER")
+	wager_run.set_environment({
+		"id": "terminal_fast_wager_fixture",
+		"archetype_id": "fixture_room",
+		"kind": "casino",
+		"economic_profile": {"stake_floor": 1, "stake_ceiling": 5},
+		"game_ids": ["slot"],
+		"event_ids": [],
+		"item_offers": [],
+		"travel_hooks": ["corner_store"],
+		"next_archetypes": [],
+		"lender_hooks": ["street_lender"],
+	})
+	_assert_terminal_fast_parity(wager_run, library, "valid-wager fast path", false, failures)
 	_check_broke_pull_tab_deferred_terminal_boundary(library, failures)
 	_check_broke_idle_terminal_evaluator_not_per_frame(library, failures)
 
@@ -3400,6 +3419,7 @@ func _check_broke_pull_tab_deferred_terminal_boundary(library: ContentLibrary, f
 	environment["game_states"] = {"pull_tabs": machine}
 	run_state.set_environment(environment)
 	run_state.change_bankroll(-run_state.bankroll, true)
+	_assert_terminal_fast_parity(run_state, library, "deferred zero-bankroll game", true, failures)
 	var deferred_status := RunTerminalEvaluatorScript.evaluate(run_state, library)
 	if bool(deferred_status.get("failed", false)) or not bool(deferred_status.get("bankroll_zero_deferred", false)):
 		failures.append("Unresolved pull-tab ticket did not preserve zero-bankroll deferred recovery.")
@@ -3411,9 +3431,19 @@ func _check_broke_pull_tab_deferred_terminal_boundary(library: ContentLibrary, f
 	states["pull_tabs"] = stored_machine
 	run_state.current_environment["game_states"] = states
 	run_state.capture_portable_ticket_piles_from_environment(run_state.current_environment)
-	var failed_status := RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
+	var failed_status := RunTerminalEvaluatorScript.evaluate_terminal_and_apply(run_state, library)
 	if not bool(failed_status.get("failed", false)) or run_state.run_failure_reason != RunState.FAILURE_BANKROLL_ZERO:
 		failures.append("Clearing zero-bankroll pull-tab recovery did not fail at the action boundary with bankroll-zero reason.")
+
+
+func _assert_terminal_fast_parity(run_state: RunState, library: ContentLibrary, label: String, expect_full_diagnostics: bool, failures: Array) -> void:
+	var diagnostic := RunTerminalEvaluatorScript.evaluate(run_state, library)
+	var terminal_only := RunTerminalEvaluatorScript.evaluate_terminal(run_state, library)
+	for key in ["failed", "terminal", "reason", "message", "wager_available", "bankroll_zero_deferred"]:
+		if diagnostic.get(key) != terminal_only.get(key):
+			failures.append("Terminal-only evaluator changed %s for %s." % [key, label])
+	if expect_full_diagnostics and JSON.stringify(diagnostic) != JSON.stringify(terminal_only):
+		failures.append("Terminal-only evaluator did not preserve full no-wager recovery diagnostics for %s." % label)
 
 
 func _check_broke_idle_terminal_evaluator_not_per_frame(library: ContentLibrary, failures: Array) -> void:

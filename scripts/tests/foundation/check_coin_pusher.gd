@@ -7,6 +7,13 @@ const PUSHER_VARIATION_EV_ACTIONS := 600
 var coin_pusher_snapshot_boundary_exercised := false
 
 
+class ResultSnapshotHost:
+	extends RefCounted
+
+	var last_game_result: Dictionary = {}
+	var current_game: GameModule
+
+
 class StaleNativeBackend:
 	extends RefCounted
 
@@ -975,12 +982,46 @@ func _check_coin_pusher_canonical_probe(failures: Array) -> void:
 	var result_snapshot_source := _source_function(view_model_source, "current_game_result_snapshot")
 	if not view_snapshot_source.contains('result_key == "surface_presentation_snapshot_patch"') \
 			or not view_snapshot_source.contains('game_id in ["slot", "coin_pusher"]') \
+			or not view_snapshot_source.contains("read_only_render_result") \
 			or not result_snapshot_source.contains('result_game_id == "coin_pusher"') \
-			or not result_snapshot_source.contains("duplicate(false)"):
+			or not result_snapshot_source.contains("read_only_render_result") \
+			or not result_snapshot_source.contains("duplicate(false)") \
+			or not result_snapshot_source.contains("duplicate(true)"):
 		failures.append("Coin Pusher host snapshot assembly regressed to deep-copying its dense immutable presentation trace.")
 	var main_source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
 	if not main_source.contains("last_game_result = FoundationActionViewModelScript.stored_game_result_snapshot(result)"):
 		failures.append("Coin Pusher foreground action storage no longer uses the ownership-preserving result boundary.")
+	var embedded_refresh_source := _source_function(main_source, "_refresh_after_embedded_game_action")
+	for required_refresh_text in [
+		"_evaluate_run_terminal_state()",
+		"world_header_context_key != _embedded_world_header_context_key()",
+		"if embeds_result_feedback:",
+		"environment_result_panel.visible = false",
+		"_refresh_active_item_slot()",
+		"_render_foundation_snapshots()",
+		"_refresh_talk_dock()",
+		"_update_procedural_music()",
+		"_schedule_game_coach_refresh_after_draw()",
+	]:
+		if not embedded_refresh_source.contains(required_refresh_text):
+			failures.append("Embedded game refresh lost immediate parity seam %s." % required_refresh_text)
+	if not _source_call_graph_contains(main_source, "_refresh_after_embedded_game_action", "_queue_pending_tutorial_heat_intervention") \
+			or not _source_call_graph_contains(main_source, "_refresh_after_embedded_game_action", "_queue_pending_tutorial_drunk_coffee_interventions"):
+		failures.append("Embedded game refresh no longer preserves tutorial intervention evaluation at the action boundary.")
+	var hud_model_source := _source_function(main_source, "_run_status_hud_model")
+	var pressure_source := _source_function(main_source, "_run_pressure_view")
+	if not hud_model_source.contains("_next_objective_option(pressure, objective)") \
+			or pressure_source.contains("_supported_recovery_available()"):
+		failures.append("Embedded HUD refresh rebuilt objective or dead recovery-hook context instead of reusing its action-boundary values.")
+	var terminal_bridge_source := _source_function(main_source, "_run_terminal_evaluator_evaluate_and_apply")
+	if not terminal_bridge_source.contains("evaluate_terminal_and_apply"):
+		failures.append("Foundation action boundaries are not routed through the terminal-only evaluator.")
+	var resolve_source := _source_function(main_source, "_resolve_game_action")
+	if not resolve_source.contains('_apply_post_action_environment_interrupt("game_action")') \
+			or not resolve_source.contains("_refresh()") \
+			or not resolve_source.contains('_autosave_foundation_run("Autosaved.")') \
+			or not resolve_source.contains("_refresh_after_embedded_game_action(true)"):
+		failures.append("Embedded refresh optimization no longer preserves the full environment-interrupt reroute.")
 
 
 func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> void:
@@ -1436,6 +1477,21 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 	if not _coin_pusher_dictionaries_share_reference(owned_patch, stored_result.get("surface_presentation_snapshot_patch", {})) \
 			or _coin_pusher_dictionaries_share_reference(source_deltas, stored_result.get("deltas", {})):
 		failures.append("Quarter Falls host result storage did not transfer only its immutable presentation patch while isolating ordinary result data.")
+	var snapshot_host := ResultSnapshotHost.new()
+	snapshot_host.current_game = game
+	snapshot_host.last_game_result = stored_result
+	var public_result: Dictionary = view_model_script.current_game_result_snapshot(snapshot_host)
+	var render_result: Dictionary = view_model_script.current_game_result_snapshot(snapshot_host, true)
+	if _coin_pusher_dictionaries_share_reference(public_result.get("deltas", {}), stored_result.get("deltas", {})) \
+			or _coin_pusher_dictionaries_share_reference(public_result.get("surface_presentation_snapshot_patch", {}), stored_result.get("surface_presentation_snapshot_patch", {})):
+		failures.append("Quarter Falls public result snapshot exposed nested action-boundary storage by reference.")
+	if not _coin_pusher_dictionaries_share_reference(render_result.get("deltas", {}), stored_result.get("deltas", {})) \
+			or not _coin_pusher_dictionaries_share_reference(render_result.get("surface_presentation_snapshot_patch", {}), stored_result.get("surface_presentation_snapshot_patch", {})):
+		failures.append("Quarter Falls read-only canvas result recopied action-boundary nested data.")
+	var public_deltas: Dictionary = public_result.get("deltas", {}) as Dictionary
+	public_deltas["bankroll_delta"] = 99
+	if int((stored_result.get("deltas", {}) as Dictionary).get("bankroll_delta", 0)) != 1:
+		failures.append("Mutating a public Quarter Falls result snapshot changed the stored action result.")
 	var drop_fixture := _coin_pusher_fixture(game, "PUSHER-PRESENTATION-DROP")
 	var drop_run: RunState = drop_fixture.get("run_state")
 	var drop_ui := {"coin_pusher_lane": 2, "coin_pusher_upper_input_phase": 2, "coin_pusher_lower_input_phase": 5, "coin_pusher_capture_presentation_trace": true}
