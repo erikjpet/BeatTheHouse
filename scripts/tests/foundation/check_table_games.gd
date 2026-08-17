@@ -92,10 +92,18 @@ func _check_craps_street_variant(game: GameModule, library: ContentLibrary, fail
 		failures.append("Street Craps forked the core rules dictionary instead of reusing it exactly.")
 	environment["game_states"] = {"craps": table}
 	run_state.current_environment = environment
+	var round_tripped_value: Variant = JSON.parse_string(JSON.stringify(run_state.to_dict()))
+	if typeof(round_tripped_value) != TYPE_DICTIONARY:
+		failures.append("Street Craps contract could not JSON-round-trip its RunState fixture.")
+		return
+	var restored_run_state: RunState = RunStateScript.new()
+	restored_run_state.from_dict(round_tripped_value as Dictionary)
+	run_state = restored_run_state
+	var before_enter := JSON.stringify(run_state.to_dict())
 	var first_enter := game.enter(run_state, run_state.current_environment)
-	var second_enter := game.enter(run_state, run_state.current_environment)
-	if not bool(run_state.narrative_flags.get("street_craps_guidance_seen", false)) or str(first_enter.get("message", "")) == str(second_enter.get("message", "")):
-		failures.append("Street Craps did not deliver exactly one first-session diegetic guidance line per run.")
+	var after_enter := JSON.stringify(run_state.to_dict())
+	if before_enter != after_enter or bool(run_state.narrative_flags.get("street_craps_guidance_seen", false)):
+		failures.append("Street Craps info-card selection mutated a JSON-round-tripped serialized RunState before an action boundary.")
 	var surface := game.surface_state(run_state, run_state.current_environment, {})
 	var target_ids: Array = []
 	for target_value in _craps_array(surface.get("bet_targets", [])):
@@ -104,12 +112,15 @@ func _check_craps_street_variant(game: GameModule, library: ContentLibrary, fail
 	if target_ids != ["pass_line", "dont_pass"] or str(surface.get("surface_cast", "")) != "circle_of_players" or str(surface.get("currency", "")) != "cash":
 		failures.append("Street Craps surface is not the cash-only, Pass/Don't Pass circle presentation.")
 	var invalid := game.resolve_with_context("roll_craps", 2, run_state, run_state.current_environment, run_state.create_rng("street_invalid"), {"craps_pending_bets": {"field": 2}})
-	if bool(invalid.get("ok", false)):
-		failures.append("Street Craps accepted a Field wager outside its two-line surface.")
+	if bool(invalid.get("ok", false)) or bool(run_state.narrative_flags.get("street_craps_guidance_seen", false)):
+		failures.append("Street Craps accepted a Field wager outside its two-line surface or consumed guidance before a successful action.")
 	var before_chips := run_state.grand_casino_chips
 	var cash_result := game.resolve_with_context("roll_craps", 2, run_state, run_state.current_environment, run_state.create_rng("street_cash"), {"craps_pending_bets": {"pass_line": 2}})
 	if not bool(cash_result.get("ok", false)) or str(cash_result.get("currency", "")) != "cash" or run_state.grand_casino_chips != before_chips:
 		failures.append("Street Craps did not route its real wager through cash while leaving casino chips untouched.")
+	var second_enter := game.enter(run_state, run_state.current_environment)
+	if not bool(run_state.narrative_flags.get("street_craps_guidance_seen", false)) or str(first_enter.get("message", "")) == str(second_enter.get("message", "")):
+		failures.append("Street Craps did not retire its first-session diegetic guidance after the first successful action.")
 	if not bool(game.surface_state(run_state, run_state.current_environment, {}).get("craps_setting_available", false)):
 		failures.append("Street Craps retained the casino practice gate at gutter stakes.")
 	var street_cheats := game.cheat_actions(run_state, run_state.current_environment)

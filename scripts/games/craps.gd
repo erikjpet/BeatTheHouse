@@ -18,7 +18,6 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 		if run_state != null and not bool(run_state.narrative_flags.get(seen_flag, false)) and not lines.is_empty():
 			var line_index := _stable_hash("%s:%s" % [str(run_state.seed_value), seen_flag]) % lines.size()
 			result["message"] = "%s palms the dice. \"%s\"" % [str(table.get("dealer_name", "The caller")), str(lines[line_index])]
-			run_state.narrative_flags[seen_flag] = true
 		else:
 			result["message"] = "%s opens the chalk ring. Cash only, %d to %d." % [
 				str(table.get("dealer_name", "The caller")),
@@ -355,8 +354,11 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	deltas["suspicion_delta"] = suspicion_delta
 	deltas["inventory_remove"] = _string_array(cheat.get("inventory_remove", []))
 	deltas["messages"] = [message]
-	if not training.is_empty():
-		deltas["flags_set"] = _dict(training.get("flags_set", {})).duplicate(true)
+	var flags_set: Dictionary = _dict(training.get("flags_set", {})).duplicate(true) if not training.is_empty() else {}
+	if street:
+		flags_set[_street_guidance_seen_flag()] = true
+	if not flags_set.is_empty():
+		deltas["flags_set"] = flags_set
 	var story_entry := {
 		"type": "game_action",
 		"game_id": get_id(),
@@ -799,6 +801,10 @@ func _street_config() -> Dictionary:
 	return _dict(_dict(_config().get("variants", {})).get("street_craps", {}))
 
 
+func _street_guidance_seen_flag() -> String:
+	return str(_dict(_street_config().get("guidance", {})).get("seen_flag", "street_craps_guidance_seen"))
+
+
 func _is_street_variant(environment: Dictionary) -> bool:
 	var variant := _street_config()
 	if variant.is_empty():
@@ -868,6 +874,7 @@ func _resolve_street_disperse(run_state: RunState, environment: Dictionary, tabl
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = refund
 	deltas["messages"] = [message]
+	deltas["flags_set"] = {_street_guidance_seen_flag(): true}
 	deltas["story_log"] = [{
 		"type": "game_action",
 		"game_id": get_id(),
