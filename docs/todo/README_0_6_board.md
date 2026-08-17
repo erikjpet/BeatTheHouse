@@ -669,6 +669,18 @@ What happens then is the owner's, not an agent's:
   candidate/one-RNG behavior; same-length content replacement and explicit
   in-place rebuild each prove exactly one index scan. PM's sole profiling/counter
   merge conflict was corrected so counters remain outside measured helper spans.
+- 2026-08-17 [pusher06_2 embedded-refresh acceptance] The isolated refresh
+  correction is independently ACCEPTED and integrated through `45113784` after
+  three returned test revisions. Provably dead recovery scans and duplicate
+  pressure/objective work are removed; the terminal-only path skips recovery
+  diagnostics only after a valid wager proves nonterminal; internal Coin Pusher
+  render snapshots avoid redundant nested copies while public snapshots remain
+  deep-safe; stable world-header/embedded-feedback work is skipped without
+  delaying HUD, game, item, talk, music, coach, autosave, interrupt, or realtime
+  animation updates. Final behavioral proofs use FoundationMain's owned canvas,
+  real completed drop/nudge actions, real realtime guards/advance, explicit
+  autosave-before-forced-travel order, deferred coach execution, tutorial/normal
+  intervention, and required nonempty byte-equal public data before mutation.
 - 2026-08-17 [pusher06_2 presentation gaps] Independent static review ACCEPTS
   all three corrections after returning float quota math and two false-positive
   tests. Opening generation uses integer-only deterministic per-shelf quotas
