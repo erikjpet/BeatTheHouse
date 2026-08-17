@@ -67,6 +67,7 @@ const NEW_SURFACE_SAMPLE_FRAMES := 120
 const COIN_PUSHER_SHIPPED_COIN_CAP := 160
 const COIN_PUSHER_SOLVER_SAMPLE_COUNT := 32
 const COIN_PUSHER_ACTIVE_SAMPLE_FRAMES := 60
+const COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS := 16.0
 const COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS := 16.0
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
@@ -557,11 +558,18 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 	stats["fixed_tick_samples"] = fixed_tick_samples
 	stats["capped_samples"] = capped_samples
 	stats["coin_cap"] = cap
+	stats["p95_budget_ms"] = COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS
 	observations.append(stats)
 	coin_pusher_performance_status["raw_solver_timing"] = stats.duplicate(true)
-	coin_pusher_solver_timing_checked = samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT and fixed_tick_samples == samples.size() and capped_samples == samples.size()
+	coin_pusher_solver_timing_checked = samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT \
+		and fixed_tick_samples == samples.size() \
+		and capped_samples == samples.size() \
+		and float(stats.get("p95_ms", 0.0)) <= COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS
 	if not coin_pusher_solver_timing_checked:
-		failures.append("Raw Coin Pusher solver timing did not preserve all %d fixed-tick, capped samples." % COIN_PUSHER_SOLVER_SAMPLE_COUNT)
+		if samples.size() != COIN_PUSHER_SOLVER_SAMPLE_COUNT or fixed_tick_samples != samples.size() or capped_samples != samples.size():
+			failures.append("Raw Coin Pusher solver timing did not preserve all %d fixed-tick, capped samples." % COIN_PUSHER_SOLVER_SAMPLE_COUNT)
+		if float(stats.get("p95_ms", 0.0)) > COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS:
+			failures.append("Raw full-cap Coin Pusher solver p95 %.3f ms exceeded %.3f ms." % [float(stats.get("p95_ms", 0.0)), COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS])
 
 
 func _probe_coin_pusher_active_sequence(run_state: RunState, game: GameModule, environment_id: String) -> void:
@@ -622,6 +630,7 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 		"mode": mode,
 		"frames": COIN_PUSHER_ACTIVE_SAMPLE_FRAMES,
 		"resolve_call_ms": resolve_call_ms,
+		"resolve_call_budget_ms": COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS,
 		"frame_time": frame_stats,
 		"frame_p95_budget_ms": COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS,
 		"draw_avg_ms": float(counters.get("draw_avg_ms", 0.0)),
@@ -639,6 +648,9 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 	var passed := handled and bool(result.get("ok", false)) and int(metrics.get("fixed_ticks", 0)) == CoinPusherSolverScript.ACTION_TICKS and not trace.is_empty()
 	if not passed:
 		failures.append("Coin Pusher %s did not resolve through the production surface with a complete fixed-tick presentation replay." % mode)
+	if resolve_call_ms > COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS:
+		failures.append("Coin Pusher %s synchronous resolve %.3f ms exceeded %.3f ms." % [mode, resolve_call_ms, COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS])
+		passed = false
 	if float(frame_stats.get("p95_ms", 0.0)) > COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS:
 		failures.append("Coin Pusher %s frame p95 %.3f ms exceeded %.3f ms." % [mode, float(frame_stats.get("p95_ms", 0.0)), COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS])
 		passed = false

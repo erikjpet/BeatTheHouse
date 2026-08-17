@@ -408,6 +408,9 @@ func _check_coin_pusher_canonical_probe(failures: Array) -> void:
 		'"mode"] = "coin_pusher_solver_action_raw"',
 		'"coin_pusher_active_drop"',
 		'"coin_pusher_active_nudge"',
+		'COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS := 16.0',
+		'float(stats.get("p95_ms", 0.0)) > COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS',
+		'resolve_call_ms > COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS',
 		'COIN_PUSHER_ACTIVE_FRAME_P95_BUDGET_MS := 16.0',
 		'MAX_SURFACE_DRAW_P95_MS := 5.0',
 	]:
