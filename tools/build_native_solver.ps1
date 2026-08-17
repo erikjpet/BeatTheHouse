@@ -17,6 +17,7 @@ if ($LASTEXITCODE -ne 0) {
 $python = Join-Path $toolRoot "python/python.exe"
 $wheel = Join-Path $toolRoot "downloads/scons-4.10.1-py3-none-any.whl"
 $godotCpp = Join-Path $toolRoot "godot-cpp"
+$nativeLock = Get-Content -LiteralPath (Join-Path $root "native/coin_pusher/toolchain.lock.json") -Raw | ConvertFrom-Json
 $source = Join-Path $root "native/coin_pusher"
 $output = Join-Path $root "addons/coin_pusher_native"
 foreach ($required in @($python, $wheel, (Join-Path $godotCpp "SConstruct"))) {
@@ -64,6 +65,7 @@ try {
         "target=$Target",
         "arch=$(if ($Platform -eq 'Web') { 'wasm32' } else { 'x86_64' })",
         "threads=no",
+        "api_version=$([string]$nativeLock.godot_cpp.api_version)",
         "godot_cpp_dir=$godotCpp"
     )
     if ($Platform -eq "Windows") {

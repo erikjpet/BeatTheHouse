@@ -7,10 +7,13 @@
   },
   "godot_cpp": {
     "repository": "https://github.com/godotengine/godot-cpp.git",
-    "tag": "godot-4.5-stable",
-    "commit": "e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77",
-    "api_version": "4.5",
-    "compatibility_reason": "Godot documents earlier-minor GDExtensions as normally compatible with later 4.x minors and recommends targeting the lowest needed version. This is not guaranteed across the 4.0 boundary or float-precision changes; this project uses matching float precision and only stable core containers plus RefCounted registration."
+    "source_ref": "commit:58d1de720b8ffe9f8ffcdfe3a85148582cfd2e74",
+    "commit": "58d1de720b8ffe9f8ffcdfe3a85148582cfd2e74",
+    "api_version": "4.6",
+    "synced_godot_commit": "89cea143987d564363e15d207438530651d943ac",
+    "extension_api_sha256": "00a3ad6df2361ed3df6ef9bc8717fe0f49112012ee6e87a7b4cfb34465c9beed",
+    "gdextension_interface_sha256": "34d7058f31af186d36b84567e70a9f9543da0d74f25cfe5266d4fe2d27e090f0",
+    "compatibility_reason": "This exact godot-cpp commit is the upstream sync from the pinned Godot 4.6-stable engine commit. Its API and interface payloads match dumps from that exact runtime; Godot 4.5 bindings crash during StringName registration against Godot 4.6."
   },
   "python": {
     "version": "3.12.10",

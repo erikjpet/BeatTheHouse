@@ -25,6 +25,7 @@ function Assert-NativeToolchainLock {
     foreach ($commit in @(
         [string]$Value.godot.commit,
         [string]$Value.godot_cpp.commit,
+        [string]$Value.godot_cpp.synced_godot_commit,
         [string]$Value.windows.compiler_commit,
         [string]$Value.web.compiler_commit,
         [string]$Value.web.commit
@@ -34,6 +35,8 @@ function Assert-NativeToolchainLock {
         }
     }
     foreach ($sha in @(
+        [string]$Value.godot_cpp.extension_api_sha256,
+        [string]$Value.godot_cpp.gdextension_interface_sha256,
         [string]$Value.python.archive_sha256,
         [string]$Value.scons.wheel_sha256,
         [string]$Value.windows.archive_sha256,
@@ -63,9 +66,12 @@ function Assert-NativeToolchainLock {
         godot_version = "4.6-stable"
         godot_commit = "89cea143987d564363e15d207438530651d943ac"
         godot_cpp_repository = "https://github.com/godotengine/godot-cpp.git"
-        godot_cpp_tag = "godot-4.5-stable"
-        godot_cpp_commit = "e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77"
-        godot_cpp_api = "4.5"
+        godot_cpp_source_ref = "commit:58d1de720b8ffe9f8ffcdfe3a85148582cfd2e74"
+        godot_cpp_commit = "58d1de720b8ffe9f8ffcdfe3a85148582cfd2e74"
+        godot_cpp_api = "4.6"
+        godot_cpp_synced_godot_commit = "89cea143987d564363e15d207438530651d943ac"
+        godot_cpp_extension_api_sha256 = "00a3ad6df2361ed3df6ef9bc8717fe0f49112012ee6e87a7b4cfb34465c9beed"
+        godot_cpp_interface_sha256 = "34d7058f31af186d36b84567e70a9f9543da0d74f25cfe5266d4fe2d27e090f0"
         python_version = "3.12.10"
         python_architecture = "amd64"
         python_archive_url = "https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-amd64.zip"
@@ -94,9 +100,12 @@ function Assert-NativeToolchainLock {
         godot_version = [string]$Value.godot.version
         godot_commit = [string]$Value.godot.commit
         godot_cpp_repository = [string]$Value.godot_cpp.repository
-        godot_cpp_tag = [string]$Value.godot_cpp.tag
+        godot_cpp_source_ref = [string]$Value.godot_cpp.source_ref
         godot_cpp_commit = [string]$Value.godot_cpp.commit
         godot_cpp_api = [string]$Value.godot_cpp.api_version
+        godot_cpp_synced_godot_commit = [string]$Value.godot_cpp.synced_godot_commit
+        godot_cpp_extension_api_sha256 = [string]$Value.godot_cpp.extension_api_sha256
+        godot_cpp_interface_sha256 = [string]$Value.godot_cpp.gdextension_interface_sha256
         python_version = [string]$Value.python.version
         python_architecture = [string]$Value.python.architecture
         python_archive_url = [string]$Value.python.archive_url
@@ -639,6 +648,24 @@ function Sync-PinnedRepository {
     }
 }
 
+function Assert-GodotCppPayloads {
+    param([object]$GodotCppLock, [string]$Path)
+    $payloads = @(
+        @{ path = (Join-Path $Path "gdextension/extension_api.json"); sha256 = [string]$GodotCppLock.extension_api_sha256 },
+        @{ path = (Join-Path $Path "gdextension/gdextension_interface.json"); sha256 = [string]$GodotCppLock.gdextension_interface_sha256 }
+    )
+    foreach ($payload in $payloads) {
+        Assert-UnderToolRoot $payload.path
+        if (-not (Test-Path -LiteralPath $payload.path -PathType Leaf)) {
+            throw "Pinned godot-cpp payload is missing: $($payload.path)"
+        }
+        $actual = (Get-FileHash -LiteralPath $payload.path -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($actual -cne $payload.sha256) {
+            throw "Pinned godot-cpp payload hash drift: expected $($payload.sha256), got $actual for $($payload.path)"
+        }
+    }
+}
+
 function Invoke-BootstrapSelfTest {
     $validCopy = (ConvertFrom-Json (ConvertTo-Json $lock -Depth 10))
     Assert-NativeToolchainLock $validCopy
@@ -646,7 +673,7 @@ function Invoke-BootstrapSelfTest {
         @{ path = @("godot_cpp", "commit"); value = "../moving-target" },
         @{ path = @("godot", "commit"); value = "89cea1439" },
         @{ path = @("godot", "version"); value = "4.6.1-stable" },
-        @{ path = @("godot_cpp", "api_version"); value = "4.6" },
+        @{ path = @("godot_cpp", "api_version"); value = "4.5" },
         @{ path = @("python", "version"); value = "3.12.11" },
         @{ path = @("python", "archive_url"); value = "https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-win32.zip" },
         @{ path = @("python", "archive_sha256"); value = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
@@ -947,6 +974,7 @@ try {
     }
 
     Sync-PinnedRepository $lock.godot_cpp.repository $lock.godot_cpp.commit $godotCppRoot
+    Assert-GodotCppPayloads $lock.godot_cpp $godotCppRoot
 
     if ($Target -in @("Windows", "All")) {
         $archivePath = Join-Path $downloadRoot (Split-Path -Leaf $lock.windows.archive_url)
