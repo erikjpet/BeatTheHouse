@@ -137,7 +137,7 @@ stated in each prompt** — `events.json` in particular is shared, and
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | teach06_1 | `teach06_1_onboarding_prompt.md` | TODO | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | | | | All 56 shipped lessons teach 0.5 content only; zero cover crew, delivery, Numbers, pushers, craps, or Punchline layers. Must NOT teach discovery-gated systems (past-posting, crew fix, the Turn, hidden layers). |
 | env06_5 | `env06_5_scenario_backlog_prompt.md` | TODO | env06_1/2/3 (DONE) | playtest variety | | | | 13 backlog scenarios from the roadmap catalog. Owns `scenarios.json`; may only add `scenario_`-prefixed events to `events.json`. |
-| art06_1 | `art06_1_punchline_layers_prompt.md` | TODO | env06_4 (DONE) | — | | | | Punchline L1/L3 still reuse the underground raster (art debt logged by env06_4). Owns assets + manifest + `visual_context` only; L3 must leave crew06_6 furniture spots clear. |
+| art06_1 | `art06_1_punchline_layers_prompt.md` | IN_PROGRESS | env06_4 (DONE) | — | Codex/art06_1 | 2026-08-16 | | Punchline L1/L3 still reuse the underground raster (art debt logged by env06_4). Owns assets + manifest + `visual_context` only; L3 must leave crew06_6 furniture spots clear. |
 
 ### Wave D — Crew depth
 
@@ -735,3 +735,6 @@ What happens then is the owner's, not an agent's:
   590-checkpoint determinism (`3483570349`), 20-seed real-node property proof,
   byte-identical inactive travel, no-soft-lock regressions, and zero-warning
   visual QA. This unblocks crew06_6 delivery jobs and crew06_8 getaway routing.
+- 2026-08-16 [art06_1] Codex claimed the Punchline L1/L3 final-raster art
+  pass; work is confined to new assets, manifest entries, and Punchline
+  `visual_context` paths, with current L3 crew furniture areas reserved.
