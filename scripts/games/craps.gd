@@ -928,13 +928,12 @@ func _street_training_delta(run_state: RunState, settlement: Dictionary) -> Dict
 	if not completed_line:
 		return {}
 	var progress_flag := str(training.get("progress_flag", "craps_setting_street_progress"))
-	var progress := maxi(0, int(run_state.narrative_flags.get(progress_flag, 0))) + 1
 	var required := maxi(1, int(training.get("completed_line_resolutions_required", 1)))
-	var flags: Dictionary = {}
-	flags[progress_flag] = mini(progress, required)
+	var grant := run_state.grant_shared_training_progress(progress_flag, trained_flag, required, 1, false)
+	var progress := int(grant.get("progress", 0))
+	var flags: Dictionary = grant.get("flags_set", {}) if typeof(grant.get("flags_set", {})) == TYPE_DICTIONARY else {}
 	var message := ""
 	if progress >= required:
-		flags[trained_flag] = true
 		message = str(training.get("completion_line", ""))
 	return {"flags_set": flags, "message": message}
 

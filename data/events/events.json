@@ -4504,5 +4504,40 @@
       {"id": "post_the_entry", "label": "Post the entry", "text": "The buy-in puts your name in the first round.", "consequence_summary": "Bankroll -15", "consequences": {"bankroll_delta": -15, "flags": {"captains_invitational_entered": true}, "resolve_event": true}},
       {"id": "watch_the_rounds", "label": "Watch the rounds", "text": "The tournament keeps your place politely empty.", "consequence_summary": "Heat -2", "consequences": {"suspicion_delta": -2, "flags": {"captains_invitational_observed": true}, "resolve_event": true}}
     ]}
+  },
+  {
+    "id": "crew_job_board", "display_name": "Job Board", "type": "crew", "interaction_mode": "interactable", "scopes": ["crew"],
+    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Pinned work, real places, and clocks that keep moving.", "trigger": {"type": "manual"},
+    "payload": {"kind": "crew_job_board", "summary": "Take a pinned job, or leave clean.", "choices": []}
+  },
+  {
+    "id": "crew_planning_table", "display_name": "Planning Table", "type": "crew", "interaction_mode": "interactable", "scopes": ["crew"],
+    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "The center waits for a score worth planning.", "trigger": {"type": "manual"},
+    "payload": {"summary": "When the score is real, the map lands.", "choices": [{"id": "leave", "label": "Leave the table clear", "text": "The score is not real yet.", "consequences": {}}]}
+  },
+  {
+    "id": "crew_practice_rig", "display_name": "Mags' Practice Rig", "type": "crew", "interaction_mode": "interactable", "scopes": ["crew"],
+    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "dice", "environment_prop": "table", "start_summary": "Two felt ramps, a timing lamp, and a target distribution.", "trigger": {"type": "manual"},
+    "payload": {"kind": "crew_practice_rig", "summary": "Hit the window. No stakes. No heat.", "choices": []}
+  },
+  {
+    "id": "crew_rook_ride", "display_name": "Rook's Ride", "type": "crew", "interaction_mode": "interactable", "scopes": ["crew"],
+    "asset_path": "res://assets/art/events/motel_knock.png", "icon_key": "travel_ride", "environment_prop": "side_door", "start_summary": "Rook keeps the car warm for work that matters.", "trigger": {"type": "manual"},
+    "payload": {"kind": "crew_rook_ride", "summary": "Discount one open route. Locked roads stay locked.", "choices": []}
+  },
+  {
+    "id": "crew_mags_bench", "display_name": "Mags' Bench", "type": "crew", "interaction_mode": "interactable", "scopes": ["crew"],
+    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "trunk_offer", "environment_prop": "table", "start_summary": "Labeled cases and a clean repair mat.", "trigger": {"type": "manual"},
+    "payload": {"kind": "crew_mags_bench", "summary": "Bench ready; the gear pass owns its catalog.", "choices": []}
+  },
+  {
+    "id": "crew_stake_horse_loss", "display_name": "Crew Money", "type": "crew", "interaction_mode": "interactable", "scopes": ["any"],
+    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "The stake is gone. Your answer is the result.", "trigger": {"type": "manual"},
+    "payload": {"kind": "crew_stake_horse_loss", "summary": "Repay the stake or shrug off the loss.", "choices": []}
+  },
+  {
+    "id": "crew_collection_press", "display_name": "The Second Ask", "type": "crew", "interaction_mode": "interactable", "scopes": ["any"],
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The friendly visit worked. Knuckles left the pressure to you.", "trigger": {"type": "manual"},
+    "payload": {"kind": "crew_collection_press", "summary": "Take clean cash or press for heat.", "choices": []}
   }
 ]

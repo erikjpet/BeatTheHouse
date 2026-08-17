@@ -216,7 +216,10 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 		var venue_label := str(venue_row.get("label", host._label_from_id(venue_id)))
 		var book_source := "desk" if at_desk else "book"
 		var object_id := "event:numbers_desk" if at_desk else "numbers:book"
-		var focus_rect: Rect2 = host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_EVENT if at_desk else host.CONTEXT_MODE_NUMBERS, 0)
+		# The production desk replaces the event card but owns its dedicated
+		# Numbers fixture spot, which must not drift with encounter-card layout.
+		var focus_rect: Rect2 = host._authored_interaction_rect(host.CONTEXT_MODE_NUMBERS, 0) if at_desk \
+			else host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_NUMBERS, 0)
 		objects.append(host._make_interactable_object({
 			"object_id": object_id,
 			"object_type": host.CONTEXT_MODE_NUMBERS,
