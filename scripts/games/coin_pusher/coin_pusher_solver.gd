@@ -121,6 +121,7 @@ static func add_recovered_coin(state: Dictionary, rng: RngStream, lane_count: in
 static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	# Presentation time is sampled only when the player commits an action. The
 	# sampled fixed-point phases become explicit deterministic solver inputs.
+	_normalize_hot_body_fields(state)
 	if config.has("captured_upper_phase_fp"):
 		state["upper_phase_fp"] = posmod(int(config.get("captured_upper_phase_fp", 0)), PHASE_PERIOD)
 	if config.has("captured_lower_phase_fp"):
@@ -762,6 +763,38 @@ static func _exit_event(body: Dictionary, outcome: String, cause: String, tick_o
 		"tick_offset": tick_offset,
 		"metadata": (body.get("metadata", {}) as Dictionary).duplicate(true) if typeof(body.get("metadata", {})) == TYPE_DICTIONARY else {},
 	}
+
+
+static func _normalize_hot_body_fields(state: Dictionary) -> void:
+	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
+	for body_value in bodies:
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = body_value
+		if not body.has("id"):
+			body["id"] = ""
+		if not body.has("x"):
+			body["x"] = 0
+		if not body.has("y"):
+			body["y"] = 0
+		if not body.has("z"):
+			body["z"] = 0
+		if not body.has("vx"):
+			body["vx"] = 0
+		if not body.has("vy"):
+			body["vy"] = 0
+		if not body.has("vz"):
+			body["vz"] = 0
+		if not body.has("radius"):
+			body["radius"] = COIN_RADIUS
+		if not body.has("height"):
+			body["height"] = COIN_HEIGHT
+		if not body.has("mass"):
+			body["mass"] = 1
+		if not body.has("sleep_ticks"):
+			body["sleep_ticks"] = 0
+		if not body.has("sleeping"):
+			body["sleeping"] = false
 
 
 static func _presentation_event_views(state: Dictionary, exits: Array, motion_events: Array, metrics: Dictionary, config: Dictionary) -> Array:

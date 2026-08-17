@@ -118,6 +118,19 @@ func _check_coin_pusher_discrete_solver(definition: Dictionary, failures: Array)
 	var state := CoinPusherSolverScript.create(_configured_rng(6062), int(tuning.get("coin_cap", 0)), 0, 5)
 	if str(state.get("schema", "")) != "coin_pusher_fixed_point" or int(state.get("fixed_hz", 0)) != 60 or int(state.get("fixed_point_scale", 0)) != 1000 or int(state.get("coin_cap", 0)) != 160:
 		failures.append("Coin Pusher did not expose the shipped 60 Hz integer fixed-point solver and 160-coin cap.")
+	var sparse_source := CoinPusherSolverScript.create(_configured_rng(6060), 48, 0, 5)
+	sparse_source["bodies"] = [{"id": "restored_sparse", "kind": "coin", "x": 50000, "y": 30000, "z": 9000}]
+	var restored_value: Variant = JSON.parse_string(JSON.stringify(sparse_source))
+	var restored_sparse: Dictionary = restored_value if typeof(restored_value) == TYPE_DICTIONARY else {}
+	var explicit_defaults := sparse_source.duplicate(true)
+	explicit_defaults["bodies"] = [_solver_body("restored_sparse", "coin", 50000, 30000, 9000, false)]
+	var sparse_step := CoinPusherSolverScript.step_action(restored_sparse, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
+	var explicit_step := CoinPusherSolverScript.step_action(explicit_defaults, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
+	if JSON.stringify(CoinPusherSolverScript.canonical_digest(restored_sparse)) != JSON.stringify(CoinPusherSolverScript.canonical_digest(explicit_defaults)):
+		failures.append("Cold JSON-restored sparse Coin Pusher body did not normalize to the explicit canonical state.")
+	for output_key in ["events", "motion_events", "presentation_events", "presentation_trace"]:
+		if JSON.stringify(sparse_step.get(output_key, [])) != JSON.stringify(explicit_step.get(output_key, [])):
+			failures.append("Cold JSON-restored sparse Coin Pusher body changed exact %s output after hot-field normalization." % output_key)
 	var resting_stack := CoinPusherSolverScript.create(_configured_rng(6061), 48, 0, 5)
 	resting_stack["bodies"] = [
 		_solver_body("rest_base", "coin", 42000, 27000, 0, true),
