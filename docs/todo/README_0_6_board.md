@@ -534,6 +534,13 @@ What happens then is the owner's, not an agent's:
   alias-equivalent in-place reconciliation (prefer a compact validated packed
   candidate/output seam), prove body and container aliases with and without
   exits, and remeasure raw plus production budgets.
+- 2026-08-17 [pusher06_2 native adapter] The compact candidate/in-place
+  reconciliation revision now preserves the original bodies Array, surviving
+  Dictionary identities, exit compaction, unknown top-level state, and
+  solver-owned publication; locked missing/text phase writes also match the
+  oracle. Static acceptance still requires malformed candidate element checks
+  before casts and explicit public-helper extrema/reject-before-mutation smoke.
+  Candidate-body copy cost remains subject to the unchanged performance gate.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1248,3 +1255,6 @@ What happens then is the owner's, not an agent's:
 - 2026-08-17 [pusher06_2] Whole-state copy/replace is not an acceptable
   transactional repair: it breaks aliases and risks the 16 ms budget. The
   corrected seam must reconcile in place and be remeasured.
+- 2026-08-17 [pusher06_2] Compact in-place publication and conditional phase
+  writes now satisfy static alias/parity review. Malformed output and helper
+  extrema hostiles remain before the next runtime build can be accepted.
