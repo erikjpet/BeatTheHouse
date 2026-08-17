@@ -4292,6 +4292,13 @@
     "payload": {"kind": "crew_rook_signpost", "summary": "Rook names contacts still within reach.", "choices": []}
   },
   {
+    "id": "recruitment_rook_leads", "display_name": "Rook", "type": "character", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Rook", "character_id": "crew_rook", "voice_line_key": "loan_offer", "environment_actor": true},
+    "asset_path": "res://assets/art/events/motel_knock.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "Rook watches the road and names its people.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker"},
+    "payload": {"kind": "crew_rook_leads", "summary": "Rook names contacts still within reach.", "choices": []}
+  },
+  {
     "id": "recruitment_switch", "display_name": "Switch", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
     "speaker": {"role": "crew", "name": "Switch", "character_id": "crew_switch", "voice_line_key": "favor_due", "environment_actor": true},
     "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "Switch has the next road before this one is done.", "trigger": {"type": "manual"},

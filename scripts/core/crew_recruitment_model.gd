@@ -47,6 +47,10 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 	if run_state == null or environment.is_empty() or not crew_path_started(run_state):
 		return
 	var event_ids := _string_array(environment.get("event_ids", []))
+	# Rook's contextual leads follow his seeded presence. Remove the derived
+	# event before recomputing so a revisit never leaves his voice in an empty
+	# room after his itinerary rotates.
+	event_ids.erase("recruitment_rook_leads")
 	for member_id in MEMBER_IDS:
 		if member_id == "crew_rook" or _rank_at_least(run_state.crew_rank(member_id), "associate"):
 			continue
@@ -57,12 +61,16 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 		if not event_id.is_empty() and not event_ids.has(event_id):
 			event_ids.append(event_id)
 	environment["event_ids"] = event_ids
+	var patrons := _string_array(environment.get("scenario_patron_ids", []))
+	for member_id in MEMBER_IDS:
+		patrons.erase(member_id)
 	var presence := presence_for_environment(run_state, environment)
 	if presence.is_empty():
 		environment.erase("crew_presence")
+		environment["event_ids"] = event_ids
+		environment["scenario_patron_ids"] = patrons
 		return
 	environment["crew_presence"] = presence
-	var patrons := _string_array(environment.get("scenario_patron_ids", []))
 	for entry_value in presence:
 		if typeof(entry_value) != TYPE_DICTIONARY:
 			continue
@@ -70,6 +78,12 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 		if not member_id.is_empty() and not patrons.has(member_id):
 			patrons.append(member_id)
 	environment["scenario_patron_ids"] = patrons
+	for entry_value in presence:
+		if typeof(entry_value) == TYPE_DICTIONARY and str((entry_value as Dictionary).get("member_id", "")) == "crew_rook" \
+			and not rook_signpost_choices(run_state).is_empty():
+			event_ids.append("recruitment_rook_leads")
+			break
+	environment["event_ids"] = event_ids
 
 
 static func crew_path_started(run_state: RunState) -> bool:
@@ -140,7 +154,7 @@ static func meetable_members(run_state: RunState) -> Array:
 	return result
 
 
-static func rook_signpost_choices(run_state: RunState) -> Array:
+static func rook_signpost_choices(run_state: RunState, resolve_event: bool = true) -> Array:
 	var result: Array = []
 	for member_id in meetable_members(run_state):
 		var definition := member_definition(member_id)
@@ -151,10 +165,10 @@ static func rook_signpost_choices(run_state: RunState) -> Array:
 			"id": "ask_%s" % member_id.trim_prefix("crew_"),
 			"label": str(member_id.trim_prefix("crew_")).capitalize(),
 			"text": line,
-			"consequences": {"resolve_event": true},
+			"consequences": {"resolve_event": true} if resolve_event else {},
 		})
 	if not result.is_empty():
-		result.append({"id": "keep_moving", "label": "Keep moving", "text": "Rook nods. The road keeps its own time.", "consequences": {"resolve_event": true}})
+		result.append({"id": "keep_moving", "label": "Keep moving", "text": "Rook nods. The road keeps its own time.", "consequences": {"resolve_event": true} if resolve_event else {}})
 	return result
 
 

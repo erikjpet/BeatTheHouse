@@ -40,6 +40,8 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 	var payload := _copy_dict(definition.get("payload", {}))
 	if str(payload.get("kind", "")) == "crew_rook_signpost":
 		return CrewRecruitmentModelScript.rook_signpost_choices(run_state) if run_state != null else []
+	if str(payload.get("kind", "")) == "crew_rook_leads":
+		return CrewRecruitmentModelScript.rook_signpost_choices(run_state, false) if run_state != null else []
 	if str(payload.get("kind", "")) == "grand_casino_showdown":
 		return _grand_casino_showdown_choices(payload, run_state, environment)
 	if str(payload.get("kind", "")) == "grand_casino_high_roller_cashout":
