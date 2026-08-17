@@ -157,18 +157,26 @@ static func meetable_members(run_state: RunState) -> Array:
 static func rook_signpost_choices(run_state: RunState, resolve_event: bool = true) -> Array:
 	var result: Array = []
 	for member_id in meetable_members(run_state):
+		var heard_flag := "crew_rook_lead_heard:%s" % member_id
+		if bool(run_state.narrative_flags.get(heard_flag, false)):
+			continue
 		var definition := member_definition(member_id)
 		var line := str(definition.get("rook_line", "")).strip_edges()
 		if line.is_empty():
 			continue
+		var consequences := {"flags": {heard_flag: true}}
+		if resolve_event:
+			consequences["resolve_event"] = true
+		else:
+			consequences["event_hooks"] = [{"type": "crew_rook_lead_closed"}]
 		result.append({
 			"id": "ask_%s" % member_id.trim_prefix("crew_"),
 			"label": str(member_id.trim_prefix("crew_")).capitalize(),
 			"text": line,
-			"consequences": {"resolve_event": true} if resolve_event else {},
+			"consequences": consequences,
 		})
-	if not result.is_empty():
-		result.append({"id": "keep_moving", "label": "Keep moving", "text": "Rook nods. The road keeps its own time.", "consequences": {"resolve_event": true} if resolve_event else {}})
+	if not result.is_empty() and resolve_event:
+		result.append({"id": "keep_moving", "label": "Keep moving", "text": "Rook nods. The road keeps its own time.", "consequences": {"resolve_event": true}})
 	return result
 
 
@@ -220,6 +228,8 @@ static func validate_content() -> Array:
 	var source := config()
 	if int(source.get("schema_version", 0)) != SCHEMA_VERSION:
 		failures.append("recruitment.json schema_version must match CrewRecruitmentModel.")
+	if int(source.get("associate_trust", -1)) != CrewStateModelScript.rank_threshold("associate"):
+		failures.append("recruitment.json associate_trust must match crew.json's Associate threshold.")
 	var seen: Array = []
 	for value in _array(source.get("members", [])):
 		if typeof(value) != TYPE_DICTIONARY:

@@ -4292,7 +4292,7 @@
     "payload": {"kind": "crew_rook_signpost", "summary": "Rook names contacts still within reach.", "choices": []}
   },
   {
-    "id": "recruitment_rook_leads", "display_name": "Rook", "type": "character", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "id": "recruitment_rook_leads", "display_name": "Rook", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
     "speaker": {"role": "crew", "name": "Rook", "character_id": "crew_rook", "voice_line_key": "loan_offer", "environment_actor": true},
     "asset_path": "res://assets/art/events/motel_knock.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "Rook watches the road and names its people.", "trigger": {"type": "manual"},
     "conditions": {"min_crew_rank": "marker"},
