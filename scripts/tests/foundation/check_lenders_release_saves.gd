@@ -2930,8 +2930,17 @@ func _check_grand_casino_staff_game_state_reset(library: ContentLibrary, main_en
 			failures.append("Grand Casino %s surface did not display its assigned dealer identity." % game_id)
 
 	var blackjack := table_games.get("blackjack") as GameModule
+	# Establish the original dealer through the production write boundary before
+	# seeding familiarity. Passive surface projection is intentionally
+	# observational and must not make a later dealer look like a rotation.
+	run_state.bankroll = maxi(run_state.bankroll, 100)
+	blackjack.resolve_with_context("blackjack_place_bet", 1, run_state, run_state.current_environment, run_state.create_rng("gc_staff_initial_assignment_action"), {"selected_stake": 1})
 	var blackjack_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var blackjack_table: Dictionary = blackjack_states.get("blackjack", {}) if typeof(blackjack_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
+	var first_blackjack_id := str(blackjack_table.get("staff_assignment_id", ""))
+	if first_blackjack_id.is_empty():
+		failures.append("Grand Casino staff reset fixture did not persist the initial blackjack dealer at an action boundary.")
+		return
 	blackjack_table["strategy_deviation_strikes"] = 7
 	blackjack_table["strategy_watch_pressure"] = 31
 	blackjack_table["strategy_last_notice"] = "Dealer questioned the line."
@@ -2939,7 +2948,6 @@ func _check_grand_casino_staff_game_state_reset(library: ContentLibrary, main_en
 	blackjack_table["running_count"] = 4
 	blackjack_table["barred"] = true
 	blackjack_table["barred_reason"] = "Casino memory persists."
-	var first_blackjack_id := str(run_state.grand_casino_staff_member_for_game("blackjack").get("id", ""))
 	run_state.add_suspicion("gc_staff_reset_heat", 28, "behavior", true, {"environment_id": str(run_state.current_environment.get("id", ""))})
 	run_state.narrative_flags["grand_casino_games_played"] = 4
 	run_state.narrative_flags["grand_casino_cheat_evidence"] = true
