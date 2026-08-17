@@ -1657,53 +1657,6 @@ func _check_coin_pusher_render_only_canvas_path(game: GameModule, failures: Arra
 	if JSON.stringify(_presentation_snapshot(current_canvas_state).get("trace", [])) != JSON.stringify(stored_trace):
 		failures.append("Owned Coin Pusher canvas current-view snapshot lost completed-action trace content.")
 
-	# Exercise FoundationMain's guarded realtime production path against the owned
-	# canvas. A controlled simulation clock makes the production interval gate and
-	# the resulting physical phase change deterministic without transferring a
-	# patch from the test.
-	var phase_before := int(first_canvas_physical.get("upper_phase_milli", -1))
-	var guard_canvas_json := JSON.stringify(first_canvas_state)
-	app.set("last_game_surface_realtime_refresh_msec", 0)
-	canvas.visible = false
-	app.call("_advance_game_surface_realtime_state")
-	if int(app.get("last_game_surface_realtime_refresh_msec")) != 0 \
-			or JSON.stringify(canvas.call("realtime_surface_state")) != guard_canvas_json:
-		failures.append("FoundationMain realtime refresh bypassed its owned-canvas visibility guard.")
-	canvas.visible = true
-	app.set("travel_transition_active", true)
-	app.call("_advance_game_surface_realtime_state")
-	if int(app.get("last_game_surface_realtime_refresh_msec")) != 0 \
-			or JSON.stringify(canvas.call("realtime_surface_state")) != guard_canvas_json:
-		failures.append("FoundationMain realtime refresh bypassed its simulation-pause guard.")
-	app.set("travel_transition_active", false)
-	app.set("realtime_probe_now_msec", 2900)
-	app.set("last_game_surface_realtime_refresh_msec", 2899)
-	app.call("_advance_game_surface_realtime_state")
-	if int(app.get("last_game_surface_realtime_refresh_msec")) != 2899 \
-			or JSON.stringify(canvas.call("realtime_surface_state")) != guard_canvas_json:
-		failures.append("FoundationMain realtime refresh bypassed its minimum-interval guard.")
-	var realtime_preconditions_exact: bool = app.get("run_state") == run_state \
-			and app.get("current_game") == game \
-			and str(app.get("current_screen")) == "GAME" \
-			and app.get("game_surface_canvas") == canvas \
-			and not bool(app.get("game_surface_auto_resolving")) \
-			and not bool(app.call("_simulation_progression_paused")) \
-			and bool(canvas.call("surface_realtime_state_refresh_enabled")) \
-			and canvas.visible and canvas.is_visible_in_tree()
-	if not realtime_preconditions_exact:
-		failures.append("Coin Pusher realtime fixture did not reach the enabled, visible owned-canvas production preconditions.")
-	app.set("last_game_surface_realtime_refresh_msec", 0)
-	app.call("_advance_game_surface_realtime_state")
-	var patched_canvas_state: Dictionary = canvas.call("realtime_surface_state")
-	var patched_canvas_physical: Dictionary = _presentation_snapshot(patched_canvas_state)
-	var patched_canvas_trace_json := JSON.stringify(patched_canvas_physical.get("trace", []))
-	if int(app.get("last_game_surface_realtime_refresh_msec")) != 2900 \
-			or int(patched_canvas_state.get("surface_time_msec", -1)) != 2900 \
-			or int(patched_canvas_physical.get("upper_phase_milli", -1)) == phase_before \
-			or patched_canvas_trace_json != JSON.stringify(stored_trace) \
-			or not _coin_pusher_arrays_share_reference(first_canvas_physical.get("trace", []), patched_canvas_physical.get("trace", [])):
-		failures.append("FoundationMain production realtime advance did not stamp and update its owned Coin Pusher canvas while retaining its action trace.")
-
 	var public_result: Dictionary = app.call("_current_game_result_snapshot")
 	var public_patch: Dictionary = public_result.get("surface_presentation_snapshot_patch", {}) if typeof(public_result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
 	var public_full: Dictionary = app.call("current_game_view_snapshot")
@@ -1736,7 +1689,7 @@ func _check_coin_pusher_render_only_canvas_path(game: GameModule, failures: Arra
 		failures.append("Public Coin Pusher deep-safety fixture lacked a nested frame/body or delta collection to mutate.")
 	if JSON.stringify(stored_patch.get("trace", [])) != stored_trace_json \
 			or JSON.stringify(stored_deltas) != stored_deltas_json \
-			or JSON.stringify(_presentation_snapshot(canvas.call("realtime_surface_state")).get("trace", [])) != patched_canvas_trace_json:
+			or JSON.stringify(_presentation_snapshot(canvas.call("realtime_surface_state")).get("trace", [])) != stored_trace_json:
 		failures.append("Mutating a public Coin Pusher patch/full snapshot changed stored or canvas-owned render data.")
 
 	# A second player action also travels through the canvas signal and host command

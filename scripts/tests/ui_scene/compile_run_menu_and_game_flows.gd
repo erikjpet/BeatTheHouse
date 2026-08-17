@@ -130,6 +130,10 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		return false
 	var probe: Control = probe_value
 	probe.set("continuous_environment_clock_enabled", false)
+	# Disable host processing before it enters the tree. _ready, layout, child
+	# drawing, and viewport visibility still run, but no automatic realtime call
+	# can race any setup or observation in this fixture.
+	probe.set_process(false)
 	root.add_child(probe)
 	await process_frame
 	await process_frame
@@ -142,10 +146,13 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			and game != null and game.get_id() == "coin_pusher" \
 			and str(probe.get("current_screen")) == "GAME" \
 			and probe.get("game_surface_canvas") == canvas \
+			and not probe.is_processing() \
+			and not bool(probe.get("game_surface_auto_resolving")) \
+			and not bool(probe.call("_simulation_progression_paused")) \
 			and bool(canvas.call("surface_realtime_state_refresh_enabled")) \
 			and canvas.visible and canvas.is_visible_in_tree()
 	if not preconditions_exact:
-		push_error("Coin Pusher draw-frame probe did not reach the visible production owned-canvas preconditions.")
+		push_error("Coin Pusher draw/realtime probe did not reach the exact live owned-canvas production preconditions.")
 		probe.queue_free()
 		await process_frame
 		return false
@@ -168,6 +175,9 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var draw_state: Dictionary = last_draw.get("state", {}) if typeof(last_draw.get("state", {})) == TYPE_DICTIONARY else {}
 	var draw_snapshot: Dictionary = draw_state.get("coin_pusher_snapshot", {}) if typeof(draw_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
 	var draw_trace: Array = draw_snapshot.get("trace", []) if typeof(draw_snapshot.get("trace", [])) == TYPE_ARRAY else []
+	var action_canvas_state: Dictionary = canvas.call("realtime_surface_state")
+	var action_canvas_snapshot: Dictionary = action_canvas_state.get("coin_pusher_snapshot", {}) if typeof(action_canvas_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	var action_canvas_trace: Array = action_canvas_snapshot.get("trace", []) if typeof(action_canvas_snapshot.get("trace", [])) == TYPE_ARRAY else []
 	var draw_soak_after: Dictionary = canvas.call("debug_soak_snapshot")
 	var draw_sample_count_after := int(draw_soak_after.get("draw_sample_count", 0))
 	var rendered_drop_hit := false
@@ -179,19 +189,88 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		var hit_action := str((region_value as Dictionary).get("action", ""))
 		rendered_drop_hit = rendered_drop_hit or hit_action == "coin_pusher_drop"
 		rendered_nudge_hit = rendered_nudge_hit or hit_action == "coin_pusher_nudge"
-	var passed := str(stored.get("action_id", "")) == "drop_quarter" \
+	var render_passed := str(stored.get("action_id", "")) == "drop_quarter" \
 			and not stored_trace.is_empty() \
 			and not draw_snapshots.is_empty() \
 			and JSON.stringify(draw_trace) == JSON.stringify(stored_trace) \
+			and JSON.stringify(action_canvas_trace) == JSON.stringify(stored_trace) \
+			and is_same(action_canvas_trace, stored_trace) \
 			and draw_sample_count_after > draw_sample_count_before \
 			and rendered_drop_hit and rendered_nudge_hit
-	if not passed:
+	if not render_passed:
 		push_error("Coin Pusher owned canvas did not render its completed host action on a real viewport draw frame.")
+
+	var guard_canvas_json := JSON.stringify(action_canvas_state)
+	probe.set("last_game_surface_realtime_refresh_msec", 0)
+	canvas.visible = false
+	probe.call("_advance_game_surface_realtime_state")
+	var hidden_guard_passed := int(probe.get("last_game_surface_realtime_refresh_msec")) == 0 \
+			and JSON.stringify(canvas.call("realtime_surface_state")) == guard_canvas_json
+	canvas.visible = true
+	if not hidden_guard_passed:
+		push_error("FoundationMain realtime advance bypassed its hidden owned-canvas guard on a live tree.")
+
+	probe.set("travel_transition_active", true)
+	probe.call("_advance_game_surface_realtime_state")
+	var pause_guard_passed := int(probe.get("last_game_surface_realtime_refresh_msec")) == 0 \
+			and JSON.stringify(canvas.call("realtime_surface_state")) == guard_canvas_json
+	probe.set("travel_transition_active", false)
+	if not pause_guard_passed:
+		push_error("FoundationMain realtime advance bypassed its simulation-pause guard on a live tree.")
+
+	var interval_now_msec := int(probe.call("_environment_simulation_time_msec"))
+	# Use a positive future stamp so both a sub-16-ms project uptime and an
+	# arbitrary CI scheduler stall remain deterministically inside the production
+	# `now - last < interval` guard. This changes only test-owned prior-call state;
+	# the current clock and production comparison remain untouched.
+	var interval_guard_stamp := interval_now_msec + 1000
+	probe.set("last_game_surface_realtime_refresh_msec", interval_guard_stamp)
+	probe.call("_advance_game_surface_realtime_state")
+	var interval_guard_passed := int(probe.get("last_game_surface_realtime_refresh_msec")) == interval_guard_stamp \
+			and JSON.stringify(canvas.call("realtime_surface_state")) == guard_canvas_json
+	if not interval_guard_passed:
+		push_error("FoundationMain realtime advance bypassed its minimum-interval guard on a live tree.")
+
+	var surface_time_before := int(action_canvas_state.get("surface_time_msec", -1))
+	var upper_phase_before := int(action_canvas_snapshot.get("upper_phase_milli", -1))
+	# Host processing remains disabled while the real clock advances. Bound the
+	# wait so a fast headless frame cannot leave both observations in one millisecond.
+	var realtime_clock_wait_frames := 0
+	while int(probe.call("_environment_simulation_time_msec")) <= surface_time_before \
+			and realtime_clock_wait_frames < 16:
+		realtime_clock_wait_frames += 1
+		await process_frame
+	var success_preconditions_exact := probe.get("run_state") != null \
+			and probe.get("current_game") == game \
+			and str(probe.get("current_screen")) == "GAME" \
+			and probe.get("game_surface_canvas") == canvas \
+			and not probe.is_processing() \
+			and not bool(probe.get("game_surface_auto_resolving")) \
+			and not bool(probe.call("_simulation_progression_paused")) \
+			and bool(canvas.call("surface_realtime_state_refresh_enabled")) \
+			and canvas.visible and canvas.is_visible_in_tree()
+	if not success_preconditions_exact:
+		push_error("Coin Pusher realtime probe did not restore every live production precondition before its success call.")
+	probe.set("last_game_surface_realtime_refresh_msec", 0)
+	probe.call("_advance_game_surface_realtime_state")
+	var success_stamp := int(probe.get("last_game_surface_realtime_refresh_msec"))
+	var realtime_canvas_state: Dictionary = canvas.call("realtime_surface_state")
+	var realtime_canvas_snapshot: Dictionary = realtime_canvas_state.get("coin_pusher_snapshot", {}) if typeof(realtime_canvas_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	var realtime_canvas_trace: Array = realtime_canvas_snapshot.get("trace", []) if typeof(realtime_canvas_snapshot.get("trace", [])) == TYPE_ARRAY else []
+	var realtime_passed := success_preconditions_exact \
+			and realtime_clock_wait_frames < 16 \
+			and success_stamp > surface_time_before \
+			and int(realtime_canvas_state.get("surface_time_msec", -1)) == success_stamp \
+			and int(realtime_canvas_snapshot.get("upper_phase_milli", -1)) != upper_phase_before \
+			and JSON.stringify(realtime_canvas_trace) == JSON.stringify(stored_trace) \
+			and is_same(realtime_canvas_trace, action_canvas_trace)
+	if not realtime_passed:
+		push_error("FoundationMain production realtime advance did not stamp/update the live owned canvas while retaining its exact action trace reference.")
 	if canvas.draw.is_connected(observe_draw):
 		canvas.draw.disconnect(observe_draw)
 	probe.queue_free()
 	await process_frame
-	return passed
+	return render_passed and hidden_guard_passed and pause_guard_passed and interval_guard_passed and realtime_passed
 
 
 func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
