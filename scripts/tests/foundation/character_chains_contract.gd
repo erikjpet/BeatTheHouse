@@ -49,6 +49,8 @@ static func _check_inventory(library: ContentLibrary, failures: Array) -> void:
 static func _check_deterministic_world_anchors(failures: Array) -> void:
 	var first := _world_run("CHAIN-ANCHORS")
 	var twin := _world_run("CHAIN-ANCHORS")
+	first.set_story_flag("chain06_sal_item_taken", true)
+	twin.set_story_flag("chain06_sal_item_taken", true)
 	var environment := _environment("bar", "bar", "bar_payday_rush")
 	CharacterChainModelScript.apply_to_environment(first, environment)
 	CharacterChainModelScript.apply_to_environment(twin, _environment("bar", "bar", "bar_payday_rush"))

@@ -31,13 +31,19 @@ static func tuning() -> Dictionary:
 static func apply_to_environment(run_state: RunState, environment: Dictionary) -> void:
 	if run_state == null or environment.is_empty():
 		return
-	_ensure_run_anchors(run_state)
-	_ensure_dave_true_rumor(run_state)
+	if bool(run_state.story_flags.get("chain06_sal_item_taken", false)) \
+		or str(environment.get("scenario_id", "")) == "pawn_shop_estate_lot_day":
+		_ensure_run_anchors(run_state)
+	if bool(run_state.story_flags.get("chain06_dave_last_stop", false)):
+		_ensure_dave_true_rumor(run_state)
 	var event_ids := _string_array(environment.get("event_ids", []))
-	for prior_id in _string_array(environment.get(INJECTED_EVENT_IDS_KEY, [])):
+	var prior_ids := _string_array(environment.get(INJECTED_EVENT_IDS_KEY, []))
+	for prior_id in prior_ids:
 		event_ids.erase(prior_id)
 	var injected: Array = []
 	for chain in chains():
+		if not _chain_projection_active(run_state, str(chain.get("id", "")), environment):
+			continue
 		for beat in _dictionary_array(chain.get("beats", [])):
 			if not _placement_matches(_dictionary(beat.get("placement", {})), environment):
 				continue
@@ -47,8 +53,9 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 			injected.append(event_id)
 			if not event_ids.has(event_id):
 				event_ids.append(event_id)
-	environment[INJECTED_EVENT_IDS_KEY] = injected
-	environment["event_ids"] = event_ids
+	if not injected.is_empty() or not prior_ids.is_empty():
+		environment[INJECTED_EVENT_IDS_KEY] = injected
+		environment["event_ids"] = event_ids
 	_apply_cass_environment_effects(run_state, environment)
 	_apply_rourke_staff_register(run_state, environment)
 
@@ -190,6 +197,10 @@ static func _ensure_dave_true_rumor(run_state: RunState) -> void:
 
 
 static func _apply_cass_environment_effects(run_state: RunState, environment: Dictionary) -> void:
+	if not bool(run_state.story_flags.get("chain06_cass_ending_truce", false)) \
+		and not bool(run_state.story_flags.get("chain06_cass_flameout_attention_active", false)) \
+		and not _dictionary(environment.get("security_profile", {})).has("cass_chain_attention_delta"):
+		return
 	var security := _dictionary(environment.get("security_profile", {})).duplicate(true)
 	security.erase("cass_chain_attention_delta")
 	if bool(run_state.story_flags.get("chain06_cass_ending_truce", false)):
@@ -203,6 +214,11 @@ static func _apply_cass_environment_effects(run_state: RunState, environment: Di
 
 static func _apply_rourke_staff_register(run_state: RunState, environment: Dictionary) -> void:
 	var prior_line := str(environment.get(INJECTED_AMBIENT_LINE_KEY, ""))
+	var has_register := bool(run_state.story_flags.get("chain06_rourke_noticed", false)) \
+		or bool(run_state.story_flags.get("chain06_rourke_named", false)) \
+		or bool(run_state.story_flags.get("chain06_rourke_expected", false))
+	if prior_line.is_empty() and not has_register:
+		return
 	var ambient := _string_array(environment.get("layer_ambient_lines", []))
 	if not prior_line.is_empty():
 		ambient.erase(prior_line)
@@ -220,6 +236,32 @@ static func _apply_rourke_staff_register(run_state: RunState, environment: Dicti
 	environment["layer_ambient_lines"] = ambient
 	if not line.is_empty():
 		environment["layer_ambient_line"] = line
+
+
+static func _chain_projection_active(run_state: RunState, chain_id: String, environment: Dictionary) -> bool:
+	var node_id := str(environment.get("world_node_id", environment.get("id", "")))
+	var scenario_id := str(environment.get("scenario_id", _dictionary(environment.get("scenario_state", {})).get("id", "")))
+	match chain_id:
+		"cass_venn":
+			return run_state.traveler_node("cass_rival_counter") == node_id or _has_story_prefix(run_state, "chain06_cass_")
+		"sal_estate_lot":
+			return scenario_id == "pawn_shop_estate_lot_day" or _has_story_prefix(run_state, "chain06_sal_")
+		"nico_soft_loans":
+			return scenario_id == "motel_weekly_rates" or _has_story_prefix(run_state, "chain06_nico_") or bool(run_state.narrative_flags.get("debt_favor_owed", false))
+		"rourke_scouts":
+			return _has_story_prefix(run_state, "chain06_rourke_") or run_state.suspicion_level() >= 10 or run_state.bankroll >= 125
+		"the_trio":
+			return int(trio_gift_memory(run_state).get("count", 0)) > 0 or _has_story_prefix(run_state, "chain06_trio_")
+		"dave_true_stories":
+			return run_state.traveler_node("dave_bus_regular") == node_id or _has_story_prefix(run_state, "chain06_dave_")
+	return false
+
+
+static func _has_story_prefix(run_state: RunState, prefix: String) -> bool:
+	for key in run_state.story_flags.keys():
+		if str(key).begins_with(prefix):
+			return true
+	return false
 
 
 static func _placement_matches(placement: Dictionary, environment: Dictionary) -> bool:

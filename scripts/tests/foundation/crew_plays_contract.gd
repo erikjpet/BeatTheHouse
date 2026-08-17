@@ -188,7 +188,7 @@ static func _check_heat_pressure(library: ContentLibrary, failures: Array) -> vo
 	var blackjack := _module(BlackjackScript, library, "blackjack")
 	blackjack.resolve_with_context("crew_play:spotter", 5, run, run.current_environment, run.create_rng(), {})
 	run.advance_environment_turns(1)
-	for index in range(8):
+	for index in range(12):
 		var pressure := run.crew_play_adjust_suspicion(12, "blackjack")
 		run.add_suspicion("aggressive_fixture_%d" % index, pressure, "behavior", true, {"action_kind": "cheat"}, true)
 		run.advance_environment_turns(1)

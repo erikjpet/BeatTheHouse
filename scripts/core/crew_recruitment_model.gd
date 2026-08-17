@@ -178,32 +178,6 @@ static func contact_choices(run_state: RunState, _environment: Dictionary, membe
 	if run_state == null or not _rank_at_least(run_state.crew_rank(member_id), "associate"):
 		return []
 	var choices: Array = []
-	if run_state.crew_member_job_available(member_id):
-		for job_value in CrewStateModelScript.job_definitions_for_member(member_id):
-			if choices.size() >= 3 or typeof(job_value) != TYPE_DICTIONARY:
-				break
-			var job: Dictionary = job_value
-			var definition_id := str(job.get("id", "")).strip_edges()
-			var target_event_id := str(_dict(job.get("payload", {})).get("event_id", "")).strip_edges()
-			if definition_id.is_empty() or run_state.crew_job_definition_pending(definition_id):
-				continue
-			var offer_line := str(member_definition(member_id).get("job_offer_line", "There is work if you want it."))
-			if not target_event_id.is_empty():
-				if (library != null and library.event(target_event_id).is_empty()) or run_state.triggered_event_pending(target_event_id):
-					continue
-				choices.append({
-					"id": "job_%s" % definition_id,
-					"label": "Ask about work",
-					"text": offer_line,
-					"consequences": {"trigger_event": {"event_id": target_event_id, "chance": 1.0}},
-				})
-			else:
-				choices.append({
-					"id": "job_%s" % definition_id,
-					"label": str(job.get("label", "Take the job")),
-					"text": offer_line,
-					"consequences": {"event_hooks": [{"type": "crew_job_accept", "definition_id": definition_id}]},
-				})
 	if member_id == "crew_switch":
 		var sweep := run_state.sweep_status()
 		if run_state.crew_capability_active("sweep_intel") and choices.size() < 3:
@@ -261,9 +235,32 @@ static func contact_choices(run_state: RunState, _environment: Dictionary, membe
 			"text": "Lucky hands over a sealed bag and three stops that refuse to stay simple.",
 			"consequences": {"event_hooks": [{"type": "crew_lucky_collection"}]},
 		})
+	choices = _append_member_job_choices(choices, run_state, member_id, library)
 	if choices.is_empty():
 		return []
 	choices.append({"id": "leave", "label": "Leave", "text": "The Crew contact lets the room breathe.", "consequences": {}})
+	return choices
+
+
+static func _append_member_job_choices(existing: Array, run_state: RunState, member_id: String, library: ContentLibrary) -> Array:
+	var choices := existing.duplicate(true)
+	if not run_state.crew_member_job_available(member_id):
+		return choices
+	for job_value in CrewStateModelScript.job_definitions_for_member(member_id):
+		if choices.size() >= 4 or typeof(job_value) != TYPE_DICTIONARY:
+			break
+		var job: Dictionary = job_value
+		var definition_id := str(job.get("id", "")).strip_edges()
+		var target_event_id := str(_dict(job.get("payload", {})).get("event_id", "")).strip_edges()
+		if definition_id.is_empty() or run_state.crew_job_definition_pending(definition_id):
+			continue
+		var offer_line := str(member_definition(member_id).get("job_offer_line", "There is work if you want it."))
+		if not target_event_id.is_empty():
+			if (library != null and library.event(target_event_id).is_empty()) or run_state.triggered_event_pending(target_event_id):
+				continue
+			choices.append({"id": "job_%s" % definition_id, "label": "Ask about work", "text": offer_line, "consequences": {"trigger_event": {"event_id": target_event_id, "chance": 1.0}}})
+		else:
+			choices.append({"id": "job_%s" % definition_id, "label": str(job.get("label", "Take the job")), "text": offer_line, "consequences": {"event_hooks": [{"type": "crew_job_accept", "definition_id": definition_id}]}})
 	return choices
 
 
