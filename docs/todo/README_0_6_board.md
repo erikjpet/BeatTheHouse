@@ -551,6 +551,15 @@ What happens then is the owner's, not an agent's:
   performance gate. A newly built debug DLL then crashed during extension load
   before the smoke script; that build is rejected pending exact-source rebuild
   and registration/binary-compatibility isolation.
+- 2026-08-17 [pusher06_2 native load] Three exact debug builds and an
+  old-binding-surface control all crash identically during extension
+  registration at Godot's StringName refcount-unref path, before any solver
+  script/action. PE architecture/export/imports are valid and new method
+  bindings are ruled out. Root-cause direction: hardened bootstrap replaced an
+  unchecked cached binding tree with the lock's Godot 4.5 `godot-cpp` commit
+  `e83fd...`, while the engine is Godot 4.6. Run clean scaffold controls against
+  exact 4.5 and official 4.6-stable bindings, clearing native/generated caches;
+  if 4.6 loads, correct and verify the lock rather than working around the ABI.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1272,3 +1281,6 @@ What happens then is the owner's, not an agent's:
   ACCEPTED after the complete hostile matrix. Runtime remains red/open: debug
   extension load crashed before script, and exactness plus <=16 ms performance
   have not yet passed on a loadable final binary.
+- 2026-08-17 [pusher06_2] Load-crash forensics rules out gameplay/kernel and new
+  binding methods; the pinned 4.5 godot-cpp tree is the leading ABI mismatch
+  against Godot 4.6. Clean 4.5/4.6 scaffold discrimination is in progress.
