@@ -4288,7 +4288,7 @@
     "id": "scenario_inventory_night_count", "display_name": "The Short Count", "type": "opportunistic", "interaction_mode": "interactable", "scopes": ["shop"],
     "asset_path": "res://assets/art/events/late_shift_discount.png", "icon_key": "discount_sticker", "environment_prop": "clerk_counter", "start_summary": "One box missed the sheet. Clerk noticed.", "trigger": {"type": "manual"},
     "payload": {"summary": "One box missed the sheet. Clerk noticed.", "choices": [
-      {"id": "take_the_short_count", "label": "Take the short count", "text": "The ledger loses seven dollars and keeps your face.", "consequence_summary": "Bankroll +7, heat +2", "consequences": {"bankroll_delta": 7, "suspicion_delta": 2, "flags": {"inventory_short_count_taken": true}, "resolve_event": true}},
+      {"id": "take_the_short_count", "label": "Take the short count", "text": "The ledger comes up short and keeps your face.", "consequence_summary": "Bankroll +7, heat +2", "consequences": {"bankroll_delta": 7, "suspicion_delta": 2, "flags": {"inventory_short_count_taken": true}, "resolve_event": true}},
       {"id": "set_the_box_back", "label": "Set the box back", "text": "The clerk crosses out one reason to watch you.", "consequence_summary": "Heat -1", "consequences": {"suspicion_delta": -1, "flags": {"inventory_count_left_clean": true}, "resolve_event": true}}
     ]}
   },
@@ -4297,14 +4297,14 @@
     "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Nothing moves. The lookout keeps counting cars.", "trigger": {"type": "manual"},
     "payload": {"summary": "Nothing moves. The lookout keeps counting cars.", "choices": [
       {"id": "wait_out_the_light", "label": "Wait out the light", "text": "The street forgets you before business returns.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "flags": {"nothing_moving_waited": true}, "resolve_event": true}},
-      {"id": "knock_anyway", "label": "Knock anyway", "text": "Five dollars buys the same closed door.", "consequence_summary": "Bankroll -5", "consequences": {"bankroll_delta": -5, "flags": {"nothing_moving_knocked": true}, "resolve_event": true}}
+      {"id": "knock_anyway", "label": "Knock anyway", "text": "Your cash buys the same closed door.", "consequence_summary": "Bankroll -5", "consequences": {"bankroll_delta": -5, "flags": {"nothing_moving_knocked": true}, "resolve_event": true}}
     ]}
   },
   {
     "id": "scenario_wedding_overflow_hallway", "display_name": "Hallway Table", "type": "temptation", "interaction_mode": "interactable", "scopes": ["shop"],
     "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "No rooms left. The hallway found cards.", "trigger": {"type": "manual"},
     "payload": {"summary": "No rooms left. The hallway found cards.", "choices": [
-      {"id": "take_the_hallway_seat", "label": "Take the hallway seat", "text": "The wedding pays ten dollars to learn your face.", "consequence_summary": "Bankroll +10, heat +3", "consequences": {"bankroll_delta": 10, "suspicion_delta": 3, "flags": {"wedding_overflow_table_played": true}, "resolve_event": true}},
+      {"id": "take_the_hallway_seat", "label": "Take the hallway seat", "text": "The wedding pays out to learn your face.", "consequence_summary": "Bankroll +10, heat +3", "consequences": {"bankroll_delta": 10, "suspicion_delta": 3, "flags": {"wedding_overflow_table_played": true}, "resolve_event": true}},
       {"id": "step_over_the_coolers", "label": "Step over the coolers", "text": "The loud floor gives you one quiet pass.", "consequence_summary": "Heat -1", "consequences": {"suspicion_delta": -1, "flags": {"wedding_overflow_passed": true}, "resolve_event": true}}
     ]}
   },
@@ -4312,15 +4312,15 @@
     "id": "scenario_darts_league_decider", "display_name": "The Deciding Leg", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
     "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "One leg left. The rail has picked sides.", "trigger": {"type": "manual"},
     "payload": {"summary": "One leg left. The rail has picked sides.", "choices": [
-      {"id": "back_the_home_side", "label": "Back the home side", "text": "Ten dollars buys a place beside the board.", "consequence_summary": "Bankroll -10", "consequences": {"bankroll_delta": -10, "flags": {"darts_league_home_backed": true}, "resolve_event": true}},
-      {"id": "take_the_rail_money", "label": "Take the rail money", "text": "The quiet leg pays twelve and points your way.", "consequence_summary": "Bankroll +12, heat +3", "consequences": {"bankroll_delta": 12, "suspicion_delta": 3, "flags": {"darts_league_rail_taken": true}, "resolve_event": true}}
+      {"id": "back_the_home_side", "label": "Back the home side", "text": "Your stake buys a place beside the board.", "consequence_summary": "Bankroll -10", "consequences": {"bankroll_delta": -10, "flags": {"darts_league_home_backed": true}, "resolve_event": true}},
+      {"id": "take_the_rail_money", "label": "Take the rail money", "text": "The quiet leg pays and points your way.", "consequence_summary": "Bankroll +12, heat +3", "consequences": {"bankroll_delta": 12, "suspicion_delta": 3, "flags": {"darts_league_rail_taken": true}, "resolve_event": true}}
     ]}
   },
   {
     "id": "scenario_live_band_request", "display_name": "One Request", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
     "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "start_summary": "The band takes requests folded around cash.", "trigger": {"type": "manual"},
     "payload": {"summary": "The band takes requests folded around cash.", "choices": [
-      {"id": "fold_an_eight", "label": "Fold an eight", "text": "The next song keeps the room off your hands.", "consequence_summary": "Bankroll -8, heat -2", "consequences": {"bankroll_delta": -8, "suspicion_delta": -2, "flags": {"live_band_request_paid": true}, "resolve_event": true}},
+      {"id": "fold_an_eight", "label": "Fold a bill", "text": "The next song keeps the room off your hands.", "consequence_summary": "Bankroll -8, heat -2", "consequences": {"bankroll_delta": -8, "suspicion_delta": -2, "flags": {"live_band_request_paid": true}, "resolve_event": true}},
       {"id": "keep_the_tab_flat", "label": "Keep the tab flat", "text": "The band finds somebody else's favorite.", "consequences": {"flags": {"live_band_request_passed": true}, "resolve_event": true}}
     ]}
   },
@@ -4328,7 +4328,7 @@
     "id": "scenario_dead_tuesday_regular", "display_name": "Last Regular", "type": "discovery", "interaction_mode": "interactable", "scopes": ["casino"],
     "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "The last regular knows why stools are dry.", "trigger": {"type": "manual"},
     "payload": {"summary": "The last regular knows why stools are dry.", "choices": [
-      {"id": "take_the_small_tip", "label": "Take the small tip", "text": "Five dollars and one warning cross the bar.", "consequence_summary": "Bankroll +5", "consequences": {"bankroll_delta": 5, "flags": {"dead_tuesday_tip_taken": true}, "resolve_event": true}},
+      {"id": "take_the_small_tip", "label": "Take the small tip", "text": "A small tip and a warning cross the bar.", "consequence_summary": "Bankroll +5", "consequences": {"bankroll_delta": 5, "flags": {"dead_tuesday_tip_taken": true}, "resolve_event": true}},
       {"id": "leave_the_stool_open", "label": "Leave the stool open", "text": "The empty room loses interest in you.", "consequence_summary": "Heat -2", "consequences": {"suspicion_delta": -2, "flags": {"dead_tuesday_left_quiet": true}, "resolve_event": true}}
     ]}
   },
@@ -4336,15 +4336,15 @@
     "id": "scenario_road_crew_payday_pool", "display_name": "Pay Envelope Pool", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
     "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Fresh envelopes make the small pool loud.", "trigger": {"type": "manual"},
     "payload": {"summary": "Fresh envelopes make the small pool loud.", "choices": [
-      {"id": "cover_the_crew_side", "label": "Cover the crew side", "text": "Twelve dollars buys a hardhat's good opinion.", "consequence_summary": "Bankroll -12", "consequences": {"bankroll_delta": -12, "flags": {"road_crew_side_covered": true}, "resolve_event": true}},
-      {"id": "cash_the_loose_envelope", "label": "Cash the loose envelope", "text": "Ten dollars comes loose. Every hardhat notices.", "consequence_summary": "Bankroll +10, heat +4", "consequences": {"bankroll_delta": 10, "suspicion_delta": 4, "flags": {"road_crew_envelope_taken": true}, "resolve_event": true}}
+      {"id": "cover_the_crew_side", "label": "Cover the crew side", "text": "Your stake buys a hardhat's good opinion.", "consequence_summary": "Bankroll -12", "consequences": {"bankroll_delta": -12, "flags": {"road_crew_side_covered": true}, "resolve_event": true}},
+      {"id": "cash_the_loose_envelope", "label": "Cash the envelope", "text": "Cash comes loose. Every hardhat notices.", "consequence_summary": "Bankroll +10, heat +4", "consequences": {"bankroll_delta": 10, "suspicion_delta": 4, "flags": {"road_crew_envelope_taken": true}, "resolve_event": true}}
     ]}
   },
   {
     "id": "scenario_storm_shelter_corner", "display_name": "The Dry Corner", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
     "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "The clerk kept one dry corner for everybody.", "trigger": {"type": "manual"},
     "payload": {"summary": "The clerk kept one dry corner for everybody.", "choices": [
-      {"id": "cover_the_coffee", "label": "Cover the coffee", "text": "Five dollars settles the room for a minute.", "consequence_summary": "Bankroll -5, heat -2", "consequences": {"bankroll_delta": -5, "suspicion_delta": -2, "flags": {"storm_shelter_coffee_covered": true}, "resolve_event": true}},
+      {"id": "cover_the_coffee", "label": "Cover the coffee", "text": "Your tab settles the room for a minute.", "consequence_summary": "Bankroll -5, heat -2", "consequences": {"bankroll_delta": -5, "suspicion_delta": -2, "flags": {"storm_shelter_coffee_covered": true}, "resolve_event": true}},
       {"id": "keep_to_the_back_door", "label": "Keep to the back door", "text": "The crowd remembers who would not come in.", "consequence_summary": "Heat +2", "consequences": {"suspicion_delta": 2, "flags": {"storm_shelter_door_kept": true}, "resolve_event": true}}
     ]}
   },
@@ -4361,30 +4361,30 @@
     "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Every knock sounds official downstairs.", "trigger": {"type": "manual"},
     "payload": {"summary": "Every knock sounds official downstairs.", "choices": [
       {"id": "use_the_second_check", "label": "Use the second check", "text": "The nervous floor checks somebody else first.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "flags": {"raid_jitters_check_used": true}, "resolve_event": true}},
-      {"id": "keep_cash_moving", "label": "Keep cash moving", "text": "Eight dollars clears before the next knock.", "consequence_summary": "Bankroll +8, heat +5", "consequences": {"bankroll_delta": 8, "suspicion_delta": 5, "flags": {"raid_jitters_cash_moved": true}, "resolve_event": true}}
+      {"id": "keep_cash_moving", "label": "Keep cash moving", "text": "Cash clears before the next knock.", "consequence_summary": "Bankroll +8, heat +5", "consequences": {"bankroll_delta": 8, "suspicion_delta": 5, "flags": {"raid_jitters_cash_moved": true}, "resolve_event": true}}
     ]}
   },
   {
     "id": "scenario_union_trouble_line", "display_name": "The Meeting Line", "type": "social", "interaction_mode": "interactable", "scopes": ["shop"],
     "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "start_summary": "The worn room provides a careful meeting line.", "trigger": {"type": "manual"},
     "payload": {"summary": "The worn room provides a careful meeting line.", "choices": [
-      {"id": "cover_one_due", "label": "Cover one due", "text": "Ten dollars keeps one chair in the next set.", "consequence_summary": "Bankroll -10, heat -2", "consequences": {"bankroll_delta": -10, "suspicion_delta": -2, "flags": {"union_trouble_due_covered": true}, "resolve_event": true}},
-      {"id": "cross_the_line", "label": "Cross the line", "text": "Six dollars pays now. The room keeps the rest.", "consequence_summary": "Bankroll +6, heat +4", "consequences": {"bankroll_delta": 6, "suspicion_delta": 4, "flags": {"union_trouble_line_crossed": true}, "resolve_event": true}}
+      {"id": "cover_one_due", "label": "Cover one due", "text": "Your money keeps a chair in the next set.", "consequence_summary": "Bankroll -10, heat -2", "consequences": {"bankroll_delta": -10, "suspicion_delta": -2, "flags": {"union_trouble_due_covered": true}, "resolve_event": true}},
+      {"id": "cross_the_line", "label": "Cross the line", "text": "Cash pays now. The room keeps the rest.", "consequence_summary": "Bankroll +6, heat +4", "consequences": {"bankroll_delta": 6, "suspicion_delta": 4, "flags": {"union_trouble_line_crossed": true}, "resolve_event": true}}
     ]}
   },
   {
     "id": "scenario_bachelorette_storm_table", "display_name": "The Saved Table", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
     "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The house saved them one attentive table.", "trigger": {"type": "manual"},
     "payload": {"summary": "The house saved them one attentive table.", "choices": [
-      {"id": "cover_one_round", "label": "Cover one round", "text": "Ten dollars earns a generous little absence.", "consequence_summary": "Bankroll -10, heat -2", "consequences": {"bankroll_delta": -10, "suspicion_delta": -2, "flags": {"bachelorette_round_covered": true}, "resolve_event": true}},
-      {"id": "play_the_saved_table", "label": "Play the saved table", "text": "The party pays twelve. The floor takes notice.", "consequence_summary": "Bankroll +12, heat +4", "consequences": {"bankroll_delta": 12, "suspicion_delta": 4, "flags": {"bachelorette_table_played": true}, "resolve_event": true}}
+      {"id": "cover_one_round", "label": "Cover one round", "text": "Your round earns a generous little absence.", "consequence_summary": "Bankroll -10, heat -2", "consequences": {"bankroll_delta": -10, "suspicion_delta": -2, "flags": {"bachelorette_round_covered": true}, "resolve_event": true}},
+      {"id": "play_the_saved_table", "label": "Play the saved table", "text": "The party pays. The floor takes notice.", "consequence_summary": "Bankroll +12, heat +4", "consequences": {"bankroll_delta": 12, "suspicion_delta": 4, "flags": {"bachelorette_table_played": true}, "resolve_event": true}}
     ]}
   },
   {
     "id": "scenario_captains_invitational_card", "display_name": "The Captain's Card", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
     "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The captain's card provides one attentive table.", "trigger": {"type": "manual"},
     "payload": {"summary": "The captain's card provides one attentive table.", "choices": [
-      {"id": "post_the_entry", "label": "Post the entry", "text": "Fifteen dollars puts your name in the first round.", "consequence_summary": "Bankroll -15", "consequences": {"bankroll_delta": -15, "flags": {"captains_invitational_entered": true}, "resolve_event": true}},
+      {"id": "post_the_entry", "label": "Post the entry", "text": "The buy-in puts your name in the first round.", "consequence_summary": "Bankroll -15", "consequences": {"bankroll_delta": -15, "flags": {"captains_invitational_entered": true}, "resolve_event": true}},
       {"id": "watch_the_rounds", "label": "Watch the rounds", "text": "The tournament keeps your place politely empty.", "consequence_summary": "Heat -2", "consequences": {"suspicion_delta": -2, "flags": {"captains_invitational_observed": true}, "resolve_event": true}}
     ]}
   }
