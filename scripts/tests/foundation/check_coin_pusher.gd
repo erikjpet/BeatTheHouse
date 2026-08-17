@@ -597,7 +597,7 @@ func _assert_coin_pusher_hot_solver_twin(source: Dictionary, config: Dictionary,
 		failures.append("Packed Coin Pusher solver changed exits/events/metrics/trace order for %s versus the dictionary oracle." % label)
 	if bool(config.get("capture_presentation_trace", false)):
 		if native_expected and (typeof(hot_result.get("presentation_trace_packed")) != TYPE_DICTIONARY \
-				or CoinPusherSolverScript.decode_packed_presentation_trace(hot_result.get("presentation_trace_packed", {})).size() != 13):
+				or CoinPusherSolverScript.decode_packed_presentation_trace(hot_result.get("presentation_trace_packed", {})).size() != 14):
 			failures.append("Coin Pusher production native fixture %s did not exercise exact packed trace decoding." % label)
 		elif not native_expected and (hot_result.has("presentation_trace_packed") or (hot_result.get("presentation_trace", []) as Array).is_empty()):
 			failures.append("Coin Pusher fallback fixture %s did not retain the distinct legacy trace path." % label)
@@ -1649,9 +1649,30 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 		failures.append("Quarter Falls drop replay did not end on the exact authoritative persisted pile.")
 	var packed_replay_surface := game.surface_state(drop_run, drop_run.current_environment, {"surface_time_msec": 1000})
 	var packed_replay_snapshot := _presentation_snapshot(packed_replay_surface)
+	var action_view_patch: Dictionary = drop_result.get("surface_action_view_patch", {}) if typeof(drop_result.get("surface_action_view_patch", {})) == TYPE_DICTIONARY else {}
+	for patch_key in action_view_patch:
+		if str(patch_key) == "coin_pusher_snapshot":
+			var nested_patch: Dictionary = action_view_patch[patch_key] if typeof(action_view_patch[patch_key]) == TYPE_DICTIONARY else {}
+			for nested_key in nested_patch:
+				if JSON.stringify(packed_replay_snapshot.get(nested_key)) != JSON.stringify(nested_patch[nested_key]):
+					failures.append("Quarter Falls lightweight action patch diverged from fresh surface state at coin_pusher_snapshot.%s." % str(nested_key))
+		elif JSON.stringify(packed_replay_surface.get(patch_key)) != JSON.stringify(action_view_patch[patch_key]):
+			failures.append("Quarter Falls lightweight action patch diverged from fresh surface state at %s." % str(patch_key))
+	var action_snapshot_patch: Dictionary = action_view_patch.get("coin_pusher_snapshot", {}) if typeof(action_view_patch.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	if action_view_patch.is_empty() or action_snapshot_patch.has("bodies") or action_snapshot_patch.has("riders") or action_snapshot_patch.has("features"):
+		failures.append("Quarter Falls action view patch was missing or duplicated dense physical arrays instead of retaining packed authority.")
 	packed_replay_snapshot["trace_packed"] = packed_trace
 	packed_replay_snapshot["trace_frame_count"] = int(packed_patch.get("trace_frame_count", 0))
 	packed_replay_snapshot["action_state"] = packed_patch.get("action_state", {})
+	var packed_authoritative_final: Array = game.call("_packed_final_bodies", packed_replay_snapshot)
+	if JSON.stringify(packed_authoritative_final) != JSON.stringify(final_trace_bodies):
+		failures.append("Quarter Falls packed final-frame reader did not expose the exact persisted body/exit/feature set.")
+	# Simulate the incremental host retaining stale dense entry arrays. Packed
+	# final authority must still drive reduced motion and missing-feature
+	# reconciliation, including excluding a body that no longer exists.
+	packed_replay_snapshot["bodies"] = [_solver_body("stale_exited_body", "coin", 1000, 1000, 0, false)]
+	packed_replay_snapshot["riders"] = [{"id": "stale_exited_rider", "kind": "rider"}]
+	packed_replay_snapshot["features"] = [{"id": "stale_exited_feature", "kind": "puck"}]
 	var packed_harness := SurfaceHarness.new()
 	packed_harness.setup(packed_replay_surface)
 	packed_harness.animation_active = true
@@ -2479,11 +2500,16 @@ func _check_coin_pusher_items(game: GameModule, failures: Array) -> void:
 	var shim_simulation: Dictionary = shim_state.get("simulation", {}) if typeof(shim_state.get("simulation", {})) == TYPE_DICTIONARY else {}
 	var shim_bodies: Array = shim_simulation.get("bodies", []) if typeof(shim_simulation.get("bodies", [])) == TYPE_ARRAY else []
 	shim_bodies.append(_solver_body("shim_gutter_coin", "coin", 1000, 0, 0, false))
-	var shim_drop := game.resolve_with_context("drop_quarter", 1, shim_run, shim_run.current_environment, _configured_rng(gutter_seed), {"coin_pusher_lane": 0})
+	var shim_drop := game.resolve_with_context("drop_quarter", 1, shim_run, shim_run.current_environment, _configured_rng(gutter_seed), {"coin_pusher_lane": 0, "coin_pusher_capture_presentation_trace": true})
 	GameModule.apply_result(shim_run, shim_drop, shim_run.create_rng("shim_gutter_drop_apply"))
 	shim_state = (shim_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	if not bool(shim_drop.get("coin_pusher_shim_recovered", false)) or bool(shim_drop.get("coin_pusher_gutter", true)) or int(shim_state.get("shim_uses_remaining", -1)) != authored_uses - 1:
 		failures.append("Coin-Return Shim effect was not consumed by a real edge-gutter drop action.")
+	var shim_trace := _presentation_trace(shim_drop)
+	var shim_final: Dictionary = shim_trace[shim_trace.size() - 1] if not shim_trace.is_empty() and typeof(shim_trace[shim_trace.size() - 1]) == TYPE_DICTIONARY else {}
+	var shim_final_bodies: Array = shim_final.get("bodies", []) if typeof(shim_final.get("bodies", [])) == TYPE_ARRAY else []
+	if shim_trace.size() != 14 or JSON.stringify(shim_final_bodies) != JSON.stringify(CoinPusherSolverScript.body_views(shim_state.get("simulation", {}))):
+		failures.append("Coin-Return Shim presentation did not replace tick 49 with the exact recovered authoritative pile.")
 
 
 func _check_coin_pusher_economy(game: GameModule, definition: Dictionary, failures: Array) -> void:

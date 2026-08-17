@@ -917,6 +917,15 @@ Dictionary StepKernel::run() {
 			if (debug_profile) profile_trace += elapsed_usec(stage_started);
 		}
 	}
+	// The persisted action boundary is one presentation beat after the final
+	// fixed tick. Author that exact final pile while this kernel and its packed
+	// descriptors are already hot instead of constructing a second kernel solely
+	// to duplicate tick 48 at tick 49.
+	if (capture_trace) {
+		if (debug_profile) stage_started = std::chrono::steady_clock::now();
+		append_packed_trace_frame(ACTION_TICKS + 1, Array());
+		if (debug_profile) profile_trace += elapsed_usec(stage_started);
+	}
 
 	if (debug_profile) stage_started = std::chrono::steady_clock::now();
 	int64_t moved_count = 0;

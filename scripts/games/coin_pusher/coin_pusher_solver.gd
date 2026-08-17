@@ -448,6 +448,11 @@ static func native_step_contract_valid_for_test(before: Dictionary, candidate: D
 static func finalize_packed_presentation_trace(packed_trace: Dictionary, state: Dictionary, tick_offset: int) -> Dictionary:
 	if not _packed_trace_contract_valid(packed_trace):
 		return {}
+	# Shipped native traces already author the persisted tick-49 pile while the
+	# first solver kernel is hot. Keep this compatibility entry point idempotent;
+	# old 13-frame traces can still be finalized during a rolling upgrade.
+	if int(packed_trace.get("frame_count", 0)) == ACTION_TICKS / PRESENTATION_TRACE_INTERVAL_TICKS + 2:
+		return packed_trace
 	var native := _native_solver_backend()
 	if native == null or native.get_class() != "CoinPusherNativeCore" or native.get_script() != null \
 			or not native.has_method("append_presentation_trace_frame"):
@@ -684,7 +689,7 @@ static func _native_step_contract_valid(before: Dictionary, candidate: Dictionar
 		if not (result.get("presentation_trace", []) as Array).is_empty() \
 				or typeof(result.get("presentation_trace_packed")) != TYPE_DICTIONARY \
 				or not _packed_trace_contract_valid(result.get("presentation_trace_packed", {})) \
-				or int((result.get("presentation_trace_packed", {}) as Dictionary).get("frame_count", 0)) != ACTION_TICKS / PRESENTATION_TRACE_INTERVAL_TICKS + 1:
+				or int((result.get("presentation_trace_packed", {}) as Dictionary).get("frame_count", 0)) != ACTION_TICKS / PRESENTATION_TRACE_INTERVAL_TICKS + 2:
 			return false
 		allowed_keys.append("presentation_trace_packed")
 	elif result.has("presentation_trace_packed"):
@@ -886,7 +891,7 @@ static func _trusted_packed_trace_shape_valid(value: Variant) -> bool:
 	var packed: Dictionary = value
 	var frame_count := int(packed.get("frame_count", -1))
 	if str(packed.get("schema", "")) != PACKED_TRACE_SCHEMA or int(packed.get("version", 0)) != PACKED_TRACE_VERSION \
-			or frame_count != ACTION_TICKS / PRESENTATION_TRACE_INTERVAL_TICKS + 1:
+			or frame_count != ACTION_TICKS / PRESENTATION_TRACE_INTERVAL_TICKS + 2:
 		return false
 	var required_types := {
 		"frame_offsets": TYPE_PACKED_INT32_ARRAY, "tick_offsets": TYPE_PACKED_INT32_ARRAY,
@@ -1019,6 +1024,8 @@ static func _step_action_dictionary_reference(state: Dictionary, config: Diction
 		var before: Array = start_positions.get(str(body.get("id", "")), [])
 		if before.size() == 3 and (absi(int(before[0]) - int(body.get("x", 0))) > 180 or absi(int(before[1]) - int(body.get("y", 0))) > 180 or absi(int(before[2]) - int(body.get("z", 0))) > 180):
 			moved_count += 1
+	if capture_trace:
+		presentation_trace.append(_presentation_trace_frame(state, ACTION_TICKS + 1, []))
 	state["last_events"] = events
 	state["last_motion_events"] = motion_events
 	state["last_step_metrics"] = {
@@ -1198,6 +1205,11 @@ static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionar
 	hot.write_back(state)
 	if debug_profile_stages:
 		debug_stage_timing_usec["writeback"] = Time.get_ticks_usec() - debug_stage_started_usec
+	if capture_trace:
+		debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
+		presentation_trace.append(_presentation_trace_frame(state, ACTION_TICKS + 1, []))
+		if debug_profile_stages:
+			debug_stage_timing_usec["trace_construction"] = int(debug_stage_timing_usec.get("trace_construction", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
 	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 	var awake_count := 0
 	var sleeping := hot.sleeping

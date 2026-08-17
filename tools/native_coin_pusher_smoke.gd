@@ -141,12 +141,6 @@ func _check_exact_step_backends(core: Object, failures: Array[String]) -> void:
 		var finalized_packed := Solver.finalize_packed_presentation_trace(native_result.get("presentation_trace_packed", {}), native_state, Solver.ACTION_TICKS + 1)
 		var finalized_trace := Solver.decode_packed_presentation_trace(finalized_packed)
 		var expected_finalized_trace: Array = reference_result.get("presentation_trace", []).duplicate(true)
-		expected_finalized_trace.append({
-			"tick_offset": Solver.ACTION_TICKS + 1,
-			"upper_phase_fp": int(native_state.get("upper_phase_fp", 0)),
-			"lower_phase_fp": int(native_state.get("lower_phase_fp", 0)),
-			"bodies": Solver.body_views(native_state),
-		})
 		if JSON.stringify(finalized_trace) != JSON.stringify(expected_finalized_trace):
 			failures.append("native packed tick-49 finalization did not decode to the exact legacy 14-frame trace")
 		_check_trusted_contract_negatives(core, source, base_config, failures)
@@ -172,9 +166,9 @@ func _check_full_cap_adapter_selection(failures: Array[String]) -> void:
 		failures.append("full-cap production adapter rejected the real native result and double-ran the GDScript fallback")
 	if int((result.get("metrics", {}) as Dictionary).get("fixed_ticks", 0)) != Solver.ACTION_TICKS:
 		failures.append("full-cap native adapter smoke did not complete its fixed-tick action")
-	if int((result.get("presentation_trace_packed", {}) as Dictionary).get("frame_count", 0)) != 13 \
-			or Solver.decode_packed_presentation_trace(result.get("presentation_trace_packed", {})).size() != 13:
-		failures.append("full-cap native adapter did not publish all 13 solver frames through the packed trace boundary")
+	if int((result.get("presentation_trace_packed", {}) as Dictionary).get("frame_count", 0)) != 14 \
+			or Solver.decode_packed_presentation_trace(result.get("presentation_trace_packed", {})).size() != 14:
+		failures.append("full-cap native adapter did not publish all 14 authoritative frames through the packed trace boundary")
 
 
 func _legacy_solver_result(result: Dictionary) -> Dictionary:
