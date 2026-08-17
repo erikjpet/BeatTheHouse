@@ -1711,23 +1711,39 @@ func _check_multi_slot_reentry_uses_selected_fixture(app: Control) -> bool:
 		return false
 	if not _install_multi_slot_fixture_room(app, run_state):
 		return false
+	var before_fixture_3_open := JSON.stringify(run_state.to_dict())
 	if not bool(app.call("activate_interactable_object", "game:slot:3")):
 		push_error("Multi-slot reentry fixture could not enter slot fixture 3.")
 		return false
 	await process_frame
-	var active_keys: Dictionary = run_state.current_environment.get("active_game_state_keys", {}) if typeof(run_state.current_environment.get("active_game_state_keys", {})) == TYPE_DICTIONARY else {}
-	if str(active_keys.get("slot", "")) != "slot:3":
-		push_error("Entering slot fixture 3 did not select state key slot:3.")
+	var after_fixture_3_open := JSON.stringify(run_state.to_dict())
+	if after_fixture_3_open != before_fixture_3_open:
+		push_error("Opening slot fixture 3 mutated serialized RunState.")
+		return false
+	if str(app.get("current_game_state_key")) != "slot:3":
+		push_error("Entering slot fixture 3 did not keep state key slot:3 in transient host state.")
+		return false
+	var restored_after_open := RunState.new()
+	var serialized_after_open: Variant = JSON.parse_string(after_fixture_3_open)
+	if typeof(serialized_after_open) != TYPE_DICTIONARY:
+		push_error("Opening slot fixture 3 produced an invalid serialized RunState snapshot.")
+		return false
+	restored_after_open.from_dict(serialized_after_open as Dictionary)
+	if JSON.stringify(restored_after_open.to_dict()) != before_fixture_3_open:
+		push_error("Slot fixture 3 open did not survive serialize/restore byte-identically.")
 		return false
 	app.call("back_to_environment")
 	await process_frame
+	var before_fixture_1_open := JSON.stringify(run_state.to_dict())
 	if not bool(app.call("activate_interactable_object", "game:slot")):
 		push_error("Multi-slot reentry fixture could not re-enter slot fixture 1.")
 		return false
 	await process_frame
-	active_keys = run_state.current_environment.get("active_game_state_keys", {}) if typeof(run_state.current_environment.get("active_game_state_keys", {})) == TYPE_DICTIONARY else {}
-	if str(active_keys.get("slot", "")) != "slot":
-		push_error("Re-entering the first slot left the previous fixture active: %s." % JSON.stringify(active_keys))
+	if JSON.stringify(run_state.to_dict()) != before_fixture_1_open:
+		push_error("Re-entering slot fixture 1 mutated serialized RunState.")
+		return false
+	if str(app.get("current_game_state_key")) != "slot":
+		push_error("Re-entering slot fixture 1 left the previous transient fixture selected.")
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
@@ -1742,6 +1758,11 @@ func _check_multi_slot_reentry_uses_selected_fixture(app: Control) -> bool:
 func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 	var original_run_state: Variant = app.get("run_state")
 	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
+	var save_service: SaveService = app.get("save_service")
+	var checkpoint_slot := "ui_multi_slot_background_checkpoint"
+	if save_service == null or _remove_save_slot(save_service, checkpoint_slot) != OK:
+		push_error("Multi-slot autoplay fixture could not prepare its isolated checkpoint save.")
+		return false
 	app.call("start_foundation_run", "UI-MULTI-SLOT-AUTOPLAY")
 	await process_frame
 	var run_state: RunState = app.get("run_state")
@@ -1758,8 +1779,18 @@ func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 		machine["slot_autoplay_next_msec"] = 1
 		machine["spin_count"] = 10 if state_key == "slot" else 20 if state_key == "slot:2" else 30
 		SlotMachineStateScript.write_machine(run_state.current_environment, state_key, machine)
+	var active_keys_before_open := JSON.stringify(run_state.current_environment.get("active_game_state_keys", {}))
+	var run_before_open := JSON.stringify(run_state.to_dict())
 	if not bool(app.call("activate_interactable_object", "game:slot:2")):
 		push_error("Multi-slot autoplay fixture could not enter foreground slot fixture 2.")
+		return false
+	if JSON.stringify(run_state.to_dict()) != run_before_open:
+		push_error("Opening foreground slot fixture 2 mutated serialized RunState.")
+		return false
+	if str(app.get("current_game_state_key")) != "slot:2":
+		push_error("Foreground slot fixture 2 was not selected in transient host state.")
+		return false
+	if not _arm_foreground_slot_checkpoint_collision(app, run_state, "slot:2", "slot", "shared-runtime-animation"):
 		return false
 	app.call("_advance_environment_game_runtime")
 	var after_first_slot_1 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot").get("spin_count", 0))
@@ -1775,17 +1806,109 @@ func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 	if after_second_slot_1 != 11 or after_second_slot_2 != 20 or after_second_slot_3 != 31:
 		push_error("Second multi-slot runtime tick should advance only background slot 3; got %d/%d/%d." % [after_second_slot_1, after_second_slot_2, after_second_slot_3])
 		return false
-	var active_keys: Dictionary = run_state.current_environment.get("active_game_state_keys", {}) if typeof(run_state.current_environment.get("active_game_state_keys", {})) == TYPE_DICTIONARY else {}
-	if str(active_keys.get("slot", "")) != "slot:2":
-		push_error("Background multi-slot runtime did not restore the foreground slot fixture: %s." % JSON.stringify(active_keys))
+	var active_keys_after_runtime := JSON.stringify(run_state.current_environment.get("active_game_state_keys", {}))
+	if active_keys_after_runtime != active_keys_before_open:
+		push_error("Background multi-slot runtime leaked its fixture selection into serialized RunState: %s." % active_keys_after_runtime)
+		return false
+	if str(app.get("current_game_state_key")) != "slot:2":
+		push_error("Background multi-slot runtime did not restore the transient foreground slot fixture.")
+		return false
+	if not _saved_foreground_slot_checkpoint_isolated(save_service, checkpoint_slot, run_state, "slot:2", ["slot", "slot:3"], "background autoplay tick"):
+		return false
+
+	# Exercise the second background save path: an all-in confirmation resolves
+	# against slot 3 while slot 2 remains the visible animated cabinet. Give the
+	# two fixtures the same animation ID so state-key isolation, not ID uniqueness,
+	# is what protects the foreground checkpoint.
+	for state_key in ["slot", "slot:2", "slot:3"]:
+		var confirmation_machine: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, state_key)
+		confirmation_machine["slot_autoplay_active"] = state_key == "slot:3"
+		confirmation_machine["slot_autoplay_next_msec"] = 1 if state_key == "slot:3" else 0
+		confirmation_machine.erase("slot_animation_resume_elapsed_msec")
+		SlotMachineStateScript.write_machine(run_state.current_environment, state_key, confirmation_machine)
+	var slot_game_value: Variant = app.call("_game_module_for_id", "slot")
+	if not slot_game_value is GameModule:
+		push_error("Multi-slot confirmation fixture could not resolve the slot module.")
+		return false
+	var slot_game := slot_game_value as GameModule
+	var prior_context := slot_game.transient_state_key_context()
+	slot_game.set_transient_state_key_context("slot:3")
+	var confirmation_cost := maxi(1, slot_game.wager_cost_for_context("spin", 0, run_state, run_state.current_environment, {}))
+	slot_game.set_transient_state_key_context(prior_context)
+	run_state.bankroll = confirmation_cost
+	if not _arm_foreground_slot_checkpoint_collision(app, run_state, "slot:2", "slot:3", "shared-confirmation-animation"):
+		return false
+	app.call("_invalidate_environment_runtime_schedule", run_state.current_environment)
+	app.call("_advance_environment_game_runtime")
+	if str(app.get("pending_wager_confirm_source_game_state_key")) != "slot:3":
+		push_error("Background slot 3 did not open its final-bankroll confirmation.")
+		return false
+	app.call("confirm_pending_wager_action")
+	if str(app.get("current_game_state_key")) != "slot:2" or slot_game.transient_state_key_context() != "slot:2":
+		push_error("Confirmed background slot wager did not restore foreground slot 2 before save preparation.")
+		return false
+	if not _saved_foreground_slot_checkpoint_isolated(save_service, checkpoint_slot, run_state, "slot:2", ["slot", "slot:3"], "confirmed background wager"):
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
+	_remove_save_slot(save_service, checkpoint_slot)
 	app.set("run_state", original_run_state)
 	app.set("dev_game_test_mode", original_dev_game_test_mode)
 	app.call("_refresh_run_action_service")
 	app.call("_refresh_start_screen")
 	await process_frame
+	return true
+
+
+func _arm_foreground_slot_checkpoint_collision(app: Control, run_state: RunState, foreground_key: String, background_key: String, animation_id: String) -> bool:
+	for state_key in [foreground_key, background_key]:
+		var machine: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, state_key)
+		if machine.is_empty():
+			push_error("Slot checkpoint collision fixture could not read %s." % state_key)
+			return false
+		machine["slot_animation_id"] = animation_id
+		machine["slot_animation_duration_msec"] = 5000
+		machine["slot_animation_started_msec"] = maxi(1, Time.get_ticks_msec() - 400)
+		machine.erase("slot_animation_resume_elapsed_msec")
+		SlotMachineStateScript.write_machine(run_state.current_environment, state_key, machine)
+	var surface_canvas: Variant = app.get("game_surface_canvas")
+	if surface_canvas == null:
+		push_error("Slot checkpoint collision fixture could not access the game surface.")
+		return false
+	surface_canvas.set("surface_animation_channels", {
+		"slot_spin": {
+			"id": "slot_spin",
+			"active_id": animation_id,
+			"active": true,
+			"duration_msec": 5000,
+			"started_msec": maxi(1, Time.get_ticks_msec() - 400),
+			"clock_source": "realtime",
+			"metadata": {},
+		},
+	})
+	app.set("game_surface_ui_state", {"checkpoint_fixture_active": true})
+	return true
+
+
+func _saved_foreground_slot_checkpoint_isolated(save_service: SaveService, slot_id: String, run_state: RunState, foreground_key: String, background_keys: Array, label: String) -> bool:
+	if save_service.save_run(run_state, slot_id) != OK:
+		push_error("%s could not write its checkpoint regression save." % label.capitalize())
+		return false
+	var loaded_value: Variant = save_service.load_run(slot_id)
+	if not loaded_value is RunState:
+		push_error("%s could not reload its checkpoint regression save." % label.capitalize())
+		return false
+	var loaded := loaded_value as RunState
+	var foreground_machine: Dictionary = SlotMachineStateScript.read_machine(loaded.current_environment, foreground_key)
+	if int(foreground_machine.get("slot_animation_resume_elapsed_msec", 0)) <= 0:
+		push_error("%s omitted the visible %s animation checkpoint from save/reload." % [label.capitalize(), foreground_key])
+		return false
+	for background_key_value in background_keys:
+		var background_key := str(background_key_value)
+		var background_machine: Dictionary = SlotMachineStateScript.read_machine(loaded.current_environment, background_key)
+		if background_machine.has("slot_animation_resume_elapsed_msec"):
+			push_error("%s wrote the visible animation checkpoint into background %s." % [label.capitalize(), background_key])
+			return false
 	return true
 
 
@@ -3088,39 +3211,6 @@ func _surface_hit_rects(snapshot: Dictionary, actions: Array) -> Array:
 		if typeof(rect) == TYPE_RECT2:
 			rects.append(rect as Rect2)
 	return rects
-
-
-func _has_visible_text(node: Node, text: String) -> bool:
-	if node == null:
-		return false
-	if node is CanvasItem and not (node as CanvasItem).visible:
-		return false
-	if node is Label and (node as Label).text.find(text) != -1:
-		return true
-	if node is Button and (node as Button).text.find(text) != -1:
-		return true
-	if node is LineEdit and (node as LineEdit).text.find(text) != -1:
-		return true
-	for child in node.get_children():
-		if _has_visible_text(child, text):
-			return true
-	return false
-
-
-func _click_visible_button(node: Node, text: String) -> bool:
-	if node == null:
-		return false
-	if node is CanvasItem and not (node as CanvasItem).visible:
-		return false
-	if node is Button:
-		var button := node as Button
-		if not button.disabled and button.text == text:
-			button.emit_signal("pressed")
-			return true
-	for child in node.get_children():
-		if _click_visible_button(child, text):
-			return true
-	return false
 
 
 func _find_visible_button(node: Node, text: String) -> Button:

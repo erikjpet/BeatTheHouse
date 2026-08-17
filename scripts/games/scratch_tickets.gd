@@ -102,7 +102,7 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	var machine := _ensure_machine_state(run_state, environment, true)
+	var machine := _ensure_machine_state(run_state, environment, false)
 	var active_ticket := _dict_ref(machine.get("active_ticket", {}))
 	var stock := _stock_view(machine)
 	var queue := _dictionary_array(machine.get("pending_queue", []))
@@ -485,7 +485,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 
 
 func environment_interactable_objects(run_state: RunState, environment: Dictionary) -> Array:
-	var machine := _ensure_machine_state(run_state, environment, true)
+	var machine := _ensure_machine_state(run_state, environment, false)
 	var payout := _pending_payout(machine)
 	var winners := _dictionary_array(machine.get("winner_pile", [])).size()
 	var label := _redeemer_label(environment)
@@ -541,7 +541,7 @@ func environment_action_command(hook_id: String, action_id: String, run_state: R
 
 
 func environment_runtime_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var machine := _ensure_machine_state(run_state, environment, true)
+	var machine := _ensure_machine_state(run_state, environment, false)
 	var active := _dict_ref(machine.get("active_ticket", {}))
 	var payout := _pending_payout(machine)
 	return {
@@ -1908,8 +1908,6 @@ func _add_restock_tickets(machine: Dictionary, count: int, rng: RngStream) -> in
 func _refresh_scalper_for_visit(run_state: RunState, environment: Dictionary, machine: Dictionary) -> bool:
 	if run_state == null:
 		return false
-	if not environment.has("entered_game_clock_minutes"):
-		environment["entered_game_clock_minutes"] = run_state.game_clock_minutes
 	var visit_token := _scratch_visit_token(run_state, environment)
 	if run_state.is_tutorial_run():
 		var tutorial_changed := bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false))
@@ -2104,16 +2102,24 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 	if typeof(value) == TYPE_DICTIONARY and not (value as Dictionary).is_empty():
 		var machine := value as Dictionary if persist else (value as Dictionary).duplicate(true)
 		_normalize_machine_state(machine, run_state)
+		# Project elapsed restocks and the visit-scoped scalper on the owned copy
+		# used by presentation reads. Persistent callers receive the same
+		# deterministic projection and commit it at their action boundary.
+		_refresh_scalper_for_visit(run_state, environment, machine)
+		_advance_restock_schedule(run_state, environment, machine)
 		if persist:
-			_refresh_scalper_for_visit(run_state, environment, machine)
-			_advance_restock_schedule(run_state, environment, machine)
-		_sync_portable_ticket_state(run_state, environment, machine)
+			_sync_portable_ticket_state(run_state, environment, machine)
+		else:
+			_merge_portable_ticket_state_readonly(run_state, environment, machine)
 		return machine
 	var generated := _generate_machine_state(run_state, environment, null)
 	_normalize_machine_state(generated, run_state)
+	_refresh_scalper_for_visit(run_state, environment, generated)
+	_advance_restock_schedule(run_state, environment, generated)
 	if persist:
-		_refresh_scalper_for_visit(run_state, environment, generated)
-	_sync_portable_ticket_state(run_state, environment, generated)
+		_sync_portable_ticket_state(run_state, environment, generated)
+	else:
+		_merge_portable_ticket_state_readonly(run_state, environment, generated)
 	if persist:
 		var writable_states := states.duplicate(false)
 		writable_states[get_id()] = generated
@@ -2173,6 +2179,24 @@ func _sync_portable_ticket_state(run_state: RunState, environment: Dictionary, m
 	for field in ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
 		if portable.has(field):
 			machine[field] = portable[field]
+	_normalize_machine_state(machine, run_state)
+
+
+func _merge_portable_ticket_state_readonly(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
+	if run_state == null:
+		return
+	var portable := run_state.portable_ticket_state(get_id(), environment)
+	if portable.is_empty():
+		return
+	for field in ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
+		if portable.has(field):
+			var value: Variant = portable[field]
+			if typeof(value) == TYPE_DICTIONARY:
+				machine[field] = (value as Dictionary).duplicate(true)
+			elif typeof(value) == TYPE_ARRAY:
+				machine[field] = (value as Array).duplicate(true)
+			else:
+				machine[field] = value
 	_normalize_machine_state(machine, run_state)
 
 
