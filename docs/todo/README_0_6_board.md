@@ -651,6 +651,15 @@ What happens then is the owner's, not an agent's:
   target indexing and the provably redundant P0-P3 refresh work, with parity
   tests; broad dirty-state/revision caching remains out of scope unless a fresh
   profile proves it necessary.
+- 2026-08-17 [pusher06_2 interrupt fast-path review] Final cross-review returned
+  the first interrupt branch: quiet actions still reached the full unavoidable-
+  event pack scan, and positive-Heat/supported-table paths still scanned every
+  event. The fundamental correction must publish ordered, data-derived action,
+  heat, and table candidate indexes that preserve authored order and exact RNG;
+  the real outer action path must prove zero full-pack visits/deep trace copies/
+  unnecessary surface builds. Closing, forced-travel, unavoidable short-circuit
+  order and same-length direct-content replacement invalidation also require
+  behavioral coverage. The branch is not accepted or integrated.
 - 2026-08-17 [pusher06_2 presentation gaps] Independent static review ACCEPTS
   all three corrections after returning float quota math and two false-positive
   tests. Opening generation uses integer-only deterministic per-shelf quotas
