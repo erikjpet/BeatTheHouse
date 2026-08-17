@@ -28,6 +28,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	before_travel_objects.append_array(casino_spatial_interactable_objects(host))
 	before_travel_objects.append_array(environment_layer_interactable_objects(host))
 	before_travel_objects.append_array(numbers_interactable_objects(host))
+	before_travel_objects.append_array(crew_presence_interactable_objects(host))
 	var after_travel_objects: Array = []
 	var room_return_object = host._parent_home_return_interactable_object()
 	if not room_return_object.is_empty():
@@ -74,6 +75,52 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_locked": host._closing_time_blocks_environment_actions(),
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	})
+
+
+static func crew_presence_interactable_objects(host: Variant) -> Array:
+	var result: Array = []
+	if host.run_state == null:
+		return result
+	var index := 0
+	for value in host._copy_array(host.run_state.current_environment.get("crew_presence", [])):
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var presence: Dictionary = value
+		var member_id := str(presence.get("member_id", "")).strip_edges()
+		var line := str(presence.get("line", "")).strip_edges()
+		if member_id.is_empty() or line.is_empty():
+			continue
+		var speaker: Dictionary = host._resolve_character_speaker({
+			"role": "crew",
+			"name": member_id.trim_prefix("crew_").capitalize(),
+			"character_id": member_id,
+			"voice_line_key": "favor_due",
+		}, "crew_presence:%s" % member_id, "favor_due")
+		var label := str(speaker.get("speaking_character_name", member_id.trim_prefix("crew_").capitalize()))
+		var object_id := "crew_presence:%s" % member_id
+		result.append(host._make_interactable_object({
+			"object_id": object_id,
+			"object_type": "dialogue",
+			"visual_type": "character",
+			"source_id": member_id,
+			"label": label,
+			"short_description": line,
+			"presence": "ambient",
+			"interactive": false,
+			"enabled": false,
+			"disabled_reason": line,
+			"action_summary": line,
+			"status_summary": str(presence.get("rank", "marker")).replace("_", " ").capitalize(),
+			"visual_key": "crew_presence",
+			"prop": "patron",
+			"icon_key": "rowdy_regular",
+			"character_actor": speaker,
+			"available_actions": [],
+			"confirm_action_id": "",
+			"focus_rect": host._interaction_rect_for_object(object_id, "dialogue", index),
+		}))
+		index += 1
+	return result
 
 
 static func delivery_interactable_objects(host: Variant, occupied_objects: Array = []) -> Array:

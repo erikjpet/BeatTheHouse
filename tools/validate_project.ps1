@@ -33,6 +33,7 @@ $requiredFiles = @(
     "scripts/core/content_library.gd",
     "scripts/core/character_roster.gd",
     "scripts/core/crew_state_model.gd",
+    "scripts/core/crew_recruitment_model.gd",
     "scripts/core/rng_stream.gd",
     "scripts/core/run_generator.gd",
     "scripts/core/save_service.gd",
@@ -41,6 +42,7 @@ $requiredFiles = @(
     "scripts/ui/visual_style.gd",
     "scripts/tests/foundation/check_lenders_release_saves.gd",
     "scripts/tests/foundation/interactable_event_class_guard.gd",
+    "scripts/tests/foundation/crew_recruitment_contract.gd",
     "scripts/tests/foundation/check_scratch_tickets.gd",
     "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd",
     "tools/check_godot.ps1",
@@ -59,6 +61,7 @@ $requiredFiles = @(
     "data/games/scratch_tickets.json",
     "data/debt/lenders.json",
     "data/crew/crew.json",
+    "data/crew/recruitment.json",
     "data/crew/jobs.json",
     "data/services/services.json",
     "data/travel/routes.json",
@@ -199,6 +202,7 @@ $expectedClasses = @{
     "scripts/core/profile_inventory.gd" = "class_name ProfileInventory"
     "scripts/core/content_library.gd" = "class_name ContentLibrary"
     "scripts/core/scenario_engine.gd" = "class_name ScenarioEngine"
+    "scripts/core/crew_recruitment_model.gd" = "class_name CrewRecruitmentModel"
     "scripts/core/rng_stream.gd" = "class_name RngStream"
     "scripts/core/run_generator.gd" = "class_name RunGenerator"
     "scripts/core/save_service.gd" = "class_name SaveService"
@@ -715,6 +719,8 @@ $eventConsequenceKeys = $resultDeltaKeys + @(
     "check",
     "resolve_event",
     "trigger_event",
+    "crew_recruit_member",
+    "crew_meet_member",
     "lender_hook",
     "debt_settlement_discount_percent"
 )
