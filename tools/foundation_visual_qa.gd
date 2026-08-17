@@ -9,6 +9,7 @@ const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
+const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const REPORT_PATH := "user://foundation_visual_qa_report.json"
 const TEST_SETTINGS_PATH := "user://settings_foundation_visual_qa.json"
 const TEST_META_COLLECTION_PATH := "user://foundation_visual_qa_meta_collection.json"
@@ -68,13 +69,11 @@ var report := {
 		"r100_stab_no_scroll_critical_path": false,
 		"r100_stab_game_surface_no_overlap": false,
 		"r100_stab_result_useful_or_hidden": false,
-		"streets_package_surface": false,
-		"streets_multi_stop_surface": false,
-		"streets_multi_stop_progress": false,
-		"streets_hold_surface": false,
-		"streets_hold_signal_exit": false,
-		"streets_idle_liveness": false,
-		"streets_failure_exit": false,
+		"delivery_map_layer": false,
+		"delivery_target_marker": false,
+		"delivery_in_venue_handoff": false,
+		"delivery_idle_liveness": false,
+		"delivery_failure_exit": false,
 		"numbers_book_surface": false,
 		"numbers_slip_purchase": false,
 		"numbers_silas_surface": false,
@@ -223,7 +222,7 @@ func _run() -> void:
 	_require(await _try_travel_object_flow("home-first start"), "Could not travel from the home start into the world.")
 	_return_to_room_view()
 	await _settle()
-	await _verify_streets_surface()
+	await _verify_delivery_surface()
 	await _verify_numbers_surfaces()
 	await _prepare_multi_game_visual_qa_fixture()
 	await _verify_all_visible_game_objects_clickable()
@@ -2694,7 +2693,7 @@ func _record_state(name: String, description: String) -> void:
 		"spatial": app.call("current_spatial_interaction_snapshot") if app.has_method("current_spatial_interaction_snapshot") else {},
 		"popup": app.call("current_event_choice_popup_snapshot") if app.has_method("current_event_choice_popup_snapshot") else {},
 		"talk": app.call("current_talk_dock_snapshot") if app.has_method("current_talk_dock_snapshot") else {},
-		"streets": (app.get("run_state") as RunState).streets_snapshot() if app.get("run_state") != null else {},
+		"delivery": (app.get("run_state") as RunState).delivery_snapshot() if app.get("run_state") != null else {},
 	})
 
 
@@ -2898,26 +2897,18 @@ func _verify_numbers_surfaces() -> void:
 	settings.reduce_motion = false
 	_require(not _click_visible_button_role("numbers_runner_button", ["Lucky's Collection Route"]).is_empty(), "Associate Lucky runner did not start through the visible desk control.")
 	await _settle()
-	_require(run_state.streets_has_active_run() and _has_visible_text(app, "THE ROUNDS"), "Visible Lucky runner did not enter the frozen multi-stop Streets surface.")
-	_cover("numbers_runner_surface")
-	_record_state("numbers_runner_surface", "Lucky's associate collection entered the live multi-stop Streets surface from the L3 desk.")
-	_require(not _click_button_exact("DITCH").is_empty(), "Numbers runner fixture could not leave the Streets surface through its visible Ditch action.")
+	_require(run_state.delivery_has_active_run(), "Visible Lucky runner did not enter real-map multi-stop delivery.")
+	_require(bool(app.call("open_world_map")), "Lucky runner could not open the existing courier map.")
 	await _settle()
-	var ditched_runner := run_state.active_streets_run
-	_require(
-		str(ditched_runner.get("status", "")) == "resolved"
-			and str((ditched_runner.get("resolution", {}) as Dictionary).get("reason", "")) == "ditched",
-		"Numbers runner Ditch did not resolve through the authored Streets failure path."
-	)
-	_require(
-		str(run_state.current_environment.get("archetype_id", "")) == "small_underground_casino"
-			and str(run_state.current_environment.get("current_layer_id", "")) == "club",
-		"Numbers runner Ditch did not consume its authored Punchline travel continuation."
-	)
-	_require(
-		run_state.run_status == "failed" and run_state.run_failure_reason == "stranded",
-		"Numbers runner Ditch did not preserve its terminal stranded consequence."
-	)
+	var runner_map: Dictionary = app.call("_world_map_snapshot")
+	_require(bool((runner_map.get("courier_layer", {}) as Dictionary).get("active", false)), "Lucky runner did not enrich the existing map with courier state.")
+	_cover("numbers_runner_surface")
+	_record_state("numbers_runner_surface", "Lucky's associate collection marked its real stops and contraband on the existing world map.")
+	app.call("close_world_map")
+	run_state.delivery_abandon()
+	app.call("_refresh")
+	await _settle()
+	_require(not run_state.delivery_has_active_run(), "Numbers runner abandon did not return to the room cleanly.")
 
 	# The made-rank fix is an independent desk contract. After proving the Ditch
 	# consequence above, install a fresh L3 fixture rather than pretending the
@@ -2943,19 +2934,26 @@ func _verify_numbers_surfaces() -> void:
 	await _settle()
 	_require(not _click_visible_button_role("numbers_fix_button", ["Move the Fix Package"]).is_empty(), "Made-rank fix did not start through the visible desk control.")
 	await _settle()
-	_require(run_state.streets_has_active_run() and str(run_state.numbers_desk_status().get("fix_stage", "")) == "bribe_running", "Visible fix entry did not enter the frozen package Streets surface.")
+	_require(run_state.delivery_has_active_run() and str(run_state.numbers_desk_status().get("fix_stage", "")) == "bribe_running", "Visible fix entry did not enter real-map package delivery.")
 	_cover("numbers_fix_surface")
-	var fix_board := (run_state.active_streets_run.get("board", {}) as Dictionary).duplicate(true)
-	fix_board["patrols"] = []
-	run_state.active_streets_run["board"] = fix_board
-	run_state.active_streets_run["player"] = (fix_board.get("destination", {}) as Dictionary).duplicate(true)
+	var fix_targets: Array = run_state.delivery_snapshot().get("targets", [])
+	var fix_target_id := str((fix_targets[0] as Dictionary).get("node_id", ""))
+	var fix_node := WorldMapScript.node_metadata_by_id(run_state.world_map, fix_target_id)
+	var fix_archetype_id := str(fix_node.get("archetype_id", fix_target_id))
+	await _prepare_visual_qa_fixture_environment(fix_archetype_id, "visual_numbers_fix_drop", {"event_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": []}, 200)
+	run_state.world_map = WorldMapScript.enter_node(run_state.world_map, fix_target_id, run_state.current_environment)
+	run_state.current_environment["world_node_id"] = fix_target_id
+	var fix_arrival := run_state.delivery_resolve_travel_arrival({"target_node_id": fix_target_id}, {})
 	app.call("_refresh")
 	await _settle()
-	_require(not _click_button_exact("WAIT").is_empty(), "Numbers fix fixture could not complete its visible successful Streets delivery.")
+	canvas = app.get("environment_canvas") as Control
+	var handoff_id := "delivery:handoff:%s" % fix_target_id
+	var handoff_object := _canvas_object_by_id(canvas, handoff_id)
+	_require(bool(fix_arrival.get("handoff_ready", false)) and not handoff_object.is_empty(), "Numbers fix fixture arrival did not produce the physical handoff actor.")
+	_require(not (await _double_click_canvas_object_data(canvas, handoff_object, "delivery")).is_empty(), "Physical Numbers fix handoff could not be completed in the room.")
 	await _settle()
-	_require(str(run_state.numbers_desk_status().get("fix_stage", "")) == "camouflage", "Visible successful fix delivery did not reach camouflage.")
-	app.call("_refresh")
-	await _settle()
+	_require(str(run_state.numbers_desk_status().get("fix_stage", "")) == "camouflage", "Visible successful fix handoff did not reach camouflage.")
+	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_numbers_fix_allocation", {"event_ids": ["numbers_desk"], "required_event_ids": ["numbers_desk"], "item_offers": [], "service_ids": [], "lender_hooks": []}, 200, "back_room")
 	canvas = app.get("environment_canvas") as Control
 	desk_object = _canvas_object_by_id(canvas, "event:numbers_desk")
 	_require(not (await _double_click_canvas_object_data(canvas, desk_object, "numbers")).is_empty(), "Numbers desk could not reopen for allocation QA.")
@@ -2985,112 +2983,75 @@ func _verify_numbers_surfaces() -> void:
 	_cover("numbers_fix_payday")
 
 
-func _verify_streets_surface() -> void:
+func _verify_delivery_surface() -> void:
 	var run_state: RunState = app.get("run_state")
-	_require(run_state != null, "Streets visual QA could not access the active run.")
-	var started := run_state.streets_begin({
-		"mode": "package",
-		"route_id": "visual_qa_package",
-		"origin_node_id": run_state.current_world_node_id() if not run_state.current_world_node_id().is_empty() else "back_alley",
-		"destination_node_id": "visual_qa_drop",
-		"distance": "remote",
-		"deadline_actions": 24,
-		"cargo_id": "visual_qa_package",
-	})
-	_require(bool(started.get("ok", false)), "Streets visual QA package fixture did not start.")
-	app.call("_refresh")
+	_require(run_state != null, "Delivery visual QA could not access the active run.")
+	var started := run_state.delivery_begin_package({"run_id": "visual_qa_package", "deadline_actions": 24, "cargo_id": "visual_qa_package", "cargo_label": "Wrapped case"})
+	_require(bool(started.get("ok", false)), "Delivery visual QA package fixture did not start on the generated map.")
+	_require(bool(app.call("open_world_map")), "Delivery visual QA could not open the existing world map.")
 	await _settle()
-	_require(_has_visible_text(app, "RUN THE PACKAGE"), "Streets package title was not visible.")
-	_require(_has_visible_button_exact("DITCH"), "Streets surface did not expose its clean failure verb.")
-	var controller: Variant = app.get("streets_controller")
-	_require(controller != null and bool(controller.call("is_visible")), "Streets controller was not visible over the live run.")
-	_cover("streets_package_surface")
+	var map_snapshot: Dictionary = app.call("_world_map_snapshot")
+	var courier_layer: Dictionary = map_snapshot.get("courier_layer", {}) if typeof(map_snapshot.get("courier_layer", {})) == TYPE_DICTIONARY else {}
+	_require(bool(courier_layer.get("active", false)) and str((courier_layer.get("cargo", {}) as Dictionary).get("label", "")) == "Wrapped case", "Courier map did not show carried contraband.")
+	_require(not (courier_layer.get("edge_reads", []) as Array).is_empty(), "Courier map did not show qualitative per-edge risk.")
+	var target_id := str(((run_state.delivery_snapshot().get("targets", []) as Array)[0] as Dictionary).get("node_id", ""))
+	var target_marked := false
+	for node_value in map_snapshot.get("nodes", []):
+		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == target_id:
+			target_marked = bool((node_value as Dictionary).get("delivery_target", false)) and str((node_value as Dictionary).get("delivery_marker_label", "")).find("24") >= 0
+			break
+	_require(target_marked, "Courier target marker did not show its remaining deadline on the real node.")
+	var map_canvas := app.get("world_map_nodes_layer") as Control
+	_require(map_canvas != null and map_canvas.visible and bool(map_canvas.get("courier_active")), "Courier annotations were not cached by the existing map canvas.")
+	_require((map_canvas.get("courier_edge_reads_by_id") as Dictionary).size() == (courier_layer.get("edge_reads", []) as Array).size(), "Courier edge cache did not match the map snapshot.")
+	_cover("delivery_map_layer")
+	_cover("delivery_target_marker")
+	_record_state("delivery_map_layer", "The existing town map shows a real-node drop, deadline, contraband header, and qualitative edge risk.")
 	await create_timer(0.15).timeout
-	_require(bool(controller.call("idle_animation_running")) and float(controller.call("measured_idle_liveness")) > 0.001, "Streets surface did not measure live idle movement.")
-	_cover("streets_idle_liveness")
-	_record_state("streets_package_surface", "Remote-distance package board with live weather, patrol, prop, deadline, and verb presentation.")
-	_require(not _click_button_exact("DITCH").is_empty(), "Streets visual QA could not use the visible Ditch verb.")
+	_require(map_canvas.is_processing() and bool(map_canvas.call("_current_marker_pulse_active")), "Open courier map did not retain its normal idle marker liveness.")
+	_cover("delivery_idle_liveness")
+	var target_node := WorldMapScript.node_metadata_by_id(run_state.world_map, target_id)
+	var travel_count_before := run_state.environment_travel_count()
+	var clock_before := run_state.game_clock_minutes
+	var delivery_path := WorldMapScript.path_between(run_state.world_map, run_state.current_world_node_id(), target_id, true)
+	_require(not target_node.is_empty() and delivery_path.size() >= 2, "Visual delivery target did not have a revealed real-map path.")
+	for path_index in range(1, delivery_path.size()):
+		var segment_id := str(delivery_path[path_index])
+		if path_index > 1:
+			_require(bool(app.call("open_world_map")), "Visual delivery could not reopen the existing map for its next segment.")
+			await _settle()
+		var segment_choice: Dictionary = app.call("_travel_choice", segment_id)
+		_require(not segment_choice.is_empty() and bool(segment_choice.get("enabled", false)), "Visual delivery segment was not a normal open route.")
+		_require(bool(app.call("select_world_map_node", segment_id)), "Visual delivery segment could not be selected through the existing map.")
+		app.call("confirm_world_map_travel")
+		for _travel_frame in range(24):
+			await process_frame
+			if run_state.current_world_node_id() == segment_id and not bool(app.get("travel_transition_active")):
+				break
+		await _settle()
+		_require(run_state.current_world_node_id() == segment_id, "Visual delivery did not arrive at its selected real-map segment.")
+		app.call("back_to_environment")
+		await _settle()
+	var generated_environment: Dictionary = run_state.current_environment
+	_require(run_state.current_world_node_id() == target_id and run_state.environment_travel_count() == travel_count_before + delivery_path.size() - 1, "Visual delivery did not complete through normal map travel.")
+	_require(str(generated_environment.get("world_node_id", "")) == target_id and str(generated_environment.get("archetype_id", "")) == str(target_node.get("archetype_id", "")), "Visual delivery did not enter its real target node.")
+	_require(not (generated_environment.get("layout", {}) as Dictionary).is_empty() and run_state.game_clock_minutes > clock_before, "Visual delivery bypassed normal time or RunGenerator room generation.")
+	var canvas := app.get("environment_canvas") as Control
+	var handoff_id := "delivery:handoff:%s" % target_id
+	var handoff_object := _canvas_object_by_id(canvas, handoff_id)
+	_require(not handoff_object.is_empty() and str(run_state.delivery_arrival_interaction().get("object_id", "")) == handoff_id, "Production travel did not expose the physical delivery handoff in the generated room.")
+	_cover("delivery_in_venue_handoff")
+	_record_state("delivery_in_venue_handoff", "Normal map travel pays its route cost, advances time and risk, generates the real target room and exposes the package handoff as a physical character interaction.")
+	_require(not (await _double_click_canvas_object_data(canvas, handoff_object, "delivery")).is_empty(), "Physical delivery handoff could not be completed in the generated room.")
 	await _settle()
-	_require(not run_state.streets_has_active_run() and not bool(controller.call("is_visible")), "Ditch did not fail and exit the Streets surface cleanly.")
-	_cover("streets_failure_exit")
-
-	var multi_started := run_state.streets_begin_multi_stop({
-		"route_id": "visual_qa_multi_stop",
-		"origin_node_id": "visual_qa_rounds_start",
-		"destination_node_id": "visual_qa_rounds_finish",
-		"distance": "near",
-		"deadline_actions": 12,
-		"order_mode": "ordered",
-		"stops": [
-			{"id": "numbers_store", "label": "Corner Store"},
-			{"id": "numbers_motel", "label": "Motel"},
-		],
-	})
-	_require(bool(multi_started.get("ok", false)), "Streets visual QA multi-stop fixture did not start.")
-	var multi_board: Dictionary = run_state.active_streets_run.get("board", {})
-	multi_board["patrols"] = []
-	var multi_stops: Array = run_state.active_streets_run.get("stops", [])
-	_require(multi_stops.size() == 2, "Streets visual QA multi-stop fixture did not expose two stops.")
-	var first_stop: Dictionary = multi_stops[0] if not multi_stops.is_empty() else {}
-	var first_stop_position: Dictionary = first_stop.get("position", {}) if typeof(first_stop.get("position", {})) == TYPE_DICTIONARY else {}
-	run_state.active_streets_run["board"] = multi_board
-	run_state.active_streets_run["player"] = {
-		"x": int(first_stop_position.get("x", 1)) - 1,
-		"y": int(first_stop_position.get("y", 0)),
-	}
+	_require(not run_state.delivery_has_active_run(), "Physical delivery handoff did not resolve the active run.")
+	var failure_started := run_state.delivery_begin_package({"run_id": "visual_qa_failure", "deadline_actions": 24, "cargo_id": "visual_qa_failure", "cargo_label": "Wrapped case"})
+	_require(bool(failure_started.get("ok", false)), "Delivery failure-exit fixture could not start after the real handoff.")
+	var abandoned := run_state.delivery_abandon()
 	app.call("_refresh")
 	await _settle()
-	_require(bool(controller.call("is_visible")), "Multi-stop Streets surface did not open through the production controller.")
-	_require(_has_visible_text(app, "THE ROUNDS") and _has_visible_text(app, "Make the rounds: 0/2 stops"), "Multi-stop Streets surface did not present its distinct title and stop objective.")
-	_require(_has_visible_button_exact("1") and _has_visible_button_exact("DITCH") and not _has_visible_button_exact("SIGNAL"), "Multi-stop Streets surface did not present its numbered stop and cargo controls.")
-	_cover("streets_multi_stop_surface")
-	_record_state("streets_multi_stop_surface", "Ordered two-stop rounds board with numbered stops, deadline, cargo controls, and no Hold signal.")
-	_require(not _click_button_exact("1").is_empty(), "Streets visual QA could not enter the first numbered stop through its visible board cell.")
-	await _settle()
-	var multi_progress := run_state.streets_snapshot()
-	var progressed_stops: Array = multi_progress.get("stops", []) if typeof(multi_progress.get("stops", [])) == TYPE_ARRAY else []
-	_require(run_state.streets_has_active_run() and not progressed_stops.is_empty() and bool((progressed_stops[0] as Dictionary).get("visited", false)), "Visible multi-stop movement did not complete the first ordered stop.")
-	_require(_has_visible_text(app, "Make the rounds: 1/2 stops"), "Multi-stop Streets surface did not refresh its player-facing stop progress.")
-	_cover("streets_multi_stop_progress")
-	_record_state("streets_multi_stop_progress", "The first numbered stop was entered through the live grid and the objective advanced to one of two stops.")
-	_require(not _click_button_exact("DITCH").is_empty(), "Streets visual QA could not exit the multi-stop fixture through its visible Ditch verb.")
-	await _settle()
-	_require(not run_state.streets_has_active_run() and not bool(controller.call("is_visible")), "Multi-stop Ditch did not exit the production Streets controller.")
-
-	var hold_started := run_state.streets_begin_hold({
-		"route_id": "visual_qa_hold",
-		"origin_node_id": "visual_qa_hold_corner",
-		"destination_node_id": "visual_qa_hold_corner",
-		"distance": "near",
-		"deadline_actions": 8,
-		"signal_window": {"start": 2, "end": 3},
-		"fast_threshold_actions": 3,
-	})
-	_require(bool(hold_started.get("ok", false)), "Streets visual QA Hold fixture did not start.")
-	var hold_board: Dictionary = run_state.active_streets_run.get("board", {})
-	hold_board["patrols"] = []
-	run_state.active_streets_run["board"] = hold_board
-	app.call("_refresh")
-	await _settle()
-	_require(bool(controller.call("is_visible")), "Hold Streets surface did not open through the production controller.")
-	_require(_has_visible_text(app, "HOLD THE CORNER") and _has_visible_text(app, "Signal on ticks 2-3"), "Hold Streets surface did not present its distinct title and signal window objective.")
-	_require(_has_visible_button_exact("WAIT") and _has_visible_button_exact("SIGNAL") and not _has_visible_button_exact("DITCH"), "Hold Streets surface did not present its distinct Wait/Signal controls.")
-	_cover("streets_hold_surface")
-	_record_state("streets_hold_surface", "Hold board at the authored mark with a visible tick-two-to-three signal window and distinct Wait/Signal controls.")
-	_require(not _click_button_exact("WAIT").is_empty(), "Streets visual QA could not wait through the first Hold tick.")
-	await _settle()
-	_require(not _click_button_exact("WAIT").is_empty(), "Streets visual QA could not wait into the Hold signal window.")
-	await _settle()
-	var hold_window_snapshot := run_state.streets_snapshot()
-	_require(run_state.streets_has_active_run() and int(hold_window_snapshot.get("turn", 0)) == 2 and int(hold_window_snapshot.get("deadline_remaining", 0)) == 6, "Visible Hold actions did not reach the authored signal window on exactly two boundaries.")
-	_record_state("streets_hold_signal_window", "Two visible Wait actions reached tick two with six deadline ticks left and Signal still available.")
-	_require(not _click_button_exact("SIGNAL").is_empty(), "Streets visual QA could not use Signal inside the visible Hold window.")
-	await _settle()
-	var hold_resolution: Dictionary = run_state.active_streets_run.get("resolution", {})
-	_require(not run_state.streets_has_active_run() and not bool(controller.call("is_visible")), "Successful Hold signal did not exit the production Streets controller.")
-	_require(str(hold_resolution.get("outcome", "")) == "success" and str(hold_resolution.get("reason", "")) == "signaled" and int(hold_resolution.get("turns_used", 0)) == 3, "Visible Hold signal did not resolve successfully on its third action.")
-	_cover("streets_hold_signal_exit")
-	_record_state("streets_hold_signal_exit", "Signal was pressed inside the authored window, resolved success on action three, and returned to the room.")
+	_require(bool(abandoned.get("resolved", false)) and not run_state.delivery_has_active_run(), "Delivery abandon did not return to the ordinary room cleanly.")
+	_cover("delivery_failure_exit")
 
 
 func _screen_summary() -> Dictionary:
