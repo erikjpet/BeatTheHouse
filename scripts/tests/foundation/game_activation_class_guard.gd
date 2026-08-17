@@ -4,6 +4,7 @@ extends RefCounted
 # be observational; persistent changes belong to a resolved player action.
 
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
@@ -57,17 +58,62 @@ class MutatingActivationFixture:
 		return super.coach_state(run_state, environment, ui_state)
 
 
+class MaskingActivationFixture:
+	extends GameModule
+
+	func environment_runtime_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+		# This cache is intentionally absent from RunState serialization. Sharing a
+		# live fixture across hooks would carry it into the next assertion.
+		run_state.set_meta("activation_mask", true)
+		return super.environment_runtime_state(run_state, environment)
+
+	func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+		if not run_state.has_meta("activation_mask"):
+			run_state.narrative_flags["game_activation_fixture_masked_object"] = true
+		return super.environment_object_state(run_state, environment)
+
+
+class ByteRepresentationActivationFixture:
+	extends GameModule
+
+	func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+		if run_state.narrative_flags.has("game_activation_numeric_representation"):
+			# GDScript considers 0.0 == 0, while JSON emits float 0.0 and integer 0
+			# distinctly. Recursive semantic equality therefore misses this mutation.
+			run_state.narrative_flags["game_activation_numeric_representation"] = 0
+		return super.environment_object_state(run_state, environment)
+
+
+class SourceAliasProbeFixture:
+	extends GameModule
+
+	func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+		var payload_value: Variant = run_state.narrative_flags.get("game_activation_source_alias_probe", {})
+		if typeof(payload_value) == TYPE_DICTIONARY:
+			var nested_value: Variant = (payload_value as Dictionary).get("entries", [])
+			if typeof(nested_value) == TYPE_ARRAY and not (nested_value as Array).is_empty() and typeof((nested_value as Array)[0]) == TYPE_DICTIONARY:
+				((nested_value as Array)[0] as Dictionary)["value"] = "mutated-through-alias"
+		# Restore the live serialized graph exactly. If from_dict received the
+		# canonical dictionary directly, only that source retains the hostile write.
+		run_state.narrative_flags["game_activation_source_alias_probe"] = {
+			"entries": [{"value": "original"}],
+		}
+		return super.environment_object_state(run_state, environment)
+
+
 static func check(library: ContentLibrary, failures: Array) -> void:
 	var covered_game_ids := {}
 	var checked_contexts := {}
 	_check_generated_environment_sweep(library, covered_game_ids, checked_contexts, failures)
 	_check_catalog_coverage(library, covered_game_ids, failures)
 	_check_portable_ticket_readonly_isolation(library, failures)
+	_check_saved_slot_checkpoint_activation(library, failures)
 	_check_staff_rollover_presentation(library, failures)
 	_check_reintroduced_defect_fixture(failures)
 
 
 static func _check_generated_environment_sweep(library: ContentLibrary, covered_game_ids: Dictionary, checked_contexts: Dictionary, failures: Array) -> void:
+	var generator := RunGeneratorScript.new(library)
 	for seed_index in range(SEED_COUNT):
 		for archetype_value in library.environment_archetypes:
 			if typeof(archetype_value) != TYPE_DICTIONARY:
@@ -90,26 +136,37 @@ static func _check_generated_environment_sweep(library: ContentLibrary, covered_
 					{},
 					scenario
 				).to_dict()
-				var generator := RunGeneratorScript.new(library)
 				environment["game_states"] = generator._generated_game_states(
 					run_state,
 					environment,
 					run_state.create_rng("generated_game_states")
 				)
 				run_state.set_environment(environment)
-				var restored_run := _json_round_trip_run_state(run_state, "%s/%s/seed-%02d" % [archetype_id, scenario_id, seed_index], failures)
+				var fixture_label := "%s/%s/seed-%02d" % [archetype_id, scenario_id, seed_index]
+				var parsed_snapshot := _json_round_trip_snapshot(run_state, fixture_label, failures)
+				if parsed_snapshot.is_empty():
+					continue
+				var parsed_environment := _dict(parsed_snapshot.get("current_environment", {}))
+				_record_environment_catalog_coverage(parsed_environment, covered_game_ids)
+				var layered := int(parsed_environment.get("environment_layer_schema_version", 0)) > 0 and not str(parsed_environment.get("current_layer_id", "")).strip_edges().is_empty()
+				# Repeated seed fixtures still cross the JSON codec and contribute catalog
+				# coverage. If they add no game/state-key context and have no layers to
+				# traverse, constructing a live RunState cannot add another assertion.
+				if not layered and not _environment_has_unchecked_context(parsed_environment, scenario_id, checked_contexts):
+					continue
+				var restored_run := _run_state_from_parsed_snapshot(parsed_snapshot)
 				if restored_run == null:
+					failures.append("Game activation class guard could not restore %s." % fixture_label)
 					continue
 				run_state = restored_run
 				_check_environment(library, run_state, scenario_id, covered_game_ids, checked_contexts, failures)
 				if run_state.is_layered_environment():
-					_enter_and_check_remaining_layers(library, run_state, scenario_id, covered_game_ids, checked_contexts, failures)
+					_enter_and_check_remaining_layers(library, generator, run_state, scenario_id, covered_game_ids, checked_contexts, failures)
 
 
-static func _enter_and_check_remaining_layers(library: ContentLibrary, run_state: RunState, scenario_id: String, covered_game_ids: Dictionary, checked_contexts: Dictionary, failures: Array) -> void:
+static func _enter_and_check_remaining_layers(library: ContentLibrary, generator: RunGenerator, run_state: RunState, scenario_id: String, covered_game_ids: Dictionary, checked_contexts: Dictionary, failures: Array) -> void:
 	var remaining := _string_array(run_state.current_environment.get("layer_ids", []))
 	remaining.erase(str(run_state.current_environment.get("current_layer_id", "")))
-	var generator := RunGeneratorScript.new(library)
 	while not remaining.is_empty():
 		var entered := false
 		for transition_value in _array(run_state.current_environment.get("layer_transitions", [])):
@@ -140,6 +197,13 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 	var environment := source_run.current_environment
 	var archetype_id := str(environment.get("archetype_id", ""))
 	var layer_id := str(environment.get("current_layer_id", "base"))
+	# Every checked context in this environment starts from the same cold-restored
+	# run. Build its canonical representation lazily: most later seed contexts are
+	# already covered, so eagerly encoding them would add work without assertions.
+	var source_snapshot: Dictionary = {}
+	var source_text := ""
+	var cold_source: Dictionary = {}
+	var cold_source_text := ""
 	for game_id_value in _string_array(environment.get("game_ids", [])):
 		var game_id := str(game_id_value)
 		covered_game_ids[game_id] = true
@@ -149,6 +213,13 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 			if checked_contexts.has(context_key):
 				continue
 			checked_contexts[context_key] = true
+			if source_snapshot.is_empty():
+				source_snapshot = source_run.to_dict()
+				source_text = JSON.stringify(source_snapshot)
+				var parsed_source: Variant = JSON.parse_string(source_text)
+				if typeof(parsed_source) == TYPE_DICTIONARY:
+					cold_source = parsed_source as Dictionary
+					cold_source_text = JSON.stringify(cold_source)
 			var game := _load_game(library, game_id, failures)
 			if game == null:
 				continue
@@ -156,10 +227,27 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 			# opens a non-default generated fixture. It must select presentation
 			# without recording that selection in the serialized environment.
 			game.set_transient_state_key_context(state_key)
-			var violation := _activation_violation(game, source_run)
+			var violation := _activation_violation(game, source_run, source_snapshot, source_text, cold_source, cold_source_text)
 			game.set_transient_state_key_context("")
 			if not violation.is_empty():
 				failures.append("Game activation mutated serialized RunState for %s (%s) in %s/%s/%s: %s" % [game_id, state_key, archetype_id, layer_id, scenario_id, violation])
+
+
+static func _record_environment_catalog_coverage(environment: Dictionary, covered_game_ids: Dictionary) -> void:
+	for game_id_value in _string_array(environment.get("game_ids", [])):
+		covered_game_ids[str(game_id_value)] = true
+
+
+static func _environment_has_unchecked_context(environment: Dictionary, scenario_id: String, checked_contexts: Dictionary) -> bool:
+	var archetype_id := str(environment.get("archetype_id", ""))
+	var layer_id := str(environment.get("current_layer_id", "base"))
+	for game_id_value in _string_array(environment.get("game_ids", [])):
+		var game_id := str(game_id_value)
+		for state_key_value in _generated_state_keys(environment, game_id):
+			var context_key := "%s|%s|%s|%s|%s" % [game_id, str(state_key_value), archetype_id, layer_id, scenario_id]
+			if not checked_contexts.has(context_key):
+				return true
+	return false
 
 
 static func _check_catalog_coverage(library: ContentLibrary, covered_game_ids: Dictionary, failures: Array) -> void:
@@ -252,6 +340,99 @@ static func _check_portable_ticket_readonly_isolation(library: ContentLibrary, f
 				(preview_stack[0] as Dictionary)["hostile_preview_mutation"] = true
 			if JSON.stringify(pull_run.to_dict()) != pull_before:
 				failures.append("Pull Tabs passive merge exposed live portable ticket dictionaries to its preview copy.")
+
+
+static func _check_saved_slot_checkpoint_activation(library: ContentLibrary, failures: Array) -> void:
+	var slot_game := _load_game(library, "slot", failures)
+	if slot_game == null:
+		return
+	var run_state := RunStateScript.new()
+	run_state.start_new("GAME-ACTIVATION-SAVED-SLOT-CHECKPOINT")
+	run_state.bankroll = 1000
+	var environment := {
+		"id": "activation_saved_slot_checkpoint",
+		"world_node_id": "activation_saved_slot_checkpoint_node",
+		"archetype_id": RunState.GRAND_CASINO_ARCHETYPE_ID,
+		"display_name": "Saved Slot Checkpoint Fixture",
+		"kind": "boss",
+		"tier": 3,
+		"game_ids": ["slot"],
+		"game_states": {},
+	}
+	var states: Dictionary = slot_game.generate_environment_fixture_states(
+		run_state,
+		environment,
+		run_state.create_rng("saved_slot_checkpoint_fixtures"),
+		3
+	)
+	var state_key := "slot:2"
+	var machine := _dict(states.get(state_key, {}))
+	if machine.is_empty():
+		failures.append("Game activation saved-slot guard did not generate non-default fixture slot:2.")
+		return
+	machine["slot_animation_id"] = "saved-slot-checkpoint"
+	machine["slot_animation_duration_msec"] = 3000
+	machine["slot_animation_started_msec"] = 0
+	machine["slot_animation_resume_elapsed_msec"] = 1250
+	machine["slot_animation_plan"] = {
+		"id": "saved-slot-checkpoint",
+		"duration_msec": 3000,
+		"reel_timeline": [{"reel": 0, "stop_time": 1.0}],
+	}
+	states[state_key] = machine
+	environment["game_states"] = states
+	run_state.set_environment(environment)
+	run_state = _json_round_trip_run_state(run_state, "saved non-default slot checkpoint fixture", failures)
+	if run_state == null:
+		return
+	slot_game.set_transient_state_key_context(state_key)
+	var source_text := JSON.stringify(run_state.to_dict())
+	var violation := _activation_violation(slot_game, run_state)
+	if not violation.is_empty() or JSON.stringify(run_state.to_dict()) != source_text:
+		failures.append("Saved non-default slot checkpoint changed during passive activation: %s" % violation)
+	var surface := slot_game.surface_state(run_state, run_state.current_environment, {
+		"surface_time_msec": 10000,
+		"drunk_scaled_surface_time_msec": 10000,
+	})
+	var spin_channel := _animation_channel(surface, "slot_spin")
+	if int(spin_channel.get("elapsed_offset_msec", -1)) != 1250 \
+			or int(spin_channel.get("started_msec", -1)) != 0:
+		failures.append("Saved non-default slot checkpoint did not project its resume offset into transient surface state.")
+	if JSON.stringify(run_state.to_dict()) != source_text:
+		failures.append("Saved non-default slot checkpoint surface projection mutated durable RunState.")
+
+	var opened := RunStateScript.new()
+	opened.from_dict(run_state.to_dict().duplicate(true))
+	var direct := RunStateScript.new()
+	direct.from_dict(run_state.to_dict().duplicate(true))
+	var opened_before := JSON.stringify(opened.to_dict())
+	slot_game.enter(opened, opened.current_environment)
+	if JSON.stringify(opened.to_dict()) != opened_before:
+		failures.append("Saved non-default slot checkpoint enter was not byte-exact before play.")
+	var opened_surface := slot_game.surface_state(opened, opened.current_environment, {
+		"surface_time_msec": 10000,
+		"drunk_scaled_surface_time_msec": 10000,
+	})
+	var opened_canvas: Control = GameSurfaceCanvasScript.new()
+	opened_canvas.call("render_game_snapshot", opened_surface)
+	opened_canvas.call("surface_runtime_status")
+	opened_canvas.free()
+	if JSON.stringify(opened.to_dict()) != opened_before:
+		failures.append("Saved non-default slot checkpoint open-and-render was not byte-exact before play.")
+	var action_ui := {"surface_time_msec": 12000, "drunk_scaled_surface_time_msec": 12000}
+	var opened_result := slot_game.resolve_with_context("spin", 0, opened, opened.current_environment, opened.create_rng("saved_slot_open_play"), action_ui)
+	var direct_result := slot_game.resolve_with_context("spin", 0, direct, direct.current_environment, direct.create_rng("saved_slot_open_play"), action_ui)
+	if JSON.stringify(opened_result) != JSON.stringify(direct_result) \
+			or JSON.stringify(opened.to_dict()) != JSON.stringify(direct.to_dict()):
+		failures.append("Saved non-default slot checkpoint open-then-play diverged from direct play.")
+	slot_game.set_transient_state_key_context("")
+
+
+static func _animation_channel(surface: Dictionary, channel_id: String) -> Dictionary:
+	for channel_value in _array(surface.get("surface_animation_channels", [])):
+		if typeof(channel_value) == TYPE_DICTIONARY and str((channel_value as Dictionary).get("id", "")) == channel_id:
+			return (channel_value as Dictionary).duplicate(true)
+	return {}
 
 
 static func _check_staff_rollover_presentation(library: ContentLibrary, failures: Array) -> void:
@@ -376,20 +557,82 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 		if defect_violation.find("%s changed" % method) == -1 or defect_violation.find(expected_path) == -1:
 			failures.append("Game activation class guard did not detect the reintroduced mutate-on-%s fixture: %s" % [method, defect_violation])
 
+	var masking_run := RunStateScript.new()
+	masking_run.start_new("GAME-ACTIVATION-NONSERIALIZED-MASK-FIXTURE")
+	masking_run.set_environment(environment)
+	masking_run = _json_round_trip_run_state(masking_run, "nonserialized masking negative fixture", failures)
+	if masking_run != null:
+		var masking_game := MaskingActivationFixture.new()
+		masking_game.setup({"id": "game_activation_fixture", "display_name": "Activation Fixture", "legal_actions": [], "cheat_actions": []})
+		var masking_violation := _activation_violation(masking_game, masking_run)
+		if masking_violation.find("environment_object_state changed") == -1 or masking_violation.find("narrative_flags.game_activation_fixture_masked_object") == -1:
+			failures.append("Game activation class guard let nonserialized state from one hook mask a later mutation: %s" % masking_violation)
 
-static func _activation_violation(game: GameModule, run_state: RunState) -> String:
-	var source_snapshot := run_state.to_dict()
-	var source_text := JSON.stringify(source_snapshot)
-	var post_hook_restore_checked := false
+	var byte_representation_run := RunStateScript.new()
+	byte_representation_run.start_new("GAME-ACTIVATION-BYTE-REPRESENTATION-FIXTURE")
+	byte_representation_run.set_environment(environment)
+	byte_representation_run.narrative_flags["game_activation_numeric_representation"] = 0.0
+	byte_representation_run = _json_round_trip_run_state(byte_representation_run, "numeric byte-representation negative fixture", failures)
+	if byte_representation_run != null:
+		var cold_numeric_value: Variant = byte_representation_run.narrative_flags.get("game_activation_numeric_representation")
+		var cold_numeric_text := JSON.stringify({"value": cold_numeric_value})
+		if typeof(cold_numeric_value) != TYPE_FLOAT or cold_numeric_text != "{\"value\":0.0}":
+			failures.append("Game activation byte-representation fixture did not survive cold restore as canonical float 0.0: %s" % cold_numeric_text)
+		else:
+			var byte_representation_game := ByteRepresentationActivationFixture.new()
+			byte_representation_game.setup({"id": "game_activation_fixture", "display_name": "Activation Fixture", "legal_actions": [], "cheat_actions": []})
+			var byte_representation_violation := _activation_violation(byte_representation_game, byte_representation_run)
+			if byte_representation_violation.find("environment_object_state changed canonical byte order/type changed") == -1:
+				failures.append("Game activation class guard did not detect a semantic-equal JSON-byte representation mutation: %s" % byte_representation_violation)
+
+	var source_alias_run := RunStateScript.new()
+	source_alias_run.start_new("GAME-ACTIVATION-SOURCE-ALIAS-FIXTURE")
+	source_alias_run.set_environment(environment)
+	source_alias_run.narrative_flags["game_activation_source_alias_probe"] = {
+		"entries": [{"value": "original"}],
+	}
+	source_alias_run = _json_round_trip_run_state(source_alias_run, "source-alias isolation fixture", failures)
+	if source_alias_run != null:
+		var source_alias_game := SourceAliasProbeFixture.new()
+		source_alias_game.setup({"id": "game_activation_fixture", "display_name": "Activation Fixture", "legal_actions": [], "cheat_actions": []})
+		var source_alias_violation := _activation_violation(source_alias_game, source_alias_run)
+		if not source_alias_violation.is_empty():
+			failures.append("Game activation class guard did not isolate its immutable parsed source from live hook state: %s" % source_alias_violation)
+
+
+static func _activation_violation(game: GameModule, run_state: RunState, cached_source_snapshot: Dictionary = {}, cached_source_text: String = "", cached_cold_source: Dictionary = {}, cached_cold_source_text: String = "") -> String:
+	var source_snapshot := cached_source_snapshot if not cached_source_snapshot.is_empty() else run_state.to_dict()
+	var source_text := cached_source_text if not cached_source_text.is_empty() else JSON.stringify(source_snapshot)
+	# Parse the canonical bytes once. Every hook restores from this immutable
+	# dictionary, so hooks remain isolated without seven repeated JSON parses.
+	var cold_source := cached_cold_source
+	if cold_source.is_empty():
+		var cold_source_value: Variant = JSON.parse_string(source_text)
+		if typeof(cold_source_value) != TYPE_DICTIONARY:
+			return "could not parse canonical activation fixture"
+		cold_source = cold_source_value as Dictionary
+	# JSON parsing may normalize representation details that RunState.to_dict()
+	# later canonicalizes back to source_text. Preserve the parser's own exact
+	# baseline solely for detecting retained-reference writes into cold_source.
+	var cold_source_text := cached_cold_source_text if not cached_cold_source_text.is_empty() else JSON.stringify(cold_source)
+	# Validate one pristine cold clone exactly. RunState.from_dict retains some
+	# nested references, so every live fixture receives its own deep source copy;
+	# hooks never share state with each other or with the canonical dictionary.
+	var first_method_run := RunStateScript.new()
+	first_method_run.from_dict(cold_source.duplicate(true))
+	var canonical_snapshot := first_method_run.to_dict()
+	var canonical_text := JSON.stringify(canonical_snapshot)
+	if canonical_text != source_text:
+		return "%s could not cold-clone its canonical activation fixture" % str(ACTIVATION_METHODS[0])
+	var first_method_available := true
 	for method in ACTIVATION_METHODS:
-		# The outer fixture has already crossed the JSON codec. Preserve cold
-		# per-hook isolation without paying for seven redundant JSON parses.
-		var method_run := RunStateScript.new()
-		method_run.from_dict(source_snapshot.duplicate(true))
-		var before := method_run.to_dict()
-		var before_text := JSON.stringify(before)
-		if before_text != source_text:
-			return "%s could not cold-clone its canonical activation fixture" % method
+		var method_run: RunState
+		if first_method_available:
+			method_run = first_method_run
+			first_method_available = false
+		else:
+			method_run = RunStateScript.new()
+			method_run.from_dict(cold_source.duplicate(true))
 		match method:
 			"environment_runtime_state":
 				game.environment_runtime_state(method_run, method_run.current_environment)
@@ -406,15 +649,21 @@ static func _activation_violation(game: GameModule, run_state: RunState) -> Stri
 			"coach_state":
 				game.coach_state(method_run, method_run.current_environment, {})
 		var after := method_run.to_dict()
-		if before_text != JSON.stringify(after):
+		var after_text := JSON.stringify(after)
+		# Exact canonical bytes remain the invariant after every individual hook.
+		if after_text != source_text:
 			var paths: Array = []
-			_collect_changed_paths(before, after, "", paths)
-			return "%s changed %s" % [method, ", ".join(paths)]
-		if not post_hook_restore_checked:
-			var restored_after_open := _run_state_from_json_snapshot(after)
-			if restored_after_open == null or JSON.stringify(restored_after_open.to_dict()) != before_text:
-				return "%s changed after serialize/restore" % method
-			post_hook_restore_checked = true
+			_collect_changed_paths(canonical_snapshot, after, "", paths)
+			var change_summary := ", ".join(paths)
+			if change_summary.is_empty():
+				change_summary = "canonical byte order/type changed"
+			return "%s changed %s" % [method, change_summary]
+	# The sentinel proves cold_source -> from_dict -> to_dict is byte-canonical;
+	# every hook proves its post-state has those same bytes. A redundant eighth
+	# restore cannot strengthen that transitive proof, so retain only both source
+	# immutability checks here.
+	if JSON.stringify(cold_source) != cold_source_text:
+		return "activation hooks mutated their parsed cold source fixture"
 	if JSON.stringify(source_snapshot) != source_text:
 		return "cold activation clones mutated their canonical source fixture"
 	return ""
@@ -435,23 +684,27 @@ static func _generated_state_keys(environment: Dictionary, game_id: String) -> A
 
 
 static func _json_round_trip_run_state(run_state: RunState, label: String, failures: Array) -> RunState:
-	var snapshot := run_state.to_dict()
-	var restored := _run_state_from_json_snapshot(snapshot)
-	if restored == null:
-		failures.append("Game activation class guard could not JSON-roundtrip %s." % label)
+	var parsed_snapshot := _json_round_trip_snapshot(run_state, label, failures)
+	if parsed_snapshot.is_empty():
 		return null
+	var restored := _run_state_from_parsed_snapshot(parsed_snapshot)
 	# from_dict() intentionally normalizes legacy/default fields. The restored
 	# representation, not the pre-codec in-memory dictionary, is the activation
 	# baseline used below.
 	return restored
 
 
-static func _run_state_from_json_snapshot(snapshot: Dictionary) -> RunState:
-	var parsed: Variant = JSON.parse_string(JSON.stringify(snapshot))
+static func _json_round_trip_snapshot(run_state: RunState, label: String, failures: Array) -> Dictionary:
+	var parsed: Variant = JSON.parse_string(JSON.stringify(run_state.to_dict()))
 	if typeof(parsed) != TYPE_DICTIONARY:
-		return null
+		failures.append("Game activation class guard could not JSON-roundtrip %s." % label)
+		return {}
+	return parsed as Dictionary
+
+
+static func _run_state_from_parsed_snapshot(snapshot: Dictionary) -> RunState:
 	var restored := RunStateScript.new()
-	restored.from_dict(parsed as Dictionary)
+	restored.from_dict(snapshot)
 	return restored
 
 
@@ -478,6 +731,10 @@ static func _collect_changed_paths(before: Variant, after: Variant, path: String
 	if paths.size() >= 12:
 		return
 	if typeof(before) != typeof(after):
+		# Numerically equal int/float values are a representation-only mutation.
+		# Leave the path list empty so the exact-byte fallback reports it clearly.
+		if before == after:
+			return
 		paths.append(path if not path.is_empty() else "<root>")
 		return
 	if typeof(before) == TYPE_DICTIONARY:

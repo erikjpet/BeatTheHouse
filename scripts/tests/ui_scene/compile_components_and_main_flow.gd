@@ -111,6 +111,7 @@ func _click_visible_button(node: Node, text: String) -> bool:
 	return false
 
 
+# SPLIT_RUNNER_OMIT_BEGIN
 func _check_meta_home_launcher_opens_room(_app: Control) -> bool:
 	_missing_descendant_fixture("_check_meta_home_launcher_opens_room")
 	return false
@@ -439,6 +440,7 @@ func _canvas_surviving_object_positions_match(_before_objects: Array, _after_obj
 func _card_by_title(_cards: Array, _title: String) -> Dictionary:
 	_missing_descendant_fixture("_card_by_title")
 	return {}
+# SPLIT_RUNNER_OMIT_END
 
 
 func _check_run_report_screen_component() -> bool:

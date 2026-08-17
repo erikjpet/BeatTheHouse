@@ -3019,8 +3019,17 @@ func _check_grand_casino_staff_game_state_reset(library: ContentLibrary, main_en
 			failures.append("Grand Casino %s surface did not display its assigned dealer identity." % game_id)
 
 	var blackjack := table_games.get("blackjack") as GameModule
+	# Establish the original dealer through the production write boundary before
+	# seeding familiarity. Passive surface projection is intentionally
+	# observational and must not make a later dealer look like a rotation.
+	run_state.bankroll = maxi(run_state.bankroll, 100)
+	blackjack.resolve_with_context("blackjack_place_bet", 1, run_state, run_state.current_environment, run_state.create_rng("gc_staff_initial_assignment_action"), {"selected_stake": 1})
 	var blackjack_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var blackjack_table: Dictionary = blackjack_states.get("blackjack", {}) if typeof(blackjack_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
+	var first_blackjack_id := str(blackjack_table.get("staff_assignment_id", ""))
+	if first_blackjack_id.is_empty():
+		failures.append("Grand Casino staff reset fixture did not persist the initial blackjack dealer at an action boundary.")
+		return
 	blackjack_table["strategy_deviation_strikes"] = 7
 	blackjack_table["strategy_watch_pressure"] = 31
 	blackjack_table["strategy_last_notice"] = "Dealer questioned the line."
@@ -3028,7 +3037,6 @@ func _check_grand_casino_staff_game_state_reset(library: ContentLibrary, main_en
 	blackjack_table["running_count"] = 4
 	blackjack_table["barred"] = true
 	blackjack_table["barred_reason"] = "Casino memory persists."
-	var first_blackjack_id := str(run_state.grand_casino_staff_member_for_game("blackjack").get("id", ""))
 	run_state.add_suspicion("gc_staff_reset_heat", 28, "behavior", true, {"environment_id": str(run_state.current_environment.get("id", ""))})
 	run_state.narrative_flags["grand_casino_games_played"] = 4
 	run_state.narrative_flags["grand_casino_cheat_evidence"] = true
@@ -3037,18 +3045,32 @@ func _check_grand_casino_staff_game_state_reset(library: ContentLibrary, main_en
 	run_state.narrative_flags["grand_casino_players_card_highest_tier"] = RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER
 	run_state.narrative_flags["grand_casino_comp_drink_tokens"] = 2
 	var rotated := false
+	var rotated_surface: Dictionary = {}
 	for _day_index in range(20):
 		run_state.advance_game_clock_minutes(1440)
 		if str(run_state.grand_casino_staff_member_for_game("blackjack").get("id", "")) == first_blackjack_id:
 			continue
-		blackjack.surface_state(run_state, run_state.current_environment, {})
+		var before_surface_json := JSON.stringify(_save_load_canonical_run_snapshot(run_state.to_dict()))
+		rotated_surface = blackjack.surface_state(run_state, run_state.current_environment, {})
+		var after_surface_json := JSON.stringify(_save_load_canonical_run_snapshot(run_state.to_dict()))
+		if after_surface_json != before_surface_json:
+			failures.append("Fresh blackjack dealer preview mutated serialized RunState before play.")
 		rotated = true
 		break
 	if not rotated:
 		failures.append("Grand Casino staff reset fixture did not reach a seeded blackjack dealer rotation.")
 		return
+	var rotated_assignment := run_state.grand_casino_staff_member_for_game("blackjack")
+	var rotated_profile: Dictionary = rotated_surface.get("dealer_profile", {}) if typeof(rotated_surface.get("dealer_profile", {})) == TYPE_DICTIONARY else {}
+	if str(rotated_surface.get("dealer_name", "")) != str(rotated_assignment.get("name", "")) or str(rotated_profile.get("identity_id", "")) != str(rotated_assignment.get("id", "")) or int(rotated_surface.get("strategy_watch_pressure", -1)) != 0:
+		failures.append("Fresh blackjack dealer preview did not project the rotated identity with cleared strategy pressure.")
+	# Resolution is the write boundary. The durable ban intentionally rejects the
+	# wager after _table_state() commits the dealer-local reset, without dealing a
+	# hand or disturbing the physical table history this contract also protects.
+	run_state.bankroll = maxi(run_state.bankroll, 100)
+	blackjack.resolve_with_context("blackjack_place_bet", 1, run_state, run_state.current_environment, run_state.create_rng("gc_staff_reset_action"), {"selected_stake": 1})
 	if int(blackjack_table.get("strategy_deviation_strikes", -1)) != 0 or int(blackjack_table.get("strategy_watch_pressure", -1)) != 0 or not str(blackjack_table.get("strategy_last_notice", "missing")).is_empty():
-		failures.append("Fresh blackjack dealer did not reset exactly the existing dealer-local strategy familiarity state.")
+		failures.append("Fresh blackjack dealer action boundary did not reset exactly the existing dealer-local strategy familiarity state.")
 	if int(blackjack_table.get("hands_played", 0)) != 9 or int(blackjack_table.get("running_count", 0)) != 4 or not bool(blackjack_table.get("barred", false)) or str(blackjack_table.get("barred_reason", "")) != "Casino memory persists.":
 		failures.append("Dealer rotation reset physical table history or durable casino ban state.")
 	if run_state.suspicion_level() != 28 or int(run_state.narrative_flags.get("grand_casino_games_played", 0)) != 4 or not bool(run_state.narrative_flags.get("grand_casino_cheat_evidence", false)) or str(run_state.narrative_flags.get("grand_casino_players_card_highest_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_SILVER or int(run_state.narrative_flags.get("grand_casino_comp_drink_tokens", 0)) != 2:
@@ -4883,7 +4905,7 @@ func _check_events(event_ids: Array, library: ContentLibrary, scopes: Array, fai
 
 
 # Creates in-memory content for contract checks.
-func _fixture_library() -> ContentLibrary:
+func _fixture_library(failures: Array) -> ContentLibrary:
 	var library := ContentLibraryScript.new()
 	library.environment_archetypes = [
 		{
@@ -4985,7 +5007,16 @@ func _fixture_library() -> ContentLibrary:
 			"destination_tier_hint": 1,
 		},
 	]
-	library.rebuild_content_indexes()
+	# Match ContentLibrary.load(): prove an intentionally unhydrated fixture
+	# changes only its lazy index cache, then freeze the fully constructed state
+	# before any check receives it.
+	var before_hydration := _foundation_library_fingerprint(library)
+	var before_non_index_state := _foundation_library_fingerprint(library, false)
+	library._rebuild_indexes()
+	if _foundation_library_fingerprint(library) == before_hydration:
+		failures.append("Foundation fixture hydration regression did not exercise the unhydrated index state.")
+	if _foundation_library_fingerprint(library, false) != before_non_index_state:
+		failures.append("Foundation fixture hydration changed state outside the lazy index cache.")
 	return library
 
 
@@ -5440,8 +5471,9 @@ func _save_load_checkpoint(library: ContentLibrary, run_state: RunState, label: 
 	if JSON.stringify(before_signature) != JSON.stringify(after_signature):
 		failures.append("SB.3 %s legal action signature changed after save/load." % label)
 	if assert_continuation and not restored.is_terminal():
-		var continuation: RunState = RunStateScript.new()
-		continuation.from_dict(restored.to_dict())
+		# `second` is already the exact, independently loaded continuation clone
+		# proven above; a third serialization/load adds no new assertion.
+		var continuation: RunState = second
 		var continuation_generator: RunGenerator = RunGeneratorScript.new(library)
 		for step in range(SAVE_LOAD_FUZZ_CONTINUATION_STEPS):
 			if continuation.is_terminal():

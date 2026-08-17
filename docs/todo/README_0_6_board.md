@@ -138,13 +138,13 @@ stated in each prompt** — `events.json` in particular is shared, and
 | teach06_1 | `teach06_1_onboarding_prompt.md` | DONE | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | PM:Codex/sub:teach-audit | 2026-08-16 | 2026-08-16 | Seven once-only public-surface lessons; final double-notify, non-consuming handoff, clickable pointer-safe placement, guided-prefix, secrecy, UI, determinism, and 75-state visual acceptance pass. |
 | env06_5 | `env06_5_scenario_backlog_prompt.md` | DONE | env06_1/2/3 (DONE) | playtest variety | PM:Codex/sub:env-audit | 2026-08-16 | 2026-08-17 | All 13 complete backlog scenarios accepted: exact 55-scenario catalog, 13 scenario-owned events, 20-seed full/launch reach, phases/save-load/layer/tutorial checks, systems/UI assertions, determinism, three-venue smoke, and zero-warning visual QA. |
 | art06_1 | `art06_1_punchline_layers_prompt.md` | CLOSED — FALSE PREMISE | env06_4 (DONE) | — | owner-side finding | 2026-08-16 | 2026-08-16 | **Stop work; do not build a renderer seam.** No environment renders from a raster — every venue is procedurally drawn via `pixel_scene_canvas.gd`'s `scene_type` dispatch, and `visual_context.asset_path` is metadata the canvas never consumes. `_draw_punchline_club()` and `_draw_punchline_back_room()` already exist, are dispatched, and are at detail parity with `_draw_bar`/`_draw_underground`. The objective was already met before the row was authored. New PNGs kept as metadata-only. |
-| fix06_2 | `fix06_2_street_craps_activation_mutation_prompt.md` | IN_PROGRESS | — (defect in landed craps06_2) | env06_5 acceptance | PM:Codex/sub:activation-guard | 2026-08-17 | | Reopened after the stronger cold-state guard proved the prior closeout exempted presentation hooks and non-default generated fixtures; seven passive Grand Casino dealer-day writes reproduced. Root repair and integrated gates remain required. |
+| fix06_2 | `fix06_2_street_craps_activation_mutation_prompt.md` | DONE | — (defect in landed craps06_2) | env06_5 acceptance | PM:Codex/sub:activation-guard | 2026-08-17 | 2026-08-17 | PM verified the generic observational activation repair across Street/Grand Craps, all generated games and seven passive hooks, portable tickets/autosave/staffing, and cold saved-Slot checkpoints; focused suites plus clean Systems/UI/determinism/75-state visual gates all PASS without waivers. |
 
 ### Wave D — Crew depth
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| crew06_5 | `crew06_5_recruitment_prompt.md` | IN_PROGRESS | crew06_1, env06_2, env06_3 | crew06_6/7/8 | PM:Codex/sub:crew-recruitment | 2026-08-17 | | PM-orchestrated isolated execution; subagent owns implementation only, PM owns board, integration, design-fidelity review, verification, archival, and push. |
+| crew06_5 | `crew06_5_recruitment_prompt.md` | DONE | crew06_1, env06_2, env06_3 | crew06_6/7/8 | PM:Codex/sub:crew-recruitment | 2026-08-17 | 2026-08-17 | PM verified all seven primary/fallback recruitment paths, diegetic signposting, rank services, seeded presence, save/ignored-run compatibility, lender behavior, authored voices, and clean Contract/Systems/UI/determinism/75-state visual gates. |
 | crew06_6 | `crew06_6_layer3_jobs_prompt.md` | TODO | crew06_1, env06_4, streets06_1, crew06_5 | crew06_8 | | | | |
 | crew06_7 | `crew06_7_coordinated_plays_prompt.md` | TODO | crew06_1, crew06_5 | crew06_8 | | | | |
 | crew06_8 | `crew06_8_heist_prompt.md` | TODO | crew06_5/6/7, craps06_1, streets06_1, env06_3 | crew06_9 | | | | |
@@ -219,6 +219,15 @@ What happens then is the owner's, not an agent's:
   Fence Night anchor as `back_alley_fence_night`, not a pawn-shop scenario.
   Crew06_5 consumes that existing primary anchor and may not invent a new
   scenario outside its placement scope.
+- 2026-08-17 [crew06_5] PM arbitration on the prompt's 7x2 wording: Rook is
+  the explicit exception named in Task 1. His shipped Crew-loan action is
+  scenario-independent, so he cannot become unmeetable from scenario selection
+  and no duplicate fallback encounter may be invented. Acceptance requires the
+  real `RunActionService` loan path plus legacy Marker migration compatibility;
+  the other six members require primary and fallback production placements.
+  Static acceptance also rejected two real placement defects: Velvet's fallback
+  must be limited to the authored Slow Night beat, and Bishop's met presence /
+  contact must seed and refresh in the Grand Casino cage subroom across revisits.
 - 2026-08-17 [fix06_2] An external Codex process merged and pushed the
   still-unverified repair through `91e0a6c4` as merge `9d92f49f`. It changed
   no board or prompt records. The merge is provisional integration only: the
@@ -235,6 +244,483 @@ What happens then is the owner's, not an agent's:
   Density (160 cap / 150 opening), samples, outcomes, trace, icons, animation,
   and audio may not be reduced to converge; implementation is addressing
   repeated whole-machine and presentation-trace deep copies at their source.
+- 2026-08-17 [pusher06_2] Independent solver review rejected active-body
+  pruning and async/incremental action semantics as insufficient or contract-
+  breaking. The accepted optimization direction is a transactional packed SoA
+  solver with deterministic flat-grid iteration and one writeback after all 48
+  fixed ticks. Its dictionary solver remains the oracle: the carried 8-seed x
+  10-action differential matrix must prove every action used the packed path
+  and match raw state, canonical digest, exits, events, trace, and metrics after
+  every action. Hostile int64/high-motion states must safely fall back; density,
+  ordering, outcomes, presentation, save semantics, and the 16 ms gate remain
+  unchanged.
+- 2026-08-17 [pusher06_2] The packed solver's exact gate is green (80/80
+  carried actions used the hot path and matched the dictionary oracle after
+  every action), but it is not a performance fix: raw p95 regressed from
+  246.554 ms to 272.698 ms; production drop/nudge resolves measured 319.607 /
+  391.200 ms against the unchanged 16 ms limit. Draw and post-action frame p95
+  remain green, confirming the synchronous solver is the blocker. Trace is off
+  in the raw probe, and the packed path writes dictionaries only once at the
+  end; the next root pass targets repeated 27-cell collision/support walks,
+  unconditional sparse-grid rebuilds, per-tick Packed allocations, and hot-loop
+  Variant/call overhead while keeping the dictionary oracle and all hard limits.
+- 2026-08-17 [fix06_2] The integrated games matrix passed after the portable-
+  ticket travel correction, but broader systems acceptance exposed two test-
+  machinery defects: the Blackjack rotation fixture had not first persisted
+  its original dealer at an action boundary, and the new seven-hook activation
+  guard pushed the unchanged suite over budget through redundant cold rebuilds.
+  The fixture now establishes the original dealer through production resolve;
+  the guard optimization may reuse generator/cold snapshots only while retaining
+  all 235 generated contexts, 11 games, seven hooks, hostile fixtures, and
+  per-hook canonical before/after assertions. No budget or registration changes
+  are authorized.
+- 2026-08-17 [fix06_2] Runtime validation of the optimized activation guard
+  exposed a test-harness aliasing fault, not 168 production mutations:
+  `RunState.from_dict` can retain nested references from its input, and the
+  parsed JSON graph also has parser-normalized bytes distinct from canonical
+  `RunState.to_dict` bytes. Each of the seven hook fixtures now receives a deep
+  copy of the parsed graph. Canonical hook outputs still compare exactly to the
+  original RunState JSON, while parsed-source immutability compares exactly to
+  a baseline captured immediately after parse. A hostile nested-alias fixture,
+  the nonserialized-meta masking fixture, and byte-order fixture permanently
+  guard all three invariants; no contexts, hooks, budgets, or registrations
+  changed.
+- 2026-08-17 [pusher06_2] Opt-in phase profiling isolated the packed solver's
+  actual blocker at the unchanged 160-body/48-tick fixture: collision traversal
+  consumes 57.72% and support traversal 20.64% of raw solver mean, versus grid
+  rebuild 3.97%, writeback 0.07%, and collision-visited setup below 0.01%.
+  Production drop/nudge remain 295.995/356.338 ms against the 16 ms gate. The
+  next root pass therefore caches the frozen-grid candidate order once per tick
+  and flattens collision/support hot loops; exact oracle order, trace, density,
+  outcomes, and synchronous semantics remain binding.
+- 2026-08-17 [crew06_5] The final focused Contract gate is green after two
+  fixture-only corrections: exact ignored-run golden normalization now converts
+  only finite integral JSON floats in the safe integer range, and the Lucky
+  Numbers route fixture now uses canonical WorldMap `a`/`b` edges instead of
+  discarded `from`/`to` keys. The real generated presence/contact/EventModule
+  service path starts an active delivery run; all Contract assertions pass in
+  190.136 s within the unchanged 230.391 s budget. The row remains IN_PROGRESS
+  until the full integrated prompt matrix and PM scope/design review complete.
+- 2026-08-17 [systems gate] Five test-harness-only efficiency corrections were
+  independently accepted and integrated: loaded content references are reused
+  under exact immutability sentinels; topology-only world-map sweeps use the
+  production map-build seam; activation parsing is cached per environment while
+  all seven live hook fixtures remain isolated; Town/Numbers/Police Sweep reuse
+  reset/read-only fixtures under hostile reset proof; and save continuation
+  reuses its already-proven independent second restore. Seed counts, contexts,
+  assertions, registrations, budgets, and production code are unchanged.
+- 2026-08-17 [pusher06_2] The profiled hot-path correction is statically
+  accepted at `4159f393`: one deterministic frozen-grid candidate sequence per
+  center is shared by flattened collision/support loops, with lazy population
+  for within-tick center crossings. Exact iteration order, pair visitation,
+  support ties, 48 ticks, trace, density, outcomes, and synchronous semantics
+  remain unchanged; a hostile center-crossing oracle fixture covers the lazy
+  path. Runtime exactness and the 16 ms performance gates remain pending.
+- 2026-08-17 [systems gate] The corrected integrated systems matrix now has
+  zero assertion/stderr failures, including Crew recruitment and the complete
+  seven-hook activation guard, but the unchanged wall gate remains red at
+  58.496 s versus 43.712 s (48.515 s internal plus about 9.98 s process
+  overhead). In-check setup reuse saved roughly 2.9 s but cannot close the
+  remaining wall gap. The accepted next harness direction is deterministic
+  multi-process sharding of the existing systems registration: every check
+  must run exactly once, aggregate failures/stderr/timeouts must remain honest,
+  and no suite, seed, assertion, registration, or budget may move or change.
+- 2026-08-17 [systems gate] Independent pre-runtime review returned the first
+  sharded launcher for correction before integration: raw child failures must
+  outrank synthesized stderr code 127; launcher/cache/report exceptions must
+  still emit an honest stage summary; missing-report exit-zero children must
+  retain stdout-derived `last_started_check`; hostile contracts must exercise
+  those cases plus launch cleanup and mutex contention rather than inspect
+  source strings; and shard processes must be prevented from racing on shared
+  `.godot` cache files, not merely detect a write afterward. The unchanged
+  registration, assertions, timeout, and 43.712 s wall budget still bind.
+- 2026-08-17 [systems gate] The first safe live sharded run completed in
+  39.554 s, but the exact mutation sentinel honestly exposed nine fixture-only
+  failures. Root cause: `_fixture_library()` returned a hand-built library with
+  empty derived indexes, so the first legitimate `fixture_rng` lookup lazily
+  rebuilt `_indexes` after the baseline fingerprint. Commit `c376445c` now
+  hydrates those indexes through the canonical production seam before taking
+  the single global baseline, and proves the hydration changes indexes only;
+  no sentinel field, assertion, seed, registration, or budget was exempted.
+- 2026-08-17 [systems gate] Independent rerun at `c376445c` is green: the
+  integrated systems stage completed in 37.260 s against the unchanged
+  43.712 s budget; all 49 checks were registered, owned, and executed exactly
+  once; all four raw shard exits and stderr streams were clean; and private
+  shard projects were fully removed. The hardened launcher and its behavioral
+  mutex, partial-child, junction-cleanup, exception, and accounting contracts
+  were merged to main in `5a967b75`.
+- 2026-08-17 [systems gate] Combined-main verification then exposed two
+  environment-sensitive harness defects that the isolated worktree did not.
+  The shard copier recursively traversed mutable `.godot/shader_cache`, so a
+  disappearing Vulkan cache file could abort setup; after that was removed,
+  the post-cleanup parent-cache sentinel ran through `GetNewClosure()` and
+  could not resolve its script-local fingerprint helper. Commits `6696bf9e`
+  and `e28c67a5` now copy only physically private `imported` data plus required
+  stable root metadata, never traverse volatile cache siblings, and exercise
+  the cleanup sentinel in its real scope with clean and mutation-fail-closed
+  behavioral controls.
+- 2026-08-17 [systems gate] Final combined-main verification at `e28c67a5`
+  passed in 40.211 s against the unchanged 43.712 s budget. All 49 registered,
+  requested, and executed checks are unique and canonical; all four shards
+  exited zero with no stderr or timeout; private projects were removed; and no
+  Godot process remained. Artifact:
+  `.tmp/test_reports/20260817_pm_postmerge_systems_e28c67a5/summary.json`.
+- 2026-08-17 [integrated UI] The UI gate currently stops before assertions
+  because `New-SplitTestRunner` concatenates descendant implementations with a
+  contiguous parent-only fallback-stub block, producing duplicate function
+  declarations. The parent stubs remain necessary for standalone inheritance;
+  the generic correction will mark and omit only that block in generated split
+  runners, with balanced-marker and exact-once generation checks. No UI
+  assertion or implementation function may be removed.
+- 2026-08-17 [crew06_5/integrated UI] After the split-runner correction, the
+  integrated UI suite reached its assertions and exposed a real compatibility
+  regression: accepting the shipped Crew loan retires its lender entry but
+  `RunActionService.use_hook()` immediately enqueues `recruitment_rook_signpost`,
+  so the talk dock remains visible and the formerly empty triggered-event queue
+  changes. The Wave kickoff requires the shipped Crew lender flow to remain
+  behavior-identical. Crew06_5 already supplies the prompt-required diegetic
+  leads through the seeded, presence-bound `recruitment_rook_leads` encounter;
+  the redundant automatic post-loan enqueue must be removed while that
+  contextual path and its one-hearing/save contracts remain intact.
+- 2026-08-17 [crew06_5/integrated UI] Commit `4e86bbe1` removes only the
+  redundant automatic post-loan Rook enqueue and permanently asserts that the
+  real Crew lender action reaches Marker with no triggered/talk event left
+  pending. Contextual seeded `recruitment_rook_leads` remains covered. PM reran
+  the complete integrated UI gate at
+  `.tmp/test_reports/20260817_042700_pm_integrated_ui_crew_fixed`: 0 failures;
+  `ui_scene_compile` 58.029 s versus the unchanged 124.851 s budget, with all
+  import/load/auxiliary UI stages green and no stderr issues.
+- 2026-08-17 [fix06_2] Independent scope audit accepted the Street/Grand Craps,
+  seven-hook cold JSON-restored guard, staff-generation, portable-ticket, and
+  autosave repairs, but found one remaining activation-class defect: a saved
+  Slot fixture carrying `slot_animation_resume_elapsed_msec` erases that
+  durable checkpoint and writes `slot_animation_started_msec` from wall-clock
+  time during passive `enter()`. Generated fixtures did not carry the checkpoint,
+  so the current guard missed it. The row remains IN_PROGRESS for a transient
+  resume projection plus an exact-byte cold saved-slot hostile; the field may
+  not be exempted or normalized before the baseline.
+- 2026-08-17 [fix06_2] Commits `b5db8c07` and `124ced15`, integrated by
+  `e94658ca`, keep the durable Slot checkpoint byte-exact during passive
+  `enter()`/surface projection and resume it through transient canvas time.
+  New coverage includes cold JSON-restored non-default `slot:2`, real
+  enter→surface→render→play parity, 0.5 drunk-time scaling, same-ID cumulative
+  rebase, omitted-offset clearing, unrelated-channel isolation, and clean
+  checkpoint consumption at action/save boundaries. Focused Slot is 2/2 and
+  Games 10/10 with zero skips/failures/stderr; integrated systems and UI are
+  green, while determinism and visual gates remain before row closeout.
+- 2026-08-17 [fix06_2/integrated systems] The first post-merge run was
+  functionally green 49/49 but correctly rejected for timing because an
+  already-started Web native compile inflated every shard (61.518 s). With
+  external build I/O stopped, the exact rerun passed in 39.895 s against the
+  unchanged 43.712 s budget: 49 registered/requested/executed unique checks,
+  saved-slot activation hostile green, four raw exits zero, no stderr/timeouts,
+  and empty private-project cleanup. Artifact:
+  `.tmp/test_reports/20260817_052921_pm_postmerge_systems_saved_slot_clean`.
+- 2026-08-17 [fix06_2/crew06_5 integrated UI] A native compiler overlapped the
+  first post-merge UI run, so its functional pass was retained only as
+  diagnostic evidence. After the pusher lane was made quiet, the fresh
+  authoritative rerun passed with 0 failures: `ui_scene_compile` 57.828 s
+  against the unchanged 124.851 s budget, every stage exit 0, no timeouts, and
+  no stderr issues. Artifact:
+  `.tmp/test_reports/20260817_0540_postmerge_saved_slot_ui_authoritative`.
+- 2026-08-17 [crew06_5 voice review] PM manually compared every new recruitment,
+  presence, signposting, and contact line in `data/crew/recruitment.json` and
+  `data/events/events.json` against the seven authored `characters.json` voice
+  styles. The registers remain distinct and conforming: Rook low/economical,
+  Switch fast/forward-looking, Mags precise/order-driven, Knuckles blunt,
+  Velvet warm/polished, Bishop formal/record-minded, and Lucky bright/reckless.
+  No quest-log register or hidden-system leakage was found.
+- 2026-08-17 [fix06_2/crew06_5 determinism] The clean current-main 10-seed
+  probe passed twice with 590 checkpoints and combined hash `3567232055`.
+  `run_a.json` and `run_b.json` are byte-identical at SHA-256
+  `18515D3E083837485C5821F3FC27BE4B81134AB7B89D018290CC41C55CEC13CD`;
+  all seeds have matching final hashes, with zero failures or warnings.
+  Artifact: `.tmp/foundation_determinism_probe/`.
+- 2026-08-17 [fix06_2/crew06_5 visual QA] Current-main visual QA passed twice;
+  the isolated diagnostic rerun had exit 0 and empty stderr. The final report
+  contains 75 state snapshots, 117 screen-input events, and eight Coin Pusher
+  captures with zero warnings, errors, or overlap failures. Both explicit
+  environment/game-surface overlap assertions are true. The gate intentionally
+  records headless state/geometry rather than PNGs; PM inspected representative
+  normal, reduced-motion, lockdown, small-screen, scenario, shop, and machine
+  snapshots. Report: `user://foundation_visual_qa_report.json`.
+- 2026-08-17 [crew06_5 final scope/design review] PM walked Task sections 1–3
+  and QA 1–6 against `cc82fdfe` plus `4e86bbe1`, including the board-arbitrated
+  code-reality seams. All seven contacts have production primary/fallback
+  reachability, Associate promotion, diegetic Rook leads, rank-gated existing
+  services, and seeded action-boundary presence. Trust stays hidden, no quest
+  UI/log leakage or wall-clock mutation exists, ignored runs retain the byte
+  golden, save/load persists canonical crew06_1 fields, and the shipped Rook
+  lender handoff reaches Marker without a duplicate pending event. No
+  out-of-scope feature or owner-locked guess remains.
+- 2026-08-17 [pusher06_2] Exact runtime at `4159f393` is green across the 80
+  carried hot actions and all hostile/fallback twins. Raw p95 improved 43.9%
+  from 283.293 to 159.000 ms, but remains 9.94x over the 16 ms gate; production
+  drop/nudge are 223.999/253.298 ms while draw and frame budgets pass. Eager
+  candidate priming moved the dominant cost to grid/cache construction
+  (62.612 ms mean). A lazy allocation-stable cache pass is in progress, but
+  profiling already shows current GDScript cannot credibly close 16 ms without
+  a native packed-core seam if that pass remains over budget; no threshold,
+  density, trace, ordering, or outcome change is authorized.
+- 2026-08-17 [pusher06_2] The allocation-stable lazy-cache pass at `c0a7ad26`
+  plus fixture correction `054698bd` remains exact across the full Coin Pusher
+  contract (0 failures; 80/80 carried actions and hostile fallbacks), but its
+  unchanged shipped-cap performance gate still fails: raw solver p95 is
+  123.578 ms and production drop/nudge resolves are 183.537 / 205.508 ms versus
+  16.0 ms. Collision, support, and 48-tick integration alone exceed budget;
+  presentation draw/frame gates pass. Further GDScript tuning cannot credibly
+  close the remaining 7.72x gap. The root correction therefore advances to a
+  native deterministic packed core behind the existing GDScript oracle/fallback,
+  with Windows and Web export compatibility, density, trace, order, outcomes,
+  and synchronous action semantics unchanged.
+- 2026-08-17 [pusher06_2 native hardening] Independent re-audit of `ad11f2fa`
+  accepted the Git-environment hostile, non-traversing junction cleanup,
+  abandoned-mutex recovery, verified-toolchain-only build path, quiet Git, and
+  full environment restoration. It returned one release blocker: the committed
+  Web preset still has `variant/extensions_support=false`. Web export must set
+  extension support true and fail before build/export unless that exact preset
+  option is enabled; a side-module filename check alone cannot prove the engine
+  template can load it.
+- 2026-08-17 [pusher06_2 native hardening] Corrective commit `5c06e08a` is
+  independently accepted for static/provisioning scope. The sole Web preset is
+  extension-capable, and exact named-preset hostiles prove export rejects false,
+  missing, mixed-case, or unrelated-preset values before resolving Godot,
+  building native code, or exporting. Windows/Web build, load, export, and boot
+  remain runtime acceptance gates.
+- 2026-08-17 [pusher06_2 native adapter] Independent static review returned the
+  first native dispatch for a fail-closed contract repair. Class-name
+  instantiation and a non-empty result do not prove backend identity, ABI, or
+  result shape; passing authoritative state also lets an incompatible backend
+  mutate before a fallback double-step. Native execution must use a deep
+  candidate, validate exact backend identity/methods/result schema, and publish
+  only after full acceptance. Injected stale and partial-mutating invalid
+  backends must prove original state/result remain exact and fallback runs once.
+- 2026-08-17 [pusher06_2 native boundary] The same review found hostile signed
+  arithmetic at the public helper seam: `INT64_MIN / -1` is undefined in C++,
+  and unbounded aim/nudge inputs can overflow subtraction/negation or narrow
+  velocity sums before validation. Define that division edge, enforce a numeric
+  envelope, reject before mutation, and cover INT64 extrema plus oversized
+  nudge inputs. The fixed-positive-divisor 48-tick kernel is not implicated.
+- 2026-08-17 [pusher06_2 trace audit] Presentation/audio traceability found two
+  unclosed acceptance defects outside solver speed. At 1280Ã—720 the generic
+  LEAVE button's x=776..862 design rect overlaps the Coin Pusher console-title
+  region for Quarter Falls, Jackpot Ridge, and Vault Drop; a production layout
+  assertion is missing. Reduced-motion replay also becomes inactive before the
+  snapshot sync observes an active action, which can suppress terminal
+  impact/tray/gutter/alarm audio. Reposition and guard the affordances, and prove
+  reduced-motion actions still emit snapshot-driven audio while visuals freeze.
+- 2026-08-17 [pusher06_2 kernel parity] Static comparison found native phase
+  publication diverging from the GDScript oracle. Native unconditionally adds
+  or normalizes both phase keys, while the reference preserves a missing or
+  non-integer phase when that pusher is locked and no phase was captured. Keep
+  normalized locals for geometry/trace, publish only under the reference
+  conditions, and add exact locked missing/non-integer phase fixtures across
+  reference, forced GDScript, and native paths.
+- 2026-08-17 [pusher06_2 kernel parity] Native writeback also replaces the
+  `bodies` Array, while the GDScript hot path compacts the original container in
+  place. External array aliases therefore observe exits only on the fallback.
+  Preserve the oracle's container-alias behavior and add a unique-ID exit
+  fixture across reference, forced GDScript, and native paths.
+- 2026-08-17 [pusher06_2 opening density] The trace audit found no implementation
+  or assertion for the prompt's explicit "packed near the pusher, thinning
+  toward the ledge" opening gradient. Current seeding splits 110 coins evenly,
+  samples full shelf depth uniformly, and maximizes spacing. Dense captures do
+  not prove the required distribution; deterministic depth bias plus a gradient
+  test is required without reducing the 160/150 shipped density.
+- 2026-08-17 [pusher06_2 native adapter] The first transactional correction is
+  still rejected: deep-copying the whole state then clearing/merging it on
+  success invalidates every nested body/array alias even without exits and puts
+  full-cap GDScript copying back on the <=16 ms path. Publish through
+  alias-equivalent in-place reconciliation (prefer a compact validated packed
+  candidate/output seam), prove body and container aliases with and without
+  exits, and remeasure raw plus production budgets.
+- 2026-08-17 [pusher06_2 native adapter] The compact candidate/in-place
+  reconciliation revision now preserves the original bodies Array, surviving
+  Dictionary identities, exit compaction, unknown top-level state, and
+  solver-owned publication; locked missing/text phase writes also match the
+  oracle. Static acceptance still requires malformed candidate element checks
+  before casts and explicit public-helper extrema/reject-before-mutation smoke.
+  Candidate-body copy cost remains subject to the unchanged performance gate.
+- 2026-08-17 [pusher06_2 native static acceptance] Final independent review
+  ACCEPTS the corrected kernel/adapter scope: exact 48-tick order, defined
+  signed arithmetic, identity/ABI/schema selection, transactional fallback,
+  phase parity, live Array/Dictionary/nested-metadata aliases, ordered exits,
+  mutable-only publication, full nine-key integer metrics, malformed/immutable/
+  duplicate-ID hostiles, per-action carried native selection, and no production
+  clock reads. `git diff --check` is clean. Candidate-copy cost remains a runtime
+  performance gate. A newly built debug DLL then crashed during extension load
+  before the smoke script; that build is rejected pending exact-source rebuild
+  and registration/binary-compatibility isolation.
+- 2026-08-17 [pusher06_2 native load] Three exact debug builds and an
+  old-binding-surface control all crash identically during extension
+  registration at Godot's StringName refcount-unref path, before any solver
+  script/action. PE architecture/export/imports are valid and new method
+  bindings are ruled out. Root-cause direction: hardened bootstrap replaced an
+  unchecked cached binding tree with the lock's Godot 4.5 `godot-cpp` commit
+  `e83fd...`, while the engine is Godot 4.6. Run clean scaffold controls against
+  exact 4.5 and exact-engine 4.6 API/interface bindings, clearing native/
+  generated caches; if 4.6 loads, correct and verify the lock rather than
+  working around the ABI. Upstream has no `godot-cpp` 4.6-stable tag/branch:
+  latest stable is 4.5 `e83fd...`, while Godot 4.6-stable is engine commit
+  `89cea143...`. Do not pin `godot-cpp` master blindly; generate and hash-pin the
+  API/interface from the exact engine or verify a specific upstream sync commit.
+- 2026-08-17 [pusher06_2 4.6 binding pin] Candidate upstream commit `d7b6162`
+  is technically credible but returned for truthful provenance. It is official
+  `godot-cpp` master/v10 Beta, not a nonexistent 4.6-stable tag; it is post-4.6
+  and also carries gated 4.7 additions. With `api_version=4.6` it selects a
+  file declaring Godot 4.6.0 stable/official/single at SHA-256
+  `00A3AD6DF2361ED3DF6EF9BC8717FE0F49112012EE6E87A7B4CFB34465C9BEED`.
+  Record `refs/heads/master` plus immutable commit, disclose the reviewed Beta/
+  post-release risk, and lock/assert the exact 4.6 API and interface provenance
+  instead of fabricating a tag.
+- 2026-08-17 [pusher06_2 4.6 binding pin] A higher-integrity upstream target
+  supersedes the master candidate: official `godot-cpp` commit `58d1de72...`
+  explicitly syncs Godot engine `89cea143...` (4.6-stable). Its extension API is
+  content-equivalent to the exact runtime dump and its GDExtension interface is
+  byte-identical (interface SHA-256 `34d7058f31af186d36b84567e70a9f9543da0d74f25cfe5266d4fe2d27e090f0`).
+  The candidate lock now records truthful commit provenance, exact payload
+  hashes, API 4.6, and bootstrap verification after clearing mixed generated
+  caches. Independent provenance re-audit and a clean load test remain.
+- 2026-08-17 [pusher06_2 4.6 binding pin] Independent re-audit ACCEPTS exact
+  `58d1de72...` pin/provenance/hash semantics. At that commit `extension_api.json`
+  is intentionally the consumed 4.6 payload (4.6.0 stable/official/single), the
+  API and interface hashes match the lock, and the source commit is the official
+  exact sync from engine `89cea143...`. No fabricated tag or master/Beta risk
+  remains. Windows/Web runtime load and smoke are still separate required gates.
+- 2026-08-17 [pusher06_2 Windows native] A fully clean exact-4.6 debug build
+  linked and registered in Godot 4.6 with exit 0, proving the prior crash came
+  from the 4.5 binding payload/mixed cache. Direct real-core smoke passed backend/
+  ABI identity, signed-division and nudge extrema, reject-without-mutation,
+  reference=forced-GDScript=native twins, +48 tick/no production clock leakage,
+  duplicate-ID, and hostile fallback. The sole authoritative focused run at
+  `.tmp/test_reports/20260817_063025_smoke` passed with 0 failures: validation
+  41.703 s, load 21.966 s, Coin Pusher 51.734 s, all exits 0 and no stderr/
+  timeouts. An earlier no-GODOT_BIN setup directory is discarded, not evidence.
+- 2026-08-17 [pusher06_2 native performance] First loadable native measurement
+  remains RED at the unchanged thresholds: raw full-cap p95 19.369 ms, production
+  drop 104.976 ms, and production nudge 124.424 ms versus 16.000 ms. This is a
+  major improvement over GDScript but not acceptance. Backend selection and
+  truthful production phase timing must isolate the compact candidate-copy cost
+  from the additional host/snapshot overhead; no density, tick, presentation,
+  action, or threshold change is authorized. Unrelated scratch-ticket fixture
+  failures in the broad probe are not Coin Pusher evidence.
+- 2026-08-17 [pusher06_2 native phase profile] Opt-in production-boundary
+  timing confirms real native selection and narrows the remaining work without
+  blaming autosave. Raw full-cap p95 is 18.109 ms: native call p95 13.131 ms,
+  adapter validation 1.889 ms, and adapter total 16.924 ms. Production drop is
+  99.247 ms and nudge 102.682 ms; module resolution is 34.291/37.826 ms, of
+  which trace construction alone is 15.195/16.582 ms, while the still-combined
+  post-action/refresh phase is the largest block at 51.969/55.557 ms. Autosave
+  preparation is only 0.008 ms. The next probe must split apply/tutorial/audio
+  from embedded refresh/snapshot before any root optimization is accepted.
+- 2026-08-17 [pusher06_2 native host split] The second opt-in probe confirms
+  the remaining synchronous production cost is distributed, not one I/O bug:
+  raw p95 18.257 ms; drop/nudge 86.509/89.304 ms; trace construction
+  14.036/14.974 ms; post-action checks 19.508/22.268 ms; embedded refresh
+  22.884/23.841 ms, with roughly 11 ms still outside the instrumented host
+  total. Root work must account for that outer cost and preserve immediate
+  action completion, exact 14-frame trace, snapshot/audio semantics, and all
+  160 physical bodies; deferral or feature removal is not accepted.
+- 2026-08-17 [pusher06_2 optimized native profile] Fresh exact-4.6 DLL
+  `8B7F5CE8...E0E5D9` linked/loaded, direct native smoke and focused Coin Pusher
+  exactness passed, but performance remains RED: raw p95 17.276 ms, production
+  drop 80.586 ms, nudge 75.020 ms versus 16 ms. Draw/frame/idle are green and
+  both actions preserve 14 trace frames, collapse evidence, and zero full
+  snapshots. The accepted trace construction pass reduced active trace to
+  6.284-7.002 ms. Remaining host roots are no-op interrupt scans
+  (`enqueue_talk` 10.316-10.820 ms plus unavoidable-event 8.799-9.258 ms) and
+  embedded refresh (`HUD` 14.630-15.316 ms, terminal 4.152-4.184 ms,
+  snapshots 3.382-4.677 ms). Parallel root analysis is authorized; no threshold,
+  trace, body, animation, audio, or immediate-completion change is authorized.
+- 2026-08-17 [pusher06_2 native optimization review] The second raw/trace
+  candidate was rejected before runtime: scripted subclasses of the native
+  class could be misclassified as trusted; ordered-subset validation allowed
+  unreported body removal/immutable drift; trace Dictionary insertion order
+  differed from the reference; and nested metadata aliased across published
+  frames/exits. Exact unscripted identity, exit-accounted 1:1 body validation,
+  reference key order, and per-publication metadata isolation plus hostile
+  regressions are required. No rejected runtime evidence will be produced.
+- 2026-08-17 [pusher06_2 host root analysis] Two isolated host corrections are
+  authorized from measured code paths. Interrupt handling currently deep-copies
+  the full 14x160 trace twice merely to read scalar fields, then builds a dense
+  surface before learning no table-approach event targets Coin Pusher. Embedded
+  refresh rebuilds pressure/objectives two to three times, scans a recovery
+  value the consumer never reads, performs full terminal recovery scans despite
+  a valid wager, and repeats already-isolated result copies. Separate branches
+  will implement only priority-identical read-only scalar selection/data-derived
+  target indexing and the provably redundant P0-P3 refresh work, with parity
+  tests; broad dirty-state/revision caching remains out of scope unless a fresh
+  profile proves it necessary.
+- 2026-08-17 [pusher06_2 interrupt fast-path review] Final cross-review returned
+  the first interrupt branch: quiet actions still reached the full unavoidable-
+  event pack scan, and positive-Heat/supported-table paths still scanned every
+  event. The fundamental correction must publish ordered, data-derived action,
+  heat, and table candidate indexes that preserve authored order and exact RNG;
+  the real outer action path must prove zero full-pack visits/deep trace copies/
+  unnecessary surface builds. Closing, forced-travel, unavoidable short-circuit
+  order and same-length direct-content replacement invalidation also require
+  behavioral coverage. The branch is not accepted or integrated.
+- 2026-08-17 [pusher06_2 interrupt fast-path acceptance] After two returned
+  revisions, the isolated interrupt correction is independently ACCEPTED and
+  integrated through `cd2f39ef`. Ordered action/heat/table candidate indexes
+  preserve authored order/RNG while the real quiet dense outer path proves zero
+  candidate visits, cadence RNG create/save calls, surface construction, deep
+  result snapshots, and index rebuilds. Eligible timed actions prove exact one-
+  candidate/one-RNG behavior; same-length content replacement and explicit
+  in-place rebuild each prove exactly one index scan. PM's sole profiling/counter
+  merge conflict was corrected so counters remain outside measured helper spans.
+- 2026-08-17 [pusher06_2 embedded-refresh acceptance] The isolated refresh
+  correction is independently ACCEPTED and integrated through `45113784` after
+  three returned test revisions. Provably dead recovery scans and duplicate
+  pressure/objective work are removed; the terminal-only path skips recovery
+  diagnostics only after a valid wager proves nonterminal; internal Coin Pusher
+  render snapshots avoid redundant nested copies while public snapshots remain
+  deep-safe; stable world-header/embedded-feedback work is skipped without
+  delaying HUD, game, item, talk, music, coach, autosave, interrupt, or realtime
+  animation updates. Final behavioral proofs use FoundationMain's owned canvas,
+  real completed drop/nudge actions, real realtime guards/advance, explicit
+  autosave-before-forced-travel order, deferred coach execution, tutorial/normal
+  intervention, and required nonempty byte-equal public data before mutation.
+- 2026-08-17 [pusher06_2 presentation gaps] Independent static review ACCEPTS
+  all three corrections after returning float quota math and two false-positive
+  tests. Opening generation uses integer-only deterministic per-shelf quotas
+  (rear 35 > mid 25 > front 15; stacks 9/7/4) at exact 150/cap160 with
+  authoritative body-view parity. Exact production titles auto-fit inside a
+  bounded rect clear of the real LEAVE control. Reduced-motion audio establishes
+  a silent first/restored baseline, keeps restored active state silent through
+  terminal, emits a later action once, and syncs before frozen visual clocks/
+  redraws. Focused runtime remains before merge.
+- 2026-08-17 [pusher06_2 density authority] PM arbitration records the narrow
+  interpretation required by the prompt's specific Task 0 over its general
+  zero-outcome-change rule: the explicitly required generation-time coin-cap,
+  opening-density, and opening-depth-gradient changes are authorized physical
+  initial-state changes. "Unchanged outcomes" means presentation/audio may not
+  steer, fabricate, reconcile, or feed back into a payout; the deterministic
+  authoritative solver still decides solely from the generated pile and player
+  inputs, and exactly what physically crosses the payout edge pays. This is not
+  authority to alter action rules, payout classification, or solver semantics.
+- 2026-08-17 [pusher06_2 presentation runtime] The isolated presentation-gap
+  fresh focused gate is green with zero failures and zero stderr issues:
+  validation 41.483 s, import 17.038 s, load 21.723 s, and Coin Pusher
+  129.535 s. An earlier run exposed only a restored-vs-new audio fixture error;
+  the corrected fixture now establishes an empty baseline and still requires
+  every event in each of four genuinely live nudge lifecycles. Synthetic
+  key-fragment rendering and pusher-specific supported-input/1280x720 dispatch
+  coverage remain before the presentation commits are accepted.
+- 2026-08-17 [pusher06_2 input scope] Code-reality audit confirms the dense
+  Coin Pusher surface supports mouse and touch through `GameSurfaceCanvas` exact
+  hit regions; it has no keyboard/joypad routing or focusable controls.
+  Acceptance therefore covers real mouse and touch events at 1280x720 for all
+  five lanes, three force choices, three directions, drop, and nudge. Adding a
+  new keyboard/controller interaction model would be a design/feature expansion,
+  not a missing test in this presentation row.
+- 2026-08-17 [pusher06_2 presentation closeout] Final isolated presentation
+  contract run is green with zero failures and zero stderr issues: validation
+  42.747 s, import 16.969 s, load 21.473 s, Coin Pusher 126.478 s. Independent
+  static review also accepts the added solver-null Vault key-fragment proof and
+  all 13 production exact-hit targets through real mouse and touch dispatch at
+  1280x720, including command mapping and deterministic-digest invariance. The
+  presentation commits may now integrate after native performance is green.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -873,3 +1359,104 @@ What happens then is the owner's, not an agent's:
   `staff_assignment_day` writes across Grand Casino Blackjack and Roulette.
   Row returned to IN_PROGRESS; no prior assertion was weakened. `env06_5`
   remains DONE on its independently verified content/audit/capture scope.
+- 2026-08-17 [systems gate] Integrated deterministic sharding merged at
+  `5a967b75` after independent behavioral safety review and a green 37.260 s
+  run under the unchanged 43.712 s budget. All 49 systems checks retain their
+  exact assertions and canonical report order while executing once across four
+  isolated project/cache roots; aggregate failures, raw exits, stderr,
+  timeouts, last-started diagnostics, cleanup failures, and cleanup wall time
+  remain fail-closed. This removes the harness-only release-gate bottleneck;
+  combined-main verification remains the final acceptance authority.
+- 2026-08-17 [systems gate] Combined-main acceptance is green at `e28c67a5`:
+  40.211 s / 43.712 s, 49/49 unique checks, four clean shards, zero failures,
+  and complete private-project cleanup. The live reruns also removed volatile
+  cache traversal (`6696bf9e`) and repaired cleanup-callback scope
+  (`e28c67a5`) under behavioral fail-closed tests; no assertion, registration,
+  seed, timeout, or budget changed.
+- 2026-08-17 [fix06_2] PM scope audit returned the row for one final cold-save
+  correction: passive Slot entry currently consumes a saved animation resume
+  checkpoint and writes wall-clock-derived serialized state. An isolated agent
+  is moving that projection to transient UI state and adding the missing cold
+  JSON-restored hostile before the complete gate matrix reruns.
+- 2026-08-17 [fix06_2] Saved Slot checkpoint activation repair integrated at
+  `e94658ca` after independent semantic review. The real cold open/render path
+  is now observational and visual progress resumes without wall-clock writes,
+  double drunk scaling, stale offsets, or same-ID double counting. Focused
+  Slot/Games gates are green with clean stderr; full integrated closeout gates
+  remain intentionally pending.
+- 2026-08-17 [fix06_2] Post-merge Systems is independently green in a clean
+  timing window: 39.895 s / 43.712 s, 49/49 unique checks, all four shards
+  clean, saved-slot hostile green, and complete cleanup. A prior 61.518 s run
+  was discarded rather than waived because concurrent Web compilation
+  contaminated the wall clock.
+- 2026-08-17 [fix06_2/crew06_5] Post-merge UI is independently green in a clean
+  timing window at
+  `.tmp/test_reports/20260817_0540_postmerge_saved_slot_ui_authoritative`:
+  0 failures, `ui_scene_compile` 57.828 s / 124.851 s, every stage exit 0, and
+  no timeout/stderr issues. Determinism and visual gates subsequently passed.
+- 2026-08-17 [crew06_5] PM completed the prompt-required manual voice review of
+  all new lines against the seven authored character styles; each member keeps
+  a distinct conforming register, with no tracker copy or system leakage.
+- 2026-08-17 [fix06_2/crew06_5] Current-main determinism is green for all 10
+  seeds and 590 checkpoints; both reports are byte-identical with combined hash
+  `3567232055`, zero failures, and zero warnings. Visual QA subsequently passed.
+- 2026-08-17 [pusher06_2] Native provisioning/export hardening `ad11f2fa` passed
+  every re-audited hostile except the actual Web-preset capability: extension
+  support remains disabled. The row stays IN_PROGRESS until the preset is
+  extension-capable and export rejects that mismatch before doing work.
+- 2026-08-17 [pusher06_2] `5c06e08a` closes the Web-preset hardening blocker;
+  independent exact named-preset hostiles are green. The row remains
+  IN_PROGRESS for the native solver and real Windows/Web runtime gates.
+- 2026-08-17 [fix06_2] DONE after reopened acceptance. The cold seven-hook guard
+  and saved-Slot hostile now prove passive activation is observational across
+  the full game class; focused Slot/Games plus clean Systems/UI/10-seed
+  determinism/75-state visual gates pass. No state field, budget, assertion, or
+  feature was waived; the archived execution record preserves both reopenings.
+- 2026-08-17 [crew06_5] DONE. PM completed verbatim scope, roadmap fidelity,
+  lender compatibility, manual voice, Contract, Systems, UI, determinism, and
+  visual reviews. Deterministic recruitment/presence and rank-service APIs now
+  unblock `crew06_6`, `crew06_7`, and `crew06_8`.
+- 2026-08-17 [pusher06_2] Static kernel review found the native adapter was not
+  transactional or identity/schema-validated. The row remains IN_PROGRESS and
+  runtime results are diagnostic until candidate-state execution and hostile
+  stale/mutating backend tests close that seam without weakening fallback.
+- 2026-08-17 [pusher06_2] Public native helper arithmetic also needs a
+  reject-before-mutation numeric contract for signed division and aim/nudge
+  extrema; hostile coverage is required before runtime acceptance.
+- 2026-08-17 [pusher06_2] Closeout trace review returned overlapping LEAVE/title
+  layout and missing reduced-motion action-audio coverage. The presentation and
+  audio contract remains binding alongside native performance.
+- 2026-08-17 [pusher06_2] Native locked-phase publication also differs from the
+  reference solver; exact missing/non-integer locked-state fixtures and a
+  conditional write repair are required before backend acceptance.
+- 2026-08-17 [pusher06_2] Native bodies-array alias semantics and the authored
+  opening depth gradient remain unproven. Both require exact regressions before
+  closeout; dense appearance alone is not accepted as evidence.
+- 2026-08-17 [pusher06_2] Whole-state copy/replace is not an acceptable
+  transactional repair: it breaks aliases and risks the 16 ms budget. The
+  corrected seam must reconcile in place and be remeasured.
+- 2026-08-17 [pusher06_2] Compact in-place publication and conditional phase
+  writes now satisfy static alias/parity review. Malformed output and helper
+  extrema hostiles remain before the next runtime build can be accepted.
+- 2026-08-17 [pusher06_2] Native kernel/adapter static scope is independently
+  ACCEPTED after the complete hostile matrix. Runtime remains red/open: debug
+  extension load crashed before script, and exactness plus <=16 ms performance
+  have not yet passed on a loadable final binary.
+- 2026-08-17 [pusher06_2] Load-crash forensics rules out gameplay/kernel and new
+  binding methods; the pinned 4.5 godot-cpp tree is the leading ABI mismatch
+  against Godot 4.6. Clean 4.5/4.6 scaffold discrimination is in progress.
+- 2026-08-17 [pusher06_2] Exact `d7b6162` 4.6 API selection is credible, but the
+  lock's fabricated tag and incomplete Beta/provenance disclosure are rejected;
+  artifact hashes and truthful source ref are required before runtime evidence.
+- 2026-08-17 [pusher06_2] Exact official 4.6 sync commit `58d1de72...` supersedes
+  the rejected master candidate; payload provenance is independently re-auditing
+  while a fully clean Windows load build runs.
+- 2026-08-17 [pusher06_2] Exact 4.6 pin/provenance is independently ACCEPTED;
+  clean Windows/Web runtime evidence remains before native acceptance.
+- 2026-08-17 [pusher06_2] Clean Windows debug load, direct native smoke, and the
+  focused exactness matrix are green on the accepted 4.6 pin. Raw/production
+  <=16 ms performance and Windows release/Web acceptance remain.
+- 2026-08-17 [pusher06_2] First native performance run is still red at raw
+  19.369 ms / drop 104.976 ms / nudge 124.424 ms against 16 ms; root profiling
+  continues without waivers. The isolated presentation-gap patch is static
+  ACCEPT and now owns the focused runtime window.

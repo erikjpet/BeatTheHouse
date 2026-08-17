@@ -1,12 +1,12 @@
-Status: IN_PROGRESS
+Status: DONE
 Board row: `fix06_2` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** — (reopened 2026-08-17 after stronger guard reproduction)
-- **Completion/implementation commits:** Prior partial repair: `4a4201b7`, `314b2d04`, `0572377b`, `30993c92`; root repair pending integration.
-- **Verification:** Pending. The earlier M1.6/Craps evidence remains valid, but the prior guard did not cover passive presentation hooks, cold restored state, or non-default fixture keys.
-- **Deviations:** The earlier closeout was reopened when the stronger guard reproduced seven passive Grand Casino dealer-day mutations. No test or assertion is waived.
+- **Completed:** 2026-08-17
+- **Completion/implementation commits:** Initial Craps/activation repair `4a4201b7`, `314b2d04`, `0572377b`, `30993c92`; cold generic repair integrated by `9d92f49f` (including `32a96a43`, `bd4260e7`, `4a1b48e5`, `91e0a6c4`); portable-ticket compatibility `adba98b7`; saved-Slot checkpoint repair `b5db8c07`, `124ced15`, integrated by `e94658ca`.
+- **Verification:** Street and Grand Casino Craps focused parity/save tests green; seven-hook cold JSON-restored activation guard green across all generated contexts and non-default keys; saved-Slot focused Slot 2/2 and Games 10/10; integrated Systems 49/49 in 39.895 s / 43.712 s; UI 0 failures with `ui_scene_compile` 57.828 s / 124.851 s; 10-seed determinism 590/590 checkpoints with identical combined hash `3567232055`; 75-state visual QA, 0 warnings/overlaps/stderr.
+- **Deviations:** The earlier closeout was reopened when the stronger guard reproduced seven passive Grand Casino dealer-day mutations, then widened once more when a cold saved-Slot animation checkpoint exposed the same activation-class defect. The repair stayed generic and observational; no test, assertion, budget, feature, or serialized field was waived.
 
 # Agent Prompt — fix06_2: Street Craps Mutates RunState on Activation
 

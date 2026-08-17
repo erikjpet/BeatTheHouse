@@ -4,6 +4,7 @@ extends RefCounted
 # Builds deterministic environments from library data.
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
+const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 
@@ -29,6 +30,7 @@ func next_environment(run_state: RunState, target_archetype_id: String = "", tar
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
 	run_state.apply_town_generation_modifiers(environment_data, rng)
+	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.save_rng(rng)
@@ -146,6 +148,10 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 	environment_data["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
 	environment_data["world_map_travel"] = true
 	_apply_world_travel_targets(environment_data, run_state, run_state.world_map, RunState.GRAND_CASINO_ARCHETYPE_ID)
+	# Grand Casino subrooms share one canonical world node. Apply seeded Crew
+	# placement only after that identity is present, and reapply it for restored
+	# rooms so itinerary rotation happens at the same revisit boundary as town.
+	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.set_environment(environment_data)
 	return true
@@ -194,6 +200,10 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 	layer_state["layout"] = EnvironmentInstance.ensure_generated_layout(layer_state)
 	if not run_state.install_environment_layer_state(target_id, layer_state):
 		return {"ok": false, "message": "The room could not be entered."}
+	# Scenario reconciliation and layer installation can replace flat event
+	# arrays. Recompute recruitment/presence against the final active layer so
+	# real side-door entries and restored revisits expose the authored fallback.
+	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
 	if run_state.has_world_map():
 		run_state.store_current_world_node_environment()
 	return {
@@ -369,6 +379,7 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
 	run_state.apply_town_generation_modifiers(environment_data, rng)
+	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.save_rng(rng)
@@ -382,6 +393,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	if not stored_environment.is_empty() and str(node.get("state", "")) == WorldMap.STATE_VISITED:
 		var restored := stored_environment.duplicate(true)
 		run_state.apply_town_living_world_context(restored, rng.fork("town_reentry:%s" % node_id))
+		CrewRecruitmentModelScript.apply_to_environment(run_state, restored)
 		_apply_world_travel_targets(restored, run_state, map_data, node_id)
 		restored["world_node_id"] = node_id
 		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored)
@@ -399,6 +411,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	# Game generation hooks may publish node-scoped facts. Give them the stable
 	# world-node identity before generating their canonical machine state.
 	environment_data["world_node_id"] = node_id
+	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	if str(archetype.get("kind", "")) == "home":
 		_apply_home_profile(run_state, environment_data, archetype, node_id, rng.fork("home_profile:%s" % node_id))

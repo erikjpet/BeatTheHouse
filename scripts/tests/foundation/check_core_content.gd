@@ -32,6 +32,7 @@ const ScenarioBacklogContractScript := preload("res://scripts/tests/foundation/s
 const InteractableEventClassGuardScript := preload("res://scripts/tests/foundation/interactable_event_class_guard.gd")
 const GameActivationClassGuardScript := preload("res://scripts/tests/foundation/game_activation_class_guard.gd")
 const Onboarding06ContractScript := preload("res://scripts/tests/foundation/onboarding_06_contract.gd")
+const CrewRecruitmentContractScript := preload("res://scripts/tests/foundation/crew_recruitment_contract.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
@@ -104,6 +105,12 @@ const FOUNDATION_SUITES := [
 ]
 
 var _foundation_active_suite := "contracts"
+var _surface_contract_script_cache: Dictionary = {}
+var _foundation_requested_check_ids: Dictionary = {}
+var _foundation_content_library_ref: ContentLibrary = null
+var _foundation_fixture_library_ref: ContentLibrary = null
+var _foundation_content_library_fingerprint := ""
+var _foundation_fixture_library_fingerprint := ""
 
 
 class ScenarioModifierProbeGame:
@@ -365,10 +372,25 @@ func _init() -> void:
 	_foundation_active_suite = str(options.get("suite", "contracts"))
 	var failures: Array = []
 	var report := _foundation_report(_foundation_active_suite)
+	var requested_check_ids: Array = options.get("check_ids", [])
+	for check_id_value in requested_check_ids:
+		var check_id := str(check_id_value)
+		if _foundation_requested_check_ids.has(check_id):
+			failures.append("Foundation check filter contains duplicate id: %s." % check_id)
+		_foundation_requested_check_ids[check_id] = true
+	report["requested_check_ids"] = requested_check_ids.duplicate()
 	var content_library: ContentLibrary = ContentLibraryScript.new()
 	content_library.load()
-	var fixture_library := _fixture_library()
+	var fixture_library := _fixture_library(failures)
+	_foundation_content_library_ref = content_library
+	_foundation_fixture_library_ref = fixture_library
+	_foundation_content_library_fingerprint = _foundation_library_fingerprint(content_library)
+	_foundation_fixture_library_fingerprint = _foundation_library_fingerprint(fixture_library)
 	_foundation_run_suite(_foundation_active_suite, content_library, fixture_library, failures, report)
+	var registered_check_ids: Array = report.get("registered_check_ids", [])
+	for check_id_value in requested_check_ids:
+		if not registered_check_ids.has(str(check_id_value)):
+			failures.append("Foundation check filter requested unregistered id: %s." % str(check_id_value))
 	report["duration_msec"] = Time.get_ticks_msec() - int(report.get("started_msec", 0))
 	report["failure_count"] = failures.size()
 	report["failures"] = failures.duplicate()
@@ -393,6 +415,7 @@ func _foundation_options() -> Dictionary:
 		"suite": "contracts",
 		"report": FOUNDATION_DEFAULT_REPORT_PATH,
 		"list": false,
+		"check_ids": [],
 	}
 	for raw_arg in OS.get_cmdline_user_args():
 		var arg := str(raw_arg).strip_edges()
@@ -402,6 +425,13 @@ func _foundation_options() -> Dictionary:
 			options["suite"] = _foundation_normalized_suite(arg.get_slice("=", 1))
 		elif arg.begins_with("--report="):
 			options["report"] = arg.get_slice("=", 1)
+		elif arg.begins_with("--check-ids="):
+			var check_ids: Array = []
+			for id_value in arg.get_slice("=", 1).split(",", false):
+				var check_id := str(id_value).strip_edges()
+				if not check_id.is_empty():
+					check_ids.append(check_id)
+			options["check_ids"] = check_ids
 	return options
 
 
@@ -434,6 +464,9 @@ func _foundation_report(suite: String) -> Dictionary:
 		"failure_count": 0,
 		"failures": [],
 		"checks": [],
+		"registered_check_ids": [],
+		"requested_check_ids": [],
+		"executed_check_ids": [],
 		"skipped": [],
 		"last_started_check": "",
 	}
@@ -488,6 +521,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 
 func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
 	_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+	_foundation_run_check(report, failures, "crew_recruitment_contract", Callable(CrewRecruitmentContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
 	_foundation_run_check(report, failures, "foundation_contracts", Callable(self, "_check_foundation_contract_smoke_for_suite"), [content_library])
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
@@ -518,6 +552,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "event_module_foundation", Callable(self, "_check_event_module_foundation"), [content_library])
 	_foundation_run_check(report, failures, "event_system_state_foundation", Callable(self, "_check_event_system_state_foundation"), [content_library])
 	_foundation_run_check(report, failures, "interactable_event_class_guard", Callable(InteractableEventClassGuardScript, "check"), [content_library])
+	_foundation_run_check(report, failures, "crew_recruitment_contract", Callable(CrewRecruitmentContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "game_activation_class_guard", Callable(GameActivationClassGuardScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "lottery_redemption_clerk_merge", Callable(self, "_check_lottery_redemption_clerk_merge"), [])
 	_foundation_run_check(report, failures, "talk_decision_system_foundation", Callable(self, "_check_talk_decision_system_foundation"), [content_library])
@@ -566,10 +601,15 @@ func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library:
 	_foundation_run_check(report, failures, "talk_decision_system_foundation", Callable(self, "_check_talk_decision_system_foundation"), [content_library])
 	_foundation_run_check(report, failures, "dialogue_system_foundation", Callable(self, "_check_dialogue_system_foundation"), [content_library])
 	_foundation_run_check(report, failures, "interactable_event_class_guard", Callable(InteractableEventClassGuardScript, "check"), [content_library])
+	_foundation_run_check(report, failures, "crew_recruitment_contract", Callable(CrewRecruitmentContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "game_activation_class_guard", Callable(GameActivationClassGuardScript, "check"), [content_library])
 
 
 func _foundation_run_check(report: Dictionary, failures: Array, check_id: String, callable: Callable, args: Array) -> void:
+	(report["registered_check_ids"] as Array).append(check_id)
+	if not _foundation_requested_check_ids.is_empty() and not _foundation_requested_check_ids.has(check_id):
+		(report["skipped"] as Array).append(check_id)
+		return
 	var start_msec := Time.get_ticks_msec()
 	var before_failures := failures.size()
 	report["last_started_check"] = check_id
@@ -577,15 +617,58 @@ func _foundation_run_check(report: Dictionary, failures: Array, check_id: String
 	var call_args := args.duplicate()
 	call_args.append(failures)
 	callable.callv(call_args)
+	if _foundation_library_fingerprint(_foundation_content_library_ref) != _foundation_content_library_fingerprint:
+		failures.append("Foundation check %s mutated the shared production ContentLibrary." % check_id)
+	if _foundation_library_fingerprint(_foundation_fixture_library_ref) != _foundation_fixture_library_fingerprint:
+		failures.append("Foundation check %s mutated the shared fixture ContentLibrary." % check_id)
 	var duration := Time.get_ticks_msec() - start_msec
 	var failure_delta := failures.size() - before_failures
+	var check_failures: Array = []
+	for failure_index in range(before_failures, failures.size()):
+		check_failures.append(failures[failure_index])
 	(report["checks"] as Array).append({
 		"id": check_id,
 		"duration_msec": duration,
 		"failure_count": failure_delta,
+		"failures": check_failures,
 		"passed": failure_delta == 0,
 	})
+	(report["executed_check_ids"] as Array).append(check_id)
 	print("FOUNDATION_CHECK_DONE id=%s duration_msec=%d failures=%d" % [check_id, duration, failure_delta])
+
+
+func _foundation_library_fingerprint(library: ContentLibrary, include_indexes: bool = true) -> String:
+	if library == null:
+		return ""
+	var state := {
+		"environment_archetypes": library.environment_archetypes,
+		"environment_scenarios": library.environment_scenarios,
+		"games": library.games,
+		"scratch_ticket_types": library.scratch_ticket_types,
+		"items": library.items,
+		"content_groups": library.content_groups,
+		"events": library.events,
+		"dialogues": library.dialogues,
+		"characters": library.characters,
+		"character_pools": library.character_pools,
+		"challenges": library.challenges,
+		"lenders": library.lenders,
+		"services": library.services,
+		"travel_routes": library.travel_routes,
+		"music_tracks": library.music_tracks,
+		"tutorial_lessons": library.tutorial_lessons,
+		"town_conditions": library.town_conditions,
+		"validation_errors": library.validation_errors,
+		"validation_warnings": library.validation_warnings,
+		"validation_complete": library.validation_complete,
+		"_load_errors": library._load_errors,
+		"_indexes": library._indexes,
+		"_load_timing": library._load_timing,
+		"_load_pack_timings": library._load_pack_timings,
+	}
+	if not include_indexes:
+		state.erase("_indexes")
+	return JSON.stringify(state)
 
 
 func _foundation_write_report(report_path: String, report: Dictionary) -> void:
@@ -661,6 +744,13 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 
 
 func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array) -> void:
+	var production_references_text := JSON.stringify({
+		"environment_archetypes": library.environment_archetypes,
+		"events": library.events,
+		"games": library.games,
+		"items": library.items,
+		"services": library.services,
+	})
 	_check_tier1_scenario_content(library, failures)
 	var motel := library.environment_archetype("pawn_shop")
 	var legacy_run := RunStateScript.new()
@@ -714,7 +804,7 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 		failures.append("World-node revisit did not restore the stored scenario unchanged.")
 
 	var repeat_library := ContentLibraryScript.new()
-	repeat_library.load(false)
+	repeat_library.environment_scenarios = {"bar": library.scenarios_for_archetype("bar").duplicate(true)}
 	var repeat_pool := repeat_library.scenarios_for_archetype("bar")
 	var third := bar_definition.duplicate(true)
 	third["id"] = "bar_engine_proof_third"
@@ -791,6 +881,14 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	_check_scenario_validation_negative_fixture(library, "bad_archetype", {"missing_archetype": [{"id": "bad_archetype", "archetype_id": "missing_archetype", "display_name": "Bad", "weight": 1, "mutations": {}}]}, "unknown archetype", failures)
 	_check_scenario_validation_negative_fixture(library, "bad_event", {"bar": [{"id": "bad_event", "archetype_id": "bar", "display_name": "Bad", "weight": 1, "mutations": {"event_pool_add": ["missing_event"]}}]}, "unknown id", failures)
 	_check_scenario_validation_negative_fixture(library, "bad_key", {"bar": [{"id": "bad_key", "archetype_id": "bar", "display_name": "Bad", "weight": 1, "mutations": {"per_frame_weather": true}}]}, "unknown mutation key", failures)
+	if JSON.stringify({
+		"environment_archetypes": library.environment_archetypes,
+		"events": library.events,
+		"games": library.games,
+		"items": library.items,
+		"services": library.services,
+	}) != production_references_text:
+		failures.append("Scenario validation fixtures mutated the production content-library references.")
 
 
 func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> void:
@@ -1011,7 +1109,14 @@ func _scenario_full_generation(seed: String, library: ContentLibrary) -> Diction
 
 func _check_scenario_validation_negative_fixture(library: ContentLibrary, fixture_id: String, scenarios: Dictionary, expected_fragment: String, failures: Array) -> void:
 	var fixture := ContentLibraryScript.new()
-	fixture.load(false)
+	# The scenario validator only reads these reference catalogs. Reusing their
+	# loaded definitions avoids three redundant full library parses; the caller's
+	# exact before/after sentinel proves the production library remains immutable.
+	fixture.environment_archetypes = library.environment_archetypes
+	fixture.events = library.events
+	fixture.games = library.games
+	fixture.items = library.items
+	fixture.services = library.services
 	fixture.environment_scenarios = scenarios.duplicate(true)
 	fixture.validation_errors = []
 	fixture.call("_validate_scenario_definitions")
@@ -1077,12 +1182,13 @@ func _check_town_state_foundation(library: ContentLibrary, failures: Array) -> v
 		"distance": "local",
 		"risk_event": {"id": "town_risk", "chance_percent": 40},
 	}
-	_town_force_condition(run_state, "clear", "midweek")
+	var condition_actions := _town_condition_action_indices(run_state, [["clear", "midweek"], ["storm", "midweek"], ["clear", "payday"]])
+	_town_force_condition(run_state, "clear", "midweek", condition_actions)
 	var clear_status := run_state.travel_route_status(route)
 	var clear_risk := run_state.travel_route_risk_preview(route)
 	if int(clear_status.get("cost", -1)) != 20 or str(clear_status.get("risk", "")) != "medium" or int(clear_risk.get("chance_percent", -1)) != 40:
 		failures.append("Clear weather did not preserve baseline travel cost/risk behavior.")
-	_town_force_condition(run_state, "storm", "midweek")
+	_town_force_condition(run_state, "storm", "midweek", condition_actions)
 	var storm_status := run_state.travel_route_status(route)
 	var storm_risk := run_state.travel_route_risk_preview(route)
 	if int(storm_status.get("cost", 0)) <= int(clear_status.get("cost", 0)) or str(storm_status.get("risk", "")) != "high" or int(storm_risk.get("chance_percent", 0)) <= int(clear_risk.get("chance_percent", 0)):
@@ -1099,10 +1205,10 @@ func _check_town_state_foundation(library: ContentLibrary, failures: Array) -> v
 		"visual_context": {},
 		"music_profile": {"ambience": 0.5, "volume": 0.25, "texture": "bar"},
 	}
-	_town_force_condition(run_state, "clear", "payday")
+	_town_force_condition(run_state, "clear", "payday", condition_actions)
 	var payday_environment := base_environment.duplicate(true)
 	run_state.apply_town_generation_modifiers(payday_environment)
-	_town_force_condition(run_state, "clear", "midweek")
+	_town_force_condition(run_state, "clear", "midweek", condition_actions)
 	var midweek_environment := base_environment.duplicate(true)
 	run_state.apply_town_generation_modifiers(midweek_environment)
 	var payday_economy: Dictionary = payday_environment.get("economic_profile", {})
@@ -1142,8 +1248,29 @@ func _check_town_state_foundation(library: ContentLibrary, failures: Array) -> v
 	_check_connected_town_foundation(library, failures)
 
 
-func _town_force_condition(run_state: RunState, weather_id: String, day_type_id: String) -> void:
+func _town_condition_action_indices(run_state: RunState, conditions: Array) -> Dictionary:
+	var original := run_state.town_snapshot()
+	var result: Dictionary = {}
+	for action in range(maxi(1, int(original.get("turn_horizon", 240)))):
+		var probe := original.duplicate(true)
+		probe["action_index"] = action
+		run_state.town_state.restore(probe, run_state.seed_value)
+		var key := "%s|%s" % [run_state.weather_now(), run_state.day_type()]
+		for condition_value in conditions:
+			var condition: Array = condition_value
+			if key == "%s|%s" % [str(condition[0]), str(condition[1])] and not result.has(key):
+				result[key] = action
+	run_state.town_state.restore(original, run_state.seed_value)
+	return result
+
+
+func _town_force_condition(run_state: RunState, weather_id: String, day_type_id: String, action_indices: Dictionary = {}) -> void:
 	var snapshot := run_state.town_snapshot()
+	var key := "%s|%s" % [weather_id, day_type_id]
+	if action_indices.has(key):
+		snapshot["action_index"] = int(action_indices[key])
+		run_state.town_state.restore(snapshot, run_state.seed_value)
+		return
 	for action in range(maxi(1, int(snapshot.get("turn_horizon", 240)))):
 		snapshot["action_index"] = action
 		run_state.town_state.restore(snapshot, run_state.seed_value)
@@ -4439,7 +4566,11 @@ func _check_production_game_module_load(library: ContentLibrary, run_state: RunS
 	if module_path.begins_with("res://data/runtime/") or module_path.ends_with("_ui.gd"):
 		failures.append("Smoke game module points at demo runtime/UI path: %s." % module_path)
 		return
-	var module_script: Script = load(module_path)
+	var module_script: Script = _surface_contract_script_cache.get(module_path, null) as Script
+	if module_script == null:
+		module_script = load(module_path)
+		if module_script != null:
+			_surface_contract_script_cache[module_path] = module_script
 	if module_script == null:
 		failures.append("Smoke game module could not be loaded: %s." % module_path)
 		return

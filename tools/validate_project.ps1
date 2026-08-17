@@ -4,6 +4,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
 
 function Get-ProjectRelativePath {
     param([string]$Path)
@@ -33,6 +34,7 @@ $requiredFiles = @(
     "scripts/core/content_library.gd",
     "scripts/core/character_roster.gd",
     "scripts/core/crew_state_model.gd",
+    "scripts/core/crew_recruitment_model.gd",
     "scripts/core/rng_stream.gd",
     "scripts/core/run_generator.gd",
     "scripts/core/save_service.gd",
@@ -41,9 +43,13 @@ $requiredFiles = @(
     "scripts/ui/visual_style.gd",
     "scripts/tests/foundation/check_lenders_release_saves.gd",
     "scripts/tests/foundation/interactable_event_class_guard.gd",
+    "scripts/tests/foundation/crew_recruitment_contract.gd",
+    "scripts/tests/foundation/crew_ignored_golden_probe.gd",
+    "scripts/tests/fixtures/crew06_5_ignored_run_baseline.json",
     "scripts/tests/foundation/check_scratch_tickets.gd",
     "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd",
     "tools/check_godot.ps1",
+    "tools/split_test_runner_helpers.ps1",
     "tools/function_census.ps1",
     "tools/gdscript_load_check.gd",
     "tools/foundation_visual_qa.ps1",
@@ -59,6 +65,7 @@ $requiredFiles = @(
     "data/games/scratch_tickets.json",
     "data/debt/lenders.json",
     "data/crew/crew.json",
+    "data/crew/recruitment.json",
     "data/crew/jobs.json",
     "data/services/services.json",
     "data/travel/routes.json",
@@ -199,6 +206,7 @@ $expectedClasses = @{
     "scripts/core/profile_inventory.gd" = "class_name ProfileInventory"
     "scripts/core/content_library.gd" = "class_name ContentLibrary"
     "scripts/core/scenario_engine.gd" = "class_name ScenarioEngine"
+    "scripts/core/crew_recruitment_model.gd" = "class_name CrewRecruitmentModel"
     "scripts/core/rng_stream.gd" = "class_name RngStream"
     "scripts/core/run_generator.gd" = "class_name RunGenerator"
     "scripts/core/save_service.gd" = "class_name SaveService"
@@ -635,6 +643,7 @@ Require-Text "tools/check_godot.ps1" 'Get-FoundationSplitRunnerPath' "Godot chec
 Require-Text "tools/check_godot.ps1" 'scripts/tests/foundation/check_lenders_release_saves.gd' "Godot check script must include the split foundation terminal source."
 Require-Text "tools/check_godot.ps1" 'Get-UiSceneSplitRunnerPath' "Godot check script must assemble the split UI scene compile runner."
 Require-Text "tools/check_godot.ps1" 'scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd' "Godot check script must include the split UI scene terminal source."
+Require-Text "tools/check_godot.ps1" 'Get-SplitTestRunnerLines' "Godot check script must use the marker-aware split runner assembler."
 Require-Text "tools/check_godot.ps1" 'ValidateSet("Smoke", "Contract", "Audit", "Full")' "Godot check script must expose suite selection."
 Require-Text "tools/check_godot.ps1" 'gdscript_load_check.gd' "Godot check script must run the one-process GDScript load checker."
 Require-Text "tools/check_godot.ps1" 'Stop-NewGodotProcesses' "Godot check script must clean up timed-out Godot child processes."
@@ -644,6 +653,124 @@ Require-TextInAny $foundationCheckFiles 'FOUNDATION_DEFAULT_REPORT_PATH' "Founda
 Require-Text "tools/gdscript_load_check.gd" 'checked_files' "GDScript load check must report checked files."
 Require-Text "tools/gdscript_load_check.gd" 'res://scripts' "GDScript load check must cover live scripts by default."
 Require-Text "tools/gdscript_load_check.gd" 'res://tools' "GDScript load check must cover tool scripts by default."
+
+$uiSplitSources = @(
+    "scripts/tests/ui_scene/compile_components_and_main_flow.gd",
+    "scripts/tests/ui_scene/compile_environment_layout.gd",
+    "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd"
+)
+$splitBeginMarker = Get-SplitTestRunnerOmitBeginMarker
+$splitEndMarker = Get-SplitTestRunnerOmitEndMarker
+$parentSplitLines = [System.IO.File]::ReadAllLines((Join-Path $root $uiSplitSources[0]))
+$beginMarkerCount = @($parentSplitLines | Where-Object { $_.Trim() -eq $splitBeginMarker }).Count
+$endMarkerCount = @($parentSplitLines | Where-Object { $_.Trim() -eq $splitEndMarker }).Count
+if ($beginMarkerCount -ne 1 -or $endMarkerCount -ne 1) {
+    $failures.Add("UI split parent must contain exactly one balanced descendant-stub marker block.")
+}
+
+# Hostile tool fixtures prove the assembler rejects malformed marker structure
+# and removes only the explicitly marked span from a multi-source runner.
+$hostileMarkedLines = @(
+    "func _unmarked_before() -> void:",
+    $splitBeginMarker,
+    "func _hostile_duplicate_stub() -> void:",
+    $splitEndMarker,
+    "func _unmarked_after() -> void:"
+)
+$hostileFilteredLines = @(Remove-SplitTestRunnerOmittedBlocks -Lines $hostileMarkedLines -SourceLabel "hostile balanced fixture" -OmitMarkedBlocks $true)
+if (($hostileFilteredLines -join "`n") -ne "func _unmarked_before() -> void:`nfunc _unmarked_after() -> void:") {
+    $failures.Add("Split-runner omit markers must remove only marked content and preserve adjacent unmarked lines exactly.")
+}
+$hostileStandaloneLines = @(Remove-SplitTestRunnerOmittedBlocks -Lines $hostileMarkedLines -SourceLabel "hostile standalone fixture" -OmitMarkedBlocks $false)
+if (($hostileStandaloneLines -join "`n") -ne ($hostileMarkedLines -join "`n")) {
+    $failures.Add("Single-source split runners must preserve marked standalone fixture stubs byte-for-byte.")
+}
+$malformedMarkerFixtures = @(
+    @($splitBeginMarker, "func _never_closed() -> void:"),
+    @($splitEndMarker),
+    @($splitBeginMarker, $splitBeginMarker, $splitEndMarker, $splitEndMarker)
+)
+foreach ($fixture in $malformedMarkerFixtures) {
+    $rejected = $false
+    try {
+        [void](Remove-SplitTestRunnerOmittedBlocks -Lines $fixture -SourceLabel "hostile malformed fixture" -OmitMarkedBlocks $true)
+    }
+    catch {
+        $rejected = $true
+    }
+    if (-not $rejected) {
+        $failures.Add("Split-runner assembler must reject unbalanced or nested omit markers.")
+    }
+}
+
+$generatedUiLines = @()
+try {
+    $generatedUiLines = @(Get-SplitTestRunnerLines -ProjectRoot $root -SourceRelativePaths $uiSplitSources)
+}
+catch {
+    $failures.Add("Could not assemble marker-aware UI split runner: $($_.Exception.Message)")
+}
+$generatedUiFunctionNames = @($generatedUiLines | ForEach-Object {
+    if ($_ -match '^func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(') {
+        $Matches[1]
+    }
+})
+$descendantFunctionNames = @($uiSplitSources[1..($uiSplitSources.Count - 1)] | ForEach-Object {
+    [System.IO.File]::ReadAllLines((Join-Path $root $_)) | ForEach-Object {
+        if ($_ -match '^func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(') {
+            $Matches[1]
+        }
+    }
+})
+foreach ($functionName in ($descendantFunctionNames | Sort-Object -Unique)) {
+    $generatedCount = @($generatedUiFunctionNames | Where-Object { $_ -eq $functionName }).Count
+    if ($generatedCount -ne 1) {
+        $failures.Add("Generated UI split runner must contain descendant function $functionName exactly once; found $generatedCount.")
+    }
+}
+
+$insideStubBlock = $false
+$stubFunctionNames = New-Object System.Collections.Generic.List[string]
+$stubCallNames = New-Object System.Collections.Generic.List[string]
+$stubBlockHasUnexpectedContent = $false
+foreach ($line in $parentSplitLines) {
+    if ($line.Trim() -eq $splitBeginMarker) {
+        $insideStubBlock = $true
+        continue
+    }
+    if ($line.Trim() -eq $splitEndMarker) {
+        $insideStubBlock = $false
+        continue
+    }
+    if (-not $insideStubBlock) {
+        continue
+    }
+    $trimmedStubLine = $line.Trim()
+    if (-not [string]::IsNullOrWhiteSpace($trimmedStubLine) -and
+        $trimmedStubLine -notmatch '^func\s+' -and
+        $trimmedStubLine -notmatch '^_missing_descendant_fixture\(' -and
+        $trimmedStubLine -notmatch '^return\s+') {
+        $stubBlockHasUnexpectedContent = $true
+    }
+    if ($line -match '^func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(') {
+        $stubFunctionNames.Add($Matches[1])
+    }
+    if ($line -match '_missing_descendant_fixture\("([A-Za-z_][A-Za-z0-9_]*)"\)') {
+        $stubCallNames.Add($Matches[1])
+    }
+}
+if (($stubFunctionNames -join "`n") -ne ($stubCallNames -join "`n") -or $stubFunctionNames.Count -eq 0 -or $stubBlockHasUnexpectedContent) {
+    $failures.Add("UI split omit block may contain only declared descendant-fixture stubs with matching guards.")
+}
+foreach ($functionName in $stubFunctionNames) {
+    $descendantCount = @($descendantFunctionNames | Where-Object { $_ -eq $functionName }).Count
+    if ($descendantCount -ne 1) {
+        $failures.Add("Omitted UI parent stub $functionName must have exactly one descendant implementation; found $descendantCount.")
+    }
+}
+if (@($generatedUiLines | Where-Object { $_.Trim() -eq $splitBeginMarker -or $_.Trim() -eq $splitEndMarker }).Count -ne 0) {
+    $failures.Add("Generated multi-source UI runner must not retain split-runner omit markers.")
+}
 
 $m2DataPacks = @{
     "lenders" = @{
@@ -715,6 +842,8 @@ $eventConsequenceKeys = $resultDeltaKeys + @(
     "check",
     "resolve_event",
     "trigger_event",
+    "crew_recruit_member",
+    "crew_meet_member",
     "lender_hook",
     "debt_settlement_discount_percent"
 )
@@ -1140,6 +1269,13 @@ foreach ($searchRoot in $simulationSearchRoots) {
             $failures.Add("Foundation simulation must use RngStream instead of engine-global randomness: $relativeScript")
         }
     }
+}
+
+try {
+    & (Join-Path $root "tools/foundation_systems_shards_test.ps1") -Quiet
+}
+catch {
+    $failures.Add("Foundation systems shard hostile contracts failed: $($_.Exception.Message)")
 }
 
 if ($failures.Count -gt 0) {

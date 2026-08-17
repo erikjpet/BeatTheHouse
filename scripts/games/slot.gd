@@ -53,7 +53,6 @@ func gameplay_model() -> String:
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	_ensure_machine_state(run_state, environment, run_state.create_rng("slot_enter") if run_state != null else null)
-	_resume_saved_presentation_checkpoint(environment)
 	var result: Dictionary = super.enter(run_state, environment)
 	var machine: Dictionary = _read_machine(environment)
 	result["message"] = "%s %s machine waits." % [
@@ -73,10 +72,16 @@ func checkpoint_surface_ui_state(ui_state: Dictionary, _run_state: RunState, env
 	var animations: Dictionary = animations_value as Dictionary if typeof(animations_value) == TYPE_DICTIONARY else {}
 	var spin_value: Variant = animations.get("slot_spin", {})
 	var spin: Dictionary = spin_value as Dictionary if typeof(spin_value) == TYPE_DICTIONARY else {}
+	var duration_msec := maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
 	if str(spin.get("active_id", "")) != str(machine.get("slot_animation_id", "")):
+		if machine.has("slot_animation_resume_elapsed_msec") \
+				and int(machine.get("slot_animation_resume_elapsed_msec", 0)) >= duration_msec \
+				and not StateScript.active_bonus_incomplete(machine) \
+				and not str(machine.get("slot_animation_id", "")).begins_with("bonus:"):
+			_settle_completed_presentation(machine)
+			_write_machine(environment, machine, false)
 		return
 	var elapsed_msec := maxi(0, int(round(float(spin.get("elapsed", 0.0)) * 1000.0)))
-	var duration_msec := maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
 	if bool(spin.get("active", false)) and elapsed_msec < duration_msec:
 		machine["slot_animation_resume_elapsed_msec"] = elapsed_msec
 	elif StateScript.active_bonus_incomplete(machine) or str(machine.get("slot_animation_id", "")).begins_with("bonus:"):
@@ -85,24 +90,7 @@ func checkpoint_surface_ui_state(ui_state: Dictionary, _run_state: RunState, env
 		machine["slot_animation_resume_elapsed_msec"] = duration_msec
 	else:
 		_settle_completed_presentation(machine)
-	_write_machine(environment, machine)
-
-
-func _resume_saved_presentation_checkpoint(environment: Dictionary) -> void:
-	var machine: Dictionary = _read_machine(environment)
-	if machine.is_empty() or not machine.has("slot_animation_resume_elapsed_msec"):
-		return
-	var elapsed_msec := clampi(
-		int(machine.get("slot_animation_resume_elapsed_msec", 0)),
-		0,
-		maxi(0, int(machine.get("slot_animation_duration_msec", 0)))
-	)
-	machine.erase("slot_animation_resume_elapsed_msec")
-	if elapsed_msec >= int(machine.get("slot_animation_duration_msec", 0)) and not StateScript.active_bonus_incomplete(machine) and not str(machine.get("slot_animation_id", "")).begins_with("bonus:"):
-		_settle_completed_presentation(machine)
-	else:
-		machine["slot_animation_started_msec"] = maxi(1, Time.get_ticks_msec() - elapsed_msec)
-	_write_machine(environment, machine)
+	_write_machine(environment, machine, false)
 
 
 func _settle_completed_presentation(machine: Dictionary) -> void:
@@ -206,11 +194,15 @@ func _peek_machine(environment: Dictionary) -> Dictionary:
 	return StateScript.peek_machine(environment, _machine_state_key(environment))
 
 
-func _write_machine(environment: Dictionary, machine: Dictionary) -> void:
+func _write_machine(environment: Dictionary, machine: Dictionary, consume_saved_checkpoint: bool = true) -> void:
+	if consume_saved_checkpoint:
+		machine.erase("slot_animation_resume_elapsed_msec")
 	StateScript.write_runtime_machine(environment, _machine_state_key(environment), machine)
 
 
-func _write_owned_machine(environment: Dictionary, machine: Dictionary) -> void:
+func _write_owned_machine(environment: Dictionary, machine: Dictionary, consume_saved_checkpoint: bool = true) -> void:
+	if consume_saved_checkpoint:
+		machine.erase("slot_animation_resume_elapsed_msec")
 	StateScript.write_runtime_machine(environment, _machine_state_key(environment), machine)
 
 
@@ -235,10 +227,26 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var machine: Dictionary = _read_machine(environment)
 	if machine.is_empty():
 		machine = _ensure_machine_state(run_state, environment, run_state.create_rng("slot_surface") if run_state != null else null)
-	var surface: Dictionary = presentation.surface_state(machine, run_state, definition, ui_state)
+	var presentation_machine := _saved_checkpoint_presentation_view(machine)
+	var surface: Dictionary = presentation.surface_state(presentation_machine, run_state, definition, ui_state)
 	if bool(surface.get("slot_bonus_trigger_revealed", false)):
 		_commit_bonus_trigger_reveal(environment, machine)
 	return surface
+
+
+func _saved_checkpoint_presentation_view(machine: Dictionary) -> Dictionary:
+	if not machine.has("slot_animation_resume_elapsed_msec"):
+		return machine
+	var view := machine.duplicate(true)
+	var duration_msec := maxi(0, int(view.get("slot_animation_duration_msec", 0)))
+	var elapsed_msec := clampi(int(view.get("slot_animation_resume_elapsed_msec", 0)), 0, duration_msec)
+	if elapsed_msec >= duration_msec \
+			and not StateScript.active_bonus_incomplete(view) \
+			and not str(view.get("slot_animation_id", "")).begins_with("bonus:"):
+		_settle_completed_presentation(view)
+		return view
+	view["slot_animation_resume_offset_msec"] = elapsed_msec
+	return view
 
 
 func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
@@ -266,7 +274,7 @@ func _commit_bonus_trigger_reveal(environment: Dictionary, machine: Dictionary) 
 	if committed.is_empty():
 		return
 	committed["slot_bonus_trigger_revealed"] = true
-	_write_owned_machine(environment, committed)
+	_write_owned_machine(environment, committed, false)
 
 
 func draw_surface(surface_canvas, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
@@ -1201,10 +1209,10 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, rng: Rn
 			generation_rng = RngStream.new()
 			generation_rng.configure(1)
 		machine = generator.generate_machine(run_state, environment, generation_rng, definition, get_id())
-		_write_machine(environment, machine)
+		_write_machine(environment, machine, false)
 	elif int(machine.get("schema_version", 0)) != StateScript.SCHEMA_VERSION:
 		machine = StateScript.normalize(machine)
-		_write_machine(environment, machine)
+		_write_machine(environment, machine, false)
 	return machine
 
 

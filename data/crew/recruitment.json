@@ -1,0 +1,121 @@
+[
+  {
+    "id": "crew_recruitment",
+    "schema_version": 1,
+    "associate_trust": 30,
+    "presence_rotate_actions": 6,
+    "members": [
+      {
+        "member_id": "crew_rook",
+        "event_id": "recruitment_rook_signpost",
+        "contact_event_id": "crew_contact_rook",
+        "job_offer_line": "Rook keeps the next handoff short and the terms shorter.",
+        "primary": {"kind": "crew_loan"},
+        "fallback": {"kind": "legacy_marker"},
+        "presence": ["small_underground_casino", "gas_station_casino", "back_alley"],
+        "presence_lines": {
+          "marker": "Rook keeps one eye on the door.",
+          "associate": "Rook has the engine warm.",
+          "made": "Rook nods. The back room is open.",
+          "inner_circle": "Rook waits where the road goes dark."
+        }
+      },
+      {
+        "member_id": "crew_switch",
+        "event_id": "recruitment_switch",
+        "contact_event_id": "crew_contact_switch",
+        "job_offer_line": "Switch has a route open now, not later.",
+        "primary": {"archetype_ids": ["gas_station_casino"], "scenario_ids": ["gas_station_trucker_convoy"]},
+        "fallback": {"archetype_ids": ["back_alley"]},
+        "presence": ["gas_station_casino", "back_alley", "small_underground_casino"],
+        "presence_lines": {
+          "marker": "Switch watches both ends of the road.",
+          "associate": "Switch has tonight's route in her head.",
+          "made": "Switch knows where the sweep turns next.",
+          "inner_circle": "Switch is already three roads ahead."
+        },
+        "rook_line": "Switch works the truck stops. Listen where the engines idle."
+      },
+      {
+        "member_id": "crew_mags",
+        "event_id": "recruitment_mags",
+        "contact_event_id": "crew_contact_mags",
+        "job_offer_line": "Mags has the work ordered before she names it.",
+        "primary": {"archetype_ids": ["back_alley"], "scenario_ids": ["back_alley_fence_night"]},
+        "fallback": {"archetype_ids": ["small_underground_casino"], "layer_ids": ["casino"]},
+        "presence": ["pawn_shop", "back_alley", "small_underground_casino"],
+        "presence_lines": {
+          "marker": "Mags checks the room twice.",
+          "associate": "Mags has every loose piece sorted.",
+          "made": "Mags has a plan and no patience for edits.",
+          "inner_circle": "Mags has already measured the exit."
+        },
+        "rook_line": "Mags buys what the rain brings. Find the quiet market."
+      },
+      {
+        "member_id": "crew_knuckles",
+        "event_id": "recruitment_knuckles",
+        "contact_event_id": "crew_contact_knuckles",
+        "job_offer_line": "Knuckles has work that improves when nobody explains it.",
+        "primary": {"archetype_ids": ["bar"], "scenario_ids": ["bar_fight_night"]},
+        "fallback": {"archetype_ids": ["small_underground_casino"], "layer_ids": ["club"]},
+        "presence": ["bar", "small_underground_casino", "back_alley"],
+        "presence_lines": {
+          "marker": "Knuckles watches the room make mistakes.",
+          "associate": "Knuckles keeps a clean corner for hot goods.",
+          "made": "Knuckles stands where questions stop.",
+          "inner_circle": "Knuckles waits. Nobody tests the wait."
+        },
+        "rook_line": "Knuckles follows the fights. Look for the room picking sides."
+      },
+      {
+        "member_id": "crew_velvet",
+        "event_id": "recruitment_velvet",
+        "contact_event_id": "crew_contact_velvet",
+        "job_offer_line": "Velvet has an introduction that needs a steady guest.",
+        "primary": {"archetype_ids": ["kitty_cat_lounge"], "scenario_ids": ["kitty_cat_lounge_buyout"]},
+        "fallback": {"archetype_ids": ["kitty_cat_lounge"], "scenario_ids": ["kitty_cat_lounge_slow_night"]},
+        "presence": ["kitty_cat_lounge", "delta_queen", "small_underground_casino"],
+        "presence_lines": {
+          "marker": "Velvet makes the worn room feel invited.",
+          "associate": "Velvet has a name for every closed door.",
+          "made": "Velvet smiles. The rope gives way.",
+          "inner_circle": "Velvet has the house thanking her for entry."
+        },
+        "rook_line": "Velvet works the lounge. Private rooms still need public names."
+      },
+      {
+        "member_id": "crew_bishop",
+        "event_id": "recruitment_bishop",
+        "contact_event_id": "crew_contact_bishop",
+        "job_offer_line": "Bishop has an appointment the floor must never notice.",
+        "primary": {"archetype_ids": ["grand_casino"]},
+        "fallback": {"archetype_ids": ["grand_casino_cage"], "available_with_primary": true},
+        "presence": ["grand_casino", "grand_casino_cage", "grand_casino_high_limit"],
+        "presence_lines": {
+          "marker": "Bishop stands where the ceiling expects him.",
+          "associate": "Bishop checks the shift without looking up.",
+          "made": "Bishop knows which camera is being polite.",
+          "inner_circle": "Bishop has the audit window memorized."
+        },
+        "rook_line": "Bishop stays near the Grand's cage. Don't make him break cover."
+      },
+      {
+        "member_id": "crew_lucky",
+        "event_id": "recruitment_lucky",
+        "contact_event_id": "crew_contact_lucky",
+        "job_offer_line": "Lucky has a short run and a dangerous definition of short.",
+        "primary": {"archetype_ids": ["beach"], "scenario_ids": ["beach_festival_weekend"]},
+        "fallback": {"archetype_ids": ["small_underground_casino", "bar", "motel", "gas_station_casino", "corner_store"], "requires_system": "numbers"},
+        "presence": ["small_underground_casino", "bar", "gas_station_casino"],
+        "presence_lines": {
+          "marker": "Lucky looks ready to race the tide.",
+          "associate": "Lucky has three stops and one good shortcut.",
+          "made": "Lucky grins like the clock owes him time.",
+          "inner_circle": "Lucky is already moving when the plan lands."
+        },
+        "rook_line": "Lucky works the beach when the stalls are up. Otherwise, follow the Numbers."
+      }
+    ]
+  }
+]
