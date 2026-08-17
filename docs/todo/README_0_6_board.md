@@ -99,7 +99,7 @@ the implementations. Wave C cannot close until both are DONE.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| rework06_1 | `rework06_1_map_delivery_prompt.md` | IN_PROGRESS | town06_1/2/3, crew06_1 (all DONE) | crew06_3 re-point, crew06_6, crew06_8 | PM:Codex/sub:8 | 2026-08-16 | | PM-orchestrated isolated execution; subagent owns implementation only, PM owns board, integration, verification, archival, and push. |
+| rework06_1 | `rework06_1_map_delivery_prompt.md` | DONE | town06_1/2/3, crew06_1 (all DONE) | crew06_3 re-point, crew06_6, crew06_8 | PM:Codex/sub:8 | 2026-08-16 | 2026-08-16 | PM verified synthetic-board deletion, real-node targets and ordinary-travel routing, all four modes, Numbers re-pointing, migration, exact crew-favor behavior, full 235-stage matrix, 10-seed determinism, and zero-warning visual QA. |
 | rework06_2 | `rework06_2_coin_pusher_simulation_prompt.md` | IN_PROGRESS | env06_1, town06_1 (DONE) | Wave C closure | PM:Codex/sub:9 | 2026-08-16 | | PM-orchestrated isolated execution; subagent owns implementation only, PM owns board, integration, verification, archival, and push. |
 
 ### Wave D — Crew depth
@@ -636,3 +636,14 @@ What happens then is the owner's, not an agent's:
   travel and re-point Numbers consumers; Coin Pusher must replace the height
   grid with deterministic fixed-point individual-coin simulation. PM retains
   single-writer board, integration, acceptance, archival, and push ownership.
+- 2026-08-16 [rework06_1] PM accepted one delivery contract: schema-versioned
+  `delivery_*` state selects reachable generatable real nodes, exposes courier
+  truth through the existing map overlay, routes every move through normal
+  travel, and completes handoffs inside generated venues. Numbers now consumes
+  multi-stop delivery directly; crew06_6 jobs and crew06_8 getaway inherit the
+  same registered API. No synthetic-board compatibility shim remains.
+- 2026-08-16 [rework06_1] DONE after PM line-by-line scope/design review and
+  exact integrated-tree verification: 235/235 full-matrix stages, 10-seed /
+  590-checkpoint determinism (`3483570349`), 20-seed real-node property proof,
+  byte-identical inactive travel, no-soft-lock regressions, and zero-warning
+  visual QA. This unblocks crew06_6 delivery jobs and crew06_8 getaway routing.
