@@ -1626,7 +1626,11 @@ func _check_coin_pusher_render_only_canvas_path(game: GameModule, failures: Arra
 		"coin_pusher_capture_presentation_trace": true,
 	})
 	app.call("_set_current_screen", "GAME")
-	app.call("_refresh_after_game_selection")
+	# The real entry path performs the broad screen refresh before switching to
+	# same-screen refreshes. Without it, the test-owned canvas existed but remained
+	# under the hidden start-screen run container and truthfully failed the
+	# production is_visible_in_tree() realtime guard.
+	app.call("_refresh")
 	var canvas: Control = app.get("game_surface_canvas")
 	if canvas == null:
 		failures.append("Coin Pusher host-path fixture did not use FoundationMain's owned GameSurfaceCanvas.")
@@ -1637,7 +1641,6 @@ func _check_coin_pusher_render_only_canvas_path(game: GameModule, failures: Arra
 	# connected handler resolves the completed action and its embedded refresh must
 	# route the new snapshot back into this same canvas.
 	canvas.emit_signal("surface_action", "coin_pusher_drop", 0, false)
-	canvas.call("_draw")
 	var first_stored: Dictionary = app.get("last_game_result")
 	var stored_patch: Dictionary = first_stored.get("surface_presentation_snapshot_patch", {}) if typeof(first_stored.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
 	var stored_trace: Array = stored_patch.get("trace", []) if typeof(stored_patch.get("trace", [])) == TYPE_ARRAY else []
@@ -1679,12 +1682,18 @@ func _check_coin_pusher_render_only_canvas_path(game: GameModule, failures: Arra
 	if int(app.get("last_game_surface_realtime_refresh_msec")) != 2899 \
 			or JSON.stringify(canvas.call("realtime_surface_state")) != guard_canvas_json:
 		failures.append("FoundationMain realtime refresh bypassed its minimum-interval guard.")
-	if not canvas.call("surface_realtime_state_refresh_enabled") \
-			or not canvas.visible or not canvas.is_visible_in_tree():
+	var realtime_preconditions_exact := app.get("run_state") == run_state \
+			and app.get("current_game") == game \
+			and str(app.get("current_screen")) == "GAME" \
+			and app.get("game_surface_canvas") == canvas \
+			and not bool(app.get("game_surface_auto_resolving")) \
+			and not bool(app.call("_simulation_progression_paused")) \
+			and bool(canvas.call("surface_realtime_state_refresh_enabled")) \
+			and canvas.visible and canvas.is_visible_in_tree()
+	if not realtime_preconditions_exact:
 		failures.append("Coin Pusher realtime fixture did not reach the enabled, visible owned-canvas production preconditions.")
 	app.set("last_game_surface_realtime_refresh_msec", 0)
 	app.call("_advance_game_surface_realtime_state")
-	canvas.call("_draw")
 	var patched_canvas_state: Dictionary = canvas.call("realtime_surface_state")
 	var patched_canvas_physical: Dictionary = _presentation_snapshot(patched_canvas_state)
 	var patched_canvas_trace_json := JSON.stringify(patched_canvas_physical.get("trace", []))
@@ -1736,7 +1745,6 @@ func _check_coin_pusher_render_only_canvas_path(game: GameModule, failures: Arra
 		run_state.complete_talk_event_resolution(str(run_state.next_pending_talk_event().get("event_id", "")))
 	app.call("_refresh_talk_dock")
 	canvas.emit_signal("surface_action", "coin_pusher_nudge", 0, false)
-	canvas.call("_draw")
 	var second_canvas_physical: Dictionary = _presentation_snapshot(canvas.call("realtime_surface_state"))
 	var second_stored: Dictionary = app.get("last_game_result")
 	var second_patch: Dictionary = second_stored.get("surface_presentation_snapshot_patch", {}) if typeof(second_stored.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}

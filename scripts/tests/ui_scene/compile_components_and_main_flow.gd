@@ -241,6 +241,11 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 	return false
 
 
+func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_coin_pusher_owned_canvas_render_frame")
+	return false
+
+
 func _check_background_slot_autoplay_isolated_from_active_game(_app: Control) -> bool:
 	_missing_descendant_fixture("_check_background_slot_autoplay_isolated_from_active_game")
 	return false
@@ -3315,6 +3320,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_embedded_refresh_deferred_coach(app):
+		quit(1)
+		return
+	if not await _check_coin_pusher_owned_canvas_render_frame(app):
 		quit(1)
 		return
 	if app.get("start_screen") == null:
