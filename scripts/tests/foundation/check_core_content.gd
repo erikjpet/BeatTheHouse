@@ -28,6 +28,7 @@ const PunchlineLayerContractScript := preload("res://scripts/tests/foundation/pu
 const PoliceSweepContractScript := preload("res://scripts/tests/foundation/police_sweep_contract.gd")
 const NumbersContractScript := preload("res://scripts/tests/foundation/numbers_contract.gd")
 const Tier2ScenarioContractScript := preload("res://scripts/tests/foundation/tier2_scenario_contract.gd")
+const ScenarioBacklogContractScript := preload("res://scripts/tests/foundation/scenario_backlog_contract.gd")
 const InteractableEventClassGuardScript := preload("res://scripts/tests/foundation/interactable_event_class_guard.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
@@ -621,6 +622,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_scenario_engine_foundation(library, failures)
 	PunchlineLayerContractScript.check(library, failures)
 	Tier2ScenarioContractScript.check(library, failures)
+	ScenarioBacklogContractScript.check(library, failures)
 
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CONTENT-CHECK")
@@ -720,8 +722,12 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	var pinned: Dictionary = repeat_generator.call("_select_scenario", pinned_run, "bar", pinned_run.create_rng("pin"))
 	if str(pinned.get("id", "")) != "bar_lock_in" or _copy_dict(pinned.get("mutations", {})).is_empty():
 		failures.append("Challenge scenario pin did not select the configured scenario.")
+	var excluded_ids: Array = []
+	for excluded_definition_value in library.scenarios_for_archetype("bar"):
+		if typeof(excluded_definition_value) == TYPE_DICTIONARY:
+			excluded_ids.append(str((excluded_definition_value as Dictionary).get("id", "")))
 	var excluded_run := RunStateScript.new()
-	excluded_run.start_new("SCENARIO-EXCLUDE", RunStateScript.custom_challenge("scenario_exclude", "SCENARIO-EXCLUDE", {"scenario_excludes": {"bar": ["bar_wake", "bar_fight_night", "bar_payday_rush", "bar_lock_in"]}}))
+	excluded_run.start_new("SCENARIO-EXCLUDE", RunStateScript.custom_challenge("scenario_exclude", "SCENARIO-EXCLUDE", {"scenario_excludes": {"bar": excluded_ids}}))
 	var excluded: Dictionary = RunGeneratorScript.new(library).call("_select_scenario", excluded_run, "bar", excluded_run.create_rng("exclude"))
 	if not excluded.is_empty():
 		failures.append("Challenge scenario exclusions did not remove every configured id.")
@@ -794,16 +800,16 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 		var archetype_id := str(archetype_id_value)
 		var pool := library.scenarios_for_archetype(archetype_id)
 		var expected_pool: Array = expected.get(archetype_id, [])
-		if pool.size() != expected_pool.size():
-			failures.append("Tier-1 scenario pool %s has %d entries; expected %d." % [archetype_id, pool.size(), expected_pool.size()])
+		if pool.size() < expected_pool.size():
+			failures.append("Tier-1 scenario pool %s has %d entries; expected at least the %d launch entries." % [archetype_id, pool.size(), expected_pool.size()])
 		for scenario_value in pool:
 			if typeof(scenario_value) != TYPE_DICTIONARY:
 				continue
 			var scenario: Dictionary = scenario_value
 			var scenario_id := str(scenario.get("id", ""))
-			found_ids.append(scenario_id)
 			if not expected_pool.has(scenario_id):
-				failures.append("Tier-1 scenario pool %s contains unexpected id %s." % [archetype_id, scenario_id])
+				continue
+			found_ids.append(scenario_id)
 			if bool(scenario.get("placeholder", false)):
 				failures.append("Tier-1 scenario %s is still marked as placeholder content." % scenario_id)
 			if scenario.has("layer_id"):
