@@ -230,7 +230,7 @@ static func _check_staff_rollover_presentation(library: ContentLibrary, failures
 			failures.append("Grand Casino %s passive presentation mutated serialized state after a real staff rollover: %s" % [game_id, ", ".join(paths)])
 			continue
 		_commit_staff_action_boundary(game_id, game, method_run)
-		var role_id := "bartender" if game_id == "bar_dice" else game_id
+		var role_id: String = "bartender" if game_id == "bar_dice" else game_id
 		var expected_assignment := _dict(assignments.get(role_id, {}))
 		var game_states := _dict(method_run.current_environment.get("game_states", {}))
 		var persisted_table := _dict(game_states.get(game_id, {}))
