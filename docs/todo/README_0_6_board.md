@@ -613,6 +613,14 @@ What happens then is the owner's, not an agent's:
   post-action/refresh phase is the largest block at 51.969/55.557 ms. Autosave
   preparation is only 0.008 ms. The next probe must split apply/tutorial/audio
   from embedded refresh/snapshot before any root optimization is accepted.
+- 2026-08-17 [pusher06_2 native host split] The second opt-in probe confirms
+  the remaining synchronous production cost is distributed, not one I/O bug:
+  raw p95 18.257 ms; drop/nudge 86.509/89.304 ms; trace construction
+  14.036/14.974 ms; post-action checks 19.508/22.268 ms; embedded refresh
+  22.884/23.841 ms, with roughly 11 ms still outside the instrumented host
+  total. Root work must account for that outer cost and preserve immediate
+  action completion, exact 14-frame trace, snapshot/audio semantics, and all
+  160 physical bodies; deferral or feature removal is not accepted.
 - 2026-08-17 [pusher06_2 presentation gaps] Independent static review ACCEPTS
   all three corrections after returning float quota math and two false-positive
   tests. Opening generation uses integer-only deterministic per-shelf quotas
