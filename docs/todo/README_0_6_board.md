@@ -293,6 +293,29 @@ What happens then is the owner's, not an agent's:
   next root pass therefore caches the frozen-grid candidate order once per tick
   and flattens collision/support hot loops; exact oracle order, trace, density,
   outcomes, and synchronous semantics remain binding.
+- 2026-08-17 [crew06_5] The final focused Contract gate is green after two
+  fixture-only corrections: exact ignored-run golden normalization now converts
+  only finite integral JSON floats in the safe integer range, and the Lucky
+  Numbers route fixture now uses canonical WorldMap `a`/`b` edges instead of
+  discarded `from`/`to` keys. The real generated presence/contact/EventModule
+  service path starts an active delivery run; all Contract assertions pass in
+  190.136 s within the unchanged 230.391 s budget. The row remains IN_PROGRESS
+  until the full integrated prompt matrix and PM scope/design review complete.
+- 2026-08-17 [systems gate] Five test-harness-only efficiency corrections were
+  independently accepted and integrated: loaded content references are reused
+  under exact immutability sentinels; topology-only world-map sweeps use the
+  production map-build seam; activation parsing is cached per environment while
+  all seven live hook fixtures remain isolated; Town/Numbers/Police Sweep reuse
+  reset/read-only fixtures under hostile reset proof; and save continuation
+  reuses its already-proven independent second restore. Seed counts, contexts,
+  assertions, registrations, budgets, and production code are unchanged.
+- 2026-08-17 [pusher06_2] The profiled hot-path correction is statically
+  accepted at `4159f393`: one deterministic frozen-grid candidate sequence per
+  center is shared by flattened collision/support loops, with lazy population
+  for within-tick center crossings. Exact iteration order, pair visitation,
+  support ties, 48 ticks, trace, density, outcomes, and synchronous semantics
+  remain unchanged; a hostile center-crossing oracle fixture covers the lazy
+  path. Runtime exactness and the 16 ms performance gates remain pending.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
