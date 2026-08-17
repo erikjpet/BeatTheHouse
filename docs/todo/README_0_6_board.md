@@ -558,8 +558,12 @@ What happens then is the owner's, not an agent's:
   bindings are ruled out. Root-cause direction: hardened bootstrap replaced an
   unchecked cached binding tree with the lock's Godot 4.5 `godot-cpp` commit
   `e83fd...`, while the engine is Godot 4.6. Run clean scaffold controls against
-  exact 4.5 and official 4.6-stable bindings, clearing native/generated caches;
-  if 4.6 loads, correct and verify the lock rather than working around the ABI.
+  exact 4.5 and exact-engine 4.6 API/interface bindings, clearing native/
+  generated caches; if 4.6 loads, correct and verify the lock rather than
+  working around the ABI. Upstream has no `godot-cpp` 4.6-stable tag/branch:
+  latest stable is 4.5 `e83fd...`, while Godot 4.6-stable is engine commit
+  `89cea143...`. Do not pin `godot-cpp` master blindly; generate and hash-pin the
+  API/interface from the exact engine or verify a specific upstream sync commit.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
