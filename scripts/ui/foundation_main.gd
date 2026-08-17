@@ -2485,10 +2485,13 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 	# Pal made invisible conversations accrue abandonment Heat on travel.
 	if run_state.is_tutorial_run():
 		return false
+	var ordered_candidates := library.action_trigger_event_candidates_readonly()
+	if ordered_candidates.is_empty():
+		return false
 	var candidates: Array = []
 	var enqueued := false
 	var cadence_rng := run_state.create_event_cadence_rng()
-	for event_definition_value in library.action_trigger_event_candidates_readonly():
+	for event_definition_value in ordered_candidates:
 		action_trigger_candidate_visit_count += 1
 		if typeof(event_definition_value) != TYPE_DICTIONARY:
 			continue

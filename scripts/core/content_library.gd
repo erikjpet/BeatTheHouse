@@ -68,6 +68,7 @@ var _table_approach_talk_event_candidates: Array = []
 var _table_approach_game_targets: Dictionary = {}
 var _table_approach_has_wildcard := false
 var _trigger_event_indexed_events: Array = []
+var _trigger_event_index_full_pack_scan_count := 0
 var _content_index_generation := 0
 var _load_timing: Dictionary = {}
 var _load_pack_timings: Array = []
@@ -1062,6 +1063,12 @@ func content_index_generation() -> int:
 	return _content_index_generation
 
 
+# Test/diagnostic seam for proving that immutable runtime reads do not rebuild
+# or rescan the authored event pack. Each trigger-index rebuild is one full pass.
+func trigger_event_index_full_pack_scan_count() -> int:
+	return _trigger_event_index_full_pack_scan_count
+
+
 # Rebuilds id indexes for loaded content arrays. Fixture tests can still replace
 # arrays directly; _lookup and the trigger-index identity guard refresh replacements
 # on demand. In-place fixture edits use rebuild_content_indexes() above.
@@ -1094,6 +1101,7 @@ func _ensure_trigger_event_indexes() -> void:
 
 
 func _rebuild_trigger_event_indexes() -> void:
+	_trigger_event_index_full_pack_scan_count += 1
 	_action_trigger_event_candidates = []
 	_heat_threshold_talk_event_candidates = []
 	_table_approach_talk_event_candidates = []

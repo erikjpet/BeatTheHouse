@@ -1590,6 +1590,7 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	quiet_pack_events.append(_table_approach_fast_path_event("stable_specific_target", ["another_game"]))
 	unsupported_library.events = quiet_pack_events
 	unsupported_library.rebuild_content_indexes()
+	var quiet_trigger_index_scans_before := unsupported_library.trigger_event_index_full_pack_scan_count()
 	app.set("library", unsupported_library)
 	run_state.clear_closing_time_state()
 	run_state.narrative_flags.erase("health_inspector_closing_actions")
@@ -1597,6 +1598,8 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	var queue_before := JSON.stringify(run_state.pending_triggered_events)
 	var cadence_before := JSON.stringify(run_state.event_cadence)
 	var state_before := JSON.stringify(run_state.to_dict())
+	run_state.event_cadence_rng_create_call_count = 0
+	run_state.event_cadence_rng_save_call_count = 0
 	app.set("recent_result_deep_snapshot_call_count", 0)
 	app.set("action_trigger_candidate_visit_count", 0)
 	app.set("heat_talk_candidate_visit_count", 0)
@@ -1615,14 +1618,17 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 			or JSON.stringify(game_result) != result_before \
 			or int(app.get("recent_result_deep_snapshot_call_count")) != 0 \
 			or int(app.get("action_trigger_candidate_visit_count")) != 0 \
+			or run_state.event_cadence_rng_create_call_count != 0 \
+			or run_state.event_cadence_rng_save_call_count != 0 \
 			or int(app.get("heat_talk_candidate_visit_count")) != 0 \
 			or int(app.get("table_talk_candidate_visit_count")) != 0 \
 			or int(app.get("post_interrupt_talk_boundary_visit_count")) != 1 \
 			or int(app.get("post_interrupt_closing_visit_count")) != 1 \
 			or int(app.get("post_interrupt_forced_travel_visit_count")) != 1 \
 			or int(app.get("post_interrupt_talk_enqueue_visit_count")) != 1 \
-			or int(app.get("post_interrupt_unavoidable_visit_count")) != 1:
-		push_error("Real quiet outer interrupt scanned its full pack, used a deep snapshot, built a surface, queued, advanced RNG, or mutated state.")
+			or int(app.get("post_interrupt_unavoidable_visit_count")) != 1 \
+			or unsupported_library.trigger_event_index_full_pack_scan_count() != quiet_trigger_index_scans_before:
+		push_error("Real quiet outer interrupt rebuilt/scanned its event pack, touched cadence RNG, used a deep snapshot, built a surface, queued, or mutated state.")
 		valid = false
 	if str(context.get("game_id", "")) != "coin_pusher" or str(context.get("action_id", "")) != "drop_quarter" \
 			or str(context.get("action_kind", "")) != "legal":
@@ -1728,23 +1734,31 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 
 	var fixture_library := ContentLibrary.new()
 	fixture_library.events = [_table_approach_fast_path_event("original_target", ["original_game"])]
-	if not fixture_library.has_table_approach_talk_event_for_game("original_game"):
+	var initial_scan_count := fixture_library.trigger_event_index_full_pack_scan_count()
+	if not fixture_library.has_table_approach_talk_event_for_game("original_game") \
+			or fixture_library.trigger_event_index_full_pack_scan_count() != initial_scan_count + 1:
 		push_error("Direct-array table index did not initialize on its first query.")
 		valid = false
 	fixture_library.events = [_table_approach_fast_path_event("original_target", [])]
-	if not fixture_library.has_table_approach_talk_event_for_game("same_id_replacement_game"):
+	var replacement_scan_count := fixture_library.trigger_event_index_full_pack_scan_count()
+	if not fixture_library.has_table_approach_talk_event_for_game("same_id_replacement_game") \
+			or fixture_library.trigger_event_index_full_pack_scan_count() != replacement_scan_count + 1:
 		push_error("Same-length/same-ID Array replacement did not invalidate changed wildcard target content.")
 		valid = false
 	var generation_before_update := fixture_library.content_index_generation()
+	var in_place_scan_count := fixture_library.trigger_event_index_full_pack_scan_count()
 	var updated_event: Dictionary = fixture_library.events[0]
 	var updated_trigger: Dictionary = updated_event.get("trigger", {})
 	updated_trigger["games"] = ["rebuilt_game"]
 	updated_event["trigger"] = updated_trigger
 	fixture_library.events[0] = updated_event
 	fixture_library.rebuild_content_indexes()
+	var old_target_after_rebuild := fixture_library.has_table_approach_talk_event_for_game("original_game")
+	var rebuilt_target_after_rebuild := fixture_library.has_table_approach_talk_event_for_game("rebuilt_game")
 	if fixture_library.content_index_generation() != generation_before_update + 1 \
-			or fixture_library.has_table_approach_talk_event_for_game("original_game") \
-			or not fixture_library.has_table_approach_talk_event_for_game("rebuilt_game"):
+			or fixture_library.trigger_event_index_full_pack_scan_count() != in_place_scan_count + 1 \
+			or old_target_after_rebuild \
+			or not rebuilt_target_after_rebuild:
 		push_error("Supported content-index rebuild left an in-place table-target update stale.")
 		valid = false
 	# Replacing the public Array remains the supported lightweight fixture seam;
@@ -1924,10 +1938,14 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	run_state.event_cadence["last_modal_closed_action"] = -9999
 	var unavoidable_rng_before := int(run_state.event_cadence.get("rng_state", 0))
 	_reset_interrupt_probe_counters(app)
+	run_state.event_cadence_rng_create_call_count = 0
+	run_state.event_cadence_rng_save_call_count = 0
 	if not bool(app.call("_apply_post_action_environment_interrupt", "game_action")) \
 			or str(run_state.active_triggered_event.get("event_id", "")) != "outer_unavoidable_fixture" \
 			or JSON.stringify(_post_interrupt_stage_counts(app)) != JSON.stringify([1, 1, 1, 1, 1]) \
 			or int(app.get("action_trigger_candidate_visit_count")) != 1 \
+			or run_state.event_cadence_rng_create_call_count != 1 \
+			or run_state.event_cadence_rng_save_call_count != 1 \
 			or int(app.get("heat_talk_candidate_visit_count")) != 0 \
 			or int(app.get("table_talk_candidate_visit_count")) != 0 \
 			or int(app.get("recent_result_deep_snapshot_call_count")) != 0 \
