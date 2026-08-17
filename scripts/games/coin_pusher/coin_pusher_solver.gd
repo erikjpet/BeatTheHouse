@@ -418,13 +418,13 @@ static func _apply_pusher(state: Dictionary, old_face: int, new_face: int, upper
 
 static func _integrate(state: Dictionary, events: Array, motion_events: Array) -> void:
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	var remaining: Array = []
-	for value in bodies:
+	var exit_indices: Array = []
+	for body_index in range(bodies.size()):
+		var value: Variant = bodies[body_index]
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var body: Dictionary = value
 		if bool(body.get("sleeping", false)):
-			remaining.append(body)
 			continue
 		var cap_pressure_ticks := maxi(0, int(body.get("cap_pressure_ticks", 0)))
 		if cap_pressure_ticks > 0:
@@ -440,6 +440,7 @@ static func _integrate(state: Dictionary, events: Array, motion_events: Array) -
 		var exit := _exit_kind(body)
 		if not exit.is_empty():
 			events.append(_exit_event(body, exit, "physical_fall"))
+			exit_indices.append(body_index)
 			continue
 		var base_z := _floor_z(body)
 		if was_upper and int(body.get("y", 0)) < UPPER_EDGE:
@@ -453,75 +454,77 @@ static func _integrate(state: Dictionary, events: Array, motion_events: Array) -
 		else:
 			body["rest_state"] = "falling"
 			body["sleep_ticks"] = 0
-		remaining.append(body)
-	state["bodies"] = remaining
+	for exit_index in range(exit_indices.size() - 1, -1, -1):
+		bodies.remove_at(int(exit_indices[exit_index]))
 
 
 static func _resolve_collisions(state: Dictionary, buckets: Dictionary) -> int:
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	var awake_indices: Array = []
+	var awake_indices := PackedInt32Array()
 	for index in range(bodies.size()):
 		if typeof(bodies[index]) == TYPE_DICTIONARY and not bool((bodies[index] as Dictionary).get("sleeping", false)):
 			awake_indices.append(index)
 	if awake_indices.is_empty():
 		return 0
-	var visited_pairs := {}
+	var visited_pairs := PackedByteArray()
+	visited_pairs.resize(bodies.size() * bodies.size())
 	var resolved := 0
 	for left_index_value in awake_indices:
 		var left_index := int(left_index_value)
 		var left: Dictionary = bodies[left_index]
-		var nearby := _nearby_indices(buckets, left)
-		for right_index_value in nearby:
-			var right_index := int(right_index_value)
-			if right_index == left_index:
-				continue
-			var low := mini(left_index, right_index)
-			var high := maxi(left_index, right_index)
-			var pair_key := low * 256 + high
-			if bool(visited_pairs.get(pair_key, false)):
-				continue
-			visited_pairs[pair_key] = true
-			if typeof(bodies[right_index]) != TYPE_DICTIONARY:
-				continue
-			var right: Dictionary = bodies[right_index]
-			var dx := int(right.get("x", 0)) - int(left.get("x", 0))
-			var dy := int(right.get("y", 0)) - int(left.get("y", 0))
-			var min_distance := int(left.get("radius", COIN_RADIUS)) + int(right.get("radius", COIN_RADIUS))
-			if absi(dx) >= min_distance or absi(dy) >= min_distance or dx * dx + dy * dy >= min_distance * min_distance:
-				continue
-			var z_gap := absi(int(left.get("z", 0)) - int(right.get("z", 0)))
-			if z_gap >= mini(int(left.get("height", COIN_HEIGHT)), int(right.get("height", COIN_HEIGHT))):
-				continue
-			var overlap := min_distance - maxi(absi(dx), absi(dy))
-			if overlap <= 0:
-				continue
-			if absi(dx) >= absi(dy):
-				var sign_x := 1 if dx >= 0 else -1
-				right["x"] = int(right.get("x", 0)) + _divi(sign_x * overlap, 2)
-				left["x"] = int(left.get("x", 0)) - _divi(sign_x * overlap, 2)
-				right["vx"] = int(right.get("vx", 0)) + sign_x * overlap * 5
-				left["vx"] = int(left.get("vx", 0)) - sign_x * overlap * 5
-			else:
-				var sign_y := 1 if dy >= 0 else -1
-				right["y"] = int(right.get("y", 0)) + _divi(sign_y * overlap, 2)
-				left["y"] = int(left.get("y", 0)) - _divi(sign_y * overlap, 2)
-				right["vy"] = int(right.get("vy", 0)) + sign_y * overlap * 5
-				left["vy"] = int(left.get("vy", 0)) - sign_y * overlap * 5
-			_wake(left)
-			_wake(right)
-			resolved += 1
+		var center_x := _divi(int(left.get("x", 0)), BROADPHASE_CELL)
+		var center_y := _divi(int(left.get("y", 0)), BROADPHASE_CELL)
+		var center_z := _divi(int(left.get("z", 0)), BROADPHASE_CELL)
+		for z_offset in range(-1, 2):
+			for y_offset in range(-1, 2):
+				for x_offset in range(-1, 2):
+					var bucket_value: Variant = buckets.get(_bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset), null)
+					if typeof(bucket_value) != TYPE_ARRAY:
+						continue
+					for right_index_value in bucket_value as Array:
+						var right_index := int(right_index_value)
+						if right_index == left_index:
+							continue
+						var low := mini(left_index, right_index)
+						var high := maxi(left_index, right_index)
+						var pair_key := low * bodies.size() + high
+						if visited_pairs[pair_key] != 0:
+							continue
+						visited_pairs[pair_key] = 1
+						if typeof(bodies[right_index]) != TYPE_DICTIONARY:
+							continue
+						var right: Dictionary = bodies[right_index]
+						var dx := int(right.get("x", 0)) - int(left.get("x", 0))
+						var dy := int(right.get("y", 0)) - int(left.get("y", 0))
+						var min_distance := int(left.get("radius", COIN_RADIUS)) + int(right.get("radius", COIN_RADIUS))
+						if absi(dx) >= min_distance or absi(dy) >= min_distance or dx * dx + dy * dy >= min_distance * min_distance:
+							continue
+						var z_gap := absi(int(left.get("z", 0)) - int(right.get("z", 0)))
+						if z_gap >= mini(int(left.get("height", COIN_HEIGHT)), int(right.get("height", COIN_HEIGHT))):
+							continue
+						var overlap := min_distance - maxi(absi(dx), absi(dy))
+						if overlap <= 0:
+							continue
+						if absi(dx) >= absi(dy):
+							var sign_x := 1 if dx >= 0 else -1
+							right["x"] = int(right.get("x", 0)) + _divi(sign_x * overlap, 2)
+							left["x"] = int(left.get("x", 0)) - _divi(sign_x * overlap, 2)
+							right["vx"] = int(right.get("vx", 0)) + sign_x * overlap * 5
+							left["vx"] = int(left.get("vx", 0)) - sign_x * overlap * 5
+						else:
+							var sign_y := 1 if dy >= 0 else -1
+							right["y"] = int(right.get("y", 0)) + _divi(sign_y * overlap, 2)
+							left["y"] = int(left.get("y", 0)) - _divi(sign_y * overlap, 2)
+							right["vy"] = int(right.get("vy", 0)) + sign_y * overlap * 5
+							left["vy"] = int(left.get("vy", 0)) - sign_y * overlap * 5
+						_wake(left)
+						_wake(right)
+						resolved += 1
 	return resolved
 
 
 static func _resolve_supports(state: Dictionary, buckets: Dictionary, motion_events: Array) -> void:
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	var any_awake := false
-	for value in bodies:
-		if typeof(value) == TYPE_DICTIONARY and not bool((value as Dictionary).get("sleeping", false)):
-			any_awake = true
-			break
-	if not any_awake:
-		return
 	for value in bodies:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
@@ -534,21 +537,30 @@ static func _resolve_supports(state: Dictionary, buckets: Dictionary, motion_eve
 			continue
 		var support: Dictionary = {}
 		var support_distance := 1 << 30
-		for candidate_index_value in _nearby_indices(buckets, body):
-			var candidate_index := int(candidate_index_value)
-			if candidate_index < 0 or candidate_index >= bodies.size() or bodies[candidate_index] == value or typeof(bodies[candidate_index]) != TYPE_DICTIONARY:
-				continue
-			var candidate: Dictionary = bodies[candidate_index]
-			var target_z := int(candidate.get("z", 0)) + int(candidate.get("height", COIN_HEIGHT))
-			if target_z > int(body.get("z", 0)) + COIN_HEIGHT or target_z < int(body.get("z", 0)) - COIN_HEIGHT * 2:
-				continue
-			var dx := int(body.get("x", 0)) - int(candidate.get("x", 0))
-			var dy := int(body.get("y", 0)) - int(candidate.get("y", 0))
-			var distance := dx * dx + dy * dy
-			var support_radius := mini(int(body.get("radius", COIN_RADIUS)), int(candidate.get("radius", COIN_RADIUS)))
-			if distance < support_radius * support_radius and distance < support_distance:
-				support = candidate
-				support_distance = distance
+		var center_x := _divi(int(body.get("x", 0)), BROADPHASE_CELL)
+		var center_y := _divi(int(body.get("y", 0)), BROADPHASE_CELL)
+		var center_z := _divi(int(body.get("z", 0)), BROADPHASE_CELL)
+		for z_offset in range(-1, 2):
+			for y_offset in range(-1, 2):
+				for x_offset in range(-1, 2):
+					var bucket_value: Variant = buckets.get(_bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset), null)
+					if typeof(bucket_value) != TYPE_ARRAY:
+						continue
+					for candidate_index_value in bucket_value as Array:
+						var candidate_index := int(candidate_index_value)
+						if candidate_index < 0 or candidate_index >= bodies.size() or bodies[candidate_index] == value or typeof(bodies[candidate_index]) != TYPE_DICTIONARY:
+							continue
+						var candidate: Dictionary = bodies[candidate_index]
+						var target_z := int(candidate.get("z", 0)) + int(candidate.get("height", COIN_HEIGHT))
+						if target_z > int(body.get("z", 0)) + COIN_HEIGHT or target_z < int(body.get("z", 0)) - COIN_HEIGHT * 2:
+							continue
+						var dx := int(body.get("x", 0)) - int(candidate.get("x", 0))
+						var dy := int(body.get("y", 0)) - int(candidate.get("y", 0))
+						var distance := dx * dx + dy * dy
+						var support_radius := mini(int(body.get("radius", COIN_RADIUS)), int(candidate.get("radius", COIN_RADIUS)))
+						if distance < support_radius * support_radius and distance < support_distance:
+							support = candidate
+							support_distance = distance
 		if support.is_empty():
 			body["rest_state"] = "falling"
 			body["sleeping"] = false
@@ -650,23 +662,10 @@ static func _spatial_buckets(bodies: Array) -> Dictionary:
 			continue
 		var body: Dictionary = bodies[index]
 		var key := _bucket_key(_divi(int(body.get("x", 0)), BROADPHASE_CELL), _divi(int(body.get("y", 0)), BROADPHASE_CELL), _divi(int(body.get("z", 0)), BROADPHASE_CELL))
-		var bucket: Array = result.get(key, []) if typeof(result.get(key, [])) == TYPE_ARRAY else []
-		bucket.append(index)
-		result[key] = bucket
-	return result
-
-
-static func _nearby_indices(buckets: Dictionary, body: Dictionary) -> Array:
-	var result: Array = []
-	var center_x := _divi(int(body.get("x", 0)), BROADPHASE_CELL)
-	var center_y := _divi(int(body.get("y", 0)), BROADPHASE_CELL)
-	var center_z := _divi(int(body.get("z", 0)), BROADPHASE_CELL)
-	for z_offset in range(-1, 2):
-		for y_offset in range(-1, 2):
-			for x_offset in range(-1, 2):
-				var key := _bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset)
-				var bucket: Array = buckets.get(key, []) if typeof(buckets.get(key, [])) == TYPE_ARRAY else []
-				result.append_array(bucket)
+		if result.has(key):
+			(result[key] as Array).append(index)
+		else:
+			result[key] = [index]
 	return result
 
 
