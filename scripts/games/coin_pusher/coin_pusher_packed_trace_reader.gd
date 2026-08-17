@@ -10,6 +10,7 @@ const VERSION := 1
 const CACHE_LIMIT := 2
 
 var _replay_id := ""
+var _packed_source: Dictionary = {}
 var _frames: Dictionary = {}
 var _recency: Array = []
 
@@ -24,7 +25,7 @@ func sample(packed: Dictionary, replay_id: String, progress: float) -> Dictionar
 	var count := frame_count(packed)
 	if count <= 0:
 		return {}
-	_select_replay(replay_id)
+	_select_replay(packed, replay_id)
 	var frame_position := clampf(progress, 0.0, 1.0) * float(count - 1)
 	var frame_index := clampi(int(floor(frame_position)), 0, count - 1)
 	var next_index := mini(frame_index + 1, count - 1)
@@ -43,14 +44,20 @@ func sample(packed: Dictionary, replay_id: String, progress: float) -> Dictionar
 
 func clear() -> void:
 	_replay_id = ""
+	_packed_source = {}
 	_frames.clear()
 	_recency.clear()
 
 
-func _select_replay(replay_id: String) -> void:
-	if _replay_id == replay_id:
+func _select_replay(packed: Dictionary, replay_id: String) -> void:
+	# Action counters restart for each run/cabinet, so replay_id alone is not a
+	# safe cache key. The packed payload is immutable and ownership-preserved on
+	# the internal render path; identity distinguishes two action_1 payloads in
+	# constant time without hashing every packed row on every draw.
+	if _replay_id == replay_id and is_same(_packed_source, packed):
 		return
 	_replay_id = replay_id
+	_packed_source = packed
 	_frames.clear()
 	_recency.clear()
 
