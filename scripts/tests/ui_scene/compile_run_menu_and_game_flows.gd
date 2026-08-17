@@ -142,7 +142,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	await process_frame
 	var canvas: Control = probe.get("game_surface_canvas")
 	var game: GameModule = probe.get("current_game")
-	var preconditions_exact := canvas != null \
+	var preconditions_exact: bool = canvas != null \
 			and game != null and game.get_id() == "coin_pusher" \
 			and str(probe.get("current_screen")) == "GAME" \
 			and probe.get("game_surface_canvas") == canvas \
@@ -240,7 +240,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			and realtime_clock_wait_frames < 16:
 		realtime_clock_wait_frames += 1
 		await process_frame
-	var success_preconditions_exact := probe.get("run_state") != null \
+	var success_preconditions_exact: bool = probe.get("run_state") != null \
 			and probe.get("current_game") == game \
 			and str(probe.get("current_screen")) == "GAME" \
 			and probe.get("game_surface_canvas") == canvas \
@@ -257,7 +257,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var realtime_canvas_state: Dictionary = canvas.call("realtime_surface_state")
 	var realtime_canvas_snapshot: Dictionary = realtime_canvas_state.get("coin_pusher_snapshot", {}) if typeof(realtime_canvas_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
 	var realtime_canvas_trace: Array = realtime_canvas_snapshot.get("trace", []) if typeof(realtime_canvas_snapshot.get("trace", [])) == TYPE_ARRAY else []
-	var realtime_passed := success_preconditions_exact \
+	var realtime_passed: bool = success_preconditions_exact \
 			and realtime_clock_wait_frames < 16 \
 			and success_stamp > surface_time_before \
 			and int(realtime_canvas_state.get("surface_time_msec", -1)) == success_stamp \
