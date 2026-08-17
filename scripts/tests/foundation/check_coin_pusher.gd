@@ -317,6 +317,7 @@ func _check_coin_pusher_production_rider(game: GameModule, library: ContentLibra
 
 func _check_coin_pusher_alarm_audio(failures: Array) -> void:
 	var sfx := SfxPlayerScript.new()
+	root.add_child(sfx)
 	var pusher_source := FileAccess.get_file_as_string("res://scripts/games/coin_pusher.gd")
 	if pusher_source.contains('result["surface_audio_cue"] = "alarm_chirp"'):
 		failures.append("Coin Pusher still bypasses its snapshot-event chirp ladder through the legacy generic result cue.")
@@ -1122,6 +1123,9 @@ func _check_coin_pusher_nudge_alarm(game: GameModule, library: ContentLibrary, f
 	machine["tell_rung"] = 0
 	var tell_rungs: Array = []
 	var tell_event_kinds := {}
+	var runtime_tell_kinds: Dictionary = {}
+	var tell_runtime_sfx := SfxPlayerScript.new()
+	root.add_child(tell_runtime_sfx)
 	var alarm_result: Dictionary = {}
 	for nudge_index in range(4):
 		alarm_result = game.resolve_with_context("nudge_machine", 0, run_state, environment, run_state.create_rng("bad_nudge_%d" % nudge_index), {
@@ -1133,12 +1137,26 @@ func _check_coin_pusher_nudge_alarm(game: GameModule, library: ContentLibrary, f
 		for event_value in presentation_patch.get("events", []):
 			if typeof(event_value) == TYPE_DICTIONARY:
 				tell_event_kinds[str((event_value as Dictionary).get("kind", ""))] = true
+		var runtime_surface: Dictionary = {"coin_pusher_snapshot": presentation_patch}
+		var runtime_schedule: Array = tell_runtime_sfx.debug_coin_pusher_event_schedule(runtime_surface)
+		var runtime_id: String = "production_nudge_%d" % nudge_index
+		tell_runtime_sfx.debug_coin_pusher_runtime_event_markers(runtime_surface, 0.0, true, runtime_id, true)
+		var runtime_markers: Array = tell_runtime_sfx.debug_coin_pusher_runtime_event_markers(runtime_surface, 0.8, false, runtime_id, false)
+		if runtime_markers.size() != runtime_schedule.size():
+			failures.append("Production nudge %d emitted %d audio-primary events but runtime SFX consumed %d." % [nudge_index, runtime_schedule.size(), runtime_markers.size()])
+		else:
+			for scheduled_value in runtime_schedule:
+				if typeof(scheduled_value) == TYPE_DICTIONARY:
+					runtime_tell_kinds[str((scheduled_value as Dictionary).get("kind", ""))] = true
 		GameModule.apply_result(run_state, alarm_result, run_state.create_rng("bad_nudge_apply_%d" % nudge_index))
+	tell_runtime_sfx.free()
 	if JSON.stringify(tell_rungs) != JSON.stringify([1, 2, 3]):
 		failures.append("Quarter Falls tell ladder did not fire rock, chirp, attendant glance in order: %s." % JSON.stringify(tell_rungs))
 	for required_tell_event in ["tell_rock", "tell_chirp", "attendant_glance", "alarm"]:
 		if not bool(tell_event_kinds.get(required_tell_event, false)):
 			failures.append("Production nudge ladder did not emit required presentation/audio event %s." % required_tell_event)
+		if not bool(runtime_tell_kinds.get(required_tell_event, false)):
+			failures.append("Production nudge ladder event %s did not traverse runtime SFX routing." % required_tell_event)
 	if not bool(alarm_result.get("coin_pusher_hard_alarm", false)) or not bool(alarm_result.get("coin_pusher_machine_locked", false)):
 		failures.append("Quarter Falls tolerance crossing did not lock only the machine.")
 	if int(alarm_result.get("suspicion_delta", 0)) < 8 or bool(alarm_result.get("ended", false)) or not bool(alarm_result.get("coin_pusher_player_remains_in_environment", false)):

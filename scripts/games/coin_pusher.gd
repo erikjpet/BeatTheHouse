@@ -548,7 +548,7 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 	result["coin_pusher_variation_id"] = str(machine.get("variation_id", "quarter_falls"))
 	result["coin_pusher_physics_events"] = physics.get("events", [])
 	var presentation_events: Array = (physics.get("presentation_events", []) as Array).duplicate(true)
-	if int(machine.get("tell_rung", 0)) > previous_tell:
+	if alarmed or int(machine.get("tell_rung", 0)) > previous_tell:
 		presentation_events.append(_tell_presentation_event(int(machine.get("tell_rung", 0)), alarmed))
 	result["coin_pusher_solver_metrics"] = physics.get("metrics", {})
 	result["surface_presentation_snapshot_patch"] = _presentation_action_snapshot_patch(
