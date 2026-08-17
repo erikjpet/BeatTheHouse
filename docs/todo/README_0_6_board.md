@@ -100,7 +100,7 @@ the implementations. Wave C cannot close until both are DONE.
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | rework06_1 | `rework06_1_map_delivery_prompt.md` | DONE | town06_1/2/3, crew06_1 (all DONE) | crew06_3 re-point, crew06_6, crew06_8 | PM:Codex/sub:8 | 2026-08-16 | 2026-08-16 | PM verified synthetic-board deletion, real-node targets and ordinary-travel routing, all four modes, Numbers re-pointing, migration, exact crew-favor behavior, full 235-stage matrix, 10-seed determinism, and zero-warning visual QA. |
-| rework06_2 | `rework06_2_coin_pusher_simulation_prompt.md` | IN_PROGRESS | env06_1, town06_1 (DONE) | Wave C closure, pusher06_2/3/4 | PM:Codex/sub:9 | 2026-08-16 | | PM-orchestrated isolated execution; subagent owns implementation only, PM owns board, integration, verification, archival, and push. **Do not restart or redirect this row** — it already contains the real fixed-point discrete-body solver (`coin_pusher_solver.gd`) the follow-on plan calls for. |
+| rework06_2 | `rework06_2_coin_pusher_simulation_prompt.md` | DONE | env06_1, town06_1 (DONE) | Wave C closure, pusher06_2/3/4 | PM:Codex/sub:9 | 2026-08-16 | 2026-08-17 | PM verified the 60 Hz fixed-point discrete-body solver, physical variation mechanics, persistence, exact Windows/Web replay parity, 10-seed determinism, EV, all six feel captures, zero-warning visual QA, and shipped-cap performance. All systems assertions were green; same-load baseline-equivalent wrapper timing was accepted per the owner rule. |
 
 ### Coin pusher depth (staged; continues AFTER rework06_2 is accepted)
 
@@ -789,3 +789,11 @@ What happens then is the owner's, not an agent's:
   could mark an intermediate normal tip seen without displaying it. PM required
   yield-without-replacement semantics on the first notification plus a real
   double-notify regression; tutorial behavior remains unchanged.
+- 2026-08-17 [rework06_2] DONE. PM accepted the deterministic 60 Hz fixed-point
+  discrete-body Coin Pusher at a shipped cap of 48 after exact 200-action
+  Windows/Web parity, two matching 10-seed determinism runs, physical-behavior,
+  persistence, EV, six-scenario feel, zero-warning visual, and full performance
+  coverage. Systems assertions remained fully green and final wall time matched
+  the same-load control within 0.38%, satisfying the owner's environmental-only
+  timing rule. This closes Wave C and unblocks `pusher06_2`; owner-identified
+  visual density and presentation work remains correctly scoped there.
