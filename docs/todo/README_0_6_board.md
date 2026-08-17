@@ -622,6 +622,14 @@ What happens then is the owner's, not an agent's:
   authoritative solver still decides solely from the generated pile and player
   inputs, and exactly what physically crosses the payout edge pays. This is not
   authority to alter action rules, payout classification, or solver semantics.
+- 2026-08-17 [pusher06_2 presentation runtime] The isolated presentation-gap
+  fresh focused gate is green with zero failures and zero stderr issues:
+  validation 41.483 s, import 17.038 s, load 21.723 s, and Coin Pusher
+  129.535 s. An earlier run exposed only a restored-vs-new audio fixture error;
+  the corrected fixture now establishes an empty baseline and still requires
+  every event in each of four genuinely live nudge lifecycles. Synthetic
+  key-fragment rendering and pusher-specific supported-input/1280x720 dispatch
+  coverage remain before the presentation commits are accepted.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
