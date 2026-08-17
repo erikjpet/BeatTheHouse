@@ -351,6 +351,14 @@ What happens then is the owner's, not an agent's:
   leads through the seeded, presence-bound `recruitment_rook_leads` encounter;
   the redundant automatic post-loan enqueue must be removed while that
   contextual path and its one-hearing/save contracts remain intact.
+- 2026-08-17 [crew06_5/integrated UI] Commit `4e86bbe1` removes only the
+  redundant automatic post-loan Rook enqueue and permanently asserts that the
+  real Crew lender action reaches Marker with no triggered/talk event left
+  pending. Contextual seeded `recruitment_rook_leads` remains covered. PM reran
+  the complete integrated UI gate at
+  `.tmp/test_reports/20260817_042700_pm_integrated_ui_crew_fixed`: 0 failures;
+  `ui_scene_compile` 58.029 s versus the unchanged 124.851 s budget, with all
+  import/load/auxiliary UI stages green and no stderr issues.
 - 2026-08-17 [pusher06_2] Exact runtime at `4159f393` is green across the 80
   carried hot actions and all hostile/fallback twins. Raw p95 improved 43.9%
   from 283.293 to 159.000 ms, but remains 9.94x over the 16 ms gate; production
