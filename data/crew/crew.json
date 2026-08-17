@@ -32,7 +32,10 @@
     },
     "member_services": {
       "switch_intel_uses_per_visit": 2,
-      "knuckles_stash_cap": 3
+      "knuckles_stash_cap": 3,
+      "rook_ride_uses_by_rank": {"associate": 1, "made": 2, "inner_circle": 3},
+      "rook_ride_discount_percent_by_rank": {"associate": 50, "made": 100, "inner_circle": 100},
+      "practice_rig_successes_required": 2
     },
     "heist_requirements": {
       "the_count": ["crew_bishop"],

@@ -4673,6 +4673,10 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	clear_interaction_focus()
 	var destination_name := str(run_state.current_environment.get("display_name", target_label))
 	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
+	if not local_casino_room_move:
+		# Rook's service discounts exactly one successful ordinary route. Interior
+		# room doors do not consume the promised ride.
+		run_state.crew_rook_finish_ride()
 	if bool(delivery_arrival.get("handoff_ready", false)):
 		var delivery_message := " The marked hand is waiting inside."
 		travel_result["message"] = "%s%s" % [str(travel_result.get("message", "")), delivery_message]
@@ -4954,7 +4958,7 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 	deltas["suspicion_delta"] = total_suspicion_delta
 	deltas["story_log"] = story_entries
 	deltas["messages"] = [message]
-	return GameModule.build_action_result({
+	var built := GameModule.build_action_result({
 		"ok": true,
 		"type": "travel",
 		"source_id": target_id,
@@ -4971,6 +4975,7 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		"deltas": deltas,
 		"message": message,
 	})
+	return built
 
 
 func _show_travel_transition(target_id: String, target_label: String, detail: String = "") -> void:

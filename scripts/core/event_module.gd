@@ -44,6 +44,27 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 		return CrewRecruitmentModelScript.rook_signpost_choices(run_state, false) if run_state != null else []
 	if str(payload.get("kind", "")) == "crew_contact":
 		return CrewRecruitmentModelScript.contact_choices(run_state, environment, str(payload.get("member_id", "")), content_library) if run_state != null else []
+	if str(payload.get("kind", "")) == "crew_job_board":
+		return run_state.crew_job_board_choices() if run_state != null else []
+	if str(payload.get("kind", "")) == "crew_practice_rig":
+		return run_state.crew_practice_rig_choices() if run_state != null else []
+	if str(payload.get("kind", "")) == "crew_stake_horse_loss":
+		return run_state.crew_stake_horse_loss_choices() if run_state != null else []
+	if str(payload.get("kind", "")) == "crew_collection_press":
+		return run_state.crew_collection_choices() if run_state != null else []
+	if str(payload.get("kind", "")) == "crew_rook_ride":
+		if run_state == null:
+			return []
+		var ride := run_state.crew_rook_ride_status()
+		return [
+			{"id": "call_ride", "label": "Call Rook's ride", "text": "%d/%d rides remain · %d%% route discount." % [int(ride.get("uses_remaining", 0)), int(ride.get("cap", 0)), int(ride.get("discount_percent", 0))], "consequences": {"event_hooks": [{"type": "crew_rook_ride"}]}, "conditions": {"requires_flags": {}}},
+			{"id": "leave", "label": "Keep walking", "text": "Rook leaves the engine quiet.", "consequences": {}},
+		] if bool(ride.get("available", false)) else [{"id": "leave", "label": "Ride unavailable", "text": "Travel is locked or today's rides are used.", "consequences": {}}]
+	if str(payload.get("kind", "")) == "crew_mags_bench":
+		if run_state == null:
+			return []
+		var bench := run_state.crew_mags_bench_status()
+		return [{"id": "inspect", "label": "Inspect the bench", "text": str(bench.get("message", "The cases stay shut.")), "consequences": {}}]
 	if str(payload.get("kind", "")) == "grand_casino_showdown":
 		return _grand_casino_showdown_choices(payload, run_state, environment)
 	if str(payload.get("kind", "")) == "grand_casino_high_roller_cashout":
@@ -229,6 +250,16 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				service_result = run_state.crew_knuckles_retrieve_stash_entry(int(pre_hook.get("stash_index", -1)), str(pre_hook.get("item_id", "")))
 			"crew_lucky_collection":
 				service_result = run_state.numbers_begin_collection_route()
+			"crew_job_accept":
+				service_result = run_state.crew_job_accept_definition(str(pre_hook.get("definition_id", "")))
+			"crew_practice_rig":
+				service_result = run_state.crew_practice_rig_session(str(pre_hook.get("window", "")))
+			"crew_stake_loss_choice":
+				service_result = run_state.crew_resolve_stake_horse_loss(str(pre_hook.get("choice", "")))
+			"crew_collection_choice":
+				service_result = run_state.crew_resolve_collection(str(pre_hook.get("choice", "")))
+			"crew_rook_ride":
+				service_result = run_state.crew_rook_begin_ride()
 		if not service_result.is_empty():
 			if not bool(service_result.get("ok", false)):
 				result["ok"] = false
@@ -254,7 +285,7 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				run_state.crew_meet_member(str(hook_data.get("member_id", "")))
 			"crew_rook_lead_closed":
 				run_state.crew_close_rook_leads_event()
-			"crew_switch_reveal", "crew_lucky_collection", "crew_knuckles_stash", "crew_knuckles_retrieve":
+			"crew_switch_reveal", "crew_lucky_collection", "crew_knuckles_stash", "crew_knuckles_retrieve", "crew_job_accept", "crew_practice_rig", "crew_stake_loss_choice", "crew_collection_choice", "crew_rook_ride":
 				pass
 
 

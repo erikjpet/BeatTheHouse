@@ -185,17 +185,25 @@ static func contact_choices(run_state: RunState, _environment: Dictionary, membe
 			var job: Dictionary = job_value
 			var definition_id := str(job.get("id", "")).strip_edges()
 			var target_event_id := str(_dict(job.get("payload", {})).get("event_id", "")).strip_edges()
-			if definition_id.is_empty() or target_event_id.is_empty() \
-				or (library != null and library.event(target_event_id).is_empty()) \
-				or run_state.crew_job_definition_pending(definition_id) \
-				or run_state.triggered_event_pending(target_event_id):
+			if definition_id.is_empty() or run_state.crew_job_definition_pending(definition_id):
 				continue
-			choices.append({
-				"id": "job_%s" % definition_id,
-				"label": "Ask about work",
-				"text": str(member_definition(member_id).get("job_offer_line", "There is work if you want it.")),
-				"consequences": {"trigger_event": {"event_id": target_event_id, "chance": 1.0}},
-			})
+			var offer_line := str(member_definition(member_id).get("job_offer_line", "There is work if you want it."))
+			if not target_event_id.is_empty():
+				if (library != null and library.event(target_event_id).is_empty()) or run_state.triggered_event_pending(target_event_id):
+					continue
+				choices.append({
+					"id": "job_%s" % definition_id,
+					"label": "Ask about work",
+					"text": offer_line,
+					"consequences": {"trigger_event": {"event_id": target_event_id, "chance": 1.0}},
+				})
+			else:
+				choices.append({
+					"id": "job_%s" % definition_id,
+					"label": str(job.get("label", "Take the job")),
+					"text": offer_line,
+					"consequences": {"event_hooks": [{"type": "crew_job_accept", "definition_id": definition_id}]},
+				})
 	if member_id == "crew_switch":
 		var sweep := run_state.sweep_status()
 		if run_state.crew_capability_active("sweep_intel") and choices.size() < 3:
@@ -298,6 +306,8 @@ static func presence_for_environment(run_state: RunState, environment: Dictionar
 	var action_index := int(run_state.town_snapshot().get("action_index", 0))
 	var rotate := maxi(1, int(config().get("presence_rotate_actions", 6)))
 	var segment := action_index / rotate
+	if str(environment.get("current_layer_id", "")) == "back_room":
+		return _back_room_residency(run_state, segment)
 	for member_id in MEMBER_IDS:
 		var rank := run_state.crew_rank(member_id)
 		if not _rank_at_least(rank, "marker"):
@@ -320,6 +330,36 @@ static func presence_for_environment(run_state: RunState, environment: Dictionar
 		var lines := _dict(definition.get("presence_lines", {}))
 		var line := str(lines.get(rank, lines.get("marker", ""))).strip_edges()
 		result.append({"member_id": member_id, "rank": rank, "line": line})
+	return result
+
+
+# Layer 3 is a home base rather than another itinerary stop. Two to four met
+# members rotate into residence on the same seeded schedule as their public
+# appearances. The result depends only on seed, segment, and canonical trust.
+static func _back_room_residency(run_state: RunState, segment: int) -> Array:
+	var candidates: Array = []
+	for member_id in MEMBER_IDS:
+		if _rank_at_least(run_state.crew_rank(member_id), "marker"):
+			candidates.append(member_id)
+	if candidates.is_empty():
+		return []
+	var rng := RngStream.new()
+	rng.configure(run_state.seed_value, run_state.seed_value)
+	rng = rng.fork("crew_back_room_residency:%d" % segment)
+	var count := mini(candidates.size(), 2 + posmod(run_state.seed_value + segment, 3))
+	var selected := rng.pick_many(candidates, count)
+	var result: Array = []
+	for member_value in selected:
+		var member_id := str(member_value)
+		var rank := run_state.crew_rank(member_id)
+		var lines := _dict(member_definition(member_id).get("presence_lines", {}))
+		result.append({
+			"member_id": member_id,
+			"rank": rank,
+			"line": str(lines.get(rank, lines.get("marker", ""))).strip_edges(),
+			"resident": true,
+		})
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("member_id", "")) < str(b.get("member_id", "")))
 	return result
 
 

@@ -26,6 +26,7 @@ const GRIEVANCE_KINDS := [
 	"numbers_past_posting_in_colors",
 ]
 const JOB_OUTCOMES := ["success", "failed", "abandoned"]
+const JOB_KINDS := ["package_run", "numbers_route", "lookout_hold", "stake_horse", "collection", "package_delivery", "numbers_collection"]
 
 static var _config_cache: Dictionary = {}
 static var _job_cache: Dictionary = {}
@@ -55,6 +56,17 @@ static func job_definitions_for_member(member_id: String) -> Array:
 		var definition: Dictionary = definition_value
 		if str(definition.get("member_id", "")) == member_id:
 			result.append(definition.duplicate(true))
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("id", "")) < str(b.get("id", "")))
+	return result
+
+
+static func job_definitions() -> Array:
+	_ensure_job_cache()
+	var result: Array = []
+	for job_id_value in _job_cache.keys():
+		var definition_value: Variant = _job_cache.get(job_id_value, {})
+		if typeof(definition_value) == TYPE_DICTIONARY:
+			result.append((definition_value as Dictionary).duplicate(true))
 	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("id", "")) < str(b.get("id", "")))
 	return result
 
@@ -146,8 +158,10 @@ static func normalize_job_definition(value: Dictionary) -> Dictionary:
 	var rewards: Dictionary = value.get("rewards", {}) if typeof(value.get("rewards", {})) == TYPE_DICTIONARY else {}
 	return {
 		"id": definition_id,
+		"label": str(value.get("label", definition_id.replace("_", " ").capitalize())).strip_edges(),
 		"member_id": member_id,
 		"kind": str(value.get("kind", "")).strip_edges(),
+		"min_rank": str(value.get("min_rank", "associate")).strip_edges(),
 		"payload": (value.get("payload", {}) as Dictionary).duplicate(true) if typeof(value.get("payload", {})) == TYPE_DICTIONARY else {},
 		"expiry_in_actions": maxi(1, int(value.get("expiry_in_actions", 1))),
 		"rewards": {
@@ -201,6 +215,13 @@ static func validate_content() -> Array:
 	var member_services: Dictionary = source.get("member_services", {}) if typeof(source.get("member_services", {})) == TYPE_DICTIONARY else {}
 	if int(member_services.get("switch_intel_uses_per_visit", 0)) <= 0 or int(member_services.get("knuckles_stash_cap", 0)) <= 0:
 		failures.append("crew.json member service caps must be positive.")
+	var ride_caps: Dictionary = member_services.get("rook_ride_uses_by_rank", {}) if typeof(member_services.get("rook_ride_uses_by_rank", {})) == TYPE_DICTIONARY else {}
+	var ride_discounts: Dictionary = member_services.get("rook_ride_discount_percent_by_rank", {}) if typeof(member_services.get("rook_ride_discount_percent_by_rank", {})) == TYPE_DICTIONARY else {}
+	for rank_id in ["associate", "made", "inner_circle"]:
+		if int(ride_caps.get(rank_id, 0)) <= 0 or not range(0, 101).has(int(ride_discounts.get(rank_id, -1))):
+			failures.append("crew.json Rook ride tuning is invalid for %s." % rank_id)
+	if int(member_services.get("practice_rig_successes_required", 0)) <= 0:
+		failures.append("crew.json Practice Rig threshold must be positive.")
 	var heist_requirements: Dictionary = source.get("heist_requirements", {}) if typeof(source.get("heist_requirements", {})) == TYPE_DICTIONARY else {}
 	for plan_id in heist_requirements.keys():
 		for member_id in _string_array(heist_requirements.get(plan_id, [])):
@@ -217,8 +238,10 @@ static func validate_content() -> Array:
 		var job: Dictionary = job_value
 		var normalized := normalize_job_definition(job)
 		var job_id := str(job.get("id", "")).strip_edges()
-		if normalized.is_empty() or str(normalized.get("kind", "")).is_empty():
+		if normalized.is_empty() or not JOB_KINDS.has(str(normalized.get("kind", ""))):
 			failures.append("jobs.json job %s has an invalid member, kind, reward, or failure contract." % job_id)
+		elif not RANK_IDS.has(str(normalized.get("min_rank", ""))):
+			failures.append("jobs.json job %s has an invalid rank gate." % job_id)
 		elif job_ids.has(job_id):
 			failures.append("jobs.json contains duplicate id %s." % job_id)
 		job_ids[job_id] = true
@@ -239,8 +262,10 @@ static func _normalize_job_instance(value: Dictionary, instance_id: String) -> D
 	var normalized := value.duplicate(true)
 	normalized["id"] = instance_id
 	normalized["definition_id"] = str(value.get("definition_id", instance_id)).strip_edges()
+	normalized["label"] = str(value.get("label", normalized["definition_id"].replace("_", " ").capitalize())).strip_edges()
 	normalized["member_id"] = member_id
 	normalized["kind"] = str(value.get("kind", "")).strip_edges()
+	normalized["min_rank"] = str(value.get("min_rank", "associate")).strip_edges()
 	normalized["status"] = status
 	normalized["outcome"] = outcome
 	normalized["payload"] = (value.get("payload", {}) as Dictionary).duplicate(true) if typeof(value.get("payload", {})) == TYPE_DICTIONARY else {}

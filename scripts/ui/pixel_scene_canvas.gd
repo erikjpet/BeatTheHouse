@@ -1267,22 +1267,44 @@ func _draw_punchline_table(position: Vector2) -> void:
 
 
 func _draw_punchline_back_room() -> void:
-	# Restricted shell for Rook: storage, a work table, and a guarded return door.
+	# Furnished crew floor: each gameplay surface has a stable diegetic zone.
 	draw_rect(Rect2(0, 0, 900, 245), Color("#090b10"))
 	for x in range(0, 900, 76):
 		draw_rect(Rect2(x, 0, 38, 245), Color("#10151d"))
 		draw_rect(Rect2(x + 38, 0, 38, 245), Color("#0c1117"))
-	_neon_text("STAFF ONLY", Vector2(348, 40), 24, C_PINK)
-	draw_rect(Rect2(250, 148, 400, 82), Color("#1b2027"))
-	draw_rect(Rect2(270, 162, 360, 48), Color("#343b43"))
-	for x in [308, 384, 506, 582]:
-		_card_back(Rect2(x, 132 + (x % 3) * 4, 26, 36))
-	draw_rect(Rect2(52, 66, 154, 174), Color("#121820"))
-	for y in [82, 126, 170]:
-		draw_rect(Rect2(66, y, 126, 9), Color("#3b2e26"))
-		draw_rect(Rect2(76, y - 28, 22, 28), C_SHADOW)
-		draw_rect(Rect2(112, y - 22, 14, 22), C_AMBER.darkened(0.35))
-	_silhouette(Vector2(738, 184), 1.25, C_SHADOW)
+	_neon_text("THE BACK ROOM", Vector2(326, 34), 22, C_PINK)
+	# Job board and pinned cards.
+	draw_rect(Rect2(42, 54, 170, 104), Color("#402c20"))
+	draw_rect(Rect2(49, 61, 156, 90), Color("#6b4a2d"))
+	for note in [Rect2(60, 70, 38, 26), Rect2(108, 68, 42, 32), Rect2(159, 78, 34, 24), Rect2(76, 110, 48, 28), Rect2(139, 114, 46, 26)]:
+		draw_rect(note, C_SOFT.darkened(0.12))
+		draw_circle(note.position + Vector2(note.size.x * 0.5, 4), 2, C_PINK)
+	_neon_text("WORK", Vector2(92, 49), 13, C_AMBER)
+	# Planning table in the center; the clean middle is reserved for crew06_8.
+	draw_rect(Rect2(264, 151, 372, 74), Color("#1b2027"))
+	draw_rect(Rect2(282, 162, 336, 44), Color("#3d464b"))
+	draw_rect(Rect2(382, 170, 136, 28), Color("#27343b"))
+	for x in [304, 346, 552, 592]:
+		_card_back(Rect2(x, 135 + (x % 3) * 4, 24, 34))
+	# Numbers desk and adding machine.
+	draw_rect(Rect2(42, 184, 170, 52), Color("#26201c"))
+	draw_rect(Rect2(58, 173, 64, 30), Color("#d3c39a"))
+	for y in [181, 188, 195]:
+		draw_line(Vector2(64, y), Vector2(114, y), Color("#5c5544"), 1)
+	draw_rect(Rect2(142, 168, 46, 36), Color("#232a2d"))
+	# Mags' bench and Practice Rig occupy the right wall.
+	draw_rect(Rect2(680, 62, 154, 46), Color("#33281e"))
+	for x in [694, 732, 770, 808]:
+		draw_rect(Rect2(x, 48, 20, 18), C_AMBER.darkened(0.45))
+	_neon_text("MAGS", Vector2(731, 42), 12, C_CYAN)
+	draw_rect(Rect2(674, 142, 172, 82), Color("#18252a"))
+	draw_line(Vector2(698, 196), Vector2(742, 152), C_TEAL, 5)
+	draw_line(Vector2(778, 152), Vector2(822, 196), C_TEAL, 5)
+	draw_circle(Vector2(760, 177), 12, C_YELLOW.darkened(0.2))
+	draw_circle(Vector2(760, 177), 4, C_SHADOW)
+	_neon_text("RIG", Vector2(742, 132), 12, C_YELLOW)
+	# Rook's guarded exit remains the normal travel seam.
+	_silhouette(Vector2(626, 188), 1.05, C_SHADOW)
 	draw_rect(Rect2(790, 70, 80, 174), Color("#12151b"))
 	draw_circle(Vector2(808, 158), 3, C_AMBER)
 	_floor_reflections()

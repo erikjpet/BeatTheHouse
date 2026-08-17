@@ -6243,6 +6243,121 @@ func crew_member_job_available(member_id: String) -> bool:
 	return crew_rank_perks(member_id).has("member_jobs")
 
 
+# Read-only physical-presence seam shared by Layer 3 jobs and coordinated plays.
+func crew_present_member_ids(environment: Dictionary = {}) -> Array:
+	var source := current_environment if environment.is_empty() else environment
+	var result: Array = []
+	for entry_value in _copy_array(source.get("crew_presence", [])):
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var member_id := str((entry_value as Dictionary).get("member_id", "")).strip_edges()
+		if CrewStateModelScript.MEMBER_IDS.has(member_id) and not result.has(member_id):
+			result.append(member_id)
+	result.sort()
+	return result
+
+
+func crew_member_present(member_id: String, environment: Dictionary = {}) -> bool:
+	return crew_present_member_ids(environment).has(member_id.strip_edges())
+
+
+# Shared progress grant used by both Street Craps lessons and Mags' Practice
+# Rig. Callers may request a delta-only projection when GameModule will apply
+# the returned flags at the canonical action boundary.
+func grant_shared_training_progress(progress_flag: String, trained_flag: String, required: int, amount: int = 1, apply_now: bool = true) -> Dictionary:
+	var clean_progress := progress_flag.strip_edges()
+	var clean_trained := trained_flag.strip_edges()
+	if clean_progress.is_empty() or clean_trained.is_empty() or required <= 0 or amount <= 0:
+		return {}
+	if bool(narrative_flags.get(clean_trained, false)):
+		return {"flags_set": {}, "progress": required, "required": required, "trained": true}
+	var progress := mini(required, maxi(0, int(narrative_flags.get(clean_progress, 0))) + amount)
+	var flags := {clean_progress: progress}
+	if progress >= required:
+		flags[clean_trained] = true
+	if apply_now:
+		for key in flags.keys():
+			narrative_flags[str(key)] = flags[key]
+	return {"flags_set": flags, "progress": progress, "required": required, "trained": progress >= required}
+
+
+func crew_practice_rig_readout() -> Dictionary:
+	var services := _copy_dict(CrewStateModelScript.config().get("member_services", {}))
+	var required := maxi(1, int(services.get("practice_rig_successes_required", 2)))
+	var windows := ["early", "center", "late"]
+	var index := posmod(seed_value * 31 + _crew_action_index() * 17, windows.size())
+	return {
+		"target_window": windows[index],
+		"progress": mini(required, maxi(0, int(narrative_flags.get("craps_setting_street_progress", 0)))),
+		"required": required,
+		"trained": bool(narrative_flags.get("craps_setting_trained", false)),
+	}
+
+
+func crew_practice_rig_choices() -> Array:
+	var readout := crew_practice_rig_readout()
+	if bool(readout.get("trained", false)):
+		return [{"id": "leave", "label": "Rig trained", "text": "The target distribution holds steady. The setting technique is learned.", "consequences": {}}]
+	var result: Array = []
+	for window in ["early", "center", "late"]:
+		result.append({
+			"id": window,
+			"label": "Release %s" % str(window).capitalize(),
+			"text": "Readout target: %s. Progress %d/%d." % [str(readout.get("target_window", "center")).capitalize(), int(readout.get("progress", 0)), int(readout.get("required", 2))],
+			"consequences": {"event_hooks": [{"type": "crew_practice_rig", "window": window}]},
+		})
+	result.append({"id": "leave", "label": "Step away", "text": "No stakes. No heat. The rig waits.", "consequences": {}})
+	return result
+
+
+func crew_practice_rig_session(window: String) -> Dictionary:
+	var readout := crew_practice_rig_readout()
+	var hit := window.strip_edges() == str(readout.get("target_window", ""))
+	var grant := {}
+	if hit:
+		grant = grant_shared_training_progress("craps_setting_street_progress", "craps_setting_trained", int(readout.get("required", 2)), 1, true)
+	return {"ok": ["early", "center", "late"].has(window), "hit": hit, "window": window, "target_window": str(readout.get("target_window", "")), "grant": grant, "message": "The dice settle inside the band." if hit else "The dice land outside the target band."}
+
+
+func crew_rook_ride_status() -> Dictionary:
+	var services := _copy_dict(CrewStateModelScript.config().get("member_services", {}))
+	var rank := crew_rank("crew_rook")
+	var caps := _copy_dict(services.get("rook_ride_uses_by_rank", {}))
+	var discounts := _copy_dict(services.get("rook_ride_discount_percent_by_rank", {}))
+	var cap := maxi(0, int(caps.get(rank, 0)))
+	var day := int(floor(float(_crew_action_index()) / 48.0))
+	var stored_day := int(narrative_flags.get("crew_rook_ride_day", -1))
+	var used := maxi(0, int(narrative_flags.get("crew_rook_ride_uses", 0))) if stored_day == day else 0
+	var active := bool(narrative_flags.get("crew_rook_ride_active", false))
+	return {"available": cap > used and not active and current_travel_lock_remaining() <= 0, "rank": rank, "cap": cap, "used": used, "uses_remaining": maxi(0, cap - used), "discount_percent": clampi(int(discounts.get(rank, 0)), 0, 100), "active": active, "travel_locked": current_travel_lock_remaining() > 0, "day": day}
+
+
+func crew_rook_begin_ride() -> Dictionary:
+	var status := crew_rook_ride_status()
+	if not bool(status.get("available", false)):
+		return {"ok": false, "message": "Rook cannot move the car through this lock." if bool(status.get("travel_locked", false)) else "Rook's rides are used for this stretch."}
+	narrative_flags["crew_rook_ride_day"] = int(status.get("day", 0))
+	narrative_flags["crew_rook_ride_uses"] = int(status.get("used", 0))
+	narrative_flags["crew_rook_ride_active"] = true
+	narrative_flags["crew_rook_ride_discount_percent"] = int(status.get("discount_percent", 0))
+	return {"ok": true, "status": crew_rook_ride_status(), "message": "Rook starts the car. Choose any normally open route."}
+
+
+func crew_rook_finish_ride() -> Dictionary:
+	if not bool(narrative_flags.get("crew_rook_ride_active", false)):
+		return {}
+	narrative_flags["crew_rook_ride_active"] = false
+	narrative_flags["crew_rook_ride_discount_percent"] = 0
+	narrative_flags["crew_rook_ride_day"] = int(floor(float(_crew_action_index()) / 48.0))
+	narrative_flags["crew_rook_ride_uses"] = maxi(0, int(narrative_flags.get("crew_rook_ride_uses", 0))) + 1
+	return crew_rook_ride_status()
+
+
+func crew_mags_bench_status() -> Dictionary:
+	var available := CrewStateModelScript.RANK_IDS.find(crew_rank("crew_mags")) >= CrewStateModelScript.RANK_IDS.find("associate")
+	return {"available": available, "catalog_ready": false, "catalog_owner": "content06_1", "message": "Mags has the bench wired. The upgrade catalog arrives with the gear pass." if available else "Mags does not open the cases for strangers."}
+
+
 func crew_job_definition_pending(definition_id: String) -> bool:
 	var clean_id := definition_id.strip_edges()
 	for job_value in crew_jobs.values():
@@ -6585,6 +6700,189 @@ func job_resolve(job_id: String, outcome: String) -> Dictionary:
 	job["resolved_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
 	return job.duplicate(true)
+
+
+# Player-safe Layer 3 board projection. Only jobs owned by crew physically in
+# the room appear; the authored catalog remains broader than any one residency.
+func crew_job_board_offers() -> Array:
+	var result: Array = []
+	for definition_value in CrewStateModelScript.job_definitions():
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var definition: Dictionary = definition_value
+		var definition_id := str(definition.get("id", ""))
+		if definition_id == "crew_favor_delivery" or crew_job_definition_pending(definition_id):
+			continue
+		var member_id := str(definition.get("member_id", ""))
+		var min_rank := str(definition.get("min_rank", "associate"))
+		if not crew_member_present(member_id) \
+			or CrewStateModelScript.RANK_IDS.find(crew_rank(member_id)) < CrewStateModelScript.RANK_IDS.find(min_rank):
+			continue
+		result.append({
+			"definition_id": definition_id,
+			"label": str(definition.get("label", definition_id.replace("_", " ").capitalize())),
+			"member_id": member_id,
+			"kind": str(definition.get("kind", "")),
+			"expiry_in_actions": int(definition.get("expiry_in_actions", 1)),
+			"cash": int(_copy_dict(definition.get("rewards", {})).get("cash", 0)),
+			"trust": int(_copy_dict(definition.get("rewards", {})).get("trust", 0)),
+			"member_present": true,
+		})
+	return result
+
+
+func crew_job_board_choices() -> Array:
+	var result: Array = []
+	for offer_value in crew_job_board_offers():
+		var offer: Dictionary = offer_value
+		var member_name := str(offer.get("member_id", "crew")).trim_prefix("crew_").capitalize()
+		result.append({
+			"id": "accept_%s" % str(offer.get("definition_id", "")),
+			"label": "%s · %s" % [str(offer.get("label", "Work")), member_name],
+			"text": "%s%s · %d actions · $%d / trust %+d." % [
+				str(offer.get("kind", "job")).replace("_", " ").capitalize(),
+				" · here tonight",
+				int(offer.get("expiry_in_actions", 1)), int(offer.get("cash", 0)), int(offer.get("trust", 0))],
+			"consequences": {"event_hooks": [{"type": "crew_job_accept", "definition_id": str(offer.get("definition_id", ""))}]},
+		})
+	result.append({"id": "leave", "label": "Leave the board", "text": "No promise made. No grievance written.", "consequences": {}})
+	return result
+
+
+func crew_job_accept_definition(definition_id: String) -> Dictionary:
+	var definition := CrewStateModelScript.job_definition(definition_id)
+	if definition.is_empty() or crew_job_definition_pending(definition_id):
+		return {"ok": false, "message": "That note is no longer open."}
+	var member_id := str(definition.get("member_id", ""))
+	var min_rank := str(definition.get("min_rank", "associate"))
+	if not crew_member_present(member_id):
+		return {"ok": false, "message": "That crew member is not in the room."}
+	if CrewStateModelScript.RANK_IDS.find(crew_rank(member_id)) < CrewStateModelScript.RANK_IDS.find(min_rank):
+		return {"ok": false, "message": "That work is above your standing."}
+	var offered := job_offer(definition)
+	var job_id := str(offered.get("id", ""))
+	if job_id.is_empty() or job_accept(job_id).is_empty() or job_activate(job_id).is_empty():
+		return {"ok": false, "message": "The note will not come off the wall."}
+	var payload := _copy_dict(definition.get("payload", {}))
+	var kind := str(definition.get("kind", ""))
+	if kind in ["package_run", "package_delivery", "numbers_route", "lookout_hold", "collection"]:
+		var spec := payload.duplicate(true)
+		spec["run_id"] = "crew_job:%s" % job_id
+		spec["job_id"] = "" if kind == "collection" else job_id
+		spec["deadline_actions"] = int(definition.get("expiry_in_actions", 1))
+		spec["consumer_payload"] = {"success": {"cash": 0, "heat": 0}, "failure": {"cash": 0, "heat": 0}}
+		var started := delivery_begin_multi_stop(spec) if kind == "numbers_route" else delivery_begin_hold(spec) if kind == "lookout_hold" else delivery_begin_package(spec)
+		if not bool(started.get("ok", false)):
+			job_resolve(job_id, "failed")
+			return started
+		if kind == "collection":
+			active_delivery_run["run_id"] = "crew_collection:%s" % job_id
+		return {"ok": true, "job_id": job_id, "kind": kind, "delivery": started, "message": "The real-map route is marked."}
+	if kind == "stake_horse":
+		var stake := maxi(1, int(payload.get("crew_stake", 1)))
+		payload["session_net"] = 0
+		payload["loss_choice_pending"] = false
+		var job := _crew_job(job_id)
+		job["payload"] = payload
+		crew_jobs[job_id] = job
+		change_bankroll(stake, true)
+		return {"ok": true, "job_id": job_id, "kind": kind, "crew_stake": stake, "message": "Crew money is in your pocket. Play the named game."}
+	job_resolve(job_id, "failed")
+	return {"ok": false, "message": "That job kind has no live surface."}
+
+
+# Central game-result seam: a stake horse advances only at its authored venue
+# and game, using the canonical applied bankroll delta.
+func crew_record_game_result(result: Dictionary, deltas: Dictionary) -> Dictionary:
+	var game_id := str(result.get("game_id", result.get("source_id", "")))
+	var venue_id := str(result.get("environment_archetype_id", current_environment.get("archetype_id", "")))
+	for job_id_value in crew_jobs.keys():
+		var job_id := str(job_id_value)
+		var job := _crew_job(job_id)
+		if str(job.get("status", "")) != "active" or str(job.get("kind", "")) != "stake_horse":
+			continue
+		var payload := _copy_dict(job.get("payload", {}))
+		if str(payload.get("game_id", "")) != game_id or str(payload.get("venue_id", "")) != venue_id:
+			continue
+		payload["session_net"] = int(payload.get("session_net", 0)) + int(deltas.get("bankroll_delta", 0))
+		job["payload"] = payload
+		crew_jobs[job_id] = job
+		if int(payload.get("session_net", 0)) >= int(payload.get("profit_target", 1)):
+			return job_resolve(job_id, "success")
+		if int(payload.get("session_net", 0)) <= -int(payload.get("crew_stake", 1)):
+			payload["loss_choice_pending"] = true
+			job["payload"] = payload
+			crew_jobs[job_id] = job
+			_crew_add_room_event("crew_stake_horse_loss")
+		return job.duplicate(true)
+	return {}
+
+
+func crew_stake_horse_loss_choices() -> Array:
+	var pending := _pending_crew_job("stake_horse", "loss_choice_pending")
+	if pending.is_empty():
+		return []
+	return [
+		{"id": "repay", "label": "Repay the stake", "text": "Make the crew whole. The loss still costs trust.", "consequences": {"event_hooks": [{"type": "crew_stake_loss_choice", "choice": "repay"}], "resolve_event": true}},
+		{"id": "shrug", "label": "Shrug it off", "text": "Call it the cost of doing business.", "consequences": {"event_hooks": [{"type": "crew_stake_loss_choice", "choice": "shrug"}], "resolve_event": true}},
+	]
+
+
+func crew_resolve_stake_horse_loss(choice_id: String) -> Dictionary:
+	var pending := _pending_crew_job("stake_horse", "loss_choice_pending")
+	if pending.is_empty() or not ["repay", "shrug"].has(choice_id):
+		return {"ok": false}
+	var job_id := str(pending.get("id", ""))
+	var payload := _copy_dict(pending.get("payload", {}))
+	if choice_id == "repay":
+		change_bankroll(-mini(bankroll, maxi(1, int(payload.get("crew_stake", 1)))), true)
+	var resolved := job_resolve(job_id, "failed")
+	if choice_id == "shrug":
+		grievance_add({"member_id": str(pending.get("member_id", "")), "kind": "stake_horse_loss_shrugged", "weight": 1, "source_ref": job_id})
+	return {"ok": not resolved.is_empty(), "choice": choice_id, "job": resolved}
+
+
+func crew_collection_choices() -> Array:
+	var pending := _pending_crew_job("collection", "press_choice_pending")
+	if pending.is_empty():
+		return []
+	return [
+		{"id": "friendly", "label": "Keep the friendly face", "text": "Take the smaller envelope and leave the room intact.", "consequences": {"event_hooks": [{"type": "crew_collection_choice", "choice": "friendly"}], "resolve_event": true}},
+		{"id": "press", "label": "Press harder", "text": "Take more cash and let the town remember the pressure.", "consequences": {"event_hooks": [{"type": "crew_collection_choice", "choice": "press"}], "resolve_event": true}},
+	]
+
+
+func crew_resolve_collection(choice_id: String) -> Dictionary:
+	var pending := _pending_crew_job("collection", "press_choice_pending")
+	if pending.is_empty() or not ["friendly", "press"].has(choice_id):
+		return {"ok": false}
+	var payload := _copy_dict(pending.get("payload", {}))
+	var cash := int(payload.get("friendly_cash", 0)) if choice_id == "friendly" else int(payload.get("press_cash", 0))
+	var heat := int(payload.get("friendly_heat", 0)) if choice_id == "friendly" else int(payload.get("press_heat", 0))
+	if cash > 0:
+		change_bankroll(cash, true)
+	if heat > 0:
+		add_suspicion("crew_collection_press", heat, "behavior", false, {}, true)
+	var resolved := job_resolve(str(pending.get("id", "")), "success")
+	return {"ok": not resolved.is_empty(), "choice": choice_id, "cash": cash, "heat": heat, "job": resolved}
+
+
+func _pending_crew_job(kind: String, payload_flag: String) -> Dictionary:
+	for job_value in crew_jobs.values():
+		if typeof(job_value) != TYPE_DICTIONARY:
+			continue
+		var job: Dictionary = job_value
+		if str(job.get("status", "")) == "active" and str(job.get("kind", "")) == kind and bool(_copy_dict(job.get("payload", {})).get(payload_flag, false)):
+			return job.duplicate(true)
+	return {}
+
+
+func _crew_add_room_event(event_id: String) -> void:
+	var ids := _copy_array(current_environment.get("event_ids", []))
+	if not ids.has(event_id):
+		ids.append(event_id)
+	current_environment["event_ids"] = ids
+	store_current_world_node_environment()
 
 
 # Starts or declines the Crew favor without changing ordinary travel. The
@@ -7306,6 +7604,18 @@ func _apply_delivery_resolution() -> void:
 	if not job_id.is_empty():
 		job_resolve(job_id, "success" if succeeded else "failed")
 	var run_id := str(active_delivery_run.get("run_id", ""))
+	if run_id.begins_with("crew_collection:"):
+		var collection_job_id := run_id.trim_prefix("crew_collection:")
+		var collection_job := _crew_job(collection_job_id)
+		if not collection_job.is_empty() and str(collection_job.get("status", "")) == "active":
+			if succeeded:
+				var collection_payload := _copy_dict(collection_job.get("payload", {}))
+				collection_payload["press_choice_pending"] = true
+				collection_job["payload"] = collection_payload
+				crew_jobs[collection_job_id] = collection_job
+				_crew_add_room_event("crew_collection_press")
+			else:
+				job_resolve(collection_job_id, "failed")
 	if numbers_state != null:
 		if run_id.begins_with("numbers_collection:"):
 			numbers_state.resolve_collection(succeeded, reason, resolution)
@@ -7430,7 +7740,11 @@ func _travel_route_cost(route_data: Dictionary) -> int:
 	var multiplier := 1.0
 	if town_state != null:
 		multiplier = maxf(0.0, float(town_state.travel_modifier_profile().get("cost_multiplier", 1.0)))
-	return maxi(0, int(round(float(base_cost) * multiplier)))
+	var adjusted := maxi(0, int(round(float(base_cost) * multiplier)))
+	if bool(narrative_flags.get("crew_rook_ride_active", false)):
+		var discount := clampi(int(narrative_flags.get("crew_rook_ride_discount_percent", 0)), 0, 100)
+		adjusted = maxi(0, int(ceil(float(adjusted) * float(100 - discount) / 100.0)))
+	return adjusted
 
 
 func _tutorial_travel_route_cost_override(route_data: Dictionary) -> int:

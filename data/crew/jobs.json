@@ -1,21 +1,80 @@
 [
   {
-    "id": "crew_favor_delivery",
-    "member_id": "crew_rook",
-    "kind": "package_delivery",
-    "payload": {
-      "event_id": "crew_favor_delivery",
-      "streets_seam": "streets06_1"
-    },
-    "expiry_in_actions": 1,
-    "rewards": {
-      "cash": 0,
-      "trust": 5
-    },
-    "failure": {
-      "trust": -5,
-      "grievance_kind": "job_abandoned",
-      "grievance_weight": 1
-    }
+    "id": "crew_favor_delivery", "label": "Rook's First Package", "member_id": "crew_rook", "kind": "package_delivery", "min_rank": "marker",
+    "payload": {"event_id": "crew_favor_delivery", "target_count": 1, "cargo_id": "crew_package", "cargo_label": "Crew package", "cargo_heat_per_travel": 0},
+    "expiry_in_actions": 18, "rewards": {"cash": 0, "trust": 5},
+    "failure": {"trust": -5, "grievance_kind": "job_abandoned", "grievance_weight": 1}
+  },
+  {
+    "id": "rook_quiet_package", "label": "Quiet Package", "member_id": "crew_rook", "kind": "package_run", "min_rank": "associate",
+    "payload": {"target_count": 1, "cargo_id": "sealed_motor_part", "cargo_label": "sealed motor part", "cargo_heat_per_travel": 2},
+    "expiry_in_actions": 14, "rewards": {"cash": 24, "trust": 5},
+    "failure": {"trust": -5, "grievance_kind": "job_abandoned", "grievance_weight": 1}
+  },
+  {
+    "id": "switch_two_stop_signal", "label": "Two-Stop Signal", "member_id": "crew_switch", "kind": "numbers_route", "min_rank": "associate",
+    "payload": {"target_count": 2, "cargo_id": "numbers_slips", "cargo_label": "route slips", "cargo_heat_per_travel": 3},
+    "expiry_in_actions": 18, "rewards": {"cash": 34, "trust": 6},
+    "failure": {"trust": -6, "grievance_kind": "job_abandoned", "grievance_weight": 1}
+  },
+  {
+    "id": "lucky_book_rounds", "label": "Book Rounds", "member_id": "crew_lucky", "kind": "numbers_route", "min_rank": "associate",
+    "payload": {"target_count": 3, "cargo_id": "numbers_bag", "cargo_label": "Numbers bag", "cargo_heat_per_travel": 3},
+    "expiry_in_actions": 22, "rewards": {"cash": 42, "trust": 7},
+    "failure": {"trust": -7, "grievance_kind": "job_abandoned", "grievance_weight": 1}
+  },
+  {
+    "id": "bishop_camera_window", "label": "Camera Window", "member_id": "crew_bishop", "kind": "lookout_hold", "min_rank": "associate",
+    "payload": {"target_count": 1, "hold_required_actions": 3, "hold_attention_limit": 55, "cargo_id": "shift_note", "cargo_label": "shift note"},
+    "expiry_in_actions": 12, "rewards": {"cash": 30, "trust": 6},
+    "failure": {"trust": -6, "grievance_kind": "job_abandoned", "grievance_weight": 1}
+  },
+  {
+    "id": "velvet_lounge_lookout", "label": "Lounge Lookout", "member_id": "crew_velvet", "kind": "lookout_hold", "min_rank": "associate",
+    "payload": {"target_node_ids": ["kitty_cat_lounge"], "target_count": 1, "hold_required_actions": 2, "hold_attention_limit": 45, "cargo_id": "guest_list", "cargo_label": "guest list"},
+    "expiry_in_actions": 14, "rewards": {"cash": 28, "trust": 5},
+    "failure": {"trust": -5, "grievance_kind": "job_abandoned", "grievance_weight": 1}
+  },
+  {
+    "id": "mags_low_roller_stake", "label": "Low-Roller Stake", "member_id": "crew_mags", "kind": "stake_horse", "min_rank": "associate",
+    "payload": {"venue_id": "small_underground_casino", "game_id": "blackjack", "crew_stake": 20, "profit_target": 12, "success_split": 10},
+    "expiry_in_actions": 16, "rewards": {"cash": 10, "trust": 6},
+    "failure": {"trust": -5, "grievance_kind": "", "grievance_weight": 1}
+  },
+  {
+    "id": "velvet_queen_stake", "label": "Queen's Stake", "member_id": "crew_velvet", "kind": "stake_horse", "min_rank": "made",
+    "payload": {"venue_id": "delta_queen", "game_id": "baccarat", "crew_stake": 30, "profit_target": 18, "success_split": 14},
+    "expiry_in_actions": 18, "rewards": {"cash": 14, "trust": 7},
+    "failure": {"trust": -6, "grievance_kind": "", "grievance_weight": 1}
+  },
+  {
+    "id": "lucky_slot_stake", "label": "Lucky's Machine", "member_id": "crew_lucky", "kind": "stake_horse", "min_rank": "associate",
+    "payload": {"venue_id": "gas_station_casino", "game_id": "slot", "crew_stake": 18, "profit_target": 10, "success_split": 8},
+    "expiry_in_actions": 14, "rewards": {"cash": 8, "trust": 5},
+    "failure": {"trust": -4, "grievance_kind": "", "grievance_weight": 1}
+  },
+  {
+    "id": "knuckles_friendly_collection", "label": "Friendly Collection", "member_id": "crew_knuckles", "kind": "collection", "min_rank": "associate",
+    "payload": {"target_count": 1, "friendly_cash": 22, "press_cash": 38, "friendly_heat": 0, "press_heat": 8, "cargo_id": "collection_note", "cargo_label": "collection note"},
+    "expiry_in_actions": 16, "rewards": {"cash": 0, "trust": 6},
+    "failure": {"trust": -5, "grievance_kind": "job_abandoned", "grievance_weight": 1}
+  },
+  {
+    "id": "knuckles_hard_collection", "label": "Old Bar Tab", "member_id": "crew_knuckles", "kind": "collection", "min_rank": "made",
+    "payload": {"target_node_ids": ["bar"], "target_count": 1, "friendly_cash": 28, "press_cash": 46, "friendly_heat": 0, "press_heat": 10, "cargo_id": "bar_ledger", "cargo_label": "bar ledger"},
+    "expiry_in_actions": 18, "rewards": {"cash": 0, "trust": 7},
+    "failure": {"trust": -6, "grievance_kind": "job_abandoned", "grievance_weight": 1}
+  },
+  {
+    "id": "bishop_cage_packet", "label": "Cage Packet", "member_id": "crew_bishop", "kind": "package_run", "min_rank": "made",
+    "payload": {"target_node_ids": ["grand_casino"], "target_count": 1, "cargo_id": "cage_packet", "cargo_label": "cage packet", "cargo_heat_per_travel": 4},
+    "expiry_in_actions": 16, "rewards": {"cash": 40, "trust": 7},
+    "failure": {"trust": -7, "grievance_kind": "job_abandoned", "grievance_weight": 1}
+  },
+  {
+    "id": "switch_weather_packet", "label": "Weather Packet", "member_id": "crew_switch", "kind": "package_run", "min_rank": "made",
+    "payload": {"target_count": 1, "cargo_id": "route_packet", "cargo_label": "route packet", "cargo_heat_per_travel": 1},
+    "expiry_in_actions": 10, "rewards": {"cash": 32, "trust": 6},
+    "failure": {"trust": -6, "grievance_kind": "job_abandoned", "grievance_weight": 1}
   }
 ]
