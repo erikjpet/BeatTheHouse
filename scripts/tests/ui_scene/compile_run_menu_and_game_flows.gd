@@ -123,6 +123,77 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 	return passed
 
 
+func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
+	var probe_value: Variant = MainScene.instantiate()
+	if not probe_value is Control:
+		push_error("Coin Pusher draw-frame probe could not instantiate FoundationMain.")
+		return false
+	var probe: Control = probe_value
+	probe.set("continuous_environment_clock_enabled", false)
+	root.add_child(probe)
+	await process_frame
+	await process_frame
+	probe.call("start_game_test_session", "coin_pusher")
+	await process_frame
+	await process_frame
+	var canvas: Control = probe.get("game_surface_canvas")
+	var game: GameModule = probe.get("current_game")
+	var preconditions_exact := canvas != null \
+			and game != null and game.get_id() == "coin_pusher" \
+			and str(probe.get("current_screen")) == "GAME" \
+			and probe.get("game_surface_canvas") == canvas \
+			and bool(canvas.call("surface_realtime_state_refresh_enabled")) \
+			and canvas.visible and canvas.is_visible_in_tree()
+	if not preconditions_exact:
+		push_error("Coin Pusher draw-frame probe did not reach the visible production owned-canvas preconditions.")
+		probe.queue_free()
+		await process_frame
+		return false
+	var draw_snapshots: Array = []
+	var observe_draw := func() -> void:
+		draw_snapshots.append(canvas.call("current_view_snapshot"))
+	canvas.draw.connect(observe_draw)
+	var draw_soak_before: Dictionary = canvas.call("debug_soak_snapshot")
+	var draw_sample_count_before := int(draw_soak_before.get("draw_sample_count", 0))
+	canvas.emit_signal("surface_action", "coin_pusher_drop", 0, false)
+	# queue_redraw requests the same viewport draw notification used in production;
+	# the draw callback itself is never invoked directly by this test.
+	canvas.queue_redraw()
+	await process_frame
+	await process_frame
+	var stored: Dictionary = probe.get("last_game_result")
+	var stored_patch: Dictionary = stored.get("surface_presentation_snapshot_patch", {}) if typeof(stored.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
+	var stored_trace: Array = stored_patch.get("trace", []) if typeof(stored_patch.get("trace", [])) == TYPE_ARRAY else []
+	var last_draw: Dictionary = draw_snapshots.back() if not draw_snapshots.is_empty() and typeof(draw_snapshots.back()) == TYPE_DICTIONARY else {}
+	var draw_state: Dictionary = last_draw.get("state", {}) if typeof(last_draw.get("state", {})) == TYPE_DICTIONARY else {}
+	var draw_snapshot: Dictionary = draw_state.get("coin_pusher_snapshot", {}) if typeof(draw_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	var draw_trace: Array = draw_snapshot.get("trace", []) if typeof(draw_snapshot.get("trace", [])) == TYPE_ARRAY else []
+	var draw_soak_after: Dictionary = canvas.call("debug_soak_snapshot")
+	var draw_sample_count_after := int(draw_soak_after.get("draw_sample_count", 0))
+	var rendered_drop_hit := false
+	var rendered_nudge_hit := false
+	var hit_regions: Array = canvas.call("_hit_region_snapshots")
+	for region_value in hit_regions:
+		if typeof(region_value) != TYPE_DICTIONARY:
+			continue
+		var hit_action := str((region_value as Dictionary).get("action", ""))
+		rendered_drop_hit = rendered_drop_hit or hit_action == "coin_pusher_drop"
+		rendered_nudge_hit = rendered_nudge_hit or hit_action == "coin_pusher_nudge"
+	var passed := str(stored.get("action_id", "")) == "drop_quarter" \
+			and not stored_trace.is_empty() \
+			and not draw_snapshots.is_empty() \
+			and JSON.stringify(draw_trace) == JSON.stringify(stored_trace) \
+			and draw_sample_count_after > draw_sample_count_before \
+			and rendered_drop_hit and rendered_nudge_hit
+	if not passed:
+		push_error("Coin Pusher owned canvas did not render its completed host action on a real viewport draw frame.")
+	if canvas.draw.is_connected(observe_draw):
+		canvas.draw.disconnect(observe_draw)
+	probe.queue_free()
+	await process_frame
+	return passed
+
+
 func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	var profile: ProfileInventory = app.get("profile_inventory")
 	var save_service: SaveService = app.get("save_service")
