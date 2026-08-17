@@ -4,6 +4,7 @@ extends RefCounted
 # Data-backed event contract for conditional run consequences.
 
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
+const CharacterChainModelScript := preload("res://scripts/core/character_chain_model.gd")
 
 var definition: Dictionary = {}
 var content_library: ContentLibrary = null
@@ -57,6 +58,7 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 			choice_data = _rumor_delivery_choice(choice_data, run_state, environment)
 			choice_data = _traveler_context_choice(choice_data, run_state)
 			choice_data = _reputation_context_choice(choice_data, environment)
+			choice_data = CharacterChainModelScript.contextualize_choice(get_id(), choice_data, run_state)
 			result.append(choice_data)
 	return result
 
@@ -254,8 +256,15 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				run_state.crew_meet_member(str(hook_data.get("member_id", "")))
 			"crew_rook_lead_closed":
 				run_state.crew_close_rook_leads_event()
+			"resolve_lender_favor":
+				result["lender_favor_result"] = CharacterChainModelScript.resolve_lender_favor(
+					run_state,
+					str(hook_data.get("lender_id", "")),
+					str(hook_data.get("resolution", ""))
+				)
 			"crew_switch_reveal", "crew_lucky_collection", "crew_knuckles_stash", "crew_knuckles_retrieve":
 				pass
+	CharacterChainModelScript.apply_to_environment(run_state, run_state.current_environment)
 
 
 # Returns a no-op event result for invalid choices.
@@ -579,6 +588,15 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	for flag_id in _string_array(conditions.get("missing_story_flags", [])):
 		if _story_flag_is_true(run_state, flag_id):
 			return false
+	var requires_any_flags := _string_array(conditions.get("requires_any_flags", []))
+	if not requires_any_flags.is_empty():
+		var found_any_flag := false
+		for flag_id in requires_any_flags:
+			if _story_flag_is_true(run_state, flag_id) or bool(run_state.narrative_flags.get(flag_id, false)):
+				found_any_flag = true
+				break
+		if not found_any_flag:
+			return false
 	for item_id in _string_array(conditions.get("requires_items", [])):
 		if not run_state.inventory.has(item_id):
 			return false
@@ -591,12 +609,28 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	for archetype_id in _string_array(conditions.get("blocked_archetype_ids", [])):
 		if str(environment.get("archetype_id", "")) == archetype_id:
 			return false
+	var scenario_ids := _string_array(conditions.get("scenario_ids", []))
+	var environment_scenario_id := str(environment.get("scenario_id", _copy_dict(environment.get("scenario_state", {})).get("id", "")))
+	if not scenario_ids.is_empty() and not scenario_ids.has(environment_scenario_id):
+		return false
+	var environment_node_id := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
+	for flag_id in _string_array(conditions.get("story_flag_matches_node", [])):
+		if str(_story_flag_value(run_state, flag_id)).strip_edges() != environment_node_id:
+			return false
 	for character_id in _string_array(conditions.get("requires_traveler_here", [])):
-		var environment_node_id := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
 		if run_state.traveler_node(character_id) != environment_node_id:
+			return false
+	var pressure_band := _copy_dict(conditions.get("pressure_band", {}))
+	if not pressure_band.is_empty():
+		var heat_met := pressure_band.has("min_suspicion") and run_state.suspicion_level() >= int(pressure_band.get("min_suspicion", 0))
+		var winnings_met := pressure_band.has("min_bankroll") and run_state.bankroll >= int(pressure_band.get("min_bankroll", 0))
+		if not heat_met and not winnings_met:
 			return false
 	if bool(conditions.get("requires_available_rumor", false)) and _next_environment_rumor(environment).is_empty():
 		return false
+	for rumor_id in _string_array(conditions.get("requires_rumor_fact_ids", [])):
+		if run_state.rumor_fact(rumor_id).is_empty():
+			return false
 	var layer_ids := _string_array(conditions.get("layer_ids", []))
 	if not layer_ids.is_empty() and not layer_ids.has(str(environment.get("current_layer_id", ""))):
 		return false

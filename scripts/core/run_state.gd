@@ -20,6 +20,7 @@ const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment
 const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
+const CharacterChainModelScript := preload("res://scripts/core/character_chain_model.gd")
 
 const DEFAULT_BANKROLL := 100
 const LOCAL_RISK_DECAY_BY_DISTANCE := {
@@ -1373,6 +1374,7 @@ func set_environment(environment_data: Dictionary) -> void:
 		environment_history.append(_environment_history_entry(current_environment))
 		_compact_environment_history()
 	current_environment = _normalize_environment(environment_data)
+	CharacterChainModelScript.apply_to_environment(self, current_environment)
 	# The Punchline's posted board is a physical source. Arriving after the post
 	# reveals only the current published handle; it does not grant solo-route lore.
 	if numbers_state != null and str(current_environment.get("archetype_id", "")) == "small_underground_casino":
@@ -1674,6 +1676,7 @@ func install_environment_layer_state(layer_id: String, layer_state: Dictionary) 
 	if not scenario_state.is_empty():
 		ScenarioEngineScript.reconcile_environment(target, scenario_state)
 	current_environment = _normalize_environment(target)
+	CharacterChainModelScript.apply_to_environment(self, current_environment)
 	return true
 
 
@@ -2897,6 +2900,8 @@ func security_risk_bonus(action_kind: String = "cheat") -> int:
 		bonus = 1
 	if int(narrative_flags.get("shift_change_rookie_actions", 0)) > 0:
 		bonus = maxi(0, bonus - 3)
+	var chain_security := _copy_dict(current_environment.get("security_profile", {}))
+	bonus += maxi(0, int(chain_security.get("cass_chain_attention_delta", 0)))
 	return bonus
 
 
@@ -7933,8 +7938,8 @@ func record_reputation_from_result(result: Dictionary, deltas: Dictionary) -> vo
 
 func scenario_weight_multiplier(archetype_id: String, scenario_id: String, tags: Array) -> float:
 	if town_state == null:
-		return 1.0
-	return town_state.scenario_weight_multiplier(archetype_id, scenario_id, tags)
+		return CharacterChainModelScript.scenario_weight_multiplier(self, archetype_id, scenario_id)
+	return town_state.scenario_weight_multiplier(archetype_id, scenario_id, tags) * CharacterChainModelScript.scenario_weight_multiplier(self, archetype_id, scenario_id)
 
 
 func apply_town_generation_modifiers(environment_data: Dictionary, rng: RngStream = null) -> void:
@@ -7970,6 +7975,7 @@ func apply_town_living_world_context(environment_data: Dictionary, rng: RngStrea
 	_apply_town_reputation_generation_context(environment_data)
 	_apply_town_sweep_generation_context(environment_data)
 	_apply_town_rumor_generation_context(environment_data, rng)
+	CharacterChainModelScript.apply_to_environment(self, environment_data)
 
 
 func _apply_town_sweep_generation_context(environment_data: Dictionary) -> void:
@@ -8068,7 +8074,7 @@ func _apply_town_traveler_generation_context(environment_data: Dictionary) -> vo
 	flags.erase("rival_worked_here_remaining_actions")
 	var security := _copy_dict(environment_data.get("security_profile", {}))
 	security.erase("rival_table_attention_delta")
-	var cass_modifier := town_state.departed_traveler_modifier(node_id, "cass_rival_counter")
+	var cass_modifier := {} if bool(story_flags.get("chain06_cass_ending_truce", false)) else town_state.departed_traveler_modifier(node_id, "cass_rival_counter")
 	if not cass_modifier.is_empty():
 		flags["rival_worked_here"] = true
 		flags["rival_worked_here_remaining_actions"] = int(cass_modifier.get("remaining_actions", 0))
@@ -8509,6 +8515,39 @@ func lender_repayment_status(lender_id: String) -> Dictionary:
 	return status
 
 
+# Resolves a narrative favor attached to one lender without inventing a second
+# debt system. Honoring clears the soft note; refusing converts it into a short,
+# ordinary repayment clock so no favor_owed state can dangle forever.
+func resolve_lender_favor(lender_id: String, resolution: String) -> Dictionary:
+	var clean_lender := lender_id.strip_edges()
+	var clean_resolution := resolution.strip_edges().to_lower()
+	if clean_lender.is_empty() or not ["honored", "refused"].has(clean_resolution):
+		return {"ok": false, "message": "That favor cannot be resolved."}
+	for index in range(debt.size() - 1, -1, -1):
+		if typeof(debt[index]) != TYPE_DICTIONARY:
+			continue
+		var debt_data := (debt[index] as Dictionary).duplicate(true)
+		if str(debt_data.get("lender_id", "")) != clean_lender:
+			continue
+		if not ["active", "overdue", "favor_due"].has(str(debt_data.get("status", "active"))):
+			continue
+		if clean_resolution == "honored":
+			debt.remove_at(index)
+			_mark_lender_repaid(clean_lender)
+			narrative_flags["debt_favor_owed"] = false
+			_refresh_economy(true)
+			return {"ok": true, "resolution": clean_resolution, "debt_id": str(debt_data.get("id", "")), "message": "The favor closes the soft note."}
+		debt_data["status"] = "active"
+		debt_data["default_consequence"] = "forced_repayment"
+		debt_data["turns_remaining"] = 2
+		debt_data["deadline_turns"] = 2
+		debt[index] = debt_data
+		narrative_flags["debt_favor_owed"] = false
+		_refresh_economy(true)
+		return {"ok": true, "resolution": clean_resolution, "debt_id": str(debt_data.get("id", "")), "message": "The favor becomes an ordinary note. Two ticks."}
+	return {"ok": false, "message": "No favor from that lender is waiting."}
+
+
 func pawn_tickets_for_lender(lender_id: String) -> Array:
 	var result: Array = []
 	for debt_entry in debt:
@@ -8810,6 +8849,7 @@ func _advance_global_boundary_before_local_cooldown(safe_amount: int) -> void:
 func _advance_global_boundary_finish(safe_amount: int) -> void:
 	_advance_debt_clocks(safe_amount)
 	_advance_crew_jobs()
+	CharacterChainModelScript.advance(self, safe_amount)
 
 
 func _advance_environment_layer_ambient(total_turns: int) -> void:
