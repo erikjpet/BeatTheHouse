@@ -635,6 +635,8 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 	var metrics: Dictionary = result.get("coin_pusher_solver_metrics", {}) if typeof(result.get("coin_pusher_solver_metrics", {})) == TYPE_DICTIONARY else {}
 	var presentation_patch: Dictionary = result.get("surface_presentation_snapshot_patch", {}) if typeof(result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
 	var trace: Array = presentation_patch.get("trace", []) if typeof(presentation_patch.get("trace", [])) == TYPE_ARRAY else []
+	var packed_trace: Dictionary = presentation_patch.get("trace_packed", {}) if typeof(presentation_patch.get("trace_packed", {})) == TYPE_DICTIONARY else {}
+	var trace_frame_count := int(packed_trace.get("frame_count", 0)) if not packed_trace.is_empty() else trace.size()
 	var collapse_seen := int(metrics.get("topple_count", 0)) > 0 or int(metrics.get("upper_lower_fall_count", 0)) > 0
 	var solver_backend := CoinPusherSolverScript.last_step_backend_for_test()
 	var combined_stage_timing: Dictionary = (result.get("coin_pusher_debug_stage_timing_usec", {}) as Dictionary).duplicate(false)
@@ -662,12 +664,12 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 		"solver_metrics": metrics,
 		"solver_backend": solver_backend,
 		"stage_timing_ms": _coin_pusher_stage_profile_msec(combined_stage_timing),
-		"presentation_trace_frames": trace.size(),
+		"presentation_trace_frames": trace_frame_count,
 		"collapse_seen": collapse_seen,
 	}
 	observations.append(observation)
 	coin_pusher_performance_status[mode] = observation.duplicate(true)
-	var passed := handled and bool(result.get("ok", false)) and int(metrics.get("fixed_ticks", 0)) == CoinPusherSolverScript.ACTION_TICKS and trace.size() == 14 and solver_backend == "native"
+	var passed := handled and bool(result.get("ok", false)) and int(metrics.get("fixed_ticks", 0)) == CoinPusherSolverScript.ACTION_TICKS and trace_frame_count == 14 and solver_backend == "native"
 	if not passed:
 		failures.append("Coin Pusher %s did not resolve through the production surface with the exact 14-frame fixed-tick presentation replay." % mode)
 	if resolve_call_ms > COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS:

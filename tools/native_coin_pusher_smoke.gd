@@ -34,7 +34,7 @@ func _initialize() -> void:
 		if str(core.call("backend_id")) != "coin_pusher_native_integer_v1":
 			failures.append("native backend identity drifted")
 		var contract: Dictionary = core.call("solver_contract") as Dictionary
-		if contract != {"abi_version": 1, "schema": "coin_pusher_fixed_point", "state_version": 1, "fixed_point_scale": 1000, "action_ticks": 48}:
+		if contract != {"abi_version": 1, "schema": "coin_pusher_fixed_point", "state_version": 1, "fixed_point_scale": 1000, "action_ticks": 48, "packed_trace_version": 1}:
 			failures.append("native ABI/solver contract drifted")
 		for fixture in [[7, 3, 2], [-7, 3, -2], [7, -3, -2], [-7, -3, 2], [7, 0, 0]]:
 			if int(core.call("divi", fixture[0], fixture[1])) != fixture[2]:
@@ -130,13 +130,25 @@ func _check_exact_step_backends(core: Object, failures: Array[String]) -> void:
 			failures.append("dictionary reference and forced packed GDScript fallback diverged")
 		if JSON.stringify(reference_state) != JSON.stringify(native_state):
 			failures.append("native authoritative state diverged from the dictionary oracle")
-		if JSON.stringify(reference_result) != JSON.stringify(native_result):
+		var decoded_native_result := _legacy_solver_result(native_result)
+		if JSON.stringify(reference_result) != JSON.stringify(decoded_native_result):
 			failures.append("native exits/events/trace/metrics diverged from the dictionary oracle")
 		if int(native_state.get("tick", -1)) != int(source.get("tick", 0)) + Solver.ACTION_TICKS:
 			failures.append("native authoritative step did not advance exactly 48 fixed ticks")
 		if native_result.has("debug_stage_timing_usec"):
 			failures.append("production native result leaked non-authoritative wall-clock timing")
-		_check_trace_contract(source, native_state, native_result, failures)
+		_check_trace_contract(source, native_state, decoded_native_result, failures)
+		var finalized_packed := Solver.finalize_packed_presentation_trace(native_result.get("presentation_trace_packed", {}), native_state, Solver.ACTION_TICKS + 1)
+		var finalized_trace := Solver.decode_packed_presentation_trace(finalized_packed)
+		var expected_finalized_trace: Array = reference_result.get("presentation_trace", []).duplicate(true)
+		expected_finalized_trace.append({
+			"tick_offset": Solver.ACTION_TICKS + 1,
+			"upper_phase_fp": int(native_state.get("upper_phase_fp", 0)),
+			"lower_phase_fp": int(native_state.get("lower_phase_fp", 0)),
+			"bodies": Solver.body_views(native_state),
+		})
+		if JSON.stringify(finalized_trace) != JSON.stringify(expected_finalized_trace):
+			failures.append("native packed tick-49 finalization did not decode to the exact legacy 14-frame trace")
 		_check_trusted_contract_negatives(core, source, base_config, failures)
 	_check_scripted_native_transaction(source, failures)
 	_check_full_cap_adapter_selection(failures)
@@ -153,12 +165,25 @@ func _check_full_cap_adapter_selection(failures: Array[String]) -> void:
 		"captured_upper_phase_fp": 1700,
 		"captured_lower_phase_fp": 2300,
 		"push_scale": 3,
+		"capture_presentation_trace": true,
 		"_debug_profile_stages": true,
 	})
 	if Solver.last_step_backend_for_test() != "native":
 		failures.append("full-cap production adapter rejected the real native result and double-ran the GDScript fallback")
 	if int((result.get("metrics", {}) as Dictionary).get("fixed_ticks", 0)) != Solver.ACTION_TICKS:
 		failures.append("full-cap native adapter smoke did not complete its fixed-tick action")
+	if int((result.get("presentation_trace_packed", {}) as Dictionary).get("frame_count", 0)) != 13 \
+			or Solver.decode_packed_presentation_trace(result.get("presentation_trace_packed", {})).size() != 13:
+		failures.append("full-cap native adapter did not publish all 13 solver frames through the packed trace boundary")
+
+
+func _legacy_solver_result(result: Dictionary) -> Dictionary:
+	if typeof(result.get("presentation_trace_packed")) != TYPE_DICTIONARY:
+		return result
+	var comparable := result.duplicate(false)
+	comparable["presentation_trace"] = Solver.decode_packed_presentation_trace(result.get("presentation_trace_packed", {}))
+	comparable.erase("presentation_trace_packed")
+	return comparable
 
 
 func _check_hostile_native_boundary(core: Object, source: Dictionary, failures: Array[String]) -> void:

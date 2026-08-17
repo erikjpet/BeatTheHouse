@@ -1,6 +1,9 @@
 #include "coin_pusher_native_core.h"
 
 #include <godot_cpp/variant/array.hpp>
+#include <godot_cpp/variant/packed_byte_array.hpp>
+#include <godot_cpp/variant/packed_int32_array.hpp>
+#include <godot_cpp/variant/packed_string_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include <algorithm>
@@ -50,6 +53,7 @@ constexpr int64_t HOT_PRESSURE_ACCEL_ABS_LIMIT = 100000;
 constexpr int64_t HOT_BODY_COUNT_LIMIT = 256;
 constexpr int64_t HOT_CONFIG_IMPULSE_ABS_LIMIT = 100000000;
 constexpr int64_t HOT_PUSH_SCALE_ABS_LIMIT = 1000;
+constexpr int64_t PACKED_TRACE_VERSION = 1;
 
 int64_t divi(int64_t numerator, int64_t denominator) {
 	return denominator == 0 ? 0 : numerator / denominator;
@@ -213,6 +217,29 @@ public:
 	std::set<String> motion_event_keys;
 	Array trace;
 	std::vector<ExitTrail> exit_trails;
+	PackedInt32Array trace_frame_offsets;
+	PackedInt32Array trace_tick_offsets;
+	PackedInt32Array trace_upper_phases;
+	PackedInt32Array trace_lower_phases;
+	PackedStringArray trace_body_ids;
+	PackedStringArray trace_body_kinds;
+	PackedInt32Array trace_body_radii;
+	PackedInt32Array trace_body_heights;
+	PackedInt32Array trace_body_masses;
+	Array trace_body_metadata;
+	PackedInt32Array trace_row_body_indices;
+	PackedStringArray trace_row_material_categories;
+	PackedInt32Array trace_row_x;
+	PackedInt32Array trace_row_y;
+	PackedInt32Array trace_row_z;
+	PackedInt32Array trace_row_radius;
+	PackedInt32Array trace_row_height;
+	PackedByteArray trace_row_sleeping;
+	PackedStringArray trace_row_rest_states;
+	PackedByteArray trace_row_has_level;
+	PackedStringArray trace_row_levels;
+	PackedInt32Array trace_row_lean;
+	std::map<String, int32_t> trace_descriptor_by_id;
 	int64_t upper_phase = 0;
 	int64_t lower_phase = 0;
 	int64_t state_tick = 0;
@@ -256,6 +283,7 @@ public:
 				body.trace_base_view["metadata"] = body.metadata;
 			}
 			bodies.push_back(body);
+			if (capture_trace) ensure_trace_descriptor(body);
 		}
 		upper_phase = state.get("upper_phase_fp", 0);
 		lower_phase = state.get("lower_phase_fp", 0);
@@ -272,6 +300,162 @@ public:
 			start_x.push_back(body.x); start_y.push_back(body.y); start_z.push_back(body.z);
 			if (emit_presentation) peak_z.push_back(body.z);
 		}
+	}
+
+	int32_t ensure_trace_descriptor(const Body &body) {
+		auto found = trace_descriptor_by_id.find(body.id);
+		if (found != trace_descriptor_by_id.end()) return found->second;
+		const int32_t index = trace_body_ids.size();
+		trace_descriptor_by_id[body.id] = index;
+		trace_body_ids.append(body.id);
+		trace_body_kinds.append(body.kind);
+		trace_body_radii.append(static_cast<int32_t>(body.radius));
+		trace_body_heights.append(static_cast<int32_t>(body.height));
+		trace_body_masses.append(static_cast<int32_t>(body.mass));
+		trace_body_metadata.append(body.metadata.duplicate(true));
+		return index;
+	}
+
+	int32_t ensure_trace_descriptor(const Dictionary &view) {
+		const String id = view.get("id", "");
+		auto found = trace_descriptor_by_id.find(id);
+		if (found != trace_descriptor_by_id.end()) return found->second;
+		const int32_t index = trace_body_ids.size();
+		trace_descriptor_by_id[id] = index;
+		const String kind = view.get("kind", "coin");
+		trace_body_ids.append(id);
+		trace_body_kinds.append(kind);
+		trace_body_radii.append(static_cast<int32_t>(view.get("radius", kind == "coin" ? COIN_RADIUS : OBJECT_RADIUS)));
+		trace_body_heights.append(static_cast<int32_t>(view.get("height", kind == "coin" ? COIN_HEIGHT : OBJECT_HEIGHT)));
+		trace_body_masses.append(static_cast<int32_t>(view.get("mass", 1)));
+		Variant metadata_value = view.get("metadata", Dictionary());
+		trace_body_metadata.append(metadata_value.get_type() == Variant::DICTIONARY ? Dictionary(metadata_value).duplicate(true) : Dictionary());
+		return index;
+	}
+
+	void append_trace_row(const Body &body) {
+		trace_row_body_indices.append(ensure_trace_descriptor(body));
+		trace_row_material_categories.append(material_category(body.kind));
+		trace_row_x.append(static_cast<int32_t>(body.x)); trace_row_y.append(static_cast<int32_t>(body.y)); trace_row_z.append(static_cast<int32_t>(body.z));
+		trace_row_radius.append(static_cast<int32_t>(body.radius)); trace_row_height.append(static_cast<int32_t>(body.height));
+		trace_row_sleeping.append(body.sleeping ? 1 : 0);
+		trace_row_rest_states.append(body.rest_state);
+		trace_row_has_level.append(1);
+		trace_row_levels.append(body.y >= UPPER_EDGE && body.z >= UPPER_FLOOR_Z ? "upper" : body.y >= FRONT_EDGE && body.z >= LOWER_FLOOR_Z && body.z < UPPER_FLOOR_Z ? "lower" : "falling");
+		trace_row_lean.append(static_cast<int32_t>(body.lean));
+	}
+
+	void append_trace_row(const Dictionary &view) {
+		trace_row_body_indices.append(ensure_trace_descriptor(view));
+		trace_row_material_categories.append(String(view.get("material_category", "physical_object")));
+		trace_row_x.append(static_cast<int32_t>(view.get("x", 0))); trace_row_y.append(static_cast<int32_t>(view.get("y", 0))); trace_row_z.append(static_cast<int32_t>(view.get("z", 0)));
+		trace_row_radius.append(static_cast<int32_t>(view.get("radius", COIN_RADIUS))); trace_row_height.append(static_cast<int32_t>(view.get("height", COIN_HEIGHT)));
+		trace_row_sleeping.append(bool(view.get("sleeping", false)) ? 1 : 0);
+		trace_row_rest_states.append(String(view.get("rest_state", "settling")));
+		const bool has_level = view.has("level");
+		trace_row_has_level.append(has_level ? 1 : 0);
+		trace_row_levels.append(has_level ? String(view.get("level", "falling")) : String());
+		trace_row_lean.append(static_cast<int32_t>(view.get("lean_milli", 0)));
+	}
+
+	void append_packed_trace_frame(int64_t tick_offset, const Array &extra) {
+		struct OrderedRow {
+			int body_index = -1;
+			Dictionary extra_view;
+			int64_t depth = 0;
+			String id;
+		};
+		std::vector<OrderedRow> ordered;
+		ordered.reserve(bodies.size() + extra.size());
+		for (int index = 0; index < static_cast<int>(bodies.size()); ++index) {
+			const Body &body = bodies[index];
+			OrderedRow row; row.body_index = index; row.depth = body.y * 10 - body.z; row.id = body.id; ordered.push_back(row);
+		}
+		for (int index = 0; index < extra.size(); ++index) {
+			Dictionary view = extra[index];
+			OrderedRow row; row.extra_view = view;
+			row.depth = static_cast<int64_t>(view.get("y", 0)) * 10 - static_cast<int64_t>(view.get("z", 0));
+			row.id = view.get("id", ""); ordered.push_back(row);
+		}
+		std::sort(ordered.begin(), ordered.end(), [](const OrderedRow &left, const OrderedRow &right) {
+			if (left.depth == right.depth) return left.id < right.id;
+			return left.depth > right.depth;
+		});
+		trace_frame_offsets.append(trace_row_body_indices.size());
+		trace_tick_offsets.append(static_cast<int32_t>(tick_offset));
+		trace_upper_phases.append(static_cast<int32_t>(upper_phase));
+		trace_lower_phases.append(static_cast<int32_t>(lower_phase));
+		for (const OrderedRow &row : ordered) {
+			if (row.body_index >= 0) append_trace_row(bodies[row.body_index]); else append_trace_row(row.extra_view);
+		}
+	}
+
+	bool load_existing_packed_trace(const Dictionary &packed) {
+		if (String(packed.get("schema", "")) != "coin_pusher_presentation_trace_packed" || static_cast<int64_t>(packed.get("version", 0)) != PACKED_TRACE_VERSION) return false;
+		trace_frame_offsets = packed.get("frame_offsets", PackedInt32Array());
+		trace_tick_offsets = packed.get("tick_offsets", PackedInt32Array());
+		trace_upper_phases = packed.get("upper_phase_fp", PackedInt32Array());
+		trace_lower_phases = packed.get("lower_phase_fp", PackedInt32Array());
+		trace_body_ids = packed.get("body_ids", PackedStringArray());
+		trace_body_kinds = packed.get("body_kinds", PackedStringArray());
+		trace_body_radii = packed.get("body_radii", PackedInt32Array());
+		trace_body_heights = packed.get("body_heights", PackedInt32Array());
+		trace_body_masses = packed.get("body_masses", PackedInt32Array());
+		Variant metadata_value = packed.get("body_metadata", Array());
+		if (metadata_value.get_type() != Variant::ARRAY) return false;
+		trace_body_metadata = metadata_value;
+		trace_row_body_indices = packed.get("row_body_indices", PackedInt32Array());
+		trace_row_material_categories = packed.get("row_material_categories", PackedStringArray());
+		trace_row_x = packed.get("row_x", PackedInt32Array()); trace_row_y = packed.get("row_y", PackedInt32Array()); trace_row_z = packed.get("row_z", PackedInt32Array());
+		trace_row_radius = packed.get("row_radius", PackedInt32Array()); trace_row_height = packed.get("row_height", PackedInt32Array());
+		trace_row_sleeping = packed.get("row_sleeping", PackedByteArray());
+		trace_row_rest_states = packed.get("row_rest_states", PackedStringArray());
+		trace_row_has_level = packed.get("row_has_level", PackedByteArray());
+		trace_row_levels = packed.get("row_levels", PackedStringArray());
+		trace_row_lean = packed.get("row_lean_milli", PackedInt32Array());
+		const int64_t frame_count = packed.get("frame_count", -1);
+		const int64_t descriptor_count = trace_body_ids.size();
+		const int64_t row_count = trace_row_body_indices.size();
+		if (frame_count < 0 || trace_tick_offsets.size() != frame_count || trace_upper_phases.size() != frame_count || trace_lower_phases.size() != frame_count || trace_frame_offsets.size() != frame_count + 1) return false;
+		if (trace_body_kinds.size() != descriptor_count || trace_body_radii.size() != descriptor_count || trace_body_heights.size() != descriptor_count || trace_body_masses.size() != descriptor_count || trace_body_metadata.size() != descriptor_count) return false;
+		if (trace_row_material_categories.size() != row_count || trace_row_x.size() != row_count || trace_row_y.size() != row_count || trace_row_z.size() != row_count || trace_row_radius.size() != row_count || trace_row_height.size() != row_count || trace_row_sleeping.size() != row_count || trace_row_rest_states.size() != row_count || trace_row_has_level.size() != row_count || trace_row_levels.size() != row_count || trace_row_lean.size() != row_count) return false;
+		if (trace_frame_offsets[0] != 0 || trace_frame_offsets[frame_count] != row_count) return false;
+		for (int64_t index = 0; index < frame_count; ++index) if (trace_frame_offsets[index] > trace_frame_offsets[index + 1]) return false;
+		for (int64_t index = 0; index < row_count; ++index) if (trace_row_body_indices[index] < 0 || trace_row_body_indices[index] >= descriptor_count) return false;
+		for (int32_t index = 0; index < trace_body_ids.size(); ++index) {
+			if (trace_descriptor_by_id.count(trace_body_ids[index]) != 0) return false;
+			trace_descriptor_by_id[trace_body_ids[index]] = index;
+		}
+		trace_frame_offsets.resize(frame_count);
+		return true;
+	}
+
+	Dictionary finish_packed_trace() {
+		trace_frame_offsets.append(trace_row_body_indices.size());
+		Dictionary packed;
+		packed["schema"] = "coin_pusher_presentation_trace_packed";
+		packed["version"] = PACKED_TRACE_VERSION;
+		packed["frame_count"] = trace_tick_offsets.size();
+		packed["frame_offsets"] = trace_frame_offsets;
+		packed["tick_offsets"] = trace_tick_offsets;
+		packed["upper_phase_fp"] = trace_upper_phases;
+		packed["lower_phase_fp"] = trace_lower_phases;
+		packed["body_ids"] = trace_body_ids;
+		packed["body_kinds"] = trace_body_kinds;
+		packed["body_radii"] = trace_body_radii;
+		packed["body_heights"] = trace_body_heights;
+		packed["body_masses"] = trace_body_masses;
+		packed["body_metadata"] = trace_body_metadata;
+		packed["row_body_indices"] = trace_row_body_indices;
+		packed["row_material_categories"] = trace_row_material_categories;
+		packed["row_x"] = trace_row_x; packed["row_y"] = trace_row_y; packed["row_z"] = trace_row_z;
+		packed["row_radius"] = trace_row_radius; packed["row_height"] = trace_row_height;
+		packed["row_sleeping"] = trace_row_sleeping;
+		packed["row_rest_states"] = trace_row_rest_states;
+		packed["row_has_level"] = trace_row_has_level;
+		packed["row_levels"] = trace_row_levels;
+		packed["row_lean_milli"] = trace_row_lean;
+		return packed;
 	}
 
 	int64_t apply_nudge() {
@@ -654,7 +838,7 @@ Dictionary StepKernel::run() {
 	if (debug_profile) profile_pack = elapsed_usec(stage_started);
 	if (capture_trace) {
 		if (debug_profile) stage_started = std::chrono::steady_clock::now();
-		trace.append(trace_frame(0, Array()));
+		append_packed_trace_frame(0, Array());
 		if (debug_profile) profile_trace += elapsed_usec(stage_started);
 	}
 	if (debug_profile) stage_started = std::chrono::steady_clock::now();
@@ -728,7 +912,7 @@ Dictionary StepKernel::run() {
 					}
 				}
 				exit_trails = std::move(remaining);
-				trace.append(trace_frame(tick_index + 1, extra));
+				append_packed_trace_frame(tick_index + 1, extra);
 			}
 			if (debug_profile) profile_trace += elapsed_usec(stage_started);
 		}
@@ -775,6 +959,7 @@ Dictionary StepKernel::run() {
 	result["presentation_events"] = presentation_events;
 	result["metrics"] = metrics;
 	result["presentation_trace"] = trace;
+	if (capture_trace) result["presentation_trace_packed"] = finish_packed_trace();
 	if (debug_profile) {
 		profile_result = elapsed_usec(stage_started);
 		Dictionary profile;
@@ -798,4 +983,17 @@ Dictionary CoinPusherNativeCore::step_action(Dictionary state, const Dictionary 
 	if (!validate_step_input(state, config)) return Dictionary();
 	StepKernel kernel(state, config);
 	return kernel.run();
+}
+
+Dictionary CoinPusherNativeCore::append_presentation_trace_frame(Dictionary packed_trace, const Dictionary &state, int64_t tick_offset) const {
+	Dictionary validation_config;
+	if (!validate_step_input(state, validation_config)) return Dictionary();
+	Dictionary config;
+	config["capture_presentation_trace"] = true;
+	config["emit_presentation_events"] = false;
+	StepKernel kernel(state, config);
+	if (!kernel.load_existing_packed_trace(packed_trace)) return Dictionary();
+	kernel.load();
+	kernel.append_packed_trace_frame(tick_offset, Array());
+	return kernel.finish_packed_trace();
 }

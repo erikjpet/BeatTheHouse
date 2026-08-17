@@ -200,14 +200,14 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	await process_frame
 	var stored: Dictionary = probe.get("last_game_result")
 	var stored_patch: Dictionary = stored.get("surface_presentation_snapshot_patch", {}) if typeof(stored.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
-	var stored_trace: Array = stored_patch.get("trace", []) if typeof(stored_patch.get("trace", [])) == TYPE_ARRAY else []
+	var stored_trace: Variant = stored_patch.get("trace_packed", {}) if typeof(stored_patch.get("trace_packed", {})) == TYPE_DICTIONARY and not (stored_patch.get("trace_packed", {}) as Dictionary).is_empty() else stored_patch.get("trace", [])
 	var last_draw: Dictionary = draw_snapshots.back() if not draw_snapshots.is_empty() and typeof(draw_snapshots.back()) == TYPE_DICTIONARY else {}
 	var draw_state: Dictionary = last_draw.get("state", {}) if typeof(last_draw.get("state", {})) == TYPE_DICTIONARY else {}
 	var draw_snapshot: Dictionary = draw_state.get("coin_pusher_snapshot", {}) if typeof(draw_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
-	var draw_trace: Array = draw_snapshot.get("trace", []) if typeof(draw_snapshot.get("trace", [])) == TYPE_ARRAY else []
+	var draw_trace: Variant = draw_snapshot.get("trace_packed", {}) if typeof(draw_snapshot.get("trace_packed", {})) == TYPE_DICTIONARY and not (draw_snapshot.get("trace_packed", {}) as Dictionary).is_empty() else draw_snapshot.get("trace", [])
 	var action_canvas_state: Dictionary = canvas.call("realtime_surface_state")
 	var action_canvas_snapshot: Dictionary = action_canvas_state.get("coin_pusher_snapshot", {}) if typeof(action_canvas_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
-	var action_canvas_trace: Array = action_canvas_snapshot.get("trace", []) if typeof(action_canvas_snapshot.get("trace", [])) == TYPE_ARRAY else []
+	var action_canvas_trace: Variant = action_canvas_snapshot.get("trace_packed", {}) if typeof(action_canvas_snapshot.get("trace_packed", {})) == TYPE_DICTIONARY and not (action_canvas_snapshot.get("trace_packed", {}) as Dictionary).is_empty() else action_canvas_snapshot.get("trace", [])
 	var draw_soak_after: Dictionary = canvas.call("debug_soak_snapshot")
 	var draw_sample_count_after := int(draw_soak_after.get("draw_sample_count", 0))
 	var rendered_drop_hit := false
@@ -221,6 +221,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		rendered_nudge_hit = rendered_nudge_hit or hit_action == "coin_pusher_nudge"
 	var render_passed := refresh_contract_passed and str(stored.get("action_id", "")) == "drop_quarter" \
 			and not stored_trace.is_empty() \
+			and (typeof(stored_trace) != TYPE_DICTIONARY or int((stored_trace as Dictionary).get("frame_count", 0)) == 14) \
 			and not draw_snapshots.is_empty() \
 			and JSON.stringify(draw_trace) == JSON.stringify(stored_trace) \
 			and JSON.stringify(action_canvas_trace) == JSON.stringify(stored_trace) \
@@ -286,7 +287,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var success_stamp := int(probe.get("last_game_surface_realtime_refresh_msec"))
 	var realtime_canvas_state: Dictionary = canvas.call("realtime_surface_state")
 	var realtime_canvas_snapshot: Dictionary = realtime_canvas_state.get("coin_pusher_snapshot", {}) if typeof(realtime_canvas_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
-	var realtime_canvas_trace: Array = realtime_canvas_snapshot.get("trace", []) if typeof(realtime_canvas_snapshot.get("trace", [])) == TYPE_ARRAY else []
+	var realtime_canvas_trace: Variant = realtime_canvas_snapshot.get("trace_packed", {}) if typeof(realtime_canvas_snapshot.get("trace_packed", {})) == TYPE_DICTIONARY and not (realtime_canvas_snapshot.get("trace_packed", {}) as Dictionary).is_empty() else realtime_canvas_snapshot.get("trace", [])
 	var realtime_passed: bool = success_preconditions_exact \
 			and realtime_clock_wait_frames < 16 \
 			and success_stamp > surface_time_before \

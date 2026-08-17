@@ -28,6 +28,7 @@ void CoinPusherNativeCore::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("apply_nudge_columns", "columns", "config"), &CoinPusherNativeCore::apply_nudge_columns);
 	ClassDB::bind_method(D_METHOD("can_step", "state", "config"), &CoinPusherNativeCore::can_step);
 	ClassDB::bind_method(D_METHOD("step_action", "state", "config"), &CoinPusherNativeCore::step_action);
+	ClassDB::bind_method(D_METHOD("append_presentation_trace_frame", "packed_trace", "state", "tick_offset"), &CoinPusherNativeCore::append_presentation_trace_frame);
 }
 
 String CoinPusherNativeCore::backend_id() const {
@@ -41,6 +42,7 @@ Dictionary CoinPusherNativeCore::solver_contract() const {
 	value["state_version"] = 1;
 	value["fixed_point_scale"] = FP;
 	value["action_ticks"] = 48;
+	value["packed_trace_version"] = 1;
 	return value;
 }
 

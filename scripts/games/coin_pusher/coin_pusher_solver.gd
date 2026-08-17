@@ -46,6 +46,8 @@ const HOT_CONFIG_IMPULSE_ABS_LIMIT := 100000000
 const HOT_PUSH_SCALE_ABS_LIMIT := 1000
 const NATIVE_BACKEND_ID := "coin_pusher_native_integer_v1"
 const NATIVE_ABI_VERSION := 1
+const PACKED_TRACE_SCHEMA := "coin_pusher_presentation_trace_packed"
+const PACKED_TRACE_VERSION := 1
 const NATIVE_MUTABLE_BODY_KEYS := {
 	"x": true, "y": true, "z": true,
 	"vx": true, "vy": true, "vz": true,
@@ -378,7 +380,13 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 				var debug_native_call_usec := Time.get_ticks_usec() - debug_stage_started_usec if debug_adapter else 0
 				var native_result: Dictionary = native_result_value if typeof(native_result_value) == TYPE_DICTIONARY else {}
 				debug_stage_started_usec = Time.get_ticks_usec() if debug_adapter else 0
-				if _native_step_contract_valid(state, native_state, native_result, config, trusted_native):
+				# Only this synchronous, scriptless extension call may take the compact
+				# publication guard: no caller can mutate its isolated candidate between
+				# return and validation. Test/injected contracts retain the exhaustive
+				# corruption audit exposed below.
+				var native_contract_valid := _trusted_native_step_contract_valid(state, native_state, native_result, config) if trusted_native \
+						else _native_step_contract_valid(state, native_state, native_result, config, false)
+				if native_contract_valid:
 					var debug_validate_usec := Time.get_ticks_usec() - debug_stage_started_usec if debug_adapter else 0
 					debug_stage_started_usec = Time.get_ticks_usec() if debug_adapter else 0
 					_publish_native_state(state, native_state, trusted_native)
@@ -437,6 +445,71 @@ static func native_step_contract_valid_for_test(before: Dictionary, candidate: D
 	return _native_step_contract_valid(before, candidate, result, config, trusted_native)
 
 
+static func finalize_packed_presentation_trace(packed_trace: Dictionary, state: Dictionary, tick_offset: int) -> Dictionary:
+	if not _packed_trace_contract_valid(packed_trace):
+		return {}
+	var native := _native_solver_backend()
+	if native == null or native.get_class() != "CoinPusherNativeCore" or native.get_script() != null \
+			or not native.has_method("append_presentation_trace_frame"):
+		return {}
+	var value: Variant = native.call("append_presentation_trace_frame", packed_trace, state, tick_offset)
+	var finalized: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
+	return finalized if _packed_trace_contract_valid(finalized) and int(finalized.get("frame_count", 0)) == int(packed_trace.get("frame_count", 0)) + 1 else {}
+
+
+static func decode_packed_presentation_trace(packed_trace: Dictionary) -> Array:
+	if not _packed_trace_contract_valid(packed_trace):
+		return []
+	var frame_offsets: PackedInt32Array = packed_trace["frame_offsets"]
+	var tick_offsets: PackedInt32Array = packed_trace["tick_offsets"]
+	var upper_phases: PackedInt32Array = packed_trace["upper_phase_fp"]
+	var lower_phases: PackedInt32Array = packed_trace["lower_phase_fp"]
+	var body_ids: PackedStringArray = packed_trace["body_ids"]
+	var body_kinds: PackedStringArray = packed_trace["body_kinds"]
+	var body_radii: PackedInt32Array = packed_trace["body_radii"]
+	var body_heights: PackedInt32Array = packed_trace["body_heights"]
+	var body_masses: PackedInt32Array = packed_trace["body_masses"]
+	var body_metadata: Array = packed_trace["body_metadata"]
+	var row_body_indices: PackedInt32Array = packed_trace["row_body_indices"]
+	var row_material_categories: PackedStringArray = packed_trace["row_material_categories"]
+	var row_x: PackedInt32Array = packed_trace["row_x"]
+	var row_y: PackedInt32Array = packed_trace["row_y"]
+	var row_z: PackedInt32Array = packed_trace["row_z"]
+	var row_radius: PackedInt32Array = packed_trace["row_radius"]
+	var row_height: PackedInt32Array = packed_trace["row_height"]
+	var row_sleeping: PackedByteArray = packed_trace["row_sleeping"]
+	var row_rest_states: PackedStringArray = packed_trace["row_rest_states"]
+	var row_has_level: PackedByteArray = packed_trace["row_has_level"]
+	var row_levels: PackedStringArray = packed_trace["row_levels"]
+	var row_lean: PackedInt32Array = packed_trace["row_lean_milli"]
+	var frames: Array = []
+	for frame_index in range(int(packed_trace["frame_count"])):
+		var frame_bodies: Array = []
+		for row_index in range(frame_offsets[frame_index], frame_offsets[frame_index + 1]):
+			var body_index := row_body_indices[row_index]
+			var body := {
+				"id": body_ids[body_index],
+				"kind": body_kinds[body_index],
+				"material_category": row_material_categories[row_index],
+				"x": row_x[row_index], "y": row_y[row_index], "z": row_z[row_index],
+				"radius": row_radius[row_index], "height": row_height[row_index], "mass": body_masses[body_index],
+				"sleeping": row_sleeping[row_index] != 0,
+				"rest_state": row_rest_states[row_index],
+			}
+			if row_has_level[row_index] != 0:
+				body["level"] = row_levels[row_index]
+			body["lean_milli"] = row_lean[row_index]
+			body["metadata"] = (body_metadata[body_index] as Dictionary).duplicate(true) if typeof(body_metadata[body_index]) == TYPE_DICTIONARY else {}
+			frame_bodies.append(body)
+		frames.append({
+			"tick_offset": tick_offsets[frame_index],
+			"upper_phase_fp": upper_phases[frame_index],
+			"lower_phase_fp": lower_phases[frame_index],
+			"bodies": frame_bodies,
+		})
+	return frames
+
+
 static func _native_solver_backend() -> Object:
 	if _native_backend_checked:
 		return _native_backend
@@ -452,7 +525,7 @@ static func _native_solver_backend() -> Object:
 static func _native_backend_contract_valid(backend: Object) -> bool:
 	if backend == null:
 		return false
-	for method_name in ["backend_id", "solver_contract", "can_step", "step_action"]:
+	for method_name in ["backend_id", "solver_contract", "can_step", "step_action", "append_presentation_trace_frame"]:
 		if not backend.has_method(method_name):
 			return false
 	if str(backend.call("backend_id")) != NATIVE_BACKEND_ID:
@@ -465,7 +538,50 @@ static func _native_backend_contract_valid(backend: Object) -> bool:
 		and str(contract.get("schema", "")) == SCHEMA \
 		and int(contract.get("state_version", -1)) == VERSION \
 		and int(contract.get("fixed_point_scale", -1)) == FP \
-		and int(contract.get("action_ticks", -1)) == ACTION_TICKS
+		and int(contract.get("action_ticks", -1)) == ACTION_TICKS \
+		and int(contract.get("packed_trace_version", -1)) == PACKED_TRACE_VERSION
+
+
+static func _packed_trace_contract_valid(packed_trace: Dictionary) -> bool:
+	if str(packed_trace.get("schema", "")) != PACKED_TRACE_SCHEMA or int(packed_trace.get("version", 0)) != PACKED_TRACE_VERSION:
+		return false
+	var frame_count := int(packed_trace.get("frame_count", -1))
+	if frame_count < 0:
+		return false
+	var packed_int_fields := ["frame_offsets", "tick_offsets", "upper_phase_fp", "lower_phase_fp", "body_radii", "body_heights", "body_masses", "row_body_indices", "row_x", "row_y", "row_z", "row_radius", "row_height", "row_lean_milli"]
+	for field in packed_int_fields:
+		if typeof(packed_trace.get(field)) != TYPE_PACKED_INT32_ARRAY:
+			return false
+	for field in ["body_ids", "body_kinds", "row_material_categories", "row_rest_states", "row_levels"]:
+		if typeof(packed_trace.get(field)) != TYPE_PACKED_STRING_ARRAY:
+			return false
+	for field in ["row_sleeping", "row_has_level"]:
+		if typeof(packed_trace.get(field)) != TYPE_PACKED_BYTE_ARRAY:
+			return false
+	if typeof(packed_trace.get("body_metadata")) != TYPE_ARRAY:
+		return false
+	var offsets: PackedInt32Array = packed_trace["frame_offsets"]
+	var rows: PackedInt32Array = packed_trace["row_body_indices"]
+	var descriptors: PackedStringArray = packed_trace["body_ids"]
+	if offsets.size() != frame_count + 1 or offsets.is_empty() or offsets[0] != 0 or offsets[offsets.size() - 1] != rows.size():
+		return false
+	if (packed_trace["tick_offsets"] as PackedInt32Array).size() != frame_count \
+			or (packed_trace["upper_phase_fp"] as PackedInt32Array).size() != frame_count \
+			or (packed_trace["lower_phase_fp"] as PackedInt32Array).size() != frame_count:
+		return false
+	for field in ["body_kinds", "body_radii", "body_heights", "body_masses", "body_metadata"]:
+		if int(packed_trace[field].size()) != descriptors.size():
+			return false
+	for field in ["row_material_categories", "row_x", "row_y", "row_z", "row_radius", "row_height", "row_sleeping", "row_rest_states", "row_has_level", "row_levels", "row_lean_milli"]:
+		if packed_trace[field].size() != rows.size():
+			return false
+	for frame_index in range(frame_count):
+		if offsets[frame_index] > offsets[frame_index + 1]:
+			return false
+	for body_index in rows:
+		if body_index < 0 or body_index >= descriptors.size():
+			return false
+	return true
 
 
 static func _native_candidate_state(state: Dictionary, deep_copy_values: bool = true) -> Dictionary:
@@ -563,6 +679,16 @@ static func _native_step_contract_valid(before: Dictionary, candidate: Dictionar
 		if typeof(result.get(key, null)) != int(required_types[key]):
 			return false
 	var allowed_keys := required_types.keys()
+	var captures_trace := bool(config.get("capture_presentation_trace", false))
+	if trusted_native and captures_trace:
+		if not (result.get("presentation_trace", []) as Array).is_empty() \
+				or typeof(result.get("presentation_trace_packed")) != TYPE_DICTIONARY \
+				or not _packed_trace_contract_valid(result.get("presentation_trace_packed", {})) \
+				or int((result.get("presentation_trace_packed", {}) as Dictionary).get("frame_count", 0)) != ACTION_TICKS / PRESENTATION_TRACE_INTERVAL_TICKS + 1:
+			return false
+		allowed_keys.append("presentation_trace_packed")
+	elif result.has("presentation_trace_packed"):
+		return false
 	if bool(config.get("_debug_profile_stages", false)):
 		if typeof(result.get("debug_stage_timing_usec", null)) != TYPE_DICTIONARY:
 			return false
@@ -681,6 +807,118 @@ static func _native_step_contract_valid(before: Dictionary, candidate: Dictionar
 				and str((before_value as Dictionary).get("id", "")) == str((candidate_bodies[candidate_index] as Dictionary).get("id", "")):
 			candidate_index += 1
 	return candidate_index == candidate_bodies.size()
+
+
+static func _trusted_native_step_contract_valid(before: Dictionary, candidate: Dictionary, result: Dictionary, config: Dictionary) -> bool:
+	# CoinPusherNativeCore is the shipped, scriptless extension selected by exact
+	# class identity and a versioned solver contract. Its own boundary validates
+	# every input body before constructing an isolated candidate. Rewalking every
+	# immutable body field and every packed replay row in GDScript duplicated that
+	# trusted boundary on every action. Keep a constant-shape publication guard;
+	# injected/scripted backends still take the exhaustive transaction above.
+	if result.is_empty() or typeof(candidate.get("bodies", null)) != TYPE_ARRAY:
+		return false
+	if str(candidate.get("schema", "")) != SCHEMA or int(candidate.get("version", -1)) != VERSION \
+			or typeof(candidate.get("tick", null)) != TYPE_INT \
+			or int(candidate.get("tick", -1)) != int(before.get("tick", 0)) + ACTION_TICKS:
+		return false
+	for phase_spec in [["upper_phase_fp", "upper_locked"], ["lower_phase_fp", "lower_locked"]]:
+		var phase_key: String = phase_spec[0]
+		var captured := config.has("captured_%s" % phase_key)
+		if captured or not bool(config.get(phase_spec[1], false)):
+			var phase := int(candidate.get(phase_key, -1))
+			if typeof(candidate.get(phase_key, null)) != TYPE_INT or phase < 0 or phase >= PHASE_PERIOD:
+				return false
+		elif candidate.has(phase_key) != before.has(phase_key) \
+				or (candidate.has(phase_key) and candidate[phase_key] != before[phase_key]):
+			return false
+	var required_types := {
+		"events": TYPE_ARRAY,
+		"motion_events": TYPE_ARRAY,
+		"presentation_events": TYPE_ARRAY,
+		"metrics": TYPE_DICTIONARY,
+		"presentation_trace": TYPE_ARRAY,
+	}
+	for key in required_types:
+		if typeof(result.get(key, null)) != int(required_types[key]):
+			return false
+	var allowed_keys := required_types.keys()
+	if bool(config.get("capture_presentation_trace", false)):
+		if not (result.get("presentation_trace", []) as Array).is_empty() \
+				or not _trusted_packed_trace_shape_valid(result.get("presentation_trace_packed", {})):
+			return false
+		allowed_keys.append("presentation_trace_packed")
+	elif result.has("presentation_trace_packed"):
+		return false
+	if bool(config.get("_debug_profile_stages", false)):
+		if typeof(result.get("debug_stage_timing_usec", null)) != TYPE_DICTIONARY:
+			return false
+		allowed_keys.append("debug_stage_timing_usec")
+	elif result.has("debug_stage_timing_usec"):
+		return false
+	if result.size() != allowed_keys.size():
+		return false
+	for key in result:
+		if not allowed_keys.has(key):
+			return false
+	var metrics: Dictionary = result.get("metrics", {})
+	var metric_keys := ["fixed_ticks", "body_count", "awake_count", "woken_count", "moved_count", "collision_passes", "collision_count", "topple_count", "upper_lower_fall_count"]
+	if metrics.size() != metric_keys.size():
+		return false
+	for metric_key in metric_keys:
+		if typeof(metrics.get(metric_key, null)) != TYPE_INT:
+			return false
+	if int(metrics.get("fixed_ticks", -1)) != ACTION_TICKS \
+			or int(metrics.get("body_count", -1)) != (candidate.get("bodies", []) as Array).size() \
+			or (candidate.get("bodies", []) as Array).size() > (before.get("bodies", []) as Array).size():
+		return false
+	return typeof(candidate.get("last_events", null)) == TYPE_ARRAY \
+			and typeof(candidate.get("last_motion_events", null)) == TYPE_ARRAY \
+			and typeof(candidate.get("last_step_metrics", null)) == TYPE_DICTIONARY \
+			and candidate["last_events"] == result["events"] \
+			and candidate["last_motion_events"] == result["motion_events"] \
+			and candidate["last_step_metrics"] == result["metrics"]
+
+
+static func _trusted_packed_trace_shape_valid(value: Variant) -> bool:
+	if typeof(value) != TYPE_DICTIONARY:
+		return false
+	var packed: Dictionary = value
+	var frame_count := int(packed.get("frame_count", -1))
+	if str(packed.get("schema", "")) != PACKED_TRACE_SCHEMA or int(packed.get("version", 0)) != PACKED_TRACE_VERSION \
+			or frame_count != ACTION_TICKS / PRESENTATION_TRACE_INTERVAL_TICKS + 1:
+		return false
+	var required_types := {
+		"frame_offsets": TYPE_PACKED_INT32_ARRAY, "tick_offsets": TYPE_PACKED_INT32_ARRAY,
+		"upper_phase_fp": TYPE_PACKED_INT32_ARRAY, "lower_phase_fp": TYPE_PACKED_INT32_ARRAY,
+		"body_ids": TYPE_PACKED_STRING_ARRAY, "body_kinds": TYPE_PACKED_STRING_ARRAY,
+		"body_radii": TYPE_PACKED_INT32_ARRAY, "body_heights": TYPE_PACKED_INT32_ARRAY,
+		"body_masses": TYPE_PACKED_INT32_ARRAY, "body_metadata": TYPE_ARRAY,
+		"row_body_indices": TYPE_PACKED_INT32_ARRAY, "row_material_categories": TYPE_PACKED_STRING_ARRAY,
+		"row_x": TYPE_PACKED_INT32_ARRAY, "row_y": TYPE_PACKED_INT32_ARRAY, "row_z": TYPE_PACKED_INT32_ARRAY,
+		"row_radius": TYPE_PACKED_INT32_ARRAY, "row_height": TYPE_PACKED_INT32_ARRAY,
+		"row_sleeping": TYPE_PACKED_BYTE_ARRAY, "row_rest_states": TYPE_PACKED_STRING_ARRAY,
+		"row_has_level": TYPE_PACKED_BYTE_ARRAY, "row_levels": TYPE_PACKED_STRING_ARRAY,
+		"row_lean_milli": TYPE_PACKED_INT32_ARRAY,
+	}
+	for key in required_types:
+		if typeof(packed.get(key, null)) != int(required_types[key]):
+			return false
+	var offsets: PackedInt32Array = packed.get("frame_offsets", PackedInt32Array())
+	var descriptors: PackedStringArray = packed.get("body_ids", PackedStringArray())
+	var rows: PackedInt32Array = packed.get("row_body_indices", PackedInt32Array())
+	if offsets.size() != frame_count + 1 or offsets[0] != 0 or offsets[frame_count] != rows.size():
+		return false
+	for field in ["tick_offsets", "upper_phase_fp", "lower_phase_fp"]:
+		if packed[field].size() != frame_count:
+			return false
+	for field in ["body_kinds", "body_radii", "body_heights", "body_masses", "body_metadata"]:
+		if packed[field].size() != descriptors.size():
+			return false
+	for field in ["row_material_categories", "row_x", "row_y", "row_z", "row_radius", "row_height", "row_sleeping", "row_rest_states", "row_has_level", "row_levels", "row_lean_milli"]:
+		if packed[field].size() != rows.size():
+			return false
+	return true
 
 
 static func _step_action_dictionary_reference(state: Dictionary, config: Dictionary) -> Dictionary:

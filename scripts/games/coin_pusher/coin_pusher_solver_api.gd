@@ -76,6 +76,14 @@ static func native_step_contract_valid_for_test(before: Dictionary, candidate: D
 	return bool(_implementation_script().call("native_step_contract_valid_for_test", before, candidate, result, config, trusted_native))
 
 
+static func finalize_packed_presentation_trace(packed_trace: Dictionary, state: Dictionary, tick_offset: int) -> Dictionary:
+	return _implementation_script().call("finalize_packed_presentation_trace", packed_trace, state, tick_offset) as Dictionary
+
+
+static func decode_packed_presentation_trace(packed_trace: Dictionary) -> Array:
+	return _implementation_script().call("decode_packed_presentation_trace", packed_trace) as Array
+
+
 static func body_views(state: Dictionary) -> Array:
 	return _implementation_script().call("body_views", state) as Array
 

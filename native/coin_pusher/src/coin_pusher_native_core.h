@@ -23,6 +23,7 @@ public:
 	Dictionary apply_nudge_columns(const Dictionary &columns, const Dictionary &config) const;
 	bool can_step(const Dictionary &state, const Dictionary &config) const;
 	Dictionary step_action(Dictionary state, const Dictionary &config) const;
+	Dictionary append_presentation_trace_frame(Dictionary packed_trace, const Dictionary &state, int64_t tick_offset) const;
 };
 
 } // namespace godot
