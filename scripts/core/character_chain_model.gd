@@ -42,13 +42,11 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 		event_ids.erase(prior_id)
 	var injected: Array = []
 	for chain in chains():
-		if not _chain_projection_active(run_state, str(chain.get("id", "")), environment):
-			continue
 		for beat in _dictionary_array(chain.get("beats", [])):
 			if not _placement_matches(_dictionary(beat.get("placement", {})), environment):
 				continue
 			var event_id := str(beat.get("event_id", "")).strip_edges()
-			if event_id.is_empty() or injected.has(event_id):
+			if event_id.is_empty() or injected.has(event_id) or not _beat_projection_active(run_state, event_id, environment):
 				continue
 			injected.append(event_id)
 			if not event_ids.has(event_id):
@@ -238,29 +236,75 @@ static func _apply_rourke_staff_register(run_state: RunState, environment: Dicti
 		environment["layer_ambient_line"] = line
 
 
-static func _chain_projection_active(run_state: RunState, chain_id: String, environment: Dictionary) -> bool:
+static func _beat_projection_active(run_state: RunState, event_id: String, environment: Dictionary) -> bool:
 	var node_id := str(environment.get("world_node_id", environment.get("id", "")))
 	var scenario_id := str(environment.get("scenario_id", _dictionary(environment.get("scenario_state", {})).get("id", "")))
-	match chain_id:
-		"cass_venn":
-			return run_state.traveler_node("cass_rival_counter") == node_id or _has_story_prefix(run_state, "chain06_cass_")
-		"sal_estate_lot":
-			return scenario_id == "pawn_shop_estate_lot_day" or _has_story_prefix(run_state, "chain06_sal_")
-		"nico_soft_loans":
-			return scenario_id == "motel_weekly_rates" or _has_story_prefix(run_state, "chain06_nico_") or bool(run_state.narrative_flags.get("debt_favor_owed", false))
-		"rourke_scouts":
-			return _has_story_prefix(run_state, "chain06_rourke_") or run_state.suspicion_level() >= 10 or run_state.bankroll >= 125
-		"the_trio":
-			return int(trio_gift_memory(run_state).get("count", 0)) > 0 or _has_story_prefix(run_state, "chain06_trio_")
-		"dave_true_stories":
-			return run_state.traveler_node("dave_bus_regular") == node_id or _has_story_prefix(run_state, "chain06_dave_")
+	if event_id.begins_with("chain06_cass_") and str(environment.get("current_layer_id", "")) == "back_room":
+		return false
+	var cass_here := run_state.traveler_node("cass_rival_counter") == node_id
+	var cass_open := not _story(run_state, "chain06_cass_ending_truce") \
+		and not _story(run_state, "chain06_cass_ending_tipoff") \
+		and not _story(run_state, "chain06_cass_ending_flameout")
+	match event_id:
+		"chain06_cass_first_contact":
+			return cass_here and cass_open and not _story(run_state, "chain06_cass_first_contact")
+		"chain06_cass_escalation":
+			return cass_here and cass_open and _story(run_state, "chain06_cass_first_contact") and not _story(run_state, "chain06_cass_escalated")
+		"chain06_cass_proposition":
+			return cass_here and cass_open and _story(run_state, "chain06_cass_escalated") and not _story(run_state, "chain06_cass_proposition_done")
+		"chain06_cass_tipoff":
+			return cass_here and _story(run_state, "chain06_cass_tipoff_pending") and not _story(run_state, "chain06_cass_ending_tipoff")
+		"chain06_cass_flameout":
+			return cass_here and _story(run_state, "chain06_cass_clean_route") and _story(run_state, "chain06_cass_proposition_done") \
+				and run_state.suspicion_level() <= 24 and not _story(run_state, "chain06_cass_ending_flameout")
+		"chain06_sal_estate_item":
+			return scenario_id == "pawn_shop_estate_lot_day" and not _story(run_state, "chain06_sal_item_taken")
+		"chain06_sal_trail_one":
+			return _story(run_state, "chain06_sal_item_taken") and node_id == str(run_state.story_flags.get("chain06_sal_target_1", "")) and not _story(run_state, "chain06_sal_trail_one_done")
+		"chain06_sal_trail_two":
+			return _story(run_state, "chain06_sal_trail_one_done") and node_id == str(run_state.story_flags.get("chain06_sal_target_2", "")) and not _story(run_state, "chain06_sal_trail_two_done")
+		"chain06_sal_trail_three":
+			return _story(run_state, "chain06_sal_trail_two_done") and node_id == str(run_state.story_flags.get("chain06_sal_target_3", "")) and not _story(run_state, "chain06_sal_trail_three_done")
+		"chain06_sal_sellback":
+			return _story(run_state, "chain06_sal_trail_three_done") and not _story(run_state, "chain06_sal_ending_changed")
+		"chain06_nico_weekly_door":
+			return scenario_id == "motel_weekly_rates" and not _story(run_state, "chain06_nico_weekly_door")
+		"chain06_nico_what_it_covers":
+			return scenario_id == "motel_weekly_rates" and _story(run_state, "chain06_nico_weekly_door") and not _story(run_state, "chain06_nico_cover_seen")
+		"chain06_nico_favor_call":
+			return _story(run_state, "chain06_nico_cover_seen") and bool(run_state.narrative_flags.get("debt_favor_owed", false)) \
+				and _has_overdue_lender_debt(run_state, "motel_friend") \
+				and not _story(run_state, "chain06_nico_favor_honored") and not _story(run_state, "chain06_nico_favor_refused")
+		"chain06_rourke_noticed":
+			return (run_state.suspicion_level() >= 10 or run_state.bankroll >= 125) and not _story(run_state, "chain06_rourke_noticed")
+		"chain06_rourke_named":
+			return _story(run_state, "chain06_rourke_noticed") and (run_state.suspicion_level() >= 30 or run_state.bankroll >= 160) and not _story(run_state, "chain06_rourke_named")
+		"chain06_rourke_expected":
+			return _story(run_state, "chain06_rourke_named") and (run_state.suspicion_level() >= 50 or run_state.bankroll >= 220) and not _story(run_state, "chain06_rourke_expected")
+		"chain06_trio_gift_memory":
+			return int(trio_gift_memory(run_state).get("count", 0)) > 0 and not _story(run_state, "chain06_trio_gifts_named")
+		"chain06_trio_rent_payoff":
+			return scenario_id == "jazz_club_rent_party" and _story(run_state, "chain06_trio_gifts_named") and not _story(run_state, "chain06_trio_rent_party_paid")
+		"chain06_dave_same_bus":
+			return run_state.traveler_node("dave_bus_regular") == node_id and not _story(run_state, "chain06_dave_same_bus")
+		"chain06_dave_last_stop":
+			return run_state.traveler_node("dave_bus_regular") == node_id and _story(run_state, "chain06_dave_same_bus") and not _story(run_state, "chain06_dave_last_stop")
+		"chain06_dave_true_stop":
+			return run_state.traveler_node("dave_bus_regular") == node_id and _story(run_state, "chain06_dave_last_stop") \
+				and not run_state.rumor_fact(DAVE_RUMOR_ID).is_empty() and not _story(run_state, "chain06_dave_true_rumor_heard")
 	return false
 
 
-static func _has_story_prefix(run_state: RunState, prefix: String) -> bool:
-	for key in run_state.story_flags.keys():
-		if str(key).begins_with(prefix):
-			return true
+static func _story(run_state: RunState, flag_id: String) -> bool:
+	return bool(run_state.story_flags.get(flag_id, false))
+
+
+static func _has_overdue_lender_debt(run_state: RunState, lender_id: String) -> bool:
+	for debt_value in run_state.debt:
+		if typeof(debt_value) == TYPE_DICTIONARY:
+			var debt: Dictionary = debt_value
+			if str(debt.get("lender_id", "")) == lender_id and str(debt.get("status", "")) == "overdue":
+				return true
 	return false
 
 

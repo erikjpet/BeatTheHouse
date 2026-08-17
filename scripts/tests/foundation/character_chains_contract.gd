@@ -65,6 +65,8 @@ static func _check_deterministic_world_anchors(failures: Array) -> void:
 		unique[str(target)] = true
 	if unique.size() != 3:
 		failures.append("Sal's estate trail must select three distinct world venues: %s." % JSON.stringify(targets))
+	environment = _environment(str(targets[0]), str(targets[0]), "")
+	CharacterChainModelScript.apply_to_environment(first, environment)
 	if not _strings(environment.get("event_ids", [])).has("chain06_sal_trail_one"):
 		failures.append("Character-chain projection did not inject placed optional events.")
 
