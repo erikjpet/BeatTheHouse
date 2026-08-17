@@ -495,6 +495,12 @@ What happens then is the owner's, not an agent's:
   candidate, validate exact backend identity/methods/result schema, and publish
   only after full acceptance. Injected stale and partial-mutating invalid
   backends must prove original state/result remain exact and fallback runs once.
+- 2026-08-17 [pusher06_2 native boundary] The same review found hostile signed
+  arithmetic at the public helper seam: `INT64_MIN / -1` is undefined in C++,
+  and unbounded aim/nudge inputs can overflow subtraction/negation or narrow
+  velocity sums before validation. Define that division edge, enforce a numeric
+  envelope, reject before mutation, and cover INT64 extrema plus oversized
+  nudge inputs. The fixed-positive-divisor 48-tick kernel is not implicated.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1194,3 +1200,6 @@ What happens then is the owner's, not an agent's:
   transactional or identity/schema-validated. The row remains IN_PROGRESS and
   runtime results are diagnostic until candidate-state execution and hostile
   stale/mutating backend tests close that seam without weakening fallback.
+- 2026-08-17 [pusher06_2] Public native helper arithmetic also needs a
+  reject-before-mutation numeric contract for signed division and aim/nudge
+  extrema; hostile coverage is required before runtime acceptance.
