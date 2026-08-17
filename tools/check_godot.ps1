@@ -566,10 +566,6 @@ function Enter-CheckGodotWorkspaceMutex {
     return $true
 }
 
-function Get-ProjectCacheWriteState {
-    return @(Get-FoundationCacheFingerprint -CacheRoot (Join-Path $root ".godot"))
-}
-
 function Get-FoundationLastStartedCheck {
     param([string]$StdoutText)
     $matches = [regex]::Matches($StdoutText, 'FOUNDATION_CHECK_START id=([^\s]+)')
@@ -632,7 +628,8 @@ function Invoke-FoundationSystemsSharded {
     }
     $runnerRelativePath = $runnerResourcePath.Substring("res://".Length)
     $runnerPath = Join-Path $root ($runnerRelativePath.Replace("/", "\"))
-    $cacheBefore = Get-ProjectCacheWriteState
+    $parentCacheRoot = Join-Path $root ".godot"
+    $cacheBefore = @(Get-FoundationCacheFingerprint -CacheRoot $parentCacheRoot)
     foreach ($shardIdValue in $plan.Keys) {
         $shardId = [string]$shardIdValue
         $safeShardId = $shardId -replace "[^A-Za-z0-9_.-]", "_"
@@ -793,11 +790,11 @@ function Invoke-FoundationSystemsSharded {
     $aggregateReport = $merged.report
     $aggregateReport.started_msec = $startedMsec
     $cacheCheck = {
-        if (($cacheBefore -join "`n") -ne ((Get-ProjectCacheWriteState) -join "`n")) {
+        if (($cacheBefore -join "`n") -ne ((Get-FoundationCacheFingerprint -CacheRoot $parentCacheRoot) -join "`n")) {
             return @("Concurrent systems shards changed the shared .godot cache after the parent import.")
         }
         return @()
-    }.GetNewClosure()
+    }
     $completion = Complete-FoundationTimedCleanup -Records $records -AllowedProjectRoot $shardProjectsRoot -Stopwatch $wall -Report $aggregateReport -AfterCleanupCheck $cacheCheck
     $aggregateReport = $completion.report
     $reportPath = Join-Path $script:ReportRoot "foundation_systems.json"

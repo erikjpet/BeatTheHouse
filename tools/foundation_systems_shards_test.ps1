@@ -268,12 +268,50 @@ Assert-True (-not $cleanupClock.IsRunning -and $cleanupClock.ElapsedMilliseconds
 $cleanupFailureExit = Resolve-FoundationSystemsExitCode -ShardResults @([pscustomobject]@{ exit_code = 0; raw_exit_code = 0; timed_out = $false }) -AggregatePassed ([bool]$cleanupFailureReport.passed) -BudgetExceeded $false
 Assert-True ($cleanupFailureExit -eq 1) "Cleanup failure report did not force a nonzero systems stage exit."
 
+function Invoke-HostileNestedCacheCompletion {
+    param(
+        [string]$CacheRoot,
+        [bool]$MutateAfterBaseline
+    )
+    $cacheBefore = @(Get-FoundationCacheFingerprint -CacheRoot $CacheRoot)
+    if ($MutateAfterBaseline) {
+        [System.IO.File]::WriteAllText((Join-Path $CacheRoot "sentinel.cache"), "MUTATED")
+    }
+    $cacheCheck = {
+        if (($cacheBefore -join "`n") -ne ((Get-FoundationCacheFingerprint -CacheRoot $CacheRoot) -join "`n")) {
+            return @("hostile parent cache mutation detected")
+        }
+        return @()
+    }
+    $report = [pscustomobject]@{ passed = $true; failure_count = 0; failures = @() }
+    $clock = [System.Diagnostics.Stopwatch]::StartNew()
+    return Complete-FoundationTimedCleanup -Records @() -AllowedProjectRoot $allowedProjects -Stopwatch $clock -Report $report -AfterCleanupCheck $cacheCheck
+}
+
+$nestedCacheRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("bth_nested_cache_check_" + [Guid]::NewGuid().ToString("N"))
+try {
+    New-Item -ItemType Directory -Force -Path $nestedCacheRoot | Out-Null
+    [System.IO.File]::WriteAllText((Join-Path $nestedCacheRoot "sentinel.cache"), "BASELINE")
+    $cleanNestedCompletion = Invoke-HostileNestedCacheCompletion -CacheRoot $nestedCacheRoot -MutateAfterBaseline $false
+    Assert-True ([bool]$cleanNestedCompletion.report.passed) "Nested post-cleanup cache callback could not resolve its fingerprint seam or enclosing baseline."
+    $mutatedNestedCompletion = Invoke-HostileNestedCacheCompletion -CacheRoot $nestedCacheRoot -MutateAfterBaseline $true
+    Assert-True (-not [bool]$mutatedNestedCompletion.report.passed) "Nested post-cleanup cache callback did not fail closed on a real parent-cache mutation."
+    Assert-True ((@($mutatedNestedCompletion.failures) -join " | ").Contains("hostile parent cache mutation detected")) "Nested post-cleanup cache callback dropped its mutation diagnostic."
+}
+finally {
+    if (Test-Path -LiteralPath $nestedCacheRoot) {
+        Remove-Item -LiteralPath $nestedCacheRoot -Recurse -Force
+    }
+}
+
 $fakeProject = Join-Path $projectRoot ".tmp/test_reports/fake_shard"
 Assert-True (-not (Test-FoundationJunctionTargetSafe -ProjectRoot $fakeProject -TargetPath (Join-Path $projectRoot ".tmp"))) "Ancestor .tmp junction cycle was accepted."
 Assert-True (Test-FoundationJunctionTargetSafe -ProjectRoot $fakeProject -TargetPath (Join-Path $projectRoot "scripts")) "Disjoint read-only source junction was rejected."
 Assert-True (-not $checkGodotSource.Contains('@(".agents", ".tmp",')) "Shard project still junctions its ancestor .tmp report tree."
 Assert-True ($checkGodotSource.Contains('Copy-FoundationShardCache -SourceCache $sourceCache -DestinationCache $shardCache')) "Shard launcher bypasses the validated private-cache copier."
 Assert-True (-not $checkGodotSource.Contains('Get-ChildItem -LiteralPath $sourceCache -Force')) "Shard launcher still enumerates volatile parent-cache siblings."
+Assert-True (-not $checkGodotSource.Contains('Get-ProjectCacheWriteState')) "Shard launcher still routes cleanup cache checks through a callback-invisible script-local wrapper."
+Assert-True (-not ([regex]::IsMatch($checkGodotSource, '(?s)\$cacheCheck\s*=\s*\{.*?\}\.GetNewClosure\(\)'))) "Post-cleanup cache callback still hides script-scope fingerprint functions inside a dynamic closure module."
 
 if (-not $Quiet) {
     Write-Host "Foundation systems shard hostile contracts passed."
