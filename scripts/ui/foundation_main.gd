@@ -2489,8 +2489,10 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 
 
 func _enqueue_heat_threshold_talk_events(source: String) -> bool:
-	var result := _recent_result_snapshot()
-	var applied_delta := int(result.get("suspicion_delta", _copy_dict(result.get("deltas", {})).get("suspicion_delta", 0)))
+	var result := _recent_result_readonly()
+	var deltas_value: Variant = result.get("deltas", {})
+	var deltas: Dictionary = deltas_value if typeof(deltas_value) == TYPE_DICTIONARY else {}
+	var applied_delta := int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
 	if applied_delta <= 0:
 		return false
 	var current_level := run_state.suspicion_level()
@@ -2537,6 +2539,10 @@ func _enqueue_table_approach_talk_events(source: String) -> bool:
 		return false
 	var game_id := current_game.get_id()
 	if game_id.is_empty():
+		return false
+	# Games with no authored table-approach talk cannot enqueue here. Reject them
+	# before asking a dense game surface (notably Coin Pusher) to rebuild itself.
+	if not library.has_table_approach_talk_event_for_game(game_id):
 		return false
 	var surface_state := current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
 	if typeof(surface_state) != TYPE_DICTIONARY:
@@ -3475,7 +3481,7 @@ func _event_action_trigger_context(source: String) -> Dictionary:
 		"turns": int(run_state.current_environment.get("turns", 0)) if run_state != null else 0,
 	}
 	if ["game_action", "game_hook", "environment_game"].has(source):
-		var result := _recent_result_snapshot()
+		var result := _recent_result_readonly()
 		var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
 		if game_id.is_empty() and current_game != null:
 			game_id = current_game.get_id()
@@ -10887,6 +10893,21 @@ func _recent_result_snapshot() -> Dictionary:
 		return last_game_result.duplicate(true)
 	if current_game == null and not last_environment_runtime_result.is_empty():
 		return last_environment_runtime_result.duplicate(true)
+	return _result_from_story_log(run_state.story_log)
+
+
+# Selects the same recent-result source as `_recent_result_snapshot()` without
+# cloning dense presentation data. This is private to scalar-only interrupt
+# readers; callers must never mutate the returned Dictionary.
+func _recent_result_readonly() -> Dictionary:
+	if not last_hook_result.is_empty():
+		return last_hook_result
+	if not last_item_result.is_empty():
+		return last_item_result
+	if not last_game_result.is_empty():
+		return last_game_result
+	if current_game == null and not last_environment_runtime_result.is_empty():
+		return last_environment_runtime_result
 	return _result_from_story_log(run_state.story_log)
 
 

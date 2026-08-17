@@ -1473,6 +1473,8 @@ func _talk_dock_choice_button(node: Node, text: String) -> Button:
 
 
 func _check_talk_dock_main_flow(app: Control) -> bool:
+	if not _check_post_action_interrupt_fast_paths(app):
+		return false
 	var modal_heat := await _resolve_talk_event_fixture(app, "modal")
 	if modal_heat < 0:
 		return false
@@ -1491,6 +1493,220 @@ func _check_talk_dock_main_flow(app: Control) -> bool:
 		push_error("Talk dock resolution left a blocking event popup visible.")
 		return false
 	return await _check_family_loan_unknown_caller(app)
+
+
+func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-POST-ACTION-INTERRUPT-FAST-PATH")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	var production_library: ContentLibrary = app.get("library")
+	if run_state == null or production_library == null:
+		push_error("Post-action interrupt fast-path fixture could not access the live run and content library.")
+		return false
+	var valid := true
+	var original_game: GameModule = app.get("current_game")
+	var story_entry := {
+		"id": "story_priority",
+		"type": "game_action",
+		"action_id": "story_action",
+		"suspicion_delta": 0,
+		"message": "Story priority fixture.",
+	}
+	run_state.story_log = [story_entry]
+	var huge_trace: Array = []
+	for frame_index in range(14):
+		var bodies: Array = []
+		for body_index in range(160):
+			bodies.append({
+				"id": "body_%03d" % body_index,
+				"x": body_index * 10 + frame_index,
+				"metadata": {"nested": {"sentinel": body_index}},
+			})
+		huge_trace.append({"tick_offset": frame_index * 4, "bodies": bodies})
+	var hook_result := {"source_id": "hook_priority", "action_id": "hook_action"}
+	var item_result := {"source_id": "item_priority", "action_id": "item_action"}
+	var game_result := {
+		"source_id": "coin_pusher",
+		"game_id": "coin_pusher",
+		"action_id": "drop_quarter",
+		"action_kind": "legal",
+		"suspicion_delta": 0,
+		"deltas": {"suspicion_delta": 0},
+		"surface_presentation_snapshot_patch": {"trace": huge_trace},
+	}
+	var environment_result := {"source_id": "environment_priority", "action_id": "environment_action"}
+	app.set("last_hook_result", hook_result)
+	app.set("last_item_result", item_result)
+	app.set("last_game_result", game_result)
+	app.set("last_environment_runtime_result", environment_result)
+	app.set("current_game", null)
+	var priority_sources := [
+		["hook_priority", hook_result],
+		["item_priority", item_result],
+		["coin_pusher", game_result],
+		["environment_priority", environment_result],
+	]
+	for priority_value in priority_sources:
+		var expected_id := str(priority_value[0])
+		var expected_source: Dictionary = priority_value[1]
+		var selected: Dictionary = app.call("_recent_result_readonly")
+		if str(selected.get("source_id", "")) != expected_id or not is_same(selected, expected_source):
+			push_error("Read-only recent-result selector changed source priority or cloned %s." % expected_id)
+			valid = false
+		match expected_id:
+			"hook_priority":
+				app.set("last_hook_result", {})
+			"item_priority":
+				app.set("last_item_result", {})
+			"coin_pusher":
+				app.set("last_game_result", {})
+			"environment_priority":
+				app.set("last_environment_runtime_result", {})
+	var story_selected: Dictionary = app.call("_recent_result_readonly")
+	if str(story_selected.get("source_id", "")) != "story_priority" or str(story_selected.get("action_id", "")) != "story_action":
+		push_error("Read-only recent-result selector did not preserve story-log fallback priority.")
+		valid = false
+
+	var coin_pusher_game := CountingTableApproachFixtureGame.new("coin_pusher", [], 4)
+	app.set("current_game", coin_pusher_game)
+	app.set("last_game_result", game_result)
+	var result_before := JSON.stringify(game_result)
+	var queue_before := JSON.stringify(run_state.pending_triggered_events)
+	var cadence_before := JSON.stringify(run_state.event_cadence)
+	var context: Dictionary = app.call("_event_action_trigger_context", "game_action")
+	var enqueued := bool(app.call("_enqueue_talk_events_for_action_boundary", "game_action"))
+	if enqueued or coin_pusher_game.surface_state_calls != 0 \
+			or JSON.stringify(run_state.pending_triggered_events) != queue_before \
+			or JSON.stringify(run_state.event_cadence) != cadence_before \
+			or JSON.stringify(game_result) != result_before:
+		push_error("Coin Pusher no-op interrupt path copied/mutated its dense result, built a surface, changed RNG, or queued talk.")
+		valid = false
+	if str(context.get("game_id", "")) != "coin_pusher" or str(context.get("action_id", "")) != "drop_quarter" \
+			or str(context.get("action_kind", "")) != "legal":
+		push_error("Read-only action-trigger context changed Coin Pusher scalar result fields.")
+		valid = false
+
+	var bar_environment := run_state.current_environment.duplicate(true)
+	bar_environment["id"] = "interrupt_fast_path_bar"
+	bar_environment["archetype_id"] = "bar"
+	bar_environment["kind"] = "bar"
+	bar_environment["tier"] = 1
+	bar_environment["event_ids"] = []
+	bar_environment["resolved_event_ids"] = []
+	run_state.set_environment(bar_environment)
+	app.set("current_game", null)
+	run_state.retire_pending_talk_events()
+	for seen_flag in ["talk_heat_threshold_65_seen", "talk_heat_threshold_85_seen"]:
+		run_state.narrative_flags.erase(seen_flag)
+	run_state.suspicion["level"] = 90
+	app.set("last_game_result", {"suspicion_delta": 30, "deltas": {"suspicion_delta": 30}})
+	var heat_cadence_before := JSON.stringify(run_state.event_cadence)
+	if not bool(app.call("_enqueue_heat_threshold_talk_events", "game_action")) \
+			or run_state.pending_talk_event_count() != 2 \
+			or str(run_state.pending_triggered_events[0].get("event_id", "")) != "floor_staff_heat_warning" \
+			or str(run_state.pending_triggered_events[1].get("event_id", "")) != "pit_boss_heat_warning" \
+			or JSON.stringify(run_state.event_cadence) != heat_cadence_before:
+		push_error("Heat-threshold fast path changed crossing order, queue shape, or cadence RNG.")
+		valid = false
+	run_state.retire_pending_talk_events()
+	if bool(app.call("_enqueue_heat_threshold_talk_events", "game_action")) or run_state.pending_talk_event_count() != 0:
+		push_error("Seen heat-threshold events were not suppressed after their first crossing.")
+		valid = false
+	for seen_flag in ["talk_heat_threshold_65_seen", "talk_heat_threshold_85_seen"]:
+		run_state.narrative_flags.erase(seen_flag)
+	run_state.suspicion["level"] = 70
+	app.set("last_game_result", {"deltas": {"suspicion_delta": 2}})
+	if bool(app.call("_enqueue_heat_threshold_talk_events", "game_action")) or run_state.pending_talk_event_count() != 0:
+		push_error("Non-crossing nested heat delta incorrectly queued a threshold conversation.")
+		valid = false
+
+	var authored_table_targets: Array[String] = []
+	for event_value in production_library.events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event_definition: Dictionary = event_value
+		var trigger: Dictionary = event_definition.get("trigger", {}) if typeof(event_definition.get("trigger", {})) == TYPE_DICTIONARY else {}
+		if str(event_definition.get("interaction_mode", "interactable")) != "triggered" \
+				or str(event_definition.get("presentation", "modal")) != "talk" \
+				or str(trigger.get("type", "manual")) != "table_approach":
+			continue
+		for game_id_value in trigger.get("games", []):
+			var game_id := str(game_id_value)
+			if not game_id.is_empty() and not authored_table_targets.has(game_id):
+				authored_table_targets.append(game_id)
+	var authored_cadence_before := JSON.stringify(run_state.event_cadence)
+	for game_id in authored_table_targets:
+		var authored_game := CountingTableApproachFixtureGame.new(game_id, [], 4)
+		app.set("current_game", authored_game)
+		if not production_library.has_table_approach_talk_event_for_game(game_id) \
+				or bool(app.call("_enqueue_table_approach_talk_events", "game_action")) \
+				or authored_game.surface_state_calls != 1:
+			push_error("Authored table-approach target %s did not pass the data-derived surface guard." % game_id)
+			valid = false
+	if JSON.stringify(run_state.event_cadence) != authored_cadence_before:
+		push_error("Empty-patron authored table probes advanced cadence RNG.")
+		valid = false
+	if production_library.has_table_approach_talk_event_for_game("coin_pusher"):
+		push_error("Data-derived table-approach index incorrectly targets Coin Pusher.")
+		valid = false
+
+	var fixture_library := ContentLibrary.new()
+	fixture_library.events = [
+		_table_approach_fast_path_event("specific_miss", ["another_game"]),
+		_table_approach_fast_path_event("wildcard_first", []),
+		_table_approach_fast_path_event("wildcard_second", []),
+	]
+	fixture_library.call("_rebuild_indexes")
+	app.set("library", fixture_library)
+	run_state.retire_pending_talk_events()
+	var wildcard_game := CountingTableApproachFixtureGame.new("wildcard_game", [
+		{"id": "patron_zero", "name": "Mara", "role": "patron", "silhouette": "coat"},
+		{"id": "patron_one", "name": "Sol", "role": "patron", "silhouette": "hat"},
+	], 7)
+	app.set("current_game", wildcard_game)
+	var expected_rng := run_state.create_event_cadence_rng()
+	expected_rng.randi_range(0, 9999)
+	expected_rng.randi_range(0, 9999)
+	var expected_patron_index := expected_rng.randi_range(0, wildcard_game.fixture_patrons.size() - 1)
+	if not fixture_library.has_table_approach_talk_event_for_game("wildcard_game") \
+			or not bool(app.call("_enqueue_table_approach_talk_events", "game_action")):
+		push_error("Wildcard table-approach event did not target an otherwise unindexed game.")
+		valid = false
+	var wildcard_entry := run_state.next_pending_talk_event()
+	var wildcard_context: Dictionary = wildcard_entry.get("context", {}) if typeof(wildcard_entry.get("context", {})) == TYPE_DICTIONARY else {}
+	var wildcard_speaker: Dictionary = wildcard_entry.get("speaker", {}) if typeof(wildcard_entry.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if str(wildcard_entry.get("event_id", "")) != "wildcard_first" \
+			or str(wildcard_entry.get("source", "")) != "table_approach" \
+			or str(wildcard_context.get("game_id", "")) != "wildcard_game" \
+			or int(wildcard_context.get("hands_played", -1)) != 7 \
+			or int(wildcard_speaker.get("patron_index", -1)) != expected_patron_index \
+			or int(run_state.event_cadence.get("rng_state", -1)) != expected_rng.state_value \
+			or wildcard_game.surface_state_calls != 1:
+		push_error("Wildcard table approach changed authored order, queue context, patron roll, surface count, or exact cadence RNG state.")
+		valid = false
+
+	app.set("library", production_library)
+	app.set("current_game", original_game)
+	app.set("last_hook_result", {})
+	app.set("last_item_result", {})
+	app.set("last_game_result", {})
+	app.set("last_environment_runtime_result", {})
+	run_state.retire_pending_talk_events()
+	return valid
+
+
+func _table_approach_fast_path_event(event_id: String, game_ids: Array) -> Dictionary:
+	return {
+		"id": event_id,
+		"display_name": event_id.capitalize(),
+		"type": "patron",
+		"interaction_mode": "triggered",
+		"presentation": "talk",
+		"scopes": ["any"],
+		"speaker": {"role": "patron", "name": "Fixture Patron", "bind": "table_patron", "environment_actor": false},
+		"trigger": {"type": "table_approach", "games": game_ids.duplicate(), "min_hands": 0, "chance": 1.0},
+		"payload": {"summary": "Fixture table approach.", "timing": {"expires": false}},
+	}
 
 
 func _check_family_loan_unknown_caller(app: Control) -> bool:
@@ -2670,6 +2886,32 @@ class BankrollPresentationFixtureGame:
 		var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 		states[get_id()] = fixture_state.duplicate(true)
 		environment["game_states"] = states
+
+
+class CountingTableApproachFixtureGame:
+	extends GameModule
+
+	var surface_state_calls := 0
+	var fixture_patrons: Array = []
+	var fixture_hands := 0
+
+	func _init(game_id: String, patrons: Array, hands_played: int) -> void:
+		fixture_patrons = patrons.duplicate(true)
+		fixture_hands = hands_played
+		setup({
+			"id": game_id,
+			"display_name": "Table Approach Fixture",
+			"family": "fixture",
+			"legal_actions": [],
+			"cheat_actions": [],
+		})
+
+	func surface_state(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
+		surface_state_calls += 1
+		return {
+			"patrons": fixture_patrons.duplicate(true),
+			"hands_played": fixture_hands,
+		}
 
 
 func _init() -> void:

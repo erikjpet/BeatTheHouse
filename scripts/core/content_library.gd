@@ -62,6 +62,9 @@ var validation_warnings: Array = []
 var validation_complete := false
 var _load_errors: Array = []
 var _indexes: Dictionary = {}
+var _table_approach_game_targets: Dictionary = {}
+var _table_approach_has_wildcard := false
+var _table_approach_indexed_events: Array = []
 var _load_timing: Dictionary = {}
 var _load_pack_timings: Array = []
 
@@ -702,6 +705,15 @@ func event(event_id: String) -> Dictionary:
 	return _lookup("events", events, event_id)
 
 
+# Returns whether authored talk cadence can target a game without walking the
+# event pack. The eventual enqueue still scans `events`, preserving its exact
+# authored order and seeded roll sequence for supported games.
+func has_table_approach_talk_event_for_game(game_id: String) -> bool:
+	_ensure_table_approach_target_index()
+	var clean_id := game_id.strip_edges()
+	return not clean_id.is_empty() and (_table_approach_has_wildcard or bool(_table_approach_game_targets.get(clean_id, false)))
+
+
 # Finds a dialogue definition by id.
 func dialogue(dialogue_id: String) -> Dictionary:
 	return _lookup("dialogues", dialogues, dialogue_id)
@@ -1033,6 +1045,41 @@ func _rebuild_indexes() -> void:
 		"music_tracks": _index_by_id(music_tracks),
 		"tutorial_lessons": _index_by_id(tutorial_lessons),
 	}
+	_rebuild_table_approach_target_index()
+
+
+func _ensure_table_approach_target_index() -> void:
+	# Production content is immutable after load. This identity check keeps the
+	# long-standing direct-array fixture seam honest without rescanning on play.
+	if not is_same(_table_approach_indexed_events, events):
+		_rebuild_table_approach_target_index()
+
+
+func _rebuild_table_approach_target_index() -> void:
+	_table_approach_game_targets = {}
+	_table_approach_has_wildcard = false
+	for event_value in events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event_definition: Dictionary = event_value
+		if str(event_definition.get("interaction_mode", "interactable")) != "triggered" \
+				or str(event_definition.get("presentation", "modal")) != "talk":
+			continue
+		var trigger_value: Variant = event_definition.get("trigger", {})
+		if typeof(trigger_value) != TYPE_DICTIONARY:
+			continue
+		var trigger: Dictionary = trigger_value
+		if str(trigger.get("type", "manual")) != "table_approach":
+			continue
+		var game_ids := _string_array(trigger.get("games", []))
+		if game_ids.is_empty():
+			_table_approach_has_wildcard = true
+			continue
+		for game_id_value in game_ids:
+			var target_id := str(game_id_value).strip_edges()
+			if not target_id.is_empty():
+				_table_approach_game_targets[target_id] = true
+	_table_approach_indexed_events = events
 
 
 func debug_soak_snapshot() -> Dictionary:
