@@ -443,9 +443,9 @@ func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> v
 	live_canvas.call("set_game_module", game)
 	live_canvas.call("render_game_snapshot", surface)
 	var live_before: Dictionary = live_canvas.call("realtime_surface_state")
-	var live_before_snapshot := _presentation_snapshot(live_before)
-	var live_patch := game.surface_realtime_state_patch(run_state, run_state.current_environment, {"coin_pusher_lane": 2, "surface_time_msec": 1900}, live_before)
-	var live_patch_snapshot := _presentation_snapshot(live_patch)
+	var live_before_snapshot: Dictionary = _presentation_snapshot(live_before)
+	var live_patch: Dictionary = game.surface_realtime_state_patch(run_state, run_state.current_environment, {"coin_pusher_lane": 2, "surface_time_msec": 1900}, live_before)
+	var live_patch_snapshot: Dictionary = _presentation_snapshot(live_patch)
 	var shallow_references_preserved := true
 	for key in ["bodies", "riders", "features", "events", "trace"]:
 		if not _coin_pusher_arrays_share_reference(live_before_snapshot.get(key, []), live_patch_snapshot.get(key, [])):
@@ -455,8 +455,8 @@ func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> v
 	)
 	live_canvas.call("apply_surface_state_patch", live_patch)
 	var live_after: Dictionary = live_canvas.call("realtime_surface_state")
-	var live_after_snapshot := _presentation_snapshot(live_after)
-	var live_click := game.surface_action_command("coin_pusher_drop", 0, false, {"coin_pusher_lane": 2, "surface_time_msec": 1900}, run_state, run_state.current_environment)
+	var live_after_snapshot: Dictionary = _presentation_snapshot(live_after)
+	var live_click: Dictionary = game.surface_action_command("coin_pusher_drop", 0, false, {"coin_pusher_lane": 2, "surface_time_msec": 1900}, run_state, run_state.current_environment)
 	var live_click_ui: Dictionary = live_click.get("ui_state", {}) if typeof(live_click.get("ui_state", {})) == TYPE_DICTIONARY else {}
 	if not shallow_references_preserved or not action_reference_preserved:
 		failures.append("Quarter Falls realtime phase patch rebuilt physical snapshot arrays or action state instead of retaining their exact references.")
