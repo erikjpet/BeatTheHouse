@@ -14,6 +14,7 @@ var game: GameModule
 var run_state: RunState
 var environment: Dictionary
 var captures: Array = []
+var sequences: Array = []
 var failed := false
 
 
@@ -51,6 +52,8 @@ func _run() -> void:
 	]
 	for fixture_value in fixtures:
 		await _capture_fixture(fixture_value as Dictionary)
+	for fixture_index in [0, 2, 3, 4, 5]:
+		await _capture_replay_sequence(fixtures[fixture_index] as Dictionary)
 	_write_manifest()
 	print("COIN_PUSHER_FEEL_CAPTURE_%s captures=%d out=%s" % ["FAIL" if failed else "PASS", captures.size(), ProjectSettings.globalize_path(out_dir)])
 	quit(1 if failed else 0)
@@ -65,7 +68,7 @@ func _drop_fixture() -> Dictionary:
 	(state["bodies"] as Array).push_front(_body("drop_stack", landing_x, landing_y, SolverScript.UPPER_FLOOR_Z + SolverScript.COIN_HEIGHT, true))
 	(state["bodies"] as Array).push_front(_body("drop_support", landing_x, landing_y, SolverScript.UPPER_FLOOR_Z, true))
 	var before := state.duplicate(true)
-	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true})
+	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
 	var metrics: Dictionary = step.get("metrics", {})
 	return _fixture("drop_disturbs_pile", "01_drop_disturbs_pile_1280x720.png", "DROP LANDS AND DISTURBS THE PILE", before, state, step, int(metrics.get("collision_count", 0)) > 0 and int(metrics.get("moved_count", 0)) >= 2)
 
@@ -78,7 +81,7 @@ func _topple_fixture() -> Dictionary:
 		_body("topple_landing", 52700, 30000, 9000, false),
 	]
 	var before := state.duplicate(true)
-	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true})
+	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
 	return _fixture("stack_topples", "02_stack_topples_1280x720.png", "LEANING STACK TOPPLES", before, state, step, int((step.get("metrics", {}) as Dictionary).get("topple_count", 0)) > 0)
 
 
@@ -89,7 +92,7 @@ func _upper_lower_fixture() -> Dictionary:
 		_body("lower_landing", 50000, SolverScript.UPPER_EDGE - 9000, 0, true),
 	]
 	var before := state.duplicate(true)
-	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true})
+	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
 	return _fixture("upper_to_lower", "03_upper_to_lower_1280x720.png", "UPPER SHELF FALLS TO LOWER FIELD", before, state, step, int((step.get("metrics", {}) as Dictionary).get("upper_lower_fall_count", 0)) > 0)
 
 
@@ -102,7 +105,7 @@ func _nudge_fixture() -> Dictionary:
 	]
 	var before := state.duplicate(true)
 	var before_digest := JSON.stringify(SolverScript.canonical_digest(state))
-	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "nudge_x": 12000, "nudge_y": -22000, "aimed_x": 50000, "nudge_radius": 14000})
+	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "nudge_x": 12000, "nudge_y": -22000, "aimed_x": 50000, "nudge_radius": 14000, "capture_presentation_trace": true})
 	return _fixture("nudge_shifts_pile", "04_nudge_shifts_pile_1280x720.png", "NUDGE SHIFTS A REAL PILE", before, state, step, JSON.stringify(SolverScript.canonical_digest(state)) != before_digest and int((step.get("metrics", {}) as Dictionary).get("moved_count", 0)) > 0)
 
 
@@ -110,7 +113,7 @@ func _tray_fixture() -> Dictionary:
 	var state := SolverScript.create(_rng(7501), 48, 0, 5)
 	state["bodies"] = [_body("tray_hanger", 50000, 2000, 0, false)]
 	var before := state.duplicate(true)
-	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true})
+	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
 	return _fixture("tray_fall", "05_tray_fall_1280x720.png", "EDGE HANGER FALLS INTO THE TRAY", before, state, step, _has_outcome(step, "tray"))
 
 
@@ -118,7 +121,7 @@ func _gutter_fixture() -> Dictionary:
 	var state := SolverScript.create(_rng(7601), 48, 0, 5)
 	state["bodies"] = [_body("gutter_coin", 1000, 2000, 0, false)]
 	var before := state.duplicate(true)
-	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true})
+	var step := SolverScript.step_action(state, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
 	return _fixture("gutter_loss", "06_gutter_loss_1280x720.png", "GREEDY SIDE SHOT FALLS INTO THE GUTTER", before, state, step, _has_outcome(step, "gutter"))
 
 
@@ -169,6 +172,99 @@ func _capture_fixture(fixture: Dictionary) -> void:
 	root.remove_child(panel)
 	panel.queue_free()
 	await process_frame
+
+
+func _capture_replay_sequence(fixture: Dictionary) -> void:
+	var step: Dictionary = fixture.get("step", {})
+	var trace: Array = step.get("presentation_trace", []) if typeof(step.get("presentation_trace", [])) == TYPE_ARRAY else []
+	if trace.size() < 4:
+		failed = true
+		return
+	var panel := ColorRect.new()
+	panel.color = Color("#070b14")
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_child(panel)
+	var title := Label.new()
+	title.text = "%s — AUTHORITATIVE 800MS REPLAY" % str(fixture.get("title", "COIN PUSHER PHYSICS"))
+	title.position = Vector2(24, 16)
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color("#e9f4ff"))
+	panel.add_child(title)
+	var proof := Label.new()
+	proof.text = "PREBUILT FIXED-TICK FRAMES — RENDER ONLY SELECTS; FINAL PILE IS ALREADY COMMITTED"
+	proof.position = Vector2(24, 48)
+	proof.add_theme_font_size_override("font_size", 13)
+	proof.add_theme_color_override("font_color", Color("#58e1d4"))
+	panel.add_child(proof)
+	var frame_indices := _sequence_frame_indices(trace)
+	var background := SolverScript.create(_rng(9000 + sequences.size()), 48, 26, 5)
+	for panel_index in range(frame_indices.size()):
+		var trace_frame: Dictionary = trace[int(frame_indices[panel_index])] if typeof(trace[int(frame_indices[panel_index])]) == TYPE_DICTIONARY else {}
+		var snapshot := _surface_for_trace_frame(background, trace_frame, panel_index * 267)
+		_add_sequence_surface_panel(panel, snapshot, Vector2(12 + panel_index * 316, 94), "TICK %d" % int(trace_frame.get("tick_offset", 0)))
+	await process_frame
+	await RenderingServer.frame_post_draw
+	var file_name := "sequence_%s_1280x720.png" % str(fixture.get("id", "physics"))
+	var image := root.get_viewport().get_texture().get_image()
+	var saved := image != null and image.save_png("%s/%s" % [out_dir, file_name]) == OK
+	var positions_advance := _trace_positions_advance(trace)
+	var sampled_tick_offsets: Array = []
+	for frame_index in frame_indices:
+		sampled_tick_offsets.append(int((trace[int(frame_index)] as Dictionary).get("tick_offset", 0)))
+	if not saved or not positions_advance:
+		failed = true
+	sequences.append({
+		"id": "%s_replay" % str(fixture.get("id", "")),
+		"file": file_name,
+		"saved": saved,
+		"positions_advance": positions_advance,
+		"frame_count": trace.size(),
+		"sampled_tick_offsets": sampled_tick_offsets,
+	})
+	root.remove_child(panel)
+	panel.queue_free()
+	await process_frame
+
+
+func _surface_for_trace_frame(background: Dictionary, trace_frame: Dictionary, surface_time_msec: int) -> Dictionary:
+	var snapshot := _surface_for_simulation(background, surface_time_msec)
+	var bodies := SolverScript.body_views(background)
+	for body_value in trace_frame.get("bodies", []):
+		bodies.append(body_value)
+	snapshot["coin_pusher_bodies"] = bodies
+	return snapshot
+
+
+func _add_sequence_surface_panel(parent: Control, snapshot: Dictionary, position: Vector2, caption: String) -> void:
+	var label := Label.new()
+	label.text = caption
+	label.position = position + Vector2(0, -24)
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", Color("#f6cb56"))
+	parent.add_child(label)
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.position = position
+	canvas.size = Vector2(300, 144)
+	canvas.set_game_module(game)
+	canvas.render_game_snapshot(snapshot)
+	canvas.set_process(false)
+	canvas.set("flicker", 0.75)
+	parent.add_child(canvas)
+
+
+func _trace_positions_advance(trace: Array) -> bool:
+	if trace.size() < 2 or typeof(trace.front()) != TYPE_DICTIONARY or typeof(trace.back()) != TYPE_DICTIONARY:
+		return false
+	return JSON.stringify((trace.front() as Dictionary).get("bodies", [])) != JSON.stringify((trace.back() as Dictionary).get("bodies", []))
+
+
+func _sequence_frame_indices(trace: Array) -> Array:
+	for frame_index in range(trace.size()):
+		var frame: Dictionary = trace[frame_index] if typeof(trace[frame_index]) == TYPE_DICTIONARY else {}
+		for body_value in frame.get("bodies", []):
+			if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("rest_state", "")).begins_with("falling_"):
+				return [0, frame_index, mini(frame_index + 1, trace.size() - 1), mini(frame_index + 2, trace.size() - 1)]
+	return [0, trace.size() / 3, (trace.size() * 2) / 3, trace.size() - 1]
 
 
 func _add_surface_panel(parent: Control, snapshot: Dictionary, position: Vector2, caption: String) -> void:
@@ -230,8 +326,8 @@ func _write_manifest() -> void:
 	var captured_ids: Array = []
 	for capture in captures:
 		captured_ids.append(str((capture as Dictionary).get("id", "")))
-	var passed := not failed and JSON.stringify(captured_ids) == JSON.stringify(REQUIRED_IDS) and captures.size() == REQUIRED_IDS.size()
-	var manifest := {"schema": "coin_pusher_physics_feel_captures", "passed": passed, "capture_size": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y}, "required_ids": REQUIRED_IDS, "captures": captures}
+	var passed := not failed and JSON.stringify(captured_ids) == JSON.stringify(REQUIRED_IDS) and captures.size() == REQUIRED_IDS.size() and sequences.size() == 5
+	var manifest := {"schema": "coin_pusher_physics_feel_captures", "passed": passed, "capture_size": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y}, "required_ids": REQUIRED_IDS, "captures": captures, "replay_sequences": sequences}
 	var file := FileAccess.open("%s/manifest.json" % out_dir, FileAccess.WRITE)
 	if file == null:
 		failed = true

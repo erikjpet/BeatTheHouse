@@ -23,6 +23,7 @@ const FLOOR_DRAG_DEN := 64
 const SLEEP_SPEED := 90
 const SLEEP_TICKS := 8
 const ACTION_TICKS := 48
+const PRESENTATION_TRACE_INTERVAL_TICKS := 4
 const PHASE_PERIOD := 12000
 const TRAY_LEFT := 2000
 const TRAY_RIGHT := 98000
@@ -104,6 +105,11 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 		state["lower_phase_fp"] = posmod(int(config.get("captured_lower_phase_fp", 0)), PHASE_PERIOD)
 	var events: Array = []
 	var motion_events: Array = []
+	var capture_trace := bool(config.get("capture_presentation_trace", false))
+	var presentation_trace: Array = []
+	var exit_trails: Array = []
+	if capture_trace:
+		presentation_trace.append(_presentation_trace_frame(state, 0, []))
 	var start_positions := _positions_by_id(state)
 	var nudge_x := int(config.get("nudge_x", 0))
 	var nudge_y := int(config.get("nudge_y", 0))
@@ -117,7 +123,8 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	var collision_count := 0
 	if nudge_x != 0 or nudge_y != 0:
 		wake_count += _apply_nudge(state, nudge_x, nudge_y, aimed_x, nudge_radius)
-	for _tick_index in range(ACTION_TICKS):
+	for tick_index in range(ACTION_TICKS):
+		var event_count_before := events.size()
 		var old_upper := _pusher_face_y(int(state.get("upper_phase_fp", 0)), true)
 		var old_lower := _pusher_face_y(int(state.get("lower_phase_fp", 0)), false)
 		if not upper_locked:
@@ -139,6 +146,23 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 					break
 			_resolve_supports(state, tick_buckets, motion_events)
 		state["tick"] = int(state.get("tick", 0)) + 1
+		if capture_trace:
+			for event_index in range(event_count_before, events.size()):
+				exit_trails.append({"views": _presentation_exit_views(events[event_index]), "index": 0})
+			if (tick_index + 1) % PRESENTATION_TRACE_INTERVAL_TICKS == 0 or tick_index + 1 == ACTION_TICKS:
+				var exit_views: Array = []
+				var remaining_trails: Array = []
+				for trail_value in exit_trails:
+					var trail: Dictionary = trail_value if typeof(trail_value) == TYPE_DICTIONARY else {}
+					var views: Array = trail.get("views", []) if typeof(trail.get("views", [])) == TYPE_ARRAY else []
+					var view_index := int(trail.get("index", 0))
+					if view_index < views.size():
+						exit_views.append(views[view_index])
+						trail["index"] = view_index + 1
+						if view_index + 1 < views.size():
+							remaining_trails.append(trail)
+				exit_trails = remaining_trails
+				presentation_trace.append(_presentation_trace_frame(state, tick_index + 1, exit_views))
 	var moved_count := 0
 	for value in state.get("bodies", []):
 		if typeof(value) != TYPE_DICTIONARY:
@@ -160,7 +184,12 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 		"topple_count": _motion_event_count(motion_events, "topple"),
 		"upper_lower_fall_count": _motion_event_count(motion_events, "upper_to_lower"),
 	}
-	return {"events": events, "motion_events": motion_events, "metrics": state["last_step_metrics"]}
+	return {
+		"events": events,
+		"motion_events": motion_events,
+		"metrics": state["last_step_metrics"],
+		"presentation_trace": presentation_trace,
+	}
 
 
 static func apply_nudge_only(state: Dictionary, x_impulse: int, y_impulse: int, aimed_x: int, radius: int) -> int:
@@ -189,6 +218,40 @@ static func body_views(state: Dictionary) -> Array:
 			"metadata": (body.get("metadata", {}) as Dictionary).duplicate(true) if typeof(body.get("metadata", {})) == TYPE_DICTIONARY else {},
 		})
 	return result
+
+
+static func _presentation_trace_frame(state: Dictionary, tick_offset: int, exit_views: Array) -> Dictionary:
+	var bodies := body_views(state)
+	for exit_view in exit_views:
+		bodies.append(exit_view)
+	return {
+		"tick_offset": tick_offset,
+		"upper_phase_fp": int(state.get("upper_phase_fp", 0)),
+		"lower_phase_fp": int(state.get("lower_phase_fp", 0)),
+		"bodies": bodies,
+	}
+
+
+static func _presentation_exit_views(event_value: Variant) -> Array:
+	var event: Dictionary = event_value if typeof(event_value) == TYPE_DICTIONARY else {}
+	var first := {
+		"id": str(event.get("body_id", "")),
+		"kind": str(event.get("kind", "coin")),
+		"x": int(event.get("x", 0)),
+		"y": int(event.get("y", 0)),
+		"z": int(event.get("z", 0)),
+		"radius": COIN_RADIUS if str(event.get("kind", "coin")) == "coin" else OBJECT_RADIUS,
+		"height": COIN_HEIGHT if str(event.get("kind", "coin")) == "coin" else OBJECT_HEIGHT,
+		"mass": int(event.get("mass", 1)),
+		"sleeping": false,
+		"rest_state": "falling_%s" % str(event.get("outcome", "tray")),
+		"lean_milli": 0,
+		"metadata": (event.get("metadata", {}) as Dictionary).duplicate(true) if typeof(event.get("metadata", {})) == TYPE_DICTIONARY else {},
+	}
+	var second := first.duplicate(true)
+	second["y"] = int(first.get("y", 0)) - 4500
+	second["z"] = int(first.get("z", 0)) - 6000
+	return [first, second]
 
 
 static func coin_count(state: Dictionary) -> int:

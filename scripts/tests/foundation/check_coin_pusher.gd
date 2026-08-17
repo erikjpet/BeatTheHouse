@@ -19,6 +19,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_canonical_probe(failures)
 	_check_coin_pusher_surface_liveness(game, failures)
 	_check_coin_pusher_visible_timing(game, failures)
+	_check_coin_pusher_presentation_replay(game, failures)
 	_check_coin_pusher_discrete_solver(definition, failures)
 	_check_coin_pusher_read_boundaries(game, failures)
 	_check_coin_pusher_determinism(game, failures)
@@ -353,6 +354,111 @@ func _check_coin_pusher_visible_timing(game: GameModule, failures: Array) -> voi
 	if JSON.stringify(early_result.get("coin_pusher_solver_metrics", {})) != JSON.stringify(replay_result.get("coin_pusher_solver_metrics", {})) \
 			or game.deterministic_state_digest(early_run.current_environment) != game.deterministic_state_digest(replay_run.current_environment):
 		failures.append("Quarter Falls replaying the same captured display phase did not reproduce the exact pile.")
+
+
+func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -> void:
+	var drop_fixture := _coin_pusher_fixture(game, "PUSHER-PRESENTATION-DROP")
+	var drop_run: RunState = drop_fixture.get("run_state")
+	var drop_ui := {"coin_pusher_lane": 2, "coin_pusher_upper_input_phase": 2, "coin_pusher_lower_input_phase": 5, "coin_pusher_capture_presentation_trace": true}
+	var drop_result := game.resolve_with_context("drop_quarter", 1, drop_run, drop_run.current_environment, drop_run.create_rng("presentation_drop"), drop_ui)
+	var drop_trace: Array = drop_result.get("coin_pusher_presentation_trace", []) if typeof(drop_result.get("coin_pusher_presentation_trace", [])) == TYPE_ARRAY else []
+	if not bool(drop_result.get("ok", false)) or drop_trace.size() < 4 or drop_trace.size() > 15 or not _trace_visibly_moves(drop_trace):
+		failures.append("Quarter Falls drop did not expose a bounded authoritative body-motion replay.")
+	var drop_machine: Dictionary = (drop_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	if drop_machine.has("coin_pusher_presentation_trace") or (drop_machine.get("simulation", {}) as Dictionary).has("presentation_trace"):
+		failures.append("Quarter Falls serialized its transient presentation replay into the node snapshot.")
+	var final_trace_bodies: Array = (drop_trace.back() as Dictionary).get("bodies", []) if not drop_trace.is_empty() and typeof(drop_trace.back()) == TYPE_DICTIONARY else []
+	var drop_simulation: Dictionary = drop_machine.get("simulation", {}) if typeof(drop_machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	if JSON.stringify(final_trace_bodies) != JSON.stringify(CoinPusherSolverScript.body_views(drop_simulation)):
+		failures.append("Quarter Falls drop replay did not end on the exact authoritative persisted pile.")
+	var persisted_digest: String = game.deterministic_state_digest(drop_run.current_environment)
+	var replay_surface := game.surface_state(drop_run, drop_run.current_environment, {"surface_time_msec": 1000})
+	replay_surface["coin_pusher_presentation_trace"] = drop_trace
+	var replay_harness := SurfaceHarness.new()
+	replay_harness.setup(replay_surface)
+	replay_harness.animation_active = true
+	replay_harness.animation_progress = 0.0
+	var replay_start: Dictionary = game.surface_motion_signature(replay_harness, replay_surface)
+	replay_harness.animation_progress = 0.5
+	var replay_middle: Dictionary = game.surface_motion_signature(replay_harness, replay_surface)
+	replay_harness.animation_progress = 1.0
+	var replay_end: Dictionary = game.surface_motion_signature(replay_harness, replay_surface)
+	if int(replay_start.get("physics_body_checksum", 0)) == int(replay_middle.get("physics_body_checksum", 0)) \
+			or int(replay_middle.get("physics_body_checksum", 0)) == int(replay_end.get("physics_body_checksum", 0)):
+		failures.append("Quarter Falls player-facing drop replay did not visibly advance body positions through time.")
+	var reduced_surface := replay_surface.duplicate(true)
+	reduced_surface["reduce_motion"] = true
+	replay_harness.setup(reduced_surface)
+	replay_harness.animation_progress = 0.0
+	var reduced_sample: Dictionary = game.surface_motion_signature(replay_harness, reduced_surface)
+	if int(reduced_sample.get("physics_body_checksum", 0)) != int(replay_end.get("physics_body_checksum", -1)):
+		failures.append("Quarter Falls reduced motion did not jump directly to the authoritative final pile.")
+	if game.deterministic_state_digest(drop_run.current_environment) != persisted_digest:
+		failures.append("Quarter Falls presentation replay mutated the authoritative pile.")
+	var headless_fixture := _coin_pusher_fixture(game, "PUSHER-NO-PRESENTATION-TRACE")
+	var headless_run: RunState = headless_fixture.get("run_state")
+	var headless_result := game.resolve_with_context("drop_quarter", 1, headless_run, headless_run.current_environment, headless_run.create_rng("no_presentation_trace"), {"coin_pusher_lane": 2})
+	if not (headless_result.get("coin_pusher_presentation_trace", []) as Array).is_empty():
+		failures.append("Quarter Falls generated replay frames for a non-presented headless action.")
+
+	var nudge_fixture := _coin_pusher_fixture(game, "PUSHER-PRESENTATION-NUDGE")
+	var nudge_run: RunState = nudge_fixture.get("run_state")
+	var nudge_result := game.resolve_with_context("nudge_machine", 0, nudge_run, nudge_run.current_environment, nudge_run.create_rng("presentation_nudge"), {
+		"coin_pusher_lane": 2, "coin_pusher_force": "slam", "coin_pusher_direction": "front",
+		"coin_pusher_upper_input_phase": 2, "coin_pusher_lower_input_phase": 5, "coin_pusher_capture_presentation_trace": true,
+	})
+	var nudge_trace: Array = nudge_result.get("coin_pusher_presentation_trace", []) if typeof(nudge_result.get("coin_pusher_presentation_trace", [])) == TYPE_ARRAY else []
+	if not bool(nudge_result.get("ok", false)) or not _trace_visibly_moves(nudge_trace):
+		failures.append("Quarter Falls nudge did not expose visible real-pile movement from the authoritative solver.")
+
+	var fall_state := CoinPusherSolverScript.create(_configured_rng(6141), 48, 0, 5)
+	fall_state["bodies"] = [
+		_solver_body("replay_upper", "coin", 50000, CoinPusherSolverScript.UPPER_EDGE - 1000, CoinPusherSolverScript.UPPER_FLOOR_Z, false),
+		_solver_body("replay_tray", "coin", 50000, 2000, 0, false),
+		_solver_body("replay_gutter", "coin", 1000, 2000, 0, false),
+	]
+	var fall_step := CoinPusherSolverScript.step_action(fall_state, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
+	var fall_trace: Array = fall_step.get("presentation_trace", [])
+	if not _trace_body_changes_level(fall_trace, "replay_upper") or not _trace_has_exit_path(fall_trace, "replay_tray", "tray") or not _trace_has_exit_path(fall_trace, "replay_gutter", "gutter"):
+		failures.append("Quarter Falls replay did not preserve legible upper-to-lower, tray, and gutter body paths.")
+
+
+func _trace_visibly_moves(trace: Array) -> bool:
+	if trace.size() < 2 or typeof(trace.front()) != TYPE_DICTIONARY or typeof(trace.back()) != TYPE_DICTIONARY:
+		return false
+	return JSON.stringify((trace.front() as Dictionary).get("bodies", [])) != JSON.stringify((trace.back() as Dictionary).get("bodies", []))
+
+
+func _trace_body_changes_level(trace: Array, body_id: String) -> bool:
+	var first_z := 0
+	var last_z := 0
+	var seen := false
+	for frame_value in trace:
+		if typeof(frame_value) != TYPE_DICTIONARY:
+			continue
+		for body_value in (frame_value as Dictionary).get("bodies", []):
+			if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("id", "")) == body_id:
+				if not seen:
+					first_z = int((body_value as Dictionary).get("z", 0))
+				seen = true
+				last_z = int((body_value as Dictionary).get("z", 0))
+	return seen and first_z >= CoinPusherSolverScript.UPPER_FLOOR_Z and last_z < CoinPusherSolverScript.UPPER_FLOOR_Z
+
+
+func _trace_has_exit_path(trace: Array, body_id: String, outcome: String) -> bool:
+	var positions: Array = []
+	var terminal_count := 0
+	for frame_value in trace:
+		if typeof(frame_value) != TYPE_DICTIONARY:
+			continue
+		for body_value in (frame_value as Dictionary).get("bodies", []):
+			if typeof(body_value) != TYPE_DICTIONARY or str((body_value as Dictionary).get("id", "")) != body_id:
+				continue
+			var body: Dictionary = body_value
+			positions.append([int(body.get("x", 0)), int(body.get("y", 0)), int(body.get("z", 0))])
+			if str(body.get("rest_state", "")) == "falling_%s" % outcome:
+				terminal_count += 1
+	return positions.size() >= 3 and terminal_count >= 2 and JSON.stringify(positions.front()) != JSON.stringify(positions.back())
 
 
 func _check_coin_pusher_reduced_motion_freeze(game: GameModule, surface: Dictionary, failures: Array) -> void:
