@@ -1460,3 +1460,21 @@ What happens then is the owner's, not an agent's:
   19.369 ms / drop 104.976 ms / nudge 124.424 ms against 16 ms; root profiling
   continues without waivers. The isolated presentation-gap patch is static
   ACCEPT and now owns the focused runtime window.
+- 2026-08-17 [pusher06_2] Root profiling kept the shipped 160-body cap,
+  150-body opening pile, 48-tick action, 14-frame replay, render/audio assets,
+  and all budgets fixed. Output-identical work is split between the native
+  broadphase/packed-trace path and the synchronous host refresh/event/coach
+  path; the Coach copy-on-write deviation is accepted for measurement only
+  after the real input guard accounted for roughly 3.3-3.5 ms, and remains
+  contingent on onboarding plus complete UI parity gates.
+- 2026-08-17 [pusher06_2] Independent closeout review rejected a packed-trace
+  optimization because raw native `body_metadata` could alias authoritative
+  simulation metadata. The repair must restore nested publication isolation
+  and add a hostile raw-result mutation proof before performance evidence can
+  count.
+- 2026-08-17 [pusher06_2] The first fused native-load diagnostic also exposed
+  a real sparse-save regression: the carried eight-seed oracle left the native
+  backend when legacy body defaults were no longer normalized. Sparse-only
+  normalization and its internal marker must remain behavior-identical and
+  non-serializing; exact current-schema piles retain the scan-free path. No
+  compatibility assertion is waived.
