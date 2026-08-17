@@ -41,7 +41,7 @@ rules and scope.
 
 ## Dependencies
 
-`crew06_5/6/7`, `craps06_1`, `streets06_1`, `env06_3` DONE. The Turn
+`crew06_5/6/7`, `craps06_1`, `rework06_1`, `env06_3` DONE. The Turn
 is crew06_9 — build this slice so the ladder's fourth outcome is a
 stub the next prompt fills (define the seam explicitly).
 
@@ -69,9 +69,9 @@ stub the next prompt fills (define the seam explicitly).
   1. *Furniture identity*: N clean Grand Casino sessions inside
      bet-band + suspicion-ceiling constraints (reuse session stats;
      progress is diegetic via Bishop's lines).
-  2. *The schedule*: a Streets hold at the cage during a shift
+  2. *The schedule*: a real-venue delivery hold at the cage during a shift
      change.
-  3. *The swap cart*: a hard Streets package run to the service
+  3. *The swap cart*: a hard real-map package run to the service
      perimeter.
   4. *(Optional)* the corridor guard's marker via Debt Court
      (env06_3 content seam) — completing it removes a Play-phase
@@ -108,7 +108,7 @@ stub the next prompt fills (define the seam explicitly).
 
 ### 4. Getaway + outcome ladder + victory route
 
-- **Getaway**: the Streets chase variant (streets06_1 mode) with
+- **Getaway**: the real-map `delivery_begin_getaway` mode with
   plan-flavored parameters (A: dock run; B: front-door walk that
   turns into a chase only on hot outcomes). Outcome ladder:
   *Clean Sweep / Out Hot / Somebody Got Pinched / The Turn (stub)* —

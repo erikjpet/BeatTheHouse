@@ -31,6 +31,9 @@ var map_view_bounds_cache := Rect2(Vector2.ZERO, Vector2.ONE)
 var target_map_view_bounds_cache := Rect2(Vector2.ZERO, Vector2.ONE)
 var travel_edge_ids_cache: Array = []
 var enabled_travel_edge_ids_cache: Array = []
+var courier_edge_reads_by_id: Dictionary = {}
+var courier_active := false
+var courier_header_text := ""
 var cached_layout_size := Vector2(-1.0, -1.0)
 var snapshot_signature := ""
 var map_view_bounds_signature := ""
@@ -280,6 +283,7 @@ func _draw() -> void:
 	var rect := Rect2(Vector2.ZERO, size)
 	_draw_background(rect)
 	_draw_edges()
+	_draw_courier_header()
 	_draw_route_path_geometry()
 	_draw_path()
 	_draw_nodes()
@@ -352,7 +356,26 @@ func _draw_edges() -> void:
 		if enabled_travel_edge_ids_cache.has(edge_id):
 			color = Color("#5df2a2", 0.86)
 			width = 3.0
+		if courier_edge_reads_by_id.has(edge_id):
+			var read: Dictionary = courier_edge_reads_by_id.get(edge_id, {})
+			match str(read.get("band", "low")):
+				"hot":
+					color = Color("#f26d7d", 0.88)
+				"guarded":
+					color = Color("#ffd36a", 0.82)
+				_:
+					color = Color("#5df2a2", 0.70)
+			width = maxf(width, 3.4)
 		draw_line(clipped[0] as Vector2, clipped[1] as Vector2, color, width)
+
+
+func _draw_courier_header() -> void:
+	if not courier_active or courier_header_text.is_empty():
+		return
+	var rect := Rect2(Vector2(12.0, 10.0), Vector2(330.0, 28.0))
+	draw_rect(rect, Color("#130c1d", 0.92))
+	draw_rect(rect, Color("#f27fb3", 0.82), false, 1.5)
+	draw_string(ThemeDB.fallback_font, rect.position + Vector2(10.0, 18.0), courier_header_text, HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 20.0, 11, Color("#ffd9ea"))
 
 
 func _draw_route_path_geometry() -> void:
@@ -559,6 +582,11 @@ func _draw_nodes() -> void:
 			elif not bool(node.get("open_now", true)):
 				status_color = Color("#f26d7d", alpha)
 			draw_circle(pos + Vector2(radius - 2.0, -radius + 2.0), 4.0, status_color)
+		if bool(node.get("delivery_target", false)):
+			var delivered := str(node.get("delivery_target_status", "pending")) == "delivered"
+			var delivery_color := Color("#5df2a2") if delivered else Color("#f27fb3")
+			draw_arc(pos, radius + 8.0, 0.0, TAU, 4, delivery_color, 3.0)
+			draw_string(ThemeDB.fallback_font, pos + Vector2(-40.0, radius + 24.0), str(node.get("delivery_marker_label", "DROP")), HORIZONTAL_ALIGNMENT_CENTER, 80.0, 10, delivery_color)
 
 
 func _draw_current_node_ring(pos: Vector2, radius: float) -> void:
@@ -613,6 +641,23 @@ func _current_marker_pulse_active() -> bool:
 
 func _rebuild_snapshot_cache() -> void:
 	nodes_by_id_cache = {}
+	courier_edge_reads_by_id = {}
+	var courier_layer := _copy_dict(snapshot.get("courier_layer", {}))
+	courier_active = bool(courier_layer.get("active", false))
+	courier_header_text = ""
+	if courier_active:
+		var cargo := _copy_dict(courier_layer.get("cargo", {}))
+		courier_header_text = "%s · CONTRABAND · %d ACTIONS" % [
+			str(cargo.get("label", "Cargo")).to_upper(),
+			int(courier_layer.get("deadline_remaining", 0)),
+		]
+		for read_value in _array_view(courier_layer.get("edge_reads", [])):
+			if typeof(read_value) != TYPE_DICTIONARY:
+				continue
+			var read: Dictionary = read_value
+			var edge_id := str(read.get("edge_id", "")).strip_edges()
+			if not edge_id.is_empty():
+				courier_edge_reads_by_id[edge_id] = read
 	for node_value in _array_view(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue

@@ -16,7 +16,7 @@ const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.g
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
-const StreetsRunModelScript := preload("res://scripts/core/streets_run_model.gd")
+const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
 
@@ -300,7 +300,7 @@ var crew_grievance_ledger: Array = []
 var crew_jobs: Dictionary = {}
 var crew_grievance_sequence: int = 0
 var crew_job_sequence: int = 0
-var active_streets_run: Dictionary = {}
+var active_delivery_run: Dictionary = {}
 var crew_pattern_memory: Dictionary = {}
 var crew_match_marks: Dictionary = {}
 var numbers_state: NumbersModel
@@ -387,7 +387,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	crew_jobs = {}
 	crew_grievance_sequence = 0
 	crew_job_sequence = 0
-	active_streets_run = {}
+	active_delivery_run = {}
 	crew_pattern_memory = CrewPokerModelScript.default_observations()
 	crew_match_marks = {}
 	numbers_state = NumbersModelScript.new()
@@ -6354,7 +6354,7 @@ func job_resolve(job_id: String, outcome: String) -> Dictionary:
 
 
 # Starts or declines the Crew favor without changing ordinary travel. The
-# shipped event rewards are applied only after its declared Streets board ends.
+# shipped event rewards are applied only after the real in-venue handoff.
 func resolve_crew_favor_delivery_job(choice_id: String, authored_consequences: Dictionary = {}) -> Dictionary:
 	var offered := job_offer(CrewStateModelScript.job_definition("crew_favor_delivery"))
 	var job_id := str(offered.get("id", ""))
@@ -6362,32 +6362,23 @@ func resolve_crew_favor_delivery_job(choice_id: String, authored_consequences: D
 		return {}
 	if choice_id != "run_package":
 		return job_resolve(job_id, "failed")
-	var route := _streets_default_edge()
-	return streets_begin({
-		"mode": "package",
-		"route_id": "crew_favor_delivery",
+	var started := delivery_begin_package({
+		"run_id": "crew_favor_delivery",
 		"job_id": job_id,
 		"source_event_id": "crew_favor_delivery",
-		"origin_node_id": str(route.get("origin_node_id", current_world_node_id())),
-		"destination_node_id": str(route.get("destination_node_id", "crew_drop")),
-		"destination_label": str(route.get("destination_label", "the Crew's drop")),
-		"distance": str(route.get("distance", "near")),
 		"attempt": int(offered.get("offered_action", 0)),
-		"deadline_actions": maxi(10, int(route.get("distance_blocks", 2)) * 5 + 8),
+		"deadline_actions": 18,
 		"cargo_id": "crew_package",
-		"consumer_payload": _streets_event_consumer_payload(authored_consequences),
-		"travel_continuation": {
-			"enabled": true,
-			"target_id": str(route.get("destination_node_id", "crew_drop")),
-			"target_label": str(route.get("destination_label", "the Crew's drop")),
-			# This package commits to the real edge when it starts. Route details,
-			# cost, risk, time, and generation remain owned by FoundationMain.
-			"choice_data": {"enabled": true},
-		},
+		"cargo_label": "Crew package",
+		"cargo_heat_per_travel": 0,
+		"consumer_payload": _delivery_event_consumer_payload(authored_consequences),
 	})
+	if not bool(started.get("ok", false)):
+		job_resolve(job_id, "failed")
+	return started
 
 
-func _streets_event_consumer_payload(consequences: Dictionary) -> Dictionary:
+func _delivery_event_consumer_payload(consequences: Dictionary) -> Dictionary:
 	var succeeded := _copy_dict(consequences.get("success", {}))
 	var failed := _copy_dict(consequences.get("failure", {}))
 	return {
@@ -6436,12 +6427,12 @@ func numbers_desk_status() -> Dictionary:
 		"runner_available": CrewStateModelScript.RANK_IDS.find(lucky_rank) >= CrewStateModelScript.RANK_IDS.find("associate")
 			and numbers_state.action_index < numbers_state.post_action(current_day)
 			and str(numbers_state.collection_state.get("status", "")) != "active"
-			and not streets_has_active_run(),
+			and not delivery_has_active_run(),
 		"runner_active": str(numbers_state.collection_state.get("status", "")) == "active",
 		"lucky_rank": lucky_rank,
 		"mags_rank": mags_rank,
 		"fix_eligible": _numbers_fix_eligible(),
-		"fix_available": public_stage == "ready" and not streets_has_active_run(),
+		"fix_available": public_stage == "ready" and not delivery_has_active_run(),
 		"fix_stage": public_stage,
 		"allocation_available": public_stage == "camouflage",
 		"venues": venues,
@@ -6519,7 +6510,7 @@ func numbers_buy_silas_tip(today_number: bool = false) -> Dictionary:
 	return result
 
 
-# Lucky's associate route consumes the frozen Streets multi-stop entry point.
+# Lucky's associate route consumes the real-map delivery multi-stop entry point.
 func numbers_begin_collection_route() -> Dictionary:
 	if numbers_state == null or CrewStateModelScript.RANK_IDS.find(crew_rank("crew_lucky")) < CrewStateModelScript.RANK_IDS.find("associate"):
 		return {"ok": false, "message": "Lucky does not hand that bag to strangers."}
@@ -6532,7 +6523,7 @@ func numbers_begin_collection_route() -> Dictionary:
 		if typeof(venue_value) != TYPE_DICTIONARY:
 			continue
 		var venue_id := str((venue_value as Dictionary).get("id", ""))
-		if venue_id != "small_underground_casino":
+		if venue_id != "small_underground_casino" and venue_id != current_world_node_id():
 			venue_ids.append(venue_id)
 	venue_ids.sort()
 	var stop_count_range := _copy_array(tuning.get("stop_count", [3, 4]))
@@ -6562,24 +6553,23 @@ func numbers_begin_collection_route() -> Dictionary:
 	var job_id := str(offered.get("id", ""))
 	if job_id.is_empty() or job_accept(job_id).is_empty() or job_activate(job_id).is_empty():
 		return {"ok": false, "message": "Lucky keeps the bag."}
-	var started := streets_begin_multi_stop({
-		"route_id": "numbers_collection:%d" % numbers_state.day_at(_crew_action_index()),
+	var delivery_targets := stops.duplicate(true)
+	delivery_targets.append({"id": "numbers_return", "node_id": "small_underground_casino", "label": "The Punchline"})
+	var started := delivery_begin_multi_stop({
+		"run_id": "numbers_collection:%d" % numbers_state.day_at(_crew_action_index()),
 		"job_id": job_id,
-		"origin_node_id": current_world_node_id(),
-		"destination_node_id": "small_underground_casino",
-		"distance": "local",
 		"attempt": numbers_state.day_at(_crew_action_index()),
-		"stops": stops,
+		"targets": delivery_targets,
+		"target_count": delivery_targets.size(),
 		"deadline_actions": remaining,
 		"fast_threshold_actions": maxi(1, remaining - 4),
-		"spot_heat_per_new_spot": 3,
-		"order_mode": "free",
 		"cargo_id": "numbers_slips",
+		"cargo_label": "Numbers bag",
+		"cargo_heat_per_travel": 3,
 		"consumer_payload": {
 			"success": {"cash": pay, "heat": 0, "flags": {"numbers_route_paid": true}},
 			"failure": {"cash": 0, "heat": 7, "flags": {"numbers_route_failed": true}},
 		},
-		"travel_continuation": {"enabled": true, "target_id": "small_underground_casino", "target_label": "The Punchline", "choice_data": {"enabled": true}},
 	})
 	if not bool(started.get("ok", false)):
 		job_resolve(job_id, "failed")
@@ -6591,7 +6581,7 @@ func numbers_begin_collection_route() -> Dictionary:
 	return started
 
 
-# Starts the high-trust fix through the frozen Streets package mode.
+# Starts the high-trust fix through a real-map package run.
 func numbers_begin_fix_bribe() -> Dictionary:
 	if numbers_state == null:
 		return {"ok": false, "message": "The desk is dark."}
@@ -6600,17 +6590,12 @@ func numbers_begin_fix_bribe() -> Dictionary:
 	if not bool(begun.get("ok", false)):
 		return begun
 	var bribe := _copy_dict(_copy_dict(NumbersModelScript.tuning().get("fix", {})).get("bribe_run", {}))
-	var route := _streets_default_edge()
-	var started := streets_begin({
-		"mode": "package",
-		"route_id": "numbers_fix_bribe:%d" % int(_copy_dict(begun.get("fix", {})).get("target_day", 0)),
-		"origin_node_id": str(route.get("origin_node_id", current_world_node_id())),
-		"destination_node_id": str(route.get("destination_node_id", "back_alley")),
-		"distance": "far",
+	var started := delivery_begin_package({
+		"run_id": "numbers_fix_bribe:%d" % int(_copy_dict(begun.get("fix", {})).get("target_day", 0)),
 		"deadline_actions": int(bribe.get("deadline_actions", 22)),
-		"spot_heat_per_new_spot": int(bribe.get("spot_heat_per_new_spot", 6)),
-		"scenario_patrol_density_delta": int(bribe.get("scenario_patrol_density_delta", 3)),
+		"cargo_heat_per_travel": int(bribe.get("spot_heat_per_new_spot", 6)),
 		"cargo_id": "numbers_bribe_envelope",
+		"cargo_label": "Bribe envelope",
 		"consumer_payload": {"success": {"cash": 0, "heat": 0}, "failure": {"cash": 0, "heat": 12}},
 	})
 	if not bool(started.get("ok", false)):
@@ -6754,228 +6739,367 @@ func _sync_numbers_inventory_marker() -> void:
 		remove_item("numbers_slips")
 
 
-# Generic mode-owned entry point. Callers opt in explicitly; the world-map
-# travel path never calls this method.
-func streets_begin(spec: Dictionary) -> Dictionary:
-	if streets_has_active_run():
+# Delivery jobs carry state across the real map. They never own movement.
+func delivery_begin_package(spec: Dictionary) -> Dictionary:
+	var normalized := spec.duplicate(true)
+	normalized["mode"] = DeliveryRunModelScript.MODE_PACKAGE
+	normalized["target_count"] = 1
+	return _delivery_begin(normalized)
+
+
+func delivery_begin_multi_stop(spec: Dictionary) -> Dictionary:
+	var normalized := spec.duplicate(true)
+	normalized["mode"] = DeliveryRunModelScript.MODE_MULTI_STOP
+	return _delivery_begin(normalized)
+
+
+func delivery_begin_hold(spec: Dictionary) -> Dictionary:
+	var normalized := spec.duplicate(true)
+	normalized["mode"] = DeliveryRunModelScript.MODE_HOLD
+	normalized["target_count"] = 1
+	return _delivery_begin(normalized)
+
+
+func delivery_begin_getaway(spec: Dictionary) -> Dictionary:
+	if not bool(spec.get("enabled", false)) and not bool(narrative_flags.get("delivery_getaway_enabled", false)):
+		return {"ok": false, "message": "The getaway route is not live."}
+	var normalized := spec.duplicate(true)
+	normalized["mode"] = DeliveryRunModelScript.MODE_GETAWAY
+	normalized["target_count"] = 1
+	return _delivery_begin(normalized)
+
+
+func _delivery_begin(spec: Dictionary) -> Dictionary:
+	if delivery_has_active_run():
 		return {"ok": false, "message": "Finish the route already under your coat."}
-	var mode := str(spec.get("mode", "package")).strip_edges().to_lower()
-	if mode == "chase" and not bool(spec.get("enabled", false)) and not bool(narrative_flags.get("streets_chase_enabled", false)):
-		return {"ok": false, "message": "The getaway board is still under a tarp."}
-	var state := StreetsRunModelScript.begin(spec, _streets_world_context(spec), seed_value)
+	if not has_world_map():
+		return {"ok": false, "message": "There is no real town route for that job."}
+	var resolved_targets := _delivery_resolve_targets(spec)
+	if not bool(resolved_targets.get("ok", false)):
+		return {"ok": false, "message": str(resolved_targets.get("message", "That route cannot be offered tonight."))}
+	var normalized := spec.duplicate(true)
+	normalized["targets"] = _copy_array(resolved_targets.get("targets", []))
+	var state := DeliveryRunModelScript.begin(normalized, _crew_action_index())
 	if state.is_empty():
-		return {"ok": false, "message": "That route does not draw on this town."}
-	active_streets_run = state
-	return {"ok": true, "snapshot": streets_snapshot(), "message": "The block is live. Keep your head down."}
+		return {"ok": false, "message": "That route cannot be carried on this town map."}
+	world_map = _copy_dict(resolved_targets.get("world_map", world_map))
+	active_delivery_run = state
+	return {"ok": true, "snapshot": delivery_snapshot(), "message": "The route is marked. The room at the far end is real."}
 
 
-# Frozen Numbers consumer API. Required: route/origin/destination ids, stops,
-# and deadline_actions. Stops are dictionaries with stable id and optional
-# node_id/label/position; order_mode is ordered or free.
-func streets_begin_multi_stop(spec: Dictionary) -> Dictionary:
-	var normalized := spec.duplicate(true)
-	normalized["mode"] = "multi_stop"
-	var stops: Array = normalized.get("stops", []) if typeof(normalized.get("stops", [])) == TYPE_ARRAY else []
-	if stops.is_empty() or int(normalized.get("deadline_actions", 0)) <= 0:
-		return {"ok": false, "message": "A route needs stops and a closing clock."}
-	return streets_begin(normalized)
+func delivery_has_active_run() -> bool:
+	return not active_delivery_run.is_empty() and str(active_delivery_run.get("status", "")) == "active"
 
 
-func streets_begin_hold(spec: Dictionary) -> Dictionary:
-	var normalized := spec.duplicate(true)
-	normalized["mode"] = "hold"
-	return streets_begin(normalized)
+func delivery_snapshot() -> Dictionary:
+	return DeliveryRunModelScript.snapshot(active_delivery_run)
 
 
-func streets_begin_chase(spec: Dictionary) -> Dictionary:
-	var normalized := spec.duplicate(true)
-	normalized["mode"] = "chase"
-	return streets_begin(normalized)
-
-
-func streets_has_active_run() -> bool:
-	return not active_streets_run.is_empty() and str(active_streets_run.get("status", "")) == "active"
-
-
-func streets_snapshot() -> Dictionary:
-	return StreetsRunModelScript.snapshot(active_streets_run)
-
-
-# Hands a resolved board's optional travel bridge to its UI consumer exactly
-# once. The consumer must pass this back into its existing travel pipeline.
-func streets_take_travel_continuation() -> Dictionary:
-	if active_streets_run.is_empty() or str(active_streets_run.get("status", "")) != "resolved":
+func delivery_arrival_interaction() -> Dictionary:
+	if not delivery_has_active_run():
 		return {}
-	var continuation := _copy_dict(active_streets_run.get("travel_continuation", {}))
-	var target_id := str(continuation.get("target_id", "")).strip_edges()
-	if not bool(continuation.get("enabled", false)) or bool(continuation.get("consumed", false)) or target_id.is_empty():
+	var node_id := current_world_node_id()
+	if node_id.is_empty() or node_id != str(active_delivery_run.get("handoff_pending_node_id", "")):
 		return {}
-	continuation["consumed"] = true
-	active_streets_run["travel_continuation"] = continuation
 	return {
-		"enabled": true,
-		"target_id": target_id,
-		"target_label": str(continuation.get("target_label", target_id.replace("_", " ").capitalize())),
-		"choice_data": _copy_dict(continuation.get("choice_data", {})),
+		"object_id": "delivery:handoff:%s" % node_id,
+		"node_id": node_id,
+		"label": "Make the handoff",
+		"cargo_label": str(active_delivery_run.get("cargo_label", "Crew package")),
+		"message": "A quiet hand waits inside the room. Pass it over.",
 	}
 
 
-func streets_apply_action(action: Dictionary) -> Dictionary:
-	if not streets_has_active_run():
-		return {"ok": false, "message": "No live route is waiting on you."}
-	var route_id := str(active_streets_run.get("route_id", ""))
-	if route_id.begins_with("numbers_fix_bribe:") and str(action.get("verb", "")) == "stash":
-		return {"ok": false, "message": "The envelope is radioactive. It never leaves your hand."}
-	if route_id.begins_with("numbers_collection:"):
-		if bool(narrative_flags.get("numbers_collection_sweep_confiscation_pending", false)):
-			narrative_flags.erase("numbers_collection_sweep_confiscation_pending")
-			action = {"verb": "ditch"}
-		else:
-			var visited_ids: Array = []
-			for stop_value in _copy_array(streets_snapshot().get("stops", [])):
-				if typeof(stop_value) == TYPE_DICTIONARY and bool((stop_value as Dictionary).get("visited", false)):
-					visited_ids.append(str((stop_value as Dictionary).get("id", "")))
-			var next_node := numbers_state.collection_next_node(visited_ids) if numbers_state != null else ""
-			if town_state != null and not next_node.is_empty() and not town_state.swept_window(next_node).is_empty() and str(action.get("verb", "")) != "wait":
-				return {"ok": false, "paused": true, "wait_available": true, "message": "The book at %s is swept. Wait a boundary for the unit to move." % next_node.replace("_", " ").capitalize(), "snapshot": streets_snapshot()}
-	var times_spotted_before := int(active_streets_run.get("times_spotted", 0))
-	var applied := StreetsRunModelScript.apply_action(active_streets_run, action)
-	if not bool(applied.get("ok", false)):
-		applied.erase("state")
-		return applied
-	active_streets_run = _copy_dict(applied.get("state", {}))
-	applied.erase("state")
-	var new_spots := maxi(0, int(active_streets_run.get("times_spotted", 0)) - times_spotted_before)
-	var spot_heat := maxi(0, int(active_streets_run.get("spot_heat_per_new_spot", 0)))
-	# Action boundaries advance before their newly earned world effects. This keeps
-	# the same boundary from immediately decaying spotting or resolution heat.
-	advance_environment_turns(1)
-	if new_spots > 0 and spot_heat > 0:
-		add_suspicion("streets_spotted", new_spots * spot_heat, "contraband", true, {
-			"route_id": str(active_streets_run.get("route_id", "")),
-			"new_spots": new_spots,
+func delivery_complete_handoff(node_id: String = "") -> Dictionary:
+	if not delivery_has_active_run():
+		return {"ok": false, "message": "There is no package to hand over."}
+	var target_id := node_id.strip_edges()
+	if target_id.is_empty():
+		target_id = current_world_node_id()
+	var before := JSON.stringify(delivery_snapshot())
+	active_delivery_run = DeliveryRunModelScript.complete_handoff(active_delivery_run, target_id)
+	if JSON.stringify(delivery_snapshot()) == before:
+		return {"ok": false, "message": "This is not the marked handoff."}
+	_apply_delivery_resolution()
+	return {"ok": true, "resolved": not delivery_has_active_run(), "snapshot": delivery_snapshot(), "message": "The package changes hands. Nothing else does."}
+
+
+func delivery_use_getaway_assist(assist_id: String) -> Dictionary:
+	if not delivery_has_active_run():
+		return {"ok": false, "message": "No getaway is active."}
+	var before := JSON.stringify(delivery_snapshot())
+	active_delivery_run = DeliveryRunModelScript.use_assist(active_delivery_run, assist_id)
+	if JSON.stringify(delivery_snapshot()) == before:
+		return {"ok": false, "message": "That assist is not available."}
+	return {"ok": true, "snapshot": delivery_snapshot(), "message": "One favor burns. The pressure drops."}
+
+
+func delivery_abandon(reason: String = "abandoned") -> Dictionary:
+	if not delivery_has_active_run():
+		return {"ok": false, "message": "No delivery is active."}
+	active_delivery_run = DeliveryRunModelScript.abandon(active_delivery_run, reason)
+	_apply_delivery_resolution()
+	return {"ok": true, "resolved": true, "snapshot": delivery_snapshot(), "message": "The route closes without you."}
+
+
+# Called by the canonical travel pipeline after the destination room exists.
+func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Dictionary = {}) -> Dictionary:
+	if not delivery_has_active_run():
+		return {}
+	var node_id := current_world_node_id()
+	var security_heat := _delivery_arrival_security_heat()
+	if security_heat > 0:
+		add_suspicion("delivery_arrival", security_heat, "contraband", true, {
+			"node_id": node_id,
+			"cargo_id": str(active_delivery_run.get("cargo_id", "")),
+			"route_risk_triggered": bool(route_risk.get("triggered", false)),
 		}, true)
-	if bool(applied.get("resolved", false)):
-		_apply_streets_resolution()
-	applied["snapshot"] = streets_snapshot()
-	return applied
+		active_delivery_run = DeliveryRunModelScript.add_heat(active_delivery_run, security_heat)
+	# Travel is one delivery action boundary. Ordinary travel never enters here.
+	advance_environment_turns(1)
+	if not delivery_has_active_run():
+		return {"ok": false, "resolved": true, "snapshot": delivery_snapshot()}
+	active_delivery_run = DeliveryRunModelScript.note_arrival(active_delivery_run, node_id)
+	_apply_delivery_resolution()
+	return {
+		"ok": true,
+		"resolved": not delivery_has_active_run(),
+		"handoff_ready": str(active_delivery_run.get("handoff_pending_node_id", "")) == node_id,
+		"route_id": str(route.get("id", route.get("target_node_id", node_id))),
+		"snapshot": delivery_snapshot(),
+	}
 
 
-func _apply_streets_resolution() -> void:
-	if active_streets_run.is_empty() or bool(active_streets_run.get("world_applied", false)):
+func delivery_map_layer() -> Dictionary:
+	if not delivery_has_active_run():
+		return {}
+	var public_sweep := sweep_status()
+	var edge_reads: Array = []
+	for edge_value in _copy_array(world_map.get("edges", [])):
+		if typeof(edge_value) != TYPE_DICTIONARY:
+			continue
+		var edge: Dictionary = edge_value
+		var a := str(edge.get("a", "")).strip_edges()
+		var b := str(edge.get("b", "")).strip_edges()
+		if not WorldMap.is_node_visible(world_map, a) or not WorldMap.is_node_visible(world_map, b):
+			continue
+		var score := 0
+		var reasons: Array = []
+		var weather := weather_now()
+		if weather in ["rain", "storm", "fog"]:
+			score += 1
+			reasons.append("weather cover" if weather == "fog" else "bad weather")
+		var attention := 0.0
+		if town_state != null:
+			attention = maxf(float(town_state.local_reputation(a).get("attention", 0.0)), float(town_state.local_reputation(b).get("attention", 0.0)))
+		if attention >= 0.5:
+			score += 1
+			reasons.append("local attention")
+		var law_pressure := _delivery_scenario_law_pressure([a, b])
+		if law_pressure > 0:
+			score += law_pressure
+			reasons.append("venue pressure")
+		if not public_sweep.is_empty() and bool(public_sweep.get("active", false)):
+			var sweep_nodes := [str(public_sweep.get("current_node_id", "")), str(public_sweep.get("heading_node_id", ""))]
+			if a in sweep_nodes or b in sweep_nodes:
+				score += 2
+				reasons.append("reported sweep")
+		elif public_sweep.is_empty():
+			reasons.append("sweep unknown")
+		var band := "low" if score <= 1 else "guarded" if score <= 3 else "hot"
+		edge_reads.append({
+			"edge_id": str(edge.get("id", "%s--%s" % [a, b])),
+			"a": a,
+			"b": b,
+			"band": band,
+			"reasons": reasons,
+		})
+	return {
+		"active": true,
+		"mode": str(active_delivery_run.get("mode", "package")),
+		"targets": _copy_array(delivery_snapshot().get("targets", [])),
+		"deadline_remaining": int(active_delivery_run.get("deadline_remaining", 0)),
+		"cargo": {
+			"id": str(active_delivery_run.get("cargo_id", "")),
+			"label": str(active_delivery_run.get("cargo_label", "Crew package")),
+			"contraband": true,
+		},
+		"edge_reads": edge_reads,
+	}
+
+
+func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
+	var requested: Array = []
+	for source_value in [spec.get("targets", []), spec.get("stops", []), spec.get("target_node_ids", [])]:
+		if typeof(source_value) != TYPE_ARRAY or (source_value as Array).is_empty():
+			continue
+		for entry_value in source_value as Array:
+			var node_id := str((entry_value as Dictionary).get("node_id", (entry_value as Dictionary).get("id", ""))).strip_edges() if typeof(entry_value) == TYPE_DICTIONARY else str(entry_value).strip_edges()
+			if not node_id.is_empty() and not requested.has(node_id):
+				requested.append(node_id)
+		break
+	var count := maxi(1, int(spec.get("target_count", requested.size() if not requested.is_empty() else 1)))
+	var origin_id := current_world_node_id()
+	var buckets := [[], [], []]
+	for node_value in _copy_array(world_map.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", "")).strip_edges()
+		if node_id.is_empty() or (node_id == origin_id and str(spec.get("mode", "")) != DeliveryRunModelScript.MODE_HOLD):
+			continue
+		if str(node.get("archetype_id", "")).strip_edges().is_empty() or str(node.get("kind", "")).strip_edges().is_empty():
+			continue
+		if not WorldMap.has_path(world_map, origin_id, node_id, false) and node_id != origin_id:
+			continue
+		# Familiar places are the default: first rooms the player has entered,
+		# then the rest of the discovered map. Hidden real nodes remain the last
+		# bucket so courier work can still pull the player into unseen town.
+		var bucket_index := 0 if str(node.get("state", "hidden")) == WorldMap.STATE_VISITED else 1 if WorldMap.is_node_visible(world_map, node_id) else 2
+		(buckets[bucket_index] as Array).append(node_id)
+	var candidates: Array = []
+	var target_rng := create_rng("delivery_targets:%s:%d" % [str(spec.get("run_id", spec.get("route_id", "delivery"))), _crew_action_index()])
+	for bucket_value in buckets:
+		var bucket: Array = bucket_value
+		bucket.sort()
+		for chosen_value in target_rng.pick_many(bucket, bucket.size()):
+			candidates.append(str(chosen_value))
+	var chosen_ids := requested if not requested.is_empty() else candidates.slice(0, mini(count, candidates.size()))
+	if chosen_ids.size() != count:
+		return {"ok": false, "message": "The job has no complete real route tonight."}
+	var reveal_ids: Array = []
+	var targets: Array = []
+	for node_id_value in chosen_ids:
+		var node_id := str(node_id_value)
+		if not candidates.has(node_id):
+			return {"ok": false, "message": "%s is not a reachable venue tonight." % node_id.replace("_", " ").capitalize()}
+		var path := WorldMap.path_between(world_map, origin_id, node_id, false) if node_id != origin_id else [origin_id]
+		if path.is_empty() or not _delivery_path_uses_real_edges(path):
+			return {"ok": false, "message": "The route to %s is not a real map path." % node_id.replace("_", " ").capitalize()}
+		for path_id_value in path:
+			var path_id := str(path_id_value)
+			if not WorldMap.is_node_visible(world_map, path_id) and not reveal_ids.has(path_id):
+				reveal_ids.append(path_id)
+		var node := WorldMap.node_metadata_by_id(world_map, node_id)
+		targets.append({
+			"id": "delivery_target_%s" % node_id,
+			"node_id": node_id,
+			"label": str(node.get("label", node_id.replace("_", " ").capitalize())),
+			"was_visited_at_offer": str(node.get("state", "hidden")) == WorldMap.STATE_VISITED,
+			"was_visible_at_offer": WorldMap.is_node_visible(world_map, node_id),
+			"revealed_by_job": not WorldMap.is_node_visible(world_map, node_id),
+		})
+	var offered_map := WorldMap.unlock_nodes(world_map, reveal_ids, WorldMap.DISCOVERY_SOURCE_EVENT)
+	for target_value in targets:
+		var node_id := str((target_value as Dictionary).get("node_id", ""))
+		var visible_path := WorldMap.path_between(offered_map, origin_id, node_id, true) if node_id != origin_id else [origin_id]
+		if visible_path.is_empty() or not _delivery_path_uses_real_edges(visible_path, offered_map):
+			return {"ok": false, "message": "The revealed courier route is incomplete."}
+	return {"ok": true, "targets": targets, "world_map": offered_map}
+
+
+func _delivery_path_uses_real_edges(path: Array, map_value: Dictionary = {}) -> bool:
+	var source_map := world_map if map_value.is_empty() else map_value
+	if path.size() == 1:
+		return true
+	for index in range(path.size() - 1):
+		if WorldMap.edge_between(source_map, str(path[index]), str(path[index + 1])).is_empty():
+			return false
+	return path.size() >= 2
+
+
+func _delivery_scenario_law_pressure(node_ids: Array) -> int:
+	var total := 0
+	var seen := {}
+	for node_id_value in node_ids:
+		var node_id := str(node_id_value).strip_edges()
+		if node_id.is_empty() or seen.has(node_id):
+			continue
+		seen[node_id] = true
+		var definition := seeded_scenario_definition_for_node(node_id)
+		var mutations: Dictionary = definition.get("mutations", {}) if typeof(definition.get("mutations", {})) == TYPE_DICTIONARY else {}
+		var security: Dictionary = mutations.get("security_overrides", {}) if typeof(mutations.get("security_overrides", {})) == TYPE_DICTIONARY else {}
+		match str(security.get("strictness_band", "")).to_lower():
+			"high", "strict", "maximum":
+				total += 2
+			"medium", "uneven":
+				total += 1
+	return clampi(total, 0, 4)
+
+
+func _delivery_arrival_security_heat() -> int:
+	if not delivery_has_active_run():
+		return 0
+	var heat := maxi(0, int(active_delivery_run.get("cargo_heat_per_travel", 2)))
+	var security := _copy_dict(current_environment.get("security_profile", {}))
+	match str(security.get("strictness_band", security.get("strictness", "low"))).to_lower():
+		"medium":
+			heat += 1
+		"high", "strict", "maximum":
+			heat += 2
+	heat += _delivery_scenario_law_pressure([current_world_node_id()])
+	return heat
+
+
+func _apply_delivery_resolution() -> void:
+	if active_delivery_run.is_empty() or str(active_delivery_run.get("status", "")) != "resolved" or bool(active_delivery_run.get("world_applied", false)):
 		return
-	var resolution := _copy_dict(active_streets_run.get("resolution", {}))
+	var resolution := _copy_dict(active_delivery_run.get("resolution", {}))
 	var succeeded := str(resolution.get("outcome", "")) == "success"
-	var payload := _copy_dict(active_streets_run.get("consumer_payload", {}))
+	var payload := _copy_dict(active_delivery_run.get("consumer_payload", {}))
 	var effects := _copy_dict(payload.get("success" if succeeded else "failure", {}))
-	var reason := str(resolution.get("reason", ""))
+	var reason := str(resolution.get("reason", "failed"))
 	var cash := maxi(0, int(effects.get("cash", 0)))
 	if succeeded and bool(resolution.get("clean", false)) and bool(resolution.get("fast", false)):
 		cash += maxi(0, int(effects.get("clean_speed_bonus_cash", 0)))
 	if cash > 0:
 		change_bankroll(cash, true)
 	var heat := maxi(0, int(effects.get("heat", 0)))
-	if reason == "ditched":
+	if reason == "abandoned":
 		heat = 0
 	if heat > 0:
-		add_suspicion("streets:%s" % reason, heat, "contraband", true, {"route_id": str(active_streets_run.get("route_id", ""))}, true)
+		add_suspicion("delivery:%s" % reason, heat, "contraband", true, {"run_id": str(active_delivery_run.get("run_id", ""))}, true)
 	for flag_value in _copy_dict(effects.get("flags", {})).keys():
 		narrative_flags[str(flag_value)] = _copy_dict(effects.get("flags", {})).get(flag_value)
-	var job_id := str(active_streets_run.get("job_id", ""))
+	var job_id := str(active_delivery_run.get("job_id", ""))
 	if not job_id.is_empty():
 		job_resolve(job_id, "success" if succeeded else "failed")
+	var run_id := str(active_delivery_run.get("run_id", ""))
 	if numbers_state != null:
-		var route_id := str(active_streets_run.get("route_id", ""))
-		if route_id.begins_with("numbers_collection:"):
+		if run_id.begins_with("numbers_collection:"):
 			numbers_state.resolve_collection(succeeded, reason, resolution)
-			if not succeeded and reason == "ditched" and not bool(narrative_flags.get("numbers_collection_was_swept", false)):
-				grievance_add({"member_id": "crew_lucky", "kind": "job_abandoned", "weight": 1, "source_ref": str(active_streets_run.get("job_id", route_id))})
-			narrative_flags.erase("numbers_collection_was_swept")
-		elif route_id.begins_with("numbers_fix_bribe:"):
+			if not succeeded and reason == "abandoned":
+				grievance_add({"member_id": "crew_lucky", "kind": "job_abandoned", "weight": 1, "source_ref": str(active_delivery_run.get("job_id", run_id))})
+		elif run_id.begins_with("numbers_fix_bribe:"):
 			numbers_state.fix_record_bribe(succeeded, resolution)
-	if bool(resolution.get("snitch_seen", false)):
-		var destination_id := str(active_streets_run.get("destination_node_id", current_world_node_id()))
-		register_rumor_fact("numbers_whisper", "streets_snitch:%s:%d" % [str(active_streets_run.get("route_id", "run")), int(active_streets_run.get("turn", 0))], {
-			"target_node_id": destination_id,
-			"source_id": "silas_snitch_window",
-			"route_id": str(active_streets_run.get("route_id", "")),
-		})
-		record_reputation_incident("alarm_tripped", destination_id, 0.5, {"source_id": "snitch_window"})
-	active_streets_run["world_applied"] = true
+	active_delivery_run["world_applied"] = true
 
 
-func _streets_world_context(spec: Dictionary) -> Dictionary:
-	var origin_id := str(spec.get("origin_node_id", current_world_node_id())).strip_edges()
-	var destination_id := str(spec.get("destination_node_id", origin_id)).strip_edges()
-	var reputation := 0.0
-	if town_state != null:
-		reputation = float(town_state.local_reputation(origin_id).get("attention", 0.0))
-	var sweep_delta := 0
-	if town_state != null:
-		var sweep := town_state.sweep_internal_status()
-		var sweep_node := str(sweep.get("current_node_id", ""))
-		var sweep_heading := str(sweep.get("heading_node_id", ""))
-		if bool(sweep.get("active", false)) and (sweep_node in [origin_id, destination_id] or sweep_heading in [origin_id, destination_id]):
-			sweep_delta += 2
-		if not town_state.swept_window(origin_id).is_empty() or not town_state.swept_window(destination_id).is_empty():
-			sweep_delta += 1
-	var scenario_patrol_delta := _streets_scenario_patrol_delta([origin_id, destination_id])
-	return {
-		"weather": weather_now(),
-		"day_type": day_type(),
-		"happenings": active_happenings(),
-		"heat": suspicion_level(),
-		"reputation": int(round(reputation * 25.0)),
-		"sweep_density_delta": sweep_delta,
-		"scenario_patrol_density_delta": scenario_patrol_delta,
-	}
-
-
-func _streets_scenario_patrol_delta(node_ids: Array) -> int:
-	var total := 0
-	var visited := {}
-	for node_id_value in node_ids:
-		var node_id := str(node_id_value).strip_edges()
-		if node_id.is_empty() or visited.has(node_id):
-			continue
-		visited[node_id] = true
-		var public_scenario := scenario_for_node(node_id)
-		var scenario_id := str(public_scenario.get("id", "")).strip_edges()
-		if scenario_id.is_empty():
-			continue
-		var definition := seeded_scenario_definition_for_node(node_id)
-		if str(definition.get("id", "")) != scenario_id:
-			continue
-		total += clampi(int(definition.get("streets_patrol_density_delta", 0)), 0, 4)
-	return clampi(total, 0, 6)
-
-
-func _streets_default_edge() -> Dictionary:
-	var origin_id := current_world_node_id()
-	var edges: Array = world_map.get("edges", []) if typeof(world_map.get("edges", [])) == TYPE_ARRAY else []
-	for edge_value in edges:
-		if typeof(edge_value) != TYPE_DICTIONARY:
-			continue
-		var edge: Dictionary = edge_value
-		var a := str(edge.get("a", ""))
-		var b := str(edge.get("b", ""))
-		if a != origin_id and b != origin_id:
-			continue
-		var destination_id := b if a == origin_id else a
-		return {
-			"origin_node_id": origin_id,
-			"destination_node_id": destination_id,
-			"destination_label": destination_id.replace("_", " ").capitalize(),
-			"distance": str(edge.get("distance", "near")),
-			"distance_blocks": int(edge.get("distance_blocks", 2)),
-		}
-	return {
-		"origin_node_id": origin_id if not origin_id.is_empty() else "street_start",
-		"destination_node_id": "%s_drop" % origin_id if not origin_id.is_empty() else "crew_drop",
-		"destination_label": "the Crew's drop",
-		"distance": "near",
-		"distance_blocks": 2,
-	}
+func _migrate_legacy_streets_run(legacy_state: Dictionary) -> void:
+	var legacy_status := str(legacy_state.get("status", "")).strip_edges()
+	if legacy_status.is_empty():
+		return
+	var job_id := str(legacy_state.get("job_id", "")).strip_edges()
+	if not job_id.is_empty():
+		var job := _crew_job(job_id)
+		if not job.is_empty() and str(job.get("status", "")) != "resolved":
+			job["status"] = "resolved"
+			job["outcome"] = "migration_closed"
+			job["resolved_action"] = _crew_action_index()
+			crew_jobs[job_id] = job
+	var route_id := str(legacy_state.get("route_id", ""))
+	if numbers_state != null and route_id.begins_with("numbers_collection:") and str(numbers_state.collection_state.get("status", "")) == "active":
+		numbers_state.resolve_collection(false, "migration_closed", {})
+	elif numbers_state != null and route_id.begins_with("numbers_fix_bribe:"):
+		numbers_state.fix_record_bribe(false, {"reason": "migration_closed"})
+	narrative_flags["delivery_legacy_board_migrated"] = true
+	log_story({
+		"type": "delivery_migration",
+		"message": "An old street-board route was closed cleanly during save migration.",
+		"legacy_route_id": route_id,
+		"job_id": job_id,
+	})
+	print("RUN_SAVE_MIGRATION active_streets_run closed; synthetic geography is no longer supported.")
 
 
 func default_debt(debt_id: String) -> Dictionary:
@@ -7406,8 +7530,8 @@ func sweep_interplay_seams(node_id: String = "") -> Dictionary:
 		"knuckles_stash_active": false,
 		"numbers_pause_registered": true,
 		"numbers_pause_active": false,
-		"streets_patrol_density_registered": true,
-		"streets_patrol_density_delta": 0,
+		"delivery_carrier_risk_registered": true,
+		"delivery_law_pressure_delta": _delivery_scenario_law_pressure([target]),
 		"swept_window": swept_window(target),
 	}
 
@@ -8413,6 +8537,15 @@ func advance_environment_turns(amount: int = 1) -> void:
 func _advance_global_boundary_start(safe_amount: int) -> void:
 	if town_state != null:
 		town_state.advance_actions(safe_amount)
+	if delivery_has_active_run() and safe_amount > 0:
+		active_delivery_run = DeliveryRunModelScript.advance_boundaries(
+			active_delivery_run,
+			safe_amount,
+			current_world_node_id(),
+			suspicion_level(),
+			_crew_action_index()
+		)
+		_apply_delivery_resolution()
 	simulation_msec = maxi(0, simulation_msec + safe_amount * SIMULATION_ACTION_MSEC)
 	event_cadence_advance_actions(safe_amount)
 	if numbers_state != null:
@@ -8452,15 +8585,15 @@ func _advance_crew_jobs() -> void:
 		var job := _crew_job(str(job_id_value))
 		if str(job.get("status", "")) == "resolved":
 			continue
-		var linked_streets_job_pending := (
-			not active_streets_run.is_empty()
-			and str(active_streets_run.get("job_id", "")) == str(job_id_value)
+		var linked_delivery_job_pending := (
+			not active_delivery_run.is_empty()
+			and str(active_delivery_run.get("job_id", "")) == str(job_id_value)
 			and (
-				str(active_streets_run.get("status", "")) == "active"
-				or not bool(active_streets_run.get("world_applied", false))
+				str(active_delivery_run.get("status", "")) == "active"
+				or not bool(active_delivery_run.get("world_applied", false))
 			)
 		)
-		if linked_streets_job_pending:
+		if linked_delivery_job_pending:
 			continue
 		if action_index >= int(job.get("expires_at_action", action_index + 1)):
 			expiring_ids.append(str(job_id_value))
@@ -8612,7 +8745,11 @@ func _resolve_police_sweep_encounter(claim: Dictionary) -> Dictionary:
 			if not contraband_ids.is_empty():
 				contraband_ids.sort()
 				var confiscated_id := str(contraband_ids[encounter_rng.randi_range(0, contraband_ids.size() - 1)])
-				remove_item(confiscated_id)
+				if confiscated_id.begins_with("delivery:"):
+					active_delivery_run = DeliveryRunModelScript.confiscate(active_delivery_run, "swept")
+					_apply_delivery_resolution()
+				else:
+					remove_item(confiscated_id)
 				result["confiscated_item_id"] = confiscated_id
 				result["cost_kind"] = "contraband"
 				result["cost_amount"] = 1
@@ -8646,15 +8783,10 @@ func _resolve_police_sweep_encounter(claim: Dictionary) -> Dictionary:
 				result["cost_amount"] = near_miss_lock
 		_:
 			pass
-	if numbers_state != null and str(numbers_state.collection_state.get("status", "")) == "active":
+	if numbers_state != null and str(result.get("confiscated_item_id", "")).begins_with("delivery:numbers_slips"):
 		var swept_bag_value := maxi(0, int(numbers_state.collection_state.get("bag_value", 0)))
 		var swept_collection := numbers_state.confiscate_open_slips("collection_sweep")
-		var collection := numbers_state.resolve_collection(false, "swept", result)
-		var collection_job_id := str(collection.get("job_id", ""))
-		if not collection_job_id.is_empty():
-			job_resolve(collection_job_id, "failed")
-		narrative_flags["numbers_collection_sweep_confiscation_pending"] = true
-		narrative_flags["numbers_collection_was_swept"] = true
+		var collection_job_id := str(active_delivery_run.get("job_id", ""))
 		var swept_heat := maxi(0, int(_copy_dict(NumbersModelScript.tuning().get("runner", {})).get("swept_heat", 14)))
 		if swept_heat > 0:
 			add_suspicion("numbers_collection_swept", swept_heat, "contraband", true, {"node_id": node_id}, true)
@@ -8765,6 +8897,8 @@ func _carried_contraband_ids() -> Array:
 		var risk_flags := _string_array(_copy_array(definition.get("risk_flags", [])))
 		if str(definition.get("class", "")).strip_edges().to_lower() == "contraband" or risk_flags.has("contraband"):
 			result.append(item_id)
+	if delivery_has_active_run():
+		result.append("delivery:%s" % str(active_delivery_run.get("cargo_id", "cargo")))
 	return result
 
 
@@ -9836,7 +9970,7 @@ func to_dict() -> Dictionary:
 		"story_log": _normalize_story_log(story_log),
 		"story_log_archive_count": story_log_archive_count,
 		"crew_state": _crew_state_for_save(true),
-		"active_streets_run": active_streets_run.duplicate(true),
+		"active_delivery_run": active_delivery_run.duplicate(true),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": normalize_heat_history(heat_history),
 		"town_state": town_state.snapshot() if town_state != null else {},
@@ -9914,7 +10048,7 @@ func to_save_snapshot() -> Dictionary:
 		"story_log": story_log.duplicate(false),
 		"story_log_archive_count": story_log_archive_count,
 		"crew_state": _crew_state_for_save(false),
-		"active_streets_run": active_streets_run.duplicate(false),
+		"active_delivery_run": active_delivery_run.duplicate(false),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": heat_history.duplicate(false),
 		"town_state": town_state.snapshot() if town_state != null else {},
@@ -9936,6 +10070,7 @@ func to_save_snapshot() -> Dictionary:
 # Restores the run from saved data.
 func from_dict(data: Dictionary) -> void:
 	var saved_crew_state: Dictionary = data.get("crew_state", {}) if typeof(data.get("crew_state", {})) == TYPE_DICTIONARY else {}
+	var legacy_streets_migration := _copy_dict(data.get("active_streets_run", {}))
 	seed_text = str(data.get("seed_text", "FOUNDATION-SEED"))
 	seed_value = int(data.get("seed_value", text_to_seed(seed_text)))
 	rng_seed = int(data.get("rng_seed", seed_value))
@@ -10015,7 +10150,7 @@ func from_dict(data: Dictionary) -> void:
 	narrative_flags = _copy_dict(data.get("narrative_flags", {}))
 	story_flags = _copy_dict(data.get("story_flags", {}))
 	_restore_crew_state(saved_crew_state, not data.has("crew_state"))
-	active_streets_run = StreetsRunModelScript.normalize_state(data.get("active_streets_run", {}))
+	active_delivery_run = DeliveryRunModelScript.normalize_state(data.get("active_delivery_run", {}))
 	numbers_state = NumbersModelScript.new()
 	var saved_numbers_value: Variant = data.get("numbers_state", {})
 	if typeof(saved_numbers_value) == TYPE_DICTIONARY and not (saved_numbers_value as Dictionary).is_empty():
@@ -10036,6 +10171,8 @@ func from_dict(data: Dictionary) -> void:
 		if typeof(story_entry_value) == TYPE_DICTIONARY:
 			_remember_story_seen_flags(story_entry_value as Dictionary)
 	_compact_story_log()
+	if active_delivery_run.is_empty() and not legacy_streets_migration.is_empty():
+		_migrate_legacy_streets_run(legacy_streets_migration)
 	# Restore the authoritative clock before synthesizing any missing timeline
 	# sample. Older saves without heat history must not receive a fake Day-1 row.
 	game_clock_minutes = maxi(0, int(data.get("game_clock_minutes", GAME_CLOCK_START_MINUTE)))

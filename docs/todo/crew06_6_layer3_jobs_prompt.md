@@ -17,7 +17,7 @@ Copy everything below this line into the agent.
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). env06_4 shipped
 the Punchline with L3 as a shell; crew06_1 shipped the job framework;
-streets06_1 shipped playable runs; crew06_5 shipped recruitment.
+rework06_1 replaced the rejected Streets board with real-map delivery runs; crew06_5 shipped recruitment.
 Binding design contract: `docs/plans/0.6_living_world_roadmap.md` —
 Pillar 3 "Layer 3", "Jobs", and the Practice Rig. This prompt is
 self-contained for rules and scope.
@@ -36,7 +36,7 @@ self-contained for rules and scope.
 
 ## Dependencies
 
-`crew06_1`, `env06_4`, `streets06_1`, `crew06_5` DONE. Coordinate with
+`crew06_1`, `env06_4`, `rework06_1`, `crew06_5` DONE. Coordinate with
 crew06_2 (poker table lives here) and crew06_3 (Numbers desk) via the
 board — whichever lands later integrates with the earlier one's
 furniture; verify by code.
@@ -56,15 +56,16 @@ furniture; verify by code.
   their contextual lines and offer their jobs in person.
 - L3 services: Rook's ride (a free/discounted travel service with
   data-limited uses per rank — routes through normal travel, no
-  Streets board), Mags' bench (item repair/upgrade seam —
+  separate delivery surface), Mags' bench (item repair/upgrade seam —
   content06_1 fills the catalog; ship the service surface).
 
 ### 2. The job board
 
 - The board surfaces available jobs from all met members
   (`data/crew/jobs.json` — extend the schema as needed, never fork
-  it): package runs (Streets), Numbers routes (if crew06_3 landed),
-  lookout holds (Streets hold mode), **stake-horse plays** (new here:
+  it): package runs (the real-map `delivery_begin_package` API),
+  Numbers routes (if crew06_3 landed), lookout holds (the real-venue
+  `delivery_begin_hold` mode), **stake-horse plays** (new here:
   gamble crew money at a named venue/game with a target; hit target =
   split + trust; bust = trust hit and, if the player shrugs it off
   through the offered choice beat, the `stake_horse_loss_shrugged`
