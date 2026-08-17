@@ -2316,6 +2316,7 @@ func _check_world_map_payload_independent_read_paths(library: ContentLibrary, fa
 
 func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> void:
 	var generator: RunGenerator = RunGeneratorScript.new(library)
+	var topology_map_service := WorldMapScript.new(library)
 	var run_a: RunState = RunStateScript.new()
 	run_a.start_new("WORLD-MAP-SEED")
 	var start_environment := generator.next_environment(run_a)
@@ -2361,7 +2362,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	for tip_seed_index in range(20):
 		var tip_run: RunState = RunStateScript.new()
 		tip_run.start_new("WORLD-MAP-UNDERGROUND-TIP-%02d" % tip_seed_index)
-		generator.next_environment(tip_run)
+		_build_topology_only_world_map(tip_run, topology_map_service)
 		var underground_id := WorldMapScript.UNDERGROUND_SHORTCUT_ID
 		if WorldMapScript.visible_node_ids(tip_run.world_map).has(underground_id):
 			failures.append("World map showed the underground casino before the parking lot tip for seed %02d." % tip_seed_index)
@@ -2394,7 +2395,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	for leak_seed_index in range(20):
 		var leak_run: RunState = RunStateScript.new()
 		leak_run.start_new("WORLD-MAP-FOG-%02d" % leak_seed_index)
-		generator.next_environment(leak_run)
+		_build_topology_only_world_map(leak_run, topology_map_service)
 		var hidden_selected_id := _first_hidden_world_node_id(leak_run.world_map)
 		var leak_snapshot := WorldMapScript.snapshot(leak_run.world_map, hidden_selected_id)
 		var leaked_ids := _world_map_snapshot_hidden_leaks(leak_run.world_map, leak_snapshot)
@@ -2422,7 +2423,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	for seed_index in range(50):
 		var reach_run: RunState = RunStateScript.new()
 		reach_run.start_new("WORLD-MAP-REACH-%02d" % seed_index)
-		generator.next_environment(reach_run)
+		_build_topology_only_world_map(reach_run, topology_map_service)
 		var hops := _world_map_hops_to(reach_run.world_map, reach_run.current_world_node_id(), RunState.GRAND_CASINO_ARCHETYPE_ID)
 		if hops < 0 or hops > 6:
 			failures.append("World map reachability failed for seed %02d: Grand Casino hops=%d." % [seed_index, hops])
@@ -2481,7 +2482,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	for policy_seed_index in range(20):
 		var policy_run: RunState = RunStateScript.new()
 		policy_run.start_new("WORLD-MAP-POLICY-%02d" % policy_seed_index)
-		generator.next_environment(policy_run)
+		_build_topology_only_world_map(policy_run, topology_map_service)
 		var policy_targets := WorldMapScript.travel_target_ids(policy_run.world_map, policy_run.current_world_node_id())
 		if policy_targets.size() > WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
 			failures.append("World map target policy exceeded total cap for seed %02d." % policy_seed_index)
@@ -2497,7 +2498,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	for beach_seed_index in range(50):
 		var beach_run: RunState = RunStateScript.new()
 		beach_run.start_new("WORLD-MAP-BEACH-%02d" % beach_seed_index)
-		generator.next_environment(beach_run)
+		_build_topology_only_world_map(beach_run, topology_map_service)
 		if not _world_map_beach_delta_adjacency_ok(beach_run.world_map, "seed %02d" % beach_seed_index, failures):
 			break
 		if not _world_map_beach_route_gate_ok(beach_run.world_map, "seed %02d" % beach_seed_index, library, failures):
@@ -2555,6 +2556,13 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("World map graph/discovery/path state did not survive RunState save/load.")
 	_check_unique_object_layout_classes(library, failures)
 	_check_generated_object_layout_stability(library, failures)
+
+
+func _build_topology_only_world_map(run_state: RunState, map_service: WorldMap) -> void:
+	# Match RunGenerator's exact world-map RNG seam without paying for an
+	# EnvironmentInstance when the assertion reads topology only.
+	var rng := run_state.create_rng()
+	run_state.set_world_map(map_service.build(run_state, rng.fork("world_map")))
 
 
 func _check_closing_soon_world_travel(library: ContentLibrary, failures: Array) -> void:
