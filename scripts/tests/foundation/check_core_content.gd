@@ -106,6 +106,11 @@ const FOUNDATION_SUITES := [
 
 var _foundation_active_suite := "contracts"
 var _surface_contract_script_cache: Dictionary = {}
+var _foundation_requested_check_ids: Dictionary = {}
+var _foundation_content_library_ref: ContentLibrary = null
+var _foundation_fixture_library_ref: ContentLibrary = null
+var _foundation_content_library_fingerprint := ""
+var _foundation_fixture_library_fingerprint := ""
 
 
 class ScenarioModifierProbeGame:
@@ -357,10 +362,25 @@ func _init() -> void:
 	_foundation_active_suite = str(options.get("suite", "contracts"))
 	var failures: Array = []
 	var report := _foundation_report(_foundation_active_suite)
+	var requested_check_ids: Array = options.get("check_ids", [])
+	for check_id_value in requested_check_ids:
+		var check_id := str(check_id_value)
+		if _foundation_requested_check_ids.has(check_id):
+			failures.append("Foundation check filter contains duplicate id: %s." % check_id)
+		_foundation_requested_check_ids[check_id] = true
+	report["requested_check_ids"] = requested_check_ids.duplicate()
 	var content_library: ContentLibrary = ContentLibraryScript.new()
 	content_library.load()
 	var fixture_library := _fixture_library()
+	_foundation_content_library_ref = content_library
+	_foundation_fixture_library_ref = fixture_library
+	_foundation_content_library_fingerprint = _foundation_library_fingerprint(content_library)
+	_foundation_fixture_library_fingerprint = _foundation_library_fingerprint(fixture_library)
 	_foundation_run_suite(_foundation_active_suite, content_library, fixture_library, failures, report)
+	var registered_check_ids: Array = report.get("registered_check_ids", [])
+	for check_id_value in requested_check_ids:
+		if not registered_check_ids.has(str(check_id_value)):
+			failures.append("Foundation check filter requested unregistered id: %s." % str(check_id_value))
 	report["duration_msec"] = Time.get_ticks_msec() - int(report.get("started_msec", 0))
 	report["failure_count"] = failures.size()
 	report["failures"] = failures.duplicate()
@@ -385,6 +405,7 @@ func _foundation_options() -> Dictionary:
 		"suite": "contracts",
 		"report": FOUNDATION_DEFAULT_REPORT_PATH,
 		"list": false,
+		"check_ids": [],
 	}
 	for raw_arg in OS.get_cmdline_user_args():
 		var arg := str(raw_arg).strip_edges()
@@ -394,6 +415,13 @@ func _foundation_options() -> Dictionary:
 			options["suite"] = _foundation_normalized_suite(arg.get_slice("=", 1))
 		elif arg.begins_with("--report="):
 			options["report"] = arg.get_slice("=", 1)
+		elif arg.begins_with("--check-ids="):
+			var check_ids: Array = []
+			for id_value in arg.get_slice("=", 1).split(",", false):
+				var check_id := str(id_value).strip_edges()
+				if not check_id.is_empty():
+					check_ids.append(check_id)
+			options["check_ids"] = check_ids
 	return options
 
 
@@ -426,6 +454,9 @@ func _foundation_report(suite: String) -> Dictionary:
 		"failure_count": 0,
 		"failures": [],
 		"checks": [],
+		"registered_check_ids": [],
+		"requested_check_ids": [],
+		"executed_check_ids": [],
 		"skipped": [],
 		"last_started_check": "",
 	}
@@ -565,6 +596,10 @@ func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library:
 
 
 func _foundation_run_check(report: Dictionary, failures: Array, check_id: String, callable: Callable, args: Array) -> void:
+	(report["registered_check_ids"] as Array).append(check_id)
+	if not _foundation_requested_check_ids.is_empty() and not _foundation_requested_check_ids.has(check_id):
+		(report["skipped"] as Array).append(check_id)
+		return
 	var start_msec := Time.get_ticks_msec()
 	var before_failures := failures.size()
 	report["last_started_check"] = check_id
@@ -572,15 +607,51 @@ func _foundation_run_check(report: Dictionary, failures: Array, check_id: String
 	var call_args := args.duplicate()
 	call_args.append(failures)
 	callable.callv(call_args)
+	if _foundation_library_fingerprint(_foundation_content_library_ref) != _foundation_content_library_fingerprint:
+		failures.append("Foundation check %s mutated the shared production ContentLibrary." % check_id)
+	if _foundation_library_fingerprint(_foundation_fixture_library_ref) != _foundation_fixture_library_fingerprint:
+		failures.append("Foundation check %s mutated the shared fixture ContentLibrary." % check_id)
 	var duration := Time.get_ticks_msec() - start_msec
 	var failure_delta := failures.size() - before_failures
+	var check_failures: Array = []
+	for failure_index in range(before_failures, failures.size()):
+		check_failures.append(failures[failure_index])
 	(report["checks"] as Array).append({
 		"id": check_id,
 		"duration_msec": duration,
 		"failure_count": failure_delta,
+		"failures": check_failures,
 		"passed": failure_delta == 0,
 	})
+	(report["executed_check_ids"] as Array).append(check_id)
 	print("FOUNDATION_CHECK_DONE id=%s duration_msec=%d failures=%d" % [check_id, duration, failure_delta])
+
+
+func _foundation_library_fingerprint(library: ContentLibrary) -> String:
+	if library == null:
+		return ""
+	return JSON.stringify({
+		"environment_archetypes": library.environment_archetypes,
+		"environment_scenarios": library.environment_scenarios,
+		"games": library.games,
+		"scratch_ticket_types": library.scratch_ticket_types,
+		"items": library.items,
+		"content_groups": library.content_groups,
+		"events": library.events,
+		"dialogues": library.dialogues,
+		"characters": library.characters,
+		"character_pools": library.character_pools,
+		"challenges": library.challenges,
+		"lenders": library.lenders,
+		"services": library.services,
+		"travel_routes": library.travel_routes,
+		"music_tracks": library.music_tracks,
+		"tutorial_lessons": library.tutorial_lessons,
+		"town_conditions": library.town_conditions,
+		"validation_errors": library.validation_errors,
+		"validation_warnings": library.validation_warnings,
+		"validation_complete": library.validation_complete,
+	})
 
 
 func _foundation_write_report(report_path: String, report: Dictionary) -> void:
