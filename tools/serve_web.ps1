@@ -1,12 +1,11 @@
 # Serves the local Web build with production-compatible isolation headers.
 #
-# The shipped 0.5 Web preset is single-threaded and does not require
-# SharedArrayBuffer. These headers preserve compatibility with isolated hosting
-# and make this local server representative of stricter production embeds:
+# The Web preset is single-threaded, but its GDExtension side module still
+# requires cross-origin isolation. These headers match the required itch.io
+# SharedArrayBuffer hosting mode:
 #   Cross-Origin-Opener-Policy: same-origin
 #   Cross-Origin-Embedder-Policy: require-corp
-# This script serves builds/web with those headers while retaining normal
-# single-thread operation when a host does not provide them.
+# This script serves builds/web with those required headers.
 #
 # Examples:
 #   .\tools\serve_web.ps1               # serve at http://127.0.0.1:8060 and open a browser
@@ -55,7 +54,7 @@ class IsolatedHandler(SimpleHTTPRequestHandler):
             pass
 
 print(f"Serving {directory}")
-print(f"  http://127.0.0.1:{port}  (production-compatible isolation headers)")
+print(f"  http://127.0.0.1:{port}  (required GDExtension isolation headers)")
 print("  Ctrl+C to stop.")
 HTTPServer(("127.0.0.1", port), IsolatedHandler).serve_forever()
 '@

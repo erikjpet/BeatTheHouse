@@ -104,6 +104,25 @@ function Assert-CleanDistributionOutput {
     }
 }
 
+function Assert-NativeSolverExport {
+    param(
+        [string]$Directory,
+        [ValidateSet("web", "windows")]
+        [string]$ExportTarget
+    )
+    $extension = if ($ExportTarget -eq "web") { ".wasm" } else { ".dll" }
+    $nativeLibraries = @(
+        Get-ChildItem -LiteralPath $Directory -File -Recurse -Force |
+            Where-Object {
+                $_.Name -like "coin_pusher_native*$extension" -and
+                $_.Name -like "*.nothreads$extension"
+            }
+    )
+    if ($nativeLibraries.Count -ne 1) {
+        throw "Expected exactly one exported Coin Pusher native $ExportTarget library, found $($nativeLibraries.Count). Refusing to package a build without the native solver."
+    }
+}
+
 # Per-target configuration.
 $config = @{
     "web"     = @{ Preset = "Web";          Out = "builds/web/index.html";          Dir = "builds/web";     Zip = "BeatTheHouse-web.zip";     DefaultChannel = "html" }
@@ -123,10 +142,17 @@ if ($presetFeatures -notcontains "distribution_build") {
 
 Write-Host "Release version from project.godot: $projectVersion"
 Write-Host "Fresh-install storage namespace: user://distribution (isolated from editor saves)"
+$godot = Resolve-Godot
+$nativeBuildTarget = if ($Debug) { "template_debug" } else { "template_release" }
 
 # 1. Export from Godot.
 if (-not $SkipExport) {
-    $godot = Resolve-Godot
+    $nativePlatform = if ($Target -eq "web") { "Web" } else { "Windows" }
+    Write-Host "Building and verifying the locked native Coin Pusher solver ($nativePlatform/$nativeBuildTarget) ..."
+    & (Join-Path $PSScriptRoot "build_native_solver.ps1") -Platform $nativePlatform -Target $nativeBuildTarget -GodotPath $godot
+    if ($LASTEXITCODE -ne 0) {
+        throw "Native Coin Pusher solver build or runtime preflight failed."
+    }
     Clear-DirectoryContents $outDir
     if ($Debug) { $exportFlag = "--export-debug" } else { $exportFlag = "--export-release" }
     Write-Host "Exporting preset '$($cfg.Preset)' ($exportFlag) with: $godot"
@@ -139,12 +165,17 @@ if (-not $SkipExport) {
     }
 }
 else {
+    & (Join-Path $PSScriptRoot "verify_native_solver_runtime.ps1") -GodotPath $godot -RequireWebTemplate:($Target -eq "web")
+    if ($LASTEXITCODE -ne 0) {
+        throw "Native solver runtime preflight failed; refusing to repackage an unverified build."
+    }
     if (-not (Test-Path $outFile)) {
         throw "-SkipExport was set but no existing build was found at: $outFile"
     }
 }
 
 Assert-CleanDistributionOutput $outDir
+Assert-NativeSolverExport -Directory $outDir -ExportTarget $Target
 
 # 2. Package the uploadable zip.
 #    For web the zip MUST contain index.html at its root, so we archive the
@@ -192,7 +223,7 @@ else {
         Write-Host "  1. Upload $($cfg.Zip) to your itch.io project."
         Write-Host "  2. Tick 'This file will be played in the browser'."
         Write-Host "  3. Embed options: set size 1280 x 720, enable the fullscreen button."
-        Write-Host "  4. SharedArrayBuffer support is optional; the shipped Web export is single-threaded."
+        Write-Host "  4. Enable SharedArrayBuffer support. Web GDExtension loading requires cross-origin isolation even though this build is single-threaded."
         Write-Host "  5. Butler channel: $($cfg.DefaultChannel); user version: $projectVersion."
     }
     else {

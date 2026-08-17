@@ -160,9 +160,52 @@ function Assert-UnderToolRoot {
 function Remove-ToolDirectory {
     param([string]$Path)
     Assert-UnderToolRoot $Path
-    if (Test-Path -LiteralPath $Path) {
-        Remove-Item -LiteralPath $Path -Recurse -Force
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return
     }
+    $rootItem = Get-Item -LiteralPath $Path -Force
+    if (-not $rootItem.PSIsContainer) {
+        throw "Remove-ToolDirectory requires a directory: $Path"
+    }
+    $stack = [System.Collections.Generic.Stack[object]]::new()
+    $postorder = [System.Collections.Generic.List[object]]::new()
+    $stack.Push($rootItem)
+    while ($stack.Count -gt 0) {
+        $directory = $stack.Pop()
+        $postorder.Add($directory)
+        foreach ($child in $directory.GetFileSystemInfos()) {
+            if (($child.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                $child.Delete()
+            }
+            elseif ($child -is [System.IO.DirectoryInfo]) {
+                $stack.Push($child)
+            }
+            else {
+                Remove-Item -LiteralPath $child.FullName -Force
+            }
+        }
+    }
+    for ($index = $postorder.Count - 1; $index -ge 0; --$index) {
+        Remove-Item -LiteralPath $postorder[$index].FullName -Force
+    }
+}
+
+function Enter-NativeBootstrapMutex {
+    param([string]$Name)
+    $mutex = [System.Threading.Mutex]::new($false, $Name)
+    $acquired = $false
+    try {
+        $acquired = $mutex.WaitOne(0)
+    }
+    catch [System.Threading.AbandonedMutexException] {
+        $acquired = $true
+        $script:NativeBootstrapRecoveredAbandonedMutex = $true
+    }
+    if (-not $acquired) {
+        $mutex.Dispose()
+        throw "Another native solver bootstrap is already running."
+    }
+    return $mutex
 }
 
 function Test-FileChecksum {
@@ -495,8 +538,14 @@ function Assert-ExactEmccVersion {
 
 function Invoke-SafeGit {
     param([string[]]$GitArguments, [string]$Failure)
-    $previousSystem = $env:GIT_CONFIG_NOSYSTEM
-    $previousGlobal = $env:GIT_CONFIG_GLOBAL
+    $savedConfigEnvironment = @{}
+    foreach ($entry in [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Process).GetEnumerator()) {
+        $name = [string]$entry.Key
+        if ($name -match '^GIT_CONFIG_(COUNT|KEY_[0-9]+|VALUE_[0-9]+|PARAMETERS|SYSTEM|GLOBAL|NOSYSTEM)$') {
+            $savedConfigEnvironment[$name] = [string]$entry.Value
+            [System.Environment]::SetEnvironmentVariable($name, $null, [System.EnvironmentVariableTarget]::Process)
+        }
+    }
     $previousPrompt = $env:GIT_TERMINAL_PROMPT
     try {
         $env:GIT_CONFIG_NOSYSTEM = "1"
@@ -505,8 +554,15 @@ function Invoke-SafeGit {
         return Invoke-NativeCommand { & git @GitArguments } $Failure
     }
     finally {
-        $env:GIT_CONFIG_NOSYSTEM = $previousSystem
-        $env:GIT_CONFIG_GLOBAL = $previousGlobal
+        foreach ($entry in [System.Environment]::GetEnvironmentVariables([System.EnvironmentVariableTarget]::Process).GetEnumerator()) {
+            $name = [string]$entry.Key
+            if ($name -match '^GIT_CONFIG_(COUNT|KEY_[0-9]+|VALUE_[0-9]+|PARAMETERS|SYSTEM|GLOBAL|NOSYSTEM)$') {
+                [System.Environment]::SetEnvironmentVariable($name, $null, [System.EnvironmentVariableTarget]::Process)
+            }
+        }
+        foreach ($name in $savedConfigEnvironment.Keys) {
+            [System.Environment]::SetEnvironmentVariable([string]$name, [string]$savedConfigEnvironment[$name], [System.EnvironmentVariableTarget]::Process)
+        }
         $env:GIT_TERMINAL_PROMPT = $previousPrompt
     }
 }
@@ -570,8 +626,8 @@ function Sync-PinnedRepository {
         New-Item -ItemType Directory -Path $stagingPath | Out-Null
         Invoke-SafeGit @("init", "--quiet", "--template=", $stagingPath) "Could not initialize transactional dependency repository" | Out-Null
         Write-SafeRepositoryConfig $stagingPath $Repository
-        Invoke-SafeGit @("-C", $stagingPath, "fetch", "--no-tags", "--depth", "1", "origin", $Commit) "Could not fetch pinned commit $Commit from $Repository" | Write-Host
-        Invoke-SafeGit @("-C", $stagingPath, "checkout", "--detach", "--force", $Commit) "Could not check out pinned commit $Commit" | Write-Host
+        Invoke-SafeGit @("-C", $stagingPath, "fetch", "--quiet", "--no-tags", "--depth", "1", "origin", $Commit) "Could not fetch pinned commit $Commit from $Repository" | Write-Host
+        Invoke-SafeGit @("-C", $stagingPath, "checkout", "--quiet", "--detach", "--force", $Commit) "Could not check out pinned commit $Commit" | Write-Host
         Invoke-SafeGit @("-C", $stagingPath, "clean", "-ffdx") "Could not clean transactional dependency checkout" | Write-Host
         if (-not (Test-PinnedRepository $Repository $Commit $stagingPath)) {
             throw "Transactional dependency checkout did not validate: $Repository@$Commit"
@@ -643,6 +699,26 @@ function Invoke-BootstrapSelfTest {
     finally {
         if (Test-Path -LiteralPath $junction) { Remove-Item -LiteralPath $junction -Force }
         Remove-ToolDirectory $junctionTarget
+    }
+
+    $nestedTree = Join-Path $toolRoot "self-test-nested-reparse-tree"
+    $nestedTarget = Join-Path $toolRoot "self-test-nested-reparse-target"
+    Remove-ToolDirectory $nestedTree
+    Remove-ToolDirectory $nestedTarget
+    try {
+        New-Item -ItemType Directory -Path (Join-Path $nestedTree "inner") -Force | Out-Null
+        New-Item -ItemType Directory -Path $nestedTarget | Out-Null
+        $outsideSentinel = Join-Path $nestedTarget "must-survive.txt"
+        [System.IO.File]::WriteAllText($outsideSentinel, "outside sentinel")
+        New-Item -ItemType Junction -Path (Join-Path $nestedTree "inner/escape") -Target $nestedTarget | Out-Null
+        Remove-ToolDirectory $nestedTree
+        if (-not (Test-Path -LiteralPath $outsideSentinel) -or (Test-Path -LiteralPath $nestedTree)) {
+            throw "Safe recursive cleanup traversed a nested junction or retained the guarded tree."
+        }
+    }
+    finally {
+        Remove-ToolDirectory $nestedTree
+        Remove-ToolDirectory $nestedTarget
     }
 
     $zipDestination = Join-Path $toolRoot "self-test-zip-destination"
@@ -773,6 +849,28 @@ function Invoke-BootstrapSelfTest {
         Move-Item -LiteralPath $repoOrigin -Destination $repoOffline
         $script:Force = $false
         try { Sync-PinnedRepository $repoOrigin $repoCommit $repoInstall } finally { $script:Force = $savedForce }
+        $hostileConfigNames = @("GIT_CONFIG_COUNT", "GIT_CONFIG_KEY_0", "GIT_CONFIG_VALUE_0")
+        $savedHostileConfig = @{}
+        foreach ($name in $hostileConfigNames) {
+            $savedHostileConfig[$name] = [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Process)
+        }
+        $env:GIT_CONFIG_COUNT = "1"
+        $env:GIT_CONFIG_KEY_0 = "core.hooksPath"
+        $env:GIT_CONFIG_VALUE_0 = "HOSTILE-INHERITED-HOOKS"
+        try {
+            $isolatedHooks = ([string](Invoke-SafeGit @("-C", $repoInstall, "config", "--get", "core.hooksPath") "Could not verify Git config-count isolation" | Select-Object -First 1)).Trim()
+            if ($isolatedHooks -cne "NUL") {
+                throw "Inherited Git config-count injection overrode the safe hooks path: $isolatedHooks"
+            }
+            if ($env:GIT_CONFIG_COUNT -cne "1" -or $env:GIT_CONFIG_KEY_0 -cne "core.hooksPath" -or $env:GIT_CONFIG_VALUE_0 -cne "HOSTILE-INHERITED-HOOKS") {
+                throw "Safe Git invocation did not restore the caller's config-count environment."
+            }
+        }
+        finally {
+            foreach ($name in $hostileConfigNames) {
+                [System.Environment]::SetEnvironmentVariable($name, $savedHostileConfig[$name], [System.EnvironmentVariableTarget]::Process)
+            }
+        }
         [System.IO.File]::WriteAllText((Join-Path $repoInstall "hostile.cpp"), "#error stale dependency source")
         if (Test-PinnedRepository $repoOrigin $repoCommit $repoInstall) {
             throw "Pinned repository validation accepted an untracked build source."
@@ -800,14 +898,30 @@ function Invoke-BootstrapSelfTest {
         throw "Native bootstrap mutex did not reject a concurrent process."
     }
     $global:LASTEXITCODE = 0
+    $abandonedName = "Local\BeatTheHouse_NativeSolver_Abandoned_$PID"
+    $abandonedObserver = [System.Threading.Mutex]::new($false, $abandonedName)
+    $abandonSource = '$m=[System.Threading.Mutex]::new($false,"' + $abandonedName + '");$null=$m.WaitOne();[System.Environment]::Exit(0)'
+    $abandonEncoded = [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($abandonSource))
+    $abandonProcess = Start-Process -FilePath powershell.exe -ArgumentList @("-NoProfile", "-EncodedCommand", $abandonEncoded) -WindowStyle Hidden -PassThru -Wait
+    if ($abandonProcess.ExitCode -ne 0) {
+        throw "Could not create abandoned-mutex recovery fixture."
+    }
+    $script:NativeBootstrapRecoveredAbandonedMutex = $false
+    $recoveredMutex = Enter-NativeBootstrapMutex $abandonedName
+    try {
+        if (-not $script:NativeBootstrapRecoveredAbandonedMutex) {
+            throw "Native bootstrap mutex helper did not exercise abandoned ownership recovery."
+        }
+    }
+    finally {
+        $recoveredMutex.ReleaseMutex()
+        $recoveredMutex.Dispose()
+        $abandonedObserver.Dispose()
+    }
     Write-Host "Native bootstrap hostile lock/archive/version/repository/reparse checks passed." -ForegroundColor Green
 }
 
-$bootstrapMutex = [System.Threading.Mutex]::new($false, "Local\BeatTheHouse_NativeSolver_Bootstrap_v1")
-if (-not $bootstrapMutex.WaitOne(0)) {
-    $bootstrapMutex.Dispose()
-    throw "Another native solver bootstrap is already running."
-}
+$bootstrapMutex = Enter-NativeBootstrapMutex "Local\BeatTheHouse_NativeSolver_Bootstrap_v1"
 try {
     Assert-NativeToolchainLock $lock
     if ($SelfTest) {
