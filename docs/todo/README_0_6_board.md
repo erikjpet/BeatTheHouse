@@ -541,6 +541,16 @@ What happens then is the owner's, not an agent's:
   oracle. Static acceptance still requires malformed candidate element checks
   before casts and explicit public-helper extrema/reject-before-mutation smoke.
   Candidate-body copy cost remains subject to the unchanged performance gate.
+- 2026-08-17 [pusher06_2 native static acceptance] Final independent review
+  ACCEPTS the corrected kernel/adapter scope: exact 48-tick order, defined
+  signed arithmetic, identity/ABI/schema selection, transactional fallback,
+  phase parity, live Array/Dictionary/nested-metadata aliases, ordered exits,
+  mutable-only publication, full nine-key integer metrics, malformed/immutable/
+  duplicate-ID hostiles, per-action carried native selection, and no production
+  clock reads. `git diff --check` is clean. Candidate-copy cost remains a runtime
+  performance gate. A newly built debug DLL then crashed during extension load
+  before the smoke script; that build is rejected pending exact-source rebuild
+  and registration/binary-compatibility isolation.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1258,3 +1268,7 @@ What happens then is the owner's, not an agent's:
 - 2026-08-17 [pusher06_2] Compact in-place publication and conditional phase
   writes now satisfy static alias/parity review. Malformed output and helper
   extrema hostiles remain before the next runtime build can be accepted.
+- 2026-08-17 [pusher06_2] Native kernel/adapter static scope is independently
+  ACCEPTED after the complete hostile matrix. Runtime remains red/open: debug
+  extension load crashed before script, and exactness plus <=16 ms performance
+  have not yet passed on a loadable final binary.
