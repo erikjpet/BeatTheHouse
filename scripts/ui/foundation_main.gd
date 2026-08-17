@@ -1362,6 +1362,11 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 			_show_message(str(result.get("message", "")))
 		elif bool(command.get("attention", false)) or bool(result.get("slot_pending_feature", false)):
 			_show_message(str(result.get("message", command.get("message", ""))))
+		# The background fixture is no longer the active presentation context once
+		# its result has been consumed. Restore the foreground selection before
+		# save preparation checkpoints the visible surface animation.
+		_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
+		game.set_transient_state_key_context(previous_state_key_context)
 		_advance_alcohol_absorption()
 		var autosave_started_usec := Time.get_ticks_usec()
 		_autosave_foundation_run("Autosaved.")
@@ -8512,15 +8517,14 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 		_show_message("%s feature is ready. Open the machine to play it." % game.get_display_name())
 	else:
 		_show_message(str(result.get("message", "")))
+	game.set_transient_state_key_context(previous_state_key_context)
+	_restore_environment_active_game_state_keys(run_state.current_environment, original_active_game_state_keys)
 	if bool(result.get("ok", false)):
 		_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
-	game.set_transient_state_key_context(previous_state_key_context)
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("environment_game"):
-		_restore_environment_active_game_state_keys(run_state.current_environment, original_active_game_state_keys)
 		_refresh_runtime_environment_views()
 		return
-	_restore_environment_active_game_state_keys(run_state.current_environment, original_active_game_state_keys)
 	_refresh_runtime_environment_views()
 
 
