@@ -2190,7 +2190,13 @@ func _merge_portable_ticket_state_readonly(run_state: RunState, environment: Dic
 		return
 	for field in ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
 		if portable.has(field):
-			machine[field] = portable[field]
+			var value: Variant = portable[field]
+			if typeof(value) == TYPE_DICTIONARY:
+				machine[field] = (value as Dictionary).duplicate(true)
+			elif typeof(value) == TYPE_ARRAY:
+				machine[field] = (value as Array).duplicate(true)
+			else:
+				machine[field] = value
 	_normalize_machine_state(machine, run_state)
 
 

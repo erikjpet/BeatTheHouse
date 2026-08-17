@@ -1720,7 +1720,13 @@ func _merge_portable_ticket_state_readonly(run_state: RunState, environment: Dic
 	if portable.is_empty():
 		return
 	for field in ["tray_stack", "ticket_stack", "winner_pile", "loser_pile"]:
-		machine[field] = portable.get(field, [])
+		var value: Variant = portable.get(field, [])
+		if typeof(value) == TYPE_DICTIONARY:
+			machine[field] = (value as Dictionary).duplicate(true)
+		elif typeof(value) == TYPE_ARRAY:
+			machine[field] = (value as Array).duplicate(true)
+		else:
+			machine[field] = value
 	machine["loser_archive_count"] = maxi(0, int(portable.get("loser_archive_count", 0)))
 
 

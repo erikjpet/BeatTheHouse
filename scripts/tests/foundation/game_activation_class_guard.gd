@@ -62,6 +62,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	var checked_contexts := {}
 	_check_generated_environment_sweep(library, covered_game_ids, checked_contexts, failures)
 	_check_catalog_coverage(library, covered_game_ids, failures)
+	_check_portable_ticket_readonly_isolation(library, failures)
 	_check_staff_rollover_presentation(library, failures)
 	_check_reintroduced_defect_fixture(failures)
 
@@ -172,6 +173,85 @@ static func _check_catalog_coverage(library: ContentLibrary, covered_game_ids: D
 			continue
 		if not covered_game_ids.has(game_id):
 			failures.append("Game activation class guard never reached production game %s in generated environments." % game_id)
+
+
+static func _check_portable_ticket_readonly_isolation(library: ContentLibrary, failures: Array) -> void:
+	var scratch_game := _load_game(library, "scratch_tickets", failures)
+	if scratch_game != null:
+		var scratch_run := RunStateScript.new()
+		scratch_run.start_new("GAME-ACTIVATION-STALE-SCRATCH")
+		var scratch_environment := {
+			"id": "activation_stale_scratch",
+			"world_node_id": "activation_stale_scratch_node",
+			"archetype_id": "gas_station_casino",
+			"display_name": "Stale Scratch Fixture",
+			"kind": "casino",
+			"tier": 1,
+			"game_ids": ["scratch_tickets"],
+			"game_states": {},
+		}
+		scratch_environment["game_states"] = {
+			"scratch_tickets": scratch_game.generate_environment_state(
+				scratch_run,
+				scratch_environment,
+				scratch_run.create_rng("stale_scratch_machine")
+			),
+		}
+		scratch_run.set_environment(scratch_environment)
+		var stale_ticket: Dictionary = scratch_game.call(
+			"_roll_ticket",
+			scratch_game.call("_ticket_type", "two_fer"),
+			scratch_run.create_rng("stale_scratch_ticket"),
+			0,
+			"stale",
+			false
+		)
+		stale_ticket["region_layout_version"] = 0
+		stale_ticket["scratch_regions"] = []
+		stale_ticket["latex_mask"] = []
+		scratch_run.remember_portable_ticket_state("scratch_tickets", scratch_run.current_environment, {"active_ticket": stale_ticket})
+		scratch_run = _json_round_trip_run_state(scratch_run, "hostile stale scratch active-ticket fixture", failures)
+		if scratch_run != null:
+			var scratch_before := JSON.stringify(scratch_run.to_dict())
+			var scratch_violation := _activation_violation(scratch_game, scratch_run)
+			if not scratch_violation.is_empty() or JSON.stringify(scratch_run.to_dict()) != scratch_before:
+				failures.append("Scratch Tickets passive normalization aliased its cold-restored portable active ticket: %s" % scratch_violation)
+
+	var pull_game := _load_game(library, "pull_tabs", failures)
+	if pull_game != null:
+		var pull_run := RunStateScript.new()
+		pull_run.start_new("GAME-ACTIVATION-PORTABLE-PULL-TABS")
+		var pull_environment := {
+			"id": "activation_portable_pull_tabs",
+			"world_node_id": "activation_portable_pull_tabs_node",
+			"archetype_id": "jazz_club",
+			"display_name": "Portable Pull Tab Fixture",
+			"kind": "bar",
+			"tier": 1,
+			"game_ids": ["pull_tabs"],
+			"game_states": {},
+		}
+		pull_environment["game_states"] = {
+			"pull_tabs": pull_game.generate_environment_state(
+				pull_run,
+				pull_environment,
+				pull_run.create_rng("portable_pull_machine")
+			),
+		}
+		pull_run.set_environment(pull_environment)
+		pull_run.remember_portable_ticket_state("pull_tabs", pull_run.current_environment, {
+			"ticket_stack": [{"id": "hostile-portable-tab", "windows": [{"revealed": false}]}],
+		})
+		pull_run = _json_round_trip_run_state(pull_run, "hostile portable pull-tab fixture", failures)
+		if pull_run != null:
+			var pull_before := JSON.stringify(pull_run.to_dict())
+			var preview: Dictionary = pull_game.call("_ensure_machine_state", pull_run, pull_run.current_environment, false)
+			var preview_stack_value: Variant = preview.get("ticket_stack", [])
+			var preview_stack: Array = preview_stack_value as Array if typeof(preview_stack_value) == TYPE_ARRAY else []
+			if not preview_stack.is_empty() and typeof(preview_stack[0]) == TYPE_DICTIONARY:
+				(preview_stack[0] as Dictionary)["hostile_preview_mutation"] = true
+			if JSON.stringify(pull_run.to_dict()) != pull_before:
+				failures.append("Pull Tabs passive merge exposed live portable ticket dictionaries to its preview copy.")
 
 
 static func _check_staff_rollover_presentation(library: ContentLibrary, failures: Array) -> void:
