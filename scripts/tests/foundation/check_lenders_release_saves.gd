@@ -29,6 +29,44 @@ class BlackjackChipStakeRangeHost:
 		return presented_cash
 
 
+class EmbeddedRefreshFixtureGame:
+	extends GameModule
+
+	var runtime_tick_result := false
+	var surface_serial := 0
+
+	func _init() -> void:
+		definition = {
+			"id": "embedded_refresh_fixture", "display_name": "Embedded Refresh Fixture", "family": "slot",
+			"legal_actions": [{"id": "fixture_action", "label": "Act", "min_stake": 1}], "cheat_actions": [],
+		}
+
+	func wager_cost_for_context(_action_id: String, _stake: int, _run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+		return 0
+
+	func resolve_with_context(_action_id: String, _stake: int, _run_state: RunState, environment: Dictionary, _rng: RngStream, _ui_state: Dictionary = {}) -> Dictionary:
+		surface_serial += 1
+		var deltas := GameModule.empty_result_deltas()
+		deltas["messages"] = ["Embedded refresh fixture %d." % surface_serial]
+		var result := GameModule.build_action_result({
+			"ok": true, "source_id": get_id(), "game_id": get_id(), "action_id": "fixture_action", "action_kind": "legal",
+			"stake": 0, "environment_id": str(environment.get("id", "")), "deltas": deltas,
+			"message": "Embedded refresh fixture %d." % surface_serial,
+		})
+		result["host_apply_result"] = false
+		result["preserve_surface_ui_state"] = true
+		if runtime_tick_result:
+			result["slot_runtime_tick"] = true
+			result["slot_bonus_complete"] = false
+		return result
+
+	func surface_state(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
+		return {
+			"game_id": get_id(), "surface_renderer": "slot_machine", "surface_life": "animated",
+			"surface_cast": "machine", "surface_embeds_outcomes": true, "runtime_serial": surface_serial,
+		}
+
+
 func _check_run_report_foundation(failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("RUN-REPORT-FOUNDATION")
@@ -3391,6 +3429,8 @@ func _check_recovery_loss_pressure_foundation(library: ContentLibrary, failures:
 		"lender_hooks": ["street_lender"],
 	})
 	_assert_terminal_fast_parity(wager_run, library, "valid-wager fast path", false, failures)
+	_check_terminal_evaluator_behavior_matrix(library, failures)
+	_check_embedded_refresh_behavior(library, failures)
 	_check_broke_pull_tab_deferred_terminal_boundary(library, failures)
 	_check_broke_idle_terminal_evaluator_not_per_frame(library, failures)
 
@@ -3444,6 +3484,315 @@ func _assert_terminal_fast_parity(run_state: RunState, library: ContentLibrary, 
 			failures.append("Terminal-only evaluator changed %s for %s." % [key, label])
 	if expect_full_diagnostics and JSON.stringify(diagnostic) != JSON.stringify(terminal_only):
 		failures.append("Terminal-only evaluator did not preserve full no-wager recovery diagnostics for %s." % label)
+
+
+func _check_terminal_evaluator_behavior_matrix(library: ContentLibrary, failures: Array) -> void:
+	var ended_run: RunState = RunStateScript.new()
+	ended_run.start_new("TERMINAL-PUBLIC-ENDED")
+	ended_run.run_status = RunState.RUN_STATUS_ENDED
+	_assert_public_terminal_result(ended_run, library, _terminal_expected({"terminal": true}), RunState.RUN_STATUS_ENDED, RunState.FAILURE_NONE, "ended run", failures)
+
+	var already_failed_run: RunState = RunStateScript.new()
+	already_failed_run.start_new("TERMINAL-PUBLIC-FAILED")
+	already_failed_run.fail_run(RunState.FAILURE_ABANDONED, "Fixture abandonment.")
+	_assert_public_terminal_result(already_failed_run, library, _terminal_expected({
+		"failed": true, "terminal": true, "reason": RunState.FAILURE_ABANDONED, "message": "Fixture abandonment.",
+	}), RunState.RUN_STATUS_FAILED, RunState.FAILURE_ABANDONED, "already-failed run", failures)
+
+	var heat_run: RunState = RunStateScript.new()
+	heat_run.start_new("TERMINAL-PUBLIC-CAPTURE")
+	heat_run.set_environment({"id": "heat_capture_room", "archetype_id": "bar", "kind": "casino"})
+	heat_run.suspicion["level"] = 100
+	_assert_public_terminal_result(heat_run, library, _terminal_expected({
+		"failed": true, "terminal": true, "reason": RunState.FAILURE_POLICE_CAPTURE, "message": RunState.POLICE_CAPTURE_FAILURE_MESSAGE,
+	}), RunState.RUN_STATUS_FAILED, RunState.FAILURE_POLICE_CAPTURE, "heat capture", failures)
+
+	var forced_travel_run: RunState = RunStateScript.new()
+	forced_travel_run.start_new("TERMINAL-PUBLIC-FORCED-TRAVEL")
+	forced_travel_run.set_environment({"id": "forced_travel_room", "archetype_id": "bar", "kind": "casino"})
+	forced_travel_run.closing_time_state = {"phase": RunState.CLOSING_TIME_PHASE_FORCED_TRAVEL, "environment_id": "forced_travel_room"}
+	forced_travel_run.change_bankroll(-forced_travel_run.bankroll, true)
+	_assert_public_terminal_result(forced_travel_run, library, _terminal_expected({
+		"bankroll_zero_deferred": true, "travel_available": true, "recovery_available": true,
+	}), RunState.RUN_STATUS_ACTIVE, RunState.FAILURE_NONE, "zero-bankroll forced travel", failures)
+
+	var event_run := _terminal_recovery_run("TERMINAL-PUBLIC-EVENT", {
+		"kind": "shop", "event_ids": ["chatty_clerk"],
+	})
+	_assert_public_terminal_result(event_run, library, _terminal_expected({
+		"event_recovery_available": true, "recovery_available": true,
+	}), RunState.RUN_STATUS_ACTIVE, RunState.FAILURE_NONE, "event recovery", failures)
+
+	var merchant_run := _terminal_recovery_run("TERMINAL-PUBLIC-MERCHANT", {
+		"kind": "shop", "item_offers": ["fixture_offer"],
+	})
+	merchant_run.add_item("creased_luck_card")
+	_assert_public_terminal_result(merchant_run, library, _terminal_expected({
+		"merchant_sale_available": true, "recovery_available": true,
+	}), RunState.RUN_STATUS_ACTIVE, RunState.FAILURE_NONE, "merchant sale recovery", failures)
+
+	var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
+	if pull_tabs != null:
+		var game_hook_run := _terminal_recovery_run("TERMINAL-PUBLIC-GAME-HOOK", {"game_ids": ["pull_tabs"]})
+		var game_hook_environment := game_hook_run.current_environment
+		var machine := pull_tabs.generate_environment_state(game_hook_run, game_hook_environment, game_hook_run.create_rng("terminal_game_hook"))
+		machine["winner_pile"] = [{"symbols": ["A", "A", "A"], "payout": 5}]
+		game_hook_environment["game_states"] = {"pull_tabs": machine}
+		game_hook_run.set_environment(game_hook_environment)
+		_assert_public_terminal_result(game_hook_run, library, _terminal_expected({
+			"game_hook_recovery_available": true, "recovery_available": true,
+		}), RunState.RUN_STATUS_ACTIVE, RunState.FAILURE_NONE, "game-hook recovery", failures)
+
+	var local_room_run := _grand_casino_spatial_fixture_run(library, "TERMINAL-PUBLIC-LOCAL-ROOM", failures)
+	if local_room_run != null:
+		local_room_run.current_environment["game_ids"] = []
+		local_room_run.current_environment["event_ids"] = []
+		local_room_run.current_environment["item_offers"] = []
+		local_room_run.current_environment["travel_hooks"] = []
+		local_room_run.current_environment["next_archetypes"] = []
+		local_room_run.current_environment["lender_hooks"] = []
+		local_room_run.current_environment["economic_profile"] = {"stake_floor": 5, "stake_ceiling": 5}
+		local_room_run.change_bankroll(-(local_room_run.bankroll - 1))
+		var local_expected := _terminal_expected({"local_room_travel_available": true, "recovery_available": true})
+		_assert_public_terminal_result(local_room_run, library, local_expected, RunState.RUN_STATUS_ACTIVE, RunState.FAILURE_NONE, "Grand Casino local-room recovery", failures)
+
+	var grand_casino_run := _grand_casino_spatial_fixture_run(library, "TERMINAL-PUBLIC-GC-REROUTE", failures)
+	if grand_casino_run != null:
+		grand_casino_run.narrative_flags["grand_casino_attention_forced_heat"] = true
+		grand_casino_run.suspicion["level"] = 100
+		if not grand_casino_run.grand_casino_heat_reroute_available():
+			failures.append("Grand Casino terminal reroute fixture did not reach a reroutable heat state.")
+		else:
+			var before_reroute := RunTerminalEvaluatorScript.evaluate(grand_casino_run, library)
+			if JSON.stringify(before_reroute) != JSON.stringify(_terminal_expected()):
+				failures.append("Public terminal evaluation did not preserve the pre-reroute Grand Casino run exactly.")
+			var applied_reroute := RunTerminalEvaluatorScript.evaluate_and_apply(grand_casino_run, library)
+			var reroute_status := grand_casino_run.demo_objective_status()
+			if bool(applied_reroute.get("failed", true)) or bool(applied_reroute.get("terminal", true)) \
+					or grand_casino_run.run_status != RunState.RUN_STATUS_ACTIVE \
+					or not bool(reroute_status.get("showdown_pending", false)) \
+					or str(grand_casino_run.narrative_flags.get("grand_casino_heat_reroute_context", "")) != "terminal_evaluator":
+				failures.append("Public evaluate_and_apply did not reroute Grand Casino heat before terminal failure.")
+
+
+func _check_embedded_refresh_behavior(library: ContentLibrary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("EMBEDDED-REFRESH-BEHAVIOR")
+	run_state.set_environment(_embedded_refresh_environment("embedded_refresh_room"))
+	run_state.add_item("thermos_black_coffee")
+	run_state.set_active_item("thermos_black_coffee")
+	var fixture_game := EmbeddedRefreshFixtureGame.new()
+	var app := _embedded_refresh_fixture_app(library, run_state, fixture_game, true, "embedded refresh", failures)
+	if app == null:
+		return
+
+	var expected_key := "GAME|%s|%s" % [fixture_game.get_id(), RunState.RUN_STATUS_ACTIVE]
+	var stable_key := str(app.call("_embedded_world_header_context_key"))
+	if stable_key != expected_key:
+		failures.append("Embedded header dependency key was not exactly screen, game id, and run status: %s." % stable_key)
+	app.set("current_screen", "RESULT")
+	if str(app.call("_embedded_world_header_context_key")) == stable_key:
+		failures.append("Embedded header dependency key ignored a screen change.")
+	app.set("current_screen", "GAME")
+	app.set("current_game", null)
+	if str(app.call("_embedded_world_header_context_key")) == stable_key:
+		failures.append("Embedded header dependency key ignored a current-game change.")
+	app.set("current_game", fixture_game)
+	run_state.run_status = RunState.RUN_STATUS_ENDED
+	if str(app.call("_embedded_world_header_context_key")) == stable_key:
+		failures.append("Embedded header dependency key ignored a run-status change.")
+	run_state.run_status = RunState.RUN_STATUS_ACTIVE
+
+	var dialogue := library.dialogue("pull_tab_clerk")
+	if dialogue.is_empty() or not run_state.enqueue_dialogue(
+			"pull_tab_clerk", "embedded_refresh_talk", {"name": "Fixture Clerk", "role": "guide"},
+			str(dialogue.get("start", "greeting")), "embedded_refresh_fixture", {"trigger": "fixture"}):
+		failures.append("Embedded refresh fixture could not queue its live TalkDock entry.")
+	var title: Label = app.get("title_label")
+	var result_panel: Control = app.get("environment_result_panel")
+	var active_item_button: Button = app.get("active_item_button")
+	var talk_dock: Control = app.get("talk_dock")
+	var music_player: Node = app.get("procedural_music_player")
+	if title != null:
+		title.text = "EMBEDDED-STABLE-HEADER"
+	if result_panel != null:
+		result_panel.visible = true
+	if active_item_button != null:
+		active_item_button.text = "STALE-ACTIVE-ITEM"
+	if music_player != null:
+		music_player.set("_current_music_context", {"embedded_refresh_sentinel": true})
+	app.set("game_coach_refresh_scheduled", false)
+	app.call("_refresh_after_embedded_game_action", true)
+	if title == null or title.text != "EMBEDDED-STABLE-HEADER":
+		failures.append("Stable embedded action rebuilt the world header instead of retaining it.")
+	if result_panel == null or result_panel.visible:
+		failures.append("Embedded action did not hide host-owned result feedback for an embedding surface.")
+	if active_item_button == null or not active_item_button.text.begins_with("Use: ") or active_item_button.text == "STALE-ACTIVE-ITEM":
+		failures.append("Embedded action did not refresh the active-item slot.")
+	if talk_dock == null or str((talk_dock.get("entry") as Dictionary).get("event_id", "")) != "embedded_refresh_talk":
+		failures.append("Embedded action did not refresh the live TalkDock entry.")
+	if not bool(app.get("game_coach_refresh_scheduled")):
+		failures.append("Embedded action did not schedule the post-draw game coach refresh.")
+	if music_player == null or bool((music_player.get("_current_music_context") as Dictionary).get("embedded_refresh_sentinel", false)):
+		failures.append("Embedded action did not update the procedural-music context.")
+
+	# The runtime-tick branch must draw the new machine snapshot immediately while
+	# leaving the player on the same embedded surface.
+	run_state.complete_talk_event_resolution("embedded_refresh_talk")
+	app.call("_refresh_talk_dock")
+	fixture_game.runtime_tick_result = true
+	app.call("_resolve_game_action", "fixture_action", true, true, false, {})
+	var surface_canvas: Control = app.get("game_surface_canvas")
+	var immediate_surface: Dictionary = surface_canvas.call("realtime_surface_state") if surface_canvas != null else {}
+	if app.get("current_game") != fixture_game or str(app.get("current_screen")) != "GAME" \
+			or int(immediate_surface.get("runtime_serial", -1)) != 1 \
+			or not bool((app.get("last_game_result") as Dictionary).get("slot_runtime_tick", false)):
+		failures.append("In-progress embedded runtime action did not render its authoritative surface immediately in place.")
+	fixture_game.runtime_tick_result = false
+
+	# A terminal transition is the exceptional context change: it must abandon the
+	# hot path, clear the game, reroute, and rebuild the header immediately.
+	run_state.current_environment["game_ids"] = []
+	run_state.current_environment["event_ids"] = []
+	run_state.current_environment["item_offers"] = []
+	run_state.current_environment["travel_hooks"] = []
+	run_state.current_environment["next_archetypes"] = []
+	run_state.current_environment["lender_hooks"] = []
+	run_state.current_environment["economic_profile"] = {"stake_floor": 5, "stake_ceiling": 5}
+	run_state.bankroll = 0
+	if title != null:
+		title.text = "EMBEDDED-TERMINAL-STALE"
+	app.call("_refresh_after_embedded_game_action", true)
+	if run_state.run_status != RunState.RUN_STATUS_FAILED or str(app.get("current_screen")) != "FAILURE" \
+			or app.get("current_game") != null or (title != null and title.text == "EMBEDDED-TERMINAL-STALE"):
+		failures.append("Embedded refresh did not reroute and rebuild immediately when terminal evaluation changed context.")
+	_sb4_dispose_app(app)
+
+	_check_embedded_refresh_autosave_interrupt(library, failures)
+	_check_embedded_refresh_tutorial_intervention(library, true, failures)
+	_check_embedded_refresh_tutorial_intervention(library, false, failures)
+
+
+func _check_embedded_refresh_autosave_interrupt(library: ContentLibrary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("EMBEDDED-AUTOSAVE-INTERRUPT")
+	var environment := _embedded_refresh_environment("embedded_interrupt_room")
+	environment["travel_hooks"] = ["corner_store"]
+	run_state.set_environment(environment)
+	run_state.narrative_flags["health_inspector_closing_actions"] = 1
+	var fixture_game := EmbeddedRefreshFixtureGame.new()
+	var app := _embedded_refresh_fixture_app(library, run_state, fixture_game, false, "embedded interrupt", failures)
+	if app == null:
+		return
+	var source_environment_id := str(run_state.current_environment.get("id", ""))
+	app.call("_resolve_game_action", "fixture_action", true, true, false, {})
+	if not bool(app.get("pending_autosave")):
+		failures.append("Completed embedded action did not queue its autosave before post-action interruption.")
+	if not bool(run_state.narrative_flags.get("health_inspector_forced_travel", false)) \
+			or str(run_state.current_environment.get("id", "")) == source_environment_id \
+			or app.get("current_game") != null or str(app.get("current_screen")) != "RESULT":
+		failures.append("Post-action Health Inspector interruption did not reroute the embedded game into forced travel.")
+	_sb4_dispose_app(app)
+
+
+func _check_embedded_refresh_tutorial_intervention(library: ContentLibrary, tutorial: bool, failures: Array) -> void:
+	var label := "tutorial" if tutorial else "normal"
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("EMBEDDED-HEAT-%s" % label.to_upper(), {"tutorial": true} if tutorial else {})
+	run_state.set_environment(_embedded_refresh_environment("embedded_heat_%s_room" % label))
+	run_state.suspicion["level"] = 98
+	run_state.add_suspicion("embedded_heat_fixture", 1, "behavior", true, {}, true)
+	var fixture_game := EmbeddedRefreshFixtureGame.new()
+	var app := _embedded_refresh_fixture_app(library, run_state, fixture_game, true, "embedded %s heat" % label, failures)
+	if app == null:
+		return
+	app.call("_resolve_game_action", "fixture_action", true, true, false, {})
+	var talk_entry := run_state.next_pending_talk_event()
+	var is_heat_intervention := str(talk_entry.get("event_id", "")).begins_with("tutorial_intervention:heat_99:") \
+			and str(talk_entry.get("dialogue_id", "")) == "tutorial_pal_guidance" \
+			and str(talk_entry.get("current_node", "")) == "heat_99"
+	if tutorial:
+		if run_state.suspicion_level() != 75 or not is_heat_intervention:
+			failures.append("Embedded tutorial action did not surface Pal's live heat-99 intervention and reduce heat to 75.")
+	else:
+		if run_state.suspicion_level() != 99 or is_heat_intervention or not talk_entry.is_empty():
+			failures.append("Normal embedded action incorrectly emitted the tutorial heat intervention.")
+	_sb4_dispose_app(app)
+
+
+func _embedded_refresh_fixture_app(library: ContentLibrary, run_state: RunState, fixture_game: GameModule, dev_mode: bool, label: String, failures: Array) -> Control:
+	var app_value: Variant = MainScene.instantiate()
+	if not app_value is Control:
+		failures.append("%s fixture could not instantiate FoundationMain." % label.capitalize())
+		return null
+	var app: Control = app_value
+	root.add_child(app)
+	if not bool(app.call("uses_foundation_runtime")):
+		app.call("_ready")
+	if not bool(app.call("uses_foundation_runtime")):
+		failures.append("%s fixture requires FoundationMain runtime nodes." % label.capitalize())
+		_sb4_dispose_app(app)
+		return null
+	app.set("library", library)
+	app.set("generator", RunGeneratorScript.new(library))
+	app.set("dev_game_test_mode", dev_mode)
+	app.set("run_state", run_state)
+	app.set("current_game", fixture_game)
+	app.set("game_surface_ui_state", {})
+	app.call("_set_current_screen", "GAME")
+	app.call("_refresh_after_game_selection")
+	return app
+
+
+func _embedded_refresh_environment(environment_id: String) -> Dictionary:
+	return {
+		"id": environment_id, "display_name": "Embedded Refresh Room", "archetype_id": "bar", "kind": "casino",
+		"economic_profile": {"stake_floor": 1, "stake_ceiling": 5},
+		"game_ids": [], "event_ids": [], "item_offers": [], "travel_hooks": [], "next_archetypes": [], "lender_hooks": [], "game_states": {},
+	}
+
+
+func _terminal_recovery_run(seed_text: String, environment_overrides: Dictionary) -> RunState:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(seed_text)
+	var environment := {
+		"id": "%s_room" % seed_text.to_lower(), "archetype_id": "fixture_room", "kind": "casino",
+		"economic_profile": {"stake_floor": 5, "stake_ceiling": 5},
+		"game_ids": [], "event_ids": [], "item_offers": [], "travel_hooks": [], "next_archetypes": [], "lender_hooks": [], "game_states": {},
+	}
+	for key in environment_overrides:
+		environment[key] = environment_overrides[key]
+	run_state.set_environment(environment)
+	run_state.change_bankroll(-(run_state.bankroll - 1))
+	return run_state
+
+
+func _terminal_expected(overrides: Dictionary = {}) -> Dictionary:
+	var expected := {
+		"failed": false, "terminal": false, "reason": RunState.FAILURE_NONE, "message": "",
+		"wager_available": false, "travel_available": false, "local_room_travel_available": false,
+		"event_recovery_available": false, "lender_available": false, "merchant_sale_available": false,
+		"game_hook_recovery_available": false, "recovery_available": false, "bankroll_zero_deferred": false,
+	}
+	for key in overrides:
+		expected[key] = overrides[key]
+	return expected
+
+
+func _assert_public_terminal_result(run_state: RunState, library: ContentLibrary, expected: Dictionary, expected_status: String, expected_reason: String, label: String, failures: Array) -> void:
+	var diagnostic := RunTerminalEvaluatorScript.evaluate(run_state, library)
+	if JSON.stringify(diagnostic) != JSON.stringify(expected):
+		failures.append("Public terminal evaluate output drifted for %s. expected=%s actual=%s" % [label, JSON.stringify(expected), JSON.stringify(diagnostic)])
+	var terminal_only := RunTerminalEvaluatorScript.evaluate_terminal(run_state, library)
+	if not bool(expected.get("wager_available", false)) and JSON.stringify(terminal_only) != JSON.stringify(expected):
+		failures.append("Terminal-only no-wager output drifted for %s." % label)
+	var applied_run: RunState = RunStateScript.new()
+	applied_run.from_dict(run_state.to_dict())
+	var applied := RunTerminalEvaluatorScript.evaluate_and_apply(applied_run, library)
+	if JSON.stringify(applied) != JSON.stringify(expected):
+		failures.append("Public terminal evaluate_and_apply output drifted for %s. expected=%s actual=%s" % [label, JSON.stringify(expected), JSON.stringify(applied)])
+	if applied_run.run_status != expected_status or applied_run.run_failure_reason != expected_reason:
+		failures.append("Public terminal evaluate_and_apply side effects drifted for %s (status=%s reason=%s)." % [label, applied_run.run_status, applied_run.run_failure_reason])
 
 
 func _check_broke_idle_terminal_evaluator_not_per_frame(library: ContentLibrary, failures: Array) -> void:
