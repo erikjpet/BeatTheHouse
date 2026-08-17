@@ -360,6 +360,17 @@ What happens then is the owner's, not an agent's:
   profiling already shows current GDScript cannot credibly close 16 ms without
   a native packed-core seam if that pass remains over budget; no threshold,
   density, trace, ordering, or outcome change is authorized.
+- 2026-08-17 [pusher06_2] The allocation-stable lazy-cache pass at `c0a7ad26`
+  plus fixture correction `054698bd` remains exact across the full Coin Pusher
+  contract (0 failures; 80/80 carried actions and hostile fallbacks), but its
+  unchanged shipped-cap performance gate still fails: raw solver p95 is
+  123.578 ms and production drop/nudge resolves are 183.537 / 205.508 ms versus
+  16.0 ms. Collision, support, and 48-tick integration alone exceed budget;
+  presentation draw/frame gates pass. Further GDScript tuning cannot credibly
+  close the remaining 7.72x gap. The root correction therefore advances to a
+  native deterministic packed core behind the existing GDScript oracle/fallback,
+  with Windows and Web export compatibility, density, trace, order, outcomes,
+  and synchronous action semantics unchanged.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
