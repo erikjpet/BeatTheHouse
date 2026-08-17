@@ -430,6 +430,12 @@ What happens then is the owner's, not an agent's:
   Switch fast/forward-looking, Mags precise/order-driven, Knuckles blunt,
   Velvet warm/polished, Bishop formal/record-minded, and Lucky bright/reckless.
   No quest-log register or hidden-system leakage was found.
+- 2026-08-17 [fix06_2/crew06_5 determinism] The clean current-main 10-seed
+  probe passed twice with 590 checkpoints and combined hash `3567232055`.
+  `run_a.json` and `run_b.json` are byte-identical at SHA-256
+  `18515D3E083837485C5821F3FC27BE4B81134AB7B89D018290CC41C55CEC13CD`;
+  all seeds have matching final hashes, with zero failures or warnings.
+  Artifact: `.tmp/foundation_determinism_probe/`.
 - 2026-08-17 [pusher06_2] Exact runtime at `4159f393` is green across the 80
   carried hot actions and all hostile/fallback twins. Raw p95 improved 43.9%
   from 283.293 to 159.000 ms, but remains 9.94x over the 16 ms gate; production
@@ -1140,6 +1146,9 @@ What happens then is the owner's, not an agent's:
 - 2026-08-17 [crew06_5] PM completed the prompt-required manual voice review of
   all new lines against the seven authored character styles; each member keeps
   a distinct conforming register, with no tracker copy or system leakage.
+- 2026-08-17 [fix06_2/crew06_5] Current-main determinism is green for all 10
+  seeds and 590 checkpoints; both reports are byte-identical with combined hash
+  `3567232055`, zero failures, and zero warnings. Visual QA remains.
 - 2026-08-17 [pusher06_2] Native provisioning/export hardening `ad11f2fa` passed
   every re-audited hostile except the actual Web-preset capability: extension
   support remains disabled. The row stays IN_PROGRESS until the preset is
