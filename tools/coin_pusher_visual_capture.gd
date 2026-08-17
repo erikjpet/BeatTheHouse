@@ -259,7 +259,7 @@ func _capture_surface(file_name: String, capture_id: String, expected: Dictionar
 			and animation_redraw_count == 0 \
 			and not bool(runtime.get("surface_continuous_redraw_active", true))
 	var valid := str(state.get("surface_renderer", "")) == "coin_pusher" \
-		and (state.get("coin_pusher_cells", []) as Array).size() == 30 \
+		and (state.get("coin_pusher_bodies", []) as Array).size() >= 24 \
 		and (state.get("coin_pusher_lanes", []) as Array).size() == 5 \
 		and (state.get("coin_pusher_riders", []) as Array).size() == 1 \
 		and int(state.get("coin_pusher_tell_rung", -1)) == int(expected.get("expected_tell_rung", -2)) \
@@ -275,7 +275,7 @@ func _capture_surface(file_name: String, capture_id: String, expected: Dictionar
 		"saved": saved,
 		"state_valid": valid,
 		"surface_renderer": str(state.get("surface_renderer", "")),
-		"cell_count": (state.get("coin_pusher_cells", []) as Array).size(),
+		"body_count": (state.get("coin_pusher_bodies", []) as Array).size(),
 		"lane_count": (state.get("coin_pusher_lanes", []) as Array).size(),
 		"rider_count": (state.get("coin_pusher_riders", []) as Array).size(),
 		"tell_rung": int(state.get("coin_pusher_tell_rung", -1)),
