@@ -596,6 +596,23 @@ What happens then is the owner's, not an agent's:
   `.tmp/test_reports/20260817_063025_smoke` passed with 0 failures: validation
   41.703 s, load 21.966 s, Coin Pusher 51.734 s, all exits 0 and no stderr/
   timeouts. An earlier no-GODOT_BIN setup directory is discarded, not evidence.
+- 2026-08-17 [pusher06_2 native performance] First loadable native measurement
+  remains RED at the unchanged thresholds: raw full-cap p95 19.369 ms, production
+  drop 104.976 ms, and production nudge 124.424 ms versus 16.000 ms. This is a
+  major improvement over GDScript but not acceptance. Backend selection and
+  truthful production phase timing must isolate the compact candidate-copy cost
+  from the additional host/snapshot overhead; no density, tick, presentation,
+  action, or threshold change is authorized. Unrelated scratch-ticket fixture
+  failures in the broad probe are not Coin Pusher evidence.
+- 2026-08-17 [pusher06_2 presentation gaps] Independent static review ACCEPTS
+  all three corrections after returning float quota math and two false-positive
+  tests. Opening generation uses integer-only deterministic per-shelf quotas
+  (rear 35 > mid 25 > front 15; stacks 9/7/4) at exact 150/cap160 with
+  authoritative body-view parity. Exact production titles auto-fit inside a
+  bounded rect clear of the real LEAVE control. Reduced-motion audio establishes
+  a silent first/restored baseline, keeps restored active state silent through
+  terminal, emits a later action once, and syncs before frozen visual clocks/
+  redraws. Focused runtime remains before merge.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1331,3 +1348,7 @@ What happens then is the owner's, not an agent's:
 - 2026-08-17 [pusher06_2] Clean Windows debug load, direct native smoke, and the
   focused exactness matrix are green on the accepted 4.6 pin. Raw/production
   <=16 ms performance and Windows release/Web acceptance remain.
+- 2026-08-17 [pusher06_2] First native performance run is still red at raw
+  19.369 ms / drop 104.976 ms / nudge 124.424 ms against 16 ms; root profiling
+  continues without waivers. The isolated presentation-gap patch is static
+  ACCEPT and now owns the focused runtime window.
