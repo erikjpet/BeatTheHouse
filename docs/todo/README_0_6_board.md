@@ -122,7 +122,7 @@ a *rendering* project rather than a gameplay rewrite.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | pusher06_0 | `pusher06_0_physics_lab_prompt.md` | OPTIONAL | rework06_2 accepted | — | | | | Measurement/hardening only: coin cap, frame/solver/render p95, pathology counts, Windows-vs-Web parity, adversarial + long-run. Claim ONLY if rework06_2 did not measure these rigorously. |
 | pusher06_1 | `pusher06_1_solver_core_prompt.md` | REFERENCE | rework06_2 accepted | — | | | | Substance delivered by rework06_2. Use as an acceptance checklist against the landed solver — especially the authority rule (what crosses the tray edge is what pays; no steered outcomes) and emergent-RTP-by-machine-tuning. |
-| pusher06_2 | `pusher06_2_presentation_audio_prompt.md` | TODO | rework06_2 accepted | pusher06_3 | | | | **The V2 headline task.** Coin density first (`coin_cap` 48 → 150–300, packed/overlapping/random placement), then stacking + edge-hanger legibility, then layered audio. Owner-verified defect: the sim is real but the render is a sparse dot scatter. |
+| pusher06_2 | `pusher06_2_presentation_audio_prompt.md` | IN_PROGRESS | rework06_2 accepted | pusher06_3 | PM:Codex/sub:pusher-depth | 2026-08-17 | | PM-orchestrated isolated execution from the accepted rework integration tree; density/presentation/audio only, with snapshot authority, unchanged outcomes, performance, and player-readable feel captures independently verified by PM. |
 | pusher06_3 | `pusher06_3_variations_prompt.md` | TODO | pusher06_2 | pusher06_4 | | | | Prove Ridge and Vault are genuinely different machines on the new solver, with physical pucks/fragments. Distinctness is the acceptance bar. |
 | pusher06_4 | `pusher06_4_environment_integration_prompt.md` | TODO | pusher06_1/2/3 landed | coin pusher closure | | | | Venue presence, persistence at run scale with measured save-size, rumor/sweep/scenario/reputation wiring, class guard. |
 
@@ -144,7 +144,7 @@ stated in each prompt** — `events.json` in particular is shared, and
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| crew06_5 | `crew06_5_recruitment_prompt.md` | TODO | crew06_1, env06_2, env06_3 | crew06_6/7/8 | | | | |
+| crew06_5 | `crew06_5_recruitment_prompt.md` | IN_PROGRESS | crew06_1, env06_2, env06_3 | crew06_6/7/8 | PM:Codex/sub:crew-recruitment | 2026-08-17 | | PM-orchestrated isolated execution; subagent owns implementation only, PM owns board, integration, design-fidelity review, verification, archival, and push. |
 | crew06_6 | `crew06_6_layer3_jobs_prompt.md` | TODO | crew06_1, env06_4, streets06_1, crew06_5 | crew06_8 | | | | |
 | crew06_7 | `crew06_7_coordinated_plays_prompt.md` | TODO | crew06_1, crew06_5 | crew06_8 | | | | |
 | crew06_8 | `crew06_8_heist_prompt.md` | TODO | crew06_5/6/7, craps06_1, streets06_1, env06_3 | crew06_9 | | | | |
@@ -797,3 +797,11 @@ What happens then is the owner's, not an agent's:
   the same-load control within 0.38%, satisfying the owner's environmental-only
   timing rule. This closes Wave C and unblocks `pusher06_2`; owner-identified
   visual density and presentation work remains correctly scoped there.
+- 2026-08-17 [pusher06_2] PM-orchestrated isolated execution claimed after
+  `rework06_2` acceptance. The V2 headline track begins with a performance-set
+  dense coin cap and player-readable 2.5D stacking/edge hangers, then snapshot-
+  event-driven audio; authoritative outcomes and the accepted solver are fixed.
+- 2026-08-17 [crew06_5] PM-orchestrated isolated execution claimed in parallel
+  with `pusher06_2`. This recruitment slice owns seven primary/fallback paths,
+  diegetic signposting, rank-gated existing perks, seeded presence, and the
+  crew-ignoring regression; it unblocks the Wave D jobs/plays chain.
