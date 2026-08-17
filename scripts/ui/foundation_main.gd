@@ -224,6 +224,14 @@ var pending_wager_confirm_source_game_state_key: String = ""
 var pending_all_in_result_terminal_check := false
 var terminal_evaluator_call_count := 0
 var recent_result_deep_snapshot_call_count := 0
+var action_trigger_candidate_visit_count := 0
+var heat_talk_candidate_visit_count := 0
+var table_talk_candidate_visit_count := 0
+var post_interrupt_talk_boundary_visit_count := 0
+var post_interrupt_closing_visit_count := 0
+var post_interrupt_forced_travel_visit_count := 0
+var post_interrupt_talk_enqueue_visit_count := 0
+var post_interrupt_unavoidable_visit_count := 0
 var presented_bankroll_hold_active := false
 var presented_bankroll_value := 0
 var presented_bankroll_game_id := ""
@@ -2221,24 +2229,28 @@ func _apply_post_action_environment_interrupt(source: String) -> bool:
 	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
 	var debug_enabled := not debug_timing.is_empty() and current_game != null
 	var debug_stage_started_usec := Time.get_ticks_usec() if debug_enabled else 0
+	post_interrupt_talk_boundary_visit_count += 1
 	var talk_advanced := _advance_talk_event_action_boundary(source)
 	if debug_enabled:
 		debug_timing["interrupt_advance_talk"] = Time.get_ticks_usec() - debug_stage_started_usec
 	if talk_advanced:
 		return true
 	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
+	post_interrupt_closing_visit_count += 1
 	var closing_applied := _apply_closing_time_action_boundary(source)
 	if debug_enabled:
 		debug_timing["interrupt_closing_time"] = Time.get_ticks_usec() - debug_stage_started_usec
 	if closing_applied:
 		return true
 	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
+	post_interrupt_forced_travel_visit_count += 1
 	var travel_applied := _apply_forced_environment_travel(source)
 	if debug_enabled:
 		debug_timing["interrupt_forced_travel"] = Time.get_ticks_usec() - debug_stage_started_usec
 	if travel_applied:
 		return true
 	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
+	post_interrupt_talk_enqueue_visit_count += 1
 	var talk_enqueued := _enqueue_talk_events_for_action_boundary(source)
 	if debug_enabled:
 		debug_timing["interrupt_enqueue_talk"] = Time.get_ticks_usec() - debug_stage_started_usec
@@ -2247,6 +2259,7 @@ func _apply_post_action_environment_interrupt(source: String) -> bool:
 		_refresh_talk_dock()
 		return true
 	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
+	post_interrupt_unavoidable_visit_count += 1
 	var unavoidable_triggered := _maybe_trigger_unavoidable_event(source)
 	if debug_enabled:
 		debug_timing["interrupt_unavoidable_event"] = Time.get_ticks_usec() - debug_stage_started_usec
@@ -2475,12 +2488,11 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 	var candidates: Array = []
 	var enqueued := false
 	var cadence_rng := run_state.create_event_cadence_rng()
-	for event_definition_value in library.events:
+	for event_definition_value in library.action_trigger_event_candidates_readonly():
+		action_trigger_candidate_visit_count += 1
 		if typeof(event_definition_value) != TYPE_DICTIONARY:
 			continue
 		var event_definition: Dictionary = event_definition_value
-		if str(event_definition.get("interaction_mode", "interactable")) != "triggered":
-			continue
 		var event_id := str(event_definition.get("id", ""))
 		var trigger: Dictionary = event_definition.get("trigger", {}) if typeof(event_definition.get("trigger", {})) == TYPE_DICTIONARY else {}
 		var trigger_type := str(trigger.get("type", "manual"))
@@ -2535,17 +2547,12 @@ func _enqueue_heat_threshold_talk_events(source: String) -> bool:
 	var current_level := run_state.suspicion_level()
 	var previous_level := clampi(current_level - applied_delta, 0, 100)
 	var enqueued := false
-	for event_definition_value in library.events:
+	for event_definition_value in library.heat_threshold_talk_event_candidates_readonly():
+		heat_talk_candidate_visit_count += 1
 		if typeof(event_definition_value) != TYPE_DICTIONARY:
 			continue
 		var event_definition: Dictionary = event_definition_value
-		if str(event_definition.get("interaction_mode", "interactable")) != "triggered":
-			continue
-		if str(event_definition.get("presentation", "modal")) != "talk":
-			continue
 		var trigger: Dictionary = event_definition.get("trigger", {}) if typeof(event_definition.get("trigger", {})) == TYPE_DICTIONARY else {}
-		if str(trigger.get("type", "manual")) != "heat_threshold":
-			continue
 		var threshold := int(trigger.get("level", 0))
 		if threshold <= 0 or previous_level >= threshold or current_level < threshold:
 			continue
@@ -2591,17 +2598,12 @@ func _enqueue_table_approach_talk_events(source: String) -> bool:
 	var hands_played := int(state.get("hands_played", state.get("rounds_played", 0)))
 	var cadence_rng := run_state.create_event_cadence_rng()
 	var enqueued := false
-	for event_definition_value in library.events:
+	for event_definition_value in library.table_approach_talk_event_candidates_readonly():
+		table_talk_candidate_visit_count += 1
 		if typeof(event_definition_value) != TYPE_DICTIONARY:
 			continue
 		var event_definition: Dictionary = event_definition_value
-		if str(event_definition.get("interaction_mode", "interactable")) != "triggered":
-			continue
-		if str(event_definition.get("presentation", "modal")) != "talk":
-			continue
 		var trigger: Dictionary = event_definition.get("trigger", {}) if typeof(event_definition.get("trigger", {})) == TYPE_DICTIONARY else {}
-		if str(trigger.get("type", "manual")) != "table_approach":
-			continue
 		var chance := clampf(float(trigger.get("chance", 1.0)), 0.0, 1.0)
 		var roll := cadence_rng.randi_range(0, 9999)
 		var context := _event_context_with_environment({
