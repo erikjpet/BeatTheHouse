@@ -1682,7 +1682,7 @@ func _check_coin_pusher_render_only_canvas_path(game: GameModule, failures: Arra
 	if int(app.get("last_game_surface_realtime_refresh_msec")) != 2899 \
 			or JSON.stringify(canvas.call("realtime_surface_state")) != guard_canvas_json:
 		failures.append("FoundationMain realtime refresh bypassed its minimum-interval guard.")
-	var realtime_preconditions_exact := app.get("run_state") == run_state \
+	var realtime_preconditions_exact: bool = app.get("run_state") == run_state \
 			and app.get("current_game") == game \
 			and str(app.get("current_screen")) == "GAME" \
 			and app.get("game_surface_canvas") == canvas \
