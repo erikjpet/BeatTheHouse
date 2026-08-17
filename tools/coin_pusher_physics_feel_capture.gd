@@ -5,9 +5,11 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const CoinPusherGameScript := preload("res://scripts/games/coin_pusher.gd")
 const SolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
-const OUTPUT_DIR := "res://.tmp/rework06_2_feel_captures"
+const OUTPUT_DIR := "res://.tmp/pusher06_2_feel_captures"
 const CAPTURE_SIZE := Vector2i(1280, 720)
-const REQUIRED_IDS := ["drop_disturbs_pile", "stack_topples", "upper_to_lower", "nudge_shifts_pile", "tray_fall", "gutter_loss"]
+const REQUIRED_IDS := ["drop_disturbs_pile", "stack_topples", "upper_to_lower", "nudge_shifts_pile", "tray_fall", "gutter_loss", "tell_ladder_alarm"]
+const SHIPPED_COIN_CAP := 160
+const SHIPPED_OPENING_COIN_COUNT := 150
 
 var out_dir := OUTPUT_DIR
 var game: GameModule
@@ -52,6 +54,7 @@ func _run() -> void:
 	]
 	for fixture_value in fixtures:
 		await _capture_fixture(fixture_value as Dictionary)
+	await _capture_tell_ladder()
 	for fixture_index in [0, 2, 3, 4, 5]:
 		await _capture_replay_sequence(fixtures[fixture_index] as Dictionary)
 	_write_manifest()
@@ -130,7 +133,7 @@ func _fixture(id: String, file_name: String, title: String, before: Dictionary, 
 
 
 func _capture_fixture(fixture: Dictionary) -> void:
-	var background := SolverScript.create(_rng(8000 + captures.size()), 48, 30, 5)
+	var background := SolverScript.create(_rng(8000 + captures.size()), SHIPPED_COIN_CAP, SHIPPED_OPENING_COIN_COUNT, 5)
 	var before_visual := background.duplicate(true)
 	var after_visual := background.duplicate(true)
 	(before_visual["bodies"] as Array).append_array(((fixture.get("before", {}) as Dictionary).get("bodies", []) as Array).duplicate(true))
@@ -197,7 +200,7 @@ func _capture_replay_sequence(fixture: Dictionary) -> void:
 	proof.add_theme_color_override("font_color", Color("#58e1d4"))
 	panel.add_child(proof)
 	var frame_indices := _sequence_frame_indices(trace)
-	var background := SolverScript.create(_rng(9000 + sequences.size()), 48, 26, 5)
+	var background := SolverScript.create(_rng(9000 + sequences.size()), SHIPPED_COIN_CAP, SHIPPED_OPENING_COIN_COUNT, 5)
 	for panel_index in range(frame_indices.size()):
 		var trace_frame: Dictionary = trace[int(frame_indices[panel_index])] if typeof(trace[int(frame_indices[panel_index])]) == TYPE_DICTIONARY else {}
 		var snapshot := _surface_for_trace_frame(background, trace_frame, panel_index * 267)
@@ -232,6 +235,67 @@ func _surface_for_trace_frame(background: Dictionary, trace_frame: Dictionary, s
 	for body_value in trace_frame.get("bodies", []):
 		bodies.append(body_value)
 	snapshot["coin_pusher_bodies"] = bodies
+	(snapshot.get("coin_pusher_snapshot", {}) as Dictionary)["bodies"] = bodies
+	return snapshot
+
+
+func _capture_tell_ladder() -> void:
+	var background := SolverScript.create(_rng(9701), SHIPPED_COIN_CAP, SHIPPED_OPENING_COIN_COUNT, 5)
+	var panel := ColorRect.new()
+	panel.color = Color("#070b14")
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_child(panel)
+	var title := Label.new()
+	title.text = "THE TELL LADDER — WALK THE LINE ON PURPOSE"
+	title.position = Vector2(24, 16)
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color("#e9f4ff"))
+	panel.add_child(title)
+	var proof := Label.new()
+	proof.text = "RUNG 1: CABINET ROCK  >  RUNG 2: CHIRP  >  RUNG 3: ATTENDANT GLANCE  >  MACHINE ALARM + LOCK"
+	proof.position = Vector2(24, 49)
+	proof.add_theme_font_size_override("font_size", 14)
+	proof.add_theme_color_override("font_color", Color("#ff8e5b"))
+	panel.add_child(proof)
+	var first_warning := _tell_surface(background, 1, false, 0)
+	var alarm := _tell_surface(background, 3, true, 900)
+	_add_surface_panel(panel, first_warning, Vector2(20, 92), "RUNG 1 — ROCK / FIRST LAMP")
+	_add_surface_panel(panel, alarm, Vector2(650, 92), "RUNG 3 — ATTENDANT / ALARM / LOCK")
+	await process_frame
+	await RenderingServer.frame_post_draw
+	var file_name := "07_tell_ladder_alarm_1280x720.png"
+	var image := root.get_viewport().get_texture().get_image()
+	var saved := image != null and image.save_png("%s/%s" % [out_dir, file_name]) == OK
+	var state_valid := int(first_warning.get("coin_pusher_tell_rung", 0)) == 1 \
+		and int(alarm.get("coin_pusher_tell_rung", 0)) == 3 \
+		and bool(alarm.get("coin_pusher_locked", false))
+	if not saved or not state_valid:
+		failed = true
+	captures.append({
+		"id": "tell_ladder_alarm", "file": file_name, "saved": saved, "state_valid": state_valid,
+		"rungs": ["steady", "cabinet_rock", "chirp", "attendant_glance", "alarm_lock"],
+	})
+	var machine: Dictionary = ((run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary)
+	machine["tell_rung"] = 0
+	machine["locked_down"] = false
+	machine["last_message"] = "Pick a lane. Read both shelves."
+	root.remove_child(panel)
+	panel.queue_free()
+	await process_frame
+
+
+func _tell_surface(simulation: Dictionary, tell_rung: int, alarmed: bool, surface_time_msec: int) -> Dictionary:
+	var machine: Dictionary = ((run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary)
+	machine["tell_rung"] = tell_rung
+	machine["locked_down"] = alarmed
+	machine["last_message"] = "Attendant looks over. Alarm line crossed." if alarmed else "The cabinet rocks under the first warning."
+	var snapshot := _surface_for_simulation(simulation, surface_time_msec)
+	snapshot["coin_pusher_presentation_events"] = [{
+		"kind": "alarm" if alarmed else "tell_rock", "body_id": "cabinet",
+		"x": SolverScript.WIDTH / 2, "y": SolverScript.UPPER_EDGE, "z": 0,
+		"intensity_milli": 1000 if alarmed else 540, "tick_offset": SolverScript.ACTION_TICKS,
+		"metadata": {"tell_rung": tell_rung},
+	}]
 	return snapshot
 
 
@@ -327,7 +391,7 @@ func _write_manifest() -> void:
 	for capture in captures:
 		captured_ids.append(str((capture as Dictionary).get("id", "")))
 	var passed := not failed and JSON.stringify(captured_ids) == JSON.stringify(REQUIRED_IDS) and captures.size() == REQUIRED_IDS.size() and sequences.size() == 5
-	var manifest := {"schema": "coin_pusher_physics_feel_captures", "passed": passed, "capture_size": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y}, "required_ids": REQUIRED_IDS, "captures": captures, "replay_sequences": sequences}
+	var manifest := {"schema": "coin_pusher_physics_feel_captures", "passed": passed, "coin_cap": SHIPPED_COIN_CAP, "opening_coin_count": SHIPPED_OPENING_COIN_COUNT, "capture_size": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y}, "required_ids": REQUIRED_IDS, "captures": captures, "replay_sequences": sequences}
 	var file := FileAccess.open("%s/manifest.json" % out_dir, FileAccess.WRITE)
 	if file == null:
 		failed = true

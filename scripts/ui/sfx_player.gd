@@ -13,6 +13,7 @@ const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 signal music_cue_requested(cue_id: String, context: Dictionary)
 
 const SFX_BUS := "SFX"
+const SURFACE_SFX_MANIFEST_PATH := "res://data/audio/surface_sfx_manifest.json"
 const SAMPLE_RATE := 22050
 const TELEPHONE_SAMPLE_RATE := 4000
 const WEB_DELIVERY_ROOT := "res://assets/audio/sfx_web"
@@ -57,6 +58,21 @@ const ENVIRONMENT_PREWARM_EVENTS := [
 	"scratch_paper_foley_loop",
 	"scratch_box_pop",
 ]
+const COIN_PUSHER_PREWARM_EVENTS := [
+	"coin_pusher_motor",
+	"coin_pusher_coin_metal",
+	"coin_pusher_coin_stack",
+	"coin_pusher_slide",
+	"coin_pusher_fall",
+	"coin_pusher_topple",
+	"coin_pusher_ledge_tip",
+	"coin_pusher_tray",
+	"coin_pusher_gutter",
+	"coin_pusher_shake",
+	"coin_pusher_tell_rock",
+	"coin_pusher_chirp",
+	"coin_pusher_alarm",
+]
 const WEB_PREWARM_SAMPLES_PER_FRAME := 32
 const NATIVE_PREWARM_BUDGET_USEC := 500
 const NATIVE_PREWARM_TIME_CHECK_INTERVAL := 8
@@ -84,6 +100,7 @@ const WEB_DELIVERY_EVENT_IDS := [
 	"video_poker_button", "video_poker_deal", "video_poker_hold", "video_poker_draw", "video_poker_cheat", "video_poker_cheat_beat", "video_poker_double", "video_poker_win",
 	"roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch",
 	"roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout",
+	"coin_pusher_motor", "coin_pusher_coin_metal", "coin_pusher_coin_stack", "coin_pusher_slide", "coin_pusher_fall", "coin_pusher_topple", "coin_pusher_ledge_tip", "coin_pusher_tray", "coin_pusher_gutter", "coin_pusher_shake", "coin_pusher_tell_rock", "coin_pusher_chirp", "coin_pusher_alarm",
 ]
 const NATIVE_SLOT_DELIVERY_EVENTS := {
 	"button": true, "button_pinball": true, "button_buffalo": true, "button_digital": true,
@@ -178,6 +195,7 @@ var _roulette_spin_id: String = ""
 var _roulette_payout_id: String = ""
 var _baccarat_deal_id: String = ""
 var _baccarat_payout_id: String = ""
+var _coin_pusher_action_id: String = ""
 var _web_surface_loop_active := false
 var _surface_loop_event_id := ""
 var _surface_loop_fade_tween: Tween
@@ -192,6 +210,7 @@ var _prewarm_active_sample_rate := 0
 var _prewarm_active_frame_count := 0
 var _prewarm_active_frame_cursor := 0
 var _prewarm_active_data := PackedByteArray()
+var _surface_sfx_manifest: Dictionary = {}
 
 
 func set_prewarm_events(event_ids: Array) -> void:
@@ -354,6 +373,103 @@ func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing
 				_timing_active(timing, "payout_animation_channel"),
 				_timing_active_id(timing, "payout_animation_channel")
 			)
+		"coin_pusher_state":
+			sync_coin_pusher_state(
+				surface_state,
+				_timing_elapsed(timing, "animation_channel"),
+				_timing_active(timing, "animation_channel"),
+				_timing_active_id(timing, "animation_channel")
+			)
+
+
+func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation_active: bool, active_id: String) -> void:
+	var profile := _surface_sfx_profile("coin_pusher")
+	if profile.is_empty():
+		return
+	var motor: Dictionary = _dict(profile.get("motor_loop", {}))
+	var motor_event := str(motor.get("event_id", "coin_pusher_motor"))
+	var body_count := _dictionary_array(surface_state.get("coin_pusher_bodies", [])).size()
+	var loaded := body_count >= 80
+	var phase_milli := int(surface_state.get("coin_pusher_lower_phase_milli", 0))
+	var phase_energy := absf(sin(float(phase_milli) / 8000.0 * TAU))
+	var motor_volume := float(motor.get("loaded_volume_db", -13.0) if loaded else motor.get("idle_volume_db", -18.0))
+	var motor_pitch := float(motor.get("loaded_pitch", 0.96) if loaded else motor.get("idle_pitch", 0.88)) + phase_energy * 0.035
+	if _surface_loop_event_id != motor_event or (_loop_player != null and not _loop_player.playing and not _web_surface_loop_active):
+		_start_reel_loop(motor_event, motor_volume, motor_pitch)
+	elif _loop_player != null:
+		_loop_player.volume_db = motor_volume
+		_loop_player.pitch_scale = motor_pitch
+	if active_id.is_empty() or not animation_active:
+		_coin_pusher_action_id = ""
+		return
+	if active_id != _coin_pusher_action_id:
+		_coin_pusher_action_id = active_id
+		_clear_markers_with_prefix("coin_pusher_event_")
+	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
+	var events := _dictionary_array(surface_state.get("coin_pusher_presentation_events", []))
+	for index in range(events.size()):
+		var event: Dictionary = events[index]
+		if not _coin_pusher_event_is_audio_primary(event):
+			continue
+		var tick_offset := clampi(int(event.get("tick_offset", 0)), 0, 48)
+		var event_time := float(tick_offset) / 60.0
+		var cue := _coin_pusher_event_cue(event, event_classes)
+		if cue.is_empty():
+			continue
+		var intensity := clampf(float(int(event.get("intensity_milli", 500))) / 1000.0, 0.0, 1.0)
+		var context := _coin_pusher_event_mix(event, intensity)
+		_trigger(
+			"coin_pusher_event_%s_%d" % [active_id, index],
+			elapsed >= event_time,
+			cue,
+			float(context.get("volume_db", -5.0)),
+			float(context.get("pitch", 1.0))
+		)
+
+
+func _coin_pusher_event_cue(event: Dictionary, event_classes: Dictionary) -> String:
+	var kind := str(event.get("kind", ""))
+	if kind == "impact":
+		var metadata := _dict(event.get("metadata", {}))
+		var impact_class := "impact_stack" if str(metadata.get("material", "")) == "coin_on_coin" else "impact_metal"
+		return str(event_classes.get(impact_class, ""))
+	return str(event_classes.get(kind, ""))
+
+
+func _coin_pusher_event_is_audio_primary(event: Dictionary) -> bool:
+	# A tray cascade is one payout gesture whose weight comes from the actual
+	# physical fall count. Individual landing events remain in the snapshot for
+	# particles and future renderers, but only the first starts the cascade bed.
+	return str(event.get("kind", "")) != "tray_landing" or int(_dict(event.get("metadata", {})).get("group_index", 0)) == 0
+
+
+func _coin_pusher_event_mix(event: Dictionary, intensity: float) -> Dictionary:
+	var kind := str(event.get("kind", ""))
+	var metadata := _dict(event.get("metadata", {}))
+	var volume_db := lerpf(-11.0, -1.5, intensity)
+	var pitch := 0.92 + intensity * 0.16
+	match kind:
+		"impact":
+			var stack_depth := maxi(0, int(metadata.get("stack_depth", 0)))
+			var fall_height := clampf(float(int(metadata.get("fall_height_milli", 0))) / 1000.0, 0.0, 6.0)
+			volume_db += minf(3.0, fall_height * 0.65)
+			pitch += minf(0.12, fall_height * 0.025)
+			pitch += minf(0.16, float(stack_depth) * 0.035)
+			if str(metadata.get("material", "")) == "coin_on_metal":
+				pitch += 0.10
+		"tray_landing":
+			var cascade_count := maxi(1, int(metadata.get("group_count", 1)))
+			volume_db = lerpf(-7.0, 0.0, intensity) + minf(4.0, log(float(cascade_count)) / log(2.0) * 1.2)
+			pitch = 0.92 + intensity * 0.10 + minf(0.08, float(cascade_count - 1) * 0.012)
+		"gutter_loss":
+			volume_db = lerpf(-8.0, -2.0, intensity)
+			pitch = 0.76 + intensity * 0.06
+		"alarm":
+			volume_db = -0.5
+			pitch = 1.0
+		"tell_chirp", "attendant_glance":
+			pitch = 0.92 + float(maxi(0, int(metadata.get("tell_rung", 1)) - 1)) * 0.16
+	return {"volume_db": volume_db, "pitch": pitch}
 
 
 func _play_surface_stake_event(action: String, surface_state: Dictionary) -> void:
@@ -787,6 +903,7 @@ func stop_all() -> void:
 	_roulette_payout_id = ""
 	_baccarat_deal_id = ""
 	_baccarat_payout_id = ""
+	_coin_pusher_action_id = ""
 	_played_markers.clear()
 	for player in _players:
 		if player is AudioStreamPlayer:
@@ -815,6 +932,30 @@ func debug_slot_cue_markers(slot_state: Dictionary) -> Array:
 
 func debug_normalized_event_id(event_id: String) -> String:
 	return _normalized_event_id(event_id)
+
+
+func debug_surface_sfx_profile(profile_id: String) -> Dictionary:
+	return _surface_sfx_profile(profile_id).duplicate(true)
+
+
+func debug_coin_pusher_event_schedule(surface_state: Dictionary) -> Array:
+	var profile := _surface_sfx_profile("coin_pusher")
+	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
+	var result: Array = []
+	for event_value in _dictionary_array(surface_state.get("coin_pusher_presentation_events", [])):
+		var event: Dictionary = event_value
+		if not _coin_pusher_event_is_audio_primary(event):
+			continue
+		var intensity := clampf(float(int(event.get("intensity_milli", 500))) / 1000.0, 0.0, 1.0)
+		var mix := _coin_pusher_event_mix(event, intensity)
+		result.append({
+			"kind": str(event.get("kind", "")),
+			"cue": _coin_pusher_event_cue(event, event_classes),
+			"time": float(clampi(int(event.get("tick_offset", 0)), 0, 48)) / 60.0,
+			"volume_db": float(mix.get("volume_db", -5.0)),
+			"pitch": float(mix.get("pitch", 1.0)),
+		})
+	return result
 
 
 func debug_music_director_cue_ids() -> Array:
@@ -1252,6 +1393,8 @@ func _begin_incremental_prewarm() -> void:
 				_queue_prewarm_event(str(event_id))
 			for event_id in ENVIRONMENT_PREWARM_EVENTS:
 				_queue_prewarm_event(str(event_id))
+			for event_id in COIN_PUSHER_PREWARM_EVENTS:
+				_queue_prewarm_event(str(event_id))
 	else:
 		for event_id in _prewarm_event_override:
 			_queue_prewarm_event(str(event_id))
@@ -1439,7 +1582,7 @@ func _audio_stream_from_pcm(event_id: String, sample_rate: int, frames: int, dat
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = sample_rate
 	stream.data = data
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if event_id.begins_with("reel_loop") or event_id in ["roulette_ball_loop", "scratch_paper_foley_loop"] else AudioStreamWAV.LOOP_DISABLED
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if event_id.begins_with("reel_loop") or event_id in ["roulette_ball_loop", "scratch_paper_foley_loop", "coin_pusher_motor"] else AudioStreamWAV.LOOP_DISABLED
 	stream.loop_begin = 0
 	stream.loop_end = frames
 	return stream
@@ -1449,6 +1592,21 @@ func _event_sample_rate(event_id: String) -> int:
 	if event_id in ["phone_call", "phone_out_of_service"]:
 		return TELEPHONE_SAMPLE_RATE
 	return SAMPLE_RATE
+
+
+func _surface_sfx_profile(profile_id: String) -> Dictionary:
+	if _surface_sfx_manifest.is_empty():
+		var source := FileAccess.get_file_as_string(SURFACE_SFX_MANIFEST_PATH)
+		var parsed: Variant = JSON.parse_string(source)
+		if typeof(parsed) == TYPE_ARRAY:
+			for entry_value in parsed:
+				if typeof(entry_value) != TYPE_DICTIONARY:
+					continue
+				var entry: Dictionary = entry_value
+				var entry_id := str(entry.get("id", ""))
+				if not entry_id.is_empty():
+					_surface_sfx_manifest[entry_id] = _dict(entry.get("profile", {}))
+	return _dict(_surface_sfx_manifest.get(profile_id, {}))
 
 
 func _normalized_event_id(event_id: String) -> String:
@@ -1543,7 +1701,7 @@ func _normalized_event_id_uncached(event_id: String) -> String:
 	if family_event == "scratch_paper_foley_loop" or family_event == "scratch_box_pop":
 		return family_event
 	match family_event:
-		"button", "button_pinball", "button_buffalo", "button_digital", "lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital", "reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital", "reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital", "gold_coin_tease", "double_gold_coin_tease", "bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital", "bumper", "pinball_money_ding", "bonus_step_buffalo", "bonus_step_digital", "jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital", "payout", "payout_digital", "bonus_total", "bonus_total_buffalo", "bonus_total_digital", "jackpot", "jackpot_buffalo", "jackpot_digital", "lose", "pull_tab_click", "pull_tab_thump", "paper_peek", "paper_peel", "blackjack_card", "blackjack_chip", "blackjack_felt", "blackjack_payout", "blackjack_bust", "blackjack_peek", "blackjack_count", "blackjack_distraction", "video_poker_button", "video_poker_deal", "video_poker_hold", "video_poker_draw", "video_poker_cheat", "video_poker_cheat_beat", "video_poker_double", "video_poker_win", "roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch", "roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout":
+		"button", "button_pinball", "button_buffalo", "button_digital", "lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital", "reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital", "reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital", "gold_coin_tease", "double_gold_coin_tease", "bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital", "bumper", "pinball_money_ding", "bonus_step_buffalo", "bonus_step_digital", "jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital", "payout", "payout_digital", "bonus_total", "bonus_total_buffalo", "bonus_total_digital", "jackpot", "jackpot_buffalo", "jackpot_digital", "lose", "pull_tab_click", "pull_tab_thump", "paper_peek", "paper_peel", "blackjack_card", "blackjack_chip", "blackjack_felt", "blackjack_payout", "blackjack_bust", "blackjack_peek", "blackjack_count", "blackjack_distraction", "video_poker_button", "video_poker_deal", "video_poker_hold", "video_poker_draw", "video_poker_cheat", "video_poker_cheat_beat", "video_poker_double", "video_poker_win", "roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch", "roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout", "coin_pusher_motor", "coin_pusher_coin_metal", "coin_pusher_coin_stack", "coin_pusher_slide", "coin_pusher_fall", "coin_pusher_topple", "coin_pusher_ledge_tip", "coin_pusher_tray", "coin_pusher_gutter", "coin_pusher_shake", "coin_pusher_tell_rock", "coin_pusher_chirp", "coin_pusher_alarm":
 			return event_id
 		"slot_reel_spin_loop":
 			return "reel_loop"
@@ -1599,6 +1757,22 @@ func _event_seconds(event_id: String) -> float:
 			return 1.72
 		"heat_gain":
 			return 0.30
+		"coin_pusher_motor":
+			return 0.64
+		"coin_pusher_coin_metal", "coin_pusher_coin_stack", "coin_pusher_ledge_tip":
+			return 0.30
+		"coin_pusher_slide":
+			return 0.48
+		"coin_pusher_fall", "coin_pusher_topple", "coin_pusher_shake", "coin_pusher_tell_rock":
+			return 0.42
+		"coin_pusher_tray":
+			return 0.82
+		"coin_pusher_gutter":
+			return 0.38
+		"coin_pusher_chirp":
+			return 0.24
+		"coin_pusher_alarm":
+			return 1.10
 		"scratch_paper_foley_loop":
 			return 0.28
 		"scratch_box_pop":
@@ -1721,6 +1895,30 @@ func _event_sample(event_id: String, t: float, frame: int, seconds: float) -> fl
 			return _sample_phone_out_of_service(t, frame, seconds)
 		"heat_gain":
 			return _sample_heat_gain(t, frame, seconds)
+		"coin_pusher_motor":
+			return _sample_coin_pusher_motor(t, frame, seconds)
+		"coin_pusher_coin_metal":
+			return _sample_coin_pusher_impact(t, frame, seconds, false)
+		"coin_pusher_coin_stack":
+			return _sample_coin_pusher_impact(t, frame, seconds, true)
+		"coin_pusher_slide":
+			return _sample_coin_pusher_slide(t, frame, seconds)
+		"coin_pusher_fall":
+			return _sample_coin_pusher_fall(t, frame, seconds)
+		"coin_pusher_topple":
+			return _sample_coin_pusher_topple(t, frame, seconds)
+		"coin_pusher_ledge_tip":
+			return _sample_coin_pusher_ledge_tip(t, frame, seconds)
+		"coin_pusher_tray":
+			return _sample_coin_pusher_tray(t, frame, seconds)
+		"coin_pusher_gutter":
+			return _sample_coin_pusher_gutter(t, frame, seconds)
+		"coin_pusher_shake", "coin_pusher_tell_rock":
+			return _sample_coin_pusher_shake(t, frame, seconds)
+		"coin_pusher_chirp":
+			return _sample_coin_pusher_chirp(t, frame, seconds)
+		"coin_pusher_alarm":
+			return _sample_coin_pusher_alarm(t, frame, seconds)
 		"scratch_paper_foley_loop":
 			return _sample_scratch_paper_foley_loop(t, frame, seconds)
 		"scratch_box_pop":
@@ -2431,6 +2629,82 @@ func _telephone_ring_segment(t: float, frame: int, start: float, duration: float
 	var tone_b := sin(TAU * 480.0 * local - warble_phase * 0.12 + 0.15)
 	var striker := _noise(frame, 6071) * 0.020 * (1.0 - clampf(local / 0.022, 0.0, 1.0))
 	return (tone_a * 0.52 + tone_b * 0.48) * envelope * tremolo * 0.145 + striker
+
+
+func _sample_coin_pusher_motor(t: float, frame: int, seconds: float) -> float:
+	var cycle := fposmod(t, seconds) / maxf(0.001, seconds)
+	var load := 0.74 + sin(cycle * TAU) * 0.12
+	var motor := _warm_tone(t, 54.0 + load * 8.0, 0.40) * 0.058
+	var belt := _soft_noise(frame, 60621, 13) * 0.016 * (0.72 + absf(sin(cycle * TAU)) * 0.28)
+	var detent := _body_thump(fposmod(t, seconds), seconds, 78.0, 0.06) if cycle < 0.10 else 0.0
+	return motor + belt + detent
+
+
+func _sample_coin_pusher_impact(t: float, frame: int, seconds: float, on_stack: bool) -> float:
+	var base := 690.0 if on_stack else 940.0
+	var ping := _inharmonic_coin_ping(t, frame, 60623 if on_stack else 60629, base, 0.86 if on_stack else 1.0)
+	var bed := _body_thump(t, seconds, 126.0 if on_stack else 168.0, 0.11 if on_stack else 0.16)
+	return ping + bed
+
+
+func _sample_coin_pusher_slide(t: float, frame: int, seconds: float) -> float:
+	var grit := _scratch_coin_grit(t, frame, seconds, 60631, 0.66) * _decay_env(t, seconds, 0.012, seconds * 0.78)
+	var pile := _warm_tone(t, 92.0, 0.16) * 0.028 * _decay_env(t, seconds, 0.010, seconds * 0.70)
+	return grit + pile
+
+
+func _sample_coin_pusher_fall(t: float, frame: int, seconds: float) -> float:
+	var flight := _soft_noise(frame, 60637, 17) * 0.018 * _pulse_window(t, 0.0, 0.16)
+	var landing := _sample_coin_pusher_impact(t - 0.14, frame + 37, maxf(0.10, seconds - 0.14), false)
+	return flight + landing
+
+
+func _sample_coin_pusher_topple(t: float, frame: int, seconds: float) -> float:
+	var result := _body_thump(t, seconds, 112.0, 0.16)
+	for index in range(4):
+		result += _inharmonic_coin_ping(t - float(index) * 0.052, frame + index * 29, 60641 + index * 7, 640.0 + float(index) * 75.0, 0.52)
+	return result
+
+
+func _sample_coin_pusher_ledge_tip(t: float, frame: int, seconds: float) -> float:
+	var scrape := _scratch_coin_grit(t, frame, seconds, 60671, 0.34) * _pulse_window(t, 0.0, 0.11)
+	var ring := _inharmonic_coin_ping(t - 0.09, frame + 17, 60679, 780.0, 0.62)
+	return scrape + ring
+
+
+func _sample_coin_pusher_tray(t: float, frame: int, seconds: float) -> float:
+	var result := _body_thump(t, seconds, 118.0, 0.18)
+	for index in range(9):
+		var delay := float(index) * 0.061 + float((index * 17) % 5) * 0.008
+		result += _inharmonic_coin_ping(t - delay, frame + index * 31, 60703 + index * 13, 610.0 + float((index * 97) % 330), 0.62)
+	return result
+
+
+func _sample_coin_pusher_gutter(t: float, frame: int, seconds: float) -> float:
+	var swallow := _body_thump(t, seconds, 74.0, 0.26)
+	var flat := _soft_noise(frame, 60733, 9) * 0.030 * _decay_env(t, seconds, 0.004, seconds * 0.58)
+	return swallow + flat
+
+
+func _sample_coin_pusher_shake(t: float, frame: int, seconds: float) -> float:
+	var wood := _body_thump(t, seconds, 86.0, 0.30)
+	var glass := _rounded_bell(t, 410.0, 0.18, 0.003) * 0.045
+	var rattle := _soft_noise(frame, 60757, 5) * 0.040 * _pulse_train(t, 34.0, 0.42) * _decay_env(t, seconds, 0.004, seconds * 0.72)
+	return wood + glass + rattle
+
+
+func _sample_coin_pusher_chirp(t: float, frame: int, seconds: float) -> float:
+	var first := _rounded_bell(t, 910.0, 0.09, 0.002) * 0.095
+	var second := _rounded_bell(t - 0.10, 1210.0, 0.10, 0.002) * 0.080
+	var relay := _soft_noise(frame, 60773, 3) * 0.018 * _pulse_window(t, 0.0, 0.018)
+	return first + second + relay
+
+
+func _sample_coin_pusher_alarm(t: float, frame: int, seconds: float) -> float:
+	var pulse := 0.70 + 0.30 * signf(sin(TAU * 7.0 * t))
+	var siren := (_warm_tone(t, 690.0 + sin(TAU * 2.3 * t) * 120.0, 0.12) * 0.105 + _warm_tone(t, 1035.0, 0.08) * 0.055) * pulse
+	var relay := _soft_noise(frame, 60781, 3) * 0.025 * _pulse_train(t, 7.0, 0.16)
+	return (siren + relay) * _decay_env(t, seconds, 0.008, seconds * 0.86)
 
 
 func _inharmonic_coin_ping(local: float, frame: int, seed: int, base_frequency: float, strength: float) -> float:

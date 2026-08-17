@@ -1,0 +1,28 @@
+[{
+  "id": "coin_pusher",
+  "profile": {
+      "bus": "SFX",
+      "motor_loop": {
+        "event_id": "coin_pusher_motor",
+        "idle_volume_db": -18.0,
+        "loaded_volume_db": -13.0,
+        "idle_pitch": 0.88,
+        "loaded_pitch": 0.96
+      },
+      "event_classes": {
+        "impact_metal": "coin_pusher_coin_metal",
+        "impact_stack": "coin_pusher_coin_stack",
+        "slide": "coin_pusher_slide",
+        "upper_to_lower": "coin_pusher_fall",
+        "topple": "coin_pusher_topple",
+        "ledge_tip": "coin_pusher_ledge_tip",
+        "tray_landing": "coin_pusher_tray",
+        "gutter_loss": "coin_pusher_gutter",
+        "cabinet_shake": "coin_pusher_shake",
+        "tell_rock": "coin_pusher_tell_rock",
+        "tell_chirp": "coin_pusher_chirp",
+        "attendant_glance": "coin_pusher_chirp",
+        "alarm": "coin_pusher_alarm"
+      }
+  }
+}]

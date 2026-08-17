@@ -165,7 +165,7 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 		var woke_this_tick := _apply_pushers(state, old_upper, new_upper, old_lower, new_lower, push_scale, integration_indices)
 		wake_count += woke_this_tick
 		if not integration_indices.is_empty():
-			_integrate(state, integration_indices, events, motion_events)
+			_integrate(state, integration_indices, events, motion_events, tick_index + 1)
 			var awake_indices := PackedInt32Array()
 			var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
 			var spatial_keys := _spatial_keys(bodies, awake_indices)
@@ -225,9 +225,11 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 		"topple_count": _motion_event_count(motion_events, "topple"),
 		"upper_lower_fall_count": _motion_event_count(motion_events, "upper_to_lower"),
 	}
+	var presentation_events := _presentation_event_views(state, events, motion_events, state["last_step_metrics"], config)
 	return {
 		"events": events,
 		"motion_events": motion_events,
+		"presentation_events": presentation_events,
 		"metrics": state["last_step_metrics"],
 		"presentation_trace": presentation_trace,
 	}
@@ -246,6 +248,7 @@ static func body_views(state: Dictionary) -> Array:
 		result.append({
 			"id": str(body.get("id", "")),
 			"kind": str(body.get("kind", "coin")),
+			"material_category": _presentation_material_category(body),
 			"x": int(body.get("x", 0)),
 			"y": int(body.get("y", 0)),
 			"z": int(body.get("z", 0)),
@@ -258,6 +261,7 @@ static func body_views(state: Dictionary) -> Array:
 			"lean_milli": int(body.get("lean_milli", 0)),
 			"metadata": (body.get("metadata", {}) as Dictionary).duplicate(true) if typeof(body.get("metadata", {})) == TYPE_DICTIONARY else {},
 		})
+	result.sort_custom(_body_view_depth_before)
 	return result
 
 
@@ -265,6 +269,7 @@ static func _presentation_trace_frame(state: Dictionary, tick_offset: int, exit_
 	var bodies := body_views(state)
 	for exit_view in exit_views:
 		bodies.append(exit_view)
+	bodies.sort_custom(_body_view_depth_before)
 	return {
 		"tick_offset": tick_offset,
 		"upper_phase_fp": int(state.get("upper_phase_fp", 0)),
@@ -278,6 +283,7 @@ static func _presentation_exit_views(event_value: Variant) -> Array:
 	var first := {
 		"id": str(event.get("body_id", "")),
 		"kind": str(event.get("kind", "coin")),
+		"material_category": "coin" if str(event.get("kind", "coin")) == "coin" else "physical_object",
 		"x": int(event.get("x", 0)),
 		"y": int(event.get("y", 0)),
 		"z": int(event.get("z", 0)),
@@ -293,6 +299,16 @@ static func _presentation_exit_views(event_value: Variant) -> Array:
 	second["y"] = int(first.get("y", 0)) - 4500
 	second["z"] = int(first.get("z", 0)) - 6000
 	return [first, second]
+
+
+static func _body_view_depth_before(left_value: Variant, right_value: Variant) -> bool:
+	var left: Dictionary = left_value if typeof(left_value) == TYPE_DICTIONARY else {}
+	var right: Dictionary = right_value if typeof(right_value) == TYPE_DICTIONARY else {}
+	var left_depth := int(left.get("y", 0)) * 10 - int(left.get("z", 0))
+	var right_depth := int(right.get("y", 0)) * 10 - int(right.get("z", 0))
+	if left_depth == right_depth:
+		return str(left.get("id", "")) < str(right.get("id", ""))
+	return left_depth > right_depth
 
 
 static func coin_count(state: Dictionary) -> int:
@@ -352,26 +368,91 @@ static func canonical_digest(state: Dictionary) -> Dictionary:
 
 
 static func _seed_opening_pile(state: Dictionary, rng: RngStream, opening_coins: int, _lane_count: int) -> void:
-	var stack_count := mini(8, maxi(0, opening_coins - 24))
-	var base_count := opening_coins - stack_count
-	var half := maxi(1, _divi(base_count + 1, 2))
-	var column_width := _divi(WIDTH, 10)
-	for index in range(opening_coins):
-		var stacked := index >= base_count
-		var source_index := index - base_count if stacked else index
-		var upper := source_index >= half
-		var local_index := source_index - half if upper else source_index
-		var column := posmod(local_index, 10)
-		var row := _divi(local_index, 10)
-		var y_base := UPPER_EDGE + 8500 if upper else FRONT_EDGE + 8500
-		var y := y_base + row * 10000 + (0 if stacked else rng.randi_range(-450, 450))
-		var x := clampi(column * column_width + _divi(column_width, 2) + (600 if stacked else rng.randi_range(-450, 450)), COIN_RADIUS, WIDTH - COIN_RADIUS)
-		var base_z := UPPER_FLOOR_Z if upper else LOWER_FLOOR_Z
-		var body := _body(state, "coin", x, y, base_z + (COIN_HEIGHT if stacked else 0), COIN_RADIUS, COIN_HEIGHT, 1, {})
-		body["sleeping"] = true
-		body["sleep_ticks"] = SLEEP_TICKS
-		body["rest_state"] = "resting"
-		(state["bodies"] as Array).append(body)
+	# Best-candidate sampling gives each seeded cabinet a natural, compressed
+	# field without reintroducing the old lane/height-grid model. It is performed
+	# once at generation time and consumes only the run-scoped RNG.
+	var shelf_specs := [
+		{"min_y": 8500, "max_y": 48500, "upper": false},
+		{"min_y": 55000, "max_y": 92500, "upper": true},
+	]
+	var base_target := mini(opening_coins, 110)
+	var base_bodies: Array = []
+	for shelf_index in range(shelf_specs.size()):
+		var shelf: Dictionary = shelf_specs[shelf_index]
+		var count := base_target / shelf_specs.size()
+		if shelf_index < base_target % shelf_specs.size():
+			count += 1
+		var shelf_bodies: Array = []
+		for _coin_index in range(count):
+			var candidate := _opening_best_candidate(rng, shelf, shelf_bodies)
+			var base_z := UPPER_FLOOR_Z if bool(shelf.get("upper", false)) else LOWER_FLOOR_Z
+			var body := _body(state, "coin", candidate.x, candidate.y, base_z, COIN_RADIUS, COIN_HEIGHT, 1, {"opening_pile": true})
+			_set_opening_body_rest(body)
+			(state["bodies"] as Array).append(body)
+			base_bodies.append(body)
+			shelf_bodies.append(body)
+	var stack_layers := {}
+	while (state["bodies"] as Array).size() < opening_coins and not base_bodies.is_empty():
+		var candidates: Array = []
+		for base_value in base_bodies:
+			var base: Dictionary = base_value
+			var base_id := str(base.get("id", ""))
+			var layers := int(stack_layers.get(base_id, 0))
+			var y := int(base.get("y", 0))
+			if layers < 2 and (y >= 26000 and y < UPPER_EDGE or y >= 72000):
+				candidates.append(base)
+		if candidates.is_empty():
+			break
+		var support: Dictionary = candidates[rng.randi_range(0, candidates.size() - 1)]
+		var support_id := str(support.get("id", ""))
+		var layer := int(stack_layers.get(support_id, 0)) + 1
+		stack_layers[support_id] = layer
+		var lean_x := rng.randi_range(-1900, 1900)
+		var lean_y := rng.randi_range(-1450, 1450)
+		var stacked := _body(
+			state,
+			"coin",
+			clampi(int(support.get("x", 0)) + lean_x, COIN_RADIUS, WIDTH - COIN_RADIUS),
+			int(support.get("y", 0)) + lean_y,
+			int(support.get("z", 0)) + layer * COIN_HEIGHT,
+			COIN_RADIUS,
+			COIN_HEIGHT,
+			1,
+			{"opening_pile": true, "opening_stack_layer": layer}
+		)
+		stacked["lean_milli"] = _divi(maxi(absi(lean_x), absi(lean_y)) * FP, COIN_RADIUS)
+		_set_opening_body_rest(stacked)
+		(state["bodies"] as Array).append(stacked)
+
+
+static func _opening_best_candidate(rng: RngStream, shelf: Dictionary, existing: Array) -> Vector2i:
+	var best := Vector2i(WIDTH / 2, int(shelf.get("min_y", FRONT_EDGE)))
+	var best_nearest_distance := -1
+	for _attempt in range(16):
+		var candidate := Vector2i(
+			rng.randi_range(COIN_RADIUS, WIDTH - COIN_RADIUS),
+			rng.randi_range(int(shelf.get("min_y", FRONT_EDGE)), int(shelf.get("max_y", UPPER_EDGE - COIN_RADIUS)))
+		)
+		var nearest_distance := 1 << 62
+		for value in existing:
+			if typeof(value) != TYPE_DICTIONARY:
+				continue
+			var body: Dictionary = value
+			var dx := candidate.x - int(body.get("x", 0))
+			var dy := candidate.y - int(body.get("y", 0))
+			nearest_distance = mini(nearest_distance, dx * dx + dy * dy)
+		if existing.is_empty():
+			nearest_distance = 1 << 61
+		if nearest_distance > best_nearest_distance:
+			best_nearest_distance = nearest_distance
+			best = candidate
+	return best
+
+
+static func _set_opening_body_rest(body: Dictionary) -> void:
+	body["sleeping"] = true
+	body["sleep_ticks"] = SLEEP_TICKS
+	body["rest_state"] = "resting"
 
 
 static func _body(state: Dictionary, kind: String, x: int, y: int, z: int, radius: int, height: int, mass: int, metadata: Dictionary) -> Dictionary:
@@ -463,7 +544,7 @@ static func _apply_pushers(state: Dictionary, old_upper: int, new_upper: int, ol
 	return count
 
 
-static func _integrate(state: Dictionary, active_indices: PackedInt32Array, events: Array, motion_events: Array) -> void:
+static func _integrate(state: Dictionary, active_indices: PackedInt32Array, events: Array, motion_events: Array, tick_offset: int) -> void:
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
 	var exit_indices: Array = []
 	for body_index_value in active_indices:
@@ -487,12 +568,12 @@ static func _integrate(state: Dictionary, active_indices: PackedInt32Array, even
 		body["z"] = int(body.get("z", 0)) + _divi(int(body.get("vz", 0)), FIXED_HZ)
 		var exit := _exit_kind(body)
 		if not exit.is_empty():
-			events.append(_exit_event(body, exit, "physical_fall"))
+			events.append(_exit_event(body, exit, "physical_fall", tick_offset))
 			exit_indices.append(body_index)
 			continue
 		var base_z := _floor_z(body)
 		if was_upper and int(body.get("y", 0)) < UPPER_EDGE:
-			motion_events.append({"kind": "upper_to_lower", "body_id": str(body.get("id", "")), "x": int(body.get("x", 0)), "y": int(body.get("y", 0)), "z": int(body.get("z", 0))})
+			motion_events.append({"kind": "upper_to_lower", "body_id": str(body.get("id", "")), "x": int(body.get("x", 0)), "y": int(body.get("y", 0)), "z": int(body.get("z", 0)), "tick_offset": tick_offset})
 		if int(body.get("z", 0)) <= base_z:
 			body["z"] = base_z
 			body["vz"] = 0
@@ -656,14 +737,104 @@ static func _exit_kind(body: Dictionary) -> String:
 	return "tray" if x >= TRAY_LEFT and x <= TRAY_RIGHT else "gutter"
 
 
-static func _exit_event(body: Dictionary, outcome: String, cause: String) -> Dictionary:
+static func _exit_event(body: Dictionary, outcome: String, cause: String, tick_offset: int = ACTION_TICKS) -> Dictionary:
 	return {
 		"body_id": str(body.get("id", "")), "kind": str(body.get("kind", "coin")),
 		"outcome": outcome, "cause": cause,
 		"x": int(body.get("x", 0)), "y": int(body.get("y", 0)), "z": int(body.get("z", 0)),
 		"mass": int(body.get("mass", 1)),
+		"tick_offset": tick_offset,
 		"metadata": (body.get("metadata", {}) as Dictionary).duplicate(true) if typeof(body.get("metadata", {})) == TYPE_DICTIONARY else {},
 	}
+
+
+static func _presentation_event_views(state: Dictionary, exits: Array, motion_events: Array, metrics: Dictionary, config: Dictionary) -> Array:
+	var result: Array = []
+	var focus := _presentation_focus_body(state)
+	var collision_count := int(metrics.get("collision_count", 0))
+	var moved_count := int(metrics.get("moved_count", 0))
+	if collision_count > 0:
+		result.append(_presentation_event("impact", focus, mini(1000, 280 + collision_count * 36), ACTION_TICKS / 4, {
+			"material": "coin_on_coin" if int(focus.get("z", 0)) > _floor_z(focus) else "coin_on_metal",
+			"stack_depth": maxi(0, _divi(int(focus.get("z", 0)) - _floor_z(focus), COIN_HEIGHT)),
+			"fall_height_milli": maxi(0, _divi(int(focus.get("z", 0)) - _floor_z(focus), COIN_HEIGHT) * FP),
+			"collision_count": collision_count,
+		}))
+	if moved_count > 1:
+		result.append(_presentation_event("slide", focus, mini(1000, 180 + moved_count * 24), ACTION_TICKS / 2, {"moved_count": moved_count}))
+	for motion_value in motion_events:
+		if typeof(motion_value) != TYPE_DICTIONARY:
+			continue
+		var motion: Dictionary = motion_value
+		var kind := str(motion.get("kind", ""))
+		var body := _presentation_body_by_id(state, str(motion.get("body_id", "")))
+		if body.is_empty():
+			body = motion
+		result.append(_presentation_event(kind, body, 720 if kind == "topple" else 820, int(motion.get("tick_offset", ACTION_TICKS / 2)), motion))
+	var outcome_totals := {"tray": 0, "gutter": 0}
+	for exit_value in exits:
+		if typeof(exit_value) == TYPE_DICTIONARY:
+			var counted_outcome := str((exit_value as Dictionary).get("outcome", "gutter"))
+			outcome_totals[counted_outcome] = int(outcome_totals.get(counted_outcome, 0)) + 1
+	var outcome_indices := {"tray": 0, "gutter": 0}
+	for exit_value in exits:
+		if typeof(exit_value) != TYPE_DICTIONARY:
+			continue
+		var exit_event: Dictionary = exit_value
+		var outcome := str(exit_event.get("outcome", "gutter"))
+		var tick_offset := int(exit_event.get("tick_offset", ACTION_TICKS))
+		var group_index := int(outcome_indices.get(outcome, 0))
+		outcome_indices[outcome] = group_index + 1
+		result.append(_presentation_event("ledge_tip", exit_event, 760, maxi(0, tick_offset - 3), {"outcome": outcome}))
+		result.append(_presentation_event("tray_landing" if outcome == "tray" else "gutter_loss", exit_event, mini(1000, 450 + int(exit_event.get("mass", 1)) * 110), tick_offset, {
+			"outcome": outcome,
+			"group_count": int(outcome_totals.get(outcome, 1)),
+			"group_index": group_index,
+		}))
+	if int(config.get("nudge_x", 0)) != 0 or int(config.get("nudge_y", 0)) != 0:
+		result.append(_presentation_event("cabinet_shake", focus, mini(1000, (absi(int(config.get("nudge_x", 0))) + absi(int(config.get("nudge_y", 0)))) / 24), 1, {}))
+	return result
+
+
+static func _presentation_focus_body(state: Dictionary) -> Dictionary:
+	for body_value in state.get("bodies", []):
+		if typeof(body_value) == TYPE_DICTIONARY and not bool((body_value as Dictionary).get("sleeping", false)):
+			return (body_value as Dictionary).duplicate(true)
+	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
+	return (bodies[0] as Dictionary).duplicate(true) if not bodies.is_empty() and typeof(bodies[0]) == TYPE_DICTIONARY else {}
+
+
+static func _presentation_body_by_id(state: Dictionary, body_id: String) -> Dictionary:
+	for body_value in state.get("bodies", []):
+		if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("id", "")) == body_id:
+			return (body_value as Dictionary).duplicate(true)
+	return {}
+
+
+static func _presentation_event(kind: String, body: Dictionary, intensity_milli: int, tick_offset: int, metadata: Dictionary) -> Dictionary:
+	return {
+		"kind": kind,
+		"body_id": str(body.get("body_id", body.get("id", ""))),
+		"x": int(body.get("x", WIDTH / 2)),
+		"y": int(body.get("y", UPPER_EDGE)),
+		"z": int(body.get("z", 0)),
+		"intensity_milli": clampi(intensity_milli, 0, 1000),
+		"tick_offset": clampi(tick_offset, 0, ACTION_TICKS),
+		"metadata": metadata.duplicate(true),
+	}
+
+
+static func _presentation_material_category(body: Dictionary) -> String:
+	match str(body.get("kind", "coin")):
+		"coin":
+			return "coin"
+		"puck":
+			return "feature_puck"
+		"fragment":
+			return "key_fragment"
+		"rider":
+			return "prize_rider"
+	return "physical_object"
 
 
 static func _positions_by_id(state: Dictionary) -> Dictionary:

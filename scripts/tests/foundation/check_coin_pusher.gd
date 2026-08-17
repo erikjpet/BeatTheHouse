@@ -18,6 +18,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_alarm_audio(failures)
 	_check_coin_pusher_canonical_probe(failures)
 	_check_coin_pusher_surface_liveness(game, failures)
+	_check_coin_pusher_snapshot_renderer_boundary(game, failures)
 	_check_coin_pusher_visible_timing(game, failures)
 	_check_coin_pusher_presentation_replay(game, failures)
 	_check_coin_pusher_feature_reconciliation(game, failures)
@@ -110,8 +111,8 @@ func _check_coin_pusher_data_contract(library: ContentLibrary, definition: Dicti
 func _check_coin_pusher_discrete_solver(definition: Dictionary, failures: Array) -> void:
 	var tuning: Dictionary = definition.get("coin_pusher_tuning", {}) if typeof(definition.get("coin_pusher_tuning", {})) == TYPE_DICTIONARY else {}
 	var state := CoinPusherSolverScript.create(_configured_rng(6062), int(tuning.get("coin_cap", 0)), 0, 5)
-	if str(state.get("schema", "")) != "coin_pusher_fixed_point" or int(state.get("fixed_hz", 0)) != 60 or int(state.get("fixed_point_scale", 0)) != 1000 or int(state.get("coin_cap", 0)) != 48:
-		failures.append("Coin Pusher did not expose the shipped 60 Hz integer fixed-point solver and 48-coin cap.")
+	if str(state.get("schema", "")) != "coin_pusher_fixed_point" or int(state.get("fixed_hz", 0)) != 60 or int(state.get("fixed_point_scale", 0)) != 1000 or int(state.get("coin_cap", 0)) != 160:
+		failures.append("Coin Pusher did not expose the shipped 60 Hz integer fixed-point solver and 160-coin cap.")
 	var resting_stack := CoinPusherSolverScript.create(_configured_rng(6061), 48, 0, 5)
 	resting_stack["bodies"] = [
 		_solver_body("rest_base", "coin", 42000, 27000, 0, true),
@@ -162,7 +163,7 @@ func _check_coin_pusher_discrete_solver(definition: Dictionary, failures: Array)
 	if JSON.stringify(CoinPusherSolverScript.canonical_digest(nudge_state)) == nudge_before:
 		failures.append("A nudge did not shift and destabilize a real individual-coin pile.")
 	var pressure_rng := _configured_rng(6065)
-	var pressure_state := CoinPusherSolverScript.create(pressure_rng.fork("opening"), 48, 36, 5)
+	var pressure_state := CoinPusherSolverScript.create(pressure_rng.fork("opening"), 160, 150, 5)
 	for action_index in range(600):
 		CoinPusherSolverScript.add_coin(pressure_state, pressure_rng, action_index % 5, 5, 3 if action_index % 17 == 0 else 1)
 		var pressure_step := CoinPusherSolverScript.step_action(pressure_state, {
@@ -170,8 +171,8 @@ func _check_coin_pusher_discrete_solver(definition: Dictionary, failures: Array)
 			"captured_lower_phase_fp": (action_index * 2300) % CoinPusherSolverScript.PHASE_PERIOD,
 			"push_scale": 1 + action_index % 5,
 		})
-		if CoinPusherSolverScript.coin_count(pressure_state) > 48:
-			failures.append("Coin Pusher cap pressure left more than 48 real coins after action %d." % action_index)
+		if CoinPusherSolverScript.coin_count(pressure_state) > 160:
+			failures.append("Coin Pusher cap pressure left more than 160 real coins after action %d." % action_index)
 			break
 		for event_value in pressure_step.get("events", []):
 			if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("cause", "")) != "physical_fall":
@@ -278,9 +279,55 @@ func _check_coin_pusher_production_rider(game: GameModule, library: ContentLibra
 
 func _check_coin_pusher_alarm_audio(failures: Array) -> void:
 	var sfx := SfxPlayerScript.new()
-	var stream: AudioStreamWAV = sfx.render_event_master_stream("alarm_chirp")
-	if sfx.debug_normalized_event_id("alarm_chirp") != "heat_gain" or stream == null or stream.data.is_empty():
-		failures.append("Quarter Falls alarm_chirp is not registered to the authored non-generic radio-chirp SFX bank.")
+	var pusher_source := FileAccess.get_file_as_string("res://scripts/games/coin_pusher.gd")
+	if pusher_source.contains('result["surface_audio_cue"] = "alarm_chirp"'):
+		failures.append("Coin Pusher still bypasses its snapshot-event chirp ladder through the legacy generic result cue.")
+	var profile := sfx.debug_surface_sfx_profile("coin_pusher")
+	var classes: Dictionary = profile.get("event_classes", {}) if typeof(profile.get("event_classes", {})) == TYPE_DICTIONARY else {}
+	var expected_classes := ["impact_metal", "impact_stack", "slide", "upper_to_lower", "topple", "ledge_tip", "tray_landing", "gutter_loss", "cabinet_shake", "tell_rock", "tell_chirp", "attendant_glance", "alarm"]
+	if str(profile.get("bus", "")) != "SFX" or str((profile.get("motor_loop", {}) as Dictionary).get("event_id", "")) != "coin_pusher_motor":
+		failures.append("Coin Pusher audio profile is not registered through the central SFX bus and motor-loop manifest.")
+	for event_class in expected_classes:
+		var cue := str(classes.get(event_class, ""))
+		var stream: AudioStreamWAV = sfx.render_event_master_stream(cue)
+		if cue.is_empty() or sfx.debug_normalized_event_id(cue) != cue or stream == null or stream.data.is_empty():
+			failures.append("Coin Pusher audio event class %s is missing its authored central-bank cue." % event_class)
+	var schedule := sfx.debug_coin_pusher_event_schedule({"coin_pusher_presentation_events": [
+		{"kind": "impact", "tick_offset": 2, "intensity_milli": 400, "metadata": {"material": "coin_on_metal", "stack_depth": 0, "fall_height_milli": 0}},
+		{"kind": "impact", "tick_offset": 3, "intensity_milli": 700, "metadata": {"material": "coin_on_coin", "stack_depth": 3, "fall_height_milli": 3000}},
+		{"kind": "slide", "tick_offset": 5, "intensity_milli": 500, "metadata": {}},
+		{"kind": "upper_to_lower", "tick_offset": 8, "intensity_milli": 700, "metadata": {}},
+		{"kind": "topple", "tick_offset": 12, "intensity_milli": 800, "metadata": {}},
+		{"kind": "ledge_tip", "tick_offset": 17, "intensity_milli": 600, "metadata": {}},
+		{"kind": "tray_landing", "tick_offset": 22, "intensity_milli": 900, "metadata": {"group_count": 4, "group_index": 0}},
+		{"kind": "gutter_loss", "tick_offset": 24, "intensity_milli": 800, "metadata": {}},
+		{"kind": "cabinet_shake", "tick_offset": 1, "intensity_milli": 600, "metadata": {}},
+		{"kind": "tell_rock", "tick_offset": 1, "intensity_milli": 400, "metadata": {"tell_rung": 1}},
+		{"kind": "tell_chirp", "tick_offset": 1, "intensity_milli": 600, "metadata": {"tell_rung": 2}},
+		{"kind": "attendant_glance", "tick_offset": 1, "intensity_milli": 700, "metadata": {"tell_rung": 3}},
+		{"kind": "alarm", "tick_offset": 1, "intensity_milli": 1000, "metadata": {"tell_rung": 3}},
+	]})
+	if schedule.size() != 13 or str((schedule[0] as Dictionary).get("cue", "")) != "coin_pusher_coin_metal" or str((schedule[1] as Dictionary).get("cue", "")) != "coin_pusher_coin_stack" \
+			or float((schedule[1] as Dictionary).get("pitch", 0.0)) <= float((schedule[0] as Dictionary).get("pitch", 0.0)) \
+			or str((schedule[6] as Dictionary).get("cue", "")) != "coin_pusher_tray" or str((schedule[7] as Dictionary).get("cue", "")) != "coin_pusher_gutter" \
+			or str((schedule[12] as Dictionary).get("cue", "")) != "coin_pusher_alarm":
+		failures.append("Coin Pusher snapshot events did not schedule the full layered impact/slide/motor/tray/gutter/tell/alarm audio map.")
+	var height_schedule := sfx.debug_coin_pusher_event_schedule({"coin_pusher_presentation_events": [
+		{"kind": "impact", "tick_offset": 1, "intensity_milli": 500, "metadata": {"material": "coin_on_metal", "stack_depth": 0, "fall_height_milli": 0}},
+		{"kind": "impact", "tick_offset": 1, "intensity_milli": 500, "metadata": {"material": "coin_on_metal", "stack_depth": 0, "fall_height_milli": 4000}},
+	]})
+	if height_schedule.size() != 2 or float((height_schedule[1] as Dictionary).get("volume_db", -99.0)) <= float((height_schedule[0] as Dictionary).get("volume_db", -99.0)):
+		failures.append("Coin Pusher impact mix does not respond to physical fall height.")
+	var cascade_schedule := sfx.debug_coin_pusher_event_schedule({"coin_pusher_presentation_events": [
+		{"kind": "tray_landing", "tick_offset": 2, "intensity_milli": 700, "metadata": {"group_count": 3, "group_index": 0}},
+		{"kind": "tray_landing", "tick_offset": 3, "intensity_milli": 700, "metadata": {"group_count": 3, "group_index": 1}},
+	]})
+	if cascade_schedule.size() != 1 or float((cascade_schedule[0] as Dictionary).get("volume_db", -99.0)) <= -7.0:
+		failures.append("Coin Pusher tray payout did not collapse physical landings into one count-scaled cascade.")
+	var alarm_stream: AudioStreamWAV = sfx.render_event_master_stream("coin_pusher_alarm")
+	var chirp_stream: AudioStreamWAV = sfx.render_event_master_stream("coin_pusher_chirp")
+	if alarm_stream == null or chirp_stream == null or alarm_stream.data == chirp_stream.data:
+		failures.append("Coin Pusher alarm is not a distinct machine cue from the tell-ladder chirp.")
 	sfx.free()
 
 
@@ -296,6 +343,10 @@ func _check_coin_pusher_canonical_probe(failures: Array) -> void:
 	var required_capture_contract := 'const REQUIRED_CAPTURE_IDS := ["normal_pile_rider", "tell_alarm_chirps", "reduced_motion", "hard_alarm_lockdown", "room_available_after_alarm", "jackpot_ridge", "vault_drop"]'
 	if not capture_source.contains(required_capture_contract):
 		failures.append("Coin Pusher focused capture does not require both Jackpot Ridge and The Vault Drop alongside the five base proofs.")
+	var feel_source := FileAccess.get_file_as_string("res://tools/coin_pusher_physics_feel_capture.gd")
+	var required_feel_contract := 'const REQUIRED_IDS := ["drop_disturbs_pile", "stack_topples", "upper_to_lower", "nudge_shifts_pile", "tray_fall", "gutter_loss", "tell_ladder_alarm"]'
+	if not feel_source.contains(required_feel_contract) or not feel_source.contains("const SHIPPED_OPENING_COIN_COUNT := 150"):
+		failures.append("Coin Pusher feel QA does not require all seven dense-pile scenarios at the shipped presentation cap.")
 	var performance_source := FileAccess.get_file_as_string("res://tools/foundation_performance_probe.gd")
 	for required_text in [
 		'"coin_pusher": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8}',
@@ -353,6 +404,48 @@ func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> v
 	if game.deterministic_state_digest(run_state.current_environment) != digest_before_render:
 		failures.append("Quarter Falls rider/approach rendering mutated the persisted pile per frame.")
 	_check_coin_pusher_reduced_motion_freeze(game, surface, failures)
+
+
+func _check_coin_pusher_snapshot_renderer_boundary(game: GameModule, failures: Array) -> void:
+	var synthetic_body := {
+		"id": "synthetic_coin", "kind": "coin", "x": 50000, "y": 32000, "z": 1700,
+		"radius": 4300, "height": 1700, "mass": 1, "sleeping": true,
+		"rest_state": "resting", "level": "lower", "material_category": "coin", "lean_milli": 340, "metadata": {},
+	}
+	var synthetic := {
+		"surface_renderer": "coin_pusher", "surface_time_msec": 1, "reduce_motion": true,
+		"coin_pusher_snapshot": {
+			"schema": "coin_pusher_presentation_snapshot", "version": 1,
+			"geometry": {"width": 100000, "front_edge": 7000, "upper_edge": 52000, "rear_edge": 95000, "coin_radius": 4300, "coin_height": 1700},
+			"bodies": [synthetic_body], "depth_ordered": true, "upper_phase_milli": 0, "lower_phase_milli": 0, "phase_domain_milli": 8000,
+			"action_state": {"action_count": 0, "replay_active_id": ""}, "tell_rung": 0, "locked": false,
+		},
+		"coin_pusher_bodies": [synthetic_body], "coin_pusher_lanes": [{"lane": 0, "approach": 0}],
+		"coin_pusher_lane": 0, "coin_pusher_tell_rung": 0, "coin_pusher_upper_phase_milli": 0,
+		"coin_pusher_lower_phase_milli": 0, "coin_pusher_force_order": ["tap", "shove", "slam"],
+		"coin_pusher_direction_order": ["left", "right", "front"], "coin_pusher_variation_id": "quarter_falls",
+		"coin_pusher_variation_name": "Quarter Falls", "coin_pusher_last_message": "Synthetic snapshot.",
+	}
+	var harness := SurfaceHarness.new()
+	harness.setup(synthetic)
+	if not game.draw_surface(harness, synthetic, {"synthetic_snapshot_without_solver": true}):
+		failures.append("Coin Pusher renderer did not run from a synthetic pure-data snapshot without a solver state.")
+	elif not harness.labels.has("QUARTER FALLS") or not _surface_harness_has_action(harness, "coin_pusher_drop"):
+		failures.append("Coin Pusher synthetic snapshot renderer did not retain its identity and input affordances.")
+	var narrow_geometry: Dictionary = ((synthetic.get("coin_pusher_snapshot", {}) as Dictionary).get("geometry", {}) as Dictionary).duplicate(true)
+	var wide_geometry: Dictionary = narrow_geometry.duplicate(true)
+	wide_geometry["width"] = 200000
+	var narrow_position: Vector2 = game.call("_body_screen_position", synthetic_body, narrow_geometry)
+	var wide_position: Vector2 = game.call("_body_screen_position", synthetic_body, wide_geometry)
+	if narrow_position.is_equal_approx(wide_position):
+		failures.append("Coin Pusher renderer ignored synthetic snapshot geometry and therefore still depends on solver geometry.")
+	var source := FileAccess.get_file_as_string("res://scripts/games/coin_pusher.gd")
+	var render_start := source.find("func _draw_cells")
+	var render_end := source.find("func _draw_vault_console")
+	if render_start < 0 or render_end <= render_start or source.substr(render_start, render_end - render_start).contains("CoinPusherSolverScript"):
+		failures.append("Coin Pusher render helpers reach through the renderer-agnostic snapshot into solver internals.")
+	if source.substr(render_start, render_end - render_start).contains("sort_custom"):
+		failures.append("Coin Pusher renderer still sorts every physical body per frame instead of consuming snapshot depth order.")
 
 
 func _check_coin_pusher_visible_timing(game: GameModule, failures: Array) -> void:

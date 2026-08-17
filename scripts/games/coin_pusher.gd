@@ -141,6 +141,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_suppresses_game_result_burst": true,
 		"surface_time_msec": surface_time_msec,
 		"coin_pusher_bodies": _body_views(machine),
+		"coin_pusher_snapshot": _presentation_snapshot(machine, upper_display_phase_milli, lower_display_phase_milli),
 		"coin_pusher_solver_fixed_hz": CoinPusherSolverScript.FIXED_HZ,
 		"coin_pusher_solver_fixed_point_scale": CoinPusherSolverScript.FP,
 		"coin_pusher_coin_cap": _coin_cap(),
@@ -199,6 +200,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			"action_cues": {
 				"coin_pusher_drop": "machine_button",
 				"coin_pusher_nudge": "table_hit",
+			},
+			"state_sync": {
+				"method": "coin_pusher_state",
+				"animation_channel": PHYSICS_REPLAY_CHANNEL,
 			},
 		}),
 	})
@@ -292,21 +297,26 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 		return false
 	surface.surface_begin_design_space(SURFACE_SIZE)
 	surface.draw_rect(Rect2(Vector2.ZERO, SURFACE_SIZE), C_BG)
-	var cabinet := Rect2(32, 18, 610, 390)
-	if int(state.get("coin_pusher_tell_rung", 0)) > 0:
-		cabinet.position.x += sin(float(surface.surface_flicker()) * 14.0) * float(int(state.get("coin_pusher_tell_rung", 0)))
-	surface.draw_rect(cabinet, C_CASE)
-	surface.draw_rect(Rect2(56, 48, 562, 282), C_GLASS)
-	var flicker := float(surface.surface_flicker())
-	var attract_shift := sin(flicker * 2.0) * 2.5
-	_draw_shelf(surface, 80.0 + attract_shift, int(state.get("coin_pusher_upper_phase_milli", int(state.get("coin_pusher_upper_phase", 0)) * 1000)), C_TEAL)
-	_draw_shelf(surface, 225.0 - attract_shift, int(state.get("coin_pusher_lower_phase_milli", int(state.get("coin_pusher_lower_phase", 0)) * 1000)), Color("#ff8e5b"))
-	_draw_gutter_lanes(surface)
+	var snapshot: Dictionary = state.get("coin_pusher_snapshot", {}) if typeof(state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	var tell_rung := int(snapshot.get("tell_rung", state.get("coin_pusher_tell_rung", 0)))
+	var shake_offset := Vector2.ZERO
+	if tell_rung > 0 and not bool(state.get("reduce_motion", false)):
+		shake_offset.x = sin(float(surface.surface_flicker()) * 14.0) * minf(4.5, float(tell_rung) * 1.4)
+	var cabinet := Rect2(Vector2(22, 10) + shake_offset, Vector2(616, 402))
+	surface.draw_rect(Rect2(cabinet.position + Vector2(7, 8), cabinet.size), Color(0, 0, 0, 0.55))
+	surface.draw_rect(cabinet, C_HANG if tell_rung >= 3 else C_CASE)
+	surface.draw_rect(Rect2(cabinet.position + Vector2(6, 6), cabinet.size - Vector2(12, 12)), C_CASE)
+	var geometry := _presentation_geometry(state)
+	_draw_perspective_cabinet(surface, shake_offset, state)
+	var phase_domain_milli := maxi(1, int(snapshot.get("phase_domain_milli", _phase_steps() * 1000)))
+	_draw_shelf(surface, "upper", int(snapshot.get("upper_phase_milli", 0)), phase_domain_milli, C_TEAL)
+	_draw_shelf(surface, "lower", int(snapshot.get("lower_phase_milli", 0)), phase_domain_milli, Color("#ff8e5b"))
 	var presentation_bodies := _presentation_bodies(surface, state)
-	_draw_cells(surface, state, presentation_bodies)
+	_draw_cells(surface, state, presentation_bodies, geometry)
+	_draw_presentation_particles(surface, state, geometry)
 	_draw_lane_approaches(surface, state)
-	_draw_riders(surface, presentation_bodies, state.get("coin_pusher_bodies", []) if typeof(state.get("coin_pusher_bodies", [])) == TYPE_ARRAY else [])
-	_draw_variation_features(surface, state, presentation_bodies, state.get("coin_pusher_bodies", []) if typeof(state.get("coin_pusher_bodies", [])) == TYPE_ARRAY else [])
+	_draw_riders(surface, presentation_bodies, state.get("coin_pusher_bodies", []) if typeof(state.get("coin_pusher_bodies", [])) == TYPE_ARRAY else [], geometry)
+	_draw_variation_features(surface, state, presentation_bodies, state.get("coin_pusher_bodies", []) if typeof(state.get("coin_pusher_bodies", [])) == TYPE_ARRAY else [], geometry)
 	_draw_console(surface, state)
 	surface.surface_end_design_space()
 	return true
@@ -431,6 +441,7 @@ func _resolve_drop(run_state: RunState, environment: Dictionary, machine: Dictio
 	result["coin_pusher_lower_input_phase"] = lower_input_phase
 	result["coin_pusher_phase_accuracy"] = phase_accuracy
 	result["coin_pusher_physics_events"] = physics.get("events", [])
+	result["coin_pusher_presentation_events"] = physics.get("presentation_events", [])
 	result["coin_pusher_solver_metrics"] = physics.get("metrics", {})
 	result["coin_pusher_presentation_trace"] = _finalized_presentation_trace(physics, machine)
 	result["coin_pusher_presentation_action"] = DROP_ACTION
@@ -541,12 +552,14 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 	result["coin_pusher_prizes"] = prizes
 	result["coin_pusher_variation_id"] = str(machine.get("variation_id", "quarter_falls"))
 	result["coin_pusher_physics_events"] = physics.get("events", [])
+	var presentation_events: Array = (physics.get("presentation_events", []) as Array).duplicate(true)
+	if int(machine.get("tell_rung", 0)) > previous_tell:
+		presentation_events.append(_tell_presentation_event(int(machine.get("tell_rung", 0)), alarmed))
+	result["coin_pusher_presentation_events"] = presentation_events
 	result["coin_pusher_solver_metrics"] = physics.get("metrics", {})
 	result["coin_pusher_presentation_trace"] = _finalized_presentation_trace(physics, machine)
 	result["coin_pusher_presentation_action"] = NUDGE_ACTION
 	result["preserve_surface_ui_state"] = true
-	if not alarmed and int(machine.get("tell_rung", 0)) == 2 and previous_tell < 2:
-		result["surface_audio_cue"] = "alarm_chirp"
 	return result
 
 
@@ -1263,6 +1276,44 @@ func _body_views(machine: Dictionary) -> Array:
 	return CoinPusherSolverScript.body_views(_simulation(machine))
 
 
+func _presentation_snapshot(machine: Dictionary, upper_phase_milli: int, lower_phase_milli: int) -> Dictionary:
+	return {
+		"schema": "coin_pusher_presentation_snapshot",
+		"version": 1,
+		"geometry": CoinPusherSolverScript.implementation_contract().duplicate(true),
+		"bodies": _body_views(machine),
+		"depth_ordered": true,
+		"upper_phase_milli": upper_phase_milli,
+		"lower_phase_milli": lower_phase_milli,
+		"phase_domain_milli": _phase_steps() * 1000,
+		"action_state": {
+			"action_count": int(machine.get("action_count", 0)),
+			"replay_active_id": "action_%d" % int(machine.get("action_count", 0)) if int(machine.get("action_count", 0)) > 0 else "",
+		},
+		"tell_rung": int(machine.get("tell_rung", 0)),
+		"locked": bool(machine.get("locked_down", false)),
+	}
+
+
+func _presentation_geometry(state: Dictionary) -> Dictionary:
+	var snapshot: Dictionary = state.get("coin_pusher_snapshot", {}) if typeof(state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	var geometry: Dictionary = snapshot.get("geometry", {}) if typeof(snapshot.get("geometry", {})) == TYPE_DICTIONARY else {}
+	return geometry
+
+
+func _tell_presentation_event(tell_rung: int, alarmed: bool) -> Dictionary:
+	return {
+		"kind": "alarm" if alarmed else "attendant_glance" if tell_rung >= 3 else "tell_chirp" if tell_rung >= 2 else "tell_rock",
+		"body_id": "cabinet",
+		"x": CoinPusherSolverScript.WIDTH / 2,
+		"y": CoinPusherSolverScript.UPPER_EDGE,
+		"z": 0,
+		"intensity_milli": 1000 if alarmed else 360 + tell_rung * 180,
+		"tick_offset": CoinPusherSolverScript.ACTION_TICKS,
+		"metadata": {"tell_rung": tell_rung},
+	}
+
+
 func _finalized_presentation_trace(physics: Dictionary, machine: Dictionary) -> Array:
 	var trace: Array = physics.get("presentation_trace", []) if typeof(physics.get("presentation_trace", [])) == TYPE_ARRAY else []
 	if trace.is_empty():
@@ -1301,39 +1352,110 @@ func _digest_state(machine: Dictionary) -> Dictionary:
 	}
 
 
-func _draw_shelf(surface, y: float, phase_milli: int, color: Color) -> void:
-	var offset := sin(float(phase_milli) / float(_phase_steps() * 1000) * TAU) * 14.0
-	surface.draw_rect(Rect2(82 + offset, y, 505, 14), color)
-	surface.draw_rect(Rect2(82 + offset, y, 505, 14), C_TEXT, false, 1)
+func _draw_perspective_cabinet(surface, offset: Vector2, state: Dictionary) -> void:
+	surface.draw_rect(Rect2(Vector2(46, 42) + offset, Vector2(568, 284)), C_GLASS)
+	surface.draw_rect(Rect2(92, 64, 476, 119), Color("#183c4d"))
+	surface.draw_rect(Rect2(66, 188, 528, 127), Color("#203344"))
+	surface.draw_line(Vector2(108, 64), Vector2(81, 183), Color("#315d6b"), 2.0)
+	surface.draw_line(Vector2(552, 64), Vector2(579, 183), Color("#315d6b"), 2.0)
+	surface.draw_line(Vector2(81, 188), Vector2(54, 315), Color("#40566b"), 2.0)
+	surface.draw_line(Vector2(579, 188), Vector2(606, 315), Color("#40566b"), 2.0)
+	surface.draw_line(Vector2(81, 183), Vector2(579, 183), Color("#d9f2f1"), 3.0)
+	surface.draw_line(Vector2(54, 315), Vector2(606, 315), Color("#ffe6a0"), 4.0)
+	surface.draw_rect(Rect2(74, 322, 512, 23), Color("#0c131c"))
+	surface.draw_line(Vector2(108, 345), Vector2(552, 345), C_COIN, 2.0)
+	var gutter_color := Color(C_HANG.r, C_HANG.g, C_HANG.b, 0.26)
+	surface.draw_rect(Rect2(35, 315, 73, 30), gutter_color)
+	surface.draw_rect(Rect2(552, 315, 73, 30), gutter_color)
+	var tell_rung := int(state.get("coin_pusher_tell_rung", 0))
+	for rung in range(3):
+		var light_color := C_HANG if tell_rung > rung else Color("#342a2d")
+		surface.draw_circle(Vector2(273 + rung * 28, 27), 6.0, light_color)
+	if tell_rung >= 2:
+		surface.surface_label("CHIRP" if tell_rung == 2 else "ALARM", Vector2(359, 31), 7, C_HANG)
+	if tell_rung >= 3:
+		surface.draw_circle(Vector2(591, 66), 9.0, Color("#8b9aaa"))
+		surface.draw_line(Vector2(591, 75), Vector2(585, 94), Color("#8b9aaa"), 4.0)
+		surface.draw_line(Vector2(585, 82), Vector2(567, 78), C_HANG, 2.0)
 
 
-func _draw_gutter_lanes(surface) -> void:
-	var field_left := 84.0
-	var field_width := 500.0
-	var left_width := field_width * float(CoinPusherSolverScript.TRAY_LEFT) / float(CoinPusherSolverScript.WIDTH)
-	var right_start := field_left + field_width * float(CoinPusherSolverScript.TRAY_RIGHT) / float(CoinPusherSolverScript.WIDTH)
-	var gutter_color := Color(C_HANG.r, C_HANG.g, C_HANG.b, 0.34)
-	surface.draw_rect(Rect2(field_left, 54, left_width, 250), gutter_color)
-	surface.draw_rect(Rect2(right_start, 54, field_left + field_width - right_start, 250), gutter_color)
+func _draw_shelf(surface, level: String, phase_milli: int, phase_domain_milli: int, color: Color) -> void:
+	var cycle := float(phase_milli) / float(maxi(1, phase_domain_milli))
+	var extension := 0.5 - 0.5 * cos(cycle * TAU)
+	var rear_y := 72.0 if level == "upper" else 198.0
+	var front_y := 121.0 if level == "upper" else 260.0
+	var y := lerpf(rear_y, front_y, extension)
+	var width := lerpf(448.0, 510.0, extension)
+	var left := 330.0 - width * 0.5
+	surface.draw_rect(Rect2(left, y - 8, width, 15), Color(color.r, color.g, color.b, 0.82))
+	surface.draw_line(Vector2(left - 5, y + 7), Vector2(left + width + 5, y + 7), C_TEXT, 2.0)
+	var direction := -1.0 if cycle > 0.5 else 1.0
+	for marker in range(4):
+		var marker_x := left + 82.0 + float(marker) * (width - 164.0) / 3.0
+		surface.draw_line(Vector2(marker_x, y - 1), Vector2(marker_x + direction * 9.0, y - 1), C_BG, 2.0)
 
 
 func _presentation_bodies(surface, state: Dictionary) -> Array:
-	var final_bodies: Array = state.get("coin_pusher_bodies", []) if typeof(state.get("coin_pusher_bodies", [])) == TYPE_ARRAY else []
+	var snapshot: Dictionary = state.get("coin_pusher_snapshot", {}) if typeof(state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	var final_bodies: Array = snapshot.get("bodies", state.get("coin_pusher_bodies", [])) if typeof(snapshot.get("bodies", state.get("coin_pusher_bodies", []))) == TYPE_ARRAY else []
 	if bool(state.get("reduce_motion", false)):
 		return final_bodies
 	var trace: Array = state.get("coin_pusher_presentation_trace", []) if typeof(state.get("coin_pusher_presentation_trace", [])) == TYPE_ARRAY else []
 	if trace.is_empty() or surface == null or not surface.has_method("surface_animation_progress"):
 		return final_bodies
 	var progress := clampf(float(surface.surface_animation_progress(PHYSICS_REPLAY_CHANNEL)), 0.0, 1.0)
-	var frame_index := clampi(int(floor(progress * float(trace.size()))), 0, trace.size() - 1)
+	var frame_position := progress * float(trace.size() - 1)
+	var frame_index := clampi(int(floor(frame_position)), 0, trace.size() - 1)
+	var next_index := mini(frame_index + 1, trace.size() - 1)
 	var frame_value: Variant = trace[frame_index]
-	if typeof(frame_value) != TYPE_DICTIONARY:
+	var next_value: Variant = trace[next_index]
+	if typeof(frame_value) != TYPE_DICTIONARY or typeof(next_value) != TYPE_DICTIONARY:
 		return final_bodies
 	var frame: Dictionary = frame_value
-	return frame.get("bodies", final_bodies) if typeof(frame.get("bodies", final_bodies)) == TYPE_ARRAY else final_bodies
+	var next_frame: Dictionary = next_value
+	var current_bodies: Array = frame.get("bodies", final_bodies) if typeof(frame.get("bodies", final_bodies)) == TYPE_ARRAY else final_bodies
+	var next_bodies: Array = next_frame.get("bodies", current_bodies) if typeof(next_frame.get("bodies", current_bodies)) == TYPE_ARRAY else current_bodies
+	return _interpolated_body_views(current_bodies, next_bodies, frame_position - float(frame_index))
 
 
-func _draw_cells(surface, state: Dictionary, bodies: Array) -> void:
+func _interpolated_body_views(current_bodies: Array, next_bodies: Array, weight: float) -> Array:
+	if weight <= 0.001 or current_bodies.is_empty():
+		return current_bodies
+	var next_by_id := {}
+	for next_value in next_bodies:
+		if typeof(next_value) == TYPE_DICTIONARY:
+			next_by_id[str((next_value as Dictionary).get("id", ""))] = next_value
+	var result: Array = []
+	for current_value in current_bodies:
+		if typeof(current_value) != TYPE_DICTIONARY:
+			continue
+		var current: Dictionary = current_value
+		var body_id := str(current.get("id", ""))
+		var next: Dictionary = next_by_id.get(body_id, {}) if typeof(next_by_id.get(body_id, {})) == TYPE_DICTIONARY else {}
+		if next.is_empty():
+			result.append(current)
+			continue
+		var view := {
+			"id": body_id,
+			"kind": str(current.get("kind", "coin")),
+			"material_category": str(current.get("material_category", "coin")),
+			"x": roundi(lerpf(float(int(current.get("x", 0))), float(int(next.get("x", current.get("x", 0)))), weight)),
+			"y": roundi(lerpf(float(int(current.get("y", 0))), float(int(next.get("y", current.get("y", 0)))), weight)),
+			"z": roundi(lerpf(float(int(current.get("z", 0))), float(int(next.get("z", current.get("z", 0)))), weight)),
+			"radius": int(current.get("radius", 0)),
+			"height": int(current.get("height", 0)),
+			"mass": int(current.get("mass", 1)),
+			"sleeping": bool(current.get("sleeping", false)),
+			"rest_state": str(current.get("rest_state", "settling")),
+			"level": str(current.get("level", "lower")),
+			"lean_milli": roundi(lerpf(float(int(current.get("lean_milli", 0))), float(int(next.get("lean_milli", current.get("lean_milli", 0)))), weight)),
+			"metadata": current.get("metadata", {}),
+		}
+		result.append(view)
+	return result
+
+
+func _draw_cells(surface, state: Dictionary, bodies: Array, geometry: Dictionary) -> void:
 	var selected_lane := int(state.get("coin_pusher_lane", 0))
 	for value in bodies:
 		if typeof(value) != TYPE_DICTIONARY:
@@ -1341,25 +1463,46 @@ func _draw_cells(surface, state: Dictionary, bodies: Array) -> void:
 		var body: Dictionary = value
 		if str(body.get("kind", "coin")) != "coin":
 			continue
-		var world_x := float(int(body.get("x", 0))) / float(CoinPusherSolverScript.WIDTH)
-		var world_y := float(int(body.get("y", 0)) - CoinPusherSolverScript.FRONT_EDGE) / float(CoinPusherSolverScript.REAR_EDGE - CoinPusherSolverScript.FRONT_EDGE)
-		var world_z := float(int(body.get("z", 0))) / 24000.0
-		var position := Vector2(84.0 + world_x * 500.0, 304.0 - world_y * 235.0 - world_z * 12.0)
-		var radius := 5.4 if int(body.get("mass", 1)) <= 1 else 6.4
-		var coin_color := C_HANG if int(body.get("y", 0)) < CoinPusherSolverScript.FRONT_EDGE + int(body.get("radius", CoinPusherSolverScript.COIN_RADIUS)) else C_COIN
-		surface.draw_circle(position + Vector2(2, 2), radius, Color(0, 0, 0, 0.35))
-		surface.draw_circle(position, radius, coin_color)
-		surface.draw_circle(position, radius - 2.0, Color("#ffe59a"), false, 1.0)
+		var position := _body_screen_position(body, geometry)
+		var radius := _body_screen_radius(body, geometry)
+		var is_hanging := int(body.get("y", 0)) < int(geometry.get("front_edge", 0)) + int(body.get("radius", geometry.get("coin_radius", 1)))
+		surface.draw_circle(position + Vector2(0, 4.4), radius, Color("#9f6c28"))
+		surface.draw_circle(position, radius, C_COIN)
+		var floor_z := int(geometry.get("upper_floor_z", 0)) if str(body.get("level", "lower")) == "upper" else int(geometry.get("lower_floor_z", 0))
+		if is_hanging or int(body.get("z", 0)) > floor_z:
+			surface.draw_circle(position, radius - 2.0, C_HANG if is_hanging else Color("#ffe7a4"), false, 1.5 if is_hanging else 1.1)
 		if int(body.get("lean_milli", 0)) > 500:
-			surface.draw_line(position, position + Vector2(5, -3), C_HANG, 1.5)
+			surface.draw_line(position, position + Vector2(radius * 0.72, -radius * 0.34), C_HANG, 2.0)
 	for lane in range(_lane_count()):
-		var lane_rect := Rect2(83 + lane * 103, 54, 84, 250)
-		surface.draw_rect(lane_rect, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.035 if lane != selected_lane else 0.09))
+		var far_x := 108.0 + float(lane) * 89.0
+		var near_x := 54.0 + float(lane) * 104.0
+		surface.draw_line(Vector2(far_x + 35, 66), Vector2(near_x + 48, 315), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.04 if lane != selected_lane else 0.18), 1.0 if lane != selected_lane else 2.0)
 	for lane in range(_lane_count()):
-		var button := Rect2(83 + lane * 103, 338, 84, 28)
+		var button := Rect2(54 + lane * 108, 354, 96, 28)
 		surface.draw_rect(button, C_TEAL if lane == selected_lane else C_CASE)
 		surface.surface_label_centered("LANE %d" % (lane + 1), button, 8, C_BG if lane == selected_lane else C_TEXT)
 		surface.surface_add_exact_hit(button, "coin_pusher_lane", lane)
+func _body_screen_position(body: Dictionary, geometry: Dictionary) -> Vector2:
+	var front_edge := int(geometry.get("front_edge", 0))
+	var rear_edge := maxi(front_edge + 1, int(geometry.get("rear_edge", front_edge + 1)))
+	var width := maxi(1, int(geometry.get("width", 1)))
+	var coin_height := maxi(1, int(geometry.get("coin_height", 1)))
+	var depth := clampf(float(int(body.get("y", front_edge)) - front_edge) / float(rear_edge - front_edge), -0.10, 1.08)
+	var field_width := lerpf(552.0, 444.0, clampf(depth, 0.0, 1.0))
+	var x_ratio := float(int(body.get("x", width / 2))) / float(width) - 0.5
+	var layer_height := float(int(body.get("z", 0))) / float(coin_height) * 5.3
+	return Vector2(330.0 + x_ratio * field_width, 315.0 - depth * 247.0 - layer_height)
+
+
+func _body_screen_radius(body: Dictionary, geometry: Dictionary) -> float:
+	var front_edge := int(geometry.get("front_edge", 0))
+	var rear_edge := maxi(front_edge + 1, int(geometry.get("rear_edge", front_edge + 1)))
+	var width := maxi(1, int(geometry.get("width", 1)))
+	var depth := clampf(float(int(body.get("y", front_edge)) - front_edge) / float(rear_edge - front_edge), 0.0, 1.0)
+	var field_width := lerpf(552.0, 444.0, depth)
+	return maxf(8.0, float(int(body.get("radius", geometry.get("coin_radius", 1)))) / float(width) * field_width * 0.82)
+
+
 
 
 func _draw_lane_approaches(surface, state: Dictionary) -> void:
@@ -1369,8 +1512,8 @@ func _draw_lane_approaches(surface, state: Dictionary) -> void:
 		var lane: Dictionary = value
 		var lane_index := int(lane.get("lane", 0))
 		var approach := int(lane.get("approach", 0))
-		var center := Vector2(125.0 + float(lane_index) * 103.0, 327.0)
-		surface.draw_line(center + Vector2(float(approach) * 5.0, -17.0), center, C_TEAL, 2.0)
+		var center := Vector2(102.0 + float(lane_index) * 108.0, 347.0)
+		surface.draw_line(center + Vector2(float(approach) * 5.0, -15.0), center, C_TEAL, 2.0)
 		var label := "C"
 		if approach < 0:
 			label = "L%d" % absi(approach)
@@ -1379,7 +1522,7 @@ func _draw_lane_approaches(surface, state: Dictionary) -> void:
 		surface.surface_label_centered(label, Rect2(center.x - 20.0, center.y - 14.0, 40.0, 12.0), 6, C_TEXT)
 
 
-func _draw_riders(surface, bodies: Array, final_bodies: Array) -> void:
+func _draw_riders(surface, bodies: Array, final_bodies: Array, geometry: Dictionary) -> void:
 	var flicker := float(surface.surface_flicker())
 	for value in bodies:
 		if typeof(value) != TYPE_DICTIONARY:
@@ -1387,24 +1530,23 @@ func _draw_riders(surface, bodies: Array, final_bodies: Array) -> void:
 		var rider: Dictionary = value
 		if str(rider.get("kind", "")) != "rider":
 			continue
-		_draw_rider_body(surface, rider, flicker)
+		_draw_rider_body(surface, rider, flicker, geometry)
 	for value in final_bodies:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var final_rider: Dictionary = value
 		if _should_draw_authoritative_feature(bodies, final_rider, "rider"):
-			_draw_rider_body(surface, final_rider, flicker)
+			_draw_rider_body(surface, final_rider, flicker, geometry)
 
 
-func _draw_rider_body(surface, rider: Dictionary, flicker: float) -> void:
+func _draw_rider_body(surface, rider: Dictionary, flicker: float, geometry: Dictionary) -> void:
 	var metadata: Dictionary = rider.get("metadata", {}) if typeof(rider.get("metadata", {})) == TYPE_DICTIONARY else {}
-	var world_x := float(int(rider.get("x", 0))) / float(CoinPusherSolverScript.WIDTH)
-	var world_y := float(int(rider.get("y", 0)) - CoinPusherSolverScript.FRONT_EDGE) / float(CoinPusherSolverScript.REAR_EDGE - CoinPusherSolverScript.FRONT_EDGE)
-	var world_z := float(int(rider.get("z", 0))) / 24000.0
+	var world_x := float(int(rider.get("x", 0))) / float(maxi(1, int(geometry.get("width", 1))))
 	var bob := sin(flicker * 3.0 + world_x * 4.0) * 2.5
-	var position := Vector2(84.0 + world_x * 500.0, 304.0 - world_y * 235.0 - world_z * 12.0 + bob)
-	surface.draw_circle(position, 8.0, C_HANG)
-	surface.draw_circle(position, 5.0, C_COIN)
+	var position := _body_screen_position(rider, geometry) + Vector2(0, bob)
+	var radius := _body_screen_radius(rider, geometry) * 0.82
+	surface.draw_rect(Rect2(position - Vector2(radius, radius * 0.55), Vector2(radius * 2.0, radius * 1.1)), C_HANG)
+	surface.draw_rect(Rect2(position - Vector2(radius * 0.72, radius * 0.38), Vector2(radius * 1.44, radius * 0.76)), C_COIN)
 	surface.surface_label("R:%s" % str(metadata.get("label", "prize")).left(9).to_upper(), position + Vector2(10.0, 3.0), 6, C_TEXT)
 
 
@@ -1459,7 +1601,7 @@ func _draw_console(surface, state: Dictionary) -> void:
 	surface.surface_label(str(state.get("coin_pusher_last_message", "")).left(34), Vector2(678, 366), 7, C_TEXT)
 
 
-func _draw_variation_features(surface, state: Dictionary, bodies: Array, final_bodies: Array) -> void:
+func _draw_variation_features(surface, state: Dictionary, bodies: Array, final_bodies: Array, geometry: Dictionary) -> void:
 	var variation_id := str(state.get("coin_pusher_variation_id", "quarter_falls"))
 	if variation_id == "quarter_falls":
 		return
@@ -1471,13 +1613,13 @@ func _draw_variation_features(surface, state: Dictionary, bodies: Array, final_b
 		var body_kind := str(feature.get("kind", ""))
 		if body_kind not in ["puck", "fragment"]:
 			continue
-		_draw_variation_feature_body(surface, variation_id, feature, flicker)
+		_draw_variation_feature_body(surface, variation_id, feature, flicker, geometry)
 	for value in final_bodies:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var final_feature: Dictionary = value
 		if _should_draw_authoritative_feature(bodies, final_feature, "variation"):
-			_draw_variation_feature_body(surface, variation_id, final_feature, flicker)
+			_draw_variation_feature_body(surface, variation_id, final_feature, flicker, geometry)
 
 
 func _should_draw_authoritative_feature(selected_bodies: Array, final_feature: Dictionary, feature_family: String) -> bool:
@@ -1498,12 +1640,10 @@ func _feature_kind_matches_family(kind: String, feature_family: String) -> bool:
 	return kind == "rider" if feature_family == "rider" else kind == "puck" or kind == "fragment"
 
 
-func _draw_variation_feature_body(surface, variation_id: String, feature: Dictionary, flicker: float) -> void:
+func _draw_variation_feature_body(surface, variation_id: String, feature: Dictionary, flicker: float, geometry: Dictionary) -> void:
 	var metadata: Dictionary = feature.get("metadata", {}) if typeof(feature.get("metadata", {})) == TYPE_DICTIONARY else {}
-	var world_x := float(int(feature.get("x", 0))) / float(CoinPusherSolverScript.WIDTH)
-	var world_y := float(int(feature.get("y", 0)) - CoinPusherSolverScript.FRONT_EDGE) / float(CoinPusherSolverScript.REAR_EDGE - CoinPusherSolverScript.FRONT_EDGE)
-	var world_z := float(int(feature.get("z", 0))) / 24000.0
-	var position := Vector2(84.0 + world_x * 500.0, 304.0 - world_y * 235.0 - world_z * 12.0 + sin(flicker * 2.5 + world_x * 5.0) * 2.0)
+	var world_x := float(int(feature.get("x", 0))) / float(maxi(1, int(geometry.get("width", 1))))
+	var position := _body_screen_position(feature, geometry) + Vector2(0, sin(flicker * 2.5 + world_x * 5.0) * 2.0)
 	if variation_id == "jackpot_ridge":
 		var kind := str(metadata.get("kind", "dud"))
 		var color := C_TEAL if kind == "multiplier" else Color("#9d7bff") if kind == "lock" else C_HANG
@@ -1512,8 +1652,37 @@ func _draw_variation_feature_body(surface, variation_id: String, feature: Dictio
 		var label := "x%d" % int(metadata.get("multiplier", 2)) if kind == "multiplier" else "L" if kind == "lock" else "D"
 		surface.surface_label_centered(label, Rect2(position - Vector2(10, 7), Vector2(20, 14)), 6, color)
 	else:
-		surface.draw_rect(Rect2(position - Vector2(7, 7), Vector2(14, 14)), Color("#a8ffea"))
-		surface.draw_rect(Rect2(position - Vector2(4, 4), Vector2(8, 8)), C_TEAL)
+		surface.draw_rect(Rect2(position - Vector2(8, 8), Vector2(16, 16)), Color("#a8ffea"))
+		surface.draw_line(position + Vector2(0, -11), position + Vector2(9, 0), C_TEAL, 2.0)
+		surface.draw_line(position + Vector2(9, 0), position + Vector2(0, 11), C_TEAL, 2.0)
+		surface.draw_line(position + Vector2(0, 11), position + Vector2(-9, 0), C_TEAL, 2.0)
+		surface.draw_line(position + Vector2(-9, 0), position + Vector2(0, -11), C_TEAL, 2.0)
+
+
+func _draw_presentation_particles(surface, state: Dictionary, geometry: Dictionary) -> void:
+	if bool(state.get("reduce_motion", false)):
+		return
+	var events: Array = state.get("coin_pusher_presentation_events", []) if typeof(state.get("coin_pusher_presentation_events", [])) == TYPE_ARRAY else []
+	if events.is_empty():
+		return
+	var progress := clampf(float(surface.surface_animation_progress(PHYSICS_REPLAY_CHANNEL)), 0.0, 1.0) if surface.has_method("surface_animation_progress") else 1.0
+	for event_value in events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = event_value
+		var event_progress := float(int(event.get("tick_offset", 0))) / float(maxi(1, int(geometry.get("action_ticks", 1))))
+		var age := progress - event_progress
+		if age < 0.0 or age > 0.22:
+			continue
+		var position := _body_screen_position(event, geometry)
+		var intensity := float(int(event.get("intensity_milli", 400))) / 1000.0
+		var alpha := 1.0 - age / 0.22
+		var color := Color(C_HANG.r, C_HANG.g, C_HANG.b, alpha) if str(event.get("kind", "")) in ["gutter_loss", "alarm"] else Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, alpha)
+		for ray in range(5):
+			var angle := TAU * float(ray) / 5.0 + float(int(event.get("tick_offset", 0))) * 0.17
+			var inner := position + Vector2(cos(angle), sin(angle)) * 4.0
+			var outer := position + Vector2(cos(angle), sin(angle)) * (8.0 + 12.0 * intensity)
+			surface.draw_line(inner, outer, color, 1.5)
 
 
 func _draw_vault_console(surface, state: Dictionary) -> void:
