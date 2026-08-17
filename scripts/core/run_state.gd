@@ -11956,7 +11956,7 @@ func _refresh_economy(defer_bankroll_zero: bool = false) -> void:
 		return
 	var economy_balance := bankroll + grand_casino_chips if _is_grand_casino_environment(current_environment) else bankroll
 	if economy_balance <= 0:
-		if defer_bankroll_zero:
+		if defer_bankroll_zero or closing_time_forced_travel_required():
 			bankroll = 0
 			economic_state = "insolvent"
 			return
