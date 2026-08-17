@@ -317,7 +317,6 @@ func _check_coin_pusher_production_rider(game: GameModule, library: ContentLibra
 
 func _check_coin_pusher_alarm_audio(failures: Array) -> void:
 	var sfx := SfxPlayerScript.new()
-	root.add_child(sfx)
 	var pusher_source := FileAccess.get_file_as_string("res://scripts/games/coin_pusher.gd")
 	if pusher_source.contains('result["surface_audio_cue"] = "alarm_chirp"'):
 		failures.append("Coin Pusher still bypasses its snapshot-event chirp ladder through the legacy generic result cue.")
@@ -1125,7 +1124,6 @@ func _check_coin_pusher_nudge_alarm(game: GameModule, library: ContentLibrary, f
 	var tell_event_kinds := {}
 	var runtime_tell_kinds: Dictionary = {}
 	var tell_runtime_sfx := SfxPlayerScript.new()
-	root.add_child(tell_runtime_sfx)
 	var alarm_result: Dictionary = {}
 	for nudge_index in range(4):
 		alarm_result = game.resolve_with_context("nudge_machine", 0, run_state, environment, run_state.create_rng("bad_nudge_%d" % nudge_index), {

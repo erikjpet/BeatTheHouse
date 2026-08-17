@@ -197,6 +197,7 @@ var _baccarat_deal_id: String = ""
 var _baccarat_payout_id: String = ""
 var _coin_pusher_action_id: String = ""
 var _coin_pusher_action_observed_active := false
+var _debug_suppress_playback := false
 var _web_surface_loop_active := false
 var _surface_loop_event_id := ""
 var _surface_loop_fade_tween: Tween
@@ -974,7 +975,9 @@ func debug_coin_pusher_runtime_event_markers(surface_state: Dictionary, elapsed:
 		_coin_pusher_action_id = ""
 		_coin_pusher_action_observed_active = false
 		_clear_markers_with_prefix("coin_pusher_event_")
+	_debug_suppress_playback = true
 	sync_coin_pusher_state(surface_state, elapsed, animation_active, active_id)
+	_debug_suppress_playback = false
 	var result: Array = []
 	for marker_value in _played_markers.keys():
 		var marker := str(marker_value)
@@ -1249,6 +1252,8 @@ func _trigger(marker: String, condition: bool, event_id: String, volume_db: floa
 	if not condition or bool(_played_markers.get(marker, false)):
 		return
 	_played_markers[marker] = true
+	if _debug_suppress_playback:
+		return
 	if _emit_music_director_cue(event_id, {"marker": marker, "volume_db": volume_db, "pitch": pitch}):
 		return
 	_play(event_id, volume_db, pitch)
@@ -1324,8 +1329,10 @@ func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallb
 
 
 func _start_reel_loop(event_id: String = "reel_loop", volume_db: float = -13.0, pitch: float = 1.0) -> void:
-	var stream := _event_stream(event_id)
 	_surface_loop_event_id = _normalized_event_id(event_id)
+	if _debug_suppress_playback:
+		return
+	var stream := _event_stream(event_id)
 	if WebAudioBridgeScript.available():
 		WebAudioBridgeScript.play_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch, WEB_SURFACE_LOOP_ID, true)
 		_web_surface_loop_active = true
