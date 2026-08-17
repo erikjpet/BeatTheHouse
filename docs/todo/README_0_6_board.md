@@ -408,6 +408,14 @@ What happens then is the owner's, not an agent's:
   checkpoint consumption at action/save boundaries. Focused Slot is 2/2 and
   Games 10/10 with zero skips/failures/stderr; integrated systems/UI,
   determinism, and visual gates remain before row closeout.
+- 2026-08-17 [fix06_2/integrated systems] The first post-merge run was
+  functionally green 49/49 but correctly rejected for timing because an
+  already-started Web native compile inflated every shard (61.518 s). With
+  external build I/O stopped, the exact rerun passed in 39.895 s against the
+  unchanged 43.712 s budget: 49 registered/requested/executed unique checks,
+  saved-slot activation hostile green, four raw exits zero, no stderr/timeouts,
+  and empty private-project cleanup. Artifact:
+  `.tmp/test_reports/20260817_052921_pm_postmerge_systems_saved_slot_clean`.
 - 2026-08-17 [pusher06_2] Exact runtime at `4159f393` is green across the 80
   carried hot actions and all hostile/fallback twins. Raw p95 improved 43.9%
   from 283.293 to 159.000 ms, but remains 9.94x over the 16 ms gate; production
@@ -1091,3 +1099,8 @@ What happens then is the owner's, not an agent's:
   double drunk scaling, stale offsets, or same-ID double counting. Focused
   Slot/Games gates are green with clean stderr; full integrated closeout gates
   remain intentionally pending.
+- 2026-08-17 [fix06_2] Post-merge Systems is independently green in a clean
+  timing window: 39.895 s / 43.712 s, 49/49 unique checks, all four shards
+  clean, saved-slot hostile green, and complete cleanup. A prior 61.518 s run
+  was discarded rather than waived because concurrent Web compilation
+  contaminated the wall clock. UI, determinism, and visual gates remain.
