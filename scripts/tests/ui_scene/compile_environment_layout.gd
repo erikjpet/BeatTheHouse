@@ -1,15 +1,5 @@
 extends "res://scripts/tests/ui_scene/compile_components_and_main_flow.gd"
 
-func _use_isolated_user_settings(path: String) -> void:
-	OS.set_environment(UserSettingsScript.SETTINGS_PATH_ENV, path)
-	var isolated_settings: UserSettings = UserSettingsScript.new()
-	isolated_settings.reset()
-	var error := isolated_settings.save()
-	if error != OK:
-		push_error("Could not prepare isolated UI test settings.")
-		quit(1)
-
-
 func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	var collections_button := app.get("collections_button") as Button
 	if collections_button == null:
@@ -413,18 +403,6 @@ func _canvas_preserves_art_aspect(snapshot: Dictionary, label: String) -> bool:
 		push_error("%s stretches art: rendered aspect %.3f, board aspect %.3f." % [label, rendered_aspect, board_aspect])
 		return false
 	return true
-
-
-func _snapshot_rect(value: Variant) -> Rect2:
-	if typeof(value) == TYPE_RECT2:
-		return value as Rect2
-	if typeof(value) != TYPE_DICTIONARY:
-		return Rect2()
-	var data: Dictionary = value
-	return Rect2(
-		Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))),
-		Vector2(float(data.get("w", 0.0)), float(data.get("h", 0.0)))
-	)
 
 
 func _focus_camera_animation_is_stable(canvas: Control, label: String) -> bool:

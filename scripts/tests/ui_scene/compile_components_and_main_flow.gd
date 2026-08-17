@@ -48,6 +48,379 @@ func _copy_dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true)
 
 
+# This file owns the executable UI gate entrypoint, while the environment and
+# run-menu layers override the fixture operations they implement. Keep every
+# descendant seam declared here so an incomplete hierarchy fails loudly at
+# runtime instead of becoming an unresolvable script class.
+func _missing_descendant_fixture(method_name: String) -> void:
+	push_error("UI scene fixture hierarchy is incomplete: %s was not overridden." % method_name)
+
+
+func _use_isolated_user_settings(path: String) -> void:
+	OS.set_environment(UserSettingsScript.SETTINGS_PATH_ENV, path)
+	var isolated_settings: UserSettings = UserSettingsScript.new()
+	isolated_settings.reset()
+	var error := isolated_settings.save()
+	if error != OK:
+		push_error("Could not prepare isolated UI test settings.")
+		quit(1)
+
+
+func _snapshot_rect(value: Variant) -> Rect2:
+	if typeof(value) == TYPE_RECT2:
+		return value as Rect2
+	if typeof(value) != TYPE_DICTIONARY:
+		return Rect2()
+	var data: Dictionary = value
+	return Rect2(
+		Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))),
+		Vector2(float(data.get("w", 0.0)), float(data.get("h", 0.0)))
+	)
+
+
+func _has_visible_text(node: Node, text: String) -> bool:
+	if node == null:
+		return false
+	if node is CanvasItem and not (node as CanvasItem).visible:
+		return false
+	if node is Label and (node as Label).text.find(text) != -1:
+		return true
+	if node is Button and (node as Button).text.find(text) != -1:
+		return true
+	if node is LineEdit and (node as LineEdit).text.find(text) != -1:
+		return true
+	for child in node.get_children():
+		if _has_visible_text(child, text):
+			return true
+	return false
+
+
+func _click_visible_button(node: Node, text: String) -> bool:
+	if node == null:
+		return false
+	if node is CanvasItem and not (node as CanvasItem).visible:
+		return false
+	if node is Button:
+		var button := node as Button
+		if not button.disabled and button.text == text:
+			button.emit_signal("pressed")
+			return true
+	for child in node.get_children():
+		if _click_visible_button(child, text):
+			return true
+	return false
+
+
+func _check_meta_home_launcher_opens_room(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_meta_home_launcher_opens_room")
+	return false
+
+
+func _check_run_pawn_credit_is_immediate(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_run_pawn_credit_is_immediate")
+	return false
+
+
+func _control_fits_viewport(_control: Variant, _viewport_rect, _label: String) -> bool:
+	_missing_descendant_fixture("_control_fits_viewport")
+	return false
+
+
+func _control_rect_inside(_inner: Control, _outer: Control) -> bool:
+	_missing_descendant_fixture("_control_rect_inside")
+	return false
+
+
+func _control_tree_has_scroll_container(_node: Node) -> bool:
+	_missing_descendant_fixture("_control_tree_has_scroll_container")
+	return false
+
+
+func _control_clips_contents(_control: Variant, _label: String) -> bool:
+	_missing_descendant_fixture("_control_clips_contents")
+	return false
+
+
+func _canvas_preserves_art_aspect(_snapshot: Dictionary, _label: String) -> bool:
+	_missing_descendant_fixture("_canvas_preserves_art_aspect")
+	return false
+
+
+func _focus_camera_animation_is_stable(_canvas: Control, _label: String) -> bool:
+	_missing_descendant_fixture("_focus_camera_animation_is_stable")
+	return false
+
+
+func _selected_info_text_fits(_canvas_value: Variant, _label: String, _required_fragments: Array = []) -> bool:
+	_missing_descendant_fixture("_selected_info_text_fits")
+	return false
+
+
+func _world_map_detail_popup_fits(_screen_snapshot: Dictionary) -> bool:
+	_missing_descendant_fixture("_world_map_detail_popup_fits")
+	return false
+
+
+func _canvas_local_center_for_object(_canvas: Control, _object_data: Dictionary) -> Vector2:
+	_missing_descendant_fixture("_canvas_local_center_for_object")
+	return Vector2.ZERO
+
+
+func _blank_canvas_position(_canvas: Control) -> Vector2:
+	_missing_descendant_fixture("_blank_canvas_position")
+	return Vector2.ZERO
+
+
+func _environment_canvas_keeps_critical_ui_clear(_app: Control, _canvas: Control, _viewport_rect, _label: String) -> bool:
+	_missing_descendant_fixture("_environment_canvas_keeps_critical_ui_clear")
+	return false
+
+
+func _visible_text_fits_viewport(_node: Node, _text: String, _viewport_rect, _label: String) -> bool:
+	_missing_descendant_fixture("_visible_text_fits_viewport")
+	return false
+
+
+func _qa_action_label(_action: Dictionary) -> String:
+	_missing_descendant_fixture("_qa_action_label")
+	return ""
+
+
+func _check_onboarding_tutorial_ui_flow(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_onboarding_tutorial_ui_flow")
+	return false
+
+
+func _check_in_run_menu_flow(_app: Control, _save_service: SaveService, _viewport_rect: Rect2) -> bool:
+	_missing_descendant_fixture("_check_in_run_menu_flow")
+	return false
+
+
+func _travel_to_first_game_environment(_app: Control, _require_travel: bool = false) -> bool:
+	_missing_descendant_fixture("_travel_to_first_game_environment")
+	return false
+
+
+func _check_web_travel_cannot_strand_transition(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_web_travel_cannot_strand_transition")
+	return false
+
+
+func _check_pull_tab_buy_button_single_activation(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_pull_tab_buy_button_single_activation")
+	return false
+
+
+func _check_scratch_ticket_selected_slot_purchase(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_scratch_ticket_selected_slot_purchase")
+	return false
+
+
+func _check_slot_autoplay_button_one_click(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_slot_autoplay_button_one_click")
+	return false
+
+
+func _check_all_in_wager_confirmation_recovery(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_all_in_wager_confirmation_recovery")
+	return false
+
+
+func _check_confirmed_all_in_wager_result_then_failure(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_confirmed_all_in_wager_result_then_failure")
+	return false
+
+
+func _check_presented_bankroll_waits_for_result_reveal(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_presented_bankroll_waits_for_result_reveal")
+	return false
+
+
+func _check_background_slot_autoplay_isolated_from_active_game(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_background_slot_autoplay_isolated_from_active_game")
+	return false
+
+
+func _check_background_slot_all_in_confirmation(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_background_slot_all_in_confirmation")
+	return false
+
+
+func _check_multi_slot_reentry_uses_selected_fixture(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_multi_slot_reentry_uses_selected_fixture")
+	return false
+
+
+func _check_multi_slot_background_autoplay_budget(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_multi_slot_background_autoplay_budget")
+	return false
+
+
+func _game_surface_action_binding(_app: Control, _kind: String) -> Dictionary:
+	_missing_descendant_fixture("_game_surface_action_binding")
+	return {}
+
+
+func _enter_action_fixture_game(_app: Control, _game_id: String) -> bool:
+	_missing_descendant_fixture("_enter_action_fixture_game")
+	return false
+
+
+func _normalize_json_numbers(_value: Variant) -> Variant:
+	_missing_descendant_fixture("_normalize_json_numbers")
+	return null
+
+
+func _stable_json(_value: Variant) -> String:
+	_missing_descendant_fixture("_stable_json")
+	return ""
+
+
+func _enter_ui_test_game(_app: Control) -> bool:
+	_missing_descendant_fixture("_enter_ui_test_game")
+	return false
+
+
+func _check_run_journal_flow(_app: Control, _save_service: SaveService, _viewport_rect: Rect2) -> bool:
+	_missing_descendant_fixture("_check_run_journal_flow")
+	return false
+
+
+func _check_final_demo_objective_hud_matrix(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_final_demo_objective_hud_matrix")
+	return false
+
+
+func _check_preview_focus_keeps_serialized_run_state(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_preview_focus_keeps_serialized_run_state")
+	return false
+
+
+func _check_onboarding_06_real_numbers_seam(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_onboarding_06_real_numbers_seam")
+	return false
+
+
+func _check_lender_acceptance_does_not_open_motel_popup(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_lender_acceptance_does_not_open_motel_popup")
+	return false
+
+
+func _remove_save_slot(_save_service: SaveService, _slot_id: String) -> Error:
+	_missing_descendant_fixture("_remove_save_slot")
+	return FAILED
+
+
+func _write_save_slot_text(_save_service: SaveService, _slot_id: String, _text: String) -> bool:
+	_missing_descendant_fixture("_write_save_slot_text")
+	return false
+
+
+func _resolve_visible_event_popup(_app: Control, _label: String) -> bool:
+	_missing_descendant_fixture("_resolve_visible_event_popup")
+	return false
+
+
+func _check_game_surface_touch_hit_policy() -> bool:
+	_missing_descendant_fixture("_check_game_surface_touch_hit_policy")
+	return false
+
+
+func _surface_hit_groups_disjoint(_snapshot: Dictionary, _left_actions: Array, _right_actions: Array, _label: String) -> bool:
+	_missing_descendant_fixture("_surface_hit_groups_disjoint")
+	return false
+
+
+func _category_by_id(_categories: Array, _category_id: String) -> Dictionary:
+	_missing_descendant_fixture("_category_by_id")
+	return {}
+
+
+func _interactable_copy_is_concise(_objects: Array, _label: String) -> bool:
+	_missing_descendant_fixture("_interactable_copy_is_concise")
+	return false
+
+
+func _interactable_by_type(_objects: Array, _object_type: String) -> Dictionary:
+	_missing_descendant_fixture("_interactable_by_type")
+	return {}
+
+
+func _label_for_object_id(_objects: Array, _object_id: String) -> String:
+	_missing_descendant_fixture("_label_for_object_id")
+	return ""
+
+
+func _canvas_object_by_id(_objects: Array, _object_id: String) -> Dictionary:
+	_missing_descendant_fixture("_canvas_object_by_id")
+	return {}
+
+
+func _canvas_has_object_type(_objects: Array, _object_type: String) -> bool:
+	_missing_descendant_fixture("_canvas_has_object_type")
+	return false
+
+
+func _canvas_object_id_with_prefix(_objects: Array, _prefix: String) -> bool:
+	_missing_descendant_fixture("_canvas_object_id_with_prefix")
+	return false
+
+
+func _hidden_world_map_ids(_map_data: Dictionary) -> Array:
+	_missing_descendant_fixture("_hidden_world_map_ids")
+	return []
+
+
+func _world_map_node_by_id(_map_data: Dictionary, _node_id: String) -> Dictionary:
+	_missing_descendant_fixture("_world_map_node_by_id")
+	return {}
+
+
+func _world_map_position_in_bounds(_position_value: Variant, _bounds: Dictionary) -> bool:
+	_missing_descendant_fixture("_world_map_position_in_bounds")
+	return false
+
+
+func _map_bounds_equal(_a: Dictionary, _b: Dictionary) -> bool:
+	_missing_descendant_fixture("_map_bounds_equal")
+	return false
+
+
+func _map_canvas_size_equal(_a: Dictionary, _b: Dictionary) -> bool:
+	_missing_descendant_fixture("_map_canvas_size_equal")
+	return false
+
+
+func _event_choice_has_trigger_event(_event_definition: Dictionary, _choice_id: String) -> bool:
+	_missing_descendant_fixture("_event_choice_has_trigger_event")
+	return false
+
+
+func _canvas_object_position_matches_board_spot(_object_data: Dictionary, _board_spot: Variant) -> bool:
+	_missing_descendant_fixture("_canvas_object_position_matches_board_spot")
+	return false
+
+
+func _archetype_by_id(_library: ContentLibrary, _archetype_id: String) -> Dictionary:
+	_missing_descendant_fixture("_archetype_by_id")
+	return {}
+
+
+func _implemented_game_display_names(_library: ContentLibrary) -> Array:
+	_missing_descendant_fixture("_implemented_game_display_names")
+	return []
+
+
+func _canvas_surviving_object_positions_match(_before_objects: Array, _after_objects: Array, _removed_object_id: String) -> bool:
+	_missing_descendant_fixture("_canvas_surviving_object_positions_match")
+	return false
+
+
+func _card_by_title(_cards: Array, _title: String) -> Dictionary:
+	_missing_descendant_fixture("_card_by_title")
+	return {}
+
+
 func _check_run_report_screen_component() -> bool:
 	var screen: RunReportScreen = RunReportScreenScript.new()
 	screen.size = Vector2(1280, 720)
