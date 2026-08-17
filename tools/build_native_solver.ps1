@@ -1,6 +1,7 @@
 param(
     [ValidateSet("template_debug", "template_release")]
     [string]$Target = "template_debug",
+    [string]$GodotPath = "",
     [switch]$SkipBootstrap
 )
 
@@ -17,13 +18,23 @@ if (-not $SkipBootstrap) {
 $python = Join-Path $toolRoot "python/python.exe"
 $wheel = Join-Path $toolRoot "downloads/scons-4.10.1-py3-none-any.whl"
 $godotCpp = Join-Path $toolRoot "godot-cpp"
-$mingw = Join-Path $toolRoot "llvm-mingw"
+$mingwPackage = Join-Path $toolRoot "llvm-mingw-package"
+$mingwChildren = @(Get-ChildItem -LiteralPath $mingwPackage -Directory -ErrorAction SilentlyContinue)
+if ($mingwChildren.Count -ne 1) {
+    throw "Pinned LLVM-MinGW package must contain exactly one toolchain root."
+}
+$mingw = $mingwChildren[0].FullName
 $source = Join-Path $root "native/coin_pusher"
 $output = Join-Path $root "addons/coin_pusher_native"
 foreach ($required in @($python, $wheel, (Join-Path $godotCpp "SConstruct"), (Join-Path $mingw "bin/clang++.exe"))) {
     if (-not (Test-Path -LiteralPath $required)) {
         throw "Native solver prerequisite is missing: $required"
     }
+}
+
+& (Join-Path $PSScriptRoot "verify_native_solver_runtime.ps1") -GodotPath $GodotPath
+if ($LASTEXITCODE -ne 0) {
+    throw "Native solver runtime preflight failed."
 }
 
 New-Item -ItemType Directory -Force -Path (Join-Path $output "bin") | Out-Null

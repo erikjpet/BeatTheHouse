@@ -14,7 +14,7 @@ $downloadRoot = Join-Path $toolRoot "downloads"
 $pythonRoot = Join-Path $toolRoot "python"
 $pythonExe = Join-Path $pythonRoot "python.exe"
 $godotCppRoot = Join-Path $toolRoot "godot-cpp"
-$windowsRoot = Join-Path $toolRoot "llvm-mingw"
+$windowsRoot = Join-Path $toolRoot "llvm-mingw-package"
 $emsdkRoot = Join-Path $toolRoot "emsdk"
 
 function Assert-NativeToolchainLock {
@@ -26,6 +26,7 @@ function Assert-NativeToolchainLock {
         [string]$Value.godot.commit,
         [string]$Value.godot_cpp.commit,
         [string]$Value.windows.compiler_commit,
+        [string]$Value.web.compiler_commit,
         [string]$Value.web.commit
     )) {
         if ($commit -notmatch '^[0-9a-f]{40}$') {
@@ -35,7 +36,8 @@ function Assert-NativeToolchainLock {
     foreach ($sha in @(
         [string]$Value.python.archive_sha256,
         [string]$Value.scons.wheel_sha256,
-        [string]$Value.windows.archive_sha256
+        [string]$Value.windows.archive_sha256,
+        [string]$Value.web.template_sha256
     )) {
         if ($sha -notmatch '^[0-9a-f]{64}$') {
             throw "Native toolchain archive hash is not a pinned lowercase SHA-256: $sha"
@@ -60,11 +62,17 @@ function Assert-NativeToolchainLock {
     $reviewed = @{
         godot_version = "4.6-stable"
         godot_commit = "89cea143987d564363e15d207438530651d943ac"
+        godot_cpp_repository = "https://github.com/godotengine/godot-cpp.git"
         godot_cpp_tag = "godot-4.5-stable"
+        godot_cpp_commit = "e83fd0904c13356ed1d4c3d09f8bb9132bdc6b77"
         godot_cpp_api = "4.5"
         python_version = "3.12.10"
         python_architecture = "amd64"
+        python_archive_url = "https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-amd64.zip"
+        python_archive_sha256 = "4acbed6dd1c744b0376e3b1cf57ce906f9dc9e95e68824584c8099a63025a3c3"
         scons_version = "4.10.1"
+        scons_wheel_url = "https://files.pythonhosted.org/packages/ce/bf/931fb9fbb87234c32b8b1b1c15fba23472a10777c12043336675633809a7/scons-4.10.1-py3-none-any.whl"
+        scons_wheel_sha256 = "bd9d1c52f908d874eba92a8c0c0a8dcf2ed9f3b88ab956d0fce1da479c4e7126"
         windows_toolchain = "llvm-mingw"
         windows_version = "20260616"
         windows_compiler = "22.1.8"
@@ -72,18 +80,30 @@ function Assert-NativeToolchainLock {
         windows_runtime = "ucrt"
         windows_architecture = "x86_64"
         windows_target = "x86_64-w64-windows-gnu"
+        windows_archive_url = "https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-x86_64.zip"
+        windows_archive_sha256 = "b9b68a4d276e16fa25802aaba458e4638f64b3884c290aaccdc2d87083b6ca35"
         web_toolchain = "emsdk"
         web_version = "4.0.20"
+        web_compiler_commit = "6913738ec5371a88c4af5a80db0ab42bad3de681"
+        web_repository = "https://github.com/emscripten-core/emsdk.git"
+        web_commit = "e4fe26ef59168ff44f4c23c466e497bf60b3411e"
         web_template = "web_dlink_nothreads_release.zip"
+        web_template_sha256 = "94d21e07411bec3ca6e8769b18125e9ecfb8edff050ce50c5fb41278d151619d"
     }
     $actual = @{
         godot_version = [string]$Value.godot.version
         godot_commit = [string]$Value.godot.commit
+        godot_cpp_repository = [string]$Value.godot_cpp.repository
         godot_cpp_tag = [string]$Value.godot_cpp.tag
+        godot_cpp_commit = [string]$Value.godot_cpp.commit
         godot_cpp_api = [string]$Value.godot_cpp.api_version
         python_version = [string]$Value.python.version
         python_architecture = [string]$Value.python.architecture
+        python_archive_url = [string]$Value.python.archive_url
+        python_archive_sha256 = [string]$Value.python.archive_sha256
         scons_version = [string]$Value.scons.version
+        scons_wheel_url = [string]$Value.scons.wheel_url
+        scons_wheel_sha256 = [string]$Value.scons.wheel_sha256
         windows_toolchain = [string]$Value.windows.toolchain
         windows_version = [string]$Value.windows.version
         windows_compiler = [string]$Value.windows.compiler_version
@@ -91,9 +111,15 @@ function Assert-NativeToolchainLock {
         windows_runtime = [string]$Value.windows.runtime
         windows_architecture = [string]$Value.windows.architecture
         windows_target = [string]$Value.windows.target
+        windows_archive_url = [string]$Value.windows.archive_url
+        windows_archive_sha256 = [string]$Value.windows.archive_sha256
         web_toolchain = [string]$Value.web.toolchain
         web_version = [string]$Value.web.version
+        web_compiler_commit = [string]$Value.web.compiler_commit
+        web_repository = [string]$Value.web.repository
+        web_commit = [string]$Value.web.commit
         web_template = [string]$Value.web.template
+        web_template_sha256 = [string]$Value.web.template_sha256
     }
     foreach ($key in $reviewed.Keys) {
         if ($actual[$key] -cne $reviewed[$key]) {
@@ -177,6 +203,255 @@ function Get-VerifiedDownload {
     }
 }
 
+function Assert-SafeZipEntryName {
+    param([string]$Name, [string]$DestinationRoot)
+    if ([string]::IsNullOrWhiteSpace($Name) -or $Name.IndexOf([char]0) -ge 0) {
+        throw "Archive contains an empty or NUL-bearing entry name."
+    }
+    $normalized = $Name.Replace('\', '/')
+    if ($normalized.StartsWith('/') -or $normalized.StartsWith('//') -or $normalized -match '^[A-Za-z]:' -or $normalized.Contains(':')) {
+        throw "Archive entry is rooted, drive-qualified, UNC, or ADS-qualified: $Name"
+    }
+    $isDirectory = $normalized.EndsWith('/')
+    $parts = $normalized.TrimEnd('/').Split('/')
+    if ($parts.Count -eq 0) {
+        throw "Archive entry has no safe path components: $Name"
+    }
+    foreach ($part in $parts) {
+        if ([string]::IsNullOrWhiteSpace($part) -or $part -in @('.', '..') -or $part.EndsWith('.') -or $part.EndsWith(' ')) {
+            throw "Archive entry contains an unsafe or ambiguous component: $Name"
+        }
+        $deviceStem = ($part -split '\.')[0]
+        if ($deviceStem.ToUpperInvariant() -match '^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$') {
+            throw "Archive entry contains a reserved Windows device component: $Name"
+        }
+    }
+    $destination = [System.IO.Path]::GetFullPath($DestinationRoot)
+    $candidate = [System.IO.Path]::GetFullPath((Join-Path $destination ($normalized -replace '/', [System.IO.Path]::DirectorySeparatorChar)))
+    if (-not $candidate.StartsWith($destination + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Archive entry escapes its destination: $Name"
+    }
+    return @{ normalized = $normalized; directory = $isDirectory; destination = $candidate }
+}
+
+function Assert-ArchiveEntriesSafe {
+    param([string]$ArchivePath, [string]$DestinationRoot)
+    Assert-UnderToolRoot $ArchivePath
+    Assert-UnderToolRoot $DestinationRoot
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($ArchivePath)
+    try {
+        $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        foreach ($entry in $archive.Entries) {
+            $checked = Assert-SafeZipEntryName $entry.FullName $DestinationRoot
+            $key = [string]$checked.normalized
+            if (-not $seen.Add($key.TrimEnd('/'))) {
+                throw "Archive contains a case/separator-colliding duplicate entry: $($entry.FullName)"
+            }
+            $unixType = ($entry.ExternalAttributes -shr 16) -band 0xF000
+            $windowsAttributes = $entry.ExternalAttributes -band 0xFFFF
+            if ($unixType -eq 0xA000 -or ($windowsAttributes -band [int][System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                throw "Archive contains a symlink/reparse entry: $($entry.FullName)"
+            }
+            if ($unixType -notin @(0, 0x4000, 0x8000)) {
+                throw "Archive contains a non-file/non-directory entry type: $($entry.FullName)"
+            }
+        }
+    }
+    finally {
+        $archive.Dispose()
+    }
+}
+
+function Expand-VerifiedArchive {
+    param([string]$ArchivePath, [string]$DestinationRoot)
+    Assert-UnderToolRoot $ArchivePath
+    Assert-UnderToolRoot $DestinationRoot
+    if (Test-Path -LiteralPath $DestinationRoot) {
+        throw "Verified archive destination must not already exist: $DestinationRoot"
+    }
+    Add-Type -AssemblyName System.IO.Compression
+    $archiveStream = [System.IO.File]::Open($ArchivePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
+    try {
+        $archive = [System.IO.Compression.ZipArchive]::new($archiveStream, [System.IO.Compression.ZipArchiveMode]::Read, $true)
+        try {
+            $seen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            foreach ($entry in $archive.Entries) {
+                $checked = Assert-SafeZipEntryName $entry.FullName $DestinationRoot
+                if (-not $seen.Add(([string]$checked.normalized).TrimEnd('/'))) {
+                    throw "Archive contains a case/separator-colliding duplicate entry: $($entry.FullName)"
+                }
+                $unixType = ($entry.ExternalAttributes -shr 16) -band 0xF000
+                $windowsAttributes = $entry.ExternalAttributes -band 0xFFFF
+                if ($unixType -eq 0xA000 -or ($windowsAttributes -band [int][System.IO.FileAttributes]::ReparsePoint) -ne 0 -or $unixType -notin @(0, 0x4000, 0x8000)) {
+                    throw "Archive contains a link/reparse/special entry: $($entry.FullName)"
+                }
+            }
+            New-Item -ItemType Directory -Path $DestinationRoot | Out-Null
+            foreach ($entry in $archive.Entries) {
+                $checked = Assert-SafeZipEntryName $entry.FullName $DestinationRoot
+                $entryDestination = [string]$checked.destination
+                if ([bool]$checked.directory) {
+                    New-Item -ItemType Directory -Force -Path $entryDestination | Out-Null
+                    continue
+                }
+                $parent = Split-Path -Parent $entryDestination
+                New-Item -ItemType Directory -Force -Path $parent | Out-Null
+                $input = $entry.Open()
+                try {
+                    $output = [System.IO.File]::Open($entryDestination, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+                    try { $input.CopyTo($output) } finally { $output.Dispose() }
+                }
+                finally {
+                    $input.Dispose()
+                }
+            }
+        }
+        finally {
+            $archive.Dispose()
+        }
+    }
+    finally {
+        $archiveStream.Dispose()
+    }
+    Assert-UnderToolRoot $DestinationRoot
+}
+
+function Get-StreamSha256 {
+    param([System.IO.Stream]$Stream)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return ([System.BitConverter]::ToString($sha.ComputeHash($Stream))).Replace('-', '').ToLowerInvariant()
+    }
+    finally {
+        $sha.Dispose()
+    }
+}
+
+function Test-InstalledArchiveMatches {
+    param([string]$ArchivePath, [string]$InstallRoot)
+    if (-not (Test-Path -LiteralPath $InstallRoot -PathType Container)) {
+        return $false
+    }
+    try {
+        Assert-ArchiveEntriesSafe $ArchivePath $InstallRoot
+        Assert-UnderToolRoot $InstallRoot
+        $actualFiles = @{}
+        $installPrefix = [System.IO.Path]::GetFullPath($InstallRoot).TrimEnd([System.IO.Path]::DirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+        foreach ($file in Get-ChildItem -LiteralPath $InstallRoot -File -Recurse -Force) {
+            Assert-UnderToolRoot $file.FullName
+            $relative = ([System.IO.Path]::GetFullPath($file.FullName)).Substring($installPrefix.Length).Replace('\', '/')
+            $actualFiles[$relative.ToLowerInvariant()] = $file.FullName
+        }
+        $archive = [System.IO.Compression.ZipFile]::OpenRead($ArchivePath)
+        try {
+            $expectedCount = 0
+            foreach ($entry in $archive.Entries) {
+                $checked = Assert-SafeZipEntryName $entry.FullName $InstallRoot
+                if ([bool]$checked.directory) {
+                    continue
+                }
+                ++$expectedCount
+                $key = ([string]$checked.normalized).ToLowerInvariant()
+                if (-not $actualFiles.ContainsKey($key)) {
+                    return $false
+                }
+                $entryStream = $entry.Open()
+                try { $expectedSha = Get-StreamSha256 $entryStream } finally { $entryStream.Dispose() }
+                $actualSha = (Get-FileHash -LiteralPath $actualFiles[$key] -Algorithm SHA256).Hash.ToLowerInvariant()
+                if ($actualSha -cne $expectedSha) {
+                    return $false
+                }
+            }
+            return $actualFiles.Count -eq $expectedCount
+        }
+        finally {
+            $archive.Dispose()
+        }
+    }
+    catch {
+        return $false
+    }
+}
+
+function Promote-ToolDirectory {
+    param([string]$StagingPath, [string]$DestinationPath)
+    Assert-UnderToolRoot $StagingPath
+    Assert-UnderToolRoot $DestinationPath
+    $backupPath = "$DestinationPath.previous"
+    Remove-ToolDirectory $backupPath
+    $hadDestination = Test-Path -LiteralPath $DestinationPath
+    $promoted = $false
+    try {
+        if ($hadDestination) {
+            Move-Item -LiteralPath $DestinationPath -Destination $backupPath
+        }
+        Move-Item -LiteralPath $StagingPath -Destination $DestinationPath
+        $promoted = $true
+    }
+    catch {
+        if (-not (Test-Path -LiteralPath $DestinationPath) -and (Test-Path -LiteralPath $backupPath)) {
+            Move-Item -LiteralPath $backupPath -Destination $DestinationPath
+        }
+        throw
+    }
+    finally {
+        if ($promoted) {
+            Remove-ToolDirectory $backupPath
+        }
+    }
+}
+
+function Install-VerifiedArchive {
+    param([string]$ArchivePath, [string]$DestinationPath)
+    Assert-UnderToolRoot $DestinationPath
+    if (-not $Force -and (Test-InstalledArchiveMatches $ArchivePath $DestinationPath)) {
+        return
+    }
+    $stagingPath = "$DestinationPath.staging"
+    Remove-ToolDirectory $stagingPath
+    try {
+        Expand-VerifiedArchive $ArchivePath $stagingPath
+        if (-not (Test-InstalledArchiveMatches $ArchivePath $stagingPath)) {
+            throw "Staged archive install failed full provenance validation: $ArchivePath"
+        }
+        Promote-ToolDirectory $stagingPath $DestinationPath
+    }
+    finally {
+        Remove-ToolDirectory $stagingPath
+    }
+}
+
+function New-SelfTestZipArchive {
+    param([string]$Path, [object[]]$Entries)
+    Assert-UnderToolRoot $Path
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $stream = [System.IO.File]::Open($Path, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+    try {
+        $archive = [System.IO.Compression.ZipArchive]::new($stream, [System.IO.Compression.ZipArchiveMode]::Create, $true)
+        try {
+            foreach ($spec in $Entries) {
+                $entry = $archive.CreateEntry([string]$spec.name)
+                if ($spec.ContainsKey("external_attributes")) {
+                    $entry.ExternalAttributes = [int]$spec.external_attributes
+                }
+                if (-not ([string]$spec.name).EndsWith('/') -and -not ([string]$spec.name).EndsWith('\')) {
+                    $writer = [System.IO.StreamWriter]::new($entry.Open(), [System.Text.UTF8Encoding]::new($false))
+                    try { $writer.Write([string]$spec.content) } finally { $writer.Dispose() }
+                }
+            }
+        }
+        finally {
+            $archive.Dispose()
+        }
+    }
+    finally {
+        $stream.Dispose()
+    }
+}
+
 function Invoke-NativeCommand {
     param([scriptblock]$Command, [string]$Failure)
     $output = & $Command
@@ -210,44 +485,101 @@ function Assert-ExactCompilerVersion {
 }
 
 function Assert-ExactEmccVersion {
-    param([string]$FirstLine, [string]$Expected)
-    if ($FirstLine -notmatch '\) ([0-9]+\.[0-9]+\.[0-9]+)$' -or $Matches[1] -cne $Expected) {
+    param([string]$FirstLine, [string]$Expected, [string]$ExpectedCommit)
+    if ($FirstLine -notmatch '\) ([0-9]+\.[0-9]+\.[0-9]+) \(([0-9a-f]{40})\)$' `
+            -or $Matches[1] -cne $Expected `
+            -or $Matches[2] -cne $ExpectedCommit) {
         throw "Emscripten version drift: $FirstLine"
+    }
+}
+
+function Invoke-SafeGit {
+    param([string[]]$GitArguments, [string]$Failure)
+    $previousSystem = $env:GIT_CONFIG_NOSYSTEM
+    $previousGlobal = $env:GIT_CONFIG_GLOBAL
+    $previousPrompt = $env:GIT_TERMINAL_PROMPT
+    try {
+        $env:GIT_CONFIG_NOSYSTEM = "1"
+        $env:GIT_CONFIG_GLOBAL = "NUL"
+        $env:GIT_TERMINAL_PROMPT = "0"
+        return Invoke-NativeCommand { & git @GitArguments } $Failure
+    }
+    finally {
+        $env:GIT_CONFIG_NOSYSTEM = $previousSystem
+        $env:GIT_CONFIG_GLOBAL = $previousGlobal
+        $env:GIT_TERMINAL_PROMPT = $previousPrompt
+    }
+}
+
+function Get-SafeRepositoryConfig {
+    param([string]$Repository)
+    $safeRepository = $Repository.Replace('\', '/')
+    return "[core]`n`trepositoryformatversion = 0`n`tfilemode = false`n`tbare = false`n`tlogallrefupdates = true`n`thooksPath = NUL`n`tfsmonitor = false`n[remote `"origin`"]`n`turl = `"$safeRepository`"`n"
+}
+
+function Write-SafeRepositoryConfig {
+    param([string]$Path, [string]$Repository)
+    $gitRoot = Join-Path $Path ".git"
+    $configPath = Join-Path $gitRoot "config"
+    Assert-UnderToolRoot $gitRoot
+    if (-not (Test-Path -LiteralPath $gitRoot -PathType Container)) {
+        throw "Dependency repository has no ordinary .git directory: $Path"
+    }
+    Assert-UnderToolRoot $configPath
+    [System.IO.File]::WriteAllText($configPath, (Get-SafeRepositoryConfig $Repository), [System.Text.UTF8Encoding]::new($false))
+}
+
+function Test-PinnedRepository {
+    param([string]$Repository, [string]$Commit, [string]$Path)
+    try {
+        Assert-UnderToolRoot $Path
+        $gitRoot = Join-Path $Path ".git"
+        $configPath = Join-Path $gitRoot "config"
+        if (-not (Test-Path -LiteralPath $gitRoot -PathType Container) -or -not (Test-Path -LiteralPath $configPath -PathType Leaf)) {
+            return $false
+        }
+        Assert-UnderToolRoot $configPath
+        if ([System.IO.File]::ReadAllText($configPath) -cne (Get-SafeRepositoryConfig $Repository)) {
+            return $false
+        }
+        $actual = [string](Invoke-SafeGit @("-C", $Path, "rev-parse", "HEAD") "Could not inspect dependency commit" | Select-Object -First 1)
+        if ($actual.Trim() -cne $Commit) {
+            return $false
+        }
+        $remote = [string](Invoke-SafeGit @("-C", $Path, "remote", "get-url", "origin") "Could not inspect dependency origin" | Select-Object -First 1)
+        if ($remote.Trim().Replace('\', '/') -cne $Repository.Replace('\', '/')) {
+            return $false
+        }
+        $dirty = (Invoke-SafeGit @("-C", $Path, "status", "--porcelain=v1", "--untracked-files=all") "Could not inspect dependency cleanliness") -join "`n"
+        return $dirty.Length -eq 0
+    }
+    catch {
+        return $false
     }
 }
 
 function Sync-PinnedRepository {
     param([string]$Repository, [string]$Commit, [string]$Path)
     Assert-UnderToolRoot $Path
-    if ($Force) {
-        Remove-ToolDirectory $Path
+    if (-not $Force -and (Test-PinnedRepository $Repository $Commit $Path)) {
+        return
     }
-    if (-not (Test-Path -LiteralPath (Join-Path $Path ".git"))) {
-        $cloneOutput = Invoke-NativeCommand { & git clone --filter=blob:none --no-checkout $Repository $Path } "Could not clone $Repository"
-        $cloneOutput | Write-Host
+    $stagingPath = "$Path.staging"
+    Remove-ToolDirectory $stagingPath
+    try {
+        New-Item -ItemType Directory -Path $stagingPath | Out-Null
+        Invoke-SafeGit @("init", "--quiet", "--template=", $stagingPath) "Could not initialize transactional dependency repository" | Out-Null
+        Write-SafeRepositoryConfig $stagingPath $Repository
+        Invoke-SafeGit @("-C", $stagingPath, "fetch", "--no-tags", "--depth", "1", "origin", $Commit) "Could not fetch pinned commit $Commit from $Repository" | Write-Host
+        Invoke-SafeGit @("-C", $stagingPath, "checkout", "--detach", "--force", $Commit) "Could not check out pinned commit $Commit" | Write-Host
+        Invoke-SafeGit @("-C", $stagingPath, "clean", "-ffdx") "Could not clean transactional dependency checkout" | Write-Host
+        if (-not (Test-PinnedRepository $Repository $Commit $stagingPath)) {
+            throw "Transactional dependency checkout did not validate: $Repository@$Commit"
+        }
+        Promote-ToolDirectory $stagingPath $Path
     }
-    Assert-UnderToolRoot $Path
-    $remote = [string](Invoke-NativeCommand { & git -C $Path remote get-url origin } "Could not inspect repository origin" | Select-Object -First 1)
-    $remote = $remote.Trim()
-    if ($remote -cne $Repository) {
-        throw "Pinned repository origin drift in $Path`: expected $Repository, got $remote"
-    }
-    $cleanOutput = Invoke-NativeCommand { & git -C $Path clean -ffdx } "Could not clean untracked dependency files"
-    $cleanOutput | Write-Host
-    $fetchOutput = Invoke-NativeCommand { & git -C $Path fetch --depth 1 origin $Commit } "Could not fetch pinned commit $Commit from $Repository"
-    $fetchOutput | Write-Host
-    $checkoutOutput = Invoke-NativeCommand { & git -C $Path checkout --detach --force $Commit } "Could not check out pinned commit $Commit in $Path"
-    $checkoutOutput | Write-Host
-    $cleanAgainOutput = Invoke-NativeCommand { & git -C $Path clean -ffdx } "Could not finalize clean dependency checkout"
-    $cleanAgainOutput | Write-Host
-    $actual = [string](Invoke-NativeCommand { & git -C $Path rev-parse HEAD } "Could not inspect dependency commit" | Select-Object -First 1)
-    $actual = $actual.Trim()
-    if ($actual -cne $Commit) {
-        throw "Pinned repository drift in $Path`: expected $Commit, got $actual"
-    }
-    $dirty = (Invoke-NativeCommand { & git -C $Path status --porcelain=v1 --untracked-files=all } "Could not inspect dependency cleanliness") -join "`n"
-    if ($dirty.Length -ne 0) {
-        throw "Pinned repository contains build-affecting local files in $Path`: $dirty"
+    finally {
+        Remove-ToolDirectory $stagingPath
     }
 }
 
@@ -260,11 +592,21 @@ function Invoke-BootstrapSelfTest {
         @{ path = @("godot", "version"); value = "4.6.1-stable" },
         @{ path = @("godot_cpp", "api_version"); value = "4.6" },
         @{ path = @("python", "version"); value = "3.12.11" },
+        @{ path = @("python", "archive_url"); value = "https://www.python.org/ftp/python/3.12.10/python-3.12.10-embed-win32.zip" },
+        @{ path = @("python", "archive_sha256"); value = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+        @{ path = @("scons", "wheel_url"); value = "https://files.pythonhosted.org/packages/ce/bf/alternate/scons-4.10.1-py3-none-any.whl" },
+        @{ path = @("scons", "wheel_sha256"); value = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
+        @{ path = @("godot_cpp", "repository"); value = "https://github.com/godotengine/godot.git" },
         @{ path = @("windows", "archive_sha256"); value = "not-a-sha256" },
+        @{ path = @("windows", "archive_sha256"); value = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" },
+        @{ path = @("windows", "archive_url"); value = "https://github.com/mstorsjo/llvm-mingw/releases/download/20260616/llvm-mingw-20260616-ucrt-i686.zip" },
         @{ path = @("windows", "runtime"); value = "msvcrt" },
         @{ path = @("windows", "architecture"); value = "arm64" },
         @{ path = @("windows", "archive_url"); value = "http://example.com/compiler.zip" },
         @{ path = @("windows", "archive_url"); value = "https://github.com/example/%2e%2e" },
+        @{ path = @("web", "repository"); value = "https://github.com/emscripten-core/emscripten.git" },
+        @{ path = @("web", "compiler_commit"); value = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+        @{ path = @("web", "template_sha256"); value = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" },
         @{ path = @("web", "version"); value = "4.0.21" }
     )
     foreach ($mutation in $mutations) {
@@ -303,6 +645,76 @@ function Invoke-BootstrapSelfTest {
         Remove-ToolDirectory $junctionTarget
     }
 
+    $zipDestination = Join-Path $toolRoot "self-test-zip-destination"
+    $zipEscape = Join-Path $toolRoot "self-test-zip-escape.txt"
+    $hostileZip = Join-Path $downloadRoot "self-test-hostile.zip"
+    $duplicateZip = Join-Path $downloadRoot "self-test-duplicate.zip"
+    $symlinkZip = Join-Path $downloadRoot "self-test-symlink.zip"
+    $safeZip = Join-Path $downloadRoot "self-test-safe.zip"
+    foreach ($path in @($hostileZip, $duplicateZip, $symlinkZip, $safeZip, $zipEscape)) {
+        if (Test-Path -LiteralPath $path) { Assert-UnderToolRoot $path; Remove-Item -LiteralPath $path -Force }
+    }
+    Remove-ToolDirectory $zipDestination
+    try {
+        foreach ($unsafeName in @('../escape', '..\escape', '/rooted', '\rooted', 'C:\drive', '\\server\share', 'safe/../escape', 'safe\..\escape', 'file:stream', 'safe/CON.txt', 'safe/trailing.')) {
+            $rejected = $false
+            try { Assert-SafeZipEntryName $unsafeName $zipDestination | Out-Null } catch { $rejected = $true }
+            if (-not $rejected) { throw "Archive preflight accepted unsafe entry '$unsafeName'." }
+        }
+        New-SelfTestZipArchive $hostileZip @(
+            @{ name = 'safe/partial.txt'; content = 'must never be written' },
+            @{ name = '../self-test-zip-escape.txt'; content = 'escape' }
+        )
+        $hostileRejected = $false
+        try { Expand-VerifiedArchive $hostileZip $zipDestination } catch { $hostileRejected = $true }
+        if (-not $hostileRejected -or (Test-Path -LiteralPath $zipDestination) -or (Test-Path -LiteralPath $zipEscape)) {
+            throw "Hostile archive caused an outside or partial write before full preflight rejection."
+        }
+        New-SelfTestZipArchive $duplicateZip @(
+            @{ name = 'safe/Case.txt'; content = 'one' },
+            @{ name = 'SAFE\case.TXT'; content = 'two' }
+        )
+        $duplicateRejected = $false
+        try { Assert-ArchiveEntriesSafe $duplicateZip $zipDestination } catch { $duplicateRejected = $true }
+        if (-not $duplicateRejected) { throw "Archive preflight accepted a case/separator-colliding duplicate." }
+        $symlinkAttributes = -1610612736
+        New-SelfTestZipArchive $symlinkZip @(
+            @{ name = 'safe-link'; content = 'target'; external_attributes = $symlinkAttributes }
+        )
+        $symlinkRejected = $false
+        try { Assert-ArchiveEntriesSafe $symlinkZip $zipDestination } catch { $symlinkRejected = $true }
+        if (-not $symlinkRejected) { throw "Archive preflight accepted a symlink entry." }
+        New-SelfTestZipArchive $safeZip @(
+            @{ name = 'root/one.txt'; content = 'one' },
+            @{ name = 'root/two.txt'; content = 'two' }
+        )
+        $savedForce = $Force
+        $script:Force = $false
+        try {
+            Install-VerifiedArchive $safeZip $zipDestination
+            if (-not (Test-InstalledArchiveMatches $safeZip $zipDestination)) {
+                throw "Transactional archive install did not validate after promotion."
+            }
+            [System.IO.File]::WriteAllText((Join-Path $zipDestination 'root/one.txt'), 'tampered')
+            if (Test-InstalledArchiveMatches $safeZip $zipDestination) {
+                throw "Full archive provenance check accepted a replaced installed file."
+            }
+            Install-VerifiedArchive $safeZip $zipDestination
+            if (-not (Test-InstalledArchiveMatches $safeZip $zipDestination) -or (Test-Path -LiteralPath "$zipDestination.staging")) {
+                throw "Transactional archive repair failed or retained staging residue."
+            }
+        }
+        finally {
+            $script:Force = $savedForce
+        }
+    }
+    finally {
+        Remove-ToolDirectory $zipDestination
+        foreach ($path in @($hostileZip, $duplicateZip, $symlinkZip, $safeZip, $zipEscape)) {
+            if (Test-Path -LiteralPath $path) { Assert-UnderToolRoot $path; Remove-Item -LiteralPath $path -Force }
+        }
+    }
+
     $corrupt = Join-Path $downloadRoot "self-test-corrupt.cache"
     try {
         [System.IO.File]::WriteAllBytes($corrupt, [byte[]](1, 2, 3, 4))
@@ -324,23 +736,70 @@ function Invoke-BootstrapSelfTest {
     try { Assert-ExactCompilerVersion @("clang version 22.1.80 (https://github.com/llvm/llvm-project.git ca7933e47d3a3451d81e72ac174dcb5aa28b59d1)", "Target: x86_64-w64-windows-gnu") "22.1.8" "ca7933e47d3a3451d81e72ac174dcb5aa28b59d1" "x86_64-w64-windows-gnu" } catch { $badCompilerRejected = $true }
     if (-not $badCompilerRejected) { throw "Native bootstrap accepted compiler version prefix drift." }
     $badEmccRejected = $false
-    try { Assert-ExactEmccVersion "emcc (Emscripten gcc/clang-like replacement) 4.0.200" "4.0.20" } catch { $badEmccRejected = $true }
+    try { Assert-ExactEmccVersion "emcc (Emscripten gcc/clang-like replacement) 4.0.200 (6913738ec5371a88c4af5a80db0ab42bad3de681)" "4.0.20" "6913738ec5371a88c4af5a80db0ab42bad3de681" } catch { $badEmccRejected = $true }
     if (-not $badEmccRejected) { throw "Native bootstrap accepted Emscripten version prefix drift." }
 
-    $repoScratch = Join-Path $toolRoot "self-test-repository"
-    Remove-ToolDirectory $repoScratch
-    New-Item -ItemType Directory -Path $repoScratch | Out-Null
+    $cacheScratch = Join-Path $downloadRoot "self-test-offline.cache"
     try {
-        Invoke-NativeCommand { & git -C $repoScratch init --quiet } "Could not create self-test repository" | Out-Null
-        [System.IO.File]::WriteAllText((Join-Path $repoScratch "hostile.cpp"), "#error stale dependency source")
-        Invoke-NativeCommand { & git -C $repoScratch clean -ffdx } "Could not clean self-test repository" | Out-Null
-        if (Test-Path -LiteralPath (Join-Path $repoScratch "hostile.cpp")) {
-            throw "Native bootstrap retained a hostile untracked dependency source."
+        [System.IO.File]::WriteAllText($cacheScratch, "offline cache proof")
+        $cacheSha = (Get-FileHash -LiteralPath $cacheScratch -Algorithm SHA256).Hash.ToLowerInvariant()
+        Get-VerifiedDownload "https://invalid.invalid/must-not-be-contacted.cache" $cacheScratch $cacheSha
+    }
+    finally {
+        if (Test-Path -LiteralPath $cacheScratch) { Remove-Item -LiteralPath $cacheScratch -Force }
+    }
+
+    $repoSource = Join-Path $toolRoot "self-test-repo-source"
+    $repoOrigin = Join-Path $toolRoot "self-test-repo-origin.git"
+    $repoOffline = Join-Path $toolRoot "self-test-repo-origin.offline"
+    $repoInstall = Join-Path $toolRoot "self-test-repository"
+    foreach ($repoPath in @($repoSource, $repoOrigin, $repoOffline, $repoInstall)) { Remove-ToolDirectory $repoPath }
+    try {
+        New-Item -ItemType Directory -Path $repoSource | Out-Null
+        Invoke-SafeGit @("init", "--quiet", "--template=", $repoSource) "Could not create self-test source repository" | Out-Null
+        [System.IO.File]::WriteAllText((Join-Path $repoSource "pinned.txt"), "pinned dependency")
+        Invoke-SafeGit @("-C", $repoSource, "add", "--", "pinned.txt") "Could not stage self-test dependency" | Out-Null
+        Invoke-SafeGit @("-c", "user.name=BTH Self Test", "-c", "user.email=self-test.invalid", "-C", $repoSource, "commit", "--quiet", "-m", "fixture") "Could not commit self-test dependency" | Out-Null
+        $repoCommit = ([string](Invoke-SafeGit @("-C", $repoSource, "rev-parse", "HEAD") "Could not read self-test dependency commit" | Select-Object -First 1)).Trim()
+        Invoke-SafeGit @("clone", "--quiet", "--bare", $repoSource, $repoOrigin) "Could not create self-test dependency origin" | Out-Null
+        New-Item -ItemType Directory -Path $repoInstall | Out-Null
+        [System.IO.File]::WriteAllText((Join-Path $repoInstall "stale.partial"), "stale")
+        $savedForce = $Force
+        $script:Force = $false
+        try { Sync-PinnedRepository $repoOrigin $repoCommit $repoInstall } finally { $script:Force = $savedForce }
+        if (-not (Test-PinnedRepository $repoOrigin $repoCommit $repoInstall) -or (Test-Path -LiteralPath (Join-Path $repoInstall "stale.partial"))) {
+            throw "Transactional repository recovery did not replace a stale partial root."
+        }
+        Move-Item -LiteralPath $repoOrigin -Destination $repoOffline
+        $script:Force = $false
+        try { Sync-PinnedRepository $repoOrigin $repoCommit $repoInstall } finally { $script:Force = $savedForce }
+        [System.IO.File]::WriteAllText((Join-Path $repoInstall "hostile.cpp"), "#error stale dependency source")
+        if (Test-PinnedRepository $repoOrigin $repoCommit $repoInstall) {
+            throw "Pinned repository validation accepted an untracked build source."
+        }
+        Remove-Item -LiteralPath (Join-Path $repoInstall "hostile.cpp") -Force
+        [System.IO.File]::AppendAllText((Join-Path $repoInstall ".git/config"), "[alias]`n`thostile = !echo hostile`n")
+        if (Test-PinnedRepository $repoOrigin $repoCommit $repoInstall) {
+            throw "Pinned repository validation accepted hostile local Git config."
         }
     }
     finally {
-        Remove-ToolDirectory $repoScratch
+        foreach ($repoPath in @($repoSource, $repoOrigin, $repoOffline, $repoInstall)) { Remove-ToolDirectory $repoPath }
     }
+
+    $savedErrorPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $childOutput = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $PSCommandPath -SelfTest 2>&1
+        $childExitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $savedErrorPreference
+    }
+    if ($childExitCode -eq 0 -or (($childOutput -join "`n") -notmatch 'Another native solver bootstrap is already running')) {
+        throw "Native bootstrap mutex did not reject a concurrent process."
+    }
+    $global:LASTEXITCODE = 0
     Write-Host "Native bootstrap hostile lock/archive/version/repository/reparse checks passed." -ForegroundColor Green
 }
 
@@ -362,9 +821,7 @@ try {
 
     $pythonArchive = Join-Path $downloadRoot (Split-Path -Leaf $lock.python.archive_url)
     Get-VerifiedDownload $lock.python.archive_url $pythonArchive $lock.python.archive_sha256
-    Remove-ToolDirectory $pythonRoot
-    New-Item -ItemType Directory -Path $pythonRoot | Out-Null
-    Expand-Archive -LiteralPath $pythonArchive -DestinationPath $pythonRoot -Force
+    Install-VerifiedArchive $pythonArchive $pythonRoot
     Assert-ExactPythonVersion $pythonExe $lock.python.version
 
     $sconsWheel = Join-Path $downloadRoot "scons-$($lock.scons.version)-py3-none-any.whl"
@@ -380,24 +837,14 @@ try {
     if ($Target -in @("Windows", "All")) {
         $archivePath = Join-Path $downloadRoot (Split-Path -Leaf $lock.windows.archive_url)
         Get-VerifiedDownload $lock.windows.archive_url $archivePath $lock.windows.archive_sha256
-        Remove-ToolDirectory $windowsRoot
-        $extractRoot = Join-Path $toolRoot "llvm-mingw-extract"
-        Remove-ToolDirectory $extractRoot
-        New-Item -ItemType Directory -Path $extractRoot | Out-Null
-        try {
-            Expand-Archive -LiteralPath $archivePath -DestinationPath $extractRoot -Force
-            Assert-UnderToolRoot $extractRoot
-            $inner = Get-ChildItem -LiteralPath $extractRoot -Directory | Select-Object -First 1
-            if ($null -eq $inner -or -not (Test-Path -LiteralPath (Join-Path $inner.FullName "bin/clang++.exe"))) {
-                throw "Unexpected LLVM-MinGW archive layout."
-            }
-            Assert-UnderToolRoot $inner.FullName
-            Move-Item -LiteralPath $inner.FullName -Destination $windowsRoot
+        Install-VerifiedArchive $archivePath $windowsRoot
+        $windowsChildren = @(Get-ChildItem -LiteralPath $windowsRoot -Directory)
+        if ($windowsChildren.Count -ne 1) {
+            throw "Unexpected LLVM-MinGW archive root count: $($windowsChildren.Count)"
         }
-        finally {
-            Remove-ToolDirectory $extractRoot
-        }
-        $compiler = Join-Path $windowsRoot "bin/clang++.exe"
+        $windowsToolRoot = $windowsChildren[0].FullName
+        Assert-UnderToolRoot $windowsToolRoot
+        $compiler = Join-Path $windowsToolRoot "bin/clang++.exe"
         $compilerOutput = Invoke-NativeCommand { & $compiler --version } "Could not run pinned LLVM-MinGW compiler"
         Assert-ExactCompilerVersion $compilerOutput $lock.windows.compiler_version $lock.windows.compiler_commit $lock.windows.target
         $compilerOutput | Select-Object -First 2 | Write-Host
@@ -406,16 +853,29 @@ try {
     if ($Target -in @("Web", "All")) {
         Sync-PinnedRepository $lock.web.repository $lock.web.commit $emsdkRoot
         $emsdk = Join-Path $emsdkRoot "emsdk.bat"
-        Invoke-NativeCommand { & $emsdk install $lock.web.version } "Could not install Emscripten $($lock.web.version)" | Write-Host
-        Invoke-NativeCommand { & $emsdk activate $lock.web.version } "Could not activate Emscripten $($lock.web.version)" | Write-Host
         $emcc = Join-Path $emsdkRoot "upstream/emscripten/emcc.bat"
-        $emccOutput = Invoke-NativeCommand { & $emcc --version } "Could not run Emscripten $($lock.web.version)"
-        $emccFirstLine = (($emccOutput | Select-Object -First 1) -as [string]).Trim()
-        Assert-ExactEmccVersion $emccFirstLine $lock.web.version
+        $emccFirstLine = ""
+        if (-not $Force -and (Test-Path -LiteralPath $emcc)) {
+            try {
+                $emccOutput = Invoke-NativeCommand { & $emcc --version } "Could not run cached Emscripten $($lock.web.version)"
+                $emccFirstLine = (($emccOutput | Select-Object -First 1) -as [string]).Trim()
+                Assert-ExactEmccVersion $emccFirstLine $lock.web.version $lock.web.compiler_commit
+            }
+            catch {
+                $emccFirstLine = ""
+            }
+        }
+        if ($emccFirstLine.Length -eq 0) {
+            Invoke-NativeCommand { & $emsdk install $lock.web.version } "Could not install Emscripten $($lock.web.version)" | Write-Host
+            Invoke-NativeCommand { & $emsdk activate $lock.web.version } "Could not activate Emscripten $($lock.web.version)" | Write-Host
+            $emccOutput = Invoke-NativeCommand { & $emcc --version } "Could not run Emscripten $($lock.web.version)"
+            $emccFirstLine = (($emccOutput | Select-Object -First 1) -as [string]).Trim()
+            Assert-ExactEmccVersion $emccFirstLine $lock.web.version $lock.web.compiler_commit
+        }
         Write-Host $emccFirstLine
     }
 
-    Write-Host "Native Coin Pusher toolchain ready at $toolRoot" -ForegroundColor Green
+    Write-Host "Native Coin Pusher dependency toolchain ready at $toolRoot; runtime/export-template identity is verified by build/export preflight." -ForegroundColor Green
 }
 finally {
     $bootstrapMutex.ReleaseMutex()
