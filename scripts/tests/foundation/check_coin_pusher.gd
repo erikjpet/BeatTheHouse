@@ -3,8 +3,6 @@ extends SceneTree
 const PUSHER_DETERMINISM_ACTIONS := 200
 const PUSHER_EV_ACTIONS := 2400
 const PUSHER_VARIATION_EV_ACTIONS := 600
-const FoundationMainScene := preload("res://scenes/main.tscn")
-
 var coin_pusher_snapshot_boundary_exercised := false
 
 
@@ -13,6 +11,15 @@ class ResultSnapshotHost:
 
 	var last_game_result: Dictionary = {}
 	var current_game: GameModule
+
+
+class CoinPusherRealtimeProbeHost:
+	extends FoundationMain
+
+	var realtime_probe_now_msec := 1000
+
+	func _environment_simulation_time_msec() -> int:
+		return realtime_probe_now_msec
 
 
 class StaleNativeBackend:
@@ -1598,7 +1605,7 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 func _check_coin_pusher_render_only_canvas_path(game: GameModule, failures: Array) -> void:
 	var fixture := _coin_pusher_fixture(game, "PUSHER-RENDER-ONLY-CANVAS")
 	var run_state: RunState = fixture.get("run_state")
-	var app_value: Variant = FoundationMainScene.instantiate()
+	var app_value: Variant = CoinPusherRealtimeProbeHost.new()
 	if not app_value is Control:
 		failures.append("Coin Pusher render-only fixture could not instantiate FoundationMain.")
 		return
@@ -1647,19 +1654,46 @@ func _check_coin_pusher_render_only_canvas_path(game: GameModule, failures: Arra
 	if JSON.stringify(_presentation_snapshot(current_canvas_state).get("trace", [])) != JSON.stringify(stored_trace):
 		failures.append("Owned Coin Pusher canvas current-view snapshot lost completed-action trace content.")
 
-	# Exercise FoundationMain's realtime production path against the owned canvas.
+	# Exercise FoundationMain's guarded realtime production path against the owned
+	# canvas. A controlled simulation clock makes the production interval gate and
+	# the resulting physical phase change deterministic without transferring a
+	# patch from the test.
 	var phase_before := int(first_canvas_physical.get("upper_phase_milli", -1))
-	var realtime_at_msec := maxi(0, int(first_canvas_state.get("surface_time_msec", 0))) + 1900
-	var realtime_patch: Dictionary = app.call("_game_surface_realtime_state_patch", realtime_at_msec)
-	canvas.call("apply_surface_state_patch", realtime_patch)
+	var guard_canvas_json := JSON.stringify(first_canvas_state)
+	app.set("last_game_surface_realtime_refresh_msec", 0)
+	canvas.visible = false
+	app.call("_advance_game_surface_realtime_state")
+	if int(app.get("last_game_surface_realtime_refresh_msec")) != 0 \
+			or JSON.stringify(canvas.call("realtime_surface_state")) != guard_canvas_json:
+		failures.append("FoundationMain realtime refresh bypassed its owned-canvas visibility guard.")
+	canvas.visible = true
+	app.set("travel_transition_active", true)
+	app.call("_advance_game_surface_realtime_state")
+	if int(app.get("last_game_surface_realtime_refresh_msec")) != 0 \
+			or JSON.stringify(canvas.call("realtime_surface_state")) != guard_canvas_json:
+		failures.append("FoundationMain realtime refresh bypassed its simulation-pause guard.")
+	app.set("travel_transition_active", false)
+	app.set("realtime_probe_now_msec", 2900)
+	app.set("last_game_surface_realtime_refresh_msec", 2899)
+	app.call("_advance_game_surface_realtime_state")
+	if int(app.get("last_game_surface_realtime_refresh_msec")) != 2899 \
+			or JSON.stringify(canvas.call("realtime_surface_state")) != guard_canvas_json:
+		failures.append("FoundationMain realtime refresh bypassed its minimum-interval guard.")
+	if not canvas.call("surface_realtime_state_refresh_enabled") \
+			or not canvas.visible or not canvas.is_visible_in_tree():
+		failures.append("Coin Pusher realtime fixture did not reach the enabled, visible owned-canvas production preconditions.")
+	app.set("last_game_surface_realtime_refresh_msec", 0)
+	app.call("_advance_game_surface_realtime_state")
 	canvas.call("_draw")
 	var patched_canvas_state: Dictionary = canvas.call("realtime_surface_state")
 	var patched_canvas_physical: Dictionary = _presentation_snapshot(patched_canvas_state)
 	var patched_canvas_trace_json := JSON.stringify(patched_canvas_physical.get("trace", []))
-	if int(patched_canvas_physical.get("upper_phase_milli", -1)) == phase_before \
+	if int(app.get("last_game_surface_realtime_refresh_msec")) != 2900 \
+			or int(patched_canvas_state.get("surface_time_msec", -1)) != 2900 \
+			or int(patched_canvas_physical.get("upper_phase_milli", -1)) == phase_before \
 			or patched_canvas_trace_json != JSON.stringify(stored_trace) \
 			or not _coin_pusher_arrays_share_reference(first_canvas_physical.get("trace", []), patched_canvas_physical.get("trace", [])):
-		failures.append("FoundationMain realtime refresh did not advance the owned Coin Pusher canvas while retaining its action trace.")
+		failures.append("FoundationMain production realtime advance did not stamp and update its owned Coin Pusher canvas while retaining its action trace.")
 
 	var public_result: Dictionary = app.call("_current_game_result_snapshot")
 	var public_patch: Dictionary = public_result.get("surface_presentation_snapshot_patch", {}) if typeof(public_result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
