@@ -8,9 +8,8 @@ static func initial_state(config: Dictionary, rng: RngStream, lane_count: int, c
 	for index in range(fragment_count):
 		fragments.append({
 			"id": "vault_fragment_%02d" % index,
-			"lane": rng.randi_range(0, lane_count - 1),
-			"cell": rng.randi_range(0, maxi(1, cell_count - 1)),
-			"push": rng.randi_range(0, maxi(0, int(config.get("fragment_push_threshold", 2)) - 1)),
+			"spawn_lane": rng.randi_range(0, lane_count - 1),
+			"spawn_depth_slot": rng.randi_range(0, maxi(1, cell_count - 1)),
 		})
 	var schedule: Array = []
 	var cursor := 0
@@ -18,7 +17,7 @@ static func initial_state(config: Dictionary, rng: RngStream, lane_count: int, c
 		cursor += rng.randi_range(maxi(1, int(config.get("spawn_gap_min", 2))), maxi(2, int(config.get("spawn_gap_max", 5))))
 		schedule.append({
 			"id": "vault_scheduled_%02d" % index, "spawn_action": cursor,
-			"lane": rng.randi_range(0, lane_count - 1), "cell": rng.randi_range(1, maxi(1, cell_count - 1)), "push": 0,
+			"spawn_lane": rng.randi_range(0, lane_count - 1), "spawn_depth_slot": rng.randi_range(1, maxi(1, cell_count - 1)),
 		})
 	var floor_value := maxi(0, int(config.get("progressive_floor", 120)))
 	return {
@@ -46,33 +45,38 @@ static func prepare_action(state: Dictionary, action_count: int) -> void:
 	state["fragments"] = fragments
 
 
-static func apply_movement(state: Dictionary, movement_events: Array, context: Dictionary, config: Dictionary) -> Dictionary:
+static func apply_physical_events(state: Dictionary, physics_events: Array) -> Dictionary:
 	var fragments: Array = state.get("fragments", []) if typeof(state.get("fragments", [])) == TYPE_ARRAY else []
 	var remaining: Array = []
 	var banked := 0
-	var threshold := maxi(1, int(config.get("fragment_push_threshold", 2)))
-	var aimed_lane := int(context.get("aimed_lane", -1))
-	var from_nudge := bool(context.get("from_nudge", false))
+	var lost := 0
+	var outcomes := {}
+	for event_value in physics_events:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event: Dictionary = event_value
+		if str(event.get("kind", "")) != "fragment":
+			continue
+		var metadata: Dictionary = event.get("metadata", {}) if typeof(event.get("metadata", {})) == TYPE_DICTIONARY else {}
+		outcomes[str(metadata.get("feature_id", ""))] = str(event.get("outcome", ""))
 	for value in fragments:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
-		var fragment := (value as Dictionary).duplicate(false)
-		var movement := _matching_movement(movement_events, int(fragment.get("lane", -1)), int(fragment.get("cell", -1)))
-		if from_nudge and int(fragment.get("lane", -1)) == aimed_lane:
-			movement += maxi(1, int(context.get("push_strength", 0)) / 2)
-		fragment["push"] = int(fragment.get("push", 0)) + movement
-		while int(fragment.get("push", 0)) >= threshold:
-			fragment["push"] = int(fragment.get("push", 0)) - threshold
-			fragment["cell"] = int(fragment.get("cell", 0)) - 1
-		if int(fragment.get("cell", 0)) < 0:
+		var fragment: Dictionary = value
+		var outcome := str(outcomes.get(str(fragment.get("id", "")), ""))
+		if outcome == "tray":
 			banked += 1
+		elif outcome == "gutter":
+			lost += 1
 		else:
 			remaining.append(fragment)
 	state["fragments"] = remaining
 	state["banked_fragments"] = int(state.get("banked_fragments", 0)) + banked
 	if banked > 0:
-		state["last_feature_message"] = "%d key fragment%s banked." % [banked, "" if banked == 1 else "s"]
-	return {"fragments_banked": banked}
+		state["last_feature_message"] = "%d key fragment%s physically banked." % [banked, "" if banked == 1 else "s"]
+	elif lost > 0:
+		state["last_feature_message"] = "%d fragment%s lost to the gutter." % [lost, "" if lost == 1 else "s"]
+	return {"fragments_banked": banked, "fragments_lost": lost}
 
 
 static func start_round(state: Dictionary) -> Dictionary:
@@ -197,11 +201,3 @@ static func _cell_label(cell: Dictionary, meter_value: int) -> String:
 		"reset": return "RESET"
 		"jackpot": return "JACKPOT $%d" % meter_value
 	return "empty"
-
-
-static func _matching_movement(events: Array, lane: int, cell: int) -> int:
-	var movement := 0
-	for value in events:
-		if typeof(value) == TYPE_DICTIONARY and int((value as Dictionary).get("lane", -1)) == lane and int((value as Dictionary).get("cell", -1)) == cell:
-			movement += maxi(0, int((value as Dictionary).get("moved", 0)))
-	return movement
