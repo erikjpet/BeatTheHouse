@@ -6940,23 +6940,26 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 		break
 	var count := maxi(1, int(spec.get("target_count", requested.size() if not requested.is_empty() else 1)))
 	var origin_id := current_world_node_id()
+	var offer_path_query := WorldMap.prepare_path_query(world_map, origin_id, false)
 	var buckets := [[], [], []]
-	for node_value in _copy_array(world_map.get("nodes", [])):
-		if typeof(node_value) != TYPE_DICTIONARY:
-			continue
-		var node: Dictionary = node_value
-		var node_id := str(node.get("id", "")).strip_edges()
-		if node_id.is_empty() or (node_id == origin_id and str(spec.get("mode", "")) != DeliveryRunModelScript.MODE_HOLD):
-			continue
-		if str(node.get("archetype_id", "")).strip_edges().is_empty() or str(node.get("kind", "")).strip_edges().is_empty():
-			continue
-		if not WorldMap.has_path(world_map, origin_id, node_id, false) and node_id != origin_id:
-			continue
-		# Familiar places are the default: first rooms the player has entered,
-		# then the rest of the discovered map. Hidden real nodes remain the last
-		# bucket so courier work can still pull the player into unseen town.
-		var bucket_index := 0 if str(node.get("state", "hidden")) == WorldMap.STATE_VISITED else 1 if WorldMap.is_node_visible(world_map, node_id) else 2
-		(buckets[bucket_index] as Array).append(node_id)
+	var nodes_value: Variant = world_map.get("nodes", [])
+	if typeof(nodes_value) == TYPE_ARRAY:
+		for node_value in nodes_value as Array:
+			if typeof(node_value) != TYPE_DICTIONARY:
+				continue
+			var node: Dictionary = node_value
+			var node_id := str(node.get("id", "")).strip_edges()
+			if node_id.is_empty() or (node_id == origin_id and str(spec.get("mode", "")) != DeliveryRunModelScript.MODE_HOLD):
+				continue
+			if str(node.get("archetype_id", "")).strip_edges().is_empty() or str(node.get("kind", "")).strip_edges().is_empty():
+				continue
+			if not WorldMap.prepared_has_path(offer_path_query, node_id) and node_id != origin_id:
+				continue
+			# Familiar places are the default: first rooms the player has entered,
+			# then the rest of the discovered map. Hidden real nodes remain the last
+			# bucket so courier work can still pull the player into unseen town.
+			var bucket_index := 0 if str(node.get("state", "hidden")) == WorldMap.STATE_VISITED else 1 if WorldMap.prepared_is_node_visible(offer_path_query, node_id) else 2
+			(buckets[bucket_index] as Array).append(node_id)
 	var candidates: Array = []
 	var target_rng := create_rng("delivery_targets:%s:%d" % [str(spec.get("run_id", spec.get("route_id", "delivery"))), _crew_action_index()])
 	for bucket_value in buckets:
@@ -6973,27 +6976,29 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 		var node_id := str(node_id_value)
 		if not candidates.has(node_id):
 			return {"ok": false, "message": "%s is not a reachable venue tonight." % node_id.replace("_", " ").capitalize()}
-		var path := WorldMap.path_between(world_map, origin_id, node_id, false) if node_id != origin_id else [origin_id]
-		if path.is_empty() or not _delivery_path_uses_real_edges(path):
+		var path := WorldMap.prepared_path(offer_path_query, node_id) if node_id != origin_id else [origin_id]
+		if path.is_empty() or not WorldMap.prepared_path_uses_real_edges(offer_path_query, path):
 			return {"ok": false, "message": "The route to %s is not a real map path." % node_id.replace("_", " ").capitalize()}
 		for path_id_value in path:
 			var path_id := str(path_id_value)
-			if not WorldMap.is_node_visible(world_map, path_id) and not reveal_ids.has(path_id):
+			if not WorldMap.prepared_is_node_visible(offer_path_query, path_id) and not reveal_ids.has(path_id):
 				reveal_ids.append(path_id)
 		var node := WorldMap.node_metadata_by_id(world_map, node_id)
+		var was_visible := WorldMap.prepared_is_node_visible(offer_path_query, node_id)
 		targets.append({
 			"id": "delivery_target_%s" % node_id,
 			"node_id": node_id,
 			"label": str(node.get("label", node_id.replace("_", " ").capitalize())),
 			"was_visited_at_offer": str(node.get("state", "hidden")) == WorldMap.STATE_VISITED,
-			"was_visible_at_offer": WorldMap.is_node_visible(world_map, node_id),
-			"revealed_by_job": not WorldMap.is_node_visible(world_map, node_id),
+			"was_visible_at_offer": was_visible,
+			"revealed_by_job": not was_visible,
 		})
 	var offered_map := WorldMap.unlock_nodes(world_map, reveal_ids, WorldMap.DISCOVERY_SOURCE_EVENT)
+	var offered_path_query := WorldMap.prepare_path_query(offered_map, origin_id, true)
 	for target_value in targets:
 		var node_id := str((target_value as Dictionary).get("node_id", ""))
-		var visible_path := WorldMap.path_between(offered_map, origin_id, node_id, true) if node_id != origin_id else [origin_id]
-		if visible_path.is_empty() or not _delivery_path_uses_real_edges(visible_path, offered_map):
+		var visible_path := WorldMap.prepared_path(offered_path_query, node_id) if node_id != origin_id else [origin_id]
+		if visible_path.is_empty() or not WorldMap.prepared_path_uses_real_edges(offered_path_query, visible_path):
 			return {"ok": false, "message": "The revealed courier route is incomplete."}
 	return {"ok": true, "targets": targets, "world_map": offered_map}
 
