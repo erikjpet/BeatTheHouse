@@ -334,6 +334,22 @@ What happens then is the owner's, not an agent's:
   source strings; and shard processes must be prevented from racing on shared
   `.godot` cache files, not merely detect a write afterward. The unchanged
   registration, assertions, timeout, and 43.712 s wall budget still bind.
+- 2026-08-17 [systems gate] The first safe live sharded run completed in
+  39.554 s, but the exact mutation sentinel honestly exposed nine fixture-only
+  failures. Root cause: `_fixture_library()` returned a hand-built library with
+  empty derived indexes, so the first legitimate `fixture_rng` lookup lazily
+  rebuilt `_indexes` after the baseline fingerprint. Commit `c376445c` now
+  hydrates those indexes through the canonical production seam before taking
+  the single global baseline, and proves the hydration changes indexes only;
+  no sentinel field, assertion, seed, registration, or budget was exempted.
+- 2026-08-17 [systems gate] Independent rerun at `c376445c` is green: the
+  integrated systems stage completed in 37.260 s against the unchanged
+  43.712 s budget; all 49 checks were registered, owned, and executed exactly
+  once; all four raw shard exits and stderr streams were clean; and private
+  shard projects were fully removed. The hardened launcher and its behavioral
+  mutex, partial-child, junction-cleanup, exception, and accounting contracts
+  were merged to main in `5a967b75`; final combined-tree verification is in
+  progress.
 - 2026-08-17 [integrated UI] The UI gate currently stops before assertions
   because `New-SplitTestRunner` concatenates descendant implementations with a
   contiguous parent-only fallback-stub block, producing duplicate function
@@ -1017,3 +1033,11 @@ What happens then is the owner's, not an agent's:
   `staff_assignment_day` writes across Grand Casino Blackjack and Roulette.
   Row returned to IN_PROGRESS; no prior assertion was weakened. `env06_5`
   remains DONE on its independently verified content/audit/capture scope.
+- 2026-08-17 [systems gate] Integrated deterministic sharding merged at
+  `5a967b75` after independent behavioral safety review and a green 37.260 s
+  run under the unchanged 43.712 s budget. All 49 systems checks retain their
+  exact assertions and canonical report order while executing once across four
+  isolated project/cache roots; aggregate failures, raw exits, stderr,
+  timeouts, last-started diagnostics, cleanup failures, and cleanup wall time
+  remain fail-closed. This removes the harness-only release-gate bottleneck;
+  combined-main verification remains the final acceptance authority.
