@@ -632,6 +632,25 @@ What happens then is the owner's, not an agent's:
   embedded refresh (`HUD` 14.630-15.316 ms, terminal 4.152-4.184 ms,
   snapshots 3.382-4.677 ms). Parallel root analysis is authorized; no threshold,
   trace, body, animation, audio, or immediate-completion change is authorized.
+- 2026-08-17 [pusher06_2 native optimization review] The second raw/trace
+  candidate was rejected before runtime: scripted subclasses of the native
+  class could be misclassified as trusted; ordered-subset validation allowed
+  unreported body removal/immutable drift; trace Dictionary insertion order
+  differed from the reference; and nested metadata aliased across published
+  frames/exits. Exact unscripted identity, exit-accounted 1:1 body validation,
+  reference key order, and per-publication metadata isolation plus hostile
+  regressions are required. No rejected runtime evidence will be produced.
+- 2026-08-17 [pusher06_2 host root analysis] Two isolated host corrections are
+  authorized from measured code paths. Interrupt handling currently deep-copies
+  the full 14x160 trace twice merely to read scalar fields, then builds a dense
+  surface before learning no table-approach event targets Coin Pusher. Embedded
+  refresh rebuilds pressure/objectives two to three times, scans a recovery
+  value the consumer never reads, performs full terminal recovery scans despite
+  a valid wager, and repeats already-isolated result copies. Separate branches
+  will implement only priority-identical read-only scalar selection/data-derived
+  target indexing and the provably redundant P0-P3 refresh work, with parity
+  tests; broad dirty-state/revision caching remains out of scope unless a fresh
+  profile proves it necessary.
 - 2026-08-17 [pusher06_2 presentation gaps] Independent static review ACCEPTS
   all three corrections after returning float quota math and two false-positive
   tests. Opening generation uses integer-only deterministic per-shelf quotas
