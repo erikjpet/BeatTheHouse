@@ -1010,6 +1010,9 @@ func _check_coin_pusher_canonical_probe(failures: Array) -> void:
 	if not _source_call_graph_contains(main_source, "_refresh_after_embedded_game_action", "_queue_pending_tutorial_heat_intervention") \
 			or not _source_call_graph_contains(main_source, "_refresh_after_embedded_game_action", "_queue_pending_tutorial_drunk_coffee_interventions"):
 		failures.append("Embedded game refresh no longer preserves tutorial intervention evaluation at the action boundary.")
+	var coach_schedule_source := _source_function(main_source, "_schedule_game_coach_refresh_after_draw")
+	if not coach_schedule_source.contains('call_deferred("_refresh_game_coach_after_draw")'):
+		failures.append("Embedded coach scheduling no longer dispatches the production post-draw callback.")
 	var hud_model_source := _source_function(main_source, "_run_status_hud_model")
 	var pressure_source := _source_function(main_source, "_run_pressure_view")
 	if not hud_model_source.contains("_next_objective_option(pressure, objective)") \
@@ -1595,15 +1598,6 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 func _check_coin_pusher_render_only_canvas_path(game: GameModule, failures: Array) -> void:
 	var fixture := _coin_pusher_fixture(game, "PUSHER-RENDER-ONLY-CANVAS")
 	var run_state: RunState = fixture.get("run_state")
-	var view_model_script: Script = load("res://scripts/ui/foundation_action_view_model.gd")
-	if view_model_script == null:
-		failures.append("Coin Pusher render-only fixture could not load the canonical action view model.")
-		return
-	var first_result := game.resolve_with_context("drop_quarter", 1, run_state, run_state.current_environment, run_state.create_rng("render_only_drop"), {
-		"coin_pusher_lane": 2, "coin_pusher_upper_input_phase": 2, "coin_pusher_lower_input_phase": 5,
-		"coin_pusher_capture_presentation_trace": true,
-	})
-	var first_stored: Dictionary = view_model_script.stored_game_result_snapshot(first_result)
 	var app_value: Variant = FoundationMainScene.instantiate()
 	if not app_value is Control:
 		failures.append("Coin Pusher render-only fixture could not instantiate FoundationMain.")
@@ -1620,65 +1614,128 @@ func _check_coin_pusher_render_only_canvas_path(game: GameModule, failures: Arra
 	app.set("dev_game_test_mode", true)
 	app.set("run_state", run_state)
 	app.set("current_game", game)
-	app.set("last_game_result", first_stored)
-	app.set("game_surface_ui_state", {"coin_pusher_lane": 2, "surface_time_msec": 1000})
+	app.set("game_surface_ui_state", {
+		"coin_pusher_lane": 2, "coin_pusher_upper_input_phase": 2, "coin_pusher_lower_input_phase": 5,
+		"coin_pusher_capture_presentation_trace": true,
+	})
 	app.call("_set_current_screen", "GAME")
-	var render_snapshot: Dictionary = app.call("_game_view_snapshot", true)
-	var render_physical: Dictionary = _presentation_snapshot(render_snapshot)
-	var stored_patch: Dictionary = first_stored.get("surface_presentation_snapshot_patch", {})
-	if not _coin_pusher_arrays_share_reference(render_physical.get("trace", []), stored_patch.get("trace", [])):
-		failures.append("Internal Coin Pusher render snapshot did not transfer the immutable action trace into the real canvas snapshot.")
-	var canvas: Control = GameSurfaceCanvasScript.new()
-	canvas.size = Vector2(450, 215)
-	root.add_child(canvas)
-	canvas.call("set_game_module", game)
-	canvas.call("render_game_snapshot", render_snapshot)
+	app.call("_refresh_after_game_selection")
+	var canvas: Control = app.get("game_surface_canvas")
+	if canvas == null:
+		failures.append("Coin Pusher host-path fixture did not use FoundationMain's owned GameSurfaceCanvas.")
+		root.remove_child(app)
+		app.free()
+		return
+	# Emit the owned canvas signal exactly as a player click does. FoundationMain's
+	# connected handler resolves the completed action and its embedded refresh must
+	# route the new snapshot back into this same canvas.
+	canvas.emit_signal("surface_action", "coin_pusher_drop", 0, false)
 	canvas.call("_draw")
+	var first_stored: Dictionary = app.get("last_game_result")
+	var stored_patch: Dictionary = first_stored.get("surface_presentation_snapshot_patch", {}) if typeof(first_stored.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
+	var stored_trace: Array = stored_patch.get("trace", []) if typeof(stored_patch.get("trace", [])) == TYPE_ARRAY else []
+	var stored_deltas: Dictionary = first_stored.get("deltas", {}) if typeof(first_stored.get("deltas", {})) == TYPE_DICTIONARY else {}
 	var first_canvas_state: Dictionary = canvas.call("realtime_surface_state")
 	var first_canvas_physical: Dictionary = _presentation_snapshot(first_canvas_state)
-	var realtime_patch: Dictionary = game.surface_realtime_state_patch(run_state, run_state.current_environment, {"coin_pusher_lane": 2, "surface_time_msec": 1900}, first_canvas_state)
+	if str(first_stored.get("action_id", "")) != "drop_quarter" or stored_trace.is_empty() or stored_deltas.is_empty():
+		failures.append("Real Coin Pusher host action did not produce the required nonempty stored trace and deltas.")
+	if JSON.stringify(first_canvas_physical.get("trace", [])) != JSON.stringify(stored_trace) \
+			or not _coin_pusher_arrays_share_reference(first_canvas_physical.get("trace", []), stored_trace):
+		failures.append("FoundationMain's production snapshot renderer did not wire the completed Coin Pusher trace into its owned canvas.")
+	var current_canvas_view: Dictionary = canvas.call("current_view_snapshot")
+	var current_canvas_state: Dictionary = current_canvas_view.get("state", {}) if typeof(current_canvas_view.get("state", {})) == TYPE_DICTIONARY else {}
+	if JSON.stringify(_presentation_snapshot(current_canvas_state).get("trace", [])) != JSON.stringify(stored_trace):
+		failures.append("Owned Coin Pusher canvas current-view snapshot lost completed-action trace content.")
+
+	# Exercise FoundationMain's realtime production path against the owned canvas.
+	var phase_before := int(first_canvas_physical.get("upper_phase_milli", -1))
+	var realtime_at_msec := maxi(0, int(first_canvas_state.get("surface_time_msec", 0))) + 1900
+	var realtime_patch: Dictionary = app.call("_game_surface_realtime_state_patch", realtime_at_msec)
 	canvas.call("apply_surface_state_patch", realtime_patch)
 	canvas.call("_draw")
 	var patched_canvas_state: Dictionary = canvas.call("realtime_surface_state")
 	var patched_canvas_physical: Dictionary = _presentation_snapshot(patched_canvas_state)
 	var patched_canvas_trace_json := JSON.stringify(patched_canvas_physical.get("trace", []))
-	if int(patched_canvas_physical.get("upper_phase_milli", -1)) == int(first_canvas_physical.get("upper_phase_milli", -1)) \
+	if int(patched_canvas_physical.get("upper_phase_milli", -1)) == phase_before \
+			or patched_canvas_trace_json != JSON.stringify(stored_trace) \
 			or not _coin_pusher_arrays_share_reference(first_canvas_physical.get("trace", []), patched_canvas_physical.get("trace", [])):
-		failures.append("Real Coin Pusher canvas render/current/realtime-patch path rebuilt or failed to advance the render-only snapshot.")
+		failures.append("FoundationMain realtime refresh did not advance the owned Coin Pusher canvas while retaining its action trace.")
 
 	var public_result: Dictionary = app.call("_current_game_result_snapshot")
-	var public_patch: Dictionary = public_result.get("surface_presentation_snapshot_patch", {})
+	var public_patch: Dictionary = public_result.get("surface_presentation_snapshot_patch", {}) if typeof(public_result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
 	var public_full: Dictionary = app.call("current_game_view_snapshot")
 	var public_full_physical: Dictionary = _presentation_snapshot(public_full)
+	var public_deltas: Dictionary = public_result.get("deltas", {}) if typeof(public_result.get("deltas", {})) == TYPE_DICTIONARY else {}
+	var public_full_deltas: Dictionary = public_full.get("deltas", {}) if typeof(public_full.get("deltas", {})) == TYPE_DICTIONARY else {}
+	var public_patch_trace: Array = public_patch.get("trace", []) if typeof(public_patch.get("trace", [])) == TYPE_ARRAY else []
+	var public_full_trace: Array = public_full_physical.get("trace", []) if typeof(public_full_physical.get("trace", [])) == TYPE_ARRAY else []
+	if stored_trace.is_empty() or stored_deltas.is_empty() \
+			or public_patch_trace.is_empty() or public_deltas.is_empty() \
+			or public_full_trace.is_empty() or public_full_deltas.is_empty():
+		failures.append("Public Coin Pusher safety fixture was missing required trace/delta content before isolation checks.")
+	if JSON.stringify(public_patch_trace) != JSON.stringify(stored_trace) \
+			or JSON.stringify(public_deltas) != JSON.stringify(stored_deltas) \
+			or JSON.stringify(public_full_trace) != JSON.stringify(stored_trace) \
+			or JSON.stringify(public_full_deltas) != JSON.stringify(stored_deltas):
+		failures.append("Public Coin Pusher result/patch/full snapshots were not byte-equal to required stored content before mutation.")
 	if _coin_pusher_dictionaries_share_reference(public_patch, stored_patch) \
-			or _coin_pusher_arrays_share_reference(public_patch.get("trace", []), stored_patch.get("trace", [])) \
-			or _coin_pusher_arrays_share_reference(public_full_physical.get("trace", []), stored_patch.get("trace", [])):
+			or _coin_pusher_arrays_share_reference(public_patch_trace, stored_patch.get("trace", [])) \
+			or _coin_pusher_dictionaries_share_reference(public_deltas, stored_deltas) \
+			or _coin_pusher_arrays_share_reference(public_full_trace, stored_patch.get("trace", [])) \
+			or _coin_pusher_dictionaries_share_reference(public_full_deltas, stored_deltas):
 		failures.append("Public Coin Pusher result/complete snapshots exposed the internal action patch or trace by reference.")
 	var stored_trace_json := JSON.stringify(stored_patch.get("trace", []))
-	(public_patch.get("trace", []) as Array).append({"public_mutation": true})
-	(public_full_physical.get("trace", []) as Array).append({"public_full_mutation": true})
+	var stored_deltas_json := JSON.stringify(stored_deltas)
+	if not _mutate_public_coin_pusher_trace(public_patch_trace, "public_patch_mutation") \
+			or not _mutate_public_coin_pusher_trace(public_full_trace, "public_full_mutation") \
+			or not _mutate_public_coin_pusher_deltas(public_deltas, "public_result_mutation") \
+			or not _mutate_public_coin_pusher_deltas(public_full_deltas, "public_full_delta_mutation"):
+		failures.append("Public Coin Pusher deep-safety fixture lacked a nested frame/body or delta collection to mutate.")
 	if JSON.stringify(stored_patch.get("trace", [])) != stored_trace_json \
+			or JSON.stringify(stored_deltas) != stored_deltas_json \
 			or JSON.stringify(_presentation_snapshot(canvas.call("realtime_surface_state")).get("trace", [])) != patched_canvas_trace_json:
 		failures.append("Mutating a public Coin Pusher patch/full snapshot changed stored or canvas-owned render data.")
 
-	var second_result := game.resolve_with_context("nudge_machine", 0, run_state, run_state.current_environment, run_state.create_rng("render_only_nudge"), {
-		"coin_pusher_lane": 2, "coin_pusher_force": "tap", "coin_pusher_direction": "front",
-		"coin_pusher_upper_input_phase": 2, "coin_pusher_lower_input_phase": 5,
-		"coin_pusher_capture_presentation_trace": true,
-	})
-	var second_stored: Dictionary = view_model_script.stored_game_result_snapshot(second_result)
-	app.set("last_game_result", second_stored)
-	var second_render_snapshot: Dictionary = app.call("_game_view_snapshot", true)
-	canvas.call("render_game_snapshot", second_render_snapshot)
+	# A second player action also travels through the canvas signal and host command
+	# handler; no direct module resolution or manual snapshot transfer is allowed.
+	while not run_state.next_pending_talk_event().is_empty():
+		run_state.complete_talk_event_resolution(str(run_state.next_pending_talk_event().get("event_id", "")))
+	app.call("_refresh_talk_dock")
+	canvas.emit_signal("surface_action", "coin_pusher_nudge", 0, false)
 	canvas.call("_draw")
 	var second_canvas_physical: Dictionary = _presentation_snapshot(canvas.call("realtime_surface_state"))
-	if str((second_canvas_physical.get("action_state", {}) as Dictionary).get("action_id", "")) != "nudge_machine" \
+	var second_stored: Dictionary = app.get("last_game_result")
+	var second_patch: Dictionary = second_stored.get("surface_presentation_snapshot_patch", {}) if typeof(second_stored.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
+	var second_trace: Array = second_patch.get("trace", []) if typeof(second_patch.get("trace", [])) == TYPE_ARRAY else []
+	if str(second_stored.get("action_id", "")) != "nudge_machine" \
+			or second_trace.is_empty() \
+			or str((second_canvas_physical.get("action_state", {}) as Dictionary).get("action_id", "")) != "nudge_machine" \
+			or JSON.stringify(second_canvas_physical.get("trace", [])) != JSON.stringify(second_trace) \
 			or JSON.stringify(stored_patch.get("trace", [])) != stored_trace_json:
-		failures.append("Second Coin Pusher render frame/action did not replace the canvas snapshot without mutating the first action.")
-	root.remove_child(canvas)
-	canvas.free()
+		failures.append("Second real Coin Pusher host action did not replace the owned canvas snapshot without mutating the first action.")
 	root.remove_child(app)
 	app.free()
+
+
+func _mutate_public_coin_pusher_trace(trace: Array, marker: String) -> bool:
+	if trace.is_empty() or typeof(trace[0]) != TYPE_DICTIONARY:
+		return false
+	var frame: Dictionary = trace[0]
+	var bodies: Array = frame.get("bodies", []) if typeof(frame.get("bodies", [])) == TYPE_ARRAY else []
+	if bodies.is_empty() or typeof(bodies[0]) != TYPE_DICTIONARY:
+		return false
+	frame[marker] = true
+	(bodies[0] as Dictionary)[marker] = true
+	return true
+
+
+func _mutate_public_coin_pusher_deltas(deltas: Dictionary, marker: String) -> bool:
+	var messages: Array = deltas.get("messages", []) if typeof(deltas.get("messages", [])) == TYPE_ARRAY else []
+	if messages.is_empty():
+		return false
+	messages.append(marker)
+	deltas[marker] = {"nested": true}
+	return true
 
 
 func _trace_visibly_moves(trace: Array) -> bool:

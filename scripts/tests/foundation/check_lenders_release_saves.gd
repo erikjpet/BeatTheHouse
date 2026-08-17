@@ -66,6 +66,57 @@ class EmbeddedRefreshFixtureGame:
 			"surface_cast": "machine", "surface_embeds_outcomes": true, "runtime_serial": surface_serial,
 		}
 
+	func surface_action_command(surface_action: String, _index: int, _confirm_requested: bool, ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
+		if surface_action != "fixture_complete":
+			return {"handled": false}
+		return GameModule.surface_command({
+			"ui_state": ui_state.duplicate(true), "action_id": "fixture_action", "action_kind": "legal",
+			"resolve": true, "direct_resolve": true, "skip_stake_validation": true,
+			"preserve_surface_ui_state": true, "message": "Fixture action committed.",
+		})
+
+
+class EmbeddedRefreshProbeHost:
+	extends FoundationMain
+
+	var embedded_probe_log: Array = []
+	var embedded_probe_interrupt_saw_pending_autosave := false
+	var embedded_probe_interrupt_environment_id := ""
+
+	func _prepare_foundation_run_save() -> void:
+		embedded_probe_log.append("autosave_prepare")
+		super._prepare_foundation_run_save()
+
+	func _apply_post_action_environment_interrupt(source: String) -> bool:
+		embedded_probe_log.append("post_action_interrupt")
+		embedded_probe_interrupt_saw_pending_autosave = pending_autosave
+		embedded_probe_interrupt_environment_id = str(run_state.current_environment.get("id", "")) if run_state != null else ""
+		return super._apply_post_action_environment_interrupt(source)
+
+	func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false) -> void:
+		embedded_probe_log.append("embedded_refresh")
+		super._refresh_after_embedded_game_action(embeds_result_feedback)
+
+	func _refresh_active_item_slot() -> void:
+		embedded_probe_log.append("active_item")
+		super._refresh_active_item_slot()
+
+	func _refresh_talk_dock() -> void:
+		embedded_probe_log.append("talk_dock")
+		super._refresh_talk_dock()
+
+	func _update_procedural_music() -> void:
+		embedded_probe_log.append("music")
+		super._update_procedural_music()
+
+	func _schedule_game_coach_refresh_after_draw() -> void:
+		embedded_probe_log.append("coach_schedule")
+		super._schedule_game_coach_refresh_after_draw()
+
+	func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false) -> void:
+		embedded_probe_log.append("coach_execute:%s" % str(surface_transition_wait_satisfied))
+		super._refresh_coach_at_boundary(surface_transition_wait_satisfied)
+
 
 func _check_run_report_foundation(failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
@@ -3668,9 +3719,74 @@ func _check_embedded_refresh_behavior(library: ContentLibrary, failures: Array) 
 		failures.append("Embedded refresh did not reroute and rebuild immediately when terminal evaluation changed context.")
 	_sb4_dispose_app(app)
 
+	_check_embedded_completed_action_callsite(library, failures)
 	_check_embedded_refresh_autosave_interrupt(library, failures)
 	_check_embedded_refresh_tutorial_intervention(library, true, failures)
 	_check_embedded_refresh_tutorial_intervention(library, false, failures)
+
+
+func _check_embedded_completed_action_callsite(library: ContentLibrary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("EMBEDDED-COMPLETED-CALLSITE")
+	run_state.set_environment(_embedded_refresh_environment("embedded_callsite_room"))
+	run_state.add_item("thermos_black_coffee")
+	run_state.set_active_item("thermos_black_coffee")
+	var fixture_game := EmbeddedRefreshFixtureGame.new()
+	var app := _embedded_refresh_fixture_app(library, run_state, fixture_game, true, "embedded completed callsite", failures, true)
+	if app == null:
+		return
+	var canvas: Control = app.get("game_surface_canvas")
+	if canvas == null:
+		failures.append("Embedded completed-action fixture did not use FoundationMain's owned game canvas.")
+		_sb4_dispose_app(app)
+		return
+	var dialogue := library.dialogue("pull_tab_clerk")
+	if dialogue.is_empty() or not run_state.enqueue_dialogue(
+			"pull_tab_clerk", "embedded_callsite_talk", {"name": "Fixture Clerk", "role": "guide"},
+			str(dialogue.get("start", "greeting")), "embedded_callsite_fixture", {"trigger": "fixture"}):
+		failures.append("Embedded completed-action fixture could not queue its TalkDock consequence.")
+	var result_panel: Control = app.get("environment_result_panel")
+	var active_item_button: Button = app.get("active_item_button")
+	var talk_dock: Control = app.get("talk_dock")
+	var music_player: Node = app.get("procedural_music_player")
+	if result_panel != null:
+		result_panel.visible = true
+	if active_item_button != null:
+		active_item_button.text = "STALE-CALLSITE-ITEM"
+	if music_player != null:
+		music_player.set("_current_music_context", {"embedded_callsite_sentinel": true})
+	(app.get("embedded_probe_log") as Array).clear()
+	app.set("game_coach_refresh_scheduled", false)
+
+	# Player input originates at the owned canvas signal, enters FoundationMain's
+	# production handler, resolves a completed action, and returns through the real
+	# embedded refresh call site. No refresh helper is invoked by this test.
+	canvas.emit_signal("surface_action", "fixture_complete", 0, false)
+	var probe_log: Array = app.get("embedded_probe_log")
+	var canvas_state: Dictionary = canvas.call("realtime_surface_state")
+	if str((app.get("last_game_result") as Dictionary).get("action_id", "")) != "fixture_action" \
+			or str(app.get("current_screen")) != "GAME" or app.get("current_game") != fixture_game \
+			or int(canvas_state.get("runtime_serial", -1)) != 1:
+		failures.append("Real non-interrupted embedded action did not complete and render through the production host call site.")
+	var refresh_index := probe_log.find("embedded_refresh")
+	var active_item_index := probe_log.find("active_item", refresh_index + 1)
+	var talk_dock_index := probe_log.find("talk_dock", refresh_index + 1)
+	var music_index := probe_log.find("music", refresh_index + 1)
+	if refresh_index < 0 or active_item_index <= refresh_index \
+			or talk_dock_index <= refresh_index or music_index <= refresh_index:
+		failures.append("Production completed-action call site omitted an embedded refresh consequence: %s." % JSON.stringify(probe_log))
+	if result_panel == null or result_panel.visible:
+		failures.append("Real completed embedded action left host-owned result feedback visible.")
+	if active_item_button == null or not active_item_button.text.begins_with("Use: ") or active_item_button.text == "STALE-CALLSITE-ITEM":
+		failures.append("Real completed embedded action did not refresh the active-item slot.")
+	if talk_dock == null or str((talk_dock.get("entry") as Dictionary).get("event_id", "")) != "embedded_callsite_talk":
+		failures.append("Real completed embedded action did not present its queued TalkDock consequence.")
+	if music_player == null or bool((music_player.get("_current_music_context") as Dictionary).get("embedded_callsite_sentinel", false)):
+		failures.append("Real completed embedded action did not update procedural music.")
+	var coach_schedule_index := probe_log.find("coach_schedule", refresh_index + 1)
+	if coach_schedule_index <= refresh_index or not bool(app.get("game_coach_refresh_scheduled")):
+		failures.append("Real completed embedded action did not arm the production post-draw coach schedule: %s." % JSON.stringify(probe_log))
+	_sb4_dispose_app(app)
 
 
 func _check_embedded_refresh_autosave_interrupt(library: ContentLibrary, failures: Array) -> void:
@@ -3681,11 +3797,21 @@ func _check_embedded_refresh_autosave_interrupt(library: ContentLibrary, failure
 	run_state.set_environment(environment)
 	run_state.narrative_flags["health_inspector_closing_actions"] = 1
 	var fixture_game := EmbeddedRefreshFixtureGame.new()
-	var app := _embedded_refresh_fixture_app(library, run_state, fixture_game, false, "embedded interrupt", failures)
+	var app := _embedded_refresh_fixture_app(library, run_state, fixture_game, false, "embedded interrupt", failures, true)
 	if app == null:
 		return
 	var source_environment_id := str(run_state.current_environment.get("id", ""))
-	app.call("_resolve_game_action", "fixture_action", true, true, false, {})
+	(app.get("embedded_probe_log") as Array).clear()
+	var canvas: Control = app.get("game_surface_canvas")
+	if canvas != null:
+		canvas.emit_signal("surface_action", "fixture_complete", 0, false)
+	var probe_log: Array = app.get("embedded_probe_log")
+	var autosave_prepare_index := probe_log.find("autosave_prepare")
+	var interrupt_index := probe_log.find("post_action_interrupt")
+	if canvas == null or autosave_prepare_index < 0 or interrupt_index <= autosave_prepare_index \
+			or not bool(app.get("embedded_probe_interrupt_saw_pending_autosave")) \
+			or str(app.get("embedded_probe_interrupt_environment_id")) != source_environment_id:
+		failures.append("Embedded action did not behaviorally prepare/queue autosave before entering its post-action interrupt: %s." % JSON.stringify(probe_log))
 	if not bool(app.get("pending_autosave")):
 		failures.append("Completed embedded action did not queue its autosave before post-action interruption.")
 	if not bool(run_state.narrative_flags.get("health_inspector_forced_travel", false)) \
@@ -3720,8 +3846,8 @@ func _check_embedded_refresh_tutorial_intervention(library: ContentLibrary, tuto
 	_sb4_dispose_app(app)
 
 
-func _embedded_refresh_fixture_app(library: ContentLibrary, run_state: RunState, fixture_game: GameModule, dev_mode: bool, label: String, failures: Array) -> Control:
-	var app_value: Variant = MainScene.instantiate()
+func _embedded_refresh_fixture_app(library: ContentLibrary, run_state: RunState, fixture_game: GameModule, dev_mode: bool, label: String, failures: Array, use_probe_host: bool = false) -> Control:
+	var app_value: Variant = EmbeddedRefreshProbeHost.new() if use_probe_host else MainScene.instantiate()
 	if not app_value is Control:
 		failures.append("%s fixture could not instantiate FoundationMain." % label.capitalize())
 		return null
