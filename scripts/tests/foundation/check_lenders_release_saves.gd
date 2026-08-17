@@ -4400,7 +4400,7 @@ func _check_events(event_ids: Array, library: ContentLibrary, scopes: Array, fai
 
 
 # Creates in-memory content for contract checks.
-func _fixture_library() -> ContentLibrary:
+func _fixture_library(failures: Array) -> ContentLibrary:
 	var library := ContentLibraryScript.new()
 	library.environment_archetypes = [
 		{
@@ -4502,6 +4502,16 @@ func _fixture_library() -> ContentLibrary:
 			"destination_tier_hint": 1,
 		},
 	]
+	# Match ContentLibrary.load(): prove an intentionally unhydrated fixture
+	# changes only its lazy index cache, then freeze the fully constructed state
+	# before any check receives it.
+	var before_hydration := _foundation_library_fingerprint(library)
+	var before_non_index_state := _foundation_library_fingerprint(library, false)
+	library._rebuild_indexes()
+	if _foundation_library_fingerprint(library) == before_hydration:
+		failures.append("Foundation fixture hydration regression did not exercise the unhydrated index state.")
+	if _foundation_library_fingerprint(library, false) != before_non_index_state:
+		failures.append("Foundation fixture hydration changed state outside the lazy index cache.")
 	return library
 
 

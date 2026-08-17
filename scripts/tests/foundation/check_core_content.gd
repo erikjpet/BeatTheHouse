@@ -371,7 +371,7 @@ func _init() -> void:
 	report["requested_check_ids"] = requested_check_ids.duplicate()
 	var content_library: ContentLibrary = ContentLibraryScript.new()
 	content_library.load()
-	var fixture_library := _fixture_library()
+	var fixture_library := _fixture_library(failures)
 	_foundation_content_library_ref = content_library
 	_foundation_fixture_library_ref = fixture_library
 	_foundation_content_library_fingerprint = _foundation_library_fingerprint(content_library)
@@ -627,10 +627,10 @@ func _foundation_run_check(report: Dictionary, failures: Array, check_id: String
 	print("FOUNDATION_CHECK_DONE id=%s duration_msec=%d failures=%d" % [check_id, duration, failure_delta])
 
 
-func _foundation_library_fingerprint(library: ContentLibrary) -> String:
+func _foundation_library_fingerprint(library: ContentLibrary, include_indexes: bool = true) -> String:
 	if library == null:
 		return ""
-	return JSON.stringify({
+	var state := {
 		"environment_archetypes": library.environment_archetypes,
 		"environment_scenarios": library.environment_scenarios,
 		"games": library.games,
@@ -655,7 +655,10 @@ func _foundation_library_fingerprint(library: ContentLibrary) -> String:
 		"_indexes": library._indexes,
 		"_load_timing": library._load_timing,
 		"_load_pack_timings": library._load_pack_timings,
-	})
+	}
+	if not include_indexes:
+		state.erase("_indexes")
+	return JSON.stringify(state)
 
 
 func _foundation_write_report(report_path: String, report: Dictionary) -> void:
