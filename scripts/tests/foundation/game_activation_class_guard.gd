@@ -57,6 +57,21 @@ class MutatingActivationFixture:
 		return super.coach_state(run_state, environment, ui_state)
 
 
+class MaskingActivationFixture:
+	extends GameModule
+
+	func environment_runtime_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+		# This cache is intentionally absent from RunState serialization. Sharing a
+		# live fixture across hooks would carry it into the next assertion.
+		run_state.set_meta("activation_mask", true)
+		return super.environment_runtime_state(run_state, environment)
+
+	func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+		if not run_state.has_meta("activation_mask"):
+			run_state.narrative_flags["game_activation_fixture_masked_object"] = true
+		return super.environment_object_state(run_state, environment)
+
+
 static func check(library: ContentLibrary, failures: Array) -> void:
 	var covered_game_ids := {}
 	var checked_contexts := {}
@@ -97,8 +112,21 @@ static func _check_generated_environment_sweep(library: ContentLibrary, covered_
 					run_state.create_rng("generated_game_states")
 				)
 				run_state.set_environment(environment)
-				var restored_run := _json_round_trip_run_state(run_state, "%s/%s/seed-%02d" % [archetype_id, scenario_id, seed_index], failures)
+				var fixture_label := "%s/%s/seed-%02d" % [archetype_id, scenario_id, seed_index]
+				var parsed_snapshot := _json_round_trip_snapshot(run_state, fixture_label, failures)
+				if parsed_snapshot.is_empty():
+					continue
+				var parsed_environment := _dict(parsed_snapshot.get("current_environment", {}))
+				_record_environment_catalog_coverage(parsed_environment, covered_game_ids)
+				var layered := int(parsed_environment.get("environment_layer_schema_version", 0)) > 0 and not str(parsed_environment.get("current_layer_id", "")).strip_edges().is_empty()
+				# Repeated seed fixtures still cross the JSON codec and contribute catalog
+				# coverage. If they add no game/state-key context and have no layers to
+				# traverse, constructing a live RunState cannot add another assertion.
+				if not layered and not _environment_has_unchecked_context(parsed_environment, scenario_id, checked_contexts):
+					continue
+				var restored_run := _run_state_from_parsed_snapshot(parsed_snapshot)
 				if restored_run == null:
+					failures.append("Game activation class guard could not restore %s." % fixture_label)
 					continue
 				run_state = restored_run
 				_check_environment(library, run_state, scenario_id, covered_game_ids, checked_contexts, failures)
@@ -167,6 +195,23 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 			game.set_transient_state_key_context("")
 			if not violation.is_empty():
 				failures.append("Game activation mutated serialized RunState for %s (%s) in %s/%s/%s: %s" % [game_id, state_key, archetype_id, layer_id, scenario_id, violation])
+
+
+static func _record_environment_catalog_coverage(environment: Dictionary, covered_game_ids: Dictionary) -> void:
+	for game_id_value in _string_array(environment.get("game_ids", [])):
+		covered_game_ids[str(game_id_value)] = true
+
+
+static func _environment_has_unchecked_context(environment: Dictionary, scenario_id: String, checked_contexts: Dictionary) -> bool:
+	var archetype_id := str(environment.get("archetype_id", ""))
+	var layer_id := str(environment.get("current_layer_id", "base"))
+	for game_id_value in _string_array(environment.get("game_ids", [])):
+		var game_id := str(game_id_value)
+		for state_key_value in _generated_state_keys(environment, game_id):
+			var context_key := "%s|%s|%s|%s|%s" % [game_id, str(state_key_value), archetype_id, layer_id, scenario_id]
+			if not checked_contexts.has(context_key):
+				return true
+	return false
 
 
 static func _check_catalog_coverage(library: ContentLibrary, covered_game_ids: Dictionary, failures: Array) -> void:
@@ -383,22 +428,32 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 		if defect_violation.find("%s changed" % method) == -1 or defect_violation.find(expected_path) == -1:
 			failures.append("Game activation class guard did not detect the reintroduced mutate-on-%s fixture: %s" % [method, defect_violation])
 
+	var masking_run := RunStateScript.new()
+	masking_run.start_new("GAME-ACTIVATION-NONSERIALIZED-MASK-FIXTURE")
+	masking_run.set_environment(environment)
+	masking_run = _json_round_trip_run_state(masking_run, "nonserialized masking negative fixture", failures)
+	if masking_run != null:
+		var masking_game := MaskingActivationFixture.new()
+		masking_game.setup({"id": "game_activation_fixture", "display_name": "Activation Fixture", "legal_actions": [], "cheat_actions": []})
+		var masking_violation := _activation_violation(masking_game, masking_run)
+		if masking_violation.find("environment_object_state changed") == -1 or masking_violation.find("narrative_flags.game_activation_fixture_masked_object") == -1:
+			failures.append("Game activation class guard let nonserialized state from one hook mask a later mutation: %s" % masking_violation)
+
 
 static func _activation_violation(game: GameModule, run_state: RunState, cached_source_snapshot: Dictionary = {}, cached_source_text: String = "") -> String:
 	var source_snapshot := cached_source_snapshot if not cached_source_snapshot.is_empty() else run_state.to_dict()
 	var source_text := cached_source_text if not cached_source_text.is_empty() else JSON.stringify(source_snapshot)
-	# One cold reconstruction is sufficient for the complete activation
-	# sequence. Each hook still receives the exact canonical state left by the
-	# previous hook, and every hook retains its own before/after assertion.
-	var method_run := RunStateScript.new()
-	method_run.from_dict(source_snapshot)
-	var current_snapshot := method_run.to_dict()
-	var current_text := JSON.stringify(current_snapshot)
 	var post_hook_restore_checked := false
 	for method in ACTIVATION_METHODS:
-		if current_text != source_text:
+		# Every hook gets an independent cold RunState. The shared source dictionary
+		# is immutable; from_dict() copies its serialized fields, avoiding a deep
+		# duplicate without sharing live caches or object metadata.
+		var method_run := RunStateScript.new()
+		method_run.from_dict(source_snapshot)
+		var before := method_run.to_dict()
+		var before_text := JSON.stringify(before)
+		if before_text != source_text:
 			return "%s could not cold-clone its canonical activation fixture" % method
-		var before := current_snapshot
 		match method:
 			"environment_runtime_state":
 				game.environment_runtime_state(method_run, method_run.current_environment)
@@ -416,17 +471,15 @@ static func _activation_violation(game: GameModule, run_state: RunState, cached_
 				game.coach_state(method_run, method_run.current_environment, {})
 		var after := method_run.to_dict()
 		var after_text := JSON.stringify(after)
-		if current_text != after_text:
+		if before_text != after_text:
 			var paths: Array = []
 			_collect_changed_paths(before, after, "", paths)
 			return "%s changed %s" % [method, ", ".join(paths)]
 		if not post_hook_restore_checked:
-			var restored_after_open := _run_state_from_json_snapshot(after)
-			if restored_after_open == null or JSON.stringify(restored_after_open.to_dict()) != current_text:
+			var restored_after_open := _run_state_from_json_snapshot(after, after_text)
+			if restored_after_open == null or JSON.stringify(restored_after_open.to_dict()) != before_text:
 				return "%s changed after serialize/restore" % method
 			post_hook_restore_checked = true
-		current_snapshot = after
-		current_text = after_text
 	if JSON.stringify(source_snapshot) != source_text:
 		return "cold activation clones mutated their canonical source fixture"
 	return ""
@@ -447,23 +500,35 @@ static func _generated_state_keys(environment: Dictionary, game_id: String) -> A
 
 
 static func _json_round_trip_run_state(run_state: RunState, label: String, failures: Array) -> RunState:
-	var snapshot := run_state.to_dict()
-	var restored := _run_state_from_json_snapshot(snapshot)
-	if restored == null:
-		failures.append("Game activation class guard could not JSON-roundtrip %s." % label)
+	var parsed_snapshot := _json_round_trip_snapshot(run_state, label, failures)
+	if parsed_snapshot.is_empty():
 		return null
+	var restored := _run_state_from_parsed_snapshot(parsed_snapshot)
 	# from_dict() intentionally normalizes legacy/default fields. The restored
 	# representation, not the pre-codec in-memory dictionary, is the activation
 	# baseline used below.
 	return restored
 
 
-static func _run_state_from_json_snapshot(snapshot: Dictionary) -> RunState:
-	var parsed: Variant = JSON.parse_string(JSON.stringify(snapshot))
+static func _json_round_trip_snapshot(run_state: RunState, label: String, failures: Array) -> Dictionary:
+	var parsed: Variant = JSON.parse_string(JSON.stringify(run_state.to_dict()))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		failures.append("Game activation class guard could not JSON-roundtrip %s." % label)
+		return {}
+	return parsed as Dictionary
+
+
+static func _run_state_from_json_snapshot(snapshot: Dictionary, cached_text: String = "") -> RunState:
+	var snapshot_text := cached_text if not cached_text.is_empty() else JSON.stringify(snapshot)
+	var parsed: Variant = JSON.parse_string(snapshot_text)
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return null
+	return _run_state_from_parsed_snapshot(parsed as Dictionary)
+
+
+static func _run_state_from_parsed_snapshot(snapshot: Dictionary) -> RunState:
 	var restored := RunStateScript.new()
-	restored.from_dict(parsed as Dictionary)
+	restored.from_dict(snapshot)
 	return restored
 
 
