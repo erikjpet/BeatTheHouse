@@ -8322,7 +8322,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	var embeds_result_feedback := _current_game_embeds_result_feedback()
 	if bool(result.get("ok", false)) and embeds_result_feedback and not runtime_tick_in_progress:
 		_begin_presented_bankroll_hold(result, bankroll_before_result, wager_cost)
-	last_game_result = result.duplicate(true)
+	last_game_result = FoundationActionViewModelScript.stored_game_result_snapshot(result)
 	if bool(result.get("ok", false)) and (not runtime_tick_in_progress or _music_result_bankroll_delta(result) != 0):
 		var outcome_schedule := _schedule_game_result_music_outcome(result, action_id)
 		if not outcome_schedule.is_empty():

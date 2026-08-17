@@ -443,6 +443,17 @@ func _check_coin_pusher_canonical_probe(failures: Array) -> void:
 	if actions_source.contains("_read_machine_state") or not ensure_source.contains("not _machine_read_requires_reconciliation") \
 			or not ensure_source.contains("return machine"):
 		failures.append("Coin Pusher action/stake reads no longer preserve the scalar readonly no-simulation-copy fast path.")
+	var view_model_source := FileAccess.get_file_as_string("res://scripts/ui/foundation_action_view_model.gd")
+	var view_snapshot_source := _source_function(view_model_source, "game_view_snapshot")
+	var result_snapshot_source := _source_function(view_model_source, "current_game_result_snapshot")
+	if not view_snapshot_source.contains('result_key == "surface_presentation_snapshot_patch"') \
+			or not view_snapshot_source.contains('game_id in ["slot", "coin_pusher"]') \
+			or not result_snapshot_source.contains('result_game_id == "coin_pusher"') \
+			or not result_snapshot_source.contains("duplicate(false)"):
+		failures.append("Coin Pusher host snapshot assembly regressed to deep-copying its dense immutable presentation trace.")
+	var main_source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	if not main_source.contains("last_game_result = FoundationActionViewModelScript.stored_game_result_snapshot(result)"):
+		failures.append("Coin Pusher foreground action storage no longer uses the ownership-preserving result boundary.")
 
 
 func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> void:
@@ -773,6 +784,21 @@ func _check_coin_pusher_visible_timing(game: GameModule, failures: Array) -> voi
 
 
 func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -> void:
+	var owned_events := [{"kind": "ownership_probe"}]
+	var owned_trace := [{"tick_offset": 0, "bodies": []}]
+	var owned_patch: Dictionary = game.call("_presentation_action_snapshot_patch", {"action_count": 4}, "ownership_probe", owned_events, owned_trace)
+	if not _coin_pusher_arrays_share_reference(owned_events, owned_patch.get("events", [])) \
+			or not _coin_pusher_arrays_share_reference(owned_trace, owned_patch.get("trace", [])):
+		failures.append("Quarter Falls action presentation boundary copied its freshly owned event or trace arrays.")
+	var view_model_script: Script = load("res://scripts/ui/foundation_action_view_model.gd")
+	var source_deltas := {"bankroll_delta": 1, "messages": ["isolated"]}
+	var stored_result: Dictionary = view_model_script.stored_game_result_snapshot({
+		"game_id": "coin_pusher", "deltas": source_deltas,
+		"surface_presentation_snapshot_patch": owned_patch,
+	})
+	if not _coin_pusher_dictionaries_share_reference(owned_patch, stored_result.get("surface_presentation_snapshot_patch", {})) \
+			or _coin_pusher_dictionaries_share_reference(source_deltas, stored_result.get("deltas", {})):
+		failures.append("Quarter Falls host result storage did not transfer only its immutable presentation patch while isolating ordinary result data.")
 	var drop_fixture := _coin_pusher_fixture(game, "PUSHER-PRESENTATION-DROP")
 	var drop_run: RunState = drop_fixture.get("run_state")
 	var drop_ui := {"coin_pusher_lane": 2, "coin_pusher_upper_input_phase": 2, "coin_pusher_lower_input_phase": 5, "coin_pusher_capture_presentation_trace": true}
@@ -788,6 +814,9 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 	if JSON.stringify(final_trace_bodies) != JSON.stringify(CoinPusherSolverScript.body_views(drop_simulation)):
 		failures.append("Quarter Falls drop replay did not end on the exact authoritative persisted pile.")
 	var persisted_digest: String = game.deterministic_state_digest(drop_run.current_environment)
+	var persisted_save_json := JSON.stringify(drop_run.to_save_snapshot())
+	if persisted_save_json.contains("surface_presentation_snapshot_patch") or persisted_save_json.contains("presentation_trace"):
+		failures.append("Quarter Falls transient presentation replay leaked into the durable run save snapshot.")
 	var replay_surface := game.surface_state(drop_run, drop_run.current_environment, {"surface_time_msec": 1000})
 	_presentation_snapshot(replay_surface)["trace"] = drop_trace
 	var replay_harness := SurfaceHarness.new()
@@ -811,6 +840,16 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 		failures.append("Quarter Falls reduced motion did not jump directly to the authoritative final pile.")
 	if game.deterministic_state_digest(drop_run.current_environment) != persisted_digest:
 		failures.append("Quarter Falls presentation replay mutated the authoritative pile.")
+	var first_patch: Dictionary = drop_result.get("surface_presentation_snapshot_patch", {}) if typeof(drop_result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
+	var first_trace_json := JSON.stringify(first_patch.get("trace", []))
+	var following_result := game.resolve_with_context("nudge_machine", 0, drop_run, drop_run.current_environment, drop_run.create_rng("presentation_following_action"), {
+		"coin_pusher_lane": 2, "coin_pusher_force": "tap", "coin_pusher_direction": "front",
+		"coin_pusher_upper_input_phase": 2, "coin_pusher_lower_input_phase": 5, "coin_pusher_capture_presentation_trace": true,
+	})
+	var following_patch: Dictionary = following_result.get("surface_presentation_snapshot_patch", {}) if typeof(following_result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
+	if first_trace_json != JSON.stringify(first_patch.get("trace", [])) \
+			or _coin_pusher_arrays_share_reference(first_patch.get("trace", []), following_patch.get("trace", [])):
+		failures.append("Quarter Falls reused or mutated a prior action's presentation trace when the following action resolved.")
 	var headless_fixture := _coin_pusher_fixture(game, "PUSHER-NO-PRESENTATION-TRACE")
 	var headless_run: RunState = headless_fixture.get("run_state")
 	var headless_result := game.resolve_with_context("drop_quarter", 1, headless_run, headless_run.current_environment, headless_run.create_rng("no_presentation_trace"), {"coin_pusher_lane": 2})

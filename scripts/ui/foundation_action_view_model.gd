@@ -21,7 +21,7 @@ static func game_view_snapshot(host: Variant) -> Dictionary:
 		module_surface_state = host.current_game.surface_state(host.run_state, host.run_state.current_environment, host._current_game_surface_ui_state())
 		if typeof(module_surface_state) != TYPE_DICTIONARY:
 			module_surface_state = {}
-		elif game_id != "slot":
+		elif game_id != "slot" and game_id != "coin_pusher":
 			module_surface_state = module_surface_state.duplicate(true)
 		host._sync_surface_feature_music_state(module_surface_state)
 		if module_surface_state.has("surface_renderer"):
@@ -102,10 +102,11 @@ static func game_view_snapshot(host: Variant) -> Dictionary:
 		"summary_source": str(result.get("summary_source", "active_game" if host.current_game != null else "")),
 	}
 	for key in module_surface_state.keys():
-		# Slot presentation constructs an isolated surface spec. Transferring its
-		# nested arrays directly avoids copying reel strips/grids a second time in
-		# the same action frame; the canvas treats snapshots as read-only.
-		snapshot[key] = module_surface_state[key] if game_id == "slot" else host._snapshot_copy_value(module_surface_state[key])
+		# Slot and Coin Pusher presentation construct isolated surface specs.
+		# Transferring their nested arrays directly avoids copying dense reel and
+		# physical traces again in the same frame; the canvas treats snapshots as
+		# read-only.
+		snapshot[key] = module_surface_state[key] if game_id in ["slot", "coin_pusher"] else host._snapshot_copy_value(module_surface_state[key])
 	snapshot["bankroll"] = host._presented_bankroll()
 	snapshot["stake_min"] = int(stake_range.get("min", 1))
 	snapshot["stake_max"] = int(stake_range.get("max", 1))
@@ -116,13 +117,20 @@ static func game_view_snapshot(host: Variant) -> Dictionary:
 	snapshot["reduce_motion"] = host._reduce_motion_enabled()
 	for key in result.keys():
 		var result_key = str(key)
+		# This patch is merged into its named presentation snapshot below. Copying
+		# it into the generic result bag first duplicates the complete physics
+		# trace only to erase that duplicate immediately afterward.
+		if result_key == "surface_presentation_snapshot_patch":
+			continue
 		if not snapshot.has(result_key):
 			snapshot[result_key] = host._snapshot_copy_value(result[key])
 	var presentation_snapshot_key := str(snapshot.get("surface_presentation_snapshot_key", ""))
 	var presentation_patch: Variant = result.get("surface_presentation_snapshot_patch", {})
 	if not presentation_snapshot_key.is_empty() and typeof(presentation_patch) == TYPE_DICTIONARY \
 			and typeof(snapshot.get(presentation_snapshot_key, {})) == TYPE_DICTIONARY:
-		var presentation_snapshot: Dictionary = (snapshot.get(presentation_snapshot_key, {}) as Dictionary).duplicate(true)
+		# The module surface spec is owned by this snapshot construction, so merge
+		# the action patch into it without cloning its body arrays a second time.
+		var presentation_snapshot: Dictionary = snapshot.get(presentation_snapshot_key, {}) as Dictionary
 		host._deep_merge_dict(presentation_snapshot, presentation_patch as Dictionary)
 		snapshot[presentation_snapshot_key] = presentation_snapshot
 		snapshot.erase("surface_presentation_snapshot_patch")
@@ -159,8 +167,28 @@ static func current_game_result_snapshot(host: Variant) -> Dictionary:
 		return host.last_game_result.duplicate(true)
 	var result_game_id = str(host.last_game_result.get("game_id", host.last_game_result.get("source_id", "")))
 	if result_game_id.is_empty() or result_game_id == host.current_game.get_id():
+		# Coin Pusher's action result owns an immutable, dense presentation trace.
+		# Snapshot consumers are read-only, so a shallow outer snapshot preserves
+		# isolation for top-level edits without recopying every body in every frame.
+		if result_game_id == "coin_pusher":
+			return host.last_game_result.duplicate(false)
 		return host.last_game_result.duplicate(true)
 	return {}
+
+
+static func stored_game_result_snapshot(result: Dictionary) -> Dictionary:
+	var result_game_id := str(result.get("game_id", result.get("source_id", "")))
+	var patch_value: Variant = result.get("surface_presentation_snapshot_patch", {})
+	if result_game_id != "coin_pusher" or typeof(patch_value) != TYPE_DICTIONARY:
+		return result.duplicate(true)
+	# Copy ordinary result data exactly as before, but transfer the action-owned
+	# immutable presentation patch. This avoids one full trace copy while keeping
+	# mutable deltas/messages isolated from the module result dictionary.
+	var without_patch := result.duplicate(false)
+	without_patch.erase("surface_presentation_snapshot_patch")
+	var stored := without_patch.duplicate(true)
+	stored["surface_presentation_snapshot_patch"] = patch_value
+	return stored
 
 
 static func current_game_embeds_result_feedback(host: Variant) -> bool:

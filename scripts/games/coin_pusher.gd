@@ -1432,8 +1432,11 @@ func _finalized_presentation_trace(physics: Dictionary, machine: Dictionary) -> 
 
 func _presentation_action_snapshot_patch(machine: Dictionary, action_id: String, events: Variant, trace: Variant) -> Dictionary:
 	return {
-		"events": (events as Array).duplicate(true) if typeof(events) == TYPE_ARRAY else [],
-		"trace": (trace as Array).duplicate(true) if typeof(trace) == TYPE_ARRAY else [],
+		# Both arrays are freshly authored by this action and are immutable after
+		# handoff. Preserve ownership through the presentation boundary instead of
+		# cloning the dense physical trace before the host receives it.
+		"events": events as Array if typeof(events) == TYPE_ARRAY else [],
+		"trace": trace as Array if typeof(trace) == TYPE_ARRAY else [],
 		"action_state": {
 			"action_count": int(machine.get("action_count", 0)),
 			"replay_active_id": "action_%d" % int(machine.get("action_count", 0)),

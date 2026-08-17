@@ -271,9 +271,13 @@ static func body_views(state: Dictionary) -> Array:
 
 static func _presentation_trace_frame(state: Dictionary, tick_offset: int, exit_views: Array) -> Dictionary:
 	var bodies := body_views(state)
-	for exit_view in exit_views:
-		bodies.append(exit_view)
-	bodies.sort_custom(_body_view_depth_before)
+	# body_views() already returns the stable depth order used by presentation.
+	# Only exits can disturb it, so avoid sorting all 150-160 bodies again on
+	# the overwhelmingly common frames that have no exiting body.
+	if not exit_views.is_empty():
+		for exit_view in exit_views:
+			bodies.append(exit_view)
+		bodies.sort_custom(_body_view_depth_before)
 	return {
 		"tick_offset": tick_offset,
 		"upper_phase_fp": int(state.get("upper_phase_fp", 0)),
