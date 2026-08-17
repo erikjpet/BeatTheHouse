@@ -1094,8 +1094,7 @@ func _check_coin_pusher_items(game: GameModule, failures: Array) -> void:
 	shim_state = (shim_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	var authored_uses := shim_run.item_effect_total("coin_pusher_gutter_recovery_uses", "coin_pusher")
 	if not bool(shim_seed_drop.get("ok", false)) or bool(shim_seed_drop.get("coin_pusher_shim_recovered", false)) \
-			or not bool(shim_state.get("shim_initialized", false)) or bool(shim_state.get("shim_activation_pending", true)) \
-			or int(shim_state.get("shim_uses_remaining", 0)) != authored_uses or authored_uses != 3:
+			or not bool(shim_state.get("shim_initialized", false)) or int(shim_state.get("shim_uses_remaining", 0)) != authored_uses or authored_uses != 3:
 		failures.append("Coin-Return Shim did not seed its authored limited-use recovery state at the next real drop boundary.")
 	var gutter_seed := _coin_pusher_seed_for_roll(true)
 	var shim_simulation: Dictionary = shim_state.get("simulation", {}) if typeof(shim_state.get("simulation", {})) == TYPE_DICTIONARY else {}

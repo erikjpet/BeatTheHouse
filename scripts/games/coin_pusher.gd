@@ -354,8 +354,6 @@ func deterministic_state_digest(environment: Dictionary) -> String:
 
 
 func _resolve_drop(run_state: RunState, environment: Dictionary, machine: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
-	var shim_spend_allowed := not bool(machine.get("shim_activation_pending", false))
-	machine["shim_activation_pending"] = false
 	var cost := _drop_cost()
 	if run_state != null and run_state.wager_capacity_for_game(get_id(), environment) < cost:
 		return _empty_pusher_result(DROP_ACTION, environment, "You need a dollar to feed this thing.")
@@ -379,7 +377,7 @@ func _resolve_drop(run_state: RunState, environment: Dictionary, machine: Dictio
 	var drop_push := density + _variation_push_strength_bonus(machine, run_state, false, density)
 	var physics := CoinPusherSolverScript.step_action(simulation, _solver_action_config(machine, drop_push, lane, false, "front", phase_accuracy, input_phase, lower_input_phase, _presentation_trace_requested(ui_state)))
 	_sync_phase_views(machine)
-	var physical_outcome := _consume_physics_events(run_state, machine, physics.get("events", []), rng, shim_spend_allowed)
+	var physical_outcome := _consume_physics_events(run_state, machine, physics.get("events", []), rng)
 	var payout := int(physical_outcome.get("payout", 0))
 	var prizes: Array = physical_outcome.get("prizes", []) if typeof(physical_outcome.get("prizes", [])) == TYPE_ARRAY else []
 	var gutter := int(physical_outcome.get("gutter_count", 0)) > 0
@@ -438,8 +436,6 @@ func _resolve_drop(run_state: RunState, environment: Dictionary, machine: Dictio
 
 
 func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
-	var shim_spend_allowed := not bool(machine.get("shim_activation_pending", false))
-	machine["shim_activation_pending"] = false
 	# Staff memory predating this action may restore its floor. A hard alarm
 	# created by this action starts watching from the following action onward.
 	var staff_watch_heat := _staff_watch_suspicion_delta(run_state, machine)
@@ -480,7 +476,7 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 		push_strength += _slam_bonus_push()
 	var physics := CoinPusherSolverScript.step_action(_simulation(machine), _solver_action_config(machine, push_strength, lane, true, direction, phase_distance, upper_input_phase, timing_phase, _presentation_trace_requested(ui_state)))
 	_sync_phase_views(machine)
-	var physical_outcome := _consume_physics_events(run_state, machine, physics.get("events", []), rng, shim_spend_allowed)
+	var physical_outcome := _consume_physics_events(run_state, machine, physics.get("events", []), rng)
 	var payout := int(physical_outcome.get("payout", 0))
 	var prizes: Array = physical_outcome.get("prizes", []) if typeof(physical_outcome.get("prizes", [])) == TYPE_ARRAY else []
 	payout += _prize_cash(prizes)
@@ -615,7 +611,6 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"cold_quarters_density_armed": 0,
 		"shim_initialized": false,
 		"shim_uses_remaining": 0,
-		"shim_activation_pending": false,
 		"scenario_reset_token": _scenario_reset_token(environment),
 		"last_message": _variation_intro(variation_id),
 	}
@@ -647,7 +642,7 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 		machine["tolerance_modifier"] = _security_tolerance_delta(environment, run_state) + int(machine.get("variation_tolerance_modifier", 0))
 		machine["alarm_tolerance_remaining"] = maxi(1, int(machine.get("base_alarm_tolerance", _tolerance_min())) + int(machine.get("tolerance_modifier", 0)))
 		machine["tell_rung"] = 0
-	_initialize_owned_shim(run_state, machine, true)
+	_initialize_owned_shim(run_state, machine)
 	_sync_vault_meter(run_state, machine)
 	_sync_physical_features(machine)
 	if persist:
@@ -665,13 +660,11 @@ func _write_machine_state(environment: Dictionary, machine: Dictionary) -> void:
 	environment["game_states"] = game_states
 
 
-func _initialize_owned_shim(run_state: RunState, machine: Dictionary, defer_first_spend: bool = false) -> bool:
+func _initialize_owned_shim(run_state: RunState, machine: Dictionary) -> void:
 	if run_state == null or bool(machine.get("shim_initialized", false)) or not run_state.inventory.has(SHIM_ITEM_ID):
-		return false
+		return
 	machine["shim_initialized"] = true
 	machine["shim_uses_remaining"] = _shim_uses(run_state)
-	machine["shim_activation_pending"] = defer_first_spend
-	return true
 
 
 func _game_states(environment: Dictionary) -> Dictionary:
@@ -702,7 +695,6 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 		machine[key] = maxi(0, int(machine.get(key, 0)))
 	machine["staff_watch_memory"] = bool(machine.get("staff_watch_memory", false))
 	machine["locked_down"] = bool(machine.get("locked_down", false))
-	machine["shim_activation_pending"] = bool(machine.get("shim_activation_pending", false))
 	_sync_physical_features(machine)
 	_sync_phase_views(machine)
 	return machine
@@ -748,7 +740,7 @@ func _presentation_trace_requested(ui_state: Dictionary) -> bool:
 	return ui_state.has("surface_time_msec") or bool(ui_state.get("coin_pusher_capture_presentation_trace", false))
 
 
-func _consume_physics_events(run_state: RunState, machine: Dictionary, events: Array, rng: RngStream, shim_spend_allowed: bool = true) -> Dictionary:
+func _consume_physics_events(run_state: RunState, machine: Dictionary, events: Array, rng: RngStream) -> Dictionary:
 	var payout := 0
 	var prizes: Array = []
 	var gutter_count := 0
@@ -768,7 +760,7 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 		if kind == "coin":
 			if outcome == "tray":
 				payout += _coin_value()
-			elif outcome == "gutter" and shim_spend_allowed and not shim_recovered and _shim_available(run_state, machine):
+			elif outcome == "gutter" and not shim_recovered and _shim_available(run_state, machine):
 				machine["shim_uses_remaining"] = maxi(0, int(machine.get("shim_uses_remaining", 0)) - 1)
 				CoinPusherSolverScript.add_recovered_coin(_simulation(machine), rng, _lane_count())
 				shim_recovered = true
@@ -1405,7 +1397,6 @@ func _digest_state(machine: Dictionary) -> Dictionary:
 		"alarm_tolerance_remaining": int(machine.get("alarm_tolerance_remaining", 0)), "tell_rung": int(machine.get("tell_rung", 0)),
 		"locked_down": bool(machine.get("locked_down", false)), "staff_watch_memory": bool(machine.get("staff_watch_memory", false)),
 		"suspicion_floor": int(machine.get("suspicion_floor", 0)), "shim_uses_remaining": int(machine.get("shim_uses_remaining", 0)),
-		"shim_activation_pending": bool(machine.get("shim_activation_pending", false)),
 	}
 
 
