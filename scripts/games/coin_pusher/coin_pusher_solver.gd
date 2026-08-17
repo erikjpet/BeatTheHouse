@@ -36,6 +36,12 @@ const HOT_DIMENSION_LIMIT := 10000
 const HOT_GENERAL_SCALAR_ABS_LIMIT := 1000000
 const HOT_PRESSURE_ACCEL_ABS_LIMIT := 100000
 const HOT_BODY_COUNT_LIMIT := 256
+# One collision query and one support query per eligible body are the
+# MAX_COLLISION_PASSES == 1 ceiling. Keep the open-address table at <= 50%
+# load and reserve the exact worst-case flat candidate count without growth.
+const HOT_CANDIDATE_CACHE_CAPACITY := 1024
+const HOT_CANDIDATE_POOL_CAPACITY := HOT_BODY_COUNT_LIMIT * HOT_BODY_COUNT_LIMIT * 2
+const HOT_CACHE_GENERATION_MAX := 2147483647
 const HOT_CONFIG_IMPULSE_ABS_LIMIT := 100000000
 const HOT_PUSH_SCALE_ABS_LIMIT := 1000
 
@@ -156,17 +162,33 @@ class HotGrid:
 	var next := PackedInt32Array()
 	var touched := PackedInt32Array()
 	var overflow: Dictionary = {}
-	var candidate_cache: Dictionary = {}
+	var candidate_keys := PackedInt32Array()
+	var candidate_generations := PackedInt32Array()
+	var candidate_offsets := PackedInt32Array()
+	var candidate_lengths := PackedInt32Array()
+	var candidate_pool := PackedInt32Array()
+	var candidate_pool_used := 0
+	var candidate_generation := 0
 
 	func _init() -> void:
 		head.resize(CoinPusherSolver.HOT_GRID_KEY_CAPACITY)
+		candidate_keys.resize(CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY)
+		candidate_generations.resize(CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY)
+		candidate_offsets.resize(CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY)
+		candidate_lengths.resize(CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY)
+		candidate_pool.resize(CoinPusherSolver.HOT_CANDIDATE_POOL_CAPACITY)
 
 	func rebuild(hot: HotBodies) -> void:
 		for key in touched:
 			head[int(key)] = 0
 		touched.clear()
 		overflow.clear()
-		candidate_cache.clear()
+		candidate_pool_used = 0
+		if candidate_generation >= CoinPusherSolver.HOT_CACHE_GENERATION_MAX:
+			candidate_generations.fill(0)
+			candidate_generation = 1
+		else:
+			candidate_generation += 1
 		next.resize(hot.size())
 		for index in range(hot.size() - 1, -1, -1):
 			var key := CoinPusherSolver._bucket_key(
@@ -184,38 +206,42 @@ class HotGrid:
 			next[index] = head[key]
 			head[key] = index + 1
 
-	func prime_candidate_centers(hot: HotBodies) -> void:
-		# Most bodies retain their post-integration cell through collision
-		# resolution. Prime those frozen-grid neighborhoods once; a body pushed
-		# across a cell boundary is handled lazily by the same center-key cache.
-		for index in range(hot.size()):
-			candidate_indices(
-				CoinPusherSolver._divi(hot.x[index], CoinPusherSolver.BROADPHASE_CELL),
-				CoinPusherSolver._divi(hot.y[index], CoinPusherSolver.BROADPHASE_CELL),
-				CoinPusherSolver._divi(hot.z[index], CoinPusherSolver.BROADPHASE_CELL)
-			)
-
-	func candidate_indices(center_x: int, center_y: int, center_z: int) -> PackedInt32Array:
+	func candidate_slot(center_x: int, center_y: int, center_z: int) -> int:
 		var center_key := CoinPusherSolver._bucket_key(center_x, center_y, center_z)
-		var cached: Variant = candidate_cache.get(center_key, null)
-		if typeof(cached) == TYPE_PACKED_INT32_ARRAY:
-			return cached as PackedInt32Array
-		var result := PackedInt32Array()
+		var cache_slot := (center_key * 1103515245) & (CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY - 1)
+		for _probe_index in range(CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY):
+			if candidate_generations[cache_slot] != candidate_generation:
+				candidate_generations[cache_slot] = candidate_generation
+				candidate_keys[cache_slot] = center_key
+				candidate_offsets[cache_slot] = candidate_pool_used
+				_build_candidate_sequence(cache_slot, center_x, center_y, center_z)
+				return cache_slot
+			if candidate_keys[cache_slot] == center_key:
+				return cache_slot
+			cache_slot = (cache_slot + 1) & (CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY - 1)
+		return -1
+
+	func _build_candidate_sequence(cache_slot: int, center_x: int, center_y: int, center_z: int) -> void:
+		var start_offset := candidate_pool_used
 		for z_offset in range(-1, 2):
 			for y_offset in range(-1, 2):
 				for x_offset in range(-1, 2):
 					var key := CoinPusherSolver._bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset)
 					if key < 0 or key >= head.size():
 						for overflow_index in overflow.get(key, []):
-							result.append(int(overflow_index))
+							candidate_pool[candidate_pool_used] = int(overflow_index)
+							candidate_pool_used += 1
 						continue
 					var encoded_index := head[key]
 					while encoded_index != 0:
 						var index := encoded_index - 1
-						result.append(index)
+						candidate_pool[candidate_pool_used] = index
+						candidate_pool_used += 1
 						encoded_index = next[index]
-		candidate_cache[center_key] = result
-		return result
+		candidate_lengths[cache_slot] = candidate_pool_used - start_offset
+
+	func set_candidate_generation_for_test(generation: int) -> void:
+		candidate_generation = clampi(generation, 0, CoinPusherSolver.HOT_CACHE_GENERATION_MAX)
 
 
 static func public_contract() -> Dictionary:
@@ -504,6 +530,8 @@ static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionar
 		debug_stage_timing_usec["collision_visited_setup"] = Time.get_ticks_usec() - debug_stage_started_usec
 	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 	var hot_grid := HotGrid.new()
+	if config.has("_debug_hot_grid_generation"):
+		hot_grid.set_candidate_generation_for_test(int(config.get("_debug_hot_grid_generation", 0)))
 	if debug_profile_stages:
 		debug_stage_timing_usec["grid"] = Time.get_ticks_usec() - debug_stage_started_usec
 	if nudge_x != 0 or nudge_y != 0:
@@ -511,6 +539,11 @@ static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionar
 		wake_count += _hot_apply_nudge(hot, nudge_x, nudge_y, aimed_x, nudge_radius)
 		if debug_profile_stages:
 			debug_stage_timing_usec["push_integrate_48_ticks"] = Time.get_ticks_usec() - debug_stage_started_usec
+	var integration_indices := PackedInt32Array()
+	var awake_indices := PackedInt32Array()
+	var support_indices := PackedInt32Array()
+	var support_seen := PackedByteArray()
+	support_seen.resize(hot.size())
 	for tick_index in range(ACTION_TICKS):
 		var event_count_before := events.size()
 		var old_upper := _pusher_face_y(int(state.get("upper_phase_fp", 0)), true)
@@ -521,7 +554,7 @@ static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionar
 			state["lower_phase_fp"] = posmod(int(state.get("lower_phase_fp", 0)) + 360 * (2 if ridge_double else 1), PHASE_PERIOD)
 		var new_upper := _pusher_face_y(int(state.get("upper_phase_fp", 0)), true)
 		var new_lower := _pusher_face_y(int(state.get("lower_phase_fp", 0)), false)
-		var integration_indices := PackedInt32Array()
+		integration_indices.clear()
 		debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 		wake_count += _hot_apply_pushers(hot, old_upper, new_upper, old_lower, new_lower, push_scale, integration_indices)
 		if not integration_indices.is_empty():
@@ -530,15 +563,18 @@ static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionar
 			debug_stage_timing_usec["push_integrate_48_ticks"] = int(debug_stage_timing_usec.get("push_integrate_48_ticks", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
 		if not integration_indices.is_empty():
 			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-			var awake_indices := _hot_awake_indices(hot)
+			awake_indices.clear()
+			var hot_sleeping := hot.sleeping
+			for index in range(hot_sleeping.size()):
+				if hot_sleeping[index] == 0:
+					awake_indices.append(index)
 			hot_grid.rebuild(hot)
-			hot_grid.prime_candidate_centers(hot)
 			if debug_profile_stages:
 				debug_stage_timing_usec["grid"] = int(debug_stage_timing_usec.get("grid", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
 			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-			var support_indices := awake_indices.duplicate()
-			var support_seen := PackedByteArray()
-			support_seen.resize(hot.size())
+			support_indices.clear()
+			support_indices.append_array(awake_indices)
+			support_seen.fill(0)
 			for awake_index in awake_indices:
 				support_seen[int(awake_index)] = 1
 			if debug_profile_stages:
@@ -590,20 +626,36 @@ static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionar
 	if debug_profile_stages:
 		debug_stage_timing_usec["writeback"] = Time.get_ticks_usec() - debug_stage_started_usec
 	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
+	var awake_count := 0
+	var sleeping := hot.sleeping
+	for index in range(sleeping.size()):
+		if sleeping[index] == 0:
+			awake_count += 1
+	var topple_count := 0
+	var upper_lower_fall_count := 0
+	for event_index in range(motion_events.size()):
+		var motion_value: Variant = motion_events[event_index]
+		if typeof(motion_value) != TYPE_DICTIONARY:
+			continue
+		var motion_kind := str((motion_value as Dictionary).get("kind", ""))
+		if motion_kind == "topple":
+			topple_count += 1
+		elif motion_kind == "upper_to_lower":
+			upper_lower_fall_count += 1
 	state["last_events"] = events
 	state["last_motion_events"] = motion_events
 	state["last_step_metrics"] = {
 		"fixed_ticks": ACTION_TICKS,
 		"body_count": hot.size(),
-		"awake_count": _hot_awake_count(hot),
+		"awake_count": awake_count,
 		"woken_count": wake_count,
 		"moved_count": moved_count,
 		"collision_passes": MAX_COLLISION_PASSES,
 		"collision_count": collision_count,
-		"topple_count": _motion_event_count(motion_events, "topple"),
-		"upper_lower_fall_count": _motion_event_count(motion_events, "upper_to_lower"),
+		"topple_count": topple_count,
+		"upper_lower_fall_count": upper_lower_fall_count,
 	}
-	var presentation_events := _presentation_event_views(state, events, motion_events, state["last_step_metrics"], config) if emit_presentation_events else []
+	var presentation_events := _hot_presentation_event_views(hot, events, motion_events, state["last_step_metrics"], config) if emit_presentation_events else []
 	var result := {
 		"events": events,
 		"motion_events": motion_events,
@@ -622,37 +674,29 @@ static func apply_nudge_only(state: Dictionary, x_impulse: int, y_impulse: int, 
 	return _apply_nudge(state, x_impulse, y_impulse, aimed_x, radius)
 
 
-static func _hot_wake(hot: HotBodies, index: int) -> void:
-	hot.sleeping[index] = 0
-	hot.sleep_ticks[index] = 0
-	hot.rest_states[index] = "settling"
-
-
-static func _hot_update_sleep(hot: HotBodies, index: int) -> void:
-	var speed := absi(hot.vx[index]) + absi(hot.vy[index]) + absi(hot.vz[index])
-	if speed <= SLEEP_SPEED:
-		hot.sleep_ticks[index] += 1
-		if hot.sleep_ticks[index] >= SLEEP_TICKS:
-			hot.vx[index] = 0
-			hot.vy[index] = 0
-			hot.vz[index] = 0
-			hot.sleeping[index] = 1
-			hot.rest_states[index] = "resting"
-	else:
-		hot.sleep_ticks[index] = 0
-		hot.rest_states[index] = "settling"
-
-
 static func _hot_apply_nudge(hot: HotBodies, x_impulse: int, y_impulse: int, aimed_x: int, radius: int) -> int:
 	var count := 0
-	for index in range(hot.size()):
-		if absi(hot.x[index] - aimed_x) > radius:
+	var xs := hot.x
+	var vxs := hot.vx
+	var vys := hot.vy
+	var masses := hot.masses
+	var sleeping := hot.sleeping
+	var sleep_ticks := hot.sleep_ticks
+	var rest_states := hot.rest_states
+	for index in range(xs.size()):
+		if absi(xs[index] - aimed_x) > radius:
 			continue
-		var mass := maxi(1, hot.masses[index])
-		hot.vx[index] += _divi(x_impulse, mass)
-		hot.vy[index] += _divi(y_impulse, mass)
-		_hot_wake(hot, index)
+		var mass := maxi(1, masses[index])
+		vxs[index] += _divi(x_impulse, mass)
+		vys[index] += _divi(y_impulse, mass)
+		sleeping[index] = 0
+		sleep_ticks[index] = 0
+		rest_states[index] = "settling"
 		count += 1
+	hot.vx = vxs
+	hot.vy = vys
+	hot.sleeping = sleeping
+	hot.sleep_ticks = sleep_ticks
 	return count
 
 
@@ -660,41 +704,37 @@ static func _hot_apply_pushers(hot: HotBodies, old_upper: int, new_upper: int, o
 	var upper_active := new_upper < old_upper
 	var lower_active := new_lower < old_lower
 	var count := 0
-	for index in range(hot.size()):
-		var body_y := hot.y[index]
-		var body_z := hot.z[index]
+	var ys := hot.y
+	var zs := hot.z
+	var vys := hot.vy
+	var radii := hot.radii
+	var heights := hot.heights
+	var sleeping := hot.sleeping
+	var sleep_ticks := hot.sleep_ticks
+	var rest_states := hot.rest_states
+	for index in range(ys.size()):
+		var body_y := ys[index]
+		var body_z := zs[index]
 		var upper := body_y >= UPPER_EDGE and body_z >= UPPER_FLOOR_Z
 		var active := upper_active if upper else lower_active
 		var old_face := old_upper if upper else old_lower
 		var new_face := new_upper if upper else new_lower
 		var floor_z := UPPER_FLOOR_Z if upper else LOWER_FLOOR_Z
 		var eligible := active and (upper or (body_y >= FRONT_EDGE and body_y < UPPER_EDGE and body_z < UPPER_FLOOR_Z + COIN_HEIGHT))
-		if eligible and body_y > new_face - hot.radii[index] and body_y < old_face + hot.radii[index] and body_z <= floor_z + hot.heights[index] * 5:
-			hot.y[index] = mini(body_y, new_face - hot.radii[index])
-			hot.vy[index] -= (old_face - new_face) * push_scale
-			_hot_wake(hot, index)
+		if eligible and body_y > new_face - radii[index] and body_y < old_face + radii[index] and body_z <= floor_z + heights[index] * 5:
+			ys[index] = mini(body_y, new_face - radii[index])
+			vys[index] -= (old_face - new_face) * push_scale
+			sleeping[index] = 0
+			sleep_ticks[index] = 0
+			rest_states[index] = "settling"
 			count += 1
-		if hot.sleeping[index] == 0:
+		if sleeping[index] == 0:
 			active_indices.append(index)
+	hot.y = ys
+	hot.vy = vys
+	hot.sleeping = sleeping
+	hot.sleep_ticks = sleep_ticks
 	return count
-
-
-static func _hot_exit_kind(hot: HotBodies, index: int) -> String:
-	if hot.x[index] < -hot.radii[index] or hot.x[index] > WIDTH + hot.radii[index]:
-		return "gutter"
-	if hot.y[index] >= FRONT_EDGE - hot.radii[index]:
-		return ""
-	return "tray" if hot.x[index] >= TRAY_LEFT and hot.x[index] <= TRAY_RIGHT else "gutter"
-
-
-static func _hot_exit_event(hot: HotBodies, index: int, outcome: String, tick_offset: int) -> Dictionary:
-	return {
-		"body_id": str(hot.ids[index]), "kind": str(hot.kinds[index]),
-		"outcome": outcome, "cause": "physical_fall",
-		"x": hot.x[index], "y": hot.y[index], "z": hot.z[index],
-		"mass": hot.masses[index], "tick_offset": tick_offset,
-		"metadata": (hot.metadata[index] as Dictionary).duplicate(true),
-	}
 
 
 static func _hot_append_impact_motion_event(events: Array, event_keys: Dictionary, hot: HotBodies, index: int, material: String, stack_depth: int, fall_height: int, tick_offset: int) -> void:
@@ -713,60 +753,99 @@ static func _hot_append_impact_motion_event(events: Array, event_keys: Dictionar
 
 
 static func _hot_integrate(hot: HotBodies, active_indices: PackedInt32Array, events: Array, motion_events: Array, motion_event_keys: Dictionary, peak_z: PackedInt32Array, tick_offset: int, start_x: PackedInt32Array, start_y: PackedInt32Array, start_z: PackedInt32Array) -> void:
-	var exit_indices: Array = []
-	for body_index_value in active_indices:
-		var index := int(body_index_value)
-		if index < 0 or index >= hot.size():
+	var exit_indices := PackedInt32Array()
+	var body_count := hot.size()
+	var xs := hot.x
+	var ys := hot.y
+	var zs := hot.z
+	var vxs := hot.vx
+	var vys := hot.vy
+	var vzs := hot.vz
+	var radii := hot.radii
+	var masses := hot.masses
+	var ids := hot.ids
+	var kinds := hot.kinds
+	var metadata := hot.metadata
+	var sleeping := hot.sleeping
+	var sleep_ticks := hot.sleep_ticks
+	var rest_states := hot.rest_states
+	var pressure_ticks := hot.cap_pressure_ticks
+	var pressure_accel := hot.cap_pressure_accel
+	for active_position in range(active_indices.size()):
+		var index := active_indices[active_position]
+		if index < 0 or index >= body_count:
 			continue
-		var previous_z := hot.z[index]
+		var previous_z := zs[index]
 		if not peak_z.is_empty():
 			peak_z[index] = maxi(peak_z[index], previous_z)
-		if hot.cap_pressure_ticks[index] > 0:
-			hot.vy[index] -= maxi(0, hot.cap_pressure_accel[index])
-			hot.cap_pressure_ticks[index] -= 1
-		var was_upper := hot.z[index] >= UPPER_FLOOR_Z
-		hot.vz[index] -= GRAVITY
-		hot.vx[index] = _divi(hot.vx[index] * AIR_DRAG_NUM, AIR_DRAG_DEN)
-		hot.vy[index] = _divi(hot.vy[index] * AIR_DRAG_NUM, AIR_DRAG_DEN)
-		hot.x[index] += _divi(hot.vx[index], FIXED_HZ)
-		hot.y[index] += _divi(hot.vy[index], FIXED_HZ)
-		hot.z[index] += _divi(hot.vz[index], FIXED_HZ)
-		var exit := _hot_exit_kind(hot, index)
+		if pressure_ticks[index] > 0:
+			vys[index] -= maxi(0, pressure_accel[index])
+			pressure_ticks[index] -= 1
+		var was_upper := zs[index] >= UPPER_FLOOR_Z
+		vzs[index] -= GRAVITY
+		vxs[index] = _divi(vxs[index] * AIR_DRAG_NUM, AIR_DRAG_DEN)
+		vys[index] = _divi(vys[index] * AIR_DRAG_NUM, AIR_DRAG_DEN)
+		xs[index] += _divi(vxs[index], FIXED_HZ)
+		ys[index] += _divi(vys[index], FIXED_HZ)
+		zs[index] += _divi(vzs[index], FIXED_HZ)
+		var exit := ""
+		if xs[index] < -radii[index] or xs[index] > WIDTH + radii[index]:
+			exit = "gutter"
+		elif ys[index] < FRONT_EDGE - radii[index]:
+			exit = "tray" if xs[index] >= TRAY_LEFT and xs[index] <= TRAY_RIGHT else "gutter"
 		if not exit.is_empty():
-			events.append(_hot_exit_event(hot, index, exit, tick_offset))
+			events.append({
+				"body_id": str(ids[index]), "kind": str(kinds[index]),
+				"outcome": exit, "cause": "physical_fall",
+				"x": xs[index], "y": ys[index], "z": zs[index],
+				"mass": masses[index], "tick_offset": tick_offset,
+				"metadata": (metadata[index] as Dictionary).duplicate(true),
+			})
 			exit_indices.append(index)
 			continue
-		var base_z := UPPER_FLOOR_Z if hot.y[index] >= UPPER_EDGE else LOWER_FLOOR_Z
-		if was_upper and hot.y[index] < UPPER_EDGE:
-			motion_events.append({"kind": "upper_to_lower", "body_id": str(hot.ids[index]), "x": hot.x[index], "y": hot.y[index], "z": hot.z[index], "tick_offset": tick_offset})
-		if hot.z[index] <= base_z:
+		var base_z := UPPER_FLOOR_Z if ys[index] >= UPPER_EDGE else LOWER_FLOOR_Z
+		if was_upper and ys[index] < UPPER_EDGE:
+			motion_events.append({"kind": "upper_to_lower", "body_id": str(ids[index]), "x": xs[index], "y": ys[index], "z": zs[index], "tick_offset": tick_offset})
+		if zs[index] <= base_z:
 			var fall_height := maxi(0, (peak_z[index] if not peak_z.is_empty() else previous_z) - base_z)
 			if not peak_z.is_empty() and previous_z > base_z and fall_height > 0:
 				_hot_append_impact_motion_event(motion_events, motion_event_keys, hot, index, "coin_on_metal", 0, fall_height, tick_offset)
-			hot.z[index] = base_z
-			hot.vz[index] = 0
-			hot.vx[index] = _divi(hot.vx[index] * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
-			hot.vy[index] = _divi(hot.vy[index] * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
-			_hot_update_sleep(hot, index)
+			zs[index] = base_z
+			vzs[index] = 0
+			vxs[index] = _divi(vxs[index] * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
+			vys[index] = _divi(vys[index] * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
+			var speed := absi(vxs[index]) + absi(vys[index]) + absi(vzs[index])
+			if speed <= SLEEP_SPEED:
+				sleep_ticks[index] += 1
+				if sleep_ticks[index] >= SLEEP_TICKS:
+					vxs[index] = 0
+					vys[index] = 0
+					vzs[index] = 0
+					sleeping[index] = 1
+					rest_states[index] = "resting"
+			else:
+				sleep_ticks[index] = 0
+				rest_states[index] = "settling"
 		else:
-			hot.rest_states[index] = "falling"
-			hot.sleep_ticks[index] = 0
+			rest_states[index] = "falling"
+			sleep_ticks[index] = 0
+	hot.x = xs
+	hot.y = ys
+	hot.z = zs
+	hot.vx = vxs
+	hot.vy = vys
+	hot.vz = vzs
+	hot.sleeping = sleeping
+	hot.sleep_ticks = sleep_ticks
+	hot.cap_pressure_ticks = pressure_ticks
 	for exit_position in range(exit_indices.size() - 1, -1, -1):
-		var exit_index := int(exit_indices[exit_position])
+		var exit_index := exit_indices[exit_position]
 		hot.remove_at(exit_index)
 		start_x.remove_at(exit_index)
 		start_y.remove_at(exit_index)
 		start_z.remove_at(exit_index)
 		if not peak_z.is_empty():
 			peak_z.remove_at(exit_index)
-
-
-static func _hot_awake_indices(hot: HotBodies) -> PackedInt32Array:
-	var result := PackedInt32Array()
-	for index in range(hot.size()):
-		if hot.sleeping[index] == 0:
-			result.append(index)
-	return result
 
 
 static func _hot_resolve_collisions(hot: HotBodies, grid: HotGrid, visited_pairs: PackedInt32Array, visit_generation: int, awake_indices: PackedInt32Array, support_indices: PackedInt32Array, support_seen: PackedByteArray) -> int:
@@ -793,9 +872,11 @@ static func _hot_resolve_collisions(hot: HotBodies, grid: HotGrid, visited_pairs
 		var center_x := _divi(xs[left_index], BROADPHASE_CELL)
 		var center_y := _divi(ys[left_index], BROADPHASE_CELL)
 		var center_z := _divi(zs[left_index], BROADPHASE_CELL)
-		var candidates := grid.candidate_indices(center_x, center_y, center_z)
-		for candidate_position in range(candidates.size()):
-			var right_index := candidates[candidate_position]
+		var cache_slot := grid.candidate_slot(center_x, center_y, center_z)
+		var candidate_offset := grid.candidate_offsets[cache_slot]
+		var candidate_length := grid.candidate_lengths[cache_slot]
+		for candidate_position in range(candidate_length):
+			var right_index := grid.candidate_pool[candidate_offset + candidate_position]
 			if right_index == left_index:
 				continue
 			var low := mini(left_index, right_index)
@@ -874,9 +955,11 @@ static func _hot_resolve_supports(hot: HotBodies, grid: HotGrid, active_indices:
 		var center_x := _divi(xs[body_index], BROADPHASE_CELL)
 		var center_y := _divi(ys[body_index], BROADPHASE_CELL)
 		var center_z := _divi(zs[body_index], BROADPHASE_CELL)
-		var candidates := grid.candidate_indices(center_x, center_y, center_z)
-		for candidate_position in range(candidates.size()):
-			var candidate_index := candidates[candidate_position]
+		var cache_slot := grid.candidate_slot(center_x, center_y, center_z)
+		var candidate_offset := grid.candidate_offsets[cache_slot]
+		var candidate_length := grid.candidate_lengths[cache_slot]
+		for candidate_position in range(candidate_length):
+			var candidate_index := grid.candidate_pool[candidate_offset + candidate_position]
 			if candidate_index == body_index:
 				continue
 			var candidate_target_z := zs[candidate_index] + heights[candidate_index]
@@ -966,14 +1049,6 @@ static func _hot_presentation_trace_frame(hot: HotBodies, state: Dictionary, tic
 		"lower_phase_fp": int(state.get("lower_phase_fp", 0)),
 		"bodies": bodies,
 	}
-
-
-static func _hot_awake_count(hot: HotBodies) -> int:
-	var count := 0
-	for sleeping_value in hot.sleeping:
-		if sleeping_value == 0:
-			count += 1
-	return count
 
 
 static func body_views(state: Dictionary) -> Array:
@@ -1657,6 +1732,91 @@ static func _presentation_event_views(state: Dictionary, exits: Array, motion_ev
 	if int(config.get("nudge_x", 0)) != 0 or int(config.get("nudge_y", 0)) != 0:
 		result.append(_presentation_event("cabinet_shake", focus, mini(1000, (absi(int(config.get("nudge_x", 0))) + absi(int(config.get("nudge_y", 0)))) / 24), 1, {}))
 	return result
+
+
+static func _hot_presentation_event_views(hot: HotBodies, exits: Array, motion_events: Array, metrics: Dictionary, config: Dictionary) -> Array:
+	var result: Array = []
+	var focus_index := -1
+	var sleeping := hot.sleeping
+	for index in range(sleeping.size()):
+		if sleeping[index] == 0:
+			focus_index = index
+			break
+	if focus_index < 0 and hot.size() > 0:
+		focus_index = 0
+	var moved_count := int(metrics.get("moved_count", 0))
+	if moved_count > 1:
+		result.append(_hot_presentation_event("slide", hot, focus_index, mini(1000, 180 + moved_count * 24), ACTION_TICKS / 2, {"moved_count": moved_count}))
+	var body_index_by_id := {}
+	var ids := hot.ids
+	if not motion_events.is_empty():
+		for index in range(ids.size()):
+			body_index_by_id[str(ids[index])] = index
+	for motion_index in range(motion_events.size()):
+		var motion_value: Variant = motion_events[motion_index]
+		if typeof(motion_value) != TYPE_DICTIONARY:
+			continue
+		var motion: Dictionary = motion_value
+		var kind := str(motion.get("kind", ""))
+		var intensity := 720 if kind == "topple" else 820
+		if kind == "impact":
+			intensity = mini(1000, 320 + int(motion.get("fall_height_milli", 0)) / 8 + int(motion.get("stack_depth", 0)) * 70)
+		var body_index := int(body_index_by_id.get(str(motion.get("body_id", "")), -1))
+		if body_index >= 0:
+			result.append(_hot_presentation_event(kind, hot, body_index, intensity, int(motion.get("tick_offset", ACTION_TICKS / 2)), motion))
+		else:
+			result.append(_presentation_event(kind, motion, intensity, int(motion.get("tick_offset", ACTION_TICKS / 2)), motion))
+	var tray_total := 0
+	var gutter_total := 0
+	for exit_index in range(exits.size()):
+		var exit_value: Variant = exits[exit_index]
+		if typeof(exit_value) != TYPE_DICTIONARY:
+			continue
+		if str((exit_value as Dictionary).get("outcome", "gutter")) == "tray":
+			tray_total += 1
+		else:
+			gutter_total += 1
+	var tray_index := 0
+	var gutter_index := 0
+	for exit_index in range(exits.size()):
+		var exit_value: Variant = exits[exit_index]
+		if typeof(exit_value) != TYPE_DICTIONARY:
+			continue
+		var exit_event: Dictionary = exit_value
+		var outcome := str(exit_event.get("outcome", "gutter"))
+		var tick_offset := int(exit_event.get("tick_offset", ACTION_TICKS))
+		var group_index := tray_index if outcome == "tray" else gutter_index
+		var group_count := tray_total if outcome == "tray" else gutter_total
+		if outcome == "tray":
+			tray_index += 1
+		else:
+			gutter_index += 1
+		result.append(_presentation_event("ledge_tip", exit_event, 760, maxi(0, tick_offset - 3), {"outcome": outcome}))
+		result.append(_presentation_event("tray_landing" if outcome == "tray" else "gutter_loss", exit_event, mini(1000, 450 + int(exit_event.get("mass", 1)) * 110), tick_offset, {
+			"outcome": outcome,
+			"group_count": group_count,
+			"group_index": group_index,
+		}))
+	if int(config.get("nudge_x", 0)) != 0 or int(config.get("nudge_y", 0)) != 0:
+		result.append(_hot_presentation_event("cabinet_shake", hot, focus_index, mini(1000, (absi(int(config.get("nudge_x", 0))) + absi(int(config.get("nudge_y", 0)))) / 24), 1, {}))
+	return result
+
+
+static func _hot_presentation_event(kind: String, hot: HotBodies, body_index: int, intensity_milli: int, tick_offset: int, metadata: Dictionary) -> Dictionary:
+	var body_id := ""
+	if body_index >= 0:
+		var body: Dictionary = hot.refs[body_index]
+		body_id = str(body.get("body_id", hot.ids[body_index]))
+	return {
+		"kind": kind,
+		"body_id": body_id,
+		"x": hot.x[body_index] if body_index >= 0 else _divi(WIDTH, 2),
+		"y": hot.y[body_index] if body_index >= 0 else UPPER_EDGE,
+		"z": hot.z[body_index] if body_index >= 0 else 0,
+		"intensity_milli": clampi(intensity_milli, 0, 1000),
+		"tick_offset": clampi(tick_offset, 0, ACTION_TICKS),
+		"metadata": metadata.duplicate(true),
+	}
 
 
 static func _presentation_focus_body(state: Dictionary) -> Dictionary:

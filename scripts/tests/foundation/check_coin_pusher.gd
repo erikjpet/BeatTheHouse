@@ -108,6 +108,11 @@ func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:
 	_assert_coin_pusher_hot_solver_twin(sparse_value as Dictionary, {
 		"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true,
 	}, "cold sparse JSON body with negative optional pressure fields", failures)
+	var empty_nudge := CoinPusherSolverScript.create(_configured_rng(8816), 48, 0, 5)
+	_assert_coin_pusher_hot_solver_twin(empty_nudge, {
+		"upper_locked": true, "lower_locked": true,
+		"nudge_x": 1200, "nudge_y": -900, "aimed_x": 50000, "nudge_radius": 100000,
+	}, "empty-body cabinet-shake presentation defaults", failures)
 	var duplicate_ids := CoinPusherSolverScript.create(_configured_rng(8806), 48, 0, 5)
 	duplicate_ids["bodies"] = [
 		_solver_body("duplicate_oracle", "coin", 48000, 30000, 0, false),
@@ -149,6 +154,19 @@ func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:
 	_assert_coin_pusher_hot_solver_twin(center_crossing, {
 		"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true,
 	}, "within-tick broadphase-center crossing with frozen candidate cache", failures)
+	var generation_rollover := CoinPusherSolverScript.create(_configured_rng(8815), 48, 0, 5)
+	generation_rollover["bodies"] = [
+		_solver_body("rollover_awake", "coin", 50000, 30000, 3400, false),
+		_solver_body("rollover_neighbor", "coin", 54000, 30000, 3400, false),
+		_solver_body("rollover_support", "coin", 50000, 30000, 1700, true),
+	]
+	var rollover_config := {
+		"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true,
+		"_debug_hot_grid_generation": CoinPusherSolverScript.HOT_CACHE_GENERATION_MAX - 1,
+	}
+	if not CoinPusherSolverScript.hot_state_eligible_for_test(generation_rollover, rollover_config):
+		failures.append("Packed Coin Pusher generation-rollover oracle did not exercise the production hot path.")
+	_assert_coin_pusher_hot_solver_twin(generation_rollover, rollover_config, "lazy candidate-cache generation rollover and stamped-slot reset", failures)
 	var int64_hostile := CoinPusherSolverScript.create(_configured_rng(8810), 48, 0, 5)
 	int64_hostile["bodies"] = [_solver_body("int64_hostile", "coin", 50000, 30000, 0, false)]
 	var int64_body: Dictionary = (int64_hostile.get("bodies", []) as Array)[0]
