@@ -164,6 +164,8 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 	var drag_move := game.surface_pointer_command("scratch_scrub", 0, "move", drag_to, drag_begin.get("ui_state", {}), run_state, environment)
 	if not bool(drag_move.get("surface_transient", false)) or str(drag_move.get("surface_audio_loop_start", "")) != "scratch_paper_foley_loop":
 		failures.append("Scratch drag did not use its transient paper-foley route.")
+	if drag_move.has("message"):
+		failures.append("Ordinary Scratch pointer movement still routed a non-visible global status update through the hot path.")
 	var drag_end := game.surface_pointer_command("scratch_scrub", 0, "end", drag_to, drag_move.get("ui_state", {}), run_state, environment)
 	if str(drag_end.get("surface_audio_loop_stop", "")) != "scratch_paper_foley_loop":
 		failures.append("Scratch pointer release did not stop the paper-foley loop.")

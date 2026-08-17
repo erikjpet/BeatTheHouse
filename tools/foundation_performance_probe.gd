@@ -1507,7 +1507,7 @@ func _resolve_probe_ui_state(game_id: String, sample_index: int, game: GameModul
 		"pull_tabs":
 			return {"pull_tab_deal_index": sample_index % 4}
 		"scratch_tickets":
-			return {"scratch_stock_index": _stocked_scratch_index(run_state, environment, sample_index)}
+			return {"scratch_stock_index": _stocked_scratch_index(game, run_state, environment, sample_index)}
 		"bar_dice":
 			var roll_command := game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, environment)
 			var ui: Dictionary = roll_command.get("ui_state", {})
@@ -1705,26 +1705,33 @@ func _interactable_object_by_id(objects: Array, object_id: String) -> Dictionary
 	return {}
 
 
-func _stocked_scratch_index(run_state: RunState, environment: Dictionary, sample_index: int) -> int:
-	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var machine: Dictionary = game_states.get("scratch_tickets", {}) if typeof(game_states.get("scratch_tickets", {})) == TYPE_DICTIONARY else {}
+func _stocked_scratch_index(game: GameModule, run_state: RunState, environment: Dictionary, sample_index: int) -> int:
+	# Enter-time presentation projects a visit-scoped scalper on an observational
+	# copy. Resolve must project that same state at its mutation boundary, so raw
+	# environment stock can say "available" immediately before the scalper clears
+	# it. This microbenchmark measures a real purchase, not the sold-out branch:
+	# commit the visit projection first, then prepare one deterministic available
+	# ticket without changing ticket definitions, odds, inventory, or the seed.
+	var machine: Dictionary = game.call("_ensure_machine_state", run_state, environment, true)
+	machine["scalper_present"] = false
+	machine["scalper_knows_schedule"] = false
 	var stock: Array = machine.get("stock", []) if typeof(machine.get("stock", [])) == TYPE_ARRAY else []
 	if stock.is_empty():
 		return 0
+	var selected_index := -1
 	for offset in range(stock.size()):
 		var index := (sample_index + offset) % stock.size()
 		if typeof(stock[index]) == TYPE_DICTIONARY and int((stock[index] as Dictionary).get("remaining", 0)) > 0:
-			return index
-	if typeof(stock[0]) == TYPE_DICTIONARY:
+			selected_index = index
+			break
+	if selected_index < 0 and typeof(stock[0]) == TYPE_DICTIONARY:
 		var slot: Dictionary = stock[0]
 		slot["remaining"] = 1
 		stock[0] = slot
 		machine["stock"] = stock
-		game_states["scratch_tickets"] = machine
-		environment["game_states"] = game_states
-		if run_state != null:
-			run_state.current_environment = environment
-	return 0
+		selected_index = 0
+	game.call("_write_machine_state", environment, machine, run_state, false)
+	return maxi(0, selected_index)
 
 
 func _open_fresh_app() -> void:
