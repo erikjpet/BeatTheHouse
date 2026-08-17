@@ -93,7 +93,7 @@
         "event_id": "recruitment_lucky",
         "primary": {"archetype_ids": ["beach"], "scenario_ids": ["beach_festival_weekend"]},
         "fallback": {"archetype_ids": ["small_underground_casino", "bar", "motel", "gas_station_casino", "corner_store"], "requires_system": "numbers"},
-        "presence": ["beach", "small_underground_casino", "bar", "gas_station_casino"],
+        "presence": ["small_underground_casino", "bar", "gas_station_casino"],
         "presence_lines": {
           "marker": "Lucky looks ready to race the tide.",
           "associate": "Lucky has three stops and one good shortcut.",

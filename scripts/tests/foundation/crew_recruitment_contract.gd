@@ -15,7 +15,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Crew recruitment content: %s" % str(failure))
 	_check_placement_matrix(library, failures)
 	_check_rook_paths(failures)
-	_check_rook_signposts(failures)
+	_check_rook_signposts(library, failures)
 	_check_perks_and_save(failures)
 	_check_crew_ignoring_regression(failures)
 	_check_presence_determinism(failures)
@@ -74,6 +74,10 @@ static func _check_placement_matrix(library: ContentLibrary, failures: Array) ->
 				failures.append("Crew recruitment %s %s choice did not grant Associate." % [member_id, path_kind])
 			if not run_state.crew_member_job_available(member_id):
 				failures.append("Crew recruitment %s %s did not open Associate jobs." % [member_id, path_kind])
+			var recruited_round_trip := RunStateScript.new()
+			recruited_round_trip.from_dict(run_state.to_dict())
+			if recruited_round_trip.crew_rank(member_id) != "associate" or not recruited_round_trip.crew_member_job_available(member_id):
+				failures.append("Crew recruitment %s %s did not survive its post-intro save/load." % [member_id, path_kind])
 
 
 static func _check_rook_paths(failures: Array) -> void:
@@ -93,7 +97,7 @@ static func _check_rook_paths(failures: Array) -> void:
 		failures.append("Rook's legacy-marker fallback migration did not preserve meetability.")
 
 
-static func _check_rook_signposts(failures: Array) -> void:
+static func _check_rook_signposts(library: ContentLibrary, failures: Array) -> void:
 	var run_state := _marked_run("CREW-ROOK-SIGNPOSTS")
 	_set_fixture_world(run_state, ["back_alley"])
 	var choices := CrewRecruitmentModelScript.rook_signpost_choices(run_state)
@@ -103,13 +107,47 @@ static func _check_rook_signposts(failures: Array) -> void:
 			choice_ids.append(str((value as Dictionary).get("id", "")))
 	if choice_ids != ["ask_switch", "keep_moving"]:
 		failures.append("Rook signposted members who were not genuinely meetable in the fixture: %s." % JSON.stringify(choice_ids))
+	var rook_definition := CrewRecruitmentModelScript.member_definition("crew_rook")
+	var leads_placed := false
+	for location_value in _array(rook_definition.get("presence", [])):
+		var location := str(location_value)
+		var environment := {
+			"id": "%s_fixture" % location,
+			"archetype_id": location,
+			"world_node_id": location,
+			"kind": "casino",
+			"event_ids": [],
+			"scenario_patron_ids": [],
+		}
+		CrewRecruitmentModelScript.apply_to_environment(run_state, environment)
+		if _string_array(environment.get("event_ids", [])).has("recruitment_rook_leads"):
+			leads_placed = true
+			break
+	if not leads_placed:
+		failures.append("Rook's seeded presence did not expose his contextual meetable-member leads.")
 	run_state.crew_recruit_member("crew_switch")
 	if not CrewRecruitmentModelScript.rook_signpost_choices(run_state).is_empty():
 		failures.append("Rook kept signposting a member after their intro was complete.")
+	var presence_run := _marked_run("CREW-ROOK-SIGNPOSTS")
+	_set_fixture_world(presence_run, ["back_alley"])
+	var environment := {"id": "rook_leads_fixture", "archetype_id": "back_alley", "world_node_id": "back_alley", "kind": "casino", "event_ids": [], "resolved_event_ids": []}
+	CrewRecruitmentModelScript.apply_to_environment(presence_run, environment)
+	if not _string_array(environment.get("event_ids", [])).has("recruitment_rook_leads"):
+		failures.append("Rook's seeded presence did not expose his reusable leads encounter.")
+	else:
+		presence_run.set_environment(environment)
+		var module := EventModuleScript.new()
+		module.setup(library.event("recruitment_rook_leads"), library)
+		var first := module.resolve(presence_run, presence_run.current_environment, "ask_switch")
+		if not bool(first.get("ok", false)) or _string_array(presence_run.current_environment.get("resolved_event_ids", [])).has("recruitment_rook_leads") \
+			or not module.can_trigger(presence_run, presence_run.current_environment) or module.choice("ask_switch", presence_run, presence_run.current_environment).is_empty():
+			failures.append("Rook's presence-bound leads encounter was not reusable after one question.")
 
 
 static func _check_perks_and_save(failures: Array) -> void:
 	var run_state := _marked_run("CREW-PERKS")
+	if run_state.crew_rook_escort_available():
+		failures.append("Rook's L3 escort leaked below Made.")
 	if run_state.crew_capability_active("sweep_intel") or bool(run_state.crew_switch_intel_status().get("available", false)):
 		failures.append("Switch intel leaked below Associate.")
 	run_state.crew_recruit_member("crew_switch")
@@ -209,6 +247,39 @@ static func _check_presence_determinism(failures: Array) -> void:
 				twin_presence["%s:%s" % [node_id, str((value as Dictionary).get("member_id", ""))]] = value
 	if JSON.stringify(presence_by_location) != JSON.stringify(twin_presence):
 		failures.append("Crew itinerary placement differed between same-seed twins.")
+	var stale_environment := {
+		"id": "stale_crew_presence_fixture",
+		"archetype_id": "motel",
+		"world_node_id": "motel",
+		"kind": "recovery",
+		"event_ids": ["recruitment_rook_leads"],
+		"scenario_patron_ids": CrewRecruitmentModelScript.MEMBER_IDS.duplicate(),
+		"crew_presence": [{"member_id": "crew_rook", "rank": "marker", "line": "stale"}],
+	}
+	CrewRecruitmentModelScript.apply_to_environment(first, stale_environment)
+	var stale_patrons := _string_array(stale_environment.get("scenario_patron_ids", []))
+	var leaked_member := false
+	for member_id in CrewRecruitmentModelScript.MEMBER_IDS:
+		if stale_patrons.has(member_id):
+			leaked_member = true
+	if stale_environment.has("crew_presence") or leaked_member or _string_array(stale_environment.get("event_ids", [])).has("recruitment_rook_leads"):
+		failures.append("Crew presence rotation left stale patrons or Rook leads in an empty room.")
+	var recovery_run := _marked_run("CREW-PRESENCE-RECOVERY")
+	var recovery_environment := {
+		"id": "beach_fixture",
+		"archetype_id": "beach",
+		"world_node_id": "beach",
+		"kind": "recovery",
+		"event_ids": ["recruitment_rook_leads"],
+		"scenario_patron_ids": ["bonfire_crowd", "crew_rook"],
+		"crew_presence": [{"member_id": "crew_rook", "rank": "marker", "line": "stale"}],
+	}
+	CrewRecruitmentModelScript.apply_to_environment(recovery_run, recovery_environment)
+	if recovery_environment.has("crew_presence") \
+		or _string_array(recovery_environment.get("event_ids", [])).has("recruitment_rook_leads") \
+		or _string_array(recovery_environment.get("scenario_patron_ids", [])).has("crew_rook") \
+		or not _string_array(recovery_environment.get("scenario_patron_ids", [])).has("bonfire_crowd"):
+		failures.append("Crew presence weakened the actor-free recovery-venue contract.")
 
 
 static func _marked_run(seed: String) -> RunState:
