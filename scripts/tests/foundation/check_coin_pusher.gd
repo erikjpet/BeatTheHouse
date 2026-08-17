@@ -5,6 +5,7 @@ const PUSHER_EV_ACTIONS := 2400
 const PUSHER_VARIATION_EV_ACTIONS := 600
 const CoinPusherExportParityRunnerScript := preload("res://scripts/games/coin_pusher/coin_pusher_export_parity_runner.gd")
 const CoinPusherPackedTraceReaderScript := preload("res://scripts/games/coin_pusher/coin_pusher_packed_trace_reader.gd")
+const CoinPusherFeelCaptureScript := preload("res://tools/coin_pusher_physics_feel_capture.gd")
 var coin_pusher_snapshot_boundary_exercised := false
 
 
@@ -133,6 +134,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_alarm_audio(failures)
 	_check_coin_pusher_title_geometry(game, failures)
 	_check_coin_pusher_canonical_probe(game, library, failures)
+	_check_coin_pusher_feel_capture_trace_compatibility(failures)
 	_check_coin_pusher_opening_depth_gradient(failures)
 	_check_coin_pusher_hot_solver_exact_twin(failures)
 	_check_coin_pusher_export_native_acceptance(failures)
@@ -1326,6 +1328,58 @@ func _check_coin_pusher_canonical_probe(game: GameModule, library: ContentLibrar
 	]:
 		if not main_source.contains(required_scheduler_text):
 			failures.append("Coin Pusher deferred presentation scheduler lost safeguard %s." % required_scheduler_text)
+
+
+func _check_coin_pusher_feel_capture_trace_compatibility(failures: Array) -> void:
+	var capture_source := FileAccess.get_file_as_string("res://tools/coin_pusher_physics_feel_capture.gd")
+	var helper_source := _source_function(capture_source, "presentation_trace_for_capture")
+	for required_helper_text in [
+		'payload.get("presentation_trace_packed", {})',
+		'patch.get("trace_packed", {})',
+		'SolverScript.decode_packed_presentation_trace',
+		'payload.get("presentation_trace", [])',
+		'.get("trace", [])',
+	]:
+		if not helper_source.contains(required_helper_text):
+			failures.append("Coin Pusher feel capture trace compatibility helper lost %s." % required_helper_text)
+	for consumer_name in ["_capture_fixture", "_capture_replay_sequence", "_capture_tell_ladder"]:
+		var consumer_source := _source_function(capture_source, consumer_name)
+		if not consumer_source.contains("presentation_trace_for_capture(") \
+				or consumer_source.contains('.get("presentation_trace",') \
+				or consumer_source.contains('.get("trace",'):
+			failures.append("Coin Pusher feel capture %s bypasses the shared packed/legacy trace boundary." % consumer_name)
+
+	var packed_fixture := _packed_reader_fixture(111, 333)
+	var raw_packed_trace: Array = CoinPusherFeelCaptureScript.presentation_trace_for_capture({
+		"presentation_trace_packed": packed_fixture,
+	})
+	var patch_packed_trace: Array = CoinPusherFeelCaptureScript.presentation_trace_for_capture({
+		"surface_presentation_snapshot_patch": {"trace_packed": packed_fixture},
+	})
+	var legacy_fixture := [{"tick_offset": 7, "bodies": [{"id": "legacy", "x": 777}]}]
+	var legacy_trace: Array = CoinPusherFeelCaptureScript.presentation_trace_for_capture({
+		"presentation_trace": legacy_fixture,
+	})
+	var patch_legacy_trace: Array = CoinPusherFeelCaptureScript.presentation_trace_for_capture({
+		"surface_presentation_snapshot_patch": {"trace": legacy_fixture},
+	})
+	var raw_first_x := _capture_trace_first_x(raw_packed_trace)
+	var patch_first_x := _capture_trace_first_x(patch_packed_trace)
+	if raw_packed_trace.size() != 2 or patch_packed_trace.size() != 2 \
+			or raw_first_x != 111 or patch_first_x != 111 \
+			or JSON.stringify(legacy_trace) != JSON.stringify(legacy_fixture) \
+			or JSON.stringify(patch_legacy_trace) != JSON.stringify(legacy_fixture):
+		failures.append("Coin Pusher feel capture helper did not decode raw/patch packed authority with legacy fallback.")
+
+
+func _capture_trace_first_x(trace: Array) -> int:
+	if trace.is_empty() or typeof(trace[0]) != TYPE_DICTIONARY:
+		return -1
+	var bodies_value: Variant = (trace[0] as Dictionary).get("bodies", [])
+	if typeof(bodies_value) != TYPE_ARRAY or (bodies_value as Array).is_empty() \
+			or typeof((bodies_value as Array)[0]) != TYPE_DICTIONARY:
+		return -1
+	return int(((bodies_value as Array)[0] as Dictionary).get("x", -1))
 
 
 func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> void:

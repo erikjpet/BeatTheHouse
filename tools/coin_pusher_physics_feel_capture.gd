@@ -123,6 +123,33 @@ func _fixture(id: String, file_name: String, title: String, before: Dictionary, 
 	return {"id": id, "file": file_name, "title": title, "before": before, "after": after, "step": step, "valid": valid}
 
 
+static func presentation_trace_for_capture(payload: Dictionary) -> Array:
+	# Native actions publish compact packed authority while the reference/fallback
+	# path may still provide legacy frame Arrays. Keep every capture proof on one
+	# compatibility boundary so visual QA observes the same action in either build.
+	var packed_value: Variant = payload.get("presentation_trace_packed", {})
+	if typeof(packed_value) == TYPE_DICTIONARY and not (packed_value as Dictionary).is_empty():
+		var decoded := SolverScript.decode_packed_presentation_trace(packed_value as Dictionary)
+		if not decoded.is_empty():
+			return decoded
+	var patch_value: Variant = payload.get("surface_presentation_snapshot_patch", {})
+	if typeof(patch_value) == TYPE_DICTIONARY:
+		var patch: Dictionary = patch_value
+		packed_value = patch.get("trace_packed", {})
+		if typeof(packed_value) == TYPE_DICTIONARY and not (packed_value as Dictionary).is_empty():
+			var decoded_patch := SolverScript.decode_packed_presentation_trace(packed_value as Dictionary)
+			if not decoded_patch.is_empty():
+				return decoded_patch
+	var legacy_value: Variant = payload.get("presentation_trace", [])
+	if typeof(legacy_value) == TYPE_ARRAY and not (legacy_value as Array).is_empty():
+		return legacy_value as Array
+	if typeof(patch_value) == TYPE_DICTIONARY:
+		legacy_value = (patch_value as Dictionary).get("trace", [])
+		if typeof(legacy_value) == TYPE_ARRAY:
+			return legacy_value as Array
+	return []
+
+
 func _capture_fixture(fixture: Dictionary) -> void:
 	var before_surface := _surface_for_simulation(fixture.get("before", {}), 0)
 	var after_surface := _surface_for_simulation(fixture.get("after", {}), 900)
@@ -149,7 +176,7 @@ func _capture_fixture(fixture: Dictionary) -> void:
 	var image := root.get_viewport().get_texture().get_image()
 	var saved := image != null and image.save_png("%s/%s" % [out_dir, str(fixture.get("file", "capture.png"))]) == OK
 	var before_body_count := ((fixture.get("before", {}) as Dictionary).get("bodies", []) as Array).size()
-	var trace: Array = ((fixture.get("step", {}) as Dictionary).get("presentation_trace", []) as Array)
+	var trace := presentation_trace_for_capture(fixture.get("step", {}) as Dictionary)
 	var trace_starts_from_same_pile := not trace.is_empty() and typeof(trace.front()) == TYPE_DICTIONARY \
 		and ((trace.front() as Dictionary).get("bodies", []) as Array).size() == before_body_count
 	var valid := bool(fixture.get("valid", false)) and before_body_count >= SHIPPED_OPENING_COIN_COUNT and trace_starts_from_same_pile and saved
@@ -172,7 +199,7 @@ func _capture_fixture(fixture: Dictionary) -> void:
 
 func _capture_replay_sequence(fixture: Dictionary) -> void:
 	var step: Dictionary = fixture.get("step", {})
-	var trace: Array = step.get("presentation_trace", []) if typeof(step.get("presentation_trace", [])) == TYPE_ARRAY else []
+	var trace := presentation_trace_for_capture(step)
 	if trace.size() < 4:
 		failed = true
 		return
@@ -288,7 +315,7 @@ func _capture_tell_ladder() -> void:
 	var saved := image != null and image.save_png("%s/%s" % [out_dir, file_name]) == OK
 	var first_snapshot: Dictionary = first_warning.get("coin_pusher_snapshot", {})
 	var alarm_snapshot: Dictionary = alarm.get("coin_pusher_snapshot", {})
-	var first_trace: Array = ((first_result.get("surface_presentation_snapshot_patch", {}) as Dictionary).get("trace", []) as Array)
+	var first_trace := presentation_trace_for_capture(first_result)
 	var trace_starts_from_same_pile := not first_trace.is_empty() and typeof(first_trace.front()) == TYPE_DICTIONARY \
 		and ((first_trace.front() as Dictionary).get("bodies", []) as Array).size() == (before.get("bodies", []) as Array).size()
 	var stage_evidence: Array = []
