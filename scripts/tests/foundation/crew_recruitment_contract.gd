@@ -13,12 +13,36 @@ const WorldMapScript := preload("res://scripts/core/world_map.gd")
 static func check(library: ContentLibrary, failures: Array) -> void:
 	for failure in CrewRecruitmentModelScript.validate_content():
 		failures.append("Crew recruitment content: %s" % str(failure))
+	_check_event_presentation_contract(library, failures)
 	_check_placement_matrix(library, failures)
 	_check_rook_paths(failures)
 	_check_rook_signposts(library, failures)
 	_check_perks_and_save(failures)
 	_check_crew_ignoring_regression(failures)
 	_check_presence_determinism(failures)
+
+
+static func _check_event_presentation_contract(library: ContentLibrary, failures: Array) -> void:
+	var event_ids := CrewRecruitmentModelScript.recruitment_event_ids()
+	event_ids.append("recruitment_rook_leads")
+	for event_id_value in event_ids:
+		var event_id := str(event_id_value)
+		var definition := library.event(event_id)
+		if definition.is_empty():
+			failures.append("Crew recruitment event %s is missing." % event_id)
+			continue
+		if str(definition.get("type", "")) != "crew":
+			failures.append("Crew recruitment event %s must use the crew event class." % event_id)
+		var speaker := _dict(definition.get("speaker", {}))
+		if str(speaker.get("role", "")) != "crew":
+			failures.append("Crew recruitment event %s must retain a Crew speaker." % event_id)
+	var knuckles := library.event("recruitment_knuckles")
+	var knuckles_speaker := _dict(knuckles.get("speaker", {}))
+	if str(knuckles.get("asset_path", "")) != "res://assets/art/events/rowdy_regular.png" \
+		or str(knuckles.get("icon_key", "")) != "rowdy_regular" \
+		or str(knuckles.get("environment_prop", "")) != "rowdy_patron" \
+		or not bool(knuckles_speaker.get("environment_actor", false)):
+		failures.append("Knuckles recruitment must remain an actor-present rowdy encounter, not a door prop.")
 
 
 static func _check_placement_matrix(library: ContentLibrary, failures: Array) -> void:
@@ -140,8 +164,16 @@ static func _check_rook_signposts(library: ContentLibrary, failures: Array) -> v
 		module.setup(library.event("recruitment_rook_leads"), library)
 		var first := module.resolve(presence_run, presence_run.current_environment, "ask_switch")
 		if not bool(first.get("ok", false)) or _string_array(presence_run.current_environment.get("resolved_event_ids", [])).has("recruitment_rook_leads") \
-			or not module.can_trigger(presence_run, presence_run.current_environment) or module.choice("ask_switch", presence_run, presence_run.current_environment).is_empty():
-			failures.append("Rook's presence-bound leads encounter was not reusable after one question.")
+			or not bool(presence_run.narrative_flags.get("crew_rook_lead_heard:crew_switch", false)) \
+			or not module.choice("ask_switch", presence_run, presence_run.current_environment).is_empty() \
+			or _string_array(presence_run.current_environment.get("event_ids", [])).has("recruitment_rook_leads") \
+			or module.can_trigger(presence_run, presence_run.current_environment):
+			failures.append("Rook's presence-bound lead did not retire after its one authored hearing.")
+		var heard_round_trip := RunStateScript.new()
+		heard_round_trip.from_dict(presence_run.to_dict())
+		if not bool(heard_round_trip.narrative_flags.get("crew_rook_lead_heard:crew_switch", false)) \
+			or not CrewRecruitmentModelScript.rook_signpost_choices(heard_round_trip).is_empty():
+			failures.append("Rook's one-hearing lead retirement did not survive save/load.")
 
 
 static func _check_perks_and_save(failures: Array) -> void:
