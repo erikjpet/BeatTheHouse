@@ -39,6 +39,27 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 
 
 func _check_coin_pusher_data_contract(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
+	var solver_api_contract := {
+		"schema": CoinPusherSolverScript.SCHEMA,
+		"fixed_hz": CoinPusherSolverScript.FIXED_HZ,
+		"fixed_point_scale": CoinPusherSolverScript.FP,
+		"width": CoinPusherSolverScript.WIDTH,
+		"front_edge": CoinPusherSolverScript.FRONT_EDGE,
+		"upper_edge": CoinPusherSolverScript.UPPER_EDGE,
+		"rear_edge": CoinPusherSolverScript.REAR_EDGE,
+		"upper_floor_z": CoinPusherSolverScript.UPPER_FLOOR_Z,
+		"lower_floor_z": CoinPusherSolverScript.LOWER_FLOOR_Z,
+		"coin_radius": CoinPusherSolverScript.COIN_RADIUS,
+		"coin_height": CoinPusherSolverScript.COIN_HEIGHT,
+		"object_radius": CoinPusherSolverScript.OBJECT_RADIUS,
+		"object_height": CoinPusherSolverScript.OBJECT_HEIGHT,
+		"action_ticks": CoinPusherSolverScript.ACTION_TICKS,
+		"phase_period": CoinPusherSolverScript.PHASE_PERIOD,
+		"tray_left": CoinPusherSolverScript.TRAY_LEFT,
+		"tray_right": CoinPusherSolverScript.TRAY_RIGHT,
+	}
+	if solver_api_contract != CoinPusherSolverScript.implementation_contract():
+		failures.append("Quarter Falls lazy solver API constants drifted from the deterministic implementation contract.")
 	if str(definition.get("module_path", "")) != "res://scripts/games/coin_pusher.gd" or str(definition.get("family", "")) != "coin_pusher":
 		failures.append("Quarter Falls is not registered as the data-routed coin_pusher family.")
 	if not _string_array(definition.get("content_groups", [])).has("coin_pusher_pack") or _string_array(definition.get("content_groups", [])).has("slot_pack"):

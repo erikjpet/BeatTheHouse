@@ -31,6 +31,28 @@ const MAX_COLLISION_PASSES := 1
 const BROADPHASE_CELL := 10000
 
 
+static func public_contract() -> Dictionary:
+	return {
+		"schema": SCHEMA,
+		"fixed_hz": FIXED_HZ,
+		"fixed_point_scale": FP,
+		"width": WIDTH,
+		"front_edge": FRONT_EDGE,
+		"upper_edge": UPPER_EDGE,
+		"rear_edge": REAR_EDGE,
+		"upper_floor_z": UPPER_FLOOR_Z,
+		"lower_floor_z": LOWER_FLOOR_Z,
+		"coin_radius": COIN_RADIUS,
+		"coin_height": COIN_HEIGHT,
+		"object_radius": OBJECT_RADIUS,
+		"object_height": OBJECT_HEIGHT,
+		"action_ticks": ACTION_TICKS,
+		"phase_period": PHASE_PERIOD,
+		"tray_left": TRAY_LEFT,
+		"tray_right": TRAY_RIGHT,
+	}
+
+
 static func create(seed_rng: RngStream, coin_cap: int, opening_coins: int, lane_count: int) -> Dictionary:
 	var state := {
 		"schema": SCHEMA,
