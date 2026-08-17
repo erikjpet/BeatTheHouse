@@ -65,6 +65,7 @@ var _indexes: Dictionary = {}
 var _table_approach_game_targets: Dictionary = {}
 var _table_approach_has_wildcard := false
 var _table_approach_indexed_events: Array = []
+var _content_index_generation := 0
 var _load_timing: Dictionary = {}
 var _load_pack_timings: Array = []
 
@@ -123,7 +124,7 @@ func load(run_validation: bool = true) -> Dictionary:
 	var town_condition_entries := _load_array(TOWN_CONDITIONS_PATH, true)
 	town_conditions = town_condition_entries[0] if not town_condition_entries.is_empty() and typeof(town_condition_entries[0]) == TYPE_DICTIONARY else {}
 	var parse_complete_usec := Time.get_ticks_usec()
-	_rebuild_indexes()
+	rebuild_content_indexes()
 	var index_complete_usec := Time.get_ticks_usec()
 	if run_validation:
 		validate()
@@ -165,6 +166,9 @@ func validate() -> Array:
 	validation_complete = true
 	events = _normalize_event_definitions(events)
 	dialogues = _normalize_dialogue_definitions(dialogues)
+	# Validation replaces normalized content arrays. Publish that mutation through
+	# the supported index boundary before any validator or fixture reads content.
+	rebuild_content_indexes()
 	validation_errors = _load_errors.duplicate(true)
 	validation_warnings = []
 	_validate_collection("environment_archetypes", environment_archetypes, [
@@ -1026,8 +1030,22 @@ static func _normalize_event_timing(value: Variant) -> Dictionary:
 	}
 
 
-# Rebuilds id indexes for loaded content arrays. Fixture tests can still assign
-# arrays directly; _lookup refreshes a stale or missing index on demand.
+# Supported invalidation boundary for tools and fixtures that edit public content
+# arrays after load. Production content is immutable between calls to load(); an
+# editor that mutates an Array or one of its nested definitions in place must call
+# this method once after the edit. Runtime action paths never rescan content.
+func rebuild_content_indexes() -> void:
+	_rebuild_indexes()
+	_content_index_generation += 1
+
+
+func content_index_generation() -> int:
+	return _content_index_generation
+
+
+# Rebuilds id indexes for loaded content arrays. Fixture tests can still replace
+# arrays directly; _lookup and the table-target identity guard refresh replacements
+# on demand. In-place fixture edits use rebuild_content_indexes() above.
 func _rebuild_indexes() -> void:
 	_indexes = {
 		"environment_archetypes": _index_by_id(environment_archetypes),
@@ -1050,7 +1068,8 @@ func _rebuild_indexes() -> void:
 
 func _ensure_table_approach_target_index() -> void:
 	# Production content is immutable after load. This identity check keeps the
-	# long-standing direct-array fixture seam honest without rescanning on play.
+	# long-standing direct-array replacement seam honest without rescanning on
+	# play. In-place tool/fixture edits use rebuild_content_indexes().
 	if not is_same(_table_approach_indexed_events, events):
 		_rebuild_table_approach_target_index()
 

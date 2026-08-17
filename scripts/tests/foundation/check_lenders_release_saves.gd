@@ -4480,6 +4480,7 @@ func _fixture_library() -> ContentLibrary:
 			"destination_tier_hint": 1,
 		},
 	]
+	library.rebuild_content_indexes()
 	return library
 
 
