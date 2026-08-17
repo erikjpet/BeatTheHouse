@@ -651,6 +651,10 @@ func _foundation_library_fingerprint(library: ContentLibrary) -> String:
 		"validation_errors": library.validation_errors,
 		"validation_warnings": library.validation_warnings,
 		"validation_complete": library.validation_complete,
+		"_load_errors": library._load_errors,
+		"_indexes": library._indexes,
+		"_load_timing": library._load_timing,
+		"_load_pack_timings": library._load_pack_timings,
 	})
 
 

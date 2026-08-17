@@ -110,12 +110,64 @@ $script:FoundationSystemsShardPlan = [ordered]@{
     )
 }
 
+$script:FoundationSystemsUserPathOwners = [ordered]@{
+    "user://foundation_tutorial_meta_store.json" = "onboarding_tutorial_arc"
+    "user://foundation_profile_inventory_check.json" = "profile_inventory_boundary"
+    "user://saves/foundation_save_round_trip.json" = "save_service_foundation_round_trip"
+    "user://saves/foundation_save_atomic_recovery.json" = "save_service_foundation_round_trip"
+    "user://meta_collection_linked_bag_check.json" = "meta_home_run_boundary"
+    "user://foundation_check_fresh_meta_collection.json" = "meta_home_fresh_store_defaults"
+    "user://foundation_check_polluted_meta_collection.json" = "meta_home_fixture_pollution_migration"
+    "user://foundation_check_earned_meta_collection.json" = "meta_home_fixture_pollution_migration"
+    "user://music_wav_cache_fixture.wav" = "music_fx_foundation"
+}
+
 function Get-FoundationSystemsCheckIds {
     return @($script:FoundationSystemsCheckIds)
 }
 
 function Get-FoundationSystemsShardPlan {
     return $script:FoundationSystemsShardPlan
+}
+
+function Get-FoundationSystemsUserPathOwners {
+    return $script:FoundationSystemsUserPathOwners
+}
+
+function Get-FoundationCacheFingerprint {
+    param([string]$CacheRoot)
+    if (-not (Test-Path -LiteralPath $CacheRoot)) {
+        return @()
+    }
+    $rootPath = [System.IO.Path]::GetFullPath($CacheRoot).TrimEnd([char[]]@([char]'\', [char]'/'))
+    return @(Get-ChildItem -LiteralPath $rootPath -Recurse -File -ErrorAction Stop | Sort-Object FullName | ForEach-Object {
+        $relative = $_.FullName.Substring($rootPath.Length).TrimStart([char[]]@([char]'\', [char]'/')).Replace("\", "/")
+        $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+        "{0}|{1}|{2}" -f $relative, $_.Length, $hash
+    })
+}
+
+function Resolve-FoundationSystemsExitCode {
+    param(
+        [object[]]$ShardResults,
+        [bool]$AggregatePassed,
+        [bool]$BudgetExceeded
+    )
+    if (@($ShardResults | Where-Object { [bool]$_.timed_out }).Count -gt 0) {
+        return 124
+    }
+    foreach ($shard in $ShardResults) {
+        if ([int]$shard.exit_code -ne 0) {
+            return [int]$shard.exit_code
+        }
+    }
+    if (-not $AggregatePassed) {
+        return 1
+    }
+    if ($BudgetExceeded) {
+        return 126
+    }
+    return 0
 }
 
 function Test-FoundationSystemsShardPlan {
@@ -167,7 +219,6 @@ function Merge-FoundationSystemsShardReports {
         [object[]]$ShardResults
     )
     $harnessFailures = New-Object System.Collections.Generic.List[string]
-    $unassignedFailures = New-Object System.Collections.Generic.List[string]
     $checksById = @{}
     $executedByShard = [ordered]@{}
     $shardSummaries = @()
@@ -179,6 +230,9 @@ function Merge-FoundationSystemsShardReports {
             $harnessFailures.Add("Systems shard '$shardId' did not produce a readable report.")
         }
         else {
+            if ([string]$report.tool -ne "foundation_check" -or [string]$report.suite -ne "systems") {
+                $harnessFailures.Add("Systems shard '$shardId' produced a report with the wrong tool or suite.")
+            }
             $registeredIds = @($report.registered_check_ids)
             if (($registeredIds -join "|") -ne ($ExpectedIds -join "|")) {
                 $harnessFailures.Add("Systems shard '$shardId' did not observe the canonical systems registration in its original order.")
@@ -192,15 +246,26 @@ function Merge-FoundationSystemsShardReports {
                 else {
                     $checksById[$checkId] = $check
                 }
-            }
-            $attachedFailures = @($report.checks | ForEach-Object { @($_.failures) })
-            foreach ($failure in @($report.failures)) {
-                if ($attachedFailures -notcontains [string]$failure) {
-                    $unassignedFailures.Add([string]$failure)
+                $checkFailures = @($check.failures)
+                if ([int]$check.failure_count -ne $checkFailures.Count -or [bool]$check.passed -ne ($checkFailures.Count -eq 0)) {
+                    $harnessFailures.Add("Systems shard '$shardId' check '$checkId' has inconsistent failure fields.")
                 }
             }
-            if (-not [bool]$report.passed -and @($report.failures).Count -eq 0) {
-                $harnessFailures.Add("Systems shard '$shardId' reported failure without a failure message.")
+            $expectedShardIds = @($shard.expected_check_ids)
+            $requestedIds = @($report.requested_check_ids)
+            $reportedExecutedIds = @($report.executed_check_ids)
+            if (($requestedIds -join "|") -ne ($expectedShardIds -join "|")) {
+                $harnessFailures.Add("Systems shard '$shardId' requested-check evidence diverged from its stable ownership list.")
+            }
+            if (($executedIds -join "|") -ne ($expectedShardIds -join "|") -or ($reportedExecutedIds -join "|") -ne ($expectedShardIds -join "|")) {
+                $harnessFailures.Add("Systems shard '$shardId' executed checks outside its canonical owned order.")
+            }
+            $attachedFailures = @($report.checks | ForEach-Object { @($_.failures) })
+            if ((@($report.failures) -join "`n") -ne ($attachedFailures -join "`n")) {
+                $harnessFailures.Add("Systems shard '$shardId' report-level failures diverged from its ordered check failures.")
+            }
+            if ([int]$report.failure_count -ne @($report.failures).Count -or [bool]$report.passed -ne (@($report.failures).Count -eq 0)) {
+                $harnessFailures.Add("Systems shard '$shardId' has inconsistent report-level failure fields.")
             }
         }
         $executedByShard[$shardId] = $executedIds
@@ -250,9 +315,6 @@ function Merge-FoundationSystemsShardReports {
         foreach ($failure in @($check.failures)) {
             $failures.Add([string]$failure)
         }
-    }
-    foreach ($failure in $unassignedFailures) {
-        $failures.Add([string]$failure)
     }
     foreach ($failure in $harnessFailures) {
         $failures.Add([string]$failure)
