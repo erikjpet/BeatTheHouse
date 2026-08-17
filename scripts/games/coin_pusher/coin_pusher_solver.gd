@@ -339,6 +339,8 @@ static func add_recovered_coin(state: Dictionary, rng: RngStream, lane_count: in
 
 static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	_normalize_hot_body_fields(state)
+	var debug_adapter := bool(config.get("_debug_profile_stages", false))
+	var debug_adapter_started_usec := Time.get_ticks_usec() if debug_adapter else 0
 	if _hot_state_requires_reference(state, config):
 		_last_step_backend_for_test = "reference"
 		return _step_action_dictionary_reference(state, config)
@@ -346,13 +348,37 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	if forced_backend != "gdscript":
 		var native := _native_solver_backend()
 		if native != null:
-			var native_state := _native_candidate_state(state)
-			var native_config := config.duplicate(true)
-			if bool(native.call("can_step", native_state, native_config)):
+			var trusted_native := native.get_class() == "CoinPusherNativeCore" and native.get_script() == null
+			var debug_stage_started_usec := Time.get_ticks_usec() if debug_adapter else 0
+			var native_state := _native_candidate_state(state, not trusted_native)
+			var native_config := config.duplicate(not trusted_native)
+			var debug_candidate_usec := Time.get_ticks_usec() - debug_stage_started_usec if debug_adapter else 0
+			debug_stage_started_usec = Time.get_ticks_usec() if debug_adapter else 0
+			# The exact shipped extension validates at the top of step_action before it
+			# constructs or mutates the kernel. Calling can_step first repeated the same
+			# full-body validation across the GDExtension boundary. Injected/mock
+			# backends keep the explicit eligibility call and deep transaction above.
+			var native_eligible := trusted_native or bool(native.call("can_step", native_state, native_config))
+			var debug_can_step_usec := Time.get_ticks_usec() - debug_stage_started_usec if debug_adapter else 0
+			if native_eligible:
+				debug_stage_started_usec = Time.get_ticks_usec() if debug_adapter else 0
 				var native_result_value: Variant = native.call("step_action", native_state, native_config)
+				var debug_native_call_usec := Time.get_ticks_usec() - debug_stage_started_usec if debug_adapter else 0
 				var native_result: Dictionary = native_result_value if typeof(native_result_value) == TYPE_DICTIONARY else {}
-				if _native_step_contract_valid(state, native_state, native_result, config):
+				debug_stage_started_usec = Time.get_ticks_usec() if debug_adapter else 0
+				if _native_step_contract_valid(state, native_state, native_result, config, trusted_native):
+					var debug_validate_usec := Time.get_ticks_usec() - debug_stage_started_usec if debug_adapter else 0
+					debug_stage_started_usec = Time.get_ticks_usec() if debug_adapter else 0
 					_publish_native_state(state, native_state)
+					if debug_adapter:
+						var debug_profile: Dictionary = native_result.get("debug_stage_timing_usec", {})
+						debug_profile["adapter_candidate"] = debug_candidate_usec
+						debug_profile["adapter_can_step"] = debug_can_step_usec
+						debug_profile["adapter_native_call"] = debug_native_call_usec
+						debug_profile["adapter_validate"] = debug_validate_usec
+						debug_profile["adapter_publish"] = Time.get_ticks_usec() - debug_stage_started_usec
+						debug_profile["adapter_total"] = Time.get_ticks_usec() - debug_adapter_started_usec
+						native_result["debug_stage_timing_usec"] = debug_profile
 					_last_step_backend_for_test = "native"
 					return native_result
 	_last_step_backend_for_test = "gdscript"
@@ -389,6 +415,10 @@ static func install_native_backend_for_test(backend: Object) -> void:
 	_last_step_backend_for_test = "uninitialized"
 
 
+static func native_step_contract_valid_for_test(before: Dictionary, candidate: Dictionary, result: Dictionary, config: Dictionary, trusted_native: bool) -> bool:
+	return _native_step_contract_valid(before, candidate, result, config, trusted_native)
+
+
 static func _native_solver_backend() -> Object:
 	if _native_backend_checked:
 		return _native_backend
@@ -420,14 +450,14 @@ static func _native_backend_contract_valid(backend: Object) -> bool:
 		and int(contract.get("action_ticks", -1)) == ACTION_TICKS
 
 
-static func _native_candidate_state(state: Dictionary) -> Dictionary:
+static func _native_candidate_state(state: Dictionary, deep_copy_values: bool = true) -> Dictionary:
 	var candidate := {}
 	for key in ["schema", "version", "fixed_hz", "fixed_point_scale", "tick", "upper_phase_fp", "lower_phase_fp"]:
 		if state.has(key):
 			candidate[key] = state[key]
 	var candidate_bodies: Array = []
 	for body_value in state.get("bodies", []):
-		candidate_bodies.append((body_value as Dictionary).duplicate(true))
+		candidate_bodies.append((body_value as Dictionary).duplicate(deep_copy_values))
 	candidate["bodies"] = candidate_bodies
 	return candidate
 
@@ -460,7 +490,7 @@ static func _publish_native_state(state: Dictionary, candidate: Dictionary) -> v
 	state["last_step_metrics"] = candidate["last_step_metrics"]
 
 
-static func _native_step_contract_valid(before: Dictionary, candidate: Dictionary, result: Dictionary, config: Dictionary) -> bool:
+static func _native_step_contract_valid(before: Dictionary, candidate: Dictionary, result: Dictionary, config: Dictionary, trusted_native: bool = false) -> bool:
 	if result.is_empty() or typeof(candidate.get("bodies", null)) != TYPE_ARRAY:
 		return false
 	if typeof(candidate.get("tick", null)) != TYPE_INT or int(candidate.get("tick", -1)) != int(before.get("tick", 0)) + ACTION_TICKS:
@@ -519,11 +549,61 @@ static func _native_step_contract_valid(before: Dictionary, candidate: Dictionar
 		return false
 	var before_bodies: Array = before.get("bodies", [])
 	var candidate_bodies: Array = candidate.get("bodies", [])
+	var mutable_body_keys := ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "sleeping", "rest_state", "lean_milli", "cap_pressure_ticks", "cap_pressure_accel"]
+	if trusted_native:
+		# validate_step_input() guarantees unique source IDs. The exact unscripted
+		# kernel may only retain bodies in source order or remove a body reported by
+		# one physical-exit event. Immutable body shape and values remain guarded.
+		var physical_exit_ids := {}
+		for event_value in result.get("events", []):
+			if typeof(event_value) != TYPE_DICTIONARY:
+				return false
+			var exit_event: Dictionary = event_value
+			var exit_id := str(exit_event.get("body_id", ""))
+			if exit_id.is_empty() or str(exit_event.get("cause", "")) != "physical_fall" or physical_exit_ids.has(exit_id):
+				return false
+			physical_exit_ids[exit_id] = true
+		var before_index := 0
+		for candidate_value in candidate_bodies:
+			if typeof(candidate_value) != TYPE_DICTIONARY:
+				return false
+			var candidate_body: Dictionary = candidate_value
+			var candidate_id := str(candidate_body.get("id", ""))
+			while before_index < before_bodies.size() and str((before_bodies[before_index] as Dictionary).get("id", "")) != candidate_id:
+				var removed_id := str((before_bodies[before_index] as Dictionary).get("id", ""))
+				if not physical_exit_ids.erase(removed_id):
+					return false
+				before_index += 1
+			if before_index >= before_bodies.size():
+				return false
+			var before_body: Dictionary = before_bodies[before_index]
+			before_index += 1
+			for int_key in ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "lean_milli"]:
+				if typeof(candidate_body.get(int_key, null)) != TYPE_INT:
+					return false
+			if typeof(candidate_body.get("sleeping", null)) != TYPE_BOOL or typeof(candidate_body.get("rest_state", null)) != TYPE_STRING:
+				return false
+			for pressure_key in ["cap_pressure_ticks", "cap_pressure_accel"]:
+				if before_body.has(pressure_key) and not candidate_body.has(pressure_key):
+					return false
+				if candidate_body.has(pressure_key) and typeof(candidate_body[pressure_key]) != TYPE_INT:
+					return false
+			for key in before_body:
+				if not mutable_body_keys.has(key) and (not candidate_body.has(key) or typeof(candidate_body[key]) != typeof(before_body[key]) or candidate_body[key] != before_body[key]):
+					return false
+			for key in candidate_body:
+				if not mutable_body_keys.has(key) and not before_body.has(key):
+					return false
+		while before_index < before_bodies.size():
+			var removed_id := str((before_bodies[before_index] as Dictionary).get("id", ""))
+			if not physical_exit_ids.erase(removed_id):
+				return false
+			before_index += 1
+		return physical_exit_ids.is_empty()
 	var candidate_ids := {}
 	var before_by_id := {}
 	for before_value in before_bodies:
 		before_by_id[str((before_value as Dictionary).get("id", ""))] = before_value
-	var mutable_body_keys := ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "sleeping", "rest_state", "lean_milli", "cap_pressure_ticks", "cap_pressure_accel"]
 	for candidate_value in candidate_bodies:
 		if typeof(candidate_value) != TYPE_DICTIONARY:
 			return false
@@ -545,12 +625,13 @@ static func _native_step_contract_valid(before: Dictionary, candidate: Dictionar
 				return false
 			if candidate_body.has(pressure_key) and typeof(candidate_body[pressure_key]) != TYPE_INT:
 				return false
-		for key in before_body:
-			if not mutable_body_keys.has(key) and (not candidate_body.has(key) or typeof(candidate_body[key]) != typeof(before_body[key]) or candidate_body[key] != before_body[key]):
-				return false
-		for key in candidate_body:
-			if not mutable_body_keys.has(key) and not before_body.has(key):
-				return false
+		if not trusted_native:
+			for key in before_body:
+				if not mutable_body_keys.has(key) and (not candidate_body.has(key) or typeof(candidate_body[key]) != typeof(before_body[key]) or candidate_body[key] != before_body[key]):
+					return false
+			for key in candidate_body:
+				if not mutable_body_keys.has(key) and not before_body.has(key):
+					return false
 	var candidate_index := 0
 	for before_value in before_bodies:
 		if candidate_index < candidate_bodies.size() \

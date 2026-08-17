@@ -9,6 +9,7 @@
 #include <limits>
 #include <map>
 #include <set>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -96,6 +97,7 @@ struct Body {
 	String id;
 	String kind;
 	Dictionary metadata;
+	Dictionary trace_base_view;
 	String rest_state;
 	int64_t x = 0;
 	int64_t y = 0;
@@ -120,8 +122,8 @@ struct ExitTrail {
 
 class SpatialGrid {
 public:
-	std::map<int64_t, std::vector<int>> buckets;
-	std::map<int64_t, std::vector<int>> candidates;
+	std::unordered_map<int64_t, std::vector<int>> buckets;
+	std::unordered_map<int64_t, std::vector<int>> candidates;
 
 	void rebuild(const std::vector<Body> &bodies) {
 		buckets.clear();
@@ -224,6 +226,8 @@ public:
 	void load() {
 		source_bodies = state.get("bodies", Array());
 		Array source = source_bodies;
+		capture_trace = config.get("capture_presentation_trace", false);
+		emit_presentation = config.get("emit_presentation_events", true);
 		bodies.reserve(source.size());
 		for (int index = 0; index < source.size(); ++index) {
 			Dictionary ref = source[index];
@@ -232,13 +236,22 @@ public:
 			body.id = ref.get("id", "");
 			body.kind = ref.get("kind", "coin");
 			Variant metadata_value = ref.get("metadata", Dictionary());
-			body.metadata = metadata_value.get_type() == Variant::DICTIONARY ? Dictionary(metadata_value) : Dictionary();
+			body.metadata = metadata_value.get_type() == Variant::DICTIONARY ? Dictionary(metadata_value).duplicate(true) : Dictionary();
 			body.rest_state = ref.get("rest_state", "settling");
 			body.x = ref.get("x", 0); body.y = ref.get("y", 0); body.z = ref.get("z", 0);
 			body.vx = ref.get("vx", 0); body.vy = ref.get("vy", 0); body.vz = ref.get("vz", 0);
 			body.radius = ref.get("radius", COIN_RADIUS); body.height = ref.get("height", COIN_HEIGHT); body.mass = ref.get("mass", 1);
 			body.sleep_ticks = ref.get("sleep_ticks", 0); body.sleeping = ref.get("sleeping", false);
 			body.lean = ref.get("lean_milli", 0); body.pressure_ticks = ref.get("cap_pressure_ticks", 0); body.pressure_accel = ref.get("cap_pressure_accel", 0);
+			if (capture_trace) {
+				body.trace_base_view["id"] = body.id; body.trace_base_view["kind"] = body.kind;
+				body.trace_base_view["material_category"] = material_category(body.kind);
+				body.trace_base_view["x"] = body.x; body.trace_base_view["y"] = body.y; body.trace_base_view["z"] = body.z;
+				body.trace_base_view["radius"] = body.radius; body.trace_base_view["height"] = body.height; body.trace_base_view["mass"] = body.mass;
+				body.trace_base_view["sleeping"] = body.sleeping; body.trace_base_view["rest_state"] = body.rest_state;
+				body.trace_base_view["level"] = ""; body.trace_base_view["lean_milli"] = body.lean;
+				body.trace_base_view["metadata"] = body.metadata;
+			}
 			bodies.push_back(body);
 		}
 		upper_phase = state.get("upper_phase_fp", 0);
@@ -252,8 +265,6 @@ public:
 			lower_phase = posmod_i(static_cast<int64_t>(config.get("captured_lower_phase_fp", 0)), PHASE_PERIOD);
 			state["lower_phase_fp"] = lower_phase;
 		}
-		capture_trace = config.get("capture_presentation_trace", false);
-		emit_presentation = config.get("emit_presentation_events", true);
 		for (const Body &body : bodies) {
 			start_x.push_back(body.x); start_y.push_back(body.y); start_z.push_back(body.z);
 			if (emit_presentation) peak_z.push_back(body.z);
@@ -459,32 +470,48 @@ public:
 	}
 
 	Dictionary body_view(const Body &body) const {
-		Dictionary view;
-		view["id"] = body.id; view["kind"] = body.kind;
-		view["material_category"] = material_category(body.kind);
+		Dictionary view = body.trace_base_view.duplicate(false);
 		view["x"] = body.x; view["y"] = body.y; view["z"] = body.z;
-		view["radius"] = body.radius; view["height"] = body.height; view["mass"] = body.mass;
 		view["sleeping"] = body.sleeping; view["rest_state"] = body.rest_state;
 		view["level"] = body.y >= UPPER_EDGE && body.z >= UPPER_FLOOR_Z ? "upper" : body.y >= FRONT_EDGE && body.z >= LOWER_FLOOR_Z && body.z < UPPER_FLOOR_Z ? "lower" : "falling";
-		view["lean_milli"] = body.lean; view["metadata"] = body.metadata.duplicate(true);
+		view["lean_milli"] = body.lean;
+		view["metadata"] = body.metadata.duplicate(true);
 		return view;
 	}
 
-	static bool depth_before(const Dictionary &left, const Dictionary &right) {
-		const int64_t left_depth = static_cast<int64_t>(left.get("y", 0)) * 10 - static_cast<int64_t>(left.get("z", 0));
-		const int64_t right_depth = static_cast<int64_t>(right.get("y", 0)) * 10 - static_cast<int64_t>(right.get("z", 0));
-		if (left_depth == right_depth) return String(left.get("id", "")) < String(right.get("id", ""));
-		return left_depth > right_depth;
-	}
-
 	Array body_views(const Array &extra = Array()) const {
-		std::vector<Dictionary> sorted;
+		struct OrderedView {
+			int body_index = -1;
+			Dictionary extra_view;
+			int64_t depth = 0;
+			String id;
+		};
+		std::vector<OrderedView> sorted;
 		sorted.reserve(bodies.size() + extra.size());
-		for (const Body &body : bodies) sorted.push_back(body_view(body));
-		for (int index = 0; index < extra.size(); ++index) sorted.push_back(Dictionary(extra[index]));
-		std::sort(sorted.begin(), sorted.end(), depth_before);
+		for (int index = 0; index < static_cast<int>(bodies.size()); ++index) {
+			const Body &body = bodies[index];
+			OrderedView entry;
+			entry.body_index = index;
+			entry.depth = body.y * 10 - body.z;
+			entry.id = body.id;
+			sorted.push_back(entry);
+		}
+		for (int index = 0; index < extra.size(); ++index) {
+			Dictionary view = extra[index];
+			OrderedView entry;
+			entry.extra_view = view;
+			entry.depth = static_cast<int64_t>(view.get("y", 0)) * 10 - static_cast<int64_t>(view.get("z", 0));
+			entry.id = view.get("id", "");
+			sorted.push_back(entry);
+		}
+		std::sort(sorted.begin(), sorted.end(), [](const OrderedView &left, const OrderedView &right) {
+			if (left.depth == right.depth) return left.id < right.id;
+			return left.depth > right.depth;
+		});
 		Array result;
-		for (const Dictionary &view : sorted) result.append(view);
+		for (const OrderedView &entry : sorted) {
+			result.append(entry.body_index >= 0 ? body_view(bodies[entry.body_index]) : entry.extra_view);
+		}
 		return result;
 	}
 

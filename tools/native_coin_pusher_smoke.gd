@@ -3,6 +3,26 @@ extends SceneTree
 const Solver := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 
 
+class ScriptedNativeSubclass:
+	extends CoinPusherNativeCore
+
+	var can_step_called := false
+	var step_action_called := false
+
+	func can_step(state: Dictionary, _config: Dictionary) -> bool:
+		can_step_called = true
+		var bodies: Array = state.get("bodies", [])
+		if not bodies.is_empty():
+			var metadata: Dictionary = (bodies[0] as Dictionary).get("metadata", {})
+			var nested: Dictionary = metadata.get("nested", {})
+			nested["sentinel"] = "scripted_mutation"
+		return false
+
+	func step_action(_state: Dictionary, _config: Dictionary) -> Dictionary:
+		step_action_called = true
+		return {}
+
+
 func _initialize() -> void:
 	var failures: Array[String] = []
 	if not ClassDB.class_exists("CoinPusherNativeCore"):
@@ -114,7 +134,29 @@ func _check_exact_step_backends(core: Object, failures: Array[String]) -> void:
 			failures.append("native authoritative step did not advance exactly 48 fixed ticks")
 		if native_result.has("debug_stage_timing_usec"):
 			failures.append("production native result leaked non-authoritative wall-clock timing")
+		_check_trace_contract(source, native_state, native_result, failures)
+		_check_trusted_contract_negatives(core, source, base_config, failures)
+	_check_scripted_native_transaction(source, failures)
+	_check_full_cap_adapter_selection(failures)
 	_check_hostile_native_boundary(core, source, failures)
+
+
+func _check_full_cap_adapter_selection(failures: Array[String]) -> void:
+	var rng := RngStream.new()
+	rng.configure(19770123)
+	var state: Dictionary = Solver.create(rng, 160, 160, 5)
+	var drop_rng := rng.fork("full-cap-drop")
+	Solver.add_coin(state, drop_rng, 2, 5)
+	var result := Solver.step_action(state, {
+		"captured_upper_phase_fp": 1700,
+		"captured_lower_phase_fp": 2300,
+		"push_scale": 3,
+		"_debug_profile_stages": true,
+	})
+	if Solver.last_step_backend_for_test() != "native":
+		failures.append("full-cap production adapter rejected the real native result and double-ran the GDScript fallback")
+	if int((result.get("metrics", {}) as Dictionary).get("fixed_ticks", 0)) != Solver.ACTION_TICKS:
+		failures.append("full-cap native adapter smoke did not complete its fixed-tick action")
 
 
 func _check_hostile_native_boundary(core: Object, source: Dictionary, failures: Array[String]) -> void:
@@ -151,11 +193,146 @@ func _check_hostile_native_boundary(core: Object, source: Dictionary, failures: 
 		failures.append("native boundary mutated a duplicate-ID state before fallback")
 
 
+func _check_scripted_native_transaction(source: Dictionary, failures: Array[String]) -> void:
+	var backend := ScriptedNativeSubclass.new()
+	Solver.install_native_backend_for_test(backend)
+	var config := {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true}
+	var oracle_state := source.duplicate(true)
+	var oracle_result := Solver.step_action_reference_for_test(oracle_state, config)
+	var actual_state := source.duplicate(true)
+	var actual_result := Solver.step_action(actual_state, config)
+	if not backend.can_step_called or backend.step_action_called:
+		failures.append("scripted native subclass bypassed the untrusted can_step transaction")
+	if JSON.stringify(actual_state) != JSON.stringify(oracle_state) or JSON.stringify(actual_result) != JSON.stringify(oracle_result):
+		failures.append("scripted native subclass leaked a nested candidate mutation or changed deterministic fallback")
+	if Solver.last_step_backend_for_test() != "gdscript":
+		failures.append("scripted native subclass was incorrectly trusted as the exact native backend")
+	Solver.reset_native_backend_for_test()
+
+
+func _check_trusted_contract_negatives(core: Object, source: Dictionary, config: Dictionary, failures: Array[String]) -> void:
+	var before := source.duplicate(true)
+	var candidate := source.duplicate(true)
+	var result: Dictionary = core.call("step_action", candidate, config) as Dictionary
+	if not Solver.native_step_contract_valid_for_test(before, candidate, result, config, true):
+		failures.append("trusted native contract rejected an exact native result")
+		return
+	var fixtures: Array = []
+	var duplicate_candidate := candidate.duplicate(true)
+	(duplicate_candidate.get("bodies", []) as Array).append(((duplicate_candidate.get("bodies", []) as Array)[0] as Dictionary).duplicate(true))
+	var duplicate_result := result.duplicate(true)
+	_sync_contract_body_count(duplicate_candidate, duplicate_result)
+	fixtures.append(["duplicate body", duplicate_candidate, duplicate_result])
+	var reorder_candidate := candidate.duplicate(true)
+	var reorder_bodies: Array = reorder_candidate.get("bodies", [])
+	if reorder_bodies.size() >= 2:
+		var reordered := reorder_bodies[0]
+		reorder_bodies[0] = reorder_bodies[1]
+		reorder_bodies[1] = reordered
+	fixtures.append(["reordered body", reorder_candidate, result.duplicate(true)])
+	var missing_candidate := candidate.duplicate(true)
+	(missing_candidate.get("bodies", []) as Array).remove_at(0)
+	var missing_result := result.duplicate(true)
+	_sync_contract_body_count(missing_candidate, missing_result)
+	fixtures.append(["unreported missing body", missing_candidate, missing_result])
+	var extra_candidate := candidate.duplicate(true)
+	var extra_body := ((extra_candidate.get("bodies", []) as Array)[0] as Dictionary).duplicate(true)
+	extra_body["id"] = "native_extra"
+	(extra_candidate.get("bodies", []) as Array).append(extra_body)
+	var extra_result := result.duplicate(true)
+	_sync_contract_body_count(extra_candidate, extra_result)
+	fixtures.append(["extra body", extra_candidate, extra_result])
+	for mutation in ["add", "remove", "change"]:
+		var immutable_candidate := candidate.duplicate(true)
+		var immutable_body: Dictionary = (immutable_candidate.get("bodies", []) as Array)[0]
+		if mutation == "add":
+			immutable_body["smuggled"] = true
+		elif mutation == "remove":
+			immutable_body.erase("kind")
+		else:
+			immutable_body["kind"] = "rider"
+		fixtures.append(["immutable %s" % mutation, immutable_candidate, result.duplicate(true)])
+	var malformed_candidate := candidate.duplicate(true)
+	((malformed_candidate.get("bodies", []) as Array)[0] as Dictionary)["x"] = "bad"
+	fixtures.append(["malformed mutable", malformed_candidate, result.duplicate(true)])
+	var unreported_result := result.duplicate(true)
+	unreported_result["events"] = []
+	var unreported_candidate := candidate.duplicate(true)
+	unreported_candidate["last_events"] = []
+	fixtures.append(["unreported physical exit", unreported_candidate, unreported_result])
+	for fixture in fixtures:
+		if Solver.native_step_contract_valid_for_test(before, fixture[1], fixture[2], config, true):
+			failures.append("trusted native contract accepted %s" % str(fixture[0]))
+
+
+func _sync_contract_body_count(candidate: Dictionary, result: Dictionary) -> void:
+	var metrics: Dictionary = result.get("metrics", {})
+	metrics["body_count"] = (candidate.get("bodies", []) as Array).size()
+	result["metrics"] = metrics
+	candidate["last_step_metrics"] = metrics
+
+
+func _check_trace_contract(source: Dictionary, authority: Dictionary, result: Dictionary, failures: Array[String]) -> void:
+	var trace: Array = result.get("presentation_trace", [])
+	var expected_keys := ["id", "kind", "material_category", "x", "y", "z", "radius", "height", "mass", "sleeping", "rest_state", "level", "lean_milli", "metadata"]
+	var expected_exit_keys := ["id", "kind", "material_category", "x", "y", "z", "radius", "height", "mass", "sleeping", "rest_state", "lean_milli", "metadata"]
+	for frame_value in trace:
+		var frame: Dictionary = frame_value
+		for body_value in frame.get("bodies", []):
+			var body: Dictionary = body_value
+			var expected: Array = expected_keys if body.has("level") else expected_exit_keys
+			if body.keys() != expected:
+				failures.append("native trace body key insertion order diverged from the reference contract")
+				return
+	var first_metadata := _trace_metadata(trace, "native_a", 0)
+	var second_metadata := _trace_metadata(trace, "native_a", 1)
+	var authority_metadata := _body_metadata(authority, "native_a")
+	if first_metadata.is_empty() or second_metadata.is_empty() or authority_metadata.is_empty():
+		failures.append("native trace metadata isolation fixture was incomplete")
+		return
+	((first_metadata.get("nested", {}) as Dictionary))["sentinel"] = "frame_mutation"
+	if str(((second_metadata.get("nested", {}) as Dictionary)).get("sentinel", "")) != "native_a" \
+			or str(((authority_metadata.get("nested", {}) as Dictionary)).get("sentinel", "")) != "native_a":
+		failures.append("native trace frame nested metadata aliased a sibling frame or authority")
+	var events: Array = result.get("events", [])
+	if not events.is_empty():
+		var event_metadata: Dictionary = (events[0] as Dictionary).get("metadata", {})
+		var exit_frame_metadata := _trace_metadata(trace, str((events[0] as Dictionary).get("body_id", "")), 1)
+		if not event_metadata.is_empty() and not exit_frame_metadata.is_empty():
+			((event_metadata.get("nested", {}) as Dictionary))["sentinel"] = "event_mutation"
+			if str(((exit_frame_metadata.get("nested", {}) as Dictionary)).get("sentinel", "")) == "event_mutation":
+				failures.append("native physical-exit nested metadata aliased its published trace frame")
+	var source_metadata := _body_metadata(source, "native_exit")
+	if not source_metadata.is_empty() and str(((source_metadata.get("nested", {}) as Dictionary)).get("sentinel", "")) != "native_exit":
+		failures.append("native published metadata mutated the source authority")
+
+
+func _trace_metadata(trace: Array, body_id: String, occurrence: int) -> Dictionary:
+	var found := 0
+	for frame_value in trace:
+		for body_value in (frame_value as Dictionary).get("bodies", []):
+			var body: Dictionary = body_value
+			if str(body.get("id", "")) == body_id:
+				if found == occurrence:
+					return body.get("metadata", {})
+				found += 1
+	return {}
+
+
+func _body_metadata(state: Dictionary, body_id: String) -> Dictionary:
+	for body_value in state.get("bodies", []):
+		var body: Dictionary = body_value
+		if str(body.get("id", "")) == body_id:
+			return body.get("metadata", {})
+	return {}
+
+
 func _body(id: String, x: int, y: int, z: int, sleeping: bool) -> Dictionary:
 	return {
 		"id": id, "kind": "coin", "x": x, "y": y, "z": z,
 		"vx": 0, "vy": 0, "vz": 0,
 		"radius": Solver.COIN_RADIUS, "height": Solver.COIN_HEIGHT, "mass": 1,
 		"sleep_ticks": 9 if sleeping else 0, "sleeping": sleeping,
-		"rest_state": "resting" if sleeping else "settling", "lean_milli": 0, "metadata": {},
+		"rest_state": "resting" if sleeping else "settling", "lean_milli": 0,
+		"metadata": {"nested": {"sentinel": id}},
 	}

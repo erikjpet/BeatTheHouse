@@ -72,6 +72,10 @@ static func install_native_backend_for_test(backend: Object) -> void:
 	_implementation_script().call("install_native_backend_for_test", backend)
 
 
+static func native_step_contract_valid_for_test(before: Dictionary, candidate: Dictionary, result: Dictionary, config: Dictionary, trusted_native: bool = true) -> bool:
+	return bool(_implementation_script().call("native_step_contract_valid_for_test", before, candidate, result, config, trusted_native))
+
+
 static func body_views(state: Dictionary) -> Array:
 	return _implementation_script().call("body_views", state) as Array
 
