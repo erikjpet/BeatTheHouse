@@ -14,6 +14,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
 $suiteKey = $Suite.ToLowerInvariant()
 $foundationSuiteKey = $FoundationSuite.Trim().ToLowerInvariant()
 $validFoundationSuites = @(
@@ -202,29 +203,7 @@ function New-SplitTestRunner {
     $generatedRoot = Join-Path $root ".tmp\generated_tests"
     New-Item -ItemType Directory -Force -Path $generatedRoot | Out-Null
     $destination = Join-Path $generatedRoot $Name
-    $lines = New-Object System.Collections.Generic.List[string]
-    $sourceIndex = 0
-    foreach ($relativePath in $SourceRelativePaths) {
-        $source = Join-Path $root $relativePath
-        if (-not (Test-Path -LiteralPath $source)) {
-            throw "Split test source not found: $relativePath"
-        }
-        if ($sourceIndex -gt 0) {
-            $lines.Add("")
-            $lines.Add("# --- split source: $relativePath ---")
-        }
-        $fileLines = [System.IO.File]::ReadAllLines($source)
-        $lineIndex = 0
-        foreach ($line in $fileLines) {
-            if ($sourceIndex -gt 0 -and $lineIndex -eq 0 -and ($line -match '^extends\s+' -or $line -match '^class_name\s+')) {
-                $lineIndex += 1
-                continue
-            }
-            $lines.Add($line)
-            $lineIndex += 1
-        }
-        $sourceIndex += 1
-    }
+    $lines = @(Get-SplitTestRunnerLines -ProjectRoot $root -SourceRelativePaths $SourceRelativePaths)
     [System.IO.File]::WriteAllLines($destination, $lines)
     return Convert-ProjectResourcePath $destination
 }
