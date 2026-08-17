@@ -305,8 +305,8 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 	var presentation_bodies := _presentation_bodies(surface, state)
 	_draw_cells(surface, state, presentation_bodies)
 	_draw_lane_approaches(surface, state)
-	_draw_riders(surface, presentation_bodies)
-	_draw_variation_features(surface, state, presentation_bodies)
+	_draw_riders(surface, presentation_bodies, state.get("coin_pusher_bodies", []) if typeof(state.get("coin_pusher_bodies", [])) == TYPE_ARRAY else [])
+	_draw_variation_features(surface, state, presentation_bodies, state.get("coin_pusher_bodies", []) if typeof(state.get("coin_pusher_bodies", [])) == TYPE_ARRAY else [])
 	_draw_console(surface, state)
 	surface.surface_end_design_space()
 	return true
@@ -778,16 +778,35 @@ func _sync_physical_features(machine: Dictionary) -> void:
 	var simulation := _simulation(machine)
 	if simulation.is_empty():
 		return
+	var variation_id := str(machine.get("variation_id", "quarter_falls"))
+	var features: Array = machine.get("riders", []) if variation_id == "quarter_falls" else (_variation_state(machine).get("pucks", []) if variation_id == "jackpot_ridge" else _variation_state(machine).get("fragments", []))
+	var kind := "rider" if variation_id == "quarter_falls" else "puck" if variation_id == "jackpot_ridge" else "fragment"
+	var desired_feature_ids := {}
+	for value in features:
+		if typeof(value) == TYPE_DICTIONARY:
+			var desired_id := str((value as Dictionary).get("id", ""))
+			if not desired_id.is_empty():
+				desired_feature_ids[desired_id] = true
+	# Feature records are the durable ownership ledger. Reconcile stale physical
+	# bodies when that ledger is replaced instead of allowing ghost prizes to
+	# survive forever in the simulated pile.
+	var bodies: Array = simulation.get("bodies", []) if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else []
+	for body_index in range(bodies.size() - 1, -1, -1):
+		if typeof(bodies[body_index]) != TYPE_DICTIONARY:
+			continue
+		var candidate: Dictionary = bodies[body_index]
+		if str(candidate.get("kind", "")) != kind:
+			continue
+		var candidate_metadata: Dictionary = candidate.get("metadata", {}) if typeof(candidate.get("metadata", {})) == TYPE_DICTIONARY else {}
+		if not bool(desired_feature_ids.get(str(candidate_metadata.get("feature_id", "")), false)):
+			bodies.remove_at(body_index)
 	var existing := {}
-	for value in simulation.get("bodies", []):
+	for value in bodies:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var body: Dictionary = value
 		var metadata: Dictionary = body.get("metadata", {}) if typeof(body.get("metadata", {})) == TYPE_DICTIONARY else {}
 		existing[str(metadata.get("feature_id", ""))] = true
-	var variation_id := str(machine.get("variation_id", "quarter_falls"))
-	var features: Array = machine.get("riders", []) if variation_id == "quarter_falls" else (_variation_state(machine).get("pucks", []) if variation_id == "jackpot_ridge" else _variation_state(machine).get("fragments", []))
-	var kind := "rider" if variation_id == "quarter_falls" else "puck" if variation_id == "jackpot_ridge" else "fragment"
 	for value in features:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
@@ -1360,7 +1379,7 @@ func _draw_lane_approaches(surface, state: Dictionary) -> void:
 		surface.surface_label_centered(label, Rect2(center.x - 20.0, center.y - 14.0, 40.0, 12.0), 6, C_TEXT)
 
 
-func _draw_riders(surface, bodies: Array) -> void:
+func _draw_riders(surface, bodies: Array, final_bodies: Array) -> void:
 	var flicker := float(surface.surface_flicker())
 	for value in bodies:
 		if typeof(value) != TYPE_DICTIONARY:
@@ -1368,15 +1387,25 @@ func _draw_riders(surface, bodies: Array) -> void:
 		var rider: Dictionary = value
 		if str(rider.get("kind", "")) != "rider":
 			continue
-		var metadata: Dictionary = rider.get("metadata", {}) if typeof(rider.get("metadata", {})) == TYPE_DICTIONARY else {}
-		var world_x := float(int(rider.get("x", 0))) / float(CoinPusherSolverScript.WIDTH)
-		var world_y := float(int(rider.get("y", 0)) - CoinPusherSolverScript.FRONT_EDGE) / float(CoinPusherSolverScript.REAR_EDGE - CoinPusherSolverScript.FRONT_EDGE)
-		var world_z := float(int(rider.get("z", 0))) / 24000.0
-		var bob := sin(flicker * 3.0 + world_x * 4.0) * 2.5
-		var position := Vector2(84.0 + world_x * 500.0, 304.0 - world_y * 235.0 - world_z * 12.0 + bob)
-		surface.draw_circle(position, 8.0, C_HANG)
-		surface.draw_circle(position, 5.0, C_COIN)
-		surface.surface_label("R:%s" % str(metadata.get("label", "prize")).left(9).to_upper(), position + Vector2(10.0, 3.0), 6, C_TEXT)
+		_draw_rider_body(surface, rider, flicker)
+	for value in final_bodies:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var final_rider: Dictionary = value
+		if _should_draw_authoritative_feature(bodies, final_rider, "rider"):
+			_draw_rider_body(surface, final_rider, flicker)
+
+
+func _draw_rider_body(surface, rider: Dictionary, flicker: float) -> void:
+	var metadata: Dictionary = rider.get("metadata", {}) if typeof(rider.get("metadata", {})) == TYPE_DICTIONARY else {}
+	var world_x := float(int(rider.get("x", 0))) / float(CoinPusherSolverScript.WIDTH)
+	var world_y := float(int(rider.get("y", 0)) - CoinPusherSolverScript.FRONT_EDGE) / float(CoinPusherSolverScript.REAR_EDGE - CoinPusherSolverScript.FRONT_EDGE)
+	var world_z := float(int(rider.get("z", 0))) / 24000.0
+	var bob := sin(flicker * 3.0 + world_x * 4.0) * 2.5
+	var position := Vector2(84.0 + world_x * 500.0, 304.0 - world_y * 235.0 - world_z * 12.0 + bob)
+	surface.draw_circle(position, 8.0, C_HANG)
+	surface.draw_circle(position, 5.0, C_COIN)
+	surface.surface_label("R:%s" % str(metadata.get("label", "prize")).left(9).to_upper(), position + Vector2(10.0, 3.0), 6, C_TEXT)
 
 
 func _draw_console(surface, state: Dictionary) -> void:
@@ -1430,7 +1459,7 @@ func _draw_console(surface, state: Dictionary) -> void:
 	surface.surface_label(str(state.get("coin_pusher_last_message", "")).left(34), Vector2(678, 366), 7, C_TEXT)
 
 
-func _draw_variation_features(surface, state: Dictionary, bodies: Array) -> void:
+func _draw_variation_features(surface, state: Dictionary, bodies: Array, final_bodies: Array) -> void:
 	var variation_id := str(state.get("coin_pusher_variation_id", "quarter_falls"))
 	if variation_id == "quarter_falls":
 		return
@@ -1442,21 +1471,49 @@ func _draw_variation_features(surface, state: Dictionary, bodies: Array) -> void
 		var body_kind := str(feature.get("kind", ""))
 		if body_kind not in ["puck", "fragment"]:
 			continue
-		var metadata: Dictionary = feature.get("metadata", {}) if typeof(feature.get("metadata", {})) == TYPE_DICTIONARY else {}
-		var world_x := float(int(feature.get("x", 0))) / float(CoinPusherSolverScript.WIDTH)
-		var world_y := float(int(feature.get("y", 0)) - CoinPusherSolverScript.FRONT_EDGE) / float(CoinPusherSolverScript.REAR_EDGE - CoinPusherSolverScript.FRONT_EDGE)
-		var world_z := float(int(feature.get("z", 0))) / 24000.0
-		var position := Vector2(84.0 + world_x * 500.0, 304.0 - world_y * 235.0 - world_z * 12.0 + sin(flicker * 2.5 + world_x * 5.0) * 2.0)
-		if variation_id == "jackpot_ridge":
-			var kind := str(metadata.get("kind", "dud"))
-			var color := C_TEAL if kind == "multiplier" else Color("#9d7bff") if kind == "lock" else C_HANG
-			surface.draw_circle(position, 10.0, color)
-			surface.draw_circle(position, 7.0, C_BG)
-			var label := "x%d" % int(metadata.get("multiplier", 2)) if kind == "multiplier" else "L" if kind == "lock" else "D"
-			surface.surface_label_centered(label, Rect2(position - Vector2(10, 7), Vector2(20, 14)), 6, color)
-		else:
-			surface.draw_rect(Rect2(position - Vector2(7, 7), Vector2(14, 14)), Color("#a8ffea"))
-			surface.draw_rect(Rect2(position - Vector2(4, 4), Vector2(8, 8)), C_TEAL)
+		_draw_variation_feature_body(surface, variation_id, feature, flicker)
+	for value in final_bodies:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var final_feature: Dictionary = value
+		if _should_draw_authoritative_feature(bodies, final_feature, "variation"):
+			_draw_variation_feature_body(surface, variation_id, final_feature, flicker)
+
+
+func _should_draw_authoritative_feature(selected_bodies: Array, final_feature: Dictionary, feature_family: String) -> bool:
+	var final_kind := str(final_feature.get("kind", ""))
+	if not _feature_kind_matches_family(final_kind, feature_family):
+		return false
+	var final_id := str(final_feature.get("id", ""))
+	for value in selected_bodies:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var selected: Dictionary = value
+		if _feature_kind_matches_family(str(selected.get("kind", "")), feature_family) and str(selected.get("id", "")) == final_id:
+			return false
+	return true
+
+
+func _feature_kind_matches_family(kind: String, feature_family: String) -> bool:
+	return kind == "rider" if feature_family == "rider" else kind == "puck" or kind == "fragment"
+
+
+func _draw_variation_feature_body(surface, variation_id: String, feature: Dictionary, flicker: float) -> void:
+	var metadata: Dictionary = feature.get("metadata", {}) if typeof(feature.get("metadata", {})) == TYPE_DICTIONARY else {}
+	var world_x := float(int(feature.get("x", 0))) / float(CoinPusherSolverScript.WIDTH)
+	var world_y := float(int(feature.get("y", 0)) - CoinPusherSolverScript.FRONT_EDGE) / float(CoinPusherSolverScript.REAR_EDGE - CoinPusherSolverScript.FRONT_EDGE)
+	var world_z := float(int(feature.get("z", 0))) / 24000.0
+	var position := Vector2(84.0 + world_x * 500.0, 304.0 - world_y * 235.0 - world_z * 12.0 + sin(flicker * 2.5 + world_x * 5.0) * 2.0)
+	if variation_id == "jackpot_ridge":
+		var kind := str(metadata.get("kind", "dud"))
+		var color := C_TEAL if kind == "multiplier" else Color("#9d7bff") if kind == "lock" else C_HANG
+		surface.draw_circle(position, 10.0, color)
+		surface.draw_circle(position, 7.0, C_BG)
+		var label := "x%d" % int(metadata.get("multiplier", 2)) if kind == "multiplier" else "L" if kind == "lock" else "D"
+		surface.surface_label_centered(label, Rect2(position - Vector2(10, 7), Vector2(20, 14)), 6, color)
+	else:
+		surface.draw_rect(Rect2(position - Vector2(7, 7), Vector2(14, 14)), Color("#a8ffea"))
+		surface.draw_rect(Rect2(position - Vector2(4, 4), Vector2(8, 8)), C_TEAL)
 
 
 func _draw_vault_console(surface, state: Dictionary) -> void:

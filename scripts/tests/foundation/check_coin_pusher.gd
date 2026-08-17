@@ -20,6 +20,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_surface_liveness(game, failures)
 	_check_coin_pusher_visible_timing(game, failures)
 	_check_coin_pusher_presentation_replay(game, failures)
+	_check_coin_pusher_feature_reconciliation(game, failures)
 	_check_coin_pusher_discrete_solver(definition, failures)
 	_check_coin_pusher_read_boundaries(game, failures)
 	_check_coin_pusher_determinism(game, failures)
@@ -422,11 +423,51 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 	if not _trace_body_changes_level(fall_trace, "replay_upper") or not _trace_has_exit_path(fall_trace, "replay_tray", "tray") or not _trace_has_exit_path(fall_trace, "replay_gutter", "gutter"):
 		failures.append("Quarter Falls replay did not preserve legible upper-to-lower, tray, and gutter body paths.")
 
+	# A feature spawned by the resolved action may exist only in the final
+	# authoritative frame. Preserve an older trace feature by stable body id,
+	# while drawing the final-only feature instead of hiding it until replay end.
+	var selected_features := [
+		{"id": "existing_rider_body", "kind": "rider"},
+		{"id": "settled_coin", "kind": "coin"},
+	]
+	var existing_final := {"id": "existing_rider_body", "kind": "rider"}
+	var spawned_final := {"id": "spawned_rider_body", "kind": "rider"}
+	if bool(game.call("_should_draw_authoritative_feature", selected_features, existing_final, "rider")) \
+			or not bool(game.call("_should_draw_authoritative_feature", selected_features, spawned_final, "rider")):
+		failures.append("Quarter Falls replay did not reconcile one trace rider plus one final-only rider by stable body id.")
+	var selected_pucks := [{"id": "existing_puck_body", "kind": "puck"}]
+	var existing_puck := {"id": "existing_puck_body", "kind": "puck"}
+	var spawned_fragment := {"id": "spawned_fragment_body", "kind": "fragment"}
+	if bool(game.call("_should_draw_authoritative_feature", selected_pucks, existing_puck, "variation")) \
+			or not bool(game.call("_should_draw_authoritative_feature", selected_pucks, spawned_fragment, "variation")):
+		failures.append("Pusher variation replay did not reconcile existing and final-only physical features by stable body id.")
+
 
 func _trace_visibly_moves(trace: Array) -> bool:
 	if trace.size() < 2 or typeof(trace.front()) != TYPE_DICTIONARY or typeof(trace.back()) != TYPE_DICTIONARY:
 		return false
 	return JSON.stringify((trace.front() as Dictionary).get("bodies", [])) != JSON.stringify((trace.back() as Dictionary).get("bodies", []))
+
+
+func _check_coin_pusher_feature_reconciliation(game: GameModule, failures: Array) -> void:
+	var fixture := _coin_pusher_fixture(game, "PUSHER-FEATURE-RECONCILIATION")
+	var run_state: RunState = fixture.get("run_state")
+	var machine: Dictionary = (run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	machine["variation_id"] = "quarter_falls"
+	machine["riders"] = [
+		{"id": "replacement_rider_a", "kind": "chip_stack", "label": "first", "cash_value": 4, "lane": 1, "cell": 2},
+		{"id": "replacement_rider_b", "kind": "item", "label": "second", "item_id": "cold_quarters", "lane": 3, "cell": 3},
+	]
+	game.call("_sync_physical_features", machine)
+	var physical_feature_ids: Array = []
+	for body_value in CoinPusherSolverScript.body_views(machine.get("simulation", {})):
+		if typeof(body_value) != TYPE_DICTIONARY or str((body_value as Dictionary).get("kind", "")) != "rider":
+			continue
+		var metadata: Dictionary = (body_value as Dictionary).get("metadata", {}) if typeof((body_value as Dictionary).get("metadata", {})) == TYPE_DICTIONARY else {}
+		physical_feature_ids.append(str(metadata.get("feature_id", "")))
+	physical_feature_ids.sort()
+	if physical_feature_ids != ["replacement_rider_a", "replacement_rider_b"]:
+		failures.append("Quarter Falls durable feature-ledger replacement left a stale physical rider or failed to add exactly the desired feature ids: %s." % JSON.stringify(physical_feature_ids))
 
 
 func _trace_body_changes_level(trace: Array, body_id: String) -> bool:
@@ -687,7 +728,7 @@ func _check_coin_pusher_nudge_alarm(game: GameModule, library: ContentLibrary, f
 	if not bool(clean.get("coin_pusher_clean_drop", false)) or int(clean.get("coin_pusher_tolerance_spent", -1)) != 0:
 		failures.append("Well-timed, aimed Quarter Falls nudge did not preserve tolerance and clean the hanger.")
 	if game.deterministic_state_digest(environment) == digest_before_clean:
-		failures.append("A clean Quarter Falls nudge did not evolve the coarse pile.")
+		failures.append("A clean Quarter Falls nudge did not evolve the physical pile.")
 	machine = (environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	_machine_hanger_fixture(machine, 2)
 	machine["base_alarm_tolerance"] = 3
