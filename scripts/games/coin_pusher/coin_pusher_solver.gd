@@ -29,6 +29,155 @@ const TRAY_LEFT := 2000
 const TRAY_RIGHT := 98000
 const MAX_COLLISION_PASSES := 1
 const BROADPHASE_CELL := 10000
+const HOT_GRID_KEY_CAPACITY := 1048576
+const HOT_POSITION_ABS_LIMIT := 200000
+const HOT_VELOCITY_ABS_LIMIT := 100000
+const HOT_DIMENSION_LIMIT := 10000
+const HOT_GENERAL_SCALAR_ABS_LIMIT := 1000000
+const HOT_PRESSURE_ACCEL_ABS_LIMIT := 100000
+
+
+class HotBodies:
+	extends RefCounted
+
+	var refs: Array = []
+	var ids: Array = []
+	var kinds: Array = []
+	var metadata: Array = []
+	var rest_states: Array = []
+	var x := PackedInt32Array()
+	var y := PackedInt32Array()
+	var z := PackedInt32Array()
+	var vx := PackedInt32Array()
+	var vy := PackedInt32Array()
+	var vz := PackedInt32Array()
+	var radii := PackedInt32Array()
+	var heights := PackedInt32Array()
+	var masses := PackedInt32Array()
+	var sleep_ticks := PackedInt32Array()
+	var sleeping := PackedByteArray()
+	var lean := PackedInt32Array()
+	var cap_pressure_ticks := PackedInt32Array()
+	var cap_pressure_accel := PackedInt32Array()
+
+	func load_from(state: Dictionary) -> void:
+		refs = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
+		var count := refs.size()
+		ids.resize(count)
+		kinds.resize(count)
+		metadata.resize(count)
+		rest_states.resize(count)
+		x.resize(count)
+		y.resize(count)
+		z.resize(count)
+		vx.resize(count)
+		vy.resize(count)
+		vz.resize(count)
+		radii.resize(count)
+		heights.resize(count)
+		masses.resize(count)
+		sleep_ticks.resize(count)
+		sleeping.resize(count)
+		lean.resize(count)
+		cap_pressure_ticks.resize(count)
+		cap_pressure_accel.resize(count)
+		for index in range(count):
+			var body: Dictionary = refs[index]
+			ids[index] = str(body.get("id", ""))
+			kinds[index] = str(body.get("kind", "coin"))
+			metadata[index] = body.get("metadata", {}) if typeof(body.get("metadata", {})) == TYPE_DICTIONARY else {}
+			rest_states[index] = str(body.get("rest_state", "settling"))
+			x[index] = int(body["x"])
+			y[index] = int(body["y"])
+			z[index] = int(body["z"])
+			vx[index] = int(body["vx"])
+			vy[index] = int(body["vy"])
+			vz[index] = int(body["vz"])
+			radii[index] = int(body["radius"])
+			heights[index] = int(body["height"])
+			masses[index] = int(body["mass"])
+			sleep_ticks[index] = int(body["sleep_ticks"])
+			sleeping[index] = 1 if bool(body["sleeping"]) else 0
+			lean[index] = int(body.get("lean_milli", 0))
+			cap_pressure_ticks[index] = int(body.get("cap_pressure_ticks", 0))
+			cap_pressure_accel[index] = int(body.get("cap_pressure_accel", 0))
+
+	func size() -> int:
+		return refs.size()
+
+	func remove_at(index: int) -> void:
+		refs.remove_at(index)
+		ids.remove_at(index)
+		kinds.remove_at(index)
+		metadata.remove_at(index)
+		rest_states.remove_at(index)
+		x.remove_at(index)
+		y.remove_at(index)
+		z.remove_at(index)
+		vx.remove_at(index)
+		vy.remove_at(index)
+		vz.remove_at(index)
+		radii.remove_at(index)
+		heights.remove_at(index)
+		masses.remove_at(index)
+		sleep_ticks.remove_at(index)
+		sleeping.remove_at(index)
+		lean.remove_at(index)
+		cap_pressure_ticks.remove_at(index)
+		cap_pressure_accel.remove_at(index)
+
+	func write_back(state: Dictionary) -> void:
+		for index in range(refs.size()):
+			var body: Dictionary = refs[index]
+			body["x"] = x[index]
+			body["y"] = y[index]
+			body["z"] = z[index]
+			body["vx"] = vx[index]
+			body["vy"] = vy[index]
+			body["vz"] = vz[index]
+			body["sleep_ticks"] = sleep_ticks[index]
+			body["sleeping"] = sleeping[index] != 0
+			body["rest_state"] = rest_states[index]
+			body["lean_milli"] = lean[index]
+			if body.has("cap_pressure_ticks") or cap_pressure_ticks[index] > 0:
+				body["cap_pressure_ticks"] = cap_pressure_ticks[index]
+			if body.has("cap_pressure_accel") or cap_pressure_accel[index] > 0:
+				body["cap_pressure_accel"] = cap_pressure_accel[index]
+		state["bodies"] = refs
+
+
+class HotGrid:
+	extends RefCounted
+
+	var head := PackedInt32Array()
+	var next := PackedInt32Array()
+	var touched := PackedInt32Array()
+	var overflow: Dictionary = {}
+
+	func _init() -> void:
+		head.resize(CoinPusherSolver.HOT_GRID_KEY_CAPACITY)
+
+	func rebuild(hot: HotBodies) -> void:
+		for key in touched:
+			head[int(key)] = 0
+		touched.clear()
+		overflow.clear()
+		next.resize(hot.size())
+		for index in range(hot.size() - 1, -1, -1):
+			var key := CoinPusherSolver._bucket_key(
+				CoinPusherSolver._divi(hot.x[index], CoinPusherSolver.BROADPHASE_CELL),
+				CoinPusherSolver._divi(hot.y[index], CoinPusherSolver.BROADPHASE_CELL),
+				CoinPusherSolver._divi(hot.z[index], CoinPusherSolver.BROADPHASE_CELL)
+			)
+			if key < 0 or key >= head.size():
+				var overflow_members: Array = overflow.get(key, [])
+				overflow_members.push_front(index)
+				overflow[key] = overflow_members
+				continue
+			if head[key] == 0:
+				touched.append(key)
+			next[index] = head[key]
+			head[key] = index + 1
 
 
 static func public_contract() -> Dictionary:
@@ -119,6 +268,23 @@ static func add_recovered_coin(state: Dictionary, rng: RngStream, lane_count: in
 
 
 static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
+	_normalize_hot_body_fields(state)
+	if _hot_state_requires_reference(state):
+		return _step_action_dictionary_reference(state, config)
+	return _step_action_hot(state, config)
+
+
+static func step_action_reference_for_test(state: Dictionary, config: Dictionary) -> Dictionary:
+	return _step_action_dictionary_reference(state, config)
+
+
+static func hot_state_eligible_for_test(state: Dictionary) -> bool:
+	var candidate := state.duplicate(true)
+	_normalize_hot_body_fields(candidate)
+	return not _hot_state_requires_reference(candidate)
+
+
+static func _step_action_dictionary_reference(state: Dictionary, config: Dictionary) -> Dictionary:
 	# Presentation time is sampled only when the player commits an action. The
 	# sampled fixed-point phases become explicit deterministic solver inputs.
 	_normalize_hot_body_fields(state)
@@ -239,8 +405,449 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	}
 
 
+static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionary:
+	if config.has("captured_upper_phase_fp"):
+		state["upper_phase_fp"] = posmod(int(config.get("captured_upper_phase_fp", 0)), PHASE_PERIOD)
+	if config.has("captured_lower_phase_fp"):
+		state["lower_phase_fp"] = posmod(int(config.get("captured_lower_phase_fp", 0)), PHASE_PERIOD)
+	var hot := HotBodies.new()
+	hot.load_from(state)
+	var events: Array = []
+	var motion_events: Array = []
+	var motion_event_keys := {}
+	var capture_trace := bool(config.get("capture_presentation_trace", false))
+	var emit_presentation_events := bool(config.get("emit_presentation_events", true))
+	var presentation_trace: Array = []
+	var exit_trails: Array = []
+	if capture_trace:
+		presentation_trace.append(_hot_presentation_trace_frame(hot, state, 0, []))
+	var start_x := hot.x.duplicate()
+	var start_y := hot.y.duplicate()
+	var start_z := hot.z.duplicate()
+	var peak_z := hot.z.duplicate() if emit_presentation_events else PackedInt32Array()
+	var nudge_x := int(config.get("nudge_x", 0))
+	var nudge_y := int(config.get("nudge_y", 0))
+	var aimed_x := int(config.get("aimed_x", _divi(WIDTH, 2)))
+	var nudge_radius := maxi(COIN_RADIUS * 2, int(config.get("nudge_radius", WIDTH)))
+	var push_scale := maxi(1, int(config.get("push_scale", 1)))
+	var upper_locked := bool(config.get("upper_locked", false))
+	var lower_locked := bool(config.get("lower_locked", false))
+	var ridge_double := bool(config.get("ridge_double", false))
+	var wake_count := 0
+	var collision_count := 0
+	var collision_visited := PackedInt32Array()
+	collision_visited.resize(hot.size() * hot.size())
+	var hot_grid := HotGrid.new()
+	if nudge_x != 0 or nudge_y != 0:
+		wake_count += _hot_apply_nudge(hot, nudge_x, nudge_y, aimed_x, nudge_radius)
+	for tick_index in range(ACTION_TICKS):
+		var event_count_before := events.size()
+		var old_upper := _pusher_face_y(int(state.get("upper_phase_fp", 0)), true)
+		var old_lower := _pusher_face_y(int(state.get("lower_phase_fp", 0)), false)
+		if not upper_locked:
+			state["upper_phase_fp"] = posmod(int(state.get("upper_phase_fp", 0)) + 280 * (2 if ridge_double else 1), PHASE_PERIOD)
+		if not lower_locked:
+			state["lower_phase_fp"] = posmod(int(state.get("lower_phase_fp", 0)) + 360 * (2 if ridge_double else 1), PHASE_PERIOD)
+		var new_upper := _pusher_face_y(int(state.get("upper_phase_fp", 0)), true)
+		var new_lower := _pusher_face_y(int(state.get("lower_phase_fp", 0)), false)
+		var integration_indices := PackedInt32Array()
+		wake_count += _hot_apply_pushers(hot, old_upper, new_upper, old_lower, new_lower, push_scale, integration_indices)
+		if not integration_indices.is_empty():
+			_hot_integrate(hot, integration_indices, events, motion_events, motion_event_keys, peak_z, tick_index + 1, start_x, start_y, start_z)
+			var awake_indices := _hot_awake_indices(hot)
+			hot_grid.rebuild(hot)
+			var support_indices := awake_indices.duplicate()
+			var support_seen := PackedByteArray()
+			support_seen.resize(hot.size())
+			for awake_index in awake_indices:
+				support_seen[int(awake_index)] = 1
+			for _pass_index in range(MAX_COLLISION_PASSES):
+				var visit_generation := tick_index * MAX_COLLISION_PASSES + _pass_index + 1
+				var resolved := _hot_resolve_collisions(hot, hot_grid, collision_visited, visit_generation, awake_indices, support_indices, support_seen)
+				collision_count += resolved
+				if resolved <= 0:
+					break
+			support_indices.sort()
+			_hot_resolve_supports(hot, hot_grid, support_indices, motion_events, motion_event_keys, peak_z, tick_index + 1)
+		state["tick"] = int(state.get("tick", 0)) + 1
+		if capture_trace:
+			for event_index in range(event_count_before, events.size()):
+				exit_trails.append({"views": _presentation_exit_views(events[event_index]), "index": 0})
+			if (tick_index + 1) % PRESENTATION_TRACE_INTERVAL_TICKS == 0 or tick_index + 1 == ACTION_TICKS:
+				var exit_views: Array = []
+				var remaining_trails: Array = []
+				for trail_value in exit_trails:
+					var trail: Dictionary = trail_value if typeof(trail_value) == TYPE_DICTIONARY else {}
+					var views: Array = trail.get("views", []) if typeof(trail.get("views", [])) == TYPE_ARRAY else []
+					var view_index := int(trail.get("index", 0))
+					if view_index < views.size():
+						exit_views.append(views[view_index])
+						trail["index"] = view_index + 1
+						if view_index + 1 < views.size():
+							remaining_trails.append(trail)
+				exit_trails = remaining_trails
+				presentation_trace.append(_hot_presentation_trace_frame(hot, state, tick_index + 1, exit_views))
+	var moved_count := 0
+	for index in range(hot.size()):
+		if absi(start_x[index] - hot.x[index]) > 180 or absi(start_y[index] - hot.y[index]) > 180 or absi(start_z[index] - hot.z[index]) > 180:
+			moved_count += 1
+	hot.write_back(state)
+	state["last_events"] = events
+	state["last_motion_events"] = motion_events
+	state["last_step_metrics"] = {
+		"fixed_ticks": ACTION_TICKS,
+		"body_count": hot.size(),
+		"awake_count": _hot_awake_count(hot),
+		"woken_count": wake_count,
+		"moved_count": moved_count,
+		"collision_passes": MAX_COLLISION_PASSES,
+		"collision_count": collision_count,
+		"topple_count": _motion_event_count(motion_events, "topple"),
+		"upper_lower_fall_count": _motion_event_count(motion_events, "upper_to_lower"),
+	}
+	var presentation_events := _presentation_event_views(state, events, motion_events, state["last_step_metrics"], config) if emit_presentation_events else []
+	return {
+		"events": events,
+		"motion_events": motion_events,
+		"presentation_events": presentation_events,
+		"metrics": state["last_step_metrics"],
+		"presentation_trace": presentation_trace,
+	}
+
+
 static func apply_nudge_only(state: Dictionary, x_impulse: int, y_impulse: int, aimed_x: int, radius: int) -> int:
 	return _apply_nudge(state, x_impulse, y_impulse, aimed_x, radius)
+
+
+static func _hot_wake(hot: HotBodies, index: int) -> void:
+	hot.sleeping[index] = 0
+	hot.sleep_ticks[index] = 0
+	hot.rest_states[index] = "settling"
+
+
+static func _hot_update_sleep(hot: HotBodies, index: int) -> void:
+	var speed := absi(hot.vx[index]) + absi(hot.vy[index]) + absi(hot.vz[index])
+	if speed <= SLEEP_SPEED:
+		hot.sleep_ticks[index] += 1
+		if hot.sleep_ticks[index] >= SLEEP_TICKS:
+			hot.vx[index] = 0
+			hot.vy[index] = 0
+			hot.vz[index] = 0
+			hot.sleeping[index] = 1
+			hot.rest_states[index] = "resting"
+	else:
+		hot.sleep_ticks[index] = 0
+		hot.rest_states[index] = "settling"
+
+
+static func _hot_apply_nudge(hot: HotBodies, x_impulse: int, y_impulse: int, aimed_x: int, radius: int) -> int:
+	var count := 0
+	for index in range(hot.size()):
+		if absi(hot.x[index] - aimed_x) > radius:
+			continue
+		var mass := maxi(1, hot.masses[index])
+		hot.vx[index] += _divi(x_impulse, mass)
+		hot.vy[index] += _divi(y_impulse, mass)
+		_hot_wake(hot, index)
+		count += 1
+	return count
+
+
+static func _hot_apply_pushers(hot: HotBodies, old_upper: int, new_upper: int, old_lower: int, new_lower: int, push_scale: int, active_indices: PackedInt32Array) -> int:
+	var upper_active := new_upper < old_upper
+	var lower_active := new_lower < old_lower
+	var count := 0
+	for index in range(hot.size()):
+		var body_y := hot.y[index]
+		var body_z := hot.z[index]
+		var upper := body_y >= UPPER_EDGE and body_z >= UPPER_FLOOR_Z
+		var active := upper_active if upper else lower_active
+		var old_face := old_upper if upper else old_lower
+		var new_face := new_upper if upper else new_lower
+		var floor_z := UPPER_FLOOR_Z if upper else LOWER_FLOOR_Z
+		var eligible := active and (upper or (body_y >= FRONT_EDGE and body_y < UPPER_EDGE and body_z < UPPER_FLOOR_Z + COIN_HEIGHT))
+		if eligible and body_y > new_face - hot.radii[index] and body_y < old_face + hot.radii[index] and body_z <= floor_z + hot.heights[index] * 5:
+			hot.y[index] = mini(body_y, new_face - hot.radii[index])
+			hot.vy[index] -= (old_face - new_face) * push_scale
+			_hot_wake(hot, index)
+			count += 1
+		if hot.sleeping[index] == 0:
+			active_indices.append(index)
+	return count
+
+
+static func _hot_exit_kind(hot: HotBodies, index: int) -> String:
+	if hot.x[index] < -hot.radii[index] or hot.x[index] > WIDTH + hot.radii[index]:
+		return "gutter"
+	if hot.y[index] >= FRONT_EDGE - hot.radii[index]:
+		return ""
+	return "tray" if hot.x[index] >= TRAY_LEFT and hot.x[index] <= TRAY_RIGHT else "gutter"
+
+
+static func _hot_exit_event(hot: HotBodies, index: int, outcome: String, tick_offset: int) -> Dictionary:
+	return {
+		"body_id": str(hot.ids[index]), "kind": str(hot.kinds[index]),
+		"outcome": outcome, "cause": "physical_fall",
+		"x": hot.x[index], "y": hot.y[index], "z": hot.z[index],
+		"mass": hot.masses[index], "tick_offset": tick_offset,
+		"metadata": (hot.metadata[index] as Dictionary).duplicate(true),
+	}
+
+
+static func _hot_append_impact_motion_event(events: Array, event_keys: Dictionary, hot: HotBodies, index: int, material: String, stack_depth: int, fall_height: int, tick_offset: int) -> void:
+	var body_id := str(hot.ids[index])
+	var event_key := "impact|%s" % body_id
+	if body_id.is_empty() or event_keys.has(event_key):
+		return
+	events.append({
+		"kind": "impact", "body_id": body_id,
+		"x": hot.x[index], "y": hot.y[index], "z": hot.z[index],
+		"tick_offset": tick_offset, "material": material,
+		"stack_depth": maxi(0, stack_depth),
+		"fall_height_milli": maxi(0, _divi(fall_height * FP, COIN_HEIGHT)),
+	})
+	event_keys[event_key] = true
+
+
+static func _hot_integrate(hot: HotBodies, active_indices: PackedInt32Array, events: Array, motion_events: Array, motion_event_keys: Dictionary, peak_z: PackedInt32Array, tick_offset: int, start_x: PackedInt32Array, start_y: PackedInt32Array, start_z: PackedInt32Array) -> void:
+	var exit_indices: Array = []
+	for body_index_value in active_indices:
+		var index := int(body_index_value)
+		if index < 0 or index >= hot.size():
+			continue
+		var previous_z := hot.z[index]
+		if not peak_z.is_empty():
+			peak_z[index] = maxi(peak_z[index], previous_z)
+		if hot.cap_pressure_ticks[index] > 0:
+			hot.vy[index] -= maxi(0, hot.cap_pressure_accel[index])
+			hot.cap_pressure_ticks[index] -= 1
+		var was_upper := hot.z[index] >= UPPER_FLOOR_Z
+		hot.vz[index] -= GRAVITY
+		hot.vx[index] = _divi(hot.vx[index] * AIR_DRAG_NUM, AIR_DRAG_DEN)
+		hot.vy[index] = _divi(hot.vy[index] * AIR_DRAG_NUM, AIR_DRAG_DEN)
+		hot.x[index] += _divi(hot.vx[index], FIXED_HZ)
+		hot.y[index] += _divi(hot.vy[index], FIXED_HZ)
+		hot.z[index] += _divi(hot.vz[index], FIXED_HZ)
+		var exit := _hot_exit_kind(hot, index)
+		if not exit.is_empty():
+			events.append(_hot_exit_event(hot, index, exit, tick_offset))
+			exit_indices.append(index)
+			continue
+		var base_z := UPPER_FLOOR_Z if hot.y[index] >= UPPER_EDGE else LOWER_FLOOR_Z
+		if was_upper and hot.y[index] < UPPER_EDGE:
+			motion_events.append({"kind": "upper_to_lower", "body_id": str(hot.ids[index]), "x": hot.x[index], "y": hot.y[index], "z": hot.z[index], "tick_offset": tick_offset})
+		if hot.z[index] <= base_z:
+			var fall_height := maxi(0, (peak_z[index] if not peak_z.is_empty() else previous_z) - base_z)
+			if not peak_z.is_empty() and previous_z > base_z and fall_height > 0:
+				_hot_append_impact_motion_event(motion_events, motion_event_keys, hot, index, "coin_on_metal", 0, fall_height, tick_offset)
+			hot.z[index] = base_z
+			hot.vz[index] = 0
+			hot.vx[index] = _divi(hot.vx[index] * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
+			hot.vy[index] = _divi(hot.vy[index] * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
+			_hot_update_sleep(hot, index)
+		else:
+			hot.rest_states[index] = "falling"
+			hot.sleep_ticks[index] = 0
+	for exit_position in range(exit_indices.size() - 1, -1, -1):
+		var exit_index := int(exit_indices[exit_position])
+		hot.remove_at(exit_index)
+		start_x.remove_at(exit_index)
+		start_y.remove_at(exit_index)
+		start_z.remove_at(exit_index)
+		if not peak_z.is_empty():
+			peak_z.remove_at(exit_index)
+
+
+static func _hot_awake_indices(hot: HotBodies) -> PackedInt32Array:
+	var result := PackedInt32Array()
+	for index in range(hot.size()):
+		if hot.sleeping[index] == 0:
+			result.append(index)
+	return result
+
+
+static func _hot_resolve_collisions(hot: HotBodies, grid: HotGrid, visited_pairs: PackedInt32Array, visit_generation: int, awake_indices: PackedInt32Array, support_indices: PackedInt32Array, support_seen: PackedByteArray) -> int:
+	if awake_indices.is_empty():
+		return 0
+	var resolved := 0
+	var body_count := hot.size()
+	for left_index_value in awake_indices:
+		var left_index := int(left_index_value)
+		var center_x := _divi(hot.x[left_index], BROADPHASE_CELL)
+		var center_y := _divi(hot.y[left_index], BROADPHASE_CELL)
+		var center_z := _divi(hot.z[left_index], BROADPHASE_CELL)
+		for z_offset in range(-1, 2):
+			for y_offset in range(-1, 2):
+				for x_offset in range(-1, 2):
+					var key := _bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset)
+					if key < 0 or key >= grid.head.size():
+						for overflow_right in grid.overflow.get(key, []):
+							resolved += _hot_resolve_collision_pair(hot, left_index, int(overflow_right), body_count, visited_pairs, visit_generation, support_indices, support_seen)
+						continue
+					var encoded_right := grid.head[key]
+					while encoded_right != 0:
+						var right_index := encoded_right - 1
+						encoded_right = grid.next[right_index]
+						resolved += _hot_resolve_collision_pair(hot, left_index, right_index, body_count, visited_pairs, visit_generation, support_indices, support_seen)
+	return resolved
+
+
+static func _hot_resolve_collision_pair(hot: HotBodies, left_index: int, right_index: int, body_count: int, visited_pairs: PackedInt32Array, visit_generation: int, support_indices: PackedInt32Array, support_seen: PackedByteArray) -> int:
+	if right_index == left_index:
+		return 0
+	var low := mini(left_index, right_index)
+	var high := maxi(left_index, right_index)
+	var pair_key := low * body_count + high
+	if visited_pairs[pair_key] == visit_generation:
+		return 0
+	visited_pairs[pair_key] = visit_generation
+	var dx := hot.x[right_index] - hot.x[left_index]
+	var dy := hot.y[right_index] - hot.y[left_index]
+	var min_distance := hot.radii[left_index] + hot.radii[right_index]
+	if absi(dx) >= min_distance or absi(dy) >= min_distance or dx * dx + dy * dy >= min_distance * min_distance:
+		return 0
+	var z_gap := absi(hot.z[left_index] - hot.z[right_index])
+	if z_gap >= mini(hot.heights[left_index], hot.heights[right_index]):
+		return 0
+	var overlap := min_distance - maxi(absi(dx), absi(dy))
+	if overlap <= 0:
+		return 0
+	if absi(dx) >= absi(dy):
+		var sign_x := 1 if dx >= 0 else -1
+		hot.x[right_index] += _divi(sign_x * overlap, 2)
+		hot.x[left_index] -= _divi(sign_x * overlap, 2)
+		hot.vx[right_index] += sign_x * overlap * 5
+		hot.vx[left_index] -= sign_x * overlap * 5
+	else:
+		var sign_y := 1 if dy >= 0 else -1
+		hot.y[right_index] += _divi(sign_y * overlap, 2)
+		hot.y[left_index] -= _divi(sign_y * overlap, 2)
+		hot.vy[right_index] += sign_y * overlap * 5
+		hot.vy[left_index] -= sign_y * overlap * 5
+	if hot.sleeping[right_index] != 0 and support_seen[right_index] == 0:
+		support_seen[right_index] = 1
+		support_indices.append(right_index)
+	_hot_wake(hot, left_index)
+	_hot_wake(hot, right_index)
+	return 1
+
+
+static func _hot_resolve_supports(hot: HotBodies, grid: HotGrid, active_indices: PackedInt32Array, motion_events: Array, motion_event_keys: Dictionary, peak_z: PackedInt32Array, tick_offset: int) -> void:
+	for body_index_value in active_indices:
+		var body_index := int(body_index_value)
+		if body_index < 0 or body_index >= hot.size():
+			continue
+		var base_z := UPPER_FLOOR_Z if hot.y[body_index] >= UPPER_EDGE else LOWER_FLOOR_Z
+		if hot.z[body_index] <= base_z:
+			hot.lean[body_index] = 0
+			continue
+		var support_index := -1
+		var support_distance := 1 << 30
+		var center_x := _divi(hot.x[body_index], BROADPHASE_CELL)
+		var center_y := _divi(hot.y[body_index], BROADPHASE_CELL)
+		var center_z := _divi(hot.z[body_index], BROADPHASE_CELL)
+		for z_offset in range(-1, 2):
+			for y_offset in range(-1, 2):
+				for x_offset in range(-1, 2):
+					var key := _bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset)
+					if key < 0 or key >= grid.head.size():
+						for overflow_candidate in grid.overflow.get(key, []):
+							var overflow_index := int(overflow_candidate)
+							if overflow_index == body_index:
+								continue
+							var overflow_target_z := hot.z[overflow_index] + hot.heights[overflow_index]
+							if overflow_target_z > hot.z[body_index] + COIN_HEIGHT or overflow_target_z < hot.z[body_index] - COIN_HEIGHT * 2:
+								continue
+							var overflow_dx := hot.x[body_index] - hot.x[overflow_index]
+							var overflow_dy := hot.y[body_index] - hot.y[overflow_index]
+							var overflow_distance := overflow_dx * overflow_dx + overflow_dy * overflow_dy
+							var overflow_radius := mini(hot.radii[body_index], hot.radii[overflow_index])
+							if overflow_distance < overflow_radius * overflow_radius and overflow_distance < support_distance:
+								support_index = overflow_index
+								support_distance = overflow_distance
+						continue
+					var encoded_candidate := grid.head[key]
+					while encoded_candidate != 0:
+						var candidate_index := encoded_candidate - 1
+						encoded_candidate = grid.next[candidate_index]
+						if candidate_index == body_index:
+							continue
+						var candidate_target_z := hot.z[candidate_index] + hot.heights[candidate_index]
+						if candidate_target_z > hot.z[body_index] + COIN_HEIGHT or candidate_target_z < hot.z[body_index] - COIN_HEIGHT * 2:
+							continue
+						var candidate_dx := hot.x[body_index] - hot.x[candidate_index]
+						var candidate_dy := hot.y[body_index] - hot.y[candidate_index]
+						var distance := candidate_dx * candidate_dx + candidate_dy * candidate_dy
+						var support_radius := mini(hot.radii[body_index], hot.radii[candidate_index])
+						if distance < support_radius * support_radius and distance < support_distance:
+							support_index = candidate_index
+							support_distance = distance
+		if support_index < 0:
+			hot.rest_states[body_index] = "falling"
+			hot.sleeping[body_index] = 0
+			continue
+		var target_z := hot.z[support_index] + hot.heights[support_index]
+		if hot.vz[body_index] <= 0 and hot.z[body_index] <= target_z + COIN_HEIGHT:
+			var fall_height := maxi(0, (peak_z[body_index] if not peak_z.is_empty() else hot.z[body_index]) - target_z)
+			if not peak_z.is_empty() and fall_height > 0:
+				var stack_depth := maxi(1, _divi(target_z - base_z, COIN_HEIGHT))
+				_hot_append_impact_motion_event(motion_events, motion_event_keys, hot, body_index, "coin_on_coin", stack_depth, fall_height, tick_offset)
+			hot.z[body_index] = target_z
+			hot.vz[body_index] = 0
+			var dx := hot.x[body_index] - hot.x[support_index]
+			var dy := hot.y[body_index] - hot.y[support_index]
+			var lean := _divi(maxi(absi(dx), absi(dy)) * FP, maxi(1, hot.radii[body_index]))
+			hot.lean[body_index] = lean
+			if lean > 620:
+				var topple_key := "topple|%s" % str(hot.ids[body_index])
+				if not motion_event_keys.has(topple_key):
+					motion_events.append({"kind": "topple", "body_id": str(hot.ids[body_index]), "support_id": str(hot.ids[support_index]), "lean_milli": lean})
+					motion_event_keys[topple_key] = true
+				hot.vx[body_index] += 120 if dx >= 0 else -120
+				hot.vy[body_index] += 120 if dy >= 0 else -120
+				hot.z[body_index] = target_z + 80
+				hot.rest_states[body_index] = "toppling"
+				hot.sleeping[body_index] = 0
+			else:
+				_hot_update_sleep(hot, body_index)
+
+
+static func _hot_body_views(hot: HotBodies) -> Array:
+	var result: Array = []
+	for index in range(hot.size()):
+		var kind := str(hot.kinds[index])
+		result.append({
+			"id": str(hot.ids[index]), "kind": kind,
+			"material_category": "coin" if kind == "coin" else "feature_puck" if kind == "puck" else "key_fragment" if kind == "fragment" else "prize_rider" if kind == "rider" else "physical_object",
+			"x": hot.x[index], "y": hot.y[index], "z": hot.z[index],
+			"radius": hot.radii[index], "height": hot.heights[index], "mass": hot.masses[index],
+			"sleeping": hot.sleeping[index] != 0, "rest_state": str(hot.rest_states[index]),
+			"level": "upper" if hot.y[index] >= UPPER_EDGE and hot.z[index] >= UPPER_FLOOR_Z else "lower" if hot.y[index] >= FRONT_EDGE and hot.z[index] >= LOWER_FLOOR_Z and hot.z[index] < UPPER_FLOOR_Z else "falling",
+			"lean_milli": hot.lean[index], "metadata": (hot.metadata[index] as Dictionary).duplicate(true),
+		})
+	result.sort_custom(_body_view_depth_before)
+	return result
+
+
+static func _hot_presentation_trace_frame(hot: HotBodies, state: Dictionary, tick_offset: int, exit_views: Array) -> Dictionary:
+	var bodies := _hot_body_views(hot)
+	if not exit_views.is_empty():
+		bodies.append_array(exit_views)
+		bodies.sort_custom(_body_view_depth_before)
+	return {
+		"tick_offset": tick_offset,
+		"upper_phase_fp": int(state.get("upper_phase_fp", 0)),
+		"lower_phase_fp": int(state.get("lower_phase_fp", 0)),
+		"bodies": bodies,
+	}
+
+
+static func _hot_awake_count(hot: HotBodies) -> int:
+	var count := 0
+	for sleeping_value in hot.sleeping:
+		if sleeping_value == 0:
+			count += 1
+	return count
 
 
 static func body_views(state: Dictionary) -> Array:
@@ -799,6 +1406,70 @@ static func _normalize_hot_body_fields(state: Dictionary) -> void:
 			body["sleep_ticks"] = 0
 		if not body.has("sleeping"):
 			body["sleeping"] = false
+		if not body.has("kind"):
+			body["kind"] = "coin"
+		if not body.has("rest_state"):
+			body["rest_state"] = "settling"
+		if not body.has("lean_milli"):
+			body["lean_milli"] = 0
+		if not body.has("metadata") or typeof(body.get("metadata")) != TYPE_DICTIONARY:
+			body["metadata"] = {}
+		body["x"] = int(body.get("x", 0))
+		body["y"] = int(body.get("y", 0))
+		body["z"] = int(body.get("z", 0))
+		body["vx"] = int(body.get("vx", 0))
+		body["vy"] = int(body.get("vy", 0))
+		body["vz"] = int(body.get("vz", 0))
+		body["radius"] = int(body.get("radius", COIN_RADIUS))
+		body["height"] = int(body.get("height", COIN_HEIGHT))
+		body["mass"] = int(body.get("mass", 1))
+		body["sleep_ticks"] = int(body.get("sleep_ticks", 0))
+		body["sleeping"] = bool(body.get("sleeping", false))
+		body["rest_state"] = str(body.get("rest_state", "settling"))
+		body["lean_milli"] = int(body.get("lean_milli", 0))
+		if body.has("cap_pressure_ticks"):
+			body["cap_pressure_ticks"] = int(body.get("cap_pressure_ticks", 0))
+		if body.has("cap_pressure_accel"):
+			body["cap_pressure_accel"] = int(body.get("cap_pressure_accel", 0))
+
+
+static func _hot_state_requires_reference(state: Dictionary) -> bool:
+	var seen_ids := {}
+	for body_value in state.get("bodies", []):
+		if typeof(body_value) != TYPE_DICTIONARY:
+			return true
+		var body_id := str((body_value as Dictionary).get("id", ""))
+		if seen_ids.has(body_id):
+			return true
+		seen_ids[body_id] = true
+		var body: Dictionary = body_value
+		for position_key in ["x", "y", "z"]:
+			var position_value := int(body.get(position_key, 0))
+			if position_value < -HOT_POSITION_ABS_LIMIT or position_value > HOT_POSITION_ABS_LIMIT:
+				return true
+		for velocity_key in ["vx", "vy", "vz"]:
+			var velocity_value := int(body.get(velocity_key, 0))
+			if velocity_value < -HOT_VELOCITY_ABS_LIMIT or velocity_value > HOT_VELOCITY_ABS_LIMIT:
+				return true
+		var radius := int(body.get("radius", COIN_RADIUS))
+		var height := int(body.get("height", COIN_HEIGHT))
+		if radius <= 0 or radius > HOT_DIMENSION_LIMIT or height <= 0 or height > HOT_DIMENSION_LIMIT:
+			return true
+		for scalar_key in ["mass", "sleep_ticks", "lean_milli", "cap_pressure_ticks"]:
+			var scalar_value := int(body.get(scalar_key, 0))
+			if scalar_value < -HOT_GENERAL_SCALAR_ABS_LIMIT or scalar_value > HOT_GENERAL_SCALAR_ABS_LIMIT:
+				return true
+		var pressure_accel := int(body.get("cap_pressure_accel", 0))
+		if pressure_accel < -HOT_PRESSURE_ACCEL_ABS_LIMIT or pressure_accel > HOT_PRESSURE_ACCEL_ABS_LIMIT:
+			return true
+		var center_x := _divi(int(body.get("x", 0)), BROADPHASE_CELL)
+		var center_y := _divi(int(body.get("y", 0)), BROADPHASE_CELL)
+		var center_z := _divi(int(body.get("z", 0)), BROADPHASE_CELL)
+		var low_key := _bucket_key(center_x - 1, center_y - 1, center_z - 1)
+		var high_key := _bucket_key(center_x + 1, center_y + 1, center_z + 1)
+		if low_key < 0 or high_key >= HOT_GRID_KEY_CAPACITY:
+			return true
+	return false
 
 
 static func _presentation_event_views(state: Dictionary, exits: Array, motion_events: Array, metrics: Dictionary, config: Dictionary) -> Array:

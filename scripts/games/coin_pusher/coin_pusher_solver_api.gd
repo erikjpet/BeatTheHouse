@@ -48,6 +48,14 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	return _implementation_script().call("step_action", state, config) as Dictionary
 
 
+static func step_action_reference_for_test(state: Dictionary, config: Dictionary) -> Dictionary:
+	return _implementation_script().call("step_action_reference_for_test", state, config) as Dictionary
+
+
+static func hot_state_eligible_for_test(state: Dictionary) -> bool:
+	return bool(_implementation_script().call("hot_state_eligible_for_test", state))
+
+
 static func body_views(state: Dictionary) -> Array:
 	return _implementation_script().call("body_views", state) as Array
 

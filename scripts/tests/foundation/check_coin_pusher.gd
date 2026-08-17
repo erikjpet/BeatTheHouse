@@ -19,6 +19,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_production_rider(game, library, failures)
 	_check_coin_pusher_alarm_audio(failures)
 	_check_coin_pusher_canonical_probe(failures)
+	_check_coin_pusher_hot_solver_exact_twin(failures)
 	_check_coin_pusher_surface_liveness(game, failures)
 	_check_coin_pusher_snapshot_renderer_boundary(game, failures)
 	if not coin_pusher_snapshot_boundary_exercised:
@@ -42,6 +43,156 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_vault_drop_contract(game, definition, failures)
 	_check_pusher_variation_distribution(game, failures)
 	_check_pusher_variation_determinism_and_ev(game, definition, failures)
+
+
+func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:
+	var full_cap := CoinPusherSolverScript.create(_configured_rng(8800), 160, 160, 5)
+	CoinPusherSolverScript.add_coin(full_cap, _configured_rng(8900), 2, 5)
+	if not CoinPusherSolverScript.hot_state_eligible_for_test(full_cap):
+		failures.append("Packed Coin Pusher oracle matrix did not actually exercise the production hot path.")
+	_assert_coin_pusher_hot_solver_twin(full_cap, {
+		"captured_upper_phase_fp": 1700, "captured_lower_phase_fp": 2300, "push_scale": 3,
+	}, "full-cap drop without replay", failures)
+	_assert_coin_pusher_hot_solver_twin(full_cap, {
+		"captured_upper_phase_fp": 5100, "captured_lower_phase_fp": 6900, "push_scale": 5,
+		"capture_presentation_trace": true, "nudge_x": 1200, "nudge_y": -4200, "aimed_x": 50000, "nudge_radius": 100000,
+	}, "full-cap nudge with replay", failures)
+	_assert_coin_pusher_hot_solver_twin(full_cap, {
+		"captured_upper_phase_fp": 8500, "captured_lower_phase_fp": 11500, "push_scale": 4,
+		"upper_locked": true, "lower_locked": true, "ridge_double": true, "emit_presentation_events": false,
+	}, "locked ridge action without presentation events", failures)
+
+	var compaction := CoinPusherSolverScript.create(_configured_rng(8803), 160, 150, 5)
+	CoinPusherSolverScript.add_feature(compaction, "puck", "oracle_puck", 1, 31000, 5, {"mass": 3})
+	CoinPusherSolverScript.add_feature(compaction, "fragment", "oracle_fragment", 2, 47000, 5, {"mass": 2})
+	CoinPusherSolverScript.add_feature(compaction, "rider", "oracle_rider", 3, 69000, 5, {"mass": 4})
+	var compaction_bodies: Array = compaction.get("bodies", [])
+	for index in range(3):
+		var body: Dictionary = compaction_bodies[index]
+		body["y"] = CoinPusherSolverScript.FRONT_EDGE - int(body.get("radius", CoinPusherSolverScript.COIN_RADIUS)) - 10
+		body["x"] = 50000 if index == 0 else -int(body.get("radius", CoinPusherSolverScript.COIN_RADIUS)) - 10 if index == 1 else 50000
+		body["sleeping"] = false
+	_assert_coin_pusher_hot_solver_twin(compaction, {
+		"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true,
+	}, "exit compaction with all physical feature kinds", failures)
+
+	var sparse := CoinPusherSolverScript.create(_configured_rng(8804), 48, 0, 5)
+	sparse["bodies"] = [{"id": "sparse_oracle", "kind": "coin", "x": 50000, "y": 30000, "z": 9000, "cap_pressure_ticks": -3, "cap_pressure_accel": -7}]
+	var sparse_value: Variant = JSON.parse_string(JSON.stringify(sparse))
+	_assert_coin_pusher_hot_solver_twin(sparse_value as Dictionary, {
+		"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true,
+	}, "cold sparse JSON body with negative optional pressure fields", failures)
+	var duplicate_ids := CoinPusherSolverScript.create(_configured_rng(8806), 48, 0, 5)
+	duplicate_ids["bodies"] = [
+		_solver_body("duplicate_oracle", "coin", 48000, 30000, 0, false),
+		_solver_body("duplicate_oracle", "coin", 52000, 30000, 0, true),
+	]
+	_assert_coin_pusher_hot_solver_twin(duplicate_ids, {"upper_locked": true, "lower_locked": true}, "duplicate-id reference fallback", failures)
+	var aliased_body := _solver_body("aliased_oracle", "coin", 50000, 30000, 0, false)
+	var aliased_reference := CoinPusherSolverScript.create(_configured_rng(8807), 48, 0, 5)
+	var aliased_hot := aliased_reference.duplicate(true)
+	aliased_reference["bodies"] = [aliased_body, aliased_body]
+	var hot_alias_body := aliased_body.duplicate(true)
+	aliased_hot["bodies"] = [hot_alias_body, hot_alias_body]
+	var alias_config := {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true}
+	var alias_reference_result := CoinPusherSolverScript.step_action_reference_for_test(aliased_reference, alias_config)
+	var alias_hot_result := CoinPusherSolverScript.step_action(aliased_hot, alias_config)
+	if JSON.stringify(aliased_reference) != JSON.stringify(aliased_hot) or JSON.stringify(alias_reference_result) != JSON.stringify(alias_hot_result):
+		failures.append("Packed Coin Pusher solver did not preserve aliased-body reference semantics through its duplicate-id fallback.")
+	var invalid_member := CoinPusherSolverScript.create(_configured_rng(8808), 48, 0, 5)
+	invalid_member["bodies"] = ["invalid_body", _solver_body("valid_after_invalid", "coin", 50000, 30000, 0, false)]
+	_assert_coin_pusher_hot_solver_twin(invalid_member, {"upper_locked": true, "lower_locked": true}, "non-dictionary body reference fallback", failures)
+	var ordering_trap := CoinPusherSolverScript.create(_configured_rng(8809), 48, 0, 5)
+	ordering_trap["bodies"] = [
+		_solver_body("order_left", "coin", 50000, 30000, 3400, false),
+		_solver_body("order_axis_tie", "coin", 54000, 34000, 3400, true),
+		_solver_body("order_support_a", "coin", 48000, 30000, 1700, true),
+		_solver_body("order_support_b", "coin", 52000, 30000, 1700, true),
+		_solver_body("order_neighbor_cell", "coin", 59000, 30000, 3400, true),
+	]
+	_assert_coin_pusher_hot_solver_twin(ordering_trap, {
+		"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true,
+	}, "frozen-grid neighbor order, axis tie, and strict support tie", failures)
+	var int64_hostile := CoinPusherSolverScript.create(_configured_rng(8810), 48, 0, 5)
+	int64_hostile["bodies"] = [_solver_body("int64_hostile", "coin", 50000, 30000, 0, false)]
+	var int64_body: Dictionary = (int64_hostile.get("bodies", []) as Array)[0]
+	int64_body["vx"] = 2147483000
+	int64_body["vz"] = -2147483000
+	int64_body["cap_pressure_ticks"] = 2147483000
+	int64_body["cap_pressure_accel"] = 2147483000
+	if CoinPusherSolverScript.hot_state_eligible_for_test(int64_hostile):
+		failures.append("Packed Coin Pusher accepted an int64 hostile state without safe arithmetic headroom.")
+	_assert_coin_pusher_hot_solver_twin(int64_hostile, {"upper_locked": true, "lower_locked": true}, "int64 scalar fallback", failures)
+	var crossing_hostile := CoinPusherSolverScript.create(_configured_rng(8811), 48, 0, 5)
+	crossing_hostile["bodies"] = [_solver_body("grid_crossing_hostile", "coin", 50000, 30000, 190000, false)]
+	var crossing_body: Dictionary = (crossing_hostile.get("bodies", []) as Array)[0]
+	crossing_body["vz"] = 10000000
+	if CoinPusherSolverScript.hot_state_eligible_for_test(crossing_hostile):
+		failures.append("Packed Coin Pusher accepted high vertical motion that can leave its canonical grid envelope mid-action.")
+	_assert_coin_pusher_hot_solver_twin(crossing_hostile, {"upper_locked": true, "lower_locked": true}, "in-range-entry high-motion grid fallback", failures)
+
+	var sequence_source := CoinPusherSolverScript.create(_configured_rng(8805), 160, 150, 5)
+	CoinPusherSolverScript.add_coin(sequence_source, _configured_rng(8905), 4, 5)
+	var reference_sequence := sequence_source.duplicate(true)
+	var hot_sequence := sequence_source.duplicate(true)
+	var first_config := {"captured_upper_phase_fp": 2400, "captured_lower_phase_fp": 7600, "push_scale": 4, "capture_presentation_trace": true}
+	var reference_first := CoinPusherSolverScript.step_action_reference_for_test(reference_sequence, first_config)
+	var hot_first := CoinPusherSolverScript.step_action(hot_sequence, first_config)
+	var reference_reload: Dictionary = JSON.parse_string(JSON.stringify(reference_sequence)) as Dictionary
+	var hot_reload: Dictionary = JSON.parse_string(JSON.stringify(hot_sequence)) as Dictionary
+	var second_config := {"nudge_x": -1600, "nudge_y": -3600, "aimed_x": 72000, "nudge_radius": 38000, "capture_presentation_trace": true}
+	var reference_second := CoinPusherSolverScript.step_action_reference_for_test(reference_reload, second_config)
+	var hot_second := CoinPusherSolverScript.step_action(hot_reload, second_config)
+	if JSON.stringify(reference_first) != JSON.stringify(hot_first) or JSON.stringify(reference_second) != JSON.stringify(hot_second) \
+			or JSON.stringify(reference_reload) != JSON.stringify(hot_reload):
+		failures.append("Packed Coin Pusher solver changed an exact two-action save/reload sequence versus the dictionary oracle.")
+
+	for seed_index in range(8):
+		var reference_state := CoinPusherSolverScript.create(_configured_rng(9000 + seed_index), 160, 150 + seed_index % 3, 5)
+		var hot_state := reference_state.duplicate(true)
+		for action_index in range(10):
+			if action_index % 3 == 0:
+				CoinPusherSolverScript.add_coin(reference_state, _configured_rng(10000 + seed_index * 20 + action_index), (seed_index + action_index) % 5, 5, 1 + action_index % 2)
+				CoinPusherSolverScript.add_coin(hot_state, _configured_rng(10000 + seed_index * 20 + action_index), (seed_index + action_index) % 5, 5, 1 + action_index % 2)
+			if not CoinPusherSolverScript.hot_state_eligible_for_test(hot_state):
+				failures.append("Packed Coin Pusher carried oracle seed %d action %d unexpectedly selected the dictionary fallback." % [seed_index, action_index])
+				break
+			var sequence_config := {
+				"captured_upper_phase_fp": (seed_index * 1300 + action_index * 1700) % CoinPusherSolverScript.PHASE_PERIOD,
+				"captured_lower_phase_fp": (seed_index * 1900 + action_index * 2300) % CoinPusherSolverScript.PHASE_PERIOD,
+				"push_scale": 1 if action_index % 4 == 0 else 6 if action_index % 4 == 1 else 3 + action_index % 3,
+				"upper_locked": action_index % 7 == 0,
+				"lower_locked": action_index % 6 == 0,
+				"ridge_double": action_index % 5 == 0,
+				"capture_presentation_trace": action_index % 2 == 0,
+				"emit_presentation_events": action_index % 4 < 2,
+			}
+			if action_index % 3 == 1:
+				sequence_config.merge({
+					"nudge_x": -1800 + seed_index * 300, "nudge_y": -3200 - action_index * 170,
+					"aimed_x": 18000 + ((seed_index + action_index) % 5) * 16000, "nudge_radius": 24000 + action_index * 1800,
+				})
+			var reference_action := CoinPusherSolverScript.step_action_reference_for_test(reference_state, sequence_config)
+			var hot_action := CoinPusherSolverScript.step_action(hot_state, sequence_config)
+			var state_equal := JSON.stringify(reference_state) == JSON.stringify(hot_state)
+			var result_equal := JSON.stringify(reference_action) == JSON.stringify(hot_action)
+			if not state_equal or not result_equal:
+				failures.append("Packed Coin Pusher solver diverged in carried sequence seed %d action %d config %s (state=%s result=%s)." % [seed_index, action_index, JSON.stringify(sequence_config), state_equal, result_equal])
+				break
+			if action_index == 4:
+				reference_state = JSON.parse_string(JSON.stringify(reference_state)) as Dictionary
+				hot_state = JSON.parse_string(JSON.stringify(hot_state)) as Dictionary
+
+
+func _assert_coin_pusher_hot_solver_twin(source: Dictionary, config: Dictionary, label: String, failures: Array) -> void:
+	var reference_state := source.duplicate(true)
+	var hot_state := source.duplicate(true)
+	var reference_result := CoinPusherSolverScript.step_action_reference_for_test(reference_state, config)
+	var hot_result := CoinPusherSolverScript.step_action(hot_state, config)
+	if JSON.stringify(reference_state) != JSON.stringify(hot_state):
+		failures.append("Packed Coin Pusher solver changed exact authoritative state for %s versus the dictionary oracle." % label)
+	if JSON.stringify(reference_result) != JSON.stringify(hot_result):
+		failures.append("Packed Coin Pusher solver changed exits/events/metrics/trace order for %s versus the dictionary oracle." % label)
 
 
 func _check_coin_pusher_data_contract(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
