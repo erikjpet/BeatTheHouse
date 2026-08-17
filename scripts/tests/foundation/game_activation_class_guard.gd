@@ -72,14 +72,14 @@ class MaskingActivationFixture:
 		return super.environment_object_state(run_state, environment)
 
 
-class ByteOrderActivationFixture:
+class ByteRepresentationActivationFixture:
 	extends GameModule
 
 	func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-		if run_state.narrative_flags.has("game_activation_byte_order_first"):
-			var unchanged_value: Variant = run_state.narrative_flags.get("game_activation_byte_order_first")
-			run_state.narrative_flags.erase("game_activation_byte_order_first")
-			run_state.narrative_flags["game_activation_byte_order_first"] = unchanged_value
+		if run_state.narrative_flags.has("game_activation_numeric_representation"):
+			# GDScript considers 0 == 0.0, while JSON emits integer 0 and float 0.0
+			# distinctly. Recursive semantic equality therefore misses this mutation.
+			run_state.narrative_flags["game_activation_numeric_representation"] = 0.0
 		return super.environment_object_state(run_state, environment)
 
 
@@ -467,18 +467,17 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 		if masking_violation.find("environment_object_state changed") == -1 or masking_violation.find("narrative_flags.game_activation_fixture_masked_object") == -1:
 			failures.append("Game activation class guard let nonserialized state from one hook mask a later mutation: %s" % masking_violation)
 
-	var byte_order_run := RunStateScript.new()
-	byte_order_run.start_new("GAME-ACTIVATION-BYTE-ORDER-FIXTURE")
-	byte_order_run.set_environment(environment)
-	byte_order_run.narrative_flags["game_activation_byte_order_first"] = "unchanged"
-	byte_order_run.narrative_flags["game_activation_byte_order_second"] = "unchanged"
-	byte_order_run = _json_round_trip_run_state(byte_order_run, "byte-order negative fixture", failures)
-	if byte_order_run != null:
-		var byte_order_game := ByteOrderActivationFixture.new()
-		byte_order_game.setup({"id": "game_activation_fixture", "display_name": "Activation Fixture", "legal_actions": [], "cheat_actions": []})
-		var byte_order_violation := _activation_violation(byte_order_game, byte_order_run)
-		if byte_order_violation.find("environment_object_state changed canonical byte order/type changed") == -1:
-			failures.append("Game activation class guard did not detect a byte-only dictionary reorder: %s" % byte_order_violation)
+	var byte_representation_run := RunStateScript.new()
+	byte_representation_run.start_new("GAME-ACTIVATION-BYTE-REPRESENTATION-FIXTURE")
+	byte_representation_run.set_environment(environment)
+	byte_representation_run.narrative_flags["game_activation_numeric_representation"] = 0
+	byte_representation_run = _json_round_trip_run_state(byte_representation_run, "numeric byte-representation negative fixture", failures)
+	if byte_representation_run != null:
+		var byte_representation_game := ByteRepresentationActivationFixture.new()
+		byte_representation_game.setup({"id": "game_activation_fixture", "display_name": "Activation Fixture", "legal_actions": [], "cheat_actions": []})
+		var byte_representation_violation := _activation_violation(byte_representation_game, byte_representation_run)
+		if byte_representation_violation.find("environment_object_state changed canonical byte order/type changed") == -1:
+			failures.append("Game activation class guard did not detect a semantic-equal JSON-byte representation mutation: %s" % byte_representation_violation)
 
 	var source_alias_run := RunStateScript.new()
 	source_alias_run.start_new("GAME-ACTIVATION-SOURCE-ALIAS-FIXTURE")
@@ -624,6 +623,10 @@ static func _collect_changed_paths(before: Variant, after: Variant, path: String
 	if paths.size() >= 12:
 		return
 	if typeof(before) != typeof(after):
+		# Numerically equal int/float values are a representation-only mutation.
+		# Leave the path list empty so the exact-byte fallback reports it clearly.
+		if before == after:
+			return
 		paths.append(path if not path.is_empty() else "<root>")
 		return
 	if typeof(before) == TYPE_DICTIONARY:
