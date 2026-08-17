@@ -342,12 +342,22 @@ static func _check_sampled_ev_bands(failures: Array) -> void:
 	var sample_count := 5000
 	var straight_payout := 0
 	var box_payout := 0
+	var straight_model: NumbersModel = NumbersModelScript.new()
+	var box_model: NumbersModel = NumbersModelScript.new()
+	# Prove reset returns a used model to the exact state of a fresh instance
+	# before reusing the two models across the unchanged 5,000-seed sample.
+	straight_model.reset(777)
+	straight_model.buy_slip("bar", "000", 1, "straight")
+	straight_model.advance_to(21)
+	straight_model.reset(1)
+	var fresh_reset_model: NumbersModel = NumbersModelScript.new()
+	fresh_reset_model.reset(1)
+	if JSON.stringify(straight_model.snapshot()) != JSON.stringify(fresh_reset_model.snapshot()):
+		failures.append("NumbersModel reset did not exactly match a fresh same-seed instance.")
 	for seed_value in range(1, sample_count + 1):
-		var straight_model: NumbersModel = NumbersModelScript.new()
 		straight_model.reset(seed_value)
 		straight_model.buy_slip("bar", "000", 1, "straight")
 		straight_payout += int(_first_event(straight_model.advance_to(21), "numbers_settlement").get("payout", 0))
-		var box_model: NumbersModel = NumbersModelScript.new()
 		box_model.reset(seed_value)
 		box_model.buy_slip("bar", "123", 1, "box")
 		box_payout += int(_first_event(box_model.advance_to(21), "numbers_settlement").get("payout", 0))
