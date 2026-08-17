@@ -67,6 +67,23 @@
         "security_overrides": {"strictness_band": "relaxed", "cheat_risk_window": "wide"},
         "hook_flags": {"rumor_anchor": true, "best_rumor_source": true}
       }
+    },
+    {
+      "id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "display_name": "Inventory Night",
+      "weight": 9,
+      "mutations": {
+        "staff_set": ["inventory_clerk"],
+        "patron_set": ["stock_counter"],
+        "event_pool_add": ["scenario_inventory_night_count"],
+        "economic_profile_overrides": {"shop_price_multiplier": 0.8},
+        "game_modifier_hooks": {"shelf_access": "counted", "clerk_attention": "ledger"},
+        "music_profile_override": {"bpm": 62, "ambience": 0.82, "texture": "fluorescent", "volume": 0.2},
+        "presentation": {"palette_tint": "#d9ed92", "lighting_key": "inventory", "crowd_density": "sparse", "signage_line": "AISLES CLOSED. COUNT STILL WRONG."},
+        "exclusive_opportunity": {"event_id": "scenario_inventory_night_count"},
+        "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "brief"}
+      }
     }
   ],
   "back_alley": [
@@ -119,6 +136,23 @@
         "exclusive_opportunity": {"event_id": "scenario_fence_night_mags"},
         "security_overrides": {"strictness_band": "relaxed", "cheat_risk_window": "wide"},
         "hook_flags": {"recruitment_anchor": "mags", "fence_prices_real": true}
+      }
+    },
+    {
+      "id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "display_name": "Nothing Moving",
+      "weight": 8,
+      "town_weight_tags": ["calendar:midweek"],
+      "mutations": {
+        "patron_set": ["one_lookout"],
+        "event_pool_add": ["scenario_nothing_moving_wait"],
+        "economic_profile_overrides": {"shop_price_multiplier": 1.25},
+        "game_modifier_hooks": {"street_trade": "closed", "waiting_window": "open"},
+        "music_profile_override": {"bpm": 54, "ambience": 0.94, "texture": "rain", "volume": 0.18},
+        "presentation": {"palette_tint": "#495057", "lighting_key": "nothing_moving", "crowd_density": "empty", "signage_line": "NO CARS. NO DEALS. ONE LIGHT."},
+        "exclusive_opportunity": {"event_id": "scenario_nothing_moving_wait"},
+        "security_overrides": {"strictness_band": "absent", "cheat_risk_window": "wide"}
       }
     }
   ],
@@ -173,6 +207,24 @@
         "exclusive_opportunity": {"event_id": "scenario_weekly_rates_soft_terms"},
         "security_overrides": {"strictness_band": "private", "cheat_risk_window": "brief"},
         "hook_flags": {"chain_anchor": "nico", "soft_loan_source": true}
+      }
+    },
+    {
+      "id": "motel_wedding_overflow",
+      "archetype_id": "motel",
+      "display_name": "Wedding Overflow",
+      "weight": 9,
+      "mutations": {
+        "staff_set": ["overbooked_clerk"],
+        "patron_set": ["wedding_overflow", "hallway_card_players"],
+        "event_pool_add": ["scenario_wedding_overflow_hallway"],
+        "economic_profile_overrides": {"stake_floor": 10, "stake_ceiling": 55, "shop_price_multiplier": 1.2},
+        "game_modifier_hooks": {"hallway_game": "open", "room_supply": "full"},
+        "service_add": ["house_drink"],
+        "music_profile_override": {"bpm": 96, "ambience": 0.5, "texture": "hallway", "volume": 0.31},
+        "presentation": {"palette_tint": "#ffcad4", "lighting_key": "wedding_overflow", "crowd_density": "packed", "signage_line": "NO ROOMS. HALLWAY STILL OPEN."},
+        "exclusive_opportunity": {"event_id": "scenario_wedding_overflow_hallway"},
+        "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "wide"}
       }
     }
   ],
@@ -315,6 +367,78 @@
           }
         }
       ]
+    },
+    {
+      "id": "bar_darts_league_night",
+      "archetype_id": "bar",
+      "display_name": "Darts League Night",
+      "weight": 6,
+      "mutations": {
+        "patron_set": ["darts_league", "scoreboard_rail"],
+        "event_pool_add": ["scenario_darts_league_decider"],
+        "economic_profile_overrides": {"stake_floor": 5, "stake_ceiling": 65},
+        "game_modifier_hooks": {"darts_league": true, "league_phase": "league_play"},
+        "music_profile_override": {"bpm": 88, "ambience": 0.58, "texture": "bar", "volume": 0.29},
+        "presentation": {"palette_tint": "#2a9d8f", "lighting_key": "darts_league", "crowd_density": "dense", "signage_line": "LEAGUE BOARD. ONE LEG LEFT."},
+        "exclusive_opportunity": {"event_id": "scenario_darts_league_decider"},
+        "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "brief"}
+      },
+      "phases": [
+        {
+          "id": "league_play",
+          "advance_after_actions": 4,
+          "mutations": {
+            "economic_profile_overrides": {"stake_floor": 5, "stake_ceiling": 65},
+            "presentation": {"crowd_density": "dense", "signage_line": "LEAGUE BOARD. ONE LEG LEFT."},
+            "game_modifier_hooks": {"league_phase": "league_play"}
+          }
+        },
+        {
+          "id": "decider",
+          "advance_after_actions": 0,
+          "mutations": {
+            "economic_profile_overrides": {"stake_floor": 15, "stake_ceiling": 90},
+            "presentation": {"crowd_density": "packed", "signage_line": "DECIDING LEG. ROOM GOES QUIET."},
+            "game_modifier_hooks": {"league_phase": "decider"}
+          }
+        }
+      ]
+    },
+    {
+      "id": "bar_live_band",
+      "archetype_id": "bar",
+      "display_name": "Live Band",
+      "weight": 6,
+      "mutations": {
+        "staff_set": ["bar_band"],
+        "patron_set": ["dance_floor_regulars"],
+        "event_pool_add": ["scenario_live_band_request"],
+        "economic_profile_overrides": {"stake_floor": 10, "stake_ceiling": 60},
+        "game_modifier_hooks": {"table_tone": "loud", "floor_volume": "live"},
+        "service_add": ["house_drink"],
+        "music_profile_override": {"bpm": 112, "ambience": 0.34, "mode": "dorian", "texture": "live_bar", "volume": 0.38},
+        "presentation": {"palette_tint": "#e76f51", "lighting_key": "live_band", "crowd_density": "packed", "signage_line": "NO JUKEBOX. BAND TAKES CASH."},
+        "exclusive_opportunity": {"event_id": "scenario_live_band_request"},
+        "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "wide"}
+      }
+    },
+    {
+      "id": "bar_dead_tuesday",
+      "archetype_id": "bar",
+      "display_name": "Dead Tuesday",
+      "weight": 6,
+      "town_weight_tags": ["calendar:midweek"],
+      "mutations": {
+        "staff_set": ["tuesday_bartender"],
+        "patron_set": ["last_regular"],
+        "event_pool_add": ["scenario_dead_tuesday_regular"],
+        "economic_profile_overrides": {"stake_floor": 2, "stake_ceiling": 30},
+        "game_modifier_hooks": {"table_tone": "quiet", "staff_attention": "full"},
+        "music_profile_override": {"bpm": 56, "ambience": 0.9, "mode": "minor", "texture": "bar", "volume": 0.18},
+        "presentation": {"palette_tint": "#577590", "lighting_key": "dead_tuesday", "crowd_density": "empty", "signage_line": "TUESDAY. ONE STOOL TAKEN."},
+        "exclusive_opportunity": {"event_id": "scenario_dead_tuesday_regular"},
+        "security_overrides": {"strictness_band": "attentive", "cheat_risk_window": "narrow"}
+      }
     }
   ],
   "gas_station_casino": [
@@ -369,6 +493,70 @@
         "security_overrides": {"strictness_band": "relaxed", "cheat_risk_window": "wide", "machine_alarm_tolerance_band": "lax"},
         "hook_flags": {"maintenance_cheat_window": true, "lax_machine_alarm_tolerance": true, "push06_1_seam": true}
       }
+    },
+    {
+      "id": "gas_station_road_crew_payday",
+      "archetype_id": "gas_station_casino",
+      "display_name": "Road Crew Payday",
+      "weight": 10,
+      "town_weight_tags": ["calendar:payday"],
+      "mutations": {
+        "patron_set": ["road_crew", "pay_envelope_players"],
+        "event_pool_add": ["scenario_road_crew_payday_pool"],
+        "economic_profile_overrides": {"stake_floor": 20, "stake_ceiling": 95},
+        "game_modifier_hooks": {"machine_occupancy": "high", "table_tone": "loose"},
+        "music_profile_override": {"bpm": 98, "ambience": 0.46, "texture": "highway", "volume": 0.33},
+        "presentation": {"palette_tint": "#fcbf49", "lighting_key": "road_crew_payday", "crowd_density": "packed", "signage_line": "ROAD CLOSED. PAY ENVELOPES OPEN."},
+        "exclusive_opportunity": {"event_id": "scenario_road_crew_payday_pool"},
+        "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "brief"}
+      }
+    },
+    {
+      "id": "gas_station_storm_shelter",
+      "archetype_id": "gas_station_casino",
+      "display_name": "Storm Shelter",
+      "weight": 7,
+      "town_weight_tags": ["weather:rain", "weather:storm"],
+      "mutations": {
+        "staff_set": ["storm_clerk"],
+        "patron_set": ["stranded_drivers", "wet_road_crew"],
+        "event_pool_add": ["scenario_storm_shelter_corner"],
+        "economic_profile_overrides": {"stake_floor": 5, "stake_ceiling": 40},
+        "game_modifier_hooks": {"storm_shelter_phase": "gathering", "machine_occupancy": "rising"},
+        "service_add": ["house_drink"],
+        "music_profile_override": {"bpm": 60, "ambience": 0.92, "texture": "storm_highway", "volume": 0.22},
+        "presentation": {"palette_tint": "#3a506b", "lighting_key": "storm_shelter", "crowd_density": "dense", "signage_line": "ROAD FLOODED. DOOR STAYS OPEN."},
+        "exclusive_opportunity": {"event_id": "scenario_storm_shelter_corner"},
+        "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "narrow"}
+      },
+      "phases": [
+        {
+          "id": "gathering",
+          "advance_after_actions": 3,
+          "mutations": {
+            "presentation": {"crowd_density": "dense", "signage_line": "ROAD FLOODED. DOOR STAYS OPEN."},
+            "game_modifier_hooks": {"storm_shelter_phase": "gathering", "machine_occupancy": "rising"}
+          }
+        },
+        {
+          "id": "waiting_out",
+          "advance_after_actions": 4,
+          "mutations": {
+            "economic_profile_overrides": {"stake_floor": 10, "stake_ceiling": 60},
+            "presentation": {"crowd_density": "packed", "signage_line": "RAIN HOLDS. MACHINES STAY BUSY."},
+            "game_modifier_hooks": {"storm_shelter_phase": "waiting_out", "machine_occupancy": "full"}
+          }
+        },
+        {
+          "id": "clearing",
+          "advance_after_actions": 0,
+          "mutations": {
+            "economic_profile_overrides": {"stake_floor": 5, "stake_ceiling": 35},
+            "presentation": {"crowd_density": "medium", "signage_line": "RAIN THINS. ENGINES START."},
+            "game_modifier_hooks": {"storm_shelter_phase": "clearing", "machine_occupancy": "thinning"}
+          }
+        }
+      ]
     }
   ],
   "small_underground_casino": [
@@ -436,6 +624,27 @@
         "exclusive_opportunity": {"event_id": "scenario_debt_court_office_hours"}, "security_overrides": {"strictness_band": "crew_rules", "cheat_risk_window": "closed"},
         "hook_flags": {"punchline_layer": "casino", "collector_office_hours": true, "debt_discount_percent": 25}
       }
+    },
+    {
+      "id": "punchline_new_muscle", "archetype_id": "small_underground_casino", "layer_id": "casino", "display_name": "New Muscle", "weight": 2,
+      "mutations": {
+        "staff_set": ["new_floor_muscle", "crew_floor"], "patron_set": ["careful_regulars"], "event_pool_add": ["scenario_new_muscle_door"],
+        "economic_profile_overrides": {"stake_floor": 15, "stake_ceiling": 100}, "game_modifier_hooks": {"floor_read": "unfamiliar", "table_tone": "careful"},
+        "music_profile_override": {"bpm": 68, "ambience": 0.82, "texture": "basement_hush", "volume": 0.23},
+        "presentation": {"palette_tint": "#a4133c", "lighting_key": "new_muscle", "crowd_density": "medium", "signage_line": "NEW COAT. OLD RULES."},
+        "exclusive_opportunity": {"event_id": "scenario_new_muscle_door"}, "security_overrides": {"strictness_band": "tight", "cheat_risk_window": "narrow"}
+      }
+    },
+    {
+      "id": "punchline_raid_jitters", "archetype_id": "small_underground_casino", "layer_id": "casino", "display_name": "Raid Jitters", "weight": 3,
+      "town_weight_tags": ["law:pressure"],
+      "mutations": {
+        "staff_set": ["door_listener", "crew_floor"], "patron_set": ["nervous_regulars"], "event_pool_add": ["scenario_raid_jitters_check"],
+        "economic_profile_overrides": {"stake_floor": 10, "stake_ceiling": 70}, "game_modifier_hooks": {"floor_read": "jittery", "cashout_tone": "fast"},
+        "music_profile_override": {"bpm": 74, "ambience": 0.9, "texture": "basement_hush", "volume": 0.2},
+        "presentation": {"palette_tint": "#6c757d", "lighting_key": "raid_jitters", "crowd_density": "sparse", "signage_line": "TWO KNOCKS. THEN THREE."},
+        "exclusive_opportunity": {"event_id": "scenario_raid_jitters_check"}, "security_overrides": {"strictness_band": "twitchy", "cheat_risk_window": "closed"}
+      }
     }
   ],
   "jazz_club": [
@@ -468,6 +677,16 @@
         "presentation": {"palette_tint": "#8ecae6", "lighting_key": "recording", "crowd_density": "sparse", "signage_line": "QUIET FLOOR. TAPE ROLLING."},
         "exclusive_opportunity": {"event_id": "scenario_recording_night_tape"}, "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "wide"},
         "hook_flags": {"jazz_overlay": true, "recording_night": true}
+      }
+    },
+    {
+      "id": "jazz_club_union_trouble", "archetype_id": "jazz_club", "display_name": "Union Trouble", "weight": 8,
+      "mutations": {
+        "staff_set": ["union_delegate", "house_pianist"], "patron_set": ["off_shift_musicians"], "event_pool_add": ["scenario_union_trouble_line"],
+        "economic_profile_overrides": {"shop_price_multiplier": 1.1}, "game_modifier_hooks": {"staff_attention": "divided", "set_breaks": "long"},
+        "music_profile_override": {"ambience": 0.62, "volume": 0.25},
+        "presentation": {"palette_tint": "#b08968", "lighting_key": "union_trouble", "crowd_density": "medium", "signage_line": "SET BREAK. MEETING STILL RUNNING."},
+        "exclusive_opportunity": {"event_id": "scenario_union_trouble_line"}, "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "brief"}
       }
     }
   ],
@@ -504,6 +723,16 @@
         "presentation": {"palette_tint": "#577590", "lighting_key": "slow_night", "crowd_density": "sparse", "signage_line": "NO LINE. NOTHING STAYS QUIET."},
         "exclusive_opportunity": {"event_id": "scenario_slow_night_intel"}, "security_overrides": {"strictness_band": "relaxed", "cheat_risk_window": "wide"},
         "hook_flags": {"best_intel_source": true, "rumor_anchor": true}
+      }
+    },
+    {
+      "id": "kitty_cat_lounge_bachelorette_storm", "archetype_id": "kitty_cat_lounge", "display_name": "Bachelorette Storm", "weight": 10,
+      "mutations": {
+        "staff_set": ["party_host"], "patron_set": ["bachelorette_party", "patient_regulars"], "event_pool_add": ["scenario_bachelorette_storm_table"], "service_add": ["house_drink"],
+        "economic_profile_overrides": {"stake_floor": 15, "stake_ceiling": 100}, "game_modifier_hooks": {"table_tone": "celebratory", "staff_attention": "party"},
+        "music_profile_override": {"bpm": 116, "ambience": 0.32, "texture": "lounge", "volume": 0.38},
+        "presentation": {"palette_tint": "#ff4d6d", "lighting_key": "bachelorette_storm", "crowd_density": "packed", "signage_line": "THE HOUSE SAVED THEM A TABLE."},
+        "exclusive_opportunity": {"event_id": "scenario_bachelorette_storm_table"}, "security_overrides": {"strictness_band": "distracted", "cheat_risk_window": "brief"}
       }
     }
   ],
@@ -560,6 +789,21 @@
         {"id": "dead_in_water", "advance_after_actions": 3, "mutations": {"presentation": {"signage_line": "ANCHORED. ENGINE CREW BELOW."}, "game_modifier_hooks": {"engine_phase": "dead_in_water"}}},
         {"id": "repairs", "advance_after_actions": 2, "mutations": {"economic_profile_overrides": {"stake_floor": 20, "stake_ceiling": 100}, "presentation": {"crowd_density": "packed", "signage_line": "WRENCHES TURN. TEMPERS TOO."}, "game_modifier_hooks": {"engine_phase": "repairs"}}},
         {"id": "underway", "advance_after_actions": 0, "mutations": {"economic_profile_overrides": {"stake_floor": 10, "stake_ceiling": 70}, "presentation": {"crowd_density": "medium", "signage_line": "WHEELS TURN. ROUTES OPEN."}, "game_modifier_hooks": {"engine_phase": "underway"}}}
+      ]
+    },
+    {
+      "id": "delta_queen_captains_invitational", "archetype_id": "delta_queen", "display_name": "Captain's Invitational", "weight": 7,
+      "mutations": {
+        "staff_set": ["captain_host", "tournament_dealer"], "patron_set": ["invited_players", "riverboat_rail"], "event_pool_add": ["scenario_captains_invitational_card"],
+        "economic_profile_overrides": {"stake_floor": 20, "stake_ceiling": 100}, "game_modifier_hooks": {"table_tone": "tournament", "tournament_round": "entry"},
+        "music_profile_override": {"bpm": 78, "ambience": 0.58, "texture": "riverboat", "volume": 0.29},
+        "presentation": {"palette_tint": "#264653", "lighting_key": "captains_invitational", "crowd_density": "dense", "signage_line": "CAPTAIN'S CARD. TABLES OPEN."},
+        "exclusive_opportunity": {"event_id": "scenario_captains_invitational_card"}, "security_overrides": {"strictness_band": "attentive", "cheat_risk_window": "narrow"}
+      },
+      "phases": [
+        {"id": "entry", "advance_after_actions": 3, "mutations": {"economic_profile_overrides": {"stake_floor": 20, "stake_ceiling": 100}, "presentation": {"crowd_density": "dense", "signage_line": "CAPTAIN'S CARD. TABLES OPEN."}, "game_modifier_hooks": {"tournament_round": "entry"}}},
+        {"id": "rounds", "advance_after_actions": 4, "mutations": {"economic_profile_overrides": {"stake_floor": 30, "stake_ceiling": 140}, "presentation": {"crowd_density": "packed", "signage_line": "TWO TABLES LEFT."}, "game_modifier_hooks": {"tournament_round": "rounds"}}},
+        {"id": "final", "advance_after_actions": 0, "mutations": {"economic_profile_overrides": {"stake_floor": 50, "stake_ceiling": 180}, "presentation": {"crowd_density": "medium", "signage_line": "ONE TABLE. CAPTAIN WATCHING."}, "game_modifier_hooks": {"tournament_round": "final"}}}
       ]
     }
   ],

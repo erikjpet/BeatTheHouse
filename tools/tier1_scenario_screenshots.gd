@@ -23,11 +23,18 @@ const TIER2_SMOKE_SCENARIOS := {
 	"grand_casino": ["grand_casino_gala_night", "grand_casino_audit_night"],
 }
 
+const BACKLOG_SMOKE_SCENARIOS := {
+	"corner_store": ["corner_store_inventory_night"],
+	"gas_station_casino": ["gas_station_storm_shelter"],
+	"delta_queen": ["delta_queen_captains_invitational"],
+}
+
 var app: Control
 var out_dir := "res://.tmp/tier1_scenario_screenshots"
 var report: Dictionary = {}
 var failed := false
 var tier2_mode := false
+var backlog_mode := false
 
 
 func _init() -> void:
@@ -38,6 +45,10 @@ func _init() -> void:
 			tier2_mode = true
 			if out_dir == "res://.tmp/tier1_scenario_screenshots":
 				out_dir = "res://.tmp/tier2_scenario_screenshots"
+		elif argument == "--backlog":
+			backlog_mode = true
+			if out_dir == "res://.tmp/tier1_scenario_screenshots":
+				out_dir = "res://.tmp/env06_5/scenario_smoke"
 	call_deferred("_run")
 
 
@@ -55,7 +66,7 @@ func _run() -> void:
 		push_error("Scenario screenshot QA could not start the real app run.")
 		quit(1)
 		return
-	var smoke_scenarios: Dictionary = TIER2_SMOKE_SCENARIOS if tier2_mode else TIER1_SMOKE_SCENARIOS
+	var smoke_scenarios: Dictionary = BACKLOG_SMOKE_SCENARIOS if backlog_mode else TIER2_SMOKE_SCENARIOS if tier2_mode else TIER1_SMOKE_SCENARIOS
 	for archetype_id_value in smoke_scenarios.keys():
 		var archetype_id := str(archetype_id_value)
 		for scenario_id_value in smoke_scenarios.get(archetype_id, []):
@@ -68,7 +79,7 @@ func _run() -> void:
 		return
 	file.store_string(JSON.stringify(report, "\t"))
 	file.close()
-	var suite_label := "TIER2_SCENARIO_SCREENSHOTS" if tier2_mode else "TIER1_SCENARIO_SCREENSHOTS"
+	var suite_label := "BACKLOG_SCENARIO_SCREENSHOTS" if backlog_mode else "TIER2_SCENARIO_SCREENSHOTS" if tier2_mode else "TIER1_SCENARIO_SCREENSHOTS"
 	print("%s %s count=%d out=%s" % [suite_label, "FAIL" if failed else "PASS", report.size(), absolute_dir])
 	quit(1 if failed else 0)
 

@@ -61,6 +61,7 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 	_check_craps_luck_contract(game, failures)
 	_check_craps_energy_projection(game, table, failures)
 	_check_craps_street_variant(game, library, failures)
+	_check_craps_casino_activation_invariant(game, failures)
 	_check_craps_currency_routing(failures)
 	if library != null:
 		_check_craps_room_registration_and_duel(game, library, failures)
@@ -104,6 +105,7 @@ func _check_craps_street_variant(game: GameModule, library: ContentLibrary, fail
 	var after_enter := JSON.stringify(run_state.to_dict())
 	if before_enter != after_enter or bool(run_state.narrative_flags.get("street_craps_guidance_seen", false)):
 		failures.append("Street Craps info-card selection mutated a JSON-round-tripped serialized RunState before an action boundary.")
+	_check_craps_open_then_play_determinism(game, run_state, {"craps_pending_bets": {"pass_line": 2}}, 2, "Street Craps", failures)
 	var surface := game.surface_state(run_state, run_state.current_environment, {})
 	var target_ids: Array = []
 	for target_value in _craps_array(surface.get("bet_targets", [])):
@@ -135,6 +137,45 @@ func _check_craps_street_variant(game: GameModule, library: ContentLibrary, fail
 	var core_surface := game.surface_state(run_state, core_environment, {})
 	if core_table.has("variant_id") or core_surface.has("craps_variant"):
 		failures.append("An environment without Street Craps retained variant traces.")
+
+
+func _check_craps_casino_activation_invariant(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CASINO-CRAPS-ACTIVATION-INVARIANT")
+	run_state.bankroll = 100
+	run_state.grand_casino_chips = 100
+	var environment := _surface_contract_environment()
+	environment["id"] = "grand_casino_craps_activation"
+	environment["archetype_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+	environment["kind"] = "boss"
+	environment["game_ids"] = ["craps"]
+	var table := game.generate_environment_state(run_state, environment, run_state.create_rng("casino_craps_activation_table"))
+	environment["game_states"] = {"craps": table}
+	run_state.set_environment(environment)
+	var parsed: Variant = JSON.parse_string(JSON.stringify(run_state.to_dict()))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		failures.append("Grand Casino Craps activation contract could not JSON-round-trip its RunState fixture.")
+		return
+	var restored := RunStateScript.new()
+	restored.from_dict(parsed as Dictionary)
+	var before_enter := JSON.stringify(restored.to_dict())
+	game.enter(restored, restored.current_environment)
+	if before_enter != JSON.stringify(restored.to_dict()):
+		failures.append("Grand Casino Craps info-card selection mutated serialized RunState before an action boundary.")
+	var minimum := int(table.get("table_minimum", 1))
+	_check_craps_open_then_play_determinism(game, restored, {"craps_pending_bets": {"pass_line": minimum}}, minimum, "Grand Casino Craps", failures)
+
+
+func _check_craps_open_then_play_determinism(game: GameModule, source: RunState, ui_state: Dictionary, stake: int, label: String, failures: Array) -> void:
+	var opened := RunStateScript.new()
+	opened.from_dict(source.to_dict())
+	var direct := RunStateScript.new()
+	direct.from_dict(source.to_dict())
+	game.enter(opened, opened.current_environment)
+	var opened_result := game.resolve_with_context("roll_craps", stake, opened, opened.current_environment, opened.create_rng("craps_activation_determinism"), ui_state)
+	var direct_result := game.resolve_with_context("roll_craps", stake, direct, direct.current_environment, direct.create_rng("craps_activation_determinism"), ui_state)
+	if JSON.stringify(opened_result) != JSON.stringify(direct_result) or JSON.stringify(opened.to_dict()) != JSON.stringify(direct.to_dict()):
+		failures.append("%s open-then-play sequence diverged from the identical direct-play sequence." % label)
 
 
 func _check_street_craps_disperse(game: GameModule, failures: Array) -> void:
