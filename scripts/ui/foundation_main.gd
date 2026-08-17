@@ -9364,6 +9364,11 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 	_record_tutorial_action_if_authored(coach_action_id)
 	if coach_overlay != null and coach_overlay.notify_action(coach_action_id):
 		_consume_recorded_tutorial_action(coach_action_id)
+	# Focus changes the public encounter context used by optional lessons. Evaluate
+	# only after the input callback returns so ambient advice cannot consume or
+	# cover the interaction that revealed it.
+	if coach_overlay != null and run_state != null and not run_state.is_tutorial_run():
+		call_deferred("_refresh_coach_at_boundary")
 	_sync_talk_dock_coach_avoid_rect()
 	return true
 

@@ -2644,9 +2644,10 @@ func _check_onboarding_06_real_numbers_seam(app: Control) -> bool:
 	_set_ui_fixture_run(app, fixture_run)
 	coach_overlay.call("set_lessons", app.get("library").get("tutorial_lessons"))
 	coach_overlay.call("restore_seen", {})
+	app.call("_set_current_screen", "ENVIRONMENT")
 	app.set("current_context_mode", "room")
 	app.set("pending_event_choice_popup_snapshot", {})
-	app.call("_refresh_coach_overlay")
+	app.call("_refresh_coach_at_boundary")
 	if bool(coach_overlay.call("current_snapshot").get("visible", false)):
 		push_error("0.6 onboarding appeared before the real Numbers interaction was focused.")
 		return false
@@ -2660,6 +2661,7 @@ func _check_onboarding_06_real_numbers_seam(app: Control) -> bool:
 	if not bool(app.call("_focus_interactable_object_with_data", "numbers:book", numbers_object)):
 		push_error("Real host focus seam rejected the Numbers interaction fixture.")
 		return false
+	await process_frame
 	var focus_snapshot: Dictionary = coach_overlay.call("current_snapshot")
 	if str(focus_snapshot.get("lesson_id", "")) != "tip06_numbers_book" \
 			or not bool(focus_snapshot.get("dismissible", false)) \
