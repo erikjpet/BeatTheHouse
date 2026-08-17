@@ -6896,7 +6896,7 @@ func _refresh_after_game_selection() -> void:
 	_schedule_game_coach_refresh_after_draw()
 
 
-func _refresh_after_embedded_game_action() -> void:
+func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false) -> void:
 	# A native game surface remains in the same layout after an embedded result.
 	# Rebuilding the environment, run report, result panel, map, and focus layout
 	# here made repeating slot actions hitch despite none of those views changing.
@@ -6906,11 +6906,15 @@ func _refresh_after_embedded_game_action() -> void:
 		_refresh()
 		return
 	_invalidate_run_screen_layout()
+	# The game title/description is stable across a same-screen action. Refresh it
+	# only if terminal routing changed the exact screen/game/run-status context.
+	var world_header_context_key := _embedded_world_header_context_key()
 	_evaluate_run_terminal_state()
 	if current_screen != SCREEN_GAME or current_game == null:
 		_refresh()
 		return
-	_refresh_world_header()
+	if world_header_context_key != _embedded_world_header_context_key():
+		_refresh_world_header()
 	var hud_model := _run_status_hud_model()
 	if status_label != null:
 		status_label.text = str(hud_model.get("status_text", ""))
@@ -6925,11 +6929,26 @@ func _refresh_after_embedded_game_action() -> void:
 		save_status_label.text = str(hud_model.get("save_text", ""))
 	_apply_hud_mode_visibility()
 	_refresh_active_item_slot()
-	_refresh_environment_result_feedback()
+	# This hot path is entered with the embedding contract captured before action
+	# resolution. An embedding surface owns the visible result and this panel must
+	# remain hidden; direct/debug callers retain the conservative refresh default.
+	if embeds_result_feedback:
+		if environment_result_panel != null:
+			environment_result_panel.visible = false
+	else:
+		_refresh_environment_result_feedback()
 	_render_foundation_snapshots()
 	_refresh_talk_dock()
 	_update_procedural_music()
 	_schedule_game_coach_refresh_after_draw()
+
+
+func _embedded_world_header_context_key() -> String:
+	return "%s|%s|%s" % [
+		current_screen,
+		current_game.get_id() if current_game != null else "",
+		run_state.run_status if run_state != null else "",
+	]
 
 
 func _schedule_game_coach_refresh_after_draw() -> void:
@@ -8332,7 +8351,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
 	if runtime_tick_in_progress:
 		if game_surface_canvas != null and current_screen == SCREEN_GAME:
-			game_surface_canvas.render_game_snapshot(_game_view_snapshot())
+			game_surface_canvas.render_game_snapshot(_game_view_snapshot(true))
 		return
 	if not preserve_surface_ui_state:
 		game_surface_ui_state = _preserved_game_surface_preference_state(game_surface_ui_state)
@@ -8356,16 +8375,16 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			# in the same frame. The outcome, RNG, persistence, and next-spin clock
 			# are already committed; hand the rendered update to the following frame
 			# so neither frame blocks the player.
-			call_deferred("_refresh_after_embedded_autoplay_action")
+			call_deferred("_refresh_after_embedded_autoplay_action", true)
 		else:
-			_refresh_after_embedded_game_action()
+			_refresh_after_embedded_game_action(true)
 	else:
 		_refresh()
 
 
-func _refresh_after_embedded_autoplay_action() -> void:
+func _refresh_after_embedded_autoplay_action(embeds_result_feedback: bool = false) -> void:
 	if current_screen == SCREEN_GAME and current_game != null:
-		_refresh_after_embedded_game_action()
+		_refresh_after_embedded_game_action(embeds_result_feedback)
 	else:
 		_refresh()
 
@@ -10189,7 +10208,7 @@ func select_environment_view_object(index: int = 0) -> void:
 func _render_foundation_snapshots() -> void:
 	var environment_visible := current_screen != SCREEN_GAME or current_game == null
 	var game_visible := current_screen == SCREEN_GAME and current_game != null
-	var game_snapshot: Dictionary = _game_view_snapshot() if game_visible else {}
+	var game_snapshot: Dictionary = _game_view_snapshot(true) if game_visible else {}
 	if environment_canvas != null and environment_visible:
 		_render_environment_canvas_snapshot()
 	if game_surface_canvas != null:
@@ -10492,8 +10511,8 @@ func _vector2_from_dict(value: Variant, fallback: Vector2 = Vector2.ZERO) -> Vec
 	return EnvironmentInteractionViewModelScript.vector2_from_dict(value, fallback)
 
 
-func _game_view_snapshot() -> Dictionary:
-	return FoundationActionViewModelScript.game_view_snapshot(self)
+func _game_view_snapshot(read_only_render_result: bool = false) -> Dictionary:
+	return FoundationActionViewModelScript.game_view_snapshot(self, read_only_render_result)
 
 
 func _current_game_surface_ui_state() -> Dictionary:
@@ -10504,8 +10523,8 @@ func _focused_talk_speaker_snapshot() -> Dictionary:
 	return FoundationActionViewModelScript.focused_talk_speaker_snapshot(self)
 
 
-func _current_game_result_snapshot() -> Dictionary:
-	return FoundationActionViewModelScript.current_game_result_snapshot(self)
+func _current_game_result_snapshot(read_only_render_result: bool = false) -> Dictionary:
+	return FoundationActionViewModelScript.current_game_result_snapshot(self, read_only_render_result)
 
 
 func _current_game_embeds_result_feedback() -> bool:
@@ -12705,7 +12724,7 @@ func _run_status_hud_model() -> Dictionary:
 		"has_save": autosave_loadable_available,
 		"save_status_message": save_status_message,
 		"economy_text": _economy_cue_text(),
-		"next_objective": _next_objective_option(),
+		"next_objective": _next_objective_option(pressure, objective),
 		"label_from_id": Callable(self, "_label_from_id"),
 		"player_facing_text": Callable(self, "_player_facing_text"),
 	})
@@ -12822,8 +12841,9 @@ func _pit_boss_hud_text(status: Dictionary) -> String:
 	return FoundationHudViewModelScript.pit_boss_hud_text(status)
 
 
-func _active_demo_objective_needs_play() -> bool:
-	var objective := _demo_objective_status()
+func _active_demo_objective_needs_play(objective: Dictionary = {}) -> bool:
+	if objective.is_empty():
+		objective = _demo_objective_status()
 	return bool(objective.get("active", false)) and not bool(objective.get("complete", false))
 
 
@@ -12831,23 +12851,23 @@ func _next_opportunity_hint() -> String:
 	return str(_next_objective_option().get("hint", ""))
 
 
-func _next_objective_option() -> Dictionary:
+func _next_objective_option(prebuilt_pressure: Dictionary = {}, prebuilt_demo_objective: Dictionary = {}) -> Dictionary:
 	if run_state == null:
 		return {}
-	var pressure := _run_pressure_view()
+	var pressure := prebuilt_pressure if not prebuilt_pressure.is_empty() else _run_pressure_view()
 	var pressure_state := str(pressure.get("state", ""))
 	if pressure_state == "victory":
 		return _objective_for_object("menu", "main_menu", "return to the menu or start fresh", true)
 	if pressure_state == "failed":
 		return _objective_for_object("menu", "main_menu", "return to the menu to continue or start over", true)
 
-	var demo_objective := _demo_objective_status()
+	var demo_objective := prebuilt_demo_objective if not prebuilt_demo_objective.is_empty() else _demo_objective_status()
 	var objective_state := _objective_presentation_state(pressure, demo_objective)
 	var state_objective := _next_objective_option_for_state(objective_state, demo_objective)
 	if not state_objective.is_empty():
 		return state_objective
 	if current_game != null:
-		if _active_demo_objective_needs_play():
+		if _active_demo_objective_needs_play(demo_objective):
 			return {
 				"hint": "choose stake and press for the objective",
 				"object_type": "game_surface",
@@ -12860,7 +12880,7 @@ func _next_objective_option() -> Dictionary:
 			"object_id": "",
 			"enabled": true,
 		}
-	if _active_demo_objective_needs_play() and _has_enabled_game_object():
+	if _active_demo_objective_needs_play(demo_objective) and _has_enabled_game_object():
 		return _objective_for_object(CONTEXT_MODE_GAME, "", "play for the boss-floor target", true)
 
 	var event_option := _first_event_option()
@@ -12965,7 +12985,9 @@ func _economy_cue_text() -> String:
 func _run_pressure_view() -> Dictionary:
 	if run_state == null:
 		return {}
-	return run_state.recovery_pressure_status(_supported_recovery_available(), _has_deferred_bankroll_zero_failure())
+	# RunState's pressure model does not consume the recovery-availability input.
+	# Avoid rebuilding lender and game-hook interactables for every HUD read.
+	return run_state.recovery_pressure_status(false, _has_deferred_bankroll_zero_failure())
 
 
 func _has_deferred_bankroll_zero_failure() -> bool:
@@ -13068,7 +13090,7 @@ func _tutorial_coffee_item_ids() -> Array:
 
 func _run_terminal_evaluator_evaluate_and_apply() -> Dictionary:
 	terminal_evaluator_call_count += 1
-	return RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
+	return RunTerminalEvaluatorScript.evaluate_terminal_and_apply(run_state, library)
 
 
 func _all_in_result_terminal_check_is_pending() -> bool:

@@ -5,6 +5,18 @@ extends RefCounted
 
 
 static func evaluate(run_state: RunState, library: ContentLibrary = null) -> Dictionary:
+	return _evaluate(run_state, library, true)
+
+
+# Foundation only needs the terminal decision at an action boundary. Keep the
+# public diagnostic evaluator above byte-compatible, while avoiding recovery
+# inventory/event/hook scans once a valid wager already proves the run cannot be
+# stranded.
+static func evaluate_terminal(run_state: RunState, library: ContentLibrary = null) -> Dictionary:
+	return _evaluate(run_state, library, false)
+
+
+static func _evaluate(run_state: RunState, library: ContentLibrary, include_recovery_diagnostics: bool) -> Dictionary:
 	var result := _base_result()
 	if run_state == null:
 		return result
@@ -44,6 +56,8 @@ static func evaluate(run_state: RunState, library: ContentLibrary = null) -> Dic
 		return result
 
 	result["wager_available"] = _has_valid_wager(run_state, library)
+	if not include_recovery_diagnostics and bool(result.get("wager_available", false)):
+		return result
 	result["travel_available"] = _has_available_travel(run_state, library)
 	result["local_room_travel_available"] = _has_available_local_room_travel(run_state)
 	result["event_recovery_available"] = _has_event_recovery(run_state, library)
@@ -66,9 +80,17 @@ static func evaluate(run_state: RunState, library: ContentLibrary = null) -> Dic
 
 
 static func evaluate_and_apply(run_state: RunState, library: ContentLibrary = null) -> Dictionary:
+	return _evaluate_and_apply(run_state, library, false)
+
+
+static func evaluate_terminal_and_apply(run_state: RunState, library: ContentLibrary = null) -> Dictionary:
+	return _evaluate_and_apply(run_state, library, true)
+
+
+static func _evaluate_and_apply(run_state: RunState, library: ContentLibrary, terminal_only: bool) -> Dictionary:
 	if run_state != null:
 		run_state.handle_grand_casino_heat_reroute("terminal_evaluator")
-	var result := evaluate(run_state, library)
+	var result := evaluate_terminal(run_state, library) if terminal_only else evaluate(run_state, library)
 	if run_state == null or not bool(result.get("failed", false)):
 		return result
 	var reason := str(result.get("reason", ""))
