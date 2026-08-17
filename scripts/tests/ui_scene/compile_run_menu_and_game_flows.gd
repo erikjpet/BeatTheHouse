@@ -135,6 +135,10 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	# can race any setup or observation in this fixture.
 	probe.set_process(false)
 	root.add_child(probe)
+	# FoundationMain's scripted _process is re-enabled during tree entry/ready.
+	# Disable it again before the first frame so no automatic realtime advance can
+	# race the fixture, while child layout and viewport drawing continue normally.
+	probe.set_process(false)
 	await process_frame
 	await process_frame
 	probe.call("start_game_test_session", "coin_pusher")
@@ -152,7 +156,18 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			and bool(canvas.call("surface_realtime_state_refresh_enabled")) \
 			and canvas.visible and canvas.is_visible_in_tree()
 	if not preconditions_exact:
-		push_error("Coin Pusher draw/realtime probe did not reach the exact live owned-canvas production preconditions.")
+		push_error("Coin Pusher draw/realtime probe did not reach the exact live owned-canvas production preconditions: canvas=%s game=%s screen=%s owned=%s processing=%s auto=%s paused=%s refresh=%s visible=%s tree_visible=%s." % [
+			canvas != null,
+			game != null and game.get_id() == "coin_pusher",
+			str(probe.get("current_screen")) == "GAME",
+			probe.get("game_surface_canvas") == canvas,
+			probe.is_processing(),
+			bool(probe.get("game_surface_auto_resolving")),
+			bool(probe.call("_simulation_progression_paused")),
+			bool(canvas.call("surface_realtime_state_refresh_enabled")) if canvas != null else false,
+			canvas.visible if canvas != null else false,
+			canvas.is_visible_in_tree() if canvas != null else false,
+		])
 		probe.queue_free()
 		await process_frame
 		return false
