@@ -285,6 +285,8 @@ var pending_triggered_events: Array = []
 var pending_bags: Array = []
 var active_triggered_event: Dictionary = {}
 var event_cadence: Dictionary = {}
+var event_cadence_rng_create_call_count := 0
+var event_cadence_rng_save_call_count := 0
 var music_arrangement_state: Dictionary = {}
 var music_tempo_state: Dictionary = {}
 var music_choreography_state: Dictionary = {}
@@ -1179,6 +1181,7 @@ func simulation_time_msec() -> int:
 
 # Creates the saved RNG stream reserved for world-event cadence decisions.
 func create_event_cadence_rng() -> RngStream:
+	event_cadence_rng_create_call_count += 1
 	_ensure_event_cadence()
 	var rng := RngStream.new()
 	rng.configure(int(event_cadence.get("rng_seed", seed_value)), int(event_cadence.get("rng_state", seed_value)))
@@ -1187,6 +1190,7 @@ func create_event_cadence_rng() -> RngStream:
 
 # Saves the cadence stream without advancing the general run RNG.
 func save_event_cadence_rng(rng: RngStream) -> void:
+	event_cadence_rng_save_call_count += 1
 	if rng == null:
 		return
 	_ensure_event_cadence()
