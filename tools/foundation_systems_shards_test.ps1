@@ -146,42 +146,94 @@ $expectedOverrides = @("BTH_DISTRIBUTION_DATA_ROOT", "BTH_DISTRIBUTION_BUILD", "
 Assert-True (((Get-FoundationShardClearedEnvironmentNames) -join "|") -eq ($expectedOverrides -join "|")) "Shard persistence override clearing list is incomplete or reordered."
 Assert-True ($checkGodotSource.Contains('foreach ($overrideName in Get-FoundationShardClearedEnvironmentNames)')) "Shard launcher does not consume the validated persistence override list."
 
-$cleanupPlan = Get-FoundationPartialLaunchCleanupTargets -Records @(
-    [pscustomobject]@{ process_started = $false; process_has_exited = $false; process_id = 11; project_root = "first" },
-    [pscustomobject]@{ process_started = $true; process_has_exited = $false; process_id = 22; project_root = "second" },
-    [pscustomobject]@{ process_started = $true; process_has_exited = $true; process_id = 33; project_root = "third" }
-)
-Assert-True ((@($cleanupPlan.process_ids) -join "|") -eq "22") "Partial-launch cleanup did not select exactly the live child process."
-Assert-True ((@($cleanupPlan.project_roots) -join "|") -eq "first|second|third") "Partial-launch cleanup dropped a prepared shard project root."
-Assert-True ($checkGodotSource.Contains('Get-FoundationPartialLaunchCleanupTargets -Records $cleanupRecords')) "Shard launcher does not consume the simulated partial-launch cleanup contract."
-
 $guard = New-FoundationConcurrencyGuardStage -Message "hostile contention"
 Assert-True ($guard.name -eq "concurrent_godot_guard" -and $guard.exit_code -eq 125 -and $guard.error -eq "hostile contention") "Mutex contention did not create the established guard stage/exit 125 evidence."
-Assert-True ($checkGodotSource.Contains('New-FoundationConcurrencyGuardStage -Message $message')) "Workspace-mutex contention path does not consume the validated guard result."
+$mutexWorkspace = Join-Path ([System.IO.Path]::GetTempPath()) ("bth_mutex_hostile_" + [Guid]::NewGuid().ToString("N"))
+$mutexLease = Enter-FoundationWorkspaceMutex -WorkspaceRoot $mutexWorkspace
+try {
+    Assert-True $mutexLease.acquired "Hostile mutex setup could not acquire its unique workspace lock."
+    $modulePath = (Join-Path $PSScriptRoot "foundation_systems_shards.ps1").Replace("'", "''")
+    $childWorkspace = $mutexWorkspace.Replace("'", "''")
+    $mutexProbeCommand = ". '$modulePath'; `$lease = Enter-FoundationWorkspaceMutex -WorkspaceRoot '$childWorkspace'; if (`$lease.acquired) { Exit-FoundationWorkspaceMutex -Lease `$lease; 'ACQUIRED' } else { 'CONTENDED' }"
+    $mutexProbeOutput = @(& powershell -NoProfile -ExecutionPolicy Bypass -Command $mutexProbeCommand)
+    Assert-True ($LASTEXITCODE -eq 0 -and $mutexProbeOutput[-1] -eq "CONTENDED") "A real second process acquired the already-owned workspace mutex."
+}
+finally {
+    Exit-FoundationWorkspaceMutex -Lease $mutexLease
+}
+$postReleaseLease = Enter-FoundationWorkspaceMutex -WorkspaceRoot $mutexWorkspace
+try {
+    Assert-True $postReleaseLease.acquired "Workspace mutex remained locked after releasing the hostile owner."
+}
+finally {
+    Exit-FoundationWorkspaceMutex -Lease $postReleaseLease
+}
+
+$hostileRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("bth_cleanup_hostile_" + [Guid]::NewGuid().ToString("N"))
+$tempBase = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd([char[]]@([char]'\', [char]'/'))
+$hostileFull = [System.IO.Path]::GetFullPath($hostileRoot)
+Assert-True $hostileFull.StartsWith($tempBase + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase) "Hostile cleanup root escaped the OS temporary directory."
+$allowedProjects = Join-Path $hostileRoot "projects"
+$disposableProject = Join-Path $allowedProjects "partial"
+$junctionTarget = Join-Path $hostileRoot "target"
+$sentinelPath = Join-Path $junctionTarget "sentinel.txt"
+$benignChild = $null
+try {
+    New-Item -ItemType Directory -Force -Path $disposableProject | Out-Null
+    New-Item -ItemType Directory -Force -Path $junctionTarget | Out-Null
+    [System.IO.File]::WriteAllText($sentinelPath, "survives")
+    New-Item -ItemType Junction -Path (Join-Path $disposableProject "scripts") -Target $junctionTarget | Out-Null
+    $childStart = New-Object System.Diagnostics.ProcessStartInfo
+    $childStart.FileName = (Get-Command powershell -ErrorAction Stop).Source
+    $childStart.Arguments = '-NoProfile -Command "Start-Sleep -Seconds 30"'
+    $childStart.UseShellExecute = $false
+    $childStart.CreateNoWindow = $true
+    $benignChild = [System.Diagnostics.Process]::Start($childStart)
+    $partialRecord = [pscustomobject]@{
+        shard_id = "hostile_partial"
+        process = $benignChild
+        process_started = $true
+        stdout_task = $null
+        stderr_task = $null
+        project_root = $disposableProject
+    }
+    $actualCleanupFailures = @(Invoke-FoundationShardResourceCleanup -Records @($partialRecord) -AllowedProjectRoot $allowedProjects)
+    $benignChild.Refresh()
+    Assert-True ($actualCleanupFailures.Count -eq 0) ("Real partial-launch cleanup failed: " + ($actualCleanupFailures -join " | "))
+    Assert-True $benignChild.HasExited "Real partial-launch cleanup left its benign child running."
+    Assert-True (-not (Test-Path -LiteralPath $disposableProject)) "Real partial-launch cleanup left its private project behind."
+    Assert-True ((Test-Path -LiteralPath $sentinelPath) -and [System.IO.File]::ReadAllText($sentinelPath) -eq "survives") "Junction cleanup damaged the source target sentinel."
+    Assert-True ([string]::IsNullOrWhiteSpace([string]$partialRecord.project_root)) "Successful cleanup did not retire the record's private-project ownership."
+}
+finally {
+    if ($null -ne $benignChild) {
+        try { if (-not $benignChild.HasExited) { Stop-Process -Id $benignChild.Id -Force -ErrorAction SilentlyContinue } } catch { }
+    }
+    if (Test-Path -LiteralPath $disposableProject) {
+        Remove-FoundationShardProjectRoot -ProjectRoot $disposableProject -AllowedProjectRoot $allowedProjects
+    }
+    if (Test-Path -LiteralPath $hostileRoot) {
+        Remove-Item -LiteralPath $hostileRoot -Recurse -Force
+    }
+}
+
 $exceptionStage = New-FoundationHarnessExceptionStage -GodotPath "godot" -Message "hostile launch failure" -DurationMsec 2500 -BaselineSec 10.0 -BudgetSec 20.0 -StdoutPath "out" -StderrPath "err"
 Assert-True ($exceptionStage.name -eq "foundation_systems" -and $exceptionStage.exit_code -eq 1 -and $exceptionStage.error -eq "hostile launch failure" -and $exceptionStage.duration_sec -eq 2.5) "Harness exception did not retain honest foundation_systems stage evidence."
 Assert-True ($checkGodotSource.Contains('New-FoundationHarnessExceptionStage')) "Shard exception path does not consume the validated failure-stage contract."
 $cleanupFailureReport = [pscustomobject]@{ passed = $true; failure_count = 0; failures = @() }
-$cleanupFailureReport = Add-FoundationCleanupFailuresToReport -Report $cleanupFailureReport -CleanupFailures @("hostile cleanup failure")
+$cleanupClock = [System.Diagnostics.Stopwatch]::StartNew()
+$cleanupCompletion = Complete-FoundationTimedCleanup -Records @() -AllowedProjectRoot $allowedProjects -Stopwatch $cleanupClock -Report $cleanupFailureReport -CleanupAction { Start-Sleep -Milliseconds 75; @("hostile cleanup failure") }
+$cleanupFailureReport = $cleanupCompletion.report
 Assert-True (-not $cleanupFailureReport.passed -and $cleanupFailureReport.failure_count -eq 1 -and $cleanupFailureReport.failures[0] -eq "hostile cleanup failure") "Cleanup failure did not deterministically fail the aggregate report."
+Assert-True (-not $cleanupClock.IsRunning -and $cleanupClock.ElapsedMilliseconds -ge 70) "Timed cleanup stopped its stage clock before the cleanup action completed."
 $cleanupFailureExit = Resolve-FoundationSystemsExitCode -ShardResults @([pscustomobject]@{ exit_code = 0; raw_exit_code = 0; timed_out = $false }) -AggregatePassed ([bool]$cleanupFailureReport.passed) -BudgetExceeded $false
 Assert-True ($cleanupFailureExit -eq 1) "Cleanup failure report did not force a nonzero systems stage exit."
-Assert-True ($checkGodotSource.Contains('Add-FoundationCleanupFailuresToReport -Report $aggregateReport -CleanupFailures $cleanupFailures')) "Shard launcher does not consume the validated cleanup-failure report contract."
-$cleanupIndex = $checkGodotSource.IndexOf('$cleanupFailures = @(Invoke-FoundationShardResourceCleanup -Records $records)')
-$clockStopIndex = $checkGodotSource.IndexOf('$wall.Stop()', $cleanupIndex)
-$budgetIndex = $checkGodotSource.IndexOf('$budgetExceeded =', $clockStopIndex)
-Assert-True ($cleanupIndex -ge 0 -and $clockStopIndex -gt $cleanupIndex -and $budgetIndex -gt $clockStopIndex) "Systems stage clock/budget no longer includes private-project cleanup."
-$exceptionCleanupIndex = $checkGodotSource.IndexOf('$exceptionCleanupFailures = @(Invoke-FoundationShardResourceCleanup -Records $records)')
-$exceptionClockStopIndex = $checkGodotSource.IndexOf('$wall.Stop()', $exceptionCleanupIndex)
-$exceptionStageIndex = $checkGodotSource.IndexOf('New-FoundationHarnessExceptionStage', $exceptionClockStopIndex)
-Assert-True ($exceptionCleanupIndex -ge 0 -and $exceptionClockStopIndex -gt $exceptionCleanupIndex -and $exceptionStageIndex -gt $exceptionClockStopIndex) "Harness-exception stage timing/result no longer includes its cleanup attempt."
 
 $fakeProject = Join-Path $projectRoot ".tmp/test_reports/fake_shard"
 Assert-True (-not (Test-FoundationJunctionTargetSafe -ProjectRoot $fakeProject -TargetPath (Join-Path $projectRoot ".tmp"))) "Ancestor .tmp junction cycle was accepted."
 Assert-True (Test-FoundationJunctionTargetSafe -ProjectRoot $fakeProject -TargetPath (Join-Path $projectRoot "scripts")) "Disjoint read-only source junction was rejected."
 Assert-True (-not $checkGodotSource.Contains('@(".agents", ".tmp",')) "Shard project still junctions its ancestor .tmp report tree."
 Assert-True ($checkGodotSource.Contains('Copy-Item -LiteralPath $sourceImported -Destination (Join-Path $shardCache "imported") -Recurse -Force')) "Shard imported cache is not physically private."
-Assert-True ($checkGodotSource.Contains('Remove-Item -LiteralPath $junction -Force')) "Shard cleanup does not unlink source junctions before recursive removal."
 
 if (-not $Quiet) {
     Write-Host "Foundation systems shard hostile contracts passed."

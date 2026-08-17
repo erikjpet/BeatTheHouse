@@ -554,30 +554,13 @@ function Enter-CheckGodotWorkspaceMutex {
     if ($AllowConcurrentGodot) {
         return $true
     }
-    $rootBytes = [System.Text.Encoding]::UTF8.GetBytes(([System.IO.Path]::GetFullPath($root)).ToLowerInvariant())
-    $sha = [System.Security.Cryptography.SHA256]::Create()
-    try {
-        $hash = ([System.BitConverter]::ToString($sha.ComputeHash($rootBytes))).Replace("-", "").Substring(0, 24)
-    }
-    finally {
-        $sha.Dispose()
-    }
-    $mutex = New-Object System.Threading.Mutex($false, "Local\BeatTheHouse_CheckGodot_$hash")
-    $acquired = $false
-    try {
-        $acquired = $mutex.WaitOne(0)
-    }
-    catch [System.Threading.AbandonedMutexException] {
-        $acquired = $true
-    }
-    if (-not $acquired) {
-        $mutex.Dispose()
+    $lease = Enter-FoundationWorkspaceMutex -WorkspaceRoot $root
+    if (-not $lease.acquired) {
         return $false
     }
-    $script:CheckGodotWorkspaceMutex = $mutex
+    $script:CheckGodotWorkspaceMutex = $lease.mutex
     $releaseMutex = {
-        try { $mutex.ReleaseMutex() } catch { }
-        try { $mutex.Dispose() } catch { }
+        Exit-FoundationWorkspaceMutex -Lease $lease
     }.GetNewClosure()
     Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action $releaseMutex | Out-Null
     return $true
@@ -630,89 +613,9 @@ function New-FoundationShardProjectRoot {
     return $projectRoot
     }
     catch {
-        Remove-FoundationShardProjectRoot -ProjectRoot $projectRoot
+        Remove-FoundationShardProjectRoot -ProjectRoot $projectRoot -AllowedProjectRoot (Join-Path $script:ReportRoot "shard_projects")
         throw
     }
-}
-
-function Remove-FoundationShardProjectRoot {
-    param([string]$ProjectRoot)
-    if ([string]::IsNullOrWhiteSpace($ProjectRoot) -or -not (Test-Path -LiteralPath $ProjectRoot)) {
-        return
-    }
-    $fullRoot = [System.IO.Path]::GetFullPath($ProjectRoot)
-    $allowedRoot = [System.IO.Path]::GetFullPath((Join-Path $script:ReportRoot "shard_projects"))
-    if (-not $fullRoot.StartsWith($allowedRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "Refusing to remove shard project outside report root: $fullRoot"
-    }
-    # Unlink every source junction before recursive removal. Never allow a
-    # cleanup implementation to traverse from a disposable project into the
-    # real workspace.
-    foreach ($directoryName in @(".agents", "assets", "branding", "data", "docs", "scenes", "scripts", "tools")) {
-        $junction = Join-Path $fullRoot $directoryName
-        if (Test-Path -LiteralPath $junction) {
-            Remove-Item -LiteralPath $junction -Force
-        }
-    }
-    Remove-Item -LiteralPath $fullRoot -Recurse -Force
-}
-
-function Invoke-FoundationShardResourceCleanup {
-    param([object[]]$Records)
-    $failures = New-Object System.Collections.Generic.List[string]
-    $cleanupRecords = @()
-    foreach ($record in @($Records)) {
-        $hasExited = $true
-        if ($null -ne $record.process -and $record.process_started) {
-            try { $hasExited = [bool]$record.process.HasExited } catch { $hasExited = $false }
-        }
-        $cleanupRecords += [pscustomobject]@{
-            process_started = [bool]$record.process_started
-            process_has_exited = $hasExited
-            process_id = if ($null -ne $record.process -and $record.process_started) { [int]$record.process.Id } else { 0 }
-            project_root = [string]$record.project_root
-        }
-    }
-    $cleanupTargets = Get-FoundationPartialLaunchCleanupTargets -Records $cleanupRecords
-    foreach ($processId in @($cleanupTargets.process_ids)) {
-        try { Stop-Process -Id $processId -Force -ErrorAction Stop } catch { $failures.Add("Could not stop systems shard process ${processId}: $($_.Exception.Message)") }
-    }
-    foreach ($record in @($Records)) {
-        if ($null -ne $record.process -and $record.process_started) {
-            try {
-                if (-not $record.process.WaitForExit(5000)) {
-                    $failures.Add("Timed out draining systems shard '$($record.shard_id)' process during cleanup.")
-                }
-            }
-            catch { $failures.Add("Could not drain systems shard '$($record.shard_id)' process: $($_.Exception.Message)") }
-            if ($null -ne $record.stdout_task) {
-                try {
-                    if (-not $record.stdout_task.Wait(5000)) {
-                        $failures.Add("Timed out draining systems shard '$($record.shard_id)' stdout during cleanup.")
-                    }
-                }
-                catch { $failures.Add("Could not drain systems shard '$($record.shard_id)' stdout: $($_.Exception.Message)") }
-            }
-            if ($null -ne $record.stderr_task) {
-                try {
-                    if (-not $record.stderr_task.Wait(5000)) {
-                        $failures.Add("Timed out draining systems shard '$($record.shard_id)' stderr during cleanup.")
-                    }
-                }
-                catch { $failures.Add("Could not drain systems shard '$($record.shard_id)' stderr: $($_.Exception.Message)") }
-            }
-        }
-        if (-not [string]::IsNullOrWhiteSpace([string]$record.project_root)) {
-            try {
-                Remove-FoundationShardProjectRoot -ProjectRoot ([string]$record.project_root)
-                $record.project_root = ""
-            }
-            catch {
-                $failures.Add("Could not remove systems shard '$($record.shard_id)' private project: $($_.Exception.Message)")
-            }
-        }
-    }
-    return @($failures)
 }
 
 function Invoke-FoundationSystemsSharded {
@@ -720,6 +623,7 @@ function Invoke-FoundationSystemsSharded {
     $name = "foundation_systems"
     $timeout = if ($StageTimeoutSec -gt 0) { $StageTimeoutSec } else { Get-StageTimeout $name }
     $records = New-Object System.Collections.Generic.List[object]
+    $shardProjectsRoot = Join-Path $script:ReportRoot "shard_projects"
     $startedMsec = [Environment]::TickCount64
     $wall = [System.Diagnostics.Stopwatch]::StartNew()
     try {
@@ -807,7 +711,7 @@ function Invoke-FoundationSystemsSharded {
         $records.Add($record)
         }
         catch {
-            Remove-FoundationShardProjectRoot -ProjectRoot $shardProjectRoot
+            Remove-FoundationShardProjectRoot -ProjectRoot $shardProjectRoot -AllowedProjectRoot $shardProjectsRoot
             throw
         }
         [void]$process.Start()
@@ -898,16 +802,16 @@ function Invoke-FoundationSystemsSharded {
     $merged = Merge-FoundationSystemsShardReports -ExpectedIds $expectedIds -ShardResults $shardResults
     $aggregateReport = $merged.report
     $aggregateReport.started_msec = $startedMsec
-    $cleanupFailures = @(Invoke-FoundationShardResourceCleanup -Records $records)
-    $aggregateReport = Add-FoundationCleanupFailuresToReport -Report $aggregateReport -CleanupFailures $cleanupFailures
-    if (($cacheBefore -join "`n") -ne ((Get-ProjectCacheWriteState) -join "`n")) {
-        $aggregateReport.failures += "Concurrent systems shards changed the shared .godot cache after the parent import."
-    }
-    $aggregateReport.failure_count = @($aggregateReport.failures).Count
-    $aggregateReport.passed = ($aggregateReport.failure_count -eq 0)
+    $cacheCheck = {
+        if (($cacheBefore -join "`n") -ne ((Get-ProjectCacheWriteState) -join "`n")) {
+            return @("Concurrent systems shards changed the shared .godot cache after the parent import.")
+        }
+        return @()
+    }.GetNewClosure()
+    $completion = Complete-FoundationTimedCleanup -Records $records -AllowedProjectRoot $shardProjectsRoot -Stopwatch $wall -Report $aggregateReport -AfterCleanupCheck $cacheCheck
+    $aggregateReport = $completion.report
     $reportPath = Join-Path $script:ReportRoot "foundation_systems.json"
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-    $wall.Stop()
     $aggregateReport.duration_msec = [int]$wall.ElapsedMilliseconds
     [System.IO.File]::WriteAllText($reportPath, ($aggregateReport | ConvertTo-Json -Depth 20), $utf8NoBom)
 
@@ -957,10 +861,9 @@ function Invoke-FoundationSystemsSharded {
     }
     catch {
         $harnessException = $_.Exception.Message
-        $exceptionCleanupFailures = @(Invoke-FoundationShardResourceCleanup -Records $records)
-        if ($wall.IsRunning) {
-            $wall.Stop()
-        }
+        $exceptionReport = [pscustomobject]@{ passed = $true; failure_count = 0; failures = @() }
+        $exceptionCompletion = Complete-FoundationTimedCleanup -Records $records -AllowedProjectRoot $shardProjectsRoot -Stopwatch $wall -Report $exceptionReport
+        $exceptionCleanupFailures = @($exceptionCompletion.failures)
         $errorText = "Foundation systems shard harness exception: $harnessException"
         if ($exceptionCleanupFailures.Count -gt 0) {
             $errorText += " " + ($exceptionCleanupFailures -join " | ")
@@ -987,7 +890,7 @@ function Invoke-FoundationSystemsSharded {
         return $false
     }
     finally {
-        $fallbackCleanupFailures = @(Invoke-FoundationShardResourceCleanup -Records $records)
+        $fallbackCleanupFailures = @(Invoke-FoundationShardResourceCleanup -Records $records -AllowedProjectRoot $shardProjectsRoot)
         foreach ($fallbackCleanupFailure in $fallbackCleanupFailures) {
             Write-Warning $fallbackCleanupFailure
         }
