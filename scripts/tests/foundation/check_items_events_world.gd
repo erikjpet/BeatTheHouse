@@ -1413,8 +1413,11 @@ func _check_t4_7_crew_conversation_contract(library: ContentLibrary, failures: A
 		var definition: Dictionary = definition_variant
 		var event_id := str(definition.get("id", ""))
 		var speaker: Dictionary = definition.get("speaker", {}) if typeof(definition.get("speaker", {})) == TYPE_DICTIONARY else {}
-		var is_crew_event := event_id.begins_with("crew_") or str(speaker.get("name", "")) == "The Crew"
-		if not is_crew_event:
+		# T4.7 owns pooled group conversations spoken by The Crew. Individual
+		# member recruitment/contact events intentionally use their own speaker
+		# identities and must not be forced through the three-portrait lender pool.
+		var is_crew_group_event := str(speaker.get("name", "")) == "The Crew"
+		if not is_crew_group_event:
 			continue
 		crew_event_count += 1
 		if str(definition.get("presentation", "")) != "talk":
@@ -2362,7 +2365,10 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	for tip_seed_index in range(20):
 		var tip_run: RunState = RunStateScript.new()
 		tip_run.start_new("WORLD-MAP-UNDERGROUND-TIP-%02d" % tip_seed_index)
-		_build_topology_only_world_map(tip_run, topology_map_service)
+		# This sweep exercises RunState.add_next_archetypes, whose production
+		# boundary requires an active generated environment. Keep the full
+		# generator path here; only topology-read-only sweeps use the fast seam.
+		generator.next_environment(tip_run)
 		var underground_id := WorldMapScript.UNDERGROUND_SHORTCUT_ID
 		if WorldMapScript.visible_node_ids(tip_run.world_map).has(underground_id):
 			failures.append("World map showed the underground casino before the parking lot tip for seed %02d." % tip_seed_index)
