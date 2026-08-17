@@ -77,9 +77,9 @@ class ByteRepresentationActivationFixture:
 
 	func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 		if run_state.narrative_flags.has("game_activation_numeric_representation"):
-			# GDScript considers 0 == 0.0, while JSON emits integer 0 and float 0.0
+			# GDScript considers 0.0 == 0, while JSON emits float 0.0 and integer 0
 			# distinctly. Recursive semantic equality therefore misses this mutation.
-			run_state.narrative_flags["game_activation_numeric_representation"] = 0.0
+			run_state.narrative_flags["game_activation_numeric_representation"] = 0
 		return super.environment_object_state(run_state, environment)
 
 
@@ -470,14 +470,19 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 	var byte_representation_run := RunStateScript.new()
 	byte_representation_run.start_new("GAME-ACTIVATION-BYTE-REPRESENTATION-FIXTURE")
 	byte_representation_run.set_environment(environment)
-	byte_representation_run.narrative_flags["game_activation_numeric_representation"] = 0
+	byte_representation_run.narrative_flags["game_activation_numeric_representation"] = 0.0
 	byte_representation_run = _json_round_trip_run_state(byte_representation_run, "numeric byte-representation negative fixture", failures)
 	if byte_representation_run != null:
-		var byte_representation_game := ByteRepresentationActivationFixture.new()
-		byte_representation_game.setup({"id": "game_activation_fixture", "display_name": "Activation Fixture", "legal_actions": [], "cheat_actions": []})
-		var byte_representation_violation := _activation_violation(byte_representation_game, byte_representation_run)
-		if byte_representation_violation.find("environment_object_state changed canonical byte order/type changed") == -1:
-			failures.append("Game activation class guard did not detect a semantic-equal JSON-byte representation mutation: %s" % byte_representation_violation)
+		var cold_numeric_value: Variant = byte_representation_run.narrative_flags.get("game_activation_numeric_representation")
+		var cold_numeric_text := JSON.stringify({"value": cold_numeric_value})
+		if typeof(cold_numeric_value) != TYPE_FLOAT or cold_numeric_text != "{\"value\":0.0}":
+			failures.append("Game activation byte-representation fixture did not survive cold restore as canonical float 0.0: %s" % cold_numeric_text)
+		else:
+			var byte_representation_game := ByteRepresentationActivationFixture.new()
+			byte_representation_game.setup({"id": "game_activation_fixture", "display_name": "Activation Fixture", "legal_actions": [], "cheat_actions": []})
+			var byte_representation_violation := _activation_violation(byte_representation_game, byte_representation_run)
+			if byte_representation_violation.find("environment_object_state changed canonical byte order/type changed") == -1:
+				failures.append("Game activation class guard did not detect a semantic-equal JSON-byte representation mutation: %s" % byte_representation_violation)
 
 	var source_alias_run := RunStateScript.new()
 	source_alias_run.start_new("GAME-ACTIVATION-SOURCE-ALIAS-FIXTURE")
