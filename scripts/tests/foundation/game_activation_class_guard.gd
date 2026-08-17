@@ -96,16 +96,16 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 	for game_id_value in _string_array(environment.get("game_ids", [])):
 		var game_id := str(game_id_value)
 		covered_game_ids[game_id] = true
+		var context_key := "%s|%s|%s|%s" % [game_id, archetype_id, layer_id, scenario_id]
+		if checked_contexts.has(context_key):
+			continue
+		checked_contexts[context_key] = true
 		var game := _load_game(library, game_id, failures)
 		if game == null:
 			continue
 		# Initial room rendering establishes each game's environment-facing
 		# presentation before focus/click snapshots are compared by M1.6.
 		_settle_room_presentation(game, source_run)
-		var context_key := "%s|%s|%s|%s" % [game_id, archetype_id, layer_id, scenario_id]
-		if checked_contexts.has(context_key):
-			continue
-		checked_contexts[context_key] = true
 		pending_checks.append({"game_id": game_id, "game": game})
 	var settled_snapshot := source_run.to_dict()
 	for check_value in pending_checks:
@@ -160,9 +160,9 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 
 
 static func _activation_violation(game: GameModule, run_state: RunState) -> String:
+	var before := run_state.to_dict()
+	var before_text := JSON.stringify(before)
 	for method in ACTIVATION_METHODS:
-		var before := run_state.to_dict()
-		var before_text := JSON.stringify(before)
 		match method:
 			"enter":
 				game.enter(run_state, run_state.current_environment)
@@ -172,8 +172,9 @@ static func _activation_violation(game: GameModule, run_state: RunState) -> Stri
 				game.surface_state(run_state, run_state.current_environment, {})
 			"coach_state":
 				game.coach_state(run_state, run_state.current_environment, {})
-		var after := run_state.to_dict()
-		if before_text != JSON.stringify(after):
+		var after_text := JSON.stringify(run_state.to_dict())
+		if before_text != after_text:
+			var after := run_state.to_dict()
 			var paths: Array = []
 			_collect_changed_paths(before, after, "", paths)
 			return "%s changed %s" % [method, ", ".join(paths)]
