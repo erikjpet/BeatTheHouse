@@ -325,6 +325,15 @@ What happens then is the owner's, not an agent's:
   multi-process sharding of the existing systems registration: every check
   must run exactly once, aggregate failures/stderr/timeouts must remain honest,
   and no suite, seed, assertion, registration, or budget may move or change.
+- 2026-08-17 [systems gate] Independent pre-runtime review returned the first
+  sharded launcher for correction before integration: raw child failures must
+  outrank synthesized stderr code 127; launcher/cache/report exceptions must
+  still emit an honest stage summary; missing-report exit-zero children must
+  retain stdout-derived `last_started_check`; hostile contracts must exercise
+  those cases plus launch cleanup and mutex contention rather than inspect
+  source strings; and shard processes must be prevented from racing on shared
+  `.godot` cache files, not merely detect a write afterward. The unchanged
+  registration, assertions, timeout, and 43.712 s wall budget still bind.
 - 2026-08-17 [integrated UI] The UI gate currently stops before assertions
   because `New-SplitTestRunner` concatenates descendant implementations with a
   contiguous parent-only fallback-stub block, producing duplicate function
