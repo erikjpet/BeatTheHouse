@@ -4811,7 +4811,7 @@ func _initialize_grand_casino_staffing(environment: Dictionary = {}) -> void:
 		return
 	var prior_cue: Dictionary = grand_casino_staffing.get("entry_cue", {}) if typeof(grand_casino_staffing.get("entry_cue", {})) == TYPE_DICTIONARY else {}
 	var shown_day := maxi(0, int(grand_casino_staffing.get("rotation_cue_shown_day", 0)))
-	grand_casino_staffing = _grand_casino_staffing_for_day(current_day)
+	grand_casino_staffing = _grand_casino_staffing_for_day(current_day, _grand_casino_staff_config(source))
 	grand_casino_staffing["entry_cue"] = prior_cue
 	grand_casino_staffing["rotation_cue_shown_day"] = shown_day
 
@@ -4824,9 +4824,9 @@ func _advance_grand_casino_staff_day_rollovers(previous_day: int, next_day: int)
 		_seed_rival_cheater_cast(day_index)
 
 
-func _grand_casino_staffing_for_day(day_index: int) -> Dictionary:
+func _grand_casino_staffing_for_day(day_index: int, config_override: Dictionary = {}) -> Dictionary:
 	var target_day := maxi(1, day_index)
-	var config := _grand_casino_staff_config()
+	var config := config_override.duplicate(true) if not config_override.is_empty() else _grand_casino_staff_config()
 	var chance := clampi(int(config.get("rotation_chance_percent", GRAND_CASINO_STAFF_ROTATION_CHANCE_PERCENT)), 0, 100)
 	var assignments: Dictionary = {}
 	for timeline_day in range(1, target_day + 1):
@@ -4909,8 +4909,13 @@ func _grand_casino_staff_pick(roster: Array, previous: Dictionary, rng: RngStrea
 	return (selected as Dictionary).duplicate(true) if typeof(selected) == TYPE_DICTIONARY else {}
 
 
-func _grand_casino_staff_config() -> Dictionary:
-	for environment_value in [current_environment, grand_casino_room_states.get(GRAND_CASINO_ARCHETYPE_ID, {})]:
+func _grand_casino_staff_config(environment: Dictionary = {}) -> Dictionary:
+	var candidates: Array = []
+	if not environment.is_empty():
+		candidates.append(environment)
+	candidates.append(current_environment)
+	candidates.append(grand_casino_room_states.get(GRAND_CASINO_ARCHETYPE_ID, {}))
+	for environment_value in candidates:
 		if typeof(environment_value) != TYPE_DICTIONARY:
 			continue
 		var environment := environment_value as Dictionary
