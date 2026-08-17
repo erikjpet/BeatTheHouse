@@ -573,6 +573,14 @@ What happens then is the owner's, not an agent's:
   Record `refs/heads/master` plus immutable commit, disclose the reviewed Beta/
   post-release risk, and lock/assert the exact 4.6 API and interface provenance
   instead of fabricating a tag.
+- 2026-08-17 [pusher06_2 4.6 binding pin] A higher-integrity upstream target
+  supersedes the master candidate: official `godot-cpp` commit `58d1de72...`
+  explicitly syncs Godot engine `89cea143...` (4.6-stable). Its extension API is
+  content-equivalent to the exact runtime dump and its GDExtension interface is
+  byte-identical (interface SHA-256 `34d7058f31af186d36b84567e70a9f9543da0d74f25cfe5266d4fe2d27e090f0`).
+  The candidate lock now records truthful commit provenance, exact payload
+  hashes, API 4.6, and bootstrap verification after clearing mixed generated
+  caches. Independent provenance re-audit and a clean load test remain.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1300,3 +1308,6 @@ What happens then is the owner's, not an agent's:
 - 2026-08-17 [pusher06_2] Exact `d7b6162` 4.6 API selection is credible, but the
   lock's fabricated tag and incomplete Beta/provenance disclosure are rejected;
   artifact hashes and truthful source ref are required before runtime evidence.
+- 2026-08-17 [pusher06_2] Exact official 4.6 sync commit `58d1de72...` supersedes
+  the rejected master candidate; payload provenance is independently re-auditing
+  while a fully clean Windows load build runs.
