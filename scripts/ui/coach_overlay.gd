@@ -70,6 +70,8 @@ var tips_enabled := true
 var reduce_motion := false
 var small_screen := false
 var focus_visual_enabled := true
+var object_property_list_scan_count := 0
+var _object_property_names_by_instance: Dictionary = {}
 
 var focus_layer: FocusLayer
 var panel: Panel
@@ -225,7 +227,7 @@ func notify_action(action_id: String) -> bool:
 	# case). Re-read only public host state at that explicit input boundary. The
 	# input that revealed a lesson never dismisses the lesson in the same call.
 	if active_lesson.is_empty():
-		if _path_value(latest_context, "run.tutorial") != true:
+		if _path_value(latest_context, "run.tutorial") != true and _has_normal_action_boundary_candidate():
 			_evaluate_normal_action_boundary(action_id)
 		return false
 	if not CoachViewModelScript.completion_matches(active_lesson, action_id):
@@ -234,9 +236,44 @@ func notify_action(action_id: String) -> bool:
 	return true
 
 
+func _has_normal_action_boundary_candidate() -> bool:
+	# Most normal-run clicks happen after the one tip authored for their current
+	# surface has already been seen. Avoid rebuilding the complete public coach
+	# context when no unseen normal lesson can possibly match the stable routing
+	# fields. Predicate/dependency evaluation still happens at the real boundary
+	# whenever even one candidate remains, so dynamic advice behavior is exact.
+	if not tips_enabled:
+		return false
+	if not queued_lessons.is_empty():
+		return true
+	for lesson_value in lessons:
+		if typeof(lesson_value) != TYPE_DICTIONARY:
+			continue
+		var lesson: Dictionary = lesson_value
+		if str(lesson.get("scope", "")).strip_edges() == "tutorial_run":
+			continue
+		var lesson_id := str(lesson.get("id", "")).strip_edges()
+		if lesson_id.is_empty() or bool(seen.get(lesson_id, false)) or bool(queued_ids.get(lesson_id, false)):
+			continue
+		var trigger := _dict(lesson.get("trigger", {}))
+		if trigger.is_empty():
+			continue
+		var route_can_match := true
+		for field in ["screen", "environment_kind", "environment_archetype", "game_id"]:
+			var expected := str(trigger.get(field, "")).strip_edges()
+			if not expected.is_empty() and str(_path_value(latest_context, field)).strip_edges() != expected:
+				route_can_match = false
+				break
+		if route_can_match:
+			return true
+	return false
+
+
 func _evaluate_normal_action_boundary(action_id: String) -> void:
-	var interaction_context := latest_context.duplicate(true)
-	var action_context := _dict(interaction_context.get("action", {})).duplicate(true)
+	# Copy on write: the action branch is the only caller-owned branch changed
+	# here. evaluate_at_boundary deep-owns any queued/active lesson snapshot.
+	var interaction_context := latest_context.duplicate(false)
+	var action_context := _dict(interaction_context.get("action", {})).duplicate(false)
 	action_context["last_action_id"] = action_id
 	interaction_context["action"] = action_context
 	evaluate_at_boundary(interaction_context)
@@ -246,13 +283,16 @@ func _evaluate_normal_action_boundary(action_id: String) -> void:
 # Keeping this read seam inside the coach surface avoids adding tutorial flags
 # to gameplay models and keeps discovery-gated mechanics out of the context.
 func _with_public_system_context(context: Dictionary) -> Dictionary:
-	var observed := context.duplicate(true)
+	# Copy on write: only `run` and `ui` receive derived public flags. Geometry,
+	# anchors, viewport, and other presentation branches stay read-only and can be
+	# borrowed until a lesson is queued/activated, where they are deep-copied.
+	var observed := context.duplicate(false)
 	var host := get_parent()
 	var run_state_value: Variant = _object_property(host, "run_state")
 	if typeof(run_state_value) != TYPE_OBJECT:
 		return observed
-	var run_context := _dict(observed.get("run", {})).duplicate(true)
-	var ui_context := _dict(observed.get("ui", {})).duplicate(true)
+	var run_context := _dict(observed.get("run", {})).duplicate(false)
+	var ui_context := _dict(observed.get("ui", {})).duplicate(false)
 	var environment := _dict(_object_property(run_state_value, "current_environment"))
 	var scenario_id := str(environment.get("scenario_id", "")).strip_edges()
 	if scenario_id.is_empty():
@@ -286,9 +326,31 @@ func _object_property(source: Variant, property_name: String) -> Variant:
 	if typeof(source) != TYPE_OBJECT:
 		return null
 	var object_value := source as Object
-	for property_value in object_value.get_property_list():
-		if typeof(property_value) == TYPE_DICTIONARY and str((property_value as Dictionary).get("name", "")) == property_name:
-			return object_value.get(property_name)
+	if not is_instance_valid(object_value):
+		return null
+	var instance_id := object_value.get_instance_id()
+	var cache_entry: Dictionary = _object_property_names_by_instance.get(instance_id, {}) \
+			if typeof(_object_property_names_by_instance.get(instance_id, {})) == TYPE_DICTIONARY else {}
+	var cached_ref: WeakRef = cache_entry.get("object_ref") as WeakRef if cache_entry.get("object_ref") is WeakRef else null
+	if cached_ref == null or not is_same(cached_ref.get_ref(), object_value):
+		# A new RunState is installed for each run. Retain capabilities only for
+		# objects that are still live so this cache cannot accumulate dead runs.
+		for cached_instance_id in _object_property_names_by_instance.keys():
+			var stale_entry_value: Variant = _object_property_names_by_instance.get(cached_instance_id, {})
+			var stale_entry: Dictionary = stale_entry_value if typeof(stale_entry_value) == TYPE_DICTIONARY else {}
+			var stale_ref_value: Variant = stale_entry.get("object_ref")
+			if not stale_ref_value is WeakRef or (stale_ref_value as WeakRef).get_ref() == null:
+				_object_property_names_by_instance.erase(cached_instance_id)
+		var property_names: Dictionary = {}
+		for property_value in object_value.get_property_list():
+			if typeof(property_value) == TYPE_DICTIONARY:
+				property_names[str((property_value as Dictionary).get("name", ""))] = true
+		cache_entry = {"object_ref": weakref(object_value), "property_names": property_names}
+		_object_property_names_by_instance[instance_id] = cache_entry
+		object_property_list_scan_count += 1
+	var cached_names: Dictionary = cache_entry.get("property_names", {}) if typeof(cache_entry.get("property_names", {})) == TYPE_DICTIONARY else {}
+	if bool(cached_names.get(property_name, false)):
+		return object_value.get(property_name)
 	return null
 
 

@@ -347,14 +347,19 @@ static func add_recovered_coin(state: Dictionary, rng: RngStream, lane_count: in
 
 
 static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
-	_normalize_hot_body_fields(state)
+	var forced_backend := str(config.get("_debug_force_solver_backend", ""))
+	var native := _native_solver_backend() if forced_backend != "gdscript" else null
+	var trusted_native := native != null and native.get_class() == "CoinPusherNativeCore" and native.get_script() == null
+	# The shipped extension validates and loads bodies in one pass. Exact piles stay
+	# scan-free; sparse/legacy fields are normalized only inside its isolated
+	# candidate and mirrored at publication. Scripted/injected paths still need
+	# normalization here before their eligibility checks.
+	if not trusted_native:
+		_normalize_hot_body_fields(state)
 	var debug_adapter := bool(config.get("_debug_profile_stages", false))
 	var debug_adapter_started_usec := Time.get_ticks_usec() if debug_adapter else 0
-	var forced_backend := str(config.get("_debug_force_solver_backend", ""))
 	if forced_backend != "gdscript":
-		var native := _native_solver_backend()
 		if native != null:
-			var trusted_native := native.get_class() == "CoinPusherNativeCore" and native.get_script() == null
 			# The shipped extension performs the same numeric/body eligibility
 			# validation before it mutates its isolated candidate. Let that single
 			# native boundary own the trusted check; a rejection returns an empty
@@ -606,6 +611,11 @@ static func _native_candidate_state(state: Dictionary, deep_copy_values: bool = 
 
 
 static func _publish_native_state(state: Dictionary, candidate: Dictionary, trusted_native: bool = false) -> void:
+	# Exact current-schema piles stay on the zero-scan publication path. The native
+	# loader marks only sparse/legacy candidates that it normalized while reading;
+	# mirror those defaults into live aliases before publishing mutable physics.
+	if trusted_native and bool(candidate.get("_native_normalized_hot_fields", false)):
+		_normalize_hot_body_fields(state)
 	var original_bodies: Array = state.get("bodies", [])
 	var candidate_bodies: Array = candidate.get("bodies", [])
 	if trusted_native:

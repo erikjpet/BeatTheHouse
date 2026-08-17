@@ -93,9 +93,9 @@ class EmbeddedRefreshProbeHost:
 		embedded_probe_interrupt_environment_id = str(run_state.current_environment.get("id", "")) if run_state != null else ""
 		return super._apply_post_action_environment_interrupt(source)
 
-	func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false) -> void:
+	func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false, action_boundary_preflight_complete: bool = false) -> void:
 		embedded_probe_log.append("embedded_refresh")
-		super._refresh_after_embedded_game_action(embeds_result_feedback)
+		super._refresh_after_embedded_game_action(embeds_result_feedback, action_boundary_preflight_complete)
 
 	func _refresh_active_item_slot() -> void:
 		embedded_probe_log.append("active_item")

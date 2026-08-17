@@ -1609,6 +1609,9 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	var result_before := JSON.stringify(game_result)
 	var queue_before := JSON.stringify(run_state.pending_triggered_events)
 	var cadence_before := JSON.stringify(run_state.event_cadence)
+	var cadence_identity_before: Dictionary = run_state.event_cadence
+	var cadence_seen_identity_before: Variant = run_state.event_cadence.get("seen_event_counts", {})
+	var cadence_visit_ids_identity_before: Variant = run_state.event_cadence.get("visit_event_ids", [])
 	var state_before := JSON.stringify(run_state.to_dict())
 	run_state.event_cadence_rng_create_call_count = 0
 	run_state.event_cadence_rng_save_call_count = 0
@@ -1626,6 +1629,9 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	if interrupted or coin_pusher_game.surface_state_calls != 0 \
 			or JSON.stringify(run_state.pending_triggered_events) != queue_before \
 			or JSON.stringify(run_state.event_cadence) != cadence_before \
+			or not is_same(run_state.event_cadence, cadence_identity_before) \
+			or not is_same(run_state.event_cadence.get("seen_event_counts", {}), cadence_seen_identity_before) \
+			or not is_same(run_state.event_cadence.get("visit_event_ids", []), cadence_visit_ids_identity_before) \
 			or JSON.stringify(run_state.to_dict()) != state_before \
 			or JSON.stringify(game_result) != result_before \
 			or int(app.get("recent_result_deep_snapshot_call_count")) != 0 \
@@ -1950,6 +1956,16 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	unavoidable_library.events = [_timed_interrupt_fixture_event("outer_unavoidable_fixture")]
 	unavoidable_library.rebuild_content_indexes()
 	app.set("library", unavoidable_library)
+	var unavoidable_cache_rebuilds_before := int(app.get("triggered_event_module_cache_rebuild_count"))
+	var unavoidable_definition := unavoidable_library.event("outer_unavoidable_fixture")
+	var first_cached_module: Variant = app.call("_cached_triggered_event_module", unavoidable_definition)
+	var unavoidable_cache_rebuilds_after_first := int(app.get("triggered_event_module_cache_rebuild_count"))
+	var second_cached_module: Variant = app.call("_cached_triggered_event_module", unavoidable_definition)
+	if first_cached_module == null or not is_same(first_cached_module, second_cached_module) \
+			or unavoidable_cache_rebuilds_after_first != unavoidable_cache_rebuilds_before + 1 \
+			or int(app.get("triggered_event_module_cache_rebuild_count")) != unavoidable_cache_rebuilds_after_first:
+		push_error("Triggered event modules were not built once per content-index generation and reused read-only.")
+		valid = false
 	var unavoidable_game := CountingTableApproachFixtureGame.new("unavoidable_quiet_game", [], 0)
 	app.set("current_game", unavoidable_game)
 	app.set("last_game_result", game_result)

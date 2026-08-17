@@ -62,6 +62,16 @@ class EmbeddedCoachProbeHost:
 		super._refresh_coach_at_boundary(surface_transition_wait_satisfied)
 
 
+class CoinManualDeferredProbeHost:
+	extends FoundationMain
+
+	var result_audio_boundary_count := 0
+
+	func _play_result_surface_audio_cue(result: Dictionary) -> void:
+		result_audio_boundary_count += 1
+		super._play_result_surface_audio_cue(result)
+
+
 func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 	var probe: Control = EmbeddedCoachProbeHost.new()
 	probe.set("continuous_environment_clock_enabled", false)
@@ -131,7 +141,7 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 
 
 func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
-	var probe_value: Variant = MainScene.instantiate()
+	var probe_value: Variant = CoinManualDeferredProbeHost.new()
 	if not probe_value is Control:
 		push_error("Coin Pusher draw-frame probe could not instantiate FoundationMain.")
 		return false
@@ -179,6 +189,15 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		await process_frame
 		return false
 	var draw_snapshots: Array = []
+	var pre_action_canvas_state: Dictionary = canvas.call("realtime_surface_state")
+	var pre_action_catalog_key := str(pre_action_canvas_state.get("surface_action_catalog_key", ""))
+	var pre_action_legal_actions: Variant = pre_action_canvas_state.get("legal_actions", [])
+	var pre_action_cheat_actions: Variant = pre_action_canvas_state.get("cheat_actions", [])
+	var pre_action_audio_json := JSON.stringify(pre_action_canvas_state.get("surface_audio", {}))
+	var pre_action_count := int(pre_action_canvas_state.get("coin_pusher_action_count", 0))
+	var pre_action_preferences: Dictionary = probe.get("game_surface_ui_state") if typeof(probe.get("game_surface_ui_state")) == TYPE_DICTIONARY else {}
+	pre_action_preferences["host_owned_preference_sentinel"] = "preserve"
+	probe.set("game_surface_ui_state", pre_action_preferences)
 	var observe_draw := func() -> void:
 		draw_snapshots.append(canvas.call("current_view_snapshot"))
 	canvas.draw.connect(observe_draw)
@@ -189,6 +208,11 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		"input_route_coach_notification_visit_count",
 		"embedded_incremental_snapshot_count",
 		"embedded_full_snapshot_fallback_count",
+		"deferred_embedded_refresh_schedule_count",
+		"deferred_embedded_refresh_execution_count",
+		"deferred_embedded_refresh_stale_count",
+		"deferred_embedded_refresh_blocked_surface_input_count",
+		"direct_surface_stake_override_count",
 		"post_interrupt_talk_boundary_visit_count",
 		"post_interrupt_closing_visit_count",
 		"post_interrupt_forced_travel_visit_count",
@@ -197,21 +221,81 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	]:
 		probe.set(counter_name, 0)
 	probe.set("recent_result_deep_snapshot_call_count", 0)
+	probe.set("result_audio_boundary_count", 0)
 	canvas.emit_signal("surface_action", "coin_pusher_drop", 0, false)
+	# The manual action's authoritative result and interrupt checks stay inside the
+	# input boundary, but Coin Pusher's complete presentation must not refresh in
+	# that same callback. Its exact incremental patch is delivered next frame.
+	var synchronous_result: Dictionary = probe.get("last_game_result")
+	var synchronous_canvas_state: Dictionary = canvas.call("realtime_surface_state")
+	var manual_refresh_deferred := int(probe.get("embedded_incremental_snapshot_count")) == 0 \
+			and int(probe.get("embedded_full_snapshot_fallback_count")) == 0 \
+			and bool(probe.get("deferred_embedded_refresh_pending")) \
+			and int(probe.get("deferred_embedded_refresh_schedule_count")) == 1 \
+			and int(probe.get("deferred_embedded_refresh_execution_count")) == 0 \
+			and int(synchronous_canvas_state.get("coin_pusher_action_count", 0)) == pre_action_count
+	var authoritative_result_synchronous := str(synchronous_result.get("action_id", "")) == "drop_quarter"
+	var result_audio_synchronous_once := int(probe.get("result_audio_boundary_count")) == 1
+	var post_action_boundaries_synchronous := int(probe.get("post_interrupt_talk_boundary_visit_count")) == 1 \
+			and int(probe.get("post_interrupt_closing_visit_count")) == 1 \
+			and int(probe.get("post_interrupt_forced_travel_visit_count")) == 1 \
+			and int(probe.get("post_interrupt_talk_enqueue_visit_count")) == 1 \
+			and int(probe.get("post_interrupt_unavoidable_visit_count")) == 1
+	# A second physical resolve in the pending frame must not advance gameplay.
+	# Leave/navigation is intentionally outside this command-level lock.
+	canvas.emit_signal("surface_action", "coin_pusher_drop", 0, false)
+	var double_input_blocked := int(probe.get("deferred_embedded_refresh_blocked_surface_input_count")) == 1 \
+			and str((probe.get("last_game_result") as Dictionary).get("action_id", "")) == "drop_quarter" \
+			and int(probe.get("deferred_embedded_refresh_schedule_count")) == 1 \
+			and int(probe.get("deferred_embedded_refresh_execution_count")) == 0
+	var pending_lane_before := int((canvas.call("realtime_surface_state") as Dictionary).get("coin_pusher_lane", -1))
+	canvas.emit_signal("surface_action", "coin_pusher_lane", (pending_lane_before + 1) % 3, false)
+	var pending_lane_after := int((canvas.call("realtime_surface_state") as Dictionary).get("coin_pusher_lane", -1))
+	var lane_command_blocked := int(probe.get("deferred_embedded_refresh_blocked_surface_input_count")) == 2 \
+			and pending_lane_after == pending_lane_before \
+			and int(probe.get("embedded_incremental_snapshot_count")) == 0 \
+			and int(probe.get("embedded_full_snapshot_fallback_count")) == 0
+	probe.call("select_game_action", "nudge_machine", "cheat")
+	var accessibility_selection_blocked := int(probe.get("deferred_embedded_refresh_blocked_surface_input_count")) == 3 \
+			and str(probe.get("selected_action_id")) == "" \
+			and int(probe.get("embedded_incremental_snapshot_count")) == 0 \
+			and int(probe.get("embedded_full_snapshot_fallback_count")) == 0
 	# queue_redraw requests the same viewport draw notification used in production;
 	# the draw callback itself is never invoked directly by this test.
+	var deferred_draw_count_before := draw_snapshots.size()
 	canvas.queue_redraw()
-	await process_frame
+	var deferred_draw_wait_frames := 0
+	while (draw_snapshots.size() <= deferred_draw_count_before \
+			or bool(probe.get("deferred_embedded_refresh_pending"))) \
+			and deferred_draw_wait_frames < 16:
+		deferred_draw_wait_frames += 1
+		await process_frame
+	var deferred_draw_arrived := draw_snapshots.size() > deferred_draw_count_before \
+			and not bool(probe.get("deferred_embedded_refresh_pending"))
 	var next_frame_hud_model: Dictionary = probe.call("_run_status_hud_model")
 	var next_frame_status_label: Label = probe.get("status_label")
 	var next_frame_hud_passed: bool = next_frame_status_label != null \
 			and next_frame_status_label.text == str(next_frame_hud_model.get("status_text", ""))
 	var failed_invariants: Array[String] = []
 	var refresh_invariants := {
-		"input_guard_once": int(probe.get("input_route_guard_visit_count")) == 1,
-		"coach_notification_once": int(probe.get("input_route_coach_notification_visit_count")) == 1,
+		"manual_refresh_deferred": manual_refresh_deferred,
+		"authoritative_result_synchronous": authoritative_result_synchronous,
+		"result_audio_synchronous_once": result_audio_synchronous_once \
+				and int(probe.get("result_audio_boundary_count")) == 1,
+		"post_action_boundaries_synchronous": post_action_boundaries_synchronous,
+		"double_input_blocked": double_input_blocked,
+		"lane_command_blocked": lane_command_blocked,
+		"accessibility_selection_blocked": accessibility_selection_blocked,
+		"deferred_draw_arrived_bounded": deferred_draw_arrived,
+		"input_guard_only_for_resolved_click": int(probe.get("input_route_guard_visit_count")) == 1,
+		"coach_notification_only_for_resolved_click": int(probe.get("input_route_coach_notification_visit_count")) == 1,
 		"incremental_snapshot_once": int(probe.get("embedded_incremental_snapshot_count")) == 1,
 		"no_full_snapshot_fallback": int(probe.get("embedded_full_snapshot_fallback_count")) == 0,
+		"deferred_refresh_exactly_once": int(probe.get("deferred_embedded_refresh_schedule_count")) == 1 \
+				and int(probe.get("deferred_embedded_refresh_execution_count")) == 1 \
+				and not bool(probe.get("deferred_embedded_refresh_pending")),
+		"direct_stake_override_once": int(probe.get("direct_surface_stake_override_count")) == 1 \
+				and int(probe.get("selected_stake")) == 1,
 		"talk_boundary_once": int(probe.get("post_interrupt_talk_boundary_visit_count")) == 1,
 		"closing_boundary_once": int(probe.get("post_interrupt_closing_visit_count")) == 1,
 		"forced_travel_boundary_once": int(probe.get("post_interrupt_forced_travel_visit_count")) == 1,
@@ -232,6 +316,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var draw_snapshot: Dictionary = draw_state.get("coin_pusher_snapshot", {}) if typeof(draw_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
 	var draw_trace: Variant = draw_snapshot.get("trace_packed", {}) if typeof(draw_snapshot.get("trace_packed", {})) == TYPE_DICTIONARY and not (draw_snapshot.get("trace_packed", {}) as Dictionary).is_empty() else draw_snapshot.get("trace", [])
 	var action_canvas_state: Dictionary = canvas.call("realtime_surface_state")
+	var post_action_preferences: Dictionary = probe.get("game_surface_ui_state") if typeof(probe.get("game_surface_ui_state")) == TYPE_DICTIONARY else {}
 	var action_canvas_snapshot: Dictionary = action_canvas_state.get("coin_pusher_snapshot", {}) if typeof(action_canvas_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
 	var action_canvas_trace: Variant = action_canvas_snapshot.get("trace_packed", {}) if typeof(action_canvas_snapshot.get("trace_packed", {})) == TYPE_DICTIONARY and not (action_canvas_snapshot.get("trace_packed", {}) as Dictionary).is_empty() else action_canvas_snapshot.get("trace", [])
 	var stored_action_patch: Dictionary = stored.get("surface_action_view_patch", {}) if typeof(stored.get("surface_action_view_patch", {})) == TYPE_DICTIONARY else {}
@@ -247,6 +332,8 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var expected_realtime_snapshot: Dictionary = expected_realtime_patch.get("coin_pusher_snapshot", {}) if typeof(expected_realtime_patch.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
 	var action_view_invariants := {
 		"next_frame_hud": next_frame_hud_passed,
+		"surface_audio_unchanged": JSON.stringify(action_canvas_state.get("surface_audio", {})) == pre_action_audio_json \
+				and str((action_canvas_state.get("surface_audio", {}) as Dictionary).get("profile_id", "")) == "coin_pusher",
 		"action_patch_present": not stored_action_patch.is_empty(),
 		"top_level_action_count": int(action_canvas_state.get("coin_pusher_action_count", 0)) == int(stored_action_patch.get("coin_pusher_action_count", -1)),
 		"authoritative_upper_phase": int(action_canvas_snapshot.get("upper_phase_milli", -1)) == int(expected_realtime_snapshot.get("upper_phase_milli", -2)),
@@ -260,6 +347,20 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		"presented_bankroll": live_run_state != null and int(action_canvas_state.get("bankroll", -1)) == int(probe.call("_presented_bankroll")),
 		"replay_channel_active": bool(replay_channel.get("active", false)),
 		"replay_channel_id": str(replay_channel.get("active_id", "")) == "action_%d" % int(stored_action_state.get("action_count", 0)),
+		"catalog_key_published": not str(action_canvas_state.get("surface_action_catalog_key", "")).is_empty() \
+				and str(action_canvas_state.get("surface_action_catalog_key", "")) == str(stored_action_patch.get("surface_action_catalog_key", "")),
+		"catalog_reused_when_dependencies_stable": str(action_canvas_state.get("surface_action_catalog_key", "")) != pre_action_catalog_key \
+				or (is_same(action_canvas_state.get("legal_actions", []), pre_action_legal_actions) \
+				and is_same(action_canvas_state.get("cheat_actions", []), pre_action_cheat_actions)),
+		"render_patch_excludes_host_only_result": not action_canvas_state.has("coin_pusher_physics_events") \
+				and not action_canvas_state.has("coin_pusher_debug_host_timing_usec") \
+				and not action_canvas_state.has("deltas"),
+		"preference_merge_preserves_host_state": str(post_action_preferences.get("host_owned_preference_sentinel", "")) == "preserve",
+		"preference_merge_excludes_sampled_clocks": not post_action_preferences.has("coin_pusher_upper_input_phase") \
+				and not post_action_preferences.has("coin_pusher_lower_input_phase") \
+				and not post_action_preferences.has("surface_time_msec") \
+				and not post_action_preferences.has("coin_pusher_capture_presentation_trace") \
+				and not post_action_preferences.has("coin_pusher_debug_profile_stages"),
 	}
 	for invariant_name in action_view_invariants.keys():
 		if not bool(action_view_invariants.get(invariant_name, false)):
@@ -363,11 +464,50 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			and is_same(realtime_canvas_trace, action_canvas_trace)
 	if not realtime_passed:
 		push_error("FoundationMain production realtime advance did not stamp/update the live owned canvas while retaining its exact action trace reference.")
+	# Replacing only the result boundary while the exact run/game/room/session stay
+	# active must stale the captured identity rather than render the wrong result.
+	var generation_before_stale := int(probe.get("deferred_embedded_refresh_generation"))
+	var incremental_before_stale := int(probe.get("embedded_incremental_snapshot_count"))
+	var fallback_before_stale := int(probe.get("embedded_full_snapshot_fallback_count"))
+	var execution_before_stale := int(probe.get("deferred_embedded_refresh_execution_count"))
+	probe.call("_schedule_deferred_embedded_action_refresh", true)
+	var result_identity_generation := int(probe.get("deferred_embedded_refresh_generation"))
+	probe.set("last_game_result", (probe.get("last_game_result") as Dictionary).duplicate(true))
+	var result_identity_wait_frames := 0
+	while bool(probe.get("deferred_embedded_refresh_pending")) and result_identity_wait_frames < 16:
+		result_identity_wait_frames += 1
+		await process_frame
+	var result_identity_stale_passed := result_identity_generation > generation_before_stale \
+			and result_identity_wait_frames < 16 \
+			and not bool(probe.get("deferred_embedded_refresh_pending")) \
+			and int(probe.get("deferred_embedded_refresh_execution_count")) == execution_before_stale \
+			and int(probe.get("deferred_embedded_refresh_stale_count")) >= 1 \
+			and int(probe.get("embedded_incremental_snapshot_count")) == incremental_before_stale \
+			and int(probe.get("embedded_full_snapshot_fallback_count")) == fallback_before_stale \
+			and str(probe.get("current_screen")) == "GAME"
+	# Queue another refresh, then exercise permitted navigation/reset before its
+	# frame barrier. The invalid token must no-op into the new screen.
+	probe.call("_schedule_deferred_embedded_action_refresh", true)
+	var scheduled_generation := int(probe.get("deferred_embedded_refresh_generation"))
+	probe.call("back_to_environment")
+	await process_frame
+	await process_frame
+	var stale_token_passed := result_identity_stale_passed \
+			and scheduled_generation > result_identity_generation \
+			and int(probe.get("deferred_embedded_refresh_generation")) > scheduled_generation \
+			and not bool(probe.get("deferred_embedded_refresh_pending")) \
+			and int(probe.get("deferred_embedded_refresh_execution_count")) == execution_before_stale \
+			and int(probe.get("deferred_embedded_refresh_stale_count")) >= 2 \
+			and int(probe.get("embedded_incremental_snapshot_count")) == incremental_before_stale \
+			and int(probe.get("embedded_full_snapshot_fallback_count")) == fallback_before_stale \
+			and str(probe.get("current_screen")) == "ENVIRONMENT"
+	if not stale_token_passed:
+		push_error("Coin Pusher deferred refresh token did not stale-no-op after allowed navigation/reset.")
 	if canvas.draw.is_connected(observe_draw):
 		canvas.draw.disconnect(observe_draw)
 	probe.queue_free()
 	await process_frame
-	return render_passed and hidden_guard_passed and pause_guard_passed and interval_guard_passed and realtime_passed
+	return render_passed and hidden_guard_passed and pause_guard_passed and interval_guard_passed and realtime_passed and stale_token_passed
 
 
 func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:

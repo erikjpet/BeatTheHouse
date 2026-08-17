@@ -155,6 +155,14 @@ func surface_state(_run_state: RunState, _environment: Dictionary, _ui_state: Di
 	return {}
 
 
+# Most embedded game actions refresh their complete presentation before the
+# input callback returns. Solver-heavy modules may opt into the same next-frame
+# presentation handoff used by autoplay after their authoritative result and
+# post-action interrupt boundaries have completed synchronously.
+func defers_embedded_action_presentation_refresh(_run_state: RunState, _environment: Dictionary) -> bool:
+	return false
+
+
 # Exposes sparse, action-boundary tutorial facts without teaching the UI any
 # game-specific state schema.
 func coach_state(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
@@ -523,13 +531,30 @@ static func skill_outcome_for_grade(prefix: String, grade: String, fallback_grad
 
 # Builds a normalized ActionResult dictionary from module payload data.
 static func build_action_result(payload: Dictionary = {}) -> Dictionary:
-	var source_deltas := _copy_dict(payload.get("deltas", {}))
+	return _build_action_result(payload, false)
+
+
+# Builds a normalized ActionResult while taking ownership of the payload's
+# delta containers. Use this only for fresh, action-local payloads that are not
+# retained by their producer. The public result shape and alias boundaries are
+# identical to build_action_result. Legacy aliases or unknown delta keys fall
+# back to the copying builder; only canonical single-owner deltas take the fast
+# path.
+static func build_owned_action_result(payload: Dictionary = {}) -> Dictionary:
+	var deltas_value: Variant = payload.get("deltas", {})
+	if typeof(deltas_value) != TYPE_DICTIONARY or not _has_only_canonical_result_delta_keys(deltas_value as Dictionary):
+		return _build_action_result(payload, false)
+	return _build_action_result(payload, true)
+
+
+static func _build_action_result(payload: Dictionary, take_delta_ownership: bool) -> Dictionary:
+	var source_deltas := _owned_dict(payload.get("deltas", {})) if take_delta_ownership else _copy_dict(payload.get("deltas", {}))
 	for key in ["bankroll_delta", "suspicion_delta", "alcohol_intake", "drunk_delta", "pending_drunk_absorption_delta", "drunk_distortion_suppression_turns", "heat_cooldown_actions", "heat_cooldown_per_action", "alcoholic_delta", "baseline_luck_delta", "ended"]:
 		if payload.has(key) and not source_deltas.has(key):
 			source_deltas[key] = payload[key]
 	if payload.has("messages") and not source_deltas.has("messages"):
-		source_deltas["messages"] = _copy_array(payload.get("messages", []))
-	var deltas := _normalize_result_deltas(source_deltas)
+		source_deltas["messages"] = _owned_array(payload.get("messages", [])) if take_delta_ownership else _copy_array(payload.get("messages", []))
+	var deltas := _normalize_result_deltas(source_deltas, take_delta_ownership)
 	var message := str(payload.get("message", ""))
 	if message.is_empty() and not deltas["messages"].is_empty():
 		message = str(deltas["messages"][0])
@@ -555,18 +580,18 @@ static func build_action_result(payload: Dictionary = {}) -> Dictionary:
 		"message": message,
 		"messages": _copy_array(deltas.get("messages", [])),
 	}
-	return normalize_skill_cheat_contract(result, payload)
+	return normalize_skill_cheat_contract(result, payload, take_delta_ownership)
 
 
 # Adds the cross-game skill-cheat contract to cheat/risky/advantage results.
 # Game-specific modules still own their rules; this keeps shared systems from
 # chasing blackjack_*, slot_*, roulette_*, etc. variants for the same facts.
-static func normalize_skill_cheat_contract(result: Dictionary, payload: Dictionary = {}) -> Dictionary:
+static func normalize_skill_cheat_contract(result: Dictionary, payload: Dictionary = {}, take_delta_ownership: bool = false) -> Dictionary:
 	var action_kind := str(result.get("action_kind", ""))
 	if not _is_skill_action_kind(action_kind):
 		return result
-	var deltas := _normalize_result_deltas(result.get("deltas", {}))
-	var story_entries := _copy_array(deltas.get("story_log", []))
+	var deltas := _normalize_result_deltas(result.get("deltas", {}), take_delta_ownership)
+	var story_entries := _owned_array(deltas.get("story_log", [])) if take_delta_ownership else _copy_array(deltas.get("story_log", []))
 	var story_context := _matching_story_entry(story_entries, result)
 	var suspicion_delta := int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
 	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
@@ -629,12 +654,14 @@ static func normalize_skill_cheat_contract(result: Dictionary, payload: Dictiona
 	if not security_message.is_empty():
 		result["security_message"] = security_message
 
-	var normalized_story: Array = []
-	for story_value in story_entries:
+	var normalized_story: Array = story_entries if take_delta_ownership else []
+	for story_index in range(story_entries.size()):
+		var story_value: Variant = story_entries[story_index]
 		if typeof(story_value) != TYPE_DICTIONARY:
-			normalized_story.append(story_value)
+			if not take_delta_ownership:
+				normalized_story.append(story_value)
 			continue
-		var entry: Dictionary = (story_value as Dictionary).duplicate(true)
+		var entry: Dictionary = (story_value as Dictionary) if take_delta_ownership else (story_value as Dictionary).duplicate(true)
 		if _story_entry_matches_result(entry, result):
 			entry["action_kind"] = str(entry.get("action_kind", action_kind))
 			entry["skill_outcome"] = skill_outcome
@@ -652,7 +679,10 @@ static func normalize_skill_cheat_contract(result: Dictionary, payload: Dictiona
 			entry["skill_story_context"] = skill_context.duplicate(true)
 			if not security_message.is_empty():
 				entry["security_message"] = security_message
-		normalized_story.append(entry)
+		if take_delta_ownership:
+			normalized_story[story_index] = entry
+		else:
+			normalized_story.append(entry)
 	deltas["story_log"] = normalized_story
 	result["deltas"] = deltas
 	return result
@@ -1089,6 +1119,14 @@ static func _copy_dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true)
 
 
+static func _owned_array(value: Variant) -> Array:
+	return value as Array if typeof(value) == TYPE_ARRAY else []
+
+
+static func _owned_dict(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
 static func _normalize_surface_animation_channels(value: Variant) -> Array:
 	var entries: Array = []
 	if typeof(value) == TYPE_DICTIONARY:
@@ -1255,8 +1293,8 @@ static func _default_skill_accuracy(skill_grade: String, action_kind: String, wo
 
 
 # Normalizes legacy or partial result-delta dictionaries into the shared shape.
-static func _normalize_result_deltas(value: Variant) -> Dictionary:
-	var source := _copy_dict(value)
+static func _normalize_result_deltas(value: Variant, take_ownership: bool = false) -> Dictionary:
+	var source := _owned_dict(value) if take_ownership else _copy_dict(value)
 	if source.has("bankroll") and not source.has("bankroll_delta"):
 		source["bankroll_delta"] = source["bankroll"]
 	if source.has("suspicion") and not source.has("suspicion_delta"):
@@ -1279,6 +1317,23 @@ static func _normalize_result_deltas(value: Variant) -> Dictionary:
 			travel_changes["set_next_archetypes"] = _copy_array(source.get("set_next_archetypes", []))
 		source["travel_changes"] = travel_changes
 
+	if take_ownership:
+		var defaults := empty_result_deltas()
+		for key in defaults.keys():
+			if not source.has(key):
+				source[key] = defaults[key]
+				continue
+			if key == "bankroll_delta" or key == "chips_delta" or key == "suspicion_delta" or key == "alcohol_intake" or key == "drunk_delta" or key == "pending_drunk_absorption_delta" or key == "drunk_distortion_suppression_turns" or key == "heat_cooldown_actions" or key == "heat_cooldown_per_action" or key == "alcoholic_delta" or key == "baseline_luck_delta":
+				source[key] = int(source[key])
+			elif key == "ended":
+				source[key] = bool(source[key])
+			elif key == "flags_set" or key == "story_flags_set" or key == "travel_changes" or key == "demo_finale" or key == "environment_layer_discovery" or key == "discounted_debt_settlement":
+				if typeof(source[key]) != TYPE_DICTIONARY:
+					source[key] = {}
+			elif typeof(source[key]) != TYPE_ARRAY:
+				source[key] = []
+		return source
+
 	var result := empty_result_deltas()
 	for key in result.keys():
 		if not source.has(key):
@@ -1292,3 +1347,11 @@ static func _normalize_result_deltas(value: Variant) -> Dictionary:
 		else:
 			result[key] = _copy_array(source[key])
 	return result
+
+
+static func _has_only_canonical_result_delta_keys(deltas: Dictionary) -> bool:
+	var canonical := empty_result_deltas()
+	for key in deltas.keys():
+		if not canonical.has(key):
+			return false
+	return true

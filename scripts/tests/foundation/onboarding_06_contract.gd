@@ -188,7 +188,13 @@ static func _check_public_host_context(failures: Array) -> void:
 	var host := PublicHostFixture.new()
 	var overlay := CoachOverlayScript.new()
 	host.add_child(overlay)
-	var context: Dictionary = overlay.call("_with_public_system_context", _environment_context())
+	var source_context := _environment_context()
+	var source_run: Dictionary = source_context.get("run", {})
+	var source_ui: Dictionary = source_context.get("ui", {})
+	var borrowed_geometry := {"dense": [{"marker": 7}]}
+	source_context["anchor_rects"] = borrowed_geometry
+	var source_json := JSON.stringify(source_context)
+	var context: Dictionary = overlay.call("_with_public_system_context", source_context)
 	var run_context := _dict(context.get("run", {}))
 	var ui_context := _dict(context.get("ui", {}))
 	for key in ["scenario_active", "delivery_active", "crew_job_resolved", "venue_depth_surface"]:
@@ -196,6 +202,32 @@ static func _check_public_host_context(failures: Array) -> void:
 			failures.append("Coach public-context seam did not expose landed encounter '%s'." % key)
 	if not bool(ui_context.get("numbers_encountered", false)):
 		failures.append("Coach public-context seam did not recognize the focused Numbers surface.")
+	if JSON.stringify(source_context) != source_json \
+			or is_same(context, source_context) \
+			or is_same(run_context, source_run) \
+			or is_same(ui_context, source_ui) \
+			or not is_same(context.get("anchor_rects", {}), borrowed_geometry):
+		failures.append("Coach public-context copy-on-write seam mutated its source or copied an untouched presentation branch.")
+	run_context["scenario_active"] = false
+	ui_context["numbers_encountered"] = false
+	if source_run.has("scenario_active") or source_ui.has("numbers_encountered"):
+		failures.append("Coach public-context derived flags aliased caller-owned run/ui branches.")
+	var property_scans_after_first := int(overlay.object_property_list_scan_count)
+	overlay.call("_with_public_system_context", source_context)
+	if property_scans_after_first != 2 or int(overlay.object_property_list_scan_count) != property_scans_after_first:
+		failures.append("Coach public-context property capability cache rescanned a stable host or RunState instance.")
+	var action_source := _game_context("coin_pusher")
+	var action_source_branch := {"last_action_id": "before"}
+	action_source["action"] = action_source_branch
+	action_source["anchor_rects"] = borrowed_geometry
+	overlay.latest_context = action_source
+	overlay.call("_evaluate_normal_action_boundary", "coin_pusher_drop")
+	var observed_action: Dictionary = _dict(overlay.latest_context.get("action", {}))
+	if str(action_source_branch.get("last_action_id", "")) != "before" \
+			or str(observed_action.get("last_action_id", "")) != "coin_pusher_drop" \
+			or is_same(observed_action, action_source_branch) \
+			or not is_same(overlay.latest_context.get("anchor_rects", {}), borrowed_geometry):
+		failures.append("Coach action-boundary copy-on-write path mutated its source or copied untouched geometry.")
 	host.free()
 
 

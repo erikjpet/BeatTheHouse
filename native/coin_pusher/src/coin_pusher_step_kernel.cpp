@@ -7,6 +7,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cstdint>
 #include <limits>
@@ -96,12 +97,21 @@ String material_category(const String &kind) {
 	return "physical_object";
 }
 
+Dictionary isolated_metadata(const Dictionary &metadata) {
+	// Empty event/exit metadata needs no recursive walk: a fresh Dictionary already
+	// owns its storage. Non-empty body metadata—including full-cap opening-pile
+	// descriptors—retains the hostile-tested deep publication boundary, including
+	// nested arrays and dictionaries.
+	return metadata.is_empty() ? Dictionary() : metadata.duplicate(true);
+}
+
 struct Body {
 	Dictionary ref;
 	String id;
 	String kind;
+	String trace_material_category;
 	Dictionary metadata;
-	Dictionary trace_base_view;
+	int32_t trace_descriptor_index = -1;
 	String rest_state;
 	int64_t x = 0;
 	int64_t y = 0;
@@ -124,34 +134,105 @@ struct ExitTrail {
 	int64_t index = 0;
 };
 
+struct OrderedTraceRow {
+	int body_index = -1;
+	int extra_index = -1;
+	int64_t depth = 0;
+	const String *id = nullptr;
+};
+
 class SpatialGrid {
 public:
-	std::unordered_map<int64_t, std::vector<int>> buckets;
-	std::unordered_map<int64_t, std::vector<int>> candidates;
+	static constexpr size_t SLOT_COUNT = 512;
+	static constexpr size_t SLOT_MASK = SLOT_COUNT - 1;
+	std::array<int64_t, SLOT_COUNT> bucket_keys{};
+	std::array<uint32_t, SLOT_COUNT> bucket_generations{};
+	std::array<std::vector<int>, SLOT_COUNT> bucket_members{};
+	std::array<int64_t, SLOT_COUNT> candidate_keys{};
+	std::array<uint32_t, SLOT_COUNT> candidate_generations{};
+	std::array<std::vector<int>, SLOT_COUNT> candidate_members{};
+	std::unordered_map<int64_t, std::vector<int>> overflow_buckets;
+	std::unordered_map<int64_t, std::vector<int>> overflow_candidates;
+	uint32_t generation = 0;
+
+	static size_t slot_start(int64_t key) {
+		uint64_t mixed = static_cast<uint64_t>(key) * UINT64_C(11400714819323198485);
+		mixed ^= mixed >> 32;
+		return static_cast<size_t>(mixed) & SLOT_MASK;
+	}
+
+	int find_slot(const std::array<int64_t, SLOT_COUNT> &keys, const std::array<uint32_t, SLOT_COUNT> &generations, int64_t key) const {
+		size_t slot = slot_start(key);
+		for (size_t probe = 0; probe < SLOT_COUNT; ++probe) {
+			if (generations[slot] != generation) return -1;
+			if (keys[slot] == key) return static_cast<int>(slot);
+			slot = (slot + 1) & SLOT_MASK;
+		}
+		return -1;
+	}
+
+	int claim_slot(std::array<int64_t, SLOT_COUNT> &keys, std::array<uint32_t, SLOT_COUNT> &generations, int64_t key) {
+		size_t slot = slot_start(key);
+		for (size_t probe = 0; probe < SLOT_COUNT; ++probe) {
+			if (generations[slot] != generation) {
+				generations[slot] = generation;
+				keys[slot] = key;
+				return static_cast<int>(slot);
+			}
+			if (keys[slot] == key) return static_cast<int>(slot);
+			slot = (slot + 1) & SLOT_MASK;
+		}
+		return -1;
+	}
 
 	void rebuild(const std::vector<Body> &bodies) {
-		buckets.clear();
-		candidates.clear();
+		if (++generation == 0) {
+			bucket_generations.fill(0);
+			candidate_generations.fill(0);
+			generation = 1;
+		}
+		overflow_buckets.clear();
+		overflow_candidates.clear();
 		for (int index = 0; index < static_cast<int>(bodies.size()); ++index) {
 			const Body &body = bodies[index];
-			buckets[bucket_key(divi(body.x, BROADPHASE_CELL), divi(body.y, BROADPHASE_CELL), divi(body.z, BROADPHASE_CELL))].push_back(index);
+			const int64_t key = bucket_key(divi(body.x, BROADPHASE_CELL), divi(body.y, BROADPHASE_CELL), divi(body.z, BROADPHASE_CELL));
+			int slot = find_slot(bucket_keys, bucket_generations, key);
+			if (slot < 0) {
+				slot = claim_slot(bucket_keys, bucket_generations, key);
+				if (slot >= 0) bucket_members[static_cast<size_t>(slot)].clear();
+			}
+			if (slot < 0) {
+				overflow_buckets[key].push_back(index);
+				continue;
+			}
+			std::vector<int> &members = bucket_members[static_cast<size_t>(slot)];
+			members.push_back(index);
 		}
 	}
 
 	const std::vector<int> &candidate_sequence(int64_t center_x, int64_t center_y, int64_t center_z) {
 		const int64_t center_key = bucket_key(center_x, center_y, center_z);
-		auto found = candidates.find(center_key);
-		if (found != candidates.end()) return found->second;
-		std::vector<int> sequence;
+		int candidate_slot = find_slot(candidate_keys, candidate_generations, center_key);
+		if (candidate_slot >= 0) return candidate_members[static_cast<size_t>(candidate_slot)];
+		candidate_slot = claim_slot(candidate_keys, candidate_generations, center_key);
+		std::vector<int> &sequence = candidate_slot >= 0 ? candidate_members[static_cast<size_t>(candidate_slot)] : overflow_candidates[center_key];
+		sequence.clear();
 		for (int64_t zo = -1; zo <= 1; ++zo) {
 			for (int64_t yo = -1; yo <= 1; ++yo) {
 				for (int64_t xo = -1; xo <= 1; ++xo) {
-					auto members = buckets.find(bucket_key(center_x + xo, center_y + yo, center_z + zo));
-					if (members != buckets.end()) sequence.insert(sequence.end(), members->second.begin(), members->second.end());
+					const int64_t neighbor_key = bucket_key(center_x + xo, center_y + yo, center_z + zo);
+					const int bucket_slot = find_slot(bucket_keys, bucket_generations, neighbor_key);
+					if (bucket_slot >= 0) {
+						const std::vector<int> &members = bucket_members[static_cast<size_t>(bucket_slot)];
+						sequence.insert(sequence.end(), members.begin(), members.end());
+					} else {
+						auto overflow = overflow_buckets.find(neighbor_key);
+						if (overflow != overflow_buckets.end()) sequence.insert(sequence.end(), overflow->second.begin(), overflow->second.end());
+					}
 				}
 			}
 		}
-		return candidates.emplace(center_key, std::move(sequence)).first->second;
+		return sequence;
 	}
 };
 
@@ -160,10 +241,10 @@ bool scalar_in_range(const Dictionary &dictionary, const char *key, int64_t limi
 	return value >= -limit && value <= limit;
 }
 
-bool validate_step_input(const Dictionary &state, const Dictionary &config) {
+bool validate_step_header(const Dictionary &state, const Dictionary &config, Array &bodies) {
 	Variant bodies_value = state.get("bodies", Array());
 	if (bodies_value.get_type() != Variant::ARRAY) return false;
-	Array bodies = bodies_value;
+	bodies = bodies_value;
 	if (bodies.size() > HOT_BODY_COUNT_LIMIT) return false;
 	const int64_t tick = state.get("tick", 0);
 	if (tick > std::numeric_limits<int64_t>::max() - ACTION_TICKS) return false;
@@ -180,24 +261,67 @@ bool validate_step_input(const Dictionary &state, const Dictionary &config) {
 	}
 	const int64_t push_scale = config.get("push_scale", 1);
 	if (push_scale < -HOT_PUSH_SCALE_ABS_LIMIT || push_scale > HOT_PUSH_SCALE_ABS_LIMIT) return false;
+	return true;
+}
+
+bool read_validated_body(const Variant &value, Body &body, std::set<String> &ids, bool &normalized_hot_fields, bool normalize_ref) {
+	if (value.get_type() != Variant::DICTIONARY) return false;
+	Dictionary ref = value;
+	bool exact_hot_fields = true;
+	for (const char *key : {"x", "y", "z", "vx", "vy", "vz", "radius", "height", "mass", "sleep_ticks", "lean_milli"}) {
+		if (ref.get(key, Variant()).get_type() != Variant::INT) exact_hot_fields = false;
+	}
+	for (const char *key : {"cap_pressure_ticks", "cap_pressure_accel"}) {
+		if (ref.has(key) && ref.get(key, Variant()).get_type() != Variant::INT) exact_hot_fields = false;
+	}
+	if (ref.get("id", Variant()).get_type() != Variant::STRING || ref.get("kind", Variant()).get_type() != Variant::STRING ||
+			ref.get("metadata", Variant()).get_type() != Variant::DICTIONARY || ref.get("rest_state", Variant()).get_type() != Variant::STRING ||
+			ref.get("sleeping", Variant()).get_type() != Variant::BOOL) exact_hot_fields = false;
+	body.id = ref.get("id", "");
+	if (!ids.insert(body.id).second) return false;
+	body.kind = ref.get("kind", "coin");
+	Variant metadata_value = ref.get("metadata", Dictionary());
+	body.metadata = metadata_value.get_type() == Variant::DICTIONARY ? Dictionary(metadata_value) : Dictionary();
+	body.rest_state = ref.get("rest_state", "settling");
+	body.x = ref.get("x", 0); body.y = ref.get("y", 0); body.z = ref.get("z", 0);
+	body.vx = ref.get("vx", 0); body.vy = ref.get("vy", 0); body.vz = ref.get("vz", 0);
+	body.radius = ref.get("radius", COIN_RADIUS); body.height = ref.get("height", COIN_HEIGHT); body.mass = ref.get("mass", 1);
+	body.sleep_ticks = ref.get("sleep_ticks", 0); body.sleeping = ref.get("sleeping", false);
+	body.lean = ref.get("lean_milli", 0); body.pressure_ticks = ref.get("cap_pressure_ticks", 0); body.pressure_accel = ref.get("cap_pressure_accel", 0);
+	if (!exact_hot_fields && normalize_ref) {
+		if (!ref.has("id")) ref["id"] = "";
+		if (!ref.has("kind")) ref["kind"] = "coin";
+		ref["x"] = body.x; ref["y"] = body.y; ref["z"] = body.z;
+		ref["vx"] = body.vx; ref["vy"] = body.vy; ref["vz"] = body.vz;
+		ref["radius"] = body.radius; ref["height"] = body.height; ref["mass"] = body.mass;
+		ref["sleep_ticks"] = body.sleep_ticks; ref["sleeping"] = body.sleeping;
+		ref["rest_state"] = body.rest_state; ref["lean_milli"] = body.lean;
+		ref["metadata"] = body.metadata;
+		if (ref.has("cap_pressure_ticks")) ref["cap_pressure_ticks"] = body.pressure_ticks;
+		if (ref.has("cap_pressure_accel")) ref["cap_pressure_accel"] = body.pressure_accel;
+		normalized_hot_fields = true;
+	}
+	body.ref = ref;
+	if (body.x < -HOT_POSITION_ABS_LIMIT || body.x > HOT_POSITION_ABS_LIMIT || body.y < -HOT_POSITION_ABS_LIMIT || body.y > HOT_POSITION_ABS_LIMIT || body.z < -HOT_POSITION_ABS_LIMIT || body.z > HOT_POSITION_ABS_LIMIT) return false;
+	if (body.vx < -HOT_VELOCITY_ABS_LIMIT || body.vx > HOT_VELOCITY_ABS_LIMIT || body.vy < -HOT_VELOCITY_ABS_LIMIT || body.vy > HOT_VELOCITY_ABS_LIMIT || body.vz < -HOT_VELOCITY_ABS_LIMIT || body.vz > HOT_VELOCITY_ABS_LIMIT) return false;
+	if (body.radius <= 0 || body.radius > HOT_DIMENSION_LIMIT || body.height <= 0 || body.height > HOT_DIMENSION_LIMIT) return false;
+	if (body.mass < -HOT_GENERAL_SCALAR_ABS_LIMIT || body.mass > HOT_GENERAL_SCALAR_ABS_LIMIT || body.sleep_ticks < -HOT_GENERAL_SCALAR_ABS_LIMIT || body.sleep_ticks > HOT_GENERAL_SCALAR_ABS_LIMIT ||
+			body.lean < -HOT_GENERAL_SCALAR_ABS_LIMIT || body.lean > HOT_GENERAL_SCALAR_ABS_LIMIT || body.pressure_ticks < -HOT_GENERAL_SCALAR_ABS_LIMIT || body.pressure_ticks > HOT_GENERAL_SCALAR_ABS_LIMIT ||
+			body.pressure_accel < -HOT_PRESSURE_ACCEL_ABS_LIMIT || body.pressure_accel > HOT_PRESSURE_ACCEL_ABS_LIMIT) return false;
+	const int64_t cx = divi(body.x, BROADPHASE_CELL);
+	const int64_t cy = divi(body.y, BROADPHASE_CELL);
+	const int64_t cz = divi(body.z, BROADPHASE_CELL);
+	return bucket_key(cx - 1, cy - 1, cz - 1) >= 0 && bucket_key(cx + 1, cy + 1, cz + 1) < HOT_GRID_KEY_CAPACITY;
+}
+
+bool validate_step_input(const Dictionary &state, const Dictionary &config) {
+	Array bodies;
+	if (!validate_step_header(state, config, bodies)) return false;
 	std::set<String> ids;
+	bool normalized_hot_fields = false;
 	for (int index = 0; index < bodies.size(); ++index) {
-		Variant value = bodies[index];
-		if (value.get_type() != Variant::DICTIONARY) return false;
-		Dictionary body = value;
-		String id = body.get("id", "");
-		if (!ids.insert(id).second) return false;
-		for (const char *key : {"x", "y", "z"}) if (!scalar_in_range(body, key, HOT_POSITION_ABS_LIMIT)) return false;
-		for (const char *key : {"vx", "vy", "vz"}) if (!scalar_in_range(body, key, HOT_VELOCITY_ABS_LIMIT)) return false;
-		const int64_t radius = body.get("radius", COIN_RADIUS);
-		const int64_t height = body.get("height", COIN_HEIGHT);
-		if (radius <= 0 || radius > HOT_DIMENSION_LIMIT || height <= 0 || height > HOT_DIMENSION_LIMIT) return false;
-		for (const char *key : {"mass", "sleep_ticks", "lean_milli", "cap_pressure_ticks"}) if (!scalar_in_range(body, key, HOT_GENERAL_SCALAR_ABS_LIMIT)) return false;
-		if (!scalar_in_range(body, "cap_pressure_accel", HOT_PRESSURE_ACCEL_ABS_LIMIT)) return false;
-		const int64_t cx = divi(static_cast<int64_t>(body.get("x", 0)), BROADPHASE_CELL);
-		const int64_t cy = divi(static_cast<int64_t>(body.get("y", 0)), BROADPHASE_CELL);
-		const int64_t cz = divi(static_cast<int64_t>(body.get("z", 0)), BROADPHASE_CELL);
-		if (bucket_key(cx - 1, cy - 1, cz - 1) < 0 || bucket_key(cx + 1, cy + 1, cz + 1) >= HOT_GRID_KEY_CAPACITY) return false;
+		Body body;
+		if (!read_validated_body(bodies[index], body, ids, normalized_hot_fields, false)) return false;
 	}
 	return true;
 }
@@ -212,6 +336,13 @@ public:
 	std::vector<int64_t> start_y;
 	std::vector<int64_t> start_z;
 	std::vector<int64_t> peak_z;
+	std::vector<int> active_indices;
+	std::vector<int> awake_indices;
+	std::vector<int> support_indices;
+	std::vector<uint8_t> support_seen;
+	std::vector<int> exit_indices;
+	std::vector<OrderedTraceRow> trace_ordered_rows;
+	std::vector<String> trace_extra_ids;
 	Array exits;
 	Array motion_events;
 	std::set<String> motion_event_keys;
@@ -239,7 +370,22 @@ public:
 	PackedByteArray trace_row_has_level;
 	PackedStringArray trace_row_levels;
 	PackedInt32Array trace_row_lean;
+	int32_t *trace_row_body_indices_write = nullptr;
+	String *trace_row_material_categories_write = nullptr;
+	int32_t *trace_row_x_write = nullptr;
+	int32_t *trace_row_y_write = nullptr;
+	int32_t *trace_row_z_write = nullptr;
+	int32_t *trace_row_radius_write = nullptr;
+	int32_t *trace_row_height_write = nullptr;
+	uint8_t *trace_row_sleeping_write = nullptr;
+	String *trace_row_rest_states_write = nullptr;
+	uint8_t *trace_row_has_level_write = nullptr;
+	String *trace_row_levels_write = nullptr;
+	int32_t *trace_row_lean_write = nullptr;
 	std::map<String, int32_t> trace_descriptor_by_id;
+	bool trace_storage_preallocated = false;
+	int32_t trace_frames_written = 0;
+	int32_t trace_rows_written = 0;
 	int64_t upper_phase = 0;
 	int64_t lower_phase = 0;
 	int64_t state_tick = 0;
@@ -250,41 +396,32 @@ public:
 
 	StepKernel(Dictionary p_state, const Dictionary &p_config) : state(p_state), config(p_config) {}
 
-	void load() {
-		source_bodies = state.get("bodies", Array());
+	bool load() {
+		if (!validate_step_header(state, config, source_bodies)) return false;
 		Array source = source_bodies;
 		capture_trace = config.get("capture_presentation_trace", false);
 		emit_presentation = config.get("emit_presentation_events", true);
 		bodies.reserve(source.size());
+		active_indices.reserve(source.size());
+		awake_indices.reserve(source.size());
+		support_indices.reserve(source.size());
+		support_seen.reserve(source.size());
+		exit_indices.reserve(source.size());
+		trace_ordered_rows.reserve(source.size());
+		trace_extra_ids.reserve(source.size());
+		std::set<String> ids;
+		bool normalized_hot_fields = false;
 		for (int index = 0; index < source.size(); ++index) {
-			Dictionary ref = source[index];
 			Body body;
-			body.ref = ref;
-			body.id = ref.get("id", "");
-			body.kind = ref.get("kind", "coin");
-			Variant metadata_value = ref.get("metadata", Dictionary());
-			// Metadata is immutable solver input. Published exits and trace frames
-			// deep-copy it at their ownership boundaries, so duplicating every
-			// body's nested metadata during an action was redundant allocation.
-			body.metadata = metadata_value.get_type() == Variant::DICTIONARY ? Dictionary(metadata_value) : Dictionary();
-			body.rest_state = ref.get("rest_state", "settling");
-			body.x = ref.get("x", 0); body.y = ref.get("y", 0); body.z = ref.get("z", 0);
-			body.vx = ref.get("vx", 0); body.vy = ref.get("vy", 0); body.vz = ref.get("vz", 0);
-			body.radius = ref.get("radius", COIN_RADIUS); body.height = ref.get("height", COIN_HEIGHT); body.mass = ref.get("mass", 1);
-			body.sleep_ticks = ref.get("sleep_ticks", 0); body.sleeping = ref.get("sleeping", false);
-			body.lean = ref.get("lean_milli", 0); body.pressure_ticks = ref.get("cap_pressure_ticks", 0); body.pressure_accel = ref.get("cap_pressure_accel", 0);
+			if (!read_validated_body(source[index], body, ids, normalized_hot_fields, true)) return false;
 			if (capture_trace) {
-				body.trace_base_view["id"] = body.id; body.trace_base_view["kind"] = body.kind;
-				body.trace_base_view["material_category"] = material_category(body.kind);
-				body.trace_base_view["x"] = body.x; body.trace_base_view["y"] = body.y; body.trace_base_view["z"] = body.z;
-				body.trace_base_view["radius"] = body.radius; body.trace_base_view["height"] = body.height; body.trace_base_view["mass"] = body.mass;
-				body.trace_base_view["sleeping"] = body.sleeping; body.trace_base_view["rest_state"] = body.rest_state;
-				body.trace_base_view["level"] = ""; body.trace_base_view["lean_milli"] = body.lean;
-				body.trace_base_view["metadata"] = body.metadata;
+				body.trace_material_category = material_category(body.kind);
+				body.trace_descriptor_index = ensure_trace_descriptor(body);
 			}
 			bodies.push_back(body);
-			if (capture_trace) ensure_trace_descriptor(body);
 		}
+		if (normalized_hot_fields) state["_native_normalized_hot_fields"] = true;
+		if (capture_trace) prepare_trace_storage();
 		upper_phase = state.get("upper_phase_fp", 0);
 		lower_phase = state.get("lower_phase_fp", 0);
 		state_tick = state.get("tick", 0);
@@ -300,6 +437,7 @@ public:
 			start_x.push_back(body.x); start_y.push_back(body.y); start_z.push_back(body.z);
 			if (emit_presentation) peak_z.push_back(body.z);
 		}
+		return true;
 	}
 
 	int32_t ensure_trace_descriptor(const Body &body) {
@@ -312,7 +450,10 @@ public:
 		trace_body_radii.append(static_cast<int32_t>(body.radius));
 		trace_body_heights.append(static_cast<int32_t>(body.height));
 		trace_body_masses.append(static_cast<int32_t>(body.mass));
-		trace_body_metadata.append(body.metadata.duplicate(true));
+		// The packed trace is a public solver result. Its nested descriptor metadata
+		// must not alias the shallow candidate or authoritative simulation state: a
+		// caller may retain and mutate this result before any renderer boundary.
+		trace_body_metadata.append(isolated_metadata(body.metadata));
 		return index;
 	}
 
@@ -329,64 +470,138 @@ public:
 		trace_body_heights.append(static_cast<int32_t>(view.get("height", kind == "coin" ? COIN_HEIGHT : OBJECT_HEIGHT)));
 		trace_body_masses.append(static_cast<int32_t>(view.get("mass", 1)));
 		Variant metadata_value = view.get("metadata", Dictionary());
-		trace_body_metadata.append(metadata_value.get_type() == Variant::DICTIONARY ? Dictionary(metadata_value).duplicate(true) : Dictionary());
+		trace_body_metadata.append(metadata_value.get_type() == Variant::DICTIONARY ? isolated_metadata(Dictionary(metadata_value)) : Dictionary());
 		return index;
 	}
 
+	void bind_trace_row_writers() {
+		trace_row_body_indices_write = trace_row_body_indices.ptrw();
+		trace_row_material_categories_write = trace_row_material_categories.ptrw();
+		trace_row_x_write = trace_row_x.ptrw(); trace_row_y_write = trace_row_y.ptrw(); trace_row_z_write = trace_row_z.ptrw();
+		trace_row_radius_write = trace_row_radius.ptrw(); trace_row_height_write = trace_row_height.ptrw();
+		trace_row_sleeping_write = trace_row_sleeping.ptrw();
+		trace_row_rest_states_write = trace_row_rest_states.ptrw();
+		trace_row_has_level_write = trace_row_has_level.ptrw();
+		trace_row_levels_write = trace_row_levels.ptrw();
+		trace_row_lean_write = trace_row_lean.ptrw();
+	}
+
+	void resize_trace_rows(int64_t size) {
+		trace_row_body_indices.resize(size);
+		trace_row_material_categories.resize(size);
+		trace_row_x.resize(size); trace_row_y.resize(size); trace_row_z.resize(size);
+		trace_row_radius.resize(size); trace_row_height.resize(size);
+		trace_row_sleeping.resize(size);
+		trace_row_rest_states.resize(size);
+		trace_row_has_level.resize(size);
+		trace_row_levels.resize(size);
+		trace_row_lean.resize(size);
+		bind_trace_row_writers();
+	}
+
+	void prepare_trace_storage() {
+		const int32_t frame_capacity = ACTION_TICKS / TRACE_INTERVAL + 2;
+		trace_frame_offsets.resize(frame_capacity + 1);
+		trace_tick_offsets.resize(frame_capacity);
+		trace_upper_phases.resize(frame_capacity);
+		trace_lower_phases.resize(frame_capacity);
+		resize_trace_rows(static_cast<int64_t>(frame_capacity) * static_cast<int64_t>(bodies.size()));
+		trace_storage_preallocated = true;
+		trace_frames_written = 0;
+		trace_rows_written = 0;
+	}
+
+	void ensure_trace_row_capacity(int32_t required) {
+		if (!trace_storage_preallocated || required <= trace_row_body_indices.size()) return;
+		const int64_t grown = std::max<int64_t>(required, std::max<int64_t>(1, trace_row_body_indices.size() * 2));
+		resize_trace_rows(grown);
+	}
+
+	void append_trace_row_values(int32_t descriptor_index, const String &material, int64_t x, int64_t y, int64_t z,
+			int64_t radius, int64_t height, bool sleeping, const String &rest_state, bool has_level, const String &level, int64_t lean) {
+		if (!trace_storage_preallocated) {
+			trace_row_body_indices.append(descriptor_index);
+			trace_row_material_categories.append(material);
+			trace_row_x.append(static_cast<int32_t>(x)); trace_row_y.append(static_cast<int32_t>(y)); trace_row_z.append(static_cast<int32_t>(z));
+			trace_row_radius.append(static_cast<int32_t>(radius)); trace_row_height.append(static_cast<int32_t>(height));
+			trace_row_sleeping.append(sleeping ? 1 : 0);
+			trace_row_rest_states.append(rest_state);
+			trace_row_has_level.append(has_level ? 1 : 0);
+			trace_row_levels.append(has_level ? level : String());
+			trace_row_lean.append(static_cast<int32_t>(lean));
+			return;
+		}
+		ensure_trace_row_capacity(trace_rows_written + 1);
+		const int32_t row = trace_rows_written++;
+		trace_row_body_indices_write[row] = descriptor_index;
+		trace_row_material_categories_write[row] = material;
+		trace_row_x_write[row] = static_cast<int32_t>(x); trace_row_y_write[row] = static_cast<int32_t>(y); trace_row_z_write[row] = static_cast<int32_t>(z);
+		trace_row_radius_write[row] = static_cast<int32_t>(radius); trace_row_height_write[row] = static_cast<int32_t>(height);
+		trace_row_sleeping_write[row] = sleeping ? 1 : 0;
+		trace_row_rest_states_write[row] = rest_state;
+		trace_row_has_level_write[row] = has_level ? 1 : 0;
+		trace_row_levels_write[row] = has_level ? level : String();
+		trace_row_lean_write[row] = static_cast<int32_t>(lean);
+	}
+
 	void append_trace_row(const Body &body) {
-		trace_row_body_indices.append(ensure_trace_descriptor(body));
-		trace_row_material_categories.append(material_category(body.kind));
-		trace_row_x.append(static_cast<int32_t>(body.x)); trace_row_y.append(static_cast<int32_t>(body.y)); trace_row_z.append(static_cast<int32_t>(body.z));
-		trace_row_radius.append(static_cast<int32_t>(body.radius)); trace_row_height.append(static_cast<int32_t>(body.height));
-		trace_row_sleeping.append(body.sleeping ? 1 : 0);
-		trace_row_rest_states.append(body.rest_state);
-		trace_row_has_level.append(1);
-		trace_row_levels.append(body.y >= UPPER_EDGE && body.z >= UPPER_FLOOR_Z ? "upper" : body.y >= FRONT_EDGE && body.z >= LOWER_FLOOR_Z && body.z < UPPER_FLOOR_Z ? "lower" : "falling");
-		trace_row_lean.append(static_cast<int32_t>(body.lean));
+		append_trace_row_values(
+			body.trace_descriptor_index, body.trace_material_category, body.x, body.y, body.z, body.radius, body.height,
+			body.sleeping, body.rest_state, true,
+			body.y >= UPPER_EDGE && body.z >= UPPER_FLOOR_Z ? "upper" : body.y >= FRONT_EDGE && body.z >= LOWER_FLOOR_Z && body.z < UPPER_FLOOR_Z ? "lower" : "falling",
+			body.lean
+		);
 	}
 
 	void append_trace_row(const Dictionary &view) {
-		trace_row_body_indices.append(ensure_trace_descriptor(view));
-		trace_row_material_categories.append(String(view.get("material_category", "physical_object")));
-		trace_row_x.append(static_cast<int32_t>(view.get("x", 0))); trace_row_y.append(static_cast<int32_t>(view.get("y", 0))); trace_row_z.append(static_cast<int32_t>(view.get("z", 0)));
-		trace_row_radius.append(static_cast<int32_t>(view.get("radius", COIN_RADIUS))); trace_row_height.append(static_cast<int32_t>(view.get("height", COIN_HEIGHT)));
-		trace_row_sleeping.append(bool(view.get("sleeping", false)) ? 1 : 0);
-		trace_row_rest_states.append(String(view.get("rest_state", "settling")));
 		const bool has_level = view.has("level");
-		trace_row_has_level.append(has_level ? 1 : 0);
-		trace_row_levels.append(has_level ? String(view.get("level", "falling")) : String());
-		trace_row_lean.append(static_cast<int32_t>(view.get("lean_milli", 0)));
+		append_trace_row_values(
+			ensure_trace_descriptor(view), String(view.get("material_category", "physical_object")),
+			view.get("x", 0), view.get("y", 0), view.get("z", 0), view.get("radius", COIN_RADIUS), view.get("height", COIN_HEIGHT),
+			view.get("sleeping", false), String(view.get("rest_state", "settling")), has_level,
+			has_level ? String(view.get("level", "falling")) : String(), view.get("lean_milli", 0)
+		);
 	}
 
 	void append_packed_trace_frame(int64_t tick_offset, const Array &extra) {
-		struct OrderedRow {
-			int body_index = -1;
-			Dictionary extra_view;
-			int64_t depth = 0;
-			String id;
-		};
-		std::vector<OrderedRow> ordered;
-		ordered.reserve(bodies.size() + extra.size());
+		trace_ordered_rows.clear();
+		trace_extra_ids.clear();
+		if (trace_ordered_rows.capacity() < bodies.size() + static_cast<size_t>(extra.size())) {
+			trace_ordered_rows.reserve(bodies.size() + extra.size());
+		}
+		if (trace_extra_ids.capacity() < static_cast<size_t>(extra.size())) trace_extra_ids.reserve(extra.size());
+		for (int index = 0; index < extra.size(); ++index) {
+			Dictionary view = extra[index];
+			trace_extra_ids.push_back(view.get("id", ""));
+		}
 		for (int index = 0; index < static_cast<int>(bodies.size()); ++index) {
 			const Body &body = bodies[index];
-			OrderedRow row; row.body_index = index; row.depth = body.y * 10 - body.z; row.id = body.id; ordered.push_back(row);
+			OrderedTraceRow row; row.body_index = index; row.depth = body.y * 10 - body.z; row.id = &body.id; trace_ordered_rows.push_back(row);
 		}
 		for (int index = 0; index < extra.size(); ++index) {
 			Dictionary view = extra[index];
-			OrderedRow row; row.extra_view = view;
+			OrderedTraceRow row; row.extra_index = index;
 			row.depth = static_cast<int64_t>(view.get("y", 0)) * 10 - static_cast<int64_t>(view.get("z", 0));
-			row.id = view.get("id", ""); ordered.push_back(row);
+			row.id = &trace_extra_ids[index]; trace_ordered_rows.push_back(row);
 		}
-		std::sort(ordered.begin(), ordered.end(), [](const OrderedRow &left, const OrderedRow &right) {
-			if (left.depth == right.depth) return left.id < right.id;
+		std::sort(trace_ordered_rows.begin(), trace_ordered_rows.end(), [](const OrderedTraceRow &left, const OrderedTraceRow &right) {
+			if (left.depth == right.depth) return *left.id < *right.id;
 			return left.depth > right.depth;
 		});
-		trace_frame_offsets.append(trace_row_body_indices.size());
-		trace_tick_offsets.append(static_cast<int32_t>(tick_offset));
-		trace_upper_phases.append(static_cast<int32_t>(upper_phase));
-		trace_lower_phases.append(static_cast<int32_t>(lower_phase));
-		for (const OrderedRow &row : ordered) {
-			if (row.body_index >= 0) append_trace_row(bodies[row.body_index]); else append_trace_row(row.extra_view);
+		if (trace_storage_preallocated) {
+			const int32_t frame = trace_frames_written++;
+			trace_frame_offsets.set(frame, trace_rows_written);
+			trace_tick_offsets.set(frame, static_cast<int32_t>(tick_offset));
+			trace_upper_phases.set(frame, static_cast<int32_t>(upper_phase));
+			trace_lower_phases.set(frame, static_cast<int32_t>(lower_phase));
+		} else {
+			trace_frame_offsets.append(trace_row_body_indices.size());
+			trace_tick_offsets.append(static_cast<int32_t>(tick_offset));
+			trace_upper_phases.append(static_cast<int32_t>(upper_phase));
+			trace_lower_phases.append(static_cast<int32_t>(lower_phase));
+		}
+		for (const OrderedTraceRow &row : trace_ordered_rows) {
+			if (row.body_index >= 0) append_trace_row(bodies[row.body_index]); else append_trace_row(Dictionary(extra[row.extra_index]));
 		}
 	}
 
@@ -431,7 +646,17 @@ public:
 	}
 
 	Dictionary finish_packed_trace() {
-		trace_frame_offsets.append(trace_row_body_indices.size());
+		if (trace_storage_preallocated) {
+			trace_frame_offsets.set(trace_frames_written, trace_rows_written);
+			trace_frame_offsets.resize(trace_frames_written + 1);
+			trace_tick_offsets.resize(trace_frames_written);
+			trace_upper_phases.resize(trace_frames_written);
+			trace_lower_phases.resize(trace_frames_written);
+			resize_trace_rows(trace_rows_written);
+			trace_storage_preallocated = false;
+		} else {
+			trace_frame_offsets.append(trace_row_body_indices.size());
+		}
 		Dictionary packed;
 		packed["schema"] = "coin_pusher_presentation_trace_packed";
 		packed["version"] = PACKED_TRACE_VERSION;
@@ -512,7 +737,7 @@ public:
 	}
 
 	void integrate(const std::vector<int> &active, int64_t tick_offset) {
-		std::vector<int> exit_indices;
+		exit_indices.clear();
 		for (int index : active) {
 			if (index < 0 || index >= static_cast<int>(bodies.size())) continue;
 			Body &body = bodies[index];
@@ -536,7 +761,7 @@ public:
 				event["outcome"] = outcome; event["cause"] = "physical_fall";
 				event["x"] = body.x; event["y"] = body.y; event["z"] = body.z;
 				event["mass"] = body.mass; event["tick_offset"] = tick_offset;
-				event["metadata"] = body.metadata.duplicate(true);
+				event["metadata"] = isolated_metadata(body.metadata);
 				exits.append(event); exit_indices.push_back(index); continue;
 			}
 			const int64_t base_z = body.y >= UPPER_EDGE ? UPPER_FLOOR_Z : LOWER_FLOOR_Z;
@@ -656,52 +881,6 @@ public:
 		}
 	}
 
-	Dictionary body_view(const Body &body) const {
-		Dictionary view = body.trace_base_view.duplicate(false);
-		view["x"] = body.x; view["y"] = body.y; view["z"] = body.z;
-		view["sleeping"] = body.sleeping; view["rest_state"] = body.rest_state;
-		view["level"] = body.y >= UPPER_EDGE && body.z >= UPPER_FLOOR_Z ? "upper" : body.y >= FRONT_EDGE && body.z >= LOWER_FLOOR_Z && body.z < UPPER_FLOOR_Z ? "lower" : "falling";
-		view["lean_milli"] = body.lean;
-		view["metadata"] = body.metadata.duplicate(true);
-		return view;
-	}
-
-	Array body_views(const Array &extra = Array()) const {
-		struct OrderedView {
-			int body_index = -1;
-			Dictionary extra_view;
-			int64_t depth = 0;
-			String id;
-		};
-		std::vector<OrderedView> sorted;
-		sorted.reserve(bodies.size() + extra.size());
-		for (int index = 0; index < static_cast<int>(bodies.size()); ++index) {
-			const Body &body = bodies[index];
-			OrderedView entry;
-			entry.body_index = index;
-			entry.depth = body.y * 10 - body.z;
-			entry.id = body.id;
-			sorted.push_back(entry);
-		}
-		for (int index = 0; index < extra.size(); ++index) {
-			Dictionary view = extra[index];
-			OrderedView entry;
-			entry.extra_view = view;
-			entry.depth = static_cast<int64_t>(view.get("y", 0)) * 10 - static_cast<int64_t>(view.get("z", 0));
-			entry.id = view.get("id", "");
-			sorted.push_back(entry);
-		}
-		std::sort(sorted.begin(), sorted.end(), [](const OrderedView &left, const OrderedView &right) {
-			if (left.depth == right.depth) return left.id < right.id;
-			return left.depth > right.depth;
-		});
-		Array result;
-		for (const OrderedView &entry : sorted) {
-			result.append(entry.body_index >= 0 ? body_view(bodies[entry.body_index]) : entry.extra_view);
-		}
-		return result;
-	}
-
 	Array exit_views(const Dictionary &event) const {
 		const String kind = event.get("kind", "coin");
 		Dictionary first;
@@ -714,20 +893,11 @@ public:
 		first["rest_state"] = String("falling_") + String(event.get("outcome", "tray"));
 		first["lean_milli"] = 0;
 		Variant metadata_value = event.get("metadata", Dictionary());
-		first["metadata"] = metadata_value.get_type() == Variant::DICTIONARY ? Dictionary(metadata_value).duplicate(true) : Dictionary();
+		first["metadata"] = metadata_value.get_type() == Variant::DICTIONARY ? isolated_metadata(Dictionary(metadata_value)) : Dictionary();
 		Dictionary second = first.duplicate(true);
 		second["y"] = static_cast<int64_t>(first.get("y", 0)) - 4500;
 		second["z"] = static_cast<int64_t>(first.get("z", 0)) - 6000;
 		Array result; result.append(first); result.append(second); return result;
-	}
-
-	Dictionary trace_frame(int64_t tick_offset, const Array &extra) const {
-		Dictionary frame;
-		frame["tick_offset"] = tick_offset;
-		frame["upper_phase_fp"] = upper_phase;
-		frame["lower_phase_fp"] = lower_phase;
-		frame["bodies"] = body_views(extra);
-		return frame;
 	}
 
 	Dictionary presentation_event(const String &kind, int body_index, const Dictionary &fallback_body, int64_t intensity, int64_t tick_offset, const Dictionary &metadata) const {
@@ -745,7 +915,7 @@ public:
 		}
 		event["intensity_milli"] = clamp_i(intensity, 0, 1000);
 		event["tick_offset"] = clamp_i(tick_offset, 0, ACTION_TICKS);
-		event["metadata"] = metadata.duplicate(true);
+		event["metadata"] = isolated_metadata(metadata);
 		return event;
 	}
 
@@ -834,7 +1004,7 @@ Dictionary StepKernel::run() {
 		started = std::chrono::steady_clock::now();
 		stage_started = started;
 	}
-	load();
+	if (!load()) return Dictionary();
 	if (debug_profile) profile_pack = elapsed_usec(stage_started);
 	if (capture_trace) {
 		if (debug_profile) stage_started = std::chrono::steady_clock::now();
@@ -867,31 +1037,30 @@ Dictionary StepKernel::run() {
 		}
 		const int64_t new_upper = pusher_face(upper_phase, true);
 		const int64_t new_lower = pusher_face(lower_phase, false);
-		std::vector<int> active;
-		active.reserve(bodies.size());
+		active_indices.clear();
 		if (debug_profile) stage_started = std::chrono::steady_clock::now();
-		wake_count += apply_pushers(old_upper, new_upper, old_lower, new_lower, push_scale, active);
-		if (!active.empty()) integrate(active, tick_index + 1);
+		wake_count += apply_pushers(old_upper, new_upper, old_lower, new_lower, push_scale, active_indices);
+		if (!active_indices.empty()) integrate(active_indices, tick_index + 1);
 		if (debug_profile) profile_push_integrate += elapsed_usec(stage_started);
-		if (!active.empty()) {
-			std::vector<int> awake;
-			for (int index = 0; index < static_cast<int>(bodies.size()); ++index) if (!bodies[index].sleeping) awake.push_back(index);
+		if (!active_indices.empty()) {
+			awake_indices.clear();
+			for (int index = 0; index < static_cast<int>(bodies.size()); ++index) if (!bodies[index].sleeping) awake_indices.push_back(index);
 			if (debug_profile) stage_started = std::chrono::steady_clock::now();
 			grid.rebuild(bodies);
 			if (debug_profile) profile_grid += elapsed_usec(stage_started);
 			if (debug_profile) stage_started = std::chrono::steady_clock::now();
-			std::vector<int> supports = awake;
-			std::vector<uint8_t> support_seen(bodies.size(), 0);
-			for (int index : awake) support_seen[index] = 1;
+			support_indices.assign(awake_indices.begin(), awake_indices.end());
+			support_seen.assign(bodies.size(), 0);
+			for (int index : awake_indices) support_seen[index] = 1;
 			if (debug_profile) profile_supports += elapsed_usec(stage_started);
 			const int64_t generation = tick_index + 1;
 			if (debug_profile) stage_started = std::chrono::steady_clock::now();
-			const int64_t resolved = resolve_collisions(grid, collision_visited, generation, awake, supports, support_seen);
+			const int64_t resolved = resolve_collisions(grid, collision_visited, generation, awake_indices, support_indices, support_seen);
 			collision_count += resolved;
 			if (debug_profile) profile_collisions += elapsed_usec(stage_started);
 			if (debug_profile) stage_started = std::chrono::steady_clock::now();
-			std::sort(supports.begin(), supports.end());
-			resolve_supports(grid, supports, tick_index + 1);
+			std::sort(support_indices.begin(), support_indices.end());
+			resolve_supports(grid, support_indices, tick_index + 1);
 			if (debug_profile) profile_supports += elapsed_usec(stage_started);
 		}
 		++state_tick;
@@ -989,7 +1158,6 @@ Dictionary StepKernel::run() {
 }
 
 Dictionary CoinPusherNativeCore::step_action(Dictionary state, const Dictionary &config) const {
-	if (!validate_step_input(state, config)) return Dictionary();
 	StepKernel kernel(state, config);
 	return kernel.run();
 }
@@ -1002,7 +1170,7 @@ Dictionary CoinPusherNativeCore::append_presentation_trace_frame(Dictionary pack
 	config["emit_presentation_events"] = false;
 	StepKernel kernel(state, config);
 	if (!kernel.load_existing_packed_trace(packed_trace)) return Dictionary();
-	kernel.load();
+	if (!kernel.load()) return Dictionary();
 	kernel.append_packed_trace_frame(tick_offset, Array());
 	return kernel.finish_packed_trace();
 }

@@ -153,10 +153,41 @@ static func embedded_action_view_patch(host: Variant, current_state: Dictionary)
 	if str(current_state.get("game_id", "")) != host.current_game.get_id():
 		return {}
 	var module_patch: Dictionary = module_patch_value
+	var debug_timing: Dictionary = result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	var debug_enabled := not debug_timing.is_empty()
+	var debug_stage_started_usec := Time.get_ticks_usec() if debug_enabled else 0
 	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
-	var legal_actions = host._game_action_view_list("legal")
-	var cheat_actions = host._game_action_view_list("cheat")
-	var stake_range: Dictionary = host._stake_range()
+	# A module may publish the exact dependency key for its transformed action
+	# catalog. Reuse that immutable canvas-owned catalog until availability really
+	# changes (Coin Pusher: room, busy/lock, variation, or X-ray ownership). Stake
+	# authority remains independent because bankroll can change every action.
+	var module_catalog_key := str(module_patch.get("surface_action_catalog_key", ""))
+	var module_stake_view_value: Variant = module_patch.get("surface_action_stake_view", {})
+	var catalog_reusable := not module_catalog_key.is_empty() \
+			and module_catalog_key == str(current_state.get("surface_action_catalog_key", "")) \
+			and typeof(module_stake_view_value) == TYPE_DICTIONARY \
+			and not (module_stake_view_value as Dictionary).is_empty() \
+			and typeof(current_state.get("legal_actions", [])) == TYPE_ARRAY \
+			and typeof(current_state.get("cheat_actions", [])) == TYPE_ARRAY
+	var action_view: Dictionary = {}
+	var legal_actions: Array
+	var cheat_actions: Array
+	if catalog_reusable:
+		legal_actions = current_state.get("legal_actions", []) as Array
+		cheat_actions = current_state.get("cheat_actions", []) as Array
+	else:
+		var action_view_value: Variant = host.current_game.actions(host.run_state, host.run_state.current_environment)
+		action_view = action_view_value if typeof(action_view_value) == TYPE_DICTIONARY else {}
+		legal_actions = _game_action_view_list_from_source(host, action_view.get("legal_actions", []), "legal")
+		cheat_actions = _game_action_view_list_from_source(host, action_view.get("cheat_actions", []), "cheat")
+	if typeof(module_stake_view_value) == TYPE_DICTIONARY and not (module_stake_view_value as Dictionary).is_empty():
+		var module_stake_view: Dictionary = module_stake_view_value
+		for stake_key in module_stake_view.keys():
+			action_view[stake_key] = module_stake_view[stake_key]
+	if debug_enabled:
+		debug_timing["refresh_patch_catalog"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
+	var stake_range: Dictionary = host._stake_range(action_view)
 	var snapshot_selected_stake = host._selected_stake_for_range(stake_range)
 	var result_message = host._player_facing_text(str(result.get("message", "")))
 	var result_bankroll_delta = host._visible_recent_bankroll_delta(int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0))))
@@ -166,6 +197,11 @@ static func embedded_action_view_patch(host: Variant, current_state: Dictionary)
 		result_message = host._player_facing_text(host.message_label.text)
 	var drunk_time_scale = host.run_state.drunk_time_scale()
 	var drunk_world_speed_percent = host.run_state.drunk_time_scale_percent()
+	var accessibility_value: Variant = current_state.get("accessibility", {})
+	var accessibility: Dictionary = accessibility_value if typeof(accessibility_value) == TYPE_DICTIONARY else host.current_accessibility_snapshot()
+	if debug_enabled:
+		debug_timing["refresh_patch_stake_and_scalars"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	var patch := {
 		"legal_actions": legal_actions,
 		"cheat_actions": cheat_actions,
@@ -179,7 +215,7 @@ static func embedded_action_view_patch(host: Variant, current_state: Dictionary)
 		"selected_action_kind": host.selected_action_kind,
 		"selected_action_label": host.selected_action_label,
 		"selected_action_summary": host._selected_action_summary() if not host.selected_action_id.is_empty() else "",
-		"risk_cue": host._cheat_action_risk_cue(cheat_actions),
+		"risk_cue": str(current_state.get("risk_cue", "")) if catalog_reusable else host._cheat_action_risk_cue(cheat_actions),
 		"has_recent_outcome": true,
 		"outcome_message": result_message,
 		"outcome_bankroll_delta": result_bankroll_delta,
@@ -196,7 +232,9 @@ static func embedded_action_view_patch(host: Variant, current_state: Dictionary)
 		"drunk_effect_mode": host._drunk_effect_mode(),
 		"reduce_motion": host._reduce_motion_enabled(),
 		"high_contrast": host._high_contrast_enabled(),
-		"accessibility": host.current_accessibility_snapshot(),
+		# Settings cannot change inside a synchronous game action. Reuse the
+		# canvas-owned snapshot instead of rebuilding the settings menu model.
+		"accessibility": accessibility,
 		"alcoholic_level": host.run_state.alcoholic_level,
 		"baseline_luck": host.run_state.baseline_luck,
 		"luck_modifier": host.run_state.effective_luck(),
@@ -209,11 +247,12 @@ static func embedded_action_view_patch(host: Variant, current_state: Dictionary)
 		"state": str(result.get("state", GameModule.RESULT_CONTINUE)),
 		"summary_source": str(result.get("summary_source", "active_game")),
 	}
-	for key in result.keys():
-		var result_key := str(key)
-		if result_key in ["surface_presentation_snapshot_patch", "surface_action_view_patch"] or patch.has(result_key):
-			continue
-		patch[result_key] = result[key]
+	# Internal canvas rendering consumes an explicit result surface. Stored/public
+	# results remain complete, but solver diagnostics, story deltas, physics event
+	# bags, and other host-only fields must not become top-level canvas state.
+	for result_key in ["action_id", "action_kind", "game_id", "source_id", "display_name", "family"]:
+		if result.has(result_key) and not patch.has(result_key):
+			patch[result_key] = result[result_key]
 	var presentation_snapshot_key := str(module_patch.get(
 		"surface_presentation_snapshot_key",
 		current_state.get("surface_presentation_snapshot_key", "")
@@ -221,6 +260,9 @@ static func embedded_action_view_patch(host: Variant, current_state: Dictionary)
 	for key in module_patch.keys():
 		if str(key) != presentation_snapshot_key:
 			patch[key] = module_patch[key]
+	if debug_enabled:
+		debug_timing["refresh_patch_result_surface"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	if not presentation_snapshot_key.is_empty():
 		var current_presentation_value: Variant = current_state.get(presentation_snapshot_key, {})
 		if typeof(current_presentation_value) != TYPE_DICTIONARY:
@@ -238,6 +280,8 @@ static func embedded_action_view_patch(host: Variant, current_state: Dictionary)
 	elif typeof(result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY \
 			and not (result.get("surface_presentation_snapshot_patch", {}) as Dictionary).is_empty():
 		return {}
+	if debug_enabled:
+		debug_timing["refresh_patch_presentation_merge"] = Time.get_ticks_usec() - debug_stage_started_usec
 	return patch
 
 
@@ -591,6 +635,12 @@ static func game_action_view_list(host: Variant, action_kind: String) -> Array:
 	var source = host.current_game.legal_actions(host.run_state, host.run_state.current_environment)
 	if action_kind == "cheat":
 		source = host.current_game.cheat_actions(host.run_state, host.run_state.current_environment)
+	return _game_action_view_list_from_source(host, source, action_kind)
+
+
+static func _game_action_view_list_from_source(host: Variant, source: Variant, action_kind: String) -> Array:
+	if typeof(source) != TYPE_ARRAY:
+		return []
 	var actions: Array = []
 	for action in source:
 		if typeof(action) != TYPE_DICTIONARY:

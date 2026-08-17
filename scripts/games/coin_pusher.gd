@@ -46,6 +46,10 @@ func gameplay_model() -> String:
 	return GameModule.GAMEPLAY_MODEL_FULL_SIMULATION
 
 
+func defers_embedded_action_presentation_refresh(run_state: RunState, _environment: Dictionary) -> bool:
+	return run_state != null and not run_state.is_tutorial_run()
+
+
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	# Surface entry is presentation-only. Machine normalization, rumor updates,
 	# and staff-watch consequences belong to generation/action boundaries.
@@ -153,6 +157,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_web_idle_animation_fps": 15.0,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
+		"surface_action_catalog_key": _surface_action_catalog_key(machine, run_state, environment, ui_state),
+		"surface_action_stake_view": _surface_action_stake_view(run_state, environment),
 		"surface_time_msec": surface_time_msec,
 		"coin_pusher_snapshot": _presentation_snapshot(machine, upper_display_phase_milli, lower_display_phase_milli),
 		"surface_presentation_snapshot_key": "coin_pusher_snapshot",
@@ -213,45 +219,83 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 
 
 func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	# This command path only overlays scalar UI-local selections/phases. Preserve
-	# nested read-only action context by reference instead of cloning the complete
-	# surface/runtime snapshot before every drop or nudge.
-	var next := ui_state.duplicate(false)
+	# Coin commands own only scalar selections and sampled phases. Author a fresh
+	# transient payload from those values: the host retains the complete pre-click
+	# context for resolution, while runtime-status/speaker dictionaries are neither
+	# copied nor persisted back into the game's preference state.
+	var next := _surface_command_scalar_ui_state(ui_state)
 	match surface_action:
 		"coin_pusher_lane":
 			next["coin_pusher_lane"] = clampi(index, 0, _lane_count() - 1)
-			return GameModule.surface_command({"ui_state": next, "preserve_surface_ui_state": true, "message": "Lane %d lined up." % (clampi(index, 0, _lane_count() - 1) + 1)})
+			return _coin_surface_command(next, {"preserve_surface_ui_state": true, "message": "Lane %d lined up." % (clampi(index, 0, _lane_count() - 1) + 1)})
 		"coin_pusher_force":
 			var force_order := _force_order()
 			next["coin_pusher_force"] = str(force_order[clampi(index, 0, force_order.size() - 1)])
-			return GameModule.surface_command({"ui_state": next, "preserve_surface_ui_state": true, "message": "%s force ready." % str(next["coin_pusher_force"]).capitalize()})
+			return _coin_surface_command(next, {"preserve_surface_ui_state": true, "message": "%s force ready." % str(next["coin_pusher_force"]).capitalize()})
 		"coin_pusher_direction":
 			var direction_order := _direction_order()
 			next["coin_pusher_direction"] = str(direction_order[clampi(index, 0, direction_order.size() - 1)])
-			return GameModule.surface_command({"ui_state": next, "preserve_surface_ui_state": true, "message": "%s nudge lined up." % str(next["coin_pusher_direction"]).capitalize()})
+			return _coin_surface_command(next, {"preserve_surface_ui_state": true, "message": "%s nudge lined up." % str(next["coin_pusher_direction"]).capitalize()})
 		"coin_pusher_ridge_trim":
 			var trim_order: Array = _variation_config("jackpot_ridge").get("force_trim_order", ["feather", "balanced", "heavy"])
 			next["coin_pusher_ridge_trim"] = str(trim_order[clampi(index, 0, trim_order.size() - 1)])
-			return GameModule.surface_command({"ui_state": next, "preserve_surface_ui_state": true, "message": "%s puck force trim." % str(next["coin_pusher_ridge_trim"]).capitalize()})
+			return _coin_surface_command(next, {"preserve_surface_ui_state": true, "message": "%s puck force trim." % str(next["coin_pusher_ridge_trim"]).capitalize()})
 		"coin_pusher_drop":
 			_capture_display_phases(next, _read_machine_state(run_state, environment))
-			return GameModule.surface_command({"ui_state": next, "action_id": DROP_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "set_stake": _drop_cost(), "preserve_surface_ui_state": true, "message": "Quarter committed."})
+			return _coin_surface_command(next, {"action_id": DROP_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "set_stake": _drop_cost(), "preserve_surface_ui_state": true, "message": "Quarter committed."})
 		"coin_pusher_nudge":
 			_capture_display_phases(next, _read_machine_state(run_state, environment))
-			return GameModule.surface_command({"ui_state": next, "action_id": NUDGE_ACTION, "action_kind": "risky", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "Hands on the cabinet."})
+			return _coin_surface_command(next, {"action_id": NUDGE_ACTION, "action_kind": "risky", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "Hands on the cabinet."})
 		"coin_pusher_vault_cell":
 			next["coin_pusher_vault_cell"] = maxi(0, index)
-			return GameModule.surface_command({"ui_state": next, "preserve_surface_ui_state": true, "message": "Vault cell %d selected." % (maxi(0, index) + 1)})
+			return _coin_surface_command(next, {"preserve_surface_ui_state": true, "message": "Vault cell %d selected." % (maxi(0, index) + 1)})
 		"coin_pusher_vault_start":
-			return GameModule.surface_command({"ui_state": next, "action_id": VAULT_START_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "Vault door pulled."})
+			return _coin_surface_command(next, {"action_id": VAULT_START_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "Vault door pulled."})
 		"coin_pusher_vault_open":
-			return GameModule.surface_command({"ui_state": next, "action_id": VAULT_OPEN_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "Cell selected."})
+			return _coin_surface_command(next, {"action_id": VAULT_OPEN_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "Cell selected."})
 		"coin_pusher_vault_stop":
-			return GameModule.surface_command({"ui_state": next, "action_id": VAULT_STOP_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "Stop and bank."})
+			return _coin_surface_command(next, {"action_id": VAULT_STOP_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "Stop and bank."})
 		"coin_pusher_vault_peek":
 			if run_state != null and run_state.inventory.has("xray_glasses") and str(_read_machine_state(run_state, environment).get("variation_id", "")) == "vault_drop":
-				return GameModule.surface_command({"ui_state": next, "action_id": VAULT_PEEK_ACTION, "action_kind": "risky", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "X-ray glasses set on the selected cell."})
+				return _coin_surface_command(next, {"action_id": VAULT_PEEK_ACTION, "action_kind": "risky", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "X-ray glasses set on the selected cell."})
 	return {"handled": false}
+
+
+func _surface_command_scalar_ui_state(ui_state: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	# Explicit module ownership: never persist arbitrary host scalars merely
+	# because their current representation happens to be primitive.
+	for key in [
+		"coin_pusher_lane",
+		"coin_pusher_force",
+		"coin_pusher_direction",
+		"coin_pusher_ridge_trim",
+		"coin_pusher_vault_cell",
+		"coin_pusher_timing_phase",
+		"coin_pusher_upper_input_phase",
+		"coin_pusher_lower_input_phase",
+		"coin_pusher_capture_presentation_trace",
+		"coin_pusher_debug_profile_stages",
+		"surface_time_msec",
+	]:
+		if ui_state.has(key):
+			result[key] = ui_state[key]
+	return result
+
+
+func _coin_surface_command(ui_state: Dictionary, payload: Dictionary) -> Dictionary:
+	var owned_payload := payload.duplicate(false)
+	owned_payload["ui_state"] = ui_state
+	owned_payload["surface_ui_preference_patch"] = _surface_command_preference_patch(ui_state)
+	return GameModule.surface_command(owned_payload, true)
+
+
+func _surface_command_preference_patch(ui_state: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for key in ["coin_pusher_lane", "coin_pusher_force", "coin_pusher_direction", "coin_pusher_ridge_trim", "coin_pusher_vault_cell"]:
+		if ui_state.has(key):
+			result[key] = ui_state[key]
+	return result
 
 
 func surface_motion_signature(surface, surface_state: Dictionary) -> Dictionary:
@@ -343,7 +387,7 @@ func active_item_command(item_id: String, run_state: RunState, environment: Dict
 	deltas["inventory_remove"] = [item_id]
 	var message := "Cold quarters loaded. The next drop hits heavy."
 	deltas["messages"] = [message]
-	var result := GameModule.build_action_result({
+	var result := GameModule.build_owned_action_result({
 		"source_id": get_id(), "game_id": get_id(), "action_id": "load_cold_quarters", "action_kind": "item",
 		"environment_id": str(environment.get("id", "")), "deltas": deltas, "message": message,
 	})
@@ -415,9 +459,9 @@ func _resolve_drop(run_state: RunState, environment: Dictionary, machine: Dictio
 	var staff_watch_heat := _staff_watch_suspicion_delta(run_state, machine)
 	deltas["suspicion_delta"] = staff_watch_heat
 	deltas["inventory_add"] = _inventory_prizes(prizes)
-	deltas["story_log"] = [_story_entry(DROP_ACTION, "legal", environment, payout - cost, 0, {"lane": lane, "gutter": gutter, "prizes": prizes})]
+	deltas["story_log"] = [_story_entry(DROP_ACTION, "legal", environment, payout - cost, 0, {"lane": lane, "gutter": gutter, "prizes": prizes.duplicate(true)})]
 	deltas["messages"] = [message]
-	var result := GameModule.build_action_result({
+	var result := GameModule.build_owned_action_result({
 		"source_id": get_id(), "game_id": get_id(), "action_id": DROP_ACTION, "action_kind": "legal", "stake": cost,
 		"environment_id": str(environment.get("id", "")), "environment_archetype_id": str(environment.get("archetype_id", "")),
 		"bankroll_delta": payout - cost, "suspicion_delta": staff_watch_heat, "deltas": deltas, "won": payout > cost or not prizes.is_empty(), "message": message,
@@ -438,7 +482,7 @@ func _resolve_drop(run_state: RunState, environment: Dictionary, machine: Dictio
 	result["surface_presentation_snapshot_patch"] = _presentation_action_snapshot_patch(
 		machine, DROP_ACTION, physics.get("presentation_events", []), _finalized_presentation_trace(physics, machine, shim_recovered)
 	)
-	result["surface_action_view_patch"] = _surface_action_view_patch(machine, physics, ui_state)
+	result["surface_action_view_patch"] = _surface_action_view_patch(machine, physics, ui_state, run_state, environment)
 	result["preserve_surface_ui_state"] = true
 	if debug_profile_stages:
 		var debug_stage_timing: Dictionary = (physics.get("debug_stage_timing_usec", {}) as Dictionary).duplicate(true)
@@ -530,7 +574,7 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 		"tell_rung": int(machine.get("tell_rung", 0)), "hard_alarm": alarmed, "machine_lockdown_only": alarmed,
 	})]
 	deltas["messages"] = [message]
-	var result := GameModule.build_action_result({
+	var result := GameModule.build_owned_action_result({
 		"source_id": "coin_pusher_alarm" if alarmed else get_id(), "game_id": get_id(), "action_id": "nudge_alarm" if alarmed else NUDGE_ACTION,
 		"action_kind": "risky", "stake": 0, "environment_id": str(environment.get("id", "")),
 		"environment_archetype_id": str(environment.get("archetype_id", "")), "bankroll_delta": payout,
@@ -556,14 +600,17 @@ func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dicti
 	result["coin_pusher_prizes"] = prizes
 	result["coin_pusher_variation_id"] = str(machine.get("variation_id", "quarter_falls"))
 	result["coin_pusher_physics_events"] = physics.get("events", [])
-	var presentation_events: Array = (physics.get("presentation_events", []) as Array).duplicate(true)
+	# The solver result is action-local and never retained after this boundary, so
+	# ownership can move directly into the presentation patch before the optional
+	# tell event is appended.
+	var presentation_events: Array = physics.get("presentation_events", []) as Array
 	if alarmed or int(machine.get("tell_rung", 0)) > previous_tell:
 		presentation_events.append(_tell_presentation_event(int(machine.get("tell_rung", 0)), alarmed))
 	result["coin_pusher_solver_metrics"] = physics.get("metrics", {})
 	result["surface_presentation_snapshot_patch"] = _presentation_action_snapshot_patch(
 		machine, NUDGE_ACTION, presentation_events, _finalized_presentation_trace(physics, machine, shim_recovered)
 	)
-	result["surface_action_view_patch"] = _surface_action_view_patch(machine, physics, ui_state)
+	result["surface_action_view_patch"] = _surface_action_view_patch(machine, physics, ui_state, run_state, environment)
 	result["preserve_surface_ui_state"] = true
 	if debug_profile_stages:
 		var debug_stage_timing: Dictionary = (physics.get("debug_stage_timing_usec", {}) as Dictionary).duplicate(true)
@@ -1501,13 +1548,15 @@ func _presentation_action_snapshot_patch(machine: Dictionary, action_id: String,
 	return patch
 
 
-func _surface_action_view_patch(machine: Dictionary, physics: Dictionary, _ui_state: Dictionary) -> Dictionary:
+func _surface_action_view_patch(machine: Dictionary, physics: Dictionary, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	# Complete lightweight post-action surface state. The packed replay remains
 	# the single physical body/rider/feature authority; duplicating those dense
 	# arrays here would recreate the hitch this patch boundary removes.
 	var metrics: Dictionary = physics.get("metrics", {}) if typeof(physics.get("metrics", {})) == TYPE_DICTIONARY else {}
 	var awake_count := int(metrics.get("awake_count", 0)) if metrics.has("awake_count") else CoinPusherSolverScript.awake_count(_simulation(machine))
 	var patch := {
+		"surface_action_catalog_key": _surface_action_catalog_key(machine, run_state, environment, ui_state),
+		"surface_action_stake_view": _surface_action_stake_view(run_state, environment),
 		"coin_pusher_snapshot": {
 			# Scalar post-action authority for consumers such as SFX. Reading the
 			# simulation Array size is O(1) and avoids decoding/copying packed bodies.
@@ -1542,6 +1591,47 @@ func _surface_action_view_patch(machine: Dictionary, physics: Dictionary, _ui_st
 			patch["coin_pusher_vault_meter"] = int(variation_state.get("meter_value", 0))
 			patch["coin_pusher_feature_message"] = str(variation_state.get("last_feature_message", ""))
 	return patch
+
+
+func _surface_action_catalog_key(machine: Dictionary, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> String:
+	# Exact dependencies of legal_actions()/cheat_actions(). Selection, bankroll,
+	# animation clocks, and action count deliberately do not invalidate it; every
+	# Heat/security/watch projection that changes risky availability or copy, plus
+	# selection (transformed action rows carry `selected`), is explicit in the key.
+	var challenge_cheats_disabled := run_state != null and run_state.challenge_cheat_actions_disabled()
+	var security_risk_bonus := run_state.security_risk_bonus("cheat") if run_state != null else 0
+	var security_pressure_label := run_state.security_pressure_label() if run_state != null else ""
+	var security_pressure_summary := run_state.security_pressure_summary() if run_state != null else ""
+	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
+	return JSON.stringify([
+		get_id(),
+		str(environment.get("id", "")),
+		str(ui_state.get("selected_action_id", "")),
+		str(ui_state.get("selected_action_kind", "")),
+		_machine_busy(environment),
+		bool(machine.get("locked_down", false)),
+		str(machine.get("variation_id", _variation_id())),
+		run_state != null and run_state.inventory.has("xray_glasses"),
+		challenge_cheats_disabled,
+		security_risk_bonus,
+		security_pressure_label,
+		security_pressure_summary,
+		bool(pit_boss_status.get("active", false)),
+		bool(pit_boss_status.get("watched", false)),
+		int(pit_boss_status.get("cheat_heat_bonus", 0)),
+		str(pit_boss_status.get("summary", "")),
+	])
+
+
+func _surface_action_stake_view(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 0
+	return {
+		"stake_floor": _drop_cost(),
+		"stake_ceiling": maxi(_drop_cost(), capacity),
+		"base_stake_ceiling": maxi(_drop_cost(), capacity),
+		"economy_state": run_state.economy() if run_state != null else {},
+		"economy_pressure_applied": false,
+	}
 
 
 func _surface_animation_channels(machine: Dictionary) -> Array:
@@ -1676,11 +1766,7 @@ func _presentation_bodies(surface, state: Dictionary) -> Array:
 			var replay_id := str(action_state.get("replay_active_id", ""))
 			var packed_sample: Dictionary = _packed_trace_reader.sample(packed, replay_id, packed_progress)
 			if not packed_sample.is_empty():
-				var packed_frame: Dictionary = packed_sample.get("frame", {}) if typeof(packed_sample.get("frame", {})) == TYPE_DICTIONARY else {}
-				var packed_next_frame: Dictionary = packed_sample.get("next_frame", {}) if typeof(packed_sample.get("next_frame", {})) == TYPE_DICTIONARY else {}
-				var packed_bodies: Array = packed_frame.get("bodies", final_bodies) if typeof(packed_frame.get("bodies", final_bodies)) == TYPE_ARRAY else final_bodies
-				var packed_next_bodies: Array = packed_next_frame.get("bodies", packed_bodies) if typeof(packed_next_frame.get("bodies", packed_bodies)) == TYPE_ARRAY else packed_bodies
-				return _interpolated_body_views(packed_bodies, packed_next_bodies, float(packed_sample.get("weight", 0.0)))
+				return _packed_trace_reader.interpolated_bodies(packed_sample)
 	else:
 		# A new cabinet/run can reuse action_1; clear the transient reader when no
 		# packed replay is active so that identifier reuse cannot expose old frames.
@@ -1727,9 +1813,7 @@ func _packed_final_bodies(snapshot: Dictionary) -> Array:
 		return []
 	var action_state: Dictionary = snapshot.get("action_state", {}) if typeof(snapshot.get("action_state", {})) == TYPE_DICTIONARY else {}
 	var replay_id := str(action_state.get("replay_active_id", ""))
-	var sample: Dictionary = _packed_trace_reader.sample(packed_value as Dictionary, replay_id, 1.0)
-	var frame: Dictionary = sample.get("frame", {}) if typeof(sample.get("frame", {})) == TYPE_DICTIONARY else {}
-	return frame.get("bodies", []) if typeof(frame.get("bodies", [])) == TYPE_ARRAY else []
+	return _packed_trace_reader.final_bodies(packed_value as Dictionary, replay_id)
 
 
 func _interpolated_body_views(current_bodies: Array, next_bodies: Array, weight: float) -> Array:

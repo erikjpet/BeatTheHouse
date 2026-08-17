@@ -211,6 +211,10 @@ var camera_focus_point: Vector2 = Vector2(0.5, 0.5)
 var current_context_mode: String = CONTEXT_MODE_ROOM
 var game_surface_ui_state: Dictionary = {}
 var game_module_cache: Dictionary = {}
+var triggered_event_module_cache: Dictionary = {}
+var triggered_event_module_cache_library: ContentLibrary = null
+var triggered_event_module_cache_generation := -1
+var triggered_event_module_cache_rebuild_count := 0
 var current_game_state_key: String = ""
 var pending_event_choice_popup_event_id: String = ""
 var pending_event_choice_popup_focus_choice_id: String = ""
@@ -231,6 +235,23 @@ var input_route_guard_visit_count := 0
 var input_route_coach_notification_visit_count := 0
 var embedded_incremental_snapshot_count := 0
 var embedded_full_snapshot_fallback_count := 0
+var deferred_embedded_refresh_generation := 0
+var deferred_embedded_refresh_pending := false
+var deferred_embedded_refresh_run_state: RunState
+var deferred_embedded_refresh_game: GameModule
+var deferred_embedded_refresh_environment: Dictionary = {}
+var deferred_embedded_refresh_result: Dictionary = {}
+var deferred_embedded_refresh_canvas: Control
+var deferred_embedded_refresh_game_state_key := ""
+var deferred_embedded_refresh_surface_session_generation := 0
+var game_surface_session_generation := 0
+var deferred_embedded_refresh_schedule_count := 0
+var deferred_embedded_refresh_execution_count := 0
+var deferred_embedded_refresh_stale_count := 0
+var deferred_embedded_refresh_blocked_surface_input_count := 0
+var suppress_completed_tutorial_acknowledgement_clear := false
+var direct_surface_stake_override_count := 0
+var rendered_cheat_dock_model_key := ""
 var post_interrupt_talk_boundary_visit_count := 0
 var post_interrupt_closing_visit_count := 0
 var post_interrupt_forced_travel_visit_count := 0
@@ -902,6 +923,9 @@ func select_game_action(action_id: String, action_kind: String, input_route_guar
 	if current_game == null:
 		_show_message("Enter a game before choosing an action.")
 		return
+	if _deferred_embedded_refresh_blocks_current_surface_input():
+		deferred_embedded_refresh_blocked_surface_input_count += 1
+		return
 	if not input_route_guarded and _guard_player_input_route(false, "game_action:%s" % action_id):
 		return
 	var action := _available_game_action(action_id, action_kind)
@@ -921,7 +945,15 @@ func _on_game_surface_action(action: String, index: int, confirm_requested: bool
 		_show_message("Choose a game first.")
 		_refresh()
 		return
+	# Back remains available, but a pending same-surface presentation owns every
+	# other input before coach/modal routing can create an early refresh boundary.
+	if action != "surface_back" and _deferred_embedded_refresh_blocks_current_surface_input():
+		deferred_embedded_refresh_blocked_surface_input_count += 1
+		return
 	if _guard_player_input_route(false, action):
+		return
+	if action == "surface_back":
+		back_to_environment()
 		return
 	if _surface_action_uses_game_binding(action):
 		var bound_action := _current_game_bound_surface_action(action, index)
@@ -929,9 +961,6 @@ func _on_game_surface_action(action: String, index: int, confirm_requested: bool
 			if _handle_module_surface_action(str(bound_action.get("action", action)), int(bound_action.get("index", index)), confirm_requested, true):
 				return
 	match action:
-		"surface_back":
-			back_to_environment()
-			return
 		"surface_stake_down":
 			_adjust_surface_stake(-1, true)
 			return
@@ -995,6 +1024,9 @@ func _on_game_surface_pointer_action(action: String, index: int, phase: String, 
 	# It must still obey modal and closing-time locks, while begin/end retain the
 	# exact tutorial notification contract.
 	var notify_coach := phase != "move"
+	if _deferred_embedded_refresh_blocks_current_surface_input():
+		deferred_embedded_refresh_blocked_surface_input_count += 1
+		return
 	if current_game == null or _guard_player_input_route(false, action, notify_coach):
 		return
 	var lightweight_state := current_game.surface_pointer_uses_lightweight_ui_state(action)
@@ -1038,24 +1070,40 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_requested: bool = false, notify_coach: bool = true, input_route_guarded: bool = false) -> bool:
 	if command.is_empty() or not bool(command.get("handled", false)):
 		return false
+	if _deferred_embedded_refresh_blocks_current_surface_input():
+		deferred_embedded_refresh_blocked_surface_input_count += 1
+		return true
 	if not game_surface_auto_resolving and not input_route_guarded and _guard_player_input_route(false, "ui:any", notify_coach):
 		return true
-	if command.has("ui_state") and typeof(command.get("ui_state")) == TYPE_DICTIONARY:
+	var preference_patch_value: Variant = command.get("surface_ui_preference_patch", {})
+	# Patch presence is authoritative even when no durable selection differs from
+	# the module's defaults. Falling through on an empty patch would persist the
+	# command's transient phase/debug context and replace unrelated host prefs.
+	if command.has("surface_ui_preference_patch") and typeof(preference_patch_value) == TYPE_DICTIONARY:
+		var merged_preferences := game_surface_ui_state.duplicate(false)
+		for preference_key in (preference_patch_value as Dictionary).keys():
+			merged_preferences[preference_key] = (preference_patch_value as Dictionary)[preference_key]
+		_store_current_game_surface_ui_state(merged_preferences, false)
+	elif command.has("ui_state") and typeof(command.get("ui_state")) == TYPE_DICTIONARY:
 		_store_current_game_surface_ui_state(command.get("ui_state", {}) as Dictionary, not bool(command.get("surface_transient", false)))
 	if command.has("selected_index") and game_surface_canvas != null:
 		game_surface_canvas.set_selected_index(int(command.get("selected_index", index)))
+	var direct_resolve := bool(command.get("direct_resolve", false))
+	var direct_stake_override := int(command.get("set_stake", 0)) if direct_resolve and command.has("set_stake") else 0
+	if direct_stake_override > 0:
+		direct_surface_stake_override_count += 1
 	if command.has("stake_multiplier"):
 		var multiplied_stake := _current_selected_stake() * int(command.get("stake_multiplier", 1))
 		set_selected_stake(multiplied_stake, true)
-	if command.has("set_stake"):
+	if command.has("set_stake") and not direct_resolve:
 		set_selected_stake(int(command.get("set_stake", _current_selected_stake())), true)
 	_play_surface_command_audio(command, index)
 	var environment_changed := bool(command.get("environment_changed", false))
 	var action_id := str(command.get("action_id", ""))
 	var action_kind := str(command.get("action_kind", ""))
 	var resolved_surface_ui_state := _surface_command_resolution_ui_state(command)
-	if bool(command.get("direct_resolve", false)) and not action_id.is_empty():
-		_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state, true)
+	if direct_resolve and not action_id.is_empty():
+		_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state, true, direct_stake_override)
 		return true
 	if not action_id.is_empty() and not action_kind.is_empty():
 		var already_selected := selected_action_id == action_id and selected_action_kind == action_kind
@@ -1090,6 +1138,12 @@ func _surface_command_resolution_ui_state(command: Dictionary) -> Dictionary:
 	for key in command_state:
 		merged_state[key] = command_state[key]
 	return merged_state
+
+
+func _deferred_embedded_refresh_blocks_current_surface_input() -> bool:
+	return deferred_embedded_refresh_pending \
+			and current_game != null \
+			and current_game == deferred_embedded_refresh_game
 
 
 func _play_surface_command_audio(command: Dictionary, fallback_index: int) -> void:
@@ -1719,12 +1773,15 @@ func _current_game_surface_realtime_ui_state(now_msec: int) -> Dictionary:
 	return _apply_game_surface_time_fields(ui_state, now_msec)
 
 
-func _game_surface_realtime_state_patch(now_msec: int) -> Dictionary:
+func _game_surface_realtime_state_patch(now_msec: int, current_surface_state_override: Dictionary = {}) -> Dictionary:
 	if current_game == null or run_state == null or game_surface_canvas == null:
 		return {}
 	var ui_state := _current_game_surface_realtime_ui_state(now_msec)
+	var current_surface_state := current_surface_state_override \
+			if not current_surface_state_override.is_empty() \
+			else game_surface_canvas.realtime_surface_state()
 	if current_game.has_method("surface_realtime_state_patch"):
-		var module_patch: Variant = current_game.surface_realtime_state_patch(run_state, run_state.current_environment, ui_state, game_surface_canvas.realtime_surface_state())
+		var module_patch: Variant = current_game.surface_realtime_state_patch(run_state, run_state.current_environment, ui_state, current_surface_state)
 		if typeof(module_patch) == TYPE_DICTIONARY:
 			var typed_patch: Dictionary = module_patch
 			_augment_game_surface_realtime_patch(typed_patch, ui_state)
@@ -1768,6 +1825,8 @@ func _checkpoint_current_game_surface_ui_state() -> void:
 
 
 func _reset_game_surface_runtime_state() -> void:
+	game_surface_session_generation += 1
+	_invalidate_deferred_embedded_action_refresh()
 	_checkpoint_current_game_surface_ui_state()
 	if current_game != null:
 		current_game.set_transient_state_key_context("")
@@ -2491,6 +2550,9 @@ func _source_allows_action_triggered_events(source: String) -> bool:
 func _enqueue_triggered_events_for_context(source: String, context: Dictionary, environment: Dictionary) -> bool:
 	if run_state == null or library == null:
 		return false
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	var debug_enabled := not debug_timing.is_empty()
+	var debug_stage_started_usec := Time.get_ticks_usec() if debug_enabled else 0
 	# Automatic world cadence is intentionally paused during the authored guided
 	# run. These events are not tutorial beats and sharing the TalkDock queue with
 	# Pal made invisible conversations accrue abandonment Heat on travel.
@@ -2502,11 +2564,17 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 	# path. Non-empty shortlists retain the exact authored order and the unchanged
 	# synchronous can-trigger/cadence/RNG authority below.
 	var ordered_candidates := library.action_trigger_event_candidates_for_context_readonly(source, context, environment)
+	if debug_enabled:
+		debug_timing["interrupt_event_shortlist"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	if ordered_candidates.is_empty():
 		return false
 	var candidates: Array = []
 	var enqueued := false
 	var cadence_rng := run_state.create_event_cadence_rng()
+	if debug_enabled:
+		debug_timing["interrupt_event_rng_create"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	for event_definition_value in ordered_candidates:
 		action_trigger_candidate_visit_count += 1
 		if typeof(event_definition_value) != TYPE_DICTIONARY:
@@ -2515,8 +2583,9 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 		var event_id := str(event_definition.get("id", ""))
 		var trigger: Dictionary = event_definition.get("trigger", {}) if typeof(event_definition.get("trigger", {})) == TYPE_DICTIONARY else {}
 		var trigger_type := str(trigger.get("type", "manual"))
-		var event_module := EventModule.new()
-		event_module.setup(event_definition, library)
+		var event_module := _cached_triggered_event_module(event_definition)
+		if event_module == null:
+			continue
 		if not event_module.can_trigger(run_state, environment, context):
 			continue
 		if not run_state.event_cadence_allows_world_event(event_id, trigger_type, source, event_definition):
@@ -2552,8 +2621,68 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 			if run_state.enqueue_triggered_event(picked_id, source, _event_context_with_environment(context, environment), _triggered_entry_overrides(picked_event)):
 				run_state.event_cadence_note_event_enqueued(picked_id, not run_state.event_cadence_event_bypasses_budget(picked_id, "random", source, picked_event))
 				enqueued = true
+	if debug_enabled:
+		debug_timing["interrupt_event_candidates"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	run_state.save_event_cadence_rng(cadence_rng)
+	if debug_enabled:
+		debug_timing["interrupt_event_rng_save"] = Time.get_ticks_usec() - debug_stage_started_usec
 	return enqueued
+
+
+# Triggered definitions are immutable between ContentLibrary index generations,
+# and EventModule.can_trigger is read-only. Build their deep-owned module views
+# once with the content indexes instead of cloning every complete event payload
+# on every player action. Fixture/tool edits retain their supported invalidation
+# seam: a trigger-index rebuild changes the generation and refreshes this cache
+# before the next candidate is evaluated.
+func _rebuild_triggered_event_module_cache() -> void:
+	triggered_event_module_cache = {}
+	if library == null:
+		triggered_event_module_cache_library = null
+		triggered_event_module_cache_generation = -1
+		return
+	var candidate_views := [
+		library.action_trigger_event_candidates_readonly(),
+		library.heat_threshold_talk_event_candidates_readonly(),
+		library.table_approach_talk_event_candidates_readonly(),
+	]
+	for candidates_value in candidate_views:
+		if typeof(candidates_value) != TYPE_ARRAY:
+			continue
+		for event_definition_value in candidates_value:
+			if typeof(event_definition_value) != TYPE_DICTIONARY:
+				continue
+			var event_definition: Dictionary = event_definition_value
+			var event_id := str(event_definition.get("id", "")).strip_edges()
+			if event_id.is_empty() or triggered_event_module_cache.has(event_id):
+				continue
+			var event_module := EventModule.new()
+			event_module.setup(event_definition, library)
+			triggered_event_module_cache[event_id] = event_module
+	triggered_event_module_cache_library = library
+	triggered_event_module_cache_generation = library.trigger_event_index_full_pack_scan_count()
+	triggered_event_module_cache_rebuild_count += 1
+
+
+func _cached_triggered_event_module(event_definition: Dictionary) -> EventModule:
+	if library == null or event_definition.is_empty():
+		return null
+	var current_generation := library.trigger_event_index_full_pack_scan_count()
+	if not is_same(triggered_event_module_cache_library, library) \
+			or current_generation != triggered_event_module_cache_generation:
+		_rebuild_triggered_event_module_cache()
+	var event_id := str(event_definition.get("id", "")).strip_edges()
+	var cached_value: Variant = triggered_event_module_cache.get(event_id)
+	if cached_value is EventModule:
+		return cached_value as EventModule
+	# Conservative support for a fixture that supplies a definition outside the
+	# indexed views. It pays setup once, then follows the same immutable contract.
+	var event_module := EventModule.new()
+	event_module.setup(event_definition, library)
+	if not event_id.is_empty():
+		triggered_event_module_cache[event_id] = event_module
+	return event_module
 
 
 func _enqueue_heat_threshold_talk_events(source: String) -> bool:
@@ -2587,8 +2716,9 @@ func _enqueue_heat_threshold_talk_events(source: String) -> bool:
 			"previous_suspicion": previous_level,
 			"current_suspicion": current_level,
 		}, run_state.current_environment)
-		var event_module := EventModule.new()
-		event_module.setup(event_definition, library)
+		var event_module := _cached_triggered_event_module(event_definition)
+		if event_module == null:
+			continue
 		if not event_module.can_trigger(run_state, run_state.current_environment, context):
 			continue
 		if run_state.enqueue_triggered_event(event_id, "heat_threshold", context, _triggered_entry_overrides(event_definition)):
@@ -2634,8 +2764,9 @@ func _enqueue_table_approach_talk_events(source: String) -> bool:
 			"roll": roll,
 			"chance": chance,
 		}, run_state.current_environment)
-		var event_module := EventModule.new()
-		event_module.setup(event_definition, library)
+		var event_module := _cached_triggered_event_module(event_definition)
+		if event_module == null:
+			continue
 		if not event_module.can_trigger(run_state, run_state.current_environment, context):
 			continue
 		if roll >= int(round(chance * 10000.0)):
@@ -2867,7 +2998,8 @@ func _refresh_talk_dock() -> void:
 		talk_dock.clear_entry()
 		item_found_talk_dock_suspended = false
 		return
-	_clear_completed_tutorial_action_acknowledgements()
+	if not suppress_completed_tutorial_acknowledgement_clear:
+		_clear_completed_tutorial_action_acknowledgements()
 	var entry := run_state.next_pending_talk_event()
 	if entry.is_empty():
 		talk_dock.clear_entry()
@@ -5082,6 +5214,7 @@ func _initialize_foundation() -> void:
 	_mark_boot_event("content_library_load_start")
 	var defer_content_validation := _defer_start_menu_secondary_panels()
 	library.load(not defer_content_validation)
+	_rebuild_triggered_event_module_cache()
 	_surface_content_validation_errors(library, true)
 	if defer_content_validation:
 		_mark_boot_event("content_validation_deferred")
@@ -6960,7 +7093,7 @@ func _refresh_after_game_selection() -> void:
 	_schedule_game_coach_refresh_after_draw()
 
 
-func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false) -> void:
+func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false, action_boundary_preflight_complete: bool = false) -> void:
 	# A native game surface remains in the same layout after an embedded result.
 	# Rebuilding the environment, run report, result panel, map, and focus layout
 	# here made repeating slot actions hitch despite none of those views changing.
@@ -6976,7 +7109,8 @@ func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false) -
 	# The game title/description is stable across a same-screen action. Refresh it
 	# only if terminal routing changed the exact screen/game/run-status context.
 	var world_header_context_key := _embedded_world_header_context_key()
-	_evaluate_run_terminal_state()
+	if not action_boundary_preflight_complete:
+		_evaluate_run_terminal_state()
 	if debug_enabled:
 		debug_timing["refresh_terminal"] = Time.get_ticks_usec() - debug_stage_started_usec
 		debug_stage_started_usec = Time.get_ticks_usec()
@@ -7023,7 +7157,11 @@ func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false) -
 		debug_timing["refresh_snapshot_patch"] = snapshot_refresh_usec if incremental_snapshot_used else 0
 		debug_timing["refresh_snapshot_full_fallback"] = 0 if incremental_snapshot_used else snapshot_refresh_usec
 		debug_stage_started_usec = Time.get_ticks_usec()
+	var previous_acknowledgement_suppression := suppress_completed_tutorial_acknowledgement_clear
+	if action_boundary_preflight_complete:
+		suppress_completed_tutorial_acknowledgement_clear = true
 	_refresh_talk_dock()
+	suppress_completed_tutorial_acknowledgement_clear = previous_acknowledgement_suppression
 	_update_procedural_music()
 	_schedule_game_coach_refresh_after_draw()
 	if debug_enabled:
@@ -8332,8 +8470,11 @@ func _add_current_game_panel(environment: Dictionary) -> void:
 	actions_list = previous_actions_list
 
 
-func _resolve_game_action(action_id: String, skip_stake_validation: bool = false, preserve_surface_ui_state: bool = false, wager_confirmed: bool = false, resolved_surface_ui_state: Dictionary = {}, input_route_guarded: bool = false) -> void:
+func _resolve_game_action(action_id: String, skip_stake_validation: bool = false, preserve_surface_ui_state: bool = false, wager_confirmed: bool = false, resolved_surface_ui_state: Dictionary = {}, input_route_guarded: bool = false, stake_override: int = 0) -> void:
 	if action_id.is_empty() or current_game == null:
+		return
+	if _deferred_embedded_refresh_blocks_current_surface_input():
+		deferred_embedded_refresh_blocked_surface_input_count += 1
 		return
 	if not wager_confirmed and not input_route_guarded and _guard_player_input_route():
 		return
@@ -8344,17 +8485,29 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	# A prior wager can leave the raw selection above the player's new capacity.
 	# The table and stake control already present the clamped value, so make that
 	# affordable value authoritative before validation and all-in confirmation.
-	var current_stake_range := _stake_range()
-	var stake := _selected_stake_for_range(current_stake_range) if bool(current_stake_range.get("has_valid", false)) else selected_stake
+	# A native surface may publish the exact current stake inputs alongside its
+	# rendered catalog. Reuse that read-only authority instead of re-entering the
+	# complete game actions()/machine reconciliation path before every resolve.
+	var rendered_stake_view: Dictionary = {}
+	if game_surface_canvas != null:
+		var rendered_action_state := game_surface_canvas.realtime_surface_state()
+		var rendered_stake_value: Variant = rendered_action_state.get("surface_action_stake_view", {})
+		if str(rendered_action_state.get("game_id", "")) == current_game.get_id() \
+				and typeof(rendered_stake_value) == TYPE_DICTIONARY:
+			rendered_stake_view = rendered_stake_value
+	var current_stake_range := _stake_range(rendered_stake_view)
+	var stake := stake_override if stake_override > 0 else (_selected_stake_for_range(current_stake_range) if bool(current_stake_range.get("has_valid", false)) else selected_stake)
 	if stake <= 0:
 		stake = _default_stake()
-	if bool(current_stake_range.get("has_valid", false)):
-		selected_stake = stake
-	if not skip_stake_validation and not _is_valid_stake(stake):
-		var range := _stake_range()
-		_show_message("Stake must be between %d and %d." % [int(range.get("min", 1)), int(range.get("max", 1))])
+	var stake_is_valid := bool(current_stake_range.get("has_valid", false)) \
+			and stake >= int(current_stake_range.get("min", 1)) \
+			and stake <= int(current_stake_range.get("max", 1))
+	if not skip_stake_validation and not stake_is_valid:
+		_show_message("Stake must be between %d and %d." % [int(current_stake_range.get("min", 1)), int(current_stake_range.get("max", 1))])
 		_refresh_stake_input()
 		return
+	if bool(current_stake_range.get("has_valid", false)):
+		selected_stake = stake
 	var wager_cost := _wager_cost_for_action(action_id, stake)
 	# Build the action context once. Slot autoplay reaches this path repeatedly, and
 	# each UI-state snapshot contains nested machine/runtime data. Rebuilding it for
@@ -8484,11 +8637,26 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if embeds_result_feedback and current_screen == SCREEN_GAME and current_game != null:
 		if game_surface_auto_resolving:
-			# Autoplay resolution and a complete presentation snapshot used to land
-			# in the same frame. The outcome, RNG, persistence, and next-spin clock
-			# are already committed; hand the rendered update to the following frame
-			# so neither frame blocks the player.
+			# Preserve the established autoplay handoff exactly. Manual solver-heavy
+			# actions use the stronger identity-guarded frame scheduler below.
 			call_deferred("_refresh_after_embedded_autoplay_action", true)
+		elif current_game.defers_embedded_action_presentation_refresh(run_state, run_state.current_environment):
+			# Terminal routing and tutorial queue cleanup are authoritative action
+			# mutations, so they remain synchronous. Only the complete same-screen
+			# presentation is eligible for the guarded next-frame handoff.
+			var preflight_run_state := run_state
+			var preflight_game := current_game
+			var preflight_environment := run_state.current_environment
+			var preflight_session_generation := game_surface_session_generation
+			_evaluate_run_terminal_state()
+			_clear_completed_tutorial_action_acknowledgements()
+			if run_state != preflight_run_state or current_game != preflight_game \
+					or current_screen != SCREEN_GAME \
+					or not is_same(run_state.current_environment, preflight_environment) \
+					or game_surface_session_generation != preflight_session_generation:
+				_refresh()
+			else:
+				_schedule_deferred_embedded_action_refresh(true)
 		else:
 			_refresh_after_embedded_game_action(true)
 	else:
@@ -8503,6 +8671,75 @@ func _refresh_after_embedded_autoplay_action(embeds_result_feedback: bool = fals
 		_refresh_after_embedded_game_action(embeds_result_feedback)
 	else:
 		_refresh()
+
+
+func _schedule_deferred_embedded_action_refresh(embeds_result_feedback: bool) -> void:
+	deferred_embedded_refresh_generation += 1
+	var generation := deferred_embedded_refresh_generation
+	deferred_embedded_refresh_pending = true
+	deferred_embedded_refresh_run_state = run_state
+	deferred_embedded_refresh_game = current_game
+	deferred_embedded_refresh_environment = run_state.current_environment
+	deferred_embedded_refresh_result = last_game_result
+	deferred_embedded_refresh_canvas = game_surface_canvas
+	deferred_embedded_refresh_game_state_key = current_game_state_key
+	deferred_embedded_refresh_surface_session_generation = game_surface_session_generation
+	deferred_embedded_refresh_schedule_count += 1
+	call_deferred("_refresh_after_deferred_embedded_action_frame", generation, embeds_result_feedback)
+
+
+func _refresh_after_deferred_embedded_action_frame(generation: int, embeds_result_feedback: bool) -> void:
+	var tree := get_tree()
+	if tree == null:
+		if generation == deferred_embedded_refresh_generation:
+			_clear_deferred_embedded_action_refresh()
+		return
+	# call_deferred alone can run in the current idle cycle. This barrier ensures
+	# the solver result frame has returned before its complete presentation begins.
+	await tree.process_frame
+	if generation != deferred_embedded_refresh_generation or not deferred_embedded_refresh_pending:
+		deferred_embedded_refresh_stale_count += 1
+		return
+	if not _deferred_embedded_action_refresh_identity_is_current():
+		deferred_embedded_refresh_stale_count += 1
+		_clear_deferred_embedded_action_refresh()
+		return
+	var deferred_refresh_started_usec := Time.get_ticks_usec()
+	_clear_deferred_embedded_action_refresh()
+	deferred_embedded_refresh_execution_count += 1
+	_refresh_after_embedded_game_action(embeds_result_feedback, true)
+	var debug_timing_value: Variant = last_game_result.get("coin_pusher_debug_host_timing_usec", {})
+	if typeof(debug_timing_value) == TYPE_DICTIONARY and not (debug_timing_value as Dictionary).is_empty():
+		(debug_timing_value as Dictionary)["host_deferred_embedded_refresh"] = Time.get_ticks_usec() - deferred_refresh_started_usec
+
+
+func _deferred_embedded_action_refresh_identity_is_current() -> bool:
+	return run_state != null \
+			and run_state == deferred_embedded_refresh_run_state \
+			and current_game != null \
+			and current_game == deferred_embedded_refresh_game \
+			and current_screen == SCREEN_GAME \
+			and is_same(run_state.current_environment, deferred_embedded_refresh_environment) \
+			and is_same(last_game_result, deferred_embedded_refresh_result) \
+			and game_surface_canvas == deferred_embedded_refresh_canvas \
+			and current_game_state_key == deferred_embedded_refresh_game_state_key \
+			and game_surface_session_generation == deferred_embedded_refresh_surface_session_generation
+
+
+func _clear_deferred_embedded_action_refresh() -> void:
+	deferred_embedded_refresh_pending = false
+	deferred_embedded_refresh_run_state = null
+	deferred_embedded_refresh_game = null
+	deferred_embedded_refresh_environment = {}
+	deferred_embedded_refresh_result = {}
+	deferred_embedded_refresh_canvas = null
+	deferred_embedded_refresh_game_state_key = ""
+	deferred_embedded_refresh_surface_session_generation = 0
+
+
+func _invalidate_deferred_embedded_action_refresh() -> void:
+	deferred_embedded_refresh_generation += 1
+	_clear_deferred_embedded_action_refresh()
 
 
 func _play_result_surface_audio_cue(result: Dictionary) -> void:
@@ -10336,29 +10573,70 @@ func _render_foundation_snapshots() -> void:
 			game_surface_canvas.render_game_snapshot(game_snapshot)
 	if cheat_dock != null:
 		cheat_dock.render(game_snapshot)
+		rendered_cheat_dock_model_key = _cheat_dock_model_key(game_snapshot)
 
 
 func _render_embedded_action_snapshot_patch() -> bool:
 	if game_surface_canvas == null or current_game == null or run_state == null:
 		return false
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	var debug_enabled := not debug_timing.is_empty()
+	var debug_stage_started_usec := Time.get_ticks_usec() if debug_enabled else 0
 	var current_state := game_surface_canvas.realtime_surface_state()
 	var patch := FoundationActionViewModelScript.embedded_action_view_patch(self, current_state)
 	if patch.is_empty():
 		return false
-	game_surface_canvas.set_game_module(current_game)
-	game_surface_canvas.apply_surface_state_patch(patch)
-	# Shelf clocks and other lightweight real-time fields read the authoritative
-	# post-action machine state. Apply them after the action patch so nested
-	# presentation state is extended rather than replaced from the old frame.
+	if debug_enabled:
+		debug_timing["refresh_snapshot_model"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
+	# The realtime module must observe the just-authored action state (especially
+	# its new replay snapshot), but the live canvas remains immutable until the
+	# complete boundary is ready. A shallow prospective view is sufficient because
+	# every nested value in the action patch is already complete/read-only.
+	var prospective_state := current_state.duplicate(false)
+	for patch_key in patch.keys():
+		prospective_state[patch_key] = patch[patch_key]
 	var now_msec := _environment_simulation_time_msec()
-	var realtime_patch := _game_surface_realtime_state_patch(now_msec)
+	var realtime_patch := _game_surface_realtime_state_patch(now_msec, prospective_state)
+	var combined_patch := patch.duplicate(false)
+	for realtime_key in realtime_patch.keys():
+		combined_patch[realtime_key] = realtime_patch[realtime_key]
+	if debug_enabled:
+		debug_timing["refresh_snapshot_realtime"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
+	game_surface_canvas.set_game_module(current_game)
+	# One atomic canvas patch means one key walk, animation-channel sync, distortion
+	# update, and redraw request for the complete action+clock boundary.
+	game_surface_canvas.apply_surface_state_patch(combined_patch)
+	if debug_enabled:
+		debug_timing["refresh_snapshot_canvas_apply"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	if not realtime_patch.is_empty():
-		game_surface_canvas.apply_surface_state_patch(realtime_patch)
 		last_game_surface_realtime_refresh_msec = now_msec
 	if cheat_dock != null:
-		cheat_dock.render(game_surface_canvas.realtime_surface_state())
+		var patched_state := game_surface_canvas.realtime_surface_state()
+		var cheat_dock_key := _cheat_dock_model_key(patched_state)
+		if cheat_dock_key != rendered_cheat_dock_model_key:
+			cheat_dock.render(patched_state)
+			rendered_cheat_dock_model_key = cheat_dock_key
+	if debug_enabled:
+		debug_timing["refresh_snapshot_cheat_dock"] = Time.get_ticks_usec() - debug_stage_started_usec
 	embedded_incremental_snapshot_count += 1
 	return true
+
+
+func _cheat_dock_model_key(game_state: Dictionary) -> String:
+	if game_state.is_empty():
+		return ""
+	# CheatDock consumes only the transformed risky catalog and its risk text.
+	# Coin's catalog key already includes lock/busy/variation/X-ray dependencies;
+	# selected ids cover the compatibility adapter's selection snapshot.
+	return JSON.stringify([
+		str(game_state.get("surface_action_catalog_key", "")),
+		str(game_state.get("selected_action_id", "")),
+		str(game_state.get("selected_action_kind", "")),
+		str(game_state.get("risk_cue", "")),
+	])
 
 
 func _render_environment_canvas_snapshot() -> void:

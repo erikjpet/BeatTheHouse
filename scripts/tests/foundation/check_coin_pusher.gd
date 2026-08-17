@@ -127,10 +127,12 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	game.setup(definition, library)
 	_check_coin_pusher_data_contract(library, definition, failures)
 	_check_coin_pusher_definition_routing(library, definition, failures)
+	_check_coin_pusher_transient_command_ownership(game, failures)
+	_check_coin_pusher_owned_action_result_contract(failures)
 	_check_coin_pusher_production_rider(game, library, failures)
 	_check_coin_pusher_alarm_audio(failures)
 	_check_coin_pusher_title_geometry(game, failures)
-	_check_coin_pusher_canonical_probe(failures)
+	_check_coin_pusher_canonical_probe(game, library, failures)
 	_check_coin_pusher_opening_depth_gradient(failures)
 	_check_coin_pusher_hot_solver_exact_twin(failures)
 	_check_coin_pusher_export_native_acceptance(failures)
@@ -518,6 +520,18 @@ func _check_coin_pusher_packed_reader_identity(failures: Array) -> void:
 	var second_x := _packed_sample_first_x(second_sample)
 	if first_x != 111 or second_x != 999:
 		failures.append("Coin Pusher packed reader reused stale action_1 frames across distinct run/cabinet payload identities.")
+	var animated := _packed_reader_fixture(100, 300)
+	var early_sample: Dictionary = reader.sample(animated, "action_2", 0.25)
+	var early_bodies: Array = reader.interpolated_bodies(early_sample)
+	var early_body: Dictionary = early_bodies[0] if not early_bodies.is_empty() and typeof(early_bodies[0]) == TYPE_DICTIONARY else {}
+	var early_x := int(early_body.get("x", -1))
+	var final_bodies: Array = reader.final_bodies(animated, "action_2")
+	var later_sample: Dictionary = reader.sample(animated, "action_2", 0.5)
+	var later_bodies: Array = reader.interpolated_bodies(later_sample)
+	var later_body: Dictionary = later_bodies[0] if not later_bodies.is_empty() and typeof(later_bodies[0]) == TYPE_DICTIONARY else {}
+	if early_x != 150 or int(later_body.get("x", -1)) != 200 or final_bodies.is_empty() \
+			or int((final_bodies[0] as Dictionary).get("x", -1)) != 300 or not is_same(early_body, later_body):
+		failures.append("Coin Pusher packed reader rebuilt interpolated bodies or thrashed its permanent final frame within one replay segment.")
 
 
 func _packed_sample_first_x(sample: Dictionary) -> int:
@@ -526,19 +540,28 @@ func _packed_sample_first_x(sample: Dictionary) -> int:
 	return int((bodies[0] as Dictionary).get("x", -1)) if not bodies.is_empty() and typeof(bodies[0]) == TYPE_DICTIONARY else -1
 
 
-func _packed_reader_fixture(x_value: int) -> Dictionary:
+func _packed_reader_fixture(x_value: int, next_x_value: int = -1) -> Dictionary:
+	var has_next := next_x_value >= 0
 	return {
-		"schema": "coin_pusher_presentation_trace_packed", "version": 1, "frame_count": 1,
-		"frame_offsets": PackedInt32Array([0, 1]), "tick_offsets": PackedInt32Array([0]),
-		"upper_phase_fp": PackedInt32Array([100]), "lower_phase_fp": PackedInt32Array([200]),
+		"schema": "coin_pusher_presentation_trace_packed", "version": 1, "frame_count": 2 if has_next else 1,
+		"frame_offsets": PackedInt32Array([0, 1, 2]) if has_next else PackedInt32Array([0, 1]),
+		"tick_offsets": PackedInt32Array([0, 4]) if has_next else PackedInt32Array([0]),
+		"upper_phase_fp": PackedInt32Array([100, 200]) if has_next else PackedInt32Array([100]),
+		"lower_phase_fp": PackedInt32Array([200, 300]) if has_next else PackedInt32Array([200]),
 		"body_ids": PackedStringArray(["cache_body"]), "body_kinds": PackedStringArray(["coin"]),
 		"body_radii": PackedInt32Array([4300]), "body_heights": PackedInt32Array([1700]), "body_masses": PackedInt32Array([1]),
-		"body_metadata": [{}], "row_body_indices": PackedInt32Array([0]),
-		"row_material_categories": PackedStringArray(["coin"]),
-		"row_x": PackedInt32Array([x_value]), "row_y": PackedInt32Array([30000]), "row_z": PackedInt32Array([0]),
-		"row_radius": PackedInt32Array([4300]), "row_height": PackedInt32Array([1700]),
-		"row_sleeping": PackedByteArray([1]), "row_rest_states": PackedStringArray(["resting"]),
-		"row_has_level": PackedByteArray([1]), "row_levels": PackedStringArray(["lower"]), "row_lean_milli": PackedInt32Array([0]),
+		"body_metadata": [{}], "row_body_indices": PackedInt32Array([0, 0]) if has_next else PackedInt32Array([0]),
+		"row_material_categories": PackedStringArray(["coin", "coin"]) if has_next else PackedStringArray(["coin"]),
+		"row_x": PackedInt32Array([x_value, next_x_value]) if has_next else PackedInt32Array([x_value]),
+		"row_y": PackedInt32Array([30000, 30000]) if has_next else PackedInt32Array([30000]),
+		"row_z": PackedInt32Array([0, 0]) if has_next else PackedInt32Array([0]),
+		"row_radius": PackedInt32Array([4300, 4300]) if has_next else PackedInt32Array([4300]),
+		"row_height": PackedInt32Array([1700, 1700]) if has_next else PackedInt32Array([1700]),
+		"row_sleeping": PackedByteArray([1, 1]) if has_next else PackedByteArray([1]),
+		"row_rest_states": PackedStringArray(["resting", "resting"]) if has_next else PackedStringArray(["resting"]),
+		"row_has_level": PackedByteArray([1, 1]) if has_next else PackedByteArray([1]),
+		"row_levels": PackedStringArray(["lower", "lower"]) if has_next else PackedStringArray(["lower"]),
+		"row_lean_milli": PackedInt32Array([0, 0]) if has_next else PackedInt32Array([0]),
 	}
 
 
@@ -552,6 +575,7 @@ func _check_coin_pusher_native_alias_publication(failures: Array) -> void:
 	var base_config := {
 		"upper_locked": true, "lower_locked": true,
 		"nudge_x": 1200, "nudge_y": -900, "aimed_x": 50000, "nudge_radius": 100000,
+		"capture_presentation_trace": true,
 	}
 	for backend in ["reference", "gdscript", "native"]:
 		CoinPusherSolverScript.reset_native_backend_for_test()
@@ -563,12 +587,13 @@ func _check_coin_pusher_native_alias_publication(failures: Array) -> void:
 		var metadata_alias: Dictionary = survivor_alias["metadata"]
 		var nested_metadata_alias: Dictionary = metadata_alias["nested"]
 		var config := base_config.duplicate(true)
+		var raw_result: Dictionary = {}
 		if backend == "reference":
-			CoinPusherSolverScript.step_action_reference_for_test(state, config)
+			raw_result = CoinPusherSolverScript.step_action_reference_for_test(state, config)
 		else:
 			if backend == "gdscript":
 				config["_debug_force_solver_backend"] = "gdscript"
-			CoinPusherSolverScript.step_action(state, config)
+			raw_result = CoinPusherSolverScript.step_action(state, config)
 		if bodies_alias.size() != 1 or str((bodies_alias[0] as Dictionary).get("id", "")) != "alias_survivor":
 			failures.append("Coin Pusher %s backend replaced or failed to compact the externally aliased bodies Array." % backend)
 			continue
@@ -580,6 +605,19 @@ func _check_coin_pusher_native_alias_publication(failures: Array) -> void:
 			failures.append("Coin Pusher %s backend broke live body/Array aliases while publishing an action." % backend)
 		if backend == "native" and CoinPusherSolverScript.last_step_backend_for_test() != "native":
 			failures.append("Coin Pusher native alias fixture did not execute through the native backend.")
+		if backend == "native":
+			var packed: Dictionary = raw_result.get("presentation_trace_packed", {}) if typeof(raw_result.get("presentation_trace_packed", {})) == TYPE_DICTIONARY else {}
+			var descriptor_ids: PackedStringArray = packed.get("body_ids", PackedStringArray())
+			var descriptor_metadata: Array = packed.get("body_metadata", []) if typeof(packed.get("body_metadata", [])) == TYPE_ARRAY else []
+			var survivor_descriptor := descriptor_ids.find("alias_survivor")
+			if survivor_descriptor < 0 or survivor_descriptor >= descriptor_metadata.size() or typeof(descriptor_metadata[survivor_descriptor]) != TYPE_DICTIONARY:
+				failures.append("Coin Pusher native raw packed result omitted survivor descriptor metadata.")
+			else:
+				var packed_metadata: Dictionary = descriptor_metadata[survivor_descriptor]
+				var packed_nested: Dictionary = packed_metadata.get("nested", {}) if typeof(packed_metadata.get("nested", {})) == TYPE_DICTIONARY else {}
+				packed_nested["hostile_raw_result_mutation"] = true
+				if bool(nested_metadata_alias.get("hostile_raw_result_mutation", false)):
+					failures.append("Coin Pusher raw native packed metadata retained a nested alias into authoritative simulation state.")
 	CoinPusherSolverScript.reset_native_backend_for_test()
 
 
@@ -694,6 +732,8 @@ func _check_coin_pusher_discrete_solver(definition: Dictionary, failures: Array)
 	explicit_defaults["bodies"] = [_solver_body("restored_sparse", "coin", 50000, 30000, 9000, false)]
 	var sparse_step := CoinPusherSolverScript.step_action(restored_sparse, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
 	var explicit_step := CoinPusherSolverScript.step_action(explicit_defaults, {"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true})
+	if restored_sparse.has("_native_normalized_hot_fields") or sparse_step.has("_native_normalized_hot_fields"):
+		failures.append("Coin Pusher native sparse-normalization marker escaped its isolated candidate into authoritative or public state.")
 	if JSON.stringify(CoinPusherSolverScript.canonical_digest(restored_sparse)) != JSON.stringify(CoinPusherSolverScript.canonical_digest(explicit_defaults)):
 		failures.append("Cold JSON-restored sparse Coin Pusher body did not normalize to the explicit canonical state.")
 	for output_key in ["events", "motion_events", "presentation_events", "presentation_trace"]:
@@ -867,6 +907,139 @@ func _check_coin_pusher_definition_routing(library: ContentLibrary, definition: 
 		failures.append("Quarter Falls security-band tolerance ignored the authored delta table.")
 
 
+func _check_coin_pusher_transient_command_ownership(game: GameModule, failures: Array) -> void:
+	var fixture := _coin_pusher_fixture(game, "PUSHER-TRANSIENT-COMMAND")
+	var run_state: RunState = fixture.get("run_state")
+	var borrowed_runtime := {"nested": {"marker": 7}, "dense": [{"id": "must_not_persist"}]}
+	var source_ui := {
+		"coin_pusher_lane": 1,
+		"coin_pusher_force": "tap",
+		"coin_pusher_direction": "front",
+		"coin_pusher_capture_presentation_trace": true,
+		"surface_time_msec": 1900,
+		"surface_runtime_status": borrowed_runtime,
+		"focused_talk_speaker": {"name": "borrowed"},
+		"host_scalar_must_not_persist": 42,
+	}
+	var force_command := game.surface_action_command("coin_pusher_force", 2, false, source_ui, run_state, run_state.current_environment)
+	var force_ui: Dictionary = force_command.get("ui_state", {}) if typeof(force_command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var force_preferences: Dictionary = force_command.get("surface_ui_preference_patch", {}) if typeof(force_command.get("surface_ui_preference_patch", {})) == TYPE_DICTIONARY else {}
+	if not bool(force_command.get("surface_transient", false)) or is_same(force_ui, source_ui) \
+			or force_ui.has("surface_runtime_status") or force_ui.has("focused_talk_speaker") or force_ui.has("host_scalar_must_not_persist") \
+			or int(force_ui.get("coin_pusher_lane", -1)) != 1 \
+			or str(force_ui.get("coin_pusher_force", "")) != "slam" \
+			or str(force_ui.get("coin_pusher_direction", "")) != "front" \
+			or not bool(force_ui.get("coin_pusher_capture_presentation_trace", false)):
+		failures.append("Coin Pusher command did not isolate a fresh scalar-only transient state while preserving selections.")
+	if force_preferences.keys().size() != 3 \
+			or int(force_preferences.get("coin_pusher_lane", -1)) != 1 \
+			or str(force_preferences.get("coin_pusher_force", "")) != "slam" \
+			or str(force_preferences.get("coin_pusher_direction", "")) != "front" \
+			or force_preferences.has("surface_time_msec") \
+			or force_preferences.has("coin_pusher_capture_presentation_trace") \
+			or force_preferences.has("coin_pusher_debug_profile_stages") \
+			or force_preferences.has("host_scalar_must_not_persist"):
+		failures.append("Coin Pusher command preference patch was not restricted to durable module-owned selections.")
+	var direction_command := game.surface_action_command("coin_pusher_direction", 0, false, force_ui, run_state, run_state.current_environment)
+	var direction_ui: Dictionary = direction_command.get("ui_state", {}) if typeof(direction_command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	if not bool(direction_command.get("surface_transient", false)) \
+			or int(direction_ui.get("coin_pusher_lane", -1)) != 1 \
+			or str(direction_ui.get("coin_pusher_force", "")) != "slam" \
+			or str(direction_ui.get("coin_pusher_direction", "")) != "left":
+		failures.append("Coin Pusher consecutive transient commands lost an earlier scalar selection.")
+	var drop_command := game.surface_action_command("coin_pusher_drop", 0, false, direction_ui, run_state, run_state.current_environment)
+	var drop_ui: Dictionary = drop_command.get("ui_state", {}) if typeof(drop_command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var drop_preferences: Dictionary = drop_command.get("surface_ui_preference_patch", {}) if typeof(drop_command.get("surface_ui_preference_patch", {})) == TYPE_DICTIONARY else {}
+	if not bool(drop_command.get("surface_transient", false)) or not bool(drop_command.get("direct_resolve", false)) \
+			or int(drop_ui.get("coin_pusher_lane", -1)) != 1 \
+			or str(drop_ui.get("coin_pusher_force", "")) != "slam" \
+			or str(drop_ui.get("coin_pusher_direction", "")) != "left" \
+			or not drop_ui.has("coin_pusher_upper_input_phase") or not drop_ui.has("coin_pusher_lower_input_phase"):
+		failures.append("Coin Pusher DROP transient command lost selections or its exact displayed phase sample.")
+	if drop_preferences.has("coin_pusher_upper_input_phase") or drop_preferences.has("coin_pusher_lower_input_phase") \
+			or drop_preferences.has("surface_time_msec") or drop_preferences.has("coin_pusher_capture_presentation_trace"):
+		failures.append("Coin Pusher DROP attempted to persist sampled clocks or debug controls as UI preferences.")
+	var default_drop_command := game.surface_action_command("coin_pusher_drop", 0, false, {
+		"surface_time_msec": 1900,
+		"coin_pusher_capture_presentation_trace": true,
+	}, run_state, run_state.current_environment)
+	var default_drop_preferences: Variant = default_drop_command.get("surface_ui_preference_patch")
+	var default_drop_ui: Dictionary = default_drop_command.get("ui_state", {}) if typeof(default_drop_command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	if typeof(default_drop_preferences) != TYPE_DICTIONARY or not (default_drop_preferences as Dictionary).is_empty() \
+			or not default_drop_ui.has("coin_pusher_upper_input_phase") \
+			or not default_drop_ui.has("coin_pusher_lower_input_phase"):
+		failures.append("Coin Pusher did not distinguish an authoritative empty preference patch from transient default DROP resolution context.")
+	(borrowed_runtime.get("nested", {}) as Dictionary)["marker"] = 99
+	if force_ui.has("surface_runtime_status") or direction_ui.has("surface_runtime_status") or drop_ui.has("surface_runtime_status"):
+		failures.append("Coin Pusher transient command retained a borrowed nested runtime reference.")
+	var base_catalog_key := str(game.surface_state(run_state, run_state.current_environment).get("surface_action_catalog_key", ""))
+	var selected_catalog_key := str(game.surface_state(run_state, run_state.current_environment, {
+		"selected_action_id": "nudge_machine",
+		"selected_action_kind": "cheat",
+	}).get("surface_action_catalog_key", ""))
+	run_state.suspicion["level"] = 30
+	var heat_catalog_key := str(game.surface_state(run_state, run_state.current_environment).get("surface_action_catalog_key", ""))
+	run_state.challenge_config = {"modifiers": {"disable_cheat_actions": true}}
+	var challenge_catalog_key := str(game.surface_state(run_state, run_state.current_environment).get("surface_action_catalog_key", ""))
+	if base_catalog_key.is_empty() or selected_catalog_key == base_catalog_key \
+			or heat_catalog_key == base_catalog_key or challenge_catalog_key == heat_catalog_key \
+			or not game.cheat_actions(run_state, run_state.current_environment).is_empty():
+		failures.append("Coin Pusher action catalog key did not invalidate for Heat/security projection or disabled cheat actions.")
+
+
+func _check_coin_pusher_owned_action_result_contract(failures: Array) -> void:
+	var game_source := FileAccess.get_file_as_string("res://scripts/games/coin_pusher.gd")
+	var nudge_source := _source_function(game_source, "_resolve_nudge")
+	if not nudge_source.contains("GameModule.build_owned_action_result") \
+			or nudge_source.contains('(physics.get("presentation_events", []) as Array).duplicate(true)'):
+		failures.append("Coin Pusher nudge no longer uses the single-owner result/presentation assembly path.")
+	var story := {
+		"type": "game_action", "game_id": "coin_pusher", "action_id": "nudge_machine",
+		"action_kind": "risky", "bankroll_delta": 3, "suspicion_delta": 2,
+	}
+	var source_deltas := GameModule.empty_result_deltas()
+	source_deltas["bankroll_delta"] = 3
+	source_deltas["suspicion_delta"] = 2
+	source_deltas["story_log"] = [story]
+	source_deltas["messages"] = ["ownership probe"]
+	var payload := {
+		"source_id": "coin_pusher", "game_id": "coin_pusher", "action_id": "nudge_machine",
+		"action_kind": "risky", "stake": 0, "bankroll_delta": 3, "suspicion_delta": 2,
+		"deltas": source_deltas, "won": true, "message": "ownership probe",
+		"skill_outcome": "clean_drop", "skill_grade": "perfect", "skill_accuracy": 100,
+		"base_suspicion_delta": 2,
+	}
+	var standard := GameModule.build_action_result(payload.duplicate(true))
+	var owned := GameModule.build_owned_action_result(payload)
+	if JSON.stringify(standard) != JSON.stringify(owned):
+		failures.append("Coin Pusher owned result assembly changed the normalized public ActionResult contract.")
+	if not is_same(source_deltas, owned.get("deltas", {})) or is_same(source_deltas, standard.get("deltas", {})):
+		failures.append("Coin Pusher owned result assembly did not transfer only its explicitly owned delta container.")
+	var owned_messages: Array = owned.get("messages", [])
+	owned_messages.append("top-level mutation")
+	if (owned.get("deltas", {}) as Dictionary).get("messages", []).size() != 1:
+		failures.append("Coin Pusher owned result assembly collapsed the public top-level/delta message alias boundary.")
+	var adversarial_payload := payload.duplicate(true)
+	adversarial_payload["deltas"] = {"bankroll": 5, "unknown": "x"}
+	var adversarial_standard := GameModule.build_action_result(adversarial_payload.duplicate(true))
+	var adversarial_owned := GameModule.build_owned_action_result(adversarial_payload)
+	if JSON.stringify(adversarial_standard) != JSON.stringify(adversarial_owned) \
+			or (adversarial_owned.get("deltas", {}) as Dictionary).has("bankroll") \
+			or (adversarial_owned.get("deltas", {}) as Dictionary).has("unknown"):
+		failures.append("Owned result assembly did not fall back to canonical copying normalization for legacy or unknown delta keys.")
+	var partial_contract := {
+		"ok": true, "type": "game_action", "source_id": "coin_pusher", "game_id": "coin_pusher",
+		"action_id": "nudge_machine", "action_kind": "risky", "stake": 0,
+		"bankroll_delta": 0, "suspicion_delta": 0, "skill_cheat_contract": true,
+		"deltas": GameModule.empty_result_deltas(),
+	}
+	var partial_run := RunStateScript.new()
+	partial_run.start_new("PUSHER-PARTIAL-SKILL-CONTRACT")
+	GameModule.apply_result(partial_run, partial_contract)
+	if not partial_contract.has("skill_outcome") or not partial_contract.has("skill_story_context"):
+		failures.append("GameModule apply stopped fully normalizing a partial legacy skill contract.")
+
+
 func _check_coin_pusher_production_rider(game: GameModule, library: ContentLibrary, failures: Array) -> void:
 	var scenario := library.scenario("gas_station_graveyard_shift")
 	var mutations: Dictionary = scenario.get("mutations", {}) if typeof(scenario.get("mutations", {})) == TYPE_DICTIONARY else {}
@@ -1033,7 +1206,7 @@ func _check_coin_pusher_title_geometry(game: GameModule, failures: Array) -> voi
 		failures.append("Coin Pusher title geometry test lost the actual shared LEAVE control seam.")
 
 
-func _check_coin_pusher_canonical_probe(failures: Array) -> void:
+func _check_coin_pusher_canonical_probe(game: GameModule, library: ContentLibrary, failures: Array) -> void:
 	var probe_source := FileAccess.get_file_as_string("res://tools/foundation_determinism_probe.gd")
 	if probe_source.is_empty() or not probe_source.contains('"coin_pusher"') \
 			or not probe_source.contains('"drop_quarter"') or not probe_source.contains('"nudge_machine"'):
@@ -1129,8 +1302,30 @@ func _check_coin_pusher_canonical_probe(failures: Array) -> void:
 	if not resolve_source.contains('_apply_post_action_environment_interrupt("game_action")') \
 			or not resolve_source.contains("_refresh()") \
 			or not resolve_source.contains('_autosave_foundation_run("Autosaved.")') \
+			or not resolve_source.contains("current_game.defers_embedded_action_presentation_refresh(run_state, run_state.current_environment)") \
+			or not resolve_source.contains("_schedule_deferred_embedded_action_refresh(true)") \
 			or not resolve_source.contains("_refresh_after_embedded_game_action(true)"):
 		failures.append("Embedded refresh optimization no longer preserves the full environment-interrupt reroute.")
+	var capability_fixture := _coin_pusher_fixture(game, "PUSHER-DEFERRED-PRESENTATION-CAPABILITY")
+	var capability_run: RunState = capability_fixture.get("run_state")
+	var tutorial_run := RunState.new()
+	var tutorial_config: Dictionary = library.challenge_config_for("tutorial_first_card", "PUSHER-DEFERRED-PRESENTATION-TUTORIAL")
+	tutorial_run.start_new("PUSHER-DEFERRED-PRESENTATION-TUTORIAL", tutorial_config)
+	if capability_run == null \
+			or not game.defers_embedded_action_presentation_refresh(capability_run, capability_run.current_environment) \
+			or game.defers_embedded_action_presentation_refresh(tutorial_run, tutorial_run.current_environment) \
+			or GameModule.new().defers_embedded_action_presentation_refresh(capability_run, capability_run.current_environment):
+		failures.append("Coin Pusher no longer owns its explicit next-frame embedded presentation capability without changing the default game contract.")
+	for required_scheduler_text in [
+		"await tree.process_frame",
+		"deferred_embedded_refresh_generation",
+		"_deferred_embedded_action_refresh_identity_is_current()",
+		"is_same(last_game_result, deferred_embedded_refresh_result)",
+		"_deferred_embedded_refresh_blocks_current_surface_input()",
+		'\"host_deferred_embedded_refresh\"',
+	]:
+		if not main_source.contains(required_scheduler_text):
+			failures.append("Coin Pusher deferred presentation scheduler lost safeguard %s." % required_scheduler_text)
 
 
 func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> void:
@@ -1610,6 +1805,21 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 	var drop_trace := _presentation_trace(drop_result)
 	if not bool(drop_result.get("ok", false)) or drop_trace.size() < 4 or drop_trace.size() > 15 or not _trace_visibly_moves(drop_trace):
 		failures.append("Quarter Falls drop did not expose a bounded authoritative body-motion replay.")
+	var result_prizes: Array = drop_result.get("coin_pusher_prizes", [])
+	var drop_deltas: Dictionary = drop_result.get("deltas", {})
+	var drop_story: Array = drop_deltas.get("story_log", [])
+	var story_context: Dictionary = ((drop_story[0] as Dictionary).get("context", {}) as Dictionary) if not drop_story.is_empty() else {}
+	var story_prizes: Array = story_context.get("prizes", [])
+	var result_prize_count := result_prizes.size()
+	var story_prize_count := story_prizes.size()
+	result_prizes.append({"item_id": "hostile_result_probe"})
+	var result_to_story_leaked := story_prizes.size() != story_prize_count
+	result_prizes.pop_back()
+	story_prizes.append({"item_id": "hostile_story_probe"})
+	var story_to_result_leaked := result_prizes.size() != result_prize_count
+	story_prizes.pop_back()
+	if is_same(result_prizes, story_prizes) or result_to_story_leaked or story_to_result_leaked:
+		failures.append("Quarter Falls owned drop result collapsed the bidirectional prize/story isolation boundary.")
 	var packed_patch: Dictionary = drop_result.get("surface_presentation_snapshot_patch", {}) if typeof(drop_result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
 	var packed_trace: Dictionary = packed_patch.get("trace_packed", {}) if typeof(packed_patch.get("trace_packed", {})) == TYPE_DICTIONARY else {}
 	if int(packed_patch.get("trace_frame_count", 0)) != 14 or int(packed_trace.get("frame_count", 0)) != 14:
@@ -1803,6 +2013,10 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 func _check_coin_pusher_render_only_canvas_path(game: GameModule, failures: Array) -> void:
 	var fixture := _coin_pusher_fixture(game, "PUSHER-RENDER-ONLY-CANVAS")
 	var run_state: RunState = fixture.get("run_state")
+	# This generated foundation wrapper is intentionally synchronous. Exercise
+	# Coin's production synchronous tutorial presentation here; normal-run deferred
+	# scheduling and frame settlement belong to the live UI regression.
+	run_state.challenge_config["tutorial"] = true
 	var app_value: Variant = CoinPusherRealtimeProbeHost.new()
 	if not app_value is Control:
 		failures.append("Coin Pusher render-only fixture could not instantiate FoundationMain.")

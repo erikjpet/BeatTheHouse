@@ -13,6 +13,11 @@ var _replay_id := ""
 var _packed_source: Dictionary = {}
 var _frames: Dictionary = {}
 var _recency: Array = []
+var _final_frame_index := -1
+var _final_frame: Dictionary = {}
+var _interpolation_pair := Vector2i(-1, -1)
+var _interpolated_bodies: Array = []
+var _interpolation_targets: Array = []
 
 
 func frame_count(packed: Dictionary) -> int:
@@ -25,7 +30,7 @@ func sample(packed: Dictionary, replay_id: String, progress: float) -> Dictionar
 	var count := frame_count(packed)
 	if count <= 0:
 		return {}
-	_select_replay(packed, replay_id)
+	_select_replay(packed, replay_id, count)
 	var frame_position := clampf(progress, 0.0, 1.0) * float(count - 1)
 	var frame_index := clampi(int(floor(frame_position)), 0, count - 1)
 	var next_index := mini(frame_index + 1, count - 1)
@@ -42,14 +47,62 @@ func sample(packed: Dictionary, replay_id: String, progress: float) -> Dictionar
 	}
 
 
+func final_bodies(packed: Dictionary, replay_id: String) -> Array:
+	var count := frame_count(packed)
+	if count <= 0:
+		return []
+	_select_replay(packed, replay_id, count)
+	var frame := _frame(packed, count - 1)
+	return frame.get("bodies", []) if typeof(frame.get("bodies", [])) == TYPE_ARRAY else []
+
+
+func interpolated_bodies(sample_value: Dictionary) -> Array:
+	var frame: Dictionary = sample_value.get("frame", {}) if typeof(sample_value.get("frame", {})) == TYPE_DICTIONARY else {}
+	var next_frame: Dictionary = sample_value.get("next_frame", {}) if typeof(sample_value.get("next_frame", {})) == TYPE_DICTIONARY else {}
+	var current_bodies: Array = frame.get("bodies", []) if typeof(frame.get("bodies", [])) == TYPE_ARRAY else []
+	var next_bodies: Array = next_frame.get("bodies", current_bodies) if typeof(next_frame.get("bodies", current_bodies)) == TYPE_ARRAY else current_bodies
+	var weight := float(sample_value.get("weight", 0.0))
+	if weight <= 0.001 or current_bodies.is_empty():
+		return current_bodies
+	var pair := Vector2i(int(sample_value.get("frame_index", -1)), int(sample_value.get("next_frame_index", -1)))
+	if pair != _interpolation_pair:
+		_interpolation_pair = pair
+		_interpolated_bodies.clear()
+		_interpolation_targets.clear()
+		var next_by_id := {}
+		for next_value in next_bodies:
+			if typeof(next_value) == TYPE_DICTIONARY:
+				next_by_id[str((next_value as Dictionary).get("id", ""))] = next_value
+		for current_value in current_bodies:
+			if typeof(current_value) != TYPE_DICTIONARY:
+				continue
+			var current: Dictionary = current_value
+			var next: Dictionary = next_by_id.get(str(current.get("id", "")), {}) if typeof(next_by_id.get(str(current.get("id", "")), {})) == TYPE_DICTIONARY else {}
+			_interpolated_bodies.append(current if next.is_empty() else current.duplicate(false))
+			_interpolation_targets.append(next)
+	for index in range(_interpolated_bodies.size()):
+		var target: Dictionary = _interpolation_targets[index] if typeof(_interpolation_targets[index]) == TYPE_DICTIONARY else {}
+		if target.is_empty():
+			continue
+		var body: Dictionary = _interpolated_bodies[index]
+		body["x"] = roundi(lerpf(float(int(current_bodies[index].get("x", 0))), float(int(target.get("x", current_bodies[index].get("x", 0)))), weight))
+		body["y"] = roundi(lerpf(float(int(current_bodies[index].get("y", 0))), float(int(target.get("y", current_bodies[index].get("y", 0)))), weight))
+		body["z"] = roundi(lerpf(float(int(current_bodies[index].get("z", 0))), float(int(target.get("z", current_bodies[index].get("z", 0)))), weight))
+		body["lean_milli"] = roundi(lerpf(float(int(current_bodies[index].get("lean_milli", 0))), float(int(target.get("lean_milli", current_bodies[index].get("lean_milli", 0)))), weight))
+	return _interpolated_bodies
+
+
 func clear() -> void:
 	_replay_id = ""
 	_packed_source = {}
 	_frames.clear()
 	_recency.clear()
+	_final_frame_index = -1
+	_final_frame = {}
+	_clear_interpolation()
 
 
-func _select_replay(packed: Dictionary, replay_id: String) -> void:
+func _select_replay(packed: Dictionary, replay_id: String, frame_total: int) -> void:
 	# Action counters restart for each run/cabinet, so replay_id alone is not a
 	# safe cache key. The packed payload is immutable and ownership-preserved on
 	# the internal render path; identity distinguishes two action_1 payloads in
@@ -60,15 +113,29 @@ func _select_replay(packed: Dictionary, replay_id: String) -> void:
 	_packed_source = packed
 	_frames.clear()
 	_recency.clear()
+	_final_frame_index = frame_total - 1
+	_final_frame = {}
+	_clear_interpolation()
+
+
+func _clear_interpolation() -> void:
+	_interpolation_pair = Vector2i(-1, -1)
+	_interpolated_bodies.clear()
+	_interpolation_targets.clear()
 
 
 func _frame(packed: Dictionary, frame_index: int) -> Dictionary:
+	if frame_index == _final_frame_index and not _final_frame.is_empty():
+		return _final_frame
 	if _frames.has(frame_index):
 		_touch(frame_index)
 		return _frames[frame_index]
 	var decoded := _decode_frame(packed, frame_index)
 	if decoded.is_empty():
 		return {}
+	if frame_index == _final_frame_index:
+		_final_frame = decoded
+		return decoded
 	_frames[frame_index] = decoded
 	_touch(frame_index)
 	while _recency.size() > CACHE_LIMIT:

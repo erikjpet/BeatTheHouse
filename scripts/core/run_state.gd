@@ -1230,7 +1230,8 @@ func event_cadence_advance_actions(amount: int = 1) -> void:
 # Returns whether a world-initiated event can be queued under the room budget.
 func event_cadence_allows_world_event(event_id: String, trigger_type: String, source: String, event_definition: Dictionary = {}) -> bool:
 	_ensure_event_cadence()
-	var cadence: Dictionary = _copy_dict(event_definition.get("cadence", {}))
+	var cadence_value: Variant = event_definition.get("cadence", {})
+	var cadence: Dictionary = cadence_value if typeof(cadence_value) == TYPE_DICTIONARY else {}
 	if not event_cadence_can_open_modal() and not bool(cadence.get("queue_while_modal", false)):
 		return false
 	if event_cadence_event_bypasses_budget(event_id, trigger_type, source, event_definition):
@@ -1244,7 +1245,9 @@ func event_cadence_allows_world_event(event_id: String, trigger_type: String, so
 		return false
 	if action_index - int(event_cadence.get("last_world_event_action", -9999)) < EVENT_CADENCE_GLOBAL_GAP_ACTIONS:
 		return false
-	if _copy_array(event_cadence.get("visit_event_ids", [])).has(event_id):
+	var visit_event_ids_value: Variant = event_cadence.get("visit_event_ids", [])
+	var visit_event_ids: Array = visit_event_ids_value if typeof(visit_event_ids_value) == TYPE_ARRAY else []
+	if visit_event_ids.has(event_id):
 		return false
 	return true
 
@@ -1252,14 +1255,16 @@ func event_cadence_allows_world_event(event_id: String, trigger_type: String, so
 # Debt collectors, showdown calls, and explicit chains can jump the quiet-visit budget.
 func event_cadence_event_bypasses_budget(event_id: String, trigger_type: String, source: String, event_definition: Dictionary = {}) -> bool:
 	var normalized_id := event_id.strip_edges()
-	var cadence: Dictionary = _copy_dict(event_definition.get("cadence", {}))
+	var cadence_value: Variant = event_definition.get("cadence", {})
+	var cadence: Dictionary = cadence_value if typeof(cadence_value) == TYPE_DICTIONARY else {}
 	if bool(cadence.get("bypass_budget", false)):
 		return true
 	if [GRAND_CASINO_SHOWDOWN_EVENT_ID, GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "the_collector", "family_loan"].has(normalized_id):
 		return true
 	if ["event_chain", "debt", "lender", "showdown"].has(source):
 		return true
-	var conditions := _copy_dict(event_definition.get("conditions", {}))
+	var conditions_value: Variant = event_definition.get("conditions", {})
+	var conditions: Dictionary = conditions_value if typeof(conditions_value) == TYPE_DICTIONARY else {}
 	if bool(conditions.get("requires_overdue_debt", false)):
 		return true
 	return trigger_type == "manual" and source == "event"
@@ -1268,7 +1273,8 @@ func event_cadence_event_bypasses_budget(event_id: String, trigger_type: String,
 # Returns lower weights for events already seen this run without forbidding them.
 func event_cadence_weight_for_event(event_id: String) -> int:
 	_ensure_event_cadence()
-	var seen_counts := _copy_dict(event_cadence.get("seen_event_counts", {}))
+	var seen_counts_value: Variant = event_cadence.get("seen_event_counts", {})
+	var seen_counts: Dictionary = seen_counts_value if typeof(seen_counts_value) == TYPE_DICTIONARY else {}
 	return 25 if int(seen_counts.get(event_id, 0)) > 0 else 100
 
 
@@ -1321,8 +1327,12 @@ func event_cadence_summary() -> Dictionary:
 func _ensure_event_cadence() -> void:
 	if event_cadence.is_empty():
 		_reset_event_cadence_state()
-		return
-	event_cadence = _normalize_event_cadence(event_cadence)
+	# Cadence is normalized at new-run/reset and deserialization boundaries, and
+	# every canonical mutator below preserves that shape. Re-normalizing here made
+	# each read recursively duplicate arrays/dictionaries; an action with several
+	# eligible event candidates paid that save-compatibility work dozens of times.
+	# Serialization still emits a normalized copy, so older-save compatibility and
+	# external snapshots retain the same defensive boundary.
 
 
 func _reset_event_cadence_state() -> void:
