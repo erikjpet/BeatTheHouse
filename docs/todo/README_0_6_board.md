@@ -423,6 +423,13 @@ What happens then is the owner's, not an agent's:
   against the unchanged 124.851 s budget, every stage exit 0, no timeouts, and
   no stderr issues. Artifact:
   `.tmp/test_reports/20260817_0540_postmerge_saved_slot_ui_authoritative`.
+- 2026-08-17 [crew06_5 voice review] PM manually compared every new recruitment,
+  presence, signposting, and contact line in `data/crew/recruitment.json` and
+  `data/events/events.json` against the seven authored `characters.json` voice
+  styles. The registers remain distinct and conforming: Rook low/economical,
+  Switch fast/forward-looking, Mags precise/order-driven, Knuckles blunt,
+  Velvet warm/polished, Bishop formal/record-minded, and Lucky bright/reckless.
+  No quest-log register or hidden-system leakage was found.
 - 2026-08-17 [pusher06_2] Exact runtime at `4159f393` is green across the 80
   carried hot actions and all hostile/fallback twins. Raw p95 improved 43.9%
   from 283.293 to 159.000 ms, but remains 9.94x over the 16 ms gate; production
@@ -1116,3 +1123,6 @@ What happens then is the owner's, not an agent's:
   `.tmp/test_reports/20260817_0540_postmerge_saved_slot_ui_authoritative`:
   0 failures, `ui_scene_compile` 57.828 s / 124.851 s, every stage exit 0, and
   no timeout/stderr issues. Determinism and visual gates remain.
+- 2026-08-17 [crew06_5] PM completed the prompt-required manual voice review of
+  all new lines against the seven authored character styles; each member keeps
+  a distinct conforming register, with no tracker copy or system leakage.
