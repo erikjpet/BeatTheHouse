@@ -1041,10 +1041,15 @@ func _check_coin_pusher_canonical_probe(failures: Array) -> void:
 	if not coach_schedule_source.contains('call_deferred("_refresh_game_coach_after_draw")'):
 		failures.append("Embedded coach scheduling no longer dispatches the production post-draw callback.")
 	var hud_model_source := _source_function(main_source, "_run_status_hud_model")
+	var hud_style_source := _source_function(main_source, "_style_hud_for_recent_consequence")
 	var pressure_source := _source_function(main_source, "_run_pressure_view")
 	if not hud_model_source.contains("_next_objective_option(pressure, objective)") \
+			or not hud_model_source.contains("_recent_result_readonly()") \
+			or not hud_style_source.contains("_recent_result_readonly()") \
+			or hud_model_source.contains("_recent_result_snapshot()") \
+			or hud_style_source.contains("_recent_result_snapshot()") \
 			or pressure_source.contains("_supported_recovery_available()"):
-		failures.append("Embedded HUD refresh rebuilt objective or dead recovery-hook context instead of reusing its action-boundary values.")
+		failures.append("Embedded HUD refresh rebuilt dense result/objective or dead recovery-hook context instead of reading its owned action-boundary values.")
 	var terminal_bridge_source := _source_function(main_source, "_run_terminal_evaluator_evaluate_and_apply")
 	if not terminal_bridge_source.contains("evaluate_terminal_and_apply"):
 		failures.append("Foundation action boundaries are not routed through the terminal-only evaluator.")

@@ -987,7 +987,11 @@ func _on_game_surface_action_blocked(_action: String, reason: String) -> void:
 
 
 func _on_game_surface_pointer_action(action: String, index: int, phase: String, board_position: Vector2) -> void:
-	if current_game == null or _guard_player_input_route(false, action):
+	# Coalesced pointer movement is visual state, not an authored action boundary.
+	# It must still obey modal and closing-time locks, while begin/end retain the
+	# exact tutorial notification contract.
+	var notify_coach := phase != "move"
+	if current_game == null or _guard_player_input_route(false, action, notify_coach):
 		return
 	var lightweight_state := current_game.surface_pointer_uses_lightweight_ui_state(action)
 	var ui_state := game_surface_ui_state.duplicate(false) if lightweight_state else _current_game_surface_ui_state()
@@ -996,7 +1000,7 @@ func _on_game_surface_pointer_action(action: String, index: int, phase: String, 
 	ui_state["selected_stake"] = _current_selected_stake()
 	var command := current_game.surface_pointer_command(action, index, phase, board_position, ui_state, run_state, run_state.current_environment)
 	command["_resolved_surface_ui_state"] = ui_state
-	_apply_game_surface_command(command, index, false)
+	_apply_game_surface_command(command, index, false, notify_coach)
 
 
 func _handle_module_surface_action(action: String, index: int, confirm_requested: bool) -> bool:
@@ -1025,10 +1029,10 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 	return handled
 
 
-func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_requested: bool = false) -> bool:
+func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_requested: bool = false, notify_coach: bool = true) -> bool:
 	if command.is_empty() or not bool(command.get("handled", false)):
 		return false
-	if not game_surface_auto_resolving and _guard_player_input_route():
+	if not game_surface_auto_resolving and _guard_player_input_route(false, "ui:any", notify_coach):
 		return true
 	if command.has("ui_state") and typeof(command.get("ui_state")) == TYPE_DICTIONARY:
 		_store_current_game_surface_ui_state(command.get("ui_state", {}) as Dictionary, not bool(command.get("surface_transient", false)))
@@ -8696,17 +8700,18 @@ func _blocking_modal_message() -> String:
 	return ""
 
 
-func _guard_player_input_route(force_closing_allowed: bool = false, coach_action_id: String = "ui:any") -> bool:
+func _guard_player_input_route(force_closing_allowed: bool = false, coach_action_id: String = "ui:any", notify_coach: bool = true) -> bool:
 	var message := _blocking_modal_message()
 	if message.is_empty():
 		if not force_closing_allowed and _closing_time_blocks_environment_actions():
 			if not _ensure_closing_time_departure_talk():
 				_show_message(_closing_time_disabled_reason())
 			return true
-		_record_tutorial_action_if_authored(coach_action_id)
-		if coach_overlay != null:
-			if coach_overlay.notify_action(coach_action_id):
-				_consume_recorded_tutorial_action(coach_action_id)
+		if notify_coach:
+			_record_tutorial_action_if_authored(coach_action_id)
+			if coach_overlay != null:
+				if coach_overlay.notify_action(coach_action_id):
+					_consume_recorded_tutorial_action(coach_action_id)
 		return false
 	_show_message(message)
 	_refresh_modal_contract_owner()
@@ -11258,7 +11263,10 @@ func _player_facing_text(text: String) -> String:
 func _style_hud_for_recent_consequence() -> void:
 	if status_label == null:
 		return
-	var result := _recent_result_snapshot()
+	# HUD styling consumes scalar consequence fields only. Keep the owned result
+	# read-only so a Coin Pusher action does not clone its 14 dense replay frames
+	# once for color and again for text during the same embedded refresh.
+	var result := _recent_result_readonly()
 	var deltas: Dictionary = result.get("deltas", {})
 	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
 	var suspicion_delta := int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
@@ -12817,7 +12825,10 @@ func _run_status_hud_model() -> Dictionary:
 		return {}
 	var pressure := _run_pressure_view()
 	var objective := _demo_objective_status()
-	var recent_result := _recent_result_snapshot()
+	# FoundationHudViewModel reads only scalar result/delta fields and never
+	# mutates this dictionary. The public snapshot API remains deep-safe; this
+	# private render path keeps the dense Coin Pusher trace under single ownership.
+	var recent_result := _recent_result_readonly()
 	var deltas: Dictionary = recent_result.get("deltas", {})
 	var state := FoundationHudViewModelScript.objective_presentation_state(pressure, objective)
 	return FoundationHudViewModelScript.run_status_model(run_state, {

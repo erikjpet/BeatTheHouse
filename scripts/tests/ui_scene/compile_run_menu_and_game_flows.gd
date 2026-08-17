@@ -177,11 +177,26 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	canvas.draw.connect(observe_draw)
 	var draw_soak_before: Dictionary = canvas.call("debug_soak_snapshot")
 	var draw_sample_count_before := int(draw_soak_before.get("draw_sample_count", 0))
+	for counter_name in [
+		"post_interrupt_talk_boundary_visit_count",
+		"post_interrupt_closing_visit_count",
+		"post_interrupt_forced_travel_visit_count",
+		"post_interrupt_talk_enqueue_visit_count",
+		"post_interrupt_unavoidable_visit_count",
+	]:
+		probe.set(counter_name, 0)
+	probe.set("recent_result_deep_snapshot_call_count", 0)
 	canvas.emit_signal("surface_action", "coin_pusher_drop", 0, false)
 	# queue_redraw requests the same viewport draw notification used in production;
 	# the draw callback itself is never invoked directly by this test.
 	canvas.queue_redraw()
 	await process_frame
+	var refresh_contract_passed := int(probe.get("post_interrupt_talk_boundary_visit_count")) == 1 \
+			and int(probe.get("post_interrupt_closing_visit_count")) == 1 \
+			and int(probe.get("post_interrupt_forced_travel_visit_count")) == 1 \
+			and int(probe.get("post_interrupt_talk_enqueue_visit_count")) == 1 \
+			and int(probe.get("post_interrupt_unavoidable_visit_count")) == 1 \
+			and int(probe.get("recent_result_deep_snapshot_call_count")) == 0
 	await process_frame
 	var stored: Dictionary = probe.get("last_game_result")
 	var stored_patch: Dictionary = stored.get("surface_presentation_snapshot_patch", {}) if typeof(stored.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
@@ -204,7 +219,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		var hit_action := str((region_value as Dictionary).get("action", ""))
 		rendered_drop_hit = rendered_drop_hit or hit_action == "coin_pusher_drop"
 		rendered_nudge_hit = rendered_nudge_hit or hit_action == "coin_pusher_nudge"
-	var render_passed := str(stored.get("action_id", "")) == "drop_quarter" \
+	var render_passed := refresh_contract_passed and str(stored.get("action_id", "")) == "drop_quarter" \
 			and not stored_trace.is_empty() \
 			and not draw_snapshots.is_empty() \
 			and JSON.stringify(draw_trace) == JSON.stringify(stored_trace) \
@@ -213,7 +228,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			and draw_sample_count_after > draw_sample_count_before \
 			and rendered_drop_hit and rendered_nudge_hit
 	if not render_passed:
-		push_error("Coin Pusher owned canvas did not render its completed host action on a real viewport draw frame.")
+		push_error("Coin Pusher owned canvas did not interrupt-check and render its completed host action without cloning the dense result on a real viewport draw frame.")
 
 	var guard_canvas_json := JSON.stringify(action_canvas_state)
 	probe.set("last_game_surface_realtime_refresh_msec", 0)
