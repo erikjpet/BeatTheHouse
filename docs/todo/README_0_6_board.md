@@ -630,6 +630,13 @@ What happens then is the owner's, not an agent's:
   every event in each of four genuinely live nudge lifecycles. Synthetic
   key-fragment rendering and pusher-specific supported-input/1280x720 dispatch
   coverage remain before the presentation commits are accepted.
+- 2026-08-17 [pusher06_2 input scope] Code-reality audit confirms the dense
+  Coin Pusher surface supports mouse and touch through `GameSurfaceCanvas` exact
+  hit regions; it has no keyboard/joypad routing or focusable controls.
+  Acceptance therefore covers real mouse and touch events at 1280x720 for all
+  five lanes, three force choices, three directions, drop, and nudge. Adding a
+  new keyboard/controller interaction model would be a design/feature expansion,
+  not a missing test in this presentation row.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
