@@ -444,17 +444,21 @@ static func _check_contact_surfaces(library: ContentLibrary, failures: Array) ->
 	var lucky_run := _marked_run("CREW-CONTACT-LUCKY")
 	lucky_run.crew_recruit_member("crew_lucky")
 	_set_fixture_world(lucky_run, ["small_underground_casino", "bar", "motel", "gas_station_casino", "corner_store"])
-	var lucky_environment := _presence_environment(lucky_run, "crew_lucky", false)
+	var lucky_presence_probe := _presence_environment(lucky_run, "crew_lucky", false)
+	var lucky_location := str(lucky_presence_probe.get("world_node_id", ""))
+	var lucky_generator := RunGeneratorScript.new(library)
+	if not lucky_location.is_empty():
+		lucky_generator.next_environment(lucky_run, lucky_location, true)
+	var lucky_environment := lucky_run.current_environment
 	if not _contact_is_embedded(lucky_environment, "crew_lucky"):
-		failures.append("Lucky's seeded presence did not expose his available Numbers work.")
+		failures.append("Lucky's generated seeded presence did not expose his available Numbers work.")
 	else:
-		lucky_run.set_environment(lucky_environment)
 		var lucky_module := EventModuleScript.new()
 		lucky_module.setup(library.event("crew_contact_lucky"), library)
 		var lucky_result := lucky_module.resolve(lucky_run, lucky_run.current_environment, "start_numbers_collection")
 		if not bool(lucky_result.get("ok", false)) or not bool(_dict(lucky_result.get("crew_service_result", {})).get("ok", false)) \
 			or not lucky_run.delivery_has_active_run():
-			failures.append("Lucky's contextual contact did not start the existing Numbers route work.")
+			failures.append("Lucky's contextual contact did not start the existing Numbers route work: %s" % JSON.stringify(lucky_result.get("crew_service_result", {})))
 
 
 static func _check_crew_ignoring_regression(library: ContentLibrary, failures: Array) -> void:
@@ -477,7 +481,7 @@ static func _check_crew_ignoring_regression(library: ContentLibrary, failures: A
 	if typeof(baseline) != TYPE_DICTIONARY:
 		failures.append("Crew-ignoring accepted-main golden fixture is missing or invalid.")
 	else:
-		var expected_capture := _dict((baseline as Dictionary).get("capture", {}))
+		var expected_capture := _normalize_ignored_capture_numeric_types(_dict((baseline as Dictionary).get("capture", {})))
 		if JSON.stringify(generated_a) != JSON.stringify(expected_capture):
 			failures.append("Crew-ignoring full RunState/current/world environment bytes shifted from accepted main outside authorized anchor ambience.")
 			_append_ignored_capture_diff(expected_capture, generated_a, failures)
@@ -694,6 +698,34 @@ static func _append_ignored_capture_diff(expected: Dictionary, actual: Dictionar
 			for field in ["run_state_bytes", "run_state_sha256", "current_environment_bytes", "current_environment_sha256", "world_environments_bytes", "world_environments_sha256"]:
 				if expected_checkpoint.get(field) != actual_checkpoint.get(field):
 					failures.append("Crew-ignoring golden %s/%s %s changed: expected %s, actual %s." % [seed, label, field, expected_checkpoint.get(field), actual_checkpoint.get(field)])
+
+
+static func _normalize_ignored_capture_numeric_types(value: Dictionary) -> Dictionary:
+	# JSON fixtures load number tokens without preserving the runtime integer
+	# Variant type. Normalize only those known numeric scalars in-place while
+	# retaining every dictionary key, array entry, ordering, and extra field so
+	# the following JSON equality remains a full exact-structure golden.
+	var result := value.duplicate(true)
+	if result.has("schema_version"):
+		result["schema_version"] = int(result.get("schema_version", 0))
+	var runs := _array(result.get("runs", []))
+	for run_index in range(runs.size()):
+		if typeof(runs[run_index]) != TYPE_DICTIONARY:
+			continue
+		var run: Dictionary = runs[run_index]
+		var checkpoints := _array(run.get("checkpoints", []))
+		for checkpoint_index in range(checkpoints.size()):
+			if typeof(checkpoints[checkpoint_index]) != TYPE_DICTIONARY:
+				continue
+			var checkpoint: Dictionary = checkpoints[checkpoint_index]
+			for field in ["run_state_bytes", "current_environment_bytes", "world_environments_bytes"]:
+				if checkpoint.has(field):
+					checkpoint[field] = int(checkpoint.get(field, 0))
+			checkpoints[checkpoint_index] = checkpoint
+		run["checkpoints"] = checkpoints
+		runs[run_index] = run
+	result["runs"] = runs
+	return result
 
 
 static func _dict(value: Variant) -> Dictionary:
