@@ -104,6 +104,26 @@ function Assert-CleanDistributionOutput {
     }
 }
 
+function Get-ExportPresetOption {
+    param(
+        [string]$PresetName,
+        [string]$OptionName
+    )
+    $presetPath = Join-Path $root "export_presets.cfg"
+    $activeName = ""
+    $escapedOptionName = [System.Text.RegularExpressions.Regex]::Escape($OptionName)
+    foreach ($line in Get-Content -LiteralPath $presetPath) {
+        if ($line -match '^name="([^"]+)"$') {
+            $activeName = $Matches[1]
+            continue
+        }
+        if ($activeName -eq $PresetName -and $line -match "^$escapedOptionName=(.+)$") {
+            return $Matches[1]
+        }
+    }
+    throw "Could not read option '$OptionName' for export preset '$PresetName'."
+}
+
 function Assert-NativeSolverExport {
     param(
         [string]$Directory,
@@ -138,6 +158,9 @@ $projectVersion = Get-ProjectVersion
 $presetFeatures = Get-ExportPresetCustomFeatures $cfg.Preset
 if ($presetFeatures -notcontains "distribution_build") {
     throw "Export preset '$($cfg.Preset)' must include the distribution_build feature so itch builds cannot read development saves."
+}
+if ($Target -eq "web" -and (Get-ExportPresetOption $cfg.Preset "variant/extensions_support") -cne "true") {
+    throw "Web export preset '$($cfg.Preset)' must set variant/extensions_support=true before the native solver can be built or exported."
 }
 
 Write-Host "Release version from project.godot: $projectVersion"
