@@ -1362,7 +1362,10 @@ func set_environment(environment_data: Dictionary) -> void:
 		if stamped_departure >= entered_minutes and stamped_departure <= game_clock_minutes:
 			departed_minutes = stamped_departure
 		current_environment["departed_game_clock_minutes"] = maxi(entered_minutes, departed_minutes)
-		capture_portable_ticket_piles_from_environment(current_environment)
+		# The portable registry is canonical once an action has written it. Travel
+		# may migrate a missing legacy machine pile, but must not overwrite a newer
+		# portable pile with stale environment state left by a read-only preview.
+		capture_portable_ticket_piles_from_environment(current_environment, true)
 		_store_current_local_suspicion()
 		environment_history.append(_environment_history_entry(current_environment))
 		_compact_environment_history()
