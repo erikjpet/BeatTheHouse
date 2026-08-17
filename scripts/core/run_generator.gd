@@ -4,6 +4,7 @@ extends RefCounted
 # Builds deterministic environments from library data.
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
+const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 
@@ -29,6 +30,7 @@ func next_environment(run_state: RunState, target_archetype_id: String = "", tar
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
 	run_state.apply_town_generation_modifiers(environment_data, rng)
+	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.save_rng(rng)
@@ -140,6 +142,7 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 		var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config)
 		environment_data = environment.to_dict()
 		run_state.apply_town_generation_modifiers(environment_data, rng)
+		CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 		environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 		run_state.save_rng(rng)
 	_apply_cage_gift_shop_stock(run_state, environment_data)
@@ -185,6 +188,7 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 		return {"ok": false, "message": "The room could not be restored."}
 	if not layer_state.has("town_conditions"):
 		run_state.apply_town_generation_modifiers(layer_state)
+	CrewRecruitmentModelScript.apply_to_environment(run_state, layer_state)
 	var stored_game_states: Variant = layer_state.get("game_states", null)
 	if typeof(stored_game_states) != TYPE_DICTIONARY or (stored_game_states as Dictionary).is_empty() and not _copy_array(layer_state.get("game_ids", [])).is_empty():
 		var game_rng := run_state.create_rng("environment_layer_games:%s:%s" % [str(run_state.current_environment.get("world_node_id", run_state.current_environment.get("archetype_id", ""))), target_id])
@@ -369,6 +373,7 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
 	run_state.apply_town_generation_modifiers(environment_data, rng)
+	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.save_rng(rng)
@@ -382,6 +387,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	if not stored_environment.is_empty() and str(node.get("state", "")) == WorldMap.STATE_VISITED:
 		var restored := stored_environment.duplicate(true)
 		run_state.apply_town_living_world_context(restored, rng.fork("town_reentry:%s" % node_id))
+		CrewRecruitmentModelScript.apply_to_environment(run_state, restored)
 		_apply_world_travel_targets(restored, run_state, map_data, node_id)
 		restored["world_node_id"] = node_id
 		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored)
@@ -399,6 +405,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	# Game generation hooks may publish node-scoped facts. Give them the stable
 	# world-node identity before generating their canonical machine state.
 	environment_data["world_node_id"] = node_id
+	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	if str(archetype.get("kind", "")) == "home":
 		_apply_home_profile(run_state, environment_data, archetype, node_id, rng.fork("home_profile:%s" % node_id))
