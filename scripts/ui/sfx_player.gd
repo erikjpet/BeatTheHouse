@@ -197,7 +197,6 @@ var _baccarat_deal_id: String = ""
 var _baccarat_payout_id: String = ""
 var _coin_pusher_action_id: String = ""
 var _coin_pusher_action_observed_active := false
-var _debug_suppress_playback := false
 var _web_surface_loop_active := false
 var _surface_loop_event_id := ""
 var _surface_loop_fade_tween: Tween
@@ -384,7 +383,7 @@ func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing
 			)
 
 
-func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation_active: bool, active_id: String) -> void:
+func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation_active: bool, active_id: String, suppress_physical_playback: bool = false) -> void:
 	var profile := _surface_sfx_profile("coin_pusher")
 	if profile.is_empty():
 		return
@@ -399,7 +398,7 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 	var motor_volume := float(motor.get("loaded_volume_db", -13.0) if loaded else motor.get("idle_volume_db", -18.0))
 	var motor_pitch := float(motor.get("loaded_pitch", 0.96) if loaded else motor.get("idle_pitch", 0.88)) + phase_energy * 0.035
 	if _surface_loop_event_id != motor_event or (_loop_player != null and not _loop_player.playing and not _web_surface_loop_active):
-		_start_reel_loop(motor_event, motor_volume, motor_pitch)
+		_start_reel_loop(motor_event, motor_volume, motor_pitch, suppress_physical_playback)
 	elif _loop_player != null:
 		_loop_player.volume_db = motor_volume
 		_loop_player.pitch_scale = motor_pitch
@@ -433,7 +432,8 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 			not animation_active or elapsed >= event_time,
 			cue,
 			float(context.get("volume_db", -5.0)),
-			float(context.get("pitch", 1.0))
+			float(context.get("pitch", 1.0)),
+			suppress_physical_playback
 		)
 
 
@@ -975,9 +975,7 @@ func debug_coin_pusher_runtime_event_markers(surface_state: Dictionary, elapsed:
 		_coin_pusher_action_id = ""
 		_coin_pusher_action_observed_active = false
 		_clear_markers_with_prefix("coin_pusher_event_")
-	_debug_suppress_playback = true
-	sync_coin_pusher_state(surface_state, elapsed, animation_active, active_id)
-	_debug_suppress_playback = false
+	sync_coin_pusher_state(surface_state, elapsed, animation_active, active_id, true)
 	var result: Array = []
 	for marker_value in _played_markers.keys():
 		var marker := str(marker_value)
@@ -1248,11 +1246,11 @@ func _slot_audio_profile(slot_state: Dictionary) -> Dictionary:
 	return profile
 
 
-func _trigger(marker: String, condition: bool, event_id: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
+func _trigger(marker: String, condition: bool, event_id: String, volume_db: float = 0.0, pitch: float = 1.0, suppress_physical_playback: bool = false) -> void:
 	if not condition or bool(_played_markers.get(marker, false)):
 		return
 	_played_markers[marker] = true
-	if _debug_suppress_playback:
+	if suppress_physical_playback:
 		return
 	if _emit_music_director_cue(event_id, {"marker": marker, "volume_db": volume_db, "pitch": pitch}):
 		return
@@ -1328,9 +1326,9 @@ func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallb
 		_trigger(marker, elapsed >= cue_time, cue_id, volume_db, pitch)
 
 
-func _start_reel_loop(event_id: String = "reel_loop", volume_db: float = -13.0, pitch: float = 1.0) -> void:
+func _start_reel_loop(event_id: String = "reel_loop", volume_db: float = -13.0, pitch: float = 1.0, suppress_physical_playback: bool = false) -> void:
 	_surface_loop_event_id = _normalized_event_id(event_id)
-	if _debug_suppress_playback:
+	if suppress_physical_playback:
 		return
 	var stream := _event_stream(event_id)
 	if WebAudioBridgeScript.available():
