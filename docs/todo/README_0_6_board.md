@@ -501,6 +501,21 @@ What happens then is the owner's, not an agent's:
   velocity sums before validation. Define that division edge, enforce a numeric
   envelope, reject before mutation, and cover INT64 extrema plus oversized
   nudge inputs. The fixed-positive-divisor 48-tick kernel is not implicated.
+- 2026-08-17 [pusher06_2 trace audit] Presentation/audio traceability found two
+  unclosed acceptance defects outside solver speed. At 1280Ã—720 the generic
+  LEAVE button's x=776..862 design rect overlaps the Coin Pusher console-title
+  region for Quarter Falls, Jackpot Ridge, and Vault Drop; a production layout
+  assertion is missing. Reduced-motion replay also becomes inactive before the
+  snapshot sync observes an active action, which can suppress terminal
+  impact/tray/gutter/alarm audio. Reposition and guard the affordances, and prove
+  reduced-motion actions still emit snapshot-driven audio while visuals freeze.
+- 2026-08-17 [pusher06_2 kernel parity] Static comparison found native phase
+  publication diverging from the GDScript oracle. Native unconditionally adds
+  or normalizes both phase keys, while the reference preserves a missing or
+  non-integer phase when that pusher is locked and no phase was captured. Keep
+  normalized locals for geometry/trace, publish only under the reference
+  conditions, and add exact locked missing/non-integer phase fixtures across
+  reference, forced GDScript, and native paths.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1203,3 +1218,9 @@ What happens then is the owner's, not an agent's:
 - 2026-08-17 [pusher06_2] Public native helper arithmetic also needs a
   reject-before-mutation numeric contract for signed division and aim/nudge
   extrema; hostile coverage is required before runtime acceptance.
+- 2026-08-17 [pusher06_2] Closeout trace review returned overlapping LEAVE/title
+  layout and missing reduced-motion action-audio coverage. The presentation and
+  audio contract remains binding alongside native performance.
+- 2026-08-17 [pusher06_2] Native locked-phase publication also differs from the
+  reference solver; exact missing/non-integer locked-state fixtures and a
+  conditional write repair are required before backend acceptance.
