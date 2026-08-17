@@ -660,6 +660,15 @@ What happens then is the owner's, not an agent's:
   unnecessary surface builds. Closing, forced-travel, unavoidable short-circuit
   order and same-length direct-content replacement invalidation also require
   behavioral coverage. The branch is not accepted or integrated.
+- 2026-08-17 [pusher06_2 interrupt fast-path acceptance] After two returned
+  revisions, the isolated interrupt correction is independently ACCEPTED and
+  integrated through `cd2f39ef`. Ordered action/heat/table candidate indexes
+  preserve authored order/RNG while the real quiet dense outer path proves zero
+  candidate visits, cadence RNG create/save calls, surface construction, deep
+  result snapshots, and index rebuilds. Eligible timed actions prove exact one-
+  candidate/one-RNG behavior; same-length content replacement and explicit
+  in-place rebuild each prove exactly one index scan. PM's sole profiling/counter
+  merge conflict was corrected so counters remain outside measured helper spans.
 - 2026-08-17 [pusher06_2 presentation gaps] Independent static review ACCEPTS
   all three corrections after returning float quota math and two false-positive
   tests. Opening generation uses integer-only deterministic per-shelf quotas
