@@ -14,6 +14,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "foundation_systems_shards.ps1")
 $suiteKey = $Suite.ToLowerInvariant()
 $foundationSuiteKey = $FoundationSuite.Trim().ToLowerInvariant()
 $validFoundationSuites = @(
@@ -469,7 +470,7 @@ function Write-TestSummary {
     $failed = @($script:StageResults | Where-Object { $_.exit_code -ne 0 })
     $stages = @()
     foreach ($stage in $script:StageResults) {
-        $stages += [ordered]@{
+        $stageSummary = [ordered]@{
             name = $stage.name
             command = $stage.command
             arguments = @($stage.arguments)
@@ -486,6 +487,13 @@ function Write-TestSummary {
             stderr = $stage.stderr
             error = $stage.error
         }
+        if ($null -ne $stage.PSObject.Properties["foundation_report"]) {
+            $stageSummary["foundation_report"] = $stage.foundation_report
+        }
+        if ($null -ne $stage.PSObject.Properties["shards"]) {
+            $stageSummary["shards"] = @($stage.shards)
+        }
+        $stages += $stageSummary
     }
     $summary = @{
         tool = "check_godot"
@@ -563,6 +571,252 @@ function Invoke-FoundationSuite {
     Invoke-GodotScript -Name ("foundation_{0}" -f $FoundationSuite) -ScriptPath (Get-FoundationSplitRunnerPath) -UserArgs @("--suite=$FoundationSuite", "--report=$report") -StageTimeoutSec $StageTimeoutSec
 }
 
+function Enter-CheckGodotWorkspaceMutex {
+    if ($AllowConcurrentGodot) {
+        return
+    }
+    $rootBytes = [System.Text.Encoding]::UTF8.GetBytes(([System.IO.Path]::GetFullPath($root)).ToLowerInvariant())
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $hash = ([System.BitConverter]::ToString($sha.ComputeHash($rootBytes))).Replace("-", "").Substring(0, 24)
+    }
+    finally {
+        $sha.Dispose()
+    }
+    $mutex = New-Object System.Threading.Mutex($false, "Local\BeatTheHouse_CheckGodot_$hash")
+    $acquired = $false
+    try {
+        $acquired = $mutex.WaitOne(0)
+    }
+    catch [System.Threading.AbandonedMutexException] {
+        $acquired = $true
+    }
+    if (-not $acquired) {
+        $mutex.Dispose()
+        throw "Another check_godot process already owns the workspace test lock."
+    }
+    $script:CheckGodotWorkspaceMutex = $mutex
+}
+
+function Get-ProjectCacheWriteState {
+    $cacheRoot = Join-Path $root ".godot"
+    if (-not (Test-Path -LiteralPath $cacheRoot)) {
+        return @()
+    }
+    return @(Get-ChildItem -LiteralPath $cacheRoot -Recurse -File -ErrorAction Stop | Sort-Object FullName | ForEach-Object {
+        "{0}|{1}|{2}" -f (Get-ProjectRelativePath $_.FullName), $_.Length, $_.LastWriteTimeUtc.Ticks
+    })
+}
+
+function Get-FoundationLastStartedCheck {
+    param([string]$StdoutText)
+    $matches = [regex]::Matches($StdoutText, 'FOUNDATION_CHECK_START id=([^\s]+)')
+    if ($matches.Count -eq 0) {
+        return ""
+    }
+    return [string]$matches[$matches.Count - 1].Groups[1].Value
+}
+
+function Invoke-FoundationSystemsSharded {
+    param([int]$StageTimeoutSec = 0)
+    $name = "foundation_systems"
+    $timeout = if ($StageTimeoutSec -gt 0) { $StageTimeoutSec } else { Get-StageTimeout $name }
+    $expectedIds = Get-FoundationSystemsCheckIds
+    $plan = Get-FoundationSystemsShardPlan
+    $planCheck = Test-FoundationSystemsShardPlan -ExpectedIds $expectedIds -Shards $plan
+    if (-not $planCheck.valid) {
+        throw "Invalid foundation systems shard plan: $(@($planCheck.errors) -join ' | ')"
+    }
+
+    # Generate the composite source once. Children only read it.
+    $runnerPath = Get-FoundationSplitRunnerPath
+    $cacheBefore = Get-ProjectCacheWriteState
+    $records = New-Object System.Collections.Generic.List[object]
+    $wall = [System.Diagnostics.Stopwatch]::StartNew()
+    foreach ($shardIdValue in $plan.Keys) {
+        $shardId = [string]$shardIdValue
+        $safeShardId = $shardId -replace "[^A-Za-z0-9_.-]", "_"
+        $reportFile = "foundation_systems.$safeShardId.json"
+        $reportPath = Join-Path $script:ReportRoot $reportFile
+        $stdoutPath = Join-Path $script:ReportRoot ("foundation_systems.$safeShardId.stdout.txt")
+        $stderrPath = Join-Path $script:ReportRoot ("foundation_systems.$safeShardId.stderr.txt")
+        $logPath = Join-Path $script:ReportRoot ("foundation_systems.$safeShardId.godot.log")
+        $userRoot = Join-Path $script:ReportRoot ("user_data\$safeShardId")
+        New-Item -ItemType Directory -Force -Path $userRoot | Out-Null
+        Remove-Item -LiteralPath $reportPath -Force -ErrorAction SilentlyContinue
+        $resourceReport = Convert-ReportResourcePath $reportFile
+        $checkIds = @($plan[$shardId])
+        $arguments = @(
+            "--headless", "--path", $root,
+            "--log-file", $logPath,
+            "--script", $runnerPath,
+            "--",
+            "--suite=systems",
+            "--report=$resourceReport",
+            "--check-ids=$($checkIds -join ',')"
+        )
+        $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+        $startInfo.FileName = $script:Godot
+        $startInfo.UseShellExecute = $false
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+        $startInfo.CreateNoWindow = $true
+        $startInfo.EnvironmentVariables["APPDATA"] = $userRoot
+        $startInfo.EnvironmentVariables["LOCALAPPDATA"] = $userRoot
+        $startInfo.EnvironmentVariables["XDG_DATA_HOME"] = $userRoot
+        if ($null -ne $startInfo.ArgumentList) {
+            foreach ($argument in $arguments) {
+                [void]$startInfo.ArgumentList.Add($argument)
+            }
+        }
+        else {
+            $startInfo.Arguments = Join-ProcessArguments -Arguments $arguments
+        }
+        $process = New-Object System.Diagnostics.Process
+        $process.StartInfo = $startInfo
+        [void]$process.Start()
+        $records.Add([pscustomobject]@{
+            shard_id = $shardId
+            expected_check_ids = $checkIds
+            process = $process
+            stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+            stdout_task = $process.StandardOutput.ReadToEndAsync()
+            stderr_task = $process.StandardError.ReadToEndAsync()
+            report_path = $reportPath
+            stdout_path = $stdoutPath
+            stderr_path = $stderrPath
+            arguments = $arguments
+            timed_out = $false
+        })
+    }
+
+    $timedOut = $false
+    while (@($records | Where-Object { -not $_.process.HasExited }).Count -gt 0) {
+        if ($wall.Elapsed.TotalSeconds -ge $timeout) {
+            $timedOut = $true
+            foreach ($record in $records) {
+                if (-not $record.process.HasExited) {
+                    $record.timed_out = $true
+                    Stop-Process -Id $record.process.Id -Force -ErrorAction SilentlyContinue
+                }
+            }
+            break
+        }
+        Start-Sleep -Milliseconds 25
+    }
+
+    $shardResults = @()
+    $combinedStdout = New-Object System.Text.StringBuilder
+    $combinedStderr = New-Object System.Text.StringBuilder
+    foreach ($record in $records) {
+        $record.process.WaitForExit()
+        $record.stopwatch.Stop()
+        $record.stdout_task.Wait(5000) | Out-Null
+        $record.stderr_task.Wait(5000) | Out-Null
+        $stdoutText = [string]$record.stdout_task.Result
+        $stderrText = [string]$record.stderr_task.Result
+        [System.IO.File]::WriteAllText($record.stdout_path, $stdoutText)
+        [System.IO.File]::WriteAllText($record.stderr_path, $stderrText)
+        [void]$combinedStdout.AppendLine(("--- shard {0} ---" -f $record.shard_id))
+        [void]$combinedStdout.Append($stdoutText)
+        [void]$combinedStderr.AppendLine(("--- shard {0} ---" -f $record.shard_id))
+        [void]$combinedStderr.Append($stderrText)
+        $stderrIssues = @($stderrText -split "`r?`n" | Where-Object { $_ -match '^\s*(SCRIPT ERROR|ERROR|WARNING):' })
+        $exitCode = if ($record.timed_out) { 124 } else { [int]$record.process.ExitCode }
+        if ($exitCode -eq 0 -and $stderrIssues.Count -gt 0) {
+            $exitCode = 127
+        }
+        $report = $null
+        if (Test-Path -LiteralPath $record.report_path) {
+            try {
+                $report = Get-Content -LiteralPath $record.report_path -Raw | ConvertFrom-Json
+            }
+            catch {
+                $report = $null
+            }
+        }
+        $shardResults += [pscustomobject]@{
+            shard_id = $record.shard_id
+            expected_check_ids = @($record.expected_check_ids)
+            exit_code = $exitCode
+            timed_out = [bool]$record.timed_out
+            duration_msec = [int]$record.stopwatch.ElapsedMilliseconds
+            report = $report
+            report_path = $record.report_path
+            stdout_path = $record.stdout_path
+            stderr_path = $record.stderr_path
+            stderr_issues = $stderrIssues
+            last_started_check = Get-FoundationLastStartedCheck -StdoutText $stdoutText
+        }
+    }
+    $wall.Stop()
+    $stdout = Join-Path $script:ReportRoot "foundation_systems.stdout.txt"
+    $stderr = Join-Path $script:ReportRoot "foundation_systems.stderr.txt"
+    [System.IO.File]::WriteAllText($stdout, $combinedStdout.ToString())
+    [System.IO.File]::WriteAllText($stderr, $combinedStderr.ToString())
+
+    $merged = Merge-FoundationSystemsShardReports -ExpectedIds $expectedIds -ShardResults $shardResults
+    $aggregateReport = $merged.report
+    $aggregateReport.duration_msec = [int]$wall.ElapsedMilliseconds
+    if (($cacheBefore -join "`n") -ne ((Get-ProjectCacheWriteState) -join "`n")) {
+        $aggregateReport.failures += "Concurrent systems shards changed the shared .godot cache after the parent import."
+        $aggregateReport.failure_count = @($aggregateReport.failures).Count
+        $aggregateReport.passed = $false
+    }
+    $reportPath = Join-Path $script:ReportRoot "foundation_systems.json"
+    $aggregateReport | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $reportPath
+
+    $baseline = Get-FoundationSuiteStageBaselineSec $name
+    $budget = [Math]::Round($baseline * $FoundationSuiteBudgetMultiplier, 3)
+    $budgetExceeded = ($budget -gt 0.0 -and $wall.Elapsed.TotalSeconds -gt $budget)
+    $exitCode = if ($timedOut) { 124 } elseif (-not [bool]$aggregateReport.passed) { 1 } else { 0 }
+    if (-not $timedOut -and @($shardResults | Where-Object { $_.exit_code -eq 127 }).Count -gt 0) {
+        $exitCode = 127
+    }
+    if ($budgetExceeded -and $exitCode -eq 0) {
+        $exitCode = 126
+    }
+    $errorText = ""
+    if ($timedOut) {
+        $errorText = "Foundation systems shards exceeded the $timeout second timeout."
+    }
+    elseif (-not [bool]$aggregateReport.passed) {
+        $errorText = @($aggregateReport.failures) -join " | "
+    }
+    if ($budgetExceeded) {
+        $budgetError = ("Stage {0} took {1:N3}s, exceeding the S0.1 suite-time budget {2:N3}s (baseline {3:N3}s * {4:N2})." -f $name, $wall.Elapsed.TotalSeconds, $budget, $baseline, $FoundationSuiteBudgetMultiplier)
+        $errorText = if ([string]::IsNullOrWhiteSpace($errorText)) { $budgetError } else { "$errorText $budgetError" }
+    }
+    $allStderrIssues = @($shardResults | ForEach-Object { @($_.stderr_issues) })
+    $result = [pscustomobject][ordered]@{
+        name = $name
+        command = $script:Godot
+        arguments = @("four deterministic systems shards")
+        exit_code = $exitCode
+        timed_out = $timedOut
+        duration_msec = [int]$wall.ElapsedMilliseconds
+        duration_sec = [Math]::Round($wall.Elapsed.TotalSeconds, 3)
+        suite_time_baseline_sec = $baseline
+        suite_time_budget_sec = $budget
+        suite_time_budget_exceeded = $budgetExceeded
+        stderr_issue_count = $allStderrIssues.Count
+        stderr_issues = $allStderrIssues
+        stdout = $stdout
+        stderr = $stderr
+        error = $errorText
+        foundation_report = $reportPath
+        shards = @($aggregateReport.shards)
+    }
+    $script:StageResults.Add($result)
+    $status = if ($exitCode -eq 0) { "PASS" } elseif ($timedOut) { "TIMEOUT" } else { "FAIL" }
+    Write-Host ("{0,-28} {1,7} {2,8}ms" -f $name, $status, [int]$wall.ElapsedMilliseconds)
+    if ($exitCode -ne 0 -and -not $KeepGoing) {
+        Write-TestSummary
+        exit $exitCode
+    }
+    return $exitCode -eq 0
+}
+
 function Invoke-FoundationPerfSmoke {
     $oldRuns = $env:BTH_PERF_RUNS
     $oldFrames = $env:BTH_PERF_FRAMES
@@ -604,6 +858,7 @@ function Invoke-ExhaustiveParse {
 }
 
 $powerShellExe = (Get-Command powershell -ErrorAction Stop).Source
+Enter-CheckGodotWorkspaceMutex
 Invoke-ProcessStage -Name "validate_project" -FilePath $powerShellExe -Arguments @("-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "validate_project.ps1"), "-Quiet") -StageTimeoutSec 120 | Out-Null
 
 $script:Godot = Find-Godot
@@ -635,6 +890,9 @@ if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
         Invoke-GodotScript -Name "inventory_spatial_ui" -ScriptPath "res://scripts/tests/inventory_spatial_ui_check.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "inventory_spatial_main_integration" -ScriptPath "res://scripts/tests/inventory_spatial_main_integration_check.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "ui05_design_system" -ScriptPath "res://scripts/tests/ui05_design_system_check.gd" -StageTimeoutSec 120
+    }
+    elseif ($foundationSuiteKey -eq "systems") {
+        Invoke-FoundationSystemsSharded -StageTimeoutSec (Get-StageTimeout "foundation_systems") | Out-Null
     }
     else {
         Invoke-FoundationSuite -FoundationSuite $foundationSuiteKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey))
