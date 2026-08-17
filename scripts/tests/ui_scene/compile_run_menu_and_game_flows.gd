@@ -4,6 +4,125 @@ const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 
 
+class EmbeddedCoachFixtureGame:
+	extends GameModule
+
+	var serial := 0
+
+	func _init() -> void:
+		definition = {
+			"id": "ui_embedded_coach_fixture", "display_name": "UI Embedded Coach Fixture", "family": "slot",
+			"legal_actions": [{"id": "fixture_action", "label": "Act", "min_stake": 1}], "cheat_actions": [],
+		}
+
+	func wager_cost_for_context(_action_id: String, _stake: int, _run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+		return 0
+
+	func resolve_with_context(_action_id: String, _stake: int, _run_state: RunState, environment: Dictionary, _rng: RngStream, _ui_state: Dictionary = {}) -> Dictionary:
+		serial += 1
+		var deltas := GameModule.empty_result_deltas()
+		deltas["messages"] = ["Deferred coach fixture completed."]
+		var result := GameModule.build_action_result({
+			"ok": true, "source_id": get_id(), "game_id": get_id(), "action_id": "fixture_action", "action_kind": "legal",
+			"stake": 0, "environment_id": str(environment.get("id", "")), "deltas": deltas,
+			"message": "Deferred coach fixture completed.",
+		})
+		result["host_apply_result"] = false
+		result["preserve_surface_ui_state"] = true
+		return result
+
+	func surface_state(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
+		return {
+			"game_id": get_id(), "surface_renderer": "slot_machine", "surface_life": "static",
+			"surface_cast": "machine", "surface_embeds_outcomes": true, "runtime_serial": serial,
+		}
+
+	func surface_action_command(surface_action: String, _index: int, _confirm_requested: bool, ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
+		if surface_action != "fixture_complete":
+			return {"handled": false}
+		return GameModule.surface_command({
+			"ui_state": ui_state.duplicate(true), "action_id": "fixture_action", "action_kind": "legal",
+			"resolve": true, "direct_resolve": true, "skip_stake_validation": true,
+			"preserve_surface_ui_state": true,
+		})
+
+
+class EmbeddedCoachProbeHost:
+	extends FoundationMain
+
+	var coach_schedule_count := 0
+	var coach_boundary_calls: Array = []
+
+	func _schedule_game_coach_refresh_after_draw() -> void:
+		coach_schedule_count += 1
+		super._schedule_game_coach_refresh_after_draw()
+
+	func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false) -> void:
+		coach_boundary_calls.append(surface_transition_wait_satisfied)
+		super._refresh_coach_at_boundary(surface_transition_wait_satisfied)
+
+
+func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
+	var probe: Control = EmbeddedCoachProbeHost.new()
+	probe.set("continuous_environment_clock_enabled", false)
+	root.add_child(probe)
+	await process_frame
+	await process_frame
+	if not bool(probe.call("uses_foundation_runtime")):
+		push_error("Embedded coach probe could not initialize FoundationMain runtime nodes.")
+		probe.queue_free()
+		await process_frame
+		return false
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("UI-EMBEDDED-DEFERRED-COACH")
+	run_state.set_environment({
+		"id": "ui_embedded_coach_room", "display_name": "Embedded Coach Room", "archetype_id": "bar", "kind": "casino",
+		"economic_profile": {"stake_floor": 1, "stake_ceiling": 5},
+		"game_ids": [], "event_ids": [], "item_offers": [], "travel_hooks": [], "next_archetypes": [], "lender_hooks": [], "game_states": {},
+	})
+	var fixture_game := EmbeddedCoachFixtureGame.new()
+	probe.set("dev_game_test_mode", true)
+	probe.set("run_state", run_state)
+	probe.set("current_game", fixture_game)
+	probe.set("game_surface_ui_state", {})
+	probe.call("_set_current_screen", "GAME")
+	probe.call("_refresh_after_game_selection")
+	var settle_frames := 0
+	while bool(probe.get("game_coach_refresh_scheduled")) and settle_frames < 16:
+		settle_frames += 1
+		await process_frame
+	if bool(probe.get("game_coach_refresh_scheduled")):
+		push_error("Embedded coach probe's initial post-draw callback did not settle.")
+		probe.queue_free()
+		await process_frame
+		return false
+	probe.set("coach_schedule_count", 0)
+	(probe.get("coach_boundary_calls") as Array).clear()
+	var canvas: Control = probe.get("game_surface_canvas")
+	if canvas == null:
+		push_error("Embedded coach probe did not own a GameSurfaceCanvas.")
+		probe.queue_free()
+		await process_frame
+		return false
+	canvas.emit_signal("surface_action", "fixture_complete", 0, false)
+	var armed_after_action := bool(probe.get("game_coach_refresh_scheduled"))
+	var action_schedule_count := int(probe.get("coach_schedule_count"))
+	var action_frames := 0
+	while bool(probe.get("game_coach_refresh_scheduled")) and action_frames < 16:
+		action_frames += 1
+		await process_frame
+	var boundary_calls: Array = probe.get("coach_boundary_calls")
+	var passed := armed_after_action \
+			and action_schedule_count == 1 \
+			and not bool(probe.get("game_coach_refresh_scheduled")) \
+			and boundary_calls == [false, true]
+	if not passed:
+		push_error("Completed embedded action did not execute its real deferred coach callback: armed=%s schedules=%d frames=%d calls=%s." % [str(armed_after_action), action_schedule_count, action_frames, JSON.stringify(boundary_calls)])
+	probe.queue_free()
+	await process_frame
+	return passed
+
+
 func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	var profile: ProfileInventory = app.get("profile_inventory")
 	var save_service: SaveService = app.get("save_service")

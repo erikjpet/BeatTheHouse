@@ -236,6 +236,11 @@ func _check_presented_bankroll_waits_for_result_reveal(_app: Control) -> bool:
 	return false
 
 
+func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_embedded_refresh_deferred_coach")
+	return false
+
+
 func _check_background_slot_autoplay_isolated_from_active_game(_app: Control) -> bool:
 	_missing_descendant_fixture("_check_background_slot_autoplay_isolated_from_active_game")
 	return false
@@ -2726,6 +2731,9 @@ func _run() -> void:
 		return
 	if not app.has_method("uses_foundation_runtime") or not bool(app.call("uses_foundation_runtime")):
 		push_error("Foundation UI shell did not initialize the README runtime contracts.")
+		quit(1)
+		return
+	if not await _check_embedded_refresh_deferred_coach(app):
 		quit(1)
 		return
 	if app.get("start_screen") == null:
