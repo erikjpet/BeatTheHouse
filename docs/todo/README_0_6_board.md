@@ -274,6 +274,25 @@ What happens then is the owner's, not an agent's:
   all 235 generated contexts, 11 games, seven hooks, hostile fixtures, and
   per-hook canonical before/after assertions. No budget or registration changes
   are authorized.
+- 2026-08-17 [fix06_2] Runtime validation of the optimized activation guard
+  exposed a test-harness aliasing fault, not 168 production mutations:
+  `RunState.from_dict` can retain nested references from its input, and the
+  parsed JSON graph also has parser-normalized bytes distinct from canonical
+  `RunState.to_dict` bytes. Each of the seven hook fixtures now receives a deep
+  copy of the parsed graph. Canonical hook outputs still compare exactly to the
+  original RunState JSON, while parsed-source immutability compares exactly to
+  a baseline captured immediately after parse. A hostile nested-alias fixture,
+  the nonserialized-meta masking fixture, and byte-order fixture permanently
+  guard all three invariants; no contexts, hooks, budgets, or registrations
+  changed.
+- 2026-08-17 [pusher06_2] Opt-in phase profiling isolated the packed solver's
+  actual blocker at the unchanged 160-body/48-tick fixture: collision traversal
+  consumes 57.72% and support traversal 20.64% of raw solver mean, versus grid
+  rebuild 3.97%, writeback 0.07%, and collision-visited setup below 0.01%.
+  Production drop/nudge remain 295.995/356.338 ms against the 16 ms gate. The
+  next root pass therefore caches the frozen-grid candidate order once per tick
+  and flattens collision/support hot loops; exact oracle order, trace, density,
+  outcomes, and synchronous semantics remain binding.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
