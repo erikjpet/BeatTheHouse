@@ -162,7 +162,7 @@ func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:
 	]
 	var rollover_config := {
 		"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true,
-		"_debug_hot_grid_generation": CoinPusherSolverScript.HOT_CACHE_GENERATION_MAX - 1,
+		"_debug_hot_grid_generation": 2147483646,
 	}
 	if not CoinPusherSolverScript.hot_state_eligible_for_test(generation_rollover, rollover_config):
 		failures.append("Packed Coin Pusher generation-rollover oracle did not exercise the production hot path.")
