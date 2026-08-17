@@ -348,8 +348,23 @@ What happens then is the owner's, not an agent's:
   once; all four raw shard exits and stderr streams were clean; and private
   shard projects were fully removed. The hardened launcher and its behavioral
   mutex, partial-child, junction-cleanup, exception, and accounting contracts
-  were merged to main in `5a967b75`; final combined-tree verification is in
-  progress.
+  were merged to main in `5a967b75`.
+- 2026-08-17 [systems gate] Combined-main verification then exposed two
+  environment-sensitive harness defects that the isolated worktree did not.
+  The shard copier recursively traversed mutable `.godot/shader_cache`, so a
+  disappearing Vulkan cache file could abort setup; after that was removed,
+  the post-cleanup parent-cache sentinel ran through `GetNewClosure()` and
+  could not resolve its script-local fingerprint helper. Commits `6696bf9e`
+  and `e28c67a5` now copy only physically private `imported` data plus required
+  stable root metadata, never traverse volatile cache siblings, and exercise
+  the cleanup sentinel in its real scope with clean and mutation-fail-closed
+  behavioral controls.
+- 2026-08-17 [systems gate] Final combined-main verification at `e28c67a5`
+  passed in 40.211 s against the unchanged 43.712 s budget. All 49 registered,
+  requested, and executed checks are unique and canonical; all four shards
+  exited zero with no stderr or timeout; private projects were removed; and no
+  Godot process remained. Artifact:
+  `.tmp/test_reports/20260817_pm_postmerge_systems_e28c67a5/summary.json`.
 - 2026-08-17 [integrated UI] The UI gate currently stops before assertions
   because `New-SplitTestRunner` concatenates descendant implementations with a
   contiguous parent-only fallback-stub block, producing duplicate function
@@ -375,6 +390,15 @@ What happens then is the owner's, not an agent's:
   `.tmp/test_reports/20260817_042700_pm_integrated_ui_crew_fixed`: 0 failures;
   `ui_scene_compile` 58.029 s versus the unchanged 124.851 s budget, with all
   import/load/auxiliary UI stages green and no stderr issues.
+- 2026-08-17 [fix06_2] Independent scope audit accepted the Street/Grand Craps,
+  seven-hook cold JSON-restored guard, staff-generation, portable-ticket, and
+  autosave repairs, but found one remaining activation-class defect: a saved
+  Slot fixture carrying `slot_animation_resume_elapsed_msec` erases that
+  durable checkpoint and writes `slot_animation_started_msec` from wall-clock
+  time during passive `enter()`. Generated fixtures did not carry the checkpoint,
+  so the current guard missed it. The row remains IN_PROGRESS for a transient
+  resume projection plus an exact-byte cold saved-slot hostile; the field may
+  not be exempted or normalized before the baseline.
 - 2026-08-17 [pusher06_2] Exact runtime at `4159f393` is green across the 80
   carried hot actions and all hostile/fallback twins. Raw p95 improved 43.9%
   from 283.293 to 159.000 ms, but remains 9.94x over the 16 ms gate; production
@@ -1041,3 +1065,14 @@ What happens then is the owner's, not an agent's:
   timeouts, last-started diagnostics, cleanup failures, and cleanup wall time
   remain fail-closed. This removes the harness-only release-gate bottleneck;
   combined-main verification remains the final acceptance authority.
+- 2026-08-17 [systems gate] Combined-main acceptance is green at `e28c67a5`:
+  40.211 s / 43.712 s, 49/49 unique checks, four clean shards, zero failures,
+  and complete private-project cleanup. The live reruns also removed volatile
+  cache traversal (`6696bf9e`) and repaired cleanup-callback scope
+  (`e28c67a5`) under behavioral fail-closed tests; no assertion, registration,
+  seed, timeout, or budget changed.
+- 2026-08-17 [fix06_2] PM scope audit returned the row for one final cold-save
+  correction: passive Slot entry currently consumes a saved animation resume
+  checkpoint and writes wall-clock-derived serialized state. An isolated agent
+  is moving that projection to transient UI state and adding the missing cold
+  JSON-restored hostile before the complete gate matrix reruns.
