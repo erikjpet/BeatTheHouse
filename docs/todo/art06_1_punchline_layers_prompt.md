@@ -1,16 +1,60 @@
-Status: IN_PROGRESS
-Board row: `art06_1` in `docs/todo/README_0_6_board.md`
+Status: CLOSED — FALSE PREMISE (owner-side finding, 2026-08-16)
 
-## Execution Record (fill on completion)
+## STOP — do not execute this prompt
 
-- **Completed:** —
-- **Completion/implementation commits:** `4b7a21f1` (asset pass; acceptance repair pending)
-- **Verification:** PM acceptance reopened: registered raster paths are not yet
-  consumed by the normal in-run Punchline renderer, so real-room visibility is
-  not proven. Prior UI/visual artifacts remain supporting evidence only.
-- **Deviations:** A concurrent branch marked this row complete before PM
-  acceptance. Root PM restored the row and prompt to active state; the generic
-  runtime renderer seam and final integrated gates remain required.
+**This task was authored on a wrong assumption and its objective was
+already satisfied before it was written.** Do not build the renderer
+seam it appears to ask for. Read this block, then stop.
+
+Verified against code on 2026-08-16:
+
+1. **No environment in this game renders from a raster.**
+   `scripts/ui/pixel_scene_canvas.gd` draws every venue
+   procedurally through a `scene_type` dispatch (`_draw_bar`,
+   `_draw_underground`, `_draw_jazz_club`, …). There is no
+   raster-background load path anywhere in `scripts/ui/`. The
+   `visual_context.asset_path` field is metadata the scene canvas
+   never consumes.
+2. **The Punchline already has three distinct procedural rooms.**
+   `_draw_punchline_club()` (line ~1236) and
+   `_draw_punchline_back_room()` (line ~1269) exist and are already
+   dispatched. The club draws a brick back wall, a stage with mic
+   stand and spotlight, a "THE PUNCHLINE" neon, two-drink tables
+   with patron silhouettes, and one deliberately unremarkable side
+   door — **no gambling signifier**, which was the design point.
+3. **Detail is at parity with shipped venues.** Club ≈ 27 lines,
+   back room ≈ 22, against `_draw_bar` ≈ 26 and `_draw_underground`
+   ≈ 26. It is not a placeholder.
+
+**Therefore the reported blocker is not a defect.** "In-run rendering
+uses procedural rooms rather than the registered rasters" describes
+the architecture working as designed, for every venue in the game.
+The agent was right to refuse to patch the UI seam under this
+prompt's ownership rules — that judgment was correct and is the
+reason nothing was broken.
+
+**Root cause of the confusion:** `env06_4`'s art-debt note said L1/L3
+"reuse the underground raster beneath distinct code-rendered club and
+back-room scenes." True but misleading — the reused thing (rasters)
+is never rendered, and the thing that is rendered (the code scenes)
+was already distinct and complete. This prompt then compounded it by
+assuming raster art drives environment visuals. That assumption was
+the author's error, not the executing agent's.
+
+**Disposition:**
+- Close the board row. No further work.
+- `punchline_club.png` and `punchline_back_room.png` are unconsumed
+  by the renderer. Keep them: as `visual_context` metadata they are
+  strictly more accurate than the previous underground-raster
+  pointers, and they are ready if a raster path is ever added. Record
+  them as metadata-only so nobody re-litigates this.
+- If the procedural Punchline rooms are ever judged visually weak,
+  that is a **new, scoped row against the draw functions** — not a
+  rendering-architecture change.
+
+## Original prompt below — retained for the record, NOT for execution
+
+---
 
 # Agent Prompt — art06_1: The Punchline's Missing Rooms
 
