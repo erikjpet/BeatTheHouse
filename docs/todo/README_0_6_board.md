@@ -135,9 +135,9 @@ stated in each prompt** — `events.json` in particular is shared, and
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| teach06_1 | `teach06_1_onboarding_prompt.md` | TODO | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | | | | All 56 shipped lessons teach 0.5 content only; zero cover crew, delivery, Numbers, pushers, craps, or Punchline layers. Must NOT teach discovery-gated systems (past-posting, crew fix, the Turn, hidden layers). |
-| env06_5 | `env06_5_scenario_backlog_prompt.md` | TODO | env06_1/2/3 (DONE) | playtest variety | | | | 13 backlog scenarios from the roadmap catalog. Owns `scenarios.json`; may only add `scenario_`-prefixed events to `events.json`. |
-| art06_1 | `art06_1_punchline_layers_prompt.md` | DONE | env06_4 (DONE) | — | Codex/art06_1 | 2026-08-16 | 2026-08-16 | Dedicated 900x430 L1/L3 rasters, exact manifest/visual-context wiring, no-gambling L1 audit, reserved-footprint evidence, Open Mic/Headliner overlays, UI, and canonical visual QA PASS; baseline L2/layout findings unchanged. |
+| teach06_1 | `teach06_1_onboarding_prompt.md` | IN_PROGRESS | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | PM:Codex/sub:teach-audit | 2026-08-16 | | PM-supervised repair and acceptance; subagent owns implementation only, PM owns board, archival, integration, and push. |
+| env06_5 | `env06_5_scenario_backlog_prompt.md` | IN_PROGRESS | env06_1/2/3 (DONE) | playtest variety | PM:Codex/sub:env-audit | 2026-08-16 | | PM-supervised repair and acceptance; `scenarios.json` ownership and `scenario_` event prefix remain binding. |
+| art06_1 | `art06_1_punchline_layers_prompt.md` | IN_PROGRESS | env06_4 (DONE) | — | PM:Codex/sub:art-repair | 2026-08-16 | | PM acceptance reopened: assets are registered but normal in-run Punchline rendering does not yet consume their paths; runtime visibility and integrated gates remain. |
 
 ### Wave D — Crew depth
 
@@ -754,3 +754,8 @@ What happens then is the owner's, not an agent's:
   Open Mic/Headliner presentation, full UI, and canonical visual QA pass.
   Systems assertions are zero-failure; final wall-time acceptance is serialized
   by PM because three concurrent Godot worktrees exceeded the unchanged budget.
+- 2026-08-16 [concurrency correction] Root PM mirrored active `env06_5` and
+  `teach06_1` execution onto the authoritative board. `art06_1` was reopened
+  after independent acceptance found that its registered L1/L3 raster paths
+  are not consumed by the normal in-run Punchline renderer; the prior DONE
+  record is retained above as history, not accepted closure.
