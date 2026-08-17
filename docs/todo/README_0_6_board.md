@@ -1478,3 +1478,10 @@ What happens then is the owner's, not an agent's:
   normalization and its internal marker must remain behavior-identical and
   non-serializing; exact current-schema piles retain the scan-free path. No
   compatibility assertion is waived.
+- 2026-08-17 [pusher06_2] Sparse/native parity, packed-metadata isolation, the
+  internal-marker hostile, Contracts, repaired UI, and focused Coin gates are
+  green on the combined tree. The independent strict probe remains red without
+  waiver at 16.439 ms Drop and 16.652 ms collapse Nudge versus 16.000 ms;
+  raw native p95 is 8.938 ms, draw p95 is 4.120/4.013 ms, frame p95 is
+  6.914/6.916 ms, 14 replay frames and zero full snapshots are intact. Final
+  root work is limited to output-identical native result/host boundary costs.
