@@ -156,6 +156,7 @@ class HotGrid:
 	var next := PackedInt32Array()
 	var touched := PackedInt32Array()
 	var overflow: Dictionary = {}
+	var candidate_cache: Dictionary = {}
 
 	func _init() -> void:
 		head.resize(CoinPusherSolver.HOT_GRID_KEY_CAPACITY)
@@ -165,6 +166,7 @@ class HotGrid:
 			head[int(key)] = 0
 		touched.clear()
 		overflow.clear()
+		candidate_cache.clear()
 		next.resize(hot.size())
 		for index in range(hot.size() - 1, -1, -1):
 			var key := CoinPusherSolver._bucket_key(
@@ -181,6 +183,39 @@ class HotGrid:
 				touched.append(key)
 			next[index] = head[key]
 			head[key] = index + 1
+
+	func prime_candidate_centers(hot: HotBodies) -> void:
+		# Most bodies retain their post-integration cell through collision
+		# resolution. Prime those frozen-grid neighborhoods once; a body pushed
+		# across a cell boundary is handled lazily by the same center-key cache.
+		for index in range(hot.size()):
+			candidate_indices(
+				CoinPusherSolver._divi(hot.x[index], CoinPusherSolver.BROADPHASE_CELL),
+				CoinPusherSolver._divi(hot.y[index], CoinPusherSolver.BROADPHASE_CELL),
+				CoinPusherSolver._divi(hot.z[index], CoinPusherSolver.BROADPHASE_CELL)
+			)
+
+	func candidate_indices(center_x: int, center_y: int, center_z: int) -> PackedInt32Array:
+		var center_key := CoinPusherSolver._bucket_key(center_x, center_y, center_z)
+		var cached: Variant = candidate_cache.get(center_key, null)
+		if typeof(cached) == TYPE_PACKED_INT32_ARRAY:
+			return cached as PackedInt32Array
+		var result := PackedInt32Array()
+		for z_offset in range(-1, 2):
+			for y_offset in range(-1, 2):
+				for x_offset in range(-1, 2):
+					var key := CoinPusherSolver._bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset)
+					if key < 0 or key >= head.size():
+						for overflow_index in overflow.get(key, []):
+							result.append(int(overflow_index))
+						continue
+					var encoded_index := head[key]
+					while encoded_index != 0:
+						var index := encoded_index - 1
+						result.append(index)
+						encoded_index = next[index]
+		candidate_cache[center_key] = result
+		return result
 
 
 static func public_contract() -> Dictionary:
@@ -497,6 +532,7 @@ static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionar
 			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
 			var awake_indices := _hot_awake_indices(hot)
 			hot_grid.rebuild(hot)
+			hot_grid.prime_candidate_centers(hot)
 			if debug_profile_stages:
 				debug_stage_timing_usec["grid"] = int(debug_stage_timing_usec.get("grid", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
 			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
@@ -738,145 +774,168 @@ static func _hot_resolve_collisions(hot: HotBodies, grid: HotGrid, visited_pairs
 		return 0
 	var resolved := 0
 	var body_count := hot.size()
-	for left_index_value in awake_indices:
-		var left_index := int(left_index_value)
-		var center_x := _divi(hot.x[left_index], BROADPHASE_CELL)
-		var center_y := _divi(hot.y[left_index], BROADPHASE_CELL)
-		var center_z := _divi(hot.z[left_index], BROADPHASE_CELL)
-		for z_offset in range(-1, 2):
-			for y_offset in range(-1, 2):
-				for x_offset in range(-1, 2):
-					var key := _bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset)
-					if key < 0 or key >= grid.head.size():
-						for overflow_right in grid.overflow.get(key, []):
-							resolved += _hot_resolve_collision_pair(hot, left_index, int(overflow_right), body_count, visited_pairs, visit_generation, support_indices, support_seen)
-						continue
-					var encoded_right := grid.head[key]
-					while encoded_right != 0:
-						var right_index := encoded_right - 1
-						encoded_right = grid.next[right_index]
-						resolved += _hot_resolve_collision_pair(hot, left_index, right_index, body_count, visited_pairs, visit_generation, support_indices, support_seen)
+	# Hoist the reference-backed packed columns once for the dense pair loop.
+	# This preserves candidate/pair order while avoiding object-property
+	# dispatch for every scalar read and write; the final assignments make the
+	# column publication explicit for static readers.
+	var xs := hot.x
+	var ys := hot.y
+	var zs := hot.z
+	var vxs := hot.vx
+	var vys := hot.vy
+	var radii := hot.radii
+	var heights := hot.heights
+	var sleeping := hot.sleeping
+	var sleep_ticks := hot.sleep_ticks
+	var rest_states := hot.rest_states
+	for awake_position in range(awake_indices.size()):
+		var left_index := awake_indices[awake_position]
+		var center_x := _divi(xs[left_index], BROADPHASE_CELL)
+		var center_y := _divi(ys[left_index], BROADPHASE_CELL)
+		var center_z := _divi(zs[left_index], BROADPHASE_CELL)
+		var candidates := grid.candidate_indices(center_x, center_y, center_z)
+		for candidate_position in range(candidates.size()):
+			var right_index := candidates[candidate_position]
+			if right_index == left_index:
+				continue
+			var low := mini(left_index, right_index)
+			var high := maxi(left_index, right_index)
+			var pair_key := low * body_count + high
+			if visited_pairs[pair_key] == visit_generation:
+				continue
+			visited_pairs[pair_key] = visit_generation
+			var dx := xs[right_index] - xs[left_index]
+			var dy := ys[right_index] - ys[left_index]
+			var min_distance := radii[left_index] + radii[right_index]
+			if absi(dx) >= min_distance or absi(dy) >= min_distance or dx * dx + dy * dy >= min_distance * min_distance:
+				continue
+			var z_gap := absi(zs[left_index] - zs[right_index])
+			if z_gap >= mini(heights[left_index], heights[right_index]):
+				continue
+			var overlap := min_distance - maxi(absi(dx), absi(dy))
+			if overlap <= 0:
+				continue
+			if absi(dx) >= absi(dy):
+				var sign_x := 1 if dx >= 0 else -1
+				xs[right_index] += _divi(sign_x * overlap, 2)
+				xs[left_index] -= _divi(sign_x * overlap, 2)
+				vxs[right_index] += sign_x * overlap * 5
+				vxs[left_index] -= sign_x * overlap * 5
+			else:
+				var sign_y := 1 if dy >= 0 else -1
+				ys[right_index] += _divi(sign_y * overlap, 2)
+				ys[left_index] -= _divi(sign_y * overlap, 2)
+				vys[right_index] += sign_y * overlap * 5
+				vys[left_index] -= sign_y * overlap * 5
+			if sleeping[right_index] != 0 and support_seen[right_index] == 0:
+				support_seen[right_index] = 1
+				support_indices.append(right_index)
+			sleeping[left_index] = 0
+			sleep_ticks[left_index] = 0
+			rest_states[left_index] = "settling"
+			sleeping[right_index] = 0
+			sleep_ticks[right_index] = 0
+			rest_states[right_index] = "settling"
+			resolved += 1
+	hot.x = xs
+	hot.y = ys
+	hot.vx = vxs
+	hot.vy = vys
+	hot.sleeping = sleeping
+	hot.sleep_ticks = sleep_ticks
 	return resolved
 
 
-static func _hot_resolve_collision_pair(hot: HotBodies, left_index: int, right_index: int, body_count: int, visited_pairs: PackedInt32Array, visit_generation: int, support_indices: PackedInt32Array, support_seen: PackedByteArray) -> int:
-	if right_index == left_index:
-		return 0
-	var low := mini(left_index, right_index)
-	var high := maxi(left_index, right_index)
-	var pair_key := low * body_count + high
-	if visited_pairs[pair_key] == visit_generation:
-		return 0
-	visited_pairs[pair_key] = visit_generation
-	var dx := hot.x[right_index] - hot.x[left_index]
-	var dy := hot.y[right_index] - hot.y[left_index]
-	var min_distance := hot.radii[left_index] + hot.radii[right_index]
-	if absi(dx) >= min_distance or absi(dy) >= min_distance or dx * dx + dy * dy >= min_distance * min_distance:
-		return 0
-	var z_gap := absi(hot.z[left_index] - hot.z[right_index])
-	if z_gap >= mini(hot.heights[left_index], hot.heights[right_index]):
-		return 0
-	var overlap := min_distance - maxi(absi(dx), absi(dy))
-	if overlap <= 0:
-		return 0
-	if absi(dx) >= absi(dy):
-		var sign_x := 1 if dx >= 0 else -1
-		hot.x[right_index] += _divi(sign_x * overlap, 2)
-		hot.x[left_index] -= _divi(sign_x * overlap, 2)
-		hot.vx[right_index] += sign_x * overlap * 5
-		hot.vx[left_index] -= sign_x * overlap * 5
-	else:
-		var sign_y := 1 if dy >= 0 else -1
-		hot.y[right_index] += _divi(sign_y * overlap, 2)
-		hot.y[left_index] -= _divi(sign_y * overlap, 2)
-		hot.vy[right_index] += sign_y * overlap * 5
-		hot.vy[left_index] -= sign_y * overlap * 5
-	if hot.sleeping[right_index] != 0 and support_seen[right_index] == 0:
-		support_seen[right_index] = 1
-		support_indices.append(right_index)
-	_hot_wake(hot, left_index)
-	_hot_wake(hot, right_index)
-	return 1
-
-
 static func _hot_resolve_supports(hot: HotBodies, grid: HotGrid, active_indices: PackedInt32Array, motion_events: Array, motion_event_keys: Dictionary, peak_z: PackedInt32Array, tick_offset: int) -> void:
-	for body_index_value in active_indices:
-		var body_index := int(body_index_value)
-		if body_index < 0 or body_index >= hot.size():
+	var body_count := hot.size()
+	var xs := hot.x
+	var ys := hot.y
+	var zs := hot.z
+	var vxs := hot.vx
+	var vys := hot.vy
+	var vzs := hot.vz
+	var radii := hot.radii
+	var heights := hot.heights
+	var ids := hot.ids
+	var lean_values := hot.lean
+	var sleeping := hot.sleeping
+	var sleep_ticks := hot.sleep_ticks
+	var rest_states := hot.rest_states
+	for active_position in range(active_indices.size()):
+		var body_index := active_indices[active_position]
+		if body_index < 0 or body_index >= body_count:
 			continue
-		var base_z := UPPER_FLOOR_Z if hot.y[body_index] >= UPPER_EDGE else LOWER_FLOOR_Z
-		if hot.z[body_index] <= base_z:
-			hot.lean[body_index] = 0
+		var base_z := UPPER_FLOOR_Z if ys[body_index] >= UPPER_EDGE else LOWER_FLOOR_Z
+		if zs[body_index] <= base_z:
+			lean_values[body_index] = 0
 			continue
 		var support_index := -1
 		var support_distance := 1 << 30
-		var center_x := _divi(hot.x[body_index], BROADPHASE_CELL)
-		var center_y := _divi(hot.y[body_index], BROADPHASE_CELL)
-		var center_z := _divi(hot.z[body_index], BROADPHASE_CELL)
-		for z_offset in range(-1, 2):
-			for y_offset in range(-1, 2):
-				for x_offset in range(-1, 2):
-					var key := _bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset)
-					if key < 0 or key >= grid.head.size():
-						for overflow_candidate in grid.overflow.get(key, []):
-							var overflow_index := int(overflow_candidate)
-							if overflow_index == body_index:
-								continue
-							var overflow_target_z := hot.z[overflow_index] + hot.heights[overflow_index]
-							if overflow_target_z > hot.z[body_index] + COIN_HEIGHT or overflow_target_z < hot.z[body_index] - COIN_HEIGHT * 2:
-								continue
-							var overflow_dx := hot.x[body_index] - hot.x[overflow_index]
-							var overflow_dy := hot.y[body_index] - hot.y[overflow_index]
-							var overflow_distance := overflow_dx * overflow_dx + overflow_dy * overflow_dy
-							var overflow_radius := mini(hot.radii[body_index], hot.radii[overflow_index])
-							if overflow_distance < overflow_radius * overflow_radius and overflow_distance < support_distance:
-								support_index = overflow_index
-								support_distance = overflow_distance
-						continue
-					var encoded_candidate := grid.head[key]
-					while encoded_candidate != 0:
-						var candidate_index := encoded_candidate - 1
-						encoded_candidate = grid.next[candidate_index]
-						if candidate_index == body_index:
-							continue
-						var candidate_target_z := hot.z[candidate_index] + hot.heights[candidate_index]
-						if candidate_target_z > hot.z[body_index] + COIN_HEIGHT or candidate_target_z < hot.z[body_index] - COIN_HEIGHT * 2:
-							continue
-						var candidate_dx := hot.x[body_index] - hot.x[candidate_index]
-						var candidate_dy := hot.y[body_index] - hot.y[candidate_index]
-						var distance := candidate_dx * candidate_dx + candidate_dy * candidate_dy
-						var support_radius := mini(hot.radii[body_index], hot.radii[candidate_index])
-						if distance < support_radius * support_radius and distance < support_distance:
-							support_index = candidate_index
-							support_distance = distance
+		var center_x := _divi(xs[body_index], BROADPHASE_CELL)
+		var center_y := _divi(ys[body_index], BROADPHASE_CELL)
+		var center_z := _divi(zs[body_index], BROADPHASE_CELL)
+		var candidates := grid.candidate_indices(center_x, center_y, center_z)
+		for candidate_position in range(candidates.size()):
+			var candidate_index := candidates[candidate_position]
+			if candidate_index == body_index:
+				continue
+			var candidate_target_z := zs[candidate_index] + heights[candidate_index]
+			if candidate_target_z > zs[body_index] + COIN_HEIGHT or candidate_target_z < zs[body_index] - COIN_HEIGHT * 2:
+				continue
+			var candidate_dx := xs[body_index] - xs[candidate_index]
+			var candidate_dy := ys[body_index] - ys[candidate_index]
+			var distance := candidate_dx * candidate_dx + candidate_dy * candidate_dy
+			var support_radius := mini(radii[body_index], radii[candidate_index])
+			if distance < support_radius * support_radius and distance < support_distance:
+				support_index = candidate_index
+				support_distance = distance
 		if support_index < 0:
-			hot.rest_states[body_index] = "falling"
-			hot.sleeping[body_index] = 0
+			rest_states[body_index] = "falling"
+			sleeping[body_index] = 0
 			continue
-		var target_z := hot.z[support_index] + hot.heights[support_index]
-		if hot.vz[body_index] <= 0 and hot.z[body_index] <= target_z + COIN_HEIGHT:
-			var fall_height := maxi(0, (peak_z[body_index] if not peak_z.is_empty() else hot.z[body_index]) - target_z)
+		var target_z := zs[support_index] + heights[support_index]
+		if vzs[body_index] <= 0 and zs[body_index] <= target_z + COIN_HEIGHT:
+			var fall_height := maxi(0, (peak_z[body_index] if not peak_z.is_empty() else zs[body_index]) - target_z)
 			if not peak_z.is_empty() and fall_height > 0:
 				var stack_depth := maxi(1, _divi(target_z - base_z, COIN_HEIGHT))
 				_hot_append_impact_motion_event(motion_events, motion_event_keys, hot, body_index, "coin_on_coin", stack_depth, fall_height, tick_offset)
-			hot.z[body_index] = target_z
-			hot.vz[body_index] = 0
-			var dx := hot.x[body_index] - hot.x[support_index]
-			var dy := hot.y[body_index] - hot.y[support_index]
-			var lean := _divi(maxi(absi(dx), absi(dy)) * FP, maxi(1, hot.radii[body_index]))
-			hot.lean[body_index] = lean
+			zs[body_index] = target_z
+			vzs[body_index] = 0
+			var dx := xs[body_index] - xs[support_index]
+			var dy := ys[body_index] - ys[support_index]
+			var lean := _divi(maxi(absi(dx), absi(dy)) * FP, maxi(1, radii[body_index]))
+			lean_values[body_index] = lean
 			if lean > 620:
-				var topple_key := "topple|%s" % str(hot.ids[body_index])
+				var topple_key := "topple|%s" % str(ids[body_index])
 				if not motion_event_keys.has(topple_key):
-					motion_events.append({"kind": "topple", "body_id": str(hot.ids[body_index]), "support_id": str(hot.ids[support_index]), "lean_milli": lean})
+					motion_events.append({"kind": "topple", "body_id": str(ids[body_index]), "support_id": str(ids[support_index]), "lean_milli": lean})
 					motion_event_keys[topple_key] = true
-				hot.vx[body_index] += 120 if dx >= 0 else -120
-				hot.vy[body_index] += 120 if dy >= 0 else -120
-				hot.z[body_index] = target_z + 80
-				hot.rest_states[body_index] = "toppling"
-				hot.sleeping[body_index] = 0
+				vxs[body_index] += 120 if dx >= 0 else -120
+				vys[body_index] += 120 if dy >= 0 else -120
+				zs[body_index] = target_z + 80
+				rest_states[body_index] = "toppling"
+				sleeping[body_index] = 0
 			else:
-				_hot_update_sleep(hot, body_index)
+				var speed := absi(vxs[body_index]) + absi(vys[body_index]) + absi(vzs[body_index])
+				if speed <= SLEEP_SPEED:
+					sleep_ticks[body_index] += 1
+					if sleep_ticks[body_index] >= SLEEP_TICKS:
+						vxs[body_index] = 0
+						vys[body_index] = 0
+						vzs[body_index] = 0
+						sleeping[body_index] = 1
+						rest_states[body_index] = "resting"
+				else:
+					sleep_ticks[body_index] = 0
+					sleeping[body_index] = 0
+					rest_states[body_index] = "settling"
+	hot.z = zs
+	hot.vx = vxs
+	hot.vy = vys
+	hot.vz = vzs
+	hot.lean = lean_values
+	hot.sleeping = sleeping
+	hot.sleep_ticks = sleep_ticks
 
 
 static func _hot_body_views(hot: HotBodies) -> Array:

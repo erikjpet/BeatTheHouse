@@ -139,6 +139,16 @@ func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:
 	_assert_coin_pusher_hot_solver_twin(ordering_trap, {
 		"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true,
 	}, "frozen-grid neighbor order, axis tie, and strict support tie", failures)
+	var center_crossing := CoinPusherSolverScript.create(_configured_rng(8812), 48, 0, 5)
+	center_crossing["bodies"] = [
+		_solver_body("crossing_left", "coin", 9999, 30000, 3400, false),
+		_solver_body("crossing_right", "coin", 6500, 30000, 3400, false),
+		_solver_body("new_center_neighbor", "coin", 20001, 30000, 3400, false),
+		_solver_body("crossing_support", "coin", 9500, 30000, 1700, true),
+	]
+	_assert_coin_pusher_hot_solver_twin(center_crossing, {
+		"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true,
+	}, "within-tick broadphase-center crossing with frozen candidate cache", failures)
 	var int64_hostile := CoinPusherSolverScript.create(_configured_rng(8810), 48, 0, 5)
 	int64_hostile["bodies"] = [_solver_body("int64_hostile", "coin", 50000, 30000, 0, false)]
 	var int64_body: Dictionary = (int64_hostile.get("bodies", []) as Array)[0]
