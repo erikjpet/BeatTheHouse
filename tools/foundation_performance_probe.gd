@@ -533,6 +533,7 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 	var stage_samples: Dictionary = {}
 	var fixed_tick_samples := 0
 	var capped_samples := 0
+	var native_backend_samples := 0
 	for sample_index in range(COIN_PUSHER_SOLVER_SAMPLE_COUNT):
 		var sample_state: Dictionary = baseline.duplicate(true)
 		var drop_rng := run_state.create_rng("performance_coin_pusher_raw_solver:%d" % sample_index)
@@ -551,6 +552,8 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 			fixed_tick_samples += 1
 		if CoinPusherSolverScript.coin_count(sample_state) <= cap:
 			capped_samples += 1
+		if CoinPusherSolverScript.last_step_backend_for_test() == "native":
+			native_backend_samples += 1
 	var stats := _timing_stats(samples)
 	stats["seed"] = "practice:coin_pusher_full_cap"
 	stats["run_index"] = -1
@@ -560,6 +563,8 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 	stats["sample_count"] = samples.size()
 	stats["fixed_tick_samples"] = fixed_tick_samples
 	stats["capped_samples"] = capped_samples
+	stats["native_backend_samples"] = native_backend_samples
+	stats["solver_backend"] = "native" if native_backend_samples == samples.size() else "mixed_or_fallback"
 	stats["coin_cap"] = cap
 	stats["p95_budget_ms"] = COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS
 	stats["stage_timing_ms"] = _coin_pusher_stage_timing_stats(stage_samples)
@@ -568,10 +573,13 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 	coin_pusher_solver_timing_checked = samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT \
 		and fixed_tick_samples == samples.size() \
 		and capped_samples == samples.size() \
+		and native_backend_samples == samples.size() \
 		and float(stats.get("p95_ms", 0.0)) <= COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS
 	if not coin_pusher_solver_timing_checked:
 		if samples.size() != COIN_PUSHER_SOLVER_SAMPLE_COUNT or fixed_tick_samples != samples.size() or capped_samples != samples.size():
 			failures.append("Raw Coin Pusher solver timing did not preserve all %d fixed-tick, capped samples." % COIN_PUSHER_SOLVER_SAMPLE_COUNT)
+		if native_backend_samples != samples.size():
+			failures.append("Raw Coin Pusher solver timing selected native for %d/%d samples." % [native_backend_samples, samples.size()])
 		if float(stats.get("p95_ms", 0.0)) > COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS:
 			failures.append("Raw full-cap Coin Pusher solver p95 %.3f ms exceeded %.3f ms." % [float(stats.get("p95_ms", 0.0)), COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS])
 
@@ -628,6 +636,11 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 	var presentation_patch: Dictionary = result.get("surface_presentation_snapshot_patch", {}) if typeof(result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
 	var trace: Array = presentation_patch.get("trace", []) if typeof(presentation_patch.get("trace", [])) == TYPE_ARRAY else []
 	var collapse_seen := int(metrics.get("topple_count", 0)) > 0 or int(metrics.get("upper_lower_fall_count", 0)) > 0
+	var solver_backend := CoinPusherSolverScript.last_step_backend_for_test()
+	var combined_stage_timing: Dictionary = (result.get("coin_pusher_debug_stage_timing_usec", {}) as Dictionary).duplicate(false)
+	var host_stage_timing: Dictionary = result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	for host_stage in host_stage_timing:
+		combined_stage_timing[host_stage] = host_stage_timing[host_stage]
 	var observation := {
 		"seed": "practice:coin_pusher_full_cap",
 		"run_index": -1,
@@ -647,15 +660,16 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 		"draw_p95_budget_ms": MAX_SURFACE_DRAW_P95_MS,
 		"full_snapshot_calls": int(counters.get("full_snapshot_calls", 0)),
 		"solver_metrics": metrics,
-		"stage_timing_ms": _coin_pusher_stage_profile_msec(result.get("coin_pusher_debug_stage_timing_usec", {})),
+		"solver_backend": solver_backend,
+		"stage_timing_ms": _coin_pusher_stage_profile_msec(combined_stage_timing),
 		"presentation_trace_frames": trace.size(),
 		"collapse_seen": collapse_seen,
 	}
 	observations.append(observation)
 	coin_pusher_performance_status[mode] = observation.duplicate(true)
-	var passed := handled and bool(result.get("ok", false)) and int(metrics.get("fixed_ticks", 0)) == CoinPusherSolverScript.ACTION_TICKS and not trace.is_empty()
+	var passed := handled and bool(result.get("ok", false)) and int(metrics.get("fixed_ticks", 0)) == CoinPusherSolverScript.ACTION_TICKS and trace.size() == 14 and solver_backend == "native"
 	if not passed:
-		failures.append("Coin Pusher %s did not resolve through the production surface with a complete fixed-tick presentation replay." % mode)
+		failures.append("Coin Pusher %s did not resolve through the production surface with the exact 14-frame fixed-tick presentation replay." % mode)
 	if resolve_call_ms > COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS:
 		failures.append("Coin Pusher %s synchronous resolve %.3f ms exceeded %.3f ms." % [mode, resolve_call_ms, COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS])
 		passed = false

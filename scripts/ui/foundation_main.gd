@@ -993,13 +993,27 @@ func _on_game_surface_pointer_action(action: String, index: int, phase: String, 
 func _handle_module_surface_action(action: String, index: int, confirm_requested: bool) -> bool:
 	if current_game == null:
 		return false
+	var debug_coin_pusher_outer := bool(game_surface_ui_state.get("coin_pusher_debug_profile_stages", false))
+	var debug_outer_started_usec := Time.get_ticks_usec() if debug_coin_pusher_outer else 0
+	var debug_outer_stage_started_usec := debug_outer_started_usec
 	var ui_state := _current_game_surface_ui_state()
+	var debug_outer_ui_state_usec := Time.get_ticks_usec() - debug_outer_stage_started_usec if debug_coin_pusher_outer else 0
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
+	debug_outer_stage_started_usec = Time.get_ticks_usec() if debug_coin_pusher_outer else 0
 	var command := current_game.surface_action_command(action, index, confirm_requested, ui_state, run_state, run_state.current_environment)
+	var debug_outer_command_usec := Time.get_ticks_usec() - debug_outer_stage_started_usec if debug_coin_pusher_outer else 0
 	command["_resolved_surface_ui_state"] = ui_state
-	return _apply_game_surface_command(command, index, confirm_requested)
+	debug_outer_stage_started_usec = Time.get_ticks_usec() if debug_coin_pusher_outer else 0
+	var handled := _apply_game_surface_command(command, index, confirm_requested)
+	if debug_coin_pusher_outer and typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY:
+		var debug_host_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {})
+		debug_host_timing["outer_ui_state"] = debug_outer_ui_state_usec
+		debug_host_timing["outer_surface_command"] = debug_outer_command_usec
+		debug_host_timing["outer_apply_command"] = Time.get_ticks_usec() - debug_outer_stage_started_usec
+		debug_host_timing["outer_total"] = Time.get_ticks_usec() - debug_outer_started_usec
+	return handled
 
 
 func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_requested: bool = false) -> bool:
@@ -2203,17 +2217,39 @@ func _on_talk_dock_choice_requested(event_id: String, choice_id: String) -> void
 func _apply_post_action_environment_interrupt(source: String) -> bool:
 	if run_state == null or library == null or run_state.is_terminal():
 		return false
-	if _advance_talk_event_action_boundary(source):
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	var debug_enabled := not debug_timing.is_empty() and current_game != null
+	var debug_stage_started_usec := Time.get_ticks_usec() if debug_enabled else 0
+	var talk_advanced := _advance_talk_event_action_boundary(source)
+	if debug_enabled:
+		debug_timing["interrupt_advance_talk"] = Time.get_ticks_usec() - debug_stage_started_usec
+	if talk_advanced:
 		return true
-	if _apply_closing_time_action_boundary(source):
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
+	var closing_applied := _apply_closing_time_action_boundary(source)
+	if debug_enabled:
+		debug_timing["interrupt_closing_time"] = Time.get_ticks_usec() - debug_stage_started_usec
+	if closing_applied:
 		return true
-	if _apply_forced_environment_travel(source):
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
+	var travel_applied := _apply_forced_environment_travel(source)
+	if debug_enabled:
+		debug_timing["interrupt_forced_travel"] = Time.get_ticks_usec() - debug_stage_started_usec
+	if travel_applied:
 		return true
-	if _enqueue_talk_events_for_action_boundary(source):
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
+	var talk_enqueued := _enqueue_talk_events_for_action_boundary(source)
+	if debug_enabled:
+		debug_timing["interrupt_enqueue_talk"] = Time.get_ticks_usec() - debug_stage_started_usec
+	if talk_enqueued:
 		_autosave_foundation_run("Autosaved.")
 		_refresh_talk_dock()
 		return true
-	return _maybe_trigger_unavoidable_event(source)
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
+	var unavoidable_triggered := _maybe_trigger_unavoidable_event(source)
+	if debug_enabled:
+		debug_timing["interrupt_unavoidable_event"] = Time.get_ticks_usec() - debug_stage_started_usec
+	return unavoidable_triggered
 
 
 func _apply_closing_time_action_boundary(_source: String) -> bool:
@@ -6905,8 +6941,14 @@ func _refresh_after_embedded_game_action() -> void:
 	if run_state == null or current_screen != SCREEN_GAME or current_game == null:
 		_refresh()
 		return
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	var debug_enabled := not debug_timing.is_empty()
+	var debug_stage_started_usec := Time.get_ticks_usec() if debug_enabled else 0
 	_invalidate_run_screen_layout()
 	_evaluate_run_terminal_state()
+	if debug_enabled:
+		debug_timing["refresh_terminal"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	if current_screen != SCREEN_GAME or current_game == null:
 		_refresh()
 		return
@@ -6924,12 +6966,23 @@ func _refresh_after_embedded_game_action() -> void:
 	if save_status_label != null:
 		save_status_label.text = str(hud_model.get("save_text", ""))
 	_apply_hud_mode_visibility()
+	if debug_enabled:
+		debug_timing["refresh_hud"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	_refresh_active_item_slot()
 	_refresh_environment_result_feedback()
+	if debug_enabled:
+		debug_timing["refresh_feedback"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	_render_foundation_snapshots()
+	if debug_enabled:
+		debug_timing["refresh_snapshots"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	_refresh_talk_dock()
 	_update_procedural_music()
 	_schedule_game_coach_refresh_after_draw()
+	if debug_enabled:
+		debug_timing["refresh_talk_music_coach"] = Time.get_ticks_usec() - debug_stage_started_usec
 
 
 func _schedule_game_coach_refresh_after_draw() -> void:
@@ -8231,6 +8284,10 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		return
 	if not wager_confirmed and _guard_player_input_route():
 		return
+	var debug_coin_pusher_host := bool(resolved_surface_ui_state.get("coin_pusher_debug_profile_stages", false))
+	var debug_host_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
+	var debug_host_stage_started_usec := debug_host_started_usec
+	var debug_host_timing: Dictionary = {}
 	# A prior wager can leave the raw selection above the player's new capacity.
 	# The table and stake control already present the clamped value, so make that
 	# affordable value authoritative before validation and all-in confirmation.
@@ -8266,7 +8323,13 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		return
 	var bankroll_before_result := run_state.bankroll
 	var rng := run_state.create_rng()
+	if debug_coin_pusher_host:
+		debug_host_timing["host_pre_module"] = Time.get_ticks_usec() - debug_host_stage_started_usec
+		debug_host_stage_started_usec = Time.get_ticks_usec()
 	var result := current_game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, action_surface_ui_state)
+	if debug_coin_pusher_host:
+		debug_host_timing["host_module_resolve"] = Time.get_ticks_usec() - debug_host_stage_started_usec
+		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if bool(result.get("ok", false)):
 		var scratch_completion: Dictionary = _record_scratch_ticket_discovery(str(result.get("scratch_discovered_type_id", "")))
 		if not scratch_completion.is_empty():
@@ -8288,6 +8351,9 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		preserve_surface_ui_state = bool(result.get("preserve_surface_ui_state", true))
 	var runtime_tick := bool(result.get("slot_runtime_tick", false))
 	var runtime_tick_in_progress := runtime_tick and not bool(result.get("slot_bonus_complete", false))
+	if debug_coin_pusher_host:
+		debug_host_timing["host_result_preapply"] = Time.get_ticks_usec() - debug_host_stage_started_usec
+		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if bool(result.get("ok", false)):
 		if not runtime_tick_in_progress:
 			run_state.advance_environment_turns(1)
@@ -8297,6 +8363,9 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			run_state.save_rng(rng)
 	elif confirmed_all_in_wager:
 		run_state.clear_deferred_bankroll_zero_resolution()
+	if debug_coin_pusher_host:
+		debug_host_timing["host_turn_and_apply"] = Time.get_ticks_usec() - debug_host_stage_started_usec
+		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if confirmed_all_in_wager and run_state.defer_next_bankroll_zero_failure:
 		run_state.clear_deferred_bankroll_zero_resolution()
 	var tutorial_caught_transition := TutorialFlowScript.apply_caught_transition(run_state, result)
@@ -8342,14 +8411,24 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	else:
 		_set_current_screen(SCREEN_RESULT)
 	_show_message(str(result.get("message", "")))
+	if debug_coin_pusher_host:
+		debug_host_timing["host_result_routing"] = Time.get_ticks_usec() - debug_host_stage_started_usec
+		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if bool(result.get("ok", false)):
 		_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
+	if debug_coin_pusher_host:
+		debug_host_timing["host_autosave_prepare"] = Time.get_ticks_usec() - debug_host_stage_started_usec
+		debug_host_stage_started_usec = Time.get_ticks_usec()
+		last_game_result["coin_pusher_debug_host_timing_usec"] = debug_host_timing
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("game_action"):
 		if current_screen != SCREEN_GAME:
 			_sync_presented_bankroll_to_actual()
 		_refresh()
 		return
+	if debug_coin_pusher_host:
+		debug_host_timing["host_post_action_checks"] = Time.get_ticks_usec() - debug_host_stage_started_usec
+		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if embeds_result_feedback and current_screen == SCREEN_GAME and current_game != null:
 		if game_surface_auto_resolving:
 			# Autoplay resolution and a complete presentation snapshot used to land
@@ -8361,6 +8440,9 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			_refresh_after_embedded_game_action()
 	else:
 		_refresh()
+	if debug_coin_pusher_host:
+		debug_host_timing["host_embedded_refresh"] = Time.get_ticks_usec() - debug_host_stage_started_usec
+		debug_host_timing["host_total"] = Time.get_ticks_usec() - debug_host_started_usec
 
 
 func _refresh_after_embedded_autoplay_action() -> void:
