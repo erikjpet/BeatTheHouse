@@ -1,12 +1,12 @@
-Status: IN_PROGRESS
+Status: DONE
 Board row: `fix06_2` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-17 by Codex
+- **Completion/implementation commits:** `4a4201b7`, `314b2d04`, `0572377b`, `30993c92`
+- **Verification:** Exact activation diff captured; focused Craps suite PASS; generated-placement activation guard PASS with hostile fixture; UI suite PASS including unchanged M1.6; systems assertions 0; 10-seed determinism PASS (590 checkpoints, hash `3567232055`); canonical visual QA PASS (75 states, zero warnings).
+- **Deviations:** Grand Casino Craps was not implicated. The systems wrapper's unchanged 43.712s stored wall budget remained exceeded, but the quiet 52.277s result was baseline-equivalent to the already accepted rework control at 51.780s (+0.96%); no assertion or budget was changed, under the existing owner environmental-only timing rule.
 
 # Agent Prompt — fix06_2: Street Craps Mutates RunState on Activation
 
