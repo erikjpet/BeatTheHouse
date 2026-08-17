@@ -103,7 +103,7 @@ var draw_patron_character_style: Dictionary = {}
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result: Dictionary = super.enter(run_state, environment)
-	var table: Dictionary = _table_state(run_state, environment)
+	var table: Dictionary = _table_state_preview(run_state, environment)
 	if _is_rourke_duel(run_state, environment):
 		var duel := run_state.grand_casino_duel_status()
 		result["message"] = str(duel.get("last_bark", "Sit down. Five hands. Then the door decides."))
@@ -123,13 +123,13 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 
 
 func legal_actions(run_state: RunState, environment: Dictionary) -> Array:
-	if bool(_table_state(run_state, environment).get("barred", false)):
+	if bool(_table_state_preview(run_state, environment).get("barred", false)):
 		return []
 	return super.legal_actions(run_state, environment)
 
 
 func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
-	if bool(_table_state(run_state, environment).get("barred", false)):
+	if bool(_table_state_preview(run_state, environment).get("barred", false)):
 		return []
 	return super.cheat_actions(run_state, environment)
 
@@ -217,6 +217,10 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 	return _configure_rourke_duel_table(state, run_state, environment)
 
 
+func environment_state_generated(run_state: RunState, environment: Dictionary, generated_state: Dictionary) -> void:
+	_apply_grand_casino_dealer_assignment(generated_state, run_state, environment)
+
+
 func _configure_rourke_duel_table(table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	if not _is_rourke_duel(run_state, environment):
 		return table
@@ -275,7 +279,7 @@ func _is_rourke_duel(run_state: RunState, environment: Dictionary) -> bool:
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	var table: Dictionary = _table_state(run_state, environment)
+	var table: Dictionary = _table_state_preview(run_state, environment)
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 	session["surface_time_msec"] = now_msec
@@ -622,7 +626,7 @@ func _rourke_duel_ui_protected_regions() -> Array:
 
 
 func wager_activity_incomplete(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> bool:
-	var table := _table_state(run_state, environment)
+	var table := _table_state_preview(run_state, environment)
 	return _has_dealt_hand(_normalized_session(run_state, environment, ui_state, table))
 
 
@@ -854,7 +858,7 @@ func coach_state(run_state: RunState, environment: Dictionary, ui_state: Diction
 	var count_icons: Array = count_challenge.get("icons", []) if typeof(count_challenge.get("icons", [])) == TYPE_ARRAY else []
 	var clicked_icons: Array = count_challenge.get("clicked_icons", []) if typeof(count_challenge.get("clicked_icons", [])) == TYPE_ARRAY else []
 	var surface_action_anchors: Array = []
-	var table := _table_state(run_state, environment)
+	var table := _table_state_preview(run_state, environment)
 	var hand_active := _has_dealt_hand(ui_state)
 	var hands_played := int(table.get("hands_played", 0))
 	var distractions: Array = _dictionary_array(table.get("distractions", []))
@@ -884,7 +888,7 @@ func coach_state(run_state: RunState, environment: Dictionary, ui_state: Diction
 
 
 func _blackjack_surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	var table: Dictionary = _table_state(run_state, environment)
+	var table: Dictionary = _table_state_preview(run_state, environment)
 	var next_state: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 	var selected_stake: int = _effective_table_stake(_session_stake(int(ui_state.get("selected_stake", next_state.get("selected_stake", 1))), next_state), next_state, run_state, environment)
 	_update_live_count_state(next_state, table, run_state, true)
@@ -1397,7 +1401,7 @@ func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, 
 	# completed hand and leave the player trapped behind the SETTLE control.
 	if _is_rourke_duel(run_state, environment):
 		return 0
-	var table: Dictionary = _table_state(run_state, environment)
+	var table: Dictionary = _table_state_preview(run_state, environment)
 	if bool(table.get("barred", false)):
 		return 0
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
@@ -1475,7 +1479,7 @@ func _place_bet_result(run_state: RunState, environment: Dictionary, rng: RngStr
 
 
 func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var table: Dictionary = _table_state(run_state, environment)
+	var table: Dictionary = _table_state_preview(run_state, environment)
 	if table.is_empty():
 		return {}
 	var shoe_remaining: int = _shoe_remaining(table)
@@ -2960,12 +2964,24 @@ func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	return normalized
 
 
-func _apply_grand_casino_dealer_assignment(table: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+func _table_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var stored: Variant = game_states.get(get_id(), {})
+	var table: Dictionary = (stored as Dictionary).duplicate(true) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_table_state(run_state, environment)
+	_apply_grand_casino_dealer_assignment(table, run_state, environment, true)
+	var normalized := _normalize_table_state(table)
+	# Tutorial repair is also a projection here. Action boundaries persist it via
+	# _table_state(); passive activation must never rewrite a resumed save.
+	_ensure_tutorial_peek_distractions(normalized, run_state, environment)
+	return normalized
+
+
+func _apply_grand_casino_dealer_assignment(table: Dictionary, run_state: RunState, environment: Dictionary, observational: bool = false) -> void:
 	if run_state == null:
 		return
 	if _is_rourke_duel(run_state, environment):
 		return
-	var assignment := run_state.grand_casino_staff_member_for_game(get_id(), environment)
+	var assignment := run_state.grand_casino_staff_member_for_game_preview(get_id(), environment) if observational else run_state.grand_casino_staff_member_for_game(get_id(), environment)
 	var assignment_id := str(assignment.get("id", "")).strip_edges()
 	if assignment_id.is_empty():
 		return
@@ -3199,7 +3215,7 @@ func _chip_denominations(table: Dictionary) -> Array:
 
 
 func _normalize_table_state(table: Dictionary) -> Dictionary:
-	var normalized := table.duplicate(false)
+	var normalized := table.duplicate(true)
 	normalized["schema"] = str(normalized.get("schema", "blackjack_table_state"))
 	normalized["version"] = maxi(2, int(normalized.get("version", 2)))
 	normalized["deck_count"] = clampi(int(normalized.get("deck_count", 6)), 1, 8)
