@@ -654,6 +654,13 @@ What happens then is the owner's, not an agent's:
   five lanes, three force choices, three directions, drop, and nudge. Adding a
   new keyboard/controller interaction model would be a design/feature expansion,
   not a missing test in this presentation row.
+- 2026-08-17 [pusher06_2 presentation closeout] Final isolated presentation
+  contract run is green with zero failures and zero stderr issues: validation
+  42.747 s, import 16.969 s, load 21.473 s, Coin Pusher 126.478 s. Independent
+  static review also accepts the added solver-null Vault key-fragment proof and
+  all 13 production exact-hit targets through real mouse and touch dispatch at
+  1280x720, including command mapping and deterministic-digest invariance. The
+  presentation commits may now integrate after native performance is green.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
