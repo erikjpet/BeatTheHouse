@@ -35,6 +35,9 @@ const HOT_VELOCITY_ABS_LIMIT := 100000000
 const HOT_DIMENSION_LIMIT := 10000
 const HOT_GENERAL_SCALAR_ABS_LIMIT := 1000000
 const HOT_PRESSURE_ACCEL_ABS_LIMIT := 100000
+const HOT_BODY_COUNT_LIMIT := 256
+const HOT_CONFIG_IMPULSE_ABS_LIMIT := 100000000
+const HOT_PUSH_SCALE_ABS_LIMIT := 1000
 
 
 class HotBodies:
@@ -269,7 +272,7 @@ static func add_recovered_coin(state: Dictionary, rng: RngStream, lane_count: in
 
 static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	_normalize_hot_body_fields(state)
-	if _hot_state_requires_reference(state):
+	if _hot_state_requires_reference(state, config):
 		return _step_action_dictionary_reference(state, config)
 	return _step_action_hot(state, config)
 
@@ -278,10 +281,10 @@ static func step_action_reference_for_test(state: Dictionary, config: Dictionary
 	return _step_action_dictionary_reference(state, config)
 
 
-static func hot_state_eligible_for_test(state: Dictionary) -> bool:
+static func hot_state_eligible_for_test(state: Dictionary, config: Dictionary = {}) -> bool:
 	var candidate := state.duplicate(true)
 	_normalize_hot_body_fields(candidate)
-	return not _hot_state_requires_reference(candidate)
+	return not _hot_state_requires_reference(candidate, config)
 
 
 static func _step_action_dictionary_reference(state: Dictionary, config: Dictionary) -> Dictionary:
@@ -1433,9 +1436,27 @@ static func _normalize_hot_body_fields(state: Dictionary) -> void:
 			body["cap_pressure_accel"] = int(body.get("cap_pressure_accel", 0))
 
 
-static func _hot_state_requires_reference(state: Dictionary) -> bool:
+static func _hot_state_requires_reference(state: Dictionary, config: Dictionary = {}) -> bool:
+	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
+	if bodies.size() > HOT_BODY_COUNT_LIMIT:
+		return true
+	if not config.has("captured_upper_phase_fp"):
+		var upper_phase := int(state.get("upper_phase_fp", 0))
+		if upper_phase < 0 or upper_phase >= PHASE_PERIOD:
+			return true
+	if not config.has("captured_lower_phase_fp"):
+		var lower_phase := int(state.get("lower_phase_fp", 0))
+		if lower_phase < 0 or lower_phase >= PHASE_PERIOD:
+			return true
+	for config_key in ["nudge_x", "nudge_y", "aimed_x", "nudge_radius"]:
+		var config_value := int(config.get(config_key, 0))
+		if config_value < -HOT_CONFIG_IMPULSE_ABS_LIMIT or config_value > HOT_CONFIG_IMPULSE_ABS_LIMIT:
+			return true
+	var requested_push_scale := int(config.get("push_scale", 1))
+	if requested_push_scale < -HOT_PUSH_SCALE_ABS_LIMIT or requested_push_scale > HOT_PUSH_SCALE_ABS_LIMIT:
+		return true
 	var seen_ids := {}
-	for body_value in state.get("bodies", []):
+	for body_value in bodies:
 		if typeof(body_value) != TYPE_DICTIONARY:
 			return true
 		var body_id := str((body_value as Dictionary).get("id", ""))

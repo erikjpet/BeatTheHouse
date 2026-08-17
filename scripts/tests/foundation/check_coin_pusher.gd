@@ -130,6 +130,28 @@ func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:
 	if not CoinPusherSolverScript.hot_state_eligible_for_test(crossing_hostile):
 		failures.append("Packed Coin Pusher high-motion oracle did not exercise the exact-order overflow-grid path.")
 	_assert_coin_pusher_hot_solver_twin(crossing_hostile, {"upper_locked": true, "lower_locked": true}, "in-range-entry high-motion overflow grid", failures)
+	var over_count := CoinPusherSolverScript.create(_configured_rng(8812), 512, 0, 5)
+	var over_count_bodies: Array = []
+	for body_index in range(257):
+		over_count_bodies.append(_solver_body("over_count_%03d" % body_index, "coin", 50000, 30000, 0, true))
+	over_count["bodies"] = over_count_bodies
+	if CoinPusherSolverScript.hot_state_eligible_for_test(over_count):
+		failures.append("Packed Coin Pusher accepted more bodies than its proven arithmetic/pair-grid ceiling.")
+	_assert_coin_pusher_hot_solver_twin(over_count, {"upper_locked": true, "lower_locked": true}, "over-body-cap fallback", failures)
+	var hostile_config_source := CoinPusherSolverScript.create(_configured_rng(8813), 48, 0, 5)
+	hostile_config_source["bodies"] = [_solver_body("hostile_config_body", "coin", 50000, 30000, 0, true)]
+	var hostile_config := {"upper_locked": true, "lower_locked": true, "nudge_x": 2147483000, "nudge_y": -2147483000, "push_scale": 2147483000}
+	if CoinPusherSolverScript.hot_state_eligible_for_test(hostile_config_source, hostile_config):
+		failures.append("Packed Coin Pusher accepted hostile config impulses outside its proven arithmetic envelope.")
+	_assert_coin_pusher_hot_solver_twin(hostile_config_source, hostile_config, "hostile nudge and push-scale config fallback", failures)
+	for phase_locked in [false, true]:
+		var hostile_phase := CoinPusherSolverScript.create(_configured_rng(8814 + int(phase_locked)), 48, 0, 5)
+		hostile_phase["upper_phase_fp"] = 2147483000
+		hostile_phase["lower_phase_fp"] = -2147483000
+		var hostile_phase_config := {"upper_locked": phase_locked, "lower_locked": phase_locked}
+		if CoinPusherSolverScript.hot_state_eligible_for_test(hostile_phase, hostile_phase_config):
+			failures.append("Packed Coin Pusher accepted hostile stored phases for the %s phase path." % ("locked" if phase_locked else "unlocked"))
+		_assert_coin_pusher_hot_solver_twin(hostile_phase, hostile_phase_config, "hostile stored phases (%s) fallback" % ("locked" if phase_locked else "unlocked"), failures)
 
 	var sequence_source := CoinPusherSolverScript.create(_configured_rng(8805), 160, 150, 5)
 	CoinPusherSolverScript.add_coin(sequence_source, _configured_rng(8905), 4, 5)
@@ -154,9 +176,6 @@ func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:
 			if action_index % 3 == 0:
 				CoinPusherSolverScript.add_coin(reference_state, _configured_rng(10000 + seed_index * 20 + action_index), (seed_index + action_index) % 5, 5, 1 + action_index % 2)
 				CoinPusherSolverScript.add_coin(hot_state, _configured_rng(10000 + seed_index * 20 + action_index), (seed_index + action_index) % 5, 5, 1 + action_index % 2)
-			if not CoinPusherSolverScript.hot_state_eligible_for_test(hot_state):
-				failures.append("Packed Coin Pusher carried oracle seed %d action %d unexpectedly selected the dictionary fallback." % [seed_index, action_index])
-				break
 			var sequence_config := {
 				"captured_upper_phase_fp": (seed_index * 1300 + action_index * 1700) % CoinPusherSolverScript.PHASE_PERIOD,
 				"captured_lower_phase_fp": (seed_index * 1900 + action_index * 2300) % CoinPusherSolverScript.PHASE_PERIOD,
@@ -172,6 +191,9 @@ func _check_coin_pusher_hot_solver_exact_twin(failures: Array) -> void:
 					"nudge_x": -1800 + seed_index * 300, "nudge_y": -3200 - action_index * 170,
 					"aimed_x": 18000 + ((seed_index + action_index) % 5) * 16000, "nudge_radius": 24000 + action_index * 1800,
 				})
+			if not CoinPusherSolverScript.hot_state_eligible_for_test(hot_state, sequence_config):
+				failures.append("Packed Coin Pusher carried oracle seed %d action %d unexpectedly selected the dictionary fallback." % [seed_index, action_index])
+				break
 			var reference_action := CoinPusherSolverScript.step_action_reference_for_test(reference_state, sequence_config)
 			var hot_action := CoinPusherSolverScript.step_action(hot_state, sequence_config)
 			var state_equal := JSON.stringify(reference_state) == JSON.stringify(hot_state)
