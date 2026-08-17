@@ -299,12 +299,17 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 
 static func _activation_violation(game: GameModule, run_state: RunState) -> String:
 	var source_snapshot := run_state.to_dict()
+	var source_text := JSON.stringify(source_snapshot)
+	var post_hook_restore_checked := false
 	for method in ACTIVATION_METHODS:
-		var method_run := _run_state_from_json_snapshot(source_snapshot)
-		if method_run == null:
-			return "%s could not restore its pre-activation JSON fixture" % method
+		# The outer fixture has already crossed the JSON codec. Preserve cold
+		# per-hook isolation without paying for seven redundant JSON parses.
+		var method_run := RunStateScript.new()
+		method_run.from_dict(source_snapshot.duplicate(true))
 		var before := method_run.to_dict()
 		var before_text := JSON.stringify(before)
+		if before_text != source_text:
+			return "%s could not cold-clone its canonical activation fixture" % method
 		match method:
 			"environment_runtime_state":
 				game.environment_runtime_state(method_run, method_run.current_environment)
@@ -325,9 +330,13 @@ static func _activation_violation(game: GameModule, run_state: RunState) -> Stri
 			var paths: Array = []
 			_collect_changed_paths(before, after, "", paths)
 			return "%s changed %s" % [method, ", ".join(paths)]
-		var restored_after_open := _run_state_from_json_snapshot(after)
-		if restored_after_open == null or JSON.stringify(restored_after_open.to_dict()) != before_text:
-			return "%s changed after serialize/restore" % method
+		if not post_hook_restore_checked:
+			var restored_after_open := _run_state_from_json_snapshot(after)
+			if restored_after_open == null or JSON.stringify(restored_after_open.to_dict()) != before_text:
+				return "%s changed after serialize/restore" % method
+			post_hook_restore_checked = true
+	if JSON.stringify(source_snapshot) != source_text:
+		return "cold activation clones mutated their canonical source fixture"
 	return ""
 
 
