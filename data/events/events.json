@@ -4539,5 +4539,170 @@
     "id": "crew_collection_press", "display_name": "The Second Ask", "type": "crew", "interaction_mode": "interactable", "scopes": ["any"],
     "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The friendly visit worked. Knuckles left the pressure to you.", "trigger": {"type": "manual"},
     "payload": {"kind": "crew_collection_press", "summary": "Take clean cash or press for heat.", "choices": []}
+  },
+  {
+    "id": "chain06_cass_first_contact", "display_name": "Cass Venn", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["casino", "shop"],
+    "speaker": {"role": "patron", "name": "Cass Venn", "character_id": "cass_rival_counter", "voice_line_key": "rival_counter", "silhouette": "glasses", "bind": "none"},
+    "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Cass counts the same table from the other end.", "trigger": {"type": "manual"},
+    "conditions": {"requires_traveler_here": ["cass_rival_counter"], "missing_story_flags": ["chain06_cass_first_contact", "chain06_cass_ending_truce", "chain06_cass_ending_tipoff", "chain06_cass_ending_flameout"]},
+    "payload": {"summary": "Cass counts the same table from the other end.", "choices": [
+      {"id": "share_the_read", "label": "Share the read", "text": "Cass checks your count and finds it close enough.", "consequences": {"story_flags_set": {"chain06_cass_first_contact": true}, "resolve_event": true}},
+      {"id": "keep_counting", "label": "Keep counting", "text": "You keep the number. Cass keeps your face.", "consequences": {"story_flags_set": {"chain06_cass_first_contact": true, "chain06_cass_guarded": true}, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "chain06_cass_escalation", "display_name": "Her Seat", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["casino", "shop"],
+    "speaker": {"role": "patron", "name": "Cass Venn", "character_id": "cass_rival_counter", "voice_line_key": "rival_counter", "silhouette": "glasses", "bind": "none"},
+    "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Cass finds you in the seat she marked.", "trigger": {"type": "manual"},
+    "conditions": {"requires_traveler_here": ["cass_rival_counter"], "requires_story_flags": {"chain06_cass_first_contact": true}, "missing_story_flags": ["chain06_cass_escalated", "chain06_cass_ending_truce", "chain06_cass_ending_tipoff", "chain06_cass_ending_flameout"]},
+    "payload": {"summary": "Cass finds you in the seat she marked.", "choices": [
+      {"id": "take_the_mark", "label": "Hold the seat", "text": "Nice hands. Shame about where you put them.", "consequences": {"story_flags_set": {"chain06_cass_escalated": true, "chain06_cass_marked": true}, "suspicion_delta": 2, "resolve_event": true}},
+      {"id": "leave_it_clean", "label": "Leave it clean", "text": "Cass gets the chair. You keep the clean exit.", "consequences": {"story_flags_set": {"chain06_cass_escalated": true, "chain06_cass_clean_since_escalation": true}, "suspicion_delta": -1, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "chain06_cass_proposition", "display_name": "Split the Town", "type": "temptation", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["casino", "shop"],
+    "speaker": {"role": "patron", "name": "Cass Venn", "character_id": "cass_rival_counter", "voice_line_key": "rival_counter", "silhouette": "glasses", "bind": "none"},
+    "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Cass draws one line through the town.", "trigger": {"type": "manual"},
+    "conditions": {"requires_traveler_here": ["cass_rival_counter"], "requires_story_flags": {"chain06_cass_escalated": true}, "missing_story_flags": ["chain06_cass_proposition_done", "chain06_cass_ending_truce", "chain06_cass_ending_tipoff", "chain06_cass_ending_flameout"]},
+    "payload": {"summary": "Cass draws one line through the town.", "choices": [
+      {"id": "split_the_town", "label": "Split the town", "text": "Your rooms stay yours. Cass stops warming the chairs.", "consequences": {"story_flags_set": {"chain06_cass_proposition_done": true, "chain06_cass_ending_truce": true}, "resolve_event": true}},
+      {"id": "cross_her", "label": "Cross her", "text": "Cass smiles once. Somewhere, a line starts ringing.", "consequences": {"story_flags_set": {"chain06_cass_proposition_done": true, "chain06_cass_tipoff_pending": true}, "resolve_event": true}},
+      {"id": "stay_clean", "label": "Stay clean", "text": "You leave her the town and keep your hands still.", "conditions": {"requires_story_flags": {"chain06_cass_clean_since_escalation": true}}, "consequences": {"story_flags_set": {"chain06_cass_proposition_done": true, "chain06_cass_clean_route": true}, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "chain06_cass_tipoff", "display_name": "The Warning Signs", "type": "security", "interaction_mode": "interactable", "scopes": ["casino", "shop"],
+    "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "The dealer checks the phone. The floorman checks you.", "trigger": {"type": "manual"},
+    "conditions": {"requires_traveler_here": ["cass_rival_counter"], "requires_story_flags": {"chain06_cass_tipoff_pending": true}, "missing_story_flags": ["chain06_cass_ending_tipoff"]},
+    "payload": {"summary": "The dealer checks the phone. The floorman checks you.", "choices": [
+      {"id": "take_the_burn", "label": "Take the burn", "text": "Cass sold the shape of your hands. The room believes her.", "consequence_summary": "Heat +8", "consequences": {"suspicion_delta": 8, "story_flags_set": {"chain06_cass_tipoff_pending": false, "chain06_cass_ending_tipoff": true}, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "chain06_cass_flameout", "display_name": "Cass Gets Made", "type": "security", "interaction_mode": "interactable", "scopes": ["boss"],
+    "asset_path": "res://assets/art/events/pit_boss_sweep.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "The ceiling finds Cass before the count closes.", "trigger": {"type": "manual"},
+    "conditions": {"archetype_ids": ["grand_casino"], "requires_traveler_here": ["cass_rival_counter"], "requires_story_flags": {"chain06_cass_clean_route": true, "chain06_cass_proposition_done": true}, "max_suspicion": 24, "missing_story_flags": ["chain06_cass_ending_flameout"]},
+    "payload": {"summary": "The ceiling finds Cass before the count closes.", "choices": [
+      {"id": "watch_the_floor_close", "label": "Watch it happen", "text": "Cass leaves between two suits. Every table gets careful.", "consequence_summary": "Heat +4; floor attention for 6 actions", "consequences": {"suspicion_delta": 4, "story_flags_set": {"chain06_cass_ending_flameout": true, "chain06_cass_flameout_attention_active": true, "chain06_cass_flameout_attention_remaining": 6}, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "chain06_sal_estate_item", "display_name": "The Estate Map", "type": "discovery", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
+    "speaker": {"role": "staff", "name": "Sal", "character_id": "sal_pawn_broker", "voice_line_key": "shop_greeting", "silhouette": "coat", "bind": "none"},
+    "asset_path": "res://assets/art/events/parking_lot_tip.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "One estate map has three addresses crossed out.", "trigger": {"type": "manual"},
+    "conditions": {"archetype_ids": ["pawn_shop"], "scenario_ids": ["pawn_shop_estate_lot_day"], "missing_story_flags": ["chain06_sal_item_taken"]},
+    "payload": {"summary": "One estate map has three addresses crossed out.", "choices": [
+      {"id": "take_the_map", "label": "Take the map", "text": "Sal calls it trash and watches which pocket takes it.", "consequences": {"story_flags_set": {"chain06_sal_item_taken": true}, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "chain06_sal_trail_one", "display_name": "First Address", "type": "discovery", "interaction_mode": "interactable", "scopes": ["any"],
+    "asset_path": "res://assets/art/events/parking_lot_tip.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "The first address remembers the estate owner.", "trigger": {"type": "manual"},
+    "conditions": {"requires_story_flags": {"chain06_sal_item_taken": true}, "story_flag_matches_node": ["chain06_sal_target_1"], "missing_story_flags": ["chain06_sal_trail_one_done"]},
+    "payload": {"summary": "The first address remembers the estate owner.", "choices": [{"id": "follow_the_name", "label": "Follow the name", "text": "A receipt points across town.", "consequences": {"story_flags_set": {"chain06_sal_trail_one_done": true}, "resolve_event": true}}]}
+  },
+  {
+    "id": "chain06_sal_trail_two", "display_name": "Second Address", "type": "discovery", "interaction_mode": "interactable", "scopes": ["any"],
+    "asset_path": "res://assets/art/events/parking_lot_tip.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "The second address kept the owner's last marker.", "trigger": {"type": "manual"},
+    "conditions": {"requires_story_flags": {"chain06_sal_trail_one_done": true}, "story_flag_matches_node": ["chain06_sal_target_2"], "missing_story_flags": ["chain06_sal_trail_two_done"]},
+    "payload": {"summary": "The second address kept the owner's last marker.", "choices": [{"id": "read_the_marker", "label": "Read the marker", "text": "The mark is Sal's. The date is not.", "consequences": {"story_flags_set": {"chain06_sal_trail_two_done": true}, "resolve_event": true}}]}
+  },
+  {
+    "id": "chain06_sal_trail_three", "display_name": "Third Address", "type": "discovery", "interaction_mode": "interactable", "scopes": ["any"],
+    "asset_path": "res://assets/art/events/parking_lot_tip.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "The third address has the missing half of Sal's ticket.", "trigger": {"type": "manual"},
+    "conditions": {"requires_story_flags": {"chain06_sal_trail_two_done": true}, "story_flag_matches_node": ["chain06_sal_target_3"], "missing_story_flags": ["chain06_sal_trail_three_done"]},
+    "payload": {"summary": "The third address has the missing half of Sal's ticket.", "choices": [{"id": "take_the_half", "label": "Take the half", "text": "The old paper fits the new story.", "consequences": {"story_flags_set": {"chain06_sal_trail_three_done": true}, "resolve_event": true}}]}
+  },
+  {
+    "id": "chain06_sal_sellback", "display_name": "Sal's Old Ticket", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
+    "speaker": {"role": "staff", "name": "Sal", "character_id": "sal_pawn_broker", "voice_line_key": "sale", "silhouette": "coat", "bind": "none"},
+    "asset_path": "res://assets/art/events/parking_lot_tip.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Sal knows the ticket before you set it down.", "trigger": {"type": "manual"},
+    "conditions": {"archetype_ids": ["pawn_shop"], "requires_story_flags": {"chain06_sal_trail_three_done": true}, "missing_story_flags": ["chain06_sal_ending_changed"]},
+    "payload": {"summary": "Sal knows the ticket before you set it down.", "choices": [
+      {"id": "sell_it_back", "label": "Sell it back", "text": "Sal pays without insulting it. That's the change.", "consequence_summary": "Bankroll +12", "consequences": {"bankroll_delta": 12, "story_flags_set": {"chain06_sal_ending_changed": true, "chain06_sal_sellback_taken": true}, "resolve_event": true}},
+      {"id": "leave_it_with_him", "label": "Leave it with Sal", "text": "No sale. Sal puts it under the counter anyway.", "consequence_summary": "Luck +1", "consequences": {"baseline_luck_delta": 1, "story_flags_set": {"chain06_sal_ending_changed": true, "chain06_sal_keepsake_returned": true}, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "chain06_nico_weekly_door", "display_name": "Weekly Door", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
+    "speaker": {"role": "lender", "name": "Nico", "character_id": "nico_motel_friend", "voice_line_key": "motel_knock", "silhouette": "coat", "bind": "none"},
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Nico leaves groceries outside a weekly door.", "trigger": {"type": "manual"},
+    "conditions": {"archetype_ids": ["motel"], "scenario_ids": ["motel_weekly_rates"], "missing_story_flags": ["chain06_nico_weekly_door"]},
+    "payload": {"summary": "Nico leaves groceries outside a weekly door.", "choices": [{"id": "notice_the_names", "label": "Notice the names", "text": "Half the doors owe him. None call it a loan.", "consequences": {"story_flags_set": {"chain06_nico_weekly_door": true}, "resolve_event": true}}]}
+  },
+  {
+    "id": "chain06_nico_what_it_covers", "display_name": "What It Covers", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
+    "speaker": {"role": "lender", "name": "Nico", "character_id": "nico_motel_friend", "voice_line_key": "motel_knock", "silhouette": "coat", "bind": "none"},
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "The soft loans keep three doors from going dark.", "trigger": {"type": "manual"},
+    "conditions": {"archetype_ids": ["motel"], "scenario_ids": ["motel_weekly_rates"], "requires_story_flags": {"chain06_nico_weekly_door": true}, "missing_story_flags": ["chain06_nico_cover_seen"]},
+    "payload": {"summary": "The soft loans keep three doors from going dark.", "choices": [{"id": "keep_it_quiet", "label": "Keep it quiet", "text": "Nico nods. It's nothing. It is not nothing.", "consequences": {"story_flags_set": {"chain06_nico_cover_seen": true}, "resolve_event": true}}]}
+  },
+  {
+    "id": "chain06_nico_favor_call", "display_name": "Nico Calls It In", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
+    "speaker": {"role": "lender", "name": "Nico", "character_id": "nico_motel_friend", "voice_line_key": "loan_offer", "silhouette": "coat", "bind": "none"},
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "One weekly door needs a quiet hand tonight.", "trigger": {"type": "manual"},
+    "conditions": {"archetype_ids": ["motel"], "requires_story_flags": {"chain06_nico_cover_seen": true}, "requires_flags": {"debt_favor_owed": true}, "requires_lender_debt": ["motel_friend"], "requires_overdue_debt": true, "missing_story_flags": ["chain06_nico_favor_honored", "chain06_nico_favor_refused"]},
+    "payload": {"summary": "One weekly door needs a quiet hand tonight.", "choices": [
+      {"id": "carry_the_box", "label": "Carry the box", "text": "The box reaches the door. Nico tears up the note.", "consequence_summary": "Heat -2; Nico's note cleared", "consequences": {"suspicion_delta": -2, "story_flags_set": {"chain06_nico_favor_honored": true}, "event_hooks": [{"type": "resolve_lender_favor", "lender_id": "motel_friend", "resolution": "honored"}], "resolve_event": true}},
+      {"id": "leave_him_the_note", "label": "Leave him the note", "text": "Nico folds the softness out of the paper.", "consequence_summary": "Favor becomes cash debt", "consequences": {"story_flags_set": {"chain06_nico_favor_refused": true}, "event_hooks": [{"type": "resolve_lender_favor", "lender_id": "motel_friend", "resolution": "refused"}], "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "chain06_rourke_noticed", "display_name": "Noticed", "type": "security", "interaction_mode": "interactable", "scopes": ["boss"],
+    "asset_path": "res://assets/art/events/pit_boss_sweep.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "A floor clerk checks your face twice.", "trigger": {"type": "manual"},
+    "conditions": {"archetype_ids": ["grand_casino"], "pressure_band": {"min_suspicion": 10, "min_bankroll": 125}, "missing_story_flags": ["chain06_rourke_noticed"]},
+    "payload": {"summary": "A floor clerk checks your face twice.", "choices": [{"id": "let_the_check_pass", "label": "Let it pass", "text": "The clerk closes the file without closing it.", "consequences": {"story_flags_set": {"chain06_rourke_noticed": true}, "resolve_event": true}}]}
+  },
+  {
+    "id": "chain06_rourke_named", "display_name": "Named", "type": "security", "interaction_mode": "interactable", "scopes": ["boss"],
+    "asset_path": "res://assets/art/events/pit_boss_sweep.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "A dealer says Rourke without moving his mouth.", "trigger": {"type": "manual"},
+    "conditions": {"archetype_ids": ["grand_casino"], "pressure_band": {"min_suspicion": 30, "min_bankroll": 160}, "requires_story_flags": {"chain06_rourke_noticed": true}, "missing_story_flags": ["chain06_rourke_named"]},
+    "payload": {"summary": "A dealer says Rourke without moving his mouth.", "choices": [{"id": "keep_the_name", "label": "Keep the name", "text": "The house provides a name for the attention.", "consequences": {"story_flags_set": {"chain06_rourke_named": true}, "resolve_event": true}}]}
+  },
+  {
+    "id": "chain06_rourke_expected", "display_name": "Expected", "type": "security", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["boss"],
+    "speaker": {"role": "staff", "name": "Grand Casino Host", "character_id": "vivienne_grand_host", "voice_line_key": "greeting", "silhouette": "suit", "bind": "none"},
+    "asset_path": "res://assets/art/events/pit_boss_sweep.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "The host has your courtesy ready before you arrive.", "trigger": {"type": "manual"},
+    "conditions": {"archetype_ids": ["grand_casino"], "pressure_band": {"min_suspicion": 50, "min_bankroll": 220}, "requires_story_flags": {"chain06_rourke_named": true}, "missing_story_flags": ["chain06_rourke_expected"]},
+    "payload": {"summary": "The host has your courtesy ready before you arrive.", "choices": [{"id": "accept_the_courtesy", "label": "Accept the courtesy", "text": "Rourke expected you. The house is pleased to be right.", "consequences": {"story_flags_set": {"chain06_rourke_expected": true}, "resolve_event": true}}]}
+  },
+  {
+    "id": "chain06_trio_gift_memory", "display_name": "The Band Remembers", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
+    "speaker": {"role": "staff", "name": "The Trio", "character_pool_id": "blue_note_trio", "character_identity_key": "blue_note_trio", "voice_line_key": "set_break", "silhouette": "vest", "bind": "none"},
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "start_summary": "The trio recognizes what it put in your hands.", "trigger": {"type": "manual"},
+    "conditions": {"archetype_ids": ["jazz_club"], "requires_any_flags": ["jazz_sax_coin_obtained", "jazz_cello_coin_obtained", "jazz_drummer_coin_obtained", "jazz_drummer_glasses_obtained"], "missing_story_flags": ["chain06_trio_gifts_named"]},
+    "payload": {"summary": "The trio recognizes what it put in your hands.", "choices": [{"id": "show_what_stayed", "label": "Show what stayed", "text": "Every gift gets a nod. The band misses nothing.", "consequences": {"story_flags_set": {"chain06_trio_gifts_named": true}, "resolve_event": true}}]}
+  },
+  {
+    "id": "chain06_trio_rent_payoff", "display_name": "Rent Party Promise", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["shop"],
+    "speaker": {"role": "staff", "name": "The Trio", "character_pool_id": "blue_note_trio", "character_identity_key": "blue_note_trio", "voice_line_key": "set_break", "silhouette": "vest", "bind": "none"},
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "start_summary": "Rent rides on the set. The band remembers you.", "trigger": {"type": "manual"},
+    "conditions": {"archetype_ids": ["jazz_club"], "scenario_ids": ["jazz_club_rent_party"], "requires_story_flags": {"chain06_trio_gifts_named": true}, "missing_story_flags": ["chain06_trio_rent_party_paid"]},
+    "payload": {"summary": "Rent rides on the set. The band remembers you.", "choices": [
+      {"id": "cover_the_last_corner", "label": "Cover the last corner", "text": "They name {gift_memory}. Your money keeps the room.", "conditions": {"min_bankroll": 8}, "consequence_summary": "Bankroll -8; luck +1", "consequences": {"bankroll_delta": -8, "baseline_luck_delta": 1, "story_flags_set": {"chain06_trio_rent_party_paid": true}, "resolve_event": true}},
+      {"id": "carry_the_hat", "label": "Carry the hat", "text": "They name {gift_memory}. Every table hears why the hat matters.", "consequence_summary": "Heat +2; luck +1", "consequences": {"suspicion_delta": 2, "baseline_luck_delta": 1, "story_flags_set": {"chain06_trio_rent_party_paid": true}, "resolve_event": true}}
+    ]}
+  },
+  {
+    "id": "chain06_dave_same_bus", "display_name": "Dave's Last Stop", "type": "discovery", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "stranger", "name": "Dave", "character_id": "dave_bus_regular", "voice_line_key": "where_been", "silhouette": "coat", "bind": "none"},
+    "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Dave is where the bus left him.", "trigger": {"type": "manual"},
+    "conditions": {"requires_traveler_here": ["dave_bus_regular"], "missing_story_flags": ["chain06_dave_same_bus"]},
+    "payload": {"summary": "Dave is where the bus left him.", "choices": [{"id": "sit_in_the_silence", "label": "Sit in the silence", "text": "The stop before this one was louder. Dave does not explain.", "consequences": {"story_flags_set": {"chain06_dave_same_bus": true}, "resolve_event": true}}]}
+  },
+  {
+    "id": "chain06_dave_last_stop", "display_name": "Dave's Second Truth", "type": "discovery", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "stranger", "name": "Dave", "character_id": "dave_bus_regular", "voice_line_key": "where_been", "silhouette": "coat", "bind": "none"},
+    "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Dave watches the road arrive before the bus.", "trigger": {"type": "manual"},
+    "conditions": {"requires_traveler_here": ["dave_bus_regular"], "requires_story_flags": {"chain06_dave_same_bus": true}, "missing_story_flags": ["chain06_dave_last_stop"]},
+    "payload": {"summary": "Dave watches the road arrive before the bus.", "choices": [{"id": "wait_for_one_line", "label": "Wait for one line", "text": "The room he left is still doing what he said it would.", "consequences": {"story_flags_set": {"chain06_dave_last_stop": true}, "resolve_event": true}}]}
+  },
+  {
+    "id": "chain06_dave_true_stop", "display_name": "A Useful Story", "type": "discovery", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "stranger", "name": "Dave", "character_id": "dave_bus_regular", "voice_line_key": "bus_warning", "silhouette": "coat", "bind": "none"},
+    "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Dave names one true room and lets the map catch up.", "trigger": {"type": "manual"},
+    "conditions": {"requires_traveler_here": ["dave_bus_regular"], "requires_story_flags": {"chain06_dave_last_stop": true}, "requires_rumor_fact_ids": ["character_chain:dave_true_stop"], "missing_story_flags": ["chain06_dave_true_rumor_heard"]},
+    "payload": {"summary": "Dave names one true room and lets the map catch up.", "choices": [{"id": "mark_the_true_stop", "label": "Mark the stop", "text": "Same road. True story. Better map.", "consequences": {"event_hooks": [{"type": "hear_rumor", "rumor_id": "character_chain:dave_true_stop"}], "story_flags_set": {"chain06_dave_true_rumor_heard": true}, "resolve_event": true}}]}
   }
 ]

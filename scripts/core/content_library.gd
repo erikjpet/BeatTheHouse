@@ -24,6 +24,7 @@ const TRAVEL_ROUTES_PATH := "res://data/travel/routes.json"
 const MUSIC_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const TUTORIAL_LESSONS_PATH := "res://data/tutorial/lessons.json"
 const TOWN_CONDITIONS_PATH := "res://data/town/conditions.json"
+const CHARACTER_CHAINS_PATH := "res://data/story/character_chains.json"
 const MUSIC_ASSET_ROOT := "res://assets/audio/music"
 const MUSIC_WEB_ASSET_ROOT := "res://assets/audio/music_web"
 const MUSIC_WEB_SAMPLE_RATE := 22050
@@ -57,6 +58,7 @@ var travel_routes: Array = []
 var music_tracks: Array = []
 var tutorial_lessons: Array = []
 var town_conditions: Dictionary = {}
+var character_chains: Dictionary = {}
 var validation_errors: Array = []
 var validation_warnings: Array = []
 var validation_complete := false
@@ -81,6 +83,7 @@ static func required_pack_paths() -> Dictionary:
 		"character_pools": CHARACTER_POOLS_PATH,
 		"tutorial_lessons": TUTORIAL_LESSONS_PATH,
 		"town_conditions": TOWN_CONDITIONS_PATH,
+		"character_chains": CHARACTER_CHAINS_PATH,
 	}
 
 
@@ -119,6 +122,7 @@ func load(run_validation: bool = true) -> Dictionary:
 	tutorial_lessons = _load_array(TUTORIAL_LESSONS_PATH, true)
 	var town_condition_entries := _load_array(TOWN_CONDITIONS_PATH, true)
 	town_conditions = town_condition_entries[0] if not town_condition_entries.is_empty() and typeof(town_condition_entries[0]) == TYPE_DICTIONARY else {}
+	character_chains = _load_dictionary(CHARACTER_CHAINS_PATH, true)
 	var parse_complete_usec := Time.get_ticks_usec()
 	_rebuild_indexes()
 	var index_complete_usec := Time.get_ticks_usec()
@@ -154,6 +158,7 @@ func load(run_validation: bool = true) -> Dictionary:
 		"music_tracks": music_tracks,
 		"tutorial_lessons": tutorial_lessons,
 		"town_conditions": town_conditions,
+		"character_chains": character_chains,
 	}
 
 
@@ -315,9 +320,47 @@ func validate() -> Array:
 	_validate_music_manifest_definitions()
 	_validate_tutorial_lesson_definitions()
 	validation_errors.append_array(town_conditions_validation_errors(town_conditions))
+	_validate_character_chain_definitions()
 	_validate_environment_references()
 	_validate_scenario_definitions()
 	return validation_errors.duplicate(true)
+
+
+func _validate_character_chain_definitions() -> void:
+	if int(character_chains.get("schema_version", 0)) != 1:
+		validation_errors.append("character_chains schema_version must be 1.")
+	var event_ids := _ids_for(events)
+	var seen_chains := {}
+	for chain_value in character_chains.get("chains", []):
+		if typeof(chain_value) != TYPE_DICTIONARY:
+			validation_errors.append("character_chains chains entries must be dictionaries.")
+			continue
+		var chain: Dictionary = chain_value
+		var chain_id := str(chain.get("id", "")).strip_edges()
+		var prefix := str(chain.get("flag_prefix", "")).strip_edges()
+		if chain_id.is_empty() or seen_chains.has(chain_id):
+			validation_errors.append("character_chains has a missing or duplicate id: %s" % chain_id)
+		seen_chains[chain_id] = true
+		if prefix.is_empty():
+			validation_errors.append("character_chains %s is missing flag_prefix." % chain_id)
+		var seen_beats := {}
+		for beat_value in chain.get("beats", []):
+			if typeof(beat_value) != TYPE_DICTIONARY:
+				validation_errors.append("character_chains %s beat must be a dictionary." % chain_id)
+				continue
+			var beat: Dictionary = beat_value
+			var beat_id := str(beat.get("id", "")).strip_edges()
+			var event_id := str(beat.get("event_id", "")).strip_edges()
+			if beat_id.is_empty() or seen_beats.has(beat_id):
+				validation_errors.append("character_chains %s has a missing or duplicate beat: %s" % [chain_id, beat_id])
+			seen_beats[beat_id] = true
+			if not event_ids.has(event_id):
+				validation_errors.append("character_chains %s beat %s references unknown event: %s" % [chain_id, beat_id, event_id])
+			if _as_dict(beat.get("placement", {})).is_empty():
+				validation_errors.append("character_chains %s beat %s needs placement." % [chain_id, beat_id])
+		for ending_flag in _string_array(chain.get("ending_flags", [])):
+			if not ending_flag.begins_with(prefix):
+				validation_errors.append("character_chains %s ending flag escapes prefix: %s" % [chain_id, ending_flag])
 
 
 static func town_conditions_validation_errors(value: Variant) -> Array:

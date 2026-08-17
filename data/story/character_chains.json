@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "tuning": {
+    "cass_tipoff_heat": 8,
+    "cass_flameout_heat": 4,
+    "cass_flameout_attention_actions": 6,
+    "cass_flameout_attention_risk_delta": 1,
+    "sal_mood_weight_multiplier": 1.75
+  },
+  "chains": [
+    {
+      "id": "cass_venn",
+      "flag_prefix": "chain06_cass_",
+      "ending_flags": [
+        "chain06_cass_ending_truce",
+        "chain06_cass_ending_tipoff",
+        "chain06_cass_ending_flameout"
+      ],
+      "beats": [
+        {
+          "id": "first_contact",
+          "event_id": "chain06_cass_first_contact",
+          "placement": {"archetype_ids": ["gas_station_casino", "small_underground_casino", "jazz_club", "kitty_cat_lounge", "delta_queen", "grand_casino"]}
+        },
+        {
+          "id": "escalation",
+          "event_id": "chain06_cass_escalation",
+          "requires_flags": ["chain06_cass_first_contact"],
+          "placement": {"archetype_ids": ["gas_station_casino", "small_underground_casino", "jazz_club", "kitty_cat_lounge", "delta_queen", "grand_casino"]}
+        },
+        {
+          "id": "proposition",
+          "event_id": "chain06_cass_proposition",
+          "requires_flags": ["chain06_cass_escalated"],
+          "placement": {"archetype_ids": ["gas_station_casino", "small_underground_casino", "jazz_club", "kitty_cat_lounge", "delta_queen", "grand_casino"]}
+        },
+        {
+          "id": "tipoff",
+          "event_id": "chain06_cass_tipoff",
+          "requires_flags": ["chain06_cass_tipoff_pending"],
+          "placement": {"archetype_ids": ["gas_station_casino", "small_underground_casino", "jazz_club", "kitty_cat_lounge", "delta_queen", "grand_casino"]}
+        },
+        {
+          "id": "flameout",
+          "event_id": "chain06_cass_flameout",
+          "requires_flags": ["chain06_cass_clean_route"],
+          "placement": {"archetype_ids": ["grand_casino"]}
+        }
+      ]
+    },
+    {
+      "id": "sal_estate_lot",
+      "flag_prefix": "chain06_sal_",
+      "ending_flags": ["chain06_sal_ending_changed"],
+      "beats": [
+        {"id": "estate_item", "event_id": "chain06_sal_estate_item", "placement": {"archetype_ids": ["pawn_shop"]}},
+        {"id": "trail_one", "event_id": "chain06_sal_trail_one", "requires_flags": ["chain06_sal_item_taken"], "placement": {"archetype_ids": ["corner_store", "back_alley", "motel", "bar", "gas_station_casino", "small_underground_casino", "jazz_club", "kitty_cat_lounge", "delta_queen", "beach"]}},
+        {"id": "trail_two", "event_id": "chain06_sal_trail_two", "requires_flags": ["chain06_sal_trail_one_done"], "placement": {"archetype_ids": ["corner_store", "back_alley", "motel", "bar", "gas_station_casino", "small_underground_casino", "jazz_club", "kitty_cat_lounge", "delta_queen", "beach"]}},
+        {"id": "trail_three", "event_id": "chain06_sal_trail_three", "requires_flags": ["chain06_sal_trail_two_done"], "placement": {"archetype_ids": ["corner_store", "back_alley", "motel", "bar", "gas_station_casino", "small_underground_casino", "jazz_club", "kitty_cat_lounge", "delta_queen", "beach"]}},
+        {"id": "sellback", "event_id": "chain06_sal_sellback", "requires_flags": ["chain06_sal_trail_three_done"], "placement": {"archetype_ids": ["pawn_shop"]}}
+      ]
+    },
+    {
+      "id": "nico_soft_loans",
+      "flag_prefix": "chain06_nico_",
+      "ending_flags": ["chain06_nico_favor_honored", "chain06_nico_favor_refused"],
+      "beats": [
+        {"id": "weekly_door", "event_id": "chain06_nico_weekly_door", "placement": {"archetype_ids": ["motel"]}},
+        {"id": "what_it_covers", "event_id": "chain06_nico_what_it_covers", "requires_flags": ["chain06_nico_weekly_door"], "placement": {"archetype_ids": ["motel"]}},
+        {"id": "favor_call", "event_id": "chain06_nico_favor_call", "requires_flags": ["chain06_nico_cover_seen"], "placement": {"archetype_ids": ["motel"]}}
+      ]
+    },
+    {
+      "id": "rourke_scouts",
+      "flag_prefix": "chain06_rourke_",
+      "ending_flags": ["chain06_rourke_expected"],
+      "beats": [
+        {"id": "noticed", "event_id": "chain06_rourke_noticed", "placement": {"archetype_ids": ["grand_casino"]}},
+        {"id": "named", "event_id": "chain06_rourke_named", "requires_flags": ["chain06_rourke_noticed"], "placement": {"archetype_ids": ["grand_casino"]}},
+        {"id": "expected", "event_id": "chain06_rourke_expected", "requires_flags": ["chain06_rourke_named"], "placement": {"archetype_ids": ["grand_casino"]}}
+      ]
+    },
+    {
+      "id": "the_trio",
+      "flag_prefix": "chain06_trio_",
+      "ending_flags": ["chain06_trio_rent_party_paid"],
+      "beats": [
+        {"id": "gift_memory", "event_id": "chain06_trio_gift_memory", "placement": {"archetype_ids": ["jazz_club"]}},
+        {"id": "rent_payoff", "event_id": "chain06_trio_rent_payoff", "requires_flags": ["chain06_trio_gifts_named"], "placement": {"archetype_ids": ["jazz_club"]}}
+      ]
+    },
+    {
+      "id": "dave_true_stories",
+      "flag_prefix": "chain06_dave_",
+      "ending_flags": ["chain06_dave_true_rumor_heard"],
+      "beats": [
+        {"id": "same_bus", "event_id": "chain06_dave_same_bus", "placement": {"archetype_ids": ["corner_store", "motel", "bar", "gas_station_casino", "jazz_club", "delta_queen"]}},
+        {"id": "last_stop", "event_id": "chain06_dave_last_stop", "requires_flags": ["chain06_dave_same_bus"], "placement": {"archetype_ids": ["corner_store", "motel", "bar", "gas_station_casino", "jazz_club", "delta_queen"]}},
+        {"id": "true_stop", "event_id": "chain06_dave_true_stop", "requires_flags": ["chain06_dave_last_stop"], "placement": {"archetype_ids": ["corner_store", "motel", "bar", "gas_station_casino", "jazz_club", "delta_queen"]}}
+      ]
+    }
+  ]
+}

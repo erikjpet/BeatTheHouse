@@ -46,6 +46,7 @@ $requiredFiles = @(
     "scripts/tests/foundation/crew_recruitment_contract.gd",
     "scripts/tests/foundation/crew_layer3_jobs_contract.gd",
     "scripts/tests/foundation/crew_plays_contract.gd",
+    "scripts/tests/foundation/character_chains_contract.gd",
     "scripts/tests/foundation/crew_ignored_golden_probe.gd",
     "scripts/tests/fixtures/crew06_5_ignored_run_baseline.json",
     "scripts/tests/foundation/check_scratch_tickets.gd",
@@ -160,7 +161,8 @@ $objectJsonFiles = @(
     "data/art/art_manifest.json",
     "data/art/attribute_glyphs.json",
     "data/games/scratch_ticket_regions.json",
-    "data/environments/scenarios.json"
+    "data/environments/scenarios.json",
+    "data/story/character_chains.json"
 )
 
 $jsonFiles = Get-ChildItem -LiteralPath (Join-Path $root "data") -Filter "*.json" -File -Recurse -ErrorAction SilentlyContinue
