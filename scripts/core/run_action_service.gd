@@ -13,6 +13,7 @@ const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 
 const JAZZ_CLUB_ARCHETYPE_ID := "jazz_club"
 const JAZZ_SAX_ROUND_SERVICE_ID := "jazz_sax_round"
@@ -946,6 +947,7 @@ func use_hook(kind: String, hook_id: String) -> Dictionary:
 	GameModule.apply_result(run_state, result)
 	if kind == "lender" and hook_id == "the_crew":
 		_apply_crew_loan_trust(definition)
+		_enqueue_rook_signpost()
 	return _service_success(result)
 
 
@@ -1483,6 +1485,24 @@ func _apply_crew_loan_trust(definition: Dictionary) -> void:
 	var marker_threshold := CrewStateModelScript.rank_threshold("marker")
 	for member_id in member_ids:
 		run_state.crew_add_trust(str(member_id), maxi(0, marker_threshold - run_state.crew_trust(str(member_id))), "crew_loan")
+
+
+func _enqueue_rook_signpost() -> void:
+	if run_state == null or library == null or bool(run_state.narrative_flags.get("crew_rook_signpost_offered", false)):
+		return
+	if CrewRecruitmentModelScript.rook_signpost_choices(run_state).is_empty():
+		return
+	var event_id := "recruitment_rook_signpost"
+	var event := library.event(event_id)
+	if event.is_empty():
+		return
+	var context := RunState.environment_context_snapshot(run_state.current_environment)
+	context["trigger"] = "crew_marker_opened"
+	if run_state.enqueue_triggered_event(event_id, "crew_recruitment", context, {
+		"presentation": str(event.get("presentation", "talk")),
+		"speaker": _copy_dict(event.get("speaker", {})),
+	}):
+		run_state.narrative_flags["crew_rook_signpost_offered"] = true
 
 
 func _family_lender_deltas(definition: Dictionary, profile: Dictionary) -> Dictionary:

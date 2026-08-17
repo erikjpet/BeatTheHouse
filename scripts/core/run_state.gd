@@ -16,6 +16,7 @@ const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.g
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
@@ -303,6 +304,7 @@ var crew_job_sequence: int = 0
 var active_delivery_run: Dictionary = {}
 var crew_pattern_memory: Dictionary = {}
 var crew_match_marks: Dictionary = {}
+var crew_contraband_stash: Array = []
 var numbers_state: NumbersModel
 var heat_history: Array = []
 var town_state: TownState
@@ -390,6 +392,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	active_delivery_run = {}
 	crew_pattern_memory = CrewPokerModelScript.default_observations()
 	crew_match_marks = {}
+	crew_contraband_stash = []
 	numbers_state = NumbersModelScript.new()
 	numbers_state.reset(seed_value)
 	heat_history = []
@@ -6199,7 +6202,209 @@ func crew_add_trust(member_id: String, amount: int, _reason: String = "") -> int
 	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or amount == 0:
 		return crew_trust(member_id)
 	crew_trust_by_member[member_id] = maxi(0, crew_trust(member_id) + amount)
+	_reconcile_crew_recruitment_perks()
 	return crew_trust(member_id)
+
+
+# Promotes one met contact to Associate through the authored intro encounter.
+# Trust remains the single canonical met/rank field owned by crew06_1.
+func crew_recruit_member(member_id: String) -> Dictionary:
+	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or member_id == "crew_rook":
+		return {"ok": false, "member_id": member_id}
+	var target := CrewStateModelScript.rank_threshold("associate")
+	if crew_trust(member_id) < target:
+		crew_add_trust(member_id, target - crew_trust(member_id), "recruitment_intro")
+	return {"ok": crew_rank(member_id) == "associate" or CrewStateModelScript.RANK_IDS.find(crew_rank(member_id)) > CrewStateModelScript.RANK_IDS.find("associate"), "member_id": member_id, "rank": crew_rank(member_id)}
+
+
+func crew_meet_member(member_id: String) -> Dictionary:
+	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or member_id == "crew_rook":
+		return {"ok": false, "member_id": member_id}
+	var target := CrewStateModelScript.rank_threshold("marker")
+	if crew_trust(member_id) < target:
+		crew_add_trust(member_id, target - crew_trust(member_id), "recruitment_contact")
+	return {"ok": CrewStateModelScript.RANK_IDS.find(crew_rank(member_id)) >= CrewStateModelScript.RANK_IDS.find("marker"), "member_id": member_id, "rank": crew_rank(member_id)}
+
+
+func crew_rank_perks(member_id: String) -> Array:
+	var result: Array = []
+	var rank_index := CrewStateModelScript.RANK_IDS.find(crew_rank(member_id))
+	for rank_id_value in CrewRecruitmentModelScript.rank_perks(member_id).keys():
+		var rank_id := str(rank_id_value)
+		if CrewStateModelScript.RANK_IDS.has(rank_id) and rank_index >= CrewStateModelScript.RANK_IDS.find(rank_id):
+			for perk_value in _copy_array(CrewRecruitmentModelScript.rank_perks(member_id).get(rank_id_value, [])):
+				var perk_id := str(perk_value)
+				if not perk_id.is_empty() and not result.has(perk_id):
+					result.append(perk_id)
+	return result
+
+
+func crew_member_job_available(member_id: String) -> bool:
+	return crew_rank_perks(member_id).has("member_jobs")
+
+
+func crew_job_definition_pending(definition_id: String) -> bool:
+	var clean_id := definition_id.strip_edges()
+	for job_value in crew_jobs.values():
+		if typeof(job_value) != TYPE_DICTIONARY:
+			continue
+		var job: Dictionary = job_value
+		if str(job.get("definition_id", "")) == clean_id and str(job.get("status", "")) != "resolved":
+			return true
+	return false
+
+
+func crew_close_rook_leads_event() -> void:
+	var event_ids := _copy_array(current_environment.get("event_ids", []))
+	event_ids.erase("recruitment_rook_leads")
+	current_environment["event_ids"] = event_ids
+	store_current_world_node_environment()
+
+
+func crew_switch_intel_status() -> Dictionary:
+	var available := crew_rank_perks("crew_switch").has("remote_scenario_reveal")
+	var services := _copy_dict(CrewStateModelScript.config().get("member_services", {}))
+	var cap := maxi(1, int(services.get("switch_intel_uses_per_visit", 2)))
+	var visit_id := _event_cadence_visit_key(current_environment)
+	var stored_visit_id := str(current_environment.get("crew_switch_intel_visit_id", ""))
+	var used := maxi(0, int(current_environment.get("crew_switch_intel_uses", 0))) if not visit_id.is_empty() and stored_visit_id == visit_id else 0
+	return {"available": available and used < cap, "rank_gated": not available, "uses": used, "uses_remaining": maxi(0, cap - used), "cap": cap, "visit_id": visit_id}
+
+
+func crew_switch_reveal_candidates() -> Array:
+	if not bool(crew_switch_intel_status().get("available", false)):
+		return []
+	var result: Array = []
+	for node_value in _copy_array(world_map.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", "")).strip_edges()
+		if node_id.is_empty() or node_id == current_world_node_id() or bool(node.get("scouted", false)):
+			continue
+		var scenario := seeded_scenario_for_node(node_id)
+		if scenario.is_empty():
+			continue
+		result.append({
+			"node_id": node_id,
+			"display_name": str(node.get("display_name", node.get("name", node_id.replace("_", " ").capitalize()))),
+			"scenario_id": str(scenario.get("id", "")),
+		})
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("node_id", "")) < str(b.get("node_id", "")))
+	return result
+
+
+# Switch upgrades a true seeded scenario fact through the existing heard/scouted
+# pipeline. The use counter lives in the node snapshot and resets on a new room.
+func crew_switch_reveal_node(node_id: String) -> Dictionary:
+	var status := crew_switch_intel_status()
+	var target := node_id.strip_edges()
+	if not bool(status.get("available", false)) or target.is_empty() or seeded_scenario_for_node(target).is_empty():
+		return {"ok": false, "node_id": target, "status": status}
+	var heard := hear_rumor("scenario:%s" % target)
+	if heard.is_empty():
+		return {"ok": false, "node_id": target, "status": status}
+	world_map = WorldMap.mark_scouted(world_map, target)
+	current_environment["crew_switch_intel_visit_id"] = str(status.get("visit_id", ""))
+	current_environment["crew_switch_intel_uses"] = int(status.get("uses", 0)) + 1
+	store_current_world_node_environment()
+	return {"ok": true, "node_id": target, "heard": heard, "status": crew_switch_intel_status()}
+
+
+func crew_rook_escort_available() -> bool:
+	return crew_rank_perks("crew_rook").has("rook_l3_escort")
+
+
+func crew_knuckles_stash_status() -> Dictionary:
+	var cap := CrewRecruitmentModelScript.stash_cap()
+	var available := crew_rank_perks("crew_knuckles").has("contraband_stash")
+	return {"available": available and crew_contraband_stash.size() < cap, "rank_gated": not available, "count": crew_contraband_stash.size(), "cap": cap, "item_ids": crew_contraband_stash.duplicate(true)}
+
+
+func crew_knuckles_stash_candidates() -> Array:
+	var result: Array = []
+	var definitions := _item_definition_index()
+	for inventory_index in range(inventory.size()):
+		var item_id := _inventory_item_id(inventory[inventory_index])
+		var definition := _copy_dict(definitions.get(item_id, {}))
+		var risk_flags := _string_array(_copy_array(definition.get("risk_flags", [])))
+		if str(definition.get("class", "")).strip_edges().to_lower() == "contraband" or risk_flags.has("contraband"):
+			result.append({"candidate_id": "inventory:%d" % inventory_index, "inventory_index": inventory_index, "item_id": item_id})
+	return result
+
+
+func crew_knuckles_retrieve_candidates() -> Array:
+	var result: Array = []
+	for stash_index in range(crew_contraband_stash.size()):
+		result.append({"candidate_id": "stash:%d" % stash_index, "stash_index": stash_index, "item_id": _inventory_item_id(crew_contraband_stash[stash_index])})
+	return result
+
+
+# Moves carried contraband out of sweep-visible inventory. Stashed entries keep
+# their exact inventory shape and therefore survive confiscation encounters.
+func crew_knuckles_stash_item(item_id: String) -> Dictionary:
+	var clean_id := item_id.strip_edges()
+	for candidate_value in crew_knuckles_stash_candidates():
+		if typeof(candidate_value) == TYPE_DICTIONARY and str((candidate_value as Dictionary).get("item_id", "")) == clean_id:
+			return crew_knuckles_stash_inventory_entry(int((candidate_value as Dictionary).get("inventory_index", -1)), clean_id)
+	return {"ok": false, "item_id": clean_id, "status": crew_knuckles_stash_status()}
+
+
+func crew_knuckles_stash_inventory_entry(inventory_index: int, expected_item_id: String) -> Dictionary:
+	var status := crew_knuckles_stash_status()
+	var clean_id := expected_item_id.strip_edges()
+	if not bool(status.get("available", false)) or inventory_index < 0 or inventory_index >= inventory.size() \
+		or _inventory_item_id(inventory[inventory_index]) != clean_id:
+		return {"ok": false, "item_id": clean_id, "status": status}
+	var valid_candidate := false
+	for candidate_value in crew_knuckles_stash_candidates():
+		if typeof(candidate_value) == TYPE_DICTIONARY and int((candidate_value as Dictionary).get("inventory_index", -1)) == inventory_index:
+			valid_candidate = true
+			break
+	if not valid_candidate:
+		return {"ok": false, "item_id": clean_id, "status": status}
+	crew_contraband_stash.append(_persistent_copy_value(inventory[inventory_index]))
+	inventory.remove_at(inventory_index)
+	invalidate_inventory_effect_cache()
+	if active_item_id == clean_id:
+		active_item_id = ""
+	return {"ok": true, "item_id": clean_id, "status": crew_knuckles_stash_status()}
+
+
+func crew_knuckles_retrieve_item(item_id: String) -> Dictionary:
+	var clean_id := item_id.strip_edges()
+	for candidate_value in crew_knuckles_retrieve_candidates():
+		if typeof(candidate_value) == TYPE_DICTIONARY and str((candidate_value as Dictionary).get("item_id", "")) == clean_id:
+			return crew_knuckles_retrieve_stash_entry(int((candidate_value as Dictionary).get("stash_index", -1)), clean_id)
+	return {"ok": false, "item_id": clean_id}
+
+
+func crew_knuckles_retrieve_stash_entry(stash_index: int, expected_item_id: String) -> Dictionary:
+	var clean_id := expected_item_id.strip_edges()
+	if not crew_rank_perks("crew_knuckles").has("contraband_stash") or stash_index < 0 or stash_index >= crew_contraband_stash.size() \
+		or _inventory_item_id(crew_contraband_stash[stash_index]) != clean_id:
+		return {"ok": false, "item_id": clean_id}
+	inventory.append(_persistent_copy_value(crew_contraband_stash[stash_index]))
+	crew_contraband_stash.remove_at(stash_index)
+	invalidate_inventory_effect_cache()
+	return {"ok": true, "item_id": clean_id, "status": crew_knuckles_stash_status()}
+
+
+func triggered_event_pending(event_id: String) -> bool:
+	var clean_id := event_id.strip_edges()
+	if clean_id.is_empty():
+		return false
+	if str(active_triggered_event.get("event_id", "")) == clean_id:
+		return true
+	for entry_value in pending_triggered_events:
+		if typeof(entry_value) == TYPE_DICTIONARY and str((entry_value as Dictionary).get("event_id", "")) == clean_id:
+			return true
+	return false
+
+
+func _reconcile_crew_recruitment_perks() -> void:
+	if crew_rook_escort_available():
+		narrative_flags["rook_escort_punchline_back_room"] = true
 
 
 # Derives crew-wide standing and the registered shared/heist gates.
@@ -6999,11 +7204,13 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 	var chosen_ids := requested if not requested.is_empty() else candidates.slice(0, mini(count, candidates.size()))
 	if chosen_ids.size() != count:
 		return {"ok": false, "message": "The job has no complete real route tonight."}
+	var allows_origin_return := str(spec.get("mode", "")) == DeliveryRunModelScript.MODE_MULTI_STOP \
+		and chosen_ids.size() > 1 and str(chosen_ids[chosen_ids.size() - 1]) == origin_id
 	var reveal_ids: Array = []
 	var targets: Array = []
 	for node_id_value in chosen_ids:
 		var node_id := str(node_id_value)
-		if not candidates.has(node_id):
+		if not candidates.has(node_id) and not (allows_origin_return and node_id == origin_id):
 			return {"ok": false, "message": "%s is not a reachable venue tonight." % node_id.replace("_", " ").capitalize()}
 		var path := WorldMap.prepared_path(offer_path_query, node_id) if node_id != origin_id else [origin_id]
 		if path.is_empty() or not WorldMap.prepared_path_uses_real_edges(offer_path_query, path):
@@ -7524,6 +7731,8 @@ func set_crew_capability(capability_id: String, enabled: bool = true) -> void:
 
 func crew_capability_active(capability_id: String) -> bool:
 	var clean_id := capability_id.strip_edges().to_lower()
+	if clean_id == "sweep_intel" and crew_rank_perks("crew_switch").has("sweep_intel"):
+		return true
 	return not clean_id.is_empty() and bool(narrative_flags.get("crew_capability:%s" % clean_id, false))
 
 
@@ -7561,7 +7770,8 @@ func sweep_interplay_seams(node_id: String = "") -> Dictionary:
 	return {
 		"node_id": target,
 		"knuckles_stash_registered": true,
-		"knuckles_stash_active": false,
+		"knuckles_stash_active": crew_rank_perks("crew_knuckles").has("contraband_stash"),
+		"knuckles_stash_count": crew_contraband_stash.size(),
 		"numbers_pause_registered": true,
 		"numbers_pause_active": false,
 		"delivery_carrier_risk_registered": true,
@@ -10550,7 +10760,7 @@ static func _world_map_for_save_snapshot(map_data: Dictionary) -> Dictionary:
 
 
 func _crew_state_for_save(deep_copy: bool) -> Dictionary:
-	return {
+	var result := {
 		"schema_version": CrewStateModelScript.STATE_SCHEMA_VERSION,
 		"trust": crew_trust_by_member.duplicate(deep_copy),
 		"grievances": crew_grievance_ledger.duplicate(deep_copy),
@@ -10561,6 +10771,12 @@ func _crew_state_for_save(deep_copy: bool) -> Dictionary:
 		"p": CrewPokerModelScript.pack_observations(crew_pattern_memory),
 		"m": crew_match_marks.duplicate(deep_copy),
 	}
+	# Keep a crew-ignoring save byte-identical to the crew06_1 projection. The
+	# optional field carries its own addition version only after the stash is used.
+	if not crew_contraband_stash.is_empty():
+		result["recruitment_schema_version"] = CrewRecruitmentModelScript.SCHEMA_VERSION
+		result["stash"] = crew_contraband_stash.duplicate(deep_copy)
+	return result
 
 
 func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
@@ -10571,6 +10787,7 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	crew_job_sequence = maxi(int(saved.get("job_sequence", crew_jobs.size())), crew_jobs.size())
 	crew_pattern_memory = CrewPokerModelScript.unpack_observations(saved.get("p", {}))
 	crew_match_marks = {}
+	crew_contraband_stash = _normalize_inventory_entries(saved.get("stash", []))
 	var saved_marks: Dictionary = saved.get("m", {}) if typeof(saved.get("m", {})) == TYPE_DICTIONARY else {}
 	for member_id in CrewStateModelScript.MEMBER_IDS:
 		# Keep an empty/sparse save projection sparse. Session recording already
@@ -10578,6 +10795,7 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 		# byte-identical save/load without improving runtime behavior.
 		if saved_marks.has(member_id):
 			crew_match_marks[member_id] = maxi(0, int(saved_marks.get(member_id, 0)))
+	_reconcile_crew_recruitment_perks()
 	if not legacy:
 		return
 	var has_legacy_marker := (
@@ -11346,6 +11564,12 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	environment["next_archetypes"] = _copy_array(environment.get("next_archetypes", []))
 	environment["object_fixtures"] = _copy_array(environment.get("object_fixtures", []))
 	environment["local_narrative_flags"] = _copy_dict(environment.get("local_narrative_flags", {}))
+	if environment.has("crew_presence"):
+		environment["crew_presence"] = _copy_array(environment.get("crew_presence", []))
+	if environment.has("crew_switch_intel_uses"):
+		environment["crew_switch_intel_uses"] = maxi(0, int(environment.get("crew_switch_intel_uses", 0)))
+	if environment.has("crew_switch_intel_visit_id"):
+		environment["crew_switch_intel_visit_id"] = str(environment.get("crew_switch_intel_visit_id", ""))
 	environment["game_states"] = _normalize_game_states(_copy_dict(environment.get("game_states", {})))
 	environment["visual_context"] = _copy_dict(environment.get("visual_context", {}))
 	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)

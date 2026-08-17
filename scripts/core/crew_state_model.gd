@@ -45,6 +45,20 @@ static func job_definition(job_id: String) -> Dictionary:
 	return (definition as Dictionary).duplicate(true) if typeof(definition) == TYPE_DICTIONARY else {}
 
 
+static func job_definitions_for_member(member_id: String) -> Array:
+	_ensure_job_cache()
+	var result: Array = []
+	for job_id_value in _job_cache.keys():
+		var definition_value: Variant = _job_cache.get(job_id_value, {})
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var definition: Dictionary = definition_value
+		if str(definition.get("member_id", "")) == member_id:
+			result.append(definition.duplicate(true))
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("id", "")) < str(b.get("id", "")))
+	return result
+
+
 static func default_trust() -> Dictionary:
 	var result := {}
 	for member_id in MEMBER_IDS:
@@ -175,6 +189,18 @@ static func validate_content() -> Array:
 		failures.append("crew.json rank ladder does not match the binding five ranks.")
 	if _string_array(source.get("grievance_kinds", [])) != GRIEVANCE_KINDS:
 		failures.append("crew.json grievance taxonomy does not match the binding ledger kinds.")
+	var member_rank_perks: Dictionary = source.get("member_rank_perks", {}) if typeof(source.get("member_rank_perks", {})) == TYPE_DICTIONARY else {}
+	for member_id in MEMBER_IDS:
+		var gates: Dictionary = member_rank_perks.get(member_id, {}) if typeof(member_rank_perks.get(member_id, {})) == TYPE_DICTIONARY else {}
+		if not _string_array(gates.get("associate", [])).has("member_jobs"):
+			failures.append("crew.json %s must open member jobs at Associate." % member_id)
+		for rank_id_value in gates.keys():
+			var rank_id := str(rank_id_value)
+			if not RANK_IDS.has(rank_id) or _string_array(gates.get(rank_id_value, [])).is_empty():
+				failures.append("crew.json %s has an invalid or empty %s perk gate." % [member_id, rank_id])
+	var member_services: Dictionary = source.get("member_services", {}) if typeof(source.get("member_services", {})) == TYPE_DICTIONARY else {}
+	if int(member_services.get("switch_intel_uses_per_visit", 0)) <= 0 or int(member_services.get("knuckles_stash_cap", 0)) <= 0:
+		failures.append("crew.json member service caps must be positive.")
 	var heist_requirements: Dictionary = source.get("heist_requirements", {}) if typeof(source.get("heist_requirements", {})) == TYPE_DICTIONARY else {}
 	for plan_id in heist_requirements.keys():
 		for member_id in _string_array(heist_requirements.get(plan_id, [])):

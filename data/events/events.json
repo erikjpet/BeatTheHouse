@@ -4285,6 +4285,123 @@
     ]}
   },
   {
+    "id": "recruitment_rook_signpost", "display_name": "Rook's Leads", "type": "crew", "interaction_mode": "triggered", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Rook", "character_id": "crew_rook", "voice_line_key": "loan_offer", "environment_actor": false},
+    "asset_path": "res://assets/art/events/motel_knock.png", "start_summary": "Rook names the roads that still have people on them.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker"},
+    "payload": {"kind": "crew_rook_signpost", "summary": "Rook names contacts still within reach.", "choices": []}
+  },
+  {
+    "id": "recruitment_rook_leads", "display_name": "Rook", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Rook", "character_id": "crew_rook", "voice_line_key": "loan_offer", "environment_actor": true},
+    "asset_path": "res://assets/art/events/motel_knock.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "Rook watches the road and names its people.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker"},
+    "payload": {"kind": "crew_rook_leads", "summary": "Rook names contacts still within reach.", "choices": []}
+  },
+  {
+    "id": "recruitment_switch", "display_name": "Switch", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Switch", "character_id": "crew_switch", "voice_line_key": "favor_due", "environment_actor": true},
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "Switch has the next road before this one is done.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker", "crew_member_rank_at_most": {"crew_switch": "marker"}},
+    "payload": {"summary": "Switch taps two routes, then waits.", "choices": [
+      {"id": "work_with_switch", "label": "Take the route", "text": "Good. Window's open now. Move before it notices.", "consequences": {"crew_recruit_member": "crew_switch", "resolve_event": true}},
+      {"id": "leave_switch_waiting", "label": "Keep circling", "text": "Switch is already watching the next door.", "consequences": {}}
+    ]}
+  },
+  {
+    "id": "recruitment_mags", "display_name": "Mags", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Mags", "character_id": "crew_mags", "voice_line_key": "favor_due", "environment_actor": true},
+    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "trunk_offer", "environment_prop": "trunk_offer", "start_summary": "Mags has counted every loose part twice.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker", "crew_member_rank_at_most": {"crew_mags": "marker"}},
+    "payload": {"summary": "Mags orders three pieces. None are decoration.", "choices": [
+      {"id": "work_with_mags", "label": "Follow the order", "text": "Three steps. Do them cleanly and we won't need a fourth.", "consequences": {"crew_recruit_member": "crew_mags", "resolve_event": true}},
+      {"id": "leave_mags_plan", "label": "Leave it sorted", "text": "Mags closes the case without wasting a word.", "consequences": {}}
+    ]}
+  },
+  {
+    "id": "recruitment_knuckles", "display_name": "Knuckles", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Knuckles", "character_id": "crew_knuckles", "voice_line_key": "favor_due", "environment_actor": true},
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Knuckles watches the room choose the hard way.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker", "crew_member_rank_at_most": {"crew_knuckles": "marker"}},
+    "payload": {"summary": "Knuckles points from the mess to the exit.", "choices": [
+      {"id": "work_with_knuckles", "label": "Keep it simple", "text": "Good. Carry what matters. Drop the speech.", "consequences": {"crew_recruit_member": "crew_knuckles", "resolve_event": true}},
+      {"id": "leave_knuckles_waiting", "label": "Make an excuse", "text": "Knuckles laughs once. The excuse doesn't improve.", "consequences": {}}
+    ]}
+  },
+  {
+    "id": "recruitment_velvet", "display_name": "Velvet", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Velvet", "character_id": "crew_velvet", "voice_line_key": "favor_due", "environment_actor": true},
+    "asset_path": "res://assets/art/events/side_door.png", "icon_key": "side_door", "environment_prop": "side_door", "start_summary": "Velvet makes the rope look like your idea.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker", "crew_member_rank_at_most": {"crew_velvet": "marker"}},
+    "payload": {"summary": "Velvet offers a name the room will remember.", "choices": [
+      {"id": "work_with_velvet", "label": "Accept the introduction", "text": "Beautiful. Let them think they invited you, darling.", "consequences": {"crew_recruit_member": "crew_velvet", "resolve_event": true}},
+      {"id": "leave_velvets_rope", "label": "Stay outside", "text": "Of course, sweetheart. The rope can wait beautifully.", "consequences": {}}
+    ]}
+  },
+  {
+    "id": "recruitment_bishop", "display_name": "Bishop", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Bishop", "character_id": "crew_bishop", "voice_line_key": "favor_due", "environment_actor": true},
+    "asset_path": "res://assets/art/events/eye_in_the_sky.png", "icon_key": "camera", "environment_prop": "security_camera", "start_summary": "Bishop waits where the floor sees an employee.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker", "crew_member_rank_at_most": {"crew_bishop": "marker"}},
+    "payload": {"summary": "Bishop checks the window, then your reflection.", "choices": [
+      {"id": "wait_for_bishop", "label": "Wait by the window", "conditions": {"missing_flags": ["bishop_recruitment_first_beat"]}, "text": "The proper hour is not yet. Stand still and let it arrive.", "consequences": {"flags": {"bishop_recruitment_first_beat": true}, "crew_meet_member": "crew_bishop"}},
+      {"id": "work_with_bishop", "label": "Keep the appointment", "conditions": {"requires_flags": {"bishop_recruitment_first_beat": true}}, "text": "The record now shows reliability. We may proceed.", "consequences": {"crew_recruit_member": "crew_bishop", "resolve_event": true}},
+      {"id": "leave_bishops_window", "label": "Break the appointment", "text": "Bishop returns to the floor before the floor misses him.", "consequences": {}}
+    ]}
+  },
+  {
+    "id": "recruitment_lucky", "display_name": "Lucky", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Lucky", "character_id": "crew_lucky", "voice_line_key": "favor_due", "environment_actor": false},
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Lucky turns three stops into one bright dare.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker", "crew_member_rank_at_most": {"crew_lucky": "marker"}},
+    "payload": {"summary": "Lucky has a route and unreasonable confidence.", "choices": [
+      {"id": "work_with_lucky", "label": "Run the route", "text": "Perfect. Tiny road, big suspense. Try to look brilliant.", "consequences": {"crew_recruit_member": "crew_lucky", "resolve_event": true}},
+      {"id": "leave_luckys_route", "label": "Let it run", "text": "Lucky takes the long way just to prove it was shorter.", "consequences": {}}
+    ]}
+  },
+  {
+    "id": "crew_contact_rook", "display_name": "Rook", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Rook", "character_id": "crew_rook", "voice_line_key": "favor_due", "environment_actor": false},
+    "asset_path": "res://assets/art/events/motel_knock.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "Rook keeps one hand near the next job.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker"}, "payload": {"kind": "crew_contact", "member_id": "crew_rook", "summary": "Rook keeps the terms short.", "choices": []}
+  },
+  {
+    "id": "crew_contact_switch", "display_name": "Switch", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Switch", "character_id": "crew_switch", "voice_line_key": "favor_due", "environment_actor": false},
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "Switch has the next route open.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker"}, "payload": {"kind": "crew_contact", "member_id": "crew_switch", "summary": "Switch taps the routes still worth reading.", "choices": []}
+  },
+  {
+    "id": "crew_contact_mags", "display_name": "Mags", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Mags", "character_id": "crew_mags", "voice_line_key": "favor_due", "environment_actor": false},
+    "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "trunk_offer", "environment_prop": "trunk_offer", "start_summary": "Mags has the work in order.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker"}, "payload": {"kind": "crew_contact", "member_id": "crew_mags", "summary": "Mags waits for a clean opening.", "choices": []}
+  },
+  {
+    "id": "crew_contact_knuckles", "display_name": "Knuckles", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Knuckles", "character_id": "crew_knuckles", "voice_line_key": "favor_due", "environment_actor": false},
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Knuckles keeps one quiet corner clear.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker"}, "payload": {"kind": "crew_contact", "member_id": "crew_knuckles", "summary": "Knuckles can hold hot goods out of sight.", "choices": []}
+  },
+  {
+    "id": "crew_contact_velvet", "display_name": "Velvet", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Velvet", "character_id": "crew_velvet", "voice_line_key": "favor_due", "environment_actor": false},
+    "asset_path": "res://assets/art/events/side_door.png", "icon_key": "side_door", "environment_prop": "side_door", "start_summary": "Velvet keeps an introduction ready.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker"}, "payload": {"kind": "crew_contact", "member_id": "crew_velvet", "summary": "Velvet watches the room choose its guest.", "choices": []}
+  },
+  {
+    "id": "crew_contact_bishop", "display_name": "Bishop", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Bishop", "character_id": "crew_bishop", "voice_line_key": "favor_due", "environment_actor": false},
+    "asset_path": "res://assets/art/events/eye_in_the_sky.png", "icon_key": "camera", "environment_prop": "security_camera", "start_summary": "Bishop keeps the appointment off the books.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker"}, "payload": {"kind": "crew_contact", "member_id": "crew_bishop", "summary": "Bishop waits for the proper opening.", "choices": []}
+  },
+  {
+    "id": "crew_contact_lucky", "display_name": "Lucky", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
+    "speaker": {"role": "crew", "name": "Lucky", "character_id": "crew_lucky", "voice_line_key": "favor_due", "environment_actor": false},
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Lucky has a route trying to become a dare.", "trigger": {"type": "manual"},
+    "conditions": {"min_crew_rank": "marker"}, "payload": {"kind": "crew_contact", "member_id": "crew_lucky", "summary": "Lucky waits for the next fast opening.", "choices": []}
+  },
+  {
     "id": "scenario_inventory_night_count", "display_name": "The Short Count", "type": "opportunistic", "interaction_mode": "interactable", "scopes": ["shop"],
     "asset_path": "res://assets/art/events/late_shift_discount.png", "icon_key": "discount_sticker", "environment_prop": "clerk_counter", "start_summary": "One box missed the sheet. Clerk noticed.", "trigger": {"type": "manual"},
     "payload": {"summary": "One box missed the sheet. Clerk noticed.", "choices": [
