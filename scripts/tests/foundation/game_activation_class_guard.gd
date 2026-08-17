@@ -72,6 +72,17 @@ class MaskingActivationFixture:
 		return super.environment_object_state(run_state, environment)
 
 
+class ByteOrderActivationFixture:
+	extends GameModule
+
+	func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+		if run_state.narrative_flags.has("game_activation_byte_order_first"):
+			var unchanged_value: Variant = run_state.narrative_flags.get("game_activation_byte_order_first")
+			run_state.narrative_flags.erase("game_activation_byte_order_first")
+			run_state.narrative_flags["game_activation_byte_order_first"] = unchanged_value
+		return super.environment_object_state(run_state, environment)
+
+
 static func check(library: ContentLibrary, failures: Array) -> void:
 	var covered_game_ids := {}
 	var checked_contexts := {}
@@ -439,6 +450,19 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 		if masking_violation.find("environment_object_state changed") == -1 or masking_violation.find("narrative_flags.game_activation_fixture_masked_object") == -1:
 			failures.append("Game activation class guard let nonserialized state from one hook mask a later mutation: %s" % masking_violation)
 
+	var byte_order_run := RunStateScript.new()
+	byte_order_run.start_new("GAME-ACTIVATION-BYTE-ORDER-FIXTURE")
+	byte_order_run.set_environment(environment)
+	byte_order_run.narrative_flags["game_activation_byte_order_first"] = "unchanged"
+	byte_order_run.narrative_flags["game_activation_byte_order_second"] = "unchanged"
+	byte_order_run = _json_round_trip_run_state(byte_order_run, "byte-order negative fixture", failures)
+	if byte_order_run != null:
+		var byte_order_game := ByteOrderActivationFixture.new()
+		byte_order_game.setup({"id": "game_activation_fixture", "display_name": "Activation Fixture", "legal_actions": [], "cheat_actions": []})
+		var byte_order_violation := _activation_violation(byte_order_game, byte_order_run)
+		if byte_order_violation.find("environment_object_state changed canonical byte order/type changed") == -1:
+			failures.append("Game activation class guard did not detect a byte-only dictionary reorder: %s" % byte_order_violation)
+
 
 static func _activation_violation(game: GameModule, run_state: RunState, cached_source_snapshot: Dictionary = {}, cached_source_text: String = "") -> String:
 	var source_snapshot := cached_source_snapshot if not cached_source_snapshot.is_empty() else run_state.to_dict()
@@ -488,7 +512,10 @@ static func _activation_violation(game: GameModule, run_state: RunState, cached_
 		if after_text != source_text:
 			var paths: Array = []
 			_collect_changed_paths(canonical_snapshot, after, "", paths)
-			return "%s changed %s" % [method, ", ".join(paths)]
+			var change_summary := ", ".join(paths)
+			if change_summary.is_empty():
+				change_summary = "canonical byte order/type changed"
+			return "%s changed %s" % [method, change_summary]
 	# The sentinel proves cold_source -> from_dict -> to_dict is byte-canonical;
 	# every hook proves its post-state has those same bytes. A redundant eighth
 	# restore cannot strengthen that transitive proof, so retain only both source
