@@ -216,17 +216,20 @@ static func _check_staff_rollover_presentation(library: ContentLibrary, failures
 			failures.append("Grand Casino %s staffing assignment did not retain the real rollover day." % role)
 
 	var rollover_snapshot := run_state.to_dict()
-	var rollover_text := JSON.stringify(rollover_snapshot)
 	for game_id in ["blackjack", "roulette", "bar_dice", "baccarat"]:
 		var game := _load_game(library, game_id, failures)
 		if game == null:
 			continue
 		var method_run := RunStateScript.new()
 		method_run.from_dict(rollover_snapshot.duplicate(true))
+		# from_dict() canonicalizes derived economy/rival fields. As in the main
+		# activation sweep, that restored representation is the byte baseline.
+		var passive_before := method_run.to_dict()
+		var passive_before_text := JSON.stringify(passive_before)
 		game.environment_object_state(method_run, method_run.current_environment)
-		if JSON.stringify(method_run.to_dict()) != rollover_text:
+		if JSON.stringify(method_run.to_dict()) != passive_before_text:
 			var paths: Array = []
-			_collect_changed_paths(rollover_snapshot, method_run.to_dict(), "", paths)
+			_collect_changed_paths(passive_before, method_run.to_dict(), "", paths)
 			failures.append("Grand Casino %s passive presentation mutated serialized state after a real staff rollover: %s" % [game_id, ", ".join(paths)])
 			continue
 		_commit_staff_action_boundary(game_id, game, method_run)
