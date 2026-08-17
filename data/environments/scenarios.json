@@ -372,7 +372,7 @@
       "id": "bar_darts_league_night",
       "archetype_id": "bar",
       "display_name": "Darts League Night",
-      "weight": 10,
+      "weight": 6,
       "mutations": {
         "patron_set": ["darts_league", "scoreboard_rail"],
         "event_pool_add": ["scenario_darts_league_decider"],
@@ -408,7 +408,7 @@
       "id": "bar_live_band",
       "archetype_id": "bar",
       "display_name": "Live Band",
-      "weight": 9,
+      "weight": 6,
       "mutations": {
         "staff_set": ["bar_band"],
         "patron_set": ["dance_floor_regulars"],
@@ -426,7 +426,7 @@
       "id": "bar_dead_tuesday",
       "archetype_id": "bar",
       "display_name": "Dead Tuesday",
-      "weight": 10,
+      "weight": 6,
       "town_weight_tags": ["calendar:midweek"],
       "mutations": {
         "staff_set": ["tuesday_bartender"],
@@ -626,7 +626,7 @@
       }
     },
     {
-      "id": "punchline_new_muscle", "archetype_id": "small_underground_casino", "layer_id": "casino", "display_name": "New Muscle", "weight": 9,
+      "id": "punchline_new_muscle", "archetype_id": "small_underground_casino", "layer_id": "casino", "display_name": "New Muscle", "weight": 2,
       "mutations": {
         "staff_set": ["new_floor_muscle", "crew_floor"], "patron_set": ["careful_regulars"], "event_pool_add": ["scenario_new_muscle_door"],
         "economic_profile_overrides": {"stake_floor": 15, "stake_ceiling": 100}, "game_modifier_hooks": {"floor_read": "unfamiliar", "table_tone": "careful"},
@@ -636,7 +636,7 @@
       }
     },
     {
-      "id": "punchline_raid_jitters", "archetype_id": "small_underground_casino", "layer_id": "casino", "display_name": "Raid Jitters", "weight": 6,
+      "id": "punchline_raid_jitters", "archetype_id": "small_underground_casino", "layer_id": "casino", "display_name": "Raid Jitters", "weight": 3,
       "town_weight_tags": ["law:pressure"],
       "mutations": {
         "staff_set": ["door_listener", "crew_floor"], "patron_set": ["nervous_regulars"], "event_pool_add": ["scenario_raid_jitters_check"],
