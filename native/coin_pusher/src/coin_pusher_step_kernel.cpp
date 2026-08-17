@@ -141,6 +141,21 @@ struct OrderedTraceRow {
 	const String *id = nullptr;
 };
 
+struct TraceRowValues {
+	int32_t body_index = -1;
+	String material_category;
+	int32_t x = 0;
+	int32_t y = 0;
+	int32_t z = 0;
+	int32_t radius = 0;
+	int32_t height = 0;
+	uint8_t sleeping = 0;
+	String rest_state;
+	uint8_t has_level = 0;
+	String level;
+	int32_t lean = 0;
+};
+
 class SpatialGrid {
 public:
 	static constexpr size_t SLOT_COUNT = 512;
@@ -343,6 +358,7 @@ public:
 	std::vector<int> exit_indices;
 	std::vector<OrderedTraceRow> trace_ordered_rows;
 	std::vector<String> trace_extra_ids;
+	std::vector<TraceRowValues> trace_rows;
 	Array exits;
 	Array motion_events;
 	std::set<String> motion_event_keys;
@@ -370,18 +386,6 @@ public:
 	PackedByteArray trace_row_has_level;
 	PackedStringArray trace_row_levels;
 	PackedInt32Array trace_row_lean;
-	int32_t *trace_row_body_indices_write = nullptr;
-	String *trace_row_material_categories_write = nullptr;
-	int32_t *trace_row_x_write = nullptr;
-	int32_t *trace_row_y_write = nullptr;
-	int32_t *trace_row_z_write = nullptr;
-	int32_t *trace_row_radius_write = nullptr;
-	int32_t *trace_row_height_write = nullptr;
-	uint8_t *trace_row_sleeping_write = nullptr;
-	String *trace_row_rest_states_write = nullptr;
-	uint8_t *trace_row_has_level_write = nullptr;
-	String *trace_row_levels_write = nullptr;
-	int32_t *trace_row_lean_write = nullptr;
 	std::map<String, int32_t> trace_descriptor_by_id;
 	bool trace_storage_preallocated = false;
 	int32_t trace_frames_written = 0;
@@ -474,19 +478,8 @@ public:
 		return index;
 	}
 
-	void bind_trace_row_writers() {
-		trace_row_body_indices_write = trace_row_body_indices.ptrw();
-		trace_row_material_categories_write = trace_row_material_categories.ptrw();
-		trace_row_x_write = trace_row_x.ptrw(); trace_row_y_write = trace_row_y.ptrw(); trace_row_z_write = trace_row_z.ptrw();
-		trace_row_radius_write = trace_row_radius.ptrw(); trace_row_height_write = trace_row_height.ptrw();
-		trace_row_sleeping_write = trace_row_sleeping.ptrw();
-		trace_row_rest_states_write = trace_row_rest_states.ptrw();
-		trace_row_has_level_write = trace_row_has_level.ptrw();
-		trace_row_levels_write = trace_row_levels.ptrw();
-		trace_row_lean_write = trace_row_lean.ptrw();
-	}
-
-	void resize_trace_rows(int64_t size) {
+	void materialize_trace_rows() {
+		const int64_t size = static_cast<int64_t>(trace_rows.size());
 		trace_row_body_indices.resize(size);
 		trace_row_material_categories.resize(size);
 		trace_row_x.resize(size); trace_row_y.resize(size); trace_row_z.resize(size);
@@ -496,7 +489,51 @@ public:
 		trace_row_has_level.resize(size);
 		trace_row_levels.resize(size);
 		trace_row_lean.resize(size);
-		bind_trace_row_writers();
+
+		// Packed-array write pointers are valid only while their owning packed
+		// array remains untouched. Keep every pointer inside one primitive-only
+		// fill so no Godot allocation or String operation can cross its lifetime.
+		{
+			int32_t *write = trace_row_body_indices.ptrw();
+			for (int64_t index = 0; index < size; ++index) write[index] = trace_rows[index].body_index;
+		}
+		{
+			int32_t *write = trace_row_x.ptrw();
+			for (int64_t index = 0; index < size; ++index) write[index] = trace_rows[index].x;
+		}
+		{
+			int32_t *write = trace_row_y.ptrw();
+			for (int64_t index = 0; index < size; ++index) write[index] = trace_rows[index].y;
+		}
+		{
+			int32_t *write = trace_row_z.ptrw();
+			for (int64_t index = 0; index < size; ++index) write[index] = trace_rows[index].z;
+		}
+		{
+			int32_t *write = trace_row_radius.ptrw();
+			for (int64_t index = 0; index < size; ++index) write[index] = trace_rows[index].radius;
+		}
+		{
+			int32_t *write = trace_row_height.ptrw();
+			for (int64_t index = 0; index < size; ++index) write[index] = trace_rows[index].height;
+		}
+		{
+			uint8_t *write = trace_row_sleeping.ptrw();
+			for (int64_t index = 0; index < size; ++index) write[index] = trace_rows[index].sleeping;
+		}
+		{
+			uint8_t *write = trace_row_has_level.ptrw();
+			for (int64_t index = 0; index < size; ++index) write[index] = trace_rows[index].has_level;
+		}
+		{
+			int32_t *write = trace_row_lean.ptrw();
+			for (int64_t index = 0; index < size; ++index) write[index] = trace_rows[index].lean;
+		}
+		for (int64_t index = 0; index < size; ++index) {
+			trace_row_material_categories.set(index, trace_rows[index].material_category);
+			trace_row_rest_states.set(index, trace_rows[index].rest_state);
+			trace_row_levels.set(index, trace_rows[index].level);
+		}
 	}
 
 	void prepare_trace_storage() {
@@ -505,43 +542,30 @@ public:
 		trace_tick_offsets.resize(frame_capacity);
 		trace_upper_phases.resize(frame_capacity);
 		trace_lower_phases.resize(frame_capacity);
-		resize_trace_rows(static_cast<int64_t>(frame_capacity) * static_cast<int64_t>(bodies.size()));
+		trace_rows.clear();
+		trace_rows.reserve(static_cast<size_t>(frame_capacity) * bodies.size());
 		trace_storage_preallocated = true;
 		trace_frames_written = 0;
 		trace_rows_written = 0;
 	}
 
-	void ensure_trace_row_capacity(int32_t required) {
-		if (!trace_storage_preallocated || required <= trace_row_body_indices.size()) return;
-		const int64_t grown = std::max<int64_t>(required, std::max<int64_t>(1, trace_row_body_indices.size() * 2));
-		resize_trace_rows(grown);
-	}
-
 	void append_trace_row_values(int32_t descriptor_index, const String &material, int64_t x, int64_t y, int64_t z,
 			int64_t radius, int64_t height, bool sleeping, const String &rest_state, bool has_level, const String &level, int64_t lean) {
-		if (!trace_storage_preallocated) {
-			trace_row_body_indices.append(descriptor_index);
-			trace_row_material_categories.append(material);
-			trace_row_x.append(static_cast<int32_t>(x)); trace_row_y.append(static_cast<int32_t>(y)); trace_row_z.append(static_cast<int32_t>(z));
-			trace_row_radius.append(static_cast<int32_t>(radius)); trace_row_height.append(static_cast<int32_t>(height));
-			trace_row_sleeping.append(sleeping ? 1 : 0);
-			trace_row_rest_states.append(rest_state);
-			trace_row_has_level.append(has_level ? 1 : 0);
-			trace_row_levels.append(has_level ? level : String());
-			trace_row_lean.append(static_cast<int32_t>(lean));
-			return;
-		}
-		ensure_trace_row_capacity(trace_rows_written + 1);
-		const int32_t row = trace_rows_written++;
-		trace_row_body_indices_write[row] = descriptor_index;
-		trace_row_material_categories_write[row] = material;
-		trace_row_x_write[row] = static_cast<int32_t>(x); trace_row_y_write[row] = static_cast<int32_t>(y); trace_row_z_write[row] = static_cast<int32_t>(z);
-		trace_row_radius_write[row] = static_cast<int32_t>(radius); trace_row_height_write[row] = static_cast<int32_t>(height);
-		trace_row_sleeping_write[row] = sleeping ? 1 : 0;
-		trace_row_rest_states_write[row] = rest_state;
-		trace_row_has_level_write[row] = has_level ? 1 : 0;
-		trace_row_levels_write[row] = has_level ? level : String();
-		trace_row_lean_write[row] = static_cast<int32_t>(lean);
+		TraceRowValues row;
+		row.body_index = descriptor_index;
+		row.material_category = material;
+		row.x = static_cast<int32_t>(x);
+		row.y = static_cast<int32_t>(y);
+		row.z = static_cast<int32_t>(z);
+		row.radius = static_cast<int32_t>(radius);
+		row.height = static_cast<int32_t>(height);
+		row.sleeping = sleeping ? 1 : 0;
+		row.rest_state = rest_state;
+		row.has_level = has_level ? 1 : 0;
+		row.level = has_level ? level : String();
+		row.lean = static_cast<int32_t>(lean);
+		trace_rows.push_back(std::move(row));
+		trace_rows_written = static_cast<int32_t>(trace_rows.size());
 	}
 
 	void append_trace_row(const Body &body) {
@@ -590,12 +614,12 @@ public:
 		});
 		if (trace_storage_preallocated) {
 			const int32_t frame = trace_frames_written++;
-			trace_frame_offsets.set(frame, trace_rows_written);
+			trace_frame_offsets.set(frame, static_cast<int32_t>(trace_rows.size()));
 			trace_tick_offsets.set(frame, static_cast<int32_t>(tick_offset));
 			trace_upper_phases.set(frame, static_cast<int32_t>(upper_phase));
 			trace_lower_phases.set(frame, static_cast<int32_t>(lower_phase));
 		} else {
-			trace_frame_offsets.append(trace_row_body_indices.size());
+			trace_frame_offsets.append(static_cast<int32_t>(trace_rows.size()));
 			trace_tick_offsets.append(static_cast<int32_t>(tick_offset));
 			trace_upper_phases.append(static_cast<int32_t>(upper_phase));
 			trace_lower_phases.append(static_cast<int32_t>(lower_phase));
@@ -641,22 +665,41 @@ public:
 			if (trace_descriptor_by_id.count(trace_body_ids[index]) != 0) return false;
 			trace_descriptor_by_id[trace_body_ids[index]] = index;
 		}
+		trace_rows.clear();
+		trace_rows.reserve(static_cast<size_t>(row_count));
+		for (int64_t index = 0; index < row_count; ++index) {
+			TraceRowValues row;
+			row.body_index = trace_row_body_indices[index];
+			row.material_category = trace_row_material_categories[index];
+			row.x = trace_row_x[index];
+			row.y = trace_row_y[index];
+			row.z = trace_row_z[index];
+			row.radius = trace_row_radius[index];
+			row.height = trace_row_height[index];
+			row.sleeping = trace_row_sleeping[index];
+			row.rest_state = trace_row_rest_states[index];
+			row.has_level = trace_row_has_level[index];
+			row.level = trace_row_levels[index];
+			row.lean = trace_row_lean[index];
+			trace_rows.push_back(std::move(row));
+		}
+		trace_rows_written = static_cast<int32_t>(trace_rows.size());
 		trace_frame_offsets.resize(frame_count);
 		return true;
 	}
 
 	Dictionary finish_packed_trace() {
 		if (trace_storage_preallocated) {
-			trace_frame_offsets.set(trace_frames_written, trace_rows_written);
+			trace_frame_offsets.set(trace_frames_written, static_cast<int32_t>(trace_rows.size()));
 			trace_frame_offsets.resize(trace_frames_written + 1);
 			trace_tick_offsets.resize(trace_frames_written);
 			trace_upper_phases.resize(trace_frames_written);
 			trace_lower_phases.resize(trace_frames_written);
-			resize_trace_rows(trace_rows_written);
 			trace_storage_preallocated = false;
 		} else {
-			trace_frame_offsets.append(trace_row_body_indices.size());
+			trace_frame_offsets.append(static_cast<int32_t>(trace_rows.size()));
 		}
+		materialize_trace_rows();
 		Dictionary packed;
 		packed["schema"] = "coin_pusher_presentation_trace_packed";
 		packed["version"] = PACKED_TRACE_VERSION;

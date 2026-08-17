@@ -137,6 +137,7 @@ func _check_exact_step_backends(core: Object, failures: Array[String]) -> void:
 			failures.append("native authoritative step did not advance exactly 48 fixed ticks")
 		if native_result.has("debug_stage_timing_usec"):
 			failures.append("production native result leaked non-authoritative wall-clock timing")
+		_check_packed_trace_string_columns(native_result.get("presentation_trace_packed", {}), failures)
 		_check_trace_contract(source, native_state, decoded_native_result, failures)
 		var finalized_packed := Solver.finalize_packed_presentation_trace(native_result.get("presentation_trace_packed", {}), native_state, Solver.ACTION_TICKS + 1)
 		var finalized_trace := Solver.decode_packed_presentation_trace(finalized_packed)
@@ -147,6 +148,29 @@ func _check_exact_step_backends(core: Object, failures: Array[String]) -> void:
 	_check_scripted_native_transaction(source, failures)
 	_check_full_cap_adapter_selection(failures)
 	_check_hostile_native_boundary(core, source, failures)
+
+
+func _check_packed_trace_string_columns(packed_value: Variant, failures: Array[String]) -> void:
+	if typeof(packed_value) != TYPE_DICTIONARY:
+		failures.append("native packed trace string-column fixture was missing")
+		return
+	var packed: Dictionary = packed_value
+	var row_body_indices: PackedInt32Array = packed.get("row_body_indices", PackedInt32Array())
+	var material_categories: PackedStringArray = packed.get("row_material_categories", PackedStringArray())
+	var rest_states: PackedStringArray = packed.get("row_rest_states", PackedStringArray())
+	var has_level: PackedByteArray = packed.get("row_has_level", PackedByteArray())
+	var levels: PackedStringArray = packed.get("row_levels", PackedStringArray())
+	var row_count := row_body_indices.size()
+	if material_categories.size() != row_count or rest_states.size() != row_count \
+			or has_level.size() != row_count or levels.size() != row_count:
+		failures.append("native packed trace string columns were not row-aligned")
+		return
+	for row in row_count:
+		if material_categories[row].is_empty() or rest_states[row].is_empty() \
+				or (has_level[row] != 0 and levels[row].is_empty()) \
+				or (has_level[row] == 0 and not levels[row].is_empty()):
+			failures.append("native packed trace string ownership corrupted row %d" % row)
+			return
 
 
 func _check_full_cap_adapter_selection(failures: Array[String]) -> void:
