@@ -406,8 +406,8 @@ What happens then is the owner's, not an agent's:
   enter→surface→render→play parity, 0.5 drunk-time scaling, same-ID cumulative
   rebase, omitted-offset clearing, unrelated-channel isolation, and clean
   checkpoint consumption at action/save boundaries. Focused Slot is 2/2 and
-  Games 10/10 with zero skips/failures/stderr; integrated systems/UI,
-  determinism, and visual gates remain before row closeout.
+  Games 10/10 with zero skips/failures/stderr; integrated systems and UI are
+  green, while determinism and visual gates remain before row closeout.
 - 2026-08-17 [fix06_2/integrated systems] The first post-merge run was
   functionally green 49/49 but correctly rejected for timing because an
   already-started Web native compile inflated every shard (61.518 s). With
@@ -416,6 +416,13 @@ What happens then is the owner's, not an agent's:
   saved-slot activation hostile green, four raw exits zero, no stderr/timeouts,
   and empty private-project cleanup. Artifact:
   `.tmp/test_reports/20260817_052921_pm_postmerge_systems_saved_slot_clean`.
+- 2026-08-17 [fix06_2/crew06_5 integrated UI] A native compiler overlapped the
+  first post-merge UI run, so its functional pass was retained only as
+  diagnostic evidence. After the pusher lane was made quiet, the fresh
+  authoritative rerun passed with 0 failures: `ui_scene_compile` 57.828 s
+  against the unchanged 124.851 s budget, every stage exit 0, no timeouts, and
+  no stderr issues. Artifact:
+  `.tmp/test_reports/20260817_0540_postmerge_saved_slot_ui_authoritative`.
 - 2026-08-17 [pusher06_2] Exact runtime at `4159f393` is green across the 80
   carried hot actions and all hostile/fallback twins. Raw p95 improved 43.9%
   from 283.293 to 159.000 ms, but remains 9.94x over the 16 ms gate; production
@@ -1103,4 +1110,9 @@ What happens then is the owner's, not an agent's:
   timing window: 39.895 s / 43.712 s, 49/49 unique checks, all four shards
   clean, saved-slot hostile green, and complete cleanup. A prior 61.518 s run
   was discarded rather than waived because concurrent Web compilation
-  contaminated the wall clock. UI, determinism, and visual gates remain.
+  contaminated the wall clock.
+- 2026-08-17 [fix06_2/crew06_5] Post-merge UI is independently green in a clean
+  timing window at
+  `.tmp/test_reports/20260817_0540_postmerge_saved_slot_ui_authoritative`:
+  0 failures, `ui_scene_compile` 57.828 s / 124.851 s, every stage exit 0, and
+  no timeout/stderr issues. Determinism and visual gates remain.
