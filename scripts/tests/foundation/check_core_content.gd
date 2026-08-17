@@ -29,6 +29,7 @@ const PoliceSweepContractScript := preload("res://scripts/tests/foundation/polic
 const NumbersContractScript := preload("res://scripts/tests/foundation/numbers_contract.gd")
 const Tier2ScenarioContractScript := preload("res://scripts/tests/foundation/tier2_scenario_contract.gd")
 const InteractableEventClassGuardScript := preload("res://scripts/tests/foundation/interactable_event_class_guard.gd")
+const Onboarding06ContractScript := preload("res://scripts/tests/foundation/onboarding_06_contract.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
@@ -3489,12 +3490,7 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 
 
 func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) -> void:
-	var normal_lessons: Array = []
-	for lesson_value in library.tutorial_lessons:
-		if typeof(lesson_value) == TYPE_DICTIONARY and str((lesson_value as Dictionary).get("scope", "")).strip_edges() != "tutorial_run":
-			normal_lessons.append(lesson_value)
-	if not normal_lessons.is_empty():
-		failures.append("Dialogue-guided tutorial retained ambient first-time coach tips.")
+	Onboarding06ContractScript.check(library, failures)
 	for removed_id in ["tip_first_heat_gain", "tip_first_debt_taken", "tip_first_closing_warning", "tip_first_pawn_interaction", "tip_first_item_purchase", "tip_first_map_open", "tip_first_chips_gained", "tip_first_card_tier", "tip_starter_card_home"]:
 		if not library.tutorial_lesson(removed_id).is_empty():
 			failures.append("Removed ambient lesson still ships: %s." % removed_id)

@@ -163,7 +163,7 @@ func set_focus_visual_enabled(enabled: bool) -> void:
 func evaluate_at_boundary(context: Dictionary) -> void:
 	if panel == null:
 		_build()
-	var observed_context := context.duplicate(true)
+	var observed_context := _with_public_system_context(context)
 	observed_context["reduce_motion"] = reduce_motion
 	observed_context["small_screen"] = small_screen
 	latest_context = observed_context
@@ -201,10 +201,72 @@ func evaluate_at_boundary(context: Dictionary) -> void:
 
 
 func notify_action(action_id: String) -> bool:
-	if active_lesson.is_empty() or not CoachViewModelScript.completion_matches(active_lesson, action_id):
+	# Normal-run tips may meet their first genuine encounter on focus rather than
+	# on an action-consuming run boundary (the Numbers book is the canonical
+	# case). Re-read only public host state at that explicit input boundary. The
+	# input that revealed a lesson never dismisses the lesson in the same call.
+	if active_lesson.is_empty():
+		if _path_value(latest_context, "run.tutorial") != true:
+			var interaction_context := latest_context.duplicate(true)
+			var action_context := _dict(interaction_context.get("action", {})).duplicate(true)
+			action_context["last_action_id"] = action_id
+			interaction_context["action"] = action_context
+			evaluate_at_boundary(interaction_context)
+		return false
+	if not CoachViewModelScript.completion_matches(active_lesson, action_id):
 		return false
 	_finish_active()
 	return true
+
+
+# Contextual 0.6 lessons deliberately consume public presentation state only.
+# Keeping this read seam inside the coach surface avoids adding tutorial flags
+# to gameplay models and keeps discovery-gated mechanics out of the context.
+func _with_public_system_context(context: Dictionary) -> Dictionary:
+	var observed := context.duplicate(true)
+	var host := get_parent()
+	var run_state_value: Variant = _object_property(host, "run_state")
+	if typeof(run_state_value) != TYPE_OBJECT:
+		return observed
+	var run_context := _dict(observed.get("run", {})).duplicate(true)
+	var ui_context := _dict(observed.get("ui", {})).duplicate(true)
+	var environment := _dict(_object_property(run_state_value, "current_environment"))
+	var scenario_id := str(environment.get("scenario_id", "")).strip_edges()
+	if scenario_id.is_empty():
+		scenario_id = str(_dict(environment.get("scenario_state", {})).get("id", "")).strip_edges()
+	run_context["scenario_active"] = not scenario_id.is_empty()
+	var delivery_snapshot: Dictionary = {}
+	if (run_state_value as Object).has_method("delivery_has_active_run") \
+			and bool((run_state_value as Object).call("delivery_has_active_run")) \
+			and (run_state_value as Object).has_method("delivery_snapshot"):
+		delivery_snapshot = _dict((run_state_value as Object).call("delivery_snapshot"))
+	run_context["delivery_active"] = not delivery_snapshot.is_empty() and str(delivery_snapshot.get("status", "")) == "active"
+	var resolved_job := false
+	var crew_jobs := _dict(_object_property(run_state_value, "crew_jobs"))
+	for job_value in crew_jobs.values():
+		if typeof(job_value) == TYPE_DICTIONARY and str((job_value as Dictionary).get("status", "")) == "resolved":
+			resolved_job = true
+			break
+	run_context["crew_job_resolved"] = resolved_job
+	run_context["venue_depth_surface"] = str(environment.get("archetype_id", "")) == "small_underground_casino" \
+			and str(environment.get("current_layer_id", "club")) == "club"
+	var current_context_mode := str(_object_property(host, "current_context_mode"))
+	var popup_snapshot := _dict(_object_property(host, "pending_event_choice_popup_snapshot"))
+	ui_context["numbers_encountered"] = current_context_mode == "numbers" \
+			or str(popup_snapshot.get("popup_type", "")) == "numbers_surface"
+	observed["run"] = run_context
+	observed["ui"] = ui_context
+	return observed
+
+
+func _object_property(source: Variant, property_name: String) -> Variant:
+	if typeof(source) != TYPE_OBJECT:
+		return null
+	var object_value := source as Object
+	for property_value in object_value.get_property_list():
+		if typeof(property_value) == TYPE_DICTIONARY and str((property_value as Dictionary).get("name", "")) == property_name:
+			return object_value.get(property_name)
+	return null
 
 
 func notify_dialogue_completed(lesson_id: String) -> bool:
