@@ -3896,7 +3896,7 @@ func _embedded_refresh_environment(environment_id: String) -> Dictionary:
 	return {
 		"id": environment_id, "display_name": "Embedded Refresh Room", "archetype_id": "bar", "kind": "casino",
 		"economic_profile": {"stake_floor": 1, "stake_ceiling": 5},
-		"game_ids": [], "event_ids": [], "item_offers": [], "travel_hooks": [], "next_archetypes": [], "lender_hooks": [], "game_states": {},
+		"game_ids": ["bar_dice"], "event_ids": [], "item_offers": [], "travel_hooks": [], "next_archetypes": [], "lender_hooks": [], "game_states": {},
 	}
 
 
