@@ -236,7 +236,10 @@ public:
 			body.id = ref.get("id", "");
 			body.kind = ref.get("kind", "coin");
 			Variant metadata_value = ref.get("metadata", Dictionary());
-			body.metadata = metadata_value.get_type() == Variant::DICTIONARY ? Dictionary(metadata_value).duplicate(true) : Dictionary();
+			// Metadata is immutable solver input. Published exits and trace frames
+			// deep-copy it at their ownership boundaries, so duplicating every
+			// body's nested metadata during an action was redundant allocation.
+			body.metadata = metadata_value.get_type() == Variant::DICTIONARY ? Dictionary(metadata_value) : Dictionary();
 			body.rest_state = ref.get("rest_state", "settling");
 			body.x = ref.get("x", 0); body.y = ref.get("y", 0); body.z = ref.get("z", 0);
 			body.vx = ref.get("vx", 0); body.vy = ref.get("vy", 0); body.vz = ref.get("vz", 0);

@@ -46,6 +46,13 @@ const HOT_CONFIG_IMPULSE_ABS_LIMIT := 100000000
 const HOT_PUSH_SCALE_ABS_LIMIT := 1000
 const NATIVE_BACKEND_ID := "coin_pusher_native_integer_v1"
 const NATIVE_ABI_VERSION := 1
+const NATIVE_MUTABLE_BODY_KEYS := {
+	"x": true, "y": true, "z": true,
+	"vx": true, "vy": true, "vz": true,
+	"sleep_ticks": true, "sleeping": true,
+	"rest_state": true, "lean_milli": true,
+	"cap_pressure_ticks": true, "cap_pressure_accel": true,
+}
 
 static var _native_backend: Object = null
 static var _native_backend_checked := false
@@ -341,14 +348,19 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 	_normalize_hot_body_fields(state)
 	var debug_adapter := bool(config.get("_debug_profile_stages", false))
 	var debug_adapter_started_usec := Time.get_ticks_usec() if debug_adapter else 0
-	if _hot_state_requires_reference(state, config):
-		_last_step_backend_for_test = "reference"
-		return _step_action_dictionary_reference(state, config)
 	var forced_backend := str(config.get("_debug_force_solver_backend", ""))
 	if forced_backend != "gdscript":
 		var native := _native_solver_backend()
 		if native != null:
 			var trusted_native := native.get_class() == "CoinPusherNativeCore" and native.get_script() == null
+			# The shipped extension performs the same numeric/body eligibility
+			# validation before it mutates its isolated candidate. Let that single
+			# native boundary own the trusted check; a rejection returns an empty
+			# result and routes the untouched authority through the reference path.
+			# Scripted backends retain the explicit GDScript eligibility guard.
+			if not trusted_native and _hot_state_requires_reference(state, config):
+				_last_step_backend_for_test = "reference"
+				return _step_action_dictionary_reference(state, config)
 			var debug_stage_started_usec := Time.get_ticks_usec() if debug_adapter else 0
 			var native_state := _native_candidate_state(state, not trusted_native)
 			var native_config := config.duplicate(not trusted_native)
@@ -369,7 +381,7 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 				if _native_step_contract_valid(state, native_state, native_result, config, trusted_native):
 					var debug_validate_usec := Time.get_ticks_usec() - debug_stage_started_usec if debug_adapter else 0
 					debug_stage_started_usec = Time.get_ticks_usec() if debug_adapter else 0
-					_publish_native_state(state, native_state)
+					_publish_native_state(state, native_state, trusted_native)
 					if debug_adapter:
 						var debug_profile: Dictionary = native_result.get("debug_stage_timing_usec", {})
 						debug_profile["adapter_candidate"] = debug_candidate_usec
@@ -381,6 +393,12 @@ static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
 						native_result["debug_stage_timing_usec"] = debug_profile
 					_last_step_backend_for_test = "native"
 					return native_result
+			if trusted_native:
+				_last_step_backend_for_test = "reference"
+				return _step_action_dictionary_reference(state, config)
+	if _hot_state_requires_reference(state, config):
+		_last_step_backend_for_test = "reference"
+		return _step_action_dictionary_reference(state, config)
 	_last_step_backend_for_test = "gdscript"
 	return _step_action_hot(state, config)
 
@@ -455,31 +473,57 @@ static func _native_candidate_state(state: Dictionary, deep_copy_values: bool = 
 	for key in ["schema", "version", "fixed_hz", "fixed_point_scale", "tick", "upper_phase_fp", "lower_phase_fp"]:
 		if state.has(key):
 			candidate[key] = state[key]
+	var bodies_value: Variant = state.get("bodies", [])
+	if typeof(bodies_value) != TYPE_ARRAY:
+		candidate["bodies"] = bodies_value
+		return candidate
 	var candidate_bodies: Array = []
-	for body_value in state.get("bodies", []):
-		candidate_bodies.append((body_value as Dictionary).duplicate(deep_copy_values))
+	for body_value in (bodies_value as Array):
+		candidate_bodies.append((body_value as Dictionary).duplicate(deep_copy_values) if typeof(body_value) == TYPE_DICTIONARY else body_value)
 	candidate["bodies"] = candidate_bodies
 	return candidate
 
 
-static func _publish_native_state(state: Dictionary, candidate: Dictionary) -> void:
+static func _publish_native_state(state: Dictionary, candidate: Dictionary, trusted_native: bool = false) -> void:
 	var original_bodies: Array = state.get("bodies", [])
-	var candidate_by_id := {}
-	for candidate_value in candidate.get("bodies", []):
-		var candidate_body: Dictionary = candidate_value
-		candidate_by_id[str(candidate_body.get("id", ""))] = candidate_body
-	for index in range(original_bodies.size() - 1, -1, -1):
-		var original_body: Dictionary = original_bodies[index]
-		var body_id := str(original_body.get("id", ""))
-		if candidate_by_id.has(body_id):
-			var candidate_body: Dictionary = candidate_by_id[body_id]
+	var candidate_bodies: Array = candidate.get("bodies", [])
+	if trusted_native:
+		# The trusted contract has already proved that candidates are the
+		# source-order subsequence left after reported physical exits. Publish
+		# linearly so body Dictionary identities remain authoritative aliases.
+		var original_index := 0
+		var candidate_index := 0
+		while original_index < original_bodies.size():
+			var original_body: Dictionary = original_bodies[original_index]
+			if candidate_index >= candidate_bodies.size() \
+					or str(original_body.get("id", "")) != str((candidate_bodies[candidate_index] as Dictionary).get("id", "")):
+				original_bodies.remove_at(original_index)
+				continue
+			var candidate_body: Dictionary = candidate_bodies[candidate_index]
 			for mutable_key in ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "sleeping", "rest_state", "lean_milli"]:
 				original_body[mutable_key] = candidate_body[mutable_key]
 			for pressure_key in ["cap_pressure_ticks", "cap_pressure_accel"]:
 				if original_body.has(pressure_key) or int(candidate_body.get(pressure_key, 0)) > 0:
 					original_body[pressure_key] = candidate_body.get(pressure_key, 0)
-		else:
-			original_bodies.remove_at(index)
+			original_index += 1
+			candidate_index += 1
+	else:
+		var candidate_by_id := {}
+		for candidate_value in candidate_bodies:
+			var candidate_body: Dictionary = candidate_value
+			candidate_by_id[str(candidate_body.get("id", ""))] = candidate_body
+		for index in range(original_bodies.size() - 1, -1, -1):
+			var original_body: Dictionary = original_bodies[index]
+			var body_id := str(original_body.get("id", ""))
+			if candidate_by_id.has(body_id):
+				var candidate_body: Dictionary = candidate_by_id[body_id]
+				for mutable_key in ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "sleeping", "rest_state", "lean_milli"]:
+					original_body[mutable_key] = candidate_body[mutable_key]
+				for pressure_key in ["cap_pressure_ticks", "cap_pressure_accel"]:
+					if original_body.has(pressure_key) or int(candidate_body.get(pressure_key, 0)) > 0:
+						original_body[pressure_key] = candidate_body.get(pressure_key, 0)
+			else:
+				original_bodies.remove_at(index)
 	state["bodies"] = original_bodies
 	state["tick"] = candidate["tick"]
 	for phase_key in ["upper_phase_fp", "lower_phase_fp"]:
@@ -549,7 +593,6 @@ static func _native_step_contract_valid(before: Dictionary, candidate: Dictionar
 		return false
 	var before_bodies: Array = before.get("bodies", [])
 	var candidate_bodies: Array = candidate.get("bodies", [])
-	var mutable_body_keys := ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "sleeping", "rest_state", "lean_milli", "cap_pressure_ticks", "cap_pressure_accel"]
 	if trusted_native:
 		# validate_step_input() guarantees unique source IDs. The exact unscripted
 		# kernel may only retain bodies in source order or remove a body reported by
@@ -589,10 +632,10 @@ static func _native_step_contract_valid(before: Dictionary, candidate: Dictionar
 				if candidate_body.has(pressure_key) and typeof(candidate_body[pressure_key]) != TYPE_INT:
 					return false
 			for key in before_body:
-				if not mutable_body_keys.has(key) and (not candidate_body.has(key) or typeof(candidate_body[key]) != typeof(before_body[key]) or candidate_body[key] != before_body[key]):
+				if not NATIVE_MUTABLE_BODY_KEYS.has(key) and (not candidate_body.has(key) or typeof(candidate_body[key]) != typeof(before_body[key]) or candidate_body[key] != before_body[key]):
 					return false
 			for key in candidate_body:
-				if not mutable_body_keys.has(key) and not before_body.has(key):
+				if not NATIVE_MUTABLE_BODY_KEYS.has(key) and not before_body.has(key):
 					return false
 		while before_index < before_bodies.size():
 			var removed_id := str((before_bodies[before_index] as Dictionary).get("id", ""))
@@ -627,10 +670,10 @@ static func _native_step_contract_valid(before: Dictionary, candidate: Dictionar
 				return false
 		if not trusted_native:
 			for key in before_body:
-				if not mutable_body_keys.has(key) and (not candidate_body.has(key) or typeof(candidate_body[key]) != typeof(before_body[key]) or candidate_body[key] != before_body[key]):
+				if not NATIVE_MUTABLE_BODY_KEYS.has(key) and (not candidate_body.has(key) or typeof(candidate_body[key]) != typeof(before_body[key]) or candidate_body[key] != before_body[key]):
 					return false
 			for key in candidate_body:
-				if not mutable_body_keys.has(key) and not before_body.has(key):
+				if not NATIVE_MUTABLE_BODY_KEYS.has(key) and not before_body.has(key):
 					return false
 	var candidate_index := 0
 	for before_value in before_bodies:
