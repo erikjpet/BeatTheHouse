@@ -219,6 +219,15 @@ What happens then is the owner's, not an agent's:
   Fence Night anchor as `back_alley_fence_night`, not a pawn-shop scenario.
   Crew06_5 consumes that existing primary anchor and may not invent a new
   scenario outside its placement scope.
+- 2026-08-17 [crew06_5] PM arbitration on the prompt's 7x2 wording: Rook is
+  the explicit exception named in Task 1. His shipped Crew-loan action is
+  scenario-independent, so he cannot become unmeetable from scenario selection
+  and no duplicate fallback encounter may be invented. Acceptance requires the
+  real `RunActionService` loan path plus legacy Marker migration compatibility;
+  the other six members require primary and fallback production placements.
+  Static acceptance also rejected two real placement defects: Velvet's fallback
+  must be limited to the authored Slow Night beat, and Bishop's met presence /
+  contact must seed and refresh in the Grand Casino cage subroom across revisits.
 - 2026-08-17 [fix06_2] An external Codex process merged and pushed the
   still-unverified repair through `91e0a6c4` as merge `9d92f49f`. It changed
   no board or prompt records. The merge is provisional integration only: the
@@ -235,6 +244,26 @@ What happens then is the owner's, not an agent's:
   Density (160 cap / 150 opening), samples, outcomes, trace, icons, animation,
   and audio may not be reduced to converge; implementation is addressing
   repeated whole-machine and presentation-trace deep copies at their source.
+- 2026-08-17 [pusher06_2] Independent solver review rejected active-body
+  pruning and async/incremental action semantics as insufficient or contract-
+  breaking. The accepted optimization direction is a transactional packed SoA
+  solver with deterministic flat-grid iteration and one writeback after all 48
+  fixed ticks. Its dictionary solver remains the oracle: the carried 8-seed x
+  10-action differential matrix must prove every action used the packed path
+  and match raw state, canonical digest, exits, events, trace, and metrics after
+  every action. Hostile int64/high-motion states must safely fall back; density,
+  ordering, outcomes, presentation, save semantics, and the 16 ms gate remain
+  unchanged.
+- 2026-08-17 [fix06_2] The integrated games matrix passed after the portable-
+  ticket travel correction, but broader systems acceptance exposed two test-
+  machinery defects: the Blackjack rotation fixture had not first persisted
+  its original dealer at an action boundary, and the new seven-hook activation
+  guard pushed the unchanged suite over budget through redundant cold rebuilds.
+  The fixture now establishes the original dealer through production resolve;
+  the guard optimization may reuse generator/cold snapshots only while retaining
+  all 235 generated contexts, 11 games, seven hooks, hostile fixtures, and
+  per-hook canonical before/after assertions. No budget or registration changes
+  are authorized.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
