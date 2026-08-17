@@ -713,6 +713,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_talk_content_pass_content(library, failures)
 	_check_content_validation_boot_surfacing(library, failures)
 	_check_t4_3_event_pack(library, failures)
+	_check_action_trigger_candidate_index(failures)
 	_check_t4_4_item_pack(library, failures)
 	_check_content_group_modularity(library, failures)
 	_check_challenge_pack_content(library, failures)
@@ -741,6 +742,140 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_environment_instance_shape(second_environment, false, failures)
 	if second_environment.id == first_environment.id:
 		failures.append("Travel did not generate a distinct second environment.")
+
+
+func _check_action_trigger_candidate_index(failures: Array) -> void:
+	var library := ContentLibraryScript.new()
+	library.events = [
+		_action_index_fixture_event("action_card_cheat", "random", ["casino"], {"requires_context": {"source": "game_action", "action_kind": "cheat", "game_family": "cards"}}, {}, {"min_turns": 1}),
+		_action_index_fixture_event("wrong_archetype", "random", ["casino"], {"archetype_ids": ["delta_queen"]}),
+		_action_index_fixture_event("later_timed", "timed", ["casino"], {}, {}, {"turns": 3}),
+		_action_index_fixture_event("travel_only", "travel", ["any"]),
+		_action_index_fixture_event("room_actor_manual", "manual", ["any"], {}, {"role": "patron"}),
+		_action_index_fixture_event("already_resolved", "random", ["casino"]),
+		_action_index_fixture_event("exact_empty_scope", "random", [""]),
+		_action_index_fixture_event("whitespace_blocked_id", "random", ["odd"], {"blocked_archetype_ids": [" bar "]}),
+		_action_index_fixture_event("blank_blocked_id", "random", ["odd"], {"blocked_archetype_ids": [" "]}),
+		_action_index_fixture_event("empty_blocked_id", "random", ["odd"], {"blocked_archetype_ids": [""]}),
+		_action_index_fixture_event("whitespace_required_id", "random", ["odd"], {"archetype_ids": [" bar "]}),
+		_action_index_fixture_event("whitespace_required_game", "random", ["odd"], {"requires_games": [" blackjack "]}),
+		_action_index_fixture_event("not_triggered", "random", ["any"], {}, {}, {}, "interactable"),
+	]
+	library.rebuild_content_indexes()
+	var scan_count := library.trigger_event_index_full_pack_scan_count()
+	var action_context := {
+		"trigger": "action",
+		"type": "action",
+		"source": "game_action",
+		"turns": 2,
+		"game_id": "blackjack",
+		"game_family": "cards",
+		"action_kind": "cheat",
+	}
+	var casino_environment := {
+		"id": "index_casino",
+		"kind": "casino",
+		"archetype_id": "bar",
+		"tier": 1,
+		"turns": 2,
+		"game_ids": ["blackjack"],
+		"resolved_event_ids": ["already_resolved"],
+	}
+	_assert_action_index_exact_parity(library, "game_action", action_context, casino_environment, failures)
+	var action_ids := _action_index_event_ids(library.action_trigger_event_candidates_for_context_readonly("game_action", action_context, casino_environment))
+	if action_ids != ["action_card_cheat", "room_actor_manual"]:
+		failures.append("Action-trigger eligibility index changed authored order or retained statically impossible candidates: %s." % JSON.stringify(action_ids))
+	var home_environment := {
+		"id": "index_home",
+		"kind": "home",
+		"archetype_id": "home",
+		"tier": 1,
+		"turns": 2,
+		"game_ids": [],
+		"resolved_event_ids": ["already_resolved"],
+	}
+	_assert_action_index_exact_parity(library, "game_action", action_context, home_environment, failures)
+	if not library.action_trigger_event_candidates_for_context_readonly("game_action", action_context, home_environment).is_empty():
+		failures.append("Action-trigger eligibility index did not prove a deterministic no-op room boundary.")
+	var travel_context := {"trigger": "travel", "type": "travel", "source": "travel", "turns": 0}
+	_assert_action_index_exact_parity(library, "travel", travel_context, home_environment, failures)
+	var travel_ids := _action_index_event_ids(library.action_trigger_event_candidates_for_context_readonly("travel", travel_context, home_environment))
+	if travel_ids != ["travel_only", "room_actor_manual"]:
+		failures.append("Travel trigger bucket lost authored order or room-actor travel semantics: %s." % JSON.stringify(travel_ids))
+	var override_context := action_context.duplicate(true)
+	override_context["conditions_override"] = {}
+	_assert_action_index_exact_parity(library, "game_action", override_context, casino_environment, failures)
+	var empty_kind_environment := {
+		"id": "index_empty_kind",
+		"kind": "",
+		"archetype_id": "empty_kind",
+		"tier": 1,
+		"turns": 2,
+		"game_ids": [],
+		"resolved_event_ids": ["already_resolved"],
+	}
+	_assert_action_index_exact_parity(library, "game_action", action_context, empty_kind_environment, failures)
+	var empty_kind_ids := _action_index_event_ids(library.action_trigger_event_candidates_for_context_readonly("game_action", action_context, empty_kind_environment))
+	if empty_kind_ids != ["room_actor_manual", "exact_empty_scope"]:
+		failures.append("Exact empty environment scope was hidden by the universal-scope fallback: %s." % JSON.stringify(empty_kind_ids))
+	var whitespace_environment := {
+		"id": "index_whitespace",
+		"kind": "odd",
+		"archetype_id": " bar ",
+		"tier": 1,
+		"turns": 2,
+		"game_ids": [" blackjack "],
+		"resolved_event_ids": ["already_resolved"],
+	}
+	_assert_action_index_exact_parity(library, "game_action", action_context, whitespace_environment, failures)
+	var whitespace_ids := _action_index_event_ids(library.action_trigger_event_candidates_for_context_readonly("game_action", action_context, whitespace_environment))
+	if whitespace_ids != ["room_actor_manual", "blank_blocked_id", "empty_blocked_id", "whitespace_required_id", "whitespace_required_game"]:
+		failures.append("Exact whitespace authored IDs diverged from EventModule string membership: %s." % JSON.stringify(whitespace_ids))
+	whitespace_environment["archetype_id"] = "bar"
+	whitespace_environment["game_ids"] = ["blackjack"]
+	_assert_action_index_exact_parity(library, "game_action", action_context, whitespace_environment, failures)
+	var normalized_ids := _action_index_event_ids(library.action_trigger_event_candidates_for_context_readonly("game_action", action_context, whitespace_environment))
+	if normalized_ids != ["room_actor_manual", "whitespace_blocked_id", "blank_blocked_id", "empty_blocked_id"]:
+		failures.append("Untrimmed authored condition IDs did not match EventModule membership semantics: %s." % JSON.stringify(normalized_ids))
+	if library.trigger_event_index_full_pack_scan_count() != scan_count:
+		failures.append("Read-only action-trigger eligibility queries rescanned or rebuilt the event pack.")
+
+
+func _assert_action_index_exact_parity(library: ContentLibrary, source: String, context: Dictionary, environment: Dictionary, failures: Array) -> void:
+	var expected: Array = []
+	for event_definition_value in library.action_trigger_event_candidates_readonly():
+		if typeof(event_definition_value) != TYPE_DICTIONARY:
+			continue
+		var event_definition: Dictionary = event_definition_value
+		var event_module := EventModuleScript.new()
+		event_module.setup(event_definition, library)
+		if event_module.can_trigger(RunStateScript.new(), environment, context):
+			expected.append(str(event_definition.get("id", "")))
+	var actual := _action_index_event_ids(library.action_trigger_event_candidates_for_context_readonly(source, context, environment))
+	if actual != expected:
+		failures.append("Action-trigger eligibility index diverged from EventModule parity for %s/%s: expected=%s actual=%s." % [source, str(environment.get("kind", "")), JSON.stringify(expected), JSON.stringify(actual)])
+
+
+func _action_index_fixture_event(event_id: String, trigger_type: String, scopes: Array, conditions: Dictionary = {}, speaker: Dictionary = {}, trigger_overrides: Dictionary = {}, interaction_mode: String = "triggered") -> Dictionary:
+	var trigger := {"type": trigger_type, "chance_percent": 100}
+	for key_value in trigger_overrides.keys():
+		trigger[key_value] = trigger_overrides.get(key_value)
+	return {
+		"id": event_id,
+		"interaction_mode": interaction_mode,
+		"scopes": scopes.duplicate(true),
+		"trigger": trigger,
+		"conditions": conditions.duplicate(true),
+		"speaker": speaker.duplicate(true),
+	}
+
+
+func _action_index_event_ids(event_definitions: Array) -> Array:
+	var result: Array = []
+	for event_definition_value in event_definitions:
+		if typeof(event_definition_value) == TYPE_DICTIONARY:
+			result.append(str((event_definition_value as Dictionary).get("id", "")))
+	return result
 
 
 func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array) -> void:
