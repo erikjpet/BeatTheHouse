@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `crew06_6` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-17
+- **Completion/implementation commits:** `adda134e`, `280a477e`
+- **Verification:** Focused layer-three contract PASS; combined Contracts, Systems, UI, 10-seed determinism, and zero-warning visual QA PASS. Furnished Punchline layer captures are in `.tmp/crew06_release_screenshots/`.
+- **Deviations:** None. Contact services retain priority when job offers share the compact interaction surface.
 
 # Agent Prompt — 0.6 crew06_6: Layer 3 Build-Out + Jobs Content
 

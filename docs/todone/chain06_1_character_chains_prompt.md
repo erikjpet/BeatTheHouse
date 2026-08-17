@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `chain06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-17
+- **Completion/implementation commits:** `e1538661`, `280a477e`, `2dea0124`, `2a5ce370`
+- **Verification:** Six-chain/21-beat focused contract, Cass three-ending runs, prefix sweep, icon-actionability sweep, and save/load fuzz PASS; combined Contracts, Systems, UI, 10-seed determinism, and zero-warning visual QA PASS.
+- **Deviations:** Added one generic eligible-beat environment projection helper; progression remains authoritative in existing `story_flags` and adds no UI.
 
 # Agent Prompt — 0.6 chain06_1: Character Storyline Chains
 

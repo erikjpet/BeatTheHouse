@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `crew06_7` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-17
+- **Completion/implementation commits:** `9b9c042d`, `280a477e`
+- **Verification:** Focused five-play contract and sustained heat-pressure harness PASS; combined Contracts, Systems, UI, 10-seed determinism, and zero-warning visual QA PASS.
+- **Deviations:** None. Play tuning is centralized in the approved `data/crew/plays.json` schema.
 
 # Agent Prompt — 0.6 crew06_7: Coordinated Plays (Crew in the Casino)
 
