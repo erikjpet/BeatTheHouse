@@ -135,7 +135,7 @@ stated in each prompt** — `events.json` in particular is shared, and
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| teach06_1 | `teach06_1_onboarding_prompt.md` | TODO | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | | | | All 56 shipped lessons teach 0.5 content only; zero cover crew, delivery, Numbers, pushers, craps, or Punchline layers. Must NOT teach discovery-gated systems (past-posting, crew fix, the Turn, hidden layers). |
+| teach06_1 | `teach06_1_onboarding_prompt.md` | IN_PROGRESS | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | Codex | 2026-08-16 | | All 56 shipped lessons teach 0.5 content only; zero cover crew, delivery, Numbers, pushers, craps, or Punchline layers. Must NOT teach discovery-gated systems (past-posting, crew fix, the Turn, hidden layers). |
 | env06_5 | `env06_5_scenario_backlog_prompt.md` | TODO | env06_1/2/3 (DONE) | playtest variety | | | | 13 backlog scenarios from the roadmap catalog. Owns `scenarios.json`; may only add `scenario_`-prefixed events to `events.json`. |
 | art06_1 | `art06_1_punchline_layers_prompt.md` | TODO | env06_4 (DONE) | — | | | | Punchline L1/L3 still reuse the underground raster (art debt logged by env06_4). Owns assets + manifest + `visual_context` only; L3 must leave crew06_6 furniture spots clear. |
 
@@ -589,6 +589,7 @@ What happens then is the owner's, not an agent's:
 
 ## Work Log
 
+- 2026-08-16 [teach06_1] Codex claimed contextual onboarding for public 0.6 surfaces; discovery-gated systems and the shipped guided tutorial remain explicitly out of scope.
 - 2026-08-13 [board] Queue authored: 24 prompts across waves A–E.
 - 2026-08-13 [Wave A] PM-orchestrated execution claimed for env06_1,
   town06_1, and crew06_1; three isolated subagents assigned, with the PM
