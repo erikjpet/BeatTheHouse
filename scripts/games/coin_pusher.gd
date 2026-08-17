@@ -298,11 +298,9 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 	_draw_shelf(surface, "upper", int(snapshot.get("upper_phase_milli", 0)), phase_domain_milli, C_TEAL)
 	_draw_shelf(surface, "lower", int(snapshot.get("lower_phase_milli", 0)), phase_domain_milli, Color("#ff8e5b"))
 	var presentation_bodies := _presentation_bodies(surface, state)
-	var authoritative_final_bodies := _packed_final_bodies(snapshot)
-	var final_riders: Array = _presentation_kind_views(authoritative_final_bodies, ["rider"]) if not authoritative_final_bodies.is_empty() \
-			else (snapshot.get("riders", []) if typeof(snapshot.get("riders", [])) == TYPE_ARRAY else [])
-	var final_features: Array = _presentation_kind_views(authoritative_final_bodies, ["puck", "fragment"]) if not authoritative_final_bodies.is_empty() \
-			else (snapshot.get("features", []) if typeof(snapshot.get("features", [])) == TYPE_ARRAY else [])
+	var authoritative_final_bodies := _authoritative_final_bodies(snapshot)
+	var final_riders: Array = _presentation_kind_views(authoritative_final_bodies, ["rider"])
+	var final_features: Array = _presentation_kind_views(authoritative_final_bodies, ["puck", "fragment"])
 	_draw_cells(surface, state, presentation_bodies, final_riders, final_features, geometry)
 	_draw_presentation_particles(surface, state, geometry)
 	_draw_lane_approaches(surface, state)
@@ -1367,6 +1365,7 @@ func _presentation_snapshot(machine: Dictionary, upper_phase_milli: int, lower_p
 		"version": 1,
 		"geometry": CoinPusherSolverScript.implementation_contract().duplicate(true),
 		"bodies": bodies,
+		"body_count": bodies.size(),
 		"riders": _presentation_kind_views(bodies, ["rider"]),
 		"features": _presentation_kind_views(bodies, ["puck", "fragment"]),
 		"depth_ordered": true,
@@ -1510,6 +1509,9 @@ func _surface_action_view_patch(machine: Dictionary, physics: Dictionary, _ui_st
 	var awake_count := int(metrics.get("awake_count", 0)) if metrics.has("awake_count") else CoinPusherSolverScript.awake_count(_simulation(machine))
 	var patch := {
 		"coin_pusher_snapshot": {
+			# Scalar post-action authority for consumers such as SFX. Reading the
+			# simulation Array size is O(1) and avoids decoding/copying packed bodies.
+			"body_count": (_simulation(machine).get("bodies", []) as Array).size(),
 			"tell_rung": int(machine.get("tell_rung", 0)),
 			"tell_label": _tell_label(int(machine.get("tell_rung", 0))),
 			"locked": bool(machine.get("locked_down", false)),
@@ -1661,10 +1663,9 @@ func _draw_shelf(surface, level: String, phase_milli: int, phase_domain_milli: i
 
 func _presentation_bodies(surface, state: Dictionary) -> Array:
 	var snapshot := _snapshot_view(state)
-	var final_bodies: Array = snapshot.get("bodies", []) if typeof(snapshot.get("bodies", [])) == TYPE_ARRAY else []
+	var final_bodies := _authoritative_final_bodies(snapshot)
 	if bool(state.get("reduce_motion", false)):
-		var packed_final := _packed_final_bodies(snapshot)
-		return packed_final if not packed_final.is_empty() else final_bodies
+		return final_bodies
 	var packed_value: Variant = snapshot.get("trace_packed", {})
 	var has_packed_trace := typeof(packed_value) == TYPE_DICTIONARY and int(snapshot.get("trace_frame_count", 0)) > 0
 	if has_packed_trace:
@@ -1700,6 +1701,24 @@ func _presentation_bodies(surface, state: Dictionary) -> Array:
 	var current_bodies: Array = frame.get("bodies", final_bodies) if typeof(frame.get("bodies", final_bodies)) == TYPE_ARRAY else final_bodies
 	var next_bodies: Array = next_frame.get("bodies", current_bodies) if typeof(next_frame.get("bodies", current_bodies)) == TYPE_ARRAY else current_bodies
 	return _interpolated_body_views(current_bodies, next_bodies, frame_position - float(frame_index))
+
+
+func _authoritative_final_bodies(snapshot: Dictionary) -> Array:
+	# Action replay is newer than the retained entry snapshot. Preserve an empty
+	# authoritative final pile as empty: presence, not Array emptiness, determines
+	# fallback precedence.
+	var packed_value: Variant = snapshot.get("trace_packed", {})
+	if typeof(packed_value) == TYPE_DICTIONARY and int(snapshot.get("trace_frame_count", 0)) > 0:
+		return _packed_final_bodies(snapshot)
+	var trace_value: Variant = snapshot.get("trace", [])
+	if typeof(trace_value) == TYPE_ARRAY and not (trace_value as Array).is_empty():
+		var final_value: Variant = (trace_value as Array).back()
+		if typeof(final_value) == TYPE_DICTIONARY:
+			var final_body_value: Variant = (final_value as Dictionary).get("bodies", [])
+			if typeof(final_body_value) == TYPE_ARRAY:
+				return final_body_value
+	var snapshot_body_value: Variant = snapshot.get("bodies", [])
+	return snapshot_body_value if typeof(snapshot_body_value) == TYPE_ARRAY else []
 
 
 func _packed_final_bodies(snapshot: Dictionary) -> Array:

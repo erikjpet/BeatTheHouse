@@ -392,7 +392,10 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 	var snapshot := _dict(surface_state.get("coin_pusher_snapshot", {}))
 	var motor: Dictionary = _dict(profile.get("motor_loop", {}))
 	var motor_event := str(motor.get("event_id", "coin_pusher_motor"))
-	var body_count := _dictionary_array(snapshot.get("bodies", [])).size()
+	# Incremental Coin Pusher action views retain the canvas-owned dense body
+	# arrays while publishing the authoritative post-action count separately.
+	# Full/legacy snapshots continue to derive the same value from `bodies`.
+	var body_count := int(snapshot.get("body_count", _dictionary_array(snapshot.get("bodies", [])).size()))
 	var loaded := body_count >= 80
 	var phase_milli := int(snapshot.get("lower_phase_milli", 0))
 	var phase_domain_milli := maxi(1, int(snapshot.get("phase_domain_milli", 8000)))

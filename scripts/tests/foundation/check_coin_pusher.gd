@@ -1661,6 +1661,8 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 	var action_snapshot_patch: Dictionary = action_view_patch.get("coin_pusher_snapshot", {}) if typeof(action_view_patch.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
 	if action_view_patch.is_empty() or action_snapshot_patch.has("bodies") or action_snapshot_patch.has("riders") or action_snapshot_patch.has("features"):
 		failures.append("Quarter Falls action view patch was missing or duplicated dense physical arrays instead of retaining packed authority.")
+	if int(action_snapshot_patch.get("body_count", -1)) != final_trace_bodies.size():
+		failures.append("Quarter Falls action view patch did not publish the authoritative final body count without copying the pile.")
 	packed_replay_snapshot["trace_packed"] = packed_trace
 	packed_replay_snapshot["trace_frame_count"] = int(packed_patch.get("trace_frame_count", 0))
 	packed_replay_snapshot["action_state"] = packed_patch.get("action_state", {})
@@ -1718,6 +1720,26 @@ func _check_coin_pusher_presentation_replay(game: GameModule, failures: Array) -
 	var reduced_sample: Dictionary = game.surface_motion_signature(replay_harness, reduced_surface)
 	if int(reduced_sample.get("physics_body_checksum", 0)) != int(replay_end.get("physics_body_checksum", -1)):
 		failures.append("Quarter Falls reduced motion did not jump directly to the authoritative final pile.")
+	var fallback_state := CoinPusherSolverScript.create(_configured_rng(62531), 24, 0, 5)
+	var fallback_step := CoinPusherSolverScript.step_action(fallback_state, {
+		"upper_locked": true, "lower_locked": true, "capture_presentation_trace": true,
+		"_debug_force_solver_backend": "gdscript",
+	})
+	var fallback_trace: Array = fallback_step.get("presentation_trace", []) if typeof(fallback_step.get("presentation_trace", [])) == TYPE_ARRAY else []
+	var fallback_final: Dictionary = fallback_trace.back() if not fallback_trace.is_empty() and typeof(fallback_trace.back()) == TYPE_DICTIONARY else {}
+	var fallback_final_bodies: Array = fallback_final.get("bodies", []) if typeof(fallback_final.get("bodies", [])) == TYPE_ARRAY else []
+	var fallback_surface := {
+		"reduce_motion": true,
+		"coin_pusher_snapshot": {
+			"bodies": [_solver_body("stale_fallback_body", "coin", 1000, 1000, 0, false)],
+			"riders": [{"id": "stale_fallback_rider", "kind": "rider"}],
+			"features": [{"id": "stale_fallback_feature", "kind": "puck"}],
+			"trace": fallback_trace,
+		},
+	}
+	var fallback_reduced_bodies: Array = game.call("_presentation_bodies", null, fallback_surface)
+	if fallback_trace.size() != 14 or JSON.stringify(fallback_reduced_bodies) != JSON.stringify(fallback_final_bodies):
+		failures.append("Quarter Falls GDScript fallback reduced-motion path did not use the final legacy trace pile.")
 	if game.deterministic_state_digest(drop_run.current_environment) != persisted_digest:
 		failures.append("Quarter Falls presentation replay mutated the authoritative pile.")
 	var first_patch: Dictionary = drop_result.get("surface_presentation_snapshot_patch", {}) if typeof(drop_result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
@@ -2510,6 +2532,16 @@ func _check_coin_pusher_items(game: GameModule, failures: Array) -> void:
 	var shim_final_bodies: Array = shim_final.get("bodies", []) if typeof(shim_final.get("bodies", [])) == TYPE_ARRAY else []
 	if shim_trace.size() != 14 or JSON.stringify(shim_final_bodies) != JSON.stringify(CoinPusherSolverScript.body_views(shim_state.get("simulation", {}))):
 		failures.append("Coin-Return Shim presentation did not replace tick 49 with the exact recovered authoritative pile.")
+	var shim_surface := game.surface_state(shim_run, shim_run.current_environment, {"surface_time_msec": 1000})
+	var shim_snapshot := _presentation_snapshot(shim_surface)
+	shim_snapshot["trace"] = shim_trace
+	shim_snapshot["bodies"] = [_solver_body("stale_shim_body", "coin", 1000, 1000, 0, false)]
+	shim_snapshot["riders"] = [{"id": "stale_shim_rider", "kind": "rider"}]
+	shim_snapshot["features"] = [{"id": "stale_shim_feature", "kind": "fragment"}]
+	shim_surface["reduce_motion"] = true
+	var shim_reduced_bodies: Array = game.call("_presentation_bodies", null, shim_surface)
+	if JSON.stringify(shim_reduced_bodies) != JSON.stringify(shim_final_bodies):
+		failures.append("Coin-Return Shim reduced-motion path ignored the recovered final legacy trace pile.")
 
 
 func _check_coin_pusher_economy(game: GameModule, definition: Dictionary, failures: Array) -> void:
