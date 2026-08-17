@@ -456,10 +456,33 @@ static func _check_contact_surfaces(library: ContentLibrary, failures: Array) ->
 	else:
 		var lucky_module := EventModuleScript.new()
 		lucky_module.setup(library.event("crew_contact_lucky"), library)
+		var lucky_choice_ids: Array = []
+		for choice_value in lucky_module.choices(lucky_run, lucky_run.current_environment):
+			if typeof(choice_value) == TYPE_DICTIONARY:
+				lucky_choice_ids.append(str((choice_value as Dictionary).get("id", "")))
 		var lucky_result := lucky_module.resolve(lucky_run, lucky_run.current_environment, "start_numbers_collection")
 		if not bool(lucky_result.get("ok", false)) or not bool(_dict(lucky_result.get("crew_service_result", {})).get("ok", false)) \
 			or not lucky_run.delivery_has_active_run():
-			failures.append("Lucky's contextual contact did not start the existing Numbers route work: %s" % JSON.stringify(lucky_result.get("crew_service_result", {})))
+			var action_index := int(lucky_run.event_cadence.get("action_index", 0))
+			var numbers_action_index := int(lucky_run.numbers_state.action_index)
+			var numbers_day := lucky_run.numbers_state.day_at(action_index)
+			var numbers_post_action := lucky_run.numbers_state.post_action(numbers_day)
+			failures.append("Lucky's contextual contact did not start the existing Numbers route work: %s" % JSON.stringify({
+				"service_path": "EventModule.resolve -> crew_lucky_collection -> RunState.numbers_begin_collection_route",
+				"world_cursor": lucky_run.current_world_node_id(),
+				"environment_world_node": str(lucky_run.current_environment.get("world_node_id", "")),
+				"environment_archetype": str(lucky_run.current_environment.get("archetype_id", "")),
+				"action_index": action_index,
+				"numbers_action_index": numbers_action_index,
+				"day": numbers_day,
+				"post_action": numbers_post_action,
+				"remaining_actions": numbers_post_action - action_index,
+				"choice_ids": lucky_choice_ids,
+				"contact_result": lucky_result,
+				"service_result": lucky_result.get("crew_service_result", {}),
+				"delivery_active": lucky_run.delivery_has_active_run(),
+				"delivery_snapshot": lucky_run.delivery_snapshot(),
+			}))
 
 
 static func _check_crew_ignoring_regression(library: ContentLibrary, failures: Array) -> void:
@@ -567,7 +590,7 @@ static func _set_fixture_world(run_state: RunState, node_ids: Array) -> void:
 		var node_id := str(node_ids[index])
 		nodes.append({"id": node_id, "archetype_id": node_id, "kind": "casino", "tier": 2, "state": "revealed", "seen": true, "environment": {}})
 		if index > 0:
-			edges.append({"from": str(node_ids[index - 1]), "to": node_id})
+			edges.append({"a": str(node_ids[index - 1]), "b": node_id})
 	var start_id := str(node_ids[0]) if not node_ids.is_empty() else ""
 	run_state.set_world_map({"version": 3, "seed_text": run_state.seed_text, "start_node_id": start_id, "current_node_id": start_id, "nodes": nodes, "edges": edges, "visited_path": [start_id] if not start_id.is_empty() else []})
 
