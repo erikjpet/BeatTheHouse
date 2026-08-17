@@ -1,7 +1,7 @@
 extends RefCounted
 
 
-static func game_view_snapshot(host: Variant) -> Dictionary:
+static func game_view_snapshot(host: Variant, read_only_render_result: bool = false) -> Dictionary:
 	var display_name = "Choose a game"
 	var game_id = ""
 	var family = ""
@@ -32,7 +32,7 @@ static func game_view_snapshot(host: Variant) -> Dictionary:
 			surface_life = str(module_surface_state.get("surface_life", surface_life))
 		if module_surface_state.has("surface_cast"):
 			surface_cast = str(module_surface_state.get("surface_cast", surface_cast))
-	var result = host._current_game_result_snapshot()
+	var result = host._current_game_result_snapshot(read_only_render_result)
 	if host.current_game == null and not result.is_empty():
 		display_name = str(result.get("display_name", "Saved game summary"))
 		game_id = str(result.get("game_id", ""))
@@ -123,7 +123,9 @@ static func game_view_snapshot(host: Variant) -> Dictionary:
 		if result_key == "surface_presentation_snapshot_patch":
 			continue
 		if not snapshot.has(result_key):
-			snapshot[result_key] = host._snapshot_copy_value(result[key])
+			# The internal canvas render owns a read-only action-boundary result.
+			# Public snapshots still take the deep-copy path below.
+			snapshot[result_key] = result[key] if read_only_render_result and game_id == "coin_pusher" else host._snapshot_copy_value(result[key])
 	var presentation_snapshot_key := str(snapshot.get("surface_presentation_snapshot_key", ""))
 	var presentation_patch: Variant = result.get("surface_presentation_snapshot_patch", {})
 	if not presentation_snapshot_key.is_empty() and typeof(presentation_patch) == TYPE_DICTIONARY \
@@ -160,17 +162,16 @@ static func focused_talk_speaker_snapshot(host: Variant) -> Dictionary:
 	return speaker.duplicate(true)
 
 
-static func current_game_result_snapshot(host: Variant) -> Dictionary:
+static func current_game_result_snapshot(host: Variant, read_only_render_result: bool = false) -> Dictionary:
 	if host.last_game_result.is_empty():
 		return {}
 	if host.current_game == null:
 		return host.last_game_result.duplicate(true)
 	var result_game_id = str(host.last_game_result.get("game_id", host.last_game_result.get("source_id", "")))
 	if result_game_id.is_empty() or result_game_id == host.current_game.get_id():
-		# Coin Pusher's action result owns an immutable, dense presentation trace.
-		# Snapshot consumers are read-only, so a shallow outer snapshot preserves
-		# isolation for top-level edits without recopying every body in every frame.
-		if result_game_id == "coin_pusher":
+		# Only the internal canvas render may share Coin Pusher's immutable dense
+		# presentation trace. Public semantic snapshots remain deeply isolated.
+		if read_only_render_result and result_game_id == "coin_pusher":
 			return host.last_game_result.duplicate(false)
 		return host.last_game_result.duplicate(true)
 	return {}
