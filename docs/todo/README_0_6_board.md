@@ -210,6 +210,31 @@ What happens then is the owner's, not an agent's:
 
 ## Discovery & Decision Log
 
+- 2026-08-17 [crew06_5] PM scope review returned the row for correction:
+  rank/perk APIs alone do not satisfy the prompt's temporary pre-job-board
+  contract. Associate work, Switch intel/reveal, and Knuckles stash/retrieve
+  must be reachable through normal member contact/encounter surfaces, with
+  production-path tests rather than direct API-only fixtures. Code reality
+  also resolves the prompt's Mags wording drift: env06_2 shipped the authored
+  Fence Night anchor as `back_alley_fence_night`, not a pawn-shop scenario.
+  Crew06_5 consumes that existing primary anchor and may not invent a new
+  scenario outside its placement scope.
+- 2026-08-17 [fix06_2] An external Codex process merged and pushed the
+  still-unverified repair through `91e0a6c4` as merge `9d92f49f`. It changed
+  no board or prompt records. The merge is provisional integration only: the
+  row remains IN_PROGRESS because the PM's focused UI fixture exposed an
+  incomplete test-inheritance contract after the merge. The correction must
+  land as a follow-up commit and the full integrated gate matrix still binds;
+  no DONE or archival credit is inferred from the pushed merge.
+- 2026-08-17 [pusher06_2] PM performance review found that the shipped-cap
+  probe recorded raw solver p95 and synchronous production
+  `resolve_call_ms` but gated only frames sampled after the blocking action
+  returned. Historical full-cap calls were 273–383 ms, so the apparent frame
+  PASS hid a player-visible stall. The existing 16.0 ms action/frame contract
+  now gates raw solver p95 plus production drop and collapse-nudge resolves.
+  Density (160 cap / 150 opening), samples, outcomes, trace, icons, animation,
+  and audio may not be reduced to converge; implementation is addressing
+  repeated whole-machine and presentation-trace deep copies at their source.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:

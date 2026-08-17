@@ -356,6 +356,11 @@ func _canvas_object_by_id(_objects: Array, _object_id: String) -> Dictionary:
 	return {}
 
 
+func _object_by_id(_objects: Array, _object_id: String) -> Dictionary:
+	_missing_descendant_fixture("_object_by_id")
+	return {}
+
+
 func _canvas_has_object_type(_objects: Array, _object_type: String) -> bool:
 	_missing_descendant_fixture("_canvas_has_object_type")
 	return false
@@ -373,6 +378,11 @@ func _hidden_world_map_ids(_map_data: Dictionary) -> Array:
 
 func _world_map_node_by_id(_map_data: Dictionary, _node_id: String) -> Dictionary:
 	_missing_descendant_fixture("_world_map_node_by_id")
+	return {}
+
+
+func _map_icon_marker(_markers: Array, _node_id: String) -> Dictionary:
+	_missing_descendant_fixture("_map_icon_marker")
 	return {}
 
 
