@@ -8,6 +8,7 @@ const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.g
 const OUTPUT_DIR := "res://.tmp/pusher06_2_feel_captures"
 const CAPTURE_SIZE := Vector2i(1280, 720)
 const REQUIRED_IDS := ["drop_disturbs_pile", "stack_topples", "upper_to_lower", "nudge_shifts_pile", "tray_fall", "gutter_loss", "tell_ladder_alarm"]
+const TELL_STAGE_IDS := ["steady", "cabinet_rock", "chirp", "attendant_glance", "alarm_lock"]
 const SHIPPED_COIN_CAP := 160
 const SHIPPED_OPENING_COIN_COUNT := 150
 
@@ -237,6 +238,8 @@ func _capture_tell_ladder() -> void:
 	machine["tell_rung"] = 0
 	machine["locked_down"] = false
 	var before := packed.duplicate(true)
+	var stage_surfaces: Array = [game.surface_state(run_state, run_state.current_environment, {"coin_pusher_lane": 2, "surface_time_msec": 0}).duplicate(true)]
+	var stage_results: Array = []
 	var first_result: Dictionary = {}
 	var alarm_result: Dictionary = {}
 	var first_warning: Dictionary = {}
@@ -248,6 +251,8 @@ func _capture_tell_ladder() -> void:
 			"coin_pusher_capture_presentation_trace": true,
 		})
 		GameModule.apply_result(run_state, result, _rng(9802 + nudge_index))
+		stage_results.append(result.duplicate(true))
+		stage_surfaces.append(_surface_with_result_events(result, (nudge_index + 1) * 900).duplicate(true))
 		if nudge_index == 0:
 			first_result = result
 			first_warning = _surface_with_result_events(result, nudge_index * 900)
@@ -286,7 +291,33 @@ func _capture_tell_ladder() -> void:
 	var first_trace: Array = ((first_result.get("surface_presentation_snapshot_patch", {}) as Dictionary).get("trace", []) as Array)
 	var trace_starts_from_same_pile := not first_trace.is_empty() and typeof(first_trace.front()) == TYPE_DICTIONARY \
 		and ((first_trace.front() as Dictionary).get("bodies", []) as Array).size() == (before.get("bodies", []) as Array).size()
-	var state_valid := int(first_snapshot.get("tell_rung", 0)) == 1 \
+	var stage_evidence: Array = []
+	var stages_valid := stage_surfaces.size() == TELL_STAGE_IDS.size() and stage_results.size() == 4
+	var expected_rungs := [0, 1, 2, 3, 3]
+	var expected_events := ["", "tell_rock", "tell_chirp", "attendant_glance", "alarm"]
+	var evidence_stage_count := mini(stage_surfaces.size(), TELL_STAGE_IDS.size())
+	for stage_index in range(evidence_stage_count):
+		var stage_surface: Dictionary = stage_surfaces[stage_index]
+		var stage_snapshot: Dictionary = stage_surface.get("coin_pusher_snapshot", {}) if typeof(stage_surface.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+		var stage_event_kinds: Array = []
+		for event_value in stage_snapshot.get("events", []):
+			if typeof(event_value) == TYPE_DICTIONARY:
+				stage_event_kinds.append(str((event_value as Dictionary).get("kind", "")))
+		var expected_locked := stage_index == TELL_STAGE_IDS.size() - 1
+		var expected_event := str(expected_events[stage_index])
+		var stage_valid := int(stage_snapshot.get("tell_rung", -1)) == int(expected_rungs[stage_index]) \
+			and bool(stage_snapshot.get("locked", false)) == expected_locked \
+			and (expected_event.is_empty() or stage_event_kinds.has(expected_event))
+		stages_valid = stages_valid and stage_valid
+		stage_evidence.append({
+			"id": str(TELL_STAGE_IDS[stage_index]),
+			"tell_rung": int(stage_snapshot.get("tell_rung", -1)),
+			"locked": bool(stage_snapshot.get("locked", false)),
+			"event_kinds": stage_event_kinds,
+			"body_count": (stage_snapshot.get("bodies", []) as Array).size(),
+			"valid": stage_valid,
+		})
+	var state_valid := stages_valid and int(first_snapshot.get("tell_rung", 0)) == 1 \
 		and int(alarm_snapshot.get("tell_rung", 0)) == 3 \
 		and bool(alarm_snapshot.get("locked", false)) \
 		and bool(alarm_result.get("coin_pusher_hard_alarm", false)) \
@@ -304,7 +335,8 @@ func _capture_tell_ladder() -> void:
 		"first_events": ((first_result.get("surface_presentation_snapshot_patch", {}) as Dictionary).get("events", []) as Array).duplicate(true),
 		"alarm_events": ((alarm_result.get("surface_presentation_snapshot_patch", {}) as Dictionary).get("events", []) as Array).duplicate(true),
 		"metrics": alarm_result.get("coin_pusher_solver_metrics", {}),
-		"rungs": ["steady", "cabinet_rock", "chirp", "attendant_glance", "alarm_lock"],
+		"rungs": TELL_STAGE_IDS.duplicate(),
+		"stage_evidence": stage_evidence,
 	})
 	machine["tell_rung"] = 0
 	machine["locked_down"] = false
@@ -312,6 +344,54 @@ func _capture_tell_ladder() -> void:
 	root.remove_child(panel)
 	panel.queue_free()
 	await process_frame
+	var stage_files: Array = []
+	var stage_files_saved := true
+	for stage_index in range(evidence_stage_count):
+		var stage_file := "07%c_tell_%s_1280x720.png" % [97 + stage_index, str(TELL_STAGE_IDS[stage_index])]
+		var stage_saved := await _capture_tell_stage(stage_surfaces[stage_index], str(TELL_STAGE_IDS[stage_index]), stage_file)
+		stage_files.append({"id": str(TELL_STAGE_IDS[stage_index]), "file": stage_file, "saved": stage_saved})
+		stage_files_saved = stage_files_saved and stage_saved
+	var capture_record: Dictionary = captures.back()
+	capture_record["stage_files"] = stage_files
+	capture_record["state_valid"] = bool(capture_record.get("state_valid", false)) and stage_files_saved
+	if not stage_files_saved:
+		failed = true
+
+
+func _capture_tell_stage(surface_state: Dictionary, stage_id: String, file_name: String) -> bool:
+	var panel := ColorRect.new()
+	panel.color = Color("#070b14")
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_child(panel)
+	var title := Label.new()
+	title.text = "TELL LADDER: %s" % stage_id.to_upper()
+	title.position = Vector2(32, 18)
+	title.add_theme_font_size_override("font_size", 28)
+	title.add_theme_color_override("font_color", Color("#e9f4ff"))
+	panel.add_child(title)
+	var snapshot: Dictionary = surface_state.get("coin_pusher_snapshot", {}) if typeof(surface_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	var proof := Label.new()
+	proof.text = "PRODUCTION STATE   RUNG %d   %s" % [int(snapshot.get("tell_rung", -1)), "MACHINE LOCKED" if bool(snapshot.get("locked", false)) else "MACHINE LIVE"]
+	proof.position = Vector2(32, 56)
+	proof.add_theme_font_size_override("font_size", 18)
+	proof.add_theme_color_override("font_color", Color("#ff6b5f") if bool(snapshot.get("locked", false)) else Color("#58e1d4"))
+	panel.add_child(proof)
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	canvas.position = Vector2(40, 94)
+	canvas.size = Vector2(1200, 580)
+	canvas.set_game_module(game)
+	canvas.render_game_snapshot(surface_state)
+	canvas.set_process(false)
+	canvas.set("flicker", 0.75)
+	panel.add_child(canvas)
+	await process_frame
+	await RenderingServer.frame_post_draw
+	var image := root.get_viewport().get_texture().get_image()
+	var saved := image != null and image.save_png("%s/%s" % [out_dir, file_name]) == OK
+	root.remove_child(panel)
+	panel.queue_free()
+	await process_frame
+	return saved
 
 
 func _surface_with_result_events(result: Dictionary, surface_time_msec: int) -> Dictionary:

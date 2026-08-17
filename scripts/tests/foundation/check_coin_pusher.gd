@@ -415,6 +415,14 @@ func _check_coin_pusher_canonical_probe(failures: Array) -> void:
 	if not feel_source.contains(required_feel_contract) or not feel_source.contains("const SHIPPED_OPENING_COIN_COUNT := 150") \
 			or not feel_source.contains("func _packed_state") or feel_source.contains("before_visual") or feel_source.contains("after_visual"):
 		failures.append("Coin Pusher feel QA does not require all seven dense-pile scenarios at the shipped presentation cap.")
+	for required_tell_capture_text in [
+		'const TELL_STAGE_IDS := ["steady", "cabinet_rock", "chirp", "attendant_glance", "alarm_lock"]',
+		'var stage_surfaces: Array = [game.surface_state',
+		'"stage_evidence": stage_evidence',
+		'func _capture_tell_stage',
+	]:
+		if not feel_source.contains(required_tell_capture_text):
+			failures.append("Coin Pusher feel QA is missing five-stage production tell evidence seam %s." % required_tell_capture_text)
 	var performance_source := FileAccess.get_file_as_string("res://tools/foundation_performance_probe.gd")
 	for required_text in [
 		'"coin_pusher": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8}',
