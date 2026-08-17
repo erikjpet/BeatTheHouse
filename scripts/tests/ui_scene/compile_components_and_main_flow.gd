@@ -1584,21 +1584,45 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	app.set("current_game", coin_pusher_game)
 	app.set("last_game_result", game_result)
 	var unsupported_library := ContentLibrary.new()
-	unsupported_library.events = [_table_approach_fast_path_event("stable_specific_target", ["another_game"])]
+	var quiet_pack_events: Array = []
+	for quiet_event_index in range(64):
+		quiet_pack_events.append(_non_triggered_interrupt_fixture_event("quiet_pack_%02d" % quiet_event_index))
+	quiet_pack_events.append(_table_approach_fast_path_event("stable_specific_target", ["another_game"]))
+	unsupported_library.events = quiet_pack_events
 	unsupported_library.rebuild_content_indexes()
 	app.set("library", unsupported_library)
+	run_state.clear_closing_time_state()
+	run_state.narrative_flags.erase("health_inspector_closing_actions")
 	var result_before := JSON.stringify(game_result)
 	var queue_before := JSON.stringify(run_state.pending_triggered_events)
 	var cadence_before := JSON.stringify(run_state.event_cadence)
+	var state_before := JSON.stringify(run_state.to_dict())
 	app.set("recent_result_deep_snapshot_call_count", 0)
+	app.set("action_trigger_candidate_visit_count", 0)
+	app.set("heat_talk_candidate_visit_count", 0)
+	app.set("table_talk_candidate_visit_count", 0)
+	app.set("post_interrupt_talk_boundary_visit_count", 0)
+	app.set("post_interrupt_closing_visit_count", 0)
+	app.set("post_interrupt_forced_travel_visit_count", 0)
+	app.set("post_interrupt_talk_enqueue_visit_count", 0)
+	app.set("post_interrupt_unavoidable_visit_count", 0)
 	var context: Dictionary = app.call("_event_action_trigger_context", "game_action")
-	var enqueued := bool(app.call("_enqueue_talk_events_for_action_boundary", "game_action"))
-	if enqueued or coin_pusher_game.surface_state_calls != 0 \
+	var interrupted := bool(app.call("_apply_post_action_environment_interrupt", "game_action"))
+	if interrupted or coin_pusher_game.surface_state_calls != 0 \
 			or JSON.stringify(run_state.pending_triggered_events) != queue_before \
 			or JSON.stringify(run_state.event_cadence) != cadence_before \
+			or JSON.stringify(run_state.to_dict()) != state_before \
 			or JSON.stringify(game_result) != result_before \
-			or int(app.get("recent_result_deep_snapshot_call_count")) != 0:
-		push_error("Unsupported dense-result interrupt path used a deep snapshot, mutated its result, built a surface, changed RNG, or queued talk.")
+			or int(app.get("recent_result_deep_snapshot_call_count")) != 0 \
+			or int(app.get("action_trigger_candidate_visit_count")) != 0 \
+			or int(app.get("heat_talk_candidate_visit_count")) != 0 \
+			or int(app.get("table_talk_candidate_visit_count")) != 0 \
+			or int(app.get("post_interrupt_talk_boundary_visit_count")) != 1 \
+			or int(app.get("post_interrupt_closing_visit_count")) != 1 \
+			or int(app.get("post_interrupt_forced_travel_visit_count")) != 1 \
+			or int(app.get("post_interrupt_talk_enqueue_visit_count")) != 1 \
+			or int(app.get("post_interrupt_unavoidable_visit_count")) != 1:
+		push_error("Real quiet outer interrupt scanned its full pack, used a deep snapshot, built a surface, queued, advanced RNG, or mutated state.")
 		valid = false
 	if str(context.get("game_id", "")) != "coin_pusher" or str(context.get("action_id", "")) != "drop_quarter" \
 			or str(context.get("action_kind", "")) != "legal":
@@ -1621,10 +1645,12 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	run_state.suspicion["level"] = 90
 	app.set("last_game_result", {"suspicion_delta": 30, "deltas": {"suspicion_delta": 30}})
 	var heat_cadence_before := JSON.stringify(run_state.event_cadence)
+	app.set("heat_talk_candidate_visit_count", 0)
 	if not bool(app.call("_enqueue_heat_threshold_talk_events", "game_action")) \
 			or run_state.pending_talk_event_count() != 2 \
 			or str(run_state.pending_triggered_events[0].get("event_id", "")) != "floor_staff_heat_warning" \
 			or str(run_state.pending_triggered_events[1].get("event_id", "")) != "pit_boss_heat_warning" \
+			or int(app.get("heat_talk_candidate_visit_count")) != production_library.heat_threshold_talk_event_candidates_readonly().size() \
 			or JSON.stringify(run_state.event_cadence) != heat_cadence_before:
 		push_error("Heat-threshold fast path changed crossing order, queue shape, or cadence RNG.")
 		valid = false
@@ -1637,9 +1663,11 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	run_state.suspicion["level"] = 66
 	app.set("last_game_result", {"deltas": {"suspicion_delta": 2}})
 	app.set("recent_result_deep_snapshot_call_count", 0)
+	app.set("heat_talk_candidate_visit_count", 0)
 	if not bool(app.call("_enqueue_heat_threshold_talk_events", "game_action")) \
 			or run_state.pending_talk_event_count() != 1 \
 			or str(run_state.pending_triggered_events[0].get("event_id", "")) != "floor_staff_heat_warning" \
+			or int(app.get("heat_talk_candidate_visit_count")) != production_library.heat_threshold_talk_event_candidates_readonly().size() \
 			or int(app.get("recent_result_deep_snapshot_call_count")) != 0:
 		push_error("Nested-only heat delta did not cross 65 exactly once without invoking the deep recent-result snapshot.")
 		valid = false
@@ -1647,15 +1675,25 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 
 	var authored_table_targets: Array[String] = []
 	var production_has_table_wildcard := false
+	var expected_action_candidate_ids: Array[String] = []
+	var expected_heat_candidate_ids: Array[String] = []
+	var expected_table_candidate_ids: Array[String] = []
 	for event_value in production_library.events:
 		if typeof(event_value) != TYPE_DICTIONARY:
 			continue
 		var event_definition: Dictionary = event_value
 		var trigger: Dictionary = event_definition.get("trigger", {}) if typeof(event_definition.get("trigger", {})) == TYPE_DICTIONARY else {}
-		if str(event_definition.get("interaction_mode", "interactable")) != "triggered" \
-				or str(event_definition.get("presentation", "modal")) != "talk" \
-				or str(trigger.get("type", "manual")) != "table_approach":
+		if str(event_definition.get("interaction_mode", "interactable")) != "triggered":
 			continue
+		var trigger_type := str(trigger.get("type", "manual"))
+		var event_id := str(event_definition.get("id", ""))
+		if trigger_type in ["manual", "timed", "travel", "random"]:
+			expected_action_candidate_ids.append(event_id)
+		if str(event_definition.get("presentation", "modal")) == "talk" and trigger_type == "heat_threshold":
+			expected_heat_candidate_ids.append(event_id)
+		if str(event_definition.get("presentation", "modal")) != "talk" or trigger_type != "table_approach":
+			continue
+		expected_table_candidate_ids.append(event_id)
 		var trigger_games: Array = trigger.get("games", []) if typeof(trigger.get("games", [])) == TYPE_ARRAY else []
 		var clean_trigger_games: Array[String] = []
 		for game_id_value in trigger_games:
@@ -1666,6 +1704,11 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 				authored_table_targets.append(game_id)
 		if clean_trigger_games.is_empty():
 			production_has_table_wildcard = true
+	if JSON.stringify(_event_definition_ids(production_library.action_trigger_event_candidates_readonly())) != JSON.stringify(expected_action_candidate_ids) \
+			or JSON.stringify(_event_definition_ids(production_library.heat_threshold_talk_event_candidates_readonly())) != JSON.stringify(expected_heat_candidate_ids) \
+			or JSON.stringify(_event_definition_ids(production_library.table_approach_talk_event_candidates_readonly())) != JSON.stringify(expected_table_candidate_ids):
+		push_error("Production trigger candidate caches changed authored order or manual/timed/travel/random/heat/table membership.")
+		valid = false
 	var authored_cadence_before := JSON.stringify(run_state.event_cadence)
 	for game_id in authored_table_targets:
 		var authored_game := CountingTableApproachFixtureGame.new(game_id, [], 4)
@@ -1687,6 +1730,10 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	fixture_library.events = [_table_approach_fast_path_event("original_target", ["original_game"])]
 	if not fixture_library.has_table_approach_talk_event_for_game("original_game"):
 		push_error("Direct-array table index did not initialize on its first query.")
+		valid = false
+	fixture_library.events = [_table_approach_fast_path_event("original_target", [])]
+	if not fixture_library.has_table_approach_talk_event_for_game("same_id_replacement_game"):
+		push_error("Same-length/same-ID Array replacement did not invalidate changed wildcard target content.")
 		valid = false
 	var generation_before_update := fixture_library.content_index_generation()
 	var updated_event: Dictionary = fixture_library.events[0]
@@ -1738,6 +1785,7 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 		{"id": "patron_one", "name": "Sol", "role": "patron", "silhouette": "hat"},
 	], 7)
 	app.set("current_game", wildcard_game)
+	app.set("table_talk_candidate_visit_count", 0)
 	var expected_rng := run_state.create_event_cadence_rng()
 	expected_rng.randi_range(0, 9999)
 	expected_rng.randi_range(0, 9999)
@@ -1755,6 +1803,7 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 			or int(wildcard_context.get("hands_played", -1)) != 7 \
 			or int(wildcard_speaker.get("patron_index", -1)) != expected_patron_index \
 			or int(run_state.event_cadence.get("rng_state", -1)) != expected_rng.state_value \
+			or int(app.get("table_talk_candidate_visit_count")) != 2 \
 			or wildcard_game.surface_state_calls != 1:
 		push_error("Wildcard table approach changed authored order, queue context, patron roll, surface count, or exact cadence RNG state.")
 		valid = false
@@ -1768,12 +1817,16 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	app.set("current_game", tutorial_game)
 	var tutorial_queue_before := JSON.stringify(run_state.pending_triggered_events)
 	var tutorial_cadence_before := JSON.stringify(run_state.event_cadence)
-	app.set("recent_result_deep_snapshot_call_count", 0)
+	_reset_interrupt_probe_counters(app)
 	if bool(app.call("_apply_post_action_environment_interrupt", "game_action")) \
 			or tutorial_game.surface_state_calls != 0 \
 			or JSON.stringify(run_state.pending_triggered_events) != tutorial_queue_before \
 			or JSON.stringify(run_state.event_cadence) != tutorial_cadence_before \
-			or int(app.get("recent_result_deep_snapshot_call_count")) != 0:
+			or int(app.get("recent_result_deep_snapshot_call_count")) != 0 \
+			or int(app.get("action_trigger_candidate_visit_count")) != 0 \
+			or int(app.get("heat_talk_candidate_visit_count")) != 0 \
+			or int(app.get("table_talk_candidate_visit_count")) != 0 \
+			or JSON.stringify(_post_interrupt_stage_counts(app)) != JSON.stringify([1, 1, 1, 1, 1]):
 		push_error("Tutorial outer interrupt entered ambient talk readers, rebuilt a surface, queued talk, or advanced cadence.")
 		valid = false
 	run_state.challenge_config = tutorial_config_before
@@ -1792,12 +1845,98 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 		push_error("Interrupt-order fixture could not enqueue its expiring talk.")
 		valid = false
 	var order_cadence_before := JSON.stringify(run_state.event_cadence)
+	_reset_interrupt_probe_counters(app)
 	if not bool(app.call("_apply_post_action_environment_interrupt", "game_action")) \
 			or ordered_game.surface_state_calls != 0 \
 			or not run_state.pending_talk_event("interrupt_order_fixture").is_empty() \
-			or JSON.stringify(run_state.event_cadence) != order_cadence_before:
+			or JSON.stringify(run_state.event_cadence) != order_cadence_before \
+			or JSON.stringify(_post_interrupt_stage_counts(app)) != JSON.stringify([1, 0, 0, 0, 0]) \
+			or _total_interrupt_candidate_visits(app) != 0:
 		push_error("Focused-talk expiry did not short-circuit table cadence at the outer interrupt boundary.")
 		valid = false
+
+	# Forced closing is the next outer boundary. Arm the real closed-hours state
+	# and prove no forced-travel, talk-candidate, or unavoidable work follows it.
+	app.set("library", production_library)
+	run_state.set_environment(bar_environment)
+	run_state.retire_pending_talk_events()
+	run_state.game_clock_minutes = 300
+	run_state.begin_closing_time(run_state.current_environment, run_state.game_minute_of_day(), 0)
+	run_state.force_closing_time_travel()
+	app.set("current_game", ordered_game)
+	var closing_cadence_before := JSON.stringify(run_state.event_cadence)
+	_reset_interrupt_probe_counters(app)
+	if not bool(app.call("_apply_post_action_environment_interrupt", "game_action")) \
+			or run_state.pending_talk_event("dialogue:venue_closing_notice").is_empty() \
+			or JSON.stringify(run_state.event_cadence) != closing_cadence_before \
+			or JSON.stringify(_post_interrupt_stage_counts(app)) != JSON.stringify([1, 1, 0, 0, 0]) \
+			or _total_interrupt_candidate_visits(app) != 0:
+		push_error("Armed closing-time departure did not short-circuit forced travel and all later cadence stages.")
+		valid = false
+	run_state.retire_pending_talk_events()
+	run_state.clear_closing_time_state()
+
+	# Health-inspector forced travel owns the following boundary. Start from a
+	# fresh generated room so at least one production route is genuinely enabled.
+	app.call("start_foundation_run", "UI-POST-ACTION-FORCED-TRAVEL-ORDER")
+	await process_frame
+	run_state = app.get("run_state")
+	production_library = app.get("library")
+	app.set("current_game", null)
+	run_state.narrative_flags["health_inspector_closing_actions"] = 1
+	var forced_choices: Array = app.call("_travel_choice_view_list")
+	var has_enabled_forced_choice := false
+	for forced_choice_value in forced_choices:
+		if typeof(forced_choice_value) == TYPE_DICTIONARY and bool((forced_choice_value as Dictionary).get("enabled", false)):
+			has_enabled_forced_choice = true
+			break
+	var forced_rng_before := int(run_state.event_cadence.get("rng_state", 0))
+	_reset_interrupt_probe_counters(app)
+	var forced_interrupted := bool(app.call("_apply_post_action_environment_interrupt", "game_action"))
+	if not has_enabled_forced_choice or not forced_interrupted \
+			or not bool(run_state.narrative_flags.get("health_inspector_forced_travel", false)) \
+			or JSON.stringify(_post_interrupt_stage_counts(app)) != JSON.stringify([1, 1, 1, 0, 0]) \
+			or _total_interrupt_candidate_visits(app) != 0 \
+			or int(run_state.event_cadence.get("rng_state", 0)) != forced_rng_before:
+		push_error("Armed Health Inspector travel did not short-circuit talk/unavoidable cadence in exact outer order.")
+		valid = false
+	await process_frame
+	await process_frame
+	await process_frame
+
+	# Finally arm one deterministic unavoidable event and prove the outer path
+	# reaches only the ordered action-candidate cache after all earlier stages.
+	app.call("start_foundation_run", "UI-POST-ACTION-UNAVOIDABLE-ORDER")
+	await process_frame
+	run_state = app.get("run_state")
+	production_library = app.get("library")
+	var unavoidable_library := ContentLibrary.new()
+	unavoidable_library.events = [_timed_interrupt_fixture_event("outer_unavoidable_fixture")]
+	unavoidable_library.rebuild_content_indexes()
+	app.set("library", unavoidable_library)
+	var unavoidable_game := CountingTableApproachFixtureGame.new("unavoidable_quiet_game", [], 0)
+	app.set("current_game", unavoidable_game)
+	app.set("last_game_result", game_result)
+	run_state.event_cadence["visit_should_fire"] = true
+	run_state.event_cadence["visit_event_count"] = 0
+	run_state.event_cadence["visit_min_action"] = 0
+	run_state.event_cadence["last_world_event_action"] = -9999
+	run_state.event_cadence["last_modal_closed_action"] = -9999
+	var unavoidable_rng_before := int(run_state.event_cadence.get("rng_state", 0))
+	_reset_interrupt_probe_counters(app)
+	if not bool(app.call("_apply_post_action_environment_interrupt", "game_action")) \
+			or str(run_state.active_triggered_event.get("event_id", "")) != "outer_unavoidable_fixture" \
+			or JSON.stringify(_post_interrupt_stage_counts(app)) != JSON.stringify([1, 1, 1, 1, 1]) \
+			or int(app.get("action_trigger_candidate_visit_count")) != 1 \
+			or int(app.get("heat_talk_candidate_visit_count")) != 0 \
+			or int(app.get("table_talk_candidate_visit_count")) != 0 \
+			or int(app.get("recent_result_deep_snapshot_call_count")) != 0 \
+			or unavoidable_game.surface_state_calls != 0 \
+			or int(run_state.event_cadence.get("rng_state", 0)) != unavoidable_rng_before:
+		push_error("Armed unavoidable candidate did not preserve exact outer order, cache visits, RNG, and no-copy/no-surface behavior.")
+		valid = false
+	app.call("_hide_event_choice_popup")
+	run_state.complete_triggered_event_resolution("outer_unavoidable_fixture")
 
 	app.set("library", production_library)
 	app.set("current_game", original_game)
@@ -1807,6 +1946,45 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	app.set("last_environment_runtime_result", {})
 	run_state.retire_pending_talk_events()
 	return valid
+
+
+func _reset_interrupt_probe_counters(app: Control) -> void:
+	for property_name in [
+		"recent_result_deep_snapshot_call_count",
+		"action_trigger_candidate_visit_count",
+		"heat_talk_candidate_visit_count",
+		"table_talk_candidate_visit_count",
+		"post_interrupt_talk_boundary_visit_count",
+		"post_interrupt_closing_visit_count",
+		"post_interrupt_forced_travel_visit_count",
+		"post_interrupt_talk_enqueue_visit_count",
+		"post_interrupt_unavoidable_visit_count",
+	]:
+		app.set(property_name, 0)
+
+
+func _post_interrupt_stage_counts(app: Control) -> Array:
+	return [
+		int(app.get("post_interrupt_talk_boundary_visit_count")),
+		int(app.get("post_interrupt_closing_visit_count")),
+		int(app.get("post_interrupt_forced_travel_visit_count")),
+		int(app.get("post_interrupt_talk_enqueue_visit_count")),
+		int(app.get("post_interrupt_unavoidable_visit_count")),
+	]
+
+
+func _total_interrupt_candidate_visits(app: Control) -> int:
+	return int(app.get("action_trigger_candidate_visit_count")) \
+		+ int(app.get("heat_talk_candidate_visit_count")) \
+		+ int(app.get("table_talk_candidate_visit_count"))
+
+
+func _event_definition_ids(definitions: Array) -> Array[String]:
+	var result: Array[String] = []
+	for definition_value in definitions:
+		if typeof(definition_value) == TYPE_DICTIONARY:
+			result.append(str((definition_value as Dictionary).get("id", "")))
+	return result
 
 
 func _table_approach_fast_path_event(event_id: String, game_ids: Array, min_hands: int = 0) -> Dictionary:
@@ -1820,6 +1998,35 @@ func _table_approach_fast_path_event(event_id: String, game_ids: Array, min_hand
 		"speaker": {"role": "patron", "name": "Fixture Patron", "bind": "table_patron", "environment_actor": false},
 		"trigger": {"type": "table_approach", "games": game_ids.duplicate(), "min_hands": min_hands, "chance": 1.0},
 		"payload": {"summary": "Fixture table approach.", "timing": {"expires": false}},
+	}
+
+
+func _non_triggered_interrupt_fixture_event(event_id: String) -> Dictionary:
+	return {
+		"id": event_id,
+		"display_name": event_id.capitalize(),
+		"type": "fixture",
+		"interaction_mode": "interactable",
+		"presentation": "modal",
+		"scopes": ["any"],
+		"trigger": {"type": "manual"},
+		"payload": {"summary": "Irrelevant full-pack fixture."},
+	}
+
+
+func _timed_interrupt_fixture_event(event_id: String) -> Dictionary:
+	return {
+		"id": event_id,
+		"display_name": event_id.capitalize(),
+		"type": "fixture",
+		"interaction_mode": "triggered",
+		"presentation": "modal",
+		"scopes": ["any"],
+		"trigger": {"type": "timed", "turns": 0},
+		"payload": {
+			"summary": "Unavoidable action-boundary fixture.",
+			"choices": [{"id": "acknowledge", "label": "Acknowledge", "text": "Continue.", "consequences": {"resolve_event": true}}],
+		},
 	}
 
 
