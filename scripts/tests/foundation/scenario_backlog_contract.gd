@@ -10,6 +10,22 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
 const SEED_COUNT := 20
+const AUTHORIZED_CATALOG_TOTAL := 55
+const EVENT_CHOICE_LABEL_WIDTH_CEILING := 22
+const LAUNCH_BY_ARCHETYPE := {
+	"corner_store": ["corner_store_delivery_day", "corner_store_lotto_fever", "corner_store_aftermath", "corner_store_dead_shift"],
+	"back_alley": ["back_alley_street_craps", "back_alley_cruiser_parked", "back_alley_fence_night"],
+	"motel": ["motel_conventioneers", "motel_stakeout", "motel_weekly_rates"],
+	"bar": ["bar_wake", "bar_fight_night", "bar_payday_rush", "bar_lock_in"],
+	"gas_station_casino": ["gas_station_trucker_convoy", "gas_station_tour_bus_stop", "gas_station_graveyard_shift"],
+	"small_underground_casino": ["punchline_open_mic_night", "punchline_headliner_night", "punchline_bringer_show", "punchline_high_stakes_night", "punchline_greased_week", "punchline_debt_court"],
+	"jazz_club": ["jazz_club_guest_legend", "jazz_club_rent_party", "jazz_club_recording_night"],
+	"kitty_cat_lounge": ["kitty_cat_lounge_amateur_night", "kitty_cat_lounge_buyout", "kitty_cat_lounge_slow_night"],
+	"delta_queen": ["delta_queen_wedding_charter", "delta_queen_whale_aboard", "delta_queen_fog_delay", "delta_queen_engine_trouble"],
+	"beach": ["beach_bonfire_night", "beach_storm_coming", "beach_festival_weekend"],
+	"pawn_shop": ["pawn_shop_estate_lot_day", "pawn_shop_serial_check_day", "pawn_shop_sals_mood"],
+	"grand_casino": ["grand_casino_gala_night", "grand_casino_convention_crowd", "grand_casino_audit_night"],
+}
 const BACKLOG_BY_ARCHETYPE := {
 	"corner_store": ["corner_store_inventory_night"],
 	"back_alley": ["back_alley_nothing_moving"],
@@ -34,6 +50,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	var backlog_ids := _backlog_ids()
 	if backlog_ids.size() != 13:
 		failures.append("Scenario backlog contract must declare exactly 13 scenarios.")
+	_check_authorized_catalog(library, failures)
 	var base_event_ids := _base_event_ids(library)
 	var claimed_event_ids: Dictionary = {}
 	for archetype_id_value in BACKLOG_BY_ARCHETYPE.keys():
@@ -115,6 +132,7 @@ static func _check_event(library: ContentLibrary, archetype: Dictionary, scenari
 			failures.append("Scenario backlog event %s contains a malformed choice." % event_id)
 			continue
 		var choice := choice_value as Dictionary
+		_check_choice_voice_and_width(event_id, choice, failures)
 		var run_state := RunStateScript.new()
 		run_state.start_new("BACKLOG-RESOLVE-%s-%s" % [event_id, str(choice.get("id", ""))])
 		run_state.bankroll = 100
@@ -127,6 +145,79 @@ static func _check_event(library: ContentLibrary, archetype: Dictionary, scenari
 		var result := event_module.resolve(run_state, run_state.current_environment, str(choice.get("id", "")))
 		if not bool(result.get("ok", false)) or not _strings(run_state.current_environment.get("resolved_event_ids", [])).has(event_id):
 			failures.append("Scenario backlog event %s choice %s did not resolve through EventModule." % [event_id, str(choice.get("id", ""))])
+
+
+static func _check_authorized_catalog(library: ContentLibrary, failures: Array) -> void:
+	var authorized: Dictionary = {}
+	for archetype_id_value in LAUNCH_BY_ARCHETYPE.keys():
+		var archetype_id := str(archetype_id_value)
+		for scenario_id_value in LAUNCH_BY_ARCHETYPE.get(archetype_id, []):
+			authorized[str(scenario_id_value)] = archetype_id
+	for archetype_id_value in BACKLOG_BY_ARCHETYPE.keys():
+		var archetype_id := str(archetype_id_value)
+		for scenario_id_value in BACKLOG_BY_ARCHETYPE.get(archetype_id, []):
+			var scenario_id := str(scenario_id_value)
+			if authorized.has(scenario_id):
+				failures.append("Scenario backlog id %s duplicates the authorized launch catalog." % scenario_id)
+			authorized[scenario_id] = archetype_id
+	if authorized.size() != AUTHORIZED_CATALOG_TOTAL:
+		failures.append("Authorized scenario catalog declares %d ids; expected %d." % [authorized.size(), AUTHORIZED_CATALOG_TOTAL])
+	var actual: Dictionary = {}
+	for archetype_id_value in library.environment_scenarios.keys():
+		var archetype_id := str(archetype_id_value)
+		for definition_value in library.scenarios_for_archetype(archetype_id):
+			if typeof(definition_value) != TYPE_DICTIONARY:
+				continue
+			var scenario_id := str((definition_value as Dictionary).get("id", ""))
+			actual[scenario_id] = archetype_id
+			if not authorized.has(scenario_id):
+				failures.append("Scenario catalog contains unauthorized id %s under %s." % [scenario_id, archetype_id])
+			elif str(authorized.get(scenario_id, "")) != archetype_id:
+				failures.append("Scenario catalog places %s under %s; authorized archetype is %s." % [scenario_id, archetype_id, str(authorized.get(scenario_id, ""))])
+	if actual.size() != AUTHORIZED_CATALOG_TOTAL:
+		failures.append("Scenario catalog contains %d unique ids; expected the exact authorized %d." % [actual.size(), AUTHORIZED_CATALOG_TOTAL])
+	for scenario_id_value in authorized.keys():
+		if not actual.has(str(scenario_id_value)):
+			failures.append("Scenario catalog is missing authorized id %s." % str(scenario_id_value))
+
+
+static func _check_choice_voice_and_width(event_id: String, choice: Dictionary, failures: Array) -> void:
+	var label := str(choice.get("label", ""))
+	if label.length() > EVENT_CHOICE_LABEL_WIDTH_CEILING:
+		failures.append("Scenario backlog event %s choice %s label exceeds the %d-character events.json ceiling." % [event_id, str(choice.get("id", "")), EVENT_CHOICE_LABEL_WIDTH_CEILING])
+	var consequences := _dict(choice.get("consequences", {}))
+	if not consequences.has("bankroll_delta"):
+		return
+	var amount := absi(int(consequences.get("bankroll_delta", 0)))
+	var number_word := _number_word(amount)
+	if number_word.is_empty():
+		return
+	var flavor := "%s %s" % [label, str(choice.get("text", ""))]
+	var padded_flavor := " %s " % flavor.to_lower().replace(".", " ").replace(",", " ").replace("'", " ").replace("-", " ")
+	if padded_flavor.contains(" %s " % number_word):
+		failures.append("Scenario backlog event %s choice %s spells its exact bankroll amount in flavor prose." % [event_id, str(choice.get("id", ""))])
+
+
+static func _number_word(value: int) -> String:
+	var words := {
+		1: "one",
+		2: "two",
+		3: "three",
+		4: "four",
+		5: "five",
+		6: "six",
+		7: "seven",
+		8: "eight",
+		9: "nine",
+		10: "ten",
+		11: "eleven",
+		12: "twelve",
+		13: "thirteen",
+		14: "fourteen",
+		15: "fifteen",
+		20: "twenty",
+	}
+	return str(words.get(value, ""))
 
 
 static func _check_phase_arcs(library: ContentLibrary, failures: Array) -> void:
