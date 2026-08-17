@@ -200,9 +200,24 @@ What happens then is the owner's, not an agent's:
 
 ## Owner Questions (needs owner; do not guess)
 
-*(empty)*
+- **crew06_7 — Chip Dump funding authority:** the approved play requires
+  money conservation and forbids free money, but the roadmap/prompt does not
+  define whose funds are placed into the dump or the transfer direction.
+  Before Chip Dump is implemented, choose one binding model: (A) player-funded
+  temporary escrow, (B) a finite seeded per-run/member crew float, or (C) both
+  as separately offered variants. Crew06_6 and the non-Chip-Dump portions of
+  crew06_7 can proceed without this answer; no agent may invent the economy.
 
 ## Discovery & Decision Log
+
+- 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
+  is accepted, both rows may execute concurrently only in isolated worktrees.
+  They will share one read-only presence seam over `crew_presence`:
+  `crew_present_member_ids(environment := current_environment)` and
+  `crew_member_present(member_id, environment := current_environment)`.
+  Crew06_6 owns grievance-free job decline/expiry and the shared Craps
+  training-progress grant seam; crew06_7 consumes those APIs and may not guess
+  Chip Dump's owner-locked funding model.
 
 - 2026-08-13 [board] Board created from roadmap v4. Rounds 1–4 owner
   decisions are all locked in the roadmap; heist ships Plans A+B; C+D
