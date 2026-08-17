@@ -604,6 +604,15 @@ What happens then is the owner's, not an agent's:
   from the additional host/snapshot overhead; no density, tick, presentation,
   action, or threshold change is authorized. Unrelated scratch-ticket fixture
   failures in the broad probe are not Coin Pusher evidence.
+- 2026-08-17 [pusher06_2 native phase profile] Opt-in production-boundary
+  timing confirms real native selection and narrows the remaining work without
+  blaming autosave. Raw full-cap p95 is 18.109 ms: native call p95 13.131 ms,
+  adapter validation 1.889 ms, and adapter total 16.924 ms. Production drop is
+  99.247 ms and nudge 102.682 ms; module resolution is 34.291/37.826 ms, of
+  which trace construction alone is 15.195/16.582 ms, while the still-combined
+  post-action/refresh phase is the largest block at 51.969/55.557 ms. Autosave
+  preparation is only 0.008 ms. The next probe must split apply/tutorial/audio
+  from embedded refresh/snapshot before any root optimization is accepted.
 - 2026-08-17 [pusher06_2 presentation gaps] Independent static review ACCEPTS
   all three corrections after returning float quota math and two false-positive
   tests. Opening generation uses integer-only deterministic per-shelf quotas
