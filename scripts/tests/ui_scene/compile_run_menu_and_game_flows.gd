@@ -3117,39 +3117,6 @@ func _surface_hit_rects(snapshot: Dictionary, actions: Array) -> Array:
 	return rects
 
 
-func _has_visible_text(node: Node, text: String) -> bool:
-	if node == null:
-		return false
-	if node is CanvasItem and not (node as CanvasItem).visible:
-		return false
-	if node is Label and (node as Label).text.find(text) != -1:
-		return true
-	if node is Button and (node as Button).text.find(text) != -1:
-		return true
-	if node is LineEdit and (node as LineEdit).text.find(text) != -1:
-		return true
-	for child in node.get_children():
-		if _has_visible_text(child, text):
-			return true
-	return false
-
-
-func _click_visible_button(node: Node, text: String) -> bool:
-	if node == null:
-		return false
-	if node is CanvasItem and not (node as CanvasItem).visible:
-		return false
-	if node is Button:
-		var button := node as Button
-		if not button.disabled and button.text == text:
-			button.emit_signal("pressed")
-			return true
-	for child in node.get_children():
-		if _click_visible_button(child, text):
-			return true
-	return false
-
-
 func _find_visible_button(node: Node, text: String) -> Button:
 	if node == null:
 		return null
