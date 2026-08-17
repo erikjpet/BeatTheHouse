@@ -651,6 +651,13 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 
 
 func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array) -> void:
+	var production_references_text := JSON.stringify({
+		"environment_archetypes": library.environment_archetypes,
+		"events": library.events,
+		"games": library.games,
+		"items": library.items,
+		"services": library.services,
+	})
 	_check_tier1_scenario_content(library, failures)
 	var motel := library.environment_archetype("pawn_shop")
 	var legacy_run := RunStateScript.new()
@@ -704,7 +711,7 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 		failures.append("World-node revisit did not restore the stored scenario unchanged.")
 
 	var repeat_library := ContentLibraryScript.new()
-	repeat_library.load(false)
+	repeat_library.environment_scenarios = {"bar": library.scenarios_for_archetype("bar").duplicate(true)}
 	var repeat_pool := repeat_library.scenarios_for_archetype("bar")
 	var third := bar_definition.duplicate(true)
 	third["id"] = "bar_engine_proof_third"
@@ -781,6 +788,14 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	_check_scenario_validation_negative_fixture(library, "bad_archetype", {"missing_archetype": [{"id": "bad_archetype", "archetype_id": "missing_archetype", "display_name": "Bad", "weight": 1, "mutations": {}}]}, "unknown archetype", failures)
 	_check_scenario_validation_negative_fixture(library, "bad_event", {"bar": [{"id": "bad_event", "archetype_id": "bar", "display_name": "Bad", "weight": 1, "mutations": {"event_pool_add": ["missing_event"]}}]}, "unknown id", failures)
 	_check_scenario_validation_negative_fixture(library, "bad_key", {"bar": [{"id": "bad_key", "archetype_id": "bar", "display_name": "Bad", "weight": 1, "mutations": {"per_frame_weather": true}}]}, "unknown mutation key", failures)
+	if JSON.stringify({
+		"environment_archetypes": library.environment_archetypes,
+		"events": library.events,
+		"games": library.games,
+		"items": library.items,
+		"services": library.services,
+	}) != production_references_text:
+		failures.append("Scenario validation fixtures mutated the production content-library references.")
 
 
 func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> void:
@@ -1001,7 +1016,14 @@ func _scenario_full_generation(seed: String, library: ContentLibrary) -> Diction
 
 func _check_scenario_validation_negative_fixture(library: ContentLibrary, fixture_id: String, scenarios: Dictionary, expected_fragment: String, failures: Array) -> void:
 	var fixture := ContentLibraryScript.new()
-	fixture.load(false)
+	# The scenario validator only reads these reference catalogs. Reusing their
+	# loaded definitions avoids three redundant full library parses; the caller's
+	# exact before/after sentinel proves the production library remains immutable.
+	fixture.environment_archetypes = library.environment_archetypes
+	fixture.events = library.events
+	fixture.games = library.games
+	fixture.items = library.items
+	fixture.services = library.services
 	fixture.environment_scenarios = scenarios.duplicate(true)
 	fixture.validation_errors = []
 	fixture.call("_validate_scenario_definitions")
