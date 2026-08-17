@@ -126,9 +126,7 @@ static func placement_kind(run_state: RunState, environment: Dictionary, definit
 	if not _location_matches(fallback, environment):
 		return ""
 	var selected_node := fallback_node_id(run_state, definition)
-	var canonical_node := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
-	var physical_location := str(environment.get("archetype_id", canonical_node)).strip_edges()
-	var current_location := physical_location if canonical_node == "grand_casino" and GRAND_CASINO_ROOM_IDS.has(physical_location) else canonical_node
+	var current_node := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
 	return "fallback" if selected_node.is_empty() or selected_node == current_node else ""
 
 
@@ -294,7 +292,9 @@ static func presence_for_environment(run_state: RunState, environment: Dictionar
 	# that shipped environment rule.
 	if str(environment.get("kind", "")) == "recovery":
 		return result
-	var current_node := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
+	var canonical_node := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
+	var physical_location := str(environment.get("archetype_id", canonical_node)).strip_edges()
+	var current_location := physical_location if canonical_node == "grand_casino" and GRAND_CASINO_ROOM_IDS.has(physical_location) else canonical_node
 	var action_index := int(run_state.town_snapshot().get("action_index", 0))
 	var rotate := maxi(1, int(config().get("presence_rotate_actions", 6)))
 	var segment := action_index / rotate
