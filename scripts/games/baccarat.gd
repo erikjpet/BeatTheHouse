@@ -2551,22 +2551,22 @@ func _table_state_preview(run_state: RunState, environment: Dictionary) -> Dicti
 	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	if states.has(get_id()) and typeof(states.get(get_id(), {})) == TYPE_DICTIONARY:
 		var table := _normalize_table_state(states.get(get_id(), {}), environment)
-		_apply_grand_casino_dealer_assignment(table, run_state, environment)
+		_apply_grand_casino_dealer_assignment(table, run_state, environment, true)
 		return table
 	if states.has("baccarat") and typeof(states.get("baccarat", {})) == TYPE_DICTIONARY:
 		var legacy_table := _normalize_table_state(states.get("baccarat", {}), environment)
-		_apply_grand_casino_dealer_assignment(legacy_table, run_state, environment)
+		_apply_grand_casino_dealer_assignment(legacy_table, run_state, environment, true)
 		return legacy_table
 	var rng := run_state.create_rng("baccarat_table_preview") if run_state != null else _default_table_rng({}, "preview")
 	var generated := generate_environment_state(run_state, environment, rng)
-	_apply_grand_casino_dealer_assignment(generated, run_state, environment)
+	_apply_grand_casino_dealer_assignment(generated, run_state, environment, true)
 	return generated
 
 
-func _apply_grand_casino_dealer_assignment(table: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+func _apply_grand_casino_dealer_assignment(table: Dictionary, run_state: RunState, environment: Dictionary, observational: bool = false) -> void:
 	if run_state == null:
 		return
-	var assignment := run_state.grand_casino_staff_member_for_game(get_id(), environment)
+	var assignment := run_state.grand_casino_staff_member_for_game_preview(get_id(), environment) if observational else run_state.grand_casino_staff_member_for_game(get_id(), environment)
 	var assignment_id := str(assignment.get("id", "")).strip_edges()
 	if assignment_id.is_empty():
 		return

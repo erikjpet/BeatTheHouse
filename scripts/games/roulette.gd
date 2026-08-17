@@ -94,7 +94,7 @@ var bet_targets_cache: Dictionary = {}
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result: Dictionary = super.enter(run_state, environment)
-	var table := _table_state(run_state, environment)
+	var table := _table_state_preview(run_state, environment)
 	if bool(table.get("table_barred", false)):
 		result["message"] = str(table.get("barred_reason", "The croupier refuses more roulette action at this wheel."))
 		return result
@@ -182,7 +182,7 @@ func _roulette_room_ceiling(environment: Dictionary, fallback_ceiling: int) -> i
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	var table := _table_state(run_state, environment)
+	var table := _table_state_preview(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	var bets: Array = _bet_array(session.get("roulette_bets", []))
 	var bet_targets := _roulette_bet_targets(table)
@@ -502,7 +502,7 @@ func _peek_table_state(environment: Dictionary) -> Dictionary:
 
 
 func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
-	var table := _table_state(run_state, environment)
+	var table := _table_state_preview(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	var now_msec := _surface_time_msec_for_result(ui_state, _last_result_source(table))
 	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin", ROULETTE_ROUND_DELAY_MSEC)
@@ -535,7 +535,7 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 
 
 func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	var table := _table_state(run_state, environment)
+	var table := _table_state_preview(run_state, environment)
 	var next_state := _normalized_session(run_state, environment, ui_state, table)
 	if bool(table.get("table_barred", false)):
 		return _message_command(next_state, str(table.get("barred_reason", "The croupier closes the roulette table to you.")))
@@ -1178,7 +1178,7 @@ func _record_past_post_table_result(table: Dictionary, last_result: Dictionary, 
 func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
 	if action_id != "spin_roulette":
 		return 0
-	var table := _table_state(run_state, environment)
+	var table := _table_state_preview(run_state, environment)
 	if bool(table.get("table_barred", false)):
 		return 0
 	var session := _normalized_session(run_state, environment, ui_state, table)
@@ -1189,7 +1189,7 @@ func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, 
 
 
 func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var table := _table_state(run_state, environment)
+	var table := _table_state_preview(run_state, environment)
 	if table.is_empty():
 		return {}
 	var last_results := _dictionary_array(table.get("last_results", []))
@@ -3100,10 +3100,18 @@ func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	return _normalize_table_state(table)
 
 
-func _apply_grand_casino_dealer_assignment(table: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+func _table_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var stored: Variant = game_states.get(get_id(), {})
+	var table: Dictionary = (stored as Dictionary).duplicate(true) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_table_state(run_state, environment)
+	_apply_grand_casino_dealer_assignment(table, run_state, environment, true)
+	return table if _table_state_is_current(table) else _normalize_table_state(table)
+
+
+func _apply_grand_casino_dealer_assignment(table: Dictionary, run_state: RunState, environment: Dictionary, observational: bool = false) -> void:
 	if run_state == null:
 		return
-	var assignment := run_state.grand_casino_staff_member_for_game(get_id(), environment)
+	var assignment := run_state.grand_casino_staff_member_for_game_preview(get_id(), environment) if observational else run_state.grand_casino_staff_member_for_game(get_id(), environment)
 	var assignment_id := str(assignment.get("id", "")).strip_edges()
 	if assignment_id.is_empty():
 		return

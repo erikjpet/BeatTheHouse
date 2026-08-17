@@ -62,6 +62,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	var checked_contexts := {}
 	_check_generated_environment_sweep(library, covered_game_ids, checked_contexts, failures)
 	_check_catalog_coverage(library, covered_game_ids, failures)
+	_check_staff_rollover_presentation(library, failures)
 	_check_reintroduced_defect_fixture(failures)
 
 
@@ -171,6 +172,89 @@ static func _check_catalog_coverage(library: ContentLibrary, covered_game_ids: D
 			continue
 		if not covered_game_ids.has(game_id):
 			failures.append("Game activation class guard never reached production game %s in generated environments." % game_id)
+
+
+static func _check_staff_rollover_presentation(library: ContentLibrary, failures: Array) -> void:
+	var archetype := library.environment_archetype("grand_casino")
+	if archetype.is_empty():
+		failures.append("Game activation class guard could not resolve the Grand Casino rollover fixture.")
+		return
+	var run_state := RunStateScript.new()
+	run_state.start_new("GAME-ACTIVATION-STAFF-ROLLOVER")
+	var environment := EnvironmentInstanceScript.from_archetype(
+		archetype,
+		int(archetype.get("tier", 3)),
+		run_state.create_rng("staff_rollover_environment"),
+		library
+	).to_dict()
+	var generator := RunGeneratorScript.new(library)
+	environment["game_states"] = generator._generated_game_states(
+		run_state,
+		environment,
+		run_state.create_rng("staff_rollover_game_states")
+	)
+	run_state.set_environment(environment)
+	run_state = _json_round_trip_run_state(run_state, "Grand Casino staff rollover fixture", failures)
+	if run_state == null:
+		return
+	run_state.advance_game_clock_minutes(1440)
+	# Keep each action-boundary proof comfortably funded; this fixture is about
+	# staff persistence, not wager rejection.
+	run_state.bankroll = 1000
+	run_state.grand_casino_chips = 1000
+	var staffing := run_state.grand_casino_staffing_snapshot()
+	var rollover_day := run_state.game_day()
+	if int(staffing.get("day", 0)) != rollover_day:
+		failures.append("Grand Casino staffing did not advance to the real game-clock rollover day.")
+	var assignments := _dict(staffing.get("assignments", {}))
+	for role in ["blackjack", "baccarat", "roulette", "bartender"]:
+		if not assignments.has(role):
+			failures.append("Grand Casino %s staffing assignment was missing after the real rollover." % role)
+			continue
+		var assignment := _dict(assignments.get(role, {}))
+		if int(assignment.get("day", 0)) != rollover_day:
+			failures.append("Grand Casino %s staffing assignment did not retain the real rollover day." % role)
+
+	var rollover_snapshot := run_state.to_dict()
+	var rollover_text := JSON.stringify(rollover_snapshot)
+	for game_id in ["blackjack", "roulette", "bar_dice", "baccarat"]:
+		var game := _load_game(library, game_id, failures)
+		if game == null:
+			continue
+		var method_run := RunStateScript.new()
+		method_run.from_dict(rollover_snapshot.duplicate(true))
+		game.environment_object_state(method_run, method_run.current_environment)
+		if JSON.stringify(method_run.to_dict()) != rollover_text:
+			var paths: Array = []
+			_collect_changed_paths(rollover_snapshot, method_run.to_dict(), "", paths)
+			failures.append("Grand Casino %s passive presentation mutated serialized state after a real staff rollover: %s" % [game_id, ", ".join(paths)])
+			continue
+		_commit_staff_action_boundary(game_id, game, method_run)
+		var role_id := "bartender" if game_id == "bar_dice" else game_id
+		var expected_assignment := _dict(assignments.get(role_id, {}))
+		var game_states := _dict(method_run.current_environment.get("game_states", {}))
+		var persisted_table := _dict(game_states.get(game_id, {}))
+		if persisted_table.is_empty():
+			failures.append("Grand Casino %s real action boundary did not retain its generated game state." % game_id)
+			continue
+		if int(persisted_table.get("staff_assignment_day", 0)) != rollover_day \
+				or str(persisted_table.get("staff_assignment_id", "")) != str(expected_assignment.get("id", "")):
+			failures.append("Grand Casino %s real action boundary did not persist rollover staff %s on day %d." % [game_id, str(expected_assignment.get("id", "")), rollover_day])
+
+
+static func _commit_staff_action_boundary(game_id: String, game: GameModule, run_state: RunState) -> void:
+	var environment := run_state.current_environment
+	var rng := run_state.create_rng("staff_rollover_action:%s" % game_id)
+	match game_id:
+		"blackjack":
+			game.resolve_with_context("blackjack_place_bet", 10, run_state, environment, rng, {})
+		"roulette":
+			game.resolve_with_context("spin_roulette", 10, run_state, environment, rng, {"roulette_bets": [game.call("_default_smoke_bet", 10)]})
+		"bar_dice":
+			var roll_command := game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, environment)
+			game.resolve_with_context("roll", 10, run_state, environment, rng, _dict(roll_command.get("ui_state", {})))
+		"baccarat":
+			game.resolve_with_context("deal_baccarat", 20, run_state, environment, rng, {"baccarat_bets": {"player": 20}})
 
 
 static func _check_reintroduced_defect_fixture(failures: Array) -> void:

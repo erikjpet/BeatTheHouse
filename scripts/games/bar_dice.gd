@@ -157,7 +157,7 @@ const MEMORABLE_REGULAR := {
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result: Dictionary = super.enter(run_state, environment)
-	var state := _dice_state(run_state, environment)
+	var state := _dice_state_preview(run_state, environment)
 	result["message"] = "%s sets the dice cup on the %s. Lock 6-5-4, then high cargo wins the pot." % [
 		str(state.get("dealer_name", "The bartender")),
 		str(state.get("bar_name", "bar top")),
@@ -207,17 +207,17 @@ func environment_state_generated(run_state: RunState, environment: Dictionary, g
 func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
 	if action_id == "press":
 		return maxi(0, stake)
-	var state := _dice_state(run_state, environment)
+	var state := _dice_state_preview(run_state, environment)
 	return _active_stake_from_context(stake, state, ui_state, run_state, environment)
 
 
 func wager_activity_incomplete(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> bool:
-	var state := _dice_state(run_state, environment)
+	var state := _dice_state_preview(run_state, environment)
 	return bool(_normalized_ui_state(run_state, environment, ui_state, state).get("rolled", false))
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	var state := _dice_state(run_state, environment)
+	var state := _dice_state_preview(run_state, environment)
 	var ui := _normalized_ui_state(run_state, environment, ui_state, state)
 	var last_result := _copy_dict(state.get("last_result", {}))
 	var rolled := bool(ui.get("rolled", false))
@@ -448,7 +448,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 
 
 func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	var state := _dice_state(run_state, environment)
+	var state := _dice_state_preview(run_state, environment)
 	var next := _normalized_ui_state(run_state, environment, ui_state, state)
 	match surface_action:
 		"bar_dice_rail_bet":
@@ -916,7 +916,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 
 
 func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var state := _dice_state(run_state, environment)
+	var state := _dice_state_preview(run_state, environment)
 	var last_result := _copy_dict(state.get("last_result", {}))
 	var badge := "DICE"
 	if not last_result.is_empty():
@@ -1224,10 +1224,18 @@ func _dice_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	return normalized
 
 
-func _apply_grand_casino_bartender_assignment(state: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+func _dice_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var stored: Variant = game_states.get(get_id(), {})
+	var state: Dictionary = (stored as Dictionary).duplicate(true) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_state(run_state, environment)
+	_apply_grand_casino_bartender_assignment(state, run_state, environment, true)
+	return state if _state_is_current(state) else _normalize_state(state)
+
+
+func _apply_grand_casino_bartender_assignment(state: Dictionary, run_state: RunState, environment: Dictionary, observational: bool = false) -> void:
 	if run_state == null:
 		return
-	var assignment := run_state.grand_casino_staff_member_for_game(get_id(), environment)
+	var assignment := run_state.grand_casino_staff_member_for_game_preview(get_id(), environment) if observational else run_state.grand_casino_staff_member_for_game(get_id(), environment)
 	var assignment_id := str(assignment.get("id", "")).strip_edges()
 	if assignment_id.is_empty():
 		return
