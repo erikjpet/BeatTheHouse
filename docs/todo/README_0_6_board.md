@@ -136,7 +136,7 @@ stated in each prompt** — `events.json` in particular is shared, and
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | teach06_1 | `teach06_1_onboarding_prompt.md` | IN_PROGRESS | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | PM:Codex/sub:teach-audit | 2026-08-16 | | PM-supervised repair and acceptance; subagent owns implementation only, PM owns board, archival, integration, and push. |
-| env06_5 | `env06_5_scenario_backlog_prompt.md` | IN_PROGRESS | env06_1/2/3 (DONE) | playtest variety | PM:Codex/sub:env-audit | 2026-08-16 | | PM-supervised repair and acceptance; `scenarios.json` ownership and `scenario_` event prefix remain binding. |
+| env06_5 | `env06_5_scenario_backlog_prompt.md` | BLOCKED | env06_1/2/3 (DONE) | playtest variety | PM:Codex/sub:env-audit | 2026-08-16 | | Blocked on generic Craps state normalization: serialized UI gate reports `M1.6 selected info-card game activation mutated serialized RunState.` Scenario-data/seed steering is forbidden. |
 | art06_1 | `art06_1_punchline_layers_prompt.md` | IN_PROGRESS | env06_4 (DONE) | — | PM:Codex/sub:art-repair | 2026-08-16 | | PM acceptance reopened: assets are registered but normal in-run Punchline rendering does not yet consume their paths; runtime visibility and integrated gates remain. |
 
 ### Wave D — Crew depth
@@ -782,3 +782,14 @@ What happens then is the owner's, not an agent's:
   could mark an intermediate normal tip seen without displaying it. PM required
   yield-without-replacement semantics on the first notification plus a real
   double-notify regression; tutorial behavior remains unchanged.
+- 2026-08-16 [env06_5] Discovery: the serialized UI gate fails verbatim with
+  `M1.6 selected info-card game activation mutated serialized RunState.` The
+  deterministic meta-home run selected shipped `back_alley_street_craps`; its
+  `game:craps` entry rewrote numerically equivalent generated fields from JSON
+  floats to ints on entry (for example `version`, table limits, chip values,
+  point, working bets, roll count, streak, and table energy). Gameplay values
+  and `active_game_state_keys` were unchanged.
+- 2026-08-16 [env06_5] BLOCKED: the generic repair belongs to the Craps runtime
+  normalization seam. The rejected scenario-weight/seed-fixture workaround was
+  fully reverted; the independently audited 55-scenario catalog remains at its
+  last green content commits, and this prompt stays in `docs/todo/` for resume.
