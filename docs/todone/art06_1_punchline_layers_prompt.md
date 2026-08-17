@@ -3,10 +3,19 @@ Board row: `art06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-16
+- **Completion/implementation commits:** `4b7a21f1`
+- **Verification:** `tools/validate_project.ps1` PASS; UI FoundationSuite PASS;
+  canonical `tools/foundation_visual_qa.ps1 -RequireGodot` PASS with zero
+  warnings; production L1/L3 captures 0 overlaps; Open Mic/Headliner captures
+  PASS at 1600x900 with crowd/signage/palette contrast; 900x430 three-layer
+  glance test and L3 reserved-footprint overlay inspected.
+- **Deviations:** Untouched main reproduces the branch's exact inherited
+  scenario failure vector (`punchline_high_stakes_night`, Kitty Cat Amateur and
+  Buyout) and Punchline L2 Video Poker/Numbers Book overlap; no out-of-scope
+  layout change was made. Concurrent systems runs had zero assertion failures
+  but exceeded the unchanged wall-time budget under three-worktree contention;
+  PM owns the serialized final timing gate.
 
 # Agent Prompt — art06_1: The Punchline's Missing Rooms
 
