@@ -538,7 +538,10 @@ func surface_elapsed(channel_id: String) -> float:
 	elif clock_source == "presentation":
 		now_msec = surface_presentation_time_msec()
 	var elapsed_msec := maxi(0, now_msec - started_msec)
-	return float(elapsed_msec) * drunk_time_scale / 1000.0
+	# Resume offsets are captured from surface_elapsed(), so they are already in
+	# presentation-time units. Scale only the new UI-local clock delta.
+	var elapsed_offset_msec := maxi(0, int(channel.get("elapsed_offset_msec", 0)))
+	return (float(elapsed_msec) * drunk_time_scale + float(elapsed_offset_msec)) / 1000.0
 
 
 func surface_animation_duration(channel_id: String) -> float:
@@ -1115,10 +1118,18 @@ func _update_surface_animation_channels() -> void:
 		else:
 			current["active_id"] = incoming_active_id
 			current["duration_msec"] = maxi(0, int(channel.get("duration_msec", current.get("duration_msec", 0))))
+			# The incoming offset is authoritative. A changed cumulative resume
+			# offset rebases the UI-local clock so elapsed time is not counted twice;
+			# omission explicitly clears a previously transient resume projection.
+			var current_offset := maxi(0, int(current.get("elapsed_offset_msec", 0)))
+			var incoming_offset := maxi(0, int(channel.get("elapsed_offset_msec", 0)))
+			current["elapsed_offset_msec"] = incoming_offset
 			current["metadata"] = _copy_dict(channel.get("metadata", current.get("metadata", {})))
 			current["clock_source"] = str(channel.get("clock_source", current.get("clock_source", "realtime")))
 			if incoming_started > 0:
 				current["started_msec"] = incoming_started
+			elif incoming_offset != current_offset:
+				current["started_msec"] = now_msec
 		current["id"] = channel_id
 		current["active"] = incoming_active
 		current["restart_on_active_id_change"] = restart_on_id_change
@@ -1531,6 +1542,7 @@ func _surface_animation_status_snapshot() -> Dictionary:
 			"time_scale": drunk_time_scale,
 			"duration_msec": int(channel.get("duration_msec", 0)),
 			"started_msec": int(channel.get("started_msec", 0)),
+			"elapsed_offset_msec": int(channel.get("elapsed_offset_msec", 0)),
 			"metadata": _copy_dict(channel.get("metadata", {})),
 		}
 	return snapshot

@@ -41,7 +41,10 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		animation_id,
 		animation_duration,
 		int(machine.get("slot_animation_started_msec", 0)),
-		{"metadata": {"classification": str(machine.get("last_classification", "idle"))}}
+		{
+			"elapsed_offset_msec": maxi(0, int(machine.get("slot_animation_resume_offset_msec", 0))),
+			"metadata": {"classification": str(machine.get("last_classification", "idle"))},
+		}
 	)
 	var feature_active := _bonus_visible_on_surface(active_bonus)
 	var feature_active_id := ""
