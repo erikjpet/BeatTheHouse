@@ -1549,9 +1549,11 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	for priority_value in priority_sources:
 		var expected_id := str(priority_value[0])
 		var expected_source: Dictionary = priority_value[1]
+		var expected_source_before := JSON.stringify(expected_source)
 		var selected: Dictionary = app.call("_recent_result_readonly")
-		if str(selected.get("source_id", "")) != expected_id or not is_same(selected, expected_source):
-			push_error("Read-only recent-result selector changed source priority or cloned %s." % expected_id)
+		if str(selected.get("source_id", "")) != expected_id or not is_same(selected, expected_source) \
+				or JSON.stringify(expected_source) != expected_source_before:
+			push_error("Read-only recent-result selector changed source priority, cloned, or mutated %s." % expected_id)
 			valid = false
 		match expected_id:
 			"hook_priority":
@@ -1562,6 +1564,17 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 				app.set("last_game_result", {})
 			"environment_priority":
 				app.set("last_environment_runtime_result", {})
+	app.set("last_environment_runtime_result", environment_result)
+	var active_story_game := CountingTableApproachFixtureGame.new("active_story_game", [], 0)
+	app.set("current_game", active_story_game)
+	var runtime_before_active_game := JSON.stringify(environment_result)
+	var active_game_story_selected: Dictionary = app.call("_recent_result_readonly")
+	if str(active_game_story_selected.get("source_id", "")) != "story_priority" \
+			or JSON.stringify(environment_result) != runtime_before_active_game:
+		push_error("An active game did not suppress the environment-runtime result in favor of story fallback, or mutated runtime storage.")
+		valid = false
+	app.set("current_game", null)
+	app.set("last_environment_runtime_result", {})
 	var story_selected: Dictionary = app.call("_recent_result_readonly")
 	if str(story_selected.get("source_id", "")) != "story_priority" or str(story_selected.get("action_id", "")) != "story_action":
 		push_error("Read-only recent-result selector did not preserve story-log fallback priority.")
@@ -1570,21 +1583,28 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	var coin_pusher_game := CountingTableApproachFixtureGame.new("coin_pusher", [], 4)
 	app.set("current_game", coin_pusher_game)
 	app.set("last_game_result", game_result)
+	var unsupported_library := ContentLibrary.new()
+	unsupported_library.events = [_table_approach_fast_path_event("stable_specific_target", ["another_game"])]
+	unsupported_library.rebuild_content_indexes()
+	app.set("library", unsupported_library)
 	var result_before := JSON.stringify(game_result)
 	var queue_before := JSON.stringify(run_state.pending_triggered_events)
 	var cadence_before := JSON.stringify(run_state.event_cadence)
+	app.set("recent_result_deep_snapshot_call_count", 0)
 	var context: Dictionary = app.call("_event_action_trigger_context", "game_action")
 	var enqueued := bool(app.call("_enqueue_talk_events_for_action_boundary", "game_action"))
 	if enqueued or coin_pusher_game.surface_state_calls != 0 \
 			or JSON.stringify(run_state.pending_triggered_events) != queue_before \
 			or JSON.stringify(run_state.event_cadence) != cadence_before \
-			or JSON.stringify(game_result) != result_before:
-		push_error("Coin Pusher no-op interrupt path copied/mutated its dense result, built a surface, changed RNG, or queued talk.")
+			or JSON.stringify(game_result) != result_before \
+			or int(app.get("recent_result_deep_snapshot_call_count")) != 0:
+		push_error("Unsupported dense-result interrupt path used a deep snapshot, mutated its result, built a surface, changed RNG, or queued talk.")
 		valid = false
 	if str(context.get("game_id", "")) != "coin_pusher" or str(context.get("action_id", "")) != "drop_quarter" \
 			or str(context.get("action_kind", "")) != "legal":
 		push_error("Read-only action-trigger context changed Coin Pusher scalar result fields.")
 		valid = false
+	app.set("library", production_library)
 
 	var bar_environment := run_state.current_environment.duplicate(true)
 	bar_environment["id"] = "interrupt_fast_path_bar"
@@ -1614,13 +1634,19 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 		valid = false
 	for seen_flag in ["talk_heat_threshold_65_seen", "talk_heat_threshold_85_seen"]:
 		run_state.narrative_flags.erase(seen_flag)
-	run_state.suspicion["level"] = 70
+	run_state.suspicion["level"] = 66
 	app.set("last_game_result", {"deltas": {"suspicion_delta": 2}})
-	if bool(app.call("_enqueue_heat_threshold_talk_events", "game_action")) or run_state.pending_talk_event_count() != 0:
-		push_error("Non-crossing nested heat delta incorrectly queued a threshold conversation.")
+	app.set("recent_result_deep_snapshot_call_count", 0)
+	if not bool(app.call("_enqueue_heat_threshold_talk_events", "game_action")) \
+			or run_state.pending_talk_event_count() != 1 \
+			or str(run_state.pending_triggered_events[0].get("event_id", "")) != "floor_staff_heat_warning" \
+			or int(app.get("recent_result_deep_snapshot_call_count")) != 0:
+		push_error("Nested-only heat delta did not cross 65 exactly once without invoking the deep recent-result snapshot.")
 		valid = false
+	run_state.retire_pending_talk_events()
 
 	var authored_table_targets: Array[String] = []
+	var production_has_table_wildcard := false
 	for event_value in production_library.events:
 		if typeof(event_value) != TYPE_DICTIONARY:
 			continue
@@ -1630,10 +1656,16 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 				or str(event_definition.get("presentation", "modal")) != "talk" \
 				or str(trigger.get("type", "manual")) != "table_approach":
 			continue
-		for game_id_value in trigger.get("games", []):
-			var game_id := str(game_id_value)
+		var trigger_games: Array = trigger.get("games", []) if typeof(trigger.get("games", [])) == TYPE_ARRAY else []
+		var clean_trigger_games: Array[String] = []
+		for game_id_value in trigger_games:
+			var game_id := str(game_id_value).strip_edges()
+			if not game_id.is_empty() and not clean_trigger_games.has(game_id):
+				clean_trigger_games.append(game_id)
 			if not game_id.is_empty() and not authored_table_targets.has(game_id):
 				authored_table_targets.append(game_id)
+		if clean_trigger_games.is_empty():
+			production_has_table_wildcard = true
 	var authored_cadence_before := JSON.stringify(run_state.event_cadence)
 	for game_id in authored_table_targets:
 		var authored_game := CountingTableApproachFixtureGame.new(game_id, [], 4)
@@ -1646,17 +1678,59 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	if JSON.stringify(run_state.event_cadence) != authored_cadence_before:
 		push_error("Empty-patron authored table probes advanced cadence RNG.")
 		valid = false
-	if production_library.has_table_approach_talk_event_for_game("coin_pusher"):
-		push_error("Data-derived table-approach index incorrectly targets Coin Pusher.")
+	var coin_pusher_authored := production_has_table_wildcard or authored_table_targets.has("coin_pusher")
+	if production_library.has_table_approach_talk_event_for_game("coin_pusher") != coin_pusher_authored:
+		push_error("Data-derived table-approach index did not match authored Coin Pusher target/wildcard content.")
 		valid = false
 
 	var fixture_library := ContentLibrary.new()
+	fixture_library.events = [_table_approach_fast_path_event("original_target", ["original_game"])]
+	if not fixture_library.has_table_approach_talk_event_for_game("original_game"):
+		push_error("Direct-array table index did not initialize on its first query.")
+		valid = false
+	var generation_before_update := fixture_library.content_index_generation()
+	var updated_event: Dictionary = fixture_library.events[0]
+	var updated_trigger: Dictionary = updated_event.get("trigger", {})
+	updated_trigger["games"] = ["rebuilt_game"]
+	updated_event["trigger"] = updated_trigger
+	fixture_library.events[0] = updated_event
+	fixture_library.rebuild_content_indexes()
+	if fixture_library.content_index_generation() != generation_before_update + 1 \
+			or fixture_library.has_table_approach_talk_event_for_game("original_game") \
+			or not fixture_library.has_table_approach_talk_event_for_game("rebuilt_game"):
+		push_error("Supported content-index rebuild left an in-place table-target update stale.")
+		valid = false
+	# Replacing the public Array remains the supported lightweight fixture seam;
+	# the identity guard must notice it without a private-method call.
 	fixture_library.events = [
 		_table_approach_fast_path_event("specific_miss", ["another_game"]),
 		_table_approach_fast_path_event("wildcard_first", []),
 		_table_approach_fast_path_event("wildcard_second", []),
 	]
-	fixture_library.call("_rebuild_indexes")
+	if not fixture_library.has_table_approach_talk_event_for_game("assignment_after_first_query"):
+		push_error("Replacing events after the first query did not invalidate the table-target index.")
+		valid = false
+
+	var below_min_library := ContentLibrary.new()
+	below_min_library.events = [_table_approach_fast_path_event("below_minimum", [], 8)]
+	below_min_library.rebuild_content_indexes()
+	app.set("library", below_min_library)
+	run_state.retire_pending_talk_events()
+	var below_min_game := CountingTableApproachFixtureGame.new("below_min_game", [
+		{"id": "patient_patron", "name": "Mara", "role": "patron", "silhouette": "coat"},
+	], 7)
+	app.set("current_game", below_min_game)
+	var below_min_queue_before := JSON.stringify(run_state.pending_triggered_events)
+	var below_min_expected_rng := run_state.create_event_cadence_rng()
+	below_min_expected_rng.randi_range(0, 9999)
+	if not below_min_library.has_table_approach_talk_event_for_game("below_min_game") \
+			or bool(app.call("_enqueue_table_approach_talk_events", "game_action")) \
+			or below_min_game.surface_state_calls != 1 \
+			or JSON.stringify(run_state.pending_triggered_events) != below_min_queue_before \
+			or int(run_state.event_cadence.get("rng_state", -1)) != below_min_expected_rng.state_value:
+		push_error("Below-minimum table approach changed its exact surface, queue, hands gate, or cadence-roll behavior.")
+		valid = false
+
 	app.set("library", fixture_library)
 	run_state.retire_pending_talk_events()
 	var wildcard_game := CountingTableApproachFixtureGame.new("wildcard_game", [
@@ -1685,6 +1759,46 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 		push_error("Wildcard table approach changed authored order, queue context, patron roll, surface count, or exact cadence RNG state.")
 		valid = false
 
+	# Tutorial cadence exits before either heat or table helpers. Exercise the
+	# outer interrupt so closing/forced-travel/unavoidable ordering stays visible.
+	run_state.retire_pending_talk_events()
+	var tutorial_config_before := run_state.challenge_config.duplicate(true)
+	run_state.challenge_config["tutorial"] = true
+	var tutorial_game := CountingTableApproachFixtureGame.new("tutorial_wildcard_game", wildcard_game.fixture_patrons, 9)
+	app.set("current_game", tutorial_game)
+	var tutorial_queue_before := JSON.stringify(run_state.pending_triggered_events)
+	var tutorial_cadence_before := JSON.stringify(run_state.event_cadence)
+	app.set("recent_result_deep_snapshot_call_count", 0)
+	if bool(app.call("_apply_post_action_environment_interrupt", "game_action")) \
+			or tutorial_game.surface_state_calls != 0 \
+			or JSON.stringify(run_state.pending_triggered_events) != tutorial_queue_before \
+			or JSON.stringify(run_state.event_cadence) != tutorial_cadence_before \
+			or int(app.get("recent_result_deep_snapshot_call_count")) != 0:
+		push_error("Tutorial outer interrupt entered ambient talk readers, rebuilt a surface, queued talk, or advanced cadence.")
+		valid = false
+	run_state.challenge_config = tutorial_config_before
+
+	# An expiring focused conversation must short-circuit the outer interrupt
+	# before a supported table can build its surface or consume cadence RNG.
+	run_state.retire_pending_talk_events()
+	var ordered_game := CountingTableApproachFixtureGame.new("ordered_wildcard_game", wildcard_game.fixture_patrons, 9)
+	app.set("current_game", ordered_game)
+	var order_overrides := {
+		"presentation": "talk",
+		"speaker": {"role": "patron", "name": "Order Fixture", "environment_actor": false},
+		"timing": {"expires": true, "duration_actions": 1, "remaining_actions": 1, "timeout_choice_id": "ignore"},
+	}
+	if not run_state.enqueue_triggered_event("interrupt_order_fixture", "ui_fixture", {}, order_overrides):
+		push_error("Interrupt-order fixture could not enqueue its expiring talk.")
+		valid = false
+	var order_cadence_before := JSON.stringify(run_state.event_cadence)
+	if not bool(app.call("_apply_post_action_environment_interrupt", "game_action")) \
+			or ordered_game.surface_state_calls != 0 \
+			or not run_state.pending_talk_event("interrupt_order_fixture").is_empty() \
+			or JSON.stringify(run_state.event_cadence) != order_cadence_before:
+		push_error("Focused-talk expiry did not short-circuit table cadence at the outer interrupt boundary.")
+		valid = false
+
 	app.set("library", production_library)
 	app.set("current_game", original_game)
 	app.set("last_hook_result", {})
@@ -1695,7 +1809,7 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	return valid
 
 
-func _table_approach_fast_path_event(event_id: String, game_ids: Array) -> Dictionary:
+func _table_approach_fast_path_event(event_id: String, game_ids: Array, min_hands: int = 0) -> Dictionary:
 	return {
 		"id": event_id,
 		"display_name": event_id.capitalize(),
@@ -1704,7 +1818,7 @@ func _table_approach_fast_path_event(event_id: String, game_ids: Array) -> Dicti
 		"presentation": "talk",
 		"scopes": ["any"],
 		"speaker": {"role": "patron", "name": "Fixture Patron", "bind": "table_patron", "environment_actor": false},
-		"trigger": {"type": "table_approach", "games": game_ids.duplicate(), "min_hands": 0, "chance": 1.0},
+		"trigger": {"type": "table_approach", "games": game_ids.duplicate(), "min_hands": min_hands, "chance": 1.0},
 		"payload": {"summary": "Fixture table approach.", "timing": {"expires": false}},
 	}
 

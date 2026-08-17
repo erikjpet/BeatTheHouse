@@ -223,6 +223,7 @@ var pending_wager_confirm_source_game_id: String = ""
 var pending_wager_confirm_source_game_state_key: String = ""
 var pending_all_in_result_terminal_check := false
 var terminal_evaluator_call_count := 0
+var recent_result_deep_snapshot_call_count := 0
 var presented_bankroll_hold_active := false
 var presented_bankroll_value := 0
 var presented_bankroll_game_id := ""
@@ -10885,6 +10886,7 @@ func _travel_id_list_label(items: Array) -> String:
 
 
 func _recent_result_snapshot() -> Dictionary:
+	recent_result_deep_snapshot_call_count += 1
 	if not last_hook_result.is_empty():
 		return last_hook_result.duplicate(true)
 	if not last_item_result.is_empty():
