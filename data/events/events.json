@@ -4286,8 +4286,8 @@
   },
   {
     "id": "scenario_inventory_night_count", "display_name": "The Short Count", "type": "opportunistic", "interaction_mode": "interactable", "scopes": ["shop"],
-    "asset_path": "res://assets/art/events/late_shift_discount.png", "icon_key": "discount_sticker", "environment_prop": "clerk_counter", "start_summary": "One box missed the sheet. The clerk did not.", "trigger": {"type": "manual"},
-    "payload": {"summary": "One box missed the sheet. The clerk did not.", "choices": [
+    "asset_path": "res://assets/art/events/late_shift_discount.png", "icon_key": "discount_sticker", "environment_prop": "clerk_counter", "start_summary": "One box missed the sheet. Clerk noticed.", "trigger": {"type": "manual"},
+    "payload": {"summary": "One box missed the sheet. Clerk noticed.", "choices": [
       {"id": "take_the_short_count", "label": "Take the short count", "text": "The ledger loses seven dollars and keeps your face.", "consequence_summary": "Bankroll +7, heat +2", "consequences": {"bankroll_delta": 7, "suspicion_delta": 2, "flags": {"inventory_short_count_taken": true}, "resolve_event": true}},
       {"id": "set_the_box_back", "label": "Set the box back", "text": "The clerk crosses out one reason to watch you.", "consequence_summary": "Heat -1", "consequences": {"suspicion_delta": -1, "flags": {"inventory_count_left_clean": true}, "resolve_event": true}}
     ]}
@@ -4326,8 +4326,8 @@
   },
   {
     "id": "scenario_dead_tuesday_regular", "display_name": "Last Regular", "type": "discovery", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "The last regular knows why the other stools are dry.", "trigger": {"type": "manual"},
-    "payload": {"summary": "The last regular knows why the other stools are dry.", "choices": [
+    "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "clerk_chat", "environment_prop": "clerk_talk", "start_summary": "The last regular knows why stools are dry.", "trigger": {"type": "manual"},
+    "payload": {"summary": "The last regular knows why stools are dry.", "choices": [
       {"id": "take_the_small_tip", "label": "Take the small tip", "text": "Five dollars and one warning cross the bar.", "consequence_summary": "Bankroll +5", "consequences": {"bankroll_delta": 5, "flags": {"dead_tuesday_tip_taken": true}, "resolve_event": true}},
       {"id": "leave_the_stool_open", "label": "Leave the stool open", "text": "The empty room loses interest in you.", "consequence_summary": "Heat -2", "consequences": {"suspicion_delta": -2, "flags": {"dead_tuesday_left_quiet": true}, "resolve_event": true}}
     ]}
@@ -4374,8 +4374,8 @@
   },
   {
     "id": "scenario_bachelorette_storm_table", "display_name": "The Saved Table", "type": "social", "interaction_mode": "interactable", "scopes": ["casino"],
-    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The house saved them a table and all its attention.", "trigger": {"type": "manual"},
-    "payload": {"summary": "The house saved them a table and all its attention.", "choices": [
+    "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The house saved them one attentive table.", "trigger": {"type": "manual"},
+    "payload": {"summary": "The house saved them one attentive table.", "choices": [
       {"id": "cover_one_round", "label": "Cover one round", "text": "Ten dollars earns a generous little absence.", "consequence_summary": "Bankroll -10, heat -2", "consequences": {"bankroll_delta": -10, "suspicion_delta": -2, "flags": {"bachelorette_round_covered": true}, "resolve_event": true}},
       {"id": "play_the_saved_table", "label": "Play the saved table", "text": "The party pays twelve. The floor takes notice.", "consequence_summary": "Bankroll +12, heat +4", "consequences": {"bankroll_delta": 12, "suspicion_delta": 4, "flags": {"bachelorette_table_played": true}, "resolve_event": true}}
     ]}
