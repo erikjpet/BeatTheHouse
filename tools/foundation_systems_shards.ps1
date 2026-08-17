@@ -129,6 +129,11 @@ $script:FoundationShardClearedEnvironmentNames = @(
     "BTH_PROFILE_INVENTORY_PATH"
 )
 
+$script:FoundationShardStableCacheFiles = @(
+    "global_script_class_cache.cfg",
+    "uid_cache.bin"
+)
+
 function Get-FoundationSystemsCheckIds {
     return @($script:FoundationSystemsCheckIds)
 }
@@ -143,6 +148,29 @@ function Get-FoundationSystemsUserPathOwners {
 
 function Get-FoundationShardClearedEnvironmentNames {
     return @($script:FoundationShardClearedEnvironmentNames)
+}
+
+function Copy-FoundationShardCache {
+    param(
+        [string]$SourceCache,
+        [string]$DestinationCache
+    )
+    $sourceImported = Join-Path $SourceCache "imported"
+    if (-not (Test-Path -LiteralPath $sourceImported -PathType Container)) {
+        throw "Parent Godot import did not produce .godot/imported before systems sharding."
+    }
+    New-Item -ItemType Directory -Force -Path $DestinationCache | Out-Null
+    foreach ($fileName in $script:FoundationShardStableCacheFiles) {
+        $sourceFile = Join-Path $SourceCache $fileName
+        if (-not (Test-Path -LiteralPath $sourceFile -PathType Leaf)) {
+            throw "Parent Godot import did not produce required stable cache file '$fileName'."
+        }
+        Copy-Item -LiteralPath $sourceFile -Destination (Join-Path $DestinationCache $fileName) -Force
+    }
+    # Imported artifacts are the only cache directory the shards inherit.
+    # Editor, export, and shader caches are volatile and child Godot processes
+    # create their own private versions when needed.
+    Copy-Item -LiteralPath $sourceImported -Destination (Join-Path $DestinationCache "imported") -Recurse -Force
 }
 
 function Test-FoundationJunctionTargetSafe {

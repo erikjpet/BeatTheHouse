@@ -598,18 +598,8 @@ function New-FoundationShardProjectRoot {
         }
     }
     $sourceCache = Join-Path $root ".godot"
-    $sourceImported = Join-Path $sourceCache "imported"
-    if (-not (Test-Path -LiteralPath $sourceImported)) {
-        throw "Parent Godot import did not produce .godot/imported before systems sharding."
-    }
     $shardCache = Join-Path $projectRoot ".godot"
-    New-Item -ItemType Directory -Force -Path $shardCache | Out-Null
-    foreach ($cacheEntry in Get-ChildItem -LiteralPath $sourceCache -Force | Where-Object { $_.Name -ne "imported" }) {
-        Copy-Item -LiteralPath $cacheEntry.FullName -Destination (Join-Path $shardCache $cacheEntry.Name) -Recurse -Force
-    }
-    # Every child receives a physically private imported cache. This costs
-    # setup I/O, but prevents Godot from racing on shared imported artifacts.
-    Copy-Item -LiteralPath $sourceImported -Destination (Join-Path $shardCache "imported") -Recurse -Force
+    Copy-FoundationShardCache -SourceCache $sourceCache -DestinationCache $shardCache
     return $projectRoot
     }
     catch {

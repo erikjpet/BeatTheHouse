@@ -151,6 +151,40 @@ $expectedOverrides = @("BTH_DISTRIBUTION_DATA_ROOT", "BTH_DISTRIBUTION_BUILD", "
 Assert-True (((Get-FoundationShardClearedEnvironmentNames) -join "|") -eq ($expectedOverrides -join "|")) "Shard persistence override clearing list is incomplete or reordered."
 Assert-True ($checkGodotSource.Contains('foreach ($overrideName in Get-FoundationShardClearedEnvironmentNames)')) "Shard launcher does not consume the validated persistence override list."
 
+$cacheIsolationRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("bth_shard_cache_isolation_" + [Guid]::NewGuid().ToString("N"))
+$sourceCacheRoot = Join-Path $cacheIsolationRoot "source"
+$privateCacheRoot = Join-Path $cacheIsolationRoot "private"
+try {
+    New-Item -ItemType Directory -Force -Path (Join-Path $sourceCacheRoot "imported") | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $sourceCacheRoot "shader_cache\volatile") | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $sourceCacheRoot "editor") | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $sourceCacheRoot "exported") | Out-Null
+    [System.IO.File]::WriteAllText((Join-Path $sourceCacheRoot "imported\asset.ctex"), "IMPORTED_SOURCE")
+    [System.IO.File]::WriteAllText((Join-Path $sourceCacheRoot "global_script_class_cache.cfg"), "CLASS_SOURCE")
+    [System.IO.File]::WriteAllText((Join-Path $sourceCacheRoot "uid_cache.bin"), "UID_SOURCE")
+    [System.IO.File]::WriteAllText((Join-Path $sourceCacheRoot "shader_cache\volatile\hostile.vulkan.cache"), "VOLATILE")
+    [System.IO.File]::WriteAllText((Join-Path $sourceCacheRoot "editor\hostile.cache"), "EDITOR")
+    [System.IO.File]::WriteAllText((Join-Path $sourceCacheRoot "exported\hostile.cache"), "EXPORTED")
+
+    Copy-FoundationShardCache -SourceCache $sourceCacheRoot -DestinationCache $privateCacheRoot
+
+    Assert-True ([System.IO.File]::ReadAllText((Join-Path $privateCacheRoot "imported\asset.ctex")) -eq "IMPORTED_SOURCE") "Shard cache isolation dropped required imported data."
+    Assert-True ([System.IO.File]::ReadAllText((Join-Path $privateCacheRoot "global_script_class_cache.cfg")) -eq "CLASS_SOURCE") "Shard cache isolation dropped the stable script-class cache."
+    Assert-True ([System.IO.File]::ReadAllText((Join-Path $privateCacheRoot "uid_cache.bin")) -eq "UID_SOURCE") "Shard cache isolation dropped the stable UID cache."
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $privateCacheRoot "shader_cache"))) "Shard cache isolation traversed/copied the volatile shader cache."
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $privateCacheRoot "editor"))) "Shard cache isolation traversed/copied the volatile editor cache."
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $privateCacheRoot "exported"))) "Shard cache isolation traversed/copied the volatile export cache."
+    [System.IO.File]::WriteAllText((Join-Path $privateCacheRoot "imported\asset.ctex"), "PRIVATE_MUTATION")
+    [System.IO.File]::WriteAllText((Join-Path $privateCacheRoot "uid_cache.bin"), "PRIVATE_UID_MUTATION")
+    Assert-True ([System.IO.File]::ReadAllText((Join-Path $sourceCacheRoot "imported\asset.ctex")) -eq "IMPORTED_SOURCE") "Shard imported cache is not a physical private copy."
+    Assert-True ([System.IO.File]::ReadAllText((Join-Path $sourceCacheRoot "uid_cache.bin")) -eq "UID_SOURCE") "Shard stable cache files are not physical private copies."
+}
+finally {
+    if (Test-Path -LiteralPath $cacheIsolationRoot) {
+        Remove-Item -LiteralPath $cacheIsolationRoot -Recurse -Force
+    }
+}
+
 $guard = New-FoundationConcurrencyGuardStage -Message "hostile contention"
 Assert-True ($guard.name -eq "concurrent_godot_guard" -and $guard.exit_code -eq 125 -and $guard.error -eq "hostile contention") "Mutex contention did not create the established guard stage/exit 125 evidence."
 $mutexWorkspace = Join-Path ([System.IO.Path]::GetTempPath()) ("bth_mutex_hostile_" + [Guid]::NewGuid().ToString("N"))
@@ -238,7 +272,8 @@ $fakeProject = Join-Path $projectRoot ".tmp/test_reports/fake_shard"
 Assert-True (-not (Test-FoundationJunctionTargetSafe -ProjectRoot $fakeProject -TargetPath (Join-Path $projectRoot ".tmp"))) "Ancestor .tmp junction cycle was accepted."
 Assert-True (Test-FoundationJunctionTargetSafe -ProjectRoot $fakeProject -TargetPath (Join-Path $projectRoot "scripts")) "Disjoint read-only source junction was rejected."
 Assert-True (-not $checkGodotSource.Contains('@(".agents", ".tmp",')) "Shard project still junctions its ancestor .tmp report tree."
-Assert-True ($checkGodotSource.Contains('Copy-Item -LiteralPath $sourceImported -Destination (Join-Path $shardCache "imported") -Recurse -Force')) "Shard imported cache is not physically private."
+Assert-True ($checkGodotSource.Contains('Copy-FoundationShardCache -SourceCache $sourceCache -DestinationCache $shardCache')) "Shard launcher bypasses the validated private-cache copier."
+Assert-True (-not $checkGodotSource.Contains('Get-ChildItem -LiteralPath $sourceCache -Force')) "Shard launcher still enumerates volatile parent-cache siblings."
 
 if (-not $Quiet) {
     Write-Host "Foundation systems shard hostile contracts passed."
