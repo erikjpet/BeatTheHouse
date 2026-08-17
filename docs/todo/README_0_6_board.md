@@ -138,7 +138,7 @@ stated in each prompt** — `events.json` in particular is shared, and
 | teach06_1 | `teach06_1_onboarding_prompt.md` | DONE | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | PM:Codex/sub:teach-audit | 2026-08-16 | 2026-08-16 | Seven once-only public-surface lessons; final double-notify, non-consuming handoff, clickable pointer-safe placement, guided-prefix, secrecy, UI, determinism, and 75-state visual acceptance pass. |
 | env06_5 | `env06_5_scenario_backlog_prompt.md` | DONE | env06_1/2/3 (DONE) | playtest variety | PM:Codex/sub:env-audit | 2026-08-16 | 2026-08-17 | All 13 complete backlog scenarios accepted: exact 55-scenario catalog, 13 scenario-owned events, 20-seed full/launch reach, phases/save-load/layer/tutorial checks, systems/UI assertions, determinism, three-venue smoke, and zero-warning visual QA. |
 | art06_1 | `art06_1_punchline_layers_prompt.md` | CLOSED — FALSE PREMISE | env06_4 (DONE) | — | owner-side finding | 2026-08-16 | 2026-08-16 | **Stop work; do not build a renderer seam.** No environment renders from a raster — every venue is procedurally drawn via `pixel_scene_canvas.gd`'s `scene_type` dispatch, and `visual_context.asset_path` is metadata the canvas never consumes. `_draw_punchline_club()` and `_draw_punchline_back_room()` already exist, are dispatched, and are at detail parity with `_draw_bar`/`_draw_underground`. The objective was already met before the row was authored. New PNGs kept as metadata-only. |
-| fix06_2 | `fix06_2_street_craps_activation_mutation_prompt.md` | DONE | — (defect in landed craps06_2) | env06_5 acceptance | PM:Codex | 2026-08-17 | 2026-08-17 | Guidance consumption moved from navigation to successful Street Craps actions; M1.6 and explicit Street/Grand activation-save-determinism checks pass; exhaustive generated-placement guard plus hostile mutate-on-enter fixture is permanent. |
+| fix06_2 | `fix06_2_street_craps_activation_mutation_prompt.md` | IN_PROGRESS | — (defect in landed craps06_2) | env06_5 acceptance | PM:Codex/sub:activation-guard | 2026-08-17 | | Reopened after the stronger cold-state guard proved the prior closeout exempted presentation hooks and non-default generated fixtures; seven passive Grand Casino dealer-day writes reproduced. Root repair and integrated gates remain required. |
 
 ### Wave D — Crew depth
 
@@ -825,3 +825,11 @@ What happens then is the owner's, not an agent's:
   Invitational smoke captures pass with zero overlaps. The two ordinary-travel
   whole-state hashes were exactly recaptured for the authorized catalog change;
   route, cost, clock, RNG, story, heat, and travel-count fields did not shift.
+- 2026-08-17 [fix06_2 reopening] The externally integrated closeout at
+  `11f55f41` is superseded for this row. Its guard settled mutating room
+  presentation before comparison, covered only four hooks, reused warm state,
+  and did not exercise non-default generated fixture keys. The PM's stronger
+  seven-hook cold-state/JSON-restored guard reproduced seven passive
+  `staff_assignment_day` writes across Grand Casino Blackjack and Roulette.
+  Row returned to IN_PROGRESS; no prior assertion was weakened. `env06_5`
+  remains DONE on its independently verified content/audit/capture scope.
