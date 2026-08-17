@@ -68,6 +68,7 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_guided_prefix(library, failures)
 	_check_contextual_lesson_matrix(library, failures)
 	_check_public_host_context(failures)
+	_check_contextual_queue_discipline(library, failures)
 	_check_discovery_boundary(library, failures)
 
 
@@ -185,6 +186,56 @@ static func _check_public_host_context(failures: Array) -> void:
 			failures.append("Coach public-context seam did not expose landed encounter '%s'." % key)
 	if not bool(ui_context.get("numbers_encountered", false)):
 		failures.append("Coach public-context seam did not recognize the focused Numbers surface.")
+	host.free()
+
+
+static func _check_contextual_queue_discipline(library: Variant, failures: Array) -> void:
+	var host := PublicHostFixture.new()
+	var overlay := CoachOverlayScript.new()
+	host.add_child(overlay)
+	var scenario_lesson: Dictionary = library.tutorial_lesson("tip06_tonight_changes_rooms")
+	var depth_lesson: Dictionary = library.tutorial_lesson("tip06_venue_depth")
+	overlay.set_lessons([scenario_lesson, depth_lesson])
+	overlay.restore_seen({})
+	overlay.evaluate_at_boundary(_environment_context())
+	var first_snapshot: Dictionary = overlay.current_snapshot()
+	if str(first_snapshot.get("lesson_id", "")) != "tip06_tonight_changes_rooms" \
+			or int(first_snapshot.get("queued_count", -1)) != 0:
+		failures.append("A simultaneous scenario/Punchline encounter queued a normal-run advice wall: %s" % JSON.stringify(first_snapshot))
+	if not overlay.notify_action("coach:skip"):
+		failures.append("The first simultaneous contextual tip could not be dismissed normally.")
+	# Leaving the surface before another boundary must not display the deferred
+	# Punchline tip out of context.
+	host.run_state.current_environment = {"archetype_id": "bar"}
+	host.current_context_mode = "room"
+	host.pending_event_choice_popup_snapshot = {}
+	overlay.evaluate_at_boundary(_environment_context())
+	var stale_surface_snapshot: Dictionary = overlay.current_snapshot()
+	if bool(stale_surface_snapshot.get("visible", false)) or not str(stale_surface_snapshot.get("lesson_id", "")).is_empty():
+		failures.append("Deferred contextual advice followed the player off its genuine encounter: %s" % JSON.stringify(stale_surface_snapshot))
+	# Returning later is a new genuine encounter and may teach the deferred tip.
+	host.run_state.current_environment = {
+		"archetype_id": "small_underground_casino",
+		"current_layer_id": "club",
+	}
+	overlay.evaluate_at_boundary(_environment_context())
+	var deferred_snapshot: Dictionary = overlay.current_snapshot()
+	if str(deferred_snapshot.get("lesson_id", "")) != "tip06_venue_depth" \
+			or int(deferred_snapshot.get("queued_count", -1)) != 0:
+		failures.append("A deferred contextual tip did not wait for its next genuine encounter: %s" % JSON.stringify(deferred_snapshot))
+	# Exercise the defensive display-time check directly: a legacy/staged queue
+	# entry whose trigger no longer matches is dropped without becoming seen.
+	overlay.restore_seen({})
+	overlay.set_lessons([depth_lesson])
+	host.run_state.current_environment = {"archetype_id": "bar"}
+	overlay.queued_lessons.append({"lesson": depth_lesson.duplicate(true), "context": _environment_context({"venue_depth_surface": true})})
+	overlay.queued_ids["tip06_venue_depth"] = true
+	overlay.evaluate_at_boundary(_environment_context())
+	var revalidated_snapshot: Dictionary = overlay.current_snapshot()
+	if bool(revalidated_snapshot.get("visible", false)) \
+			or int(revalidated_snapshot.get("queued_count", -1)) != 0 \
+			or bool(overlay.seen.get("tip06_venue_depth", false)):
+		failures.append("A stale contextual queue entry displayed or became seen after its trigger disappeared: %s" % JSON.stringify(revalidated_snapshot))
 	host.free()
 
 

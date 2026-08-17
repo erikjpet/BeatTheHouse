@@ -179,6 +179,12 @@ func evaluate_at_boundary(context: Dictionary) -> void:
 	# outcomes before selecting the next lesson so already-achieved work never
 	# leaves the dependency graph waiting for a transient trigger that has passed.
 	_complete_satisfied_frontier_lessons(observed_context)
+	# Normal-run advice is contextual, not a lesson chain. Admit at most one new
+	# tip at a boundary and never build a backlog behind an active tip. A later
+	# boundary may admit another still-relevant encounter after the player has
+	# acted; if the surface changed, that deferred tip simply remains eligible
+	# for its next genuine encounter.
+	var normal_tip_admitted := _normal_tip_pending()
 	for lesson_value in lessons:
 		if typeof(lesson_value) != TYPE_DICTIONARY:
 			continue
@@ -186,9 +192,14 @@ func evaluate_at_boundary(context: Dictionary) -> void:
 		var lesson_id := str(lesson.get("id", "")).strip_edges()
 		if bool(queued_ids.get(lesson_id, false)) or (not active_lesson.is_empty() and str(active_lesson.get("id", "")) == lesson_id):
 			continue
+		var tutorial_lesson := str(lesson.get("scope", "")).strip_edges() == "tutorial_run"
+		if not tutorial_lesson and normal_tip_admitted:
+			continue
 		if CoachViewModelScript.trigger_matches(lesson, observed_context, seen, tips_enabled):
 			queued_lessons.append({"lesson": lesson.duplicate(true), "context": observed_context.duplicate(true)})
 			queued_ids[lesson_id] = true
+			if not tutorial_lesson:
+				normal_tip_admitted = true
 	# Exact predicates describe the ideal authored beat, but the tutorial must
 	# survive an extra click, an early hand, a closed map, or a reload. If the
 	# player is already on the lesson's surface, keep the real lesson active and
@@ -372,26 +383,46 @@ func _build() -> void:
 
 
 func _show_next() -> void:
-	if queued_lessons.is_empty():
-		active_lesson = {}
-		active_context = {}
-		prepared_snapshot = {}
-		visible = false
-		if focus_layer != null:
-			focus_layer.set_snapshot({})
+	while not queued_lessons.is_empty():
+		var entry: Dictionary = queued_lessons.pop_front()
+		var candidate := _dict(entry.get("lesson", {})).duplicate(true)
+		var lesson_id := str(candidate.get("id", "")).strip_edges()
+		queued_ids.erase(lesson_id)
+		var display_context := latest_context.duplicate(true) if not latest_context.is_empty() else _dict(entry.get("context", {})).duplicate(true)
+		var tutorial_lesson := str(candidate.get("scope", "")).strip_edges() == "tutorial_run"
+		# Guided lessons retain their authored queue semantics. Contextual advice
+		# must still match the live surface immediately before it is displayed;
+		# stale entries are dropped without being marked seen so a later genuine
+		# encounter can teach them.
+		if not tutorial_lesson and not CoachViewModelScript.trigger_matches(candidate, display_context, seen, tips_enabled):
+			continue
+		active_lesson = candidate
+		active_context = display_context
+		if not tutorial_lesson:
+			seen[lesson_id] = true
+		lesson_seen.emit(lesson_id)
+		active_dialogue_requested = false
+		active_dialogue_was_requested = false
+		active_dialogue_acknowledged = false
+		_render_active(true)
 		return
-	var entry: Dictionary = queued_lessons.pop_front()
-	active_lesson = _dict(entry.get("lesson", {})).duplicate(true)
-	active_context = latest_context.duplicate(true) if not latest_context.is_empty() else _dict(entry.get("context", {})).duplicate(true)
-	queued_ids.erase(str(active_lesson.get("id", "")))
-	var lesson_id := str(active_lesson.get("id", ""))
-	if str(active_lesson.get("scope", "")).strip_edges() != "tutorial_run":
-		seen[lesson_id] = true
-	lesson_seen.emit(lesson_id)
-	active_dialogue_requested = false
-	active_dialogue_was_requested = false
-	active_dialogue_acknowledged = false
-	_render_active(true)
+	active_lesson = {}
+	active_context = {}
+	prepared_snapshot = {}
+	visible = false
+	if focus_layer != null:
+		focus_layer.set_snapshot({})
+
+
+func _normal_tip_pending() -> bool:
+	if not active_lesson.is_empty() and str(active_lesson.get("scope", "")).strip_edges() != "tutorial_run":
+		return true
+	for entry_value in queued_lessons:
+		var entry := _dict(entry_value)
+		var lesson := _dict(entry.get("lesson", {}))
+		if not lesson.is_empty() and str(lesson.get("scope", "")).strip_edges() != "tutorial_run":
+			return true
+	return false
 
 
 func _render_active(play_motion: bool) -> void:
