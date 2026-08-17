@@ -692,4 +692,69 @@
     "completion": {"type": "anchored_action", "action_id": "open_meta_container"},
     "gating": {"allowed_action_ids": ["open_meta_container", "ui:any"]}
   }
+  ,
+  {
+    "id": "tip06_tonight_changes_rooms",
+    "scope": "normal_run",
+    "delivery": "coach",
+    "trigger": {"screen": "ENVIRONMENT", "state_predicates": [{"path": "run.scenario_active", "op": "equals", "value": true}]},
+    "anchor": {"kind": "none", "id": ""},
+    "copy": "Tonight changes a room. Listen before you settle in; a rumor here can sharpen another stop on the map.",
+    "completion": {"type": "any_action"}
+  },
+  {
+    "id": "tip06_delivery_route",
+    "scope": "normal_run",
+    "delivery": "coach",
+    "trigger": {"screen": "ENVIRONMENT", "state_predicates": [{"path": "run.delivery_active", "op": "equals", "value": true}]},
+    "anchor": {"kind": "interactable_object", "id": "travel:leave"},
+    "copy": "That package is contraband. Every action spends the deadline. The map marks real stops; choose your route.",
+    "completion": {"type": "anchored_action", "action_id": "map"},
+    "gating": {"allowed_action_ids": ["travel:leave", "map"]}
+  },
+  {
+    "id": "tip06_numbers_book",
+    "scope": "normal_run",
+    "delivery": "coach",
+    "trigger": {"screen": "ENVIRONMENT", "state_predicates": [{"path": "ui.numbers_encountered", "op": "equals", "value": true}]},
+    "anchor": {"kind": "none", "id": ""},
+    "copy": "Pick three digits and a stake before the daily draw. The town talks numbers. The slip is contraband.",
+    "completion": {"type": "any_action"}
+  },
+  {
+    "id": "tip06_crew_standing",
+    "scope": "normal_run",
+    "delivery": "coach",
+    "trigger": {"screen": "ENVIRONMENT", "state_predicates": [{"path": "run.crew_job_resolved", "op": "equals", "value": true}]},
+    "anchor": {"kind": "none", "id": ""},
+    "copy": "Jobs build standing. Miss one and the crew remembers. Standing opens rooms; this is a path, not another loan.",
+    "completion": {"type": "any_action"}
+  },
+  {
+    "id": "tip06_coin_pusher",
+    "scope": "normal_run",
+    "delivery": "coach",
+    "trigger": {"screen": "GAME", "game_id": "coin_pusher", "state_predicates": []},
+    "anchor": {"kind": "none", "id": ""},
+    "copy": "Time a paid drop with the shelf; aim a lane. Nudges shift the pile. Rock, chirp, stare: next one risks Heat and lockout.",
+    "completion": {"type": "any_action"}
+  },
+  {
+    "id": "tip06_craps_pass_line",
+    "scope": "normal_run",
+    "delivery": "coach",
+    "trigger": {"screen": "GAME", "game_id": "craps", "state_predicates": []},
+    "anchor": {"kind": "none", "id": ""},
+    "copy": "Put one stake on Pass. Seven or eleven wins the first roll; otherwise it sets a point. Make that point before seven.",
+    "completion": {"type": "any_action"}
+  },
+  {
+    "id": "tip06_venue_depth",
+    "scope": "normal_run",
+    "delivery": "coach",
+    "trigger": {"screen": "ENVIRONMENT", "state_predicates": [{"path": "run.venue_depth_surface", "op": "equals", "value": true}]},
+    "anchor": {"kind": "none", "id": ""},
+    "copy": "Some venues keep more room behind them. Watch the room for a way through; it will show you when the time is right.",
+    "completion": {"type": "any_action"}
+  }
 ]

@@ -2588,6 +2588,73 @@ func _check_preview_focus_keeps_serialized_run_state(app: Control) -> bool:
 	return await _preview_call_keeps_serialized_run_state(app, "world map preview", "activate_interactable_object", ["travel:leave"])
 
 
+func _check_onboarding_06_real_numbers_seam(app: Control) -> bool:
+	var fixture_run: RunState = RunStateScript.new()
+	fixture_run.start_new("UI-ONBOARDING-06-NUMBERS")
+	fixture_run.game_clock_minutes = 20 * 60
+	var environment := {
+		"id": "ui_onboarding_06_numbers",
+		"archetype_id": "bar",
+		"display_name": "Numbers Seam Fixture",
+		"kind": "casino",
+		"tier": 1,
+		"turns": 0,
+		"game_ids": [],
+		"event_ids": [],
+		"resolved_event_ids": [],
+		"item_offers": [],
+		"service_ids": [],
+		"lender_hooks": [],
+		"next_archetypes": [],
+		"travel_hooks": [],
+		"object_fixtures": [],
+	}
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	fixture_run.set_environment(environment)
+	var coach_overlay: Control = app.get("coach_overlay")
+	coach_overlay.call("set_lessons", [])
+	coach_overlay.call("restore_seen", {})
+	_set_ui_fixture_run(app, fixture_run)
+	coach_overlay.call("set_lessons", app.get("library").get("tutorial_lessons"))
+	coach_overlay.call("restore_seen", {})
+	app.set("current_context_mode", "room")
+	app.set("pending_event_choice_popup_snapshot", {})
+	app.call("_refresh_coach_overlay")
+	if bool(coach_overlay.call("current_snapshot").get("visible", false)):
+		push_error("0.6 onboarding appeared before the real Numbers interaction was focused.")
+		return false
+	var numbers_object := {
+		"object_id": "numbers:book",
+		"object_type": "numbers",
+		"source_id": "book",
+		"focus_rect": {"x": 0.35, "y": 0.3, "w": 0.2, "h": 0.2},
+		"focus_point": {"x": 0.45, "y": 0.4},
+	}
+	if not bool(app.call("_focus_interactable_object_with_data", "numbers:book", numbers_object)):
+		push_error("Real host focus seam rejected the Numbers interaction fixture.")
+		return false
+	var focus_snapshot: Dictionary = coach_overlay.call("current_snapshot")
+	if str(focus_snapshot.get("lesson_id", "")) != "tip06_numbers_book" \
+			or not bool(focus_snapshot.get("dismissible", false)) \
+			or bool(focus_snapshot.get("gating", true)):
+		push_error("Real Numbers focus did not open its optional contextual lesson: %s" % JSON.stringify(focus_snapshot))
+		return false
+	if not bool(app.call("_open_numbers_surface", "book")):
+		push_error("Real Numbers open seam rejected the focused book.")
+		return false
+	await process_frame
+	var popup_snapshot: Dictionary = app.call("current_event_choice_popup_snapshot")
+	var open_snapshot: Dictionary = coach_overlay.call("current_snapshot")
+	if str(popup_snapshot.get("popup_type", "")) != "numbers_surface" \
+			or str(open_snapshot.get("lesson_id", "")) != "tip06_numbers_book" \
+			or not bool(coach_overlay.call("input_allowed", "numbers:digit")):
+		push_error("The real Numbers surface displaced or gated its contextual lesson: popup=%s coach=%s" % [JSON.stringify(popup_snapshot), JSON.stringify(open_snapshot)])
+		return false
+	coach_overlay.call("notify_action", "coach:skip")
+	app.call("_hide_event_choice_popup")
+	return true
+
+
 func _preview_call_keeps_serialized_run_state(app: Control, label: String, method: String, args: Array) -> bool:
 	var serialized_before := JSON.stringify(app.call("serialized_run_state"))
 	var result: Variant = app.callv(method, args)

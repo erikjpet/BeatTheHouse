@@ -79,6 +79,7 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 		anchor_kind = "none"
 	var anchor_id := str(anchor.get("id", "")).strip_edges()
 	var anchor_rect := _anchor_rect(anchor_kind, anchor_id, context)
+	var tutorial_lesson := str(lesson.get("scope", "")).strip_edges() == "tutorial_run"
 	if anchor_rect.has_area():
 		anchor_rect = anchor_rect.intersection(viewport_rect)
 	var additional_anchor_rects: Array = []
@@ -102,12 +103,13 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 		minf(bubble_height, maxf(1.0, viewport_rect.size.y - VIEWPORT_MARGIN * 2.0))
 	)
 	var bubble_rect := _bubble_rect(viewport_rect, anchor_rect, bubble_size)
+	if not tutorial_lesson:
+		bubble_rect = _bubble_rect_avoiding_context(viewport_rect, bubble_rect, bubble_size, context)
 	var guidance := _dict(lesson.get("gating", {}))
 	var suggested_action_ids := _string_array(guidance.get("allowed_action_ids", []))
 	var delivery := str(lesson.get("delivery", "coach")).strip_edges().to_lower()
 	if not ["coach", "dialogue"].has(delivery):
 		delivery = "coach"
-	var tutorial_lesson := str(lesson.get("scope", "")).strip_edges() == "tutorial_run"
 	return {
 		"visible": true,
 		"lesson_id": str(lesson.get("id", "")),
@@ -265,6 +267,53 @@ static func _bubble_rect(viewport_rect: Rect2, anchor_rect: Rect2, bubble_size: 
 	position.x = clampf(position.x, viewport_rect.position.x + VIEWPORT_MARGIN, viewport_rect.end.x - bubble_size.x - VIEWPORT_MARGIN)
 	position.y = clampf(position.y, viewport_rect.position.y + VIEWPORT_MARGIN, viewport_rect.end.y - bubble_size.y - VIEWPORT_MARGIN)
 	return Rect2(position, bubble_size)
+
+
+# Ambient advice keeps its one intentional pointer receiver (Skip tip) while
+# choosing the least-contended standard placement from public UI geometry. The
+# choice is pure and deterministic; guided tutorial placement remains authored.
+static func _bubble_rect_avoiding_context(viewport_rect: Rect2, preferred: Rect2, bubble_size: Vector2, context: Dictionary) -> Rect2:
+	var targets: Array[Rect2] = []
+	var anchor_rects := _dict(context.get("anchor_rects", {}))
+	for group_name in ["interactable_objects", "hud_elements", "surface_actions"]:
+		for rect_value in _dict(anchor_rects.get(group_name, {})).values():
+			var target := _rect(rect_value)
+			if target.has_area():
+				targets.append(target)
+	if targets.is_empty():
+		return preferred
+	var left := viewport_rect.position.x + VIEWPORT_MARGIN
+	var top := viewport_rect.position.y + VIEWPORT_MARGIN
+	var right := viewport_rect.end.x - bubble_size.x - VIEWPORT_MARGIN
+	var bottom := viewport_rect.end.y - bubble_size.y - VIEWPORT_MARGIN
+	var center := viewport_rect.get_center() - bubble_size * 0.5
+	var candidates: Array[Rect2] = [
+		preferred,
+		Rect2(Vector2(left, top), bubble_size),
+		Rect2(Vector2(right, top), bubble_size),
+		Rect2(Vector2(left, bottom), bubble_size),
+		Rect2(Vector2(right, bottom), bubble_size),
+		Rect2(Vector2(center.x, top), bubble_size),
+		Rect2(Vector2(center.x, bottom), bubble_size),
+		Rect2(Vector2(left, center.y), bubble_size),
+		Rect2(Vector2(right, center.y), bubble_size),
+	]
+	var best := preferred
+	var best_overlap := _bubble_target_overlap(preferred, targets)
+	for candidate in candidates:
+		var overlap := _bubble_target_overlap(candidate, targets)
+		if overlap < best_overlap:
+			best = candidate
+			best_overlap = overlap
+	return best
+
+
+static func _bubble_target_overlap(bubble: Rect2, targets: Array[Rect2]) -> float:
+	var overlap := 0.0
+	for target in targets:
+		if bubble.intersects(target):
+			overlap += bubble.intersection(target).get_area()
+	return overlap
 
 
 static func _rect(value: Variant) -> Rect2:

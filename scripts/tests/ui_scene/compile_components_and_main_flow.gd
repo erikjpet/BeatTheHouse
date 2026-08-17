@@ -3823,6 +3823,9 @@ func _run() -> void:
 	if not await _check_preview_focus_keeps_serialized_run_state(app):
 		quit(1)
 		return
+	if not await _check_onboarding_06_real_numbers_seam(app):
+		quit(1)
+		return
 	app.call("start_foundation_run", "UI-COMPILE-SEED")
 	await process_frame
 	var category_snapshot: Dictionary = app.call("current_action_category_snapshot")

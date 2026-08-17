@@ -163,7 +163,7 @@ func set_focus_visual_enabled(enabled: bool) -> void:
 func evaluate_at_boundary(context: Dictionary) -> void:
 	if panel == null:
 		_build()
-	var observed_context := context.duplicate(true)
+	var observed_context := _with_public_system_context(context)
 	observed_context["reduce_motion"] = reduce_motion
 	observed_context["small_screen"] = small_screen
 	latest_context = observed_context
@@ -179,6 +179,12 @@ func evaluate_at_boundary(context: Dictionary) -> void:
 	# outcomes before selecting the next lesson so already-achieved work never
 	# leaves the dependency graph waiting for a transient trigger that has passed.
 	_complete_satisfied_frontier_lessons(observed_context)
+	# Normal-run advice is contextual, not a lesson chain. Admit at most one new
+	# tip at a boundary and never build a backlog behind an active tip. A later
+	# boundary may admit another still-relevant encounter after the player has
+	# acted; if the surface changed, that deferred tip simply remains eligible
+	# for its next genuine encounter.
+	var normal_tip_admitted := _normal_tip_pending()
 	for lesson_value in lessons:
 		if typeof(lesson_value) != TYPE_DICTIONARY:
 			continue
@@ -186,9 +192,14 @@ func evaluate_at_boundary(context: Dictionary) -> void:
 		var lesson_id := str(lesson.get("id", "")).strip_edges()
 		if bool(queued_ids.get(lesson_id, false)) or (not active_lesson.is_empty() and str(active_lesson.get("id", "")) == lesson_id):
 			continue
+		var tutorial_lesson := str(lesson.get("scope", "")).strip_edges() == "tutorial_run"
+		if not tutorial_lesson and normal_tip_admitted:
+			continue
 		if CoachViewModelScript.trigger_matches(lesson, observed_context, seen, tips_enabled):
 			queued_lessons.append({"lesson": lesson.duplicate(true), "context": observed_context.duplicate(true)})
 			queued_ids[lesson_id] = true
+			if not tutorial_lesson:
+				normal_tip_admitted = true
 	# Exact predicates describe the ideal authored beat, but the tutorial must
 	# survive an extra click, an early hand, a closed map, or a reload. If the
 	# player is already on the lesson's surface, keep the real lesson active and
@@ -201,10 +212,84 @@ func evaluate_at_boundary(context: Dictionary) -> void:
 
 
 func notify_action(action_id: String) -> bool:
-	if active_lesson.is_empty() or not CoachViewModelScript.completion_matches(active_lesson, action_id):
+	# Ambient advice yields to the player's very next action. It may evaluate the
+	# newly focused public context, but it never consumes that same input. Guided
+	# tutorial lessons retain their authored completion contracts below.
+	if not active_lesson.is_empty() and str(active_lesson.get("scope", "")).strip_edges() != "tutorial_run":
+		_finish_active()
+		if action_id == "coach:skip":
+			return true
+		return false
+	# Normal-run tips may meet their first genuine encounter on focus rather than
+	# on an action-consuming run boundary (the Numbers book is the canonical
+	# case). Re-read only public host state at that explicit input boundary. The
+	# input that revealed a lesson never dismisses the lesson in the same call.
+	if active_lesson.is_empty():
+		if _path_value(latest_context, "run.tutorial") != true:
+			_evaluate_normal_action_boundary(action_id)
+		return false
+	if not CoachViewModelScript.completion_matches(active_lesson, action_id):
 		return false
 	_finish_active()
 	return true
+
+
+func _evaluate_normal_action_boundary(action_id: String) -> void:
+	var interaction_context := latest_context.duplicate(true)
+	var action_context := _dict(interaction_context.get("action", {})).duplicate(true)
+	action_context["last_action_id"] = action_id
+	interaction_context["action"] = action_context
+	evaluate_at_boundary(interaction_context)
+
+
+# Contextual 0.6 lessons deliberately consume public presentation state only.
+# Keeping this read seam inside the coach surface avoids adding tutorial flags
+# to gameplay models and keeps discovery-gated mechanics out of the context.
+func _with_public_system_context(context: Dictionary) -> Dictionary:
+	var observed := context.duplicate(true)
+	var host := get_parent()
+	var run_state_value: Variant = _object_property(host, "run_state")
+	if typeof(run_state_value) != TYPE_OBJECT:
+		return observed
+	var run_context := _dict(observed.get("run", {})).duplicate(true)
+	var ui_context := _dict(observed.get("ui", {})).duplicate(true)
+	var environment := _dict(_object_property(run_state_value, "current_environment"))
+	var scenario_id := str(environment.get("scenario_id", "")).strip_edges()
+	if scenario_id.is_empty():
+		scenario_id = str(_dict(environment.get("scenario_state", {})).get("id", "")).strip_edges()
+	run_context["scenario_active"] = not scenario_id.is_empty()
+	var delivery_snapshot: Dictionary = {}
+	if (run_state_value as Object).has_method("delivery_has_active_run") \
+			and bool((run_state_value as Object).call("delivery_has_active_run")) \
+			and (run_state_value as Object).has_method("delivery_snapshot"):
+		delivery_snapshot = _dict((run_state_value as Object).call("delivery_snapshot"))
+	run_context["delivery_active"] = not delivery_snapshot.is_empty() and str(delivery_snapshot.get("status", "")) == "active"
+	var resolved_job := false
+	var crew_jobs := _dict(_object_property(run_state_value, "crew_jobs"))
+	for job_value in crew_jobs.values():
+		if typeof(job_value) == TYPE_DICTIONARY and str((job_value as Dictionary).get("status", "")) == "resolved":
+			resolved_job = true
+			break
+	run_context["crew_job_resolved"] = resolved_job
+	run_context["venue_depth_surface"] = str(environment.get("archetype_id", "")) == "small_underground_casino" \
+			and str(environment.get("current_layer_id", "club")) == "club"
+	var current_context_mode := str(_object_property(host, "current_context_mode"))
+	var popup_snapshot := _dict(_object_property(host, "pending_event_choice_popup_snapshot"))
+	ui_context["numbers_encountered"] = current_context_mode == "numbers" \
+			or str(popup_snapshot.get("popup_type", "")) == "numbers_surface"
+	observed["run"] = run_context
+	observed["ui"] = ui_context
+	return observed
+
+
+func _object_property(source: Variant, property_name: String) -> Variant:
+	if typeof(source) != TYPE_OBJECT:
+		return null
+	var object_value := source as Object
+	for property_value in object_value.get_property_list():
+		if typeof(property_value) == TYPE_DICTIONARY and str((property_value as Dictionary).get("name", "")) == property_name:
+			return object_value.get(property_name)
+	return null
 
 
 func notify_dialogue_completed(lesson_id: String) -> bool:
@@ -274,6 +359,7 @@ func current_snapshot() -> Dictionary:
 
 
 func _build() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_layer = FocusLayer.new()
 	focus_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	focus_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -283,6 +369,7 @@ func _build() -> void:
 	panel.clip_contents = true
 	add_child(panel)
 	var margin := MarginContainer.new()
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", VisualStyle.SPACE_5)
 	margin.add_theme_constant_override("margin_right", VisualStyle.SPACE_5)
@@ -290,17 +377,21 @@ func _build() -> void:
 	margin.add_theme_constant_override("margin_bottom", VisualStyle.SPACE_3)
 	panel.add_child(margin)
 	var stack := VBoxContainer.new()
+	stack.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	stack.add_theme_constant_override("separation", VisualStyle.SPACE_3)
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_child(stack)
 	eyebrow_label = FoundationWidgets.label("DEALER'S ADVICE", VisualStyle.TYPE_SMALL)
+	eyebrow_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	FoundationWidgets.set_control_font_color(eyebrow_label, VisualStyle.YELLOW)
 	stack.add_child(eyebrow_label)
 	copy_label = FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE + VisualStyle.BORDER_HAIRLINE)
+	copy_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	copy_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	copy_label.max_lines_visible = 4
 	stack.add_child(copy_label)
 	var action_spacer := Control.new()
+	action_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	action_spacer.custom_minimum_size.y = float(VisualStyle.SPACE_4)
 	action_spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stack.add_child(action_spacer)
@@ -310,26 +401,51 @@ func _build() -> void:
 
 
 func _show_next() -> void:
-	if queued_lessons.is_empty():
-		active_lesson = {}
-		active_context = {}
-		prepared_snapshot = {}
-		visible = false
-		if focus_layer != null:
-			focus_layer.set_snapshot({})
+	while not queued_lessons.is_empty():
+		var entry: Dictionary = queued_lessons.pop_front()
+		var candidate := _dict(entry.get("lesson", {})).duplicate(true)
+		var lesson_id := str(candidate.get("id", "")).strip_edges()
+		queued_ids.erase(lesson_id)
+		var display_context := latest_context.duplicate(true) if not latest_context.is_empty() else _dict(entry.get("context", {})).duplicate(true)
+		var tutorial_lesson := str(candidate.get("scope", "")).strip_edges() == "tutorial_run"
+		# Guided lessons retain their authored queue semantics. Contextual advice
+		# must still match the live surface immediately before it is displayed;
+		# stale entries are dropped without being marked seen so a later genuine
+		# encounter can teach them.
+		if not tutorial_lesson and not CoachViewModelScript.trigger_matches(candidate, display_context, seen, tips_enabled):
+			continue
+		active_lesson = candidate
+		active_context = display_context
+		# Contextual advice is genuinely non-modal: its bubble cannot intercept a
+		# room prop or surface control underneath it. Any player action dismisses
+		# the tip, while guided tutorial panels keep their authored pointer behavior
+		# and action gates.
+		panel.mouse_filter = Control.MOUSE_FILTER_STOP if tutorial_lesson else Control.MOUSE_FILTER_IGNORE
+		if not tutorial_lesson:
+			seen[lesson_id] = true
+		lesson_seen.emit(lesson_id)
+		active_dialogue_requested = false
+		active_dialogue_was_requested = false
+		active_dialogue_acknowledged = false
+		_render_active(true)
 		return
-	var entry: Dictionary = queued_lessons.pop_front()
-	active_lesson = _dict(entry.get("lesson", {})).duplicate(true)
-	active_context = latest_context.duplicate(true) if not latest_context.is_empty() else _dict(entry.get("context", {})).duplicate(true)
-	queued_ids.erase(str(active_lesson.get("id", "")))
-	var lesson_id := str(active_lesson.get("id", ""))
-	if str(active_lesson.get("scope", "")).strip_edges() != "tutorial_run":
-		seen[lesson_id] = true
-	lesson_seen.emit(lesson_id)
-	active_dialogue_requested = false
-	active_dialogue_was_requested = false
-	active_dialogue_acknowledged = false
-	_render_active(true)
+	active_lesson = {}
+	active_context = {}
+	prepared_snapshot = {}
+	visible = false
+	if focus_layer != null:
+		focus_layer.set_snapshot({})
+
+
+func _normal_tip_pending() -> bool:
+	if not active_lesson.is_empty() and str(active_lesson.get("scope", "")).strip_edges() != "tutorial_run":
+		return true
+	for entry_value in queued_lessons:
+		var entry := _dict(entry_value)
+		var lesson := _dict(entry.get("lesson", {}))
+		if not lesson.is_empty() and str(lesson.get("scope", "")).strip_edges() != "tutorial_run":
+			return true
+	return false
 
 
 func _render_active(play_motion: bool) -> void:
@@ -347,6 +463,7 @@ func _render_active(play_motion: bool) -> void:
 	copy_label.text = str(prepared_snapshot.get("copy", ""))
 	ok_button.text = str(prepared_snapshot.get("dismiss_label", "Got it"))
 	ok_button.visible = bool(prepared_snapshot.get("dismissible", true))
+	ok_button.mouse_filter = Control.MOUSE_FILTER_STOP
 	ok_button.custom_minimum_size.y = float(prepared_snapshot.get("minimum_control_height", 40.0))
 	var bubble_rect := CoachViewModelScript._rect(prepared_snapshot.get("bubble_rect", {}))
 	panel.position = bubble_rect.position
