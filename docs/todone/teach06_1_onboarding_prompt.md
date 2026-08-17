@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `teach06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-16 by Codex
+- **Completion/implementation commits:** `4ce50464` (board claim), `fb5bc53b` (lesson catalog and public coach context), `206fdcb2` (contextual pacing and real UI seams), `de0f901f` (generic non-consuming lifecycle, clickable pointer-safe placement, and permanent regression fixture)
+- **Verification:** `tools/validate_project.ps1` PASS; focused foundation smoke coach/onboarding checks 0 failures; systems suite assertions 0; UI suite PASS; determinism PASS at 10 seeds / 590 checkpoints (`3483570349`); canonical visual QA PASS at 75 states / 0 warnings; guided 56-lesson parsed prefix exact and canonical SHA-256 `8a028210242d1190492e8b4ec78432e894d632c802a6f55c9e1b0b77aacbb415`; 19-phrase discovery audit 0 hits; delivery, coin-pusher, and Numbers smoke captures recorded under `.tmp/teach06_1/`.
+- **Deviations:** No required public system was unavailable. The systems wrapper exceeded the stored wall-time budget on the branch (50.095s) and untouched main (51.283s) with zero assertion failures; no gate, budget, or waiver was changed. Contextual tips required a generic lifecycle/pointer correction after canonical QA reproduced stale advice over real controls; the permanent fixture now proves non-consumption, queue handoff, one clickable dismiss receiver, and deterministic avoidance of public interaction geometry. Discovery-gated systems remain unmentioned.
 
 # Agent Prompt — teach06_1: Onboarding for 0.6 Systems
 

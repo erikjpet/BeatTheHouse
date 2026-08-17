@@ -135,7 +135,7 @@ stated in each prompt** — `events.json` in particular is shared, and
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| teach06_1 | `teach06_1_onboarding_prompt.md` | IN_PROGRESS | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | Codex | 2026-08-16 | | All 56 shipped lessons teach 0.5 content only; zero cover crew, delivery, Numbers, pushers, craps, or Punchline layers. Must NOT teach discovery-gated systems (past-posting, crew fix, the Turn, hidden layers). |
+| teach06_1 | `teach06_1_onboarding_prompt.md` | DONE | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | Codex | 2026-08-16 | 2026-08-16 | Seven once-only contextual lessons cover public 0.6 surfaces; guided 56-lesson prefix and discovery gates are unchanged. UI PASS; determinism 10/590 (`3483570349`); visual 75 states/0 warnings; systems assertions 0. |
 | env06_5 | `env06_5_scenario_backlog_prompt.md` | TODO | env06_1/2/3 (DONE) | playtest variety | | | | 13 backlog scenarios from the roadmap catalog. Owns `scenarios.json`; may only add `scenario_`-prefixed events to `events.json`. |
 | art06_1 | `art06_1_punchline_layers_prompt.md` | DONE | env06_4 (DONE) | — | Codex/art06_1 | 2026-08-16 | 2026-08-16 | Dedicated 900x430 L1/L3 rasters, exact manifest/visual-context wiring, no-gambling L1 audit, reserved-footprint evidence, Open Mic/Headliner overlays, UI, and canonical visual QA PASS; baseline L2/layout findings unchanged. |
 
@@ -587,8 +587,12 @@ What happens then is the owner's, not an agent's:
   raised from "counters incremented" to "a person shown the capture calls it a
   coin pusher."
 
+- 2026-08-16 [teach06_1] Discovery/deviation: the systems wrapper exceeded its stored wall-time budget on both the feature branch (50.095s) and untouched main (51.283s), while all assertions passed; the budget and gate were not changed or waived. Serialized owner acceptance supplied the final UI PASS, 10-seed/590-checkpoint determinism hash `3483570349`, and canonical 75-state/zero-warning visual result.
+- 2026-08-16 [teach06_1] Decision: normal-run advice admits at most one contextual beat, yields without consuming the player's next action, and uses deterministic public-control geometry to keep its clickable Skip tip away from gameplay where a clear standard placement exists. Guided tutorial queue, pointer, and completion behavior remain unchanged.
+
 ## Work Log
 
+- 2026-08-16 [teach06_1] DONE; seven public-surface lessons now teach scenarios, delivery routes, honest Numbers play, crew standing, coin pushers, craps, and unnamed venue depth at first encounter. The guided 56-lesson prefix is byte-identical, the 19-phrase discovery audit has zero hits, all gate assertions are green, and ambient advice can no longer consume or physically cover the player's next action.
 - 2026-08-16 [teach06_1] Codex claimed contextual onboarding for public 0.6 surfaces; discovery-gated systems and the shipped guided tutorial remain explicitly out of scope.
 - 2026-08-13 [board] Queue authored: 24 prompts across waves A–E.
 - 2026-08-13 [Wave A] PM-orchestrated execution claimed for env06_1,
