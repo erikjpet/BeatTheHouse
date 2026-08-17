@@ -621,6 +621,17 @@ What happens then is the owner's, not an agent's:
   total. Root work must account for that outer cost and preserve immediate
   action completion, exact 14-frame trace, snapshot/audio semantics, and all
   160 physical bodies; deferral or feature removal is not accepted.
+- 2026-08-17 [pusher06_2 optimized native profile] Fresh exact-4.6 DLL
+  `8B7F5CE8...E0E5D9` linked/loaded, direct native smoke and focused Coin Pusher
+  exactness passed, but performance remains RED: raw p95 17.276 ms, production
+  drop 80.586 ms, nudge 75.020 ms versus 16 ms. Draw/frame/idle are green and
+  both actions preserve 14 trace frames, collapse evidence, and zero full
+  snapshots. The accepted trace construction pass reduced active trace to
+  6.284-7.002 ms. Remaining host roots are no-op interrupt scans
+  (`enqueue_talk` 10.316-10.820 ms plus unavoidable-event 8.799-9.258 ms) and
+  embedded refresh (`HUD` 14.630-15.316 ms, terminal 4.152-4.184 ms,
+  snapshots 3.382-4.677 ms). Parallel root analysis is authorized; no threshold,
+  trace, body, animation, audio, or immediate-completion change is authorized.
 - 2026-08-17 [pusher06_2 presentation gaps] Independent static review ACCEPTS
   all three corrections after returning float quota math and two false-positive
   tests. Opening generation uses integer-only deterministic per-shelf quotas
