@@ -78,7 +78,7 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 	run_state.set_environment({
 		"id": "ui_embedded_coach_room", "display_name": "Embedded Coach Room", "archetype_id": "bar", "kind": "casino",
 		"economic_profile": {"stake_floor": 1, "stake_ceiling": 5},
-		"game_ids": [], "event_ids": [], "item_offers": [], "travel_hooks": [], "next_archetypes": [], "lender_hooks": [], "game_states": {},
+		"game_ids": ["bar_dice"], "event_ids": [], "item_offers": [], "travel_hooks": [], "next_archetypes": [], "lender_hooks": [], "game_states": {},
 	})
 	var fixture_game := EmbeddedCoachFixtureGame.new()
 	probe.set("dev_game_test_mode", true)
