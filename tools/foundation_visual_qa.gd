@@ -4211,6 +4211,16 @@ func _double_click_first_enabled_canvas_object_type(object_type: String) -> Stri
 
 func _double_click_canvas_object_data(canvas: Control, object_data: Dictionary, object_type: String) -> String:
 	var object_id := _canvas_object_id(object_data)
+	# Callers may retain an object snapshot after single-click focus has moved the
+	# room camera to another object. Reset and reacquire before hit-testing so a
+	# stale focus rectangle cannot make a visible object appear unclickable.
+	app.call("clear_interaction_focus", true)
+	await _settle()
+	await _wait_for_room_camera()
+	var current_object := _canvas_object_by_id(canvas, object_id)
+	if current_object.is_empty():
+		return ""
+	object_data = current_object
 	var local_position := _canvas_local_hit_position_for_object(canvas, object_data)
 	if local_position.x < 0.0 or local_position.y < 0.0 or local_position.x > canvas.size.x or local_position.y > canvas.size.y:
 		_return_to_room_view()
