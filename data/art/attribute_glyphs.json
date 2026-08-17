@@ -1331,6 +1331,7 @@
     },
     "event": {
       "_default": "class_event",
+      "character": "class_event",
       "crew": "class_event",
       "debt": "class_event",
       "discovery": "class_event",

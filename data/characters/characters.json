@@ -21,6 +21,16 @@
           "Cash is easy. Being ready when we call is the part you owe.",
           "Take the bills. Keep the engine warm. We hate waiting."
         ],
+        "signpost": [
+          "People are out there. Ask once. Listen the first time.",
+          "I know where they work. You still have to show up.",
+          "Road's got names on it. Pick one and move."
+        ],
+        "work_offer": [
+          "One handoff. Clean road. Say yes or keep walking.",
+          "Work's ready. Engine should be too.",
+          "Short job. Short answer."
+        ],
         "favor_due": [
           "Engine is running. Take the package and keep us on schedule.",
           "Your marker is up. One clean delivery makes it smaller.",
@@ -61,6 +71,16 @@
           "Take the money, darling. We only ask that you remember who made tonight possible.",
           "No interest, no paperwork. Just answer beautifully when we need you.",
           "Sweetheart, the cash is the easy part. The favor is where you get interesting."
+        ],
+        "recruitment": [
+          "Let them think they invited you, darling. Then we can talk.",
+          "A good introduction opens the door before anyone touches the rope.",
+          "You arrived beautifully. I may have use for that."
+        ],
+        "work_offer": [
+          "I have a small introduction that would suit you beautifully.",
+          "Darling, one room needs exactly the guest you can become.",
+          "Say yes sweetly. The difficult part prefers good manners."
         ],
         "favor_due": [
           "A small package needs a discreet new friend. Tonight, that's you.",
@@ -103,6 +123,16 @@
           "Forty-five bucks buys you a chance. The favor buys us even.",
           "Take it or don't. My evening survives either way."
         ],
+        "recruitment": [
+          "Carry what matters. Drop the speech.",
+          "You showed up. Good. Keep doing that.",
+          "Simple job. Simple answer."
+        ],
+        "work_offer": [
+          "Got work. Doesn't need a meeting.",
+          "Hot goods go here. Questions go somewhere else.",
+          "You carrying trouble or looking for some?"
+        ],
         "favor_due": [
           "Package. Address. No detours. Then we can all stay friendly.",
           "Time to earn the part where we didn't charge interest.",
@@ -143,6 +173,16 @@
           "Quick deal: our cash, your legs, one future call. Yes or no?",
           "You can keep circling broke, or take the shortcut we brought.",
           "Door is open now. Doors are rude like that; they close."
+        ],
+        "recruitment": [
+          "Window's open now. Decide while now still means now.",
+          "Two routes, one useful answer. Keep up.",
+          "You made the stop. Good. Next one moves faster."
+        ],
+        "work_offer": [
+          "I've got three roads and about six minutes. Pick.",
+          "Next stop's real, clean, and already getting old.",
+          "Look quick. The route won't wait for the sentence."
         ],
         "favor_due": [
           "Route is clean for six minutes. Grab the package and move.",
@@ -185,6 +225,16 @@
           "We solve tonight's cash problem. Later, you solve a scheduling problem.",
           "Accepting is simple. Improvising afterward is where people disappoint me."
         ],
+        "recruitment": [
+          "Three steps. In order. Then we discuss whether you are useful.",
+          "You arrived on time. That removes one concern.",
+          "The pieces fit. Please do not improve them."
+        ],
+        "work_offer": [
+          "The work is arranged. Your part is the only remaining variable.",
+          "I have a clean sequence and no need for improvisation.",
+          "Read the order twice. Perform it once."
+        ],
         "favor_due": [
           "The handoff has three steps. Follow them in order and nobody needs a fourth.",
           "Your delivery window is open. Missing it creates unnecessary variables.",
@@ -226,6 +276,16 @@
           "We offer liquidity without interest. Reliability is the collateral.",
           "The record can show generosity tonight and obedience later. Elegant, yes?"
         ],
+        "recruitment": [
+          "The proper hour has arrived. We may proceed.",
+          "Your patience has been noted. So has your discretion.",
+          "The floor sees an appointment. The record sees an ally."
+        ],
+        "work_offer": [
+          "There is an appointment available to a reliable party.",
+          "The record requires one quiet correction.",
+          "Proceed properly and the floor will remember nothing."
+        ],
         "favor_due": [
           "The Crew is exercising one favor. Complete the delivery and the record changes.",
           "A promise is most valuable when collected at the proper hour.",
@@ -266,6 +326,16 @@
           "Free money tonight, one exciting favor later. Best odds in town.",
           "Take the forty-five. Future you loves solving future problems.",
           "Come on, it's practically charity with a steering wheel."
+        ],
+        "recruitment": [
+          "Tiny route, big suspense. You are absolutely coming.",
+          "Great timing. Possibly terrible judgment. I like both.",
+          "You found me. That makes one of us lucky already."
+        ],
+        "work_offer": [
+          "Short run, bright odds, very exciting bad idea.",
+          "I found a shortcut. It only looks longer and more dangerous.",
+          "Come on. Future us will call this efficient."
         ],
         "favor_due": [
           "Good news: the package is small. Better news: they're watching somebody else.",

@@ -42,6 +42,8 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 		return CrewRecruitmentModelScript.rook_signpost_choices(run_state) if run_state != null else []
 	if str(payload.get("kind", "")) == "crew_rook_leads":
 		return CrewRecruitmentModelScript.rook_signpost_choices(run_state, false) if run_state != null else []
+	if str(payload.get("kind", "")) == "crew_contact":
+		return CrewRecruitmentModelScript.contact_choices(run_state, environment, str(payload.get("member_id", "")), content_library) if run_state != null else []
 	if str(payload.get("kind", "")) == "grand_casino_showdown":
 		return _grand_casino_showdown_choices(payload, run_state, environment)
 	if str(payload.get("kind", "")) == "grand_casino_high_roller_cashout":
@@ -211,8 +213,16 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 	# A heard fact is true at the action boundary where the player accepts it.
 	# Capture it before advancing town schedules could expire an incoming fact.
 	for hook in deltas.get("event_hooks", []):
-		if typeof(hook) == TYPE_DICTIONARY and str((hook as Dictionary).get("type", "")) == "hear_rumor":
-			run_state.hear_rumor(str((hook as Dictionary).get("rumor_id", "")))
+		if typeof(hook) != TYPE_DICTIONARY:
+			continue
+		var pre_hook: Dictionary = hook
+		match str(pre_hook.get("type", "")):
+			"hear_rumor":
+				run_state.hear_rumor(str(pre_hook.get("rumor_id", "")))
+			"crew_knuckles_stash":
+				run_state.crew_knuckles_stash_inventory_entry(int(pre_hook.get("inventory_index", -1)), str(pre_hook.get("item_id", "")))
+			"crew_knuckles_retrieve":
+				run_state.crew_knuckles_retrieve_stash_entry(int(pre_hook.get("stash_index", -1)), str(pre_hook.get("item_id", "")))
 	run_state.advance_environment_turns(1)
 	GameModule.apply_result(run_state, result)
 	for hook in deltas.get("event_hooks", []):
@@ -232,6 +242,10 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				run_state.crew_meet_member(str(hook_data.get("member_id", "")))
 			"crew_rook_lead_closed":
 				run_state.crew_close_rook_leads_event()
+			"crew_switch_reveal":
+				run_state.crew_switch_reveal_node(str(hook_data.get("node_id", "")))
+			"crew_knuckles_stash", "crew_knuckles_retrieve":
+				pass
 
 
 # Returns a no-op event result for invalid choices.

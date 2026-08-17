@@ -6844,6 +6844,9 @@ func _run() -> void:
 	if not await _check_lender_acceptance_does_not_open_motel_popup(app):
 		quit(1)
 		return
+	if not await _check_crew_recruitment_player_surfaces(app):
+		quit(1)
+		return
 	environment_canvas.queue_free()
 	game_canvas.queue_free()
 	app.queue_free()

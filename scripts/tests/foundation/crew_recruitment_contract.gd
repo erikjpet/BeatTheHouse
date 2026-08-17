@@ -4,20 +4,33 @@ extends RefCounted
 # optionality, rank perks, save migration, and hidden deterministic presence.
 
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
+const CrewIgnoredGoldenProbeScript := preload("res://scripts/tests/foundation/crew_ignored_golden_probe.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
+const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const IGNORED_RUN_GOLDEN := {
+	"trust": {"crew_rook": 0, "crew_switch": 0, "crew_mags": 0, "crew_knuckles": 0, "crew_velvet": 0, "crew_bishop": 0, "crew_lucky": 0},
+	"current_recruitment_events": [],
+	"current_contact_events": [],
+	"current_presence": [],
+	"world_recruitment_events": [],
+	"world_contact_events": [],
+}
+const IGNORED_BASELINE_PATH := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
 
 
 static func check(library: ContentLibrary, failures: Array) -> void:
 	for failure in CrewRecruitmentModelScript.validate_content():
 		failures.append("Crew recruitment content: %s" % str(failure))
 	_check_placement_matrix(library, failures)
+	_check_production_reachability(library, failures)
 	_check_rook_paths(failures)
 	_check_rook_signposts(library, failures)
 	_check_perks_and_save(failures)
-	_check_crew_ignoring_regression(failures)
+	_check_contact_surfaces(library, failures)
+	_check_crew_ignoring_regression(library, failures)
 	_check_presence_determinism(failures)
 
 
@@ -78,6 +91,44 @@ static func _check_placement_matrix(library: ContentLibrary, failures: Array) ->
 			recruited_round_trip.from_dict(run_state.to_dict())
 			if recruited_round_trip.crew_rank(member_id) != "associate" or not recruited_round_trip.crew_member_job_available(member_id):
 				failures.append("Crew recruitment %s %s did not survive its post-intro save/load." % [member_id, path_kind])
+
+
+static func _check_production_reachability(library: ContentLibrary, failures: Array) -> void:
+	var primary_cases := [
+		["crew_switch", "gas_station_casino", "gas_station_trucker_convoy"],
+		["crew_mags", "back_alley", "back_alley_fence_night"],
+		["crew_knuckles", "bar", "bar_fight_night"],
+		["crew_velvet", "kitty_cat_lounge", "kitty_cat_lounge_buyout"],
+		["crew_lucky", "beach", "beach_festival_weekend"],
+	]
+	for case_value in primary_cases:
+		var member_id := str(case_value[0])
+		var environment := _production_environment(library, "CREW-PRODUCTION-%s" % member_id, str(case_value[1]), str(case_value[2]))
+		var event_id := str(CrewRecruitmentModelScript.member_definition(member_id).get("event_id", ""))
+		if environment.is_empty() or not _string_array(environment.get("event_ids", [])).has(event_id):
+			failures.append("Production generation did not place %s at %s." % [member_id, str(case_value[2])])
+	var velvet_definition := CrewRecruitmentModelScript.member_definition("crew_velvet")
+	for scenario_id in ["kitty_cat_lounge_amateur_night", "kitty_cat_lounge_slow_night", "kitty_cat_lounge_bachelorette_storm"]:
+		var environment := _production_environment(library, "CREW-VELVET-%s" % scenario_id, "kitty_cat_lounge", scenario_id)
+		if not _string_array(environment.get("event_ids", [])).has(str(velvet_definition.get("event_id", ""))):
+			failures.append("Velvet was unreachable in production scenario %s." % scenario_id)
+	var layered_run := _marked_run("CREW-PRODUCTION-PUNCHLINE")
+	_set_fixture_world(layered_run, ["small_underground_casino"])
+	var generator := RunGeneratorScript.new(library)
+	generator.next_environment(layered_run, "small_underground_casino")
+	if not _string_array(layered_run.current_environment.get("event_ids", [])).has("recruitment_knuckles"):
+		failures.append("Production Punchline club entry did not expose Knuckles' side-door fallback.")
+	var entered := generator.enter_environment_layer(layered_run, "casino", false)
+	if not bool(entered.get("ok", false)) or not _string_array(layered_run.current_environment.get("event_ids", [])).has("recruitment_mags"):
+		failures.append("Production Punchline L2 entry did not expose Mags' fallback.")
+	for bishop_archetype in ["grand_casino", "grand_casino_cage"]:
+		var bishop_environment := _production_environment(library, "CREW-BISHOP-%s" % bishop_archetype, bishop_archetype)
+		if not _string_array(bishop_environment.get("event_ids", [])).has("recruitment_bishop"):
+			failures.append("Production %s did not expose Bishop's two-beat contact." % bishop_archetype)
+	var lucky_environment := _production_environment(library, "CREW-LUCKY-RECOVERY", "beach", "beach_festival_weekend")
+	var lucky_speaker := _dict(library.event("recruitment_lucky").get("speaker", {}))
+	if lucky_environment.has("crew_presence") or bool(lucky_speaker.get("environment_actor", true)):
+		failures.append("Lucky's production beach recruitment weakened the actor-free recovery contract.")
 
 
 static func _check_rook_paths(failures: Array) -> void:
@@ -207,7 +258,60 @@ static func _check_perks_and_save(failures: Array) -> void:
 		failures.append("Pre-recruitment crew saves did not migrate to an empty stash.")
 
 
-static func _check_crew_ignoring_regression(failures: Array) -> void:
+static func _check_contact_surfaces(library: ContentLibrary, failures: Array) -> void:
+	for member_id in CrewRecruitmentModelScript.MEMBER_IDS:
+		var event_id := str(CrewRecruitmentModelScript.member_definition(member_id).get("contact_event_id", ""))
+		var event := library.event(event_id)
+		var speaker := _dict(event.get("speaker", {}))
+		if event.is_empty() or bool(speaker.get("environment_actor", true)) or str(speaker.get("voice_line_key", "")) != "work_offer":
+			failures.append("Crew contact %s did not use the presence actor and authored work voice." % member_id)
+	var switch_run := _marked_run("CREW-CONTACT-SWITCH")
+	switch_run.crew_recruit_member("crew_switch")
+	_set_fixture_world(switch_run, ["bar", "gas_station_casino", "back_alley", "motel"])
+	for node_id in ["gas_station_casino", "back_alley", "motel"]:
+		switch_run.seed_scenario_for_node(node_id, {"id": "fixture_%s" % node_id, "archetype_id": node_id, "display_name": node_id.capitalize()})
+	switch_run.set_environment({"id": "switch_contact", "archetype_id": "bar", "world_node_id": "bar", "event_ids": ["crew_contact_switch"], "resolved_event_ids": []})
+	var switch_module := EventModuleScript.new()
+	switch_module.setup(library.event("crew_contact_switch"), library)
+	var switch_choices := switch_module.choices(switch_run, switch_run.current_environment)
+	if switch_choices.size() > 4 or switch_module.choice("reveal_back_alley", switch_run, switch_run.current_environment).is_empty():
+		failures.append("Switch's contact did not expose a bounded remote-reveal action surface.")
+	else:
+		var switch_result := switch_module.resolve(switch_run, switch_run.current_environment, "reveal_back_alley")
+		if not bool(switch_result.get("ok", false)) or not bool(WorldMapScript.node_by_id(switch_run.world_map, "back_alley").get("scouted", false)):
+			failures.append("Switch's player-facing contact action did not invoke the real reveal pipeline.")
+	var knuckles_run := _marked_run("CREW-CONTACT-KNUCKLES")
+	knuckles_run.crew_recruit_member("crew_knuckles")
+	knuckles_run.inventory = [{"id": "marked_cards", "copy": "first"}, {"id": "marked_cards", "copy": "second"}]
+	knuckles_run.set_environment({"id": "knuckles_contact", "archetype_id": "bar", "world_node_id": "bar", "event_ids": ["crew_contact_knuckles"], "resolved_event_ids": []})
+	var knuckles_module := EventModuleScript.new()
+	knuckles_module.setup(library.event("crew_contact_knuckles"), library)
+	var knuckles_choices := knuckles_module.choices(knuckles_run, knuckles_run.current_environment)
+	var stash_choice_id := "stash_marked_cards_1"
+	var stash_choice: Dictionary = {}
+	for choice_value in knuckles_choices:
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == stash_choice_id:
+			stash_choice = choice_value
+	if knuckles_choices.size() > 4 or stash_choice.is_empty() or str(stash_choice.get("label", "")) != "Stash Marked Cards" \
+		or not bool(knuckles_module.resolve(knuckles_run, knuckles_run.current_environment, stash_choice_id).get("ok", false)) \
+		or knuckles_run.inventory.size() != 1 or str((knuckles_run.inventory[0] as Dictionary).get("copy", "")) != "first" \
+		or knuckles_run.crew_contraband_stash.size() != 1 or str((knuckles_run.crew_contraband_stash[0] as Dictionary).get("copy", "")) != "second":
+		failures.append("Knuckles' player-facing contact did not stash contraband before the action boundary.")
+	var rook_run := _marked_run("CREW-CONTACT-ROOK")
+	rook_run.crew_add_trust("crew_rook", CrewStateModelScript.rank_threshold("associate") - rook_run.crew_trust("crew_rook"), "contact_fixture")
+	rook_run.set_environment({"id": "rook_contact", "archetype_id": "back_alley", "world_node_id": "back_alley", "event_ids": ["crew_contact_rook"], "resolved_event_ids": []})
+	var rook_module := EventModuleScript.new()
+	rook_module.setup(library.event("crew_contact_rook"), library)
+	var rook_choices := rook_module.choices(rook_run, rook_run.current_environment)
+	if rook_module.choice("job_crew_favor_delivery", rook_run, rook_run.current_environment).is_empty() or rook_choices.size() > 4:
+		failures.append("Rook's Associate contact did not query the existing job catalog.")
+	else:
+		rook_module.resolve(rook_run, rook_run.current_environment, "job_crew_favor_delivery")
+		if not _pending_event_ids(rook_run).has("crew_favor_delivery"):
+			failures.append("Rook's job contact did not trigger the existing payload event.")
+
+
+static func _check_crew_ignoring_regression(library: ContentLibrary, failures: Array) -> void:
 	var run_state := RunStateScript.new()
 	run_state.start_new("CREW-IGNORED")
 	var environment := {"id": "ignored", "archetype_id": "bar", "kind": "casino", "event_ids": ["rowdy_regular"], "scenario_patron_ids": ["fight_crowd"]}
@@ -219,6 +323,27 @@ static func _check_crew_ignoring_regression(failures: Array) -> void:
 	for member_id in CrewRecruitmentModelScript.MEMBER_IDS:
 		if run_state.crew_trust(member_id) != 0:
 			failures.append("Crew-ignoring run moved hidden trust for %s." % member_id)
+	var generated_a := RunStateScript.new()
+	generated_a.start_new("CREW-IGNORED-PRODUCTION")
+	_set_fixture_world(generated_a, ["bar"])
+	RunGeneratorScript.new(library).next_environment(generated_a, "bar")
+	var generated_b := RunStateScript.new()
+	generated_b.start_new("CREW-IGNORED-PRODUCTION")
+	_set_fixture_world(generated_b, ["bar"])
+	RunGeneratorScript.new(library).next_environment(generated_b, "bar")
+	if JSON.stringify(generated_a.to_dict()) != JSON.stringify(generated_b.to_dict()):
+		failures.append("Crew-ignoring canonical production runs were not byte-identical same-seed twins.")
+	var projection := _ignored_run_projection(generated_a)
+	if JSON.stringify(projection) != JSON.stringify(IGNORED_RUN_GOLDEN):
+		failures.append("Crew-ignoring empty crew-artifact projection moved from its narrow golden: %s." % JSON.stringify(projection))
+	var baseline: Variant = JSON.parse_string(FileAccess.get_file_as_string(IGNORED_BASELINE_PATH)) if FileAccess.file_exists(IGNORED_BASELINE_PATH) else null
+	if typeof(baseline) != TYPE_DICTIONARY:
+		failures.append("Crew-ignoring pre-crew06_5 baseline fixture is missing or invalid.")
+	else:
+		var expected := _dict((baseline as Dictionary).get("capture", {}))
+		var actual := CrewIgnoredGoldenProbeScript.capture(library)
+		if JSON.stringify(actual) != JSON.stringify(expected):
+			failures.append("Crew-ignoring full RunState/current/world environment bytes shifted from accepted parent main.")
 
 
 static func _check_presence_determinism(failures: Array) -> void:
@@ -304,6 +429,17 @@ static func _set_fixture_world(run_state: RunState, node_ids: Array) -> void:
 	run_state.set_world_map({"version": 3, "seed_text": run_state.seed_text, "start_node_id": start_id, "current_node_id": start_id, "nodes": nodes, "edges": edges, "visited_path": [start_id] if not start_id.is_empty() else []})
 
 
+static func _production_environment(library: ContentLibrary, seed: String, archetype_id: String, scenario_id: String = "") -> Dictionary:
+	var run_state := _marked_run(seed)
+	_set_fixture_world(run_state, [archetype_id])
+	if not scenario_id.is_empty():
+		var scenario := library.scenario(scenario_id)
+		if not scenario.is_empty():
+			run_state.seed_scenario_for_node(archetype_id, scenario)
+	RunGeneratorScript.new(library).next_environment(run_state, archetype_id)
+	return run_state.current_environment.duplicate(true)
+
+
 static func _dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
 
@@ -319,3 +455,39 @@ static func _string_array(value: Variant) -> Array:
 		if not entry.is_empty():
 			result.append(entry)
 	return result
+
+
+static func _pending_event_ids(run_state: RunState) -> Array:
+	var result: Array = []
+	for value in run_state.pending_triggered_events:
+		if typeof(value) == TYPE_DICTIONARY:
+			result.append(str((value as Dictionary).get("event_id", (value as Dictionary).get("id", ""))))
+	return result
+
+
+static func _ignored_run_projection(run_state: RunState) -> Dictionary:
+	var trust := {}
+	for member_id in CrewRecruitmentModelScript.MEMBER_IDS:
+		trust[member_id] = run_state.crew_trust(member_id)
+	var recruitment_ids := CrewRecruitmentModelScript.recruitment_event_ids()
+	var contact_ids := CrewRecruitmentModelScript.contact_event_ids()
+	var current_events := _string_array(run_state.current_environment.get("event_ids", []))
+	var world_recruitment: Array = []
+	var world_contacts: Array = []
+	for node_value in _array(run_state.world_map.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var stored := _dict((node_value as Dictionary).get("environment", {}))
+		for event_id in _string_array(stored.get("event_ids", [])):
+			if recruitment_ids.has(event_id):
+				world_recruitment.append(event_id)
+			if contact_ids.has(event_id):
+				world_contacts.append(event_id)
+	return {
+		"trust": trust,
+		"current_recruitment_events": current_events.filter(func(event_id: String) -> bool: return recruitment_ids.has(event_id)),
+		"current_contact_events": current_events.filter(func(event_id: String) -> bool: return contact_ids.has(event_id)),
+		"current_presence": _array(run_state.current_environment.get("crew_presence", [])),
+		"world_recruitment_events": world_recruitment,
+		"world_contact_events": world_contacts,
+	}

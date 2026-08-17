@@ -23,12 +23,13 @@ static func interactable_object_view_list(host: Variant) -> Array:
 			"fixture_object_states": host._environment_game_fixture_object_states(game_id),
 		})
 	var before_travel_objects: Array = []
+	var all_event_options := host._eligible_event_option_view_list()
 	before_travel_objects.append_array(host._game_hook_interactable_objects())
 	before_travel_objects.append_array(host._home_interactable_objects())
 	before_travel_objects.append_array(casino_spatial_interactable_objects(host))
 	before_travel_objects.append_array(environment_layer_interactable_objects(host))
 	before_travel_objects.append_array(numbers_interactable_objects(host))
-	before_travel_objects.append_array(crew_presence_interactable_objects(host))
+	before_travel_objects.append_array(crew_presence_interactable_objects(host, all_event_options))
 	var after_travel_objects: Array = []
 	var room_return_object = host._parent_home_return_interactable_object()
 	if not room_return_object.is_empty():
@@ -44,8 +45,17 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		})
 	before_travel_objects.append_array(delivery_interactable_objects(host, delivery_occupied))
 	var event_options: Array = []
-	for event_value in host._eligible_event_option_view_list():
-		if typeof(event_value) != TYPE_DICTIONARY or str((event_value as Dictionary).get("id", "")) != "numbers_desk":
+	var contact_event_ids: Array = []
+	for presence_value in host._copy_array(host.run_state.current_environment.get("crew_presence", [])):
+		if typeof(presence_value) == TYPE_DICTIONARY:
+			var contact_event_id := str((presence_value as Dictionary).get("contact_event_id", "")).strip_edges()
+			if not contact_event_id.is_empty():
+				contact_event_ids.append(contact_event_id)
+	for event_value in all_event_options:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event_id := str((event_value as Dictionary).get("id", ""))
+		if event_id != "numbers_desk" and not contact_event_ids.has(event_id):
 			event_options.append(event_value)
 	return host.EnvironmentInteractionViewModelScript.interactable_object_view_list(host.run_state, host.library, {
 		"run_failed_without_recovery": failed,
@@ -77,7 +87,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	})
 
 
-static func crew_presence_interactable_objects(host: Variant) -> Array:
+static func crew_presence_interactable_objects(host: Variant, event_options: Array = []) -> Array:
 	var result: Array = []
 	if host.run_state == null:
 		return result
@@ -90,34 +100,44 @@ static func crew_presence_interactable_objects(host: Variant) -> Array:
 		var line := str(presence.get("line", "")).strip_edges()
 		if member_id.is_empty() or line.is_empty():
 			continue
-		var speaker: Dictionary = host._resolve_character_speaker({
+		var contact_event_id := str(presence.get("contact_event_id", "")).strip_edges()
+		var contact_event: Dictionary = {}
+		for event_value in event_options:
+			if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("id", "")) == contact_event_id:
+				contact_event = event_value
+				break
+		var speaker_source: Dictionary = contact_event.get("speaker", {}) if typeof(contact_event.get("speaker", {})) == TYPE_DICTIONARY else {
 			"role": "crew",
 			"name": member_id.trim_prefix("crew_").capitalize(),
 			"character_id": member_id,
-			"voice_line_key": "favor_due",
-		}, "crew_presence:%s" % member_id, "favor_due")
+			"voice_line_key": "work_offer",
+		}
+		var speaker: Dictionary = host._resolve_character_speaker(speaker_source, "crew_presence:%s" % member_id, "work_offer")
 		var label := str(speaker.get("speaking_character_name", member_id.trim_prefix("crew_").capitalize()))
-		var object_id := "crew_presence:%s" % member_id
+		var choices: Array = contact_event.get("choices", []) if typeof(contact_event.get("choices", [])) == TYPE_ARRAY else []
+		var interactive := not contact_event_id.is_empty() and not choices.is_empty()
+		var object_id := "event:%s" % contact_event_id if interactive else "crew_presence:%s" % member_id
 		result.append(host._make_interactable_object({
 			"object_id": object_id,
-			"object_type": "dialogue",
+			"object_type": "event" if interactive else "dialogue",
 			"visual_type": "character",
-			"source_id": member_id,
+			"source_id": contact_event_id if interactive else member_id,
 			"label": label,
 			"short_description": line,
 			"presence": "ambient",
-			"interactive": false,
-			"enabled": false,
-			"disabled_reason": line,
-			"action_summary": line,
+			"interactive": interactive,
+			"enabled": interactive,
+			"disabled_reason": "" if interactive else line,
+			"action_summary": str(contact_event.get("start_summary", line)) if interactive else line,
 			"status_summary": str(presence.get("rank", "marker")).replace("_", " ").capitalize(),
 			"visual_key": "crew_presence",
 			"prop": "patron",
 			"icon_key": "rowdy_regular",
 			"character_actor": speaker,
-			"available_actions": [],
-			"confirm_action_id": "",
-			"focus_rect": host._interaction_rect_for_object(object_id, "dialogue", index),
+			"available_actions": [{"id": "inspect_event_choices", "label": "Review responses"}] if interactive else [],
+			"inline_actions": host._event_inline_response_actions(contact_event_id, choices) if interactive else [],
+			"confirm_action_id": "inspect_event_choices" if interactive else "",
+			"focus_rect": host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_EVENT if interactive else "dialogue", index),
 		}))
 		index += 1
 	return result

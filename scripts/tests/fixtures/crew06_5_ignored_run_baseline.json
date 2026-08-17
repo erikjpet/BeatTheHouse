@@ -1,0 +1,29 @@
+{
+  "baseline_commit": "2e7895df",
+  "capture": {
+    "runs": [
+      {
+        "checkpoints": [
+          {"current_environment_bytes":25701,"current_environment_sha256":"cc11317fbe495939a386dca3035c1d95cc4c58e40f51e16b3581f96b13d8f611","label":"initial_bar","run_state_bytes":83936,"run_state_sha256":"54824852e45703c9e99e7435a13d7ced45e3307bed0905bc38846472977d33d5","world_environments_bytes":25716,"world_environments_sha256":"a9ef102c5697b2186e2f83d3a985009b487c831f853ed748747d3d107f9ec5f9"},
+          {"current_environment_bytes":25701,"current_environment_sha256":"be63f92c13acc1bbecdafe3343cba376d860c84ad8f3e179d890e8a1c5932f77","label":"bar_action_boundary","run_state_bytes":83939,"run_state_sha256":"5ba9917be33c4497b706f3a78d2db8c85ca4851038d181b595a99df5bfe8224b","world_environments_bytes":25716,"world_environments_sha256":"a9ef102c5697b2186e2f83d3a985009b487c831f853ed748747d3d107f9ec5f9"},
+          {"current_environment_bytes":16826,"current_environment_sha256":"03dee4ea27164198dd8d383a7c1cc9bd93312a7d38e1b0a82b0ada0ee64108f4","label":"ordinary_travel","run_state_bytes":91638,"run_state_sha256":"9bf02c4a5523501c43a956b73db3696c24fece85ffc571d8fd4feae3b7f2b1f9","world_environments_bytes":42150,"world_environments_sha256":"6b67afc4acb2be090119bdbd44cee8e28bf7677970f9bf002eb1211506df2b30"},
+          {"current_environment_bytes":26511,"current_environment_sha256":"a3b827082015997383368ca68ca9bb6ba1fdf82cf8cf7e841e6da9440e4df9bf","label":"bar_revisit","run_state_bytes":102981,"run_state_sha256":"a6e22a2a55f055cdb717f8ddd48a069360941889bee2cc9244e37d37c3521297","world_environments_bytes":43051,"world_environments_sha256":"7a7b8eee2ed36cc8397c3a4a7852d593d51f4c06ede9ffef2dac3445febd990c"},
+          {"current_environment_bytes":26511,"current_environment_sha256":"a3b827082015997383368ca68ca9bb6ba1fdf82cf8cf7e841e6da9440e4df9bf","label":"save_load_round_trip","run_state_bytes":102981,"run_state_sha256":"a6e22a2a55f055cdb717f8ddd48a069360941889bee2cc9244e37d37c3521297","world_environments_bytes":43051,"world_environments_sha256":"7a7b8eee2ed36cc8397c3a4a7852d593d51f4c06ede9ffef2dac3445febd990c"}
+        ],
+        "seed": "CREW-IGNORED-GOLDEN-A"
+      },
+      {
+        "checkpoints": [
+          {"current_environment_bytes":25181,"current_environment_sha256":"2453e0f210e866348942511389d66f4c08805b35b72b25d9b4caeb0fc6088fe9","label":"initial_bar","run_state_bytes":81978,"run_state_sha256":"e6c36f1411132eda1370105b3abe78b9babff9458d621e2266c2ca8d8fc55e5f","world_environments_bytes":25196,"world_environments_sha256":"bd601ab3a82424c3be43017189fc2d41d3129a1fe47c2edab44617fa06874b8b"},
+          {"current_environment_bytes":25181,"current_environment_sha256":"4afae90424f61c6dff7e9af937e920d62d5c563dc304eafa8f8e0d5d07ec0db1","label":"bar_action_boundary","run_state_bytes":81981,"run_state_sha256":"d371e3fa4aafc7ac204b0b59b2e8ee45ea579ac11fef874c1dd006873b1b337f","world_environments_bytes":25196,"world_environments_sha256":"bd601ab3a82424c3be43017189fc2d41d3129a1fe47c2edab44617fa06874b8b"},
+          {"current_environment_bytes":19130,"current_environment_sha256":"5e43f8d352db39d9c4483587fbe7a3c0ec47fe3b8508b0c6a42da5f5d7d4bfd2","label":"ordinary_travel","run_state_bytes":94809,"run_state_sha256":"9bd7e08b547bcf49745e6d506ffa231cb97d42f0befeb28a45631425013f4aa4","world_environments_bytes":43934,"world_environments_sha256":"a75ec8c05f058d8745641835b3de1e93a6a1c63423f7fb21f3d5b9526ab0f57a"},
+          {"current_environment_bytes":26072,"current_environment_sha256":"99ca34112cf336ccb93400e4d1ec2c5246855a8039a17085d1d39d940fa2b222","label":"bar_revisit","run_state_bytes":103490,"run_state_sha256":"6fd18d11080017061b01066ad7cf88d82dee6178accda8beaee30eb11e0c245b","world_environments_bytes":44916,"world_environments_sha256":"64f162ae01b4cebac1ef83590f29d9f76b9bbd3c8ecf6696332d642581bfbc3a"},
+          {"current_environment_bytes":26072,"current_environment_sha256":"99ca34112cf336ccb93400e4d1ec2c5246855a8039a17085d1d39d940fa2b222","label":"save_load_round_trip","run_state_bytes":103490,"run_state_sha256":"6fd18d11080017061b01066ad7cf88d82dee6178accda8beaee30eb11e0c245b","world_environments_bytes":44916,"world_environments_sha256":"64f162ae01b4cebac1ef83590f29d9f76b9bbd3c8ecf6696332d642581bfbc3a"}
+        ],
+        "seed": "CREW-IGNORED-GOLDEN-B"
+      }
+    ],
+    "schema_version": 1
+  },
+  "schema_version": 1
+}

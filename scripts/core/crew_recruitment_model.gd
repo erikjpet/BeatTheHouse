@@ -43,6 +43,17 @@ static func recruitment_event_ids() -> Array:
 	return result
 
 
+static func contact_event_ids() -> Array:
+	var result: Array = []
+	for value in _array(config().get("members", [])):
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var event_id := str((value as Dictionary).get("contact_event_id", "")).strip_edges()
+		if not event_id.is_empty():
+			result.append(event_id)
+	return result
+
+
 static func apply_to_environment(run_state: RunState, environment: Dictionary) -> void:
 	if run_state == null or environment.is_empty() or not crew_path_started(run_state):
 		return
@@ -51,6 +62,8 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 	# event before recomputing so a revisit never leaves his voice in an empty
 	# room after his itinerary rotates.
 	event_ids.erase("recruitment_rook_leads")
+	for contact_event_id in contact_event_ids():
+		event_ids.erase(contact_event_id)
 	for member_id in MEMBER_IDS:
 		if member_id == "crew_rook" or _rank_at_least(run_state.crew_rank(member_id), "associate"):
 			continue
@@ -74,9 +87,15 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 	for entry_value in presence:
 		if typeof(entry_value) != TYPE_DICTIONARY:
 			continue
-		var member_id := str((entry_value as Dictionary).get("member_id", ""))
+		var entry: Dictionary = entry_value
+		var member_id := str(entry.get("member_id", ""))
 		if not member_id.is_empty() and not patrons.has(member_id):
 			patrons.append(member_id)
+		var contact_event_id := str(member_definition(member_id).get("contact_event_id", "")).strip_edges()
+		if not contact_event_id.is_empty() and not contact_choices(run_state, environment, member_id).is_empty():
+			entry["contact_event_id"] = contact_event_id
+			if not event_ids.has(contact_event_id):
+				event_ids.append(contact_event_id)
 	environment["scenario_patron_ids"] = patrons
 	for entry_value in presence:
 		if typeof(entry_value) == TYPE_DICTIONARY and str((entry_value as Dictionary).get("member_id", "")) == "crew_rook" \
@@ -95,6 +114,8 @@ static func crew_path_started(run_state: RunState) -> bool:
 static func placement_kind(run_state: RunState, environment: Dictionary, definition: Dictionary) -> String:
 	if definition.is_empty() or str(definition.get("member_id", "")) == "crew_rook":
 		return ""
+	if not placement_available_for_run(run_state, definition):
+		return ""
 	var primary := _dict(definition.get("primary", {}))
 	if _location_matches(primary, environment):
 		return "primary"
@@ -108,6 +129,17 @@ static func placement_kind(run_state: RunState, environment: Dictionary, definit
 	var selected_node := fallback_node_id(run_state, definition)
 	var current_node := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
 	return "fallback" if selected_node.is_empty() or selected_node == current_node else ""
+
+
+static func placement_available_for_run(run_state: RunState, definition: Dictionary) -> bool:
+	if run_state == null or definition.is_empty():
+		return false
+	if primary_available(run_state, definition):
+		return true
+	var fallback := _dict(definition.get("fallback", {}))
+	if fallback.is_empty() or not _fallback_system_live(run_state, fallback):
+		return false
+	return not fallback_node_id(run_state, definition).is_empty()
 
 
 static func primary_available(run_state: RunState, definition: Dictionary) -> bool:
@@ -149,9 +181,73 @@ static func meetable_members(run_state: RunState) -> Array:
 		if member_id == "crew_rook" or _rank_at_least(run_state.crew_rank(member_id), "associate"):
 			continue
 		var definition := member_definition(member_id)
-		if primary_available(run_state, definition) or not fallback_node_id(run_state, definition).is_empty():
+		if placement_available_for_run(run_state, definition):
 			result.append(member_id)
 	return result
+
+
+static func contact_choices(run_state: RunState, _environment: Dictionary, member_id: String, library: ContentLibrary = null) -> Array:
+	if run_state == null or not _rank_at_least(run_state.crew_rank(member_id), "associate"):
+		return []
+	var choices: Array = []
+	if run_state.crew_member_job_available(member_id):
+		for job_value in CrewStateModelScript.job_definitions_for_member(member_id):
+			if choices.size() >= 3 or typeof(job_value) != TYPE_DICTIONARY:
+				break
+			var job: Dictionary = job_value
+			var target_event_id := str(_dict(job.get("payload", {})).get("event_id", "")).strip_edges()
+			if target_event_id.is_empty() or (library != null and library.event(target_event_id).is_empty()) \
+				or run_state.crew_job_definition_pending(str(job.get("id", ""))) or run_state.triggered_event_pending(target_event_id):
+				continue
+			choices.append({
+				"id": "job_%s" % str(job.get("id", "")),
+				"label": "Ask about work",
+				"text": str(member_definition(member_id).get("job_offer_line", "There is work if you want it.")),
+				"consequences": {"trigger_event": {"event_id": target_event_id, "chance": 1.0}},
+			})
+	if member_id == "crew_switch":
+		for candidate_value in run_state.crew_switch_reveal_candidates():
+			if choices.size() >= 3 or typeof(candidate_value) != TYPE_DICTIONARY:
+				break
+			var candidate: Dictionary = candidate_value
+			var node_id := str(candidate.get("node_id", ""))
+			choices.append({
+				"id": "reveal_%s" % node_id,
+				"label": "Read %s" % str(candidate.get("display_name", node_id.replace("_", " ").capitalize())),
+				"text": "Switch taps the route once. The real stop comes into focus.",
+				"consequences": {"event_hooks": [{"type": "crew_switch_reveal", "node_id": node_id}]},
+			})
+	elif member_id == "crew_knuckles":
+		var stash_status := run_state.crew_knuckles_stash_status()
+		if bool(stash_status.get("available", false)):
+			for candidate_value in run_state.crew_knuckles_stash_candidates():
+				if choices.size() >= 3 or typeof(candidate_value) != TYPE_DICTIONARY:
+					break
+				var candidate: Dictionary = candidate_value
+				var item_id := str(candidate.get("item_id", ""))
+				var inventory_index := int(candidate.get("inventory_index", -1))
+				choices.append({
+					"id": "stash_%s_%d" % [item_id, inventory_index],
+					"label": "Stash %s" % _item_display_name(library, item_id),
+					"text": "Knuckles takes it without asking where it came from.",
+					"consequences": {"event_hooks": [{"type": "crew_knuckles_stash", "item_id": item_id, "inventory_index": inventory_index}]},
+				})
+		for candidate_value in run_state.crew_knuckles_retrieve_candidates():
+			if choices.size() >= 3 or typeof(candidate_value) != TYPE_DICTIONARY:
+				break
+			var candidate: Dictionary = candidate_value
+			var item_id := str(candidate.get("item_id", ""))
+			var stash_index := int(candidate.get("stash_index", -1))
+			choices.append({
+				"id": "retrieve_%s_%d" % [item_id, stash_index],
+				"label": "Retrieve %s" % _item_display_name(library, item_id),
+				"text": "Knuckles slides it back. Still yours. Still quiet.",
+				"consequences": {"event_hooks": [{"type": "crew_knuckles_retrieve", "item_id": item_id, "stash_index": stash_index}]},
+			})
+	if choices.is_empty():
+		return []
+	choices.append({"id": "leave", "label": "Leave", "text": "The Crew contact lets the room breathe.", "consequences": {}})
+	return choices
 
 
 static func rook_signpost_choices(run_state: RunState, resolve_event: bool = true) -> Array:
@@ -242,6 +338,8 @@ static func validate_content() -> Array:
 		seen.append(member_id)
 		if _dict(definition.get("primary", {})).is_empty() or _dict(definition.get("fallback", {})).is_empty():
 			failures.append("Crew recruitment %s needs primary and fallback placement data." % member_id)
+		if str(definition.get("contact_event_id", "")).strip_edges().is_empty():
+			failures.append("Crew recruitment %s needs a contact event id." % member_id)
 		if _string_array(definition.get("presence", [])).is_empty():
 			failures.append("Crew recruitment %s needs a seeded presence itinerary." % member_id)
 		var lines := _dict(definition.get("presence_lines", {}))
@@ -315,3 +413,11 @@ static func _string_array(value: Variant) -> Array:
 		if not entry.is_empty():
 			result.append(entry)
 	return result
+
+
+static func _item_display_name(library: ContentLibrary, item_id: String) -> String:
+	if library != null:
+		var definition := library.item(item_id)
+		if not definition.is_empty():
+			return str(definition.get("display_name", definition.get("name", item_id.replace("_", " ").capitalize())))
+	return item_id.replace("_", " ").capitalize()

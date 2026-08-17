@@ -2935,6 +2935,117 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 	return true
 
 
+func _check_crew_recruitment_player_surfaces(app: Control) -> bool:
+	app.call("start_foundation_run", "UI-CREW-CONTACT-SWITCH")
+	await process_frame
+	var run_state: RunState = app.get("run_state")
+	var ignored_spatial_objects: Array = []
+	for object_value in (app.call("current_spatial_interaction_snapshot") as Dictionary).get("objects", []):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_id := str((object_value as Dictionary).get("object_id", ""))
+		if object_id.begins_with("crew_presence:") or object_id.begins_with("event:recruitment_") or object_id.begins_with("event:crew_contact_"):
+			ignored_spatial_objects.append(object_id)
+	if JSON.stringify({"crew_objects": ignored_spatial_objects}) != JSON.stringify({"crew_objects": []}):
+		push_error("Crew-ignoring canonical spatial snapshot moved from its empty golden: %s." % JSON.stringify(ignored_spatial_objects))
+		return false
+	run_state.crew_add_trust("crew_rook", 10, "ui_marker")
+	run_state.crew_recruit_member("crew_switch")
+	run_state.set_world_map({
+		"version": 3, "seed_text": run_state.seed_text, "start_node_id": "bar", "current_node_id": "bar",
+		"nodes": [
+			{"id": "bar", "archetype_id": "bar", "display_name": "Bar", "kind": "casino", "tier": 1, "state": "visited", "seen": true, "environment": {}},
+			{"id": "back_alley", "archetype_id": "back_alley", "display_name": "Back Alley", "kind": "shop", "tier": 1, "state": "revealed", "seen": true, "environment": {}},
+			{"id": "motel", "archetype_id": "motel", "display_name": "Motel", "kind": "shop", "tier": 1, "state": "revealed", "seen": true, "environment": {}},
+		],
+		"edges": [{"from": "bar", "to": "back_alley"}, {"from": "bar", "to": "motel"}], "visited_path": ["bar"],
+	})
+	for node_id in ["back_alley", "motel"]:
+		run_state.seed_scenario_for_node(node_id, {"id": "ui_%s" % node_id, "archetype_id": node_id, "display_name": node_id.replace("_", " ").capitalize()})
+	run_state.set_environment({
+		"id": "ui_switch_contact", "archetype_id": "bar", "world_node_id": "bar", "display_name": "Switch Contact", "kind": "casino", "tier": 1,
+		"event_ids": ["crew_contact_switch"], "resolved_event_ids": [], "game_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [], "travel_hooks": [], "next_archetypes": [],
+		"crew_presence": [{"member_id": "crew_switch", "rank": "associate", "line": "Switch has tonight's route in her head.", "contact_event_id": "crew_contact_switch"}],
+	})
+	app.call("clear_interaction_focus")
+	app.call("_refresh")
+	await process_frame
+	var objects: Array = app.call("current_environment_view_snapshot").get("interactable_objects", [])
+	var switch_object := _object_by_id(objects, "event:crew_contact_switch")
+	var switch_object_count := 0
+	for object_value in objects:
+		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")) == "event:crew_contact_switch":
+			switch_object_count += 1
+	if switch_object_count != 1 or str(switch_object.get("visual_type", "")) != "character" or not bool(switch_object.get("enabled", false)):
+		push_error("Switch's presence actor was not the sole interactive contact entry: %s." % JSON.stringify(switch_object))
+		return false
+	if not bool(app.call("activate_interactable_object", "event:crew_contact_switch")):
+		push_error("Switch's presence actor could not open the production event popup.")
+		return false
+	await process_frame
+	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	var choices: Array = popup.get("choices", []) if typeof(popup.get("choices", [])) == TYPE_ARRAY else []
+	if not bool(popup.get("visible", false)) or choices.size() > 4 or _crew_choice_by_id(choices, "reveal_back_alley").is_empty():
+		push_error("Switch's contact popup did not expose the bounded remote-reveal action: %s." % JSON.stringify(popup))
+		return false
+	app.call("resolve_event_choice", "crew_contact_switch", "reveal_back_alley")
+	await process_frame
+	if not bool(WorldMap.node_by_id(run_state.world_map, "back_alley").get("scouted", false)):
+		push_error("Switch's UI action did not reach the real scouted-map pipeline.")
+		return false
+	var save_service: SaveService = app.get("save_service")
+	var original_slot := str(app.get("autosave_slot_id"))
+	var test_slot := "crew06_5_bishop_mid_path"
+	app.set("autosave_slot_id", test_slot)
+	_remove_save_slot(save_service, test_slot)
+	app.call("start_foundation_run", "UI-CREW-BISHOP-SAVE")
+	await process_frame
+	run_state = app.get("run_state")
+	run_state.crew_add_trust("crew_rook", 10, "ui_marker")
+	run_state.set_environment({"id": "ui_bishop_contact", "archetype_id": "grand_casino", "world_node_id": "grand_casino", "display_name": "Bishop Contact", "kind": "boss", "tier": 3, "event_ids": ["recruitment_bishop"], "resolved_event_ids": [], "game_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [], "travel_hooks": [], "next_archetypes": []})
+	app.call("_refresh")
+	await process_frame
+	if not bool(app.call("activate_interactable_object", "event:recruitment_bishop")):
+		push_error("Bishop's real recruitment card could not open.")
+		app.set("autosave_slot_id", original_slot)
+		return false
+	app.call("resolve_event_choice", "recruitment_bishop", "wait_for_bishop")
+	await process_frame
+	if save_service.save_run(run_state, test_slot) != OK:
+		push_error("Bishop mid-path UI fixture could not save.")
+		app.set("autosave_slot_id", original_slot)
+		return false
+	app.call("load_foundation_run")
+	await process_frame
+	await process_frame
+	run_state = app.get("run_state")
+	if run_state.crew_rank("crew_bishop") != "marker" or not bool(run_state.narrative_flags.get("bishop_recruitment_first_beat", false)):
+		push_error("Bishop's first recruitment beat did not survive production save/load.")
+		app.set("autosave_slot_id", original_slot)
+		return false
+	if not bool(app.call("activate_interactable_object", "event:recruitment_bishop")):
+		push_error("Bishop's recruitment card could not reopen after load.")
+		app.set("autosave_slot_id", original_slot)
+		return false
+	await process_frame
+	app.call("resolve_event_choice", "recruitment_bishop", "work_with_bishop")
+	await process_frame
+	var recruited := run_state.crew_rank("crew_bishop") == "associate"
+	_remove_save_slot(save_service, test_slot)
+	app.set("autosave_slot_id", original_slot)
+	if not recruited:
+		push_error("Bishop's reopened UI path did not complete recruitment.")
+		return false
+	return true
+
+
+func _crew_choice_by_id(choices: Array, choice_id: String) -> Dictionary:
+	for value in choices:
+		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("id", "")) == choice_id:
+			return (value as Dictionary).duplicate(true)
+	return {}
+
+
 func _remove_save_slot(save_service: SaveService, slot_id: String) -> Error:
 	if save_service == null:
 		return ERR_UNCONFIGURED
