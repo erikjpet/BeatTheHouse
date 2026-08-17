@@ -29,6 +29,7 @@ const PoliceSweepContractScript := preload("res://scripts/tests/foundation/polic
 const NumbersContractScript := preload("res://scripts/tests/foundation/numbers_contract.gd")
 const Tier2ScenarioContractScript := preload("res://scripts/tests/foundation/tier2_scenario_contract.gd")
 const InteractableEventClassGuardScript := preload("res://scripts/tests/foundation/interactable_event_class_guard.gd")
+const GameActivationClassGuardScript := preload("res://scripts/tests/foundation/game_activation_class_guard.gd")
 const Onboarding06ContractScript := preload("res://scripts/tests/foundation/onboarding_06_contract.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
@@ -445,6 +446,7 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 			_foundation_run_check(report, failures, "bar_dice_contract", Callable(self, "_check_bar_dice_contract"), [content_library])
 			_foundation_run_check(report, failures, "video_poker_contract", Callable(self, "_check_video_poker_contract"), [content_library])
 			_foundation_run_check(report, failures, "all_game_module_contracts", Callable(self, "_check_all_game_module_contracts"), [content_library])
+			_foundation_run_check(report, failures, "game_activation_class_guard", Callable(GameActivationClassGuardScript, "check"), [content_library])
 			_foundation_run_check(report, failures, "cross_game_integration_matrix", Callable(self, "_check_cross_game_integration_matrix"), [content_library])
 			_foundation_run_check(report, failures, "slot_contract_smoke", Callable(self, "_check_slot_contract_smoke"), [content_library])
 			_foundation_run_check(report, failures, "coin_pusher_contract", Callable(self, "_check_coin_pusher_contract"), [content_library])
@@ -504,6 +506,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "event_module_foundation", Callable(self, "_check_event_module_foundation"), [content_library])
 	_foundation_run_check(report, failures, "event_system_state_foundation", Callable(self, "_check_event_system_state_foundation"), [content_library])
 	_foundation_run_check(report, failures, "interactable_event_class_guard", Callable(InteractableEventClassGuardScript, "check"), [content_library])
+	_foundation_run_check(report, failures, "game_activation_class_guard", Callable(GameActivationClassGuardScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "lottery_redemption_clerk_merge", Callable(self, "_check_lottery_redemption_clerk_merge"), [])
 	_foundation_run_check(report, failures, "talk_decision_system_foundation", Callable(self, "_check_talk_decision_system_foundation"), [content_library])
 	_foundation_run_check(report, failures, "dialogue_system_foundation", Callable(self, "_check_dialogue_system_foundation"), [content_library])
@@ -551,6 +554,7 @@ func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library:
 	_foundation_run_check(report, failures, "talk_decision_system_foundation", Callable(self, "_check_talk_decision_system_foundation"), [content_library])
 	_foundation_run_check(report, failures, "dialogue_system_foundation", Callable(self, "_check_dialogue_system_foundation"), [content_library])
 	_foundation_run_check(report, failures, "interactable_event_class_guard", Callable(InteractableEventClassGuardScript, "check"), [content_library])
+	_foundation_run_check(report, failures, "game_activation_class_guard", Callable(GameActivationClassGuardScript, "check"), [content_library])
 
 
 func _foundation_run_check(report: Dictionary, failures: Array, check_id: String, callable: Callable, args: Array) -> void:
