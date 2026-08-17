@@ -458,6 +458,12 @@ What happens then is the owner's, not an agent's:
   extension support true and fail before build/export unless that exact preset
   option is enabled; a side-module filename check alone cannot prove the engine
   template can load it.
+- 2026-08-17 [pusher06_2 native hardening] Corrective commit `5c06e08a` is
+  independently accepted for static/provisioning scope. The sole Web preset is
+  extension-capable, and exact named-preset hostiles prove export rejects false,
+  missing, mixed-case, or unrelated-preset values before resolving Godot,
+  building native code, or exporting. Windows/Web build, load, export, and boot
+  remain runtime acceptance gates.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1138,3 +1144,6 @@ What happens then is the owner's, not an agent's:
   every re-audited hostile except the actual Web-preset capability: extension
   support remains disabled. The row stays IN_PROGRESS until the preset is
   extension-capable and export rejects that mismatch before doing work.
+- 2026-08-17 [pusher06_2] `5c06e08a` closes the Web-preset hardening blocker;
+  independent exact named-preset hostiles are green. The row remains
+  IN_PROGRESS for the native solver and real Windows/Web runtime gates.
