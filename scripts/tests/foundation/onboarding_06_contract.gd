@@ -69,6 +69,7 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_contextual_lesson_matrix(library, failures)
 	_check_public_host_context(failures)
 	_check_contextual_queue_discipline(library, failures)
+	_check_normal_tip_action_handoff(library, failures)
 	_check_discovery_boundary(library, failures)
 
 
@@ -237,6 +238,68 @@ static func _check_contextual_queue_discipline(library: Variant, failures: Array
 			or bool(overlay.seen.get("tip06_venue_depth", false)):
 		failures.append("A stale contextual queue entry displayed or became seen after its trigger disappeared: %s" % JSON.stringify(revalidated_snapshot))
 	host.free()
+
+
+static func _check_normal_tip_action_handoff(library: Variant, failures: Array) -> void:
+	var host := PublicHostFixture.new()
+	host.current_context_mode = "room"
+	host.pending_event_choice_popup_snapshot = {}
+	var overlay := CoachOverlayScript.new()
+	host.add_child(overlay)
+	var delivery_lesson: Dictionary = library.tutorial_lesson("tip06_delivery_route")
+	var scenario_lesson: Dictionary = library.tutorial_lesson("tip06_tonight_changes_rooms")
+	var numbers_lesson: Dictionary = library.tutorial_lesson("tip06_numbers_book")
+	overlay.set_lessons([delivery_lesson])
+	overlay.restore_seen({})
+	overlay.evaluate_at_boundary(_environment_context())
+	if overlay.active_lesson_id() != "tip06_delivery_route":
+		failures.append("Normal-tip handoff fixture did not begin with active delivery advice.")
+	if not _normal_tip_pointer_blockers(overlay).is_empty():
+		failures.append("Normal-run advice was not pointer-transparent over real room and surface controls.")
+	# Production activation reports the object to the input guard before focus
+	# updates the public context. The guard may dismiss existing advice, but it
+	# must not select and mark an intermediate room tip in that same physical
+	# activation.
+	overlay.set_lessons([delivery_lesson, scenario_lesson, numbers_lesson])
+	var guard_consumed := overlay.notify_action("numbers:book")
+	if guard_consumed \
+			or not overlay.active_lesson_id().is_empty() \
+			or bool(overlay.seen.get("tip06_tonight_changes_rooms", false)) \
+			or bool(overlay.seen.get("tip06_numbers_book", false)):
+		failures.append("The activation guard selected or marked unseen contextual advice before the real focus boundary.")
+	host.current_context_mode = "numbers"
+	host.pending_event_choice_popup_snapshot = {"popup_type": "numbers_surface"}
+	var focus_consumed := overlay.notify_action("focus:numbers:book")
+	if focus_consumed \
+			or overlay.active_lesson_id() != "tip06_tonight_changes_rooms" \
+			or not bool(overlay.seen.get("tip06_tonight_changes_rooms", false)) \
+			or bool(overlay.seen.get("tip06_numbers_book", false)):
+		failures.append("The genuine focus boundary did not admit exactly one visible contextual tip in catalog order.")
+	if not _normal_tip_pointer_blockers(overlay).is_empty():
+		failures.append("Replacement normal-run advice stopped being pointer-transparent after the genuine focus boundary.")
+	var first_surface_action_consumed := overlay.notify_action("numbers:digit")
+	if first_surface_action_consumed \
+			or not overlay.active_lesson_id().is_empty() \
+			or bool(overlay.seen.get("tip06_numbers_book", false)):
+		failures.append("The first Numbers control silently admitted replacement advice in the notification that dismissed the visible tip.")
+	overlay.evaluate_at_boundary(_environment_context())
+	if overlay.active_lesson_id() != "tip06_numbers_book" or not bool(overlay.seen.get("tip06_numbers_book", false)):
+		failures.append("A later genuine refresh boundary did not admit the deferred Numbers advice.")
+	var slip_consumed := overlay.notify_action("numbers:write_slip")
+	if slip_consumed or not overlay.active_lesson_id().is_empty():
+		failures.append("Normal Numbers advice consumed or remained over the ordinary slip action instead of yielding non-modally.")
+	host.free()
+
+
+static func _normal_tip_pointer_blockers(node: Node) -> Array:
+	var blockers: Array = []
+	if node == null:
+		return ["missing_panel"]
+	if node is Control and (node as Control).mouse_filter != Control.MOUSE_FILTER_IGNORE:
+		blockers.append((node as Control).name)
+	for child in node.get_children():
+		blockers.append_array(_normal_tip_pointer_blockers(child))
+	return blockers
 
 
 static func _check_discovery_boundary(library: Variant, failures: Array) -> void:
