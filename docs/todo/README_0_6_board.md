@@ -138,13 +138,13 @@ stated in each prompt** — `events.json` in particular is shared, and
 | teach06_1 | `teach06_1_onboarding_prompt.md` | DONE | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | PM:Codex/sub:teach-audit | 2026-08-16 | 2026-08-16 | Seven once-only public-surface lessons; final double-notify, non-consuming handoff, clickable pointer-safe placement, guided-prefix, secrecy, UI, determinism, and 75-state visual acceptance pass. |
 | env06_5 | `env06_5_scenario_backlog_prompt.md` | DONE | env06_1/2/3 (DONE) | playtest variety | PM:Codex/sub:env-audit | 2026-08-16 | 2026-08-17 | All 13 complete backlog scenarios accepted: exact 55-scenario catalog, 13 scenario-owned events, 20-seed full/launch reach, phases/save-load/layer/tutorial checks, systems/UI assertions, determinism, three-venue smoke, and zero-warning visual QA. |
 | art06_1 | `art06_1_punchline_layers_prompt.md` | CLOSED — FALSE PREMISE | env06_4 (DONE) | — | owner-side finding | 2026-08-16 | 2026-08-16 | **Stop work; do not build a renderer seam.** No environment renders from a raster — every venue is procedurally drawn via `pixel_scene_canvas.gd`'s `scene_type` dispatch, and `visual_context.asset_path` is metadata the canvas never consumes. `_draw_punchline_club()` and `_draw_punchline_back_room()` already exist, are dispatched, and are at detail parity with `_draw_bar`/`_draw_underground`. The objective was already met before the row was authored. New PNGs kept as metadata-only. |
-| fix06_2 | `fix06_2_street_craps_activation_mutation_prompt.md` | IN_PROGRESS | — (defect in landed craps06_2) | env06_5 acceptance | PM:Codex/sub:activation-guard | 2026-08-17 | | Reopened after the stronger cold-state guard proved the prior closeout exempted presentation hooks and non-default generated fixtures; seven passive Grand Casino dealer-day writes reproduced. Root repair and integrated gates remain required. |
+| fix06_2 | `fix06_2_street_craps_activation_mutation_prompt.md` | DONE | — (defect in landed craps06_2) | env06_5 acceptance | PM:Codex/sub:activation-guard | 2026-08-17 | 2026-08-17 | PM verified the generic observational activation repair across Street/Grand Craps, all generated games and seven passive hooks, portable tickets/autosave/staffing, and cold saved-Slot checkpoints; focused suites plus clean Systems/UI/determinism/75-state visual gates all PASS without waivers. |
 
 ### Wave D — Crew depth
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| crew06_5 | `crew06_5_recruitment_prompt.md` | IN_PROGRESS | crew06_1, env06_2, env06_3 | crew06_6/7/8 | PM:Codex/sub:crew-recruitment | 2026-08-17 | | PM-orchestrated isolated execution; subagent owns implementation only, PM owns board, integration, design-fidelity review, verification, archival, and push. |
+| crew06_5 | `crew06_5_recruitment_prompt.md` | DONE | crew06_1, env06_2, env06_3 | crew06_6/7/8 | PM:Codex/sub:crew-recruitment | 2026-08-17 | 2026-08-17 | PM verified all seven primary/fallback recruitment paths, diegetic signposting, rank services, seeded presence, save/ignored-run compatibility, lender behavior, authored voices, and clean Contract/Systems/UI/determinism/75-state visual gates. |
 | crew06_6 | `crew06_6_layer3_jobs_prompt.md` | TODO | crew06_1, env06_4, streets06_1, crew06_5 | crew06_8 | | | | |
 | crew06_7 | `crew06_7_coordinated_plays_prompt.md` | TODO | crew06_1, crew06_5 | crew06_8 | | | | |
 | crew06_8 | `crew06_8_heist_prompt.md` | TODO | crew06_5/6/7, craps06_1, streets06_1, env06_3 | crew06_9 | | | | |
@@ -436,6 +436,23 @@ What happens then is the owner's, not an agent's:
   `18515D3E083837485C5821F3FC27BE4B81134AB7B89D018290CC41C55CEC13CD`;
   all seeds have matching final hashes, with zero failures or warnings.
   Artifact: `.tmp/foundation_determinism_probe/`.
+- 2026-08-17 [fix06_2/crew06_5 visual QA] Current-main visual QA passed twice;
+  the isolated diagnostic rerun had exit 0 and empty stderr. The final report
+  contains 75 state snapshots, 117 screen-input events, and eight Coin Pusher
+  captures with zero warnings, errors, or overlap failures. Both explicit
+  environment/game-surface overlap assertions are true. The gate intentionally
+  records headless state/geometry rather than PNGs; PM inspected representative
+  normal, reduced-motion, lockdown, small-screen, scenario, shop, and machine
+  snapshots. Report: `user://foundation_visual_qa_report.json`.
+- 2026-08-17 [crew06_5 final scope/design review] PM walked Task sections 1–3
+  and QA 1–6 against `cc82fdfe` plus `4e86bbe1`, including the board-arbitrated
+  code-reality seams. All seven contacts have production primary/fallback
+  reachability, Associate promotion, diegetic Rook leads, rank-gated existing
+  services, and seeded action-boundary presence. Trust stays hidden, no quest
+  UI/log leakage or wall-clock mutation exists, ignored runs retain the byte
+  golden, save/load persists canonical crew06_1 fields, and the shipped Rook
+  lender handoff reaches Marker without a duplicate pending event. No
+  out-of-scope feature or owner-locked guess remains.
 - 2026-08-17 [pusher06_2] Exact runtime at `4159f393` is green across the 80
   carried hot actions and all hostile/fallback twins. Raw p95 improved 43.9%
   from 283.293 to 159.000 ms, but remains 9.94x over the 16 ms gate; production
@@ -1142,13 +1159,13 @@ What happens then is the owner's, not an agent's:
   timing window at
   `.tmp/test_reports/20260817_0540_postmerge_saved_slot_ui_authoritative`:
   0 failures, `ui_scene_compile` 57.828 s / 124.851 s, every stage exit 0, and
-  no timeout/stderr issues. Determinism and visual gates remain.
+  no timeout/stderr issues. Determinism and visual gates subsequently passed.
 - 2026-08-17 [crew06_5] PM completed the prompt-required manual voice review of
   all new lines against the seven authored character styles; each member keeps
   a distinct conforming register, with no tracker copy or system leakage.
 - 2026-08-17 [fix06_2/crew06_5] Current-main determinism is green for all 10
   seeds and 590 checkpoints; both reports are byte-identical with combined hash
-  `3567232055`, zero failures, and zero warnings. Visual QA remains.
+  `3567232055`, zero failures, and zero warnings. Visual QA subsequently passed.
 - 2026-08-17 [pusher06_2] Native provisioning/export hardening `ad11f2fa` passed
   every re-audited hostile except the actual Web-preset capability: extension
   support remains disabled. The row stays IN_PROGRESS until the preset is
@@ -1156,3 +1173,12 @@ What happens then is the owner's, not an agent's:
 - 2026-08-17 [pusher06_2] `5c06e08a` closes the Web-preset hardening blocker;
   independent exact named-preset hostiles are green. The row remains
   IN_PROGRESS for the native solver and real Windows/Web runtime gates.
+- 2026-08-17 [fix06_2] DONE after reopened acceptance. The cold seven-hook guard
+  and saved-Slot hostile now prove passive activation is observational across
+  the full game class; focused Slot/Games plus clean Systems/UI/10-seed
+  determinism/75-state visual gates pass. No state field, budget, assertion, or
+  feature was waived; the archived execution record preserves both reopenings.
+- 2026-08-17 [crew06_5] DONE. PM completed verbatim scope, roadmap fidelity,
+  lender compatibility, manual voice, Contract, Systems, UI, determinism, and
+  visual reviews. Deterministic recruitment/presence and rank-service APIs now
+  unblock `crew06_6`, `crew06_7`, and `crew06_8`.

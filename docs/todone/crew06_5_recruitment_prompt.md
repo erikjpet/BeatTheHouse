@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `crew06_5` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-17
+- **Completion/implementation commits:** Recruitment/rank/presence implementation series `916ac806`, `354918b9`, `067f5e6b`, `7ee14f05`, `7e5599b4`, `71e16cbc`, `f3af1f39`, `507eadbb`, `772561db`, `166aadc0`, `a555d1df`, `3ca36521`, with acceptance-fixture corrections `9b2bcede`, `d4ad8e0d`; integrated by `cc82fdfe`; shipped Crew lender compatibility correction `4e86bbe1`.
+- **Verification:** Focused Contract PASS (7 primary/fallback routes, rank gates/services, seeded presence, signposting, save/load, ignored-run byte golden) in 190.136 s / 230.391 s; integrated Systems 49/49 in 39.895 s / 43.712 s; UI 0 failures with `ui_scene_compile` 57.828 s / 124.851 s; 10-seed determinism 590/590 checkpoints with identical combined hash `3567232055`; 75-state visual QA, 0 warnings/overlaps/stderr; PM manual voice review passed all seven authored registers.
+- **Deviations:** Code-reality arbitration preserved the shipped Rook Crew-loan/legacy-Marker flow instead of inventing a duplicate fallback; Mags consumes the live `back_alley_fence_night` anchor and a generated casino-layer fallback because the roadmap's pawn-shop/Punchline wording did not match landed scenario topology; Velvet fallback is Slow Night only; Bishop refreshes within the Grand Casino cage subroom. All decisions are recorded on the board; no owner-locked design was guessed.
 
 # Agent Prompt — 0.6 crew06_5: Crew Recruitment (Seven Placements)
 
