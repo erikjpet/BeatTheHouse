@@ -2228,29 +2228,30 @@ func _apply_post_action_environment_interrupt(source: String) -> bool:
 		return false
 	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
 	var debug_enabled := not debug_timing.is_empty() and current_game != null
-	var debug_stage_started_usec := Time.get_ticks_usec() if debug_enabled else 0
+	var debug_stage_started_usec := 0
 	post_interrupt_talk_boundary_visit_count += 1
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
 	var talk_advanced := _advance_talk_event_action_boundary(source)
 	if debug_enabled:
 		debug_timing["interrupt_advance_talk"] = Time.get_ticks_usec() - debug_stage_started_usec
 	if talk_advanced:
 		return true
-	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
 	post_interrupt_closing_visit_count += 1
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
 	var closing_applied := _apply_closing_time_action_boundary(source)
 	if debug_enabled:
 		debug_timing["interrupt_closing_time"] = Time.get_ticks_usec() - debug_stage_started_usec
 	if closing_applied:
 		return true
-	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
 	post_interrupt_forced_travel_visit_count += 1
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
 	var travel_applied := _apply_forced_environment_travel(source)
 	if debug_enabled:
 		debug_timing["interrupt_forced_travel"] = Time.get_ticks_usec() - debug_stage_started_usec
 	if travel_applied:
 		return true
-	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
 	post_interrupt_talk_enqueue_visit_count += 1
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
 	var talk_enqueued := _enqueue_talk_events_for_action_boundary(source)
 	if debug_enabled:
 		debug_timing["interrupt_enqueue_talk"] = Time.get_ticks_usec() - debug_stage_started_usec
@@ -2258,8 +2259,8 @@ func _apply_post_action_environment_interrupt(source: String) -> bool:
 		_autosave_foundation_run("Autosaved.")
 		_refresh_talk_dock()
 		return true
-	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
 	post_interrupt_unavoidable_visit_count += 1
+	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
 	var unavoidable_triggered := _maybe_trigger_unavoidable_event(source)
 	if debug_enabled:
 		debug_timing["interrupt_unavoidable_event"] = Time.get_ticks_usec() - debug_stage_started_usec
