@@ -564,6 +564,15 @@ What happens then is the owner's, not an agent's:
   latest stable is 4.5 `e83fd...`, while Godot 4.6-stable is engine commit
   `89cea143...`. Do not pin `godot-cpp` master blindly; generate and hash-pin the
   API/interface from the exact engine or verify a specific upstream sync commit.
+- 2026-08-17 [pusher06_2 4.6 binding pin] Candidate upstream commit `d7b6162`
+  is technically credible but returned for truthful provenance. It is official
+  `godot-cpp` master/v10 Beta, not a nonexistent 4.6-stable tag; it is post-4.6
+  and also carries gated 4.7 additions. With `api_version=4.6` it selects a
+  file declaring Godot 4.6.0 stable/official/single at SHA-256
+  `00A3AD6DF2361ED3DF6EF9BC8717FE0F49112012EE6E87A7B4CFB34465C9BEED`.
+  Record `refs/heads/master` plus immutable commit, disclose the reviewed Beta/
+  post-release risk, and lock/assert the exact 4.6 API and interface provenance
+  instead of fabricating a tag.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
@@ -1288,3 +1297,6 @@ What happens then is the owner's, not an agent's:
 - 2026-08-17 [pusher06_2] Load-crash forensics rules out gameplay/kernel and new
   binding methods; the pinned 4.5 godot-cpp tree is the leading ABI mismatch
   against Godot 4.6. Clean 4.5/4.6 scaffold discrimination is in progress.
+- 2026-08-17 [pusher06_2] Exact `d7b6162` 4.6 API selection is credible, but the
+  lock's fabricated tag and incomplete Beta/provenance disclosure are rejected;
+  artifact hashes and truthful source ref are required before runtime evidence.
