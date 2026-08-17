@@ -122,6 +122,13 @@ $script:FoundationSystemsUserPathOwners = [ordered]@{
     "user://music_wav_cache_fixture.wav" = "music_fx_foundation"
 }
 
+$script:FoundationShardClearedEnvironmentNames = @(
+    "BTH_DISTRIBUTION_DATA_ROOT",
+    "BTH_DISTRIBUTION_BUILD",
+    "BTH_META_COLLECTION_PATH",
+    "BTH_PROFILE_INVENTORY_PATH"
+)
+
 function Get-FoundationSystemsCheckIds {
     return @($script:FoundationSystemsCheckIds)
 }
@@ -132,6 +139,85 @@ function Get-FoundationSystemsShardPlan {
 
 function Get-FoundationSystemsUserPathOwners {
     return $script:FoundationSystemsUserPathOwners
+}
+
+function Get-FoundationShardClearedEnvironmentNames {
+    return @($script:FoundationShardClearedEnvironmentNames)
+}
+
+function Test-FoundationJunctionTargetSafe {
+    param(
+        [string]$ProjectRoot,
+        [string]$TargetPath
+    )
+    $project = [System.IO.Path]::GetFullPath($ProjectRoot).TrimEnd([char[]]@([char]'\', [char]'/'))
+    $target = [System.IO.Path]::GetFullPath($TargetPath).TrimEnd([char[]]@([char]'\', [char]'/'))
+    $separator = [System.IO.Path]::DirectorySeparatorChar
+    $projectContainsTarget = $target.StartsWith($project + $separator, [System.StringComparison]::OrdinalIgnoreCase)
+    $targetContainsProject = $project.StartsWith($target + $separator, [System.StringComparison]::OrdinalIgnoreCase)
+    return -not ($project.Equals($target, [System.StringComparison]::OrdinalIgnoreCase) -or $projectContainsTarget -or $targetContainsProject)
+}
+
+function Get-FoundationPartialLaunchCleanupTargets {
+    param([object[]]$Records)
+    $processIds = @()
+    $projectRoots = @()
+    foreach ($record in @($Records)) {
+        if ([bool]$record.process_started -and -not [bool]$record.process_has_exited -and [int]$record.process_id -gt 0) {
+            $processIds += [int]$record.process_id
+        }
+        if (-not [string]::IsNullOrWhiteSpace([string]$record.project_root)) {
+            $projectRoots += [string]$record.project_root
+        }
+    }
+    return [pscustomobject]@{
+        process_ids = @($processIds)
+        project_roots = @($projectRoots)
+    }
+}
+
+function New-FoundationConcurrencyGuardStage {
+    param([string]$Message)
+    return [pscustomobject][ordered]@{
+        name = "concurrent_godot_guard"
+        command = "System.Threading.Mutex"
+        arguments = @()
+        exit_code = 125
+        timed_out = $false
+        duration_msec = 0
+        stdout = ""
+        stderr = ""
+        error = $Message
+    }
+}
+
+function New-FoundationHarnessExceptionStage {
+    param(
+        [string]$GodotPath,
+        [string]$Message,
+        [int]$DurationMsec,
+        [double]$BaselineSec,
+        [double]$BudgetSec,
+        [string]$StdoutPath,
+        [string]$StderrPath
+    )
+    return [pscustomobject][ordered]@{
+        name = "foundation_systems"
+        command = $GodotPath
+        arguments = @("four deterministic systems shards")
+        exit_code = 1
+        timed_out = $false
+        duration_msec = $DurationMsec
+        duration_sec = [Math]::Round($DurationMsec / 1000.0, 3)
+        suite_time_baseline_sec = $BaselineSec
+        suite_time_budget_sec = $BudgetSec
+        suite_time_budget_exceeded = ($BudgetSec -gt 0.0 -and ($DurationMsec / 1000.0) -gt $BudgetSec)
+        stderr_issue_count = 1
+        stderr_issues = @($Message)
+        stdout = $StdoutPath
+        stderr = $StderrPath
+        error = $Message
+    }
 }
 
 function Get-FoundationCacheFingerprint {
@@ -157,8 +243,13 @@ function Resolve-FoundationSystemsExitCode {
         return 124
     }
     foreach ($shard in $ShardResults) {
-        if ([int]$shard.exit_code -ne 0) {
-            return [int]$shard.exit_code
+        if ([int]$shard.raw_exit_code -ne 0) {
+            return [int]$shard.raw_exit_code
+        }
+    }
+    foreach ($shard in $ShardResults) {
+        if ([int]$shard.exit_code -eq 127) {
+            return 127
         }
     }
     if (-not $AggregatePassed) {
@@ -289,6 +380,7 @@ function Merge-FoundationSystemsShardReports {
         $shardSummaries += [ordered]@{
             id = $shardId
             exit_code = [int]$shard.exit_code
+            raw_exit_code = [int]$shard.raw_exit_code
             timed_out = [bool]$shard.timed_out
             duration_msec = [int]$shard.duration_msec
             report = [string]$shard.report_path
@@ -297,6 +389,7 @@ function Merge-FoundationSystemsShardReports {
             stderr_issue_count = @($shard.stderr_issues).Count
             stderr_issues = @($shard.stderr_issues)
             last_started_check = if ($null -ne $report) { [string]$report.last_started_check } else { [string]$shard.last_started_check }
+            report_available = ($null -ne $report)
             executed_check_ids = $executedIds
         }
     }
@@ -324,7 +417,7 @@ function Merge-FoundationSystemsShardReports {
         $lastStarted = [string]$ExpectedIds[$ExpectedIds.Count - 1]
     }
     else {
-        $fatalCandidates = @($shardSummaries | Where-Object { $_.exit_code -ne 0 } | ForEach-Object { [string]$_.last_started_check } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        $fatalCandidates = @($shardSummaries | Where-Object { $_.exit_code -ne 0 -or -not $_.report_available } | ForEach-Object { [string]$_.last_started_check } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
         foreach ($id in $ExpectedIds) {
             if ($fatalCandidates -contains $id) {
                 $lastStarted = $id
