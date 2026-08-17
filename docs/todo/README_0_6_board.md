@@ -316,6 +316,31 @@ What happens then is the owner's, not an agent's:
   support ties, 48 ticks, trace, density, outcomes, and synchronous semantics
   remain unchanged; a hostile center-crossing oracle fixture covers the lazy
   path. Runtime exactness and the 16 ms performance gates remain pending.
+- 2026-08-17 [systems gate] The corrected integrated systems matrix now has
+  zero assertion/stderr failures, including Crew recruitment and the complete
+  seven-hook activation guard, but the unchanged wall gate remains red at
+  58.496 s versus 43.712 s (48.515 s internal plus about 9.98 s process
+  overhead). In-check setup reuse saved roughly 2.9 s but cannot close the
+  remaining wall gap. The accepted next harness direction is deterministic
+  multi-process sharding of the existing systems registration: every check
+  must run exactly once, aggregate failures/stderr/timeouts must remain honest,
+  and no suite, seed, assertion, registration, or budget may move or change.
+- 2026-08-17 [integrated UI] The UI gate currently stops before assertions
+  because `New-SplitTestRunner` concatenates descendant implementations with a
+  contiguous parent-only fallback-stub block, producing duplicate function
+  declarations. The parent stubs remain necessary for standalone inheritance;
+  the generic correction will mark and omit only that block in generated split
+  runners, with balanced-marker and exact-once generation checks. No UI
+  assertion or implementation function may be removed.
+- 2026-08-17 [pusher06_2] Exact runtime at `4159f393` is green across the 80
+  carried hot actions and all hostile/fallback twins. Raw p95 improved 43.9%
+  from 283.293 to 159.000 ms, but remains 9.94x over the 16 ms gate; production
+  drop/nudge are 223.999/253.298 ms while draw and frame budgets pass. Eager
+  candidate priming moved the dominant cost to grid/cache construction
+  (62.612 ms mean). A lazy allocation-stable cache pass is in progress, but
+  profiling already shows current GDScript cannot credibly close 16 ms without
+  a native packed-core seam if that pass remains over budget; no threshold,
+  density, trace, ordering, or outcome change is authorized.
 - 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
   is accepted, both rows may execute concurrently only in isolated worktrees.
   They will share one read-only presence seam over `crew_presence`:
