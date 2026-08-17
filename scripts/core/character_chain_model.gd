@@ -6,6 +6,7 @@ extends RefCounted
 # selects deterministic world anchors and projects eligible event fixtures.
 
 const DATA_PATH := "res://data/story/character_chains.json"
+const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const INJECTED_EVENT_IDS_KEY := "character_chain_event_ids"
 const INJECTED_AMBIENT_LINE_KEY := "character_chain_ambient_line"
 const SAL_TARGET_PREFIX := "chain06_sal_target_"
@@ -54,6 +55,10 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 	if not injected.is_empty() or not prior_ids.is_empty():
 		environment[INJECTED_EVENT_IDS_KEY] = injected
 		environment["event_ids"] = event_ids
+		# Chain beats are projected after the base room layout exists. Reconcile
+		# their physical icons immediately so saving and restoring cannot add a
+		# rectangle that was absent from the pre-save environment.
+		environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment)
 	_apply_cass_environment_effects(run_state, environment)
 	_apply_rourke_staff_register(run_state, environment)
 

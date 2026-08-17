@@ -4541,7 +4541,7 @@
     "payload": {"kind": "crew_collection_press", "summary": "Take clean cash or press for heat.", "choices": []}
   },
   {
-    "id": "chain06_cass_first_contact", "display_name": "Cass Venn", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["casino", "shop"],
+    "id": "chain06_cass_first_contact", "display_name": "Cass Venn", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["casino", "shop", "club", "boss"],
     "speaker": {"role": "patron", "name": "Cass Venn", "character_id": "cass_rival_counter", "voice_line_key": "rival_counter", "silhouette": "glasses", "bind": "none"},
     "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Cass counts from the other end.", "trigger": {"type": "manual"},
     "conditions": {"requires_traveler_here": ["cass_rival_counter"], "missing_story_flags": ["chain06_cass_first_contact", "chain06_cass_ending_truce", "chain06_cass_ending_tipoff", "chain06_cass_ending_flameout"]},
@@ -4551,7 +4551,7 @@
     ]}
   },
   {
-    "id": "chain06_cass_escalation", "display_name": "Her Seat", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["casino", "shop"],
+    "id": "chain06_cass_escalation", "display_name": "Her Seat", "type": "social", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["casino", "shop", "club", "boss"],
     "speaker": {"role": "patron", "name": "Cass Venn", "character_id": "cass_rival_counter", "voice_line_key": "rival_counter", "silhouette": "glasses", "bind": "none"},
     "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Cass finds you in the seat she marked.", "trigger": {"type": "manual"},
     "conditions": {"requires_traveler_here": ["cass_rival_counter"], "requires_story_flags": {"chain06_cass_first_contact": true}, "missing_story_flags": ["chain06_cass_escalated", "chain06_cass_ending_truce", "chain06_cass_ending_tipoff", "chain06_cass_ending_flameout"]},
@@ -4561,7 +4561,7 @@
     ]}
   },
   {
-    "id": "chain06_cass_proposition", "display_name": "Split the Town", "type": "temptation", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["casino", "shop"],
+    "id": "chain06_cass_proposition", "display_name": "Split the Town", "type": "temptation", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["casino", "shop", "club", "boss"],
     "speaker": {"role": "patron", "name": "Cass Venn", "character_id": "cass_rival_counter", "voice_line_key": "rival_counter", "silhouette": "glasses", "bind": "none"},
     "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Cass draws one line through the town.", "trigger": {"type": "manual"},
     "conditions": {"requires_traveler_here": ["cass_rival_counter"], "requires_story_flags": {"chain06_cass_escalated": true}, "missing_story_flags": ["chain06_cass_proposition_done", "chain06_cass_ending_truce", "chain06_cass_ending_tipoff", "chain06_cass_ending_flameout"]},
@@ -4572,7 +4572,7 @@
     ]}
   },
   {
-    "id": "chain06_cass_tipoff", "display_name": "The Warning Signs", "type": "security", "interaction_mode": "interactable", "scopes": ["casino", "shop"],
+    "id": "chain06_cass_tipoff", "display_name": "The Warning Signs", "type": "security", "interaction_mode": "interactable", "scopes": ["casino", "shop", "club", "boss"],
     "asset_path": "res://assets/art/events/heat_at_exit.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "The phone rings. The floorman checks you.", "trigger": {"type": "manual"},
     "conditions": {"requires_traveler_here": ["cass_rival_counter"], "requires_story_flags": {"chain06_cass_tipoff_pending": true}, "missing_story_flags": ["chain06_cass_ending_tipoff"]},
     "payload": {"summary": "The phone rings. The floorman checks you.", "choices": [
