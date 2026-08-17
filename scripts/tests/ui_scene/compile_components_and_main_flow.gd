@@ -1335,13 +1335,15 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# was captured on that detached commit with meta injection explicitly disabled,
 	# then reproduced byte-for-byte on the delivery tree. Hashes cover each full
 	# serialized value; there are no field exclusions or post-change twin values.
+	# The two whole-state hashes were recaptured at pusher-final commit 53f4d5bd
+	# because its authorized physical machine snapshots supersede the old pile.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "5bb556d6d8c42411355f571dbc7b4bdbffb3461b3291b1aa4691a52bb8ffb1a1",
+		"current_environment_sha256": "46aae4e85eccc9885d69b2e18498ec5f6d0ada58877f7c9b5e43455811963ad1",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
-		"provenance_commit": "f4a66f679d1d507c5f79aa02960fb65760d0646b",
+		"provenance_commit": "53f4d5bda64e67139af7a58f3822a878346c1e4c",
 		"rng_state": 70883311,
 		"route_choice_sha256": "3fd96381385eb4ba8868bddac39f233b6c62d586e0cd4b249f45e050cb10657b",
 		"seed": "DELIVERY-ORDINARY-BASELINE",
@@ -1349,7 +1351,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0801d8c617e0ab15f304eae949a7c70fae01fc4031f24580d34f74e2dedd72ce",
-		"world_map_sha256": "8db6efc4c8ca6fc8b5d0562de76a96c2091e72bb77fe4c87ca8dec22c9c79f68",
+		"world_map_sha256": "8ea7417a00d1e8b9de7090b6cb73c8ec2d1111f5977e13453c32619486a2688e",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -1390,7 +1392,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"current_environment_sha256": JSON.stringify(run_state.current_environment).sha256_text(),
 		"current_world_node_id": run_state.current_world_node_id(),
 		"heat_delta": run_state.suspicion_level() - heat_before,
-		"provenance_commit": "f4a66f679d1d507c5f79aa02960fb65760d0646b",
+		"provenance_commit": "53f4d5bda64e67139af7a58f3822a878346c1e4c",
 		"rng_state": run_state.rng_state,
 		"route_choice_sha256": JSON.stringify(choice).sha256_text(),
 		"seed": "DELIVERY-ORDINARY-BASELINE",

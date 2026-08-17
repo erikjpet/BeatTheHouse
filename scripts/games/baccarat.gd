@@ -2908,7 +2908,7 @@ func _draw_croupier_station(surface, state: Dictionary) -> void:
 
 
 func _draw_hand_explainer(surface, state: Dictionary) -> void:
-	var explainer := _copy_dict(state.get("baccarat_explainer", {}))
+	var explainer := _draw_dict_view(state.get("baccarat_explainer", {}))
 	if explainer.is_empty():
 		return
 	var rect := Rect2(684, 14, 192, 58)
@@ -2927,8 +2927,8 @@ func _draw_table_patrons(surface, state: Dictionary) -> void:
 
 
 func _draw_bet_zones(surface, state: Dictionary) -> void:
-	var targets := _dictionary_array(state.get("bet_targets", []))
-	var bets := _bet_dict(state.get("baccarat_bets", {}))
+	var targets := _draw_array_view(state.get("bet_targets", []))
+	var bets := _draw_dict_view(state.get("baccarat_bets", {}))
 	for i in range(targets.size()):
 		var target: Dictionary = targets[i]
 		var rect: Rect2 = target.get("rect", Rect2())
@@ -2949,9 +2949,9 @@ func _draw_bet_zones(surface, state: Dictionary) -> void:
 
 
 func _draw_card_areas(surface, state: Dictionary) -> void:
-	var last_hand := _copy_dict(state.get("last_hand", {}))
-	var player_cards := _card_array(last_hand.get("player_cards", []))
-	var banker_cards := _card_array(last_hand.get("banker_cards", []))
+	var last_hand := _draw_dict_view(state.get("last_hand", {}))
+	var player_cards := _draw_array_view(last_hand.get("player_cards", []))
+	var banker_cards := _draw_array_view(last_hand.get("banker_cards", []))
 	var deal_active := bool(surface.surface_animation_active(BACCARAT_DEAL_CHANNEL))
 	var visible_cards := _visible_animation_cards(surface, state) if deal_active else []
 	if deal_active and not visible_cards.is_empty():
@@ -2982,7 +2982,7 @@ func _draw_card_areas(surface, state: Dictionary) -> void:
 
 func _active_squeeze_event(surface, state: Dictionary) -> Dictionary:
 	var progress_elapsed: float = float(surface.surface_elapsed(BACCARAT_DEAL_CHANNEL))
-	for event_value in _dictionary_array(state.get("deal_animation_events", [])):
+	for event_value in _draw_array_view(state.get("deal_animation_events", [])):
 		var event: Dictionary = event_value
 		if str(event.get("type", "")) != "squeeze":
 			continue
@@ -3009,7 +3009,7 @@ func _draw_total_badge(surface, rect: Rect2, label: String, total: int, accent: 
 
 func _visible_animation_cards(surface, state: Dictionary) -> Array:
 	var progress_elapsed: float = float(surface.surface_elapsed(BACCARAT_DEAL_CHANNEL))
-	var events := _dictionary_array(state.get("deal_animation_events", []))
+	var events := _draw_array_view(state.get("deal_animation_events", []))
 	var visible: Array = []
 	for event_value in events:
 		var event: Dictionary = event_value
@@ -3023,14 +3023,14 @@ func _visible_animation_cards(surface, state: Dictionary) -> Array:
 		var eased := 1.0 - pow(1.0 - t, 3.0)
 		var from_pos := _event_vector(event.get("from", []), CARD_SHOE_POS)
 		var to_pos := _event_vector(event.get("to", []), CARD_SHOE_POS)
-		visible.append({"card": _copy_dict(event.get("card", {})), "position": from_pos.lerp(to_pos, eased)})
+		visible.append({"card": _draw_dict_view(event.get("card", {})), "position": from_pos.lerp(to_pos, eased)})
 	return visible
 
 
 func _draw_bet_chips(surface, state: Dictionary) -> void:
-	var bets := _bet_dict(state.get("baccarat_bets", {}))
-	var targets := _dictionary_array(state.get("bet_targets", []))
-	var denoms := _int_array(state.get("chip_denominations", [5, 10, 20, 25, 50, 100]))
+	var bets := _draw_dict_view(state.get("baccarat_bets", {}))
+	var targets := _draw_array_view(state.get("bet_targets", []))
+	var denoms := _draw_array_view(state.get("chip_denominations", [5, 10, 20, 25, 50, 100]))
 	_draw_patron_bet_chips(surface, state, targets)
 	for target_value in targets:
 		var target: Dictionary = target_value
@@ -3046,10 +3046,10 @@ func _draw_bet_chips(surface, state: Dictionary) -> void:
 
 
 func _draw_patron_bet_chips(surface, state: Dictionary, targets: Array) -> void:
-	var patrons := _dictionary_array(state.get("patrons", []))
+	var patrons := _draw_array_view(state.get("patrons", []))
 	for i in range(patrons.size()):
 		var patron: Dictionary = patrons[i]
-		var wager := _copy_dict(patron.get("visible_bet", {}))
+		var wager := _draw_dict_view(patron.get("visible_bet", {}))
 		var target := _baccarat_target_by_id(targets, str(wager.get("id", "")))
 		if target.is_empty():
 			continue
@@ -3094,7 +3094,7 @@ func _draw_shoe_and_discard(surface, state: Dictionary) -> void:
 		surface.draw_rect(Rect2(shoe.position + Vector2(12 + i * 7, 12 - i), Vector2(30, 24)), Color(0.94, 0.90, 0.78, 0.85))
 	surface.draw_rect(shoe, C_YELLOW, false, 1)
 	surface.surface_label_centered("%d LEFT" % int(state.get("shoe_remaining", 0)), Rect2(716, 140, 90, 14), 8, C_YELLOW)
-	var penetration := _copy_dict(state.get("shoe_penetration", {}))
+	var penetration := _draw_dict_view(state.get("shoe_penetration", {}))
 	if not penetration.is_empty():
 		surface.surface_label_centered("%d%% USED" % int(penetration.get("penetration_percent", 0)), Rect2(716, 154, 90, 12), 7, C_SOFT)
 	var discard := Rect2(102, 86, 78, 42)
@@ -3108,7 +3108,7 @@ func _draw_shoe_and_discard(surface, state: Dictionary) -> void:
 
 
 func _draw_baccarat_road(surface, state: Dictionary) -> void:
-	var road := _copy_dict(state.get("baccarat_road", {}))
+	var road := _draw_dict_view(state.get("baccarat_road", {}))
 	if road.is_empty():
 		return
 	var rect := Rect2(18, 150, 146, 94)
@@ -3117,7 +3117,7 @@ func _draw_baccarat_road(surface, state: Dictionary) -> void:
 	surface.surface_label_centered(str(road.get("summary", "")).left(18), Rect2(rect.position + Vector2(70, 5), Vector2(66, 12)), 7, C_SOFT)
 	var rows := maxi(1, int(road.get("rows", BACCARAT_ROAD_ROWS)))
 	var columns := maxi(1, int(road.get("columns", BACCARAT_ROAD_COLUMNS)))
-	var beads := _dictionary_array(road.get("beads", []))
+	var beads := _draw_array_view(road.get("beads", []))
 	var cell := 9.6
 	var origin := rect.position + Vector2(10, 26)
 	for column_index in range(columns):
@@ -3155,9 +3155,9 @@ func _draw_edge_sort_panel(surface, state: Dictionary) -> void:
 	if bool(state.get("shoe_read_active", false)):
 		_draw_shoe_read_panel(surface, state)
 		return
-	var status := _copy_dict(state.get("edge_sort_status", state.get("baccarat_edge_sort_status", {})))
-	var challenge := _copy_dict(state.get("edge_sort_challenge", state.get("baccarat_edge_sort_challenge", {})))
-	var edge := _copy_dict(state.get("edge_sort_edge", state.get("baccarat_edge_sort_edge", {})))
+	var status := _draw_dict_view(state.get("edge_sort_status", state.get("baccarat_edge_sort_status", {})))
+	var challenge := _draw_dict_view(state.get("edge_sort_challenge", state.get("baccarat_edge_sort_challenge", {})))
+	var edge := _draw_dict_view(state.get("edge_sort_edge", state.get("baccarat_edge_sort_edge", {})))
 	if challenge.is_empty() and edge.is_empty():
 		return
 	var rect := Rect2(202, 72, 492, 28)
@@ -3190,8 +3190,8 @@ func _draw_edge_sort_panel(surface, state: Dictionary) -> void:
 
 
 func _draw_shoe_read_panel(surface, state: Dictionary) -> void:
-	var challenge := _copy_dict(state.get("shoe_read_challenge", {}))
-	var status := _copy_dict(state.get("shoe_read_status", {}))
+	var challenge := _draw_dict_view(state.get("shoe_read_challenge", {}))
+	var status := _draw_dict_view(state.get("shoe_read_status", {}))
 	if challenge.is_empty():
 		return
 	var rect := Rect2(202, 72, 492, 28)
@@ -3236,7 +3236,7 @@ func _draw_round_timer(surface, state: Dictionary) -> void:
 
 
 func _draw_chip_rack(surface, state: Dictionary) -> void:
-	var denoms := _int_array(state.get("chip_denominations", [5, 10, 20, 25, 50, 100]))
+	var denoms := _draw_array_view(state.get("chip_denominations", [5, 10, 20, 25, 50, 100]))
 	var selected := int(state.get("selected_chip", denoms[0]))
 	surface.surface_label("CHIPS", Vector2(28, CONSOLE_Y + 19), 12, C_YELLOW)
 	for i in range(denoms.size()):
@@ -3319,13 +3319,24 @@ func _draw_chip_button(surface, center: Vector2, value: int, action: String, ind
 
 
 func _draw_chip_stack(surface, pos: Vector2, stack_value: Variant, scale: float = 1.0) -> void:
-	var stacks := _dictionary_array(stack_value)
+	var stacks := _draw_array_view(stack_value)
 	var y := 0.0
 	for stack in stacks:
 		var count := clampi(int(stack.get("count", 1)), 1, 8)
 		for i in range(count):
 			_draw_casino_chip(surface, pos + Vector2(0, y - float(i) * 3.0 * scale), int(stack.get("value", 1)), 12.0 * scale, 0.94, false)
 		y -= float(count + 1) * 3.0 * scale
+
+
+static func _draw_dict_view(value: Variant) -> Dictionary:
+	# Surface snapshots are immutable for the duration of a draw. Borrowing the
+	# already-normalized value avoids deep-copy churn without moving authority or
+	# permitting any render helper to write into gameplay state.
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _draw_array_view(value: Variant) -> Array:
+	return value as Array if typeof(value) == TYPE_ARRAY else []
 
 
 func _draw_casino_chip(surface, center: Vector2, value: int, radius: float, alpha: float = 1.0, selected: bool = false) -> void:

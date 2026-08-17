@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `rework06_2` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-17
+- **Completion/implementation commits:** `8be3efab`, `6109e81a`, `6cf0a1e8`, `e4e35428`, `85a928c6`, `53f4d5bd`, `56b13ce0`, `c820b67e`, `e516facb`
+- **Verification:** PM scope/design review complete. Coin Pusher and Baccarat focused suites, the complete UI matrix, determinism twice (10 seeds, 590 checkpoints, hash `3543536704`), canonical visual QA (zero warnings), shipped-cap performance at 48 bodies, EV harnesses, all six feel captures, and exact 200-action Windows/Web export parity passed. Systems assertions and stderr checks were all green; final wall time was baseline-equivalent under the same load (`45.549s` versus `45.377s`) and was accepted under the owner's environmental-timing rule.
+- **Deviations:** The accepted simulation cap is 48. The owner-confirmed density/presentation gap belongs to `pusher06_2`, not this solver rework. No assertion, budget, liveness floor, or deterministic check was weakened.
 
 # Agent Prompt — 0.6 rework06_2: Real Coin Pusher Simulation (replaces the coarse pile model)
 
