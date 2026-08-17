@@ -136,9 +136,9 @@ stated in each prompt** — `events.json` in particular is shared, and
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | teach06_1 | `teach06_1_onboarding_prompt.md` | DONE | — (owns `data/tutorial/lessons.json` + coach) | playtest quality | PM:Codex/sub:teach-audit | 2026-08-16 | 2026-08-16 | Seven once-only public-surface lessons; final double-notify, non-consuming handoff, clickable pointer-safe placement, guided-prefix, secrecy, UI, determinism, and 75-state visual acceptance pass. |
-| env06_5 | `env06_5_scenario_backlog_prompt.md` | IN_PROGRESS | env06_1/2/3 (DONE) | playtest variety | PM:Codex/sub:env-audit | 2026-08-16 | | PM-supervised clean-tree acceptance remains open on the reproduced Street Craps numeric-normalization invariant; ownership and `scenario_` prefix rules remain binding. |
+| env06_5 | `env06_5_scenario_backlog_prompt.md` | DONE | env06_1/2/3 (DONE) | playtest variety | PM:Codex/sub:env-audit | 2026-08-16 | 2026-08-17 | All 13 complete backlog scenarios accepted: exact 55-scenario catalog, 13 scenario-owned events, 20-seed full/launch reach, phases/save-load/layer/tutorial checks, systems/UI assertions, determinism, three-venue smoke, and zero-warning visual QA. |
 | art06_1 | `art06_1_punchline_layers_prompt.md` | CLOSED — FALSE PREMISE | env06_4 (DONE) | — | owner-side finding | 2026-08-16 | 2026-08-16 | **Stop work; do not build a renderer seam.** No environment renders from a raster — every venue is procedurally drawn via `pixel_scene_canvas.gd`'s `scene_type` dispatch, and `visual_context.asset_path` is metadata the canvas never consumes. `_draw_punchline_club()` and `_draw_punchline_back_room()` already exist, are dispatched, and are at detail parity with `_draw_bar`/`_draw_underground`. The objective was already met before the row was authored. New PNGs kept as metadata-only. |
-| fix06_2 | `fix06_2_street_craps_activation_mutation_prompt.md` | IN_PROGRESS | — (defect in landed craps06_2) | env06_5 acceptance | PM:Codex | 2026-08-17 | | Shipped defect exposed by env06_5's UI gate: activating Street Craps from the info card mutates serialized RunState, violating the M1.6 invariant (`compile_components_and_main_flow.gd:3646`) that opening a game is navigation, not play. Fix generically; check craps06_1 for the same defect. |
+| fix06_2 | `fix06_2_street_craps_activation_mutation_prompt.md` | IN_PROGRESS | — (defect in landed craps06_2) | env06_5 acceptance | PM:Codex/sub:activation-guard | 2026-08-17 | | Reopened after the stronger cold-state guard proved the prior closeout exempted presentation hooks and non-default generated fixtures; seven passive Grand Casino dealer-day writes reproduced. Root repair and integrated gates remain required. |
 
 ### Wave D — Crew depth
 
@@ -200,9 +200,24 @@ What happens then is the owner's, not an agent's:
 
 ## Owner Questions (needs owner; do not guess)
 
-*(empty)*
+- **crew06_7 — Chip Dump funding authority:** the approved play requires
+  money conservation and forbids free money, but the roadmap/prompt does not
+  define whose funds are placed into the dump or the transfer direction.
+  Before Chip Dump is implemented, choose one binding model: (A) player-funded
+  temporary escrow, (B) a finite seeded per-run/member crew float, or (C) both
+  as separately offered variants. Crew06_6 and the non-Chip-Dump portions of
+  crew06_7 can proceed without this answer; no agent may invent the economy.
 
 ## Discovery & Decision Log
+
+- 2026-08-17 [crew06_6/crew06_7] PM pre-integration decision: after crew06_5
+  is accepted, both rows may execute concurrently only in isolated worktrees.
+  They will share one read-only presence seam over `crew_presence`:
+  `crew_present_member_ids(environment := current_environment)` and
+  `crew_member_present(member_id, environment := current_environment)`.
+  Crew06_6 owns grievance-free job decline/expiry and the shared Craps
+  training-progress grant seam; crew06_7 consumes those APIs and may not guess
+  Chip Dump's owner-locked funding model.
 
 - 2026-08-13 [board] Board created from roadmap v4. Rounds 1–4 owner
   decisions are all locked in the roadmap; heist ships Plans A+B; C+D
@@ -593,6 +608,7 @@ What happens then is the owner's, not an agent's:
 
 ## Work Log
 
+- 2026-08-17 [fix06_2] Reproduced mutation diff and call path: info-card activation routes `activate_interactable_object()` → `enter_game()` → `_enter_game_after_input_guard()` → `CrapsGame.enter()`, which changed `narrative_flags.street_craps_guidance_seen` from absent to `true` solely while composing the first-entry message. The generated Craps table and RNG state were otherwise unchanged. Diagnosis: craps06_2 attached once-only teaching consumption to navigation instead of a successful action boundary. The Grand Casino sibling uses the same rules/table module but not the Street guidance branch and did not mutate.
 - 2026-08-17 [fix06_2] PM:Codex claimed the shipped Street Craps activation-mutation defect; M1.6 remains binding, the repair must be generic across game activation, craps06_1 shares the audit scope, and env06_5 acceptance resumes only after this row lands.
 
 - 2026-08-16 [art06_1] CLOSED — FALSE PREMISE, author's error, not the executing agent's. Verified against code: `scripts/ui/pixel_scene_canvas.gd` draws EVERY environment procedurally through a `scene_type` dispatch, and no raster-background load path exists anywhere in `scripts/ui/` — `visual_context.asset_path` is metadata the scene canvas never consumes. `_draw_punchline_club()` (~1236) and `_draw_punchline_back_room()` (~1269) already exist, are already dispatched, and sit at detail parity with shipped venues (27/22 lines vs `_draw_bar` 26, `_draw_underground` 26); the club already renders a stage, mic stand, neon, two-drink tables, patron silhouettes, and a plain side door with no gambling signifier. The reported blocker ("in-run rendering uses procedural rooms rather than registered rasters") describes the architecture working as designed for every venue in the game. The executing agent's refusal to patch the UI/module seam under this prompt's ownership rules was CORRECT and prevented an unnecessary architectural change. Root cause: env06_4's art-debt note was misleading (the reused rasters are never rendered; the code scenes were already distinct and complete), and the art06_1 prompt compounded it by assuming rasters drive environment visuals. New PNGs retained as metadata-only — strictly better pointers than the previous underground paths. Any future concern about the Punchline's look is a new scoped row against the DRAW FUNCTIONS, never a rendering-architecture change.
@@ -805,3 +821,30 @@ What happens then is the owner's, not an agent's:
   with `pusher06_2`. This recruitment slice owns seven primary/fallback paths,
   diegetic signposting, rank-gated existing perks, seeded presence, and the
   crew-ignoring regression; it unblocks the Wave D jobs/plays chain.
+- 2026-08-17 [fix06_2] DONE. Street guidance is now consumed only by a
+  successful Street Craps action (including dispersal), never by `enter()`.
+  Street and Grand Casino Craps both remain byte-stable across activation and
+  save/load; open-then-play and direct-play outcomes match at the same seed.
+  The permanent generated-environment game activation guard covers every
+  production module and rejects a hostile mutate-on-enter fixture. Systems and
+  UI assertions, 10-seed determinism, and 75-state visual QA are green;
+  systems wall time was baseline-equivalent (52.277s versus the accepted
+  rework control's 51.780s) with the stored budget and assertions unchanged.
+  `env06_5` acceptance is unblocked.
+- 2026-08-17 [env06_5] DONE. Accepted all 13 backlog scenarios and their 13
+  `scenario_`-prefixed exclusive events without modifying legacy events. The
+  audit reports 55 total scenarios (42 launch + 13 backlog), every scenario
+  reached in 20 seeds, no launch crowd-out, correct Punchline casino-layer and
+  tutorial-neutral behavior, and all three authored phase arcs surviving
+  mid-phase save/load. Inventory Night, Storm Shelter, and Captain's
+  Invitational smoke captures pass with zero overlaps. The two ordinary-travel
+  whole-state hashes were exactly recaptured for the authorized catalog change;
+  route, cost, clock, RNG, story, heat, and travel-count fields did not shift.
+- 2026-08-17 [fix06_2 reopening] The externally integrated closeout at
+  `11f55f41` is superseded for this row. Its guard settled mutating room
+  presentation before comparison, covered only four hooks, reused warm state,
+  and did not exercise non-default generated fixture keys. The PM's stronger
+  seven-hook cold-state/JSON-restored guard reproduced seven passive
+  `staff_assignment_day` writes across Grand Casino Blackjack and Roulette.
+  Row returned to IN_PROGRESS; no prior assertion was weakened. `env06_5`
+  remains DONE on its independently verified content/audit/capture scope.

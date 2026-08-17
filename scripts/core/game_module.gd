@@ -12,6 +12,7 @@ const TABLE_ROUND_WARNING_MSEC := 5000
 
 var definition: Dictionary = {}
 var library: ContentLibrary
+var _transient_state_key_context := ""
 
 
 # Stores the game definition used by this module.
@@ -33,6 +34,17 @@ func get_display_name() -> String:
 # Returns the game family used by item modifiers.
 func get_family() -> String:
 	return str(definition.get("family", ""))
+
+
+# Selects a generated fixture for the current host interaction without writing
+# that presentation choice into RunState. Hosts may temporarily override this
+# context while advancing another fixture in the background.
+func set_transient_state_key_context(state_key: String) -> void:
+	_transient_state_key_context = state_key.strip_edges()
+
+
+func transient_state_key_context() -> String:
+	return _transient_state_key_context
 
 
 # Distinguishes simple data-authored odds games from modules that own their

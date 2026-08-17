@@ -4768,19 +4768,29 @@ func grand_casino_staffing_snapshot(environment: Dictionary = {}) -> Dictionary:
 	var source := current_environment if environment.is_empty() else environment
 	if not _is_grand_casino_environment(source):
 		return {}
-	_initialize_grand_casino_staffing()
-	return grand_casino_staffing.duplicate(true)
+	return _grand_casino_staffing_projection(source)
 
 
 func grand_casino_staff_member_for_game(game_id: String, environment: Dictionary = {}) -> Dictionary:
 	var source := current_environment if environment.is_empty() else environment
 	if not _is_grand_casino_environment(source):
 		return {}
-	_initialize_grand_casino_staffing()
+	_initialize_grand_casino_staffing(source)
 	var role_id := "bartender" if game_id == "bar_dice" else game_id.strip_edges()
 	var assignments: Dictionary = grand_casino_staffing.get("assignments", {}) if typeof(grand_casino_staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
 	var assignment: Variant = assignments.get(role_id, {})
 	return assignment if typeof(assignment) == TYPE_DICTIONARY else {}
+
+
+func grand_casino_staff_member_for_game_preview(game_id: String, environment: Dictionary = {}) -> Dictionary:
+	var source := current_environment if environment.is_empty() else environment
+	if not _is_grand_casino_environment(source):
+		return {}
+	var staffing := _grand_casino_staffing_projection(source)
+	var role_id := "bartender" if game_id == "bar_dice" else game_id.strip_edges()
+	var assignments: Dictionary = staffing.get("assignments", {}) if typeof(staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
+	var assignment: Variant = assignments.get(role_id, {})
+	return (assignment as Dictionary).duplicate(true) if typeof(assignment) == TYPE_DICTIONARY else {}
 
 
 func grand_casino_staff_profile_rng(role_id: String, assignment_id: String, day_index: int) -> RngStream:
@@ -4802,17 +4812,28 @@ func consume_grand_casino_entry_cue() -> Dictionary:
 	return cue
 
 
-func _initialize_grand_casino_staffing() -> void:
-	if not _is_grand_casino_environment(current_environment):
+func _initialize_grand_casino_staffing(environment: Dictionary = {}) -> void:
+	var source := current_environment if environment.is_empty() else environment
+	if not _is_grand_casino_environment(source):
 		return
 	var current_day := game_day()
 	if int(grand_casino_staffing.get("day", 0)) == current_day and not _grand_casino_staff_assignments(grand_casino_staffing).is_empty():
 		return
 	var prior_cue: Dictionary = grand_casino_staffing.get("entry_cue", {}) if typeof(grand_casino_staffing.get("entry_cue", {})) == TYPE_DICTIONARY else {}
 	var shown_day := maxi(0, int(grand_casino_staffing.get("rotation_cue_shown_day", 0)))
-	grand_casino_staffing = _grand_casino_staffing_for_day(current_day)
+	grand_casino_staffing = _grand_casino_staffing_for_day(current_day, _grand_casino_staff_config(source))
 	grand_casino_staffing["entry_cue"] = prior_cue
 	grand_casino_staffing["rotation_cue_shown_day"] = shown_day
+
+
+func _grand_casino_staffing_projection(environment: Dictionary) -> Dictionary:
+	var current_day := game_day()
+	if int(grand_casino_staffing.get("day", 0)) == current_day and not _grand_casino_staff_assignments(grand_casino_staffing).is_empty():
+		return grand_casino_staffing.duplicate(true)
+	var projected := _grand_casino_staffing_for_day(current_day, _grand_casino_staff_config(environment))
+	projected["entry_cue"] = _copy_dict(grand_casino_staffing.get("entry_cue", {}))
+	projected["rotation_cue_shown_day"] = maxi(0, int(grand_casino_staffing.get("rotation_cue_shown_day", 0)))
+	return projected
 
 
 func _advance_grand_casino_staff_day_rollovers(previous_day: int, next_day: int) -> void:
@@ -4823,9 +4844,9 @@ func _advance_grand_casino_staff_day_rollovers(previous_day: int, next_day: int)
 		_seed_rival_cheater_cast(day_index)
 
 
-func _grand_casino_staffing_for_day(day_index: int) -> Dictionary:
+func _grand_casino_staffing_for_day(day_index: int, config_override: Dictionary = {}) -> Dictionary:
 	var target_day := maxi(1, day_index)
-	var config := _grand_casino_staff_config()
+	var config := config_override.duplicate(true) if not config_override.is_empty() else _grand_casino_staff_config()
 	var chance := clampi(int(config.get("rotation_chance_percent", GRAND_CASINO_STAFF_ROTATION_CHANCE_PERCENT)), 0, 100)
 	var assignments: Dictionary = {}
 	for timeline_day in range(1, target_day + 1):
@@ -4908,12 +4929,17 @@ func _grand_casino_staff_pick(roster: Array, previous: Dictionary, rng: RngStrea
 	return (selected as Dictionary).duplicate(true) if typeof(selected) == TYPE_DICTIONARY else {}
 
 
-func _grand_casino_staff_config() -> Dictionary:
-	for environment_value in [current_environment, grand_casino_room_states.get(GRAND_CASINO_ARCHETYPE_ID, {})]:
+func _grand_casino_staff_config(environment: Dictionary = {}) -> Dictionary:
+	var candidates: Array = []
+	if not environment.is_empty():
+		candidates.append(environment)
+	candidates.append(current_environment)
+	candidates.append(grand_casino_room_states.get(GRAND_CASINO_ARCHETYPE_ID, {}))
+	for environment_value in candidates:
 		if typeof(environment_value) != TYPE_DICTIONARY:
 			continue
-		var environment := environment_value as Dictionary
-		var flags: Dictionary = environment.get("local_narrative_flags", {}) if typeof(environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+		var candidate_environment := environment_value as Dictionary
+		var flags: Dictionary = candidate_environment.get("local_narrative_flags", {}) if typeof(candidate_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
 		var config: Variant = flags.get("grand_casino_staff_rotation", {})
 		if typeof(config) == TYPE_DICTIONARY and not (config as Dictionary).is_empty():
 			return (config as Dictionary).duplicate(true)
