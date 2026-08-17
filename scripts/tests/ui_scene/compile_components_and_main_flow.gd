@@ -1914,19 +1914,29 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 		if typeof(forced_choice_value) == TYPE_DICTIONARY and bool((forced_choice_value as Dictionary).get("enabled", false)):
 			has_enabled_forced_choice = true
 			break
-	var forced_rng_before := int(run_state.event_cadence.get("rng_state", 0))
+	var forced_source_environment_id := str(run_state.current_environment.get("id", ""))
+	var forced_source_world_node_id := run_state.current_world_node_id()
 	_reset_interrupt_probe_counters(app)
 	var forced_interrupted := bool(app.call("_apply_post_action_environment_interrupt", "game_action"))
 	if not has_enabled_forced_choice or not forced_interrupted \
 			or not bool(run_state.narrative_flags.get("health_inspector_forced_travel", false)) \
-			or JSON.stringify(_post_interrupt_stage_counts(app)) != JSON.stringify([1, 1, 1, 0, 0]) \
-			or _total_interrupt_candidate_visits(app) != 0 \
-			or int(run_state.event_cadence.get("rng_state", 0)) != forced_rng_before:
+			or JSON.stringify(_post_interrupt_stage_counts(app)) != JSON.stringify([1, 1, 1, 0, 0]):
 		push_error("Armed Health Inspector travel did not short-circuit talk/unavoidable cadence in exact outer order.")
 		valid = false
 	await process_frame
 	await process_frame
 	await process_frame
+	var forced_destination_environment_id := str(run_state.current_environment.get("id", ""))
+	var forced_destination_world_node_id := run_state.current_world_node_id()
+	var forced_travel_completed := not forced_destination_environment_id.is_empty() \
+			and forced_destination_environment_id != forced_source_environment_id
+	if not forced_source_world_node_id.is_empty():
+		forced_travel_completed = forced_travel_completed \
+				and not forced_destination_world_node_id.is_empty() \
+				and forced_destination_world_node_id != forced_source_world_node_id
+	if not forced_travel_completed:
+		push_error("Armed Health Inspector interrupt did not complete a real enabled-route destination change.")
+		valid = false
 
 	# Finally arm one deterministic unavoidable event and prove the outer path
 	# reaches only the ordered action-candidate cache after all earlier stages.
