@@ -504,6 +504,10 @@ static func _activation_violation(game: GameModule, run_state: RunState, cached_
 	if typeof(cold_source_value) != TYPE_DICTIONARY:
 		return "could not parse canonical activation fixture"
 	var cold_source := cold_source_value as Dictionary
+	# JSON parsing may normalize representation details that RunState.to_dict()
+	# later canonicalizes back to source_text. Preserve the parser's own exact
+	# baseline solely for detecting retained-reference writes into cold_source.
+	var cold_source_text := JSON.stringify(cold_source)
 	# Validate one pristine cold clone exactly. RunState.from_dict retains some
 	# nested references, so every live fixture receives its own deep source copy;
 	# hooks never share state with each other or with the canonical dictionary.
@@ -551,7 +555,7 @@ static func _activation_violation(game: GameModule, run_state: RunState, cached_
 	# every hook proves its post-state has those same bytes. A redundant eighth
 	# restore cannot strengthen that transitive proof, so retain only both source
 	# immutability checks here.
-	if JSON.stringify(cold_source) != source_text:
+	if JSON.stringify(cold_source) != cold_source_text:
 		return "activation hooks mutated their parsed cold source fixture"
 	if JSON.stringify(source_snapshot) != source_text:
 		return "cold activation clones mutated their canonical source fixture"
