@@ -18,6 +18,8 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_alarm_audio(failures)
 	_check_coin_pusher_canonical_probe(failures)
 	_check_coin_pusher_surface_liveness(game, failures)
+	_check_coin_pusher_visible_timing(game, failures)
+	_check_coin_pusher_discrete_solver(definition, failures)
 	_check_coin_pusher_read_boundaries(game, failures)
 	_check_coin_pusher_determinism(game, failures)
 	_check_coin_pusher_security_bands(game, failures)
@@ -45,10 +47,8 @@ func _check_coin_pusher_data_contract(library: ContentLibrary, definition: Dicti
 	var tuning: Dictionary = definition.get("coin_pusher_tuning", {}) if typeof(definition.get("coin_pusher_tuning", {})) == TYPE_DICTIONARY else {}
 	for key in [
 		"state_schema_version", "variation_id", "phase_steps", "force_order", "default_force", "direction_order", "default_direction",
-		"security_band_deltas", "tell_labels", "lane_count", "cell_count", "cell_capacity", "upper_phase_step", "lower_phase_step",
-		"clean_nudge_phase", "clean_nudge_window_steps", "forward_phase_window_steps", "nudge_forces", "shelf_push_percent",
-		"nudge_push_percent", "forward_push_bonus_percent", "retracted_push_penalty_percent", "mistimed_push_penalty",
-		"max_settle_passes", "retracted_stack_threshold_bonus", "strong_push_threshold", "strong_push_extra_coins",
+		"security_band_deltas", "tell_labels", "lane_count", "depth_slot_count", "solver_fixed_hz", "solver_fixed_point_scale",
+		"solver_action_ticks", "coin_cap", "opening_coin_count", "clean_nudge_phase", "clean_nudge_window_steps", "nudge_forces", "mistimed_push_penalty",
 		"front_nudge_lane_radius", "skill_accuracy_base", "skill_accuracy_phase_penalty", "hard_alarm_heat",
 		"prize_initial_cell_max", "documented_ev_band", "scenario_reset_contract", "prize_riders",
 	]:
@@ -82,6 +82,96 @@ func _check_coin_pusher_data_contract(library: ContentLibrary, definition: Dicti
 		var pool: Array = library.environment_archetype(untouched_id).get("game_pool", [])
 		if pool.has("coin_pusher"):
 			failures.append("Quarter Falls leaked into non-target venue %s." % untouched_id)
+
+
+func _check_coin_pusher_discrete_solver(definition: Dictionary, failures: Array) -> void:
+	var tuning: Dictionary = definition.get("coin_pusher_tuning", {}) if typeof(definition.get("coin_pusher_tuning", {})) == TYPE_DICTIONARY else {}
+	var state := CoinPusherSolverScript.create(_configured_rng(6062), int(tuning.get("coin_cap", 0)), 0, 5)
+	if str(state.get("schema", "")) != "coin_pusher_fixed_point" or int(state.get("fixed_hz", 0)) != 60 or int(state.get("fixed_point_scale", 0)) != 1000 or int(state.get("coin_cap", 0)) != 48:
+		failures.append("Coin Pusher did not expose the shipped 60 Hz integer fixed-point solver and 48-coin cap.")
+	var resting_stack := CoinPusherSolverScript.create(_configured_rng(6061), 48, 0, 5)
+	resting_stack["bodies"] = [
+		_solver_body("rest_base", "coin", 42000, 27000, 0, true),
+		_solver_body("rest_top", "coin", 42000, 27000, CoinPusherSolverScript.COIN_HEIGHT, true),
+	]
+	CoinPusherSolverScript.step_action(resting_stack, {"upper_locked": true, "lower_locked": true})
+	if int(((resting_stack.get("bodies", []) as Array)[1] as Dictionary).get("z", 0)) != CoinPusherSolverScript.COIN_HEIGHT:
+		failures.append("A settled individual coin did not remain physically stacked on another coin.")
+	state["bodies"] = [
+		_solver_body("support", "coin", 50000, 30000, 0, true),
+		_solver_body("leaner", "coin", 50000, 30000, 1700, false),
+		_solver_body("landing", "coin", 52700, 30000, 9000, false),
+	]
+	var before_landing_z := int((state.get("bodies", []) as Array)[2].get("z", 0))
+	var stack_step := CoinPusherSolverScript.step_action(state, {"upper_locked": true, "lower_locked": true})
+	var bodies: Array = state.get("bodies", [])
+	if bodies.size() < 3 or int((bodies[2] as Dictionary).get("z", 0)) >= before_landing_z:
+		failures.append("A physical landing coin did not fall toward and disturb an individual stack.")
+	var stack_metrics: Dictionary = stack_step.get("metrics", {}) if typeof(stack_step.get("metrics", {})) == TYPE_DICTIONARY else {}
+	if int(stack_metrics.get("topple_count", 0)) < 1 or int(stack_metrics.get("collision_count", 0)) < 1 or int(stack_metrics.get("moved_count", 0)) < 2:
+		failures.append("Discrete coins did not stack unevenly, record lean/topple state, and cascade from one landing.")
+	var fall_state := CoinPusherSolverScript.create(_configured_rng(6063), 80, 0, 5)
+	fall_state["bodies"] = [
+		_solver_body("upper_fall", "coin", 50000, CoinPusherSolverScript.UPPER_EDGE - 1000, CoinPusherSolverScript.UPPER_FLOOR_Z, false),
+		_solver_body("tray_fall", "coin", 50000, 0, 0, false),
+		_solver_body("gutter_fall", "coin", 1000, 0, 0, false),
+	]
+	var fall_step := CoinPusherSolverScript.step_action(fall_state, {"upper_locked": true, "lower_locked": true})
+	var tray_seen := false
+	var gutter_seen := false
+	for event_value in fall_step.get("events", []):
+		if typeof(event_value) == TYPE_DICTIONARY:
+			tray_seen = tray_seen or str((event_value as Dictionary).get("outcome", "")) == "tray"
+			gutter_seen = gutter_seen or str((event_value as Dictionary).get("outcome", "")) == "gutter"
+	var upper_landed_lower := false
+	for body_value in fall_state.get("bodies", []):
+		if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("id", "")) == "upper_fall":
+			upper_landed_lower = int((body_value as Dictionary).get("z", 0)) < CoinPusherSolverScript.UPPER_FLOOR_Z
+	if not upper_landed_lower or int((fall_step.get("metrics", {}) as Dictionary).get("upper_lower_fall_count", 0)) < 1 or not tray_seen or not gutter_seen:
+		failures.append("Tier gravity did not produce upper-to-lower fall, tray payout, and side-gutter loss as physical exits.")
+	var nudge_state := CoinPusherSolverScript.create(_configured_rng(6064), 80, 0, 5)
+	nudge_state["bodies"] = [
+		_solver_body("nudge_base", "coin", 50000, 9000, 0, true),
+		_solver_body("nudge_top", "coin", 52000, 9000, 1700, true),
+	]
+	var nudge_before := JSON.stringify(CoinPusherSolverScript.canonical_digest(nudge_state))
+	CoinPusherSolverScript.step_action(nudge_state, {"upper_locked": true, "lower_locked": true, "nudge_x": 12000, "nudge_y": -22000, "aimed_x": 50000, "nudge_radius": 12000})
+	if JSON.stringify(CoinPusherSolverScript.canonical_digest(nudge_state)) == nudge_before:
+		failures.append("A nudge did not shift and destabilize a real individual-coin pile.")
+	var pressure_rng := _configured_rng(6065)
+	var pressure_state := CoinPusherSolverScript.create(pressure_rng.fork("opening"), 48, 36, 5)
+	for action_index in range(600):
+		CoinPusherSolverScript.add_coin(pressure_state, pressure_rng, action_index % 5, 5, 3 if action_index % 17 == 0 else 1)
+		var pressure_step := CoinPusherSolverScript.step_action(pressure_state, {
+			"captured_upper_phase_fp": (action_index * 1700) % CoinPusherSolverScript.PHASE_PERIOD,
+			"captured_lower_phase_fp": (action_index * 2300) % CoinPusherSolverScript.PHASE_PERIOD,
+			"push_scale": 1 + action_index % 5,
+		})
+		if CoinPusherSolverScript.coin_count(pressure_state) > 48:
+			failures.append("Coin Pusher cap pressure left more than 48 real coins after action %d." % action_index)
+			break
+		for event_value in pressure_step.get("events", []):
+			if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("cause", "")) != "physical_fall":
+				failures.append("Coin Pusher cap pressure emitted a nonphysical exit on action %d." % action_index)
+				return
+	for body_value in nudge_state.get("bodies", []):
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = body_value
+		for key in ["x", "y", "z", "vx", "vy", "vz", "radius", "height", "mass", "sleep_ticks", "lean_milli"]:
+			if typeof(body.get(key, null)) != TYPE_INT:
+				failures.append("Fixed-point solver field %s drifted away from integer state." % key)
+				return
+
+
+func _solver_body(id: String, kind: String, x: int, y: int, z: int, sleeping: bool) -> Dictionary:
+	return {
+		"id": id, "kind": kind, "x": x, "y": y, "z": z,
+		"vx": 0, "vy": 0, "vz": 0,
+		"radius": CoinPusherSolverScript.COIN_RADIUS, "height": CoinPusherSolverScript.COIN_HEIGHT, "mass": 1,
+		"sleep_ticks": 8 if sleeping else 0, "sleeping": sleeping,
+		"rest_state": "resting" if sleeping else "settling", "lean_milli": 0, "metadata": {},
+	}
 
 
 func _check_coin_pusher_definition_routing(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
@@ -231,6 +321,40 @@ func _check_coin_pusher_surface_liveness(game: GameModule, failures: Array) -> v
 	_check_coin_pusher_reduced_motion_freeze(game, surface, failures)
 
 
+func _check_coin_pusher_visible_timing(game: GameModule, failures: Array) -> void:
+	var early_fixture := _coin_pusher_fixture(game, "PUSHER-VISIBLE-TIMING")
+	var late_fixture := _coin_pusher_fixture(game, "PUSHER-VISIBLE-TIMING")
+	var replay_fixture := _coin_pusher_fixture(game, "PUSHER-VISIBLE-TIMING")
+	var early_run: RunState = early_fixture.get("run_state")
+	var late_run: RunState = late_fixture.get("run_state")
+	var replay_run: RunState = replay_fixture.get("run_state")
+	var early_surface := game.surface_state(early_run, early_run.current_environment, {"surface_time_msec": 0})
+	var late_surface := game.surface_state(late_run, late_run.current_environment, {"surface_time_msec": 900})
+	var early_command := game.surface_action_command("coin_pusher_drop", 0, false, {"surface_time_msec": 0, "coin_pusher_lane": 2}, early_run, early_run.current_environment)
+	var late_command := game.surface_action_command("coin_pusher_drop", 0, false, {"surface_time_msec": 900, "coin_pusher_lane": 2}, late_run, late_run.current_environment)
+	var replay_command := game.surface_action_command("coin_pusher_drop", 0, false, {"surface_time_msec": 0, "coin_pusher_lane": 2}, replay_run, replay_run.current_environment)
+	var early_ui: Dictionary = early_command.get("ui_state", {})
+	var late_ui: Dictionary = late_command.get("ui_state", {})
+	var replay_ui: Dictionary = replay_command.get("ui_state", {})
+	if int(early_ui.get("coin_pusher_upper_input_phase", -1)) != int(early_surface.get("coin_pusher_upper_phase", -2)) \
+			or int(late_ui.get("coin_pusher_upper_input_phase", -1)) != int(late_surface.get("coin_pusher_upper_phase", -2)):
+		failures.append("Quarter Falls click did not capture the exact shelf phase shown to the player.")
+	if int(early_ui.get("coin_pusher_upper_input_phase", -1)) == int(late_ui.get("coin_pusher_upper_input_phase", -1)):
+		failures.append("Quarter Falls visible pusher phase did not sweep as surface time advanced.")
+	var early_result := game.resolve_with_context("drop_quarter", 0, early_run, early_run.current_environment, early_run.create_rng("visible_timing"), early_ui)
+	var late_result := game.resolve_with_context("drop_quarter", 0, late_run, late_run.current_environment, late_run.create_rng("visible_timing"), late_ui)
+	var replay_result := game.resolve_with_context("drop_quarter", 0, replay_run, replay_run.current_environment, replay_run.create_rng("visible_timing"), replay_ui)
+	var early_machine: Dictionary = (early_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	var late_machine: Dictionary = (late_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	var early_bodies := JSON.stringify(CoinPusherSolverScript.canonical_digest(early_machine.get("simulation", {})).get("bodies", []))
+	var late_bodies := JSON.stringify(CoinPusherSolverScript.canonical_digest(late_machine.get("simulation", {})).get("bodies", []))
+	if int(early_result.get("coin_pusher_input_phase", -1)) == int(late_result.get("coin_pusher_input_phase", -1)) or early_bodies == late_bodies:
+		failures.append("Quarter Falls different visible click phases did not produce different timing and physical pile outcomes.")
+	if JSON.stringify(early_result.get("coin_pusher_solver_metrics", {})) != JSON.stringify(replay_result.get("coin_pusher_solver_metrics", {})) \
+			or game.deterministic_state_digest(early_run.current_environment) != game.deterministic_state_digest(replay_run.current_environment):
+		failures.append("Quarter Falls replaying the same captured display phase did not reproduce the exact pile.")
+
+
 func _check_coin_pusher_reduced_motion_freeze(game: GameModule, surface: Dictionary, failures: Array) -> void:
 	var reduced_surface := surface.duplicate(true)
 	reduced_surface["reduce_motion"] = true
@@ -255,7 +379,7 @@ func _check_coin_pusher_reduced_motion_freeze(game: GameModule, surface: Diction
 		failures.append("Quarter Falls reduced motion still scheduled continuous surface redraws.")
 	if JSON.stringify(state_before) != JSON.stringify(state_after) \
 			or str(state_after.get("surface_renderer", "")) != "coin_pusher" \
-			or (state_after.get("coin_pusher_cells", []) as Array).size() != (state_before.get("coin_pusher_cells", []) as Array).size() \
+			or (state_after.get("coin_pusher_bodies", []) as Array).size() != (state_before.get("coin_pusher_bodies", []) as Array).size() \
 			or (state_after.get("coin_pusher_riders", []) as Array).size() != (state_before.get("coin_pusher_riders", []) as Array).size() \
 			or int(state_after.get("coin_pusher_tell_rung", -1)) != int(state_before.get("coin_pusher_tell_rung", -2)):
 		failures.append("Quarter Falls reduced motion hid or changed the visible pile state.")
@@ -596,6 +720,13 @@ func _check_coin_pusher_prize_items(game: GameModule, failures: Array) -> void:
 	var machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	_machine_hanger_fixture(machine, 2)
 	machine["riders"] = [{"id": "fixture_prize", "kind": "scenario_item", "label": "lucky penny", "item_id": "lucky_penny", "cash_value": 0, "lane": 2, "cell": 0, "push": 1}]
+	var rider_body := _solver_body("fixture_rider_body", "rider", 50000, 2000, 0, false)
+	rider_body["radius"] = CoinPusherSolverScript.OBJECT_RADIUS
+	rider_body["height"] = CoinPusherSolverScript.OBJECT_HEIGHT
+	rider_body["mass"] = 3
+	rider_body["metadata"] = machine["riders"][0].duplicate(true)
+	(rider_body["metadata"] as Dictionary)["feature_id"] = "fixture_prize"
+	((machine.get("simulation", {}) as Dictionary).get("bodies", []) as Array).append(rider_body)
 	var result := game.resolve_with_context("nudge_machine", 0, run_state, environment, run_state.create_rng("prize_push"), {
 		"coin_pusher_force": "shove", "coin_pusher_direction": "front", "coin_pusher_lane": 2, "coin_pusher_timing_phase": 3,
 	})
@@ -638,8 +769,13 @@ func _check_coin_pusher_items(game: GameModule, failures: Array) -> void:
 		var safe_seed := _coin_pusher_seed_for_roll(false)
 		var cold_drop := game.resolve_with_context("drop_quarter", 1, cold_run, cold_run.current_environment, _configured_rng(safe_seed), {"coin_pusher_lane": 2})
 		var after_cold: Dictionary = (cold_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
-		if not bool(cold_drop.get("ok", false)) or _coin_pusher_coin_count(after_cold) != authored_density or bool(after_cold.get("cold_quarters_armed", true)):
-			failures.append("Cold Quarters density was not consumed by the next real pusher drop action.")
+		var cold_bodies: Array = ((after_cold.get("simulation", {}) as Dictionary).get("bodies", []) as Array)
+		var dense_coin_seen := false
+		for body_value in cold_bodies:
+			if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("kind", "")) == "coin" and int((body_value as Dictionary).get("mass", 1)) == authored_density:
+				dense_coin_seen = true
+		if not bool(cold_drop.get("ok", false)) or not dense_coin_seen or bool(after_cold.get("cold_quarters_armed", true)):
+			failures.append("Cold Quarters did not create one denser physical coin and consume the armed state.")
 
 	var shim_fixture := _coin_pusher_fixture(game, "PUSHER-COIN-SHIM")
 	var shim_run: RunState = shim_fixture.get("run_state")
@@ -653,6 +789,9 @@ func _check_coin_pusher_items(game: GameModule, failures: Array) -> void:
 			or not bool(shim_state.get("shim_initialized", false)) or int(shim_state.get("shim_uses_remaining", 0)) != authored_uses or authored_uses != 3:
 		failures.append("Coin-Return Shim did not seed its authored limited-use recovery state at the next real drop boundary.")
 	var gutter_seed := _coin_pusher_seed_for_roll(true)
+	var shim_simulation: Dictionary = shim_state.get("simulation", {}) if typeof(shim_state.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var shim_bodies: Array = shim_simulation.get("bodies", []) if typeof(shim_simulation.get("bodies", [])) == TYPE_ARRAY else []
+	shim_bodies.append(_solver_body("shim_gutter_coin", "coin", 1000, 0, 0, false))
 	var shim_drop := game.resolve_with_context("drop_quarter", 1, shim_run, shim_run.current_environment, _configured_rng(gutter_seed), {"coin_pusher_lane": 0})
 	GameModule.apply_result(shim_run, shim_drop, shim_run.create_rng("shim_gutter_drop_apply"))
 	shim_state = (shim_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
@@ -684,7 +823,7 @@ func _check_pusher_variation_data(definition: Dictionary, failures: Array) -> vo
 	for key in ["schedule_count", "multiplier_values", "multiplier_drop_count", "lock_cycles", "ridge_run_cycles", "alarm_tolerance_bonus", "tolerance_band_size", "force_trim_order", "force_trim_push_delta", "force_trim_tolerance_delta", "documented_ev_band"]:
 		if not ridge.has(key):
 			failures.append("Jackpot Ridge tuning is missing %s." % key)
-	for key in ["fragment_push_threshold", "progressive_floor", "progressive_growth_per_action", "progressive_crowded_growth_per_action", "reset_cell_count", "reset_odds_floor", "vault_cells", "documented_ev_by_meter"]:
+	for key in ["progressive_floor", "progressive_growth_per_action", "progressive_crowded_growth_per_action", "reset_cell_count", "reset_odds_floor", "vault_cells", "documented_ev_by_meter"]:
 		if not vault.has(key):
 			failures.append("Vault Drop tuning is missing %s." % key)
 	var total_cells := 0
@@ -704,11 +843,15 @@ func _check_jackpot_ridge_lifecycle(game: GameModule, definition: Dictionary, fa
 	var config: Dictionary = variations.get("jackpot_ridge", {})
 	var state := JackpotRidgeVariation.initial_state(config, _configured_rng(173), 5, 6)
 	state["pucks"] = [
-		{"id": "m2", "kind": "multiplier", "multiplier": 2, "charges": 2, "lane": 2, "cell": 0, "push": 1},
-		{"id": "m3", "kind": "multiplier", "multiplier": 3, "charges": 2, "lane": 2, "cell": 0, "push": 1},
-		{"id": "m5", "kind": "multiplier", "multiplier": 5, "charges": 2, "lane": 2, "cell": 0, "push": 1},
+		{"id": "m2", "kind": "multiplier", "multiplier": 2, "charges": 2},
+		{"id": "m3", "kind": "multiplier", "multiplier": 3, "charges": 2},
+		{"id": "m5", "kind": "multiplier", "multiplier": 5, "charges": 2},
 	]
-	var ridge := JackpotRidgeVariation.apply_movement(state, [{"lane": 2, "cell": 0, "moved": 1}], {"aimed_lane": 2, "push_strength": 0, "from_nudge": false}, config)
+	var ridge := JackpotRidgeVariation.apply_physical_events(state, [
+		{"kind": "puck", "outcome": "tray", "metadata": {"feature_id": "m2"}},
+		{"kind": "puck", "outcome": "tray", "metadata": {"feature_id": "m3"}},
+		{"kind": "puck", "outcome": "tray", "metadata": {"feature_id": "m5"}},
+	], config)
 	if not bool(ridge.get("ridge_run_triggered", false)) or int(ridge.get("multiplier_drops", 0)) != 3 or int(state.get("cascade_remaining", 0)) != int(config.get("ridge_run_cycles", -1)):
 		failures.append("Jackpot Ridge did not trigger exactly on three multiplier pucks in one shelf cycle with authored duration.")
 	if JackpotRidgeVariation.payout_multiplier(state) != 5:
@@ -718,34 +861,31 @@ func _check_jackpot_ridge_lifecycle(game: GameModule, definition: Dictionary, fa
 	if JackpotRidgeVariation.payout_multiplier(state) != 1:
 		failures.append("Jackpot Ridge multiplier charges did not expire after the authored drops.")
 	state["pucks"] = [
-		{"id": "lock", "kind": "lock", "shelf": "upper", "lane": 1, "cell": 0, "push": 1},
-		{"id": "dud", "kind": "dud", "lane": 3, "cell": 0, "push": 1},
+		{"id": "lock", "kind": "lock", "shelf": "upper"},
+		{"id": "dud", "kind": "dud"},
 	]
-	state["jammed_lanes"] = [3]
-	JackpotRidgeVariation.apply_movement(state, [{"lane": 1, "cell": 0, "moved": 1}, {"lane": 3, "cell": 0, "moved": 1}], {"aimed_lane": 2, "push_strength": 0, "from_nudge": false}, config)
-	if not JackpotRidgeVariation.shelf_locked(state, "upper") or JackpotRidgeVariation.lane_is_jammed(state, 3):
-		failures.append("Jackpot Ridge lock/dud lifecycle did not freeze the shelf and clear the jam.")
+	JackpotRidgeVariation.apply_physical_events(state, [
+		{"kind": "puck", "outcome": "tray", "metadata": {"feature_id": "lock"}},
+		{"kind": "puck", "outcome": "tray", "metadata": {"feature_id": "dud"}},
+	], config)
+	if not JackpotRidgeVariation.shelf_locked(state, "upper") or not (state.get("pucks", []) as Array).is_empty():
+		failures.append("Jackpot Ridge lock/dud lifecycle did not freeze the shelf and consume both physical outcomes.")
 	var two_state := state.duplicate(true)
 	two_state["pucks"] = [
-		{"kind": "multiplier", "multiplier": 2, "charges": 1, "lane": 0, "cell": 0, "push": 1},
-		{"kind": "multiplier", "multiplier": 3, "charges": 1, "lane": 0, "cell": 0, "push": 1},
+		{"id": "two_a", "kind": "multiplier", "multiplier": 2, "charges": 1},
+		{"id": "two_b", "kind": "multiplier", "multiplier": 3, "charges": 1},
 	]
-	var two := JackpotRidgeVariation.apply_movement(two_state, [{"lane": 0, "cell": 0, "moved": 1}], {"aimed_lane": 0, "push_strength": 0, "from_nudge": false}, config)
+	var two := JackpotRidgeVariation.apply_physical_events(two_state, [
+		{"kind": "puck", "outcome": "tray", "metadata": {"feature_id": "two_a"}},
+		{"kind": "puck", "outcome": "tray", "metadata": {"feature_id": "two_b"}},
+	], config)
 	if bool(two.get("ridge_run_triggered", true)):
 		failures.append("Jackpot Ridge cascade triggered below the exact three-puck threshold.")
 	var nudge_fixture := _pusher_variation_fixture(game, "RIDGE-PUCK-NUDGE", "jackpot_ridge")
 	var nudge_run: RunState = nudge_fixture.get("run_state")
 	var nudge_environment: Dictionary = nudge_run.current_environment
 	var nudge_machine: Dictionary = (nudge_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
-	var nudge_state: Dictionary = nudge_machine.get("variation_state", {})
-	nudge_state["pucks"] = [{"id": "visible_multiplier", "kind": "multiplier", "multiplier": 3, "charges": 2, "lane": 2, "cell": 1, "push": 0}]
-	nudge_state["jammed_lanes"] = []
-	for lane_value in nudge_machine.get("lanes", []):
-		if typeof(lane_value) != TYPE_DICTIONARY:
-			continue
-		for cell_value in (lane_value as Dictionary).get("cells", []):
-			if typeof(cell_value) == TYPE_DICTIONARY:
-				(cell_value as Dictionary)["edge_hang"] = false
+	_replace_ridge_pucks(nudge_machine, [{"id": "visible_multiplier", "kind": "multiplier", "multiplier": 3, "charges": 2, "spawn_lane": 2, "spawn_depth_slot": 1}])
 	var tolerance_before := int(nudge_machine.get("alarm_tolerance_remaining", 0))
 	var nudge_result := game.resolve_with_context("nudge_machine", 0, nudge_run, nudge_environment, nudge_run.create_rng("ridge_puck_nudge"), {
 		"coin_pusher_lane": 2, "coin_pusher_force": "tap", "coin_pusher_direction": "front",
@@ -757,12 +897,10 @@ func _check_jackpot_ridge_lifecycle(game: GameModule, definition: Dictionary, fa
 		failures.append("Jackpot Ridge rejected a clean nudge aimed at a visible feature puck when no base coin was hanging.")
 	var policy_fixture := _pusher_variation_fixture(game, "RIDGE-POLICY", "jackpot_ridge")
 	var policy_machine: Dictionary = ((policy_fixture.get("environment") as Dictionary).get("game_states", {}) as Dictionary).get("coin_pusher", {})
-	var policy_state: Dictionary = policy_machine.get("variation_state", {})
-	policy_state["pucks"] = [
-		{"id": "dud_near", "kind": "dud", "lane": 1, "cell": 0, "push": 1},
-		{"id": "multiplier_near", "kind": "multiplier", "multiplier": 5, "lane": 3, "cell": 1, "push": 0},
-	]
-	policy_state["jammed_lanes"] = [1]
+	_replace_ridge_pucks(policy_machine, [
+		{"id": "dud_near", "kind": "dud", "spawn_lane": 1, "spawn_depth_slot": 0},
+		{"id": "multiplier_near", "kind": "multiplier", "multiplier": 5, "spawn_lane": 3, "spawn_depth_slot": 1},
+	])
 	var nudge_decision := _ridge_strategy_decision(policy_machine, 4)
 	var drop_decision := _ridge_strategy_decision(policy_machine, 5)
 	if str(nudge_decision.get("action_id", "")) != "nudge_machine" \
@@ -772,6 +910,27 @@ func _check_jackpot_ridge_lifecycle(game: GameModule, definition: Dictionary, fa
 	if str(drop_decision.get("action_id", "")) != "drop_quarter" \
 			or int((drop_decision.get("ui_state", {}) as Dictionary).get("coin_pusher_lane", -1)) == 1:
 		failures.append("Jackpot Ridge strategy knowingly paid into a dud-jammed lane.")
+	_check_ridge_physical_jam_zone(game, failures)
+
+
+func _check_ridge_physical_jam_zone(game: GameModule, failures: Array) -> void:
+	var fixture := _pusher_variation_fixture(game, "RIDGE-JAM-ZONE", "jackpot_ridge")
+	var run_state: RunState = fixture.get("run_state")
+	var environment: Dictionary = run_state.current_environment
+	var machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
+	_replace_ridge_pucks(machine, [{"id": "moving_dud", "kind": "dud", "spawn_lane": 2, "spawn_depth_slot": 4}])
+	var jammed_surface := game.surface_state(run_state, environment, {"coin_pusher_lane": 2})
+	if not (jammed_surface.get("coin_pusher_jammed_lanes", []) as Array).has(2):
+		failures.append("Jackpot Ridge did not derive a jam from a dud body in the rear upper feed zone.")
+	for body_value in (machine.get("simulation", {}) as Dictionary).get("bodies", []):
+		if typeof(body_value) != TYPE_DICTIONARY or str((body_value as Dictionary).get("kind", "")) != "puck":
+			continue
+		var body: Dictionary = body_value
+		body["y"] = CoinPusherSolverScript.UPPER_EDGE - CoinPusherSolverScript.OBJECT_RADIUS
+		body["z"] = CoinPusherSolverScript.LOWER_FLOOR_Z
+	var cleared_surface := game.surface_state(run_state, environment, {"coin_pusher_lane": 2})
+	if (cleared_surface.get("coin_pusher_jammed_lanes", []) as Array).has(2):
+		failures.append("Jackpot Ridge retained a metadata jam after the same dud body moved out of the physical feed zone.")
 
 
 func _check_vault_drop_contract(game: GameModule, definition: Dictionary, failures: Array) -> void:
@@ -797,7 +956,7 @@ func _check_vault_drop_contract(game: GameModule, definition: Dictionary, failur
 	var machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	var state: Dictionary = machine.get("variation_state", {})
 	state["fragments"] = [{"id": "proof_fragment", "lane": 2, "cell": 0, "push": 1}]
-	VaultDropVariation.apply_movement(state, [{"lane": 2, "cell": 0, "moved": 1}], {"aimed_lane": 2, "push_strength": 0, "from_nudge": false}, config)
+	VaultDropVariation.apply_physical_events(state, [{"kind": "fragment", "outcome": "tray", "metadata": {"feature_id": "proof_fragment"}}])
 	if int(state.get("banked_fragments", 0)) != 1:
 		failures.append("Vault fragment did not bank after crossing the shared pile ledge.")
 	run_state.add_item("xray_glasses")
@@ -909,21 +1068,30 @@ func _pusher_variation_session(game: GameModule, seed_text: String, variation_id
 
 
 func _ridge_strategy_decision(machine: Dictionary, action_index: int) -> Dictionary:
-	var state: Dictionary = machine.get("variation_state", {}) if typeof(machine.get("variation_state", {})) == TYPE_DICTIONARY else {}
-	var pucks: Array = state.get("pucks", []) if typeof(state.get("pucks", [])) == TYPE_ARRAY else []
 	var target: Dictionary = {}
 	var kind_priority := {"multiplier": 0, "lock": 1, "dud": 2}
-	for value in pucks:
-		if typeof(value) != TYPE_DICTIONARY:
+	var jammed_lanes: Array = []
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	for value in CoinPusherSolverScript.body_views(simulation):
+		if typeof(value) != TYPE_DICTIONARY or str((value as Dictionary).get("kind", "")) != "puck":
 			continue
-		var puck: Dictionary = value
+		var body: Dictionary = value
+		var metadata: Dictionary = body.get("metadata", {}) if typeof(body.get("metadata", {})) == TYPE_DICTIONARY else {}
+		var puck := {
+			"id": str(metadata.get("feature_id", body.get("id", ""))),
+			"kind": str(metadata.get("kind", "dud")),
+			"lane": clampi(int(body.get("x", 0)) / (CoinPusherSolverScript.WIDTH / 5), 0, 4),
+			"y": int(body.get("y", CoinPusherSolverScript.REAR_EDGE)),
+		}
+		if str(puck.get("kind", "")) == "dud" and not jammed_lanes.has(int(puck.get("lane", -1))):
+			jammed_lanes.append(int(puck.get("lane", -1)))
 		if target.is_empty():
 			target = puck
 			continue
 		var puck_priority := int(kind_priority.get(str(puck.get("kind", "dud")), 3))
 		var target_priority := int(kind_priority.get(str(target.get("kind", "dud")), 3))
-		var puck_key := [puck_priority, int(puck.get("cell", 99)), -int(puck.get("push", 0)), int(puck.get("lane", 99)), str(puck.get("id", ""))]
-		var target_key := [target_priority, int(target.get("cell", 99)), -int(target.get("push", 0)), int(target.get("lane", 99)), str(target.get("id", ""))]
+		var puck_key := [puck_priority, int(puck.get("y", CoinPusherSolverScript.REAR_EDGE)), int(puck.get("lane", 99)), str(puck.get("id", ""))]
+		var target_key := [target_priority, int(target.get("y", CoinPusherSolverScript.REAR_EDGE)), int(target.get("lane", 99)), str(target.get("id", ""))]
 		if _ridge_strategy_key_before(puck_key, target_key):
 			target = puck
 	if action_index % 5 == 4 and not target.is_empty():
@@ -936,7 +1104,6 @@ func _ridge_strategy_decision(machine: Dictionary, action_index: int) -> Diction
 				"coin_pusher_ridge_trim": "balanced",
 			},
 		}
-	var jammed_lanes: Array = state.get("jammed_lanes", []) if typeof(state.get("jammed_lanes", [])) == TYPE_ARRAY else []
 	var preferred_lane := int(target.get("lane", action_index % 5)) if str(target.get("kind", "")) == "multiplier" else action_index % 5
 	if jammed_lanes.has(preferred_lane):
 		for offset in range(5):
@@ -945,6 +1112,34 @@ func _ridge_strategy_decision(machine: Dictionary, action_index: int) -> Diction
 				preferred_lane = candidate
 				break
 	return {"action_id": "drop_quarter", "target_kind": str(target.get("kind", "")), "ui_state": {"coin_pusher_lane": preferred_lane}}
+
+
+func _replace_ridge_pucks(machine: Dictionary, definitions: Array) -> void:
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var retained_bodies: Array = []
+	for value in simulation.get("bodies", []):
+		if typeof(value) != TYPE_DICTIONARY or str((value as Dictionary).get("kind", "")) != "puck":
+			retained_bodies.append(value)
+	simulation["bodies"] = retained_bodies
+	var pucks: Array = []
+	for value in definitions:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var puck := (value as Dictionary).duplicate(true)
+		var lane := clampi(int(puck.get("spawn_lane", 2)), 0, 4)
+		var depth_slot := clampi(int(puck.get("spawn_depth_slot", 2)), 0, 5)
+		var depth := CoinPusherSolverScript.FRONT_EDGE + 9000 + depth_slot * (CoinPusherSolverScript.REAR_EDGE - CoinPusherSolverScript.FRONT_EDGE - 18000) / 5
+		var metadata := puck.duplicate(true)
+		metadata.erase("spawn_lane")
+		metadata.erase("spawn_depth_slot")
+		metadata["mass"] = 4
+		var body := CoinPusherSolverScript.add_feature(simulation, "puck", str(puck.get("id", "")), lane, depth, 5, metadata)
+		puck["body_id"] = str(body.get("id", ""))
+		puck.erase("spawn_lane")
+		puck.erase("spawn_depth_slot")
+		pucks.append(puck)
+	var state: Dictionary = machine.get("variation_state", {}) if typeof(machine.get("variation_state", {})) == TYPE_DICTIONARY else {}
+	state["pucks"] = pucks
 
 
 func _ridge_strategy_key_before(left: Array, right: Array) -> bool:
@@ -1087,45 +1282,26 @@ func _coin_pusher_adjacent_world_node(world_map: Dictionary, source_id: String) 
 
 
 func _machine_hanger_fixture(machine: Dictionary, lane: int) -> void:
-	var lanes: Array = machine.get("lanes", [])
-	if lane < 0 or lane >= lanes.size():
-		return
-	var lane_data: Dictionary = lanes[lane]
-	var cells: Array = lane_data.get("cells", [])
-	if cells.is_empty():
-		return
-	var front: Dictionary = cells[0]
-	front["height"] = 10
-	front["edge_hang"] = true
-	cells[0] = front
-	lane_data["cells"] = cells
-	lanes[lane] = lane_data
-	machine["lanes"] = lanes
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var bodies: Array = simulation.get("bodies", []) if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else []
+	var center_x := lane * 20000 + 10000
+	for index in range(4):
+		var body := _solver_body("fixture_hanger_%d" % index, "coin", center_x + (index - 2) * 1200, 8500 + (index % 2) * 500, 0, true)
+		bodies.append(body)
 
 
 func _clear_coin_pusher_lanes(machine: Dictionary) -> void:
-	var lanes: Array = machine.get("lanes", []) if typeof(machine.get("lanes", [])) == TYPE_ARRAY else []
-	for lane_index in range(lanes.size()):
-		if typeof(lanes[lane_index]) != TYPE_DICTIONARY:
-			continue
-		var lane: Dictionary = lanes[lane_index]
-		var cells: Array = lane.get("cells", []) if typeof(lane.get("cells", [])) == TYPE_ARRAY else []
-		for cell_index in range(cells.size()):
-			cells[cell_index] = {"height": 0, "edge_hang": false}
-		lane["cells"] = cells
-		lanes[lane_index] = lane
-	machine["lanes"] = lanes
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	simulation["bodies"] = []
 	machine["riders"] = []
 
 
 func _coin_pusher_coin_count(machine: Dictionary) -> int:
 	var total := 0
-	for lane_value in machine.get("lanes", []):
-		if typeof(lane_value) != TYPE_DICTIONARY:
-			continue
-		for cell_value in (lane_value as Dictionary).get("cells", []):
-			if typeof(cell_value) == TYPE_DICTIONARY:
-				total += int((cell_value as Dictionary).get("height", 0))
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	for body_value in simulation.get("bodies", []):
+		if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("kind", "")) == "coin":
+			total += 1
 	return total
 
 
