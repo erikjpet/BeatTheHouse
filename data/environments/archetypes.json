@@ -1233,7 +1233,7 @@
     "visual_context": {
       "perspective": "first_person",
       "scene_type": "comedy_club",
-      "asset_path": "res://assets/art/environments/small_underground_casino.png",
+      "asset_path": "res://assets/art/environments/punchline_club.png",
       "description": "A tired comedy stage works for every laugh."
     },
     "objective_hint": "Two drinks buy a chair. The bad jokes come free.",
@@ -1393,7 +1393,7 @@
         "visual_context": {
           "perspective": "first_person",
           "scene_type": "comedy_club",
-          "asset_path": "res://assets/art/environments/small_underground_casino.png",
+          "asset_path": "res://assets/art/environments/punchline_club.png",
           "description": "A tired comedy stage works for every laugh."
         },
         "objective_hint": "Two drinks buy a chair. The bad jokes come free.",
@@ -1566,7 +1566,7 @@
         "visual_context": {
           "perspective": "first_person",
           "scene_type": "crew_back_room",
-          "asset_path": "res://assets/art/environments/small_underground_casino.png",
+          "asset_path": "res://assets/art/environments/punchline_back_room.png",
           "description": "A shut door. A friendly card table. Nobody else listening."
         },
         "objective_hint": "The cards are honest and the money stays friendly.",
