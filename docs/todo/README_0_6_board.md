@@ -332,6 +332,16 @@ What happens then is the owner's, not an agent's:
   the generic correction will mark and omit only that block in generated split
   runners, with balanced-marker and exact-once generation checks. No UI
   assertion or implementation function may be removed.
+- 2026-08-17 [crew06_5/integrated UI] After the split-runner correction, the
+  integrated UI suite reached its assertions and exposed a real compatibility
+  regression: accepting the shipped Crew loan retires its lender entry but
+  `RunActionService.use_hook()` immediately enqueues `recruitment_rook_signpost`,
+  so the talk dock remains visible and the formerly empty triggered-event queue
+  changes. The Wave kickoff requires the shipped Crew lender flow to remain
+  behavior-identical. Crew06_5 already supplies the prompt-required diegetic
+  leads through the seeded, presence-bound `recruitment_rook_leads` encounter;
+  the redundant automatic post-loan enqueue must be removed while that
+  contextual path and its one-hearing/save contracts remain intact.
 - 2026-08-17 [pusher06_2] Exact runtime at `4159f393` is green across the 80
   carried hot actions and all hostile/fallback twins. Raw p95 improved 43.9%
   from 283.293 to 159.000 ms, but remains 9.94x over the 16 ms gate; production
