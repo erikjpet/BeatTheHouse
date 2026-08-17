@@ -3,6 +3,7 @@ extends SceneTree
 const PUSHER_DETERMINISM_ACTIONS := 200
 const PUSHER_EV_ACTIONS := 2400
 const PUSHER_VARIATION_EV_ACTIONS := 600
+const CoinPusherExportParityRunnerScript := preload("res://scripts/games/coin_pusher/coin_pusher_export_parity_runner.gd")
 var coin_pusher_snapshot_boundary_exercised := false
 
 
@@ -123,6 +124,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_coin_pusher_canonical_probe(failures)
 	_check_coin_pusher_opening_depth_gradient(failures)
 	_check_coin_pusher_hot_solver_exact_twin(failures)
+	_check_coin_pusher_export_native_acceptance(failures)
 	_check_coin_pusher_native_adapter_fail_closed(failures)
 	_check_coin_pusher_native_alias_publication(failures)
 	_check_coin_pusher_profile_invariance(failures)
@@ -150,6 +152,24 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_vault_drop_contract(game, definition, failures)
 	_check_pusher_variation_distribution(game, failures)
 	_check_pusher_variation_determinism_and_ev(game, definition, failures)
+
+
+func _check_coin_pusher_export_native_acceptance(failures: Array) -> void:
+	var accepted: Dictionary = CoinPusherExportParityRunnerScript.native_acceptance_report(true, ["native", "native", "native"], 3)
+	if not bool(accepted.get("all_actions_native", false)) \
+		or int(accepted.get("native_action_count", -1)) != 3 \
+		or int(accepted.get("action_backend_count", -1)) != 3:
+		failures.append("Coin Pusher export parity rejected a complete native action path.")
+	for rejected in [
+		CoinPusherExportParityRunnerScript.native_acceptance_report(false, ["native"], 1),
+		CoinPusherExportParityRunnerScript.native_acceptance_report(true, ["gdscript"], 1),
+		CoinPusherExportParityRunnerScript.native_acceptance_report(true, ["native", "gdscript"], 2),
+		CoinPusherExportParityRunnerScript.native_acceptance_report(true, ["native"], 2),
+		CoinPusherExportParityRunnerScript.native_acceptance_report(true, [], 0),
+	]:
+		if bool((rejected as Dictionary).get("all_actions_native", true)):
+			failures.append("Coin Pusher export parity accepted an unavailable, fallback, mixed, incomplete, or empty native action path.")
+			break
 
 
 func _check_coin_pusher_profile_invariance(failures: Array) -> void:
