@@ -399,6 +399,15 @@ What happens then is the owner's, not an agent's:
   so the current guard missed it. The row remains IN_PROGRESS for a transient
   resume projection plus an exact-byte cold saved-slot hostile; the field may
   not be exempted or normalized before the baseline.
+- 2026-08-17 [fix06_2] Commits `b5db8c07` and `124ced15`, integrated by
+  `e94658ca`, keep the durable Slot checkpoint byte-exact during passive
+  `enter()`/surface projection and resume it through transient canvas time.
+  New coverage includes cold JSON-restored non-default `slot:2`, real
+  enter→surface→render→play parity, 0.5 drunk-time scaling, same-ID cumulative
+  rebase, omitted-offset clearing, unrelated-channel isolation, and clean
+  checkpoint consumption at action/save boundaries. Focused Slot is 2/2 and
+  Games 10/10 with zero skips/failures/stderr; integrated systems/UI,
+  determinism, and visual gates remain before row closeout.
 - 2026-08-17 [pusher06_2] Exact runtime at `4159f393` is green across the 80
   carried hot actions and all hostile/fallback twins. Raw p95 improved 43.9%
   from 283.293 to 159.000 ms, but remains 9.94x over the 16 ms gate; production
@@ -1076,3 +1085,9 @@ What happens then is the owner's, not an agent's:
   checkpoint and writes wall-clock-derived serialized state. An isolated agent
   is moving that projection to transient UI state and adding the missing cold
   JSON-restored hostile before the complete gate matrix reruns.
+- 2026-08-17 [fix06_2] Saved Slot checkpoint activation repair integrated at
+  `e94658ca` after independent semantic review. The real cold open/render path
+  is now observational and visual progress resumes without wall-clock writes,
+  double drunk scaling, stale offsets, or same-ID double counting. Focused
+  Slot/Games gates are green with clean stderr; full integrated closeout gates
+  remain intentionally pending.
