@@ -4,6 +4,7 @@ extends RefCounted
 # be observational; persistent changes belong to a resolved player action.
 
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
@@ -106,6 +107,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_generated_environment_sweep(library, covered_game_ids, checked_contexts, failures)
 	_check_catalog_coverage(library, covered_game_ids, failures)
 	_check_portable_ticket_readonly_isolation(library, failures)
+	_check_saved_slot_checkpoint_activation(library, failures)
 	_check_staff_rollover_presentation(library, failures)
 	_check_reintroduced_defect_fixture(failures)
 
@@ -338,6 +340,99 @@ static func _check_portable_ticket_readonly_isolation(library: ContentLibrary, f
 				(preview_stack[0] as Dictionary)["hostile_preview_mutation"] = true
 			if JSON.stringify(pull_run.to_dict()) != pull_before:
 				failures.append("Pull Tabs passive merge exposed live portable ticket dictionaries to its preview copy.")
+
+
+static func _check_saved_slot_checkpoint_activation(library: ContentLibrary, failures: Array) -> void:
+	var slot_game := _load_game(library, "slot", failures)
+	if slot_game == null:
+		return
+	var run_state := RunStateScript.new()
+	run_state.start_new("GAME-ACTIVATION-SAVED-SLOT-CHECKPOINT")
+	run_state.bankroll = 1000
+	var environment := {
+		"id": "activation_saved_slot_checkpoint",
+		"world_node_id": "activation_saved_slot_checkpoint_node",
+		"archetype_id": RunState.GRAND_CASINO_ARCHETYPE_ID,
+		"display_name": "Saved Slot Checkpoint Fixture",
+		"kind": "boss",
+		"tier": 3,
+		"game_ids": ["slot"],
+		"game_states": {},
+	}
+	var states: Dictionary = slot_game.generate_environment_fixture_states(
+		run_state,
+		environment,
+		run_state.create_rng("saved_slot_checkpoint_fixtures"),
+		3
+	)
+	var state_key := "slot:2"
+	var machine := _dict(states.get(state_key, {}))
+	if machine.is_empty():
+		failures.append("Game activation saved-slot guard did not generate non-default fixture slot:2.")
+		return
+	machine["slot_animation_id"] = "saved-slot-checkpoint"
+	machine["slot_animation_duration_msec"] = 3000
+	machine["slot_animation_started_msec"] = 0
+	machine["slot_animation_resume_elapsed_msec"] = 1250
+	machine["slot_animation_plan"] = {
+		"id": "saved-slot-checkpoint",
+		"duration_msec": 3000,
+		"reel_timeline": [{"reel": 0, "stop_time": 1.0}],
+	}
+	states[state_key] = machine
+	environment["game_states"] = states
+	run_state.set_environment(environment)
+	run_state = _json_round_trip_run_state(run_state, "saved non-default slot checkpoint fixture", failures)
+	if run_state == null:
+		return
+	slot_game.set_transient_state_key_context(state_key)
+	var source_text := JSON.stringify(run_state.to_dict())
+	var violation := _activation_violation(slot_game, run_state)
+	if not violation.is_empty() or JSON.stringify(run_state.to_dict()) != source_text:
+		failures.append("Saved non-default slot checkpoint changed during passive activation: %s" % violation)
+	var surface := slot_game.surface_state(run_state, run_state.current_environment, {
+		"surface_time_msec": 10000,
+		"drunk_scaled_surface_time_msec": 10000,
+	})
+	var spin_channel := _animation_channel(surface, "slot_spin")
+	if int(spin_channel.get("elapsed_offset_msec", -1)) != 1250 \
+			or int(spin_channel.get("started_msec", -1)) != 0:
+		failures.append("Saved non-default slot checkpoint did not project its resume offset into transient surface state.")
+	if JSON.stringify(run_state.to_dict()) != source_text:
+		failures.append("Saved non-default slot checkpoint surface projection mutated durable RunState.")
+
+	var opened := RunStateScript.new()
+	opened.from_dict(run_state.to_dict().duplicate(true))
+	var direct := RunStateScript.new()
+	direct.from_dict(run_state.to_dict().duplicate(true))
+	var opened_before := JSON.stringify(opened.to_dict())
+	slot_game.enter(opened, opened.current_environment)
+	if JSON.stringify(opened.to_dict()) != opened_before:
+		failures.append("Saved non-default slot checkpoint enter was not byte-exact before play.")
+	var opened_surface := slot_game.surface_state(opened, opened.current_environment, {
+		"surface_time_msec": 10000,
+		"drunk_scaled_surface_time_msec": 10000,
+	})
+	var opened_canvas: Control = GameSurfaceCanvasScript.new()
+	opened_canvas.call("render_game_snapshot", opened_surface)
+	opened_canvas.call("surface_runtime_status")
+	opened_canvas.free()
+	if JSON.stringify(opened.to_dict()) != opened_before:
+		failures.append("Saved non-default slot checkpoint open-and-render was not byte-exact before play.")
+	var action_ui := {"surface_time_msec": 12000, "drunk_scaled_surface_time_msec": 12000}
+	var opened_result := slot_game.resolve_with_context("spin", 0, opened, opened.current_environment, opened.create_rng("saved_slot_open_play"), action_ui)
+	var direct_result := slot_game.resolve_with_context("spin", 0, direct, direct.current_environment, direct.create_rng("saved_slot_open_play"), action_ui)
+	if JSON.stringify(opened_result) != JSON.stringify(direct_result) \
+			or JSON.stringify(opened.to_dict()) != JSON.stringify(direct.to_dict()):
+		failures.append("Saved non-default slot checkpoint open-then-play diverged from direct play.")
+	slot_game.set_transient_state_key_context("")
+
+
+static func _animation_channel(surface: Dictionary, channel_id: String) -> Dictionary:
+	for channel_value in _array(surface.get("surface_animation_channels", [])):
+		if typeof(channel_value) == TYPE_DICTIONARY and str((channel_value as Dictionary).get("id", "")) == channel_id:
+			return (channel_value as Dictionary).duplicate(true)
+	return {}
 
 
 static func _check_staff_rollover_presentation(library: ContentLibrary, failures: Array) -> void:

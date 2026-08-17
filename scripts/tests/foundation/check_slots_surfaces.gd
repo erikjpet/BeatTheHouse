@@ -83,11 +83,24 @@ func _check_slot_runtime_storage_contract(definition: Dictionary, failures: Arra
 			break
 		run_state = loaded_value as RunState
 		environment = run_state.current_environment
+		var before_enter := JSON.stringify(run_state.to_dict())
 		game.enter(run_state, environment)
-		var resumed: Dictionary = SlotMachineStateScript.peek_machine(environment, "slot")
-		var resumed_elapsed := Time.get_ticks_msec() - int(resumed.get("slot_animation_started_msec", 0))
-		if absi(resumed_elapsed - expected_elapsed) > 17:
-			failures.append("Slot active presentation checkpoint did not resume within one rendered frame at %d%%." % int(progress * 100.0))
+		if JSON.stringify(run_state.to_dict()) != before_enter:
+			failures.append("Opening a cold-restored slot checkpoint mutated serialized RunState at %d%%." % int(progress * 100.0))
+		var resumed_surface: Dictionary = game.surface_state(run_state, environment, {"surface_time_msec": 10000, "drunk_scaled_surface_time_msec": 10000})
+		var canvas: Control = GameSurfaceCanvasScript.new()
+		canvas.call("render_game_snapshot", resumed_surface)
+		var resumed_elapsed := int(round(float(canvas.call("surface_elapsed", "slot_spin")) * 1000.0))
+		if resumed_elapsed < expected_elapsed or resumed_elapsed > expected_elapsed + 25:
+			failures.append("Slot transient checkpoint projection did not resume within one rendered frame at %d%%: %dms." % [int(progress * 100.0), resumed_elapsed])
+		var runtime_status: Dictionary = canvas.call("surface_runtime_status")
+		var runtime_spin: Dictionary = _slot_dict(_slot_dict(runtime_status.get("surface_animations", {})).get("slot_spin", {}))
+		if int(runtime_spin.get("elapsed_offset_msec", -1)) != expected_elapsed:
+			failures.append("Slot transient checkpoint projection omitted its %dms UI-local offset." % expected_elapsed)
+		if JSON.stringify(run_state.to_dict()) != before_enter:
+			failures.append("Rendering a resumed slot checkpoint mutated its durable save state at %d%%." % int(progress * 100.0))
+		canvas.free()
+	_check_slot_resume_offset_channel_semantics(failures)
 	save_service.clear_run(checkpoint_slot)
 	var machine: Dictionary = game.call("_read_machine", environment)
 	machine["slot_animation_started_msec"] = 0
@@ -108,6 +121,85 @@ func _check_slot_runtime_storage_contract(definition: Dictionary, failures: Arra
 	if int(pinball_cache.get("board_template_cache_size", 0)) > int(pinball_cache.get("board_template_cache_cap", 0)):
 		failures.append("Pinball immutable board template cache exceeded its explicit bound.")
 	_check_slot_reel_motion_visibility(definition, failures)
+
+
+func _check_slot_resume_offset_channel_semantics(failures: Array) -> void:
+	var canvas: Control = GameSurfaceCanvasScript.new()
+	var slot_channel := {
+		"id": "slot_spin",
+		"active_id": "saved-spin",
+		"active": true,
+		"duration_msec": 5000,
+		"started_msec": 0,
+		"elapsed_offset_msec": 1250,
+	}
+	var auxiliary_channel := {
+		"id": "unrelated",
+		"active_id": "ambient",
+		"active": true,
+		"duration_msec": 5000,
+		"started_msec": 0,
+		"elapsed_offset_msec": 300,
+	}
+	canvas.call("render_game_snapshot", {
+		"game_id": "slot",
+		"drunk_time_scale": 0.5,
+		"surface_animation_channels": [slot_channel, auxiliary_channel],
+	})
+	var fresh_elapsed := int(round(float(canvas.call("surface_elapsed", "slot_spin")) * 1000.0))
+	if fresh_elapsed < 1250 or fresh_elapsed > 1275:
+		failures.append("Slot resume offset was drunk-time-scaled twice on fresh activation: %dms." % fresh_elapsed)
+	var first_status: Dictionary = canvas.call("surface_runtime_status")
+	var first_animations := _slot_dict(first_status.get("surface_animations", {}))
+	var first_slot := _slot_dict(first_animations.get("slot_spin", {}))
+	canvas.call("render_game_snapshot", {
+		"game_id": "slot",
+		"drunk_time_scale": 0.5,
+		"surface_animation_channels": [slot_channel, auxiliary_channel],
+	})
+	var same_offset_status: Dictionary = canvas.call("surface_runtime_status")
+	var same_offset_slot := _slot_dict(_slot_dict(same_offset_status.get("surface_animations", {})).get("slot_spin", {}))
+	if int(same_offset_slot.get("started_msec", -1)) != int(first_slot.get("started_msec", -2)):
+		failures.append("Slot same-ID refresh restarted an unchanged resume offset.")
+
+	var live_channels: Dictionary = canvas.get("surface_animation_channels")
+	var live_slot := _slot_dict(live_channels.get("slot_spin", {}))
+	live_slot["started_msec"] = Time.get_ticks_msec() - 1000
+	live_channels["slot_spin"] = live_slot
+	canvas.set("surface_animation_channels", live_channels)
+	var before_rebase: Dictionary = canvas.call("surface_runtime_status")
+	var before_aux := _slot_dict(_slot_dict(before_rebase.get("surface_animations", {})).get("unrelated", {}))
+	var cumulative_slot := slot_channel.duplicate(true)
+	cumulative_slot["elapsed_offset_msec"] = 1750
+	canvas.call("render_game_snapshot", {
+		"game_id": "slot",
+		"drunk_time_scale": 0.5,
+		"surface_animation_channels": [cumulative_slot, auxiliary_channel],
+	})
+	var rebased_elapsed := int(round(float(canvas.call("surface_elapsed", "slot_spin")) * 1000.0))
+	if rebased_elapsed < 1750 or rebased_elapsed > 1775:
+		failures.append("Slot same-ID cumulative resume refresh double-counted its prior UI-local elapsed time: %dms." % rebased_elapsed)
+	var after_rebase: Dictionary = canvas.call("surface_runtime_status")
+	var after_aux := _slot_dict(_slot_dict(after_rebase.get("surface_animations", {})).get("unrelated", {}))
+	if int(after_aux.get("started_msec", -1)) != int(before_aux.get("started_msec", -2)) \
+			or int(after_aux.get("elapsed_offset_msec", -1)) != int(before_aux.get("elapsed_offset_msec", -2)):
+		failures.append("Slot resume rebase changed an unrelated animation channel.")
+
+	var no_offset_slot := cumulative_slot.duplicate(true)
+	no_offset_slot.erase("elapsed_offset_msec")
+	canvas.call("render_game_snapshot", {
+		"game_id": "slot",
+		"drunk_time_scale": 0.5,
+		"surface_animation_channels": [no_offset_slot, auxiliary_channel],
+	})
+	var cleared_status: Dictionary = canvas.call("surface_runtime_status")
+	var cleared_slot := _slot_dict(_slot_dict(cleared_status.get("surface_animations", {})).get("slot_spin", {}))
+	if int(cleared_slot.get("elapsed_offset_msec", -1)) != 0:
+		failures.append("Slot same-ID refresh inherited an omitted transient resume offset.")
+	var cleared_elapsed := int(round(float(canvas.call("surface_elapsed", "slot_spin")) * 1000.0))
+	if cleared_elapsed < 0 or cleared_elapsed > 25:
+		failures.append("Slot omitted resume offset did not rebase the UI-local animation clock: %dms." % cleared_elapsed)
+	canvas.free()
 
 
 func _check_slot_reel_motion_visibility(definition: Dictionary, failures: Array) -> void:
