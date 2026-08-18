@@ -305,7 +305,11 @@ What happens then is the owner's, not an agent's:
   must run serially. The authored-character validation failure on
   `heist_live_table` is real; the Grand Casino save and Health Inspector
   assertions must be reproduced after correction and compared on clean current
-  main before any inherited-failure classification.
+  main before any inherited-failure classification. Static follow-up found the
+  likely regression: empty/non-heist boundary sync still rebuilt every world-
+  map node while searching for the transient event. Crew-ignoring runs require
+  a true no-op; cleanup scans may run only when a persisted registration marker
+  proves this heist actually mounted the event.
 
 - 2026-08-17 [pusherv3_2] PM production-lifecycle review returned the first
   live-loop implementation before broad gates: FoundationMain prepares an
