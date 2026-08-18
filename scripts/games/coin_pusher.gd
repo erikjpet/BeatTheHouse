@@ -128,13 +128,13 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 	}
 
 
-func surface_state(run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
+func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	# Generic presentation sweeps query surfaces without entering them and are
 	# contractually read-only. Production `enter()` has already opened the live
 	# machine, so only use that transient state when it exists.
 	var key := _live_key(run_state, environment)
 	var machine: Dictionary = _live_machines[key] if _live_machines.has(key) else _read_machine_state(run_state, environment)
-	return _v3_headless_surface_state(machine)
+	return _v3_headless_surface_state(machine, run_state, environment, ui_state)
 
 
 func surface_action_command(surface_action: String, _index: int, _confirm_requested: bool, _ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -241,7 +241,10 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		return _empty_pusher_result(action_id, environment, "Red light. This cabinet stays dead tonight; the rest of the room is open.")
 	if action_id == DROP_ACTION:
 		if _drop_refused(machine):
-			return _empty_pusher_result(action_id, environment, "The coin slot refuses the quarter; nothing was charged.")
+			var refused_result := _empty_pusher_result(action_id, environment, "The coin slot refuses the quarter; nothing was charged.")
+			refused_result["surface_action_view_patch"] = _surface_action_view_patch(machine, run_state, environment, _ui_state)
+			refused_result["preserve_surface_ui_state"] = true
+			return refused_result
 		var simulation := _simulation(machine)
 		var density := maxi(_cold_density(), int(machine.get("cold_quarters_density_armed", 0))) if bool(machine.get("cold_quarters_armed", false)) else 1
 		machine["cold_quarters_armed"] = false
@@ -258,6 +261,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		deltas["messages"] = [str(machine["last_message"])]
 		var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": DROP_ACTION, "action_kind": "legal", "stake": _drop_cost(), "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": str(machine["last_message"])})
 		result["host_apply_result"] = true
+		result["surface_action_view_patch"] = _surface_action_view_patch(machine, run_state, environment, _ui_state)
 		result["preserve_surface_ui_state"] = true
 		return result
 	if action_id == NUDGE_ACTION:
@@ -600,7 +604,7 @@ func _has_v3_simulation(machine: Dictionary) -> bool:
 		and str((simulation_value as Dictionary).get("schema", "")) == CoinPusherSolverScript.SCHEMA
 
 
-func _v3_headless_surface_state(machine: Dictionary) -> Dictionary:
+func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null, environment: Dictionary = {}, ui_state: Dictionary = {}) -> Dictionary:
 	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), _machine_definition())
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
@@ -620,6 +624,8 @@ func _v3_headless_surface_state(machine: Dictionary) -> Dictionary:
 		"surface_realtime_state_refresh": true,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
+		"surface_action_catalog_key": _surface_action_catalog_key(machine, run_state, environment, ui_state),
+		"surface_action_stake_view": _surface_action_stake_view(run_state, environment),
 		"coin_pusher_v3_headless_placeholder": true,
 		"coin_pusher_solver_schema": str(simulation.get("schema", "")),
 		"coin_pusher_solver_version": int(simulation.get("version", 0)),
@@ -653,6 +659,75 @@ func _v3_headless_surface_state(machine: Dictionary) -> Dictionary:
 		"surface_animation_channels": [],
 		"surface_audio": {},
 	})
+
+
+func _surface_action_view_patch(machine: Dictionary, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	# Deferred embedded actions only need the shallow, action-boundary scalars.
+	# The following realtime patch remains the single owner of dense body views,
+	# so a DROP never copies the full 300-body surface merely to refresh the HUD.
+	var simulation := _simulation(machine)
+	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+	return {
+		# This surface already refreshes from its continuous live loop. Asking for
+		# another dense body projection inside the deferred action refresh would
+		# duplicate the same frame's work; the next live tick catches up from the
+		# deterministic surface clock.
+		"surface_action_realtime_refresh_required": false,
+		"surface_action_catalog_key": _surface_action_catalog_key(machine, run_state, environment, ui_state),
+		"surface_action_stake_view": _surface_action_stake_view(run_state, environment),
+		"coin_pusher_action_count": int(machine.get("action_count", 0)),
+		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
+		"coin_pusher_tray_count": tray.size(),
+		"coin_pusher_tray_value": _ledger_value(tray),
+		"native_selected_surface_actions": ["coin_pusher_drop", CARRIAGE_LEFT_ACTION, CARRIAGE_RIGHT_ACTION, SKILL_STOP_ACTION, COLLECT_ACTION],
+		"surface_action_bindings": {
+			"coin_pusher_drop": {"label": "DROP", "enabled": not _drop_refused(machine)},
+			CARRIAGE_LEFT_ACTION: {"label": "<", "enabled": true},
+			CARRIAGE_RIGHT_ACTION: {"label": ">", "enabled": true},
+			SKILL_STOP_ACTION: {"label": "RELEASE" if bool(simulation.get("skill_stop_engaged", false)) else "SKILL STOP", "enabled": true, "lit": bool(simulation.get("skill_stop_engaged", false))},
+			COLLECT_ACTION: {"label": "COLLECT", "enabled": not tray.is_empty()},
+		},
+	}
+
+
+func _surface_action_catalog_key(machine: Dictionary, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> String:
+	# These are the exact dependencies of legal_actions()/cheat_actions().
+	# Body motion, carriage position, bankroll, and animation time do not alter
+	# the catalog and therefore must not force it to be rebuilt every frame.
+	var challenge_cheats_disabled := run_state != null and run_state.challenge_cheat_actions_disabled()
+	var security_risk_bonus := run_state.security_risk_bonus("cheat") if run_state != null else 0
+	var security_pressure_label := run_state.security_pressure_label() if run_state != null else ""
+	var security_pressure_summary := run_state.security_pressure_summary() if run_state != null else ""
+	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
+	return JSON.stringify([
+		get_id(),
+		str(environment.get("id", "")),
+		str(ui_state.get("selected_action_id", "")),
+		str(ui_state.get("selected_action_kind", "")),
+		_machine_busy(environment),
+		bool(machine.get("locked_down", false)),
+		str(machine.get("variation_id", _variation_id())),
+		run_state != null and run_state.inventory.has("xray_glasses"),
+		challenge_cheats_disabled,
+		security_risk_bonus,
+		security_pressure_label,
+		security_pressure_summary,
+		bool(pit_boss_status.get("active", false)),
+		bool(pit_boss_status.get("watched", false)),
+		int(pit_boss_status.get("cheat_heat_bonus", 0)),
+		str(pit_boss_status.get("summary", "")),
+	])
+
+
+func _surface_action_stake_view(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 0
+	return {
+		"stake_floor": _drop_cost(),
+		"stake_ceiling": maxi(_drop_cost(), capacity),
+		"base_stake_ceiling": maxi(_drop_cost(), capacity),
+		"economy_state": run_state.economy() if run_state != null else {},
+		"economy_pressure_applied": false,
+	}
 
 
 func _ensure_live_machine(run_state: RunState, environment: Dictionary) -> Dictionary:
