@@ -4699,6 +4699,12 @@
     "payload": {"summary": "Dave watches the road arrive before the bus.", "choices": [{"id": "wait_for_one_line", "label": "Wait for one line", "text": "The room he left is still doing what he said it would.", "consequences": {"story_flags_set": {"chain06_dave_last_stop": true}, "resolve_event": true}}]}
   },
   {
+    "id": "heist_live_table", "display_name": "The Live Table", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["casino"],
+    "speaker": {"role": "staff", "name": "The Crew", "character_pool_id": "crew_regulars", "character_identity_key": "the_crew", "voice_line_key": "favor_due", "silhouette": "vest", "portrait_count": 3, "face_layers": [], "bind": "none"},
+    "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "crew", "environment_prop": "card_table", "start_summary": "The crew beat waits inside the live session.", "trigger": {"type": "manual"},
+    "conditions": {"requires_story_flags": {"heist_live_table_active": true}}, "payload": {"kind": "heist_live_table", "summary": "The crew beat waits inside the live session.", "choices": []}
+  },
+  {
     "id": "chain06_dave_true_stop", "display_name": "A Useful Story", "type": "discovery", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
     "speaker": {"role": "stranger", "name": "Dave", "character_id": "dave_bus_regular", "voice_line_key": "bus_warning", "silhouette": "coat", "bind": "none"},
     "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Dave names one true room for your map.", "trigger": {"type": "manual"},

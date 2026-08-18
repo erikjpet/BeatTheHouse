@@ -200,7 +200,13 @@ static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Diction
 	var tutorial_failure := _is_tutorial_failure(run_data)
 	var outcome_key := str(run_data.get("run_failure_reason", RunState.FAILURE_BANKROLL_ZERO))
 	if won:
-		outcome_key = "players_card" if str(flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID else "showdown_survived"
+		var victory_route := str(flags.get("demo_victory_route", ""))
+		if victory_route == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID:
+			outcome_key = "players_card"
+		elif victory_route == "crew_heist":
+			outcome_key = "heist_%s" % str(flags.get("crew_heist_outcome", "somebody_got_pinched"))
+		else:
+			outcome_key = "showdown_survived"
 	var entries := _copy_dict(registry.get("outcomes", registry))
 	var definition := _copy_dict(entries.get(outcome_key, {}))
 	var title := str(definition.get("title", outcome_key.replace("_", " ").capitalize()))

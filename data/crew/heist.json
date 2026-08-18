@@ -1,0 +1,57 @@
+[{ 
+  "schema_version": 1,
+  "state_schema_version": 1,
+  "plans": [
+    {
+      "id": "the_count",
+      "label": "The Count",
+      "architects": ["crew_bishop"],
+      "world_criteria": [{"kind": "scenario_hook", "key": "audit_night", "label": "No audit on the books this season."}],
+      "crew_criteria": [{"member_id": "crew_bishop", "rank": "inner_circle", "label": "Bishop is not inside the circle yet."}],
+      "setup": {
+        "identity": {"required_sessions": 3, "bet_min": 8, "bet_max": 30, "heat_ceiling": 35},
+        "schedule": {"hold_required_actions": 2, "deadline_actions": 12, "attention_limit": 40},
+        "swap_cart": {"deadline_actions": 14},
+        "guard_marker": {"optional": true, "flag": "debt_court_settlement", "member_id": "crew_knuckles", "min_rank": "associate"}
+      },
+      "play": {"required_rounds": 3, "window_actions": 9, "table_game": "blackjack", "decision_rounds": {"go": 0, "distraction": 1, "exit": 2}, "boring_bet_min": 8, "boring_bet_max": 30, "heat_spike": 15},
+      "getaway": {"default_exit": "dock", "routes": {"dock": {"deadline_actions": 7, "pursuit_pressure": 4, "pursuit_limit": 11}, "corridor": {"deadline_actions": 12, "pursuit_pressure": 1, "pursuit_limit": 11}}},
+      "payout": {"base": 900, "clean_bonus": 250, "hot_penalty": 180}
+    },
+    {
+      "id": "the_whale_game",
+      "label": "The Whale Game",
+      "architects": ["crew_velvet", "crew_mags"],
+      "world_criteria": [{"kind": "scenario_hook_any", "keys": ["heist_plan_b_criteria", "gala_night"], "label": "No whale is aboard and no gala is booked."}],
+      "crew_criteria": [{"member_id": "crew_velvet", "rank": "inner_circle", "label": "Velvet is not inside the circle yet."}],
+      "setup": {
+        "vouch": {"loss_target": 60, "rounds": 2},
+        "rig": {"component_item": "false_bottom_cup", "training_flag": "craps_setting_trained"},
+        "name": {"spend_required": 120, "seen_required": 2},
+        "drunk": {"automatic": true}
+      },
+      "play": {"required_rounds": 5, "venue_archetype": "grand_casino_high_limit", "game_sequence": ["craps", "blackjack", "craps", "baccarat", "blackjack"], "hazard_rounds": [2, 4], "starting_pot": 650, "made_suspicion": 100, "lifelines": 2},
+      "interview": {"clean_score_min": 80, "clean_choice": "show_receipt", "hot_choice": "cut_short"},
+      "getaway": {"exit": "front_door", "deadline_actions": 9, "hot_pursuit_pressure": 3, "pursuit_limit": 10},
+      "payout": {"minimum": 180, "maximum": 1300}
+    }
+  ],
+  "outcomes": [
+    {"id": "clean_sweep", "label": "Clean Sweep", "score_min": 80},
+    {"id": "out_hot", "label": "Out Hot", "score_min": 55},
+    {"id": "somebody_got_pinched", "label": "Somebody Got Pinched", "score_min": 0},
+    {"id": "the_turn", "label": "The Turn", "stub": true}
+  ],
+  "ending_copy": {
+    "the_count": {
+      "clean_sweep": "The count closes. Bishop leaves no number behind.",
+      "out_hot": "The dock takes the noise. The envelope still clears.",
+      "somebody_got_pinched": "One chair stays empty. The count still balances."
+    },
+    "the_whale_game": {
+      "clean_sweep": "Velvet gives the room its name back. The pot leaves with yours.",
+      "out_hot": "The front door becomes a race. The money keeps up.",
+      "somebody_got_pinched": "The house keeps a face. The crew keeps the night."
+    }
+  }
+}]

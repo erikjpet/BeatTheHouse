@@ -163,7 +163,13 @@ static func advance_boundaries(state_value: Variant, amount: int, current_node_i
 					state = _resolve(state, "success", "held_window", true)
 					continue
 		elif str(state.get("mode", "")) == MODE_GETAWAY:
-			state["pursuit_pressure"] = int(state.get("pursuit_pressure", 0)) + int(state.get("pursuit_per_boundary", 0))
+			var consumer_payload := _copy_dict(state.get("consumer_payload", {}))
+			var start_grace := maxi(0, int(consumer_payload.get("start_boundary_grace", 0)))
+			if start_grace > 0:
+				consumer_payload["start_boundary_grace"] = start_grace - 1
+				state["consumer_payload"] = consumer_payload
+			else:
+				state["pursuit_pressure"] = int(state.get("pursuit_pressure", 0)) + int(state.get("pursuit_per_boundary", 0))
 			if int(state.get("pursuit_pressure", 0)) >= int(state.get("pursuit_limit", 1)):
 				state = _resolve(state, "failed", "caught", false)
 				continue
