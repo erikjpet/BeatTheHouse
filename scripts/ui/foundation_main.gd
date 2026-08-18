@@ -5929,7 +5929,12 @@ func _rebuild_content_group_toggles() -> void:
 	content_group_toggles = {}
 	if library == null:
 		return
-	for option_value in library.content_group_options(selected_content_group_ids):
+	var options := library.content_group_options(selected_content_group_ids)
+	# Keep the drawer at five visible rows or fewer as data packs are added.
+	# The full-width run configuration has room for four accessible columns;
+	# deriving this here avoids a fixed-grid overflow without per-frame layout.
+	content_group_list.columns = clampi(ceili(float(options.size()) / 5.0), 2, 4)
+	for option_value in options:
 		if typeof(option_value) != TYPE_DICTIONARY:
 			continue
 		var option: Dictionary = option_value
