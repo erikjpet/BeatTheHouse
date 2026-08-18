@@ -347,6 +347,9 @@ What happens then is the owner's, not an agent's:
   whenever uncollected tray value survives an exit. Collection itself must also
   retain an explicit transferred-body accounting term (or equivalent): simply
   clearing the tray otherwise makes every later live tick fail conservation.
+  Both kernels must implement that term: the native input-trace `collect` path
+  cannot clear a nonempty tray without the same accounting, and export parity
+  must exercise a genuinely nonempty collection.
   The snapshot budget must include a heavily loaded tray: repeated cash entries
   need compact persistence while exact kinds, values, Ridge provenance, and
   sparse prize items still round-trip and collect once.
