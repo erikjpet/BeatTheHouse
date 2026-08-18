@@ -44,9 +44,10 @@ func defers_embedded_action_presentation_refresh(run_state: RunState, _environme
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	# Surface entry is presentation-only. Machine normalization, rumor updates,
 	# and staff-watch consequences belong to generation/action boundaries.
-	var machine := _ensure_live_machine(run_state, environment)
+	var busy := _machine_busy(environment)
+	var machine := _read_machine_state(run_state, environment) if busy else _ensure_live_machine(run_state, environment)
 	var result := super.enter(run_state, environment)
-	if _machine_busy(environment):
+	if busy:
 		result["message"] = "A convoy regular has the good machine tied up. Try another room or come back when the crowd moves."
 	elif bool(machine.get("locked_down", false)):
 		result["message"] = "Red lights. This cabinet is done for tonight. The rest of the room is still yours."
@@ -138,13 +139,13 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 
 
 func surface_action_command(surface_action: String, _index: int, _confirm_requested: bool, _ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if _machine_busy(environment):
+		return GameModule.surface_command({"handled": true, "message": "The machine is occupied; no control responds."}, true)
 	var machine := _ensure_live_machine(run_state, environment)
 	_reconcile_tolerance_modifiers(run_state, environment, machine)
 	var live_session: Dictionary = machine.get("live_session", {})
 	if bool(live_session.get("input_locked", false)):
 		return GameModule.surface_command({"handled": true, "message": "The controls lock while the last cascade settles."}, true)
-	if _machine_busy(environment):
-		return GameModule.surface_command({"handled": true, "message": "The machine is occupied; no control responds."}, true)
 	if bool(machine.get("locked_down", false)) and surface_action != COLLECT_ACTION:
 		return GameModule.surface_command({"handled": true, "message": "The alarm lock leaves the cabinet dark. Only the tray remains reachable."}, true)
 	if surface_action.begins_with(NUDGE_FORCE_PREFIX):
@@ -233,12 +234,14 @@ func surface_pointer_uses_lightweight_ui_state(surface_action: String) -> bool:
 func surface_pointer_command(surface_action: String, _index: int, phase: String, board_position: Vector2, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	if surface_action != CARRIAGE_DRAG_ACTION:
 		return {"handled": false}
+	if _machine_busy(environment):
+		return GameModule.surface_command({"handled": true, "message": "The machine is occupied; no control responds."}, true)
 	var machine := _ensure_live_machine(run_state, environment)
 	_reconcile_tolerance_modifiers(run_state, environment, machine)
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	if bool(session.get("input_locked", false)):
 		return GameModule.surface_command({"handled": true, "message": "The controls lock while the last cascade settles."}, true)
-	if _machine_busy(environment) or bool(machine.get("locked_down", false)):
+	if bool(machine.get("locked_down", false)):
 		return GameModule.surface_command({"handled": true, "message": "The carriage does not move while this cabinet is unavailable."}, true)
 	var next_state := ui_state
 	if phase == "begin":
@@ -375,6 +378,8 @@ func resolve(action_id: String, stake: int, run_state: RunState, environment: Di
 
 
 func resolve_with_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, _rng: RngStream, _ui_state: Dictionary = {}) -> Dictionary:
+	if _machine_busy(environment):
+		return _empty_pusher_result(action_id, environment, "The machine is occupied; no control responds.")
 	var machine := _ensure_live_machine(run_state, environment)
 	_reconcile_tolerance_modifiers(run_state, environment, machine)
 	if bool((machine.get("live_session", {}) as Dictionary).get("input_locked", false)):
@@ -420,6 +425,8 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 func active_item_command(item_id: String, run_state: RunState, environment: Dictionary, _rng: RngStream) -> Dictionary:
 	if item_id != COLD_QUARTERS_ITEM_ID or run_state == null or not run_state.inventory.has(item_id):
 		return {"handled": false}
+	if _machine_busy(environment):
+		return {"handled": true, "message": "The machine is occupied; no control responds."}
 	var machine := _ensure_live_machine(run_state, environment)
 	_reconcile_tolerance_modifiers(run_state, environment, machine)
 	if bool(machine.get("locked_down", false)):
@@ -444,6 +451,10 @@ func deterministic_state_digest(environment: Dictionary) -> String:
 
 
 func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, _current_surface_state: Dictionary) -> Dictionary:
+	if _machine_busy(environment):
+		# Occupancy is a hard absence boundary: project the durable snapshot, but
+		# never open a live session or advance one tick behind the patron's back.
+		return _v3_headless_surface_state(_read_machine_state(run_state, environment), run_state, environment, ui_state)
 	var machine := _ensure_live_machine(run_state, environment)
 	var advanced := CoinPusherLiveSessionScript.advance(machine, int(ui_state.get("surface_time_msec", 0)))
 	var physics_events: Array = advanced.get("events", []) if typeof(advanced.get("events", [])) == TYPE_ARRAY else []

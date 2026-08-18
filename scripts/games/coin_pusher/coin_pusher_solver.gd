@@ -203,10 +203,11 @@ static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1
 	var board := _drop_board(definition)
 	var jitter := maxi(0, int(apparatus.get("release_jitter", 0)))
 	var radius := int(coins.get("radius", COIN_RADIUS))
+	var release_x := _production_release_x(rng, x, jitter, apparatus, radius, int(geometry.get("width", WIDTH)))
 	var body := _new_body(
 		state,
 		"coin",
-		clampi(x + rng.randi_range(-jitter, jitter), radius, int(geometry.get("width", WIDTH)) - radius),
+		release_x,
 		int(board.get("y", DROP_Y)),
 		int(board.get("z_top", DROP_Z)),
 		radius,
@@ -282,6 +283,25 @@ static func return_gutter_body(state: Dictionary, return_data: Dictionary) -> Di
 	}
 	(state.get("bodies", []) as Array).append(body)
 	return body
+
+
+static func _production_release_x(rng: RngStream, requested_x: int, jitter: int, apparatus: Dictionary, radius: int, width: int) -> int:
+	var legal_offsets: Array[int] = []
+	var pegs: Array = apparatus.get("pegs", []) if typeof(apparatus.get("pegs", [])) == TYPE_ARRAY else []
+	for offset in range(-jitter, jitter + 1):
+		var candidate := clampi(requested_x + offset, radius, width - radius)
+		var exact_symmetry := false
+		for peg_value in pegs:
+			if typeof(peg_value) == TYPE_DICTIONARY and candidate == int((peg_value as Dictionary).get("x", candidate + 1)):
+				exact_symmetry = true
+				break
+		if not exact_symmetry:
+			legal_offsets.append(offset)
+	if legal_offsets.is_empty():
+		# A malformed zero-width apparatus still gets a deterministic release;
+		# production definitions guarantee authored nonzero jitter around pegs.
+		return clampi(requested_x, radius, width - radius)
+	return clampi(requested_x + legal_offsets[rng.randi_range(0, legal_offsets.size() - 1)], radius, width - radius)
 
 
 static func set_skill_stop(state: Dictionary, engaged: bool, resume_rate_fp: int = -1) -> void:
@@ -539,6 +559,7 @@ static func body_views(state: Dictionary) -> Array:
 			"rest_state": str(body.get("rest_state", "falling")),
 			"support_kind": str(body.get("support_kind", "")),
 			"support_root": "platform" if str(body.get("support_kind", "")) == "platform" or (str(body.get("support_kind", "")) == "body" and bool(body.get("carried_sleep", false))) else "deck" if not str(body.get("support_kind", "")).is_empty() else "",
+			"peg_contact_key": str(body.get("peg_contact_key", "")),
 			"metadata": (body.get("meta", {}) as Dictionary).duplicate(true),
 		})
 	return views
@@ -850,15 +871,15 @@ static func _apply_peg_contacts(bodies: Array, definition: Dictionary, events: A
 			var distance := maxi(1, _isqrt(distance_sq))
 			var nx := _divi(dx * FP, distance)
 			var nz := _divi(dz * FP, distance)
-			# Only an exactly centered crown contact lacks a lateral radial side.
-			# Peg parity supplies that deterministic degeneracy fallback; every
-			# ordinary contact uses the exact integer radial normal above.
-			if dx == 0 and nz > 0:
-				nx = -250 if peg_index % 2 == 0 else 250
-				nz = _isqrt(FP * FP - nx * nx)
+			# A vertical crown has the valid radial normal (0, +1); never author a
+			# left/right outcome from peg identity. Only true coincident centers
+			# lack a normal and use a fixed deterministic separation axis.
+			if distance_sq == 0:
+				nx = FP
+				nz = 0
 			var penetration := minimum - distance
 			var correction := _divi(maxi(0, penetration - SLOP) * BETA, FP)
-			if dx == 0:
+			if distance_sq == 0:
 				body["x"] = int(body.get("x", 0)) + _divi(nx * correction, FP)
 				body["z"] = int(body.get("z", 0)) + _divi(nz * correction, FP)
 			else:

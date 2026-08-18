@@ -312,21 +312,82 @@ func _check_pusher_v3_landing_skill(machine: Dictionary, failures: Array) -> voi
 		definitions[variation_id] = variant
 	for variation_id in definitions.keys():
 		var definition: Dictionary = definitions[variation_id]
+		_check_pusher_v3_production_release_jitter(str(variation_id), definition, failures)
+		if not failures.is_empty():
+			return
 		var period := int((definition.get("stroke", {}) as Dictionary).get("period_ticks", 240))
-		for phase in range(period):
-			var state := _pusher_v3_state(definition, "PUSHER-V3-UPPER-%s-%03d" % [variation_id, phase])
-			_pusher_v3_hold_phase(state, definition, phase)
-			var drop_rng := _pusher_v3_rng("PUSHER-V3-UPPER-DROP-%s-%03d" % [variation_id, phase])
-			var coin: Dictionary = CoinPusherSolverScript.add_coin(state, drop_rng, int((definition.get("geometry", {}) as Dictionary).get("width", 100000)) / 2, 1)
-			var first_support := ""
-			var landing_result: Dictionary = CoinPusherSolverScript.step_ticks_reference_for_test(state, {"motor_enabled": false}, 480)
-			for event_value in landing_result.get("events", []):
-				if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("body_id", "")) == str(coin.get("id", "")) and bool((event_value as Dictionary).get("first_support", false)):
-					first_support = str((event_value as Dictionary).get("support_root", ""))
-					break
-			if first_support != "platform":
-				failures.append("Coin Pusher V3 Amendment 6.2 first support bypassed the upper platform at %s phase %d: %s." % [variation_id, phase, first_support])
+		for target_x in _pusher_v3_release_targets(definition):
+			for phase in range(period):
+				for desired_sign in [-1, 1]:
+					var release := _pusher_v3_signed_release(definition, str(variation_id), int(target_x), phase, desired_sign)
+					if release.is_empty():
+						failures.append("Coin Pusher V3 could not produce authored jitter sign %d at %s x=%d phase=%d." % [desired_sign, variation_id, int(target_x), phase])
+						return
+					var target_state: Dictionary = release["state"]
+					var target_coin: Dictionary = release["coin"]
+					var target_result: Dictionary = CoinPusherSolverScript.step_ticks_reference_for_test(target_state, {"motor_enabled": false}, 480)
+					var target_root := ""
+					var terminal_before_support := false
+					for event_value in target_result.get("events", []):
+						if typeof(event_value) != TYPE_DICTIONARY or str((event_value as Dictionary).get("body_id", "")) != str(target_coin.get("id", "")):
+							continue
+						if str((event_value as Dictionary).get("kind", "")) in ["tray", "gutter"] and target_root.is_empty():
+							terminal_before_support = true
+						if bool((event_value as Dictionary).get("first_support", false)):
+							target_root = str((event_value as Dictionary).get("support_root", ""))
+							break
+					var landed_view := _pusher_v3_body(target_state, str(target_coin.get("id", "")))
+					var independent_root := str((CoinPusherSolverScript.body_views(target_state).filter(func(view): return str((view as Dictionary).get("id", "")) == str(target_coin.get("id", ""))).front() as Dictionary).get("support_root", "")) if not landed_view.is_empty() else ""
+					if target_root != "platform" or independent_root != "platform" or terminal_before_support:
+						failures.append("Coin Pusher V3 Cartesian landing failed at %s x=%d phase=%d jitter_sign=%d: event_root=%s view_root=%s terminal_before_support=%s." % [variation_id, int(target_x), phase, desired_sign, target_root, independent_root, terminal_before_support])
+						return
+
+
+func _pusher_v3_signed_release(definition: Dictionary, variation_id: String, target_x: int, phase: int, desired_sign: int) -> Dictionary:
+	for seed_index in range(64):
+		var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-CARTESIAN-STATE-%s-%d-%d-%d-%d" % [variation_id, target_x, phase, desired_sign, seed_index]), definition, 0)
+		_pusher_v3_hold_phase(state, definition, phase)
+		var coin: Dictionary = CoinPusherSolverScript.add_coin(state, _pusher_v3_rng("PUSHER-V3-CARTESIAN-DROP-%s-%d-%d-%d-%d" % [variation_id, target_x, phase, desired_sign, seed_index]), target_x, 1)
+		var offset := int(coin.get("x", target_x)) - target_x
+		if signi(offset) == desired_sign:
+			return {"state": state, "coin": coin, "offset": offset, "seed_index": seed_index}
+	return {}
+
+
+func _check_pusher_v3_production_release_jitter(variation_id: String, definition: Dictionary, failures: Array) -> void:
+	var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+	var pegs: Array = apparatus.get("pegs", []) if typeof(apparatus.get("pegs", [])) == TYPE_ARRAY else []
+	var jitter := maxi(0, int(apparatus.get("release_jitter", 0)))
+	var saw_negative := false
+	var saw_positive := false
+	for target_x in _pusher_v3_release_targets(definition):
+		for seed_index in range(32):
+			var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-JITTER-STATE-%s-%d-%d" % [variation_id, int(target_x), seed_index]), definition, 0)
+			var released: Dictionary = CoinPusherSolverScript.add_coin(state, _pusher_v3_rng("PUSHER-V3-JITTER-DROP-%s-%d-%d" % [variation_id, int(target_x), seed_index]), int(target_x), 1)
+			var release_x := int(released.get("x", int(target_x)))
+			var offset := release_x - int(target_x)
+			saw_negative = saw_negative or offset < 0
+			saw_positive = saw_positive or offset > 0
+			if absi(offset) > jitter:
+				failures.append("Coin Pusher V3 production release escaped authored jitter at %s x=%d offset=%d jitter=%d." % [variation_id, int(target_x), offset, jitter])
 				return
+			for peg_value in pegs:
+				if typeof(peg_value) == TYPE_DICTIONARY and release_x == int((peg_value as Dictionary).get("x", release_x + 1)):
+					failures.append("Coin Pusher V3 production release created exact peg symmetry at %s x=%d seed=%d." % [variation_id, release_x, seed_index])
+					return
+	if jitter > 0 and (not saw_negative or not saw_positive):
+		failures.append("Coin Pusher V3 production release seed set did not exercise both jitter signs at %s." % variation_id)
+
+
+func _pusher_v3_release_targets(definition: Dictionary) -> Array:
+	var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+	var holes: Array = apparatus.get("holes", []) if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else []
+	if not holes.is_empty():
+		return holes.duplicate()
+	var rail: Dictionary = apparatus.get("rail", {}) if typeof(apparatus.get("rail", {})) == TYPE_DICTIONARY else {}
+	var rail_min := int(rail.get("x_min", 8000))
+	var rail_max := int(rail.get("x_max", 92000))
+	return [rail_min, (rail_min + rail_max) / 2, rail_max]
 
 
 func _check_pusher_v3_nestle(machine: Dictionary, failures: Array) -> void:
