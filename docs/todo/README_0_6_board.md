@@ -1429,6 +1429,14 @@ What happens then is the owner's, not an agent's:
   consume continuous body positions from the compact/live snapshot, seed riders
   before snapshot creation, and prove idle movement from real phase/face/body
   state rather than a constant or cosmetic checksum.
+- 2026-08-18 [content06_1] PM verbatim Task/Pillar 6 review returned an omitted
+  required bench item: the branch authored loaded dice, tuned loupe, lined
+  sleeve, and a valid gutter kit, but not the binding Mags-tuned nudge dampener.
+  The existing `coin_pusher_nudge_tolerance_band_delta` effect hook is already
+  data-readable; Content must add the dampener as a fifth generic bench entry
+  with art, gates, documented delta, and focused coverage. `pusherv3_4` remains
+  responsible for reconnecting that existing hook to the amended physical
+  machine, not for authoring the missing content item.
 
 ## Work Log
 
