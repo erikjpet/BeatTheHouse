@@ -10,6 +10,7 @@ const EnvironmentInstanceScript := preload("res://scripts/core/environment_insta
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const CoinPusherScript := preload("res://scripts/games/coin_pusher.gd")
 
 const SEED_COUNT := 10
 const RAW_EVENTS_PATH := "res://data/events/events.json"
@@ -20,6 +21,69 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_generated_environment_sweep(library, failures)
 	_check_reintroduced_defect_fixture(library, failures)
 	_check_beach_scenario_resolution(library, failures)
+	_check_coin_pusher_cabinet_action_states(library, failures)
+
+
+static func _check_coin_pusher_cabinet_action_states(library: ContentLibrary, failures: Array) -> void:
+	var definition := library.game("coin_pusher")
+	var game := CoinPusherScript.new()
+	game.setup(definition, library)
+	var run := RunStateScript.new()
+	run.start_new("INTERACTABLE-GUARD-COIN-PUSHER")
+	run.bankroll = 100
+	var environment := {"id": "guard_pusher", "world_node_id": "guard_pusher", "scenario_game_modifiers": {"coin_pusher": {"variation_id": "vault_drop"}}, "game_states": {}}
+	var generated: Dictionary = game.generate_environment_state(run, environment, run.create_rng("guard_pusher_generation"))
+	environment["game_states"] = {"coin_pusher": generated}
+	game.enter(run, environment)
+	var live_map: Dictionary = game.get("_live_machines")
+	var live: Dictionary = live_map.values()[0] if not live_map.is_empty() else {}
+	var simulation: Dictionary = live.get("simulation", {}) if typeof(live.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var normal := _dict(game.surface_state(run, environment).get("surface_action_bindings", {}))
+	var expected_actions: Array = game.call("_native_surface_actions", live)
+	for action_value in expected_actions:
+		var action_id := str(action_value)
+		if not normal.has(action_id):
+			failures.append("Coin Pusher cabinet guard lost production action binding %s." % action_id)
+			continue
+		var binding := _dict(normal.get(action_id, {}))
+		if str(binding.get("label", "")).strip_edges().is_empty():
+			failures.append("Coin Pusher cabinet guard action %s has no player-facing label." % action_id)
+		if typeof(binding.get("enabled", null)) != TYPE_BOOL:
+			failures.append("Coin Pusher cabinet guard action %s has no Boolean enabled state." % action_id)
+	if normal.size() != expected_actions.size():
+		failures.append("Coin Pusher cabinet guard action inventory drifted: expected %d bindings, found %d." % [expected_actions.size(), normal.size()])
+	for action_id in ["coin_pusher_drop", "coin_pusher_skill_stop", "coin_pusher_nudge"]:
+		if not normal.has(action_id) or not bool(_dict(normal.get(action_id, {})).get("enabled", false)):
+			failures.append("Coin Pusher cabinet guard lost enabled normal action %s." % action_id)
+	if not normal.has("coin_pusher_collect") or bool(_dict(normal.get("coin_pusher_collect", {})).get("enabled", true)):
+		failures.append("Coin Pusher cabinet guard did not disable COLLECT for an empty tray.")
+	if not normal.has("peek_vault_cell") or bool(_dict(normal.get("peek_vault_cell", {})).get("enabled", true)):
+		failures.append("Coin Pusher cabinet guard exposed item-gated Vault Peek without X-Ray Glasses.")
+	run.add_item("xray_glasses")
+	var with_item := _dict(game.surface_state(run, environment).get("surface_action_bindings", {}))
+	if not bool(_dict(with_item.get("peek_vault_cell", {})).get("enabled", false)):
+		failures.append("Coin Pusher cabinet guard did not enable Vault Peek with X-Ray Glasses.")
+	var ceiling := int((simulation.get("machine_definition", {}) as Dictionary).get("ceiling", 600))
+	while (simulation.get("bodies", []) as Array).size() < ceiling:
+		(simulation.get("bodies", []) as Array).append({"id": "guard_ceiling_%d" % (simulation.get("bodies", []) as Array).size(), "kind": "coin"})
+	var disabled := _dict(game.surface_state(run, environment).get("surface_action_bindings", {}))
+	if bool(_dict(disabled.get("coin_pusher_drop", {})).get("enabled", true)):
+		failures.append("Coin Pusher cabinet guard did not disable DROP at the physical ceiling.")
+	(simulation.get("bodies", []) as Array).clear()
+	(simulation.get("tray_ledger", []) as Array).append({"body_id": "guard_tray", "kind": "coin", "value": 1, "item_id": "", "provenance": {}})
+	live["locked_down"] = true
+	var locked := _dict(game.surface_state(run, environment).get("surface_action_bindings", {}))
+	for action_id in locked.keys():
+		var enabled := bool(_dict(locked.get(action_id, {})).get("enabled", false))
+		if (str(action_id) == "coin_pusher_collect") != enabled:
+			failures.append("Coin Pusher cabinet guard locked state enabled the wrong action %s." % str(action_id))
+	live["locked_down"] = false
+	var busy_environment := environment.duplicate(true)
+	busy_environment["scenario_game_modifiers"]["machine_occupancy"] = "occupied"
+	var busy := _dict(game.surface_state(run, busy_environment).get("surface_action_bindings", {}))
+	for action_id in busy.keys():
+		if bool(_dict(busy.get(action_id, {})).get("enabled", false)):
+			failures.append("Coin Pusher cabinet guard busy state left %s enabled." % str(action_id))
 
 
 static func _check_speaker_authorship_normalization(library: ContentLibrary, failures: Array) -> void:

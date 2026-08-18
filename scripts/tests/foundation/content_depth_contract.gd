@@ -97,6 +97,30 @@ static func _check_seeded_scenario_souvenir_pipeline(library: ContentLibrary, fa
 		failures.append("Seeded production scenario event %s failed its standard EventModule application." % TARGET_EVENT)
 	if not selected_run.inventory.has(TARGET_ITEM):
 		failures.append("Seeded generation -> scenario -> event -> standard result did not acquire %s." % TARGET_ITEM)
+		return
+	var acquired_environment := selected_run.current_environment.duplicate(true)
+	selected_run.set_environment({"id": "souvenir_travel_probe", "archetype_id": "roadside", "kind": "roadside", "tier": 1, "event_ids": [], "resolved_event_ids": []})
+	if not selected_run.inventory.has(TARGET_ITEM):
+		failures.append("Scenario souvenir did not survive within-run travel.")
+	selected_run.set_environment(acquired_environment)
+	var saved_run := selected_run.to_dict()
+	var restored := RunStateScript.new()
+	restored.from_dict(saved_run)
+	if not restored.inventory.has(TARGET_ITEM) or not _array(restored.current_environment.get("resolved_event_ids", [])).has(TARGET_EVENT):
+		failures.append("Scenario souvenir or its resolved acquisition did not survive save/load/revisit.")
+		return
+	# Model a legitimate within-run resale by removing the owned item. Reloading
+	# or revisiting the source must not reopen the resolved event as an item farm.
+	restored.inventory.erase(TARGET_ITEM)
+	var repeat_trigger := module.can_trigger(restored, restored.current_environment)
+	if repeat_trigger:
+		module.resolve(restored, restored.current_environment, str((choices[0] as Dictionary).get("id", "")))
+	if repeat_trigger or restored.inventory.has(TARGET_ITEM):
+		failures.append("Scenario souvenir could be reacquired for repeat resale after reload/revisit.")
+	var fresh_run := RunStateScript.new()
+	fresh_run.start_new("CONTENT-SOUVENIR-FRESH-RUN")
+	if fresh_run.inventory.has(TARGET_ITEM) or _array(fresh_run.to_dict().get("inventory", [])).has(TARGET_ITEM):
+		failures.append("Within-run scenario souvenir leaked into fresh-run/meta state.")
 
 
 static func _check_scenario_budgets(library: ContentLibrary, failures: Array) -> void:
