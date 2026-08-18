@@ -631,7 +631,11 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			var level2 := _bet_level(next)
 			var denom2 := _denomination_index(next, state)
 			var reduced2 := bool(next.get("reduce_motion", false))
-			var deal_started_msec := _surface_time_msec(ui_state)
+			# Surface-clock animation starts must be positive. Zero is a valid
+			# simulation time at the beginning of a run, but the canvas reserves a
+			# zero start as "unspecified" and otherwise rebases it to engine time.
+			# That clock mismatch can leave the dealt cards showing their backs.
+			var deal_started_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 			next = {"hand_active": true, "holds": [], "marked": false, "bet_level": level2, "denomination_index": denom2}
 			if reduced2:
 				next["reduce_motion"] = true

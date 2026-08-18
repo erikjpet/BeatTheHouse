@@ -4625,7 +4625,14 @@ func _check_video_poker_surface_contract(game: GameModule, failures: Array) -> v
 		failures.append("Video poker MARK HOLDS should not arm before DEAL.")
 	var deal_click := _check_surface_command_non_mutating(game, "video_poker_deal", 0, false, {}, run_state, environment, "video poker deal", failures)
 	var deal_state: Dictionary = deal_click.get("ui_state", {})
+	if int(deal_state.get("deal_started_msec", 0)) <= 0:
+		failures.append("Video poker DEAL emitted a zero surface-clock animation start, which can leave cards face down indefinitely.")
 	var dealt_surface := game.surface_state(run_state, environment, deal_state)
+	var dealt_channels: Array = dealt_surface.get("surface_animation_channels", []) if typeof(dealt_surface.get("surface_animation_channels", [])) == TYPE_ARRAY else []
+	for channel_value in dealt_channels:
+		var channel: Dictionary = channel_value if typeof(channel_value) == TYPE_DICTIONARY else {}
+		if str(channel.get("id", "")) == "video_poker_flip" and int(channel.get("started_msec", 0)) <= 0:
+			failures.append("Video poker flip channel did not preserve the positive DEAL animation start.")
 	if str(dealt_surface.get("phase", "")) != "hold":
 		failures.append("Video poker DEAL did not enter hold phase.")
 	var hold_click := _check_surface_command_non_mutating(game, "video_poker_hold", 0, false, deal_state, run_state, environment, "video poker hold", failures)
