@@ -35,6 +35,22 @@ the coin pusher rebuild.
 
 ## Task
 
+### 0. Amendment 6.2 — rear-fed visible delivery surface
+
+- Replace the rejected direct-to-lower-deck landing window. Every machine
+  releases at the rear delivery board and every inserted coin's first support
+  must be the moving upper platform or stock supported by it, at every stroke
+  phase. Only the carry + back-plate ratchet may later deposit it to the deck.
+- The delivery area is a real, data-defined cabinet surface, not hidden
+  simulation or decorative pins: show its bounds, entry hardware, the live
+  falling coin, shadow, every solver peg contact/bounce, and the final landing.
+  Renderer pins and trajectories must use the exact public solver geometry.
+- Timing still changes the upper-row/gap/stack landing topology. It never acts
+  as a scalar and never rewards or punishes timing by skipping a level.
+- Add behavior and player-eye capture contracts proving all-phase upper
+  landing, no direct deck bypass, a visible real peg bounce, and continuous
+  readable descent for Quarter Falls, Ridge, and Vault.
+
 ### 1. Jackpot Ridge on the real machine (plan 3.5, 5.5)
 
 - Machine definition: `hole_set` apparatus (3 holes at
@@ -47,6 +63,9 @@ the coin pusher rebuild.
   sitting in a hole mouth — remove it by pushing it out. Ridge's
   multiplier scales tray-value crediting of coins that fell while
   armed (plan 5.5) — it never moves a coin.
+- A physically banked lock puck preserves the currently armed multiplier
+  against expiry for one complete 240-tick stroke cycle. It does not stop,
+  slow, or otherwise steer the motor/platform physics.
 - Ridge Run (three multipliers banked within one stroke cycle) sets
   `rate = 2` for its bonus cycles — a physically faster motor, with
   the motor-pitch audio following.
@@ -83,6 +102,8 @@ the coin pusher rebuild.
   bands; tune ONLY machine geometry/apparatus to the documented
   bands; document every tuned value. No payout multipliers on
   physics.
+- Vault Drop's physical coin-to-tray EV band is `[0.72, 0.94]`, measured
+  separately from its meter-dependent vault-round option value.
 
 ### 5. Closure
 

@@ -1,6 +1,17 @@
 # Coin Pusher V3 — The Real Machine (binding design contract)
 
 Status: **OWNER-APPROVED design, execution pending** (2026-08-17).
+**Amendment 6.2 (2026-08-18): rear-fed visible drop-board ruling.** The
+owner rejected the retraction-apex shortcut that allowed a newly inserted coin
+to land directly on the lower fixed deck. Every inserted coin now travels down
+a visible rear delivery board and first lands on the upper moving platform or
+on stock already supported by it. Timing chooses where the coin joins that
+upper mass; it never bypasses the ratchet. The whole descent, peg contacts,
+bounces, shadow, and landing are part of the cabinet showcase and use the same
+live solver state as the outcome. Sections 3.1, 3.4, 3.5, 6, 7, and 9 below
+are re-issued accordingly. This supersedes Amendment 6.1's deck-landing-window
+requirement without altering its axis, face, plate, or persistent-top-stock
+rulings.
 **Amendment 6.1 (2026-08-17): geometry orientation ruling.** The
 pusherv3_1 agent correctly caught that the original geometry labeled
 FACE_MIN_Y/FACE_MAX_Y backwards for this coordinate system (+y runs
@@ -113,8 +124,8 @@ BACK_PLATE_Y     = 63000         # fixed plate, spans full width
                                  # of top stock persist at full retraction)
 BACK_PLATE_GAP   = 400           # plate bottom = PLATFORM_TOP_Z + 400
                                  # platform slides under; coins cannot
-DROP_Y           = 40000         # release depth, inside the face sweep
-DROP_Z           = 14000         # release height (free fall from here)
+DROP_Y           = 58000         # rear delivery-board plane; always over top
+DROP_Z           = 24000         # visible release above every authored peg row
 GUTTER_X         = 3000          # side gutters: x < 3000 or > 97000
 STROKE_PERIOD    = 240 ticks     # 4.0 s full cycle at 60 Hz
 ```
@@ -174,25 +185,30 @@ contact rules in section 4 — no scripted coin movement:
 5. Coins pushed past TRAY_LIP_Y fall to the TRAY (3.6). Coins
    escaping past the side gutter mouths are LOST (house).
 
-### 3.4 The landing skill (owner-locked core mechanic)
+### 3.4 The landing skill (owner-locked core mechanic, Amendment 6.2)
 
-`DROP_Y = 40000` sits inside the face sweep (28000..46000):
+`DROP_Y = 58000` is as far rearward as the default coin can safely sit
+before the back plate (`BACK_PLATE_Y - COIN_RADIUS = 58700`). It is
+rearward of the fully retracted face by more than one coin radius, so the
+moving platform always exists beneath the delivery path at every phase.
 
-- Face forward of the drop point (`face_y < DROP_Y - radius`, most of
-  the cycle): the platform covers the landing point, so the coin
-  lands on the PLATFORM TOP — it rides and joins the top stock (slow
-  value).
-- Face retracted behind the drop point (`face_y > DROP_Y + radius`,
-  the ~20% apex dwell of the cosine cycle): exposed deck — the coin
-  free-falls to DECK level and lands FLAT in the face's path, and the
-  next forward stroke drives it straight into the row — the strong
-  play, timed to the retraction apex.
-- The pile itself may occupy the zone — the coin lands ON the pile
-  (adds height, may topple, may nestle per 4.6).
+- Every inserted coin begins at the top of the visible rear delivery board,
+  falls through its authored pegs, and first contacts either the PLATFORM TOP
+  or a body whose support chain terminates on that platform.
+- A newly inserted coin may NEVER first land on the lower fixed deck. The
+  lower deck is reached only later through the collective carry + back-plate
+  ratchet in 3.3.
+- Timing remains physical: the upper stock moves with the platform beneath a
+  fixed rear feed, so release phase changes which gap, row, or stack receives
+  the coin. Good timing can place it on the existing rear row instead of being
+  punished with a level-skipping shortcut or miss.
+- Peg contacts change the visible falling trajectory and lateral landing
+  position. They cannot move the coin outside the upper-platform catchment.
+- The pile may receive the coin above platform height, allowing ordinary
+  nestle/topple/contact behavior from section 4.
 
-Timing is therefore a pure physical consequence. There is NO
-phase-accuracy scalar, NO clean-window constant, NO push-strength
-bonus. Delete them.
+There is NO phase-accuracy scalar, clean-window constant, push-strength bonus,
+or direct-to-deck landing window. Timing is landing topology on the upper mass.
 
 ### 3.5 Entry apparatus (per-machine, data-driven)
 
@@ -201,15 +217,16 @@ hardcoded:
 
 - **Quarter Falls (default):** a coin slot on a horizontal rail. The
   player slides the carriage continuously (free, no cost, no world
-  time) across `x in [8000, 92000]`; DROP releases one coin in free
-  fall from (carriage_x, DROP_Y, DROP_Z). Between DROP_Z and the
+  time) across `x in [8000, 92000]`; DROP releases one coin at the top
+  of a full-width, glass-fronted rear delivery board at
+  `(carriage_x, DROP_Y, DROP_Z)`. Between DROP_Z and the upper-platform
   landing zone sit **3 fixed pegs** (cylinders r=1200) at data-given
   positions (default: x = 30000/50000/70000, z = 9000) that the coin
   can clip and deflect off — pure collision, plus a seeded release
   jitter of +/-300 on x so identical inputs still vary
   deterministically per RNG stream.
 - **Jackpot Ridge:** 3 fixed entry holes (x = 25000/50000/75000)
-  feeding a **full plinko board**: 5 rows of offset pegs between
+  feeding its visible **full plinko delivery board**: 5 rows of offset pegs between
   z = 20000 and z = 8000. The player picks a hole; the board decides
   the rest.
 - **Third machine:** apparatus designed later; the schema must allow
@@ -424,8 +441,11 @@ glass, game). Required components:
    marquee/topper with the variation name, backglass area (Vault
    meter / Ridge multiplier lamps / prize showcase live here), glass
    with a glare overlay, coin slot + RAIL with a physically drawn
-   sliding carriage, peg field / plinko board as drawn pins matching
-   the sim colliders exactly, platform block with a shaded front face
+   sliding carriage, a clearly bounded rear delivery board / plinko
+   surface, and its peg field as drawn pins matching the sim colliders
+   exactly. The complete live coin descent, peg impacts, bounces, motion
+   shadow, and first upper-platform landing remain visible. The platform
+   block has a shaded front face
    and visible top surface, back plate, deck, tray lip, TRAY BIN with
    a visible coin heap that grows, side gutter mouths, and the SKILL
    STOP as a big physical button (lit while engaged). Controls are
@@ -464,6 +484,7 @@ In `data/games/games.json` under `coin_pusher_machine`:
   "apparatus":{ type: "rail_slot" | "hole_set",
                 rail: { x_min, x_max, speed_per_tick },
                 holes: [x, ...],
+                drop_board: { y, z_top, z_bottom, x_min, x_max },
                 pegs: [{x, z, r}, ...],
                 release_jitter: 300 },
   "coins":    { radius, height, mass, value, drop_cost },
@@ -504,10 +525,13 @@ tray_value and sub-game state, and log the migration once.
    digest) across runs, processes, and Windows-vs-Web export (the
    parity runner is rebuilt from action-batch to input-trace replay).
 2. **Behavior contracts** (each a targeted headless test):
-   ratchet walk (a coin placed on the platform reaches the face edge
+   rear-feed landing (drops at every sampled stroke phase first contact the
+   platform or platform-supported stock, never the lower deck; peg/no-peg
+   inputs visibly produce their real differing trajectories); ratchet walk
+   (a coin placed on the platform reaches the face edge
    and falls within N cycles); face push moves a 3-row mass; landing
-   skill (same drop x, two phases -> deck landing vs platform
-   landing); nestle (a coin dropped into a 2-coin pocket rests
+   skill (same drop x at two phases joins different upper-stock topology while
+   both first land on platform support); nestle (a coin dropped into a 2-coin pocket rests
    between them — THE regression test for the crystallization bug);
    no-lattice (a 300-coin settle produces no axis-aligned rows: the
    nearest-neighbor angle histogram must not spike at 0/90 degrees);
@@ -521,7 +545,8 @@ tray_value and sub-game state, and log the migration once.
    machine idles within the animated-idle budget WITH its liveness
    counter.
 4. **Feel captures** (acceptance, judged as a player): a drop lands
-   beside the row and the row advances; a drop lands on the platform
+   beside the upper row and the row advances; the entire drop-board descent
+   and at least one real peg bounce are readable frame-to-frame; a drop lands on the platform
    and ratchets over >= 3 cycles; a stack topples into a pocket; a
    skill-stop bank + big release; the tray heap grows and is
    collected. Bar: a person shown the capture without context calls

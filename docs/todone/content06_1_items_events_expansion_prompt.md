@@ -3,10 +3,10 @@ Board row: `content06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-18
+- **Completion/implementation commits:** `48807695`, `6279395e`, `4f91777b`, `1253e3b1`
+- **Verification:** PM verbatim scope/design review and production-path manual smoke; combined Systems, Contracts, UI, 10-seed determinism, and canonical visual QA PASS on the integrated tree. All scenario souvenirs reach within-run inventory/shelf/sale presentation, and all five Mags outputs have real consumers.
+- **Deviations:** Owner ruled souvenir collection integration is within-run only; no new cross-run collection persistence was authorized. Economy audit values remain playtest inputs and were not tuned.
 
 # Agent Prompt — 0.6 content06_1: Items, Services, Events Depth Pass
 

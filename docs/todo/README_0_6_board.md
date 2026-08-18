@@ -160,7 +160,7 @@ each stage builds on the last.
 | pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | DONE | rework06_2 (landed) | pusherv3_2 | PM:Codex | 2026-08-17 | 2026-08-17 | Owner ruled complete after PM verification of Amendment 6.1 behavior, native 300-body performance, exact Windows/Web parity, determinism, and all pusher-owning gates; integrated at `a6e36d2f`. |
 | pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | DONE | pusherv3_1 | pusherv3_3 | PM:Codex/sub:pusher-live | 2026-08-17 | 2026-08-18 | PM verified continuous 60 Hz loop, deterministic trace, tray-only collection, compact persistence/migration, motor-on exit settle, continuous rail drag, exact Windows/Web parity, performance, and all combined gates. |
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | DONE | pusherv3_2 | pusherv3_4 | PM:Codex/sub:pusher-cabinet | 2026-08-18 | 2026-08-18 | PM verified the data-driven slot-parity cabinet, batched stacked projection, physical audio map, integrated 9/9 feel contract, determinism, visual QA, and all combined suites/performance budgets. |
-| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | BLOCKED | pusherv3_3 | coin pusher closure | PM:Codex/sub:pusher-variations | 2026-08-18 | | Owner rulings required: define the V3 lock-puck target and Vault Drop's physical coin-drop EV band. No substitute behavior or target band may be guessed. |
+| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | IN_PROGRESS | pusherv3_3 | coin pusher closure | PM:Codex/sub:pusher-variations | 2026-08-18 | | Owner rulings landed: multiplier-expiry lock, Vault `[0.72,0.94]` physical EV, and Amendment 6.2 rear-fed visible delivery boards with no direct lower-deck landing. |
 
 ### Wave D — Crew depth
 
@@ -183,7 +183,7 @@ the release, and it is where release activity finally happens.
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | chain06_1 | `chain06_1_character_chains_prompt.md` | DONE | town06_2, env06_2, env06_3 | playtest06_1 | PM:Codex/sub:character-chains | 2026-08-17 | 2026-08-17 | PM verified six chains/21 beats, all three Cass endings, deterministic anchors, prefix safety, bounded effects, actionable icon projection, save compatibility, and combined release gates PASS. |
-| content06_1 | `content06_1_items_events_expansion_prompt.md` | BLOCKED | env06_2, env06_3, crew06_6 | playtest06_1 | PM:Codex/sub:content-depth | 2026-08-17 | | Compatible within-run scope and gates are green; owner must rule whether souvenir collections integration is within-run presentation or authorizes new cross-run persistence. |
+| content06_1 | `content06_1_items_events_expansion_prompt.md` | DONE | env06_2, env06_3, crew06_6 | playtest06_1 | PM:Codex/sub:content-depth | 2026-08-17 | 2026-08-18 | Owner selected within-run-only souvenir presentation; PM verified all compatible content, real consumers, economy-audit restraint, and combined gates. |
 | playtest06_1 | `playtest06_1_playtest_readiness_prompt.md` | TODO | ALL other rows DONE (except parked) | owner playtest | | | | Verification, playability sweep, honest handoff report, local build. No version bump, no tag, no packaging, no publish, no final balance tuning. |
 
 ### Parked until after the owner's playtest
@@ -222,34 +222,36 @@ What happens then is the owner's, not an agent's:
 
 ## Owner Questions (needs owner; do not guess)
 
-- **pusherv3_4 — Jackpot Ridge lock puck target:** the superseded variation
+- **pusherv3_4 — Jackpot Ridge lock puck target: ANSWERED (2026-08-18).** The superseded variation
   design says a lock puck will “freeze a shelf one cycle.” The binding V3
   machine explicitly removes the two-shelf model and has one continuously
   reciprocating platform; V3 preserves Ridge multiplier/lock/jam logic but
   redefines only jams and Ridge Run, leaving the lock target undefined. What
   should a physically banked lock puck lock for one cycle on the V3 machine?
-  Freezing the whole motor/platform, an entry hole, or another component would
-  each be a new mechanical decision, so `pusherv3_4` is BLOCKED rather than
-  selecting one without owner authority.
+  Owner ruling: a banked lock puck preserves the currently armed multiplier
+  against expiry for one full 240-tick stroke. It never stops or steers the
+  physical motor/platform.
 
-- **pusherv3_4 — Vault Drop physical EV band:** Stage 4 requires a physical
+- **pusherv3_4 — Vault Drop physical EV band: ANSWERED (2026-08-18).** Stage 4 requires a physical
   >=200k-drop harness for every machine and permits geometry/apparatus tuning
   only into each documented band. Quarter Falls documents `[0.72, 0.94]` and
   Jackpot Ridge `[0.70, 1.08]`; Vault Drop documents only the separate
   meter-dependent vault-cell option values and has no physical coin-drop EV
   target. What physical coin-drop EV band should the Vault machine use? The
   harness must report tray return separately from vault-round option value, so
-  the cell table is not a substitute target.
+  the cell table is not a substitute target. Owner ruling: `[0.72, 0.94]` for
+  physical coin-to-tray EV, reported separately from vault option value.
 
-- **content06_1 — souvenir collections persistence:** the prompt asks for
+- **content06_1 — souvenir collections persistence: ANSWERED (2026-08-18).** The prompt asks for
   scenario souvenirs to receive collections-shelf integration, but roadmap
   owner decision #1 makes the Players Card the only cross-run system in 0.6.
   The shipped `data/collections/collections.json` is explicitly meta/cross-run
   and its generic contracts fix two collections with 14-item tiers. Should
   souvenir “collections integration” mean only the within-run inventory/item
   shelf and sale surfaces, or is an explicit roadmap amendment authorizing new
-  cross-run souvenir collection progress intended? Content continues on all
-  compatible data/events/services/bench scope; meta registration is paused.
+  cross-run souvenir collection progress intended? Owner ruling: within-run
+  inventory/item shelf and sale presentation only; no new cross-run souvenir
+  progress in 0.6.
 
 - **pusherv3_1 — platform stroke orientation: ANSWERED (Amendment 6.1,
   2026-08-17).** Ruling: keep the axis (+y = rearward) and all coordinate
@@ -263,7 +265,8 @@ What happens then is the owner's, not an agent's:
   ~1 queued row per deposit, an ~20% apex-dwell deck-landing window, and a
   full-height face collider so nothing slips beneath the pusher. Sections
   3.1-3.4 of the contract are the corrected binding versions. Do not derive
-  from any earlier copy.
+  from any earlier copy. Amendment 6.2 later supersedes only the deck-landing
+  window: entries are now rear-fed onto the upper platform at every phase.
 
 - **crew06_7 — Chip Dump funding authority:** the approved play requires
   money conservation and forbids free money, but the roadmap/prompt does not
@@ -274,6 +277,16 @@ What happens then is the owner's, not an agent's:
   crew06_7 can proceed without this answer; no agent may invent the economy.
 
 ## Discovery & Decision Log
+
+- 2026-08-18 [pusherv3_4] Owner Amendment 6.2 rejects the direct-to-deck
+  retraction-apex shortcut. All entries now use a visible rear delivery board;
+  first support is always the upper moving platform or its supported stock,
+  while timing changes upper landing topology. The complete live fall and real
+  peg contacts are part of the cabinet showcase, not hidden simulation.
+- 2026-08-18 [pusherv3_4/content06_1] Owner accepted the PM rulings: lock pucks
+  preserve armed-multiplier expiry for one stroke without steering physics;
+  Vault physical EV targets `[0.72,0.94]` separately from option value; souvenir
+  integration stays within-run with no cross-run collection schema.
 
 - 2026-08-18 [pusherv3_4] Independent preflight confirmed a binding-contract
   gap: roadmap Pillar 4 defines Ridge lock pucks as “freeze a shelf one cycle,”
@@ -1579,6 +1592,13 @@ What happens then is the owner's, not an agent's:
 
 ## Work Log
 
+- 2026-08-18 [content06_1] Owner selected the already-verified within-run
+  souvenir interpretation. PM completed and archived the row; `playtest06_1`
+  now waits only on the serial coin-pusher closure.
+- 2026-08-18 [pusherv3_4] Owner rulings removed both blockers and added the
+  rear-fed visible-delivery correction as Amendment 6.2. The isolated worker
+  may resume against the amended contract; earlier unvalidated drafts remain
+  non-integrable until rebuilt and tested against it.
 - 2026-08-18 [pusherv3_4] Row set BLOCKED during preflight because the V3
   physical meaning of a banked lock puck is owner-undefined. The isolated
   worker was stopped before implementation; no substitute machine behavior was
