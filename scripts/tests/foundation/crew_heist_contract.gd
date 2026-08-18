@@ -88,6 +88,12 @@ static func _check_production_paths(library: ContentLibrary, failures: Array) ->
 	var whale_event := EventModuleScript.new()
 	whale_event.setup(library.event("scenario_whale_aboard_vouch"), library)
 	whale_event.resolve(whale, whale.current_environment, "stake_his_table")
+	var whale_anchor_environment := whale.current_environment.duplicate(true)
+	whale.set_environment({"id": "small_underground_casino", "world_node_id": "small_underground_casino", "archetype_id": "small_underground_casino", "kind": "casino", "turns": 0, "visit_id": "unrelated_loss", "scenario_hook_flags": {}, "event_ids": [], "resolved_event_ids": []})
+	GameModuleScript.apply_result(whale, _settled_blackjack_result(42, -42, "small_underground_casino"))
+	if int(_dict(whale.crew_heist_snapshot().get("setup", {})).get("vouch_rounds", 0)) != 0:
+		failures.append("An unrelated casino loss advanced the Whale vouch away from the authored anchor table.")
+	whale.set_environment(whale_anchor_environment)
 	GameModuleScript.apply_result(whale, _settled_blackjack_result(42, -42, "delta_queen"))
 	var whale_setup := _dict(whale.crew_heist_snapshot().get("setup", {}))
 	if not bool(whale.narrative_flags.get("heist_plan_b_whale_vouch", false)) or not bool(whale_setup.get("vouch", false)):
@@ -374,6 +380,23 @@ static func _check_abort_and_save(failures: Array) -> void:
 	ignored.call("_crew_heist_boundary_sync")
 	if JSON.stringify(ignored.to_dict()) != ignored_before:
 		failures.append("A crew-ignoring action boundary mutated serialized run bytes through the live-table lifecycle.")
+	var identity_shortfall := _run("HEIST-IDENTITY-SHORTFALL", {"audit_night": true})
+	_set_inner(identity_shortfall, "crew_bishop")
+	identity_shortfall.crew_heist_lock("the_count")
+	identity_shortfall.crew_heist_state["setup"] = {"schedule": true, "swap_cart": true}
+	var identity_bankroll := identity_shortfall.bankroll
+	var identity_result := identity_shortfall.crew_heist_begin_play()
+	var identity_abort := _dict(identity_shortfall.crew_heist_snapshot().get("abort", {}))
+	if not bool(identity_result.get("forced", false)) or str(identity_shortfall.crew_heist_snapshot().get("status", "")) != "aborted" or str(identity_abort.get("reason", "")) != "identity_shortfall" or identity_shortfall.bankroll >= identity_bankroll or identity_shortfall.run_status != RunState.RUN_STATUS_ACTIVE:
+		failures.append("Plan A identity shortfall did not force a costed abort while preserving the active run.")
+	var ordinary_gap := _run("HEIST-ORDINARY-SETUP-GAP", {"audit_night": true})
+	_set_inner(ordinary_gap, "crew_bishop")
+	ordinary_gap.crew_heist_lock("the_count")
+	ordinary_gap.crew_heist_state["setup"] = {"identity": true, "identity_sessions": 3, "identity_session_ids": ["a", "b", "c"], "swap_cart": true}
+	var ordinary_bankroll := ordinary_gap.bankroll
+	var ordinary_result := ordinary_gap.crew_heist_begin_play()
+	if bool(ordinary_result.get("ok", false)) or str(ordinary_gap.crew_heist_snapshot().get("status", "")) != "setup" or ordinary_gap.bankroll != ordinary_bankroll:
+		failures.append("An ordinary missing schedule/cart setup guardrail was incorrectly converted into a forced abort.")
 
 
 static func _check_seam_regressions(failures: Array) -> void:
