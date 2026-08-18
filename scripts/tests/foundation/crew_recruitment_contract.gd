@@ -48,8 +48,11 @@ static func _check_placement_matrix(library: ContentLibrary, failures: Array) ->
 			if archetypes.is_empty():
 				failures.append("Crew recruitment %s %s fixture has no archetype." % [member_id, path_kind])
 				continue
-			if path_kind == "fallback":
-				_set_fixture_world(run_state, [str(archetypes[0])])
+			_set_fixture_world(run_state, [str(archetypes[0])])
+			if not scenarios.is_empty():
+				var seeded_scenario := library.scenario(str(scenarios[0]))
+				if not seeded_scenario.is_empty():
+					run_state.seed_scenario_for_node(str(archetypes[0]), seeded_scenario)
 			var environment := {
 				"id": "%s_%s_fixture" % [member_id, path_kind],
 				"archetype_id": str(archetypes[0]),
@@ -115,7 +118,7 @@ static func _check_production_reachability(library: ContentLibrary, failures: Ar
 	var layered_run := _marked_run("CREW-PRODUCTION-PUNCHLINE")
 	_set_fixture_world(layered_run, ["small_underground_casino"])
 	var generator := RunGeneratorScript.new(library)
-	generator.next_environment(layered_run, "small_underground_casino")
+	generator.next_environment(layered_run, "small_underground_casino", true)
 	if not _string_array(layered_run.current_environment.get("event_ids", [])).has("recruitment_knuckles"):
 		failures.append("Production Punchline club entry did not expose Knuckles' side-door fallback.")
 	var entered := generator.enter_environment_layer(layered_run, "casino", false)
@@ -436,7 +439,7 @@ static func _production_environment(library: ContentLibrary, seed: String, arche
 		var scenario := library.scenario(scenario_id)
 		if not scenario.is_empty():
 			run_state.seed_scenario_for_node(archetype_id, scenario)
-	RunGeneratorScript.new(library).next_environment(run_state, archetype_id)
+	RunGeneratorScript.new(library).next_environment(run_state, archetype_id, true)
 	return run_state.current_environment.duplicate(true)
 
 
