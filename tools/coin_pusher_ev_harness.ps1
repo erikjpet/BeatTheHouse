@@ -99,7 +99,9 @@ else {
             $job = $running[$index]
             if (-not $job.Process.HasExited) { continue }
             $job.Process.WaitForExit()
-            $job.ExitCode = $job.Process.ExitCode
+            $job.Process.Refresh()
+            $observedExitCode = $job.Process.ExitCode
+            $job.ExitCode = if ($null -eq $observedExitCode) { -2 } else { [int]$observedExitCode }
             $completed.Add($job)
             $running.RemoveAt($index)
             Write-Host ("EV shard {0}/{1} machine={2} shard={3} exit={4}" -f $completed.Count, $jobs.Count, $job.Machine, $job.Shard, $job.ExitCode)
@@ -144,7 +146,7 @@ function Get-Dispersion([double[]]$Values) {
         mean = $mean
         sample_standard_deviation = $sampleStdDev
         standard_error = $standardError
-        confidence_95 = @($mean - $critical * $standardError, $mean + $critical * $standardError)
+        confidence_95 = @(($mean - $critical * $standardError), ($mean + $critical * $standardError))
         shard_values = @($Values)
     }
 }
@@ -152,6 +154,11 @@ function Get-Dispersion([double[]]$Values) {
 $machineReports = [System.Collections.Generic.List[object]]::new()
 foreach ($machine in $machines) {
     $reports = @($shardReports | Where-Object machine_id -eq $machine | Sort-Object shard_index)
+    $shardHashes = [ordered]@{}
+    foreach ($shardReport in $reports) {
+        $shardName = "$($shardReport.machine_id)_shard_$('{0:D2}' -f $shardReport.shard_index).json"
+        $shardHashes[$shardName] = (Get-FileHash -LiteralPath (Join-Path $OutDir $shardName) -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
     $accepted = [int64](($reports | Measure-Object accepted_player_inserts -Sum).Sum)
     $wagered = [int64](($reports | ForEach-Object { $_.economy.wagered } | Measure-Object -Sum).Sum)
     $physicalValue = [int64](($reports | ForEach-Object { $_.economy.base_physical_coin_tray_value } | Measure-Object -Sum).Sum)
@@ -241,6 +248,7 @@ foreach ($machine in $machines) {
         assertions = $assertions
         passed = @($assertions.Values | Where-Object { -not $_ }).Count -eq 0
         shard_reports = @($reports | ForEach-Object { [System.IO.Path]::GetFileName("$($_.machine_id)_shard_$('{0:D2}' -f $_.shard_index).json") })
+        shard_report_sha256 = $shardHashes
     })
 }
 
