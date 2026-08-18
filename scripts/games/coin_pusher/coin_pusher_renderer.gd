@@ -2,7 +2,6 @@ class_name CoinPusherRenderer
 extends RefCounted
 
 const DESIGN_SIZE := Vector2(900, 430)
-const RAIL_DRAG_RECT := Rect2(176, 154, 548, 44)
 const PLAYFIELD_RECT := Rect2(158, 152, 584, 165)
 const SCHEMA_DEFAULT_WIDTH := 100000.0
 const SCHEMA_DEFAULT_BACK_Y := 63000.0
@@ -436,17 +435,15 @@ func _draw_glass(surface, colors: Dictionary) -> void:
 func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
 	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
-	var rail: Dictionary = apparatus.get("rail", {}) if typeof(apparatus.get("rail", {})) == TYPE_DICTIONARY else {}
-	var rail_min := int(rail.get("x_min", 8000))
-	var rail_max := maxi(rail_min + 1, int(rail.get("x_max", 92000)))
-	var carriage := int(state.get("coin_pusher_carriage_x", 50000))
-	var carriage_t := clampf(float(carriage - rail_min) / float(rail_max - rail_min), 0.0, 1.0)
-	var rail_x := RAIL_DRAG_RECT.position.x + RAIL_DRAG_RECT.size.x * carriage_t
+	var layout := _entry_hardware_layout(state)
 	if str(apparatus.get("type", "rail_slot")) == "hole_set":
-		var holes: Array = apparatus.get("holes", []) if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else []
-		for hole_index in range(holes.size()):
-			var hole_x := 260.0 + float(hole_index) * 190.0
-			var hole_rect := Rect2(hole_x - 22.0, 154.0, 44.0, 44.0)
+		var targets: Array = layout.get("targets", []) if typeof(layout.get("targets", [])) == TYPE_ARRAY else []
+		for target_value in targets:
+			if typeof(target_value) != TYPE_DICTIONARY:
+				continue
+			var target: Dictionary = target_value
+			var hole_index := int(target.get("index", 0))
+			var hole_rect: Rect2 = target.get("rect", Rect2())
 			surface.draw_circle(hole_rect.get_center(), 20.0, colors["trim"])
 			surface.draw_circle(hole_rect.get_center(), 15.0, Color("#020305"))
 			if hole_index == int(state.get("coin_pusher_selected_hole", 0)):
@@ -457,13 +454,17 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 				surface.surface_add_exact_hit(hole_rect, hole_action, hole_index)
 	else:
 		# The rail owns only its 44 px hardware strip; it never blankets the board or pile.
+		var drag_rect: Rect2 = layout.get("drag_rect", Rect2())
+		var rail_start: Vector2 = layout.get("rail_start", drag_rect.position)
+		var rail_end: Vector2 = layout.get("rail_end", drag_rect.end)
+		var carriage_point: Vector2 = layout.get("carriage", drag_rect.get_center())
 		var drag_enabled := _binding_enabled(bindings, "coin_pusher_carriage_left") and _binding_enabled(bindings, "coin_pusher_carriage_right")
 		if drag_enabled:
-			surface.surface_add_drag_hit(RAIL_DRAG_RECT, "coin_pusher_carriage_drag")
-		surface.draw_line(Vector2(RAIL_DRAG_RECT.position.x, 166), Vector2(RAIL_DRAG_RECT.end.x, 166), colors["trim"].darkened(0.18), 6.0)
-		surface.draw_rect(Rect2(rail_x - 11, 154, 22, 42), colors["side"])
-		surface.draw_rect(Rect2(rail_x - 11, 154, 22, 42), colors["light"], false, 2.0)
-		surface.draw_line(Vector2(rail_x, 184), Vector2(rail_x, 204), colors["light"], 3.0)
+			surface.surface_add_drag_hit(drag_rect, "coin_pusher_carriage_drag")
+		surface.draw_line(rail_start, rail_end, colors["trim"].darkened(0.18), 6.0)
+		surface.draw_rect(Rect2(carriage_point - Vector2(11, 21), Vector2(22, 42)), colors["side"])
+		surface.draw_rect(Rect2(carriage_point - Vector2(11, 21), Vector2(22, 42)), colors["light"], false, 2.0)
+		surface.draw_line(carriage_point + Vector2(0, 9), carriage_point + Vector2(0, 29), colors["light"], 3.0)
 		_draw_small_hardware(surface, Rect2(126, 332, 42, 34), "<", "coin_pusher_carriage_left", colors, _binding_enabled(bindings, "coin_pusher_carriage_left"))
 		_draw_small_hardware(surface, Rect2(174, 332, 42, 34), ">", "coin_pusher_carriage_right", colors, _binding_enabled(bindings, "coin_pusher_carriage_right"))
 	var stop_engaged := bool(state.get("coin_pusher_skill_stop_engaged", false))
@@ -508,38 +509,27 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 
 
 func _draw_feature_hardware(surface, state: Dictionary, bindings: Dictionary, colors: Dictionary) -> void:
-	_draw_nudge_selectors(surface, state, bindings, colors)
-	if str(state.get("coin_pusher_variation_id", "")) == "vault_drop":
-		_draw_vault_hardware(surface, state, bindings, colors)
+	var descriptor: Dictionary = state.get("coin_pusher_feature_hardware", {}) if typeof(state.get("coin_pusher_feature_hardware", {})) == TYPE_DICTIONARY else {}
+	_draw_selector_groups(surface, descriptor, bindings, colors)
+	_draw_feature_panels(surface, descriptor, bindings, colors)
 
 
-func _draw_nudge_selectors(surface, state: Dictionary, bindings: Dictionary, colors: Dictionary) -> void:
-	var forces: Dictionary = state.get("coin_pusher_nudge_forces", {}) if typeof(state.get("coin_pusher_nudge_forces", {})) == TYPE_DICTIONARY else {}
-	var force_options: Array = []
-	for force in forces.keys():
-		force_options.append({"id": str(force), "label": str(force).to_upper(), "action": "coin_pusher_force_%s" % str(force)})
-	var direction_options: Array = []
-	for direction in ["left", "front", "right"]:
-		direction_options.append({"id": direction, "label": direction.left(1).to_upper(), "action": "coin_pusher_direction_%s" % direction})
-	var selected_force := str(state.get("coin_pusher_nudge_force", "tap"))
-	var selected_direction := str(state.get("coin_pusher_nudge_direction", "front"))
-	var groups := [
-		{"options": force_options, "selected": selected_force, "y": 300.0},
-		{"options": direction_options, "selected": selected_direction, "y": 382.0},
-	]
+func _draw_selector_groups(surface, descriptor: Dictionary, bindings: Dictionary, colors: Dictionary) -> void:
+	var groups: Array = descriptor.get("selector_groups", []) if typeof(descriptor.get("selector_groups", [])) == TYPE_ARRAY else []
 	for group_value in groups:
 		var group: Dictionary = group_value
 		var options: Array = group.get("options", []) if typeof(group.get("options", [])) == TYPE_ARRAY else []
 		if options.is_empty():
 			continue
-		var width := 90.0 / float(options.size())
+		var group_rect: Rect2 = group.get("rect", Rect2())
+		var width := group_rect.size.x / float(options.size())
 		for option_index in range(options.size()):
 			if typeof(options[option_index]) != TYPE_DICTIONARY:
 				continue
 			var option: Dictionary = options[option_index]
 			var action := str(option.get("action", ""))
 			var option_id := str(option.get("id", ""))
-			var rect := Rect2(684.0 + width * option_index, float(group["y"]), width - 2.0, 17.0)
+			var rect := Rect2(group_rect.position + Vector2(width * option_index, 0.0), Vector2(width - 2.0, group_rect.size.y))
 			var enabled := _binding_enabled(bindings, action)
 			var selected := option_id == str(group["selected"])
 			surface.draw_rect(rect, colors["light"] if selected else colors["side"])
@@ -549,54 +539,44 @@ func _draw_nudge_selectors(surface, state: Dictionary, bindings: Dictionary, col
 				surface.surface_add_exact_hit(rect, action, int(option.get("index", option_index)))
 
 
-func _draw_vault_hardware(surface, state: Dictionary, bindings: Dictionary, colors: Dictionary) -> void:
-	var panel := Rect2(126, 382, 540, 38)
-	surface.draw_rect(panel, colors["side"].darkened(0.12))
-	surface.draw_rect(panel, colors["trim"], false, 2.0)
-	var round_active := bool(state.get("coin_pusher_vault_round_active", false))
-	var cells: Array = state.get("coin_pusher_vault_cells", []) if typeof(state.get("coin_pusher_vault_cells", [])) == TYPE_ARRAY else []
-	var door_rect := Rect2(132, 387, 78, 27)
-	surface.draw_rect(door_rect, colors["body"].darkened(0.20 if not round_active else 0.02))
-	surface.draw_rect(door_rect, colors["trim"], false, 2.0)
-	surface.surface_label_centered("VAULT %s" % ("OPEN" if round_active else "SHUT"), door_rect, 8, colors["light"])
-	var cell_width := 31.0
-	for cell_index in range(cells.size()):
-		if typeof(cells[cell_index]) != TYPE_DICTIONARY:
+func _draw_feature_panels(surface, descriptor: Dictionary, bindings: Dictionary, colors: Dictionary) -> void:
+	var panels: Array = descriptor.get("panels", []) if typeof(descriptor.get("panels", [])) == TYPE_ARRAY else []
+	for panel_value in panels:
+		if typeof(panel_value) != TYPE_DICTIONARY:
 			continue
-		var cell: Dictionary = cells[cell_index]
-		var rect := Rect2(216.0 + cell_width * cell_index, 387.0, cell_width - 3.0, 27.0)
-		var action := str(cell.get("selection_action", "coin_pusher_vault_cell_%d" % cell_index))
-		var selected := cell_index == int(state.get("coin_pusher_vault_selected_cell", -1))
-		var opened := bool(cell.get("opened", false))
-		var peeked := bool(cell.get("peeked", false))
-		var fill: Color = colors["light"] if selected else colors["body"].lightened(0.10 if opened or peeked else 0.0)
-		surface.draw_rect(rect, fill)
-		surface.draw_rect(rect, colors["light"] if selected else colors["trim"], false, 1.0)
-		surface.surface_label_centered(str(cell.get("label", "?")), rect.grow(-1.0), 8, Color("#10141d") if selected else colors["light"])
-		if _binding_enabled(bindings, action):
-			surface.surface_add_exact_hit(rect, action, cell_index)
-	var action_ids := ["start_vault_round", "open_vault_cell", "stop_vault_round", "peek_vault_cell"]
-	var action_labels := ["OPEN", "CELL", "STOP", "X-RAY"]
-	for action_index in range(action_ids.size()):
-		var action := str(action_ids[action_index])
-		var rect := Rect2(410.0 + action_index * 62.0, 387.0, 58.0, 27.0)
-		var enabled := _binding_enabled(bindings, action)
-		_draw_small_hardware(surface, rect, str(action_labels[action_index]), action, colors, enabled)
+		var panel: Dictionary = panel_value
+		var panel_rect: Rect2 = panel.get("rect", Rect2())
+		surface.draw_rect(panel_rect, colors["side"].darkened(0.12))
+		surface.draw_rect(panel_rect, colors["trim"], false, 2.0)
+		for control_value in panel.get("controls", []):
+			if typeof(control_value) != TYPE_DICTIONARY:
+				continue
+			var control: Dictionary = control_value
+			var rect: Rect2 = control.get("rect", Rect2())
+			var action := str(control.get("action", ""))
+			var selected := bool(control.get("selected", false))
+			var enabled := _binding_enabled(bindings, action) if not action.is_empty() else false
+			var fill: Color = colors["light"] if selected else colors["body"].lightened(0.10 if bool(control.get("lit", false)) else 0.0)
+			surface.draw_rect(rect, fill)
+			surface.draw_rect(rect, colors["light"] if selected else colors["trim"], false, 1.0)
+			surface.surface_label_centered(str(control.get("label", "")), rect.grow(-1.0), int(control.get("font_size", 8)), Color("#10141d") if selected else colors["light"])
+			if enabled:
+				surface.surface_add_exact_hit(rect, action, int(control.get("index", 0)))
 
 
 func _feature_hardware_action_ids(state: Dictionary) -> Array:
 	var result: Array = []
-	var forces: Dictionary = state.get("coin_pusher_nudge_forces", {}) if typeof(state.get("coin_pusher_nudge_forces", {})) == TYPE_DICTIONARY else {}
-	for force in forces.keys():
-		result.append("coin_pusher_force_%s" % str(force))
-	for direction in ["left", "front", "right"]:
-		result.append("coin_pusher_direction_%s" % direction)
-	if str(state.get("coin_pusher_variation_id", "")) == "vault_drop":
-		var cells: Array = state.get("coin_pusher_vault_cells", []) if typeof(state.get("coin_pusher_vault_cells", [])) == TYPE_ARRAY else []
-		for cell_index in range(cells.size()):
-			var cell: Dictionary = cells[cell_index] if typeof(cells[cell_index]) == TYPE_DICTIONARY else {}
-			result.append(str(cell.get("selection_action", "coin_pusher_vault_cell_%d" % cell_index)))
-		result.append_array(["start_vault_round", "open_vault_cell", "stop_vault_round", "peek_vault_cell"])
+	var descriptor: Dictionary = state.get("coin_pusher_feature_hardware", {}) if typeof(state.get("coin_pusher_feature_hardware", {})) == TYPE_DICTIONARY else {}
+	for group_value in descriptor.get("selector_groups", []):
+		if typeof(group_value) == TYPE_DICTIONARY:
+			for option_value in (group_value as Dictionary).get("options", []):
+				if typeof(option_value) == TYPE_DICTIONARY and not str((option_value as Dictionary).get("action", "")).is_empty():
+					result.append(str((option_value as Dictionary).get("action", "")))
+	for panel_value in descriptor.get("panels", []):
+		if typeof(panel_value) == TYPE_DICTIONARY:
+			for control_value in (panel_value as Dictionary).get("controls", []):
+				if typeof(control_value) == TYPE_DICTIONARY and not str((control_value as Dictionary).get("action", "")).is_empty():
+					result.append(str((control_value as Dictionary).get("action", "")))
 	return result
 
 
@@ -647,12 +627,29 @@ func _binding_enabled(bindings: Dictionary, action: String) -> bool:
 
 func _entry_hardware_layout(state: Dictionary) -> Dictionary:
 	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	var board := _delivery_board(apparatus, geometry)
+	var z_top := float(board.get("z_top", 24000))
 	if str(apparatus.get("type", "rail_slot")) == "hole_set":
 		var targets: Array = []
-		for hole_index in range((apparatus.get("holes", []) as Array).size() if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else 0):
-			targets.append({"index": hole_index, "action": "coin_pusher_hole_%d" % hole_index, "rect": Rect2(238.0 + float(hole_index) * 190.0, 154.0, 44.0, 44.0)})
+		var holes: Array = apparatus.get("holes", []) if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else []
+		for hole_index in range(holes.size()):
+			var center := _project_delivery_board_point(board, float(holes[hole_index]), z_top)
+			targets.append({"index": hole_index, "action": "coin_pusher_hole_%d" % hole_index, "center": center, "rect": Rect2(center - Vector2(22, 22), Vector2(44, 44))})
 		return {"type": "hole_set", "targets": targets}
-	return {"type": "rail_slot", "drag_rect": RAIL_DRAG_RECT}
+	var rail: Dictionary = apparatus.get("rail", {}) if typeof(apparatus.get("rail", {})) == TYPE_DICTIONARY else {}
+	var rail_min := int(rail.get("x_min", 8000))
+	var rail_max := maxi(rail_min + 1, int(rail.get("x_max", 92000)))
+	var carriage := clampi(int(state.get("coin_pusher_carriage_x", (rail_min + rail_max) / 2)), rail_min, rail_max)
+	var rail_start := _project_delivery_board_point(board, float(rail_min), z_top)
+	var rail_end := _project_delivery_board_point(board, float(rail_max), z_top)
+	var carriage_point := _project_delivery_board_point(board, float(carriage), z_top)
+	return {"type": "rail_slot", "rail_start": rail_start, "rail_end": rail_end, "carriage": carriage_point, "drag_rect": Rect2(Vector2(minf(rail_start.x, rail_end.x), rail_start.y - 22.0), Vector2(absf(rail_end.x - rail_start.x), 44.0))}
+
+
+func debug_entry_hardware_layout_for_test(state: Dictionary) -> Dictionary:
+	_configure_projection(state)
+	return _entry_hardware_layout(state)
 
 
 func _draw_small_hardware(surface, rect: Rect2, label: String, action: String, colors: Dictionary, enabled: bool) -> void:

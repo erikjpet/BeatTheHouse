@@ -77,6 +77,10 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 			"colors": {"body": "#010203", "side": "#040506", "trim": "#070809", "light": "#0a0b0c", "glass": "#0d0e0f", "deck": "#101112", "platform": "#131415", "backglass": "#161718"},
 		},
 		"coin_pusher_geometry": {"width": 200000, "back_plate_y": 80000, "deck_polygon": [[0, 6000, 0], [200000, 6000, 0], [185000, 42000, 0], [100000, 50000, 0], [15000, 42000, 0]]},
+		"coin_pusher_apparatus": {"type": "hole_set", "holes": [22000, 97000, 181000], "drop_board": {"y": 80000, "z_top": 26000, "z_bottom": 3600, "x_min": 5000, "x_max": 195000}},
+		"coin_pusher_variation_id": "hostile_fourth_apparatus",
+		"coin_pusher_feature_hardware": {"selector_groups": [{"rect": Rect2(700, 300, 72, 18), "selected": "odd", "options": [{"id": "odd", "label": "ODD", "action": "hostile_selector"}]}], "panels": [{"rect": Rect2(120, 382, 400, 36), "controls": [{"rect": Rect2(128, 388, 92, 24), "label": "ALIEN", "action": "hostile_panel", "index": 7}]}]},
+		"surface_action_bindings": {"hostile_selector": {"enabled": true}, "hostile_panel": {"enabled": true}},
 		"coin_pusher_coin_height": 2500,
 		"coin_pusher_previous_face_position_y": 46000,
 		"coin_pusher_face_position_y": 28000,
@@ -93,6 +97,24 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 		failures.append("Coin Pusher V3 renderer did not consume nondefault public geometry/coin height/deck polygon: signature=%s center=%s high=%s deck=%d." % [JSON.stringify(hostile_signature), projected_center, projected_coin_high, authored_deck.size()])
 	if int(renderer.debug_interpolated_face_y_for_test(hostile_state)) != 37000:
 		failures.append("Coin Pusher V3 face/platform midpoint interpolation was not 37000.")
+	var hostile_layout: Dictionary = renderer.debug_entry_hardware_layout_for_test(hostile_state)
+	var hostile_targets: Array = hostile_layout.get("targets", []) if typeof(hostile_layout.get("targets", [])) == TYPE_ARRAY else []
+	var projected_hole: Vector2 = renderer.debug_project_delivery_board_point_for_test(hostile_state, 97000.0, 26000.0)
+	var hostile_catalog: Array = hostile_signature.get("hardware_catalog", []) if typeof(hostile_signature.get("hardware_catalog", [])) == TYPE_ARRAY else []
+	var renderer_source := FileAccess.get_file_as_string("res://scripts/games/coin_pusher/coin_pusher_renderer.gd")
+	if hostile_targets.size() != 3 or not ((hostile_targets[1] as Dictionary).get("center", Vector2.ZERO) as Vector2).is_equal_approx(projected_hole) or not (((hostile_targets[1] as Dictionary).get("rect", Rect2()) as Rect2).get_center()).is_equal_approx(projected_hole):
+		failures.append("Coin Pusher V3 hostile fourth apparatus did not project its authored hole center and exact hit rect through the delivery-board transform: %s." % JSON.stringify(hostile_layout))
+	if not hostile_catalog.has("hostile_selector") or not hostile_catalog.has("hostile_panel") or renderer_source.contains("quarter_falls") or renderer_source.contains("jackpot_ridge") or renderer_source.contains("vault_drop") or renderer_source.contains("coin_pusher_variation_id"):
+		failures.append("Coin Pusher V3 renderer still identifies variations instead of consuming generic feature hardware: catalog=%s." % JSON.stringify(hostile_catalog))
+	var hostile_rail_state := hostile_state.duplicate(true)
+	hostile_rail_state["coin_pusher_apparatus"] = {"type": "rail_slot", "rail": {"x_min": 17000, "x_max": 183000}, "drop_board": {"y": 80000, "z_top": 26000, "z_bottom": 3600}}
+	hostile_rail_state["coin_pusher_carriage_x"] = 97000
+	var hostile_rail_layout: Dictionary = renderer.debug_entry_hardware_layout_for_test(hostile_rail_state)
+	var expected_rail_start: Vector2 = renderer.debug_project_delivery_board_point_for_test(hostile_rail_state, 17000.0, 26000.0)
+	var expected_rail_end: Vector2 = renderer.debug_project_delivery_board_point_for_test(hostile_rail_state, 183000.0, 26000.0)
+	var expected_carriage: Vector2 = renderer.debug_project_delivery_board_point_for_test(hostile_rail_state, 97000.0, 26000.0)
+	if not (hostile_rail_layout.get("rail_start", Vector2.ZERO) as Vector2).is_equal_approx(expected_rail_start) or not (hostile_rail_layout.get("rail_end", Vector2.ZERO) as Vector2).is_equal_approx(expected_rail_end) or not (hostile_rail_layout.get("carriage", Vector2.ZERO) as Vector2).is_equal_approx(expected_carriage):
+		failures.append("Coin Pusher V3 legal rail/carriage projection diverged from the delivery-board body/pin x transform: %s." % JSON.stringify(hostile_rail_layout))
 	hostile_state["reduce_motion"] = true
 	if int(renderer.debug_interpolated_face_y_for_test(hostile_state)) != 28000:
 		failures.append("Coin Pusher V3 reduced motion did not present the current face/platform position directly.")

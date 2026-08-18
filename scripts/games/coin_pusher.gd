@@ -326,10 +326,15 @@ func _apparatus_action_bindings(machine: Dictionary, simulation: Dictionary) -> 
 
 
 func _rail_x_from_board_position(machine: Dictionary, board_position: Vector2) -> int:
-	var rail: Dictionary = (_machine_definition(str(machine.get("variation_id", _variation_id()))).get("apparatus", {}) as Dictionary).get("rail", {})
+	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
+	var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+	var geometry: Dictionary = definition.get("geometry", {}) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
+	var rail: Dictionary = apparatus.get("rail", {}) if typeof(apparatus.get("rail", {})) == TYPE_DICTIONARY else {}
 	var rail_min := int(rail.get("x_min", 8000))
 	var rail_max := int(rail.get("x_max", 92000))
-	var normalized := clampf((board_position.x - V3_RAIL_DRAG_RECT.position.x) / V3_RAIL_DRAG_RECT.size.x, 0.0, 1.0)
+	var layout: Dictionary = _renderer.debug_entry_hardware_layout_for_test({"coin_pusher_geometry": geometry, "coin_pusher_apparatus": apparatus, "coin_pusher_carriage_x": int(_simulation(machine).get("carriage_x", (rail_min + rail_max) / 2))})
+	var drag_rect: Rect2 = layout.get("drag_rect", V3_RAIL_DRAG_RECT)
+	var normalized := clampf((board_position.x - drag_rect.position.x) / maxf(1.0, drag_rect.size.x), 0.0, 1.0)
 	return clampi(int(round(lerpf(float(rail_min), float(rail_max), normalized))), rail_min, rail_max)
 
 
@@ -810,6 +815,42 @@ func _has_v3_simulation(machine: Dictionary) -> bool:
 		and str((simulation_value as Dictionary).get("schema", "")) == CoinPusherSolverScript.SCHEMA
 
 
+func _feature_hardware_descriptor(machine: Dictionary, vault_views: Dictionary) -> Dictionary:
+	var force_options: Array = []
+	var forces: Dictionary = _tuning().get("nudge_forces", {}) if typeof(_tuning().get("nudge_forces", {})) == TYPE_DICTIONARY else {}
+	for force in forces.keys():
+		force_options.append({"id": str(force), "label": str(force).to_upper(), "action": NUDGE_FORCE_PREFIX + str(force)})
+	var direction_options: Array = []
+	for direction in ["left", "front", "right"]:
+		direction_options.append({"id": direction, "label": direction.left(1).to_upper(), "action": NUDGE_DIRECTION_PREFIX + direction})
+	var result := {"schema": "coin_pusher_feature_hardware_v1", "selector_groups": [
+		{"rect": Rect2(684, 300, 90, 17), "selected": str(machine.get("nudge_force", "tap")), "options": force_options},
+		{"rect": Rect2(684, 382, 90, 17), "selected": str(machine.get("nudge_direction", "front")), "options": direction_options},
+	], "panels": []}
+	if vault_views.is_empty():
+		return result
+	var variation_state := _variation_state(machine)
+	var round_active := bool(variation_state.get("vault_round_active", false))
+	var controls: Array = [{"rect": Rect2(132, 387, 78, 27), "label": "VAULT %s" % ("OPEN" if round_active else "SHUT"), "lit": round_active}]
+	var cells: Array = vault_views.get("cells", []) if typeof(vault_views.get("cells", [])) == TYPE_ARRAY else []
+	for cell_index in range(cells.size()):
+		var cell: Dictionary = cells[cell_index] if typeof(cells[cell_index]) == TYPE_DICTIONARY else {}
+		controls.append({
+			"rect": Rect2(216.0 + 31.0 * cell_index, 387.0, 28.0, 27.0),
+			"label": str(cell.get("label", "?")),
+			"action": str(cell.get("selection_action", VAULT_CELL_PREFIX + str(cell_index))),
+			"index": cell_index,
+			"selected": cell_index == int(machine.get("vault_selected_cell", -1)),
+			"lit": bool(cell.get("opened", false)) or bool(cell.get("peeked", false)),
+		})
+	var action_ids := [VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION]
+	var action_labels := ["OPEN", "CELL", "STOP", "X-RAY"]
+	for action_index in range(action_ids.size()):
+		controls.append({"rect": Rect2(410.0 + action_index * 62.0, 387.0, 58.0, 27.0), "label": action_labels[action_index], "action": action_ids[action_index], "index": action_index})
+	result["panels"] = [{"rect": Rect2(126, 382, 540, 38), "controls": controls}]
+	return result
+
+
 func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null, environment: Dictionary = {}, ui_state: Dictionary = {}) -> Dictionary:
 	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
 	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), definition)
@@ -883,6 +924,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_nudge_force": str(machine.get("nudge_force", "tap")),
 		"coin_pusher_nudge_direction": str(machine.get("nudge_direction", "front")),
 		"coin_pusher_nudge_forces": (_tuning().get("nudge_forces", {}) as Dictionary).duplicate(true) if typeof(_tuning().get("nudge_forces", {})) == TYPE_DICTIONARY else {},
+		"coin_pusher_feature_hardware": _feature_hardware_descriptor(machine, vault_views),
 		"coin_pusher_audio_events": [],
 		"coin_pusher_audio_serial": int(session.get("presentation_audio_serial", 0)),
 		"coin_pusher_last_message": V3_HEADLESS_MESSAGE,
@@ -932,6 +974,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 		"coin_pusher_vault_selected_cell": int(machine.get("vault_selected_cell", 0)),
 		"coin_pusher_nudge_force": str(machine.get("nudge_force", "tap")),
 		"coin_pusher_nudge_direction": str(machine.get("nudge_direction", "front")),
+		"coin_pusher_feature_hardware": _feature_hardware_descriptor(machine, vault_views),
 	}
 	# The entry snapshot owns the full control catalog. Ordinary live ticks only
 	# republish bindings when a control-visible state actually changes.
