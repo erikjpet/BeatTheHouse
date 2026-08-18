@@ -294,7 +294,10 @@ What happens then is the owner's, not an agent's:
   cheat use and detection through the normalized action kind plus existing
   game-specific settled fields. The heist must derive honesty and being made
   from those production facts, with production-shaped coverage for all three;
-  a synthetic override cannot be the gameplay path.
+  a synthetic override cannot be the gameplay path. Nonterminal cheat setup
+  actions such as Peek or Edge Sort must carry bounded pending dishonesty/
+  detection into the later settled hand without advancing a round or losing
+  the fact at the settlement guard.
 
 - 2026-08-17 [pusherv3_2] PM production-lifecycle review returned the first
   live-loop implementation before broad gates: FoundationMain prepares an
