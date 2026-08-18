@@ -1,6 +1,15 @@
 [{ 
   "schema_version": 1,
   "state_schema_version": 1,
+  "hidden_resolution": {
+    "chance_percent_per_weight": 12,
+    "chance_percent_cap": 72,
+    "wrong_choice_chance_percent": 18,
+    "crew_trust_cost": 5,
+    "hedge_trust_cost": 2,
+    "payment_shortfall_percent": 25,
+    "partial_haul_percent_band": [35, 55]
+  },
   "plans": [
     {
       "id": "the_count",
@@ -40,18 +49,20 @@
     {"id": "clean_sweep", "label": "Clean Sweep", "score_min": 80},
     {"id": "out_hot", "label": "Out Hot", "score_min": 55},
     {"id": "somebody_got_pinched", "label": "Somebody Got Pinched", "score_min": 0},
-    {"id": "the_turn", "label": "The Turn", "stub": true}
+    {"id": "closed", "label": "Night Closed", "score_min": 0}
   ],
   "ending_copy": {
     "the_count": {
       "clean_sweep": "The count closes. Bishop leaves no number behind.",
       "out_hot": "The dock takes the noise. The envelope still clears.",
       "somebody_got_pinched": "One chair stays empty. The count still balances."
+      ,"closed": "The Turn comes in the corridor. The door does not hold, and the count goes home with the house."
     },
     "the_whale_game": {
       "clean_sweep": "Velvet gives the room its name back. The pot leaves with yours.",
       "out_hot": "The front door becomes a race. The money keeps up.",
       "somebody_got_pinched": "The house keeps a face. The crew keeps the night."
+      ,"closed": "The Turn comes across the felt. Your rig points back at you, and the house closes its hand."
     }
   }
 }]

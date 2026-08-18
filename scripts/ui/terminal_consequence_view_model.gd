@@ -63,7 +63,7 @@ static func consequence_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 		"current_state_text": current_state_text,
 		"suspicion_text": suspicion_text,
 		"recent_result_text": "Recent result: %s | Bankroll %+d | Heat %+d" % [recent_message if not recent_message.is_empty() else "No result yet.", bankroll_delta, suspicion_delta],
-		"story_text": "Story: %s | Clues %s" % [" / ".join(story_messages) if not story_messages.is_empty() else "No story yet.", flag_summary(flag_labels)],
+		"story_text": "Story: %s | Details %s" % [" / ".join(story_messages) if not story_messages.is_empty() else "No story yet.", flag_summary(flag_labels)],
 		"cards": consequence_cards(run_state, context),
 	}
 
@@ -438,7 +438,7 @@ static func pressure_status_text(pressure: Dictionary) -> String:
 static func run_summary_text(state: RunState, pressure: Dictionary) -> String:
 	if state == null: return "No active run."
 	var environment := state.current_environment
-	return "%s | Bankroll %d | %s | Heat %d | Story %d | Clues %d | Routes %d" % [str(environment.get("display_name", environment.get("id", "No environment"))), state.bankroll, pressure_status_text(pressure), state.suspicion_level(), state.story_log_entry_count(), state.narrative_flags.size(), run_travel_target_count(state)]
+	return "%s | Bankroll %d | %s | Heat %d | Story %d | Details %d | Routes %d" % [str(environment.get("display_name", environment.get("id", "No environment"))), state.bankroll, pressure_status_text(pressure), state.suspicion_level(), state.story_log_entry_count(), state.narrative_flags.size(), run_travel_target_count(state)]
 
 
 static func run_travel_target_count(state: RunState) -> int:

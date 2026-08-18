@@ -103,7 +103,8 @@ static func availability(run_state: RunState, environment: Dictionary, game_id: 
 	var current_action := run_state.crew_action_index()
 	var used := maxi(0, int((state.get("uses", {}) as Dictionary).get(play_id, 0)))
 	var cap := maxi(0, int(play.get("uses_per_run", 0)))
-	if used >= cap:
+	var free_heist_use := run_state.crew_heist_free_play_available()
+	if used >= cap and not free_heist_use:
 		return {"available": false, "reason": "uses_spent"}
 	var required_active := str(play.get("requires_active_play", "")).strip_edges()
 	if not required_active.is_empty() and not is_active(state, required_active, current_action, environment):
@@ -115,13 +116,13 @@ static func availability(run_state: RunState, environment: Dictionary, game_id: 
 	if members.size() < member_count:
 		return {"available": false, "reason": "member_presence_rank_or_cooldown"}
 	members = members.slice(0, member_count)
-	var cash_cost := maxi(0, int(play.get("cash_cost", 0)))
+	var cash_cost := 0 if free_heist_use else maxi(0, int(play.get("cash_cost", 0)))
 	var effect: Dictionary = play.get("effect", {}) if typeof(play.get("effect", {})) == TYPE_DICTIONARY else {}
 	if play_id == "chip_dump":
 		cash_cost += maxi(0, int(effect.get("transfer_amount", 0))) + maxi(0, int(effect.get("transfer_fee", 0)))
 	if run_state.bankroll < cash_cost:
 		return {"available": false, "reason": "cash_cost"}
-	var summary := "%d/%d uses" % [cap - used, cap]
+	var summary := "The room covers this one" if free_heist_use else "%d/%d uses" % [cap - used, cap]
 	if play_id == "chip_dump":
 		summary += " · $%d transfer + $%d fee" % [int(effect.get("transfer_amount", 0)), int(effect.get("transfer_fee", 0))]
 	elif cash_cost > 0:
@@ -138,6 +139,7 @@ static func availability(run_state: RunState, environment: Dictionary, game_id: 
 		"member_ids": members,
 		"uses_remaining": cap - used,
 		"cash_cost": cash_cost,
+		"free_heist_use": free_heist_use,
 		"cost_summary": summary,
 	}
 
@@ -151,7 +153,9 @@ static func activate(run_state: RunState, environment: Dictionary, game_id: Stri
 	var members := _string_array(status.get("member_ids", []))
 	var current_action := run_state.crew_action_index()
 	var uses: Dictionary = state.get("uses", {})
-	uses[play_id] = int(uses.get(play_id, 0)) + 1
+	var free_heist_use := bool(status.get("free_heist_use", false)) and run_state.crew_heist_consume_free_play()
+	if not free_heist_use:
+		uses[play_id] = int(uses.get(play_id, 0)) + 1
 	state["uses"] = uses
 	state["sequence"] = int(state.get("sequence", 0)) + 1
 	var cooldowns: Dictionary = state.get("member_cooldowns", {})
@@ -159,7 +163,7 @@ static func activate(run_state: RunState, environment: Dictionary, game_id: Stri
 	for member_id in members:
 		cooldowns[member_id] = current_action + cooldown_boundaries + 1
 	state["member_cooldowns"] = cooldowns
-	var cash_cost := maxi(0, int(play.get("cash_cost", 0)))
+	var cash_cost := 0 if free_heist_use else maxi(0, int(play.get("cash_cost", 0)))
 	var effect: Dictionary = play.get("effect", {}) if typeof(play.get("effect", {})) == TYPE_DICTIONARY else {}
 	var beat := _voice_line(play, members)
 	var bankroll_delta := -cash_cost

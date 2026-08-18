@@ -52,6 +52,7 @@ static func begin(spec: Dictionary, started_action: int) -> Dictionary:
 		"heat_earned": 0,
 		"confiscated": false,
 		"resolution": {},
+		"receipt": {},
 		"world_applied": false,
 	})
 
@@ -105,6 +106,7 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"heat_earned": maxi(0, int(source.get("heat_earned", 0))),
 		"confiscated": bool(source.get("confiscated", false)),
 		"resolution": resolution,
+		"receipt": _copy_dict(source.get("receipt", {})),
 		"world_applied": bool(source.get("world_applied", false)),
 	}
 
@@ -139,6 +141,7 @@ static func snapshot(state_value: Variant) -> Dictionary:
 		"assists_available": _copy_array(state.get("assists_available", [])),
 		"assists_used": _copy_array(state.get("assists_used", [])),
 		"resolution": _copy_dict(state.get("resolution", {})),
+		"receipt": _copy_dict(state.get("receipt", {})),
 	}
 
 

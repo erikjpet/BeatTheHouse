@@ -303,12 +303,13 @@ func backup_save_path(slot_id: String = "autosave") -> String:
 
 # Builds a versioned foundation run payload.
 func _save_payload(run_state: RunState, slot_id: String) -> Dictionary:
+	var runtime_snapshot := run_state.to_save_snapshot()
 	return {
 		"schema": SAVE_SCHEMA,
 		"version": SAVE_VERSION,
-		"act": run_state.act_marker(),
+		"act": maxi(1, int(runtime_snapshot.get("act", 1))),
 		"slot_id": slot_id,
-		"run_state": RunSaveCodecScript.encode(run_state.to_dict()),
+		"run_state": RunSaveCodecScript.encode(runtime_snapshot),
 	}
 
 
