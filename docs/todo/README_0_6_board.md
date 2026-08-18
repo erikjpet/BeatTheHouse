@@ -287,6 +287,16 @@ What happens then is the owner's, not an agent's:
   Item IDs and effects may not be special-cased; Content owns the non-heist
   `crew_mags_bench` payload and must prove the complete gate matrix.
 
+- 2026-08-17 [content06_1] PM verbatim-scope review found the shipped Layer 3
+  job board has rotating offers through residency but only one fixed line of
+  presentation copy, so the prompt's job-board flavor rotation has no landed
+  data seam. PM authorizes a small generic authored-copy pool projected
+  deterministically from stable run/action context at interaction boundaries.
+  No per-frame or wall-clock mutation is allowed. The same review returned the
+  economy artifact because it excluded heist bands; after crew06_8 integrates,
+  Content must rebase and audit the landed setup/abort/payout bands without
+  tuning them.
+
 - 2026-08-17 [pusherv3_1] OWNER COMPLETION RULING accepted by the PM after
   integrating `a6e36d2f`. Amendment 6.1's solver behavior, native 300-body
   headroom, exact Windows/Web replay, 10-seed determinism, and all pusher-owned
