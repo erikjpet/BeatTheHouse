@@ -450,7 +450,11 @@ func _check_pusher_v3_landing_skill(machine: Dictionary, failures: Array) -> voi
 						return
 					var target_state: Dictionary = release["state"]
 					var target_coin: Dictionary = release["coin"]
-					var target_result: Dictionary = CoinPusherSolverScript.step_ticks_reference_for_test(target_state, {"motor_enabled": false}, 480)
+					# This is the exhaustive production-behavior sweep (all machines,
+					# targets, phases, and both jitter signs). Use the production backend
+					# here; input-trace parity independently locks it to the reference
+					# solver, while keeping this Cartesian gate inside the suite budget.
+					var target_result: Dictionary = CoinPusherSolverScript.step_ticks(target_state, {"motor_enabled": false}, 480)
 					var target_root := ""
 					var terminal_before_support := false
 					for event_value in target_result.get("events", []):
