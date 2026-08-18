@@ -1480,6 +1480,16 @@ What happens then is the owner's, not an agent's:
   captures. Systems/UI/Contracts/determinism/visual gates are green. The row is
   BLOCKED solely on the recorded owner question because the PM will not infer a
   new cross-run collection schema from a within-run roadmap.
+- 2026-08-18 [crew06_9] Pre-implementation visibility audit found existing
+  secrecy debt that The Turn must close rather than inherit: player copy says
+  “No grievance written”; new saves emit semantic grievance keys/IDs/kinds;
+  heist data's `the_turn` label would project as a run-report title; and two
+  unrelated generic UI strings use “Clues”/“Check the clue.” Hidden state must
+  stay in the neutral `crew_heist_state.r` seam with backward-compatible opaque
+  save projection, neutral outcome/scar codes, and a poker-style audit spanning
+  choices, results, story, save, report, and the cross-run ProfileInventory act
+  seam (which otherwise copies `outcome_band` verbatim). Ordinary verb/timing
+  uses of “turn” are unrelated and are not a mass-rename target.
 
 ## Work Log
 
