@@ -288,6 +288,14 @@ What happens then is the owner's, not an agent's:
   pressure. None may be represented by fixture-only result flags or a parallel
   heist currency.
 
+- 2026-08-17 [crew06_8] ActionResult field audit found Plan B hazard/made
+  scoring still read fixture-only generic `heist_honest` / `cheat_used` /
+  `caught` fields. Shipped Craps, Blackjack, and Baccarat expose their real
+  cheat use and detection through the normalized action kind plus existing
+  game-specific settled fields. The heist must derive honesty and being made
+  from those production facts, with production-shaped coverage for all three;
+  a synthetic override cannot be the gameplay path.
+
 - 2026-08-17 [pusherv3_2] PM production-lifecycle review returned the first
   live-loop implementation before broad gates: FoundationMain prepares an
   autosave after every paid DROP by calling the generic surface checkpoint,
