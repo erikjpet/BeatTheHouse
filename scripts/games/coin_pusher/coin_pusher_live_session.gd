@@ -53,6 +53,9 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		# reconstructing a previous position from velocity.
 		"presentation_previous_bodies": opening_views,
 		"presentation_current_bodies": opening_views,
+		"presentation_feature_count": _presentation_feature_count(opening_views),
+		"presentation_previous_face_y": int(simulation.get("face_y", 0)),
+		"presentation_current_face_y": int(simulation.get("face_y", 0)),
 		"presentation_view_serial": 0,
 		"presentation_audio_serial": 0,
 	}
@@ -319,6 +322,7 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 	for _tick in range(maxi(0, tick_count)):
 		var current_views: Variant = session.get("presentation_current_bodies", [])
 		session["presentation_previous_bodies"] = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
+		session["presentation_previous_face_y"] = int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
 		var tick_value := int(simulation.get("tick", 0))
 		var trace_slice: Array = []
 		var cursor := int(session.get("input_cursor", 0))
@@ -329,6 +333,8 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 		session["input_cursor"] = cursor
 		var result := CoinPusherSolverScript.step_ticks(simulation, {"input_trace": trace_slice, "rng": rng, "motor_enabled": not bool(machine.get("locked_down", false))}, 1)
 		session["presentation_current_bodies"] = _presentation_body_views(simulation)
+		session["presentation_feature_count"] = _presentation_feature_count(session["presentation_current_bodies"])
+		session["presentation_current_face_y"] = int(simulation.get("face_y", 0))
 		session["presentation_view_serial"] = int(session.get("presentation_view_serial", 0)) + 1
 		all_events.append_array(result.get("events", []))
 	session["rng"] = rng.snapshot()
@@ -361,6 +367,14 @@ static func _presentation_body_views(simulation: Dictionary) -> Array:
 
 static func presentation_body_views_for_test(simulation: Dictionary) -> Array:
 	return _presentation_body_views(simulation)
+
+
+static func _presentation_feature_count(views: Array) -> int:
+	var count := 0
+	for body_value in views:
+		if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("kind", "coin")) != "coin":
+			count += 1
+	return count
 
 
 static func _settled_body(body: Dictionary) -> Dictionary:

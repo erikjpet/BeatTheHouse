@@ -116,24 +116,56 @@ func _capture_beside_row() -> void:
 	await _capture("02_deck_landing_row_advance.png", "deck_landing_row_advance", state, {
 		"drop_support": str(landed.get("support_kind", "exited")),
 		"forward_advanced_count": advanced_count,
-		"row_advanced": advanced_count > 0 or not (state.get("tray_ledger", []) as Array).is_empty(),
+		"row_advanced": advanced_count > 0,
 	})
 
 
 func _capture_ratchet() -> void:
-	var state := _state("cabinet-ratchet", 56)
+	var state := _state("cabinet-ratchet", 0)
 	_hold_phase(state, 0)
+	var tracked_front_ids := {}
+	for row in range(3):
+		for column in range(10):
+			var stock := Solver.add_coin(state, _rng("cabinet-ratchet-stock-%d-%d" % [row, column]), 7000 + column * 9400, 1)
+			_configure_body(stock, 7000 + column * 9400 + (350 if row % 2 == 1 else 0), 58700 - row * 8200, 3600, "platform", "resting")
+			if row == 2:
+				tracked_front_ids[str(stock.get("id", ""))] = true
 	var drop := Solver.add_coin(state, _rng("cabinet-ratchet-drop"), 57000, 1)
-	Solver.step_ticks(state, {"motor_enabled": true}, 110)
-	var landed := _body(state, str(drop.get("id", "")))
-	var y_before := int(landed.get("y", 0))
-	Solver.step_ticks(state, {"motor_enabled": true}, 720)
-	var after := _body(state, str(drop.get("id", "")))
+	var drop_id := str(drop.get("id", ""))
+	var landed_on_platform := false
+	var deposited_front := {}
+	var deposit_y := {}
+	var minimum_y_after_deposit := {}
+	var platform_y := 0
+	for _tick in range(720):
+		var tick_result: Dictionary = Solver.step_ticks(state, {"motor_enabled": true}, 1)
+		var tracked := _body(state, drop_id)
+		if not tracked.is_empty() and str(tracked.get("support_kind", "")) == "platform":
+			landed_on_platform = true
+			platform_y = int(tracked.get("y", 0))
+		for event_value in tick_result.get("events", []):
+			var event: Dictionary = event_value
+			var deposited_id := str(event.get("body_id", ""))
+			if str(event.get("kind", "")) == "platform_deposit" and tracked_front_ids.has(deposited_id):
+				var deposited_body := _body(state, deposited_id)
+				deposited_front[deposited_id] = true
+				deposit_y[deposited_id] = int(deposited_body.get("y", 0))
+				minimum_y_after_deposit[deposited_id] = int(deposited_body.get("y", 0))
+		for deposited_id in deposited_front.keys():
+			var deposited_body := _body(state, str(deposited_id))
+			if not deposited_body.is_empty():
+				minimum_y_after_deposit[deposited_id] = mini(int(minimum_y_after_deposit.get(deposited_id, deposited_body.get("y", 0))), int(deposited_body.get("y", 0)))
+	var transported_after_deposit := 0
+	for deposited_id in deposited_front.keys():
+		if int(minimum_y_after_deposit.get(deposited_id, deposit_y.get(deposited_id, 0))) < int(deposit_y.get(deposited_id, 0)) - 100:
+			transported_after_deposit += 1
 	await _capture("03_platform_ratchet_three_cycles.png", "platform_ratchet_three_cycles", state, {
-		"cycles": 3,
-		"start_y": y_before,
-		"end_y": int(after.get("y", -1)),
-		"transported_or_exited": after.is_empty() or int(after.get("y", y_before)) != y_before,
+		"cycles_observed": 3,
+		"landed_on_platform": landed_on_platform,
+		"platform_to_deck_count": deposited_front.size(),
+		"platform_y": platform_y,
+		"transported_after_deposit_count": transported_after_deposit,
+		"ratchet_proven": landed_on_platform and deposited_front.size() >= 2 and transported_after_deposit >= 2,
 	})
 
 
@@ -141,17 +173,38 @@ func _capture_nestle() -> void:
 	var state := _state("cabinet-nestle", 0)
 	var a := Solver.add_coin(state, _rng("cabinet-nestle-a"), 45000, 1)
 	var b := Solver.add_coin(state, _rng("cabinet-nestle-b"), 55000, 1)
+	var stack := Solver.add_coin(state, _rng("cabinet-nestle-stack"), 45700, 1)
 	var top := Solver.add_coin(state, _rng("cabinet-nestle-top"), 50000, 1)
 	_configure_body(a, 45700, 18000, 0, "deck", "resting")
 	_configure_body(b, 54300, 18000, 0, "deck", "resting")
-	_configure_body(top, 50000, 18000, 1900, "", "falling")
-	Solver.step_ticks(state, {"motor_enabled": false}, 120)
+	# The upper coin begins on a real, overhung stack (not above the prepared
+	# pocket). Its lateral momentum carries it off that support and into the gap
+	# between the two base coins.
+	_configure_body(stack, 42000, 18000, 1700, "body", "resting")
+	_configure_body(top, 49500, 18000, 3400, "body", "resting")
+	top["sleeping"] = false
+	top["sleep_ticks"] = 0
+	top["vx"] = 8000
+	var initial_x := int(top.get("x", 0))
+	var initial_z := int(top.get("z", 0))
+	var initial_rest := str(top.get("rest_state", ""))
+	var initial_support := str(top.get("support_kind", ""))
+	var initial_unstable := not bool(top.get("sleeping", true)) and int(top.get("vx", 0)) != 0
+	Solver.step_ticks(state, {"motor_enabled": false}, 180)
 	var settled := _body(state, str(top.get("id", "")))
 	await _capture("04_stack_nestles_into_pocket.png", "stack_nestles_into_pocket", state, {
+		"initial_x": initial_x,
+		"initial_z": initial_z,
+		"initial_rest_state": initial_rest,
+		"initial_support_kind": initial_support,
+		"initial_unstable": initial_unstable,
 		"top_x": int(settled.get("x", -1)),
 		"top_z": int(settled.get("z", -1)),
 		"rest_state": str(settled.get("rest_state", "")),
-		"nestled": str(settled.get("rest_state", "")) == "resting" and int(settled.get("z", 0)) >= 1600,
+		"support_kind": str(settled.get("support_kind", "")),
+		"horizontal_displacement": absi(int(settled.get("x", initial_x)) - initial_x),
+		"vertical_fall": initial_z - int(settled.get("z", initial_z)),
+		"nestled": initial_z >= 3400 and initial_support == "body" and initial_unstable and str(settled.get("rest_state", "")) == "resting" and str(settled.get("support_kind", "")) == "body" and int(settled.get("z", 0)) == 1700 and int(settled.get("x", 0)) > 48000 and int(settled.get("x", 0)) < 52000 and absi(int(settled.get("x", initial_x)) - initial_x) >= 500,
 	})
 
 
@@ -159,17 +212,39 @@ func _capture_skill_stop() -> void:
 	var state := _state("cabinet-skill-stop", 72)
 	Solver.set_skill_stop(state, true)
 	Solver.step_ticks(state, {"motor_enabled": true}, 24)
+	var banked_ids: Array[String] = []
 	for index in range(5):
-		Solver.add_coin(state, _rng("cabinet-bank-%d" % index), 47000 + index * 1200, 1)
-	Solver.step_ticks(state, {"motor_enabled": true}, 110)
-	var positions_before := _body_y_by_id(state)
+		var banked := Solver.add_coin(state, _rng("cabinet-bank-%d" % index), 47000 + index * 1200, 1)
+		banked_ids.append(str(banked.get("id", "")))
+	Solver.step_ticks(state, {"motor_enabled": true}, 140)
+	var held_positions := _body_y_for_ids(state, banked_ids)
+	Solver.step_ticks(state, {"motor_enabled": true}, 24)
+	var held_positions_after := _body_y_for_ids(state, banked_ids)
+	var held_motor_rate := int(state.get("motor_rate_fp", -1))
+	var held_still := held_positions == held_positions_after and held_motor_rate == 0
 	Solver.set_skill_stop(state, false)
-	Solver.step_ticks(state, {"motor_enabled": true}, 360)
-	var advanced_count := _forward_advanced_count(state, positions_before)
+	var minimum_released_positions := held_positions.duplicate()
+	for _tick in range(720):
+		Solver.step_ticks(state, {"motor_enabled": true}, 1)
+		var released_tick_positions := _body_y_for_ids(state, banked_ids)
+		for banked_id in banked_ids:
+			if released_tick_positions.has(banked_id):
+				minimum_released_positions[banked_id] = mini(int(minimum_released_positions.get(banked_id, released_tick_positions[banked_id])), int(released_tick_positions[banked_id]))
+	var advanced_count := 0
+	var total_forward_displacement := 0
+	for banked_id in banked_ids:
+		if held_positions.has(banked_id) and minimum_released_positions.has(banked_id):
+			var displacement := maxi(0, int(held_positions[banked_id]) - int(minimum_released_positions[banked_id]))
+			total_forward_displacement += displacement
+			advanced_count += 1 if displacement > 100 else 0
 	await _capture("05_skill_stop_bank_release.png", "skill_stop_bank_release", state, {
-		"banked_coins": 5,
+		"banked_coins": banked_ids.size(),
+		"held_motor_rate_fp": held_motor_rate,
+		"motor_stopped": held_motor_rate == 0,
+		"held_positions_stable": held_still,
 		"forward_advanced_count": advanced_count,
-		"large_release_advanced": advanced_count >= 5 or not (state.get("tray_ledger", []) as Array).is_empty(),
+		"total_forward_displacement": total_forward_displacement,
+		"large_release_advanced": held_still and advanced_count >= 3 and total_forward_displacement > 5000,
 	})
 
 
@@ -332,6 +407,21 @@ func _body_y_by_id(state: Dictionary) -> Dictionary:
 	for body_value in state.get("bodies", []):
 		if typeof(body_value) == TYPE_DICTIONARY:
 			result[str((body_value as Dictionary).get("id", ""))] = int((body_value as Dictionary).get("y", 0))
+	return result
+
+
+func _body_y_for_ids(state: Dictionary, body_ids: Array[String]) -> Dictionary:
+	var wanted := {}
+	for body_id in body_ids:
+		wanted[body_id] = true
+	var result := {}
+	for body_value in state.get("bodies", []):
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = body_value
+		var body_id := str(body.get("id", ""))
+		if wanted.has(body_id):
+			result[body_id] = int(body.get("y", 0))
 	return result
 
 

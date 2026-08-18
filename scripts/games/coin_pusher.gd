@@ -666,12 +666,14 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_presentation_view_serial": int(session.get("presentation_view_serial", 0)),
 		"coin_pusher_interpolation_alpha": clampf(float(int(session.get("accumulator_units", 0))) / 1000.0, 0.0, 1.0),
 		"coin_pusher_features": feature_views,
+		"coin_pusher_feature_count": feature_views.size(),
 		"coin_pusher_riders": feature_views if variation_id == "quarter_falls" else [],
 		"coin_pusher_tell_rung": tell_rung,
 		"coin_pusher_tell_label": str(_tell_labels()[tell_rung]),
 		"coin_pusher_locked": bool(machine.get("locked_down", false)),
 		"coin_pusher_phase_fp": int(simulation.get("phase_fp", 0)),
 		"coin_pusher_face_position_y": int(simulation.get("face_y", 0)),
+		"coin_pusher_previous_face_position_y": int(session.get("presentation_previous_face_y", simulation.get("face_y", 0))),
 		"coin_pusher_carriage_x": int(simulation.get("carriage_x", 50000)),
 		"coin_pusher_skill_stop_engaged": bool(simulation.get("skill_stop_engaged", false)),
 		"coin_pusher_motor_rate_fp": int(simulation.get("motor_rate_fp", CoinPusherSolverScript.FP)),
@@ -716,6 +718,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary) -> Dictionary:
 	var tell_rung := clampi(int(machine.get("tell_rung", 0)), 0, _tell_labels().size() - 1)
 	var patch := {
 		"coin_pusher_body_count": body_views.size(),
+		"coin_pusher_feature_count": int(session.get("presentation_feature_count", 0)),
 		"coin_pusher_bodies": body_views,
 		"coin_pusher_previous_bodies": previous_views,
 		"coin_pusher_presentation_view_serial": int(session.get("presentation_view_serial", 0)),
@@ -725,8 +728,10 @@ func _v3_realtime_presentation_patch(machine: Dictionary) -> Dictionary:
 		"coin_pusher_locked": bool(machine.get("locked_down", false)),
 		"coin_pusher_carriage_x": int(simulation.get("carriage_x", 50000)),
 		"coin_pusher_face_position_y": int(simulation.get("face_y", CoinPusherSolverScript.FACE_EXTENDED_Y)),
+		"coin_pusher_previous_face_position_y": int(session.get("presentation_previous_face_y", simulation.get("face_y", CoinPusherSolverScript.FACE_EXTENDED_Y))),
 		"coin_pusher_phase_fp": int(simulation.get("phase_fp", 0)),
 		"coin_pusher_skill_stop_engaged": bool(simulation.get("skill_stop_engaged", false)),
+		"coin_pusher_motor_rate_fp": int(simulation.get("motor_rate_fp", CoinPusherSolverScript.FP)),
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
 		"coin_pusher_last_step_metrics": simulation.get("last_step_metrics", {}),
@@ -1017,7 +1022,6 @@ func _presentation_audio_events(machine: Dictionary, physics_events: Array) -> A
 	var strongest_fall_height := 0
 	var strongest_stack_depth := 0
 	var strongest_impact_material := "coin_on_metal"
-	var plate_clink_count := 0
 	var gutter_count := 0
 	for event_value in physics_events:
 		if typeof(event_value) != TYPE_DICTIONARY:
@@ -1042,38 +1046,69 @@ func _presentation_audio_events(machine: Dictionary, physics_events: Array) -> A
 					strongest_fall_height = 0
 					strongest_stack_depth = 0
 					strongest_impact_material = "coin_on_metal"
-			"platform_deposit":
-				plate_clink_count += 1
 			"tray":
 				tray_count += 1
 			"gutter":
 				gutter_count += 1
 	if impact_count > 0:
 		result.append({"kind": "impact", "intensity_milli": strongest_impact, "metadata": {"fall_height_milli": strongest_fall_height, "stack_depth": strongest_stack_depth, "material": strongest_impact_material, "group_count": impact_count}})
-	if plate_clink_count > 0:
-		result.append({"kind": "plate_clink", "intensity_milli": clampi(420 + (plate_clink_count - 1) * 35, 420, 760), "metadata": {"group_count": plate_clink_count}})
 	if tray_count > 0:
 		result.append({"kind": "tray_landing", "intensity_milli": clampi(440 + tray_count * 75, 440, 1000), "metadata": {"group_count": tray_count, "group_index": 0}})
 	if gutter_count > 0:
 		result.append({"kind": "gutter_loss", "intensity_milli": clampi(520 + (gutter_count - 1) * 45, 520, 880), "metadata": {"group_count": gutter_count}})
-	# A slide cue is driven by actual public body velocities while the moving face
-	# is doing work. Avoid scanning the dense body view on the eleven ticks where
-	# cadence makes a cue impossible; this is presentation-only state.
+	_append_motion_audio_events(machine, result)
+	return result
+
+
+func _append_motion_audio_events(machine: Dictionary, result: Array) -> void:
+	# Classify ratchet/slide sound from the same consecutive public views the
+	# renderer consumes. Solver contact events remain mechanics evidence; they do
+	# not get relabeled as a cabinet sound merely because a body is awake.
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var simulation := _simulation(machine)
+	var previous: Array = session.get("presentation_previous_bodies", []) if typeof(session.get("presentation_previous_bodies", [])) == TYPE_ARRAY else []
+	var current: Array = session.get("presentation_current_bodies", []) if typeof(session.get("presentation_current_bodies", [])) == TYPE_ARRAY else []
+	if previous.size() != current.size() or current.is_empty():
+		return
+	var previous_face := int(session.get("presentation_previous_face_y", simulation.get("face_y", 0)))
+	var current_face := int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
+	var retracting := current_face > previous_face
+	var pushing := current_face < previous_face
+	var face_delta := current_face - previous_face
+	var definition := _machine_definition()
+	var geometry: Dictionary = definition.get("geometry", {}) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
+	var coins: Dictionary = definition.get("coins", {}) if typeof(definition.get("coins", {})) == TYPE_DICTIONARY else {}
+	var plate_limit := int(geometry.get("back_plate_y", CoinPusherSolverScript.BACK_PLATE_Y)) - int(coins.get("radius", CoinPusherSolverScript.COIN_RADIUS))
 	var simulation_tick := int(simulation.get("tick", 0))
+	var plate_block_count := 0
+	var moving_under_face := 0
+	var last_plate_tick := int(session.get("presentation_last_plate_tick", -6))
 	var last_slide_tick := int(session.get("presentation_last_slide_tick", -12))
-	if int(simulation.get("motor_rate_fp", 0)) <= 0 or simulation_tick - last_slide_tick < 12:
-		return result
-	# The solver's awake count is calculated from canonical body velocities at
-	# this exact tick. Reusing it avoids a second 300-body dictionary scan solely
-	# for presentation audio.
-	var step_metrics: Dictionary = simulation.get("last_step_metrics", {}) if typeof(simulation.get("last_step_metrics", {})) == TYPE_DICTIONARY else {}
-	var moving_count := maxi(0, int(step_metrics.get("awake_count", 0)))
-	if moving_count >= 4:
-		result.append({"kind": "mass_slide", "intensity_milli": clampi(260 + moving_count * 12, 260, 850), "metadata": {"moving_count": moving_count}})
+	var classify_plate := retracting and simulation_tick - last_plate_tick >= 6
+	var classify_slide := pushing and int(simulation.get("motor_rate_fp", 0)) > 0 and simulation_tick - last_slide_tick >= 12
+	for body_index in range(current.size()):
+		var current_body: Dictionary = current[body_index]
+		var previous_body: Dictionary = previous[body_index]
+		if str(current_body.get("id", "")) != str(previous_body.get("id", "")):
+			return
+		# A plate clink is the actual blocked carry contact: the retracting
+		# platform advances while a platform-supported body remains pinned at the
+		# authored rear contact limit. A platform->deck deposit is intentionally
+		# not classified as a plate sound.
+		if classify_plate and str(previous_body.get("support_kind", "")) == "platform" and str(current_body.get("support_kind", "")) == "platform" \
+				and absi(int(current_body.get("y", 0)) - plate_limit) <= 100 \
+				and int(current_body.get("y", 0)) - int(previous_body.get("y", 0)) < maxi(1, face_delta / 4):
+			plate_block_count += 1
+		if classify_slide and str(current_body.get("support_kind", "")) == "deck" \
+				and int(current_body.get("y", 0)) < int(previous_body.get("y", 0)) - 25 \
+				and abs(int(current_body.get("y", 0)) - current_face) <= 12000:
+			moving_under_face += 1
+	if plate_block_count > 0:
+		result.append({"kind": "plate_clink", "intensity_milli": clampi(420 + (plate_block_count - 1) * 35, 420, 760), "metadata": {"group_count": plate_block_count, "classification": "rear_plate_blocked_carry"}})
+		session["presentation_last_plate_tick"] = simulation_tick
+	if moving_under_face >= 4:
+		result.append({"kind": "mass_slide", "intensity_milli": clampi(260 + moving_under_face * 12, 260, 850), "metadata": {"moving_count": moving_under_face, "classification": "forward_motion_under_face"}})
 		session["presentation_last_slide_tick"] = simulation_tick
-	return result
 
 
 func _sync_physical_features(machine: Dictionary) -> void:
