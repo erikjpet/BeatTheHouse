@@ -3555,7 +3555,7 @@
       {
         "id": "drop_quarter",
         "label": "Drop Quarter",
-        "summary": "Pick a lane and drop on the shelf beat.",
+        "summary": "Move the rail and time the drop into the live pile.",
         "win_chance": 0,
         "payout_mult": 0
       }

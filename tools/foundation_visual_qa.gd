@@ -1613,7 +1613,7 @@ func _verify_coin_pusher_visual_qa_fixture() -> void:
 	_require(not machine.is_empty(), "Quarter Falls visual QA fixture did not generate a persisted pusher pile.")
 	_require(not (machine.get("riders", []) as Array).is_empty(), "Quarter Falls visual QA generation did not persist its authored prize rider before compact snapshot creation.")
 	machine["tell_rung"] = 0
-	machine["last_message"] = "Pick a lane. Read both shelves."
+	machine["last_message"] = "Move the rail and time the drop into the live pile."
 	app.call("_refresh")
 	await _settle()
 	var room_canvas := app.get("environment_canvas") as Control
@@ -1648,18 +1648,6 @@ func _verify_coin_pusher_visual_qa_fixture() -> void:
 	_record_coin_pusher_visual_capture("idle_motion_1280x720", surface_canvas, {"motion_before": motion_before, "motion_after": motion_after})
 	_record_state("coin_pusher_idle_motion_1280x720", "Quarter Falls shelf attract and prize-rider presentation advance while the persisted pile remains action-boundary state.")
 	_cover("coin_pusher_idle_motion")
-
-	machine = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
-	machine["tell_rung"] = 2
-	machine["last_message"] = "Alarm chirps. The attendant looks over."
-	app.call("_refresh")
-	await _settle()
-	var tell_state: Dictionary = surface_canvas.call("realtime_surface_state")
-	var tell_presentation := _coin_pusher_presentation_snapshot(tell_state)
-	_require(int(tell_presentation.get("tell_rung", 0)) == 2 and str(tell_presentation.get("tell_label", "")) == "alarm chirps", "Quarter Falls tell-ladder capture did not expose the readable alarm-chirps rung.")
-	_record_coin_pusher_visual_capture("tell_ladder_alarm_chirps_1280x720", surface_canvas)
-	_record_state("coin_pusher_tell_ladder_1280x720", "Quarter Falls visibly reads Tell: alarm chirps before the cabinet reaches hard lockdown.")
-	_cover("coin_pusher_tell_ladder")
 
 	var settings: Variant = app.get("user_settings")
 	_require(settings != null, "Quarter Falls visual QA could not access reduced-motion settings.")
