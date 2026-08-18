@@ -335,6 +335,9 @@ What happens then is the owner's, not an agent's:
   whenever uncollected tray value survives an exit. Collection itself must also
   retain an explicit transferred-body accounting term (or equivalent): simply
   clearing the tray otherwise makes every later live tick fail conservation.
+  The snapshot budget must include a heavily loaded tray: repeated cash entries
+  need compact persistence while exact kinds, values, Ridge provenance, and
+  sparse prize items still round-trip and collect once.
 
 - 2026-08-17 [pusherv3_2] Final verbatim cleanup found the obsolete packed-
   presentation trace still consumed by the performance probe, and the Stage 1
