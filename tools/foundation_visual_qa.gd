@@ -97,13 +97,8 @@ var report := {
 		"street_craps_circle": false,
 		"street_craps_dispersed": false,
 		"coin_pusher_normal_pile_rider": false,
-		"coin_pusher_tell_ladder": false,
-		"coin_pusher_hard_alarm_lockdown": false,
-		"coin_pusher_room_available_after_alarm": false,
 		"coin_pusher_idle_motion": false,
 		"coin_pusher_reduce_motion": false,
-		"coin_pusher_jackpot_ridge": false,
-		"coin_pusher_vault_drop": false,
 		"screen_click_only_gameplay": false,
 		"stake_selector": false,
 		"legal_action_selection": false,
@@ -1610,22 +1605,13 @@ func _verify_coin_pusher_visual_qa_fixture() -> void:
 		"service_ids": [],
 		"lender_hooks": [],
 		"object_fixtures": [],
-		"scenario_game_modifiers": {"coin_pusher": {"variation_id": "quarter_falls"}},
+		"scenario_game_modifiers": {"coin_pusher": {"variation_id": "quarter_falls", "prize_item_ids": ["coffee"]}},
 	}, 500)
 	var fixture_run := app.get("run_state") as RunState
 	_require(fixture_run != null, "Quarter Falls visual QA could not access foundation runtime state.")
 	var machine: Dictionary = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
 	_require(not machine.is_empty(), "Quarter Falls visual QA fixture did not generate a persisted pusher pile.")
-	machine["riders"] = [{
-		"id": "visual_chip_rider",
-		"kind": "chip_stack",
-		"label": "chip stack",
-		"item_id": "",
-		"cash_value": 4,
-		"lane": 1,
-		"cell": 2,
-		"push": 1,
-	}]
+	_require(not (machine.get("riders", []) as Array).is_empty(), "Quarter Falls visual QA generation did not persist its authored prize rider before compact snapshot creation.")
 	machine["tell_rung"] = 0
 	machine["last_message"] = "Pick a lane. Read both shelves."
 	app.call("_refresh")
@@ -1642,16 +1628,22 @@ func _verify_coin_pusher_visual_qa_fixture() -> void:
 	var normal_state: Dictionary = surface_canvas.call("realtime_surface_state")
 	var normal_presentation := _coin_pusher_presentation_snapshot(normal_state)
 	_require(str(normal_state.get("surface_renderer", "")) == "coin_pusher", "Quarter Falls visual QA entered the wrong surface renderer.")
-	_require((normal_presentation.get("bodies", []) as Array).size() >= 24 and (normal_state.get("coin_pusher_lanes", []) as Array).size() == 5, "Quarter Falls normal capture did not expose its populated individual-body pile and five lane approaches.")
-	_require((normal_presentation.get("riders", []) as Array).size() == 1 and not bool(normal_presentation.get("locked", true)), "Quarter Falls normal capture did not show its prize rider on an unlocked pile.")
+	var normal_bodies: Array = normal_presentation.get("bodies", [])
+	_require(normal_bodies.size() >= 24, "Quarter Falls normal capture did not expose its populated individual-body pile.")
+	_require(_coin_pusher_distinct_axis_count(normal_bodies, "x") > 5 and _coin_pusher_distinct_axis_count(normal_bodies, "y") > 6, "Quarter Falls normal capture regressed to the removed five-lane/depth-slot lattice.")
+	_require((normal_presentation.get("riders", []) as Array).size() >= 1 and not bool(normal_presentation.get("locked", true)), "Quarter Falls normal capture did not show its generated prize rider on an unlocked pile.")
 	_record_coin_pusher_visual_capture("normal_pile_rider_1280x720", surface_canvas)
-	_record_state("coin_pusher_normal_pile_rider_1280x720", "Quarter Falls shows five approach lanes, a persisted coin pile, and a prize rider on the shelf.")
+	_record_state("coin_pusher_normal_pile_rider_1280x720", "Quarter Falls shows a continuous-coordinate persisted pile and a prize rider without the removed lane lattice.")
 	_cover("coin_pusher_normal_pile_rider")
 
 	var motion_before: Dictionary = surface_canvas.call("debug_surface_motion_sample")
-	var motion_runtime: Dictionary = surface_canvas.call("debug_advance_idle_liveness", 0.5)
+	var liveness_before := int(normal_state.get("coin_pusher_liveness_ticks", 0))
+	for _frame_index in range(12):
+		await process_frame
+	var motion_runtime: Dictionary = surface_canvas.call("surface_runtime_status")
+	var motion_state: Dictionary = surface_canvas.call("realtime_surface_state")
 	var motion_after: Dictionary = surface_canvas.call("debug_surface_motion_sample")
-	_require(JSON.stringify(motion_before) != JSON.stringify(motion_after), "Quarter Falls idle presentation did not visibly advance its shelf/rider motion sample.")
+	_require(int(motion_state.get("coin_pusher_liveness_ticks", 0)) > liveness_before and JSON.stringify(motion_before) != JSON.stringify(motion_after), "Quarter Falls production realtime patch did not advance actual solver liveness/phase state.")
 	_require(bool(motion_runtime.get("surface_animation_liveness_active", false)), "Quarter Falls idle presentation did not keep its bounded liveness channel active.")
 	_record_coin_pusher_visual_capture("idle_motion_1280x720", surface_canvas, {"motion_before": motion_before, "motion_after": motion_after})
 	_record_state("coin_pusher_idle_motion_1280x720", "Quarter Falls shelf attract and prize-rider presentation advance while the persisted pile remains action-boundary state.")
@@ -1678,102 +1670,29 @@ func _verify_coin_pusher_visual_qa_fixture() -> void:
 	await _settle()
 	surface_canvas.call("reset_performance_counters")
 	var reduced_state_before: Dictionary = surface_canvas.call("realtime_surface_state").duplicate(true)
-	var reduced_before: Dictionary = surface_canvas.call("debug_surface_motion_sample")
+	var reduced_ticks_before := int(reduced_state_before.get("coin_pusher_liveness_ticks", 0))
 	for _frame_index in range(18):
-		surface_canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
-	var reduced_after: Dictionary = surface_canvas.call("debug_surface_motion_sample")
+		await process_frame
 	var reduced_state: Dictionary = surface_canvas.call("realtime_surface_state")
 	var reduced_presentation := _coin_pusher_presentation_snapshot(reduced_state)
 	var reduced_runtime: Dictionary = surface_canvas.call("surface_runtime_status")
-	_require(bool(reduced_runtime.get("reduce_motion", false)) and JSON.stringify(reduced_before) == JSON.stringify(reduced_after), "Quarter Falls reduced-motion mode did not freeze presentation-only motion.")
+	_require(bool(reduced_runtime.get("reduce_motion", false)) and int(reduced_state.get("coin_pusher_liveness_ticks", 0)) > reduced_ticks_before, "Quarter Falls reduced-motion mode incorrectly froze the present machine's live solver.")
 	_require(int(reduced_runtime.get("surface_animation_redraw_count", -1)) == 0 and not bool(reduced_runtime.get("surface_continuous_redraw_active", true)), "Quarter Falls reduced-motion mode still scheduled animation redraws.")
-	_require(JSON.stringify(reduced_state_before) == JSON.stringify(reduced_state) and (reduced_presentation.get("bodies", []) as Array).size() > 0 and (reduced_presentation.get("riders", []) as Array).size() == 1 and str(reduced_presentation.get("tell_label", "")) == "alarm chirps", "Quarter Falls reduced-motion mode hid or changed pile, rider, or tell information.")
+	_require((reduced_presentation.get("bodies", []) as Array).size() > 0 and (reduced_presentation.get("riders", []) as Array).size() >= 1, "Quarter Falls reduced-motion mode hid the live pile or prize rider.")
 	_record_coin_pusher_visual_capture("reduced_motion_1280x720", surface_canvas, {
-		"motion_before": reduced_before,
-		"motion_after": reduced_after,
-		"motion_frozen": JSON.stringify(reduced_before) == JSON.stringify(reduced_after),
-		"state_intact": JSON.stringify(reduced_state_before) == JSON.stringify(reduced_state),
+		"solver_ticks_before": reduced_ticks_before,
+		"solver_ticks_after": int(reduced_state.get("coin_pusher_liveness_ticks", 0)),
 		"animation_redraw_count": int(reduced_runtime.get("surface_animation_redraw_count", -1)),
 		"continuous_redraw_active": bool(reduced_runtime.get("surface_continuous_redraw_active", true)),
 	})
-	_record_state("coin_pusher_reduced_motion_1280x720", "Reduced motion freezes presentation bobbing while pile, rider, lanes, and tell state remain readable.")
+	_record_state("coin_pusher_reduced_motion_1280x720", "Reduced motion suppresses continuous redraw while the present machine's solver, pile, and rider remain live.")
 	_cover("coin_pusher_reduce_motion")
 	settings.reduce_motion = false
 	app.call("_on_settings_applied")
 	await _settle()
-
-	machine = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
-	machine["alarm_tolerance_remaining"] = 0
-	machine["lower_phase"] = 9
-	app.call("_refresh")
-	await _settle()
-	_require(await _push_game_surface_action("coin_pusher_force", 2), "Quarter Falls visual QA could not select visible SLAM force.")
-	_require(await _confirm_game_surface_action("coin_pusher_nudge", 0), "Quarter Falls visual QA could not resolve the visible alarm-producing nudge.")
-	await _settle()
-	await _refresh_game_surface_hit_regions()
-	var alarm_state: Dictionary = surface_canvas.call("realtime_surface_state")
-	var alarm_presentation := _coin_pusher_presentation_snapshot(alarm_state)
-	var alarm_hits: Array = (surface_canvas.call("current_view_snapshot") as Dictionary).get("surface_hit_actions", [])
-	_require(bool(alarm_presentation.get("locked", false)) and int(alarm_presentation.get("tell_rung", 0)) == 3, "Quarter Falls hard-alarm capture did not show machine-only lockdown and the top tell rung.")
-	_require(not _surface_hit_snapshot_has_action(alarm_hits, "coin_pusher_drop") and not _surface_hit_snapshot_has_action(alarm_hits, "coin_pusher_nudge"), "Quarter Falls locked capture still exposed machine play actions.")
-	_record_coin_pusher_visual_capture("hard_alarm_lockdown_1280x720", surface_canvas)
-	_record_state("coin_pusher_hard_alarm_lockdown_1280x720", "Quarter Falls shows LOCKED TONIGHT and tells the player that other room games remain open.")
-	_cover("coin_pusher_hard_alarm_lockdown")
-
-	_return_to_room_view()
-	await _settle()
-	room_canvas = app.get("environment_canvas") as Control
-	_require(room_canvas != null and room_canvas.visible, "Quarter Falls hard alarm forced the player out of the room instead of returning to room play.")
-	var bar_dice_object := _canvas_object_by_id(room_canvas, "game:bar_dice")
-	_require(not bar_dice_object.is_empty() and not bool(bar_dice_object.get("disabled", false)), "Quarter Falls hard alarm disabled the room's other game.")
-	_record_coin_pusher_room_capture("room_available_after_alarm_1280x720", fixture_run, bar_dice_object)
-	_record_state("coin_pusher_room_available_after_alarm_1280x720", "The alarmed pusher stays locked, but the bar and its other game remain available.")
-	_require(not (await _double_click_canvas_object_data(room_canvas, bar_dice_object, "game")).is_empty(), "Quarter Falls hard alarm left the other room game visible but unusable.")
-	await _settle()
-	_require(str(app.call("current_game_view_snapshot").get("game_id", "")) == "bar_dice", "Quarter Falls hard alarm did not preserve entry to the room's other game.")
-	_return_to_room_view()
-	await _settle()
-	_cover("coin_pusher_room_available_after_alarm")
-	var fixture_library := app.get("library") as ContentLibrary
-	var pusher_definition := fixture_library.game("coin_pusher") if fixture_library != null else {}
-	var pusher_module_value: Variant = app.call("_create_game_module", pusher_definition) if not pusher_definition.is_empty() else null
-	_require(pusher_module_value != null and pusher_module_value is GameModule, "Coin Pusher variation visual QA could not create the shared module.")
-	if pusher_module_value != null and pusher_module_value is GameModule:
-		var pusher_module := pusher_module_value as GameModule
-		for variation_id in ["jackpot_ridge", "vault_drop"]:
-			if variation_id == "vault_drop":
-				fixture_run.add_item("xray_glasses")
-			fixture_run.current_environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": variation_id}}
-			var generated := pusher_module.generate_environment_state(fixture_run, fixture_run.current_environment, fixture_run.create_rng("visual_pusher_%s" % variation_id))
-			if variation_id == "vault_drop":
-				var vault_state: Dictionary = generated.get("variation_state", {})
-				vault_state["banked_fragments"] = 3
-			var states: Dictionary = fixture_run.current_environment.get("game_states", {})
-			states["coin_pusher"] = generated
-			fixture_run.current_environment["game_states"] = states
-			pusher_module.environment_state_generated(fixture_run, fixture_run.current_environment, generated)
-			app.call("_refresh")
-			await _settle()
-			room_canvas = app.get("environment_canvas") as Control
-			pusher_object = _canvas_object_by_id(room_canvas, "game:coin_pusher")
-			_require(not pusher_object.is_empty() and not bool(pusher_object.get("disabled", false)), "%s visual fixture did not expose an enabled room machine." % variation_id)
-			_require(not (await _double_click_canvas_object_data(room_canvas, pusher_object, "game")).is_empty(), "%s visual fixture could not enter its machine." % variation_id)
-			await _settle()
-			await _refresh_game_surface_hit_regions()
-			surface_canvas = app.get("game_surface_canvas") as Control
-			var variation_state: Dictionary = surface_canvas.call("realtime_surface_state")
-			var variation_presentation := _coin_pusher_presentation_snapshot(variation_state)
-			var hits: Array = (surface_canvas.call("current_view_snapshot") as Dictionary).get("surface_hit_actions", [])
-			_require(str(variation_state.get("coin_pusher_variation_id", "")) == variation_id and not (variation_presentation.get("features", []) as Array).is_empty(), "%s surface did not render its unique pile features." % variation_id)
-			if variation_id == "jackpot_ridge":
-				_require(str(variation_state.get("coin_pusher_variation_name", "")) == "Jackpot Ridge" and variation_state.has("coin_pusher_cascade_remaining"), "Jackpot Ridge visual state omitted puck sequencing or Ridge Run status.")
-				_cover("coin_pusher_jackpot_ridge")
-			else:
-				_require((variation_state.get("coin_pusher_vault_cells", []) as Array).size() == 9 and _surface_hit_snapshot_has_action(hits, "coin_pusher_vault_start") and _surface_hit_snapshot_has_action(hits, "coin_pusher_vault_peek"), "Vault Drop visual state omitted its 3x3 vault or native vault controls.")
-				_cover("coin_pusher_vault_drop")
-			_record_coin_pusher_visual_capture("%s_1280x720" % variation_id, surface_canvas, {"variation_id": variation_id, "feature_count": (variation_presentation.get("features", []) as Array).size(), "vault_cell_count": (variation_state.get("coin_pusher_vault_cells", []) as Array).size()})
-			_return_to_room_view()
-			await _settle()
+	# Cabinet tells/lockdown are Stage 3 and variation-specific surfaces are
+	# Stage 4. Their visual contracts remain with their owning stages.
+	_record_state("coin_pusher_stage2_visual_scope", "Stage 2 proves continuous live bodies, generated physical riders, real solver liveness, and reduced-motion scheduling; cabinet and variation visuals remain with their owning stages.")
 
 
 func _reset_fixed_price_surface_for_risky_action() -> void:
@@ -2175,8 +2094,22 @@ func _set_game_surface_status(status_key: String, status: String, reason: String
 
 
 func _coin_pusher_presentation_snapshot(surface_state: Dictionary) -> Dictionary:
-	var value: Variant = surface_state.get("coin_pusher_snapshot", {})
-	return value if typeof(value) == TYPE_DICTIONARY else {}
+	return {
+		"bodies": (surface_state.get("coin_pusher_bodies", []) as Array).duplicate(true),
+		"features": (surface_state.get("coin_pusher_features", []) as Array).duplicate(true),
+		"riders": (surface_state.get("coin_pusher_riders", []) as Array).duplicate(true),
+		"tell_rung": int(surface_state.get("coin_pusher_tell_rung", 0)),
+		"tell_label": str(surface_state.get("coin_pusher_tell_label", "")),
+		"locked": bool(surface_state.get("coin_pusher_locked", false)),
+	}
+
+
+func _coin_pusher_distinct_axis_count(bodies: Array, axis: String) -> int:
+	var values := {}
+	for body_value in bodies:
+		if typeof(body_value) == TYPE_DICTIONARY:
+			values[int((body_value as Dictionary).get(axis, 0))] = true
+	return values.size()
 
 
 func _record_coin_pusher_visual_capture(capture_key: String, surface_canvas: Control, extra: Dictionary = {}) -> void:
@@ -2189,7 +2122,8 @@ func _record_coin_pusher_visual_capture(capture_key: String, surface_canvas: Con
 		"viewport": {"width": int(round(viewport_size.x)), "height": int(round(viewport_size.y))},
 		"surface_renderer": str(surface_state.get("surface_renderer", "")),
 		"body_count": (presentation.get("bodies", []) as Array).size(),
-		"lane_count": (surface_state.get("coin_pusher_lanes", []) as Array).size(),
+		"distinct_x_count": _coin_pusher_distinct_axis_count(presentation.get("bodies", []) as Array, "x"),
+		"distinct_y_count": _coin_pusher_distinct_axis_count(presentation.get("bodies", []) as Array, "y"),
 		"rider_count": (presentation.get("riders", []) as Array).size(),
 		"tell_rung": int(presentation.get("tell_rung", 0)),
 		"tell": str(presentation.get("tell_label", "")),
