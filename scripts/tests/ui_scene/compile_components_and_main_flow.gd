@@ -3917,6 +3917,71 @@ func _run() -> void:
 		quit(1)
 		return
 	environment_canvas.call("render_environment_snapshot", {
+		"id": "punchline_club_asset_fixture",
+		"archetype_id": "small_underground_casino",
+		"visual_context": {
+			"art_key": "punchline_club",
+			"scene_type": "comedy_club",
+			"asset_path": "res://assets/art/environments/punchline_club.png",
+			"render_asset_background": true,
+		},
+		"scenario_presentation": {"palette_tint": "#ff4d88", "crowd_density": "sparse", "signage_line": "OPEN MIC"},
+		"interactable_objects": [{"object_id": "event:open_mic", "object_type": "event", "label": "Open Mic", "normalized_rect": {"x": 0.72, "y": 0.40, "w": 0.11, "h": 0.17}}],
+	})
+	await process_frame
+	var punchline_club_render: Dictionary = environment_canvas.call("current_view_snapshot")
+	if not bool(punchline_club_render.get("scene_asset_background_requested", false)) \
+		or not bool(punchline_club_render.get("scene_asset_background_loaded", false)) \
+		or str(punchline_club_render.get("scene_asset_background_path", "")) != "res://assets/art/environments/punchline_club.png":
+		push_error("Punchline L1 did not load its active-layer room raster in the production canvas.")
+		quit(1)
+		return
+	if not bool(punchline_club_render.get("scenario_palette_active", false)) \
+		or int(punchline_club_render.get("scenario_crowd_count", 0)) <= 0 \
+		or str(punchline_club_render.get("scenario_signage", "")) != "OPEN MIC" \
+		or not (punchline_club_render.get("object_layout", {}) as Dictionary).has("event:open_mic"):
+		push_error("Punchline L1 raster path displaced scenario overlays or interaction geometry.")
+		quit(1)
+		return
+	environment_canvas.call("render_environment_snapshot", {
+		"id": "punchline_casino_procedural_fixture",
+		"archetype_id": "small_underground_casino",
+		"visual_context": {
+			"art_key": "small_underground_casino",
+			"scene_type": "underground",
+			"asset_path": "res://assets/art/environments/small_underground_casino.png",
+		},
+		"interactable_objects": [],
+	})
+	await process_frame
+	var punchline_casino_render: Dictionary = environment_canvas.call("current_view_snapshot")
+	if bool(punchline_casino_render.get("scene_asset_background_requested", true)) \
+		or bool(punchline_casino_render.get("scene_asset_background_loaded", true)) \
+		or not str(punchline_casino_render.get("scene_asset_background_path", "")).is_empty():
+		push_error("Punchline L2 stopped using its unchanged procedural underground renderer.")
+		quit(1)
+		return
+	environment_canvas.call("render_environment_snapshot", {
+		"id": "punchline_back_room_asset_fixture",
+		"archetype_id": "small_underground_casino",
+		"visual_context": {
+			"art_key": "punchline_back_room",
+			"scene_type": "crew_back_room",
+			"asset_path": "res://assets/art/environments/punchline_back_room.png",
+			"render_asset_background": true,
+		},
+		"interactable_objects": [{"object_id": "game:crew_draw_poker", "object_type": "game", "label": "Crew Draw Poker", "normalized_rect": {"x": 0.42, "y": 0.37, "w": 0.16, "h": 0.22}}],
+	})
+	await process_frame
+	var punchline_back_room_render: Dictionary = environment_canvas.call("current_view_snapshot")
+	if not bool(punchline_back_room_render.get("scene_asset_background_requested", false)) \
+		or not bool(punchline_back_room_render.get("scene_asset_background_loaded", false)) \
+		or str(punchline_back_room_render.get("scene_asset_background_path", "")) != "res://assets/art/environments/punchline_back_room.png" \
+		or not (punchline_back_room_render.get("object_layout", {}) as Dictionary).has("game:crew_draw_poker"):
+		push_error("Punchline L3 did not render its registered room raster beneath live interaction geometry.")
+		quit(1)
+		return
+	environment_canvas.call("render_environment_snapshot", {
 		"id": "grand_casino_living_fixture",
 		"archetype_id": "grand_casino",
 		"display_name": "Grand Casino Main Floor",

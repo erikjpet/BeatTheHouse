@@ -75,6 +75,8 @@ $requiredFiles = @(
     "assets/art/environments/jazz_club.png",
     "assets/art/environments/gas_station_casino.png",
     "assets/art/environments/small_underground_casino.png",
+    "assets/art/environments/punchline_club.png",
+    "assets/art/environments/punchline_back_room.png",
     "assets/art/environments/grand_casino.png",
     "assets/art/game_scenes/slot.png",
     "assets/art/game_scenes/pull_tabs.png",
@@ -101,6 +103,8 @@ $assetDimensions = @{
     "assets/art/environments/jazz_club.png" = @(900, 430)
     "assets/art/environments/gas_station_casino.png" = @(900, 430)
     "assets/art/environments/small_underground_casino.png" = @(900, 430)
+    "assets/art/environments/punchline_club.png" = @(900, 430)
+    "assets/art/environments/punchline_back_room.png" = @(900, 430)
     "assets/art/environments/grand_casino.png" = @(900, 430)
     "assets/art/game_scenes/slot.png" = @(900, 430)
     "assets/art/game_scenes/pull_tabs.png" = @(900, 430)

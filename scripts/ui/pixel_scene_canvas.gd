@@ -116,6 +116,9 @@ var foundation_scene_objects: Array = []
 var uses_foundation_snapshot := false
 var background_texture: Texture2D
 var use_external_background := false
+var scene_asset_background_texture: Texture2D
+var scene_asset_background_path := ""
+var scene_asset_background_requested := false
 var flicker: float = 0.0
 var camera_zoom: float = 1.0
 var camera_offset: Vector2 = Vector2.ZERO
@@ -187,6 +190,7 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	var visual_context: Dictionary = foundation_snapshot.get("visual_context", {}) if typeof(foundation_snapshot.get("visual_context", {})) == TYPE_DICTIONARY else {}
 	var art_key := str(visual_context.get("art_key", archetype_id)).strip_edges()
 	environment_id = art_key if ["punchline_club", "punchline_back_room"].has(art_key) else archetype_id
+	_cache_scene_asset_background(visual_context)
 	var texture_scope_key := str(foundation_snapshot.get("world_node_id", foundation_snapshot.get("id", environment_id))).strip_edges()
 	if texture_scope_key.is_empty():
 		texture_scope_key = environment_id
@@ -256,6 +260,9 @@ func debug_soak_snapshot() -> Dictionary:
 		"fit_draw_text_cache_size": fit_draw_text_cache.size(),
 		"object_animation_phase_cache_size": object_animation_phase_cache.size(),
 		"background_texture_loaded": background_texture != null,
+		"scene_asset_background_requested": scene_asset_background_requested,
+		"scene_asset_background_loaded": scene_asset_background_texture != null,
+		"scene_asset_background_path": scene_asset_background_path,
 		"scene_idle_animation_redraw_count": scene_idle_animation_redraw_count,
 		"reserved_overlay_global_rect": reserved_overlay_global_rect,
 		"overlay_repositioned_object_ids": overlay_repositioned_object_ids.duplicate(),
@@ -359,6 +366,9 @@ func current_view_snapshot() -> Dictionary:
 		"scenario_palette_active": scenario_palette_overlay.a > 0.0,
 		"scenario_crowd_count": scenario_crowd_count,
 		"scenario_signage": scenario_signage,
+		"scene_asset_background_requested": scene_asset_background_requested,
+		"scene_asset_background_loaded": scene_asset_background_texture != null,
+		"scene_asset_background_path": scene_asset_background_path,
 		"suspicion_level": suspicion_level,
 		"drunk_level": drunk_level,
 		"drunk_time_scale": drunk_time_scale,
@@ -590,6 +600,8 @@ func _draw() -> void:
 	_bg()
 	if use_external_background and background_texture != null:
 		draw_texture_rect(background_texture, Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)), false)
+	elif scene_asset_background_texture != null:
+		draw_texture_rect(scene_asset_background_texture, Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)), false)
 	else:
 		match environment_id:
 			"corner_store":
@@ -642,6 +654,23 @@ func _draw() -> void:
 	_draw_drunk_overlay()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_update_drunk_distortion_protected_rects()
+
+
+func _cache_scene_asset_background(visual_context: Dictionary) -> void:
+	scene_asset_background_requested = bool(visual_context.get("render_asset_background", false))
+	var requested_path := str(visual_context.get("asset_path", "")).strip_edges() if scene_asset_background_requested else ""
+	if requested_path == scene_asset_background_path:
+		return
+	scene_asset_background_path = requested_path
+	scene_asset_background_texture = null
+	if requested_path.is_empty():
+		return
+	if ResourceLoader.exists(requested_path):
+		scene_asset_background_texture = ResourceLoader.load(requested_path, "Texture2D", ResourceLoader.CACHE_MODE_REUSE) as Texture2D
+		return
+	var image := Image.new()
+	if image.load(requested_path) == OK:
+		scene_asset_background_texture = ImageTexture.create_from_image(image)
 
 
 func _draw_scenario_palette() -> void:

@@ -1,6 +1,7 @@
 extends RefCounted
 
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
@@ -24,6 +25,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Punchline archetype did not expose one node with club/casino/back_room layers.")
 		return
 	_check_public_identity(library, archetype, failures)
+	_check_presentation_assets(library, archetype, failures)
 	_check_l2_baseline(layers, failures)
 	_check_generation_and_tutorial(library, archetype, failures)
 	_check_discovery_and_save(library, archetype, failures)
@@ -31,6 +33,44 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_legacy_migration(library, archetype, failures)
 	_check_shortcut_edge(library, failures)
 	_check_scenario_layer_scope(failures)
+
+
+static func _check_presentation_assets(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:
+	var layers := _dict(archetype.get("layers", {}))
+	var expected := {
+		"club": "res://assets/art/environments/punchline_club.png",
+		"back_room": "res://assets/art/environments/punchline_back_room.png",
+	}
+	for layer_id in ["club", "back_room"]:
+		var layer_visual := _dict(_dict(layers.get(layer_id, {})).get("visual_context", {}))
+		if str(layer_visual.get("asset_path", "")) != str(expected.get(layer_id, "")) or not bool(layer_visual.get("render_asset_background", false)):
+			failures.append("Punchline %s did not opt into its registered runtime room raster." % layer_id)
+	var casino_visual := _dict(_dict(layers.get("casino", {})).get("visual_context", {}))
+	if bool(casino_visual.get("render_asset_background", false)):
+		failures.append("Punchline L2 must preserve its procedural underground renderer.")
+	var run_state := RunStateScript.new()
+	run_state.start_new("PUNCHLINE-PRESENTATION-ASSETS")
+	for layer_id in ["club", "casino", "back_room"]:
+		var generated := EnvironmentInstanceScript.from_archetype_layer(
+			archetype,
+			layer_id,
+			2,
+			run_state.create_rng("punchline_presentation:%s" % layer_id),
+			library
+		).to_dict()
+		var simulation_visual := _dict(generated.get("visual_context", {}))
+		if simulation_visual.has("asset_path") or simulation_visual.has("scene_asset_path") or simulation_visual.has("render_asset_background"):
+			failures.append("Punchline %s leaked presentation asset metadata into deterministic environment state." % layer_id)
+		simulation_visual["scenario_fixture"] = "preserved"
+		generated["visual_context"] = simulation_visual
+		var presented := EnvironmentInteractionViewModelScript.presentation_visual_context(generated, archetype)
+		var authored_visual := _dict(_dict(layers.get(layer_id, {})).get("visual_context", {}))
+		if str(presented.get("asset_path", "")) != str(authored_visual.get("asset_path", "")):
+			failures.append("Punchline %s presentation did not resolve the active layer asset path." % layer_id)
+		if bool(presented.get("render_asset_background", false)) != bool(authored_visual.get("render_asset_background", false)):
+			failures.append("Punchline %s presentation did not preserve its authored renderer selection." % layer_id)
+		if str(presented.get("scenario_fixture", "")) != "preserved":
+			failures.append("Punchline %s presentation asset resolution replaced runtime scenario visual fields." % layer_id)
 
 
 static func _check_public_identity(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:

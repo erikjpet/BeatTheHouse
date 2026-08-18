@@ -1234,6 +1234,7 @@
       "perspective": "first_person",
       "scene_type": "comedy_club",
       "asset_path": "res://assets/art/environments/punchline_club.png",
+      "render_asset_background": true,
       "description": "A tired comedy stage works for every laugh."
     },
     "objective_hint": "Two drinks buy a chair. The bad jokes come free.",
@@ -1394,6 +1395,7 @@
           "perspective": "first_person",
           "scene_type": "comedy_club",
           "asset_path": "res://assets/art/environments/punchline_club.png",
+          "render_asset_background": true,
           "description": "A tired comedy stage works for every laugh."
         },
         "objective_hint": "Two drinks buy a chair. The bad jokes come free.",
@@ -1567,6 +1569,7 @@
           "perspective": "first_person",
           "scene_type": "crew_back_room",
           "asset_path": "res://assets/art/environments/punchline_back_room.png",
+          "render_asset_background": true,
           "description": "A shut door. A friendly card table. Nobody else listening."
         },
         "objective_hint": "The cards are honest and the money stays friendly.",

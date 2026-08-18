@@ -10201,6 +10201,7 @@ func _environment_view_snapshot() -> Dictionary:
 	var archetype := _current_environment_archetype()
 	var world_map_visible := world_map_overlay != null and world_map_overlay.visible
 	return EnvironmentInteractionViewModelScript.environment_snapshot(run_state, {
+		"environment_archetype": archetype,
 		"recent_result": recent_result,
 		"drunk_effect_mode": _drunk_effect_mode(),
 		"reduce_motion": _reduce_motion_enabled(),

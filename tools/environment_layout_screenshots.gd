@@ -54,6 +54,13 @@ func _run() -> void:
 		if punchline_layer_review and archetype_id != "small_underground_casino":
 			continue
 		await _capture_archetype(archetype, archetype_id, run_state, library)
+	if punchline_layer_review:
+		if not _verify_punchline_runtime_backgrounds():
+			quit(1)
+			return
+		if not _write_punchline_glance_capture():
+			quit(1)
+			return
 	var file := FileAccess.open("%s/layout_report.json" % out_dir, FileAccess.WRITE)
 	if file != null:
 		file.store_string(JSON.stringify(report, "\t"))
@@ -202,12 +209,16 @@ func _capture_current_meta_room(file_id: String) -> void:
 		"meta_location": str(environment.get("meta_location", "")),
 		"authored_layout": environment.get("layout", {}),
 		"canvas_object_layout": _canvas_object_layout(),
+		"runtime_background": _canvas_runtime_background(),
 	}
 
 
 func _capture_archetype(archetype: Dictionary, archetype_id: String, run_state: Variant, library: Variant) -> void:
 	var rng: Variant = run_state.create_rng()
-	var environment: Variant = EnvironmentInstance.from_archetype(archetype, 1, rng, library, run_state.challenge_config)
+	var selected_scenario: Dictionary = {}
+	if punchline_layer_review and archetype_id == "small_underground_casino":
+		selected_scenario = library.scenario("punchline_open_mic_night")
+	var environment: Variant = EnvironmentInstance.from_archetype(archetype, 1, rng, library, run_state.challenge_config, selected_scenario)
 	var data: Dictionary = environment.to_dict()
 	data["world_node_id"] = archetype_id
 	if str(archetype.get("kind", "")) == "home":
@@ -238,12 +249,45 @@ func _capture_archetype(archetype: Dictionary, archetype_id: String, run_state: 
 		"lender_hooks": data.get("lender_hooks", []),
 		"authored_layout": archetype.get("layout", {}),
 		"canvas_object_layout": _canvas_object_layout(),
+		"runtime_background": _canvas_runtime_background(),
 	}
 	if punchline_layer_review:
+		await _capture_punchline_club_scenario(archetype, archetype_id, "punchline_headliner_night", "club_headliner", run_state, library)
 		for layer_id_value in data.get("layer_ids", []):
 			var layer_id := str(layer_id_value)
 			if layer_id != default_layer_id:
 				await _capture_archetype_layer(archetype, archetype_id, layer_id, run_state, library)
+
+
+func _capture_punchline_club_scenario(archetype: Dictionary, archetype_id: String, scenario_id: String, file_suffix: String, run_state: Variant, library: Variant) -> void:
+	var rng: Variant = run_state.create_rng("layout_survey_scenario:%s" % scenario_id)
+	var environment: Variant = EnvironmentInstance.from_archetype(
+		archetype,
+		1,
+		rng,
+		library,
+		run_state.challenge_config,
+		library.scenario(scenario_id)
+	)
+	var data: Dictionary = environment.to_dict()
+	data["world_node_id"] = archetype_id
+	data["layout"] = EnvironmentInstance.ensure_generated_layout(data)
+	run_state.set_environment(data)
+	app.call("_clear_selected_game_action")
+	app.call("_refresh")
+	await _settle(4)
+	await RenderingServer.frame_post_draw
+	var image := root.get_viewport().get_texture().get_image()
+	var file_id := "%s_%s" % [archetype_id, file_suffix]
+	image.save_png("%s/%s.png" % [out_dir, file_id])
+	report[file_id] = {
+		"name": str(data.get("display_name", archetype_id)),
+		"layer_id": str(data.get("current_layer_id", "")),
+		"scenario_id": scenario_id,
+		"scenario_presentation": data.get("scenario_presentation", {}),
+		"canvas_object_layout": _canvas_object_layout(),
+		"runtime_background": _canvas_runtime_background(),
+	}
 
 
 func _capture_archetype_layer(archetype: Dictionary, archetype_id: String, layer_id: String, run_state: Variant, library: Variant) -> void:
@@ -280,6 +324,70 @@ func _canvas_object_layout() -> Dictionary:
 		return {}
 	var snapshot: Dictionary = canvas.call("current_view_snapshot")
 	return snapshot.get("object_layout", {})
+
+
+func _canvas_runtime_background() -> Dictionary:
+	var canvas: Variant = app.get("environment_canvas")
+	if canvas == null:
+		return {}
+	var snapshot: Dictionary = canvas.call("current_view_snapshot")
+	return {
+		"requested": bool(snapshot.get("scene_asset_background_requested", false)),
+		"loaded": bool(snapshot.get("scene_asset_background_loaded", false)),
+		"path": str(snapshot.get("scene_asset_background_path", "")),
+		"scenario_palette_active": bool(snapshot.get("scenario_palette_active", false)),
+		"scenario_crowd_count": int(snapshot.get("scenario_crowd_count", 0)),
+		"scenario_signage": str(snapshot.get("scenario_signage", "")),
+	}
+
+
+func _verify_punchline_runtime_backgrounds() -> bool:
+	var expected := {
+		"small_underground_casino_club": {"requested": true, "path": "res://assets/art/environments/punchline_club.png"},
+		"small_underground_casino_club_headliner": {"requested": true, "path": "res://assets/art/environments/punchline_club.png"},
+		"small_underground_casino_casino": {"requested": false, "path": ""},
+		"small_underground_casino_back_room": {"requested": true, "path": "res://assets/art/environments/punchline_back_room.png"},
+	}
+	for capture_id in expected.keys():
+		var capture := report.get(capture_id, {}) as Dictionary
+		var background := capture.get("runtime_background", {}) as Dictionary
+		var wanted := expected.get(capture_id, {}) as Dictionary
+		var requested := bool(wanted.get("requested", false))
+		if bool(background.get("requested", false)) != requested \
+			or bool(background.get("loaded", false)) != requested \
+			or str(background.get("path", "")) != str(wanted.get("path", "")):
+			push_error("Punchline layer runtime background mismatch for %s: %s" % [capture_id, JSON.stringify(background)])
+			return false
+	var open_mic := report.get("small_underground_casino_club", {}) as Dictionary
+	var open_mic_background := open_mic.get("runtime_background", {}) as Dictionary
+	var headliner := report.get("small_underground_casino_club_headliner", {}) as Dictionary
+	var headliner_background := headliner.get("runtime_background", {}) as Dictionary
+	if str(open_mic_background.get("scenario_signage", "")) != "FIVE MINUTES. NO PROMISES." \
+		or int(open_mic_background.get("scenario_crowd_count", 0)) != 2 \
+		or str(headliner_background.get("scenario_signage", "")) != "SOLD OUT. KEEP MOVING." \
+		or int(headliner_background.get("scenario_crowd_count", 0)) != 10:
+		push_error("Punchline L1 scenario overlays did not survive the runtime raster path.")
+		return false
+	return true
+
+
+func _write_punchline_glance_capture() -> bool:
+	var layer_ids := ["club", "casino", "back_room"]
+	var tile_size := Vector2i(640, 360)
+	var composite := Image.create(tile_size.x * layer_ids.size(), tile_size.y, false, Image.FORMAT_RGBA8)
+	for index in range(layer_ids.size()):
+		var path := "%s/small_underground_casino_%s.png" % [out_dir, layer_ids[index]]
+		var layer_image := Image.load_from_file(path)
+		if layer_image == null or layer_image.is_empty():
+			push_error("Punchline glance capture could not load %s." % path)
+			return false
+		layer_image.resize(tile_size.x, tile_size.y, Image.INTERPOLATE_NEAREST)
+		composite.blit_rect(layer_image, Rect2i(Vector2i.ZERO, tile_size), Vector2i(index * tile_size.x, 0))
+	var error := composite.save_png("%s/punchline_layers_glance.png" % out_dir)
+	if error != OK:
+		push_error("Punchline glance capture could not be written (error %d)." % error)
+		return false
+	return true
 
 
 func _survey_home_containers(profile: Dictionary) -> Array:

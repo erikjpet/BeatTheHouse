@@ -524,6 +524,7 @@ static func _generated_layout_variant(archetype: Dictionary, rng: RngStream) -> 
 static func _strip_presentation_paths(visual: Dictionary, p_art_key: String) -> Dictionary:
 	visual.erase("asset_path")
 	visual.erase("scene_asset_path")
+	visual.erase("render_asset_background")
 	visual["art_key"] = p_art_key
 	return visual
 

@@ -54,6 +54,10 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	# The room canvas is a read-only presentation surface. Machine state can
 	# contain large masks/decks and is neither rendered nor mutated here.
 	var snapshot := RunState.environment_context_snapshot(run_state.current_environment)
+	snapshot["visual_context"] = presentation_visual_context(
+		run_state.current_environment,
+		_copy_dict(data.get("environment_archetype", {}))
+	)
 	var recent_result: Dictionary = data.get("recent_result", {})
 	var recent_deltas: Dictionary = recent_result.get("deltas", {})
 	snapshot["suspicion_level"] = run_state.suspicion_level()
@@ -117,6 +121,34 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	snapshot["outcome_bankroll_delta"] = int(recent_result.get("bankroll_delta", recent_deltas.get("bankroll_delta", 0)))
 	snapshot["outcome_suspicion_delta"] = int(recent_result.get("suspicion_delta", recent_deltas.get("suspicion_delta", 0)))
 	return snapshot
+
+
+# Rehydrates presentation-only paths from authored content without putting them
+# back into deterministic RunState or node snapshots. Layered venues resolve the
+# active layer's visual context; scenario/runtime fields remain authoritative.
+static func presentation_visual_context(environment: Dictionary, archetype: Dictionary) -> Dictionary:
+	var visual := _copy_dict(environment.get("visual_context", {}))
+	if archetype.is_empty():
+		return visual
+	var authored_visual := _copy_dict(archetype.get("visual_context", {}))
+	var layer_id := str(environment.get("current_layer_id", "")).strip_edges()
+	if not layer_id.is_empty():
+		var layers := _copy_dict(archetype.get("layers", {}))
+		var layer := _copy_dict(layers.get(layer_id, {}))
+		if not layer.is_empty():
+			var layer_visual := _copy_dict(layer.get("visual_context", {}))
+			authored_visual.merge(layer_visual, true)
+			# Renderer selection is layer-local. Missing presentation keys must
+			# not inherit the public room's raster opt-in into hidden L2.
+			for layer_presentation_key in ["asset_path", "scene_asset_path", "render_asset_background"]:
+				if not layer_visual.has(layer_presentation_key):
+					authored_visual.erase(layer_presentation_key)
+	for presentation_key in ["asset_path", "scene_asset_path", "render_asset_background"]:
+		if authored_visual.has(presentation_key):
+			visual[presentation_key] = authored_visual.get(presentation_key)
+		else:
+			visual.erase(presentation_key)
+	return visual
 
 
 static func interactable_object_view_list(run_state: RunState, library: ContentLibrary, data: Dictionary) -> Array:
