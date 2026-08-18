@@ -177,6 +177,8 @@ var save_service: SaveService
 var platform_services: PlatformServices
 var run_action_service: RunActionService
 var current_game: GameModule
+var game_exit_settle_active := false
+var last_game_exit_final_projection_rendered := false
 var last_game_result: Dictionary = {}
 var last_music_outcome_schedule: Dictionary = {}
 var last_environment_runtime_result: Dictionary = {}
@@ -894,6 +896,41 @@ func back_to_environment() -> void:
 		return
 	if _guard_blocking_decision_or_transition():
 		return
+	if game_exit_settle_active:
+		return
+	if current_game != null and run_state != null and current_game.requires_chunked_exit_settle(run_state, run_state.current_environment):
+		game_exit_settle_active = true
+		last_game_exit_final_projection_rendered = false
+		var begin := current_game.begin_chunked_exit_settle(run_state, run_state.current_environment)
+		if not bool(begin.get("done", false)):
+			call_deferred("_finish_chunked_game_exit")
+			return
+		game_exit_settle_active = false
+	_complete_back_to_environment()
+
+
+func _finish_chunked_game_exit() -> void:
+	while game_exit_settle_active and current_game != null and run_state != null:
+		var result := current_game.advance_chunked_exit_settle(run_state, run_state.current_environment, 8)
+		var patch: Dictionary = result.get("surface_state_patch", {}) if typeof(result.get("surface_state_patch", {})) == TYPE_DICTIONARY else {}
+		if not patch.is_empty() and game_surface_canvas != null:
+			game_surface_canvas.apply_surface_state_patch(patch)
+		if bool(result.get("done", false)):
+			# Give the final settled projection one rendered frame before the
+			# environment replaces the live machine surface.
+			await get_tree().process_frame
+			var rendered := game_surface_canvas.realtime_surface_state() if game_surface_canvas != null else {}
+			last_game_exit_final_projection_rendered = not patch.is_empty() \
+					and int(rendered.get("coin_pusher_phase_fp", -1)) == int(patch.get("coin_pusher_phase_fp", -2))
+			await get_tree().process_frame
+			break
+		await get_tree().process_frame
+	current_game.finalize_chunked_exit_settle(run_state, run_state.current_environment)
+	_complete_back_to_environment()
+	game_exit_settle_active = false
+
+
+func _complete_back_to_environment() -> void:
 	_sync_presented_bankroll_to_actual()
 	_reset_game_surface_runtime_state()
 	current_game = null
@@ -1776,6 +1813,11 @@ func _current_game_surface_realtime_ui_state(now_msec: int) -> Dictionary:
 func _game_surface_realtime_state_patch(now_msec: int, current_surface_state_override: Dictionary = {}) -> Dictionary:
 	if current_game == null or run_state == null or game_surface_canvas == null:
 		return {}
+	# The chunked exit loop is the sole simulation owner once dismissal starts.
+	# A normal realtime refresh after its final chunk would otherwise reopen the
+	# just-frozen transient machine during the one-frame visual handoff.
+	if game_exit_settle_active:
+		return {}
 	var ui_state := _current_game_surface_realtime_ui_state(now_msec)
 	var current_surface_state := current_surface_state_override \
 			if not current_surface_state_override.is_empty() \
@@ -1784,6 +1826,9 @@ func _game_surface_realtime_state_patch(now_msec: int, current_surface_state_ove
 		var module_patch: Variant = current_game.surface_realtime_state_patch(run_state, run_state.current_environment, ui_state, current_surface_state)
 		if typeof(module_patch) == TYPE_DICTIONARY:
 			var typed_patch: Dictionary = module_patch
+			if bool(typed_patch.get("request_foundation_autosave", false)):
+				typed_patch.erase("request_foundation_autosave")
+				call_deferred("_autosave_foundation_run", "Autosaved.", false)
 			_augment_game_surface_realtime_patch(typed_patch, ui_state)
 			return typed_patch
 	var module_surface_state: Variant = current_game.surface_state(run_state, run_state.current_environment, ui_state)
@@ -4471,6 +4516,10 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 	if dev_game_test_mode:
 		save_status_message = "Practice sessions are not autosaved."
 		return false
+	if current_game != null and not current_game.foundation_save_ready(run_state, run_state.current_environment):
+		autosave_dirty_generation += 1
+		save_status_message = "Save waits for the live machine to settle." if force else status_text
+		return true
 	# Capture the completed action while it is still the active context. This is
 	# deliberately separate from JSON serialization/disk I/O: a later deferred
 	# flush must not mutate RunState during an unrelated hover/focus frame.
@@ -4487,7 +4536,8 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 
 
 func _prepare_foundation_run_save() -> void:
-	_checkpoint_current_game_surface_ui_state()
+	if current_game != null and run_state != null and not run_state.current_environment.is_empty():
+		current_game.checkpoint_surface_ui_state_for_save(_current_game_surface_ui_state(), run_state, run_state.current_environment)
 	_evaluate_run_terminal_state()
 	if procedural_music_player != null:
 		run_state.remember_music_tempo_state(procedural_music_player.adaptive_tempo_save_state())

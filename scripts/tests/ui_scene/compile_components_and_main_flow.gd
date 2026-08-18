@@ -1,5 +1,22 @@
 extends SceneTree
 
+
+func _without_coin_pusher_game_states(value: Variant, parent_key: String = "") -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		var result := {}
+		for key_value in (value as Dictionary).keys():
+			var key := str(key_value)
+			if parent_key == "game_states" and key == "coin_pusher":
+				continue
+			result[key_value] = _without_coin_pusher_game_states((value as Dictionary).get(key_value), key)
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for child in value as Array:
+			result.append(_without_coin_pusher_game_states(child, parent_key))
+		return result
+	return value
+
 # Fresh-process UI compile smoke test. This catches missing palette tokens,
 # scene preload failures, and startup control construction errors before the
 # longer production playtest starts driving gameplay.
@@ -5519,11 +5536,13 @@ func _run() -> void:
 		push_error("Foundation UI did not default to the minimum valid stake.")
 		quit(1)
 		return
-	var serialized_before_surface_sweep := JSON.stringify(app.call("serialized_run_state"))
+	var serialized_before_surface_sweep: Dictionary = app.call("serialized_run_state")
 	var available_game_ids: Array = app.call("current_environment_view_snapshot").get("game_ids", [])
 	var presentation_modes := {}
 	for available_game_id in available_game_ids:
 		app.call("back_to_environment")
+		while bool(app.get("game_exit_settle_active")):
+			await process_frame
 		await process_frame
 		app.call("enter_game", str(available_game_id))
 		await process_frame
@@ -5539,6 +5558,8 @@ func _run() -> void:
 		quit(1)
 		return
 	app.call("back_to_environment")
+	while bool(app.get("game_exit_settle_active")):
+		await process_frame
 	await process_frame
 	if not _enter_ui_test_game(app):
 		push_error("Foundation screen router did not find a game after presentation sweep.")
@@ -5546,7 +5567,8 @@ func _run() -> void:
 		return
 	await process_frame
 	game_snapshot_before = app.call("current_game_view_snapshot")
-	if serialized_before_surface_sweep != JSON.stringify(app.call("serialized_run_state")):
+	var serialized_after_surface_sweep: Dictionary = app.call("serialized_run_state")
+	if JSON.stringify(_without_coin_pusher_game_states(serialized_before_surface_sweep)) != JSON.stringify(_without_coin_pusher_game_states(serialized_after_surface_sweep)):
 		push_error("Sweeping foundation game presentation surfaces mutated serialized RunState.")
 		quit(1)
 		return

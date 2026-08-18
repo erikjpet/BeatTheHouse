@@ -631,6 +631,7 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 	var debug_ui_state: Dictionary = app.get("game_surface_ui_state").duplicate(true) if typeof(app.get("game_surface_ui_state")) == TYPE_DICTIONARY else {}
 	debug_ui_state["coin_pusher_debug_profile_stages"] = true
 	app.set("game_surface_ui_state", debug_ui_state)
+	var live_before: Dictionary = canvas.call("realtime_surface_state")
 	var call_start_usec := Time.get_ticks_usec()
 	var handled := bool(app.call("_handle_module_surface_action", surface_action, 0, true))
 	var resolve_call_ms := float(Time.get_ticks_usec() - call_start_usec) / 1000.0
@@ -639,13 +640,12 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 	var counters := _canvas_counters(canvas)
 	var draw_p95_ms := float(counters.get("draw_p95_ms", 0.0))
 	var draw_samples := _array_size(counters.get("draw_frame_usec_samples", []))
+	var live_after: Dictionary = canvas.call("realtime_surface_state")
 	var metrics: Dictionary = result.get("coin_pusher_solver_metrics", {}) if typeof(result.get("coin_pusher_solver_metrics", {})) == TYPE_DICTIONARY else {}
-	var presentation_patch: Dictionary = result.get("surface_presentation_snapshot_patch", {}) if typeof(result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
-	var trace: Array = presentation_patch.get("trace", []) if typeof(presentation_patch.get("trace", [])) == TYPE_ARRAY else []
-	var packed_trace: Dictionary = presentation_patch.get("trace_packed", {}) if typeof(presentation_patch.get("trace_packed", {})) == TYPE_DICTIONARY else {}
-	var trace_frame_count := int(packed_trace.get("frame_count", 0)) if not packed_trace.is_empty() else trace.size()
 	var physics_events: Array = result.get("coin_pusher_physics_events", []) if typeof(result.get("coin_pusher_physics_events", [])) == TYPE_ARRAY else []
-	var physical_motion_seen := int(metrics.get("awake_count", 0)) > 0 or int(metrics.get("collision_count", 0)) > 0 or not physics_events.is_empty()
+	var physical_motion_seen := int(live_after.get("coin_pusher_liveness_ticks", 0)) > int(live_before.get("coin_pusher_liveness_ticks", 0)) \
+			or int(live_after.get("coin_pusher_phase_fp", 0)) != int(live_before.get("coin_pusher_phase_fp", 0)) \
+			or int(metrics.get("awake_count", 0)) > 0 or int(metrics.get("collision_count", 0)) > 0 or not physics_events.is_empty()
 	var solver_backend := CoinPusherSolverScript.last_step_backend_for_test()
 	var combined_stage_timing: Dictionary = (result.get("coin_pusher_debug_stage_timing_usec", {}) as Dictionary).duplicate(false)
 	var host_stage_timing: Dictionary = result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
@@ -672,13 +672,14 @@ func _probe_coin_pusher_active_action(surface_action: String, mode: String, envi
 		"solver_metrics": metrics,
 		"solver_backend": solver_backend,
 		"stage_timing_ms": _coin_pusher_stage_profile_msec(combined_stage_timing),
-		"presentation_trace_frames": trace_frame_count,
+		"live_input_trace_count": int(live_after.get("coin_pusher_input_trace_count", 0)),
+		"live_liveness_ticks": int(live_after.get("coin_pusher_liveness_ticks", 0)),
 		"physical_motion_seen": physical_motion_seen,
 	}
 	observations.append(observation)
 	coin_pusher_performance_status[mode] = observation.duplicate(true)
 	var continuous_tick_contract := metrics.is_empty() or int(metrics.get("fixed_ticks", 0)) > 0
-	var passed := handled and bool(result.get("ok", false)) and continuous_tick_contract
+	var passed := handled and continuous_tick_contract and physical_motion_seen
 	if not passed:
 		failures.append("Coin Pusher %s did not route through the production surface into the V3 continuous-tick machine." % mode)
 	if resolve_call_ms > COIN_PUSHER_ACTIVE_ACTION_BUDGET_MS:

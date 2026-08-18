@@ -21,6 +21,8 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_energy_settle_conservation(machine_definition, failures)
 	_check_pusher_v3_input_trace_determinism(machine_definition, failures)
 	_check_pusher_v3_live_loop_and_persistence(machine_definition, failures)
+	_check_pusher_v3_v2_production_migration(library, failures)
+	_check_pusher_v3_generated_rider_production(library, failures)
 	_check_pusher_v3_solver_performance(machine_definition, failures)
 
 
@@ -66,6 +68,9 @@ func _check_pusher_v3_rejected_mechanics_deleted(failures: Array) -> void:
 	for rejected in ["_pressurize_full_pile", "_pusher_face_y", "_hot_apply_pushers", "MAX_COLLISION_PASSES", "phase_accuracy", "clean_nudge_phase", "clean_nudge_window_steps", "overlap * 5", "lean > 620"]:
 		if solver_source.contains(rejected) or game_source.contains(rejected) or native_source.contains(rejected) or data_source.contains(rejected):
 			failures.append("Coin Pusher V3 retained rejected mechanic token: %s" % rejected)
+	if game_source.contains("CABINET CONTROLS OFFLINE") or game_source.contains("NO COIN ACCEPTED") \
+			or not game_source.contains("MOVE THE RAIL · TIME THE DROP · COLLECT THE TRAY"):
+		failures.append("Coin Pusher V3 temporary live surface still communicates disabled Stage-1 controls.")
 	for rejected_native in ["ACTION_TICKS", "std::sqrt", "upper_locked", "lower_locked"]:
 		if native_source.contains(rejected_native):
 			failures.append("Coin Pusher V3 native outcome path retained rejected mechanic token: %s" % rejected_native)
@@ -330,6 +335,95 @@ func _check_pusher_v3_live_loop_and_persistence(machine: Dictionary, failures: A
 	var catch_up := CoinPusherLiveSessionScript.advance(live_machine, 1200)
 	if int(catch_up.get("ticks", 0)) != 4 or int(catch_up.get("backlog_ticks", 0)) < 7 or int(simulation.get("tick", 0)) != start_tick + 4:
 		failures.append("Coin Pusher V3 live accumulator skipped backlog or exceeded four catch-up ticks: %s" % JSON.stringify(catch_up))
+	var hitch_machine := {"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-HITCH"), machine, 0), "variation_state": {}, "tell_rung": 0, "alarm_tolerance_remaining": 7, "locked_down": false}
+	CoinPusherLiveSessionScript.begin(hitch_machine, machine, 118)
+	CoinPusherLiveSessionScript.advance(hitch_machine, 1000)
+	var hitch_first := CoinPusherLiveSessionScript.advance(hitch_machine, 6000)
+	var hitch_calls := 1
+	while int((hitch_machine["live_session"] as Dictionary).get("accumulator_units", 0)) >= 1000 and hitch_calls < 100:
+		CoinPusherLiveSessionScript.advance(hitch_machine, 6000)
+		hitch_calls += 1
+	if int(hitch_first.get("ticks", 0)) != 4 \
+			or int(hitch_first.get("backlog_ticks", 0)) != 296 \
+			or int((hitch_machine["simulation"] as Dictionary).get("tick", 0)) != 300 \
+			or int((hitch_machine["live_session"] as Dictionary).get("accumulator_units", -1)) != 0:
+		failures.append("Coin Pusher V3 discarded elapsed ticks during a five-second hitch or failed to drain the capped backlog: first=%s calls=%d tick=%d units=%d" % [JSON.stringify(hitch_first), hitch_calls, int((hitch_machine["simulation"] as Dictionary).get("tick", 0)), int((hitch_machine["live_session"] as Dictionary).get("accumulator_units", -1))])
+	var exit_hitch := {"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-EXIT-HITCH"), machine, 0), "variation_state": {}, "tell_rung": 0, "alarm_tolerance_remaining": 7, "locked_down": false}
+	CoinPusherLiveSessionScript.begin(exit_hitch, machine, 119)
+	CoinPusherLiveSessionScript.advance(exit_hitch, 1000)
+	CoinPusherLiveSessionScript.advance(exit_hitch, 6000)
+	CoinPusherLiveSessionScript.begin_chunked_settle(exit_hitch)
+	var exit_drain := {"draining_backlog": true}
+	var exit_drain_calls := 0
+	while bool(exit_drain.get("draining_backlog", false)) and exit_drain_calls < 100:
+		exit_drain = CoinPusherLiveSessionScript.advance_chunked_settle(exit_hitch, 8)
+		exit_drain_calls += 1
+	if int((exit_hitch["simulation"] as Dictionary).get("tick", 0)) < 300 \
+			or int((exit_hitch["live_session"] as Dictionary).get("accumulator_units", -1)) >= 1000 \
+			or exit_drain_calls < 74:
+		failures.append("Coin Pusher V3 exit skipped present-time hitch backlog instead of draining it chunkwise: calls=%d tick=%d units=%d." % [exit_drain_calls, int((exit_hitch["simulation"] as Dictionary).get("tick", 0)), int((exit_hitch["live_session"] as Dictionary).get("accumulator_units", -1))])
+	var representative := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-SNAPSHOT-250"), machine, 250)
+	var representative_snapshot := CoinPusherLiveSessionScript.make_snapshot(representative, {})
+	var representative_bytes := JSON.stringify(representative_snapshot).to_utf8_buffer().size()
+	var cap_state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-SNAPSHOT-CAP"), machine, int(machine.get("ceiling", 600)))
+	var cap_bytes := JSON.stringify(CoinPusherLiveSessionScript.make_snapshot(cap_state, {})).to_utf8_buffer().size()
+	if representative_bytes > 2300 or cap_bytes > 5000:
+		failures.append("Coin Pusher V3 compact snapshot missed the ~2 KB representative target or scaled nonlinearly at cap: 250=%d cap=%d." % [representative_bytes, cap_bytes])
+	var loaded_tray_state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-LOADED-TRAY"), machine, 50)
+	var loaded_tray: Array = []
+	for tray_index in range(300):
+		loaded_tray.append({"kind": "coin", "value": 1, "item_id": "", "provenance": {"variation_id": "jackpot_ridge", "ridge_multiplier": 3} if tray_index % 5 == 0 else {}})
+	loaded_tray.append({"kind": "rider", "value": 0, "item_id": "coffee", "provenance": {}})
+	loaded_tray_state["tray_ledger"] = loaded_tray
+	loaded_tray_state["opening_body_count"] = (loaded_tray_state.get("bodies", []) as Array).size() + loaded_tray.size()
+	var loaded_tray_snapshot := CoinPusherLiveSessionScript.make_snapshot(loaded_tray_state, {})
+	var loaded_tray_bytes := JSON.stringify(loaded_tray_snapshot).to_utf8_buffer().size()
+	print("Coin Pusher V3 compact snapshot bytes: representative=%d cap=%d loaded_tray=%d" % [representative_bytes, cap_bytes, loaded_tray_bytes])
+	var loaded_tray_restore := CoinPusherLiveSessionScript.restore_snapshot(loaded_tray_snapshot, machine)
+	var loaded_tray_collect := CoinPusherSolverScript.collect_tray(loaded_tray_restore)
+	var loaded_tray_tick := CoinPusherSolverScript.step_ticks(loaded_tray_restore, {"motor_enabled": true}, 1)
+	if loaded_tray_bytes > 1800 or int(loaded_tray_collect.get("count", 0)) != loaded_tray.size() \
+			or not (loaded_tray_collect.get("items", []) as Array).has("coffee") \
+			or not bool((loaded_tray_tick.get("invariants", {}) as Dictionary).get("conservation_ok", false)):
+		failures.append("Coin Pusher V3 heavily loaded tray missed compact persistence/exact-collect conservation: bytes=%d count=%d." % [loaded_tray_bytes, int(loaded_tray_collect.get("count", 0))])
+	var growth_state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-SNAPSHOT-GROWTH"), machine, 250)
+	var growth_before := JSON.stringify(CoinPusherLiveSessionScript.make_snapshot(growth_state, {})).to_utf8_buffer().size()
+	var growth_rng := _pusher_v3_rng("PUSHER-V3-SNAPSHOT-GROWTH-DROPS")
+	for _drop in range(200):
+		CoinPusherSolverScript.add_coin(growth_state, growth_rng, 50000, 1, {})
+	var growth_snapshot := CoinPusherLiveSessionScript.make_snapshot(growth_state, {})
+	var growth_after := JSON.stringify(growth_snapshot).to_utf8_buffer().size()
+	if not (growth_snapshot.get("extra_bodies", []) as Array).is_empty() or growth_after - growth_before > 1600:
+		failures.append("Coin Pusher V3 default player drops escaped compact packing: before=%d after=%d extras=%d." % [growth_before, growth_after, (growth_snapshot.get("extra_bodies", []) as Array).size()])
+	var vault_growth := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-VAULT-GROWTH"), machine, 250)
+	var vault_before := JSON.stringify(CoinPusherLiveSessionScript.make_snapshot(vault_growth, {})).to_utf8_buffer().size()
+	var vault_rng := _pusher_v3_rng("PUSHER-V3-VAULT-GROWTH-DROPS")
+	for _drop in range(200):
+		CoinPusherSolverScript.add_coin(vault_growth, vault_rng, 50000, 1, {"variation_id": "vault_drop", "ridge_multiplier": 1})
+	var vault_snapshot := CoinPusherLiveSessionScript.make_snapshot(vault_growth, {})
+	var vault_after := JSON.stringify(vault_snapshot).to_utf8_buffer().size()
+	if not (vault_snapshot.get("coin_provenance", {}) as Dictionary).is_empty() or vault_after - vault_before > 1600:
+		failures.append("Coin Pusher V3 non-paying Vault labels created verbose per-coin provenance growth: before=%d after=%d sidecars=%d." % [vault_before, vault_after, (vault_snapshot.get("coin_provenance", {}) as Dictionary).size()])
+	var ridge_growth := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-RIDGE-GROWTH"), machine, 250)
+	var ridge_before := JSON.stringify(CoinPusherLiveSessionScript.make_snapshot(ridge_growth, {})).to_utf8_buffer().size()
+	var ridge_rng := _pusher_v3_rng("PUSHER-V3-RIDGE-GROWTH-DROPS")
+	for _drop in range(200):
+		CoinPusherSolverScript.add_coin(ridge_growth, ridge_rng, 50000, 1, {"variation_id": "jackpot_ridge", "ridge_multiplier": 3})
+	var ridge_snapshot := CoinPusherLiveSessionScript.make_snapshot(ridge_growth, {})
+	var ridge_after := JSON.stringify(ridge_snapshot).to_utf8_buffer().size()
+	if not (ridge_snapshot.get("extra_bodies", []) as Array).is_empty() \
+			or not (ridge_snapshot.get("coin_provenance", {}) as Dictionary).is_empty() \
+			or ridge_after - ridge_before > 1800:
+		failures.append("Coin Pusher V3 meaningful Ridge drops escaped compact multiplier packing: before=%d after=%d extras=%d sidecars=%d." % [ridge_before, ridge_after, (ridge_snapshot.get("extra_bodies", []) as Array).size(), (ridge_snapshot.get("coin_provenance", {}) as Dictionary).size()])
+	var provenance_state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-PROVENANCE"), machine, 0)
+	var provenance_rng := _pusher_v3_rng("PUSHER-V3-PROVENANCE-DROP")
+	var provenance_coin := CoinPusherSolverScript.add_coin(provenance_state, provenance_rng, 50000, 1, {"variation_id": "jackpot_ridge", "ridge_multiplier": 3})
+	var provenance_snapshot := CoinPusherLiveSessionScript.make_snapshot(provenance_state, {})
+	var provenance_restore := CoinPusherLiveSessionScript.restore_snapshot(provenance_snapshot, machine)
+	var restored_provenance := _pusher_v3_body(provenance_restore, str(provenance_coin.get("id", "")))
+	if int((((restored_provenance.get("meta", {}) as Dictionary).get("provenance", {}) as Dictionary).get("ridge_multiplier", 0))) != 3 \
+			or not (provenance_snapshot.get("extra_bodies", []) as Array).is_empty():
+		failures.append("Coin Pusher V3 meaningful Ridge provenance did not round-trip through the compact sidecar.")
 	var trace_before := (live_machine["live_session"]["input_trace"] as Array).size()
 	CoinPusherLiveSessionScript.queue_input(live_machine, {"kind": "carriage", "x": 41000})
 	CoinPusherLiveSessionScript.queue_input(live_machine, {"kind": "skill_stop", "engaged": true})
@@ -348,6 +442,20 @@ func _check_pusher_v3_live_loop_and_persistence(machine: Dictionary, failures: A
 	var collected := CoinPusherSolverScript.collect_tray(simulation)
 	if int(collected.get("value", 0)) != 3 or not (simulation.get("tray_ledger", []) as Array).is_empty():
 		failures.append("Coin Pusher V3 COLLECT did not transfer the tray ledger exactly once.")
+	var tray_persist := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-TRAY-PERSIST"), machine, 10)
+	(tray_persist.get("bodies", []) as Array).pop_back()
+	tray_persist["tray_ledger"] = [{"kind": "coin", "value": 2, "item_id": "", "provenance": {}}]
+	var tray_snapshot := CoinPusherLiveSessionScript.make_snapshot(tray_persist, {})
+	var tray_restore := CoinPusherLiveSessionScript.restore_snapshot(tray_snapshot, machine)
+	var restored_tick := CoinPusherSolverScript.step_ticks(tray_restore, {"motor_enabled": true}, 1)
+	var restored_collect := CoinPusherSolverScript.collect_tray(tray_restore)
+	var post_collect_tick := CoinPusherSolverScript.step_ticks(tray_restore, {"motor_enabled": true}, 1)
+	var duplicate_collect := CoinPusherSolverScript.collect_tray(tray_restore)
+	if not bool((restored_tick.get("invariants", {}) as Dictionary).get("conservation_ok", false)) \
+			or int(restored_collect.get("value", 0)) != 2 or int(restored_collect.get("count", 0)) != 1 \
+			or not bool((post_collect_tick.get("invariants", {}) as Dictionary).get("conservation_ok", false)) \
+			or int(duplicate_collect.get("count", -1)) != 0:
+		failures.append("Coin Pusher V3 nonempty tray did not restore, collect exactly once, and continue motor ticks conservation-green.")
 	# Preserve sparse IDs and support truth. A tall deck stack is not platform
 	# carried merely because its z is above PLATFORM_TOP_Z.
 	var bodies: Array = simulation.get("bodies", [])
@@ -379,6 +487,145 @@ func _check_pusher_v3_live_loop_and_persistence(machine: Dictionary, failures: A
 		failures.append("Coin Pusher V3 visit 1 and visit 80 settled digests diverged.")
 	if JSON.stringify(snapshot).contains("accumulator_units") or JSON.stringify(snapshot).contains("input_trace"):
 		failures.append("Coin Pusher V3 serialized transient accumulator/backlog into settled outcome state.")
+
+
+func _check_pusher_v3_v2_production_migration(library: ContentLibrary, failures: Array) -> void:
+	var definition := library.game("coin_pusher")
+	var module_script: Script = load(str(definition.get("module_path", "")))
+	if module_script == null:
+		failures.append("Coin Pusher V3 migration test could not load the production module.")
+		return
+	var legacy_sub_game := {"legacy_round": 7, "armed": true, "cells": [2, 0, 3]}
+	var legacy_machine := {
+		"schema": "coin_pusher_discrete_pile",
+		"version": 2,
+		"variation_id": "quarter_falls",
+		"variation_state": legacy_sub_game.duplicate(true),
+		"tray_value": 4,
+		"base_alarm_tolerance": 9,
+		"alarm_tolerance_remaining": 5,
+		"tell_rung": 2,
+		"staff_watch_memory": true,
+		"locked_down": false,
+		"action_count": 11,
+		"total_cost": 11,
+		"total_payout": 6,
+	}
+	var unrelated_state := {"schema": "slot_machine_state", "version": 9, "opaque": [3, {"keep": "exact"}]}
+	var run_state := RunState.new()
+	run_state.start_new("PUSHER-V3-V2-MIGRATION", RunState.standard_challenge("PUSHER-V3-V2-MIGRATION"))
+	var environment := {"id": "pusher_v2_migration_fixture", "world_node_id": "pusher_v2_migration_fixture", "game_states": {"coin_pusher": legacy_machine.duplicate(true), "slot": unrelated_state.duplicate(true)}}
+	var game: GameModule = module_script.new()
+	game.setup(definition, library)
+	game.enter(run_state, environment)
+	var live_map: Dictionary = game.get("_live_machines")
+	var live_machine: Dictionary = live_map.values()[0] if not live_map.is_empty() else {}
+	var simulation: Dictionary = live_machine.get("simulation", {}) if typeof(live_machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var first_settled: Dictionary = (((environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary).get("settled_state", {}) as Dictionary).duplicate(true)
+	var first_migration_logs := 0
+	for entry_value in run_state.story_log:
+		if typeof(entry_value) == TYPE_DICTIONARY and str((entry_value as Dictionary).get("type", "")) == "coin_pusher_v2_migrated":
+			first_migration_logs += 1
+	var migrated_exact: bool = int(live_machine.get("tray_value", -1)) == 4 \
+			and (simulation.get("tray_ledger", []) as Array).size() == 4 \
+			and live_machine.get("variation_state", {}) == legacy_sub_game \
+			and int(live_machine.get("base_alarm_tolerance", -1)) == 9 \
+			and int(live_machine.get("alarm_tolerance_remaining", -1)) == 5 \
+			and int(live_machine.get("tell_rung", -1)) == 2 \
+			and bool(live_machine.get("staff_watch_memory", false)) \
+			and first_migration_logs == 1
+	if not migrated_exact:
+		failures.append("Coin Pusher V3 production migration did not carry V2 tray/sub-game/alarm state and log exactly once.")
+	game.begin_chunked_exit_settle(run_state, environment)
+	var settle_result := {"done": false}
+	var settle_chunks := 0
+	while not bool(settle_result.get("done", false)) and settle_chunks < 24:
+		settle_result = game.advance_chunked_exit_settle(run_state, environment, 64)
+		settle_chunks += 1
+	game.finalize_chunked_exit_settle(run_state, environment)
+	var settled_before_reentry: Dictionary = (((environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary).get("settled_state", {}) as Dictionary).duplicate(true)
+	game.enter(run_state, environment)
+	var settled_after_reentry: Dictionary = (((environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary).get("settled_state", {}) as Dictionary).duplicate(true)
+	var migration_logs_after_reentry := 0
+	for entry_value in run_state.story_log:
+		if typeof(entry_value) == TYPE_DICTIONARY and str((entry_value as Dictionary).get("type", "")) == "coin_pusher_v2_migrated":
+			migration_logs_after_reentry += 1
+	if not bool(settle_result.get("done", false)) or settled_before_reentry != settled_after_reentry or migration_logs_after_reentry != 1:
+		failures.append("Coin Pusher V3 migrated state reseeded or relogged on stable re-entry.")
+	var second_run := RunState.new()
+	second_run.start_new("PUSHER-V3-V2-MIGRATION", RunState.standard_challenge("PUSHER-V3-V2-MIGRATION"))
+	var second_environment := {"id": "pusher_v2_migration_fixture", "world_node_id": "pusher_v2_migration_fixture", "game_states": {"coin_pusher": legacy_machine.duplicate(true)}}
+	var second_game: GameModule = module_script.new()
+	second_game.setup(definition, library)
+	second_game.enter(second_run, second_environment)
+	var second_settled: Dictionary = (((second_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary).get("settled_state", {}) as Dictionary)
+	if first_settled != second_settled:
+		failures.append("Coin Pusher V3 V2 migration reseed was not deterministic for the same run seed and machine node.")
+	var non_pusher_run := RunState.new()
+	non_pusher_run.start_new("PUSHER-V3-NON-PUSHER", RunState.standard_challenge("PUSHER-V3-NON-PUSHER"))
+	var non_pusher_environment := {"id": "non_pusher_fixture", "game_states": {"slot": unrelated_state.duplicate(true)}}
+	var non_pusher_before := JSON.stringify(non_pusher_environment, "", true)
+	game.call("_read_machine_state", non_pusher_run, non_pusher_environment)
+	if JSON.stringify(non_pusher_environment, "", true) != non_pusher_before:
+		failures.append("Coin Pusher V3 read/migration path changed a non-pusher save byte contract.")
+
+
+func _check_pusher_v3_generated_rider_production(library: ContentLibrary, failures: Array) -> void:
+	var definition := library.game("coin_pusher")
+	var module_script: Script = load(str(definition.get("module_path", "")))
+	if module_script == null:
+		failures.append("Coin Pusher V3 production rider test could not load the game module.")
+		return
+	var game: GameModule = module_script.new()
+	game.setup(definition, library)
+	var run_state := RunState.new()
+	run_state.start_new("PUSHER-V3-RIDER-PRODUCTION", RunState.standard_challenge("PUSHER-V3-RIDER-PRODUCTION"))
+	var environment := {"id": "pusher_v3_rider_fixture", "scenario_game_modifiers": {"coin_pusher": {"variation_id": "quarter_falls", "prize_item_ids": ["coffee"]}}, "game_states": {}}
+	var generated: Dictionary = {}
+	var selected_rider: Dictionary = {}
+	for seed_index in range(1, 129):
+		var generation_rng := _pusher_v3_rng("PUSHER-V3-RIDER-%03d" % seed_index)
+		generated = game.call("_generate_machine_state", run_state, environment, generation_rng)
+		for rider_value in generated.get("riders", []):
+			if typeof(rider_value) == TYPE_DICTIONARY and not str((rider_value as Dictionary).get("item_id", "")).is_empty():
+				selected_rider = rider_value
+				break
+		if not selected_rider.is_empty():
+			break
+	if selected_rider.is_empty():
+		failures.append("Coin Pusher V3 could not generate a production Quarter Falls item rider in the deterministic seed sweep.")
+		return
+	environment["game_states"] = {"coin_pusher": generated}
+	game.enter(run_state, environment)
+	var live_machines: Dictionary = game.get("_live_machines")
+	generated = live_machines.values()[0] if not live_machines.is_empty() else {}
+	for rider_value in generated.get("riders", []):
+		if typeof(rider_value) == TYPE_DICTIONARY and str((rider_value as Dictionary).get("id", "")) == str(selected_rider.get("id", "")):
+			selected_rider = rider_value
+			break
+	var simulation: Dictionary = generated.get("simulation", {})
+	var rider_body := _pusher_v3_body(simulation, str(selected_rider.get("body_id", "")))
+	if rider_body.is_empty() or str(rider_body.get("kind", "")) != "rider":
+		failures.append("Coin Pusher V3 generated a rider ledger record without its physical solver body.")
+		return
+	rider_body["x"] = CoinPusherSolverScript.WIDTH / 2
+	rider_body["y"] = 0
+	rider_body["z"] = 0
+	var exit_result := CoinPusherSolverScript.step_ticks(simulation, {"motor_enabled": false}, 1)
+	game.call("_consume_physics_events", run_state, generated, exit_result.get("events", []), _pusher_v3_rng("PUSHER-V3-RIDER-EXIT"))
+	var snapshot := CoinPusherLiveSessionScript.make_snapshot(simulation, generated)
+	var restored := CoinPusherLiveSessionScript.restore_snapshot(snapshot, game.call("_machine_definition"))
+	generated["simulation"] = restored
+	generated["live_session"] = {}
+	var tray_before: Array = restored.get("tray_ledger", [])
+	var item_id := str(selected_rider.get("item_id", ""))
+	var tray_has_item := false
+	for entry_value in tray_before:
+		if typeof(entry_value) == TYPE_DICTIONARY and str((entry_value as Dictionary).get("item_id", "")) == item_id:
+			tray_has_item = true
+	game.call("_collect_surface_command", run_state, environment, generated)
+	if not tray_has_item or not run_state.inventory.has(item_id) or not (restored.get("tray_ledger", []) as Array).is_empty():
+		failures.append("Coin Pusher V3 generated rider did not fall, persist in tray, and collect into inventory through production seams.")
 
 
 func _check_pusher_v3_solver_performance(machine: Dictionary, failures: Array) -> void:
