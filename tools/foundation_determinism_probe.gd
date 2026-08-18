@@ -9,6 +9,7 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
+const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 
 const DEFAULT_SEED_COUNT := 10
 const DEFAULT_SEED_PREFIX := "FOUNDATION-DETERMINISM"
@@ -519,37 +520,74 @@ func _poker_policy_decisions(table: Dictionary) -> Array:
 func _apply_coin_pusher_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
 	var game_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var machine: Dictionary = game_states.get("coin_pusher", {}) if typeof(game_states.get("coin_pusher", {})) == TYPE_DICTIONARY else {}
-	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
-	if str(simulation.get("schema", "")) != CoinPusherSolverScript.SCHEMA:
-		failures.append("%s coin pusher fixture did not install the V3 simulation." % seed)
+	var settled: Dictionary = machine.get("settled_state", {}) if typeof(machine.get("settled_state", {})) == TYPE_DICTIONARY else {}
+	if str(settled.get("schema", "")) != CoinPusherLiveSessionScript.SNAPSHOT_SCHEMA or machine.has("simulation") or machine.has("live_session"):
+		failures.append("%s coin pusher fixture did not install the compact V3 settled snapshot." % seed)
 		return
-	var start_tick := int(simulation.get("tick", 0))
+	var game: GameModule = game_modules.get("coin_pusher", null)
+	if game == null:
+		failures.append("%s coin pusher fixture could not access the production module." % seed)
+		return
+	var definition: Dictionary = game.call("_machine_definition")
+	var restored := CoinPusherLiveSessionScript.restore_snapshot(settled, definition)
+	var start_tick := int(restored.get("tick", 0))
 	var input_trace: Array = [
 		{"tick": start_tick + 5, "kind": "drop", "x": 42000, "density": 1},
 		{"tick": start_tick + 60, "kind": "skill_stop", "engaged": true},
 		{"tick": start_tick + 96, "kind": "drop", "x": 58000, "density": 2},
 		{"tick": start_tick + 130, "kind": "skill_stop", "engaged": false},
 	]
-	var trace_rng := run_state.create_rng("determinism_coin_pusher_v3_trace")
-	var first := CoinPusherSolverScript.replay_input_trace(simulation, trace_rng.fork("exact"), input_trace, 260)
-	var repeat := CoinPusherSolverScript.replay_input_trace(simulation, trace_rng.fork("exact"), input_trace, 260)
+	var session_seed := int(_stable_hash_text("%s:determinism_coin_pusher_v3_trace" % seed))
+	var first_machine := machine.duplicate(true)
+	var repeat_machine := machine.duplicate(true)
+	var first := _run_coin_pusher_live_trace(first_machine, definition, session_seed, input_trace, 260)
+	var repeat := _run_coin_pusher_live_trace(repeat_machine, definition, session_seed, input_trace, 260)
 	var first_digest := CoinPusherSolverScript.canonical_digest(first)
 	var repeat_digest := CoinPusherSolverScript.canonical_digest(repeat)
-	if JSON.stringify(first_digest) != JSON.stringify(repeat_digest):
+	var first_session: Dictionary = first_machine.get("live_session", {})
+	var repeat_session: Dictionary = repeat_machine.get("live_session", {})
+	if JSON.stringify(first_digest) != JSON.stringify(repeat_digest) \
+			or JSON.stringify(first_session.get("input_trace", [])) != JSON.stringify(repeat_session.get("input_trace", [])):
 		failures.append("%s coin pusher V3 input-trace replay was not exact." % seed)
 	# Wall-clock profiling is diagnostic-only and cannot enter a deterministic
 	# RunState checkpoint; physical outcome state remains fully serialized.
 	first.erase("last_step_metrics")
-	machine["simulation"] = first
+	machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(first, first_machine)
+	machine.erase("simulation")
+	machine.erase("live_session")
 	game_states["coin_pusher"] = machine
 	run_state.current_environment["game_states"] = game_states
-	run_state.save_rng(trace_rng)
 	_checkpoint_with_evidence(run_state, checkpoints, seed, "coin_pusher_v3_input_trace", {
 		"digest": first_digest,
-		"input_count": input_trace.size(),
+		"input_count": (first_session.get("input_trace", []) as Array).size(),
+		"input_trace_sha256": JSON.stringify(first_session.get("input_trace", [])).sha256_text(),
+		"settled_schema": str((machine.get("settled_state", {}) as Dictionary).get("schema", "")),
 		"solver_schema": str(first.get("schema", "")),
 		"solver_version": int(first.get("version", 0)),
 	})
+
+
+func _run_coin_pusher_live_trace(machine: Dictionary, definition: Dictionary, session_seed: int, scheduled_inputs: Array, tick_count: int) -> Dictionary:
+	CoinPusherLiveSessionScript.begin(machine, definition, session_seed)
+	var simulation: Dictionary = machine.get("simulation", {})
+	var session: Dictionary = machine.get("live_session", {})
+	var start_tick := int(simulation.get("tick", 0))
+	var target_tick := start_tick + maxi(0, tick_count)
+	var input_cursor := 0
+	var clock_msec := 0
+	CoinPusherLiveSessionScript.advance(machine, clock_msec)
+	while int(simulation.get("tick", 0)) < target_tick:
+		var current_tick := int(simulation.get("tick", 0))
+		while input_cursor < scheduled_inputs.size() and int((scheduled_inputs[input_cursor] as Dictionary).get("tick", -1)) == current_tick:
+			var input: Dictionary = (scheduled_inputs[input_cursor] as Dictionary).duplicate(true)
+			input.erase("tick")
+			CoinPusherLiveSessionScript.queue_input(machine, input)
+			input_cursor += 1
+		clock_msec += 16
+		CoinPusherLiveSessionScript.advance(machine, clock_msec)
+	if input_cursor != scheduled_inputs.size() or int(session.get("liveness_ticks", 0)) != tick_count:
+		failures.append("Coin pusher production live-session trace did not consume every tick-stamped input exactly once.")
+	return simulation
 
 
 func _apply_skill_cheats(run_state: RunState, checkpoints: Array, seed: String) -> void:
