@@ -339,8 +339,9 @@ What happens then is the owner's, not an agent's:
   flushes pending inputs but not the fixed-tick `accumulator_units`. Closing
   immediately after a hitch can therefore discard elapsed time that occurred
   while present, violating the never-skip contract. Exit must drain that
-  backlog visibly within bounded per-frame work before steady-state settling,
-  and a close-on-hitch digest regression must prove no ticks disappear.
+  backlog visibly at the same maximum four catch-up ticks per rendered frame
+  before steady-state settling, and a close-on-hitch digest regression must
+  prove no ticks disappear.
 
 - 2026-08-17 [crew06_8] Live-event lifecycle review found the dynamically
   registered `heist_live_table` event was append-only. Without bounded removal
