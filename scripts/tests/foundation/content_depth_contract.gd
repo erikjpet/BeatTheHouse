@@ -2,8 +2,14 @@ class_name ContentDepthContract
 extends RefCounted
 
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
+const GameModuleScript := preload("res://scripts/core/game_module.gd")
+const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const BarDiceScript := preload("res://scripts/games/bar_dice.gd")
+const BaccaratScript := preload("res://scripts/games/baccarat.gd")
+const RouletteScript := preload("res://scripts/games/roulette.gd")
+const CoinPusherScript := preload("res://scripts/games/coin_pusher.gd")
 const JackpotRidgeScript := preload("res://scripts/games/coin_pusher/jackpot_ridge.gd")
 
 const SOUVENIR_EVENTS := {
@@ -56,6 +62,41 @@ static func _check_souvenirs(library: ContentLibrary, failures: Array) -> void:
 		var result := module.resolve(run, run.current_environment, str((options[0] as Dictionary).get("id", "")))
 		if not _array(_dict(result.get("deltas", {})).get("inventory_add", [])).has(item_id):
 			failures.append("Content souvenir %s does not enter inventory through its scenario path." % item_id)
+	_check_seeded_scenario_souvenir_pipeline(library, failures)
+
+
+static func _check_seeded_scenario_souvenir_pipeline(library: ContentLibrary, failures: Array) -> void:
+	const TARGET_ARCHETYPE := "delta_queen"
+	const TARGET_SCENARIO := "delta_queen_wedding_charter"
+	const TARGET_EVENT := "scenario_wedding_best_man"
+	const TARGET_ITEM := "wedding_ribbon_favor"
+	var selected_run: RunState
+	for seed_index in range(512):
+		var candidate := RunStateScript.new()
+		candidate.start_new("CONTENT-PRODUCTION-SCENARIO-%03d" % seed_index)
+		var generator := RunGeneratorScript.new(library)
+		generator.next_environment(candidate)
+		generator.next_environment(candidate, TARGET_ARCHETYPE, true)
+		if str(candidate.current_environment.get("scenario_id", "")) == TARGET_SCENARIO:
+			selected_run = candidate
+			break
+	if selected_run == null:
+		failures.append("Seeded production generation never selected %s in the deterministic probe window." % TARGET_SCENARIO)
+		return
+	if not _array(selected_run.current_environment.get("event_ids", [])).has(TARGET_EVENT):
+		failures.append("Seeded production scenario %s did not inject authored event %s." % [TARGET_SCENARIO, TARGET_EVENT])
+		return
+	var module := EventModuleScript.new()
+	module.setup(library.event(TARGET_EVENT), library)
+	var choices := module.choices(selected_run, selected_run.current_environment)
+	if choices.is_empty():
+		failures.append("Seeded production scenario event %s exposed no acquisition choice." % TARGET_EVENT)
+		return
+	var result := module.resolve(selected_run, selected_run.current_environment, str((choices[0] as Dictionary).get("id", "")))
+	if not bool(result.get("ok", false)):
+		failures.append("Seeded production scenario event %s failed its standard EventModule application." % TARGET_EVENT)
+	if not selected_run.inventory.has(TARGET_ITEM):
+		failures.append("Seeded generation -> scenario -> event -> standard result did not acquire %s." % TARGET_ITEM)
 
 
 static func _check_scenario_budgets(library: ContentLibrary, failures: Array) -> void:
@@ -100,24 +141,8 @@ static func _check_bench(library: ContentLibrary, failures: Array) -> void:
 	module.setup(definition, library)
 	if module.choices(run, run.current_environment).size() != 1:
 		failures.append("Mags' bench exposed gear before Mags' rank gate.")
-	var nudge_gate := RunStateScript.new()
-	nudge_gate.start_new("CONTENT-NUDGE-GATE")
-	nudge_gate.bankroll = 42
-	nudge_gate.current_environment = run.current_environment.duplicate(true)
-	nudge_gate.crew_add_trust("crew_mags", CrewStateModelScript.rank_threshold("associate"), "content_fixture")
-	nudge_gate.add_item("timing_bracelet")
-	if _has_choice(module.choices(nudge_gate, nudge_gate.current_environment), "craft_nudge_dampener"):
-		failures.append("Mags' nudge dampener bypassed its Made rank gate.")
-	nudge_gate.crew_add_trust("crew_mags", CrewStateModelScript.rank_threshold("made") - CrewStateModelScript.rank_threshold("associate"), "content_fixture")
-	nudge_gate.remove_item("timing_bracelet")
-	if _has_choice(module.choices(nudge_gate, nudge_gate.current_environment), "craft_nudge_dampener"):
-		failures.append("Mags' nudge dampener bypassed its Timing Bracelet component gate.")
-	nudge_gate.add_item("timing_bracelet")
-	if not _has_choice(module.choices(nudge_gate, nudge_gate.current_environment), "craft_nudge_dampener"):
-		failures.append("Mags' nudge dampener did not open at its authored rank/cash/component boundary.")
-	nudge_gate.bankroll = 41
-	if _has_choice(module.choices(nudge_gate, nudge_gate.current_environment), "craft_nudge_dampener"):
-		failures.append("Mags' nudge dampener bypassed its $42 cash gate.")
+	for entry_value in catalog:
+		_check_bench_entry_matrix(module, entry_value as Dictionary, run.current_environment, failures)
 	run.crew_add_trust("crew_mags", CrewStateModelScript.rank_threshold("inner_circle"), "content_fixture")
 	for entry_value in catalog:
 		for item_id_value in _array((entry_value as Dictionary).get("requires_items", [])):
@@ -126,40 +151,104 @@ static func _check_bench(library: ContentLibrary, failures: Array) -> void:
 	var available := module.choices(run, run.current_environment)
 	if available.size() != catalog.size() + 1:
 		failures.append("Mags' full-rank/cash/component gate did not expose the complete catalog.")
-	var nudge_entry: Dictionary = {}
-	for entry_value in catalog:
-		if str((entry_value as Dictionary).get("output_item", "")) == "mags_nudge_dampener":
-			nudge_entry = entry_value
-			break
-	if nudge_entry.is_empty():
-		failures.append("Mags' bench is missing the authored nudge dampener entry.")
-	else:
-		var nudge_result := module.resolve(run, run.current_environment, str(nudge_entry.get("id", "")))
-		var nudge_deltas := _dict(nudge_result.get("deltas", {}))
-		if int(nudge_deltas.get("bankroll_delta", 0)) != -int(nudge_entry.get("cash_cost", 0)) \
-			or _array(nudge_deltas.get("inventory_remove", [])) != _array(nudge_entry.get("requires_items", [])) \
-			or _array(nudge_deltas.get("inventory_add", [])) != ["mags_nudge_dampener"]:
-			failures.append("Mags' nudge dampener did not emit its exact cash/component/output deltas.")
-		run.add_item("mags_nudge_dampener")
-		if run.item_effect_total("coin_pusher_nudge_tolerance_band_delta", "coin_pusher") != 1:
-			failures.append("Mags' nudge dampener did not expose exactly one existing coin-pusher tolerance band.")
-		if JackpotRidgeScript.tolerance_band_bonus(run, {"tolerance_band_size": 2}) != 2:
-			failures.append("Mags' nudge dampener did not reach Jackpot Ridge's existing tolerance-band hook.")
-	if not catalog.is_empty():
-		var first_entry: Dictionary = catalog[0]
-		var resolved := module.resolve(run, run.current_environment, str(first_entry.get("id", "")))
-		var deltas := _dict(resolved.get("deltas", {}))
-		if not bool(resolved.get("ok", false)):
-			failures.append("Mags' bench could not resolve an available catalog choice.")
-		if int(deltas.get("bankroll_delta", 0)) != -int(first_entry.get("cash_cost", 0)):
-			failures.append("Mags' bench did not emit the catalog cash delta through the standard action result.")
-		if _array(deltas.get("inventory_remove", [])) != _array(first_entry.get("requires_items", [])):
-			failures.append("Mags' bench did not consume the authored component list through the standard action result.")
-		if _array(deltas.get("inventory_add", [])) != [str(first_entry.get("output_item", ""))]:
-			failures.append("Mags' bench did not emit its authored upgrade through the standard action result.")
+	_check_bench_runtime_consumers(library, failures)
 	run.bankroll = 0
 	if module.choices(run, run.current_environment).size() != 1:
 		failures.append("Mags' bench cash gate exposed an unaffordable upgrade.")
+
+
+static func _check_bench_entry_matrix(module: EventModule, entry: Dictionary, environment: Dictionary, failures: Array) -> void:
+	var choice_id := str(entry.get("id", ""))
+	var output_id := str(entry.get("output_item", ""))
+	var min_rank := str(entry.get("min_member_rank", ""))
+	var cash_cost := int(entry.get("cash_cost", 0))
+	var components := _array(entry.get("requires_items", []))
+	var rank_index := CrewStateModelScript.RANK_IDS.find(min_rank)
+	var run := RunStateScript.new()
+	run.start_new("CONTENT-BENCH-MATRIX-%s" % output_id)
+	run.current_environment = environment.duplicate(true)
+	run.bankroll = cash_cost
+	var lower_rank := str(CrewStateModelScript.RANK_IDS[maxi(0, rank_index - 1)])
+	run.crew_add_trust("crew_mags", CrewStateModelScript.rank_threshold(lower_rank), "content_fixture")
+	for component_value in components:
+		run.add_item(str(component_value))
+	if _has_choice(module.choices(run, run.current_environment), choice_id):
+		failures.append("Bench %s bypassed its exact %s rank gate." % [output_id, min_rank])
+	var trust_needed := CrewStateModelScript.rank_threshold(min_rank) - run.crew_trust("crew_mags")
+	if trust_needed > 0:
+		run.crew_add_trust("crew_mags", trust_needed, "content_fixture")
+	var missing_component := str(components[0]) if not components.is_empty() else ""
+	if not missing_component.is_empty():
+		run.remove_item(missing_component)
+	if _has_choice(module.choices(run, run.current_environment), choice_id):
+		failures.append("Bench %s bypassed its exact component gate." % output_id)
+	if not missing_component.is_empty():
+		run.add_item(missing_component)
+	run.bankroll = cash_cost - 1
+	if _has_choice(module.choices(run, run.current_environment), choice_id):
+		failures.append("Bench %s bypassed its exact $%d cash gate." % [output_id, cash_cost])
+	run.bankroll = cash_cost
+	if not _has_choice(module.choices(run, run.current_environment), choice_id):
+		failures.append("Bench %s did not open at its authored rank/cash/component boundary." % output_id)
+		return
+	var result := module.resolve(run, run.current_environment, choice_id)
+	var deltas := _dict(result.get("deltas", {}))
+	if not bool(result.get("ok", false)) \
+		or int(deltas.get("bankroll_delta", 0)) != -cash_cost \
+		or _array(deltas.get("inventory_remove", [])) != components \
+		or _array(deltas.get("inventory_add", [])) != [output_id]:
+		failures.append("Bench %s did not emit its exact cash/component/output matrix." % output_id)
+
+
+static func _check_bench_runtime_consumers(library: ContentLibrary, failures: Array) -> void:
+	var loaded := RunStateScript.new()
+	loaded.start_new("CONTENT-LOADED-DICE-CONSUMER")
+	loaded.add_item("mags_loaded_dice")
+	var dice := BarDiceScript.new()
+	dice.setup(library.game("bar_dice"), library)
+	var dice_windows := dice._controlled_roll_windows(loaded)
+	if int(dice_windows.get("perfect", 0)) != dice.CONTROLLED_ROLL_PERFECT_WINDOW_MSEC + 45 \
+		or int(dice_windows.get("good", 0)) != dice.CONTROLLED_ROLL_GOOD_WINDOW_MSEC + 80 \
+		or dice._controlled_roll_base_heat(loaded) != maxi(1, dice.CONTROLLED_ROLL_BASE_HEAT - 3):
+		failures.append("Mags' loaded dice did not arrive at Bar Dice's existing timing/heat consumers.")
+
+	var loupe := RunStateScript.new()
+	loupe.start_new("CONTENT-TUNED-LOUPE-CONSUMER")
+	loupe.add_item("mags_tuned_loupe")
+	var baccarat := BaccaratScript.new()
+	baccarat.setup(library.game("baccarat"), library)
+	if baccarat._edge_sort_required_cue_count(loupe) != maxi(3, baccarat.EDGE_SORT_CUE_COUNT - 2) \
+		or baccarat._edge_sort_memory_tolerance(loupe) != 2 \
+		or baccarat._edge_sort_base_heat(loupe) != maxi(1, baccarat.EDGE_SORT_BASE_HEAT - 3):
+		failures.append("Mags' tuned loupe did not arrive at Baccarat's existing edge-sort consumers.")
+
+	var sleeve := RunStateScript.new()
+	sleeve.start_new("CONTENT-LINED-SLEEVE-CONSUMER")
+	sleeve.add_item("mags_lined_sleeve")
+	var generic_slots := GameModuleScript.new()
+	generic_slots.setup(library.game("slot"), library)
+	var roulette := RouletteScript.new()
+	roulette.setup(library.game("roulette"), library)
+	var roulette_windows := roulette._past_post_windows(sleeve)
+	if generic_slots._item_bonus("win_chance", sleeve, false) != 7 \
+		or int(roulette_windows.get("perfect", 0)) != roulette.PAST_POST_PERFECT_MSEC + 30 \
+		or roulette._past_post_base_heat(sleeve) != maxi(1, roulette.PAST_POST_BASE_HEAT - 4):
+		failures.append("Mags' lined sleeve did not arrive at Slots/Roulette's existing generic consumers.")
+
+	var dampener := RunStateScript.new()
+	dampener.start_new("CONTENT-NUDGE-DAMPENER-CONSUMER")
+	dampener.add_item("mags_nudge_dampener")
+	if dampener.item_effect_total("coin_pusher_nudge_tolerance_band_delta", "coin_pusher") != 1 \
+		or JackpotRidgeScript.tolerance_band_bonus(dampener, {"tolerance_band_size": 2}) != 2:
+		failures.append("Mags' nudge dampener did not arrive at Jackpot Ridge's existing tolerance-band consumer.")
+
+	var shim := RunStateScript.new()
+	shim.start_new("CONTENT-GUTTER-KIT-CONSUMER")
+	shim.add_item("mags_shim_kit")
+	var pusher := CoinPusherScript.new()
+	pusher.setup(library.game("coin_pusher"), library)
+	if pusher._shim_uses(shim) != 4:
+		failures.append("Mags' gutter kit did not arrive at the coin pusher's existing recovery-use consumer.")
 
 
 static func _array(value: Variant) -> Array:
