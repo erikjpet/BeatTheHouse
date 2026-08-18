@@ -361,14 +361,13 @@ struct Kernel {
         int64_t d = std::max<int64_t>(1, isqrt(ds)), nx = divi(dx * FP, d),
                 nz = divi(dz * FP, d), pen = minimum - d,
                 corr = divi(std::max<int64_t>(0, pen - SLOP) * BETA, FP);
-        // Only an exactly centered crown contact lacks a lateral radial side.
-        // Peg parity is the deterministic degeneracy fallback; all ordinary
-        // contacts retain the exact integer radial normal above.
-        if (dx == 0 && nz > 0) {
-          nx = (i % 2 == 0) ? -250 : 250;
-          nz = isqrt(FP * FP - nx * nx);
+        // A vertical crown already has the valid radial normal (0,+1). Never
+        // steer it from peg identity; only coincident centers are undefined.
+        if (ds == 0) {
+          nx = FP;
+          nz = 0;
         }
-        if (dx == 0) {
+        if (ds == 0) {
           q.x += divi(nx * corr, FP);
           q.z += divi(nz * corr, FP);
         } else {
@@ -796,9 +795,27 @@ struct Kernel {
       events.append(e);
       return;
     }
+    std::vector<int64_t> legal_offsets;
+    Array pegs = g.pegs;
+    for (int64_t offset = -g.jitter; offset <= g.jitter; ++offset) {
+      int64_t candidate = clampi(x + offset, g.coin_r, g.width - g.coin_r);
+      bool exact_symmetry = false;
+      for (int peg_index = 0; peg_index < pegs.size(); ++peg_index) {
+        Dictionary peg = pegs[peg_index];
+        if (candidate == int64_t(peg.get("x", candidate + 1))) {
+          exact_symmetry = true;
+          break;
+        }
+      }
+      if (!exact_symmetry)
+        legal_offsets.push_back(offset);
+    }
     int64_t jitter = 0;
-    if (rng)
-      jitter = int64_t(rng->call("randi_range", -g.jitter, g.jitter));
+    if (rng && !legal_offsets.empty()) {
+      int64_t selected = int64_t(rng->call(
+          "randi_range", 0, int64_t(legal_offsets.size()) - 1));
+      jitter = legal_offsets[selected];
+    }
     Body q;
     int64_t next_id = state.get("next_body_id", 1);
     q.id = String("body_") + String::num_int64(next_id).pad_zeros(5);
