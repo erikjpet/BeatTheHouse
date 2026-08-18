@@ -4,6 +4,7 @@ extends RefCounted
 # Deterministic, boundary-driven state model for the two launch heists.
 
 const CONFIG_PATH := "res://data/crew/heist.json"
+const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const SCHEMA_VERSION := 1
 const PLAN_COUNT := "the_count"
 const PLAN_WHALE := "the_whale_game"
@@ -55,6 +56,7 @@ static func begin(plan_id: String, action_index: int) -> Dictionary:
 		"outcome": "",
 		"payout": 0,
 		"r": {"v": 1, "s": "0"},
+		"x": CrewTurnModelScript.empty_state(),
 	})
 
 
@@ -79,6 +81,7 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"outcome": str(source.get("outcome", "")),
 		"payout": maxi(0, int(source.get("payout", 0))),
 		"r": _copy_dict(source.get("r", {"v": 1, "s": "0"})),
+		"x": CrewTurnModelScript.normalize_state(source.get("x", {}), ["crew_rook", "crew_velvet", "crew_knuckles", "crew_switch", "crew_mags", "crew_bishop", "crew_lucky"]),
 	}
 	if source.has("abort"):
 		result["abort"] = _copy_dict(source.get("abort", {}))
@@ -166,6 +169,10 @@ static func validate_content() -> Array:
 				failures.append("The Whale Game must author its cage interview beat.")
 	if ids != PLAN_IDS:
 		failures.append("heist.json must ship Plans A and B only, in contract order.")
+	failures.append_array(CrewTurnModelScript.validate_tuning(_copy_dict(source.get("hidden_resolution", {}))))
+	var outcomes := _copy_array(source.get("outcomes", []))
+	if outcomes.size() != 4 or str(_copy_dict(outcomes[3]).get("id", "")) != "closed":
+		failures.append("heist.json must fill the outcome ladder's fourth slot with the hidden failure beat.")
 	for forbidden in ["the_jackpot_job", "lights_out"]:
 		if JSON.stringify(source).to_lower().find(forbidden) != -1:
 			failures.append("heist.json contains a forbidden future-plan coupling: %s." % forbidden)

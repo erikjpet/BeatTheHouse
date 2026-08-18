@@ -19,6 +19,7 @@ const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const CrewPlayModelScript := preload("res://scripts/core/crew_play_model.gd")
 const CrewHeistModelScript := preload("res://scripts/core/crew_heist_model.gd")
+const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
@@ -514,12 +515,16 @@ func _act_seam_route_payload(seam_route: String) -> Dictionary:
 				"tone": "marked",
 			}
 		"crew_heist":
-			return {
+			var heist_payload := {
 				"hook": "town_remembers",
 				"outcome_band": str(crew_heist_state.get("outcome", "somebody_got_pinched")),
 				"plan_id": str(crew_heist_state.get("plan_id", "")),
 				"tone": "crew_exit",
 			}
+			var scar_id := str(_copy_dict(crew_heist_state.get("getaway", {})).get("scar", ""))
+			if not scar_id.is_empty():
+				heist_payload["story_scar"] = scar_id
+			return heist_payload
 		_:
 			return {}
 
@@ -6428,6 +6433,22 @@ func crew_play_active_status(game_id: String = "", environment: Dictionary = cur
 	return CrewPlayModelScript.active_status(crew_play_state, _crew_action_index(), environment, game_id)
 
 
+func crew_heist_free_play_available() -> bool:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	return str(state.get("status", "")) == CrewHeistModelScript.STATUS_PLAY and int(_copy_dict(state.get("play", {})).get("free_play", 0)) > 0
+
+
+func crew_heist_consume_free_play() -> bool:
+	if not crew_heist_free_play_available():
+		return false
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	var play := _copy_dict(state.get("play", {}))
+	play["free_play"] = maxi(0, int(play.get("free_play", 0)) - 1)
+	state["play"] = play
+	crew_heist_state = state
+	return true
+
+
 func crew_play_effect_int(play_id: String, effect_key: String, fallback: int, environment: Dictionary = current_environment) -> int:
 	return CrewPlayModelScript.effect_int(crew_play_state, play_id, effect_key, _crew_action_index(), environment, fallback)
 
@@ -6698,6 +6719,8 @@ func crew_heist_table_choices() -> Array:
 		var play := _copy_dict(crew_heist_state.get("play", {}))
 		active_choices.append({"id": "inspect", "label": "Read the live score", "text": "The locked plan is in %s." % phase.replace("_", " "), "consequences": {}})
 		if phase == CrewHeistModelScript.STATUS_SETUP:
+			active_choices.append({"id": "table_talk", "label": "Let the room talk", "text": "Nobody has stood up yet.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "observe_table"}]}})
+			active_choices.append_array(_crew_heist_private_choices())
 			if plan_id == CrewHeistModelScript.PLAN_COUNT:
 				if not bool(setup.get("schedule", false)):
 					active_choices.append({"id": "count_schedule", "label": "Watch the schedule", "text": "Hold the cage through shift change.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_schedule"}]}})
@@ -6772,6 +6795,9 @@ func _crew_heist_decision_choices(decision_id: String, values: Array) -> Array:
 func crew_heist_event_action(hook: Dictionary) -> Dictionary:
 	match str(hook.get("action", "")):
 		"lock": return crew_heist_lock(str(hook.get("plan_id", "")))
+		"observe_table": return crew_heist_observe_table()
+		"confront": return crew_heist_confront(str(hook.get("member_id", "")))
+		"hedge": return crew_heist_hedge()
 		"abort": return crew_heist_abort("planning_table")
 		"count_schedule": return crew_heist_begin_count_schedule()
 		"count_cart": return crew_heist_begin_count_swap_cart()
@@ -6790,8 +6816,161 @@ func crew_heist_lock(plan_id: String) -> Dictionary:
 		var row := _copy_dict(row_value)
 		if str(row.get("id", "")) == plan_id and bool(row.get("live", false)):
 			crew_heist_state = CrewHeistModelScript.begin(plan_id, _crew_action_index())
+			var met_members: Array = []
+			for member_id in CrewStateModelScript.MEMBER_IDS:
+				if crew_rank(member_id) != "stranger":
+					met_members.append(member_id)
+			var resolution_rng := create_rng("crew_heist_hidden").fork("lock:%s:%d" % [plan_id, _crew_action_index()])
+			crew_heist_state["x"] = CrewTurnModelScript.resolve(
+				CrewHeistModelScript.plan(plan_id), met_members, crew_grievances(), CrewStateModelScript.MEMBER_IDS,
+				_copy_dict(CrewHeistModelScript.config().get("hidden_resolution", {})), resolution_rng
+			)
 			return {"ok": not crew_heist_state.is_empty(), "plan_id": plan_id, "message": "The plan is locked. The map stays on the table."}
 	return {"ok": false, "message": "The plan's stars do not line up tonight."}
+
+
+# Only diegetic options leave this method. Hidden member ids and progress never do.
+func _crew_heist_private_choices() -> Array:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	var hidden := _copy_dict(state.get("x", {}))
+	var witnessed := CrewTurnModelScript.witnessed_count(hidden, CrewStateModelScript.MEMBER_IDS)
+	var result: Array = []
+	if witnessed == 1 and not bool(hidden.get("h", false)):
+		result.append({"id": "change_seat", "label": "Change your place at the table", "text": "Move your part without explaining why.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "hedge"}]}})
+	elif witnessed >= 2 and not bool(hidden.get("c", false)):
+		var eligible := CrewTurnModelScript.eligible_members(CrewHeistModelScript.plan(str(state.get("plan_id", ""))), _crew_heist_met_members(), CrewStateModelScript.MEMBER_IDS)
+		for member_id in eligible:
+			result.append({"id": "close_door_%s" % member_id.trim_prefix("crew_"), "label": "Close the door on %s" % member_id.trim_prefix("crew_").capitalize(), "text": "Say the name once and accept what follows.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "confront", "member_id": member_id}]}})
+	return result
+
+
+func crew_heist_observe_table() -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
+		return {"ok": false, "message": "The room has moved past talk."}
+	var hidden := CrewTurnModelScript.normalize_state(state.get("x", {}), CrewStateModelScript.MEMBER_IDS)
+	var member_id := CrewTurnModelScript.active_member(hidden, CrewStateModelScript.MEMBER_IDS)
+	if member_id.is_empty():
+		return {"ok": true, "message": "The room talks through the route one more time."}
+	var emitted := _copy_array(hidden.get("e", []))
+	if not emitted.has(CrewTurnModelScript.SIGNAL_PATTERN):
+		var learned := tell_learned(member_id)
+		hidden = CrewTurnModelScript.mark_emitted(hidden, CrewTurnModelScript.SIGNAL_PATTERN, learned, CrewStateModelScript.MEMBER_IDS)
+		state["x"] = hidden
+		crew_heist_state = state
+		if learned:
+			var patterns := CrewPokerModelScript.patterns(member_id)
+			var line := str(_copy_dict(patterns[0] if not patterns.is_empty() else {}).get("line", "%s goes still." % member_id.trim_prefix("crew_").capitalize()))
+			return {"ok": true, "message": "%s No cards are on the table." % line}
+		return {"ok": true, "message": "%s checks the route and says nothing new." % member_id.trim_prefix("crew_").capitalize()}
+	if not emitted.has(CrewTurnModelScript.SIGNAL_ROUTE):
+		var contradiction := _crew_heist_route_contradiction(member_id)
+		if not contradiction.is_empty():
+			hidden = CrewTurnModelScript.mark_emitted(hidden, CrewTurnModelScript.SIGNAL_ROUTE, true, CrewStateModelScript.MEMBER_IDS)
+			state["x"] = hidden
+			crew_heist_state = state
+			assert(bool(contradiction.get("checkable", false)), "Planning route line lacked a visited world record.")
+			return {"ok": true, "message": "%s says, 'From %s to %s, I was at %s.' You saw %s at %s during that same visit." % [member_id.trim_prefix("crew_").capitalize(), _crew_clock_label(int(contradiction.get("period_start", 0))), _crew_clock_label(int(contradiction.get("period_end", 0))), str(contradiction.get("claimed_name", "the other room")), member_id.trim_prefix("crew_").capitalize(), str(contradiction.get("actual_name", "somewhere else"))]}
+	return {"ok": true, "message": "The route gets read without another word."}
+
+
+func crew_heist_confront(member_id: String) -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	var hidden := CrewTurnModelScript.normalize_state(state.get("x", {}), CrewStateModelScript.MEMBER_IDS)
+	if str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP or CrewTurnModelScript.witnessed_count(hidden, CrewStateModelScript.MEMBER_IDS) < 2:
+		return {"ok": false, "message": "The room does not follow you there."}
+	var eligible := CrewTurnModelScript.eligible_members(CrewHeistModelScript.plan(str(state.get("plan_id", ""))), _crew_heist_met_members(), CrewStateModelScript.MEMBER_IDS)
+	if not eligible.has(member_id):
+		return {"ok": false, "message": "That chair is not yours to close."}
+	if member_id == str(hidden.get("m", "")) and not member_id.is_empty():
+		hidden["c"] = true
+		hidden["m"] = ""
+		var play := _copy_dict(state.get("play", {}))
+		play["free_play"] = 1
+		state["play"] = play
+		state["x"] = hidden
+		crew_heist_state = state
+		return {"ok": true, "message": "%s stays after the others leave. The old debt comes out plain. One chair moves closer." % member_id.trim_prefix("crew_").capitalize()}
+	grievance_add({"member_id": member_id, "kind": "wrong_accusation", "weight": 2, "source_ref": "heist_table"})
+	var tuning := _copy_dict(CrewHeistModelScript.config().get("hidden_resolution", {}))
+	var trust_cost := maxi(1, int(tuning.get("crew_trust_cost", 5)))
+	for crew_member_id in CrewStateModelScript.MEMBER_IDS:
+		crew_add_trust(crew_member_id, -trust_cost, "closed_door")
+	# Re-run only the already-real member against the increased curve. The wrong
+	# chair's new debt cannot become a candidate here, and a miss cannot fabricate
+	# evidence. Existing evidence remains valid only if that same member fires.
+	var real_member := CrewTurnModelScript.active_member(hidden, CrewStateModelScript.MEMBER_IDS)
+	var escalation := int(hidden.get("f", 0)) + 1
+	var reroll_rng := create_rng("crew_heist_hidden").fork("reroute:%s:%d:%d:%s" % [str(state.get("plan_id", "")), _crew_action_index(), escalation, real_member])
+	var rerolled := CrewTurnModelScript.resolve(CrewHeistModelScript.plan(str(state.get("plan_id", ""))), [real_member], crew_grievances(real_member), CrewStateModelScript.MEMBER_IDS, tuning, reroll_rng, escalation)
+	if str(rerolled.get("m", "")) == real_member:
+		rerolled["e"] = _copy_array(hidden.get("e", []))
+		rerolled["w"] = _copy_array(hidden.get("w", []))
+	state["x"] = rerolled
+	crew_heist_state = state
+	return {"ok": true, "message": "%s leaves first. Nobody brightens the lamp for the next name." % member_id.trim_prefix("crew_").capitalize()}
+
+
+func crew_heist_hedge() -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	var hidden := CrewTurnModelScript.normalize_state(state.get("x", {}), CrewStateModelScript.MEMBER_IDS)
+	if str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP or CrewTurnModelScript.witnessed_count(hidden, CrewStateModelScript.MEMBER_IDS) != 1 or bool(hidden.get("h", false)):
+		return {"ok": false, "message": "The seats stay where they are."}
+	hidden["h"] = true
+	if CrewTurnModelScript.active_member(hidden, CrewStateModelScript.MEMBER_IDS).is_empty():
+		var cost := maxi(1, int(_copy_dict(CrewHeistModelScript.config().get("hidden_resolution", {})).get("hedge_trust_cost", 2)))
+		for member_id in CrewStateModelScript.MEMBER_IDS:
+			crew_add_trust(member_id, -cost, "cold_feet")
+	state["x"] = hidden
+	crew_heist_state = state
+	return {"ok": true, "message": "You move your own chair. The room notices and lets you keep the explanation."}
+
+
+func _crew_heist_met_members() -> Array:
+	var result: Array = []
+	for member_id in CrewStateModelScript.MEMBER_IDS:
+		if crew_rank(member_id) != "stranger":
+			result.append(member_id)
+	return result
+
+
+func _crew_heist_route_contradiction(member_id: String) -> Dictionary:
+	var actual := {}
+	for node_value in _copy_array(world_map.get("nodes", [])):
+		var node := _copy_dict(node_value)
+		if str(node.get("state", "")) != "visited":
+			continue
+		var environment := _copy_dict(node.get("environment", {}))
+		var period_start := int(environment.get("entered_game_clock_minutes", -1))
+		var period_end := int(environment.get("departed_game_clock_minutes", -1))
+		if period_start < 0 or period_end <= period_start:
+			continue
+		for presence_value in _copy_array(environment.get("crew_presence", [])):
+			if str(_copy_dict(presence_value).get("member_id", "")) == member_id:
+				actual = {"id": str(node.get("id", "")), "name": str(node.get("label", node.get("id", "the room"))), "period_start": period_start, "period_end": period_end}
+				break
+		if not actual.is_empty():
+			break
+	if actual.is_empty():
+		return {}
+	var claimed := {}
+	for node_value in _copy_array(world_map.get("nodes", [])):
+		var node := _copy_dict(node_value)
+		if str(node.get("id", "")) != str(actual.get("id", "")):
+			claimed = {"id": str(node.get("id", "")), "name": str(node.get("label", node.get("id", "the other room")))}
+			break
+	if claimed.is_empty():
+		return {}
+	return {"checkable": true, "actual_node_id": str(actual.get("id", "")), "actual_name": str(actual.get("name", "")), "claimed_node_id": str(claimed.get("id", "")), "claimed_name": str(claimed.get("name", "")), "period_start": int(actual.get("period_start", 0)), "period_end": int(actual.get("period_end", 0))}
+
+
+static func _crew_clock_label(total_minutes: int) -> String:
+	var minute_of_day := maxi(0, total_minutes) % 1440
+	var hour_24 := int(floor(float(minute_of_day) / 60.0)) % 24
+	var hour_12 := hour_24 % 12
+	if hour_12 == 0:
+		hour_12 = 12
+	return "%d:%02d %s" % [hour_12, minute_of_day % 60, "AM" if hour_24 < 12 else "PM"]
 
 
 func crew_heist_abort(reason: String = "retreated") -> Dictionary:
@@ -7024,6 +7203,9 @@ func crew_heist_play_round(round_data: Dictionary) -> Dictionary:
 			if int(hazard_round_value) == next_round:
 				hazard = true
 				break
+		var hidden := CrewTurnModelScript.normalize_state(state.get("x", {}), CrewStateModelScript.MEMBER_IDS)
+		if hazard and not CrewTurnModelScript.active_member(hidden, CrewStateModelScript.MEMBER_IDS).is_empty():
+			return _crew_heist_finish_whale_exposure(state, next_round, hidden)
 		var honest := bool(round_data.get("honest", false))
 		if hazard:
 			var hazards := _copy_array(play.get("hazards", []))
@@ -7048,6 +7230,53 @@ func crew_heist_play_round(round_data: Dictionary) -> Dictionary:
 	state["play"] = play
 	crew_heist_state = state
 	return {"ok": true, "round": next_round, "score": int(play.get("score", 0)), "ready": next_round >= int(tuning.get("required_rounds", 1))}
+
+
+# Plan B breaks at the felt, before interview/getaway. The exposed rig costs the
+# live pot and raises concrete house attention; a changed seat saves only a
+# deterministic partial haul and closes Out Hot at the same mid-game boundary.
+func _crew_heist_finish_whale_exposure(state_value: Dictionary, round_index: int, hidden: Dictionary) -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(state_value)
+	var play := _copy_dict(state.get("play", {}))
+	play["round"] = round_index
+	play["interrupted"] = "house_points_at_rig"
+	state["play"] = play
+	var hedged := bool(hidden.get("h", false))
+	var outcome := "out_hot" if hedged else "closed"
+	var payout := 0
+	var scar_id := ""
+	if hedged:
+		payout = _crew_heist_hidden_partial_payout(state)
+		add_suspicion("heist_whale_exit", 10, "crew_heist", true, {}, true)
+	else:
+		scar_id = "rig_exposure"
+		add_suspicion("heist_whale_rig_exposed", 25, "contraband", true, {}, true)
+	grand_casino_chips = 0
+	bankroll += payout
+	state["status"] = CrewHeistModelScript.STATUS_COMPLETED
+	state["outcome"] = outcome
+	state["payout"] = payout
+	if not scar_id.is_empty():
+		play["scar"] = scar_id
+		state["play"] = play
+		story_flags["heist_scar_%s" % scar_id] = true
+	crew_heist_state = state
+	narrative_flags["heist_live_table_active"] = false
+	_crew_heist_sync_live_table_event(state)
+	var message := CrewHeistModelScript.ending_line(CrewHeistModelScript.PLAN_WHALE, outcome)
+	narrative_flags["crew_heist_outcome"] = outcome
+	narrative_flags["crew_heist_plan_id"] = CrewHeistModelScript.PLAN_WHALE
+	_complete_demo_objective({"id": "crew_heist", "target_bankroll": bankroll, "victory_message": message}, message, {"finale_event_id": "heist_finale", "finale_branch": outcome, "demo_victory_route": "crew_heist"})
+	narrative_flags["act_two_seam_ready"] = true
+	return {"ok": true, "resolved": true, "outcome": outcome, "payout": payout, "message": message}
+
+
+func _crew_heist_hidden_partial_payout(state: Dictionary) -> int:
+	var band := _copy_array(_copy_dict(CrewHeistModelScript.config().get("hidden_resolution", {})).get("partial_haul_percent_band", [35, 55]))
+	var low := int(band[0]) if band.size() > 0 else 35
+	var high := int(band[1]) if band.size() > 1 else low
+	var partial_rng := create_rng("crew_heist_hidden").fork("partial:%s:%d" % [str(state.get("plan_id", "")), int(state.get("locked_action", 0))])
+	return int(floor(float(CrewHeistModelScript.payout_for(state, "clean_sweep")) * float(partial_rng.randi_range(low, high)) / 100.0))
 
 
 func crew_heist_begin_interview() -> Dictionary:
@@ -7351,8 +7580,19 @@ func _crew_heist_apply_delivery_resolution(run_id: String, succeeded: bool, reso
 	if part != "getaway" or str(state.get("status", "")) != CrewHeistModelScript.STATUS_GETAWAY:
 		return
 	var play := _copy_dict(state.get("play", {}))
+	var hidden := CrewTurnModelScript.normalize_state(state.get("x", {}), CrewStateModelScript.MEMBER_IDS)
+	var active_member := CrewTurnModelScript.active_member(hidden, CrewStateModelScript.MEMBER_IDS)
 	var outcome := CrewHeistModelScript.ladder(int(play.get("score", 0)), succeeded, bool(play.get("made", false)), bool(play.get("bust", false)))
 	var payout := CrewHeistModelScript.payout_for(state, outcome)
+	var scar_id := ""
+	if not active_member.is_empty():
+		if bool(hidden.get("h", false)):
+			outcome = "out_hot"
+			payout = _crew_heist_hidden_partial_payout(state)
+		else:
+			outcome = "closed"
+			payout = 0
+			scar_id = "corridor_breach" if str(state.get("plan_id", "")) == CrewHeistModelScript.PLAN_COUNT else "rig_exposure"
 	if str(state.get("plan_id", "")) == CrewHeistModelScript.PLAN_WHALE:
 		grand_casino_chips = 0
 	bankroll += payout
@@ -7362,6 +7602,12 @@ func _crew_heist_apply_delivery_resolution(run_id: String, succeeded: bool, reso
 	var getaway := _copy_dict(state.get("getaway", {}))
 	getaway["status"] = "success" if succeeded else "failed"
 	getaway["resolution"] = resolution.duplicate(true)
+	if not scar_id.is_empty():
+		getaway["scar"] = scar_id
+		if scar_id == "corridor_breach":
+			getaway["corridor_failed"] = true
+			add_suspicion("heist_count_corridor_breach", 15, "crew_heist", true, {}, true)
+		story_flags["heist_scar_%s" % scar_id] = true
 	state["getaway"] = getaway
 	crew_heist_state = state
 	narrative_flags["heist_live_table_active"] = false
@@ -7492,10 +7738,16 @@ func job_resolve(job_id: String, outcome: String) -> Dictionary:
 	var member_id := str(job.get("member_id", ""))
 	if outcome == "success":
 		var rewards: Dictionary = job.get("rewards", {}) if typeof(job.get("rewards", {})) == TYPE_DICTIONARY else {}
-		var cash_reward := maxi(0, int(rewards.get("cash", 0)))
+		var posted_cash := maxi(0, int(rewards.get("cash", 0)))
+		var payment := _crew_heist_job_payment(member_id, posted_cash, job_id)
+		var cash_reward := maxi(0, int(payment.get("paid", posted_cash)))
 		if cash_reward > 0:
 			change_bankroll(cash_reward, true)
 		crew_add_trust(member_id, int(rewards.get("trust", 0)), "job:%s" % str(job.get("definition_id", "")))
+		if cash_reward != posted_cash:
+			job["posted_cash"] = posted_cash
+			job["paid_cash"] = cash_reward
+			job["payment_note"] = "The board says $%d. The envelope holds $%d." % [posted_cash, cash_reward]
 	else:
 		var failure: Dictionary = job.get("failure", {}) if typeof(job.get("failure", {})) == TYPE_DICTIONARY else {}
 		crew_add_trust(member_id, int(failure.get("trust", 0)), "job:%s:%s" % [str(job.get("definition_id", "")), outcome])
@@ -7512,6 +7764,23 @@ func job_resolve(job_id: String, outcome: String) -> Dictionary:
 	job["resolved_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
 	return job.duplicate(true)
+
+
+func _crew_heist_job_payment(member_id: String, posted_cash: int, job_id: String) -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP or posted_cash <= 0:
+		return {"paid": posted_cash}
+	var hidden := CrewTurnModelScript.normalize_state(state.get("x", {}), CrewStateModelScript.MEMBER_IDS)
+	if CrewTurnModelScript.active_member(hidden, CrewStateModelScript.MEMBER_IDS) != member_id or _copy_array(hidden.get("e", [])).has(CrewTurnModelScript.SIGNAL_PAYMENT):
+		return {"paid": posted_cash}
+	var percent := clampi(int(_copy_dict(CrewHeistModelScript.config().get("hidden_resolution", {})).get("payment_shortfall_percent", 25)), 1, 90)
+	var shortfall := maxi(1, int(ceil(float(posted_cash) * float(percent) / 100.0)))
+	var paid := maxi(0, posted_cash - shortfall)
+	hidden = CrewTurnModelScript.mark_emitted(hidden, CrewTurnModelScript.SIGNAL_PAYMENT, true, CrewStateModelScript.MEMBER_IDS)
+	state["x"] = hidden
+	crew_heist_state = state
+	assert(posted_cash - paid == shortfall and shortfall > 0, "Job payment did not retain a checkable board figure.")
+	return {"paid": paid, "posted": posted_cash, "source": job_id}
 
 
 # Player-safe Layer 3 board projection. Only jobs owned by crew physically in
@@ -7566,7 +7835,7 @@ func crew_job_board_choices(payload: Dictionary = {}) -> Array:
 			"text": detail,
 			"consequences": {"event_hooks": [{"type": "crew_job_accept", "definition_id": str(offer.get("definition_id", ""))}]},
 		})
-	result.append({"id": "leave", "label": "Leave the board", "text": "No promise made. No grievance written.", "consequences": {}})
+	result.append({"id": "leave", "label": "Leave the board", "text": "No promise made. The chalk stays clean.", "consequences": {}})
 	return result
 
 
@@ -8290,7 +8559,9 @@ func delivery_complete_handoff(node_id: String = "") -> Dictionary:
 	if JSON.stringify(delivery_snapshot()) == before:
 		return {"ok": false, "message": "This is not the marked handoff."}
 	_apply_delivery_resolution()
-	return {"ok": true, "resolved": not delivery_has_active_run(), "snapshot": delivery_snapshot(), "message": "The package changes hands. Nothing else does."}
+	var receipt := _copy_dict(active_delivery_run.get("receipt", {}))
+	var handoff_message := str(receipt.get("payment_note", "The package changes hands. Nothing else does."))
+	return {"ok": true, "resolved": not delivery_has_active_run(), "snapshot": delivery_snapshot(), "message": handoff_message}
 
 
 func delivery_use_getaway_assist(assist_id: String) -> Dictionary:
@@ -8539,7 +8810,14 @@ func _apply_delivery_resolution() -> void:
 		narrative_flags[str(flag_value)] = _copy_dict(effects.get("flags", {})).get(flag_value)
 	var job_id := str(active_delivery_run.get("job_id", ""))
 	if not job_id.is_empty():
-		job_resolve(job_id, "success" if succeeded else "failed")
+		var job_result := job_resolve(job_id, "success" if succeeded else "failed")
+		var payment_note := str(job_result.get("payment_note", "")).strip_edges()
+		if not payment_note.is_empty():
+			active_delivery_run["receipt"] = {
+				"posted_cash": int(job_result.get("posted_cash", 0)),
+				"paid_cash": int(job_result.get("paid_cash", 0)),
+				"payment_note": payment_note,
+			}
 	var run_id := str(active_delivery_run.get("run_id", ""))
 	if run_id.begins_with("heist:"):
 		_crew_heist_apply_delivery_resolution(run_id, succeeded, resolution)
@@ -11506,7 +11784,9 @@ func to_dict() -> Dictionary:
 		"story_flags": story_flags.duplicate(true),
 		"story_log": _normalize_story_log(story_log),
 		"story_log_archive_count": story_log_archive_count,
-		"crew_state": _crew_state_for_save(true),
+		# Runtime serialization remains the established public projection for
+		# compatibility/goldens. Persistent saves use to_save_snapshot().
+		"crew_state": _crew_state_for_save(true, false),
 		"active_delivery_run": active_delivery_run.duplicate(true),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": normalize_heat_history(heat_history),
@@ -11584,7 +11864,7 @@ func to_save_snapshot() -> Dictionary:
 		"story_flags": story_flags.duplicate(false),
 		"story_log": story_log.duplicate(false),
 		"story_log_archive_count": story_log_archive_count,
-		"crew_state": _crew_state_for_save(false),
+		"crew_state": _crew_state_for_save(false, true),
 		"active_delivery_run": active_delivery_run.duplicate(false),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": heat_history.duplicate(false),
@@ -12052,18 +12332,97 @@ static func _world_map_for_save_snapshot(map_data: Dictionary) -> Dictionary:
 	return snapshot
 
 
-func _crew_state_for_save(deep_copy: bool) -> Dictionary:
+func _crew_pack_ledger() -> Array:
+	var result: Array = []
+	for entry_value in crew_grievance_ledger:
+		var entry := _copy_dict(entry_value)
+		var member_index := CrewStateModelScript.MEMBER_IDS.find(str(entry.get("member_id", "")))
+		var kind_index := CrewStateModelScript.GRIEVANCE_KINDS.find(str(entry.get("kind", "")))
+		if member_index >= 0 and kind_index >= 0:
+			result.append([
+				member_index,
+				kind_index,
+				maxi(1, int(entry.get("weight", 1))),
+				maxi(0, int(entry.get("turn_recorded", 0))),
+				str(entry.get("id", "")).to_utf8_buffer().hex_encode(),
+				str(entry.get("source_ref", "")).to_utf8_buffer().hex_encode(),
+			])
+	return result
+
+
+func _crew_unpack_ledger(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	var source: Array = value
+	# Backward-compatible reader for pre-crew06_9 saves.
+	if not source.is_empty() and typeof(source[0]) == TYPE_DICTIONARY:
+		return CrewStateModelScript.normalize_grievances(source)
+	var decoded: Array = []
+	for index in range(source.size()):
+		if typeof(source[index]) != TYPE_ARRAY:
+			continue
+		var row: Array = source[index]
+		if row.size() < 4:
+			continue
+		var member_index := int(row[0])
+		var kind_index := int(row[1])
+		if member_index < 0 or member_index >= CrewStateModelScript.MEMBER_IDS.size() or kind_index < 0 or kind_index >= CrewStateModelScript.GRIEVANCE_KINDS.size():
+			continue
+		var entry_id := str(row[4]).hex_decode().get_string_from_utf8() if row.size() > 4 else "g%04d" % (index + 1)
+		var source_ref := str(row[5]).hex_decode().get_string_from_utf8() if row.size() > 5 else ""
+		decoded.append({"id": entry_id, "member_id": CrewStateModelScript.MEMBER_IDS[member_index], "kind": CrewStateModelScript.GRIEVANCE_KINDS[kind_index], "weight": maxi(1, int(row[2])), "turn_recorded": maxi(0, int(row[3])), "source_ref": source_ref})
+	return decoded
+
+
+func _crew_jobs_for_save(deep_copy: bool) -> Dictionary:
+	var result := crew_jobs.duplicate(deep_copy)
+	for job_id in result.keys():
+		var job := _copy_dict(result.get(job_id, {}))
+		var failure := _copy_dict(job.get("failure", {}))
+		var kind_index := CrewStateModelScript.GRIEVANCE_KINDS.find(str(failure.get("grievance_kind", "")))
+		failure.erase("grievance_kind")
+		failure.erase("grievance_weight")
+		if kind_index >= 0:
+			failure["g"] = [kind_index, maxi(1, int(_copy_dict(job.get("failure", {})).get("grievance_weight", 1)))]
+		job["failure"] = failure
+		result[job_id] = job
+	return result
+
+
+func _crew_jobs_from_save(value: Variant) -> Dictionary:
+	var result: Dictionary = (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+	for job_id in result.keys():
+		var job := _copy_dict(result.get(job_id, {}))
+		var failure := _copy_dict(job.get("failure", {}))
+		var packed := _copy_array(failure.get("g", []))
+		if packed.size() >= 2:
+			var kind_index := int(packed[0])
+			failure["grievance_kind"] = CrewStateModelScript.GRIEVANCE_KINDS[kind_index] if kind_index >= 0 and kind_index < CrewStateModelScript.GRIEVANCE_KINDS.size() else ""
+			failure["grievance_weight"] = maxi(1, int(packed[1]))
+			failure.erase("g")
+		job["failure"] = failure
+		result[job_id] = job
+	return result
+
+
+func _crew_state_for_save(deep_copy: bool, opaque_hidden: bool = false) -> Dictionary:
 	var result := {
 		"schema_version": CrewStateModelScript.STATE_SCHEMA_VERSION,
 		"trust": crew_trust_by_member.duplicate(deep_copy),
-		"grievances": crew_grievance_ledger.duplicate(deep_copy),
-		"jobs": crew_jobs.duplicate(deep_copy),
-		"grievance_sequence": crew_grievance_sequence,
+		"jobs": _crew_jobs_for_save(deep_copy),
 		"job_sequence": crew_job_sequence,
 		# Neutral keys keep the hidden learning model opaque in raw saves.
 		"p": CrewPokerModelScript.pack_observations(crew_pattern_memory),
 		"m": crew_match_marks.duplicate(deep_copy),
 	}
+	# The runtime projection is byte-compatible with the established crew API.
+	# The actual persistent projection is opaque even when the ledger is empty.
+	if not opaque_hidden:
+		result["grievances"] = crew_grievance_ledger.duplicate(deep_copy)
+		result["grievance_sequence"] = crew_grievance_sequence
+	else:
+		result["g"] = _crew_pack_ledger()
+		result["q"] = crew_grievance_sequence
 	# Keep a crew-ignoring save byte-identical to the crew06_1 projection. The
 	# optional field carries its own addition version only after the stash is used.
 	if not crew_contraband_stash.is_empty():
@@ -12083,9 +12442,9 @@ func _crew_state_for_save(deep_copy: bool) -> Dictionary:
 
 func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	crew_trust_by_member = CrewStateModelScript.normalize_trust(saved.get("trust", {}))
-	crew_grievance_ledger = CrewStateModelScript.normalize_grievances(saved.get("grievances", []))
-	crew_jobs = CrewStateModelScript.normalize_jobs(saved.get("jobs", {}))
-	crew_grievance_sequence = maxi(int(saved.get("grievance_sequence", crew_grievance_ledger.size())), crew_grievance_ledger.size())
+	crew_grievance_ledger = _crew_unpack_ledger(saved.get("g", saved.get("grievances", [])))
+	crew_jobs = CrewStateModelScript.normalize_jobs(_crew_jobs_from_save(saved.get("jobs", {})))
+	crew_grievance_sequence = maxi(int(saved.get("q", saved.get("grievance_sequence", crew_grievance_ledger.size()))), crew_grievance_ledger.size())
 	crew_job_sequence = maxi(int(saved.get("job_sequence", crew_jobs.size())), crew_jobs.size())
 	crew_pattern_memory = CrewPokerModelScript.unpack_observations(saved.get("p", {}))
 	crew_match_marks = {}
