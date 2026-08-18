@@ -6,23 +6,39 @@
     "numbers": "Low ticket outlay repeats across a run; crew-fix cuts are intermittent income and must stay below a strong table session in aggregate.",
     "coin_pusher": "Coin feed is the recurring sink; tray collection is the sole credit boundary. Prize riders and progressive cells are burst sources, not passive income.",
     "crew": "Job stakes, components, and Mags cash costs are deliberate mid-run sinks; job rewards and successful cuts are bounded sources tied to completed play.",
-    "heist": "Plan costs and payout bands are excluded from this content pass and remain release06_1 balance authority.",
+    "heist": "The Count risks three ordinary $8-30 blackjack sessions plus normal setup-route costs for a terminal $720-1,150 payout. The Whale requires $60 of qualifying losses, $120 of run-wide scored spending, a sourced False-Bottom Cup, and craps training; its 650-chip invitational pot moves through real game results and cashes once in a clamped $180-1,300 band.",
     "souvenirs": "Scenario souvenirs enter free through one resolved event and sell for 4-14 cash; their value is memory plus a small existing-hook effect, never a primary income route."
   },
   "new_sink_bands": {
-    "mags_bench_cash": [32, 46],
+    "mags_bench_cash": [32, 44],
     "punchline_cover": 14,
-    "punchline_private_table": 24
+    "punchline_private_table": 24,
+    "heist_count_identity_session_bet": [8, 30],
+    "heist_count_identity_sessions_required": 3,
+    "heist_whale_required_loss": 60,
+    "heist_whale_run_spending_requirement": 120,
+    "heist_abort_formula": "15 + 10 per authored setup-state key, capped at bankroll - 1 so the run survives"
   },
   "new_source_bands": {
     "souvenir_resale": [4, 14],
-    "open_bar_cash_value": 0
+    "open_bar_cash_value": 0,
+    "heist_count_terminal_payout": [720, 1150],
+    "heist_whale_starting_chip_pot": 650,
+    "heist_whale_terminal_payout": [180, 1300]
+  },
+  "heist_interactions": {
+    "the_count": "Identity sessions settle through ordinary blackjack, so their net wins/losses remain real run economy. Schedule and swap-cart setup use the normal travel/delivery framework. Outcome payout is flat by ladder rung: pinched 720, out hot 900, clean sweep 1,150.",
+    "the_whale_game": "The $120 name requirement reads existing run-wide scored spending rather than charging a second fee. The $60 vouch loss is real loss exposure. The rig prerequisite checks—but does not consume—the False-Bottom Cup and existing craps training. The seeded 650 chips become the authoritative pot, real mixed-game results grow or bust it, the finale clears the chips, then pays the clamped $180-1,300 pot once.",
+    "abort": "Before Play, abort charges 15 plus 10 for each stored setup-state key and caps payment at bankroll minus one. Abort does not end the run, but permanently closes both heist plans for that run.",
+    "repeatability": "Either completed plan ends Act 1 through the crew-heist victory route; abort is one-way. Neither payout is a repeatable farming source."
   },
   "flagged_for_release06_1": [
     "Compare repeatable Numbers crew cuts against median Act 1 table profit after human playtest.",
     "Measure pusher tray EV by variation with persisted loaded machines; do not infer EV from initial stock.",
-    "Check whether crew job rewards plus waived travel costs overfund the 32-46 cash bench band.",
-    "Review heist payout bands only after both complete plans have human completion-time data.",
+    "Check whether crew job rewards plus waived travel costs overfund the $32-44 cash bench band.",
+    "Compare The Count's $720/$900/$1,150 ladder against three identity-session outcomes and its two setup-route costs after human completion-time data.",
+    "Check The Whale's $180-1,300 pot payout against its real $60 loss requirement and overlapping $120 run-spending requirement; do not count the latter as a second direct fee.",
+    "Review whether the setup-key-count abort formula communicates a predictable cost as metadata keys accumulate, without changing its survivable bankroll cap in this pass.",
     "Confirm free souvenir resale cannot be repeated through scenario revisit or save reload."
   ]
 }
