@@ -4,6 +4,7 @@ extends RefCounted
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const JackpotRidgeScript := preload("res://scripts/games/coin_pusher/jackpot_ridge.gd")
 
 const SOUVENIR_EVENTS := {
 	"scenario_delivery_day_stock": "delivery_twine",
@@ -20,7 +21,7 @@ const SOUVENIR_EVENTS := {
 	"scenario_festival_lucky_pitch": "festival_brass_token",
 	"scenario_estate_lot_provenance": "estate_map_clasp",
 }
-const BENCH_OUTPUTS := ["mags_loaded_dice", "mags_tuned_loupe", "mags_lined_sleeve", "mags_shim_kit"]
+const BENCH_OUTPUTS := ["mags_loaded_dice", "mags_tuned_loupe", "mags_lined_sleeve", "mags_nudge_dampener", "mags_shim_kit"]
 
 
 static func check(library: ContentLibrary, failures: Array) -> void:
@@ -99,6 +100,24 @@ static func _check_bench(library: ContentLibrary, failures: Array) -> void:
 	module.setup(definition, library)
 	if module.choices(run, run.current_environment).size() != 1:
 		failures.append("Mags' bench exposed gear before Mags' rank gate.")
+	var nudge_gate := RunStateScript.new()
+	nudge_gate.start_new("CONTENT-NUDGE-GATE")
+	nudge_gate.bankroll = 42
+	nudge_gate.current_environment = run.current_environment.duplicate(true)
+	nudge_gate.crew_add_trust("crew_mags", CrewStateModelScript.rank_threshold("associate"), "content_fixture")
+	nudge_gate.add_item("timing_bracelet")
+	if _has_choice(module.choices(nudge_gate, nudge_gate.current_environment), "craft_nudge_dampener"):
+		failures.append("Mags' nudge dampener bypassed its Made rank gate.")
+	nudge_gate.crew_add_trust("crew_mags", CrewStateModelScript.rank_threshold("made") - CrewStateModelScript.rank_threshold("associate"), "content_fixture")
+	nudge_gate.remove_item("timing_bracelet")
+	if _has_choice(module.choices(nudge_gate, nudge_gate.current_environment), "craft_nudge_dampener"):
+		failures.append("Mags' nudge dampener bypassed its Timing Bracelet component gate.")
+	nudge_gate.add_item("timing_bracelet")
+	if not _has_choice(module.choices(nudge_gate, nudge_gate.current_environment), "craft_nudge_dampener"):
+		failures.append("Mags' nudge dampener did not open at its authored rank/cash/component boundary.")
+	nudge_gate.bankroll = 41
+	if _has_choice(module.choices(nudge_gate, nudge_gate.current_environment), "craft_nudge_dampener"):
+		failures.append("Mags' nudge dampener bypassed its $42 cash gate.")
 	run.crew_add_trust("crew_mags", CrewStateModelScript.rank_threshold("inner_circle"), "content_fixture")
 	for entry_value in catalog:
 		for item_id_value in _array((entry_value as Dictionary).get("requires_items", [])):
@@ -107,6 +126,25 @@ static func _check_bench(library: ContentLibrary, failures: Array) -> void:
 	var available := module.choices(run, run.current_environment)
 	if available.size() != catalog.size() + 1:
 		failures.append("Mags' full-rank/cash/component gate did not expose the complete catalog.")
+	var nudge_entry: Dictionary = {}
+	for entry_value in catalog:
+		if str((entry_value as Dictionary).get("output_item", "")) == "mags_nudge_dampener":
+			nudge_entry = entry_value
+			break
+	if nudge_entry.is_empty():
+		failures.append("Mags' bench is missing the authored nudge dampener entry.")
+	else:
+		var nudge_result := module.resolve(run, run.current_environment, str(nudge_entry.get("id", "")))
+		var nudge_deltas := _dict(nudge_result.get("deltas", {}))
+		if int(nudge_deltas.get("bankroll_delta", 0)) != -int(nudge_entry.get("cash_cost", 0)) \
+			or _array(nudge_deltas.get("inventory_remove", [])) != _array(nudge_entry.get("requires_items", [])) \
+			or _array(nudge_deltas.get("inventory_add", [])) != ["mags_nudge_dampener"]:
+			failures.append("Mags' nudge dampener did not emit its exact cash/component/output deltas.")
+		run.add_item("mags_nudge_dampener")
+		if run.item_effect_total("coin_pusher_nudge_tolerance_band_delta", "coin_pusher") != 1:
+			failures.append("Mags' nudge dampener did not expose exactly one existing coin-pusher tolerance band.")
+		if JackpotRidgeScript.tolerance_band_bonus(run, {"tolerance_band_size": 2}) != 2:
+			failures.append("Mags' nudge dampener did not reach Jackpot Ridge's existing tolerance-band hook.")
 	if not catalog.is_empty():
 		var first_entry: Dictionary = catalog[0]
 		var resolved := module.resolve(run, run.current_environment, str(first_entry.get("id", "")))
@@ -126,6 +164,13 @@ static func _check_bench(library: ContentLibrary, failures: Array) -> void:
 
 static func _array(value: Variant) -> Array:
 	return value as Array if typeof(value) == TYPE_ARRAY else []
+
+
+static func _has_choice(choices: Array, choice_id: String) -> bool:
+	for choice_value in choices:
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == choice_id:
+			return true
+	return false
 
 
 static func _dict(value: Variant) -> Dictionary:
