@@ -899,6 +899,10 @@ func back_to_environment() -> void:
 	if game_exit_settle_active:
 		return
 	if current_game != null and run_state != null and current_game.requires_chunked_exit_settle(run_state, run_state.current_environment):
+		# Leaving is already authoritative even though this machine preserves a
+		# few rendered settle frames. A queued action refresh must not execute
+		# into that exit-only presentation window.
+		_invalidate_deferred_embedded_action_refresh()
 		game_exit_settle_active = true
 		last_game_exit_final_projection_rendered = false
 		var begin := current_game.begin_chunked_exit_settle(run_state, run_state.current_environment)
@@ -1122,7 +1126,12 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 			merged_preferences[preference_key] = (preference_patch_value as Dictionary)[preference_key]
 		_store_current_game_surface_ui_state(merged_preferences, false)
 	elif command.has("ui_state") and typeof(command.get("ui_state")) == TYPE_DICTIONARY:
-		_store_current_game_surface_ui_state(command.get("ui_state", {}) as Dictionary, not bool(command.get("surface_transient", false)))
+		# `surface_command()` normalizes commands with an empty ui_state. That
+		# compatibility default is not an instruction to erase unrelated host
+		# preferences; explicit preference patches own intentional clears.
+		var command_ui_state: Dictionary = command.get("ui_state", {})
+		if not command_ui_state.is_empty():
+			_store_current_game_surface_ui_state(command_ui_state, not bool(command.get("surface_transient", false)))
 	if command.has("selected_index") and game_surface_canvas != null:
 		game_surface_canvas.set_selected_index(int(command.get("selected_index", index)))
 	var direct_resolve := bool(command.get("direct_resolve", false))
@@ -1841,6 +1850,10 @@ func _game_surface_realtime_state_patch(now_msec: int, current_surface_state_ove
 
 func _augment_game_surface_realtime_patch(patch: Dictionary, ui_state: Dictionary) -> void:
 	_sync_surface_feature_music_state(patch)
+	# The host clock is part of every realtime boundary even when a module emits
+	# only its changed machine fields. Without this stamp the canvas can repeatedly
+	# present an old/absent time while the live session has already advanced.
+	patch["surface_time_msec"] = int(ui_state.get("surface_time_msec", _environment_simulation_time_msec()))
 	if patch.has("surface_renderer"):
 		var surface_renderer := str(patch.get("surface_renderer", ""))
 		patch["surface_life"] = str(patch.get("surface_life", _surface_life_for_renderer(surface_renderer)))

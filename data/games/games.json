@@ -3613,7 +3613,51 @@
         "identity": "quarter_falls",
         "marquee": "QUARTER FALLS",
         "palette": "carnival_brass_red",
-        "topper_style": "coin_crown"
+        "topper_style": "coin_crown",
+        "colors": {
+          "body": "#6f2028",
+          "side": "#3c111b",
+          "trim": "#e7b84f",
+          "light": "#fff0a6",
+          "glass": "#82c9d8",
+          "deck": "#173b42",
+          "platform": "#d49c42",
+          "backglass": "#46131c"
+        },
+        "variations": {
+          "jackpot_ridge": {
+            "identity": "jackpot_ridge",
+            "marquee": "JACKPOT RIDGE",
+            "palette": "ridge_purple_gold",
+            "topper_style": "ridge_peak",
+            "colors": {
+              "body": "#45205f",
+              "side": "#241135",
+              "trim": "#efc04d",
+              "light": "#ffe68a",
+              "glass": "#9c88dc",
+              "deck": "#211b4e",
+              "platform": "#754ea1",
+              "backglass": "#311544"
+            }
+          },
+          "vault_drop": {
+            "identity": "vault_drop",
+            "marquee": "THE VAULT DROP",
+            "palette": "vault_steel_teal",
+            "topper_style": "vault_dial",
+            "colors": {
+              "body": "#354b55",
+              "side": "#1c2b32",
+              "trim": "#4bd8c8",
+              "light": "#b9fff1",
+              "glass": "#72bac2",
+              "deck": "#17343b",
+              "platform": "#5e8790",
+              "backglass": "#203c43"
+            }
+          }
+        }
       },
       "economy": {"documented_ev_band": [0.72, 0.94]},
       "sub_game": {}
