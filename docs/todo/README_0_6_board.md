@@ -120,11 +120,11 @@ a *rendering* project rather than a gameplay rewrite.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| pusher06_0 | `pusher06_0_physics_lab_prompt.md` | OPTIONAL | rework06_2 accepted | — | | | | Measurement/hardening only: coin cap, frame/solver/render p95, pathology counts, Windows-vs-Web parity, adversarial + long-run. Claim ONLY if rework06_2 did not measure these rigorously. |
-| pusher06_1 | `pusher06_1_solver_core_prompt.md` | REFERENCE | rework06_2 accepted | — | | | | Substance delivered by rework06_2. Use as an acceptance checklist against the landed solver — especially the authority rule (what crosses the tray edge is what pays; no steered outcomes) and emergent-RTP-by-machine-tuning. |
+| pusher06_0 | SUPERSEDED | OPTIONAL | rework06_2 accepted | — | | | | Superseded by the V3 machine rework (`coin_pusher_v3_machine_rework_plan.md`, owner round-6 design session 2026-08-17). Do not claim. |
+| pusher06_1 | SUPERSEDED | REFERENCE | rework06_2 accepted | — | | | | Superseded by the V3 machine rework (`coin_pusher_v3_machine_rework_plan.md`, owner round-6 design session 2026-08-17). Do not claim. |
 | pusher06_2 | `pusher06_2_presentation_audio_prompt.md` | DONE | rework06_2 accepted | pusher06_3 | PM:Codex/sub:pusher-depth | 2026-08-17 | 2026-08-17 | PM verified the 160/150 dense snapshot-authoritative render/audio pass, unchanged deterministic outcomes, sub-16 ms shipped-cap actions, exact 200-action Windows/Web native parity, clean exports, seven player-readable feel captures, and the complete green prompt gate matrix. |
-| pusher06_3 | `pusher06_3_variations_prompt.md` | TODO | pusher06_2 | pusher06_4 | | | | Prove Ridge and Vault are genuinely different machines on the new solver, with physical pucks/fragments. Distinctness is the acceptance bar. |
-| pusher06_4 | `pusher06_4_environment_integration_prompt.md` | TODO | pusher06_1/2/3 landed | coin pusher closure | | | | Venue presence, persistence at run scale with measured save-size, rumor/sweep/scenario/reputation wiring, class guard. |
+| pusher06_3 | SUPERSEDED | TODO | pusher06_2 | pusher06_4 | | | | Superseded by the V3 machine rework (`coin_pusher_v3_machine_rework_plan.md`, owner round-6 design session 2026-08-17). Do not claim. |
+| pusher06_4 | SUPERSEDED | TODO | pusher06_1/2/3 landed | coin pusher closure | | | | Superseded by the V3 machine rework (`coin_pusher_v3_machine_rework_plan.md`, owner round-6 design session 2026-08-17). Do not claim. |
 
 ### Concurrent track — parallel-safe, no dependency on the pusher or crew waves
 
@@ -139,6 +139,28 @@ stated in each prompt** — `events.json` in particular is shared, and
 | env06_5 | `env06_5_scenario_backlog_prompt.md` | DONE | env06_1/2/3 (DONE) | playtest variety | PM:Codex/sub:env-audit | 2026-08-16 | 2026-08-17 | All 13 complete backlog scenarios accepted: exact 55-scenario catalog, 13 scenario-owned events, 20-seed full/launch reach, phases/save-load/layer/tutorial checks, systems/UI assertions, determinism, three-venue smoke, and zero-warning visual QA. |
 | art06_1 | `art06_1_punchline_layers_prompt.md` | CLOSED — FALSE PREMISE | env06_4 (DONE) | — | owner-side finding | 2026-08-16 | 2026-08-16 | **Stop work; do not build a renderer seam.** No environment renders from a raster — every venue is procedurally drawn via `pixel_scene_canvas.gd`'s `scene_type` dispatch, and `visual_context.asset_path` is metadata the canvas never consumes. `_draw_punchline_club()` and `_draw_punchline_back_room()` already exist, are dispatched, and are at detail parity with `_draw_bar`/`_draw_underground`. The objective was already met before the row was authored. New PNGs kept as metadata-only. |
 | fix06_2 | `fix06_2_street_craps_activation_mutation_prompt.md` | DONE | — (defect in landed craps06_2) | env06_5 acceptance | PM:Codex/sub:activation-guard | 2026-08-17 | 2026-08-17 | PM verified the generic observational activation repair across Street/Grand Craps, all generated games and seven passive hooks, portable tickets/autosave/staffing, and cold saved-Slot checkpoints; focused suites plus clean Systems/UI/determinism/75-state visual gates all PASS without waivers. |
+
+
+### Coin pusher V3 — The Real Machine (owner round-6 design, 2026-08-17)
+
+Binding design contract: `docs/plans/coin_pusher_v3_machine_rework_plan.md`.
+The owner reviewed V2 in play and in a direct design session rejected the
+MACHINE MODEL (turn-based batches, twin blade shelves, lane grid,
+timing-as-scalar, contact-solver lattice/energy defects, replay-trace
+presentation, console UI). The contract specifies the replacement machine
+completely — one reciprocating platform with riding coins and ratchet
+transport, landing-position skill, free skill stop, continuous operation,
+physical tray with collection, settled-state-only persistence, per-machine
+data-driven apparatus and geometry, full alive cabinet at slot parity.
+Workers implement the contract; they do not redesign it. Strictly serial:
+each stage builds on the last.
+
+| ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | IN_PROGRESS | rework06_2 (landed) | pusherv3_2 | Codex | 2026-08-17 | | Solver rebuild per contract section 4 + machine mechanics section 3: radial contacts, iterative relaxation, nestle rule, platform carry + back-plate ratchet, spatial hash O(n*k), ceiling refusal. Headless; behavior contracts are the acceptance. |
+| pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | TODO | pusherv3_1 | pusherv3_3 | | | | Continuous 60 Hz loop, input-trace determinism, apparatus framework, skill stop, physical tray + collect, exit-settle + `coin_pusher_settled_v3` persistence, delete the packed-trace subsystem. |
+| pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | TODO | pusherv3_2 | pusherv3_4 | | | | Full alive cabinet at slot-renderer parity + physics-driven audio + stacking-visible projection. Feel captures judged as a player. |
+| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | TODO | pusherv3_3 | coin pusher closure | | | | Ridge (3-hole plinko, physical pucks) + Vault (physical fragments) on the new machine, town/cheat/nudge re-wiring, EV harness by geometry, migration, closure. |
 
 ### Wave D — Crew depth
 
@@ -1154,6 +1176,25 @@ What happens then is the owner's, not an agent's:
 
 ## Work Log
 
+- 2026-08-17 [pusherv3] OWNER DESIGN SESSION (round 6) — V2 machine model
+  rejected after direct play and a full walkthrough of the code. Locked: one
+  reciprocating platform whose top carries coins (ratchet transport via back
+  plate, no scripted ratchet code); landing-position timing as the core skill
+  (no phase scalars); free costless skill stop with smooth ramps; machine runs
+  continuously while present, settles and freezes on exit, never simulates
+  while absent; physical tray requiring collection before money credits;
+  insert = one world action, chute/stop/collect free; contact solver rebuilt
+  (radial normals, 6-pass relaxation, restitution/friction, multi-contact
+  nestle rule — fixes the observed crystallize-into-rows and pile-explosion
+  defects); coin ceiling is a safety net designed to be unreachable and inserts
+  are refused, coins never deleted; per-machine data-driven apparatus (QF rail
+  slot + 3 pegs, Ridge 3-hole plinko, third TBD) and playfield geometry;
+  settled-state-only ~2 KB persistence; full alive cabinet at slot parity.
+  Contract: `docs/plans/coin_pusher_v3_machine_rework_plan.md`. Prompts
+  pusherv3_1..4 authored (strictly serial). pusher06_0/1/3/4 superseded;
+  pusher06_2's density/audio work partially carries forward via the landed
+  render improvements but its model-level assumptions are replaced.
+
 - 2026-08-17 [fix06_2] Reproduced mutation diff and call path: info-card activation routes `activate_interactable_object()` → `enter_game()` → `_enter_game_after_input_guard()` → `CrapsGame.enter()`, which changed `narrative_flags.street_craps_guidance_seen` from absent to `true` solely while composing the first-entry message. The generated Craps table and RNG state were otherwise unchanged. Diagnosis: craps06_2 attached once-only teaching consumption to navigation instead of a successful action boundary. The Grand Casino sibling uses the same rules/table module but not the Street guidance branch and did not mutate.
 - 2026-08-17 [fix06_2] PM:Codex claimed the shipped Street Craps activation-mutation defect; M1.6 remains binding, the repair must be generic across game activation, craps06_1 shares the audit scope, and env06_5 acceptance resumes only after this row lands.
 
@@ -1547,3 +1588,7 @@ What happens then is the owner's, not an agent's:
   inspected fresh save-free packages, accepted shipped-cap performance, and
   confirmed the seven player-facing captures read as a real coin pusher.
   `pusher06_3` is unblocked; it has not been claimed or started.
+- 2026-08-17 [pusherv3_1] Codex claimed the owner-approved V3 headless machine
+  rebuild. Execution is strictly serial: the radial-contact/nestle solver and
+  carry-plus-back-plate ratchet behavior contracts must close before the live
+  loop, cabinet, or variation stages begin.
