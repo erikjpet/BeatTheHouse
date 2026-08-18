@@ -6,9 +6,11 @@
   "replay_ticks": 260,
   "input_trace": [
     {"tick": 5, "kind": "drop", "x": 42000, "density": 1},
+    {"tick": 20, "kind": "carriage", "x": 61000},
     {"tick": 60, "kind": "skill_stop", "engaged": true},
     {"tick": 96, "kind": "drop", "x": 58000, "density": 2},
     {"tick": 130, "kind": "skill_stop", "engaged": false},
-    {"tick": 160, "kind": "nudge", "x": 700, "y": -900}
+    {"tick": 160, "kind": "nudge", "x": 700, "y": -900},
+    {"tick": 190, "kind": "collect"}
   ]
 }

@@ -142,6 +142,8 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 		"motor_rate_fp": FP,
 		"motor_target_rate_fp": FP,
 		"skill_stop_engaged": false,
+		"carriage_x": _default_release_x(definition),
+		"selected_hole": 0,
 		"face_y": face_y_for_phase(definition, phase),
 		"previous_face_y": face_y_for_phase(definition, phase),
 		"bodies": [],
@@ -180,7 +182,7 @@ static func implementation_contract() -> Dictionary:
 	return public_contract()
 
 
-static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1) -> Dictionary:
+static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1, provenance: Dictionary = {}) -> Dictionary:
 	var definition := _definition(state)
 	var bodies: Array = state.get("bodies", [])
 	if bodies.size() >= _ceiling(definition):
@@ -202,7 +204,7 @@ static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1
 		radius,
 		int(coins.get("height", COIN_HEIGHT)),
 		maxi(1, int(coins.get("mass", FP)) * maxi(1, density)),
-		{"value": int(coins.get("value", 1))}
+		{"value": int(coins.get("value", 1)), "provenance": provenance.duplicate(true)}
 	)
 	body["accepted"] = true
 	bodies.append(body)
@@ -234,6 +236,43 @@ static func add_recovered_coin(state: Dictionary, rng: RngStream) -> Dictionary:
 static func set_skill_stop(state: Dictionary, engaged: bool) -> void:
 	state["skill_stop_engaged"] = engaged
 	state["motor_target_rate_fp"] = 0 if engaged else FP
+
+
+static func set_carriage(state: Dictionary, requested_x: int) -> int:
+	var definition := _definition(state)
+	var apparatus := _apparatus(definition)
+	var apparatus_type := str(apparatus.get("type", "rail_slot"))
+	if apparatus_type == "hole_set":
+		var holes: Array = apparatus.get("holes", []) if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else []
+		if holes.is_empty():
+			state["carriage_x"] = _default_release_x(definition)
+			return int(state["carriage_x"])
+		var best_index := 0
+		var best_distance := absi(int(holes[0]) - requested_x)
+		for index in range(1, holes.size()):
+			var distance := absi(int(holes[index]) - requested_x)
+			if distance < best_distance:
+				best_index = index
+				best_distance = distance
+		state["selected_hole"] = best_index
+		state["carriage_x"] = int(holes[best_index])
+		return int(state["carriage_x"])
+	var rail: Dictionary = apparatus.get("rail", {}) if typeof(apparatus.get("rail", {})) == TYPE_DICTIONARY else {}
+	var width := int(_geometry(definition).get("width", WIDTH))
+	var minimum := int(rail.get("x_min", 0))
+	var maximum := int(rail.get("x_max", width))
+	state["carriage_x"] = clampi(requested_x, minimum, maximum)
+	return int(state["carriage_x"])
+
+
+static func select_hole(state: Dictionary, requested_index: int) -> int:
+	var holes: Array = _apparatus(_definition(state)).get("holes", [])
+	if holes.is_empty():
+		return set_carriage(state, int(state.get("carriage_x", WIDTH / 2)))
+	var index := clampi(requested_index, 0, holes.size() - 1)
+	state["selected_hole"] = index
+	state["carriage_x"] = int(holes[index])
+	return int(state["carriage_x"])
 
 
 static func apply_nudge(state: Dictionary, impulse_x: int, impulse_y: int) -> int:
@@ -464,6 +503,9 @@ static func canonical_digest(state: Dictionary) -> Dictionary:
 		"phase_fp": int(state.get("phase_fp", 0)),
 		"motor_rate_fp": int(state.get("motor_rate_fp", 0)),
 		"motor_target_rate_fp": int(state.get("motor_target_rate_fp", 0)),
+		"skill_stop_engaged": bool(state.get("skill_stop_engaged", false)),
+		"carriage_x": int(state.get("carriage_x", _default_release_x(_definition(state)))),
+		"selected_hole": int(state.get("selected_hole", 0)),
 		"face_y": int(state.get("face_y", 0)),
 		"bodies": body_views(state),
 		"tray_ledger": (state.get("tray_ledger", []) as Array).duplicate(true),
@@ -1049,6 +1091,7 @@ static func _process_exits(state: Dictionary, events: Array) -> void:
 			"kind": str(body.get("kind", "coin")),
 			"value": int((body.get("meta", {}) as Dictionary).get("value", 1 if str(body.get("kind", "")) == "coin" else 0)),
 			"item_id": str((body.get("meta", {}) as Dictionary).get("item_id", "")),
+			"provenance": ((body.get("meta", {}) as Dictionary).get("provenance", {}) as Dictionary).duplicate(true) if typeof((body.get("meta", {}) as Dictionary).get("provenance", {})) == TYPE_DICTIONARY else {},
 		}
 		if outcome == "tray":
 			(state["tray_ledger"] as Array).append(entry)
@@ -1062,11 +1105,17 @@ static func _apply_trace_input(state: Dictionary, input: Dictionary, rng_value: 
 	match str(input.get("kind", "")):
 		"drop":
 			if rng_value is RngStream:
-				add_coin(state, rng_value as RngStream, int(input.get("x", WIDTH / 2)), int(input.get("density", 1)))
+				add_coin(state, rng_value as RngStream, int(input.get("x", state.get("carriage_x", WIDTH / 2))), int(input.get("density", 1)), input.get("provenance", {}))
+		"carriage":
+			set_carriage(state, int(input.get("x", state.get("carriage_x", WIDTH / 2))))
+		"hole":
+			select_hole(state, int(input.get("index", 0)))
 		"skill_stop":
 			set_skill_stop(state, bool(input.get("engaged", false)))
 		"nudge":
 			apply_nudge(state, int(input.get("x", 0)), int(input.get("y", 0)))
+		"collect":
+			collect_tray(state)
 
 
 static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int) -> void:
@@ -1278,6 +1327,16 @@ static func _stroke(definition: Dictionary) -> Dictionary:
 
 static func _apparatus(definition: Dictionary) -> Dictionary:
 	return definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+
+
+static func _default_release_x(definition: Dictionary) -> int:
+	var apparatus := _apparatus(definition)
+	var holes: Array = apparatus.get("holes", []) if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else []
+	if str(apparatus.get("type", "rail_slot")) == "hole_set" and not holes.is_empty():
+		return int(holes[holes.size() / 2])
+	var rail: Dictionary = apparatus.get("rail", {}) if typeof(apparatus.get("rail", {})) == TYPE_DICTIONARY else {}
+	var width := int(_geometry(definition).get("width", WIDTH))
+	return (int(rail.get("x_min", 0)) + int(rail.get("x_max", width))) / 2
 
 
 static func _coins(definition: Dictionary) -> Dictionary:

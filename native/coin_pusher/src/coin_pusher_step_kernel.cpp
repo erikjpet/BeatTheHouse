@@ -662,6 +662,7 @@ struct Kernel {
       e["kind"] = q.kind;
       e["value"] = q.meta.get("value", q.kind == "coin" ? 1 : 0);
       e["item_id"] = q.meta.get("item_id", "");
+      e["provenance"] = q.meta.get("provenance", Dictionary());
       Array ledger = state.get(
           outcome == "tray" ? "tray_ledger" : "gutter_ledger", Array());
       ledger.append(e);
@@ -681,7 +682,8 @@ struct Kernel {
       wake(q);
     }
   }
-  void add_drop(Object *rng, int64_t x, int64_t density) {
+  void add_drop(Object *rng, int64_t x, int64_t density,
+                const Dictionary &provenance = Dictionary()) {
     if ((int64_t)b.size() >= g.ceiling) {
       state["refused_inserts"] = int64_t(state.get("refused_inserts", 0)) + 1;
       Dictionary e;
@@ -709,6 +711,7 @@ struct Kernel {
     q.m = g.coin_m * std::max<int64_t>(1, density);
     q.rest = "falling";
     q.meta["value"] = g.coin_value;
+    q.meta["provenance"] = provenance.duplicate(true);
     b.push_back(q);
     int64_t wake_radius = q.r * 3, wake_sq = wake_radius * wake_radius;
     for (Body &near : b) {
@@ -740,7 +743,26 @@ struct Kernel {
       } else if (k == "drop") {
         Variant rv = config.get("rng", Variant());
         Object *rng = rv.get_type() == Variant::OBJECT ? (Object *)rv : nullptr;
-        add_drop(rng, in.get("x", g.width / 2), in.get("density", 1));
+        add_drop(rng, in.get("x", state.get("carriage_x", g.width / 2)),
+                 in.get("density", 1), in.get("provenance", Dictionary()));
+      } else if (k == "carriage") {
+        Dictionary def = state.get("machine_definition", Dictionary());
+        Dictionary apparatus = def.get("apparatus", Dictionary());
+        Dictionary rail = apparatus.get("rail", Dictionary());
+        int64_t x = in.get("x", state.get("carriage_x", g.width / 2));
+        state["carriage_x"] = clampi(x, rail.get("x_min", 0),
+                                     rail.get("x_max", g.width));
+      } else if (k == "hole") {
+        Dictionary def = state.get("machine_definition", Dictionary());
+        Dictionary apparatus = def.get("apparatus", Dictionary());
+        Array holes = apparatus.get("holes", Array());
+        if (!holes.is_empty()) {
+          int64_t index = clampi(in.get("index", 0), 0, holes.size() - 1);
+          state["selected_hole"] = index;
+          state["carriage_x"] = holes[index];
+        }
+      } else if (k == "collect") {
+        state["tray_ledger"] = Array();
       }
       ++cursor;
     }

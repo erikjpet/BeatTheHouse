@@ -116,7 +116,7 @@ func _validate_snapshot(snapshot: Dictionary, machine_definition: Dictionary, fa
 
 func _validate_input_trace(trace: Array, start_tick: int, failures: Array[String]) -> void:
 	var previous_tick := start_tick - 1
-	var allowed_kinds := ["drop", "skill_stop", "nudge"]
+	var allowed_kinds := ["drop", "carriage", "hole", "skill_stop", "nudge", "collect"]
 	for input_value in trace:
 		if typeof(input_value) != TYPE_DICTIONARY:
 			failures.append("V3 export parity input trace contains a non-dictionary entry.")
