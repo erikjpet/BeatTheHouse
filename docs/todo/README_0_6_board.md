@@ -157,7 +157,7 @@ each stage builds on the last.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | IN_PROGRESS | rework06_2 (landed) | pusherv3_2 | Codex | 2026-08-17 | | UNBLOCKED by Amendment 6.1: axis kept, labels corrected and renamed (FACE_EXTENDED_Y=28000 / FACE_RETRACTED_Y=46000, plate 63000), sections 3.1-3.4 re-issued. Resume implementation against the amended contract only. |
+| pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | BLOCKED | rework06_2 (landed) | pusherv3_2 | Codex | 2026-08-17 | | Amendment 6.1 implementation and focused gates are green; mandatory all-suite gate is blocked by inherited clean-HEAD Slot acceptance failure: `Gold Buffalo collection did not advance over 10,000 paid base spins.` No slot mechanics changed under the Coin Pusher row. |
 | pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | TODO | pusherv3_1 | pusherv3_3 | | | | Continuous 60 Hz loop, input-trace determinism, apparatus framework, skill stop, physical tray + collect, exit-settle + `coin_pusher_settled_v3` persistence, delete the packed-trace subsystem. |
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | TODO | pusherv3_2 | pusherv3_4 | | | | Full alive cabinet at slot-renderer parity + physics-driven audio + stacking-visible projection. Feel captures judged as a player. |
 | pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | TODO | pusherv3_3 | coin pusher closure | | | | Ridge (3-hole plinko, physical pucks) + Vault (physical fragments) on the new machine, town/cheat/nudge re-wiring, EV harness by geometry, migration, closure. |
@@ -254,6 +254,39 @@ What happens then is the owner's, not an agent's:
   6000 tray lip, and a platform retracting to 30000 cannot approach the fixed
   52000 back plate to produce the specified carry/plate ratchet. Per the
   contract, no coordinate-label swap or alternate machine was implemented.
+
+- 2026-08-17 [pusherv3_1] Amendment 6.1 implementation decision: the faithful
+  GDScript reference now passes the amended landing fork, nestle, face-push,
+  collective carry/plate deposit, persistent-top-stock, no-lattice, sleep,
+  ledger, ceiling, invariant, and trace contracts. Its measured 300-body
+  mid-cascade tick p95 remains about 18 ms, leaving no renderer headroom under
+  the binding 16 ms frame contract. The existing cross-export GDExtension seam
+  will therefore be rebuilt for the same V3 state/algorithm; body count,
+  collision passes, radial contacts, icons, and behavior are not reduced.
+
+- 2026-08-17 [pusherv3_1] Integrated-gate findings: the faithful native V3
+  backend measures 2.951 ms p95 at the 300-body mid-cascade contract (24
+  samples; independent focused runs measured 2.521-3.850 ms). Fresh Windows
+  and Web release exports replay the same 260-tick trace through `native_v3`
+  with exact repeat and cross-export SHA-256
+  `7fbb4b1667a2f5d09627659dd7a6908c84bc88e1a6c88f8dd9a1ea8fcc868778`.
+  The strict crew-ignored full-serialization golden was mechanically
+  rebaselined because it embeds every game definition and the intentional V3
+  machine schema replaces the larger V2 definition; the full byte-for-byte
+  assertion remains intact. The determinism probe's deleted V2 lane/nudge/
+  vault sequence was replaced with physical V3 drop + skill-stop input-trace
+  replay. Wall-clock solver telemetry is excluded from deterministic RunState
+  checkpoints; all physical outcome state remains included.
+
+- 2026-08-17 [pusherv3_1] Mandatory-suite blocker after Amendment 6.1:
+  `slot`, Smoke, Contracts, Games, Systems, UI, focused Coin Pusher, native
+  Windows/Web parity, and 10-seed determinism are green. `slot_acceptance`
+  fails only `Gold Buffalo collection did not advance over 10,000 paid base
+  spins.` after its stale reveal-order fixture is excluded from the diagnosis.
+  `docs/plans/slot_runtime_storage_root_fix_plan.md` independently records the
+  same Gold Buffalo failure on detached clean `HEAD`; it is unrelated to V3.
+  Per the row's no-extra-scope and no-weakened-gate rules, Slot mechanics were
+  not changed and the row remains blocked; pusherv3_2 stays unclaimed.
 
 - 2026-08-17 [crew06_5] PM scope review returned the row for correction:
   rank/perk APIs alone do not satisfy the prompt's temporary pre-job-board
@@ -1630,3 +1663,16 @@ What happens then is the owner's, not an agent's:
   orientation contradiction: the stated retracted/extended y positions oppose
   the existing and V3 tray/back-plate axis. Stages 2-4 remain unclaimed; no
   substitute ratchet or coordinate interpretation was introduced.
+- 2026-08-17 [pusherv3_1] Resumed on owner Amendment 6.1. The amended reference
+  machine and behavior suite are integrated; V2 diagnostics and export replay
+  are being replaced in parallel while the faithful native V3 backend closes
+  the sole remaining focused gate, 300-body frame headroom.
+- 2026-08-17 [pusherv3_1] Amendment 6.1 implementation gates now prove the
+  native 300-body budget, exact Windows/Web input-trace parity, and a 10-seed
+  two-process determinism hash. The exhaustive supported-suite matrix and
+  final scope review are in progress; pusherv3_2 remains unclaimed.
+- 2026-08-17 [pusherv3_1] BLOCKED at the mandatory all-suite gate after focused
+  completion. Verbatim inherited failure: `Gold Buffalo collection did not
+  advance over 10,000 paid base spins.` The repository's Slot storage plan
+  confirms the same failure on detached clean `HEAD`; no unrelated Slot
+  mechanics or test budget was changed. pusherv3_2 remains unclaimed.
