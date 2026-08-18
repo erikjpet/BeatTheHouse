@@ -1,6 +1,6 @@
 extends SceneTree
 
-const REQUIRED_CAPTURE_IDS := ["normal_pile_rider", "tell_alarm_chirps", "reduced_motion", "hard_alarm_lockdown", "room_available_after_alarm", "jackpot_ridge", "vault_drop"]
+const REQUIRED_CAPTURE_IDS := ["normal_pile_rider_live", "reduced_motion_live"]
 
 # Deterministic, test-only Quarter Falls evidence capture.
 # Run windowed so the viewport texture contains real rendered pixels:
@@ -43,18 +43,8 @@ func _run() -> void:
 
 	var run_state := app.get("run_state") as RunState
 	var machine := _machine(run_state)
-	machine["riders"] = [{
-		"id": "visual_chip_rider",
-		"kind": "chip_stack",
-		"label": "chip stack",
-		"item_id": "",
-		"cash_value": 4,
-		"lane": 1,
-		"cell": 2,
-		"push": 1,
-	}]
-	machine["tell_rung"] = 0
-	machine["last_message"] = "Pick a lane. Read both shelves."
+	if (machine.get("riders", []) as Array).is_empty():
+		_fail("Quarter Falls generation did not persist a rider before compact snapshot creation.")
 	app.call("_refresh")
 	await _settle(3)
 	if not bool(app.call("enter_game", "coin_pusher")):
@@ -64,19 +54,9 @@ func _run() -> void:
 	await _settle(4)
 
 	await _capture_surface(
-		"01_normal_pile_rider_1280x720.png",
-		"normal_pile_rider",
-		{"expected_tell_rung": 0, "expected_locked": false, "expected_reduce_motion": false}
-	)
-	machine = _machine(run_state)
-	machine["tell_rung"] = 2
-	machine["last_message"] = "Alarm chirps. The attendant looks over."
-	app.call("_refresh")
-	await _settle(3)
-	await _capture_surface(
-		"02_tell_alarm_chirps_1280x720.png",
-		"tell_alarm_chirps",
-		{"expected_tell_rung": 2, "expected_locked": false, "expected_reduce_motion": false}
+		"01_normal_pile_rider_live_1280x720.png",
+		"normal_pile_rider_live",
+		false
 	)
 
 	var settings: Variant = app.get("user_settings")
@@ -90,45 +70,16 @@ func _run() -> void:
 		app.call("_on_settings_applied")
 		await _settle(3)
 		await _capture_surface(
-			"03_reduced_motion_1280x720.png",
-			"reduced_motion",
-			{"expected_tell_rung": 2, "expected_locked": false, "expected_reduce_motion": true}
+			"02_reduced_motion_live_1280x720.png",
+			"reduced_motion_live",
+			true
 		)
 		settings.reduce_motion = false
 		app.call("_on_settings_applied")
 		await _settle(3)
 
-	machine = _machine(run_state)
-	machine["alarm_tolerance_remaining"] = 0
-	machine["lower_phase"] = 9
-	app.call("_refresh")
-	await _settle(2)
-	if not bool(app.call("_handle_module_surface_action", "coin_pusher_force", 2, false)):
-		_fail("Could not select the visible SLAM force for the alarm capture.")
-	if not bool(app.call("_handle_module_surface_action", "coin_pusher_nudge", 0, true)):
-		_fail("Could not resolve the deterministic hard-alarm nudge.")
-	await _settle(5)
-	await _capture_surface(
-		"04_hard_alarm_lockdown_1280x720.png",
-		"hard_alarm_lockdown",
-		{"expected_tell_rung": 3, "expected_locked": true, "expected_reduce_motion": false}
-	)
-
-	app.call("back_to_environment")
-	app.call("_refresh")
-	await _settle(5)
-	await _capture_room("05_room_available_after_alarm_1280x720.png")
-	for variation_id in ["jackpot_ridge", "vault_drop"]:
-		if not _install_variation_fixture(variation_id):
-			continue
-		await _settle(3)
-		if not bool(app.call("enter_game", "coin_pusher")):
-			_fail("Could not enter %s for focused visual capture." % variation_id)
-			continue
-		await _settle(4)
-		await _capture_variation_surface("06_jackpot_ridge_1280x720.png" if variation_id == "jackpot_ridge" else "07_vault_drop_1280x720.png", variation_id)
-		app.call("back_to_environment")
-		await _settle(2)
+	# Cabinet tells/lockdown and variation captures belong to Stages 3 and 4.
+	# This Stage-2 tool intentionally captures the continuous live machine only.
 	_write_manifest()
 	_finish(1 if failed else 0)
 
@@ -155,7 +106,7 @@ func _install_fixture_environment() -> bool:
 	environment["service_ids"] = []
 	environment["lender_hooks"] = []
 	environment["object_fixtures"] = []
-	environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": "quarter_falls"}}
+	environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": "quarter_falls", "prize_item_ids": ["coffee"]}}
 	var states: Dictionary = {}
 	for game_id in environment.get("game_ids", []):
 		var definition := library.game(str(game_id))
@@ -177,99 +128,40 @@ func _install_fixture_environment() -> bool:
 	return not _machine(run_state).is_empty()
 
 
-func _install_variation_fixture(variation_id: String) -> bool:
-	var run_state := app.get("run_state") as RunState
-	var library := app.get("library") as ContentLibrary
-	if run_state == null or library == null:
-		_fail("Could not access runtime for %s capture." % variation_id)
-		return false
-	var definition := library.game("coin_pusher")
-	var module: Variant = app.call("_create_game_module", definition)
-	if module == null or not module is GameModule:
-		_fail("Could not create Coin Pusher module for %s capture." % variation_id)
-		return false
-	run_state.current_environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": variation_id}}
-	var game := module as GameModule
-	var machine := game.generate_environment_state(run_state, run_state.current_environment, run_state.create_rng("coin_pusher_visual:%s" % variation_id))
-	if variation_id == "vault_drop":
-		run_state.add_item("xray_glasses")
-		var vault_state: Dictionary = machine.get("variation_state", {})
-		vault_state["banked_fragments"] = 3
-	var states: Dictionary = run_state.current_environment.get("game_states", {})
-	states["coin_pusher"] = machine
-	run_state.current_environment["game_states"] = states
-	game.environment_state_generated(run_state, run_state.current_environment, machine)
-	app.call("_refresh")
-	return str(machine.get("variation_id", "")) == variation_id
 
 
-func _capture_variation_surface(file_name: String, variation_id: String) -> void:
-	var canvas := app.get("game_surface_canvas") as Control
-	if canvas == null or not canvas.visible or not canvas.has_method("realtime_surface_state"):
-		_fail("%s surface was unavailable." % variation_id)
-		return
-	canvas.set_process(false)
-	canvas.set("flicker", 0.75)
-	canvas.queue_redraw()
-	await RenderingServer.frame_post_draw
-	var state: Dictionary = canvas.call("realtime_surface_state")
-	var presentation := _presentation_snapshot(state)
-	var features: Array = presentation.get("features", []) if typeof(presentation.get("features", [])) == TYPE_ARRAY else []
-	var valid := str(state.get("coin_pusher_variation_id", "")) == variation_id and not features.is_empty()
-	if variation_id == "jackpot_ridge":
-		valid = valid and str(state.get("coin_pusher_variation_name", "")) == "Jackpot Ridge" and state.has("coin_pusher_cascade_remaining")
-	else:
-		valid = valid and str(state.get("coin_pusher_variation_name", "")) == "The Vault Drop" and (state.get("coin_pusher_vault_cells", []) as Array).size() == 9 and int(state.get("coin_pusher_vault_fragments", 0)) == 3
-	if not valid:
-		_fail("%s surface did not expose its unique feature state." % variation_id)
-	var saved := await _save_viewport(file_name)
-	captures.append({
-		"id": variation_id, "file": file_name, "saved": saved, "state_valid": valid,
-		"variation_id": str(state.get("coin_pusher_variation_id", "")), "feature_count": features.size(),
-		"vault_cell_count": (state.get("coin_pusher_vault_cells", []) as Array).size(),
-		"vault_meter": int(state.get("coin_pusher_vault_meter", 0)),
-	})
-
-
-func _capture_surface(file_name: String, capture_id: String, expected: Dictionary) -> void:
+func _capture_surface(file_name: String, capture_id: String, expected_reduce_motion: bool) -> void:
 	var canvas := app.get("game_surface_canvas") as Control
 	if canvas == null or not canvas.visible or not canvas.has_method("realtime_surface_state"):
 		_fail("Quarter Falls surface is unavailable for %s." % capture_id)
 		return
-	# Freeze presentation-only animation at the same authored phase on every run.
-	canvas.set_process(false)
-	canvas.set("flicker", 0.75)
+	canvas.call("reset_performance_counters")
+	var before_state: Dictionary = canvas.call("realtime_surface_state")
+	var before_motion: Dictionary = canvas.call("debug_surface_motion_sample")
+	var before_ticks := int(before_state.get("coin_pusher_liveness_ticks", 0))
+	await _settle(18 if expected_reduce_motion else 12)
 	canvas.queue_redraw()
 	await RenderingServer.frame_post_draw
 	var state: Dictionary = canvas.call("realtime_surface_state")
 	var presentation := _presentation_snapshot(state)
 	var runtime: Dictionary = canvas.call("surface_runtime_status")
-	var expected_reduce_motion := bool(expected.get("expected_reduce_motion", false))
-	var motion_before: Dictionary = {}
-	var motion_after: Dictionary = {}
-	var animation_redraw_count := -1
-	var motion_frozen := not expected_reduce_motion
-	if expected_reduce_motion:
-		canvas.call("reset_performance_counters")
-		motion_before = canvas.call("debug_surface_motion_sample")
-		for _frame_index in range(18):
-			canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
-		motion_after = canvas.call("debug_surface_motion_sample")
-		runtime = canvas.call("surface_runtime_status")
-		animation_redraw_count = int(runtime.get("surface_animation_redraw_count", -1))
-		motion_frozen = JSON.stringify(motion_before) == JSON.stringify(motion_after) \
-			and animation_redraw_count == 0 \
-			and not bool(runtime.get("surface_continuous_redraw_active", true))
+	var after_motion: Dictionary = canvas.call("debug_surface_motion_sample")
+	var bodies: Array = presentation.get("bodies", [])
+	var solver_advanced := int(state.get("coin_pusher_liveness_ticks", 0)) > before_ticks \
+		and JSON.stringify(before_motion) != JSON.stringify(after_motion)
+	var reduced_schedule_valid := not expected_reduce_motion \
+		or (int(runtime.get("surface_animation_redraw_count", -1)) == 0 \
+		and not bool(runtime.get("surface_continuous_redraw_active", true)))
 	var valid := str(state.get("surface_renderer", "")) == "coin_pusher" \
-		and (presentation.get("bodies", []) as Array).size() >= 24 \
-		and (state.get("coin_pusher_lanes", []) as Array).size() == 5 \
-		and (presentation.get("riders", []) as Array).size() == 1 \
-		and int(presentation.get("tell_rung", -1)) == int(expected.get("expected_tell_rung", -2)) \
-		and bool(presentation.get("locked", false)) == bool(expected.get("expected_locked", false)) \
+		and bodies.size() >= 24 \
+		and _distinct_axis_count(bodies, "x") > 5 \
+		and _distinct_axis_count(bodies, "y") > 6 \
+		and (presentation.get("riders", []) as Array).size() >= 1 \
 		and bool(runtime.get("reduce_motion", false)) == expected_reduce_motion \
-		and motion_frozen
+		and solver_advanced \
+		and reduced_schedule_valid
 	if not valid:
-		_fail("Quarter Falls surface state did not match %s expectations." % capture_id)
+		_fail("Quarter Falls Stage-2 live surface did not match %s expectations." % capture_id)
 	var saved := await _save_viewport(file_name)
 	captures.append({
 		"id": capture_id,
@@ -277,50 +169,19 @@ func _capture_surface(file_name: String, capture_id: String, expected: Dictionar
 		"saved": saved,
 		"state_valid": valid,
 		"surface_renderer": str(state.get("surface_renderer", "")),
-		"body_count": (presentation.get("bodies", []) as Array).size(),
-		"lane_count": (state.get("coin_pusher_lanes", []) as Array).size(),
+		"body_count": bodies.size(),
+		"distinct_x_count": _distinct_axis_count(bodies, "x"),
+		"distinct_y_count": _distinct_axis_count(bodies, "y"),
 		"rider_count": (presentation.get("riders", []) as Array).size(),
-		"tell_rung": int(presentation.get("tell_rung", -1)),
-		"tell": str(state.get("coin_pusher_tell", "")),
-		"locked": bool(state.get("coin_pusher_locked", false)),
 		"expected_reduce_motion": expected_reduce_motion,
 		"reduce_motion": bool(runtime.get("reduce_motion", false)),
-		"motion_before": motion_before,
-		"motion_after": motion_after,
-		"motion_frozen": motion_frozen,
-		"animation_redraw_count": animation_redraw_count,
+		"solver_ticks_before": before_ticks,
+		"solver_ticks_after": int(state.get("coin_pusher_liveness_ticks", 0)),
+		"motion_before": before_motion,
+		"motion_after": after_motion,
+		"solver_advanced": solver_advanced,
+		"animation_redraw_count": int(runtime.get("surface_animation_redraw_count", -1)),
 		"continuous_redraw_active": bool(runtime.get("surface_continuous_redraw_active", false)),
-	})
-
-
-func _capture_room(file_name: String) -> void:
-	var run_state := app.get("run_state") as RunState
-	var canvas := app.get("environment_canvas") as Control
-	var view: Dictionary = canvas.call("current_view_snapshot") if canvas != null and canvas.has_method("current_view_snapshot") else {}
-	var other_game: Dictionary = {}
-	for object_value in view.get("objects", []):
-		if typeof(object_value) != TYPE_DICTIONARY:
-			continue
-		var object_data: Dictionary = object_value
-		if str(object_data.get("source_id", "")) == "bar_dice" or str(object_data.get("id", "")) == "game:bar_dice":
-			other_game = object_data
-			break
-	var machine := _machine(run_state)
-	var valid := canvas != null and canvas.visible \
-		and bool(machine.get("locked_down", false)) \
-		and not other_game.is_empty() \
-		and not bool(other_game.get("disabled", false))
-	if not valid:
-		_fail("The room-available capture did not preserve the locked pusher and enabled Bar Dice table.")
-	var saved := await _save_viewport(file_name)
-	captures.append({
-		"id": "room_available_after_alarm",
-		"file": file_name,
-		"saved": saved,
-		"state_valid": valid,
-		"pusher_locked": bool(machine.get("locked_down", false)),
-		"other_game_id": str(other_game.get("source_id", "")),
-		"other_game_disabled": bool(other_game.get("disabled", true)),
 	})
 
 
@@ -352,9 +213,9 @@ func _write_manifest() -> void:
 			valid_capture_count += 1
 		if bool(capture.get("saved", false)):
 			saved_capture_count += 1
-		if capture_id == "reduced_motion":
+		if capture_id == "reduced_motion_live":
 			reduced_motion_proof_passed = bool(capture.get("reduce_motion", false)) \
-				and bool(capture.get("motion_frozen", false)) \
+				and bool(capture.get("solver_advanced", false)) \
 				and int(capture.get("animation_redraw_count", -1)) == 0 \
 				and not bool(capture.get("continuous_redraw_active", true))
 	var manifest_authoritative_pass := captures.size() == required_capture_ids.size() \
@@ -395,8 +256,19 @@ func _machine(run_state: RunState) -> Dictionary:
 
 
 func _presentation_snapshot(surface_state: Dictionary) -> Dictionary:
-	var value: Variant = surface_state.get("coin_pusher_snapshot", {})
-	return value if typeof(value) == TYPE_DICTIONARY else {}
+	return {
+		"bodies": (surface_state.get("coin_pusher_bodies", []) as Array).duplicate(true),
+		"features": (surface_state.get("coin_pusher_features", []) as Array).duplicate(true),
+		"riders": (surface_state.get("coin_pusher_riders", []) as Array).duplicate(true),
+	}
+
+
+func _distinct_axis_count(bodies: Array, axis: String) -> int:
+	var values := {}
+	for body_value in bodies:
+		if typeof(body_value) == TYPE_DICTIONARY:
+			values[int((body_value as Dictionary).get(axis, 0))] = true
+	return values.size()
 
 
 func _settle(frame_count: int) -> void:

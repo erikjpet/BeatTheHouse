@@ -168,8 +168,28 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 	return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": _v3_headless_surface_state(machine)}, true)
 
 
-func surface_motion_signature(_surface, _surface_state: Dictionary) -> Dictionary:
-	return {"headless_placeholder": true, "physics_body_checksum": 0}
+func surface_motion_signature(_surface, surface_state: Dictionary) -> Dictionary:
+	# This is deliberately an actual-solver signature. Presentation clocks may
+	# smooth the cabinet later, but must never make a stuck live loop look alive.
+	var body_checksum := 17
+	for body_value in surface_state.get("coin_pusher_bodies", []):
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = body_value
+		body_checksum = int((body_checksum * 31 + str(body.get("id", "")).hash() + int(body.get("x", 0)) * 3 + int(body.get("y", 0)) * 5 + int(body.get("z", 0)) * 7) & 0x7fffffff)
+	var rider_checksum := 23
+	for rider_value in surface_state.get("coin_pusher_riders", []):
+		if typeof(rider_value) != TYPE_DICTIONARY:
+			continue
+		var rider: Dictionary = rider_value
+		rider_checksum = int((rider_checksum * 31 + str(rider.get("id", "")).hash() + int(rider.get("x", 0)) * 3 + int(rider.get("y", 0)) * 5 + int(rider.get("z", 0)) * 7) & 0x7fffffff)
+	return {
+		"liveness_ticks": int(surface_state.get("coin_pusher_liveness_ticks", 0)),
+		"phase_fp": int(surface_state.get("coin_pusher_phase_fp", 0)),
+		"face_y": int(surface_state.get("coin_pusher_face_position_y", 0)),
+		"physics_body_checksum": body_checksum,
+		"rider_checksum": rider_checksum,
+	}
 
 
 func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
@@ -584,6 +604,11 @@ func _v3_headless_surface_state(machine: Dictionary) -> Dictionary:
 	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), _machine_definition())
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+	var body_views := CoinPusherSolverScript.body_views(simulation)
+	var variation_id := str(machine.get("variation_id", _variation_id()))
+	var feature_kind := "rider" if variation_id == "quarter_falls" else "puck" if variation_id == "jackpot_ridge" else "fragment"
+	var feature_views := _feature_views(machine, feature_kind)
+	var tell_rung := clampi(int(machine.get("tell_rung", 0)), 0, _tell_labels().size() - 1)
 	return GameModule.surface_spec({
 		"surface_renderer": "coin_pusher",
 		"surface_life": "coin_pusher_v3_headless_placeholder",
@@ -599,7 +624,12 @@ func _v3_headless_surface_state(machine: Dictionary) -> Dictionary:
 		"coin_pusher_solver_schema": str(simulation.get("schema", "")),
 		"coin_pusher_solver_version": int(simulation.get("version", 0)),
 		"coin_pusher_body_count": (simulation.get("bodies", []) as Array).size(),
-		"coin_pusher_bodies": CoinPusherSolverScript.body_views(simulation),
+		"coin_pusher_bodies": body_views,
+		"coin_pusher_features": feature_views,
+		"coin_pusher_riders": feature_views if variation_id == "quarter_falls" else [],
+		"coin_pusher_tell_rung": tell_rung,
+		"coin_pusher_tell_label": str(_tell_labels()[tell_rung]),
+		"coin_pusher_locked": bool(machine.get("locked_down", false)),
 		"coin_pusher_phase_fp": int(simulation.get("phase_fp", 0)),
 		"coin_pusher_face_position_y": int(simulation.get("face_y", 0)),
 		"coin_pusher_carriage_x": int(simulation.get("carriage_x", 50000)),
@@ -609,8 +639,8 @@ func _v3_headless_surface_state(machine: Dictionary) -> Dictionary:
 		"coin_pusher_tray_value": _ledger_value(tray),
 		"coin_pusher_input_trace_count": (session.get("input_trace", []) as Array).size() if typeof(session.get("input_trace", [])) == TYPE_ARRAY else 0,
 		"coin_pusher_liveness_ticks": int(session.get("liveness_ticks", 0)),
-		"coin_pusher_variation_id": str(machine.get("variation_id", _variation_id())),
-		"coin_pusher_variation_name": _variation_display_name(str(machine.get("variation_id", _variation_id()))),
+		"coin_pusher_variation_id": variation_id,
+		"coin_pusher_variation_name": _variation_display_name(variation_id),
 		"coin_pusher_last_message": V3_HEADLESS_MESSAGE,
 		"native_selected_surface_actions": ["coin_pusher_drop", CARRIAGE_LEFT_ACTION, CARRIAGE_RIGHT_ACTION, SKILL_STOP_ACTION, COLLECT_ACTION],
 		"surface_action_bindings": {
