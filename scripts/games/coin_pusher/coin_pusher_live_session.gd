@@ -45,6 +45,7 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		"start_snapshot": CoinPusherSolverScript.canonical_digest(simulation),
 		"liveness_ticks": 0,
 		"durable_ready": true,
+		"durable_dirty": false,
 		"last_persisted_tick": int(simulation.get("tick", 0)),
 	}
 	return machine["live_session"]
@@ -59,6 +60,7 @@ static func queue_input(machine: Dictionary, input: Dictionary) -> Dictionary:
 	event["tick"] = int(simulation.get("tick", 0))
 	(session["input_trace"] as Array).append(event)
 	session["durable_ready"] = false
+	session["durable_dirty"] = true
 	return event
 
 
