@@ -34,6 +34,7 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		simulation["collected_value"] = 0
 	var rng := RngStream.new()
 	rng.configure(seed)
+	var opening_views := _presentation_body_views(simulation)
 	machine["live_session"] = {
 		"open": true,
 		"input_locked": false,
@@ -47,6 +48,13 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		"durable_ready": true,
 		"durable_dirty": false,
 		"last_persisted_tick": int(simulation.get("tick", 0)),
+		# Presentation-only tick pair. These public views let the renderer
+		# interpolate exact contact results without reading solver internals or
+		# reconstructing a previous position from velocity.
+		"presentation_previous_bodies": opening_views,
+		"presentation_current_bodies": opening_views,
+		"presentation_view_serial": 0,
+		"presentation_audio_serial": 0,
 	}
 	return machine["live_session"]
 
@@ -309,6 +317,8 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 	var rng := _session_rng(session)
 	var all_events: Array = []
 	for _tick in range(maxi(0, tick_count)):
+		var current_views: Variant = session.get("presentation_current_bodies", [])
+		session["presentation_previous_bodies"] = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
 		var tick_value := int(simulation.get("tick", 0))
 		var trace_slice: Array = []
 		var cursor := int(session.get("input_cursor", 0))
@@ -318,10 +328,39 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 			cursor += 1
 		session["input_cursor"] = cursor
 		var result := CoinPusherSolverScript.step_ticks(simulation, {"input_trace": trace_slice, "rng": rng, "motor_enabled": not bool(machine.get("locked_down", false))}, 1)
+		session["presentation_current_bodies"] = _presentation_body_views(simulation)
+		session["presentation_view_serial"] = int(session.get("presentation_view_serial", 0)) + 1
 		all_events.append_array(result.get("events", []))
 	session["rng"] = rng.snapshot()
 	session["liveness_ticks"] = int(session.get("liveness_ticks", 0)) + maxi(0, tick_count)
 	return {"events": all_events}
+
+
+# Renderer-facing public state intentionally excludes canonical solver fields
+# that the cabinet never consumes (velocities, remainders, mass, and deep
+# metadata). Canonical body_views remains unchanged for determinism, saves, and
+# mechanics contracts; this lean view avoids rebuilding those values 300 times
+# per visible fixed tick.
+static func _presentation_body_views(simulation: Dictionary) -> Array:
+	var views: Array = []
+	var bodies: Array = simulation.get("bodies", []) if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else []
+	views.resize(bodies.size())
+	for body_index in range(bodies.size()):
+		var body: Dictionary = bodies[body_index]
+		views[body_index] = {
+			"id": str(body.get("id", "")),
+			"kind": str(body.get("kind", "coin")),
+			"x": int(body.get("x", 0)),
+			"y": int(body.get("y", 0)),
+			"z": int(body.get("z", 0)),
+			"rest_state": str(body.get("rest_state", "falling")),
+			"support_kind": str(body.get("support_kind", "")),
+		}
+	return views
+
+
+static func presentation_body_views_for_test(simulation: Dictionary) -> Array:
+	return _presentation_body_views(simulation)
 
 
 static func _settled_body(body: Dictionary) -> Dictionary:

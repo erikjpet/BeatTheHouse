@@ -199,6 +199,7 @@ var _coin_pusher_action_id: String = ""
 var _coin_pusher_action_observed_active := false
 var _coin_pusher_audio_baseline_initialized := false
 var _coin_pusher_silent_baseline_action_id := ""
+var _coin_pusher_live_event_serial := -1
 var _web_surface_loop_active := false
 var _surface_loop_event_id := ""
 var _surface_loop_fade_tween: Tween
@@ -389,6 +390,9 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 	var profile := _surface_sfx_profile("coin_pusher")
 	if profile.is_empty():
 		return
+	if surface_state.has("coin_pusher_audio_serial"):
+		_sync_live_coin_pusher_state(surface_state, profile, suppress_physical_playback)
+		return
 	var snapshot := _dict(surface_state.get("coin_pusher_snapshot", {}))
 	var motor: Dictionary = _dict(profile.get("motor_loop", {}))
 	var motor_event := str(motor.get("event_id", "coin_pusher_motor"))
@@ -459,6 +463,43 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 		)
 
 
+func _sync_live_coin_pusher_state(surface_state: Dictionary, profile: Dictionary, suppress_physical_playback: bool) -> void:
+	var motor: Dictionary = _dict(profile.get("motor_loop", {}))
+	var motor_event := str(motor.get("event_id", "coin_pusher_motor"))
+	var body_count := maxi(0, int(surface_state.get("coin_pusher_body_count", 0)))
+	var loaded := body_count >= 80
+	var motor_rate := clampf(float(int(surface_state.get("coin_pusher_motor_rate_fp", 1000))) / 1000.0, 0.0, 1.0)
+	var locked := bool(surface_state.get("coin_pusher_locked", false))
+	if locked or motor_rate <= 0.001:
+		if _surface_loop_event_id == motor_event:
+			_stop_reel_loop()
+	else:
+		var motor_volume := float(motor.get("loaded_volume_db", -13.0) if loaded else motor.get("idle_volume_db", -18.0)) + lerpf(-7.0, 0.0, motor_rate)
+		var base_pitch := float(motor.get("loaded_pitch", 0.96) if loaded else motor.get("idle_pitch", 0.88))
+		var motor_pitch := lerpf(0.48, base_pitch, motor_rate)
+		if _surface_loop_event_id != motor_event or (_loop_player != null and not _loop_player.playing and not _web_surface_loop_active):
+			_start_reel_loop(motor_event, motor_volume, motor_pitch, suppress_physical_playback)
+		elif _loop_player != null:
+			_loop_player.volume_db = motor_volume
+			_loop_player.pitch_scale = motor_pitch
+	var serial := int(surface_state.get("coin_pusher_audio_serial", 0))
+	if serial <= _coin_pusher_live_event_serial:
+		return
+	_coin_pusher_live_event_serial = serial
+	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
+	var events := _dictionary_array(surface_state.get("coin_pusher_audio_events", []))
+	for index in range(events.size()):
+		var event: Dictionary = events[index]
+		if not _coin_pusher_event_is_audio_primary(event):
+			continue
+		var cue := _coin_pusher_event_cue(event, event_classes)
+		if cue.is_empty():
+			continue
+		var intensity := clampf(float(int(event.get("intensity_milli", 500))) / 1000.0, 0.0, 1.0)
+		var context := _coin_pusher_event_mix(event, intensity)
+		_trigger("coin_pusher_live_%d_%d" % [serial, index], true, cue, float(context.get("volume_db", -5.0)), float(context.get("pitch", 1.0)), suppress_physical_playback)
+
+
 func _coin_pusher_event_cue(event: Dictionary, event_classes: Dictionary) -> String:
 	var kind := str(event.get("kind", ""))
 	if kind == "impact":
@@ -496,6 +537,12 @@ func _coin_pusher_event_mix(event: Dictionary, intensity: float) -> Dictionary:
 		"gutter_loss":
 			volume_db = lerpf(-8.0, -2.0, intensity)
 			pitch = 0.76 + intensity * 0.06
+		"mass_slide":
+			volume_db = lerpf(-16.0, -7.0, intensity)
+			pitch = 0.72 + intensity * 0.12
+		"plate_clink":
+			volume_db = lerpf(-10.0, -3.0, intensity)
+			pitch = 1.02 + intensity * 0.12
 		"alarm":
 			volume_db = -0.5
 			pitch = 1.0
@@ -939,6 +986,7 @@ func stop_all() -> void:
 	_coin_pusher_action_observed_active = false
 	_coin_pusher_audio_baseline_initialized = false
 	_coin_pusher_silent_baseline_action_id = ""
+	_coin_pusher_live_event_serial = -1
 	_played_markers.clear()
 	for player in _players:
 		if player is AudioStreamPlayer:
@@ -978,7 +1026,10 @@ func debug_coin_pusher_event_schedule(surface_state: Dictionary) -> Array:
 	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
 	var result: Array = []
 	var snapshot := _dict(surface_state.get("coin_pusher_snapshot", {}))
-	for event_value in _dictionary_array(snapshot.get("events", [])):
+	var events := _dictionary_array(surface_state.get("coin_pusher_audio_events", []))
+	if events.is_empty():
+		events = _dictionary_array(snapshot.get("events", []))
+	for event_value in events:
 		var event: Dictionary = event_value
 		if not _coin_pusher_event_is_audio_primary(event):
 			continue

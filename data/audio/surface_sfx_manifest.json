@@ -13,6 +13,8 @@
         "impact_metal": "coin_pusher_coin_metal",
         "impact_stack": "coin_pusher_coin_stack",
         "slide": "coin_pusher_slide",
+        "mass_slide": "coin_pusher_slide",
+        "plate_clink": "coin_pusher_coin_metal",
         "upper_to_lower": "coin_pusher_fall",
         "topple": "coin_pusher_topple",
         "ledge_tip": "coin_pusher_ledge_tip",

@@ -77,6 +77,7 @@ var active_design_scale := Vector2.ONE
 var active_design_offset := Vector2.ZERO
 var active_design_local_offset := Vector2.ZERO
 var design_space_active := false
+var surface_multimesh_batch: MultiMeshInstance2D
 var reduce_motion := false
 var small_screen_mode := false
 var drunk_time_scale := 1.0
@@ -510,6 +511,29 @@ func surface_end_design_space() -> void:
 	active_design_local_offset = Vector2.ZERO
 	design_space_active = false
 	_scale_canvas()
+
+
+func surface_filled_polygon(points: PackedVector2Array, color: Color) -> void:
+	draw_colored_polygon(points, color)
+
+
+func surface_polyline(points: PackedVector2Array, color: Color, width: float = -1.0) -> void:
+	draw_polyline(points, color, width)
+
+
+func surface_present_multimesh_batch(multimesh: MultiMesh, texture: Texture2D, batch_material: Material, design_size: Vector2) -> void:
+	if surface_multimesh_batch == null:
+		surface_multimesh_batch = MultiMeshInstance2D.new()
+		surface_multimesh_batch.name = "SurfaceMultiMeshBatch"
+		surface_multimesh_batch.z_index = 1
+		add_child(surface_multimesh_batch)
+	var transform_values := _design_space_transform_values(design_size, Vector2.ZERO, Vector2.ZERO)
+	surface_multimesh_batch.position = transform_values.get("position", Vector2.ZERO)
+	surface_multimesh_batch.scale = transform_values.get("scale", Vector2.ONE)
+	surface_multimesh_batch.multimesh = multimesh
+	surface_multimesh_batch.texture = texture
+	surface_multimesh_batch.material = batch_material
+	surface_multimesh_batch.visible = true
 
 
 func _design_space_transform_values(design_size: Vector2, inset: Vector2, local_offset: Vector2) -> Dictionary:
@@ -1040,6 +1064,11 @@ func _schedule_surface_animation_redraws(delta: float) -> void:
 
 func _draw() -> void:
 	var draw_started_usec := Time.get_ticks_usec()
+	# Surface renderers may opt into one conditional batch material for a draw;
+	# always clear it before dispatch so materials cannot leak between games.
+	material = null
+	if surface_multimesh_batch != null:
+		surface_multimesh_batch.visible = false
 	hit_regions = []
 	surface_text_protected_rects = []
 	active_design_scale = Vector2.ONE
