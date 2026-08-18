@@ -1947,5 +1947,56 @@
     "description": "Heavy, and full of history.",
     "container_capacity": 10,
     "effect": {}
+  },
+  {
+    "id": "wedding_ribbon_favor", "display_name": "Wedding Ribbon Favor", "class": "souvenir", "domain": "global", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 7, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/wedding_ribbon_favor.svg", "icon_key": "wedding_ribbon_favor", "environment_prop": "paper_note", "surface": "counter", "description": "White ribbon. Somebody else's promise.", "effect": {"baseline_luck_delta": 1}
+  },
+  {
+    "id": "wake_matchbook", "display_name": "Wake Matchbook", "class": "souvenir", "domain": "global", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 8, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/wake_matchbook.svg", "icon_key": "wake_matchbook", "environment_prop": "paper_note", "surface": "counter", "description": "One match gone. One stool empty.", "effect": {"cheat_suspicion_delta": -1}
+  },
+  {
+    "id": "fight_night_betting_slip", "display_name": "Fight-Night Slip", "class": "souvenir", "domain": "games", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 9, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/fight_night_betting_slip.svg", "icon_key": "fight_night_betting_slip", "environment_prop": "paper_note", "surface": "counter", "description": "The loser is circled twice.", "effect": {"win_bonus": 1}
+  },
+  {
+    "id": "festival_brass_token", "display_name": "Festival Brass Token", "class": "souvenir", "domain": "global", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 7, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/festival_brass_token.svg", "icon_key": "festival_brass_token", "environment_prop": "token", "surface": "counter", "description": "One stall closed before you did.", "effect": {"win_chance": 1}
+  },
+  {
+    "id": "estate_map_clasp", "display_name": "Estate Map Clasp", "class": "souvenir", "domain": "travel", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 14, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/estate_map_clasp.svg", "icon_key": "estate_map_clasp", "environment_prop": "map", "surface": "counter", "description": "The estate map lost this at the fold.", "effect": {"travel_scouting_level": 1}
+  },
+  {
+    "id": "convoy_cb_tag", "display_name": "Convoy CB Tag", "class": "souvenir", "domain": "travel", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 8, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/convoy_cb_tag.svg", "icon_key": "convoy_cb_tag", "environment_prop": "keychain", "surface": "counter", "description": "A handle, a channel, no name.", "effect": {"loss_reduction": 1}
+  },
+  {
+    "id": "tour_bus_luggage_tag", "display_name": "Tour-Bus Luggage Tag", "class": "souvenir", "domain": "travel", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 6, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/tour_bus_luggage_tag.svg", "icon_key": "tour_bus_luggage_tag", "environment_prop": "paper_note", "surface": "counter", "description": "Wrong town. Right machine.", "effect": {"travel_scouting_level": 1}
+  },
+  {
+    "id": "lock_in_door_chit", "display_name": "Lock-In Door Chit", "class": "souvenir", "domain": "security", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 10, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/lock_in_door_chit.svg", "icon_key": "lock_in_door_chit", "environment_prop": "paper_note", "surface": "counter", "description": "The door opened once.", "effect": {"cheat_suspicion_delta": -1}
+  },
+  {
+    "id": "delivery_twine", "display_name": "Delivery Twine", "class": "souvenir", "domain": "global", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 4, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/delivery_twine.svg", "icon_key": "delivery_twine", "environment_prop": "keychain", "surface": "counter", "description": "Cut from the box worth opening.", "effect": {"loss_reduction": 1}
+  },
+  {
+    "id": "lotto_queue_number", "display_name": "Lotto Queue Number", "class": "souvenir", "domain": "games", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 6, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/lotto_queue_number.svg", "icon_key": "lotto_queue_number", "environment_prop": "paper_note", "surface": "counter", "description": "They called every number but yours.", "effect": {"win_chance": 1}
+  },
+  {
+    "id": "boarded_window_nail", "display_name": "Boarded-Window Nail", "class": "souvenir", "domain": "security", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 7, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/boarded_window_nail.svg", "icon_key": "boarded_window_nail", "environment_prop": "keychain", "surface": "counter", "description": "Bent coming out. Kept anyway.", "effect": {"debt_default_heat_delta": -1}
+  },
+  {
+    "id": "rent_party_hat_pin", "display_name": "Rent-Party Hat Pin", "class": "souvenir", "domain": "global", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 11, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/rent_party_hat_pin.svg", "icon_key": "rent_party_hat_pin", "environment_prop": "token", "surface": "counter", "description": "The hat got heavy. The room stayed open.", "effect": {"baseline_luck_delta": 1}
+  },
+  {
+    "id": "recording_room_tape", "display_name": "Recording-Room Tape", "class": "souvenir", "domain": "security", "content_groups": ["scenario_souvenirs"], "sellable": true, "sale_price": 9, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/recording_room_tape.svg", "icon_key": "recording_room_tape", "environment_prop": "paper_note", "surface": "counter", "description": "Silence, labeled and dated.", "effect": {"cheat_suspicion_delta": -1}
+  },
+  {
+    "id": "mags_loaded_dice", "display_name": "Mags' Loaded Dice", "class": "contraband", "domain": "games", "content_groups": ["crew_gear"], "sellable": true, "sale_price": 34, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/mags_loaded_dice.svg", "icon_key": "mags_loaded_dice", "environment_prop": "weighted_keyring", "surface": "folding_table", "description": "They settle where Mags left the weight.", "effect": {"families": {"dice": {"bar_dice_controlled_roll_perfect_msec": 45, "bar_dice_controlled_roll_good_msec": 80, "bar_dice_controlled_roll_base_heat": -3}}, "cheat_suspicion_delta": 2}
+  },
+  {
+    "id": "mags_tuned_loupe", "display_name": "Mags' Tuned Loupe", "class": "contraband", "domain": "games", "content_groups": ["crew_gear"], "sellable": true, "sale_price": 38, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/mags_tuned_loupe.svg", "icon_key": "mags_tuned_loupe", "environment_prop": "loose_card", "surface": "folding_table", "description": "Ground thin enough to catch the second lie.", "effect": {"baccarat_edge_sort_cue_count": -2, "baccarat_edge_sort_memory_tolerance": 2, "baccarat_edge_sort_heat_delta": -3, "cheat_suspicion_delta": 1}
+  },
+  {
+    "id": "mags_lined_sleeve", "display_name": "Mags' Lined Sleeve", "class": "contraband", "domain": "games", "content_groups": ["crew_gear"], "sellable": true, "sale_price": 40, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/mags_lined_sleeve.svg", "icon_key": "mags_lined_sleeve", "environment_prop": "foil_sleeve", "surface": "folding_table", "description": "Static stays in. Heat stays down.", "effect": {"families": {"slots": {"win_chance": 7}, "wheel": {"roulette_past_post_perfect_msec": 30, "roulette_past_post_base_heat": -4}}, "cheat_suspicion_delta": 1}
+  },
+  {
+    "id": "mags_shim_kit", "display_name": "Mags' Gutter Kit", "class": "contraband", "domain": "games", "content_groups": ["crew_gear"], "sellable": true, "sale_price": 32, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/mags_shim_kit.svg", "icon_key": "mags_shim_kit", "environment_prop": "coin", "surface": "folding_table", "description": "Filed teeth. One more gutter gives it back.", "effect": {"families": {"coin_pusher": {"coin_pusher_gutter_recovery_uses": 4}}, "cheat_suspicion_delta": 1}
   }
 ]

@@ -6405,7 +6405,7 @@ func crew_rook_finish_ride() -> Dictionary:
 
 func crew_mags_bench_status() -> Dictionary:
 	var available := CrewStateModelScript.RANK_IDS.find(crew_rank("crew_mags")) >= CrewStateModelScript.RANK_IDS.find("associate")
-	return {"available": available, "catalog_ready": false, "catalog_owner": "content06_1", "message": "Mags has the bench wired. The upgrade catalog arrives with the gear pass." if available else "Mags does not open the cases for strangers."}
+	return {"available": available, "catalog_ready": true, "catalog_owner": "content06_1", "message": "Mags opens the labeled cases." if available else "Mags does not open the cases for strangers."}
 
 
 func crew_action_index() -> int:

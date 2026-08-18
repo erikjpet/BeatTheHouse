@@ -68,8 +68,7 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 	if str(payload.get("kind", "")) == "crew_mags_bench":
 		if run_state == null:
 			return []
-		var bench := run_state.crew_mags_bench_status()
-		return [{"id": "inspect", "label": "Inspect the bench", "text": str(bench.get("message", "The cases stay shut.")), "consequences": {}}]
+		return _mags_bench_choices(payload, run_state, environment)
 	if str(payload.get("kind", "")) == "grand_casino_showdown":
 		return _grand_casino_showdown_choices(payload, run_state, environment)
 	if str(payload.get("kind", "")) == "grand_casino_high_roller_cashout":
@@ -94,6 +93,40 @@ func choice(choice_id: String, run_state: RunState = null, environment: Dictiona
 		if option.get("id", "") == choice_id:
 			return option.duplicate(true)
 	return {}
+
+
+# Projects Mags' authored catalog through the ordinary event consequence path.
+func _mags_bench_choices(payload: Dictionary, run_state: RunState, environment: Dictionary) -> Array:
+	var status := run_state.crew_mags_bench_status()
+	if not bool(status.get("available", false)):
+		return [{"id": "leave", "label": "Cases closed", "text": str(status.get("message", "Mags keeps the cases shut.")), "consequences": {}}]
+	var result: Array = []
+	for entry_value in _copy_array(payload.get("catalog", [])):
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		var output_item := str(entry.get("output_item", "")).strip_edges()
+		var required_items := _string_array(entry.get("requires_items", []))
+		var cash_cost := maxi(0, int(entry.get("cash_cost", 0)))
+		var minimum_rank := str(entry.get("min_member_rank", "associate")).strip_edges()
+		var conditions := {
+			"min_bankroll": cash_cost,
+			"crew_member_rank_at_least": {"crew_mags": minimum_rank},
+			"requires_items": required_items,
+			"blocked_by_items": [output_item],
+		}
+		var choice_data := {
+			"id": str(entry.get("id", output_item)),
+			"label": str(entry.get("label", "Build gear")),
+			"text": "%s\n%s" % [str(entry.get("text", "")), str(entry.get("risk_delta_note", ""))],
+			"consequence_summary": "Bankroll -%d; parts become %s" % [cash_cost, output_item],
+			"conditions": conditions,
+			"consequences": {"bankroll_delta": -cash_cost, "inventory_remove": required_items, "inventory_add": [output_item]},
+		}
+		if _choice_conditions_allow(choice_data, run_state, environment):
+			result.append(choice_data)
+	result.append({"id": "leave", "label": "Leave the cases", "text": "Mags closes nothing you paid for.", "consequences": {}})
+	return result
 
 
 # Checks whether this event can fire in the current run context.
@@ -640,6 +673,8 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	for item_id in _string_array(conditions.get("blocked_by_items", [])):
 		if run_state.inventory.has(item_id):
 			return false
+	if conditions.has("min_bankroll") and run_state.bankroll < int(conditions.get("min_bankroll", 0)):
+		return false
 	var archetype_ids := _string_array(conditions.get("archetype_ids", []))
 	if not archetype_ids.is_empty() and not archetype_ids.has(str(environment.get("archetype_id", ""))):
 		return false
@@ -685,6 +720,13 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 		var maximum := str(member_rank_maximum.get(member_id_value, "stranger"))
 		var ranks := CrewStateModel.RANK_IDS
 		if not CrewStateModel.MEMBER_IDS.has(member_id) or not ranks.has(maximum) or ranks.find(run_state.crew_rank(member_id)) > ranks.find(maximum):
+			return false
+	var member_rank_minimum := _copy_dict(conditions.get("crew_member_rank_at_least", {}))
+	for member_id_value in member_rank_minimum.keys():
+		var member_id := str(member_id_value)
+		var minimum := str(member_rank_minimum.get(member_id_value, "stranger"))
+		var ranks := CrewStateModel.RANK_IDS
+		if not CrewStateModel.MEMBER_IDS.has(member_id) or not ranks.has(minimum) or ranks.find(run_state.crew_rank(member_id)) < ranks.find(minimum):
 			return false
 	var requires_games := _string_array(conditions.get("requires_games", []))
 	if not requires_games.is_empty():

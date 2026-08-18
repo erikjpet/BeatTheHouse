@@ -238,5 +238,37 @@
         "You turn up a Cumquat Sandwich. Naturally."
       ]
     }
+  },
+  {
+    "id": "scenario_open_bar",
+    "display_name": "Open Bar",
+    "category": "alcohol",
+    "description": "The charter is pleased to provide the round.",
+    "cost": 0,
+    "message": "The charter provides the drink. The river keeps the receipt.",
+    "effect": {"alcohol_intake": 16, "baseline_luck_delta": 1, "messages": ["The open bar provides another glass."]},
+    "economy_note": "A zero-cash scenario perk; its alcohol cost and small luck edge are the sink."
+  },
+  {
+    "id": "punchline_cover_charge",
+    "display_name": "Headliner Cover",
+    "category": "nightlife",
+    "description": "Your seat will be held discreetly.",
+    "cost": 14,
+    "message": "The host provides a wrist stamp and forgets the name.",
+    "availability": {"single_use_flag": "punchline_headliner_cover_paid", "blocked_text": "Your cover is already settled."},
+    "effect": {"suspicion_delta": -2, "flags_set": {"punchline_headliner_cover_paid": true}, "messages": ["The cover buys a seat and a quieter entrance."]},
+    "economy_note": "A modest nightlife sink priced below a standard table buy-in."
+  },
+  {
+    "id": "punchline_private_table",
+    "display_name": "Private Table",
+    "category": "nightlife",
+    "description": "A quiet table away from the stairs.",
+    "cost": 24,
+    "message": "A table opens where the floor does not need your name.",
+    "availability": {"single_use_flag": "punchline_private_table_reserved", "blocked_text": "The private table is already held."},
+    "effect": {"suspicion_delta": -4, "flags_set": {"punchline_private_table_reserved": true}, "messages": ["The house provides the quiet table."]},
+    "economy_note": "A higher crew-room sink trading cash for a bounded heat reduction."
   }
 ]
