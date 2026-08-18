@@ -1393,6 +1393,22 @@ What happens then is the owner's, not an agent's:
   systems are outside this density/presentation/audio row and none of the
   binding prompt gates or coin-pusher budgets failed.
 
+- 2026-08-18 [pusherv3_2] PM acceptance review rejected a killed direct parity
+  run as evidence: the Node-based runner never entered a SceneTree, so `_ready`
+  could not fire. Windows/Web acceptance requires a supported non-hanging host
+  invocation plus real collection from a preloaded nonempty tray. The same
+  review found residual Coin Pusher `trace_packed` production/test fallbacks;
+  Stage 2 must remove the obsolete presentation-trace path rather than leave a
+  dormant compatibility branch.
+- 2026-08-18 [crew06_8] PM scope review returned two uncovered production
+  defects: after the whale-vouch flag, an unrelated casino loss could advance
+  the vouch instead of the authored whale table; and attempting The Count's
+  Play with an identity shortfall did not force its required costed, non-ending
+  abort. Both require negative production-path regressions before acceptance.
+  The crew branch's visual report was compared with clean `8f7597ed`: delivery
+  coverage is byte-equivalent/green, and its only visual warnings are the
+  expected pre-integration V3 live-pusher assertions owned by `pusherv3_2`.
+
 ## Work Log
 
 - 2026-08-17 [pusherv3_1] OWNER RULING (Amendment 6.1): the geometry
