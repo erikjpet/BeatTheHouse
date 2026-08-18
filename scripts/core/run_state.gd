@@ -6935,6 +6935,12 @@ func crew_heist_begin_play() -> Dictionary:
 	else:
 		setup["drunk"] = bool(setup.get("vouch", false)) and bool(setup.get("rig", false)) and bool(setup.get("name", false))
 	state["setup"] = setup
+	if str(state.get("plan_id", "")) == CrewHeistModelScript.PLAN_COUNT and not bool(setup.get("identity", false)):
+		crew_heist_state = state
+		var forced_abort := crew_heist_abort("identity_shortfall")
+		forced_abort["forced"] = bool(forced_abort.get("ok", false))
+		forced_abort["message"] = "The identity never held. Bishop folds the score and the preparation cost stays spent."
+		return forced_abort
 	if not CrewHeistModelScript.setup_complete(state):
 		crew_heist_state = state
 		return {"ok": false, "message": "The setup still has an empty chair."}
@@ -7643,7 +7649,7 @@ func _crew_heist_record_settled_game(game_id: String, venue_id: String, result: 
 		if plan_id == CrewHeistModelScript.PLAN_COUNT and venue_id in GRAND_CASINO_ARCHETYPE_IDS:
 			var session_id := str(result.get("session_id", "%s:%s" % [_event_cadence_visit_key(current_environment), game_id]))
 			crew_heist_record_count_session(int(result.get("bet", result.get("wager", result.get("stake", 0)))), int(result.get("heat_start", suspicion_level())), int(result.get("heat_peak", suspicion_level())), bool(result.get("ok", true)), session_id)
-		elif plan_id == CrewHeistModelScript.PLAN_WHALE and bool(narrative_flags.get("heist_plan_b_whale_vouch", false)) and net < 0:
+		elif plan_id == CrewHeistModelScript.PLAN_WHALE and bool(narrative_flags.get("heist_plan_b_whale_vouch", false)) and net < 0 and _crew_heist_whale_vouch_table_active(venue_id):
 			_crew_heist_sync_whale_setup()
 			crew_heist_record_whale_vouch(net, true)
 		return
@@ -7666,6 +7672,14 @@ func _crew_heist_record_settled_game(game_id: String, venue_id: String, result: 
 		var honest := bool(whale_facts.get("honest", true)) and not bool(pending.get("dishonest", false))
 		var made_now := bool(whale_facts.get("made", false)) and not bool(play.get("made", false))
 		crew_heist_play_round({"game_id": game_id, "honest": honest, "made": made_now, "pot_delta": net})
+
+
+func _crew_heist_whale_vouch_table_active(venue_id: String) -> bool:
+	if venue_id.is_empty() or venue_id != str(current_environment.get("archetype_id", "")):
+		return false
+	var hooks := _copy_dict(current_environment.get("scenario_hook_flags", {}))
+	var event_ids := _copy_array(current_environment.get("event_ids", []))
+	return bool(hooks.get("whale_vouch_anchor", false)) or (bool(hooks.get("heist_plan_b_criteria", false)) and event_ids.has("scenario_whale_aboard_vouch"))
 
 
 func _crew_heist_whale_expected_game(state: Dictionary) -> String:
