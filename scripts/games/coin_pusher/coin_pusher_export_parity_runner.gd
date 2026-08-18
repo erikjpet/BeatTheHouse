@@ -1,5 +1,8 @@
 extends Node
 
+# Supported entry point: coin_pusher_export_parity_runner.tscn. A Node script
+# launched directly with --script never enters the tree and cannot run _ready().
+
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const INPUT_PATH := "res://scripts/games/coin_pusher/coin_pusher_export_parity_input.json"
@@ -38,6 +41,8 @@ func _run_parity() -> void:
 	var snapshot := CoinPusherSolverScript.create_machine(
 		_rng("%s:snapshot" % seed), machine_definition, OPENING_BODY_COUNT
 	)
+	(snapshot.get("bodies", []) as Array).pop_back()
+	snapshot["tray_ledger"] = [{"kind": "coin", "value": 3, "item_id": "", "provenance": {}}]
 	var initial_digest := CoinPusherSolverScript.canonical_digest(snapshot)
 	var initial_digest_json := _canonical_json(initial_digest)
 	var start_tick := int(snapshot.get("tick", 0))
@@ -67,6 +72,9 @@ func _run_parity() -> void:
 		failures.append("V3 export parity replay did not advance exactly %d fixed ticks." % REPLAY_TICKS)
 	if int(first_digest.get("accepted_inserts", -1)) != 2:
 		failures.append("V3 export parity replay did not apply both ordered drop inputs exactly once.")
+	if int(first_digest.get("collected_count", -1)) != 1 or int(first_digest.get("collected_value", -1)) != 3 \
+			or not (first_digest.get("tray_ledger", []) as Array).is_empty():
+		failures.append("V3 export parity replay did not collect the preloaded nonempty tray exactly once.")
 	if int(first_digest.get("motor_target_rate_fp", -1)) != CoinPusherSolverScript.FP:
 		failures.append("V3 export parity replay did not apply the skill-stop release.")
 	if first_digest_json == initial_digest_json:
@@ -110,8 +118,9 @@ func _validate_snapshot(snapshot: Dictionary, machine_definition: Dictionary, fa
 	if snapshot.get("machine_definition", {}) != machine_definition:
 		failures.append("create_machine did not preserve the exact authored coin_pusher_machine definition.")
 	if int(snapshot.get("opening_body_count", -1)) != OPENING_BODY_COUNT \
-			or (snapshot.get("bodies", []) as Array).size() != OPENING_BODY_COUNT:
-		failures.append("create_machine did not seed exactly %d deterministic opening bodies." % OPENING_BODY_COUNT)
+			or (snapshot.get("bodies", []) as Array).size() != OPENING_BODY_COUNT - 1 \
+			or (snapshot.get("tray_ledger", []) as Array).size() != 1:
+		failures.append("Export parity fixture did not conserve exactly %d opening bodies across active stock plus its preloaded tray." % OPENING_BODY_COUNT)
 
 
 func _validate_input_trace(trace: Array, start_tick: int, failures: Array[String]) -> void:

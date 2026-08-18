@@ -669,8 +669,10 @@ struct Kernel {
       state[outcome == "tray" ? "tray_ledger" : "gutter_ledger"] = ledger;
       Dictionary ev;
       ev["kind"] = outcome;
+      ev["outcome"] = outcome;
       ev["body_id"] = q.id;
       ev["body_kind"] = q.kind;
+      ev["metadata"] = q.meta.duplicate(true);
       events.append(ev);
       b.erase(b.begin() + i);
     }
@@ -762,6 +764,14 @@ struct Kernel {
           state["carriage_x"] = holes[index];
         }
       } else if (k == "collect") {
+        Array tray = state.get("tray_ledger", Array());
+        int64_t collected_value = int64_t(state.get("collected_value", 0));
+        for (int tray_index = 0; tray_index < tray.size(); ++tray_index) {
+          Dictionary entry = tray[tray_index];
+          collected_value += int64_t(entry.get("value", 0));
+        }
+        state["collected_count"] = int64_t(state.get("collected_count", 0)) + tray.size();
+        state["collected_value"] = collected_value;
         state["tray_ledger"] = Array();
       }
       ++cursor;
@@ -856,15 +866,17 @@ struct Kernel {
           energy() <= before + platform_work + gravity_work + nestle_work;
       int64_t tick_tray = Array(state.get("tray_ledger", Array())).size();
       int64_t tick_gutter = Array(state.get("gutter_ledger", Array())).size();
+      int64_t tick_collected = int64_t(state.get("collected_count", 0));
       int64_t tick_origin = int64_t(state.get("opening_body_count", 0)) +
                             int64_t(state.get("accepted_inserts", 0));
       conservation_ok &=
-          int64_t(b.size()) + tick_tray + tick_gutter == tick_origin;
+          int64_t(b.size()) + tick_tray + tick_gutter + tick_collected == tick_origin;
     }
     write();
     int64_t active = b.size(),
             tray = Array(state.get("tray_ledger", Array())).size(),
             gutter = Array(state.get("gutter_ledger", Array())).size(),
+            collected = int64_t(state.get("collected_count", 0)),
             origin = int64_t(state.get("opening_body_count", 0)) +
                      int64_t(state.get("accepted_inserts", 0));
     Dictionary inv;
@@ -873,6 +885,7 @@ struct Kernel {
     inv["active"] = active;
     inv["tray"] = tray;
     inv["gutter"] = gutter;
+    inv["collected"] = collected;
     inv["origin"] = origin;
     inv["refused"] = state.get("refused_inserts", 0);
     state["last_invariants"] = inv;

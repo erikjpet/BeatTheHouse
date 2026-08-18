@@ -2,6 +2,7 @@ extends "res://scripts/tests/ui_scene/compile_environment_layout.gd"
 
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
+const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 
 
 class EmbeddedCoachFixtureGame:
@@ -165,6 +166,98 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var game: GameModule = probe.get("current_game")
 	var stage_one_surface: Dictionary = canvas.call("realtime_surface_state") if canvas != null else {}
 	if bool(stage_one_surface.get("coin_pusher_v3_headless_placeholder", false)):
+		var live_actions: Array = stage_one_surface.get("native_selected_surface_actions", [])
+		var live_loop_stage := live_actions.has("coin_pusher_drop")
+		if live_loop_stage:
+			var run_state: RunState = probe.get("run_state")
+			var bankroll_before_drop := run_state.wager_balance_for_game("coin_pusher", run_state.current_environment)
+			var turns_before_drop := int(run_state.current_environment.get("turns", 0))
+			var story_before_drop := run_state.story_log.size()
+			var durable_before: Dictionary = ((run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary)
+			var serialized_before := JSON.stringify(durable_before)
+			var live_before_map: Dictionary = game.get("_live_machines")
+			var live_before: Dictionary = live_before_map.values()[0] if not live_before_map.is_empty() else {}
+			var expected_opening_snapshot := CoinPusherLiveSessionScript.make_snapshot(live_before.get("simulation", {}), live_before)
+			probe.call("_prepare_foundation_run_save")
+			var opening_snapshot_exact := JSON.stringify(durable_before.get("settled_state", {}), "", true) == JSON.stringify(expected_opening_snapshot, "", true) \
+					and str((durable_before.get("settled_state", {}) as Dictionary).get("schema", "")) == CoinPusherLiveSessionScript.SNAPSHOT_SCHEMA
+			canvas.emit_signal("surface_action", "coin_pusher_drop", 0, false)
+			var priced_drop_passed := run_state.wager_balance_for_game("coin_pusher", run_state.current_environment) == bankroll_before_drop - 1 \
+					and int(run_state.current_environment.get("turns", 0)) == turns_before_drop + 1 \
+					and run_state.story_log.size() == story_before_drop + 1 \
+					and str((run_state.story_log.back() as Dictionary).get("action_id", "")) == "drop_quarter" \
+					and int((run_state.story_log.back() as Dictionary).get("bankroll_delta", 0)) == -1
+			await process_frame
+			var live_map: Dictionary = game.get("_live_machines")
+			var live_machine: Dictionary = live_map.values()[0] if not live_map.is_empty() else {}
+			var live_simulation: Dictionary = live_machine.get("simulation", {})
+			var free_bankroll_before := run_state.wager_balance_for_game("coin_pusher", run_state.current_environment)
+			var free_turns_before := int(run_state.current_environment.get("turns", 0))
+			canvas.emit_signal("surface_action", "coin_pusher_carriage_left", 0, false)
+			canvas.emit_signal("surface_action", "coin_pusher_skill_stop", 0, false)
+			canvas.emit_signal("surface_action", "coin_pusher_collect", 0, false)
+			var free_inputs_passed := run_state.wager_balance_for_game("coin_pusher", run_state.current_environment) == free_bankroll_before \
+					and int(run_state.current_environment.get("turns", 0)) == free_turns_before
+			var bodies_before_refusal: Array = (live_simulation.get("bodies", []) as Array).duplicate(true)
+			var ceiling := int((live_simulation.get("machine_definition", {}) as Dictionary).get("ceiling", 600))
+			var refusal_bodies: Array = bodies_before_refusal.duplicate(true)
+			while refusal_bodies.size() < ceiling:
+				refusal_bodies.append((bodies_before_refusal[refusal_bodies.size() % bodies_before_refusal.size()] as Dictionary).duplicate(true))
+			live_simulation["bodies"] = refusal_bodies
+			var refusal_bankroll_before := run_state.wager_balance_for_game("coin_pusher", run_state.current_environment)
+			var refusal_turns_before := int(run_state.current_environment.get("turns", 0))
+			var refusal_story_before := run_state.story_log.size()
+			canvas.emit_signal("surface_action", "coin_pusher_drop", 0, false)
+			var refused_drop_passed := run_state.wager_balance_for_game("coin_pusher", run_state.current_environment) == refusal_bankroll_before \
+					and int(run_state.current_environment.get("turns", 0)) == refusal_turns_before \
+					and run_state.story_log.size() == refusal_story_before
+			live_simulation["bodies"] = bodies_before_refusal
+			var pricing_passed := priced_drop_passed and free_inputs_passed and refused_drop_passed
+			if not pricing_passed:
+				push_error("Coin Pusher production action seam violated pricing/free/refusal accounting: priced=%s free=%s refused=%s wager_balance=%d turns=%d." % [priced_drop_passed, free_inputs_passed, refused_drop_passed, run_state.wager_balance_for_game("coin_pusher", run_state.current_environment), int(run_state.current_environment.get("turns", 0))])
+			var tick_before_save := int(live_simulation.get("tick", -1))
+			probe.call("_prepare_foundation_run_save")
+			var durable_after: Dictionary = ((run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary)
+			var serialized_after := JSON.stringify(durable_after)
+			var still_live_after_save := typeof(live_machine.get("simulation", {})) == TYPE_DICTIONARY \
+					and typeof(live_machine.get("live_session", {})) == TYPE_DICTIONARY \
+					and int((live_machine.get("simulation", {}) as Dictionary).get("tick", -2)) == tick_before_save
+			var first_patch: Dictionary = game.surface_realtime_state_patch(run_state, run_state.current_environment, {"surface_time_msec": 1000}, stage_one_surface)
+			var second_patch: Dictionary = game.surface_realtime_state_patch(run_state, run_state.current_environment, {"surface_time_msec": 1100}, first_patch)
+			var motor_continued := int(second_patch.get("coin_pusher_ticks_advanced", 0)) > 0 \
+					and int((live_machine.get("simulation", {}) as Dictionary).get("tick", -2)) > tick_before_save
+			var transient_clean := not serialized_before.contains("\"simulation\"") \
+					and not serialized_before.contains("live_session") \
+					and not serialized_after.contains("\"simulation\"") \
+					and not serialized_after.contains("live_session") \
+					and not serialized_after.contains("accumulator_units") \
+					and not serialized_after.contains("input_trace")
+			var live_loop_passed := pricing_passed and opening_snapshot_exact and still_live_after_save and motor_continued and transient_clean \
+					and not game.foundation_save_ready(run_state, run_state.current_environment)
+			if not live_loop_passed:
+				push_error("Coin Pusher live DROP was frozen by autosave or leaked transient solver state: still_live=%s motor=%s clean=%s ready=%s durable=%s." % [still_live_after_save, motor_continued, transient_clean, game.foundation_save_ready(run_state, run_state.current_environment), serialized_after])
+			var trace_count_before_exit := ((live_machine.get("live_session", {}) as Dictionary).get("input_trace", []) as Array).size()
+			probe.call("back_to_environment")
+			var exit_started_visible := bool(probe.get("game_exit_settle_active")) and str(probe.get("current_screen")) == "GAME"
+			var locked_command := game.surface_action_command("coin_pusher_carriage_left", 0, false, {}, run_state, run_state.current_environment)
+			var input_locked := str(locked_command.get("message", "")).contains("controls lock") \
+					and ((live_machine.get("live_session", {}) as Dictionary).get("input_trace", []) as Array).size() == trace_count_before_exit
+			var settle_frames := 0
+			while bool(probe.get("game_exit_settle_active")) and settle_frames < 200:
+				await process_frame
+				settle_frames += 1
+			var final_projection_applied := bool(probe.get("last_game_exit_final_projection_rendered"))
+			var durable_exit: Dictionary = ((run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary)
+			var zero_work_after := (game.get("_live_machines") as Dictionary).is_empty() \
+					and not JSON.stringify(durable_exit).contains("\"simulation\"") \
+					and not JSON.stringify(durable_exit).contains("live_session")
+			var chunked_exit_passed := exit_started_visible and input_locked and settle_frames > 0 \
+					and final_projection_applied and str(probe.get("current_screen")) == "ENVIRONMENT" and zero_work_after
+			if not chunked_exit_passed:
+				push_error("Coin Pusher exit did not settle visibly across locked frames or freeze absent: started=%s locked=%s frames=%d final=%s screen=%s zero=%s live=%s current_key=%s durable=%s." % [exit_started_visible, input_locked, settle_frames, final_projection_applied, str(probe.get("current_screen")), zero_work_after, JSON.stringify((game.get("_live_machines") as Dictionary).keys()), game.call("_live_key", run_state, run_state.current_environment), JSON.stringify(durable_exit)])
+			probe.queue_free()
+			await process_frame
+			return live_loop_passed and chunked_exit_passed
 		var placeholder_passed: bool = game != null and game.get_id() == "coin_pusher" \
 				and str(probe.get("current_screen")) == "GAME" \
 				and probe.get("game_surface_canvas") == canvas \
@@ -326,15 +419,12 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	await process_frame
 	var stored: Dictionary = probe.get("last_game_result")
 	var stored_patch: Dictionary = stored.get("surface_presentation_snapshot_patch", {}) if typeof(stored.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
-	var stored_trace: Variant = stored_patch.get("trace_packed", {}) if typeof(stored_patch.get("trace_packed", {})) == TYPE_DICTIONARY and not (stored_patch.get("trace_packed", {}) as Dictionary).is_empty() else stored_patch.get("trace", [])
 	var last_draw: Dictionary = draw_snapshots.back() if not draw_snapshots.is_empty() and typeof(draw_snapshots.back()) == TYPE_DICTIONARY else {}
 	var draw_state: Dictionary = last_draw.get("state", {}) if typeof(last_draw.get("state", {})) == TYPE_DICTIONARY else {}
 	var draw_snapshot: Dictionary = draw_state.get("coin_pusher_snapshot", {}) if typeof(draw_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
-	var draw_trace: Variant = draw_snapshot.get("trace_packed", {}) if typeof(draw_snapshot.get("trace_packed", {})) == TYPE_DICTIONARY and not (draw_snapshot.get("trace_packed", {}) as Dictionary).is_empty() else draw_snapshot.get("trace", [])
 	var action_canvas_state: Dictionary = canvas.call("realtime_surface_state")
 	var post_action_preferences: Dictionary = probe.get("game_surface_ui_state") if typeof(probe.get("game_surface_ui_state")) == TYPE_DICTIONARY else {}
 	var action_canvas_snapshot: Dictionary = action_canvas_state.get("coin_pusher_snapshot", {}) if typeof(action_canvas_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
-	var action_canvas_trace: Variant = action_canvas_snapshot.get("trace_packed", {}) if typeof(action_canvas_snapshot.get("trace_packed", {})) == TYPE_DICTIONARY and not (action_canvas_snapshot.get("trace_packed", {}) as Dictionary).is_empty() else action_canvas_snapshot.get("trace", [])
 	var stored_action_patch: Dictionary = stored.get("surface_action_view_patch", {}) if typeof(stored.get("surface_action_view_patch", {})) == TYPE_DICTIONARY else {}
 	var stored_action_snapshot_patch: Dictionary = stored_action_patch.get("coin_pusher_snapshot", {}) if typeof(stored_action_patch.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
 	var stored_action_state: Dictionary = stored_patch.get("action_state", {}) if typeof(stored_patch.get("action_state", {})) == TYPE_DICTIONARY else {}
@@ -397,12 +487,8 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		"refresh_contract": refresh_contract_passed,
 		"action_view_contract": action_view_passed,
 		"drop_action_result": str(stored.get("action_id", "")) == "drop_quarter",
-		"stored_trace_present": not stored_trace.is_empty(),
-		"stored_trace_frame_count": typeof(stored_trace) != TYPE_DICTIONARY or int((stored_trace as Dictionary).get("frame_count", 0)) == 14,
 		"draw_snapshot_present": not draw_snapshots.is_empty(),
-		"draw_trace_value": JSON.stringify(draw_trace) == JSON.stringify(stored_trace),
-		"canvas_trace_value": JSON.stringify(action_canvas_trace) == JSON.stringify(stored_trace),
-		"canvas_trace_identity": is_same(action_canvas_trace, stored_trace),
+		"draw_live_body_count": int(draw_snapshot.get("body_count", -1)) == int(action_canvas_snapshot.get("body_count", -2)),
 		"draw_sample_recorded": draw_sample_count_after > draw_sample_count_before,
 		"drop_hit_region": rendered_drop_hit,
 		"nudge_hit_region": rendered_nudge_hit,
@@ -470,16 +556,14 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var success_stamp := int(probe.get("last_game_surface_realtime_refresh_msec"))
 	var realtime_canvas_state: Dictionary = canvas.call("realtime_surface_state")
 	var realtime_canvas_snapshot: Dictionary = realtime_canvas_state.get("coin_pusher_snapshot", {}) if typeof(realtime_canvas_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
-	var realtime_canvas_trace: Variant = realtime_canvas_snapshot.get("trace_packed", {}) if typeof(realtime_canvas_snapshot.get("trace_packed", {})) == TYPE_DICTIONARY and not (realtime_canvas_snapshot.get("trace_packed", {}) as Dictionary).is_empty() else realtime_canvas_snapshot.get("trace", [])
 	var realtime_passed: bool = success_preconditions_exact \
 			and realtime_clock_wait_frames < 16 \
 			and success_stamp > surface_time_before \
 			and int(realtime_canvas_state.get("surface_time_msec", -1)) == success_stamp \
 			and int(realtime_canvas_snapshot.get("upper_phase_milli", -1)) != upper_phase_before \
-			and JSON.stringify(realtime_canvas_trace) == JSON.stringify(stored_trace) \
-			and is_same(realtime_canvas_trace, action_canvas_trace)
+			and int(realtime_canvas_snapshot.get("body_count", -1)) == int(action_canvas_snapshot.get("body_count", -2))
 	if not realtime_passed:
-		push_error("FoundationMain production realtime advance did not stamp/update the live owned canvas while retaining its exact action trace reference.")
+		push_error("FoundationMain production realtime advance did not stamp/update the live owned canvas from current machine state.")
 	# Replacing only the result boundary while the exact run/game/room/session stay
 	# active must stale the captured identity rather than render the wrong result.
 	var generation_before_stale := int(probe.get("deferred_embedded_refresh_generation"))

@@ -286,22 +286,11 @@ static func embedded_action_view_patch(host: Variant, current_state: Dictionary)
 
 
 static func _merge_presentation_patch_atomic(target: Dictionary, patch: Dictionary) -> void:
-	var merge_patch := patch
-	if patch.has("trace_packed"):
-		# Compact traces are immutable renderer payloads, not nested authored
-		# configuration. Treat the payload atomically so the ordinary deep merge
-		# cannot reconstruct its descriptor Dictionary key-by-key and break the
-		# stored/action/realtime read-only identity contract.
-		merge_patch = patch.duplicate(false)
-		merge_patch.erase("trace_packed")
-	_merge_dict_copy_on_write(target, merge_patch)
-	if patch.has("trace_packed"):
-		target["trace_packed"] = patch["trace_packed"]
+	_merge_dict_copy_on_write(target, patch)
 
 
 # A shallow canvas snapshot may still share small nested dictionaries with the
-# previous frame. Clone only the branches touched by a patch; dense untouched
-# arrays and packed replay payloads retain their read-only identity.
+# previous frame. Clone only the branches touched by a patch.
 static func _merge_dict_copy_on_write(target: Dictionary, overrides: Dictionary) -> void:
 	for key in overrides.keys():
 		var override_value: Variant = overrides.get(key)

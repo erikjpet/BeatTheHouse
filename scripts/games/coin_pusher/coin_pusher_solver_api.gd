@@ -75,6 +75,10 @@ static func settle(state: Dictionary, motor_running: bool, max_ticks: int = 1200
 	return CoinPusherSolverScript.settle(state, motor_running, max_ticks)
 
 
+static func all_steady(state: Dictionary, motor_running: bool = true) -> bool:
+	return CoinPusherSolverScript.all_steady(state, motor_running)
+
+
 static func collect_tray(state: Dictionary) -> Dictionary:
 	return CoinPusherSolverScript.collect_tray(state)
 

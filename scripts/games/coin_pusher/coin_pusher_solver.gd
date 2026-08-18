@@ -152,6 +152,8 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 		"refused_inserts": 0,
 		"accepted_inserts": 0,
 		"opening_body_count": 0,
+		"collected_count": 0,
+		"collected_value": 0,
 		"last_events": [],
 		"last_step_metrics": {},
 		"last_invariants": {},
@@ -439,6 +441,8 @@ static func collect_tray(state: Dictionary) -> Dictionary:
 		if not str(entry.get("item_id", "")).is_empty():
 			items.append(str(entry.get("item_id", "")))
 	state["tray_ledger"] = []
+	state["collected_count"] = int(state.get("collected_count", 0)) + ledger.size()
+	state["collected_value"] = int(state.get("collected_value", 0)) + value
 	return {"value": value, "items": items, "count": ledger.size()}
 
 
@@ -513,6 +517,8 @@ static func canonical_digest(state: Dictionary) -> Dictionary:
 		"refused_inserts": int(state.get("refused_inserts", 0)),
 		"accepted_inserts": int(state.get("accepted_inserts", 0)),
 		"opening_body_count": int(state.get("opening_body_count", 0)),
+		"collected_count": int(state.get("collected_count", 0)),
+		"collected_value": int(state.get("collected_value", 0)),
 	}
 
 
@@ -589,7 +595,7 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 	var energy_ok := after_energy <= before_energy + platform_work + gravity_work + nestle_work
 	var active_count := bodies.size()
 	var origin_count := int(state.get("opening_body_count", 0)) + int(state.get("accepted_inserts", 0))
-	var conservation_ok := active_count + (state.get("tray_ledger", []) as Array).size() + (state.get("gutter_ledger", []) as Array).size() == origin_count
+	var conservation_ok := active_count + (state.get("tray_ledger", []) as Array).size() + (state.get("gutter_ledger", []) as Array).size() + int(state.get("collected_count", 0)) == origin_count
 	return {"events": events, "collision_count": collisions, "candidate_count": pairs.size(), "energy_ok": energy_ok, "conservation_ok": conservation_ok}
 
 
@@ -1097,7 +1103,7 @@ static func _process_exits(state: Dictionary, events: Array) -> void:
 			(state["tray_ledger"] as Array).append(entry)
 		else:
 			(state["gutter_ledger"] as Array).append(entry)
-		events.append({"kind": outcome, "body_id": str(body.get("id", "")), "body_kind": str(body.get("kind", "coin"))})
+		events.append({"kind": outcome, "outcome": outcome, "body_id": str(body.get("id", "")), "body_kind": str(body.get("kind", "coin")), "metadata": (body.get("meta", {}) as Dictionary).duplicate(true)})
 		bodies.remove_at(index)
 
 
@@ -1201,13 +1207,15 @@ static func _invariant_report(state: Dictionary, energy_ok: bool) -> Dictionary:
 	var active_count := (state.get("bodies", []) as Array).size()
 	var tray_count := (state.get("tray_ledger", []) as Array).size()
 	var gutter_count := (state.get("gutter_ledger", []) as Array).size()
+	var collected_count := int(state.get("collected_count", 0))
 	var origin_count := int(state.get("opening_body_count", 0)) + int(state.get("accepted_inserts", 0))
 	return {
 		"energy_ok": energy_ok,
-		"conservation_ok": active_count + tray_count + gutter_count == origin_count,
+		"conservation_ok": active_count + tray_count + gutter_count + collected_count == origin_count,
 		"active": active_count,
 		"tray": tray_count,
 		"gutter": gutter_count,
+		"collected": collected_count,
 		"origin": origin_count,
 		"refused": int(state.get("refused_inserts", 0)),
 	}

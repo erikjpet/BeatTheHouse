@@ -213,6 +213,33 @@ func checkpoint_surface_ui_state(_ui_state: Dictionary, _run_state: RunState, _e
 	pass
 
 
+# Autosaves and actual surface dismissal are different lifecycle boundaries.
+# Most modules use the same checkpoint for both; continuous simulations may
+# defer a save until they have produced a natural settled snapshot.
+func checkpoint_surface_ui_state_for_save(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+	checkpoint_surface_ui_state(ui_state, run_state, environment)
+
+
+func foundation_save_ready(_run_state: RunState, _environment: Dictionary) -> bool:
+	return true
+
+
+func requires_chunked_exit_settle(_run_state: RunState, _environment: Dictionary) -> bool:
+	return false
+
+
+func begin_chunked_exit_settle(_run_state: RunState, _environment: Dictionary) -> Dictionary:
+	return {"started": false, "done": true}
+
+
+func advance_chunked_exit_settle(_run_state: RunState, _environment: Dictionary, _tick_budget: int = 8) -> Dictionary:
+	return {"done": true, "ticks": 0}
+
+
+func finalize_chunked_exit_settle(_run_state: RunState, _environment: Dictionary) -> void:
+	pass
+
+
 # Optional pointer-capture path for drag-native surfaces. Positions are in the
 # shared board design space and phases are begin, move, or end.
 func surface_pointer_command(_surface_action: String, _index: int, _phase: String, _board_position: Vector2, _ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
