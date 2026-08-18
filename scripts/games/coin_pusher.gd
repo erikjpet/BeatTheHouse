@@ -9,10 +9,14 @@ const SKILL_STOP_ACTION := "coin_pusher_skill_stop"
 const CARRIAGE_LEFT_ACTION := "coin_pusher_carriage_left"
 const CARRIAGE_RIGHT_ACTION := "coin_pusher_carriage_right"
 const CARRIAGE_DRAG_ACTION := "coin_pusher_carriage_drag"
+const HOLE_ACTION_PREFIX := "coin_pusher_hole_"
 const VAULT_START_ACTION := "start_vault_round"
 const VAULT_OPEN_ACTION := "open_vault_cell"
 const VAULT_STOP_ACTION := "stop_vault_round"
 const VAULT_PEEK_ACTION := "peek_vault_cell"
+const NUDGE_FORCE_PREFIX := "coin_pusher_force_"
+const NUDGE_DIRECTION_PREFIX := "coin_pusher_direction_"
+const VAULT_CELL_PREFIX := "coin_pusher_vault_cell_"
 const COLD_QUARTERS_ITEM_ID := "cold_quarters"
 const SHIM_ITEM_ID := "coin_return_shim"
 const RUMOR_CLASS := "pusher_pile"
@@ -135,9 +139,66 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 
 func surface_action_command(surface_action: String, _index: int, _confirm_requested: bool, _ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var machine := _ensure_live_machine(run_state, environment)
+	_reconcile_tolerance_modifiers(run_state, environment, machine)
 	var live_session: Dictionary = machine.get("live_session", {})
 	if bool(live_session.get("input_locked", false)):
 		return GameModule.surface_command({"handled": true, "message": "The controls lock while the last cascade settles."}, true)
+	if _machine_busy(environment):
+		return GameModule.surface_command({"handled": true, "message": "The machine is occupied; no control responds."}, true)
+	if bool(machine.get("locked_down", false)) and surface_action != COLLECT_ACTION:
+		return GameModule.surface_command({"handled": true, "message": "The alarm lock leaves the cabinet dark. Only the tray remains reachable."}, true)
+	if surface_action.begins_with(NUDGE_FORCE_PREFIX):
+		var force := surface_action.trim_prefix(NUDGE_FORCE_PREFIX)
+		var forces: Dictionary = _tuning().get("nudge_forces", {}) if typeof(_tuning().get("nudge_forces", {})) == TYPE_DICTIONARY else {}
+		if not forces.has(force):
+			return {"handled": false}
+		machine["nudge_force"] = force
+		_write_live_durable(run_state, environment, machine, false)
+		return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": _v3_headless_surface_state(machine, run_state, environment)}, true)
+	if surface_action.begins_with(NUDGE_DIRECTION_PREFIX):
+		var direction := surface_action.trim_prefix(NUDGE_DIRECTION_PREFIX)
+		if not direction in ["left", "front", "right"]:
+			return {"handled": false}
+		machine["nudge_direction"] = direction
+		_write_live_durable(run_state, environment, machine, false)
+		return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": _v3_headless_surface_state(machine, run_state, environment)}, true)
+	if surface_action.begins_with(VAULT_CELL_PREFIX):
+		if str(machine.get("variation_id", "")) != "vault_drop":
+			return {"handled": false}
+		var cell_index := int(surface_action.trim_prefix(VAULT_CELL_PREFIX))
+		var cells: Array = (_variation_state(machine).get("vault_cells", []) as Array)
+		if cell_index < 0 or cell_index >= cells.size() or bool((cells[cell_index] as Dictionary).get("opened", false)):
+			return GameModule.surface_command({"handled": true, "message": "That vault cell is unavailable."}, true)
+		machine["vault_selected_cell"] = cell_index
+		_write_live_durable(run_state, environment, machine, false)
+		return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": _v3_headless_surface_state(machine, run_state, environment)}, true)
+	if surface_action in [VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION]:
+		return GameModule.surface_command({
+			"handled": true,
+			"direct_resolve": true,
+			"action_id": surface_action,
+			"action_kind": "risky" if surface_action == VAULT_PEEK_ACTION else "legal",
+			"set_stake": 0,
+			"skip_stake_validation": true,
+			"preserve_surface_ui_state": true,
+		}, true)
+	if surface_action.begins_with(HOLE_ACTION_PREFIX):
+		var hole_index := int(surface_action.trim_prefix(HOLE_ACTION_PREFIX))
+		var simulation := _simulation(machine)
+		if _jammed_holes(machine, simulation).has(hole_index):
+			return GameModule.surface_command({"handled": true, "message": "A dud puck is physically choking that entry. Push it clear first."}, true)
+		var selected_x := CoinPusherSolverScript.select_hole(simulation, hole_index)
+		CoinPusherLiveSessionScript.queue_input(machine, {"kind": "hole", "index": int(simulation.get("selected_hole", 0))})
+		_write_live_durable(run_state, environment, machine, false)
+		return GameModule.surface_command({
+			"handled": true,
+			"environment_changed": true,
+			"preserve_surface_ui_state": true,
+			"surface_state_patch": {
+				"coin_pusher_selected_hole": int(simulation.get("selected_hole", 0)),
+				"coin_pusher_carriage_x": selected_x,
+			},
+		}, true)
 	match surface_action:
 		"coin_pusher_drop":
 			if _drop_refused(machine):
@@ -145,7 +206,7 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 			return GameModule.surface_command({"handled": true, "direct_resolve": true, "action_id": DROP_ACTION, "action_kind": "legal", "set_stake": _drop_cost(), "skip_stake_validation": true, "preserve_surface_ui_state": true}, true)
 		CARRIAGE_LEFT_ACTION, CARRIAGE_RIGHT_ACTION:
 			var simulation := _simulation(machine)
-			var rail: Dictionary = (_machine_definition().get("apparatus", {}) as Dictionary).get("rail", {})
+			var rail: Dictionary = (_machine_definition(str(machine.get("variation_id", _variation_id()))).get("apparatus", {}) as Dictionary).get("rail", {})
 			var speed := int(rail.get("speed_per_tick", 900))
 			var direction := -1 if surface_action == CARRIAGE_LEFT_ACTION else 1
 			var requested := int(simulation.get("carriage_x", 50000)) + direction * speed
@@ -154,8 +215,9 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 		SKILL_STOP_ACTION:
 			var simulation := _simulation(machine)
 			var engaged := not bool(simulation.get("skill_stop_engaged", false))
-			CoinPusherSolverScript.set_skill_stop(simulation, engaged)
-			CoinPusherLiveSessionScript.queue_input(machine, {"kind": "skill_stop", "engaged": engaged})
+			var resume_rate := _variation_motor_rate_fp(machine)
+			CoinPusherSolverScript.set_skill_stop(simulation, engaged, resume_rate)
+			CoinPusherLiveSessionScript.queue_input(machine, {"kind": "skill_stop", "engaged": engaged, "resume_rate_fp": resume_rate})
 		COLLECT_ACTION:
 			return _collect_surface_command(run_state, environment, machine)
 		_:
@@ -172,9 +234,12 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 	if surface_action != CARRIAGE_DRAG_ACTION:
 		return {"handled": false}
 	var machine := _ensure_live_machine(run_state, environment)
+	_reconcile_tolerance_modifiers(run_state, environment, machine)
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	if bool(session.get("input_locked", false)):
 		return GameModule.surface_command({"handled": true, "message": "The controls lock while the last cascade settles."}, true)
+	if _machine_busy(environment) or bool(machine.get("locked_down", false)):
+		return GameModule.surface_command({"handled": true, "message": "The carriage does not move while this cabinet is unavailable."}, true)
 	var next_state := ui_state
 	if phase == "begin":
 		next_state["coin_pusher_rail_drag_active"] = true
@@ -183,7 +248,7 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 	elif phase != "move" or not bool(next_state.get("coin_pusher_rail_drag_active", false)):
 		return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true}, true)
 	var simulation := _simulation(machine)
-	var requested_x := _rail_x_from_board_position(board_position)
+	var requested_x := _rail_x_from_board_position(machine, board_position)
 	var previous_x := int(simulation.get("carriage_x", requested_x))
 	var actual_x := CoinPusherSolverScript.set_carriage(simulation, requested_x)
 	if actual_x != previous_x:
@@ -197,8 +262,71 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 	}, true)
 
 
-func _rail_x_from_board_position(board_position: Vector2) -> int:
-	var rail: Dictionary = (_machine_definition().get("apparatus", {}) as Dictionary).get("rail", {})
+func _apparatus_type(machine: Dictionary) -> String:
+	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
+	var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+	return str(apparatus.get("type", "rail_slot"))
+
+
+func _native_surface_actions(machine: Dictionary) -> Array:
+	var result: Array = ["coin_pusher_drop"]
+	if _apparatus_type(machine) == "hole_set":
+		var apparatus: Dictionary = _machine_definition(str(machine.get("variation_id", _variation_id()))).get("apparatus", {})
+		var holes: Array = apparatus.get("holes", []) if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else []
+		for index in range(holes.size()):
+			result.append("%s%d" % [HOLE_ACTION_PREFIX, index])
+	else:
+		result.append_array([CARRIAGE_LEFT_ACTION, CARRIAGE_RIGHT_ACTION])
+	result.append_array([SKILL_STOP_ACTION, COLLECT_ACTION, "coin_pusher_nudge"])
+	var forces: Dictionary = _tuning().get("nudge_forces", {}) if typeof(_tuning().get("nudge_forces", {})) == TYPE_DICTIONARY else {}
+	for force in forces.keys():
+		result.append(NUDGE_FORCE_PREFIX + str(force))
+	for direction in ["left", "front", "right"]:
+		result.append(NUDGE_DIRECTION_PREFIX + direction)
+	if str(machine.get("variation_id", "")) == "vault_drop":
+		result.append_array([VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION])
+		for cell_index in range((_variation_state(machine).get("vault_cells", []) as Array).size()):
+			result.append(VAULT_CELL_PREFIX + str(cell_index))
+	return result
+
+
+func _apparatus_action_bindings(machine: Dictionary, simulation: Dictionary) -> Dictionary:
+	var bindings := {}
+	if _apparatus_type(machine) == "hole_set":
+		var apparatus: Dictionary = _machine_definition(str(machine.get("variation_id", _variation_id()))).get("apparatus", {})
+		var holes: Array = apparatus.get("holes", []) if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else []
+		var selected := clampi(int(simulation.get("selected_hole", 0)), 0, maxi(0, holes.size() - 1))
+		var jammed := _jammed_holes(machine, simulation)
+		for index in range(holes.size()):
+			bindings["%s%d" % [HOLE_ACTION_PREFIX, index]] = {"label": str(index + 1), "enabled": not jammed.has(index), "lit": index == selected, "jammed": jammed.has(index)}
+	else:
+		bindings[CARRIAGE_LEFT_ACTION] = {"label": "<", "enabled": true}
+		bindings[CARRIAGE_RIGHT_ACTION] = {"label": ">", "enabled": true}
+	if str(machine.get("variation_id", "")) == "vault_drop":
+		var state := _variation_state(machine)
+		var has_fragments := int(state.get("banked_fragments", 0)) > 0
+		var round_active := bool(state.get("vault_round_active", false))
+		bindings[VAULT_START_ACTION] = {"label": "OPEN VAULT", "enabled": has_fragments and not round_active}
+		bindings[VAULT_OPEN_ACTION] = {"label": "OPEN CELL", "enabled": has_fragments and round_active}
+		bindings[VAULT_STOP_ACTION] = {"label": "STOP", "enabled": round_active}
+		bindings[VAULT_PEEK_ACTION] = {"label": "X-RAY", "enabled": true}
+		var selected_cell := int(machine.get("vault_selected_cell", 0))
+		var cells: Array = state.get("vault_cells", []) if typeof(state.get("vault_cells", [])) == TYPE_ARRAY else []
+		for cell_index in range(cells.size()):
+			var opened := bool((cells[cell_index] as Dictionary).get("opened", false)) if typeof(cells[cell_index]) == TYPE_DICTIONARY else true
+			bindings[VAULT_CELL_PREFIX + str(cell_index)] = {"label": str(cell_index + 1), "enabled": not opened, "lit": cell_index == selected_cell}
+	var selected_force := str(machine.get("nudge_force", "tap"))
+	var forces: Dictionary = _tuning().get("nudge_forces", {}) if typeof(_tuning().get("nudge_forces", {})) == TYPE_DICTIONARY else {}
+	for force in forces.keys():
+		bindings[NUDGE_FORCE_PREFIX + str(force)] = {"label": str(force).to_upper(), "enabled": true, "lit": str(force) == selected_force}
+	var selected_direction := str(machine.get("nudge_direction", "front"))
+	for direction in ["left", "front", "right"]:
+		bindings[NUDGE_DIRECTION_PREFIX + direction] = {"label": str(direction).to_upper(), "enabled": true, "lit": str(direction) == selected_direction}
+	return bindings
+
+
+func _rail_x_from_board_position(machine: Dictionary, board_position: Vector2) -> int:
+	var rail: Dictionary = (_machine_definition(str(machine.get("variation_id", _variation_id()))).get("apparatus", {}) as Dictionary).get("rail", {})
 	var rail_min := int(rail.get("x_min", 8000))
 	var rail_max := int(rail.get("x_max", 92000))
 	var normalized := clampf((board_position.x - V3_RAIL_DRAG_RECT.position.x) / V3_RAIL_DRAG_RECT.size.x, 0.0, 1.0)
@@ -243,12 +371,15 @@ func resolve(action_id: String, stake: int, run_state: RunState, environment: Di
 
 func resolve_with_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, _rng: RngStream, _ui_state: Dictionary = {}) -> Dictionary:
 	var machine := _ensure_live_machine(run_state, environment)
+	_reconcile_tolerance_modifiers(run_state, environment, machine)
 	if bool((machine.get("live_session", {}) as Dictionary).get("input_locked", false)):
 		return _empty_pusher_result(action_id, environment, "The controls lock while the last cascade settles.")
 	if _machine_busy(environment):
 		return _empty_pusher_result(action_id, environment, "The good machine is occupied. Nothing moves until the convoy does.")
 	if bool(machine.get("locked_down", false)):
 		return _empty_pusher_result(action_id, environment, "Red light. This cabinet stays dead tonight; the rest of the room is open.")
+	if action_id in [VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION]:
+		return _resolve_vault_action(action_id, run_state, environment, machine, _ui_state)
 	if action_id == DROP_ACTION:
 		if _drop_refused(machine):
 			var refused_result := _empty_pusher_result(action_id, environment, "The coin slot refuses the quarter; nothing was charged.")
@@ -256,6 +387,8 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 			refused_result["preserve_surface_ui_state"] = true
 			return refused_result
 		var simulation := _simulation(machine)
+		_prepare_variation_action(machine)
+		_sync_physical_features(machine)
 		var density := maxi(_cold_density(), int(machine.get("cold_quarters_density_armed", 0))) if bool(machine.get("cold_quarters_armed", false)) else 1
 		machine["cold_quarters_armed"] = false
 		machine["cold_quarters_density_armed"] = 0
@@ -283,6 +416,7 @@ func active_item_command(item_id: String, run_state: RunState, environment: Dict
 	if item_id != COLD_QUARTERS_ITEM_ID or run_state == null or not run_state.inventory.has(item_id):
 		return {"handled": false}
 	var machine := _ensure_live_machine(run_state, environment)
+	_reconcile_tolerance_modifiers(run_state, environment, machine)
 	if bool(machine.get("locked_down", false)):
 		return {"handled": true, "message": "Cold metal won't wake a locked cabinet."}
 	machine["cold_quarters_armed"] = true
@@ -309,6 +443,9 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var advanced := CoinPusherLiveSessionScript.advance(machine, int(ui_state.get("surface_time_msec", 0)))
 	var physics_events: Array = advanced.get("events", []) if typeof(advanced.get("events", [])) == TYPE_ARRAY else []
 	_consume_live_physics_events(run_state, machine, physics_events)
+	if physics_events.any(func(event: Variant) -> bool: return typeof(event) == TYPE_DICTIONARY and str((event as Dictionary).get("kind", "")) in ["tray", "gutter"]):
+		_register_pile_rumor(run_state, environment, machine)
+	_advance_tell_decay(machine, int(advanced.get("ticks", 0)))
 	var request_autosave := false
 	if int(advanced.get("ticks", 0)) > 0:
 		var session: Dictionary = machine.get("live_session", {})
@@ -325,7 +462,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	# Realtime owns only fields that can actually change while the player watches.
 	# Rebuilding the complete entry snapshot here duplicated catalog, economy,
 	# cabinet, geometry, and body projection work on every rendered frame.
-	var patch := _v3_realtime_presentation_patch(machine)
+	var patch := _v3_realtime_presentation_patch(machine, run_state, environment)
 	var audio_events := _presentation_audio_events(machine, physics_events)
 	if not audio_events.is_empty():
 		presentation_session["presentation_audio_serial"] = int(presentation_session.get("presentation_audio_serial", 0)) + 1
@@ -373,6 +510,7 @@ func begin_chunked_exit_settle(run_state: RunState, environment: Dictionary) -> 
 	var machine: Dictionary = _live_machines[key]
 	var result := CoinPusherLiveSessionScript.begin_chunked_settle(machine)
 	_consume_live_physics_events(run_state, machine, result.get("events", []))
+	_register_pile_rumor(run_state, environment, machine)
 	return result
 
 
@@ -383,6 +521,9 @@ func advance_chunked_exit_settle(run_state: RunState, environment: Dictionary, t
 	var machine: Dictionary = _live_machines[key]
 	var result := CoinPusherLiveSessionScript.advance_chunked_settle(machine, tick_budget)
 	var consumed := _consume_live_physics_events(run_state, machine, result.get("events", []))
+	if int(result.get("ticks", 0)) > 0:
+		_register_pile_rumor(run_state, environment, machine)
+	_advance_tell_decay(machine, int(result.get("ticks", 0)))
 	if bool(result.get("done", false)) and bool(consumed.get("shim_recovered", false)) and int(result.get("total_ticks", 0)) < CoinPusherLiveSessionScript.MAX_SETTLE_TICKS:
 		result["done"] = false
 	if bool(result.get("done", false)):
@@ -411,7 +552,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	variation_rng.configure(_stable_hash("coin_pusher_variation:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)]))
 	var variation_id := _seeded_variation_id(environment, variation_rng)
 	var variation_config := _variation_config(variation_id)
-	var simulation := CoinPusherSolverScript.create_machine(local_rng.fork("fixed_point_pile"), _machine_definition(), _opening_coin_count())
+	var simulation := CoinPusherSolverScript.create_machine(local_rng.fork("fixed_point_pile"), _machine_definition(variation_id), _opening_coin_count())
 	# Keep never-visited world generation byte-identical to the Stage-1 snapshot.
 	# Live apparatus defaults are initialized at the actual entry boundary.
 	simulation.erase("carriage_x")
@@ -420,7 +561,9 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	simulation.erase("collected_value")
 	var base_tolerance := local_rng.randi_range(_tolerance_min(), _tolerance_max())
 	var variation_tolerance := int(variation_config.get("alarm_tolerance_bonus", variation_config.get("alarm_tolerance_delta", 0)))
-	var tolerance := maxi(1, base_tolerance + _security_tolerance_delta(environment, run_state) + variation_tolerance)
+	var security_tolerance := _security_tolerance_delta(environment, run_state)
+	var item_tolerance := JackpotRidgeScript.tolerance_band_bonus(run_state, variation_config) if variation_id == "jackpot_ridge" else 0
+	var tolerance := maxi(1, base_tolerance + security_tolerance + variation_tolerance + item_tolerance)
 	var node_id := _environment_node_id(run_state, environment)
 	var variation_state: Dictionary = {}
 	if variation_id == "jackpot_ridge":
@@ -442,7 +585,10 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"alarm_tolerance_remaining": tolerance,
 		"tolerance_modifier": tolerance - base_tolerance,
 		"variation_tolerance_modifier": variation_tolerance,
+		"applied_security_tolerance_modifier": security_tolerance,
+		"applied_item_tolerance_modifier": item_tolerance,
 		"tell_rung": 0,
+		"tell_decay_remaining_ticks": 0,
 		"locked_down": false,
 		"lockdown_night": "",
 		"staff_watch_memory": false,
@@ -483,10 +629,12 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 	if bool(machine.get("locked_down", false)) and run_state != null and str(machine.get("lockdown_night", "")) != _night_id(run_state):
 		machine["locked_down"] = false
 		machine["lockdown_night"] = ""
-		machine["tolerance_modifier"] = _security_tolerance_delta(environment, run_state) + int(machine.get("variation_tolerance_modifier", 0))
+		machine["tolerance_modifier"] = int(machine.get("applied_security_tolerance_modifier", 0)) + int(machine.get("variation_tolerance_modifier", 0)) + int(machine.get("applied_item_tolerance_modifier", 0))
 		machine["alarm_tolerance_remaining"] = maxi(1, int(machine.get("base_alarm_tolerance", _tolerance_min())) + int(machine.get("tolerance_modifier", 0)))
 		machine["tell_rung"] = 0
+		machine["tell_decay_remaining_ticks"] = 0
 	_initialize_owned_shim(run_state, machine)
+	_reconcile_tolerance_modifiers(run_state, environment, machine)
 	_sync_vault_meter(run_state, machine)
 	if persist and bool(machine.get("v2_migration_pending", false)):
 		machine.erase("v2_migration_pending")
@@ -540,7 +688,41 @@ func _machine_read_requires_reconciliation(machine: Dictionary, run_state: RunSt
 		var meter := run_state.progressive_meter(str(variation_state.get("meter_id", "")))
 		if not meter.is_empty() and int(variation_state.get("meter_value", 0)) != int(meter.get("value", variation_state.get("meter_value", 0))):
 			return true
+	var expected_security := _security_tolerance_delta(environment, run_state)
+	var variation_id := str(machine.get("variation_id", "quarter_falls"))
+	var expected_item := JackpotRidgeScript.tolerance_band_bonus(run_state, _variation_config(variation_id)) if variation_id == "jackpot_ridge" else 0
+	if not machine.has("applied_security_tolerance_modifier") or not machine.has("applied_item_tolerance_modifier") \
+			or int(machine.get("applied_security_tolerance_modifier", expected_security)) != expected_security \
+			or int(machine.get("applied_item_tolerance_modifier", expected_item)) != expected_item:
+		return true
 	return not _physical_features_reconciled(machine)
+
+
+func _reconcile_tolerance_modifiers(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
+	var variation_id := str(machine.get("variation_id", "quarter_falls"))
+	var expected_security := _security_tolerance_delta(environment, run_state)
+	var expected_item := JackpotRidgeScript.tolerance_band_bonus(run_state, _variation_config(variation_id)) if variation_id == "jackpot_ridge" else 0
+	var previous_item := int(machine.get("applied_item_tolerance_modifier", 0))
+	var previous_security := int(machine.get("applied_security_tolerance_modifier", int(machine.get("tolerance_modifier", 0)) - int(machine.get("variation_tolerance_modifier", 0)) - previous_item))
+	var modifier_delta := expected_security - previous_security + expected_item - previous_item
+	if modifier_delta != 0 and not bool(machine.get("locked_down", false)):
+		machine["alarm_tolerance_remaining"] = maxi(1, int(machine.get("alarm_tolerance_remaining", 1)) + modifier_delta)
+	machine["applied_security_tolerance_modifier"] = expected_security
+	machine["applied_item_tolerance_modifier"] = expected_item
+	machine["tolerance_modifier"] = int(machine.get("variation_tolerance_modifier", 0)) + expected_security + expected_item
+
+
+func _advance_tell_decay(machine: Dictionary, ticks: int) -> void:
+	if ticks <= 0 or int(machine.get("tell_rung", 0)) <= 0:
+		return
+	var period := maxi(1, _int_tuning("tell_decay_ticks", 600))
+	var remaining := int(machine.get("tell_decay_remaining_ticks", period)) - ticks
+	var rung := int(machine.get("tell_rung", 0))
+	while remaining <= 0 and rung > 0:
+		rung -= 1
+		remaining += period
+	machine["tell_rung"] = rung
+	machine["tell_decay_remaining_ticks"] = remaining if rung > 0 else 0
 
 
 func _physical_features_reconciled(machine: Dictionary) -> bool:
@@ -585,7 +767,7 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 	var migration_rng := RngStream.new()
 	migration_rng.configure(_stable_hash("coin_pusher_physical_migration:%s:%s" % [_environment_node_id(run_state, environment), str(run_state.seed_text if run_state != null else "fallback")]))
 	if migrated_v2:
-		machine["simulation"] = CoinPusherSolverScript.create_machine(migration_rng, _machine_definition(), mini(_opening_coin_count(), 250))
+		machine["simulation"] = CoinPusherSolverScript.create_machine(migration_rng, _machine_definition(str(machine.get("variation_id", _variation_id()))), mini(_opening_coin_count(), 250))
 		var migrated_ledger: Array = []
 		for _coin in range(legacy_tray_value):
 			migrated_ledger.append({"kind": "coin", "value": 1, "item_id": "", "provenance": {"migration": "v2"}})
@@ -607,6 +789,7 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 		machine["variation_state"] = JackpotRidgeScript.initial_state(_variation_config(variation_id), rng, _lane_count(), _cell_count()) if variation_id == "jackpot_ridge" else VaultDropScript.initial_state(_variation_config(variation_id), rng, _lane_count(), _cell_count(), _environment_node_id(run_state, environment))
 	for key in ["tray_value", "total_cost", "total_payout", "action_count", "tell_rung", "suspicion_floor"]:
 		machine[key] = maxi(0, int(machine.get(key, 0)))
+	machine["tell_decay_remaining_ticks"] = maxi(0, int(machine.get("tell_decay_remaining_ticks", 0)))
 	machine["staff_watch_memory"] = bool(machine.get("staff_watch_memory", false))
 	machine["locked_down"] = bool(machine.get("locked_down", false))
 	if migrated_v2 and not bool(machine.get("v2_migration_logged", false)):
@@ -628,7 +811,8 @@ func _has_v3_simulation(machine: Dictionary) -> bool:
 
 
 func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null, environment: Dictionary = {}, ui_state: Dictionary = {}) -> Dictionary:
-	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), _machine_definition())
+	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
+	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), definition)
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
 	var body_views := CoinPusherSolverScript.body_views(simulation)
@@ -636,9 +820,10 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 	var feature_kind := "rider" if variation_id == "quarter_falls" else "puck" if variation_id == "jackpot_ridge" else "fragment"
 	var feature_views := _feature_views(machine, feature_kind)
 	var variation_state := _variation_state(machine)
+	var vault_views: Dictionary = VaultDropScript.views(variation_state) if variation_id == "vault_drop" else {}
 	var cabinet := _resolved_cabinet(variation_id)
-	var geometry: Dictionary = (_machine_definition().get("geometry", {}) as Dictionary).duplicate(true) if typeof(_machine_definition().get("geometry", {})) == TYPE_DICTIONARY else {}
-	var apparatus: Dictionary = (_machine_definition().get("apparatus", {}) as Dictionary).duplicate(true) if typeof(_machine_definition().get("apparatus", {})) == TYPE_DICTIONARY else {}
+	var geometry: Dictionary = (definition.get("geometry", {}) as Dictionary).duplicate(true) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
+	var apparatus: Dictionary = (definition.get("apparatus", {}) as Dictionary).duplicate(true) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
 	apparatus["drop_y"] = int(geometry.get("drop_y", CoinPusherSolverScript.DROP_Y))
 	var tell_rung := clampi(int(machine.get("tell_rung", 0)), 0, _tell_labels().size() - 1)
 	if not session.is_empty():
@@ -675,6 +860,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_face_position_y": int(simulation.get("face_y", 0)),
 		"coin_pusher_previous_face_position_y": int(session.get("presentation_previous_face_y", simulation.get("face_y", 0))),
 		"coin_pusher_carriage_x": int(simulation.get("carriage_x", 50000)),
+		"coin_pusher_selected_hole": int(simulation.get("selected_hole", 0)),
 		"coin_pusher_skill_stop_engaged": bool(simulation.get("skill_stop_engaged", false)),
 		"coin_pusher_motor_rate_fp": int(simulation.get("motor_rate_fp", CoinPusherSolverScript.FP)),
 		"coin_pusher_tray_count": tray.size(),
@@ -686,28 +872,28 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_cabinet": cabinet,
 		"coin_pusher_geometry": geometry,
 		"coin_pusher_apparatus": apparatus,
-		"coin_pusher_coin_height": int((_machine_definition().get("coins", {}) as Dictionary).get("height", CoinPusherSolverScript.COIN_HEIGHT)) if typeof(_machine_definition().get("coins", {})) == TYPE_DICTIONARY else CoinPusherSolverScript.COIN_HEIGHT,
+		"coin_pusher_coin_height": int((definition.get("coins", {}) as Dictionary).get("height", CoinPusherSolverScript.COIN_HEIGHT)) if typeof(definition.get("coins", {})) == TYPE_DICTIONARY else CoinPusherSolverScript.COIN_HEIGHT,
 		"coin_pusher_ridge_multiplier": JackpotRidgeScript.payout_multiplier(variation_state) if variation_id == "jackpot_ridge" else 1,
 		"coin_pusher_vault_meter": int(variation_state.get("meter_value", 0)) if variation_id == "vault_drop" else 0,
 		"coin_pusher_vault_fragments": int(variation_state.get("banked_fragments", 0)) if variation_id == "vault_drop" else 0,
+		"coin_pusher_vault_cells": vault_views.get("cells", []),
+		"coin_pusher_vault_round_active": bool(variation_state.get("vault_round_active", false)) if variation_id == "vault_drop" else false,
+		"coin_pusher_vault_peeked_cell": int(variation_state.get("peeked_cell", -1)) if variation_id == "vault_drop" else -1,
+		"coin_pusher_vault_selected_cell": int(machine.get("vault_selected_cell", 0)),
+		"coin_pusher_nudge_force": str(machine.get("nudge_force", "tap")),
+		"coin_pusher_nudge_direction": str(machine.get("nudge_direction", "front")),
+		"coin_pusher_nudge_forces": (_tuning().get("nudge_forces", {}) as Dictionary).duplicate(true) if typeof(_tuning().get("nudge_forces", {})) == TYPE_DICTIONARY else {},
 		"coin_pusher_audio_events": [],
 		"coin_pusher_audio_serial": int(session.get("presentation_audio_serial", 0)),
 		"coin_pusher_last_message": V3_HEADLESS_MESSAGE,
-		"native_selected_surface_actions": ["coin_pusher_drop", CARRIAGE_LEFT_ACTION, CARRIAGE_RIGHT_ACTION, SKILL_STOP_ACTION, COLLECT_ACTION, "coin_pusher_nudge"],
-		"surface_action_bindings": {
-			"coin_pusher_drop": {"label": "DROP", "enabled": not _drop_refused(machine)},
-			CARRIAGE_LEFT_ACTION: {"label": "<", "enabled": true},
-			CARRIAGE_RIGHT_ACTION: {"label": ">", "enabled": true},
-			SKILL_STOP_ACTION: {"label": "RELEASE" if bool(simulation.get("skill_stop_engaged", false)) else "SKILL STOP", "enabled": true, "lit": bool(simulation.get("skill_stop_engaged", false))},
-			COLLECT_ACTION: {"label": "COLLECT", "enabled": not tray.is_empty()},
-			"coin_pusher_nudge": {"action": "surface_cheat", "index": 0, "label": "NUDGE", "enabled": true},
-		},
+		"native_selected_surface_actions": _native_surface_actions(machine),
+		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment),
 		"surface_animation_channels": [],
 		"surface_audio": GameModule.surface_audio_spec({"profile_id": "coin_pusher", "state_sync": {"method": "coin_pusher_state"}}),
 	})
 
 
-func _v3_realtime_presentation_patch(machine: Dictionary) -> Dictionary:
+func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
 	var simulation := _simulation(machine)
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
@@ -716,6 +902,8 @@ func _v3_realtime_presentation_patch(machine: Dictionary) -> Dictionary:
 		body_views = CoinPusherSolverScript.body_views(simulation)
 	var previous_views: Array = session.get("presentation_previous_bodies", body_views) if typeof(session.get("presentation_previous_bodies", body_views)) == TYPE_ARRAY else body_views
 	var tell_rung := clampi(int(machine.get("tell_rung", 0)), 0, _tell_labels().size() - 1)
+	var variation_state := _variation_state(machine)
+	var vault_views: Dictionary = VaultDropScript.views(variation_state) if str(machine.get("variation_id", "")) == "vault_drop" else {}
 	var patch := {
 		"coin_pusher_body_count": body_views.size(),
 		"coin_pusher_feature_count": int(session.get("presentation_feature_count", 0)),
@@ -727,6 +915,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary) -> Dictionary:
 		"coin_pusher_tell_label": str(_tell_labels()[tell_rung]),
 		"coin_pusher_locked": bool(machine.get("locked_down", false)),
 		"coin_pusher_carriage_x": int(simulation.get("carriage_x", 50000)),
+		"coin_pusher_selected_hole": int(simulation.get("selected_hole", 0)),
 		"coin_pusher_face_position_y": int(simulation.get("face_y", CoinPusherSolverScript.FACE_EXTENDED_Y)),
 		"coin_pusher_previous_face_position_y": int(session.get("presentation_previous_face_y", simulation.get("face_y", CoinPusherSolverScript.FACE_EXTENDED_Y))),
 		"coin_pusher_phase_fp": int(simulation.get("phase_fp", 0)),
@@ -737,31 +926,50 @@ func _v3_realtime_presentation_patch(machine: Dictionary) -> Dictionary:
 		"coin_pusher_last_step_metrics": simulation.get("last_step_metrics", {}),
 		"coin_pusher_liveness_ticks": int(session.get("liveness_ticks", 0)),
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
+		"coin_pusher_vault_cells": vault_views.get("cells", []),
+		"coin_pusher_vault_round_active": bool(variation_state.get("vault_round_active", false)),
+		"coin_pusher_vault_peeked_cell": int(variation_state.get("peeked_cell", -1)),
+		"coin_pusher_vault_selected_cell": int(machine.get("vault_selected_cell", 0)),
+		"coin_pusher_nudge_force": str(machine.get("nudge_force", "tap")),
+		"coin_pusher_nudge_direction": str(machine.get("nudge_direction", "front")),
 	}
 	# The entry snapshot owns the full control catalog. Ordinary live ticks only
 	# republish bindings when a control-visible state actually changes.
 	var binding_signature := _realtime_binding_signature(machine, simulation, tray)
 	if int(session.get("presentation_binding_signature", -1)) != binding_signature:
-		patch["surface_action_bindings"] = _coin_pusher_action_bindings(machine, simulation, tray)
+		patch["surface_action_bindings"] = _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment)
 		session["presentation_binding_signature"] = binding_signature
 	return patch
 
 
 func _realtime_binding_signature(machine: Dictionary, simulation: Dictionary, tray: Array) -> int:
+	var variation_state := _variation_state(machine)
 	return (1 if _drop_refused(machine) else 0) \
 		| ((1 if bool(simulation.get("skill_stop_engaged", false)) else 0) << 1) \
-		| ((1 if not tray.is_empty() else 0) << 2)
+		| ((1 if not tray.is_empty() else 0) << 2) \
+		| ((1 if bool(machine.get("locked_down", false)) else 0) << 3) \
+		| (clampi(int(simulation.get("selected_hole", 0)), 0, 3) << 4) \
+		| ((1 if bool(variation_state.get("vault_round_active", false)) else 0) << 7) \
+		| ((1 if int(variation_state.get("banked_fragments", 0)) > 0 else 0) << 8)
 
 
-func _coin_pusher_action_bindings(machine: Dictionary, simulation: Dictionary, tray: Array) -> Dictionary:
-	return {
+func _coin_pusher_action_bindings(machine: Dictionary, simulation: Dictionary, tray: Array, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
+	var result := {
 		"coin_pusher_drop": {"label": "DROP", "enabled": not _drop_refused(machine)},
-		CARRIAGE_LEFT_ACTION: {"label": "<", "enabled": true},
-		CARRIAGE_RIGHT_ACTION: {"label": ">", "enabled": true},
 		SKILL_STOP_ACTION: {"label": "RELEASE" if bool(simulation.get("skill_stop_engaged", false)) else "SKILL STOP", "enabled": true, "lit": bool(simulation.get("skill_stop_engaged", false))},
 		COLLECT_ACTION: {"label": "COLLECT", "enabled": not tray.is_empty()},
 		"coin_pusher_nudge": {"action": "surface_cheat", "index": 0, "label": "NUDGE", "enabled": true},
 	}
+	result.merge(_apparatus_action_bindings(machine, simulation), true)
+	var busy := _machine_busy(environment)
+	var locked := bool(machine.get("locked_down", false))
+	for action_id in result.keys():
+		var binding: Dictionary = result[action_id]
+		if busy or (locked and str(action_id) != COLLECT_ACTION):
+			binding["enabled"] = false
+	if result.has(VAULT_PEEK_ACTION) and (run_state == null or not run_state.inventory.has("xray_glasses")):
+		(result[VAULT_PEEK_ACTION] as Dictionary)["enabled"] = false
+	return result
 
 
 func _surface_action_view_patch(machine: Dictionary, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
@@ -782,15 +990,8 @@ func _surface_action_view_patch(machine: Dictionary, run_state: RunState, enviro
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
-		"native_selected_surface_actions": ["coin_pusher_drop", CARRIAGE_LEFT_ACTION, CARRIAGE_RIGHT_ACTION, SKILL_STOP_ACTION, COLLECT_ACTION, "coin_pusher_nudge"],
-		"surface_action_bindings": {
-			"coin_pusher_drop": {"label": "DROP", "enabled": not _drop_refused(machine)},
-			CARRIAGE_LEFT_ACTION: {"label": "<", "enabled": true},
-			CARRIAGE_RIGHT_ACTION: {"label": ">", "enabled": true},
-			SKILL_STOP_ACTION: {"label": "RELEASE" if bool(simulation.get("skill_stop_engaged", false)) else "SKILL STOP", "enabled": true, "lit": bool(simulation.get("skill_stop_engaged", false))},
-			COLLECT_ACTION: {"label": "COLLECT", "enabled": not tray.is_empty()},
-			"coin_pusher_nudge": {"action": "surface_cheat", "index": 0, "label": "NUDGE", "enabled": true},
-		},
+		"native_selected_surface_actions": _native_surface_actions(machine),
+		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment),
 	}
 
 
@@ -847,8 +1048,9 @@ func _ensure_live_machine(run_state: RunState, environment: Dictionary) -> Dicti
 	if _has_v3_simulation(machine) and str(settled.get("schema", "")) != CoinPusherLiveSessionScript.SNAPSHOT_SCHEMA:
 		machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(machine), machine)
 	var seed := _stable_hash("pusher_live:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)])
-	CoinPusherLiveSessionScript.begin(machine, _machine_definition(), seed)
+	CoinPusherLiveSessionScript.begin(machine, _machine_definition(str(machine.get("variation_id", _variation_id()))), seed)
 	_sync_physical_features(machine)
+	_sync_variation_motor(machine)
 	_live_machines[key] = machine
 	return machine
 
@@ -872,18 +1074,57 @@ func _write_live_durable(run_state: RunState, environment: Dictionary, live_mach
 
 
 func _drop_refused(machine: Dictionary) -> bool:
-	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), _machine_definition())
-	return simulation.is_empty() or (simulation.get("bodies", []) as Array).size() >= int(_machine_definition().get("ceiling", 600))
+	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
+	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), definition)
+	if simulation.is_empty() or (simulation.get("bodies", []) as Array).size() >= int(definition.get("ceiling", 600)):
+		return true
+	if str(machine.get("variation_id", "")) == "jackpot_ridge":
+		return _jammed_holes(machine, simulation).has(int(simulation.get("selected_hole", 0)))
+	return false
+
+
+func _jammed_holes(machine: Dictionary, simulation: Dictionary) -> Array:
+	if str(machine.get("variation_id", "")) != "jackpot_ridge":
+		return []
+	return JackpotRidgeScript.jammed_holes(_variation_state(machine), CoinPusherSolverScript.body_views(simulation), _machine_definition("jackpot_ridge"))
 
 
 func _drop_provenance(machine: Dictionary) -> Dictionary:
-	var variation_id := str(machine.get("variation_id", "quarter_falls"))
-	# Quarter Falls' x1 identity is the default coin meaning; writing it on every
-	# insert only bloats settled state. Non-default variation payout state remains
-	# explicit and is persisted by the snapshot provenance sidecar.
-	if variation_id != "jackpot_ridge":
-		return {}
-	return {"variation_id": variation_id, "ridge_multiplier": JackpotRidgeScript.payout_multiplier(_variation_state(machine))}
+	# Ridge value is sampled only when the physical coin crosses the tray lip.
+	# Insertion-time provenance would incorrectly preserve an expired multiplier.
+	return {}
+
+
+func _variation_motor_rate_fp(machine: Dictionary) -> int:
+	if str(machine.get("variation_id", "quarter_falls")) != "jackpot_ridge":
+		return CoinPusherSolverScript.FP
+	return CoinPusherSolverScript.FP * JackpotRidgeScript.motor_rate_multiplier(_variation_state(machine), _variation_config("jackpot_ridge"))
+
+
+func _sync_variation_motor(machine: Dictionary) -> void:
+	var simulation := _simulation(machine)
+	if simulation.is_empty():
+		return
+	var desired := _variation_motor_rate_fp(machine)
+	if int(simulation.get("motor_run_rate_fp", CoinPusherSolverScript.FP)) == desired:
+		return
+	CoinPusherSolverScript.set_motor_run_rate(simulation, desired)
+	CoinPusherLiveSessionScript.queue_input(machine, {"kind": "motor_rate", "rate_fp": desired})
+
+
+func _write_ridge_tray_multiplier(simulation: Dictionary, body_id: String, multiplier: int) -> void:
+	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+	for index in range(tray.size() - 1, -1, -1):
+		if typeof(tray[index]) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = tray[index]
+		if str(entry.get("body_id", "")) != body_id:
+			continue
+		var provenance: Dictionary = entry.get("provenance", {}) if typeof(entry.get("provenance", {})) == TYPE_DICTIONARY else {}
+		provenance["variation_id"] = "jackpot_ridge"
+		provenance["ridge_multiplier"] = maxi(1, multiplier)
+		entry["provenance"] = provenance
+		return
 
 
 func _ledger_value(ledger: Array) -> int:
@@ -912,14 +1153,18 @@ func _collect_surface_command(run_state: RunState, environment: Dictionary, mach
 	var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": COLLECT_ACTION, "action_kind": "free", "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": message})
 	GameModule.apply_result(run_state, result)
 	_write_live_durable(run_state, environment, machine, false)
+	_register_pile_rumor(run_state, environment, machine)
 	return GameModule.surface_command({"handled": true, "environment_changed": true, "message": message, "surface_state_patch": _v3_headless_surface_state(machine), "preserve_surface_ui_state": true}, true)
 
 
 func _resolve_live_nudge(run_state: RunState, environment: Dictionary, machine: Dictionary, ui_state: Dictionary) -> Dictionary:
-	var force := str(ui_state.get("coin_pusher_force", "tap"))
-	var direction := str(ui_state.get("coin_pusher_direction", "front"))
+	var force := str(ui_state.get("coin_pusher_force", machine.get("nudge_force", "tap")))
+	var direction := str(ui_state.get("coin_pusher_direction", machine.get("nudge_direction", "front")))
 	var force_data: Dictionary = (_tuning().get("nudge_forces", {}) as Dictionary).get(force, {}) if typeof(_tuning().get("nudge_forces", {})) == TYPE_DICTIONARY else {}
-	var impulse := maxi(1, int(force_data.get("push_strength", 1))) * 1200
+	var push_strength := maxi(1, int(force_data.get("push_strength", 1)))
+	if str(machine.get("variation_id", "")) == "jackpot_ridge" and run_state != null and run_state.inventory.has("weighted_keyring"):
+		push_strength += maxi(1, int(_variation_config("jackpot_ridge").get("nudge_force_granularity", 1)))
+	var impulse := push_strength * 1200
 	var x := -impulse if direction == "left" else impulse if direction == "right" else 0
 	var y := -impulse if direction == "front" else 0
 	var tolerance_cost := maxi(0, int(force_data.get("tolerance_cost", 1)))
@@ -931,7 +1176,9 @@ func _resolve_live_nudge(run_state: RunState, environment: Dictionary, machine: 
 		machine["staff_watch_memory"] = true
 		machine["suspicion_floor"] = _watch_suspicion_floor()
 	else:
-		machine["tell_rung"] = mini(3, int(machine.get("tell_rung", 0)) + 1)
+		machine["tell_rung"] = maxi(int(machine.get("tell_rung", 0)), _tell_rung(machine))
+		if int(machine.get("tell_rung", 0)) > 0:
+			machine["tell_decay_remaining_ticks"] = maxi(1, _int_tuning("tell_decay_ticks", 600))
 	CoinPusherLiveSessionScript.queue_input(machine, {"kind": "nudge", "x": x, "y": y})
 	_write_live_durable(run_state, environment, machine, false)
 	var heat := _alarm_heat() if alarmed else _attendant_glance_heat()
@@ -952,7 +1199,6 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 	var prizes: Array = []
 	var gutter_count := 0
 	var shim_recovered := false
-	var variation_events: Array = []
 	var riders: Array = machine.get("riders", []) if typeof(machine.get("riders", [])) == TYPE_ARRAY else []
 	var remaining_riders: Array = []
 	var rider_exits := {}
@@ -961,6 +1207,12 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 			continue
 		var event: Dictionary = event_value
 		var event_kind := str(event.get("kind", ""))
+		var variation_id := str(machine.get("variation_id", "quarter_falls"))
+		if event_kind == "stroke_cycle":
+			if variation_id == "jackpot_ridge":
+				JackpotRidgeScript.advance_stroke_cycle(_variation_state(machine), int(event.get("stroke_cycle", 0)))
+				_sync_variation_motor(machine)
+			continue
 		# Contact/peg/deposit events are presentation evidence only. Outcome
 		# accounting consumes the solver's explicit terminal tray/gutter events;
 		# avoid decoding body metadata for every collision in a dense drop.
@@ -973,15 +1225,37 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 		if kind == "coin":
 			if outcome == "tray":
 				payout += _coin_value()
+				if variation_id == "jackpot_ridge":
+					var ridge_state := _variation_state(machine)
+					_write_ridge_tray_multiplier(_simulation(machine), str(event.get("body_id", "")), JackpotRidgeScript.payout_multiplier(ridge_state))
+					var period := int((_machine_definition(variation_id).get("stroke", {}) as Dictionary).get("period_ticks", 240))
+					JackpotRidgeScript.finish_drop(ridge_state, int(event.get("stroke_cycle", 0)), int(event.get("phase_fp", 0)), period)
 			elif outcome == "gutter" and not shim_recovered and _shim_available(run_state, machine):
 				machine["shim_uses_remaining"] = maxi(0, int(machine.get("shim_uses_remaining", 0)) - 1)
-				CoinPusherSolverScript.add_recovered_coin(_simulation(machine), rng)
-				shim_recovered = true
+				var definition := _machine_definition(variation_id)
+				var width := int((definition.get("geometry", {}) as Dictionary).get("width", CoinPusherSolverScript.WIDTH))
+				var return_input := {
+					"kind": "gutter_return",
+					"body_id": str(event.get("body_id", "")),
+					"body_kind": kind,
+					"side": "left" if int(event.get("x", width / 2)) < width / 2 else "right",
+					"radius": int(event.get("radius", CoinPusherSolverScript.COIN_RADIUS)),
+					"height": int(event.get("height", CoinPusherSolverScript.COIN_HEIGHT)),
+					"mass": int(event.get("mass", CoinPusherSolverScript.FP)),
+					"metadata": (event.get("metadata", {}) as Dictionary).duplicate(true) if typeof(event.get("metadata", {})) == TYPE_DICTIONARY else {},
+				}
+				var returned := CoinPusherSolverScript.return_gutter_body(_simulation(machine), return_input)
+				if bool(returned.get("accepted", false)):
+					CoinPusherLiveSessionScript.queue_input(machine, return_input)
+					shim_recovered = true
 		elif kind == "rider":
 			var feature_id := str((event.get("metadata", {}) as Dictionary).get("feature_id", "")) if typeof(event.get("metadata", {})) == TYPE_DICTIONARY else ""
 			rider_exits[feature_id] = outcome
-		elif kind in ["puck", "fragment"]:
-			variation_events.append(event)
+		elif kind == "puck" and variation_id == "jackpot_ridge":
+			JackpotRidgeScript.apply_physical_events(_variation_state(machine), [event], _variation_config(variation_id), int(event.get("stroke_cycle", 0)))
+			_sync_variation_motor(machine)
+		elif kind == "fragment" and variation_id == "vault_drop":
+			VaultDropScript.apply_physical_events(_variation_state(machine), [event])
 	for rider_value in riders:
 		if typeof(rider_value) != TYPE_DICTIONARY:
 			continue
@@ -992,11 +1266,6 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 		elif str(rider_exits[rider_id]) == "tray":
 			prizes.append(rider)
 	machine["riders"] = remaining_riders
-	var variation_id := str(machine.get("variation_id", "quarter_falls"))
-	if variation_id == "jackpot_ridge":
-		JackpotRidgeScript.apply_physical_events(_variation_state(machine), variation_events, _variation_config(variation_id))
-	elif variation_id == "vault_drop":
-		VaultDropScript.apply_physical_events(_variation_state(machine), variation_events)
 	return {"payout": payout, "prizes": prizes, "gutter_count": gutter_count, "shim_recovered": shim_recovered}
 
 
@@ -1075,7 +1344,7 @@ func _append_motion_audio_events(machine: Dictionary, result: Array) -> void:
 	var retracting := current_face > previous_face
 	var pushing := current_face < previous_face
 	var face_delta := current_face - previous_face
-	var definition := _machine_definition()
+	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
 	var geometry: Dictionary = definition.get("geometry", {}) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
 	var coins: Dictionary = definition.get("coins", {}) if typeof(definition.get("coins", {})) == TYPE_DICTIONARY else {}
 	var plate_limit := int(geometry.get("back_plate_y", CoinPusherSolverScript.BACK_PLATE_Y)) - int(coins.get("radius", CoinPusherSolverScript.COIN_RADIUS))
@@ -1113,10 +1382,6 @@ func _append_motion_audio_events(machine: Dictionary, result: Array) -> void:
 
 func _sync_physical_features(machine: Dictionary) -> void:
 	var variation_id := str(machine.get("variation_id", "quarter_falls"))
-	if variation_id != "quarter_falls":
-		# Do not consume or erase legacy lane/spawn fields. Stage 4 migrates the
-		# variation ledgers once their V3 apparatus/body mapping is designed.
-		return
 	var simulation := _simulation(machine)
 	if simulation.is_empty():
 		return
@@ -1128,19 +1393,10 @@ func _sync_physical_features(machine: Dictionary) -> void:
 			var desired_id := str((value as Dictionary).get("id", ""))
 			if not desired_id.is_empty():
 				desired_feature_ids[desired_id] = true
-	# Feature records are the durable ownership ledger. Reconcile stale physical
-	# bodies when that ledger is replaced instead of allowing ghost prizes to
-	# survive forever in the simulated pile.
+	# Bodies are authoritative physical pieces once created. Reconciliation may
+	# add a missing ledger-owned body, but it never deletes or repositions one.
+	# Terminal tray/gutter transitions are the only removal path.
 	var bodies: Array = simulation.get("bodies", []) if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else []
-	for body_index in range(bodies.size() - 1, -1, -1):
-		if typeof(bodies[body_index]) != TYPE_DICTIONARY:
-			continue
-		var candidate: Dictionary = bodies[body_index]
-		if str(candidate.get("kind", "")) != kind:
-			continue
-		var candidate_metadata: Dictionary = candidate.get("meta", {}) if typeof(candidate.get("meta", {})) == TYPE_DICTIONARY else {}
-		if not bool(desired_feature_ids.get(str(candidate_metadata.get("feature_id", "")), false)):
-			bodies.remove_at(body_index)
 	var existing := {}
 	for value in bodies:
 		if typeof(value) != TYPE_DICTIONARY:
@@ -1155,19 +1411,46 @@ func _sync_physical_features(machine: Dictionary) -> void:
 		var feature_id := str(feature.get("id", ""))
 		if feature_id.is_empty() or bool(existing.get(feature_id, false)):
 			continue
-		var legacy_cell := clampi(int(feature.get("spawn_depth_slot", feature.get("cell", 2))), 0, maxi(1, _cell_count() - 1))
-		var depth := CoinPusherSolverScript.TRAY_LIP_Y + 9000 + legacy_cell * (CoinPusherSolverScript.BACK_PLATE_Y - CoinPusherSolverScript.TRAY_LIP_Y - 18000) / maxi(1, _cell_count() - 1)
+		var machine_definition := _machine_definition(variation_id)
+		var geometry: Dictionary = machine_definition.get("geometry", {}) if typeof(machine_definition.get("geometry", {})) == TYPE_DICTIONARY else {}
+		var sub_game: Dictionary = machine_definition.get("sub_game", {}) if typeof(machine_definition.get("sub_game", {})) == TYPE_DICTIONARY else {}
+		var coin_data: Dictionary = machine_definition.get("coins", {}) if typeof(machine_definition.get("coins", {})) == TYPE_DICTIONARY else {}
+		var width := int(geometry.get("width", CoinPusherSolverScript.WIDTH))
+		var lip := int(geometry.get("tray_lip_y", CoinPusherSolverScript.TRAY_LIP_Y))
+		var face := int(geometry.get("face_extended_y", CoinPusherSolverScript.FACE_EXTENDED_Y))
+		var radius := int(sub_game.get("feature_radius", CoinPusherSolverScript.OBJECT_RADIUS))
+		var x_milli := clampi(int(feature.get("spawn_x_milli", 100 + int(feature.get("spawn_lane", feature.get("lane", 2))) * 200)), 0, 1000)
+		var depth_milli := clampi(int(feature.get("spawn_depth_milli", int(feature.get("spawn_depth_slot", feature.get("cell", 2))) * 1000 / maxi(1, _cell_count() - 1))), 0, 1000)
+		var feature_x := clampi(radius + (width - radius * 2) * x_milli / 1000, radius, width - radius)
+		var depth_min := lip + radius + 600
+		var depth_max := face - radius - 600
+		var depth := depth_min + maxi(0, depth_max - depth_min) * depth_milli / 1000
 		var metadata := feature.duplicate(true)
 		metadata.erase("lane")
 		metadata.erase("cell")
 		metadata.erase("spawn_lane")
 		metadata.erase("spawn_depth_slot")
-		metadata["mass"] = 4 if kind == "puck" else 3 if kind == "rider" else 2
+		metadata["mass"] = int(sub_game.get("feature_mass", int(coin_data.get("mass", 1000)) * (3 if kind == "puck" else 2 if kind == "fragment" else 4)))
+		metadata["radius"] = radius
+		metadata["height"] = int(sub_game.get("feature_height", CoinPusherSolverScript.OBJECT_HEIGHT))
+		var is_ridge_jam := kind == "puck" and str(feature.get("kind", "")) == "dud" and int(feature.get("jam_hole_index", -1)) >= 0
+		if is_ridge_jam:
+			var apparatus: Dictionary = machine_definition.get("apparatus", {}) if typeof(machine_definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+			var holes: Array = apparatus.get("holes", []) if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else []
+			var board: Dictionary = apparatus.get("drop_board", {}) if typeof(apparatus.get("drop_board", {})) == TYPE_DICTIONARY else {}
+			var hole_index := clampi(int(feature.get("jam_hole_index", 0)), 0, maxi(0, holes.size() - 1))
+			if not holes.is_empty():
+				feature_x = int(holes[hole_index])
+			depth = int(board.get("y", geometry.get("drop_y", 58000)))
+		metadata["z"] = int(geometry.get("platform_top_z", CoinPusherSolverScript.PLATFORM_TOP_Z)) if is_ridge_jam else int(geometry.get("deck_z", CoinPusherSolverScript.DECK_Z))
 		metadata["value"] = maxi(0, int(feature.get("cash_value", 0)))
-		var feature_lane := clampi(int(feature.get("spawn_lane", feature.get("lane", 2))), 0, _lane_count() - 1)
-		var feature_lane_width := CoinPusherSolverScript.WIDTH / maxi(1, _lane_count())
-		var feature_x := feature_lane * feature_lane_width + feature_lane_width / 2
 		var body := CoinPusherSolverScript.add_feature(simulation, kind, feature_id, feature_x, depth, metadata)
+		if bool(body.get("accepted", false)):
+			body["support_kind"] = "platform" if is_ridge_jam else "deck"
+			body["carried_sleep"] = is_ridge_jam
+			body["rest_state"] = "resting"
+			body["sleeping"] = true
+			body["sleep_ticks"] = 8
 		feature["body_id"] = str(body.get("id", ""))
 		feature.erase("lane")
 		feature.erase("cell")
@@ -1313,7 +1596,7 @@ func _resolve_vault_action(action_id: String, run_state: RunState, environment: 
 	if str(machine.get("variation_id", "")) != "vault_drop":
 		return _empty_pusher_result(action_id, environment, "This cabinet has no vault door.")
 	var state := _variation_state(machine)
-	var cell_index := clampi(int(ui_state.get("coin_pusher_vault_cell", 0)), 0, maxi(0, (state.get("vault_cells", []) as Array).size() - 1))
+	var cell_index := clampi(int(ui_state.get("coin_pusher_vault_cell", machine.get("vault_selected_cell", 0))), 0, maxi(0, (state.get("vault_cells", []) as Array).size() - 1))
 	var outcome: Dictionary
 	match action_id:
 		VAULT_START_ACTION:
@@ -1337,12 +1620,22 @@ func _resolve_vault_action(action_id: String, run_state: RunState, environment: 
 	var message := str(outcome.get("message", state.get("last_feature_message", "Vault moved.")))
 	machine["last_message"] = message
 	machine["action_count"] = int(machine.get("action_count", 0)) + 1
-	machine["total_payout"] = int(machine.get("total_payout", 0)) + cash
-	machine["tray_value"] = int(machine.get("tray_value", 0)) + cash
-	_write_machine_state(environment, machine)
+	if cash > 0:
+		var simulation := _simulation(machine)
+		var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+		tray.append({
+			"body_id": "vault_reward_%d" % int(machine.get("action_count", 0)),
+			"kind": "vault_reward",
+			"value": cash,
+			"item_id": "",
+			"provenance": {"variation_id": "vault_drop", "cell_index": cell_index},
+		})
+		# The vault door dispenses an external award into the tray. Track its
+		# origin honestly; it was never an opening or paid-insert body.
+		simulation["external_origin_count"] = int(simulation.get("external_origin_count", 0)) + 1
+	_write_live_durable(run_state, environment, machine, false)
 	_register_pile_rumor(run_state, environment, machine)
 	var deltas := GameModule.empty_result_deltas()
-	deltas["bankroll_delta"] = cash
 	deltas["inventory_add"] = items
 	deltas["story_log"] = [_story_entry(action_id, "risky" if action_id == VAULT_PEEK_ACTION else "legal", environment, cash, 0, {
 		"variation_id": "vault_drop", "cell_index": cell_index, "cell_kind": str(outcome.get("kind", "")),
@@ -1352,7 +1645,7 @@ func _resolve_vault_action(action_id: String, run_state: RunState, environment: 
 	var result := GameModule.build_action_result({
 		"source_id": get_id(), "game_id": get_id(), "action_id": action_id,
 		"action_kind": "risky" if action_id == VAULT_PEEK_ACTION else "legal",
-		"environment_id": str(environment.get("id", "")), "bankroll_delta": cash,
+		"environment_id": str(environment.get("id", "")), "bankroll_delta": 0,
 		"deltas": deltas, "won": cash > 0 or not items.is_empty(), "message": message,
 	})
 	result["host_apply_result"] = true
@@ -1398,16 +1691,18 @@ func _register_pile_rumor(run_state: RunState, environment: Dictionary, machine:
 		node_id = run_state.current_world_node_id()
 	if node_id.is_empty():
 		return
-	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), _machine_definition())
+	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), _machine_definition(str(machine.get("variation_id", _variation_id()))))
 	var hangers := CoinPusherSolverScript.edge_hanger_count(simulation)
 	var pile_count := CoinPusherSolverScript.coin_count(simulation)
-	var detail := "hanging off the lip" if hangers >= 2 else "fat in the middle" if pile_count >= int(float(_coin_cap()) * 0.72) else "still hungry"
-	run_state.register_rumor_fact(RUMOR_CLASS, "pusher:%s" % node_id, {
+	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+	var fact_class := "pusher_tray_loaded" if not tray.is_empty() else RUMOR_CLASS
+	var detail := "%d piece%s" % [tray.size(), "" if tray.size() == 1 else "s"] if not tray.is_empty() else "hanging off the lip" if hangers >= 2 else "fat in the middle" if pile_count >= int(float(_coin_cap()) * 0.72) else "still hungry"
+	run_state.register_rumor_fact(fact_class, "pusher:%s" % node_id, {
 		"target_node_id": node_id,
 		"target_name": str(environment.get("name", environment.get("display_name", node_id))),
 		"fact_detail": detail,
 		"source_id": get_id(),
-		"truth_trace": {"game_id": get_id(), "environment_id": str(environment.get("id", "")), "action_count": int(machine.get("action_count", 0))},
+		"truth_trace": {"game_id": get_id(), "environment_id": str(environment.get("id", "")), "action_count": int(machine.get("action_count", 0)), "tray_count": tray.size()},
 	})
 
 
@@ -1525,9 +1820,25 @@ func _tuning() -> Dictionary:
 	return value if typeof(value) == TYPE_DICTIONARY else {}
 
 
-func _machine_definition() -> Dictionary:
+func _machine_definition(variation_id: String = "") -> Dictionary:
 	var value: Variant = definition.get("coin_pusher_machine", {})
-	return value if typeof(value) == TYPE_DICTIONARY else {}
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var base: Dictionary = (value as Dictionary).duplicate(true)
+	var machines: Dictionary = base.get("machines", {}) if typeof(base.get("machines", {})) == TYPE_DICTIONARY else {}
+	base.erase("machines")
+	var selected := variation_id.strip_edges()
+	if selected.is_empty() or selected == str(base.get("machine_id", "quarter_falls")):
+		return base
+	var override: Dictionary = machines.get(selected, {}) if typeof(machines.get(selected, {})) == TYPE_DICTIONARY else {}
+	for key in override.keys():
+		base[key] = override[key].duplicate(true) if typeof(override[key]) in [TYPE_DICTIONARY, TYPE_ARRAY] else override[key]
+	var sub_game := _variation_config(selected).duplicate(true)
+	if typeof(override.get("sub_game", {})) == TYPE_DICTIONARY:
+		sub_game.merge(override.get("sub_game", {}), true)
+	base["sub_game"] = sub_game
+	base["cabinet"] = _resolved_cabinet(selected)
+	return base
 
 
 func _resolved_cabinet(variation_id: String) -> Dictionary:

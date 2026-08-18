@@ -18,6 +18,7 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 			machine["variation_state"] = (snapshot.get("sub_game", {}) as Dictionary).duplicate(true) if typeof(snapshot.get("sub_game", {})) == TYPE_DICTIONARY else {}
 			var alarm: Dictionary = snapshot.get("alarm", {}) if typeof(snapshot.get("alarm", {})) == TYPE_DICTIONARY else {}
 			machine["tell_rung"] = int(alarm.get("tell_rung", machine.get("tell_rung", 0)))
+			machine["tell_decay_remaining_ticks"] = int(alarm.get("tell_decay_remaining_ticks", machine.get("tell_decay_remaining_ticks", 0)))
 			machine["alarm_tolerance_remaining"] = int(alarm.get("tolerance", machine.get("alarm_tolerance_remaining", 0)))
 			machine["locked_down"] = bool(alarm.get("night_lock", machine.get("locked_down", false)))
 	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
@@ -219,6 +220,7 @@ static func make_snapshot(simulation: Dictionary, machine: Dictionary = {}) -> D
 		"version": SNAPSHOT_VERSION,
 		"machine_id": str(simulation.get("machine_id", "")),
 		"phase_fp": int(simulation.get("phase_fp", 0)),
+		"stroke_cycle_serial": int(simulation.get("stroke_cycle_serial", 0)),
 		"carriage_x": int(simulation.get("carriage_x", 50000)),
 		"selected_hole": int(simulation.get("selected_hole", 0)),
 		"next_body_id": int(simulation.get("next_body_id", 1)),
@@ -233,6 +235,7 @@ static func make_snapshot(simulation: Dictionary, machine: Dictionary = {}) -> D
 		"sub_game": (machine.get("variation_state", {}) as Dictionary).duplicate(true) if typeof(machine.get("variation_state", {})) == TYPE_DICTIONARY else {},
 		"alarm": {
 			"tell_rung": int(machine.get("tell_rung", 0)),
+			"tell_decay_remaining_ticks": int(machine.get("tell_decay_remaining_ticks", 0)),
 			"tolerance": int(machine.get("alarm_tolerance_remaining", 0)),
 			"night_lock": bool(machine.get("locked_down", false)),
 		},
@@ -245,6 +248,7 @@ static func restore_snapshot(snapshot: Dictionary, machine_definition: Dictionar
 	rng.configure(1)
 	var simulation := CoinPusherSolverScript.create_machine(rng, machine_definition, 0)
 	simulation["phase_fp"] = int(snapshot.get("phase_fp", 0))
+	simulation["stroke_cycle_serial"] = int(snapshot.get("stroke_cycle_serial", 0))
 	var period := maxi(1, int((machine_definition.get("stroke", {}) as Dictionary).get("period_ticks", 240)))
 	var phase := posmod(int(simulation["phase_fp"]) / CoinPusherSolverScript.FP, period)
 	simulation["face_y"] = CoinPusherSolverScript.face_y_for_phase(machine_definition, phase)
@@ -361,6 +365,7 @@ static func _presentation_body_views(simulation: Dictionary) -> Array:
 			"z": int(body.get("z", 0)),
 			"rest_state": str(body.get("rest_state", "falling")),
 			"support_kind": str(body.get("support_kind", "")),
+			"support_root": "platform" if str(body.get("support_kind", "")) == "platform" or (str(body.get("support_kind", "")) == "body" and bool(body.get("carried_sleep", false))) else "deck" if not str(body.get("support_kind", "")).is_empty() else "",
 		}
 	return views
 
@@ -387,7 +392,7 @@ static func _restore_extra(body: Dictionary, definition: Dictionary) -> Dictiona
 
 static func _restored_body(id: String, kind: String, x: int, y: int, z: int, meta: Dictionary, definition: Dictionary, support: String, carried: bool) -> Dictionary:
 	var coins: Dictionary = definition.get("coins", {})
-	return {"id": id, "kind": kind, "x": x, "y": y, "z": z, "vx": 0, "vy": 0, "vz": 0, "radius": int(coins.get("radius", 4300)), "height": int(coins.get("height", 1700)), "mass": int(coins.get("mass", 1000)), "sleeping": true, "sleep_ticks": 8, "rest_state": "resting", "support_kind": support, "carried_sleep": carried, "meta": meta.duplicate(true)}
+	return {"id": id, "kind": kind, "x": x, "y": y, "z": z, "vx": 0, "vy": 0, "vz": 0, "radius": int(meta.get("radius", coins.get("radius", 4300))), "height": int(meta.get("height", coins.get("height", 1700))), "mass": int(meta.get("mass", coins.get("mass", 1000))), "sleeping": true, "sleep_ticks": 8, "rest_state": "resting", "support_kind": support, "carried_sleep": carried, "meta": meta.duplicate(true)}
 
 
 static func _append_u16(bytes: PackedByteArray, value: int) -> void:

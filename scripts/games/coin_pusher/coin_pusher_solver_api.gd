@@ -35,6 +35,10 @@ static func add_feature(state: Dictionary, kind: String, feature_id: String, x: 
 	return CoinPusherSolverScript.add_feature(state, kind, feature_id, x, y, metadata)
 
 
+static func return_gutter_body(state: Dictionary, return_data: Dictionary) -> Dictionary:
+	return CoinPusherSolverScript.return_gutter_body(state, return_data)
+
+
 static func step_ticks(state: Dictionary, config: Dictionary, tick_count: int) -> Dictionary:
 	return CoinPusherSolverScript.step_ticks(state, config, tick_count)
 
@@ -51,12 +55,12 @@ static func face_y_for_phase(machine_definition: Dictionary, phase: int) -> int:
 	return CoinPusherSolverScript.face_y_for_phase(machine_definition, phase)
 
 
-static func deck_landing_phase_ratio_milli(machine_definition: Dictionary) -> int:
-	return CoinPusherSolverScript.deck_landing_phase_ratio_milli(machine_definition)
+static func set_skill_stop(state: Dictionary, engaged: bool, resume_rate_fp: int = -1) -> void:
+	CoinPusherSolverScript.set_skill_stop(state, engaged, resume_rate_fp)
 
 
-static func set_skill_stop(state: Dictionary, engaged: bool) -> void:
-	CoinPusherSolverScript.set_skill_stop(state, engaged)
+static func set_motor_run_rate(state: Dictionary, rate_fp: int) -> int:
+	return CoinPusherSolverScript.set_motor_run_rate(state, rate_fp)
 
 
 static func set_carriage(state: Dictionary, x: int) -> int:
@@ -105,10 +109,6 @@ static func awake_count(state: Dictionary) -> int:
 
 static func edge_hanger_count(state: Dictionary) -> int:
 	return CoinPusherSolverScript.edge_hanger_count(state)
-
-
-static func add_recovered_coin(state: Dictionary, rng: RngStream) -> Dictionary:
-	return CoinPusherSolverScript.add_recovered_coin(state, rng)
 
 
 static func native_backend_available_for_test() -> bool:

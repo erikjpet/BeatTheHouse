@@ -8,8 +8,8 @@ static func initial_state(config: Dictionary, rng: RngStream, lane_count: int, c
 	for index in range(fragment_count):
 		fragments.append({
 			"id": "vault_fragment_%02d" % index,
-			"spawn_lane": rng.randi_range(0, lane_count - 1),
-			"spawn_depth_slot": rng.randi_range(0, maxi(1, cell_count - 1)),
+			"spawn_x_milli": rng.randi_range(80, 920),
+			"spawn_depth_milli": rng.randi_range(100, 900),
 		})
 	var schedule: Array = []
 	var cursor := 0
@@ -17,7 +17,7 @@ static func initial_state(config: Dictionary, rng: RngStream, lane_count: int, c
 		cursor += rng.randi_range(maxi(1, int(config.get("spawn_gap_min", 2))), maxi(2, int(config.get("spawn_gap_max", 5))))
 		schedule.append({
 			"id": "vault_scheduled_%02d" % index, "spawn_action": cursor,
-			"spawn_lane": rng.randi_range(0, lane_count - 1), "spawn_depth_slot": rng.randi_range(1, maxi(1, cell_count - 1)),
+			"spawn_x_milli": rng.randi_range(80, 920), "spawn_depth_milli": rng.randi_range(100, 900),
 		})
 	var floor_value := maxi(0, int(config.get("progressive_floor", 120)))
 	return {
@@ -55,7 +55,7 @@ static func apply_physical_events(state: Dictionary, physics_events: Array) -> D
 		if typeof(event_value) != TYPE_DICTIONARY:
 			continue
 		var event: Dictionary = event_value
-		if str(event.get("kind", "")) != "fragment":
+		if str(event.get("body_kind", event.get("kind", ""))) != "fragment":
 			continue
 		var metadata: Dictionary = event.get("metadata", {}) if typeof(event.get("metadata", {})) == TYPE_DICTIONARY else {}
 		outcomes[str(metadata.get("feature_id", ""))] = str(event.get("outcome", ""))

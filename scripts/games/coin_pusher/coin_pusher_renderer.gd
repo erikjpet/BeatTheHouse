@@ -2,7 +2,7 @@ class_name CoinPusherRenderer
 extends RefCounted
 
 const DESIGN_SIZE := Vector2(900, 430)
-const RAIL_DRAG_RECT := Rect2(176, 142, 548, 112)
+const RAIL_DRAG_RECT := Rect2(176, 154, 548, 44)
 const PLAYFIELD_RECT := Rect2(158, 152, 584, 165)
 const SCHEMA_DEFAULT_WIDTH := 100000.0
 const SCHEMA_DEFAULT_BACK_Y := 63000.0
@@ -15,6 +15,7 @@ const ELLIPSE_SEGMENTS := 12
 const BATCH_CAPACITY := 600
 const ATLAS_FRAME_SIZE := Vector2i(40, 32)
 const ROTATION_VARIANTS := [-0.12, -0.04, 0.04, 0.12]
+const AIRBORNE_SHADOW_OFFSET := Vector2(12, 10)
 
 const NEUTRAL_CABINET := {
 	"identity": "generic", "marquee": "COIN PUSHER", "palette": "neutral", "topper_style": "none", "marquee_subline": "",
@@ -44,6 +45,8 @@ func draw(surface, state: Dictionary) -> bool:
 	surface.surface_begin_design_space(DESIGN_SIZE)
 	var cabinet := _cabinet(state)
 	var colors := _colors(cabinet)
+	if bool(state.get("coin_pusher_locked", false)):
+		colors = _locked_colors(colors)
 	_draw_floor_and_shell(surface, cabinet, colors)
 	_draw_backglass(surface, state, cabinet, colors)
 	_draw_playfield(surface, state, colors, cabinet)
@@ -90,8 +93,21 @@ func render_signature(state: Dictionary) -> Dictionary:
 		"stacked_count": stacked,
 		"riding_count": riding,
 		"tray_heap_count": int(state.get("coin_pusher_tray_count", 0)),
-		"hardware_actions": ["coin_pusher_carriage_drag", "coin_pusher_carriage_left", "coin_pusher_carriage_right", "coin_pusher_drop", "coin_pusher_skill_stop", "coin_pusher_collect"],
+		"delivery_board": debug_delivery_board_for_test(state),
+		"entry_hardware": _entry_hardware_layout(state),
+		"airborne_shadow_offset": AIRBORNE_SHADOW_OFFSET,
+		"locked_dark": bool(state.get("coin_pusher_locked", false)),
+		"hardware_actions": _hardware_actions(state),
+		"hardware_catalog": _hardware_catalog(state),
 	}
+
+
+func _locked_colors(colors: Dictionary) -> Dictionary:
+	var result := colors.duplicate(false)
+	for key in result.keys():
+		if result[key] is Color:
+			result[key] = (result[key] as Color).darkened(0.78)
+	return result
 
 
 func _draw_floor_and_shell(surface, cabinet: Dictionary, colors: Dictionary) -> void:
@@ -151,13 +167,6 @@ func _draw_backglass(surface, state: Dictionary, cabinet: Dictionary, colors: Di
 				var lit := index < value
 				surface.draw_circle(lamp, 10.0, colors["light"] if lit else Color(colors["light"], 0.16))
 			surface.surface_label_centered(str(display.get("label_template", "%d")) % value, rect, 14, colors["light"])
-			var peg_source: Dictionary = state.get(str(display.get("peg_source_state_key", "")), {}) if typeof(state.get(str(display.get("peg_source_state_key", "")), {})) == TYPE_DICTIONARY else {}
-			var pegs: Array = peg_source.get("pegs", []) if typeof(peg_source.get("pegs", [])) == TYPE_ARRAY else []
-			for peg_index in range(pegs.size()):
-				var peg: Dictionary = pegs[peg_index]
-				var peg_x := rect.position.x + 32.0 + clampf(float(peg.get("x", 0)) / _world_width, 0.0, 1.0) * (rect.size.x - 64.0)
-				var peg_y := rect.position.y + 9.0 + float(peg_index % 2) * 18.0
-				surface.draw_circle(Vector2(peg_x, peg_y), 2.5, colors["trim"])
 		"dual_value_dial":
 			var primary := maxi(0, int(state.get(str(display.get("primary_state_key", "")), 0)))
 			var secondary := maxi(0, int(state.get(str(display.get("secondary_state_key", "")), 0)))
@@ -195,6 +204,7 @@ func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Di
 	var back_plate_y := int(geometry.get("back_plate_y", 63000))
 	var tray_lip_y := int(geometry.get("tray_lip_y", 6000))
 	surface.draw_rect(PLAYFIELD_RECT, Color("#07131c"))
+	_draw_delivery_board(surface, apparatus, geometry, colors)
 	# Back plate, fixed deck, and the moving platform are projected from authored geometry.
 	var back_left := _project(0, back_plate_y, 0)
 	var back_right := _project(int(geometry.get("width", 100000)), back_plate_y, 0)
@@ -213,7 +223,7 @@ func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Di
 	surface.surface_filled_polygon(PackedVector2Array([face_left, face_right, top_face_right, top_face_left]), colors["platform"].darkened(0.24)) # SA2_PER_FRAME_OK: four projected public geometry points.
 	surface.draw_line(top_face_left, top_face_right, colors["light"], 2.0)
 	_draw_gutters(surface, geometry, colors)
-	_draw_pegs(surface, apparatus, colors)
+	_draw_delivery_pegs(surface, apparatus, geometry, colors)
 	_draw_interpolated_bodies(surface, state, colors, cabinet)
 	_draw_tray_lip(surface, lip_left, lip_right, colors)
 
@@ -227,17 +237,40 @@ func _draw_gutters(surface, geometry: Dictionary, colors: Dictionary) -> void:
 		surface.surface_polyline(PackedVector2Array([front + Vector2(-16, -4), front + Vector2(16, -4), front + Vector2(12, 10)]), colors["trim"].darkened(0.45), 2.0) # SA2_PER_FRAME_OK: bounded three-point gutter trim.
 
 
-func _draw_pegs(surface, apparatus: Dictionary, colors: Dictionary) -> void:
+func _draw_delivery_board(surface, apparatus: Dictionary, geometry: Dictionary, colors: Dictionary) -> void:
+	var board := _delivery_board(apparatus, geometry)
+	var x_min := float(board["x_min"])
+	var x_max := float(board["x_max"])
+	var z_top := float(board["z_top"])
+	var z_bottom := float(board["z_bottom"])
+	var corners := PackedVector2Array([ # SA2_PER_FRAME_OK: fixed four-point delivery-board geometry.
+		_project_delivery_board_point(board, x_min, z_top),
+		_project_delivery_board_point(board, x_max, z_top),
+		_project_delivery_board_point(board, x_max, z_bottom),
+		_project_delivery_board_point(board, x_min, z_bottom),
+	])
+	surface.surface_filled_polygon(corners, Color(colors["backglass"], 0.84)) # SA2_PER_FRAME_OK: fixed authored four-point delivery surface.
+	corners.append(corners[0])
+	surface.surface_polyline(corners, colors["trim"], 2.0)
+	# The lower board edge is the exact upper-platform catchment seam.
+	var landing_left := _project_delivery_board_point(board, x_min, z_bottom)
+	var landing_right := _project_delivery_board_point(board, x_max, z_bottom)
+	surface.draw_line(landing_left, landing_right, Color(colors["light"], 0.72), 2.0)
+
+
+func _draw_delivery_pegs(surface, apparatus: Dictionary, geometry: Dictionary, colors: Dictionary) -> void:
+	var board := _delivery_board(apparatus, geometry)
 	var pegs: Array = apparatus.get("pegs", []) if typeof(apparatus.get("pegs", [])) == TYPE_ARRAY else []
 	for peg_value in pegs:
 		if typeof(peg_value) != TYPE_DICTIONARY:
 			continue
 		var peg: Dictionary = peg_value
-		var point := _project(int(peg.get("x", 50000)), int(apparatus.get("drop_y", 40000)), int(peg.get("z", 9000)))
-		var radius := clampf(float(int(peg.get("r", 1200))) / 1200.0 * 4.0, 3.0, 7.0)
-		surface.draw_circle(point + Vector2(1, 2), radius + 1.0, Color(0, 0, 0, 0.48))
-		surface.draw_circle(point, radius, colors["trim"])
-		surface.draw_circle(point - Vector2(1, 1), radius * 0.42, colors["light"])
+		var peg_projection := _project_delivery_peg(board, peg)
+		var point: Vector2 = peg_projection["center"]
+		var radius: Vector2 = peg_projection["radius"]
+		_draw_ellipse(surface, point + Vector2(1, 2), radius.x + 1.0, radius.y + 1.0, Color(0, 0, 0, 0.48), 0)
+		_draw_ellipse(surface, point, radius.x, radius.y, colors["trim"], 0)
+		_draw_ellipse(surface, point - Vector2(1, 1), radius.x * 0.42, radius.y * 0.42, colors["light"], 0)
 
 
 func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, cabinet: Dictionary) -> void:
@@ -269,8 +302,12 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 			x = lerpf(float(previous_x), x, alpha)
 			y = lerpf(float(previous_y), y, alpha)
 			z = lerpf(float(previous_z), z, alpha)
-		var point := _project_f(x, y, z)
 		var falling := str(body.get("rest_state", "")) == "falling"
+		var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+		var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+		var board := _delivery_board(apparatus, geometry)
+		var on_delivery_board := falling and absi(int(round(y)) - int(board["y"])) <= int(body.get("radius", 4300)) and z >= float(board["z_bottom"])
+		var point := _project_delivery_board_point(board, x, z) if on_delivery_board else _project_f(x, y, z)
 		var body_color := _body_color(str(body.get("kind", "coin")), cabinet)
 		var frame := posmod(body_id.hash(), ROTATION_VARIANTS.size())
 		var rotation: float = ROTATION_VARIANTS[frame]
@@ -279,12 +316,12 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 			_coin_multimesh.set_instance_color(index, body_color)
 			_coin_instance_color_cache[index] = body_color
 		if falling:
-			var shadow_point := _project_f(x, y, 0.0)
+			var shadow_point := _project_delivery_board_point(board, x, z) if on_delivery_board and z > float(board["z_bottom"]) + _coin_height else _project_f(x, y, float(board["z_bottom"]))
 			airborne_shadows.append(shadow_point)
 		if str(body.get("kind", "coin")) != "coin":
 			feature_labels.append({"kind": str(body.get("kind", "")), "point": point})
 	for shadow_value in airborne_shadows:
-		_draw_ellipse(surface, (shadow_value as Vector2) + Vector2(3, 4), COIN_RX * 0.88, COIN_RY * 0.72, Color(0, 0, 0, 0.30), 0)
+		_draw_ellipse(surface, (shadow_value as Vector2) + AIRBORNE_SHADOW_OFFSET, COIN_RX * 0.94, COIN_RY * 0.76, Color(0, 0, 0, 0.80), 0)
 	# One ordered batch is the exact depth order above; seeded rotation variants
 	# are per instance and never repartition or reorder overlapping bodies.
 	surface.surface_present_multimesh_batch(_coin_multimesh, _coin_texture, null, DESIGN_SIZE)
@@ -398,26 +435,44 @@ func _draw_glass(surface, colors: Dictionary) -> void:
 
 func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
-	var rail: Dictionary = (state.get("coin_pusher_apparatus", {}) as Dictionary).get("rail", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var rail: Dictionary = apparatus.get("rail", {}) if typeof(apparatus.get("rail", {})) == TYPE_DICTIONARY else {}
 	var rail_min := int(rail.get("x_min", 8000))
 	var rail_max := maxi(rail_min + 1, int(rail.get("x_max", 92000)))
 	var carriage := int(state.get("coin_pusher_carriage_x", 50000))
 	var carriage_t := clampf(float(carriage - rail_min) / float(rail_max - rail_min), 0.0, 1.0)
 	var rail_x := RAIL_DRAG_RECT.position.x + RAIL_DRAG_RECT.size.x * carriage_t
-	# The drag region is deliberately broad over the physical chute so touch users can steer without precision.
-	surface.surface_add_drag_hit(RAIL_DRAG_RECT, "coin_pusher_carriage_drag")
-	surface.draw_line(Vector2(RAIL_DRAG_RECT.position.x, 160), Vector2(RAIL_DRAG_RECT.end.x, 160), colors["trim"].darkened(0.18), 6.0)
-	surface.draw_rect(Rect2(rail_x - 11, 145, 22, 38), colors["side"])
-	surface.draw_rect(Rect2(rail_x - 11, 145, 22, 38), colors["light"], false, 2.0)
-	surface.draw_line(Vector2(rail_x, 176), Vector2(rail_x, 211), colors["light"], 3.0)
-	_draw_small_hardware(surface, Rect2(126, 332, 42, 34), "◀", "coin_pusher_carriage_left", colors, true)
-	_draw_small_hardware(surface, Rect2(174, 332, 42, 34), "▶", "coin_pusher_carriage_right", colors, true)
+	if str(apparatus.get("type", "rail_slot")) == "hole_set":
+		var holes: Array = apparatus.get("holes", []) if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else []
+		for hole_index in range(holes.size()):
+			var hole_x := 260.0 + float(hole_index) * 190.0
+			var hole_rect := Rect2(hole_x - 22.0, 154.0, 44.0, 44.0)
+			surface.draw_circle(hole_rect.get_center(), 20.0, colors["trim"])
+			surface.draw_circle(hole_rect.get_center(), 15.0, Color("#020305"))
+			if hole_index == int(state.get("coin_pusher_selected_hole", 0)):
+				surface.draw_circle(hole_rect.get_center(), 22.0, colors["light"], false, 3.0)
+			surface.surface_label_centered(str(hole_index + 1), hole_rect, 14, colors["light"])
+			var hole_action := "coin_pusher_hole_%d" % hole_index
+			if _binding_enabled(bindings, hole_action):
+				surface.surface_add_exact_hit(hole_rect, hole_action, hole_index)
+	else:
+		# The rail owns only its 44 px hardware strip; it never blankets the board or pile.
+		var drag_enabled := _binding_enabled(bindings, "coin_pusher_carriage_left") and _binding_enabled(bindings, "coin_pusher_carriage_right")
+		if drag_enabled:
+			surface.surface_add_drag_hit(RAIL_DRAG_RECT, "coin_pusher_carriage_drag")
+		surface.draw_line(Vector2(RAIL_DRAG_RECT.position.x, 166), Vector2(RAIL_DRAG_RECT.end.x, 166), colors["trim"].darkened(0.18), 6.0)
+		surface.draw_rect(Rect2(rail_x - 11, 154, 22, 42), colors["side"])
+		surface.draw_rect(Rect2(rail_x - 11, 154, 22, 42), colors["light"], false, 2.0)
+		surface.draw_line(Vector2(rail_x, 184), Vector2(rail_x, 204), colors["light"], 3.0)
+		_draw_small_hardware(surface, Rect2(126, 332, 42, 34), "<", "coin_pusher_carriage_left", colors, _binding_enabled(bindings, "coin_pusher_carriage_left"))
+		_draw_small_hardware(surface, Rect2(174, 332, 42, 34), ">", "coin_pusher_carriage_right", colors, _binding_enabled(bindings, "coin_pusher_carriage_right"))
 	var stop_engaged := bool(state.get("coin_pusher_skill_stop_engaged", false))
 	var stop_rect := Rect2(229, 326, 90, 46)
 	surface.draw_circle(stop_rect.get_center(), 27.0, colors["light"] if stop_engaged else Color("#b73538"))
 	surface.draw_circle(stop_rect.get_center(), 27.0, Color.WHITE if surface.surface_region_hovered("coin_pusher_skill_stop") else colors["trim"], false, 3.0)
 	surface.surface_label_centered("RELEASE" if stop_engaged else "STOP", stop_rect, 12, Color("#10141d"))
-	surface.surface_add_hit(stop_rect, "coin_pusher_skill_stop")
+	if _binding_enabled(bindings, "coin_pusher_skill_stop"):
+		surface.surface_add_hit(stop_rect, "coin_pusher_skill_stop")
 	var tray_rect := Rect2(332, 326, 244, 52)
 	surface.draw_rect(tray_rect, Color("#06090c"))
 	surface.draw_rect(tray_rect, colors["trim"], false, 3.0)
@@ -433,20 +488,171 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	surface.draw_circle(Vector2(630, 348), 15.0, colors["side"])
 	surface.draw_line(Vector2(620, 348), Vector2(640, 348), Color("#020305"), 5.0)
 	surface.surface_label_centered("DROP", Rect2(597, 365, 66, 10), 8, colors["light"])
-	var drop_enabled := bool((bindings.get("coin_pusher_drop", {}) as Dictionary).get("enabled", true)) if typeof(bindings.get("coin_pusher_drop", {})) == TYPE_DICTIONARY else true
+	var drop_enabled := _binding_enabled(bindings, "coin_pusher_drop")
 	if drop_enabled:
 		surface.surface_add_hit(slot_rect, "coin_pusher_drop")
 	var nudge_rect := Rect2(684, 326, 90, 46)
-	var nudge_hovered: bool = bool(surface.surface_region_hovered("coin_pusher_nudge"))
+	var nudge_enabled := _binding_enabled(bindings, "coin_pusher_nudge")
+	var nudge_hovered: bool = nudge_enabled and bool(surface.surface_region_hovered("coin_pusher_nudge"))
 	surface.draw_rect(nudge_rect, colors["side"].lightened(0.08 if nudge_hovered else 0.0))
 	surface.draw_circle(Vector2(699, 337), 3.0, colors["trim"])
 	surface.draw_circle(Vector2(759, 337), 3.0, colors["trim"])
 	surface.draw_line(Vector2(706, 347), Vector2(752, 347), Color.WHITE if nudge_hovered else colors["trim"], 8.0)
 	surface.draw_line(Vector2(706, 347), Vector2(706, 359), colors["trim"], 4.0)
 	surface.draw_line(Vector2(752, 347), Vector2(752, 359), colors["trim"], 4.0)
-	surface.surface_label_centered("NUDGE", Rect2(693, 358, 72, 12), 8, colors["light"])
-	surface.surface_add_hit(nudge_rect, "coin_pusher_nudge")
+	surface.surface_label_centered("NUDGE", Rect2(693, 358, 72, 12), 8, colors["light"] if nudge_enabled else Color(colors["light"], 0.38))
+	if nudge_enabled:
+		surface.surface_add_hit(nudge_rect, "coin_pusher_nudge")
 	surface.surface_label_centered(str(state.get("coin_pusher_tell_label", "steady")).to_upper(), Rect2(686, 375, 86, 16), 9, colors["light"])
+	_draw_feature_hardware(surface, state, bindings, colors)
+
+
+func _draw_feature_hardware(surface, state: Dictionary, bindings: Dictionary, colors: Dictionary) -> void:
+	_draw_nudge_selectors(surface, state, bindings, colors)
+	if str(state.get("coin_pusher_variation_id", "")) == "vault_drop":
+		_draw_vault_hardware(surface, state, bindings, colors)
+
+
+func _draw_nudge_selectors(surface, state: Dictionary, bindings: Dictionary, colors: Dictionary) -> void:
+	var forces: Dictionary = state.get("coin_pusher_nudge_forces", {}) if typeof(state.get("coin_pusher_nudge_forces", {})) == TYPE_DICTIONARY else {}
+	var force_options: Array = []
+	for force in forces.keys():
+		force_options.append({"id": str(force), "label": str(force).to_upper(), "action": "coin_pusher_force_%s" % str(force)})
+	var direction_options: Array = []
+	for direction in ["left", "front", "right"]:
+		direction_options.append({"id": direction, "label": direction.left(1).to_upper(), "action": "coin_pusher_direction_%s" % direction})
+	var selected_force := str(state.get("coin_pusher_nudge_force", "tap"))
+	var selected_direction := str(state.get("coin_pusher_nudge_direction", "front"))
+	var groups := [
+		{"options": force_options, "selected": selected_force, "y": 300.0},
+		{"options": direction_options, "selected": selected_direction, "y": 382.0},
+	]
+	for group_value in groups:
+		var group: Dictionary = group_value
+		var options: Array = group.get("options", []) if typeof(group.get("options", [])) == TYPE_ARRAY else []
+		if options.is_empty():
+			continue
+		var width := 90.0 / float(options.size())
+		for option_index in range(options.size()):
+			if typeof(options[option_index]) != TYPE_DICTIONARY:
+				continue
+			var option: Dictionary = options[option_index]
+			var action := str(option.get("action", ""))
+			var option_id := str(option.get("id", ""))
+			var rect := Rect2(684.0 + width * option_index, float(group["y"]), width - 2.0, 17.0)
+			var enabled := _binding_enabled(bindings, action)
+			var selected := option_id == str(group["selected"])
+			surface.draw_rect(rect, colors["light"] if selected else colors["side"])
+			surface.draw_rect(rect, colors["trim"] if enabled else Color(colors["trim"], 0.32), false, 1.0)
+			surface.surface_label_centered(str(option.get("label", option_id)).to_upper(), rect.grow(-1.0), 7, Color("#10141d") if selected else Color(colors["light"], 0.85 if enabled else 0.32))
+			if enabled and not action.is_empty():
+				surface.surface_add_exact_hit(rect, action, int(option.get("index", option_index)))
+
+
+func _draw_vault_hardware(surface, state: Dictionary, bindings: Dictionary, colors: Dictionary) -> void:
+	var panel := Rect2(126, 382, 540, 38)
+	surface.draw_rect(panel, colors["side"].darkened(0.12))
+	surface.draw_rect(panel, colors["trim"], false, 2.0)
+	var round_active := bool(state.get("coin_pusher_vault_round_active", false))
+	var cells: Array = state.get("coin_pusher_vault_cells", []) if typeof(state.get("coin_pusher_vault_cells", [])) == TYPE_ARRAY else []
+	var door_rect := Rect2(132, 387, 78, 27)
+	surface.draw_rect(door_rect, colors["body"].darkened(0.20 if not round_active else 0.02))
+	surface.draw_rect(door_rect, colors["trim"], false, 2.0)
+	surface.surface_label_centered("VAULT %s" % ("OPEN" if round_active else "SHUT"), door_rect, 8, colors["light"])
+	var cell_width := 31.0
+	for cell_index in range(cells.size()):
+		if typeof(cells[cell_index]) != TYPE_DICTIONARY:
+			continue
+		var cell: Dictionary = cells[cell_index]
+		var rect := Rect2(216.0 + cell_width * cell_index, 387.0, cell_width - 3.0, 27.0)
+		var action := str(cell.get("selection_action", "coin_pusher_vault_cell_%d" % cell_index))
+		var selected := cell_index == int(state.get("coin_pusher_vault_selected_cell", -1))
+		var opened := bool(cell.get("opened", false))
+		var peeked := bool(cell.get("peeked", false))
+		var fill: Color = colors["light"] if selected else colors["body"].lightened(0.10 if opened or peeked else 0.0)
+		surface.draw_rect(rect, fill)
+		surface.draw_rect(rect, colors["light"] if selected else colors["trim"], false, 1.0)
+		surface.surface_label_centered(str(cell.get("label", "?")), rect.grow(-1.0), 8, Color("#10141d") if selected else colors["light"])
+		if _binding_enabled(bindings, action):
+			surface.surface_add_exact_hit(rect, action, cell_index)
+	var action_ids := ["start_vault_round", "open_vault_cell", "stop_vault_round", "peek_vault_cell"]
+	var action_labels := ["OPEN", "CELL", "STOP", "X-RAY"]
+	for action_index in range(action_ids.size()):
+		var action := str(action_ids[action_index])
+		var rect := Rect2(410.0 + action_index * 62.0, 387.0, 58.0, 27.0)
+		var enabled := _binding_enabled(bindings, action)
+		_draw_small_hardware(surface, rect, str(action_labels[action_index]), action, colors, enabled)
+
+
+func _feature_hardware_action_ids(state: Dictionary) -> Array:
+	var result: Array = []
+	var forces: Dictionary = state.get("coin_pusher_nudge_forces", {}) if typeof(state.get("coin_pusher_nudge_forces", {})) == TYPE_DICTIONARY else {}
+	for force in forces.keys():
+		result.append("coin_pusher_force_%s" % str(force))
+	for direction in ["left", "front", "right"]:
+		result.append("coin_pusher_direction_%s" % direction)
+	if str(state.get("coin_pusher_variation_id", "")) == "vault_drop":
+		var cells: Array = state.get("coin_pusher_vault_cells", []) if typeof(state.get("coin_pusher_vault_cells", [])) == TYPE_ARRAY else []
+		for cell_index in range(cells.size()):
+			var cell: Dictionary = cells[cell_index] if typeof(cells[cell_index]) == TYPE_DICTIONARY else {}
+			result.append(str(cell.get("selection_action", "coin_pusher_vault_cell_%d" % cell_index)))
+		result.append_array(["start_vault_round", "open_vault_cell", "stop_vault_round", "peek_vault_cell"])
+	return result
+
+
+func _hardware_actions(state: Dictionary) -> Array:
+	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
+	var actions: Array = []
+	for action in ["coin_pusher_drop", "coin_pusher_skill_stop", "coin_pusher_collect", "coin_pusher_nudge"]:
+		if _binding_enabled(bindings, action):
+			actions.append(action)
+	if str(apparatus.get("type", "rail_slot")) == "hole_set":
+		for hole_index in range((apparatus.get("holes", []) as Array).size() if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else 0):
+			var action := "coin_pusher_hole_%d" % hole_index
+			if _binding_enabled(bindings, action):
+				actions.append(action)
+	else:
+		var left_enabled := _binding_enabled(bindings, "coin_pusher_carriage_left")
+		var right_enabled := _binding_enabled(bindings, "coin_pusher_carriage_right")
+		if left_enabled and right_enabled:
+			actions.append("coin_pusher_carriage_drag")
+		if left_enabled:
+			actions.append("coin_pusher_carriage_left")
+		if right_enabled:
+			actions.append("coin_pusher_carriage_right")
+	for action in _feature_hardware_action_ids(state):
+		if _binding_enabled(bindings, str(action)):
+			actions.append(action)
+	return actions
+
+
+func _hardware_catalog(state: Dictionary) -> Array:
+	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var result: Array = ["coin_pusher_drop", "coin_pusher_skill_stop", "coin_pusher_collect", "coin_pusher_nudge"]
+	if str(apparatus.get("type", "rail_slot")) == "hole_set":
+		for hole_index in range((apparatus.get("holes", []) as Array).size() if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else 0):
+			result.append("coin_pusher_hole_%d" % hole_index)
+	else:
+		result.append_array(["coin_pusher_carriage_drag", "coin_pusher_carriage_left", "coin_pusher_carriage_right"])
+	result.append_array(_feature_hardware_action_ids(state))
+	return result
+
+
+func _binding_enabled(bindings: Dictionary, action: String) -> bool:
+	if not bindings.has(action) or typeof(bindings[action]) != TYPE_DICTIONARY:
+		return false
+	return bool((bindings[action] as Dictionary).get("enabled", false))
+
+
+func _entry_hardware_layout(state: Dictionary) -> Dictionary:
+	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	if str(apparatus.get("type", "rail_slot")) == "hole_set":
+		var targets: Array = []
+		for hole_index in range((apparatus.get("holes", []) as Array).size() if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else 0):
+			targets.append({"index": hole_index, "action": "coin_pusher_hole_%d" % hole_index, "rect": Rect2(238.0 + float(hole_index) * 190.0, 154.0, 44.0, 44.0)})
+		return {"type": "hole_set", "targets": targets}
+	return {"type": "rail_slot", "drag_rect": RAIL_DRAG_RECT}
 
 
 func _draw_small_hardware(surface, rect: Rect2, label: String, action: String, colors: Dictionary, enabled: bool) -> void:
@@ -477,7 +683,7 @@ func _project_f(x: float, y: float, z: float) -> Vector2:
 	var width_factor := lerpf(1.0, REAR_WIDTH_FACTOR, depth)
 	var center_x := PLAYFIELD_RECT.get_center().x
 	var screen_x := center_x + (x / _world_width - 0.5) * PLAYFIELD_RECT.size.x * 0.90 * width_factor
-	var screen_y := PLAYFIELD_RECT.end.y - 18.0 - depth * 139.0 - z / _coin_height * Z_LAYER_OFFSET
+	var screen_y := PLAYFIELD_RECT.end.y - 5.0 - depth * 40.0 - z / _coin_height * Z_LAYER_OFFSET
 	return Vector2(screen_x, screen_y)
 
 
@@ -514,6 +720,13 @@ func debug_project_for_test(state: Dictionary, x: float, y: float, z: float) -> 
 	return _project_f(x, y, z)
 
 
+func debug_project_delivery_board_point_for_test(state: Dictionary, x: float, z: float) -> Vector2:
+	_configure_projection(state)
+	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	return _project_delivery_board_point(_delivery_board(apparatus, geometry), x, z)
+
+
 func debug_interpolated_face_y_for_test(state: Dictionary) -> int:
 	var current := float(state.get("coin_pusher_face_position_y", 0))
 	if bool(state.get("reduce_motion", false)):
@@ -540,6 +753,60 @@ func debug_authored_cabinet_for_test(state: Dictionary, body_kind: String = "coi
 		"body_label": str(labels.get(body_kind, body_kind.left(1).to_upper())),
 		"backglass_color": (colors["backglass"] as Color).to_html(false),
 	}
+
+
+func debug_delivery_board_for_test(state: Dictionary) -> Dictionary:
+	_configure_projection(state)
+	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var board := _delivery_board(apparatus, geometry)
+	var peg_projections: Array = []
+	for peg_value in apparatus.get("pegs", []):
+		if typeof(peg_value) == TYPE_DICTIONARY:
+			var projection := _project_delivery_peg(board, peg_value)
+			peg_projections.append({"source": (peg_value as Dictionary).duplicate(true), "center": projection["center"], "radius": projection["radius"]})
+	return {
+		"source": board.duplicate(true),
+		"top_left": _project_delivery_board_point(board, float(board["x_min"]), float(board["z_top"])),
+		"top_right": _project_delivery_board_point(board, float(board["x_max"]), float(board["z_top"])),
+		"landing_left": _project_delivery_board_point(board, float(board["x_min"]), float(board["z_bottom"])),
+		"landing_right": _project_delivery_board_point(board, float(board["x_max"]), float(board["z_bottom"])),
+		"pegs": peg_projections,
+	}
+
+
+func _delivery_board(apparatus: Dictionary, geometry: Dictionary) -> Dictionary:
+	var authored: Dictionary = apparatus.get("drop_board", {}) if typeof(apparatus.get("drop_board", {})) == TYPE_DICTIONARY else {}
+	var width := int(geometry.get("width", SCHEMA_DEFAULT_WIDTH))
+	var platform_top := int(geometry.get("platform_top_z", 3600))
+	return {
+		"y": int(authored.get("y", geometry.get("drop_y", SCHEMA_DEFAULT_BACK_Y))),
+		"z_top": int(authored.get("z_top", geometry.get("drop_z", 24000))),
+		"z_bottom": int(authored.get("z_bottom", platform_top)),
+		"x_min": int(authored.get("x_min", 0)),
+		"x_max": int(authored.get("x_max", width)),
+	}
+
+
+func _project_delivery_board_point(board: Dictionary, x: float, z: float) -> Vector2:
+	# A single transform owns the board, pins, descent and catchment seam. Its
+	# lower edge converges exactly on the authored upper-platform landing line.
+	var z_bottom := float(board.get("z_bottom", 3600))
+	var z_top := maxf(z_bottom + 1.0, float(board.get("z_top", 24000)))
+	var t := clampf((z - z_bottom) / (z_top - z_bottom), 0.0, 1.0)
+	var landing := _project_f(x, float(board.get("y", SCHEMA_DEFAULT_BACK_Y)), z_bottom)
+	var top_y := PLAYFIELD_RECT.position.y + COIN_RY + 10.0
+	return Vector2(landing.x, lerpf(landing.y, top_y, t))
+
+
+func _project_delivery_peg(board: Dictionary, peg: Dictionary) -> Dictionary:
+	var x := float(peg.get("x", 0))
+	var z := float(peg.get("z", 0))
+	var r := maxf(1.0, float(peg.get("r", 1)))
+	var center := _project_delivery_board_point(board, x, z)
+	var radius_x := center.distance_to(_project_delivery_board_point(board, x + r, z))
+	var radius_z := center.distance_to(_project_delivery_board_point(board, x, z + r))
+	return {"center": center, "radius": Vector2(maxf(1.0, radius_x), maxf(1.0, radius_z))}
 
 
 func _project_deck_polygon(geometry: Dictionary) -> PackedVector2Array:

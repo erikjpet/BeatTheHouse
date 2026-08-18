@@ -6,6 +6,7 @@
     "scenario",
     "town_condition",
     "pusher_pile",
+    "pusher_tray_loaded",
     "numbers_whisper",
     "numbers_superstition",
     "sweep_sighting",
@@ -61,6 +62,13 @@
         "The pusher at {target_name} is {fact_detail}.",
         "Somebody left the pusher {fact_detail} at {target_name}.",
         "Machine word from {target_name}: {fact_detail}."
+      ]
+    },
+    "pusher_tray_loaded": {
+      "neutral": [
+        "The pusher tray at {target_name} is loaded: {fact_detail}.",
+        "Machine word from {target_name}: {fact_detail} is waiting in the tray.",
+        "Somebody walked off from {target_name} with {fact_detail} still in the pusher tray."
       ]
     },
     "vault_progressive": {
