@@ -301,7 +301,8 @@ func _save_record_strip(file_name: String, variation_id: String, definition: Dic
 		if images[index].is_empty():
 			return false
 		strip.blit_rect(images[index], Rect2i(Vector2i.ZERO, CAPTURE_SIZE), Vector2i(index * CAPTURE_SIZE.x, 0))
-	return strip.save_png("%s/%s" % [out_dir, file_name]) == OK
+	var output_path := ProjectSettings.globalize_path("%s/%s" % [out_dir, file_name])
+	return strip.save_png(output_path) == OK
 
 
 func _render_record(variation_id: String, definition: Dictionary, record: Dictionary, reduced_motion: bool) -> Image:
