@@ -324,6 +324,13 @@ What happens then is the owner's, not an agent's:
   consumer, retain real live-motion/liveness measurement, and make the crude
   interim surface truthful; UI/visual smoke must cover the active copy.
 
+- 2026-08-17 [pusherv3_2] Exit-backlog review found the chunked close path
+  flushes pending inputs but not the fixed-tick `accumulator_units`. Closing
+  immediately after a hitch can therefore discard elapsed time that occurred
+  while present, violating the never-skip contract. Exit must drain that
+  backlog visibly within bounded per-frame work before steady-state settling,
+  and a close-on-hitch digest regression must prove no ticks disappear.
+
 - 2026-08-17 [crew06_8] Live-event lifecycle review found the dynamically
   registered `heist_live_table` event was append-only. Without bounded removal
   it can remain on a departed or completed table and leak a dead heist surface
