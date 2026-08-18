@@ -160,7 +160,7 @@ each stage builds on the last.
 | pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | DONE | rework06_2 (landed) | pusherv3_2 | PM:Codex | 2026-08-17 | 2026-08-17 | Owner ruled complete after PM verification of Amendment 6.1 behavior, native 300-body performance, exact Windows/Web parity, determinism, and all pusher-owning gates; integrated at `a6e36d2f`. |
 | pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | DONE | pusherv3_1 | pusherv3_3 | PM:Codex/sub:pusher-live | 2026-08-17 | 2026-08-18 | PM verified continuous 60 Hz loop, deterministic trace, tray-only collection, compact persistence/migration, motor-on exit settle, continuous rail drag, exact Windows/Web parity, performance, and all combined gates. |
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | DONE | pusherv3_2 | pusherv3_4 | PM:Codex/sub:pusher-cabinet | 2026-08-18 | 2026-08-18 | PM verified the data-driven slot-parity cabinet, batched stacked projection, physical audio map, integrated 9/9 feel contract, determinism, visual QA, and all combined suites/performance budgets. |
-| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | TODO | pusherv3_3 | coin pusher closure | | | | Ridge (3-hole plinko, physical pucks) + Vault (physical fragments) on the new machine, town/cheat/nudge re-wiring, EV harness by geometry, migration, closure. |
+| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | IN_PROGRESS | pusherv3_3 | coin pusher closure | PM:Codex/sub:pusher-variations | 2026-08-18 | | PM-orchestrated isolated execution; Ridge physical plinko/pucks, Vault fragments, integration re-wiring, EV/migration/feel evidence, and V3 closure. |
 
 ### Wave D — Crew depth
 
@@ -1548,6 +1548,10 @@ What happens then is the owner's, not an agent's:
 
 ## Work Log
 
+- 2026-08-18 [pusherv3_4] PM claimed the strictly serial V3 closure after
+  `pusherv3_3` passed and archived. Execution is delegated in isolation; the PM
+  remains board single-writer and will independently verify every machine,
+  integration seam, EV/parity/performance gate, migration, and feel capture.
 - 2026-08-18 [pusherv3_3] PM completed and archived the alive-cabinet pass after
   exact-tree Systems/Contracts/UI/determinism/visual/performance gates and an
   integrated 9/9 GL feel capture passed. `pusherv3_4` is now unblocked for the
