@@ -3456,6 +3456,7 @@ func _t4_4_consumed_item_effect_keys() -> Dictionary:
 		"cheat_suspicion_delta",
 		"coin_pusher_drop_density",
 		"coin_pusher_gutter_recovery_uses",
+		"coin_pusher_nudge_tolerance_band_delta",
 		"debt_default_heat_delta",
 		"debt_grace_turns",
 		"drunk_delta",
