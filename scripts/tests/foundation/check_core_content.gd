@@ -51,6 +51,7 @@ const FoundationHudViewModelScript := preload("res://scripts/ui/foundation_hud_v
 const PullTabsGameScript := preload("res://scripts/games/pull_tabs.gd")
 const CoinPusherGameScript := preload("res://scripts/games/coin_pusher.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
+const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const SlotGameScript := preload("res://scripts/games/slot.gd")
 const SlotMachineGeneratorScript := preload("res://scripts/games/slots/slot_machine_generator.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")

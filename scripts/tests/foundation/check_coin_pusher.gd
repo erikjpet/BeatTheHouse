@@ -20,6 +20,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_tray_gutter_ceiling(machine_definition, failures)
 	_check_pusher_v3_energy_settle_conservation(machine_definition, failures)
 	_check_pusher_v3_input_trace_determinism(machine_definition, failures)
+	_check_pusher_v3_live_loop_and_persistence(machine_definition, failures)
 	_check_pusher_v3_solver_performance(machine_definition, failures)
 
 
@@ -41,6 +42,15 @@ func _check_pusher_v3_machine_data(machine: Dictionary, failures: Array) -> void
 		failures.append("Coin Pusher V3 stroke data is not the binding 240-tick cosine/24-tick-ramp contract.")
 	if str(apparatus.get("type", "")) != "rail_slot" or (apparatus.get("pegs", []) as Array).size() != 3 or int(machine.get("ceiling", 0)) != 600:
 		failures.append("Coin Pusher V3 apparatus/ceiling data is incomplete.")
+	var synthetic := machine.duplicate(true)
+	var synthetic_pegs: Array = []
+	for row in range(5):
+		for column in range(4):
+			synthetic_pegs.append({"x": 20000 + column * 20000 + (10000 if row % 2 == 1 else 0), "z": 20000 - row * 3000, "r": 1200})
+	synthetic["apparatus"] = {"type": "hole_set", "holes": [25000, 50000, 75000], "pegs": synthetic_pegs, "release_jitter": 300}
+	var synthetic_state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-HOLE-SET"), synthetic, 0)
+	if CoinPusherSolverScript.select_hole(synthetic_state, 2) != 75000 or int(synthetic_state.get("selected_hole", -1)) != 2 or synthetic_pegs.size() != 20:
+		failures.append("Coin Pusher V3 apparatus framework did not accept a synthetic five-row hole-set/plinko definition.")
 	var extended: int = CoinPusherSolverScript.face_y_for_phase(machine, 0)
 	var retracted: int = CoinPusherSolverScript.face_y_for_phase(machine, 120)
 	var window_ratio: int = CoinPusherSolverScript.deck_landing_phase_ratio_milli(machine)
@@ -309,6 +319,66 @@ func _check_pusher_v3_input_trace_determinism(machine: Dictionary, failures: Arr
 	var reference_digest_json := JSON.stringify(CoinPusherSolverScript.canonical_digest(reference_state), "", true)
 	if native_digest_json != reference_digest_json:
 		failures.append("Coin Pusher V3 native and integer reference kernels diverged for the same tick-stamped trace.")
+
+
+func _check_pusher_v3_live_loop_and_persistence(machine: Dictionary, failures: Array) -> void:
+	var live_machine := {"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-LIVE"), machine, 40), "variation_state": {}, "tell_rung": 0, "alarm_tolerance_remaining": 7, "locked_down": false}
+	CoinPusherLiveSessionScript.begin(live_machine, machine, 117)
+	var simulation: Dictionary = live_machine["simulation"]
+	var start_tick := int(simulation.get("tick", 0))
+	CoinPusherLiveSessionScript.advance(live_machine, 1000)
+	var catch_up := CoinPusherLiveSessionScript.advance(live_machine, 1200)
+	if int(catch_up.get("ticks", 0)) != 4 or int(catch_up.get("backlog_ticks", 0)) < 7 or int(simulation.get("tick", 0)) != start_tick + 4:
+		failures.append("Coin Pusher V3 live accumulator skipped backlog or exceeded four catch-up ticks: %s" % JSON.stringify(catch_up))
+	var trace_before := (live_machine["live_session"]["input_trace"] as Array).size()
+	CoinPusherLiveSessionScript.queue_input(live_machine, {"kind": "carriage", "x": 41000})
+	CoinPusherLiveSessionScript.queue_input(live_machine, {"kind": "skill_stop", "engaged": true})
+	CoinPusherLiveSessionScript.queue_input(live_machine, {"kind": "collect"})
+	if (live_machine["live_session"]["input_trace"] as Array).size() != trace_before + 3:
+		failures.append("Coin Pusher V3 did not append every free input to the deterministic trace.")
+	# Collection is the only operation that removes tray value; stepping and drops
+	# leave the ledger intact and therefore cannot credit money implicitly.
+	var ledger_fixture_bodies: Array = simulation.get("bodies", [])
+	if not ledger_fixture_bodies.is_empty():
+		ledger_fixture_bodies.pop_back()
+	simulation["tray_ledger"] = [{"kind": "coin", "value": 3, "item_id": "", "provenance": {}}]
+	CoinPusherSolverScript.step_ticks(simulation, {"motor_enabled": true}, 1)
+	if (simulation.get("tray_ledger", []) as Array).size() != 1:
+		failures.append("Coin Pusher V3 credited or cleared tray money without COLLECT.")
+	var collected := CoinPusherSolverScript.collect_tray(simulation)
+	if int(collected.get("value", 0)) != 3 or not (simulation.get("tray_ledger", []) as Array).is_empty():
+		failures.append("Coin Pusher V3 COLLECT did not transfer the tray ledger exactly once.")
+	# Preserve sparse IDs and support truth. A tall deck stack is not platform
+	# carried merely because its z is above PLATFORM_TOP_Z.
+	var bodies: Array = simulation.get("bodies", [])
+	var tall: Dictionary = {}
+	if bodies.size() >= 3:
+		bodies.remove_at(1)
+		tall = bodies[1]
+		tall["z"] = 5100
+		tall["support_kind"] = "deck"
+		tall["carried_sleep"] = false
+		for body_value in bodies:
+			var body: Dictionary = body_value
+			body["x"] = (int(body.get("x", 0)) + 50) / 100 * 100
+			body["y"] = (int(body.get("y", 0)) + 50) / 100 * 100
+			body["z"] = (int(body.get("z", 0)) + 50) / 100 * 100
+	var snapshot := CoinPusherLiveSessionScript.make_snapshot(simulation, live_machine)
+	var restored := CoinPusherLiveSessionScript.restore_snapshot(snapshot, machine)
+	var restored_ids: Array = (restored.get("bodies", []) as Array).map(func(body: Dictionary): return str(body.get("id", "")))
+	var source_ids: Array = bodies.map(func(body: Dictionary): return str(body.get("id", "")))
+	if restored_ids != source_ids:
+		failures.append("Coin Pusher V3 settled persistence changed sparse body identities.")
+	var restored_tall := _pusher_v3_body(restored, str(tall.get("id", "")))
+	if str(restored_tall.get("support_kind", "")) != "deck" or bool(restored_tall.get("carried_sleep", true)):
+		failures.append("Coin Pusher V3 restored a tall deck stack as platform-carried.")
+	var visit_digest := JSON.stringify(CoinPusherSolverScript.canonical_digest(restored), "", true)
+	for _visit in range(79):
+		restored = CoinPusherLiveSessionScript.restore_snapshot(CoinPusherLiveSessionScript.make_snapshot(restored, live_machine), machine)
+	if JSON.stringify(CoinPusherSolverScript.canonical_digest(restored), "", true) != visit_digest:
+		failures.append("Coin Pusher V3 visit 1 and visit 80 settled digests diverged.")
+	if JSON.stringify(snapshot).contains("accumulator_units") or JSON.stringify(snapshot).contains("input_trace"):
+		failures.append("Coin Pusher V3 serialized transient accumulator/backlog into settled outcome state.")
 
 
 func _check_pusher_v3_solver_performance(machine: Dictionary, failures: Array) -> void:
