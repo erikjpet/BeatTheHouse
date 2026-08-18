@@ -124,6 +124,39 @@ function Get-ExportPresetOption {
     throw "Could not read option '$OptionName' for export preset '$PresetName'."
 }
 
+function Invoke-WebExportWithLockedTemplate {
+    param(
+        [string]$GodotPath,
+        [string]$ExportFlag,
+        [string]$PresetName,
+        [string]$OutputPath
+    )
+    $lock = Get-Content -LiteralPath (Join-Path $root "native/coin_pusher/toolchain.lock.json") -Raw | ConvertFrom-Json
+    $templatePath = Join-Path $env:APPDATA "Godot/export_templates/$(([string]$lock.godot.version).Replace('-', '.'))/$([string]$lock.web.template)"
+    $presetPath = Join-Path $root "export_presets.cfg"
+    $originalBytes = [System.IO.File]::ReadAllBytes($presetPath)
+    $presetText = [System.Text.Encoding]::UTF8.GetString($originalBytes)
+    $escapedTemplatePath = $templatePath.Replace('\', '/')
+    $webOptionsPattern = '(?ms)(\[preset\.3\.options\]\s*.*?^custom_template/release=)"[^"]*"'
+    if ($presetText -notmatch $webOptionsPattern) {
+        throw "Could not locate the Web release-template option in export_presets.cfg."
+    }
+    $patchedText = [System.Text.RegularExpressions.Regex]::Replace(
+        $presetText,
+        $webOptionsPattern,
+        ('$1"' + $escapedTemplatePath + '"'),
+        1
+    )
+    try {
+        [System.IO.File]::WriteAllText($presetPath, $patchedText, [System.Text.UTF8Encoding]::new($false))
+        & $GodotPath --headless --path $root $ExportFlag $PresetName $OutputPath | ForEach-Object { Write-Host $_ }
+        return $LASTEXITCODE
+    }
+    finally {
+        [System.IO.File]::WriteAllBytes($presetPath, $originalBytes)
+    }
+}
+
 function Assert-NativeSolverExport {
     param(
         [string]$Directory,
@@ -179,9 +212,15 @@ if (-not $SkipExport) {
     Clear-DirectoryContents $outDir
     if ($Debug) { $exportFlag = "--export-debug" } else { $exportFlag = "--export-release" }
     Write-Host "Exporting preset '$($cfg.Preset)' ($exportFlag) with: $godot"
-    & $godot --headless --path $root $exportFlag $cfg.Preset $cfg.Out
-    if ($LASTEXITCODE -ne 0) {
-        throw "Godot export failed (exit $LASTEXITCODE). Most common cause: export templates not installed (Editor > Manage Export Templates)."
+    $exportExitCode = if ($Target -eq "web" -and -not $Debug) {
+        Invoke-WebExportWithLockedTemplate $godot $exportFlag $cfg.Preset $cfg.Out
+    }
+    else {
+        & $godot --headless --path $root $exportFlag $cfg.Preset $cfg.Out
+        $LASTEXITCODE
+    }
+    if ($exportExitCode -ne 0) {
+        throw "Godot export failed (exit $exportExitCode). Most common cause: export templates not installed (Editor > Manage Export Templates)."
     }
     if (-not (Test-Path $outFile)) {
         throw "Export reported success but output is missing: $outFile"

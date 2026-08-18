@@ -16,12 +16,18 @@
 
 param(
     [int]$Port = 8060,
+    [Alias("Root")]
+    [string]$ServeRoot = "",
     [switch]$NoBrowser
 )
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
-$webDir = Join-Path $root "builds/web"
+$webDir = if ([string]::IsNullOrWhiteSpace($ServeRoot)) { Join-Path $root "builds/web" } else { [System.IO.Path]::GetFullPath($ServeRoot) }
+$workspaceRoot = [System.IO.Path]::GetFullPath($root)
+if (-not $webDir.StartsWith($workspaceRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Refusing to serve a directory outside the workspace: $webDir"
+}
 
 if (-not (Test-Path (Join-Path $webDir "index.html"))) {
     throw "No web build found at $webDir. Run .\tools\export_itch.ps1 first."

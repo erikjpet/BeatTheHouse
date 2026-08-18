@@ -19,11 +19,8 @@ public:
 	String backend_id() const;
 	Dictionary solver_contract() const;
 	int64_t divi(int64_t numerator, int64_t denominator) const;
-	int64_t pusher_face_y(int64_t phase_fp, bool upper) const;
-	Dictionary apply_nudge_columns(const Dictionary &columns, const Dictionary &config) const;
 	bool can_step(const Dictionary &state, const Dictionary &config) const;
-	Dictionary step_action(Dictionary state, const Dictionary &config) const;
-	Dictionary append_presentation_trace_frame(Dictionary packed_trace, const Dictionary &state, int64_t tick_offset) const;
+	Dictionary step_ticks(Dictionary state, const Dictionary &config, int64_t tick_count) const;
 };
 
 } // namespace godot

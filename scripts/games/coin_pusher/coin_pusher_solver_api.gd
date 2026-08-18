@@ -1,115 +1,107 @@
 class_name CoinPusherSolverApi
 extends RefCounted
 
-# Compile-time geometry is part of the pusher module's public contract. The
-# heavyweight implementation is loaded only when a cabinet actually simulates.
-const SCHEMA := "coin_pusher_fixed_point"
-const FIXED_HZ := 60
-const FP := 1000
-const WIDTH := 100000
-const FRONT_EDGE := 7000
-const UPPER_EDGE := 52000
-const REAR_EDGE := 95000
-const UPPER_FLOOR_Z := 12000
-const LOWER_FLOOR_Z := 0
-const COIN_RADIUS := 4300
-const COIN_HEIGHT := 1700
-const OBJECT_RADIUS := 5200
-const OBJECT_HEIGHT := 2800
-const ACTION_TICKS := 48
-const PRESENTATION_TRACE_INTERVAL_TICKS := 4
-const PHASE_PERIOD := 12000
-const TRAY_LEFT := 2000
-const TRAY_RIGHT := 98000
-
-static var _implementation: Script = null
+const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver.gd")
+const SCHEMA := CoinPusherSolverScript.SCHEMA
+const VERSION := CoinPusherSolverScript.VERSION
+const FIXED_HZ := CoinPusherSolverScript.FIXED_HZ
+const FP := CoinPusherSolverScript.FP
+const PHASE_PERIOD := CoinPusherSolverScript.PHASE_PERIOD
+const WIDTH := CoinPusherSolverScript.WIDTH
+const TRAY_LIP_Y := CoinPusherSolverScript.TRAY_LIP_Y
+const DECK_Z := CoinPusherSolverScript.DECK_Z
+const PLATFORM_TOP_Z := CoinPusherSolverScript.PLATFORM_TOP_Z
+const FACE_EXTENDED_Y := CoinPusherSolverScript.FACE_EXTENDED_Y
+const FACE_RETRACTED_Y := CoinPusherSolverScript.FACE_RETRACTED_Y
+const BACK_PLATE_Y := CoinPusherSolverScript.BACK_PLATE_Y
+const DROP_Y := CoinPusherSolverScript.DROP_Y
+const DROP_Z := CoinPusherSolverScript.DROP_Z
+const GUTTER_X := CoinPusherSolverScript.GUTTER_X
+const COIN_RADIUS := CoinPusherSolverScript.COIN_RADIUS
+const COIN_HEIGHT := CoinPusherSolverScript.COIN_HEIGHT
+const OBJECT_RADIUS := CoinPusherSolverScript.OBJECT_RADIUS
+const OBJECT_HEIGHT := CoinPusherSolverScript.OBJECT_HEIGHT
 
 
-static func create(seed_rng: RngStream, coin_cap: int, opening_coins: int, lane_count: int) -> Dictionary:
-	return _implementation_script().call("create", seed_rng, coin_cap, opening_coins, lane_count) as Dictionary
+static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int = 0) -> Dictionary:
+	return CoinPusherSolverScript.create_machine(seed_rng, machine_definition, opening_bodies)
 
 
-static func migrate_height_grid(source: Dictionary, seed_rng: RngStream, coin_cap: int, lane_count: int) -> Dictionary:
-	return _implementation_script().call("migrate_height_grid", source, seed_rng, coin_cap, lane_count) as Dictionary
+static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1) -> Dictionary:
+	return CoinPusherSolverScript.add_coin(state, rng, x, density)
 
 
-static func add_coin(state: Dictionary, rng: RngStream, lane: int, lane_count: int, density: int = 1) -> Dictionary:
-	return _implementation_script().call("add_coin", state, rng, lane, lane_count, density) as Dictionary
+static func add_feature(state: Dictionary, kind: String, feature_id: String, x: int, y: int, metadata: Dictionary = {}) -> Dictionary:
+	return CoinPusherSolverScript.add_feature(state, kind, feature_id, x, y, metadata)
 
 
-static func add_feature(state: Dictionary, kind: String, feature_id: String, lane: int, depth_milli: int, lane_count: int, metadata: Dictionary = {}) -> Dictionary:
-	return _implementation_script().call("add_feature", state, kind, feature_id, lane, depth_milli, lane_count, metadata) as Dictionary
+static func step_ticks(state: Dictionary, config: Dictionary, tick_count: int) -> Dictionary:
+	return CoinPusherSolverScript.step_ticks(state, config, tick_count)
 
 
-static func add_recovered_coin(state: Dictionary, rng: RngStream, lane_count: int) -> Dictionary:
-	return _implementation_script().call("add_recovered_coin", state, rng, lane_count) as Dictionary
+static func step_ticks_reference_for_test(state: Dictionary, config: Dictionary, tick_count: int) -> Dictionary:
+	return CoinPusherSolverScript.step_ticks_reference_for_test(state, config, tick_count)
 
 
-static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
-	return _implementation_script().call("step_action", state, config) as Dictionary
+static func replay_input_trace(snapshot: Dictionary, rng: RngStream, trace: Array, ticks: int) -> Dictionary:
+	return CoinPusherSolverScript.replay_input_trace(snapshot, rng, trace, ticks)
 
 
-static func step_action_reference_for_test(state: Dictionary, config: Dictionary) -> Dictionary:
-	return _implementation_script().call("step_action_reference_for_test", state, config) as Dictionary
+static func face_y_for_phase(machine_definition: Dictionary, phase: int) -> int:
+	return CoinPusherSolverScript.face_y_for_phase(machine_definition, phase)
 
 
-static func hot_state_eligible_for_test(state: Dictionary, config: Dictionary = {}) -> bool:
-	return bool(_implementation_script().call("hot_state_eligible_for_test", state, config))
+static func deck_landing_phase_ratio_milli(machine_definition: Dictionary) -> int:
+	return CoinPusherSolverScript.deck_landing_phase_ratio_milli(machine_definition)
 
 
-static func native_backend_available_for_test() -> bool:
-	return bool(_implementation_script().call("native_backend_available_for_test"))
+static func set_skill_stop(state: Dictionary, engaged: bool) -> void:
+	CoinPusherSolverScript.set_skill_stop(state, engaged)
 
 
-static func last_step_backend_for_test() -> String:
-	return str(_implementation_script().call("last_step_backend_for_test"))
+static func settle(state: Dictionary, motor_running: bool, max_ticks: int = 1200) -> Dictionary:
+	return CoinPusherSolverScript.settle(state, motor_running, max_ticks)
 
 
-static func reset_native_backend_for_test() -> void:
-	_implementation_script().call("reset_native_backend_for_test")
-
-
-static func install_native_backend_for_test(backend: Object) -> void:
-	_implementation_script().call("install_native_backend_for_test", backend)
-
-
-static func native_step_contract_valid_for_test(before: Dictionary, candidate: Dictionary, result: Dictionary, config: Dictionary, trusted_native: bool = true) -> bool:
-	return bool(_implementation_script().call("native_step_contract_valid_for_test", before, candidate, result, config, trusted_native))
-
-
-static func finalize_packed_presentation_trace(packed_trace: Dictionary, state: Dictionary, tick_offset: int) -> Dictionary:
-	return _implementation_script().call("finalize_packed_presentation_trace", packed_trace, state, tick_offset) as Dictionary
-
-
-static func decode_packed_presentation_trace(packed_trace: Dictionary) -> Array:
-	return _implementation_script().call("decode_packed_presentation_trace", packed_trace) as Array
+static func collect_tray(state: Dictionary) -> Dictionary:
+	return CoinPusherSolverScript.collect_tray(state)
 
 
 static func body_views(state: Dictionary) -> Array:
-	return _implementation_script().call("body_views", state) as Array
-
-
-static func coin_count(state: Dictionary) -> int:
-	return int(_implementation_script().call("coin_count", state))
-
-
-static func awake_count(state: Dictionary) -> int:
-	return int(_implementation_script().call("awake_count", state))
-
-
-static func edge_hanger_count(state: Dictionary) -> int:
-	return int(_implementation_script().call("edge_hanger_count", state))
+	return CoinPusherSolverScript.body_views(state)
 
 
 static func canonical_digest(state: Dictionary) -> Dictionary:
-	return _implementation_script().call("canonical_digest", state) as Dictionary
+	return CoinPusherSolverScript.canonical_digest(state)
 
 
 static func implementation_contract() -> Dictionary:
-	return _implementation_script().call("public_contract") as Dictionary
+	return CoinPusherSolverScript.implementation_contract()
 
 
-static func _implementation_script() -> Script:
-	if _implementation == null:
-		_implementation = load("res://scripts/games/coin_pusher/coin_pusher_solver.gd") as Script
-	return _implementation
+static func coin_count(state: Dictionary) -> int:
+	return CoinPusherSolverScript.coin_count(state)
+
+
+static func awake_count(state: Dictionary) -> int:
+	return CoinPusherSolverScript.awake_count(state)
+
+
+static func edge_hanger_count(state: Dictionary) -> int:
+	return CoinPusherSolverScript.edge_hanger_count(state)
+
+
+static func add_recovered_coin(state: Dictionary, rng: RngStream) -> Dictionary:
+	return CoinPusherSolverScript.add_recovered_coin(state, rng)
+
+
+static func native_backend_available_for_test() -> bool:
+	return CoinPusherSolverScript.native_backend_available_for_test()
+
+
+static func last_step_backend_for_test() -> String:
+	return CoinPusherSolverScript.last_step_backend_for_test()
+
+
+static func reset_native_backend_for_test() -> void:
+	CoinPusherSolverScript.reset_native_backend_for_test()

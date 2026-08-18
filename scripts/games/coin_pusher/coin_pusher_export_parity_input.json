@@ -1,10 +1,14 @@
 {
-  "schema": "coin_pusher_export_parity_input",
-  "version": 1,
-  "seed": "REWORK06-2-CROSS-EXPORT",
-  "action_count": 200,
-  "action_id": "drop_quarter",
-  "lane_cycle": [0, 1, 2, 3, 4, 3, 2, 1],
-  "upper_phase_cycle": [0, 2, 4, 6, 8, 10, 3, 9],
-  "lower_phase_cycle": [1, 5, 9, 3, 7, 11, 0, 6]
+  "schema": "coin_pusher_v3_export_parity_input",
+  "version": 3,
+  "seed": "PUSHER-V3-CROSS-EXPORT",
+  "opening_body_count": 40,
+  "replay_ticks": 260,
+  "input_trace": [
+    {"tick": 5, "kind": "drop", "x": 42000, "density": 1},
+    {"tick": 60, "kind": "skill_stop", "engaged": true},
+    {"tick": 96, "kind": "drop", "x": 58000, "density": 2},
+    {"tick": 130, "kind": "skill_stop", "engaged": false},
+    {"tick": 160, "kind": "nudge", "x": 700, "y": -900}
+  ]
 }

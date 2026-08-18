@@ -517,51 +517,39 @@ func _poker_policy_decisions(table: Dictionary) -> Array:
 
 
 func _apply_coin_pusher_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
-	_resolve_game(run_state, checkpoints, seed, "coin_pusher", "drop_quarter", 1, _timed_ui(run_state, "coin_pusher_drop", {"coin_pusher_lane": 2}))
 	var game_states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var machine: Dictionary = game_states.get("coin_pusher", {}) if typeof(game_states.get("coin_pusher", {})) == TYPE_DICTIONARY else {}
-	var tuning: Dictionary = library.game("coin_pusher").get("coin_pusher_tuning", {}) if typeof(library.game("coin_pusher").get("coin_pusher_tuning", {})) == TYPE_DICTIONARY else {}
-	var lane_count := maxi(1, int(tuning.get("lane_count", 5)))
-	var lane_width := maxi(1, CoinPusherSolverScript.WIDTH / lane_count)
-	var lane := clampi(int(machine.get("last_lane", 0)), 0, lane_count - 1)
 	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
-	for body_value in simulation.get("bodies", []):
-		if typeof(body_value) != TYPE_DICTIONARY:
-			continue
-		var body: Dictionary = body_value
-		var radius := int(body.get("radius", CoinPusherSolverScript.COIN_RADIUS))
-		var y := int(body.get("y", CoinPusherSolverScript.FRONT_EDGE + radius))
-		if y >= CoinPusherSolverScript.FRONT_EDGE and y < CoinPusherSolverScript.FRONT_EDGE + radius:
-			lane = clampi(int(body.get("x", 0)) / lane_width, 0, lane_count - 1)
-			break
-	_resolve_game(run_state, checkpoints, seed, "coin_pusher", "nudge_machine", 0, _timed_ui(run_state, "coin_pusher_nudge", {
-		"coin_pusher_force": "tap",
-		"coin_pusher_direction": "front",
-		"coin_pusher_lane": lane,
-		"coin_pusher_timing_phase": int(machine.get("lower_phase", 0)),
-	}))
-	var game: GameModule = game_modules.get("coin_pusher", null)
-	if game == null:
+	if str(simulation.get("schema", "")) != CoinPusherSolverScript.SCHEMA:
+		failures.append("%s coin pusher fixture did not install the V3 simulation." % seed)
 		return
-	for variation_id in ["jackpot_ridge", "vault_drop"]:
-		run_state.current_environment["scenario_game_modifiers"] = {"coin_pusher": {"variation_id": variation_id}}
-		var generated := game.generate_environment_state(run_state, run_state.current_environment, run_state.create_rng("determinism_pusher_%s" % variation_id))
-		var states: Dictionary = run_state.current_environment.get("game_states", {})
-		states["coin_pusher"] = generated
-		run_state.current_environment["game_states"] = states
-		game.environment_state_generated(run_state, run_state.current_environment, generated)
-		_resolve_game(run_state, checkpoints, seed, "coin_pusher", "drop_quarter", 1, _timed_ui(run_state, "%s_drop" % variation_id, {"coin_pusher_lane": 2}))
-		_resolve_game(run_state, checkpoints, seed, "coin_pusher", "nudge_machine", 0, _timed_ui(run_state, "%s_nudge" % variation_id, {
-			"coin_pusher_force": "tap", "coin_pusher_direction": "front", "coin_pusher_lane": 2,
-			"coin_pusher_timing_phase": int(generated.get("lower_phase", 0)),
-		}))
-		if variation_id == "vault_drop":
-			run_state.add_item("xray_glasses")
-			var vault_state: Dictionary = generated.get("variation_state", {})
-			vault_state["banked_fragments"] = 2
-			_resolve_game(run_state, checkpoints, seed, "coin_pusher", "start_vault_round", 0, _timed_ui(run_state, "vault_start"))
-			_resolve_game(run_state, checkpoints, seed, "coin_pusher", "peek_vault_cell", 0, _timed_ui(run_state, "vault_peek", {"coin_pusher_vault_cell": 0}))
-			_resolve_game(run_state, checkpoints, seed, "coin_pusher", "open_vault_cell", 0, _timed_ui(run_state, "vault_open", {"coin_pusher_vault_cell": 0}))
+	var start_tick := int(simulation.get("tick", 0))
+	var input_trace: Array = [
+		{"tick": start_tick + 5, "kind": "drop", "x": 42000, "density": 1},
+		{"tick": start_tick + 60, "kind": "skill_stop", "engaged": true},
+		{"tick": start_tick + 96, "kind": "drop", "x": 58000, "density": 2},
+		{"tick": start_tick + 130, "kind": "skill_stop", "engaged": false},
+	]
+	var trace_rng := run_state.create_rng("determinism_coin_pusher_v3_trace")
+	var first := CoinPusherSolverScript.replay_input_trace(simulation, trace_rng.fork("exact"), input_trace, 260)
+	var repeat := CoinPusherSolverScript.replay_input_trace(simulation, trace_rng.fork("exact"), input_trace, 260)
+	var first_digest := CoinPusherSolverScript.canonical_digest(first)
+	var repeat_digest := CoinPusherSolverScript.canonical_digest(repeat)
+	if JSON.stringify(first_digest) != JSON.stringify(repeat_digest):
+		failures.append("%s coin pusher V3 input-trace replay was not exact." % seed)
+	# Wall-clock profiling is diagnostic-only and cannot enter a deterministic
+	# RunState checkpoint; physical outcome state remains fully serialized.
+	first.erase("last_step_metrics")
+	machine["simulation"] = first
+	game_states["coin_pusher"] = machine
+	run_state.current_environment["game_states"] = game_states
+	run_state.save_rng(trace_rng)
+	_checkpoint_with_evidence(run_state, checkpoints, seed, "coin_pusher_v3_input_trace", {
+		"digest": first_digest,
+		"input_count": input_trace.size(),
+		"solver_schema": str(first.get("schema", "")),
+		"solver_version": int(first.get("version", 0)),
+	})
 
 
 func _apply_skill_cheats(run_state: RunState, checkpoints: Array, seed: String) -> void:

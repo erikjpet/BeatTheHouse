@@ -68,13 +68,6 @@ static func finish_drop(state: Dictionary) -> void:
 	state["armed_multipliers"] = remaining
 
 
-static func push_strength_bonus(state: Dictionary, run_state: RunState, from_nudge: bool, base_strength: int) -> int:
-	var bonus := maxi(0, base_strength) if int(state.get("cascade_remaining", 0)) > 0 else 0
-	if from_nudge and run_state != null and run_state.inventory.has("weighted_keyring"):
-		bonus += 1
-	return bonus
-
-
 static func tolerance_band_bonus(run_state: RunState, config: Dictionary) -> int:
 	if run_state == null:
 		return 0
@@ -131,16 +124,6 @@ static func apply_physical_events(state: Dictionary, physics_events: Array, conf
 	elif not lost.is_empty():
 		state["last_feature_message"] = "%d puck%s vanished into the side gutter." % [lost.size(), "" if lost.size() == 1 else "s"]
 	return {"banked": banked, "lost": lost, "ridge_run_triggered": ridge_triggered, "multiplier_drops": multiplier_drops}
-
-
-static func shelf_locked(state: Dictionary, shelf: String) -> bool:
-	return int(state.get("%s_lock_cycles" % shelf, 0)) > 0
-
-
-static func finish_shelf_cycle(state: Dictionary) -> void:
-	state["shelf_cycle"] = int(state.get("shelf_cycle", 0)) + 1
-	for key in ["upper_lock_cycles", "lower_lock_cycles", "cascade_remaining"]:
-		state[key] = maxi(0, int(state.get(key, 0)) - 1)
 
 
 static func views(state: Dictionary) -> Array:

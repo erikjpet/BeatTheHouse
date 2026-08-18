@@ -1,12 +1,11 @@
 extends Node
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
-const RunStateScript := preload("res://scripts/core/run_state.gd")
-const GameModuleScript := preload("res://scripts/core/game_module.gd")
-const CoinPusherGameScript := preload("res://scripts/games/coin_pusher.gd")
-const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver.gd")
+const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const INPUT_PATH := "res://scripts/games/coin_pusher/coin_pusher_export_parity_input.json"
 const RESULT_MARKER := "COIN_PUSHER_EXPORT_PARITY_RESULT="
+const OPENING_BODY_COUNT := 40
+const REPLAY_TICKS := 260
 
 
 func _ready() -> void:
@@ -20,113 +19,132 @@ func _run_parity() -> void:
 		_publish({"ok": false, "error": "input_parse_failed"})
 		return
 	var input: Dictionary = input_value
+	if str(input.get("schema", "")) != "coin_pusher_v3_export_parity_input" \
+			or int(input.get("version", 0)) != 3 \
+			or int(input.get("opening_body_count", -1)) != OPENING_BODY_COUNT \
+			or int(input.get("replay_ticks", -1)) != REPLAY_TICKS \
+			or typeof(input.get("input_trace", [])) != TYPE_ARRAY:
+		_publish({"ok": false, "error": "input_contract_invalid"})
+		return
 	var library := ContentLibraryScript.new()
 	library.load()
-	var game := CoinPusherGameScript.new()
-	game.setup(library.game("coin_pusher"), library)
-	var run_state := RunStateScript.new()
-	run_state.start_new(str(input.get("seed", "REWORK06-2-CROSS-EXPORT")))
-	run_state.bankroll = 100000
-	var environment := {
-		"id": "cross_export_coin_pusher", "archetype_id": "bar", "world_node_id": "bar",
-		"name": "Roadside Bar", "kind": "casino", "tier": 1,
-		"game_ids": ["coin_pusher", "bar_dice"],
-		"economic_profile": {"stake_floor": 1, "stake_ceiling": 100},
-		"security_profile": {"strictness": "normal"},
-		"scenario_game_modifiers": {"coin_pusher": {"variation_id": "quarter_falls"}},
-		"game_states": {},
-	}
-	var machine := game.generate_environment_state(run_state, environment, run_state.create_rng("coin_pusher_initial"))
-	environment["game_states"] = {"coin_pusher": machine}
-	run_state.set_environment(environment)
-	var lane_cycle: Array = input.get("lane_cycle", [0])
-	var upper_cycle: Array = input.get("upper_phase_cycle", [0])
-	var lower_cycle: Array = input.get("lower_phase_cycle", [0])
-	var outcomes: Array = []
-	var action_backends: Array[String] = []
-	var native_backend_available := CoinPusherSolverScript.native_backend_available_for_test()
-	var expected_action_count := maxi(1, int(input.get("action_count", 200)))
-	var captured_frame_count := 0
-	var captured_final_frame_sha256 := ""
-	for action_index in range(expected_action_count):
-		var ui_state := {
-			"coin_pusher_lane": int(lane_cycle[action_index % lane_cycle.size()]),
-			"coin_pusher_upper_input_phase": int(upper_cycle[action_index % upper_cycle.size()]),
-			"coin_pusher_lower_input_phase": int(lower_cycle[action_index % lower_cycle.size()]),
-		}
-		if action_index == 0:
-			ui_state["coin_pusher_capture_presentation_trace"] = true
-		var result := game.resolve_with_context(
-			str(input.get("action_id", "drop_quarter")), 1, run_state, run_state.current_environment,
-			run_state.create_rng("export_parity_action_%03d" % action_index), ui_state
-		)
-		action_backends.append(CoinPusherSolverScript.last_step_backend_for_test())
-		if action_index == 0:
-			var patch: Dictionary = result.get("surface_presentation_snapshot_patch", {}) if typeof(result.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
-			var packed: Dictionary = patch.get("trace_packed", {}) if typeof(patch.get("trace_packed", {})) == TYPE_DICTIONARY else {}
-			captured_frame_count = int(packed.get("frame_count", 0))
-			var decoded := CoinPusherSolverScript.decode_packed_presentation_trace(packed)
-			if decoded.size() == captured_frame_count and not decoded.is_empty():
-				captured_final_frame_sha256 = JSON.stringify(decoded.back()).sha256_text()
-		outcomes.append([
-			int(result.get("coin_pusher_payout", 0)), bool(result.get("coin_pusher_gutter", false)),
-			int(result.get("coin_pusher_input_phase", -1)), int(result.get("coin_pusher_phase_accuracy", -1)),
-			_compact_events(result.get("coin_pusher_physics_events", [])),
-		])
-		GameModuleScript.apply_result(run_state, result, run_state.create_rng("export_parity_apply_%03d" % action_index))
-	var final_machine: Dictionary = (run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {})
-	var final_simulation: Dictionary = final_machine.get("simulation", {}) if typeof(final_machine.get("simulation", {})) == TYPE_DICTIONARY else {}
-	var native_acceptance := native_acceptance_report(native_backend_available, action_backends, expected_action_count)
+	var game_definition := library.game("coin_pusher")
+	var machine_value: Variant = game_definition.get("coin_pusher_machine", {})
+	if typeof(machine_value) != TYPE_DICTIONARY or (machine_value as Dictionary).is_empty():
+		_publish({"ok": false, "error": "authored_machine_definition_missing"})
+		return
+	var machine_definition := (machine_value as Dictionary).duplicate(true)
+	var seed := str(input.get("seed", "PUSHER-V3-CROSS-EXPORT"))
+	var snapshot := CoinPusherSolverScript.create_machine(
+		_rng("%s:snapshot" % seed), machine_definition, OPENING_BODY_COUNT
+	)
+	var initial_digest := CoinPusherSolverScript.canonical_digest(snapshot)
+	var initial_digest_json := _canonical_json(initial_digest)
+	var start_tick := int(snapshot.get("tick", 0))
+	var input_trace: Array = (input.get("input_trace", []) as Array).duplicate(true)
+	var input_trace_json := _canonical_json(input_trace)
+	var failures: Array[String] = []
+	_validate_snapshot(snapshot, machine_definition, failures)
+	_validate_input_trace(input_trace, start_tick, failures)
+
+	var first := CoinPusherSolverScript.replay_input_trace(
+		snapshot, _rng("%s:replay" % seed), input_trace, REPLAY_TICKS
+	)
+	var second := CoinPusherSolverScript.replay_input_trace(
+		snapshot, _rng("%s:replay" % seed), input_trace, REPLAY_TICKS
+	)
+	var first_digest := CoinPusherSolverScript.canonical_digest(first)
+	var second_digest := CoinPusherSolverScript.canonical_digest(second)
+	var first_digest_json := _canonical_json(first_digest)
+	var second_digest_json := _canonical_json(second_digest)
+	var source_snapshot_unchanged := _canonical_json(CoinPusherSolverScript.canonical_digest(snapshot)) == initial_digest_json
+	var repeat_exact := first_digest_json == second_digest_json
+	if not source_snapshot_unchanged:
+		failures.append("V3 export parity replay mutated its immutable source snapshot.")
+	if not repeat_exact:
+		failures.append("V3 export parity replay produced different canonical digests for the same tick-stamped input trace.")
+	if int(first.get("tick", -1)) != start_tick + REPLAY_TICKS:
+		failures.append("V3 export parity replay did not advance exactly %d fixed ticks." % REPLAY_TICKS)
+	if int(first_digest.get("accepted_inserts", -1)) != 2:
+		failures.append("V3 export parity replay did not apply both ordered drop inputs exactly once.")
+	if int(first_digest.get("motor_target_rate_fp", -1)) != CoinPusherSolverScript.FP:
+		failures.append("V3 export parity replay did not apply the skill-stop release.")
+	if first_digest_json == initial_digest_json:
+		failures.append("V3 export parity replay produced no canonical state change.")
+
 	var report := {
-		"ok": bool(native_acceptance.get("all_actions_native", false)) and captured_frame_count == 14 and not captured_final_frame_sha256.is_empty(),
+		"ok": failures.is_empty(),
+		"schema": "coin_pusher_v3_export_parity",
+		"version": 1,
 		"platform": OS.get_name(),
 		"web_feature": OS.has_feature("web"),
 		"distribution_feature": OS.has_feature("distribution_build"),
 		"input_artifact_sha256": input_text.sha256_text(),
-		"action_count": outcomes.size(),
-		"outcomes": outcomes,
-		"outcomes_sha256": JSON.stringify(outcomes).sha256_text(),
-		"final_digest": game.deterministic_state_digest(run_state.current_environment),
-		"final_simulation": CoinPusherSolverScript.canonical_digest(final_simulation),
-		"captured_frame_count": captured_frame_count,
-		"captured_final_frame_sha256": captured_final_frame_sha256,
+		"input_trace_sha256": input_trace_json.sha256_text(),
+		"machine_definition_sha256": _canonical_json(machine_definition).sha256_text(),
+		"initial_digest_sha256": initial_digest_json.sha256_text(),
+		"final_digest_sha256": first_digest_json.sha256_text(),
+		"repeat_digest_sha256": second_digest_json.sha256_text(),
+		"source_snapshot_unchanged": source_snapshot_unchanged,
+		"repeat_exact": repeat_exact,
+		"solver_schema": str(snapshot.get("schema", "")),
+		"solver_version": int(snapshot.get("version", 0)),
+		"solver_fixed_hz": int(snapshot.get("fixed_hz", 0)),
+		"solver_backend": CoinPusherSolverScript.last_step_backend_for_test(),
+		"opening_body_count": int(snapshot.get("opening_body_count", -1)),
+		"input_count": input_trace.size(),
+		"replay_ticks": REPLAY_TICKS,
+		"final_digest": first_digest_json,
+		"final_simulation": first_digest,
+		"failure_count": failures.size(),
+		"failures": failures,
 	}
-	report.merge(native_acceptance)
 	_publish(report)
 
 
-static func native_acceptance_report(native_available: bool, action_backends: Array, expected_action_count: int) -> Dictionary:
-	var native_action_count := 0
-	for backend_value in action_backends:
-		if str(backend_value) == "native":
-			native_action_count += 1
-	var action_backend_count := action_backends.size()
-	var all_actions_native := native_available \
-		and expected_action_count > 0 \
-		and action_backend_count == expected_action_count \
-		and native_action_count == expected_action_count
-	return {
-		"native_backend_available": native_available,
-		"native_action_count": native_action_count,
-		"action_backend_count": action_backend_count,
-		"action_backends_sha256": JSON.stringify(action_backends).sha256_text(),
-		"all_actions_native": all_actions_native,
-	}
+func _validate_snapshot(snapshot: Dictionary, machine_definition: Dictionary, failures: Array[String]) -> void:
+	if str(snapshot.get("schema", "")) != CoinPusherSolverScript.SCHEMA \
+			or int(snapshot.get("version", 0)) != CoinPusherSolverScript.VERSION \
+			or int(snapshot.get("fixed_hz", 0)) != 60:
+		failures.append("create_machine did not publish the V3 fixed-point 60 Hz snapshot contract.")
+	if snapshot.get("machine_definition", {}) != machine_definition:
+		failures.append("create_machine did not preserve the exact authored coin_pusher_machine definition.")
+	if int(snapshot.get("opening_body_count", -1)) != OPENING_BODY_COUNT \
+			or (snapshot.get("bodies", []) as Array).size() != OPENING_BODY_COUNT:
+		failures.append("create_machine did not seed exactly %d deterministic opening bodies." % OPENING_BODY_COUNT)
 
 
-func _compact_events(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for event_value in value as Array:
-		if typeof(event_value) != TYPE_DICTIONARY:
+func _validate_input_trace(trace: Array, start_tick: int, failures: Array[String]) -> void:
+	var previous_tick := start_tick - 1
+	var allowed_kinds := ["drop", "skill_stop", "nudge"]
+	for input_value in trace:
+		if typeof(input_value) != TYPE_DICTIONARY:
+			failures.append("V3 export parity input trace contains a non-dictionary entry.")
 			continue
-		var event: Dictionary = event_value
-		result.append([
-			str(event.get("body_id", "")), str(event.get("kind", "")), str(event.get("outcome", "")),
-			str(event.get("cause", "")), int(event.get("x", 0)), int(event.get("y", 0)), int(event.get("z", 0)),
-		])
-	return result
+		var input: Dictionary = input_value
+		var tick := int(input.get("tick", -1))
+		if tick <= previous_tick or tick < start_tick or tick >= start_tick + REPLAY_TICKS:
+			failures.append("V3 export parity input trace is not strictly ordered within the replay window at tick %d." % tick)
+		if not allowed_kinds.has(str(input.get("kind", ""))):
+			failures.append("V3 export parity input trace contains unsupported kind '%s'." % str(input.get("kind", "")))
+		previous_tick = tick
+
+
+func _canonical_json(value: Variant) -> String:
+	return JSON.stringify(value, "", true)
+
+
+func _rng(seed: String) -> RngStream:
+	var rng := RngStream.new()
+	rng.configure(_stable_hash(seed))
+	return rng
+
+
+func _stable_hash(value: String) -> int:
+	var hash_value := 2166136261
+	for byte in value.to_utf8_buffer():
+		hash_value = int((hash_value ^ int(byte)) * 16777619) & 0x7fffffff
+	return hash_value
 
 
 func _publish(report: Dictionary) -> void:

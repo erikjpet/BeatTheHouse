@@ -163,6 +163,22 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	await process_frame
 	var canvas: Control = probe.get("game_surface_canvas")
 	var game: GameModule = probe.get("current_game")
+	var stage_one_surface: Dictionary = canvas.call("realtime_surface_state") if canvas != null else {}
+	if bool(stage_one_surface.get("coin_pusher_v3_headless_placeholder", false)):
+		var placeholder_passed: bool = game != null and game.get_id() == "coin_pusher" \
+				and str(probe.get("current_screen")) == "GAME" \
+				and probe.get("game_surface_canvas") == canvas \
+				and not bool(canvas.call("surface_realtime_state_refresh_enabled")) \
+				and str(stage_one_surface.get("coin_pusher_solver_schema", "")) == "coin_pusher_machine_v3" \
+				and int(stage_one_surface.get("coin_pusher_body_count", 0)) > 0 \
+				and (stage_one_surface.get("native_selected_surface_actions", []) as Array).is_empty() \
+				and (stage_one_surface.get("surface_action_bindings", {}) as Dictionary).is_empty() \
+				and (stage_one_surface.get("surface_animation_channels", []) as Array).is_empty()
+		if not placeholder_passed:
+			push_error("Coin Pusher V3 Stage 1 placeholder did not preserve its headless safety contract: %s." % JSON.stringify(stage_one_surface))
+		probe.queue_free()
+		await process_frame
+		return placeholder_passed
 	var preconditions_exact: bool = canvas != null \
 			and game != null and game.get_id() == "coin_pusher" \
 			and str(probe.get("current_screen")) == "GAME" \

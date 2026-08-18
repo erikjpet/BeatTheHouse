@@ -1,429 +1,315 @@
 class_name CoinPusherSolver
 extends RefCounted
 
-const SCHEMA := "coin_pusher_fixed_point"
-const VERSION := 1
+const SCHEMA := "coin_pusher_machine_v3"
+const VERSION := 3
 const FIXED_HZ := 60
 const FP := 1000
 const WIDTH := 100000
-const FRONT_EDGE := 7000
-const UPPER_EDGE := 52000
-const REAR_EDGE := 95000
-const UPPER_FLOOR_Z := 12000
-const LOWER_FLOOR_Z := 0
+const TRAY_LIP_Y := 6000
+const DECK_Z := 0
+const PLATFORM_TOP_Z := 3600
+const FACE_EXTENDED_Y := 28000
+const FACE_RETRACTED_Y := 46000
+const BACK_PLATE_Y := 63000
+const BACK_PLATE_GAP := 400
+const DROP_Y := 40000
+const DROP_Z := 14000
+const GUTTER_X := 3000
 const COIN_RADIUS := 4300
 const COIN_HEIGHT := 1700
 const OBJECT_RADIUS := 5200
 const OBJECT_HEIGHT := 2800
+const PHASE_PERIOD := 240
+const STROKE_PERIOD := PHASE_PERIOD
+const HARD_BODY_CEILING := 600
+const BROADPHASE_CELL := 10000
+const CANDIDATE_POOL_CAPACITY := HARD_BODY_CEILING * 32
+const SOLVER_PASSES := 6
+const SLOP := 60
+const BETA := 600
+const RESTITUTION_BODY := 100
+const RESTITUTION_PEG := 250
+const MU_BODY := 500
+const MU_DECK := 700
+const MU_PLATFORM := 800
 const GRAVITY := 560
 const AIR_DRAG_NUM := 61
 const AIR_DRAG_DEN := 64
-const FLOOR_DRAG_NUM := 42
-const FLOOR_DRAG_DEN := 64
 const SLEEP_SPEED := 90
 const SLEEP_TICKS := 8
-const ACTION_TICKS := 48
-const PRESENTATION_TRACE_INTERVAL_TICKS := 4
-const PHASE_PERIOD := 12000
-const TRAY_LEFT := 2000
-const TRAY_RIGHT := 98000
-const MAX_COLLISION_PASSES := 1
-const BROADPHASE_CELL := 10000
-const HOT_GRID_KEY_CAPACITY := 1048576
-const HOT_POSITION_ABS_LIMIT := 100000000
-const HOT_VELOCITY_ABS_LIMIT := 100000000
-const HOT_DIMENSION_LIMIT := 10000
-const HOT_GENERAL_SCALAR_ABS_LIMIT := 1000000
-const HOT_PRESSURE_ACCEL_ABS_LIMIT := 100000
-const HOT_BODY_COUNT_LIMIT := 256
-# One collision query and one support query per eligible body are the
-# MAX_COLLISION_PASSES == 1 ceiling. Keep the open-address table at <= 50%
-# load and reserve the exact worst-case flat candidate count without growth.
-const HOT_CANDIDATE_CACHE_CAPACITY := 1024
-const HOT_CANDIDATE_POOL_CAPACITY := HOT_BODY_COUNT_LIMIT * HOT_BODY_COUNT_LIMIT * 2
-const HOT_CACHE_GENERATION_MAX := 2147483647
-const HOT_CONFIG_IMPULSE_ABS_LIMIT := 100000000
-const HOT_PUSH_SCALE_ABS_LIMIT := 1000
-const NATIVE_BACKEND_ID := "coin_pusher_native_integer_v1"
-const NATIVE_ABI_VERSION := 1
-const PACKED_TRACE_SCHEMA := "coin_pusher_presentation_trace_packed"
-const PACKED_TRACE_VERSION := 1
-const NATIVE_MUTABLE_BODY_KEYS := {
-	"x": true, "y": true, "z": true,
-	"vx": true, "vy": true, "vz": true,
-	"sleep_ticks": true, "sleeping": true,
-	"rest_state": true, "lean_milli": true,
-	"cap_pressure_ticks": true, "cap_pressure_accel": true,
-}
+const SUPPORT_VERTICAL_TOLERANCE := 400
+const SUPPORT_MARGIN := 800
+const SKILL_STOP_RAMP_TICKS := 24
+const NATIVE_BACKEND_ID := "coin_pusher_native_integer_v3"
+const NATIVE_ABI_VERSION := 3
 
 static var _native_backend: Object = null
 static var _native_backend_checked := false
-static var _last_step_backend_for_test := "uninitialized"
+static var _last_step_backend := "gdscript_v3"
+
+# Compile-time integer cosine table. Outcome state never evaluates a float.
+const COS_TABLE := [
+	1000, 1000, 999, 997, 995, 991, 988, 983, 978, 972, 966, 959, 951, 943, 934, 924, 914, 903, 891, 879,
+	866, 853, 839, 824, 809, 793, 777, 760, 743, 725, 707, 688, 669, 649, 629, 609, 588, 566, 545, 522,
+	500, 477, 454, 431, 407, 383, 358, 334, 309, 284, 259, 233, 208, 182, 156, 131, 105, 78, 52, 26,
+	0, -26, -52, -78, -105, -131, -156, -182, -208, -233, -259, -284, -309, -334, -358, -383, -407, -431, -454, -477,
+	-500, -522, -545, -566, -588, -609, -629, -649, -669, -688, -707, -725, -743, -760, -777, -793, -809, -824, -839, -853,
+	-866, -879, -891, -903, -914, -924, -934, -943, -951, -959, -966, -972, -978, -983, -988, -991, -995, -997, -999, -1000,
+	-1000, -1000, -999, -997, -995, -991, -988, -983, -978, -972, -966, -959, -951, -943, -934, -924, -914, -903, -891, -879,
+	-866, -853, -839, -824, -809, -793, -777, -760, -743, -725, -707, -688, -669, -649, -629, -609, -588, -566, -545, -522,
+	-500, -477, -454, -431, -407, -383, -358, -334, -309, -284, -259, -233, -208, -182, -156, -131, -105, -78, -52, -26,
+	0, 26, 52, 78, 105, 131, 156, 182, 208, 233, 259, 284, 309, 334, 358, 383, 407, 431, 454, 477,
+	500, 522, 545, 566, 588, 609, 629, 649, 669, 688, 707, 725, 743, 760, 777, 793, 809, 824, 839, 853,
+	866, 879, 891, 903, 914, 924, 934, 943, 951, 959, 966, 972, 978, 983, 988, 991, 995, 997, 999, 1000,
+]
 
 
-class HotBodies:
+class SpatialHash2D:
 	extends RefCounted
 
-	var refs: Array = []
-	var ids: Array = []
-	var kinds: Array = []
-	var metadata: Array = []
-	var rest_states: Array = []
-	var x := PackedInt32Array()
-	var y := PackedInt32Array()
-	var z := PackedInt32Array()
-	var vx := PackedInt32Array()
-	var vy := PackedInt32Array()
-	var vz := PackedInt32Array()
-	var radii := PackedInt32Array()
-	var heights := PackedInt32Array()
-	var masses := PackedInt32Array()
-	var sleep_ticks := PackedInt32Array()
-	var sleeping := PackedByteArray()
-	var lean := PackedInt32Array()
-	var cap_pressure_ticks := PackedInt32Array()
-	var cap_pressure_accel := PackedInt32Array()
-
-	func load_from(state: Dictionary) -> void:
-		refs = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-		var count := refs.size()
-		ids.resize(count)
-		kinds.resize(count)
-		metadata.resize(count)
-		rest_states.resize(count)
-		x.resize(count)
-		y.resize(count)
-		z.resize(count)
-		vx.resize(count)
-		vy.resize(count)
-		vz.resize(count)
-		radii.resize(count)
-		heights.resize(count)
-		masses.resize(count)
-		sleep_ticks.resize(count)
-		sleeping.resize(count)
-		lean.resize(count)
-		cap_pressure_ticks.resize(count)
-		cap_pressure_accel.resize(count)
-		for index in range(count):
-			var body: Dictionary = refs[index]
-			ids[index] = str(body.get("id", ""))
-			kinds[index] = str(body.get("kind", "coin"))
-			metadata[index] = body.get("metadata", {}) if typeof(body.get("metadata", {})) == TYPE_DICTIONARY else {}
-			rest_states[index] = str(body.get("rest_state", "settling"))
-			x[index] = int(body["x"])
-			y[index] = int(body["y"])
-			z[index] = int(body["z"])
-			vx[index] = int(body["vx"])
-			vy[index] = int(body["vy"])
-			vz[index] = int(body["vz"])
-			radii[index] = int(body["radius"])
-			heights[index] = int(body["height"])
-			masses[index] = int(body["mass"])
-			sleep_ticks[index] = int(body["sleep_ticks"])
-			sleeping[index] = 1 if bool(body["sleeping"]) else 0
-			lean[index] = int(body.get("lean_milli", 0))
-			cap_pressure_ticks[index] = int(body.get("cap_pressure_ticks", 0))
-			cap_pressure_accel[index] = int(body.get("cap_pressure_accel", 0))
-
-	func size() -> int:
-		return refs.size()
-
-	func remove_at(index: int) -> void:
-		refs.remove_at(index)
-		ids.remove_at(index)
-		kinds.remove_at(index)
-		metadata.remove_at(index)
-		rest_states.remove_at(index)
-		x.remove_at(index)
-		y.remove_at(index)
-		z.remove_at(index)
-		vx.remove_at(index)
-		vy.remove_at(index)
-		vz.remove_at(index)
-		radii.remove_at(index)
-		heights.remove_at(index)
-		masses.remove_at(index)
-		sleep_ticks.remove_at(index)
-		sleeping.remove_at(index)
-		lean.remove_at(index)
-		cap_pressure_ticks.remove_at(index)
-		cap_pressure_accel.remove_at(index)
-
-	func write_back(state: Dictionary) -> void:
-		for index in range(refs.size()):
-			var body: Dictionary = refs[index]
-			body["x"] = x[index]
-			body["y"] = y[index]
-			body["z"] = z[index]
-			body["vx"] = vx[index]
-			body["vy"] = vy[index]
-			body["vz"] = vz[index]
-			body["sleep_ticks"] = sleep_ticks[index]
-			body["sleeping"] = sleeping[index] != 0
-			body["rest_state"] = rest_states[index]
-			body["lean_milli"] = lean[index]
-			if body.has("cap_pressure_ticks") or cap_pressure_ticks[index] > 0:
-				body["cap_pressure_ticks"] = cap_pressure_ticks[index]
-			if body.has("cap_pressure_accel") or cap_pressure_accel[index] > 0:
-				body["cap_pressure_accel"] = cap_pressure_accel[index]
-		state["bodies"] = refs
-
-
-class HotGrid:
-	extends RefCounted
-
-	var head := PackedInt32Array()
+	const TABLE_CAPACITY := 2048
+	var keys_x := PackedInt32Array()
+	var keys_y := PackedInt32Array()
+	var heads := PackedInt32Array()
+	var used := PackedByteArray()
 	var next := PackedInt32Array()
-	var touched := PackedInt32Array()
-	var overflow: Dictionary = {}
-	var candidate_keys := PackedInt32Array()
-	var candidate_generations := PackedInt32Array()
-	var candidate_offsets := PackedInt32Array()
-	var candidate_lengths := PackedInt32Array()
-	var candidate_pool := PackedInt32Array()
-	var candidate_pool_used := 0
-	var candidate_generation := 0
 
 	func _init() -> void:
-		head.resize(CoinPusherSolver.HOT_GRID_KEY_CAPACITY)
-		candidate_keys.resize(CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY)
-		candidate_generations.resize(CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY)
-		candidate_offsets.resize(CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY)
-		candidate_lengths.resize(CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY)
-		candidate_pool.resize(CoinPusherSolver.HOT_CANDIDATE_POOL_CAPACITY)
+		keys_x.resize(TABLE_CAPACITY)
+		keys_y.resize(TABLE_CAPACITY)
+		heads.resize(TABLE_CAPACITY)
+		used.resize(TABLE_CAPACITY)
 
-	func rebuild(hot: HotBodies) -> void:
-		for key in touched:
-			head[int(key)] = 0
-		touched.clear()
-		overflow.clear()
-		candidate_pool_used = 0
-		if candidate_generation >= CoinPusherSolver.HOT_CACHE_GENERATION_MAX:
-			candidate_generations.fill(0)
-			candidate_generation = 1
-		else:
-			candidate_generation += 1
-		next.resize(hot.size())
-		for index in range(hot.size() - 1, -1, -1):
-			var key := CoinPusherSolver._bucket_key(
-				CoinPusherSolver._divi(hot.x[index], CoinPusherSolver.BROADPHASE_CELL),
-				CoinPusherSolver._divi(hot.y[index], CoinPusherSolver.BROADPHASE_CELL),
-				CoinPusherSolver._divi(hot.z[index], CoinPusherSolver.BROADPHASE_CELL)
-			)
-			if key < 0 or key >= head.size():
-				var overflow_members: Array = overflow.get(key, [])
-				overflow_members.push_front(index)
-				overflow[key] = overflow_members
-				continue
-			if head[key] == 0:
-				touched.append(key)
-			next[index] = head[key]
-			head[key] = index + 1
+	func rebuild(bodies: Array) -> void:
+		used.fill(0)
+		heads.fill(0)
+		next.resize(bodies.size())
+		next.fill(0)
+		for index in range(bodies.size() - 1, -1, -1):
+			var body: Dictionary = bodies[index]
+			var cell_x := CoinPusherSolver._floor_div(int(body.get("x", 0)), CoinPusherSolver.BROADPHASE_CELL)
+			var cell_y := CoinPusherSolver._floor_div(int(body.get("y", 0)), CoinPusherSolver.BROADPHASE_CELL)
+			var slot := _slot(cell_x, cell_y, true)
+			next[index] = heads[slot]
+			heads[slot] = index + 1
 
-	func candidate_slot(center_x: int, center_y: int, center_z: int) -> int:
-		var center_key := CoinPusherSolver._bucket_key(center_x, center_y, center_z)
-		var cache_slot := (center_key * 1103515245) & (CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY - 1)
-		for _probe_index in range(CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY):
-			if candidate_generations[cache_slot] != candidate_generation:
-				candidate_generations[cache_slot] = candidate_generation
-				candidate_keys[cache_slot] = center_key
-				candidate_offsets[cache_slot] = candidate_pool_used
-				_build_candidate_sequence(cache_slot, center_x, center_y, center_z)
-				return cache_slot
-			if candidate_keys[cache_slot] == center_key:
-				return cache_slot
-			cache_slot = (cache_slot + 1) & (CoinPusherSolver.HOT_CANDIDATE_CACHE_CAPACITY - 1)
+	func head_index(cell_x: int, cell_y: int) -> int:
+		var slot := _slot(cell_x, cell_y, false)
+		if slot < 0:
+			return -1
+		return heads[slot] - 1
+
+	func next_index(index: int) -> int:
+		if index < 0 or index >= next.size():
+			return -1
+		return next[index] - 1
+
+	func _slot(cell_x: int, cell_y: int, insert: bool) -> int:
+		var slot := ((cell_x * 73856093) ^ (cell_y * 19349663)) & (TABLE_CAPACITY - 1)
+		for _probe in range(TABLE_CAPACITY):
+			if used[slot] == 0:
+				if not insert:
+					return -1
+				used[slot] = 1
+				keys_x[slot] = cell_x
+				keys_y[slot] = cell_y
+				return slot
+			if keys_x[slot] == cell_x and keys_y[slot] == cell_y:
+				return slot
+			slot = (slot + 1) & (TABLE_CAPACITY - 1)
 		return -1
 
-	func _build_candidate_sequence(cache_slot: int, center_x: int, center_y: int, center_z: int) -> void:
-		var start_offset := candidate_pool_used
-		for z_offset in range(-1, 2):
-			for y_offset in range(-1, 2):
-				for x_offset in range(-1, 2):
-					var key := CoinPusherSolver._bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset)
-					if key < 0 or key >= head.size():
-						for overflow_index in overflow.get(key, []):
-							candidate_pool[candidate_pool_used] = int(overflow_index)
-							candidate_pool_used += 1
-						continue
-					var encoded_index := head[key]
-					while encoded_index != 0:
-						var index := encoded_index - 1
-						candidate_pool[candidate_pool_used] = index
-						candidate_pool_used += 1
-						encoded_index = next[index]
-		candidate_lengths[cache_slot] = candidate_pool_used - start_offset
 
-	func set_candidate_generation_for_test(generation: int) -> void:
-		candidate_generation = clampi(generation, 0, CoinPusherSolver.HOT_CACHE_GENERATION_MAX)
+static var _scratch_grid: SpatialHash2D = SpatialHash2D.new()
 
 
-static func public_contract() -> Dictionary:
-	return {
-		"schema": SCHEMA,
-		"fixed_hz": FIXED_HZ,
-		"fixed_point_scale": FP,
-		"width": WIDTH,
-		"front_edge": FRONT_EDGE,
-		"upper_edge": UPPER_EDGE,
-		"rear_edge": REAR_EDGE,
-		"upper_floor_z": UPPER_FLOOR_Z,
-		"lower_floor_z": LOWER_FLOOR_Z,
-		"coin_radius": COIN_RADIUS,
-		"coin_height": COIN_HEIGHT,
-		"object_radius": OBJECT_RADIUS,
-		"object_height": OBJECT_HEIGHT,
-		"action_ticks": ACTION_TICKS,
-		"phase_period": PHASE_PERIOD,
-		"tray_left": TRAY_LEFT,
-		"tray_right": TRAY_RIGHT,
-	}
-
-
-static func create(seed_rng: RngStream, coin_cap: int, opening_coins: int, lane_count: int) -> Dictionary:
+static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int = 0) -> Dictionary:
+	var definition := machine_definition.duplicate(true)
+	var geometry := _geometry(definition)
+	var stroke := _stroke(definition)
+	var phase := seed_rng.randi_range(0, maxi(1, int(stroke.get("period_ticks", STROKE_PERIOD))) - 1)
 	var state := {
 		"schema": SCHEMA,
 		"version": VERSION,
 		"fixed_hz": FIXED_HZ,
 		"fixed_point_scale": FP,
+		"machine_id": str(definition.get("machine_id", "")),
+		"machine_definition": definition,
 		"tick": 0,
 		"next_body_id": 1,
-		"coin_cap": maxi(32, coin_cap),
+		"phase_fp": phase * FP,
+		"motor_rate_fp": FP,
+		"motor_target_rate_fp": FP,
+		"skill_stop_engaged": false,
+		"face_y": face_y_for_phase(definition, phase),
+		"previous_face_y": face_y_for_phase(definition, phase),
 		"bodies": [],
-		"upper_phase_fp": seed_rng.randi_range(0, PHASE_PERIOD - 1),
-		"lower_phase_fp": seed_rng.randi_range(0, PHASE_PERIOD - 1),
+		"tray_ledger": [],
+		"gutter_ledger": [],
+		"refused_inserts": 0,
+		"accepted_inserts": 0,
+		"opening_body_count": 0,
 		"last_events": [],
 		"last_step_metrics": {},
+		"last_invariants": {},
 	}
-	_seed_opening_pile(state, seed_rng, mini(opening_coins, int(state["coin_cap"])), lane_count)
+	if opening_bodies > 0:
+		_seed_opening_machine(state, seed_rng, mini(opening_bodies, _ceiling(definition)))
+	state["opening_body_count"] = (state["bodies"] as Array).size()
 	return state
 
 
-static func migrate_height_grid(source: Dictionary, seed_rng: RngStream, coin_cap: int, lane_count: int) -> Dictionary:
-	var total := 0
-	var lanes: Array = source.get("lanes", []) if typeof(source.get("lanes", [])) == TYPE_ARRAY else []
-	for lane_value in lanes:
-		if typeof(lane_value) != TYPE_DICTIONARY:
-			continue
-		for cell_value in (lane_value as Dictionary).get("cells", []):
-			if typeof(cell_value) == TYPE_DICTIONARY:
-				total += maxi(0, int((cell_value as Dictionary).get("height", 0)))
-	return create(seed_rng, coin_cap, mini(total, coin_cap), lane_count)
+static func public_contract() -> Dictionary:
+	return {
+		"schema": SCHEMA,
+		"version": VERSION,
+		"fixed_hz": FIXED_HZ,
+		"fixed_point_scale": FP,
+		"hard_body_ceiling": HARD_BODY_CEILING,
+		"broadphase_cell": BROADPHASE_CELL,
+		"candidate_pool_capacity": CANDIDATE_POOL_CAPACITY,
+		"solver_passes": SOLVER_PASSES,
+		"contact_normal": "radial_euclidean",
+		"support_rule": "multi_contact_bracket_nestle",
+		"transport_rule": "platform_carry_plus_back_plate",
+	}
 
 
-static func add_coin(state: Dictionary, rng: RngStream, lane: int, lane_count: int, density: int = 1) -> Dictionary:
-	if coin_count(state) >= maxi(1, int(state.get("coin_cap", 48))):
-		_pressurize_full_pile(state, lane, lane_count)
-	var lane_width := _divi(WIDTH, maxi(1, lane_count))
-	var x := clampi(lane * lane_width + _divi(lane_width, 2) + rng.randi_range(-_divi(lane_width, 6), _divi(lane_width, 6)), COIN_RADIUS, WIDTH - COIN_RADIUS)
-	var body := _body(state, "coin", x, REAR_EDGE - 3500, UPPER_FLOOR_Z + 12500, COIN_RADIUS, COIN_HEIGHT, maxi(1, density), {})
-	body["vz"] = -900
-	body["vy"] = -220 - maxi(0, density - 1) * 90
-	(state["bodies"] as Array).append(body)
+static func implementation_contract() -> Dictionary:
+	return public_contract()
+
+
+static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1) -> Dictionary:
+	var definition := _definition(state)
+	var bodies: Array = state.get("bodies", [])
+	if bodies.size() >= _ceiling(definition):
+		state["refused_inserts"] = int(state.get("refused_inserts", 0)) + 1
+		var refusal := {"accepted": false, "refused": true, "reason": "ceiling", "returned": true}
+		state["last_events"] = [{"kind": "insert_refused", "reason": "ceiling", "returned": true}]
+		return refusal
+	var geometry := _geometry(definition)
+	var coins := _coins(definition)
+	var apparatus := _apparatus(definition)
+	var jitter := maxi(0, int(apparatus.get("release_jitter", 0)))
+	var radius := int(coins.get("radius", COIN_RADIUS))
+	var body := _new_body(
+		state,
+		"coin",
+		clampi(x + rng.randi_range(-jitter, jitter), radius, int(geometry.get("width", WIDTH)) - radius),
+		int(geometry.get("drop_y", DROP_Y)),
+		int(geometry.get("drop_z", DROP_Z)),
+		radius,
+		int(coins.get("height", COIN_HEIGHT)),
+		maxi(1, int(coins.get("mass", FP)) * maxi(1, density)),
+		{"value": int(coins.get("value", 1))}
+	)
+	body["accepted"] = true
+	bodies.append(body)
+	state["accepted_inserts"] = int(state.get("accepted_inserts", 0)) + 1
+	state["last_events"] = [{"kind": "insert", "body_id": str(body.get("id", "")), "x": int(body.get("x", 0))}]
+	_wake_nearby(bodies, int(body.get("x", 0)), int(body.get("y", 0)), radius * 3, str(body.get("id", "")))
 	return body
 
 
-static func add_feature(state: Dictionary, kind: String, feature_id: String, lane: int, depth_milli: int, lane_count: int, metadata: Dictionary = {}) -> Dictionary:
-	var lane_width := _divi(WIDTH, maxi(1, lane_count))
-	var x := clampi(lane * lane_width + _divi(lane_width, 2), OBJECT_RADIUS, WIDTH - OBJECT_RADIUS)
-	var y := clampi(depth_milli, FRONT_EDGE + OBJECT_RADIUS, REAR_EDGE - OBJECT_RADIUS)
-	var base_z := UPPER_FLOOR_Z if y >= UPPER_EDGE else LOWER_FLOOR_Z
-	var body_metadata := metadata.duplicate(true)
-	body_metadata["feature_id"] = feature_id
-	var body := _body(state, kind, x, y, base_z, OBJECT_RADIUS, OBJECT_HEIGHT, maxi(2, int(metadata.get("mass", 2))), body_metadata)
-	(state["bodies"] as Array).append(body)
+static func add_feature(state: Dictionary, kind: String, feature_id: String, x: int, y: int, metadata: Dictionary = {}) -> Dictionary:
+	var definition := _definition(state)
+	var bodies: Array = state.get("bodies", [])
+	if bodies.size() >= _ceiling(definition):
+		state["refused_inserts"] = int(state.get("refused_inserts", 0)) + 1
+		return {"accepted": false, "refused": true, "reason": "ceiling", "returned": true}
+	var meta := metadata.duplicate(true)
+	meta["feature_id"] = feature_id
+	var body := _new_body(state, kind, x, y, int(metadata.get("z", PLATFORM_TOP_Z)), int(metadata.get("radius", OBJECT_RADIUS)), int(metadata.get("height", OBJECT_HEIGHT)), maxi(1, int(metadata.get("mass", 2000))), meta)
+	body["accepted"] = true
+	bodies.append(body)
+	state["accepted_inserts"] = int(state.get("accepted_inserts", 0)) + 1
 	return body
 
 
-static func add_recovered_coin(state: Dictionary, rng: RngStream, lane_count: int) -> Dictionary:
-	var lane := rng.randi_range(0, maxi(0, lane_count - 1))
-	var lane_width := _divi(WIDTH, maxi(1, lane_count))
-	var body := _body(state, "coin", lane * lane_width + _divi(lane_width, 2), UPPER_EDGE - 7000, LOWER_FLOOR_Z + 6000, COIN_RADIUS, COIN_HEIGHT, 1, {"shim_recovered": true})
-	body["vy"] = -400
-	body["vz"] = -600
-	(state["bodies"] as Array).append(body)
-	return body
+static func add_recovered_coin(state: Dictionary, rng: RngStream) -> Dictionary:
+	return add_coin(state, rng, int(_geometry(_definition(state)).get("width", WIDTH)) / 2, 1)
 
 
-static func step_action(state: Dictionary, config: Dictionary) -> Dictionary:
-	var forced_backend := str(config.get("_debug_force_solver_backend", ""))
-	var native := _native_solver_backend() if forced_backend != "gdscript" else null
-	var trusted_native := native != null and native.get_class() == "CoinPusherNativeCore" and native.get_script() == null
-	# The shipped extension validates and loads bodies in one pass. Exact piles stay
-	# scan-free; sparse/legacy fields are normalized only inside its isolated
-	# candidate and mirrored at publication. Scripted/injected paths still need
-	# normalization here before their eligibility checks.
-	if not trusted_native:
-		_normalize_hot_body_fields(state)
-	var debug_adapter := bool(config.get("_debug_profile_stages", false))
-	var debug_adapter_started_usec := Time.get_ticks_usec() if debug_adapter else 0
-	if forced_backend != "gdscript":
-		if native != null:
-			# The shipped extension performs the same numeric/body eligibility
-			# validation before it mutates its isolated candidate. Let that single
-			# native boundary own the trusted check; a rejection returns an empty
-			# result and routes the untouched authority through the reference path.
-			# Scripted backends retain the explicit GDScript eligibility guard.
-			if not trusted_native and _hot_state_requires_reference(state, config):
-				_last_step_backend_for_test = "reference"
-				return _step_action_dictionary_reference(state, config)
-			var debug_stage_started_usec := Time.get_ticks_usec() if debug_adapter else 0
-			var native_state := _native_candidate_state(state, not trusted_native)
-			var native_config := config.duplicate(not trusted_native)
-			var debug_candidate_usec := Time.get_ticks_usec() - debug_stage_started_usec if debug_adapter else 0
-			debug_stage_started_usec = Time.get_ticks_usec() if debug_adapter else 0
-			# The exact shipped extension validates at the top of step_action before it
-			# constructs or mutates the kernel. Calling can_step first repeated the same
-			# full-body validation across the GDExtension boundary. Injected/mock
-			# backends keep the explicit eligibility call and deep transaction above.
-			var native_eligible := trusted_native or bool(native.call("can_step", native_state, native_config))
-			var debug_can_step_usec := Time.get_ticks_usec() - debug_stage_started_usec if debug_adapter else 0
-			if native_eligible:
-				debug_stage_started_usec = Time.get_ticks_usec() if debug_adapter else 0
-				var native_result_value: Variant = native.call("step_action", native_state, native_config)
-				var debug_native_call_usec := Time.get_ticks_usec() - debug_stage_started_usec if debug_adapter else 0
-				var native_result: Dictionary = native_result_value if typeof(native_result_value) == TYPE_DICTIONARY else {}
-				debug_stage_started_usec = Time.get_ticks_usec() if debug_adapter else 0
-				# Only this synchronous, scriptless extension call may take the compact
-				# publication guard: no caller can mutate its isolated candidate between
-				# return and validation. Test/injected contracts retain the exhaustive
-				# corruption audit exposed below.
-				var native_contract_valid := _trusted_native_step_contract_valid(state, native_state, native_result, config) if trusted_native \
-						else _native_step_contract_valid(state, native_state, native_result, config, false)
-				if native_contract_valid:
-					var debug_validate_usec := Time.get_ticks_usec() - debug_stage_started_usec if debug_adapter else 0
-					debug_stage_started_usec = Time.get_ticks_usec() if debug_adapter else 0
-					_publish_native_state(state, native_state, trusted_native)
-					if debug_adapter:
-						var debug_profile: Dictionary = native_result.get("debug_stage_timing_usec", {})
-						debug_profile["adapter_candidate"] = debug_candidate_usec
-						debug_profile["adapter_can_step"] = debug_can_step_usec
-						debug_profile["adapter_native_call"] = debug_native_call_usec
-						debug_profile["adapter_validate"] = debug_validate_usec
-						debug_profile["adapter_publish"] = Time.get_ticks_usec() - debug_stage_started_usec
-						debug_profile["adapter_total"] = Time.get_ticks_usec() - debug_adapter_started_usec
-						native_result["debug_stage_timing_usec"] = debug_profile
-					_last_step_backend_for_test = "native"
-					return native_result
-			if trusted_native:
-				_last_step_backend_for_test = "reference"
-				return _step_action_dictionary_reference(state, config)
-	if _hot_state_requires_reference(state, config):
-		_last_step_backend_for_test = "reference"
-		return _step_action_dictionary_reference(state, config)
-	_last_step_backend_for_test = "gdscript"
-	return _step_action_hot(state, config)
+static func set_skill_stop(state: Dictionary, engaged: bool) -> void:
+	state["skill_stop_engaged"] = engaged
+	state["motor_target_rate_fp"] = 0 if engaged else FP
 
 
-static func step_action_reference_for_test(state: Dictionary, config: Dictionary) -> Dictionary:
-	return _step_action_dictionary_reference(state, config)
+static func apply_nudge(state: Dictionary, impulse_x: int, impulse_y: int) -> int:
+	var affected := 0
+	for body_value in state.get("bodies", []):
+		var body: Dictionary = body_value
+		var mass := maxi(1, int(body.get("mass", FP)))
+		body["vx"] = int(body.get("vx", 0)) + _divi(impulse_x * FP, mass)
+		body["vy"] = int(body.get("vy", 0)) + _divi(impulse_y * FP, mass)
+		_wake(body)
+		affected += 1
+	return affected
 
 
-static func hot_state_eligible_for_test(state: Dictionary, config: Dictionary = {}) -> bool:
-	var candidate := state.duplicate(true)
-	_normalize_hot_body_fields(candidate)
-	return not _hot_state_requires_reference(candidate, config)
+static func step_ticks(state: Dictionary, config: Dictionary, tick_count: int) -> Dictionary:
+	var native := _native_solver_backend()
+	if native != null and bool(native.call("can_step", state, config)):
+		var result_value: Variant = native.call("step_ticks", state, config, tick_count)
+		if typeof(result_value) == TYPE_DICTIONARY and not (result_value as Dictionary).is_empty():
+			_last_step_backend = "native_v3"
+			var native_result := result_value as Dictionary
+			_debug_assert_invariants(native_result)
+			return native_result
+	_last_step_backend = "gdscript_v3"
+	return _step_ticks_gdscript(state, config, tick_count)
+
+
+static func step_ticks_reference_for_test(state: Dictionary, config: Dictionary, tick_count: int) -> Dictionary:
+	return _step_ticks_gdscript(state, config, tick_count)
+
+
+static func _step_ticks_gdscript(state: Dictionary, config: Dictionary, tick_count: int) -> Dictionary:
+	var started_usec := Time.get_ticks_usec()
+	var events: Array = []
+	var collision_count := 0
+	var max_candidate_count := 0
+	var energy_ok := true
+	var conservation_ok := true
+	var input_trace: Array = config.get("input_trace", []) if typeof(config.get("input_trace", [])) == TYPE_ARRAY else []
+	var trace_cursor := 0
+	for local_tick in range(maxi(0, tick_count)):
+		while trace_cursor < input_trace.size():
+			var input_value: Variant = input_trace[trace_cursor]
+			if typeof(input_value) != TYPE_DICTIONARY:
+				trace_cursor += 1
+				continue
+			var input: Dictionary = input_value
+			if int(input.get("tick", -1)) != int(state.get("tick", 0)):
+				break
+			_apply_trace_input(state, input, config.get("rng"))
+			trace_cursor += 1
+		var tick_result := _step_one_tick(state, config)
+		events.append_array(tick_result.get("events", []))
+		collision_count += int(tick_result.get("collision_count", 0))
+		max_candidate_count = maxi(max_candidate_count, int(tick_result.get("candidate_count", 0)))
+		energy_ok = energy_ok and bool(tick_result.get("energy_ok", false))
+		conservation_ok = conservation_ok and bool(tick_result.get("conservation_ok", false))
+	state["last_events"] = events
+	var elapsed_usec := Time.get_ticks_usec() - started_usec
+	var metrics := {
+		"fixed_ticks": maxi(0, tick_count),
+		"body_count": (state.get("bodies", []) as Array).size(),
+		"awake_count": awake_count(state),
+		"collision_count": collision_count,
+		"collision_passes": SOLVER_PASSES,
+		"candidate_count_peak": max_candidate_count,
+		"candidate_pool_capacity": CANDIDATE_POOL_CAPACITY,
+		"elapsed_usec": elapsed_usec,
+		"tick_average_usec": _divi(elapsed_usec, maxi(1, tick_count)),
+	}
+	state["last_step_metrics"] = metrics
+	state["last_invariants"] = _invariant_report(state, energy_ok)
+	state["last_invariants"]["conservation_ok"] = conservation_ok
+	var result := {"events": events, "metrics": metrics, "invariants": state["last_invariants"]}
+	_debug_assert_invariants(result)
+	return result
 
 
 static func native_backend_available_for_test() -> bool:
@@ -431,93 +317,12 @@ static func native_backend_available_for_test() -> bool:
 
 
 static func last_step_backend_for_test() -> String:
-	return _last_step_backend_for_test
+	return _last_step_backend
 
 
 static func reset_native_backend_for_test() -> void:
 	_native_backend = null
 	_native_backend_checked = false
-	_last_step_backend_for_test = "uninitialized"
-
-
-static func install_native_backend_for_test(backend: Object) -> void:
-	_native_backend = backend if _native_backend_contract_valid(backend) else null
-	_native_backend_checked = true
-	_last_step_backend_for_test = "uninitialized"
-
-
-static func native_step_contract_valid_for_test(before: Dictionary, candidate: Dictionary, result: Dictionary, config: Dictionary, trusted_native: bool) -> bool:
-	return _native_step_contract_valid(before, candidate, result, config, trusted_native)
-
-
-static func finalize_packed_presentation_trace(packed_trace: Dictionary, state: Dictionary, tick_offset: int) -> Dictionary:
-	if not _packed_trace_contract_valid(packed_trace):
-		return {}
-	# Shipped native traces already author the persisted tick-49 pile while the
-	# first solver kernel is hot. Keep this compatibility entry point idempotent;
-	# old 13-frame traces can still be finalized during a rolling upgrade.
-	if int(packed_trace.get("frame_count", 0)) == ACTION_TICKS / PRESENTATION_TRACE_INTERVAL_TICKS + 2:
-		return packed_trace
-	var native := _native_solver_backend()
-	if native == null or native.get_class() != "CoinPusherNativeCore" or native.get_script() != null \
-			or not native.has_method("append_presentation_trace_frame"):
-		return {}
-	var value: Variant = native.call("append_presentation_trace_frame", packed_trace, state, tick_offset)
-	var finalized: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
-	return finalized if _packed_trace_contract_valid(finalized) and int(finalized.get("frame_count", 0)) == int(packed_trace.get("frame_count", 0)) + 1 else {}
-
-
-static func decode_packed_presentation_trace(packed_trace: Dictionary) -> Array:
-	if not _packed_trace_contract_valid(packed_trace):
-		return []
-	var frame_offsets: PackedInt32Array = packed_trace["frame_offsets"]
-	var tick_offsets: PackedInt32Array = packed_trace["tick_offsets"]
-	var upper_phases: PackedInt32Array = packed_trace["upper_phase_fp"]
-	var lower_phases: PackedInt32Array = packed_trace["lower_phase_fp"]
-	var body_ids: PackedStringArray = packed_trace["body_ids"]
-	var body_kinds: PackedStringArray = packed_trace["body_kinds"]
-	var body_radii: PackedInt32Array = packed_trace["body_radii"]
-	var body_heights: PackedInt32Array = packed_trace["body_heights"]
-	var body_masses: PackedInt32Array = packed_trace["body_masses"]
-	var body_metadata: Array = packed_trace["body_metadata"]
-	var row_body_indices: PackedInt32Array = packed_trace["row_body_indices"]
-	var row_material_categories: PackedStringArray = packed_trace["row_material_categories"]
-	var row_x: PackedInt32Array = packed_trace["row_x"]
-	var row_y: PackedInt32Array = packed_trace["row_y"]
-	var row_z: PackedInt32Array = packed_trace["row_z"]
-	var row_radius: PackedInt32Array = packed_trace["row_radius"]
-	var row_height: PackedInt32Array = packed_trace["row_height"]
-	var row_sleeping: PackedByteArray = packed_trace["row_sleeping"]
-	var row_rest_states: PackedStringArray = packed_trace["row_rest_states"]
-	var row_has_level: PackedByteArray = packed_trace["row_has_level"]
-	var row_levels: PackedStringArray = packed_trace["row_levels"]
-	var row_lean: PackedInt32Array = packed_trace["row_lean_milli"]
-	var frames: Array = []
-	for frame_index in range(int(packed_trace["frame_count"])):
-		var frame_bodies: Array = []
-		for row_index in range(frame_offsets[frame_index], frame_offsets[frame_index + 1]):
-			var body_index := row_body_indices[row_index]
-			var body := {
-				"id": body_ids[body_index],
-				"kind": body_kinds[body_index],
-				"material_category": row_material_categories[row_index],
-				"x": row_x[row_index], "y": row_y[row_index], "z": row_z[row_index],
-				"radius": row_radius[row_index], "height": row_height[row_index], "mass": body_masses[body_index],
-				"sleeping": row_sleeping[row_index] != 0,
-				"rest_state": row_rest_states[row_index],
-			}
-			if row_has_level[row_index] != 0:
-				body["level"] = row_levels[row_index]
-			body["lean_milli"] = row_lean[row_index]
-			body["metadata"] = (body_metadata[body_index] as Dictionary).duplicate(true) if typeof(body_metadata[body_index]) == TYPE_DICTIONARY else {}
-			frame_bodies.append(body)
-		frames.append({
-			"tick_offset": tick_offsets[frame_index],
-			"upper_phase_fp": upper_phases[frame_index],
-			"lower_phase_fp": lower_phases[frame_index],
-			"bodies": frame_bodies,
-		})
-	return frames
 
 
 static func _native_solver_backend() -> Object:
@@ -527,2164 +332,979 @@ static func _native_solver_backend() -> Object:
 	if not ClassDB.class_exists("CoinPusherNativeCore"):
 		return null
 	var candidate: Object = ClassDB.instantiate("CoinPusherNativeCore")
-	if _native_backend_contract_valid(candidate):
-		_native_backend = candidate
+	if candidate == null:
+		return null
+	for method_name in ["backend_id", "solver_contract", "can_step", "step_ticks"]:
+		if not candidate.has_method(method_name):
+			return null
+	if str(candidate.call("backend_id")) != NATIVE_BACKEND_ID:
+		return null
+	var contract_value: Variant = candidate.call("solver_contract")
+	if typeof(contract_value) != TYPE_DICTIONARY:
+		return null
+	var contract: Dictionary = contract_value
+	if int(contract.get("abi_version", -1)) != NATIVE_ABI_VERSION \
+			or str(contract.get("schema", "")) != SCHEMA \
+			or int(contract.get("state_version", -1)) != VERSION \
+			or int(contract.get("fixed_hz", -1)) != FIXED_HZ \
+			or int(contract.get("fixed_point_scale", -1)) != FP \
+			or str(contract.get("geometry_amendment", "")) != "6.1" \
+			or str(contract.get("contact_normal", "")) != "radial_euclidean" \
+			or int(contract.get("collision_passes", -1)) != SOLVER_PASSES \
+			or str(contract.get("transport_rule", "")) != "platform_carry_plus_back_plate":
+		return null
+	_native_backend = candidate
 	return _native_backend
 
 
-static func _native_backend_contract_valid(backend: Object) -> bool:
-	if backend == null:
-		return false
-	for method_name in ["backend_id", "solver_contract", "can_step", "step_action", "append_presentation_trace_frame"]:
-		if not backend.has_method(method_name):
-			return false
-	if str(backend.call("backend_id")) != NATIVE_BACKEND_ID:
-		return false
-	var contract_value: Variant = backend.call("solver_contract")
-	if typeof(contract_value) != TYPE_DICTIONARY:
-		return false
-	var contract: Dictionary = contract_value
-	return int(contract.get("abi_version", -1)) == NATIVE_ABI_VERSION \
-		and str(contract.get("schema", "")) == SCHEMA \
-		and int(contract.get("state_version", -1)) == VERSION \
-		and int(contract.get("fixed_point_scale", -1)) == FP \
-		and int(contract.get("action_ticks", -1)) == ACTION_TICKS \
-		and int(contract.get("packed_trace_version", -1)) == PACKED_TRACE_VERSION
+static func replay_input_trace(snapshot: Dictionary, rng: RngStream, trace: Array, ticks: int) -> Dictionary:
+	var state := snapshot.duplicate(true)
+	step_ticks(state, {"input_trace": trace, "rng": rng}, ticks)
+	return state
 
 
-static func _packed_trace_contract_valid(packed_trace: Dictionary) -> bool:
-	if str(packed_trace.get("schema", "")) != PACKED_TRACE_SCHEMA or int(packed_trace.get("version", 0)) != PACKED_TRACE_VERSION:
-		return false
-	var frame_count := int(packed_trace.get("frame_count", -1))
-	if frame_count < 0:
-		return false
-	var packed_int_fields := ["frame_offsets", "tick_offsets", "upper_phase_fp", "lower_phase_fp", "body_radii", "body_heights", "body_masses", "row_body_indices", "row_x", "row_y", "row_z", "row_radius", "row_height", "row_lean_milli"]
-	for field in packed_int_fields:
-		if typeof(packed_trace.get(field)) != TYPE_PACKED_INT32_ARRAY:
-			return false
-	for field in ["body_ids", "body_kinds", "row_material_categories", "row_rest_states", "row_levels"]:
-		if typeof(packed_trace.get(field)) != TYPE_PACKED_STRING_ARRAY:
-			return false
-	for field in ["row_sleeping", "row_has_level"]:
-		if typeof(packed_trace.get(field)) != TYPE_PACKED_BYTE_ARRAY:
-			return false
-	if typeof(packed_trace.get("body_metadata")) != TYPE_ARRAY:
-		return false
-	var offsets: PackedInt32Array = packed_trace["frame_offsets"]
-	var rows: PackedInt32Array = packed_trace["row_body_indices"]
-	var descriptors: PackedStringArray = packed_trace["body_ids"]
-	if offsets.size() != frame_count + 1 or offsets.is_empty() or offsets[0] != 0 or offsets[offsets.size() - 1] != rows.size():
-		return false
-	if (packed_trace["tick_offsets"] as PackedInt32Array).size() != frame_count \
-			or (packed_trace["upper_phase_fp"] as PackedInt32Array).size() != frame_count \
-			or (packed_trace["lower_phase_fp"] as PackedInt32Array).size() != frame_count:
-		return false
-	for field in ["body_kinds", "body_radii", "body_heights", "body_masses", "body_metadata"]:
-		if int(packed_trace[field].size()) != descriptors.size():
-			return false
-	for field in ["row_material_categories", "row_x", "row_y", "row_z", "row_radius", "row_height", "row_sleeping", "row_rest_states", "row_has_level", "row_levels", "row_lean_milli"]:
-		if packed_trace[field].size() != rows.size():
-			return false
-	for frame_index in range(frame_count):
-		if offsets[frame_index] > offsets[frame_index + 1]:
-			return false
-	for body_index in rows:
-		if body_index < 0 or body_index >= descriptors.size():
-			return false
-	return true
-
-
-static func _native_candidate_state(state: Dictionary, deep_copy_values: bool = true) -> Dictionary:
-	var candidate := {}
-	for key in ["schema", "version", "fixed_hz", "fixed_point_scale", "tick", "upper_phase_fp", "lower_phase_fp"]:
-		if state.has(key):
-			candidate[key] = state[key]
-	var bodies_value: Variant = state.get("bodies", [])
-	if typeof(bodies_value) != TYPE_ARRAY:
-		candidate["bodies"] = bodies_value
-		return candidate
-	var candidate_bodies: Array = []
-	for body_value in (bodies_value as Array):
-		candidate_bodies.append((body_value as Dictionary).duplicate(deep_copy_values) if typeof(body_value) == TYPE_DICTIONARY else body_value)
-	candidate["bodies"] = candidate_bodies
-	return candidate
-
-
-static func _publish_native_state(state: Dictionary, candidate: Dictionary, trusted_native: bool = false) -> void:
-	# Exact current-schema piles stay on the zero-scan publication path. The native
-	# loader marks only sparse/legacy candidates that it normalized while reading;
-	# mirror those defaults into live aliases before publishing mutable physics.
-	if trusted_native and bool(candidate.get("_native_normalized_hot_fields", false)):
-		_normalize_hot_body_fields(state)
-	var original_bodies: Array = state.get("bodies", [])
-	var candidate_bodies: Array = candidate.get("bodies", [])
-	if trusted_native:
-		# The trusted contract has already proved that candidates are the
-		# source-order subsequence left after reported physical exits. Publish
-		# linearly so body Dictionary identities remain authoritative aliases.
-		var original_index := 0
-		var candidate_index := 0
-		while original_index < original_bodies.size():
-			var original_body: Dictionary = original_bodies[original_index]
-			if candidate_index >= candidate_bodies.size() \
-					or str(original_body.get("id", "")) != str((candidate_bodies[candidate_index] as Dictionary).get("id", "")):
-				original_bodies.remove_at(original_index)
-				continue
-			var candidate_body: Dictionary = candidate_bodies[candidate_index]
-			for mutable_key in ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "sleeping", "rest_state", "lean_milli"]:
-				original_body[mutable_key] = candidate_body[mutable_key]
-			for pressure_key in ["cap_pressure_ticks", "cap_pressure_accel"]:
-				if original_body.has(pressure_key) or int(candidate_body.get(pressure_key, 0)) > 0:
-					original_body[pressure_key] = candidate_body.get(pressure_key, 0)
-			original_index += 1
-			candidate_index += 1
-	else:
-		var candidate_by_id := {}
-		for candidate_value in candidate_bodies:
-			var candidate_body: Dictionary = candidate_value
-			candidate_by_id[str(candidate_body.get("id", ""))] = candidate_body
-		for index in range(original_bodies.size() - 1, -1, -1):
-			var original_body: Dictionary = original_bodies[index]
-			var body_id := str(original_body.get("id", ""))
-			if candidate_by_id.has(body_id):
-				var candidate_body: Dictionary = candidate_by_id[body_id]
-				for mutable_key in ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "sleeping", "rest_state", "lean_milli"]:
-					original_body[mutable_key] = candidate_body[mutable_key]
-				for pressure_key in ["cap_pressure_ticks", "cap_pressure_accel"]:
-					if original_body.has(pressure_key) or int(candidate_body.get(pressure_key, 0)) > 0:
-						original_body[pressure_key] = candidate_body.get(pressure_key, 0)
-			else:
-				original_bodies.remove_at(index)
-	state["bodies"] = original_bodies
-	state["tick"] = candidate["tick"]
-	for phase_key in ["upper_phase_fp", "lower_phase_fp"]:
-		if candidate.has(phase_key):
-			state[phase_key] = candidate[phase_key]
-	state["last_events"] = candidate["last_events"]
-	state["last_motion_events"] = candidate["last_motion_events"]
-	state["last_step_metrics"] = candidate["last_step_metrics"]
-
-
-static func _native_step_contract_valid(before: Dictionary, candidate: Dictionary, result: Dictionary, config: Dictionary, trusted_native: bool = false) -> bool:
-	if result.is_empty() or typeof(candidate.get("bodies", null)) != TYPE_ARRAY:
-		return false
-	if typeof(candidate.get("tick", null)) != TYPE_INT or int(candidate.get("tick", -1)) != int(before.get("tick", 0)) + ACTION_TICKS:
-		return false
-	if str(candidate.get("schema", "")) != SCHEMA or int(candidate.get("version", -1)) != VERSION:
-		return false
-	for phase_spec in [["upper_phase_fp", "upper_locked"], ["lower_phase_fp", "lower_locked"]]:
-		var phase_key: String = phase_spec[0]
-		var captured := config.has("captured_%s" % phase_key)
-		var publishes := captured or not bool(config.get(phase_spec[1], false))
-		if publishes:
-			var phase := int(candidate.get(phase_key, -1))
-			if typeof(candidate.get(phase_key, null)) != TYPE_INT or phase < 0 or phase >= PHASE_PERIOD:
-				return false
-		elif candidate.has(phase_key) != before.has(phase_key) \
-				or (candidate.has(phase_key) and (typeof(candidate[phase_key]) != typeof(before[phase_key]) or candidate[phase_key] != before[phase_key])):
-			return false
-	var required_types := {
-		"events": TYPE_ARRAY,
-		"motion_events": TYPE_ARRAY,
-		"presentation_events": TYPE_ARRAY,
-		"metrics": TYPE_DICTIONARY,
-		"presentation_trace": TYPE_ARRAY,
-	}
-	for key in required_types:
-		if typeof(result.get(key, null)) != int(required_types[key]):
-			return false
-	var allowed_keys := required_types.keys()
-	var captures_trace := bool(config.get("capture_presentation_trace", false))
-	if trusted_native and captures_trace:
-		if not (result.get("presentation_trace", []) as Array).is_empty() \
-				or typeof(result.get("presentation_trace_packed")) != TYPE_DICTIONARY \
-				or not _packed_trace_contract_valid(result.get("presentation_trace_packed", {})) \
-				or int((result.get("presentation_trace_packed", {}) as Dictionary).get("frame_count", 0)) != ACTION_TICKS / PRESENTATION_TRACE_INTERVAL_TICKS + 2:
-			return false
-		allowed_keys.append("presentation_trace_packed")
-	elif result.has("presentation_trace_packed"):
-		return false
-	if bool(config.get("_debug_profile_stages", false)):
-		if typeof(result.get("debug_stage_timing_usec", null)) != TYPE_DICTIONARY:
-			return false
-		allowed_keys.append("debug_stage_timing_usec")
-	elif result.has("debug_stage_timing_usec"):
-		return false
-	if result.size() != allowed_keys.size():
-		return false
-	for key in result:
-		if not allowed_keys.has(key):
-			return false
-	var metrics: Dictionary = result.get("metrics", {})
-	var metric_keys := ["fixed_ticks", "body_count", "awake_count", "woken_count", "moved_count", "collision_passes", "collision_count", "topple_count", "upper_lower_fall_count"]
-	if metrics.size() != metric_keys.size():
-		return false
-	for metric_key in metric_keys:
-		if typeof(metrics.get(metric_key, null)) != TYPE_INT:
-			return false
-	if int(metrics.get("fixed_ticks", -1)) != ACTION_TICKS or int(metrics.get("body_count", -1)) != (candidate.get("bodies", []) as Array).size():
-		return false
-	if typeof(candidate.get("last_events", null)) != TYPE_ARRAY \
-			or typeof(candidate.get("last_motion_events", null)) != TYPE_ARRAY \
-			or typeof(candidate.get("last_step_metrics", null)) != TYPE_DICTIONARY:
-		return false
-	if candidate["last_events"] != result["events"] \
-			or candidate["last_motion_events"] != result["motion_events"] \
-			or candidate["last_step_metrics"] != result["metrics"]:
-		return false
-	var before_bodies: Array = before.get("bodies", [])
-	var candidate_bodies: Array = candidate.get("bodies", [])
-	if trusted_native:
-		# validate_step_input() guarantees unique source IDs. The exact unscripted
-		# kernel may only retain bodies in source order or remove a body reported by
-		# one physical-exit event. Immutable body shape and values remain guarded.
-		var physical_exit_ids := {}
-		for event_value in result.get("events", []):
-			if typeof(event_value) != TYPE_DICTIONARY:
-				return false
-			var exit_event: Dictionary = event_value
-			var exit_id := str(exit_event.get("body_id", ""))
-			if exit_id.is_empty() or str(exit_event.get("cause", "")) != "physical_fall" or physical_exit_ids.has(exit_id):
-				return false
-			physical_exit_ids[exit_id] = true
-		var before_index := 0
-		for candidate_value in candidate_bodies:
-			if typeof(candidate_value) != TYPE_DICTIONARY:
-				return false
-			var candidate_body: Dictionary = candidate_value
-			var candidate_id := str(candidate_body.get("id", ""))
-			while before_index < before_bodies.size() and str((before_bodies[before_index] as Dictionary).get("id", "")) != candidate_id:
-				var removed_id := str((before_bodies[before_index] as Dictionary).get("id", ""))
-				if not physical_exit_ids.erase(removed_id):
-					return false
-				before_index += 1
-			if before_index >= before_bodies.size():
-				return false
-			var before_body: Dictionary = before_bodies[before_index]
-			before_index += 1
-			for int_key in ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "lean_milli"]:
-				if typeof(candidate_body.get(int_key, null)) != TYPE_INT:
-					return false
-			if typeof(candidate_body.get("sleeping", null)) != TYPE_BOOL or typeof(candidate_body.get("rest_state", null)) != TYPE_STRING:
-				return false
-			for pressure_key in ["cap_pressure_ticks", "cap_pressure_accel"]:
-				if before_body.has(pressure_key) and not candidate_body.has(pressure_key):
-					return false
-				if candidate_body.has(pressure_key) and typeof(candidate_body[pressure_key]) != TYPE_INT:
-					return false
-			for key in before_body:
-				if not NATIVE_MUTABLE_BODY_KEYS.has(key) and (not candidate_body.has(key) or typeof(candidate_body[key]) != typeof(before_body[key]) or candidate_body[key] != before_body[key]):
-					return false
-			for key in candidate_body:
-				if not NATIVE_MUTABLE_BODY_KEYS.has(key) and not before_body.has(key):
-					return false
-		while before_index < before_bodies.size():
-			var removed_id := str((before_bodies[before_index] as Dictionary).get("id", ""))
-			if not physical_exit_ids.erase(removed_id):
-				return false
-			before_index += 1
-		return physical_exit_ids.is_empty()
-	var candidate_ids := {}
-	var before_by_id := {}
-	for before_value in before_bodies:
-		before_by_id[str((before_value as Dictionary).get("id", ""))] = before_value
-	for candidate_value in candidate_bodies:
-		if typeof(candidate_value) != TYPE_DICTIONARY:
-			return false
-		var candidate_id := str((candidate_value as Dictionary).get("id", ""))
-		if candidate_ids.has(candidate_id):
-			return false
-		candidate_ids[candidate_id] = true
-		if not before_by_id.has(candidate_id):
-			return false
-		var candidate_body: Dictionary = candidate_value
-		var before_body: Dictionary = before_by_id[candidate_id]
-		for int_key in ["x", "y", "z", "vx", "vy", "vz", "sleep_ticks", "lean_milli"]:
-			if typeof(candidate_body.get(int_key, null)) != TYPE_INT:
-				return false
-		if typeof(candidate_body.get("sleeping", null)) != TYPE_BOOL or typeof(candidate_body.get("rest_state", null)) != TYPE_STRING:
-			return false
-		for pressure_key in ["cap_pressure_ticks", "cap_pressure_accel"]:
-			if before_body.has(pressure_key) and not candidate_body.has(pressure_key):
-				return false
-			if candidate_body.has(pressure_key) and typeof(candidate_body[pressure_key]) != TYPE_INT:
-				return false
-		if not trusted_native:
-			for key in before_body:
-				if not NATIVE_MUTABLE_BODY_KEYS.has(key) and (not candidate_body.has(key) or typeof(candidate_body[key]) != typeof(before_body[key]) or candidate_body[key] != before_body[key]):
-					return false
-			for key in candidate_body:
-				if not NATIVE_MUTABLE_BODY_KEYS.has(key) and not before_body.has(key):
-					return false
-	var candidate_index := 0
-	for before_value in before_bodies:
-		if candidate_index < candidate_bodies.size() \
-				and str((before_value as Dictionary).get("id", "")) == str((candidate_bodies[candidate_index] as Dictionary).get("id", "")):
-			candidate_index += 1
-	return candidate_index == candidate_bodies.size()
-
-
-static func _trusted_native_step_contract_valid(before: Dictionary, candidate: Dictionary, result: Dictionary, config: Dictionary) -> bool:
-	# CoinPusherNativeCore is the shipped, scriptless extension selected by exact
-	# class identity and a versioned solver contract. Its own boundary validates
-	# every input body before constructing an isolated candidate. Rewalking every
-	# immutable body field and every packed replay row in GDScript duplicated that
-	# trusted boundary on every action. Keep a constant-shape publication guard;
-	# injected/scripted backends still take the exhaustive transaction above.
-	if result.is_empty() or typeof(candidate.get("bodies", null)) != TYPE_ARRAY:
-		return false
-	if str(candidate.get("schema", "")) != SCHEMA or int(candidate.get("version", -1)) != VERSION \
-			or typeof(candidate.get("tick", null)) != TYPE_INT \
-			or int(candidate.get("tick", -1)) != int(before.get("tick", 0)) + ACTION_TICKS:
-		return false
-	for phase_spec in [["upper_phase_fp", "upper_locked"], ["lower_phase_fp", "lower_locked"]]:
-		var phase_key: String = phase_spec[0]
-		var captured := config.has("captured_%s" % phase_key)
-		if captured or not bool(config.get(phase_spec[1], false)):
-			var phase := int(candidate.get(phase_key, -1))
-			if typeof(candidate.get(phase_key, null)) != TYPE_INT or phase < 0 or phase >= PHASE_PERIOD:
-				return false
-		elif candidate.has(phase_key) != before.has(phase_key) \
-				or (candidate.has(phase_key) and candidate[phase_key] != before[phase_key]):
-			return false
-	var required_types := {
-		"events": TYPE_ARRAY,
-		"motion_events": TYPE_ARRAY,
-		"presentation_events": TYPE_ARRAY,
-		"metrics": TYPE_DICTIONARY,
-		"presentation_trace": TYPE_ARRAY,
-	}
-	for key in required_types:
-		if typeof(result.get(key, null)) != int(required_types[key]):
-			return false
-	var allowed_keys := required_types.keys()
-	if bool(config.get("capture_presentation_trace", false)):
-		if not (result.get("presentation_trace", []) as Array).is_empty() \
-				or not _trusted_packed_trace_shape_valid(result.get("presentation_trace_packed", {})):
-			return false
-		allowed_keys.append("presentation_trace_packed")
-	elif result.has("presentation_trace_packed"):
-		return false
-	if bool(config.get("_debug_profile_stages", false)):
-		if typeof(result.get("debug_stage_timing_usec", null)) != TYPE_DICTIONARY:
-			return false
-		allowed_keys.append("debug_stage_timing_usec")
-	elif result.has("debug_stage_timing_usec"):
-		return false
-	if result.size() != allowed_keys.size():
-		return false
-	for key in result:
-		if not allowed_keys.has(key):
-			return false
-	var metrics: Dictionary = result.get("metrics", {})
-	var metric_keys := ["fixed_ticks", "body_count", "awake_count", "woken_count", "moved_count", "collision_passes", "collision_count", "topple_count", "upper_lower_fall_count"]
-	if metrics.size() != metric_keys.size():
-		return false
-	for metric_key in metric_keys:
-		if typeof(metrics.get(metric_key, null)) != TYPE_INT:
-			return false
-	if int(metrics.get("fixed_ticks", -1)) != ACTION_TICKS \
-			or int(metrics.get("body_count", -1)) != (candidate.get("bodies", []) as Array).size() \
-			or (candidate.get("bodies", []) as Array).size() > (before.get("bodies", []) as Array).size():
-		return false
-	return typeof(candidate.get("last_events", null)) == TYPE_ARRAY \
-			and typeof(candidate.get("last_motion_events", null)) == TYPE_ARRAY \
-			and typeof(candidate.get("last_step_metrics", null)) == TYPE_DICTIONARY \
-			and candidate["last_events"] == result["events"] \
-			and candidate["last_motion_events"] == result["motion_events"] \
-			and candidate["last_step_metrics"] == result["metrics"]
-
-
-static func _trusted_packed_trace_shape_valid(value: Variant) -> bool:
-	if typeof(value) != TYPE_DICTIONARY:
-		return false
-	var packed: Dictionary = value
-	var frame_count := int(packed.get("frame_count", -1))
-	if str(packed.get("schema", "")) != PACKED_TRACE_SCHEMA or int(packed.get("version", 0)) != PACKED_TRACE_VERSION \
-			or frame_count != ACTION_TICKS / PRESENTATION_TRACE_INTERVAL_TICKS + 2:
-		return false
-	var required_types := {
-		"frame_offsets": TYPE_PACKED_INT32_ARRAY, "tick_offsets": TYPE_PACKED_INT32_ARRAY,
-		"upper_phase_fp": TYPE_PACKED_INT32_ARRAY, "lower_phase_fp": TYPE_PACKED_INT32_ARRAY,
-		"body_ids": TYPE_PACKED_STRING_ARRAY, "body_kinds": TYPE_PACKED_STRING_ARRAY,
-		"body_radii": TYPE_PACKED_INT32_ARRAY, "body_heights": TYPE_PACKED_INT32_ARRAY,
-		"body_masses": TYPE_PACKED_INT32_ARRAY, "body_metadata": TYPE_ARRAY,
-		"row_body_indices": TYPE_PACKED_INT32_ARRAY, "row_material_categories": TYPE_PACKED_STRING_ARRAY,
-		"row_x": TYPE_PACKED_INT32_ARRAY, "row_y": TYPE_PACKED_INT32_ARRAY, "row_z": TYPE_PACKED_INT32_ARRAY,
-		"row_radius": TYPE_PACKED_INT32_ARRAY, "row_height": TYPE_PACKED_INT32_ARRAY,
-		"row_sleeping": TYPE_PACKED_BYTE_ARRAY, "row_rest_states": TYPE_PACKED_STRING_ARRAY,
-		"row_has_level": TYPE_PACKED_BYTE_ARRAY, "row_levels": TYPE_PACKED_STRING_ARRAY,
-		"row_lean_milli": TYPE_PACKED_INT32_ARRAY,
-	}
-	for key in required_types:
-		if typeof(packed.get(key, null)) != int(required_types[key]):
-			return false
-	var offsets: PackedInt32Array = packed.get("frame_offsets", PackedInt32Array())
-	var descriptors: PackedStringArray = packed.get("body_ids", PackedStringArray())
-	var rows: PackedInt32Array = packed.get("row_body_indices", PackedInt32Array())
-	if offsets.size() != frame_count + 1 or offsets[0] != 0 or offsets[frame_count] != rows.size():
-		return false
-	for field in ["tick_offsets", "upper_phase_fp", "lower_phase_fp"]:
-		if packed[field].size() != frame_count:
-			return false
-	for field in ["body_kinds", "body_radii", "body_heights", "body_masses", "body_metadata"]:
-		if packed[field].size() != descriptors.size():
-			return false
-	for field in ["row_material_categories", "row_x", "row_y", "row_z", "row_radius", "row_height", "row_sleeping", "row_rest_states", "row_has_level", "row_levels", "row_lean_milli"]:
-		if packed[field].size() != rows.size():
-			return false
-	return true
-
-
-static func _step_action_dictionary_reference(state: Dictionary, config: Dictionary) -> Dictionary:
-	# Presentation time is sampled only when the player commits an action. The
-	# sampled fixed-point phases become explicit deterministic solver inputs.
-	_normalize_hot_body_fields(state)
-	if config.has("captured_upper_phase_fp"):
-		state["upper_phase_fp"] = posmod(int(config.get("captured_upper_phase_fp", 0)), PHASE_PERIOD)
-	if config.has("captured_lower_phase_fp"):
-		state["lower_phase_fp"] = posmod(int(config.get("captured_lower_phase_fp", 0)), PHASE_PERIOD)
-	var events: Array = []
-	var motion_events: Array = []
-	var motion_event_keys := {}
-	var capture_trace := bool(config.get("capture_presentation_trace", false))
-	var emit_presentation_events := bool(config.get("emit_presentation_events", true))
-	var presentation_trace: Array = []
-	var exit_trails: Array = []
-	if capture_trace:
-		presentation_trace.append(_presentation_trace_frame(state, 0, []))
-	var start_positions := _positions_by_id(state)
-	var peak_z_by_id := _peak_z_by_id(state) if emit_presentation_events else {}
-	var nudge_x := int(config.get("nudge_x", 0))
-	var nudge_y := int(config.get("nudge_y", 0))
-	var aimed_x := int(config.get("aimed_x", _divi(WIDTH, 2)))
-	var nudge_radius := maxi(COIN_RADIUS * 2, int(config.get("nudge_radius", WIDTH)))
-	var push_scale := maxi(1, int(config.get("push_scale", 1)))
-	var upper_locked := bool(config.get("upper_locked", false))
-	var lower_locked := bool(config.get("lower_locked", false))
-	var ridge_double := bool(config.get("ridge_double", false))
-	var wake_count := 0
-	var collision_count := 0
-	var collision_visited := PackedInt32Array()
-	var starting_body_count := (state.get("bodies", []) as Array).size()
-	collision_visited.resize(starting_body_count * starting_body_count)
-	var cached_spatial_keys := PackedInt32Array()
-	var cached_spatial_buckets := {}
-	var cached_neighbor_indices := {}
-	if nudge_x != 0 or nudge_y != 0:
-		wake_count += _apply_nudge(state, nudge_x, nudge_y, aimed_x, nudge_radius)
-	for tick_index in range(ACTION_TICKS):
-		var event_count_before := events.size()
-		var old_upper := _pusher_face_y(int(state.get("upper_phase_fp", 0)), true)
-		var old_lower := _pusher_face_y(int(state.get("lower_phase_fp", 0)), false)
-		if not upper_locked:
-			state["upper_phase_fp"] = posmod(int(state.get("upper_phase_fp", 0)) + 280 * (2 if ridge_double else 1), PHASE_PERIOD)
-		if not lower_locked:
-			state["lower_phase_fp"] = posmod(int(state.get("lower_phase_fp", 0)) + 360 * (2 if ridge_double else 1), PHASE_PERIOD)
-		var new_upper := _pusher_face_y(int(state.get("upper_phase_fp", 0)), true)
-		var new_lower := _pusher_face_y(int(state.get("lower_phase_fp", 0)), false)
-		var integration_indices := PackedInt32Array()
-		var woke_this_tick := _apply_pushers(state, old_upper, new_upper, old_lower, new_lower, push_scale, integration_indices)
-		wake_count += woke_this_tick
-		if not integration_indices.is_empty():
-			_integrate(state, integration_indices, events, motion_events, motion_event_keys, peak_z_by_id, tick_index + 1)
-			var awake_indices := PackedInt32Array()
-			var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-			var spatial_keys := _spatial_keys(bodies, awake_indices)
-			if spatial_keys != cached_spatial_keys:
-				cached_spatial_keys = spatial_keys
-				cached_spatial_buckets = _spatial_buckets(spatial_keys)
-				cached_neighbor_indices = {}
-			var support_indices := awake_indices.duplicate()
-			var support_seen := PackedByteArray()
-			support_seen.resize(bodies.size())
-			for awake_index in awake_indices:
-				support_seen[int(awake_index)] = 1
-			for _pass_index in range(MAX_COLLISION_PASSES):
-				var visit_generation := tick_index * MAX_COLLISION_PASSES + _pass_index + 1
-				var resolved := _resolve_collisions(state, cached_spatial_buckets, collision_visited, visit_generation, awake_indices, cached_neighbor_indices, support_indices, support_seen)
-				collision_count += resolved
-				if resolved <= 0:
-					break
-			support_indices.sort()
-			_resolve_supports(state, cached_spatial_buckets, cached_neighbor_indices, support_indices, motion_events, motion_event_keys, peak_z_by_id, tick_index + 1)
-		state["tick"] = int(state.get("tick", 0)) + 1
-		if capture_trace:
-			for event_index in range(event_count_before, events.size()):
-				exit_trails.append({"views": _presentation_exit_views(events[event_index]), "index": 0})
-			if (tick_index + 1) % PRESENTATION_TRACE_INTERVAL_TICKS == 0 or tick_index + 1 == ACTION_TICKS:
-				var exit_views: Array = []
-				var remaining_trails: Array = []
-				for trail_value in exit_trails:
-					var trail: Dictionary = trail_value if typeof(trail_value) == TYPE_DICTIONARY else {}
-					var views: Array = trail.get("views", []) if typeof(trail.get("views", [])) == TYPE_ARRAY else []
-					var view_index := int(trail.get("index", 0))
-					if view_index < views.size():
-						exit_views.append(views[view_index])
-						trail["index"] = view_index + 1
-						if view_index + 1 < views.size():
-							remaining_trails.append(trail)
-				exit_trails = remaining_trails
-				presentation_trace.append(_presentation_trace_frame(state, tick_index + 1, exit_views))
-	var moved_count := 0
-	for value in state.get("bodies", []):
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var body: Dictionary = value
-		var before: Array = start_positions.get(str(body.get("id", "")), [])
-		if before.size() == 3 and (absi(int(before[0]) - int(body.get("x", 0))) > 180 or absi(int(before[1]) - int(body.get("y", 0))) > 180 or absi(int(before[2]) - int(body.get("z", 0))) > 180):
-			moved_count += 1
-	if capture_trace:
-		presentation_trace.append(_presentation_trace_frame(state, ACTION_TICKS + 1, []))
-	state["last_events"] = events
-	state["last_motion_events"] = motion_events
-	state["last_step_metrics"] = {
-		"fixed_ticks": ACTION_TICKS,
-		"body_count": (state.get("bodies", []) as Array).size(),
-		"awake_count": awake_count(state),
-		"woken_count": wake_count,
-		"moved_count": moved_count,
-		"collision_passes": MAX_COLLISION_PASSES,
-		"collision_count": collision_count,
-		"topple_count": _motion_event_count(motion_events, "topple"),
-		"upper_lower_fall_count": _motion_event_count(motion_events, "upper_to_lower"),
-	}
-	var presentation_events := _presentation_event_views(state, events, motion_events, state["last_step_metrics"], config) if emit_presentation_events else []
-	return {
-		"events": events,
-		"motion_events": motion_events,
-		"presentation_events": presentation_events,
-		"metrics": state["last_step_metrics"],
-		"presentation_trace": presentation_trace,
-	}
-
-
-static func _step_action_hot(state: Dictionary, config: Dictionary) -> Dictionary:
-	# Test-only timings are returned with the action result and never written into
-	# authoritative state. Production calls perform no clock reads and return no
-	# timing data.
-	var debug_profile_stages := bool(config.get("_debug_profile_stages", false))
-	var debug_stage_timing_usec: Dictionary = {
-		"pack": 0,
-		"push_integrate_48_ticks": 0,
-		"collision_visited_setup": 0,
-		"grid": 0,
-		"collisions": 0,
-		"supports": 0,
-		"trace_construction": 0,
-		"final_scan": 0,
-		"writeback": 0,
-		"solver_result_assembly": 0,
-		"solver_total": 0,
-	} if debug_profile_stages else {}
-	var debug_total_started_usec := Time.get_ticks_usec() if debug_profile_stages else 0
-	var debug_stage_started_usec := Time.get_ticks_usec() if debug_profile_stages else 0
-	if config.has("captured_upper_phase_fp"):
-		state["upper_phase_fp"] = posmod(int(config.get("captured_upper_phase_fp", 0)), PHASE_PERIOD)
-	if config.has("captured_lower_phase_fp"):
-		state["lower_phase_fp"] = posmod(int(config.get("captured_lower_phase_fp", 0)), PHASE_PERIOD)
-	var hot := HotBodies.new()
-	hot.load_from(state)
-	if debug_profile_stages:
-		debug_stage_timing_usec["pack"] = Time.get_ticks_usec() - debug_stage_started_usec
-	var events: Array = []
-	var motion_events: Array = []
-	var motion_event_keys := {}
-	var capture_trace := bool(config.get("capture_presentation_trace", false))
-	var emit_presentation_events := bool(config.get("emit_presentation_events", true))
-	var presentation_trace: Array = []
-	var exit_trails: Array = []
-	if capture_trace:
-		debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-		presentation_trace.append(_hot_presentation_trace_frame(hot, state, 0, []))
-		if debug_profile_stages:
-			debug_stage_timing_usec["trace_construction"] = Time.get_ticks_usec() - debug_stage_started_usec
-	var start_x := hot.x.duplicate()
-	var start_y := hot.y.duplicate()
-	var start_z := hot.z.duplicate()
-	var peak_z := hot.z.duplicate() if emit_presentation_events else PackedInt32Array()
-	var nudge_x := int(config.get("nudge_x", 0))
-	var nudge_y := int(config.get("nudge_y", 0))
-	var aimed_x := int(config.get("aimed_x", _divi(WIDTH, 2)))
-	var nudge_radius := maxi(COIN_RADIUS * 2, int(config.get("nudge_radius", WIDTH)))
-	var push_scale := maxi(1, int(config.get("push_scale", 1)))
-	var upper_locked := bool(config.get("upper_locked", false))
-	var lower_locked := bool(config.get("lower_locked", false))
-	var ridge_double := bool(config.get("ridge_double", false))
-	var wake_count := 0
-	var collision_count := 0
-	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-	var collision_visited := PackedInt32Array()
-	collision_visited.resize(hot.size() * hot.size())
-	if debug_profile_stages:
-		debug_stage_timing_usec["collision_visited_setup"] = Time.get_ticks_usec() - debug_stage_started_usec
-	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-	var hot_grid := HotGrid.new()
-	if config.has("_debug_hot_grid_generation"):
-		hot_grid.set_candidate_generation_for_test(int(config.get("_debug_hot_grid_generation", 0)))
-	if debug_profile_stages:
-		debug_stage_timing_usec["grid"] = Time.get_ticks_usec() - debug_stage_started_usec
-	if nudge_x != 0 or nudge_y != 0:
-		debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-		wake_count += _hot_apply_nudge(hot, nudge_x, nudge_y, aimed_x, nudge_radius)
-		if debug_profile_stages:
-			debug_stage_timing_usec["push_integrate_48_ticks"] = Time.get_ticks_usec() - debug_stage_started_usec
-	var integration_indices := PackedInt32Array()
-	var awake_indices := PackedInt32Array()
-	var support_indices := PackedInt32Array()
-	var support_seen := PackedByteArray()
-	support_seen.resize(hot.size())
-	for tick_index in range(ACTION_TICKS):
-		var event_count_before := events.size()
-		var old_upper := _pusher_face_y(int(state.get("upper_phase_fp", 0)), true)
-		var old_lower := _pusher_face_y(int(state.get("lower_phase_fp", 0)), false)
-		if not upper_locked:
-			state["upper_phase_fp"] = posmod(int(state.get("upper_phase_fp", 0)) + 280 * (2 if ridge_double else 1), PHASE_PERIOD)
-		if not lower_locked:
-			state["lower_phase_fp"] = posmod(int(state.get("lower_phase_fp", 0)) + 360 * (2 if ridge_double else 1), PHASE_PERIOD)
-		var new_upper := _pusher_face_y(int(state.get("upper_phase_fp", 0)), true)
-		var new_lower := _pusher_face_y(int(state.get("lower_phase_fp", 0)), false)
-		integration_indices.clear()
-		debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-		wake_count += _hot_apply_pushers(hot, old_upper, new_upper, old_lower, new_lower, push_scale, integration_indices)
-		if not integration_indices.is_empty():
-			_hot_integrate(hot, integration_indices, events, motion_events, motion_event_keys, peak_z, tick_index + 1, start_x, start_y, start_z)
-		if debug_profile_stages:
-			debug_stage_timing_usec["push_integrate_48_ticks"] = int(debug_stage_timing_usec.get("push_integrate_48_ticks", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
-		if not integration_indices.is_empty():
-			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-			awake_indices.clear()
-			var hot_sleeping := hot.sleeping
-			for index in range(hot_sleeping.size()):
-				if hot_sleeping[index] == 0:
-					awake_indices.append(index)
-			hot_grid.rebuild(hot)
-			if debug_profile_stages:
-				debug_stage_timing_usec["grid"] = int(debug_stage_timing_usec.get("grid", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
-			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-			support_indices.clear()
-			support_indices.append_array(awake_indices)
-			support_seen.fill(0)
-			for awake_index in awake_indices:
-				support_seen[int(awake_index)] = 1
-			if debug_profile_stages:
-				debug_stage_timing_usec["supports"] = int(debug_stage_timing_usec.get("supports", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
-			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-			for _pass_index in range(MAX_COLLISION_PASSES):
-				var visit_generation := tick_index * MAX_COLLISION_PASSES + _pass_index + 1
-				var resolved := _hot_resolve_collisions(hot, hot_grid, collision_visited, visit_generation, awake_indices, support_indices, support_seen)
-				collision_count += resolved
-				if resolved <= 0:
-					break
-			if debug_profile_stages:
-				debug_stage_timing_usec["collisions"] = int(debug_stage_timing_usec.get("collisions", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
-			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-			support_indices.sort()
-			_hot_resolve_supports(hot, hot_grid, support_indices, motion_events, motion_event_keys, peak_z, tick_index + 1)
-			if debug_profile_stages:
-				debug_stage_timing_usec["supports"] = int(debug_stage_timing_usec.get("supports", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
-		state["tick"] = int(state.get("tick", 0)) + 1
-		if capture_trace:
-			debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-			for event_index in range(event_count_before, events.size()):
-				exit_trails.append({"views": _presentation_exit_views(events[event_index]), "index": 0})
-			if (tick_index + 1) % PRESENTATION_TRACE_INTERVAL_TICKS == 0 or tick_index + 1 == ACTION_TICKS:
-				var exit_views: Array = []
-				var remaining_trails: Array = []
-				for trail_value in exit_trails:
-					var trail: Dictionary = trail_value if typeof(trail_value) == TYPE_DICTIONARY else {}
-					var views: Array = trail.get("views", []) if typeof(trail.get("views", [])) == TYPE_ARRAY else []
-					var view_index := int(trail.get("index", 0))
-					if view_index < views.size():
-						exit_views.append(views[view_index])
-						trail["index"] = view_index + 1
-						if view_index + 1 < views.size():
-							remaining_trails.append(trail)
-				exit_trails = remaining_trails
-				presentation_trace.append(_hot_presentation_trace_frame(hot, state, tick_index + 1, exit_views))
-			if debug_profile_stages:
-				debug_stage_timing_usec["trace_construction"] = int(debug_stage_timing_usec.get("trace_construction", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
-	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-	var moved_count := 0
-	for index in range(hot.size()):
-		if absi(start_x[index] - hot.x[index]) > 180 or absi(start_y[index] - hot.y[index]) > 180 or absi(start_z[index] - hot.z[index]) > 180:
-			moved_count += 1
-	if debug_profile_stages:
-		debug_stage_timing_usec["final_scan"] = Time.get_ticks_usec() - debug_stage_started_usec
-	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-	hot.write_back(state)
-	if debug_profile_stages:
-		debug_stage_timing_usec["writeback"] = Time.get_ticks_usec() - debug_stage_started_usec
-	if capture_trace:
-		debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-		presentation_trace.append(_presentation_trace_frame(state, ACTION_TICKS + 1, []))
-		if debug_profile_stages:
-			debug_stage_timing_usec["trace_construction"] = int(debug_stage_timing_usec.get("trace_construction", 0)) + Time.get_ticks_usec() - debug_stage_started_usec
-	debug_stage_started_usec = Time.get_ticks_usec() if debug_profile_stages else 0
-	var awake_count := 0
-	var sleeping := hot.sleeping
-	for index in range(sleeping.size()):
-		if sleeping[index] == 0:
-			awake_count += 1
-	var topple_count := 0
-	var upper_lower_fall_count := 0
-	for event_index in range(motion_events.size()):
-		var motion_value: Variant = motion_events[event_index]
-		if typeof(motion_value) != TYPE_DICTIONARY:
-			continue
-		var motion_kind := str((motion_value as Dictionary).get("kind", ""))
-		if motion_kind == "topple":
-			topple_count += 1
-		elif motion_kind == "upper_to_lower":
-			upper_lower_fall_count += 1
-	state["last_events"] = events
-	state["last_motion_events"] = motion_events
-	state["last_step_metrics"] = {
-		"fixed_ticks": ACTION_TICKS,
-		"body_count": hot.size(),
-		"awake_count": awake_count,
-		"woken_count": wake_count,
-		"moved_count": moved_count,
-		"collision_passes": MAX_COLLISION_PASSES,
-		"collision_count": collision_count,
-		"topple_count": topple_count,
-		"upper_lower_fall_count": upper_lower_fall_count,
-	}
-	var presentation_events := _hot_presentation_event_views(hot, events, motion_events, state["last_step_metrics"], config) if emit_presentation_events else []
-	var result := {
-		"events": events,
-		"motion_events": motion_events,
-		"presentation_events": presentation_events,
-		"metrics": state["last_step_metrics"],
-		"presentation_trace": presentation_trace,
-	}
-	if debug_profile_stages:
-		debug_stage_timing_usec["solver_result_assembly"] = Time.get_ticks_usec() - debug_stage_started_usec
-		debug_stage_timing_usec["solver_total"] = Time.get_ticks_usec() - debug_total_started_usec
-		result["debug_stage_timing_usec"] = debug_stage_timing_usec
+static func settle(state: Dictionary, motor_running: bool, max_ticks: int = 1200) -> Dictionary:
+	var used := 0
+	while used < max_ticks and not all_steady(state, motor_running):
+		step_ticks(state, {"motor_enabled": motor_running}, mini(8, max_ticks - used))
+		used += mini(8, max_ticks - used)
+	var result := {"settled": all_steady(state, motor_running), "ticks": used, "awake_count": awake_count(state)}
+	if max_ticks >= 1200:
+		assert(bool(result.get("settled", false)), "Coin Pusher V3 exceeded the 1200-tick settle guarantee.")
 	return result
 
 
-static func apply_nudge_only(state: Dictionary, x_impulse: int, y_impulse: int, aimed_x: int, radius: int) -> int:
-	return _apply_nudge(state, x_impulse, y_impulse, aimed_x, radius)
+static func _debug_assert_invariants(result: Dictionary) -> void:
+	var invariants: Dictionary = result.get("invariants", {}) if typeof(result.get("invariants", {})) == TYPE_DICTIONARY else {}
+	assert(bool(invariants.get("energy_ok", false)), "Coin Pusher V3 gained energy beyond platform/gravity/input work.")
+	assert(bool(invariants.get("conservation_ok", false)), "Coin Pusher V3 body conservation did not reconcile.")
 
 
-static func _hot_apply_nudge(hot: HotBodies, x_impulse: int, y_impulse: int, aimed_x: int, radius: int) -> int:
+static func all_steady(state: Dictionary, motor_running: bool = true) -> bool:
+	for body_value in state.get("bodies", []):
+		var body: Dictionary = body_value
+		if not bool(body.get("sleeping", false)):
+			return false
+		if motor_running and str(body.get("support_kind", "")) == "platform" and not bool(body.get("carried_sleep", false)):
+			return false
+	return true
+
+
+static func collect_tray(state: Dictionary) -> Dictionary:
+	var value := 0
+	var items: Array = []
+	var ledger: Array = state.get("tray_ledger", [])
+	for entry_value in ledger:
+		var entry: Dictionary = entry_value
+		value += maxi(0, int(entry.get("value", 0)))
+		if not str(entry.get("item_id", "")).is_empty():
+			items.append(str(entry.get("item_id", "")))
+	state["tray_ledger"] = []
+	return {"value": value, "items": items, "count": ledger.size()}
+
+
+static func face_y_for_phase(definition: Dictionary, phase: int) -> int:
+	var geometry := _geometry(definition)
+	var stroke := _stroke(definition)
+	var period := maxi(1, int(stroke.get("period_ticks", STROKE_PERIOD)))
+	var index := posmod(phase, period)
+	var cosine := int(COS_TABLE[index * COS_TABLE.size() / period])
+	var extended := int(geometry.get("face_extended_y", FACE_EXTENDED_Y))
+	var retracted := int(geometry.get("face_retracted_y", FACE_RETRACTED_Y))
+	return extended + _divi((retracted - extended) * (FP - cosine), 2 * FP)
+
+
+static func deck_landing_phase_ratio_milli(definition: Dictionary) -> int:
+	var geometry := _geometry(definition)
+	var stroke := _stroke(definition)
+	var period := maxi(1, int(stroke.get("period_ticks", STROKE_PERIOD)))
+	var drop_y := int(geometry.get("drop_y", DROP_Y))
+	var radius := int(_coins(definition).get("radius", COIN_RADIUS))
 	var count := 0
-	var xs := hot.x
-	var vxs := hot.vx
-	var vys := hot.vy
-	var masses := hot.masses
-	var sleeping := hot.sleeping
-	var sleep_ticks := hot.sleep_ticks
-	var rest_states := hot.rest_states
-	for index in range(xs.size()):
-		if absi(xs[index] - aimed_x) > radius:
-			continue
-		var mass := maxi(1, masses[index])
-		vxs[index] += _divi(x_impulse, mass)
-		vys[index] += _divi(y_impulse, mass)
-		sleeping[index] = 0
-		sleep_ticks[index] = 0
-		rest_states[index] = "settling"
-		count += 1
-	hot.vx = vxs
-	hot.vy = vys
-	hot.sleeping = sleeping
-	hot.sleep_ticks = sleep_ticks
-	return count
-
-
-static func _hot_apply_pushers(hot: HotBodies, old_upper: int, new_upper: int, old_lower: int, new_lower: int, push_scale: int, active_indices: PackedInt32Array) -> int:
-	var upper_active := new_upper < old_upper
-	var lower_active := new_lower < old_lower
-	var count := 0
-	var ys := hot.y
-	var zs := hot.z
-	var vys := hot.vy
-	var radii := hot.radii
-	var heights := hot.heights
-	var sleeping := hot.sleeping
-	var sleep_ticks := hot.sleep_ticks
-	var rest_states := hot.rest_states
-	for index in range(ys.size()):
-		var body_y := ys[index]
-		var body_z := zs[index]
-		var upper := body_y >= UPPER_EDGE and body_z >= UPPER_FLOOR_Z
-		var active := upper_active if upper else lower_active
-		var old_face := old_upper if upper else old_lower
-		var new_face := new_upper if upper else new_lower
-		var floor_z := UPPER_FLOOR_Z if upper else LOWER_FLOOR_Z
-		var eligible := active and (upper or (body_y >= FRONT_EDGE and body_y < UPPER_EDGE and body_z < UPPER_FLOOR_Z + COIN_HEIGHT))
-		if eligible and body_y > new_face - radii[index] and body_y < old_face + radii[index] and body_z <= floor_z + heights[index] * 5:
-			ys[index] = mini(body_y, new_face - radii[index])
-			vys[index] -= (old_face - new_face) * push_scale
-			sleeping[index] = 0
-			sleep_ticks[index] = 0
-			rest_states[index] = "settling"
+	for phase in range(period):
+		if face_y_for_phase(definition, phase) > drop_y + radius:
 			count += 1
-		if sleeping[index] == 0:
-			active_indices.append(index)
-	hot.y = ys
-	hot.vy = vys
-	hot.sleeping = sleeping
-	hot.sleep_ticks = sleep_ticks
-	return count
-
-
-static func _hot_append_impact_motion_event(events: Array, event_keys: Dictionary, hot: HotBodies, index: int, material: String, stack_depth: int, fall_height: int, tick_offset: int) -> void:
-	var body_id := str(hot.ids[index])
-	var event_key := "impact|%s" % body_id
-	if body_id.is_empty() or event_keys.has(event_key):
-		return
-	events.append({
-		"kind": "impact", "body_id": body_id,
-		"x": hot.x[index], "y": hot.y[index], "z": hot.z[index],
-		"tick_offset": tick_offset, "material": material,
-		"stack_depth": maxi(0, stack_depth),
-		"fall_height_milli": maxi(0, _divi(fall_height * FP, COIN_HEIGHT)),
-	})
-	event_keys[event_key] = true
-
-
-static func _hot_integrate(hot: HotBodies, active_indices: PackedInt32Array, events: Array, motion_events: Array, motion_event_keys: Dictionary, peak_z: PackedInt32Array, tick_offset: int, start_x: PackedInt32Array, start_y: PackedInt32Array, start_z: PackedInt32Array) -> void:
-	var exit_indices := PackedInt32Array()
-	var body_count := hot.size()
-	var xs := hot.x
-	var ys := hot.y
-	var zs := hot.z
-	var vxs := hot.vx
-	var vys := hot.vy
-	var vzs := hot.vz
-	var radii := hot.radii
-	var masses := hot.masses
-	var ids := hot.ids
-	var kinds := hot.kinds
-	var metadata := hot.metadata
-	var sleeping := hot.sleeping
-	var sleep_ticks := hot.sleep_ticks
-	var rest_states := hot.rest_states
-	var pressure_ticks := hot.cap_pressure_ticks
-	var pressure_accel := hot.cap_pressure_accel
-	for active_position in range(active_indices.size()):
-		var index := active_indices[active_position]
-		if index < 0 or index >= body_count:
-			continue
-		var previous_z := zs[index]
-		if not peak_z.is_empty():
-			peak_z[index] = maxi(peak_z[index], previous_z)
-		if pressure_ticks[index] > 0:
-			vys[index] -= maxi(0, pressure_accel[index])
-			pressure_ticks[index] -= 1
-		var was_upper := zs[index] >= UPPER_FLOOR_Z
-		vzs[index] -= GRAVITY
-		vxs[index] = _divi(vxs[index] * AIR_DRAG_NUM, AIR_DRAG_DEN)
-		vys[index] = _divi(vys[index] * AIR_DRAG_NUM, AIR_DRAG_DEN)
-		xs[index] += _divi(vxs[index], FIXED_HZ)
-		ys[index] += _divi(vys[index], FIXED_HZ)
-		zs[index] += _divi(vzs[index], FIXED_HZ)
-		var exit := ""
-		if xs[index] < -radii[index] or xs[index] > WIDTH + radii[index]:
-			exit = "gutter"
-		elif ys[index] < FRONT_EDGE - radii[index]:
-			exit = "tray" if xs[index] >= TRAY_LEFT and xs[index] <= TRAY_RIGHT else "gutter"
-		if not exit.is_empty():
-			events.append({
-				"body_id": str(ids[index]), "kind": str(kinds[index]),
-				"outcome": exit, "cause": "physical_fall",
-				"x": xs[index], "y": ys[index], "z": zs[index],
-				"mass": masses[index], "tick_offset": tick_offset,
-				"metadata": (metadata[index] as Dictionary).duplicate(true),
-			})
-			exit_indices.append(index)
-			continue
-		var base_z := UPPER_FLOOR_Z if ys[index] >= UPPER_EDGE else LOWER_FLOOR_Z
-		if was_upper and ys[index] < UPPER_EDGE:
-			motion_events.append({"kind": "upper_to_lower", "body_id": str(ids[index]), "x": xs[index], "y": ys[index], "z": zs[index], "tick_offset": tick_offset})
-		if zs[index] <= base_z:
-			var fall_height := maxi(0, (peak_z[index] if not peak_z.is_empty() else previous_z) - base_z)
-			if not peak_z.is_empty() and previous_z > base_z and fall_height > 0:
-				_hot_append_impact_motion_event(motion_events, motion_event_keys, hot, index, "coin_on_metal", 0, fall_height, tick_offset)
-			zs[index] = base_z
-			vzs[index] = 0
-			vxs[index] = _divi(vxs[index] * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
-			vys[index] = _divi(vys[index] * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
-			var speed := absi(vxs[index]) + absi(vys[index]) + absi(vzs[index])
-			if speed <= SLEEP_SPEED:
-				sleep_ticks[index] += 1
-				if sleep_ticks[index] >= SLEEP_TICKS:
-					vxs[index] = 0
-					vys[index] = 0
-					vzs[index] = 0
-					sleeping[index] = 1
-					rest_states[index] = "resting"
-			else:
-				sleep_ticks[index] = 0
-				rest_states[index] = "settling"
-		else:
-			rest_states[index] = "falling"
-			sleep_ticks[index] = 0
-	hot.x = xs
-	hot.y = ys
-	hot.z = zs
-	hot.vx = vxs
-	hot.vy = vys
-	hot.vz = vzs
-	hot.sleeping = sleeping
-	hot.sleep_ticks = sleep_ticks
-	hot.cap_pressure_ticks = pressure_ticks
-	for exit_position in range(exit_indices.size() - 1, -1, -1):
-		var exit_index := exit_indices[exit_position]
-		hot.remove_at(exit_index)
-		start_x.remove_at(exit_index)
-		start_y.remove_at(exit_index)
-		start_z.remove_at(exit_index)
-		if not peak_z.is_empty():
-			peak_z.remove_at(exit_index)
-
-
-static func _hot_resolve_collisions(hot: HotBodies, grid: HotGrid, visited_pairs: PackedInt32Array, visit_generation: int, awake_indices: PackedInt32Array, support_indices: PackedInt32Array, support_seen: PackedByteArray) -> int:
-	if awake_indices.is_empty():
-		return 0
-	var resolved := 0
-	var body_count := hot.size()
-	# Hoist the reference-backed packed columns once for the dense pair loop.
-	# This preserves candidate/pair order while avoiding object-property
-	# dispatch for every scalar read and write; the final assignments make the
-	# column publication explicit for static readers.
-	var xs := hot.x
-	var ys := hot.y
-	var zs := hot.z
-	var vxs := hot.vx
-	var vys := hot.vy
-	var radii := hot.radii
-	var heights := hot.heights
-	var sleeping := hot.sleeping
-	var sleep_ticks := hot.sleep_ticks
-	var rest_states := hot.rest_states
-	for awake_position in range(awake_indices.size()):
-		var left_index := awake_indices[awake_position]
-		var center_x := _divi(xs[left_index], BROADPHASE_CELL)
-		var center_y := _divi(ys[left_index], BROADPHASE_CELL)
-		var center_z := _divi(zs[left_index], BROADPHASE_CELL)
-		var cache_slot := grid.candidate_slot(center_x, center_y, center_z)
-		var candidate_offset := grid.candidate_offsets[cache_slot]
-		var candidate_length := grid.candidate_lengths[cache_slot]
-		for candidate_position in range(candidate_length):
-			var right_index := grid.candidate_pool[candidate_offset + candidate_position]
-			if right_index == left_index:
-				continue
-			var low := mini(left_index, right_index)
-			var high := maxi(left_index, right_index)
-			var pair_key := low * body_count + high
-			if visited_pairs[pair_key] == visit_generation:
-				continue
-			visited_pairs[pair_key] = visit_generation
-			var dx := xs[right_index] - xs[left_index]
-			var dy := ys[right_index] - ys[left_index]
-			var min_distance := radii[left_index] + radii[right_index]
-			if absi(dx) >= min_distance or absi(dy) >= min_distance or dx * dx + dy * dy >= min_distance * min_distance:
-				continue
-			var z_gap := absi(zs[left_index] - zs[right_index])
-			if z_gap >= mini(heights[left_index], heights[right_index]):
-				continue
-			var overlap := min_distance - maxi(absi(dx), absi(dy))
-			if overlap <= 0:
-				continue
-			if absi(dx) >= absi(dy):
-				var sign_x := 1 if dx >= 0 else -1
-				xs[right_index] += _divi(sign_x * overlap, 2)
-				xs[left_index] -= _divi(sign_x * overlap, 2)
-				vxs[right_index] += sign_x * overlap * 5
-				vxs[left_index] -= sign_x * overlap * 5
-			else:
-				var sign_y := 1 if dy >= 0 else -1
-				ys[right_index] += _divi(sign_y * overlap, 2)
-				ys[left_index] -= _divi(sign_y * overlap, 2)
-				vys[right_index] += sign_y * overlap * 5
-				vys[left_index] -= sign_y * overlap * 5
-			if sleeping[right_index] != 0 and support_seen[right_index] == 0:
-				support_seen[right_index] = 1
-				support_indices.append(right_index)
-			sleeping[left_index] = 0
-			sleep_ticks[left_index] = 0
-			rest_states[left_index] = "settling"
-			sleeping[right_index] = 0
-			sleep_ticks[right_index] = 0
-			rest_states[right_index] = "settling"
-			resolved += 1
-	hot.x = xs
-	hot.y = ys
-	hot.vx = vxs
-	hot.vy = vys
-	hot.sleeping = sleeping
-	hot.sleep_ticks = sleep_ticks
-	return resolved
-
-
-static func _hot_resolve_supports(hot: HotBodies, grid: HotGrid, active_indices: PackedInt32Array, motion_events: Array, motion_event_keys: Dictionary, peak_z: PackedInt32Array, tick_offset: int) -> void:
-	var body_count := hot.size()
-	var xs := hot.x
-	var ys := hot.y
-	var zs := hot.z
-	var vxs := hot.vx
-	var vys := hot.vy
-	var vzs := hot.vz
-	var radii := hot.radii
-	var heights := hot.heights
-	var ids := hot.ids
-	var lean_values := hot.lean
-	var sleeping := hot.sleeping
-	var sleep_ticks := hot.sleep_ticks
-	var rest_states := hot.rest_states
-	for active_position in range(active_indices.size()):
-		var body_index := active_indices[active_position]
-		if body_index < 0 or body_index >= body_count:
-			continue
-		var base_z := UPPER_FLOOR_Z if ys[body_index] >= UPPER_EDGE else LOWER_FLOOR_Z
-		if zs[body_index] <= base_z:
-			lean_values[body_index] = 0
-			continue
-		var support_index := -1
-		var support_distance := 1 << 30
-		var center_x := _divi(xs[body_index], BROADPHASE_CELL)
-		var center_y := _divi(ys[body_index], BROADPHASE_CELL)
-		var center_z := _divi(zs[body_index], BROADPHASE_CELL)
-		var cache_slot := grid.candidate_slot(center_x, center_y, center_z)
-		var candidate_offset := grid.candidate_offsets[cache_slot]
-		var candidate_length := grid.candidate_lengths[cache_slot]
-		for candidate_position in range(candidate_length):
-			var candidate_index := grid.candidate_pool[candidate_offset + candidate_position]
-			if candidate_index == body_index:
-				continue
-			var candidate_target_z := zs[candidate_index] + heights[candidate_index]
-			if candidate_target_z > zs[body_index] + COIN_HEIGHT or candidate_target_z < zs[body_index] - COIN_HEIGHT * 2:
-				continue
-			var candidate_dx := xs[body_index] - xs[candidate_index]
-			var candidate_dy := ys[body_index] - ys[candidate_index]
-			var distance := candidate_dx * candidate_dx + candidate_dy * candidate_dy
-			var support_radius := mini(radii[body_index], radii[candidate_index])
-			if distance < support_radius * support_radius and distance < support_distance:
-				support_index = candidate_index
-				support_distance = distance
-		if support_index < 0:
-			rest_states[body_index] = "falling"
-			sleeping[body_index] = 0
-			continue
-		var target_z := zs[support_index] + heights[support_index]
-		if vzs[body_index] <= 0 and zs[body_index] <= target_z + COIN_HEIGHT:
-			var fall_height := maxi(0, (peak_z[body_index] if not peak_z.is_empty() else zs[body_index]) - target_z)
-			if not peak_z.is_empty() and fall_height > 0:
-				var stack_depth := maxi(1, _divi(target_z - base_z, COIN_HEIGHT))
-				_hot_append_impact_motion_event(motion_events, motion_event_keys, hot, body_index, "coin_on_coin", stack_depth, fall_height, tick_offset)
-			zs[body_index] = target_z
-			vzs[body_index] = 0
-			var dx := xs[body_index] - xs[support_index]
-			var dy := ys[body_index] - ys[support_index]
-			var lean := _divi(maxi(absi(dx), absi(dy)) * FP, maxi(1, radii[body_index]))
-			lean_values[body_index] = lean
-			if lean > 620:
-				var topple_key := "topple|%s" % str(ids[body_index])
-				if not motion_event_keys.has(topple_key):
-					motion_events.append({"kind": "topple", "body_id": str(ids[body_index]), "support_id": str(ids[support_index]), "lean_milli": lean})
-					motion_event_keys[topple_key] = true
-				vxs[body_index] += 120 if dx >= 0 else -120
-				vys[body_index] += 120 if dy >= 0 else -120
-				zs[body_index] = target_z + 80
-				rest_states[body_index] = "toppling"
-				sleeping[body_index] = 0
-			else:
-				var speed := absi(vxs[body_index]) + absi(vys[body_index]) + absi(vzs[body_index])
-				if speed <= SLEEP_SPEED:
-					sleep_ticks[body_index] += 1
-					if sleep_ticks[body_index] >= SLEEP_TICKS:
-						vxs[body_index] = 0
-						vys[body_index] = 0
-						vzs[body_index] = 0
-						sleeping[body_index] = 1
-						rest_states[body_index] = "resting"
-				else:
-					sleep_ticks[body_index] = 0
-					sleeping[body_index] = 0
-					rest_states[body_index] = "settling"
-	hot.z = zs
-	hot.vx = vxs
-	hot.vy = vys
-	hot.vz = vzs
-	hot.lean = lean_values
-	hot.sleeping = sleeping
-	hot.sleep_ticks = sleep_ticks
-
-
-static func _hot_body_views(hot: HotBodies) -> Array:
-	var result: Array = []
-	for index in range(hot.size()):
-		var kind := str(hot.kinds[index])
-		result.append({
-			"id": str(hot.ids[index]), "kind": kind,
-			"material_category": "coin" if kind == "coin" else "feature_puck" if kind == "puck" else "key_fragment" if kind == "fragment" else "prize_rider" if kind == "rider" else "physical_object",
-			"x": hot.x[index], "y": hot.y[index], "z": hot.z[index],
-			"radius": hot.radii[index], "height": hot.heights[index], "mass": hot.masses[index],
-			"sleeping": hot.sleeping[index] != 0, "rest_state": str(hot.rest_states[index]),
-			"level": "upper" if hot.y[index] >= UPPER_EDGE and hot.z[index] >= UPPER_FLOOR_Z else "lower" if hot.y[index] >= FRONT_EDGE and hot.z[index] >= LOWER_FLOOR_Z and hot.z[index] < UPPER_FLOOR_Z else "falling",
-			"lean_milli": hot.lean[index], "metadata": (hot.metadata[index] as Dictionary).duplicate(true),
-		})
-	result.sort_custom(_body_view_depth_before)
-	return result
-
-
-static func _hot_presentation_trace_frame(hot: HotBodies, state: Dictionary, tick_offset: int, exit_views: Array) -> Dictionary:
-	var bodies := _hot_body_views(hot)
-	if not exit_views.is_empty():
-		bodies.append_array(exit_views)
-		bodies.sort_custom(_body_view_depth_before)
-	return {
-		"tick_offset": tick_offset,
-		"upper_phase_fp": int(state.get("upper_phase_fp", 0)),
-		"lower_phase_fp": int(state.get("lower_phase_fp", 0)),
-		"bodies": bodies,
-	}
+	return _divi(count * FP, period)
 
 
 static func body_views(state: Dictionary) -> Array:
-	var result: Array = []
-	for value in state.get("bodies", []):
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var body: Dictionary = value
-		result.append({
+	var views: Array = []
+	for body_value in state.get("bodies", []):
+		var body: Dictionary = body_value
+		views.append({
 			"id": str(body.get("id", "")),
 			"kind": str(body.get("kind", "coin")),
-			"material_category": _presentation_material_category(body),
 			"x": int(body.get("x", 0)),
 			"y": int(body.get("y", 0)),
 			"z": int(body.get("z", 0)),
+			"vx": int(body.get("vx", 0)),
+			"vy": int(body.get("vy", 0)),
+			"vz": int(body.get("vz", 0)),
+			"x_remainder": int(body.get("x_remainder", 0)),
+			"y_remainder": int(body.get("y_remainder", 0)),
+			"z_remainder": int(body.get("z_remainder", 0)),
 			"radius": int(body.get("radius", COIN_RADIUS)),
 			"height": int(body.get("height", COIN_HEIGHT)),
-			"mass": int(body.get("mass", 1)),
+			"mass": int(body.get("mass", FP)),
 			"sleeping": bool(body.get("sleeping", false)),
-			"rest_state": str(body.get("rest_state", "settling")),
-			"level": level_for_body(body),
-			"lean_milli": int(body.get("lean_milli", 0)),
-			"metadata": (body.get("metadata", {}) as Dictionary).duplicate(true) if typeof(body.get("metadata", {})) == TYPE_DICTIONARY else {},
+			"rest_state": str(body.get("rest_state", "falling")),
+			"support_kind": str(body.get("support_kind", "")),
+			"metadata": (body.get("meta", {}) as Dictionary).duplicate(true),
 		})
-	result.sort_custom(_body_view_depth_before)
-	return result
+	return views
 
 
-static func _presentation_trace_frame(state: Dictionary, tick_offset: int, exit_views: Array) -> Dictionary:
-	var bodies := body_views(state)
-	# body_views() already returns the stable depth order used by presentation.
-	# Only exits can disturb it, so avoid sorting all 150-160 bodies again on
-	# the overwhelmingly common frames that have no exiting body.
-	if not exit_views.is_empty():
-		for exit_view in exit_views:
-			bodies.append(exit_view)
-		bodies.sort_custom(_body_view_depth_before)
+static func canonical_digest(state: Dictionary) -> Dictionary:
 	return {
-		"tick_offset": tick_offset,
-		"upper_phase_fp": int(state.get("upper_phase_fp", 0)),
-		"lower_phase_fp": int(state.get("lower_phase_fp", 0)),
-		"bodies": bodies,
+		"schema": str(state.get("schema", "")),
+		"version": int(state.get("version", 0)),
+		"machine_id": str(state.get("machine_id", "")),
+		"tick": int(state.get("tick", 0)),
+		"next_body_id": int(state.get("next_body_id", 0)),
+		"phase_fp": int(state.get("phase_fp", 0)),
+		"motor_rate_fp": int(state.get("motor_rate_fp", 0)),
+		"motor_target_rate_fp": int(state.get("motor_target_rate_fp", 0)),
+		"face_y": int(state.get("face_y", 0)),
+		"bodies": body_views(state),
+		"tray_ledger": (state.get("tray_ledger", []) as Array).duplicate(true),
+		"gutter_ledger": (state.get("gutter_ledger", []) as Array).duplicate(true),
+		"refused_inserts": int(state.get("refused_inserts", 0)),
+		"accepted_inserts": int(state.get("accepted_inserts", 0)),
+		"opening_body_count": int(state.get("opening_body_count", 0)),
 	}
-
-
-static func _presentation_exit_views(event_value: Variant) -> Array:
-	var event: Dictionary = event_value if typeof(event_value) == TYPE_DICTIONARY else {}
-	var first := {
-		"id": str(event.get("body_id", "")),
-		"kind": str(event.get("kind", "coin")),
-		"material_category": "coin" if str(event.get("kind", "coin")) == "coin" else "physical_object",
-		"x": int(event.get("x", 0)),
-		"y": int(event.get("y", 0)),
-		"z": int(event.get("z", 0)),
-		"radius": COIN_RADIUS if str(event.get("kind", "coin")) == "coin" else OBJECT_RADIUS,
-		"height": COIN_HEIGHT if str(event.get("kind", "coin")) == "coin" else OBJECT_HEIGHT,
-		"mass": int(event.get("mass", 1)),
-		"sleeping": false,
-		"rest_state": "falling_%s" % str(event.get("outcome", "tray")),
-		"lean_milli": 0,
-		"metadata": (event.get("metadata", {}) as Dictionary).duplicate(true) if typeof(event.get("metadata", {})) == TYPE_DICTIONARY else {},
-	}
-	var second := first.duplicate(true)
-	second["y"] = int(first.get("y", 0)) - 4500
-	second["z"] = int(first.get("z", 0)) - 6000
-	return [first, second]
-
-
-static func _body_view_depth_before(left_value: Variant, right_value: Variant) -> bool:
-	var left: Dictionary = left_value if typeof(left_value) == TYPE_DICTIONARY else {}
-	var right: Dictionary = right_value if typeof(right_value) == TYPE_DICTIONARY else {}
-	var left_depth := int(left.get("y", 0)) * 10 - int(left.get("z", 0))
-	var right_depth := int(right.get("y", 0)) * 10 - int(right.get("z", 0))
-	if left_depth == right_depth:
-		return str(left.get("id", "")) < str(right.get("id", ""))
-	return left_depth > right_depth
 
 
 static func coin_count(state: Dictionary) -> int:
 	var count := 0
-	for value in state.get("bodies", []):
-		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("kind", "")) == "coin":
+	for body_value in state.get("bodies", []):
+		if str((body_value as Dictionary).get("kind", "")) == "coin":
 			count += 1
 	return count
 
 
 static func awake_count(state: Dictionary) -> int:
 	var count := 0
-	for value in state.get("bodies", []):
-		if typeof(value) == TYPE_DICTIONARY and not bool((value as Dictionary).get("sleeping", false)):
+	for body_value in state.get("bodies", []):
+		if not bool((body_value as Dictionary).get("sleeping", false)):
 			count += 1
 	return count
 
 
 static func edge_hanger_count(state: Dictionary) -> int:
+	var geometry := _geometry(_definition(state))
+	var lip := int(geometry.get("tray_lip_y", TRAY_LIP_Y))
 	var count := 0
-	for value in state.get("bodies", []):
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var body: Dictionary = value
-		if int(body.get("y", FRONT_EDGE + COIN_RADIUS)) < FRONT_EDGE + int(body.get("radius", COIN_RADIUS)) and int(body.get("y", 0)) >= FRONT_EDGE:
+	for body_value in state.get("bodies", []):
+		var body: Dictionary = body_value
+		if int(body.get("y", 0)) - int(body.get("radius", COIN_RADIUS)) <= lip + 1200:
 			count += 1
 	return count
 
 
-static func level_for_body(body: Dictionary) -> String:
-	var y := int(body.get("y", 0))
-	var z := int(body.get("z", 0))
-	if y >= UPPER_EDGE and z >= UPPER_FLOOR_Z:
-		return "upper"
-	if y >= FRONT_EDGE and z >= LOWER_FLOOR_Z:
-		return "lower" if z < UPPER_FLOOR_Z else "falling"
-	return "falling"
-
-
-static func canonical_digest(state: Dictionary) -> Dictionary:
-	var bodies: Array = []
-	for view in body_views(state):
-		var body: Dictionary = view
-		bodies.append({
-			"id": body.get("id", ""), "kind": body.get("kind", ""),
-			"x": body.get("x", 0), "y": body.get("y", 0), "z": body.get("z", 0),
-			"mass": body.get("mass", 1), "sleeping": body.get("sleeping", false),
-			"rest_state": body.get("rest_state", ""), "metadata": body.get("metadata", {}),
-		})
-	return {
-		"schema": str(state.get("schema", "")), "version": int(state.get("version", 0)),
-		"fixed_hz": int(state.get("fixed_hz", 0)), "fixed_point_scale": int(state.get("fixed_point_scale", 0)),
-		"tick": int(state.get("tick", 0)), "next_body_id": int(state.get("next_body_id", 0)),
-		"coin_cap": int(state.get("coin_cap", 0)), "upper_phase_fp": int(state.get("upper_phase_fp", 0)),
-		"lower_phase_fp": int(state.get("lower_phase_fp", 0)), "bodies": bodies,
-	}
-
-
-static func _seed_opening_pile(state: Dictionary, rng: RngStream, opening_coins: int, _lane_count: int) -> void:
-	# Generation owns the depth gradient. Fixed quotas make every shipped
-	# cabinet visibly packed at the pusher and progressively thinner toward the
-	# ledge, while best-candidate placement and stack lean remain run-seeded.
-	var shelf_specs := [
-		{"id": "lower", "min_y": 8500, "max_y": 48500, "upper": false},
-		{"id": "upper", "min_y": 55000, "max_y": 92500, "upper": true},
-	]
-	var shelf_targets := _opening_balanced_counts(opening_coins, shelf_specs.size())
-	var shelf_base_targets := _opening_balanced_counts(mini(opening_coins, 110), shelf_specs.size())
-	var shelf_supports: Array = []
-	var shelf_depth_targets: Array = []
-	var shelf_base_depth_targets: Array = []
-	for shelf_index in range(shelf_specs.size()):
-		var shelf: Dictionary = shelf_specs[shelf_index]
-		var depth_targets := _opening_gradient_targets(int(shelf_targets[shelf_index]))
-		var base_depth_targets := _opening_scaled_targets(depth_targets, int(shelf_base_targets[shelf_index]))
-		var bands := _opening_depth_bands(shelf)
-		var supports := {"rear": [], "mid": [], "front": []}
-		for band_value in bands:
-			var band: Dictionary = band_value
-			var band_id := str(band.get("id", "front"))
-			var band_bodies: Array = []
-			for _coin_index in range(int(base_depth_targets.get(band_id, 0))):
-				var candidate := _opening_best_candidate(rng, band, band_bodies)
-				var base_z := UPPER_FLOOR_Z if bool(shelf.get("upper", false)) else LOWER_FLOOR_Z
-				var body := _body(state, "coin", candidate.x, candidate.y, base_z, COIN_RADIUS, COIN_HEIGHT, 1, {
-					"opening_pile": true,
-					"opening_shelf": str(shelf.get("id", "lower")),
-					"opening_depth_band": band_id,
-				})
-				_set_opening_body_rest(body)
-				(state["bodies"] as Array).append(body)
-				band_bodies.append(body)
-				(supports[band_id] as Array).append(body)
-		shelf_supports.append(supports)
-		shelf_depth_targets.append(depth_targets)
-		shelf_base_depth_targets.append(base_depth_targets)
-	var stack_layers := {}
-	for shelf_index in range(shelf_specs.size()):
-		var shelf: Dictionary = shelf_specs[shelf_index]
-		var bands := _opening_depth_bands(shelf)
-		var supports: Dictionary = shelf_supports[shelf_index]
-		var depth_targets: Dictionary = shelf_depth_targets[shelf_index]
-		var base_depth_targets: Dictionary = shelf_base_depth_targets[shelf_index]
-		for band_value in bands:
-			var band: Dictionary = band_value
-			var band_id := str(band.get("id", "front"))
-			var stack_count := int(depth_targets.get(band_id, 0)) - int(base_depth_targets.get(band_id, 0))
-			for _stack_index in range(stack_count):
-				var candidates: Array = []
-				for support_value in supports.get(band_id, []):
-					var support: Dictionary = support_value
-					if int(stack_layers.get(str(support.get("id", "")), 0)) < 2:
-						candidates.append(support)
-				if candidates.is_empty():
-					break
-				var support: Dictionary = candidates[rng.randi_range(0, candidates.size() - 1)]
-				var support_id := str(support.get("id", ""))
-				var layer := int(stack_layers.get(support_id, 0)) + 1
-				stack_layers[support_id] = layer
-				var lean_x := rng.randi_range(-1900, 1900)
-				var lean_y := rng.randi_range(-1450, 1450)
-				var stacked := _body(
-					state,
-					"coin",
-					clampi(int(support.get("x", 0)) + lean_x, COIN_RADIUS, WIDTH - COIN_RADIUS),
-					clampi(int(support.get("y", 0)) + lean_y, int(band.get("min_y", FRONT_EDGE)), int(band.get("max_y", REAR_EDGE))),
-					int(support.get("z", 0)) + layer * COIN_HEIGHT,
-					COIN_RADIUS,
-					COIN_HEIGHT,
-					1,
-					{
-						"opening_pile": true,
-						"opening_shelf": str(shelf.get("id", "lower")),
-						"opening_depth_band": band_id,
-						"opening_stack_layer": layer,
-					}
-				)
-				stacked["lean_milli"] = _divi(maxi(absi(lean_x), absi(lean_y)) * FP, COIN_RADIUS)
-				_set_opening_body_rest(stacked)
-				(state["bodies"] as Array).append(stacked)
-
-
-static func _opening_balanced_counts(total: int, bucket_count: int) -> Array:
-	var result: Array = []
-	for bucket_index in range(maxi(1, bucket_count)):
-		var count := maxi(0, total) / maxi(1, bucket_count)
-		if bucket_index < maxi(0, total) % maxi(1, bucket_count):
-			count += 1
-		result.append(count)
-	return result
-
-
-static func _opening_gradient_targets(total: int) -> Dictionary:
-	var safe_total := maxi(0, total)
-	if safe_total < 6:
-		var front_small := safe_total / 5
-		var mid_small := safe_total / 3
-		return {"rear": safe_total - front_small - mid_small, "mid": mid_small, "front": front_small}
-	var front := maxi(1, safe_total / 5)
-	var mid := maxi(front + 1, safe_total / 3)
-	var rear := safe_total - front - mid
-	while rear <= mid and front > 1:
-		front -= 1
-		rear += 1
-	while rear <= mid and mid > front + 1:
-		mid -= 1
-		rear += 1
-	return {"rear": rear, "mid": mid, "front": front}
-
-
-static func _opening_scaled_targets(full_targets: Dictionary, total: int) -> Dictionary:
-	var full_total := maxi(1, int(full_targets.get("rear", 0)) + int(full_targets.get("mid", 0)) + int(full_targets.get("front", 0)))
-	var result := {"rear": 0, "mid": 0, "front": 0}
-	for band_id in ["rear", "mid", "front"]:
-		result[band_id] = mini(
-			int(full_targets.get(band_id, 0)),
-			_opening_mul_div_round(int(full_targets.get(band_id, 0)), clampi(total, 0, full_total), full_total)
-		)
-	var assigned := int(result.get("rear", 0)) + int(result.get("mid", 0)) + int(result.get("front", 0))
-	while assigned < total:
-		for band_id in ["rear", "mid", "front"]:
-			if assigned >= total:
-				break
-			if int(result.get(band_id, 0)) < int(full_targets.get(band_id, 0)):
-				result[band_id] = int(result.get(band_id, 0)) + 1
-				assigned += 1
-	while assigned > total:
-		for band_id in ["front", "mid", "rear"]:
-			if assigned <= total:
-				break
-			if int(result.get(band_id, 0)) > 0:
-				result[band_id] = int(result.get(band_id, 0)) - 1
-				assigned -= 1
-	return result
-
-
-static func _opening_mul_div_round(value: int, multiplier: int, divisor: int) -> int:
-	# Exact quotient/remainder accumulation avoids an overflowing value*multiplier
-	# numerator. Rounding is the deterministic integer half-denominator rule.
-	var safe_divisor := maxi(1, divisor)
-	var remaining := clampi(multiplier, 0, safe_divisor)
-	var term_quotient := clampi(value, 0, safe_divisor) / safe_divisor
-	var term_remainder := clampi(value, 0, safe_divisor) % safe_divisor
-	var result_quotient := 0
-	var result_remainder := 0
-	while remaining > 0:
-		if (remaining & 1) != 0:
-			var remainder_gap := safe_divisor - term_remainder
-			if result_remainder >= remainder_gap:
-				result_remainder -= remainder_gap
-				result_quotient += term_quotient + 1
-			else:
-				result_remainder += term_remainder
-				result_quotient += term_quotient
-		remaining = remaining >> 1
-		if remaining <= 0:
-			break
-		var doubled_remainder_gap := safe_divisor - term_remainder
-		if term_remainder >= doubled_remainder_gap:
-			term_remainder -= doubled_remainder_gap
-			term_quotient = term_quotient * 2 + 1
-		else:
-			term_remainder += term_remainder
-			term_quotient *= 2
-	var half_denominator := safe_divisor / 2 + safe_divisor % 2
-	return result_quotient + (1 if result_remainder >= half_denominator else 0)
-
-
-static func _opening_depth_bands(shelf: Dictionary) -> Array:
-	var min_y := int(shelf.get("min_y", FRONT_EDGE))
-	var max_y := maxi(min_y + 2, int(shelf.get("max_y", UPPER_EDGE - COIN_RADIUS)))
-	var span := max_y - min_y + 1
-	var mid_start := min_y + span / 3
-	var rear_start := min_y + span * 2 / 3
-	return [
-		{"id": "rear", "min_y": rear_start, "max_y": max_y},
-		{"id": "mid", "min_y": mid_start, "max_y": rear_start - 1},
-		{"id": "front", "min_y": min_y, "max_y": mid_start - 1},
-	]
-
-
-static func _opening_best_candidate(rng: RngStream, shelf: Dictionary, existing: Array) -> Vector2i:
-	var best := Vector2i(WIDTH / 2, int(shelf.get("min_y", FRONT_EDGE)))
-	var best_nearest_distance := -1
-	for _attempt in range(16):
-		var candidate := Vector2i(
-			rng.randi_range(COIN_RADIUS, WIDTH - COIN_RADIUS),
-			rng.randi_range(int(shelf.get("min_y", FRONT_EDGE)), int(shelf.get("max_y", UPPER_EDGE - COIN_RADIUS)))
-		)
-		var nearest_distance := 1 << 62
-		for value in existing:
-			if typeof(value) != TYPE_DICTIONARY:
+static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
+	var definition := _definition(state)
+	var geometry := _geometry(definition)
+	var bodies: Array = state.get("bodies", [])
+	var before_energy := _kinetic_energy(bodies)
+	var events: Array = []
+	var old_face := int(state.get("face_y", face_y_for_phase(definition, 0)))
+	_update_motor(state, bool(config.get("motor_enabled", true)))
+	var new_face := int(state.get("face_y", old_face))
+	var face_delta := new_face - old_face
+	_apply_platform_carry_and_plate(bodies, geometry, old_face, new_face, face_delta)
+	_apply_full_height_face(bodies, geometry, old_face, new_face, face_delta)
+	var platform_work := maxi(0, _kinetic_energy(bodies) - before_energy)
+	var before_gravity := _kinetic_energy(bodies)
+	_integrate_bodies(bodies, definition)
+	var gravity_work := maxi(0, _kinetic_energy(bodies) - before_gravity)
+	_apply_peg_contacts(bodies, definition, events)
+	var grid := _scratch_grid
+	grid.rebuild(bodies)
+	var nestle_work := _resolve_supports(bodies, definition, new_face, events, grid)
+	grid.rebuild(bodies)
+	var pairs: Array = _contact_pairs(bodies, grid)
+	var active_mask := _active_island_mask(bodies, pairs)
+	var static_candidates := _static_candidate_indices(bodies, geometry, active_mask, new_face)
+	var collisions := 0
+	for _pass in range(SOLVER_PASSES):
+		for pair_key_value in pairs:
+			var pair_key := int(pair_key_value)
+			var left_index := pair_key / HARD_BODY_CEILING
+			var right_index := pair_key % HARD_BODY_CEILING
+			if left_index >= bodies.size() or right_index >= bodies.size():
 				continue
-			var body: Dictionary = value
-			var dx := candidate.x - int(body.get("x", 0))
-			var dy := candidate.y - int(body.get("y", 0))
-			nearest_distance = mini(nearest_distance, dx * dx + dy * dy)
-		if existing.is_empty():
-			nearest_distance = 1 << 61
-		if nearest_distance > best_nearest_distance:
-			best_nearest_distance = nearest_distance
-			best = candidate
-	return best
+			if active_mask[left_index] == 0 and active_mask[right_index] == 0:
+				continue
+			if _resolve_body_contact(bodies[left_index], bodies[right_index]):
+				collisions += 1
+		platform_work += _resolve_static_contacts(bodies, geometry, static_candidates, new_face, face_delta)
+	nestle_work += _resolve_supports(bodies, definition, new_face, events, grid)
+	for body_value in bodies:
+		(body_value as Dictionary).erase("peg_contact_this_tick")
+	_process_exits(state, events)
+	state["tick"] = int(state.get("tick", 0)) + 1
+	var after_energy := _kinetic_energy(state.get("bodies", []))
+	var energy_ok := after_energy <= before_energy + platform_work + gravity_work + nestle_work
+	var active_count := bodies.size()
+	var origin_count := int(state.get("opening_body_count", 0)) + int(state.get("accepted_inserts", 0))
+	var conservation_ok := active_count + (state.get("tray_ledger", []) as Array).size() + (state.get("gutter_ledger", []) as Array).size() == origin_count
+	return {"events": events, "collision_count": collisions, "candidate_count": pairs.size(), "energy_ok": energy_ok, "conservation_ok": conservation_ok}
 
 
-static func _set_opening_body_rest(body: Dictionary) -> void:
-	body["sleeping"] = true
-	body["sleep_ticks"] = SLEEP_TICKS
-	body["rest_state"] = "resting"
+static func _update_motor(state: Dictionary, motor_enabled: bool) -> void:
+	var definition := _definition(state)
+	var stroke := _stroke(definition)
+	var period := maxi(1, int(stroke.get("period_ticks", STROKE_PERIOD)))
+	var ramp_ticks := maxi(1, int(stroke.get("ramp_ticks", SKILL_STOP_RAMP_TICKS)))
+	var target := int(state.get("motor_target_rate_fp", FP)) if motor_enabled else 0
+	var rate := int(state.get("motor_rate_fp", FP))
+	var ramp_delta := _divi(FP + ramp_ticks - 1, ramp_ticks)
+	if rate < target:
+		rate = mini(target, rate + ramp_delta)
+	elif rate > target:
+		rate = maxi(target, rate - ramp_delta)
+	state["motor_rate_fp"] = rate
+	state["previous_face_y"] = int(state.get("face_y", face_y_for_phase(definition, 0)))
+	state["phase_fp"] = posmod(int(state.get("phase_fp", 0)) + rate, period * FP)
+	state["face_y"] = face_y_for_phase(definition, _divi(int(state.get("phase_fp", 0)), FP))
 
 
-static func _body(state: Dictionary, kind: String, x: int, y: int, z: int, radius: int, height: int, mass: int, metadata: Dictionary) -> Dictionary:
-	var body_id := int(state.get("next_body_id", 1))
-	state["next_body_id"] = body_id + 1
-	return {
-		"id": "body_%05d" % body_id,
-		"kind": kind,
-		"x": x, "y": y, "z": z,
-		"vx": 0, "vy": 0, "vz": 0,
-		"radius": radius, "height": height, "mass": maxi(1, mass),
-		"sleep_ticks": 0, "sleeping": false, "rest_state": "settling", "lean_milli": 0,
-		"metadata": metadata.duplicate(true),
-	}
+static func _apply_platform_carry_and_plate(bodies: Array, geometry: Dictionary, old_face: int, new_face: int, face_delta: int) -> void:
+	var platform_top := int(geometry.get("platform_top_z", PLATFORM_TOP_Z))
+	var plate_y := int(geometry.get("back_plate_y", BACK_PLATE_Y))
+	var plate_bottom := platform_top + int(geometry.get("back_plate_gap", BACK_PLATE_GAP))
+	for body_value in bodies:
+		var body: Dictionary = body_value
+		var radius := int(body.get("radius", COIN_RADIUS))
+		var height := int(body.get("height", COIN_HEIGHT))
+		var previous_support_kind := str(body.get("support_kind", ""))
+		var direct_platform_support := previous_support_kind == "platform" or (absi(int(body.get("z", 0)) - platform_top) <= SUPPORT_VERTICAL_TOLERANCE and int(body.get("y", 0)) >= old_face)
+		var inherited_platform_carry := bool(body.get("carried_sleep", false)) and previous_support_kind == "body"
+		var riding := direct_platform_support or inherited_platform_carry
+		if riding:
+			var carry_delta := face_delta
+			var slip_limit := maxi(1, _divi(MU_PLATFORM * GRAVITY, FP))
+			carry_delta = clampi(carry_delta, -slip_limit, slip_limit)
+			var proposed_y := int(body.get("y", 0)) + carry_delta
+			var blocked_by_plate := int(body.get("z", 0)) + height > plate_bottom and proposed_y + radius > plate_y
+			if blocked_by_plate:
+				proposed_y = plate_y - radius
+				body["carried_sleep"] = false
+				body["plate_blocked"] = true
+				if face_delta != 0:
+					_wake(body)
+			else:
+				body["plate_blocked"] = false
+			body["y"] = proposed_y
+			if proposed_y >= new_face:
+				body["support_kind"] = "platform" if direct_platform_support else previous_support_kind
+			else:
+				if direct_platform_support:
+					body["pending_platform_deposit"] = true
+					body["support_kind"] = ""
+					_wake(body)
+			if bool(body.get("sleeping", false)) and not blocked_by_plate:
+				body["carried_sleep"] = true
 
 
-static func _pressurize_full_pile(state: Dictionary, lane: int, lane_count: int) -> void:
-	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	var lane_width := _divi(WIDTH, maxi(1, lane_count))
-	var lane_center := lane * lane_width + _divi(lane_width, 2)
-	var candidate: Dictionary = {}
-	var candidate_key: Array = []
-	for value in bodies:
-		if typeof(value) != TYPE_DICTIONARY or str((value as Dictionary).get("kind", "")) != "coin":
-			continue
-		var body: Dictionary = value
-		var key := [int(body.get("y", 0)), absi(int(body.get("x", 0)) - lane_center), str(body.get("id", ""))]
-		if candidate.is_empty() or _key_before(key, candidate_key):
-			candidate = body
-			candidate_key = key
-	if candidate.is_empty():
+static func _apply_full_height_face(bodies: Array, geometry: Dictionary, old_face: int, new_face: int, face_delta: int) -> void:
+	if face_delta >= 0:
 		return
-	# The cabinet cannot accept a 49th coin. Compressing a full pile gives the
-	# frontmost real coin enough physical momentum to traverse the remaining
-	# ledge distance during this same 48-tick sweep; removal still occurs only
-	# when integration observes the body crossing the tray/gutter boundary.
-	var remaining_distance := maxi(0, int(candidate.get("y", 0)) - (FRONT_EDGE - int(candidate.get("radius", COIN_RADIUS))))
-	var pressure_accel := maxi(12000, remaining_distance * 3 / 4)
-	candidate["cap_pressure_ticks"] = ACTION_TICKS
-	candidate["cap_pressure_accel"] = pressure_accel
-	candidate["vy"] = mini(int(candidate.get("vy", 0)), -pressure_accel)
-	var edge_bias := -16000 if lane == 0 else 16000 if lane == lane_count - 1 else 0
-	candidate["vx"] = int(candidate.get("vx", 0)) + edge_bias
-	_wake(candidate)
-
-
-static func _apply_nudge(state: Dictionary, x_impulse: int, y_impulse: int, aimed_x: int, radius: int) -> int:
-	var count := 0
-	for value in state.get("bodies", []):
-		if typeof(value) != TYPE_DICTIONARY:
+	var platform_top := int(geometry.get("platform_top_z", PLATFORM_TOP_Z))
+	for body_value in bodies:
+		var body: Dictionary = body_value
+		if int(body.get("z", 0)) >= platform_top:
 			continue
-		var body: Dictionary = value
-		if absi(int(body["x"]) - aimed_x) > radius:
-			continue
-		var mass := maxi(1, int(body["mass"]))
-		body["vx"] = int(body["vx"]) + _divi(x_impulse, mass)
-		body["vy"] = int(body["vy"]) + _divi(y_impulse, mass)
-		_wake(body)
-		count += 1
-	return count
-
-
-static func _apply_pushers(state: Dictionary, old_upper: int, new_upper: int, old_lower: int, new_lower: int, push_scale: int, active_indices: PackedInt32Array) -> int:
-	var upper_active := new_upper < old_upper
-	var lower_active := new_lower < old_lower
-	var count := 0
-	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	for body_index in range(bodies.size()):
-		var value: Variant = bodies[body_index]
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var body: Dictionary = value
-		var y := int(body["y"])
-		var z := int(body["z"])
-		var upper := y >= UPPER_EDGE and z >= UPPER_FLOOR_Z
-		var active := upper_active if upper else lower_active
-		var old_face := old_upper if upper else old_lower
-		var new_face := new_upper if upper else new_lower
-		var floor_z := UPPER_FLOOR_Z if upper else LOWER_FLOOR_Z
-		var eligible := active and (upper or (y >= FRONT_EDGE and y < UPPER_EDGE and z < UPPER_FLOOR_Z + COIN_HEIGHT))
-		var radius := int(body["radius"])
-		if eligible and y > new_face - radius and y < old_face + radius and z <= floor_z + int(body["height"]) * 5:
-			body["y"] = mini(y, new_face - radius)
-			body["vy"] = int(body["vy"]) - (old_face - new_face) * push_scale
+		var radius := int(body.get("radius", COIN_RADIUS))
+		var y := int(body.get("y", 0))
+		if y < new_face and new_face - (y + radius) <= radius:
 			_wake(body)
-			count += 1
-		if not bool(body["sleeping"]):
-			active_indices.append(body_index)
-	return count
+		if y + radius >= new_face and y - radius <= old_face:
+			body["y"] = new_face - radius
+			body["vy"] = mini(int(body.get("vy", 0)), face_delta * FIXED_HZ)
+			_wake(body)
 
 
-static func _integrate(state: Dictionary, active_indices: PackedInt32Array, events: Array, motion_events: Array, motion_event_keys: Dictionary, peak_z_by_id: Dictionary, tick_offset: int) -> void:
-	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	var exit_indices: Array = []
-	for body_index_value in active_indices:
+static func _static_candidate_indices(bodies: Array, geometry: Dictionary, active_mask: PackedByteArray, face_y: int) -> PackedInt32Array:
+	var result := PackedInt32Array()
+	var width := int(geometry.get("width", WIDTH))
+	var platform_top := int(geometry.get("platform_top_z", PLATFORM_TOP_Z))
+	var plate_y := int(geometry.get("back_plate_y", BACK_PLATE_Y))
+	var plate_bottom := platform_top + int(geometry.get("back_plate_gap", BACK_PLATE_GAP))
+	for body_index in range(bodies.size()):
+		if body_index >= active_mask.size() or active_mask[body_index] == 0:
+			continue
+		var body: Dictionary = bodies[body_index]
+		var radius := int(body.get("radius", COIN_RADIUS))
+		var near_side := int(body.get("x", 0)) < radius * 2 or int(body.get("x", 0)) > width - radius * 2
+		var near_plate := int(body.get("z", 0)) + int(body.get("height", COIN_HEIGHT)) > plate_bottom and int(body.get("y", 0)) + radius * 2 > plate_y
+		var body_y := int(body.get("y", 0))
+		var near_face := int(body.get("z", 0)) < platform_top and body_y < face_y and body_y + radius * 2 > face_y
+		if near_side or near_plate or near_face:
+			result.append(body_index)
+	return result
+
+
+static func _resolve_static_contacts(bodies: Array, geometry: Dictionary, candidate_indices: PackedInt32Array, face_y: int, face_delta: int) -> int:
+	var width := int(geometry.get("width", WIDTH))
+	var lip := int(geometry.get("tray_lip_y", TRAY_LIP_Y))
+	var platform_top := int(geometry.get("platform_top_z", PLATFORM_TOP_Z))
+	var plate_y := int(geometry.get("back_plate_y", BACK_PLATE_Y))
+	var plate_bottom := platform_top + int(geometry.get("back_plate_gap", BACK_PLATE_GAP))
+	var face_work := 0
+	for body_index_value in candidate_indices:
 		var body_index := int(body_index_value)
 		if body_index < 0 or body_index >= bodies.size():
 			continue
-		var value: Variant = bodies[body_index]
-		if typeof(value) != TYPE_DICTIONARY:
+		var body: Dictionary = bodies[body_index]
+		var radius := int(body.get("radius", COIN_RADIUS))
+		if int(body.get("z", 0)) < platform_top and int(body.get("y", 0)) < face_y and int(body.get("y", 0)) > face_y - radius:
+			var before_face := _body_kinetic_energy(body)
+			var face_penetration := int(body.get("y", 0)) - (face_y - radius)
+			var face_correction := _divi(maxi(0, face_penetration - SLOP) * BETA, FP)
+			body["y"] = int(body.get("y", 0)) - face_correction
+			var face_relative_normal := face_delta * FIXED_HZ - int(body.get("vy", 0))
+			if face_relative_normal < 0:
+				body["vy"] = int(body.get("vy", 0)) + face_relative_normal
+			face_work += maxi(0, _body_kinetic_energy(body) - before_face)
+			if face_correction > 0:
+				_wake(body)
+		if int(body.get("z", 0)) + int(body.get("height", COIN_HEIGHT)) > plate_bottom:
+			var plate_limit := plate_y - radius
+			if int(body.get("y", 0)) > plate_limit:
+				var plate_penetration := int(body.get("y", 0)) - plate_limit
+				var plate_correction := _divi(maxi(0, plate_penetration - SLOP) * BETA, FP)
+				body["y"] = int(body.get("y", 0)) - plate_correction
+				if int(body.get("vy", 0)) > 0:
+					body["vy"] = 0
+		if int(body.get("y", 0)) <= lip + radius:
 			continue
-		var body: Dictionary = value
-		var body_id := str(body["id"])
-		var previous_z := int(body["z"])
-		if not peak_z_by_id.is_empty():
-			peak_z_by_id[body_id] = maxi(int(peak_z_by_id.get(body_id, previous_z)), previous_z)
-		var cap_pressure_ticks := maxi(0, int(body.get("cap_pressure_ticks", 0)))
-		if cap_pressure_ticks > 0:
-			body["vy"] = int(body["vy"]) - maxi(0, int(body.get("cap_pressure_accel", 0)))
-			body["cap_pressure_ticks"] = cap_pressure_ticks - 1
-		var was_upper := int(body["z"]) >= UPPER_FLOOR_Z
-		body["vz"] = int(body["vz"]) - GRAVITY
-		body["vx"] = _divi(int(body["vx"]) * AIR_DRAG_NUM, AIR_DRAG_DEN)
-		body["vy"] = _divi(int(body["vy"]) * AIR_DRAG_NUM, AIR_DRAG_DEN)
-		body["x"] = int(body["x"]) + _divi(int(body["vx"]), FIXED_HZ)
-		body["y"] = int(body["y"]) + _divi(int(body["vy"]), FIXED_HZ)
-		body["z"] = int(body["z"]) + _divi(int(body["vz"]), FIXED_HZ)
-		var exit := _exit_kind(body)
-		if not exit.is_empty():
-			events.append(_exit_event(body, exit, "physical_fall", tick_offset))
-			exit_indices.append(body_index)
+		if int(body.get("x", 0)) < radius:
+			var left_penetration := radius - int(body.get("x", 0))
+			var left_correction := _divi(maxi(0, left_penetration - SLOP) * BETA, FP)
+			body["x"] = int(body.get("x", 0)) + left_correction
+			if int(body.get("vx", 0)) < 0:
+				body["vx"] = 0
+		elif int(body.get("x", 0)) > width - radius:
+			var right_penetration := int(body.get("x", 0)) - (width - radius)
+			var right_correction := _divi(maxi(0, right_penetration - SLOP) * BETA, FP)
+			body["x"] = int(body.get("x", 0)) - right_correction
+			if int(body.get("vx", 0)) > 0:
+				body["vx"] = 0
+	return face_work
+
+
+static func _integrate_bodies(bodies: Array, definition: Dictionary) -> void:
+	for body_value in bodies:
+		var body: Dictionary = body_value
+		if bool(body.get("sleeping", false)):
 			continue
-		var base_z := _floor_z(body)
-		if was_upper and int(body["y"]) < UPPER_EDGE:
-			motion_events.append({"kind": "upper_to_lower", "body_id": str(body["id"]), "x": int(body["x"]), "y": int(body["y"]), "z": int(body["z"]), "tick_offset": tick_offset})
-		if int(body["z"]) <= base_z:
-			var fall_height := maxi(0, int(peak_z_by_id.get(body_id, previous_z)) - base_z)
-			if not peak_z_by_id.is_empty() and previous_z > base_z and fall_height > 0:
-				_append_impact_motion_event(motion_events, motion_event_keys, body, "coin_on_metal", 0, fall_height, tick_offset)
-			body["z"] = base_z
-			body["vz"] = 0
-			body["vx"] = _divi(int(body["vx"]) * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
-			body["vy"] = _divi(int(body["vy"]) * FLOOR_DRAG_NUM, FLOOR_DRAG_DEN)
+		body["vz"] = int(body.get("vz", 0)) - GRAVITY
+		body["vx"] = _divi(int(body.get("vx", 0)) * AIR_DRAG_NUM, AIR_DRAG_DEN)
+		body["vy"] = _divi(int(body.get("vy", 0)) * AIR_DRAG_NUM, AIR_DRAG_DEN)
+		_integrate_axis(body, "x", "vx", "x_remainder")
+		_integrate_axis(body, "y", "vy", "y_remainder")
+		_integrate_axis(body, "z", "vz", "z_remainder")
+
+
+static func _apply_peg_contacts(bodies: Array, definition: Dictionary, events: Array) -> void:
+	var geometry := _geometry(definition)
+	var drop_y := int(geometry.get("drop_y", DROP_Y))
+	for body_value in bodies:
+		(body_value as Dictionary).erase("peg_contact_this_tick")
+	for body_value in bodies:
+		var body: Dictionary = body_value
+		if bool(body.get("sleeping", false)):
+			continue
+		if absi(int(body.get("y", 0)) - drop_y) > int(body.get("radius", COIN_RADIUS)):
+			continue
+		for peg_value in _apparatus(definition).get("pegs", []):
+			if typeof(peg_value) != TYPE_DICTIONARY:
+				continue
+			var peg: Dictionary = peg_value
+			var dx := int(body.get("x", 0)) - int(peg.get("x", 0))
+			var dz := int(body.get("z", 0)) - int(peg.get("z", 0))
+			var minimum := int(body.get("radius", COIN_RADIUS)) + int(peg.get("r", 1200))
+			var distance_sq := dx * dx + dz * dz
+			if distance_sq >= minimum * minimum:
+				continue
+			var distance := maxi(1, _isqrt(distance_sq))
+			var nx := _divi(dx * FP, distance)
+			var nz := _divi(dz * FP, distance)
+			var penetration := minimum - distance
+			var correction := _divi(maxi(0, penetration - SLOP) * BETA, FP)
+			body["x"] = int(body.get("x", 0)) + _divi(nx * correction, FP)
+			body["z"] = int(body.get("z", 0)) + _divi(nz * correction, FP)
+			var relative := _divi(int(body.get("vx", 0)) * nx + int(body.get("vz", 0)) * nz, FP)
+			if relative < 0:
+				# Stabilize low-speed resting contact so discrete gravity cannot
+				# sustain a perpetual micro-bounce. Full impacts retain E=250.
+				var restitution := 0 if -relative < GRAVITY * 2 else RESTITUTION_PEG
+				var impulse := -_divi((FP + restitution) * relative, FP)
+				body["vx"] = int(body.get("vx", 0)) + _divi(impulse * nx, FP)
+				body["vz"] = int(body.get("vz", 0)) + _divi(impulse * nz, FP)
+				var friction_budget := _divi(MU_BODY * impulse, FP)
+				var tx := -nz
+				var tz := nx
+				var tangent := _divi(int(body.get("vx", 0)) * tx + int(body.get("vz", 0)) * tz, FP)
+				var tangent_impulse := clampi(-tangent, -friction_budget, friction_budget)
+				body["vx"] = int(body.get("vx", 0)) + _divi(tangent_impulse * tx, FP)
+				body["vz"] = int(body.get("vz", 0)) + _divi(tangent_impulse * tz, FP)
+				var remaining := maxi(0, friction_budget - absi(tangent_impulse))
+				body["vy"] = int(body.get("vy", 0)) + clampi(-int(body.get("vy", 0)), -remaining, remaining)
+				if nz > 0 and absi(int(body.get("vx", 0))) + absi(int(body.get("vy", 0))) + absi(int(body.get("vz", 0))) < SLEEP_SPEED:
+					body["support_kind"] = "peg"
+					body["rest_state"] = "resting"
+					body["peg_contact_this_tick"] = true
+			events.append({"kind": "peg_impact", "body_id": str(body.get("id", ""))})
+
+
+static func _contact_pairs(bodies: Array, grid: SpatialHash2D) -> Array:
+	var encoded_pairs: Array = []
+	var queued := PackedByteArray()
+	queued.resize(bodies.size())
+	var queue := PackedInt32Array()
+	for index in range(bodies.size()):
+		if not bool((bodies[index] as Dictionary).get("sleeping", false)):
+			queued[index] = 1
+			queue.append(index)
+	var pair_seen: Dictionary = {}
+	var cursor := 0
+	while cursor < queue.size():
+		var left_index := int(queue[cursor])
+		cursor += 1
+		var left: Dictionary = bodies[left_index]
+		var cell_x := _floor_div(int(left.get("x", 0)), BROADPHASE_CELL)
+		var cell_y := _floor_div(int(left.get("y", 0)), BROADPHASE_CELL)
+		for offset_y in range(-1, 2):
+			for offset_x in range(-1, 2):
+				var right_index := grid.head_index(cell_x + offset_x, cell_y + offset_y)
+				while right_index >= 0:
+					if right_index == left_index:
+						right_index = grid.next_index(right_index)
+						continue
+					var right: Dictionary = bodies[right_index]
+					if not _z_bands_overlap(left, right):
+						right_index = grid.next_index(right_index)
+						continue
+					var dx := int(right.get("x", 0)) - int(left.get("x", 0))
+					var dy := int(right.get("y", 0)) - int(left.get("y", 0))
+					var minimum := int(left.get("radius", COIN_RADIUS)) + int(right.get("radius", COIN_RADIUS))
+					if dx * dx + dy * dy < minimum * minimum:
+						var left_id := str(left.get("id", ""))
+						var right_id := str(right.get("id", ""))
+						var low_index := left_index if left_id <= right_id else right_index
+						var high_index := right_index if left_id <= right_id else left_index
+						var encoded := low_index * HARD_BODY_CEILING + high_index
+						if not pair_seen.has(encoded):
+							pair_seen[encoded] = true
+							if encoded_pairs.size() < CANDIDATE_POOL_CAPACITY:
+								encoded_pairs.append(encoded)
+						if queued[right_index] == 0:
+							queued[right_index] = 1
+							queue.append(right_index)
+					right_index = grid.next_index(right_index)
+	encoded_pairs.sort_custom(_pair_id_less.bind(bodies))
+	return encoded_pairs
+
+
+static func _pair_id_less(left_key_value: Variant, right_key_value: Variant, bodies: Array) -> bool:
+	var left_key := int(left_key_value)
+	var right_key := int(right_key_value)
+	var left_low := str((bodies[left_key / HARD_BODY_CEILING] as Dictionary).get("id", ""))
+	var left_high := str((bodies[left_key % HARD_BODY_CEILING] as Dictionary).get("id", ""))
+	var right_low := str((bodies[right_key / HARD_BODY_CEILING] as Dictionary).get("id", ""))
+	var right_high := str((bodies[right_key % HARD_BODY_CEILING] as Dictionary).get("id", ""))
+	return left_low < right_low or (left_low == right_low and left_high < right_high)
+
+
+static func _active_island_mask(bodies: Array, pairs: Array) -> PackedByteArray:
+	var active := PackedByteArray()
+	active.resize(bodies.size())
+	var changed := true
+	for index in range(bodies.size()):
+		if not bool((bodies[index] as Dictionary).get("sleeping", false)):
+			active[index] = 1
+	while changed:
+		changed = false
+		for pair_key_value in pairs:
+			var pair_key := int(pair_key_value)
+			var left := pair_key / HARD_BODY_CEILING
+			var right := pair_key % HARD_BODY_CEILING
+			if active[left] != active[right]:
+				active[left] = 1
+				active[right] = 1
+				changed = true
+	return active
+
+
+static func _resolve_body_contact(left: Dictionary, right: Dictionary) -> bool:
+	if not _z_bands_overlap(left, right):
+		return false
+	var dx := int(right.get("x", 0)) - int(left.get("x", 0))
+	var dy := int(right.get("y", 0)) - int(left.get("y", 0))
+	if dx == 0 and dy == 0:
+		dx = 1 if str(left.get("id", "")) < str(right.get("id", "")) else -1
+	var minimum := int(left.get("radius", COIN_RADIUS)) + int(right.get("radius", COIN_RADIUS))
+	var distance_sq := dx * dx + dy * dy
+	if distance_sq >= minimum * minimum:
+		return false
+	var left_was_awake := not bool(left.get("sleeping", false))
+	var right_was_awake := not bool(right.get("sleeping", false))
+	var left_is_moving := absi(int(left.get("vx", 0))) + absi(int(left.get("vy", 0))) + absi(int(left.get("vz", 0))) >= SLEEP_SPEED
+	var right_is_moving := absi(int(right.get("vx", 0))) + absi(int(right.get("vy", 0))) + absi(int(right.get("vz", 0))) >= SLEEP_SPEED
+	# A merely not-yet-asleep resting body must not perpetually wake an
+	# overlapping sleeper.  Only a body carrying meaningful motion propagates
+	# an awake island through contact.
+	if left_was_awake and left_is_moving and not right_was_awake:
+		_wake(right)
+	elif right_was_awake and right_is_moving and not left_was_awake:
+		_wake(left)
+	var distance := maxi(1, _isqrt(distance_sq))
+	var nx := _divi(dx * FP, distance)
+	var ny := _divi(dy * FP, distance)
+	var penetration := minimum - distance
+	var correction := _divi(maxi(0, penetration - SLOP) * BETA, FP)
+	var contact_changed := false
+	var inverse_left := _divi(FP * FP, maxi(1, int(left.get("mass", FP))))
+	var inverse_right := _divi(FP * FP, maxi(1, int(right.get("mass", FP))))
+	var inverse_sum := maxi(1, inverse_left + inverse_right)
+	var left_correction := _divi(correction * inverse_left, inverse_sum)
+	var right_correction := correction - left_correction
+	left["x"] = int(left.get("x", 0)) - _divi(nx * left_correction, FP)
+	left["y"] = int(left.get("y", 0)) - _divi(ny * left_correction, FP)
+	right["x"] = int(right.get("x", 0)) + _divi(nx * right_correction, FP)
+	right["y"] = int(right.get("y", 0)) + _divi(ny * right_correction, FP)
+	var relative_x := int(right.get("vx", 0)) - int(left.get("vx", 0))
+	var relative_y := int(right.get("vy", 0)) - int(left.get("vy", 0))
+	var relative_normal := _divi(relative_x * nx + relative_y * ny, FP)
+	if relative_normal < 0:
+		contact_changed = relative_normal < -SLEEP_SPEED
+		var impulse := -_divi((FP + RESTITUTION_BODY) * relative_normal, inverse_sum)
+		var left_velocity_delta := _divi(impulse * inverse_left, FP)
+		var right_velocity_delta := _divi(impulse * inverse_right, FP)
+		left["vx"] = int(left.get("vx", 0)) - _divi(left_velocity_delta * nx, FP)
+		left["vy"] = int(left.get("vy", 0)) - _divi(left_velocity_delta * ny, FP)
+		right["vx"] = int(right.get("vx", 0)) + _divi(right_velocity_delta * nx, FP)
+		right["vy"] = int(right.get("vy", 0)) + _divi(right_velocity_delta * ny, FP)
+		var tangent_x := -ny
+		var tangent_y := nx
+		var relative_tangent := _divi(relative_x * tangent_x + relative_y * tangent_y, FP)
+		var tangent_impulse := clampi(-_divi(relative_tangent * FP, inverse_sum), -_divi(MU_BODY * impulse, FP), _divi(MU_BODY * impulse, FP))
+		var left_tangent_delta := _divi(tangent_impulse * inverse_left, FP)
+		var right_tangent_delta := _divi(tangent_impulse * inverse_right, FP)
+		left["vx"] = int(left.get("vx", 0)) - _divi(left_tangent_delta * tangent_x, FP)
+		left["vy"] = int(left.get("vy", 0)) - _divi(left_tangent_delta * tangent_y, FP)
+		right["vx"] = int(right.get("vx", 0)) + _divi(right_tangent_delta * tangent_x, FP)
+		right["vy"] = int(right.get("vy", 0)) + _divi(right_tangent_delta * tangent_y, FP)
+	if contact_changed:
+		_wake(left)
+		_wake(right)
+	return true
+
+
+static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int, events: Array, grid: SpatialHash2D) -> int:
+	var geometry := _geometry(definition)
+	var platform_top := int(geometry.get("platform_top_z", PLATFORM_TOP_Z))
+	var deck_z := int(geometry.get("deck_z", DECK_Z))
+	var nestle_work := 0
+	for body_index in range(bodies.size()):
+		var body: Dictionary = bodies[body_index]
+		if bool(body.get("sleeping", false)):
+			continue
+		if bool(body.get("peg_contact_this_tick", false)) and str(body.get("support_kind", "")) == "peg" and str(body.get("rest_state", "")) == "resting":
 			_update_sleep(body)
+			continue
+		var previous_support := "platform" if bool(body.get("pending_platform_deposit", false)) else str(body.get("support_kind", ""))
+		var surface_z := platform_top if int(body.get("y", 0)) >= face_y else deck_z
+		var surface_kind := "platform" if int(body.get("y", 0)) >= face_y else "deck"
+		var stable := int(body.get("z", 0)) <= surface_z + SUPPORT_VERTICAL_TOLERANCE
+		if stable and int(body.get("vz", 0)) <= 0:
+			var was_surface_falling := str(body.get("rest_state", "")) == "falling"
+			var fall_start_z := int(body.get("fall_start_z", body.get("z", surface_z)))
+			body["z"] = surface_z
+			body["vz"] = 0
+			body["z_remainder"] = 0
+			body["support_kind"] = surface_kind
+			body["carried_sleep"] = surface_kind == "platform"
+			body["rest_state"] = "resting"
+			_apply_surface_friction(body, MU_PLATFORM if surface_kind == "platform" else MU_DECK)
+			_update_sleep(body)
+			if was_surface_falling:
+				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": surface_kind, "fall_height": maxi(0, fall_start_z - surface_z), "stack_depth": 0})
+				body.erase("fall_start_z")
+			if previous_support == "platform" and surface_kind == "deck":
+				events.append({"kind": "platform_deposit", "body_id": str(body.get("id", ""))})
+				body.erase("pending_platform_deposit")
+			continue
+		var support_top := surface_z
+		var support_count := 0
+		var centered := false
+		var x_low := false
+		var x_high := false
+		var y_low := false
+		var y_high := false
+		var centroid_x := 0
+		var centroid_y := 0
+		var top_carried := false
+		var cell_x := _floor_div(int(body.get("x", 0)), BROADPHASE_CELL)
+		var cell_y := _floor_div(int(body.get("y", 0)), BROADPHASE_CELL)
+		for offset_y in range(-1, 2):
+			for offset_x in range(-1, 2):
+				var support_index := grid.head_index(cell_x + offset_x, cell_y + offset_y)
+				while support_index >= 0:
+					if support_index == body_index:
+						support_index = grid.next_index(support_index)
+						continue
+					var support: Dictionary = bodies[support_index]
+					var top := int(support.get("z", 0)) + int(support.get("height", COIN_HEIGHT))
+					if absi(int(body.get("z", 0)) - top) > SUPPORT_VERTICAL_TOLERANCE:
+						support_index = grid.next_index(support_index)
+						continue
+					var dx := int(support.get("x", 0)) - int(body.get("x", 0))
+					var dy := int(support.get("y", 0)) - int(body.get("y", 0))
+					var reach := _divi((int(body.get("radius", COIN_RADIUS)) + int(support.get("radius", COIN_RADIUS))) * 9, 10)
+					if dx * dx + dy * dy >= reach * reach:
+						support_index = grid.next_index(support_index)
+						continue
+					support_count += 1
+					centered = centered or _isqrt(dx * dx + dy * dy) < int(body.get("radius", COIN_RADIUS)) / 2
+					x_low = x_low or dx <= SUPPORT_MARGIN
+					x_high = x_high or dx >= -SUPPORT_MARGIN
+					y_low = y_low or dy <= SUPPORT_MARGIN
+					y_high = y_high or dy >= -SUPPORT_MARGIN
+					centroid_x += dx
+					centroid_y += dy
+					var support_carried := bool(support.get("carried_sleep", false)) or str(support.get("support_kind", "")) == "platform"
+					if top > support_top:
+						support_top = top
+						top_carried = support_carried
+					elif top == support_top:
+						top_carried = top_carried or support_carried
+					support_index = grid.next_index(support_index)
+		if support_count > 0:
+			stable = stable or centered or (x_low and x_high and y_low and y_high)
+			if not stable:
+				var before_nestle := _body_kinetic_energy(body)
+				centroid_x = _divi(centroid_x, support_count)
+				centroid_y = _divi(centroid_y, support_count)
+				var length := maxi(1, _isqrt(centroid_x * centroid_x + centroid_y * centroid_y))
+				body["vx"] = int(body.get("vx", 0)) - _divi(centroid_x * GRAVITY, 2 * length)
+				body["vy"] = int(body.get("vy", 0)) - _divi(centroid_y * GRAVITY, 2 * length)
+				nestle_work += maxi(0, _body_kinetic_energy(body) - before_nestle)
+		if stable and int(body.get("vz", 0)) <= 0:
+			var was_falling := str(body.get("rest_state", "")) == "falling"
+			var fall_start_z := int(body.get("fall_start_z", body.get("z", support_top)))
+			body["z"] = support_top
+			body["vz"] = 0
+			body["z_remainder"] = 0
+			body["support_kind"] = surface_kind if support_top == surface_z else "body"
+			body["carried_sleep"] = str(body.get("support_kind", "")) == "platform"
+			if str(body.get("support_kind", "")) == "body":
+				body["carried_sleep"] = top_carried
+			body["rest_state"] = "resting"
+			_apply_surface_friction(body, MU_PLATFORM if str(body.get("support_kind", "")) == "platform" else MU_DECK)
+			_update_sleep(body)
+			if was_falling:
+				var stack_depth := maxi(0, _divi(support_top - surface_z, maxi(1, int(body.get("height", COIN_HEIGHT)))))
+				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": str(body.get("support_kind", "")), "fall_height": maxi(0, fall_start_z - support_top), "stack_depth": stack_depth})
+				body.erase("fall_start_z")
 		else:
+			if str(body.get("rest_state", "")) != "falling":
+				body["fall_start_z"] = int(body.get("z", 0))
+			if previous_support == "platform":
+				body["pending_platform_deposit"] = true
+			body["support_kind"] = ""
+			body["carried_sleep"] = false
 			body["rest_state"] = "falling"
 			body["sleep_ticks"] = 0
-	for exit_index in range(exit_indices.size() - 1, -1, -1):
-		bodies.remove_at(int(exit_indices[exit_index]))
-
-
-static func _resolve_collisions(state: Dictionary, buckets: Dictionary, visited_pairs: PackedInt32Array, visit_generation: int, awake_indices: PackedInt32Array, neighbor_cache: Dictionary, support_indices: PackedInt32Array, support_seen: PackedByteArray) -> int:
-	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	if awake_indices.is_empty():
-		return 0
-	var resolved := 0
-	for left_index_value in awake_indices:
-		var left_index := int(left_index_value)
-		var left: Dictionary = bodies[left_index]
-		var center_x := _divi(int(left["x"]), BROADPHASE_CELL)
-		var center_y := _divi(int(left["y"]), BROADPHASE_CELL)
-		var center_z := _divi(int(left["z"]), BROADPHASE_CELL)
-		for right_index_value in _neighbor_indices(buckets, neighbor_cache, center_x, center_y, center_z):
-			var right_index := int(right_index_value)
-			if right_index == left_index:
-				continue
-			var low := mini(left_index, right_index)
-			var high := maxi(left_index, right_index)
-			var pair_key := low * bodies.size() + high
-			if visited_pairs[pair_key] == visit_generation:
-				continue
-			visited_pairs[pair_key] = visit_generation
-			if typeof(bodies[right_index]) != TYPE_DICTIONARY:
-				continue
-			var right: Dictionary = bodies[right_index]
-			var dx := int(right["x"]) - int(left["x"])
-			var dy := int(right["y"]) - int(left["y"])
-			var min_distance := int(left["radius"]) + int(right["radius"])
-			if absi(dx) >= min_distance or absi(dy) >= min_distance or dx * dx + dy * dy >= min_distance * min_distance:
-				continue
-			var z_gap := absi(int(left["z"]) - int(right["z"]))
-			if z_gap >= mini(int(left["height"]), int(right["height"])):
-				continue
-			var overlap := min_distance - maxi(absi(dx), absi(dy))
-			if overlap <= 0:
-				continue
-			if absi(dx) >= absi(dy):
-				var sign_x := 1 if dx >= 0 else -1
-				right["x"] = int(right["x"]) + _divi(sign_x * overlap, 2)
-				left["x"] = int(left["x"]) - _divi(sign_x * overlap, 2)
-				right["vx"] = int(right["vx"]) + sign_x * overlap * 5
-				left["vx"] = int(left["vx"]) - sign_x * overlap * 5
-			else:
-				var sign_y := 1 if dy >= 0 else -1
-				right["y"] = int(right["y"]) + _divi(sign_y * overlap, 2)
-				left["y"] = int(left["y"]) - _divi(sign_y * overlap, 2)
-				right["vy"] = int(right["vy"]) + sign_y * overlap * 5
-				left["vy"] = int(left["vy"]) - sign_y * overlap * 5
-			if bool(right["sleeping"]) and support_seen[right_index] == 0:
-				support_seen[right_index] = 1
-				support_indices.append(right_index)
-			_wake(left)
-			_wake(right)
-			resolved += 1
-	return resolved
-
-
-static func _resolve_supports(state: Dictionary, buckets: Dictionary, neighbor_cache: Dictionary, active_indices: PackedInt32Array, motion_events: Array, motion_event_keys: Dictionary, peak_z_by_id: Dictionary, tick_offset: int) -> void:
-	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	for body_index_value in active_indices:
-		var body_index := int(body_index_value)
-		if body_index < 0 or body_index >= bodies.size():
-			continue
-		var value: Variant = bodies[body_index]
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var body: Dictionary = value
-		var base_z := _floor_z(body)
-		if int(body["z"]) <= base_z:
-			body["lean_milli"] = 0
-			continue
-		var support: Dictionary = {}
-		var support_distance := 1 << 30
-		var center_x := _divi(int(body["x"]), BROADPHASE_CELL)
-		var center_y := _divi(int(body["y"]), BROADPHASE_CELL)
-		var center_z := _divi(int(body["z"]), BROADPHASE_CELL)
-		for candidate_index_value in _neighbor_indices(buckets, neighbor_cache, center_x, center_y, center_z):
-			var candidate_index := int(candidate_index_value)
-			if candidate_index < 0 or candidate_index >= bodies.size() or bodies[candidate_index] == value or typeof(bodies[candidate_index]) != TYPE_DICTIONARY:
-				continue
-			var candidate: Dictionary = bodies[candidate_index]
-			var target_z := int(candidate["z"]) + int(candidate["height"])
-			if target_z > int(body["z"]) + COIN_HEIGHT or target_z < int(body["z"]) - COIN_HEIGHT * 2:
-				continue
-			var dx := int(body["x"]) - int(candidate["x"])
-			var dy := int(body["y"]) - int(candidate["y"])
-			var distance := dx * dx + dy * dy
-			var support_radius := mini(int(body["radius"]), int(candidate["radius"]))
-			if distance < support_radius * support_radius and distance < support_distance:
-				support = candidate
-				support_distance = distance
-		if support.is_empty():
-			body["rest_state"] = "falling"
 			body["sleeping"] = false
+		if previous_support == "platform" and str(body.get("support_kind", "")) == "deck":
+			events.append({"kind": "platform_deposit", "body_id": str(body.get("id", ""))})
+			body.erase("pending_platform_deposit")
+	return nestle_work
+
+
+static func _process_exits(state: Dictionary, events: Array) -> void:
+	var definition := _definition(state)
+	var geometry := _geometry(definition)
+	var width := int(geometry.get("width", WIDTH))
+	var lip := int(geometry.get("tray_lip_y", TRAY_LIP_Y))
+	var gutter := int(geometry.get("gutter_x", GUTTER_X))
+	var bodies: Array = state.get("bodies", [])
+	for index in range(bodies.size() - 1, -1, -1):
+		var body: Dictionary = bodies[index]
+		var radius := int(body.get("radius", COIN_RADIUS))
+		var x := int(body.get("x", 0))
+		var y := int(body.get("y", 0))
+		var outcome := ""
+		if y - radius < lip:
+			outcome = "tray" if x >= gutter and x <= width - gutter else "gutter"
+		elif x + radius < gutter or x - radius > width - gutter:
+			outcome = "gutter"
+		if outcome.is_empty():
 			continue
-		var target_z := int(support["z"]) + int(support["height"])
-		if int(body["vz"]) <= 0 and int(body["z"]) <= target_z + COIN_HEIGHT:
-			var fall_height := maxi(0, int(peak_z_by_id.get(str(body["id"]), int(body["z"]))) - target_z)
-			if not peak_z_by_id.is_empty() and fall_height > 0:
-				var stack_depth := maxi(1, _divi(target_z - _floor_z(body), COIN_HEIGHT))
-				_append_impact_motion_event(motion_events, motion_event_keys, body, "coin_on_coin", stack_depth, fall_height, tick_offset)
-			body["z"] = target_z
-			body["vz"] = 0
-			var dx := int(body["x"]) - int(support["x"])
-			var dy := int(body["y"]) - int(support["y"])
-			var lean := _divi(maxi(absi(dx), absi(dy)) * FP, maxi(1, int(body["radius"])))
-			body["lean_milli"] = lean
-			if lean > 620:
-				var topple_key := "topple|%s" % str(body["id"])
-				if not motion_event_keys.has(topple_key):
-					motion_events.append({"kind": "topple", "body_id": str(body["id"]), "support_id": str(support["id"]), "lean_milli": lean})
-					motion_event_keys[topple_key] = true
-				body["vx"] = int(body["vx"]) + (120 if dx >= 0 else -120)
-				body["vy"] = int(body["vy"]) + (120 if dy >= 0 else -120)
-				body["z"] = target_z + 80
-				body["rest_state"] = "toppling"
-				body["sleeping"] = false
-			else:
-				_update_sleep(body)
+		var entry := {
+			"body_id": str(body.get("id", "")),
+			"kind": str(body.get("kind", "coin")),
+			"value": int((body.get("meta", {}) as Dictionary).get("value", 1 if str(body.get("kind", "")) == "coin" else 0)),
+			"item_id": str((body.get("meta", {}) as Dictionary).get("item_id", "")),
+		}
+		if outcome == "tray":
+			(state["tray_ledger"] as Array).append(entry)
+		else:
+			(state["gutter_ledger"] as Array).append(entry)
+		events.append({"kind": outcome, "body_id": str(body.get("id", "")), "body_kind": str(body.get("kind", "coin"))})
+		bodies.remove_at(index)
+
+
+static func _apply_trace_input(state: Dictionary, input: Dictionary, rng_value: Variant) -> void:
+	match str(input.get("kind", "")):
+		"drop":
+			if rng_value is RngStream:
+				add_coin(state, rng_value as RngStream, int(input.get("x", WIDTH / 2)), int(input.get("density", 1)))
+		"skill_stop":
+			set_skill_stop(state, bool(input.get("engaged", false)))
+		"nudge":
+			apply_nudge(state, int(input.get("x", 0)), int(input.get("y", 0)))
+
+
+static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int) -> void:
+	var definition := _definition(state)
+	var geometry := _geometry(definition)
+	var coins := _coins(definition)
+	var radius := int(coins.get("radius", COIN_RADIUS))
+	var height := int(coins.get("height", COIN_HEIGHT))
+	var mass := int(coins.get("mass", FP))
+	var face := int(state.get("face_y", FACE_EXTENDED_Y))
+	var plate := int(geometry.get("back_plate_y", BACK_PLATE_Y))
+	var width := int(geometry.get("width", WIDTH))
+	var bodies: Array = state.get("bodies", [])
+	var base_positions: Array = []
+	var x_step := maxi(radius * 2 + 500, _divi(width - radius * 2, 10))
+	var wiggle := [-1700, 700, 1800, -600, -1800, 500, 1600, -900, -1500, 1000]
+	# Three authored-width rows on the platform preserve visible top stock.
+	for row in range(3):
+		for column in range(10):
+			var x := radius + 500 + column * x_step + (x_step / 2 if row % 2 == 1 else 0)
+			if x > width - radius:
+				continue
+			var y := plate - radius - row * 8800 + int(wiggle[column]) / 3
+			var on_platform := y >= face
+			base_positions.append({"x": x, "y": y, "z": int(geometry.get("platform_top_z", PLATFORM_TOP_Z)) if on_platform else int(geometry.get("deck_z", DECK_Z)), "support": "platform" if on_platform else "deck", "carried": on_platform})
+	# Two staggered deck rows fill the moving face's working mass without overlap.
+	for row in range(2):
+		for column in range(10):
+			var x := radius + 500 + column * x_step + (x_step / 2 if row % 2 == 1 else 0)
+			if x > width - radius:
+				continue
+			var y := int(geometry.get("tray_lip_y", TRAY_LIP_Y)) + radius + 1200 + row * 7900 + int(wiggle[(column + row * 3) % wiggle.size()]) / 3
+			base_positions.append({"x": x, "y": y, "z": int(geometry.get("deck_z", DECK_Z)), "support": "deck", "carried": false})
+	for index in range(count):
+		var base: Dictionary = base_positions[index % base_positions.size()]
+		var layer := index / base_positions.size()
+		var layer_x_jitter := rng.randi_range(-180, 180) if layer > 0 else 0
+		var layer_y_jitter := rng.randi_range(-180, 180) if layer > 0 else 0
+		var body := _new_body(state, "coin", clampi(int(base.get("x", 0)) + layer_x_jitter, radius, width - radius), int(base.get("y", 0)) + layer_y_jitter, int(base.get("z", 0)) + layer * height, radius, height, mass, {"value": int(coins.get("value", 1)), "opening": true})
+		body["support_kind"] = str(base.get("support", "deck")) if layer == 0 else "body"
+		body["sleeping"] = true
+		body["sleep_ticks"] = SLEEP_TICKS
+		body["rest_state"] = "resting"
+		body["carried_sleep"] = bool(base.get("carried", false))
+		# Opening stock is already asleep. Persist only outcome-bearing values;
+		# both solver backends reconstruct these zero transient fields exactly.
+		for transient_key in ["vx", "vy", "vz", "x_remainder", "y_remainder", "z_remainder", "fall_start_z"]:
+			body.erase(transient_key)
+		if not bool(body.get("carried_sleep", false)):
+			body.erase("carried_sleep")
+		bodies.append(body)
+
+
+static func _new_body(state: Dictionary, kind: String, x: int, y: int, z: int, radius: int, height: int, mass: int, meta: Dictionary) -> Dictionary:
+	var next_id := int(state.get("next_body_id", 1))
+	state["next_body_id"] = next_id + 1
+	return {
+		"id": "body_%05d" % next_id,
+		"kind": kind,
+		"x": x,
+		"y": y,
+		"z": z,
+		"vx": 0,
+		"vy": 0,
+		"vz": 0,
+		"x_remainder": 0,
+		"y_remainder": 0,
+		"z_remainder": 0,
+		"radius": radius,
+		"height": height,
+		"mass": maxi(1, mass),
+		"sleeping": false,
+		"sleep_ticks": 0,
+		"rest_state": "falling",
+		"fall_start_z": z,
+		"support_kind": "",
+		"carried_sleep": false,
+		"meta": meta.duplicate(true),
+	}
+
+
+static func _invariant_report(state: Dictionary, energy_ok: bool) -> Dictionary:
+	var active_count := (state.get("bodies", []) as Array).size()
+	var tray_count := (state.get("tray_ledger", []) as Array).size()
+	var gutter_count := (state.get("gutter_ledger", []) as Array).size()
+	var origin_count := int(state.get("opening_body_count", 0)) + int(state.get("accepted_inserts", 0))
+	return {
+		"energy_ok": energy_ok,
+		"conservation_ok": active_count + tray_count + gutter_count == origin_count,
+		"active": active_count,
+		"tray": tray_count,
+		"gutter": gutter_count,
+		"origin": origin_count,
+		"refused": int(state.get("refused_inserts", 0)),
+	}
+
+
+static func _kinetic_energy(bodies: Array) -> int:
+	var energy := 0
+	for body_value in bodies:
+		var body: Dictionary = body_value
+		if bool(body.get("sleeping", false)):
+			continue
+		energy += _body_kinetic_energy(body)
+	return energy
+
+
+static func _body_kinetic_energy(body: Dictionary) -> int:
+	var mass := maxi(1, int(body.get("mass", FP)))
+	var vx := int(body.get("vx", 0))
+	var vy := int(body.get("vy", 0))
+	var vz := int(body.get("vz", 0))
+	return _divi(mass * (_divi(vx * vx, FP) + _divi(vy * vy, FP) + _divi(vz * vz, FP)), 2 * FP)
+
+
+static func _integrate_axis(body: Dictionary, position_key: String, velocity_key: String, remainder_key: String) -> void:
+	var total := int(body.get(remainder_key, 0)) + int(body.get(velocity_key, 0))
+	var whole := _divi(total, FIXED_HZ)
+	body[position_key] = int(body.get(position_key, 0)) + whole
+	body[remainder_key] = total - whole * FIXED_HZ
+
+
+static func _total_mass(bodies: Array) -> int:
+	var total := 0
+	for body_value in bodies:
+		var body: Dictionary = body_value
+		if not bool(body.get("sleeping", false)):
+			total += maxi(1, int(body.get("mass", FP)))
+	return total
+
+
+static func _apply_surface_friction(body: Dictionary, coefficient: int) -> void:
+	var keep := clampi(FP - _divi(coefficient, 8), 0, FP)
+	body["vx"] = _divi(int(body.get("vx", 0)) * keep, FP)
+	body["vy"] = _divi(int(body.get("vy", 0)) * keep, FP)
 
 
 static func _update_sleep(body: Dictionary) -> void:
-	var speed := absi(int(body["vx"])) + absi(int(body["vy"])) + absi(int(body["vz"]))
-	if speed <= SLEEP_SPEED:
-		body["sleep_ticks"] = int(body["sleep_ticks"]) + 1
-		if int(body["sleep_ticks"]) >= SLEEP_TICKS:
+	var speed := absi(int(body.get("vx", 0))) + absi(int(body.get("vy", 0))) + absi(int(body.get("vz", 0)))
+	if speed < SLEEP_SPEED:
+		body["vx"] = 0
+		body["vy"] = 0
+		body["vz"] = 0
+		body["sleep_ticks"] = int(body.get("sleep_ticks", 0)) + 1
+		if int(body.get("sleep_ticks", 0)) >= SLEEP_TICKS:
+			body["sleeping"] = true
 			body["vx"] = 0
 			body["vy"] = 0
 			body["vz"] = 0
-			body["sleeping"] = true
-			body["rest_state"] = "resting"
+			body["x_remainder"] = 0
+			body["y_remainder"] = 0
+			body["z_remainder"] = 0
 	else:
 		body["sleep_ticks"] = 0
-		body["rest_state"] = "settling"
+		body["sleeping"] = false
 
 
 static func _wake(body: Dictionary) -> void:
+	if bool(body.get("sleeping", false)):
+		body["sleep_ticks"] = 0
 	body["sleeping"] = false
-	body["sleep_ticks"] = 0
-	body["rest_state"] = "settling"
+	body["carried_sleep"] = false
+	if str(body.get("rest_state", "")) != "falling":
+		body["rest_state"] = "settling"
 
 
-static func _floor_z(body: Dictionary) -> int:
-	return UPPER_FLOOR_Z if int(body["y"]) >= UPPER_EDGE else LOWER_FLOOR_Z
-
-
-static func _exit_kind(body: Dictionary) -> String:
-	var x := int(body.get("x", 0))
-	var y := int(body.get("y", 0))
-	var radius := int(body.get("radius", COIN_RADIUS))
-	if x < -radius or x > WIDTH + radius:
-		return "gutter"
-	if y >= FRONT_EDGE - radius:
-		return ""
-	return "tray" if x >= TRAY_LEFT and x <= TRAY_RIGHT else "gutter"
-
-
-static func _exit_event(body: Dictionary, outcome: String, cause: String, tick_offset: int = ACTION_TICKS) -> Dictionary:
-	return {
-		"body_id": str(body.get("id", "")), "kind": str(body.get("kind", "coin")),
-		"outcome": outcome, "cause": cause,
-		"x": int(body.get("x", 0)), "y": int(body.get("y", 0)), "z": int(body.get("z", 0)),
-		"mass": int(body.get("mass", 1)),
-		"tick_offset": tick_offset,
-		"metadata": (body.get("metadata", {}) as Dictionary).duplicate(true) if typeof(body.get("metadata", {})) == TYPE_DICTIONARY else {},
-	}
-
-
-static func _normalize_hot_body_fields(state: Dictionary) -> void:
-	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
+static func _wake_nearby(bodies: Array, x: int, y: int, radius: int, excluded_id: String = "") -> void:
+	var radius_sq := radius * radius
 	for body_value in bodies:
-		if typeof(body_value) != TYPE_DICTIONARY:
-			continue
 		var body: Dictionary = body_value
-		if not body.has("id"):
-			body["id"] = ""
-		if not body.has("x"):
-			body["x"] = 0
-		if not body.has("y"):
-			body["y"] = 0
-		if not body.has("z"):
-			body["z"] = 0
-		if not body.has("vx"):
-			body["vx"] = 0
-		if not body.has("vy"):
-			body["vy"] = 0
-		if not body.has("vz"):
-			body["vz"] = 0
-		if not body.has("radius"):
-			body["radius"] = COIN_RADIUS
-		if not body.has("height"):
-			body["height"] = COIN_HEIGHT
-		if not body.has("mass"):
-			body["mass"] = 1
-		if not body.has("sleep_ticks"):
-			body["sleep_ticks"] = 0
-		if not body.has("sleeping"):
-			body["sleeping"] = false
-		if not body.has("kind"):
-			body["kind"] = "coin"
-		if not body.has("rest_state"):
-			body["rest_state"] = "settling"
-		if not body.has("lean_milli"):
-			body["lean_milli"] = 0
-		if not body.has("metadata") or typeof(body.get("metadata")) != TYPE_DICTIONARY:
-			body["metadata"] = {}
-		body["x"] = int(body.get("x", 0))
-		body["y"] = int(body.get("y", 0))
-		body["z"] = int(body.get("z", 0))
-		body["vx"] = int(body.get("vx", 0))
-		body["vy"] = int(body.get("vy", 0))
-		body["vz"] = int(body.get("vz", 0))
-		body["radius"] = int(body.get("radius", COIN_RADIUS))
-		body["height"] = int(body.get("height", COIN_HEIGHT))
-		body["mass"] = int(body.get("mass", 1))
-		body["sleep_ticks"] = int(body.get("sleep_ticks", 0))
-		body["sleeping"] = bool(body.get("sleeping", false))
-		body["rest_state"] = str(body.get("rest_state", "settling"))
-		body["lean_milli"] = int(body.get("lean_milli", 0))
-		if body.has("cap_pressure_ticks"):
-			body["cap_pressure_ticks"] = int(body.get("cap_pressure_ticks", 0))
-		if body.has("cap_pressure_accel"):
-			body["cap_pressure_accel"] = int(body.get("cap_pressure_accel", 0))
+		if not excluded_id.is_empty() and str(body.get("id", "")) == excluded_id:
+			continue
+		var dx := int(body.get("x", 0)) - x
+		var dy := int(body.get("y", 0)) - y
+		if dx * dx + dy * dy <= radius_sq:
+			_wake(body)
 
 
-static func _hot_state_requires_reference(state: Dictionary, config: Dictionary = {}) -> bool:
-	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	if bodies.size() > HOT_BODY_COUNT_LIMIT:
-		return true
-	if not config.has("captured_upper_phase_fp"):
-		var upper_phase := int(state.get("upper_phase_fp", 0))
-		if upper_phase < 0 or upper_phase >= PHASE_PERIOD:
-			return true
-	if not config.has("captured_lower_phase_fp"):
-		var lower_phase := int(state.get("lower_phase_fp", 0))
-		if lower_phase < 0 or lower_phase >= PHASE_PERIOD:
-			return true
-	for config_key in ["nudge_x", "nudge_y", "aimed_x", "nudge_radius"]:
-		var config_value := int(config.get(config_key, 0))
-		if config_value < -HOT_CONFIG_IMPULSE_ABS_LIMIT or config_value > HOT_CONFIG_IMPULSE_ABS_LIMIT:
-			return true
-	var requested_push_scale := int(config.get("push_scale", 1))
-	if requested_push_scale < -HOT_PUSH_SCALE_ABS_LIMIT or requested_push_scale > HOT_PUSH_SCALE_ABS_LIMIT:
-		return true
-	var seen_ids := {}
+static func _position_clear(bodies: Array, x: int, y: int, minimum: int) -> bool:
+	var minimum_sq := minimum * minimum
 	for body_value in bodies:
-		if typeof(body_value) != TYPE_DICTIONARY:
-			return true
-		var body_id := str((body_value as Dictionary).get("id", ""))
-		if seen_ids.has(body_id):
-			return true
-		seen_ids[body_id] = true
 		var body: Dictionary = body_value
-		for position_key in ["x", "y", "z"]:
-			var position_value := int(body.get(position_key, 0))
-			if position_value < -HOT_POSITION_ABS_LIMIT or position_value > HOT_POSITION_ABS_LIMIT:
-				return true
-		for velocity_key in ["vx", "vy", "vz"]:
-			var velocity_value := int(body.get(velocity_key, 0))
-			if velocity_value < -HOT_VELOCITY_ABS_LIMIT or velocity_value > HOT_VELOCITY_ABS_LIMIT:
-				return true
-		var radius := int(body.get("radius", COIN_RADIUS))
-		var height := int(body.get("height", COIN_HEIGHT))
-		if radius <= 0 or radius > HOT_DIMENSION_LIMIT or height <= 0 or height > HOT_DIMENSION_LIMIT:
-			return true
-		for scalar_key in ["mass", "sleep_ticks", "lean_milli", "cap_pressure_ticks"]:
-			var scalar_value := int(body.get(scalar_key, 0))
-			if scalar_value < -HOT_GENERAL_SCALAR_ABS_LIMIT or scalar_value > HOT_GENERAL_SCALAR_ABS_LIMIT:
-				return true
-		var pressure_accel := int(body.get("cap_pressure_accel", 0))
-		if pressure_accel < -HOT_PRESSURE_ACCEL_ABS_LIMIT or pressure_accel > HOT_PRESSURE_ACCEL_ABS_LIMIT:
-			return true
-		var center_x := _divi(int(body.get("x", 0)), BROADPHASE_CELL)
-		var center_y := _divi(int(body.get("y", 0)), BROADPHASE_CELL)
-		var center_z := _divi(int(body.get("z", 0)), BROADPHASE_CELL)
-		var low_key := _bucket_key(center_x - 1, center_y - 1, center_z - 1)
-		var high_key := _bucket_key(center_x + 1, center_y + 1, center_z + 1)
-		if low_key < 0 or high_key >= HOT_GRID_KEY_CAPACITY:
-			return true
-	return false
-
-
-static func _presentation_event_views(state: Dictionary, exits: Array, motion_events: Array, metrics: Dictionary, config: Dictionary) -> Array:
-	var result: Array = []
-	var focus := _presentation_focus_body(state)
-	var moved_count := int(metrics.get("moved_count", 0))
-	if moved_count > 1:
-		result.append(_presentation_event("slide", focus, mini(1000, 180 + moved_count * 24), ACTION_TICKS / 2, {"moved_count": moved_count}))
-	for motion_value in motion_events:
-		if typeof(motion_value) != TYPE_DICTIONARY:
+		if int(body.get("z", 0)) > DECK_Z + SUPPORT_VERTICAL_TOLERANCE:
 			continue
-		var motion: Dictionary = motion_value
-		var kind := str(motion.get("kind", ""))
-		var body := _presentation_body_by_id(state, str(motion.get("body_id", "")))
-		if body.is_empty():
-			body = motion
-		var intensity := 720 if kind == "topple" else 820
-		if kind == "impact":
-			intensity = mini(1000, 320 + int(motion.get("fall_height_milli", 0)) / 8 + int(motion.get("stack_depth", 0)) * 70)
-		result.append(_presentation_event(kind, body, intensity, int(motion.get("tick_offset", ACTION_TICKS / 2)), motion))
-	var outcome_totals := {"tray": 0, "gutter": 0}
-	for exit_value in exits:
-		if typeof(exit_value) == TYPE_DICTIONARY:
-			var counted_outcome := str((exit_value as Dictionary).get("outcome", "gutter"))
-			outcome_totals[counted_outcome] = int(outcome_totals.get(counted_outcome, 0)) + 1
-	var outcome_indices := {"tray": 0, "gutter": 0}
-	for exit_value in exits:
-		if typeof(exit_value) != TYPE_DICTIONARY:
-			continue
-		var exit_event: Dictionary = exit_value
-		var outcome := str(exit_event.get("outcome", "gutter"))
-		var tick_offset := int(exit_event.get("tick_offset", ACTION_TICKS))
-		var group_index := int(outcome_indices.get(outcome, 0))
-		outcome_indices[outcome] = group_index + 1
-		result.append(_presentation_event("ledge_tip", exit_event, 760, maxi(0, tick_offset - 3), {"outcome": outcome}))
-		result.append(_presentation_event("tray_landing" if outcome == "tray" else "gutter_loss", exit_event, mini(1000, 450 + int(exit_event.get("mass", 1)) * 110), tick_offset, {
-			"outcome": outcome,
-			"group_count": int(outcome_totals.get(outcome, 1)),
-			"group_index": group_index,
-		}))
-	if int(config.get("nudge_x", 0)) != 0 or int(config.get("nudge_y", 0)) != 0:
-		result.append(_presentation_event("cabinet_shake", focus, mini(1000, (absi(int(config.get("nudge_x", 0))) + absi(int(config.get("nudge_y", 0)))) / 24), 1, {}))
-	return result
+		var dx := int(body.get("x", 0)) - x
+		var dy := int(body.get("y", 0)) - y
+		if dx * dx + dy * dy < minimum_sq:
+			return false
+	return true
 
 
-static func _hot_presentation_event_views(hot: HotBodies, exits: Array, motion_events: Array, metrics: Dictionary, config: Dictionary) -> Array:
-	var result: Array = []
-	var focus_index := -1
-	var sleeping := hot.sleeping
-	for index in range(sleeping.size()):
-		if sleeping[index] == 0:
-			focus_index = index
-			break
-	if focus_index < 0 and hot.size() > 0:
-		focus_index = 0
-	var moved_count := int(metrics.get("moved_count", 0))
-	if moved_count > 1:
-		result.append(_hot_presentation_event("slide", hot, focus_index, mini(1000, 180 + moved_count * 24), ACTION_TICKS / 2, {"moved_count": moved_count}))
-	var body_index_by_id := {}
-	var ids := hot.ids
-	if not motion_events.is_empty():
-		for index in range(ids.size()):
-			body_index_by_id[str(ids[index])] = index
-	for motion_index in range(motion_events.size()):
-		var motion_value: Variant = motion_events[motion_index]
-		if typeof(motion_value) != TYPE_DICTIONARY:
-			continue
-		var motion: Dictionary = motion_value
-		var kind := str(motion.get("kind", ""))
-		var intensity := 720 if kind == "topple" else 820
-		if kind == "impact":
-			intensity = mini(1000, 320 + int(motion.get("fall_height_milli", 0)) / 8 + int(motion.get("stack_depth", 0)) * 70)
-		var body_index := int(body_index_by_id.get(str(motion.get("body_id", "")), -1))
-		if body_index >= 0:
-			result.append(_hot_presentation_event(kind, hot, body_index, intensity, int(motion.get("tick_offset", ACTION_TICKS / 2)), motion))
-		else:
-			result.append(_presentation_event(kind, motion, intensity, int(motion.get("tick_offset", ACTION_TICKS / 2)), motion))
-	var tray_total := 0
-	var gutter_total := 0
-	for exit_index in range(exits.size()):
-		var exit_value: Variant = exits[exit_index]
-		if typeof(exit_value) != TYPE_DICTIONARY:
-			continue
-		if str((exit_value as Dictionary).get("outcome", "gutter")) == "tray":
-			tray_total += 1
-		else:
-			gutter_total += 1
-	var tray_index := 0
-	var gutter_index := 0
-	for exit_index in range(exits.size()):
-		var exit_value: Variant = exits[exit_index]
-		if typeof(exit_value) != TYPE_DICTIONARY:
-			continue
-		var exit_event: Dictionary = exit_value
-		var outcome := str(exit_event.get("outcome", "gutter"))
-		var tick_offset := int(exit_event.get("tick_offset", ACTION_TICKS))
-		var group_index := tray_index if outcome == "tray" else gutter_index
-		var group_count := tray_total if outcome == "tray" else gutter_total
-		if outcome == "tray":
-			tray_index += 1
-		else:
-			gutter_index += 1
-		result.append(_presentation_event("ledge_tip", exit_event, 760, maxi(0, tick_offset - 3), {"outcome": outcome}))
-		result.append(_presentation_event("tray_landing" if outcome == "tray" else "gutter_loss", exit_event, mini(1000, 450 + int(exit_event.get("mass", 1)) * 110), tick_offset, {
-			"outcome": outcome,
-			"group_count": group_count,
-			"group_index": group_index,
-		}))
-	if int(config.get("nudge_x", 0)) != 0 or int(config.get("nudge_y", 0)) != 0:
-		result.append(_hot_presentation_event("cabinet_shake", hot, focus_index, mini(1000, (absi(int(config.get("nudge_x", 0))) + absi(int(config.get("nudge_y", 0)))) / 24), 1, {}))
-	return result
+static func _z_bands_overlap(left: Dictionary, right: Dictionary) -> bool:
+	var left_base := int(left.get("z", 0))
+	var right_base := int(right.get("z", 0))
+	return left_base < right_base + int(right.get("height", COIN_HEIGHT)) and right_base < left_base + int(left.get("height", COIN_HEIGHT))
 
 
-static func _hot_presentation_event(kind: String, hot: HotBodies, body_index: int, intensity_milli: int, tick_offset: int, metadata: Dictionary) -> Dictionary:
-	var body_id := ""
-	if body_index >= 0:
-		var body: Dictionary = hot.refs[body_index]
-		body_id = str(body.get("body_id", hot.ids[body_index]))
-	return {
-		"kind": kind,
-		"body_id": body_id,
-		"x": hot.x[body_index] if body_index >= 0 else _divi(WIDTH, 2),
-		"y": hot.y[body_index] if body_index >= 0 else UPPER_EDGE,
-		"z": hot.z[body_index] if body_index >= 0 else 0,
-		"intensity_milli": clampi(intensity_milli, 0, 1000),
-		"tick_offset": clampi(tick_offset, 0, ACTION_TICKS),
-		"metadata": metadata.duplicate(true),
-	}
+static func _definition(state: Dictionary) -> Dictionary:
+	return state.get("machine_definition", {}) if typeof(state.get("machine_definition", {})) == TYPE_DICTIONARY else {}
 
 
-static func _presentation_focus_body(state: Dictionary) -> Dictionary:
-	for body_value in state.get("bodies", []):
-		if typeof(body_value) == TYPE_DICTIONARY and not bool((body_value as Dictionary).get("sleeping", false)):
-			return (body_value as Dictionary).duplicate(true)
-	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
-	return (bodies[0] as Dictionary).duplicate(true) if not bodies.is_empty() and typeof(bodies[0]) == TYPE_DICTIONARY else {}
+static func _geometry(definition: Dictionary) -> Dictionary:
+	return definition.get("geometry", {}) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
 
 
-static func _presentation_body_by_id(state: Dictionary, body_id: String) -> Dictionary:
-	for body_value in state.get("bodies", []):
-		if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("id", "")) == body_id:
-			return (body_value as Dictionary).duplicate(true)
-	return {}
+static func _stroke(definition: Dictionary) -> Dictionary:
+	return definition.get("stroke", {}) if typeof(definition.get("stroke", {})) == TYPE_DICTIONARY else {}
 
 
-static func _presentation_event(kind: String, body: Dictionary, intensity_milli: int, tick_offset: int, metadata: Dictionary) -> Dictionary:
-	return {
-		"kind": kind,
-		"body_id": str(body.get("body_id", body.get("id", ""))),
-		"x": int(body.get("x", WIDTH / 2)),
-		"y": int(body.get("y", UPPER_EDGE)),
-		"z": int(body.get("z", 0)),
-		"intensity_milli": clampi(intensity_milli, 0, 1000),
-		"tick_offset": clampi(tick_offset, 0, ACTION_TICKS),
-		"metadata": metadata.duplicate(true),
-	}
+static func _apparatus(definition: Dictionary) -> Dictionary:
+	return definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
 
 
-static func _presentation_material_category(body: Dictionary) -> String:
-	match str(body.get("kind", "coin")):
-		"coin":
-			return "coin"
-		"puck":
-			return "feature_puck"
-		"fragment":
-			return "key_fragment"
-		"rider":
-			return "prize_rider"
-	return "physical_object"
+static func _coins(definition: Dictionary) -> Dictionary:
+	return definition.get("coins", {}) if typeof(definition.get("coins", {})) == TYPE_DICTIONARY else {}
 
 
-static func _positions_by_id(state: Dictionary) -> Dictionary:
-	var result := {}
-	for value in state.get("bodies", []):
-		if typeof(value) == TYPE_DICTIONARY:
-			var body: Dictionary = value
-			result[str(body.get("id", ""))] = [int(body.get("x", 0)), int(body.get("y", 0)), int(body.get("z", 0))]
-	return result
+static func _ceiling(definition: Dictionary) -> int:
+	return clampi(int(definition.get("ceiling", HARD_BODY_CEILING)), 1, HARD_BODY_CEILING)
 
 
-static func _peak_z_by_id(state: Dictionary) -> Dictionary:
-	var result := {}
-	for value in state.get("bodies", []):
-		if typeof(value) == TYPE_DICTIONARY:
-			var body: Dictionary = value
-			result[str(body.get("id", ""))] = int(body.get("z", 0))
-	return result
+static func _isqrt(value: int) -> int:
+	if value <= 0:
+		return 0
+	var estimate := value
+	var next := _divi(estimate + _divi(value, estimate), 2)
+	while next < estimate:
+		estimate = next
+		next = _divi(estimate + _divi(value, estimate), 2)
+	return estimate
 
 
-static func _append_impact_motion_event(events: Array, event_keys: Dictionary, body: Dictionary, material: String, stack_depth: int, fall_height: int, tick_offset: int) -> void:
-	var body_id := str(body.get("id", ""))
-	var event_key := "impact|%s" % body_id
-	if body_id.is_empty() or event_keys.has(event_key):
-		return
-	events.append({
-		"kind": "impact",
-		"body_id": body_id,
-		"x": int(body.get("x", 0)),
-		"y": int(body.get("y", 0)),
-		"z": int(body.get("z", 0)),
-		"tick_offset": tick_offset,
-		"material": material,
-		"stack_depth": maxi(0, stack_depth),
-		"fall_height_milli": maxi(0, _divi(fall_height * FP, COIN_HEIGHT)),
-	})
-	event_keys[event_key] = true
-
-
-static func _motion_event_count(events: Array, kind: String) -> int:
-	var count := 0
-	for value in events:
-		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("kind", "")) == kind:
-			count += 1
-	return count
-
-
-static func _spatial_keys(bodies: Array, awake_indices: PackedInt32Array) -> PackedInt32Array:
-	var result := PackedInt32Array()
-	for index in range(bodies.size()):
-		if typeof(bodies[index]) != TYPE_DICTIONARY:
-			result.append(0)
-			continue
-		var body: Dictionary = bodies[index]
-		if not bool(body["sleeping"]):
-			awake_indices.append(index)
-		var key := _bucket_key(_divi(int(body["x"]), BROADPHASE_CELL), _divi(int(body["y"]), BROADPHASE_CELL), _divi(int(body["z"]), BROADPHASE_CELL))
-		result.append(key)
-	return result
-
-
-static func _spatial_buckets(spatial_keys: PackedInt32Array) -> Dictionary:
-	var result := {}
-	for index in range(spatial_keys.size()):
-		var key := int(spatial_keys[index])
-		if result.has(key):
-			(result[key] as Array).append(index)
-		else:
-			result[key] = [index]
-	return result
-
-
-static func _neighbor_indices(buckets: Dictionary, cache: Dictionary, center_x: int, center_y: int, center_z: int) -> Array:
-	var center_key := _bucket_key(center_x, center_y, center_z)
-	if cache.has(center_key):
-		return cache[center_key] as Array
-	var result: Array = []
-	for z_offset in range(-1, 2):
-		for y_offset in range(-1, 2):
-			for x_offset in range(-1, 2):
-				var bucket_value: Variant = buckets.get(_bucket_key(center_x + x_offset, center_y + y_offset, center_z + z_offset), null)
-				if typeof(bucket_value) == TYPE_ARRAY:
-					result.append_array(bucket_value as Array)
-	cache[center_key] = result
-	return result
-
-
-static func _bucket_key(x: int, y: int, z: int) -> int:
-	return (x + 32) + (y + 32) * 128 + (z + 32) * 16384
-
-
-static func _key_before(left: Array, right: Array) -> bool:
-	if right.is_empty():
-		return true
-	for index in range(mini(left.size(), right.size())):
-		if left[index] == right[index]:
-			continue
-		return left[index] < right[index]
-	return left.size() < right.size()
-
-
-static func _pusher_face_y(phase_fp: int, upper: bool) -> int:
-	var half := _divi(PHASE_PERIOD, 2)
-	var folded := phase_fp if phase_fp <= half else PHASE_PERIOD - phase_fp
-	var travel := 24000 if upper else 18000
-	var rear := REAR_EDGE - 3000 if upper else UPPER_EDGE - 3000
-	return rear - _divi(folded * travel, half)
+static func _floor_div(value: int, divisor: int) -> int:
+	if divisor <= 0:
+		return 0
+	if value >= 0:
+		return value / divisor
+	return -_divi(-value + divisor - 1, divisor)
 
 
 static func _divi(numerator: int, denominator: int) -> int:

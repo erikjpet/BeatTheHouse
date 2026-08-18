@@ -3,7 +3,6 @@ extends GameModule
 
 const STATE_SCHEMA := "coin_pusher_discrete_pile"
 const DROP_ACTION := "drop_quarter"
-const NUDGE_ACTION := "nudge_machine"
 const VAULT_START_ACTION := "start_vault_round"
 const VAULT_OPEN_ACTION := "open_vault_cell"
 const VAULT_STOP_ACTION := "stop_vault_round"
@@ -12,7 +11,6 @@ const COLD_QUARTERS_ITEM_ID := "cold_quarters"
 const SHIM_ITEM_ID := "coin_return_shim"
 const RUMOR_CLASS := "pusher_pile"
 const SURFACE_SIZE := Vector2(900, 430)
-const PHYSICS_REPLAY_CHANNEL := "coin_pusher_physics"
 const C_BG := Color("#070b14")
 const C_CASE := Color("#182338")
 const C_GLASS := Color("#113148")
@@ -23,23 +21,7 @@ const C_TEXT := Color("#e9f4ff")
 const JackpotRidgeScript := preload("res://scripts/games/coin_pusher/jackpot_ridge.gd")
 const VaultDropScript := preload("res://scripts/games/coin_pusher/vault_drop.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
-const CoinPusherPackedTraceReaderScript := preload("res://scripts/games/coin_pusher/coin_pusher_packed_trace_reader.gd")
-const PHYSICS_REPLAY_DURATION_MSEC := CoinPusherSolverScript.ACTION_TICKS * 1000 / CoinPusherSolverScript.FIXED_HZ
-const RIDGE_JAM_ZONE_MIN_Y := CoinPusherSolverScript.FRONT_EDGE + 52000
-const RIDGE_JAM_ZONE_MIN_Z := CoinPusherSolverScript.UPPER_FLOOR_Z - CoinPusherSolverScript.OBJECT_HEIGHT
-const COIN_GLYPH_SIZE := 48
-const COIN_GLYPH_RADIUS := 18.0
-const SHARED_LEAVE_RECT := Rect2(776, 22, 86, 34)
-const CONSOLE_TITLE_RECT := Rect2(668, 22, 100, 34)
-const CONSOLE_TITLE_MAX_FONT_SIZE := 13
-
-var coin_glyph_textures: Dictionary = {}
-var _packed_trace_reader = CoinPusherPackedTraceReaderScript.new()
-
-
-func setup(p_definition: Dictionary, p_library: ContentLibrary = null) -> void:
-	super.setup(p_definition, p_library)
-	_prewarm_coin_glyphs()
+const V3_HEADLESS_MESSAGE := "Coin Pusher V3 physics is installed headlessly in this build. Cabinet controls arrive in the live-loop stage; no coin was spent."
 
 
 func gameplay_model() -> String:
@@ -59,6 +41,8 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 		result["message"] = "A convoy regular has the good machine tied up. Try another room or come back when the crowd moves."
 	elif bool(machine.get("locked_down", false)):
 		result["message"] = "Red lights. This cabinet is done for tonight. The rest of the room is still yours."
+	elif _has_v3_simulation(machine):
+		result["message"] = V3_HEADLESS_MESSAGE
 	elif bool(machine.get("staff_watch_memory", false)):
 		result["message"] = "%s is live again. Staff remember your hands and keep one eye here." % _variation_display_name(str(machine.get("variation_id", "quarter_falls")))
 	else:
@@ -68,7 +52,7 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 
 func legal_actions(run_state: RunState, environment: Dictionary) -> Array:
 	var machine := _read_machine_state(run_state, environment)
-	if _machine_busy(environment) or bool(machine.get("locked_down", false)):
+	if _machine_busy(environment) or bool(machine.get("locked_down", false)) or _has_v3_simulation(machine):
 		return []
 	var result: Array = []
 	for action in super.legal_actions(run_state, environment):
@@ -82,7 +66,7 @@ func legal_actions(run_state: RunState, environment: Dictionary) -> Array:
 
 func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
 	var machine := _read_machine_state(run_state, environment)
-	if _machine_busy(environment) or bool(machine.get("locked_down", false)):
+	if _machine_busy(environment) or bool(machine.get("locked_down", false)) or _has_v3_simulation(machine):
 		return []
 	var result := super.cheat_actions(run_state, environment)
 	if not _machine_busy(environment) and str(machine.get("variation_id", "")) == "vault_drop" and run_state != null and run_state.inventory.has("xray_glasses"):
@@ -106,7 +90,9 @@ func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 	}
 
 
-func wager_cost_for_context(action_id: String, _stake: int, _run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+func wager_cost_for_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+	if _has_v3_simulation(_read_machine_state(run_state, environment)):
+		return 0
 	return _drop_cost() if action_id == DROP_ACTION else 0
 
 
@@ -131,253 +117,72 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 	}
 
 
-func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+func surface_state(run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
 	var machine := _read_machine_state(run_state, environment)
-	var surface_time_msec := maxi(0, int(ui_state.get("surface_time_msec", 1)))
-	var upper_display_phase_milli := _display_phase_milli(int(machine.get("upper_phase", 0)), surface_time_msec)
-	var lower_display_phase_milli := _display_phase_milli(int(machine.get("lower_phase", 0)), surface_time_msec)
-	var selected_lane := clampi(int(ui_state.get("coin_pusher_lane", int(machine.get("last_lane", _lane_count() / 2)))), 0, _lane_count() - 1)
-	var force_order := _force_order()
-	var direction_order := _direction_order()
-	var force := str(ui_state.get("coin_pusher_force", _default_force()))
-	var direction := str(ui_state.get("coin_pusher_direction", _default_direction()))
-	if not force_order.has(force):
-		force = _default_force()
-	if not direction_order.has(direction):
-		direction = _default_direction()
-	var result := GameModule.surface_spec({
-		"surface_renderer": "coin_pusher",
-		"surface_life": "coin_pusher_attract",
-		"surface_cast": "machine",
-		"surface_controls_native": true,
-		"surface_fixed_price_actions": true,
-		"surface_stake_controls_required": false,
-		"surface_animates_idle": true,
-		"surface_realtime_state_refresh": true,
-		"surface_web_idle_animation_fps": 15.0,
-		"surface_embeds_outcomes": true,
-		"surface_suppresses_game_result_burst": true,
-		"surface_action_catalog_key": _surface_action_catalog_key(machine, run_state, environment, ui_state),
-		"surface_action_stake_view": _surface_action_stake_view(run_state, environment),
-		"surface_time_msec": surface_time_msec,
-		"coin_pusher_snapshot": _presentation_snapshot(machine, upper_display_phase_milli, lower_display_phase_milli),
-		"surface_presentation_snapshot_key": "coin_pusher_snapshot",
-		"coin_pusher_solver_fixed_hz": CoinPusherSolverScript.FIXED_HZ,
-		"coin_pusher_solver_fixed_point_scale": CoinPusherSolverScript.FP,
-		"coin_pusher_coin_cap": _coin_cap(),
-		"coin_pusher_awake_count": CoinPusherSolverScript.awake_count(_simulation(machine)),
-		"coin_pusher_last_step_metrics": (_simulation(machine).get("last_step_metrics", {}) as Dictionary).duplicate(true) if typeof(_simulation(machine).get("last_step_metrics", {})) == TYPE_DICTIONARY else {},
-		"coin_pusher_lanes": _lane_views(machine),
-		"coin_pusher_lane": selected_lane,
-		"coin_pusher_force": force,
-		"coin_pusher_direction": direction,
-		"coin_pusher_force_order": force_order,
-		"coin_pusher_direction_order": direction_order,
-		"coin_pusher_ridge_trim": str(ui_state.get("coin_pusher_ridge_trim", "balanced")),
-		"coin_pusher_ridge_trim_order": _variation_config("jackpot_ridge").get("force_trim_order", ["feather", "balanced", "heavy"]),
-		"coin_pusher_variation_id": str(machine.get("variation_id", _variation_id())),
-		"coin_pusher_variation_name": _variation_display_name(str(machine.get("variation_id", _variation_id()))),
-		"coin_pusher_phase_steps": _phase_steps(),
-		"coin_pusher_tray_value": int(machine.get("tray_value", 0)),
-		"coin_pusher_busy": _machine_busy(environment),
-		"coin_pusher_last_message": str(machine.get("last_message", "Pick a lane. Read both shelves.")),
-		"coin_pusher_action_count": int(machine.get("action_count", 0)),
-		"coin_pusher_cold_armed": bool(machine.get("cold_quarters_armed", false)),
-		"coin_pusher_shim_uses": int(machine.get("shim_uses_remaining", 0)),
-		"native_selected_surface_actions": [DROP_ACTION, NUDGE_ACTION],
-		"surface_action_bindings": {
-			"legal": {"action": "coin_pusher_drop", "index": 0},
-			"cheat": {"action": "coin_pusher_nudge", "index": 0},
-		},
-		"surface_animation_channels": _surface_animation_channels(machine),
-		"surface_audio": GameModule.surface_audio_spec({
-			"profile_id": "coin_pusher",
-			"state_sync": {
-				"method": "coin_pusher_state",
-				"animation_channel": PHYSICS_REPLAY_CHANNEL,
-			},
-		}),
-	})
-	var variation_state := _variation_state(machine)
-	match str(machine.get("variation_id", "quarter_falls")):
-		"jackpot_ridge":
-			result["coin_pusher_jammed_lanes"] = _physical_jammed_lanes(machine)
-			result["coin_pusher_multiplier"] = JackpotRidgeScript.payout_multiplier(variation_state)
-			result["coin_pusher_cascade_remaining"] = int(variation_state.get("cascade_remaining", 0))
-			result["coin_pusher_feature_message"] = str(variation_state.get("last_feature_message", ""))
-		"vault_drop":
-			var vault_views := VaultDropScript.views(variation_state)
-			result["coin_pusher_vault_cells"] = vault_views.get("cells", [])
-			result["coin_pusher_vault_fragments"] = int(variation_state.get("banked_fragments", 0))
-			result["coin_pusher_vault_active"] = bool(variation_state.get("vault_round_active", false))
-			result["coin_pusher_vault_meter"] = int(variation_state.get("meter_value", 0))
-			result["coin_pusher_vault_xray_available"] = run_state != null and run_state.inventory.has("xray_glasses")
-			result["coin_pusher_vault_selected_cell"] = clampi(int(ui_state.get("coin_pusher_vault_cell", 0)), 0, maxi(0, (vault_views.get("cells", []) as Array).size() - 1))
-			result["coin_pusher_feature_message"] = str(variation_state.get("last_feature_message", ""))
-			result["native_selected_surface_actions"] = [DROP_ACTION, NUDGE_ACTION, VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION]
-	return result
+	return _v3_headless_surface_state(machine)
 
 
-func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	# Coin commands own only scalar selections and sampled phases. Author a fresh
-	# transient payload from those values: the host retains the complete pre-click
-	# context for resolution, while runtime-status/speaker dictionaries are neither
-	# copied nor persisted back into the game's preference state.
-	var next := _surface_command_scalar_ui_state(ui_state)
-	match surface_action:
-		"coin_pusher_lane":
-			next["coin_pusher_lane"] = clampi(index, 0, _lane_count() - 1)
-			return _coin_surface_command(next, {"preserve_surface_ui_state": true, "message": "Lane %d lined up." % (clampi(index, 0, _lane_count() - 1) + 1)})
-		"coin_pusher_force":
-			var force_order := _force_order()
-			next["coin_pusher_force"] = str(force_order[clampi(index, 0, force_order.size() - 1)])
-			return _coin_surface_command(next, {"preserve_surface_ui_state": true, "message": "%s force ready." % str(next["coin_pusher_force"]).capitalize()})
-		"coin_pusher_direction":
-			var direction_order := _direction_order()
-			next["coin_pusher_direction"] = str(direction_order[clampi(index, 0, direction_order.size() - 1)])
-			return _coin_surface_command(next, {"preserve_surface_ui_state": true, "message": "%s nudge lined up." % str(next["coin_pusher_direction"]).capitalize()})
-		"coin_pusher_ridge_trim":
-			var trim_order: Array = _variation_config("jackpot_ridge").get("force_trim_order", ["feather", "balanced", "heavy"])
-			next["coin_pusher_ridge_trim"] = str(trim_order[clampi(index, 0, trim_order.size() - 1)])
-			return _coin_surface_command(next, {"preserve_surface_ui_state": true, "message": "%s puck force trim." % str(next["coin_pusher_ridge_trim"]).capitalize()})
-		"coin_pusher_drop":
-			_capture_display_phases(next, _read_machine_state(run_state, environment))
-			return _coin_surface_command(next, {"action_id": DROP_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "set_stake": _drop_cost(), "preserve_surface_ui_state": true, "message": "Quarter committed."})
-		"coin_pusher_nudge":
-			_capture_display_phases(next, _read_machine_state(run_state, environment))
-			return _coin_surface_command(next, {"action_id": NUDGE_ACTION, "action_kind": "risky", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "Hands on the cabinet."})
-		"coin_pusher_vault_cell":
-			next["coin_pusher_vault_cell"] = maxi(0, index)
-			return _coin_surface_command(next, {"preserve_surface_ui_state": true, "message": "Vault cell %d selected." % (maxi(0, index) + 1)})
-		"coin_pusher_vault_start":
-			return _coin_surface_command(next, {"action_id": VAULT_START_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "Vault door pulled."})
-		"coin_pusher_vault_open":
-			return _coin_surface_command(next, {"action_id": VAULT_OPEN_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "Cell selected."})
-		"coin_pusher_vault_stop":
-			return _coin_surface_command(next, {"action_id": VAULT_STOP_ACTION, "action_kind": "legal", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "Stop and bank."})
-		"coin_pusher_vault_peek":
-			if run_state != null and run_state.inventory.has("xray_glasses") and str(_read_machine_state(run_state, environment).get("variation_id", "")) == "vault_drop":
-				return _coin_surface_command(next, {"action_id": VAULT_PEEK_ACTION, "action_kind": "risky", "resolve": true, "direct_resolve": true, "skip_stake_validation": true, "preserve_surface_ui_state": true, "message": "X-ray glasses set on the selected cell."})
-	return {"handled": false}
+func surface_action_command(_surface_action: String, _index: int, _confirm_requested: bool, _ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": {},
+		"preserve_surface_ui_state": false,
+		"message": V3_HEADLESS_MESSAGE,
+	}, true)
 
 
-func _surface_command_scalar_ui_state(ui_state: Dictionary) -> Dictionary:
-	var result: Dictionary = {}
-	# Explicit module ownership: never persist arbitrary host scalars merely
-	# because their current representation happens to be primitive.
-	for key in [
-		"coin_pusher_lane",
-		"coin_pusher_force",
-		"coin_pusher_direction",
-		"coin_pusher_ridge_trim",
-		"coin_pusher_vault_cell",
-		"coin_pusher_timing_phase",
-		"coin_pusher_upper_input_phase",
-		"coin_pusher_lower_input_phase",
-		"coin_pusher_capture_presentation_trace",
-		"coin_pusher_debug_profile_stages",
-		"surface_time_msec",
-	]:
-		if ui_state.has(key):
-			result[key] = ui_state[key]
-	return result
-
-
-func _coin_surface_command(ui_state: Dictionary, payload: Dictionary) -> Dictionary:
-	var owned_payload := payload.duplicate(false)
-	owned_payload["ui_state"] = ui_state
-	owned_payload["surface_ui_preference_patch"] = _surface_command_preference_patch(ui_state)
-	return GameModule.surface_command(owned_payload, true)
-
-
-func _surface_command_preference_patch(ui_state: Dictionary) -> Dictionary:
-	var result: Dictionary = {}
-	for key in ["coin_pusher_lane", "coin_pusher_force", "coin_pusher_direction", "coin_pusher_ridge_trim", "coin_pusher_vault_cell"]:
-		if ui_state.has(key):
-			result[key] = ui_state[key]
-	return result
-
-
-func surface_motion_signature(surface, surface_state: Dictionary) -> Dictionary:
-	var motion_phase := float(surface.surface_flicker()) if surface != null and surface.has_method("surface_flicker") else 0.0
-	var rider_lane := 0
-	var motion_snapshot := _snapshot_view(surface_state)
-	var riders: Array = motion_snapshot.get("riders", []) if typeof(motion_snapshot.get("riders", [])) == TYPE_ARRAY else []
-	if not riders.is_empty() and typeof(riders[0]) == TYPE_DICTIONARY:
-		rider_lane = int((riders[0] as Dictionary).get("lane", 0))
-	var replay_bodies := _presentation_bodies(surface, surface_state)
-	var tracked_body: Dictionary = replay_bodies[0] if not replay_bodies.is_empty() and typeof(replay_bodies[0]) == TYPE_DICTIONARY else {}
-	var physics_checksum := 0
-	for body_value in replay_bodies:
-		if typeof(body_value) == TYPE_DICTIONARY:
-			var body: Dictionary = body_value
-			physics_checksum += int(body.get("x", 0)) * 3 + int(body.get("y", 0)) * 5 + int(body.get("z", 0)) * 7
-	return {
-		"attract_shift_milli": int(round(sin(motion_phase * 2.0) * 2500.0)),
-		"rider_bob_milli": int(round(sin(motion_phase * 3.0 + float(rider_lane) * 0.7) * 2500.0)),
-		"physics_body_id": str(tracked_body.get("id", "")),
-		"physics_body_x": int(tracked_body.get("x", 0)),
-		"physics_body_y": int(tracked_body.get("y", 0)),
-		"physics_body_z": int(tracked_body.get("z", 0)),
-		"physics_body_checksum": physics_checksum,
-	}
+func surface_motion_signature(_surface, _surface_state: Dictionary) -> Dictionary:
+	return {"headless_placeholder": true, "physics_body_checksum": 0}
 
 
 func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(state.get("surface_renderer", "")) != "coin_pusher":
 		return false
+	_draw_v3_headless_placeholder(surface, state)
+	return true
+
+
+func _draw_v3_headless_placeholder(surface, state: Dictionary) -> void:
 	surface.surface_begin_design_space(SURFACE_SIZE)
 	surface.draw_rect(Rect2(Vector2.ZERO, SURFACE_SIZE), C_BG)
-	var snapshot := _snapshot_view(state)
-	var tell_rung := int(snapshot.get("tell_rung", 0))
-	var shake_offset := _cabinet_shake_offset(surface, state)
-	_set_cabinet_draw_offset(surface, shake_offset)
-	var cabinet := Rect2(Vector2(22, 10), Vector2(616, 402))
-	surface.draw_rect(Rect2(cabinet.position + Vector2(7, 8), cabinet.size), Color(0, 0, 0, 0.55))
-	surface.draw_rect(cabinet, C_HANG if tell_rung >= 3 else C_CASE)
-	surface.draw_rect(Rect2(cabinet.position + Vector2(6, 6), cabinet.size - Vector2(12, 12)), C_CASE)
-	var geometry := _presentation_geometry(state)
-	_draw_perspective_cabinet(surface, state)
-	var phase_domain_milli := maxi(1, int(snapshot.get("phase_domain_milli", _phase_steps() * 1000)))
-	_draw_shelf(surface, "upper", int(snapshot.get("upper_phase_milli", 0)), phase_domain_milli, C_TEAL)
-	_draw_shelf(surface, "lower", int(snapshot.get("lower_phase_milli", 0)), phase_domain_milli, Color("#ff8e5b"))
-	var presentation_bodies := _presentation_bodies(surface, state)
-	var authoritative_final_bodies := _authoritative_final_bodies(snapshot)
-	var final_riders: Array = _presentation_kind_views(authoritative_final_bodies, ["rider"])
-	var final_features: Array = _presentation_kind_views(authoritative_final_bodies, ["puck", "fragment"])
-	_draw_cells(surface, state, presentation_bodies, final_riders, final_features, geometry)
-	_draw_presentation_particles(surface, state, geometry)
-	_draw_lane_approaches(surface, state)
-	_draw_console(surface, state)
-	_set_cabinet_draw_offset(surface, Vector2.ZERO)
+	var cabinet := Rect2(122, 24, 656, 382)
+	surface.draw_rect(Rect2(cabinet.position + Vector2(9, 10), cabinet.size), Color(0, 0, 0, 0.58))
+	surface.draw_rect(cabinet, C_CASE)
+	surface.draw_rect(Rect2(136, 38, 628, 64), Color("#6b2b32"))
+	surface.surface_label_centered(str(state.get("coin_pusher_variation_name", "COIN PUSHER")).to_upper(), Rect2(146, 46, 608, 44), 23, C_COIN)
+	var glass := Rect2(158, 120, 584, 184)
+	surface.draw_rect(glass, C_GLASS)
+	surface.draw_rect(Rect2(176, 142, 548, 112), Color("#0b1724"))
+	# A single block hints at the incoming real platform until the cabinet stage.
+	surface.draw_rect(Rect2(194, 214, 512, 24), Color("#426177"))
+	surface.draw_rect(Rect2(194, 238, 512, 34), Color("#263d52"))
+	surface.surface_label_centered("V3 PHYSICS CORE INSTALLED", Rect2(176, 158, 548, 30), 16, C_TEAL)
+	surface.surface_label_centered("CABINET CONTROLS OFFLINE IN THIS HEADLESS STAGE", Rect2(176, 184, 548, 24), 10, C_TEXT)
+	surface.draw_rect(Rect2(158, 324, 584, 54), Color("#0f1826"))
+	surface.surface_label_centered("NO COIN ACCEPTED · CONTROLS ARRIVE NEXT STAGE", Rect2(170, 334, 560, 34), 11, C_HANG)
+	surface.surface_label("Bodies: %d" % int(state.get("coin_pusher_body_count", 0)), Vector2(170, 386), 8, Color(C_TEXT, 0.62))
 	surface.surface_end_design_space()
-	return true
 
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
 
 
-func resolve_with_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+func resolve_with_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, _rng: RngStream, _ui_state: Dictionary = {}) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, true)
 	if _machine_busy(environment):
 		return _empty_pusher_result(action_id, environment, "The good machine is occupied. Nothing moves until the convoy does.")
 	if bool(machine.get("locked_down", false)):
 		return _empty_pusher_result(action_id, environment, "Red light. This cabinet stays dead tonight; the rest of the room is open.")
-	_prepare_variation_action(machine)
-	if action_id in [VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION]:
-		return _resolve_vault_action(action_id, run_state, environment, machine, ui_state)
-	if action_id == DROP_ACTION:
-		return _resolve_drop(run_state, environment, machine, rng, ui_state)
-	if action_id == NUDGE_ACTION:
-		return _resolve_nudge(run_state, environment, machine, rng, ui_state)
-	return _empty_pusher_result(action_id, environment, "That button does nothing but collect fingerprints.")
+	return _empty_pusher_result(action_id, environment, V3_HEADLESS_MESSAGE)
 
 
 func active_item_command(item_id: String, run_state: RunState, environment: Dictionary, _rng: RngStream) -> Dictionary:
 	if item_id != COLD_QUARTERS_ITEM_ID or run_state == null or not run_state.inventory.has(item_id):
 		return {"handled": false}
 	var machine := _ensure_machine_state(run_state, environment, true)
+	if _has_v3_simulation(machine):
+		return {"handled": true, "environment_changed": false, "message": V3_HEADLESS_MESSAGE}
 	if bool(machine.get("locked_down", false)):
 		return {"handled": true, "message": "Cold metal won't wake a locked cabinet."}
 	machine["cold_quarters_armed"] = true
@@ -399,242 +204,8 @@ func deterministic_state_digest(environment: Dictionary) -> String:
 	return JSON.stringify(_digest_state(machine), "", true)
 
 
-func _resolve_drop(run_state: RunState, environment: Dictionary, machine: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
-	var cost := _drop_cost()
-	if run_state != null and run_state.wager_capacity_for_game(get_id(), environment) < cost:
-		return _empty_pusher_result(DROP_ACTION, environment, "You need a dollar to feed this thing.")
-	var lane := clampi(int(ui_state.get("coin_pusher_lane", machine.get("last_lane", _lane_count() / 2))), 0, _lane_count() - 1)
-	var density := maxi(_cold_density(), int(machine.get("cold_quarters_density_armed", 0))) if bool(machine.get("cold_quarters_armed", false)) else 1
-	machine["cold_quarters_armed"] = false
-	machine["cold_quarters_density_armed"] = 0
-	var variation_id := str(machine.get("variation_id", "quarter_falls"))
-	var variation_state := _variation_state(machine)
-	var ridge_multiplier := JackpotRidgeScript.payout_multiplier(variation_state) if variation_id == "jackpot_ridge" else 1
-	_sync_physical_features(machine)
-	var lane_jammed := variation_id == "jackpot_ridge" and _physical_jammed_lanes(machine).has(lane)
-	var simulation := _simulation(machine)
-	var dropped := CoinPusherSolverScript.add_coin(simulation, rng, lane, _lane_count(), density)
-	if lane_jammed:
-		dropped["vx"] = -7000 if lane <= _lane_count() / 2 else 7000
-		dropped["vy"] = -5000
-	var input_phase := _captured_input_phase(ui_state, "upper", int(machine.get("upper_phase", 0)))
-	var lower_input_phase := _captured_input_phase(ui_state, "lower", int(machine.get("lower_phase", 0)))
-	var phase_accuracy := _phase_distance(input_phase, _clean_nudge_phase())
-	var drop_push := density + _variation_push_strength_bonus(machine, run_state, false, density)
-	var debug_profile_stages := bool(ui_state.get("coin_pusher_debug_profile_stages", false))
-	var solver_config := _solver_action_config(machine, drop_push, lane, false, "front", phase_accuracy, input_phase, lower_input_phase, _presentation_trace_requested(ui_state))
-	if debug_profile_stages:
-		solver_config["_debug_profile_stages"] = true
-	var physics := CoinPusherSolverScript.step_action(simulation, solver_config)
-	var debug_production_started_usec := Time.get_ticks_usec() if debug_profile_stages else 0
-	_sync_phase_views(machine)
-	var physical_outcome := _consume_physics_events(run_state, machine, physics.get("events", []), rng)
-	var payout := int(physical_outcome.get("payout", 0))
-	var prizes: Array = physical_outcome.get("prizes", []) if typeof(physical_outcome.get("prizes", [])) == TYPE_ARRAY else []
-	var gutter := int(physical_outcome.get("gutter_count", 0)) > 0
-	var shim_recovered := bool(physical_outcome.get("shim_recovered", false))
-	if shim_recovered:
-		gutter = false
-	payout += _prize_cash(prizes)
-	if variation_id == "jackpot_ridge":
-		payout *= ridge_multiplier
-		JackpotRidgeScript.finish_drop(variation_state)
-	machine["action_count"] = int(machine.get("action_count", 0)) + 1
-	machine["last_lane"] = lane
-	machine["total_cost"] = int(machine.get("total_cost", 0)) + cost
-	machine["total_payout"] = int(machine.get("total_payout", 0)) + payout
-	machine["tray_value"] = int(machine.get("tray_value", 0)) + payout
-	var message := "Dud puck kicks the physical drop sideways." if lane_jammed else "Side gutter eats the greedy line." if gutter and payout <= 0 else "%s lands on the pile. Tray pays $%d." % ["Cold weight" if density > 1 else "Quarter", payout]
-	if variation_id == "jackpot_ridge" and ridge_multiplier > 1 and not gutter:
-		message += " Armed x%d multiplier." % ridge_multiplier
-	if shim_recovered:
-		message = "The shim catches the gutter and kicks the quarter back. " + message
-	if not prizes.is_empty():
-		message += " Prize rider down: %s." % _prize_labels(prizes)
-	machine["last_message"] = message
-	_write_machine_state(environment, machine)
-	_register_pile_rumor(run_state, environment, machine)
-	var deltas := GameModule.empty_result_deltas()
-	deltas["bankroll_delta"] = payout - cost
-	var staff_watch_heat := _staff_watch_suspicion_delta(run_state, machine)
-	deltas["suspicion_delta"] = staff_watch_heat
-	deltas["inventory_add"] = _inventory_prizes(prizes)
-	deltas["story_log"] = [_story_entry(DROP_ACTION, "legal", environment, payout - cost, 0, {"lane": lane, "gutter": gutter, "prizes": prizes.duplicate(true)})]
-	deltas["messages"] = [message]
-	var result := GameModule.build_owned_action_result({
-		"source_id": get_id(), "game_id": get_id(), "action_id": DROP_ACTION, "action_kind": "legal", "stake": cost,
-		"environment_id": str(environment.get("id", "")), "environment_archetype_id": str(environment.get("archetype_id", "")),
-		"bankroll_delta": payout - cost, "suspicion_delta": staff_watch_heat, "deltas": deltas, "won": payout > cost or not prizes.is_empty(), "message": message,
-	})
-	result["host_apply_result"] = true
-	result["coin_pusher_payout"] = payout
-	result["coin_pusher_prizes"] = prizes
-	result["coin_pusher_gutter"] = gutter
-	result["coin_pusher_shim_recovered"] = shim_recovered
-	result["coin_pusher_variation_id"] = variation_id
-	result["coin_pusher_ridge_multiplier"] = ridge_multiplier
-	result["coin_pusher_lane_jammed"] = lane_jammed
-	result["coin_pusher_input_phase"] = input_phase
-	result["coin_pusher_lower_input_phase"] = lower_input_phase
-	result["coin_pusher_phase_accuracy"] = phase_accuracy
-	result["coin_pusher_physics_events"] = physics.get("events", [])
-	result["coin_pusher_solver_metrics"] = physics.get("metrics", {})
-	result["surface_presentation_snapshot_patch"] = _presentation_action_snapshot_patch(
-		machine, DROP_ACTION, physics.get("presentation_events", []), _finalized_presentation_trace(physics, machine, shim_recovered)
-	)
-	result["surface_action_view_patch"] = _surface_action_view_patch(machine, physics, ui_state, run_state, environment)
-	result["preserve_surface_ui_state"] = true
-	if debug_profile_stages:
-		var debug_stage_timing: Dictionary = (physics.get("debug_stage_timing_usec", {}) as Dictionary).duplicate(true)
-		debug_stage_timing["production_result_assembly"] = Time.get_ticks_usec() - debug_production_started_usec
-		result["coin_pusher_debug_stage_timing_usec"] = debug_stage_timing
-	return result
-
-
-func _resolve_nudge(run_state: RunState, environment: Dictionary, machine: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
-	# Staff memory predating this action may restore its floor. A hard alarm
-	# created by this action starts watching from the following action onward.
-	var staff_watch_heat := _staff_watch_suspicion_delta(run_state, machine)
-	var force_order := _force_order()
-	var direction_order := _direction_order()
-	var force := str(ui_state.get("coin_pusher_force", _default_force()))
-	var direction := str(ui_state.get("coin_pusher_direction", _default_direction()))
-	if not force_order.has(force):
-		force = _default_force()
-	if not direction_order.has(direction):
-		direction = _default_direction()
-	var lane := clampi(int(ui_state.get("coin_pusher_lane", machine.get("last_lane", _lane_count() / 2))), 0, _lane_count() - 1)
-	var upper_input_phase := _captured_input_phase(ui_state, "upper", int(machine.get("upper_phase", 0)))
-	var timing_phase := _captured_input_phase(ui_state, "lower", int(machine.get("lower_phase", 0)))
-	var phase_distance := _phase_distance(timing_phase, _clean_nudge_phase())
-	var clean_window := _clean_window()
-	# Scheduled feature records become bodies at the action boundary. Every aim
-	# decision below reads those bodies; feature metadata never owns position.
-	_sync_physical_features(machine)
-	var aimed := _direction_matches_hanger(machine, direction, lane)
-	if not aimed and str(machine.get("variation_id", "")) == "jackpot_ridge":
-		aimed = _physical_puck_target(machine, lane, direction)
-	var clean := phase_distance <= clean_window and aimed
-	var authored_push := _force_push_strength(force)
-	var tolerance_cost := 0 if clean else _force_tolerance_cost(force)
-	if str(machine.get("variation_id", "")) == "jackpot_ridge" and not clean:
-		var trim_costs: Dictionary = _variation_config("jackpot_ridge").get("force_trim_tolerance_delta", {})
-		tolerance_cost = maxi(0, tolerance_cost + int(trim_costs.get(str(ui_state.get("coin_pusher_ridge_trim", "balanced")), 0)))
-	var tolerance_before := int(machine.get("alarm_tolerance_remaining", 1))
-	var previous_tell := int(machine.get("tell_rung", 0))
-	machine["alarm_tolerance_remaining"] = tolerance_before - tolerance_cost
-	var push_strength := authored_push if clean else maxi(0, authored_push - _mistimed_push_penalty())
-	if str(machine.get("variation_id", "")) == "jackpot_ridge":
-		var trim_push: Dictionary = _variation_config("jackpot_ridge").get("force_trim_push_delta", {})
-		push_strength = maxi(0, push_strength + int(trim_push.get(str(ui_state.get("coin_pusher_ridge_trim", "balanced")), 0)))
-	push_strength += _variation_push_strength_bonus(machine, run_state, true, push_strength)
-	if force == "slam":
-		push_strength += _slam_bonus_push()
-	var debug_profile_stages := bool(ui_state.get("coin_pusher_debug_profile_stages", false))
-	var solver_config := _solver_action_config(machine, push_strength, lane, true, direction, phase_distance, upper_input_phase, timing_phase, _presentation_trace_requested(ui_state))
-	if debug_profile_stages:
-		solver_config["_debug_profile_stages"] = true
-	var physics := CoinPusherSolverScript.step_action(_simulation(machine), solver_config)
-	var debug_production_started_usec := Time.get_ticks_usec() if debug_profile_stages else 0
-	_sync_phase_views(machine)
-	var physical_outcome := _consume_physics_events(run_state, machine, physics.get("events", []), rng)
-	var payout := int(physical_outcome.get("payout", 0))
-	var prizes: Array = physical_outcome.get("prizes", []) if typeof(physical_outcome.get("prizes", [])) == TYPE_ARRAY else []
-	var shim_recovered := bool(physical_outcome.get("shim_recovered", false))
-	payout += _prize_cash(prizes)
-	var alarmed := int(machine.get("alarm_tolerance_remaining", 0)) < 0
-	var heat := 0
-	if alarmed:
-		heat = _alarm_heat()
-		machine["locked_down"] = true
-		machine["lockdown_night"] = _night_id(run_state)
-		machine["staff_watch_memory"] = true
-		machine["suspicion_floor"] = maxi(int(machine.get("suspicion_floor", 0)), _watch_suspicion_floor())
-		machine["tell_rung"] = 3
-	else:
-		machine["tell_rung"] = _tell_rung(machine)
-		if int(machine.get("tell_rung", 0)) >= 3 and previous_tell < 3:
-			heat = _attendant_glance_heat()
-	machine["action_count"] = int(machine.get("action_count", 0)) + 1
-	machine["total_payout"] = int(machine.get("total_payout", 0)) + payout
-	machine["tray_value"] = int(machine.get("tray_value", 0)) + payout
-	var message := _nudge_message(force, clean, payout, alarmed)
-	if not prizes.is_empty():
-		message += " Rider down: %s." % _prize_labels(prizes)
-	machine["last_message"] = message
-	_write_machine_state(environment, machine)
-	_register_pile_rumor(run_state, environment, machine)
-	var deltas := GameModule.empty_result_deltas()
-	deltas["bankroll_delta"] = payout
-	var total_heat := heat + staff_watch_heat
-	deltas["suspicion_delta"] = total_heat
-	deltas["inventory_add"] = _inventory_prizes(prizes)
-	deltas["story_log"] = [_story_entry(NUDGE_ACTION, "risky", environment, payout, heat, {
-		"force": force, "direction": direction, "clean": clean, "phase_distance": phase_distance,
-		"tell_rung": int(machine.get("tell_rung", 0)), "hard_alarm": alarmed, "machine_lockdown_only": alarmed,
-	})]
-	deltas["messages"] = [message]
-	var result := GameModule.build_owned_action_result({
-		"source_id": "coin_pusher_alarm" if alarmed else get_id(), "game_id": get_id(), "action_id": "nudge_alarm" if alarmed else NUDGE_ACTION,
-		"action_kind": "risky", "stake": 0, "environment_id": str(environment.get("id", "")),
-		"environment_archetype_id": str(environment.get("archetype_id", "")), "bankroll_delta": payout,
-		"suspicion_delta": total_heat, "deltas": deltas, "won": payout > 0, "message": message,
-		"skill_outcome": "clean_drop" if clean else "alarm" if alarmed else "wasted_tolerance",
-		"skill_grade": "perfect" if clean else "blown" if alarmed else "partial",
-		"skill_accuracy": 100 if clean else maxi(0, _skill_accuracy_base() - phase_distance * _skill_accuracy_phase_penalty()),
-		"base_suspicion_delta": heat,
-	})
-	result["host_apply_result"] = true
-	result["coin_pusher_hard_alarm"] = alarmed
-	result["coin_pusher_machine_locked"] = bool(machine.get("locked_down", false))
-	result["coin_pusher_player_remains_in_environment"] = true
-	result["coin_pusher_environment_id_before"] = str(environment.get("id", ""))
-	result["coin_pusher_tell_rung"] = int(machine.get("tell_rung", 0))
-	result["coin_pusher_clean_drop"] = clean
-	result["coin_pusher_tolerance_spent"] = tolerance_cost
-	result["coin_pusher_force_push"] = authored_push
-	result["coin_pusher_push_strength"] = push_strength
-	result["coin_pusher_input_phase"] = timing_phase
-	result["coin_pusher_upper_input_phase"] = upper_input_phase
-	result["coin_pusher_payout"] = payout
-	result["coin_pusher_prizes"] = prizes
-	result["coin_pusher_variation_id"] = str(machine.get("variation_id", "quarter_falls"))
-	result["coin_pusher_physics_events"] = physics.get("events", [])
-	# The solver result is action-local and never retained after this boundary, so
-	# ownership can move directly into the presentation patch before the optional
-	# tell event is appended.
-	var presentation_events: Array = physics.get("presentation_events", []) as Array
-	if alarmed or int(machine.get("tell_rung", 0)) > previous_tell:
-		presentation_events.append(_tell_presentation_event(int(machine.get("tell_rung", 0)), alarmed))
-	result["coin_pusher_solver_metrics"] = physics.get("metrics", {})
-	result["surface_presentation_snapshot_patch"] = _presentation_action_snapshot_patch(
-		machine, NUDGE_ACTION, presentation_events, _finalized_presentation_trace(physics, machine, shim_recovered)
-	)
-	result["surface_action_view_patch"] = _surface_action_view_patch(machine, physics, ui_state, run_state, environment)
-	result["preserve_surface_ui_state"] = true
-	if debug_profile_stages:
-		var debug_stage_timing: Dictionary = (physics.get("debug_stage_timing_usec", {}) as Dictionary).duplicate(true)
-		debug_stage_timing["production_result_assembly"] = Time.get_ticks_usec() - debug_production_started_usec
-		result["coin_pusher_debug_stage_timing_usec"] = debug_stage_timing
-	return result
-
-
-func surface_realtime_state_patch(_run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary) -> Dictionary:
-	var current_snapshot := _snapshot_view(current_surface_state)
-	if current_snapshot.is_empty():
-		return {}
-	var surface_time_msec := maxi(0, int(ui_state.get("surface_time_msec", current_surface_state.get("surface_time_msec", 0))))
-	var machine_value: Variant = _game_states(environment).get(get_id(), {})
-	if typeof(machine_value) != TYPE_DICTIONARY:
-		return {"surface_time_msec": surface_time_msec}
-	var machine: Dictionary = machine_value
-	var next_snapshot := current_snapshot.duplicate(false)
-	next_snapshot["upper_phase_milli"] = _display_phase_milli(int(machine.get("upper_phase", 0)), surface_time_msec)
-	next_snapshot["lower_phase_milli"] = _display_phase_milli(int(machine.get("lower_phase", 0)), surface_time_msec)
-	return {
-		"surface_time_msec": surface_time_msec,
-		"coin_pusher_snapshot": next_snapshot,
-	}
+func surface_realtime_state_patch(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary, _current_surface_state: Dictionary) -> Dictionary:
+	return {}
 
 
 func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: RngStream = null) -> Dictionary:
@@ -646,11 +217,9 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	variation_rng.configure(_stable_hash("coin_pusher_variation:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)]))
 	var variation_id := _seeded_variation_id(environment, variation_rng)
 	var variation_config := _variation_config(variation_id)
-	var simulation := CoinPusherSolverScript.create(local_rng.fork("fixed_point_pile"), _coin_cap(), _opening_coin_count(), _lane_count())
+	var simulation := CoinPusherSolverScript.create_machine(local_rng.fork("fixed_point_pile"), _machine_definition(), _opening_coin_count())
 	var base_tolerance := local_rng.randi_range(_tolerance_min(), _tolerance_max())
 	var variation_tolerance := int(variation_config.get("alarm_tolerance_bonus", variation_config.get("alarm_tolerance_delta", 0)))
-	if variation_id == "jackpot_ridge":
-		variation_tolerance += JackpotRidgeScript.tolerance_band_bonus(run_state, variation_config)
 	var tolerance := maxi(1, base_tolerance + _security_tolerance_delta(environment, run_state) + variation_tolerance)
 	var node_id := _environment_node_id(run_state, environment)
 	var variation_state: Dictionary = {}
@@ -665,10 +234,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"variation_state": variation_state,
 		"simulation": simulation,
 		"riders": _seed_prize_riders(environment, local_rng) if variation_id == "quarter_falls" else [],
-		"upper_phase": int(simulation.get("upper_phase_fp", 0)) * _phase_steps() / CoinPusherSolverScript.PHASE_PERIOD,
-		"lower_phase": int(simulation.get("lower_phase_fp", 0)) * _phase_steps() / CoinPusherSolverScript.PHASE_PERIOD,
 		"action_count": 0,
-		"last_lane": _lane_count() / 2,
 		"tray_value": 0,
 		"total_cost": 0,
 		"total_payout": 0,
@@ -771,6 +337,10 @@ func _machine_read_requires_reconciliation(machine: Dictionary, run_state: RunSt
 
 
 func _physical_features_reconciled(machine: Dictionary) -> bool:
+	if _has_v3_simulation(machine):
+		# Stage 4 owns migration of Ridge/Vault lane-authored feature data into
+		# physical V3 bodies. Treat that data as intentionally inert for now.
+		return true
 	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
 	if simulation.is_empty():
 		return false
@@ -803,7 +373,7 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 	var migration_rng := RngStream.new()
 	migration_rng.configure(_stable_hash("coin_pusher_physical_migration:%s:%s" % [_environment_node_id(run_state, environment), str(run_state.seed_text if run_state != null else "fallback")]))
 	if typeof(machine.get("simulation", {})) != TYPE_DICTIONARY or str((machine.get("simulation", {}) as Dictionary).get("schema", "")) != CoinPusherSolverScript.SCHEMA:
-		machine["simulation"] = CoinPusherSolverScript.migrate_height_grid(machine, migration_rng, _coin_cap(), _lane_count())
+		machine["simulation"] = CoinPusherSolverScript.create_machine(migration_rng, _machine_definition(), mini(_opening_coin_count(), 250))
 	machine.erase("lanes")
 	machine["schema"] = STATE_SCHEMA
 	machine["version"] = _state_version()
@@ -822,7 +392,6 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 	machine["staff_watch_memory"] = bool(machine.get("staff_watch_memory", false))
 	machine["locked_down"] = bool(machine.get("locked_down", false))
 	_sync_physical_features(machine)
-	_sync_phase_views(machine)
 	return machine
 
 
@@ -833,37 +402,37 @@ func _simulation(machine: Dictionary) -> Dictionary:
 	return machine.get("simulation", {}) as Dictionary
 
 
-func _sync_phase_views(machine: Dictionary) -> void:
+func _has_v3_simulation(machine: Dictionary) -> bool:
+	var simulation_value: Variant = machine.get("simulation", {})
+	return typeof(simulation_value) == TYPE_DICTIONARY \
+		and str((simulation_value as Dictionary).get("schema", "")) == CoinPusherSolverScript.SCHEMA
+
+
+func _v3_headless_surface_state(machine: Dictionary) -> Dictionary:
 	var simulation := _simulation(machine)
-	machine["upper_phase"] = int(simulation.get("upper_phase_fp", 0)) * _phase_steps() / CoinPusherSolverScript.PHASE_PERIOD
-	machine["lower_phase"] = int(simulation.get("lower_phase_fp", 0)) * _phase_steps() / CoinPusherSolverScript.PHASE_PERIOD
-	if str(machine.get("variation_id", "")) == "jackpot_ridge":
-		JackpotRidgeScript.finish_shelf_cycle(_variation_state(machine))
-
-
-func _solver_action_config(machine: Dictionary, push_strength: int, aimed_lane: int, from_nudge: bool, direction: String, phase_distance: int, upper_input_phase: int, lower_input_phase: int, capture_presentation_trace: bool) -> Dictionary:
-	var variation_state := _variation_state(machine)
-	var lane_width := CoinPusherSolverScript.WIDTH / maxi(1, _lane_count())
-	var direction_x := -1 if direction == "left" else 1 if direction == "right" else 0
-	var direction_y := -1
-	var impulse := maxi(0, push_strength) * 9000
-	return {
-		"captured_upper_phase_fp": posmod(upper_input_phase, _phase_steps()) * CoinPusherSolverScript.PHASE_PERIOD / _phase_steps(),
-		"captured_lower_phase_fp": posmod(lower_input_phase, _phase_steps()) * CoinPusherSolverScript.PHASE_PERIOD / _phase_steps(),
-		"push_scale": maxi(1, push_strength + (2 if phase_distance <= _clean_window() else 0)),
-		"nudge_x": direction_x * impulse if from_nudge else 0,
-		"nudge_y": direction_y * impulse if from_nudge else 0,
-		"aimed_x": aimed_lane * lane_width + lane_width / 2,
-		"nudge_radius": lane_width * (_front_nudge_lane_radius() + 1) if direction == "front" else CoinPusherSolverScript.WIDTH / 2,
-		"upper_locked": str(machine.get("variation_id", "")) == "jackpot_ridge" and JackpotRidgeScript.shelf_locked(variation_state, "upper"),
-		"lower_locked": str(machine.get("variation_id", "")) == "jackpot_ridge" and JackpotRidgeScript.shelf_locked(variation_state, "lower"),
-		"ridge_double": str(machine.get("variation_id", "")) == "jackpot_ridge" and int(variation_state.get("cascade_remaining", 0)) > 0,
-		"capture_presentation_trace": capture_presentation_trace,
-	}
-
-
-func _presentation_trace_requested(ui_state: Dictionary) -> bool:
-	return ui_state.has("surface_time_msec") or bool(ui_state.get("coin_pusher_capture_presentation_trace", false))
+	return GameModule.surface_spec({
+		"surface_renderer": "coin_pusher",
+		"surface_life": "coin_pusher_v3_headless_placeholder",
+		"surface_cast": "machine",
+		"surface_controls_native": false,
+		"surface_fixed_price_actions": false,
+		"surface_stake_controls_required": false,
+		"surface_animates_idle": false,
+		"surface_realtime_state_refresh": false,
+		"surface_embeds_outcomes": false,
+		"surface_suppresses_game_result_burst": true,
+		"coin_pusher_v3_headless_placeholder": true,
+		"coin_pusher_solver_schema": str(simulation.get("schema", "")),
+		"coin_pusher_solver_version": int(simulation.get("version", 0)),
+		"coin_pusher_body_count": (simulation.get("bodies", []) as Array).size(),
+		"coin_pusher_variation_id": str(machine.get("variation_id", _variation_id())),
+		"coin_pusher_variation_name": _variation_display_name(str(machine.get("variation_id", _variation_id()))),
+		"coin_pusher_last_message": V3_HEADLESS_MESSAGE,
+		"native_selected_surface_actions": [],
+		"surface_action_bindings": {},
+		"surface_animation_channels": [],
+		"surface_audio": {},
+	})
 
 
 func _consume_physics_events(run_state: RunState, machine: Dictionary, events: Array, rng: RngStream) -> Dictionary:
@@ -888,7 +457,7 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 				payout += _coin_value()
 			elif outcome == "gutter" and not shim_recovered and _shim_available(run_state, machine):
 				machine["shim_uses_remaining"] = maxi(0, int(machine.get("shim_uses_remaining", 0)) - 1)
-				CoinPusherSolverScript.add_recovered_coin(_simulation(machine), rng, _lane_count())
+				CoinPusherSolverScript.add_recovered_coin(_simulation(machine), rng)
 				shim_recovered = true
 		elif kind == "rider":
 			var feature_id := str((event.get("metadata", {}) as Dictionary).get("feature_id", "")) if typeof(event.get("metadata", {})) == TYPE_DICTIONARY else ""
@@ -914,6 +483,10 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 
 
 func _sync_physical_features(machine: Dictionary) -> void:
+	if _has_v3_simulation(machine):
+		# Do not consume or erase legacy lane/spawn fields. Stage 4 migrates the
+		# variation ledgers once their V3 apparatus/body mapping is designed.
+		return
 	var simulation := _simulation(machine)
 	if simulation.is_empty():
 		return
@@ -954,14 +527,17 @@ func _sync_physical_features(machine: Dictionary) -> void:
 		if feature_id.is_empty() or bool(existing.get(feature_id, false)):
 			continue
 		var legacy_cell := clampi(int(feature.get("spawn_depth_slot", feature.get("cell", 2))), 0, maxi(1, _cell_count() - 1))
-		var depth := CoinPusherSolverScript.FRONT_EDGE + 9000 + legacy_cell * (CoinPusherSolverScript.REAR_EDGE - CoinPusherSolverScript.FRONT_EDGE - 18000) / maxi(1, _cell_count() - 1)
+		var depth := CoinPusherSolverScript.TRAY_LIP_Y + 9000 + legacy_cell * (CoinPusherSolverScript.BACK_PLATE_Y - CoinPusherSolverScript.TRAY_LIP_Y - 18000) / maxi(1, _cell_count() - 1)
 		var metadata := feature.duplicate(true)
 		metadata.erase("lane")
 		metadata.erase("cell")
 		metadata.erase("spawn_lane")
 		metadata.erase("spawn_depth_slot")
 		metadata["mass"] = 4 if kind == "puck" else 3 if kind == "rider" else 2
-		var body := CoinPusherSolverScript.add_feature(simulation, kind, feature_id, clampi(int(feature.get("spawn_lane", feature.get("lane", 2))), 0, _lane_count() - 1), depth, _lane_count(), metadata)
+		var feature_lane := clampi(int(feature.get("spawn_lane", feature.get("lane", 2))), 0, _lane_count() - 1)
+		var feature_lane_width := CoinPusherSolverScript.WIDTH / maxi(1, _lane_count())
+		var feature_x := feature_lane * feature_lane_width + feature_lane_width / 2
+		var body := CoinPusherSolverScript.add_feature(simulation, kind, feature_id, feature_x, depth, metadata)
 		feature["body_id"] = str(body.get("id", ""))
 		feature.erase("lane")
 		feature.erase("cell")
@@ -981,64 +557,6 @@ func _feature_views(machine: Dictionary, kind: String) -> Array:
 			view[key] = metadata[key]
 		result.append(view)
 	return result
-
-
-func _physical_jammed_lanes(machine: Dictionary) -> Array:
-	var result: Array = []
-	var lane_width := CoinPusherSolverScript.WIDTH / maxi(1, _lane_count())
-	var simulation := _simulation(machine)
-	for body_value in simulation.get("bodies", []):
-		if typeof(body_value) != TYPE_DICTIONARY:
-			continue
-		var body: Dictionary = body_value
-		var metadata: Dictionary = body.get("metadata", {}) if typeof(body.get("metadata", {})) == TYPE_DICTIONARY else {}
-		if str(body.get("kind", "")) != "puck" or str(metadata.get("kind", "")) != "dud":
-			continue
-		# A dud only chokes a new drop while its real body occupies the rear
-		# upper-shelf feed path. Once physics moves it forward or down, the jam
-		# clears even though the feature record still exists.
-		if int(body.get("y", 0)) < RIDGE_JAM_ZONE_MIN_Y or int(body.get("z", 0)) < RIDGE_JAM_ZONE_MIN_Z:
-			continue
-		var lane := clampi(int(body.get("x", 0)) / maxi(1, lane_width), 0, _lane_count() - 1)
-		if not result.has(lane):
-			result.append(lane)
-	result.sort()
-	return result
-
-
-func _physical_puck_target(machine: Dictionary, aimed_lane: int, direction: String) -> bool:
-	var lane_width := CoinPusherSolverScript.WIDTH / maxi(1, _lane_count())
-	var simulation := _simulation(machine)
-	for body_value in simulation.get("bodies", []):
-		if typeof(body_value) != TYPE_DICTIONARY or str((body_value as Dictionary).get("kind", "")) != "puck":
-			continue
-		var lane := clampi(int((body_value as Dictionary).get("x", 0)) / maxi(1, lane_width), 0, _lane_count() - 1)
-		if direction == "front" and lane == aimed_lane:
-			return true
-		if direction == "left" and lane <= _lane_count() / 2:
-			return true
-		if direction == "right" and lane >= _lane_count() / 2:
-			return true
-	return false
-
-
-func _direction_matches_hanger(machine: Dictionary, direction: String, lane: int) -> bool:
-	var lane_width := CoinPusherSolverScript.WIDTH / maxi(1, _lane_count())
-	var simulation := _simulation(machine)
-	for body_value in simulation.get("bodies", []):
-		if typeof(body_value) != TYPE_DICTIONARY:
-			continue
-		var body: Dictionary = body_value
-		if int(body.get("y", CoinPusherSolverScript.FRONT_EDGE + CoinPusherSolverScript.COIN_RADIUS)) >= CoinPusherSolverScript.FRONT_EDGE + int(body.get("radius", CoinPusherSolverScript.COIN_RADIUS)):
-			continue
-		var body_lane := clampi(int(body.get("x", 0)) / maxi(1, lane_width), 0, _lane_count() - 1)
-		if direction == "front" and body_lane == lane:
-			return true
-		if direction == "left" and body_lane <= _lane_count() / 2:
-			return true
-		if direction == "right" and body_lane >= _lane_count() / 2:
-			return true
-	return false
 
 
 func _security_tolerance_delta(environment: Dictionary, run_state: RunState = null) -> int:
@@ -1100,37 +618,6 @@ func _tell_label(rung: int) -> String:
 	return str(labels[clampi(rung, 0, labels.size() - 1)])
 
 
-func _phase_distance(a: int, b: int) -> int:
-	var steps := _phase_steps()
-	var direct: int = abs(posmod(a, steps) - posmod(b, steps))
-	return mini(direct, steps - direct)
-
-
-func _display_phase_milli(stored_phase: int, surface_time_msec: int) -> int:
-	var domain := _phase_steps() * 1000
-	var cycle_msec := _display_phase_cycle_msec()
-	var sweep := posmod(surface_time_msec, cycle_msec) * domain / cycle_msec
-	return posmod(stored_phase * 1000 + sweep, domain)
-
-
-func _capture_display_phases(ui_state: Dictionary, machine: Dictionary) -> void:
-	var sample_msec := maxi(0, int(ui_state.get("surface_time_msec", 0)))
-	var upper_phase := _display_phase_milli(int(machine.get("upper_phase", 0)), sample_msec) / 1000
-	var lower_phase := _display_phase_milli(int(machine.get("lower_phase", 0)), sample_msec) / 1000
-	ui_state["coin_pusher_upper_input_phase"] = upper_phase
-	ui_state["coin_pusher_lower_input_phase"] = lower_phase
-	ui_state["coin_pusher_timing_phase"] = lower_phase
-
-
-func _captured_input_phase(ui_state: Dictionary, shelf: String, fallback: int) -> int:
-	var shelf_key := "coin_pusher_%s_input_phase" % shelf
-	if ui_state.has(shelf_key):
-		return posmod(int(ui_state.get(shelf_key, fallback)), _phase_steps())
-	if ui_state.has("coin_pusher_timing_phase"):
-		return posmod(int(ui_state.get("coin_pusher_timing_phase", fallback)), _phase_steps())
-	return posmod(fallback, _phase_steps())
-
-
 func _shim_available(run_state: RunState, machine: Dictionary) -> bool:
 	return run_state != null and run_state.inventory.has(SHIM_ITEM_ID) and int(machine.get("shim_uses_remaining", 0)) > 0
 
@@ -1161,12 +648,6 @@ func _prepare_variation_action(machine: Dictionary) -> void:
 	match str(machine.get("variation_id", "quarter_falls")):
 		"jackpot_ridge": JackpotRidgeScript.prepare_action(variation_state, int(machine.get("action_count", 0)))
 		"vault_drop": VaultDropScript.prepare_action(variation_state, int(machine.get("action_count", 0)))
-
-
-func _variation_push_strength_bonus(machine: Dictionary, run_state: RunState, from_nudge: bool, base_strength: int) -> int:
-	if str(machine.get("variation_id", "")) != "jackpot_ridge":
-		return 0
-	return JackpotRidgeScript.push_strength_bonus(_variation_state(machine), run_state, from_nudge, base_strength)
 
 
 func _register_vault_progressive(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
@@ -1287,8 +768,10 @@ func _register_pile_rumor(run_state: RunState, environment: Dictionary, machine:
 		node_id = run_state.current_world_node_id()
 	if node_id.is_empty():
 		return
-	var hangers := _hanger_count(machine)
-	var detail := "hanging off the lip" if hangers >= 2 else "fat in the middle" if _pile_coin_count(machine) >= int(float(_coin_cap()) * 0.72) else "still hungry"
+	var simulation := _simulation(machine)
+	var hangers := CoinPusherSolverScript.edge_hanger_count(simulation)
+	var pile_count := CoinPusherSolverScript.coin_count(simulation)
+	var detail := "hanging off the lip" if hangers >= 2 else "fat in the middle" if pile_count >= int(float(_coin_cap()) * 0.72) else "still hungry"
 	run_state.register_rumor_fact(RUMOR_CLASS, "pusher:%s" % node_id, {
 		"target_node_id": node_id,
 		"target_name": str(environment.get("name", environment.get("display_name", node_id))),
@@ -1393,283 +876,11 @@ func _empty_pusher_result(action_id: String, environment: Dictionary, message: S
 	})
 
 
-func _nudge_message(force: String, clean: bool, payout: int, alarmed: bool) -> String:
-	if alarmed:
-		return "%s hits hard. $%d spills before the alarm kills this cabinet. Staff clock you; nobody throws you out." % [force.capitalize(), payout]
-	if clean:
-		return "%s lands with the shelf. Hangers peel clean for $%d." % [force.capitalize(), payout]
-	return "%s misses the shelf. The cabinet complains; $%d shakes loose." % [force.capitalize(), payout]
-
-
-func _body_views(machine: Dictionary) -> Array:
-	return CoinPusherSolverScript.body_views(_simulation(machine))
-
-
-func _presentation_snapshot(machine: Dictionary, upper_phase_milli: int, lower_phase_milli: int) -> Dictionary:
-	var bodies := _body_views(machine)
-	return {
-		"schema": "coin_pusher_presentation_snapshot",
-		"version": 1,
-		"geometry": CoinPusherSolverScript.implementation_contract().duplicate(true),
-		"bodies": bodies,
-		"body_count": bodies.size(),
-		"riders": _presentation_kind_views(bodies, ["rider"]),
-		"features": _presentation_kind_views(bodies, ["puck", "fragment"]),
-		"depth_ordered": true,
-		"upper_phase_milli": upper_phase_milli,
-		"lower_phase_milli": lower_phase_milli,
-		"phase_domain_milli": _phase_steps() * 1000,
-		"action_state": {
-			"action_count": int(machine.get("action_count", 0)),
-			"replay_active_id": "action_%d" % int(machine.get("action_count", 0)) if int(machine.get("action_count", 0)) > 0 else "",
-			"action_id": "",
-		},
-		"tell_rung": int(machine.get("tell_rung", 0)),
-		"tell_label": _tell_label(int(machine.get("tell_rung", 0))),
-		"locked": bool(machine.get("locked_down", false)),
-		"events": [],
-		"trace": [],
-		"trace_packed": {},
-		"trace_frame_count": 0,
-	}
-
-
-func _presentation_kind_views(bodies: Array, kinds: Array) -> Array:
-	var result: Array = []
-	for body_value in bodies:
-		if typeof(body_value) != TYPE_DICTIONARY:
-			continue
-		var body: Dictionary = body_value
-		if not kinds.has(str(body.get("kind", ""))):
-			continue
-		var view := body.duplicate(true)
-		var metadata: Dictionary = body.get("metadata", {}) if typeof(body.get("metadata", {})) == TYPE_DICTIONARY else {}
-		for key in metadata.keys():
-			view[key] = metadata[key]
-		result.append(view)
-	return result
-
-
-func _snapshot_view(state: Dictionary) -> Dictionary:
-	var value: Variant = state.get("coin_pusher_snapshot", {})
-	return value if typeof(value) == TYPE_DICTIONARY else {}
-
-
-func _snapshot_value_copy(value: Variant) -> Variant:
-	if typeof(value) == TYPE_DICTIONARY:
-		return (value as Dictionary).duplicate(true)
-	if typeof(value) == TYPE_ARRAY:
-		return (value as Array).duplicate(true)
-	return value
-
-
-func _presentation_geometry(state: Dictionary) -> Dictionary:
-	var snapshot := _snapshot_view(state)
-	var geometry: Dictionary = snapshot.get("geometry", {}) if typeof(snapshot.get("geometry", {})) == TYPE_DICTIONARY else {}
-	return geometry
-
-
-func _tell_presentation_event(tell_rung: int, alarmed: bool) -> Dictionary:
-	return {
-		"kind": "alarm" if alarmed else "attendant_glance" if tell_rung >= 3 else "tell_chirp" if tell_rung >= 2 else "tell_rock",
-		"body_id": "cabinet",
-		"x": CoinPusherSolverScript.WIDTH / 2,
-		"y": CoinPusherSolverScript.UPPER_EDGE,
-		"z": 0,
-		"intensity_milli": 1000 if alarmed else 360 + tell_rung * 180,
-		"tick_offset": CoinPusherSolverScript.ACTION_TICKS,
-		"metadata": {"tell_rung": tell_rung},
-	}
-
-
-func _finalized_presentation_trace(physics: Dictionary, machine: Dictionary, rebuild_final_frame: bool = false) -> Variant:
-	var packed_value: Variant = physics.get("presentation_trace_packed", {})
-	if typeof(packed_value) == TYPE_DICTIONARY and not (packed_value as Dictionary).is_empty():
-		if rebuild_final_frame:
-			# A consumed Coin-Return Shim authors one recovered body after physics
-			# exits settle. This rare item path rebuilds only the already-small legacy
-			# presentation payload; ordinary drops/nudges keep compact packed authority
-			# and never construct a second native kernel.
-			var recovered_trace := CoinPusherSolverScript.decode_packed_presentation_trace(packed_value as Dictionary)
-			if not recovered_trace.is_empty():
-				recovered_trace[recovered_trace.size() - 1] = _final_presentation_frame(machine)
-				return recovered_trace
-		if int((packed_value as Dictionary).get("frame_count", 0)) == CoinPusherSolverScript.ACTION_TICKS / CoinPusherSolverScript.PRESENTATION_TRACE_INTERVAL_TICKS + 2:
-			return packed_value
-		var finalized_packed: Dictionary = CoinPusherSolverScript.finalize_packed_presentation_trace(
-			packed_value as Dictionary,
-			_simulation(machine),
-			CoinPusherSolverScript.ACTION_TICKS + 1
-		)
-		if not finalized_packed.is_empty():
-			return finalized_packed
-	var trace: Array = physics.get("presentation_trace", []) if typeof(physics.get("presentation_trace", [])) == TYPE_ARRAY else []
-	if trace.is_empty():
-		return []
-	if rebuild_final_frame and not trace.is_empty():
-		trace[trace.size() - 1] = _final_presentation_frame(machine)
-		return trace
-	if trace.size() == CoinPusherSolverScript.ACTION_TICKS / CoinPusherSolverScript.PRESENTATION_TRACE_INTERVAL_TICKS + 2:
-		return trace
-	trace.append(_final_presentation_frame(machine))
-	return trace
-
-
-func _final_presentation_frame(machine: Dictionary) -> Dictionary:
-	return {
-		"tick_offset": CoinPusherSolverScript.ACTION_TICKS + 1,
-		"upper_phase_fp": int(_simulation(machine).get("upper_phase_fp", 0)),
-		"lower_phase_fp": int(_simulation(machine).get("lower_phase_fp", 0)),
-		"bodies": _body_views(machine),
-	}
-
-
-func _presentation_action_snapshot_patch(machine: Dictionary, action_id: String, events: Variant, trace: Variant) -> Dictionary:
-	var patch := {
-		# These payloads are freshly authored by this action and immutable after
-		# handoff. Preserve ownership through the presentation boundary instead of
-		# cloning the dense physical replay before the host receives it.
-		"events": events as Array if typeof(events) == TYPE_ARRAY else [],
-		"trace": [],
-		"trace_packed": {},
-		"trace_frame_count": 0,
-		"action_state": {
-			"action_count": int(machine.get("action_count", 0)),
-			"replay_active_id": "action_%d" % int(machine.get("action_count", 0)),
-			"action_id": action_id,
-		},
-	}
-	if typeof(trace) == TYPE_DICTIONARY and not (trace as Dictionary).is_empty():
-		patch["trace_packed"] = trace
-		patch["trace_frame_count"] = int((trace as Dictionary).get("frame_count", 0))
-	elif typeof(trace) == TYPE_ARRAY:
-		patch["trace"] = trace
-		patch["trace_frame_count"] = (trace as Array).size()
-	return patch
-
-
-func _surface_action_view_patch(machine: Dictionary, physics: Dictionary, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	# Complete lightweight post-action surface state. The packed replay remains
-	# the single physical body/rider/feature authority; duplicating those dense
-	# arrays here would recreate the hitch this patch boundary removes.
-	var metrics: Dictionary = physics.get("metrics", {}) if typeof(physics.get("metrics", {})) == TYPE_DICTIONARY else {}
-	var awake_count := int(metrics.get("awake_count", 0)) if metrics.has("awake_count") else CoinPusherSolverScript.awake_count(_simulation(machine))
-	var patch := {
-		"surface_action_catalog_key": _surface_action_catalog_key(machine, run_state, environment, ui_state),
-		"surface_action_stake_view": _surface_action_stake_view(run_state, environment),
-		"coin_pusher_snapshot": {
-			# Scalar post-action authority for consumers such as SFX. Reading the
-			# simulation Array size is O(1) and avoids decoding/copying packed bodies.
-			"body_count": (_simulation(machine).get("bodies", []) as Array).size(),
-			"tell_rung": int(machine.get("tell_rung", 0)),
-			"tell_label": _tell_label(int(machine.get("tell_rung", 0))),
-			"locked": bool(machine.get("locked_down", false)),
-		},
-		"coin_pusher_awake_count": awake_count,
-		"coin_pusher_last_step_metrics": metrics,
-		"coin_pusher_variation_id": str(machine.get("variation_id", _variation_id())),
-		"coin_pusher_variation_name": _variation_display_name(str(machine.get("variation_id", _variation_id()))),
-		"coin_pusher_tray_value": int(machine.get("tray_value", 0)),
-		"coin_pusher_last_message": str(machine.get("last_message", "Pick a lane. Read both shelves.")),
-		"coin_pusher_action_count": int(machine.get("action_count", 0)),
-		"coin_pusher_cold_armed": bool(machine.get("cold_quarters_armed", false)),
-		"coin_pusher_shim_uses": int(machine.get("shim_uses_remaining", 0)),
-		"surface_animation_channels": _surface_animation_channels(machine),
-	}
-	var variation_state := _variation_state(machine)
-	match str(machine.get("variation_id", "quarter_falls")):
-		"jackpot_ridge":
-			patch["coin_pusher_jammed_lanes"] = _physical_jammed_lanes(machine)
-			patch["coin_pusher_multiplier"] = JackpotRidgeScript.payout_multiplier(variation_state)
-			patch["coin_pusher_cascade_remaining"] = int(variation_state.get("cascade_remaining", 0))
-			patch["coin_pusher_feature_message"] = str(variation_state.get("last_feature_message", ""))
-		"vault_drop":
-			var vault_views := VaultDropScript.views(variation_state)
-			patch["coin_pusher_vault_cells"] = vault_views.get("cells", [])
-			patch["coin_pusher_vault_fragments"] = int(variation_state.get("banked_fragments", 0))
-			patch["coin_pusher_vault_active"] = bool(variation_state.get("vault_round_active", false))
-			patch["coin_pusher_vault_meter"] = int(variation_state.get("meter_value", 0))
-			patch["coin_pusher_feature_message"] = str(variation_state.get("last_feature_message", ""))
-	return patch
-
-
-func _surface_action_catalog_key(machine: Dictionary, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> String:
-	# Exact dependencies of legal_actions()/cheat_actions(). Selection, bankroll,
-	# animation clocks, and action count deliberately do not invalidate it; every
-	# Heat/security/watch projection that changes risky availability or copy, plus
-	# selection (transformed action rows carry `selected`), is explicit in the key.
-	var challenge_cheats_disabled := run_state != null and run_state.challenge_cheat_actions_disabled()
-	var security_risk_bonus := run_state.security_risk_bonus("cheat") if run_state != null else 0
-	var security_pressure_label := run_state.security_pressure_label() if run_state != null else ""
-	var security_pressure_summary := run_state.security_pressure_summary() if run_state != null else ""
-	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
-	return JSON.stringify([
-		get_id(),
-		str(environment.get("id", "")),
-		str(ui_state.get("selected_action_id", "")),
-		str(ui_state.get("selected_action_kind", "")),
-		_machine_busy(environment),
-		bool(machine.get("locked_down", false)),
-		str(machine.get("variation_id", _variation_id())),
-		run_state != null and run_state.inventory.has("xray_glasses"),
-		challenge_cheats_disabled,
-		security_risk_bonus,
-		security_pressure_label,
-		security_pressure_summary,
-		bool(pit_boss_status.get("active", false)),
-		bool(pit_boss_status.get("watched", false)),
-		int(pit_boss_status.get("cheat_heat_bonus", 0)),
-		str(pit_boss_status.get("summary", "")),
-	])
-
-
-func _surface_action_stake_view(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 0
-	return {
-		"stake_floor": _drop_cost(),
-		"stake_ceiling": maxi(_drop_cost(), capacity),
-		"base_stake_ceiling": maxi(_drop_cost(), capacity),
-		"economy_state": run_state.economy() if run_state != null else {},
-		"economy_pressure_applied": false,
-	}
-
-
-func _surface_animation_channels(machine: Dictionary) -> Array:
-	return [
-		GameModule.surface_animation_channel(
-			PHYSICS_REPLAY_CHANNEL,
-			"action_%d" % int(machine.get("action_count", 0)) if int(machine.get("action_count", 0)) > 0 else "",
-			PHYSICS_REPLAY_DURATION_MSEC,
-			0,
-			{"active": int(machine.get("action_count", 0)) > 0}
-		),
-		GameModule.surface_animation_channel(
-			"coin_pusher_rock",
-			"tell_%d_action_%d" % [int(machine.get("tell_rung", 0)), int(machine.get("action_count", 0))] if int(machine.get("tell_rung", 0)) > 0 else "",
-			460,
-			0,
-			{"active": int(machine.get("tell_rung", 0)) > 0, "metadata": {"tell_rung": int(machine.get("tell_rung", 0))}}
-		),
-	]
-
-
-func _rider_views(machine: Dictionary) -> Array:
-	return _feature_views(machine, "rider")
-
-
-func _lane_views(machine: Dictionary) -> Array:
-	var result: Array = []
-	for lane_index in range(_lane_count()):
-		result.append({"lane": lane_index, "approach": lane_index - int(_lane_count() / 2)})
-	return result
-
-
 func _digest_state(machine: Dictionary) -> Dictionary:
 	return {
 		"schema": str(machine.get("schema", "")), "version": int(machine.get("version", 0)), "variation_id": str(machine.get("variation_id", "")),
 		"variation_state": machine.get("variation_state", {}),
 		"simulation": CoinPusherSolverScript.canonical_digest(_simulation(machine)), "riders": machine.get("riders", []),
-		"upper_phase": int(machine.get("upper_phase", 0)), "lower_phase": int(machine.get("lower_phase", 0)),
 		"action_count": int(machine.get("action_count", 0)), "tray_value": int(machine.get("tray_value", 0)),
 		"total_cost": int(machine.get("total_cost", 0)), "total_payout": int(machine.get("total_payout", 0)),
 		"alarm_tolerance_remaining": int(machine.get("alarm_tolerance_remaining", 0)), "tell_rung": int(machine.get("tell_rung", 0)),
@@ -1678,581 +889,13 @@ func _digest_state(machine: Dictionary) -> Dictionary:
 	}
 
 
-func _cabinet_shake_offset(surface, state: Dictionary) -> Vector2:
-	if bool(state.get("reduce_motion", false)) or surface == null:
-		return Vector2.ZERO
-	var snapshot := _snapshot_view(state)
-	var strength := minf(4.5, float(int(snapshot.get("tell_rung", 0))) * 1.4)
-	var events: Array = snapshot.get("events", []) if typeof(snapshot.get("events", [])) == TYPE_ARRAY else []
-	var replay_active: bool = surface.has_method("surface_animation_active") and bool(surface.surface_animation_active(PHYSICS_REPLAY_CHANNEL))
-	var replay_progress := clampf(float(surface.surface_animation_progress(PHYSICS_REPLAY_CHANNEL)), 0.0, 1.0) if replay_active and surface.has_method("surface_animation_progress") else 1.0
-	var action_ticks := maxi(1, int((snapshot.get("geometry", {}) as Dictionary).get("action_ticks", 48))) if typeof(snapshot.get("geometry", {})) == TYPE_DICTIONARY else 48
-	if replay_active:
-		for value in events:
-			if typeof(value) != TYPE_DICTIONARY:
-				continue
-			var event: Dictionary = value
-			if str(event.get("kind", "")) != "cabinet_shake":
-				continue
-			var age := replay_progress - float(int(event.get("tick_offset", 0))) / float(action_ticks)
-			if age >= 0.0 and age <= 0.32:
-				var envelope := 1.0 - age / 0.32
-				strength = maxf(strength, 4.5 * envelope * clampf(float(int(event.get("intensity_milli", 500))) / 1000.0, 0.0, 1.0))
-	var phase := float(surface.surface_flicker()) if surface.has_method("surface_flicker") else 0.0
-	return Vector2(sin(phase * 17.0) * strength, cos(phase * 13.0) * strength * 0.32)
-
-
-func _set_cabinet_draw_offset(surface, offset: Vector2) -> void:
-	if surface != null and surface.has_method("surface_set_design_space_local_offset"):
-		surface.call("surface_set_design_space_local_offset", offset)
-
-
-func _draw_perspective_cabinet(surface, state: Dictionary) -> void:
-	surface.draw_rect(Rect2(Vector2(46, 42), Vector2(568, 284)), C_GLASS)
-	surface.draw_rect(Rect2(92, 64, 476, 119), Color("#183c4d"))
-	surface.draw_rect(Rect2(66, 188, 528, 127), Color("#203344"))
-	surface.draw_line(Vector2(108, 64), Vector2(81, 183), Color("#315d6b"), 2.0)
-	surface.draw_line(Vector2(552, 64), Vector2(579, 183), Color("#315d6b"), 2.0)
-	surface.draw_line(Vector2(81, 188), Vector2(54, 315), Color("#40566b"), 2.0)
-	surface.draw_line(Vector2(579, 188), Vector2(606, 315), Color("#40566b"), 2.0)
-	surface.draw_line(Vector2(81, 183), Vector2(579, 183), Color("#d9f2f1"), 3.0)
-	surface.draw_line(Vector2(54, 315), Vector2(606, 315), Color("#ffe6a0"), 4.0)
-	surface.draw_rect(Rect2(74, 322, 512, 23), Color("#0c131c"))
-	surface.draw_line(Vector2(108, 345), Vector2(552, 345), C_COIN, 2.0)
-	var gutter_color := Color(C_HANG.r, C_HANG.g, C_HANG.b, 0.26)
-	surface.draw_rect(Rect2(35, 315, 73, 30), gutter_color)
-	surface.draw_rect(Rect2(552, 315, 73, 30), gutter_color)
-	var tell_rung := int(_snapshot_view(state).get("tell_rung", 0))
-	var hard_alarm := bool(_snapshot_view(state).get("locked", false))
-	for rung in range(3):
-		var light_color := C_HANG if tell_rung > rung else Color("#342a2d")
-		surface.draw_circle(Vector2(273 + rung * 28, 27), 6.0, light_color)
-	if tell_rung >= 2:
-		surface.surface_label("CHIRP" if tell_rung == 2 else "ALARM" if hard_alarm else "WATCH", Vector2(359, 31), 7, C_HANG)
-	if tell_rung >= 3:
-		surface.draw_circle(Vector2(591, 66), 9.0, Color("#8b9aaa"))
-		surface.draw_line(Vector2(591, 75), Vector2(585, 94), Color("#8b9aaa"), 4.0)
-		surface.draw_line(Vector2(585, 82), Vector2(567, 78), C_HANG, 2.0)
-
-
-func _draw_shelf(surface, level: String, phase_milli: int, phase_domain_milli: int, color: Color) -> void:
-	var cycle := float(phase_milli) / float(maxi(1, phase_domain_milli))
-	var extension := 0.5 - 0.5 * cos(cycle * TAU)
-	var rear_y := 72.0 if level == "upper" else 198.0
-	var front_y := 121.0 if level == "upper" else 260.0
-	var y := lerpf(rear_y, front_y, extension)
-	var width := lerpf(448.0, 510.0, extension)
-	var left := 330.0 - width * 0.5
-	surface.draw_rect(Rect2(left, y - 8, width, 15), Color(color.r, color.g, color.b, 0.82))
-	surface.draw_line(Vector2(left - 5, y + 7), Vector2(left + width + 5, y + 7), C_TEXT, 2.0)
-	var direction := -1.0 if cycle > 0.5 else 1.0
-	for marker in range(4):
-		var marker_x := left + 82.0 + float(marker) * (width - 164.0) / 3.0
-		surface.draw_line(Vector2(marker_x, y - 1), Vector2(marker_x + direction * 9.0, y - 1), C_BG, 2.0)
-
-
-func _presentation_bodies(surface, state: Dictionary) -> Array:
-	var snapshot := _snapshot_view(state)
-	var final_bodies := _authoritative_final_bodies(snapshot)
-	if bool(state.get("reduce_motion", false)):
-		return final_bodies
-	var packed_value: Variant = snapshot.get("trace_packed", {})
-	var has_packed_trace := typeof(packed_value) == TYPE_DICTIONARY and int(snapshot.get("trace_frame_count", 0)) > 0
-	if has_packed_trace:
-		if surface != null and surface.has_method("surface_animation_progress"):
-			var packed: Dictionary = packed_value
-			var packed_progress := clampf(float(surface.surface_animation_progress(PHYSICS_REPLAY_CHANNEL)), 0.0, 1.0)
-			var action_state: Dictionary = snapshot.get("action_state", {}) if typeof(snapshot.get("action_state", {})) == TYPE_DICTIONARY else {}
-			var replay_id := str(action_state.get("replay_active_id", ""))
-			var packed_sample: Dictionary = _packed_trace_reader.sample(packed, replay_id, packed_progress)
-			if not packed_sample.is_empty():
-				return _packed_trace_reader.interpolated_bodies(packed_sample)
-	else:
-		# A new cabinet/run can reuse action_1; clear the transient reader when no
-		# packed replay is active so that identifier reuse cannot expose old frames.
-		_packed_trace_reader.clear()
-	var trace: Array = snapshot.get("trace", []) if typeof(snapshot.get("trace", [])) == TYPE_ARRAY else []
-	if trace.is_empty() or surface == null or not surface.has_method("surface_animation_progress"):
-		return final_bodies
-	var progress := clampf(float(surface.surface_animation_progress(PHYSICS_REPLAY_CHANNEL)), 0.0, 1.0)
-	var frame_position := progress * float(trace.size() - 1)
-	var frame_index := clampi(int(floor(frame_position)), 0, trace.size() - 1)
-	var next_index := mini(frame_index + 1, trace.size() - 1)
-	var frame_value: Variant = trace[frame_index]
-	var next_value: Variant = trace[next_index]
-	if typeof(frame_value) != TYPE_DICTIONARY or typeof(next_value) != TYPE_DICTIONARY:
-		return final_bodies
-	var frame: Dictionary = frame_value
-	var next_frame: Dictionary = next_value
-	var current_bodies: Array = frame.get("bodies", final_bodies) if typeof(frame.get("bodies", final_bodies)) == TYPE_ARRAY else final_bodies
-	var next_bodies: Array = next_frame.get("bodies", current_bodies) if typeof(next_frame.get("bodies", current_bodies)) == TYPE_ARRAY else current_bodies
-	return _interpolated_body_views(current_bodies, next_bodies, frame_position - float(frame_index))
-
-
-func _authoritative_final_bodies(snapshot: Dictionary) -> Array:
-	# Action replay is newer than the retained entry snapshot. Preserve an empty
-	# authoritative final pile as empty: presence, not Array emptiness, determines
-	# fallback precedence.
-	var packed_value: Variant = snapshot.get("trace_packed", {})
-	if typeof(packed_value) == TYPE_DICTIONARY and int(snapshot.get("trace_frame_count", 0)) > 0:
-		return _packed_final_bodies(snapshot)
-	var trace_value: Variant = snapshot.get("trace", [])
-	if typeof(trace_value) == TYPE_ARRAY and not (trace_value as Array).is_empty():
-		var final_value: Variant = (trace_value as Array).back()
-		if typeof(final_value) == TYPE_DICTIONARY:
-			var final_body_value: Variant = (final_value as Dictionary).get("bodies", [])
-			if typeof(final_body_value) == TYPE_ARRAY:
-				return final_body_value
-	var snapshot_body_value: Variant = snapshot.get("bodies", [])
-	return snapshot_body_value if typeof(snapshot_body_value) == TYPE_ARRAY else []
-
-
-func _packed_final_bodies(snapshot: Dictionary) -> Array:
-	var packed_value: Variant = snapshot.get("trace_packed", {})
-	if typeof(packed_value) != TYPE_DICTIONARY or int(snapshot.get("trace_frame_count", 0)) <= 0:
-		return []
-	var action_state: Dictionary = snapshot.get("action_state", {}) if typeof(snapshot.get("action_state", {})) == TYPE_DICTIONARY else {}
-	var replay_id := str(action_state.get("replay_active_id", ""))
-	return _packed_trace_reader.final_bodies(packed_value as Dictionary, replay_id)
-
-
-func _interpolated_body_views(current_bodies: Array, next_bodies: Array, weight: float) -> Array:
-	if weight <= 0.001 or current_bodies.is_empty():
-		return current_bodies
-	var next_by_id := {}
-	for next_value in next_bodies:
-		if typeof(next_value) == TYPE_DICTIONARY:
-			next_by_id[str((next_value as Dictionary).get("id", ""))] = next_value
-	var result: Array = []
-	for current_value in current_bodies:
-		if typeof(current_value) != TYPE_DICTIONARY:
-			continue
-		var current: Dictionary = current_value
-		var body_id := str(current.get("id", ""))
-		var next: Dictionary = next_by_id.get(body_id, {}) if typeof(next_by_id.get(body_id, {})) == TYPE_DICTIONARY else {}
-		if next.is_empty():
-			result.append(current)
-			continue
-		var view := {
-			"id": body_id,
-			"kind": str(current.get("kind", "coin")),
-			"material_category": str(current.get("material_category", "coin")),
-			"x": roundi(lerpf(float(int(current.get("x", 0))), float(int(next.get("x", current.get("x", 0)))), weight)),
-			"y": roundi(lerpf(float(int(current.get("y", 0))), float(int(next.get("y", current.get("y", 0)))), weight)),
-			"z": roundi(lerpf(float(int(current.get("z", 0))), float(int(next.get("z", current.get("z", 0)))), weight)),
-			"radius": int(current.get("radius", 0)),
-			"height": int(current.get("height", 0)),
-			"mass": int(current.get("mass", 1)),
-			"sleeping": bool(current.get("sleeping", false)),
-			"rest_state": str(current.get("rest_state", "settling")),
-			"level": str(current.get("level", "lower")),
-			"lean_milli": roundi(lerpf(float(int(current.get("lean_milli", 0))), float(int(next.get("lean_milli", current.get("lean_milli", 0)))), weight)),
-			"metadata": current.get("metadata", {}),
-		}
-		result.append(view)
-	return result
-
-
-func _draw_cells(surface, state: Dictionary, bodies: Array, final_riders: Array, final_features: Array, geometry: Dictionary) -> void:
-	var selected_lane := int(state.get("coin_pusher_lane", 0))
-	var selected_feature_ids := {}
-	var flicker := float(surface.surface_flicker())
-	var variation_id := str(state.get("coin_pusher_variation_id", "quarter_falls"))
-	for value in bodies:
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var body: Dictionary = value
-		var body_kind := str(body.get("kind", "coin"))
-		match body_kind:
-			"coin":
-				_draw_coin_body(surface, body, geometry)
-			"rider":
-				selected_feature_ids[str(body.get("id", ""))] = true
-				_draw_rider_body(surface, body, flicker, geometry)
-			"puck", "fragment":
-				selected_feature_ids[str(body.get("id", ""))] = true
-				if variation_id != "quarter_falls":
-					_draw_variation_feature_body(surface, variation_id, body, flicker, geometry)
-	_draw_missing_snapshot_features(surface, final_riders, final_features, selected_feature_ids, variation_id, flicker, geometry)
-	for lane in range(_lane_count()):
-		var far_x := 108.0 + float(lane) * 89.0
-		var near_x := 54.0 + float(lane) * 104.0
-		surface.draw_line(Vector2(far_x + 35, 66), Vector2(near_x + 48, 315), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.04 if lane != selected_lane else 0.18), 1.0 if lane != selected_lane else 2.0)
-	for lane in range(_lane_count()):
-		var button := Rect2(54 + lane * 108, 354, 96, 28)
-		surface.draw_rect(button, C_TEAL if lane == selected_lane else C_CASE)
-		surface.surface_label_centered("LANE %d" % (lane + 1), button, 8, C_BG if lane == selected_lane else C_TEXT)
-		surface.surface_add_exact_hit(button, "coin_pusher_lane", lane)
-
-
-func _draw_coin_body(surface, body: Dictionary, geometry: Dictionary) -> void:
-	var projection := _body_screen_projection(body, geometry)
-	var position := Vector2(projection.x, projection.y)
-	var radius := projection.z
-	var is_hanging := int(body.get("y", 0)) < int(geometry.get("front_edge", 0)) + int(body.get("radius", geometry.get("coin_radius", 1)))
-	var floor_z := int(geometry.get("upper_floor_z", 0)) if str(body.get("level", "lower")) == "upper" else int(geometry.get("lower_floor_z", 0))
-	var is_raised := int(body.get("z", 0)) > floor_z
-	var is_leaning := int(body.get("lean_milli", 0)) > 500
-	var glyph_key := int(is_hanging) | (int(is_raised) << 1) | (int(is_leaning) << 2)
-	var texture: Texture2D = coin_glyph_textures.get(glyph_key)
-	var glyph_scale := radius / COIN_GLYPH_RADIUS
-	var glyph_size := Vector2(COIN_GLYPH_SIZE, COIN_GLYPH_SIZE) * glyph_scale
-	var glyph_origin := position - Vector2(24.0, 20.0) * glyph_scale
-	surface.draw_texture_rect(texture, Rect2(glyph_origin, glyph_size), false)
-
-
-func _draw_missing_snapshot_features(surface, final_riders: Array, final_features: Array, selected_ids: Dictionary, variation_id: String, flicker: float, geometry: Dictionary) -> void:
-	for value in final_riders:
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var rider: Dictionary = value
-		if not selected_ids.has(str(rider.get("id", ""))):
-			_draw_rider_body(surface, rider, flicker, geometry)
-	if variation_id == "quarter_falls":
-		return
-	for value in final_features:
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var feature: Dictionary = value
-		if not selected_ids.has(str(feature.get("id", ""))):
-			_draw_variation_feature_body(surface, variation_id, feature, flicker, geometry)
-
-
-func _prewarm_coin_glyphs() -> void:
-	if not coin_glyph_textures.is_empty():
-		return
-	for glyph_key in range(8):
-		coin_glyph_textures[glyph_key] = _build_coin_glyph_texture(glyph_key)
-
-
-func _build_coin_glyph_texture(glyph_key: int) -> Texture2D:
-	var image := Image.create(COIN_GLYPH_SIZE, COIN_GLYPH_SIZE, false, Image.FORMAT_RGBA8)
-	image.fill(Color.TRANSPARENT)
-	var hanging := bool(glyph_key & 1)
-	var raised := bool(glyph_key & 2)
-	var leaning := bool(glyph_key & 4)
-	var center := Vector2(24.0, 20.0)
-	var shadow_center := center + Vector2(0.0, 5.0)
-	for y in range(COIN_GLYPH_SIZE):
-		for x in range(COIN_GLYPH_SIZE):
-			var pixel := Vector2(float(x) + 0.5, float(y) + 0.5)
-			var shadow_distance := pixel.distance_to(shadow_center)
-			if shadow_distance < COIN_GLYPH_RADIUS + 1.0:
-				var shadow_alpha := clampf(COIN_GLYPH_RADIUS + 1.0 - shadow_distance, 0.0, 1.0)
-				image.set_pixel(x, y, Color(0.25, 0.13, 0.04, 0.72 * shadow_alpha))
-			var distance := pixel.distance_to(center)
-			if distance >= COIN_GLYPH_RADIUS + 1.0:
-				continue
-			var edge_alpha := clampf(COIN_GLYPH_RADIUS + 1.0 - distance, 0.0, 1.0)
-			var color := C_COIN
-			if distance > COIN_GLYPH_RADIUS - 2.0:
-				color = C_HANG if hanging else Color("#ffe7a4") if raised else Color("#e5a938")
-			elif pixel.distance_to(center + Vector2(-5.0, -5.0)) < 4.0:
-				color = Color("#fff0ad")
-			if leaning and x >= 18 and x <= 34 and absf(float(y) - (29.0 - float(x - 18) * 0.48)) < 1.5:
-				color = C_HANG
-			image.set_pixel(x, y, Color(color.r, color.g, color.b, edge_alpha))
-	return ImageTexture.create_from_image(image)
-
-
-func _body_screen_position(body: Dictionary, geometry: Dictionary) -> Vector2:
-	var projection := _body_screen_projection(body, geometry)
-	return Vector2(projection.x, projection.y)
-
-
-func _body_screen_projection(body: Dictionary, geometry: Dictionary) -> Vector3:
-	var front_edge := int(geometry.get("front_edge", 0))
-	var rear_edge := maxi(front_edge + 1, int(geometry.get("rear_edge", front_edge + 1)))
-	var width := maxi(1, int(geometry.get("width", 1)))
-	var coin_height := maxi(1, int(geometry.get("coin_height", 1)))
-	var depth := clampf(float(int(body.get("y", front_edge)) - front_edge) / float(rear_edge - front_edge), -0.10, 1.08)
-	var field_width := lerpf(552.0, 444.0, clampf(depth, 0.0, 1.0))
-	var x_ratio := float(int(body.get("x", width / 2))) / float(width) - 0.5
-	var layer_height := float(int(body.get("z", 0))) / float(coin_height) * 5.3
-	var radius := maxf(8.0, float(int(body.get("radius", geometry.get("coin_radius", 1)))) / float(width) * field_width * 0.82)
-	return Vector3(330.0 + x_ratio * field_width, 315.0 - depth * 247.0 - layer_height, radius)
-
-
-func _body_screen_radius(body: Dictionary, geometry: Dictionary) -> float:
-	return _body_screen_projection(body, geometry).z
-
-
-
-
-func _draw_lane_approaches(surface, state: Dictionary) -> void:
-	for value in state.get("coin_pusher_lanes", []):
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var lane: Dictionary = value
-		var lane_index := int(lane.get("lane", 0))
-		var approach := int(lane.get("approach", 0))
-		var center := Vector2(102.0 + float(lane_index) * 108.0, 347.0)
-		surface.draw_line(center + Vector2(float(approach) * 5.0, -15.0), center, C_TEAL, 2.0)
-		var label := "C"
-		if approach < 0:
-			label = "L%d" % absi(approach)
-		elif approach > 0:
-			label = "R%d" % approach
-		surface.surface_label_centered(label, Rect2(center.x - 20.0, center.y - 14.0, 40.0, 12.0), 6, C_TEXT)
-
-
-func _draw_riders(surface, bodies: Array, final_bodies: Array, geometry: Dictionary) -> void:
-	var flicker := float(surface.surface_flicker())
-	for value in bodies:
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var rider: Dictionary = value
-		if str(rider.get("kind", "")) != "rider":
-			continue
-		_draw_rider_body(surface, rider, flicker, geometry)
-	for value in final_bodies:
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var final_rider: Dictionary = value
-		if _should_draw_authoritative_feature(bodies, final_rider, "rider"):
-			_draw_rider_body(surface, final_rider, flicker, geometry)
-
-
-func _draw_rider_body(surface, rider: Dictionary, flicker: float, geometry: Dictionary) -> void:
-	var metadata: Dictionary = rider.get("metadata", {}) if typeof(rider.get("metadata", {})) == TYPE_DICTIONARY else {}
-	var world_x := float(int(rider.get("x", 0))) / float(maxi(1, int(geometry.get("width", 1))))
-	var bob := sin(flicker * 3.0 + world_x * 4.0) * 2.5
-	var position := _body_screen_position(rider, geometry) + Vector2(0, bob)
-	var radius := _body_screen_radius(rider, geometry) * 0.82
-	surface.draw_rect(Rect2(position - Vector2(radius, radius * 0.55), Vector2(radius * 2.0, radius * 1.1)), C_HANG)
-	surface.draw_rect(Rect2(position - Vector2(radius * 0.72, radius * 0.38), Vector2(radius * 1.44, radius * 0.76)), C_COIN)
-	surface.surface_label("R:%s" % str(metadata.get("label", "prize")).left(9).to_upper(), position + Vector2(10.0, 3.0), 6, C_TEXT)
-
-
-func _draw_console(surface, state: Dictionary) -> void:
-	var panel := Rect2(660, 18, 222, 390)
-	surface.draw_rect(panel, Color("#111826"))
-	var variation_id := str(state.get("coin_pusher_variation_id", "quarter_falls"))
-	_draw_console_title(surface, str(state.get("coin_pusher_variation_name", "Quarter Falls")))
-	if variation_id == "vault_drop":
-		_draw_vault_console(surface, state)
-		return
-	surface.surface_label("Tray $%d" % int(state.get("coin_pusher_tray_value", 0)), Vector2(678, 74), 11, C_TEAL)
-	var snapshot := _snapshot_view(state)
-	surface.surface_label("Tell: %s" % str(snapshot.get("tell_label", "steady")), Vector2(678, 96), 8, C_HANG if int(snapshot.get("tell_rung", 0)) > 0 else C_TEXT)
-	if variation_id == "jackpot_ridge":
-		surface.surface_label("x%d · Cascade %d · Jams %d" % [int(state.get("coin_pusher_multiplier", 1)), int(state.get("coin_pusher_cascade_remaining", 0)), (state.get("coin_pusher_jammed_lanes", []) as Array).size()], Vector2(678, 116), 7, C_TEAL)
-	var locked := bool(snapshot.get("locked", false))
-	if locked:
-		surface.surface_label("LOCKED TONIGHT", Vector2(678, 128), 13, C_HANG)
-		surface.surface_label("Back out. Other games stay open.", Vector2(678, 152), 7, C_TEXT)
-		return
-	var force_order: Array = state.get("coin_pusher_force_order", _force_order()) if typeof(state.get("coin_pusher_force_order", [])) == TYPE_ARRAY else _force_order()
-	for index in range(force_order.size()):
-		var rect := Rect2(676 + index * 67, 130, 61, 28)
-		var selected := str(state.get("coin_pusher_force", _default_force())) == str(force_order[index])
-		surface.draw_rect(rect, C_HANG if selected else C_CASE)
-		surface.surface_label_centered(str(force_order[index]).to_upper(), rect, 7, C_BG if selected else C_TEXT)
-		surface.surface_add_exact_hit(rect, "coin_pusher_force", index)
-	var direction_order: Array = state.get("coin_pusher_direction_order", _direction_order()) if typeof(state.get("coin_pusher_direction_order", [])) == TYPE_ARRAY else _direction_order()
-	for index in range(direction_order.size()):
-		var rect := Rect2(676 + index * 67, 168, 61, 28)
-		var selected := str(state.get("coin_pusher_direction", _default_direction())) == str(direction_order[index])
-		surface.draw_rect(rect, C_TEAL if selected else C_CASE)
-		surface.surface_label_centered(str(direction_order[index]).to_upper(), rect, 7, C_BG if selected else C_TEXT)
-		surface.surface_add_exact_hit(rect, "coin_pusher_direction", index)
-	var ridge := variation_id == "jackpot_ridge"
-	if ridge:
-		var trim_order: Array = state.get("coin_pusher_ridge_trim_order", ["feather", "balanced", "heavy"])
-		for index in range(trim_order.size()):
-			var rect := Rect2(676 + index * 67, 202, 61, 24)
-			var selected := str(state.get("coin_pusher_ridge_trim", "balanced")) == str(trim_order[index])
-			surface.draw_rect(rect, C_COIN if selected else C_CASE)
-			surface.surface_label_centered(str(trim_order[index]).left(4).to_upper(), rect, 6, C_BG if selected else C_TEXT)
-			surface.surface_add_exact_hit(rect, "coin_pusher_ridge_trim", index)
-	var drop_rect := Rect2(676, 234 if ridge else 218, 194, 48 if ridge else 54)
-	surface.draw_rect(drop_rect, C_COIN)
-	surface.surface_label_centered("DROP $%d" % _drop_cost(), drop_rect, 13, C_BG)
-	surface.surface_add_exact_hit(drop_rect, "coin_pusher_drop", 0)
-	var nudge_rect := Rect2(676, 290 if ridge else 282, 194, 48 if ridge else 54)
-	surface.draw_rect(nudge_rect, C_HANG)
-	surface.surface_label_centered("NUDGE", nudge_rect, 13, C_BG)
-	surface.surface_add_exact_hit(nudge_rect, "coin_pusher_nudge", 0)
-	surface.surface_label(str(state.get("coin_pusher_last_message", "")).left(34), Vector2(678, 366), 7, C_TEXT)
-
-
-func _draw_console_title(surface, display_name: String) -> void:
-	var geometry := coin_pusher_title_geometry(display_name)
-	surface.surface_label_centered(
-		str(geometry.get("text", "COIN PUSHER")),
-		geometry.get("rect", CONSOLE_TITLE_RECT),
-		int(geometry.get("max_font_size", CONSOLE_TITLE_MAX_FONT_SIZE)),
-		C_COIN
-	)
-
-
-func coin_pusher_title_geometry(display_name: String) -> Dictionary:
-	var title := display_name.strip_edges().to_upper()
-	if title.is_empty():
-		title = "COIN PUSHER"
-	return {
-		"text": title,
-		"rect": CONSOLE_TITLE_RECT,
-		"max_font_size": CONSOLE_TITLE_MAX_FONT_SIZE,
-		"alignment": "center",
-		"leave_rect": SHARED_LEAVE_RECT,
-	}
-
-
-func _draw_variation_features(surface, state: Dictionary, bodies: Array, final_bodies: Array, geometry: Dictionary) -> void:
-	var variation_id := str(state.get("coin_pusher_variation_id", "quarter_falls"))
-	if variation_id == "quarter_falls":
-		return
-	var flicker := float(surface.surface_flicker())
-	for value in bodies:
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var feature: Dictionary = value
-		var body_kind := str(feature.get("kind", ""))
-		if body_kind not in ["puck", "fragment"]:
-			continue
-		_draw_variation_feature_body(surface, variation_id, feature, flicker, geometry)
-	for value in final_bodies:
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var final_feature: Dictionary = value
-		if _should_draw_authoritative_feature(bodies, final_feature, "variation"):
-			_draw_variation_feature_body(surface, variation_id, final_feature, flicker, geometry)
-
-
-func _should_draw_authoritative_feature(selected_bodies: Array, final_feature: Dictionary, feature_family: String) -> bool:
-	var final_kind := str(final_feature.get("kind", ""))
-	if not _feature_kind_matches_family(final_kind, feature_family):
-		return false
-	var final_id := str(final_feature.get("id", ""))
-	for value in selected_bodies:
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var selected: Dictionary = value
-		if _feature_kind_matches_family(str(selected.get("kind", "")), feature_family) and str(selected.get("id", "")) == final_id:
-			return false
-	return true
-
-
-func _feature_kind_matches_family(kind: String, feature_family: String) -> bool:
-	return kind == "rider" if feature_family == "rider" else kind == "puck" or kind == "fragment"
-
-
-func _draw_variation_feature_body(surface, variation_id: String, feature: Dictionary, flicker: float, geometry: Dictionary) -> void:
-	var metadata: Dictionary = feature.get("metadata", {}) if typeof(feature.get("metadata", {})) == TYPE_DICTIONARY else {}
-	var world_x := float(int(feature.get("x", 0))) / float(maxi(1, int(geometry.get("width", 1))))
-	var position := _body_screen_position(feature, geometry) + Vector2(0, sin(flicker * 2.5 + world_x * 5.0) * 2.0)
-	if variation_id == "jackpot_ridge":
-		var kind := str(metadata.get("kind", "dud"))
-		var color := C_TEAL if kind == "multiplier" else Color("#9d7bff") if kind == "lock" else C_HANG
-		surface.draw_circle(position, 10.0, color)
-		surface.draw_circle(position, 7.0, C_BG)
-		var label := "x%d" % int(metadata.get("multiplier", 2)) if kind == "multiplier" else "L" if kind == "lock" else "D"
-		surface.surface_label_centered(label, Rect2(position - Vector2(10, 7), Vector2(20, 14)), 6, color)
-	else:
-		surface.draw_rect(Rect2(position - Vector2(8, 8), Vector2(16, 16)), Color("#a8ffea"))
-		surface.draw_line(position + Vector2(0, -11), position + Vector2(9, 0), C_TEAL, 2.0)
-		surface.draw_line(position + Vector2(9, 0), position + Vector2(0, 11), C_TEAL, 2.0)
-		surface.draw_line(position + Vector2(0, 11), position + Vector2(-9, 0), C_TEAL, 2.0)
-		surface.draw_line(position + Vector2(-9, 0), position + Vector2(0, -11), C_TEAL, 2.0)
-
-
-func _draw_presentation_particles(surface, state: Dictionary, geometry: Dictionary) -> void:
-	if not _presentation_particles_active(surface, state):
-		return
-	var snapshot := _snapshot_view(state)
-	var events: Array = snapshot.get("events", []) if typeof(snapshot.get("events", [])) == TYPE_ARRAY else []
-	if events.is_empty():
-		return
-	var progress := clampf(float(surface.surface_animation_progress(PHYSICS_REPLAY_CHANNEL)), 0.0, 1.0) if surface.has_method("surface_animation_progress") else 1.0
-	for event_value in events:
-		if typeof(event_value) != TYPE_DICTIONARY:
-			continue
-		var event: Dictionary = event_value
-		var event_progress := float(int(event.get("tick_offset", 0))) / float(maxi(1, int(geometry.get("action_ticks", 1))))
-		var age := progress - event_progress
-		if age < 0.0 or age > 0.22:
-			continue
-		var position := _body_screen_position(event, geometry)
-		var intensity := float(int(event.get("intensity_milli", 400))) / 1000.0
-		var alpha := 1.0 - age / 0.22
-		var color := Color(C_HANG.r, C_HANG.g, C_HANG.b, alpha) if str(event.get("kind", "")) in ["gutter_loss", "alarm"] else Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, alpha)
-		for ray in range(5):
-			var angle := TAU * float(ray) / 5.0 + float(int(event.get("tick_offset", 0))) * 0.17
-			var inner := position + Vector2(cos(angle), sin(angle)) * 4.0
-			var outer := position + Vector2(cos(angle), sin(angle)) * (8.0 + 12.0 * intensity)
-			surface.draw_line(inner, outer, color, 1.5)
-
-
-func _presentation_particles_active(surface, state: Dictionary) -> bool:
-	return not bool(state.get("reduce_motion", false)) and surface != null \
-		and surface.has_method("surface_animation_active") and bool(surface.surface_animation_active(PHYSICS_REPLAY_CHANNEL))
-
-
-func _draw_vault_console(surface, state: Dictionary) -> void:
-	var snapshot := _snapshot_view(state)
-	surface.surface_label("Vault $%d · Keys %d" % [int(state.get("coin_pusher_vault_meter", 0)), int(state.get("coin_pusher_vault_fragments", 0))], Vector2(674, 64), 8, C_TEAL)
-	surface.surface_label("Tell: %s" % str(snapshot.get("tell_label", "steady")), Vector2(674, 82), 7, C_HANG if int(snapshot.get("tell_rung", 0)) > 0 else C_TEXT)
-	var selected := int(state.get("coin_pusher_vault_selected_cell", 0))
-	for value in state.get("coin_pusher_vault_cells", []):
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var cell: Dictionary = value
-		var index := int(cell.get("index", 0))
-		var rect := Rect2(674 + (index % 3) * 66, 96 + (index / 3) * 31, 59, 26)
-		var color := C_TEAL if index == selected else C_HANG if bool(cell.get("peeked", false)) else C_CASE
-		surface.draw_rect(rect, color)
-		surface.surface_label_centered(str(cell.get("label", "?")).left(9).to_upper(), rect, 6, C_BG if index == selected else C_TEXT)
-		surface.surface_add_exact_hit(rect, "coin_pusher_vault_cell", index)
-	var active := bool(state.get("coin_pusher_vault_active", false))
-	var vault_buttons := [
-		{"label": "OPEN VAULT", "action": "coin_pusher_vault_start"},
-		{"label": "OPEN CELL", "action": "coin_pusher_vault_open"},
-		{"label": "X-RAY", "action": "coin_pusher_vault_peek"},
-		{"label": "STOP", "action": "coin_pusher_vault_stop"},
-	]
-	for index in range(vault_buttons.size()):
-		if str((vault_buttons[index] as Dictionary).get("action", "")) == "coin_pusher_vault_peek" and not bool(state.get("coin_pusher_vault_xray_available", false)):
-			continue
-		var rect := Rect2(674 + (index % 2) * 101, 197 + (index / 2) * 31, 95, 26)
-		surface.draw_rect(rect, C_HANG if index == 1 and active else C_CASE)
-		surface.surface_label_centered(str((vault_buttons[index] as Dictionary).get("label", "")), rect, 7, C_TEXT)
-		surface.surface_add_exact_hit(rect, str((vault_buttons[index] as Dictionary).get("action", "")), 0)
-	var drop_rect := Rect2(674, 264, 95, 38)
-	var nudge_rect := Rect2(775, 264, 95, 38)
-	surface.draw_rect(drop_rect, C_COIN)
-	surface.draw_rect(nudge_rect, C_HANG)
-	surface.surface_label_centered("DROP $%d" % _drop_cost(), drop_rect, 9, C_BG)
-	surface.surface_label_centered("NUDGE", nudge_rect, 9, C_BG)
-	surface.surface_add_exact_hit(drop_rect, "coin_pusher_drop", 0)
-	surface.surface_add_exact_hit(nudge_rect, "coin_pusher_nudge", 0)
-	var force_order: Array = state.get("coin_pusher_force_order", _force_order()) if typeof(state.get("coin_pusher_force_order", [])) == TYPE_ARRAY else _force_order()
-	for index in range(force_order.size()):
-		var rect := Rect2(674 + index * 66, 310, 59, 24)
-		var is_selected := str(state.get("coin_pusher_force", _default_force())) == str(force_order[index])
-		surface.draw_rect(rect, C_HANG if is_selected else C_CASE)
-		surface.surface_label_centered(str(force_order[index]).to_upper(), rect, 6, C_TEXT)
-		surface.surface_add_exact_hit(rect, "coin_pusher_force", index)
-	var direction_order: Array = state.get("coin_pusher_direction_order", _direction_order()) if typeof(state.get("coin_pusher_direction_order", [])) == TYPE_ARRAY else _direction_order()
-	for index in range(direction_order.size()):
-		var rect := Rect2(674 + index * 66, 340, 59, 24)
-		var is_selected := str(state.get("coin_pusher_direction", _default_direction())) == str(direction_order[index])
-		surface.draw_rect(rect, C_TEAL if is_selected else C_CASE)
-		surface.surface_label_centered(str(direction_order[index]).to_upper(), rect, 6, C_TEXT)
-		surface.surface_add_exact_hit(rect, "coin_pusher_direction", index)
-	surface.surface_label(str(state.get("coin_pusher_feature_message", "")).left(35), Vector2(674, 386), 6, C_TEXT)
-
-
-func _hanger_count(machine: Dictionary) -> int:
-	return CoinPusherSolverScript.edge_hanger_count(_simulation(machine))
-
-
-func _pile_coin_count(machine: Dictionary) -> int:
-	return CoinPusherSolverScript.coin_count(_simulation(machine))
-
-
 func _tuning() -> Dictionary:
 	var value: Variant = definition.get("coin_pusher_tuning", {})
+	return value if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _machine_definition() -> Dictionary:
+	var value: Variant = definition.get("coin_pusher_machine", {})
 	return value if typeof(value) == TYPE_DICTIONARY else {}
 
 
@@ -2312,34 +955,6 @@ func _variation_id() -> String:
 	return authored if not authored.is_empty() else "quarter_falls"
 
 
-func _phase_steps() -> int:
-	return maxi(2, _int_tuning("phase_steps", 12))
-
-
-func _display_phase_cycle_msec() -> int:
-	return maxi(600, _int_tuning("display_phase_cycle_msec", 1800))
-
-
-func _force_order() -> Array:
-	return _string_array_tuning("force_order", ["tap", "shove", "slam"])
-
-
-func _direction_order() -> Array:
-	return _string_array_tuning("direction_order", ["left", "right", "front"])
-
-
-func _default_force() -> String:
-	var order := _force_order()
-	var authored := str(_tuning().get("default_force", order[0]))
-	return authored if order.has(authored) else str(order[0])
-
-
-func _default_direction() -> String:
-	var order := _direction_order()
-	var authored := str(_tuning().get("default_direction", order[0]))
-	return authored if order.has(authored) else str(order[0])
-
-
 func _tell_labels() -> Array:
 	return _string_array_tuning("tell_labels", ["steady", "cabinet rocks", "alarm chirps", "attendant looks over"])
 
@@ -2347,20 +962,6 @@ func _tell_labels() -> Array:
 func _security_band_delta(band: String) -> int:
 	var deltas: Dictionary = _tuning().get("security_band_deltas", {}) if typeof(_tuning().get("security_band_deltas", {})) == TYPE_DICTIONARY else {}
 	return int(deltas.get(band, 0))
-
-
-func _force_tolerance_cost(force: String) -> int:
-	return maxi(0, int(_force_tuning(force).get("tolerance_cost", 1)))
-
-
-func _force_push_strength(force: String) -> int:
-	return maxi(0, int(_force_tuning(force).get("push_strength", 1)))
-
-
-func _force_tuning(force: String) -> Dictionary:
-	var forces: Dictionary = _tuning().get("nudge_forces", {}) if typeof(_tuning().get("nudge_forces", {})) == TYPE_DICTIONARY else {}
-	var value: Variant = forces.get(force, {})
-	return value if typeof(value) == TYPE_DICTIONARY else {}
 
 
 func _lane_count() -> int:
@@ -2387,30 +988,6 @@ func _coin_value() -> int:
 	return maxi(1, _int_tuning("coin_value", 1))
 
 
-func _clean_nudge_phase() -> int:
-	return posmod(_int_tuning("clean_nudge_phase", 3), _phase_steps())
-
-
-func _clean_window() -> int:
-	return clampi(_int_tuning("clean_nudge_window_steps", 1), 0, _phase_steps() / 2)
-
-
-func _mistimed_push_penalty() -> int:
-	return maxi(0, _int_tuning("mistimed_push_penalty", 2))
-
-
-func _skill_accuracy_base() -> int:
-	return clampi(_int_tuning("skill_accuracy_base", 70), 0, 100)
-
-
-func _skill_accuracy_phase_penalty() -> int:
-	return maxi(0, _int_tuning("skill_accuracy_phase_penalty", 12))
-
-
-func _front_nudge_lane_radius() -> int:
-	return maxi(0, _int_tuning("front_nudge_lane_radius", 1))
-
-
 func _prize_initial_cell_max() -> int:
 	return maxi(1, _int_tuning("prize_initial_cell_max", 3))
 
@@ -2422,10 +999,6 @@ func _cold_density() -> int:
 func _shim_uses(run_state: RunState = null) -> int:
 	var authored := run_state.item_effect_total("coin_pusher_gutter_recovery_uses", "coin_pusher") if run_state != null else 0
 	return maxi(1, authored if authored > 0 else _int_tuning("coin_return_shim_uses", 3))
-
-
-func _slam_bonus_push() -> int:
-	return maxi(1, _int_tuning("slam_bonus_push", 2))
 
 
 func _alarm_heat() -> int:
