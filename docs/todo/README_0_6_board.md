@@ -317,6 +317,20 @@ What happens then is the owner's, not an agent's:
   retaining sparse body identity and support flags; budgets may not simply be
   raised.
 
+- 2026-08-17 [pusherv3_2] Final verbatim cleanup found the obsolete packed-
+  presentation trace still consumed by the performance probe, and the Stage 1
+  placeholder still tells the player that controls are offline/no coin is
+  accepted after Stage 2 made those controls live. Remove the packed-trace
+  consumer, retain real live-motion/liveness measurement, and make the crude
+  interim surface truthful; UI/visual smoke must cover the active copy.
+
+- 2026-08-17 [crew06_8] Live-event lifecycle review found the dynamically
+  registered `heist_live_table` event was append-only. Without bounded removal
+  it can remain on a departed or completed table and leak a dead heist surface
+  into later play. Registration must be transient, save/load-safe, and removed
+  after departure, abort, or completion without mutating canonical pools; a
+  production regression must prove cleanup.
+
 - 2026-08-17 [content06_1] Code reality: the landed Mags bench seam is
   intentionally inert (`crew_mags_bench_status()` reports
   `catalog_ready: false`, and its event offers only inspection), while no
