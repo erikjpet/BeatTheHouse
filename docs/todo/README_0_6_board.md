@@ -329,7 +329,10 @@ What happens then is the owner's, not an agent's:
   Falls provenance plus future meaningful multiplier provenance while
   retaining sparse body identity and support flags; budgets may not simply be
   raised. Default x1/non-payout variation labels (including future Vault
-  drops) also cannot create one verbose sidecar entry per paid coin.
+  drops) also cannot create one verbose sidecar entry per paid coin. Restore
+  must rebase solver conservation to include the persisted tray ledger; setting
+  the opening origin to active bodies alone makes the first post-load tick fail
+  whenever uncollected tray value survives an exit.
 
 - 2026-08-17 [pusherv3_2] Final verbatim cleanup found the obsolete packed-
   presentation trace still consumed by the performance probe, and the Stage 1
