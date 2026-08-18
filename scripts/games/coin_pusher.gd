@@ -3,6 +3,11 @@ extends GameModule
 
 const STATE_SCHEMA := "coin_pusher_discrete_pile"
 const DROP_ACTION := "drop_quarter"
+const NUDGE_ACTION := "nudge_machine"
+const COLLECT_ACTION := "coin_pusher_collect"
+const SKILL_STOP_ACTION := "coin_pusher_skill_stop"
+const CARRIAGE_LEFT_ACTION := "coin_pusher_carriage_left"
+const CARRIAGE_RIGHT_ACTION := "coin_pusher_carriage_right"
 const VAULT_START_ACTION := "start_vault_round"
 const VAULT_OPEN_ACTION := "open_vault_cell"
 const VAULT_STOP_ACTION := "stop_vault_round"
@@ -21,7 +26,8 @@ const C_TEXT := Color("#e9f4ff")
 const JackpotRidgeScript := preload("res://scripts/games/coin_pusher/jackpot_ridge.gd")
 const VaultDropScript := preload("res://scripts/games/coin_pusher/vault_drop.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
-const V3_HEADLESS_MESSAGE := "Coin Pusher V3 physics is installed headlessly in this build. Cabinet controls arrive in the live-loop stage; no coin was spent."
+const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
+const V3_HEADLESS_MESSAGE := "The pusher hums continuously. Time the rail, stop the motor, and collect only when you are ready."
 
 
 func gameplay_model() -> String:
@@ -35,7 +41,9 @@ func defers_embedded_action_presentation_refresh(run_state: RunState, _environme
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	# Surface entry is presentation-only. Machine normalization, rumor updates,
 	# and staff-watch consequences belong to generation/action boundaries.
-	var machine := _read_machine_state(run_state, environment)
+	var machine := _ensure_machine_state(run_state, environment, true)
+	_begin_live_session(machine, run_state, environment)
+	_write_machine_state(environment, machine)
 	var result := super.enter(run_state, environment)
 	if _machine_busy(environment):
 		result["message"] = "A convoy regular has the good machine tied up. Try another room or come back when the crowd moves."
@@ -52,7 +60,7 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 
 func legal_actions(run_state: RunState, environment: Dictionary) -> Array:
 	var machine := _read_machine_state(run_state, environment)
-	if _machine_busy(environment) or bool(machine.get("locked_down", false)) or _has_v3_simulation(machine):
+	if _machine_busy(environment) or bool(machine.get("locked_down", false)):
 		return []
 	var result: Array = []
 	for action in super.legal_actions(run_state, environment):
@@ -66,7 +74,7 @@ func legal_actions(run_state: RunState, environment: Dictionary) -> Array:
 
 func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
 	var machine := _read_machine_state(run_state, environment)
-	if _machine_busy(environment) or bool(machine.get("locked_down", false)) or _has_v3_simulation(machine):
+	if _machine_busy(environment) or bool(machine.get("locked_down", false)):
 		return []
 	var result := super.cheat_actions(run_state, environment)
 	if not _machine_busy(environment) and str(machine.get("variation_id", "")) == "vault_drop" and run_state != null and run_state.inventory.has("xray_glasses"):
@@ -91,7 +99,7 @@ func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 
 
 func wager_cost_for_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> int:
-	if _has_v3_simulation(_read_machine_state(run_state, environment)):
+	if action_id == DROP_ACTION and _drop_refused(_read_machine_state(run_state, environment)):
 		return 0
 	return _drop_cost() if action_id == DROP_ACTION else 0
 
@@ -118,17 +126,39 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 
 
 func surface_state(run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
-	var machine := _read_machine_state(run_state, environment)
+	var machine := _ensure_machine_state(run_state, environment, true)
+	_begin_live_session(machine, run_state, environment)
+	_write_machine_state(environment, machine)
 	return _v3_headless_surface_state(machine)
 
 
-func surface_action_command(_surface_action: String, _index: int, _confirm_requested: bool, _ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
-	return GameModule.surface_command({
-		"handled": true,
-		"ui_state": {},
-		"preserve_surface_ui_state": false,
-		"message": V3_HEADLESS_MESSAGE,
-	}, true)
+func surface_action_command(surface_action: String, _index: int, _confirm_requested: bool, _ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var machine := _ensure_machine_state(run_state, environment, true)
+	_begin_live_session(machine, run_state, environment)
+	match surface_action:
+		"coin_pusher_drop":
+			if _drop_refused(machine):
+				return GameModule.surface_command({"handled": true, "message": "The coin slot refuses the quarter; nothing was charged."}, true)
+			return GameModule.surface_command({"handled": true, "direct_resolve": true, "action_id": DROP_ACTION, "action_kind": "legal", "set_stake": _drop_cost(), "skip_stake_validation": true, "preserve_surface_ui_state": true}, true)
+		CARRIAGE_LEFT_ACTION, CARRIAGE_RIGHT_ACTION:
+			var simulation := _simulation(machine)
+			var rail: Dictionary = (_machine_definition().get("apparatus", {}) as Dictionary).get("rail", {})
+			var speed := int(rail.get("speed_per_tick", 900))
+			var direction := -1 if surface_action == CARRIAGE_LEFT_ACTION else 1
+			var requested := int(simulation.get("carriage_x", 50000)) + direction * speed
+			var actual := CoinPusherSolverScript.set_carriage(simulation, requested)
+			CoinPusherLiveSessionScript.queue_input(machine, {"kind": "carriage", "x": actual})
+		SKILL_STOP_ACTION:
+			var simulation := _simulation(machine)
+			var engaged := not bool(simulation.get("skill_stop_engaged", false))
+			CoinPusherSolverScript.set_skill_stop(simulation, engaged)
+			CoinPusherLiveSessionScript.queue_input(machine, {"kind": "skill_stop", "engaged": engaged})
+		COLLECT_ACTION:
+			return _collect_surface_command(run_state, environment, machine)
+		_:
+			return {"handled": false}
+	_write_machine_state(environment, machine)
+	return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": _v3_headless_surface_state(machine)}, true)
 
 
 func surface_motion_signature(_surface, _surface_state: Dictionary) -> Dictionary:
@@ -156,6 +186,12 @@ func _draw_v3_headless_placeholder(surface, state: Dictionary) -> void:
 	# A single block hints at the incoming real platform until the cabinet stage.
 	surface.draw_rect(Rect2(194, 214, 512, 24), Color("#426177"))
 	surface.draw_rect(Rect2(194, 238, 512, 34), Color("#263d52"))
+	for body_value in state.get("coin_pusher_bodies", []):
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = body_value
+		var point := Vector2(194.0 + float(int(body.get("x", 0))) / 100000.0 * 512.0, 265.0 - float(int(body.get("y", 0))) / 63000.0 * 105.0 - float(int(body.get("z", 0))) / 1700.0 * 2.5)
+		surface.draw_circle(point, 3.0, C_COIN)
 	surface.surface_label_centered("V3 PHYSICS CORE INSTALLED", Rect2(176, 158, 548, 30), 16, C_TEAL)
 	surface.surface_label_centered("CABINET CONTROLS OFFLINE IN THIS HEADLESS STAGE", Rect2(176, 184, 548, 24), 10, C_TEXT)
 	surface.draw_rect(Rect2(158, 324, 584, 54), Color("#0f1826"))
@@ -174,15 +210,36 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		return _empty_pusher_result(action_id, environment, "The good machine is occupied. Nothing moves until the convoy does.")
 	if bool(machine.get("locked_down", false)):
 		return _empty_pusher_result(action_id, environment, "Red light. This cabinet stays dead tonight; the rest of the room is open.")
-	return _empty_pusher_result(action_id, environment, V3_HEADLESS_MESSAGE)
+	_begin_live_session(machine, run_state, environment)
+	if action_id == DROP_ACTION:
+		if _drop_refused(machine):
+			return _empty_pusher_result(action_id, environment, "The coin slot refuses the quarter; nothing was charged.")
+		var simulation := _simulation(machine)
+		var density := maxi(_cold_density(), int(machine.get("cold_quarters_density_armed", 0))) if bool(machine.get("cold_quarters_armed", false)) else 1
+		machine["cold_quarters_armed"] = false
+		machine["cold_quarters_density_armed"] = 0
+		var provenance := _drop_provenance(machine)
+		CoinPusherLiveSessionScript.queue_input(machine, {"kind": "drop", "x": int(simulation.get("carriage_x", 50000)), "density": density, "provenance": provenance})
+		machine["action_count"] = int(machine.get("action_count", 0)) + 1
+		machine["total_cost"] = int(machine.get("total_cost", 0)) + _drop_cost()
+		machine["last_message"] = "Quarter released. The machine keeps moving; winnings stay in the tray until collected."
+		_write_machine_state(environment, machine)
+		var deltas := GameModule.empty_result_deltas()
+		deltas["story_log"] = [_story_entry(DROP_ACTION, "legal", environment, -_drop_cost(), 0, {"tick": int(simulation.get("tick", 0)), "carriage_x": int(simulation.get("carriage_x", 50000))})]
+		deltas["messages"] = [str(machine["last_message"])]
+		var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": DROP_ACTION, "action_kind": "legal", "stake": _drop_cost(), "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": str(machine["last_message"])})
+		result["host_apply_result"] = true
+		result["preserve_surface_ui_state"] = true
+		return result
+	if action_id == NUDGE_ACTION:
+		return _resolve_live_nudge(run_state, environment, machine, _ui_state)
+	return _empty_pusher_result(action_id, environment, "That control is not connected.")
 
 
 func active_item_command(item_id: String, run_state: RunState, environment: Dictionary, _rng: RngStream) -> Dictionary:
 	if item_id != COLD_QUARTERS_ITEM_ID or run_state == null or not run_state.inventory.has(item_id):
 		return {"handled": false}
 	var machine := _ensure_machine_state(run_state, environment, true)
-	if _has_v3_simulation(machine):
-		return {"handled": true, "environment_changed": false, "message": V3_HEADLESS_MESSAGE}
 	if bool(machine.get("locked_down", false)):
 		return {"handled": true, "message": "Cold metal won't wake a locked cabinet."}
 	machine["cold_quarters_armed"] = true
@@ -204,8 +261,26 @@ func deterministic_state_digest(environment: Dictionary) -> String:
 	return JSON.stringify(_digest_state(machine), "", true)
 
 
-func surface_realtime_state_patch(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary, _current_surface_state: Dictionary) -> Dictionary:
-	return {}
+func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, _current_surface_state: Dictionary) -> Dictionary:
+	var machine := _ensure_machine_state(run_state, environment, true)
+	_begin_live_session(machine, run_state, environment)
+	var advanced := CoinPusherLiveSessionScript.advance(machine, int(ui_state.get("surface_time_msec", 0)))
+	if int(advanced.get("ticks", 0)) > 0:
+		_write_machine_state(environment, machine)
+	var patch := _v3_headless_surface_state(machine)
+	patch["surface_realtime_state_refresh"] = true
+	patch["coin_pusher_ticks_advanced"] = int(advanced.get("ticks", 0))
+	return patch
+
+
+func checkpoint_surface_ui_state(_ui_state: Dictionary, _run_state: RunState, environment: Dictionary) -> void:
+	var machine := _read_machine_state(_run_state, environment)
+	if not _has_v3_simulation(machine):
+		return
+	var settle_result := CoinPusherLiveSessionScript.settle_and_freeze(machine)
+	machine["last_settle_ticks"] = int(settle_result.get("ticks", 0))
+	machine["last_snapshot_bytes"] = int(settle_result.get("snapshot_bytes", 0))
+	_write_machine_state(environment, machine)
 
 
 func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: RngStream = null) -> Dictionary:
@@ -287,6 +362,11 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 	_initialize_owned_shim(run_state, machine)
 	_sync_vault_meter(run_state, machine)
 	_sync_physical_features(machine)
+	if persist and bool(machine.get("v2_migration_pending", false)):
+		machine.erase("v2_migration_pending")
+		machine["v2_migration_logged"] = true
+		if run_state != null:
+			run_state.log_story({"type": "coin_pusher_v2_migrated", "game_id": get_id(), "environment_id": str(environment.get("id", "")), "tray_value": int(machine.get("tray_value", 0)), "message": "The rebuilt pusher carries the old tray forward and reseeds its changed playfield."})
 	if persist:
 		_write_machine_state(environment, machine)
 	return machine
@@ -320,8 +400,9 @@ func _machine_read_requires_reconciliation(machine: Dictionary, run_state: RunSt
 	var reset_token := _scenario_reset_token(environment)
 	if not reset_token.is_empty() and reset_token != str(machine.get("scenario_reset_token", "")):
 		return true
-	if typeof(machine.get("simulation", {})) != TYPE_DICTIONARY \
-			or str((machine.get("simulation", {}) as Dictionary).get("schema", "")) != CoinPusherSolverScript.SCHEMA \
+	var has_live := typeof(machine.get("simulation", {})) == TYPE_DICTIONARY and str((machine.get("simulation", {}) as Dictionary).get("schema", "")) == CoinPusherSolverScript.SCHEMA
+	var has_settled := typeof(machine.get("settled_state", {})) == TYPE_DICTIONARY and str((machine.get("settled_state", {}) as Dictionary).get("schema", "")) == CoinPusherLiveSessionScript.SNAPSHOT_SCHEMA
+	if (not has_live and not has_settled) \
 			or typeof(machine.get("variation_state", {})) != TYPE_DICTIONARY:
 		return true
 	if bool(machine.get("locked_down", false)) and run_state != null and str(machine.get("lockdown_night", "")) != _night_id(run_state):
@@ -370,10 +451,16 @@ func _physical_features_reconciled(machine: Dictionary) -> bool:
 
 func _normalize_machine_state(source: Dictionary, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
 	var machine := source.duplicate(true)
+	var migrated_v2 := typeof(machine.get("simulation", {})) != TYPE_DICTIONARY or str((machine.get("simulation", {}) as Dictionary).get("schema", "")) != CoinPusherSolverScript.SCHEMA
+	var legacy_tray_value := maxi(0, int(machine.get("tray_value", 0)))
 	var migration_rng := RngStream.new()
 	migration_rng.configure(_stable_hash("coin_pusher_physical_migration:%s:%s" % [_environment_node_id(run_state, environment), str(run_state.seed_text if run_state != null else "fallback")]))
 	if typeof(machine.get("simulation", {})) != TYPE_DICTIONARY or str((machine.get("simulation", {}) as Dictionary).get("schema", "")) != CoinPusherSolverScript.SCHEMA:
 		machine["simulation"] = CoinPusherSolverScript.create_machine(migration_rng, _machine_definition(), mini(_opening_coin_count(), 250))
+		var migrated_ledger: Array = []
+		for _coin in range(legacy_tray_value):
+			migrated_ledger.append({"kind": "coin", "value": 1, "item_id": "", "provenance": {"migration": "v2"}})
+		(machine["simulation"] as Dictionary)["tray_ledger"] = migrated_ledger
 	machine.erase("lanes")
 	machine["schema"] = STATE_SCHEMA
 	machine["version"] = _state_version()
@@ -391,6 +478,8 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 		machine[key] = maxi(0, int(machine.get(key, 0)))
 	machine["staff_watch_memory"] = bool(machine.get("staff_watch_memory", false))
 	machine["locked_down"] = bool(machine.get("locked_down", false))
+	if migrated_v2 and not bool(machine.get("v2_migration_logged", false)):
+		machine["v2_migration_pending"] = true
 	_sync_physical_features(machine)
 	return machine
 
@@ -410,29 +499,123 @@ func _has_v3_simulation(machine: Dictionary) -> bool:
 
 func _v3_headless_surface_state(machine: Dictionary) -> Dictionary:
 	var simulation := _simulation(machine)
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
 	return GameModule.surface_spec({
 		"surface_renderer": "coin_pusher",
 		"surface_life": "coin_pusher_v3_headless_placeholder",
 		"surface_cast": "machine",
-		"surface_controls_native": false,
-		"surface_fixed_price_actions": false,
+		"surface_controls_native": true,
+		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
-		"surface_animates_idle": false,
-		"surface_realtime_state_refresh": false,
-		"surface_embeds_outcomes": false,
+		"surface_animates_idle": true,
+		"surface_realtime_state_refresh": true,
+		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"coin_pusher_v3_headless_placeholder": true,
 		"coin_pusher_solver_schema": str(simulation.get("schema", "")),
 		"coin_pusher_solver_version": int(simulation.get("version", 0)),
 		"coin_pusher_body_count": (simulation.get("bodies", []) as Array).size(),
+		"coin_pusher_bodies": CoinPusherSolverScript.body_views(simulation),
+		"coin_pusher_phase_fp": int(simulation.get("phase_fp", 0)),
+		"coin_pusher_face_position_y": int(simulation.get("face_y", 0)),
+		"coin_pusher_carriage_x": int(simulation.get("carriage_x", 50000)),
+		"coin_pusher_skill_stop_engaged": bool(simulation.get("skill_stop_engaged", false)),
+		"coin_pusher_motor_rate_fp": int(simulation.get("motor_rate_fp", CoinPusherSolverScript.FP)),
+		"coin_pusher_tray_count": tray.size(),
+		"coin_pusher_tray_value": _ledger_value(tray),
+		"coin_pusher_input_trace_count": (session.get("input_trace", []) as Array).size() if typeof(session.get("input_trace", [])) == TYPE_ARRAY else 0,
+		"coin_pusher_liveness_ticks": int(session.get("liveness_ticks", 0)),
 		"coin_pusher_variation_id": str(machine.get("variation_id", _variation_id())),
 		"coin_pusher_variation_name": _variation_display_name(str(machine.get("variation_id", _variation_id()))),
 		"coin_pusher_last_message": V3_HEADLESS_MESSAGE,
-		"native_selected_surface_actions": [],
-		"surface_action_bindings": {},
+		"native_selected_surface_actions": ["coin_pusher_drop", CARRIAGE_LEFT_ACTION, CARRIAGE_RIGHT_ACTION, SKILL_STOP_ACTION, COLLECT_ACTION],
+		"surface_action_bindings": {
+			"coin_pusher_drop": {"label": "DROP", "enabled": not _drop_refused(machine)},
+			CARRIAGE_LEFT_ACTION: {"label": "<", "enabled": true},
+			CARRIAGE_RIGHT_ACTION: {"label": ">", "enabled": true},
+			SKILL_STOP_ACTION: {"label": "RELEASE" if bool(simulation.get("skill_stop_engaged", false)) else "SKILL STOP", "enabled": true, "lit": bool(simulation.get("skill_stop_engaged", false))},
+			COLLECT_ACTION: {"label": "COLLECT", "enabled": not tray.is_empty()},
+		},
 		"surface_animation_channels": [],
 		"surface_audio": {},
 	})
+
+
+func _begin_live_session(machine: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+	if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY and bool((machine.get("live_session", {}) as Dictionary).get("open", false)):
+		return
+	var seed := _stable_hash("pusher_live:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)])
+	CoinPusherLiveSessionScript.begin(machine, _machine_definition(), seed)
+
+
+func _drop_refused(machine: Dictionary) -> bool:
+	var simulation := _simulation(machine)
+	return simulation.is_empty() or (simulation.get("bodies", []) as Array).size() >= int(_machine_definition().get("ceiling", 600))
+
+
+func _drop_provenance(machine: Dictionary) -> Dictionary:
+	var variation_id := str(machine.get("variation_id", "quarter_falls"))
+	return {"variation_id": variation_id, "ridge_multiplier": JackpotRidgeScript.payout_multiplier(_variation_state(machine)) if variation_id == "jackpot_ridge" else 1}
+
+
+func _ledger_value(ledger: Array) -> int:
+	var total := 0
+	for entry_value in ledger:
+		if typeof(entry_value) == TYPE_DICTIONARY:
+			var entry: Dictionary = entry_value
+			var provenance: Dictionary = entry.get("provenance", {}) if typeof(entry.get("provenance", {})) == TYPE_DICTIONARY else {}
+			total += maxi(0, int(entry.get("value", 0))) * maxi(1, int(provenance.get("ridge_multiplier", 1)))
+	return total
+
+
+func _collect_surface_command(run_state: RunState, environment: Dictionary, machine: Dictionary) -> Dictionary:
+	var simulation := _simulation(machine)
+	var tray: Array = (simulation.get("tray_ledger", []) as Array).duplicate(true)
+	CoinPusherLiveSessionScript.queue_input(machine, {"kind": "collect"})
+	var collected := CoinPusherSolverScript.collect_tray(simulation)
+	var cash := _ledger_value(tray)
+	var items: Array = collected.get("items", []) if typeof(collected.get("items", [])) == TYPE_ARRAY else []
+	var deltas := GameModule.empty_result_deltas()
+	deltas["bankroll_delta"] = cash
+	deltas["inventory_add"] = items
+	deltas["story_log"] = [_story_entry(COLLECT_ACTION, "free", environment, cash, 0, {"tray_count": tray.size()})]
+	var message := "The tray is empty." if tray.is_empty() else "You collect $%d from %d tray pieces." % [cash, tray.size()]
+	deltas["messages"] = [message]
+	var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": COLLECT_ACTION, "action_kind": "free", "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": message})
+	GameModule.apply_result(run_state, result)
+	_write_machine_state(environment, machine)
+	return GameModule.surface_command({"handled": true, "environment_changed": true, "message": message, "surface_state_patch": _v3_headless_surface_state(machine), "preserve_surface_ui_state": true}, true)
+
+
+func _resolve_live_nudge(run_state: RunState, environment: Dictionary, machine: Dictionary, ui_state: Dictionary) -> Dictionary:
+	var force := str(ui_state.get("coin_pusher_force", "tap"))
+	var direction := str(ui_state.get("coin_pusher_direction", "front"))
+	var force_data: Dictionary = (_tuning().get("nudge_forces", {}) as Dictionary).get(force, {}) if typeof(_tuning().get("nudge_forces", {})) == TYPE_DICTIONARY else {}
+	var impulse := maxi(1, int(force_data.get("push_strength", 1))) * 1200
+	var x := -impulse if direction == "left" else impulse if direction == "right" else 0
+	var y := -impulse if direction == "front" else 0
+	var tolerance_cost := maxi(0, int(force_data.get("tolerance_cost", 1)))
+	machine["alarm_tolerance_remaining"] = int(machine.get("alarm_tolerance_remaining", 1)) - tolerance_cost
+	var alarmed := int(machine.get("alarm_tolerance_remaining", 0)) <= 0
+	if alarmed:
+		machine["locked_down"] = true
+		machine["lockdown_night"] = _night_id(run_state)
+		machine["staff_watch_memory"] = true
+		machine["suspicion_floor"] = _watch_suspicion_floor()
+	else:
+		machine["tell_rung"] = mini(3, int(machine.get("tell_rung", 0)) + 1)
+	CoinPusherLiveSessionScript.queue_input(machine, {"kind": "nudge", "x": x, "y": y})
+	_write_machine_state(environment, machine)
+	var heat := _alarm_heat() if alarmed else _attendant_glance_heat()
+	var deltas := GameModule.empty_result_deltas()
+	deltas["suspicion_delta"] = heat
+	deltas["story_log"] = [_story_entry(NUDGE_ACTION, "cheat", environment, 0, heat, {"force": force, "direction": direction, "alarmed": alarmed})]
+	var message := "The alarm chirps and the cabinet locks for the night." if alarmed else "The cabinet shifts. %s." % _tell_label(int(machine.get("tell_rung", 0)))
+	deltas["messages"] = [message]
+	var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": NUDGE_ACTION, "action_kind": "cheat", "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": message})
+	result["host_apply_result"] = true
+	return result
 
 
 func _consume_physics_events(run_state: RunState, machine: Dictionary, events: Array, rng: RngStream) -> Dictionary:
