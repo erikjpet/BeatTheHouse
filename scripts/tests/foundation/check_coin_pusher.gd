@@ -21,6 +21,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_energy_settle_conservation(machine_definition, failures)
 	_check_pusher_v3_input_trace_determinism(machine_definition, failures)
 	_check_pusher_v3_live_loop_and_persistence(machine_definition, failures)
+	_check_pusher_v3_production_rail_drag(library, failures)
 	_check_pusher_v3_v2_production_migration(library, failures)
 	_check_pusher_v3_generated_rider_production(library, failures)
 	_check_pusher_v3_solver_performance(machine_definition, failures)
@@ -362,6 +363,38 @@ func _check_pusher_v3_live_loop_and_persistence(machine: Dictionary, failures: A
 			or int((exit_hitch["live_session"] as Dictionary).get("accumulator_units", -1)) >= 1000 \
 			or exit_drain_calls < 74:
 		failures.append("Coin Pusher V3 exit skipped present-time hitch backlog instead of draining it chunkwise: calls=%d tick=%d units=%d." % [exit_drain_calls, int((exit_hitch["simulation"] as Dictionary).get("tick", 0)), int((exit_hitch["live_session"] as Dictionary).get("accumulator_units", -1))])
+	var stop_exit := {"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-STOP-EXIT"), machine, 40), "variation_state": {}, "tell_rung": 0, "alarm_tolerance_remaining": 7, "locked_down": false}
+	CoinPusherLiveSessionScript.begin(stop_exit, machine, 120)
+	var stop_simulation: Dictionary = stop_exit["simulation"]
+	CoinPusherSolverScript.set_skill_stop(stop_simulation, true)
+	var stop_event := CoinPusherLiveSessionScript.queue_input(stop_exit, {"kind": "skill_stop", "engaged": true})
+	var stop_trace_before: Array = ((stop_exit["live_session"] as Dictionary).get("input_trace", []) as Array).duplicate(true)
+	var stop_begin := CoinPusherLiveSessionScript.begin_chunked_settle(stop_exit)
+	var stop_session: Dictionary = stop_exit["live_session"]
+	var stop_exit_released := not bool(stop_simulation.get("skill_stop_engaged", true)) \
+			and int(stop_simulation.get("motor_target_rate_fp", 0)) == CoinPusherSolverScript.FP \
+			and int(stop_session.get("input_cursor", -1)) == stop_trace_before.size() \
+			and (stop_session.get("input_trace", []) as Array) == stop_trace_before \
+			and int(stop_begin.get("pending_inputs_drained", 0)) == 1 \
+			and int(stop_begin.get("input_drain_ticks", 0)) == 1 \
+			and int(stop_event.get("tick", -1)) + 1 == int(stop_simulation.get("tick", -2))
+	var stop_settle := {"done": false}
+	var stop_settle_chunks := 0
+	while not bool(stop_settle.get("done", false)) and stop_settle_chunks < 160:
+		stop_settle = CoinPusherLiveSessionScript.advance_chunked_settle(stop_exit, 8)
+		stop_settle_chunks += 1
+	var carried_sleep_count := 0
+	for body_value in stop_simulation.get("bodies", []):
+		if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("support_kind", "")) == "platform" \
+				and bool((body_value as Dictionary).get("carried_sleep", false)):
+			carried_sleep_count += 1
+	var motor_on_carried_sleep_settled := bool(stop_settle.get("done", false)) \
+			and not bool(stop_simulation.get("skill_stop_engaged", true)) \
+			and int(stop_simulation.get("motor_target_rate_fp", 0)) == CoinPusherSolverScript.FP \
+			and carried_sleep_count > 0 \
+			and CoinPusherSolverScript.all_steady(stop_simulation, true)
+	if not stop_exit_released or not motor_on_carried_sleep_settled:
+		failures.append("Coin Pusher V3 same-tick SKILL STOP -> EXIT reapplied a pending stop or failed motor-on carried-sleep settlement: begin=%s settle=%s trace=%s." % [JSON.stringify(stop_begin), JSON.stringify(stop_settle), JSON.stringify(stop_trace_before)])
 	var representative := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-SNAPSHOT-250"), machine, 250)
 	var representative_snapshot := CoinPusherLiveSessionScript.make_snapshot(representative, {})
 	var representative_bytes := JSON.stringify(representative_snapshot).to_utf8_buffer().size()
@@ -487,6 +520,52 @@ func _check_pusher_v3_live_loop_and_persistence(machine: Dictionary, failures: A
 		failures.append("Coin Pusher V3 visit 1 and visit 80 settled digests diverged.")
 	if JSON.stringify(snapshot).contains("accumulator_units") or JSON.stringify(snapshot).contains("input_trace"):
 		failures.append("Coin Pusher V3 serialized transient accumulator/backlog into settled outcome state.")
+
+
+func _check_pusher_v3_production_rail_drag(library: ContentLibrary, failures: Array) -> void:
+	var definition := library.game("coin_pusher")
+	var module_script: Script = load(str(definition.get("module_path", "")))
+	if module_script == null:
+		failures.append("Coin Pusher V3 production rail-drag test could not load the game module.")
+		return
+	var game: GameModule = module_script.new()
+	game.setup(definition, library)
+	var run_state := RunState.new()
+	run_state.start_new("PUSHER-V3-RAIL-DRAG", RunState.standard_challenge("PUSHER-V3-RAIL-DRAG"))
+	var environment := {"id": "pusher_v3_rail_drag_fixture", "world_node_id": "pusher_v3_rail_drag_fixture", "game_states": {}}
+	var generated: Dictionary = game.generate_environment_state(run_state, environment, _pusher_v3_rng("PUSHER-V3-RAIL-DRAG-GENERATION"))
+	environment["game_states"] = {"coin_pusher": generated}
+	game.enter(run_state, environment)
+	var live_map: Dictionary = game.get("_live_machines")
+	var live_machine: Dictionary = live_map.values()[0] if not live_map.is_empty() else {}
+	var simulation: Dictionary = live_machine.get("simulation", {}) if typeof(live_machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var tick_before := int(simulation.get("tick", -1))
+	var bankroll_before := run_state.bankroll
+	var turns_before := int(environment.get("turns", 0))
+	var surface := game.surface_state(run_state, environment, {})
+	var begin := game.surface_pointer_command("coin_pusher_carriage_drag", 0, "begin", Vector2(176, 180), {}, run_state, environment)
+	var move := game.surface_pointer_command("coin_pusher_carriage_drag", 0, "move", Vector2(450, 180), begin.get("ui_state", {}), run_state, environment)
+	var ending := game.surface_pointer_command("coin_pusher_carriage_drag", 0, "end", Vector2(724, 180), move.get("ui_state", {}), run_state, environment)
+	var session: Dictionary = live_machine.get("live_session", {}) if typeof(live_machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var trace: Array = session.get("input_trace", []) if typeof(session.get("input_trace", [])) == TYPE_ARRAY else []
+	var trace_exact := trace.size() == 3
+	if trace_exact:
+		trace_exact = str((trace[0] as Dictionary).get("kind", "")) == "carriage" \
+				and int((trace[0] as Dictionary).get("x", -1)) == 8000 \
+				and int((trace[1] as Dictionary).get("x", -1)) == 50000 \
+				and int((trace[2] as Dictionary).get("x", -1)) == 92000
+		for event_value in trace:
+			trace_exact = trace_exact and int((event_value as Dictionary).get("tick", -2)) == tick_before
+	var production_drag_ok := bool(surface.get("surface_pointer_coalesce_moves", false)) \
+			and game.surface_pointer_uses_lightweight_ui_state("coin_pusher_carriage_drag") \
+			and bool(begin.get("handled", false)) and bool(move.get("handled", false)) and bool(ending.get("handled", false)) \
+			and bool((begin.get("ui_state", {}) as Dictionary).get("coin_pusher_rail_drag_active", false)) \
+			and not bool((ending.get("ui_state", {}) as Dictionary).get("coin_pusher_rail_drag_active", true)) \
+			and int(simulation.get("carriage_x", -1)) == 92000 \
+			and int((ending.get("surface_state_patch", {}) as Dictionary).get("coin_pusher_carriage_x", -1)) == 92000 \
+			and trace_exact and run_state.bankroll == bankroll_before and int(environment.get("turns", 0)) == turns_before
+	if not production_drag_ok:
+		failures.append("Coin Pusher V3 production rail_slot did not provide a continuous deterministic pointer drag without charging or advancing a turn: begin=%s move=%s end=%s trace=%s." % [JSON.stringify(begin), JSON.stringify(move), JSON.stringify(ending), JSON.stringify(trace)])
 
 
 func _check_pusher_v3_v2_production_migration(library: ContentLibrary, failures: Array) -> void:
