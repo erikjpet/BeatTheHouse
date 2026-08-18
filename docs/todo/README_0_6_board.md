@@ -299,6 +299,14 @@ What happens then is the owner's, not an agent's:
   detection into the later settled hand without advancing a round or losing
   the fact at the settlement guard.
 
+- 2026-08-17 [crew06_8] Gate-evidence audit rejected a concurrent Contracts/UI
+  attempt: both processes rewrote the same generated runner, and the purported
+  UI report actually identified and executed Contracts. Suites in one worktree
+  must run serially. The authored-character validation failure on
+  `heist_live_table` is real; the Grand Casino save and Health Inspector
+  assertions must be reproduced after correction and compared on clean current
+  main before any inherited-failure classification.
+
 - 2026-08-17 [pusherv3_2] PM production-lifecycle review returned the first
   live-loop implementation before broad gates: FoundationMain prepares an
   autosave after every paid DROP by calling the generic surface checkpoint,
