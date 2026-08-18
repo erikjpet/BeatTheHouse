@@ -200,6 +200,10 @@ var _coin_pusher_action_observed_active := false
 var _coin_pusher_audio_baseline_initialized := false
 var _coin_pusher_silent_baseline_action_id := ""
 var _coin_pusher_live_event_serial := -1
+var _debug_coin_pusher_motor_rate := 1.0
+var _debug_coin_pusher_motor_pitch := 0.0
+var _debug_coin_pusher_motor_volume_db := 0.0
+var _debug_coin_pusher_motor_running := false
 var _web_surface_loop_active := false
 var _surface_loop_event_id := ""
 var _surface_loop_fade_tween: Tween
@@ -470,13 +474,17 @@ func _sync_live_coin_pusher_state(surface_state: Dictionary, profile: Dictionary
 	var loaded := body_count >= 80
 	var motor_rate := clampf(float(int(surface_state.get("coin_pusher_motor_rate_fp", 1000))) / 1000.0, 0.0, 1.0)
 	var locked := bool(surface_state.get("coin_pusher_locked", false))
+	var motor_volume := float(motor.get("loaded_volume_db", -13.0) if loaded else motor.get("idle_volume_db", -18.0)) + lerpf(-7.0, 0.0, motor_rate)
+	var base_pitch := float(motor.get("loaded_pitch", 0.96) if loaded else motor.get("idle_pitch", 0.88))
+	var motor_pitch := lerpf(0.48, base_pitch, motor_rate)
+	_debug_coin_pusher_motor_rate = motor_rate
+	_debug_coin_pusher_motor_pitch = motor_pitch
+	_debug_coin_pusher_motor_volume_db = motor_volume
+	_debug_coin_pusher_motor_running = not locked and motor_rate > 0.001
 	if locked or motor_rate <= 0.001:
 		if _surface_loop_event_id == motor_event:
 			_stop_reel_loop()
 	else:
-		var motor_volume := float(motor.get("loaded_volume_db", -13.0) if loaded else motor.get("idle_volume_db", -18.0)) + lerpf(-7.0, 0.0, motor_rate)
-		var base_pitch := float(motor.get("loaded_pitch", 0.96) if loaded else motor.get("idle_pitch", 0.88))
-		var motor_pitch := lerpf(0.48, base_pitch, motor_rate)
 		if _surface_loop_event_id != motor_event or (_loop_player != null and not _loop_player.playing and not _web_surface_loop_active):
 			_start_reel_loop(motor_event, motor_volume, motor_pitch, suppress_physical_playback)
 		elif _loop_player != null:
@@ -498,6 +506,19 @@ func _sync_live_coin_pusher_state(surface_state: Dictionary, profile: Dictionary
 		var intensity := clampf(float(int(event.get("intensity_milli", 500))) / 1000.0, 0.0, 1.0)
 		var context := _coin_pusher_event_mix(event, intensity)
 		_trigger("coin_pusher_live_%d_%d" % [serial, index], true, cue, float(context.get("volume_db", -5.0)), float(context.get("pitch", 1.0)), suppress_physical_playback)
+
+
+func debug_coin_pusher_motor_sync(surface_state: Dictionary) -> Dictionary:
+	# Exercise the production live-state synchronizer without emitting physical
+	# audio. Reduced motion is intentionally ignored by this audio path.
+	_sync_live_coin_pusher_state(surface_state, _surface_sfx_profile("coin_pusher"), true)
+	return {
+		"rate": _debug_coin_pusher_motor_rate,
+		"pitch": _debug_coin_pusher_motor_pitch,
+		"volume_db": _debug_coin_pusher_motor_volume_db,
+		"running": _debug_coin_pusher_motor_running,
+		"loop_event_id": _surface_loop_event_id,
+	}
 
 
 func _coin_pusher_event_cue(event: Dictionary, event_classes: Dictionary) -> String:

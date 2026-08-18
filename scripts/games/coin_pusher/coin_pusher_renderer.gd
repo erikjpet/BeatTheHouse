@@ -4,8 +4,9 @@ extends RefCounted
 const DESIGN_SIZE := Vector2(900, 430)
 const RAIL_DRAG_RECT := Rect2(176, 142, 548, 112)
 const PLAYFIELD_RECT := Rect2(158, 152, 584, 165)
-const WORLD_BACK_Y := 63000.0
-const COIN_HEIGHT := 1700.0
+const SCHEMA_DEFAULT_WIDTH := 100000.0
+const SCHEMA_DEFAULT_BACK_Y := 63000.0
+const SCHEMA_DEFAULT_COIN_HEIGHT := 1700.0
 const REAR_WIDTH_FACTOR := 0.78
 const COIN_RX := 17.0
 const COIN_RY := 12.0
@@ -15,19 +16,11 @@ const BATCH_CAPACITY := 600
 const ATLAS_FRAME_SIZE := Vector2i(40, 32)
 const ROTATION_VARIANTS := [-0.12, -0.04, 0.04, 0.12]
 
-const DEFAULT_CABINETS := {
-	"quarter_falls": {
-		"identity": "quarter_falls", "marquee": "QUARTER FALLS", "palette": "carnival_brass_red", "topper_style": "coin_crown",
-		"colors": {"body": "#6f2028", "side": "#3c111b", "trim": "#e7b84f", "light": "#fff0a6", "glass": "#82c9d8", "deck": "#173b42", "platform": "#d49c42", "backglass": "#46131c"},
-	},
-	"jackpot_ridge": {
-		"identity": "jackpot_ridge", "marquee": "JACKPOT RIDGE", "palette": "ridge_purple_gold", "topper_style": "ridge_peak",
-		"colors": {"body": "#45205f", "side": "#241135", "trim": "#efc04d", "light": "#ffe68a", "glass": "#9c88dc", "deck": "#211b4e", "platform": "#754ea1", "backglass": "#311544"},
-	},
-	"vault_drop": {
-		"identity": "vault_drop", "marquee": "THE VAULT DROP", "palette": "vault_steel_teal", "topper_style": "vault_dial",
-		"colors": {"body": "#354b55", "side": "#1c2b32", "trim": "#4bd8c8", "light": "#b9fff1", "glass": "#72bac2", "deck": "#17343b", "platform": "#5e8790", "backglass": "#203c43"},
-	},
+const NEUTRAL_CABINET := {
+	"identity": "generic", "marquee": "COIN PUSHER", "palette": "neutral", "topper_style": "none", "marquee_subline": "",
+	"backglass_display": {"style": "none"},
+	"body_colors": {"default": "#c9c5b8"}, "body_labels": {},
+	"colors": {"body": "#454851", "side": "#252831", "trim": "#b8b4a8", "light": "#f4f1e8", "glass": "#8ba3ad", "deck": "#24343a", "platform": "#77746b", "backglass": "#30343c"},
 }
 
 var _coin_texture: Texture2D
@@ -38,18 +31,22 @@ var _sorted_body_cache_key := ""
 var _coin_instance_color_cache: Array = []
 var _palette_cache_key := ""
 var _palette_cache: Dictionary = {}
+var _world_width := SCHEMA_DEFAULT_WIDTH
+var _world_back_y := SCHEMA_DEFAULT_BACK_Y
+var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
 
 
 func draw(surface, state: Dictionary) -> bool:
 	if str(state.get("surface_renderer", "")) != "coin_pusher":
 		return false
 	_ensure_coin_batch()
+	_configure_projection(state)
 	surface.surface_begin_design_space(DESIGN_SIZE)
 	var cabinet := _cabinet(state)
 	var colors := _colors(cabinet)
 	_draw_floor_and_shell(surface, cabinet, colors)
 	_draw_backglass(surface, state, cabinet, colors)
-	_draw_playfield(surface, state, colors)
+	_draw_playfield(surface, state, colors, cabinet)
 	_draw_glass(surface, colors)
 	_draw_hardware(surface, state, colors)
 	surface.surface_end_design_space()
@@ -57,6 +54,7 @@ func draw(surface, state: Dictionary) -> bool:
 
 
 func render_signature(state: Dictionary) -> Dictionary:
+	_configure_projection(state)
 	var cabinet := _cabinet(state)
 	var bodies: Array = state.get("coin_pusher_bodies", []) if typeof(state.get("coin_pusher_bodies", [])) == TYPE_ARRAY else []
 	var airborne := 0
@@ -75,13 +73,18 @@ func render_signature(state: Dictionary) -> Dictionary:
 		"palette": str(cabinet.get("palette", "")),
 		"topper_style": str(cabinet.get("topper_style", "")),
 		"rear_width_factor": REAR_WIDTH_FACTOR,
+		"projection_width": _world_width,
+		"projection_back_y": _world_back_y,
+		"projection_coin_height": _coin_height,
 		"coin_rx": COIN_RX,
 		"coin_ry": COIN_RY,
 		"z_layer_offset": Z_LAYER_OFFSET,
 		"rotation_frames": 4,
 		"depth_sorted": true,
-		"batched_nodes": 1,
+		"batch_draws": 1,
+		"batched_nodes": 0,
 		"per_coin_nodes": 0,
+		"draw_order": ["shadows", "coin_batch", "feature_labels", "glass", "hardware"],
 		"body_count": bodies.size(),
 		"airborne_count": airborne,
 		"stacked_count": stacked,
@@ -104,29 +107,30 @@ func _draw_floor_and_shell(surface, cabinet: Dictionary, colors: Dictionary) -> 
 	surface.draw_rect(Rect2(108, 72, 684, 304), side)
 	surface.draw_rect(Rect2(116, 79, 668, 290), body.darkened(0.08))
 	surface.draw_rect(Rect2(91, 56, 718, 337), trim, false, 3.0)
-	_draw_topper(surface, str(cabinet.get("topper_style", "coin_crown")), trim, light)
+	_draw_topper(surface, str(cabinet.get("topper_style", "none")), trim, light)
 	var marquee := Rect2(143, 28, 614, 64)
 	surface.draw_rect(Rect2(marquee.position + Vector2(5, 6), marquee.size), Color(0, 0, 0, 0.55))
 	surface.draw_rect(marquee, body.lightened(0.08))
 	surface.draw_rect(marquee, trim, false, 3.0)
 	var title_rect := Rect2(marquee.position + Vector2(8, 4), Vector2(marquee.size.x - 16, 40))
 	surface.surface_label_centered(str(cabinet.get("marquee", "COIN PUSHER")), title_rect, 25, light)
-	if str(cabinet.get("identity", "")) == "quarter_falls":
-		surface.surface_label_centered("A QUARTER IN MOTION IS A QUARTER WITH A CHANCE", Rect2(159, 70, 582, 14), 8, Color(light, 0.82))
+	var subline := str(cabinet.get("marquee_subline", ""))
+	if not subline.is_empty():
+		surface.surface_label_centered(subline, Rect2(159, 70, 582, 14), 8, Color(light, 0.82))
 
 
 func _draw_topper(surface, style: String, trim: Color, light: Color) -> void:
 	match style:
-		"ridge_peak":
+		"peak":
 			surface.surface_filled_polygon(PackedVector2Array([Vector2(317, 28), Vector2(450, 3), Vector2(583, 28)]), trim.darkened(0.12)) # SA2_PER_FRAME_OK: fixed three-point topper.
 			surface.surface_polyline(PackedVector2Array([Vector2(317, 28), Vector2(450, 3), Vector2(583, 28)]), light, 3.0) # SA2_PER_FRAME_OK: fixed three-point topper trim.
-		"vault_dial":
+		"dial":
 			surface.draw_circle(Vector2(450, 28), 27.0, Color("#263b43"))
 			surface.draw_circle(Vector2(450, 28), 22.0, trim, false, 3.0)
 			for angle in range(0, 360, 45):
 				var direction := Vector2.RIGHT.rotated(deg_to_rad(float(angle)))
 				surface.draw_line(Vector2(450, 28) + direction * 14.0, Vector2(450, 28) + direction * 20.0, light, 2.0)
-		_:
+		"crown_lights":
 			for index in range(5):
 				var center := Vector2(414 + index * 18, 22 - abs(index - 2) * 4)
 				surface.draw_circle(center, 12.0, trim.darkened(float(index % 2) * 0.12))
@@ -137,32 +141,56 @@ func _draw_backglass(surface, state: Dictionary, cabinet: Dictionary, colors: Di
 	var rect := Rect2(139, 99, 622, 48)
 	surface.draw_rect(rect, colors["backglass"])
 	surface.draw_rect(rect, colors["trim"], false, 2.0)
-	var variation := str(state.get("coin_pusher_variation_id", "quarter_falls"))
-	match variation:
-		"jackpot_ridge":
-			var multiplier := maxi(1, int(state.get("coin_pusher_ridge_multiplier", 1)))
-			for index in range(5):
+	var display: Dictionary = cabinet.get("backglass_display", {}) if typeof(cabinet.get("backglass_display", {})) == TYPE_DICTIONARY else {}
+	match str(display.get("style", "none")):
+		"value_lamps":
+			var value := maxi(0, int(state.get(str(display.get("value_state_key", "")), 0)))
+			var lamp_count := maxi(1, int(display.get("lamp_count", 5)))
+			for index in range(lamp_count):
 				var lamp := Vector2(270 + index * 90, 125)
-				var lit := index < multiplier
+				var lit := index < value
 				surface.draw_circle(lamp, 10.0, colors["light"] if lit else Color(colors["light"], 0.16))
-			surface.surface_label_centered("RIDGE MULTIPLIER  x%d" % multiplier, rect, 14, colors["light"])
-		"vault_drop":
-			var meter := maxi(0, int(state.get("coin_pusher_vault_meter", 0)))
-			var fragments := maxi(0, int(state.get("coin_pusher_vault_fragments", 0)))
+			surface.surface_label_centered(str(display.get("label_template", "%d")) % value, rect, 14, colors["light"])
+			var peg_source: Dictionary = state.get(str(display.get("peg_source_state_key", "")), {}) if typeof(state.get(str(display.get("peg_source_state_key", "")), {})) == TYPE_DICTIONARY else {}
+			var pegs: Array = peg_source.get("pegs", []) if typeof(peg_source.get("pegs", [])) == TYPE_ARRAY else []
+			for peg_index in range(pegs.size()):
+				var peg: Dictionary = pegs[peg_index]
+				var peg_x := rect.position.x + 32.0 + clampf(float(peg.get("x", 0)) / _world_width, 0.0, 1.0) * (rect.size.x - 64.0)
+				var peg_y := rect.position.y + 9.0 + float(peg_index % 2) * 18.0
+				surface.draw_circle(Vector2(peg_x, peg_y), 2.5, colors["trim"])
+		"dual_value_dial":
+			var primary := maxi(0, int(state.get(str(display.get("primary_state_key", "")), 0)))
+			var secondary := maxi(0, int(state.get(str(display.get("secondary_state_key", "")), 0)))
 			surface.draw_circle(Vector2(194, 125), 18.0, colors["trim"], false, 3.0)
 			surface.draw_line(Vector2(194, 125), Vector2(194, 112), colors["light"], 3.0)
-			surface.surface_label_centered("VAULT  $%d   KEY FRAGMENTS %d" % [meter, fragments], Rect2(225, 104, 510, 42), 16, colors["light"])
-		_:
-			for index in range(7):
-				var lamp_position := Vector2(264 + index * 62, 123)
-				surface.draw_circle(lamp_position, 6.0, colors["trim"].darkened(0.18))
-				surface.draw_circle(lamp_position - Vector2(1, 1), 2.2, colors["light"])
+			surface.surface_label_centered(str(display.get("label_template", "%d  %d")) % [primary, secondary], Rect2(225, 104, 510, 42), 16, colors["light"])
+		"prize_showcase":
+			var prize_count := maxi(0, int(state.get(str(display.get("count_state_key", "")), 0)))
+			var case_symbols: Array = display.get("case_symbols", []) if typeof(display.get("case_symbols", [])) == TYPE_ARRAY else []
+			var case_captions: Array = display.get("case_captions", []) if typeof(display.get("case_captions", [])) == TYPE_ARRAY else []
+			var case_width := 88.0
+			var case_gap := 12.0
+			var cases_width := float(case_symbols.size()) * case_width + float(maxi(0, case_symbols.size() - 1)) * case_gap
+			var case_start_x := rect.get_center().x - cases_width * 0.5
+			for case_index in range(case_symbols.size()):
+				var case_rect := Rect2(case_start_x + float(case_index) * (case_width + case_gap), rect.position.y + 4.0, case_width, rect.size.y - 8.0)
+				var live_case := case_index < prize_count
+				surface.draw_rect(case_rect, colors["trim"].darkened(0.15) if live_case else colors["side"].darkened(0.18))
+				surface.draw_rect(case_rect, colors["light"] if live_case else Color(colors["trim"], 0.55), false, 2.0)
+				surface.surface_reel_symbol_label(str(case_symbols[case_index]), Rect2(case_rect.position + Vector2(3, 1), Vector2(case_rect.size.x - 6, 22)), 12, colors["light"] if live_case else Color(colors["light"], 0.50))
+				if case_index < case_captions.size():
+					surface.surface_label_centered(str(case_captions[case_index]), Rect2(case_rect.position + Vector2(2, 25), Vector2(case_rect.size.x - 4, 9)), 7, colors["light"] if live_case else Color(colors["light"], 0.44))
+			if case_symbols.is_empty():
+				surface.surface_label_centered(str(display.get("label_template", "%d")) % prize_count, rect, 11, colors["light"])
 
 
-func _draw_playfield(surface, state: Dictionary, colors: Dictionary) -> void:
+func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Dictionary) -> void:
 	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
 	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
-	var face_y := int(state.get("coin_pusher_face_position_y", 28000))
+	var current_face_y := float(state.get("coin_pusher_face_position_y", 28000))
+	var previous_face_y := float(state.get("coin_pusher_previous_face_position_y", current_face_y))
+	var interpolation_alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
+	var face_y := int(round(lerpf(previous_face_y, current_face_y, interpolation_alpha)))
 	var platform_top_z := int(geometry.get("platform_top_z", 3600))
 	var back_plate_y := int(geometry.get("back_plate_y", 63000))
 	var tray_lip_y := int(geometry.get("tray_lip_y", 6000))
@@ -175,7 +203,8 @@ func _draw_playfield(surface, state: Dictionary, colors: Dictionary) -> void:
 	var lip_right := _project(int(geometry.get("width", 100000)), tray_lip_y, 0)
 	var face_left := _project(0, face_y, 0)
 	var face_right := _project(int(geometry.get("width", 100000)), face_y, 0)
-	surface.surface_filled_polygon(PackedVector2Array([lip_left, lip_right, face_right, face_left]), colors["deck"]) # SA2_PER_FRAME_OK: four projected public geometry points.
+	var authored_deck := _project_deck_polygon(geometry)
+	surface.surface_filled_polygon(authored_deck if authored_deck.size() >= 3 else PackedVector2Array([lip_left, lip_right, face_right, face_left]), colors["deck"]) # SA2_PER_FRAME_OK: bounded authored public geometry.
 	var top_face_left := _project(0, face_y, platform_top_z)
 	var top_face_right := _project(int(geometry.get("width", 100000)), face_y, platform_top_z)
 	var top_back_left := _project(0, back_plate_y, platform_top_z)
@@ -185,7 +214,7 @@ func _draw_playfield(surface, state: Dictionary, colors: Dictionary) -> void:
 	surface.draw_line(top_face_left, top_face_right, colors["light"], 2.0)
 	_draw_gutters(surface, geometry, colors)
 	_draw_pegs(surface, apparatus, colors)
-	_draw_interpolated_bodies(surface, state, colors)
+	_draw_interpolated_bodies(surface, state, colors, cabinet)
 	_draw_tray_lip(surface, lip_left, lip_right, colors)
 
 
@@ -211,7 +240,7 @@ func _draw_pegs(surface, apparatus: Dictionary, colors: Dictionary) -> void:
 		surface.draw_circle(point - Vector2(1, 1), radius * 0.42, colors["light"])
 
 
-func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary) -> void:
+func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, cabinet: Dictionary) -> void:
 	_ensure_coin_batch()
 	var current: Array = state.get("coin_pusher_bodies", []) if typeof(state.get("coin_pusher_bodies", [])) == TYPE_ARRAY else []
 	var previous: Array = state.get("coin_pusher_previous_bodies", []) if typeof(state.get("coin_pusher_previous_bodies", [])) == TYPE_ARRAY else []
@@ -242,7 +271,7 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary) -
 			z = lerpf(float(previous_z), z, alpha)
 		var point := _project_f(x, y, z)
 		var falling := str(body.get("rest_state", "")) == "falling"
-		var body_color := _body_color(str(body.get("kind", "coin")))
+		var body_color := _body_color(str(body.get("kind", "coin")), cabinet)
 		var frame := posmod(body_id.hash(), ROTATION_VARIANTS.size())
 		var rotation: float = ROTATION_VARIANTS[frame]
 		_coin_multimesh.set_instance_transform_2d(index, Transform2D(rotation, point))
@@ -263,7 +292,10 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary) -
 		var feature: Dictionary = feature_value
 		var point: Vector2 = feature["point"]
 		var kind := str(feature.get("kind", ""))
-		surface.surface_reel_symbol_label("P" if kind == "puck" else "K" if kind == "fragment" else "R", Rect2(point - Vector2(9, 8), Vector2(18, 16)), 10, Color("#111722"))
+		var labels: Dictionary = cabinet.get("body_labels", {}) if typeof(cabinet.get("body_labels", {})) == TYPE_DICTIONARY else {}
+		var label := str(labels.get(kind, kind.left(1).to_upper()))
+		if not label.is_empty():
+			surface.surface_reel_symbol_label(label, Rect2(point - Vector2(9, 8), Vector2(18, 16)), 10, Color("#111722"))
 
 
 func _depth_sorted_bodies(bodies: Array, presentation_view_serial: int) -> Array:
@@ -336,31 +368,9 @@ func _make_coin_texture() -> Texture2D:
 	return ImageTexture.create_from_image(image)
 
 
-func _body_color(kind: String) -> Color:
-	match kind:
-		"puck": return Color("#a77cff")
-		"fragment": return Color("#58ead9")
-		"rider": return Color("#ff866e")
-	return Color("#e3b94d")
-
-
-func _draw_body(surface, body: Dictionary, point: Vector2, colors: Dictionary) -> void:
-	var kind := str(body.get("kind", "coin"))
-	var base := Color("#e3b94d")
-	if kind == "puck":
-		base = Color("#a77cff")
-	elif kind == "fragment":
-		base = Color("#58ead9")
-	elif kind == "rider":
-		base = Color("#ff866e")
-	var frame := posmod(str(body.get("id", "")).hash(), 4)
-	_draw_ellipse(surface, point, COIN_RX, COIN_RY, base.darkened(0.12), frame)
-	_draw_ellipse(surface, point + Vector2(0, -2), COIN_RX - 2.2, COIN_RY - 2.2, base, frame)
-	var highlight_angle := float(frame) * PI * 0.5 - PI * 0.75
-	var highlight := point + Vector2(cos(highlight_angle) * 8.5, sin(highlight_angle) * 5.5 - 2.0)
-	surface.draw_circle(highlight, 2.2, colors["light"])
-	if kind != "coin":
-		surface.surface_reel_symbol_label("P" if kind == "puck" else "K" if kind == "fragment" else "★", Rect2(point - Vector2(9, 8), Vector2(18, 16)), 10, Color("#111722"))
+func _body_color(kind: String, cabinet: Dictionary) -> Color:
+	var body_colors: Dictionary = cabinet.get("body_colors", {}) if typeof(cabinet.get("body_colors", {})) == TYPE_DICTIONARY else {}
+	return Color(str(body_colors.get(kind, body_colors.get("default", NEUTRAL_CABINET["body_colors"]["default"]))))
 
 
 func _draw_ellipse(surface, center: Vector2, rx: float, ry: float, color: Color, rotation_frame: int) -> void:
@@ -463,11 +473,11 @@ func _project(x: int, y: int, z: int) -> Vector2:
 
 
 func _project_f(x: float, y: float, z: float) -> Vector2:
-	var depth := clampf(y / WORLD_BACK_Y, 0.0, 1.0)
+	var depth := clampf(y / _world_back_y, 0.0, 1.0)
 	var width_factor := lerpf(1.0, REAR_WIDTH_FACTOR, depth)
 	var center_x := PLAYFIELD_RECT.get_center().x
-	var screen_x := center_x + (x / 100000.0 - 0.5) * PLAYFIELD_RECT.size.x * 0.90 * width_factor
-	var screen_y := PLAYFIELD_RECT.end.y - 18.0 - depth * 139.0 - z / COIN_HEIGHT * Z_LAYER_OFFSET
+	var screen_x := center_x + (x / _world_width - 0.5) * PLAYFIELD_RECT.size.x * 0.90 * width_factor
+	var screen_y := PLAYFIELD_RECT.end.y - 18.0 - depth * 139.0 - z / _coin_height * Z_LAYER_OFFSET
 	return Vector2(screen_x, screen_y)
 
 
@@ -475,18 +485,71 @@ func _cabinet(state: Dictionary) -> Dictionary:
 	var authored: Dictionary = state.get("coin_pusher_cabinet", {}) if typeof(state.get("coin_pusher_cabinet", {})) == TYPE_DICTIONARY else {}
 	if not authored.is_empty():
 		return authored
-	return (DEFAULT_CABINETS.get(str(state.get("coin_pusher_variation_id", "quarter_falls")), DEFAULT_CABINETS["quarter_falls"]) as Dictionary).duplicate(true)
+	return NEUTRAL_CABINET
 
 
 func _colors(cabinet: Dictionary) -> Dictionary:
 	var source: Dictionary = cabinet.get("colors", {}) if typeof(cabinet.get("colors", {})) == TYPE_DICTIONARY else {}
-	var palette_key := "%s:%s" % [str(cabinet.get("identity", "quarter_falls")), str(cabinet.get("palette", ""))]
+	var palette_key := "%s:%s" % [str(cabinet.get("identity", "generic")), str(cabinet.get("palette", ""))]
 	if palette_key == _palette_cache_key:
 		return _palette_cache
-	var fallback: Dictionary = (DEFAULT_CABINETS["quarter_falls"] as Dictionary)["colors"]
+	var fallback: Dictionary = NEUTRAL_CABINET["colors"]
 	var result := {}
 	for key in ["body", "side", "trim", "light", "glass", "deck", "platform", "backglass"]:
 		result[key] = Color(str(source.get(key, fallback.get(key, "#ffffff"))))
 	_palette_cache_key = palette_key
 	_palette_cache = result
 	return _palette_cache
+
+
+func _configure_projection(state: Dictionary) -> void:
+	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	_world_width = maxf(1.0, float(geometry.get("width", SCHEMA_DEFAULT_WIDTH)))
+	_world_back_y = maxf(1.0, float(geometry.get("back_plate_y", SCHEMA_DEFAULT_BACK_Y)))
+	_coin_height = maxf(1.0, float(state.get("coin_pusher_coin_height", SCHEMA_DEFAULT_COIN_HEIGHT)))
+
+
+func debug_project_for_test(state: Dictionary, x: float, y: float, z: float) -> Vector2:
+	_configure_projection(state)
+	return _project_f(x, y, z)
+
+
+func debug_interpolated_face_y_for_test(state: Dictionary) -> int:
+	var current := float(state.get("coin_pusher_face_position_y", 0))
+	if bool(state.get("reduce_motion", false)):
+		return int(round(current))
+	return int(round(lerpf(float(state.get("coin_pusher_previous_face_position_y", current)), current, clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0))))
+
+
+func debug_deck_polygon_for_test(state: Dictionary) -> PackedVector2Array:
+	_configure_projection(state)
+	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	return _project_deck_polygon(geometry)
+
+
+func debug_authored_cabinet_for_test(state: Dictionary, body_kind: String = "coin") -> Dictionary:
+	var cabinet := _cabinet(state)
+	var colors := _colors(cabinet)
+	var display: Dictionary = cabinet.get("backglass_display", {}) if typeof(cabinet.get("backglass_display", {})) == TYPE_DICTIONARY else {}
+	var labels: Dictionary = cabinet.get("body_labels", {}) if typeof(cabinet.get("body_labels", {})) == TYPE_DICTIONARY else {}
+	return {
+		"identity": str(cabinet.get("identity", "generic")),
+		"display_style": str(display.get("style", "none")),
+		"display_state_key": str(display.get("value_state_key", display.get("count_state_key", ""))),
+		"body_color": _body_color(body_kind, cabinet).to_html(false),
+		"body_label": str(labels.get(body_kind, body_kind.left(1).to_upper())),
+		"backglass_color": (colors["backglass"] as Color).to_html(false),
+	}
+
+
+func _project_deck_polygon(geometry: Dictionary) -> PackedVector2Array:
+	var authored: Array = geometry.get("deck_polygon", []) if typeof(geometry.get("deck_polygon", [])) == TYPE_ARRAY else []
+	var points := PackedVector2Array()
+	for point_value in authored:
+		if typeof(point_value) == TYPE_DICTIONARY:
+			var point: Dictionary = point_value
+			points.append(_project(int(point.get("x", 0)), int(point.get("y", 0)), int(point.get("z", 0))))
+		elif typeof(point_value) == TYPE_ARRAY and (point_value as Array).size() >= 2:
+			var point_array: Array = point_value
+			points.append(_project(int(point_array[0]), int(point_array[1]), int(point_array[2]) if point_array.size() >= 3 else 0))
+	return points

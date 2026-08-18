@@ -36,7 +36,7 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 	for variation_id in ["jackpot_ridge", "vault_drop"]:
 		var variant: Dictionary = variations.get(variation_id, {}) if typeof(variations.get(variation_id, {})) == TYPE_DICTIONARY else {}
 		identities.append(str(variant.get("identity", "")))
-		if str(variant.get("marquee", "")).is_empty() or str(variant.get("palette", "")).is_empty() or str(variant.get("topper_style", "")).is_empty() or (variant.get("colors", {}) as Dictionary).size() < 8:
+		if str(variant.get("marquee", "")).is_empty() or str(variant.get("palette", "")).is_empty() or str(variant.get("topper_style", "")).is_empty() or (variant.get("colors", {}) as Dictionary).size() < 8 or (variant.get("backglass_display", {}) as Dictionary).is_empty() or (variant.get("body_colors", {}) as Dictionary).is_empty():
 			failures.append("Coin Pusher V3 %s cabinet catalog entry is incomplete." % variation_id)
 	if identities != ["quarter_falls", "jackpot_ridge", "vault_drop"] or (cabinet.get("colors", {}) as Dictionary).size() < 8:
 		failures.append("Coin Pusher V3 cabinet catalog lost one of the three authored identities: %s." % JSON.stringify(identities))
@@ -58,9 +58,40 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 	var audio: Dictionary = initial.get("surface_audio", {}) if typeof(initial.get("surface_audio", {})) == TYPE_DICTIONARY else {}
 	if str(initial.get("surface_life", "")) != "coin_pusher_v3_alive_cabinet" or not bool(initial.get("coin_pusher_alive_cabinet", false)) or bool(initial.get("coin_pusher_v3_headless_placeholder", false)):
 		failures.append("Coin Pusher V3 production surface did not replace the Stage-2 placeholder with the alive cabinet.")
-	if float(signature.get("rear_width_factor", 0.0)) != 0.78 or float(signature.get("coin_rx", 0.0)) != 17.0 or float(signature.get("coin_ry", 0.0)) != 12.0 or float(signature.get("z_layer_offset", 0.0)) != 11.0 or int(signature.get("rotation_frames", 0)) != 4 or not bool(signature.get("depth_sorted", false)) or int(signature.get("batched_nodes", -1)) != 1 or int(signature.get("per_coin_nodes", -1)) != 0:
+	if float(signature.get("rear_width_factor", 0.0)) != 0.78 or float(signature.get("coin_rx", 0.0)) != 17.0 or float(signature.get("coin_ry", 0.0)) != 12.0 or float(signature.get("z_layer_offset", 0.0)) != 11.0 or int(signature.get("rotation_frames", 0)) != 4 or not bool(signature.get("depth_sorted", false)) or int(signature.get("batch_draws", -1)) != 1 or int(signature.get("batched_nodes", -1)) != 0 or int(signature.get("per_coin_nodes", -1)) != 0 or signature.get("draw_order", []) != ["shadows", "coin_batch", "feature_labels", "glass", "hardware"]:
 		failures.append("Coin Pusher V3 projection drifted from the binding 0.78/17x12/11px/four-frame batched contract: %s." % JSON.stringify(signature))
 	var renderer = load("res://scripts/games/coin_pusher/coin_pusher_renderer.gd").new()
+	var canvas_source := FileAccess.get_file_as_string("res://scripts/ui/game_surface_canvas.gd")
+	if not canvas_source.contains("draw_multimesh(multimesh, texture)") or canvas_source.contains("MultiMeshInstance2D.new()"):
+		failures.append("Coin Pusher V3 coin batch is not drawn in exact parent CanvasItem order.")
+	var hostile_state := {
+		"surface_renderer": "coin_pusher",
+		"coin_pusher_cabinet": {
+			"identity": "hostile_custom_identity", "marquee": "UNRECOGNIZED", "palette": "hostile_custom_palette", "topper_style": "none",
+			"backglass_display": {"style": "value_lamps", "value_state_key": "hostile_value", "lamp_count": 3, "label_template": "CUSTOM %d"},
+			"body_colors": {"default": "#112233", "artifact": "#123456"}, "body_labels": {"artifact": "Z9"},
+			"colors": {"body": "#010203", "side": "#040506", "trim": "#070809", "light": "#0a0b0c", "glass": "#0d0e0f", "deck": "#101112", "platform": "#131415", "backglass": "#161718"},
+		},
+		"coin_pusher_geometry": {"width": 200000, "back_plate_y": 80000, "deck_polygon": [[0, 6000, 0], [200000, 6000, 0], [185000, 42000, 0], [100000, 50000, 0], [15000, 42000, 0]]},
+		"coin_pusher_coin_height": 2500,
+		"coin_pusher_previous_face_position_y": 46000,
+		"coin_pusher_face_position_y": 28000,
+		"coin_pusher_interpolation_alpha": 0.5,
+	}
+	var hostile_authored: Dictionary = renderer.debug_authored_cabinet_for_test(hostile_state, "artifact")
+	var hostile_signature: Dictionary = renderer.render_signature(hostile_state)
+	var projected_center: Vector2 = renderer.debug_project_for_test(hostile_state, 100000.0, 80000.0, 0.0)
+	var projected_coin_high: Vector2 = renderer.debug_project_for_test(hostile_state, 100000.0, 80000.0, 2500.0)
+	var authored_deck: PackedVector2Array = renderer.debug_deck_polygon_for_test(hostile_state)
+	if hostile_authored.get("identity") != "hostile_custom_identity" or hostile_authored.get("display_style") != "value_lamps" or hostile_authored.get("display_state_key") != "hostile_value" or hostile_authored.get("body_color") != "123456" or hostile_authored.get("body_label") != "Z9" or hostile_authored.get("backglass_color") != "161718":
+		failures.append("Coin Pusher V3 renderer ignored hostile authored cabinet descriptors: %s." % JSON.stringify(hostile_authored))
+	if float(hostile_signature.get("projection_width", 0.0)) != 200000.0 or float(hostile_signature.get("projection_back_y", 0.0)) != 80000.0 or float(hostile_signature.get("projection_coin_height", 0.0)) != 2500.0 or not is_equal_approx(projected_center.x, 450.0) or not is_equal_approx(projected_coin_high.y, projected_center.y - 11.0) or authored_deck.size() != 5:
+		failures.append("Coin Pusher V3 renderer did not consume nondefault public geometry/coin height/deck polygon: signature=%s center=%s high=%s deck=%d." % [JSON.stringify(hostile_signature), projected_center, projected_coin_high, authored_deck.size()])
+	if int(renderer.debug_interpolated_face_y_for_test(hostile_state)) != 37000:
+		failures.append("Coin Pusher V3 face/platform midpoint interpolation was not 37000.")
+	hostile_state["reduce_motion"] = true
+	if int(renderer.debug_interpolated_face_y_for_test(hostile_state)) != 28000:
+		failures.append("Coin Pusher V3 reduced motion did not present the current face/platform position directly.")
 	var crossing_bodies: Array = [
 		{"id": "rear", "y": 50000, "z": 0},
 		{"id": "middle", "y": 40000, "z": 0},
@@ -90,7 +121,6 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 	var audio_cues: Array = []
 	for entry_value in audio_schedule:
 		audio_cues.append(str((entry_value as Dictionary).get("cue", "")))
-	sfx.queue_free()
 	for required_cue in ["coin_pusher_coin_stack", "coin_pusher_slide", "coin_pusher_coin_metal", "coin_pusher_tray", "coin_pusher_gutter"]:
 		if not audio_cues.has(required_cue):
 			failures.append("Coin Pusher V3 physics-audio event map omitted %s: %s." % [required_cue, JSON.stringify(audio_schedule)])
@@ -100,6 +130,72 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 	var current: Array = second_patch.get("coin_pusher_bodies", []) if typeof(second_patch.get("coin_pusher_bodies", [])) == TYPE_ARRAY else []
 	if previous.size() != current.size() or int(second_patch.get("coin_pusher_ticks_advanced", 0)) <= 0 or float(second_patch.get("coin_pusher_interpolation_alpha", -1.0)) < 0.0 or float(second_patch.get("coin_pusher_interpolation_alpha", 2.0)) > 1.0:
 		failures.append("Coin Pusher V3 live cabinet did not publish consecutive exact tick views and a bounded interpolation alpha.")
+	var time_msec := 35
+	var stop_rates: Array[int] = []
+	game.surface_action_command("coin_pusher_skill_stop", 0, false, {}, run_state, environment)
+	for _tick in range(30):
+		time_msec += 17
+		var patch: Dictionary = game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": time_msec}, {})
+		stop_rates.append(int(patch.get("coin_pusher_motor_rate_fp", -1)))
+		var sync_state := patch.duplicate(false)
+		sync_state["reduce_motion"] = true
+		var audio_motor: Dictionary = sfx.debug_coin_pusher_motor_sync(sync_state)
+		if not is_equal_approx(float(audio_motor.get("rate", -1.0)), float(stop_rates[-1]) / 1000.0):
+			failures.append("Coin Pusher V3 motor audio did not consume the production realtime rate under reduced motion: %s." % JSON.stringify(audio_motor))
+			break
+	var release_rates: Array[int] = []
+	game.surface_action_command("coin_pusher_skill_stop", 0, false, {}, run_state, environment)
+	for _tick in range(30):
+		time_msec += 17
+		var patch: Dictionary = game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": time_msec}, {})
+		release_rates.append(int(patch.get("coin_pusher_motor_rate_fp", -1)))
+		var sync_state := patch.duplicate(false)
+		sync_state["reduce_motion"] = true
+		sfx.debug_coin_pusher_motor_sync(sync_state)
+	if stop_rates.is_empty() or stop_rates[0] >= 1000 or stop_rates[-1] != 0 or release_rates.is_empty() or release_rates[0] <= 0 or release_rates[-1] != 1000:
+		failures.append("Coin Pusher V3 production motor/audio ramp did not complete 1000->0->1000 across the binding 24 ticks: stop=%s release=%s." % [JSON.stringify(stop_rates), JSON.stringify(release_rates)])
+	var stopped_audio: Dictionary = sfx.debug_coin_pusher_motor_sync({"coin_pusher_motor_rate_fp": 0, "coin_pusher_body_count": 100, "coin_pusher_audio_serial": 0, "reduce_motion": true})
+	var running_audio: Dictionary = sfx.debug_coin_pusher_motor_sync({"coin_pusher_motor_rate_fp": 1000, "coin_pusher_body_count": 100, "coin_pusher_audio_serial": 0, "reduce_motion": true})
+	if bool(stopped_audio.get("running", true)) or not bool(running_audio.get("running", false)) or float(running_audio.get("pitch", 0.0)) <= float(stopped_audio.get("pitch", 1.0)):
+		failures.append("Coin Pusher V3 motor loop did not stop/rise in pitch with the real ramp: stopped=%s running=%s." % [JSON.stringify(stopped_audio), JSON.stringify(running_audio)])
+	# Exercise the production classifier on consecutive renderer-facing views.
+	# Plate clink is rear plate blocking, never the platform->deck deposit; slide
+	# is collective face-driven deck motion close to the pushing face.
+	var live_machine: Dictionary = game.call("_ensure_live_machine", run_state, environment)
+	var live_simulation: Dictionary = live_machine.get("simulation", {})
+	var live_session: Dictionary = live_machine.get("live_session", {})
+	live_simulation["tick"] = 100
+	live_simulation["face_y"] = 41000
+	live_simulation["motor_rate_fp"] = 1000
+	live_session["presentation_previous_face_y"] = 40000
+	live_session["presentation_current_face_y"] = 41000
+	live_session["presentation_previous_bodies"] = [{"id": "plate", "kind": "coin", "x": 50000, "y": 58700, "z": 3600, "rest_state": "resting", "support_kind": "platform"}]
+	live_session["presentation_current_bodies"] = [{"id": "plate", "kind": "coin", "x": 50000, "y": 58700, "z": 3600, "rest_state": "resting", "support_kind": "platform"}]
+	var plate_audio: Array = game.call("_presentation_audio_events", live_machine, [])
+	live_simulation["tick"] = 106
+	live_session["presentation_previous_face_y"] = 41000
+	live_session["presentation_current_face_y"] = 42000
+	live_session["presentation_previous_bodies"] = [{"id": "deposit", "kind": "coin", "x": 50000, "y": 40000, "z": 3600, "rest_state": "resting", "support_kind": "platform"}]
+	live_session["presentation_current_bodies"] = [{"id": "deposit", "kind": "coin", "x": 50000, "y": 39000, "z": 0, "rest_state": "resting", "support_kind": "deck"}]
+	var deposit_audio: Array = game.call("_presentation_audio_events", live_machine, [])
+	live_simulation["tick"] = 120
+	live_simulation["face_y"] = 36000
+	live_session["presentation_previous_face_y"] = 37000
+	live_session["presentation_current_face_y"] = 36000
+	var slide_previous: Array = []
+	var slide_current: Array = []
+	for slide_index in range(5):
+		slide_previous.append({"id": "slide_%d" % slide_index, "kind": "coin", "x": 30000 + slide_index * 9000, "y": 35000, "z": 0, "rest_state": "resting", "support_kind": "deck"})
+		slide_current.append({"id": "slide_%d" % slide_index, "kind": "coin", "x": 30000 + slide_index * 9000, "y": 34000, "z": 0, "rest_state": "resting", "support_kind": "deck"})
+	live_session["presentation_previous_bodies"] = slide_previous
+	live_session["presentation_current_bodies"] = slide_current
+	var slide_audio: Array = game.call("_presentation_audio_events", live_machine, [])
+	var saw_plate_block := plate_audio.any(func(event: Variant) -> bool: return typeof(event) == TYPE_DICTIONARY and str((event as Dictionary).get("kind", "")) == "plate_clink" and str(((event as Dictionary).get("metadata", {}) as Dictionary).get("classification", "")) == "rear_plate_blocked_carry")
+	var deposit_was_silent := not deposit_audio.any(func(event: Variant) -> bool: return typeof(event) == TYPE_DICTIONARY and str((event as Dictionary).get("kind", "")) == "plate_clink")
+	var saw_face_slide := slide_audio.any(func(event: Variant) -> bool: return typeof(event) == TYPE_DICTIONARY and str((event as Dictionary).get("kind", "")) == "mass_slide" and str(((event as Dictionary).get("metadata", {}) as Dictionary).get("classification", "")) == "forward_motion_under_face")
+	if not saw_plate_block or not deposit_was_silent or not saw_face_slide:
+		failures.append("Coin Pusher V3 production motion-audio classification drifted: plate=%s deposit=%s slide=%s." % [JSON.stringify(plate_audio), JSON.stringify(deposit_audio), JSON.stringify(slide_audio)])
+	sfx.queue_free()
 	var actions: Array = signature.get("hardware_actions", []) if typeof(signature.get("hardware_actions", [])) == TYPE_ARRAY else []
 	for required in ["coin_pusher_carriage_drag", "coin_pusher_drop", "coin_pusher_skill_stop", "coin_pusher_collect"]:
 		if not actions.has(required):

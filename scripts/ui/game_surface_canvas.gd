@@ -77,7 +77,6 @@ var active_design_scale := Vector2.ONE
 var active_design_offset := Vector2.ZERO
 var active_design_local_offset := Vector2.ZERO
 var design_space_active := false
-var surface_multimesh_batch: MultiMeshInstance2D
 var reduce_motion := false
 var small_screen_mode := false
 var drunk_time_scale := 1.0
@@ -522,18 +521,16 @@ func surface_polyline(points: PackedVector2Array, color: Color, width: float = -
 
 
 func surface_present_multimesh_batch(multimesh: MultiMesh, texture: Texture2D, batch_material: Material, design_size: Vector2) -> void:
-	if surface_multimesh_batch == null:
-		surface_multimesh_batch = MultiMeshInstance2D.new()
-		surface_multimesh_batch.name = "SurfaceMultiMeshBatch"
-		surface_multimesh_batch.z_index = 1
-		add_child(surface_multimesh_batch)
-	var transform_values := _design_space_transform_values(design_size, Vector2.ZERO, Vector2.ZERO)
-	surface_multimesh_batch.position = transform_values.get("position", Vector2.ZERO)
-	surface_multimesh_batch.scale = transform_values.get("scale", Vector2.ONE)
-	surface_multimesh_batch.multimesh = multimesh
-	surface_multimesh_batch.texture = texture
-	surface_multimesh_batch.material = batch_material
-	surface_multimesh_batch.visible = true
+	# CanvasItem.draw_multimesh records the batch in this parent's draw command
+	# stream at the exact call site. A child MultiMeshInstance2D would render only
+	# after the parent's complete _draw(), placing coins above labels/glass/hardware.
+	# Cabinet batches currently use no private material; preserve the argument so
+	# generic harnesses retain a stable seam.
+	if multimesh == null or texture == null or design_size.x <= 0.0 or design_size.y <= 0.0:
+		return
+	if batch_material != null:
+		push_warning("Surface in-order MultiMesh batches inherit the canvas material.")
+	draw_multimesh(multimesh, texture)
 
 
 func _design_space_transform_values(design_size: Vector2, inset: Vector2, local_offset: Vector2) -> Dictionary:
@@ -1067,8 +1064,6 @@ func _draw() -> void:
 	# Surface renderers may opt into one conditional batch material for a draw;
 	# always clear it before dispatch so materials cannot leak between games.
 	material = null
-	if surface_multimesh_batch != null:
-		surface_multimesh_batch.visible = false
 	hit_regions = []
 	surface_text_protected_rects = []
 	active_design_scale = Vector2.ONE
