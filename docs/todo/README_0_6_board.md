@@ -160,7 +160,7 @@ each stage builds on the last.
 | pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | DONE | rework06_2 (landed) | pusherv3_2 | PM:Codex | 2026-08-17 | 2026-08-17 | Owner ruled complete after PM verification of Amendment 6.1 behavior, native 300-body performance, exact Windows/Web parity, determinism, and all pusher-owning gates; integrated at `a6e36d2f`. |
 | pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | DONE | pusherv3_1 | pusherv3_3 | PM:Codex/sub:pusher-live | 2026-08-17 | 2026-08-18 | PM verified continuous 60 Hz loop, deterministic trace, tray-only collection, compact persistence/migration, motor-on exit settle, continuous rail drag, exact Windows/Web parity, performance, and all combined gates. |
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | DONE | pusherv3_2 | pusherv3_4 | PM:Codex/sub:pusher-cabinet | 2026-08-18 | 2026-08-18 | PM verified the data-driven slot-parity cabinet, batched stacked projection, physical audio map, integrated 9/9 feel contract, determinism, visual QA, and all combined suites/performance budgets. |
-| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | IN_PROGRESS | pusherv3_3 | coin pusher closure | PM:Codex/sub:pusher-variations | 2026-08-18 | | PM-orchestrated isolated execution; Ridge physical plinko/pucks, Vault fragments, integration re-wiring, EV/migration/feel evidence, and V3 closure. |
+| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | BLOCKED | pusherv3_3 | coin pusher closure | PM:Codex/sub:pusher-variations | 2026-08-18 | | Owner ruling required: legacy lock pucks freeze “a shelf” for one cycle, but amended V3 has one platform and no defined physical lock target. No substitute behavior may be guessed. |
 
 ### Wave D — Crew depth
 
@@ -222,6 +222,16 @@ What happens then is the owner's, not an agent's:
 
 ## Owner Questions (needs owner; do not guess)
 
+- **pusherv3_4 — Jackpot Ridge lock puck target:** the superseded variation
+  design says a lock puck will “freeze a shelf one cycle.” The binding V3
+  machine explicitly removes the two-shelf model and has one continuously
+  reciprocating platform; V3 preserves Ridge multiplier/lock/jam logic but
+  redefines only jams and Ridge Run, leaving the lock target undefined. What
+  should a physically banked lock puck lock for one cycle on the V3 machine?
+  Freezing the whole motor/platform, an entry hole, or another component would
+  each be a new mechanical decision, so `pusherv3_4` is BLOCKED rather than
+  selecting one without owner authority.
+
 - **content06_1 — souvenir collections persistence:** the prompt asks for
   scenario souvenirs to receive collections-shelf integration, but roadmap
   owner decision #1 makes the Players Card the only cross-run system in 0.6.
@@ -255,6 +265,13 @@ What happens then is the owner's, not an agent's:
   crew06_7 can proceed without this answer; no agent may invent the economy.
 
 ## Discovery & Decision Log
+
+- 2026-08-18 [pusherv3_4] Independent preflight confirmed a binding-contract
+  gap: roadmap Pillar 4 defines Ridge lock pucks as “freeze a shelf one cycle,”
+  while the amended V3 contract deliberately replaces both shelves with one
+  reciprocating platform. Stage 4 says preserve lock logic but supplies no new
+  target. Implementation stopped before inventing behavior; ruling is recorded
+  under Owner Questions.
 
 - 2026-08-17 [crew06_8] PM production-path review returned the initial heist
   slice before broad gates. The crew06_9 stub leaked hidden-system language in
@@ -1548,6 +1565,10 @@ What happens then is the owner's, not an agent's:
 
 ## Work Log
 
+- 2026-08-18 [pusherv3_4] Row set BLOCKED during preflight because the V3
+  physical meaning of a banked lock puck is owner-undefined. The isolated
+  worker was stopped before implementation; no substitute machine behavior was
+  introduced.
 - 2026-08-18 [pusherv3_4] PM claimed the strictly serial V3 closure after
   `pusherv3_3` passed and archived. Execution is delegated in isolation; the PM
   remains board single-writer and will independently verify every machine,
