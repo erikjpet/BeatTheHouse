@@ -1,6 +1,16 @@
 # Coin Pusher V3 — The Real Machine (binding design contract)
 
 Status: **OWNER-APPROVED design, execution pending** (2026-08-17).
+**Amendment 6.1 (2026-08-17): geometry orientation ruling.** The
+pusherv3_1 agent correctly caught that the original geometry labeled
+FACE_MIN_Y/FACE_MAX_Y backwards for this coordinate system (+y runs
+REARWARD: tray at low y, back plate at high y). Ruling: the axis and
+all coordinate conventions are KEPT; the face constants are renamed
+and re-derived below (the relabeling also exposed a plate/stroke flaw
+that would have emptied the platform top every cycle, violating the
+persistent-top-stock requirement). Sections 3.1-3.4 below are the
+corrected, binding versions. The agent's stop-and-ask was exactly the
+required behavior.
 Supersedes the simulation sections of
 `docs/plans/0.6_coin_pusher_simulation_plan.md` and the follow-on
 tasks `pusher06_0/1/2/3/4`. Owner decisions in this document are
@@ -83,23 +93,35 @@ Fixed-point geometry (existing scale kept; all constants live in the
 machine definition data, section 7 — these are the default machine's
 values):
 
+Axis convention (binding): **+y runs REARWARD** — the tray is at low
+y (the player side), the back plate at high y. "Extended" = the face
+at its LOWEST y (pushed forward toward the tray); "retracted" = the
+face at its HIGHEST y (pulled back toward the plate).
+
 ```
 WIDTH            = 100000        # x: 0 .. WIDTH
 COIN_RADIUS      = 4300          # ~11.6 coin diameters across
 COIN_HEIGHT      = 1700
-TRAY_LIP_Y       = 6000          # deck front edge; beyond = tray fall
+TRAY_LIP_Y       = 6000          # deck front edge; y below this = tray fall
 DECK_Z           = 0             # fixed deck floor
 PLATFORM_TOP_Z   = 3600          # platform top surface (~2 coins high)
-FACE_MIN_Y       = 30000         # platform front face, retracted
-FACE_MAX_Y       = 48000         # platform front face, extended
-BACK_PLATE_Y     = 52000         # fixed plate, spans full width
+FACE_EXTENDED_Y  = 28000         # face at maximum FORWARD travel (toward tray)
+FACE_RETRACTED_Y = 46000         # face at maximum REARWARD travel
+                                 # stroke = 18000 (~2.1 coin diameters)
+BACK_PLATE_Y     = 63000         # fixed plate, spans full width
+                                 # plate - retracted face = 17000 (~2 rows
+                                 # of top stock persist at full retraction)
 BACK_PLATE_GAP   = 400           # plate bottom = PLATFORM_TOP_Z + 400
                                  # platform slides under; coins cannot
-DROP_Y           = 40000         # entry apparatus release depth
+DROP_Y           = 40000         # release depth, inside the face sweep
 DROP_Z           = 14000         # release height (free fall from here)
 GUTTER_X         = 3000          # side gutters: x < 3000 or > 97000
 STROKE_PERIOD    = 240 ticks     # 4.0 s full cycle at 60 Hz
 ```
+
+The platform FACE collider spans z = 0 up past the platform top: a
+full-height wall. Nothing slips beneath the pusher — deck coins in
+its path are pushed, always.
 
 The platform is a kinematic block: front face at `face_y(phase)`,
 body extending rearward past the back plate, top at PLATFORM_TOP_Z,
@@ -108,10 +130,12 @@ platform. Side walls at x = 0 / WIDTH above the gutter mouths.
 
 ### 3.2 Pusher kinematics + skill stop
 
-- `face_y(phase) = FACE_MIN_Y + (FACE_MAX_Y - FACE_MIN_Y) *
-  (1000 - costab[phase]) / 2000` where `costab` is a precomputed
-  240-entry integer cosine table (values -1000..1000). The table is a
-  compile-time constant, so it is deterministic on every platform.
+- `face_y(phase) = FACE_EXTENDED_Y + (FACE_RETRACTED_Y -
+  FACE_EXTENDED_Y) * (1000 - costab[phase]) / 2000` where `costab` is
+  a precomputed 240-entry integer cosine table (values -1000..1000).
+  Phase 0 = fully extended; the half-cycle apex = fully retracted.
+  The table is a compile-time constant, so it is deterministic on
+  every platform. The forward (pushing) stroke is face_y DECREASING.
 - The motor advances `phase = (phase + rate) % STROKE_PERIOD` every
   tick; nominal `rate = 1`.
 - **Skill stop (owner-locked: free, costless, part of the machine):**
@@ -129,14 +153,21 @@ This is what makes it a coin pusher. All of it is emergent from the
 contact rules in section 4 — no scripted coin movement:
 
 1. A coin landing ON the platform top RIDES it (the platform is its
-   support; carry rule 4.7).
-2. On the retract stroke, a riding coin is eventually blocked by the
-   fixed BACK PLATE (it cannot pass rearward under the plate: gap
-   400 < coin height 1700). The platform keeps sliding back beneath
-   it — the coin slips forward RELATIVE to the platform.
-3. Repeated cycles walk the coin toward the platform's front edge —
-   the ratchet. When it passes the face edge it falls off onto the
-   deck or the pile below.
+   support; carry rule 4.7) — carried rearward on retract, forward on
+   the push stroke.
+2. On the retract stroke, riding coins are blocked by the fixed BACK
+   PLATE (they cannot pass rearward under it: gap 400 < coin height
+   1700). The platform keeps sliding back beneath them — blocked
+   coins advance forward RELATIVE to the platform.
+3. The walk off the platform is COLLECTIVE: each new coin joining the
+   queue at the plate pushes the top stock forward through coin-coin
+   contact. When the retracting face passes beneath a front coin of
+   the queue (face_y exceeds the coin's y), that coin loses support
+   and deposits onto the deck IN FRONT of the face. With this
+   geometry ~1 queued row triggers a deposit while ~2 rows always
+   remain riding — the owner-required persistent, visibly moving top
+   stock. All of this must EMERGE from carry + plate + contacts; no
+   scripted walk.
 4. On the forward stroke, the platform FACE shoves the mass of coins
    sitting on the deck toward the tray lip. Friction (4.4) makes the
    mass move as a body — rows push rows.
@@ -145,16 +176,17 @@ contact rules in section 4 — no scripted coin movement:
 
 ### 3.4 The landing skill (owner-locked core mechanic)
 
-`DROP_Y = 40000` sits inside the face sweep (30000..48000):
+`DROP_Y = 40000` sits inside the face sweep (28000..46000):
 
-- Face extended past DROP_Y (`face_y > DROP_Y + radius`): the
-  platform covers the landing point, so the coin lands on the
-  PLATFORM TOP — it rides and ratchets (slow value, adds to the top
-  stock).
-- Face retracted (`face_y < DROP_Y - radius`): exposed deck — the
-  coin free-falls to DECK level and lands FLAT beside/behind the
-  mass, and the next forward stroke drives it straight into the
-  row — the strong play.
+- Face forward of the drop point (`face_y < DROP_Y - radius`, most of
+  the cycle): the platform covers the landing point, so the coin
+  lands on the PLATFORM TOP — it rides and joins the top stock (slow
+  value).
+- Face retracted behind the drop point (`face_y > DROP_Y + radius`,
+  the ~20% apex dwell of the cosine cycle): exposed deck — the coin
+  free-falls to DECK level and lands FLAT in the face's path, and the
+  next forward stroke drives it straight into the row — the strong
+  play, timed to the retraction apex.
 - The pile itself may occupy the zone — the coin lands ON the pile
   (adds height, may topple, may nestle per 4.6).
 
@@ -425,7 +457,7 @@ In `data/games/games.json` under `coin_pusher_machine`:
 ```
 {
   "machine_id": "quarter_falls",
-  "geometry": { WIDTH, TRAY_LIP_Y, FACE_MIN_Y, FACE_MAX_Y,
+  "geometry": { WIDTH, TRAY_LIP_Y, FACE_EXTENDED_Y, FACE_RETRACTED_Y,
                 BACK_PLATE_Y, PLATFORM_TOP_Z, DROP_Y, DROP_Z,
                 GUTTER_X, deck_polygon (optional non-rect shapes) },
   "stroke":   { period_ticks, ramp_ticks, profile: "cosine" },

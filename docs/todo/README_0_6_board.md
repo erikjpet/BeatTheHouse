@@ -157,7 +157,7 @@ each stage builds on the last.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | BLOCKED | rework06_2 (landed) | pusherv3_2 | Codex | 2026-08-17 | | Binding geometry reverses the platform's retracted/extended coordinates relative to the existing tray-facing y axis; owner ruling required before the ratchet can be implemented without reinterpretation. |
+| pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | IN_PROGRESS | rework06_2 (landed) | pusherv3_2 | Codex | 2026-08-17 | | UNBLOCKED by Amendment 6.1: axis kept, labels corrected and renamed (FACE_EXTENDED_Y=28000 / FACE_RETRACTED_Y=46000, plate 63000), sections 3.1-3.4 re-issued. Resume implementation against the amended contract only. |
 | pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | TODO | pusherv3_1 | pusherv3_3 | | | | Continuous 60 Hz loop, input-trace determinism, apparatus framework, skill stop, physical tray + collect, exit-settle + `coin_pusher_settled_v3` persistence, delete the packed-trace subsystem. |
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | TODO | pusherv3_2 | pusherv3_4 | | | | Full alive cabinet at slot-renderer parity + physics-driven audio + stacking-visible projection. Feel captures judged as a player. |
 | pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | TODO | pusherv3_3 | coin pusher closure | | | | Ridge (3-hole plinko, physical pucks) + Vault (physical fragments) on the new machine, town/cheat/nudge re-wiring, EV harness by geometry, migration, closure. |
@@ -222,16 +222,19 @@ What happens then is the owner's, not an agent's:
 
 ## Owner Questions (needs owner; do not guess)
 
-- **pusherv3_1 — platform stroke orientation:** the V3 contract keeps the
-  existing scale, where bodies cross the front tray lip by decreasing y, and
-  places the fixed back plate at y=52000. It nevertheless labels
-  `FACE_MIN_Y=30000` as retracted and `FACE_MAX_Y=48000` as extended. On this
-  axis the physical positions are necessarily the reverse: y=48000 is nearest
-  the back plate/retracted, while y=30000 is toward the tray/extended. Confirm
-  whether the labels should be swapped while preserving the exact cosine
-  positions, or whether the whole y axis and every stated collider coordinate
-  should be inverted. No solver implementation can choose between those
-  owner-locked geometries safely.
+- **pusherv3_1 — platform stroke orientation: ANSWERED (Amendment 6.1,
+  2026-08-17).** Ruling: keep the axis (+y = rearward) and all coordinate
+  conventions; the LABELS were wrong. The contract is amended — constants
+  renamed to `FACE_EXTENDED_Y` / `FACE_RETRACTED_Y` to kill the ambiguity
+  permanently, and re-derived: extended 28000, retracted 46000, plate moved to
+  63000. The relabel exposed a second latent flaw: with the plate at 52000 and
+  retraction at 48000 the platform top held only 4000 units (< 1 coin), so the
+  entire top stock would deposit every cycle, violating the owner's
+  persistent-riding-coins requirement. New numbers give ~2 rows always riding,
+  ~1 queued row per deposit, an ~20% apex-dwell deck-landing window, and a
+  full-height face collider so nothing slips beneath the pusher. Sections
+  3.1-3.4 of the contract are the corrected binding versions. Do not derive
+  from any earlier copy.
 
 - **crew06_7 — Chip Dump funding authority:** the approved play requires
   money conservation and forbids free money, but the roadmap/prompt does not
@@ -1195,6 +1198,17 @@ What happens then is the owner's, not an agent's:
   binding prompt gates or coin-pusher budgets failed.
 
 ## Work Log
+
+- 2026-08-17 [pusherv3_1] OWNER RULING (Amendment 6.1): the geometry
+  contradiction was real and the stop was the correct behavior. Axis kept
+  (+y rearward); FACE_MIN/MAX labels were backwards and are replaced by
+  FACE_EXTENDED_Y=28000 / FACE_RETRACTED_Y=46000 with BACK_PLATE_Y=63000 —
+  the re-derivation also fixed a latent flaw where the platform top emptied
+  every cycle (plate-to-retracted-face gap was 4000 < one coin). Corrected
+  invariants now hold: ~2 rows of top stock always riding, collective queue
+  deposit at ~1 queued row, ~20% apex-dwell deck-landing skill window,
+  full-height face collider. Contract sections 3.1-3.4 amended in place;
+  pusherv3_1 unblocked.
 
 - 2026-08-17 [pusherv3] OWNER DESIGN SESSION (round 6) — V2 machine model
   rejected after direct play and a full walkthrough of the code. Locked: one
