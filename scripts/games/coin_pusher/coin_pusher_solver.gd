@@ -13,8 +13,8 @@ const FACE_EXTENDED_Y := 28000
 const FACE_RETRACTED_Y := 46000
 const BACK_PLATE_Y := 63000
 const BACK_PLATE_GAP := 400
-const DROP_Y := 40000
-const DROP_Z := 14000
+const DROP_Y := 58000
+const DROP_Z := 24000
 const GUTTER_X := 3000
 const COIN_RADIUS := 4300
 const COIN_HEIGHT := 1700
@@ -139,8 +139,10 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 		"tick": 0,
 		"next_body_id": 1,
 		"phase_fp": phase * FP,
+		"stroke_cycle_serial": 0,
 		"motor_rate_fp": FP,
 		"motor_target_rate_fp": FP,
+		"motor_run_rate_fp": FP,
 		"skill_stop_engaged": false,
 		"carriage_x": _default_release_x(definition),
 		"selected_hole": 0,
@@ -152,6 +154,7 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 		"refused_inserts": 0,
 		"accepted_inserts": 0,
 		"opening_body_count": 0,
+		"external_origin_count": 0,
 		"collected_count": 0,
 		"collected_value": 0,
 		"last_events": [],
@@ -181,7 +184,9 @@ static func public_contract() -> Dictionary:
 
 
 static func implementation_contract() -> Dictionary:
-	return public_contract()
+	var contract := public_contract()
+	contract["geometry_amendment"] = "6.2"
+	return contract
 
 
 static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1, provenance: Dictionary = {}) -> Dictionary:
@@ -195,18 +200,19 @@ static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1
 	var geometry := _geometry(definition)
 	var coins := _coins(definition)
 	var apparatus := _apparatus(definition)
+	var board := _drop_board(definition)
 	var jitter := maxi(0, int(apparatus.get("release_jitter", 0)))
 	var radius := int(coins.get("radius", COIN_RADIUS))
 	var body := _new_body(
 		state,
 		"coin",
 		clampi(x + rng.randi_range(-jitter, jitter), radius, int(geometry.get("width", WIDTH)) - radius),
-		int(geometry.get("drop_y", DROP_Y)),
-		int(geometry.get("drop_z", DROP_Z)),
+		int(board.get("y", DROP_Y)),
+		int(board.get("z_top", DROP_Z)),
 		radius,
 		int(coins.get("height", COIN_HEIGHT)),
 		maxi(1, int(coins.get("mass", FP)) * maxi(1, density)),
-		{"value": int(coins.get("value", 1)), "provenance": provenance.duplicate(true)}
+		{"value": int(coins.get("value", 1)), "provenance": provenance.duplicate(true), "inserted": true}
 	)
 	body["accepted"] = true
 	bodies.append(body)
@@ -231,13 +237,66 @@ static func add_feature(state: Dictionary, kind: String, feature_id: String, x: 
 	return body
 
 
-static func add_recovered_coin(state: Dictionary, rng: RngStream) -> Dictionary:
-	return add_coin(state, rng, int(_geometry(_definition(state)).get("width", WIDTH)) / 2, 1)
+static func return_gutter_body(state: Dictionary, return_data: Dictionary) -> Dictionary:
+	var ledger: Array = state.get("gutter_ledger", []) if typeof(state.get("gutter_ledger", [])) == TYPE_ARRAY else []
+	var body_id := str(return_data.get("body_id", ""))
+	var ledger_index := -1
+	for index in range(ledger.size() - 1, -1, -1):
+		if typeof(ledger[index]) == TYPE_DICTIONARY and str((ledger[index] as Dictionary).get("body_id", "")) == body_id:
+			ledger_index = index
+			break
+	if ledger_index < 0:
+		return {"accepted": false, "reason": "gutter_body_missing"}
+	var entry: Dictionary = ledger[ledger_index]
+	ledger.remove_at(ledger_index)
+	var definition := _definition(state)
+	var geometry := _geometry(definition)
+	var coins := _coins(definition)
+	var radius := int(return_data.get("radius", coins.get("radius", COIN_RADIUS)))
+	var height := int(return_data.get("height", coins.get("height", COIN_HEIGHT)))
+	var mass := maxi(1, int(return_data.get("mass", coins.get("mass", FP))))
+	var left_side := str(return_data.get("side", "left")) == "left"
+	var gutter := int(geometry.get("gutter_x", GUTTER_X))
+	var width := int(geometry.get("width", WIDTH))
+	var deck := int(geometry.get("deck_z", DECK_Z))
+	var lip := int(geometry.get("tray_lip_y", TRAY_LIP_Y))
+	var metadata: Dictionary = return_data.get("metadata", {}) if typeof(return_data.get("metadata", {})) == TYPE_DICTIONARY else {}
+	metadata["value"] = int(entry.get("value", metadata.get("value", 1)))
+	metadata["item_id"] = str(entry.get("item_id", metadata.get("item_id", "")))
+	metadata["provenance"] = (entry.get("provenance", {}) as Dictionary).duplicate(true) if typeof(entry.get("provenance", {})) == TYPE_DICTIONARY else {}
+	var body := {
+		"id": body_id,
+		"kind": str(return_data.get("body_kind", entry.get("kind", "coin"))),
+		"x": gutter + radius + 100 if left_side else width - gutter - radius - 100,
+		"y": lip + radius + 1200,
+		"z": deck + height,
+		"vx": 900 if left_side else -900,
+		"vy": 300,
+		"vz": 0,
+		"x_remainder": 0, "y_remainder": 0, "z_remainder": 0,
+		"radius": radius, "height": height, "mass": mass,
+		"sleeping": false, "sleep_ticks": 0, "rest_state": "falling",
+		"fall_start_z": deck + height, "support_kind": "", "carried_sleep": false,
+		"meta": metadata,
+		"accepted": true,
+	}
+	(state.get("bodies", []) as Array).append(body)
+	return body
 
 
-static func set_skill_stop(state: Dictionary, engaged: bool) -> void:
+static func set_skill_stop(state: Dictionary, engaged: bool, resume_rate_fp: int = -1) -> void:
+	if resume_rate_fp >= 0:
+		state["motor_run_rate_fp"] = resume_rate_fp
 	state["skill_stop_engaged"] = engaged
-	state["motor_target_rate_fp"] = 0 if engaged else FP
+	state["motor_target_rate_fp"] = 0 if engaged else int(state.get("motor_run_rate_fp", FP))
+
+
+static func set_motor_run_rate(state: Dictionary, rate_fp: int) -> int:
+	var actual := maxi(0, rate_fp)
+	state["motor_run_rate_fp"] = actual
+	if not bool(state.get("skill_stop_engaged", false)):
+		state["motor_target_rate_fp"] = actual
+	return actual
 
 
 static func set_carriage(state: Dictionary, requested_x: int) -> int:
@@ -389,7 +448,7 @@ static func _native_solver_backend() -> Object:
 			or int(contract.get("state_version", -1)) != VERSION \
 			or int(contract.get("fixed_hz", -1)) != FIXED_HZ \
 			or int(contract.get("fixed_point_scale", -1)) != FP \
-			or str(contract.get("geometry_amendment", "")) != "6.1" \
+			or str(contract.get("geometry_amendment", "")) != "6.2" \
 			or str(contract.get("contact_normal", "")) != "radial_euclidean" \
 			or int(contract.get("collision_passes", -1)) != SOLVER_PASSES \
 			or str(contract.get("transport_rule", "")) != "platform_carry_plus_back_plate":
@@ -457,19 +516,6 @@ static func face_y_for_phase(definition: Dictionary, phase: int) -> int:
 	return extended + _divi((retracted - extended) * (FP - cosine), 2 * FP)
 
 
-static func deck_landing_phase_ratio_milli(definition: Dictionary) -> int:
-	var geometry := _geometry(definition)
-	var stroke := _stroke(definition)
-	var period := maxi(1, int(stroke.get("period_ticks", STROKE_PERIOD)))
-	var drop_y := int(geometry.get("drop_y", DROP_Y))
-	var radius := int(_coins(definition).get("radius", COIN_RADIUS))
-	var count := 0
-	for phase in range(period):
-		if face_y_for_phase(definition, phase) > drop_y + radius:
-			count += 1
-	return _divi(count * FP, period)
-
-
 static func body_views(state: Dictionary) -> Array:
 	var views: Array = []
 	for body_value in state.get("bodies", []):
@@ -492,6 +538,7 @@ static func body_views(state: Dictionary) -> Array:
 			"sleeping": bool(body.get("sleeping", false)),
 			"rest_state": str(body.get("rest_state", "falling")),
 			"support_kind": str(body.get("support_kind", "")),
+			"support_root": "platform" if str(body.get("support_kind", "")) == "platform" or (str(body.get("support_kind", "")) == "body" and bool(body.get("carried_sleep", false))) else "deck" if not str(body.get("support_kind", "")).is_empty() else "",
 			"metadata": (body.get("meta", {}) as Dictionary).duplicate(true),
 		})
 	return views
@@ -505,8 +552,10 @@ static func canonical_digest(state: Dictionary) -> Dictionary:
 		"tick": int(state.get("tick", 0)),
 		"next_body_id": int(state.get("next_body_id", 0)),
 		"phase_fp": int(state.get("phase_fp", 0)),
+		"stroke_cycle_serial": int(state.get("stroke_cycle_serial", 0)),
 		"motor_rate_fp": int(state.get("motor_rate_fp", 0)),
 		"motor_target_rate_fp": int(state.get("motor_target_rate_fp", 0)),
+		"motor_run_rate_fp": int(state.get("motor_run_rate_fp", FP)),
 		"skill_stop_engaged": bool(state.get("skill_stop_engaged", false)),
 		"carriage_x": int(state.get("carriage_x", _default_release_x(_definition(state)))),
 		"selected_hole": int(state.get("selected_hole", 0)),
@@ -517,6 +566,7 @@ static func canonical_digest(state: Dictionary) -> Dictionary:
 		"refused_inserts": int(state.get("refused_inserts", 0)),
 		"accepted_inserts": int(state.get("accepted_inserts", 0)),
 		"opening_body_count": int(state.get("opening_body_count", 0)),
+		"external_origin_count": int(state.get("external_origin_count", 0)),
 		"collected_count": int(state.get("collected_count", 0)),
 		"collected_value": int(state.get("collected_value", 0)),
 	}
@@ -556,7 +606,9 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 	var before_energy := _kinetic_energy(bodies)
 	var events: Array = []
 	var old_face := int(state.get("face_y", face_y_for_phase(definition, 0)))
-	_update_motor(state, bool(config.get("motor_enabled", true)))
+	var cycle_completed := _update_motor(state, bool(config.get("motor_enabled", true)))
+	if cycle_completed:
+		events.append({"kind": "stroke_cycle", "stroke_cycle": int(state.get("stroke_cycle_serial", 0)), "phase_fp": int(state.get("phase_fp", 0)), "tick": int(state.get("tick", 0))})
 	var new_face := int(state.get("face_y", old_face))
 	var face_delta := new_face - old_face
 	_apply_platform_carry_and_plate(bodies, geometry, old_face, new_face, face_delta)
@@ -588,18 +640,22 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 		platform_work += _resolve_static_contacts(bodies, geometry, static_candidates, new_face, face_delta)
 	nestle_work += _resolve_supports(bodies, definition, new_face, events, grid)
 	for body_value in bodies:
+		var settled_body: Dictionary = body_value
+		if not bool(settled_body.get("sleeping", false)) and str(settled_body.get("rest_state", "")) == "resting" and not str(settled_body.get("support_kind", "")).is_empty():
+			_update_sleep(settled_body)
+	for body_value in bodies:
 		(body_value as Dictionary).erase("peg_contact_this_tick")
 	_process_exits(state, events)
 	state["tick"] = int(state.get("tick", 0)) + 1
 	var after_energy := _kinetic_energy(state.get("bodies", []))
 	var energy_ok := after_energy <= before_energy + platform_work + gravity_work + nestle_work
 	var active_count := bodies.size()
-	var origin_count := int(state.get("opening_body_count", 0)) + int(state.get("accepted_inserts", 0))
+	var origin_count := int(state.get("opening_body_count", 0)) + int(state.get("accepted_inserts", 0)) + int(state.get("external_origin_count", 0))
 	var conservation_ok := active_count + (state.get("tray_ledger", []) as Array).size() + (state.get("gutter_ledger", []) as Array).size() + int(state.get("collected_count", 0)) == origin_count
 	return {"events": events, "collision_count": collisions, "candidate_count": pairs.size(), "energy_ok": energy_ok, "conservation_ok": conservation_ok}
 
 
-static func _update_motor(state: Dictionary, motor_enabled: bool) -> void:
+static func _update_motor(state: Dictionary, motor_enabled: bool) -> bool:
 	var definition := _definition(state)
 	var stroke := _stroke(definition)
 	var period := maxi(1, int(stroke.get("period_ticks", STROKE_PERIOD)))
@@ -613,8 +669,13 @@ static func _update_motor(state: Dictionary, motor_enabled: bool) -> void:
 		rate = maxi(target, rate - ramp_delta)
 	state["motor_rate_fp"] = rate
 	state["previous_face_y"] = int(state.get("face_y", face_y_for_phase(definition, 0)))
-	state["phase_fp"] = posmod(int(state.get("phase_fp", 0)) + rate, period * FP)
+	var previous_phase_fp := int(state.get("phase_fp", 0))
+	state["phase_fp"] = posmod(previous_phase_fp + rate, period * FP)
+	var completed := rate > 0 and int(state.get("phase_fp", 0)) < previous_phase_fp
+	if completed:
+		state["stroke_cycle_serial"] = int(state.get("stroke_cycle_serial", 0)) + 1
 	state["face_y"] = face_y_for_phase(definition, _divi(int(state.get("phase_fp", 0)), FP))
+	return completed
 
 
 static func _apply_platform_carry_and_plate(bodies: Array, geometry: Dictionary, old_face: int, new_face: int, face_delta: int) -> void:
@@ -764,47 +825,121 @@ static func _apply_peg_contacts(bodies: Array, definition: Dictionary, events: A
 		var body: Dictionary = body_value
 		if bool(body.get("sleeping", false)):
 			continue
+		if str(body.get("rest_state", "")) != "falling":
+			body.erase("peg_contact_key")
+			continue
 		if absi(int(body.get("y", 0)) - drop_y) > int(body.get("radius", COIN_RADIUS)):
 			continue
-		for peg_value in _apparatus(definition).get("pegs", []):
+		var previous_peg_key := str(body.get("peg_contact_key", ""))
+		var current_peg_key := ""
+		var pegs: Array = _apparatus(definition).get("pegs", []) if typeof(_apparatus(definition).get("pegs", [])) == TYPE_ARRAY else []
+		for peg_index in range(pegs.size()):
+			var peg_value: Variant = pegs[peg_index]
 			if typeof(peg_value) != TYPE_DICTIONARY:
 				continue
 			var peg: Dictionary = peg_value
+			var pre_x := int(body.get("x", 0))
+			var pre_z := int(body.get("z", 0))
 			var dx := int(body.get("x", 0)) - int(peg.get("x", 0))
 			var dz := int(body.get("z", 0)) - int(peg.get("z", 0))
 			var minimum := int(body.get("radius", COIN_RADIUS)) + int(peg.get("r", 1200))
 			var distance_sq := dx * dx + dz * dz
 			if distance_sq >= minimum * minimum:
 				continue
+			current_peg_key = str(peg_index)
 			var distance := maxi(1, _isqrt(distance_sq))
 			var nx := _divi(dx * FP, distance)
 			var nz := _divi(dz * FP, distance)
+			# Only an exactly centered crown contact lacks a lateral radial side.
+			# Peg parity supplies that deterministic degeneracy fallback; every
+			# ordinary contact uses the exact integer radial normal above.
+			if dx == 0 and nz > 0:
+				nx = -250 if peg_index % 2 == 0 else 250
+				nz = _isqrt(FP * FP - nx * nx)
 			var penetration := minimum - distance
 			var correction := _divi(maxi(0, penetration - SLOP) * BETA, FP)
-			body["x"] = int(body.get("x", 0)) + _divi(nx * correction, FP)
-			body["z"] = int(body.get("z", 0)) + _divi(nz * correction, FP)
+			if dx == 0:
+				body["x"] = int(body.get("x", 0)) + _divi(nx * correction, FP)
+				body["z"] = int(body.get("z", 0)) + _divi(nz * correction, FP)
+			else:
+				# Separate along the exact radial geometry, rounding each nonzero
+				# component away from the peg. Quantizing the normal first maps dx=1
+				# to nx=0 and creates an artificial vertical pin lattice.
+				body["x"] = int(body.get("x", 0)) + _radial_correction_component(dx, correction, distance)
+				body["z"] = int(body.get("z", 0)) + _radial_correction_component(dz, correction, distance)
 			var relative := _divi(int(body.get("vx", 0)) * nx + int(body.get("vz", 0)) * nz, FP)
 			if relative < 0:
 				# Stabilize low-speed resting contact so discrete gravity cannot
 				# sustain a perpetual micro-bounce. Full impacts retain E=250.
-				var restitution := 0 if -relative < GRAVITY * 2 else RESTITUTION_PEG
+				var restitution := 0 if -relative < GRAVITY * 2 and not bool((body.get("meta", {}) as Dictionary).get("inserted", false)) else RESTITUTION_PEG
 				var impulse := -_divi((FP + restitution) * relative, FP)
-				body["vx"] = int(body.get("vx", 0)) + _divi(impulse * nx, FP)
-				body["vz"] = int(body.get("vz", 0)) + _divi(impulse * nz, FP)
+				var conservative_delta := _conservative_peg_impulse_delta(int(body.get("vx", 0)), int(body.get("vz", 0)), impulse, nx, nz)
+				body["vx"] = int(body.get("vx", 0)) + conservative_delta.x
+				body["vz"] = int(body.get("vz", 0)) + conservative_delta.y
 				var friction_budget := _divi(MU_BODY * impulse, FP)
 				var tx := -nz
 				var tz := nx
 				var tangent := _divi(int(body.get("vx", 0)) * tx + int(body.get("vz", 0)) * tz, FP)
-				var tangent_impulse := clampi(-tangent, -friction_budget, friction_budget)
-				body["vx"] = int(body.get("vx", 0)) + _divi(tangent_impulse * tx, FP)
-				body["vz"] = int(body.get("vz", 0)) + _divi(tangent_impulse * tz, FP)
+				# A disk-on-pin contact has rotational compliance. The body schema has
+				# no angular state, so use the disk's 1:2 translational/rotational
+				# effective-mass split instead of falsely cancelling all COM tangent.
+				# Apply rotational compliance once on contact entry. Reapplying it
+				# every tick erases the rolling tangent because the body schema has
+				# no angular state, creating an artificial permanent pin balance.
+				var tangent_impulse := clampi(-_divi(tangent, 3), -friction_budget, friction_budget) if previous_peg_key != current_peg_key else 0
+				var friction_vx := int(body.get("vx", 0))
+				var friction_vz := int(body.get("vz", 0))
+				var tangent_dx := _divi(tangent_impulse * tx, FP)
+				var tangent_dz := _divi(tangent_impulse * tz, FP)
+				# Integer projection onto an approximate unit tangent can round a
+				# dissipative impulse into a one-unit energy gain. Reject that rounded
+				# candidate instead of weakening the solver's no-energy-gain contract.
+				if (friction_vx + tangent_dx) * (friction_vx + tangent_dx) + (friction_vz + tangent_dz) * (friction_vz + tangent_dz) > friction_vx * friction_vx + friction_vz * friction_vz:
+					tangent_impulse = 0
+					tangent_dx = 0
+					tangent_dz = 0
+				body["vx"] = friction_vx + tangent_dx
+				body["vz"] = friction_vz + tangent_dz
 				var remaining := maxi(0, friction_budget - absi(tangent_impulse))
 				body["vy"] = int(body.get("vy", 0)) + clampi(-int(body.get("vy", 0)), -remaining, remaining)
-				if nz > 0 and absi(int(body.get("vx", 0))) + absi(int(body.get("vy", 0))) + absi(int(body.get("vz", 0))) < SLEEP_SPEED:
-					body["support_kind"] = "peg"
-					body["rest_state"] = "resting"
-					body["peg_contact_this_tick"] = true
-			events.append({"kind": "peg_impact", "body_id": str(body.get("id", ""))})
+			events.append({"kind": "peg_impact", "body_id": str(body.get("id", "")), "peg": {"x": int(peg.get("x", 0)), "z": int(peg.get("z", 0)), "r": int(peg.get("r", 1200))}, "pre_x": pre_x, "pre_z": pre_z, "post_x": int(body.get("x", 0)), "post_z": int(body.get("z", 0))})
+		if current_peg_key.is_empty():
+			body.erase("peg_contact_key")
+		else:
+			body["peg_contact_key"] = current_peg_key
+
+
+static func _radial_correction_component(component: int, correction: int, distance: int) -> int:
+	if component == 0 or correction <= 0:
+		return 0
+	var magnitude := _divi(absi(component) * correction + maxi(1, distance) - 1, maxi(1, distance))
+	return magnitude if component > 0 else -magnitude
+
+
+static func _conservative_peg_impulse_delta(vx: int, vz: int, impulse: int, nx: int, nz: int) -> Vector2i:
+	var x_numerator := impulse * nx
+	var z_numerator := impulse * nz
+	var x_floor := _floor_div(x_numerator, FP)
+	var x_ceil := -_floor_div(-x_numerator, FP)
+	var z_floor := _floor_div(z_numerator, FP)
+	var z_ceil := -_floor_div(-z_numerator, FP)
+	var before_energy := vx * vx + vz * vz
+	var best := Vector2i.ZERO
+	var best_error := 0x7fffffffffffffff
+	var found := false
+	for delta_x in [x_floor, x_ceil]:
+		for delta_z in [z_floor, z_ceil]:
+			var after_energy: int = (vx + delta_x) * (vx + delta_x) + (vz + delta_z) * (vz + delta_z)
+			if after_energy > before_energy:
+				continue
+			var error_x: int = delta_x * FP - x_numerator
+			var error_z: int = delta_z * FP - z_numerator
+			var error: int = error_x * error_x + error_z * error_z
+			if not found or error < best_error or (error == best_error and (delta_x < best.x or (delta_x == best.x and delta_z < best.y))):
+				found = true
+				best_error = error
+				best = Vector2i(delta_x, delta_z)
+	return best
 
 
 static func _contact_pairs(bodies: Array, grid: SpatialHash2D) -> Array:
@@ -927,6 +1062,9 @@ static func _resolve_body_contact(left: Dictionary, right: Dictionary) -> bool:
 	var relative_y := int(right.get("vy", 0)) - int(left.get("vy", 0))
 	var relative_normal := _divi(relative_x * nx + relative_y * ny, FP)
 	if relative_normal < 0:
+		var left_v_before := Vector3i(int(left.get("vx", 0)), int(left.get("vy", 0)), int(left.get("vz", 0)))
+		var right_v_before := Vector3i(int(right.get("vx", 0)), int(right.get("vy", 0)), int(right.get("vz", 0)))
+		var pair_energy_before := _body_kinetic_energy(left) + _body_kinetic_energy(right)
 		contact_changed = relative_normal < -SLEEP_SPEED
 		var impulse := -_divi((FP + RESTITUTION_BODY) * relative_normal, inverse_sum)
 		var left_velocity_delta := _divi(impulse * inverse_left, FP)
@@ -945,6 +1083,17 @@ static func _resolve_body_contact(left: Dictionary, right: Dictionary) -> bool:
 		left["vy"] = int(left.get("vy", 0)) - _divi(left_tangent_delta * tangent_y, FP)
 		right["vx"] = int(right.get("vx", 0)) + _divi(right_tangent_delta * tangent_x, FP)
 		right["vy"] = int(right.get("vy", 0)) + _divi(right_tangent_delta * tangent_y, FP)
+		# The authored collision is dissipative. Integer normal/tangent projection
+		# can occasionally round the four velocity components into a net gain;
+		# refuse that rounded impulse while retaining positional separation.
+		if _body_kinetic_energy(left) + _body_kinetic_energy(right) > pair_energy_before:
+			left["vx"] = left_v_before.x
+			left["vy"] = left_v_before.y
+			left["vz"] = left_v_before.z
+			right["vx"] = right_v_before.x
+			right["vy"] = right_v_before.y
+			right["vz"] = right_v_before.z
+			contact_changed = false
 	if contact_changed:
 		_wake(left)
 		_wake(right)
@@ -960,9 +1109,6 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 		var body: Dictionary = bodies[body_index]
 		if bool(body.get("sleeping", false)):
 			continue
-		if bool(body.get("peg_contact_this_tick", false)) and str(body.get("support_kind", "")) == "peg" and str(body.get("rest_state", "")) == "resting":
-			_update_sleep(body)
-			continue
 		var previous_support := "platform" if bool(body.get("pending_platform_deposit", false)) else str(body.get("support_kind", ""))
 		var surface_z := platform_top if int(body.get("y", 0)) >= face_y else deck_z
 		var surface_kind := "platform" if int(body.get("y", 0)) >= face_y else "deck"
@@ -977,9 +1123,11 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 			body["carried_sleep"] = surface_kind == "platform"
 			body["rest_state"] = "resting"
 			_apply_surface_friction(body, MU_PLATFORM if surface_kind == "platform" else MU_DECK)
-			_update_sleep(body)
 			if was_surface_falling:
-				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": surface_kind, "fall_height": maxi(0, fall_start_z - surface_z), "stack_depth": 0})
+				var first_support := bool((body.get("meta", {}) as Dictionary).get("inserted", false)) and not bool((body.get("meta", {}) as Dictionary).get("first_support_recorded", false))
+				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": surface_kind, "support_root": surface_kind, "first_support": first_support, "fall_height": maxi(0, fall_start_z - surface_z), "stack_depth": 0})
+				if first_support:
+					(body.get("meta", {}) as Dictionary)["first_support_recorded"] = true
 				body.erase("fall_start_z")
 			if previous_support == "platform" and surface_kind == "deck":
 				events.append({"kind": "platform_deposit", "body_id": str(body.get("id", ""))})
@@ -1037,8 +1185,10 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 				centroid_x = _divi(centroid_x, support_count)
 				centroid_y = _divi(centroid_y, support_count)
 				var length := maxi(1, _isqrt(centroid_x * centroid_x + centroid_y * centroid_y))
-				body["vx"] = int(body.get("vx", 0)) - _divi(centroid_x * GRAVITY, 2 * length)
-				body["vy"] = int(body.get("vy", 0)) - _divi(centroid_y * GRAVITY, 2 * length)
+				# `centroid_*` points from this body toward its supports. Move into
+				# the bracket; subtracting here drove marginal stacks away forever.
+				body["vx"] = int(body.get("vx", 0)) + _divi(centroid_x * GRAVITY, 2 * length)
+				body["vy"] = int(body.get("vy", 0)) + _divi(centroid_y * GRAVITY, 2 * length)
 				nestle_work += maxi(0, _body_kinetic_energy(body) - before_nestle)
 		if stable and int(body.get("vz", 0)) <= 0:
 			var was_falling := str(body.get("rest_state", "")) == "falling"
@@ -1052,10 +1202,13 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 				body["carried_sleep"] = top_carried
 			body["rest_state"] = "resting"
 			_apply_surface_friction(body, MU_PLATFORM if str(body.get("support_kind", "")) == "platform" else MU_DECK)
-			_update_sleep(body)
 			if was_falling:
 				var stack_depth := maxi(0, _divi(support_top - surface_z, maxi(1, int(body.get("height", COIN_HEIGHT)))))
-				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": str(body.get("support_kind", "")), "fall_height": maxi(0, fall_start_z - support_top), "stack_depth": stack_depth})
+				var support_root := "platform" if str(body.get("support_kind", "")) == "platform" or (str(body.get("support_kind", "")) == "body" and top_carried) else "deck"
+				var first_support := bool((body.get("meta", {}) as Dictionary).get("inserted", false)) and not bool((body.get("meta", {}) as Dictionary).get("first_support_recorded", false))
+				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": str(body.get("support_kind", "")), "support_root": support_root, "first_support": first_support, "fall_height": maxi(0, fall_start_z - support_top), "stack_depth": stack_depth})
+				if first_support:
+					(body.get("meta", {}) as Dictionary)["first_support_recorded"] = true
 				body.erase("fall_start_z")
 		else:
 			if str(body.get("rest_state", "")) != "falling":
@@ -1103,7 +1256,7 @@ static func _process_exits(state: Dictionary, events: Array) -> void:
 			(state["tray_ledger"] as Array).append(entry)
 		else:
 			(state["gutter_ledger"] as Array).append(entry)
-		events.append({"kind": outcome, "outcome": outcome, "body_id": str(body.get("id", "")), "body_kind": str(body.get("kind", "coin")), "metadata": (body.get("meta", {}) as Dictionary).duplicate(true)})
+		events.append({"kind": outcome, "outcome": outcome, "body_id": str(body.get("id", "")), "body_kind": str(body.get("kind", "coin")), "x": x, "radius": radius, "height": int(body.get("height", COIN_HEIGHT)), "mass": int(body.get("mass", FP)), "tick": int(state.get("tick", 0)), "stroke_cycle": int(state.get("stroke_cycle_serial", 0)), "phase_fp": int(state.get("phase_fp", 0)), "metadata": (body.get("meta", {}) as Dictionary).duplicate(true)})
 		bodies.remove_at(index)
 
 
@@ -1117,9 +1270,13 @@ static func _apply_trace_input(state: Dictionary, input: Dictionary, rng_value: 
 		"hole":
 			select_hole(state, int(input.get("index", 0)))
 		"skill_stop":
-			set_skill_stop(state, bool(input.get("engaged", false)))
+			set_skill_stop(state, bool(input.get("engaged", false)), int(input.get("resume_rate_fp", state.get("motor_run_rate_fp", FP))))
+		"motor_rate":
+			set_motor_run_rate(state, int(input.get("rate_fp", FP)))
 		"nudge":
 			apply_nudge(state, int(input.get("x", 0)), int(input.get("y", 0)))
+		"gutter_return":
+			return_gutter_body(state, input)
 		"collect":
 			collect_tray(state)
 
@@ -1208,7 +1365,7 @@ static func _invariant_report(state: Dictionary, energy_ok: bool) -> Dictionary:
 	var tray_count := (state.get("tray_ledger", []) as Array).size()
 	var gutter_count := (state.get("gutter_ledger", []) as Array).size()
 	var collected_count := int(state.get("collected_count", 0))
-	var origin_count := int(state.get("opening_body_count", 0)) + int(state.get("accepted_inserts", 0))
+	var origin_count := int(state.get("opening_body_count", 0)) + int(state.get("accepted_inserts", 0)) + int(state.get("external_origin_count", 0))
 	return {
 		"energy_ok": energy_ok,
 		"conservation_ok": active_count + tray_count + gutter_count + collected_count == origin_count,
@@ -1236,7 +1393,10 @@ static func _body_kinetic_energy(body: Dictionary) -> int:
 	var vx := int(body.get("vx", 0))
 	var vy := int(body.get("vy", 0))
 	var vz := int(body.get("vz", 0))
-	return _divi(mass * (_divi(vx * vx, FP) + _divi(vy * vy, FP) + _divi(vz * vz, FP)), 2 * FP)
+	# Keep the exact common fixed-point numerator for invariant comparisons.
+	# Per-axis/per-body division made a dissipative contact appear to gain one
+	# unit when truncation landed on opposite sides of a boundary.
+	return mass * (vx * vx + vy * vy + vz * vz)
 
 
 static func _integrate_axis(body: Dictionary, position_key: String, velocity_key: String, remainder_key: String) -> void:
@@ -1335,6 +1495,17 @@ static func _stroke(definition: Dictionary) -> Dictionary:
 
 static func _apparatus(definition: Dictionary) -> Dictionary:
 	return definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+
+
+static func _drop_board(definition: Dictionary) -> Dictionary:
+	var apparatus := _apparatus(definition)
+	var authored: Dictionary = apparatus.get("drop_board", {}) if typeof(apparatus.get("drop_board", {})) == TYPE_DICTIONARY else {}
+	var geometry := _geometry(definition)
+	return {
+		"y": int(authored.get("y", geometry.get("drop_y", DROP_Y))),
+		"z_top": int(authored.get("z_top", geometry.get("drop_z", DROP_Z))),
+		"z_bottom": int(authored.get("z_bottom", geometry.get("platform_top_z", PLATFORM_TOP_Z))),
+	}
 
 
 static func _default_release_x(definition: Dictionary) -> int:

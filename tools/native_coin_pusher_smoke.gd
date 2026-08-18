@@ -6,7 +6,7 @@ const RESULT_MARKER := "COIN_PUSHER_V3_SMOKE_RESULT="
 const REPLAY_TICKS := 260
 const OPENING_BODY_COUNT := 40
 
-# This is the default Quarter Falls machine from Amendment 6.1. Keep the
+# This is the default Quarter Falls machine from Amendment 6.2. Keep the
 # geometry literal here: this smoke is also a compact cross-export contract,
 # so a relabelled or inverted face stroke must fail before replay evidence is
 # accepted.
@@ -21,8 +21,8 @@ const MACHINE_DEFINITION := {
 		"face_retracted_y": 46000,
 		"back_plate_y": 63000,
 		"back_plate_gap": 400,
-		"drop_y": 40000,
-		"drop_z": 14000,
+		"drop_y": 58000,
+		"drop_z": 24000,
 		"gutter_x": 3000,
 	},
 	"stroke": {
@@ -34,6 +34,7 @@ const MACHINE_DEFINITION := {
 		"type": "rail_slot",
 		"rail": {"x_min": 8000, "x_max": 92000, "speed_per_tick": 900},
 		"holes": [],
+		"drop_board": {"y": 58000, "z_top": 24000, "z_bottom": 3600, "x_min": 0, "x_max": 100000},
 		"pegs": [
 			{"x": 30000, "z": 9000, "r": 1200},
 			{"x": 50000, "z": 9000, "r": 1200},
@@ -71,7 +72,7 @@ func _initialize() -> void:
 
 func _run_smoke() -> Dictionary:
 	var failures: Array[String] = []
-	_check_amendment_6_1_definition(failures)
+	_check_amendment_6_2_definition(failures)
 	_check_solver_contract(failures)
 
 	var snapshot := Solver.create_machine(_rng("PUSHER-V3-SMOKE-SNAPSHOT"), MACHINE_DEFINITION, OPENING_BODY_COUNT)
@@ -146,7 +147,7 @@ func _run_smoke() -> Dictionary:
 	}
 
 
-func _check_amendment_6_1_definition(failures: Array[String]) -> void:
+func _check_amendment_6_2_definition(failures: Array[String]) -> void:
 	var geometry: Dictionary = MACHINE_DEFINITION.get("geometry", {})
 	var expected_geometry := {
 		"width": 100000,
@@ -157,19 +158,19 @@ func _check_amendment_6_1_definition(failures: Array[String]) -> void:
 		"face_retracted_y": 46000,
 		"back_plate_y": 63000,
 		"back_plate_gap": 400,
-		"drop_y": 40000,
-		"drop_z": 14000,
+		"drop_y": 58000,
+		"drop_z": 24000,
 		"gutter_x": 3000,
 	}
-	_check_exact_dictionary("Amendment 6.1 geometry", geometry, expected_geometry, failures)
+	_check_exact_dictionary("Amendment 6.2 geometry", geometry, expected_geometry, failures)
 	var stroke: Dictionary = MACHINE_DEFINITION.get("stroke", {})
-	_check_exact_dictionary("Amendment 6.1 stroke", stroke, {
+	_check_exact_dictionary("Amendment 6.2 stroke", stroke, {
 		"period_ticks": 240,
 		"ramp_ticks": 24,
 		"profile": "cosine",
 	}, failures)
 	var coins: Dictionary = MACHINE_DEFINITION.get("coins", {})
-	_check_exact_dictionary("Amendment 6.1 coin body", coins, {
+	_check_exact_dictionary("Amendment 6.2 coin body", coins, {
 		"radius": 4300,
 		"height": 1700,
 		"mass": 1000,
@@ -178,7 +179,7 @@ func _check_amendment_6_1_definition(failures: Array[String]) -> void:
 	}, failures)
 	var apparatus: Dictionary = MACHINE_DEFINITION.get("apparatus", {})
 	var rail: Dictionary = apparatus.get("rail", {})
-	_check_exact_dictionary("Amendment 6.1 entry rail", rail, {
+	_check_exact_dictionary("Amendment 6.2 entry rail", rail, {
 		"x_min": 8000,
 		"x_max": 92000,
 		"speed_per_tick": 900,
@@ -191,15 +192,15 @@ func _check_amendment_6_1_definition(failures: Array[String]) -> void:
 	if str(apparatus.get("type", "")) != "rail_slot" \
 			or int(apparatus.get("release_jitter", -1)) != 300 \
 			or apparatus.get("pegs", []) != expected_pegs:
-		failures.append("Amendment 6.1 entry apparatus drifted from the three-peg Quarter Falls contract.")
+		failures.append("Amendment 6.2 entry apparatus drifted from the three-peg Quarter Falls contract.")
 	if int(MACHINE_DEFINITION.get("ceiling", 0)) != 600:
-		failures.append("Amendment 6.1 hard body ceiling drifted from 600.")
+		failures.append("Amendment 6.2 hard body ceiling drifted from 600.")
 	if Solver.face_y_for_phase(MACHINE_DEFINITION, 0) != 28000 \
 			or Solver.face_y_for_phase(MACHINE_DEFINITION, 120) != 46000:
-		failures.append("Amendment 6.1 face orientation drifted: phase 0 must be extended at y=28000 and phase 120 retracted at y=46000.")
-	var deck_window_milli := Solver.deck_landing_phase_ratio_milli(MACHINE_DEFINITION)
-	if deck_window_milli < 180 or deck_window_milli > 220:
-		failures.append("Amendment 6.1 retraction-apex deck window drifted from approximately 20%%: %d/1000." % deck_window_milli)
+		failures.append("Amendment 6.2 face orientation drifted: phase 0 must be extended at y=28000 and phase 120 retracted at y=46000.")
+	var delivery_board: Dictionary = apparatus.get("drop_board", {})
+	if int(delivery_board.get("y", 0)) != 58000 or int(delivery_board.get("z_top", 0)) != 24000 or int(delivery_board.get("z_bottom", 0)) != 3600:
+		failures.append("Amendment 6.2 rear delivery board drifted from the visible 58000/24000-to-3600 contract.")
 
 
 func _check_solver_contract(failures: Array[String]) -> void:
@@ -216,6 +217,7 @@ func _check_solver_contract(failures: Array[String]) -> void:
 		"contact_normal": "radial_euclidean",
 		"support_rule": "multi_contact_bracket_nestle",
 		"transport_rule": "platform_carry_plus_back_plate",
+		"geometry_amendment": "6.2",
 	}
 	_check_exact_dictionary("V3 solver implementation contract", contract, expected, failures)
 
@@ -233,7 +235,7 @@ func _check_created_snapshot(snapshot: Dictionary, failures: Array[String]) -> v
 		failures.append("create_machine did not seed exactly %d opening bodies." % OPENING_BODY_COUNT)
 	var definition: Dictionary = snapshot.get("machine_definition", {})
 	if definition != MACHINE_DEFINITION:
-		failures.append("create_machine did not retain the exact Amendment 6.1 machine definition.")
+		failures.append("create_machine did not retain the exact Amendment 6.2 machine definition.")
 
 
 func _check_input_trace(trace: Array, start_tick: int, failures: Array[String]) -> void:

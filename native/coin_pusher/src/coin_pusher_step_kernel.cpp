@@ -68,8 +68,8 @@ inline int64_t floor_div(int64_t v, int64_t d) {
 
 struct Geo {
   int64_t width = 100000, lip = 6000, deck = 0, top = 3600, extended = 28000,
-          retracted = 46000, plate = 63000, plate_gap = 400, drop_y = 40000,
-          drop_z = 14000, gutter = 3000, period = 240, ramp = 24, coin_r = 4300,
+          retracted = 46000, plate = 63000, plate_gap = 400, drop_y = 58000,
+          drop_z = 24000, gutter = 3000, period = 240, ramp = 24, coin_r = 4300,
           coin_h = 1700, coin_m = 1000, coin_value = 1, jitter = 300,
           ceiling = 600;
   Array pegs;
@@ -89,8 +89,9 @@ Geo geometry(const Dictionary &s) {
   g.retracted = x.get("face_retracted_y", g.retracted);
   g.plate = x.get("back_plate_y", g.plate);
   g.plate_gap = x.get("back_plate_gap", g.plate_gap);
-  g.drop_y = x.get("drop_y", g.drop_y);
-  g.drop_z = x.get("drop_z", g.drop_z);
+  Dictionary board = a.get("drop_board", Dictionary());
+  g.drop_y = board.get("y", x.get("drop_y", g.drop_y));
+  g.drop_z = board.get("z_top", x.get("drop_z", g.drop_z));
   g.gutter = x.get("gutter_x", g.gutter);
   g.period = std::max<int64_t>(1, st.get("period_ticks", g.period));
   g.ramp = std::max<int64_t>(1, st.get("ramp_ticks", g.ramp));
@@ -111,7 +112,7 @@ int64_t face_y(const Geo &g, int64_t phase) {
 
 struct Body {
   Dictionary ref, meta;
-  String id, kind, rest, support;
+  String id, kind, rest, support, peg_key;
   int64_t x = 0, y = 0, z = 0, vx = 0, vy = 0, vz = 0, xr = 0, yr = 0, zr = 0,
           r = 4300, h = 1700, m = 1000, sleep_ticks = 0, fall_start_z = 0;
   bool sleeping = false, carried = false, plate_blocked = false,
@@ -234,6 +235,7 @@ struct Kernel {
       q.support = r.get("support_kind", "");
       q.carried = r.get("carried_sleep", false);
       q.plate_blocked = r.get("plate_blocked", false);
+      q.peg_key = r.get("peg_contact_key", "");
       q.pending_deposit = r.get("pending_platform_deposit", false);
       q.has_fall_start = r.has("fall_start_z");
       q.fall_start_z = r.get("fall_start_z", q.z);
@@ -243,9 +245,9 @@ struct Kernel {
     return true;
   }
   int64_t body_energy(const Body &q) const {
-    return divi(q.m * (divi(q.vx * q.vx, FP) + divi(q.vy * q.vy, FP) +
-                       divi(q.vz * q.vz, FP)),
-                2 * FP);
+    // Compare the exact common fixed-point numerator. Per-axis/per-body
+    // truncation can otherwise manufacture a one-unit accounting gain.
+    return q.m * (q.vx * q.vx + q.vy * q.vy + q.vz * q.vz);
   }
   int64_t energy() const {
     int64_t e = 0;
@@ -254,7 +256,7 @@ struct Kernel {
         e += body_energy(q);
     return e;
   }
-  void update_motor() {
+  bool update_motor() {
     int64_t target = config.get("motor_enabled", true)
                          ? int64_t(state.get("motor_target_rate_fp", FP))
                          : 0;
@@ -265,9 +267,13 @@ struct Kernel {
                            : rate;
     state["motor_rate_fp"] = rate;
     state["previous_face_y"] = state.get("face_y", face_y(g, 0));
-    state["phase_fp"] =
-        posmod(int64_t(state.get("phase_fp", 0)) + rate, g.period * FP);
+    int64_t previous_phase = state.get("phase_fp", 0);
+    state["phase_fp"] = posmod(previous_phase + rate, g.period * FP);
+    bool completed = rate > 0 && int64_t(state.get("phase_fp", 0)) < previous_phase;
+    if (completed)
+      state["stroke_cycle_serial"] = int64_t(state.get("stroke_cycle_serial", 0)) + 1;
     state["face_y"] = face_y(g, divi(state.get("phase_fp", 0), FP));
+    return completed;
   }
   void carry(int64_t oldf, int64_t newf, int64_t delta) {
     int64_t bottom = g.top + g.plate_gap;
@@ -337,47 +343,121 @@ struct Kernel {
     for (Body &q : b) {
       if (q.sleeping || std::abs(q.y - g.drop_y) > q.r)
         continue;
+      if (q.rest != "falling") {
+        q.peg_key = "";
+        continue;
+      }
+      String previous_peg_key = q.peg_key, current_peg_key;
       for (int i = 0; i < g.pegs.size(); ++i) {
         Dictionary p = g.pegs[i];
+        int64_t pre_x = q.x, pre_z = q.z;
         int64_t dx = q.x - int64_t(p.get("x", 0)),
                 dz = q.z - int64_t(p.get("z", 0)),
                 minimum = q.r + int64_t(p.get("r", 1200)),
                 ds = dx * dx + dz * dz;
         if (ds >= minimum * minimum)
           continue;
+        current_peg_key = String::num_int64(i);
         int64_t d = std::max<int64_t>(1, isqrt(ds)), nx = divi(dx * FP, d),
                 nz = divi(dz * FP, d), pen = minimum - d,
                 corr = divi(std::max<int64_t>(0, pen - SLOP) * BETA, FP);
-        q.x += divi(nx * corr, FP);
-        q.z += divi(nz * corr, FP);
+        // Only an exactly centered crown contact lacks a lateral radial side.
+        // Peg parity is the deterministic degeneracy fallback; all ordinary
+        // contacts retain the exact integer radial normal above.
+        if (dx == 0 && nz > 0) {
+          nx = (i % 2 == 0) ? -250 : 250;
+          nz = isqrt(FP * FP - nx * nx);
+        }
+        if (dx == 0) {
+          q.x += divi(nx * corr, FP);
+          q.z += divi(nz * corr, FP);
+        } else {
+          // Use exact radial components for positional separation. Rounding
+          // the normal first maps a one-unit offset to a false vertical pin.
+          auto radial_correction = [&](int64_t component) {
+            if (component == 0 || corr <= 0)
+              return int64_t(0);
+            int64_t magnitude = divi(std::abs(component) * corr + d - 1, d);
+            return component > 0 ? magnitude : -magnitude;
+          };
+          q.x += radial_correction(dx);
+          q.z += radial_correction(dz);
+        }
         int64_t rel = divi(q.vx * nx + q.vz * nz, FP);
         if (rel < 0) {
           // Resting-contact stabilization prevents gravity and discrete
           // correction from sustaining a perpetual micro-bounce on a peg.
           // Full impacts retain the authored E=250 response.
-          int64_t restitution = -rel < GRAVITY * 2 ? 0 : REST_PEG;
+          int64_t restitution = -rel < GRAVITY * 2 && !bool(q.meta.get("inserted", false)) ? 0 : REST_PEG;
           int64_t impulse = -divi((FP + restitution) * rel, FP);
-          q.vx += divi(impulse * nx, FP);
-          q.vz += divi(impulse * nz, FP);
+          int64_t x_num = impulse * nx, z_num = impulse * nz;
+          int64_t x_candidates[2] = {floor_div(x_num, FP), -floor_div(-x_num, FP)};
+          int64_t z_candidates[2] = {floor_div(z_num, FP), -floor_div(-z_num, FP)};
+          int64_t before_contact_energy = q.vx * q.vx + q.vz * q.vz;
+          int64_t best_dx = 0, best_dz = 0, best_error = std::numeric_limits<int64_t>::max();
+          bool found_conservative = false;
+          for (int xi = 0; xi < 2; ++xi) {
+            for (int zi = 0; zi < 2; ++zi) {
+              int64_t dx_candidate = x_candidates[xi], dz_candidate = z_candidates[zi];
+              int64_t after_contact_energy = (q.vx + dx_candidate) * (q.vx + dx_candidate) +
+                                             (q.vz + dz_candidate) * (q.vz + dz_candidate);
+              if (after_contact_energy > before_contact_energy)
+                continue;
+              int64_t error_x = dx_candidate * FP - x_num;
+              int64_t error_z = dz_candidate * FP - z_num;
+              int64_t error = error_x * error_x + error_z * error_z;
+              if (!found_conservative || error < best_error ||
+                  (error == best_error && (dx_candidate < best_dx ||
+                   (dx_candidate == best_dx && dz_candidate < best_dz)))) {
+                found_conservative = true;
+                best_error = error;
+                best_dx = dx_candidate;
+                best_dz = dz_candidate;
+              }
+            }
+          }
+          q.vx += best_dx;
+          q.vz += best_dz;
           int64_t friction_budget = divi(MU_BODY * impulse, FP);
           int64_t tx = -nz, tz = nx;
           int64_t tangent = divi(q.vx * tx + q.vz * tz, FP);
-          int64_t tangent_impulse = clampi(-tangent, -friction_budget, friction_budget);
-          q.vx += divi(tangent_impulse * tx, FP);
-          q.vz += divi(tangent_impulse * tz, FP);
+          // Disk-on-pin rotational compliance contributes twice the inverse
+          // effective mass of translation. Without angular state, preserve
+          // that 1:2 split rather than cancelling the complete COM tangent.
+          int64_t tangent_impulse = previous_peg_key != current_peg_key ? clampi(-divi(tangent, 3), -friction_budget, friction_budget) : 0;
+          int64_t friction_vx = q.vx, friction_vz = q.vz;
+          int64_t tangent_dx = divi(tangent_impulse * tx, FP);
+          int64_t tangent_dz = divi(tangent_impulse * tz, FP);
+          // Approximate integer tangents can round a dissipative impulse into
+          // a one-unit gain. Refuse that rounded candidate; conservation is a
+          // solver invariant, not an assertion tolerance.
+          if ((friction_vx + tangent_dx) * (friction_vx + tangent_dx) +
+                  (friction_vz + tangent_dz) * (friction_vz + tangent_dz) >
+              friction_vx * friction_vx + friction_vz * friction_vz) {
+            tangent_impulse = 0;
+            tangent_dx = 0;
+            tangent_dz = 0;
+          }
+          q.vx = friction_vx + tangent_dx;
+          q.vz = friction_vz + tangent_dz;
           int64_t remaining = std::max<int64_t>(0, friction_budget - std::abs(tangent_impulse));
           q.vy += clampi(-q.vy, -remaining, remaining);
-          if (nz > 0 && std::abs(q.vx) + std::abs(q.vy) + std::abs(q.vz) < SLEEP_SPEED) {
-            q.support = "peg";
-            q.rest = "resting";
-            q.peg_contact = true;
-          }
         }
         Dictionary e;
         e["kind"] = "peg_impact";
         e["body_id"] = q.id;
+        Dictionary peg;
+        peg["x"] = p.get("x", 0);
+        peg["z"] = p.get("z", 0);
+        peg["r"] = p.get("r", 1200);
+        e["peg"] = peg;
+        e["pre_x"] = pre_x;
+        e["pre_z"] = pre_z;
+        e["post_x"] = q.x;
+        e["post_z"] = q.z;
         events.append(e);
       }
+      q.peg_key = current_peg_key;
     }
   }
   std::vector<std::pair<int, int>> pairs(Grid &grid) {
@@ -466,6 +546,9 @@ struct Kernel {
             rn = divi(rvx * nx + rvy * ny, FP);
     bool changed = rn < -SLEEP_SPEED;
     if (rn < 0) {
+      int64_t lvx_before = l.vx, lvy_before = l.vy, lvz_before = l.vz;
+      int64_t rvx_before = r.vx, rvy_before = r.vy, rvz_before = r.vz;
+      int64_t pair_energy_before = body_energy(l) + body_energy(r);
       int64_t imp = -divi((FP + REST_BODY) * rn, sum), ld = divi(imp * il, FP),
               rd = divi(imp * ir, FP);
       l.vx -= divi(ld * nx, FP);
@@ -480,6 +563,17 @@ struct Kernel {
       l.vy -= divi(ltd * ty, FP);
       r.vx += divi(rtd * tx, FP);
       r.vy += divi(rtd * ty, FP);
+      // Refuse an integer-rounded collision candidate if it violates the
+      // dissipative contact law. Positional separation is still retained.
+      if (body_energy(l) + body_energy(r) > pair_energy_before) {
+        l.vx = lvx_before;
+        l.vy = lvy_before;
+        l.vz = lvz_before;
+        r.vx = rvx_before;
+        r.vy = rvy_before;
+        r.vz = rvz_before;
+        changed = false;
+      }
     }
     if (changed) {
       wake(l);
@@ -546,10 +640,6 @@ struct Kernel {
       Body &q = b[i];
       if (q.sleeping)
         continue;
-      if (q.peg_contact && q.support == "peg" && q.rest == "resting") {
-        update_sleep(q);
-        continue;
-      }
       String prev = q.pending_deposit ? String("platform") : q.support;
       int64_t surface_z = q.y >= f ? g.top : g.deck;
       String surface = q.y >= f ? String("platform") : String("deck");
@@ -594,8 +684,8 @@ struct Kernel {
           cy = divi(cy, count);
           int64_t len = std::max<int64_t>(1, isqrt(cx * cx + cy * cy)),
                   before = body_energy(q);
-          q.vx -= divi(cx * GRAVITY, 2 * len);
-          q.vy -= divi(cy * GRAVITY, 2 * len);
+          q.vx += divi(cx * GRAVITY, 2 * len);
+          q.vy += divi(cy * GRAVITY, 2 * len);
           nestle_work += std::max<int64_t>(0, body_energy(q) - before);
         }
       }
@@ -610,16 +700,20 @@ struct Kernel {
             q.support == "platform" || (q.support == "body" && top_carried);
         q.rest = "resting";
         friction(q, q.support == "platform" ? MU_PLATFORM : MU_DECK);
-        update_sleep(q);
         if (falling) {
           Dictionary e;
           e["kind"] = "impact";
           e["body_id"] = q.id;
           e["support"] = q.support;
+          e["support_root"] = q.support == "platform" || (q.support == "body" && top_carried) ? String("platform") : String("deck");
+          bool first_support = bool(q.meta.get("inserted", false)) && !bool(q.meta.get("first_support_recorded", false));
+          e["first_support"] = first_support;
           e["fall_height"] = std::max<int64_t>(0, fall_start - support_top);
           e["stack_depth"] = std::max<int64_t>(
               0, divi(support_top - surface_z, std::max<int64_t>(1, q.h)));
           events.append(e);
+          if (first_support)
+            q.meta["first_support_recorded"] = true;
           q.has_fall_start = false;
         }
       } else {
@@ -672,6 +766,13 @@ struct Kernel {
       ev["outcome"] = outcome;
       ev["body_id"] = q.id;
       ev["body_kind"] = q.kind;
+      ev["x"] = q.x;
+      ev["radius"] = q.r;
+      ev["height"] = q.h;
+      ev["mass"] = q.m;
+      ev["tick"] = state.get("tick", 0);
+      ev["stroke_cycle"] = state.get("stroke_cycle_serial", 0);
+      ev["phase_fp"] = state.get("phase_fp", 0);
       ev["metadata"] = q.meta.duplicate(true);
       events.append(ev);
       b.erase(b.begin() + i);
@@ -714,6 +815,7 @@ struct Kernel {
     q.rest = "falling";
     q.meta["value"] = g.coin_value;
     q.meta["provenance"] = provenance.duplicate(true);
+    q.meta["inserted"] = true;
     b.push_back(q);
     int64_t wake_radius = q.r * 3, wake_sq = wake_radius * wake_radius;
     for (Body &near : b) {
@@ -740,8 +842,14 @@ struct Kernel {
         nudge(in.get("x", 0), in.get("y", 0));
       else if (k == "skill_stop") {
         bool e = in.get("engaged", false);
+        state["motor_run_rate_fp"] = int64_t(in.get("resume_rate_fp", state.get("motor_run_rate_fp", FP)));
         state["skill_stop_engaged"] = e;
-        state["motor_target_rate_fp"] = e ? 0 : FP;
+        state["motor_target_rate_fp"] = e ? 0 : int64_t(state.get("motor_run_rate_fp", FP));
+      } else if (k == "motor_rate") {
+        int64_t rate = std::max<int64_t>(0, in.get("rate_fp", FP));
+        state["motor_run_rate_fp"] = rate;
+        if (!bool(state.get("skill_stop_engaged", false)))
+          state["motor_target_rate_fp"] = rate;
       } else if (k == "drop") {
         Variant rv = config.get("rng", Variant());
         Object *rng = rv.get_type() == Variant::OBJECT ? (Object *)rv : nullptr;
@@ -762,6 +870,45 @@ struct Kernel {
           int64_t index = clampi(in.get("index", 0), 0, holes.size() - 1);
           state["selected_hole"] = index;
           state["carriage_x"] = holes[index];
+        }
+      } else if (k == "gutter_return") {
+        Array ledger = state.get("gutter_ledger", Array());
+        String body_id = in.get("body_id", "");
+        int found = -1;
+        for (int ledger_index = ledger.size() - 1; ledger_index >= 0; --ledger_index) {
+          Dictionary entry = ledger[ledger_index];
+          if (String(entry.get("body_id", "")) == body_id) {
+            found = ledger_index;
+            break;
+          }
+        }
+        if (found >= 0) {
+          Dictionary entry = ledger[found];
+          ledger.remove_at(found);
+          state["gutter_ledger"] = ledger;
+          Body q;
+          q.ref = Dictionary();
+          q.id = body_id;
+          q.kind = in.get("body_kind", entry.get("kind", "coin"));
+          q.r = in.get("radius", g.coin_r);
+          q.h = in.get("height", g.coin_h);
+          q.m = std::max<int64_t>(1, in.get("mass", g.coin_m));
+          bool left = String(in.get("side", "left")) == "left";
+          q.x = left ? g.gutter + q.r + 100 : g.width - g.gutter - q.r - 100;
+          q.y = g.lip + q.r + 1200;
+          q.z = g.deck + q.h;
+          q.vx = left ? 900 : -900;
+          q.vy = 300;
+          q.vz = 0;
+          q.rest = "falling";
+          q.support = "";
+          q.fall_start_z = q.z;
+          q.has_fall_start = true;
+          q.meta = in.get("metadata", Dictionary());
+          q.meta["value"] = entry.get("value", q.meta.get("value", 1));
+          q.meta["item_id"] = entry.get("item_id", q.meta.get("item_id", ""));
+          q.meta["provenance"] = entry.get("provenance", Dictionary());
+          b.push_back(q);
         }
       } else if (k == "collect") {
         Array tray = state.get("tray_ledger", Array());
@@ -801,6 +948,10 @@ struct Kernel {
       r["support_kind"] = q.support;
       r["carried_sleep"] = q.carried;
       r["plate_blocked"] = q.plate_blocked;
+      if (!q.peg_key.is_empty())
+        r["peg_contact_key"] = q.peg_key;
+      else
+        r.erase("peg_contact_key");
       r["meta"] = q.meta;
       if (q.pending_deposit)
         r["pending_platform_deposit"] = true;
@@ -824,7 +975,15 @@ struct Kernel {
     for (int64_t t = 0; t < ticks; ++t) {
       inputs(trace, cursor);
       int64_t before = energy(), oldf = state.get("face_y", face_y(g, 0));
-      update_motor();
+      bool cycle_completed = update_motor();
+      if (cycle_completed) {
+        Dictionary e;
+        e["kind"] = "stroke_cycle";
+        e["stroke_cycle"] = state.get("stroke_cycle_serial", 0);
+        e["phase_fp"] = state.get("phase_fp", 0);
+        e["tick"] = state.get("tick", 0);
+        events.append(e);
+      }
       int64_t newf = state.get("face_y", oldf), delta = newf - oldf;
       carry(oldf, newf, delta);
       face_push(oldf, newf, delta);
@@ -860,6 +1019,9 @@ struct Kernel {
       }
       grid.rebuild(b);
       nestle_work += resolve_supports(newf, grid);
+      for (Body &q : b)
+        if (!q.sleeping && q.rest == "resting" && !q.support.is_empty())
+          update_sleep(q);
       exits();
       state["tick"] = int64_t(state.get("tick", 0)) + 1;
       energy_ok &=
@@ -868,7 +1030,8 @@ struct Kernel {
       int64_t tick_gutter = Array(state.get("gutter_ledger", Array())).size();
       int64_t tick_collected = int64_t(state.get("collected_count", 0));
       int64_t tick_origin = int64_t(state.get("opening_body_count", 0)) +
-                            int64_t(state.get("accepted_inserts", 0));
+                            int64_t(state.get("accepted_inserts", 0)) +
+                            int64_t(state.get("external_origin_count", 0));
       conservation_ok &=
           int64_t(b.size()) + tick_tray + tick_gutter + tick_collected == tick_origin;
     }
@@ -878,7 +1041,8 @@ struct Kernel {
             gutter = Array(state.get("gutter_ledger", Array())).size(),
             collected = int64_t(state.get("collected_count", 0)),
             origin = int64_t(state.get("opening_body_count", 0)) +
-                     int64_t(state.get("accepted_inserts", 0));
+                     int64_t(state.get("accepted_inserts", 0)) +
+                     int64_t(state.get("external_origin_count", 0));
     Dictionary inv;
     inv["energy_ok"] = energy_ok;
     inv["conservation_ok"] = conservation_ok;
