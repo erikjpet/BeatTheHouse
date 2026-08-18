@@ -1533,6 +1533,19 @@ What happens then is the owner's, not an agent's:
   and report/profile/challenge/achievement secrecy. Current fixtures must be
   corrected to the contract, never used to bless these implementation shapes.
 
+- 2026-08-18 [crew06_9] PM provisionally integrated implementation commits
+  `627b8ac9` and `7a3ab2ca` after line-by-line review confirmed all nine
+  acceptance returns are addressed: opaque real save paths with exact runtime
+  golden compatibility, same-period itinerary evidence, production delivery
+  receipt, restricted upward reroll, mid-play Plan B exposure, mechanical
+  plan-specific failures, full hedge/cancellation/legacy/determinism/privacy
+  assertions. The row remains IN_PROGRESS until PM reruns gates on main.
+- 2026-08-18 [pusherv3_3] Final V19 player-eye evidence is accepted: all six
+  required physical states plus tray before/after are distinct and valid, coins
+  retain the binding ellipse/stack read, controls read as cabinet hardware, and
+  the 300-body renderer passes at 3.332 ms p95 with liveness. Prompt gates and
+  unchanged solver digest remain before integration.
+
 ## Work Log
 
 - 2026-08-18 [remainder continuation] PM claimed `pusherv3_3` and `crew06_9`
