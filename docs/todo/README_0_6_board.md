@@ -1512,6 +1512,19 @@ What happens then is the owner's, not an agent's:
   projection and renderer cost, regenerate visibly distinct proof, and may not
   weaken any assertion or budget.
 
+- 2026-08-18 [pusherv3_3] V4 evidence fixed state staging and passes all
+  scenario assertions at 2.695 ms draw p95, but PM visual acceptance rejects
+  the batch atlas: actual coins became narrow vertical capsules instead of the
+  binding 34x24 ellipse/stack read, and rear cabinet copy is overdrawn by stock.
+  The agent must preserve the measured budget while restoring physical coin
+  aspect, thickness/depth, and intentional cabinet copy placement.
+- 2026-08-18 [crew06_9] Independent verbatim/design review returned four
+  blockers: clean saves still expose semantic ledger keys; the itinerary line
+  lacks a same-period contradiction; the real delivery consumer discards the
+  light-envelope result; and an empty wrong-accusation reroll fabricates a
+  witnessed signal. The agent must prove the actual production paths and may
+  not rebaseline the crew-ignoring golden or fabricate hidden evidence.
+
 ## Work Log
 
 - 2026-08-18 [remainder continuation] PM claimed `pusherv3_3` and `crew06_9`
