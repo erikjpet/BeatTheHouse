@@ -92,7 +92,7 @@ func _run() -> void:
 	var opening_tray_coin_value := 0
 	var feature_tray_count := 0
 	var feature_gutter_count := 0
-	var physically_banked_fragments := 0
+	var physically_banked_fragment_ids: Array[String] = []
 	var drop_rng := root_rng.fork("accepted_inserts")
 	var event_rng := root_rng.fork("physical_events")
 	while player_accepted < accepted_target:
@@ -116,7 +116,7 @@ func _run() -> void:
 			opening_tray_coin_count += int(relief_accounting["opening_coin_count"])
 			opening_tray_coin_value += int(relief_accounting["opening_coin_value"])
 			feature_tray_count += int(relief_accounting["feature_count"])
-			physically_banked_fragments += int(relief.get("fragments_banked", 0))
+			_append_unique_strings(physically_banked_fragment_ids, relief.get("fragment_ids", []))
 			feature_gutter_count += int(relief.get("feature_gutter_count", 0))
 			continue
 		var period_ticks := maxi(1, int((definition.get("stroke", {}) as Dictionary).get("period_ticks", 240)))
@@ -128,7 +128,7 @@ func _run() -> void:
 		var advanced := _advance_and_consume(game, machine, event_rng, POLICY_TICKS)
 		progression_ticks += POLICY_TICKS
 		invariant_failures += 0 if bool(advanced.get("invariants_ok", false)) else 1
-		physically_banked_fragments += int(advanced.get("fragments_banked", 0))
+		_append_unique_strings(physically_banked_fragment_ids, advanced.get("fragment_ids", []))
 		feature_gutter_count += int(advanced.get("feature_gutter_count", 0))
 		if player_accepted % 128 == 0:
 			var accounting := _drain_tray(simulation, game)
@@ -149,16 +149,34 @@ func _run() -> void:
 	var gutter_stock := _ledger_kind_counts(simulation.get("gutter_ledger", []))
 	var ending_origin := _body_origin_counts(simulation.get("bodies", []))
 	var gutter_origin := _ledger_origin_counts(simulation.get("gutter_ledger", []))
+	var feature_insert_count := int(simulation.get("accepted_inserts", 0)) - player_accepted
+	var origin_by_kind_reconciliation := {
+		"paid_coin": {"origin": player_accepted, "terminal": base_tray_coin_count + int(ending_origin.get("paid_coin", 0)) + int(gutter_origin.get("paid_coin", 0))},
+		"opening_coin": {"origin": opening_origin, "terminal": opening_tray_coin_count + int(ending_origin.get("opening_coin", 0)) + int(gutter_origin.get("opening_coin", 0))},
+		"feature": {"origin": feature_insert_count, "terminal": feature_tray_count + int(ending_origin.get("feature", 0)) + int(gutter_origin.get("feature", 0))},
+	}
+	var origin_by_kind_ok := true
+	for reconciliation_value in origin_by_kind_reconciliation.values():
+		var reconciliation: Dictionary = reconciliation_value
+		origin_by_kind_ok = origin_by_kind_ok and int(reconciliation.get("origin", -1)) == int(reconciliation.get("terminal", -2))
 	var origin := int(simulation.get("opening_body_count", 0)) + int(simulation.get("accepted_inserts", 0))
 	var terminal := (simulation.get("bodies", []) as Array).size() + (simulation.get("tray_ledger", []) as Array).size() + (simulation.get("gutter_ledger", []) as Array).size() + int(simulation.get("collected_count", 0))
 	var drop_cost := maxi(1, int((definition.get("coins", {}) as Dictionary).get("drop_cost", 1)))
 	var wagered := player_accepted * drop_cost
 	var physical_roi := float(base_tray_coin_value) / float(maxi(1, wagered))
 	var credited_roi := float(ridge_credited_coin_value) / float(maxi(1, wagered))
+	var ending_paid_coin_value := int(ending_origin.get("paid_coin", 0)) * int((definition.get("coins", {}) as Dictionary).get("value", 1))
+	var stock_adjusted_roi_upper := float(base_tray_coin_value + ending_paid_coin_value) / float(maxi(1, wagered))
+	var vault_banked_before_options := int(variation_state.get("banked_fragments", 0)) if machine_id == "vault_drop" else 0
+	var vault_fragment_reconciled := machine_id != "vault_drop" or vault_banked_before_options == physically_banked_fragment_ids.size()
+	if not vault_fragment_reconciled:
+		_fail("Vault physically banked fragment IDs did not reconcile to production state (%d IDs, %d banked)." % [physically_banked_fragment_ids.size(), vault_banked_before_options])
+	var vault_option_sampling := _resolve_banked_vault_options(variation_state, variation_config, physically_banked_fragment_ids) if machine_id == "vault_drop" else {}
+	var vault_option_balance_reconciled := machine_id != "vault_drop" or bool(vault_option_sampling.get("token_balance_reconciled", false))
 	var coverage_ok := phase_bins.all(func(value): return int(value) > 0) and apparatus_counts.values().all(func(value): return int(value) > 0)
 	var conservation_ok := origin == terminal
 	var report := {
-		"schema": "coin_pusher_v3_physical_ev_shard_v1",
+		"schema": "coin_pusher_v3_physical_ev_shard_v2",
 		"machine_id": machine_id,
 		"shard_index": shard_index,
 		"seed": seed,
@@ -180,7 +198,7 @@ func _run() -> void:
 			"opening_stock_by_kind": opening_stock,
 			"solver_accepted_inserts_including_features": int(simulation.get("accepted_inserts", 0)),
 			"player_accepted_inserts": player_accepted,
-			"feature_accepted_inserts": int(simulation.get("accepted_inserts", 0)) - player_accepted,
+			"feature_accepted_inserts": feature_insert_count,
 			"ending_active_by_kind": ending_stock,
 			"ending_active_by_origin": ending_origin,
 			"ending_active_count": (simulation.get("bodies", []) as Array).size(),
@@ -192,21 +210,31 @@ func _run() -> void:
 			"origin_count": origin,
 			"terminal_count": terminal,
 			"conservation_ok": conservation_ok,
+			"origin_by_kind_reconciliation": origin_by_kind_reconciliation,
+			"origin_by_kind_reconciliation_ok": origin_by_kind_ok,
 		},
 		"economy": {
 			"wagered": wagered,
 			"base_physical_coin_tray_count": base_tray_coin_count,
 			"base_physical_coin_tray_value": base_tray_coin_value,
 			"base_physical_coin_to_tray_roi": physical_roi,
+			"ending_active_paid_coin_value": ending_paid_coin_value,
+			"ending_active_paid_coin_count": int(ending_origin.get("paid_coin", 0)),
+			"paid_gutter_coin_count_terminal_lost": int(gutter_origin.get("paid_coin", 0)),
+			"stock_adjusted_physical_roi_interval": [physical_roi, stock_adjusted_roi_upper],
+			"stock_interval_method": "lower is paid-origin tray value; upper adds every unresolved active paid-origin coin; paid gutter remains terminal loss",
 			"opening_coin_tray_count_excluded_from_roi": opening_tray_coin_count,
 			"opening_coin_tray_value_excluded_from_roi": opening_tray_coin_value,
 			"ridge_credited_coin_tray_value": ridge_credited_coin_value,
 			"ridge_credited_roi": credited_roi,
 			"feature_tray_count_excluded_from_base_roi": feature_tray_count,
 			"feature_gutter_count": feature_gutter_count,
-			"physically_banked_fragments_excluded_from_base_roi": physically_banked_fragments,
-			"vault_banked_fragments_state": int(variation_state.get("banked_fragments", 0)) if machine_id == "vault_drop" else 0,
-			"vault_option_value_basis": variation_config.get("documented_ev_by_meter", {}) if machine_id == "vault_drop" else {},
+			"physically_banked_fragments_excluded_from_base_roi": physically_banked_fragment_ids.size(),
+			"physically_banked_fragment_ids": physically_banked_fragment_ids,
+			"vault_banked_fragments_before_options": vault_banked_before_options,
+			"vault_banked_fragments_after_options": int(variation_state.get("banked_fragments", 0)) if machine_id == "vault_drop" else 0,
+			"vault_option_value_sampling": vault_option_sampling,
+			"vault_option_value_sampling_sha256": _sha256(vault_option_sampling) if machine_id == "vault_drop" else "",
 			"vault_option_value_merged_into_physical_roi": false,
 			"documented_physical_roi_band": (definition.get("economy", {}) as Dictionary).get("documented_ev_band", []),
 		},
@@ -215,9 +243,12 @@ func _run() -> void:
 			"real_solver_progression": progression_ticks > player_accepted,
 			"coverage_complete": coverage_ok,
 			"conservation": conservation_ok,
+			"origin_by_kind_reconciliation": origin_by_kind_ok,
 			"invariants": invariant_failures == 0,
 			"no_favorable_reset": true,
 			"native_solver": Solver.last_step_backend_for_test() == "native_v3",
+			"vault_physical_fragment_ids_reconciled": vault_fragment_reconciled,
+			"vault_option_token_balance_reconciled": vault_option_balance_reconciled,
 		},
 		"elapsed_seconds": float(Time.get_ticks_usec() - started_usec) / 1000000.0,
 	}
@@ -225,12 +256,117 @@ func _run() -> void:
 	_finish(report)
 
 
+func _resolve_banked_vault_options(state: Dictionary, config: Dictionary, physical_ids: Array[String]) -> Dictionary:
+	var banked_before := int(state.get("banked_fragments", 0))
+	var tokens: Array[String] = physical_ids.duplicate()
+	var outcomes: Array = []
+	var spent_tokens: Array[String] = []
+	var refund_tokens: Array[String] = []
+	var cash_total := 0
+	var fixed_cash_total := 0
+	var progressive_cash_total := 0
+	var item_ids: Array[String] = []
+	var refund_count := 0
+	var reset_count := 0
+	var jackpot_count := 0
+	var kind_counts := {}
+	var cursor := 0
+	while cursor < tokens.size():
+		var cells: Array = state.get("vault_cells", []) if typeof(state.get("vault_cells", [])) == TYPE_ARRAY else []
+		var unopened: Array[int] = []
+		for cell_index in range(cells.size()):
+			if typeof(cells[cell_index]) == TYPE_DICTIONARY and not bool((cells[cell_index] as Dictionary).get("opened", false)):
+				unopened.append(cell_index)
+		if unopened.is_empty() or int(state.get("banked_fragments", 0)) <= 0:
+			break
+		if not bool(state.get("vault_round_active", false)) and not bool(Vault.start_round(state).get("ok", false)):
+			break
+		var token_id := tokens[cursor]
+		var selected_cell := unopened[cursor % unopened.size()]
+		var meter_before := int(state.get("meter_value", 0))
+		var opened := Vault.open_cell(state, selected_cell)
+		if not bool(opened.get("ok", false)):
+			break
+		cursor += 1
+		spent_tokens.append(token_id)
+		var kind := str(opened.get("kind", ""))
+		var cash := int(opened.get("cash", 0))
+		var refunded := int(opened.get("fragment_refund", 0))
+		kind_counts[kind] = int(kind_counts.get(kind, 0)) + 1
+		cash_total += cash
+		if bool(opened.get("jackpot", false)):
+			progressive_cash_total += cash
+			jackpot_count += 1
+		else:
+			fixed_cash_total += cash
+		if bool(opened.get("reset", false)):
+			reset_count += 1
+		for item_id in opened.get("items", []):
+			item_ids.append(str(item_id))
+		for refund_index in range(refunded):
+			var refund_id := "%s/refund/%d" % [token_id, refund_index]
+			tokens.append(refund_id)
+			refund_tokens.append(refund_id)
+		refund_count += refunded
+		if bool(opened.get("reset", false)) or bool(opened.get("jackpot", false)):
+			state["meter_value"] = int(config.get("progressive_floor", 120))
+		outcomes.append({
+			"source_token_id": token_id,
+			"source_is_physically_banked": physical_ids.has(token_id),
+			"cell_index": selected_cell,
+			"kind": kind,
+			"cash": cash,
+			"items": (opened.get("items", []) as Array).duplicate(),
+			"fragment_refund": refunded,
+			"reset": bool(opened.get("reset", false)),
+			"jackpot": bool(opened.get("jackpot", false)),
+			"progressive_meter_before": meter_before,
+			"progressive_meter_after": int(state.get("meter_value", 0)),
+		})
+	var unspent_tokens := tokens.slice(cursor)
+	var unspent_physical_ids: Array[String] = []
+	var unspent_refund_ids: Array[String] = []
+	for token_value in unspent_tokens:
+		var unspent_id := str(token_value)
+		if physical_ids.has(unspent_id):
+			unspent_physical_ids.append(unspent_id)
+		else:
+			unspent_refund_ids.append(unspent_id)
+	var token_balance_reconciled := unspent_tokens.size() == int(state.get("banked_fragments", 0))
+	return {
+		"method": "production_state_physically_banked_fragment_chain_v1",
+		"selection_policy": "event-order tokens; cell index is spent ordinal modulo currently unopened cells",
+		"physical_fragment_ids": physical_ids,
+		"physical_fragment_count": physical_ids.size(),
+		"production_banked_before": banked_before,
+		"physical_id_count_reconciled": banked_before == physical_ids.size(),
+		"spent_token_ids": spent_tokens,
+		"refund_token_ids": refund_tokens,
+		"unspent_token_ids": unspent_tokens,
+		"unspent_physical_fragment_ids": unspent_physical_ids,
+		"unspent_refund_token_ids": unspent_refund_ids,
+		"production_banked_after": int(state.get("banked_fragments", 0)),
+		"token_balance_reconciled": token_balance_reconciled,
+		"outcomes": outcomes,
+		"kind_counts": kind_counts,
+		"cash_total": cash_total,
+		"measured_cash_option_value_per_physically_banked_fragment": float(cash_total) / float(maxi(1, physical_ids.size())),
+		"fixed_cash_total": fixed_cash_total,
+		"progressive_cash_total": progressive_cash_total,
+		"item_ids": item_ids,
+		"fragment_refund_count": refund_count,
+		"reset_count": reset_count,
+		"jackpot_count": jackpot_count,
+		"merged_into_coin_to_tray_roi": false,
+	}
+
+
 func _advance_and_consume(game, machine: Dictionary, rng: RngStream, ticks: int) -> Dictionary:
 	var simulation: Dictionary = machine["simulation"]
 	var stepped := Solver.step_ticks(simulation, {"motor_enabled": true}, ticks)
 	var events: Array = stepped.get("events", []) if typeof(stepped.get("events", [])) == TYPE_ARRAY else []
 	game.call("_consume_physics_events", null, machine, events, rng)
-	var fragments_banked := 0
+	var fragment_ids: Array[String] = []
 	var feature_gutter_count := 0
 	for event_value in events:
 		if typeof(event_value) != TYPE_DICTIONARY:
@@ -239,11 +375,23 @@ func _advance_and_consume(game, machine: Dictionary, rng: RngStream, ticks: int)
 		var body_kind := str(event.get("body_kind", ""))
 		var outcome := str(event.get("outcome", ""))
 		if body_kind == "fragment" and outcome == "tray":
-			fragments_banked += 1
+			var metadata: Dictionary = event.get("metadata", {}) if typeof(event.get("metadata", {})) == TYPE_DICTIONARY else {}
+			var fragment_id := str(metadata.get("feature_id", ""))
+			if not fragment_id.is_empty() and not fragment_ids.has(fragment_id):
+				fragment_ids.append(fragment_id)
 		if body_kind != "coin" and outcome == "gutter":
 			feature_gutter_count += 1
 	var invariants: Dictionary = stepped.get("invariants", {}) if typeof(stepped.get("invariants", {})) == TYPE_DICTIONARY else {}
-	return {"invariants_ok": bool(invariants.get("energy_ok", false)) and bool(invariants.get("conservation_ok", false)), "fragments_banked": fragments_banked, "feature_gutter_count": feature_gutter_count}
+	return {"invariants_ok": bool(invariants.get("energy_ok", false)) and bool(invariants.get("conservation_ok", false)), "fragment_ids": fragment_ids, "feature_gutter_count": feature_gutter_count}
+
+
+func _append_unique_strings(target: Array[String], values: Variant) -> void:
+	if typeof(values) != TYPE_ARRAY:
+		return
+	for value in values:
+		var text := str(value)
+		if not text.is_empty() and not target.has(text):
+			target.append(text)
 
 
 func _drain_tray(simulation: Dictionary, game) -> Dictionary:
@@ -298,7 +446,7 @@ func _policy_descriptor(definition: Dictionary) -> Dictionary:
 		"hole_selection": "accepted_index_mod_hole_count",
 		"ceiling_behavior": "refused coin returned; same persistent machine advances and retries",
 		"collection": "tray collected every 128 accepted drops; collection does not advance or reset physics",
-		"tail_progression": "none beyond the same policy ticks following the final accepted insert",
+		"tail_progression": "no favorable tail; unresolved active paid stock is reported as a conservative identified ROI interval",
 		"apparatus_type": str((definition.get("apparatus", {}) as Dictionary).get("type", "")),
 	}
 
