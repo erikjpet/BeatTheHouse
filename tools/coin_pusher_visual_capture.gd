@@ -153,6 +153,8 @@ func _capture_surface(file_name: String, capture_id: String, expected_reduce_mot
 		or (int(runtime.get("surface_animation_redraw_count", -1)) == 0 \
 		and not bool(runtime.get("surface_continuous_redraw_active", true)))
 	var valid := str(state.get("surface_renderer", "")) == "coin_pusher" \
+		and str(state.get("surface_life", "")) == "coin_pusher_v3_alive_cabinet" \
+		and bool(state.get("coin_pusher_alive_cabinet", false)) \
 		and bodies.size() >= 24 \
 		and _distinct_axis_count(bodies, "x") > 5 \
 		and _distinct_axis_count(bodies, "y") > 6 \
@@ -161,7 +163,7 @@ func _capture_surface(file_name: String, capture_id: String, expected_reduce_mot
 		and solver_advanced \
 		and reduced_schedule_valid
 	if not valid:
-		_fail("Quarter Falls Stage-2 live surface did not match %s expectations." % capture_id)
+		_fail("Quarter Falls Stage-3 alive cabinet did not match %s expectations." % capture_id)
 	var saved := await _save_viewport(file_name)
 	captures.append({
 		"id": capture_id,

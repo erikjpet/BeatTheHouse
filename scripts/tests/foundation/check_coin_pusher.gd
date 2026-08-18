@@ -10,6 +10,8 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 		return
 	var machine_definition: Dictionary = game_definition.get("coin_pusher_machine", {}) if typeof(game_definition.get("coin_pusher_machine", {})) == TYPE_DICTIONARY else {}
 	_check_pusher_v3_machine_data(machine_definition, failures)
+	_check_pusher_v3_alive_cabinet(library, machine_definition, failures)
+	_check_pusher_v3_presentation_view(machine_definition, failures)
 	_check_pusher_v3_rejected_mechanics_deleted(failures)
 	_check_pusher_v3_landing_skill(machine_definition, failures)
 	_check_pusher_v3_nestle(machine_definition, failures)
@@ -25,6 +27,104 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_v2_production_migration(library, failures)
 	_check_pusher_v3_generated_rider_production(library, failures)
 	_check_pusher_v3_solver_performance(machine_definition, failures)
+
+
+func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary, failures: Array) -> void:
+	var cabinet: Dictionary = machine.get("cabinet", {}) if typeof(machine.get("cabinet", {})) == TYPE_DICTIONARY else {}
+	var variations: Dictionary = cabinet.get("variations", {}) if typeof(cabinet.get("variations", {})) == TYPE_DICTIONARY else {}
+	var identities := [str(cabinet.get("identity", ""))]
+	for variation_id in ["jackpot_ridge", "vault_drop"]:
+		var variant: Dictionary = variations.get(variation_id, {}) if typeof(variations.get(variation_id, {})) == TYPE_DICTIONARY else {}
+		identities.append(str(variant.get("identity", "")))
+		if str(variant.get("marquee", "")).is_empty() or str(variant.get("palette", "")).is_empty() or str(variant.get("topper_style", "")).is_empty() or (variant.get("colors", {}) as Dictionary).size() < 8:
+			failures.append("Coin Pusher V3 %s cabinet catalog entry is incomplete." % variation_id)
+	if identities != ["quarter_falls", "jackpot_ridge", "vault_drop"] or (cabinet.get("colors", {}) as Dictionary).size() < 8:
+		failures.append("Coin Pusher V3 cabinet catalog lost one of the three authored identities: %s." % JSON.stringify(identities))
+	var game_definition := library.game("coin_pusher")
+	var module_script: Script = load(str(game_definition.get("module_path", "")))
+	if module_script == null:
+		failures.append("Coin Pusher V3 alive-cabinet test could not load the production module.")
+		return
+	var game: GameModule = module_script.new()
+	game.setup(game_definition, library)
+	var run_state := RunState.new()
+	run_state.start_new("PUSHER-V3-CABINET", RunState.standard_challenge("PUSHER-V3-CABINET"))
+	var environment := {"id": "pusher_v3_cabinet_fixture", "world_node_id": "pusher_v3_cabinet_fixture", "scenario_game_modifiers": {"coin_pusher": {"variation_id": "quarter_falls"}}, "game_states": {}}
+	var generated: Dictionary = game.generate_environment_state(run_state, environment, _pusher_v3_rng("PUSHER-V3-CABINET-GENERATION"))
+	environment["game_states"] = {"coin_pusher": generated}
+	game.enter(run_state, environment)
+	var initial := game.surface_state(run_state, environment, {})
+	var signature: Dictionary = game.renderer_signature(initial)
+	var audio: Dictionary = initial.get("surface_audio", {}) if typeof(initial.get("surface_audio", {})) == TYPE_DICTIONARY else {}
+	if str(initial.get("surface_life", "")) != "coin_pusher_v3_alive_cabinet" or not bool(initial.get("coin_pusher_alive_cabinet", false)) or bool(initial.get("coin_pusher_v3_headless_placeholder", false)):
+		failures.append("Coin Pusher V3 production surface did not replace the Stage-2 placeholder with the alive cabinet.")
+	if float(signature.get("rear_width_factor", 0.0)) != 0.78 or float(signature.get("coin_rx", 0.0)) != 17.0 or float(signature.get("coin_ry", 0.0)) != 12.0 or float(signature.get("z_layer_offset", 0.0)) != 11.0 or int(signature.get("rotation_frames", 0)) != 4 or not bool(signature.get("depth_sorted", false)) or int(signature.get("batched_nodes", -1)) != 1 or int(signature.get("per_coin_nodes", -1)) != 0:
+		failures.append("Coin Pusher V3 projection drifted from the binding 0.78/17x12/11px/four-frame batched contract: %s." % JSON.stringify(signature))
+	var renderer = load("res://scripts/games/coin_pusher/coin_pusher_renderer.gd").new()
+	var crossing_bodies: Array = [
+		{"id": "rear", "y": 50000, "z": 0},
+		{"id": "middle", "y": 40000, "z": 0},
+		{"id": "front", "y": 30000, "z": 0},
+	]
+	var crossing_before: Array = renderer.debug_batch_body_order_for_test(crossing_bodies, 77)
+	var cache_before: String = renderer.debug_depth_cache_key_for_test()
+	(crossing_bodies[0] as Dictionary)["y"] = 20000
+	(crossing_bodies[1] as Dictionary)["y"] = 45000
+	var crossing_after: Array = renderer.debug_batch_body_order_for_test(crossing_bodies, 78)
+	var cache_after: String = renderer.debug_depth_cache_key_for_test()
+	if crossing_before != ["rear", "middle", "front"] or crossing_after != ["middle", "front", "rear"] or cache_before == cache_after:
+		failures.append("Coin Pusher V3 exact batch order/cache did not invalidate when overlapping bodies crossed on a new presentation view: before=%s after=%s." % [JSON.stringify(crossing_before), JSON.stringify(crossing_after)])
+	if str(audio.get("profile_id", "")) != "coin_pusher" or str((audio.get("state_sync", {}) as Dictionary).get("method", "")) != "coin_pusher_state":
+		failures.append("Coin Pusher V3 alive cabinet did not bind its continuous physics audio profile.")
+	var sfx_script: Script = load("res://scripts/ui/sfx_player.gd")
+	var sfx: Node = sfx_script.new()
+	var audio_schedule: Array = sfx.debug_coin_pusher_event_schedule({
+		"coin_pusher_audio_events": [
+			{"kind": "impact", "intensity_milli": 500, "metadata": {"fall_height_milli": 2400, "stack_depth": 2, "material": "coin_on_coin"}},
+			{"kind": "mass_slide", "intensity_milli": 600, "metadata": {"moving_count": 12}},
+			{"kind": "plate_clink", "intensity_milli": 420, "metadata": {}},
+			{"kind": "tray_landing", "intensity_milli": 700, "metadata": {"group_count": 4}},
+			{"kind": "gutter_loss", "intensity_milli": 520, "metadata": {}},
+		],
+	})
+	var audio_cues: Array = []
+	for entry_value in audio_schedule:
+		audio_cues.append(str((entry_value as Dictionary).get("cue", "")))
+	sfx.queue_free()
+	for required_cue in ["coin_pusher_coin_stack", "coin_pusher_slide", "coin_pusher_coin_metal", "coin_pusher_tray", "coin_pusher_gutter"]:
+		if not audio_cues.has(required_cue):
+			failures.append("Coin Pusher V3 physics-audio event map omitted %s: %s." % [required_cue, JSON.stringify(audio_schedule)])
+	var first_patch: Dictionary = game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": 1}, initial)
+	var second_patch: Dictionary = game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": 35}, first_patch)
+	var previous: Array = second_patch.get("coin_pusher_previous_bodies", []) if typeof(second_patch.get("coin_pusher_previous_bodies", [])) == TYPE_ARRAY else []
+	var current: Array = second_patch.get("coin_pusher_bodies", []) if typeof(second_patch.get("coin_pusher_bodies", [])) == TYPE_ARRAY else []
+	if previous.size() != current.size() or int(second_patch.get("coin_pusher_ticks_advanced", 0)) <= 0 or float(second_patch.get("coin_pusher_interpolation_alpha", -1.0)) < 0.0 or float(second_patch.get("coin_pusher_interpolation_alpha", 2.0)) > 1.0:
+		failures.append("Coin Pusher V3 live cabinet did not publish consecutive exact tick views and a bounded interpolation alpha.")
+	var actions: Array = signature.get("hardware_actions", []) if typeof(signature.get("hardware_actions", [])) == TYPE_ARRAY else []
+	for required in ["coin_pusher_carriage_drag", "coin_pusher_drop", "coin_pusher_skill_stop", "coin_pusher_collect"]:
+		if not actions.has(required):
+			failures.append("Coin Pusher V3 cabinet hardware omitted required interaction %s." % required)
+
+
+func _check_pusher_v3_presentation_view(machine: Dictionary, failures: Array) -> void:
+	var simulation := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-PRESENTATION-VIEW"), machine, 24)
+	CoinPusherSolverScript.step_ticks(simulation, {"motor_enabled": true}, 36)
+	var canonical_before: Dictionary = CoinPusherSolverScript.canonical_digest(simulation)
+	var canonical_views: Array = CoinPusherSolverScript.body_views(simulation)
+	var presentation_views: Array = CoinPusherLiveSessionScript.presentation_body_views_for_test(simulation)
+	var canonical_after: Dictionary = CoinPusherSolverScript.canonical_digest(simulation)
+	if presentation_views.size() != canonical_views.size():
+		failures.append("Coin Pusher V3 lean public presentation view lost bodies: canonical=%d presentation=%d." % [canonical_views.size(), presentation_views.size()])
+		return
+	for body_index in range(canonical_views.size()):
+		var canonical_body: Dictionary = canonical_views[body_index]
+		var presentation_body: Dictionary = presentation_views[body_index]
+		for field in ["id", "kind", "x", "y", "z", "rest_state", "support_kind"]:
+			if presentation_body.get(field) != canonical_body.get(field):
+				failures.append("Coin Pusher V3 lean public presentation view drifted at body %d field %s: canonical=%s presentation=%s." % [body_index, field, canonical_body.get(field), presentation_body.get(field)])
+				return
+	if canonical_after != canonical_before:
+		failures.append("Coin Pusher V3 lean public presentation projection mutated canonical solver state/outcomes.")
 
 
 func _check_pusher_v3_machine_data(machine: Dictionary, failures: Array) -> void:
@@ -70,8 +170,8 @@ func _check_pusher_v3_rejected_mechanics_deleted(failures: Array) -> void:
 		if solver_source.contains(rejected) or game_source.contains(rejected) or native_source.contains(rejected) or data_source.contains(rejected):
 			failures.append("Coin Pusher V3 retained rejected mechanic token: %s" % rejected)
 	if game_source.contains("CABINET CONTROLS OFFLINE") or game_source.contains("NO COIN ACCEPTED") \
-			or not game_source.contains("MOVE THE RAIL · TIME THE DROP · COLLECT THE TRAY"):
-		failures.append("Coin Pusher V3 temporary live surface still communicates disabled Stage-1 controls.")
+			or game_source.contains("_draw_v3_headless_placeholder"):
+		failures.append("Coin Pusher V3 retained temporary Stage-1/Stage-2 cabinet presentation.")
 	for rejected_native in ["ACTION_TICKS", "std::sqrt", "upper_locked", "lower_locked"]:
 		if native_source.contains(rejected_native):
 			failures.append("Coin Pusher V3 native outcome path retained rejected mechanic token: %s" % rejected_native)
