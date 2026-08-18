@@ -6800,18 +6800,27 @@ func crew_job_board_offers() -> Array:
 	return result
 
 
-func crew_job_board_choices() -> Array:
+func crew_job_board_choices(payload: Dictionary = {}) -> Array:
 	var result: Array = []
+	var flavor_lines := _string_array(payload.get("flavor_lines", []))
+	var flavor_line := ""
+	if not flavor_lines.is_empty():
+		flavor_line = str(flavor_lines[posmod(seed_value + _crew_action_index(), flavor_lines.size())])
 	for offer_value in crew_job_board_offers():
 		var offer: Dictionary = offer_value
 		var member_name := str(offer.get("member_id", "crew")).trim_prefix("crew_").capitalize()
+		var detail := "%s%s · %d actions · $%d / trust %+d." % [
+			str(offer.get("kind", "job")).replace("_", " ").capitalize(),
+			" · here tonight",
+			int(offer.get("expiry_in_actions", 1)), int(offer.get("cash", 0)), int(offer.get("trust", 0))]
+		# The event surface has no board-level subtitle, so project the rotating
+		# board note once on the first row instead of repeating it for every job.
+		if not flavor_line.is_empty() and result.is_empty():
+			detail = "%s\n%s" % [flavor_line, detail]
 		result.append({
 			"id": "accept_%s" % str(offer.get("definition_id", "")),
 			"label": "%s · %s" % [str(offer.get("label", "Work")), member_name],
-			"text": "%s%s · %d actions · $%d / trust %+d." % [
-				str(offer.get("kind", "job")).replace("_", " ").capitalize(),
-				" · here tonight",
-				int(offer.get("expiry_in_actions", 1)), int(offer.get("cash", 0)), int(offer.get("trust", 0))],
+			"text": detail,
 			"consequences": {"event_hooks": [{"type": "crew_job_accept", "definition_id": str(offer.get("definition_id", ""))}]},
 		})
 	result.append({"id": "leave", "label": "Leave the board", "text": "No promise made. No grievance written.", "consequences": {}})

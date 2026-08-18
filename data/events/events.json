@@ -4509,7 +4509,12 @@
   {
     "id": "crew_job_board", "display_name": "Job Board", "type": "crew", "interaction_mode": "interactable", "scopes": ["crew"],
     "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "Pinned work, real places, and clocks that keep moving.", "trigger": {"type": "manual"},
-    "payload": {"kind": "crew_job_board", "summary": "Take a pinned job, or leave clean.", "choices": []}
+    "payload": {"kind": "crew_job_board", "summary": "Take a pinned job, or leave clean.", "choices": [], "flavor_lines": [
+      "Fresh pinholes. Somebody changed the board.",
+      "Old paper underneath. Tonight's work on top.",
+      "Different handwriting. Same narrow promises.",
+      "The good notes move before the bad ink dries."
+    ]}
   },
   {
     "id": "crew_planning_table", "display_name": "Planning Table", "type": "crew", "interaction_mode": "interactable", "scopes": ["crew"],
