@@ -283,7 +283,9 @@ What happens then is the owner's, not an agent's:
   score the authoritative Grand Casino chip flow, consume actual finite
   crew06_7 play state as lifelines, preserve its Rourke-attention outcome path,
   and include the compressed cage/interview beat before clean walk or hot
-  chase. None may be represented by fixture-only result flags or a parallel
+  chase. A clean walk must also keep zero pursuit across later action
+  boundaries, not merely start at zero before the generic getaway model adds
+  pressure. None may be represented by fixture-only result flags or a parallel
   heist currency.
 
 - 2026-08-17 [pusherv3_2] PM production-lifecycle review returned the first
