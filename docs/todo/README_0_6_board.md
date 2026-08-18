@@ -1491,6 +1491,19 @@ What happens then is the owner's, not an agent's:
   seam (which otherwise copies `outcome_band` verbatim). Ordinary verb/timing
   uses of “turn” are unrelated and are not a mass-rename target.
 
+- 2026-08-18 [pusherv3_3] PM player-eye acceptance returned the first cabinet
+  pass for a duplicate surface `LEAVE` and fascia controls that read too much
+  like an abstract console. The implementation now keeps only the host `LEAVE`,
+  presents DROP as a metal coin bezel/slit, NUDGE as a bolted cabinet handle,
+  and COLLECT as a recessed state-sized tray heap; final acceptance still
+  requires all six physical feel captures plus before/after tray evidence.
+- 2026-08-18 [crew06_9] Implementation checkpoint reports no contract/code
+  contradiction. The chosen privacy seam packs hidden heist state under neutral
+  compact keys, emits opaque new-save grievance/failure rows while retaining
+  legacy-load support, and carries only neutral outcome/scar codes outside the
+  ending-copy boundary. PM acceptance will independently verify these claims
+  across actions, story, save, report, profile persistence, and broad seeds.
+
 ## Work Log
 
 - 2026-08-18 [remainder continuation] PM claimed `pusherv3_3` and `crew06_9`
