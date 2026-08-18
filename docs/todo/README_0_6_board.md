@@ -159,7 +159,7 @@ each stage builds on the last.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | DONE | rework06_2 (landed) | pusherv3_2 | PM:Codex | 2026-08-17 | 2026-08-17 | Owner ruled complete after PM verification of Amendment 6.1 behavior, native 300-body performance, exact Windows/Web parity, determinism, and all pusher-owning gates; integrated at `a6e36d2f`. |
 | pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | DONE | pusherv3_1 | pusherv3_3 | PM:Codex/sub:pusher-live | 2026-08-17 | 2026-08-18 | PM verified continuous 60 Hz loop, deterministic trace, tray-only collection, compact persistence/migration, motor-on exit settle, continuous rail drag, exact Windows/Web parity, performance, and all combined gates. |
-| pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | TODO | pusherv3_2 | pusherv3_4 | | | | Full alive cabinet at slot-renderer parity + physics-driven audio + stacking-visible projection. Feel captures judged as a player. |
+| pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | IN_PROGRESS | pusherv3_2 | pusherv3_4 | PM:Codex/sub:pusher-cabinet | 2026-08-18 | | PM-orchestrated isolated execution; slot-parity cabinet, stacked live projection, physics audio, and player-eye feel captures. |
 | pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | TODO | pusherv3_3 | coin pusher closure | | | | Ridge (3-hole plinko, physical pucks) + Vault (physical fragments) on the new machine, town/cheat/nudge re-wiring, EV harness by geometry, migration, closure. |
 
 ### Wave D — Crew depth
@@ -170,7 +170,7 @@ each stage builds on the last.
 | crew06_6 | `crew06_6_layer3_jobs_prompt.md` | DONE | crew06_1, env06_4, streets06_1, crew06_5 | crew06_8 | PM:Codex/sub:crew-jobs | 2026-08-17 | 2026-08-17 | PM verified furnished L3, seeded residency, 12 launch jobs across five kinds/all seven members, services, shared Practice Rig progress, save compatibility, and combined Contracts/Systems/UI/determinism/visual gates PASS. |
 | crew06_7 | `crew06_7_coordinated_plays_prompt.md` | DONE | crew06_1, crew06_5 | crew06_8 | PM:Codex/sub:crew-plays | 2026-08-17 | 2026-08-17 | PM verified five explicit coordinated plays, context/presence/rank gates, bounded windows/costs/detection, game seams, save compatibility, sustained heat pressure, and combined release gates PASS. |
 | crew06_8 | `crew06_8_heist_prompt.md` | DONE | crew06_5/6/7, craps06_1, streets06_1, env06_3 | crew06_9 | PM:Codex/sub:crew-heist | 2026-08-17 | 2026-08-18 | PM verified both production heist plans, real delivery/save-load, outcome and abort boundaries, exact shipped-route seams, and final combined gates. |
-| crew06_9 | `crew06_9_the_turn_prompt.md` | TODO | crew06_8, crew06_2, town06_2, crew06_3 | release06_1 | | | | |
+| crew06_9 | `crew06_9_the_turn_prompt.md` | IN_PROGRESS | crew06_8, crew06_2, town06_2, crew06_3 | release06_1 | PM:Codex/sub:crew-turn | 2026-08-18 | | PM-orchestrated isolated execution; hidden resolution, honest clues, confrontation/hedge, and plan-specific failure beats. |
 
 ### Wave E — Narrative + playtest handoff
 
@@ -1483,6 +1483,9 @@ What happens then is the owner's, not an agent's:
 
 ## Work Log
 
+- 2026-08-18 [remainder continuation] PM claimed `pusherv3_3` and `crew06_9`
+  after their serial dependencies closed. Both proceed in isolated worktrees;
+  the board remains PM single-writer and `content06_1` remains owner-blocked.
 - 2026-08-18 [pusherv3_2] PM completed and archived the verified live-machine
   loop. `pusherv3_3` is now unblocked for cabinet presentation, physical audio,
   and player feel without changing the accepted machine mechanics.
