@@ -190,8 +190,8 @@ static func _check_services_and_training(failures: Array) -> void:
 			failures.append("Practice Rig rejected its deterministic target window.")
 	if int(run.narrative_flags.get("craps_setting_street_progress", 0)) != 2 or not bool(run.narrative_flags.get("craps_setting_trained", false)):
 		failures.append("Practice Rig did not grant the shared Street Craps training pool and flag.")
-	if not bool(run.crew_mags_bench_status().get("available", false)) or bool(run.crew_mags_bench_status().get("catalog_ready", true)):
-		failures.append("Mags' bench did not expose its content06_1-owned catalog seam.")
+	if not bool(run.crew_mags_bench_status().get("available", false)) or not bool(run.crew_mags_bench_status().get("catalog_ready", false)):
+		failures.append("Mags' bench did not expose its content06_1 catalog.")
 
 
 static func _check_save_round_trip(failures: Array) -> void:

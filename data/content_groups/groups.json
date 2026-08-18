@@ -174,5 +174,21 @@
 		"default_enabled": true,
 		"game_ids": [],
 		"item_ids": ["numbers_slips"]
+	},
+	{
+		"id": "scenario_souvenirs",
+		"display_name": "Scenario Souvenirs",
+		"description": "Small effects carried out of nights that happened.",
+		"default_enabled": false,
+		"game_ids": [],
+		"item_ids": ["wedding_ribbon_favor", "wake_matchbook", "fight_night_betting_slip", "festival_brass_token", "estate_map_clasp", "convoy_cb_tag", "tour_bus_luggage_tag", "lock_in_door_chit", "delivery_twine", "lotto_queue_number", "boarded_window_nail", "rent_party_hat_pin", "recording_room_tape"]
+	},
+	{
+		"id": "crew_gear",
+		"display_name": "Mags' Bench Gear",
+		"description": "Crew-built upgrades available only through Mags' bench.",
+		"default_enabled": false,
+		"game_ids": [],
+		"item_ids": ["mags_loaded_dice", "mags_tuned_loupe", "mags_lined_sleeve", "mags_shim_kit"]
 	}
 ]

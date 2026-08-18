@@ -3518,7 +3518,7 @@
           "label": "Take the deal",
           "text": "You catch the price before the clerk does.",
           "consequence_summary": "Bankroll +6, heat +1",
-          "consequences": {"bankroll_delta": 6, "suspicion_delta": 1, "flags": {"delivery_day_deal": true}, "resolve_event": true}
+          "consequences": {"bankroll_delta": 6, "suspicion_delta": 1, "inventory_add": ["delivery_twine"], "flags": {"delivery_day_deal": true}, "resolve_event": true}
         },
         {
           "id": "clear_the_aisle",
@@ -3548,7 +3548,7 @@
           "label": "Chase the rumor",
           "text": "The crowd parts with a hot number and your cash.",
           "consequence_summary": "Bankroll -5, heat +2",
-          "consequences": {"bankroll_delta": -5, "suspicion_delta": 2, "flags": {"lotto_jackpot_rumor": true}, "resolve_event": true}
+          "consequences": {"bankroll_delta": -5, "suspicion_delta": 2, "inventory_add": ["lotto_queue_number"], "flags": {"lotto_jackpot_rumor": true}, "resolve_event": true}
         },
         {
           "id": "keep_your_cash",
@@ -3578,7 +3578,7 @@
           "label": "Move the goods",
           "text": "Quick money. The clerk looks away badly.",
           "consequence_summary": "Bankroll +14, heat +6",
-          "consequences": {"bankroll_delta": 14, "suspicion_delta": 6, "flags": {"aftermath_fence_deal": true}, "resolve_event": true}
+          "consequences": {"bankroll_delta": 14, "suspicion_delta": 6, "inventory_add": ["boarded_window_nail"], "flags": {"aftermath_fence_deal": true}, "resolve_event": true}
         },
         {
           "id": "leave_it_cold",
@@ -3819,7 +3819,7 @@
           "label": "Buy the next round",
           "text": "A dead man's shortcut reaches the map.",
           "consequence_summary": "Bankroll -8",
-          "consequences": {"bankroll_delta": -8, "set_next_archetypes": ["back_alley", "motel"], "flags": {"wake_route_story": true}, "resolve_event": true}
+          "consequences": {"bankroll_delta": -8, "inventory_add": ["wake_matchbook"], "set_next_archetypes": ["back_alley", "motel"], "flags": {"wake_route_story": true}, "resolve_event": true}
         },
         {
           "id": "leave_the_stool_empty",
@@ -3851,6 +3851,7 @@
           "consequence_summary": "Checked: win $30 or lose $20",
           "consequences": {
             "resolve_event": true,
+            "inventory_add": ["fight_night_betting_slip"],
             "check": {
               "chance_percent": 50,
               "min_chance": 50,
@@ -3919,7 +3920,7 @@
           "label": "Take the private seat",
           "text": "The stake climbs. The door stays shut.",
           "consequence_summary": "Bankroll -10, heat +2",
-          "consequences": {"bankroll_delta": -10, "suspicion_delta": 2, "flags": {"lock_in_private_seat": true}, "resolve_event": true}
+          "consequences": {"bankroll_delta": -10, "suspicion_delta": 2, "inventory_add": ["lock_in_door_chit"], "flags": {"lock_in_private_seat": true}, "resolve_event": true}
         },
         {
           "id": "stay_by_the_bar",
@@ -3949,7 +3950,7 @@
           "label": "Trade for the route",
           "text": "Switch marks the cheap road and the watched one.",
           "consequence_summary": "Bankroll -4",
-          "consequences": {"bankroll_delta": -4, "set_next_archetypes": ["corner_store", "bar"], "flags": {"switch_convoy_contact": true, "convoy_route_intel": true}, "resolve_event": true}
+          "consequences": {"bankroll_delta": -4, "inventory_add": ["convoy_cb_tag"], "set_next_archetypes": ["corner_store", "bar"], "flags": {"switch_convoy_contact": true, "convoy_route_intel": true}, "resolve_event": true}
         },
         {
           "id": "let_them_roll",
@@ -3979,7 +3980,7 @@
           "label": "Buy before boarding",
           "text": "You catch the odd stock before the rack goes bare.",
           "consequence_summary": "Bankroll -6",
-          "consequences": {"bankroll_delta": -6, "flags": {"tour_bus_regional_stock": true}, "resolve_event": true}
+          "consequences": {"bankroll_delta": -6, "inventory_add": ["tour_bus_luggage_tag"], "flags": {"tour_bus_regional_stock": true}, "resolve_event": true}
         },
         {
           "id": "wait_out_the_rush",
@@ -4080,7 +4081,7 @@
     "id": "scenario_rent_party_hat", "display_name": "The Rent Hat", "type": "social", "interaction_mode": "interactable", "scopes": ["shop"],
     "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "start_summary": "The hat must cover rent before last call.", "trigger": {"type": "manual"},
     "payload": {"summary": "The hat must cover rent before last call.", "choices": [
-      {"id": "cover_a_corner", "label": "Cover a corner", "text": "The band keeps the room. It keeps your face too.", "consequence_summary": "Bankroll -8, heat -2", "consequences": {"bankroll_delta": -8, "suspicion_delta": -2, "flags": {"rent_party_helped": true}, "resolve_event": true}},
+      {"id": "cover_a_corner", "label": "Cover a corner", "text": "The band keeps the room. It keeps your face too.", "consequence_summary": "Bankroll -8, heat -2", "consequences": {"bankroll_delta": -8, "suspicion_delta": -2, "inventory_add": ["rent_party_hat_pin"], "flags": {"rent_party_helped": true}, "resolve_event": true}},
       {"id": "pass_the_hat", "label": "Pass the hat", "text": "The next table carries it farther.", "consequences": {"flags": {"rent_party_witnessed": true}, "resolve_event": true}}
     ]}
   },
@@ -4088,7 +4089,7 @@
     "id": "scenario_recording_night_tape", "display_name": "Tape Rolling", "type": "security", "interaction_mode": "interactable", "scopes": ["shop"],
     "asset_path": "res://assets/art/events/chatty_clerk.png", "icon_key": "band", "environment_prop": "jazz_band", "start_summary": "The engineer watches needles. Staff watch him.", "trigger": {"type": "manual"},
     "payload": {"summary": "The engineer watches needles. Staff watch him.", "choices": [
-      {"id": "use_the_quiet", "label": "Use the quiet", "text": "The floor looks elsewhere for one clean minute.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "flags": {"recording_night_window": true}, "resolve_event": true}},
+      {"id": "use_the_quiet", "label": "Use the quiet", "text": "The floor looks elsewhere for one clean minute.", "consequence_summary": "Heat -3", "consequences": {"suspicion_delta": -3, "inventory_add": ["recording_room_tape"], "flags": {"recording_night_window": true}, "resolve_event": true}},
       {"id": "stay_off_the_tape", "label": "Stay off the tape", "text": "Nothing on the reel belongs to you.", "consequences": {"flags": {"recording_night_passed": true}, "resolve_event": true}}
     ]}
   },
@@ -4120,7 +4121,7 @@
     "id": "scenario_wedding_best_man", "display_name": "The Best Man's Table", "type": "temptation", "interaction_mode": "interactable", "scopes": ["casino"],
     "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "The best man keeps losing with perfect manners.", "trigger": {"type": "manual"},
     "payload": {"summary": "The best man keeps losing with perfect manners.", "choices": [
-      {"id": "cover_one_hand", "label": "Cover one hand", "text": "The wedding owes you one quiet favor.", "consequence_summary": "Bankroll -12", "consequences": {"bankroll_delta": -12, "flags": {"wedding_best_man_favor": true}, "resolve_event": true}},
+      {"id": "cover_one_hand", "label": "Cover one hand", "text": "The wedding owes you one quiet favor.", "consequence_summary": "Bankroll -12", "consequences": {"bankroll_delta": -12, "inventory_add": ["wedding_ribbon_favor"], "flags": {"wedding_best_man_favor": true}, "resolve_event": true}},
       {"id": "leave_him_smiling", "label": "Leave him smiling", "text": "The open bar handles the next loss.", "consequences": {"flags": {"wedding_best_man_passed": true}, "resolve_event": true}}
     ]}
   },
@@ -4168,7 +4169,7 @@
     "id": "scenario_festival_lucky_pitch", "display_name": "Lucky's Pitch", "type": "social", "interaction_mode": "interactable", "scopes": ["recovery"],
     "asset_path": "res://assets/art/events/rowdy_regular.png", "icon_key": "rowdy_regular", "environment_prop": "rowdy_patron", "start_summary": "Lucky works the stalls like a short road.", "trigger": {"type": "manual"},
     "payload": {"summary": "Lucky works the stalls like a short road.", "choices": [
-      {"id": "work_one_stall", "label": "Work one stall", "text": "Lucky learns you can move before a crowd closes.", "consequence_summary": "Bankroll +8, heat +2", "consequences": {"bankroll_delta": 8, "suspicion_delta": 2, "flags": {"lucky_festival_contact": true, "lucky_recruitment_anchor_seen": true}, "resolve_event": true}},
+      {"id": "work_one_stall", "label": "Work one stall", "text": "Lucky learns you can move before a crowd closes.", "consequence_summary": "Bankroll +8, heat +2", "consequences": {"bankroll_delta": 8, "suspicion_delta": 2, "inventory_add": ["festival_brass_token"], "flags": {"lucky_festival_contact": true, "lucky_recruitment_anchor_seen": true}, "resolve_event": true}},
       {"id": "watch_the_pitch", "label": "Watch the pitch", "text": "The route is hidden inside the patter.", "consequences": {"flags": {"lucky_festival_observed": true}, "resolve_event": true}}
     ]}
   },
@@ -4176,7 +4177,7 @@
     "id": "scenario_estate_lot_provenance", "display_name": "One Owner", "type": "discovery", "interaction_mode": "interactable", "scopes": ["shop"],
     "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "trunk_offer", "environment_prop": "trunk_offer", "start_summary": "Sal knows where the lot came from. Mostly.", "trigger": {"type": "manual"},
     "payload": {"summary": "Sal knows where the lot came from. Mostly.", "choices": [
-      {"id": "ask_about_the_lot", "label": "Ask about the lot", "text": "Two pieces belong to jobs not posted yet.", "consequences": {"flags": {"estate_lot_chain06_1_anchor": true, "estate_lot_plan_b_anchor": true}, "resolve_event": true}},
+      {"id": "ask_about_the_lot", "label": "Ask about the lot", "text": "Two pieces belong to jobs not posted yet.", "consequences": {"inventory_add": ["estate_map_clasp"], "flags": {"estate_lot_chain06_1_anchor": true, "estate_lot_plan_b_anchor": true}, "resolve_event": true}},
       {"id": "read_the_price_tags", "label": "Read the price tags", "text": "One price each. No second shelf.", "consequences": {"flags": {"estate_lot_one_off_seen": true}, "resolve_event": true}}
     ]}
   },
@@ -4528,7 +4529,12 @@
   {
     "id": "crew_mags_bench", "display_name": "Mags' Bench", "type": "crew", "interaction_mode": "interactable", "scopes": ["crew"],
     "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "trunk_offer", "environment_prop": "table", "start_summary": "Labeled cases and a clean repair mat.", "trigger": {"type": "manual"},
-    "payload": {"kind": "crew_mags_bench", "summary": "Bench ready; the gear pass owns its catalog.", "choices": []}
+    "payload": {"kind": "crew_mags_bench", "summary": "Mags labels each price, part, and risk.", "choices": [], "catalog": [
+      {"id": "craft_loaded_dice", "label": "Build loaded dice", "text": "$32 · Associate · False-Bottom Cup + Weighted Keyring", "min_member_rank": "associate", "cash_cost": 32, "requires_items": ["false_bottom_cup", "weighted_keyring"], "output_item": "mags_loaded_dice", "risk_delta_note": "Control windows widen; base dice heat -3; contraband heat remains +2."},
+      {"id": "craft_tuned_loupe", "label": "Tune the loupe", "text": "$38 · Made · Edge-Sort Loupe", "min_member_rank": "made", "cash_cost": 38, "requires_items": ["edge_sort_loupe"], "output_item": "mags_tuned_loupe", "risk_delta_note": "Cue count -2, memory tolerance +2, edge-sort heat -3; contraband heat remains +1."},
+      {"id": "craft_lined_sleeve", "label": "Line the sleeve", "text": "$44 · Inner Circle · Foil Sleeve", "min_member_rank": "inner_circle", "cash_cost": 44, "requires_items": ["foil_sleeve"], "output_item": "mags_lined_sleeve", "risk_delta_note": "Slot chance +7; past-post perfect window +30 ms and base heat -4; contraband heat +1."},
+      {"id": "craft_gutter_kit", "label": "File the gutter kit", "text": "$34 · Associate · Coin-Return Shim + Cold Quarters", "min_member_rank": "associate", "cash_cost": 34, "requires_items": ["coin_return_shim", "cold_quarters"], "output_item": "mags_shim_kit", "risk_delta_note": "Existing gutter-recovery hook rises from three uses to four; contraband heat +1."}
+    ]}
   },
   {
     "id": "crew_stake_horse_loss", "display_name": "Crew Money", "type": "crew", "interaction_mode": "interactable", "scopes": ["any"],

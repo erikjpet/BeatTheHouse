@@ -574,7 +574,7 @@
     {
       "id": "punchline_headliner_night", "archetype_id": "small_underground_casino", "layer_id": "club", "display_name": "Headliner Night", "weight": 9,
       "mutations": {
-        "staff_set": ["door_watch", "headliner_host"], "patron_set": ["sold_out_crowd"], "event_pool_add": ["scenario_headliner_cover"],
+        "staff_set": ["door_watch", "headliner_host"], "patron_set": ["sold_out_crowd"], "event_pool_add": ["scenario_headliner_cover"], "service_add": ["punchline_cover_charge"],
         "economic_profile_overrides": {"shop_price_multiplier": 1.2}, "game_modifier_hooks": {"crowd_cover": "strong", "door_watch": "tight"},
         "music_profile_override": {"bpm": 96, "ambience": 0.42, "texture": "stage_bleed"},
         "presentation": {"palette_tint": "#ff006e", "lighting_key": "headliner", "crowd_density": "packed", "signage_line": "SOLD OUT. KEEP MOVING."},
@@ -595,7 +595,7 @@
     {
       "id": "punchline_high_stakes_night", "archetype_id": "small_underground_casino", "layer_id": "casino", "display_name": "High-Stakes Night", "weight": 9,
       "mutations": {
-        "patron_set": ["underground_high_rollers"], "event_pool_add": ["scenario_punchline_high_stakes_table"],
+        "patron_set": ["underground_high_rollers"], "event_pool_add": ["scenario_punchline_high_stakes_table"], "service_add": ["punchline_private_table"],
         "economic_profile_overrides": {"stake_floor": 25, "stake_ceiling": 140}, "game_modifier_hooks": {"table_tone": "serious"},
         "music_profile_override": {"bpm": 72, "ambience": 0.72, "texture": "basement_hush"},
         "presentation": {"palette_tint": "#7209b7", "lighting_key": "high_stakes", "crowd_density": "dense", "signage_line": "REAL MONEY. CREW RULES."},
@@ -740,7 +740,7 @@
     {
       "id": "delta_queen_wedding_charter", "archetype_id": "delta_queen", "display_name": "Wedding Charter", "weight": 11,
       "mutations": {
-        "patron_set": ["wedding_party", "losing_best_man"], "event_pool_add": ["scenario_wedding_best_man"], "service_add": ["house_drink"],
+        "patron_set": ["wedding_party", "losing_best_man"], "event_pool_add": ["scenario_wedding_best_man"], "service_add": ["scenario_open_bar"],
         "economic_profile_overrides": {"stake_floor": 10, "stake_ceiling": 90}, "game_modifier_hooks": {"table_tone": "loose", "open_bar": true},
         "music_profile_override": {"bpm": 94, "ambience": 0.44, "texture": "riverboat"},
         "presentation": {"palette_tint": "#fefae0", "lighting_key": "wedding", "crowd_density": "packed", "signage_line": "CHARTERED. EVERYBODY'S FAMILY."},

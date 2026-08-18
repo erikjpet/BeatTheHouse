@@ -36,6 +36,7 @@ const CrewRecruitmentContractScript := preload("res://scripts/tests/foundation/c
 const CrewLayer3JobsContractScript := preload("res://scripts/tests/foundation/crew_layer3_jobs_contract.gd")
 const CrewPlaysContractScript := preload("res://scripts/tests/foundation/crew_plays_contract.gd")
 const CharacterChainsContractScript := preload("res://scripts/tests/foundation/character_chains_contract.gd")
+const ContentDepthContractScript := preload("res://scripts/tests/foundation/content_depth_contract.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
@@ -528,6 +529,7 @@ func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_lib
 	_foundation_run_check(report, failures, "crew_layer3_jobs_contract", Callable(CrewLayer3JobsContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "crew_plays_contract", Callable(CrewPlaysContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "character_chains_contract", Callable(CharacterChainsContractScript, "check"), [content_library])
+	_foundation_run_check(report, failures, "content_depth_contract", Callable(ContentDepthContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
 	_foundation_run_check(report, failures, "foundation_contracts", Callable(self, "_check_foundation_contract_smoke_for_suite"), [content_library])
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
@@ -562,6 +564,7 @@ func _foundation_run_system_suite(content_library: ContentLibrary, fixture_libra
 	_foundation_run_check(report, failures, "crew_layer3_jobs_contract", Callable(CrewLayer3JobsContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "crew_plays_contract", Callable(CrewPlaysContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "character_chains_contract", Callable(CharacterChainsContractScript, "check"), [content_library])
+	_foundation_run_check(report, failures, "content_depth_contract", Callable(ContentDepthContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "game_activation_class_guard", Callable(GameActivationClassGuardScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "lottery_redemption_clerk_merge", Callable(self, "_check_lottery_redemption_clerk_merge"), [])
 	_foundation_run_check(report, failures, "talk_decision_system_foundation", Callable(self, "_check_talk_decision_system_foundation"), [content_library])
@@ -614,6 +617,7 @@ func _foundation_run_all_suite(content_library: ContentLibrary, fixture_library:
 	_foundation_run_check(report, failures, "crew_layer3_jobs_contract", Callable(CrewLayer3JobsContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "crew_plays_contract", Callable(CrewPlaysContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "character_chains_contract", Callable(CharacterChainsContractScript, "check"), [content_library])
+	_foundation_run_check(report, failures, "content_depth_contract", Callable(ContentDepthContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "game_activation_class_guard", Callable(GameActivationClassGuardScript, "check"), [content_library])
 
 

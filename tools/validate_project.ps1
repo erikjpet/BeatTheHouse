@@ -47,6 +47,7 @@ $requiredFiles = @(
     "scripts/tests/foundation/crew_layer3_jobs_contract.gd",
     "scripts/tests/foundation/crew_plays_contract.gd",
     "scripts/tests/foundation/character_chains_contract.gd",
+    "scripts/tests/foundation/content_depth_contract.gd",
     "scripts/tests/foundation/crew_ignored_golden_probe.gd",
     "scripts/tests/fixtures/crew06_5_ignored_run_baseline.json",
     "scripts/tests/foundation/check_scratch_tickets.gd",
