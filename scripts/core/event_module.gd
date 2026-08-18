@@ -39,6 +39,10 @@ func get_interaction_mode() -> String:
 # Returns available event choices.
 func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 	var payload := _copy_dict(definition.get("payload", {}))
+	if get_id() == "crew_planning_table":
+		return run_state.crew_heist_table_choices() if run_state != null else []
+	if get_id() == "heist_live_table":
+		return run_state.crew_heist_live_table_choices() if run_state != null else []
 	if str(payload.get("kind", "")) == "crew_rook_signpost":
 		return CrewRecruitmentModelScript.rook_signpost_choices(run_state) if run_state != null else []
 	if str(payload.get("kind", "")) == "crew_rook_leads":
@@ -262,6 +266,8 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				service_result = run_state.crew_resolve_collection(str(pre_hook.get("choice", "")))
 			"crew_rook_ride":
 				service_result = run_state.crew_rook_begin_ride()
+			"crew_heist":
+				service_result = run_state.crew_heist_event_action(pre_hook)
 		if not service_result.is_empty():
 			if not bool(service_result.get("ok", false)):
 				result["ok"] = false
@@ -293,7 +299,7 @@ static func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 					str(hook_data.get("lender_id", "")),
 					str(hook_data.get("resolution", ""))
 				)
-			"crew_switch_reveal", "crew_lucky_collection", "crew_knuckles_stash", "crew_knuckles_retrieve", "crew_job_accept", "crew_practice_rig", "crew_stake_loss_choice", "crew_collection_choice", "crew_rook_ride":
+			"crew_switch_reveal", "crew_lucky_collection", "crew_knuckles_stash", "crew_knuckles_retrieve", "crew_job_accept", "crew_practice_rig", "crew_stake_loss_choice", "crew_collection_choice", "crew_rook_ride", "crew_heist":
 				pass
 	CharacterChainModelScript.apply_to_environment(run_state, run_state.current_environment)
 

@@ -18,6 +18,7 @@ const TownStateScript := preload("res://scripts/core/town_state.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const CrewPlayModelScript := preload("res://scripts/core/crew_play_model.gd")
+const CrewHeistModelScript := preload("res://scripts/core/crew_heist_model.gd")
 const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
@@ -310,6 +311,7 @@ var crew_pattern_memory: Dictionary = {}
 var crew_match_marks: Dictionary = {}
 var crew_contraband_stash: Array = []
 var crew_play_state: Dictionary = {}
+var crew_heist_state: Dictionary = {}
 var numbers_state: NumbersModel
 var heat_history: Array = []
 var town_state: TownState
@@ -399,6 +401,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	crew_match_marks = {}
 	crew_contraband_stash = []
 	crew_play_state = CrewPlayModelScript.default_state()
+	crew_heist_state = CrewHeistModelScript.empty_state()
 	numbers_state = NumbersModelScript.new()
 	numbers_state.reset(seed_value)
 	heat_history = []
@@ -461,8 +464,8 @@ func act_two_seam_payload() -> Dictionary:
 	var seam_route := _act_seam_route(demo_route)
 	if seam_route.is_empty():
 		return {}
-	return {
-		"schema_version": 1,
+	var payload := {
+		"schema_version": 2 if seam_route == "crew_heist" else 1,
 		"source_act": act_marker(),
 		"target_act": 2,
 		"victory_route": seam_route,
@@ -471,6 +474,7 @@ func act_two_seam_payload() -> Dictionary:
 		"story_flags": story_flags.duplicate(true),
 		"route_payload": _act_seam_route_payload(seam_route),
 	}
+	return payload
 
 
 static func act_seam_bankroll_band(bankroll_value: int) -> String:
@@ -490,6 +494,8 @@ func _act_seam_route(demo_route: String) -> String:
 		return "players_card_cashout"
 	if demo_route == GRAND_CASINO_SHOWDOWN_ROUTE:
 		return "showdown"
+	if demo_route == "crew_heist":
+		return "crew_heist"
 	return ""
 
 
@@ -506,6 +512,13 @@ func _act_seam_route_payload(seam_route: String) -> Dictionary:
 				"hook": "rourke_remembers",
 				"house_attention": "watched_exit",
 				"tone": "marked",
+			}
+		"crew_heist":
+			return {
+				"hook": "town_remembers",
+				"outcome_band": str(crew_heist_state.get("outcome", "somebody_got_pinched")),
+				"plan_id": str(crew_heist_state.get("plan_id", "")),
+				"tone": "crew_exit",
 			}
 		_:
 			return {}
@@ -3002,6 +3015,8 @@ func handle_grand_casino_heat_reroute(trigger_context: String = "") -> bool:
 		return false
 	if not _is_grand_casino_environment(current_environment):
 		return false
+	if _crew_heist_whale_attention_active():
+		return true
 	var status := demo_objective_status()
 	if not bool(status.get("grand_casino_objective", false)):
 		return false
@@ -3116,6 +3131,8 @@ func evaluate_environment_objective_state() -> Dictionary:
 	if not bool(status.get("active", false)):
 		return status
 	if run_status == RUN_STATUS_ENDED or run_status == RUN_STATUS_FAILED:
+		return status
+	if _crew_heist_whale_attention_active():
 		return status
 	if bool(status.get("grand_casino_objective", false)):
 		_evaluate_grand_casino_objective_state(status)
@@ -6630,6 +6647,726 @@ func crew_standing() -> Dictionary:
 	}
 
 
+# Public planning-table projection. It reports truthful missing stars without
+# exposing hidden seed mechanics or The Turn's private state.
+func crew_heist_planning_status() -> Dictionary:
+	var rows: Array = []
+	var any_inner_circle := not _copy_array(crew_standing().get("inner_circle_members", [])).is_empty()
+	for plan_id in CrewHeistModelScript.PLAN_IDS:
+		var definition := CrewHeistModelScript.plan(plan_id)
+		var missing: Array = []
+		for criterion_value in _copy_array(definition.get("crew_criteria", [])):
+			var criterion := _copy_dict(criterion_value)
+			var required_rank := str(criterion.get("rank", "inner_circle"))
+			if CrewStateModelScript.RANK_IDS.find(crew_rank(str(criterion.get("member_id", "")))) < CrewStateModelScript.RANK_IDS.find(required_rank):
+				missing.append(str(criterion.get("label", "The crew is not ready.")))
+		for criterion_value in _copy_array(definition.get("world_criteria", [])):
+			var criterion := _copy_dict(criterion_value)
+			var found := false
+			if str(criterion.get("kind", "")) == "scenario_hook":
+				found = _crew_heist_world_has_hook(str(criterion.get("key", "")))
+			else:
+				for key_value in _copy_array(criterion.get("keys", [])):
+					if _crew_heist_world_has_hook(str(key_value)):
+						found = true
+						break
+			if not found:
+				missing.append(str(criterion.get("label", "The night does not carry this score.")))
+		rows.append({
+			"id": plan_id,
+			"label": str(definition.get("label", plan_id)),
+			"live": any_inner_circle and missing.is_empty() and crew_heist_state.is_empty(),
+			"missing_stars": missing,
+		})
+	return {
+		"visible": any_inner_circle,
+		"locked_plan_id": str(crew_heist_state.get("plan_id", "")),
+		"phase": str(crew_heist_state.get("status", "")),
+		"plans": rows if any_inner_circle else [],
+	}
+
+
+func crew_heist_table_choices() -> Array:
+	var status := crew_heist_planning_status()
+	if not bool(status.get("visible", false)):
+		return [{"id": "leave", "label": "Leave the table clear", "text": "The center waits for somebody inside the circle.", "consequences": {}}]
+	if not crew_heist_state.is_empty():
+		var active_choices: Array = []
+		var phase := str(crew_heist_state.get("status", "setup"))
+		var plan_id := str(crew_heist_state.get("plan_id", ""))
+		var setup := _copy_dict(crew_heist_state.get("setup", {}))
+		var play := _copy_dict(crew_heist_state.get("play", {}))
+		active_choices.append({"id": "inspect", "label": "Read the live score", "text": "The locked plan is in %s." % phase.replace("_", " "), "consequences": {}})
+		if phase == CrewHeistModelScript.STATUS_SETUP:
+			if plan_id == CrewHeistModelScript.PLAN_COUNT:
+				if not bool(setup.get("schedule", false)):
+					active_choices.append({"id": "count_schedule", "label": "Watch the schedule", "text": "Hold the cage through shift change.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_schedule"}]}})
+				if not bool(setup.get("swap_cart", false)):
+					active_choices.append({"id": "count_cart", "label": "Move the swap cart", "text": "Take the hard package route to the service perimeter.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "count_cart"}]}})
+			else:
+				_crew_heist_sync_whale_setup()
+				setup = _copy_dict(crew_heist_state.get("setup", {}))
+			active_choices.append({"id": "begin_play", "label": "Begin the Play", "text": "All chairs are filled." if CrewHeistModelScript.setup_complete(crew_heist_state) else "The setup still has an empty chair.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "begin_play"}]}})
+			active_choices.append({"id": "abort", "label": "Fold the score", "text": "Pay for the preparation already burned. The run continues.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "abort"}]}})
+		elif phase == CrewHeistModelScript.STATUS_PLAY:
+			active_choices.append({"id": "live_table_direction", "label": "Return to the live table", "text": "The decisions happen inside the session, not over the planning map.", "disabled": true, "consequences": {}})
+		active_choices.append({"id": "leave", "label": "Leave the table", "text": "The map stays where it is.", "consequences": {}})
+		return active_choices
+	var choices: Array = []
+	for row_value in _copy_array(status.get("plans", [])):
+		var row := _copy_dict(row_value)
+		var missing := _copy_array(row.get("missing_stars", []))
+		choices.append({
+			"id": "lock_%s" % str(row.get("id", "")),
+			"label": "Lock %s" % str(row.get("label", "the plan")),
+			"text": "The stars line up." if bool(row.get("live", false)) else " ".join(missing),
+			"disabled": not bool(row.get("live", false)),
+			"consequences": {"event_hooks": [{"type": "crew_heist", "action": "lock", "plan_id": str(row.get("id", ""))}]},
+		})
+	choices.append({"id": "leave", "label": "Leave the table clear", "text": "No score is forced tonight.", "consequences": {}})
+	return choices
+
+
+func crew_heist_live_table_choices() -> Array:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	var phase := str(state.get("status", ""))
+	if phase == CrewHeistModelScript.STATUS_INTERVIEW and str(state.get("plan_id", "")) == CrewHeistModelScript.PLAN_WHALE:
+		var interview := _copy_dict(state.get("interview", {}))
+		return [
+			{"id": "interview_show_receipt", "label": "Show the receipt", "text": "Let the borrowed name survive the cage questions.", "disabled": bool(interview.get("cracked", false)), "consequences": {"event_hooks": [{"type": "crew_heist", "action": "resolve_interview", "choice": "show_receipt"}]}},
+			{"id": "interview_cut_short", "label": "Cut it short", "text": "Call Rook before the borrowed name cracks in the light.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "resolve_interview", "choice": "cut_short"}]}},
+		]
+	if phase != CrewHeistModelScript.STATUS_PLAY or not _crew_heist_at_designated_table(state):
+		return [{"id": "leave", "label": "Leave the quiet table", "text": "No crew beat is live here.", "consequences": {}}]
+	var play := _copy_dict(state.get("play", {}))
+	var plan_id := str(state.get("plan_id", ""))
+	var result: Array = [{"id": "inspect", "label": "Read the live session", "text": "Round %d is settled." % int(play.get("round", 0)), "consequences": {}}]
+	if plan_id == CrewHeistModelScript.PLAN_COUNT:
+		var decision_id := _crew_heist_count_decision_due(state)
+		if decision_id == "go":
+			result.append_array(_crew_heist_decision_choices("go", ["early", "hold"]))
+		elif decision_id == "distraction":
+			result.append_array(_crew_heist_decision_choices("distraction", ["sit", "dump"]))
+		elif decision_id == "exit":
+			var exits := ["dock"]
+			if bool(_copy_dict(state.get("setup", {})).get("guard_marker", false)):
+				exits.append("corridor")
+			result.append_array(_crew_heist_decision_choices("exit", exits))
+	if int(play.get("round", 0)) >= int(_copy_dict(CrewHeistModelScript.plan(plan_id).get("play", {})).get("required_rounds", 1)) and (plan_id != CrewHeistModelScript.PLAN_COUNT or _copy_dict(play.get("decisions", {})).size() == 3):
+		if plan_id == CrewHeistModelScript.PLAN_WHALE:
+			result.append({"id": "begin_interview", "label": "Take the pot to the cage", "text": "The borrowed name still has to survive the interview.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "begin_interview"}]}})
+		else:
+			result.append({"id": "begin_getaway", "label": "Take the exit", "text": "Leave the live table for the marked route.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "begin_getaway"}]}})
+	result.append({"id": "leave", "label": "Stay in the session", "text": "The table keeps moving only when you play.", "consequences": {}})
+	return result
+
+
+func _crew_heist_decision_choices(decision_id: String, values: Array) -> Array:
+	var result: Array = []
+	for value in values:
+		var choice := str(value)
+		result.append({"id": "%s_%s" % [decision_id, choice], "label": choice.replace("_", " ").capitalize(), "text": "Bishop records the choice, not an excuse.", "consequences": {"event_hooks": [{"type": "crew_heist", "action": "decide", "decision": decision_id, "choice": choice}]}})
+	return result
+
+
+func crew_heist_event_action(hook: Dictionary) -> Dictionary:
+	match str(hook.get("action", "")):
+		"lock": return crew_heist_lock(str(hook.get("plan_id", "")))
+		"abort": return crew_heist_abort("planning_table")
+		"count_schedule": return crew_heist_begin_count_schedule()
+		"count_cart": return crew_heist_begin_count_swap_cart()
+		"begin_play": return crew_heist_begin_play()
+		"decide": return crew_heist_decide(str(hook.get("decision", "")), str(hook.get("choice", "")))
+		"begin_interview": return crew_heist_begin_interview()
+		"resolve_interview": return crew_heist_resolve_interview(str(hook.get("choice", "")))
+		"begin_getaway": return crew_heist_begin_getaway()
+	return {"ok": false, "message": "That part of the plan is not live."}
+
+
+func crew_heist_lock(plan_id: String) -> Dictionary:
+	if not crew_heist_state.is_empty():
+		return {"ok": false, "message": "One score is already the run's score."}
+	for row_value in _copy_array(crew_heist_planning_status().get("plans", [])):
+		var row := _copy_dict(row_value)
+		if str(row.get("id", "")) == plan_id and bool(row.get("live", false)):
+			crew_heist_state = CrewHeistModelScript.begin(plan_id, _crew_action_index())
+			return {"ok": not crew_heist_state.is_empty(), "plan_id": plan_id, "message": "The plan is locked. The map stays on the table."}
+	return {"ok": false, "message": "The plan's stars do not line up tonight."}
+
+
+func crew_heist_abort(reason: String = "retreated") -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if state.is_empty() or [CrewHeistModelScript.STATUS_PLAY, CrewHeistModelScript.STATUS_GETAWAY, CrewHeistModelScript.STATUS_COMPLETED, CrewHeistModelScript.STATUS_ABORTED].has(str(state.get("status", ""))):
+		return {"ok": false, "message": "That retreat is no longer available."}
+	var setup_count := _copy_dict(state.get("setup", {})).size()
+	var requested_cost := 15 + setup_count * 10
+	var paid := mini(requested_cost, maxi(0, bankroll - 1))
+	bankroll -= paid
+	state["status"] = CrewHeistModelScript.STATUS_ABORTED
+	state["abort"] = {"reason": reason.strip_edges(), "cost": paid, "action": _crew_action_index()}
+	crew_heist_state = state
+	return {"ok": true, "cost": paid, "run_ended": false, "message": "The crew folds the map. Preparation costs $%d; the run stays yours." % paid}
+
+
+func crew_heist_record_count_session(bet: int, heat_start: int, heat_peak: int, settled: bool = true, session_id: String = "") -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_COUNT or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
+		return {"ok": false}
+	var tuning := _copy_dict(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_COUNT).get("setup", {})).get("identity", {}))
+	var qualifies := settled and bet >= int(tuning.get("bet_min", 0)) and bet <= int(tuning.get("bet_max", 0)) and heat_peak <= int(tuning.get("heat_ceiling", 100)) and heat_peak - heat_start < int(tuning.get("heat_ceiling", 100))
+	var setup := _copy_dict(state.get("setup", {}))
+	var session_ids := _copy_array(setup.get("identity_session_ids", []))
+	var clean_session_id := session_id.strip_edges()
+	if clean_session_id.is_empty():
+		clean_session_id = "%s:%d" % [_event_cadence_visit_key(current_environment), int(current_environment.get("turns", 0))]
+	if session_ids.has(clean_session_id):
+		qualifies = false
+	elif qualifies:
+		session_ids.append(clean_session_id)
+	setup["identity_session_ids"] = session_ids
+	var count := session_ids.size()
+	setup["identity_sessions"] = count
+	setup["identity"] = count >= int(tuning.get("required_sessions", 1))
+	state["setup"] = setup
+	crew_heist_state = state
+	return {"ok": true, "qualified": qualifies, "sessions": count, "complete": bool(setup.get("identity", false)), "message": "Bishop keeps the sessions that look like furniture."}
+
+
+func crew_heist_begin_count_schedule() -> Dictionary:
+	return _crew_heist_begin_setup_delivery("schedule", true)
+
+
+func crew_heist_begin_count_swap_cart() -> Dictionary:
+	return _crew_heist_begin_setup_delivery("swap_cart", false)
+
+
+func crew_heist_record_whale_vouch(session_loss: int, entourage_beat: bool = true) -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
+		return {"ok": false}
+	var tuning := _copy_dict(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("setup", {})).get("vouch", {}))
+	var setup := _copy_dict(state.get("setup", {}))
+	var rounds := int(setup.get("vouch_rounds", 0)) + (1 if entourage_beat and session_loss < 0 else 0)
+	var loss := int(setup.get("vouch_loss", 0)) + maxi(0, -session_loss)
+	setup["vouch_rounds"] = rounds
+	setup["vouch_loss"] = loss
+	setup["vouch"] = rounds >= int(tuning.get("rounds", 1)) and loss >= int(tuning.get("loss_target", 1))
+	state["setup"] = setup
+	crew_heist_state = state
+	return {"ok": true, "rounds": rounds, "loss": loss, "complete": bool(setup.get("vouch", false))}
+
+
+func crew_heist_record_whale_rig(_component_sourced: bool = false, _training_source: String = "") -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
+		return {"ok": false}
+	var trained := bool(narrative_flags.get("craps_setting_trained", false))
+	var sourced := inventory.has("false_bottom_cup")
+	var setup := _copy_dict(state.get("setup", {}))
+	setup["rig"] = sourced and trained
+	setup["rig_source"] = "craps_setting_trained" if trained else ""
+	state["setup"] = setup
+	crew_heist_state = state
+	return {"ok": true, "component": sourced, "trained": trained, "complete": bool(setup.get("rig", false))}
+
+
+func crew_heist_record_whale_name(spend: int, seen_beat: bool) -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
+		return {"ok": false}
+	var tuning := _copy_dict(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("setup", {})).get("name", {}))
+	var setup := _copy_dict(state.get("setup", {}))
+	setup["name_spend"] = int(setup.get("name_spend", 0)) + maxi(0, spend)
+	setup["name_seen"] = int(setup.get("name_seen", 0)) + (1 if seen_beat else 0)
+	setup["name"] = int(setup.get("name_spend", 0)) >= int(tuning.get("spend_required", 0)) and int(setup.get("name_seen", 0)) >= int(tuning.get("seen_required", 0))
+	state["setup"] = setup
+	crew_heist_state = state
+	return {"ok": true, "complete": bool(setup.get("name", false)), "spend": int(setup.get("name_spend", 0)), "seen": int(setup.get("name_seen", 0))}
+
+
+func _crew_heist_sync_whale_setup() -> void:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
+		return
+	var setup := _copy_dict(state.get("setup", {}))
+	if bool(narrative_flags.get("heist_plan_b_whale_vouch", false)) and not bool(setup.get("vouch_event_seeded", false)):
+		setup["vouch_event_seeded"] = true
+		setup["vouch_rounds"] = maxi(1, int(setup.get("vouch_rounds", 0)))
+		setup["vouch_loss"] = maxi(18, int(setup.get("vouch_loss", 0)))
+	var vouch_tuning := _copy_dict(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("setup", {})).get("vouch", {}))
+	setup["vouch"] = int(setup.get("vouch_rounds", 0)) >= int(vouch_tuning.get("rounds", 1)) and int(setup.get("vouch_loss", 0)) >= int(vouch_tuning.get("loss_target", 1))
+	var has_component: bool = inventory.has("false_bottom_cup")
+	var trained := bool(narrative_flags.get("craps_setting_trained", false))
+	setup["rig"] = bool(setup.get("rig", false)) or (has_component and trained)
+	var name_tuning := _copy_dict(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("setup", {})).get("name", {}))
+	setup["name_spend"] = maxi(int(setup.get("name_spend", 0)), run_spending_score)
+	setup["name_seen"] = _copy_array(setup.get("name_seen_ids", [])).size()
+	setup["name"] = int(setup.get("name_spend", 0)) >= int(name_tuning.get("spend_required", 0)) and int(setup.get("name_seen", 0)) >= int(name_tuning.get("seen_required", 0))
+	state["setup"] = setup
+	crew_heist_state = state
+
+
+func _crew_heist_boundary_sync() -> void:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	state = _crew_heist_sync_count_window(state)
+	_crew_heist_sync_live_table_event(state)
+	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
+		return
+	var hooks := _copy_dict(current_environment.get("scenario_hook_flags", {}))
+	if bool(hooks.get("heist_plan_b_criteria", false)) or bool(hooks.get("gala_night", false)):
+		var setup := _copy_dict(state.get("setup", {}))
+		var seen_ids := _copy_array(setup.get("name_seen_ids", []))
+		var visit_id := _event_cadence_visit_key(current_environment)
+		if not visit_id.is_empty() and not seen_ids.has(visit_id):
+			seen_ids.append(visit_id)
+			setup["name_seen_ids"] = seen_ids
+			state["setup"] = setup
+			crew_heist_state = state
+	_crew_heist_sync_whale_setup()
+
+
+func crew_heist_begin_play() -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if state.is_empty() or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
+		return {"ok": false, "message": "There is no prepared play."}
+	var setup := _copy_dict(state.get("setup", {}))
+	if str(state.get("plan_id", "")) == CrewHeistModelScript.PLAN_COUNT:
+		setup["guard_marker"] = bool(narrative_flags.get("debt_court_settlement", false)) and CrewStateModelScript.RANK_IDS.find(crew_rank("crew_knuckles")) >= CrewStateModelScript.RANK_IDS.find("associate")
+	else:
+		setup["drunk"] = bool(setup.get("vouch", false)) and bool(setup.get("rig", false)) and bool(setup.get("name", false))
+	state["setup"] = setup
+	if not CrewHeistModelScript.setup_complete(state):
+		crew_heist_state = state
+		return {"ok": false, "message": "The setup still has an empty chair."}
+	state["status"] = CrewHeistModelScript.STATUS_PLAY
+	narrative_flags["heist_live_table_active"] = true
+	var play := _copy_dict(state.get("play", {}))
+	if str(state.get("plan_id", "")) == CrewHeistModelScript.PLAN_WHALE:
+		change_grand_casino_chips(int(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("play", {})).get("starting_pot", 0)), true)
+		play["pot"] = grand_casino_chips
+	state["play"] = play
+	crew_heist_state = state
+	state = _crew_heist_sync_count_window(state)
+	_crew_heist_sync_live_table_event(state)
+	return {"ok": true, "message": "The Play begins at the real table."}
+
+
+func crew_heist_decide(decision_id: String, choice: String) -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("status", "")) != CrewHeistModelScript.STATUS_PLAY:
+		return {"ok": false}
+	var plan_id := str(state.get("plan_id", ""))
+	var allowed := {"go": ["early", "hold"], "distraction": ["sit", "dump"], "exit": ["dock", "corridor"]}
+	if plan_id != CrewHeistModelScript.PLAN_COUNT or not allowed.has(decision_id) or not _copy_array(allowed.get(decision_id, [])).has(choice):
+		return {"ok": false}
+	var setup := _copy_dict(state.get("setup", {}))
+	if decision_id == "exit" and choice == "corridor" and not bool(setup.get("guard_marker", false)):
+		return {"ok": false, "message": "The corridor has no marker."}
+	var play := _copy_dict(state.get("play", {}))
+	if decision_id == "exit" and choice == "corridor" and bool(play.get("corridor_blown", false)):
+		return {"ok": false, "message": "The heat spike has already blown the corridor."}
+	if _crew_heist_count_decision_due(state) != decision_id:
+		return {"ok": false, "message": "That crew beat is not live in this round."}
+	var decisions := _copy_dict(play.get("decisions", {}))
+	decisions[decision_id] = choice
+	play["decisions"] = decisions
+	if choice in ["early", "dump"]:
+		play["score"] = int(play.get("score", 100)) - 12
+	if decision_id == "distraction":
+		play["deliberate_heat"] = 6
+		add_suspicion("heist_count_distraction", 6, "crew_heist", true)
+	state["play"] = play
+	crew_heist_state = state
+	return {"ok": true, "decision": decision_id, "choice": choice}
+
+
+func crew_heist_play_round(round_data: Dictionary) -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("status", "")) != CrewHeistModelScript.STATUS_PLAY:
+		return {"ok": false}
+	var plan_id := str(state.get("plan_id", ""))
+	var tuning := _copy_dict(CrewHeistModelScript.plan(plan_id).get("play", {}))
+	var play := _copy_dict(state.get("play", {}))
+	var next_round := int(play.get("round", 0)) + 1
+	var score := int(play.get("score", 100))
+	if plan_id == CrewHeistModelScript.PLAN_COUNT:
+		state = _crew_heist_sync_count_window(state)
+		play = _copy_dict(state.get("play", {}))
+		score = int(play.get("score", 100))
+		if not _crew_heist_at_designated_table(state):
+			return {"ok": false, "message": "The Count only moves at its designated table."}
+		if _crew_heist_count_decision_due(state) != "":
+			return {"ok": false, "message": "Bishop's live-table beat is still waiting."}
+		if str(round_data.get("game_id", "")) != str(tuning.get("table_game", "blackjack")):
+			return {"ok": false, "message": "That is not the designated boring table."}
+		var bet := int(round_data.get("bet", 0))
+		if bet < int(tuning.get("boring_bet_min", 0)) or bet > int(tuning.get("boring_bet_max", 0)):
+			score -= 12
+		if int(round_data.get("heat_delta", 0)) >= int(tuning.get("heat_spike", 1)):
+			score -= 20
+			play["heat_degraded"] = true
+			play["corridor_blown"] = true
+	else:
+		if not _crew_heist_at_designated_table(state):
+			return {"ok": false, "message": "The invitational is not running in this room."}
+		var sequence := _copy_array(tuning.get("game_sequence", []))
+		var expected_game_id := str(sequence[next_round - 1]) if next_round - 1 < sequence.size() else ""
+		if expected_game_id.is_empty() or str(round_data.get("game_id", "")) != expected_game_id:
+			return {"ok": false, "expected_game_id": expected_game_id, "message": "The invitational calls a different game this round."}
+		var hazard := false
+		for hazard_round_value in _copy_array(tuning.get("hazard_rounds", [])):
+			if int(hazard_round_value) == next_round:
+				hazard = true
+				break
+		var honest := bool(round_data.get("honest", false))
+		if hazard:
+			var hazards := _copy_array(play.get("hazards", []))
+			hazards.append({"round": next_round, "honest": honest})
+			play["hazards"] = hazards
+			score += 5 if honest else -30
+		if bool(round_data.get("made", false)):
+			score -= 25
+			play["made"] = true
+		play["pot"] = grand_casino_chips
+		if int(play.get("pot", 0)) <= 0:
+			play["bust"] = true
+		var lifeline_sequence := _crew_heist_live_lifeline_sequence(str(round_data.get("game_id", "")), play)
+		if lifeline_sequence > 0:
+			var lifelines: Array = play.get("lifelines_used", [])
+			if lifelines.size() < int(tuning.get("lifelines", 0)):
+				lifelines.append(lifeline_sequence)
+				play["lifelines_used"] = lifelines
+				score += 8
+	play["round"] = next_round
+	play["score"] = clampi(score, 0, 100)
+	state["play"] = play
+	crew_heist_state = state
+	return {"ok": true, "round": next_round, "score": int(play.get("score", 0)), "ready": next_round >= int(tuning.get("required_rounds", 1))}
+
+
+func crew_heist_begin_interview() -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_PLAY:
+		return {"ok": false, "message": "No invitational pot is ready for the cage."}
+	var play := _copy_dict(state.get("play", {}))
+	var required_rounds := int(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("play", {})).get("required_rounds", 1))
+	if int(play.get("round", 0)) < required_rounds:
+		return {"ok": false, "message": "The invitational is not finished."}
+	var cracked := int(play.get("score", 100)) < int(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("interview", {})).get("clean_score_min", 80)) or bool(play.get("made", false)) or bool(play.get("bust", false))
+	state["status"] = CrewHeistModelScript.STATUS_INTERVIEW
+	state["interview"] = {"started_action": _crew_action_index(), "cracked": cracked, "resolved": false}
+	crew_heist_state = state
+	return {"ok": true, "cracked": cracked, "message": "The cage counts the chips. Rourke lets the borrowed name answer for them."}
+
+
+func crew_heist_resolve_interview(choice: String) -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_INTERVIEW:
+		return {"ok": false}
+	var interview := _copy_dict(state.get("interview", {}))
+	if bool(interview.get("resolved", false)) or not ["show_receipt", "cut_short"].has(choice):
+		return {"ok": false}
+	if bool(interview.get("cracked", false)) and choice == "show_receipt":
+		return {"ok": false, "message": "The borrowed name has already cracked."}
+	interview["resolved"] = true
+	interview["choice"] = choice
+	if choice == "cut_short":
+		interview["cracked"] = true
+	state["interview"] = interview
+	crew_heist_state = state
+	return crew_heist_begin_getaway()
+
+
+func crew_heist_begin_getaway() -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	var plan_id := str(state.get("plan_id", ""))
+	var phase := str(state.get("status", ""))
+	if (plan_id == CrewHeistModelScript.PLAN_COUNT and phase != CrewHeistModelScript.STATUS_PLAY) or (plan_id == CrewHeistModelScript.PLAN_WHALE and (phase != CrewHeistModelScript.STATUS_INTERVIEW or not bool(_copy_dict(state.get("interview", {})).get("resolved", false)))):
+		return {"ok": false, "message": "The Play is not ready to leave."}
+	var definition := CrewHeistModelScript.plan(plan_id)
+	var play := _copy_dict(state.get("play", {}))
+	var play_tuning := _copy_dict(definition.get("play", {}))
+	if int(play.get("round", 0)) < int(play_tuning.get("required_rounds", 1)):
+		return {"ok": false, "message": "The table sequence is not finished."}
+	if str(state.get("plan_id", "")) == CrewHeistModelScript.PLAN_COUNT and _copy_dict(play.get("decisions", {})).size() < 3:
+		return {"ok": false, "message": "The Count still has a decision open."}
+	var exit_choice := str(_copy_dict(play.get("decisions", {})).get("exit", "dock")) if plan_id == CrewHeistModelScript.PLAN_COUNT else "front_door"
+	if plan_id == CrewHeistModelScript.PLAN_COUNT and bool(play.get("corridor_blown", false)):
+		exit_choice = "dock"
+	var target_id := _crew_heist_getaway_target(plan_id, exit_choice)
+	if target_id.is_empty():
+		return {"ok": false, "message": "The real town has no valid exit route."}
+	var getaway_tuning := _copy_dict(definition.get("getaway", {}))
+	var tuning := _copy_dict(_copy_dict(getaway_tuning.get("routes", {})).get(exit_choice, {})) if plan_id == CrewHeistModelScript.PLAN_COUNT else getaway_tuning
+	var hot_whale_exit := plan_id == CrewHeistModelScript.PLAN_WHALE and (bool(_copy_dict(state.get("interview", {})).get("cracked", false)) or int(play.get("score", 100)) < 80 or bool(play.get("made", false)) or bool(play.get("bust", false)))
+	var pursuit_pressure := 0
+	if plan_id == CrewHeistModelScript.PLAN_COUNT:
+		pursuit_pressure = int(tuning.get("pursuit_pressure", 0)) + (10 if bool(play.get("heat_degraded", false)) else 0)
+	elif hot_whale_exit:
+		pursuit_pressure = int(tuning.get("hot_pursuit_pressure", 0)) + (10 if bool(play.get("made", false)) or bool(play.get("bust", false)) else 0)
+	var started := delivery_begin_getaway({
+		"enabled": true,
+		"run_id": "heist:%s:getaway" % str(state.get("plan_id", "")),
+		"targets": [{"node_id": target_id}],
+		"deadline_actions": int(tuning.get("deadline_actions", 10)),
+		"pursuit_pressure": pursuit_pressure,
+		"pursuit_per_boundary": 0 if plan_id == CrewHeistModelScript.PLAN_WHALE and not hot_whale_exit else 2,
+		"pursuit_limit": int(tuning.get("pursuit_limit", 10)),
+		"assists": ["rook_cutoff", "switch_route"],
+		"assist_relief": 4,
+		"cargo_id": "heist_take",
+		"cargo_label": "The take",
+		"cargo_heat_per_travel": 0,
+		"consumer_payload": {"start_boundary_grace": 1},
+	})
+	if not bool(started.get("ok", false)):
+		return started
+	state["status"] = CrewHeistModelScript.STATUS_GETAWAY
+	state["getaway"] = {"target_node_id": target_id, "exit": exit_choice, "status": "active", "chase": plan_id == CrewHeistModelScript.PLAN_COUNT or hot_whale_exit}
+	crew_heist_state = state
+	narrative_flags["heist_live_table_active"] = false
+	_crew_heist_sync_live_table_event(state)
+	return started
+
+
+func crew_heist_snapshot() -> Dictionary:
+	return CrewHeistModelScript.normalize_state(crew_heist_state)
+
+
+func _crew_heist_whale_attention_active() -> bool:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	return str(state.get("plan_id", "")) == CrewHeistModelScript.PLAN_WHALE and str(state.get("status", "")) in [CrewHeistModelScript.STATUS_PLAY, CrewHeistModelScript.STATUS_INTERVIEW, CrewHeistModelScript.STATUS_GETAWAY] and _is_grand_casino_environment(current_environment)
+
+
+func _crew_heist_capture_whale_attention() -> bool:
+	if not _crew_heist_whale_attention_active() or suspicion_level() < 100:
+		return false
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	var play := _copy_dict(state.get("play", {}))
+	if not bool(play.get("made", false)):
+		play["made"] = true
+		play["score"] = maxi(0, int(play.get("score", 100)) - 25)
+	play["rourke_attention_capped"] = true
+	state["play"] = play
+	crew_heist_state = state
+	add_suspicion("heist_rourke_attention", -1, "crew_heist", true)
+	return true
+
+
+func _crew_heist_count_decision_due(state: Dictionary) -> String:
+	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_COUNT or str(state.get("status", "")) != CrewHeistModelScript.STATUS_PLAY:
+		return ""
+	var play := _copy_dict(state.get("play", {}))
+	var decisions := _copy_dict(play.get("decisions", {}))
+	var round_index := int(play.get("round", 0))
+	var decision_rounds := _copy_dict(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_COUNT).get("play", {})).get("decision_rounds", {}))
+	for decision_id in ["go", "distraction", "exit"]:
+		if not decisions.has(decision_id) and round_index == int(decision_rounds.get(decision_id, -1)):
+			return decision_id
+	return ""
+
+
+func _crew_heist_live_lifeline_sequence(game_id: String, play: Dictionary) -> int:
+	var crew_state := CrewPlayModelScript.normalize_state(crew_play_state)
+	var sequence := int(crew_state.get("sequence", 0))
+	if sequence <= 0 or _copy_array(play.get("lifelines_used", [])).has(sequence):
+		return 0
+	var beat := _copy_dict(crew_state.get("last_beat", {}))
+	if str(beat.get("play_id", "")).is_empty():
+		return 0
+	var beat_is_current := int(beat.get("action_index", -1000)) >= _crew_action_index() - 1
+	var active_match := false
+	for active_value in _copy_array(crew_state.get("active", [])):
+		var active := _copy_dict(active_value)
+		if int(active.get("sequence", 0)) == sequence and (str(active.get("game_id", "")).is_empty() or str(active.get("game_id", "")) == game_id):
+			active_match = CrewPlayModelScript.is_active(crew_state, str(active.get("play_id", "")), _crew_action_index(), current_environment)
+			break
+	return sequence if beat_is_current or active_match else 0
+
+
+func _crew_heist_sync_count_window(state: Dictionary) -> Dictionary:
+	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_COUNT or str(state.get("status", "")) != CrewHeistModelScript.STATUS_PLAY:
+		return state
+	var play := _copy_dict(state.get("play", {}))
+	var tuning := _copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_COUNT).get("play", {}))
+	if int(play.get("round", 0)) >= int(tuning.get("required_rounds", 1)):
+		return state
+	var action_index := _crew_action_index()
+	if not play.has("window_started_action"):
+		if not _crew_heist_at_designated_table(state):
+			return state
+		play["window_started_action"] = action_index
+		play["window_deadline_action"] = action_index + maxi(1, int(tuning.get("window_actions", 1)))
+		play["table_visit_id"] = _event_cadence_visit_key(current_environment)
+	elif not _crew_heist_at_designated_table(state) and not bool(play.get("left_table", false)):
+		play["left_table"] = true
+		play["corridor_blown"] = true
+		play["score"] = maxi(0, int(play.get("score", 100)) - 15)
+	if action_index >= int(play.get("window_deadline_action", action_index + 1)) and not bool(play.get("late", false)):
+		play["late"] = true
+		play["heat_degraded"] = true
+		play["corridor_blown"] = true
+		play["score"] = maxi(0, int(play.get("score", 100)) - 20)
+	state["play"] = play
+	crew_heist_state = state
+	return state
+
+
+func _crew_heist_at_designated_table(state: Dictionary) -> bool:
+	var archetype_id := str(current_environment.get("archetype_id", ""))
+	if str(state.get("plan_id", "")) == CrewHeistModelScript.PLAN_COUNT:
+		return archetype_id in GRAND_CASINO_ARCHETYPE_IDS
+	return archetype_id == str(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("play", {})).get("venue_archetype", GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID))
+
+
+func _crew_heist_sync_live_table_event(state: Dictionary) -> void:
+	var phase := str(state.get("status", ""))
+	var should_register := phase in [CrewHeistModelScript.STATUS_PLAY, CrewHeistModelScript.STATUS_INTERVIEW] and _crew_heist_at_designated_table(state)
+	var was_registered := bool(narrative_flags.get("heist_live_table_registered", false))
+	# Crew-ignoring runs must remain byte-identical at every boundary.  The
+	# expensive world scan is cleanup for an event we actually registered, not
+	# a speculative repair pass for every run in the game.
+	if not was_registered and not should_register:
+		return
+	if was_registered:
+		_remove_heist_live_table_event(current_environment)
+		var nodes := _copy_array(world_map.get("nodes", []))
+		for index in range(nodes.size()):
+			if typeof(nodes[index]) == TYPE_DICTIONARY:
+				var node := _copy_dict(nodes[index])
+				var environment := _copy_dict(node.get("environment", {}))
+				_remove_heist_live_table_event(environment)
+				node["environment"] = environment
+				nodes[index] = node
+		world_map["nodes"] = nodes
+		for room_id_value in grand_casino_room_states.keys():
+			var room: Variant = grand_casino_room_states.get(room_id_value, {})
+			if typeof(room) == TYPE_DICTIONARY:
+				var clean_room := _copy_dict(room)
+				_remove_heist_live_table_event(clean_room)
+				grand_casino_room_states[room_id_value] = clean_room
+		narrative_flags.erase("heist_live_table_registered")
+	if not should_register:
+		return
+	var event_ids := _copy_array(current_environment.get("event_ids", []))
+	if not event_ids.has("heist_live_table"):
+		event_ids.append("heist_live_table")
+		current_environment["event_ids"] = event_ids
+	narrative_flags["heist_live_table_registered"] = true
+
+
+func _remove_heist_live_table_event(environment: Dictionary) -> void:
+	if environment.is_empty():
+		return
+	var event_ids := _copy_array(environment.get("event_ids", []))
+	event_ids.erase("heist_live_table")
+	environment["event_ids"] = event_ids
+	var resolved := _copy_array(environment.get("resolved_event_ids", []))
+	resolved.erase("heist_live_table")
+	environment["resolved_event_ids"] = resolved
+
+
+func _crew_heist_world_has_hook(hook_id: String) -> bool:
+	if hook_id.is_empty():
+		return false
+	if bool(_copy_dict(current_environment.get("scenario_hook_flags", {})).get(hook_id, false)):
+		return true
+	for node_value in _copy_array(world_map.get("nodes", [])):
+		var node := _copy_dict(node_value)
+		var environment := _copy_dict(node.get("environment", {}))
+		if bool(_copy_dict(environment.get("scenario_hook_flags", {})).get(hook_id, false)):
+			return true
+		var definition := seeded_scenario_definition_for_node(str(node.get("id", "")))
+		if bool(_copy_dict(_copy_dict(definition.get("mutations", {})).get("hook_flags", {})).get(hook_id, false)):
+			return true
+	return false
+
+
+func _crew_heist_begin_setup_delivery(step: String, hold: bool) -> Dictionary:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_COUNT or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
+		return {"ok": false}
+	var setup := _copy_dict(state.get("setup", {}))
+	if bool(setup.get(step, false)):
+		return {"ok": false, "message": "That setup is already complete."}
+	var target_id := _crew_heist_node_for_archetype(GRAND_CASINO_CAGE_ARCHETYPE_ID if hold else GRAND_CASINO_ARCHETYPE_ID)
+	if target_id.is_empty():
+		return {"ok": false, "message": "The setup has no real venue tonight."}
+	var tuning := _copy_dict(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_COUNT).get("setup", {})).get(step, {}))
+	var spec := {
+		"run_id": "heist:%s:%s" % [CrewHeistModelScript.PLAN_COUNT, step],
+		"targets": [{"node_id": target_id}],
+		"deadline_actions": int(tuning.get("deadline_actions", 12)),
+		"cargo_id": "heist_swap_cart" if not hold else "heist_schedule_watch",
+		"cargo_label": "Swap cart" if not hold else "Shift schedule",
+		"cargo_heat_per_travel": 0,
+	}
+	if hold:
+		spec["hold_required_actions"] = int(tuning.get("hold_required_actions", 2))
+		spec["hold_attention_limit"] = int(tuning.get("attention_limit", 40))
+	return delivery_begin_hold(spec) if hold else delivery_begin_package(spec)
+
+
+func _crew_heist_node_for_archetype(archetype_id: String) -> String:
+	for node_value in _copy_array(world_map.get("nodes", [])):
+		var node := _copy_dict(node_value)
+		if str(node.get("archetype_id", "")) == archetype_id:
+			return str(node.get("id", ""))
+	return ""
+
+
+func _crew_heist_getaway_target(plan_id: String, exit_choice: String = "") -> String:
+	var preferred_archetype := "small_underground_casino"
+	if plan_id == CrewHeistModelScript.PLAN_COUNT:
+		preferred_archetype = GRAND_CASINO_CAGE_ARCHETYPE_ID if exit_choice == "corridor" else "delta_queen"
+	var preferred := _crew_heist_node_for_archetype(preferred_archetype)
+	if not preferred.is_empty() and preferred != current_world_node_id():
+		return preferred
+	for node_value in _copy_array(world_map.get("nodes", [])):
+		var node := _copy_dict(node_value)
+		var node_id := str(node.get("id", ""))
+		if not node_id.is_empty() and node_id != current_world_node_id():
+			return node_id
+	return ""
+
+
+func _crew_heist_apply_delivery_resolution(run_id: String, succeeded: bool, resolution: Dictionary) -> void:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if state.is_empty() or not run_id.begins_with("heist:%s:" % str(state.get("plan_id", ""))):
+		return
+	var part := run_id.get_slice(":", 2)
+	if part in ["schedule", "swap_cart"]:
+		if succeeded:
+			var setup := _copy_dict(state.get("setup", {}))
+			setup[part] = true
+			state["setup"] = setup
+		crew_heist_state = state
+		return
+	if part != "getaway" or str(state.get("status", "")) != CrewHeistModelScript.STATUS_GETAWAY:
+		return
+	var play := _copy_dict(state.get("play", {}))
+	var outcome := CrewHeistModelScript.ladder(int(play.get("score", 0)), succeeded, bool(play.get("made", false)), bool(play.get("bust", false)))
+	var payout := CrewHeistModelScript.payout_for(state, outcome)
+	if str(state.get("plan_id", "")) == CrewHeistModelScript.PLAN_WHALE:
+		grand_casino_chips = 0
+	bankroll += payout
+	state["status"] = CrewHeistModelScript.STATUS_COMPLETED
+	state["outcome"] = outcome
+	state["payout"] = payout
+	var getaway := _copy_dict(state.get("getaway", {}))
+	getaway["status"] = "success" if succeeded else "failed"
+	getaway["resolution"] = resolution.duplicate(true)
+	state["getaway"] = getaway
+	crew_heist_state = state
+	narrative_flags["heist_live_table_active"] = false
+	_crew_heist_sync_live_table_event(state)
+	var message := CrewHeistModelScript.ending_line(str(state.get("plan_id", "")), outcome)
+	narrative_flags["crew_heist_outcome"] = outcome
+	narrative_flags["crew_heist_plan_id"] = str(state.get("plan_id", ""))
+	_complete_demo_objective({"id": "crew_heist", "target_bankroll": bankroll, "victory_message": message}, message, {"finale_event_id": "heist_finale", "finale_branch": outcome, "demo_victory_route": "crew_heist"})
+	narrative_flags["act_two_seam_ready"] = true
+
+
 # Adds one typed hidden grievance and returns its normalized stored shape.
 func grievance_add(entry: Dictionary) -> Dictionary:
 	var member_id := str(entry.get("member_id", "")).strip_edges()
@@ -6865,6 +7602,7 @@ func crew_job_accept_definition(definition_id: String) -> Dictionary:
 func crew_record_game_result(result: Dictionary, deltas: Dictionary) -> Dictionary:
 	var game_id := str(result.get("game_id", result.get("source_id", "")))
 	var venue_id := str(result.get("environment_archetype_id", current_environment.get("archetype_id", "")))
+	_crew_heist_record_settled_game(game_id, venue_id, result, deltas)
 	for job_id_value in crew_jobs.keys():
 		var job_id := str(job_id_value)
 		var job := _crew_job(job_id)
@@ -6885,6 +7623,113 @@ func crew_record_game_result(result: Dictionary, deltas: Dictionary) -> Dictiona
 			_crew_add_room_event("crew_stake_horse_loss")
 		return job.duplicate(true)
 	return {}
+
+
+func _crew_heist_record_settled_game(game_id: String, venue_id: String, result: Dictionary, deltas: Dictionary) -> void:
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if state.is_empty():
+		return
+	var phase := str(state.get("status", ""))
+	var plan_id := str(state.get("plan_id", ""))
+	var settled := _crew_heist_game_result_is_settled(game_id, result)
+	if plan_id == CrewHeistModelScript.PLAN_WHALE and phase == CrewHeistModelScript.STATUS_PLAY and venue_id == str(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("play", {})).get("venue_archetype", GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)):
+		if not settled:
+			_crew_heist_record_whale_pending_fact(game_id, _crew_heist_whale_result_facts(game_id, result))
+			return
+	if not settled:
+		return
+	var net := int(deltas.get("chips_delta", 0)) if str(result.get("currency", "")) == "chips" else int(deltas.get("bankroll_delta", 0))
+	if phase == CrewHeistModelScript.STATUS_SETUP:
+		if plan_id == CrewHeistModelScript.PLAN_COUNT and venue_id in GRAND_CASINO_ARCHETYPE_IDS:
+			var session_id := str(result.get("session_id", "%s:%s" % [_event_cadence_visit_key(current_environment), game_id]))
+			crew_heist_record_count_session(int(result.get("bet", result.get("wager", result.get("stake", 0)))), int(result.get("heat_start", suspicion_level())), int(result.get("heat_peak", suspicion_level())), bool(result.get("ok", true)), session_id)
+		elif plan_id == CrewHeistModelScript.PLAN_WHALE and bool(narrative_flags.get("heist_plan_b_whale_vouch", false)) and net < 0:
+			_crew_heist_sync_whale_setup()
+			crew_heist_record_whale_vouch(net, true)
+		return
+	if phase != CrewHeistModelScript.STATUS_PLAY:
+		return
+	if plan_id == CrewHeistModelScript.PLAN_COUNT and venue_id in GRAND_CASINO_ARCHETYPE_IDS:
+		crew_heist_play_round({"game_id": game_id, "bet": int(result.get("bet", result.get("wager", result.get("stake", 0)))), "heat_delta": int(result.get("heat_delta", deltas.get("suspicion_delta", 0)))})
+	elif plan_id == CrewHeistModelScript.PLAN_WHALE and venue_id == str(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("play", {})).get("venue_archetype", GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)) and game_id in ["craps", "blackjack", "baccarat", "poker", "video_poker"]:
+		var whale_facts := _crew_heist_whale_result_facts(game_id, result)
+		state = CrewHeistModelScript.normalize_state(crew_heist_state)
+		var play := _copy_dict(state.get("play", {}))
+		var pending_by_game := _copy_dict(play.get("pending_game_facts", {}))
+		var pending := _copy_dict(pending_by_game.get(game_id, {}))
+		var expected_game_id := _crew_heist_whale_expected_game(state)
+		if game_id == expected_game_id:
+			pending_by_game.erase(game_id)
+			play["pending_game_facts"] = pending_by_game
+			state["play"] = play
+			crew_heist_state = state
+		var honest := bool(whale_facts.get("honest", true)) and not bool(pending.get("dishonest", false))
+		var made_now := bool(whale_facts.get("made", false)) and not bool(play.get("made", false))
+		crew_heist_play_round({"game_id": game_id, "honest": honest, "made": made_now, "pot_delta": net})
+
+
+func _crew_heist_whale_expected_game(state: Dictionary) -> String:
+	var sequence := _copy_array(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("play", {})).get("game_sequence", []))
+	var round_index := int(_copy_dict(state.get("play", {})).get("round", 0))
+	return str(sequence[round_index]) if round_index >= 0 and round_index < sequence.size() else ""
+
+
+func _crew_heist_record_whale_pending_fact(game_id: String, facts: Dictionary) -> void:
+	if bool(facts.get("honest", true)) and not bool(facts.get("made", false)):
+		return
+	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	var play := _copy_dict(state.get("play", {}))
+	var pending_by_game := _copy_dict(play.get("pending_game_facts", {}))
+	var pending := _copy_dict(pending_by_game.get(game_id, {}))
+	pending["dishonest"] = bool(pending.get("dishonest", false)) or not bool(facts.get("honest", true))
+	pending["made"] = bool(pending.get("made", false)) or bool(facts.get("made", false))
+	if bool(facts.get("made", false)) and not bool(play.get("made", false)):
+		play["made"] = true
+		play["score"] = maxi(0, int(play.get("score", 100)) - 25)
+		pending["made_penalty_applied"] = true
+	pending_by_game[game_id] = pending
+	play["pending_game_facts"] = pending_by_game
+	state["play"] = play
+	crew_heist_state = state
+
+
+func _crew_heist_whale_result_facts(game_id: String, result: Dictionary) -> Dictionary:
+	var action_kind := str(result.get("action_kind", "")).to_lower()
+	var cheat_used := action_kind in ["cheat", "risky", "advantage"]
+	var made := false
+	match game_id:
+		"blackjack":
+			cheat_used = cheat_used or bool(result.get("player_cheat_used", false))
+			made = bool(result.get("blackjack_cheat_caught", false)) or bool(result.get("dealer_caught_cheat", false))
+		"baccarat":
+			cheat_used = cheat_used or bool(result.get("baccarat_edge_sort_edge_used", false)) or bool(result.get("baccarat_edge_sort", false))
+	var skill_outcome := str(result.get("skill_outcome", "")).to_lower()
+	var skill_grade := str(result.get("skill_grade", "")).to_lower()
+	made = made or skill_outcome.find("caught") >= 0 or skill_outcome.find("blown") >= 0 or skill_grade == "blown"
+	return {"honest": not cheat_used, "made": made}
+
+
+# GameModule's shared ActionResult deliberately carries no generic "settled"
+# bit.  Completion is owned by each shipped game and exposed by the payload it
+# adds after build_action_result.  Heist progress therefore consumes those
+# production facts instead of treating an arbitrary legal input as a session.
+func _crew_heist_game_result_is_settled(game_id: String, result: Dictionary) -> bool:
+	if not bool(result.get("ok", false)):
+		return false
+	if result.has("settled"):
+		return bool(result.get("settled", false))
+	match game_id:
+		"blackjack":
+			return not _copy_array(result.get("blackjack_hand_results", [])).is_empty()
+		"roulette":
+			return not str(result.get("roulette_spin_id", "")).is_empty()
+		"baccarat":
+			return not str(result.get("baccarat_winner", "")).is_empty() and not _copy_dict(result.get("baccarat_hand", {})).is_empty()
+		"craps":
+			return not _copy_dict(result.get("craps_roll", {})).is_empty() and not _copy_array(result.get("craps_bet_results", [])).is_empty()
+		"video_poker":
+			return str(result.get("action_id", "")) == "draw" and not _copy_array(result.get("video_poker_hand_results", [])).is_empty()
+	return false
 
 
 func crew_stake_horse_loss_choices() -> Array:
@@ -7673,6 +8518,8 @@ func _apply_delivery_resolution() -> void:
 	if not job_id.is_empty():
 		job_resolve(job_id, "success" if succeeded else "failed")
 	var run_id := str(active_delivery_run.get("run_id", ""))
+	if run_id.begins_with("heist:"):
+		_crew_heist_apply_delivery_resolution(run_id, succeeded, resolution)
 	if run_id.begins_with("crew_collection:"):
 		var collection_job_id := run_id.trim_prefix("crew_collection:")
 		var collection_job := _crew_job(collection_job_id)
@@ -9229,6 +10076,7 @@ func _advance_global_boundary_finish(safe_amount: int) -> void:
 	_advance_crew_jobs()
 	if safe_amount > 0:
 		CrewPlayModelScript.advance_boundary(self, current_environment)
+		_crew_heist_boundary_sync()
 	CharacterChainModelScript.advance(self, safe_amount)
 
 
@@ -10535,6 +11383,8 @@ func _evaluate_immediate_terminal_state(defer_bankroll_zero: bool = false) -> vo
 		return
 	if run_status == RUN_STATUS_FAILED:
 		return
+	if _crew_heist_capture_whale_attention():
+		return
 	var heat_rerouted := handle_grand_casino_heat_reroute("immediate_terminal")
 	if suspicion_level() >= 100:
 		if heat_rerouted:
@@ -11201,6 +12051,10 @@ func _crew_state_for_save(deep_copy: bool) -> Dictionary:
 		or not (normalized_plays.get("active", []) as Array).is_empty() \
 		or not (normalized_plays.get("member_cooldowns", {}) as Dictionary).is_empty():
 		result["plays"] = normalized_plays.duplicate(deep_copy)
+	var normalized_heist := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if not normalized_heist.is_empty():
+		result["crew_heist_schema_version"] = CrewHeistModelScript.SCHEMA_VERSION
+		result["crew_heist"] = normalized_heist.duplicate(deep_copy)
 	return result
 
 
@@ -11214,6 +12068,7 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	crew_match_marks = {}
 	crew_contraband_stash = _normalize_inventory_entries(saved.get("stash", []))
 	crew_play_state = CrewPlayModelScript.normalize_state(saved.get("plays", {}))
+	crew_heist_state = CrewHeistModelScript.normalize_state(saved.get("crew_heist", {}))
 	var saved_marks: Dictionary = saved.get("m", {}) if typeof(saved.get("m", {})) == TYPE_DICTIONARY else {}
 	for member_id in CrewStateModelScript.MEMBER_IDS:
 		# Keep an empty/sparse save projection sparse. Session recording already

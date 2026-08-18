@@ -5,5 +5,8 @@
   {"id":"casino_taken_out_back","title":"Walked out back","how":"The casino ended the argument behind closed doors.","icon_key":"taken_out_back","icon_path":"res://assets/art/run_outcomes/taken_out_back.png"},
   {"id":"abandoned","title":"Left clean","how":"You chose to leave the circuit before it chose for you.","icon_key":"walked_away","icon_path":"res://assets/art/run_outcomes/walked_away.png"},
   {"id":"players_card","title":"You earned the card","how":"You cashed out clean and left with the Grand Casino Players Card.","icon_key":"players_card","icon_path":"res://assets/art/run_outcomes/players_card.png"},
-  {"id":"showdown_survived","title":"You survived Rourke","how":"You survived Rourke's back-room pressure and walked out with your winnings.","icon_key":"showdown_survived","icon_path":"res://assets/art/run_outcomes/showdown_survived.png"}
+  {"id":"showdown_survived","title":"You survived Rourke","how":"You survived Rourke's back-room pressure and walked out with your winnings.","icon_key":"showdown_survived","icon_path":"res://assets/art/run_outcomes/showdown_survived.png"},
+  {"id":"heist_clean_sweep","title":"Clean Sweep","how":"The crew took the score without leaving the house a clean name for it.","icon_key":"showdown_survived","icon_path":"res://assets/art/run_outcomes/showdown_survived.png"},
+  {"id":"heist_out_hot","title":"Out Hot","how":"The crew left under pressure with the take still moving.","icon_key":"showdown_survived","icon_path":"res://assets/art/run_outcomes/showdown_survived.png"},
+  {"id":"heist_somebody_got_pinched","title":"Somebody Got Pinched","how":"The score cleared, but one chair stayed empty.","icon_key":"showdown_survived","icon_path":"res://assets/art/run_outcomes/showdown_survived.png"}
 ]
