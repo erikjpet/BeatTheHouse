@@ -446,9 +446,11 @@ struct Kernel {
         e["kind"] = "peg_impact";
         e["body_id"] = q.id;
         Dictionary peg;
-        peg["x"] = p.get("x", 0);
-        peg["z"] = p.get("z", 0);
-        peg["r"] = p.get("r", 1200);
+        // Event schema is public parity data. JSON-authored geometry may enter
+        // Godot as numeric Variants, so pin it to the integer solver contract.
+        peg["x"] = int64_t(p.get("x", 0));
+        peg["z"] = int64_t(p.get("z", 0));
+        peg["r"] = int64_t(p.get("r", 1200));
         e["peg"] = peg;
         e["pre_x"] = pre_x;
         e["pre_z"] = pre_z;
