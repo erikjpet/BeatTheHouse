@@ -1225,6 +1225,46 @@
         ]
       }
     },
+    "game_coin_pusher": {
+      "label": "Coin Pusher",
+      "description": "Works at the coin pusher.",
+      "palette": "yellow",
+      "polarity": "neutral",
+      "format": "%s",
+      "sprite": {
+        "frame": {
+          "outer": "dark",
+          "border": "yellow",
+          "fill": "dark_3"
+        },
+        "shapes": [
+          {
+            "type": "rect",
+            "x": 7,
+            "y": 10,
+            "w": 18,
+            "h": 5,
+            "color": "accent"
+          },
+          {
+            "type": "line",
+            "x1": 9,
+            "y1": 20,
+            "x2": 23,
+            "y2": 20,
+            "w": 2,
+            "color": "soft"
+          },
+          {
+            "type": "circle",
+            "cx": 16,
+            "cy": 18,
+            "r": 4,
+            "color": "amber"
+          }
+        ]
+      }
+    },
     "inventory": {
       "label": "Gear",
       "description": "An item gained or lost.",
@@ -1278,7 +1318,8 @@
       "baccarat": "game_baccarat",
       "slot": "game_slot",
       "scratch_tickets": "game_scratch_tickets",
-      "pull_tabs": "game_pull_tabs"
+      "pull_tabs": "game_pull_tabs",
+      "coin_pusher": "game_coin_pusher"
     },
     "game_labels": {
       "global": "All",
@@ -1289,7 +1330,8 @@
       "baccarat": "Bacc",
       "slot": "Slot",
       "scratch_tickets": "Scr",
-      "pull_tabs": "Pull"
+      "pull_tabs": "Pull",
+      "coin_pusher": "Push"
     },
     "domain_aliases": {
       "blackjack": "blackjack",
@@ -1304,7 +1346,9 @@
       "slots": "slot",
       "scratch": "scratch_tickets",
       "scratch_tickets": "scratch_tickets",
-      "pull_tabs": "pull_tabs"
+      "pull_tabs": "pull_tabs",
+      "coin_pusher": "coin_pusher",
+      "pusher": "coin_pusher"
     },
     "effect_key_prefixes": {
       "blackjack_": "blackjack",
@@ -1314,7 +1358,8 @@
       "baccarat_": "baccarat",
       "slot_": "slot",
       "scratch_": "scratch_tickets",
-      "pull_tab": "pull_tabs"
+      "pull_tab": "pull_tabs",
+      "coin_pusher_": "coin_pusher"
     }
   },
   "class_badges": {
@@ -1326,6 +1371,7 @@
       "contraband": "class_item",
       "damaged": "class_item",
       "permanent": "class_item",
+      "souvenir": "class_item",
       "ticket pile": "class_item",
       "temporary": "class_item"
     },

@@ -50,7 +50,7 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 	if str(payload.get("kind", "")) == "crew_contact":
 		return CrewRecruitmentModelScript.contact_choices(run_state, environment, str(payload.get("member_id", "")), content_library) if run_state != null else []
 	if str(payload.get("kind", "")) == "crew_job_board":
-		return run_state.crew_job_board_choices() if run_state != null else []
+		return run_state.crew_job_board_choices(payload) if run_state != null else []
 	if str(payload.get("kind", "")) == "crew_practice_rig":
 		return run_state.crew_practice_rig_choices() if run_state != null else []
 	if str(payload.get("kind", "")) == "crew_stake_horse_loss":
