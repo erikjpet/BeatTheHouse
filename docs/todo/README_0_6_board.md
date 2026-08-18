@@ -1525,6 +1525,14 @@ What happens then is the owner's, not an agent's:
   witnessed signal. The agent must prove the actual production paths and may
   not rebaseline the crew-ignoring golden or fabricate hidden evidence.
 
+- 2026-08-18 [crew06_9] Continued scope review found Plan B's failure beat
+  incorrectly deferred to post-getaway instead of exposing the rig mid-game;
+  wrong accusation rerolls the whole pool rather than raising the already-real
+  member's risk; and the draft QA omits finale-level cancellation, full hedge
+  outcomes, exact scars/beats, emission/reroll twin determinism, legacy saves,
+  and report/profile/challenge/achievement secrecy. Current fixtures must be
+  corrected to the contract, never used to bless these implementation shapes.
+
 ## Work Log
 
 - 2026-08-18 [remainder continuation] PM claimed `pusherv3_3` and `crew06_9`
