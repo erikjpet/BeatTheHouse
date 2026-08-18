@@ -3,10 +3,10 @@ Board row: `pusherv3_3` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-18
+- **Completion/implementation commits:** `4d2cd420`, `632384f1`, `ea99129e`
+- **Verification:** PM line-by-line scope/design review; combined Systems, Contracts, and UI suites PASS; two-process 10-seed/510-checkpoint determinism PASS (`3528944666`); canonical visual QA PASS; full performance probe PASS unchanged; integrated GL feel capture PASS 9/9 with 300-body draw p95 2.126 ms and zero per-coin nodes.
+- **Deviations:** None. Two transient full-performance failures were investigated against a matched pre-integration control and attributed to rotating host contention; the unchanged combined tree subsequently passed all existing budgets. No code, budget, or assertion was altered for convergence.
 
 # Agent Prompt — pusherv3_3: The Alive Cabinet (renderer + audio)
 

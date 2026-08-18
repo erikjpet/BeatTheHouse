@@ -3,10 +3,10 @@ Board row: `crew06_9` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-18
+- **Completion/implementation commits:** `627b8ac9`, `7a3ab2ca`
+- **Verification:** PM line-by-line scope/design/privacy review; `crew_turn_contract` and owning heist contracts PASS on the integrated tree; combined Systems, Contracts, and UI suites PASS; two-process 10-seed/510-checkpoint determinism PASS (`3528944666`); canonical visual QA PASS.
+- **Deviations:** None. Hidden state remains under neutral compact save keys, legacy saves remain accepted, and no player-visible surface names the system outside its authored ending copy.
 
 # Agent Prompt — 0.6 crew06_9: The Turn (Hidden Betrayal System)
 
