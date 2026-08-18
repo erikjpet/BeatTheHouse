@@ -1997,6 +1997,9 @@
     "id": "mags_lined_sleeve", "display_name": "Mags' Lined Sleeve", "class": "contraband", "domain": "games", "content_groups": ["crew_gear"], "sellable": true, "sale_price": 40, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/mags_lined_sleeve.svg", "icon_key": "mags_lined_sleeve", "environment_prop": "foil_sleeve", "surface": "folding_table", "description": "Static stays in. Heat stays down.", "effect": {"families": {"slots": {"win_chance": 7}, "wheel": {"roulette_past_post_perfect_msec": 30, "roulette_past_post_base_heat": -4}}, "cheat_suspicion_delta": 1}
   },
   {
+    "id": "mags_nudge_dampener", "display_name": "Mags' Nudge Dampener", "class": "contraband", "domain": "coin_pusher", "content_groups": ["crew_gear"], "sellable": true, "sale_price": 36, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/mags_nudge_dampener.svg", "icon_key": "mags_nudge_dampener", "environment_prop": "keychain", "surface": "folding_table", "description": "Rubber travel. One wider honest-looking stop.", "effect": {"families": {"coin_pusher": {"coin_pusher_nudge_tolerance_band_delta": 1}}, "cheat_suspicion_delta": 1}
+  },
+  {
     "id": "mags_shim_kit", "display_name": "Mags' Gutter Kit", "class": "contraband", "domain": "coin_pusher", "content_groups": ["crew_gear"], "sellable": true, "sale_price": 32, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/mags_shim_kit.svg", "icon_key": "mags_shim_kit", "environment_prop": "coin", "surface": "folding_table", "description": "Filed teeth. One more gutter gives it back.", "effect": {"families": {"coin_pusher": {"coin_pusher_gutter_recovery_uses": 4}}, "cheat_suspicion_delta": 1}
   }
 ]

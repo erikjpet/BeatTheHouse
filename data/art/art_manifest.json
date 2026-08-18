@@ -126,6 +126,7 @@
 	"mags_loaded_dice": {"path": "res://assets/art/items/content06/mags_loaded_dice.svg"},
 	"mags_tuned_loupe": {"path": "res://assets/art/items/content06/mags_tuned_loupe.svg"},
 	"mags_lined_sleeve": {"path": "res://assets/art/items/content06/mags_lined_sleeve.svg"},
+	"mags_nudge_dampener": {"path": "res://assets/art/items/content06/mags_nudge_dampener.svg"},
 	"mags_shim_kit": {"path": "res://assets/art/items/content06/mags_shim_kit.svg"},
 	"lucky_penny": {"path": "res://assets/art/items/lucky_penny.png"},
     "slot": {"path": "res://assets/art/games/slot.png"},
