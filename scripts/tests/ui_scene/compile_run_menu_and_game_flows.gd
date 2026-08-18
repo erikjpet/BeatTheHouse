@@ -329,6 +329,12 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var pre_action_cheat_actions: Variant = pre_action_canvas_state.get("cheat_actions", [])
 	var pre_action_audio_json := JSON.stringify(pre_action_canvas_state.get("surface_audio", {}))
 	var pre_action_count := int(pre_action_canvas_state.get("coin_pusher_action_count", 0))
+	var pre_action_bodies: Variant = pre_action_canvas_state.get("coin_pusher_bodies", [])
+	var pre_action_previous_bodies: Variant = pre_action_canvas_state.get("coin_pusher_previous_bodies", [])
+	var pre_action_liveness_ticks := int(pre_action_canvas_state.get("coin_pusher_liveness_ticks", 0))
+	var pre_action_face_y := int(pre_action_canvas_state.get("coin_pusher_face_position_y", -1))
+	var pre_action_tell_rung := int(pre_action_canvas_state.get("coin_pusher_tell_rung", -1))
+	var pre_action_locked := bool(pre_action_canvas_state.get("coin_pusher_locked", false))
 	var pre_action_preferences: Dictionary = probe.get("game_surface_ui_state") if typeof(probe.get("game_surface_ui_state")) == TYPE_DICTIONARY else {}
 	pre_action_preferences["host_owned_preference_sentinel"] = "preserve"
 	probe.set("game_surface_ui_state", pre_action_preferences)
@@ -446,38 +452,38 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var stored_patch: Dictionary = stored.get("surface_presentation_snapshot_patch", {}) if typeof(stored.get("surface_presentation_snapshot_patch", {})) == TYPE_DICTIONARY else {}
 	var last_draw: Dictionary = draw_snapshots.back() if not draw_snapshots.is_empty() and typeof(draw_snapshots.back()) == TYPE_DICTIONARY else {}
 	var draw_state: Dictionary = last_draw.get("state", {}) if typeof(last_draw.get("state", {})) == TYPE_DICTIONARY else {}
-	var draw_snapshot: Dictionary = draw_state.get("coin_pusher_snapshot", {}) if typeof(draw_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
 	var action_canvas_state: Dictionary = canvas.call("realtime_surface_state")
 	var post_action_preferences: Dictionary = probe.get("game_surface_ui_state") if typeof(probe.get("game_surface_ui_state")) == TYPE_DICTIONARY else {}
-	var action_canvas_snapshot: Dictionary = action_canvas_state.get("coin_pusher_snapshot", {}) if typeof(action_canvas_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	var action_canvas_bodies: Variant = action_canvas_state.get("coin_pusher_bodies", [])
+	var action_canvas_previous_bodies: Variant = action_canvas_state.get("coin_pusher_previous_bodies", [])
 	var stored_action_patch: Dictionary = stored.get("surface_action_view_patch", {}) if typeof(stored.get("surface_action_view_patch", {})) == TYPE_DICTIONARY else {}
-	var stored_action_snapshot_patch: Dictionary = stored_action_patch.get("coin_pusher_snapshot", {}) if typeof(stored_action_patch.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
-	var stored_action_state: Dictionary = stored_patch.get("action_state", {}) if typeof(stored_patch.get("action_state", {})) == TYPE_DICTIONARY else {}
-	var canvas_action_state: Dictionary = action_canvas_snapshot.get("action_state", {}) if typeof(action_canvas_snapshot.get("action_state", {})) == TYPE_DICTIONARY else {}
 	var animation_channels: Array = action_canvas_state.get("surface_animation_channels", []) if typeof(action_canvas_state.get("surface_animation_channels", [])) == TYPE_ARRAY else []
-	var replay_channel: Dictionary = animation_channels[0] if not animation_channels.is_empty() and typeof(animation_channels[0]) == TYPE_DICTIONARY else {}
 	var live_run_state: RunState = probe.get("run_state")
-	var expected_realtime_patch: Dictionary = game.surface_realtime_state_patch(live_run_state, live_run_state.current_environment, {
-		"surface_time_msec": int(action_canvas_state.get("surface_time_msec", 0)),
-	}, action_canvas_state)
-	var expected_realtime_snapshot: Dictionary = expected_realtime_patch.get("coin_pusher_snapshot", {}) if typeof(expected_realtime_patch.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
 	var action_view_invariants := {
 		"next_frame_hud": next_frame_hud_passed,
 		"surface_audio_unchanged": JSON.stringify(action_canvas_state.get("surface_audio", {})) == pre_action_audio_json \
 				and str((action_canvas_state.get("surface_audio", {}) as Dictionary).get("profile_id", "")) == "coin_pusher",
 		"action_patch_present": not stored_action_patch.is_empty(),
 		"top_level_action_count": int(action_canvas_state.get("coin_pusher_action_count", 0)) == int(stored_action_patch.get("coin_pusher_action_count", -1)),
-		"authoritative_upper_phase": int(action_canvas_snapshot.get("upper_phase_milli", -1)) == int(expected_realtime_snapshot.get("upper_phase_milli", -2)),
-		"authoritative_lower_phase": int(action_canvas_snapshot.get("lower_phase_milli", -1)) == int(expected_realtime_snapshot.get("lower_phase_milli", -2)),
-		"tell_rung": int(action_canvas_snapshot.get("tell_rung", -1)) == int(stored_action_snapshot_patch.get("tell_rung", -2)),
-		"lock_state": bool(action_canvas_snapshot.get("locked", false)) == bool(stored_action_snapshot_patch.get("locked", true)),
-		"authoritative_body_count": int(action_canvas_snapshot.get("body_count", -1)) == int(stored_action_snapshot_patch.get("body_count", -2)),
+		# V3 is a continuously live physical projection. A DROP queues input but
+		# must not clone or fabricate a scripted replay/packed-phase snapshot at
+		# the action boundary; the next realtime tick owns dense body projection.
+		"live_body_views_reused": is_same(action_canvas_bodies, pre_action_bodies) \
+				and is_same(action_canvas_previous_bodies, pre_action_previous_bodies),
+		"authoritative_body_count": typeof(action_canvas_bodies) == TYPE_ARRAY \
+				and int(action_canvas_state.get("coin_pusher_body_count", -1)) == (action_canvas_bodies as Array).size() \
+				and typeof(action_canvas_previous_bodies) == TYPE_ARRAY \
+				and (action_canvas_previous_bodies as Array).size() == (action_canvas_bodies as Array).size(),
+		"liveness_unchanged_until_live_tick": int(action_canvas_state.get("coin_pusher_liveness_ticks", -1)) == pre_action_liveness_ticks,
+		"face_unchanged_until_live_tick": int(action_canvas_state.get("coin_pusher_face_position_y", -2)) == pre_action_face_y,
+		"interpolation_alpha_bounded": float(action_canvas_state.get("coin_pusher_interpolation_alpha", -1.0)) >= 0.0 \
+				and float(action_canvas_state.get("coin_pusher_interpolation_alpha", 2.0)) <= 1.0,
+		"tell_rung_unchanged": int(action_canvas_state.get("coin_pusher_tell_rung", -2)) == pre_action_tell_rung,
+		"lock_state_unchanged": bool(action_canvas_state.get("coin_pusher_locked", not pre_action_locked)) == pre_action_locked,
 		"step_metrics": JSON.stringify(action_canvas_state.get("coin_pusher_last_step_metrics", {})) == JSON.stringify(stored_action_patch.get("coin_pusher_last_step_metrics", {})),
-		"nested_action_count": int(canvas_action_state.get("action_count", 0)) == int(stored_action_state.get("action_count", -1)),
 		"outcome_message": str(action_canvas_state.get("outcome_message", "")) == str(stored.get("message", "")),
 		"presented_bankroll": live_run_state != null and int(action_canvas_state.get("bankroll", -1)) == int(probe.call("_presented_bankroll")),
-		"replay_channel_active": bool(replay_channel.get("active", false)),
-		"replay_channel_id": str(replay_channel.get("active_id", "")) == "action_%d" % int(stored_action_state.get("action_count", 0)),
+		"no_scripted_replay_channel": animation_channels.is_empty(),
 		"catalog_key_published": not str(action_canvas_state.get("surface_action_catalog_key", "")).is_empty() \
 				and str(action_canvas_state.get("surface_action_catalog_key", "")) == str(stored_action_patch.get("surface_action_catalog_key", "")),
 		"catalog_reused_when_dependencies_stable": str(action_canvas_state.get("surface_action_catalog_key", "")) != pre_action_catalog_key \
@@ -513,7 +519,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		"action_view_contract": action_view_passed,
 		"drop_action_result": str(stored.get("action_id", "")) == "drop_quarter",
 		"draw_snapshot_present": not draw_snapshots.is_empty(),
-		"draw_live_body_count": int(draw_snapshot.get("body_count", -1)) == int(action_canvas_snapshot.get("body_count", -2)),
+		"draw_live_body_count": int(draw_state.get("coin_pusher_body_count", -1)) == int(action_canvas_state.get("coin_pusher_body_count", -2)),
 		"draw_sample_recorded": draw_sample_count_after > draw_sample_count_before,
 		"drop_hit_region": rendered_drop_hit,
 		"nudge_hit_region": rendered_nudge_hit,
@@ -523,7 +529,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			failed_invariants.append(str(invariant_name))
 	var render_passed := failed_invariants.is_empty()
 	if not render_passed:
-		push_error("Coin Pusher owned canvas contract failed invariants=%s counters=%s action=%s." % [JSON.stringify(failed_invariants), JSON.stringify(refresh_invariants), JSON.stringify(action_view_invariants)])
+		push_error("Coin Pusher owned canvas contract failed invariants=%s counters=%s action=%s preferences=%s." % [JSON.stringify(failed_invariants), JSON.stringify(refresh_invariants), JSON.stringify(action_view_invariants), JSON.stringify(post_action_preferences)])
 
 	var guard_canvas_json := JSON.stringify(action_canvas_state)
 	probe.set("last_game_surface_realtime_refresh_msec", 0)
@@ -557,7 +563,8 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		push_error("FoundationMain realtime advance bypassed its minimum-interval guard on a live tree.")
 
 	var surface_time_before := int(action_canvas_state.get("surface_time_msec", -1))
-	var upper_phase_before := int(action_canvas_snapshot.get("upper_phase_milli", -1))
+	var interpolation_alpha_before := float(action_canvas_state.get("coin_pusher_interpolation_alpha", -1.0))
+	var liveness_before := int(action_canvas_state.get("coin_pusher_liveness_ticks", -1))
 	# Host processing remains disabled while the real clock advances. Bound the
 	# wait so a fast headless frame cannot leave both observations in one millisecond.
 	var realtime_clock_wait_frames := 0
@@ -579,16 +586,37 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	probe.set("last_game_surface_realtime_refresh_msec", 0)
 	probe.call("_advance_game_surface_realtime_state")
 	var success_stamp := int(probe.get("last_game_surface_realtime_refresh_msec"))
+	# A freshly opened live session intentionally treats its first host clock as
+	# an anchor rather than retroactively simulating time before entry. Exercise
+	# the next ordinary interval to prove the production loop then advances.
+	var progression_wait_frames := 0
+	while int(probe.call("_environment_simulation_time_msec")) - success_stamp <= 20 \
+			and progression_wait_frames < 32:
+		progression_wait_frames += 1
+		await process_frame
+	probe.call("_advance_game_surface_realtime_state")
+	success_stamp = int(probe.get("last_game_surface_realtime_refresh_msec"))
 	var realtime_canvas_state: Dictionary = canvas.call("realtime_surface_state")
-	var realtime_canvas_snapshot: Dictionary = realtime_canvas_state.get("coin_pusher_snapshot", {}) if typeof(realtime_canvas_state.get("coin_pusher_snapshot", {})) == TYPE_DICTIONARY else {}
+	var realtime_bodies: Variant = realtime_canvas_state.get("coin_pusher_bodies", [])
+	var realtime_previous_bodies: Variant = realtime_canvas_state.get("coin_pusher_previous_bodies", [])
+	var realtime_alpha := float(realtime_canvas_state.get("coin_pusher_interpolation_alpha", -1.0))
 	var realtime_passed: bool = success_preconditions_exact \
 			and realtime_clock_wait_frames < 16 \
+			and progression_wait_frames < 32 \
 			and success_stamp > surface_time_before \
 			and int(realtime_canvas_state.get("surface_time_msec", -1)) == success_stamp \
-			and int(realtime_canvas_snapshot.get("upper_phase_milli", -1)) != upper_phase_before \
-			and int(realtime_canvas_snapshot.get("body_count", -1)) == int(action_canvas_snapshot.get("body_count", -2))
+			and (int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)) > liveness_before \
+					or not is_equal_approx(realtime_alpha, interpolation_alpha_before)) \
+			and int(realtime_canvas_state.get("coin_pusher_face_position_y", -1)) != pre_action_face_y \
+			and typeof(realtime_bodies) == TYPE_ARRAY and typeof(realtime_previous_bodies) == TYPE_ARRAY \
+			and (realtime_bodies as Array).size() == int(realtime_canvas_state.get("coin_pusher_body_count", -2)) \
+			# A queued DROP is born on this tick, so the exact previous projection
+			# legitimately has one fewer body; existing bodies still interpolate.
+			and (realtime_previous_bodies as Array).size() > 0 \
+			and (realtime_previous_bodies as Array).size() <= (realtime_bodies as Array).size() \
+			and (realtime_bodies as Array).size() - (realtime_previous_bodies as Array).size() <= 1
 	if not realtime_passed:
-		push_error("FoundationMain production realtime advance did not stamp/update the live owned canvas from current machine state.")
+		push_error("FoundationMain production realtime advance did not stamp/update the live owned canvas from current machine state: preconditions=%s wait=%d progression_wait=%d before_time=%d stamp=%d canvas_time=%d live=%d->%d alpha=%s->%s bodies=%d previous=%d public=%d." % [success_preconditions_exact, realtime_clock_wait_frames, progression_wait_frames, surface_time_before, success_stamp, int(realtime_canvas_state.get("surface_time_msec", -1)), liveness_before, int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)), interpolation_alpha_before, realtime_alpha, (realtime_bodies as Array).size() if typeof(realtime_bodies) == TYPE_ARRAY else -1, (realtime_previous_bodies as Array).size() if typeof(realtime_previous_bodies) == TYPE_ARRAY else -1, int(realtime_canvas_state.get("coin_pusher_body_count", -1))])
 	# Replacing only the result boundary while the exact run/game/room/session stay
 	# active must stale the captured identity rather than render the wrong result.
 	var generation_before_stale := int(probe.get("deferred_embedded_refresh_generation"))
@@ -615,10 +643,14 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	probe.call("_schedule_deferred_embedded_action_refresh", true)
 	var scheduled_generation := int(probe.get("deferred_embedded_refresh_generation"))
 	probe.call("back_to_environment")
-	await process_frame
+	var navigation_wait_frames := 0
+	while bool(probe.get("game_exit_settle_active")) and navigation_wait_frames < 200:
+		navigation_wait_frames += 1
+		await process_frame
 	await process_frame
 	var stale_token_passed := result_identity_stale_passed \
 			and scheduled_generation > result_identity_generation \
+			and navigation_wait_frames < 200 \
 			and int(probe.get("deferred_embedded_refresh_generation")) > scheduled_generation \
 			and not bool(probe.get("deferred_embedded_refresh_pending")) \
 			and int(probe.get("deferred_embedded_refresh_execution_count")) == execution_before_stale \
@@ -627,7 +659,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			and int(probe.get("embedded_full_snapshot_fallback_count")) == fallback_before_stale \
 			and str(probe.get("current_screen")) == "ENVIRONMENT"
 	if not stale_token_passed:
-		push_error("Coin Pusher deferred refresh token did not stale-no-op after allowed navigation/reset.")
+		push_error("Coin Pusher deferred refresh token did not stale-no-op after allowed navigation/reset: identity=%s scheduled=%d identity_generation=%d final_generation=%d navigation_frames=%d pending=%s executions=%d stale=%d incremental=%d fallback=%d screen=%s." % [result_identity_stale_passed, scheduled_generation, result_identity_generation, int(probe.get("deferred_embedded_refresh_generation")), navigation_wait_frames, bool(probe.get("deferred_embedded_refresh_pending")), int(probe.get("deferred_embedded_refresh_execution_count")), int(probe.get("deferred_embedded_refresh_stale_count")), int(probe.get("embedded_incremental_snapshot_count")), int(probe.get("embedded_full_snapshot_fallback_count")), str(probe.get("current_screen"))])
 	if canvas.draw.is_connected(observe_draw):
 		canvas.draw.disconnect(observe_draw)
 	probe.queue_free()

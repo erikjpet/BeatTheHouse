@@ -194,6 +194,15 @@ class SurfaceHarness:
 	func surface_end_design_space() -> void:
 		pass
 
+	func surface_filled_polygon(_points: PackedVector2Array, _color: Color) -> void:
+		pass
+
+	func surface_polyline(_points: PackedVector2Array, _color: Color, _width: float = -1.0) -> void:
+		pass
+
+	func surface_present_multimesh_batch(_multimesh: MultiMesh, _texture: Texture2D, _batch_material: Material, _design_size: Vector2) -> void:
+		pass
+
 	func surface_flicker() -> float:
 		return flicker_value
 
