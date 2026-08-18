@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `crew06_8` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-18
+- **Completion/implementation commits:** `795e6f48`, `f24b8d80`, `0fae43ff`
+- **Verification:** PM production-path Plans A/B E2E with real delivery and mid-route save/load PASS; exact Rourke showdown and Players Card act-seam bytes plus full shipped-route behavior PASS; final combined Systems/UI/Contracts, 10-seed determinism, and zero-warning visual QA PASS.
+- **Deviations:** None.
 
 # Agent Prompt — 0.6 crew06_8: The Heist (Plans A + B, Victory Route)
 

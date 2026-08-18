@@ -158,7 +158,7 @@ each stage builds on the last.
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | DONE | rework06_2 (landed) | pusherv3_2 | PM:Codex | 2026-08-17 | 2026-08-17 | Owner ruled complete after PM verification of Amendment 6.1 behavior, native 300-body performance, exact Windows/Web parity, determinism, and all pusher-owning gates; integrated at `a6e36d2f`. |
-| pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | IN_PROGRESS | pusherv3_1 | pusherv3_3 | PM:Codex/sub:pusher-live | 2026-08-17 | | PM-orchestrated isolated execution; continuous loop, tray/collect, apparatus, exit-settle, and settled V3 persistence. |
+| pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | DONE | pusherv3_1 | pusherv3_3 | PM:Codex/sub:pusher-live | 2026-08-17 | 2026-08-18 | PM verified continuous 60 Hz loop, deterministic trace, tray-only collection, compact persistence/migration, motor-on exit settle, continuous rail drag, exact Windows/Web parity, performance, and all combined gates. |
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | TODO | pusherv3_2 | pusherv3_4 | | | | Full alive cabinet at slot-renderer parity + physics-driven audio + stacking-visible projection. Feel captures judged as a player. |
 | pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | TODO | pusherv3_3 | coin pusher closure | | | | Ridge (3-hole plinko, physical pucks) + Vault (physical fragments) on the new machine, town/cheat/nudge re-wiring, EV harness by geometry, migration, closure. |
 
@@ -169,7 +169,7 @@ each stage builds on the last.
 | crew06_5 | `crew06_5_recruitment_prompt.md` | DONE | crew06_1, env06_2, env06_3 | crew06_6/7/8 | PM:Codex/sub:crew-recruitment | 2026-08-17 | 2026-08-17 | PM verified all seven primary/fallback recruitment paths, diegetic signposting, rank services, seeded presence, save/ignored-run compatibility, lender behavior, authored voices, and clean Contract/Systems/UI/determinism/75-state visual gates. |
 | crew06_6 | `crew06_6_layer3_jobs_prompt.md` | DONE | crew06_1, env06_4, streets06_1, crew06_5 | crew06_8 | PM:Codex/sub:crew-jobs | 2026-08-17 | 2026-08-17 | PM verified furnished L3, seeded residency, 12 launch jobs across five kinds/all seven members, services, shared Practice Rig progress, save compatibility, and combined Contracts/Systems/UI/determinism/visual gates PASS. |
 | crew06_7 | `crew06_7_coordinated_plays_prompt.md` | DONE | crew06_1, crew06_5 | crew06_8 | PM:Codex/sub:crew-plays | 2026-08-17 | 2026-08-17 | PM verified five explicit coordinated plays, context/presence/rank gates, bounded windows/costs/detection, game seams, save compatibility, sustained heat pressure, and combined release gates PASS. |
-| crew06_8 | `crew06_8_heist_prompt.md` | IN_PROGRESS | crew06_5/6/7, craps06_1, streets06_1, env06_3 | crew06_9 | PM:Codex/sub:crew-heist | 2026-08-17 | | PM-orchestrated isolated execution; Plans A+B, real delivery API, outcome ladder, and schema-versioned act seam. |
+| crew06_8 | `crew06_8_heist_prompt.md` | DONE | crew06_5/6/7, craps06_1, streets06_1, env06_3 | crew06_9 | PM:Codex/sub:crew-heist | 2026-08-17 | 2026-08-18 | PM verified both production heist plans, real delivery/save-load, outcome and abort boundaries, exact shipped-route seams, and final combined gates. |
 | crew06_9 | `crew06_9_the_turn_prompt.md` | TODO | crew06_8, crew06_2, town06_2, crew06_3 | release06_1 | | | | |
 
 ### Wave E — Narrative + playtest handoff
@@ -183,7 +183,7 @@ the release, and it is where release activity finally happens.
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | chain06_1 | `chain06_1_character_chains_prompt.md` | DONE | town06_2, env06_2, env06_3 | playtest06_1 | PM:Codex/sub:character-chains | 2026-08-17 | 2026-08-17 | PM verified six chains/21 beats, all three Cass endings, deterministic anchors, prefix safety, bounded effects, actionable icon projection, save compatibility, and combined release gates PASS. |
-| content06_1 | `content06_1_items_events_expansion_prompt.md` | IN_PROGRESS | env06_2, env06_3, crew06_6 | playtest06_1 | PM:Codex/sub:content-depth | 2026-08-17 | | PM-orchestrated isolated execution; souvenirs, existing-hook crew gear, scenario/service fill, and economy audit without tuning. |
+| content06_1 | `content06_1_items_events_expansion_prompt.md` | BLOCKED | env06_2, env06_3, crew06_6 | playtest06_1 | PM:Codex/sub:content-depth | 2026-08-17 | | Compatible within-run scope and gates are green; owner must rule whether souvenir collections integration is within-run presentation or authorizes new cross-run persistence. |
 | playtest06_1 | `playtest06_1_playtest_readiness_prompt.md` | TODO | ALL other rows DONE (except parked) | owner playtest | | | | Verification, playability sweep, honest handoff report, local build. No version bump, no tag, no packaging, no publish, no final balance tuning. |
 
 ### Parked until after the owner's playtest
@@ -1467,9 +1467,31 @@ What happens then is the owner's, not an agent's:
   clarity as setup keys accumulate while retaining its survivable cap; and prove
   free souvenir resale cannot repeat through revisit or reload. `release06_1`
   owns these decisions after human evidence.
+- 2026-08-18 [pusherv3_2] Final combined acceptance is green. A first cold-host
+  performance sample put active DROP at 21.011 ms p95; the immediate warm,
+  otherwise identical quiet-host rerun passed at 15.727/16.000 ms with the
+  300-body native tick at 3.072/12.000 ms and zero full-snapshot fallbacks.
+  Windows and a fresh integrated-main Web export produced the same native-v3
+  digest `c25d088c...` from input hash `61c7c14e...`, repeat/source exact,
+  collecting one $3 tray entry exactly once. No budget was changed.
+- 2026-08-18 [content06_1] Compatible-scope acceptance now proves seeded public
+  RunGenerator -> scenario -> EventModule -> inventory acquisition, exact gates
+  and real consumers for all five Mags outputs, and clean buy/craft/earn visual
+  captures. Systems/UI/Contracts/determinism/visual gates are green. The row is
+  BLOCKED solely on the recorded owner question because the PM will not infer a
+  new cross-run collection schema from a within-run roadmap.
 
 ## Work Log
 
+- 2026-08-18 [pusherv3_2] PM completed and archived the verified live-machine
+  loop. `pusherv3_3` is now unblocked for cabinet presentation, physical audio,
+  and player feel without changing the accepted machine mechanics.
+- 2026-08-18 [crew06_8] PM completed and archived both heist plans after exact
+  shipped-route regressions and the final combined matrix. `crew06_9` is now
+  unblocked for The Turn.
+- 2026-08-18 [content06_1] All compatible implementation and QA is integrated,
+  but the row is BLOCKED on owner authority for souvenir collection persistence;
+  its prompt remains active and `playtest06_1` stays dependency-blocked.
 - 2026-08-18 [crew06_8] PM provisionally integrated the verified production
   implementation at `0fae43ff` after both full-heist EventModule/GameModule/
   RunGenerator/delivery smokes passed with mid-route save/load. The row remains

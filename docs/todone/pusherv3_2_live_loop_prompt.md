@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `pusherv3_2` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-18
+- **Completion/implementation commits:** `7e95c662`, `1bea1ecc`, `85814c06`, `47a45462`, `257e5974`, `5385c37e`, `63f84c1d`, `590eee6d`, `23395d43`, `61f9472c`
+- **Verification:** PM line-by-line scope/design review; final combined Systems/UI/Contracts PASS; 10-seed/510-checkpoint two-process determinism PASS (`3549586652`); visual QA PASS with zero warnings; performance PASS (300-body native tick p95 3.072 ms, active DROP p95 15.727 ms, zero full-snapshot fallbacks); Windows/Web native parity exact (`c25d088c...`, input `61c7c14e...`), collection 1/$3 and empty tray.
+- **Deviations:** None. Stage-3 cabinet presentation remains intentionally downstream.
 
 # Agent Prompt — pusherv3_2: The Live Machine Loop (continuous play, tray, persistence)
 
