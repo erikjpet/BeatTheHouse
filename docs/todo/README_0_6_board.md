@@ -277,6 +277,15 @@ What happens then is the owner's, not an agent's:
   routes. Dead fixture-era Plan B component flags must be replaced by the real
   item/training producers used by code.
 
+- 2026-08-17 [crew06_8] Roadmap-fidelity review expanded the same return: The
+  Count requires an action-boundary phase window, functional dock-versus-
+  corridor consequences, and heat-spike corridor loss; The Whale Game must
+  score the authoritative Grand Casino chip flow, consume actual finite
+  crew06_7 play state as lifelines, preserve its Rourke-attention outcome path,
+  and include the compressed cage/interview beat before clean walk or hot
+  chase. None may be represented by fixture-only result flags or a parallel
+  heist currency.
+
 - 2026-08-17 [pusherv3_2] PM production-lifecycle review returned the first
   live-loop implementation before broad gates: FoundationMain prepares an
   autosave after every paid DROP by calling the generic surface checkpoint,
@@ -298,6 +307,15 @@ What happens then is the owner's, not an agent's:
   preserve full backlog with four-tick frame work, save/load an exact fresh
   pile, render the final settled frame, and prove a generated rider plus shim
   through real tick/tray/collect paths.
+
+- 2026-08-17 [pusherv3_2] Persistence-budget review found the nominal compact
+  record expands to roughly 3 KB for 250 coins after JSON/base64 before
+  headers, while every paid coin's default nonempty provenance routes it into
+  verbose `extra_bodies`, causing unbounded long-run save growth. The row must
+  measure actual representative/cap snapshots and compact default Quarter
+  Falls provenance plus future meaningful multiplier provenance while
+  retaining sparse body identity and support flags; budgets may not simply be
+  raised.
 
 - 2026-08-17 [content06_1] Code reality: the landed Mags bench seam is
   intentionally inert (`crew_mags_bench_status()` reports
