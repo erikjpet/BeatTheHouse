@@ -315,7 +315,8 @@ What happens then is the owner's, not an agent's:
   measure actual representative/cap snapshots and compact default Quarter
   Falls provenance plus future meaningful multiplier provenance while
   retaining sparse body identity and support flags; budgets may not simply be
-  raised.
+  raised. Default x1/non-payout variation labels (including future Vault
+  drops) also cannot create one verbose sidecar entry per paid coin.
 
 - 2026-08-17 [pusherv3_2] Final verbatim cleanup found the obsolete packed-
   presentation trace still consumed by the performance probe, and the Stage 1
