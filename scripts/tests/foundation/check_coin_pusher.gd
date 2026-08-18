@@ -517,16 +517,26 @@ func _check_pusher_v3_v2_production_migration(library: ContentLibrary, failures:
 	var environment := {"id": "pusher_v2_migration_fixture", "world_node_id": "pusher_v2_migration_fixture", "game_states": {"coin_pusher": legacy_machine.duplicate(true), "slot": unrelated_state.duplicate(true)}}
 	var game: GameModule = module_script.new()
 	game.setup(definition, library)
+	var activation_before := JSON.stringify(environment, "", true)
 	game.enter(run_state, environment)
+	var activation_exact := JSON.stringify(environment, "", true) == activation_before and run_state.story_log.is_empty()
 	var live_map: Dictionary = game.get("_live_machines")
 	var live_machine: Dictionary = live_map.values()[0] if not live_map.is_empty() else {}
 	var simulation: Dictionary = live_machine.get("simulation", {}) if typeof(live_machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var migrated_collect_simulation := simulation.duplicate(true)
+	var migrated_collect := CoinPusherSolverScript.collect_tray(migrated_collect_simulation)
+	var migrated_post_collect := CoinPusherSolverScript.step_ticks(migrated_collect_simulation, {"motor_enabled": false}, 1)
+	var migrated_collect_exact := int(migrated_collect.get("count", -1)) == 4 \
+			and int(migrated_collect.get("value", -1)) == 4 \
+			and bool((migrated_post_collect.get("invariants", {}) as Dictionary).get("conservation_ok", false))
+	game.surface_action_command("coin_pusher_carriage_left", 0, false, {}, run_state, environment)
 	var first_settled: Dictionary = (((environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary).get("settled_state", {}) as Dictionary).duplicate(true)
 	var first_migration_logs := 0
 	for entry_value in run_state.story_log:
 		if typeof(entry_value) == TYPE_DICTIONARY and str((entry_value as Dictionary).get("type", "")) == "coin_pusher_v2_migrated":
 			first_migration_logs += 1
-	var migrated_exact: bool = int(live_machine.get("tray_value", -1)) == 4 \
+	var migrated_exact: bool = activation_exact and migrated_collect_exact \
+			and int(live_machine.get("tray_value", -1)) == 4 \
 			and (simulation.get("tray_ledger", []) as Array).size() == 4 \
 			and live_machine.get("variation_state", {}) == legacy_sub_game \
 			and int(live_machine.get("base_alarm_tolerance", -1)) == 9 \
@@ -558,6 +568,7 @@ func _check_pusher_v3_v2_production_migration(library: ContentLibrary, failures:
 	var second_game: GameModule = module_script.new()
 	second_game.setup(definition, library)
 	second_game.enter(second_run, second_environment)
+	second_game.surface_action_command("coin_pusher_carriage_left", 0, false, {}, second_run, second_environment)
 	var second_settled: Dictionary = (((second_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary).get("settled_state", {}) as Dictionary)
 	if first_settled != second_settled:
 		failures.append("Coin Pusher V3 V2 migration reseed was not deterministic for the same run seed and machine node.")
@@ -568,6 +579,22 @@ func _check_pusher_v3_v2_production_migration(library: ContentLibrary, failures:
 	game.call("_read_machine_state", non_pusher_run, non_pusher_environment)
 	if JSON.stringify(non_pusher_environment, "", true) != non_pusher_before:
 		failures.append("Coin Pusher V3 read/migration path changed a non-pusher save byte contract.")
+	var fresh_run := RunState.new()
+	fresh_run.start_new("PUSHER-V3-FRESH-ACTIVATION", RunState.standard_challenge("PUSHER-V3-FRESH-ACTIVATION"))
+	var fresh_environment := {"id": "pusher_v3_fresh_fixture", "world_node_id": "pusher_v3_fresh_fixture", "game_states": {}}
+	var fresh_game: GameModule = module_script.new()
+	fresh_game.setup(definition, library)
+	var fresh_machine: Dictionary = fresh_game.call("_generate_machine_state", fresh_run, fresh_environment, _pusher_v3_rng("PUSHER-V3-FRESH-ACTIVATION"))
+	var fresh_snapshot: Dictionary = fresh_machine.get("settled_state", {}) if typeof(fresh_machine.get("settled_state", {})) == TYPE_DICTIONARY else {}
+	if str(fresh_snapshot.get("schema", "")) != CoinPusherLiveSessionScript.SNAPSHOT_SCHEMA \
+			or fresh_machine.has("simulation") or fresh_machine.has("live_session") \
+			or int(fresh_snapshot.get("coin_count", 0)) + (fresh_snapshot.get("extra_bodies", []) as Array).size() <= 0:
+		failures.append("Coin Pusher V3 fresh generation did not persist only a populated compact settled snapshot.")
+	fresh_environment["game_states"] = {"coin_pusher": fresh_machine}
+	var fresh_before := JSON.stringify(fresh_environment, "", true)
+	fresh_game.enter(fresh_run, fresh_environment)
+	if JSON.stringify(fresh_environment, "", true) != fresh_before:
+		failures.append("Coin Pusher V3 fresh compact machine mutated durable state during passive activation.")
 
 
 func _check_pusher_v3_generated_rider_production(library: ContentLibrary, failures: Array) -> void:
@@ -595,8 +622,17 @@ func _check_pusher_v3_generated_rider_production(library: ContentLibrary, failur
 	if selected_rider.is_empty():
 		failures.append("Coin Pusher V3 could not generate a production Quarter Falls item rider in the deterministic seed sweep.")
 		return
+	var generated_snapshot: Dictionary = generated.get("settled_state", {}) if typeof(generated.get("settled_state", {})) == TYPE_DICTIONARY else {}
+	var generated_rider_body_id := str(selected_rider.get("body_id", ""))
+	if generated_rider_body_id.is_empty() or generated.has("simulation") or generated.has("live_session") \
+			or _pusher_v3_body(CoinPusherLiveSessionScript.restore_snapshot(generated_snapshot, game.call("_machine_definition")), generated_rider_body_id).is_empty():
+		failures.append("Coin Pusher V3 generation did not compactly persist stable rider-to-body annotations.")
+		return
 	environment["game_states"] = {"coin_pusher": generated}
+	var activation_before := JSON.stringify(environment, "", true)
 	game.enter(run_state, environment)
+	if JSON.stringify(environment, "", true) != activation_before:
+		failures.append("Coin Pusher V3 rider-bearing machine mutated durable state during passive activation.")
 	var live_machines: Dictionary = game.get("_live_machines")
 	generated = live_machines.values()[0] if not live_machines.is_empty() else {}
 	for rider_value in generated.get("riders", []):

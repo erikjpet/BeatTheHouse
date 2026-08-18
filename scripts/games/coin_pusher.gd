@@ -164,7 +164,7 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 			return _collect_surface_command(run_state, environment, machine)
 		_:
 			return {"handled": false}
-	_write_live_durable(environment, machine, false)
+	_write_live_durable(run_state, environment, machine, false)
 	return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": _v3_headless_surface_state(machine)}, true)
 
 
@@ -231,7 +231,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		machine["action_count"] = int(machine.get("action_count", 0)) + 1
 		machine["total_cost"] = int(machine.get("total_cost", 0)) + _drop_cost()
 		machine["last_message"] = "Quarter released. The machine keeps moving; winnings stay in the tray until collected."
-		_write_live_durable(environment, machine, false)
+		_write_live_durable(run_state, environment, machine, false)
 		var deltas := GameModule.empty_result_deltas()
 		deltas["bankroll_delta"] = -_drop_cost()
 		deltas["story_log"] = [_story_entry(DROP_ACTION, "legal", environment, -_drop_cost(), 0, {"tick": int(simulation.get("tick", 0)), "carriage_x": int(simulation.get("carriage_x", 50000))})]
@@ -253,7 +253,7 @@ func active_item_command(item_id: String, run_state: RunState, environment: Dict
 		return {"handled": true, "message": "Cold metal won't wake a locked cabinet."}
 	machine["cold_quarters_armed"] = true
 	machine["cold_quarters_density_armed"] = maxi(_cold_density(), run_state.item_effect_total("coin_pusher_drop_density", "coin_pusher"))
-	_write_live_durable(environment, machine, false)
+	_write_live_durable(run_state, environment, machine, false)
 	var deltas := GameModule.empty_result_deltas()
 	deltas["inventory_remove"] = [item_id]
 	var message := "Cold quarters loaded. The next drop hits heavy."
@@ -278,12 +278,13 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	if int(advanced.get("ticks", 0)) > 0:
 		var session: Dictionary = machine.get("live_session", {})
 		var simulation := _simulation(machine)
-		if not bool(session.get("durable_ready", false)) \
+		if bool(session.get("durable_dirty", false)) and not bool(session.get("durable_ready", false)) \
 				and int(session.get("input_cursor", 0)) >= (session.get("input_trace", []) as Array).size() \
 				and CoinPusherSolverScript.all_steady(simulation, not bool(machine.get("locked_down", false))):
 			session["durable_ready"] = true
+			session["durable_dirty"] = false
 			session["last_persisted_tick"] = int(simulation.get("tick", 0))
-			_write_live_durable(environment, machine, true)
+			_write_live_durable(run_state, environment, machine, true)
 			request_autosave = true
 	var patch := _v3_headless_surface_state(machine)
 	patch["surface_realtime_state_refresh"] = true
@@ -344,7 +345,7 @@ func advance_chunked_exit_settle(run_state: RunState, environment: Dictionary, t
 	# arrangement before the surface is dismissed.
 	result["surface_state_patch"] = _v3_headless_surface_state(machine)
 	if bool(result.get("done", false)):
-		_write_machine_state(environment, machine)
+		_write_live_durable(run_state, environment, machine, false)
 		_live_machines.erase(key)
 	return result
 
@@ -406,6 +407,9 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"scenario_reset_token": _scenario_reset_token(environment),
 		"last_message": _variation_intro(variation_id),
 	}
+	_sync_physical_features(machine)
+	machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(machine), machine)
+	machine.erase("simulation")
 	return machine
 
 
@@ -538,7 +542,9 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 		var migrated_ledger: Array = []
 		for _coin in range(legacy_tray_value):
 			migrated_ledger.append({"kind": "coin", "value": 1, "item_id": "", "provenance": {"migration": "v2"}})
-		(machine["simulation"] as Dictionary)["tray_ledger"] = migrated_ledger
+		var migrated_simulation: Dictionary = machine["simulation"]
+		migrated_simulation["tray_ledger"] = migrated_ledger
+		migrated_simulation["opening_body_count"] = (migrated_simulation.get("bodies", []) as Array).size() + migrated_ledger.size()
 	machine.erase("lanes")
 	machine["schema"] = STATE_SCHEMA
 	machine["version"] = _state_version()
@@ -627,7 +633,7 @@ func _ensure_live_machine(run_state: RunState, environment: Dictionary) -> Dicti
 	# solver was frozen. They must project the durable snapshot, never reopen it.
 	if _exit_settle_active:
 		return _read_machine_state(run_state, environment)
-	var machine := _ensure_machine_state(run_state, environment, true).duplicate(true)
+	var machine := _read_machine_state(run_state, environment).duplicate(true)
 	var settled: Dictionary = machine.get("settled_state", {}) if typeof(machine.get("settled_state", {})) == TYPE_DICTIONARY else {}
 	if _has_v3_simulation(machine) and str(settled.get("schema", "")) != CoinPusherLiveSessionScript.SNAPSHOT_SCHEMA:
 		machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(machine), machine)
@@ -635,9 +641,6 @@ func _ensure_live_machine(run_state: RunState, environment: Dictionary) -> Dicti
 	CoinPusherLiveSessionScript.begin(machine, _machine_definition(), seed)
 	_sync_physical_features(machine)
 	_live_machines[key] = machine
-	# Reconciliation may have inserted generated prize bodies. The very first
-	# durable projection must therefore snapshot the exact entered pile.
-	_write_live_durable(environment, machine, true)
 	return machine
 
 
@@ -645,7 +648,12 @@ func _live_key(run_state: RunState, environment: Dictionary) -> String:
 	return "%s:%s" % [_environment_node_id(run_state, environment), transient_state_key_context()]
 
 
-func _write_live_durable(environment: Dictionary, live_machine: Dictionary, update_snapshot: bool) -> void:
+func _write_live_durable(run_state: RunState, environment: Dictionary, live_machine: Dictionary, update_snapshot: bool) -> void:
+	if bool(live_machine.get("v2_migration_pending", false)):
+		live_machine.erase("v2_migration_pending")
+		live_machine["v2_migration_logged"] = true
+		if run_state != null:
+			run_state.log_story({"type": "coin_pusher_v2_migrated", "game_id": get_id(), "environment_id": str(environment.get("id", "")), "tray_value": int(live_machine.get("tray_value", 0)), "message": "The rebuilt pusher carries the old tray forward and reseeds its changed playfield."})
 	var durable := live_machine.duplicate(true)
 	if update_snapshot and _has_v3_simulation(live_machine):
 		durable["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(live_machine), live_machine)
@@ -694,7 +702,7 @@ func _collect_surface_command(run_state: RunState, environment: Dictionary, mach
 	deltas["messages"] = [message]
 	var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": COLLECT_ACTION, "action_kind": "free", "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": message})
 	GameModule.apply_result(run_state, result)
-	_write_live_durable(environment, machine, false)
+	_write_live_durable(run_state, environment, machine, false)
 	return GameModule.surface_command({"handled": true, "environment_changed": true, "message": message, "surface_state_patch": _v3_headless_surface_state(machine), "preserve_surface_ui_state": true}, true)
 
 
@@ -716,7 +724,7 @@ func _resolve_live_nudge(run_state: RunState, environment: Dictionary, machine: 
 	else:
 		machine["tell_rung"] = mini(3, int(machine.get("tell_rung", 0)) + 1)
 	CoinPusherLiveSessionScript.queue_input(machine, {"kind": "nudge", "x": x, "y": y})
-	_write_live_durable(environment, machine, false)
+	_write_live_durable(run_state, environment, machine, false)
 	var heat := _alarm_heat() if alarmed else _attendant_glance_heat()
 	var deltas := GameModule.empty_result_deltas()
 	deltas["suspicion_delta"] = heat
