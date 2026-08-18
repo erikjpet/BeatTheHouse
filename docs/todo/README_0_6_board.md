@@ -256,6 +256,17 @@ What happens then is the owner's, not an agent's:
 
 ## Discovery & Decision Log
 
+- 2026-08-17 [pusherv3_2] PM production-lifecycle review returned the first
+  live-loop implementation before broad gates: FoundationMain prepares an
+  autosave after every paid DROP by calling the generic surface checkpoint,
+  while Coin Pusher used that checkpoint to run up to 1200 settle ticks and
+  freeze. That silently recreates the rejected action batch and leaves full
+  live solver/session state serializable between checkpoints. The correction
+  must separate transient live state from settled persistence and distinguish
+  autosave from actual exit: post-drop motion continues, serialized machine
+  state contains only `coin_pusher_settled_v3`, and real exit visibly settles
+  then freezes. A production autosave-path regression is required.
+
 - 2026-08-17 [content06_1] Code reality: the landed Mags bench seam is
   intentionally inert (`crew_mags_bench_status()` reports
   `catalog_ready: false`, and its event offers only inspection), while no
