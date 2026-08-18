@@ -3583,7 +3583,7 @@
         "back_plate_gap": 400,
         "drop_y": 58000,
         "drop_z": 24000,
-        "gutter_x": 3000
+        "gutter_x": 4400
       },
       "stroke": {
         "period_ticks": 240,
@@ -3722,7 +3722,7 @@
             "back_plate_gap": 400,
             "drop_y": 58000,
             "drop_z": 24000,
-            "gutter_x": 2500
+            "gutter_x": 4400
           },
           "stroke": {"period_ticks": 240, "ramp_ticks": 24, "profile": "cosine"},
           "apparatus": {
