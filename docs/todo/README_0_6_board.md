@@ -1408,6 +1408,20 @@ What happens then is the owner's, not an agent's:
   The crew branch's visual report was compared with clean `8f7597ed`: delivery
   coverage is byte-equivalent/green, and its only visual warnings are the
   expected pre-integration V3 live-pusher assertions owned by `pusherv3_2`.
+- 2026-08-18 [pusherv3_2] Integrated Systems acceptance rejected passive
+  Coin Pusher activation because opening a generated or rider-bearing machine
+  mutated serialized RunState (`simulation`, `settled_state`, and rider spawn
+  annotations). No activation-guard exception is allowed: generation must
+  produce the compact durable snapshot and stable rider annotations up front;
+  entry may only restore a transient live copy. The same correction exposed a
+  V2-migration conservation assertion during exit settle because carried tray
+  bodies were not reconciled into source accounting; that accounting must be
+  exact rather than silenced.
+- 2026-08-18 [content06_1] UI acceptance found that expanding the authored run
+  content catalog from 14 to 16 groups overflowed the fixed three-column
+  drawer. This is a content-owned presentation defect, not a timing waiver:
+  the production drawer must derive a bounded 2-4 column layout from authored
+  group count while retaining the existing minimum toggle-size assertion.
 
 ## Work Log
 
