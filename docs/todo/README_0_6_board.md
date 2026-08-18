@@ -1437,6 +1437,36 @@ What happens then is the owner's, not an agent's:
   with art, gates, documented delta, and focused coverage. `pusherv3_4` remains
   responsible for reconnecting that existing hook to the amended physical
   machine, not for authoring the missing content item.
+- 2026-08-18 [pusherv3_2] Final integrated scope review returned two live-loop
+  boundary defects. An immediate Skill Stop -> Exit drained the queued stop
+  after applying the exit-only release, so settlement could snapshot a stopped
+  motor; the trace boundary must drain first and release last. The shipped rail
+  also exposed only discrete arrow increments despite the binding continuous
+  carriage contract; Stage 2 must route drag/slide input through the existing
+  surface-pointer seam and retain deterministic tick-stamped carriage events.
+- 2026-08-18 [pusherv3_2/content06_1] Combined-tree acceptance initially loaded
+  an older ignored native pusher DLL from the main worktree and therefore
+  reported false conservation/parity failures. PM matched the verified Stage-2
+  Windows debug DLL and Web debug WASM hashes before rerunning; no native source
+  or user-modified build script was changed. The same run found a separate real
+  Content failure: `mags_nudge_dampener` advertised an unconsumed effect key,
+  which must be wired through the generic item-effect registry rather than left
+  inert for a later pusher stage.
+- 2026-08-18 [content06_1] Final verbatim QA review found the compatible scope
+  still lacked a seeded production generation -> scenario -> event -> souvenir
+  acquisition proof, per-upgrade gate/consumer coverage for all five Mags
+  outputs, and retained buy/craft/earn visual smoke captures. These are returned
+  for completion without changing the owner-blocked cross-run collection
+  question.
+- 2026-08-18 [content06_1/release06_1] Economy audit registered seven tuning
+  questions, with no tuning authorized here: compare repeatable Numbers cuts to
+  median table profit; measure persisted-machine pusher EV by variation; check
+  crew rewards/travel waivers against the $32-44 bench band; compare The Count
+  payout ladder to three sessions plus setup travel; compare The Whale payout to
+  its real $60 loss and overlapping $120 spend requirement; review abort-cost
+  clarity as setup keys accumulate while retaining its survivable cap; and prove
+  free souvenir resale cannot repeat through revisit or reload. `release06_1`
+  owns these decisions after human evidence.
 
 ## Work Log
 
