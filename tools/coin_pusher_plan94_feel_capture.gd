@@ -3,6 +3,7 @@ extends SceneTree
 const MainScene := preload("res://scenes/main.tscn")
 const Solver := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const Renderer := preload("res://scripts/games/coin_pusher/coin_pusher_renderer.gd")
+const LiveSession := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 
 const CAPTURE_SIZE := Vector2i(1280, 720)
 const VARIATIONS := ["quarter_falls", "jackpot_ridge", "vault_drop"]
@@ -11,9 +12,15 @@ const REQUIRED_SCENES := ["upper_row_join", "delivery_descent", "ratchet_three_c
 var app: Control
 var canvas: Control
 var game: GameModule
+var library: ContentLibrary
+var active_run_state: RunState
+var active_environment: Dictionary = {}
+var active_machine: Dictionary = {}
+var production_clock_msec := 0
 var out_dir := "res://.tmp/coin_pusher_plan94_feel"
 var machine_records: Array = []
 var failed := false
+var minimum_viewport_verified := false
 
 
 func _init() -> void:
@@ -31,11 +38,16 @@ func _run() -> void:
 	app.set("autosave_slot_id", "coin_pusher_plan94_feel_%d" % Time.get_ticks_usec())
 	root.add_child(app)
 	await _frames(4)
+	var visible_size := root.get_visible_rect().size
+	minimum_viewport_verified = visible_size.x >= CAPTURE_SIZE.x and visible_size.y >= CAPTURE_SIZE.y
+	if not minimum_viewport_verified:
+		_fail("Plan 9.4 capture viewport is below 1280x720: %s." % str(visible_size))
 	app.call("start_game_test_session", "coin_pusher")
 	await _frames(8)
 	game = app.get("current_game") as GameModule
+	library = app.get("library") as ContentLibrary
 	canvas = app.get("game_surface_canvas") as Control
-	if game == null or canvas == null:
+	if game == null or canvas == null or library == null:
 		_fail("Production Coin Pusher surface did not open.")
 		_finish()
 		return
@@ -47,6 +59,9 @@ func _run() -> void:
 
 
 func _capture_machine(variation_id: String) -> void:
+	if not _enter_production_variation(variation_id):
+		_fail("Production environment entry failed for %s." % variation_id)
+		return
 	var definition: Dictionary = game.call("_machine_definition", variation_id)
 	if definition.is_empty():
 		_fail("Missing production definition for %s." % variation_id)
@@ -68,7 +83,7 @@ func _capture_machine(variation_id: String) -> void:
 
 
 func _capture_upper_row(variation_id: String, definition: Dictionary) -> Dictionary:
-	var state := Solver.create_machine(_rng("plan94:%s:upper" % variation_id), definition, 70)
+	var state := _production_state("plan94:%s:upper" % variation_id, definition, 70)
 	var before_views := Solver.body_views(state)
 	var before_record := _record(state)
 	var before_y := _body_y_map(before_views)
@@ -103,7 +118,7 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 
 
 func _capture_delivery(variation_id: String, definition: Dictionary) -> Dictionary:
-	var state := Solver.create_machine(_rng("plan94:%s:delivery" % variation_id), definition, 0)
+	var state := _production_state("plan94:%s:delivery" % variation_id, definition, 0)
 	var previous := Solver.body_views(state)
 	var drop := Solver.add_coin(state, _rng("plan94:%s:delivery:drop" % variation_id), _delivery_contact_x(definition), 1)
 	var body_id := str(drop.get("id", ""))
@@ -162,7 +177,7 @@ func _capture_delivery(variation_id: String, definition: Dictionary) -> Dictiona
 
 
 func _capture_ratchet(variation_id: String, definition: Dictionary) -> Dictionary:
-	var state := Solver.create_machine(_rng("plan94:%s:ratchet" % variation_id), definition, 0)
+	var state := _production_state("plan94:%s:ratchet" % variation_id, definition, 0)
 	_hold_phase(state, definition, 0)
 	var geometry: Dictionary = definition.get("geometry", {})
 	var top_z := int(geometry.get("platform_top_z", 3600))
@@ -173,20 +188,38 @@ func _capture_ratchet(variation_id: String, definition: Dictionary) -> Dictionar
 			_configure_body(body, 7000 + column * 9400 + (350 if row % 2 else 0), 58700 - row * 8200, top_z, "platform", true)
 			if row == 2:
 				tracked_front.append(str(body.get("id", "")))
+	var bankroll_before_drop := active_run_state.bankroll
+	var drop_command := game.surface_action_command("coin_pusher_drop", 0, false, {}, active_run_state, active_environment)
+	var paid_drop_cost := int(drop_command.get("set_stake", 0))
+	var drop_result := game.resolve_with_context(str(drop_command.get("action_id", "")), paid_drop_cost, active_run_state, active_environment, _rng("plan94:%s:ratchet:paid" % variation_id), {})
+	GameModule.apply_result(active_run_state, drop_result)
+	# Production synchronizes physical riders/pucks/fragments immediately before
+	# queuing the paid drop. Capture the next solver ID after that synchronization
+	# so the proof follows the quarter, never a newly injected feature body.
+	var paid_body_id := "body_%05d" % int(state.get("next_body_id", 1))
+	var paid_drop_charged := bool(drop_command.get("handled", false)) and bool(drop_command.get("direct_resolve", false)) and paid_drop_cost > 0 and active_run_state.bankroll == bankroll_before_drop - paid_drop_cost
 	var initial := _record(state)
 	var deposits: Array = []
 	var cycle_events: Array = []
 	var mid_record := {}
 	var period := maxi(1, int((definition.get("stroke", {}) as Dictionary).get("period_ticks", 240)))
+	var paid_landed_on_platform := false
+	var paid_drop_seen := false
+	var paid_events: Array = []
 	for _tick in range(period * 3):
 		var previous := Solver.body_views(state)
-		var result := Solver.step_ticks(state, {"motor_enabled": true}, 1)
+		var result := _advance_production_tick()
+		paid_drop_seen = paid_drop_seen or not _body(state, paid_body_id).is_empty()
 		for event_value in result.get("events", []):
 			if typeof(event_value) != TYPE_DICTIONARY:
 				continue
 			var event: Dictionary = event_value
+			if str(event.get("body_id", "")) == paid_body_id:
+				paid_events.append(event.duplicate(true))
 			if str(event.get("kind", "")) == "stroke_cycle":
 				cycle_events.append(event.duplicate(true))
+			if str(event.get("body_id", "")) == paid_body_id and str(event.get("kind", "")) == "impact" and str(event.get("support_root", event.get("support", ""))) in ["platform", "body"]:
+				paid_landed_on_platform = true
 			if str(event.get("kind", "")) == "platform_deposit" and tracked_front.has(str(event.get("body_id", ""))):
 				deposits.append(event.duplicate(true))
 				if mid_record.is_empty():
@@ -196,12 +229,12 @@ func _capture_ratchet(variation_id: String, definition: Dictionary) -> Dictionar
 		mid_record = final_record
 	var file := "%s_ratchet_three_cycles.png" % variation_id
 	var saved := await _save_record_strip(file, variation_id, definition, [initial, mid_record, final_record], false)
-	var passed := cycle_events.size() >= 3 and not deposits.is_empty() and saved
-	return {"id": "ratchet_three_cycles", "passed": passed, "files": [file], "cycles": cycle_events, "tracked_front_body_ids": tracked_front, "platform_deposit_events": deposits, "initial_tick": int(initial["tick"]), "final_tick": int(final_record["tick"])}
+	var passed := paid_drop_charged and paid_drop_seen and paid_landed_on_platform and cycle_events.size() >= 3 and not deposits.is_empty() and saved
+	return {"id": "ratchet_three_cycles", "passed": passed, "files": [file], "cycles": cycle_events, "paid_body_id": paid_body_id, "paid_drop_cost": paid_drop_cost, "paid_drop_charged": paid_drop_charged, "paid_drop_seen_in_live_solver": paid_drop_seen, "paid_landed_on_platform": paid_landed_on_platform, "paid_events": paid_events, "paid_final_body": _body(state, paid_body_id).duplicate(true), "tracked_front_body_ids": tracked_front, "tracked_deposit_body_id": str((deposits[0] as Dictionary).get("body_id", "")) if not deposits.is_empty() else "", "platform_deposit_events": deposits, "initial_tick": int(initial["tick"]), "final_tick": int(final_record["tick"])}
 
 
 func _capture_nestle_topple(variation_id: String, definition: Dictionary) -> Dictionary:
-	var state := Solver.create_machine(_rng("plan94:%s:nestle" % variation_id), definition, 0)
+	var state := _production_state("plan94:%s:nestle" % variation_id, definition, 0)
 	var height := int((definition.get("coins", {}) as Dictionary).get("height", 1700))
 	var a := Solver.add_coin(state, _rng("plan94:%s:nestle:a" % variation_id), 45700, 1)
 	var b := Solver.add_coin(state, _rng("plan94:%s:nestle:b" % variation_id), 54300, 1)
@@ -215,18 +248,33 @@ func _capture_nestle_topple(variation_id: String, definition: Dictionary) -> Dic
 	top["vx"] = 8000
 	var body_id := str(top.get("id", ""))
 	var initial := _record(state)
-	Solver.step_ticks(state, {"motor_enabled": false}, 180)
+	var motion_record := {}
+	var event_record := {}
+	var motion_events: Array = []
+	for _tick in range(180):
+		var previous := Solver.body_views(state)
+		var result := Solver.step_ticks(state, {"motor_enabled": false}, 1)
+		var tracked := _body(state, body_id)
+		if motion_record.is_empty() and (int(tracked.get("vx", 0)) != 0 or int(tracked.get("vz", 0)) != 0):
+			motion_record = _record(state, previous, result.get("events", []))
+		for event_value in result.get("events", []):
+			if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("body_id", "")) == body_id:
+				motion_events.append((event_value as Dictionary).duplicate(true))
+				if event_record.is_empty():
+					event_record = _record(state, previous, result.get("events", []))
 	var settled := _body(state, body_id)
 	var final_record := _record(state)
+	if motion_record.is_empty(): motion_record = initial
+	if event_record.is_empty(): event_record = final_record
 	var file := "%s_stack_nestle_topple.png" % variation_id
-	var saved := await _save_record_strip(file, variation_id, definition, [initial, final_record], false)
+	var saved := await _save_record_strip(file, variation_id, definition, [initial, motion_record, event_record, final_record], false)
 	var nestled := str(settled.get("support_kind", "")) == "body" and int(settled.get("z", -1)) == height and int(settled.get("x", 0)) > 48000 and int(settled.get("x", 0)) < 52000
-	var passed := nestled and saved
-	return {"id": "stack_nestle_topple", "passed": passed, "files": [file], "tracked_body_id": body_id, "initial": _body_from_views(initial["current_views"], body_id), "final": settled.duplicate(true), "toppled_from_stack_and_nestled": nestled}
+	var passed := nestled and not motion_events.is_empty() and saved
+	return {"id": "stack_nestle_topple", "passed": passed, "files": [file], "tracked_body_id": body_id, "initial": _body_from_views(initial["current_views"], body_id), "motion": _body_from_views(motion_record["current_views"], body_id), "intermediate_events": motion_events, "final": settled.duplicate(true), "toppled_from_stack_and_nestled": nestled}
 
 
 func _capture_skill_stop(variation_id: String, definition: Dictionary) -> Dictionary:
-	var state := Solver.create_machine(_rng("plan94:%s:skill" % variation_id), definition, 72)
+	var state := _production_state("plan94:%s:skill" % variation_id, definition, 72)
 	Solver.set_skill_stop(state, true)
 	Solver.step_ticks(state, {"motor_enabled": true}, 24)
 	var banked_ids: Array = []
@@ -264,7 +312,7 @@ func _capture_skill_stop(variation_id: String, definition: Dictionary) -> Dictio
 
 
 func _capture_tray(variation_id: String, definition: Dictionary) -> Dictionary:
-	var state := Solver.create_machine(_rng("plan94:%s:tray" % variation_id), definition, 0)
+	var state := _production_state("plan94:%s:tray" % variation_id, definition, 0)
 	var geometry: Dictionary = definition.get("geometry", {})
 	var lip := int(geometry.get("tray_lip_y", 6000))
 	var ids: Array = []
@@ -277,12 +325,15 @@ func _capture_tray(variation_id: String, definition: Dictionary) -> Dictionary:
 	terminal_events = _terminal_events(result.get("events", []))
 	var grown := _record(state)
 	var tray_count := (state.get("tray_ledger", []) as Array).size()
-	var collected := Solver.collect_tray(state)
+	var tray_value := _ledger_value(state.get("tray_ledger", []))
+	var bankroll_before_collect := active_run_state.bankroll
+	var collected := game.surface_action_command("coin_pusher_collect", 0, false, {}, active_run_state, active_environment)
 	var empty := _record(state)
 	var file := "%s_tray_growth_collect.png" % variation_id
 	var saved := await _save_record_strip(file, variation_id, definition, [grown, empty], false)
-	var passed := tray_count == 12 and int(collected.get("count", 0)) == 12 and (state.get("tray_ledger", []) as Array).is_empty() and saved
-	return {"id": "tray_growth_collect", "passed": passed, "files": [file], "body_ids": ids, "terminal_events": terminal_events, "grown_tick": int(grown["tick"]), "tray_count_before_collect": tray_count, "collect_result": collected, "tray_count_after_collect": 0}
+	var bankroll_transfer := active_run_state.bankroll - bankroll_before_collect
+	var passed := tray_count == 12 and bool(collected.get("handled", false)) and bankroll_transfer == tray_value and (state.get("tray_ledger", []) as Array).is_empty() and saved
+	return {"id": "tray_growth_collect", "passed": passed, "files": [file], "body_ids": ids, "terminal_events": terminal_events, "grown_tick": int(grown["tick"]), "tray_count_before_collect": tray_count, "tray_value_before_collect": tray_value, "bankroll_before_collect": bankroll_before_collect, "bankroll_after_collect": active_run_state.bankroll, "bankroll_transfer": bankroll_transfer, "collect_result": collected, "tray_count_after_collect": 0}
 
 
 func _save_pair(variation_id: String, scene_id: String, definition: Dictionary, first: Dictionary, second: Dictionary, reduced: bool) -> Dictionary:
@@ -306,31 +357,14 @@ func _save_record_strip(file_name: String, variation_id: String, definition: Dic
 
 
 func _render_record(variation_id: String, definition: Dictionary, record: Dictionary, reduced_motion: bool) -> Image:
-	var state: Dictionary = record.get("state", {})
-	var tray: Array = state.get("tray_ledger", []) if typeof(state.get("tray_ledger", [])) == TYPE_ARRAY else []
-	canvas.call("apply_surface_state_patch", {
-		"coin_pusher_variation_id": variation_id,
-		"coin_pusher_variation_name": variation_id.replace("_", " ").capitalize(),
-		"coin_pusher_geometry": (definition.get("geometry", {}) as Dictionary).duplicate(true),
-		"coin_pusher_apparatus": (definition.get("apparatus", {}) as Dictionary).duplicate(true),
-		"coin_pusher_cabinet": (definition.get("cabinet", {}) as Dictionary).duplicate(true),
-		"coin_pusher_coin_height": int((definition.get("coins", {}) as Dictionary).get("height", 1700)),
-		"coin_pusher_bodies": record.get("current_views", []),
-		"coin_pusher_previous_bodies": record.get("previous_views", record.get("current_views", [])),
-		"coin_pusher_body_count": (record.get("current_views", []) as Array).size(),
-		"coin_pusher_face_position_y": int(state.get("face_y", 28000)),
-		"coin_pusher_previous_face_position_y": int(state.get("previous_face_y", state.get("face_y", 28000))),
-		"coin_pusher_carriage_x": int(state.get("carriage_x", 50000)),
-		"coin_pusher_selected_hole": int(state.get("selected_hole", 0)),
-		"coin_pusher_phase_fp": int(state.get("phase_fp", 0)),
-		"coin_pusher_motor_rate_fp": int(state.get("motor_rate_fp", 1000)),
-		"coin_pusher_skill_stop_engaged": bool(state.get("skill_stop_engaged", false)),
-		"coin_pusher_tray_count": tray.size(),
-		"coin_pusher_tray_value": _ledger_value(tray),
-		"coin_pusher_presentation_view_serial": int(record.get("tick", 0)),
-		"coin_pusher_interpolation_alpha": 1.0 if reduced_motion else 0.5,
-		"reduce_motion": reduced_motion,
-	})
+	var production_patch: Dictionary = record.get("production_surface_state", {}) if typeof(record.get("production_surface_state", {})) == TYPE_DICTIONARY else {}
+	if production_patch.is_empty():
+		_fail("%s %s record bypassed the production surface projection." % [variation_id, str(record.get("tick", -1))])
+		return Image.new()
+	production_patch = production_patch.duplicate(true)
+	production_patch["coin_pusher_interpolation_alpha"] = 1.0 if reduced_motion else 0.5
+	production_patch["reduce_motion"] = reduced_motion
+	canvas.call("apply_surface_state_patch", production_patch)
 	canvas.queue_redraw()
 	await process_frame
 	await process_frame
@@ -345,11 +379,63 @@ func _render_record(variation_id: String, definition: Dictionary, record: Dictio
 
 func _record(state: Dictionary, previous_views: Array = [], events: Array = []) -> Dictionary:
 	var current := Solver.body_views(state)
-	return {"tick": int(state.get("tick", 0)), "state": state.duplicate(true), "previous_views": current.duplicate(true) if previous_views.is_empty() else previous_views.duplicate(true), "current_views": current, "events": events.duplicate(true)}
+	var previous := current.duplicate(true) if previous_views.is_empty() else previous_views.duplicate(true)
+	var saved_previous: Variant = (active_machine.get("live_session", {}) as Dictionary).get("presentation_previous_bodies", [])
+	var saved_current: Variant = (active_machine.get("live_session", {}) as Dictionary).get("presentation_current_bodies", [])
+	(active_machine.get("live_session", {}) as Dictionary)["presentation_previous_bodies"] = previous
+	(active_machine.get("live_session", {}) as Dictionary)["presentation_current_bodies"] = current
+	var production_surface := game.surface_state(active_run_state, active_environment, {})
+	(active_machine.get("live_session", {}) as Dictionary)["presentation_previous_bodies"] = saved_previous
+	(active_machine.get("live_session", {}) as Dictionary)["presentation_current_bodies"] = saved_current
+	return {"tick": int(state.get("tick", 0)), "state": state.duplicate(true), "previous_views": previous, "current_views": current, "events": events.duplicate(true), "production_surface_state": production_surface}
 
 
 func _record_from_views(state: Dictionary, views: Array) -> Dictionary:
-	return {"tick": int(state.get("tick", 0)), "state": state.duplicate(true), "previous_views": views.duplicate(true), "current_views": views.duplicate(true), "events": []}
+	return _record(state, views, [])
+
+
+func _enter_production_variation(variation_id: String) -> bool:
+	var definition := library.game("coin_pusher")
+	var module_script: Script = load(str(definition.get("module_path", "")))
+	if module_script == null:
+		return false
+	game = module_script.new()
+	game.setup(definition, library)
+	active_run_state = app.get("run_state") as RunState
+	if active_run_state == null:
+		return false
+	active_environment = {
+		"id": "plan94_%s" % variation_id,
+		"world_node_id": "plan94_%s" % variation_id,
+		"name": "%s Plan 9.4" % variation_id.replace("_", " ").capitalize(),
+		"game_ids": ["coin_pusher"],
+		"scenario_game_modifiers": {"coin_pusher": {"variation_id": variation_id}},
+		"game_states": {},
+	}
+	var generated: Dictionary = game.generate_environment_state(active_run_state, active_environment, _rng("plan94:%s:production-entry" % variation_id))
+	active_environment["game_states"] = {"coin_pusher": generated}
+	game.enter(active_run_state, active_environment)
+	var live_map: Dictionary = game.get("_live_machines")
+	active_machine = live_map.values()[0] if not live_map.is_empty() else {}
+	production_clock_msec = 0
+	return not active_machine.is_empty() and str(active_machine.get("variation_id", "")) == variation_id
+
+
+func _production_state(seed: String, definition: Dictionary, opening_bodies: int) -> Dictionary:
+	var state := Solver.create_machine(_rng(seed), definition, opening_bodies)
+	active_machine["simulation"] = state
+	active_machine.erase("live_session")
+	LiveSession.begin(active_machine, definition, seed.hash() & 0x7fffffff)
+	production_clock_msec = 0
+	LiveSession.advance(active_machine, production_clock_msec)
+	return state
+
+
+func _advance_production_tick() -> Dictionary:
+	production_clock_msec += 17
+	var advanced := LiveSession.advance(active_machine, production_clock_msec)
+	game.call("_consume_live_physics_events", active_run_state, active_machine, advanced.get("events", []))
+	return advanced
 
 
 func _machine_context(variation_id: String, definition: Dictionary) -> Dictionary:
@@ -459,10 +545,10 @@ func _rng(seed: String) -> RngStream:
 
 
 func _write_manifest() -> void:
-	var passed := not failed and machine_records.size() == VARIATIONS.size()
+	var passed := not failed and minimum_viewport_verified and machine_records.size() == VARIATIONS.size()
 	for machine_record in machine_records:
 		passed = passed and bool((machine_record as Dictionary).get("passed", false))
-	var manifest := {"schema": "coin_pusher_v3_plan_9_4_feel_capture_v1", "production_surface": true, "minimum_viewport": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y}, "required_machines": VARIATIONS, "required_scenes_per_machine": REQUIRED_SCENES, "machine_count": machine_records.size(), "passed": passed, "machines": machine_records}
+	var manifest := {"schema": "coin_pusher_v3_plan_9_4_feel_capture_v1", "production_surface": true, "production_environment_entry": true, "production_surface_projection": true, "minimum_viewport": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y, "verified": minimum_viewport_verified}, "required_machines": VARIATIONS, "required_scenes_per_machine": REQUIRED_SCENES, "machine_count": machine_records.size(), "passed": passed, "machines": machine_records}
 	var file := FileAccess.open("%s/manifest.json" % out_dir, FileAccess.WRITE)
 	if file == null:
 		_fail("Could not write plan 9.4 manifest.")
