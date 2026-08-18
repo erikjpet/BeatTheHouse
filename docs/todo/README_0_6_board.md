@@ -1422,6 +1422,13 @@ What happens then is the owner's, not an agent's:
   drawer. This is a content-owned presentation defect, not a timing waiver:
   the production drawer must derive a bounded 2-4 column layout from authored
   group count while retaining the existing minimum toggle-size assertion.
+- 2026-08-18 [pusherv3_2] Independent visual-gate review found the capture tool
+  still required `coin_pusher_lanes.size() == 5` and read the removed Stage-1
+  `coin_pusher_snapshot`. That assertion contradicts Amendment 6.1's binding
+  no-lattice machine and cannot drive production back to lanes. The gate must
+  consume continuous body positions from the compact/live snapshot, seed riders
+  before snapshot creation, and prove idle movement from real phase/face/body
+  state rather than a constant or cosmetic checksum.
 
 ## Work Log
 
