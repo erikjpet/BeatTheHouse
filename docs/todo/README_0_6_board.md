@@ -222,6 +222,16 @@ What happens then is the owner's, not an agent's:
 
 ## Owner Questions (needs owner; do not guess)
 
+- **content06_1 — souvenir collections persistence:** the prompt asks for
+  scenario souvenirs to receive collections-shelf integration, but roadmap
+  owner decision #1 makes the Players Card the only cross-run system in 0.6.
+  The shipped `data/collections/collections.json` is explicitly meta/cross-run
+  and its generic contracts fix two collections with 14-item tiers. Should
+  souvenir “collections integration” mean only the within-run inventory/item
+  shelf and sale surfaces, or is an explicit roadmap amendment authorizing new
+  cross-run souvenir collection progress intended? Content continues on all
+  compatible data/events/services/bench scope; meta registration is paused.
+
 - **pusherv3_1 — platform stroke orientation: ANSWERED (Amendment 6.1,
   2026-08-17).** Ruling: keep the axis (+y = rearward) and all coordinate
   conventions; the LABELS were wrong. The contract is amended — constants
