@@ -103,6 +103,26 @@ static func _check_board_and_decline(library: ContentLibrary, failures: Array) -
 		failures.append("Layer 3 board fixture did not leave an absent member to prove the presence filter.")
 	var event := EventModuleScript.new()
 	event.setup(library.event("crew_job_board"), library)
+	var initial_choices := event.choices(run, run.current_environment)
+	var flavor_lines: Array = ((library.event("crew_job_board").get("payload", {}) as Dictionary).get("flavor_lines", []) as Array)
+	var flavor_occurrences := 0
+	for choice_value in initial_choices:
+		var choice_text := str((choice_value as Dictionary).get("text", ""))
+		for flavor_value in flavor_lines:
+			if choice_text.contains(str(flavor_value)):
+				flavor_occurrences += 1
+	if initial_choices.size() > 2 and flavor_occurrences != 1:
+		failures.append("Layer 3 job-board flavor must appear once, not repeat down a multi-offer board.")
+	var same_seed := _crew_run("L3-BOARD")
+	same_seed.current_environment = _back_room_environment()
+	CrewRecruitmentModelScript.apply_to_environment(same_seed, same_seed.current_environment)
+	if JSON.stringify(initial_choices) != JSON.stringify(event.choices(same_seed, same_seed.current_environment)):
+		failures.append("Layer 3 job-board flavor is not seeded and deterministic.")
+	run.event_cadence_advance_actions(1)
+	var rotated_choices := event.choices(run, run.current_environment)
+	if not initial_choices.is_empty() and not rotated_choices.is_empty() \
+		and str((initial_choices[0] as Dictionary).get("text", "")) == str((rotated_choices[0] as Dictionary).get("text", "")):
+		failures.append("Layer 3 job-board flavor did not rotate at an action boundary.")
 	var before := run.crew_grievance_ledger.size()
 	var result := event.resolve(run, run.current_environment, "leave")
 	if not bool(result.get("ok", false)) or run.crew_grievance_ledger.size() != before:
