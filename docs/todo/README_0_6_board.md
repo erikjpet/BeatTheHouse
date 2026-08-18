@@ -267,6 +267,16 @@ What happens then is the owner's, not an agent's:
   play in production. Exact payload fixtures supplement rather than replace the
   full Rourke duel and Players Card route regressions.
 
+- 2026-08-17 [crew06_8] PM verbatim Task review returned the correction again:
+  Plan A still exposed all three decisions at the planning table before table
+  play instead of interleaving them at authored round boundaries; Plan B
+  accepted any five generic rounds instead of the required mixed craps/card
+  invitational; and its clean front-door exit always started a chase despite
+  the contract reserving that chase for hot outcomes. Production tests must
+  reject early/wrong-game progress and prove both clean-walk and hot-chase
+  routes. Dead fixture-era Plan B component flags must be replaced by the real
+  item/training producers used by code.
+
 - 2026-08-17 [pusherv3_2] PM production-lifecycle review returned the first
   live-loop implementation before broad gates: FoundationMain prepares an
   autosave after every paid DROP by calling the generic surface checkpoint,
@@ -277,6 +287,17 @@ What happens then is the owner's, not an agent's:
   autosave from actual exit: post-drop motion continues, serialized machine
   state contains only `coin_pusher_settled_v3`, and real exit visibly settles
   then freezes. A production autosave-path regression is required.
+
+- 2026-08-17 [pusherv3_2] PM line-by-line live-loop review found additional
+  contract failures before integration: elapsed time above one second was
+  discarded despite the never-skip rule; fresh generated machines could write
+  a current-schema durable state with no valid opening settled snapshot; the
+  final settle chunk could be erased before its visible projection; and the
+  real-time loop never consumed physics events, leaving Quarter Falls prize
+  riders and shipped gutter/shim recovery outside production. Corrections must
+  preserve full backlog with four-tick frame work, save/load an exact fresh
+  pile, render the final settled frame, and prove a generated rider plus shim
+  through real tick/tray/collect paths.
 
 - 2026-08-17 [content06_1] Code reality: the landed Mags bench seam is
   intentionally inert (`crew_mags_bench_status()` reports
