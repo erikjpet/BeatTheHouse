@@ -1,0 +1,29 @@
+[
+{
+  "status": "audit_only_no_tuning_authorized",
+  "scope": "0.6 sources and sinks visible at the content06_1 checkpoint",
+  "curves": {
+    "numbers": "Low ticket outlay repeats across a run; crew-fix cuts are intermittent income and must stay below a strong table session in aggregate.",
+    "coin_pusher": "Coin feed is the recurring sink; tray collection is the sole credit boundary. Prize riders and progressive cells are burst sources, not passive income.",
+    "crew": "Job stakes, components, and Mags cash costs are deliberate mid-run sinks; job rewards and successful cuts are bounded sources tied to completed play.",
+    "heist": "Plan costs and payout bands are excluded from this content pass and remain release06_1 balance authority.",
+    "souvenirs": "Scenario souvenirs enter free through one resolved event and sell for 4-14 cash; their value is memory plus a small existing-hook effect, never a primary income route."
+  },
+  "new_sink_bands": {
+    "mags_bench_cash": [32, 46],
+    "punchline_cover": 14,
+    "punchline_private_table": 24
+  },
+  "new_source_bands": {
+    "souvenir_resale": [4, 14],
+    "open_bar_cash_value": 0
+  },
+  "flagged_for_release06_1": [
+    "Compare repeatable Numbers crew cuts against median Act 1 table profit after human playtest.",
+    "Measure pusher tray EV by variation with persisted loaded machines; do not infer EV from initial stock.",
+    "Check whether crew job rewards plus waived travel costs overfund the 32-46 cash bench band.",
+    "Review heist payout bands only after both complete plans have human completion-time data.",
+    "Confirm free souvenir resale cannot be repeated through scenario revisit or save reload."
+  ]
+}
+]
