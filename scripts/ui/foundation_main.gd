@@ -10652,8 +10652,13 @@ func _render_embedded_action_snapshot_patch() -> bool:
 	for patch_key in patch.keys():
 		prospective_state[patch_key] = patch[patch_key]
 	var now_msec := _environment_simulation_time_msec()
-	var realtime_patch := _game_surface_realtime_state_patch(now_msec, prospective_state)
+	# Continuously refreshing physical surfaces may explicitly defer their dense
+	# projection to the normal live tick. Their action patch still lands atomically
+	# here; deterministic elapsed-time catch-up prevents any simulation loss.
+	var realtime_refresh_required := bool(patch.get("surface_action_realtime_refresh_required", true))
+	var realtime_patch := _game_surface_realtime_state_patch(now_msec, prospective_state) if realtime_refresh_required else {}
 	var combined_patch := patch.duplicate(false)
+	combined_patch.erase("surface_action_realtime_refresh_required")
 	for realtime_key in realtime_patch.keys():
 		combined_patch[realtime_key] = realtime_patch[realtime_key]
 	if debug_enabled:
