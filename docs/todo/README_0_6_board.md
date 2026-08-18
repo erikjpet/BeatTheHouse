@@ -157,7 +157,7 @@ each stage builds on the last.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | IN_PROGRESS | rework06_2 (landed) | pusherv3_2 | Codex | 2026-08-17 | | Solver rebuild per contract section 4 + machine mechanics section 3: radial contacts, iterative relaxation, nestle rule, platform carry + back-plate ratchet, spatial hash O(n*k), ceiling refusal. Headless; behavior contracts are the acceptance. |
+| pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | BLOCKED | rework06_2 (landed) | pusherv3_2 | Codex | 2026-08-17 | | Binding geometry reverses the platform's retracted/extended coordinates relative to the existing tray-facing y axis; owner ruling required before the ratchet can be implemented without reinterpretation. |
 | pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | TODO | pusherv3_1 | pusherv3_3 | | | | Continuous 60 Hz loop, input-trace determinism, apparatus framework, skill stop, physical tray + collect, exit-settle + `coin_pusher_settled_v3` persistence, delete the packed-trace subsystem. |
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | TODO | pusherv3_2 | pusherv3_4 | | | | Full alive cabinet at slot-renderer parity + physics-driven audio + stacking-visible projection. Feel captures judged as a player. |
 | pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | TODO | pusherv3_3 | coin pusher closure | | | | Ridge (3-hole plinko, physical pucks) + Vault (physical fragments) on the new machine, town/cheat/nudge re-wiring, EV harness by geometry, migration, closure. |
@@ -222,6 +222,17 @@ What happens then is the owner's, not an agent's:
 
 ## Owner Questions (needs owner; do not guess)
 
+- **pusherv3_1 — platform stroke orientation:** the V3 contract keeps the
+  existing scale, where bodies cross the front tray lip by decreasing y, and
+  places the fixed back plate at y=52000. It nevertheless labels
+  `FACE_MIN_Y=30000` as retracted and `FACE_MAX_Y=48000` as extended. On this
+  axis the physical positions are necessarily the reverse: y=48000 is nearest
+  the back plate/retracted, while y=30000 is toward the tray/extended. Confirm
+  whether the labels should be swapped while preserving the exact cosine
+  positions, or whether the whole y axis and every stated collider coordinate
+  should be inverted. No solver implementation can choose between those
+  owner-locked geometries safely.
+
 - **crew06_7 — Chip Dump funding authority:** the approved play requires
   money conservation and forbids free money, but the roadmap/prompt does not
   define whose funds are placed into the dump or the transfer direction.
@@ -231,6 +242,15 @@ What happens then is the owner's, not an agent's:
   crew06_7 can proceed without this answer; no agent may invent the economy.
 
 ## Discovery & Decision Log
+
+- 2026-08-17 [pusherv3_1] BLOCKING CONTRACT/CODE REALITY CONTRADICTION:
+  V2 and all current tray/gutter consumers define cabinet-front travel as
+  decreasing y (`y < FRONT_EDGE` pays), matching V3's `TRAY_LIP_Y=6000` and
+  `BACK_PLATE_Y=52000`. V3 section 3.1/3.2 instead calls y=30000 retracted and
+  y=48000 extended. A face moving to 48000 cannot shove deck bodies toward the
+  6000 tray lip, and a platform retracting to 30000 cannot approach the fixed
+  52000 back plate to produce the specified carry/plate ratchet. Per the
+  contract, no coordinate-label swap or alternate machine was implemented.
 
 - 2026-08-17 [crew06_5] PM scope review returned the row for correction:
   rank/perk APIs alone do not satisfy the prompt's temporary pre-job-board
@@ -1592,3 +1612,7 @@ What happens then is the owner's, not an agent's:
   rebuild. Execution is strictly serial: the radial-contact/nestle solver and
   carry-plus-back-plate ratchet behavior contracts must close before the live
   loop, cabinet, or variation stages begin.
+- 2026-08-17 [pusherv3_1] BLOCKED before implementation on the binding platform
+  orientation contradiction: the stated retracted/extended y positions oppose
+  the existing and V3 tray/back-plate axis. Stages 2-4 remain unclaimed; no
+  substitute ratchet or coordinate interpretation was introduced.
