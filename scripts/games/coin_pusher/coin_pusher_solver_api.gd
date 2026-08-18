@@ -27,8 +27,8 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 	return CoinPusherSolverScript.create_machine(seed_rng, machine_definition, opening_bodies)
 
 
-static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1) -> Dictionary:
-	return CoinPusherSolverScript.add_coin(state, rng, x, density)
+static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1, provenance: Dictionary = {}) -> Dictionary:
+	return CoinPusherSolverScript.add_coin(state, rng, x, density, provenance)
 
 
 static func add_feature(state: Dictionary, kind: String, feature_id: String, x: int, y: int, metadata: Dictionary = {}) -> Dictionary:
@@ -57,6 +57,18 @@ static func deck_landing_phase_ratio_milli(machine_definition: Dictionary) -> in
 
 static func set_skill_stop(state: Dictionary, engaged: bool) -> void:
 	CoinPusherSolverScript.set_skill_stop(state, engaged)
+
+
+static func set_carriage(state: Dictionary, x: int) -> int:
+	return CoinPusherSolverScript.set_carriage(state, x)
+
+
+static func select_hole(state: Dictionary, index: int) -> int:
+	return CoinPusherSolverScript.select_hole(state, index)
+
+
+static func apply_nudge(state: Dictionary, impulse_x: int, impulse_y: int) -> int:
+	return CoinPusherSolverScript.apply_nudge(state, impulse_x, impulse_y)
 
 
 static func settle(state: Dictionary, motor_running: bool, max_ticks: int = 1200) -> Dictionary:
