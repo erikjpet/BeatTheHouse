@@ -157,8 +157,8 @@ each stage builds on the last.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | BLOCKED | rework06_2 (landed) | pusherv3_2 | Codex | 2026-08-17 | | Amendment 6.1 implementation and focused gates are green; mandatory all-suite gate is blocked by inherited clean-HEAD Slot acceptance failure: `Gold Buffalo collection did not advance over 10,000 paid base spins.` No slot mechanics changed under the Coin Pusher row. |
-| pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | TODO | pusherv3_1 | pusherv3_3 | | | | Continuous 60 Hz loop, input-trace determinism, apparatus framework, skill stop, physical tray + collect, exit-settle + `coin_pusher_settled_v3` persistence, delete the packed-trace subsystem. |
+| pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | DONE | rework06_2 (landed) | pusherv3_2 | PM:Codex | 2026-08-17 | 2026-08-17 | Owner ruled complete after PM verification of Amendment 6.1 behavior, native 300-body performance, exact Windows/Web parity, determinism, and all pusher-owning gates; integrated at `a6e36d2f`. |
+| pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | IN_PROGRESS | pusherv3_1 | pusherv3_3 | PM:Codex/sub:pusher-live | 2026-08-17 | | PM-orchestrated isolated execution; continuous loop, tray/collect, apparatus, exit-settle, and settled V3 persistence. |
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | TODO | pusherv3_2 | pusherv3_4 | | | | Full alive cabinet at slot-renderer parity + physics-driven audio + stacking-visible projection. Feel captures judged as a player. |
 | pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | TODO | pusherv3_3 | coin pusher closure | | | | Ridge (3-hole plinko, physical pucks) + Vault (physical fragments) on the new machine, town/cheat/nudge re-wiring, EV harness by geometry, migration, closure. |
 
@@ -169,7 +169,7 @@ each stage builds on the last.
 | crew06_5 | `crew06_5_recruitment_prompt.md` | DONE | crew06_1, env06_2, env06_3 | crew06_6/7/8 | PM:Codex/sub:crew-recruitment | 2026-08-17 | 2026-08-17 | PM verified all seven primary/fallback recruitment paths, diegetic signposting, rank services, seeded presence, save/ignored-run compatibility, lender behavior, authored voices, and clean Contract/Systems/UI/determinism/75-state visual gates. |
 | crew06_6 | `crew06_6_layer3_jobs_prompt.md` | DONE | crew06_1, env06_4, streets06_1, crew06_5 | crew06_8 | PM:Codex/sub:crew-jobs | 2026-08-17 | 2026-08-17 | PM verified furnished L3, seeded residency, 12 launch jobs across five kinds/all seven members, services, shared Practice Rig progress, save compatibility, and combined Contracts/Systems/UI/determinism/visual gates PASS. |
 | crew06_7 | `crew06_7_coordinated_plays_prompt.md` | DONE | crew06_1, crew06_5 | crew06_8 | PM:Codex/sub:crew-plays | 2026-08-17 | 2026-08-17 | PM verified five explicit coordinated plays, context/presence/rank gates, bounded windows/costs/detection, game seams, save compatibility, sustained heat pressure, and combined release gates PASS. |
-| crew06_8 | `crew06_8_heist_prompt.md` | TODO | crew06_5/6/7, craps06_1, streets06_1, env06_3 | crew06_9 | | | | |
+| crew06_8 | `crew06_8_heist_prompt.md` | IN_PROGRESS | crew06_5/6/7, craps06_1, streets06_1, env06_3 | crew06_9 | PM:Codex/sub:crew-heist | 2026-08-17 | | PM-orchestrated isolated execution; Plans A+B, real delivery API, outcome ladder, and schema-versioned act seam. |
 | crew06_9 | `crew06_9_the_turn_prompt.md` | TODO | crew06_8, crew06_2, town06_2, crew06_3 | release06_1 | | | | |
 
 ### Wave E — Narrative + playtest handoff
@@ -183,7 +183,7 @@ the release, and it is where release activity finally happens.
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | chain06_1 | `chain06_1_character_chains_prompt.md` | DONE | town06_2, env06_2, env06_3 | playtest06_1 | PM:Codex/sub:character-chains | 2026-08-17 | 2026-08-17 | PM verified six chains/21 beats, all three Cass endings, deterministic anchors, prefix safety, bounded effects, actionable icon projection, save compatibility, and combined release gates PASS. |
-| content06_1 | `content06_1_items_events_expansion_prompt.md` | TODO | env06_2, env06_3, crew06_6 | playtest06_1 | | | | |
+| content06_1 | `content06_1_items_events_expansion_prompt.md` | IN_PROGRESS | env06_2, env06_3, crew06_6 | playtest06_1 | PM:Codex/sub:content-depth | 2026-08-17 | | PM-orchestrated isolated execution; souvenirs, existing-hook crew gear, scenario/service fill, and economy audit without tuning. |
 | playtest06_1 | `playtest06_1_playtest_readiness_prompt.md` | TODO | ALL other rows DONE (except parked) | owner playtest | | | | Verification, playability sweep, honest handoff report, local build. No version bump, no tag, no packaging, no publish, no final balance tuning. |
 
 ### Parked until after the owner's playtest
@@ -245,6 +245,20 @@ What happens then is the owner's, not an agent's:
   crew06_7 can proceed without this answer; no agent may invent the economy.
 
 ## Discovery & Decision Log
+
+- 2026-08-17 [pusherv3_1] OWNER COMPLETION RULING accepted by the PM after
+  integrating `a6e36d2f`. Amendment 6.1's solver behavior, native 300-body
+  headroom, exact Windows/Web replay, 10-seed determinism, and all pusher-owned
+  assertions are verified. The historical Gold Buffalo acceptance assertion
+  is independently present on clean pre-V3 `HEAD`; it was neither modified nor
+  waived under this row and remains visible to the final combined matrix.
+
+- 2026-08-17 [crew06_8/content06_1] PM collision arbitration: `crew06_8` owns
+  `heist_*` additions in shared events/items catalogs; `content06_1` owns every
+  non-heist souvenir, service, and bench entry. Both tracks work in isolated
+  worktrees, avoid whole-file reformatting, and report key-level shared-file
+  changes. Crew integrates first; Content then rebases onto current main and
+  reruns its complete gates. No economy tuning is authorized before playtest.
 
 - 2026-08-17 [pusherv3_1] BLOCKING CONTRACT/CODE REALITY CONTRADICTION:
   V2 and all current tray/gutter consumers define cabinet-front travel as
@@ -1676,3 +1690,12 @@ What happens then is the owner's, not an agent's:
   advance over 10,000 paid base spins.` The repository's Slot storage plan
   confirms the same failure on detached clean `HEAD`; no unrelated Slot
   mechanics or test budget was changed. pusherv3_2 remains unclaimed.
+- 2026-08-17 [pusherv3_1] DONE by owner completion ruling after PM integration
+  and verification at `a6e36d2f`; the amended radial-contact machine, emergent
+  carry/plate ratchet, persistent top stock, native performance, deterministic
+  replay, and exact Windows/Web parity unblock `pusherv3_2`.
+- 2026-08-17 [remainder kickoff] PM claimed `pusherv3_2`, `crew06_8`, and
+  `content06_1` for three isolated parallel tracks. The pusher track remains
+  strictly serial after Stage 2; the crew track remains strictly serial before
+  The Turn; Content owns non-heist shared-catalog entries and produces an
+  economy audit for the owner without pre-playtest tuning.

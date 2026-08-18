@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `pusherv3_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-17
+- **Completion/implementation commits:** `a6e36d2f`
+- **Verification:** PM scope review and Amendment 6.1 behavior contracts PASS; validation PASS; Smoke, Contracts, Games, Systems, UI, focused Coin Pusher, native Windows/Web parity, 10-seed determinism, and 300-body performance PASS. Native p95 2.951 ms; exact cross-export SHA-256 `7fbb4b1667a2f5d09627659dd7a6908c84bc88e1a6c88f8dd9a1ea8fcc868778`.
+- **Deviations:** Amendment 6.1 is the binding geometry correction. The faithful reference implementation exceeded renderer headroom, so the existing cross-export native seam was rebuilt with identical V3 state and behavior. The owner subsequently ruled this row complete; the unrelated baseline Gold Buffalo acceptance assertion remains outside this row's implementation scope.
 
 # Agent Prompt — pusherv3_1: The Machine Physics (solver rebuild + real pusher)
 
