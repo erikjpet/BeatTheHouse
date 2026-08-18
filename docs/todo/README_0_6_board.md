@@ -160,7 +160,7 @@ each stage builds on the last.
 | pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | DONE | rework06_2 (landed) | pusherv3_2 | PM:Codex | 2026-08-17 | 2026-08-17 | Owner ruled complete after PM verification of Amendment 6.1 behavior, native 300-body performance, exact Windows/Web parity, determinism, and all pusher-owning gates; integrated at `a6e36d2f`. |
 | pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | DONE | pusherv3_1 | pusherv3_3 | PM:Codex/sub:pusher-live | 2026-08-17 | 2026-08-18 | PM verified continuous 60 Hz loop, deterministic trace, tray-only collection, compact persistence/migration, motor-on exit settle, continuous rail drag, exact Windows/Web parity, performance, and all combined gates. |
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | DONE | pusherv3_2 | pusherv3_4 | PM:Codex/sub:pusher-cabinet | 2026-08-18 | 2026-08-18 | PM verified the data-driven slot-parity cabinet, batched stacked projection, physical audio map, integrated 9/9 feel contract, determinism, visual QA, and all combined suites/performance budgets. |
-| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | BLOCKED | pusherv3_3 | coin pusher closure | PM:Codex/sub:pusher-variations | 2026-08-18 | | Owner ruling required: legacy lock pucks freeze “a shelf” for one cycle, but amended V3 has one platform and no defined physical lock target. No substitute behavior may be guessed. |
+| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | BLOCKED | pusherv3_3 | coin pusher closure | PM:Codex/sub:pusher-variations | 2026-08-18 | | Owner rulings required: define the V3 lock-puck target and Vault Drop's physical coin-drop EV band. No substitute behavior or target band may be guessed. |
 
 ### Wave D — Crew depth
 
@@ -232,6 +232,15 @@ What happens then is the owner's, not an agent's:
   each be a new mechanical decision, so `pusherv3_4` is BLOCKED rather than
   selecting one without owner authority.
 
+- **pusherv3_4 — Vault Drop physical EV band:** Stage 4 requires a physical
+  >=200k-drop harness for every machine and permits geometry/apparatus tuning
+  only into each documented band. Quarter Falls documents `[0.72, 0.94]` and
+  Jackpot Ridge `[0.70, 1.08]`; Vault Drop documents only the separate
+  meter-dependent vault-cell option values and has no physical coin-drop EV
+  target. What physical coin-drop EV band should the Vault machine use? The
+  harness must report tray return separately from vault-round option value, so
+  the cell table is not a substitute target.
+
 - **content06_1 — souvenir collections persistence:** the prompt asks for
   scenario souvenirs to receive collections-shelf integration, but roadmap
   owner decision #1 makes the Players Card the only cross-run system in 0.6.
@@ -272,6 +281,11 @@ What happens then is the owner's, not an agent's:
   reciprocating platform. Stage 4 says preserve lock logic but supplies no new
   target. Implementation stopped before inventing behavior; ruling is recorded
   under Owner Questions.
+- 2026-08-18 [pusherv3_4] Economy preflight found no documented physical
+  coin-drop EV band for Vault Drop. Existing Vault figures are cash-only option
+  values per spent fragment at three progressive-meter levels, not physical
+  tray return per accepted coin. Geometry tuning is paused rather than deriving
+  a target from an unlike quantity.
 
 - 2026-08-17 [crew06_8] PM production-path review returned the initial heist
   slice before broad gates. The crew06_9 stub leaked hidden-system language in
