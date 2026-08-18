@@ -1681,6 +1681,13 @@ func _verify_coin_pusher_visual_qa_fixture() -> void:
 	# Cabinet tells/lockdown are Stage 3 and variation-specific surfaces are
 	# Stage 4. Their visual contracts remain with their owning stages.
 	_record_state("coin_pusher_stage2_visual_scope", "Stage 2 proves continuous live bodies, generated physical riders, real solver liveness, and reduced-motion scheduling; cabinet and variation visuals remain with their owning stages.")
+	app.call("back_to_environment")
+	for _exit_frame in range(180):
+		await process_frame
+		var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
+		if str(screen_snapshot.get("screen", "")) == "ENVIRONMENT" and not bool(app.get("game_exit_settle_active")):
+			break
+	_require(str((app.call("current_screen_snapshot") as Dictionary).get("screen", "")) == "ENVIRONMENT" and not bool(app.get("game_exit_settle_active")), "Quarter Falls visual QA did not finish its authoritative exit settle before the next fixture.")
 
 
 func _reset_fixed_price_surface_for_risky_action() -> void:
