@@ -141,7 +141,10 @@ static func apply_physical_events(state: Dictionary, physics_events: Array, conf
 		# Anchor bonus lifetime to the physical cycle that completed the three
 		# banks. A stale consumer serial must not make the next boundary consume
 		# several cycles (or clear the new run immediately).
-		state["ridge_cycle_serial"] = maxi(int(state.get("ridge_cycle_serial", triggered_cycle)), triggered_cycle)
+		# The cycle containing the third bank is the trigger cycle, not one of the
+		# three promised full-speed cycles. Anchor consumption at the following
+		# boundary so cycles N+1, N+2, and N+3 all run at the bonus rate.
+		state["ridge_cycle_serial"] = maxi(int(state.get("ridge_cycle_serial", triggered_cycle + 1)), triggered_cycle + 1)
 		state["ridge_run_cycles_remaining"] = maxi(int(state.get("ridge_run_cycles_remaining", 0)), maxi(1, int(config.get("ridge_run_cycles", 3))))
 		state["ridge_run_count"] = int(state.get("ridge_run_count", 0)) + 1
 		state["last_feature_message"] = "RIDGE RUN. Motor doubles for %d cycles." % int(state.get("ridge_run_cycles_remaining", 0))

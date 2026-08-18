@@ -472,7 +472,10 @@ func _sync_live_coin_pusher_state(surface_state: Dictionary, profile: Dictionary
 	var motor_event := str(motor.get("event_id", "coin_pusher_motor"))
 	var body_count := maxi(0, int(surface_state.get("coin_pusher_body_count", 0)))
 	var loaded := body_count >= 80
-	var motor_rate := clampf(float(int(surface_state.get("coin_pusher_motor_rate_fp", 1000))) / 1000.0, 0.0, 1.0)
+	# Ridge Run is an authored 2x physical motor state. Preserve that rate in
+	# audio rather than flattening it to the normal loop, so the faster machine
+	# has a correspondingly faster/higher live cabinet sound.
+	var motor_rate := clampf(float(int(surface_state.get("coin_pusher_motor_rate_fp", 1000))) / 1000.0, 0.0, 2.0)
 	var locked := bool(surface_state.get("coin_pusher_locked", false))
 	var motor_volume := float(motor.get("loaded_volume_db", -13.0) if loaded else motor.get("idle_volume_db", -18.0)) + lerpf(-7.0, 0.0, motor_rate)
 	var base_pitch := float(motor.get("loaded_pitch", 0.96) if loaded else motor.get("idle_pitch", 0.88))
