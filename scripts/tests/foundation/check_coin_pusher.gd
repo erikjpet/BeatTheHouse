@@ -1146,14 +1146,32 @@ func _check_pusher_v3_items_alarm_and_rumor(library: ContentLibrary, failures: A
 		return
 	var shim_before := int(live.get("shim_uses_remaining", 0))
 	var gutter_coin := CoinPusherSolverScript.add_coin(simulation, _pusher_v3_rng("PUSHER-V3-SHIM-DROP"), 50000, 1, {"shim_contract": true})
-	gutter_coin["x"] = -9000
-	gutter_coin["y"] = 20000
+	var gutter_body_id := str(gutter_coin.get("id", ""))
+	var gutter_body_mass := int(gutter_coin.get("mass", 0))
+	# Put the body beyond the physical tray lip in the left gutter mouth. A
+	# lateral-only teleport is collision-corrected back inside before terminal
+	# classification and therefore is not a gutter event.
+	gutter_coin["x"] = 0
+	gutter_coin["y"] = 0
 	gutter_coin["sleeping"] = false
+	var trace_before_shim := ((live.get("live_session", {}) as Dictionary).get("input_trace", []) as Array).size()
 	var gutter_step := CoinPusherSolverScript.step_ticks_reference_for_test(simulation, {"motor_enabled": false}, 1)
 	var shim_outcome: Dictionary = game.call("_consume_physics_events", run_state, live, gutter_step.get("events", []), _pusher_v3_rng("PUSHER-V3-SHIM-CONSUME"))
-	var returned_coin := _pusher_v3_body(simulation, str(gutter_coin.get("id", "")))
-	if not bool(shim_outcome.get("shim_recovered", false)) or returned_coin.is_empty() or int(live.get("shim_uses_remaining", 0)) != shim_before - 1:
-		failures.append("Coin Pusher V3 shim did not physically return the same gutter body and consume one use.")
+	var returned_coin := _pusher_v3_body(simulation, gutter_body_id)
+	var machine_geometry: Dictionary = ((simulation.get("machine_definition", {}) as Dictionary).get("geometry", {}) as Dictionary)
+	var expected_return_x := int(machine_geometry.get("gutter_x", CoinPusherSolverScript.GUTTER_X)) + int(returned_coin.get("radius", CoinPusherSolverScript.COIN_RADIUS)) + 100
+	var expected_return_y := int(machine_geometry.get("tray_lip_y", CoinPusherSolverScript.TRAY_LIP_Y)) + int(returned_coin.get("radius", CoinPusherSolverScript.COIN_RADIUS)) + 1200
+	var trace_after_shim: Array = (live.get("live_session", {}) as Dictionary).get("input_trace", []) if typeof((live.get("live_session", {}) as Dictionary).get("input_trace", [])) == TYPE_ARRAY else []
+	var return_input: Dictionary = trace_after_shim.back() if trace_after_shim.size() == trace_before_shim + 1 and typeof(trace_after_shim.back()) == TYPE_DICTIONARY else {}
+	var returned_provenance: Dictionary = ((returned_coin.get("meta", {}) as Dictionary).get("provenance", {}) as Dictionary) if typeof((returned_coin.get("meta", {}) as Dictionary).get("provenance", {})) == TYPE_DICTIONARY else {}
+	if not bool(shim_outcome.get("shim_recovered", false)) or returned_coin.is_empty() \
+			or int(live.get("shim_uses_remaining", 0)) != shim_before - 1 \
+			or int(returned_coin.get("mass", 0)) != gutter_body_mass \
+			or not bool(returned_provenance.get("shim_contract", false)) \
+			or int(returned_coin.get("x", -1)) != expected_return_x or int(returned_coin.get("y", -1)) != expected_return_y \
+			or not (simulation.get("gutter_ledger", []) as Array).is_empty() \
+			or str(return_input.get("kind", "")) != "gutter_return" or str(return_input.get("body_id", "")) != gutter_body_id:
+		failures.append("Coin Pusher V3 shim did not preserve ID/provenance/mass, reenter at the gutter mouth, queue replay, and consume exactly one use: outcome=%s body=%s trace=%s." % [JSON.stringify(shim_outcome), JSON.stringify(returned_coin), JSON.stringify(return_input)])
 		return
 	(simulation.get("tray_ledger", []) as Array).append({"body_id": "rumor_tray", "kind": "coin", "value": 1, "item_id": "", "provenance": {}})
 	simulation["external_origin_count"] = int(simulation.get("external_origin_count", 0)) + 1
