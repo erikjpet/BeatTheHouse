@@ -3,6 +3,7 @@ extends "res://scripts/tests/ui_scene/compile_environment_layout.gd"
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
+const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 
 
 class EmbeddedCoachFixtureGame:
@@ -187,7 +188,10 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 					and run_state.story_log.size() == story_before_drop + 1 \
 					and str((run_state.story_log.back() as Dictionary).get("action_id", "")) == "drop_quarter" \
 					and int((run_state.story_log.back() as Dictionary).get("bankroll_delta", 0)) == -1
-			await process_frame
+			var deferred_wait_frames := 0
+			while bool(probe.get("deferred_embedded_refresh_pending")) and deferred_wait_frames < 16:
+				await process_frame
+				deferred_wait_frames += 1
 			var live_map: Dictionary = game.get("_live_machines")
 			var live_machine: Dictionary = live_map.values()[0] if not live_map.is_empty() else {}
 			var live_simulation: Dictionary = live_machine.get("simulation", {})
@@ -197,6 +201,21 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			canvas.emit_signal("surface_action", "coin_pusher_skill_stop", 0, false)
 			canvas.emit_signal("surface_action", "coin_pusher_collect", 0, false)
 			var free_inputs_passed := run_state.wager_balance_for_game("coin_pusher", run_state.current_environment) == free_bankroll_before \
+					and int(run_state.current_environment.get("turns", 0)) == free_turns_before
+			var pointer_trace_before := ((live_machine.get("live_session", {}) as Dictionary).get("input_trace", []) as Array).size()
+			probe.call("_on_game_surface_pointer_action", "coin_pusher_carriage_drag", 0, "begin", Vector2(176, 180))
+			probe.call("_on_game_surface_pointer_action", "coin_pusher_carriage_drag", 0, "move", Vector2(450, 180))
+			probe.call("_on_game_surface_pointer_action", "coin_pusher_carriage_drag", 0, "end", Vector2(724, 180))
+			var pointer_trace: Array = (live_machine.get("live_session", {}) as Dictionary).get("input_trace", []) as Array
+			var pointer_snapshot: Dictionary = canvas.call("current_view_snapshot")
+			var pointer_input_passed := _surface_hit_rect(pointer_snapshot.get("surface_hit_actions", []), "coin_pusher_carriage_drag").has_area() \
+					and bool((canvas.call("realtime_surface_state") as Dictionary).get("surface_pointer_coalesce_moves", false)) \
+					and int(live_simulation.get("carriage_x", -1)) == 92000 \
+					and pointer_trace.size() == pointer_trace_before + 3 \
+					and int((pointer_trace[pointer_trace_before] as Dictionary).get("x", -1)) == 8000 \
+					and int((pointer_trace[pointer_trace_before + 1] as Dictionary).get("x", -1)) == 50000 \
+					and int((pointer_trace[pointer_trace_before + 2] as Dictionary).get("x", -1)) == 92000 \
+					and run_state.wager_balance_for_game("coin_pusher", run_state.current_environment) == free_bankroll_before \
 					and int(run_state.current_environment.get("turns", 0)) == free_turns_before
 			var bodies_before_refusal: Array = (live_simulation.get("bodies", []) as Array).duplicate(true)
 			var ceiling := int((live_simulation.get("machine_definition", {}) as Dictionary).get("ceiling", 600))
@@ -212,9 +231,9 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 					and int(run_state.current_environment.get("turns", 0)) == refusal_turns_before \
 					and run_state.story_log.size() == refusal_story_before
 			live_simulation["bodies"] = bodies_before_refusal
-			var pricing_passed := priced_drop_passed and free_inputs_passed and refused_drop_passed
+			var pricing_passed := priced_drop_passed and free_inputs_passed and pointer_input_passed and refused_drop_passed
 			if not pricing_passed:
-				push_error("Coin Pusher production action seam violated pricing/free/refusal accounting: priced=%s free=%s refused=%s wager_balance=%d turns=%d." % [priced_drop_passed, free_inputs_passed, refused_drop_passed, run_state.wager_balance_for_game("coin_pusher", run_state.current_environment), int(run_state.current_environment.get("turns", 0))])
+				push_error("Coin Pusher production action seam violated pricing/free-pointer/refusal accounting: priced=%s free=%s pointer=%s refused=%s carriage=%d trace_before=%d trace=%s coalesce=%s ui=%s wager_balance=%d turns=%d." % [priced_drop_passed, free_inputs_passed, pointer_input_passed, refused_drop_passed, int(live_simulation.get("carriage_x", -1)), pointer_trace_before, JSON.stringify(pointer_trace), bool((canvas.call("realtime_surface_state") as Dictionary).get("surface_pointer_coalesce_moves", false)), JSON.stringify(probe.get("game_surface_ui_state")), run_state.wager_balance_for_game("coin_pusher", run_state.current_environment), int(run_state.current_environment.get("turns", 0))])
 			var tick_before_save := int(live_simulation.get("tick", -1))
 			probe.call("_prepare_foundation_run_save")
 			var durable_after: Dictionary = ((run_state.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) as Dictionary)
@@ -236,9 +255,15 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 					and not game.foundation_save_ready(run_state, run_state.current_environment)
 			if not live_loop_passed:
 				push_error("Coin Pusher live DROP was frozen by autosave or leaked transient solver state: still_live=%s motor=%s clean=%s ready=%s durable=%s." % [still_live_after_save, motor_continued, transient_clean, game.foundation_save_ready(run_state, run_state.current_environment), serialized_after])
+			if bool(live_simulation.get("skill_stop_engaged", false)):
+				canvas.emit_signal("surface_action", "coin_pusher_skill_stop", 0, false)
+			canvas.emit_signal("surface_action", "coin_pusher_skill_stop", 0, false)
 			var trace_count_before_exit := ((live_machine.get("live_session", {}) as Dictionary).get("input_trace", []) as Array).size()
 			probe.call("back_to_environment")
 			var exit_started_visible := bool(probe.get("game_exit_settle_active")) and str(probe.get("current_screen")) == "GAME"
+			var immediate_stop_exit_released := not bool(live_simulation.get("skill_stop_engaged", true)) \
+					and int(live_simulation.get("motor_target_rate_fp", 0)) == CoinPusherSolverScript.FP \
+					and int((live_machine.get("live_session", {}) as Dictionary).get("input_cursor", -1)) == trace_count_before_exit
 			var locked_command := game.surface_action_command("coin_pusher_carriage_left", 0, false, {}, run_state, run_state.current_environment)
 			var input_locked := str(locked_command.get("message", "")).contains("controls lock") \
 					and ((live_machine.get("live_session", {}) as Dictionary).get("input_trace", []) as Array).size() == trace_count_before_exit
@@ -251,10 +276,10 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			var zero_work_after := (game.get("_live_machines") as Dictionary).is_empty() \
 					and not JSON.stringify(durable_exit).contains("\"simulation\"") \
 					and not JSON.stringify(durable_exit).contains("live_session")
-			var chunked_exit_passed := exit_started_visible and input_locked and settle_frames > 0 \
+			var chunked_exit_passed := exit_started_visible and immediate_stop_exit_released and input_locked and settle_frames > 0 \
 					and final_projection_applied and str(probe.get("current_screen")) == "ENVIRONMENT" and zero_work_after
 			if not chunked_exit_passed:
-				push_error("Coin Pusher exit did not settle visibly across locked frames or freeze absent: started=%s locked=%s frames=%d final=%s screen=%s zero=%s live=%s current_key=%s durable=%s." % [exit_started_visible, input_locked, settle_frames, final_projection_applied, str(probe.get("current_screen")), zero_work_after, JSON.stringify((game.get("_live_machines") as Dictionary).keys()), game.call("_live_key", run_state, run_state.current_environment), JSON.stringify(durable_exit)])
+				push_error("Coin Pusher exit did not drain same-tick SKILL STOP, settle visibly across locked motor-on frames, or freeze absent: started=%s released=%s locked=%s frames=%d final=%s screen=%s zero=%s live=%s current_key=%s durable=%s." % [exit_started_visible, immediate_stop_exit_released, input_locked, settle_frames, final_projection_applied, str(probe.get("current_screen")), zero_work_after, JSON.stringify((game.get("_live_machines") as Dictionary).keys()), game.call("_live_key", run_state, run_state.current_environment), JSON.stringify(durable_exit)])
 			probe.queue_free()
 			await process_frame
 			return live_loop_passed and chunked_exit_passed

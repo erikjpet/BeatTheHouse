@@ -96,8 +96,27 @@ static func begin_chunked_settle(machine: Dictionary) -> Dictionary:
 	session["settling_out"] = true
 	session["settle_ticks"] = 0
 	session["backlog_drain_ticks"] = 0
+	# Inputs are authored at the current solver tick. Drain that complete boundary
+	# before imposing the exit-only motor release, otherwise a pending engaged=true
+	# skill-stop event can be replayed after the release and freeze settlement.
+	var trace: Array = session.get("input_trace", []) if typeof(session.get("input_trace", [])) == TYPE_ARRAY else []
+	var pending_before := maxi(0, trace.size() - int(session.get("input_cursor", 0)))
+	var drain_result := {"events": []}
+	var drain_ticks := 0
+	if pending_before > 0:
+		drain_result = _step_traced_ticks(machine, 1)
+		drain_ticks = 1
+		var accumulator_units := int(session.get("accumulator_units", 0))
+		session["accumulator_units"] = maxi(0, accumulator_units - mini(1000, accumulator_units))
+		session["backlog_drain_ticks"] = 1
 	CoinPusherSolverScript.set_skill_stop(machine.get("simulation", {}), false)
-	return {"started": true, "done": false}
+	return {
+		"started": true,
+		"done": false,
+		"input_drain_ticks": drain_ticks,
+		"pending_inputs_drained": pending_before,
+		"events": drain_result.get("events", []),
+	}
 
 
 static func advance_chunked_settle(machine: Dictionary, tick_budget: int = 8) -> Dictionary:

@@ -8,6 +8,7 @@ const COLLECT_ACTION := "coin_pusher_collect"
 const SKILL_STOP_ACTION := "coin_pusher_skill_stop"
 const CARRIAGE_LEFT_ACTION := "coin_pusher_carriage_left"
 const CARRIAGE_RIGHT_ACTION := "coin_pusher_carriage_right"
+const CARRIAGE_DRAG_ACTION := "coin_pusher_carriage_drag"
 const VAULT_START_ACTION := "start_vault_round"
 const VAULT_OPEN_ACTION := "open_vault_cell"
 const VAULT_STOP_ACTION := "stop_vault_round"
@@ -23,6 +24,7 @@ const C_COIN := Color("#f6cb56")
 const C_HANG := Color("#ff6b5f")
 const C_TEAL := Color("#58e1d4")
 const C_TEXT := Color("#e9f4ff")
+const V3_RAIL_DRAG_RECT := Rect2(176, 142, 548, 112)
 const JackpotRidgeScript := preload("res://scripts/games/coin_pusher/jackpot_ridge.gd")
 const VaultDropScript := preload("res://scripts/games/coin_pusher/vault_drop.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
@@ -168,6 +170,47 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 	return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": _v3_headless_surface_state(machine)}, true)
 
 
+func surface_pointer_uses_lightweight_ui_state(surface_action: String) -> bool:
+	return surface_action == CARRIAGE_DRAG_ACTION
+
+
+func surface_pointer_command(surface_action: String, _index: int, phase: String, board_position: Vector2, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if surface_action != CARRIAGE_DRAG_ACTION:
+		return {"handled": false}
+	var machine := _ensure_live_machine(run_state, environment)
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	if bool(session.get("input_locked", false)):
+		return GameModule.surface_command({"handled": true, "message": "The controls lock while the last cascade settles."}, true)
+	var next_state := ui_state
+	if phase == "begin":
+		next_state["coin_pusher_rail_drag_active"] = true
+	elif phase == "end":
+		next_state["coin_pusher_rail_drag_active"] = false
+	elif phase != "move" or not bool(next_state.get("coin_pusher_rail_drag_active", false)):
+		return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true}, true)
+	var simulation := _simulation(machine)
+	var requested_x := _rail_x_from_board_position(board_position)
+	var previous_x := int(simulation.get("carriage_x", requested_x))
+	var actual_x := CoinPusherSolverScript.set_carriage(simulation, requested_x)
+	if actual_x != previous_x:
+		CoinPusherLiveSessionScript.queue_input(machine, {"kind": "carriage", "x": actual_x})
+	next_state["coin_pusher_rail_pointer_x"] = board_position.x
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": next_state,
+		"preserve_surface_ui_state": true,
+		"surface_state_patch": {"coin_pusher_carriage_x": actual_x},
+	}, true)
+
+
+func _rail_x_from_board_position(board_position: Vector2) -> int:
+	var rail: Dictionary = (_machine_definition().get("apparatus", {}) as Dictionary).get("rail", {})
+	var rail_min := int(rail.get("x_min", 8000))
+	var rail_max := int(rail.get("x_max", 92000))
+	var normalized := clampf((board_position.x - V3_RAIL_DRAG_RECT.position.x) / V3_RAIL_DRAG_RECT.size.x, 0.0, 1.0)
+	return clampi(int(round(lerpf(float(rail_min), float(rail_max), normalized))), rail_min, rail_max)
+
+
 func surface_motion_signature(_surface, surface_state: Dictionary) -> Dictionary:
 	# This is deliberately an actual-solver signature. Presentation clocks may
 	# smooth the cabinet later, but must never make a stuck live loop look alive.
@@ -219,6 +262,10 @@ func _draw_v3_headless_placeholder(surface, state: Dictionary) -> void:
 		var body: Dictionary = body_value
 		var point := Vector2(194.0 + float(int(body.get("x", 0))) / 100000.0 * 512.0, 265.0 - float(int(body.get("y", 0))) / 63000.0 * 105.0 - float(int(body.get("z", 0))) / 1700.0 * 2.5)
 		surface.draw_circle(point, 3.0, C_COIN)
+	var carriage_normalized := clampf(float(int(state.get("coin_pusher_carriage_x", 50000)) - 8000) / 84000.0, 0.0, 1.0)
+	var carriage_screen_x := V3_RAIL_DRAG_RECT.position.x + V3_RAIL_DRAG_RECT.size.x * carriage_normalized
+	surface.draw_line(Vector2(carriage_screen_x, 142), Vector2(carriage_screen_x, 164), C_TEAL, 4.0)
+	surface.surface_add_drag_hit(V3_RAIL_DRAG_RECT, CARRIAGE_DRAG_ACTION)
 	surface.surface_label_centered("LIVE COIN PUSHER", Rect2(176, 158, 548, 30), 16, C_TEAL)
 	surface.surface_label_centered("MOVE THE RAIL · TIME THE DROP · COLLECT THE TRAY", Rect2(176, 184, 548, 24), 10, C_TEXT)
 	surface.draw_rect(Rect2(158, 324, 584, 54), Color("#0f1826"))
@@ -350,7 +397,10 @@ func begin_chunked_exit_settle(run_state: RunState, environment: Dictionary) -> 
 	if not _live_machines.has(key):
 		return {"started": false, "done": true}
 	_exit_settle_active = true
-	return CoinPusherLiveSessionScript.begin_chunked_settle(_live_machines[key])
+	var machine: Dictionary = _live_machines[key]
+	var result := CoinPusherLiveSessionScript.begin_chunked_settle(machine)
+	_consume_live_physics_events(run_state, machine, result.get("events", []))
+	return result
 
 
 func advance_chunked_exit_settle(run_state: RunState, environment: Dictionary, tick_budget: int = 8) -> Dictionary:
@@ -622,6 +672,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"surface_stake_controls_required": false,
 		"surface_animates_idle": true,
 		"surface_realtime_state_refresh": true,
+		"surface_pointer_coalesce_moves": true,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_action_catalog_key": _surface_action_catalog_key(machine, run_state, environment, ui_state),
