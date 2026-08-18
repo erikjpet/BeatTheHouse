@@ -1411,6 +1411,12 @@ What happens then is the owner's, not an agent's:
 
 ## Work Log
 
+- 2026-08-18 [crew06_8] PM provisionally integrated the verified production
+  implementation at `0fae43ff` after both full-heist EventModule/GameModule/
+  RunGenerator/delivery smokes passed with mid-route save/load. The row remains
+  IN_PROGRESS until the combined quiet-host Systems and final visual gates pass;
+  `crew06_9` is not yet claimed. Content-depth may now audit the real heist
+  economy on the integrated tree.
 - 2026-08-17 [pusherv3_1] OWNER RULING (Amendment 6.1): the geometry
   contradiction was real and the stop was the correct behavior. Axis kept
   (+y rearward); FACE_MIN/MAX labels were backwards and are replaced by
