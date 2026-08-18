@@ -1504,6 +1504,14 @@ What happens then is the owner's, not an agent's:
   ending-copy boundary. PM acceptance will independently verify these claims
   across actions, story, save, report, profile persistence, and broad seeds.
 
+- 2026-08-18 [pusherv3_3] First seven-frame feel-capture run is rejected:
+  its manifest is `passed:false`, all seven scenario states are invalid, deck
+  row advance and Skill Stop release are false, the grown-tray frame still
+  renders `COLLECT 0 ($0)`/zero heap, and measured 300-body draw p95 is
+  15.229 ms against the binding 5 ms cap. The agent must correct evidence-state
+  projection and renderer cost, regenerate visibly distinct proof, and may not
+  weaken any assertion or budget.
+
 ## Work Log
 
 - 2026-08-18 [remainder continuation] PM claimed `pusherv3_3` and `crew06_9`
