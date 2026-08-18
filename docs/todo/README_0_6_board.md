@@ -332,7 +332,9 @@ What happens then is the owner's, not an agent's:
   drops) also cannot create one verbose sidecar entry per paid coin. Restore
   must rebase solver conservation to include the persisted tray ledger; setting
   the opening origin to active bodies alone makes the first post-load tick fail
-  whenever uncollected tray value survives an exit.
+  whenever uncollected tray value survives an exit. Collection itself must also
+  retain an explicit transferred-body accounting term (or equivalent): simply
+  clearing the tray otherwise makes every later live tick fail conservation.
 
 - 2026-08-17 [pusherv3_2] Final verbatim cleanup found the obsolete packed-
   presentation trace still consumed by the performance probe, and the Stage 1
