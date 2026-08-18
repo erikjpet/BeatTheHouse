@@ -256,6 +256,17 @@ What happens then is the owner's, not an agent's:
 
 ## Discovery & Decision Log
 
+- 2026-08-17 [crew06_8] PM production-path review returned the initial heist
+  slice before broad gates. The crew06_9 stub leaked hidden-system language in
+  planning copy and serialized keys; Plan B's vouch/name/component progress
+  depended on fixture-only flags with no shipped producer; Plan A counted each
+  game action as a clean “session”; and tests bypassed EventModule, ordinary
+  travel, and real game-result routing. The correction must use neutral hidden
+  seam storage, consume landed scenario/component/training truths, count real
+  distinct sessions, and prove planning-table → normal travel/handoff → table
+  play in production. Exact payload fixtures supplement rather than replace the
+  full Rourke duel and Players Card route regressions.
+
 - 2026-08-17 [pusherv3_2] PM production-lifecycle review returned the first
   live-loop implementation before broad gates: FoundationMain prepares an
   autosave after every paid DROP by calling the generic surface checkpoint,
