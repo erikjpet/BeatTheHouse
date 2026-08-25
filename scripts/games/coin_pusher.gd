@@ -1498,7 +1498,7 @@ func _sync_physical_features(machine: Dictionary) -> void:
 			var hole_index := clampi(int(feature.get("jam_hole_index", 0)), 0, maxi(0, holes.size() - 1))
 			if not holes.is_empty():
 				feature_x = int(holes[hole_index])
-			depth = int(board.get("y", geometry.get("drop_y", 58000)))
+			depth = int(board.get("y", geometry.get("drop_y", 73000)))
 		var placement := _opening_feature_support(simulation, feature_x, depth, radius, int(metadata.get("height", CoinPusherSolverScript.OBJECT_HEIGHT)))
 		if not placement.is_empty():
 			feature_x = int(placement.get("x", feature_x))
@@ -1536,7 +1536,10 @@ func _opening_feature_support(simulation: Dictionary, requested_x: int, requeste
 		var candidate := {
 			"x": int(support.get("x", 0)),
 			"y": int(support.get("y", 0)),
-			"z": int(support.get("z", 0)) + int(support.get("height", 1700)),
+			# Compact snapshots quantize z to 100 units. Leave one quantization
+			# step above the support so restore cannot turn exact contact into a
+			# small initial penetration against neighbouring upper coins.
+			"z": int(support.get("z", 0)) + int(support.get("height", 950)) + 100,
 			"support_id": str(support.get("id", "")),
 			"carried": bool(support.get("carried_sleep", false)),
 		}
@@ -1560,11 +1563,11 @@ func _opening_feature_support(simulation: Dictionary, requested_x: int, requeste
 				continue
 			var candidate_z := int(candidate.get("z", 0))
 			var body_z := int(body.get("z", 0))
-			if candidate_z >= body_z + int(body.get("height", 1700)) or body_z >= candidate_z + feature_height:
+			if candidate_z >= body_z + int(body.get("height", 950)) or body_z >= candidate_z + feature_height:
 				continue
 			var dx := int(candidate.get("x", 0)) - int(body.get("x", 0))
 			var dy := int(candidate.get("y", 0)) - int(body.get("y", 0))
-			var minimum := feature_radius + int(body.get("radius", 4300)) + 300
+			var minimum := feature_radius + int(body.get("radius", 2350)) + 300
 			if dx * dx + dy * dy < minimum * minimum:
 				clear = false
 				break
@@ -2048,7 +2051,7 @@ func _coin_cap() -> int:
 func _opening_coin_count(variation_id: String = "") -> int:
 	var counts: Dictionary = _tuning().get("opening_coin_counts", {}) if typeof(_tuning().get("opening_coin_counts", {})) == TYPE_DICTIONARY else {}
 	var selected_id := variation_id if not variation_id.is_empty() else _variation_id()
-	return clampi(int(counts.get(selected_id, _int_tuning("opening_coin_count", 56))), 24, _coin_cap())
+	return clampi(int(counts.get(selected_id, _int_tuning("opening_coin_count", 150))), 24, _coin_cap())
 
 
 func _drop_cost() -> int:

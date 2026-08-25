@@ -164,6 +164,7 @@ each stage builds on the last.
 | pusherv3_5 | `pusherv3_5_contact_piles_and_visible_exits_prompt.md` | DONE | pusherv3_4 | physical pile/contact/exit correction | Codex | 2026-08-25 | 2026-08-25 | Irregular carried piles, contact-only local pressure, contact-matched rendering, and visible shelf-to-tray/gutter falls pass exact native/Web parity, full regression, visual, performance, determinism, and 200k-per-machine EV gates. |
 | pusherv3_6 | `pusherv3_6_plinko_bounce_and_entry_boards_prompt.md` | DONE | pusherv3_5 | plinko bounce/contact/layout correction | Codex | 2026-08-25 | 2026-08-25 | Contact-lifecycle audio gating, visible radial rebounds, unbiased release-angle variance, and distinct 7/7/10-pin entry boards pass exact parity, focused/full regression, visual, determinism, EV, and direct performance gates. |
 | pusherv3_7 | `pusherv3_7_played_in_opening_stock_prompt.md` | DONE | pusherv3_6 | played-in opening stock and bounded early payouts | Codex | 2026-08-25 | 2026-08-25 | Deterministic 54/54/56-coin played-in beds, supported feature pieces, and bounded first-five-play payouts pass exact parity, full regression, visual, determinism, EV, and direct performance gates. |
+| pusherv3_8 | `pusherv3_8_coin_scale_lower_bed_and_edge_ramp_prompt.md` | DONE | pusherv3_7 | prior coin scale, extended lower bed, physical payout ramp | Codex | 2026-08-25 | 2026-08-25 | Original 40x32 flat coin artwork, smaller matching physics, extended lower bed, researched edge ramp, played-in stock, exact parity/determinism, visual, performance, and 200k-per-machine EV gates pass. |
 
 ### Wave D — Crew depth
 
@@ -2145,3 +2146,17 @@ What happens then is the owner's, not an agent's:
   elevated stock. Exact native/Web parity, 510-checkpoint determinism, focused
   and full regression, actual-GL visual QA, 200k-per-machine EV, and direct
   solver/renderer performance gates pass.
+- 2026-08-25 [pusherv3_8] Owner requested the earlier smaller coin scale, a
+  stationary lower shelf longer than the moving upper shelf without reducing
+  upper depth, and a researched real-machine payout-edge buildup. Codex traced
+  the visual regression from 17 px to about 31 px and opened a follow-up based
+  on the inclined edge plates documented by JPH05237264A and GB2444324A and the
+  edge-prime procedure in the Cromptons Monopoly pusher service manual.
+- 2026-08-25 [pusherv3_8] DONE. Restored the original 40x32 flat-coin frame and
+  matching 17x12 projected disc, reduced physical coins to radius 2350/height
+  950, extended only the lower bed, and added a visible, solver-backed inclined
+  payout plate. Collision-valid 150/150/154-coin played-in openings retain
+  edge tension and upper piles with zero passive/first-five surge. Exact
+  native/Web parity, 510-checkpoint determinism, all-machine actual-GL capture,
+  direct performance, focused/foundation regression, and 200k-per-machine EV
+  pass without weakening unrelated tutorial/Blackjack audit failures.

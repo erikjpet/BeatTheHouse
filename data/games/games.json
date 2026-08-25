@@ -3574,14 +3574,16 @@
       "machine_id": "quarter_falls",
       "geometry": {
         "width": 100000,
-        "tray_lip_y": 6000,
+        "tray_lip_y": 4000,
+        "payout_ramp_run": 6500,
+        "payout_ramp_rise": 2500,
         "deck_z": 0,
         "platform_top_z": 3600,
-        "face_extended_y": 28000,
-        "face_retracted_y": 46000,
-        "back_plate_y": 63000,
+        "face_extended_y": 43000,
+        "face_retracted_y": 61000,
+        "back_plate_y": 78000,
         "back_plate_gap": 400,
-        "drop_y": 58000,
+        "drop_y": 73000,
         "drop_z": 24000,
         "gutter_x": 4400
       },
@@ -3594,7 +3596,7 @@
         "type": "rail_slot",
         "rail": {"x_min": 8000, "x_max": 92000, "speed_per_tick": 900},
         "holes": [],
-        "drop_board": {"y": 58000, "z_top": 24000, "z_bottom": 3600, "x_min": 0, "x_max": 100000},
+        "drop_board": {"y": 73000, "z_top": 24000, "z_bottom": 3600, "x_min": 0, "x_max": 100000},
         "pegs": [
           {"x": 30000, "z": 17000, "r": 1200}, {"x": 50000, "z": 17000, "r": 1200}, {"x": 70000, "z": 17000, "r": 1200},
           {"x": 20000, "z": 8000, "r": 1200}, {"x": 40000, "z": 8000, "r": 1200},
@@ -3604,8 +3606,8 @@
         "release_velocity_jitter": 2400
       },
       "coins": {
-        "radius": 4300,
-        "height": 1700,
+        "radius": 2350,
+        "height": 950,
         "mass": 1000,
         "value": 1,
         "drop_cost": 1
@@ -3678,14 +3680,16 @@
           "machine_id": "jackpot_ridge",
           "geometry": {
             "width": 100000,
-            "tray_lip_y": 6000,
+            "tray_lip_y": 4000,
+            "payout_ramp_run": 6500,
+            "payout_ramp_rise": 2500,
             "deck_z": 0,
             "platform_top_z": 3600,
-            "face_extended_y": 28000,
-            "face_retracted_y": 46000,
-            "back_plate_y": 63000,
+            "face_extended_y": 43000,
+            "face_retracted_y": 61000,
+            "back_plate_y": 78000,
             "back_plate_gap": 400,
-            "drop_y": 58000,
+            "drop_y": 73000,
             "drop_z": 24000,
             "gutter_x": 4000
           },
@@ -3694,7 +3698,7 @@
             "type": "hole_set",
             "rail": {},
             "holes": [25000, 50000, 75000],
-            "drop_board": {"y": 58000, "z_top": 24000, "z_bottom": 3600, "x_min": 0, "x_max": 100000},
+            "drop_board": {"y": 73000, "z_top": 24000, "z_bottom": 3600, "x_min": 0, "x_max": 100000},
             "pegs": [
               {"x": 25000, "z": 17000, "r": 1200}, {"x": 50000, "z": 17000, "r": 1200}, {"x": 75000, "z": 17000, "r": 1200},
               {"x": 12500, "z": 8000, "r": 1200}, {"x": 37500, "z": 8000, "r": 1200},
@@ -3704,7 +3708,7 @@
             "release_velocity_jitter": 3200,
             "custom": {}
           },
-          "coins": {"radius": 4300, "height": 1700, "mass": 1000, "value": 1, "drop_cost": 1},
+          "coins": {"radius": 2350, "height": 950, "mass": 1000, "value": 1, "drop_cost": 1},
           "ceiling": 600,
           "economy": {"documented_ev_band": [0.70, 1.08]},
           "sub_game": {"feature_kind": "puck", "feature_mass": 3000, "jam_radius": 5200, "ridge_run_rate": 2, "stroke_period_ticks": 240}
@@ -3713,14 +3717,16 @@
           "machine_id": "vault_drop",
           "geometry": {
             "width": 100000,
-            "tray_lip_y": 6000,
+            "tray_lip_y": 4000,
+            "payout_ramp_run": 6500,
+            "payout_ramp_rise": 2500,
             "deck_z": 0,
             "platform_top_z": 3600,
-            "face_extended_y": 28000,
-            "face_retracted_y": 46000,
-            "back_plate_y": 63000,
+            "face_extended_y": 43000,
+            "face_retracted_y": 61000,
+            "back_plate_y": 78000,
             "back_plate_gap": 400,
-            "drop_y": 58000,
+            "drop_y": 73000,
             "drop_z": 24000,
             "gutter_x": 4400
           },
@@ -3729,7 +3735,7 @@
             "type": "rail_slot",
             "rail": {"x_min": 10000, "x_max": 90000, "speed_per_tick": 750},
             "holes": [],
-            "drop_board": {"y": 58000, "z_top": 24000, "z_bottom": 3600, "x_min": 0, "x_max": 100000},
+            "drop_board": {"y": 73000, "z_top": 24000, "z_bottom": 3600, "x_min": 0, "x_max": 100000},
             "pegs": [
               {"x": 25000, "z": 17500, "r": 1400}, {"x": 50000, "z": 17500, "r": 1400}, {"x": 75000, "z": 17500, "r": 1400},
               {"x": 12500, "z": 11000, "r": 1400}, {"x": 37500, "z": 11000, "r": 1400},
@@ -3740,7 +3746,7 @@
             "release_velocity_jitter": 2800,
             "custom": {}
           },
-          "coins": {"radius": 4300, "height": 1700, "mass": 1000, "value": 1, "drop_cost": 1},
+          "coins": {"radius": 2350, "height": 950, "mass": 1000, "value": 1, "drop_cost": 1},
           "ceiling": 600,
           "economy": {"documented_ev_band": [0.72, 0.94]},
           "sub_game": {"feature_kind": "fragment", "feature_mass": 1800, "future_custom_apparatus": {}}
@@ -3830,11 +3836,11 @@
       "solver_fixed_hz": 60,
       "solver_fixed_point_scale": 1000,
       "coin_cap": 160,
-      "opening_coin_count": 56,
+      "opening_coin_count": 150,
       "opening_coin_counts": {
-        "quarter_falls": 54,
-        "jackpot_ridge": 54,
-        "vault_drop": 56
+        "quarter_falls": 150,
+        "jackpot_ridge": 150,
+        "vault_drop": 154
       },
       "drop_cost": 1,
       "coin_value": 1,

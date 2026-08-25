@@ -179,7 +179,7 @@ static func jammed_holes(state: Dictionary, body_views: Array, machine_definitio
 	var sub_game: Dictionary = machine_definition.get("sub_game", {}) if typeof(machine_definition.get("sub_game", {})) == TYPE_DICTIONARY else {}
 	var holes: Array = apparatus.get("holes", []) if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else []
 	var board: Dictionary = apparatus.get("drop_board", {}) if typeof(apparatus.get("drop_board", {})) == TYPE_DICTIONARY else {}
-	var mouth_y := int(board.get("y", 58000))
+	var mouth_y := int(board.get("y", 73000))
 	var radius := maxi(1, int(sub_game.get("jam_radius", 5200)))
 	var dud_ids := {}
 	for puck_value in state.get("pucks", []):

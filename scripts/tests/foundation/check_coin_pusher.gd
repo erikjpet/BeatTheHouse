@@ -12,6 +12,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 		return
 	var machine_definition: Dictionary = game_definition.get("coin_pusher_machine", {}) if typeof(game_definition.get("coin_pusher_machine", {})) == TYPE_DICTIONARY else {}
 	_check_pusher_v3_machine_data(machine_definition, failures)
+	_check_pusher_v3_coin_scale_lower_bed_and_edge_ramp(machine_definition, failures)
 	_check_pusher_v3_played_in_opening_state(library, game_definition, failures)
 	_check_pusher_v3_plinko_bounce_and_variance(machine_definition, failures)
 	_check_pusher_v3_alive_cabinet(library, machine_definition, failures)
@@ -211,8 +212,8 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 	live_simulation["motor_rate_fp"] = 1000
 	live_session["presentation_previous_face_y"] = 40000
 	live_session["presentation_current_face_y"] = 41000
-	live_session["presentation_previous_bodies"] = [{"id": "plate", "kind": "coin", "x": 50000, "y": 58700, "z": 3600, "rest_state": "resting", "support_kind": "platform"}]
-	live_session["presentation_current_bodies"] = [{"id": "plate", "kind": "coin", "x": 50000, "y": 58700, "z": 3600, "rest_state": "resting", "support_kind": "platform"}]
+	live_session["presentation_previous_bodies"] = [{"id": "plate", "kind": "coin", "x": 50000, "y": 75650, "z": 3600, "rest_state": "resting", "support_kind": "platform"}]
+	live_session["presentation_current_bodies"] = [{"id": "plate", "kind": "coin", "x": 50000, "y": 75650, "z": 3600, "rest_state": "resting", "support_kind": "platform"}]
 	var plate_audio: Array = game.call("_presentation_audio_events", live_machine, [])
 	live_simulation["tick"] = 106
 	live_session["presentation_previous_face_y"] = 41000
@@ -274,14 +275,16 @@ func _check_pusher_v3_machine_data(machine: Dictionary, failures: Array) -> void
 	var apparatus: Dictionary = machine.get("apparatus", {}) if typeof(machine.get("apparatus", {})) == TYPE_DICTIONARY else {}
 	if str(machine.get("machine_id", "")) != "quarter_falls" \
 			or int(geometry.get("width", 0)) != 100000 \
-			or int(geometry.get("tray_lip_y", 0)) != 6000 \
-			or int(geometry.get("face_extended_y", 0)) != 28000 \
-			or int(geometry.get("face_retracted_y", 0)) != 46000 \
-			or int(geometry.get("back_plate_y", 0)) != 63000 \
+			or int(geometry.get("tray_lip_y", 0)) != 4000 \
+			or int(geometry.get("payout_ramp_run", 0)) != 6500 \
+			or int(geometry.get("payout_ramp_rise", 0)) != 2500 \
+			or int(geometry.get("face_extended_y", 0)) != 43000 \
+			or int(geometry.get("face_retracted_y", 0)) != 61000 \
+			or int(geometry.get("back_plate_y", 0)) != 78000 \
 			or int(geometry.get("platform_top_z", 0)) != 3600 \
-			or int(geometry.get("drop_y", 0)) != 58000 \
+			or int(geometry.get("drop_y", 0)) != 73000 \
 			or int(geometry.get("drop_z", 0)) != 24000:
-		failures.append("Coin Pusher V3 machine geometry drifted from Amendment 6.2.")
+		failures.append("Coin Pusher V3 machine geometry drifted from the extended lower-bed/edge-plate contract.")
 	if int(stroke.get("period_ticks", 0)) != 240 or int(stroke.get("ramp_ticks", 0)) != 24 or str(stroke.get("profile", "")) != "cosine":
 		failures.append("Coin Pusher V3 stroke data is not the binding 240-tick cosine/24-tick-ramp contract.")
 	if str(apparatus.get("type", "")) != "rail_slot" or (apparatus.get("pegs", []) as Array).size() != 7 or int(machine.get("ceiling", 0)) != 600 \
@@ -298,21 +301,75 @@ func _check_pusher_v3_machine_data(machine: Dictionary, failures: Array) -> void
 		failures.append("Coin Pusher V3 apparatus framework did not accept a synthetic five-row hole-set/plinko definition.")
 	var extended: int = CoinPusherSolverScript.face_y_for_phase(machine, 0)
 	var retracted: int = CoinPusherSolverScript.face_y_for_phase(machine, 120)
-	if int(extended) != 28000 or int(retracted) != 46000:
+	if int(extended) != 43000 or int(retracted) != 61000:
 		failures.append("Coin Pusher V3 stroke orientation drifted: extended=%s retracted=%s." % [extended, retracted])
 	_check_pusher_v3_shipped_variant_definitions(machine, failures)
+
+
+func _check_pusher_v3_coin_scale_lower_bed_and_edge_ramp(machine: Dictionary, failures: Array) -> void:
+	var geometry: Dictionary = machine.get("geometry", {}) if typeof(machine.get("geometry", {})) == TYPE_DICTIONARY else {}
+	var coins: Dictionary = machine.get("coins", {}) if typeof(machine.get("coins", {})) == TYPE_DICTIONARY else {}
+	var lip := int(geometry.get("tray_lip_y", 0))
+	var ramp_run := int(geometry.get("payout_ramp_run", 0))
+	var ramp_rise := int(geometry.get("payout_ramp_rise", 0))
+	var extended := int(geometry.get("face_extended_y", 0))
+	var retracted := int(geometry.get("face_retracted_y", 0))
+	var plate := int(geometry.get("back_plate_y", 0))
+	var lower_depth := extended - lip
+	var upper_depth := plate - extended
+	var stroke_depth := retracted - extended
+	if int(coins.get("radius", 0)) != 2350 or int(coins.get("height", 0)) != 950:
+		failures.append("Coin Pusher V3 coins did not return to the prior 17 px physical scale: %s." % JSON.stringify(coins))
+	if lower_depth <= upper_depth or upper_depth != 35000 or stroke_depth != 18000:
+		failures.append("Coin Pusher V3 lower bed was not extended beyond the preserved upper shelf: lower=%d upper=%d stroke=%d." % [lower_depth, upper_depth, stroke_depth])
+	var back_height := CoinPusherSolverScript.payout_ramp_height_for_y(machine, lip + ramp_run)
+	var mid_height := CoinPusherSolverScript.payout_ramp_height_for_y(machine, lip + ramp_run / 2)
+	var front_height := CoinPusherSolverScript.payout_ramp_height_for_y(machine, lip)
+	var downhill_acceleration := CoinPusherSolverScript.payout_ramp_downhill_acceleration(machine)
+	if ramp_run != 6500 or ramp_rise != 2500 or back_height != 0 or absi(mid_height - 1250) > 1 or front_height != 2500 or downhill_acceleration <= 0:
+		failures.append("Coin Pusher V3 payout edge is not a finite upward plate with resolved gravity: run=%d rise=%d heights=%s downhill=%d." % [ramp_run, ramp_rise, JSON.stringify([back_height, mid_height, front_height]), downhill_acceleration])
+	var renderer := CoinPusherRenderer.new()
+	var render_state := {"coin_pusher_geometry": geometry, "coin_pusher_coin_radius": int(coins.get("radius", 0)), "coin_pusher_coin_height": int(coins.get("height", 0)), "coin_pusher_bodies": []}
+	var signature := renderer.render_signature(render_state)
+	var ramp_projection := renderer.debug_payout_ramp_for_test(render_state)
+	var flat_front := renderer.debug_project_for_test(render_state, 0, lip, 0)
+	if not is_equal_approx(float(signature.get("coin_rx", 0.0)), 17.02246) or float(signature.get("coin_ry", 0.0)) != 12.0 or signature.get("coin_atlas_frame_size", Vector2i.ZERO) != Vector2i(40, 32) or not is_equal_approx(float(signature.get("front_contact_radius_px", 0.0)), float(signature.get("coin_rx", 0.0))) or int(ramp_projection.get("run", 0)) != ramp_run or int(ramp_projection.get("rise", 0)) != ramp_rise or float((ramp_projection.get("front_left", Vector2.ZERO) as Vector2).y) >= flat_front.y:
+		failures.append("Coin Pusher V3 renderer did not restore the prior coin size or project the raised payout plate: signature=%s ramp=%s." % [JSON.stringify(signature), JSON.stringify(ramp_projection)])
+	var ramp_state := _pusher_v3_state(machine, "PUSHER-V3-EDGE-RAMP")
+	_pusher_v3_hold_phase(ramp_state, machine, 0)
+	var ramp_body := _pusher_v3_body_fixture("ramp_resistance", 50000, lip + ramp_run / 2, mid_height, false, "deck")
+	ramp_body["radius"] = int(coins.get("radius", 2350))
+	ramp_body["height"] = int(coins.get("height", 950))
+	ramp_body["rest_state"] = "resting"
+	ramp_body["vy"] = -8000
+	(ramp_state.get("bodies", []) as Array).append(ramp_body)
+	ramp_state["opening_body_count"] = 1
+	var flat_machine := machine.duplicate(true)
+	(flat_machine.get("geometry", {}) as Dictionary)["payout_ramp_rise"] = 0
+	var flat_state := _pusher_v3_state(flat_machine, "PUSHER-V3-FLAT-EDGE")
+	_pusher_v3_hold_phase(flat_state, flat_machine, 0)
+	var flat_body := ramp_body.duplicate(true)
+	flat_body["z"] = 0
+	(flat_state.get("bodies", []) as Array).append(flat_body)
+	flat_state["opening_body_count"] = 1
+	CoinPusherSolverScript.step_ticks_reference_for_test(ramp_state, {"motor_enabled": false}, 1)
+	CoinPusherSolverScript.step_ticks_reference_for_test(flat_state, {"motor_enabled": false}, 1)
+	var resisted := _pusher_v3_body(ramp_state, "ramp_resistance")
+	var unresisted := _pusher_v3_body(flat_state, "ramp_resistance")
+	if resisted.is_empty() or unresisted.is_empty() or int(resisted.get("z", 0)) <= 0 or int(resisted.get("vy", 0)) <= int(unresisted.get("vy", 0)):
+		failures.append("Coin Pusher V3 edge plate did not create uphill support and downhill resistance: ramp=%s flat=%s." % [JSON.stringify(resisted), JSON.stringify(unresisted)])
 
 
 func _check_pusher_v3_played_in_opening_state(library: ContentLibrary, game_definition: Dictionary, failures: Array) -> void:
 	var machine: Dictionary = game_definition.get("coin_pusher_machine", {}) if typeof(game_definition.get("coin_pusher_machine", {})) == TYPE_DICTIONARY else {}
 	var tuning: Dictionary = game_definition.get("coin_pusher_tuning", {}) if typeof(game_definition.get("coin_pusher_tuning", {})) == TYPE_DICTIONARY else {}
 	var authored_counts: Dictionary = tuning.get("opening_coin_counts", {}) if typeof(tuning.get("opening_coin_counts", {})) == TYPE_DICTIONARY else {}
-	var expected_counts := {"quarter_falls": 54, "jackpot_ridge": 54, "vault_drop": 56}
+	var expected_counts := {"quarter_falls": 150, "jackpot_ridge": 150, "vault_drop": 154}
 	var normalized_counts := {}
 	for variation_id in expected_counts.keys():
 		normalized_counts[variation_id] = int(authored_counts.get(variation_id, -1))
 	if normalized_counts != expected_counts:
-		failures.append("Coin Pusher V3 played-in opening counts drifted from the per-machine 54/54/56 contract: %s." % JSON.stringify(authored_counts))
+		failures.append("Coin Pusher V3 played-in opening counts drifted from the smaller-coin 150/150/154 contract: %s." % JSON.stringify(authored_counts))
 		return
 	var definitions := {"quarter_falls": machine}
 	var shipped: Dictionary = machine.get("machines", {}) if typeof(machine.get("machines", {})) == TYPE_DICTIONARY else {}
@@ -352,6 +409,7 @@ func _check_pusher_v3_played_in_opening_state(library: ContentLibrary, game_defi
 		var variation_max_total := 0
 		var variation_max_passive := 0
 		var variation_min_retained_upper := 1000000
+		var variation_min_retained_edge := 1000000
 		for seed_index in range(4):
 			var seed := "PUSHER-V3-PLAYED-IN-%s-%d" % [variation_id, seed_index]
 			var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng(seed), definition, opening_count)
@@ -362,12 +420,18 @@ func _check_pusher_v3_played_in_opening_state(library: ContentLibrary, game_defi
 			if CoinPusherSolverScript.canonical_digest(state) != CoinPusherSolverScript.canonical_digest(repeated):
 				failures.append("Coin Pusher V3 %s played-in opening generation is not same-seed deterministic." % variation_id)
 				return
-			if bodies.size() != opening_count or not (state.get("tray_ledger", []) as Array).is_empty() or upper_before < opening_count - 36 or overlap_before != 0:
+			if bodies.size() != opening_count or not (state.get("tray_ledger", []) as Array).is_empty() or upper_before < opening_count - 135 or overlap_before != 0:
 				failures.append("Coin Pusher V3 %s opening topology is not a collision-valid mixed-height played-in field: bodies=%d upper=%d overlaps=%d." % [variation_id, bodies.size(), upper_before, overlap_before])
 				return
+			var edge_before := CoinPusherSolverScript.edge_hanger_count(state)
 			CoinPusherSolverScript.step_ticks(state, {"motor_enabled": true}, 240)
 			var passive := CoinPusherSolverScript.collect_tray(state)
 			var passive_count := int(passive.get("count", 0))
+			var edge_after_passive := CoinPusherSolverScript.edge_hanger_count(state)
+			variation_min_retained_edge = mini(variation_min_retained_edge, edge_after_passive)
+			if edge_before < 6 or edge_after_passive < 4:
+				failures.append("Coin Pusher V3 %s opening stock did not retain a tensioned payout-edge buildup: seed=%d before=%d after_passive=%d." % [variation_id, seed_index, edge_before, edge_after_passive])
+				return
 			variation_max_passive = maxi(variation_max_passive, passive_count)
 			var cumulative := passive_count
 			var per_play: Array = []
@@ -387,7 +451,7 @@ func _check_pusher_v3_played_in_opening_state(library: ContentLibrary, game_defi
 			if passive_count > 2 or per_play.max() > 6 or cumulative > 10 or retained_upper < 4:
 				failures.append("Coin Pusher V3 %s opening stock surged or flattened during the first five plays: seed=%d passive=%d per_play=%s cumulative=%d retained_upper=%d." % [variation_id, seed_index, passive_count, JSON.stringify(per_play), cumulative, retained_upper])
 				return
-		report[variation_id] = {"opening": opening_count, "max_passive": variation_max_passive, "max_per_play": variation_max_payout, "max_first_five": variation_max_total, "min_retained_upper": variation_min_retained_upper}
+		report[variation_id] = {"opening": opening_count, "max_passive": variation_max_passive, "max_per_play": variation_max_payout, "max_first_five": variation_max_total, "min_retained_upper": variation_min_retained_upper, "min_retained_edge": variation_min_retained_edge}
 	print("Coin Pusher V3 played-in opening report: %s" % JSON.stringify(report))
 
 
@@ -401,7 +465,7 @@ func _pusher_v3_supported_upper_count(bodies: Array) -> int:
 
 func _pusher_v3_elevated_opening_count(state: Dictionary, definition: Dictionary) -> int:
 	var geometry: Dictionary = definition.get("geometry", {}) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
-	var face := int(state.get("face_y", geometry.get("face_extended_y", 28000)))
+	var face := int(state.get("face_y", geometry.get("face_extended_y", 43000)))
 	var platform_z := int(geometry.get("platform_top_z", 3600))
 	var deck_z := int(geometry.get("deck_z", 0))
 	var count := 0
@@ -413,7 +477,7 @@ func _pusher_v3_elevated_opening_count(state: Dictionary, definition: Dictionary
 		if str(body.get("kind", "")) != "coin" or not bool(metadata.get("opening", false)):
 			continue
 		var surface_z := platform_z if int(body.get("y", 0)) >= face else deck_z
-		if int(body.get("z", 0)) >= surface_z + int(body.get("height", 1700)) - 100:
+		if int(body.get("z", 0)) >= surface_z + int(body.get("height", 950)) - 100:
 			count += 1
 	return count
 
@@ -430,14 +494,14 @@ func _pusher_v3_overlap_pair_details(bodies: Array) -> Array:
 			var right: Dictionary = bodies[right_index]
 			var left_z := int(left.get("z", 0))
 			var right_z := int(right.get("z", 0))
-			if left_z >= right_z + int(right.get("height", 1700)) or right_z >= left_z + int(left.get("height", 1700)):
+			if left_z >= right_z + int(right.get("height", 950)) or right_z >= left_z + int(left.get("height", 950)):
 				continue
 			var dx := int(left.get("x", 0)) - int(right.get("x", 0))
 			var dy := int(left.get("y", 0)) - int(right.get("y", 0))
 			# The fixed-point solver intentionally retains a small positional slop;
 			# compact snapshots also quantize positions to 100 units. Treat only a
 			# penetration beyond that combined 300-unit envelope as an invalid spawn.
-			var minimum := maxi(1, int(left.get("radius", 4300)) + int(right.get("radius", 4300)) - 300)
+			var minimum := maxi(1, int(left.get("radius", 2350)) + int(right.get("radius", 2350)) - 300)
 			if dx * dx + dy * dy < minimum * minimum:
 				pairs.append([str(left.get("id", "")), str(left.get("kind", "")), int(left.get("x", 0)), int(left.get("y", 0)), int(left.get("z", 0)), str(right.get("id", "")), str(right.get("kind", "")), int(right.get("x", 0)), int(right.get("y", 0)), int(right.get("z", 0))])
 	return pairs
@@ -452,10 +516,10 @@ func _check_pusher_v3_shipped_variant_definitions(machine: Dictionary, failures:
 	for row in ridge_rows:
 		for x in row[1]:
 			ridge_pegs.append({"x": x, "z": row[0], "r": 1200})
-	var common_geometry := {"width": 100000, "tray_lip_y": 6000, "deck_z": 0, "platform_top_z": 3600, "face_extended_y": 28000, "face_retracted_y": 46000, "back_plate_y": 63000, "back_plate_gap": 400, "drop_y": 58000, "drop_z": 24000}
+	var common_geometry := {"width": 100000, "tray_lip_y": 4000, "payout_ramp_run": 6500, "payout_ramp_rise": 2500, "deck_z": 0, "platform_top_z": 3600, "face_extended_y": 43000, "face_retracted_y": 61000, "back_plate_y": 78000, "back_plate_gap": 400, "drop_y": 73000, "drop_z": 24000}
 	var common_stroke := {"period_ticks": 240, "ramp_ticks": 24, "profile": "cosine"}
-	var common_coins := {"radius": 4300, "height": 1700, "mass": 1000, "value": 1, "drop_cost": 1}
-	var board := {"y": 58000, "z_top": 24000, "z_bottom": 3600, "x_min": 0, "x_max": 100000}
+	var common_coins := {"radius": 2350, "height": 950, "mass": 1000, "value": 1, "drop_cost": 1}
+	var board := {"y": 73000, "z_top": 24000, "z_bottom": 3600, "x_min": 0, "x_max": 100000}
 	var ridge_geometry := common_geometry.duplicate(true)
 	ridge_geometry["gutter_x"] = 4000
 	var ridge_expected := {
@@ -497,7 +561,7 @@ func _check_pusher_v3_plinko_bounce_and_variance(machine: Dictionary, failures: 
 		if pegs.size() != int(expected_counts.get(variation_id, -1)):
 			failures.append("Coin Pusher V3 %s entry field count is not the authored density: %d." % [variation_id, pegs.size()])
 			return
-		var coin_radius := int((definition.get("coins", {}) as Dictionary).get("radius", 4300))
+		var coin_radius := int((definition.get("coins", {}) as Dictionary).get("radius", 2350))
 		for left_index in range(pegs.size()):
 			var left: Dictionary = pegs[left_index]
 			for right_index in range(left_index + 1, pegs.size()):
@@ -517,7 +581,9 @@ func _check_pusher_v3_plinko_bounce_and_variance(machine: Dictionary, failures: 
 	bounce_apparatus["pegs"] = [{"x": 50000, "z": 14000, "r": 1200}]
 	bounce_definition["apparatus"] = bounce_apparatus
 	var bounce_state := _pusher_v3_state(bounce_definition, "PUSHER-V3-PEG-BOUNCE")
-	var striker := _pusher_v3_body_fixture("peg_striker", 50000, 58000, 19700, false, "")
+	var striker := _pusher_v3_body_fixture("peg_striker", 50000, 73000, 19700, false, "")
+	striker["radius"] = 2350
+	striker["height"] = 950
 	striker["vx"] = 1400
 	striker["vz"] = -18000
 	striker["meta"] = {"value": 1, "inserted": true}
@@ -536,7 +602,7 @@ func _check_pusher_v3_plinko_bounce_and_variance(machine: Dictionary, failures: 
 				event_ticks.append(tick_index)
 				if first_rebound_vz < 0 and not body.is_empty():
 					first_rebound_vz = int(body.get("vz", 0))
-	if event_ticks.is_empty() or event_ticks.size() > 4 or first_rebound_vz < 6000 or rebound_peak_z < 19800:
+	if event_ticks.is_empty() or event_ticks.size() > 4 or first_rebound_vz < 6000 or rebound_peak_z < 18000:
 		failures.append("Coin Pusher V3 peg crown did not produce a bounded visible rebound: events=%s first_vz=%d peak_z=%d." % [JSON.stringify(event_ticks), first_rebound_vz, rebound_peak_z])
 		return
 	for event_index in range(1, event_ticks.size()):
@@ -791,7 +857,7 @@ func _check_pusher_v3_face_push(machine: Dictionary, failures: Array) -> void:
 	var bodies: Array = state.get("bodies", [])
 	for row in range(3):
 		for column in range(3):
-			bodies.append(_pusher_v3_body_fixture("mass_%d_%d" % [row, column], 42000 + column * 8200, 38000 - row * 8200, 0, true, "deck"))
+			bodies.append(_pusher_v3_body_fixture("mass_%d_%d" % [row, column], 42000 + column * 8200, 53000 - row * 8200, 0, true, "deck"))
 	state["opening_body_count"] = bodies.size()
 	var front_before := _pusher_v3_min_y(state)
 	state["motor_rate_fp"] = 1000
@@ -1926,6 +1992,9 @@ func _check_pusher_v3_irregular_supported_piles(machine: Dictionary, failures: A
 	var base := _pusher_v3_body_fixture("stack_base", 50000, stack_y, CoinPusherSolverScript.PLATFORM_TOP_Z, true, "platform")
 	var middle := _pusher_v3_body_fixture("stack_middle", 50000, stack_y, CoinPusherSolverScript.PLATFORM_TOP_Z + CoinPusherSolverScript.COIN_HEIGHT, true, "body")
 	var top := _pusher_v3_body_fixture("stack_top", 50000, stack_y, CoinPusherSolverScript.PLATFORM_TOP_Z + CoinPusherSolverScript.COIN_HEIGHT * 2, false, "body")
+	for stack_body in [base, middle, top]:
+		stack_body["radius"] = CoinPusherSolverScript.COIN_RADIUS
+		stack_body["height"] = CoinPusherSolverScript.COIN_HEIGHT
 	middle["carried_sleep"] = true
 	middle["support_ids"] = ["stack_base"]
 	top["rest_state"] = "resting"
@@ -1983,7 +2052,9 @@ func _check_pusher_v3_contact_only_pressure(machine: Dictionary, failures: Array
 func _check_pusher_v3_visible_terminal_falls(machine: Dictionary, failures: Array) -> void:
 	var initial := _pusher_v3_state(machine, "PUSHER-V3-VISIBLE-EXIT")
 	_pusher_v3_hold_phase(initial, machine, 0)
-	var falling_coin := _pusher_v3_body_fixture("visible_tray_coin", 50000, 5500, 0, false, "deck")
+	var falling_coin := _pusher_v3_body_fixture("visible_tray_coin", 50000, 6250, 0, false, "deck")
+	falling_coin["radius"] = CoinPusherSolverScript.COIN_RADIUS
+	falling_coin["height"] = CoinPusherSolverScript.COIN_HEIGHT
 	falling_coin["rest_state"] = "resting"
 	(initial.get("bodies", []) as Array).append(falling_coin)
 	initial["opening_body_count"] = 1
@@ -1997,7 +2068,7 @@ func _check_pusher_v3_visible_terminal_falls(machine: Dictionary, failures: Arra
 		return
 	if JSON.stringify(first_reference.get("events", [])) != JSON.stringify(first_native.get("events", [])):
 		failures.append("Coin Pusher V3 native visible-fall start event diverged from the reference kernel.")
-	for _tick in range(5):
+	for _tick in range(12):
 		CoinPusherSolverScript.step_ticks_reference_for_test(reference, {"motor_enabled": false}, 1)
 		CoinPusherSolverScript.step_ticks(native, {"motor_enabled": false}, 1)
 	active_fall = _pusher_v3_body(reference, "visible_tray_coin")

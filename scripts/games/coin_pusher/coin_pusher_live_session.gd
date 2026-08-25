@@ -392,7 +392,7 @@ static func _restore_extra(body: Dictionary, definition: Dictionary) -> Dictiona
 
 static func _restored_body(id: String, kind: String, x: int, y: int, z: int, meta: Dictionary, definition: Dictionary, support: String, carried: bool) -> Dictionary:
 	var coins: Dictionary = definition.get("coins", {})
-	return {"id": id, "kind": kind, "x": x, "y": y, "z": z, "vx": 0, "vy": 0, "vz": 0, "radius": int(meta.get("radius", coins.get("radius", 4300))), "height": int(meta.get("height", coins.get("height", 1700))), "mass": int(meta.get("mass", coins.get("mass", 1000))), "sleeping": true, "sleep_ticks": 8, "rest_state": "resting", "support_kind": support, "carried_sleep": carried, "meta": meta.duplicate(true)}
+	return {"id": id, "kind": kind, "x": x, "y": y, "z": z, "vx": 0, "vy": 0, "vz": 0, "radius": int(meta.get("radius", coins.get("radius", 2350))), "height": int(meta.get("height", coins.get("height", 950))), "mass": int(meta.get("mass", coins.get("mass", 1000))), "sleeping": true, "sleep_ticks": 8, "rest_state": "resting", "support_kind": support, "carried_sleep": carried, "meta": meta.duplicate(true)}
 
 
 static func _append_u16(bytes: PackedByteArray, value: int) -> void:

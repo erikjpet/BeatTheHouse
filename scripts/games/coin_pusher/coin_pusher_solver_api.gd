@@ -9,6 +9,8 @@ const FP := CoinPusherSolverScript.FP
 const PHASE_PERIOD := CoinPusherSolverScript.PHASE_PERIOD
 const WIDTH := CoinPusherSolverScript.WIDTH
 const TRAY_LIP_Y := CoinPusherSolverScript.TRAY_LIP_Y
+const PAYOUT_RAMP_RUN := CoinPusherSolverScript.PAYOUT_RAMP_RUN
+const PAYOUT_RAMP_RISE := CoinPusherSolverScript.PAYOUT_RAMP_RISE
 const DECK_Z := CoinPusherSolverScript.DECK_Z
 const PLATFORM_TOP_Z := CoinPusherSolverScript.PLATFORM_TOP_Z
 const FACE_EXTENDED_Y := CoinPusherSolverScript.FACE_EXTENDED_Y
@@ -111,6 +113,14 @@ static func awake_count(state: Dictionary) -> int:
 
 static func edge_hanger_count(state: Dictionary) -> int:
 	return CoinPusherSolverScript.edge_hanger_count(state)
+
+
+static func payout_ramp_height_for_y(machine_definition: Dictionary, y: int) -> int:
+	return CoinPusherSolverScript.payout_ramp_height_for_y(machine_definition, y)
+
+
+static func payout_ramp_downhill_acceleration(machine_definition: Dictionary) -> int:
+	return CoinPusherSolverScript.payout_ramp_downhill_acceleration(machine_definition)
 
 
 static func native_backend_available_for_test() -> bool:

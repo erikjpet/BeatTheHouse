@@ -20,7 +20,8 @@ constexpr int64_t GRAVITY = 1800, AIR_NUM = 61, AIR_DEN = 64, SLEEP_SPEED = 140,
                   LANDING_SCATTER_SPEED = 3200, TERMINAL_FALL_FLOOR_Z = -5100;
 constexpr int64_t SLOP = 60, BETA = 600, REST_BODY = 100, REST_PEG = 520,
                   MU_BODY = 500, MU_DECK = 700, MU_PLATFORM = 800;
-constexpr int64_t PEG_CONTACT_HYSTERESIS = 320, PEG_IMPACT_EVENT_SPEED = 3600;
+constexpr int64_t PEG_CONTACT_HYSTERESIS = 320, PEG_IMPACT_EVENT_SPEED = 3600,
+                  PEG_CROWN_ESCAPE_ACCEL = 450;
 constexpr int64_t SUPPORT_TOL = 400, SUPPORT_MARGIN = 800;
 constexpr std::array<int, 240> COS = {
     1000,  1000,  999,  997,  995,  991,  988,  983,  978,  972,  966,  959,
@@ -69,10 +70,11 @@ inline int64_t floor_div(int64_t v, int64_t d) {
 }
 
 struct Geo {
-  int64_t width = 100000, lip = 6000, deck = 0, top = 3600, extended = 28000,
-          retracted = 46000, plate = 63000, plate_gap = 400, drop_y = 58000,
-          drop_z = 24000, gutter = 3000, period = 240, ramp = 24, coin_r = 4300,
-          coin_h = 1700, coin_m = 1000, coin_value = 1, jitter = 300,
+  int64_t width = 100000, lip = 4000, payout_run = 6500,
+          payout_rise = 2500, deck = 0, top = 3600, extended = 43000,
+          retracted = 61000, plate = 78000, plate_gap = 400, drop_y = 73000,
+          drop_z = 24000, gutter = 3000, period = 240, ramp = 24, coin_r = 2350,
+          coin_h = 950, coin_m = 1000, coin_value = 1, jitter = 300,
           velocity_jitter = 0,
           ceiling = 600;
   Array pegs;
@@ -86,6 +88,8 @@ Geo geometry(const Dictionary &s) {
   Dictionary a = d.get("apparatus", Dictionary());
   g.width = x.get("width", g.width);
   g.lip = x.get("tray_lip_y", g.lip);
+  g.payout_run = std::max<int64_t>(1, x.get("payout_ramp_run", g.payout_run));
+  g.payout_rise = std::max<int64_t>(0, x.get("payout_ramp_rise", g.payout_rise));
   g.deck = x.get("deck_z", g.deck);
   g.top = x.get("platform_top_z", g.top);
   g.extended = x.get("face_extended_y", g.extended);
@@ -119,7 +123,7 @@ struct Body {
   Array support_ids;
   String id, kind, rest, support, peg_key, exit_state;
   int64_t x = 0, y = 0, z = 0, vx = 0, vy = 0, vz = 0, xr = 0, yr = 0, zr = 0,
-          r = 4300, h = 1700, m = 1000, sleep_ticks = 0, fall_start_z = 0,
+          r = 2350, h = 950, m = 1000, sleep_ticks = 0, fall_start_z = 0,
           exit_start_tick = -1;
   bool sleeping = false, carried = false, plate_blocked = false,
        pending_deposit = false, has_fall_start = false, peg_contact = false;
@@ -258,6 +262,25 @@ struct Kernel {
     // truncation can otherwise manufacture a one-unit accounting gain.
     return q.m * (q.vx * q.vx + q.vy * q.vy + q.vz * q.vz);
   }
+  int64_t deck_surface_z(int64_t y) const {
+    if (g.payout_rise <= 0 || y >= g.lip + g.payout_run)
+      return g.deck;
+    if (y <= g.lip)
+      return g.deck + g.payout_rise;
+    return g.deck + divi((g.lip + g.payout_run - y) * g.payout_rise,
+                         g.payout_run);
+  }
+  int64_t apply_payout_ramp_gravity(Body &q) const {
+    if (g.payout_rise <= 0 || q.y <= g.lip || q.y >= g.lip + g.payout_run ||
+        std::abs(q.vy) <= SLEEP_SPEED)
+      return 0;
+    int64_t before = body_energy(q);
+    int64_t slope_length =
+        std::max<int64_t>(1, isqrt(g.payout_run * g.payout_run +
+                                  g.payout_rise * g.payout_rise));
+    q.vy += divi(GRAVITY * g.payout_rise, slope_length);
+    return std::max<int64_t>(0, body_energy(q) - before);
+  }
   int64_t energy() const {
     int64_t e = 0;
     for (const Body &q : b)
@@ -349,7 +372,8 @@ struct Kernel {
       advance(q.z, q.zr, q.vz);
     }
   }
-  void pegs() {
+  int64_t pegs() {
+    int64_t peg_work = 0;
     for (Body &q : b)
       q.peg_contact = false;
     for (Body &q : b) {
@@ -454,6 +478,23 @@ struct Kernel {
           int64_t remaining = std::max<int64_t>(0, friction_budget - std::abs(tangent_impulse));
           q.vy += clampi(-q.vy, -remaining, remaining);
         }
+        // A disk exactly balanced on a round peg is unstable in reality, but
+        // this 2-D model has no angular state to start the roll. Convert the
+        // smallest physical offset or integration remainder into a gentle
+        // gravity-driven crown acceleration so a coin bounces and rolls off
+        // instead of remaining pinned indefinitely.
+        if (std::abs(dx) <= std::max<int64_t>(1, divi(minimum, 12)) && std::abs(q.vx) < GRAVITY) {
+          int64_t before_crown_energy = body_energy(q);
+          int64_t crown_sign = dx < 0 ? -1 : (dx > 0 ? 1 : 0);
+          if (crown_sign == 0)
+            crown_sign = q.vx < 0 ? -1 : (q.vx > 0 ? 1 : 0);
+          if (crown_sign == 0)
+            crown_sign = q.xr < 0 ? -1 : (q.xr > 0 ? 1 : 0);
+          if (crown_sign == 0)
+            crown_sign = 1;
+          q.vx += crown_sign * PEG_CROWN_ESCAPE_ACCEL;
+          peg_work += std::max<int64_t>(0, body_energy(q) - before_crown_energy);
+        }
         int64_t incoming_speed = std::max<int64_t>(0, -rel);
         if (previous_peg_key != current_peg_key && incoming_speed >= PEG_IMPACT_EVENT_SPEED) {
           Dictionary e;
@@ -488,6 +529,7 @@ struct Kernel {
       }
       q.peg_key = current_peg_key;
     }
+    return peg_work;
   }
   std::vector<std::pair<int, int>> pairs(Grid &grid) {
     std::vector<std::pair<int, int>> p;
@@ -697,7 +739,7 @@ struct Kernel {
       String prev = q.pending_deposit ? String("platform") : q.support;
       bool previous_platform_root =
           prev == "platform" || (prev == "body" && q.carried);
-      int64_t surface_z = q.y >= f ? g.top : g.deck;
+      int64_t surface_z = q.y >= f ? g.top : deck_surface_z(q.y);
       String surface = q.y >= f ? String("platform") : String("deck");
       bool stable = q.z <= surface_z + SUPPORT_TOL;
       int64_t support_top = surface_z, count = 0, cx = 0, cy = 0;
@@ -791,6 +833,8 @@ struct Kernel {
           q.has_fall_start = false;
         }
         friction(q, q.carried ? MU_PLATFORM : MU_DECK);
+        if (!q.carried)
+          nestle_work += apply_payout_ramp_gravity(q);
       } else {
         if (q.rest != "falling") {
           q.fall_start_z = q.z;
@@ -1109,7 +1153,7 @@ struct Kernel {
               gravity_before = energy();
       integrate();
       int64_t gravity_work = std::max<int64_t>(0, energy() - gravity_before);
-      pegs();
+      int64_t peg_work = pegs();
       grid.rebuild(b);
       int64_t nestle_work = resolve_supports(newf, grid);
       for (int pass = 0; pass < PASSES; ++pass) {
@@ -1143,7 +1187,7 @@ struct Kernel {
       exits();
       state["tick"] = int64_t(state.get("tick", 0)) + 1;
       energy_ok &=
-          energy() <= before + platform_work + gravity_work + nestle_work;
+          energy() <= before + platform_work + gravity_work + peg_work + nestle_work;
       int64_t tick_tray = Array(state.get("tray_ledger", Array())).size();
       int64_t tick_gutter = Array(state.get("gutter_ledger", Array())).size();
       int64_t tick_collected = int64_t(state.get("collected_count", 0));

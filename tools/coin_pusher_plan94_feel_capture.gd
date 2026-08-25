@@ -106,13 +106,13 @@ func _capture_played_in_opening(variation_id: String, definition: Dictionary) ->
 	var reduced_file := "%s_played_in_opening_reduced.png" % variation_id
 	var saved := await _save_record_strip(file, variation_id, definition, [initial, final_record], false)
 	var reduced_saved := await _save_record_strip(reduced_file, variation_id, definition, [initial, final_record], true)
-	var passed: bool = opening_count >= 50 and opening_count <= 65 and passive_tray == 0 and int(per_play.max()) <= 6 and total_collected <= 10 and initial_upper >= 8 and final_upper >= 4 and saved and reduced_saved
+	var passed: bool = opening_count >= 148 and opening_count <= 165 and passive_tray == 0 and int(per_play.max()) <= 6 and total_collected <= 10 and initial_upper >= 12 and final_upper >= 6 and saved and reduced_saved
 	return {"id": "played_in_opening", "passed": passed, "files": [file, reduced_file], "opening_body_count": opening_count, "passive_tray_count": passive_tray, "first_five_payout_counts": per_play, "first_five_total": total_collected, "initial_elevated_coins": initial_upper, "final_elevated_coins": final_upper}
 
 
 func _elevated_coin_count(state: Dictionary, definition: Dictionary) -> int:
 	var geometry: Dictionary = definition.get("geometry", {}) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
-	var face := int(state.get("face_y", geometry.get("face_extended_y", 28000)))
+	var face := int(state.get("face_y", geometry.get("face_extended_y", 43000)))
 	var count := 0
 	for body_value in state.get("bodies", []):
 		if typeof(body_value) != TYPE_DICTIONARY:
@@ -121,7 +121,7 @@ func _elevated_coin_count(state: Dictionary, definition: Dictionary) -> int:
 		if str(body.get("kind", "")) != "coin":
 			continue
 		var surface_z := int(geometry.get("platform_top_z", 3600)) if int(body.get("y", 0)) >= face else int(geometry.get("deck_z", 0))
-		if int(body.get("z", 0)) >= surface_z + int(body.get("height", 1700)) - 100:
+		if int(body.get("z", 0)) >= surface_z + int(body.get("height", 950)) - 100:
 			count += 1
 	return count
 
@@ -279,17 +279,17 @@ func _capture_ratchet(variation_id: String, definition: Dictionary) -> Dictionar
 
 func _capture_nestle_topple(variation_id: String, definition: Dictionary) -> Dictionary:
 	var state := _production_state("plan94:%s:nestle" % variation_id, definition, 0)
-	var height := int((definition.get("coins", {}) as Dictionary).get("height", 1700))
-	var a := Solver.add_coin(state, _rng("plan94:%s:nestle:a" % variation_id), 45700, 1)
-	var b := Solver.add_coin(state, _rng("plan94:%s:nestle:b" % variation_id), 54300, 1)
-	var support := Solver.add_coin(state, _rng("plan94:%s:nestle:support" % variation_id), 42000, 1)
+	var height := int((definition.get("coins", {}) as Dictionary).get("height", 950))
+	var a := Solver.add_coin(state, _rng("plan94:%s:nestle:a" % variation_id), 47650, 1)
+	var b := Solver.add_coin(state, _rng("plan94:%s:nestle:b" % variation_id), 52350, 1)
+	var support := Solver.add_coin(state, _rng("plan94:%s:nestle:support" % variation_id), 45000, 1)
 	var top := Solver.add_coin(state, _rng("plan94:%s:nestle:top" % variation_id), 49500, 1)
-	_configure_body(a, 45700, 18000, 0, "deck", true)
-	_configure_body(b, 54300, 18000, 0, "deck", true)
-	_configure_body(support, 42000, 18000, height, "body", true)
+	_configure_body(a, 47650, 18000, 0, "deck", true)
+	_configure_body(b, 52350, 18000, 0, "deck", true)
+	_configure_body(support, 45000, 18000, height, "body", true)
 	_configure_body(top, 49500, 18000, height * 2, "body", false)
 	top["rest_state"] = "resting"
-	top["vx"] = 8000
+	top["vx"] = 4200
 	var body_id := str(top.get("id", ""))
 	var initial := _record(state)
 	var motion_record := {}
@@ -358,7 +358,7 @@ func _capture_skill_stop(variation_id: String, definition: Dictionary) -> Dictio
 func _capture_tray(variation_id: String, definition: Dictionary) -> Dictionary:
 	var state := _production_state("plan94:%s:tray" % variation_id, definition, 0)
 	var geometry: Dictionary = definition.get("geometry", {})
-	var lip := int(geometry.get("tray_lip_y", 6000))
+	var lip := int(geometry.get("tray_lip_y", 4000))
 	var ids: Array = []
 	var terminal_events: Array = []
 	for index in range(12):
@@ -400,7 +400,7 @@ func _capture_tray(variation_id: String, definition: Dictionary) -> Dictionary:
 func _capture_gutter_fall(variation_id: String, definition: Dictionary) -> Dictionary:
 	var state := _production_state("plan94:%s:gutter" % variation_id, definition, 0)
 	var geometry: Dictionary = definition.get("geometry", {})
-	var lip := int(geometry.get("tray_lip_y", 6000))
+	var lip := int(geometry.get("tray_lip_y", 4000))
 	var gutter := int(geometry.get("gutter_x", 3000))
 	var body := Solver.add_coin(state, _rng("plan94:%s:gutter:body" % variation_id), gutter / 2, 1)
 	_configure_body(body, gutter / 2, lip - 800, 0, "deck", true)
@@ -584,7 +584,7 @@ func _advance_production_tick() -> Dictionary:
 
 func _machine_context(variation_id: String, definition: Dictionary) -> Dictionary:
 	var renderer = Renderer.new()
-	var signature := renderer.render_signature({"coin_pusher_variation_id": variation_id, "coin_pusher_geometry": definition.get("geometry", {}), "coin_pusher_apparatus": definition.get("apparatus", {}), "coin_pusher_cabinet": definition.get("cabinet", {}), "coin_pusher_coin_height": int((definition.get("coins", {}) as Dictionary).get("height", 1700)), "coin_pusher_bodies": []})
+	var signature := renderer.render_signature({"coin_pusher_variation_id": variation_id, "coin_pusher_geometry": definition.get("geometry", {}), "coin_pusher_apparatus": definition.get("apparatus", {}), "coin_pusher_cabinet": definition.get("cabinet", {}), "coin_pusher_coin_height": int((definition.get("coins", {}) as Dictionary).get("height", 950)), "coin_pusher_coin_radius": int((definition.get("coins", {}) as Dictionary).get("radius", 2350)), "coin_pusher_bodies": []})
 	return {"machine_id": str(definition.get("machine_id", variation_id)), "apparatus_type": str((definition.get("apparatus", {}) as Dictionary).get("type", "")), "cabinet_identity": str(signature.get("identity", "")), "cabinet_marquee": str(signature.get("marquee", "")), "sub_game_feature_kind": str((definition.get("sub_game", {}) as Dictionary).get("feature_kind", "none")), "geometry_sha256": _sha256({"geometry": definition.get("geometry", {}), "stroke": definition.get("stroke", {}), "apparatus": definition.get("apparatus", {})})}
 
 

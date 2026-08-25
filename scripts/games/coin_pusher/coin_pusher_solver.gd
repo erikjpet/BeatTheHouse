@@ -6,18 +6,20 @@ const VERSION := 3
 const FIXED_HZ := 60
 const FP := 1000
 const WIDTH := 100000
-const TRAY_LIP_Y := 6000
+const TRAY_LIP_Y := 4000
+const PAYOUT_RAMP_RUN := 6500
+const PAYOUT_RAMP_RISE := 2500
 const DECK_Z := 0
 const PLATFORM_TOP_Z := 3600
-const FACE_EXTENDED_Y := 28000
-const FACE_RETRACTED_Y := 46000
-const BACK_PLATE_Y := 63000
+const FACE_EXTENDED_Y := 43000
+const FACE_RETRACTED_Y := 61000
+const BACK_PLATE_Y := 78000
 const BACK_PLATE_GAP := 400
-const DROP_Y := 58000
+const DROP_Y := 73000
 const DROP_Z := 24000
 const GUTTER_X := 3000
-const COIN_RADIUS := 4300
-const COIN_HEIGHT := 1700
+const COIN_RADIUS := 2350
+const COIN_HEIGHT := 950
 const OBJECT_RADIUS := 5200
 const OBJECT_HEIGHT := 2800
 const PHASE_PERIOD := 240
@@ -35,6 +37,7 @@ const RESTITUTION_BODY := 100
 const RESTITUTION_PEG := 520
 const PEG_CONTACT_HYSTERESIS := 320
 const PEG_IMPACT_EVENT_SPEED := 3600
+const PEG_CROWN_ESCAPE_ACCEL := 450
 const MU_BODY := 500
 const MU_DECK := 700
 const MU_PLATFORM := 800
@@ -618,14 +621,27 @@ static func awake_count(state: Dictionary) -> int:
 static func edge_hanger_count(state: Dictionary) -> int:
 	var geometry := _geometry(_definition(state))
 	var lip := int(geometry.get("tray_lip_y", TRAY_LIP_Y))
+	var ramp_run := maxi(1, int(geometry.get("payout_ramp_run", PAYOUT_RAMP_RUN)))
 	var count := 0
 	for body_value in state.get("bodies", []):
 		var body: Dictionary = body_value
 		if _is_terminal_body(body):
 			continue
-		if int(body.get("y", 0)) - int(body.get("radius", COIN_RADIUS)) <= lip + 1200:
+		if int(body.get("y", 0)) - int(body.get("radius", COIN_RADIUS)) <= lip + ramp_run:
 			count += 1
 	return count
+
+
+static func payout_ramp_height_for_y(definition: Dictionary, y: int) -> int:
+	var geometry := _geometry(definition)
+	return _deck_surface_z(geometry, y) - int(geometry.get("deck_z", DECK_Z))
+
+
+static func payout_ramp_downhill_acceleration(definition: Dictionary) -> int:
+	var geometry := _geometry(definition)
+	var run := maxi(1, int(geometry.get("payout_ramp_run", PAYOUT_RAMP_RUN)))
+	var rise := maxi(0, int(geometry.get("payout_ramp_rise", PAYOUT_RAMP_RISE)))
+	return _divi(GRAVITY * rise, maxi(1, _isqrt(run * run + rise * rise)))
 
 
 static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
@@ -646,7 +662,7 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 	var before_gravity := _kinetic_energy(bodies)
 	_integrate_bodies(bodies, definition)
 	var gravity_work := maxi(0, _kinetic_energy(bodies) - before_gravity)
-	_apply_peg_contacts(bodies, definition, events)
+	var peg_work := _apply_peg_contacts(bodies, definition, events)
 	var grid := _scratch_grid
 	grid.rebuild(bodies)
 	var nestle_work := _resolve_supports(bodies, definition, new_face, events, grid)
@@ -682,7 +698,7 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 	_process_exits(state, events)
 	state["tick"] = int(state.get("tick", 0)) + 1
 	var after_energy := _kinetic_energy(state.get("bodies", []))
-	var energy_ok := after_energy <= before_energy + platform_work + gravity_work + nestle_work
+	var energy_ok := after_energy <= before_energy + platform_work + gravity_work + peg_work + nestle_work
 	var active_count := bodies.size()
 	var origin_count := int(state.get("opening_body_count", 0)) + int(state.get("accepted_inserts", 0)) + int(state.get("external_origin_count", 0))
 	var conservation_ok := active_count + (state.get("tray_ledger", []) as Array).size() + (state.get("gutter_ledger", []) as Array).size() + int(state.get("collected_count", 0)) == origin_count
@@ -857,9 +873,10 @@ static func _integrate_bodies(bodies: Array, definition: Dictionary) -> void:
 		_integrate_axis(body, "z", "vz", "z_remainder")
 
 
-static func _apply_peg_contacts(bodies: Array, definition: Dictionary, events: Array) -> void:
+static func _apply_peg_contacts(bodies: Array, definition: Dictionary, events: Array) -> int:
 	var geometry := _geometry(definition)
 	var drop_y := int(geometry.get("drop_y", DROP_Y))
+	var peg_work := 0
 	for body_value in bodies:
 		(body_value as Dictionary).erase("peg_contact_this_tick")
 	for body_value in bodies:
@@ -945,6 +962,23 @@ static func _apply_peg_contacts(bodies: Array, definition: Dictionary, events: A
 				body["vz"] = friction_vz + tangent_dz
 				var remaining := maxi(0, friction_budget - absi(tangent_impulse))
 				body["vy"] = int(body.get("vy", 0)) + clampi(-int(body.get("vy", 0)), -remaining, remaining)
+			# A coin balanced on the crown of a round peg is an unstable physical
+			# equilibrium. The 2-D disk model has no angular state, so a near-zero
+			# tangent can otherwise become a permanent pin. Convert the slightest
+			# authored lateral offset/remainder into a small downhill roll impulse.
+			# This is applied as gravity-driven crown acceleration, not as a random
+			# teleport, and therefore preserves each drop's input-derived direction.
+			if absi(dx) <= maxi(1, _divi(minimum, 12)) and absi(int(body.get("vx", 0))) < GRAVITY:
+				var before_crown_energy := _body_kinetic_energy(body)
+				var crown_sign := signi(dx)
+				if crown_sign == 0:
+					crown_sign = signi(int(body.get("vx", 0)))
+				if crown_sign == 0:
+					crown_sign = signi(int(body.get("x_remainder", 0)))
+				if crown_sign == 0:
+					crown_sign = 1
+				body["vx"] = int(body.get("vx", 0)) + crown_sign * PEG_CROWN_ESCAPE_ACCEL
+				peg_work += maxi(0, _body_kinetic_energy(body) - before_crown_energy)
 			# Audio/presentation sees collision entries, not solver overlap ticks.
 			# The retained contact key below keeps a separating coin latched until
 			# it clears a small band, preventing one scrape from becoming dozens
@@ -964,6 +998,7 @@ static func _apply_peg_contacts(bodies: Array, definition: Dictionary, events: A
 			body.erase("peg_contact_key")
 		else:
 			body["peg_contact_key"] = current_peg_key
+	return peg_work
 
 
 static func _radial_correction_component(component: int, correction: int, distance: int) -> int:
@@ -1167,7 +1202,6 @@ static func _resolve_body_contact(left: Dictionary, right: Dictionary) -> bool:
 static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int, events: Array, grid: SpatialHash2D) -> int:
 	var geometry := _geometry(definition)
 	var platform_top := int(geometry.get("platform_top_z", PLATFORM_TOP_Z))
-	var deck_z := int(geometry.get("deck_z", DECK_Z))
 	var nestle_work := 0
 	for body_index in range(bodies.size()):
 		var body: Dictionary = bodies[body_index]
@@ -1175,7 +1209,7 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 			continue
 		var previous_support := "platform" if bool(body.get("pending_platform_deposit", false)) else str(body.get("support_kind", ""))
 		var previous_platform_root := previous_support == "platform" or (previous_support == "body" and bool(body.get("carried_sleep", false)))
-		var surface_z := platform_top if int(body.get("y", 0)) >= face_y else deck_z
+		var surface_z := platform_top if int(body.get("y", 0)) >= face_y else _deck_surface_z(geometry, int(body.get("y", 0)))
 		var surface_kind := "platform" if int(body.get("y", 0)) >= face_y else "deck"
 		var stable := int(body.get("z", 0)) <= surface_z + SUPPORT_VERTICAL_TOLERANCE
 		if stable and int(body.get("vz", 0)) <= 0:
@@ -1197,6 +1231,8 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 					(body.get("meta", {}) as Dictionary)["first_support_recorded"] = true
 				body.erase("fall_start_z")
 			_apply_surface_friction(body, MU_PLATFORM if surface_kind == "platform" else MU_DECK)
+			if surface_kind == "deck":
+				nestle_work += _apply_payout_ramp_gravity(body, geometry)
 			if previous_platform_root and surface_kind == "deck":
 				events.append({"kind": "platform_deposit", "body_id": str(body.get("id", ""))})
 				body.erase("pending_platform_deposit")
@@ -1300,6 +1336,8 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 					(body.get("meta", {}) as Dictionary)["first_support_recorded"] = true
 				body.erase("fall_start_z")
 			_apply_surface_friction(body, MU_PLATFORM if bool(body.get("carried_sleep", false)) else MU_DECK)
+			if not bool(body.get("carried_sleep", false)):
+				nestle_work += _apply_payout_ramp_gravity(body, geometry)
 		else:
 			if str(body.get("rest_state", "")) != "falling":
 				body["fall_start_z"] = int(body.get("z", 0))
@@ -1315,6 +1353,36 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 			events.append({"kind": "platform_deposit", "body_id": str(body.get("id", ""))})
 			body.erase("pending_platform_deposit")
 	return nestle_work
+
+
+static func _deck_surface_z(geometry: Dictionary, y: int) -> int:
+	var deck := int(geometry.get("deck_z", DECK_Z))
+	var lip := int(geometry.get("tray_lip_y", TRAY_LIP_Y))
+	var run := maxi(1, int(geometry.get("payout_ramp_run", PAYOUT_RAMP_RUN)))
+	var rise := maxi(0, int(geometry.get("payout_ramp_rise", PAYOUT_RAMP_RISE)))
+	if rise <= 0 or y >= lip + run:
+		return deck
+	if y <= lip:
+		return deck + rise
+	return deck + _divi((lip + run - y) * rise, run)
+
+
+static func _apply_payout_ramp_gravity(body: Dictionary, geometry: Dictionary) -> int:
+	var lip := int(geometry.get("tray_lip_y", TRAY_LIP_Y))
+	var run := maxi(1, int(geometry.get("payout_ramp_run", PAYOUT_RAMP_RUN)))
+	var rise := maxi(0, int(geometry.get("payout_ramp_rise", PAYOUT_RAMP_RISE)))
+	var y := int(body.get("y", 0))
+	if rise <= 0 or y <= lip or y >= lip + run:
+		return 0
+	# Static deck friction holds an undisturbed edge stack. Once pressure starts
+	# a coin moving, gravity resolves along the edge plate's true incline: it
+	# opposes travel toward the win chute and assists a retreat back to the bed.
+	if absi(int(body.get("vy", 0))) <= SLEEP_SPEED:
+		return 0
+	var before := _body_kinetic_energy(body)
+	var slope_length := maxi(1, _isqrt(run * run + rise * rise))
+	body["vy"] = int(body.get("vy", 0)) + _divi(GRAVITY * rise, slope_length)
+	return maxi(0, _body_kinetic_energy(body) - before)
 
 
 static func _process_exits(state: Dictionary, events: Array) -> void:
@@ -1405,39 +1473,47 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 	var height := int(coins.get("height", COIN_HEIGHT))
 	var mass := int(coins.get("mass", FP))
 	var face := int(state.get("face_y", FACE_EXTENDED_Y))
-	var plate := int(geometry.get("back_plate_y", BACK_PLATE_Y))
 	var tray_lip := int(geometry.get("tray_lip_y", TRAY_LIP_Y))
+	var ramp_run := maxi(1, int(geometry.get("payout_ramp_run", PAYOUT_RAMP_RUN)))
 	var width := int(geometry.get("width", WIDTH))
 	var bodies: Array = state.get("bodies", [])
-	if count > 81:
+	if count > 180:
 		_seed_dense_benchmark_machine(state, rng, count, geometry, coins)
 		return
 	var base_positions: Array = []
 	var base_rows: Array = []
-	var row_specs := [
-		{"columns": 9, "x_offset": 0, "y": plate - radius - 1200},
-		{"columns": 8, "x_offset": 1, "y": plate - radius - 10400},
-		{"columns": 9, "x_offset": 0, "y": plate - radius - 19600},
-		{"columns": 2, "x_slots": [2, 8], "x_offset": 0, "y": tray_lip + radius + 8500},
-		{"columns": 8, "x_offset": 1, "y": tray_lip + radius + 17700},
+	var row_specs: Array = []
+	var slot_patterns := [
+		[1, 2, 3, 5, 6, 8, 10, 12, 14],
+		[1, 3, 4, 6, 7, 9, 11, 13, 14],
 	]
-	var x_step := maxi(radius * 2 + 900, _divi(width, 10))
-	# Five staggered, slightly scuffed rows establish a broad played-in bed. The
-	# 9.2k depth pitch and >=9.1k lateral pitch remain outside the 8.6k coin
-	# diameter even at the maximum deterministic jitter.
+	# Eight near-contact rows fill the newly extended stationary bed from the
+	# inclined payout plate to the moving face. Seven more preserve the former
+	# upper-shelf depth. Alternating gaps read as prior public play while shared
+	# lanes can still transmit genuine contact pressure toward the edge.
+	for row in range(8):
+		row_specs.append({"columns": 9, "x_slots": slot_patterns[row % 2], "y": tray_lip + ramp_run / 2 + row * 4750})
+	for row in range(7):
+		row_specs.append({"columns": 9, "x_slots": slot_patterns[(row + 1) % 2], "y": face + radius + 1200 + row * 4800})
+	var x_step := maxi(radius * 2 + 350, _divi(width, 15))
+	# Each row is laterally sparse enough to retain visible gaps and enough room
+	# for new drops; its adjacent pockets provide valid localized upper supports.
 	for spec_value in row_specs:
 		var spec: Dictionary = spec_value
 		var row_positions: Array = []
 		var x_slots: Array = spec.get("x_slots", []) if typeof(spec.get("x_slots", [])) == TYPE_ARRAY else []
 		for column in range(int(spec.get("columns", 0))):
-			var x := _divi(int(x_slots[column]) * width, 10) if not x_slots.is_empty() else _divi(width, 10) + column * x_step + (_divi(x_step, 2) if int(spec.get("x_offset", 0)) != 0 else 0)
-			x = clampi(x + rng.randi_range(-450, 450), radius, width - radius)
-			var y := int(spec.get("y", 0)) + rng.randi_range(-250, 250)
+			var x := _divi(int(x_slots[column]) * width, 15) if not x_slots.is_empty() else _divi(width, 15) + column * x_step + (_divi(x_step, 2) if int(spec.get("x_offset", 0)) != 0 else 0)
+			# A real played field is not a surveying grid. Preserve the authored
+			# contact-safe lanes while giving every pocket enough lateral history
+			# variance to break the visible columns left by repeated public play.
+			x = clampi(x + rng.randi_range(-800, 800), radius, width - radius)
+			var y := int(spec.get("y", 0)) + rng.randi_range(-10, 10)
 			var on_platform := y >= face
 			row_positions.append({
 				"x": x,
 				"y": y,
-				"z": int(geometry.get("platform_top_z", PLATFORM_TOP_Z)) if on_platform else int(geometry.get("deck_z", DECK_Z)),
+				"z": int(geometry.get("platform_top_z", PLATFORM_TOP_Z)) if on_platform else _deck_surface_z(geometry, y),
 				"support": "platform" if on_platform else "deck",
 				"carried": on_platform,
 			})
@@ -1458,12 +1534,15 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 		for column in range(row_positions.size() - 1):
 			var left: Dictionary = row_positions[column]
 			var right: Dictionary = row_positions[column + 1]
-			if int(left.get("z", 0)) != int(right.get("z", 0)) or absi(int(left.get("x", 0)) - int(right.get("x", 0))) > x_step + 1200:
+			if int(left.get("z", 0)) != int(right.get("z", 0)) or absi(int(left.get("x", 0)) - int(right.get("x", 0))) > x_step + 700:
 				continue
 			upper_candidates.append({
-				"x": _divi(int(left.get("x", 0)) + int(right.get("x", 0)), 2) + rng.randi_range(-350, 350),
-				"y": _divi(int(left.get("y", 0)) + int(right.get("y", 0)), 2) + rng.randi_range(-180, 180),
-				"z": int(left.get("z", 0)) + height,
+				"x": _divi(int(left.get("x", 0)) + int(right.get("x", 0)), 2) + rng.randi_range(-140, 140),
+				"y": _divi(int(left.get("y", 0)) + int(right.get("y", 0)), 2) + rng.randi_range(-90, 90),
+				# Compact opening snapshots quantize z to 100 units. Keep stacked
+				# stock one quantization step clear so restore cannot turn exact
+				# support contact into an initial penetration and side-pop.
+				"z": int(left.get("z", 0)) + height + 100,
 				"support": "body",
 				"support_indices": [int(left.get("opening_index", -1)), int(right.get("opening_index", -1))],
 				"carried": bool(left.get("carried", false)) or bool(right.get("carried", false)),

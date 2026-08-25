@@ -7,9 +7,9 @@ const MARQUEE_RECT := Rect2(170, 4, 560, 38)
 const BACKGLASS_RECT := Rect2(76, 42, 748, 26)
 const PLAYFIELD_RECT := Rect2(52, 70, 796, 276)
 const SCHEMA_DEFAULT_WIDTH := 100000.0
-const SCHEMA_DEFAULT_BACK_Y := 63000.0
-const SCHEMA_DEFAULT_COIN_HEIGHT := 1700.0
-const SCHEMA_DEFAULT_COIN_RADIUS := 4300.0
+const SCHEMA_DEFAULT_BACK_Y := 78000.0
+const SCHEMA_DEFAULT_COIN_HEIGHT := 950.0
+const SCHEMA_DEFAULT_COIN_RADIUS := 2350.0
 const REAR_WIDTH_FACTOR := 0.78
 const COIN_RX := SCHEMA_DEFAULT_COIN_RADIUS / SCHEMA_DEFAULT_WIDTH * PLAYFIELD_RECT.size.x * 0.91
 const COIN_RY := 12.0
@@ -22,7 +22,10 @@ const PEG_OCTAGON := [
 	Vector2(0.0, -1.0), Vector2(0.70710678, -0.70710678),
 ]
 const BATCH_CAPACITY := 600
-const ATLAS_FRAME_SIZE := Vector2i(68, 32)
+# Match the pre-expansion 17x12 coin artwork exactly. The 68 px atlas belonged
+# to the temporary 31 px radius; retaining it with a 17 px ellipse compressed
+# the textured quad horizontally and made flat coins read as upright circles.
+const ATLAS_FRAME_SIZE := Vector2i(40, 32)
 const ROTATION_VARIANTS := [-0.12, -0.04, 0.04, 0.12]
 const AIRBORNE_SHADOW_OFFSET := Vector2(12, 10)
 
@@ -78,7 +81,7 @@ func render_signature(state: Dictionary) -> Dictionary:
 			continue
 		var body: Dictionary = body_value
 		airborne += 1 if str(body.get("rest_state", "")) == "falling" else 0
-		stacked += 1 if int(body.get("z", 0)) >= int(state.get("coin_pusher_coin_height", 1700)) else 0
+		stacked += 1 if int(body.get("z", 0)) >= int(state.get("coin_pusher_coin_height", 950)) else 0
 		riding += 1 if str(body.get("support_kind", "")) == "platform" else 0
 	return {
 		"identity": str(cabinet.get("identity", "")),
@@ -91,6 +94,7 @@ func render_signature(state: Dictionary) -> Dictionary:
 		"projection_coin_height": _coin_height,
 		"coin_rx": COIN_RX,
 		"coin_ry": COIN_RY,
+		"coin_atlas_frame_size": ATLAS_FRAME_SIZE,
 		"front_contact_radius_px": _projected_contact_radius_x(0.0, _coin_radius),
 		"rear_contact_radius_px": _projected_contact_radius_x(_world_back_y, _coin_radius),
 		"z_layer_offset": Z_LAYER_OFFSET,
@@ -215,25 +219,34 @@ func _draw_backglass(surface, state: Dictionary, cabinet: Dictionary, colors: Di
 func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Dictionary) -> void:
 	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
 	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
-	var current_face_y := float(state.get("coin_pusher_face_position_y", 28000))
+	var current_face_y := float(state.get("coin_pusher_face_position_y", 43000))
 	var previous_face_y := float(state.get("coin_pusher_previous_face_position_y", current_face_y))
 	var interpolation_alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
 	var face_y := int(round(lerpf(previous_face_y, current_face_y, interpolation_alpha)))
 	var platform_top_z := int(geometry.get("platform_top_z", 3600))
-	var back_plate_y := int(geometry.get("back_plate_y", 63000))
-	var tray_lip_y := int(geometry.get("tray_lip_y", 6000))
+	var back_plate_y := int(geometry.get("back_plate_y", 78000))
+	var tray_lip_y := int(geometry.get("tray_lip_y", 4000))
+	var payout_ramp_run := maxi(1, int(geometry.get("payout_ramp_run", 6500)))
+	var payout_ramp_rise := maxi(0, int(geometry.get("payout_ramp_rise", 2500)))
 	surface.draw_rect(PLAYFIELD_RECT, Color("#07131c"))
 	_draw_delivery_board(surface, apparatus, geometry, colors)
 	# Back plate, fixed deck, and the moving platform are projected from authored geometry.
 	var back_left := _project(0, back_plate_y, 0)
 	var back_right := _project(int(geometry.get("width", 100000)), back_plate_y, 0)
 	surface.surface_filled_polygon(PackedVector2Array([back_left + Vector2(0, -20), back_right + Vector2(0, -20), back_right + Vector2(0, 6), back_left + Vector2(0, 6)]), colors["trim"].darkened(0.35)) # SA2_PER_FRAME_OK: four projected public geometry points.
-	var lip_left := _project(0, tray_lip_y, 0)
-	var lip_right := _project(int(geometry.get("width", 100000)), tray_lip_y, 0)
+	var lip_left := _project(0, tray_lip_y, payout_ramp_rise)
+	var lip_right := _project(int(geometry.get("width", 100000)), tray_lip_y, payout_ramp_rise)
+	var ramp_back_left := _project(0, tray_lip_y + payout_ramp_run, 0)
+	var ramp_back_right := _project(int(geometry.get("width", 100000)), tray_lip_y + payout_ramp_run, 0)
 	var face_left := _project(0, face_y, 0)
 	var face_right := _project(int(geometry.get("width", 100000)), face_y, 0)
 	var authored_deck := _project_deck_polygon(geometry)
-	surface.surface_filled_polygon(authored_deck if authored_deck.size() >= 3 else PackedVector2Array([lip_left, lip_right, face_right, face_left]), colors["deck"]) # SA2_PER_FRAME_OK: bounded authored public geometry.
+	surface.surface_filled_polygon(authored_deck if authored_deck.size() >= 3 else PackedVector2Array([ramp_back_left, ramp_back_right, face_right, face_left]), colors["deck"]) # SA2_PER_FRAME_OK: bounded authored public geometry.
+	# Real payout edges are inclined plates, not invisible trigger lines. Coins
+	# climb this raised band before tipping into the win chute.
+	surface.surface_filled_polygon(PackedVector2Array([lip_left, lip_right, ramp_back_right, ramp_back_left]), colors["deck"].lightened(0.16)) # SA2_PER_FRAME_OK: fixed four-point edge plate.
+	surface.draw_line(ramp_back_left, ramp_back_right, Color(colors["light"], 0.52), 1.5)
+	surface.draw_line(lip_left, lip_right, colors["light"], 2.0)
 	var top_face_left := _project(0, face_y, platform_top_z)
 	var top_face_right := _project(int(geometry.get("width", 100000)), face_y, platform_top_z)
 	var top_back_left := _project(0, back_plate_y, platform_top_z)
@@ -251,7 +264,7 @@ func _draw_gutters(surface, geometry: Dictionary, colors: Dictionary) -> void:
 	var gutter := int(geometry.get("gutter_x", 3000))
 	var width := int(geometry.get("width", 100000))
 	for x in [gutter, width - gutter]:
-		var front := _project(x, int(geometry.get("tray_lip_y", 6000)) + 6000, 0)
+		var front := _project(x, int(geometry.get("tray_lip_y", 4000)) + int(geometry.get("payout_ramp_run", 6500)) + 3000, 0)
 		surface.surface_filled_polygon(PackedVector2Array([front + Vector2(-16, -4), front + Vector2(16, -4), front + Vector2(12, 10), front + Vector2(-12, 10)]), Color("#020508")) # SA2_PER_FRAME_OK: bounded four-point gutter geometry.
 		surface.surface_polyline(PackedVector2Array([front + Vector2(-16, -4), front + Vector2(16, -4), front + Vector2(12, 10)]), colors["trim"].darkened(0.45), 2.0) # SA2_PER_FRAME_OK: bounded three-point gutter trim.
 
@@ -334,7 +347,7 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 			y = lerpf(float(previous_y), y, alpha)
 			z = lerpf(float(previous_z), z, alpha)
 		var falling := str(body.get("rest_state", "")) == "falling"
-		var on_delivery_board := falling and absi(int(round(y)) - int(board["y"])) <= int(body.get("radius", 4300)) and z >= float(board["z_bottom"])
+		var on_delivery_board := falling and absi(int(round(y)) - int(board["y"])) <= int(body.get("radius", 2350)) and z >= float(board["z_bottom"])
 		var point := _project_delivery_board_point(board, x, z) if on_delivery_board else _project_f(x, y, z)
 		var body_color := _body_color(str(body.get("kind", "coin")), cabinet)
 		var frame := posmod(body_id.hash(), ROTATION_VARIANTS.size())
@@ -776,6 +789,23 @@ func debug_deck_polygon_for_test(state: Dictionary) -> PackedVector2Array:
 	_configure_projection(state)
 	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
 	return _project_deck_polygon(geometry)
+
+
+func debug_payout_ramp_for_test(state: Dictionary) -> Dictionary:
+	_configure_projection(state)
+	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	var width := int(geometry.get("width", 100000))
+	var lip := int(geometry.get("tray_lip_y", 4000))
+	var run := maxi(1, int(geometry.get("payout_ramp_run", 6500)))
+	var rise := maxi(0, int(geometry.get("payout_ramp_rise", 2500)))
+	return {
+		"run": run,
+		"rise": rise,
+		"front_left": _project(0, lip, rise),
+		"front_right": _project(width, lip, rise),
+		"back_left": _project(0, lip + run, 0),
+		"back_right": _project(width, lip + run, 0),
+	}
 
 
 func debug_authored_cabinet_for_test(state: Dictionary, body_kind: String = "coin") -> Dictionary:
