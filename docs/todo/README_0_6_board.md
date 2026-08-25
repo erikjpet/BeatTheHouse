@@ -161,6 +161,7 @@ each stage builds on the last.
 | pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | DONE | pusherv3_1 | pusherv3_3 | PM:Codex/sub:pusher-live | 2026-08-17 | 2026-08-18 | PM verified continuous 60 Hz loop, deterministic trace, tray-only collection, compact persistence/migration, motor-on exit settle, continuous rail drag, exact Windows/Web parity, performance, and all combined gates. |
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | DONE | pusherv3_2 | pusherv3_4 | PM:Codex/sub:pusher-cabinet | 2026-08-18 | 2026-08-18 | PM verified the data-driven slot-parity cabinet, batched stacked projection, physical audio map, integrated 9/9 feel contract, determinism, visual QA, and all combined suites/performance budgets. |
 | pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | DONE | pusherv3_3 | coin pusher closure | Codex | 2026-08-18 | 2026-08-24 | Verified variation/integration closure plus real-weight deterministic gravity/impact thuds and a playfield-dominant cabinet; full suites, performance, visual/capture, exact Windows/Web parity, determinism, and 200k-per-machine EV gates pass. |
+| pusherv3_5 | `pusherv3_5_contact_piles_and_visible_exits_prompt.md` | DONE | pusherv3_4 | physical pile/contact/exit correction | Codex | 2026-08-25 | 2026-08-25 | Irregular carried piles, contact-only local pressure, contact-matched rendering, and visible shelf-to-tray/gutter falls pass exact native/Web parity, full regression, visual, performance, determinism, and 200k-per-machine EV gates. |
 
 ### Wave D — Crew depth
 
@@ -2099,3 +2100,17 @@ What happens then is the owner's, not an agent's:
   focused physics, visual/capture, 300-body performance, exact Windows/Web
   parity, 10-seed determinism, and 200k accepted drops per machine all pass.
   The V3 rebuild is closed and `playtest06_1` is unblocked.
+- 2026-08-25 [pusherv3_5] Owner reported post-playtest physical-contact issues:
+  exact columns can lose platform inheritance or pop, displayed gaps disagree
+  with solver contact, connected rows appear synchronized, and tray crossings
+  disappear before a visible fall. Codex opened the required archived-work
+  follow-up and claimed the full reference/native, presentation, and evidence
+  correction.
+- 2026-08-25 [pusherv3_5] DONE at implementation `1d198ca1`: the reference and
+  native solvers now preserve platform-rooted support chains, apply bounded
+  deterministic landing variance, rebuild contact topology per constraint
+  pass, and retain terminal bodies through a visible gravity fall before tray
+  or gutter accounting. The renderer's depth-scaled coin footprint matches the
+  solver radius. Focused/full regression, exact Windows/Web parity, two-process
+  determinism, all-machine normal/reduced GL captures, performance/visual QA,
+  and 200k accepted drops per machine all pass.
