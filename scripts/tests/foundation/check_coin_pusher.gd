@@ -24,6 +24,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_skill_stop(machine_definition, failures)
 	_check_pusher_v3_tray_gutter_ceiling(machine_definition, failures)
 	_check_pusher_v3_energy_settle_conservation(machine_definition, failures)
+	_check_pusher_v3_real_weight_gravity(machine_definition, failures)
 	_check_pusher_v3_input_trace_determinism(machine_definition, failures)
 	_check_pusher_v3_ridge_physical_contract(library, failures)
 	_check_pusher_v3_vault_physical_contract(library, failures)
@@ -66,8 +67,12 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 	var audio: Dictionary = initial.get("surface_audio", {}) if typeof(initial.get("surface_audio", {})) == TYPE_DICTIONARY else {}
 	if str(initial.get("surface_life", "")) != "coin_pusher_v3_alive_cabinet" or not bool(initial.get("coin_pusher_alive_cabinet", false)) or bool(initial.get("coin_pusher_v3_headless_placeholder", false)):
 		failures.append("Coin Pusher V3 production surface did not replace the Stage-2 placeholder with the alive cabinet.")
-	if float(signature.get("rear_width_factor", 0.0)) != 0.78 or float(signature.get("coin_rx", 0.0)) != 17.0 or float(signature.get("coin_ry", 0.0)) != 12.0 or float(signature.get("z_layer_offset", 0.0)) != 11.0 or int(signature.get("rotation_frames", 0)) != 4 or not bool(signature.get("depth_sorted", false)) or int(signature.get("batch_draws", -1)) != 1 or int(signature.get("batched_nodes", -1)) != 0 or int(signature.get("per_coin_nodes", -1)) != 0 or signature.get("draw_order", []) != ["shadows", "coin_batch", "feature_labels", "glass", "hardware"]:
-		failures.append("Coin Pusher V3 projection drifted from the binding 0.78/17x12/11px/four-frame batched contract: %s." % JSON.stringify(signature))
+	var playfield_rect: Rect2 = signature.get("playfield_rect", Rect2())
+	var cabinet_rect: Rect2 = signature.get("cabinet_rect", Rect2())
+	var marquee_rect: Rect2 = signature.get("marquee_rect", Rect2())
+	var backglass_rect: Rect2 = signature.get("backglass_rect", Rect2())
+	if float(signature.get("rear_width_factor", 0.0)) != 0.78 or float(signature.get("coin_rx", 0.0)) != 17.0 or float(signature.get("coin_ry", 0.0)) != 12.0 or float(signature.get("z_layer_offset", 0.0)) != 10.0 or float(signature.get("playfield_width_ratio", 0.0)) < 0.70 or float(signature.get("playfield_height_ratio", 0.0)) < 0.60 or playfield_rect.intersects(marquee_rect) or playfield_rect.intersects(backglass_rect) or not cabinet_rect.encloses(playfield_rect) or int(signature.get("rotation_frames", 0)) != 4 or not bool(signature.get("depth_sorted", false)) or int(signature.get("batch_draws", -1)) != 1 or int(signature.get("batched_nodes", -1)) != 0 or int(signature.get("per_coin_nodes", -1)) != 0 or signature.get("draw_order", []) != ["shadows", "coin_batch", "feature_labels", "glass", "hardware"]:
+		failures.append("Coin Pusher V3 lost the playfield-dominant 0.78/17x12/10px/four-frame batched projection contract: %s." % JSON.stringify(signature))
 	var renderer = load("res://scripts/games/coin_pusher/coin_pusher_renderer.gd").new()
 	var canvas_source := FileAccess.get_file_as_string("res://scripts/ui/game_surface_canvas.gd")
 	if not canvas_source.contains("draw_multimesh(multimesh, texture)") or canvas_source.contains("MultiMeshInstance2D.new()"):
@@ -97,7 +102,7 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 	var authored_deck: PackedVector2Array = renderer.debug_deck_polygon_for_test(hostile_state)
 	if hostile_authored.get("identity") != "hostile_custom_identity" or hostile_authored.get("display_style") != "value_lamps" or hostile_authored.get("display_state_key") != "hostile_value" or hostile_authored.get("body_color") != "123456" or hostile_authored.get("body_label") != "Z9" or hostile_authored.get("backglass_color") != "161718":
 		failures.append("Coin Pusher V3 renderer ignored hostile authored cabinet descriptors: %s." % JSON.stringify(hostile_authored))
-	if float(hostile_signature.get("projection_width", 0.0)) != 200000.0 or float(hostile_signature.get("projection_back_y", 0.0)) != 80000.0 or float(hostile_signature.get("projection_coin_height", 0.0)) != 2500.0 or not is_equal_approx(projected_center.x, 450.0) or not is_equal_approx(projected_coin_high.y, projected_center.y - 11.0) or authored_deck.size() != 5:
+	if float(hostile_signature.get("projection_width", 0.0)) != 200000.0 or float(hostile_signature.get("projection_back_y", 0.0)) != 80000.0 or float(hostile_signature.get("projection_coin_height", 0.0)) != 2500.0 or not is_equal_approx(projected_center.x, 450.0) or not is_equal_approx(projected_coin_high.y, projected_center.y - 10.0) or authored_deck.size() != 5:
 		failures.append("Coin Pusher V3 renderer did not consume nondefault public geometry/coin height/deck polygon: signature=%s center=%s high=%s deck=%d." % [JSON.stringify(hostile_signature), projected_center, projected_coin_high, authored_deck.size()])
 	if int(renderer.debug_interpolated_face_y_for_test(hostile_state)) != 37000:
 		failures.append("Coin Pusher V3 face/platform midpoint interpolation was not 37000.")
@@ -1566,10 +1571,48 @@ func _check_pusher_v3_impact_measurements(result: Dictionary, body_id: String, e
 		return
 	if str(impact.get("support", "")) != expected_support \
 			or not impact.has("fall_height") \
+			or not impact.has("impact_speed") \
+			or not ["soft", "hard"].has(str(impact.get("impact_class", ""))) \
 			or not impact.has("stack_depth") \
 			or int(impact.get("fall_height", 0)) <= 0 \
+			or int(impact.get("impact_speed", 0)) <= 0 \
 			or int(impact.get("stack_depth", -1)) < 0:
-		failures.append("Coin Pusher V3 %s impact omitted valid fall_height/stack_depth evidence: %s" % [expected_support, JSON.stringify(impact)])
+		failures.append("Coin Pusher V3 %s impact omitted valid height/speed/class/stack evidence: %s" % [expected_support, JSON.stringify(impact)])
+
+
+func _check_pusher_v3_real_weight_gravity(machine: Dictionary, failures: Array) -> void:
+	var gravity_machine := machine.duplicate(true)
+	var apparatus: Dictionary = gravity_machine.get("apparatus", {}) if typeof(gravity_machine.get("apparatus", {})) == TYPE_DICTIONARY else {}
+	apparatus["pegs"] = []
+	gravity_machine["apparatus"] = apparatus
+	var reference := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-WEIGHT"), gravity_machine, 0)
+	_pusher_v3_hold_phase(reference, gravity_machine, 120)
+	var inserted: Dictionary = CoinPusherSolverScript.add_coin(reference, _pusher_v3_rng("PUSHER-V3-WEIGHT-DROP"), CoinPusherSolverScript.WIDTH / 2, 1)
+	var body_id := str(inserted.get("id", ""))
+	var production := reference.duplicate(true)
+	var landing_tick := -1
+	var landing_event := {}
+	for tick in range(1, 61):
+		var reference_result := CoinPusherSolverScript.step_ticks_reference_for_test(reference, {"motor_enabled": false}, 1)
+		var production_result := CoinPusherSolverScript.step_ticks(production, {"motor_enabled": false}, 1)
+		if JSON.stringify(reference_result.get("events", [])) != JSON.stringify(production_result.get("events", [])) or JSON.stringify(CoinPusherSolverScript.body_views(reference)) != JSON.stringify(CoinPusherSolverScript.body_views(production)):
+			failures.append("Coin Pusher V3 real-weight fall diverged between reference and native production backends at tick %d." % tick)
+			return
+		for event_value in production_result.get("events", []):
+			var event: Dictionary = event_value
+			if str(event.get("kind", "")) == "impact" and str(event.get("body_id", "")) == body_id:
+				landing_tick = tick
+				landing_event = event
+				break
+		if landing_tick >= 0:
+			break
+	if landing_tick < 24 or landing_tick > 45 or int(landing_event.get("impact_speed", 0)) < 40000 or str(landing_event.get("impact_class", "")) != "hard" or int(landing_event.get("fall_height", 0)) < 18000:
+		failures.append("Coin Pusher V3 insert did not produce a fast, weighty physical landing: tick=%d event=%s." % [landing_tick, JSON.stringify(landing_event)])
+		return
+	CoinPusherSolverScript.step_ticks(production, {"motor_enabled": false}, 5)
+	var landed_body := _pusher_v3_body(production, body_id)
+	if landed_body.is_empty() or not bool(landed_body.get("sleeping", false)) or str(landed_body.get("rest_state", "")) != "resting":
+		failures.append("Coin Pusher V3 hard landing did not settle without floaty post-impact chatter: %s." % JSON.stringify(landed_body))
 
 
 func _pusher_v3_skill_stop_release_displacement(machine: Dictionary, x_positions: Array, _drop_seeds: Array, seed: String) -> Dictionary:

@@ -1,4 +1,4 @@
-Status: TODO
+Status: IN_PROGRESS — owner-expanded 2026-08-24
 Board row: `pusherv3_4` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
@@ -34,6 +34,40 @@ the coin pusher rebuild.
 `pusherv3_1/2/3` DONE (verify by code).
 
 ## Task
+
+### 0A. Amendment 6.3 — real-weight gravity and impact feel
+
+- Rework the shared deterministic gravity/contact model so inserted coins and
+  coins falling between platform/deck/tray levels accelerate and settle with
+  the fast, weighty cadence of real metal coins. Remove the current floaty,
+  slow descent without introducing teleporting, scalar timing rewards, or
+  presentation-only fake motion.
+- Keep the GDScript reference solver and native production backend exact. Tune
+  gravity, air response, contact restitution/friction, and sleep thresholds as
+  one coherent system; do not merely speed up renderer interpolation.
+- Every meaningful platform, body, and deck landing must publish enough
+  real impact-speed/drop-height evidence for a synchronized metal thud. Tiny
+  resting corrections must remain quiet so the cabinet does not chatter.
+- Add deterministic behavior contracts for drop duration, downward
+  acceleration, hard-impact classification, post-impact settling, conservation,
+  and reference/native parity. Refresh player-eye captures for insert-board,
+  row-to-row, and tray falls in normal and reduced-motion modes.
+
+### 0B. Amendment 6.4 — playfield-dominant environment composition
+
+- Redesign the 900×430 pusher surface so the physical delivery board, moving
+  platform, lower deck, falling bodies, and tray are the dominant visual area.
+  The marquee/header and decorative cabinet shell must become compact framing,
+  not consume more attention or area than gameplay.
+- The live playfield must occupy at least 70% of the usable cabinet width and
+  60% of its height, with the delivery-to-tray route continuously readable at
+  normal desktop and the existing small-screen/reduced-motion captures.
+- Reflow the real controls around the enlarged playfield without shrinking hit
+  targets below existing accessibility contracts. Keep each machine's
+  data-driven cabinet identity and backglass state readable, but subordinate to
+  the coins and physical apparatus.
+- Add layout assertions and refreshed per-machine captures proving the new
+  composition; stale small-window golden geometry is not an acceptance target.
 
 ### 0. Amendment 6.2 — rear-fed visible delivery surface
 
@@ -122,6 +156,8 @@ the coin pusher rebuild.
 - Determinism (input-trace + parity), budgets, no-coin-deletion,
   idle liveness: all stage-1/2/3 gates re-run green on the final
   tree.
+- Gravity and layout acceptance must exercise the production native backend,
+  not only a mocked or reference-only surface.
 - Style: tabs, typed GDScript; `.tmp/` reports; suite timeout =
   max(300s, baseline×1.5).
 

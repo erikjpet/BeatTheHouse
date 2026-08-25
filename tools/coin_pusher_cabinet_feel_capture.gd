@@ -2,6 +2,7 @@ extends SceneTree
 
 const MainScene := preload("res://scenes/main.tscn")
 const Solver := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
+const Renderer := preload("res://scripts/games/coin_pusher/coin_pusher_renderer.gd")
 const OUTPUT_DIR := "res://.tmp/coin_pusher_v3_cabinet_feel"
 const CAPTURE_SIZE := Vector2i(1280, 720)
 
@@ -132,7 +133,7 @@ func _capture_ratchet() -> void:
 				tracked_front_ids[str(stock.get("id", ""))] = true
 	var drop := Solver.add_coin(state, _rng("cabinet-ratchet-drop"), 57000, 1)
 	var drop_id := str(drop.get("id", ""))
-	var landed_on_platform := false
+	var landed_on_upper_machine := false
 	var deposited_front := {}
 	var deposit_y := {}
 	var minimum_y_after_deposit := {}
@@ -141,10 +142,13 @@ func _capture_ratchet() -> void:
 		var tick_result: Dictionary = Solver.step_ticks(state, {"motor_enabled": true}, 1)
 		var tracked := _body(state, drop_id)
 		if not tracked.is_empty() and str(tracked.get("support_kind", "")) == "platform":
-			landed_on_platform = true
+			landed_on_upper_machine = true
 			platform_y = int(tracked.get("y", 0))
 		for event_value in tick_result.get("events", []):
 			var event: Dictionary = event_value
+			if str(event.get("kind", "")) == "impact" and str(event.get("body_id", "")) == drop_id and bool(event.get("first_support", false)) and str(event.get("support_root", "")) == "platform":
+				landed_on_upper_machine = true
+				platform_y = int(tracked.get("y", 0)) if not tracked.is_empty() else platform_y
 			var deposited_id := str(event.get("body_id", ""))
 			if str(event.get("kind", "")) == "platform_deposit" and tracked_front_ids.has(deposited_id):
 				var deposited_body := _body(state, deposited_id)
@@ -161,11 +165,11 @@ func _capture_ratchet() -> void:
 			transported_after_deposit += 1
 	await _capture("03_platform_ratchet_three_cycles.png", "platform_ratchet_three_cycles", state, {
 		"cycles_observed": 3,
-		"landed_on_platform": landed_on_platform,
+		"landed_on_platform_or_platform_stock": landed_on_upper_machine,
 		"platform_to_deck_count": deposited_front.size(),
 		"platform_y": platform_y,
 		"transported_after_deposit_count": transported_after_deposit,
-		"ratchet_proven": landed_on_platform and deposited_front.size() >= 2 and transported_after_deposit >= 2,
+		"ratchet_proven": landed_on_upper_machine and deposited_front.size() >= 2 and transported_after_deposit >= 2,
 	})
 
 
@@ -252,12 +256,13 @@ func _capture_depth_crossing() -> void:
 	var rear_puck := {"id": "cross_puck", "kind": "puck", "x": 50000, "y": 40000, "z": 0, "rest_state": "resting", "support_kind": "deck", "vx": 0, "vy": 0}
 	var front_fragment := {"id": "cross_fragment", "kind": "fragment", "x": 50000, "y": 39000, "z": 0, "rest_state": "resting", "support_kind": "deck", "vx": 0, "vy": 0}
 	_apply_body_views([rear_puck, front_fragment], 77, {}, 77)
-	var teal_sample := await _sample_design_pixel(_project_for_capture(50000, 39000, 0), "08_depth_crossing_teal_front.png")
+	var teal_sample := await _feature_color_evidence("teal", "08_depth_crossing_teal_front.png")
 	rear_puck["y"] = 38000
 	front_fragment["y"] = 40000
 	_apply_body_views([rear_puck, front_fragment], 77, {}, 78)
-	var purple_sample := await _sample_design_pixel(_project_for_capture(50000, 38000, 0), "09_depth_crossing_purple_front.png")
-	var crossing_valid := teal_sample.g > teal_sample.r + 0.06 and purple_sample.r > purple_sample.g + 0.06
+	var purple_sample := await _feature_color_evidence("purple", "09_depth_crossing_purple_front.png")
+	var crossing_valid := int(teal_sample.get("teal_pixel_count", 0)) > int(purple_sample.get("teal_pixel_count", 0)) + 100 \
+		and int(purple_sample.get("purple_pixel_count", 0)) > int(teal_sample.get("purple_pixel_count", 0)) + 100
 	if not crossing_valid:
 		_fail("Exact-order GL crossing probe did not change the visible overlap owner: teal=%s purple=%s." % [teal_sample, purple_sample])
 	captures.append({
@@ -267,8 +272,8 @@ func _capture_depth_crossing() -> void:
 		"state_valid": crossing_valid,
 		"evidence": {
 			"presentation_view_serials": [77, 78],
-			"teal_front_rgb": [teal_sample.r, teal_sample.g, teal_sample.b],
-			"purple_front_rgb": [purple_sample.r, purple_sample.g, purple_sample.b],
+			"teal_front": teal_sample,
+			"purple_front": purple_sample,
 			"visible_owner_changed": crossing_valid,
 		},
 	})
@@ -362,12 +367,39 @@ func _sample_design_pixel(design_point: Vector2, debug_file: String = "") -> Col
 	return image.get_pixelv(Vector2i(roundi(viewport_point.x), roundi(viewport_point.y)))
 
 
+func _feature_color_evidence(kind: String, debug_file: String) -> Dictionary:
+	canvas.queue_redraw()
+	await process_frame
+	await process_frame
+	var image := root.get_viewport().get_texture().get_image()
+	if image == null:
+		return {"pixel_count": 0, "kind": kind}
+	image.save_png("%s/%s" % [out_dir, debug_file])
+	var teal_pixel_count := 0
+	var purple_pixel_count := 0
+	var teal_sample := Color.BLACK
+	var purple_sample := Color.BLACK
+	# Ignore the HUD band, then compare both authored feature palettes between
+	# consecutive captures. Static cyan UI cancels out; the front body supplies
+	# the required positive delta in exactly one image.
+	for y in range(image.get_height() * 28 / 100, image.get_height(), 2):
+		for x in range(0, image.get_width(), 2):
+			var color := image.get_pixel(x, y)
+			if color.g > color.r + 0.25 and color.g > color.b:
+				teal_pixel_count += 1
+				teal_sample = color
+			if color.b > color.g + 0.30 and color.r > color.g + 0.08:
+				purple_pixel_count += 1
+				purple_sample = color
+	return {"kind": kind, "teal_pixel_count": teal_pixel_count, "purple_pixel_count": purple_pixel_count, "teal_sample_rgb": [teal_sample.r, teal_sample.g, teal_sample.b], "purple_sample_rgb": [purple_sample.r, purple_sample.g, purple_sample.b]}
+
+
 func _project_for_capture(x: int, y: int, z: int) -> Vector2:
-	var depth := clampf(float(y) / 63000.0, 0.0, 1.0)
-	var width_factor := lerpf(1.0, 0.78, depth)
-	var screen_x := 450.0 + (float(x) / 100000.0 - 0.5) * 584.0 * 0.90 * width_factor
-	var screen_y := 317.0 - 18.0 - depth * 139.0 - float(z) / 1700.0 * 11.0
-	return Vector2(screen_x, screen_y)
+	var projection_state := {
+		"coin_pusher_geometry": machine_definition.get("geometry", {}),
+		"coin_pusher_coin_height": int((machine_definition.get("coins", {}) as Dictionary).get("height", 1700)),
+	}
+	return Renderer.new().debug_project_for_test(projection_state, float(x), float(y), float(z))
 
 
 func _state(seed: String, opening_count: int) -> Dictionary:

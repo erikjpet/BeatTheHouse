@@ -835,19 +835,19 @@ func _feature_hardware_descriptor(machine: Dictionary, vault_views: Dictionary) 
 	for direction in ["left", "front", "right"]:
 		direction_options.append({"id": direction, "label": direction.left(1).to_upper(), "action": NUDGE_DIRECTION_PREFIX + direction})
 	var result := {"schema": "coin_pusher_feature_hardware_v1", "selector_groups": [
-		{"rect": Rect2(684, 300, 90, 17), "selected": str(machine.get("nudge_force", "tap")), "options": force_options},
-		{"rect": Rect2(684, 382, 90, 17), "selected": str(machine.get("nudge_direction", "front")), "options": direction_options},
+		{"rect": Rect2(716, 352, 116, 18), "selected": str(machine.get("nudge_force", "tap")), "options": force_options},
+		{"rect": Rect2(716, 404, 116, 18), "selected": str(machine.get("nudge_direction", "front")), "options": direction_options},
 	], "panels": []}
 	if vault_views.is_empty():
 		return result
 	var variation_state := _variation_state(machine)
 	var round_active := bool(variation_state.get("vault_round_active", false))
-	var controls: Array = [{"rect": Rect2(132, 387, 78, 27), "label": "VAULT %s" % ("OPEN" if round_active else "SHUT"), "lit": round_active}]
+	var controls: Array = [{"rect": Rect2(58, 404, 78, 20), "label": "VAULT %s" % ("OPEN" if round_active else "SHUT"), "lit": round_active}]
 	var cells: Array = vault_views.get("cells", []) if typeof(vault_views.get("cells", [])) == TYPE_ARRAY else []
 	for cell_index in range(cells.size()):
 		var cell: Dictionary = cells[cell_index] if typeof(cells[cell_index]) == TYPE_DICTIONARY else {}
 		controls.append({
-			"rect": Rect2(216.0 + 31.0 * cell_index, 387.0, 28.0, 27.0),
+			"rect": Rect2(142.0 + 31.0 * cell_index, 404.0, 28.0, 20.0),
 			"label": str(cell.get("label", "?")),
 			"action": str(cell.get("selection_action", VAULT_CELL_PREFIX + str(cell_index))),
 			"index": cell_index,
@@ -857,8 +857,8 @@ func _feature_hardware_descriptor(machine: Dictionary, vault_views: Dictionary) 
 	var action_ids := [VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION]
 	var action_labels := ["OPEN", "CELL", "STOP", "X-RAY"]
 	for action_index in range(action_ids.size()):
-		controls.append({"rect": Rect2(410.0 + action_index * 62.0, 387.0, 58.0, 27.0), "label": action_labels[action_index], "action": action_ids[action_index], "index": action_index})
-	result["panels"] = [{"rect": Rect2(126, 382, 540, 38), "controls": controls}]
+		controls.append({"rect": Rect2(336.0 + action_index * 62.0, 404.0, 58.0, 20.0), "label": action_labels[action_index], "action": action_ids[action_index], "index": action_index})
+	result["panels"] = [{"rect": Rect2(52, 402, 540, 24), "controls": controls}]
 	return result
 
 
@@ -1354,8 +1354,9 @@ func _presentation_audio_events(machine: Dictionary, physics_events: Array) -> A
 		match kind:
 			"impact":
 				var fall_height := maxi(0, int(event.get("fall_height", 0)))
+				var impact_speed := maxi(0, int(event.get("impact_speed", 0)))
 				var stack_depth := maxi(0, int(event.get("stack_depth", 0)))
-				var intensity := clampi(180 + fall_height / 18 + stack_depth * 90, 180, 1000)
+				var intensity := clampi(160 + fall_height / 24 + impact_speed / 90 + stack_depth * 90, 160, 1000)
 				impact_count += 1
 				if intensity > strongest_impact:
 					strongest_impact = intensity
@@ -1374,7 +1375,7 @@ func _presentation_audio_events(machine: Dictionary, physics_events: Array) -> A
 			"gutter":
 				gutter_count += 1
 	if impact_count > 0:
-		result.append({"kind": "impact", "intensity_milli": strongest_impact, "metadata": {"fall_height_milli": strongest_fall_height, "stack_depth": strongest_stack_depth, "material": strongest_impact_material, "group_count": impact_count}})
+		result.append({"kind": "impact", "intensity_milli": strongest_impact, "metadata": {"fall_height_milli": strongest_fall_height, "stack_depth": strongest_stack_depth, "material": strongest_impact_material, "group_count": impact_count, "hard_impact": strongest_impact >= 520}})
 	if tray_count > 0:
 		result.append({"kind": "tray_landing", "intensity_milli": clampi(440 + tray_count * 75, 440, 1000), "metadata": {"group_count": tray_count, "group_index": 0}})
 	if gutter_count > 0:

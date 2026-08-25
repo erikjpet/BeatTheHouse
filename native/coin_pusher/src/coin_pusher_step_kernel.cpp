@@ -15,8 +15,8 @@ using namespace godot;
 
 namespace {
 constexpr int64_t FP = 1000, FIXED_HZ = 60, HARD_CEILING = 600, PASSES = 6;
-constexpr int64_t GRAVITY = 560, AIR_NUM = 61, AIR_DEN = 64, SLEEP_SPEED = 90,
-                  SLEEP_TICKS = 8;
+constexpr int64_t GRAVITY = 1800, AIR_NUM = 61, AIR_DEN = 64, SLEEP_SPEED = 140,
+                  SLEEP_TICKS = 5, HARD_IMPACT_SPEED = 12000;
 constexpr int64_t SLOP = 60, BETA = 600, REST_BODY = 100, REST_PEG = 250,
                   MU_BODY = 500, MU_DECK = 700, MU_PLATFORM = 800;
 constexpr int64_t SUPPORT_TOL = 400, SUPPORT_MARGIN = 800;
@@ -693,6 +693,7 @@ struct Kernel {
       if (stable && q.vz <= 0) {
         bool falling = q.rest == "falling";
         int64_t fall_start = q.has_fall_start ? q.fall_start_z : q.z;
+        int64_t impact_speed = std::abs(q.vz);
         q.z = support_top;
         q.vz = 0;
         q.zr = 0;
@@ -710,6 +711,8 @@ struct Kernel {
           bool first_support = bool(q.meta.get("inserted", false)) && !bool(q.meta.get("first_support_recorded", false));
           e["first_support"] = first_support;
           e["fall_height"] = std::max<int64_t>(0, fall_start - support_top);
+          e["impact_speed"] = impact_speed;
+          e["impact_class"] = impact_speed >= HARD_IMPACT_SPEED ? String("hard") : String("soft");
           e["stack_depth"] = std::max<int64_t>(
               0, divi(support_top - surface_z, std::max<int64_t>(1, q.h)));
           events.append(e);

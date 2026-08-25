@@ -21,6 +21,8 @@ const COIN_RADIUS := CoinPusherSolverScript.COIN_RADIUS
 const COIN_HEIGHT := CoinPusherSolverScript.COIN_HEIGHT
 const OBJECT_RADIUS := CoinPusherSolverScript.OBJECT_RADIUS
 const OBJECT_HEIGHT := CoinPusherSolverScript.OBJECT_HEIGHT
+const GRAVITY := CoinPusherSolverScript.GRAVITY
+const HARD_IMPACT_SPEED := CoinPusherSolverScript.HARD_IMPACT_SPEED
 
 
 static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int = 0) -> Dictionary:

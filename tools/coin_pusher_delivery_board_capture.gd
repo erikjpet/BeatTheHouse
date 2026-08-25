@@ -88,7 +88,7 @@ func _capture_variation(spec: Dictionary) -> void:
 			var integrated := before_body.duplicate(true)
 			integrated["vx"] = int(int(integrated.get("vx", 0)) * 61 / 64)
 			integrated["vy"] = int(int(integrated.get("vy", 0)) * 61 / 64)
-			integrated["vz"] = int(integrated.get("vz", 0)) - 560
+			integrated["vz"] = int(integrated.get("vz", 0)) - Solver.GRAVITY
 			var before_energy := _body_energy(before_body)
 			var integrated_energy := _body_energy(integrated)
 			invariant_failures.append({"tick": int(state.get("tick", 0)), "before": before_body, "after": body, "before_energy": before_energy, "gravity_integrated_energy": integrated_energy, "allowed_without_platform_or_support_work": maxi(before_energy, integrated_energy), "after_energy": _body_energy(body), "events": events.duplicate(true)})
@@ -157,7 +157,7 @@ func _capture_variation(spec: Dictionary) -> void:
 	var entry_hardware_ok := _entry_hardware_is_bounded(presentation.get("entry_hardware", {}))
 	var release_clear := _release_disks_clear(definition, int(spec["drop_x"]))
 	var board_height := absf((board.get("landing_left", Vector2.ZERO) as Vector2).y - (board.get("top_left", Vector2.ZERO) as Vector2).y)
-	var readable_height := board_height >= 60.0 and board_height <= 80.0
+	var readable_height := board_height >= 120.0 and board_height <= 160.0
 	var vault_evidence := {}
 	if variation_id == "vault_drop":
 		vault_evidence = await _capture_vault_hardware(definition, shadow_record)
@@ -183,7 +183,7 @@ func _capture_variation(spec: Dictionary) -> void:
 			"board_to_platform_continuity_px_lte_1": continuity,
 			"board_bounded_inside_playfield": bounded,
 			"board_height_design_px": board_height,
-			"board_height_60_to_80_px": readable_height,
+			"board_height_120_to_160_px": readable_height,
 			"entry_hardware_inside_playfield_not_backglass": entry_hardware_ok,
 			"release_disk_clear_of_pegs": release_clear,
 			"airborne_shadow_visibly_offset": bool(shadow_evidence.get("passed", false)),
@@ -306,6 +306,7 @@ func _capture_vault_hardware(definition: Dictionary, record: Dictionary) -> Dict
 	bindings["open_vault_cell"]["enabled"] = false
 	bindings["stop_vault_round"]["enabled"] = false
 	bindings["peek_vault_cell"]["enabled"] = false
+	var closed_machine := {"variation_id": "vault_drop", "nudge_force": "tap", "nudge_direction": "front", "vault_selected_cell": 0, "variation_state": {"vault_round_active": false}}
 	var base_patch := {
 		"coin_pusher_nudge_forces": forces,
 		"coin_pusher_nudge_force": "tap",
@@ -313,6 +314,7 @@ func _capture_vault_hardware(definition: Dictionary, record: Dictionary) -> Dict
 		"coin_pusher_vault_cells": cells,
 		"coin_pusher_vault_selected_cell": 0,
 		"coin_pusher_vault_round_active": false,
+		"coin_pusher_feature_hardware": game.call("_feature_hardware_descriptor", closed_machine, {"cells": cells}),
 		"surface_action_bindings": bindings,
 		"coin_pusher_locked": false,
 	}
@@ -327,7 +329,8 @@ func _capture_vault_hardware(definition: Dictionary, record: Dictionary) -> Dict
 	(open_cells[2] as Dictionary)["peeked"] = true
 	(open_cells[2] as Dictionary)["label"] = "$50"
 	var open_patch := base_patch.duplicate(true)
-	open_patch.merge({"coin_pusher_vault_round_active": true, "coin_pusher_vault_cells": open_cells, "coin_pusher_vault_selected_cell": 2, "surface_action_bindings": open_bindings}, true)
+	var open_machine := {"variation_id": "vault_drop", "nudge_force": "tap", "nudge_direction": "front", "vault_selected_cell": 2, "variation_state": {"vault_round_active": true}}
+	open_patch.merge({"coin_pusher_vault_round_active": true, "coin_pusher_vault_cells": open_cells, "coin_pusher_vault_selected_cell": 2, "coin_pusher_feature_hardware": game.call("_feature_hardware_descriptor", open_machine, {"cells": open_cells}), "surface_action_bindings": open_bindings}, true)
 	var open := await _render_frame(definition, "vault_drop", record, false, open_patch)
 	var open_signature: Dictionary = game.renderer_signature(canvas.call("realtime_surface_state"))
 	var locked_bindings: Dictionary = open_bindings.duplicate(true)
@@ -342,14 +345,14 @@ func _capture_vault_hardware(definition: Dictionary, record: Dictionary) -> Dict
 	var saved := true
 	for index in range(files.size()):
 		saved = images[index].save_png("%s/%s" % [out_dir, files[index]]) == OK and saved
-	var normal_luma := _design_rect_luminance(open, Rect2(91, 28, 718, 392))
-	var locked_luma := _design_rect_luminance(locked, Rect2(91, 28, 718, 392))
+	var normal_luma := _design_rect_luminance(open, Renderer.CABINET_RECT)
+	var locked_luma := _design_rect_luminance(locked, Renderer.CABINET_RECT)
 	var expected_closed := _expected_enabled_hardware_actions(definition, bindings, forces, cells)
 	var expected_open := _expected_enabled_hardware_actions(definition, open_bindings, forces, open_cells)
 	var closed_actions: Array = closed_signature.get("hardware_actions", [])
 	var open_actions: Array = open_signature.get("hardware_actions", [])
 	var locked_actions: Array = locked_signature.get("hardware_actions", [])
-	var door_pixels_change := _image_region_delta(closed, open, Rect2(126, 382, 540, 38))
+	var door_pixels_change := _image_region_delta(closed, open, Rect2(52, 402, 540, 24))
 	return {
 		"passed": saved and closed_actions == expected_closed and open_actions == expected_open and locked_actions.is_empty() and locked_luma < normal_luma * 0.55 and door_pixels_change > 0.01,
 		"captures": files,
@@ -518,7 +521,7 @@ func _normal_landing(definition: Dictionary, x: int) -> Vector2:
 
 
 func _board_is_bounded(board: Dictionary) -> bool:
-	var rect := Rect2(158, 152, 584, 165)
+	var rect: Rect2 = Renderer.PLAYFIELD_RECT
 	for key in ["top_left", "top_right", "landing_left", "landing_right"]:
 		if not rect.has_point(board.get(key, Vector2(-1, -1))):
 			return false
@@ -537,8 +540,8 @@ func _entry_hardware_is_bounded(value: Variant) -> bool:
 	if typeof(value) != TYPE_DICTIONARY:
 		return false
 	var layout: Dictionary = value
-	var playfield := Rect2(158, 152, 584, 165)
-	var backglass := Rect2(139, 99, 622, 48)
+	var playfield: Rect2 = Renderer.PLAYFIELD_RECT
+	var backglass: Rect2 = Renderer.BACKGLASS_RECT
 	if str(layout.get("type", "")) == "hole_set":
 		var targets: Array = layout.get("targets", [])
 		if targets.size() != 3:

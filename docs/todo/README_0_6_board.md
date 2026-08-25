@@ -160,7 +160,7 @@ each stage builds on the last.
 | pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | DONE | rework06_2 (landed) | pusherv3_2 | PM:Codex | 2026-08-17 | 2026-08-17 | Owner ruled complete after PM verification of Amendment 6.1 behavior, native 300-body performance, exact Windows/Web parity, determinism, and all pusher-owning gates; integrated at `a6e36d2f`. |
 | pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | DONE | pusherv3_1 | pusherv3_3 | PM:Codex/sub:pusher-live | 2026-08-17 | 2026-08-18 | PM verified continuous 60 Hz loop, deterministic trace, tray-only collection, compact persistence/migration, motor-on exit settle, continuous rail drag, exact Windows/Web parity, performance, and all combined gates. |
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | DONE | pusherv3_2 | pusherv3_4 | PM:Codex/sub:pusher-cabinet | 2026-08-18 | 2026-08-18 | PM verified the data-driven slot-parity cabinet, batched stacked projection, physical audio map, integrated 9/9 feel contract, determinism, visual QA, and all combined suites/performance budgets. |
-| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | IN_PROGRESS | pusherv3_3 | coin pusher closure | PM:Codex/sub:pusher-variations | 2026-08-18 | | Owner rulings landed: multiplier-expiry lock, Vault `[0.72,0.94]` physical EV, and Amendment 6.2 rear-fed visible delivery boards with no direct lower-deck landing. |
+| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | IN_PROGRESS | pusherv3_3 | coin pusher closure | Codex | 2026-08-18 | | Owner-expanded 2026-08-24: close existing variation/integration scope plus real-weight gravity/impact feel and a playfield-dominant cabinet composition. |
 
 ### Wave D — Crew depth
 
@@ -2086,3 +2086,9 @@ What happens then is the owner's, not an agent's:
   strictly serial after Stage 2; the crew track remains strictly serial before
   The Turn; Content owns non-heist shared-catalog entries and produces an
   economy audit for the owner without pre-playtest tuning.
+- 2026-08-24 [pusherv3_4] Owner expanded the active closure scope after playing
+  the current machine: replace floaty insert/row gravity with fast, weighty,
+  parity-safe coin falls and real impact thuds; enlarge the physical playfield
+  so delivery, platform, deck, and tray dominate the environment while cabinet
+  identity/header become compact framing. Codex resumed the existing row and
+  added measurable physics, audio, layout, accessibility, and capture gates.

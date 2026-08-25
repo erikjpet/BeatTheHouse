@@ -33,11 +33,14 @@ const RESTITUTION_PEG := 250
 const MU_BODY := 500
 const MU_DECK := 700
 const MU_PLATFORM := 800
-const GRAVITY := 560
+## Calibrated for a ~0.6 s unobstructed insert-board fall. The previous 560
+## value took roughly a second before peg contacts and read as slow/floaty.
+const GRAVITY := 1800
 const AIR_DRAG_NUM := 61
 const AIR_DRAG_DEN := 64
-const SLEEP_SPEED := 90
-const SLEEP_TICKS := 8
+const SLEEP_SPEED := 140
+const SLEEP_TICKS := 5
+const HARD_IMPACT_SPEED := 12000
 const SUPPORT_VERTICAL_TOLERANCE := 400
 const SUPPORT_MARGIN := 800
 const SKILL_STOP_RAMP_TICKS := 24
@@ -1137,6 +1140,7 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 		if stable and int(body.get("vz", 0)) <= 0:
 			var was_surface_falling := str(body.get("rest_state", "")) == "falling"
 			var fall_start_z := int(body.get("fall_start_z", body.get("z", surface_z)))
+			var impact_speed := absi(int(body.get("vz", 0)))
 			body["z"] = surface_z
 			body["vz"] = 0
 			body["z_remainder"] = 0
@@ -1146,7 +1150,7 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 			_apply_surface_friction(body, MU_PLATFORM if surface_kind == "platform" else MU_DECK)
 			if was_surface_falling:
 				var first_support := bool((body.get("meta", {}) as Dictionary).get("inserted", false)) and not bool((body.get("meta", {}) as Dictionary).get("first_support_recorded", false))
-				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": surface_kind, "support_root": surface_kind, "first_support": first_support, "fall_height": maxi(0, fall_start_z - surface_z), "stack_depth": 0})
+				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": surface_kind, "support_root": surface_kind, "first_support": first_support, "fall_height": maxi(0, fall_start_z - surface_z), "impact_speed": impact_speed, "impact_class": "hard" if impact_speed >= HARD_IMPACT_SPEED else "soft", "stack_depth": 0})
 				if first_support:
 					(body.get("meta", {}) as Dictionary)["first_support_recorded"] = true
 				body.erase("fall_start_z")
@@ -1214,6 +1218,7 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 		if stable and int(body.get("vz", 0)) <= 0:
 			var was_falling := str(body.get("rest_state", "")) == "falling"
 			var fall_start_z := int(body.get("fall_start_z", body.get("z", support_top)))
+			var impact_speed := absi(int(body.get("vz", 0)))
 			body["z"] = support_top
 			body["vz"] = 0
 			body["z_remainder"] = 0
@@ -1227,7 +1232,7 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 				var stack_depth := maxi(0, _divi(support_top - surface_z, maxi(1, int(body.get("height", COIN_HEIGHT)))))
 				var support_root := "platform" if str(body.get("support_kind", "")) == "platform" or (str(body.get("support_kind", "")) == "body" and top_carried) else "deck"
 				var first_support := bool((body.get("meta", {}) as Dictionary).get("inserted", false)) and not bool((body.get("meta", {}) as Dictionary).get("first_support_recorded", false))
-				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": str(body.get("support_kind", "")), "support_root": support_root, "first_support": first_support, "fall_height": maxi(0, fall_start_z - support_top), "stack_depth": stack_depth})
+				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": str(body.get("support_kind", "")), "support_root": support_root, "first_support": first_support, "fall_height": maxi(0, fall_start_z - support_top), "impact_speed": impact_speed, "impact_class": "hard" if impact_speed >= HARD_IMPACT_SPEED else "soft", "stack_depth": stack_depth})
 				if first_support:
 					(body.get("meta", {}) as Dictionary)["first_support_recorded"] = true
 				body.erase("fall_start_z")

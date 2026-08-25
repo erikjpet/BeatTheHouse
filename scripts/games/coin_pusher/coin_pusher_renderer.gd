@@ -2,14 +2,17 @@ class_name CoinPusherRenderer
 extends RefCounted
 
 const DESIGN_SIZE := Vector2(900, 430)
-const PLAYFIELD_RECT := Rect2(158, 152, 584, 165)
+const CABINET_RECT := Rect2(34, 18, 832, 400)
+const MARQUEE_RECT := Rect2(170, 4, 560, 38)
+const BACKGLASS_RECT := Rect2(76, 42, 748, 26)
+const PLAYFIELD_RECT := Rect2(52, 70, 796, 276)
 const SCHEMA_DEFAULT_WIDTH := 100000.0
 const SCHEMA_DEFAULT_BACK_Y := 63000.0
 const SCHEMA_DEFAULT_COIN_HEIGHT := 1700.0
 const REAR_WIDTH_FACTOR := 0.78
 const COIN_RX := 17.0
 const COIN_RY := 12.0
-const Z_LAYER_OFFSET := 11.0
+const Z_LAYER_OFFSET := 10.0
 const ELLIPSE_SEGMENTS := 12
 const BATCH_CAPACITY := 600
 const ATLAS_FRAME_SIZE := Vector2i(40, 32)
@@ -92,6 +95,12 @@ func render_signature(state: Dictionary) -> Dictionary:
 		"stacked_count": stacked,
 		"riding_count": riding,
 		"tray_heap_count": int(state.get("coin_pusher_tray_count", 0)),
+		"cabinet_rect": CABINET_RECT,
+		"marquee_rect": MARQUEE_RECT,
+		"backglass_rect": BACKGLASS_RECT,
+		"playfield_rect": PLAYFIELD_RECT,
+		"playfield_width_ratio": PLAYFIELD_RECT.size.x / CABINET_RECT.size.x,
+		"playfield_height_ratio": PLAYFIELD_RECT.size.y / CABINET_RECT.size.y,
 		"delivery_board": debug_delivery_board_for_test(state),
 		"entry_hardware": _entry_hardware_layout(state),
 		"airborne_shadow_offset": AIRBORNE_SHADOW_OFFSET,
@@ -115,45 +124,46 @@ func _draw_floor_and_shell(surface, cabinet: Dictionary, colors: Dictionary) -> 
 	var trim: Color = colors["trim"]
 	var light: Color = colors["light"]
 	surface.draw_rect(Rect2(Vector2.ZERO, DESIGN_SIZE), Color("#090b12"))
-	surface.surface_filled_polygon(PackedVector2Array([Vector2(72, 411), Vector2(828, 411), Vector2(756, 383), Vector2(144, 383)]), Color(0, 0, 0, 0.56)) # SA2_PER_FRAME_OK: bounded authored cabinet geometry under the measured draw budget.
-	surface.draw_rect(Rect2(91, 56, 718, 337), body)
-	surface.surface_filled_polygon(PackedVector2Array([Vector2(91, 56), Vector2(123, 74), Vector2(123, 393), Vector2(91, 393)]), side.darkened(0.22)) # SA2_PER_FRAME_OK: fixed four-point cabinet side.
-	surface.surface_filled_polygon(PackedVector2Array([Vector2(809, 56), Vector2(777, 74), Vector2(777, 393), Vector2(809, 393)]), side.darkened(0.28)) # SA2_PER_FRAME_OK: fixed four-point cabinet side.
-	surface.draw_rect(Rect2(108, 72, 684, 304), side)
-	surface.draw_rect(Rect2(116, 79, 668, 290), body.darkened(0.08))
-	surface.draw_rect(Rect2(91, 56, 718, 337), trim, false, 3.0)
+	surface.surface_filled_polygon(PackedVector2Array([Vector2(18, 425), Vector2(882, 425), Vector2(826, 400), Vector2(74, 400)]), Color(0, 0, 0, 0.56)) # SA2_PER_FRAME_OK: bounded authored cabinet geometry under the measured draw budget.
+	surface.draw_rect(CABINET_RECT, body)
+	surface.surface_filled_polygon(PackedVector2Array([Vector2(34, 18), Vector2(48, 30), Vector2(48, 414), Vector2(34, 418)]), side.darkened(0.22)) # SA2_PER_FRAME_OK: fixed four-point cabinet side.
+	surface.surface_filled_polygon(PackedVector2Array([Vector2(866, 18), Vector2(852, 30), Vector2(852, 414), Vector2(866, 418)]), side.darkened(0.28)) # SA2_PER_FRAME_OK: fixed four-point cabinet side.
+	surface.draw_rect(Rect2(44, 28, 8, 376), side)
+	surface.draw_rect(Rect2(848, 28, 8, 376), side.darkened(0.08))
+	surface.draw_rect(Rect2(48, 346, 804, 58), body.darkened(0.08))
+	surface.draw_rect(CABINET_RECT, trim, false, 3.0)
 	_draw_topper(surface, str(cabinet.get("topper_style", "none")), trim, light)
-	var marquee := Rect2(143, 28, 614, 64)
+	var marquee := MARQUEE_RECT
 	surface.draw_rect(Rect2(marquee.position + Vector2(5, 6), marquee.size), Color(0, 0, 0, 0.55))
 	surface.draw_rect(marquee, body.lightened(0.08))
 	surface.draw_rect(marquee, trim, false, 3.0)
-	var title_rect := Rect2(marquee.position + Vector2(8, 4), Vector2(marquee.size.x - 16, 40))
-	surface.surface_label_centered(str(cabinet.get("marquee", "COIN PUSHER")), title_rect, 25, light)
+	var title_rect := Rect2(marquee.position + Vector2(8, 2), Vector2(marquee.size.x - 16, 24))
+	surface.surface_label_centered(str(cabinet.get("marquee", "COIN PUSHER")), title_rect, 18, light)
 	var subline := str(cabinet.get("marquee_subline", ""))
 	if not subline.is_empty():
-		surface.surface_label_centered(subline, Rect2(159, 70, 582, 14), 8, Color(light, 0.82))
+		surface.surface_label_centered(subline, Rect2(marquee.position.x + 12, 28, marquee.size.x - 24, 10), 7, Color(light, 0.82))
 
 
 func _draw_topper(surface, style: String, trim: Color, light: Color) -> void:
 	match style:
 		"peak":
-			surface.surface_filled_polygon(PackedVector2Array([Vector2(317, 28), Vector2(450, 3), Vector2(583, 28)]), trim.darkened(0.12)) # SA2_PER_FRAME_OK: fixed three-point topper.
-			surface.surface_polyline(PackedVector2Array([Vector2(317, 28), Vector2(450, 3), Vector2(583, 28)]), light, 3.0) # SA2_PER_FRAME_OK: fixed three-point topper trim.
+			surface.surface_filled_polygon(PackedVector2Array([Vector2(326, 8), Vector2(450, 0), Vector2(574, 8)]), trim.darkened(0.12)) # SA2_PER_FRAME_OK: fixed three-point topper.
+			surface.surface_polyline(PackedVector2Array([Vector2(326, 8), Vector2(450, 0), Vector2(574, 8)]), light, 2.0) # SA2_PER_FRAME_OK: fixed three-point topper trim.
 		"dial":
-			surface.draw_circle(Vector2(450, 28), 27.0, Color("#263b43"))
-			surface.draw_circle(Vector2(450, 28), 22.0, trim, false, 3.0)
+			surface.draw_circle(Vector2(450, 8), 14.0, Color("#263b43"))
+			surface.draw_circle(Vector2(450, 8), 11.0, trim, false, 2.0)
 			for angle in range(0, 360, 45):
 				var direction := Vector2.RIGHT.rotated(deg_to_rad(float(angle)))
-				surface.draw_line(Vector2(450, 28) + direction * 14.0, Vector2(450, 28) + direction * 20.0, light, 2.0)
+				surface.draw_line(Vector2(450, 8) + direction * 7.0, Vector2(450, 8) + direction * 11.0, light, 1.0)
 		"crown_lights":
 			for index in range(5):
-				var center := Vector2(414 + index * 18, 22 - abs(index - 2) * 4)
-				surface.draw_circle(center, 12.0, trim.darkened(float(index % 2) * 0.12))
-				surface.draw_circle(center, 8.0, light, false, 2.0)
+				var center := Vector2(422 + index * 14, 7 - abs(index - 2) * 2)
+				surface.draw_circle(center, 7.0, trim.darkened(float(index % 2) * 0.12))
+				surface.draw_circle(center, 4.0, light, false, 1.0)
 
 
 func _draw_backglass(surface, state: Dictionary, cabinet: Dictionary, colors: Dictionary) -> void:
-	var rect := Rect2(139, 99, 622, 48)
+	var rect := BACKGLASS_RECT
 	surface.draw_rect(rect, colors["backglass"])
 	surface.draw_rect(rect, colors["trim"], false, 2.0)
 	var display: Dictionary = cabinet.get("backglass_display", {}) if typeof(cabinet.get("backglass_display", {})) == TYPE_DICTIONARY else {}
@@ -162,32 +172,32 @@ func _draw_backglass(surface, state: Dictionary, cabinet: Dictionary, colors: Di
 			var value := maxi(0, int(state.get(str(display.get("value_state_key", "")), 0)))
 			var lamp_count := maxi(1, int(display.get("lamp_count", 5)))
 			for index in range(lamp_count):
-				var lamp := Vector2(270 + index * 90, 125)
+				var lamp := Vector2(288 + index * 80, rect.get_center().y)
 				var lit := index < value
-				surface.draw_circle(lamp, 10.0, colors["light"] if lit else Color(colors["light"], 0.16))
-			surface.surface_label_centered(str(display.get("label_template", "%d")) % value, rect, 14, colors["light"])
+				surface.draw_circle(lamp, 7.0, colors["light"] if lit else Color(colors["light"], 0.16))
+			surface.surface_label_centered(str(display.get("label_template", "%d")) % value, rect, 11, colors["light"])
 		"dual_value_dial":
 			var primary := maxi(0, int(state.get(str(display.get("primary_state_key", "")), 0)))
 			var secondary := maxi(0, int(state.get(str(display.get("secondary_state_key", "")), 0)))
-			surface.draw_circle(Vector2(194, 125), 18.0, colors["trim"], false, 3.0)
-			surface.draw_line(Vector2(194, 125), Vector2(194, 112), colors["light"], 3.0)
-			surface.surface_label_centered(str(display.get("label_template", "%d  %d")) % [primary, secondary], Rect2(225, 104, 510, 42), 16, colors["light"])
+			surface.draw_circle(Vector2(112, rect.get_center().y), 9.0, colors["trim"], false, 2.0)
+			surface.draw_line(Vector2(112, rect.get_center().y), Vector2(112, rect.position.y + 4), colors["light"], 2.0)
+			surface.surface_label_centered(str(display.get("label_template", "%d  %d")) % [primary, secondary], Rect2(132, rect.position.y, 660, rect.size.y), 12, colors["light"])
 		"prize_showcase":
 			var prize_count := maxi(0, int(state.get(str(display.get("count_state_key", "")), 0)))
 			var case_symbols: Array = display.get("case_symbols", []) if typeof(display.get("case_symbols", [])) == TYPE_ARRAY else []
 			var case_captions: Array = display.get("case_captions", []) if typeof(display.get("case_captions", [])) == TYPE_ARRAY else []
-			var case_width := 88.0
-			var case_gap := 12.0
+			var case_width := 82.0
+			var case_gap := 8.0
 			var cases_width := float(case_symbols.size()) * case_width + float(maxi(0, case_symbols.size() - 1)) * case_gap
 			var case_start_x := rect.get_center().x - cases_width * 0.5
 			for case_index in range(case_symbols.size()):
-				var case_rect := Rect2(case_start_x + float(case_index) * (case_width + case_gap), rect.position.y + 4.0, case_width, rect.size.y - 8.0)
+				var case_rect := Rect2(case_start_x + float(case_index) * (case_width + case_gap), rect.position.y + 2.0, case_width, rect.size.y - 4.0)
 				var live_case := case_index < prize_count
 				surface.draw_rect(case_rect, colors["trim"].darkened(0.15) if live_case else colors["side"].darkened(0.18))
 				surface.draw_rect(case_rect, colors["light"] if live_case else Color(colors["trim"], 0.55), false, 2.0)
-				surface.surface_reel_symbol_label(str(case_symbols[case_index]), Rect2(case_rect.position + Vector2(3, 1), Vector2(case_rect.size.x - 6, 22)), 12, colors["light"] if live_case else Color(colors["light"], 0.50))
+				surface.surface_reel_symbol_label(str(case_symbols[case_index]), Rect2(case_rect.position + Vector2(3, 0), Vector2(case_rect.size.x - 6, 14)), 9, colors["light"] if live_case else Color(colors["light"], 0.50))
 				if case_index < case_captions.size():
-					surface.surface_label_centered(str(case_captions[case_index]), Rect2(case_rect.position + Vector2(2, 25), Vector2(case_rect.size.x - 4, 9)), 7, colors["light"] if live_case else Color(colors["light"], 0.44))
+					surface.surface_label_centered(str(case_captions[case_index]), Rect2(case_rect.position + Vector2(2, 14), Vector2(case_rect.size.x - 4, 8)), 6, colors["light"] if live_case else Color(colors["light"], 0.44))
 			if case_symbols.is_empty():
 				surface.surface_label_centered(str(display.get("label_template", "%d")) % prize_count, rect, 11, colors["light"])
 
@@ -287,6 +297,9 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 	_coin_multimesh.visible_instance_count = count
 	var feature_labels: Array = []
 	var airborne_shadows: Array = []
+	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var board := _delivery_board(apparatus, geometry)
 	for index in range(count):
 		var body: Dictionary = sorted_bodies[index]
 		var body_id := str(body.get("id", ""))
@@ -302,9 +315,6 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 			y = lerpf(float(previous_y), y, alpha)
 			z = lerpf(float(previous_z), z, alpha)
 		var falling := str(body.get("rest_state", "")) == "falling"
-		var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
-		var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
-		var board := _delivery_board(apparatus, geometry)
 		var on_delivery_board := falling and absi(int(round(y)) - int(board["y"])) <= int(body.get("radius", 4300)) and z >= float(board["z_bottom"])
 		var point := _project_delivery_board_point(board, x, z) if on_delivery_board else _project_f(x, y, z)
 		var body_color := _body_color(str(body.get("kind", "coin")), cabinet)
@@ -426,9 +436,8 @@ func _draw_tray_lip(surface, left: Vector2, right: Vector2, colors: Dictionary) 
 
 
 func _draw_glass(surface, colors: Dictionary) -> void:
-	surface.draw_rect(PLAYFIELD_RECT, Color(colors["glass"], 0.08))
-	surface.draw_line(Vector2(174, 120), Vector2(340, 120), Color(1, 1, 1, 0.28), 3.0)
-	surface.draw_line(Vector2(175, 124), Vector2(250, 210), Color(1, 1, 1, 0.09), 18.0)
+	surface.draw_line(PLAYFIELD_RECT.position + Vector2(18, 18), PLAYFIELD_RECT.position + Vector2(244, 18), Color(1, 1, 1, 0.28), 3.0)
+	surface.draw_line(PLAYFIELD_RECT.position + Vector2(20, 24), PLAYFIELD_RECT.position + Vector2(122, 154), Color(1, 1, 1, 0.09), 18.0)
 	surface.draw_rect(PLAYFIELD_RECT, Color(colors["glass"], 0.45), false, 2.0)
 
 
@@ -465,16 +474,16 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 		surface.draw_rect(Rect2(carriage_point - Vector2(11, 21), Vector2(22, 42)), colors["side"])
 		surface.draw_rect(Rect2(carriage_point - Vector2(11, 21), Vector2(22, 42)), colors["light"], false, 2.0)
 		surface.draw_line(carriage_point + Vector2(0, 9), carriage_point + Vector2(0, 29), colors["light"], 3.0)
-		_draw_small_hardware(surface, Rect2(126, 332, 42, 34), "<", "coin_pusher_carriage_left", colors, _binding_enabled(bindings, "coin_pusher_carriage_left"))
-		_draw_small_hardware(surface, Rect2(174, 332, 42, 34), ">", "coin_pusher_carriage_right", colors, _binding_enabled(bindings, "coin_pusher_carriage_right"))
+		_draw_small_hardware(surface, Rect2(54, 356, 42, 34), "<", "coin_pusher_carriage_left", colors, _binding_enabled(bindings, "coin_pusher_carriage_left"))
+		_draw_small_hardware(surface, Rect2(102, 356, 42, 34), ">", "coin_pusher_carriage_right", colors, _binding_enabled(bindings, "coin_pusher_carriage_right"))
 	var stop_engaged := bool(state.get("coin_pusher_skill_stop_engaged", false))
-	var stop_rect := Rect2(229, 326, 90, 46)
+	var stop_rect := Rect2(154, 352, 88, 48)
 	surface.draw_circle(stop_rect.get_center(), 27.0, colors["light"] if stop_engaged else Color("#b73538"))
 	surface.draw_circle(stop_rect.get_center(), 27.0, Color.WHITE if surface.surface_region_hovered("coin_pusher_skill_stop") else colors["trim"], false, 3.0)
 	surface.surface_label_centered("RELEASE" if stop_engaged else "STOP", stop_rect, 12, Color("#10141d"))
 	if _binding_enabled(bindings, "coin_pusher_skill_stop"):
 		surface.surface_add_hit(stop_rect, "coin_pusher_skill_stop")
-	var tray_rect := Rect2(332, 326, 244, 52)
+	var tray_rect := Rect2(250, 352, 280, 58)
 	surface.draw_rect(tray_rect, Color("#06090c"))
 	surface.draw_rect(tray_rect, colors["trim"], false, 3.0)
 	_draw_tray_heap(surface, tray_rect, int(state.get("coin_pusher_tray_count", 0)), colors)
@@ -483,28 +492,28 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	surface.surface_label_centered("COLLECT  %d  ($%d)" % [int(state.get("coin_pusher_tray_count", 0)), int(state.get("coin_pusher_tray_value", 0))], tray_label_rect, 11, colors["light"] if collect_enabled else Color(colors["light"], 0.44))
 	if collect_enabled:
 		surface.surface_add_hit(tray_rect, "coin_pusher_collect")
-	var slot_rect := Rect2(591, 326, 78, 46)
+	var slot_rect := Rect2(540, 352, 72, 48)
 	surface.draw_rect(slot_rect, colors["side"].lightened(0.08))
-	surface.draw_circle(Vector2(630, 348), 19.0, colors["trim"].darkened(0.20))
-	surface.draw_circle(Vector2(630, 348), 15.0, colors["side"])
-	surface.draw_line(Vector2(620, 348), Vector2(640, 348), Color("#020305"), 5.0)
-	surface.surface_label_centered("DROP", Rect2(597, 365, 66, 10), 8, colors["light"])
+	surface.draw_circle(Vector2(576, 374), 19.0, colors["trim"].darkened(0.20))
+	surface.draw_circle(Vector2(576, 374), 15.0, colors["side"])
+	surface.draw_line(Vector2(566, 374), Vector2(586, 374), Color("#020305"), 5.0)
+	surface.surface_label_centered("DROP", Rect2(546, 391, 60, 9), 8, colors["light"])
 	var drop_enabled := _binding_enabled(bindings, "coin_pusher_drop")
 	if drop_enabled:
 		surface.surface_add_hit(slot_rect, "coin_pusher_drop")
-	var nudge_rect := Rect2(684, 326, 90, 46)
+	var nudge_rect := Rect2(620, 352, 88, 48)
 	var nudge_enabled := _binding_enabled(bindings, "coin_pusher_nudge")
 	var nudge_hovered: bool = nudge_enabled and bool(surface.surface_region_hovered("coin_pusher_nudge"))
 	surface.draw_rect(nudge_rect, colors["side"].lightened(0.08 if nudge_hovered else 0.0))
-	surface.draw_circle(Vector2(699, 337), 3.0, colors["trim"])
-	surface.draw_circle(Vector2(759, 337), 3.0, colors["trim"])
-	surface.draw_line(Vector2(706, 347), Vector2(752, 347), Color.WHITE if nudge_hovered else colors["trim"], 8.0)
-	surface.draw_line(Vector2(706, 347), Vector2(706, 359), colors["trim"], 4.0)
-	surface.draw_line(Vector2(752, 347), Vector2(752, 359), colors["trim"], 4.0)
-	surface.surface_label_centered("NUDGE", Rect2(693, 358, 72, 12), 8, colors["light"] if nudge_enabled else Color(colors["light"], 0.38))
+	surface.draw_circle(Vector2(635, 363), 3.0, colors["trim"])
+	surface.draw_circle(Vector2(693, 363), 3.0, colors["trim"])
+	surface.draw_line(Vector2(642, 373), Vector2(686, 373), Color.WHITE if nudge_hovered else colors["trim"], 8.0)
+	surface.draw_line(Vector2(642, 373), Vector2(642, 385), colors["trim"], 4.0)
+	surface.draw_line(Vector2(686, 373), Vector2(686, 385), colors["trim"], 4.0)
+	surface.surface_label_centered("NUDGE", Rect2(628, 384, 72, 12), 8, colors["light"] if nudge_enabled else Color(colors["light"], 0.38))
 	if nudge_enabled:
 		surface.surface_add_hit(nudge_rect, "coin_pusher_nudge")
-	surface.surface_label_centered(str(state.get("coin_pusher_tell_label", "steady")).to_upper(), Rect2(686, 375, 86, 16), 9, colors["light"])
+	surface.surface_label_centered(str(state.get("coin_pusher_tell_label", "steady")).to_upper(), Rect2(716, 380, 116, 16), 9, colors["light"])
 	_draw_feature_hardware(surface, state, bindings, colors)
 
 
@@ -663,7 +672,9 @@ func _draw_small_hardware(surface, rect: Rect2, label: String, action: String, c
 
 
 func _draw_tray_heap(surface, rect: Rect2, count: int, colors: Dictionary) -> void:
-	var visible := mini(22, maxi(0, count))
+	# The numeric readout remains exact; cap the decorative pile so a large
+	# collect does not turn bounded presentation into per-frame polygon churn.
+	var visible := mini(12, maxi(0, count))
 	for index in range(visible):
 		var row := index / 8
 		var column := index % 8
@@ -679,8 +690,8 @@ func _project_f(x: float, y: float, z: float) -> Vector2:
 	var depth := clampf(y / _world_back_y, 0.0, 1.0)
 	var width_factor := lerpf(1.0, REAR_WIDTH_FACTOR, depth)
 	var center_x := PLAYFIELD_RECT.get_center().x
-	var screen_x := center_x + (x / _world_width - 0.5) * PLAYFIELD_RECT.size.x * 0.90 * width_factor
-	var screen_y := PLAYFIELD_RECT.end.y - 5.0 - depth * 40.0 - z / _coin_height * Z_LAYER_OFFSET
+	var screen_x := center_x + (x / _world_width - 0.5) * PLAYFIELD_RECT.size.x * 0.91 * width_factor
+	var screen_y := PLAYFIELD_RECT.end.y - 8.0 - depth * PLAYFIELD_RECT.size.y * 0.34 - z / _coin_height * Z_LAYER_OFFSET
 	return Vector2(screen_x, screen_y)
 
 
@@ -792,7 +803,9 @@ func _project_delivery_board_point(board: Dictionary, x: float, z: float) -> Vec
 	var z_top := maxf(z_bottom + 1.0, float(board.get("z_top", 24000)))
 	var t := clampf((z - z_bottom) / (z_top - z_bottom), 0.0, 1.0)
 	var landing := _project_f(x, float(board.get("y", SCHEMA_DEFAULT_BACK_Y)), z_bottom)
-	var top_y := PLAYFIELD_RECT.position.y + COIN_RY + 10.0
+	# Leave room for the largest selected entry control so the release hardware
+	# remains fully inside the glass instead of bleeding into the backglass.
+	var top_y := PLAYFIELD_RECT.position.y + COIN_RY + 12.0
 	return Vector2(landing.x, lerpf(landing.y, top_y, t))
 
 
