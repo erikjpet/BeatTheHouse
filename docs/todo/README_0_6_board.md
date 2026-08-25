@@ -165,6 +165,7 @@ each stage builds on the last.
 | pusherv3_6 | `pusherv3_6_plinko_bounce_and_entry_boards_prompt.md` | DONE | pusherv3_5 | plinko bounce/contact/layout correction | Codex | 2026-08-25 | 2026-08-25 | Contact-lifecycle audio gating, visible radial rebounds, unbiased release-angle variance, and distinct 7/7/10-pin entry boards pass exact parity, focused/full regression, visual, determinism, EV, and direct performance gates. |
 | pusherv3_7 | `pusherv3_7_played_in_opening_stock_prompt.md` | DONE | pusherv3_6 | played-in opening stock and bounded early payouts | Codex | 2026-08-25 | 2026-08-25 | Deterministic 54/54/56-coin played-in beds, supported feature pieces, and bounded first-five-play payouts pass exact parity, full regression, visual, determinism, EV, and direct performance gates. |
 | pusherv3_8 | `pusherv3_8_coin_scale_lower_bed_and_edge_ramp_prompt.md` | DONE | pusherv3_7 | prior coin scale, extended lower bed, physical payout ramp | Codex | 2026-08-25 | 2026-08-25 | Original 40x32 flat coin artwork, smaller matching physics, extended lower bed, researched edge ramp, played-in stock, exact parity/determinism, visual, performance, and 200k-per-machine EV gates pass. |
+| pusherv3_9 | `pusherv3_9_contact_bed_and_opaque_edge_prompt.md` | DONE | pusherv3_8 | touching opening bed and solid payout-edge occlusion | Codex | 2026-08-25 | 2026-08-25 | All opening stock belongs to real contact clusters; a shallow physical incline and opaque foreground apron now hold and occlude the edge prime until coins visibly clear the shelf. Focused/full regression, parity, determinism, visual, performance, and 200k-per-machine EV gates pass. |
 
 ### Wave D — Crew depth
 
@@ -2160,3 +2161,15 @@ What happens then is the owner's, not an agent's:
   native/Web parity, 510-checkpoint determinism, all-machine actual-GL capture,
   direct performance, focused/foundation regression, and 200k-per-machine EV
   pass without weakening unrelated tutorial/Blackjack audit failures.
+- 2026-08-25 [pusherv3_9] Owner reported that the smaller opening coins remain
+  separated rather than touching and that the payout edge reads as a magic line
+  with coins visible beneath it. Codex opened a follow-up for collision-tolerance
+  contact clusters, a contact-preserving slight incline, and an opaque foreground
+  shelf-edge face that hides coins until their visible fall clears the ledge.
+- 2026-08-25 [pusherv3_9] DONE. All 150/150/154 opening coins now belong to
+  genuine near-contact clusters with bounded passive/first-five payouts. The
+  edge uses a shallow solver-backed incline and an opaque foreground apron, so
+  stock visibly builds behind a solid shelf and falling coins emerge only after
+  clearing it. Exact native/Web parity, 510-checkpoint determinism, all-machine
+  actual-GL visual QA, direct performance, 24-check foundation regression, and
+  200k accepted plays per machine all pass.

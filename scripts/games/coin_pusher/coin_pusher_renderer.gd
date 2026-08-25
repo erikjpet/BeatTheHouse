@@ -103,7 +103,7 @@ func render_signature(state: Dictionary) -> Dictionary:
 		"batch_draws": 1,
 		"batched_nodes": 0,
 		"per_coin_nodes": 0,
-		"draw_order": ["shadows", "coin_batch", "feature_labels", "glass", "hardware"],
+		"draw_order": ["shadows", "coin_batch", "feature_labels", "payout_edge_face", "glass", "hardware"],
 		"body_count": bodies.size(),
 		"airborne_count": airborne,
 		"stacked_count": stacked,
@@ -227,7 +227,8 @@ func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Di
 	var back_plate_y := int(geometry.get("back_plate_y", 78000))
 	var tray_lip_y := int(geometry.get("tray_lip_y", 4000))
 	var payout_ramp_run := maxi(1, int(geometry.get("payout_ramp_run", 6500)))
-	var payout_ramp_rise := maxi(0, int(geometry.get("payout_ramp_rise", 2500)))
+	var payout_ramp_rise := maxi(0, int(geometry.get("payout_ramp_rise", 900)))
+	var payout_apron_drop := maxi(1, int(geometry.get("payout_apron_drop", 3000)))
 	surface.draw_rect(PLAYFIELD_RECT, Color("#07131c"))
 	_draw_delivery_board(surface, apparatus, geometry, colors)
 	# Back plate, fixed deck, and the moving platform are projected from authored geometry.
@@ -257,7 +258,13 @@ func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Di
 	_draw_gutters(surface, geometry, colors)
 	_draw_delivery_pegs(surface, apparatus, geometry, colors)
 	_draw_interpolated_bodies(surface, state, colors, cabinet)
-	_draw_tray_lip(surface, lip_left, lip_right, colors)
+	# The steel front apron is foreground hardware. Drawing its opaque face after
+	# the coin batch hides a coin while it is still behind the shelf edge; the
+	# coin reappears naturally only after its physical fall clears the bottom.
+	var apron_bottom_z := payout_ramp_rise - payout_apron_drop
+	var apron_bottom_left := _project(0, tray_lip_y, apron_bottom_z)
+	var apron_bottom_right := _project(int(geometry.get("width", 100000)), tray_lip_y, apron_bottom_z)
+	_draw_payout_edge_face(surface, lip_left, lip_right, apron_bottom_left, apron_bottom_right, colors)
 
 
 func _draw_gutters(surface, geometry: Dictionary, colors: Dictionary) -> void:
@@ -467,9 +474,13 @@ func _draw_ellipse(surface, center: Vector2, rx: float, ry: float, color: Color,
 	surface.surface_polyline(points, color.lightened(0.20), 1.0)
 
 
-func _draw_tray_lip(surface, left: Vector2, right: Vector2, colors: Dictionary) -> void:
-	surface.draw_line(left, right, colors["trim"], 4.0)
-	surface.draw_line(left + Vector2(0, 5), right + Vector2(0, 5), colors["side"], 4.0)
+func _draw_payout_edge_face(surface, top_left: Vector2, top_right: Vector2, bottom_left: Vector2, bottom_right: Vector2, colors: Dictionary) -> void:
+	var face := PackedVector2Array([top_left, top_right, bottom_right, bottom_left]) # SA2_PER_FRAME_OK: bounded four-point foreground apron.
+	surface.surface_filled_polygon(face, colors["deck"].darkened(0.30)) # SA2_PER_FRAME_OK: fixed opaque four-point shelf apron.
+	surface.draw_line(top_left, top_right, colors["trim"], 3.0)
+	surface.draw_line(bottom_left, bottom_right, colors["side"].darkened(0.24), 2.0)
+	surface.draw_line(top_left, bottom_left, colors["trim"].darkened(0.28), 1.0)
+	surface.draw_line(top_right, bottom_right, colors["trim"].darkened(0.28), 1.0)
 
 
 func _draw_glass(surface, colors: Dictionary) -> void:
@@ -797,12 +808,16 @@ func debug_payout_ramp_for_test(state: Dictionary) -> Dictionary:
 	var width := int(geometry.get("width", 100000))
 	var lip := int(geometry.get("tray_lip_y", 4000))
 	var run := maxi(1, int(geometry.get("payout_ramp_run", 6500)))
-	var rise := maxi(0, int(geometry.get("payout_ramp_rise", 2500)))
+	var rise := maxi(0, int(geometry.get("payout_ramp_rise", 900)))
+	var apron_drop := maxi(1, int(geometry.get("payout_apron_drop", 3000)))
 	return {
 		"run": run,
 		"rise": rise,
+		"apron_drop": apron_drop,
 		"front_left": _project(0, lip, rise),
 		"front_right": _project(width, lip, rise),
+		"apron_bottom_left": _project(0, lip, rise - apron_drop),
+		"apron_bottom_right": _project(width, lip, rise - apron_drop),
 		"back_left": _project(0, lip + run, 0),
 		"back_right": _project(width, lip + run, 0),
 	}

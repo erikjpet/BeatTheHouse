@@ -71,7 +71,7 @@ inline int64_t floor_div(int64_t v, int64_t d) {
 
 struct Geo {
   int64_t width = 100000, lip = 4000, payout_run = 6500,
-          payout_rise = 2500, deck = 0, top = 3600, extended = 43000,
+          payout_rise = 900, deck = 0, top = 3600, extended = 43000,
           retracted = 61000, plate = 78000, plate_gap = 400, drop_y = 73000,
           drop_z = 24000, gutter = 3000, period = 240, ramp = 24, coin_r = 2350,
           coin_h = 950, coin_m = 1000, coin_value = 1, jitter = 300,

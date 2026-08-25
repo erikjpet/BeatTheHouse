@@ -79,7 +79,7 @@ func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary
 	var backglass_rect: Rect2 = signature.get("backglass_rect", Rect2())
 	var front_contact_radius := float(signature.get("front_contact_radius_px", 0.0))
 	var rear_contact_radius := float(signature.get("rear_contact_radius_px", 0.0))
-	if float(signature.get("rear_width_factor", 0.0)) != 0.78 or not is_equal_approx(float(signature.get("coin_rx", 0.0)), front_contact_radius) or rear_contact_radius <= 0.0 or rear_contact_radius >= front_contact_radius or float(signature.get("coin_ry", 0.0)) != 12.0 or float(signature.get("z_layer_offset", 0.0)) != 10.0 or float(signature.get("playfield_width_ratio", 0.0)) < 0.70 or float(signature.get("playfield_height_ratio", 0.0)) < 0.60 or playfield_rect.intersects(marquee_rect) or playfield_rect.intersects(backglass_rect) or not cabinet_rect.encloses(playfield_rect) or int(signature.get("rotation_frames", 0)) != 4 or not bool(signature.get("depth_sorted", false)) or int(signature.get("batch_draws", -1)) != 1 or int(signature.get("batched_nodes", -1)) != 0 or int(signature.get("per_coin_nodes", -1)) != 0 or signature.get("draw_order", []) != ["shadows", "coin_batch", "feature_labels", "glass", "hardware"]:
+	if float(signature.get("rear_width_factor", 0.0)) != 0.78 or not is_equal_approx(float(signature.get("coin_rx", 0.0)), front_contact_radius) or rear_contact_radius <= 0.0 or rear_contact_radius >= front_contact_radius or float(signature.get("coin_ry", 0.0)) != 12.0 or float(signature.get("z_layer_offset", 0.0)) != 10.0 or float(signature.get("playfield_width_ratio", 0.0)) < 0.70 or float(signature.get("playfield_height_ratio", 0.0)) < 0.60 or playfield_rect.intersects(marquee_rect) or playfield_rect.intersects(backglass_rect) or not cabinet_rect.encloses(playfield_rect) or int(signature.get("rotation_frames", 0)) != 4 or not bool(signature.get("depth_sorted", false)) or int(signature.get("batch_draws", -1)) != 1 or int(signature.get("batched_nodes", -1)) != 0 or int(signature.get("per_coin_nodes", -1)) != 0 or signature.get("draw_order", []) != ["shadows", "coin_batch", "feature_labels", "payout_edge_face", "glass", "hardware"]:
 		failures.append("Coin Pusher V3 lost the playfield-dominant physical-contact/four-frame batched projection contract: %s." % JSON.stringify(signature))
 	var renderer = load("res://scripts/games/coin_pusher/coin_pusher_renderer.gd").new()
 	var canvas_source := FileAccess.get_file_as_string("res://scripts/ui/game_surface_canvas.gd")
@@ -277,7 +277,8 @@ func _check_pusher_v3_machine_data(machine: Dictionary, failures: Array) -> void
 			or int(geometry.get("width", 0)) != 100000 \
 			or int(geometry.get("tray_lip_y", 0)) != 4000 \
 			or int(geometry.get("payout_ramp_run", 0)) != 6500 \
-			or int(geometry.get("payout_ramp_rise", 0)) != 2500 \
+			or int(geometry.get("payout_ramp_rise", 0)) != 900 \
+			or int(geometry.get("payout_apron_drop", 0)) != 3000 \
 			or int(geometry.get("face_extended_y", 0)) != 43000 \
 			or int(geometry.get("face_retracted_y", 0)) != 61000 \
 			or int(geometry.get("back_plate_y", 0)) != 78000 \
@@ -312,6 +313,7 @@ func _check_pusher_v3_coin_scale_lower_bed_and_edge_ramp(machine: Dictionary, fa
 	var lip := int(geometry.get("tray_lip_y", 0))
 	var ramp_run := int(geometry.get("payout_ramp_run", 0))
 	var ramp_rise := int(geometry.get("payout_ramp_rise", 0))
+	var apron_drop := int(geometry.get("payout_apron_drop", 0))
 	var extended := int(geometry.get("face_extended_y", 0))
 	var retracted := int(geometry.get("face_retracted_y", 0))
 	var plate := int(geometry.get("back_plate_y", 0))
@@ -326,14 +328,15 @@ func _check_pusher_v3_coin_scale_lower_bed_and_edge_ramp(machine: Dictionary, fa
 	var mid_height := CoinPusherSolverScript.payout_ramp_height_for_y(machine, lip + ramp_run / 2)
 	var front_height := CoinPusherSolverScript.payout_ramp_height_for_y(machine, lip)
 	var downhill_acceleration := CoinPusherSolverScript.payout_ramp_downhill_acceleration(machine)
-	if ramp_run != 6500 or ramp_rise != 2500 or back_height != 0 or absi(mid_height - 1250) > 1 or front_height != 2500 or downhill_acceleration <= 0:
+	if ramp_run != 6500 or ramp_rise != 900 or apron_drop != 3000 or back_height != 0 or absi(mid_height - 450) > 1 or front_height != 900 or downhill_acceleration <= 0:
 		failures.append("Coin Pusher V3 payout edge is not a finite upward plate with resolved gravity: run=%d rise=%d heights=%s downhill=%d." % [ramp_run, ramp_rise, JSON.stringify([back_height, mid_height, front_height]), downhill_acceleration])
 	var renderer := CoinPusherRenderer.new()
 	var render_state := {"coin_pusher_geometry": geometry, "coin_pusher_coin_radius": int(coins.get("radius", 0)), "coin_pusher_coin_height": int(coins.get("height", 0)), "coin_pusher_bodies": []}
 	var signature := renderer.render_signature(render_state)
 	var ramp_projection := renderer.debug_payout_ramp_for_test(render_state)
 	var flat_front := renderer.debug_project_for_test(render_state, 0, lip, 0)
-	if not is_equal_approx(float(signature.get("coin_rx", 0.0)), 17.02246) or float(signature.get("coin_ry", 0.0)) != 12.0 or signature.get("coin_atlas_frame_size", Vector2i.ZERO) != Vector2i(40, 32) or not is_equal_approx(float(signature.get("front_contact_radius_px", 0.0)), float(signature.get("coin_rx", 0.0))) or int(ramp_projection.get("run", 0)) != ramp_run or int(ramp_projection.get("rise", 0)) != ramp_rise or float((ramp_projection.get("front_left", Vector2.ZERO) as Vector2).y) >= flat_front.y:
+	var apron_depth_px := float((ramp_projection.get("apron_bottom_left", Vector2.ZERO) as Vector2).y) - float((ramp_projection.get("front_left", Vector2.ZERO) as Vector2).y)
+	if not is_equal_approx(float(signature.get("coin_rx", 0.0)), 17.02246) or float(signature.get("coin_ry", 0.0)) != 12.0 or signature.get("coin_atlas_frame_size", Vector2i.ZERO) != Vector2i(40, 32) or not is_equal_approx(float(signature.get("front_contact_radius_px", 0.0)), float(signature.get("coin_rx", 0.0))) or int(ramp_projection.get("run", 0)) != ramp_run or int(ramp_projection.get("rise", 0)) != ramp_rise or int(ramp_projection.get("apron_drop", 0)) != apron_drop or float((ramp_projection.get("front_left", Vector2.ZERO) as Vector2).y) >= flat_front.y or apron_depth_px < 12.0:
 		failures.append("Coin Pusher V3 renderer did not restore the prior coin size or project the raised payout plate: signature=%s ramp=%s." % [JSON.stringify(signature), JSON.stringify(ramp_projection)])
 	var ramp_state := _pusher_v3_state(machine, "PUSHER-V3-EDGE-RAMP")
 	_pusher_v3_hold_phase(ramp_state, machine, 0)
@@ -410,6 +413,7 @@ func _check_pusher_v3_played_in_opening_state(library: ContentLibrary, game_defi
 		var variation_max_passive := 0
 		var variation_min_retained_upper := 1000000
 		var variation_min_retained_edge := 1000000
+		var variation_min_contacting := 1000000
 		for seed_index in range(4):
 			var seed := "PUSHER-V3-PLAYED-IN-%s-%d" % [variation_id, seed_index]
 			var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng(seed), definition, opening_count)
@@ -424,6 +428,11 @@ func _check_pusher_v3_played_in_opening_state(library: ContentLibrary, game_defi
 				failures.append("Coin Pusher V3 %s opening topology is not a collision-valid mixed-height played-in field: bodies=%d upper=%d overlaps=%d." % [variation_id, bodies.size(), upper_before, overlap_before])
 				return
 			var edge_before := CoinPusherSolverScript.edge_hanger_count(state)
+			var contacting_before := CoinPusherSolverScript.contacting_coin_count(state, 120)
+			variation_min_contacting = mini(variation_min_contacting, contacting_before)
+			if contacting_before < opening_count - 10:
+				failures.append("Coin Pusher V3 %s opening stock is still a sparse non-contact field: seed=%d contacting=%d opening=%d." % [variation_id, seed_index, contacting_before, opening_count])
+				return
 			CoinPusherSolverScript.step_ticks(state, {"motor_enabled": true}, 240)
 			var passive := CoinPusherSolverScript.collect_tray(state)
 			var passive_count := int(passive.get("count", 0))
@@ -451,7 +460,7 @@ func _check_pusher_v3_played_in_opening_state(library: ContentLibrary, game_defi
 			if passive_count > 2 or per_play.max() > 6 or cumulative > 10 or retained_upper < 4:
 				failures.append("Coin Pusher V3 %s opening stock surged or flattened during the first five plays: seed=%d passive=%d per_play=%s cumulative=%d retained_upper=%d." % [variation_id, seed_index, passive_count, JSON.stringify(per_play), cumulative, retained_upper])
 				return
-		report[variation_id] = {"opening": opening_count, "max_passive": variation_max_passive, "max_per_play": variation_max_payout, "max_first_five": variation_max_total, "min_retained_upper": variation_min_retained_upper, "min_retained_edge": variation_min_retained_edge}
+		report[variation_id] = {"opening": opening_count, "max_passive": variation_max_passive, "max_per_play": variation_max_payout, "max_first_five": variation_max_total, "min_retained_upper": variation_min_retained_upper, "min_retained_edge": variation_min_retained_edge, "min_contacting": variation_min_contacting}
 	print("Coin Pusher V3 played-in opening report: %s" % JSON.stringify(report))
 
 
@@ -516,7 +525,7 @@ func _check_pusher_v3_shipped_variant_definitions(machine: Dictionary, failures:
 	for row in ridge_rows:
 		for x in row[1]:
 			ridge_pegs.append({"x": x, "z": row[0], "r": 1200})
-	var common_geometry := {"width": 100000, "tray_lip_y": 4000, "payout_ramp_run": 6500, "payout_ramp_rise": 2500, "deck_z": 0, "platform_top_z": 3600, "face_extended_y": 43000, "face_retracted_y": 61000, "back_plate_y": 78000, "back_plate_gap": 400, "drop_y": 73000, "drop_z": 24000}
+	var common_geometry := {"width": 100000, "tray_lip_y": 4000, "payout_ramp_run": 6500, "payout_ramp_rise": 900, "payout_apron_drop": 3000, "deck_z": 0, "platform_top_z": 3600, "face_extended_y": 43000, "face_retracted_y": 61000, "back_plate_y": 78000, "back_plate_gap": 400, "drop_y": 73000, "drop_z": 24000}
 	var common_stroke := {"period_ticks": 240, "ramp_ticks": 24, "profile": "cosine"}
 	var common_coins := {"radius": 2350, "height": 950, "mass": 1000, "value": 1, "drop_cost": 1}
 	var board := {"y": 73000, "z_top": 24000, "z_bottom": 3600, "x_min": 0, "x_max": 100000}

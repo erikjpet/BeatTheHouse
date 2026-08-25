@@ -8,7 +8,7 @@ const FP := 1000
 const WIDTH := 100000
 const TRAY_LIP_Y := 4000
 const PAYOUT_RAMP_RUN := 6500
-const PAYOUT_RAMP_RISE := 2500
+const PAYOUT_RAMP_RISE := 900
 const DECK_Z := 0
 const PLATFORM_TOP_Z := 3600
 const FACE_EXTENDED_Y := 43000
@@ -616,6 +616,34 @@ static func awake_count(state: Dictionary) -> int:
 		if not bool((body_value as Dictionary).get("sleeping", false)):
 			count += 1
 	return count
+
+
+static func contacting_coin_count(state: Dictionary, tolerance: int = 120) -> int:
+	var bodies: Array = state.get("bodies", [])
+	var contacting := {}
+	for left_index in range(bodies.size()):
+		var left: Dictionary = bodies[left_index]
+		if str(left.get("kind", "")) != "coin" or _is_terminal_body(left):
+			continue
+		for right_index in range(left_index + 1, bodies.size()):
+			var right: Dictionary = bodies[right_index]
+			if str(right.get("kind", "")) != "coin" or _is_terminal_body(right):
+				continue
+			var left_bottom := int(left.get("z", 0))
+			var left_top := left_bottom + int(left.get("height", COIN_HEIGHT))
+			var right_bottom := int(right.get("z", 0))
+			var right_top := right_bottom + int(right.get("height", COIN_HEIGHT))
+			var vertical_gap := maxi(0, maxi(left_bottom - right_top, right_bottom - left_top))
+			if vertical_gap > SUPPORT_VERTICAL_TOLERANCE:
+				continue
+			var dx := int(left.get("x", 0)) - int(right.get("x", 0))
+			var dy := int(left.get("y", 0)) - int(right.get("y", 0))
+			var reach := int(left.get("radius", COIN_RADIUS)) + int(right.get("radius", COIN_RADIUS)) + maxi(0, tolerance)
+			if dx * dx + dy * dy > reach * reach:
+				continue
+			contacting[str(left.get("id", left_index))] = true
+			contacting[str(right.get("id", right_index))] = true
+	return contacting.size()
 
 
 static func edge_hanger_count(state: Dictionary) -> int:
@@ -1474,7 +1502,6 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 	var mass := int(coins.get("mass", FP))
 	var face := int(state.get("face_y", FACE_EXTENDED_Y))
 	var tray_lip := int(geometry.get("tray_lip_y", TRAY_LIP_Y))
-	var ramp_run := maxi(1, int(geometry.get("payout_ramp_run", PAYOUT_RAMP_RUN)))
 	var width := int(geometry.get("width", WIDTH))
 	var bodies: Array = state.get("bodies", [])
 	if count > 180:
@@ -1483,32 +1510,38 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 	var base_positions: Array = []
 	var base_rows: Array = []
 	var row_specs: Array = []
-	var slot_patterns := [
-		[1, 2, 3, 5, 6, 8, 10, 12, 14],
-		[1, 3, 4, 6, 7, 9, 11, 13, 14],
-	]
-	# Eight near-contact rows fill the newly extended stationary bed from the
-	# inclined payout plate to the moving face. Seven more preserve the former
-	# upper-shelf depth. Alternating gaps read as prior public play while shared
-	# lanes can still transmit genuine contact pressure toward the edge.
-	for row in range(8):
-		row_specs.append({"columns": 9, "x_slots": slot_patterns[row % 2], "y": tray_lip + ramp_run / 2 + row * 4750})
-	for row in range(7):
-		row_specs.append({"columns": 9, "x_slots": slot_patterns[(row + 1) % 2], "y": face + radius + 1200 + row * 4800})
-	var x_step := maxi(radius * 2 + 350, _divi(width, 15))
-	# Each row is laterally sparse enough to retain visible gaps and enough room
-	# for new drops; its adjacent pockets provide valid localized upper supports.
+	var lower_columns := [8, 9, 10, 9, 8, 10, 9, 8]
+	var upper_columns := [9, 10, 8, 9, 10, 9, 9]
+	var x_step := radius * 2 - 80
+	var y_step := radius * 2 - 730
+	var lattice_columns := 10
+	var lattice_start := _divi(width - (lattice_columns - 1) * x_step, 2)
+	# A real prime is a connected, locally irregular mass rather than nine coins
+	# sampled from fifteen distant lanes. Eight lower rows bridge the slight edge
+	# incline to the moving face; seven upper rows leave rear working room. Varying
+	# row lengths produce macro gaps at the sides while every cluster remains in
+	# true collision-tolerance contact through a staggered hex-like packing. A
+	# single shallow compression gap behind the edge prime prevents the idle
+	# machine from paying while preserving a visibly touching ledge buildup.
+	for row in range(lower_columns.size()):
+		row_specs.append({"columns": lower_columns[row], "y": tray_lip + 8000 + row * y_step + (600 if row > 0 else 0)})
+	for row in range(upper_columns.size()):
+		row_specs.append({"columns": upper_columns[row], "y": face + radius + 800 + row * y_step})
+	var max_base_columns := 0
 	for spec_value in row_specs:
 		var spec: Dictionary = spec_value
 		var row_positions: Array = []
-		var x_slots: Array = spec.get("x_slots", []) if typeof(spec.get("x_slots", [])) == TYPE_ARRAY else []
-		for column in range(int(spec.get("columns", 0))):
-			var x := _divi(int(x_slots[column]) * width, 15) if not x_slots.is_empty() else _divi(width, 15) + column * x_step + (_divi(x_step, 2) if int(spec.get("x_offset", 0)) != 0 else 0)
-			# A real played field is not a surveying grid. Preserve the authored
-			# contact-safe lanes while giving every pocket enough lateral history
-			# variance to break the visible columns left by repeated public play.
-			x = clampi(x + rng.randi_range(-800, 800), radius, width - radius)
-			var y := int(spec.get("y", 0)) + rng.randi_range(-10, 10)
+		var columns := int(spec.get("columns", 0))
+		max_base_columns = maxi(max_base_columns, columns)
+		var trimmed_columns := lattice_columns - columns
+		var stagger := 0 if base_rows.size() % 2 == 0 else _divi(x_step, 2)
+		var row_drift := rng.randi_range(-60, 60)
+		var start_x := lattice_start + _divi(trimmed_columns, 2) * x_step + stagger + row_drift
+		for column in range(columns):
+			# Tiny scuffs break surveying-perfect rows without opening a visible or
+			# mechanical gap: adjacent centers stay at or just inside one diameter.
+			var x := clampi(start_x + column * x_step + rng.randi_range(-20, 20), radius, width - radius)
+			var y := int(spec.get("y", 0)) + rng.randi_range(-20, 20)
 			var on_platform := y >= face
 			row_positions.append({
 				"x": x,
@@ -1520,7 +1553,7 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 		base_rows.append(row_positions)
 	# Interleave rows so smaller diagnostic/migration fixtures still occupy the
 	# whole cabinet instead of filling a pristine rear block first.
-	for column in range(9):
+	for column in range(max_base_columns):
 		for row_value in base_rows:
 			var row_positions: Array = row_value
 			if column >= row_positions.size():
@@ -1554,8 +1587,41 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 		var swap_value: Variant = upper_candidates[index]
 		upper_candidates[index] = upper_candidates[swap_index]
 		upper_candidates[swap_index] = swap_value
+	var filtered_upper_candidates: Array = []
+	for candidate_value in upper_candidates:
+		var candidate: Dictionary = candidate_value
+		var clear := true
+		for base_value in base_positions:
+			var base: Dictionary = base_value
+			var candidate_bottom := int(candidate.get("z", 0))
+			var base_bottom := int(base.get("z", 0))
+			if candidate_bottom >= base_bottom + height or base_bottom >= candidate_bottom + height:
+				continue
+			var base_dx := int(candidate.get("x", 0)) - int(base.get("x", 0))
+			var base_dy := int(candidate.get("y", 0)) - int(base.get("y", 0))
+			# Compact persistence rounds x/y to 100 units. Keep an additional
+			# clearance margin so a valid fresh candidate cannot restore inside the
+			# collision-valid 300-unit penetration envelope.
+			var base_minimum := radius * 2 - 100
+			if base_dx * base_dx + base_dy * base_dy < base_minimum * base_minimum:
+				clear = false
+				break
+		if not clear:
+			continue
+		for accepted_value in filtered_upper_candidates:
+			var accepted: Dictionary = accepted_value
+			if absi(int(candidate.get("z", 0)) - int(accepted.get("z", 0))) >= height:
+				continue
+			var dx := int(candidate.get("x", 0)) - int(accepted.get("x", 0))
+			var dy := int(candidate.get("y", 0)) - int(accepted.get("y", 0))
+			var minimum := radius * 2 - 100
+			if dx * dx + dy * dy < minimum * minimum:
+				clear = false
+				break
+		if clear:
+			filtered_upper_candidates.append(candidate)
 	var opening_positions := base_positions.duplicate()
-	opening_positions.append_array(upper_candidates)
+	opening_positions.append_array(filtered_upper_candidates)
 	for index in range(count):
 		var base: Dictionary
 		if index < opening_positions.size():

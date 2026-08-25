@@ -111,6 +111,10 @@ static func awake_count(state: Dictionary) -> int:
 	return CoinPusherSolverScript.awake_count(state)
 
 
+static func contacting_coin_count(state: Dictionary, tolerance: int = 120) -> int:
+	return CoinPusherSolverScript.contacting_coin_count(state, tolerance)
+
+
 static func edge_hanger_count(state: Dictionary) -> int:
 	return CoinPusherSolverScript.edge_hanger_count(state)
 
