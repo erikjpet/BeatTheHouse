@@ -12,6 +12,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 		return
 	var machine_definition: Dictionary = game_definition.get("coin_pusher_machine", {}) if typeof(game_definition.get("coin_pusher_machine", {})) == TYPE_DICTIONARY else {}
 	_check_pusher_v3_machine_data(machine_definition, failures)
+	_check_pusher_v3_plinko_bounce_and_variance(machine_definition, failures)
 	_check_pusher_v3_alive_cabinet(library, machine_definition, failures)
 	_check_pusher_v3_presentation_view(machine_definition, failures)
 	_check_pusher_v3_rejected_mechanics_deleted(failures)
@@ -282,7 +283,8 @@ func _check_pusher_v3_machine_data(machine: Dictionary, failures: Array) -> void
 		failures.append("Coin Pusher V3 machine geometry drifted from Amendment 6.2.")
 	if int(stroke.get("period_ticks", 0)) != 240 or int(stroke.get("ramp_ticks", 0)) != 24 or str(stroke.get("profile", "")) != "cosine":
 		failures.append("Coin Pusher V3 stroke data is not the binding 240-tick cosine/24-tick-ramp contract.")
-	if str(apparatus.get("type", "")) != "rail_slot" or (apparatus.get("pegs", []) as Array).size() != 3 or int(machine.get("ceiling", 0)) != 600:
+	if str(apparatus.get("type", "")) != "rail_slot" or (apparatus.get("pegs", []) as Array).size() != 7 or int(machine.get("ceiling", 0)) != 600 \
+			or int(apparatus.get("release_jitter", 0)) != 650 or int(apparatus.get("release_velocity_jitter", 0)) != 2400:
 		failures.append("Coin Pusher V3 apparatus/ceiling data is incomplete.")
 	var synthetic := machine.duplicate(true)
 	var synthetic_pegs: Array = []
@@ -303,10 +305,7 @@ func _check_pusher_v3_machine_data(machine: Dictionary, failures: Array) -> void
 func _check_pusher_v3_shipped_variant_definitions(machine: Dictionary, failures: Array) -> void:
 	var ridge_pegs: Array = []
 	var ridge_rows := [
-		[20000, [12500, 37500, 62500, 87500]],
-		[17000, [5000, 27500, 50000, 72500, 95000]],
-		[14000, [12500, 37500, 62500, 87500]],
-		[11000, [5000, 27500, 50000, 72500, 95000]],
+		[17000, [25000, 50000, 75000]],
 		[8000, [12500, 37500, 62500, 87500]],
 	]
 	for row in ridge_rows:
@@ -320,7 +319,7 @@ func _check_pusher_v3_shipped_variant_definitions(machine: Dictionary, failures:
 	ridge_geometry["gutter_x"] = 4000
 	var ridge_expected := {
 		"machine_id": "jackpot_ridge", "geometry": ridge_geometry, "stroke": common_stroke.duplicate(true),
-		"apparatus": {"type": "hole_set", "rail": {}, "holes": [25000, 50000, 75000], "drop_board": board.duplicate(true), "pegs": ridge_pegs, "release_jitter": 300, "custom": {}},
+		"apparatus": {"type": "hole_set", "rail": {}, "holes": [25000, 50000, 75000], "drop_board": board.duplicate(true), "pegs": ridge_pegs, "release_jitter": 850, "release_velocity_jitter": 3200, "custom": {}},
 		"coins": common_coins.duplicate(true), "ceiling": 600, "economy": {"documented_ev_band": [0.70, 1.08]},
 		"sub_game": {"feature_kind": "puck", "feature_mass": 3000, "jam_radius": 5200, "ridge_run_rate": 2, "stroke_period_ticks": 240},
 	}
@@ -328,7 +327,7 @@ func _check_pusher_v3_shipped_variant_definitions(machine: Dictionary, failures:
 	vault_geometry["gutter_x"] = 4400
 	var vault_expected := {
 		"machine_id": "vault_drop", "geometry": vault_geometry, "stroke": common_stroke.duplicate(true),
-		"apparatus": {"type": "rail_slot", "rail": {"x_min": 10000, "x_max": 90000, "speed_per_tick": 750}, "holes": [], "drop_board": board.duplicate(true), "pegs": [{"x": 22000, "z": 12500, "r": 1400}, {"x": 42000, "z": 10500, "r": 1400}, {"x": 62000, "z": 12500, "r": 1400}, {"x": 82000, "z": 10500, "r": 1400}], "release_jitter": 220, "custom": {}},
+		"apparatus": {"type": "rail_slot", "rail": {"x_min": 10000, "x_max": 90000, "speed_per_tick": 750}, "holes": [], "drop_board": board.duplicate(true), "pegs": [{"x": 25000, "z": 17500, "r": 1400}, {"x": 50000, "z": 17500, "r": 1400}, {"x": 75000, "z": 17500, "r": 1400}, {"x": 12500, "z": 11000, "r": 1400}, {"x": 37500, "z": 11000, "r": 1400}, {"x": 62500, "z": 11000, "r": 1400}, {"x": 87500, "z": 11000, "r": 1400}, {"x": 25000, "z": 4500, "r": 1400}, {"x": 50000, "z": 4500, "r": 1400}, {"x": 75000, "z": 4500, "r": 1400}], "release_jitter": 700, "release_velocity_jitter": 2800, "custom": {}},
 		"coins": common_coins.duplicate(true), "ceiling": 600, "economy": {"documented_ev_band": [0.72, 0.94]},
 		"sub_game": {"feature_kind": "fragment", "feature_mass": 1800, "future_custom_apparatus": {}},
 	}
@@ -342,6 +341,100 @@ func _check_pusher_v3_shipped_variant_definitions(machine: Dictionary, failures:
 		failures.append("Jackpot Ridge shipped machine definition drifted from its exact pinned geometry/apparatus/economy/subgame contract.")
 	if JSON.stringify(machines.get("vault_drop", {}), "", true) != JSON.stringify(vault_expected, "", true):
 		failures.append("Vault Drop shipped machine definition drifted from its exact pinned geometry/apparatus/economy/subgame contract.")
+
+
+func _check_pusher_v3_plinko_bounce_and_variance(machine: Dictionary, failures: Array) -> void:
+	var definitions := {"quarter_falls": machine}
+	var shipped: Dictionary = machine.get("machines", {}) if typeof(machine.get("machines", {})) == TYPE_DICTIONARY else {}
+	definitions["jackpot_ridge"] = shipped.get("jackpot_ridge", {})
+	definitions["vault_drop"] = shipped.get("vault_drop", {})
+	var expected_counts := {"quarter_falls": 7, "jackpot_ridge": 7, "vault_drop": 10}
+	for variation_id in definitions.keys():
+		var definition: Dictionary = definitions[variation_id]
+		var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+		var pegs: Array = apparatus.get("pegs", []) if typeof(apparatus.get("pegs", [])) == TYPE_ARRAY else []
+		if pegs.size() != int(expected_counts.get(variation_id, -1)):
+			failures.append("Coin Pusher V3 %s entry field count is not the authored density: %d." % [variation_id, pegs.size()])
+			return
+		var coin_radius := int((definition.get("coins", {}) as Dictionary).get("radius", 4300))
+		for left_index in range(pegs.size()):
+			var left: Dictionary = pegs[left_index]
+			for right_index in range(left_index + 1, pegs.size()):
+				var right: Dictionary = pegs[right_index]
+				var dx := int(left.get("x", 0)) - int(right.get("x", 0))
+				var dz := int(left.get("z", 0)) - int(right.get("z", 0))
+				var simultaneous_radius := coin_radius * 2 + int(left.get("r", 1200)) + int(right.get("r", 1200))
+				if dx * dx + dz * dz <= simultaneous_radius * simultaneous_radius:
+					failures.append("Coin Pusher V3 %s entry field lets one coin overlap pegs %d and %d simultaneously." % [variation_id, left_index, right_index])
+					return
+
+	# A centered crown strike must visibly reverse before it can separate and
+	# legitimately strike again. One sustained numerical overlap cannot emit an
+	# impact on every solver tick.
+	var bounce_definition: Dictionary = machine.duplicate(true)
+	var bounce_apparatus: Dictionary = bounce_definition.get("apparatus", {}).duplicate(true)
+	bounce_apparatus["pegs"] = [{"x": 50000, "z": 14000, "r": 1200}]
+	bounce_definition["apparatus"] = bounce_apparatus
+	var bounce_state := _pusher_v3_state(bounce_definition, "PUSHER-V3-PEG-BOUNCE")
+	var striker := _pusher_v3_body_fixture("peg_striker", 50000, 58000, 19700, false, "")
+	striker["vx"] = 1400
+	striker["vz"] = -18000
+	striker["meta"] = {"value": 1, "inserted": true}
+	(bounce_state.get("bodies", []) as Array).append(striker)
+	bounce_state["opening_body_count"] = 1
+	var event_ticks: Array = []
+	var first_rebound_vz := -1
+	var rebound_peak_z := 0
+	for tick_index in range(90):
+		var result := CoinPusherSolverScript.step_ticks_reference_for_test(bounce_state, {"motor_enabled": false}, 1)
+		var body := _pusher_v3_body(bounce_state, "peg_striker")
+		if not body.is_empty():
+			rebound_peak_z = maxi(rebound_peak_z, int(body.get("z", 0)))
+		for event_value in result.get("events", []):
+			if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("kind", "")) == "peg_impact" and str((event_value as Dictionary).get("body_id", "")) == "peg_striker":
+				event_ticks.append(tick_index)
+				if first_rebound_vz < 0 and not body.is_empty():
+					first_rebound_vz = int(body.get("vz", 0))
+	if event_ticks.is_empty() or event_ticks.size() > 4 or first_rebound_vz < 6000 or rebound_peak_z < 19800:
+		failures.append("Coin Pusher V3 peg crown did not produce a bounded visible rebound: events=%s first_vz=%d peak_z=%d." % [JSON.stringify(event_ticks), first_rebound_vz, rebound_peak_z])
+		return
+	for event_index in range(1, event_ticks.size()):
+		if int(event_ticks[event_index]) - int(event_ticks[event_index - 1]) < 5:
+			failures.append("Coin Pusher V3 peg contact chattered instead of separating between impacts: ticks=%s." % JSON.stringify(event_ticks))
+			return
+
+	# Seeded position plus release-angle variance must create more than one real
+	# collision/landing path at every authored input, including centered holes.
+	for variation_id in definitions.keys():
+		var definition: Dictionary = definitions[variation_id]
+		var machine_signatures: Dictionary = {}
+		for target_value in _pusher_v3_release_targets(definition):
+			var target := int(target_value)
+			var target_signatures: Dictionary = {}
+			for seed_index in range(16):
+				var state := _pusher_v3_state(definition, "PUSHER-V3-PLINKO-PATH-STATE-%s-%d-%d" % [variation_id, target, seed_index])
+				var released := CoinPusherSolverScript.add_coin(state, _pusher_v3_rng("PUSHER-V3-PLINKO-PATH-DROP-%s-%d-%d" % [variation_id, target, seed_index]), target, 1)
+				var body_id := str(released.get("id", ""))
+				var peg_path: Array = []
+				for _tick in range(180):
+					var result := CoinPusherSolverScript.step_ticks_reference_for_test(state, {"motor_enabled": false}, 1)
+					for event_value in result.get("events", []):
+						if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("kind", "")) == "peg_impact" and str((event_value as Dictionary).get("body_id", "")) == body_id:
+							peg_path.append(int((event_value as Dictionary).get("peg_index", -1)))
+					var body := _pusher_v3_body(state, body_id)
+					if body.is_empty() or str(body.get("rest_state", "")) != "falling":
+						break
+				var landed := _pusher_v3_body(state, body_id)
+				var landing_bin := int(landed.get("x", target)) / 1000 if not landed.is_empty() else -1
+				var signature := "%s:%d" % [JSON.stringify(peg_path), landing_bin]
+				target_signatures[signature] = true
+				machine_signatures[signature] = true
+			if target_signatures.size() < 2:
+				failures.append("Coin Pusher V3 %s entry x=%d did not diverge across deterministic physical drops: %s." % [variation_id, target, JSON.stringify(target_signatures.keys())])
+				return
+		if machine_signatures.size() < 5:
+			failures.append("Coin Pusher V3 %s entry field produced too little path variance: %d signatures." % [variation_id, machine_signatures.size()])
+			return
 
 
 func _check_pusher_v3_rejected_mechanics_deleted(failures: Array) -> void:
@@ -495,27 +588,33 @@ func _pusher_v3_signed_release(definition: Dictionary, variation_id: String, tar
 
 func _check_pusher_v3_production_release_jitter(variation_id: String, definition: Dictionary, failures: Array) -> void:
 	var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
-	var pegs: Array = apparatus.get("pegs", []) if typeof(apparatus.get("pegs", [])) == TYPE_ARRAY else []
 	var jitter := maxi(0, int(apparatus.get("release_jitter", 0)))
+	var velocity_jitter := maxi(0, int(apparatus.get("release_velocity_jitter", 0)))
 	var saw_negative := false
 	var saw_positive := false
+	var saw_velocity_negative := false
+	var saw_velocity_positive := false
 	for target_x in _pusher_v3_release_targets(definition):
 		for seed_index in range(32):
 			var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-JITTER-STATE-%s-%d-%d" % [variation_id, int(target_x), seed_index]), definition, 0)
 			var released: Dictionary = CoinPusherSolverScript.add_coin(state, _pusher_v3_rng("PUSHER-V3-JITTER-DROP-%s-%d-%d" % [variation_id, int(target_x), seed_index]), int(target_x), 1)
 			var release_x := int(released.get("x", int(target_x)))
 			var offset := release_x - int(target_x)
+			var release_vx := int(released.get("vx", 0))
 			saw_negative = saw_negative or offset < 0
 			saw_positive = saw_positive or offset > 0
+			saw_velocity_negative = saw_velocity_negative or release_vx < 0
+			saw_velocity_positive = saw_velocity_positive or release_vx > 0
 			if absi(offset) > jitter:
 				failures.append("Coin Pusher V3 production release escaped authored jitter at %s x=%d offset=%d jitter=%d." % [variation_id, int(target_x), offset, jitter])
 				return
-			for peg_value in pegs:
-				if typeof(peg_value) == TYPE_DICTIONARY and release_x == int((peg_value as Dictionary).get("x", release_x + 1)):
-					failures.append("Coin Pusher V3 production release created exact peg symmetry at %s x=%d seed=%d." % [variation_id, release_x, seed_index])
-					return
+			if absi(release_vx) > velocity_jitter:
+				failures.append("Coin Pusher V3 production release escaped authored velocity jitter at %s vx=%d jitter=%d." % [variation_id, release_vx, velocity_jitter])
+				return
 	if jitter > 0 and (not saw_negative or not saw_positive):
 		failures.append("Coin Pusher V3 production release seed set did not exercise both jitter signs at %s." % variation_id)
+	if velocity_jitter > 0 and (not saw_velocity_negative or not saw_velocity_positive):
+		failures.append("Coin Pusher V3 production release seed set did not exercise both release-angle signs at %s." % variation_id)
 
 
 func _pusher_v3_release_targets(definition: Dictionary) -> Array:

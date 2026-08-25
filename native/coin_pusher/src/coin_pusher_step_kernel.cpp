@@ -18,8 +18,9 @@ constexpr int64_t FP = 1000, FIXED_HZ = 60, HARD_CEILING = 600, PASSES = 6;
 constexpr int64_t GRAVITY = 1800, AIR_NUM = 61, AIR_DEN = 64, SLEEP_SPEED = 140,
                   SLEEP_TICKS = 5, HARD_IMPACT_SPEED = 12000,
                   LANDING_SCATTER_SPEED = 3200, TERMINAL_FALL_FLOOR_Z = -5100;
-constexpr int64_t SLOP = 60, BETA = 600, REST_BODY = 100, REST_PEG = 250,
+constexpr int64_t SLOP = 60, BETA = 600, REST_BODY = 100, REST_PEG = 520,
                   MU_BODY = 500, MU_DECK = 700, MU_PLATFORM = 800;
+constexpr int64_t PEG_CONTACT_HYSTERESIS = 320, PEG_IMPACT_EVENT_SPEED = 3600;
 constexpr int64_t SUPPORT_TOL = 400, SUPPORT_MARGIN = 800;
 constexpr std::array<int, 240> COS = {
     1000,  1000,  999,  997,  995,  991,  988,  983,  978,  972,  966,  959,
@@ -72,6 +73,7 @@ struct Geo {
           retracted = 46000, plate = 63000, plate_gap = 400, drop_y = 58000,
           drop_z = 24000, gutter = 3000, period = 240, ramp = 24, coin_r = 4300,
           coin_h = 1700, coin_m = 1000, coin_value = 1, jitter = 300,
+          velocity_jitter = 0,
           ceiling = 600;
   Array pegs;
 };
@@ -101,6 +103,7 @@ Geo geometry(const Dictionary &s) {
   g.coin_m = std::max<int64_t>(1, c.get("mass", g.coin_m));
   g.coin_value = c.get("value", g.coin_value);
   g.jitter = std::max<int64_t>(0, a.get("release_jitter", g.jitter));
+  g.velocity_jitter = std::max<int64_t>(0, a.get("release_velocity_jitter", 0));
   g.ceiling = clampi(d.get("ceiling", g.ceiling), 1, HARD_CEILING);
   g.pegs = a.get("pegs", Array());
   return g;
@@ -395,8 +398,8 @@ struct Kernel {
         if (rel < 0) {
           // Resting-contact stabilization prevents gravity and discrete
           // correction from sustaining a perpetual micro-bounce on a peg.
-          // Full impacts retain the authored E=250 response.
-          int64_t restitution = -rel < GRAVITY * 2 && !bool(q.meta.get("inserted", false)) ? 0 : REST_PEG;
+          // Insertion is provenance, not a permanent chatter exemption.
+          int64_t restitution = -rel < GRAVITY * 2 ? 0 : REST_PEG;
           int64_t impulse = -divi((FP + restitution) * rel, FP);
           int64_t x_num = impulse * nx, z_num = impulse * nz;
           int64_t x_candidates[2] = {floor_div(x_num, FP), -floor_div(-x_num, FP)};
@@ -451,21 +454,37 @@ struct Kernel {
           int64_t remaining = std::max<int64_t>(0, friction_budget - std::abs(tangent_impulse));
           q.vy += clampi(-q.vy, -remaining, remaining);
         }
-        Dictionary e;
-        e["kind"] = "peg_impact";
-        e["body_id"] = q.id;
-        Dictionary peg;
-        // Event schema is public parity data. JSON-authored geometry may enter
-        // Godot as numeric Variants, so pin it to the integer solver contract.
-        peg["x"] = int64_t(p.get("x", 0));
-        peg["z"] = int64_t(p.get("z", 0));
-        peg["r"] = int64_t(p.get("r", 1200));
-        e["peg"] = peg;
-        e["pre_x"] = pre_x;
-        e["pre_z"] = pre_z;
-        e["post_x"] = q.x;
-        e["post_z"] = q.z;
-        events.append(e);
+        int64_t incoming_speed = std::max<int64_t>(0, -rel);
+        if (previous_peg_key != current_peg_key && incoming_speed >= PEG_IMPACT_EVENT_SPEED) {
+          Dictionary e;
+          e["kind"] = "peg_impact";
+          e["body_id"] = q.id;
+          e["impact_speed"] = incoming_speed;
+          e["peg_index"] = i;
+          Dictionary peg;
+          // Event schema is public parity data. JSON-authored geometry may enter
+          // Godot as numeric Variants, so pin it to the integer solver contract.
+          peg["x"] = int64_t(p.get("x", 0));
+          peg["z"] = int64_t(p.get("z", 0));
+          peg["r"] = int64_t(p.get("r", 1200));
+          e["peg"] = peg;
+          e["pre_x"] = pre_x;
+          e["pre_z"] = pre_z;
+          e["post_x"] = q.x;
+          e["post_z"] = q.z;
+          events.append(e);
+        }
+      }
+      if (current_peg_key.is_empty() && !previous_peg_key.is_empty() && previous_peg_key.is_valid_int()) {
+        int previous_index = int(previous_peg_key.to_int());
+        if (previous_index >= 0 && previous_index < g.pegs.size()) {
+          Dictionary previous_peg = g.pegs[previous_index];
+          int64_t hold_dx = q.x - int64_t(previous_peg.get("x", 0));
+          int64_t hold_dz = q.z - int64_t(previous_peg.get("z", 0));
+          int64_t hold_radius = q.r + int64_t(previous_peg.get("r", 1200)) + PEG_CONTACT_HYSTERESIS;
+          if (hold_dx * hold_dx + hold_dz * hold_dz < hold_radius * hold_radius)
+            current_peg_key = previous_peg_key;
+        }
       }
       q.peg_key = current_peg_key;
     }
@@ -885,27 +904,9 @@ struct Kernel {
       events.append(e);
       return;
     }
-    std::vector<int64_t> legal_offsets;
-    Array pegs = g.pegs;
-    for (int64_t offset = -g.jitter; offset <= g.jitter; ++offset) {
-      int64_t candidate = clampi(x + offset, g.coin_r, g.width - g.coin_r);
-      bool exact_symmetry = false;
-      for (int peg_index = 0; peg_index < pegs.size(); ++peg_index) {
-        Dictionary peg = pegs[peg_index];
-        if (candidate == int64_t(peg.get("x", candidate + 1))) {
-          exact_symmetry = true;
-          break;
-        }
-      }
-      if (!exact_symmetry)
-        legal_offsets.push_back(offset);
-    }
     int64_t jitter = 0;
-    if (rng && !legal_offsets.empty()) {
-      int64_t selected = int64_t(rng->call(
-          "randi_range", 0, int64_t(legal_offsets.size()) - 1));
-      jitter = legal_offsets[selected];
-    }
+    if (rng && g.jitter > 0)
+      jitter = int64_t(rng->call("randi_range", -g.jitter, g.jitter));
     Body q;
     int64_t next_id = state.get("next_body_id", 1);
     q.id = String("body_") + String::num_int64(next_id).pad_zeros(5);
@@ -914,6 +915,8 @@ struct Kernel {
     q.x = clampi(x + jitter, g.coin_r, g.width - g.coin_r);
     q.y = g.drop_y;
     q.z = g.drop_z;
+    if (rng && g.velocity_jitter > 0)
+      q.vx = int64_t(rng->call("randi_range", -g.velocity_jitter, g.velocity_jitter));
     q.fall_start_z = q.z;
     q.has_fall_start = true;
     q.r = g.coin_r;

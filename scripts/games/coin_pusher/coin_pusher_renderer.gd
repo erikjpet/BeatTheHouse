@@ -15,6 +15,12 @@ const COIN_RX := SCHEMA_DEFAULT_COIN_RADIUS / SCHEMA_DEFAULT_WIDTH * PLAYFIELD_R
 const COIN_RY := 12.0
 const Z_LAYER_OFFSET := 10.0
 const ELLIPSE_SEGMENTS := 12
+const PEG_OCTAGON := [
+	Vector2(1.0, 0.0), Vector2(0.70710678, 0.70710678),
+	Vector2(0.0, 1.0), Vector2(-0.70710678, 0.70710678),
+	Vector2(-1.0, 0.0), Vector2(-0.70710678, -0.70710678),
+	Vector2(0.0, -1.0), Vector2(0.70710678, -0.70710678),
+]
 const BATCH_CAPACITY := 600
 const ATLAS_FRAME_SIZE := Vector2i(68, 32)
 const ROTATION_VARIANTS := [-0.12, -0.04, 0.04, 0.12]
@@ -281,9 +287,18 @@ func _draw_delivery_pegs(surface, apparatus: Dictionary, geometry: Dictionary, c
 		var peg_projection := _project_delivery_peg(board, peg)
 		var point: Vector2 = peg_projection["center"]
 		var radius: Vector2 = peg_projection["radius"]
-		_draw_ellipse(surface, point + Vector2(1, 2), radius.x + 1.0, radius.y + 1.0, Color(0, 0, 0, 0.48), 0)
-		_draw_ellipse(surface, point, radius.x, radius.y, colors["trim"], 0)
-		_draw_ellipse(surface, point - Vector2(1, 1), radius.x * 0.42, radius.y * 0.42, colors["light"], 0)
+		# Pins are only a few pixels across. The generic ellipse helper emits a
+		# fill and outline and recalculates trigonometry. A precomputed two-layer
+		# pixel-art pin keeps the readable body/highlight with two submissions.
+		_draw_filled_peg_ellipse(surface, point, radius.x, radius.y, colors["trim"])
+		_draw_filled_peg_ellipse(surface, point - Vector2(1, 1), radius.x * 0.42, radius.y * 0.42, colors["light"])
+
+
+func _draw_filled_peg_ellipse(surface, center: Vector2, rx: float, ry: float, color: Color) -> void:
+	var points := PackedVector2Array() # SA2_PER_FRAME_OK: fixed eight-point micro-pin primitive.
+	for unit in PEG_OCTAGON:
+		points.append(center + Vector2(unit.x * rx, unit.y * ry))
+	surface.surface_filled_polygon(points, color)
 
 
 func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, cabinet: Dictionary) -> void:

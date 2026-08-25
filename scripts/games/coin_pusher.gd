@@ -1365,9 +1365,11 @@ func _presentation_audio_events(machine: Dictionary, physics_events: Array) -> A
 					strongest_stack_depth = stack_depth
 					strongest_impact_material = "coin_on_coin" if str(event.get("support", "")) == "body" else "coin_on_metal"
 			"peg_impact":
+				var peg_speed := maxi(0, int(event.get("impact_speed", 0)))
+				var peg_intensity := clampi(260 + peg_speed / 55, 300, 820)
 				impact_count += 1
-				if strongest_impact < 360:
-					strongest_impact = 360
+				if strongest_impact < peg_intensity:
+					strongest_impact = peg_intensity
 					strongest_fall_height = 0
 					strongest_stack_depth = 0
 					strongest_impact_material = "coin_on_metal"

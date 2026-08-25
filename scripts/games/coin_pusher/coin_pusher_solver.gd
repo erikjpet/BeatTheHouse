@@ -29,7 +29,12 @@ const SOLVER_PASSES := 6
 const SLOP := 60
 const BETA := 600
 const RESTITUTION_BODY := 100
-const RESTITUTION_PEG := 250
+## A steel coin against a fixed cabinet pin needs a visible first rebound. The
+## old 0.25 response lost enough normal speed to remain inside the discrete
+## contact band and read as a slide.
+const RESTITUTION_PEG := 520
+const PEG_CONTACT_HYSTERESIS := 320
+const PEG_IMPACT_EVENT_SPEED := 3600
 const MU_BODY := 500
 const MU_DECK := 700
 const MU_PLATFORM := 800
@@ -207,8 +212,9 @@ static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1
 	var apparatus := _apparatus(definition)
 	var board := _drop_board(definition)
 	var jitter := maxi(0, int(apparatus.get("release_jitter", 0)))
+	var velocity_jitter := maxi(0, int(apparatus.get("release_velocity_jitter", 0)))
 	var radius := int(coins.get("radius", COIN_RADIUS))
-	var release_x := _production_release_x(rng, x, jitter, apparatus, radius, int(geometry.get("width", WIDTH)))
+	var release_x := _production_release_x(rng, x, jitter, radius, int(geometry.get("width", WIDTH)))
 	var body := _new_body(
 		state,
 		"coin",
@@ -220,6 +226,7 @@ static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1
 		maxi(1, int(coins.get("mass", FP)) * maxi(1, density)),
 		{"value": int(coins.get("value", 1)), "provenance": provenance.duplicate(true), "inserted": true}
 	)
+	body["vx"] = rng.randi_range(-velocity_jitter, velocity_jitter) if velocity_jitter > 0 else 0
 	body["accepted"] = true
 	bodies.append(body)
 	state["accepted_inserts"] = int(state.get("accepted_inserts", 0)) + 1
@@ -290,23 +297,12 @@ static func return_gutter_body(state: Dictionary, return_data: Dictionary) -> Di
 	return body
 
 
-static func _production_release_x(rng: RngStream, requested_x: int, jitter: int, apparatus: Dictionary, radius: int, width: int) -> int:
-	var legal_offsets: Array[int] = []
-	var pegs: Array = apparatus.get("pegs", []) if typeof(apparatus.get("pegs", [])) == TYPE_ARRAY else []
-	for offset in range(-jitter, jitter + 1):
-		var candidate := clampi(requested_x + offset, radius, width - radius)
-		var exact_symmetry := false
-		for peg_value in pegs:
-			if typeof(peg_value) == TYPE_DICTIONARY and candidate == int((peg_value as Dictionary).get("x", candidate + 1)):
-				exact_symmetry = true
-				break
-		if not exact_symmetry:
-			legal_offsets.append(offset)
-	if legal_offsets.is_empty():
-		# A malformed zero-width apparatus still gets a deterministic release;
-		# production definitions guarantee authored nonzero jitter around pegs.
-		return clampi(requested_x, radius, width - radius)
-	return clampi(requested_x + legal_offsets[rng.randi_range(0, legal_offsets.size() - 1)], radius, width - radius)
+static func _production_release_x(rng: RngStream, requested_x: int, jitter: int, radius: int, width: int) -> int:
+	# Do not manufacture variance by banning a centered peg hit. Position and
+	# release angle are sampled independently; the contact solver must resolve a
+	# crown hit as a bounce just as it resolves an off-center hit.
+	var offset := rng.randi_range(-jitter, jitter) if jitter > 0 else 0
+	return clampi(requested_x + offset, radius, width - radius)
 
 
 static func set_skill_stop(state: Dictionary, engaged: bool, resume_rate_fp: int = -1) -> void:
@@ -913,10 +909,12 @@ static func _apply_peg_contacts(bodies: Array, definition: Dictionary, events: A
 				body["x"] = int(body.get("x", 0)) + _radial_correction_component(dx, correction, distance)
 				body["z"] = int(body.get("z", 0)) + _radial_correction_component(dz, correction, distance)
 			var relative := _divi(int(body.get("vx", 0)) * nx + int(body.get("vz", 0)) * nz, FP)
+			var incoming_speed := maxi(0, -relative)
 			if relative < 0:
 				# Stabilize low-speed resting contact so discrete gravity cannot
-				# sustain a perpetual micro-bounce. Full impacts retain E=250.
-				var restitution := 0 if -relative < GRAVITY * 2 and not bool((body.get("meta", {}) as Dictionary).get("inserted", false)) else RESTITUTION_PEG
+				# sustain a perpetual micro-bounce. Inserted coins are not exempt:
+				# insertion is provenance, not a permanent license to chatter.
+				var restitution := 0 if incoming_speed < GRAVITY * 2 else RESTITUTION_PEG
 				var impulse := -_divi((FP + restitution) * relative, FP)
 				var conservative_delta := _conservative_peg_impulse_delta(int(body.get("vx", 0)), int(body.get("vz", 0)), impulse, nx, nz)
 				body["vx"] = int(body.get("vx", 0)) + conservative_delta.x
@@ -947,7 +945,21 @@ static func _apply_peg_contacts(bodies: Array, definition: Dictionary, events: A
 				body["vz"] = friction_vz + tangent_dz
 				var remaining := maxi(0, friction_budget - absi(tangent_impulse))
 				body["vy"] = int(body.get("vy", 0)) + clampi(-int(body.get("vy", 0)), -remaining, remaining)
-			events.append({"kind": "peg_impact", "body_id": str(body.get("id", "")), "peg": {"x": int(peg.get("x", 0)), "z": int(peg.get("z", 0)), "r": int(peg.get("r", 1200))}, "pre_x": pre_x, "pre_z": pre_z, "post_x": int(body.get("x", 0)), "post_z": int(body.get("z", 0))})
+			# Audio/presentation sees collision entries, not solver overlap ticks.
+			# The retained contact key below keeps a separating coin latched until
+			# it clears a small band, preventing one scrape from becoming dozens
+			# of nominal impacts.
+			if previous_peg_key != current_peg_key and incoming_speed >= PEG_IMPACT_EVENT_SPEED:
+				events.append({"kind": "peg_impact", "body_id": str(body.get("id", "")), "impact_speed": incoming_speed, "peg_index": peg_index, "peg": {"x": int(peg.get("x", 0)), "z": int(peg.get("z", 0)), "r": int(peg.get("r", 1200))}, "pre_x": pre_x, "pre_z": pre_z, "post_x": int(body.get("x", 0)), "post_z": int(body.get("z", 0))})
+		if current_peg_key.is_empty() and not previous_peg_key.is_empty() and previous_peg_key.is_valid_int():
+			var previous_index := int(previous_peg_key)
+			if previous_index >= 0 and previous_index < pegs.size() and typeof(pegs[previous_index]) == TYPE_DICTIONARY:
+				var previous_peg: Dictionary = pegs[previous_index]
+				var hold_dx := int(body.get("x", 0)) - int(previous_peg.get("x", 0))
+				var hold_dz := int(body.get("z", 0)) - int(previous_peg.get("z", 0))
+				var hold_radius := int(body.get("radius", COIN_RADIUS)) + int(previous_peg.get("r", 1200)) + PEG_CONTACT_HYSTERESIS
+				if hold_dx * hold_dx + hold_dz * hold_dz < hold_radius * hold_radius:
+					current_peg_key = previous_peg_key
 		if current_peg_key.is_empty():
 			body.erase("peg_contact_key")
 		else:

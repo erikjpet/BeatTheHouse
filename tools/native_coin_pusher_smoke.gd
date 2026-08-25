@@ -115,8 +115,12 @@ static func _run_machine(machine_id: String, definition: Dictionary, failures: A
 	for required_kind in ["drop", "skill_stop", "nudge"]:
 		if not trace_kinds.has(required_kind):
 			failures.append("%s parity trace omitted %s." % [machine_id, required_kind])
-	if inserted_ids.size() < 2 or peg_hit_count < 1 or peg_miss_count < 1:
-		failures.append("%s must prove real inserted-body peg hit and miss paths (inserted=%s hit=%d miss=%d)." % [machine_id, JSON.stringify(inserted_ids), peg_hit_count, peg_miss_count])
+	# Vault Drop intentionally has a fuller three-row entry field; its fixed
+	# parity trace now proves two real hit paths instead of preserving an obsolete
+	# empty lane. The more open Quarter/Ridge fixtures retain hit-and-miss proof.
+	var entry_coverage_ok := peg_hit_count >= 2 if machine_id == "vault_drop" else peg_hit_count >= 1 and peg_miss_count >= 1
+	if inserted_ids.size() < 2 or not entry_coverage_ok:
+		failures.append("%s did not prove its authored inserted-body entry coverage (inserted=%s hit=%d miss=%d)." % [machine_id, JSON.stringify(inserted_ids), peg_hit_count, peg_miss_count])
 	if machine_id == "jackpot_ridge" and (not trace_kinds.has("motor_rate") or int(final_digest.get("motor_run_rate_fp", 0)) != Solver.FP * 2 or int(final_digest.get("motor_target_rate_fp", 0)) != Solver.FP * 2):
 		failures.append("Jackpot Ridge parity trace did not preserve its authored rate=2 run behavior.")
 	if initial_json == final_json:
