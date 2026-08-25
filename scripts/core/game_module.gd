@@ -778,6 +778,16 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	if chips_delta != 0:
 		run_state.change_grand_casino_chips(chips_delta, defer_bankroll_zero)
 	var suspicion_delta := int(deltas.get("suspicion_delta", 0))
+	var blackjack_heat_attempt := suspicion_delta > 0 and str(result.get("game_id", result.get("source_id", ""))) == "blackjack"
+	if suspicion_delta > 0 and str(result.get("game_id", result.get("source_id", ""))) == "blackjack":
+		var capped_blackjack_delta := run_state.blackjack_suspicion_delta_before_backoff(suspicion_delta)
+		if capped_blackjack_delta != suspicion_delta:
+			deltas["base_suspicion_delta"] = suspicion_delta
+			deltas["suspicion_delta"] = capped_blackjack_delta
+			result["suspicion_delta"] = capped_blackjack_delta
+			result["deltas"] = deltas
+			suspicion_delta = capped_blackjack_delta
+	var applied_suspicion_delta := 0
 	if suspicion_delta != 0:
 		var suspicion_context := {
 			"environment_id": result.get("environment_id", ""),
@@ -786,7 +796,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 		}
 		if result.has("environment_archetype_id"):
 			suspicion_context["environment_archetype_id"] = result.get("environment_archetype_id", "")
-		var applied_suspicion_delta := run_state.add_suspicion(
+		applied_suspicion_delta = run_state.add_suspicion(
 			"%s:%s" % [result.get("source_id", ""), result.get("action_id", "")],
 			suspicion_delta,
 			"behavior",
@@ -800,8 +810,23 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 			result["suspicion_delta"] = applied_suspicion_delta
 			result["deltas"] = deltas
 			normalize_skill_cheat_contract(result)
-		if applied_suspicion_delta > 0 and run_state.suspicion_level() >= 100 and not run_state.handle_grand_casino_heat_reroute("game_result"):
-			run_state.fail_run(RunState.FAILURE_POLICE_CAPTURE, RunState.POLICE_CAPTURE_FAILURE_MESSAGE)
+	var blackjack_backoff := run_state.apply_blackjack_heat_backoff(result) if blackjack_heat_attempt and run_state.suspicion_level() >= RunState.BLACKJACK_BACKOFF_HEAT else {}
+	if not blackjack_backoff.is_empty():
+		result["blackjack_backoff"] = blackjack_backoff
+		result["blackjack_table_barred"] = true
+		var backoff_message := str(blackjack_backoff.get("message", ""))
+		var messages := _copy_array(deltas.get("messages", []))
+		if not backoff_message.is_empty():
+			messages.append(backoff_message)
+			deltas["messages"] = messages
+			result["message"] = "%s %s" % [str(result.get("message", "")).strip_edges(), backoff_message]
+			result["message"] = str(result.get("message", "")).strip_edges()
+		var story_log := _copy_array(deltas.get("story_log", []))
+		story_log.append(_copy_dict(blackjack_backoff.get("story_entry", {})))
+		deltas["story_log"] = story_log
+		result["deltas"] = deltas
+	if applied_suspicion_delta > 0 and run_state.suspicion_level() >= 100 and blackjack_backoff.is_empty() and not run_state.handle_grand_casino_heat_reroute("game_result"):
+		run_state.fail_run(RunState.FAILURE_POLICE_CAPTURE, RunState.POLICE_CAPTURE_FAILURE_MESSAGE)
 	var alcohol_intake := int(deltas.get("alcohol_intake", 0))
 	if alcohol_intake != 0:
 		run_state.drink_alcohol(alcohol_intake)

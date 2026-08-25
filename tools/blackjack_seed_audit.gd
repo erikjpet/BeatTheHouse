@@ -528,6 +528,18 @@ func _run_payout_drift_probe(game: GameModule) -> void:
 	var main_delta := 0
 	var resolved := 0
 	for i in range(PAYOUT_DRIFT_HANDS):
+		# This fixture measures payout math across one continuous shoe, not the
+		# run-level Heat economy. Clear only a prior threshold backoff so the new
+		# persistent location guardrail does not truncate the 1,000-hand sample.
+		if run_state.suspicion_level() > 0:
+			run_state.add_suspicion("payout_drift_heat_reset", -run_state.suspicion_level(), "audit", false, {"environment_id": str(environment.get("id", ""))})
+		var payout_states: Dictionary = environment.get("game_states", {})
+		var payout_table: Dictionary = payout_states.get("blackjack", {})
+		if bool(payout_table.get("heat_backoff", false)):
+			for key in ["barred", "heat_backoff", "barred_reason", "barred_scope", "barred_at_heat", "barred_action_id"]:
+				payout_table.erase(key)
+			payout_states["blackjack"] = payout_table
+			environment["game_states"] = payout_states
 		var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, run_state, environment)
 		if not bool(deal.get("handled", false)):
 			failures.append("Payout drift probe could not deal hand %d." % i)

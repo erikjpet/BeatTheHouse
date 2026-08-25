@@ -1187,6 +1187,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	if cufflinks_broke:
 		raw_suspicion_delta = 0
 	var suspicion_delta: int = run_state.alcohol_adjusted_suspicion_delta(raw_suspicion_delta) if raw_suspicion_delta > 0 else raw_suspicion_delta
+	suspicion_delta = run_state.blackjack_suspicion_delta_before_backoff(suspicion_delta) if suspicion_delta > 0 else suspicion_delta
 	# A basic-strategy mistake may add a trace of local heat, but it must not
 	# cascade into the security penalties reserved for actual advantage play.
 	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", stake, run_state.suspicion_level() + suspicion_delta) if suspicion_delta > 0 and bool(cheat.get("advantage_play", false)) else {}
@@ -1551,6 +1552,7 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 	var pit_boss_watched := bool(cheat.get("pit_boss_watched", pit_boss_status.get("watched", false)))
 	var pit_boss_heat_bonus := int(cheat.get("pit_boss_heat_bonus", pit_boss_status.get("cheat_heat_bonus", 0)))
 	var suspicion_delta: int = run_state.alcohol_adjusted_suspicion_delta(raw_suspicion_delta) if raw_suspicion_delta > 0 else raw_suspicion_delta
+	suspicion_delta = run_state.blackjack_suspicion_delta_before_backoff(suspicion_delta) if suspicion_delta > 0 else suspicion_delta
 	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", maxi(1, int(ui_state.get("selected_stake", 1))), run_state.suspicion_level() + suspicion_delta) if suspicion_delta > 0 else {}
 	var bankroll_delta := int(security_pressure.get("bankroll_delta", 0))
 	var security_message := str(security_pressure.get("message", ""))
@@ -1631,7 +1633,7 @@ func _resolve_watched_peek_confrontation(table: Dictionary, session: Dictionary,
 	var confiscated_bet := 0 if tutorial_practice_protected else maxi(1, _wager_cost_from_session(table_stake, session, table, run_state))
 	var current_heat := run_state.suspicion_level_for_environment_id(str(environment.get("id", ""))) if run_state != null else 0
 	var raw_heat := rng.randi_range(60, 80) if rng != null else 70
-	var desired_applied_heat := maxi(0, mini(raw_heat, 95 - current_heat))
+	var desired_applied_heat := maxi(0, mini(raw_heat, RunState.BLACKJACK_BACKOFF_HEAT - current_heat))
 	var heat_delta := _base_suspicion_for_applied_cap(desired_applied_heat, run_state)
 	var applied_heat_preview := run_state.alcohol_adjusted_suspicion_delta(heat_delta) if run_state != null else heat_delta
 	var pit_boss_status := run_state.pit_boss_watch_status(environment) if run_state != null else {}
@@ -2934,7 +2936,7 @@ func _draw_count_challenge(surface, surface_state: Dictionary) -> void:
 			alpha = 0.62 * (1.0 - float(fade_elapsed) / float(COUNT_ICON_FADE_MSEC))
 		_draw_count_pulse_icon(surface, pos, value, accent, alpha, clicked_icon, missed_icon)
 		if active:
-			surface.surface_add_exact_hit(Rect2(pos - Vector2(22, 22), Vector2(44, 44)), "blackjack_count_icon", i)
+			surface.surface_add_exact_hover_hit(Rect2(pos - Vector2(22, 22), Vector2(44, 44)), "blackjack_count_icon", i)
 
 
 func _draw_count_pulse_icon(surface, center: Vector2, value: int, accent: Color, alpha: float, clicked: bool, missed: bool) -> void:

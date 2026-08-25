@@ -689,6 +689,14 @@ func surface_add_exact_hit(rect: Rect2, action: String, index: int = -1) -> void
 	surface_add_hit(rect, action, index, false)
 
 
+# Registers a normal click/touch target that also activates once when the mouse
+# enters it. Repeated motion inside the same target does not emit again.
+func surface_add_exact_hover_hit(rect: Rect2, action: String, index: int = -1) -> void:
+	surface_add_hit(rect, action, index, false)
+	if not hit_regions.is_empty():
+		(hit_regions[-1] as Dictionary)["activate_on_hover"] = true
+
+
 func surface_add_cached_exact_hits(cache_key: String, rect_sources: Array, action: String) -> void:
 	if cache_key.is_empty() or action.is_empty():
 		return
@@ -1493,6 +1501,15 @@ func _set_hovered_surface_region(local_position: Vector2) -> void:
 			hovered_surface_index = next_index
 			mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 			queue_redraw()
+			if bool(region.get("activate_on_hover", false)):
+				var block_reason := _surface_action_block_reason(next_action)
+				if not block_reason.is_empty():
+					surface_action_blocked.emit(next_action, block_reason)
+					return
+				var audio_cue := _surface_action_audio_cue(next_action)
+				if not audio_cue.is_empty():
+					surface_play_audio_cue(audio_cue, {"action": next_action, "index": next_index})
+				surface_action.emit(next_action, next_index, false)
 			return
 	if hovered_surface_action.is_empty():
 		return

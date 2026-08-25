@@ -221,6 +221,8 @@ const HOME_SLEEP_MAX_HOURS := 8
 const HOME_SLEEP_HEAT_RECOVERY_PER_HOUR := 2
 const HOME_SLEEP_DRUNK_RECOVERY_PER_HOUR := 10
 const CREW_LENDER_ID := "the_crew"
+const BLACKJACK_BACKOFF_HEAT := 90
+const BLACKJACK_BACKOFF_SCOPE := "blackjack_location"
 const CREW_MAX_LOAN_LOCATIONS := 3
 const LENDER_REPAY_HEAT_REDUCTION := 3
 const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
@@ -2456,6 +2458,8 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 		and base_level < TUTORIAL_HEAT_CEILING \
 		and base_level + adjusted_amount >= TUTORIAL_HEAT_CEILING
 	var ceiling := TUTORIAL_HEAT_CEILING if is_tutorial_run() else 100
+	if str(context.get("source_id", "")) == "blackjack":
+		ceiling = mini(ceiling, BLACKJACK_BACKOFF_HEAT)
 	var level := clampi(base_level + adjusted_amount, 0, ceiling)
 	var applied_amount := level - base_level
 	if location_id.is_empty():
@@ -2993,6 +2997,99 @@ func security_action_pressure(action_kind: String, stake: int, projected_level: 
 		"bankroll_delta": 0,
 		"ended": false,
 		"message": "",
+	}
+
+
+# Caps blackjack's projected heat at the backoff threshold for security copy.
+# add_suspicion owns the authoritative post-alcohol clamp, so even a scaled
+# one-point award at 89 Heat lands exactly on the guardrail.
+func blackjack_suspicion_delta_before_backoff(amount: int) -> int:
+	if amount <= 0 or suspicion_level() >= BLACKJACK_BACKOFF_HEAT:
+		return 0
+	return mini(amount, BLACKJACK_BACKOFF_HEAT - suspicion_level())
+
+
+# Converts the first blackjack result at 90 Heat into a persistent location
+# backoff. The result seam calls this only after the canonical heat delta lands.
+func apply_blackjack_heat_backoff(result: Dictionary) -> Dictionary:
+	var game_id := str(result.get("game_id", result.get("source_id", "")))
+	if game_id != "blackjack" or suspicion_level() < BLACKJACK_BACKOFF_HEAT or current_environment.is_empty():
+		return {}
+	var game_states := _copy_dict(current_environment.get("game_states", {}))
+	var table := _copy_dict(game_states.get("blackjack", {}))
+	if bool(table.get("heat_backoff", false)):
+		return {}
+	var dealer_name := str(table.get("dealer_name", result.get("blackjack_dealer_name", "The dealer"))).strip_edges()
+	if dealer_name.is_empty():
+		dealer_name = "The dealer"
+	var environment_name := str(current_environment.get("display_name", "this casino"))
+	var message := "%s calls the pit boss over. You're done playing blackjack at %s for the rest of the run. Other games remain open." % [dealer_name, environment_name]
+	table["barred"] = true
+	table["heat_backoff"] = true
+	table["barred_reason"] = message
+	table["barred_scope"] = BLACKJACK_BACKOFF_SCOPE
+	table["barred_at_heat"] = suspicion_level()
+	table["barred_at_hand"] = int(table.get("hands_played", 0))
+	table["barred_action_id"] = str(result.get("action_id", ""))
+	game_states["blackjack"] = table
+	current_environment["game_states"] = game_states
+	current_environment["blackjack_backoff"] = true
+	current_environment["blackjack_backoff_heat"] = suspicion_level()
+
+	var location_id := str(current_environment.get("world_node_id", current_environment.get("id", current_environment.get("archetype_id", ""))))
+	var consequence_ids: Array = []
+	var crew_payback := str(current_environment.get("archetype_id", "")) == "small_underground_casino" or location_id == "small_underground_casino"
+	if crew_payback:
+		for member_id in CrewStateModelScript.MEMBER_IDS:
+			crew_trust_by_member[member_id] = 0
+		narrative_flags.erase("rook_escort_punchline_back_room")
+		_reconcile_crew_recruitment_perks()
+		add_debt({
+			"id": "crew_blackjack_backoff:%s" % location_id,
+			"lender_id": CREW_LENDER_ID,
+			"lender_name": "The Crew",
+			"balance": 1,
+			"debt_kind": "favor",
+			"status": "active",
+			"deadline_turns": 2,
+			"turns_remaining": 2,
+			"default_consequence": "crew_favor_due",
+			"cash_conversion_balance_per_favor": 45,
+			"cash_conversion_interest_rate": 0.35,
+			"source_location_id": location_id,
+			"source": "blackjack_backoff",
+		})
+		narrative_flags["crew_blackjack_backoff_payback"] = true
+		message += " The Crew strips your standing and adds one favor to your marker: payback for taking from the operation."
+		consequence_ids.append("crew_payback")
+
+	var hook_ids := _string_array(_copy_array(current_environment.get("blackjack_backoff_event_ids", [])))
+	var hook_flags := _copy_dict(current_environment.get("scenario_hook_flags", {}))
+	var single_hook := str(hook_flags.get("blackjack_backoff_event_id", "")).strip_edges()
+	if not single_hook.is_empty() and not hook_ids.has(single_hook):
+		hook_ids.append(single_hook)
+	for event_id in hook_ids:
+		if enqueue_triggered_event(event_id, "blackjack_backoff", {"heat": suspicion_level(), "location_id": location_id}, {"presentation": "talk"}):
+			consequence_ids.append(event_id)
+
+	narrative_flags["blackjack_backoff:%s" % location_id] = true
+	store_current_world_node_environment()
+	return {
+		"triggered": true,
+		"message": message,
+		"heat": suspicion_level(),
+		"location_id": location_id,
+		"crew_payback": crew_payback,
+		"consequence_ids": consequence_ids,
+		"story_entry": {
+			"type": "blackjack_backoff",
+			"game_id": "blackjack",
+			"environment_id": str(current_environment.get("id", "")),
+			"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+			"heat": suspicion_level(),
+			"crew_payback": crew_payback,
+			"message": message,
+		},
 	}
 
 
