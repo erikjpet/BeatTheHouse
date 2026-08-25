@@ -160,7 +160,7 @@ each stage builds on the last.
 | pusherv3_1 | `pusherv3_1_physics_machine_prompt.md` | DONE | rework06_2 (landed) | pusherv3_2 | PM:Codex | 2026-08-17 | 2026-08-17 | Owner ruled complete after PM verification of Amendment 6.1 behavior, native 300-body performance, exact Windows/Web parity, determinism, and all pusher-owning gates; integrated at `a6e36d2f`. |
 | pusherv3_2 | `pusherv3_2_live_loop_prompt.md` | DONE | pusherv3_1 | pusherv3_3 | PM:Codex/sub:pusher-live | 2026-08-17 | 2026-08-18 | PM verified continuous 60 Hz loop, deterministic trace, tray-only collection, compact persistence/migration, motor-on exit settle, continuous rail drag, exact Windows/Web parity, performance, and all combined gates. |
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | DONE | pusherv3_2 | pusherv3_4 | PM:Codex/sub:pusher-cabinet | 2026-08-18 | 2026-08-18 | PM verified the data-driven slot-parity cabinet, batched stacked projection, physical audio map, integrated 9/9 feel contract, determinism, visual QA, and all combined suites/performance budgets. |
-| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | IN_PROGRESS | pusherv3_3 | coin pusher closure | Codex | 2026-08-18 | | Owner-expanded 2026-08-24: close existing variation/integration scope plus real-weight gravity/impact feel and a playfield-dominant cabinet composition. |
+| pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | DONE | pusherv3_3 | coin pusher closure | Codex | 2026-08-18 | 2026-08-24 | Verified variation/integration closure plus real-weight deterministic gravity/impact thuds and a playfield-dominant cabinet; full suites, performance, visual/capture, exact Windows/Web parity, determinism, and 200k-per-machine EV gates pass. |
 
 ### Wave D — Crew depth
 
@@ -2092,3 +2092,10 @@ What happens then is the owner's, not an agent's:
   so delivery, platform, deck, and tray dominate the environment while cabinet
   identity/header become compact framing. Codex resumed the existing row and
   added measurable physics, audio, layout, accessibility, and capture gates.
+- 2026-08-24 [pusherv3_4] DONE at implementation `b8bba8d7`: the shared native
+  and reference solvers now produce fast accelerating falls, classified impact
+  evidence, synchronized thuds, and quiet settling; the enlarged delivery,
+  platform, deck, and tray occupy the primary cabinet view. Full regression,
+  focused physics, visual/capture, 300-body performance, exact Windows/Web
+  parity, 10-seed determinism, and 200k accepted drops per machine all pass.
+  The V3 rebuild is closed and `playtest06_1` is unblocked.

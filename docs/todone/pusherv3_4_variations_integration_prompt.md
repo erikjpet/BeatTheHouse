@@ -1,12 +1,12 @@
-Status: IN_PROGRESS — owner-expanded 2026-08-24
+Status: DONE — 2026-08-24
 Board row: `pusherv3_4` in `docs/todo/README_0_6_board.md`
 
-## Execution Record (fill on completion)
+## Execution Record
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-08-24
+- **Completion/implementation commits:** `b8bba8d7` (implementation and owner-expanded acceptance coverage); closure/evidence commit archives this record.
+- **Verification:** `tools/check_godot.ps1 -RequireGodot -FoundationSuite all -NoImport` PASS (`.tmp/test_reports/20260824_230744_smoke/summary.json`); focused `coin_pusher` suite PASS (`.tmp/test_reports/20260824_225350_smoke/summary.json`); `tools/foundation_performance_probe.ps1 -RequireGodot` PASS, including the 300-body live sequence; `tools/foundation_visual_qa.ps1 -RequireGodot` PASS; 9/9 GL cabinet-feel capture PASS (`.tmp/pusherv3_4_final_cabinet_gl/manifest.json`); all-machine delivery-board capture PASS (`.tmp/pusherv3_4_final_delivery/manifest.json`); exact Windows native-v3/Web GDScript-v3 input parity PASS (`.tmp/pusherv3_4_final_input_parity/manifest.json`, payload `1d60cc839f3c9264de792cbb030276e3ecfa6b8a2a3812f27a0fc3f90e67f179`); 10-seed/two-process determinism PASS (510 checkpoints, combined hash `2576813936`); 200,000 accepted drops per machine EV aggregation PASS (`.tmp/pusherv3_4_final_ev/manifest.json`): Quarter Falls `0.818655`, Jackpot Ridge `0.994905`, Vault Drop `0.848435` physical ROI.
+- **Deviations:** No gameplay or economy deviation. The first EV wrapper pass misread completed Windows process handles as exit `-2`; all 24 shards had already emitted PASS reports with empty stderr, so the documented `-AggregateOnly` path revalidated those exact saved reports and produced the passing manifest. No geometry retuning was needed because all three measured bands passed. The decorative tray pile is capped at 12 drawn coins while its exact count/value readout and physical state remain unchanged, preserving the expanded surface's 300-body draw budget.
 
 # Agent Prompt — pusherv3_4: Variations, Integration, Closure
 
