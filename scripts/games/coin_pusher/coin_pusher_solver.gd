@@ -41,6 +41,8 @@ const AIR_DRAG_DEN := 64
 const SLEEP_SPEED := 140
 const SLEEP_TICKS := 5
 const HARD_IMPACT_SPEED := 12000
+const LANDING_SCATTER_SPEED := 3200
+const TERMINAL_FALL_FLOOR_Z := -5100
 const SUPPORT_VERTICAL_TOLERANCE := 400
 const SUPPORT_MARGIN := 800
 const SKILL_STOP_RAMP_TICKS := 24
@@ -363,6 +365,8 @@ static func apply_nudge(state: Dictionary, impulse_x: int, impulse_y: int) -> in
 	var affected := 0
 	for body_value in state.get("bodies", []):
 		var body: Dictionary = body_value
+		if _is_terminal_body(body):
+			continue
 		var mass := maxi(1, int(body.get("mass", FP)))
 		body["vx"] = int(body.get("vx", 0)) + _divi(impulse_x * FP, mass)
 		body["vy"] = int(body.get("vy", 0)) + _divi(impulse_y * FP, mass)
@@ -562,6 +566,9 @@ static func body_views(state: Dictionary) -> Array:
 			"rest_state": str(body.get("rest_state", "falling")),
 			"support_kind": str(body.get("support_kind", "")),
 			"support_root": "platform" if str(body.get("support_kind", "")) == "platform" or (str(body.get("support_kind", "")) == "body" and bool(body.get("carried_sleep", false))) else "deck" if not str(body.get("support_kind", "")).is_empty() else "",
+			"support_ids": (body.get("support_ids", []) as Array).duplicate() if typeof(body.get("support_ids", [])) == TYPE_ARRAY else [],
+			"exit_state": str(body.get("exit_state", "")),
+			"exit_start_tick": int(body.get("exit_start_tick", -1)),
 			"peg_contact_key": str(body.get("peg_contact_key", "")),
 			"metadata": (body.get("meta", {}) as Dictionary).duplicate(true),
 		})
@@ -618,6 +625,8 @@ static func edge_hanger_count(state: Dictionary) -> int:
 	var count := 0
 	for body_value in state.get("bodies", []):
 		var body: Dictionary = body_value
+		if _is_terminal_body(body):
+			continue
 		if int(body.get("y", 0)) - int(body.get("radius", COIN_RADIUS)) <= lip + 1200:
 			count += 1
 	return count
@@ -645,12 +654,16 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 	var grid := _scratch_grid
 	grid.rebuild(bodies)
 	var nestle_work := _resolve_supports(bodies, definition, new_face, events, grid)
-	grid.rebuild(bodies)
-	var pairs: Array = _contact_pairs(bodies, grid)
-	var active_mask := _active_island_mask(bodies, pairs)
-	var static_candidates := _static_candidate_indices(bodies, geometry, active_mask, new_face)
 	var collisions := 0
+	var max_candidate_count := 0
 	for _pass in range(SOLVER_PASSES):
+		# Contact topology changes as penetration is resolved. Rebuilding each
+		# pass means pressure reaches a neighbour only after real contact forms.
+		grid.rebuild(bodies)
+		var pairs: Array = _contact_pairs(bodies, grid)
+		max_candidate_count = maxi(max_candidate_count, pairs.size())
+		var active_mask := _active_island_mask(bodies, pairs)
+		var static_candidates := _static_candidate_indices(bodies, geometry, active_mask, new_face)
 		for pair_key_value in pairs:
 			var pair_key := int(pair_key_value)
 			var left_index := pair_key / HARD_BODY_CEILING
@@ -662,6 +675,7 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 			if _resolve_body_contact(bodies[left_index], bodies[right_index]):
 				collisions += 1
 		platform_work += _resolve_static_contacts(bodies, geometry, static_candidates, new_face, face_delta)
+	grid.rebuild(bodies)
 	nestle_work += _resolve_supports(bodies, definition, new_face, events, grid)
 	for body_value in bodies:
 		var settled_body: Dictionary = body_value
@@ -676,7 +690,7 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 	var active_count := bodies.size()
 	var origin_count := int(state.get("opening_body_count", 0)) + int(state.get("accepted_inserts", 0)) + int(state.get("external_origin_count", 0))
 	var conservation_ok := active_count + (state.get("tray_ledger", []) as Array).size() + (state.get("gutter_ledger", []) as Array).size() + int(state.get("collected_count", 0)) == origin_count
-	return {"events": events, "collision_count": collisions, "candidate_count": pairs.size(), "energy_ok": energy_ok, "conservation_ok": conservation_ok}
+	return {"events": events, "collision_count": collisions, "candidate_count": max_candidate_count, "energy_ok": energy_ok, "conservation_ok": conservation_ok}
 
 
 static func _update_motor(state: Dictionary, motor_enabled: bool) -> bool:
@@ -708,6 +722,8 @@ static func _apply_platform_carry_and_plate(bodies: Array, geometry: Dictionary,
 	var plate_bottom := platform_top + int(geometry.get("back_plate_gap", BACK_PLATE_GAP))
 	for body_value in bodies:
 		var body: Dictionary = body_value
+		if _is_terminal_body(body):
+			continue
 		var radius := int(body.get("radius", COIN_RADIUS))
 		var height := int(body.get("height", COIN_HEIGHT))
 		var previous_support_kind := str(body.get("support_kind", ""))
@@ -722,7 +738,6 @@ static func _apply_platform_carry_and_plate(bodies: Array, geometry: Dictionary,
 			var blocked_by_plate := int(body.get("z", 0)) + height > plate_bottom and proposed_y + radius > plate_y
 			if blocked_by_plate:
 				proposed_y = plate_y - radius
-				body["carried_sleep"] = false
 				body["plate_blocked"] = true
 				if face_delta != 0:
 					_wake(body)
@@ -746,6 +761,8 @@ static func _apply_full_height_face(bodies: Array, geometry: Dictionary, old_fac
 	var platform_top := int(geometry.get("platform_top_z", PLATFORM_TOP_Z))
 	for body_value in bodies:
 		var body: Dictionary = body_value
+		if _is_terminal_body(body):
+			continue
 		if int(body.get("z", 0)) >= platform_top:
 			continue
 		var radius := int(body.get("radius", COIN_RADIUS))
@@ -768,6 +785,8 @@ static func _static_candidate_indices(bodies: Array, geometry: Dictionary, activ
 		if body_index >= active_mask.size() or active_mask[body_index] == 0:
 			continue
 		var body: Dictionary = bodies[body_index]
+		if _is_terminal_body(body):
+			continue
 		var radius := int(body.get("radius", COIN_RADIUS))
 		var near_side := int(body.get("x", 0)) < radius * 2 or int(body.get("x", 0)) > width - radius * 2
 		var near_plate := int(body.get("z", 0)) + int(body.get("height", COIN_HEIGHT)) > plate_bottom and int(body.get("y", 0)) + radius * 2 > plate_y
@@ -790,6 +809,8 @@ static func _resolve_static_contacts(bodies: Array, geometry: Dictionary, candid
 		if body_index < 0 or body_index >= bodies.size():
 			continue
 		var body: Dictionary = bodies[body_index]
+		if _is_terminal_body(body):
+			continue
 		var radius := int(body.get("radius", COIN_RADIUS))
 		if int(body.get("z", 0)) < platform_top and int(body.get("y", 0)) < face_y and int(body.get("y", 0)) > face_y - radius:
 			var before_face := _body_kinetic_energy(body)
@@ -972,7 +993,7 @@ static func _contact_pairs(bodies: Array, grid: SpatialHash2D) -> Array:
 	queued.resize(bodies.size())
 	var queue := PackedInt32Array()
 	for index in range(bodies.size()):
-		if not bool((bodies[index] as Dictionary).get("sleeping", false)):
+		if not bool((bodies[index] as Dictionary).get("sleeping", false)) and not _is_terminal_body(bodies[index] as Dictionary):
 			queued[index] = 1
 			queue.append(index)
 	var pair_seen: Dictionary = {}
@@ -981,6 +1002,8 @@ static func _contact_pairs(bodies: Array, grid: SpatialHash2D) -> Array:
 		var left_index := int(queue[cursor])
 		cursor += 1
 		var left: Dictionary = bodies[left_index]
+		if _is_terminal_body(left):
+			continue
 		var cell_x := _floor_div(int(left.get("x", 0)), BROADPHASE_CELL)
 		var cell_y := _floor_div(int(left.get("y", 0)), BROADPHASE_CELL)
 		for offset_y in range(-1, 2):
@@ -991,6 +1014,9 @@ static func _contact_pairs(bodies: Array, grid: SpatialHash2D) -> Array:
 						right_index = grid.next_index(right_index)
 						continue
 					var right: Dictionary = bodies[right_index]
+					if _is_terminal_body(right):
+						right_index = grid.next_index(right_index)
+						continue
 					if not _z_bands_overlap(left, right):
 						right_index = grid.next_index(right_index)
 						continue
@@ -1030,7 +1056,7 @@ static func _active_island_mask(bodies: Array, pairs: Array) -> PackedByteArray:
 	active.resize(bodies.size())
 	var changed := true
 	for index in range(bodies.size()):
-		if not bool((bodies[index] as Dictionary).get("sleeping", false)):
+		if not bool((bodies[index] as Dictionary).get("sleeping", false)) and not _is_terminal_body(bodies[index] as Dictionary):
 			active[index] = 1
 	while changed:
 		changed = false
@@ -1046,6 +1072,8 @@ static func _active_island_mask(bodies: Array, pairs: Array) -> PackedByteArray:
 
 
 static func _resolve_body_contact(left: Dictionary, right: Dictionary) -> bool:
+	if _is_terminal_body(left) or _is_terminal_body(right):
+		return false
 	if not _z_bands_overlap(left, right):
 		return false
 	var dx := int(right.get("x", 0)) - int(left.get("x", 0))
@@ -1131,9 +1159,10 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 	var nestle_work := 0
 	for body_index in range(bodies.size()):
 		var body: Dictionary = bodies[body_index]
-		if bool(body.get("sleeping", false)):
+		if bool(body.get("sleeping", false)) or _is_terminal_body(body):
 			continue
 		var previous_support := "platform" if bool(body.get("pending_platform_deposit", false)) else str(body.get("support_kind", ""))
+		var previous_platform_root := previous_support == "platform" or (previous_support == "body" and bool(body.get("carried_sleep", false)))
 		var surface_z := platform_top if int(body.get("y", 0)) >= face_y else deck_z
 		var surface_kind := "platform" if int(body.get("y", 0)) >= face_y else "deck"
 		var stable := int(body.get("z", 0)) <= surface_z + SUPPORT_VERTICAL_TOLERANCE
@@ -1146,15 +1175,17 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 			body["z_remainder"] = 0
 			body["support_kind"] = surface_kind
 			body["carried_sleep"] = surface_kind == "platform"
+			body["support_ids"] = []
 			body["rest_state"] = "resting"
-			_apply_surface_friction(body, MU_PLATFORM if surface_kind == "platform" else MU_DECK)
 			if was_surface_falling:
 				var first_support := bool((body.get("meta", {}) as Dictionary).get("inserted", false)) and not bool((body.get("meta", {}) as Dictionary).get("first_support_recorded", false))
-				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": surface_kind, "support_root": surface_kind, "first_support": first_support, "fall_height": maxi(0, fall_start_z - surface_z), "impact_speed": impact_speed, "impact_class": "hard" if impact_speed >= HARD_IMPACT_SPEED else "soft", "stack_depth": 0})
+				var scatter := _apply_landing_scatter(body, impact_speed)
+				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": surface_kind, "support_root": surface_kind, "first_support": first_support, "fall_height": maxi(0, fall_start_z - surface_z), "impact_speed": impact_speed, "impact_class": "hard" if impact_speed >= HARD_IMPACT_SPEED else "soft", "stack_depth": 0, "landing_scatter_x": scatter.x, "landing_scatter_y": scatter.y})
 				if first_support:
 					(body.get("meta", {}) as Dictionary)["first_support_recorded"] = true
 				body.erase("fall_start_z")
-			if previous_support == "platform" and surface_kind == "deck":
+			_apply_surface_friction(body, MU_PLATFORM if surface_kind == "platform" else MU_DECK)
+			if previous_platform_root and surface_kind == "deck":
 				events.append({"kind": "platform_deposit", "body_id": str(body.get("id", ""))})
 				body.erase("pending_platform_deposit")
 			continue
@@ -1168,6 +1199,7 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 		var centroid_x := 0
 		var centroid_y := 0
 		var top_carried := false
+		var support_ids: Array = []
 		var cell_x := _floor_div(int(body.get("x", 0)), BROADPHASE_CELL)
 		var cell_y := _floor_div(int(body.get("y", 0)), BROADPHASE_CELL)
 		for offset_y in range(-1, 2):
@@ -1178,6 +1210,9 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 						support_index = grid.next_index(support_index)
 						continue
 					var support: Dictionary = bodies[support_index]
+					if _is_terminal_body(support):
+						support_index = grid.next_index(support_index)
+						continue
 					var top := int(support.get("z", 0)) + int(support.get("height", COIN_HEIGHT))
 					if absi(int(body.get("z", 0)) - top) > SUPPORT_VERTICAL_TOLERANCE:
 						support_index = grid.next_index(support_index)
@@ -1188,7 +1223,23 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 					if dx * dx + dy * dy >= reach * reach:
 						support_index = grid.next_index(support_index)
 						continue
+					if top < support_top:
+						support_index = grid.next_index(support_index)
+						continue
+					if top > support_top:
+						support_top = top
+						support_count = 0
+						centered = false
+						x_low = false
+						x_high = false
+						y_low = false
+						y_high = false
+						centroid_x = 0
+						centroid_y = 0
+						top_carried = false
+						support_ids = []
 					support_count += 1
+					support_ids.append(str(support.get("id", "")))
 					centered = centered or _isqrt(dx * dx + dy * dy) < int(body.get("radius", COIN_RADIUS)) / 2
 					x_low = x_low or dx <= SUPPORT_MARGIN
 					x_high = x_high or dx >= -SUPPORT_MARGIN
@@ -1197,23 +1248,22 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 					centroid_x += dx
 					centroid_y += dy
 					var support_carried := bool(support.get("carried_sleep", false)) or str(support.get("support_kind", "")) == "platform"
-					if top > support_top:
-						support_top = top
-						top_carried = support_carried
-					elif top == support_top:
-						top_carried = top_carried or support_carried
+					top_carried = top_carried or support_carried
 					support_index = grid.next_index(support_index)
 		if support_count > 0:
+			support_ids.sort()
 			stable = stable or centered or (x_low and x_high and y_low and y_high)
 			if not stable:
 				var before_nestle := _body_kinetic_energy(body)
 				centroid_x = _divi(centroid_x, support_count)
 				centroid_y = _divi(centroid_y, support_count)
 				var length := maxi(1, _isqrt(centroid_x * centroid_x + centroid_y * centroid_y))
-				# `centroid_*` points from this body toward its supports. Move into
-				# the bracket; subtracting here drove marginal stacks away forever.
-				body["vx"] = int(body.get("vx", 0)) + _divi(centroid_x * GRAVITY, 2 * length)
-				body["vy"] = int(body.get("vy", 0)) + _divi(centroid_y * GRAVITY, 2 * length)
+				# One off-centre support is a downhill slope, not a magnet: slide
+				# gently away from it. Multiple unbracketed supports guide the coin
+				# toward their shared pocket without the former sideways pop.
+				var direction := -1 if support_count == 1 else 1
+				body["vx"] = int(body.get("vx", 0)) + direction * _divi(centroid_x * GRAVITY, 6 * length)
+				body["vy"] = int(body.get("vy", 0)) + direction * _divi(centroid_y * GRAVITY, 6 * length)
 				nestle_work += maxi(0, _body_kinetic_energy(body) - before_nestle)
 		if stable and int(body.get("vz", 0)) <= 0:
 			var was_falling := str(body.get("rest_state", "")) == "falling"
@@ -1226,27 +1276,30 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 			body["carried_sleep"] = str(body.get("support_kind", "")) == "platform"
 			if str(body.get("support_kind", "")) == "body":
 				body["carried_sleep"] = top_carried
+			body["support_ids"] = support_ids if str(body.get("support_kind", "")) == "body" else []
 			body["rest_state"] = "resting"
-			_apply_surface_friction(body, MU_PLATFORM if str(body.get("support_kind", "")) == "platform" else MU_DECK)
 			if was_falling:
 				var stack_depth := maxi(0, _divi(support_top - surface_z, maxi(1, int(body.get("height", COIN_HEIGHT)))))
 				var support_root := "platform" if str(body.get("support_kind", "")) == "platform" or (str(body.get("support_kind", "")) == "body" and top_carried) else "deck"
 				var first_support := bool((body.get("meta", {}) as Dictionary).get("inserted", false)) and not bool((body.get("meta", {}) as Dictionary).get("first_support_recorded", false))
-				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": str(body.get("support_kind", "")), "support_root": support_root, "first_support": first_support, "fall_height": maxi(0, fall_start_z - support_top), "impact_speed": impact_speed, "impact_class": "hard" if impact_speed >= HARD_IMPACT_SPEED else "soft", "stack_depth": stack_depth})
+				var scatter := _apply_landing_scatter(body, impact_speed)
+				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": str(body.get("support_kind", "")), "support_root": support_root, "first_support": first_support, "fall_height": maxi(0, fall_start_z - support_top), "impact_speed": impact_speed, "impact_class": "hard" if impact_speed >= HARD_IMPACT_SPEED else "soft", "stack_depth": stack_depth, "landing_scatter_x": scatter.x, "landing_scatter_y": scatter.y})
 				if first_support:
 					(body.get("meta", {}) as Dictionary)["first_support_recorded"] = true
 				body.erase("fall_start_z")
+			_apply_surface_friction(body, MU_PLATFORM if bool(body.get("carried_sleep", false)) else MU_DECK)
 		else:
 			if str(body.get("rest_state", "")) != "falling":
 				body["fall_start_z"] = int(body.get("z", 0))
-			if previous_support == "platform":
+			if previous_platform_root:
 				body["pending_platform_deposit"] = true
 			body["support_kind"] = ""
+			body["support_ids"] = []
 			body["carried_sleep"] = false
 			body["rest_state"] = "falling"
 			body["sleep_ticks"] = 0
 			body["sleeping"] = false
-		if previous_support == "platform" and str(body.get("support_kind", "")) == "deck":
+		if previous_platform_root and str(body.get("support_kind", "")) == "deck":
 			events.append({"kind": "platform_deposit", "body_id": str(body.get("id", ""))})
 			body.erase("pending_platform_deposit")
 	return nestle_work
@@ -1261,6 +1314,14 @@ static func _process_exits(state: Dictionary, events: Array) -> void:
 	var bodies: Array = state.get("bodies", [])
 	for index in range(bodies.size() - 1, -1, -1):
 		var body: Dictionary = bodies[index]
+		var existing_exit := str(body.get("exit_state", ""))
+		if not existing_exit.is_empty():
+			if int(body.get("z", 0)) > TERMINAL_FALL_FLOOR_Z:
+				continue
+			var landed_outcome := existing_exit.trim_suffix("_fall")
+			_finalize_exit(state, body, landed_outcome, events)
+			bodies.remove_at(index)
+			continue
 		var radius := int(body.get("radius", COIN_RADIUS))
 		var x := int(body.get("x", 0))
 		var y := int(body.get("y", 0))
@@ -1271,19 +1332,36 @@ static func _process_exits(state: Dictionary, events: Array) -> void:
 			outcome = "gutter"
 		if outcome.is_empty():
 			continue
-		var entry := {
-			"body_id": str(body.get("id", "")),
-			"kind": str(body.get("kind", "coin")),
-			"value": int((body.get("meta", {}) as Dictionary).get("value", 1 if str(body.get("kind", "")) == "coin" else 0)),
-			"item_id": str((body.get("meta", {}) as Dictionary).get("item_id", "")),
-			"provenance": ((body.get("meta", {}) as Dictionary).get("provenance", {}) as Dictionary).duplicate(true) if typeof((body.get("meta", {}) as Dictionary).get("provenance", {})) == TYPE_DICTIONARY else {},
-		}
-		if outcome == "tray":
-			(state["tray_ledger"] as Array).append(entry)
-		else:
-			(state["gutter_ledger"] as Array).append(entry)
-		events.append({"kind": outcome, "outcome": outcome, "body_id": str(body.get("id", "")), "body_kind": str(body.get("kind", "coin")), "x": x, "radius": radius, "height": int(body.get("height", COIN_HEIGHT)), "mass": int(body.get("mass", FP)), "tick": int(state.get("tick", 0)), "stroke_cycle": int(state.get("stroke_cycle_serial", 0)), "phase_fp": int(state.get("phase_fp", 0)), "metadata": (body.get("meta", {}) as Dictionary).duplicate(true)})
-		bodies.remove_at(index)
+		body["exit_state"] = outcome + "_fall"
+		body["exit_start_tick"] = int(state.get("tick", 0))
+		body["rest_state"] = "terminal_fall"
+		body["support_kind"] = ""
+		body["support_ids"] = []
+		body["carried_sleep"] = false
+		body["sleeping"] = false
+		body["sleep_ticks"] = 0
+		body["vz"] = mini(0, int(body.get("vz", 0)))
+		# Preserve the shelf-crossing momentum. The downward z fall is gravity;
+		# manufacturing forward speed here would add energy at the sensor seam.
+		body["vy"] = mini(0, int(body.get("vy", 0)))
+		body.erase("pending_platform_deposit")
+		events.append({"kind": outcome + "_fall_start", "outcome": outcome, "body_id": str(body.get("id", "")), "body_kind": str(body.get("kind", "coin")), "x": x, "z": int(body.get("z", 0)), "tick": int(state.get("tick", 0))})
+
+
+static func _finalize_exit(state: Dictionary, body: Dictionary, outcome: String, events: Array) -> void:
+	var metadata: Dictionary = body.get("meta", {}) if typeof(body.get("meta", {})) == TYPE_DICTIONARY else {}
+	var entry := {
+		"body_id": str(body.get("id", "")),
+		"kind": str(body.get("kind", "coin")),
+		"value": int(metadata.get("value", 1 if str(body.get("kind", "")) == "coin" else 0)),
+		"item_id": str(metadata.get("item_id", "")),
+		"provenance": (metadata.get("provenance", {}) as Dictionary).duplicate(true) if typeof(metadata.get("provenance", {})) == TYPE_DICTIONARY else {},
+	}
+	if outcome == "tray":
+		(state["tray_ledger"] as Array).append(entry)
+	else:
+		(state["gutter_ledger"] as Array).append(entry)
+	events.append({"kind": outcome, "outcome": outcome, "body_id": str(body.get("id", "")), "body_kind": str(body.get("kind", "coin")), "x": int(body.get("x", 0)), "radius": int(body.get("radius", COIN_RADIUS)), "height": int(body.get("height", COIN_HEIGHT)), "mass": int(body.get("mass", FP)), "tick": int(state.get("tick", 0)), "fall_ticks": maxi(1, int(state.get("tick", 0)) - int(body.get("exit_start_tick", state.get("tick", 0)))), "stroke_cycle": int(state.get("stroke_cycle_serial", 0)), "phase_fp": int(state.get("phase_fp", 0)), "metadata": metadata.duplicate(true)})
 
 
 static func _apply_trace_input(state: Dictionary, input: Dictionary, rng_value: Variant) -> void:
@@ -1381,6 +1459,7 @@ static func _new_body(state: Dictionary, kind: String, x: int, y: int, z: int, r
 		"rest_state": "falling",
 		"fall_start_z": z,
 		"support_kind": "",
+		"support_ids": [],
 		"carried_sleep": false,
 		"meta": meta.duplicate(true),
 	}
@@ -1447,6 +1526,24 @@ static func _apply_surface_friction(body: Dictionary, coefficient: int) -> void:
 	body["vy"] = _divi(int(body.get("vy", 0)) * keep, FP)
 
 
+static func _apply_landing_scatter(body: Dictionary, impact_speed: int) -> Vector2i:
+	if impact_speed < HARD_IMPACT_SPEED:
+		return Vector2i.ZERO
+	var metadata: Dictionary = body.get("meta", {}) if typeof(body.get("meta", {})) == TYPE_DICTIONARY else {}
+	var serial := maxi(0, int(metadata.get("landing_contact_serial", 0)))
+	var body_serial := int(str(body.get("id", "")).trim_prefix("body_"))
+	var direction_index := posmod(body_serial + serial * 3, 8)
+	var directions := [Vector2i(1000, 0), Vector2i(707, 707), Vector2i(0, 1000), Vector2i(-707, 707), Vector2i(-1000, 0), Vector2i(-707, -707), Vector2i(0, -1000), Vector2i(707, -707)]
+	var direction: Vector2i = directions[direction_index]
+	var speed := mini(LANDING_SCATTER_SPEED, maxi(0, impact_speed / 8))
+	var scatter := Vector2i(_divi(direction.x * speed, FP), _divi(direction.y * speed, FP))
+	body["vx"] = int(body.get("vx", 0)) + scatter.x
+	body["vy"] = int(body.get("vy", 0)) + scatter.y
+	metadata["landing_contact_serial"] = serial + 1
+	body["meta"] = metadata
+	return scatter
+
+
 static func _update_sleep(body: Dictionary) -> void:
 	var speed := absi(int(body.get("vx", 0))) + absi(int(body.get("vy", 0))) + absi(int(body.get("vz", 0)))
 	if speed < SLEEP_SPEED:
@@ -1471,9 +1568,12 @@ static func _wake(body: Dictionary) -> void:
 	if bool(body.get("sleeping", false)):
 		body["sleep_ticks"] = 0
 	body["sleeping"] = false
-	body["carried_sleep"] = false
 	if str(body.get("rest_state", "")) != "falling":
 		body["rest_state"] = "settling"
+
+
+static func _is_terminal_body(body: Dictionary) -> bool:
+	return not str(body.get("exit_state", "")).is_empty()
 
 
 static func _wake_nearby(bodies: Array, x: int, y: int, radius: int, excluded_id: String = "") -> void:

@@ -16,7 +16,8 @@ using namespace godot;
 namespace {
 constexpr int64_t FP = 1000, FIXED_HZ = 60, HARD_CEILING = 600, PASSES = 6;
 constexpr int64_t GRAVITY = 1800, AIR_NUM = 61, AIR_DEN = 64, SLEEP_SPEED = 140,
-                  SLEEP_TICKS = 5, HARD_IMPACT_SPEED = 12000;
+                  SLEEP_TICKS = 5, HARD_IMPACT_SPEED = 12000,
+                  LANDING_SCATTER_SPEED = 3200, TERMINAL_FALL_FLOOR_Z = -5100;
 constexpr int64_t SLOP = 60, BETA = 600, REST_BODY = 100, REST_PEG = 250,
                   MU_BODY = 500, MU_DECK = 700, MU_PLATFORM = 800;
 constexpr int64_t SUPPORT_TOL = 400, SUPPORT_MARGIN = 800;
@@ -112,9 +113,11 @@ int64_t face_y(const Geo &g, int64_t phase) {
 
 struct Body {
   Dictionary ref, meta;
-  String id, kind, rest, support, peg_key;
+  Array support_ids;
+  String id, kind, rest, support, peg_key, exit_state;
   int64_t x = 0, y = 0, z = 0, vx = 0, vy = 0, vz = 0, xr = 0, yr = 0, zr = 0,
-          r = 4300, h = 1700, m = 1000, sleep_ticks = 0, fall_start_z = 0;
+          r = 4300, h = 1700, m = 1000, sleep_ticks = 0, fall_start_z = 0,
+          exit_start_tick = -1;
   bool sleeping = false, carried = false, plate_blocked = false,
        pending_deposit = false, has_fall_start = false, peg_contact = false;
 };
@@ -125,10 +128,10 @@ void wake(Body &b) {
   if (b.sleeping)
     b.sleep_ticks = 0;
   b.sleeping = false;
-  b.carried = false;
   if (b.rest != "falling")
     b.rest = "settling";
 }
+bool terminal(const Body &b) { return !b.exit_state.is_empty(); }
 void update_sleep(Body &b) {
   int64_t speed = std::abs(b.vx) + std::abs(b.vy) + std::abs(b.vz);
   if (speed < SLEEP_SPEED) {
@@ -233,6 +236,9 @@ struct Kernel {
       q.sleeping = r.get("sleeping", false);
       q.rest = r.get("rest_state", "falling");
       q.support = r.get("support_kind", "");
+      q.support_ids = r.get("support_ids", Array());
+      q.exit_state = r.get("exit_state", "");
+      q.exit_start_tick = r.get("exit_start_tick", -1);
       q.carried = r.get("carried_sleep", false);
       q.plate_blocked = r.get("plate_blocked", false);
       q.peg_key = r.get("peg_contact_key", "");
@@ -278,6 +284,8 @@ struct Kernel {
   void carry(int64_t oldf, int64_t newf, int64_t delta) {
     int64_t bottom = g.top + g.plate_gap;
     for (Body &q : b) {
+      if (terminal(q))
+        continue;
       String previous = q.support;
       bool direct = previous == "platform" ||
                     (std::abs(q.z - g.top) <= SUPPORT_TOL && q.y >= oldf),
@@ -291,7 +299,6 @@ struct Kernel {
         bool blocked = q.z + q.h > bottom && proposed + q.r > g.plate;
         if (blocked) {
           proposed = g.plate - q.r;
-          q.carried = false;
           q.plate_blocked = true;
           if (delta != 0)
             wake(q);
@@ -314,6 +321,8 @@ struct Kernel {
     if (delta >= 0)
       return;
     for (Body &q : b) {
+      if (terminal(q))
+        continue;
       if (q.z >= g.top)
         continue;
       if (q.y < newf && newf - (q.y + q.r) <= q.r)
@@ -481,18 +490,20 @@ struct Kernel {
       return false;
     };
     for (int i = 0; i < (int)b.size(); ++i)
-      if (!b[i].sleeping) {
+      if (!b[i].sleeping && !terminal(b[i])) {
         queued[i] = 1;
         queue.push_back(i);
       }
     for (size_t cursor = 0; cursor < queue.size(); ++cursor) {
       int i = queue[cursor];
+      if (terminal(b[i]))
+        continue;
       int64_t cx = floor_div(b[i].x, 10000), cy = floor_div(b[i].y, 10000);
       for (int oy = -1; oy <= 1; ++oy)
         for (int ox = -1; ox <= 1; ++ox)
           for (int j = grid.first(cx + ox, cy + oy); j >= 0;
                j = grid.after(j)) {
-            if (i == j || !z_overlap(b[i], b[j]))
+            if (i == j || terminal(b[j]) || !z_overlap(b[i], b[j]))
               continue;
             int64_t dx = b[j].x - b[i].x, dy = b[j].y - b[i].y,
                     mn = b[i].r + b[j].r;
@@ -516,7 +527,7 @@ struct Kernel {
     return p;
   }
   bool contact(Body &l, Body &r) {
-    if (!z_overlap(l, r))
+    if (terminal(l) || terminal(r) || !z_overlap(l, r))
       return false;
     int64_t dx = r.x - l.x, dy = r.y - l.y;
     if (dx == 0 && dy == 0)
@@ -589,6 +600,8 @@ struct Kernel {
     for (int i = 0; i < (int)b.size(); ++i)
       if (active[i]) {
         Body &q = b[i];
+        if (terminal(q))
+          continue;
         if (q.x < q.r * 2 || q.x > g.width - q.r * 2 ||
             ((q.z + q.h) > bottom && (q.y + q.r * 2) > g.plate) ||
             (q.z < g.top && q.y < f && q.y + q.r * 2 > f))
@@ -601,6 +614,8 @@ struct Kernel {
     int64_t bottom = g.top + g.plate_gap, work = 0;
     for (int i : indices) {
       Body &q = b[i];
+      if (terminal(q))
+        continue;
       if (q.z < g.top && q.y < f && q.y > f - q.r) {
         int64_t before = body_energy(q), pen = q.y - (f - q.r),
                 corr = divi(std::max<int64_t>(0, pen - SLOP) * BETA, FP),
@@ -635,19 +650,41 @@ struct Kernel {
     }
     return work;
   }
+  std::pair<int64_t, int64_t> landing_scatter(Body &q,
+                                               int64_t impact_speed) {
+    if (impact_speed < HARD_IMPACT_SPEED)
+      return {0, 0};
+    static constexpr int64_t directions[8][2] = {
+        {1000, 0},   {707, 707},   {0, 1000},   {-707, 707},
+        {-1000, 0}, {-707, -707}, {0, -1000},  {707, -707}};
+    int64_t serial = std::max<int64_t>(0, q.meta.get("landing_contact_serial", 0));
+    int64_t body_serial = q.id.trim_prefix("body_").to_int();
+    int index = (int)posmod(body_serial + serial * 3, 8);
+    int64_t speed = std::min<int64_t>(LANDING_SCATTER_SPEED,
+                                      std::max<int64_t>(0, impact_speed / 8));
+    int64_t sx = divi(directions[index][0] * speed, FP);
+    int64_t sy = divi(directions[index][1] * speed, FP);
+    q.vx += sx;
+    q.vy += sy;
+    q.meta["landing_contact_serial"] = serial + 1;
+    return {sx, sy};
+  }
   int64_t resolve_supports(int64_t f, Grid &grid) {
     int64_t nestle_work = 0;
     for (int i = 0; i < (int)b.size(); ++i) {
       Body &q = b[i];
-      if (q.sleeping)
+      if (q.sleeping || terminal(q))
         continue;
       String prev = q.pending_deposit ? String("platform") : q.support;
+      bool previous_platform_root =
+          prev == "platform" || (prev == "body" && q.carried);
       int64_t surface_z = q.y >= f ? g.top : g.deck;
       String surface = q.y >= f ? String("platform") : String("deck");
       bool stable = q.z <= surface_z + SUPPORT_TOL;
       int64_t support_top = surface_z, count = 0, cx = 0, cy = 0;
       bool centered = false, xlo = false, xhi = false, ylo = false, yhi = false,
            top_carried = false;
+      Array support_ids;
       int64_t cellx = floor_div(q.x, 10000), celly = floor_div(q.y, 10000);
       for (int oy = -1; oy <= 1; ++oy)
         for (int ox = -1; ox <= 1; ++ox)
@@ -656,6 +693,8 @@ struct Kernel {
             if (i == j)
               continue;
             Body &s = b[j];
+            if (terminal(s))
+              continue;
             int64_t top = s.z + s.h;
             if (std::abs(q.z - top) > SUPPORT_TOL)
               continue;
@@ -663,7 +702,18 @@ struct Kernel {
                     reach = divi((q.r + s.r) * 9, 10);
             if (dx * dx + dy * dy >= reach * reach)
               continue;
+            if (top < support_top)
+              continue;
+            if (top > support_top) {
+              support_top = top;
+              count = 0;
+              centered = xlo = xhi = ylo = yhi = false;
+              cx = cy = 0;
+              top_carried = false;
+              support_ids = Array();
+            }
             ++count;
+            support_ids.append(s.id);
             centered |= isqrt(dx * dx + dy * dy) < q.r / 2;
             xlo |= dx <= SUPPORT_MARGIN;
             xhi |= dx >= -SUPPORT_MARGIN;
@@ -672,21 +722,19 @@ struct Kernel {
             cx += dx;
             cy += dy;
             bool carried = s.carried || s.support == "platform";
-            if (top > support_top) {
-              support_top = top;
-              top_carried = carried;
-            } else if (top == support_top)
-              top_carried |= carried;
+            top_carried |= carried;
           }
       if (count) {
+        support_ids.sort();
         stable |= centered || (xlo && xhi && ylo && yhi);
         if (!stable) {
           cx = divi(cx, count);
           cy = divi(cy, count);
           int64_t len = std::max<int64_t>(1, isqrt(cx * cx + cy * cy)),
                   before = body_energy(q);
-          q.vx += divi(cx * GRAVITY, 2 * len);
-          q.vy += divi(cy * GRAVITY, 2 * len);
+          int64_t direction = count == 1 ? -1 : 1;
+          q.vx += direction * divi(cx * GRAVITY, 6 * len);
+          q.vy += direction * divi(cy * GRAVITY, 6 * len);
           nestle_work += std::max<int64_t>(0, body_energy(q) - before);
         }
       }
@@ -700,8 +748,8 @@ struct Kernel {
         q.support = support_top == surface_z ? surface : "body";
         q.carried =
             q.support == "platform" || (q.support == "body" && top_carried);
+        q.support_ids = q.support == "body" ? support_ids : Array();
         q.rest = "resting";
-        friction(q, q.support == "platform" ? MU_PLATFORM : MU_DECK);
         if (falling) {
           Dictionary e;
           e["kind"] = "impact";
@@ -715,25 +763,30 @@ struct Kernel {
           e["impact_class"] = impact_speed >= HARD_IMPACT_SPEED ? String("hard") : String("soft");
           e["stack_depth"] = std::max<int64_t>(
               0, divi(support_top - surface_z, std::max<int64_t>(1, q.h)));
+          auto scatter = landing_scatter(q, impact_speed);
+          e["landing_scatter_x"] = scatter.first;
+          e["landing_scatter_y"] = scatter.second;
           events.append(e);
           if (first_support)
             q.meta["first_support_recorded"] = true;
           q.has_fall_start = false;
         }
+        friction(q, q.carried ? MU_PLATFORM : MU_DECK);
       } else {
         if (q.rest != "falling") {
           q.fall_start_z = q.z;
           q.has_fall_start = true;
         }
-        if (prev == "platform")
+        if (previous_platform_root)
           q.pending_deposit = true;
         q.support = "";
+        q.support_ids = Array();
         q.carried = false;
         q.rest = "falling";
         q.sleep_ticks = 0;
         q.sleeping = false;
       }
-      if (prev == "platform" && q.support == "deck") {
+      if (previous_platform_root && q.support == "deck") {
         Dictionary e;
         e["kind"] = "platform_deposit";
         e["body_id"] = q.id;
@@ -746,6 +799,39 @@ struct Kernel {
   void exits() {
     for (int i = (int)b.size() - 1; i >= 0; --i) {
       Body &q = b[i];
+      if (!q.exit_state.is_empty()) {
+        if (q.z > TERMINAL_FALL_FLOOR_Z)
+          continue;
+        String landed_outcome = q.exit_state == "tray_fall" ? String("tray") : String("gutter");
+        Dictionary entry;
+        entry["body_id"] = q.id;
+        entry["kind"] = q.kind;
+        entry["value"] = q.meta.get("value", q.kind == "coin" ? 1 : 0);
+        entry["item_id"] = q.meta.get("item_id", "");
+        entry["provenance"] = q.meta.get("provenance", Dictionary());
+        Array ledger = state.get(
+            landed_outcome == "tray" ? "tray_ledger" : "gutter_ledger", Array());
+        ledger.append(entry);
+        state[landed_outcome == "tray" ? "tray_ledger" : "gutter_ledger"] = ledger;
+        Dictionary ev;
+        ev["kind"] = landed_outcome;
+        ev["outcome"] = landed_outcome;
+        ev["body_id"] = q.id;
+        ev["body_kind"] = q.kind;
+        ev["x"] = q.x;
+        ev["radius"] = q.r;
+        ev["height"] = q.h;
+        ev["mass"] = q.m;
+        ev["tick"] = state.get("tick", 0);
+        ev["fall_ticks"] = std::max<int64_t>(
+            1, int64_t(state.get("tick", 0)) - q.exit_start_tick);
+        ev["stroke_cycle"] = state.get("stroke_cycle_serial", 0);
+        ev["phase_fp"] = state.get("phase_fp", 0);
+        ev["metadata"] = q.meta.duplicate(true);
+        events.append(ev);
+        b.erase(b.begin() + i);
+        continue;
+      }
       String outcome;
       if (q.y - q.r < g.lip)
         outcome = (q.x >= g.gutter && q.x <= g.width - g.gutter)
@@ -755,35 +841,34 @@ struct Kernel {
         outcome = "gutter";
       if (outcome.is_empty())
         continue;
-      Dictionary e;
-      e["body_id"] = q.id;
-      e["kind"] = q.kind;
-      e["value"] = q.meta.get("value", q.kind == "coin" ? 1 : 0);
-      e["item_id"] = q.meta.get("item_id", "");
-      e["provenance"] = q.meta.get("provenance", Dictionary());
-      Array ledger = state.get(
-          outcome == "tray" ? "tray_ledger" : "gutter_ledger", Array());
-      ledger.append(e);
-      state[outcome == "tray" ? "tray_ledger" : "gutter_ledger"] = ledger;
+      q.exit_state = outcome + "_fall";
+      q.exit_start_tick = state.get("tick", 0);
+      q.rest = "terminal_fall";
+      q.support = "";
+      q.support_ids = Array();
+      q.carried = false;
+      q.sleeping = false;
+      q.sleep_ticks = 0;
+      q.vz = std::min<int64_t>(0, q.vz);
+      // Preserve shelf-crossing momentum; gravity supplies the visible drop.
+      // Injecting forward speed here creates energy at the sensor boundary.
+      q.vy = std::min<int64_t>(0, q.vy);
+      q.pending_deposit = false;
       Dictionary ev;
-      ev["kind"] = outcome;
+      ev["kind"] = outcome + "_fall_start";
       ev["outcome"] = outcome;
       ev["body_id"] = q.id;
       ev["body_kind"] = q.kind;
       ev["x"] = q.x;
-      ev["radius"] = q.r;
-      ev["height"] = q.h;
-      ev["mass"] = q.m;
+      ev["z"] = q.z;
       ev["tick"] = state.get("tick", 0);
-      ev["stroke_cycle"] = state.get("stroke_cycle_serial", 0);
-      ev["phase_fp"] = state.get("phase_fp", 0);
-      ev["metadata"] = q.meta.duplicate(true);
       events.append(ev);
-      b.erase(b.begin() + i);
     }
   }
   void nudge(int64_t x, int64_t y) {
     for (Body &q : b) {
+      if (terminal(q))
+        continue;
       q.vx += divi(x * FP, q.m);
       q.vy += divi(y * FP, q.m);
       wake(q);
@@ -968,6 +1053,7 @@ struct Kernel {
       r["sleeping"] = q.sleeping;
       r["rest_state"] = q.rest;
       r["support_kind"] = q.support;
+      r["support_ids"] = q.support_ids;
       r["carried_sleep"] = q.carried;
       r["plate_blocked"] = q.plate_blocked;
       if (!q.peg_key.is_empty())
@@ -983,6 +1069,13 @@ struct Kernel {
         r["fall_start_z"] = q.fall_start_z;
       else
         r.erase("fall_start_z");
+      if (!q.exit_state.is_empty()) {
+        r["exit_state"] = q.exit_state;
+        r["exit_start_tick"] = q.exit_start_tick;
+      } else {
+        r.erase("exit_state");
+        r.erase("exit_start_tick");
+      }
       a.append(r);
     }
     state["bodies"] = a;
@@ -1016,23 +1109,23 @@ struct Kernel {
       pegs();
       grid.rebuild(b);
       int64_t nestle_work = resolve_supports(newf, grid);
-      grid.rebuild(b);
-      auto ps = pairs(grid);
-      candidate_peak = std::max<int64_t>(candidate_peak, ps.size());
-      std::vector<uint8_t> active(b.size());
-      for (size_t i = 0; i < b.size(); ++i)
-        active[i] = !b[i].sleeping;
-      bool changed = true;
-      while (changed) {
-        changed = false;
-        for (auto p : ps)
-          if (active[p.first] != active[p.second]) {
-            active[p.first] = active[p.second] = 1;
-            changed = true;
-          }
-      }
-      auto statics = static_candidates(active, newf);
       for (int pass = 0; pass < PASSES; ++pass) {
+        grid.rebuild(b);
+        auto ps = pairs(grid);
+        candidate_peak = std::max<int64_t>(candidate_peak, ps.size());
+        std::vector<uint8_t> active(b.size());
+        for (size_t i = 0; i < b.size(); ++i)
+          active[i] = !b[i].sleeping && !terminal(b[i]);
+        bool changed = true;
+        while (changed) {
+          changed = false;
+          for (auto p : ps)
+            if (active[p.first] != active[p.second]) {
+              active[p.first] = active[p.second] = 1;
+              changed = true;
+            }
+        }
+        auto statics = static_candidates(active, newf);
         for (auto p : ps)
           if ((active[p.first] || active[p.second]) &&
               contact(b[p.first], b[p.second]))

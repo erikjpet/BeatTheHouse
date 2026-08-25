@@ -284,7 +284,10 @@ func _capture_tray() -> void:
 	for index in range(12):
 		var coin := Solver.add_coin(state, _rng("cabinet-tray-%d" % index), 21000 + index % 6 * 11000, 1)
 		_configure_body(coin, 21000 + index % 6 * 11000, 5200 - index / 6 * 300, 0, "deck", "resting")
-	Solver.step_ticks(state, {"motor_enabled": false}, 1)
+	for _tick in range(60):
+		Solver.step_ticks(state, {"motor_enabled": false}, 1)
+		if (state.get("tray_ledger", []) as Array).size() == 12:
+			break
 	var tray_before := (state.get("tray_ledger", []) as Array).size()
 	await _capture("06_tray_heap_grown.png", "tray_heap_grown", state, {"tray_count": tray_before, "heap_grew": tray_before == 12})
 	var collected := Solver.collect_tray(state)

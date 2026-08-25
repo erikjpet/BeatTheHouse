@@ -7,7 +7,7 @@ const LiveSession := preload("res://scripts/games/coin_pusher/coin_pusher_live_s
 
 const CAPTURE_SIZE := Vector2i(1280, 720)
 const VARIATIONS := ["quarter_falls", "jackpot_ridge", "vault_drop"]
-const REQUIRED_SCENES := ["upper_row_join", "delivery_descent", "ratchet_three_cycles", "stack_nestle_topple", "skill_stop_bank_release", "tray_growth_collect"]
+const REQUIRED_SCENES := ["upper_row_join", "delivery_descent", "ratchet_three_cycles", "stack_nestle_topple", "skill_stop_bank_release", "rapid_drop_pile", "tray_growth_collect", "gutter_visible_fall"]
 
 var app: Control
 var canvas: Control
@@ -72,7 +72,9 @@ func _capture_machine(variation_id: String) -> void:
 	scenes.append(await _capture_ratchet(variation_id, definition))
 	scenes.append(await _capture_nestle_topple(variation_id, definition))
 	scenes.append(await _capture_skill_stop(variation_id, definition))
+	scenes.append(await _capture_rapid_drop_pile(variation_id, definition))
 	scenes.append(await _capture_tray(variation_id, definition))
+	scenes.append(await _capture_gutter_fall(variation_id, definition))
 	var context := _machine_context(variation_id, definition)
 	var complete := scenes.size() == REQUIRED_SCENES.size()
 	for scene in scenes:
@@ -322,18 +324,118 @@ func _capture_tray(variation_id: String, definition: Dictionary) -> Dictionary:
 		_configure_body(body, 21000 + index % 6 * 11000, lip - 800 - index / 6 * 300, 0, "deck", true)
 		ids.append(str(body.get("id", "")))
 	var result := Solver.step_ticks(state, {"motor_enabled": false}, 1)
-	terminal_events = _terminal_events(result.get("events", []))
+	terminal_events.append_array(_terminal_events(result.get("events", [])))
+	var departure := _record(state, [], result.get("events", []))
+	var mid_fall := {}
+	for _tick in range(60):
+		var previous := Solver.body_views(state)
+		result = Solver.step_ticks(state, {"motor_enabled": false}, 1)
+		terminal_events.append_array(_terminal_events(result.get("events", [])))
+		if mid_fall.is_empty():
+			for body_value in state.get("bodies", []):
+				if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("exit_state", "")) == "tray_fall" and int((body_value as Dictionary).get("z", 0)) < -1000:
+					mid_fall = _record(state, previous, result.get("events", []))
+					break
+		if (state.get("tray_ledger", []) as Array).size() == ids.size():
+			break
+	if mid_fall.is_empty():
+		mid_fall = departure
 	var grown := _record(state)
 	var tray_count := (state.get("tray_ledger", []) as Array).size()
 	var tray_value := _ledger_value(state.get("tray_ledger", []))
 	var bankroll_before_collect := active_run_state.bankroll
 	var collected := game.surface_action_command("coin_pusher_collect", 0, false, {}, active_run_state, active_environment)
 	var empty := _record(state)
-	var file := "%s_tray_growth_collect.png" % variation_id
-	var saved := await _save_record_strip(file, variation_id, definition, [grown, empty], false)
+	var file := "%s_tray_visible_fall_growth_collect.png" % variation_id
+	var reduced_file := "%s_tray_visible_fall_growth_collect_reduced.png" % variation_id
+	var saved := await _save_record_strip(file, variation_id, definition, [departure, mid_fall, grown, empty], false)
+	var reduced_saved := await _save_record_strip(reduced_file, variation_id, definition, [departure, mid_fall, grown, empty], true)
 	var bankroll_transfer := active_run_state.bankroll - bankroll_before_collect
-	var passed := tray_count == 12 and bool(collected.get("handled", false)) and bankroll_transfer == tray_value and (state.get("tray_ledger", []) as Array).is_empty() and saved
-	return {"id": "tray_growth_collect", "passed": passed, "files": [file], "body_ids": ids, "terminal_events": terminal_events, "grown_tick": int(grown["tick"]), "tray_count_before_collect": tray_count, "tray_value_before_collect": tray_value, "bankroll_before_collect": bankroll_before_collect, "bankroll_after_collect": active_run_state.bankroll, "bankroll_transfer": bankroll_transfer, "collect_result": collected, "tray_count_after_collect": 0}
+	var passed := tray_count == 12 and _event_count(terminal_events, "tray_fall_start") == 12 and _event_count(terminal_events, "tray") == 12 and int(mid_fall.get("tick", 0)) > int(departure.get("tick", 0)) and int(grown.get("tick", 0)) > int(mid_fall.get("tick", 0)) and bool(collected.get("handled", false)) and bankroll_transfer == tray_value and (state.get("tray_ledger", []) as Array).is_empty() and saved and reduced_saved
+	return {"id": "tray_growth_collect", "passed": passed, "files": [file, reduced_file], "body_ids": ids, "terminal_events": terminal_events, "departure_tick": int(departure["tick"]), "mid_fall_tick": int(mid_fall["tick"]), "grown_tick": int(grown["tick"]), "tray_count_before_collect": tray_count, "tray_value_before_collect": tray_value, "bankroll_before_collect": bankroll_before_collect, "bankroll_after_collect": active_run_state.bankroll, "bankroll_transfer": bankroll_transfer, "collect_result": collected, "tray_count_after_collect": 0}
+
+
+func _capture_gutter_fall(variation_id: String, definition: Dictionary) -> Dictionary:
+	var state := _production_state("plan94:%s:gutter" % variation_id, definition, 0)
+	var geometry: Dictionary = definition.get("geometry", {})
+	var lip := int(geometry.get("tray_lip_y", 6000))
+	var gutter := int(geometry.get("gutter_x", 3000))
+	var body := Solver.add_coin(state, _rng("plan94:%s:gutter:body" % variation_id), gutter / 2, 1)
+	_configure_body(body, gutter / 2, lip - 800, 0, "deck", true)
+	var body_id := str(body.get("id", ""))
+	var all_events: Array = []
+	var result := Solver.step_ticks(state, {"motor_enabled": false}, 1)
+	all_events.append_array(_terminal_events(result.get("events", [])))
+	var departure := _record(state, [], result.get("events", []))
+	var mid_fall := {}
+	for _tick in range(60):
+		var previous := Solver.body_views(state)
+		result = Solver.step_ticks(state, {"motor_enabled": false}, 1)
+		all_events.append_array(_terminal_events(result.get("events", [])))
+		var tracked := _body(state, body_id)
+		if mid_fall.is_empty() and not tracked.is_empty() and str(tracked.get("exit_state", "")) == "gutter_fall" and int(tracked.get("z", 0)) < -1000:
+			mid_fall = _record(state, previous, result.get("events", []))
+		if tracked.is_empty():
+			break
+	if mid_fall.is_empty():
+		mid_fall = departure
+	var landed := _record(state)
+	var file := "%s_gutter_visible_fall.png" % variation_id
+	var reduced_file := "%s_gutter_visible_fall_reduced.png" % variation_id
+	var saved := await _save_record_strip(file, variation_id, definition, [departure, mid_fall, landed], false)
+	var reduced_saved := await _save_record_strip(reduced_file, variation_id, definition, [departure, mid_fall, landed], true)
+	var passed := _event_count(all_events, "gutter_fall_start") == 1 and _event_count(all_events, "gutter") == 1 and (state.get("gutter_ledger", []) as Array).size() == 1 and int(mid_fall.get("tick", 0)) > int(departure.get("tick", 0)) and int(landed.get("tick", 0)) > int(mid_fall.get("tick", 0)) and saved and reduced_saved
+	return {"id": "gutter_visible_fall", "passed": passed, "files": [file, reduced_file], "body_id": body_id, "events": all_events, "departure_tick": int(departure["tick"]), "mid_fall_tick": int(mid_fall["tick"]), "landed_tick": int(landed["tick"])}
+
+
+func _capture_rapid_drop_pile(variation_id: String, definition: Dictionary) -> Dictionary:
+	var state := _production_state("plan94:%s:rapid-pile" % variation_id, definition, 0)
+	var pile_definition: Dictionary = state.get("machine_definition", {})
+	var pile_apparatus: Dictionary = pile_definition.get("apparatus", {}) if typeof(pile_definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+	# Isolate the pile response from delivery-board deflection. The production
+	# renderer and cabinet stay intact while every rapid drop shares one clear
+	# vertical path, so the final irregularity is landing/contact behavior.
+	pile_apparatus["pegs"] = []
+	pile_definition["apparatus"] = pile_apparatus
+	_hold_phase(state, definition, 120)
+	var release_x := _policy_x(definition, 0)
+	var ids: Array = []
+	var initial := {}
+	var landing_events: Array = []
+	for index in range(8):
+		var body := Solver.add_coin(state, _rng("plan94:%s:rapid-pile:%d" % [variation_id, index]), release_x, 1)
+		ids.append(str(body.get("id", "")))
+		if initial.is_empty():
+			initial = _record(state)
+		var step := Solver.step_ticks(state, {"motor_enabled": false}, 2)
+		landing_events.append_array(step.get("events", []))
+	for _tick in range(240):
+		var step := Solver.step_ticks(state, {"motor_enabled": false}, 1)
+		landing_events.append_array(step.get("events", []))
+	var final_record := _record(state)
+	var landed_positions := {}
+	var carried_stack_count := 0
+	for body_id in ids:
+		var landed_body := _body(state, str(body_id))
+		if landed_body.is_empty():
+			continue
+		landed_positions["%d:%d" % [int(landed_body.get("x", 0)) / 100, int(landed_body.get("y", 0)) / 100]] = true
+		if str(landed_body.get("support_kind", "")) == "body" and bool(landed_body.get("carried_sleep", false)):
+			carried_stack_count += 1
+	var scatter_directions := {}
+	for event_value in landing_events:
+		if typeof(event_value) != TYPE_DICTIONARY or str((event_value as Dictionary).get("kind", "")) != "impact":
+			continue
+		var event: Dictionary = event_value
+		if not ids.has(str(event.get("body_id", ""))):
+			continue
+		scatter_directions["%d:%d" % [int(event.get("landing_scatter_x", 0)), int(event.get("landing_scatter_y", 0))]] = true
+	var file := "%s_rapid_drop_irregular_pile.png" % variation_id
+	var reduced_file := "%s_rapid_drop_irregular_pile_reduced.png" % variation_id
+	var saved := await _save_record_strip(file, variation_id, definition, [initial, final_record], false)
+	var reduced_saved := await _save_record_strip(reduced_file, variation_id, definition, [initial, final_record], true)
+	var passed := landed_positions.size() >= 3 and scatter_directions.size() >= 3 and saved and reduced_saved
+	return {"id": "rapid_drop_pile", "passed": passed, "files": [file, reduced_file], "body_ids": ids, "distinct_landing_cells": landed_positions.size(), "scatter_direction_count": scatter_directions.size(), "platform_rooted_body_support_count": carried_stack_count, "initial_tick": int(initial.get("tick", -1)), "final_tick": int(final_record.get("tick", -1))}
 
 
 func _save_pair(variation_id: String, scene_id: String, definition: Dictionary, first: Dictionary, second: Dictionary, reduced: bool) -> Dictionary:
@@ -520,7 +622,15 @@ func _body_y_for_ids(views: Array, ids: Array) -> Dictionary:
 
 
 func _terminal_events(events: Array) -> Array:
-	return events.filter(func(event): return typeof(event) == TYPE_DICTIONARY and str((event as Dictionary).get("kind", "")) in ["tray", "gutter", "platform_deposit"])
+	return events.filter(func(event): return typeof(event) == TYPE_DICTIONARY and str((event as Dictionary).get("kind", "")) in ["tray_fall_start", "gutter_fall_start", "tray", "gutter", "platform_deposit"])
+
+
+func _event_count(events: Array, kind: String) -> int:
+	var count := 0
+	for event_value in events:
+		if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("kind", "")) == kind:
+			count += 1
+	return count
 
 
 func _ledger_value(ledger: Array) -> int:

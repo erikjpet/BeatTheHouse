@@ -9,13 +9,14 @@ const PLAYFIELD_RECT := Rect2(52, 70, 796, 276)
 const SCHEMA_DEFAULT_WIDTH := 100000.0
 const SCHEMA_DEFAULT_BACK_Y := 63000.0
 const SCHEMA_DEFAULT_COIN_HEIGHT := 1700.0
+const SCHEMA_DEFAULT_COIN_RADIUS := 4300.0
 const REAR_WIDTH_FACTOR := 0.78
-const COIN_RX := 17.0
+const COIN_RX := SCHEMA_DEFAULT_COIN_RADIUS / SCHEMA_DEFAULT_WIDTH * PLAYFIELD_RECT.size.x * 0.91
 const COIN_RY := 12.0
 const Z_LAYER_OFFSET := 10.0
 const ELLIPSE_SEGMENTS := 12
 const BATCH_CAPACITY := 600
-const ATLAS_FRAME_SIZE := Vector2i(40, 32)
+const ATLAS_FRAME_SIZE := Vector2i(68, 32)
 const ROTATION_VARIANTS := [-0.12, -0.04, 0.04, 0.12]
 const AIRBORNE_SHADOW_OFFSET := Vector2(12, 10)
 
@@ -37,6 +38,7 @@ var _palette_cache: Dictionary = {}
 var _world_width := SCHEMA_DEFAULT_WIDTH
 var _world_back_y := SCHEMA_DEFAULT_BACK_Y
 var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
+var _coin_radius := SCHEMA_DEFAULT_COIN_RADIUS
 
 
 func draw(surface, state: Dictionary) -> bool:
@@ -83,6 +85,8 @@ func render_signature(state: Dictionary) -> Dictionary:
 		"projection_coin_height": _coin_height,
 		"coin_rx": COIN_RX,
 		"coin_ry": COIN_RY,
+		"front_contact_radius_px": _projected_contact_radius_x(0.0, _coin_radius),
+		"rear_contact_radius_px": _projected_contact_radius_x(_world_back_y, _coin_radius),
 		"z_layer_offset": Z_LAYER_OFFSET,
 		"rotation_frames": 4,
 		"depth_sorted": true,
@@ -320,17 +324,22 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 		var body_color := _body_color(str(body.get("kind", "coin")), cabinet)
 		var frame := posmod(body_id.hash(), ROTATION_VARIANTS.size())
 		var rotation: float = ROTATION_VARIANTS[frame]
-		_coin_multimesh.set_instance_transform_2d(index, Transform2D(rotation, point))
+		var depth_scale := lerpf(1.0, REAR_WIDTH_FACTOR, clampf(y / _world_back_y, 0.0, 1.0))
+		var radius_scale := float(body.get("radius", int(_coin_radius))) / _coin_radius
+		var visual_scale := depth_scale * radius_scale
+		_coin_multimesh.set_instance_transform_2d(index, Transform2D(rotation, Vector2(visual_scale, visual_scale), 0.0, point))
 		if _coin_instance_color_cache[index] != body_color:
 			_coin_multimesh.set_instance_color(index, body_color)
 			_coin_instance_color_cache[index] = body_color
 		if falling:
 			var shadow_point := _project_delivery_board_point(board, x, z) if on_delivery_board and z > float(board["z_bottom"]) + _coin_height else _project_f(x, y, float(board["z_bottom"]))
-			airborne_shadows.append(shadow_point)
+			airborne_shadows.append({"point": shadow_point, "scale": visual_scale})
 		if str(body.get("kind", "coin")) != "coin":
 			feature_labels.append({"kind": str(body.get("kind", "")), "point": point})
 	for shadow_value in airborne_shadows:
-		_draw_ellipse(surface, (shadow_value as Vector2) + AIRBORNE_SHADOW_OFFSET, COIN_RX * 0.94, COIN_RY * 0.76, Color(0, 0, 0, 0.80), 0)
+		var shadow: Dictionary = shadow_value
+		var shadow_scale := float(shadow.get("scale", 1.0))
+		_draw_ellipse(surface, (shadow.get("point", Vector2.ZERO) as Vector2) + AIRBORNE_SHADOW_OFFSET, COIN_RX * 0.94 * shadow_scale, COIN_RY * 0.76 * shadow_scale, Color(0, 0, 0, 0.80), 0)
 	# One ordered batch is the exact depth order above; seeded rotation variants
 	# are per instance and never repartition or reorder overlapping bodies.
 	surface.surface_present_multimesh_batch(_coin_multimesh, _coin_texture, null, DESIGN_SIZE)
@@ -721,6 +730,12 @@ func _configure_projection(state: Dictionary) -> void:
 	_world_width = maxf(1.0, float(geometry.get("width", SCHEMA_DEFAULT_WIDTH)))
 	_world_back_y = maxf(1.0, float(geometry.get("back_plate_y", SCHEMA_DEFAULT_BACK_Y)))
 	_coin_height = maxf(1.0, float(state.get("coin_pusher_coin_height", SCHEMA_DEFAULT_COIN_HEIGHT)))
+	_coin_radius = maxf(1.0, float(state.get("coin_pusher_coin_radius", SCHEMA_DEFAULT_COIN_RADIUS)))
+
+
+func _projected_contact_radius_x(y: float, radius: float) -> float:
+	var depth := clampf(y / _world_back_y, 0.0, 1.0)
+	return radius / _world_width * PLAYFIELD_RECT.size.x * 0.91 * lerpf(1.0, REAR_WIDTH_FACTOR, depth)
 
 
 func debug_project_for_test(state: Dictionary, x: float, y: float, z: float) -> Vector2:
