@@ -3830,7 +3830,12 @@
       "solver_fixed_hz": 60,
       "solver_fixed_point_scale": 1000,
       "coin_cap": 160,
-      "opening_coin_count": 150,
+      "opening_coin_count": 56,
+      "opening_coin_counts": {
+        "quarter_falls": 54,
+        "jackpot_ridge": 54,
+        "vault_drop": 56
+      },
       "drop_cost": 1,
       "coin_value": 1,
       "nudge_forces": {

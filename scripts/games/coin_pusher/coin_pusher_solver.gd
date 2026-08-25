@@ -1406,12 +1406,125 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 	var mass := int(coins.get("mass", FP))
 	var face := int(state.get("face_y", FACE_EXTENDED_Y))
 	var plate := int(geometry.get("back_plate_y", BACK_PLATE_Y))
+	var tray_lip := int(geometry.get("tray_lip_y", TRAY_LIP_Y))
+	var width := int(geometry.get("width", WIDTH))
+	var bodies: Array = state.get("bodies", [])
+	if count > 81:
+		_seed_dense_benchmark_machine(state, rng, count, geometry, coins)
+		return
+	var base_positions: Array = []
+	var base_rows: Array = []
+	var row_specs := [
+		{"columns": 9, "x_offset": 0, "y": plate - radius - 1200},
+		{"columns": 8, "x_offset": 1, "y": plate - radius - 10400},
+		{"columns": 9, "x_offset": 0, "y": plate - radius - 19600},
+		{"columns": 2, "x_slots": [2, 8], "x_offset": 0, "y": tray_lip + radius + 8500},
+		{"columns": 8, "x_offset": 1, "y": tray_lip + radius + 17700},
+	]
+	var x_step := maxi(radius * 2 + 900, _divi(width, 10))
+	# Five staggered, slightly scuffed rows establish a broad played-in bed. The
+	# 9.2k depth pitch and >=9.1k lateral pitch remain outside the 8.6k coin
+	# diameter even at the maximum deterministic jitter.
+	for spec_value in row_specs:
+		var spec: Dictionary = spec_value
+		var row_positions: Array = []
+		var x_slots: Array = spec.get("x_slots", []) if typeof(spec.get("x_slots", [])) == TYPE_ARRAY else []
+		for column in range(int(spec.get("columns", 0))):
+			var x := _divi(int(x_slots[column]) * width, 10) if not x_slots.is_empty() else _divi(width, 10) + column * x_step + (_divi(x_step, 2) if int(spec.get("x_offset", 0)) != 0 else 0)
+			x = clampi(x + rng.randi_range(-450, 450), radius, width - radius)
+			var y := int(spec.get("y", 0)) + rng.randi_range(-250, 250)
+			var on_platform := y >= face
+			row_positions.append({
+				"x": x,
+				"y": y,
+				"z": int(geometry.get("platform_top_z", PLATFORM_TOP_Z)) if on_platform else int(geometry.get("deck_z", DECK_Z)),
+				"support": "platform" if on_platform else "deck",
+				"carried": on_platform,
+			})
+		base_rows.append(row_positions)
+	# Interleave rows so smaller diagnostic/migration fixtures still occupy the
+	# whole cabinet instead of filling a pristine rear block first.
+	for column in range(9):
+		for row_value in base_rows:
+			var row_positions: Array = row_value
+			if column >= row_positions.size():
+				continue
+			var position: Dictionary = row_positions[column]
+			position["opening_index"] = base_positions.size()
+			base_positions.append(position)
+	var upper_candidates: Array = []
+	for row_value in base_rows:
+		var row_positions: Array = row_value
+		for column in range(row_positions.size() - 1):
+			var left: Dictionary = row_positions[column]
+			var right: Dictionary = row_positions[column + 1]
+			if int(left.get("z", 0)) != int(right.get("z", 0)) or absi(int(left.get("x", 0)) - int(right.get("x", 0))) > x_step + 1200:
+				continue
+			upper_candidates.append({
+				"x": _divi(int(left.get("x", 0)) + int(right.get("x", 0)), 2) + rng.randi_range(-350, 350),
+				"y": _divi(int(left.get("y", 0)) + int(right.get("y", 0)), 2) + rng.randi_range(-180, 180),
+				"z": int(left.get("z", 0)) + height,
+				"support": "body",
+				"support_indices": [int(left.get("opening_index", -1)), int(right.get("opening_index", -1))],
+				"carried": bool(left.get("carried", false)) or bool(right.get("carried", false)),
+			})
+	# Localized upper coins create nonuniform mounds instead of a second full
+	# sheet. Candidate order is seeded, deterministic, and unrelated to payout.
+	for index in range(upper_candidates.size() - 1, 0, -1):
+		var swap_index := rng.randi_range(0, index)
+		var swap_value: Variant = upper_candidates[index]
+		upper_candidates[index] = upper_candidates[swap_index]
+		upper_candidates[swap_index] = swap_value
+	var opening_positions := base_positions.duplicate()
+	opening_positions.append_array(upper_candidates)
+	for index in range(count):
+		var base: Dictionary
+		if index < opening_positions.size():
+			base = opening_positions[index]
+		else:
+			# Dense benchmark fixtures may request hundreds of bodies. Production
+			# opening counts stay within the authored two-level field above; retain
+			# deterministic higher layers only for ceiling/performance coverage.
+			var fallback: Dictionary = base_positions[index % base_positions.size()]
+			var layer := 2 + _divi(index - opening_positions.size(), base_positions.size())
+			base = fallback.duplicate()
+			base["x"] = clampi(int(fallback.get("x", 0)) + rng.randi_range(-3200, 3200), radius, width - radius)
+			base["y"] = int(fallback.get("y", 0)) + rng.randi_range(-3200, 3200)
+			base["z"] = int(fallback.get("z", 0)) + layer * height
+			base["support"] = "body"
+		var body := _new_body(state, "coin", int(base.get("x", 0)), int(base.get("y", 0)), int(base.get("z", 0)), radius, height, mass, {"value": int(coins.get("value", 1)), "opening": true})
+		body["support_kind"] = str(base.get("support", "deck"))
+		body["sleeping"] = true
+		body["sleep_ticks"] = SLEEP_TICKS
+		body["rest_state"] = "resting"
+		body["carried_sleep"] = bool(base.get("carried", false))
+		if typeof(base.get("support_indices", [])) == TYPE_ARRAY:
+			var support_ids: Array = []
+			for support_index_value in base.get("support_indices", []):
+				var support_index := int(support_index_value)
+				if support_index >= 0 and support_index < bodies.size():
+					support_ids.append(str((bodies[support_index] as Dictionary).get("id", "")))
+			body["support_ids"] = support_ids
+		# Opening stock is already asleep. Persist only outcome-bearing values;
+		# both solver backends reconstruct these zero transient fields exactly.
+		for transient_key in ["vx", "vy", "vz", "x_remainder", "y_remainder", "z_remainder", "fall_start_z"]:
+			body.erase(transient_key)
+		if not bool(body.get("carried_sleep", false)):
+			body.erase("carried_sleep")
+		bodies.append(body)
+
+
+static func _seed_dense_benchmark_machine(state: Dictionary, rng: RngStream, count: int, geometry: Dictionary, coins: Dictionary) -> void:
+	var radius := int(coins.get("radius", COIN_RADIUS))
+	var height := int(coins.get("height", COIN_HEIGHT))
+	var mass := int(coins.get("mass", FP))
+	var face := int(state.get("face_y", FACE_EXTENDED_Y))
+	var plate := int(geometry.get("back_plate_y", BACK_PLATE_Y))
 	var width := int(geometry.get("width", WIDTH))
 	var bodies: Array = state.get("bodies", [])
 	var base_positions: Array = []
 	var x_step := maxi(radius * 2 + 500, _divi(width - radius * 2, 10))
 	var wiggle := [-1700, 700, 1800, -600, -1800, 500, 1600, -900, -1500, 1000]
-	# Three authored-width rows on the platform preserve visible top stock.
 	for row in range(3):
 		for column in range(10):
 			var x := radius + 500 + column * x_step + (x_step / 2 if row % 2 == 1 else 0)
@@ -1420,7 +1533,6 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 			var y := plate - radius - row * 8800 + int(wiggle[column]) / 3
 			var on_platform := y >= face
 			base_positions.append({"x": x, "y": y, "z": int(geometry.get("platform_top_z", PLATFORM_TOP_Z)) if on_platform else int(geometry.get("deck_z", DECK_Z)), "support": "platform" if on_platform else "deck", "carried": on_platform})
-	# Two staggered deck rows fill the moving face's working mass without overlap.
 	for row in range(2):
 		for column in range(10):
 			var x := radius + 500 + column * x_step + (x_step / 2 if row % 2 == 1 else 0)
@@ -1430,17 +1542,13 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 			base_positions.append({"x": x, "y": y, "z": int(geometry.get("deck_z", DECK_Z)), "support": "deck", "carried": false})
 	for index in range(count):
 		var base: Dictionary = base_positions[index % base_positions.size()]
-		var layer := index / base_positions.size()
-		var layer_x_jitter := rng.randi_range(-180, 180) if layer > 0 else 0
-		var layer_y_jitter := rng.randi_range(-180, 180) if layer > 0 else 0
-		var body := _new_body(state, "coin", clampi(int(base.get("x", 0)) + layer_x_jitter, radius, width - radius), int(base.get("y", 0)) + layer_y_jitter, int(base.get("z", 0)) + layer * height, radius, height, mass, {"value": int(coins.get("value", 1)), "opening": true})
+		var layer := _divi(index, base_positions.size())
+		var body := _new_body(state, "coin", clampi(int(base.get("x", 0)) + (rng.randi_range(-180, 180) if layer > 0 else 0), radius, width - radius), int(base.get("y", 0)) + (rng.randi_range(-180, 180) if layer > 0 else 0), int(base.get("z", 0)) + layer * height, radius, height, mass, {"value": int(coins.get("value", 1)), "opening": true})
 		body["support_kind"] = str(base.get("support", "deck")) if layer == 0 else "body"
 		body["sleeping"] = true
 		body["sleep_ticks"] = SLEEP_TICKS
 		body["rest_state"] = "resting"
 		body["carried_sleep"] = bool(base.get("carried", false))
-		# Opening stock is already asleep. Persist only outcome-bearing values;
-		# both solver backends reconstruct these zero transient fields exactly.
 		for transient_key in ["vx", "vy", "vz", "x_remainder", "y_remainder", "z_remainder", "fall_start_z"]:
 			body.erase(transient_key)
 		if not bool(body.get("carried_sleep", false)):

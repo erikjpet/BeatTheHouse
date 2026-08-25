@@ -568,7 +568,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	variation_rng.configure(_stable_hash("coin_pusher_variation:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)]))
 	var variation_id := _seeded_variation_id(environment, variation_rng)
 	var variation_config := _variation_config(variation_id)
-	var simulation := CoinPusherSolverScript.create_machine(local_rng.fork("fixed_point_pile"), _machine_definition(variation_id), _opening_coin_count())
+	var simulation := CoinPusherSolverScript.create_machine(local_rng.fork("fixed_point_pile"), _machine_definition(variation_id), _opening_coin_count(variation_id))
 	# Keep never-visited world generation byte-identical to the Stage-1 snapshot.
 	# Live apparatus defaults are initialized at the actual entry boundary.
 	simulation.erase("carriage_x")
@@ -620,8 +620,6 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(machine), machine)
 	machine.erase("simulation")
 	return machine
-
-
 func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist: bool) -> Dictionary:
 	var game_states := _game_states(environment)
 	var value: Variant = game_states.get(get_id(), {})
@@ -783,7 +781,8 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 	var migration_rng := RngStream.new()
 	migration_rng.configure(_stable_hash("coin_pusher_physical_migration:%s:%s" % [_environment_node_id(run_state, environment), str(run_state.seed_text if run_state != null else "fallback")]))
 	if migrated_v2:
-		machine["simulation"] = CoinPusherSolverScript.create_machine(migration_rng, _machine_definition(str(machine.get("variation_id", _variation_id()))), mini(_opening_coin_count(), 250))
+		var migrated_variation_id := str(machine.get("variation_id", _variation_id()))
+		machine["simulation"] = CoinPusherSolverScript.create_machine(migration_rng, _machine_definition(migrated_variation_id), mini(_opening_coin_count(migrated_variation_id), 250))
 		var migrated_ledger: Array = []
 		for _coin in range(legacy_tray_value):
 			migrated_ledger.append({"kind": "coin", "value": 1, "item_id": "", "provenance": {"migration": "v2"}})
@@ -1500,12 +1499,20 @@ func _sync_physical_features(machine: Dictionary) -> void:
 			if not holes.is_empty():
 				feature_x = int(holes[hole_index])
 			depth = int(board.get("y", geometry.get("drop_y", 58000)))
-		metadata["z"] = int(geometry.get("platform_top_z", CoinPusherSolverScript.PLATFORM_TOP_Z)) if is_ridge_jam else int(geometry.get("deck_z", CoinPusherSolverScript.DECK_Z))
+		var placement := _opening_feature_support(simulation, feature_x, depth, radius, int(metadata.get("height", CoinPusherSolverScript.OBJECT_HEIGHT)))
+		if not placement.is_empty():
+			feature_x = int(placement.get("x", feature_x))
+			depth = int(placement.get("y", depth))
+			metadata["z"] = int(placement.get("z", geometry.get("deck_z", CoinPusherSolverScript.DECK_Z)))
+			metadata["opening_support_id"] = str(placement.get("support_id", ""))
+		else:
+			metadata["z"] = int(geometry.get("platform_top_z", CoinPusherSolverScript.PLATFORM_TOP_Z)) if is_ridge_jam else int(geometry.get("deck_z", CoinPusherSolverScript.DECK_Z))
 		metadata["value"] = maxi(0, int(feature.get("cash_value", 0)))
 		var body := CoinPusherSolverScript.add_feature(simulation, kind, feature_id, feature_x, depth, metadata)
 		if bool(body.get("accepted", false)):
-			body["support_kind"] = "platform" if is_ridge_jam else "deck"
-			body["carried_sleep"] = is_ridge_jam
+			body["support_kind"] = "body" if not placement.is_empty() else "platform" if is_ridge_jam else "deck"
+			body["support_ids"] = [str(placement.get("support_id", ""))] if not placement.is_empty() else []
+			body["carried_sleep"] = bool(placement.get("carried", false)) if not placement.is_empty() else is_ridge_jam
 			body["rest_state"] = "resting"
 			body["sleeping"] = true
 			body["sleep_ticks"] = 8
@@ -1514,6 +1521,57 @@ func _sync_physical_features(machine: Dictionary) -> void:
 		feature.erase("cell")
 		feature.erase("spawn_lane")
 		feature.erase("spawn_depth_slot")
+
+
+func _opening_feature_support(simulation: Dictionary, requested_x: int, requested_y: int, feature_radius: int, feature_height: int) -> Dictionary:
+	var bodies: Array = simulation.get("bodies", []) if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else []
+	var candidates: Array = []
+	for body_value in bodies:
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var support: Dictionary = body_value
+		var metadata: Dictionary = support.get("meta", {}) if typeof(support.get("meta", {})) == TYPE_DICTIONARY else {}
+		if str(support.get("kind", "")) != "coin" or not bool(metadata.get("opening", false)) or str(support.get("support_kind", "")) != "body":
+			continue
+		var candidate := {
+			"x": int(support.get("x", 0)),
+			"y": int(support.get("y", 0)),
+			"z": int(support.get("z", 0)) + int(support.get("height", 1700)),
+			"support_id": str(support.get("id", "")),
+			"carried": bool(support.get("carried_sleep", false)),
+		}
+		var dx := int(candidate.get("x", 0)) - requested_x
+		var dy := int(candidate.get("y", 0)) - requested_y
+		candidate["distance_sq"] = dx * dx + dy * dy
+		candidates.append(candidate)
+	candidates.sort_custom(func(left: Dictionary, right: Dictionary) -> bool:
+		var left_distance := int(left.get("distance_sq", 0))
+		var right_distance := int(right.get("distance_sq", 0))
+		return left_distance < right_distance or (left_distance == right_distance and str(left.get("support_id", "")) < str(right.get("support_id", "")))
+	)
+	for candidate_value in candidates:
+		var candidate: Dictionary = candidate_value
+		var clear := true
+		for body_value in bodies:
+			if typeof(body_value) != TYPE_DICTIONARY:
+				continue
+			var body: Dictionary = body_value
+			if str(body.get("id", "")) == str(candidate.get("support_id", "")):
+				continue
+			var candidate_z := int(candidate.get("z", 0))
+			var body_z := int(body.get("z", 0))
+			if candidate_z >= body_z + int(body.get("height", 1700)) or body_z >= candidate_z + feature_height:
+				continue
+			var dx := int(candidate.get("x", 0)) - int(body.get("x", 0))
+			var dy := int(candidate.get("y", 0)) - int(body.get("y", 0))
+			var minimum := feature_radius + int(body.get("radius", 4300)) + 300
+			if dx * dx + dy * dy < minimum * minimum:
+				clear = false
+				break
+		if clear:
+			candidate.erase("distance_sq")
+			return candidate
+	return {}
 
 
 func _feature_views(machine: Dictionary, kind: String) -> Array:
@@ -1987,8 +2045,10 @@ func _coin_cap() -> int:
 	return clampi(_int_tuning("coin_cap", 48), 32, 160)
 
 
-func _opening_coin_count() -> int:
-	return clampi(_int_tuning("opening_coin_count", 36), 24, _coin_cap())
+func _opening_coin_count(variation_id: String = "") -> int:
+	var counts: Dictionary = _tuning().get("opening_coin_counts", {}) if typeof(_tuning().get("opening_coin_counts", {})) == TYPE_DICTIONARY else {}
+	var selected_id := variation_id if not variation_id.is_empty() else _variation_id()
+	return clampi(int(counts.get(selected_id, _int_tuning("opening_coin_count", 56))), 24, _coin_cap())
 
 
 func _drop_cost() -> int:

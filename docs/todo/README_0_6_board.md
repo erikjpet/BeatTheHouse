@@ -163,6 +163,7 @@ each stage builds on the last.
 | pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | DONE | pusherv3_3 | coin pusher closure | Codex | 2026-08-18 | 2026-08-24 | Verified variation/integration closure plus real-weight deterministic gravity/impact thuds and a playfield-dominant cabinet; full suites, performance, visual/capture, exact Windows/Web parity, determinism, and 200k-per-machine EV gates pass. |
 | pusherv3_5 | `pusherv3_5_contact_piles_and_visible_exits_prompt.md` | DONE | pusherv3_4 | physical pile/contact/exit correction | Codex | 2026-08-25 | 2026-08-25 | Irregular carried piles, contact-only local pressure, contact-matched rendering, and visible shelf-to-tray/gutter falls pass exact native/Web parity, full regression, visual, performance, determinism, and 200k-per-machine EV gates. |
 | pusherv3_6 | `pusherv3_6_plinko_bounce_and_entry_boards_prompt.md` | DONE | pusherv3_5 | plinko bounce/contact/layout correction | Codex | 2026-08-25 | 2026-08-25 | Contact-lifecycle audio gating, visible radial rebounds, unbiased release-angle variance, and distinct 7/7/10-pin entry boards pass exact parity, focused/full regression, visual, determinism, EV, and direct performance gates. |
+| pusherv3_7 | `pusherv3_7_played_in_opening_stock_prompt.md` | DONE | pusherv3_6 | played-in opening stock and bounded early payouts | Codex | 2026-08-25 | 2026-08-25 | Deterministic 54/54/56-coin played-in beds, supported feature pieces, and bounded first-five-play payouts pass exact parity, full regression, visual, determinism, EV, and direct performance gates. |
 
 ### Wave D — Crew depth
 
@@ -2131,3 +2132,16 @@ What happens then is the owner's, not an agent's:
   direct 300-body solver/renderer budgets pass; the shared 60-frame host wall
   phase retains a documented scheduler-only timing deviation without weakened
   budgets or gameplay.
+- 2026-08-25 [pusherv3_7] Owner reported that the new solver still receives a
+  legacy 150-coin, perfectly layered opening population. It can avalanche into
+  the tray during the first few plays, flatten its stacks, and reads as an
+  untouched machine rather than a cabinet with prior public play. Codex opened
+  a follow-up for per-machine population tuning, a collision-valid played-in
+  topology, and bounded early-payout evidence.
+- 2026-08-25 [pusherv3_7] DONE. Production machines now open with deterministic
+  54/54/56-coin irregular beds, sparse front edges, localized supported mounds,
+  and correctly supported riders/pucks/fragments. Actual production captures
+  had zero passive payouts and first-five totals of 7/7/1 while retaining
+  elevated stock. Exact native/Web parity, 510-checkpoint determinism, focused
+  and full regression, actual-GL visual QA, 200k-per-machine EV, and direct
+  solver/renderer performance gates pass.

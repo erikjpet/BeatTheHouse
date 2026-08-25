@@ -7,7 +7,7 @@ const LiveSession := preload("res://scripts/games/coin_pusher/coin_pusher_live_s
 
 const CAPTURE_SIZE := Vector2i(1280, 720)
 const VARIATIONS := ["quarter_falls", "jackpot_ridge", "vault_drop"]
-const REQUIRED_SCENES := ["upper_row_join", "delivery_descent", "ratchet_three_cycles", "stack_nestle_topple", "skill_stop_bank_release", "rapid_drop_pile", "tray_growth_collect", "gutter_visible_fall"]
+const REQUIRED_SCENES := ["played_in_opening", "upper_row_join", "delivery_descent", "ratchet_three_cycles", "stack_nestle_topple", "skill_stop_bank_release", "rapid_drop_pile", "tray_growth_collect", "gutter_visible_fall"]
 
 var app: Control
 var canvas: Control
@@ -67,6 +67,7 @@ func _capture_machine(variation_id: String) -> void:
 		_fail("Missing production definition for %s." % variation_id)
 		return
 	var scenes: Array = []
+	scenes.append(await _capture_played_in_opening(variation_id, definition))
 	scenes.append(await _capture_upper_row(variation_id, definition))
 	scenes.append(await _capture_delivery(variation_id, definition))
 	scenes.append(await _capture_ratchet(variation_id, definition))
@@ -82,6 +83,47 @@ func _capture_machine(variation_id: String) -> void:
 	machine_records.append({"variation_id": variation_id, "context": context, "scenes": scenes, "passed": complete})
 	if not complete:
 		_fail("%s did not produce every plan 9.4 feel scene." % variation_id)
+
+
+func _capture_played_in_opening(variation_id: String, definition: Dictionary) -> Dictionary:
+	var state: Dictionary = (active_machine.get("simulation", {}) as Dictionary).duplicate(true)
+	var initial := _record(state)
+	var opening_count := (state.get("bodies", []) as Array).size()
+	var initial_upper := _elevated_coin_count(state, definition)
+	var passive_tray := (state.get("tray_ledger", []) as Array).size()
+	var per_play: Array = []
+	var total_collected := 0
+	for play_index in range(5):
+		Solver.add_coin(state, _rng("plan94:%s:opening-drop:%d" % [variation_id, play_index]), _policy_x(definition, play_index), 1, {"opening_capture": true})
+		Solver.step_ticks(state, {"motor_enabled": true}, 360)
+		var collected := Solver.collect_tray(state)
+		var count := int(collected.get("count", 0))
+		per_play.append(count)
+		total_collected += count
+	var final_record := _record(state)
+	var final_upper := _elevated_coin_count(state, definition)
+	var file := "%s_played_in_opening.png" % variation_id
+	var reduced_file := "%s_played_in_opening_reduced.png" % variation_id
+	var saved := await _save_record_strip(file, variation_id, definition, [initial, final_record], false)
+	var reduced_saved := await _save_record_strip(reduced_file, variation_id, definition, [initial, final_record], true)
+	var passed: bool = opening_count >= 50 and opening_count <= 65 and passive_tray == 0 and int(per_play.max()) <= 6 and total_collected <= 10 and initial_upper >= 8 and final_upper >= 4 and saved and reduced_saved
+	return {"id": "played_in_opening", "passed": passed, "files": [file, reduced_file], "opening_body_count": opening_count, "passive_tray_count": passive_tray, "first_five_payout_counts": per_play, "first_five_total": total_collected, "initial_elevated_coins": initial_upper, "final_elevated_coins": final_upper}
+
+
+func _elevated_coin_count(state: Dictionary, definition: Dictionary) -> int:
+	var geometry: Dictionary = definition.get("geometry", {}) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
+	var face := int(state.get("face_y", geometry.get("face_extended_y", 28000)))
+	var count := 0
+	for body_value in state.get("bodies", []):
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = body_value
+		if str(body.get("kind", "")) != "coin":
+			continue
+		var surface_z := int(geometry.get("platform_top_z", 3600)) if int(body.get("y", 0)) >= face else int(geometry.get("deck_z", 0))
+		if int(body.get("z", 0)) >= surface_z + int(body.get("height", 1700)) - 100:
+			count += 1
+	return count
 
 
 func _capture_upper_row(variation_id: String, definition: Dictionary) -> Dictionary:

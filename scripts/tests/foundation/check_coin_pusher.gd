@@ -12,6 +12,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 		return
 	var machine_definition: Dictionary = game_definition.get("coin_pusher_machine", {}) if typeof(game_definition.get("coin_pusher_machine", {})) == TYPE_DICTIONARY else {}
 	_check_pusher_v3_machine_data(machine_definition, failures)
+	_check_pusher_v3_played_in_opening_state(library, game_definition, failures)
 	_check_pusher_v3_plinko_bounce_and_variance(machine_definition, failures)
 	_check_pusher_v3_alive_cabinet(library, machine_definition, failures)
 	_check_pusher_v3_presentation_view(machine_definition, failures)
@@ -300,6 +301,146 @@ func _check_pusher_v3_machine_data(machine: Dictionary, failures: Array) -> void
 	if int(extended) != 28000 or int(retracted) != 46000:
 		failures.append("Coin Pusher V3 stroke orientation drifted: extended=%s retracted=%s." % [extended, retracted])
 	_check_pusher_v3_shipped_variant_definitions(machine, failures)
+
+
+func _check_pusher_v3_played_in_opening_state(library: ContentLibrary, game_definition: Dictionary, failures: Array) -> void:
+	var machine: Dictionary = game_definition.get("coin_pusher_machine", {}) if typeof(game_definition.get("coin_pusher_machine", {})) == TYPE_DICTIONARY else {}
+	var tuning: Dictionary = game_definition.get("coin_pusher_tuning", {}) if typeof(game_definition.get("coin_pusher_tuning", {})) == TYPE_DICTIONARY else {}
+	var authored_counts: Dictionary = tuning.get("opening_coin_counts", {}) if typeof(tuning.get("opening_coin_counts", {})) == TYPE_DICTIONARY else {}
+	var expected_counts := {"quarter_falls": 54, "jackpot_ridge": 54, "vault_drop": 56}
+	var normalized_counts := {}
+	for variation_id in expected_counts.keys():
+		normalized_counts[variation_id] = int(authored_counts.get(variation_id, -1))
+	if normalized_counts != expected_counts:
+		failures.append("Coin Pusher V3 played-in opening counts drifted from the per-machine 54/54/56 contract: %s." % JSON.stringify(authored_counts))
+		return
+	var definitions := {"quarter_falls": machine}
+	var shipped: Dictionary = machine.get("machines", {}) if typeof(machine.get("machines", {})) == TYPE_DICTIONARY else {}
+	definitions["jackpot_ridge"] = shipped.get("jackpot_ridge", {})
+	definitions["vault_drop"] = shipped.get("vault_drop", {})
+	var module_script: Script = load(str(game_definition.get("module_path", "")))
+	if module_script == null:
+		failures.append("Coin Pusher V3 played-in production generator could not load the game module.")
+		return
+	var report := {}
+	for variation_id in definitions.keys():
+		var definition: Dictionary = definitions[variation_id]
+		var opening_count := int(expected_counts[variation_id])
+		for production_seed_index in range(2):
+			var production_seed := "PUSHER-V3-PLAYED-IN-PRODUCTION-%s-%d" % [variation_id, production_seed_index]
+			var run_state := RunState.new()
+			run_state.start_new(production_seed, RunState.standard_challenge(production_seed))
+			var environment := {"id": "played_in_%s" % variation_id, "world_node_id": "played_in_%s" % variation_id, "scenario_game_modifiers": {"coin_pusher": {"variation_id": variation_id}}, "game_states": {}}
+			var game: GameModule = module_script.new()
+			game.setup(game_definition, library)
+			var generated: Dictionary = game.call("_generate_machine_state", run_state, environment, _pusher_v3_rng(production_seed))
+			var repeated: Dictionary = game.call("_generate_machine_state", run_state, environment, _pusher_v3_rng(production_seed))
+			var snapshot: Dictionary = generated.get("settled_state", {}) if typeof(generated.get("settled_state", {})) == TYPE_DICTIONARY else {}
+			var production_state := CoinPusherLiveSessionScript.restore_snapshot(snapshot, definition)
+			var production_bodies: Array = production_state.get("bodies", [])
+			var feature_count := 0
+			for body_value in production_bodies:
+				if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("kind", "coin")) != "coin":
+					feature_count += 1
+			var minimum_features := 1 if variation_id == "quarter_falls" else 4 if variation_id == "jackpot_ridge" else 6
+			var production_deterministic := JSON.stringify(snapshot, "", true) == JSON.stringify(repeated.get("settled_state", {}), "", true)
+			var production_upper := _pusher_v3_elevated_opening_count(production_state, definition)
+			if not production_deterministic or production_bodies.size() < opening_count + minimum_features or feature_count < minimum_features or int(snapshot.get("tray_count", 0)) != 0 or production_upper < 8 or _pusher_v3_overlap_pair_count(production_bodies) != 0:
+				failures.append("Coin Pusher V3 %s production opening is not a deterministic collision-valid stock-plus-feature state: seed=%d deterministic=%s bodies=%d features=%d tray=%d upper=%d overlaps=%s." % [variation_id, production_seed_index, str(production_deterministic), production_bodies.size(), feature_count, int(snapshot.get("tray_count", 0)), production_upper, JSON.stringify(_pusher_v3_overlap_pair_details(production_bodies))])
+				return
+		var variation_max_payout := 0
+		var variation_max_total := 0
+		var variation_max_passive := 0
+		var variation_min_retained_upper := 1000000
+		for seed_index in range(4):
+			var seed := "PUSHER-V3-PLAYED-IN-%s-%d" % [variation_id, seed_index]
+			var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng(seed), definition, opening_count)
+			var repeated := CoinPusherSolverScript.create_machine(_pusher_v3_rng(seed), definition, opening_count)
+			var bodies: Array = state.get("bodies", [])
+			var upper_before := _pusher_v3_supported_upper_count(bodies)
+			var overlap_before := _pusher_v3_overlap_pair_count(bodies)
+			if CoinPusherSolverScript.canonical_digest(state) != CoinPusherSolverScript.canonical_digest(repeated):
+				failures.append("Coin Pusher V3 %s played-in opening generation is not same-seed deterministic." % variation_id)
+				return
+			if bodies.size() != opening_count or not (state.get("tray_ledger", []) as Array).is_empty() or upper_before < opening_count - 36 or overlap_before != 0:
+				failures.append("Coin Pusher V3 %s opening topology is not a collision-valid mixed-height played-in field: bodies=%d upper=%d overlaps=%d." % [variation_id, bodies.size(), upper_before, overlap_before])
+				return
+			CoinPusherSolverScript.step_ticks(state, {"motor_enabled": true}, 240)
+			var passive := CoinPusherSolverScript.collect_tray(state)
+			var passive_count := int(passive.get("count", 0))
+			variation_max_passive = maxi(variation_max_passive, passive_count)
+			var cumulative := passive_count
+			var per_play: Array = []
+			var targets := _pusher_v3_release_targets(definition)
+			for play_index in range(5):
+				var target := int(targets[play_index % targets.size()])
+				CoinPusherSolverScript.add_coin(state, _pusher_v3_rng("%s-DROP-%d" % [seed, play_index]), target, 1, {"opening_probe": true})
+				CoinPusherSolverScript.step_ticks(state, {"motor_enabled": true}, 360)
+				var collected := CoinPusherSolverScript.collect_tray(state)
+				var paid := int(collected.get("count", 0))
+				per_play.append(paid)
+				cumulative += paid
+				variation_max_payout = maxi(variation_max_payout, paid)
+			variation_max_total = maxi(variation_max_total, cumulative)
+			var retained_upper := _pusher_v3_supported_upper_count(state.get("bodies", []))
+			variation_min_retained_upper = mini(variation_min_retained_upper, retained_upper)
+			if passive_count > 2 or per_play.max() > 6 or cumulative > 10 or retained_upper < 4:
+				failures.append("Coin Pusher V3 %s opening stock surged or flattened during the first five plays: seed=%d passive=%d per_play=%s cumulative=%d retained_upper=%d." % [variation_id, seed_index, passive_count, JSON.stringify(per_play), cumulative, retained_upper])
+				return
+		report[variation_id] = {"opening": opening_count, "max_passive": variation_max_passive, "max_per_play": variation_max_payout, "max_first_five": variation_max_total, "min_retained_upper": variation_min_retained_upper}
+	print("Coin Pusher V3 played-in opening report: %s" % JSON.stringify(report))
+
+
+func _pusher_v3_supported_upper_count(bodies: Array) -> int:
+	var count := 0
+	for body_value in bodies:
+		if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("support_kind", "")) == "body":
+			count += 1
+	return count
+
+
+func _pusher_v3_elevated_opening_count(state: Dictionary, definition: Dictionary) -> int:
+	var geometry: Dictionary = definition.get("geometry", {}) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
+	var face := int(state.get("face_y", geometry.get("face_extended_y", 28000)))
+	var platform_z := int(geometry.get("platform_top_z", 3600))
+	var deck_z := int(geometry.get("deck_z", 0))
+	var count := 0
+	for body_value in state.get("bodies", []):
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = body_value
+		var metadata: Dictionary = body.get("meta", {}) if typeof(body.get("meta", {})) == TYPE_DICTIONARY else {}
+		if str(body.get("kind", "")) != "coin" or not bool(metadata.get("opening", false)):
+			continue
+		var surface_z := platform_z if int(body.get("y", 0)) >= face else deck_z
+		if int(body.get("z", 0)) >= surface_z + int(body.get("height", 1700)) - 100:
+			count += 1
+	return count
+
+
+func _pusher_v3_overlap_pair_count(bodies: Array) -> int:
+	return _pusher_v3_overlap_pair_details(bodies).size()
+
+
+func _pusher_v3_overlap_pair_details(bodies: Array) -> Array:
+	var pairs: Array = []
+	for left_index in range(bodies.size()):
+		var left: Dictionary = bodies[left_index]
+		for right_index in range(left_index + 1, bodies.size()):
+			var right: Dictionary = bodies[right_index]
+			var left_z := int(left.get("z", 0))
+			var right_z := int(right.get("z", 0))
+			if left_z >= right_z + int(right.get("height", 1700)) or right_z >= left_z + int(left.get("height", 1700)):
+				continue
+			var dx := int(left.get("x", 0)) - int(right.get("x", 0))
+			var dy := int(left.get("y", 0)) - int(right.get("y", 0))
+			# The fixed-point solver intentionally retains a small positional slop;
+			# compact snapshots also quantize positions to 100 units. Treat only a
+			# penetration beyond that combined 300-unit envelope as an invalid spawn.
+			var minimum := maxi(1, int(left.get("radius", 4300)) + int(right.get("radius", 4300)) - 300)
+			if dx * dx + dy * dy < minimum * minimum:
+				pairs.append([str(left.get("id", "")), str(left.get("kind", "")), int(left.get("x", 0)), int(left.get("y", 0)), int(left.get("z", 0)), str(right.get("id", "")), str(right.get("kind", "")), int(right.get("x", 0)), int(right.get("y", 0)), int(right.get("z", 0))])
+	return pairs
 
 
 func _check_pusher_v3_shipped_variant_definitions(machine: Dictionary, failures: Array) -> void:
