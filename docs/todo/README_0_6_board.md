@@ -162,7 +162,7 @@ each stage builds on the last.
 | pusherv3_3 | `pusherv3_3_cabinet_prompt.md` | DONE | pusherv3_2 | pusherv3_4 | PM:Codex/sub:pusher-cabinet | 2026-08-18 | 2026-08-18 | PM verified the data-driven slot-parity cabinet, batched stacked projection, physical audio map, integrated 9/9 feel contract, determinism, visual QA, and all combined suites/performance budgets. |
 | pusherv3_4 | `pusherv3_4_variations_integration_prompt.md` | DONE | pusherv3_3 | coin pusher closure | Codex | 2026-08-18 | 2026-08-24 | Verified variation/integration closure plus real-weight deterministic gravity/impact thuds and a playfield-dominant cabinet; full suites, performance, visual/capture, exact Windows/Web parity, determinism, and 200k-per-machine EV gates pass. |
 | pusherv3_5 | `pusherv3_5_contact_piles_and_visible_exits_prompt.md` | DONE | pusherv3_4 | physical pile/contact/exit correction | Codex | 2026-08-25 | 2026-08-25 | Irregular carried piles, contact-only local pressure, contact-matched rendering, and visible shelf-to-tray/gutter falls pass exact native/Web parity, full regression, visual, performance, determinism, and 200k-per-machine EV gates. |
-| pusherv3_6 | `pusherv3_6_plinko_bounce_and_entry_boards_prompt.md` | IN_PROGRESS | pusherv3_5 | plinko bounce/contact/layout correction | Codex | 2026-08-25 |  | Rebuilding sustained peg contacts, audible-impact gating, rebound response, deterministic release-angle variance, and machine-specific entry fields after owner playtest. |
+| pusherv3_6 | `pusherv3_6_plinko_bounce_and_entry_boards_prompt.md` | DONE | pusherv3_5 | plinko bounce/contact/layout correction | Codex | 2026-08-25 | 2026-08-25 | Contact-lifecycle audio gating, visible radial rebounds, unbiased release-angle variance, and distinct 7/7/10-pin entry boards pass exact parity, focused/full regression, visual, determinism, EV, and direct performance gates. |
 
 ### Wave D — Crew depth
 
@@ -2121,3 +2121,13 @@ What happens then is the owner's, not an agent's:
   depends too heavily on excluding exact peg-aligned releases. Codex opened a
   new archived-work follow-up for the full reference/native, data, audio,
   visual, and statistical correction.
+- 2026-08-25 [pusherv3_6] DONE at implementation `d5bbcf7d`: sustained pin
+  overlap now produces one impact event, meaningful contacts visibly rebound,
+  quiet contacts settle, and deterministic position-plus-velocity variance
+  creates divergent physical routes even from exact peg-aligned releases.
+  Distinct non-overlapping Quarter Falls/Jackpot Ridge/Vault Drop fields use
+  7/7/10 pins. Exact native/Web parity, focused and full regression,
+  determinism, all-machine GL captures, visual QA, 200k-per-machine EV, and
+  direct 300-body solver/renderer budgets pass; the shared 60-frame host wall
+  phase retains a documented scheduler-only timing deviation without weakened
+  budgets or gameplay.
