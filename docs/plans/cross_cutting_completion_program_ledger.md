@@ -406,3 +406,12 @@ their own detailed handoffs and test evidence.
   transition performance measurement/budget. Formal acceptance remains
   withheld; depth is removed from the near-term host queue while it adds bounded
   tooling under static-only HOLD and repeats self-review/independent review.
+- 2026-08-26: Depth's production-path audit found a further P1: event result
+  publication occurs after `EventModule.apply_event_result` flushes its event
+  boundary, and `FoundationMain.resolve_event_choice` guarantees no later
+  scenario boundary, so delivery-day results may stay queued until another
+  player action. Manual-flush tests masked the order. Depth will land the
+  publish/flush correction separately before evidence tooling. Because Wave 1
+  meta actively owns `scripts/ui/foundation_main.gd`, depth may not edit that
+  path without an exact semantic handoff and was directed to prefer the generic
+  `scripts/core/event_module.gd` seam if sufficient. HOST/board HOLD remains.
