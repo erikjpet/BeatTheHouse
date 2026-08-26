@@ -28,6 +28,7 @@ static func check(_library: ContentLibrary, failures: Array) -> void:
 	_check_completion_evidence(failures)
 	_check_extension_dispatch(failures)
 	_check_definition_validation_receipt(failures)
+	_check_suppressed_sequence_compatibility(failures)
 	_check_transition_and_event_delivery(failures)
 	_check_material_projection(failures)
 	ScenarioPresentationContractScript.check(failures)
@@ -894,6 +895,138 @@ static func _check_definition_validation_receipt(failures: Array) -> void:
 	var cached := ScenarioEngineScript.sequence_definition_for_environment(environment, resolved)
 	if JSON.stringify(cached) != JSON.stringify(resolved):
 		failures.append("Scenario definition validation receipt was not stable across runtime reads.")
+
+
+static func _check_suppressed_sequence_compatibility(failures: Array) -> void:
+	var definition := _runtime_definition()
+	var ordinary_environment := {
+		"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node",
+		"layout": {"object_rects": {}}, "game_ids": ["slots"],
+		"service_ids": ["fixture_service"], "travel_hooks": ["old_exit"],
+		"scenario_game_modifiers": {},
+	}
+	ScenarioEngineScript.attach_to_environment(ordinary_environment, ScenarioEngineScript.initial_state(definition), definition)
+	var ordinary_resolved := ScenarioEngineScript.sequence_definition_for_environment(ordinary_environment, definition)
+	if not SequenceSchemaScript.is_sequence(ordinary_resolved) or _dict(ordinary_environment.get("scenario_sequence_state", {})).is_empty() or _dict(ordinary_environment.get("scenario_sequence_projection", {})).is_empty():
+		failures.append("An ordinary scenario definition lost its full dynamic sequence during compatibility setup.")
+
+	var suppressed_definition := ScenarioEngineScript.suppress_sequence_definition(definition)
+	if str(suppressed_definition.get("id", "")) != str(definition.get("id", "")) or SequenceSchemaScript.is_sequence(suppressed_definition) or not bool(suppressed_definition.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)):
+		failures.append("Sequence suppression did not preserve identity while removing the dynamic overlay.")
+	var suppressed_environment := {
+		"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node",
+		"layout": {"object_rects": {}}, "game_ids": ["slots"],
+		"service_ids": ["fixture_service"], "travel_hooks": ["old_exit"],
+		"scenario_game_modifiers": {},
+	}
+	ScenarioEngineScript.attach_to_environment(suppressed_environment, ScenarioEngineScript.initial_state(suppressed_definition), definition)
+	if str(_dict(suppressed_environment.get("scenario_state", {})).get("id", "")) != str(definition.get("id", "")) or not bool(_dict(suppressed_environment.get("scenario_state", {})).get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)):
+		failures.append("Suppressed sequence setup lost its retained scenario identity marker.")
+	var hostile_state := SequenceRuntimeScript.initial_state(definition, "bar_node", "suppressed_hostile")
+	hostile_state["event_request_queue"] = [{"request_id": "hostile", "event_id": "fixture_event", "resolution_id": "fixture_resolution"}]
+	suppressed_environment["scenario_sequence_state"] = hostile_state
+	suppressed_environment["scenario_sequence_projection"] = {"hostile": true}
+	suppressed_environment["scenario_render_snapshot"] = {"hostile": true}
+	suppressed_environment["scenario_sequence_migration"] = {"hostile": true}
+	suppressed_environment["scenario_sequence_definition"] = definition.duplicate(true)
+	suppressed_environment["scenario_sequence_base_game_ids"] = ["slots"]
+	suppressed_environment["scenario_sequence_base_service_ids"] = ["fixture_service"]
+	suppressed_environment["scenario_sequence_base_travel_hooks"] = ["old_exit"]
+	suppressed_environment["scenario_sequence_base_game_modifiers"] = {}
+	suppressed_environment["game_ids"] = ["leaked_game"]
+	suppressed_environment["service_ids"] = ["leaked_service"]
+	suppressed_environment["travel_hooks"] = ["leaked_route"]
+	suppressed_environment["scenario_game_modifiers"] = {"leaked_game": {"tone": "hostile"}}
+	var suppressed_state := ScenarioEngineScript.ensure_sequence_state(suppressed_environment, definition)
+	var suppressed_resolved := ScenarioEngineScript.sequence_definition_for_environment(suppressed_environment, definition)
+	if not suppressed_state.is_empty() or SequenceSchemaScript.is_sequence(suppressed_resolved) or not ScenarioEngineScript.sequence_projection(suppressed_environment, definition).is_empty():
+		failures.append("A mutation-suppressed scenario reacquired a dynamic sequence by preferred definition or scenario id.")
+	for forbidden_key in ["scenario_sequence_state", "scenario_sequence_projection", "scenario_render_snapshot", "scenario_sequence_migration", "scenario_sequence_definition", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers"]:
+		if suppressed_environment.has(forbidden_key):
+			failures.append("Suppressed scenario retained sequence runtime artifact %s." % forbidden_key)
+	if _array(suppressed_environment.get("game_ids", [])) != ["slots"] or _array(suppressed_environment.get("service_ids", [])) != ["fixture_service"] or _array(suppressed_environment.get("travel_hooks", [])) != ["old_exit"] or not _dict(suppressed_environment.get("scenario_game_modifiers", {})).is_empty():
+		failures.append("Suppressed scenario did not restore its pre-sequence material baseline.")
+	var inactive_command := ScenarioEngineScript.sequence_command(suppressed_environment, definition, SequenceRuntimeScript.command("prepare", "bar_node", "arrival", "suppressed:command", {}, "scenario", "command_console"), {"available_funds": 10})
+	var inactive_requests := ScenarioEngineScript.drain_sequence_event_requests(suppressed_environment, definition)
+	if bool(inactive_command.get("ok", true)) or not bool(inactive_requests.get("inactive", false)) or not _array(inactive_requests.get("requests", [])).is_empty():
+		failures.append("Suppressed scenario exposed command authority or an event-bridge request drain.")
+
+	# Pre-marker saves restore through RunState.from_dict before RunGenerator can
+	# revisit a room. Cover every persisted environment graph so the content
+	# catalog cannot activate a newly installed overlay during that early seam.
+	var old_run := RunStateScript.new()
+	var old_challenge := RunStateScript.custom_challenge("suppressed_restore", "SUPPRESSED-RESTORE", {
+		"scenario_pins": {"bar": str(definition.get("id", "")), "grand_casino": str(definition.get("id", ""))},
+		"scenario_pins_apply_mutations": false,
+	})
+	old_run.start_new("SUPPRESSED-RESTORE", old_challenge)
+	var hostile_snapshot := {
+		"id": "bar_legacy", "archetype_id": "bar", "world_node_id": "bar_legacy_node",
+		"layout": {"object_rects": {}}, "game_ids": ["leaked_game"],
+		"service_ids": ["leaked_service"], "travel_hooks": ["leaked_route"],
+		"scenario_game_modifiers": {"leaked_game": {"tone": "hostile"}},
+		"scenario_sequence_base_game_ids": ["slots"],
+		"scenario_sequence_base_service_ids": ["fixture_service"],
+		"scenario_sequence_base_travel_hooks": ["old_exit"],
+		"scenario_sequence_base_game_modifiers": {},
+		"scenario_sequence_definition": definition.duplicate(true),
+		"scenario_sequence_migration": {"hostile": true},
+	}
+	ScenarioEngineScript.attach_to_environment(hostile_snapshot, ScenarioEngineScript.initial_state(definition), definition)
+	var hostile_runtime_state := SequenceRuntimeScript.initial_state(definition, "bar_legacy_node", "pre_marker")
+	hostile_runtime_state["event_request_queue"] = [{"request_id": "hostile", "event_id": "fixture_event", "resolution_id": "fixture_resolution"}]
+	hostile_snapshot["scenario_sequence_state"] = hostile_runtime_state
+	hostile_snapshot["scenario_sequence_projection"] = {"hostile": true}
+	hostile_snapshot["scenario_render_snapshot"] = {"hostile": true}
+	var hostile_layer := hostile_snapshot.duplicate(true)
+	hostile_layer["id"] = "bar_legacy_layer"
+	hostile_layer["world_node_id"] = "bar_legacy_layer_node"
+	hostile_layer.erase("archetype_id")
+	var hostile_layer_scenario := _dict(hostile_layer.get("scenario_state", {}))
+	hostile_layer_scenario["archetype_id"] = ""
+	hostile_layer["scenario_state"] = hostile_layer_scenario
+	hostile_snapshot["environment_layer_schema_version"] = 1
+	hostile_snapshot["current_layer_id"] = "main"
+	hostile_snapshot["default_layer_id"] = "main"
+	hostile_snapshot["layer_ids"] = ["main", "side"]
+	hostile_snapshot["layer_states"] = {"side": hostile_layer}
+	old_run.current_environment = hostile_snapshot.duplicate(true)
+	old_run.world_map = {
+		"version": 1, "seed_text": "SUPPRESSED-RESTORE", "start_node_id": "stored_bar", "current_node_id": "stored_bar",
+		"nodes": [{"id": "stored_bar", "archetype_id": "bar", "state": "visited", "environment": hostile_layer.duplicate(true)}],
+		"edges": [], "visited_path": ["stored_bar"],
+	}
+	var hostile_grand_room := hostile_layer.duplicate(true)
+	hostile_grand_room["id"] = "grand_casino_legacy"
+	hostile_grand_room["archetype_id"] = "grand_casino"
+	hostile_grand_room["world_node_id"] = "grand_casino"
+	old_run.grand_casino_room_states = {"grand_casino": hostile_grand_room}
+	var old_save := old_run.to_dict()
+	var restored_run := RunStateScript.new()
+	restored_run.from_dict(old_save)
+	var restored_nodes := _array(_dict(restored_run.world_map).get("nodes", []))
+	var restored_stored_environment := _dict(_dict(restored_nodes[0] if not restored_nodes.is_empty() else {}).get("environment", {}))
+	var restored_snapshots := [
+		{"path": "current", "environment": restored_run.current_environment},
+		{"path": "layer", "environment": _dict(_dict(restored_run.current_environment.get("layer_states", {})).get("side", {}))},
+		{"path": "world", "environment": restored_stored_environment},
+		{"path": "grand", "environment": _dict(restored_run.grand_casino_room_states.get("grand_casino", {}))},
+	]
+	for restored_entry_value in restored_snapshots:
+		var restored_entry := _dict(restored_entry_value)
+		var restored_environment := _dict(restored_entry.get("environment", {}))
+		var restored_scenario := _dict(restored_environment.get("scenario_state", {}))
+		if str(restored_scenario.get("id", "")) != str(definition.get("id", "")) or not bool(restored_scenario.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)):
+			failures.append("Suppressed old-save %s snapshot lost identity or its durable suppression marker." % str(restored_entry.get("path", "")))
+		for forbidden_key in ["scenario_sequence_state", "scenario_sequence_projection", "scenario_render_snapshot", "scenario_sequence_migration", "scenario_sequence_definition", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers"]:
+			if restored_environment.has(forbidden_key):
+				failures.append("Suppressed old-save %s snapshot retained sequence runtime artifact %s." % [str(restored_entry.get("path", "")), forbidden_key])
+		if _array(restored_environment.get("game_ids", [])) != ["slots"] or _array(restored_environment.get("service_ids", [])) != ["fixture_service"] or _array(restored_environment.get("travel_hooks", [])) != ["old_exit"] or not _dict(restored_environment.get("scenario_game_modifiers", {})).is_empty():
+			failures.append("Suppressed old-save %s snapshot did not restore its pre-sequence material baseline." % str(restored_entry.get("path", "")))
+	var restored_definition := restored_run.scenario_sequence_definition()
+	var restored_requests := restored_run.scenario_drain_event_requests()
+	if SequenceSchemaScript.is_sequence(restored_definition) or restored_run.scenario_sequence_active() or not bool(restored_requests.get("inactive", false)) or not _array(restored_requests.get("requests", [])).is_empty():
+		failures.append("Suppressed old-save restore reacquired a sequence or event authority after migration.")
 
 
 static func _check_transition_and_event_delivery(failures: Array) -> void:
