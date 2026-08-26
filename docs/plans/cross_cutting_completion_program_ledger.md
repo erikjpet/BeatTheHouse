@@ -144,3 +144,9 @@ their own detailed handoffs and test evidence.
   monitored intervals (50s + 55s) passed, canonical EV run 2 started from the
   frozen isolated checkout with a fresh output directory; no other task was
   released.
+- 2026-08-26: Canonical EV run 2 was invalidated after a second full harness
+  auto-dispatched from the non-canonical checkout at 00:55:32 and overlapped
+  the accepted run. The canonical run ended without a manifest; both exact
+  harness trees were stopped, both output directories were rejected, and a
+  fresh check returned zero pusher runtime/compiler processes. HOST returned
+  to HOLD while the deferred dispatcher is drained; no other task is released.
