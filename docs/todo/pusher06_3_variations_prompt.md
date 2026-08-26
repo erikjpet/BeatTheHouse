@@ -1,4 +1,6 @@
-Status: TODO
+Status: SUPERSEDED — do not claim. The V3 machine rework
+(docs/plans/coin_pusher_v3_machine_rework_plan.md, owner round-6 design session
+2026-08-17) replaces this work. See the pusherv3_* rows on the board.
 Board row: `pusher06_3` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)

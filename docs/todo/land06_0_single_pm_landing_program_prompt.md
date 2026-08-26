@@ -56,7 +56,7 @@ State at handoff. Heads move; re-derive every one before relying on it.
 | --- | --- | --- |
 | `main` | `2ad159fb` | `pusherv3_10` closed; `fix06_3` scratch alignment landed |
 | `codex/cross-completion-integration` | `8a4d29be` | cross program ledger, `polish06_0` merged as `dba53fb5` |
-| `codex/cross-remediation` | `f072b1c3` | `fix06_4` work, two self-reverts, native build churn |
+| `codex/cross-remediation` | `3e5c0378` | `fix06_4` **finished and PM-verified**, see 3.1; 50 ahead of `main`, 5 behind |
 | `codex/cross-meta` | `d7052142` | `meta06_1` implementation, 3 commits, 11 product files |
 | `codex/cross-balance` | `1c0dec3b` | `balance06_1` — **finalized and PM-verified**, see 3.2 |
 | `codex/cross-board` | `114271b0` | `board06_1` board split into dated companion logs |
@@ -70,28 +70,19 @@ State at handoff. Heads move; re-derive every one before relying on it.
 There are roughly forty registered worktrees, most of them stale from waves that
 closed weeks ago. Inventory them; do not delete anything until section 11.
 
-### 3.1 One live external worker — `codex/cross-remediation`
+### 3.1 `fix06_4` is finished — collect, review, land
 
-An agent is still finishing `fix06_4` under
-`docs/todo/handoff_fix06_4_contract_red_finalize_prompt.md`. That branch is
-**live and moving**. Do not collect it, review it, rebase it or merge it until
-that agent reports its handoff. Do not duplicate its work in the meantime.
+**No external worker is live.** The `fix06_4` agent has reported and stopped.
+`codex/cross-remediation` is final at exact head `3e5c0378`
+(`fix(test): keep surface harness aligned`), working tree clean,
+`git diff --check` passing, with no merge, push, board edit or deletion
+performed. Do not re-derive its work; collect it.
 
-Your Wave 0 does not depend on it until step 2, and steps before that will take
-you real time. If it has not reported by the time you reach step 2, you have two
-options and must choose deliberately, recording the choice in the ledger:
-
-- **Wait**, if it is demonstrably still working — check for recent commits and
-  recent file writes in its worktree, not merely that a process exists.
-- **Take the fix yourself** on your own branch, if it is idle or stalled. The
-  defect is fully specified in section 5, the fix is four lines, and a stalled
-  worker must never block the whole program on it. If you do this, preserve that
-  agent's branch untouched for later recovery of its wider harness-gap audit,
-  and say so in the ledger.
-
-As of this handoff that agent has reproduced the defect conclusively on the
-unfixed head, closed the native-build detour, and grown the row beyond the
-four-line fix. Its branch is expected to contain:
+It reproduced the defect conclusively on the unfixed head, closed the
+native-build detour, and grew the row beyond the four-line fix. Its final commit
+touches exactly three files — `scripts/tests/foundation/check_core_content.gd`,
+`tools/validate_project.ps1`, `tools/foundation_systems_shards_test.ps1` — and
+the branch contains:
 
 - the missing `surface_add_exact_hover_hit` on the double;
 - three further reachable gaps it found — `draw_arc` absent, `surface_hovered_index`
@@ -103,20 +94,61 @@ four-line fix. Its branch is expected to contain:
   17.790s budget. It reported that overrun as a finding rather than raising the
   cap, which is the behavior this program requires everywhere.
 
-**Verify two things specifically when you collect it.** First, the
-`expand_touch_hit` correction changes what tests observe: `exact` is asserted at
-`scripts/tests/foundation/check_lenders_release_saves.gd:4790` and
-`scripts/tests/foundation/check_slots_surfaces.gd:1480` and `:1505`, and the
-corrected rect geometry feeds placement and overlap checks. Confirm those suites
-pass with no expectation edits. If any expectation changed, some hit-geometry
-coverage was previously decorative — treat that as its own finding and route it.
-Second, confirm the full Contract suite was rerun on the fixed head and measured
-against the immutable 230.391s baseline, and that the native-fallback hypothesis
-is explicitly closed or kept on that evidence. A focused gate alone does not
-close it.
+Two questions this row could have left open are already answered, with evidence.
+Confirm each claim rather than reopening it:
 
-Canvas methods no game module currently calls stay documented findings and are
+- **Expectation integrity.** The `expand_touch_hit` correction changes what tests
+  observe, and `exact` is asserted at
+  `scripts/tests/foundation/check_lenders_release_saves.gd:4790` and
+  `scripts/tests/foundation/check_slots_surfaces.gd:1480` and `:1505`. The agent
+  reports **no expectations were edited** in either file and the complete
+  Contract body executed with zero assertion failures, including Blackjack exact
+  control rectangles and Slot pinball exact cell/rail geometry. So the
+  hit-geometry coverage was real, not decorative, and there is no separate
+  expectation-change finding.
+- **Native fallback is closed.** The same file tree completed a native-backed
+  Foundation Contract stage in 213.643s with every assertion green and zero
+  stderr. The remaining red is wall-time, not fallback execution. Do not reopen
+  this hypothesis without new evidence naming it.
+
+What genuinely remains open on this row is the marginal Contract timing in
+section 5, and the agent's own disclosure that **the final scoped commit received
+self-review and validation but no independent agent review after the task was
+narrowed.** Your loop's step 4 is therefore mandatory here, not a formality — it
+touches shared test infrastructure every subsequent row depends on.
+
+Two limits to carry forward rather than rediscover. The static parity guard
+recognizes calls through the `surface` identifier and literal
+`surface.call/has_method("surface_*")` forms; **arbitrary aliases and computed
+method names are not statically discoverable**, so the guard narrows this defect
+class without eliminating it — Families 1 and 2 should not assume total coverage.
+And canvas methods no game module currently calls — `surface_action_is_blocked`,
+`surface_animation_liveness_active`, `surface_draw_guidance_border`,
+`surface_play_audio_cue`, `surface_presentation_time_msec`,
+`surface_realtime_state_refresh_enabled`, `surface_realtime_ui_status`,
+`surface_runtime_status`, `surface_start_audio_loop`, `surface_stop_audio_loop`,
+`surface_transition_animation_active` — stay documented findings and are
 `game06_1`'s inheritance, not this row's.
+
+### 3.1.1 The native plugin is required for honest gate runs
+
+The coin-pusher native library is **generated and git-ignored**. It is not in any
+checkout you make. Contract, pusher and performance gates behave differently
+without it, and a missing plugin is silently a different measurement, not an
+error you will notice.
+
+Before your first gate run, establish and record how you are supplying it:
+either build it via `tools/build_native_solver.ps1` once, deliberately, and
+record the hash, or copy the one the `fix06_4` agent measured against —
+`addons/coin_pusher_native/bin/coin_pusher_native.windows.template_debug.x86_64.nothreads.dll`,
+SHA-256 `3CC7567AF1BB4B77AB1C88BB3D1D4AB3CCB7A81B51AB619E1C5E24FE66FBCB79`.
+
+Record which build every timing figure was taken against. A previous agent burned
+hours on a native rebuild chasing a defect that was never native. Build it once,
+on purpose, and never as a diagnostic reflex.
+
+Never commit the DLL, the `.os` objects, `.sconsign.dblite`, `.tools/native_solver/`
+or `addons/coin_pusher_native/`. They are ignored build products and remain so.
 
 ### 3.2 `balance06_1` is finished and verified — do not redo it
 
@@ -205,6 +237,21 @@ build output or editor state alongside them.
   independent visual review. Finish those gates; do not rebuild the row.
 - **`polish06_0` is finished and accepted** with no findings. Land it, do not
   redo it. Its outputs are PARKED and stay parked.
+- **The Contract suite's time budget is inside the machine's noise band.** The
+  budget is a recorded baseline of 153.594s times a 1.5 multiplier = 230.391s,
+  applied to the `foundation_contracts` stage. A byte-identical tree produced
+  213.643s on one run and 231.531s on another — 1.39x and 1.507x, straddling the
+  cap — on a host running parallel agents and native compiles. Treat a marginal
+  timing red as a measurement question, not a code regression: run the stage
+  repeatedly on an idle host and report **every** result, never only the passing
+  one. If the median sits near the cap, the baseline is stale — 0.6 has added 55
+  scenarios plus the crew systems, craps, poker and the pusher, all with contract
+  checks. Re-baselining with a recorded date, host and method is a legitimate,
+  owner-visible decision. Silently raising a cap, or rerunning until green, is
+  not, and either one forfeits the guard permanently.
+- **Two open defects are inherited, not yours to absorb silently:** the marginal
+  Contract timing above, and a stale delivery full-state UI golden exposed by the
+  under-budget run. Route each as its own row with its evidence.
 - **The idle-liveness regression pattern has recurred four times** in this
   project. An idle draw cost of 0.000 is a failure, not a pass, and the
   counter-gate in `scripts/ui/performance_liveness_guard.gd` is mandatory
@@ -225,9 +272,11 @@ branches, but they still land to `main` strictly one at a time.
 
 **Wave 0 — make the tree workable**
 1. The documentation commit (section 4.1).
-2. `fix06_4` — the `SurfaceHarness` fix, from `codex/cross-remediation` if its
-   agent has reported, otherwise per the choice in section 3.1. Nothing
-   downstream can be validated until suites run clean, `balance06_1` included.
+2. `fix06_4` — the harness parity fix, final at `3e5c0378` on
+   `codex/cross-remediation`. Land the three-file payload per section 3.1 and the
+   entangled-branch rule in step 6 of the landing loop; do not merge the branch.
+   Nothing downstream can be validated until suites run clean, `balance06_1`
+   included.
 3. `board06_1` — the board split, from `codex/cross-board`.
 
 **Wave 1 — work already done, sitting on branches**
@@ -290,7 +339,24 @@ before assigning it. Do not weaken a contract to fit available time.
    the mandatory idle-liveness counter-gate, accessibility, save and migration,
    and visual QA — plus whatever the row's own contract adds.
 6. **Land**: merge to `main` with `git merge --no-ff`, preserving logical
-   commits. Never squash a row into one commit.
+   commits. Never squash a clean row branch into one commit.
+
+   **Entangled branches are the exception.** Several inherited branches carry
+   another row's commits, a program ledger, reverted merges and revert pairs, and
+   several are *behind* `main`. Merging one of those would drag unrelated history
+   onto `main` and could conflict with or revert newer work. For any such branch:
+   verify the merge base and what `main` has gained since; rebase the row onto
+   current `main`, or extract the row's net change and apply it as its own
+   coherent commit set; and prove equivalence by diffing the result against the
+   accepted head for the row's owned files only. Record in the ledger which
+   method you used, the accepted head it derives from, and the exact files. The
+   original branch stays intact and undeleted as the provenance record.
+
+   `codex/cross-remediation` is the worked example: merge base `a0d2b6ff`, 50
+   commits ahead, 5 commits behind `main`, carrying `polish06_0` and the cross
+   ledger. Its actual `fix06_4` payload against current `main` is three files —
+   `scripts/tests/foundation/check_core_content.gd`, `tools/validate_project.ps1`,
+   `tools/foundation_systems_shards_test.ps1`. Land that, not the branch.
 7. **Post-land verification**: re-run the row's gates plus a smoke pass on `main`
    at the new head. A red here reopens the row immediately; do not proceed.
 8. **Record**: accepted head, merge commit, gate results, and cleanup status in
