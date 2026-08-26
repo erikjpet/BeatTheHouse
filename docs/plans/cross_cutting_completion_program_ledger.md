@@ -1056,3 +1056,14 @@ their own detailed handoffs and test evidence.
   docs-only semantic correction that keeps implementation unaccepted, restores
   IN_PROGRESS/active ownership and answered rulings, records truthful work-log
   provenance, and imports no pusher product or stale evidence.
+- 2026-08-26: Primary applied the reserved active-board portion and committed
+  the two-path semantic remediation as
+  `f072b1c3380cd34eaf7a6f0ea3acd56873d2fd80`. The board and active prompt now
+  preserve IN_PROGRESS ownership, both dated owner rulings, the claim, and the
+  completion-audit reopen/no-DONE condition; no product, evidence, execution
+  record, acceptance metric or DONE claim was added. Mandatory author §5 review
+  issued `ACCEPT f072b1c3380cd34eaf7a6f0ea3acd56873d2fd80`, no P0-P3, after
+  full `5776893c..HEAD` and focused `37f10dda..HEAD` review. Exact head is clean;
+  AST, hostile contract (2.9s), validator (49.5s), semantic-doc, conflict and
+  diff checks pass. All runtime evidence remains pending/nontransferable. Fresh
+  nonauthor exact-head review is active; HOST remains held.
