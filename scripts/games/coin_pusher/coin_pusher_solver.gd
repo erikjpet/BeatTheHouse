@@ -183,7 +183,28 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 	}
 	if opening_bodies > 0:
 		_seed_opening_machine(state, seed_rng, mini(opening_bodies, _ceiling(definition)))
-	state["opening_body_count"] = (state["bodies"] as Array).size()
+		state["opening_body_count"] = (state["bodies"] as Array).size()
+		if opening_bodies <= 180:
+			var opening_settle := settle(state, false, 1200)
+			var opening_validation := _opening_generation_validation(state)
+			assert(bool(opening_settle.get("settled", false)), "Coin Pusher V3 opening stock did not physically settle.")
+			assert(bool(opening_validation.get("valid", false)), "Coin Pusher V3 opening stock failed post-settle validation: %s" % JSON.stringify(opening_validation))
+			state["opening_settle_report"] = {
+				"physical_ticks": int(opening_settle.get("ticks", 0)),
+				"awake_count": int(opening_settle.get("awake_count", -1)),
+				"kinetic_energy": int(opening_validation.get("kinetic_energy", -1)),
+				"unsupported_count": int(opening_validation.get("unsupported_count", -1)),
+				"tray_count": int(opening_validation.get("tray_count", -1)),
+				"gutter_count": int(opening_validation.get("gutter_count", -1)),
+			}
+			# Settling is generation work, not elapsed cabinet play. Preserve its
+			# measured proof while presenting the newly created machine at tick zero.
+			state["tick"] = 0
+			state["last_events"] = []
+			state["last_step_metrics"] = {}
+			state["last_invariants"] = _invariant_report(state, true)
+	else:
+		state["opening_body_count"] = 0
 	return state
 
 
@@ -1789,11 +1810,12 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 			base["z"] = int(fallback.get("z", 0)) + layer * height
 			base["support"] = "body"
 		var body := _new_body(state, "coin", int(base.get("x", 0)), int(base.get("y", 0)), int(base.get("z", 0)), radius, height, mass, {"value": int(coins.get("value", 1)), "opening": true})
+		# These authored positions are collision-valid starting conditions, not a
+		# declared outcome. Leave every body awake so create_machine() must advance
+		# the real solver until gravity, contacts, support classification, friction,
+		# and the sleep threshold establish the persisted opening state.
 		body["support_kind"] = str(base.get("support", "deck"))
-		body["sleeping"] = true
-		body["sleep_ticks"] = SLEEP_TICKS
-		body["rest_state"] = "resting"
-		body["carried_sleep"] = bool(base.get("carried", false))
+		body["carried_sleep"] = false
 		if typeof(base.get("support_indices", [])) == TYPE_ARRAY:
 			var support_ids: Array = []
 			for support_index_value in base.get("support_indices", []):
@@ -1801,13 +1823,32 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 				if support_index >= 0 and support_index < bodies.size():
 					support_ids.append(str((bodies[support_index] as Dictionary).get("id", "")))
 			body["support_ids"] = support_ids
-		# Opening stock is already asleep. Persist only outcome-bearing values;
-		# both solver backends reconstruct these zero transient fields exactly.
-		for transient_key in ["vx", "vy", "vz", "x_remainder", "y_remainder", "z_remainder", "fall_start_z"]:
-			body.erase(transient_key)
-		if not bool(body.get("carried_sleep", false)):
-			body.erase("carried_sleep")
 		bodies.append(body)
+
+
+static func _opening_generation_validation(state: Dictionary) -> Dictionary:
+	var unsupported_count := 0
+	for body_value in state.get("bodies", []):
+		if typeof(body_value) != TYPE_DICTIONARY:
+			unsupported_count += 1
+			continue
+		var body: Dictionary = body_value
+		if _is_terminal_body(body) or str(body.get("support_kind", "")).is_empty():
+			unsupported_count += 1
+	var tray_count := (state.get("tray_ledger", []) as Array).size()
+	var gutter_count := (state.get("gutter_ledger", []) as Array).size()
+	var kinetic_energy := _kinetic_energy(state.get("bodies", []))
+	return {
+		"valid": all_steady(state, false)
+			and unsupported_count == 0
+			and tray_count == 0
+			and gutter_count == 0
+			and kinetic_energy == 0,
+		"unsupported_count": unsupported_count,
+		"tray_count": tray_count,
+		"gutter_count": gutter_count,
+		"kinetic_energy": kinetic_energy,
+	}
 
 
 static func _seed_dense_benchmark_machine(state: Dictionary, rng: RngStream, count: int, geometry: Dictionary, coins: Dictionary) -> void:

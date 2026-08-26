@@ -127,6 +127,12 @@ func _run() -> void:
 		apparatus_counts[apparatus_label] = int(apparatus_counts.get(apparatus_label, 0)) + 1
 		player_accepted += 1
 		machine["action_count"] = player_accepted
+		# The production live-session enqueue performs this action-boundary
+		# transition. The unattended EV harness inserts directly into the solver,
+		# so it must mirror the same generic "first committed drop starts play"
+		# contract instead of leaving the newly parked cabinet motionless.
+		if player_accepted == 1 and not bool(simulation.get("skill_stop_engaged", false)):
+			simulation["motor_target_rate_fp"] = int(simulation.get("motor_run_rate_fp", Solver.FP))
 		var advanced := _advance_and_consume(game, machine, event_rng, POLICY_TICKS)
 		progression_ticks += POLICY_TICKS
 		invariant_failures += 0 if bool(advanced.get("invariants_ok", false)) else 1
