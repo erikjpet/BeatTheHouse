@@ -133,3 +133,14 @@ their own detailed handoffs and test evidence.
   corrected only `scripts/games/scratch_tickets.gd` on `main` at exact head
   `97181599b9f7d85fbb5f6a5a9628155ef1347dd2`; focused runtime validation remains
   held and neither Scratch commit is treated as accepted cross-program input.
+- 2026-08-26: Owner-authorized Scratch follow-up advanced `main` again to
+  `2ad159fb6961c7d007cf68584ff2e0619593c61c` with three scoped files that stock
+  every practice ticket at 100. Runtime evidence remains HOST-held, so this is
+  recorded as concurrent main-line input rather than accepted program work.
+- 2026-08-26: A historical pusher command queue repeatedly dispatched original-
+  tree probes, non-canonical EV harnesses, focused suites, and native builds
+  after HOLD. The coordinator stopped only exact pusher trees and rejected all
+  their outputs. After the pusher task was quiesced and two consecutive clean
+  monitored intervals (50s + 55s) passed, canonical EV run 2 started from the
+  frozen isolated checkout with a fresh output directory; no other task was
+  released.
