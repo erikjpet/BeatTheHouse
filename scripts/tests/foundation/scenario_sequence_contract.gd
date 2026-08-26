@@ -3,6 +3,7 @@ extends RefCounted
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
+const HostTransactionScript := preload("res://scripts/core/scenario_host_transaction.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 
 
@@ -15,6 +16,7 @@ static func check(_library: ContentLibrary, failures: Array) -> void:
 	_check_serialized_fact_ingress(failures)
 	_check_sequence_persistence_seam(failures)
 	_check_authoritative_receipt_capacity(failures)
+	_check_host_transaction_seam(failures)
 
 
 static func _check_schema(failures: Array) -> void:
@@ -482,6 +484,333 @@ static func _check_authoritative_receipt_capacity(failures: Array) -> void:
 	var operation_replay := OperationRegistryScript.apply_operations(semantic, "scene_ops", [first_operation], "capacity:node:phase:0")
 	if not bool(operation_replay.get("ok", false)) or not _array(operation_replay.get("applied", [])).is_empty() or JSON.stringify(operation_replay.get("state", {})) != JSON.stringify(semantic):
 		failures.append("Old transition/operation receipt was evicted after presentation capacity.")
+
+
+static func _check_host_transaction_seam(failures: Array) -> void:
+	var context := HostTransactionScript.public_context("bar_node", "bar_visit_7", "night_3", "table_context_11")
+	var injected := HostTransactionScript.inject_public_context({"id": "bar_001", "archetype_id": "bar"}, context)
+	var restored_environment := EnvironmentInstanceScript.from_dict(_dict(injected.get("environment", {}))).to_dict()
+	for key in ["world_node_id", "environment_visit_id", "night_instance_id", "context_instance_id"]:
+		var context_key := "node_id" if key == "world_node_id" else key
+		if str(restored_environment.get(key, "")) != str(context.get(context_key, "")):
+			failures.append("Public game context did not persist %s before normalization." % key)
+	var leases := {
+		"scenario_main": {"owner_id": "scenario", "stream_id": "scenario", "current_state": 10, "receipts": []},
+		"craps_throw_main": {"owner_id": "craps_throw", "stream_id": "craps_throw", "current_state": 20, "receipts": []},
+		"craps_recovery_main": {"owner_id": "craps_recovery", "stream_id": "craps_recovery", "current_state": 30, "receipts": []},
+		"poker_cards_main": {"owner_id": "poker_cards", "stream_id": "poker_cards", "current_state": 40, "receipts": []},
+		"poker_policy_crew_rook": {"owner_id": "poker_policy_crew_rook", "stream_id": "poker_policy_crew_rook", "current_state": 50, "receipts": []},
+		"poker_policy_crew_velvet": {"owner_id": "poker_policy_crew_velvet", "stream_id": "poker_policy_crew_velvet", "current_state": 51, "receipts": []},
+		"poker_policy_crew_knuckles": {"owner_id": "poker_policy_crew_knuckles", "stream_id": "poker_policy_crew_knuckles", "current_state": 52, "receipts": []},
+		"poker_policy_crew_switch": {"owner_id": "poker_policy_crew_switch", "stream_id": "poker_policy_crew_switch", "current_state": 53, "receipts": []},
+		"poker_policy_crew_mags": {"owner_id": "poker_policy_crew_mags", "stream_id": "poker_policy_crew_mags", "current_state": 54, "receipts": []},
+		"poker_policy_crew_bishop": {"owner_id": "poker_policy_crew_bishop", "stream_id": "poker_policy_crew_bishop", "current_state": 55, "receipts": []},
+		"poker_policy_crew_lucky": {"owner_id": "poker_policy_crew_lucky", "stream_id": "poker_policy_crew_lucky", "current_state": 56, "receipts": []},
+		"poker_policy_intruder": {"owner_id": "poker_policy_intruder", "stream_id": "poker_policy_intruder", "current_state": 57, "receipts": []},
+	}
+	var state := HostTransactionScript.initial_state({"player_bankroll": {"fund_domain": "bankroll", "balance": 100}, "grand_casino_chips": {"fund_domain": "chips", "balance": 50}}, {
+		"craps_table": {"producer_id": "craps", "game_id": "craps", "active": true, "round": 0},
+		"casino_craps_table": {"producer_id": "craps", "game_id": "craps", "active": true, "round": 0, "prepared_account_id": "grand_casino_chips"},
+		"poker_table": {"producer_id": "poker", "game_id": "poker", "active": true, "round": 0},
+	}, leases)
+	var allowed := HostTransactionScript.prepared_game_context(state, context, "craps_table", "craps")
+	if not bool(allowed.get("ok", false)) or _dict(allowed.get("context", {})).has("prepared_requests"):
+		failures.append("Prepared game context did not use the public allowlist.")
+	var allowed_leases := _array(_dict(allowed.get("context", {})).get("rng_leases", []))
+	if allowed_leases.size() != 2 or str(_dict(allowed_leases[0]).get("owner_id", "")).begins_with("poker"):
+		failures.append("Prepared game context exposed another producer's RNG leases.")
+	var street_accounts := _dict(_dict(allowed.get("context", {})).get("accounts", {}))
+	var street_prepared := _dict(_dict(allowed.get("context", {})).get("prepared_account", {}))
+	if street_accounts.keys() != ["player_bankroll"] or str(street_prepared.get("account_id", "")) != "player_bankroll" or str(street_prepared.get("fund_domain", "")) != "bankroll":
+		failures.append("Street Craps context did not expose exactly its prepared bankroll account.")
+	var casino_allowed := HostTransactionScript.prepared_game_context(state, context, "casino_craps_table", "craps")
+	var casino_accounts := _dict(_dict(casino_allowed.get("context", {})).get("accounts", {}))
+	var casino_prepared := _dict(_dict(casino_allowed.get("context", {})).get("prepared_account", {}))
+	if not bool(casino_allowed.get("ok", false)) or casino_accounts.keys() != ["grand_casino_chips"] or str(casino_prepared.get("fund_domain", "")) != "chips":
+		failures.append("Casino Craps context did not expose exactly its prepared chip account.")
+	var poker_allowed := HostTransactionScript.prepared_game_context(state, context, "poker_table", "poker")
+	var poker_leases := _array(_dict(poker_allowed.get("context", {})).get("rng_leases", []))
+	var poker_states: Dictionary = {}
+	for lease_value in poker_leases:
+		var lease := _dict(lease_value)
+		poker_states[str(lease.get("current_state", ""))] = true
+		if str(lease.get("owner_id", "")).begins_with("craps") or str(lease.get("owner_id", "")) == "scenario": failures.append("Poker context exposed a foreign RNG lease.")
+	if not bool(poker_allowed.get("ok", false)) or poker_leases.size() != 8 or poker_states.size() != 8:
+		failures.append("Poker context did not expose cards plus seven unique member-scoped policy leases.")
+	var forbidden_context := HostTransactionScript.prepared_game_context(state, context, "craps_table", "craps", ["node_id", "prepared_requests"])
+	if bool(forbidden_context.get("ok", true)):
+		failures.append("Prepared game context exposed runtime-owned request records.")
+	var replacement := {"producer_id": "craps", "game_id": "craps", "active": true, "round": 1, "point": 6}
+	var command_receipt := "craps:bar_visit_7:table_context_11:roll_1"
+	var fact := HostTransactionScript.game_fact("game_result", "craps", "craps", "craps_table", context, "craps:bar_visit_7:roll:1", "scenario:bar_visit_7:fact:1", 1, {"won": true, "amount": 5})
+	var request := HostTransactionScript.prepared_request("sweep_interrupt_1", "interruption", "craps_table", context, HostTransactionScript.state_digest(replacement), 1, 1, 3, {"reason_id": "police_sweep"})
+	var command := HostTransactionScript.game_command("craps", "craps", "craps_table", command_receipt, context, HostTransactionScript.state_digest({"producer_id": "craps", "game_id": "craps", "active": true, "round": 0}), replacement, {
+		"account_ops": [{"account_id": "player_bankroll", "fund_domain": "bankroll", "account_before": 100, "account_after": 95, "delta": -5, "reason": "stake"}],
+		"facts": [fact],
+		"prepared_acknowledgements": [{"ack_id": "roll_prepared", "kind": "game_command", "message": "Roll prepared."}],
+		"external_warnings": ["The table is being watched."],
+		"rng_updates": [{"lease_id": "craps_throw_main", "owner_id": "craps_throw", "before_state": 20, "after_state": 21, "receipt_id": command_receipt}],
+		"prepared_request": request,
+	})
+	var transaction := HostTransactionScript.reduce_game_command(state, command)
+	if not bool(transaction.get("ok", false)):
+		failures.append("Pure game-command reducer rejected a valid typed delta: %s" % JSON.stringify(transaction.get("errors", [])))
+		return
+	var stale_state := state.duplicate(true)
+	stale_state["revision"] = 1
+	var stale := HostTransactionScript.commit_game_command(stale_state, transaction)
+	if bool(stale.get("ok", true)) or JSON.stringify(stale.get("state", {})) != JSON.stringify(HostTransactionScript.normalize_state(stale_state)):
+		failures.append("CAS game transaction did not reject a stale revision/digest without partial state.")
+	var committed := HostTransactionScript.commit_game_command(state, transaction)
+	if not bool(committed.get("ok", false)):
+		failures.append("Atomic game transaction failed: %s" % JSON.stringify(committed.get("errors", [])))
+		return
+	state = _dict(committed.get("state", {}))
+	if int(_dict(_dict(state.get("accounts", {})).get("player_bankroll", {})).get("balance", 0)) != 95 or int(_dict(_dict(state.get("table_states", {})).get("craps_table", {})).get("round", 0)) != 1:
+		failures.append("Atomic Craps transaction did not commit its table and prepared account together.")
+	if int(_dict(_dict(state.get("rng_leases", {})).get("craps_throw_main", {})).get("current_state", 0)) != 21 or _array(state.get("fact_queue", [])).size() != 1 or str(_dict(_dict(state.get("prepared_requests", {})).get("sweep_interrupt_1", {})).get("status", "")) != "prepared":
+		failures.append("Atomic game transaction dropped RNG, GameFact, or prepared-request state.")
+	if _array(state.get("external_warnings", [])).size() != 1 or _array(state.get("acknowledgements", [])).size() < 2:
+		failures.append("External warnings and runtime acknowledgements were not kept distinct.")
+	var replay := HostTransactionScript.commit_game_command(state, transaction)
+	if not bool(replay.get("ok", false)) or not bool(replay.get("replayed", false)) or JSON.stringify(replay.get("state", {})) != JSON.stringify(state):
+		failures.append("Authoritative game-command receipt was not idempotent and non-evicting.")
+	var divergent := state.duplicate(true)
+	divergent["accounts"]["player_bankroll"]["balance"] = 999
+	var divergence_command := HostTransactionScript.game_command("craps", "craps", "craps_table", "craps:bar_visit_7:table_context_11:divergence", context, HostTransactionScript.state_digest(replacement), replacement)
+	if bool(HostTransactionScript.reduce_game_command(divergent, divergence_command).get("ok", true)):
+		failures.append("Host transaction accepted a canonical RunState snapshot that diverged from its CAS digest.")
+	var conflicting := transaction.duplicate(true)
+	conflicting["fingerprint"] = "conflicting"
+	if bool(HostTransactionScript.commit_game_command(state, conflicting).get("ok", true)):
+		failures.append("Authoritative game-command receipt accepted conflicting content.")
+	var poker_replacement := {"producer_id": "poker", "game_id": "poker", "active": true, "round": 1}
+	var poker_command := HostTransactionScript.game_command("poker", "poker", "poker_table", "poker:bar_visit_7:table_context_11:hand_1", context, HostTransactionScript.state_digest({"producer_id": "poker", "game_id": "poker", "active": true, "round": 0}), poker_replacement, {
+		"account_ops": [{"account_id": "player_bankroll", "fund_domain": "bankroll", "account_before": 95, "account_after": 98, "delta": 3, "reason": "winnings"}],
+		"trust_ops": [{"subject_id": "crew_rook", "before": 0, "after": 1, "delta": 1, "reason": "clean_play"}],
+		"tell_ops": [{"pattern_id": "crew_rook:dealer_nervous", "before": 0, "after": 1, "delta": 1, "reason": "observed"}],
+	})
+	var poker_transaction := HostTransactionScript.reduce_game_command(state, poker_command)
+	var poker_committed := HostTransactionScript.commit_game_command(state, poker_transaction)
+	if not bool(poker_committed.get("ok", false)):
+		failures.append("Poker producer could not atomically commit its bankroll and Crew effects: %s" % JSON.stringify(poker_committed.get("errors", [])))
+		return
+	state = _dict(poker_committed.get("state", {}))
+	if int(_dict(_dict(state.get("accounts", {})).get("player_bankroll", {})).get("balance", 0)) != 98 or int(_dict(state.get("trust", {})).get("crew_rook", 0)) != 1 or int(_dict(state.get("tells", {})).get("crew_rook:dealer_nervous", 0)) != 1 or int(_dict(_dict(state.get("table_states", {})).get("poker_table", {})).get("round", 0)) != 1:
+		failures.append("Poker transaction did not atomically commit table/bankroll/trust/tell effects.")
+	var craps_trust := HostTransactionScript.game_command("craps", "craps", "craps_table", "craps:bar_visit_7:table_context_11:trust", context, HostTransactionScript.state_digest(replacement), replacement, {"trust_ops": [{"subject_id": "crew_rook", "before": 1, "after": 2, "delta": 1, "reason": "hostile"}]})
+	if bool(HostTransactionScript.reduce_game_command(state, craps_trust).get("ok", true)):
+		failures.append("Craps producer was allowed to author Crew trust effects.")
+	var poker_chips := HostTransactionScript.game_command("poker", "poker", "poker_table", "poker:bar_visit_7:table_context_11:chips", context, HostTransactionScript.state_digest(poker_replacement), poker_replacement, {"account_ops": [{"account_id": "grand_casino_chips", "fund_domain": "chips", "account_before": 50, "account_after": 51, "delta": 1, "reason": "hostile"}]})
+	if bool(HostTransactionScript.reduce_game_command(state, poker_chips).get("ok", true)):
+		failures.append("Poker producer was allowed to mutate casino chips with a matching before value.")
+	var foreign_table := HostTransactionScript.game_command("poker", "poker", "craps_table", "poker:bar_visit_7:table_context_11:foreign_table", context, HostTransactionScript.state_digest(replacement), {"producer_id": "poker", "game_id": "poker", "active": true, "round": 2})
+	if bool(HostTransactionScript.reduce_game_command(state, foreign_table).get("ok", true)):
+		failures.append("Poker producer was allowed to replace a Craps-owned table.")
+	var casino_replacement := {"producer_id": "craps", "game_id": "craps", "active": true, "round": 1, "prepared_account_id": "grand_casino_chips"}
+	var casino_valid := HostTransactionScript.game_command("craps", "craps", "casino_craps_table", "craps:bar_visit_7:table_context_11:casino_valid", context, HostTransactionScript.state_digest({"producer_id": "craps", "game_id": "craps", "active": true, "round": 0, "prepared_account_id": "grand_casino_chips"}), casino_replacement, {"account_ops": [{"account_id": "grand_casino_chips", "fund_domain": "chips", "account_before": 50, "account_after": 49, "delta": -1, "reason": "casino_stake"}]})
+	if not bool(HostTransactionScript.reduce_game_command(state, casino_valid).get("ok", false)):
+		failures.append("Casino Craps could not use its prepared chip account.")
+	var no_op_switch := HostTransactionScript.game_command("craps", "craps", "casino_craps_table", "craps:bar_visit_7:table_context_11:no_op_switch", context, HostTransactionScript.state_digest({"producer_id": "craps", "game_id": "craps", "active": true, "round": 0, "prepared_account_id": "grand_casino_chips"}), {"producer_id": "craps", "game_id": "craps", "active": true, "round": 1, "prepared_account_id": "player_bankroll"})
+	if bool(HostTransactionScript.reduce_game_command(state, no_op_switch).get("ok", true)):
+		failures.append("A no-op Craps replacement switched its future prepared account authority.")
+	var after_switch_charge := HostTransactionScript.game_command("craps", "craps", "casino_craps_table", "craps:bar_visit_7:table_context_11:after_switch_charge", context, HostTransactionScript.state_digest({"producer_id": "craps", "game_id": "craps", "active": true, "round": 0, "prepared_account_id": "grand_casino_chips"}), casino_replacement, {"account_ops": [{"account_id": "player_bankroll", "fund_domain": "bankroll", "account_before": 98, "account_after": 97, "delta": -1, "reason": "hostile_followup"}]})
+	if bool(HostTransactionScript.reduce_game_command(state, after_switch_charge).get("ok", true)):
+		failures.append("Craps gained bankroll authority after a rejected no-op account switch.")
+	var switched_account := HostTransactionScript.game_command("craps", "craps", "casino_craps_table", "craps:bar_visit_7:table_context_11:switch_account", context, HostTransactionScript.state_digest({"producer_id": "craps", "game_id": "craps", "active": true, "round": 0, "prepared_account_id": "grand_casino_chips"}), {"producer_id": "craps", "game_id": "craps", "active": true, "round": 1, "prepared_account_id": "player_bankroll"}, {"account_ops": [{"account_id": "player_bankroll", "fund_domain": "bankroll", "account_before": 98, "account_after": 97, "delta": -1, "reason": "hostile_switch"}]})
+	if bool(HostTransactionScript.reduce_game_command(state, switched_account).get("ok", true)):
+		failures.append("Craps replacement switched its prepared account before authorization.")
+	var transaction_bypass := HostTransactionScript.reduce_game_command(state, HostTransactionScript.game_command("craps", "craps", "craps_table", "craps:bar_visit_7:table_context_11:transaction_bypass", context, HostTransactionScript.state_digest(replacement), {"producer_id": "craps", "game_id": "craps", "active": true, "round": 2}))
+	if not bool(transaction_bypass.get("ok", false)):
+		failures.append("Valid reducer baseline failed before transaction-path producer validation.")
+		return
+	transaction_bypass["trust_ops"] = [{"subject_id": "crew_rook", "before": 1, "after": 2, "delta": 1, "reason": "post_reduce_injection"}]
+	transaction_bypass["fingerprint"] = HostTransactionScript._transaction_fingerprint(transaction_bypass)
+	var before_bypass := JSON.stringify(state)
+	var bypass_result := HostTransactionScript.commit_game_command(state, transaction_bypass)
+	if bool(bypass_result.get("ok", true)) or JSON.stringify(bypass_result.get("state", {})) != before_bypass:
+		failures.append("Transaction-path producer validation accepted injected Craps trust effects.")
+	var partial := HostTransactionScript.reduce_game_command(state, HostTransactionScript.game_command("craps", "craps", "craps_table", "craps:bar_visit_7:table_context_11:partial", context, HostTransactionScript.state_digest(replacement), {"producer_id": "craps", "game_id": "craps", "active": true, "round": 2}, {"account_ops": [{"account_id": "player_bankroll", "fund_domain": "bankroll", "account_before": 98, "account_after": 97, "delta": -1, "reason": "stake"}]}))
+	if not bool(partial.get("ok", false)):
+		failures.append("Valid reducer baseline failed before post-reduction fingerprint tampering test.")
+		return
+	partial["account_ops"] = [{"account_id": "player_bankroll", "fund_domain": "bankroll", "account_before": 98, "account_after": -901, "delta": -999, "reason": "hostile"}]
+	var before_partial := JSON.stringify(state)
+	var partial_result := HostTransactionScript.commit_game_command(state, partial)
+	if bool(partial_result.get("ok", true)) or JSON.stringify(partial_result.get("state", {})) != before_partial:
+		failures.append("Hostile post-reduction transaction tampering changed canonical state.")
+	var mixed := HostTransactionScript.game_command("craps", "craps", "craps_table", "craps:bar_visit_7:table_context_11:mixed", context, HostTransactionScript.state_digest(replacement), replacement, {"account_ops": [{"account_id": "player_bankroll", "fund_domain": "bankroll", "account_before": 98, "account_after": 97, "delta": -1, "reason": "bankroll"}, {"account_id": "grand_casino_chips", "fund_domain": "chips", "account_before": 50, "account_after": 51, "delta": 1, "reason": "chips"}]})
+	if bool(HostTransactionScript.reduce_game_command(state, mixed).get("ok", true)):
+		failures.append("Game command reducer accepted mixed account domains.")
+	var wrong_lease := HostTransactionScript.game_command("poker", "poker", "poker_table", "poker:bar_visit_7:table_context_11:wrong_lease", context, HostTransactionScript.state_digest(poker_replacement), poker_replacement, {"rng_updates": [{"lease_id": "craps_throw_main", "owner_id": "craps_throw", "before_state": 21, "after_state": 22, "receipt_id": "poker:bar_visit_7:table_context_11:wrong_lease"}]})
+	if bool(HostTransactionScript.reduce_game_command(state, wrong_lease).get("ok", true)):
+		failures.append("Game command reducer accepted another consumer's RNG lease.")
+	var missing_context := command.duplicate(true)
+	missing_context["receipt_id"] = "craps:bar_visit_7:table_context_11:missing_context"
+	missing_context["context"].erase("environment_visit_id")
+	if bool(HostTransactionScript.reduce_game_command(state, missing_context).get("ok", true)):
+		failures.append("Game command normalized before public persisted context IDs were injected.")
+	var room_mutation := command.duplicate(true)
+	room_mutation["receipt_id"] = "craps:bar_visit_7:table_context_11:room_mutation"
+	room_mutation["room_ops"] = [{"remove": "craps_table"}]
+	if bool(HostTransactionScript.reduce_game_command(state, room_mutation).get("ok", true)):
+		failures.append("Game command was allowed to mutate runtime-owned room records.")
+	var bad_serial_request := HostTransactionScript.prepared_request("bad_serial", "travel", "craps_table", context, HostTransactionScript.state_digest(replacement), 1, 3, 3, {"target_node_id": "motel_node"})
+	var travel_command := HostTransactionScript.game_command("craps", "craps", "craps_table", "craps:bar_visit_7:table_context_11:travel", context, HostTransactionScript.state_digest(replacement), replacement)
+	var hooked := HostTransactionScript.pre_travel_hook(travel_command, bad_serial_request)
+	if not bool(hooked.get("ok", false)) or bool(HostTransactionScript.reduce_game_command(state, _dict(hooked.get("command", {}))).get("ok", true)):
+		failures.append("Pre-travel hook bypassed the prepared-request delivery protocol.")
+	var corrupt_order := state.duplicate(true)
+	corrupt_order["fact_queue"][0]["commit_order"] = 0
+	if bool(HostTransactionScript.flush_game_facts(corrupt_order, 1).get("ok", true)):
+		failures.append("Safe-boundary GameFact flush accepted out-of-order host commit state.")
+	var flushed := HostTransactionScript.flush_game_facts(state, 1)
+	if not bool(flushed.get("ok", false)) or _array(flushed.get("processed", [])).size() != 1:
+		failures.append("Typed GameFact did not flush once at its safe boundary.")
+		return
+	state = _dict(flushed.get("state", {}))
+	var deferred := HostTransactionScript.respond_to_prepared_request(state, "sweep_interrupt_1", "defer", "game:bar_visit_7:sweep_interrupt_1:defer", int(state.get("revision", 0)), HostTransactionScript.state_digest(state))
+	if not bool(deferred.get("ok", false)):
+		failures.append("Prepared interruption could not be deferred without removing its live table.")
+		return
+	state = _dict(deferred.get("state", {}))
+	var accepted := HostTransactionScript.respond_to_prepared_request(state, "sweep_interrupt_1", "accept", "game:bar_visit_7:sweep_interrupt_1:accept", int(state.get("revision", 0)), HostTransactionScript.state_digest(state))
+	if not bool(accepted.get("ok", false)):
+		failures.append("Deferred interruption could not later be accepted.")
+		return
+	state = _dict(accepted.get("state", {}))
+	var early_runtime := HostTransactionScript.apply_prepared_request_runtime(state, "sweep_interrupt_1", "runtime:bar_visit_7:sweep_interrupt_1:early", int(state.get("revision", 0)), HostTransactionScript.state_digest(state))
+	if bool(early_runtime.get("ok", true)) or not bool(_dict(_dict(state.get("table_states", {})).get("craps_table", {})).get("active", false)):
+		failures.append("Interruption applied runtime state before economics/game unwind or hid the live table first.")
+	var wrong_economy := HostTransactionScript.complete_prepared_request_economy(state, "sweep_interrupt_1", [{"account_id": "grand_casino_chips", "fund_domain": "chips", "account_before": 50, "account_after": 49, "delta": -1, "reason": "hostile_fee"}], "economy:bar_visit_7:sweep_interrupt_1:wrong_account", int(state.get("revision", 0)), HostTransactionScript.state_digest(state))
+	if bool(wrong_economy.get("ok", true)):
+		failures.append("Prepared interruption economics mutated an account outside the stored request binding.")
+	var economic := HostTransactionScript.complete_prepared_request_economy(state, "sweep_interrupt_1", [{"account_id": "player_bankroll", "fund_domain": "bankroll", "account_before": 98, "account_after": 96, "delta": -2, "reason": "sweep_fee"}], "economy:bar_visit_7:sweep_interrupt_1:complete", int(state.get("revision", 0)), HostTransactionScript.state_digest(state))
+	if not bool(economic.get("ok", false)):
+		failures.append("Accepted interruption could not complete its economic receipt.")
+		return
+	state = _dict(economic.get("state", {}))
+	var before_unwind := HostTransactionScript.apply_prepared_request_runtime(state, "sweep_interrupt_1", "runtime:bar_visit_7:sweep_interrupt_1:before_unwind", int(state.get("revision", 0)), HostTransactionScript.state_digest(state))
+	if bool(before_unwind.get("ok", true)):
+		failures.append("Interruption applied before the game published its unwind acknowledgement.")
+	var unwound := HostTransactionScript.acknowledge_prepared_request_unwound(state, "sweep_interrupt_1", {"producer_id": "craps", "game_id": "craps", "active": false, "round": 1, "unwound": true}, "game:bar_visit_7:sweep_interrupt_1:unwound", int(state.get("revision", 0)), HostTransactionScript.state_digest(state))
+	if not bool(unwound.get("ok", false)):
+		failures.append("Game could not acknowledge unwind after economic completion.")
+		return
+	state = _dict(unwound.get("state", {}))
+	var runtime_applied := HostTransactionScript.apply_prepared_request_runtime(state, "sweep_interrupt_1", "runtime:bar_visit_7:sweep_interrupt_1:applied", int(state.get("revision", 0)), HostTransactionScript.state_digest(state))
+	if not bool(runtime_applied.get("ok", false)) or str(_dict(_dict(_dict(runtime_applied.get("state", {})).get("prepared_requests", {})).get("sweep_interrupt_1", {})).get("status", "")) != "applied":
+		failures.append("Prepared interruption did not reach runtime-applied acknowledgement after unwind.")
+	_check_run_state_host_transaction_facade(failures)
+
+
+static func _check_run_state_host_transaction_facade(failures: Array) -> void:
+	var run_state := RunState.new()
+	run_state.start_new("HOST-FACADE-SEED")
+	run_state.set_environment({"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node", "game_states": {
+		"craps_table": {"producer_id": "craps", "game_id": "craps", "active": true, "round": 0},
+		"poker_table": {"producer_id": "poker", "game_id": "poker", "active": true, "round": 0},
+	}})
+	var prepared_context := run_state.prepare_game_command_context("craps_table", "craps")
+	if not bool(prepared_context.get("ok", false)):
+		failures.append("Production RunState facade could not prepare public game context.")
+		return
+	var context := _dict(prepared_context.get("context", {}))
+	for key in ["node_id", "environment_visit_id", "night_instance_id", "context_instance_id"]:
+		if str(context.get(key, "")).is_empty():
+			failures.append("Production RunState facade omitted persisted context key %s." % key)
+	if bool(run_state.prepare_game_command_context("craps_table", "poker").get("ok", true)):
+		failures.append("Production RunState facade prepared a Poker context for a Craps-owned table.")
+	var owned_leases := _array(context.get("rng_leases", []))
+	if owned_leases.size() != 2 or int(_dict(owned_leases[0]).get("current_state", 0)) == int(_dict(owned_leases[1]).get("current_state", 0)):
+		failures.append("Production RunState facade did not derive distinct deterministic consumer RNG streams.")
+		return
+	var same_seed := RunState.new()
+	same_seed.start_new("HOST-FACADE-SEED")
+	same_seed.set_environment({"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node", "game_states": {
+		"craps_table": {"producer_id": "craps", "game_id": "craps", "active": true, "round": 0},
+		"poker_table": {"producer_id": "poker", "game_id": "poker", "active": true, "round": 0},
+	}})
+	var same_context := same_seed.prepare_game_command_context("craps_table", "craps")
+	if JSON.stringify(_array(_dict(same_context.get("context", {})).get("rng_leases", []))) != JSON.stringify(owned_leases):
+		failures.append("Same-seed RunState facades derived different consumer RNG leases.")
+	var poker_prepared := run_state.prepare_game_command_context("poker_table", "poker")
+	var poker_owned_leases := _array(_dict(poker_prepared.get("context", {})).get("rng_leases", []))
+	var poker_streams: Dictionary = {}
+	var poker_states: Dictionary = {}
+	for lease_value in poker_owned_leases:
+		var lease := _dict(lease_value)
+		poker_streams[str(lease.get("stream_id", ""))] = true
+		poker_states[str(lease.get("current_state", ""))] = true
+		if str(lease.get("owner_id", "")).begins_with("craps") or str(lease.get("owner_id", "")) == "scenario": failures.append("Production Poker context exposed a foreign lease.")
+	if not bool(poker_prepared.get("ok", false)) or poker_owned_leases.size() != 8 or poker_streams.size() != 8 or poker_states.size() != 8:
+		failures.append("Production RunState did not derive cards plus seven unique member-scoped Poker leases.")
+		return
+	var same_poker := same_seed.prepare_game_command_context("poker_table", "poker")
+	if JSON.stringify(_array(_dict(same_poker.get("context", {})).get("rng_leases", []))) != JSON.stringify(poker_owned_leases):
+		failures.append("Same-seed RunState facades derived different Poker policy leases.")
+	var throw_lease: Dictionary = {}
+	for lease_value in owned_leases:
+		if str(_dict(lease_value).get("owner_id", "")) == "craps_throw": throw_lease = _dict(lease_value)
+	var recovery_before := int(_dict(_dict(run_state.scenario_host_transaction_ledger.get("rng_leases", {})).get("craps_recovery_main", {})).get("current_state", 0))
+	var replacement := {"producer_id": "craps", "game_id": "craps", "active": true, "round": 1}
+	var request := HostTransactionScript.prepared_request("facade_interrupt", "interruption", "craps_table", context, HostTransactionScript.state_digest(replacement), 1, 1, 3, {"reason_id": "fixture_interrupt"})
+	var fact := HostTransactionScript.game_fact("game_result", "craps", "craps", "craps_table", context, "craps:facade:roll:1", "scenario:facade:fact:1", 1, {"won": false})
+	var command := HostTransactionScript.game_command("craps", "craps", "craps_table", "craps:facade:command:1", context, str(context.get("table_state_digest", "")), replacement, {
+		"account_ops": [{"account_id": "player_bankroll", "fund_domain": "bankroll", "account_before": run_state.bankroll, "account_after": run_state.bankroll - 2, "delta": -2, "reason": "facade_stake"}],
+		"facts": [fact],
+		"rng_updates": [{"lease_id": str(throw_lease.get("lease_id", "")), "owner_id": "craps_throw", "before_state": throw_lease.get("current_state"), "after_state": int(throw_lease.get("current_state", 0)) + 1, "receipt_id": "craps:facade:command:1"}],
+		"prepared_request": request,
+	})
+	var transaction := run_state.reduce_game_command_transaction(command)
+	var tampered_transaction := transaction.duplicate(true)
+	tampered_transaction["replacement_table_state"] = {"producer_id": "craps", "game_id": "craps", "active": true, "round": 99}
+	var bankroll_before_tamper := run_state.bankroll
+	if bool(run_state.commit_game_command(tampered_transaction).get("ok", true)) or run_state.bankroll != bankroll_before_tamper or int(_dict(_dict(run_state.current_environment.get("game_states", {})).get("craps_table", {})).get("round", 0)) != 0:
+		failures.append("Production RunState accepted a post-reduction transaction mutation.")
+	var committed := run_state.commit_game_command(transaction)
+	if not bool(committed.get("ok", false)) or run_state.bankroll != RunState.DEFAULT_BANKROLL - 2 or int(_dict(_dict(run_state.current_environment.get("game_states", {})).get("craps_table", {})).get("round", 0)) != 1:
+		failures.append("Production RunState facade did not atomically apply canonical game effects.")
+		return
+	if int(_dict(_dict(run_state.scenario_host_transaction_ledger.get("rng_leases", {})).get("craps_recovery_main", {})).get("current_state", 0)) != recovery_before:
+		failures.append("Craps throw commit advanced an unrelated recovery RNG lease.")
+	if not bool(run_state.commit_game_command(transaction).get("replayed", false)) or run_state.bankroll != RunState.DEFAULT_BANKROLL - 2:
+		failures.append("Production RunState facade replay reapplied canonical effects.")
+	var flushed := run_state.flush_game_facts_at_safe_boundary(1)
+	if not bool(flushed.get("ok", false)) or _array(flushed.get("processed", [])).size() != 1:
+		failures.append("Production RunState facade did not flush GameFacts at a safe boundary.")
+		return
+	var cas := run_state.game_command_cas_snapshot()
+	var accepted := run_state.respond_to_prepared_game_request("facade_interrupt", "accept", "game:facade:interrupt:accept", int(cas.get("revision", -1)), str(cas.get("state_digest", "")))
+	if not bool(accepted.get("ok", false)):
+		failures.append("Production RunState facade could not accept a prepared interruption.")
+		return
+	cas = run_state.game_command_cas_snapshot()
+	var chips_before_hostile_economy := run_state.grand_casino_chips
+	var hostile_economy := run_state.complete_prepared_game_request_economy("facade_interrupt", [{"account_id": "grand_casino_chips", "fund_domain": "chips", "account_before": run_state.grand_casino_chips, "account_after": run_state.grand_casino_chips + 1, "delta": 1, "reason": "hostile"}], "economy:facade:interrupt:wrong_account", int(cas.get("revision", -1)), str(cas.get("state_digest", "")))
+	if bool(hostile_economy.get("ok", true)) or run_state.grand_casino_chips != chips_before_hostile_economy:
+		failures.append("Production prepared request mutated an account outside its stored binding.")
+	cas = run_state.game_command_cas_snapshot()
+	var economic := run_state.complete_prepared_game_request_economy("facade_interrupt", [{"account_id": "player_bankroll", "fund_domain": "bankroll", "account_before": run_state.bankroll, "account_after": run_state.bankroll - 1, "delta": -1, "reason": "facade_fee"}], "economy:facade:interrupt:complete", int(cas.get("revision", -1)), str(cas.get("state_digest", "")))
+	if not bool(economic.get("ok", false)):
+		failures.append("Production RunState facade could not complete prepared economics.")
+		return
+	cas = run_state.game_command_cas_snapshot()
+	var unwound := run_state.acknowledge_prepared_game_unwound("facade_interrupt", {"producer_id": "craps", "game_id": "craps", "active": false, "round": 1}, "game:facade:interrupt:unwound", int(cas.get("revision", -1)), str(cas.get("state_digest", "")))
+	if not bool(unwound.get("ok", false)):
+		failures.append("Production RunState facade could not acknowledge game unwind.")
+		return
+	cas = run_state.game_command_cas_snapshot()
+	if not bool(run_state.apply_prepared_game_request_runtime("facade_interrupt", "runtime:facade:interrupt:applied", int(cas.get("revision", -1)), str(cas.get("state_digest", ""))).get("ok", false)):
+		failures.append("Production RunState facade did not complete the runtime-applied phase.")
+	var save := run_state.to_dict()
+	var restored := RunState.new()
+	restored.from_dict(save)
+	if restored.bankroll != run_state.bankroll or JSON.stringify(restored.scenario_host_transaction_ledger) != JSON.stringify(run_state.scenario_host_transaction_ledger) or save.has("accounts") or save.has("table_states"):
+		failures.append("Production RunState facade did not persist only its receipt/fact/RNG/request ledger.")
+	var restored_poker := restored.prepare_game_command_context("poker_table", "poker")
+	if JSON.stringify(_array(_dict(restored_poker.get("context", {})).get("rng_leases", []))) != JSON.stringify(poker_owned_leases):
+		failures.append("Save/reload changed the producer-owned Poker RNG lease projection.")
 
 
 static func _runtime_definition() -> Dictionary:

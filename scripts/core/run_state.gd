@@ -15,6 +15,7 @@ const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_due
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
+const ScenarioHostTransactionScript := preload("res://scripts/core/scenario_host_transaction.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
@@ -312,6 +313,7 @@ var crew_grievance_sequence: int = 0
 var crew_job_sequence: int = 0
 var active_delivery_run: Dictionary = {}
 var crew_pattern_memory: Dictionary = {}
+var scenario_host_transaction_ledger: Dictionary = {}
 var crew_match_marks: Dictionary = {}
 var crew_contraband_stash: Array = []
 var crew_play_state: Dictionary = {}
@@ -402,6 +404,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	crew_job_sequence = 0
 	active_delivery_run = {}
 	crew_pattern_memory = CrewPokerModelScript.default_observations()
+	scenario_host_transaction_ledger = {}
 	crew_match_marks = {}
 	crew_contraband_stash = []
 	crew_play_state = CrewPlayModelScript.default_state()
@@ -1602,6 +1605,167 @@ func scenario_sequence_active() -> bool:
 
 func scenario_sequence_projection() -> Dictionary:
 	return ScenarioEngineScript.sequence_projection(current_environment, scenario_sequence_definition())
+
+
+# Public cross-consumer table-game transaction context. The returned state is an
+# ephemeral CAS snapshot bound to canonical RunState fields; only the ledger is
+# persisted.
+func prepare_game_command_context(table_id: String, producer_id: String, requested_keys: Array = []) -> Dictionary:
+	_ensure_scenario_host_public_context()
+	return ScenarioHostTransactionScript.prepared_game_context(_scenario_host_bound_state(), _scenario_host_public_context(), table_id, producer_id, requested_keys)
+
+
+func reduce_game_command_transaction(command: Dictionary) -> Dictionary:
+	_ensure_scenario_host_public_context()
+	return ScenarioHostTransactionScript.reduce_game_command(_scenario_host_bound_state(), command)
+
+
+func commit_game_command(transaction: Dictionary) -> Dictionary:
+	var result := ScenarioHostTransactionScript.commit_game_command(_scenario_host_bound_state(), transaction)
+	return _apply_scenario_host_result(result)
+
+
+func game_command_cas_snapshot() -> Dictionary:
+	var state := _scenario_host_bound_state()
+	return {"revision": int(state.get("revision", 0)), "state_digest": ScenarioHostTransactionScript.state_digest(state)}
+
+
+func flush_game_facts_at_safe_boundary(boundary: int) -> Dictionary:
+	var result := ScenarioHostTransactionScript.flush_game_facts(_scenario_host_bound_state(), boundary)
+	return _apply_scenario_host_result(result)
+
+
+func respond_to_prepared_game_request(request_id: String, response: String, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	return _apply_scenario_host_result(ScenarioHostTransactionScript.respond_to_prepared_request(_scenario_host_bound_state(), request_id, response, receipt_id, expected_revision, expected_digest))
+
+
+func complete_prepared_game_request_economy(request_id: String, account_ops: Array, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	return _apply_scenario_host_result(ScenarioHostTransactionScript.complete_prepared_request_economy(_scenario_host_bound_state(), request_id, account_ops, receipt_id, expected_revision, expected_digest))
+
+
+func acknowledge_prepared_game_unwound(request_id: String, replacement_table_state: Dictionary, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	return _apply_scenario_host_result(ScenarioHostTransactionScript.acknowledge_prepared_request_unwound(_scenario_host_bound_state(), request_id, replacement_table_state, receipt_id, expected_revision, expected_digest))
+
+
+func apply_prepared_game_request_runtime(request_id: String, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	return _apply_scenario_host_result(ScenarioHostTransactionScript.apply_prepared_request_runtime(_scenario_host_bound_state(), request_id, receipt_id, expected_revision, expected_digest))
+
+
+func pre_travel_game_gate(command: Dictionary, request: Dictionary) -> Dictionary:
+	return ScenarioHostTransactionScript.pre_travel_hook(command, request)
+
+
+func _scenario_host_bound_state() -> Dictionary:
+	_ensure_scenario_host_ledger()
+	return ScenarioHostTransactionScript.bind_canonical_snapshot(scenario_host_transaction_ledger, {
+		"accounts": {
+			"player_bankroll": {"fund_domain": "bankroll", "balance": bankroll},
+			"grand_casino_chips": {"fund_domain": "chips", "balance": grand_casino_chips},
+		},
+		"table_states": _copy_dict(current_environment.get("game_states", {})),
+		"trust": crew_trust_by_member.duplicate(true),
+		"tells": _scenario_host_tell_snapshot(),
+	})
+
+
+func _apply_scenario_host_result(result_value: Dictionary) -> Dictionary:
+	var result := result_value.duplicate(true)
+	if not bool(result.get("ok", false)):
+		return result
+	var state := _copy_dict(result.get("state", {}))
+	if state.is_empty():
+		return result
+	if not bool(result.get("replayed", false)):
+		var accounts := _copy_dict(state.get("accounts", {}))
+		bankroll = int(_copy_dict(accounts.get("player_bankroll", {})).get("balance", bankroll))
+		grand_casino_chips = maxi(0, int(_copy_dict(accounts.get("grand_casino_chips", {})).get("balance", grand_casino_chips)))
+		current_environment["game_states"] = _copy_dict(state.get("table_states", {}))
+		crew_trust_by_member = _copy_dict(state.get("trust", {}))
+		_apply_scenario_host_tell_snapshot(_copy_dict(state.get("tells", {})))
+	scenario_host_transaction_ledger = ScenarioHostTransactionScript.persisted_ledger(state)
+	return result
+
+
+func _ensure_scenario_host_ledger() -> void:
+	if not scenario_host_transaction_ledger.is_empty():
+		return
+	var scenario_state := text_to_seed("%s|%d|scenario" % [seed_text, rng_state])
+	var craps_throw_state := text_to_seed("%s|%d|craps_throw" % [seed_text, rng_state])
+	var craps_recovery_state := text_to_seed("%s|%d|craps_recovery" % [seed_text, rng_state])
+	var poker_cards_state := text_to_seed("%s|%d|poker_cards" % [seed_text, rng_state])
+	var rng_leases := {
+		"scenario_main": {"owner_id": "scenario", "stream_id": "scenario", "current_state": scenario_state, "receipts": []},
+		"craps_throw_main": {"owner_id": "craps_throw", "stream_id": "craps_throw", "current_state": craps_throw_state, "receipts": []},
+		"craps_recovery_main": {"owner_id": "craps_recovery", "stream_id": "craps_recovery", "current_state": craps_recovery_state, "receipts": []},
+		"poker_cards_main": {"owner_id": "poker_cards", "stream_id": "poker_cards", "current_state": poker_cards_state, "receipts": []},
+	}
+	for member_id in ["crew_rook", "crew_velvet", "crew_knuckles", "crew_switch", "crew_mags", "crew_bishop", "crew_lucky"]:
+		var owner_id := "poker_policy_%s" % member_id
+		rng_leases[owner_id] = {
+			"owner_id": owner_id,
+			"stream_id": owner_id,
+			"current_state": text_to_seed("%s|%d|%s" % [seed_text, rng_state, owner_id]),
+			"receipts": [],
+		}
+	var state := ScenarioHostTransactionScript.initial_state({}, {}, rng_leases)
+	scenario_host_transaction_ledger = ScenarioHostTransactionScript.persisted_ledger(state)
+
+
+func _ensure_scenario_host_public_context() -> void:
+	if current_environment.is_empty():
+		return
+	var node_id := _scenario_host_safe_id(str(current_environment.get("world_node_id", current_environment.get("archetype_id", "node"))))
+	if node_id.is_empty(): node_id = "node"
+	current_environment["world_node_id"] = node_id
+	var environment_visit_id := _scenario_host_safe_id(str(current_environment.get("environment_visit_id", "")))
+	if environment_visit_id.is_empty():
+		environment_visit_id = "visit_%s_%d" % [_scenario_host_safe_id(str(current_environment.get("id", node_id))), maxi(1, environment_travel_count() + 1)]
+	current_environment["environment_visit_id"] = environment_visit_id
+	var night_instance_id := _scenario_host_safe_id(str(current_environment.get("night_instance_id", "")))
+	if night_instance_id.is_empty(): night_instance_id = "night_%d" % maxi(1, act_index + 1)
+	current_environment["night_instance_id"] = night_instance_id
+	var context_instance_id := _scenario_host_safe_id(str(current_environment.get("context_instance_id", "")))
+	if context_instance_id.is_empty(): context_instance_id = "context_%s" % environment_visit_id
+	current_environment["context_instance_id"] = context_instance_id
+
+
+func _scenario_host_public_context() -> Dictionary:
+	return ScenarioHostTransactionScript.public_context(
+		str(current_environment.get("world_node_id", "")),
+		str(current_environment.get("environment_visit_id", "")),
+		str(current_environment.get("night_instance_id", "")),
+		str(current_environment.get("context_instance_id", ""))
+	)
+
+
+func _scenario_host_tell_snapshot() -> Dictionary:
+	var result: Dictionary = {}
+	for member_id_value in crew_pattern_memory.keys():
+		var member_id := str(member_id_value)
+		for pattern_id_value in _copy_dict(crew_pattern_memory.get(member_id_value, {})).keys():
+			var pattern_id := str(pattern_id_value)
+			result["%s:%s" % [member_id, pattern_id]] = int(_copy_dict(crew_pattern_memory.get(member_id_value, {})).get(pattern_id_value, 0))
+	return result
+
+
+func _apply_scenario_host_tell_snapshot(snapshot: Dictionary) -> void:
+	var next := crew_pattern_memory.duplicate(true)
+	for key_value in snapshot.keys():
+		var parts := str(key_value).split(":", false, 1)
+		if parts.size() != 2: continue
+		var member := _copy_dict(next.get(str(parts[0]), {}))
+		member[str(parts[1])] = maxi(0, int(snapshot.get(key_value, 0)))
+		next[str(parts[0])] = member
+	crew_pattern_memory = next
+
+
+func _scenario_host_safe_id(value: String) -> String:
+	var result := ""
+	var normalized := value.strip_edges().to_lower()
+	for index in range(normalized.length()):
+		var code := normalized.unicode_at(index)
+		result += normalized[index] if (code >= 97 and code <= 122) or (code >= 48 and code <= 57) or code in [95, 45] else "_"
+	return result
 
 
 func scenario_sequence_command(command_id: String, idempotency_key: String, payload: Dictionary = {}, owner_namespace: String = "scenario", stable_object_id: String = "sequence") -> Dictionary:
@@ -12072,6 +12236,7 @@ func to_dict() -> Dictionary:
 		# Runtime serialization remains the established public projection for
 		# compatibility/goldens. Persistent saves use to_save_snapshot().
 		"crew_state": _crew_state_for_save(true, false),
+		"scenario_host_transaction_ledger": scenario_host_transaction_ledger.duplicate(true),
 		"active_delivery_run": active_delivery_run.duplicate(true),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": normalize_heat_history(heat_history),
@@ -12150,6 +12315,7 @@ func to_save_snapshot() -> Dictionary:
 		"story_log": story_log.duplicate(false),
 		"story_log_archive_count": story_log_archive_count,
 		"crew_state": _crew_state_for_save(false, true),
+		"scenario_host_transaction_ledger": scenario_host_transaction_ledger.duplicate(true),
 		"active_delivery_run": active_delivery_run.duplicate(false),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": heat_history.duplicate(false),
@@ -12206,6 +12372,7 @@ func from_dict(data: Dictionary) -> void:
 	pending_drunk_absorption = _normalize_pending_drunk_absorption(_copy_array(data.get("pending_drunk_absorption", [])))
 	drunk_distortion_suppression_turns = maxi(0, int(data.get("drunk_distortion_suppression_turns", 0)))
 	current_environment = _normalize_environment(_copy_dict(data.get("current_environment", {})))
+	scenario_host_transaction_ledger = _copy_dict(data.get("scenario_host_transaction_ledger", {}))
 	# Import current-room machine ownership from pre-portable saves, then make
 	# the portable record authoritative for the restored surface.
 	capture_portable_ticket_piles_from_environment(current_environment, true)
