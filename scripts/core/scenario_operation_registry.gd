@@ -819,7 +819,7 @@ static func _validate_scene_payload(payload: Dictionary, errors: Array) -> void:
 
 
 static func _validate_interaction_payload(payload: Dictionary, errors: Array) -> void:
-	_append_unknown_keys("interaction payload", payload, ["owner_namespace", "stable_object_id", "presentation_object_id", "source_kind", "source_field", "source_record_id", "label", "state_label", "prompt", "enabled", "disabled_reason", "available_actions", "input_actions", "non_color_state", "focus_order", "hit_bounds", "normalized_hit_rect", "min_target_size", "safe_exit", "mode", "target_owner_namespace", "target_stable_object_id", "source_id", "operation_receipt_key", "operation_boundary_id", "operation_fingerprint"], errors)
+	_append_unknown_keys("interaction payload", payload, ["owner_namespace", "stable_object_id", "presentation_object_id", "source_kind", "source_field", "source_record_id", "label", "state_label", "prompt", "enabled", "disabled_reason", "available_actions", "input_actions", "non_color_state", "focus_order", "hit_bounds", "normalized_hit_rect", "min_target_size", "safe_exit", "alternate_exit", "mode", "target_owner_namespace", "target_stable_object_id", "source_id", "operation_receipt_key", "operation_boundary_id", "operation_fingerprint"], errors)
 	for provenance_key in ["source_kind", "source_field", "source_record_id"]:
 		if payload.has(provenance_key) and str(payload.get(provenance_key, "")).strip_edges().is_empty():
 			errors.append("interaction producer provenance %s cannot be blank." % provenance_key)
@@ -895,6 +895,10 @@ static func _validate_interaction_payload(payload: Dictionary, errors: Array) ->
 			if not _finite_number(normalized_rect.get(rect_key)): errors.append("interaction normalized_hit_rect must contain finite coordinates.")
 	if not payload.has("safe_exit") or typeof(payload.get("safe_exit")) != TYPE_BOOL:
 		errors.append("interaction must declare safe_exit semantics.")
+	if not payload.has("alternate_exit") or typeof(payload.get("alternate_exit")) != TYPE_BOOL:
+		errors.append("interaction must declare alternate_exit semantics.")
+	elif bool(payload.get("safe_exit", false)) and bool(payload.get("alternate_exit", false)):
+		errors.append("interaction cannot be both a safe exit and an alternate exit objective.")
 
 
 static func _validate_actor_payload(payload: Dictionary, errors: Array) -> void:
@@ -971,7 +975,7 @@ static func _validate_operation_fields(family: String, op_id: String, operation:
 					"label": "Augment", "state_label": "Available", "prompt": "Choose.", "enabled": true,
 					"available_actions": _array(operation.get("available_actions", [])), "input_actions": ["confirm"],
 					"non_color_state": "available", "focus_order": 0, "hit_bounds": {"w": MIN_TARGET_SIZE, "h": MIN_TARGET_SIZE},
-					"min_target_size": MIN_TARGET_SIZE, "safe_exit": false,
+					"min_target_size": MIN_TARGET_SIZE, "safe_exit": false, "alternate_exit": false,
 				}, errors)
 		"actor_ops":
 			if op_id == "set_position" and str(operation.get("anchor_id", "")).strip_edges().is_empty() and str(operation.get("zone_id", "")).strip_edges().is_empty():
@@ -1046,7 +1050,7 @@ static func _validate_interaction_record(record: Dictionary, errors: Array, over
 				"label": "Augment", "state_label": "Available", "prompt": "Choose.", "enabled": true,
 				"available_actions": augment_actions, "input_actions": augment_inputs,
 				"non_color_state": "available", "focus_order": 0, "hit_bounds": {"w": MIN_TARGET_SIZE, "h": MIN_TARGET_SIZE},
-				"min_target_size": MIN_TARGET_SIZE, "safe_exit": false,
+				"min_target_size": MIN_TARGET_SIZE, "safe_exit": false, "alternate_exit": false,
 			}, errors)
 	elif mode == "retarget" and str(record.get("source_id", "")).strip_edges().is_empty():
 		errors.append("interaction retarget requires source_id.")

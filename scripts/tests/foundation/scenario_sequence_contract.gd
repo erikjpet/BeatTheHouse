@@ -884,10 +884,10 @@ static func _check_semantic_inventory(library: ContentLibrary, failures: Array) 
 	var census_diagnostics := EnvironmentSemanticInventoryScript.diagnose_declared_targets(census, {"interactions": ["base::item:marked_cards", "base::service:house_drink", "base::ghost"], "scene_objects": ["service::house_drink"]})
 	for diagnostic_text in ["possible-only", "belongs to collection", "wrong owner", "unknown"]:
 		if not _contains_text(census_diagnostics, diagnostic_text): failures.append("Static target catalog omitted %s diagnostics." % diagnostic_text)
-	var public_catalog := library.scenario_target_catalog(_finalization_definition())
+	var public_catalog := library.scenario_target_catalog(finalization_fixture_definition())
 	if public_catalog.is_empty() or not public_catalog.has("guaranteed") or not public_catalog.has("possible") or not public_catalog.has("records") or not public_catalog.has("provenance") or not public_catalog.has("errors") or _dict(public_catalog.get("inventory", {})).is_empty():
 		failures.append("Public scenario target catalog did not expose full guaranteed/possible/record/provenance/error proof.")
-	var wrong_layer_definition := _finalization_definition()
+	var wrong_layer_definition := finalization_fixture_definition()
 	wrong_layer_definition["layer_id"] = "ghost_layer"
 	if not _contains_text(_array(library.scenario_target_catalog(wrong_layer_definition).get("errors", [])), "layer"):
 		failures.append("Public scenario target catalog did not diagnose an authored layer mismatch.")
@@ -1006,7 +1006,7 @@ static func _check_base_semantic_producer(library: ContentLibrary, failures: Arr
 
 
 static func _check_lifecycle_finalization(library: ContentLibrary, failures: Array) -> void:
-	var definition := _finalization_definition()
+	var definition := finalization_fixture_definition()
 	var run_state := RunStateScript.new()
 	run_state.current_environment = {
 		"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node", "environment_visit_id": "visit_1",
@@ -1377,7 +1377,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	var expiry_rejected_state := _dict(expiry_recipient.get("scenario_sequence_state", {}))
 	if not expiry_is_only_progress or expiry_can_rebind or bool(expiry_ingress.get("ok", true)) or str(expiry_rejected_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or str(expiry_rejected_state.get("node_id", "")) != "bar" or SequenceRuntimeScript.content_fingerprint(expiry_rejected_state.get("expiry_boundary_records", [])) != SequenceRuntimeScript.content_fingerprint(expiry_state.get("expiry_boundary_records", [])) or not _array(expiry_rejected_state.get("command_receipt_records", [])).is_empty():
 		failures.append("Expiry-only sequence progress transplanted across nodes and authorized ingress.")
-	var production_projection := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get("records", [])), run_state.scenario_sequence_projection(), run_state.current_environment)
+	var production_projection := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), finalized)
 	var projected_records := _array(production_projection.get("records", []))
 	var projected_console: Dictionary = {}
 	var projected_scene: Dictionary = {}
@@ -4748,7 +4748,7 @@ static func _check_run_state_host_transaction_facade(failures: Array) -> void:
 		failures.append("Save/reload changed the producer-owned Poker RNG lease projection.")
 
 
-static func _finalization_definition() -> Dictionary:
+static func finalization_fixture_definition() -> Dictionary:
 	var definition := _runtime_definition()
 	var sequence := _dict(definition.get("sequence", {}))
 	var graph := _dict(sequence.get("phase_graph", {}))
@@ -5217,6 +5217,7 @@ static func _interaction_record(owner: String, stable_id: String, label: String,
 		"normalized_hit_rect": {"x": 0.1, "y": 0.1, "w": 0.12, "h": 0.18},
 		"min_target_size": 44,
 		"safe_exit": stable_id.contains("exit"),
+		"alternate_exit": false,
 	}
 
 

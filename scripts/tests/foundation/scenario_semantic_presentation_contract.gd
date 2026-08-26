@@ -6,17 +6,264 @@ const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
+const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
+const RunStateScript := preload("res://scripts/core/run_state.gd")
+const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
+const ScenarioSequenceContractScript := preload("res://scripts/tests/foundation/scenario_sequence_contract.gd")
 
 const BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const SMALL_SCREEN_TARGET := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
 
 
-static func check(_library: Variant, failures: Array) -> void:
+static func check(library: Variant, failures: Array) -> void:
 	_check_ordinary_interaction_coexistence(failures)
 	_check_public_removal_tombstones(failures)
-	_check_visible_semantic_geometry(failures)
+	_check_finalized_canvas_authority(library, failures)
+	_check_atomic_finalization_layout(library, failures)
+	_check_finalized_accessibility(library, failures)
+	_check_finalized_actor_route(library, failures)
 	_check_atomic_projection_failures(failures)
-	_check_accessibility_failures(failures)
+
+
+static func _check_finalized_canvas_authority(library: Variant, failures: Array) -> void:
+	var definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	var command_visual := _command_visual(definition)
+	var command_object := _dict(command_visual.get("object", {}))
+	command_object["bounds"] = {"w": 32, "h": 24}
+	command_visual["object"] = command_object
+	_reseal_definition(definition)
+	var run_state := RunStateScript.new()
+	run_state.current_environment = _finalization_environment(definition)
+	var presentation := _production_presentation()
+	# Deliberately stale producer data: focus_rect is the producer geometry used
+	# by semantic stamping, while normalized_rect used to outrank it on canvas.
+	presentation["normalized_rect"] = {"x": 0.72, "y": 0.66, "w": 0.08, "h": 0.09}
+	run_state.scenario_prepare_semantic_finalization()
+	var finalized := run_state.scenario_finalize_base_semantics([presentation], library, _production_layout_context())
+	if not bool(finalized.get("ok", false)):
+		failures.append("Validated RunState finalization rejected the sealed-canvas fixture: %s" % JSON.stringify(finalized.get("errors", [])))
+		return
+	var projected := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), finalized)
+	var records := _array(projected.get("records", []))
+	var slot := _record(records, "game:slot")
+	var command := _record(records, "scenario::command_console")
+	var slot_normalized := _dict(slot.get("normalized_rect", {}))
+	if not bool(projected.get("ok", false)) or not bool(run_state.current_environment.get("scenario_semantic_ready", false)) or str(run_state.current_environment.get("scenario_layout_authority_digest", "")) != str(projected.get("layout_authority_digest", "")):
+		failures.append("RunState finalization did not atomically publish the exact projection/layout authority consumed by presentation.")
+	if not is_equal_approx(float(slot_normalized.get("x", -1.0)), 0.1) or not is_equal_approx(float(slot_normalized.get("y", -1.0)), 0.1):
+		failures.append("Sealed authority did not replace a stale normalized_rect on an otherwise untouched base control.")
+	var canvas = PixelSceneCanvasScript.new()
+	canvas.size = BOARD_SIZE
+	canvas.render_environment_snapshot({
+		"id": "finalized_canvas_authority",
+		"archetype_id": "bar",
+		"interactable_objects": records,
+		"scenario_layout_audit": finalized.get("layout_audit", {}),
+		"scenario_layout_authority_digest": finalized.get("layout_authority_digest", ""),
+	})
+	var view := _dict(canvas.current_view_snapshot())
+	var slot_rect := _snapshot_rect(_layout_entry(_dict(view.get("object_layout", {})), "game:slot").get("rect", {}))
+	var command_rect := _snapshot_rect(_layout_entry(_dict(view.get("object_layout", {})), "scenario::command_console").get("rect", {}))
+	if not slot_rect.position.is_equal_approx(Vector2(90.0, 43.0)) or not slot_rect.size.is_equal_approx(Vector2(108.0, 77.4)) or canvas.object_id_at_local_position(slot_rect.get_center()) != "game:slot":
+		failures.append("Public canvas draw/hit routing diverged from sealed base geometry after stale normalized_rect replacement.")
+	if command.is_empty() or not command_rect.size.is_equal_approx(Vector2(32.0, 24.0)) or canvas.object_id_at_local_position(command_rect.get_center()) != "scenario::command_console":
+		failures.append("Public canvas reintroduced the legacy 72x48 minimum after validating a sub-minimum scenario authority.")
+	canvas.set_small_screen_mode(true)
+	var small_view := _dict(canvas.current_view_snapshot())
+	var small_command_rect := _snapshot_rect(_layout_entry(_dict(small_view.get("object_layout", {})), "scenario::command_console").get("rect", {}))
+	if not small_command_rect.size.is_equal_approx(SMALL_SCREEN_TARGET) or canvas.object_id_at_local_position(small_command_rect.get_center()) != "scenario::command_console":
+		failures.append("Public small-screen draw/hit routing did not use the exact expanded sealed authority.")
+	var evidence := _dict(small_view.get("scenario_layout_evidence", {}))
+	if int(evidence.get("authority_digest_count", 0)) != 1 or int(evidence.get("authority_count", 0)) != records.size():
+		failures.append("Public canvas snapshot did not preserve one correlated authority digest across the finalized record set.")
+	canvas.free()
+	var forged_finalized := finalized.duplicate(true)
+	forged_finalized["layout_authority"]["game::game:slot"]["normalized_hit_rect"]["x"] = 0.77
+	var forged_projection := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), forged_finalized)
+	if bool(forged_projection.get("ok", true)) or not _contains_text(_array(forged_projection.get("errors", [])), "digest correlation"):
+		failures.append("Public finalized projection accepted geometry that diverged from its committed authority digest.")
+
+
+static func _check_atomic_finalization_layout(library: Variant, failures: Array) -> void:
+	var invalid_definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	var command_visual := _command_visual(invalid_definition)
+	var command_object := _dict(command_visual.get("object", {}))
+	command_object["anchor_id"] = "missing_finalization_anchor"
+	command_visual["object"] = command_object
+	_reseal_definition(invalid_definition)
+	var invalid_run := RunStateScript.new()
+	invalid_run.current_environment = _finalization_environment(invalid_definition)
+	invalid_run.scenario_prepare_semantic_finalization()
+	var before := JSON.stringify(invalid_run.current_environment)
+	var rejected := invalid_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	if bool(rejected.get("ok", true)) or JSON.stringify(invalid_run.current_environment) != before or invalid_run.current_environment.has("scenario_semantic_ready") or invalid_run.current_environment.has("scenario_sequence_state") or invalid_run.current_environment.has("scenario_layout_authority_digest"):
+		failures.append("Layout rejection partially committed readiness, reentry state, projection, or authority instead of rolling back the detached finalization candidate.")
+
+	var valid_run := RunStateScript.new()
+	valid_run.current_environment = _finalization_environment(ScenarioSequenceContractScript.finalization_fixture_definition())
+	valid_run.scenario_prepare_semantic_finalization()
+	var finalized := valid_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	var causal_before := JSON.stringify(valid_run.current_environment.get("scenario_sequence_state", {}))
+	var invalidated := valid_run.scenario_reject_layout_projection(["fixture projection mismatch"], {"valid": false})
+	if not bool(finalized.get("ok", false)) or bool(invalidated.get("ok", true)) or valid_run.current_environment.has("scenario_semantic_ready") or not _dict(valid_run.current_environment.get("scenario_sequence_projection", {})).is_empty() or str(valid_run.current_environment.get("scenario_layout_authority_digest", "x")) != "" or JSON.stringify(valid_run.current_environment.get("scenario_sequence_state", {})) != causal_before:
+		failures.append("Post-finalization projection rejection did not invalidate ephemeral authority while preserving the durable causal journal.")
+
+
+static func _check_finalized_actor_route(library: Variant, failures: Array) -> void:
+	var definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	var phase: Dictionary = definition["sequence"]["phase_graph"]["phases"][0]
+	var actor_ops: Array = phase.get("actor_ops", [])
+	actor_ops.append({
+		"family": "actor_ops",
+		"op": "spawn",
+		"receipt_id": "actor_spawn_route_guard",
+		"owner_namespace": "scenario",
+		"stable_object_id": "route_guard",
+		"actor": {"label": "Route guard", "actor_id": "route_guard", "anchor_id": "bar_actor", "behavior": "flee", "route_id": "base::world:bar", "pose": "brace"},
+	})
+	phase["actor_ops"] = actor_ops
+	var cleanup: Dictionary = definition["sequence"]["cleanup"]
+	var cleanup_ops: Array = cleanup.get("operations", [])
+	cleanup_ops.append({"family": "actor_ops", "op": "despawn", "receipt_id": "cleanup_actor_route_guard", "owner_namespace": "scenario", "stable_object_id": "route_guard"})
+	cleanup["operations"] = cleanup_ops
+	_reseal_definition(definition)
+	var run_state := RunStateScript.new()
+	run_state.current_environment = _finalization_environment(definition)
+	run_state.current_environment["semantic_anchors"]["bar"] = {"position": [620.0, 230.0]}
+	run_state.scenario_prepare_semantic_finalization()
+	var finalized := run_state.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	var projected := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(finalized.get("records", [])), finalized)
+	var actor := _record(_array(projected.get("records", [])), "scenario::route_guard")
+	if not bool(finalized.get("ok", false)) or not bool(projected.get("ok", false)) or _array(actor.get("actor_route_points", [])).size() != 2 or _dict(actor.get("actor_route_stage", {})).is_empty():
+		failures.append("Validated finalization did not preserve authored actor route staging in the public projection: %s" % JSON.stringify(finalized.get("errors", [])))
+		return
+	var canvas = PixelSceneCanvasScript.new()
+	canvas.size = BOARD_SIZE
+	canvas.render_environment_snapshot({"id": "finalized_route", "archetype_id": "bar", "reduce_motion": true, "interactable_objects": projected.get("records", [])})
+	var actor_rect := _snapshot_rect(_layout_entry(_dict(canvas.current_view_snapshot().get("object_layout", {})), "scenario::route_guard").get("rect", {}))
+	if not actor_rect.get_center().is_equal_approx(Vector2(620.0, 230.0)):
+		failures.append("Public reduced-motion canvas routing did not use the sealed actor endpoint geometry.")
+	canvas.set_small_screen_mode(true)
+	var small_actor_rect := _snapshot_rect(_layout_entry(_dict(canvas.current_view_snapshot().get("object_layout", {})), "scenario::route_guard").get("rect", {}))
+	if not small_actor_rect.get_center().is_equal_approx(Vector2(620.0, 230.0)):
+		failures.append("Expanded small-screen actor route staging diverged from its sealed reduced-motion endpoint.")
+	canvas.free()
+
+
+static func _check_finalized_accessibility(library: Variant, failures: Array) -> void:
+	var cases := [
+		{"id": "talkdock", "anchor": [285.0, 120.0], "bounds": {"w": 20, "h": 20}, "role": "control", "context": {"reserved_overlay_board_rect": {"x": 306.0, "y": 112.0, "w": 100.0, "h": 18.0}, "small_screen_mode": true, "reduce_motion": true, "production_canvas": true}, "needle": "TalkDock"},
+		{"id": "lane", "anchor": [285.0, 355.0], "bounds": {"w": 20, "h": 20}, "role": "obstacle", "context": _production_layout_context(), "needle": "access lane"},
+	]
+	for case_value in cases:
+		var case := _dict(case_value)
+		var definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+		var command_visual := _command_visual(definition)
+		var command_object := _dict(command_visual.get("object", {}))
+		command_object["bounds"] = _dict(case.get("bounds", {}))
+		command_object["role"] = str(case.get("role", "control"))
+		command_visual["object"] = command_object
+		_reseal_definition(definition)
+		var run_state := RunStateScript.new()
+		run_state.current_environment = _finalization_environment(definition)
+		run_state.current_environment["semantic_anchors"]["bar_actor"]["position"] = _array(case.get("anchor", []))
+		run_state.scenario_prepare_semantic_finalization()
+		var rejected := run_state.scenario_finalize_base_semantics([_production_presentation()], library, _dict(case.get("context", {})))
+		if bool(rejected.get("ok", true)) or not _contains_text(_array(rejected.get("errors", [])), str(case.get("needle", ""))) or run_state.current_environment.has("scenario_semantic_ready"):
+			failures.append("Validated finalization did not reject the expanded small-screen %s hostile layout atomically: %s" % [str(case.get("id", "")), JSON.stringify(rejected.get("errors", []))])
+
+	_check_finalized_expanded_path_and_label(library, failures)
+	_check_explicit_alternate_exit(library, failures)
+
+
+static func _check_finalized_expanded_path_and_label(library: Variant, failures: Array) -> void:
+	var path_definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	var path_visual := _command_visual(path_definition)
+	var path_object := _dict(path_visual.get("object", {}))
+	path_object["anchor_id"] = "path_target"
+	path_object["bounds"] = {"w": 32, "h": 32}
+	path_visual["object"] = path_object
+	_append_scene_visual(path_definition, "expanded_path_blocker", "Path blocker", "obstacle", "path_blocker", {"w": 20, "h": 20})
+	_reseal_definition(path_definition)
+	var path_run := RunStateScript.new()
+	path_run.current_environment = _finalization_environment(path_definition)
+	path_run.current_environment["semantic_anchors"]["path_target"] = {"position": [450.0, 215.0]}
+	path_run.current_environment["semantic_anchors"]["path_blocker"] = {"position": [470.0, 300.0]}
+	path_run.scenario_prepare_semantic_finalization()
+	var path_rejected := path_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	var path_errors := _array(path_rejected.get("errors", []))
+	if bool(path_rejected.get("ok", true)) or not _contains_text(path_errors, "Expanded small-screen scenario obstruction") or not _contains_text(path_errors, "not reachable"):
+		failures.append("Validated finalization did not evaluate expanded obstacle path and interaction reachability in parallel with normal geometry: %s" % JSON.stringify(path_errors))
+
+	var label_definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	var label_visual := _command_visual(label_definition)
+	var label_object := _dict(label_visual.get("object", {}))
+	label_object["label"] = "Small expanded label"
+	label_object["anchor_id"] = "small_label"
+	label_object["bounds"] = {"w": 20, "h": 20}
+	label_visual["object"] = label_object
+	_append_scene_visual(label_definition, "large_label", "Large stable label", "prop", "large_label", {"w": 60, "h": 60})
+	_reseal_definition(label_definition)
+	var label_run := RunStateScript.new()
+	label_run.current_environment = _finalization_environment(label_definition)
+	label_run.current_environment["semantic_anchors"]["small_label"] = {"position": [380.0, 100.0]}
+	label_run.current_environment["semantic_anchors"]["large_label"] = {"position": [300.0, 100.0]}
+	label_run.scenario_prepare_semantic_finalization()
+	var label_rejected := label_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	if bool(label_rejected.get("ok", true)) or not _contains_text(_array(label_rejected.get("errors", [])), "text-safe in expanded small-screen"):
+		failures.append("Validated finalization did not reject expanded-only label overlap with the production label geometry: %s" % JSON.stringify(label_rejected.get("errors", [])))
+
+
+static func _check_explicit_alternate_exit(library: Variant, failures: Array) -> void:
+	var guessed_definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	var blocked_exit := _command_interaction(guessed_definition)
+	blocked_exit["enabled"] = false
+	blocked_exit["state_label"] = "Blocked"
+	blocked_exit["disabled_reason"] = "The marked exit is blocked."
+	blocked_exit["available_actions"] = []
+	blocked_exit["safe_exit"] = true
+	blocked_exit["alternate_exit"] = false
+	_append_scene_visual(guessed_definition, "leave_objective_route", "Leave objective route", "control", "alternate_exit_anchor", {"w": 72, "h": 56})
+	_append_interaction(guessed_definition, {
+		"owner_namespace": "scenario",
+		"stable_object_id": "leave_objective_route",
+		"presentation_object_id": "scenario::leave_objective_route",
+		"label": "Leave objective route",
+		"state_label": "Available",
+		"prompt": "Use the alternate objective route.",
+		"enabled": true,
+		"disabled_reason": "",
+		"available_actions": [{"id": "prepare", "label": "Leave now", "input_action": "confirm", "non_color_state": "ready"}],
+		"input_actions": ["confirm"],
+		"non_color_state": "available",
+		"focus_order": 5,
+		"hit_bounds": {"w": 72, "h": 56},
+		"normalized_hit_rect": {"x": 0.65, "y": 0.4, "w": 0.08, "h": 0.13},
+		"min_target_size": 44,
+		"safe_exit": false,
+		"alternate_exit": false,
+	})
+	_configure_alternate_exit_proof(guessed_definition)
+	_reseal_definition(guessed_definition)
+	var guessed_run := RunStateScript.new()
+	guessed_run.current_environment = _finalization_environment(guessed_definition)
+	guessed_run.current_environment["semantic_anchors"]["alternate_exit_anchor"] = {"position": [650.0, 200.0]}
+	guessed_run.scenario_prepare_semantic_finalization()
+	var guessed_rejected := guessed_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	if bool(guessed_rejected.get("ok", true)) or not _contains_text(_array(guessed_rejected.get("errors", [])), "alternate objective"):
+		failures.append("Exit/objective words still inferred alternate-exit authority without an explicit authored boolean.")
+
+	var explicit_definition := guessed_definition.duplicate(true)
+	var explicit_interaction := _command_interaction_by_id(explicit_definition, "leave_objective_route")
+	explicit_interaction["alternate_exit"] = true
+	_reseal_definition(explicit_definition)
+	var explicit_run := RunStateScript.new()
+	explicit_run.current_environment = _finalization_environment(explicit_definition)
+	explicit_run.current_environment["semantic_anchors"]["alternate_exit_anchor"] = {"position": [650.0, 200.0]}
+	explicit_run.scenario_prepare_semantic_finalization()
+	var explicit_finalized := explicit_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	if not bool(explicit_finalized.get("ok", false)):
+		failures.append("An explicit authored alternate_exit boolean did not satisfy the blocked-exit contract: %s" % JSON.stringify(explicit_finalized.get("errors", [])))
 
 
 static func _check_ordinary_interaction_coexistence(failures: Array) -> void:
@@ -150,26 +397,6 @@ static func _check_visible_semantic_geometry(failures: Array) -> void:
 	var evidence := _dict(view.get("scenario_layout_evidence", {}))
 	if int(evidence.get("authority_count", 0)) < 3 or int(evidence.get("authority_digest_count", 0)) != 1:
 		failures.append("Canvas did not expose capture-ready correlated layout-authority evidence.")
-	var character_actor := _dict(canvas_actor.get("character_actor", {}))
-	var members := _array(character_actor.get("members", []))
-	var actor_style := canvas.call("_character_actor_style", _dict(members[0] if not members.is_empty() else {}), character_actor, false, 99.0)
-	if str(_dict(actor_style).get("pose", "")) != "brace":
-		failures.append("Actor drawing replaced the authored reduced-motion pose with an idle animation pose.")
-	canvas.render_environment_snapshot({
-		"id": "semantic_geometry_fixture",
-		"archetype_id": "bar",
-		"display_name": "Semantic geometry fixture",
-		"reduce_motion": false,
-		"interactable_objects": records,
-	})
-	var route_duration := float(_dict(actor.get("actor_route_stage", {})).get("duration_sec", 1.0))
-	canvas.set("actor_route_time", route_duration * 0.5)
-	var moving_layout := _layout_entry(_dict(canvas.current_view_snapshot().get("object_layout", {})), "scenario::guard")
-	var moving_center := _snapshot_rect(moving_layout.get("rect", {})).get_center()
-	var route_start := actor_rect.get_center() * BOARD_SIZE
-	var route_endpoint := Vector2(620.0, 230.0)
-	if not moving_center.is_equal_approx(route_start.lerp(route_endpoint, 0.5)):
-		failures.append("Normal-motion actor staging did not traverse the sealed route deterministically.")
 	canvas.set_small_screen_mode(true)
 	var small_layout := _layout_entry(_dict(canvas.current_view_snapshot().get("object_layout", {})), "scenario::crate")
 	var small_rect := _snapshot_rect(small_layout.get("rect", {}))
@@ -423,6 +650,135 @@ static func _geometry_projection() -> Dictionary:
 			},
 		},
 	}
+
+
+static func _finalization_environment(definition: Dictionary) -> Dictionary:
+	return {
+		"id": "bar_001",
+		"archetype_id": "bar",
+		"world_node_id": "bar_node",
+		"environment_visit_id": "visit_1",
+		"scenario_sequence_definition": definition,
+		"game_ids": ["slot"],
+		"event_ids": ["late_shift_discount"],
+		"service_ids": ["house_drink"],
+		"lender_hooks": [],
+		"item_offers": [],
+		"travel_hooks": ["bar"],
+		"next_archetypes": [],
+		"semantic_anchors": {
+			"bar_floor_100": {"position": [90.0, 120.0]},
+			"bar_actor": {"position": [180.0, 120.0]},
+		},
+		"layout": {"object_rects": {"game:slot": {"x": 0.1, "y": 0.1, "w": 0.12, "h": 0.18}}},
+	}
+
+
+static func _production_presentation() -> Dictionary:
+	return EnvironmentInteractionViewModelScript.make_interactable_object({
+		"object_id": "game:slot",
+		"object_type": "game",
+		"source_id": "slot",
+		"interactive": true,
+		"label": "Slot",
+		"prompt": "Choose an action.",
+		"enabled": true,
+		"available_actions": [{"id": "enter_game", "label": "Enter"}],
+		"focus_rect": Rect2(0.1, 0.1, 0.12, 0.18),
+	}, {})
+
+
+static func _production_layout_context() -> Dictionary:
+	return {
+		"reserved_overlay_board_rect": {},
+		"small_screen_mode": false,
+		"reduce_motion": false,
+		"production_canvas": true,
+	}
+
+
+static func _command_visual(definition: Dictionary) -> Dictionary:
+	var phase: Dictionary = definition["sequence"]["phase_graph"]["phases"][0]
+	for operation_value in phase.get("scene_ops", []):
+		var operation := operation_value as Dictionary
+		if str(operation.get("stable_object_id", "")) == "command_console":
+			return operation
+	return {}
+
+
+static func _command_interaction(definition: Dictionary) -> Dictionary:
+	return _command_interaction_by_id(definition, "command_console")
+
+
+static func _command_interaction_by_id(definition: Dictionary, stable_id: String) -> Dictionary:
+	var phase: Dictionary = definition["sequence"]["phase_graph"]["phases"][0]
+	for operation_value in phase.get("interaction_ops", []):
+		var operation := operation_value as Dictionary
+		if str(operation.get("stable_object_id", "")) == stable_id:
+			return operation.get("interaction", {}) as Dictionary
+	return {}
+
+
+static func _append_scene_visual(definition: Dictionary, stable_id: String, label: String, role: String, anchor_id: String, bounds: Dictionary) -> void:
+	var phase: Dictionary = definition["sequence"]["phase_graph"]["phases"][0]
+	var scene_ops: Array = phase.get("scene_ops", [])
+	scene_ops.append({
+		"family": "scene_ops",
+		"op": "spawn",
+		"receipt_id": "scene_spawn_%s" % stable_id,
+		"owner_namespace": "scenario",
+		"stable_object_id": stable_id,
+		"object": {"label": label, "role": role, "anchor_id": anchor_id, "bounds": bounds.duplicate(true), "visible": true, "enabled": true},
+	})
+	phase["scene_ops"] = scene_ops
+	_append_cleanup(definition, "scene_ops", stable_id)
+
+
+static func _append_interaction(definition: Dictionary, interaction: Dictionary) -> void:
+	var stable_id := str(interaction.get("stable_object_id", ""))
+	var phase: Dictionary = definition["sequence"]["phase_graph"]["phases"][0]
+	var interaction_ops: Array = phase.get("interaction_ops", [])
+	interaction_ops.append({
+		"family": "interaction_ops",
+		"op": "add",
+		"receipt_id": "interaction_add_%s" % stable_id,
+		"owner_namespace": "scenario",
+		"stable_object_id": stable_id,
+		"interaction": interaction.duplicate(true),
+	})
+	phase["interaction_ops"] = interaction_ops
+	_append_cleanup(definition, "interaction_ops", stable_id)
+
+
+static func _append_cleanup(definition: Dictionary, family: String, stable_id: String) -> void:
+	var cleanup: Dictionary = definition["sequence"]["cleanup"]
+	var operations: Array = cleanup.get("operations", [])
+	operations.append({"family": family, "op": "remove", "receipt_id": "cleanup_%s_%s" % [family.trim_suffix("_ops"), stable_id], "owner_namespace": "scenario", "stable_object_id": stable_id})
+	cleanup["operations"] = operations
+
+
+static func _configure_alternate_exit_proof(definition: Dictionary) -> void:
+	var phase: Dictionary = definition["sequence"]["phase_graph"]["phases"][0]
+	phase["objective_ids"] = ["clear_exit"]
+	phase["branches"] = [{"id": "continue", "condition": {"type": "command", "command_id": "prepare"}, "next_phase": "aftermath"}]
+	var interaction_ops: Array = phase.get("interaction_ops", [])
+	interaction_ops.append({
+		"family": "interaction_ops",
+		"op": "gate",
+		"receipt_id": "interaction_gate_declared_exit",
+		"owner_namespace": "scenario",
+		"stable_object_id": "declared_exit_gate",
+		"mode": "gate",
+		"target_owner_namespace": "game",
+		"target_stable_object_id": "game:slot",
+		"enabled": false,
+		"disabled_reason": "The ordinary route is blocked.",
+	})
+	phase["interaction_ops"] = interaction_ops
+
+
+static func _reseal_definition(definition: Dictionary) -> void:
+	definition["sequence"]["sequence_signature"] = ScenarioSequenceSchemaScript.calculated_signature_hash(definition)
 
 
 static func _base_record(object_id: String, owner: String, label: String) -> Dictionary:

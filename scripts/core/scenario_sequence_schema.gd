@@ -734,7 +734,7 @@ static func _validate_phase_safe_exit(label: String, authored: Dictionary, phase
 			var interaction := _dict(operation.get("interaction", {}))
 			if bool(interaction.get("safe_exit", false)) and bool(interaction.get("enabled", false)) and not _array(interaction.get("available_actions", [])).is_empty():
 				has_safe_exit = true
-			if bool(interaction.get("enabled", false)):
+			if bool(interaction.get("alternate_exit", false)) and bool(interaction.get("enabled", false)):
 				for action_value in _array(interaction.get("available_actions", [])):
 					alternate_commands[str(_dict(action_value).get("id", ""))] = true
 		elif op_id == "gate" and not bool(operation.get("enabled", true)) and not str(operation.get("disabled_reason", "")).strip_edges().is_empty():

@@ -120,7 +120,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	_validate_visual_identity_uniqueness(resolved_scenes, resolved_actors, errors)
 	_assign_z_order(resolved_scenes, resolved_actors)
 	var obstacles := _scenario_obstacles(resolved_scenes)
-	_validate_visual_access(resolved_scenes, resolved_actors, obstacles, environment, errors)
+	_validate_visual_access(resolved_scenes, resolved_actors, obstacles, base_records, environment, errors)
 	_validate_actor_routes(resolved_actors, obstacles, occupied, environment, errors)
 	_validate_visual_interaction_consistency(_dict(semantic_state.get("interactions", {})), resolved_scenes, resolved_actors, errors)
 	_add_visual_authority(authority, resolved_scenes, "scene_object")
@@ -134,6 +134,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	_validate_layout_context(context, errors)
 	var audit := {
 		"active": true,
+		"valid": true,
 		"visual_count": mini(visual_count, MAX_VISUALS),
 		"collision_adjustment_count": collision_adjustments,
 		"board_size": _size_snapshot(BOARD_SIZE),
@@ -236,6 +237,9 @@ static func _resolve_visual(
 				errors.append("Scenario actor %s route %s has no room-space endpoint." % [identity, route_id])
 				return {}
 			route_points = [_normalized_point(pixel_rect.get_center()), _normalized_point(route_center)]
+			var route_endpoint_rect := Rect2(route_center - pixel_rect.size * 0.5, pixel_rect.size)
+			var route_small_start := _expanded_rect(pixel_rect, SMALL_SCREEN_TARGET)
+			var route_small_endpoint := _expanded_rect(route_endpoint_rect, SMALL_SCREEN_TARGET)
 			var distance := pixel_rect.get_center().distance_to(route_center)
 			route_stage = {
 				"mode": "ping_pong" if behavior == "patrol" else "to_endpoint",
@@ -243,6 +247,8 @@ static func _resolve_visual(
 				"reduced_motion_endpoint": _normalized_point(route_center),
 				"start": _normalized_point(pixel_rect.get_center()),
 				"endpoint": _normalized_point(route_center),
+				"small_screen_start": _normalized_point(route_small_start.get_center()),
+				"small_screen_endpoint": _normalized_point(route_small_endpoint.get_center()),
 			}
 	result["present"] = true
 	result["semantic_kind"] = "actor" if actor else "scene_object"
@@ -257,9 +263,19 @@ static func _resolve_visual(
 	return result
 
 
-static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obstacles: Array, environment: Dictionary, errors: Array) -> void:
+static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obstacles: Array, base_records: Array, environment: Dictionary, errors: Array) -> void:
 	var overlay := _context_overlay_rect(_layout_context(environment))
-	var label_entries: Array = []
+	var normal_labels: Array = []
+	var small_labels: Array = []
+	for base_value in base_records:
+		var base_record := _dict(base_value)
+		var base_identity := _record_identity(base_record)
+		if not bool(base_record.get("visible", true)) or scenes.has(base_identity) or actors.has(base_identity):
+			continue
+		var base_rect := _record_pixel_rect(base_record)
+		var base_small := _expanded_rect(base_rect, SMALL_SCREEN_TARGET)
+		normal_labels.append({"identity": base_identity, "rect": _label_rect(base_rect, str(base_record.get("label", ""))), "scenario": false})
+		small_labels.append({"identity": base_identity, "rect": _label_rect(base_small, str(base_record.get("label", ""))), "scenario": false})
 	for collection in [scenes, actors]:
 		var identities := (collection as Dictionary).keys()
 		identities.sort()
@@ -271,22 +287,33 @@ static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obst
 			var rect := _pixel_rect(_dict(semantic.get("normalized_hit_rect", {})))
 			var small_rect := _pixel_rect(_dict(semantic.get("small_screen_rect", {})))
 			var label_rect := _label_rect(rect, str(semantic.get("label", "")))
-			if overlay.has_area() and (rect.intersects(overlay) or small_rect.intersects(overlay) or label_rect.intersects(overlay)):
+			var small_label_rect := _label_rect(small_rect, str(semantic.get("label", "")))
+			if overlay.has_area() and (rect.intersects(overlay) or small_rect.intersects(overlay) or label_rect.intersects(overlay) or small_label_rect.intersects(overlay)):
 				errors.append("Scenario visual %s collides with the reserved TalkDock overlay." % identity)
-			label_entries.append({"identity": identity, "rect": label_rect})
+			normal_labels.append({"identity": identity, "rect": label_rect, "scenario": true})
+			small_labels.append({"identity": identity, "rect": small_label_rect, "scenario": true})
 			var role := str(semantic.get("role", "")).to_lower()
-			if role in ["obstacle", "barrier", "blockade"] and rect.intersects(WALK_LANE):
-				errors.append("Scenario obstacle %s blocks the mandatory player access lane." % identity)
-	for left_index in range(label_entries.size()):
-		var left := _dict(label_entries[left_index])
-		var left_rect: Rect2 = left.get("rect", Rect2())
-		for right_index in range(left_index + 1, label_entries.size()):
-			var right := _dict(label_entries[right_index])
-			var right_rect: Rect2 = right.get("rect", Rect2())
-			if left_rect.intersects(right_rect):
-				errors.append("Scenario labels %s and %s overlap and are not text-safe." % [str(left.get("identity", "")), str(right.get("identity", ""))])
+			if role in ["obstacle", "barrier", "blockade"] and (rect.intersects(WALK_LANE) or small_rect.intersects(WALK_LANE)):
+				errors.append("Scenario obstacle %s blocks the mandatory player access lane in normal or expanded small-screen layout." % identity)
+	_validate_label_entries(normal_labels, "normal", errors)
+	_validate_label_entries(small_labels, "expanded small-screen", errors)
 	if not obstacles.is_empty() and not _path_reachable(WALK_LANE.get_center(), Vector2(BOARD_SIZE.x * 0.5, BOARD_SIZE.y * 0.5), obstacles):
 		errors.append("Scenario obstruction leaves no reachable route from the player access lane into the room.")
+	if not obstacles.is_empty() and not _path_reachable(WALK_LANE.get_center(), Vector2(BOARD_SIZE.x * 0.5, BOARD_SIZE.y * 0.5), obstacles, "", "small_rect"):
+		errors.append("Expanded small-screen scenario obstruction leaves no reachable route from the player access lane into the room.")
+
+
+static func _validate_label_entries(entries: Array, layout_label: String, errors: Array) -> void:
+	for left_index in range(entries.size()):
+		var left := _dict(entries[left_index])
+		var left_rect: Rect2 = left.get("rect", Rect2())
+		for right_index in range(left_index + 1, entries.size()):
+			var right := _dict(entries[right_index])
+			if not bool(left.get("scenario", false)) and not bool(right.get("scenario", false)):
+				continue
+			var right_rect: Rect2 = right.get("rect", Rect2())
+			if left_rect.intersects(right_rect) and left_rect.intersection(right_rect).get_area() > 0.01:
+				errors.append("Scenario labels %s and %s overlap and are not text-safe in %s layout." % [str(left.get("identity", "")), str(right.get("identity", "")), layout_label])
 
 
 static func _validate_actor_routes(actors: Dictionary, obstacles: Array, occupied: Array, environment: Dictionary, errors: Array) -> void:
@@ -307,7 +334,7 @@ static func _validate_actor_routes(actors: Dictionary, obstacles: Array, occupie
 		if not _finite_point(start) or not _finite_point(endpoint) or not Rect2(Vector2.ZERO, BOARD_SIZE).has_point(start) or not Rect2(Vector2.ZERO, BOARD_SIZE).has_point(endpoint):
 			errors.append("Scenario actor %s route staging leaves the room board." % identity)
 			continue
-		if not _path_reachable(start, endpoint, obstacles, identity):
+		if not _path_reachable(start, endpoint, obstacles, identity) or not _path_reachable(start, endpoint, obstacles, identity, "small_rect"):
 			errors.append("Scenario actor %s route is obstructed or has an unreachable endpoint." % identity)
 			continue
 		var bounds := _dict(actor.get("resolved_bounds", {}))
@@ -319,7 +346,7 @@ static func _validate_actor_routes(actors: Dictionary, obstacles: Array, occupie
 		var endpoint_small := _expanded_rect(endpoint_rect, SMALL_SCREEN_TARGET)
 		if _substantially_overlaps(identity, endpoint_rect, occupied) or _expanded_overlaps(identity, endpoint_small, occupied):
 			errors.append("Scenario actor %s route endpoint collides in normal or expanded small-screen layout." % identity)
-		if overlay.has_area() and (endpoint_rect.intersects(overlay) or endpoint_small.intersects(overlay) or _label_rect(endpoint_rect, str(actor.get("label", ""))).intersects(overlay)):
+		if overlay.has_area() and (endpoint_rect.intersects(overlay) or endpoint_small.intersects(overlay) or _label_rect(endpoint_rect, str(actor.get("label", ""))).intersects(overlay) or _label_rect(endpoint_small, str(actor.get("label", ""))).intersects(overlay)):
 			errors.append("Scenario actor %s reduced-motion endpoint collides with the reserved TalkDock overlay." % identity)
 
 
@@ -347,14 +374,16 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 		var authority_record := _dict(authority.get(identity, {}))
 		var rect := _pixel_rect(_dict(authority_record.get("normalized_hit_rect", {})))
 		var small_rect := _pixel_rect(_dict(authority_record.get("small_screen_rect", {})))
-		if overlay.has_area() and (rect.intersects(overlay) or small_rect.intersects(overlay) or _label_rect(rect, str(interaction.get("label", ""))).intersects(overlay)):
+		if overlay.has_area() and (rect.intersects(overlay) or small_rect.intersects(overlay) or _label_rect(rect, str(interaction.get("label", ""))).intersects(overlay) or _label_rect(small_rect, str(interaction.get("label", ""))).intersects(overlay)):
 			errors.append("Scenario interaction %s collides with the reserved TalkDock overlay." % identity)
 		active_targets.append({
 			"identity": identity,
 			"rect": rect,
 			"small_rect": small_rect,
+			"label_rect": _label_rect(rect, str(interaction.get("label", ""))),
+			"small_label_rect": _label_rect(small_rect, str(interaction.get("label", ""))),
 		})
-		var reachable := _path_reachable(WALK_LANE.get_center(), rect.get_center(), obstacles, identity)
+		var reachable := _path_reachable(WALK_LANE.get_center(), rect.get_center(), obstacles, identity) and _path_reachable(WALK_LANE.get_center(), small_rect.get_center(), obstacles, identity, "small_rect")
 		if not reachable:
 			errors.append("Scenario interaction %s is not reachable from the player access lane." % identity)
 			continue
@@ -368,7 +397,7 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 				safe_exit_ids.append(identity)
 			else:
 				blocked_exit_count += 1
-		elif enabled and not actions.is_empty() and _is_alternate_exit(identity, interaction, actions):
+		elif enabled and not actions.is_empty() and bool(interaction.get("alternate_exit", false)):
 			alternate_exit_ids.append(identity)
 	for left_index in range(active_targets.size()):
 		var left := _dict(active_targets[left_index])
@@ -379,6 +408,11 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 				var right_rect: Rect2 = right.get(rect_key, Rect2())
 				if left_rect.intersects(right_rect) and left_rect.intersection(right_rect).get_area() > 0.01:
 					errors.append("Scenario interactions %s and %s have ambiguous %s hit authority." % [str(left.get("identity", "")), str(right.get("identity", "")), "expanded small-screen" if rect_key == "small_rect" else "normal"])
+			for label_key in ["label_rect", "small_label_rect"]:
+				var left_label: Rect2 = left.get(label_key, Rect2())
+				var right_label: Rect2 = right.get(label_key, Rect2())
+				if left_label.intersects(right_label) and left_label.intersection(right_label).get_area() > 0.01:
+					errors.append("Scenario interaction labels %s and %s overlap in %s layout." % [str(left.get("identity", "")), str(right.get("identity", "")), "expanded small-screen" if label_key == "small_label_rect" else "normal"])
 	for target_value in active_targets:
 		var target := _dict(target_value)
 		var target_identity := str(target.get("identity", ""))
@@ -394,6 +428,14 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 				var other_rect: Rect2 = (pair as Array)[1]
 				if target_rect.intersects(other_rect) and target_rect.intersection(other_rect).get_area() > 0.01:
 					errors.append("Scenario interaction %s has ambiguous %s hit authority with unrelated room control %s." % [target_identity, str((pair as Array)[2]), base_identity])
+			for label_pair in [
+				[target.get("label_rect", Rect2()), _label_rect(base_rect, str(base_record.get("label", ""))), "normal"],
+				[target.get("small_label_rect", Rect2()), _label_rect(base_small, str(base_record.get("label", ""))), "expanded small-screen"],
+			]:
+				var target_label: Rect2 = (label_pair as Array)[0]
+				var base_label: Rect2 = (label_pair as Array)[1]
+				if target_label.intersects(base_label) and target_label.intersection(base_label).get_area() > 0.01:
+					errors.append("Scenario interaction %s label overlaps unrelated room control %s in %s layout." % [target_identity, base_identity, str((label_pair as Array)[2])])
 	if blocked_exit_count > 0 and safe_exit_ids.is_empty() and alternate_exit_ids.is_empty():
 		errors.append("A blocked scenario exit has no readable, reachable alternate objective or exit action.")
 	return {
@@ -425,20 +467,6 @@ static func _validate_visual_identity_uniqueness(scenes: Dictionary, actors: Dic
 		var actor := _dict(actors.get(identity, {}))
 		if not scene.is_empty() and not actor.is_empty() and bool(scene.get("present", true)) and bool(actor.get("present", true)):
 			errors.append("Scenario visual identity %s cannot be both a scene object and an actor." % identity)
-
-
-static func _is_alternate_exit(identity: String, interaction: Dictionary, actions: Array) -> bool:
-	if bool(interaction.get("alternate_exit", false)) or not str(interaction.get("objective_id", "")).strip_edges().is_empty():
-		return true
-	var text := "%s %s %s" % [identity, str(interaction.get("label", "")), str(interaction.get("prompt", ""))]
-	for action_value in actions:
-		var action := _dict(action_value)
-		text += " %s %s" % [str(action.get("id", "")), str(action.get("label", ""))]
-	var lowered := text.to_lower()
-	for token in ["exit", "leave", "escape", "route", "objective"]:
-		if lowered.contains(token):
-			return true
-	return false
 
 
 static func _assign_z_order(scenes: Dictionary, actors: Dictionary) -> void:
@@ -577,39 +605,40 @@ static func _scenario_obstacles(scenes: Dictionary) -> Array:
 		result.append({
 			"identity": str(identity_value),
 			"rect": _pixel_rect(_dict(semantic.get("normalized_hit_rect", {}))).grow(8.0),
+			"small_rect": _pixel_rect(_dict(semantic.get("small_screen_rect", {}))).grow(8.0),
 		})
 	return result
 
 
-static func _path_reachable(start: Vector2, endpoint: Vector2, obstacles: Array, ignored_identity: String = "") -> bool:
-	if not _point_clear(start, obstacles, ignored_identity) or not _point_clear(endpoint, obstacles, ignored_identity):
+static func _path_reachable(start: Vector2, endpoint: Vector2, obstacles: Array, ignored_identity: String = "", rect_key: String = "rect") -> bool:
+	if not _point_clear(start, obstacles, ignored_identity, rect_key) or not _point_clear(endpoint, obstacles, ignored_identity, rect_key):
 		return false
-	if _segment_clear(start, endpoint, obstacles, ignored_identity):
+	if _segment_clear(start, endpoint, obstacles, ignored_identity, rect_key):
 		return true
 	var corners := [Vector2(start.x, endpoint.y), Vector2(endpoint.x, start.y)]
 	for corner_value in corners:
 		var corner := corner_value as Vector2
-		if _point_clear(corner, obstacles, ignored_identity) and _segment_clear(start, corner, obstacles, ignored_identity) and _segment_clear(corner, endpoint, obstacles, ignored_identity):
+		if _point_clear(corner, obstacles, ignored_identity, rect_key) and _segment_clear(start, corner, obstacles, ignored_identity, rect_key) and _segment_clear(corner, endpoint, obstacles, ignored_identity, rect_key):
 			return true
 	return false
 
 
-static func _segment_clear(start: Vector2, endpoint: Vector2, obstacles: Array, ignored_identity: String) -> bool:
+static func _segment_clear(start: Vector2, endpoint: Vector2, obstacles: Array, ignored_identity: String, rect_key: String) -> bool:
 	for step in range(41):
 		var point := start.lerp(endpoint, float(step) / 40.0)
-		if not _point_clear(point, obstacles, ignored_identity):
+		if not _point_clear(point, obstacles, ignored_identity, rect_key):
 			return false
 	return true
 
 
-static func _point_clear(point: Vector2, obstacles: Array, ignored_identity: String) -> bool:
+static func _point_clear(point: Vector2, obstacles: Array, ignored_identity: String, rect_key: String) -> bool:
 	if not Rect2(Vector2.ZERO, BOARD_SIZE).has_point(point):
 		return false
 	for value in obstacles:
 		var obstacle := _dict(value)
 		if str(obstacle.get("identity", "")) == ignored_identity:
 			continue
-		var rect: Rect2 = obstacle.get("rect", Rect2())
+		var rect: Rect2 = obstacle.get(rect_key, Rect2())
 		if rect.has_point(point):
 			return false
 	return true
@@ -702,7 +731,20 @@ static func _label_rect(rect: Rect2, label: String) -> Rect2:
 	var y := rect.position.y - LABEL_HEIGHT - LABEL_GAP
 	if y < 16.0:
 		y = rect.end.y + LABEL_GAP
-	return _clamp_inside_board(Rect2(Vector2(rect.get_center().x - width * 0.5, y), Vector2(width, LABEL_HEIGHT)))
+	return _clamp_label_inside_board(Rect2(Vector2(rect.get_center().x - width * 0.5, y), Vector2(width, LABEL_HEIGHT)))
+
+
+static func _clamp_label_inside_board(rect: Rect2) -> Rect2:
+	var margin := 16.0
+	var position := Vector2(
+		clampf(rect.position.x, margin, BOARD_SIZE.x - margin),
+		clampf(rect.position.y, margin, BOARD_SIZE.y - margin)
+	)
+	var end := Vector2(
+		clampf(rect.end.x, margin, BOARD_SIZE.x - margin),
+		clampf(rect.end.y, margin, BOARD_SIZE.y - margin)
+	)
+	return Rect2(position, Vector2(maxf(0.0, end.x - position.x), maxf(0.0, end.y - position.y)))
 
 
 static func _readable_text(value: String, maximum_length: int) -> bool:
