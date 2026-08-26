@@ -2323,14 +2323,14 @@ func _check_delivery_closed_next_hop_nonblocking(app: Control) -> bool:
 
 
 func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bool:
-	# This hermetic integrated-tree capture was reproduced at commit
-	# 9cff9b2309d70c6c93ab34cc60cc18f79f56201b with meta injection explicitly
-	# disabled. Hashes cover each full serialized value; the integrated scenario
-	# catalog is included with no field exclusions or post-change twin values.
+	# The ordinary-travel scalar baseline was first captured at 9cff9b23. The
+	# full generated-state hashes were reproduced at 908b14bb with the verified
+	# native build after authored coin-pusher persistence changes; meta injection
+	# remains disabled and each hash covers the full serialized value.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "cc863db9425747f1ff8e519795c1fd38f15536e08d47fdba858c07b380755234",
+		"current_environment_sha256": "cf55c3673bd907f8b46cce78afb274dd881a3ac853ea32dcc5e2846869a24835",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
@@ -2341,7 +2341,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0801d8c617e0ab15f304eae949a7c70fae01fc4031f24580d34f74e2dedd72ce",
-		"world_map_sha256": "69f0ec6470eaf7c334f2897548a9846a4324d9d3f3d20c3cb213bc7371129597",
+		"world_map_sha256": "d89069a0b637773de1c252a342a4dc09cc860907928e40ebf722ba3b560cf439",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
