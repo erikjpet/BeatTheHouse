@@ -449,3 +449,10 @@ their own detailed handoffs and test evidence.
   meta actively owns `scripts/ui/foundation_main.gd`, depth may not edit that
   path without an exact semantic handoff and was directed to prefer the generic
   `scripts/core/event_module.gd` seam if sufficient. HOST/board HOLD remains.
+- 2026-08-26: The depth same-boundary P1 is fixed and independently accepted on
+  clean `571a924332558e6954b709a928d4355f1953d9d9`: EventModule publishes the
+  correlated result before flushing, with production-package coverage and
+  author/reviewer static validation passes at 52.9/52.3 seconds. No
+  FoundationMain edit was needed. Formal `env06_6` acceptance remains withheld
+  because all three evidence-harness P1s remain open; depth resumed its
+  coordinated nine-file tooling change under HOST/board HOLD.
