@@ -399,3 +399,10 @@ their own detailed handoffs and test evidence.
   static validator pass. Formal branch acceptance, merge and board status remain
   withheld pending mandatory serialized host gates; depth continues HOST and
   board HOLD.
+- 2026-08-26: Depth immediately corrected that readiness claim after a
+  read-only executable-gate audit reopened `env06_6` at `aa179f11` with three
+  P1 evidence-harness gaps: no native/Web exact-sequence parity producer, no
+  player-facing producer for the required 21 capture IDs, and no delivery-day
+  transition performance measurement/budget. Formal acceptance remains
+  withheld; depth is removed from the near-term host queue while it adds bounded
+  tooling under static-only HOLD and repeats self-review/independent review.
