@@ -116,8 +116,8 @@ var _surface_contract_script_cache: Dictionary = {}
 var _foundation_requested_check_ids: Dictionary = {}
 var _foundation_content_library_ref: ContentLibrary = null
 var _foundation_fixture_library_ref: ContentLibrary = null
-var _foundation_content_library_fingerprint := PackedByteArray()
-var _foundation_fixture_library_fingerprint := PackedByteArray()
+var _foundation_content_library_fingerprint := ""
+var _foundation_fixture_library_fingerprint := ""
 
 
 class ScenarioModifierProbeGame:
@@ -676,9 +676,9 @@ func _foundation_run_check(report: Dictionary, failures: Array, check_id: String
 	print("FOUNDATION_CHECK_DONE id=%s duration_msec=%d failures=%d" % [check_id, duration, failure_delta])
 
 
-func _foundation_library_fingerprint(library: ContentLibrary, include_indexes: bool = true) -> PackedByteArray:
+func _foundation_library_fingerprint(library: ContentLibrary, include_indexes: bool = true) -> String:
 	if library == null:
-		return PackedByteArray()
+		return ""
 	var state := {
 		"environment_archetypes": library.environment_archetypes,
 		"environment_scenarios": library.environment_scenarios,
@@ -707,7 +707,7 @@ func _foundation_library_fingerprint(library: ContentLibrary, include_indexes: b
 	}
 	if not include_indexes:
 		state.erase("_indexes")
-	return var_to_bytes(state)
+	return JSON.stringify(state)
 
 
 func _foundation_write_report(report_path: String, report: Dictionary) -> void:
