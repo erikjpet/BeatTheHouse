@@ -68,9 +68,7 @@ func _run() -> void:
 	var dossiers: Array = []
 	for definition_value in definitions:
 		dossiers.append(_dossier(_dict(definition_value), authority_report))
-	var exact_expected_shape := int(authority_report.get("actual_count", -1)) == expected_count \
-		and int(authority_report.get("expected_comparison_count", -1)) == int(expected_count * (expected_count - 1) / 2) \
-		and int(authority_report.get("comparison_count", -1)) == int(expected_count * (expected_count - 1) / 2)
+	var exact_expected_shape := report_has_exact_shape(authority_report, expected_count)
 	var exact_proof_shape := expected_count == 1 and exact_expected_shape
 	if expected_count == 1 and not exact_proof_shape:
 		failures.append("env06_6 proof audit requires exactly 1 definition and 0 pairwise comparisons.")
@@ -107,7 +105,18 @@ func _run() -> void:
 	quit(0 if bool(report.get("passed", false)) else 1)
 
 
-func _definitions(library: ContentLibrary, catalog: Dictionary) -> Array:
+static func report_has_exact_shape(authority_report: Dictionary, required_count: int) -> bool:
+	var required_comparisons := int(required_count * (required_count - 1) / 2)
+	return int(authority_report.get("actual_count", -1)) == required_count \
+		and int(authority_report.get("expected_comparison_count", -1)) == required_comparisons \
+		and int(authority_report.get("comparison_count", -1)) == required_comparisons
+
+
+static func hostile_fixture_report_for_definitions(definitions: Array) -> Array:
+	return _hostile_fixture_report(_representative_definition(definitions))
+
+
+static func _definitions(library: ContentLibrary, catalog: Dictionary) -> Array:
 	var result: Array = []
 	var scenario_ids := _dict(catalog.get("overlays", {})).keys()
 	scenario_ids.sort()
@@ -118,7 +127,7 @@ func _definitions(library: ContentLibrary, catalog: Dictionary) -> Array:
 	return result
 
 
-func _masked_explanations(definitions: Array) -> Dictionary:
+static func _masked_explanations(definitions: Array) -> Dictionary:
 	var result: Dictionary = {}
 	for definition_value in definitions:
 		var authoring := _dict(_dict(definition_value).get("sequence_authoring", {}))
@@ -127,14 +136,14 @@ func _masked_explanations(definitions: Array) -> Dictionary:
 	return result
 
 
-func _representative_definition(definitions: Array) -> Dictionary:
+static func _representative_definition(definitions: Array) -> Dictionary:
 	var definition := ScenarioCatalogScript.definition_for_id(definitions, HOSTILE_FIXTURE_SCENARIO_ID)
 	if definition.is_empty() or not SequenceSchemaScript.validate_definition(definition, OperationRegistryScript).is_empty():
 		return {}
 	return definition
 
 
-func _dossier(definition: Dictionary, authority_report: Dictionary) -> Dictionary:
+static func _dossier(definition: Dictionary, authority_report: Dictionary) -> Dictionary:
 	var sequence := SequenceSchemaScript.sequence(definition)
 	var authoring := _dict(definition.get("sequence_authoring", {}))
 	var calculated := SequenceSchemaScript.calculated_completion_contract(definition)
@@ -193,7 +202,7 @@ func _dossier(definition: Dictionary, authority_report: Dictionary) -> Dictionar
 	}
 
 
-func _phase_rows(sequence: Dictionary) -> Array:
+static func _phase_rows(sequence: Dictionary) -> Array:
 	var rows: Array = []
 	for phase_value in _array(_dict(sequence.get("phase_graph", {})).get("phases", [])):
 		var phase := _dict(phase_value)
@@ -215,7 +224,7 @@ func _phase_rows(sequence: Dictionary) -> Array:
 	return rows
 
 
-func _operation_rows(value: Variant) -> Array:
+static func _operation_rows(value: Variant) -> Array:
 	var result: Array = []
 	for operation_value in _array(value):
 		var operation := _dict(operation_value)
@@ -229,7 +238,7 @@ func _operation_rows(value: Variant) -> Array:
 	return result
 
 
-func _reachable_terminal_rows(sequence: Dictionary) -> Array:
+static func _reachable_terminal_rows(sequence: Dictionary) -> Array:
 	var graph := _dict(sequence.get("phase_graph", {}))
 	var phases: Dictionary = {}
 	for phase_value in _array(graph.get("phases", [])):
@@ -256,7 +265,7 @@ func _reachable_terminal_rows(sequence: Dictionary) -> Array:
 	return result
 
 
-func _objective_rows(sequence: Dictionary) -> Array:
+static func _objective_rows(sequence: Dictionary) -> Array:
 	var result: Array = []
 	for objective_value in _array(sequence.get("objectives", [])):
 		var objective := _dict(objective_value)
@@ -267,7 +276,7 @@ func _objective_rows(sequence: Dictionary) -> Array:
 	return result
 
 
-func _hostile_fixture_report(definition: Dictionary) -> Array:
+static func _hostile_fixture_report(definition: Dictionary) -> Array:
 	if definition.is_empty():
 		return [{"class": "fixture_source", "rejected": false, "diagnostic": "schema-valid proof scenario %s is required" % HOSTILE_FIXTURE_SCENARIO_ID}]
 	var result: Array = []
@@ -338,20 +347,20 @@ func _hostile_fixture_report(definition: Dictionary) -> Array:
 	return result
 
 
-func _schema_rejection(fixture_class: String, definition: Dictionary, needle: String) -> Dictionary:
+static func _schema_rejection(fixture_class: String, definition: Dictionary, needle: String) -> Dictionary:
 	var errors := SequenceSchemaScript.validate_definition(definition, OperationRegistryScript)
 	return {"class": fixture_class, "rejected": _contains(errors, needle), "diagnostic": _matching(errors, needle)}
 
 
-func _phases(definition: Dictionary) -> Array:
+static func _phases(definition: Dictionary) -> Array:
 	return _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", []))
 
 
-func _set_phases(definition: Dictionary, phases: Array) -> void:
+static func _set_phases(definition: Dictionary, phases: Array) -> void:
 	definition["sequence"]["phase_graph"]["phases"] = phases
 
 
-func _markdown(report: Dictionary) -> String:
+static func _markdown(report: Dictionary) -> String:
 	var lines: Array = [
 		"# Scenario Sequence Audit", "",
 		"- Result: **%s**" % ("PASS" if bool(report.get("passed", false)) else "FAIL"),
@@ -374,7 +383,7 @@ func _markdown(report: Dictionary) -> String:
 	return "\n".join(lines) + "\n"
 
 
-func _write_text(path: String, content: String) -> bool:
+static func _write_text(path: String, content: String) -> bool:
 	var absolute_path := ProjectSettings.globalize_path(path)
 	DirAccess.make_dir_recursive_absolute(absolute_path.get_base_dir())
 	var file := FileAccess.open(absolute_path, FileAccess.WRITE)
@@ -386,28 +395,28 @@ func _write_text(path: String, content: String) -> bool:
 	return true
 
 
-func _markdown_cell(value: String) -> String:
+static func _markdown_cell(value: String) -> String:
 	return value.replace("|", "\\|").replace("\n", " ")
 
 
-func _matching(values: Array, needle: String) -> String:
+static func _matching(values: Array, needle: String) -> String:
 	for value in values:
 		if str(value).contains(needle):
 			return str(value)
 	return ""
 
 
-func _contains(values: Array, needle: String) -> bool:
+static func _contains(values: Array, needle: String) -> bool:
 	return not _matching(values, needle).is_empty()
 
 
-func _sorted_strings(value: Variant) -> Array:
+static func _sorted_strings(value: Variant) -> Array:
 	var result := _strings(value)
 	result.sort()
 	return result
 
 
-func _strings(value: Variant) -> Array:
+static func _strings(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) == TYPE_ARRAY:
 		for item_value in value as Array:
@@ -415,9 +424,9 @@ func _strings(value: Variant) -> Array:
 	return result
 
 
-func _dict(value: Variant) -> Dictionary:
+static func _dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
 
 
-func _array(value: Variant) -> Array:
+static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
