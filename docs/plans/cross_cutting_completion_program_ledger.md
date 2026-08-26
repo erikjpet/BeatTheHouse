@@ -243,3 +243,15 @@ their own detailed handoffs and test evidence.
   digests remain unchanged. This is static acceptance only: all affected
   runtime evidence is being refreshed on the accepted exact head, and merge/EV
   remain blocked until those gates pass.
+- 2026-08-26: Static ancestry audit classified the preserved global
+  `foundation_smoke` red as a P1 final-acceptance blocker outside pusher scope.
+  Both roots predate pusher base `a0d2b6ff` in `43767b42`: production Blackjack
+  gained an exact hover-hit API without its `SurfaceHarness` twin, and the
+  90-Heat backoff overrides the Pal tutorial Peek reprieve on the second caught
+  Peek. Current main/Scratch commits repair neither defect. The finding is
+  routed provisionally as `fix06_4` to `/root/fix06_4_blackjack_baseline` on
+  `codex/cross-remediation`, worktree
+  `D:\Projects\Beat-The-House-worktrees\cross-remediation`, base `0bcbda20`.
+  That owner is static-only under HOST HOLD; the accepted pusher branch will not
+  be amended, and final global acceptance waits for an independently accepted
+  remediation merge plus a green exact-merged-head smoke gate.
