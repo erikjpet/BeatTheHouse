@@ -2,8 +2,9 @@ class_name CrewIgnoredGoldenProbe
 extends RefCounted
 
 # Full serialized checkpoints for runs that never take the Crew loan or gain
-# Crew trust. The accepted-main fixture includes authored scenario anchors, so
-# no fields are broadly stripped: only a real byte-for-byte match passes.
+# Crew trust. The accepted fixture includes authored scenario anchors and the
+# persisted Coin Pusher settled state, so no fields are broadly stripped: only
+# a real byte-for-byte match passes.
 
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
