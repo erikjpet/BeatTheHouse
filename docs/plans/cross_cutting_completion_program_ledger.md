@@ -893,3 +893,20 @@ their own detailed handoffs and test evidence.
   proving stable path/hash/mtime, import-enabled Systems, then Contracts and
   full Smoke; every stage stops on first red and no `-NoImport` timing may be
   accepted.
+- 2026-08-26: Runtime rejected exact clean lifecycle head `6b680ee1` on the
+  first authorized missing-output Blackjack gate, so the sequence stopped.
+  Project validation (48.729s), normal import (17.957s), load check (24.429s),
+  exact `content` plus `blackjack_game_suite` assertions, registered/executed
+  order and all stderr passed, but the immutable wrapper gate was red at 18.199
+  seconds versus 17.790. The lifecycle itself is proven: Godot indexed
+  `res://generated_tests/foundation_check_split_runner.gd` with exact
+  2,308,016-byte SHA
+  `19b60badb149eed8bad881ed95228223f168b54172407f0c6016686162ed8f19`.
+  Run 2, Systems, Contracts and Smoke did not launch; host returned to zero.
+  Four prior exact-head measurements (`f577e911`, `54d8083a`, `cddfb851`,
+  `6b680ee1`) cluster at 18.199-18.393 seconds while internal checks stay
+  7.066-7.236 seconds, proving stable harness startup/initialization overhead
+  rather than assertion flakiness. A fresh independent read-only diagnosis is
+  now limited to eliminating eagerly constructed Foundation fixtures for suites
+  whose exact registration paths never consume them; no budget, assertion,
+  source selection or rerun is authorized.
