@@ -60,6 +60,7 @@ const RUN_STATUS_DISTRESSED := "distressed"
 const RUN_STATUS_FAILED := "failed"
 const RUN_STATUS_ENDED := "ended"
 const TUTORIAL_HEAT_CEILING := 99
+const PRACTICE_HEAT_CEILING := 99
 const TUTORIAL_HEAT_INTERVENTION_LEVEL := 75
 const TUTORIAL_DRUNK_COFFEE_THRESHOLD := 33
 const TUTORIAL_DRUNK_COFFEE_ITEM_ID := "thermos_black_coffee"
@@ -2458,6 +2459,9 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 		and base_level < TUTORIAL_HEAT_CEILING \
 		and base_level + adjusted_amount >= TUTORIAL_HEAT_CEILING
 	var ceiling := TUTORIAL_HEAT_CEILING if is_tutorial_run() else 100
+	var local_environment_flags := _copy_dict(current_environment.get("local_narrative_flags", {}))
+	if bool(local_environment_flags.get("practice_session", false)):
+		ceiling = mini(ceiling, PRACTICE_HEAT_CEILING)
 	if str(context.get("source_id", "")) == "blackjack":
 		ceiling = mini(ceiling, BLACKJACK_BACKOFF_HEAT)
 	var level := clampi(base_level + adjusted_amount, 0, ceiling)

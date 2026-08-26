@@ -461,6 +461,19 @@ func _check_suspicion_security_foundation(failures: Array) -> void:
 	if capture_run.run_status != RunState.RUN_STATUS_FAILED or capture_run.run_failure_reason != RunState.FAILURE_POLICE_CAPTURE:
 		failures.append("Risk meter reaching 100 did not immediately fail the run as police capture.")
 
+	var practice_run: RunState = RunStateScript.new()
+	practice_run.start_new("PRACTICE-HEAT-CAP")
+	practice_run.set_environment({
+		"id": "practice_security_pressure_game",
+		"kind": "casino",
+		"local_narrative_flags": {"practice_session": true},
+	})
+	var practice_heat_applied := practice_run.add_suspicion("practice_heat_cap", 100, "behavior", true)
+	if practice_heat_applied != 99 or practice_run.suspicion_level() != 99:
+		failures.append("Game practice environment did not cap Heat below 100%.")
+	if practice_run.run_status == RunState.RUN_STATUS_FAILED:
+		failures.append("Game practice environment failed the run when Heat reached its 99% cap.")
+
 	var event := EventModule.new()
 	event.setup({
 		"id": "security_pressure_event",
