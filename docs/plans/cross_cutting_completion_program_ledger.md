@@ -995,3 +995,20 @@ their own detailed handoffs and test evidence.
   bundle is statically accepted. Merge remains withheld pending a missing-output
   import-enabled focused run, expected wrong-scope failure, stable identical
   focused rerun, Systems, Contract and Smoke on this exact head.
+- 2026-08-26: Exact-head focused runtime passed twice on `5776893c` at 17.542s
+  and 17.539s under the immutable 17.790s cap, with exact ordered
+  `content|blackjack_game_suite`, zero failures/stderr/skips, and stable focused
+  path/SHA/length/mtime. The wrong-scope `contracts` negative is accepted from
+  two isolated captures: one numeric exit 1 plus exact zero-check failure report,
+  and one identical report plus the 291-byte scope stderr; a Windows
+  `Start-Process -Wait` wrapper hung only after its Godot child exited and is
+  rejected as a capture shell. Systems then stopped the sequence: stage timing
+  passed at 38.640s and all 55 checks ran, but `crew_recruitment_contract`
+  reported 57 exact state-golden drifts (+227/+228-byte Coin Pusher-era state
+  pattern). Contracts and Smoke did not launch; host returned to zero. The
+  remediation branch contains premature merge `554773c6` of frozen pusher
+  `a0d2b6ff`, while the accepted newer pusher line that corrects/recaptures this
+  state is intentionally not merged. Independent scheduling/provenance review
+  is deciding whether the old pusher merge must be normally reverted from Wave
+  1 rather than blessing stale intermediate goldens or importing an unfinished
+  pusher closure. No edit/rerun is authorized meanwhile.
