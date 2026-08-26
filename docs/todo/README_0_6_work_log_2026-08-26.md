@@ -6,7 +6,7 @@ contains the historical Work Log moved verbatim by
 claim, block, completion and unblock entries append here; task state and
 the binding protocol remain on the active board.
 
-Preserved entries: **124**; current entries: **129**. Use the exact find token
+Preserved entries: **124**; current entries: **130**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -44,6 +44,7 @@ below to jump to a row's history.
 | `fix06_2 reopening` | 1 | `[fix06_2 reopening]` |
 | `fix06_2/crew06_5` | 2 | `[fix06_2/crew06_5]` |
 | `fix06_3` | 2 | `[fix06_3]` |
+| `polish06_0` | 1 | `[polish06_0]` |
 | `push06_1` | 1 | `[push06_1]` |
 | `push06_2` | 1 | `[push06_2]` |
 | `pusher06_2` | 22 | `[pusher06_2]` |
@@ -827,6 +828,8 @@ below to jump to a row's history.
 - 2026-08-26 [board06_1] Semantic transplant preserved newer main truth and excluded the entangled source branch's polish payload; `polish06_0` remains TODO and unlanded while the source branch stays intact as provenance.
 
 - 2026-08-26 [board06_1] DONE. Independent review accepted `bf4fbc46`; the exact three-document semantic payload landed through integration `3c8139ce` to main `70eaaf80`. The split preserves 170/170 decisions and all 124 historical work entries, with current entries now 129; links, indexes, program rows and owner-question verdicts were verified. Post-land validation and corrected native-backed Smoke passed. The ignored owner UID and all owner artifacts were untouched; cleanup remains pending while evidence worktrees are retained.
+
+- 2026-08-26 [polish06_0] DONE. The accepted four-commit semantic payload landed as 11 source-identical planning documents through integration `7f5a989f` to main `cabf2fea`; post-land static validation and full native-backed Smoke passed. The program document, triage/tuning/cleanup prompts and release templates remain PARKED and non-claimable until the owner explicitly opens the polish pass. No version, package, release, remote or product action occurred; owner files and retained evidence remain untouched.
 
 - 2026-08-25 [env06_6] Primary integrator claimed the dynamic scenario runtime
   on the isolated depth-program integration line. Initial runtime, catalog,
