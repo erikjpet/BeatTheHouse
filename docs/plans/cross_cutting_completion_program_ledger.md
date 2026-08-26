@@ -36,7 +36,7 @@ their own detailed handoffs and test evidence.
 | `meta06_1` | `codex/cross-meta` | `D:\Projects\Beat-The-House-worktrees\cross-meta` | `/root/wave1_meta06_1` | Career/run-report view models and screens; profile stats path; focused tests and documented captures | `3d4a41da` | None | IN_PROGRESS | TBD, non-author | None reported | Pending handoff | - | - | Retained |
 | `balance06_1` | `codex/cross-balance` | `D:\Projects\Beat-The-House-worktrees\cross-balance` | `/root/wave1_balance06_1` | Opt-in economy harness, audit report, harness tests only; no product/tuning data | `3d4a41da` | None | IN_PROGRESS | TBD, non-author | Pending audit | Pending handoff | - | - | Retained |
 | `board06_1` | `codex/cross-board` | `D:\Projects\Beat-The-House-worktrees\cross-board` | `/root` | Board and companion logs; verified ignored orphan UIDs only | `3d4a41da` | Quiet-window coordination | COORDINATING | TBD, non-author | None reported | Pending | - | - | Retained |
-| `polish06_0` | `codex/cross-polish` | `D:\Projects\Beat-The-House-worktrees\cross-polish` | `/root/wave1_polish06_0` | Parked program document and newly defined parked prompts/templates; no execution | `3d4a41da` | None | IN_REVIEW; outputs PARKED | `/root/review_polish06_0` | Self-review reports no known logic gap; four integration assumptions recorded | Clean exact-head self-review; validation PASS 86.6s; diff check PASS; independent rerun pending | `be14c1ce` (candidate) | - | Retained |
+| `polish06_0` | `codex/cross-polish` | `D:\Projects\Beat-The-House-worktrees\cross-polish` | `/root/wave1_polish06_0` | Parked program document and newly defined parked prompts/templates; no execution | `3d4a41da` | None | MERGED; board/archive closure pending; outputs PARKED | `/root/review_polish06_0` | No P0-P3 findings | Author validation PASS 86.6s; reviewer validation PASS 116.4s; diff/structure checks PASS | `be14c1ce` ACCEPT | `dba53fb5` | Retained |
 | `pusherv3_11` | `codex/cross-pusher-audit` | Not created | Unassigned independent auditor | Closure audit report/evidence only | TBD | `pusherv3_10` | HELD | TBD | - | - | - | - | Not created |
 | `audio06_1` | `codex/cross-audio` | Not created | Unassigned | Surface SFX manifest/assets/shared path/tests | TBD | Families 1 and 2 rituals | HELD | TBD | - | - | - | - | Not created |
 | `integ06_1` | `codex/cross-integ` | Not created | Unassigned auditor | Integration harness/report/tests only | TBD | Families 1 and 2 merged | HELD | TBD | - | - | - | - | Not created |
@@ -58,3 +58,6 @@ their own detailed handoffs and test evidence.
 - 2026-08-25: The `board06_1` pre-edit audit found eleven ignored `.gd.uid`
   files whose sibling source paths are absent. Removal remains held for the
   board quiet window and independent exact-path review.
+- 2026-08-25: `polish06_0` independently accepted at exact head `be14c1ce`
+  with no findings and merged with `--no-ff` as `dba53fb5`. Its generated work
+  remains PARKED; active-board closure awaits the coordinated primary edit.
