@@ -355,7 +355,18 @@ static func flush_facts(state_value: Dictionary, definition: Dictionary, boundar
 		state = _dict(response.get("state", state))
 		if not bool(response.get("ok", false)):
 			errors.append_array(_array(response.get("errors", [])))
-			return {"ok": false, "state": original, "processed": [], "errors": errors}
+			# Roll back every authoritative effect from this flush, but do not
+			# leave the rejected identity at the head of the durable queue. Other
+			# queued facts retain their exact ingress order and can be retried at a
+			# later safe boundary. The rejected fact earns no receipt/fingerprint
+			# and does not advance last_flushed_fact_serial.
+			var rejected_state := original.duplicate(true)
+			var retained_queue: Array = []
+			for queued_value in _fact_array(original.get("fact_queue", [])):
+				if str((queued_value as Dictionary).get("fact_id", "")) != fact_id:
+					retained_queue.append((queued_value as Dictionary).duplicate(true))
+			rejected_state["fact_queue"] = retained_queue
+			return {"ok": false, "state": rejected_state, "processed": [], "errors": errors}
 		var receipts := _string_array(state.get("fact_receipts", []))
 		receipts.append(fact_id)
 		state["fact_receipts"] = receipts
