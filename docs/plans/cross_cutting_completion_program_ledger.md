@@ -310,3 +310,11 @@ their own detailed handoffs and test evidence.
   across repeated seeds, or the author must optimize another seam while
   preserving all per-seed generation and assertions. Budget and thresholds may
   not be loosened; EV remains unreleased.
+- 2026-08-26: The blanket cache commit `fca7f39f` landed immediately before the
+  coordinator constraint and was immediately reverted by `34314876`; no runtime
+  evidence was taken from the rejected intermediate head. Current exact head is
+  intended to be functionally identical to `a3ae328e`: pusher-only fixture
+  reuse plus scoped generated goldens, with non-pusher per-seed generation
+  preserved. Independent cumulative review was extended through both commit
+  boundaries and must confirm the revert is complete. The remaining ~3.5-second
+  budget gap must be solved elsewhere without changing thresholds or coverage.
