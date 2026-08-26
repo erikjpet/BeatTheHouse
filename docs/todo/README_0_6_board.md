@@ -1,4 +1,4 @@
-# 0.6 Active Task Board — The Living Town & The Crew
+﻿# 0.6 Active Task Board — The Living Town & The Crew
 
 Created: 2026-08-13 · Binding design contract:
 `docs/plans/0.6_living_world_roadmap.md` (v4, owner-approved).
@@ -166,7 +166,7 @@ each stage builds on the last.
 | pusherv3_7 | `pusherv3_7_played_in_opening_stock_prompt.md` | DONE | pusherv3_6 | played-in opening stock and bounded early payouts | Codex | 2026-08-25 | 2026-08-25 | Deterministic 54/54/56-coin played-in beds, supported feature pieces, and bounded first-five-play payouts pass exact parity, full regression, visual, determinism, EV, and direct performance gates. |
 | pusherv3_8 | `pusherv3_8_coin_scale_lower_bed_and_edge_ramp_prompt.md` | DONE | pusherv3_7 | prior coin scale, extended lower bed, physical payout ramp | Codex | 2026-08-25 | 2026-08-25 | Original 40x32 flat coin artwork, smaller matching physics, extended lower bed, researched edge ramp, played-in stock, exact parity/determinism, visual, performance, and 200k-per-machine EV gates pass. |
 | pusherv3_9 | `pusherv3_9_contact_bed_and_opaque_edge_prompt.md` | DONE | pusherv3_8 | touching opening bed and solid payout-edge occlusion | Codex | 2026-08-25 | 2026-08-25 | All opening stock belongs to real contact clusters; a shallow physical incline and opaque foreground apron now hold and occlude the edge prime until coins visibly clear the shelf. Focused/full regression, parity, determinism, visual, performance, and 200k-per-machine EV gates pass. |
-| pusherv3_10 | `pusherv3_10_opening_plinko_nozzles_and_stack_physics_prompt.md` | TODO | pusherv3_9 | full-width settled openings, full Plinko subsystem, nozzle queues, clarified stack physics | — | — | — | Planning complete. Implementation waits on the owner's truncated stacked-coin wording and physical cup lifecycle ruling. |
+| pusherv3_10 | `pusherv3_10_opening_plinko_nozzles_and_stack_physics_prompt.md` | IN_PROGRESS | pusherv3_9 | full-width settled openings, full Plinko subsystem, nozzle queues, clarified stack physics | Codex | 2026-08-25 | — | Owner clarified support-only stack behavior, good/bad landing audio, consumed cups, and same-nozzle multiplier chains; implementation started. |
 
 ### Wave D — Crew depth
 
@@ -2189,3 +2189,8 @@ What happens then is the owner's, not an agent's:
   coins per second. Codex added the complete staged plan and acceptance matrix.
   The owner's final stacked-coin sentence and cup post-capture lifecycle remain
   explicit owner questions and must not be guessed during implementation.
+- 2026-08-25 [pusherv3_10] Owner answered both blockers and Codex claimed the
+  implementation. Supported coins may not spread their supports but must remain
+  carried by the physical bed; good/bad stable landings receive distinct one-shot
+  feedback. Cups consume the trigger and multiplier awards feed visibly from the
+  same nozzle with rare, ROI-bounded chain potential.
