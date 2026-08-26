@@ -241,8 +241,19 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 			"augment":
 				var target := (records.get(target_key, {}) as Dictionary).duplicate(true)
 				var actions := _array(target.get("available_actions", []))
+				var existing_action_ids := _action_ids(actions)
+				var collision_id := ""
 				for action_value in _array(overlay.get("available_actions", [])):
-					if typeof(action_value) == TYPE_DICTIONARY and not _action_ids(actions).has(str((action_value as Dictionary).get("id", ""))):
+					var action_id := str(_dict(action_value).get("id", ""))
+					if existing_action_ids.has(action_id):
+						collision_id = action_id
+						break
+				if not collision_id.is_empty():
+					errors.append("interaction %s augment action id %s collides with target %s." % [source_key, collision_id, target_key])
+					records.erase(source_key)
+					continue
+				for action_value in _array(overlay.get("available_actions", [])):
+					if typeof(action_value) == TYPE_DICTIONARY:
 						actions.append((action_value as Dictionary).duplicate(true))
 				target["available_actions"] = actions
 				records[target_key] = target
