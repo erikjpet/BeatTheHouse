@@ -827,3 +827,14 @@ their own detailed handoffs and test evidence.
   `52e0bc8635f52ab39019edef4995a77a4d6662e937158475f6430071d2702e45`;
   static contracts and validation pass. Pusher body/Systems patches dry-apply
   cleanly, no runtime ran, and independent exact-head review is pending.
+- 2026-08-26: Independent exact-head review issued
+  `ACCEPT 0009ea3e71cf272c7ee8119145d0effa87707258` with no P0-P3 across
+  both focused and full remediation ranges. Exact all-nine topology/order,
+  provider pairs, single Core entry point, retired-candidate rejection and
+  byte-identical default composite were independently reproduced; check_godot,
+  Systems plan, registrations, assertions, budgets, reports, cache and product
+  code are unchanged. Three-way analysis confirms pusher line-one/body and
+  Systems hunks auto-merge; after pusher integration the pinned composite hash
+  must be mechanically refreshed only for accepted pusher body changes and the
+  hostile/Blackjack/Systems gates rerun. Runtime parse/timing remains the only
+  current residual risk; rejected `449b5ca6` is never standalone evidence.
