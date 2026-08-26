@@ -1089,3 +1089,19 @@ their own detailed handoffs and test evidence.
   clean and the host returned to zero/HOLD. Read-only author and independent
   causal audits are active; no rerun, budget/assertion change or golden refresh
   is authorized. Reports: `.tmp/test_reports/fix06_4_exact_f072b1c3_*`.
+- 2026-08-26: Author and independent read-only causal audits agree: Contract
+  ran without the required branch-matching native Coin Pusher backend. The
+  isolated checkout has no ignored `addons/coin_pusher_native` artifact, so
+  `coin_pusher_solver.gd` silently selects `gdscript_v3`; native availability is
+  checked only near the end of the large pusher contract. After the final Video
+  Poker RTP line, the next call is `_check_coin_pusher_contract`; its first
+  expensive opening fixture performs roughly 24,480 solver ticks across about
+  150 bodies before a pusher marker, explaining the timeout. Prior native-backed
+  Contract stages complete in 86-147s under the unchanged 230.391s budget.
+  `f072` is docs-only, `37f` pins-only, and `351` is the exact inverse, so this
+  is an evidence-environment prerequisite, not accepted-code regression. Safe
+  approach 1 (selected): build exact-f072 generic Windows debug native output,
+  verify locked runtime/descriptor/backend, then rerun Contract once. Approach
+  2 is a later pusher-owned fail-fast at contract entry; approach 3 is a central
+  native preflight, but it collides with active pusher `check_godot.ps1` work.
+  No budget/assertion weakening or foreign/v3.10 binary copying is allowed.
