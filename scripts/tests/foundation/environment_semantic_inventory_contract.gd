@@ -11,6 +11,7 @@ const RECORD_KEYS := ["collection", "owner_namespace", "stable_object_id", "owne
 class FixtureLibrary:
 	extends RefCounted
 
+	var events: Array = []
 	var events_by_id: Dictionary = {}
 	var characters_by_id: Dictionary = {}
 	var character_pools_by_id: Dictionary = {}
@@ -62,6 +63,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_exclusive_catalog_and_generation(library, failures)
 	_check_exclusive_pool_and_choices(library, failures)
 	_check_event_guarantees_and_choice_authority(library, failures)
+	_check_event_runtime_catalog_parity(failures)
 	_check_rare_route_catalog(library, failures)
 	_check_rare_route_materialization(library, failures)
 	_check_semantic_zone_shapes(library, failures)
@@ -173,8 +175,8 @@ static func _check_event_guarantees_and_choice_authority(library: ContentLibrary
 	for collection_key in ["scene_objects", "interactions"]:
 		if not _array(partial_guaranteed.get(collection_key, [])).has(required_identity) or _array(partial_possible.get(collection_key, [])).has(required_identity):
 			failures.append("required_event_ids did not guarantee exact rendered %s authority." % collection_key)
-		if not _array(partial_possible.get(collection_key, [])).has(optional_identity) or _array(partial_guaranteed.get(collection_key, [])).has(optional_identity):
-			failures.append("Partially selected event pool did not retain optional %s authority." % collection_key)
+		if _array(partial_possible.get(collection_key, [])).has(optional_identity) or _array(partial_guaranteed.get(collection_key, [])).has(optional_identity):
+			failures.append("Fixed-count required event selection over-authorized unreachable optional %s authority." % collection_key)
 	var guaranteed_choices := EnvironmentSemanticInventoryScript.event_choice_index(EnvironmentSemanticInventoryScript.guaranteed_event_ids(partial, library), library)
 	if not guaranteed_choices.has("back_alley_offer") or guaranteed_choices.has("parking_lot_tip"):
 		failures.append("Static event-choice authority did not distinguish required and optional-absent events.")
@@ -193,13 +195,15 @@ static func _check_event_guarantees_and_choice_authority(library: ContentLibrary
 		"shared_b": {"id": "shared_b", "interaction_mode": "interactable", "scopes": ["any"], "unique_object_class": "shared_fixture", "payload": {"choices": [{"id": "b"}]}},
 		"wrong_scope": {"id": "wrong_scope", "interaction_mode": "interactable", "scopes": ["club"], "payload": {"choices": [{"id": "wrong"}]}},
 	}
+	unique_library.events = [unique_library.events_by_id["shared_a"], unique_library.events_by_id["shared_b"], unique_library.events_by_id["wrong_scope"]]
 	var shared := {"id": "shared_unique_fixture", "layout": {}, "event_pool": ["shared_a", "shared_b"], "required_event_ids": ["shared_a"], "event_scopes": ["shop"], "event_count": [2, 2]}
-	if not EnvironmentSemanticInventoryScript.guaranteed_event_ids(shared, unique_library).is_empty():
-		failures.append("Shared non-duplicable event class was over-guaranteed after unique-object filtering.")
+	if EnvironmentSemanticInventoryScript.guaranteed_event_ids(shared, unique_library) != ["shared_a"]:
+		failures.append("Shared unique-class catalog did not retain the runtime's first equal-priority winner.")
 	var shared_inventory := EnvironmentSemanticInventoryScript.for_archetype(shared, unique_library)
+	var shared_guaranteed := EnvironmentSemanticInventoryScript.guaranteed_collections(shared_inventory)
 	var shared_possible := EnvironmentSemanticInventoryScript.possible_collections(shared_inventory)
-	for identity in ["event::event:shared_a", "event::event:shared_b"]:
-		if not _array(shared_possible.get("interactions", [])).has(identity): failures.append("Shared unique-class candidate %s was not retained as possible-only." % identity)
+	if not _array(shared_guaranteed.get("interactions", [])).has("event::event:shared_a") or _array(shared_possible.get("interactions", [])).has("event::event:shared_a") or _array(shared_guaranteed.get("interactions", [])).has("event::event:shared_b") or _array(shared_possible.get("interactions", [])).has("event::event:shared_b"):
+		failures.append("Shared unique-class catalog disagreed with the runtime's exact fixed-count winner set.")
 	var exclusive_shared := shared.duplicate(true)
 	exclusive_shared["scenario_exclusive_opportunity"] = {"event_id": "shared_a"}
 	var exclusive_shared_guaranteed := EnvironmentSemanticInventoryScript.guaranteed_collections(EnvironmentSemanticInventoryScript.for_archetype(exclusive_shared, unique_library))
@@ -208,6 +212,76 @@ static func _check_event_guarantees_and_choice_authority(library: ContentLibrary
 	var wrong_scope := {"id": "wrong_scope_fixture", "layout": {}, "event_pool": ["wrong_scope"], "required_event_ids": ["wrong_scope"], "event_scopes": ["shop"], "event_count": [1, 1]}
 	if not EnvironmentSemanticInventoryScript.guaranteed_event_ids(wrong_scope, unique_library).is_empty():
 		failures.append("Required event outside the generated scope candidate pool was over-guaranteed.")
+
+
+static func _check_event_runtime_catalog_parity(failures: Array) -> void:
+	var matrices := [
+		{
+			"label": "equal-priority shared class",
+			"events": [
+				_event_definition("shared_a", "any", "interactable", "shared", 0),
+				_event_definition("shared_b", "any", "interactable", "shared", 0),
+			],
+			"archetype": _event_archetype(["shared_b", "shared_a"], ["shared_a"], [2, 2]),
+		},
+		{
+			"label": "higher-priority shared class",
+			"events": [
+				_event_definition("shared_a", "any", "interactable", "shared", 0),
+				_event_definition("shared_b", "any", "interactable", "shared", 3),
+			],
+			"archetype": _event_archetype(["shared_a", "shared_b"], ["shared_a"], [2, 2]),
+		},
+		{
+			"label": "shared-class co-selection range",
+			"events": [
+				_event_definition("shared_a", "any", "interactable", "shared", 0),
+				_event_definition("shared_b", "any", "interactable", "shared", 0),
+			],
+			"archetype": _event_archetype(["shared_a", "shared_b"], ["shared_b"], [1, 2]),
+		},
+		{
+			"label": "empty pool mode and scope",
+			"events": [
+				_event_definition("shop_event", "shop"),
+				_event_definition("any_event", "any"),
+				_event_definition("club_event", "club"),
+				_event_definition("triggered_event", "any", "triggered"),
+			],
+			"archetype": _event_archetype([], [], [1, 2]),
+		},
+	]
+	for matrix_value in matrices:
+		var matrix := _dict(matrix_value)
+		var runtime_library := ContentLibrary.new()
+		runtime_library.events = _array(matrix.get("events", []))
+		var archetype := _dict(matrix.get("archetype", {}))
+		var inventory := EnvironmentSemanticInventoryScript.for_archetype(archetype, runtime_library)
+		var guaranteed_ids := _event_ids_from_collections(EnvironmentSemanticInventoryScript.guaranteed_collections(inventory))
+		var possible_ids := _event_ids_from_collections(EnvironmentSemanticInventoryScript.possible_collections(inventory))
+		var authorized_ids := guaranteed_ids.duplicate()
+		for event_id in possible_ids:
+			if not authorized_ids.has(event_id): authorized_ids.append(event_id)
+		var observed_union: Array = []
+		var observed_intersection: Array = []
+		for seed in range(128):
+			var generated := _generated_from_archetype(archetype, runtime_library, 73000 + seed)
+			var selected := _array(generated.get("event_ids", []))
+			if seed == 0: observed_intersection = selected.duplicate()
+			else:
+				for observed_id in observed_intersection.duplicate():
+					if not selected.has(observed_id): observed_intersection.erase(observed_id)
+			for event_id in selected:
+				if not observed_union.has(event_id): observed_union.append(event_id)
+				if not authorized_ids.has(event_id): failures.append("Event catalog omitted runtime-generated %s in %s." % [str(event_id), str(matrix.get("label", "matrix"))])
+			for guaranteed_id in guaranteed_ids:
+				if not selected.has(guaranteed_id): failures.append("Event catalog over-guaranteed %s in runtime matrix %s." % [str(guaranteed_id), str(matrix.get("label", "matrix"))])
+		observed_union.sort()
+		observed_intersection.sort()
+		authorized_ids.sort()
+		guaranteed_ids.sort()
+		if observed_union != authorized_ids or observed_intersection != guaranteed_ids:
+			failures.append("Event catalog/runtime generation membership diverged for %s: authorized=%s guaranteed=%s observed_union=%s observed_intersection=%s." % [str(matrix.get("label", "matrix")), JSON.stringify(authorized_ids), JSON.stringify(guaranteed_ids), JSON.stringify(observed_union), JSON.stringify(observed_intersection)])
 
 
 static func _check_rare_route_catalog(library: ContentLibrary, failures: Array) -> void:
@@ -743,6 +817,67 @@ static func _check_closed_inventory_envelope(library: ContentLibrary, failures: 
 		open_authority["digest"] = EnvironmentSemanticInventoryScript._digest(open_authority)
 		if EnvironmentSemanticInventoryScript.validate(open_authority).is_empty() or not EnvironmentSemanticInventoryScript.exact_collections(open_authority).is_empty():
 			failures.append("Correctly rehashed open base-interaction authority record bypassed exact validation.")
+		var nested_authority_cases: Array = []
+		var open_layout_rect := exact.duplicate(true)
+		open_layout_rect["source_provenance"]["layout_object_rects"]["game:slot"]["forged_coordinate"] = 0.5
+		nested_authority_cases.append(["layout rectangle", open_layout_rect])
+		var open_normalized_rect := exact.duplicate(true)
+		open_normalized_rect["source_provenance"]["base_interaction_authority"][0]["normalized_hit_rect"]["forged_coordinate"] = 0.5
+		nested_authority_cases.append(["normalized_hit_rect", open_normalized_rect])
+		var open_hit_bounds := exact.duplicate(true)
+		open_hit_bounds["source_provenance"]["base_interaction_authority"][0]["hit_bounds"]["forged_dimension"] = 90.0
+		nested_authority_cases.append(["hit_bounds", open_hit_bounds])
+		for hostile_value in nested_authority_cases:
+			var hostile := hostile_value as Array
+			var candidate := _dict(hostile[1])
+			candidate["digest"] = EnvironmentSemanticInventoryScript._digest(candidate)
+			if EnvironmentSemanticInventoryScript.validate(candidate).is_empty() or not EnvironmentSemanticInventoryScript.exact_collections(candidate).is_empty():
+				failures.append("Correctly rehashed open nested %s authority bypassed exact validation." % str(hostile[0]))
+	var home_environment := _exact_environment()
+	home_environment["home_profile"] = {"status": "tenant", "bed": "cot", "place": "back_room", "starting_cash": [20, 80]}
+	home_environment["layout"]["object_rects"]["home_tenure:status"] = {"x": 0.25, "y": 0.2, "w": 0.1, "h": 0.2}
+	var home_interaction := _interaction_record("base", "home_tenure:status", "home_tenure:status", home_environment["layout"]["object_rects"]["home_tenure:status"])
+	home_interaction["source_field"] = "home_profile"
+	home_interaction["source_record_id"] = "status"
+	var home_exact := EnvironmentSemanticInventoryScript.for_instance(home_environment, library, [home_interaction])
+	if not EnvironmentSemanticInventoryScript.validate(home_exact).is_empty():
+		failures.append("Nested home-profile hostile matrix could not establish a valid exact control proof.")
+	else:
+		var open_home := home_exact.duplicate(true)
+		open_home["source_provenance"]["home_profile"]["forged_home"] = true
+		open_home["digest"] = EnvironmentSemanticInventoryScript._digest(open_home)
+		if EnvironmentSemanticInventoryScript.validate(open_home).is_empty() or not EnvironmentSemanticInventoryScript.exact_collections(open_home).is_empty():
+			failures.append("Correctly rehashed open nested home_profile authority bypassed exact validation.")
+	var semantic_library := _semantic_library()
+	var semantic_exact := EnvironmentSemanticInventoryScript.for_instance(_semantic_environment(), semantic_library)
+	if not EnvironmentSemanticInventoryScript.validate(semantic_exact).is_empty():
+		failures.append("Nested semantic-record hostile matrix could not establish a valid exact control proof.")
+	else:
+		var semantic_cases: Array = []
+		var open_zone := semantic_exact.duplicate(true)
+		open_zone["source_provenance"]["semantic_zones"]["floor"]["forged_zone"] = true
+		semantic_cases.append(["semantic zone", open_zone])
+		var open_anchor := semantic_exact.duplicate(true)
+		open_anchor["source_provenance"]["semantic_anchors"]["stage"]["forged_anchor"] = true
+		semantic_cases.append(["semantic anchor", open_anchor])
+		var open_actor := semantic_exact.duplicate(true)
+		open_actor["source_provenance"]["semantic_actors"][0]["forged_actor"] = true
+		semantic_cases.append(["semantic actor", open_actor])
+		var open_record_payload := semantic_exact.duplicate(true)
+		var actor_key := "actors|base::actor:clerk"
+		open_record_payload["provenance"][actor_key]["record"]["forged_actor"] = true
+		for record_index in range(_array(open_record_payload.get("records", [])).size()):
+			var record := _dict(open_record_payload["records"][record_index])
+			if str(record.get("collection", "")) == "actors" and str(record.get("owned_identity", "")) == "base::actor:clerk":
+				record["record"]["forged_actor"] = true
+				open_record_payload["records"][record_index] = record
+		semantic_cases.append(["mirrored provenance/record payload", open_record_payload])
+		for hostile_value in semantic_cases:
+			var hostile := hostile_value as Array
+			var candidate := _dict(hostile[1])
+			candidate["digest"] = EnvironmentSemanticInventoryScript._digest(candidate)
+			if EnvironmentSemanticInventoryScript.validate(candidate).is_empty() or not EnvironmentSemanticInventoryScript.exact_collections(candidate).is_empty():
+				failures.append("Correctly rehashed open nested %s bypassed exact semantic validation." % str(hostile[0]))
 	var unknown := library.scenario_target_catalog({"id": "unknown_catalog_fixture", "archetype_id": "missing_archetype"})
 	if not _contains_text(_array(unknown.get("errors", [])), "unknown archetype") or not _dict(unknown.get("guaranteed", {})).is_empty() or not _dict(unknown.get("possible", {})).is_empty():
 		failures.append("Public scenario target catalog failed open for an unknown archetype.")
@@ -1044,6 +1179,48 @@ static func _generated_from_archetype(archetype: Dictionary, library: ContentLib
 	return EnvironmentInstanceScript.from_archetype(archetype, 1, rng, library, {}, definition).to_dict()
 
 
+static func _event_definition(event_id: String, scope: String, interaction_mode: String = "interactable", unique_class: String = "", priority: int = 0) -> Dictionary:
+	var result := {
+		"id": event_id,
+		"interaction_mode": interaction_mode,
+		"scopes": [scope],
+		"payload": {"choices": [{"id": "choose"}]},
+	}
+	if not unique_class.is_empty():
+		result["unique_object_class"] = unique_class
+		result["unique_object_priority"] = priority
+	return result
+
+
+static func _event_archetype(event_pool: Array, required_events: Array, event_count: Variant) -> Dictionary:
+	return {
+		"id": "event_runtime_parity_fixture",
+		"kind": "shop",
+		"tier": 1,
+		"name_prefixes": ["Event"],
+		"name_nouns": ["Parity"],
+		"layout": {},
+		"game_pool": [], "game_count": [0, 0],
+		"item_pool": [], "item_count": [0, 0],
+		"event_pool": event_pool.duplicate(),
+		"required_event_ids": required_events.duplicate(),
+		"event_scopes": ["shop"],
+		"event_count": (event_count as Array).duplicate(true) if typeof(event_count) == TYPE_ARRAY else event_count,
+		"service_pool": [], "lender_hooks": [], "travel_hooks": [], "next_archetypes": [],
+	}
+
+
+static func _event_ids_from_collections(collections: Dictionary) -> Array:
+	var result: Array = []
+	for identity_value in _array(collections.get("interactions", [])):
+		var identity := str(identity_value)
+		if identity.begins_with("event::event:"):
+			var event_id := identity.trim_prefix("event::event:")
+			if not result.has(event_id): result.append(event_id)
+	result.sort()
+	return result
+
+
 static func _rare_route_archetype(_library: ContentLibrary, chance: int) -> Dictionary:
 	return {
 		"id": "rare_route_fixture",
@@ -1153,6 +1330,7 @@ static func _interaction_record(owner: String, stable_id: String, presentation_i
 		"stable_object_id": stable_id,
 		"presentation_object_id": presentation_id,
 		"normalized_hit_rect": rect,
+		"hit_bounds": {"w": float(_dict(rect).get("w", 0.0)) * 900.0, "h": float(_dict(rect).get("h", 0.0)) * 430.0},
 		"source_kind": "environment_instance_ui",
 		"source_field": "game_ids",
 		"source_record_id": "slot",

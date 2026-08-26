@@ -4,6 +4,7 @@ extends RefCounted
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const BaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
+const EnvironmentEventResolverScript := preload("res://scripts/core/environment_event_resolver.gd")
 
 # Immutable proof of semantic identities that genuinely exist in authored
 # archetypes or a finalized EnvironmentInstance. Presentation IDs are retained
@@ -19,6 +20,9 @@ const SOURCE_PROVENANCE_KEYS := ["world_node_id", "archetype_id", "layout_object
 const ITEM_OFFER_AUTHORITY_KEYS := ["id", "object_id"]
 const BASE_INTERACTION_AUTHORITY_KEYS := ["owner_namespace", "stable_object_id", "presentation_object_id", "normalized_hit_rect", "hit_bounds", "source_kind", "source_field", "source_record_id"]
 const BASE_ACTOR_AUTHORITY_KEYS := ["owner_namespace", "stable_object_id", "actor_id", "anchor_id", "zone_id", "behavior", "source_kind", "source_field", "source_record_id"]
+const NORMALIZED_RECT_KEYS := ["x", "y", "w", "h"]
+const HIT_BOUNDS_KEYS := ["w", "h"]
+const HOME_PROFILE_AUTHORITY_KEYS := ["status", "bed", "place"]
 const DIAGNOSTIC_CODES := ["possible_only", "wrong_collection", "wrong_owner", "layer_mismatch", "unknown_target"]
 const SOURCE_KINDS := ["environment_archetype", "scenario_selection", "environment_instance", "environment_instance_ui", "environment_event"]
 
@@ -41,49 +45,22 @@ static func event_choice_index(event_ids: Array, library: Variant) -> Dictionary
 # Events are guaranteed only when generation must select them. Scenario-exclusive
 # opportunities are installed after random selection and are therefore exact too.
 static func guaranteed_event_ids(archetype: Dictionary, library: Variant = null) -> Array:
-	var pool := _selectable_event_pool(archetype, library)
-	var guaranteed: Array = []
-	for event_id in _ids(archetype.get("required_event_ids", [])):
-		if pool.has(event_id) and _event_has_uncontested_unique_class(event_id, pool, library) and not guaranteed.has(event_id): guaranteed.append(event_id)
-	if not pool.is_empty() and _minimum_count(archetype.get("event_count", 1)) >= pool.size():
-		for event_id in pool:
-			if _event_has_uncontested_unique_class(event_id, pool, library) and not guaranteed.has(event_id): guaranteed.append(event_id)
+	var selection := EnvironmentEventResolverScript.selection_contract(archetype, _library_event_definitions(archetype, library))
+	var guaranteed := _array(selection.get("guaranteed", []))
 	var exclusive_event_id := str(_dict(archetype.get("scenario_exclusive_opportunity", {})).get("event_id", "")).strip_edges()
 	if not exclusive_event_id.is_empty() and not guaranteed.has(exclusive_event_id): guaranteed.append(exclusive_event_id)
 	guaranteed.sort()
 	return guaranteed
 
 
-static func _selectable_event_pool(archetype: Dictionary, library: Variant) -> Array:
-	var pool := _ids(archetype.get("event_pool", []))
-	if library == null or not library.has_method("event"): return pool
-	var scopes := _ids(archetype.get("event_scopes", []))
-	var result: Array = []
-	for event_id in pool:
-		var definition := _dict(library.call("event", event_id))
-		if definition.is_empty() or str(definition.get("interaction_mode", "interactable")) != "interactable": continue
-		var event_scopes := _ids(definition.get("scopes", []))
-		var fits := event_scopes.has("any")
-		for scope in scopes:
-			if event_scopes.has(scope): fits = true
-		if fits: result.append(event_id)
+static func possible_event_ids(archetype: Dictionary, library: Variant = null) -> Array:
+	var selection := EnvironmentEventResolverScript.selection_contract(archetype, _library_event_definitions(archetype, library))
+	var result := _array(selection.get("possible", []))
+	for guaranteed_id in _array(selection.get("guaranteed", [])):
+		result.erase(str(guaranteed_id))
+	result.erase(str(_dict(archetype.get("scenario_exclusive_opportunity", {})).get("event_id", "")).strip_edges())
+	result.sort()
 	return result
-
-
-# EnvironmentInstance applies unique-object filtering after selection. Without
-# reproducing seed/order resolution here, only an uncontested class is a static
-# guarantee; shared-class winners remain possible-only. Exclusive opportunities
-# are installed after that filter and are added separately above.
-static func _event_has_uncontested_unique_class(event_id: String, pool: Array, library: Variant) -> bool:
-	if library == null or not library.has_method("event"): return true
-	var definition := _dict(library.call("event", event_id))
-	var unique_class := str(definition.get("unique_object_class", "")).strip_edges()
-	if unique_class.is_empty() or bool(definition.get("allow_duplicate_unique_class", false)): return true
-	for candidate_id in pool:
-		if str(candidate_id) == event_id: continue
-		var candidate := _dict(library.call("event", str(candidate_id)))
-		if not bool(candidate.get("allow_duplicate_unique_class", false)) and str(candidate.get("unique_object_class", "")).strip_edges() == unique_class: return false
-	return true
 
 
 static func invalid_catalog(environment_id: String, layer_id: String, messages: Array) -> Dictionary:
@@ -181,12 +158,14 @@ static func for_archetype(archetype: Dictionary, library: Variant = null, layer_
 			for collection_key in ["scene_objects", "interactions"]: _set_provenance(provenance, collection_key, rendered_identity, "scenario_selection", "scenario_exclusive_opportunity.game_id", exclusive_game_id)
 	elif not exclusive_game_id.is_empty(): errors.append("scenario exclusive opportunity references unknown game %s." % exclusive_game_id)
 	var guaranteed_events := guaranteed_event_ids(selected, library)
-	for event_id in _ids(selected.get("event_pool", [])):
-		if library == null or not library.has_method("event") or not _dict(library.call("event", event_id)).is_empty():
-			var rendered_identity := "event::event:%s" % event_id
-			var event_target := guaranteed if guaranteed_events.has(event_id) else possible
-			_add_rendered_identity(event_target, presentation_ids, rendered_identity, "event:%s" % event_id)
-			for collection_key in ["scene_objects", "interactions"]: _set_provenance(provenance, collection_key, rendered_identity, "environment_archetype", "event_pool", event_id)
+	var possible_events := possible_event_ids(selected, library)
+	var event_source_field := "event_pool" if not _ids(selected.get("event_pool", [])).is_empty() else "event_scopes"
+	for event_id in guaranteed_events + possible_events:
+		if event_id == str(exclusive_opportunity.get("event_id", "")).strip_edges(): continue
+		var rendered_identity := "event::event:%s" % event_id
+		var event_target := guaranteed if guaranteed_events.has(event_id) else possible
+		_add_rendered_identity(event_target, presentation_ids, rendered_identity, "event:%s" % event_id)
+		for collection_key in ["scene_objects", "interactions"]: _set_provenance(provenance, collection_key, rendered_identity, "environment_archetype", event_source_field, event_id)
 	var exclusive_event_id := str(exclusive_opportunity.get("event_id", "")).strip_edges()
 	if not exclusive_event_id.is_empty() and (library == null or not library.has_method("event") or not _dict(library.call("event", exclusive_event_id)).is_empty()):
 		var rendered_identity := "event::event:%s" % exclusive_event_id
@@ -601,6 +580,7 @@ static func validate(inventory: Dictionary) -> Array:
 		if not SOURCE_KINDS.has(str(record.get("source_kind", ""))): errors.append("semantic inventory record %s has an unauthorized provenance source." % composite_key)
 		if typeof(source.get("record")) != TYPE_DICTIONARY or typeof(record.get("record")) != TYPE_DICTIONARY or _canonical(record.get("record")) != _canonical(source.get("record", {})):
 			errors.append("semantic inventory record %s payload does not match provenance." % composite_key)
+		_validate_provenance_payload(collection_key, str(record.get("source_field", "")), source.get("record"), composite_key, errors)
 		if str(record.get("presentation_object_id", "")) != str(presentation_ids.get(composite_key, "")): errors.append("semantic inventory record %s presentation id does not match presentation_ids." % composite_key)
 	if seen_records.size() != expected_records.size(): errors.append("semantic inventory records do not cover every target exactly once.")
 	if provenance.size() != expected_records.size(): errors.append("semantic inventory provenance does not cover every target exactly once.")
@@ -629,14 +609,18 @@ static func _validate_source_provenance(value: Variant, errors: Array) -> void:
 		if typeof(source.get(key)) != TYPE_STRING or str(source.get(key, "")) != str(source.get(key, "")).strip_edges(): errors.append("instance semantic inventory source_provenance.%s must be a trimmed string." % key)
 	for key in ["layout_object_rects", "home_profile", "semantic_zones", "semantic_anchors"]:
 		if typeof(source.get(key)) != TYPE_DICTIONARY: errors.append("instance semantic inventory source_provenance.%s must be a dictionary." % key)
+	_validate_layout_rects(source.get("layout_object_rects"), errors)
+	_validate_home_profile_authority(source.get("home_profile"), errors)
 	if typeof(source.get("shopkeeper_offer_source_present")) != TYPE_BOOL: errors.append("instance semantic inventory shopkeeper offer authority must be boolean.")
 	for key in ["game_ids", "event_ids", "service_ids", "lender_ids", "layer_ids", "route_ids", "layer_transition_ids", "casino_room_target_ids", "casino_fixture_ids", "crew_presence_ids", "home_container_ids"]:
 		if not _closed_id_array(source.get(key)): errors.append("instance semantic inventory source_provenance.%s must be a unique string array." % key)
-	if typeof(source.get("semantic_actors")) != TYPE_ARRAY:
-		errors.append("instance semantic inventory source_provenance.semantic_actors must be an array.")
-	else:
-		for actor_value in source.get("semantic_actors", []) as Array:
-			if typeof(actor_value) != TYPE_DICTIONARY: errors.append("instance semantic inventory source semantic_actors must contain dictionaries.")
+	var semantic_errors: Array = []
+	_validated_semantic_content({
+		"semantic_zones": source.get("semantic_zones"),
+		"semantic_anchors": source.get("semantic_anchors"),
+		"semantic_actors": source.get("semantic_actors"),
+	}, null, "instance semantic inventory source_provenance", semantic_errors)
+	errors.append_array(semantic_errors)
 	_validate_authority_records(source.get("item_offer_authority"), ITEM_OFFER_AUTHORITY_KEYS, [], "item_offer_authority", errors)
 	_validate_authority_records(source.get("base_interaction_authority"), BASE_INTERACTION_AUTHORITY_KEYS, ["normalized_hit_rect", "hit_bounds"], "base_interaction_authority", errors)
 	_validate_authority_records(source.get("base_actor_authority"), BASE_ACTOR_AUTHORITY_KEYS, [], "base_actor_authority", errors)
@@ -655,6 +639,115 @@ static func _validate_authority_records(value: Variant, keys: Array, dictionary_
 			if dictionary_keys.has(key):
 				if typeof(record.get(key)) != TYPE_DICTIONARY: errors.append("instance semantic inventory %s.%s must be a dictionary." % [label, key])
 			elif typeof(record.get(key)) != TYPE_STRING: errors.append("instance semantic inventory %s.%s must be a string." % [label, key])
+		if label == "item_offer_authority":
+			for key in ITEM_OFFER_AUTHORITY_KEYS:
+				if typeof(record.get(key)) != TYPE_STRING or str(record.get(key, "")).is_empty() or str(record.get(key, "")) != str(record.get(key, "")).strip_edges(): errors.append("instance semantic inventory item_offer_authority.%s must be a non-empty trimmed string." % key)
+		elif label == "base_interaction_authority":
+			for key in ["owner_namespace", "stable_object_id", "presentation_object_id", "source_kind", "source_field", "source_record_id"]:
+				if typeof(record.get(key)) != TYPE_STRING or str(record.get(key, "")) != str(record.get(key, "")).strip_edges(): errors.append("instance semantic inventory base_interaction_authority.%s must be a trimmed string." % key)
+			var source_kind := str(record.get("source_kind", ""))
+			var source_field := str(record.get("source_field", ""))
+			var source_record_id := str(record.get("source_record_id", ""))
+			var provenance_empty := source_kind.is_empty() and source_field.is_empty() and source_record_id.is_empty()
+			if str(record.get("owner_namespace", "")).is_empty() or str(record.get("stable_object_id", "")).is_empty() or str(record.get("presentation_object_id", "")).is_empty() or not _valid_identity(OperationRegistryScript.identity(str(record.get("owner_namespace", "")), str(record.get("stable_object_id", "")))) or not provenance_empty and (not SOURCE_KINDS.has(source_kind) or source_field.is_empty() or source_record_id.is_empty()):
+				errors.append("instance semantic inventory base_interaction_authority has invalid identity or provenance.")
+			_validate_normalized_rect(record.get("normalized_hit_rect"), "base_interaction_authority.normalized_hit_rect", errors)
+			_validate_hit_bounds(record.get("hit_bounds"), "base_interaction_authority.hit_bounds", errors)
+		elif label == "base_actor_authority":
+			for key in BASE_ACTOR_AUTHORITY_KEYS:
+				if typeof(record.get(key)) != TYPE_STRING or str(record.get(key, "")) != str(record.get(key, "")).strip_edges(): errors.append("instance semantic inventory base_actor_authority.%s must be a trimmed string." % key)
+			if str(record.get("owner_namespace", "")).is_empty() or str(record.get("stable_object_id", "")).is_empty() or str(record.get("actor_id", "")).is_empty() or str(record.get("source_kind", "")).is_empty() or str(record.get("source_field", "")).is_empty() or str(record.get("source_record_id", "")).is_empty() or str(record.get("anchor_id", "")).is_empty() and str(record.get("zone_id", "")).is_empty():
+				errors.append("instance semantic inventory base_actor_authority lacks exact identity, placement, or provenance.")
+			if not _valid_identity(OperationRegistryScript.identity(str(record.get("owner_namespace", "")), str(record.get("stable_object_id", "")))) or not _canonical_semantic_id(str(record.get("actor_id", ""))) or not str(record.get("anchor_id", "")).is_empty() and not _canonical_semantic_id(str(record.get("anchor_id", ""))) or not str(record.get("zone_id", "")).is_empty() and not _canonical_semantic_id(str(record.get("zone_id", ""))) or not str(record.get("behavior", "")).is_empty() and not _canonical_semantic_id(str(record.get("behavior", ""))) or not SOURCE_KINDS.has(str(record.get("source_kind", ""))):
+				errors.append("instance semantic inventory base_actor_authority has invalid semantic identity or provenance.")
+
+
+static func _validate_layout_rects(value: Variant, errors: Array) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		return
+	for object_id_value in (value as Dictionary).keys():
+		var object_id := str(object_id_value) if typeof(object_id_value) == TYPE_STRING else ""
+		if object_id.is_empty() or object_id != object_id.strip_edges():
+			errors.append("instance semantic inventory layout_object_rects contains an invalid object id.")
+		_validate_normalized_rect((value as Dictionary).get(object_id_value), "layout_object_rects.%s" % object_id, errors)
+
+
+static func _validate_home_profile_authority(value: Variant, errors: Array) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		return
+	var profile := value as Dictionary
+	if profile.is_empty():
+		return
+	if not _closed_dictionary(profile, HOME_PROFILE_AUTHORITY_KEYS, []):
+		errors.append("instance semantic inventory home_profile authority is not closed.")
+		return
+	for key in HOME_PROFILE_AUTHORITY_KEYS:
+		if typeof(profile.get(key)) != TYPE_STRING or str(profile.get(key, "")).is_empty() or str(profile.get(key, "")) != str(profile.get(key, "")).strip_edges():
+			errors.append("instance semantic inventory home_profile.%s must be a non-empty trimmed string." % key)
+
+
+static func _validate_provenance_payload(collection: String, source_field: String, value: Variant, label: String, errors: Array) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		errors.append("semantic inventory provenance record %s payload must be a dictionary." % label)
+		return
+	var payload := value as Dictionary
+	match collection:
+		"zones":
+			if source_field != "semantic_zones" or not _closed_dictionary(payload, ["bounds"], []) or _semantic_bounds(payload.get("bounds")).is_empty():
+				errors.append("semantic inventory provenance record %s has an open or invalid zone payload." % label)
+		"anchors":
+			if source_field != "semantic_anchors" or not _closed_dictionary(payload, ["position"], ["zone_id"]) or _semantic_position(payload.get("position")).is_empty() or payload.has("zone_id") and (typeof(payload.get("zone_id")) != TYPE_STRING or str(payload.get("zone_id", "")).is_empty() or str(payload.get("zone_id", "")) != str(payload.get("zone_id", "")).strip_edges()):
+				errors.append("semantic inventory provenance record %s has an open or invalid anchor payload." % label)
+		"actors":
+			if source_field not in ["semantic_actors", "event_ids"] or not _closed_semantic_actor(payload):
+				errors.append("semantic inventory provenance record %s has an open or invalid actor payload." % label)
+		_:
+			if not payload.is_empty():
+				errors.append("semantic inventory provenance record %s has an unauthorized nested payload." % label)
+
+
+static func _closed_semantic_actor(actor: Dictionary) -> bool:
+	if not _closed_dictionary(actor, ["id", "actor_id"], ["anchor_id", "zone_id", "behavior"]):
+		return false
+	for key in actor.keys():
+		if typeof(actor.get(key)) != TYPE_STRING or str(actor.get(key, "")) != str(actor.get(key, "")).strip_edges():
+			return false
+	if not _canonical_semantic_id(str(actor.get("id", ""))) or not _canonical_semantic_id(str(actor.get("actor_id", ""))):
+		return false
+	if str(actor.get("anchor_id", "")).is_empty() and str(actor.get("zone_id", "")).is_empty():
+		return false
+	var behavior := str(actor.get("behavior", ""))
+	return behavior.is_empty() or _canonical_semantic_id(behavior)
+
+
+static func _validate_normalized_rect(value: Variant, label: String, errors: Array) -> void:
+	if typeof(value) != TYPE_DICTIONARY or not _closed_dictionary(value as Dictionary, NORMALIZED_RECT_KEYS, []):
+		errors.append("instance semantic inventory %s is not a closed normalized rectangle." % label)
+		return
+	var rect := value as Dictionary
+	for key in NORMALIZED_RECT_KEYS:
+		if not _finite_number(rect.get(key)):
+			errors.append("instance semantic inventory %s.%s must be finite." % [label, key])
+			return
+	var x := float(rect.get("x", -1.0))
+	var y := float(rect.get("y", -1.0))
+	var width := float(rect.get("w", 0.0))
+	var height := float(rect.get("h", 0.0))
+	if x < 0.0 or y < 0.0 or width <= 0.0 or height <= 0.0 or x + width > 1.00001 or y + height > 1.00001:
+		errors.append("instance semantic inventory %s must fit inside normalized environment bounds." % label)
+
+
+static func _validate_hit_bounds(value: Variant, label: String, errors: Array) -> void:
+	if typeof(value) != TYPE_DICTIONARY or not _closed_dictionary(value as Dictionary, HIT_BOUNDS_KEYS, []):
+		errors.append("instance semantic inventory %s is not closed." % label)
+		return
+	var bounds := value as Dictionary
+	if not _finite_number(bounds.get("w")) or not _finite_number(bounds.get("h")) or float(bounds.get("w", 0.0)) < OperationRegistryScript.MIN_TARGET_SIZE or float(bounds.get("h", 0.0)) < OperationRegistryScript.MIN_TARGET_SIZE:
+		errors.append("instance semantic inventory %s is not finite or accessible." % label)
+
+
+static func _finite_number(value: Variant) -> bool:
+	return typeof(value) in [TYPE_INT, TYPE_FLOAT] and is_finite(float(value))
 
 
 static func _sealed(kind: String, environment_id: String, layer_id: String, guaranteed: Dictionary, possible: Dictionary, presentation_ids: Dictionary, errors: Array, provenance: Dictionary = {}) -> Dictionary:
@@ -1020,7 +1113,7 @@ static func _instance_source_provenance(environment: Dictionary, base_interactio
 		"casino_room_target_ids": _ids(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", [])),
 		"casino_fixture_ids": _consumed_record_ids(_dict(environment.get("local_narrative_flags", {})).get("casino_fixtures", []), "id", base_interactions, "local_narrative_flags.casino_fixtures"),
 		"crew_presence_ids": _consumed_record_ids(environment.get("crew_presence", []), "member_id", base_interactions, "crew_presence"),
-		"home_profile": _dict(environment.get("home_profile", {})) if _source_field_used(base_interactions, "home_profile") else {},
+		"home_profile": _home_profile_authority(environment.get("home_profile", {})) if _source_field_used(base_interactions, "home_profile") else {},
 		"home_container_ids": _consumed_record_ids(environment.get("home_containers", []), "id", base_interactions, "home_containers"),
 		"semantic_zones": _dict(environment.get("semantic_zones", {})),
 		"semantic_anchors": _dict(environment.get("semantic_anchors", {})),
@@ -1103,6 +1196,17 @@ static func _source_field_used(interactions_value: Variant, source_field: String
 	return false
 
 
+static func _home_profile_authority(value: Variant) -> Dictionary:
+	var source := _dict(value)
+	if source.is_empty():
+		return {}
+	return {
+		"status": str(source.get("status", "")),
+		"bed": str(source.get("bed", "")),
+		"place": str(source.get("place", "")),
+	}
+
+
 static func _base_actor_authority(value: Variant) -> Array:
 	var result: Array = []
 	for record_value in _array(value):
@@ -1119,6 +1223,25 @@ static func _base_actor_authority(value: Variant) -> Array:
 			"source_record_id": str(record.get("source_record_id", "")),
 		})
 	result.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(_canonical(a)) < JSON.stringify(_canonical(b)))
+	return result
+
+
+static func _library_event_definitions(archetype: Dictionary, library: Variant) -> Array:
+	if library == null:
+		return []
+	if library is Object:
+		for property_value in (library as Object).get_property_list():
+			if str(_dict(property_value).get("name", "")) != "events":
+				continue
+			var values: Variant = (library as Object).get("events")
+			if typeof(values) == TYPE_ARRAY and not (values as Array).is_empty():
+				return (values as Array).duplicate(true)
+			break
+	var result: Array = []
+	if library.has_method("event"):
+		for event_id in _ids(archetype.get("event_pool", [])):
+			var definition := _dict(library.call("event", event_id))
+			if not definition.is_empty(): result.append(definition)
 	return result
 
 
