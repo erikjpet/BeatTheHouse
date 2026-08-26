@@ -354,3 +354,9 @@ their own detailed handoffs and test evidence.
   eligible results still take normal backoff, and hover harness parity remains
   correct. This is static acceptance only. Runtime gates and merge remain held
   behind the exclusive pusher slot.
+- 2026-08-26: A diagnostic native idle-sleep shortcut was rejected and removed
+  without commit. Although all 48 Systems assertions passed with zero stderr,
+  runtime worsened to 50.010 seconds against the immutable 43.712-second
+  budget, with the activation shard at 41.084 seconds. No dirty-tree evidence
+  is accepted. The author restored clean exact head `34314876` and is profiling
+  remaining repeated guard work; no ineffective product optimization remains.
