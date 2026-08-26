@@ -3,7 +3,11 @@ extends RefCounted
 
 const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
+<<<<<<< HEAD
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
+=======
+const SequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
+>>>>>>> 59a0c576 (env06_6: add atomic runtime persistence and migration)
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 
 # Deterministic scenario overlays. Selection belongs to RunGenerator; this
@@ -105,11 +109,47 @@ static func attach_to_environment(environment: Dictionary, state_value: Variant,
 	environment["scenario_phase_action_counter"] = int(state.get("phase_action_counter", 0))
 	environment["scenario_applied_phase_index"] = int(state.get("phase_index", 0)) if _state_targets_layer(state, environment) else -1
 	_apply_exclusive_opportunity(environment)
+<<<<<<< HEAD
+=======
+	migrate_environment_sequence(environment, definition, str(environment.get("id", "")))
+>>>>>>> 59a0c576 (env06_6: add atomic runtime persistence and migration)
 
 
 # Public sequence API. Producers publish through enqueue/flush and never mutate
 # sequence internals. RunState supplies the node-owned definition/state seam.
+static func sequence_definition_for_environment(environment: Dictionary, preferred: Dictionary = {}) -> Dictionary:
+	var scenario_id := str(_copy_dict(environment.get("scenario_state", {})).get("id", environment.get("scenario_id", ""))).strip_edges()
+	if scenario_id.is_empty():
+		return {}
+	if not preferred.is_empty() and str(preferred.get("id", preferred.get("scenario_id", ""))).strip_edges() == scenario_id:
+		return SequenceCatalogScript.apply_overlay(preferred)
+	return SequenceCatalogScript.legacy_definition(scenario_id)
+
+
+static func migrate_environment_sequence(environment: Dictionary, preferred: Dictionary = {}, seed_token: String = "") -> Dictionary:
+	var legacy := normalize_state(environment.get("scenario_state", {}))
+	if legacy.is_empty():
+		return {"ok": true, "changed": false, "active": false, "scenario_id": ""}
+	var scenario_id := str(legacy.get("id", ""))
+	var definition := sequence_definition_for_environment(environment, preferred)
+	# A runtime installed before its content packages must leave legacy snapshots
+	# exactly alone. Once an overlay exists, migration is deterministic and in-place.
+	if not SequenceSchemaScript.is_sequence(definition):
+		return {"ok": true, "changed": false, "active": false, "scenario_id": scenario_id, "definition": definition}
+	var before := JSON.stringify(environment)
+	var migration := {
+		"schema_version": SequenceRuntimeScript.STATE_SCHEMA_VERSION,
+		"scenario_id": scenario_id,
+		"receipt_id": "legacy:%s:v%d" % [scenario_id, SequenceRuntimeScript.STATE_SCHEMA_VERSION],
+		"status": "sequence_active",
+	}
+	environment["scenario_sequence_migration"] = migration
+	ensure_sequence_state(environment, definition, seed_token)
+	return {"ok": true, "changed": before != JSON.stringify(environment), "active": true, "scenario_id": scenario_id, "definition": definition}
+
+
 static func ensure_sequence_state(environment: Dictionary, definition: Dictionary, seed_token: String = "") -> Dictionary:
+	definition = sequence_definition_for_environment(environment, definition)
 	if not SequenceSchemaScript.is_sequence(definition):
 		return {}
 	if not bool(environment.get("scenario_semantic_ready", false)):
@@ -703,6 +743,7 @@ static func sequence_host_semantics(environment: Dictionary) -> Dictionary:
 
 
 static func sequence_command(environment: Dictionary, definition: Dictionary, command: Dictionary, context: Dictionary = {}) -> Dictionary:
+	definition = sequence_definition_for_environment(environment, definition)
 	var state := ensure_sequence_state(environment, definition)
 	if state.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
@@ -715,6 +756,7 @@ static func sequence_command(environment: Dictionary, definition: Dictionary, co
 
 
 static func enqueue_sequence_fact(environment: Dictionary, definition: Dictionary, fact: Dictionary) -> Dictionary:
+	definition = sequence_definition_for_environment(environment, definition)
 	var state := ensure_sequence_state(environment, definition)
 	if state.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
@@ -727,6 +769,7 @@ static func enqueue_sequence_fact(environment: Dictionary, definition: Dictionar
 
 
 static func flush_sequence_facts(environment: Dictionary, definition: Dictionary, boundary_serial: int) -> Dictionary:
+	definition = sequence_definition_for_environment(environment, definition)
 	var state := ensure_sequence_state(environment, definition)
 	if state.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
@@ -739,6 +782,7 @@ static func flush_sequence_facts(environment: Dictionary, definition: Dictionary
 
 
 static func sequence_projection(environment: Dictionary, definition: Dictionary = {}) -> Dictionary:
+<<<<<<< HEAD
 	if not SequenceSchemaScript.is_sequence(definition): return {}
 	var host_semantics := sequence_host_semantics(environment)
 	if not _copy_array(host_semantics.get("inventory_errors", [])).is_empty(): return {}
@@ -747,6 +791,133 @@ static func sequence_projection(environment: Dictionary, definition: Dictionary 
 
 
 static func _sequence_state_can_bind_initial_node(state: Dictionary, environment: Dictionary, definition: Dictionary = {}, host_semantics: Dictionary = {}) -> bool:
+=======
+	definition = sequence_definition_for_environment(environment, definition)
+	var state := SequenceRuntimeScript.normalize_state(environment.get("scenario_sequence_state", {}), definition)
+	return SequenceRuntimeScript.public_projection(state, definition) if not state.is_empty() else {}
+
+
+static func sequence_reentry(environment: Dictionary, definition: Dictionary, visit_id: String) -> Dictionary:
+	definition = sequence_definition_for_environment(environment, definition)
+	var state := ensure_sequence_state(environment, definition)
+	if state.is_empty():
+		return {"ok": false, "inactive": true, "errors": []}
+	var result := SequenceRuntimeScript.apply_reentry(state, definition, visit_id)
+	if bool(result.get("ok", false)):
+		environment["scenario_sequence_state"] = _copy_dict(result.get("state", state))
+		environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(environment["scenario_sequence_state"], definition)
+	return result
+
+
+static func sequence_expiry(environment: Dictionary, definition: Dictionary, boundary: String, boundary_serial: int) -> Dictionary:
+	definition = sequence_definition_for_environment(environment, definition)
+	var state := ensure_sequence_state(environment, definition)
+	if state.is_empty():
+		return {"ok": false, "inactive": true, "errors": []}
+	var result := SequenceRuntimeScript.apply_expiry(state, definition, boundary, boundary_serial)
+	if bool(result.get("ok", false)):
+		environment["scenario_sequence_state"] = _copy_dict(result.get("state", state))
+		environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(environment["scenario_sequence_state"], definition)
+	return result
+
+
+static func drain_sequence_transitions(environment: Dictionary, definition: Dictionary, reduced_motion: bool = false) -> Dictionary:
+	definition = sequence_definition_for_environment(environment, definition)
+	var state := ensure_sequence_state(environment, definition)
+	if state.is_empty():
+		return {"ok": false, "inactive": true, "transitions": [], "errors": []}
+	var result := SequenceRuntimeScript.drain_transitions(state, definition, reduced_motion)
+	if bool(result.get("ok", false)):
+		environment["scenario_sequence_state"] = _copy_dict(result.get("state", state))
+		environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(environment["scenario_sequence_state"], definition)
+	return result
+
+
+static func validate_sequence_definition(definition: Dictionary, references: Dictionary = {}) -> Array:
+	var errors := SequenceSchemaScript.validate_definition(definition, OperationRegistryScript)
+	if not SequenceSchemaScript.is_sequence(definition):
+		return errors
+	var scenario_id := str(definition.get("id", ""))
+	var archetype_id := str(definition.get("archetype_id", ""))
+	if not _copy_dict(references.get("archetype_ids", {})).has(archetype_id):
+		errors.append("scenario %s sequence references unknown archetype %s." % [scenario_id, archetype_id])
+	var authoring := _copy_dict(definition.get("sequence_authoring", {}))
+	if str(authoring.get("arrival_summary", "")).strip_edges().is_empty() or _string_array(authoring.get("player_verbs", [])).is_empty() or _string_array(authoring.get("world_connections", [])).is_empty():
+		errors.append("scenario %s sequence authoring requires arrival_summary, player_verbs, and world_connections." % scenario_id)
+	if _string_array(authoring.get("capture_ids", [])).is_empty() or _copy_dict(authoring.get("seed_evidence", {})).is_empty():
+		errors.append("scenario %s sequence authoring requires capture_ids and seed_evidence." % scenario_id)
+	_validate_sequence_references(scenario_id, authoring, references, errors)
+	var archetype := _copy_dict(references.get("archetype", {}))
+	for operation_value in _sequence_operations(definition):
+		var operation := _copy_dict(operation_value)
+		if str(operation.get("owner_namespace", "")) != "scenario":
+			errors.append("scenario %s sequence operation %s must be owned by the scenario namespace." % [scenario_id, str(operation.get("receipt_id", ""))])
+		for anchor_key in ["anchor_id", "zone_id"]:
+			var anchor := str(operation.get(anchor_key, "")).strip_edges()
+			if anchor.is_empty():
+				var payload := _copy_dict(operation.get("object", operation.get("actor", {})))
+				anchor = str(payload.get(anchor_key, "")).strip_edges()
+			if not anchor.is_empty() and not _sequence_anchor_exists(archetype, anchor_key, anchor):
+				errors.append("scenario %s sequence references unknown %s %s." % [scenario_id, anchor_key, anchor])
+		if str(operation.get("family", "")) == "actor_ops" and str(operation.get("op", "")) == "spawn":
+			var actor_id := str(_copy_dict(operation.get("actor", {})).get("actor_id", ""))
+			if not _copy_dict(references.get("actor_ids", {})).has(actor_id):
+				errors.append("scenario %s sequence references unknown actor %s." % [scenario_id, actor_id])
+	return errors
+
+
+static func _validate_sequence_references(scenario_id: String, authoring: Dictionary, references: Dictionary, errors: Array) -> void:
+	var authored_refs := _copy_dict(authoring.get("references", {}))
+	var known := {
+		"events": "event_ids", "games": "game_ids", "services": "service_ids",
+		"items": "item_ids", "actors": "actor_ids",
+	}
+	for key_value in authored_refs.keys():
+		var key := str(key_value)
+		if key == "objects":
+			continue
+		if not known.has(key):
+			errors.append("scenario %s sequence authoring references unknown registry %s." % [scenario_id, key])
+			continue
+		var valid := _copy_dict(references.get(str(known.get(key, "")), {}))
+		for id_value in _string_array(authored_refs.get(key, [])):
+			if not valid.has(str(id_value)):
+				errors.append("scenario %s sequence references unknown %s id %s." % [scenario_id, key, str(id_value)])
+
+
+static func _sequence_operations(definition: Dictionary) -> Array:
+	var result: Array = []
+	var authored := SequenceSchemaScript.sequence(definition)
+	for phase_value in _copy_array(_copy_dict(authored.get("phase_graph", {})).get("phases", [])):
+		var phase := _copy_dict(phase_value)
+		for family in ["scene_ops", "interaction_ops", "actor_ops", "transition_ops"]:
+			result.append_array(_copy_array(phase.get(family, [])))
+	result.append_array(_copy_array(_copy_dict(authored.get("cleanup", {})).get("operations", [])))
+	for aftermath_value in _copy_dict(authored.get("aftermath", {})).values():
+		var aftermath := _copy_dict(aftermath_value)
+		for family in ["scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops", "route_ops"]:
+			result.append_array(_copy_array(aftermath.get(family, [])))
+	return result
+
+
+static func _sequence_anchor_exists(archetype: Dictionary, anchor_kind: String, anchor: String) -> bool:
+	if anchor_kind == "zone_id":
+		return anchor in ["left", "right", "center", "foreground", "background", "exit_lane", "service_lane"]
+	var parts := anchor.split(":", false)
+	if parts.size() != 3 or str(parts[0]) != "layout" or not str(parts[2]).is_valid_int():
+		return false
+	var field := {
+		"game": "game_spots", "event": "event_spots", "item": "item_spots",
+		"service": "service_spots", "lender": "lender_spots", "travel": "travel_spots",
+		"shopkeeper": "shopkeeper_spots", "game_hook": "game_hook_spots",
+	}.get(str(parts[1]), "")
+	if str(field).is_empty():
+		return false
+	return int(parts[2]) >= 0 and int(parts[2]) < _copy_array(_copy_dict(archetype.get("layout", {})).get(str(field), [])).size()
+
+
+static func _sequence_state_can_bind_initial_node(state: Dictionary, environment: Dictionary) -> bool:
+>>>>>>> 59a0c576 (env06_6: add atomic runtime persistence and migration)
 	var original := str(state.get("node_id", "")).strip_edges()
 	var archetype_id := str(environment.get("archetype_id", "")).strip_edges()
 	if original.is_empty() or original != archetype_id or not SequenceSchemaScript.is_sequence(definition): return false

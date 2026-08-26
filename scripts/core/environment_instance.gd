@@ -69,7 +69,11 @@ var scenario_semantic_inventory_version: int = 0
 var scenario_semantic_digest: String = ""
 var scenario_sequence_state: Dictionary = {}
 var scenario_sequence_projection: Dictionary = {}
+<<<<<<< HEAD
 var scenario_event_choices: Dictionary = {}
+=======
+var scenario_sequence_migration: Dictionary = {}
+>>>>>>> 59a0c576 (env06_6: add atomic runtime persistence and migration)
 var environment_layer_schema_version: int = 0
 var current_layer_id: String = ""
 var default_layer_id: String = ""
@@ -215,6 +219,7 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.scenario_presentation = _copy_dict(data.get("scenario_presentation", {}))
 	environment.scenario_exclusive_opportunity = _copy_dict(data.get("scenario_exclusive_opportunity", {}))
 	environment.scenario_hook_flags = _copy_dict(data.get("scenario_hook_flags", {}))
+<<<<<<< HEAD
 	var semantic_inventory_version := maxi(0, int(data.get("scenario_semantic_inventory_version", 0)))
 	var semantic_digest := str(data.get("scenario_semantic_digest", "")).strip_edges()
 	if semantic_inventory_version > 0 and not semantic_digest.is_empty():
@@ -223,6 +228,11 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.scenario_sequence_state = _durable_sequence_state(data.get("scenario_sequence_state", {}))
 	environment.scenario_sequence_projection = {}
 	environment.scenario_event_choices = {}
+=======
+	environment.scenario_sequence_state = ScenarioEngineScript.SequenceRuntimeScript.normalize_state(data.get("scenario_sequence_state", {}))
+	environment.scenario_sequence_projection = _copy_dict(data.get("scenario_sequence_projection", {}))
+	environment.scenario_sequence_migration = _copy_dict(data.get("scenario_sequence_migration", {}))
+>>>>>>> 59a0c576 (env06_6: add atomic runtime persistence and migration)
 	environment.environment_layer_schema_version = maxi(0, int(data.get("environment_layer_schema_version", 0)))
 	environment.current_layer_id = str(data.get("current_layer_id", "")).strip_edges()
 	environment.default_layer_id = str(data.get("default_layer_id", "")).strip_edges()
@@ -293,6 +303,7 @@ func to_dict() -> Dictionary:
 		result["scenario_exclusive_opportunity"] = scenario_exclusive_opportunity.duplicate(true)
 		result["scenario_hook_flags"] = scenario_hook_flags.duplicate(true)
 	if not scenario_sequence_state.is_empty():
+<<<<<<< HEAD
 		result["scenario_sequence_state"] = _durable_sequence_state(scenario_sequence_state)
 	if scenario_semantic_inventory_version > 0 and not scenario_semantic_digest.strip_edges().is_empty():
 		result["scenario_semantic_inventory_version"] = scenario_semantic_inventory_version
@@ -304,6 +315,12 @@ func to_dict() -> Dictionary:
 		result["environment_visit_id"] = environment_visit_id
 		result["night_instance_id"] = night_instance_id
 		result["context_instance_id"] = context_instance_id
+=======
+		result["scenario_sequence_state"] = scenario_sequence_state.duplicate(true)
+		result["scenario_sequence_projection"] = scenario_sequence_projection.duplicate(true)
+	if not scenario_sequence_migration.is_empty():
+		result["scenario_sequence_migration"] = scenario_sequence_migration.duplicate(true)
+>>>>>>> 59a0c576 (env06_6: add atomic runtime persistence and migration)
 	if environment_layer_schema_version > 0 and not current_layer_id.is_empty():
 		result["environment_layer_schema_version"] = environment_layer_schema_version
 		result["current_layer_id"] = current_layer_id

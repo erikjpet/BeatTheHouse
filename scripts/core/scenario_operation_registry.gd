@@ -32,6 +32,7 @@ const OP_FAMILIES := {
 	"route_ops": ROUTE_OPS,
 }
 const REGISTERED_HANDLERS := {
+<<<<<<< HEAD
 	"set_local": {"inputs": ["key", "value"], "input_specs": {"key": "CanonicalId/local_field", "value": "LocalValue(key)"}, "fact_projection": {"input": "value", "selector": "value_from_payload"}, "allowed_sources": ["command", "fact"], "outputs": ["local_state"], "output_paths": ["local_state.<key>"], "write_algebra": "validated_replace", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "same-value state-idempotent; dispatch receipt exactly-once", "may_trigger_branch_resolution": ["local_equals", "local_min"], "external_effects": []},
 	"increment_local": {"inputs": ["key", "amount"], "input_specs": {"key": "CanonicalId/int_local_field", "amount": "int"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["local_state"], "output_paths": ["local_state.<key>"], "write_algebra": "integer_add_then_saturating_clamp", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "receipt-dependent", "may_trigger_branch_resolution": ["local_equals", "local_min"], "external_effects": []},
 	"complete_objective_step": {"inputs": ["objective_id", "step_id"], "input_specs": {"objective_id": "ObjectiveRef.objective_id", "step_id": "ObjectiveRef.step_id"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["objective_progress"], "output_paths": ["objective_progress.<objective_id>.completed_steps"], "write_algebra": "ordered_set_union_append", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "state-idempotent", "may_trigger_branch_resolution": ["objective"], "external_effects": []},
@@ -39,6 +40,16 @@ const REGISTERED_HANDLERS := {
 	"publish_feedback": {"inputs": ["message"], "input_specs": {"message": "bounded_nonblank_path_safe_string"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["last_feedback"], "output_paths": ["last_feedback"], "write_algebra": "replace", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "same-message state-idempotent", "may_trigger_branch_resolution": [], "external_effects": []},
 	"request_cleanup": {"inputs": ["reason"], "input_specs": {"reason": "CanonicalId"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["semantic_state", "cleanup_receipts", "cleanup_receipt_records", "cleanup_fingerprints", "cleanup_content_fingerprint", "status"], "output_paths": ["semantic_state", "cleanup_receipts", "cleanup_receipt_records", "cleanup_fingerprints", "cleanup_content_fingerprint", "status"], "write_algebra": "transactional_cleanup_batch", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "fingerprint-verified replay", "may_trigger_branch_resolution": [], "external_effects": []},
 	"event_bridge": {"inputs": ["event_id", "resolution_id"], "input_specs": {"event_id": "EventChoiceRef.event_id", "resolution_id": "EventChoiceRef.choice_id"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["last_feedback", "event_correlations"], "output_paths": ["last_feedback", "event_correlations"], "write_algebra": "replace_plus_ordered_set_union", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "correlation-key state-idempotent", "may_trigger_branch_resolution": [], "external_effects": [{"type": "event_correlation", "owner": "EventModule"}]},
+=======
+	"set_local": {"inputs": ["key", "value"], "output": "local_state", "persistent": true, "rng": "none"},
+	"increment_local": {"inputs": ["key", "amount"], "output": "local_state", "persistent": true, "rng": "none"},
+	"complete_objective_step": {"inputs": ["objective_id", "step_id"], "output": "objective_progress", "persistent": true, "rng": "none"},
+	"resolve_objective": {"inputs": ["objective_id", "outcome"], "output": "objective_progress", "persistent": true, "rng": "none"},
+	"record_outcome": {"inputs": ["outcome"], "output": "resolved_outcomes", "persistent": true, "rng": "none"},
+	"publish_feedback": {"inputs": ["message"], "output": "transition_queue", "persistent": false, "rng": "none"},
+	"request_cleanup": {"inputs": ["reason"], "output": "cleanup_receipts", "persistent": true, "rng": "none"},
+	"event_bridge": {"inputs": ["event_id", "resolution_id"], "output": "fact_queue", "persistent": true, "rng": "none"},
+>>>>>>> 59a0c576 (env06_6: add atomic runtime persistence and migration)
 }
 const MAX_OPERATIONS_PER_BATCH := 32
 const MAX_ACTIONS_PER_INTERACTION := 8
@@ -95,6 +106,7 @@ static func registered_handlers() -> Dictionary:
 	return REGISTERED_HANDLERS.duplicate(true)
 
 
+<<<<<<< HEAD
 static func validate_handler_inputs(handler_id: String, inputs: Dictionary, local_schema: Dictionary = {}, reachable_outcomes: Array = [], context: Dictionary = {}) -> Array:
 	var errors: Array = []
 	errors.append_array(validate_bounded_variant("scenario handler inputs", inputs))
@@ -152,6 +164,10 @@ static func validate_handler_inputs(handler_id: String, inputs: Dictionary, loca
 			var event_choices := _dict(context.get("event_choices", {}))
 			if event_choices.is_empty() or not _array(event_choices.get(str(inputs.get("event_id", "")), [])).has(str(inputs.get("resolution_id", ""))): errors.append("event_bridge requires a catalog-proven choice belonging to the exact event.")
 	return errors
+=======
+static func normalize_semantic_state(value: Dictionary) -> Dictionary:
+	return _normalize_semantic_state(value)
+>>>>>>> 59a0c576 (env06_6: add atomic runtime persistence and migration)
 
 
 static func validate_any_operation(operation: Dictionary) -> Array:
@@ -245,7 +261,11 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 	var authored_receipts: Dictionary = {}
 	var pending: Array = []
 	var fingerprints := _dict(original.get("operation_fingerprints", {}))
+<<<<<<< HEAD
 	var existing_receipts := _string_array(original.get("operation_receipts", []))
+=======
+	var known_targets := _dict(original.get(_collection_key(family), {}))
+>>>>>>> 59a0c576 (env06_6: add atomic runtime persistence and migration)
 	for index in range(operations.size()):
 		if typeof(operations[index]) != TYPE_DICTIONARY:
 			errors.append("%s[%d] is not a dictionary." % [family, index])
@@ -264,6 +284,7 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 			var fingerprint := operation_fingerprint(candidate)
 			if fingerprints.has(authoritative_receipt) and str(fingerprints.get(authoritative_receipt, "")) != fingerprint:
 				errors.append("operation receipt %s was reused for conflicting content." % authoritative_receipt)
+<<<<<<< HEAD
 			pending.append({"operation": candidate.duplicate(true), "receipt_id": authoritative_receipt, "authored_receipt_id": authored_receipt, "fingerprint": fingerprint, "operation_index": index})
 	var new_receipt_count := 0
 	for pending_value in pending:
@@ -274,6 +295,10 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 		errors.append("transition queue exceeds its persisted capacity.")
 	if family == "transition_ops" and _array(original.get("transition_queue", [])).size() + new_receipt_count > MAX_TRANSITION_QUEUE:
 		errors.append("transition queue capacity reached.")
+=======
+			pending.append({"operation": candidate.duplicate(true), "receipt_id": authoritative_receipt, "fingerprint": fingerprint})
+		_validate_and_track_target(family, candidate, known_targets, errors)
+>>>>>>> 59a0c576 (env06_6: add atomic runtime persistence and migration)
 	if not errors.is_empty():
 		return {"ok": false, "state": original, "applied": [], "errors": errors}
 	var state := original.duplicate(true)
@@ -1020,8 +1045,39 @@ static func _sort_interaction_overlay(a: Variant, b: Variant) -> bool:
 	var left_priority := int(OWNER_PRIORITY.get(str(left.get("owner_namespace", "")), -1))
 	var right_priority := int(OWNER_PRIORITY.get(str(right.get("owner_namespace", "")), -1))
 	if left_priority != right_priority:
-		return left_priority < right_priority
+		return left_priority > right_priority
 	return identity_from(left) < identity_from(right)
+
+
+static func _validate_and_track_target(family: String, operation: Dictionary, known_targets: Dictionary, errors: Array) -> void:
+	if family == "transition_ops":
+		return
+	var owner := str(operation.get("owner_namespace", ""))
+	var key := identity_from(operation)
+	var op_id := str(operation.get("op", ""))
+	# Base objects/interactions live in the prepared host snapshot rather than the
+	# scenario-owned reducer. The host resolver validates those targets later.
+	if owner != "scenario":
+		return
+	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
+		return
+	var creates := (family == "scene_ops" and op_id == "spawn") \
+		or (family == "interaction_ops" and op_id == "add") \
+		or (family == "actor_ops" and op_id == "spawn") \
+		or (family in ["service_ops", "game_ops"] and op_id == "add")
+	var removes := op_id in ["remove", "despawn"]
+	var requires_existing := family in ["scene_ops", "actor_ops"] and not creates \
+		or family == "interaction_ops" and removes \
+		or family in ["service_ops", "game_ops"] and not creates
+	if creates:
+		if known_targets.has(key):
+			errors.append("%s %s cannot create duplicate scenario target %s." % [family, op_id, key])
+		else:
+			known_targets[key] = true
+	elif requires_existing and not known_targets.has(key):
+		errors.append("%s %s targets missing scenario identity %s." % [family, op_id, key])
+	elif removes:
+		known_targets.erase(key)
 
 
 static func _contains_forbidden_path(value: Variant) -> bool:
