@@ -697,3 +697,11 @@ their own detailed handoffs and test evidence.
   evidence-tool P1s statically. Formal env06_6 acceptance and merge remain held
   pending its full serialized parse/suite, 21-image visual, native/Web parity,
   determinism, performance and timing battery; board HOLD continues.
+- 2026-08-26: fix06_4 timing-remediation self-review completed on clean exact
+  head `cddfb851bd39ff79f137b6bf9b22a2fb2cca0a61`, one test-only commit
+  from accepted `54d8083a` and exactly +5/-5. Two fingerprint globals, the return
+  type/null sentinel and final serialization now use `PackedByteArray`/
+  `var_to_bytes`; the exact state dictionary, index exclusion, baseline and
+  after-every-check cadence, mutation/hydration guards, hostile/hover assertions,
+  suite selection, runner and budget are unchanged. Static/hostile harness
+  checks pass; no runtime ran. Independent exact-head review is in progress.
