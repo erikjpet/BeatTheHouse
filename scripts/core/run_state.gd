@@ -13001,7 +13001,7 @@ static func _environment_for_persistent_storage(environment: Dictionary, deep_co
 
 
 static func _strip_scenario_semantic_ephemera(environment: Dictionary) -> void:
-	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_event_choices", "scenario_sequence_projection", "scenario_sequence_lifecycle_errors"]:
+	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_event_choices", "scenario_sequence_projection", "scenario_sequence_lifecycle_errors", "scenario_layout_audit", "scenario_layout_authority_digest"]:
 		environment.erase(key)
 	var state := _copy_dict(environment.get("scenario_sequence_state", {}))
 	if not state.is_empty():

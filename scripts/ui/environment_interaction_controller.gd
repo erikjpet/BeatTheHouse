@@ -11,9 +11,6 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	if host._is_meta_session():
 		return host._meta_interactable_object_view_list()
 	var preparation: Dictionary = _dict(host.run_state.scenario_prepare_semantic_finalization())
-	if not bool(preparation.get("ok", false)):
-		host.run_state.current_environment["scenario_sequence_lifecycle_errors"] = host._copy_array(preparation.get("errors", []))
-		return []
 	var failed = host._run_failed_without_recovery()
 	var failed_reason = host._pressure_status_text(host._run_pressure_view())
 	if failed_reason.strip_edges().is_empty():
@@ -94,25 +91,115 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	}))
 	var definition: Dictionary = _dict(host.run_state.scenario_sequence_definition())
+	if not bool(preparation.get("ok", false)):
+		var preparation_failure := projection_failure_result(result, _array(preparation.get("errors", [])))
+		_store_projection_status(host, preparation_failure)
+		return _array(preparation_failure.get("records", result))
 	if ScenarioSequenceSchemaScript.is_sequence(definition):
 		var finalized: Dictionary = _dict(host.run_state.scenario_finalize_base_semantics(result, host.library))
 		if not bool(finalized.get("ok", false)):
-			host.run_state.current_environment["scenario_sequence_lifecycle_errors"] = host._copy_array(finalized.get("errors", []))
-			return []
+			var finalization_failure := projection_failure_result(result, _array(finalized.get("errors", [])))
+			_store_projection_status(host, finalization_failure)
+			return _array(finalization_failure.get("records", result))
 		result = host._copy_array(finalized.get("records", []))
-		result = project_sequence_interactions(
+		var environment := host._copy_dict(host.run_state.current_environment)
+		if host.environment_canvas != null and host.environment_canvas.has_method("scenario_layout_context"):
+			environment["_scenario_layout_context"] = _dict(host.environment_canvas.call("scenario_layout_context"))
+		var projection_result := project_sequence_interaction_result(
 			result,
 			host.run_state.scenario_sequence_projection(),
-			host._copy_dict(host.run_state.current_environment)
+			environment
 		)
+		_store_projection_status(host, projection_result)
+		result = _array(projection_result.get("records", result))
+	else:
+		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
+		host.run_state.current_environment.erase("scenario_layout_audit")
+		host.run_state.current_environment.erase("scenario_layout_authority_digest")
 	return result
 
 
 static func project_sequence_interactions(base_records: Array, projection: Dictionary, environment: Dictionary = {}) -> Array:
+	return _array(project_sequence_interaction_result(base_records, projection, environment).get("records", base_records))
+
+
+static func project_sequence_interaction_result(base_records: Array, projection: Dictionary, environment: Dictionary = {}) -> Dictionary:
 	var prepared := ScenarioSemanticViewModelScript.prepare_projection(base_records, projection, environment)
+	if not bool(prepared.get("ok", false)):
+		return projection_failure_result(
+			base_records,
+			_array(prepared.get("errors", [])),
+			_dict(prepared.get("layout_audit", {})),
+			_dict(prepared.get("fallback_authority", {}))
+		)
 	var resolved_projection := _dict(prepared.get("projection", projection))
 	var semantic_state := _dict(resolved_projection.get("semantic_state", {}))
-	if not semantic_state.has("interactions") and not semantic_state.has("scene_objects") and not semantic_state.has("actors"): return base_records.duplicate(true)
+	if not semantic_state.has("interactions") and not semantic_state.has("scene_objects") and not semantic_state.has("actors"):
+		return {
+			"ok": true,
+			"records": base_records.duplicate(true),
+			"projection": resolved_projection,
+			"errors": [],
+			"warnings": _array(prepared.get("warnings", [])),
+			"layout_authority": {},
+			"layout_authority_digest": "",
+			"layout_audit": _dict(prepared.get("layout_audit", {})),
+		}
+	var authority := _dict(prepared.get("layout_authority", {}))
+	var authority_digest := str(prepared.get("layout_authority_digest", ""))
+	var composed := _compose_projected_records(base_records, resolved_projection, authority, authority_digest)
+	if not bool(composed.get("ok", false)):
+		return projection_failure_result(
+			base_records,
+			_array(composed.get("errors", [])),
+			_dict(prepared.get("layout_audit", {})),
+			_dict(prepared.get("fallback_authority", {}))
+		)
+	return {
+		"ok": true,
+		"records": _array(composed.get("records", [])),
+		"projection": resolved_projection,
+		"errors": [],
+		"warnings": _array(prepared.get("warnings", [])),
+		"layout_authority": authority,
+		"layout_authority_digest": authority_digest,
+		"layout_audit": _dict(prepared.get("layout_audit", {})),
+	}
+
+
+static func projection_failure_result(base_records: Array, errors: Array, layout_audit: Dictionary = {}, _fallback_authority: Dictionary = {}) -> Dictionary:
+	# Recompute the trusted fallback against the exact ordinary controls so the
+	# readable failure surface cannot eclipse the interactions it preserves.
+	var authority := ScenarioSemanticViewModelScript.failure_authority(base_records)
+	var clean_errors: Array = []
+	for value in errors:
+		var message := str(value).strip_edges()
+		if not message.is_empty() and not clean_errors.has(message):
+			clean_errors.append(message)
+	if clean_errors.is_empty():
+		clean_errors.append("Scenario presentation validation failed.")
+	var records := base_records.duplicate(true)
+	records.append(_projection_failure_record(authority, clean_errors))
+	var audit := layout_audit.duplicate(true)
+	audit["active"] = true
+	audit["valid"] = false
+	audit["error_count"] = clean_errors.size()
+	audit["fallback_visible"] = true
+	return {
+		"ok": false,
+		"records": records,
+		"projection": {},
+		"errors": clean_errors,
+		"warnings": [],
+		"layout_authority": {str(authority.get("identity", "system::scenario_presentation_failure")): authority},
+		"layout_authority_digest": JSON.stringify(authority).sha256_text(),
+		"layout_audit": audit,
+	}
+
+
+static func _compose_projected_records(base_records: Array, resolved_projection: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
+	var errors: Array = []
+	var semantic_state := _dict(resolved_projection.get("semantic_state", {}))
 	var semantic_interactions := _dict(semantic_state.get("interactions", {}))
 	var semantic_scene_objects := _dict(semantic_state.get("scene_objects", {}))
 	var semantic_actors := _dict(semantic_state.get("actors", {}))
@@ -145,17 +232,23 @@ static func project_sequence_interactions(base_records: Array, projection: Dicti
 		if semantic_interactions.has(identity) and not bool(semantic_interaction.get("present", true)):
 			consumed[identity] = true
 			continue
-		if semantic_visuals.has(identity) and bool(semantic_scene.get("layout_valid", true)):
-			record = _merge_projected_visual(record, semantic_scene)
+		if semantic_visuals.has(identity):
+			if not authority.has(identity):
+				errors.append("Projected visual %s lost its sealed layout authority." % identity)
+				continue
+			record = _merge_projected_visual(record, semantic_scene, _dict(authority.get(identity, {})), authority_digest)
 		if not semantic_interactions.has(identity):
-			if semantic_visuals.has(identity) and bool(semantic_scene.get("layout_valid", true)) and str(semantic_scene.get("owner_namespace", "")) == "scenario":
+			if semantic_visuals.has(identity) and str(semantic_scene.get("owner_namespace", "")) == "scenario":
 				record["interactive"] = false
 				record["scenario_sequence_actions"] = []
 			projected.append(record)
 			used_presentation_ids[str(record.get("object_id", ""))] = true
 			consumed[identity] = true
 			continue
-		var merged := _merge_projected_interaction(record, semantic_interaction)
+		if not authority.has(identity):
+			errors.append("Projected interaction %s lost its exact sealed layout authority." % identity)
+			continue
+		var merged := _merge_projected_interaction(record, semantic_interaction, _dict(authority.get(identity, {})), authority_digest)
 		projected.append(merged)
 		used_presentation_ids[str(merged.get("object_id", ""))] = true
 		consumed[identity] = true
@@ -165,11 +258,13 @@ static func project_sequence_interactions(base_records: Array, projection: Dicti
 		if consumed.has(identity): continue
 		var semantic := _dict(semantic_interactions.get(identity, {}))
 		if semantic.is_empty() or not bool(semantic.get("present", true)): continue
-		if semantic_visuals.has(identity) and not bool(_dict(semantic_visuals.get(identity, {})).get("layout_valid", true)): continue
+		if not authority.has(identity):
+			errors.append("Projected interaction %s has no exact sealed visual authority." % identity)
+			continue
 		var visual_base: Dictionary = {}
 		if semantic_visuals.has(identity):
-			visual_base = _merge_projected_visual({}, _dict(semantic_visuals.get(identity, {})))
-		var merged := _merge_projected_interaction(visual_base, semantic)
+			visual_base = _merge_projected_visual({}, _dict(semantic_visuals.get(identity, {})), _dict(authority.get(identity, {})), authority_digest)
+		var merged := _merge_projected_interaction(visual_base, semantic, _dict(authority.get(identity, {})), authority_digest)
 		var presentation_id := str(merged.get("object_id", ""))
 		if used_presentation_ids.has(presentation_id): continue
 		pending.append(merged)
@@ -179,8 +274,11 @@ static func project_sequence_interactions(base_records: Array, projection: Dicti
 		var identity := str(identity_value)
 		if consumed.has(identity): continue
 		var semantic := _dict(semantic_visuals.get(identity, {}))
-		if semantic.is_empty() or not bool(semantic.get("present", true)) or not bool(semantic.get("layout_valid", true)): continue
-		var merged := _merge_projected_visual({}, semantic)
+		if semantic.is_empty() or not bool(semantic.get("present", true)): continue
+		if not authority.has(identity):
+			errors.append("Projected visual %s has no exact sealed layout authority." % identity)
+			continue
+		var merged := _merge_projected_visual({}, semantic, _dict(authority.get(identity, {})), authority_digest)
 		var presentation_id := str(merged.get("object_id", ""))
 		if used_presentation_ids.has(presentation_id): continue
 		pending.append(merged)
@@ -193,10 +291,10 @@ static func project_sequence_interactions(base_records: Array, projection: Dicti
 		return left_order < right_order if left_order != right_order else str(left.get("object_id", "")) < str(right.get("object_id", ""))
 	)
 	projected.append_array(pending)
-	return projected
+	return {"ok": errors.is_empty(), "records": projected if errors.is_empty() else [], "errors": errors}
 
 
-static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary) -> Dictionary:
+static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
 	var result := base.duplicate(true)
 	var scenario_owned := str(semantic.get("owner_namespace", "")) == "scenario"
 	var owned_identity := "%s::%s" % [str(semantic.get("owner_namespace", "")), str(semantic.get("stable_object_id", ""))]
@@ -216,12 +314,10 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary)
 	result["disabled_reason"] = str(semantic.get("disabled_reason", ""))
 	result["non_color_state"] = str(semantic.get("non_color_state", result.get("non_color_state", "available")))
 	result["focus_order"] = int(semantic.get("focus_order", result.get("focus_order", 0)))
-	var normalized := _dict(semantic.get("normalized_hit_rect", {}))
-	if not normalized.is_empty() and not bool(result.get("scenario_layout_resolved", false)):
-		result["focus_rect"] = Rect2(float(normalized.get("x", 0.0)), float(normalized.get("y", 0.0)), float(normalized.get("w", 0.0)), float(normalized.get("h", 0.0)))
+	result = _apply_layout_authority(result, authority, authority_digest)
 	var actions := _array(semantic.get("available_actions", []))
 	result["available_actions"] = actions
-	if not actions.is_empty(): result["confirm_action_id"] = str(_dict(actions[0]).get("id", ""))
+	result["confirm_action_id"] = str(_dict(actions[0]).get("id", "")) if not actions.is_empty() else ""
 	var sequence_actions: Array = []
 	for action_value in actions:
 		var action := _dict(action_value)
@@ -230,13 +326,13 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary)
 	return result
 
 
-static func _merge_projected_visual(base: Dictionary, semantic: Dictionary) -> Dictionary:
+static func _merge_projected_visual(base: Dictionary, semantic: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
 	if str(semantic.get("semantic_kind", "")) == "actor":
-		return _merge_projected_actor(base, semantic)
-	return _merge_projected_scene_object(base, semantic)
+		return _merge_projected_actor(base, semantic, authority, authority_digest)
+	return _merge_projected_scene_object(base, semantic, authority, authority_digest)
 
 
-static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary) -> Dictionary:
+static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
 	var result := base.duplicate(true)
 	var owner := str(semantic.get("owner_namespace", result.get("owner_namespace", "")))
 	var stable_id := str(semantic.get("stable_object_id", result.get("stable_object_id", "")))
@@ -265,17 +361,11 @@ static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary
 		"state": result["semantic_state"],
 		"appearance": result["semantic_appearance"],
 	}
-	var normalized := _dict(semantic.get("normalized_hit_rect", {}))
-	if not normalized.is_empty():
-		result["focus_rect"] = Rect2(float(normalized.get("x", 0.0)), float(normalized.get("y", 0.0)), float(normalized.get("w", 0.0)), float(normalized.get("h", 0.0)))
-		result["scenario_layout_resolved"] = true
-	var small_screen_rect := _dict(semantic.get("small_screen_rect", {}))
-	if not small_screen_rect.is_empty(): result["small_screen_rect"] = small_screen_rect
-	return result
+	return _apply_layout_authority(result, authority, authority_digest)
 
 
-static func _merge_projected_actor(base: Dictionary, semantic: Dictionary) -> Dictionary:
-	var result := _merge_projected_scene_object(base, semantic)
+static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
+	var result := _merge_projected_scene_object(base, semantic, authority, authority_digest)
 	var owner := str(semantic.get("owner_namespace", result.get("owner_namespace", "")))
 	if base.is_empty() or str(result.get("object_type", "")) == "scenario_scene_object":
 		result["object_type"] = "scenario_actor" if owner == "scenario" else "character"
@@ -291,8 +381,60 @@ static func _merge_projected_actor(base: Dictionary, semantic: Dictionary) -> Di
 	result["actor_behavior"] = str(semantic.get("behavior", "idle"))
 	result["actor_route_id"] = str(semantic.get("route_id", ""))
 	result["actor_route_points"] = _array(semantic.get("route_points", []))
+	result["actor_route_stage"] = _dict(semantic.get("route_stage", {}))
 	result["character_actor"] = ScenarioSemanticViewModelScript.actor_character_model(semantic)
 	return result
+
+
+static func _apply_layout_authority(record: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
+	var result := record.duplicate(true)
+	var normalized := _dict(authority.get("normalized_hit_rect", {}))
+	var small := _dict(authority.get("small_screen_rect", {}))
+	result["focus_rect"] = Rect2(float(normalized.get("x", 0.0)), float(normalized.get("y", 0.0)), float(normalized.get("w", 0.0)), float(normalized.get("h", 0.0)))
+	result["small_screen_rect"] = small
+	result["scenario_z_order"] = int(authority.get("z_order", 0))
+	result["scenario_layout_resolved"] = true
+	result["scenario_layout_authority_identity"] = str(authority.get("identity", ""))
+	result["scenario_layout_authority_digest"] = authority_digest
+	return result
+
+
+static func _projection_failure_record(authority: Dictionary, errors: Array) -> Dictionary:
+	var message := "Scenario presentation is unavailable. %s" % str(errors[0])
+	return _apply_layout_authority({
+		"object_id": "scenario::presentation_failure",
+		"object_type": "scenario_presentation_failure",
+		"visual_type": "fixture",
+		"source_id": "scenario_presentation_failure",
+		"owner_namespace": "system",
+		"stable_object_id": "scenario_presentation_failure",
+		"label": "Scenario unavailable",
+		"short_description": message,
+		"action_summary": message,
+		"state_label": "Unavailable",
+		"state_badge": "Unavailable",
+		"enabled": false,
+		"interactive": true,
+		"visible": true,
+		"disabled_reason": message,
+		"non_color_state": "blocked",
+		"available_actions": [],
+		"inline_actions": [],
+		"confirm_action_id": "",
+		"scenario_sequence_actions": [],
+		"scenario_projection_failure": true,
+		"scenario_projection_errors": errors.duplicate(true),
+	}, authority, JSON.stringify(authority).sha256_text())
+
+
+static func _store_projection_status(host: Variant, projection_result: Dictionary) -> void:
+	var audit := _dict(projection_result.get("layout_audit", {}))
+	host.run_state.current_environment["scenario_layout_audit"] = audit
+	host.run_state.current_environment["scenario_layout_authority_digest"] = str(projection_result.get("layout_authority_digest", ""))
+	if bool(projection_result.get("ok", false)):
+		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
+	else:
+		host.run_state.current_environment["scenario_sequence_lifecycle_errors"] = _array(projection_result.get("errors", []))
 
 
 static func crew_presence_interactable_objects(host: Variant, event_options: Array = []) -> Array:

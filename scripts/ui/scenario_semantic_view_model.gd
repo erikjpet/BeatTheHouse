@@ -8,6 +8,10 @@ static func prepare_projection(base_records: Array, projection: Dictionary, envi
 	return ScenarioLayoutResolverScript.resolve(base_records, projection, environment)
 
 
+static func failure_authority(base_records: Array = []) -> Dictionary:
+	return ScenarioLayoutResolverScript.failure_authority(base_records)
+
+
 static func actor_character_model(actor: Dictionary) -> Dictionary:
 	var behavior := str(actor.get("behavior", "idle"))
 	var pose := str(actor.get("pose", "")).strip_edges()
@@ -27,6 +31,7 @@ static func actor_character_model(actor: Dictionary) -> Dictionary:
 		"behavior": behavior,
 		"route_id": str(actor.get("route_id", "")),
 		"route_points": _array(actor.get("route_points", [])),
+		"route_stage": _dict(actor.get("route_stage", {})),
 		"portrait_count": 1,
 		"members": [{
 			"role": behavior,
