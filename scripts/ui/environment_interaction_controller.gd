@@ -124,18 +124,24 @@ static func project_sequence_interactions(base_records: Array, projection: Dicti
 		var identity := "%s::%s" % [str(record.get("owner_namespace", "")), str(record.get("stable_object_id", ""))]
 		var presentation_id := str(record.get("object_id", ""))
 		if scenario_presentation_ids.has(presentation_id) and identity != presentation_id: continue
-		if semantic_scene_objects.has(identity): record = _merge_projected_scene_object(record, _dict(semantic_scene_objects.get(identity, {})))
-		if not semantic_interactions.has(identity):
-			if str(record.get("owner_namespace", "")).is_empty() or not bool(record.get("interactive", true)) or semantic_scene_objects.has(identity):
-				if semantic_scene_objects.has(identity):
-					record["interactive"] = false
-					record["scenario_sequence_actions"] = []
-				projected.append(record)
-				used_presentation_ids[str(record.get("object_id", ""))] = true
-				consumed[identity] = true
+		var semantic_scene := _dict(semantic_scene_objects.get(identity, {}))
+		var semantic_interaction := _dict(semantic_interactions.get(identity, {}))
+		if semantic_scene_objects.has(identity) and not bool(semantic_scene.get("present", true)):
+			consumed[identity] = true
 			continue
-		var semantic := _dict(semantic_interactions.get(identity, {}))
-		var merged := _merge_projected_interaction(record, semantic)
+		if semantic_interactions.has(identity) and not bool(semantic_interaction.get("present", true)):
+			consumed[identity] = true
+			continue
+		if semantic_scene_objects.has(identity): record = _merge_projected_scene_object(record, semantic_scene)
+		if not semantic_interactions.has(identity):
+			if semantic_scene_objects.has(identity):
+				record["interactive"] = false
+				record["scenario_sequence_actions"] = []
+			projected.append(record)
+			used_presentation_ids[str(record.get("object_id", ""))] = true
+			consumed[identity] = true
+			continue
+		var merged := _merge_projected_interaction(record, semantic_interaction)
 		projected.append(merged)
 		used_presentation_ids[str(merged.get("object_id", ""))] = true
 		consumed[identity] = true
@@ -144,7 +150,7 @@ static func project_sequence_interactions(base_records: Array, projection: Dicti
 		var identity := str(identity_value)
 		if consumed.has(identity): continue
 		var semantic := _dict(semantic_interactions.get(identity, {}))
-		if semantic.is_empty(): continue
+		if semantic.is_empty() or not bool(semantic.get("present", true)): continue
 		var merged := _merge_projected_interaction({}, semantic)
 		var presentation_id := str(merged.get("object_id", ""))
 		if used_presentation_ids.has(presentation_id): continue
@@ -155,7 +161,7 @@ static func project_sequence_interactions(base_records: Array, projection: Dicti
 		var identity := str(identity_value)
 		if consumed.has(identity): continue
 		var semantic := _dict(semantic_scene_objects.get(identity, {}))
-		if semantic.is_empty(): continue
+		if semantic.is_empty() or not bool(semantic.get("present", true)): continue
 		var merged := _merge_projected_scene_object({}, semantic)
 		var presentation_id := str(merged.get("object_id", ""))
 		if used_presentation_ids.has(presentation_id): continue
