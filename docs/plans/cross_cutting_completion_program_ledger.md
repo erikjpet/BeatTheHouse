@@ -796,3 +796,10 @@ their own detailed handoffs and test evidence.
   not start. The branch remains clean and host returned to zero. The candidate
   must be reverted or superseded only after a fresh bounded dependency review;
   unchanged reruns are forbidden.
+- 2026-08-26: Depth semantically synchronized its five rows and env06_6 claim
+  onto the board split at clean `7dd770ad`, with no Family 3 or structural
+  drift. Primary independently inspected the exact 28-line semantic delta,
+  applied it to `codex/cross-board`, repaired the companion count/index, and
+  committed clean head `114271b0ad952e72b6545d49e63aff0e67edd78a`.
+  `env06_6` truthfully remains IN_PROGRESS: static head `a5ae1d8f` is accepted
+  but all serialized host and independent visual gates remain pending.
