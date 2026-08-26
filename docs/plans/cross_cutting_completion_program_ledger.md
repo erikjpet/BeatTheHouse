@@ -650,3 +650,12 @@ their own detailed handoffs and test evidence.
   moved to a dedicated validator on clean reviewed `fix06_4` head `f577e911` for
   focused Blackjack/tutorial, shared Contracts and full-smoke acceptance before
   any remediation merge or balance rerun.
+- 2026-08-26: `fix06_4` focused runtime on clean reviewed `f577e911` passed both
+  Blackjack assertions with zero failures/stderr (7.066s internal) but remained
+  a hard wrapper-budget red at 18.205 seconds versus 17.790. The branch and host
+  returned clean/zero; Contracts/full smoke did not run. Coordinator diagnosis
+  found the isolated branch lacks the independently accepted
+  `review_artifacts/.gdignore` and imported 2,040 evidence cache files totaling
+  325,484,434 bytes. The owner is adding only that one-line accepted project-
+  scan hygiene dependency as a separate commit, then must repeat self-review and
+  independent exact-head review. No budget change or unchanged retry is allowed.
