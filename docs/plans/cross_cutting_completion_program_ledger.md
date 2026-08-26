@@ -467,3 +467,15 @@ their own detailed handoffs and test evidence.
   action-view practice-stock hunk were audited as line- and behavior-disjoint.
   Independent exact-head review is in progress. No runtime rerun or EV is
   permitted before its verdict.
+- 2026-08-26: Independent exact-head review issued
+  `ACCEPT 4d8a789fafcb9e70039e873f6d0416c0917da25a` with no P0-P3. The
+  host/live-session entry anchor, production captured-hold hit-region contract,
+  negative legacy-region assertion and strict later clock/tick/phase proof all
+  directly address the two preserved UI failures. Current roulette, baccarat,
+  slot and fallback realtime patches were inspected as safe and idempotent at
+  the entry timestamp; hidden/pause/visibility/throttle behavior is unchanged.
+  Meta and Scratch shared-path changes remain line- and behavior-disjoint.
+  Residual risk is the intentional publication of host clocks in all active-game
+  snapshots and the requirement that future realtime entry patches stay
+  idempotent. Affected non-EV runtime reruns may begin only after an exclusive
+  zero-process host preflight; EV remains unreleased.
