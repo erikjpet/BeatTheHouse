@@ -137,6 +137,19 @@ timed stage, and the exact enabled scenario target at logical `104x76` in
 small-screen mode. The four material outcome PNGs and visual-state hashes must
 be distinct.
 
+Obstruction evidence pins two distinct production targets: the non-exit
+`delivery_event_gate` and the safe-exit `delivery_exit`. Both must retain
+enabled tokenized actions, resolve to distinct public live rectangles, correlate
+exactly at their public hit-test centers, and remain clear of the TalkDock
+reservation. The event gate is the selected composition for this proof.
+
+Parity reports carry a separate pinned 21-row runtime order because efficient
+branch restore order differs from authored capture-list order. Every checkpoint
+must appear exactly once in that order with the production scenario and node,
+the exact phase/status pair, and the exact outcome set. Missing, duplicate,
+reordered, mislabeled, truncated, or semantically altered traces are rejected
+even when their semantic hash is internally recomputed.
+
 Parity/performance command:
 
 `powershell -NoProfile -ExecutionPolicy Bypass -File tools\scenario_sequence_parity_performance.ps1 -RequireGodot -Browser chrome -Cpu 4 -TimeoutMs 600000 -OutDir .tmp\env06_6\parity_performance`
@@ -153,8 +166,8 @@ public contract.
 
 | Gate | Status |
 | --- | --- |
-| PowerShell/Node syntax, static JSON/object-envelope checks, executable-tool hostile contracts | **PASS** - final nine-path pre-commit state, 2026-08-26 |
-| `powershell -NoProfile -ExecutionPolicy Bypass -File tools/validate_project.ps1 -Quiet` | **PASS** - 53.0 seconds on the final hardened code and contract state, 2026-08-26 |
+| PowerShell/Node syntax, static JSON/object-envelope checks, executable-tool hostile contracts | **PASS** - independently reviewed remediation pre-commit state, 2026-08-26 |
+| `powershell -NoProfile -ExecutionPolicy Bypass -File tools/validate_project.ps1 -Quiet` | **PASS** - 60.9 seconds on the independently reviewed final remediation state, 2026-08-26 |
 | Godot GDScript load/compile check | **DEFERRED — HOST LOCK** |
 | Foundation systems/content/UI/save/accessibility suites | **DEFERRED — HOST LOCK** |
 | `tools/scenario_sequence_audit.ps1 -RequireGodot -ExpectedCount 1` | **DEFERRED — HOST LOCK** |

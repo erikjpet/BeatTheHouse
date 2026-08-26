@@ -311,9 +311,13 @@ func _action_token(command_id: String) -> String:
 func _evidence(capture_id: String, expected_phase: String, expected_outcome: String = "", special: String = "") -> void:
 	_assert_projection(expected_phase, expected_outcome, capture_id)
 	if special == "obstruction":
-		var focus_id := _first_scenario_object_id()
-		if not focus_id.is_empty():
-			app.call("focus_interactable_object", focus_id)
+		var target_contract := ProbeSupport.obstruction_target_contract(_interactable_records())
+		for failure_value in _array(target_contract.get("failures", [])):
+			_fail("%s: %s" % [capture_id, str(failure_value)])
+		var focus_id := str(target_contract.get("non_exit_object_id", ""))
+		if focus_id.is_empty() or not bool(app.call("focus_interactable_object", focus_id)):
+			_fail("%s: Production delivery-event gate could not receive selected obstruction focus." % capture_id)
+		else:
 			app.call("_refresh")
 			await _settle(3)
 			var talk: Variant = app.get("talk_dock")
@@ -367,6 +371,8 @@ func _evidence(capture_id: String, expected_phase: String, expected_outcome: Str
 		"width": image.get_width(),
 		"height": image.get_height(),
 		"image_format": "png",
+		"scenario_id": str(_projection().get("scenario_id", "")),
+		"node_id": str(_projection().get("node_id", "")),
 		"phase_id": str(_projection().get("phase_id", "")),
 		"status": str(_projection().get("status", "")),
 		"outcomes": _array(_projection().get("resolved_outcomes", [])).duplicate(),
@@ -399,8 +405,9 @@ func _live_assertions(special: String) -> Dictionary:
 	var accessibility: Dictionary = app.call("current_accessibility_snapshot")
 	var result_feedback: Dictionary = app.call("current_environment_result_feedback_snapshot")
 	var reserved := _rect(view.get("reserved_overlay_global_rect", Rect2()))
-	var obstruction_target_rects := _obstruction_target_rects()
-	var obstruction_count := _reserved_overlap_count(reserved, obstruction_target_rects)
+	var obstruction_evidence := _obstruction_target_evidence(reserved)
+	var obstruction_target_rects := _array(obstruction_evidence.get("target_rects", []))
+	var obstruction_count := int(obstruction_evidence.get("reserved_overlap_count", -1))
 	var object_evidence := _live_object_evidence(reserved)
 	assertion_failures.append_array(_array(object_evidence.get("failures", [])))
 	match special:
@@ -438,11 +445,10 @@ func _live_assertions(special: String) -> Dictionary:
 			if not policy_ok or str(primary_target.get("object_id", "")).is_empty() or str(primary_target.get("command_id", "")).is_empty() or scenario_logical_size.x < 104.0 or scenario_logical_size.y < 76.0:
 				assertion_failures.append("Resolved production small-screen target geometry is below 104x76.")
 		"obstruction":
+			assertion_failures.append_array(_array(obstruction_evidence.get("failures", [])))
 			var talk: Variant = app.get("talk_dock")
 			var talk_snapshot: Dictionary = talk.call("current_snapshot") if talk != null else {}
 			var talk_reserved: Rect2 = talk.call("environment_reserved_global_rect") if talk != null else Rect2()
-			if scenario_hit_rects.size() != 1 or obstruction_target_rects.size() < 2:
-				assertion_failures.append("Obstruction evidence does not contain the exact enabled scenario target and an enabled safe exit.")
 			if not reserved.has_area():
 				assertion_failures.append("Production obstruction overlay has no reserved rectangle.")
 			if not bool(talk_snapshot.get("visible", false)) or not talk_reserved.has_area() or not talk_reserved.is_equal_approx(reserved):
@@ -467,6 +473,10 @@ func _live_assertions(special: String) -> Dictionary:
 			"primary_enabled_scenario_target": _primary_enabled_scenario_target(),
 			"reserved_overlay_has_area": reserved.has_area(),
 			"obstruction_target_count": obstruction_target_rects.size(),
+			"obstruction_target_object_ids": _array(obstruction_evidence.get("target_object_ids", [])).duplicate(),
+			"obstruction_center_hit_count": int(obstruction_evidence.get("center_hit_count", 0)),
+			"obstruction_distinct_rects": bool(obstruction_evidence.get("distinct_rects", false)),
+			"obstruction_non_exit_selected": bool(obstruction_evidence.get("non_exit_selected", false)),
 			"reserved_overlay_overlap_count": obstruction_count,
 			"small_screen_mode": bool(view.get("small_screen_mode", false)),
 			"reduce_motion": bool(view.get("reduce_motion", false)),
@@ -780,14 +790,6 @@ func _event_interactable_record() -> Dictionary:
 	return {}
 
 
-func _first_scenario_object_id() -> String:
-	for record_value in _interactable_records():
-		var record := _dict(record_value)
-		if str(record.get("object_type", "")) == "scenario" and bool(record.get("enabled", true)):
-			return str(record.get("object_id", ""))
-	return ""
-
-
 func _live_hit_rects() -> Array:
 	var result: Array = []
 	var canvas: Variant = app.get("environment_canvas") if app != null else null
@@ -821,33 +823,64 @@ func _enabled_scenario_hit_rects() -> Array:
 
 
 func _obstruction_target_rects() -> Array:
-	var result: Array = []
+	return _array(_obstruction_target_evidence(Rect2()).get("target_rects", []))
+
+
+func _obstruction_target_evidence(reserved: Rect2) -> Dictionary:
+	var evidence_failures: Array = []
+	var contract := ProbeSupport.obstruction_target_contract(_interactable_records())
+	evidence_failures.append_array(_array(contract.get("failures", [])))
 	var canvas: Variant = app.get("environment_canvas") if app != null else null
 	if canvas == null:
-		return result
-	var scenario_added := false
-	for record_value in _interactable_records():
-		var record := _dict(record_value)
-		if not bool(record.get("enabled", true)) or not bool(record.get("interactive", true)):
+		evidence_failures.append("Production environment canvas is unavailable for obstruction evidence.")
+		return {"failures": evidence_failures, "target_rects": [], "target_object_ids": [], "reserved_overlap_count": -1}
+	var target_rects: Array = []
+	var center_hit_count := 0
+	var non_exit_selected := false
+	for target_value in _array(contract.get("targets", [])):
+		var target := _dict(target_value)
+		var object_id := str(target.get("object_id", ""))
+		var rect_value: Variant = canvas.call("global_rect_for_object", object_id)
+		if typeof(rect_value) != TYPE_RECT2 or not (rect_value as Rect2).has_area():
+			evidence_failures.append("Production obstruction target has no public live geometry: %s." % object_id)
 			continue
-		var is_scenario := str(record.get("object_type", "")) == "scenario"
-		var is_safe_exit := bool(record.get("safe_exit", false)) and _has_enabled_inline_action(record)
-		if (not is_scenario or scenario_added) and not is_safe_exit:
-			continue
-		var rect: Variant = canvas.call("global_rect_for_object", str(record.get("object_id", "")))
-		if typeof(rect) != TYPE_RECT2 or not (rect as Rect2).has_area():
-			continue
-		result.append(rect)
-		if is_scenario:
-			scenario_added = true
-	return result
-
-
-func _has_enabled_inline_action(record: Dictionary) -> bool:
-	for action_value in _array(record.get("inline_actions", [])):
-		if bool(_dict(action_value).get("enabled", true)):
-			return true
-	return false
+		var target_rect: Rect2 = rect_value
+		target_rects.append(target_rect)
+		var local_center := canvas.to_local(target_rect.get_center())
+		if str(canvas.call("object_id_at_local_position", local_center)) == object_id:
+			center_hit_count += 1
+		else:
+			evidence_failures.append("Production obstruction target center does not correlate with public hit testing: %s." % object_id)
+		if object_id == str(contract.get("non_exit_object_id", "")):
+			non_exit_selected = bool(target.get("selected", false)) and bool(target.get("focused", false))
+	var distinct_rects := target_rects.size() == ProbeSupport.EXPECTED_OBSTRUCTION_TARGET_IDS.size()
+	if distinct_rects:
+		var left: Rect2 = target_rects[0]
+		var right: Rect2 = target_rects[1]
+		distinct_rects = not left.is_equal_approx(right) and not left.intersects(right)
+	if not distinct_rects:
+		evidence_failures.append("Production obstruction targets did not resolve to two distinct public live rectangles.")
+	if center_hit_count != ProbeSupport.EXPECTED_OBSTRUCTION_TARGET_IDS.size():
+		evidence_failures.append("Production obstruction targets did not preserve exact center-hit correlation.")
+	if not non_exit_selected:
+		evidence_failures.append("Production delivery-event gate is not the selected and focused obstruction target.")
+	var selected_composition: Rect2 = canvas.call("global_rect_for_selected_composition")
+	var selected_composition_unobstructed := selected_composition.has_area() and (not reserved.has_area() or not selected_composition.intersects(reserved))
+	if not selected_composition_unobstructed:
+		evidence_failures.append("Selected delivery-event gate composition intersects the TalkDock reservation.")
+	var reserved_overlap_count := _reserved_overlap_count(reserved, target_rects)
+	if reserved_overlap_count != 0:
+		evidence_failures.append("TalkDock reservation overlaps a required production obstruction target.")
+	return {
+		"failures": evidence_failures,
+		"target_rects": target_rects,
+		"target_object_ids": _array(contract.get("target_object_ids", [])).duplicate(),
+		"center_hit_count": center_hit_count,
+		"distinct_rects": distinct_rects,
+		"non_exit_selected": non_exit_selected,
+		"selected_composition_unobstructed": selected_composition_unobstructed,
+		"reserved_overlap_count": reserved_overlap_count,
+	}
 
 
 func _primary_enabled_scenario_target() -> Dictionary:
@@ -875,7 +908,7 @@ func _reserved_overlap_count(reserved: Rect2, hit_rects: Array) -> int:
 	var count := 0
 	for global_rect_value in _global_hit_rects(hit_rects):
 		var global_rect: Rect2 = global_rect_value
-		if global_rect.intersects(reserved) and global_rect.intersection(reserved).get_area() > 0.5:
+		if global_rect.intersects(reserved) and global_rect.intersection(reserved).get_area() > 0.0:
 			count += 1
 	return count
 
