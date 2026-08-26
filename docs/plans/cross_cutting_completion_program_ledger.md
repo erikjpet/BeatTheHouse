@@ -923,3 +923,23 @@ their own detailed handoffs and test evidence.
   composite that retains exact owning source bodies and uses fail-closed stubs
   only for compiler-visible omitted providers; it must prove identical
   registered/executed Blackjack checks and cannot alter budgets or assertions.
+- 2026-08-26: Independent fifth diagnosis `ACCEPT`ed one generated-only focused
+  composite plan with no P0/P1/P3 and a corrected P2 premise: the existing
+  assembler yields 30,420 five-source base lines, 4,664 fewer than the canonical
+  35,084-line full runner. Token-wide closure proves the exact included order
+  Core/Slots/Table/Items-World/Lenders contains both registered Blackjack checks,
+  all 112 direct `_check_content` callees and every selected helper. Its entire
+  intersection with omitted Delivery/Scratch/Cage/Coin function definitions is
+  exactly five compiler-visible, selected-route-unreachable symbols, with zero
+  omitted const/var/class references. The bounded three-tool-path implementation
+  must create a separate verified focused resource, inject a generated-only
+  exact-Blackjack scope/counter guard, append five signature-matched fatal stubs,
+  derive and pin all closure/signature/body/line/hash/accessor contracts, and
+  leave the full runner, tracked GDScript, registrations, assertions and budgets
+  unchanged. Exact Blackjack alone may use it; all other Foundation routes and
+  Systems retain the full accessor. Removing 13.29% of lines and 14.82% of bytes
+  from the measured 9.569-second startup is credibly causal for the required
+  4.27% reduction. Runtime acceptance additionally requires a hostile direct
+  `contracts` invocation to fail before any check, alongside exact green focused
+  IDs and timing. Pusher integration must rederive both pins while preserving
+  its full-runner Systems schedule/result logic.
