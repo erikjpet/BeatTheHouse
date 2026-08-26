@@ -506,7 +506,9 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 			_dict(semantic.get("small_screen_rect", {})),
 			int(semantic.get("z_order", 0)),
 			visual_kind,
-			"semantic_visual"
+			"semantic_visual",
+			_array(semantic.get("route_points", [])) if visual_kind == "actor" else [],
+			_dict(semantic.get("route_stage", {})) if visual_kind == "actor" else {}
 		)
 
 
@@ -530,7 +532,7 @@ static func _base_layout_authority(base_records: Array) -> Dictionary:
 
 
 static func _validate_authority(authority: Dictionary, errors: Array) -> void:
-	var expected_keys := ["identity", "normalized_hit_rect", "small_screen_rect", "source", "visual_kind", "z_order"]
+	var expected_keys := ["actor_route_points", "actor_route_stage", "identity", "normalized_hit_rect", "small_screen_rect", "source", "visual_kind", "z_order"]
 	expected_keys.sort()
 	for identity_value in authority.keys():
 		var identity := str(identity_value)
@@ -544,10 +546,53 @@ static func _validate_authority(authority: Dictionary, errors: Array) -> void:
 			var rect := _pixel_rect(_dict(record.get(rect_key, {})))
 			if not rect.has_area() or not Rect2(Vector2.ZERO, BOARD_SIZE).encloses(rect):
 				errors.append("Layout authority %s contains invalid %s geometry." % [identity, rect_key])
+		_validate_actor_route_authority(identity, record, errors)
 
 
-static func _authority_record(identity: String, normal: Dictionary, small: Dictionary, z_order: int, visual_kind: String, source: String) -> Dictionary:
+static func _validate_actor_route_authority(identity: String, authority_record: Dictionary, errors: Array) -> void:
+	var route_points := _array(authority_record.get("actor_route_points", []))
+	var route_stage := _dict(authority_record.get("actor_route_stage", {}))
+	if str(authority_record.get("visual_kind", "")) != "actor":
+		if not route_points.is_empty() or not route_stage.is_empty():
+			errors.append("Non-actor layout authority %s cannot carry route relocation authority." % identity)
+		return
+	if route_points.is_empty() and route_stage.is_empty():
+		return
+	if route_points.size() != 2:
+		errors.append("Actor layout authority %s must seal exactly two route points." % identity)
+		return
+	var expected_stage_keys := ["duration_sec", "endpoint", "mode", "reduced_motion_endpoint", "small_screen_endpoint", "small_screen_start", "start"]
+	expected_stage_keys.sort()
+	var stage_keys := route_stage.keys()
+	stage_keys.sort()
+	if stage_keys != expected_stage_keys or str(route_stage.get("mode", "")) not in ["to_endpoint", "ping_pong"] or not _finite_number(route_stage.get("duration_sec")) or float(route_stage.get("duration_sec", 0.0)) <= 0.0:
+		errors.append("Actor layout authority %s has an invalid closed route-stage contract." % identity)
+		return
+	for point_value in route_points + [route_stage.get("start", {}), route_stage.get("endpoint", {}), route_stage.get("reduced_motion_endpoint", {}), route_stage.get("small_screen_start", {}), route_stage.get("small_screen_endpoint", {})]:
+		var point := _pixel_point(_dict(point_value))
+		if not _finite_point(point) or not Rect2(Vector2.ZERO, BOARD_SIZE).has_point(point):
+			errors.append("Actor layout authority %s contains an invalid routed canvas point." % identity)
+			return
+	if JSON.stringify(route_points[0]) != JSON.stringify(route_stage.get("start", {})) or JSON.stringify(route_points[1]) != JSON.stringify(route_stage.get("endpoint", {})) or JSON.stringify(route_points[1]) != JSON.stringify(route_stage.get("reduced_motion_endpoint", {})):
+		errors.append("Actor layout authority %s route points and normal/reduced-motion endpoints diverge." % identity)
+		return
+	var normal_rect := _pixel_rect(_dict(authority_record.get("normalized_hit_rect", {})))
+	var small_rect := _pixel_rect(_dict(authority_record.get("small_screen_rect", {})))
+	var start := _pixel_point(_dict(route_points[0]))
+	var endpoint := _pixel_point(_dict(route_points[1]))
+	var expected_small_endpoint := _expanded_rect(Rect2(endpoint - normal_rect.size * 0.5, normal_rect.size), SMALL_SCREEN_TARGET).get_center()
+	var expected_duration := clampf(start.distance_to(endpoint) / 82.0, 0.75, 8.0)
+	if not start.is_equal_approx(normal_rect.get_center()) \
+		or not _pixel_point(_dict(route_stage.get("small_screen_start", {}))).is_equal_approx(small_rect.get_center()) \
+		or not _pixel_point(_dict(route_stage.get("small_screen_endpoint", {}))).is_equal_approx(expected_small_endpoint) \
+		or not is_equal_approx(float(route_stage.get("duration_sec", 0.0)), expected_duration):
+		errors.append("Actor layout authority %s route geometry or timing diverges from its sealed normal/small rectangles." % identity)
+
+
+static func _authority_record(identity: String, normal: Dictionary, small: Dictionary, z_order: int, visual_kind: String, source: String, actor_route_points: Array = [], actor_route_stage: Dictionary = {}) -> Dictionary:
 	return {
+		"actor_route_points": actor_route_points.duplicate(true),
+		"actor_route_stage": actor_route_stage.duplicate(true),
 		"identity": identity,
 		"normalized_hit_rect": normal,
 		"small_screen_rect": small,
@@ -878,6 +923,10 @@ static func _rect_snapshot(value: Rect2) -> Dictionary:
 
 static func _finite_point(point: Vector2) -> bool:
 	return is_finite(point.x) and is_finite(point.y)
+
+
+static func _finite_number(value: Variant) -> bool:
+	return typeof(value) in [TYPE_INT, TYPE_FLOAT] and is_finite(float(value))
 
 
 static func _point(value: Variant) -> Vector2:

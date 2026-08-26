@@ -3704,7 +3704,10 @@ func _actor_route_position(object_data: Dictionary) -> Vector2:
 
 
 func _actor_route_cache_key(object_data: Dictionary) -> String:
-	return "%s:%s" % [str(object_data.get("id", "")), JSON.stringify(object_data.get("actor_route_stage", {})).sha256_text()]
+	var route_identity := str(object_data.get("id", ""))
+	if bool(object_data.get("scenario_layout_resolved", false)):
+		route_identity = str(object_data.get("scenario_layout_authority_identity", ""))
+	return "%s:%s" % [route_identity, JSON.stringify(object_data.get("actor_route_stage", {})).sha256_text()]
 
 
 func _sync_actor_route_starts() -> void:

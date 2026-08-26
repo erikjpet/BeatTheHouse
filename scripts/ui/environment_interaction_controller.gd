@@ -91,23 +91,24 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	}))
 	var definition: Dictionary = _dict(host.run_state.scenario_sequence_definition())
+	var trusted_base_result := result.duplicate(true)
 	var layout_context: Dictionary = {}
 	if host.environment_canvas != null and host.environment_canvas.has_method("scenario_layout_context"):
 		layout_context = _dict(host.environment_canvas.call("scenario_layout_context"))
 	if not bool(preparation.get("ok", false)):
 		var preparation_failure := projection_failure_result(result, _array(preparation.get("errors", [])))
-		_store_projection_status(host, preparation_failure)
-		return _array(preparation_failure.get("records", result))
+		var committed_preparation_failure := committed_projection_status_result(host.run_state, preparation_failure, trusted_base_result)
+		return _array(committed_preparation_failure.get("records", trusted_base_result))
 	if ScenarioSequenceSchemaScript.is_sequence(definition):
 		var finalized: Dictionary = _dict(host.run_state.scenario_finalize_base_semantics(result, host.library, layout_context))
 		if not bool(finalized.get("ok", false)):
 			var finalization_failure := projection_failure_result(result, _array(finalized.get("errors", [])), _dict(finalized.get("layout_audit", {})))
-			_store_projection_status(host, finalization_failure)
-			return _array(finalization_failure.get("records", result))
+			var committed_finalization_failure := committed_projection_status_result(host.run_state, finalization_failure, trusted_base_result)
+			return _array(committed_finalization_failure.get("records", trusted_base_result))
 		result = host._copy_array(finalized.get("records", []))
 		var projection_result := project_finalized_sequence_interaction_result(result, finalized)
-		_store_projection_status(host, projection_result)
-		result = _array(projection_result.get("records", result))
+		var committed_result := committed_projection_status_result(host.run_state, projection_result, trusted_base_result)
+		result = _array(committed_result.get("records", trusted_base_result))
 	else:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
@@ -144,6 +145,9 @@ static func project_finalized_sequence_interaction_result(base_records: Array, f
 		or str(layout_audit.get("authority_digest", "")) != authority_digest \
 		or not bool(layout_audit.get("valid", false)):
 		return projection_failure_result(base_records, ["Finalized scenario layout authority failed digest correlation."], layout_audit)
+	var actor_authority_errors := _finalized_actor_authority_errors(semantic_state, authority)
+	if not actor_authority_errors.is_empty():
+		return projection_failure_result(base_records, actor_authority_errors, layout_audit)
 	if not semantic_state.has("interactions") and not semantic_state.has("scene_objects") and not semantic_state.has("actors"):
 		return {
 			"ok": true,
@@ -177,6 +181,31 @@ static func _layout_authority_digest(authority: Dictionary) -> String:
 	for identity_value in identities:
 		canonical.append(_dict(authority.get(identity_value, {})))
 	return JSON.stringify(canonical).sha256_text()
+
+
+static func _finalized_actor_authority_errors(semantic_state: Dictionary, authority: Dictionary) -> Array:
+	var errors: Array = []
+	var actors := _dict(semantic_state.get("actors", {}))
+	for identity_value in actors.keys():
+		var identity := str(identity_value)
+		var actor := _dict(actors.get(identity_value, {}))
+		if actor.is_empty() or not bool(actor.get("present", true)):
+			continue
+		var sealed := _dict(authority.get(identity, {}))
+		if str(sealed.get("visual_kind", "")) != "actor":
+			errors.append("Finalized scenario actor %s lost its sealed route authority." % identity)
+			continue
+		for pair in [
+			["normalized_hit_rect", actor.get("normalized_hit_rect", {}), sealed.get("normalized_hit_rect", {})],
+			["small_screen_rect", actor.get("small_screen_rect", {}), sealed.get("small_screen_rect", {})],
+			["route_points", actor.get("route_points", []), sealed.get("actor_route_points", [])],
+			["route_stage", actor.get("route_stage", {}), sealed.get("actor_route_stage", {})],
+			["z_order", actor.get("z_order", -1), sealed.get("z_order", -2)],
+		]:
+			var values := pair as Array
+			if JSON.stringify(values[1]) != JSON.stringify(values[2]):
+				errors.append("Finalized scenario actor %s %s diverged from sealed canvas authority." % [identity, str(values[0])])
+	return errors
 
 
 static func project_sequence_interaction_result(base_records: Array, projection: Dictionary, environment: Dictionary = {}) -> Dictionary:
@@ -443,8 +472,8 @@ static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, autho
 	result["actor_pose"] = str(semantic.get("pose", "idle"))
 	result["actor_behavior"] = str(semantic.get("behavior", "idle"))
 	result["actor_route_id"] = str(semantic.get("route_id", ""))
-	result["actor_route_points"] = _array(semantic.get("route_points", []))
-	result["actor_route_stage"] = _dict(semantic.get("route_stage", {}))
+	result["actor_route_points"] = _array(authority.get("actor_route_points", []))
+	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
 	result["character_actor"] = ScenarioSemanticViewModelScript.actor_character_model(semantic)
 	return result
 
@@ -460,6 +489,8 @@ static func _apply_layout_authority(record: Dictionary, authority: Dictionary, a
 	result["normalized_rect"] = normalized.duplicate(true)
 	result["focus_rect"] = final_rect
 	result["small_screen_rect"] = small
+	result["actor_route_points"] = _array(authority.get("actor_route_points", []))
+	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
 	result["scenario_z_order"] = int(authority.get("z_order", 0))
 	result["scenario_layout_resolved"] = true
 	result["scenario_layout_authority_identity"] = str(authority.get("identity", ""))
@@ -495,17 +526,59 @@ static func _projection_failure_record(authority: Dictionary, errors: Array) -> 
 	}, authority, JSON.stringify(authority).sha256_text())
 
 
-static func _store_projection_status(host: Variant, projection_result: Dictionary) -> void:
+static func committed_projection_status_result(run_state: Variant, projection_result: Dictionary, trusted_base_records: Array) -> Dictionary:
 	var audit := _dict(projection_result.get("layout_audit", {}))
 	if bool(projection_result.get("ok", false)):
-		var committed_digest := str(host.run_state.current_environment.get("scenario_layout_authority_digest", ""))
+		var committed_digest := str(run_state.current_environment.get("scenario_layout_authority_digest", ""))
 		var projected_digest := str(projection_result.get("layout_authority_digest", ""))
-		if committed_digest == projected_digest:
-			host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
-			return
-		host.run_state.scenario_reject_layout_projection(["Committed scenario layout authority diverged from the finalized production projection."], audit)
-		return
-	host.run_state.scenario_reject_layout_projection(_array(projection_result.get("errors", [])), audit)
+		var projected_authority := _dict(projection_result.get("layout_authority", {}))
+		var passive_projection := projected_authority.is_empty() and projected_digest.is_empty() and not bool(audit.get("active", false))
+		var integrity_errors: Array = []
+		if not passive_projection:
+			integrity_errors = _projected_record_authority_errors(
+				_array(projection_result.get("records", [])),
+				projected_authority,
+				projected_digest
+			)
+		if committed_digest == projected_digest and integrity_errors.is_empty():
+			run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
+			return projection_result.duplicate(true)
+		var mismatch_errors := integrity_errors
+		if mismatch_errors.is_empty():
+			mismatch_errors.append("Committed scenario layout authority diverged from the finalized production projection.")
+		run_state.scenario_reject_layout_projection(mismatch_errors, audit)
+		return projection_failure_result(trusted_base_records, mismatch_errors, audit)
+	var projection_errors := _array(projection_result.get("errors", []))
+	if projection_errors.is_empty():
+		projection_errors.append("Scenario production projection was rejected without diagnostics.")
+	run_state.scenario_reject_layout_projection(projection_errors, audit)
+	return projection_failure_result(trusted_base_records, projection_errors, audit)
+
+
+static func _projected_record_authority_errors(records: Array, authority: Dictionary, authority_digest: String) -> Array:
+	var errors: Array = []
+	if authority_digest.length() != 64 or _layout_authority_digest(authority) != authority_digest:
+		errors.append("Projected scenario records no longer match their sealed authority digest.")
+		return errors
+	for value in records:
+		var record := _dict(value)
+		var identity := str(record.get("scenario_layout_authority_identity", ""))
+		var owned_identity := "%s::%s" % [str(record.get("owner_namespace", "")), str(record.get("stable_object_id", ""))]
+		if not bool(record.get("scenario_layout_resolved", false)) or identity.is_empty() or identity != owned_identity or not authority.has(identity) or str(record.get("scenario_layout_authority_digest", "")) != authority_digest:
+			errors.append("Projected record %s lost its correlated sealed layout authority." % str(record.get("object_id", "")))
+			continue
+		var sealed := _dict(authority.get(identity, {}))
+		for pair in [
+			["normalized_rect", record.get("normalized_rect", {}), sealed.get("normalized_hit_rect", {})],
+			["small_screen_rect", record.get("small_screen_rect", {}), sealed.get("small_screen_rect", {})],
+			["scenario_z_order", record.get("scenario_z_order", -1), sealed.get("z_order", -2)],
+			["actor_route_points", record.get("actor_route_points", []), sealed.get("actor_route_points", [])],
+			["actor_route_stage", record.get("actor_route_stage", {}), sealed.get("actor_route_stage", {})],
+		]:
+			var values := pair as Array
+			if JSON.stringify(values[1]) != JSON.stringify(values[2]):
+				errors.append("Projected record %s %s diverged from sealed canvas authority." % [str(record.get("object_id", "")), str(values[0])])
+	return errors
 
 
 static func crew_presence_interactable_objects(host: Variant, event_options: Array = []) -> Array:
