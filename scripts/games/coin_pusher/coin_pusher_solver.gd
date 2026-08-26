@@ -137,7 +137,7 @@ class SpatialHash2D:
 static var _scratch_grid: SpatialHash2D = SpatialHash2D.new()
 
 
-static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int = 0) -> Dictionary:
+static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int = 0, capture_opening_report: bool = false) -> Dictionary:
 	var definition := machine_definition.duplicate(true)
 	var geometry := _geometry(definition)
 	var stroke := _stroke(definition)
@@ -189,16 +189,19 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 			var opening_validation := _opening_generation_validation(state)
 			assert(bool(opening_settle.get("settled", false)), "Coin Pusher V3 opening stock did not physically settle.")
 			assert(bool(opening_validation.get("valid", false)), "Coin Pusher V3 opening stock failed post-settle validation: %s" % JSON.stringify(opening_validation))
-			state["opening_settle_report"] = {
-				"physical_ticks": int(opening_settle.get("ticks", 0)),
-				"awake_count": int(opening_settle.get("awake_count", -1)),
-				"kinetic_energy": int(opening_validation.get("kinetic_energy", -1)),
-				"unsupported_count": int(opening_validation.get("unsupported_count", -1)),
-				"tray_count": int(opening_validation.get("tray_count", -1)),
-				"gutter_count": int(opening_validation.get("gutter_count", -1)),
-			}
-			# Settling is generation work, not elapsed cabinet play. Preserve its
-			# measured proof while presenting the newly created machine at tick zero.
+			# The detailed report is opt-in audit data. Production state keeps the
+			# physical result but not diagnostic bytes that would bloat every save.
+			if capture_opening_report:
+				state["opening_settle_report"] = {
+					"physical_ticks": int(opening_settle.get("ticks", 0)),
+					"awake_count": int(opening_settle.get("awake_count", -1)),
+					"kinetic_energy": int(opening_validation.get("kinetic_energy", -1)),
+					"unsupported_count": int(opening_validation.get("unsupported_count", -1)),
+					"tray_count": int(opening_validation.get("tray_count", -1)),
+					"gutter_count": int(opening_validation.get("gutter_count", -1)),
+				}
+			# Settling is generation work, not elapsed cabinet play. Present the
+			# newly created machine at tick zero after validating the physical result.
 			state["tick"] = 0
 			state["last_events"] = []
 			state["last_step_metrics"] = {}

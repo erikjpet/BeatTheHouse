@@ -352,12 +352,15 @@ func _check_pusher_v3_10_opening_generation_guard(machine_definition: Dictionary
 		"jackpot_ridge": machines.get("jackpot_ridge", {}),
 		"vault_drop": machines.get("vault_drop", {}),
 	}
+	var production_opening := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-10-OPENING-PRODUCTION-BYTES"), machine_definition, 150)
+	if production_opening.has("opening_settle_report"):
+		failures.append("pusherv3_10 production opening leaked opt-in settle diagnostics into serialized machine state.")
 	for machine_id in definitions:
 		var definition: Dictionary = definitions[machine_id]
 		var width := int((definition.get("geometry", {}) as Dictionary).get("width", 100000))
 		var opening_count := 154 if machine_id == "vault_drop" else 150
 		for seed_index in range(4):
-			var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-10-OPENING-%s-%d" % [machine_id, seed_index]), definition, opening_count)
+			var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-10-OPENING-%s-%d" % [machine_id, seed_index]), definition, opening_count, true)
 			var settle_report: Dictionary = state.get("opening_settle_report", {}) if typeof(state.get("opening_settle_report", {})) == TYPE_DICTIONARY else {}
 			var occupancy := [[0, 0], [0, 0], [0, 0]]
 			var contacts := [[0, 0], [0, 0], [0, 0]]

@@ -30,7 +30,7 @@ func _run() -> void:
 		var contexts: Array = []
 		for seed_index in range(4):
 			var opening_count := 154 if machine_id == "vault_drop" else 150
-			var state := Solver.create_machine(_rng("PUSHER-V3-10-OPENING-%s-%d" % [machine_id, seed_index]), definition, opening_count)
+			var state := Solver.create_machine(_rng("PUSHER-V3-10-OPENING-%s-%d" % [machine_id, seed_index]), definition, opening_count, true)
 			var matrix := _matrix(state, definition)
 			var settle: Dictionary = state.get("opening_settle_report", {})
 			var context_passed := _matrix_passed(matrix) and int(settle.get("physical_ticks", 0)) > 0 and int(settle.get("awake_count", -1)) == 0 and int(settle.get("unsupported_count", -1)) == 0 and int(settle.get("tray_count", -1)) == 0 and int(settle.get("gutter_count", -1)) == 0
