@@ -847,3 +847,17 @@ their own detailed handoffs and test evidence.
   clean, and host returned to zero. Any next candidate must restore the original
   full composite and address only its generation/import lifecycle without
   moving coverage, assertions, registrations or budget.
+- 2026-08-26: Independent third diagnosis conditionally accepted one bounded
+  lifecycle remediation with a required P1 correction and no P0/P2/P3. Merely
+  pre-generating the current `res://.tmp` runner is rejected because fresh
+  filesystem-cache evidence proves Godot does not index that hidden path. The
+  accepted direction restores the original nine-source composite/topology,
+  writes canonical UTF-8 bytes only when content changes under a normal
+  Godot-visible but Git-ignored `res://generated_tests/` root, prepares it after
+  the exclusive-host guard and before the separately hard-gated import stage,
+  and pins/reverifies its path, hash, length and mtime before both ordinary
+  Foundation and Systems consumers. The exact suite-selection matrix, source
+  order, assertions, registrations, budgets and import failure semantics must
+  remain unchanged; acceptance timing may use only normal import-enabled runs.
+  Pusher `30ee954d` remains semantically compatible but later integration must
+  preserve its critical shard launch order and canonical result reconstruction.
