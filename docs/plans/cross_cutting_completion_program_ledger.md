@@ -838,3 +838,12 @@ their own detailed handoffs and test evidence.
   must be mechanically refreshed only for accepted pusher body changes and the
   hostile/Blackjack/Systems gates rerun. Runtime parse/timing remains the only
   current residual risk; rejected `449b5ca6` is never standalone evidence.
+- 2026-08-26: Runtime also rejected exact clean topology head `0009ea3e`
+  before any Foundation check executed. The focused stage was 7.150 seconds,
+  under budget, but Godot could not resolve Coin's Cage base as a standalone
+  script; no report/check IDs were produced and run 2, Contracts and Smoke did
+  not start. Static completeness therefore does not make this deep inherited
+  test graph loadable. The direct-runner direction is abandoned, the branch is
+  clean, and host returned to zero. Any next candidate must restore the original
+  full composite and address only its generation/import lifecycle without
+  moving coverage, assertions, registrations or budget.
