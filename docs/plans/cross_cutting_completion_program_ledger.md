@@ -640,3 +640,13 @@ their own detailed handoffs and test evidence.
   dispatch guard is not separately unit-extracted; it fails closed in production
   and established downstream hostile contracts remain. Pusher remains frozen
   behind the Wave 1 host sequence.
+- 2026-08-26: Balance's full-action determinism passed for all eight playstyles
+  across paired 208-action payloads, and its fresh Systems gate passed at 41.381
+  seconds under the immutable cap. The next Contracts gate timed out at 300.047
+  seconds, but coordinator inspection found the known baseline script error
+  `SurfaceHarness.surface_add_exact_hover_hit` rather than a balance assertion;
+  this is the independently static-accepted `fix06_4` dependency. The process
+  tree returned to zero and balance is frozen without changes. Host ownership
+  moved to a dedicated validator on clean reviewed `fix06_4` head `f577e911` for
+  focused Blackjack/tutorial, shared Contracts and full-smoke acceptance before
+  any remediation merge or balance rerun.
