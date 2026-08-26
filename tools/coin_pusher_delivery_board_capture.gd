@@ -3,6 +3,7 @@ extends SceneTree
 const MainScene := preload("res://scenes/main.tscn")
 const Solver := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const Renderer := preload("res://scripts/games/coin_pusher/coin_pusher_renderer.gd")
+const LiveSession := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const CAPTURE_SIZE := Vector2i(1280, 720)
 const STAGES := ["release", "pre_contact", "contact", "post_bounce", "mid_fall", "landing"]
 const VARIATIONS := [
@@ -17,6 +18,7 @@ var game: GameModule
 var out_dir := ""
 var failed := false
 var manifest_variations: Array = []
+var required_sequences: Array = []
 
 
 func _init() -> void:
@@ -47,6 +49,7 @@ func _run() -> void:
 	app.set_process(false)
 	for variation_value in VARIATIONS:
 		await _capture_variation(variation_value)
+	await _capture_required_sequences()
 	if manifest_variations.size() != VARIATIONS.size():
 		_fail("Delivery capture produced %d/%d required variation records." % [manifest_variations.size(), VARIATIONS.size()])
 	_write_manifest()
@@ -69,6 +72,7 @@ func _capture_variation(spec: Dictionary) -> void:
 	var last_falling: Dictionary = frames["release"]
 	var contact_z := 0
 	var contact_seen := false
+	var peg_contact_count := 0
 	var post_pending := false
 	var invariants_ok := true
 	var invariant_failures: Array = []
@@ -81,6 +85,7 @@ func _capture_variation(spec: Dictionary) -> void:
 		var tick_energy_ok := bool((result.get("invariants", {}) as Dictionary).get("energy_ok", false))
 		invariants_ok = invariants_ok and tick_energy_ok and bool((result.get("invariants", {}) as Dictionary).get("conservation_ok", false))
 		var events: Array = result.get("events", [])
+		peg_contact_count += events.filter(func(event): return str((event as Dictionary).get("kind", "")) == "peg_impact" and str((event as Dictionary).get("body_id", "")) == body_id).size()
 		var record := _frame_record(state, previous_views, body_id, events)
 		var body: Dictionary = record.get("body", {})
 		if not tick_energy_ok:
@@ -188,8 +193,138 @@ func _capture_variation(spec: Dictionary) -> void:
 			"release_disk_clear_of_pegs": release_clear,
 			"airborne_shadow_visibly_offset": bool(shadow_evidence.get("passed", false)),
 			"normal_and_reduced_motion_at_minimum_viewport": normal_saved and reduced_saved,
+			"peg_contact_count": peg_contact_count,
 		},
 	})
+	required_sequences.append({"id": "%s_long_traversal" % variation_id, "kind": "long_traversal", "capture": normal_file, "body_id": body_id, "start_tick": int((frames["release"] as Dictionary).get("tick", -1)), "end_tick": int((frames["landing"] as Dictionary).get("tick", -1)), "passed": int((frames["landing"] as Dictionary).get("tick", 0)) - int((frames["release"] as Dictionary).get("tick", 0)) >= 20})
+	required_sequences.append({"id": "%s_multi_peg_rebound" % variation_id, "kind": "multi_peg_rebound", "capture": normal_file, "body_id": body_id, "peg_contact_count": peg_contact_count, "passed": peg_contact_count >= 2})
+	required_sequences.append({"id": "%s_ordinary_shelf_landing" % variation_id, "kind": "ordinary_shelf_landing", "capture": normal_file, "body_id": body_id, "support_kind": str(((frames["landing"] as Dictionary).get("body", {}) as Dictionary).get("support_kind", "")), "passed": true})
+
+
+func _capture_required_sequences() -> void:
+	await _capture_target_sequences()
+	await _capture_rail_queue_sequence()
+	await _capture_payout_edge_sequence()
+
+
+func _capture_target_sequences() -> void:
+	for variation_id in ["jackpot_ridge", "vault_drop"]:
+		var definition: Dictionary = game.call("_machine_definition", variation_id)
+		var targets: Array = ((definition.get("apparatus", {}) as Dictionary).get("targets", []) as Array)
+		var drop_board: Dictionary = ((definition.get("apparatus", {}) as Dictionary).get("drop_board", {}) as Dictionary)
+		for target_value in targets:
+			var target: Dictionary = target_value
+			var state := Solver.create_machine(_rng("capture-target:%s:%s" % [variation_id, str(target.get("id", ""))]), definition, 0)
+			var before_views := Solver.body_views(state)
+			var coin := Solver.add_coin(state, _rng("capture-target-coin:%s:%s" % [variation_id, str(target.get("id", ""))]), int(target.get("x", 0)), 1, {"source_nozzle_id": "capture_fixture", "visible_acceptance": true})
+			coin["x"] = int(target.get("x", 0))
+			coin["y"] = int(drop_board.get("y", 73000))
+			coin["z"] = int(target.get("z", 0))
+			coin["rest_state"] = "falling"
+			coin["vz"] = -1000
+			var body_id := str(coin.get("id", ""))
+			var entry := _frame_record(state, before_views, body_id, [])
+			var stepped: Dictionary = Solver.step_ticks_reference_for_test(state, {"motor_enabled": false}, 1)
+			var events: Array = stepped.get("events", [])
+			var resolved := _frame_record(state, entry.get("current_views", []), body_id, events)
+			var cup_events: Array = events.filter(func(event): return str((event as Dictionary).get("kind", "")) == "plinko_cup" and str((event as Dictionary).get("target_id", "")) == str(target.get("id", "")))
+			var images: Array[Image] = [await _render_frame(definition, variation_id, entry, false), await _render_frame(definition, variation_id, resolved, false)]
+			var file_name := "%s_%s_capture.png" % [variation_id, str(target.get("id", ""))]
+			var saved := _save_sequence_strip(images, "%s/%s" % [out_dir, file_name])
+			var passed := saved and cup_events.size() == 1 and (state.get("bodies", []) as Array).is_empty() and int(state.get("cup_consumed_count", 0)) == 1
+			if not passed:
+				_fail("Required target sequence failed for %s/%s." % [variation_id, str(target.get("id", ""))])
+			required_sequences.append({"id": str(target.get("id", "")), "kind": "physical_target_capture", "variation_id": variation_id, "capture": file_name, "body_id": body_id, "event": cup_events[0] if not cup_events.is_empty() else {}, "passed": passed})
+		# A semantic control: close enough to read as a near miss, outside the
+		# authored mouth, and therefore neither consumed nor rewarded.
+		var target: Dictionary = targets[0]
+		var miss_state := Solver.create_machine(_rng("capture-near-miss:%s" % variation_id), definition, 0)
+		var miss_coin := Solver.add_coin(miss_state, _rng("capture-near-miss-coin:%s" % variation_id), int(target.get("x", 0)), 1)
+		var miss_radius := int(target.get("mouth_radius", 1000))
+		miss_coin["x"] = int(target.get("x", 0)) + miss_radius + 100
+		miss_coin["y"] = int(drop_board.get("y", 73000))
+		miss_coin["z"] = int(target.get("z", 0))
+		miss_coin["rest_state"] = "falling"
+		var miss_before := _frame_record(miss_state, [], str(miss_coin.get("id", "")), [])
+		var miss_step: Dictionary = Solver.step_ticks_reference_for_test(miss_state, {"motor_enabled": false}, 1)
+		var miss_after := _frame_record(miss_state, miss_before.get("current_views", []), str(miss_coin.get("id", "")), miss_step.get("events", []))
+		var miss_file := "%s_target_near_miss.png" % variation_id
+		var miss_saved := _save_sequence_strip([await _render_frame(definition, variation_id, miss_before, false), await _render_frame(definition, variation_id, miss_after, false)], "%s/%s" % [out_dir, miss_file])
+		var miss_passed := miss_saved and (miss_step.get("events", []) as Array).filter(func(event): return str((event as Dictionary).get("kind", "")) == "plinko_cup").is_empty() and not (miss_state.get("bodies", []) as Array).is_empty()
+		if not miss_passed:
+			_fail("Required near-miss sequence failed for %s." % variation_id)
+		required_sequences.append({"id": "%s_target_near_miss" % variation_id, "kind": "target_near_miss", "variation_id": variation_id, "capture": miss_file, "passed": miss_passed})
+
+
+func _capture_rail_queue_sequence() -> void:
+	var variation_id := "quarter_falls"
+	var definition: Dictionary = game.call("_machine_definition", variation_id)
+	var simulation := Solver.create_machine(_rng("capture-rail-queue"), definition, 0)
+	var machine := {"simulation": simulation, "variation_state": {}, "drop_queue": [], "motor_started": false, "selected_nozzle_id": "quarter_rail"}
+	LiveSession.begin(machine, definition, 9100)
+	var queued := LiveSession.enqueue_drops(machine, {"nozzle_id": "quarter_rail", "density": 1, "provenance": {"visible_acceptance": true}}, 30)
+	LiveSession.advance(machine, 0)
+	var records: Array = [_frame_record(simulation, [], "", [])]
+	var previous_views := Solver.body_views(simulation)
+	for frame in range(181):
+		if frame == 60:
+			Solver.set_carriage(simulation, 85000)
+		var advanced: Dictionary = LiveSession.advance(machine, int((frame + 1) * 1000 / 60))
+		if frame in [54, 66, 180]:
+			records.append(_frame_record(simulation, previous_views, "", advanced.get("events", [])))
+		previous_views = Solver.body_views(simulation)
+	var images: Array[Image] = []
+	for record_value in records:
+		images.append(await _render_frame(definition, variation_id, record_value, false, {"coin_pusher_drop_queue_count": (machine.get("drop_queue", []) as Array).size()}))
+	var file_name := "quarter_falls_30_coin_rail_steering.png"
+	var saved := _save_sequence_strip(images, "%s/%s" % [out_dir, file_name])
+	var saw_left := false
+	var saw_right := false
+	for body_value in simulation.get("bodies", []):
+		var body: Dictionary = body_value
+		var provenance: Dictionary = ((body.get("meta", {}) as Dictionary).get("provenance", {}) as Dictionary)
+		if str(provenance.get("source_nozzle_id", "")) == "quarter_rail":
+			saw_left = saw_left or int(body.get("x", 50000)) < 50000
+			saw_right = saw_right or int(body.get("x", 50000)) > 70000
+	var passed := saved and queued == 30 and int(simulation.get("accepted_inserts", 0)) == 30 and (machine.get("drop_queue", []) as Array).is_empty() and saw_left and saw_right
+	if not passed:
+		_fail("Required 30-coin rail-steering sequence failed.")
+	required_sequences.append({"id": "quarter_falls_30_coin_rail_steering", "kind": "rail_steering_active_queue", "capture": file_name, "queued": queued, "accepted": int(simulation.get("accepted_inserts", 0)), "saw_left": saw_left, "saw_right": saw_right, "passed": passed})
+
+
+func _capture_payout_edge_sequence() -> void:
+	var variation_id := "quarter_falls"
+	var definition: Dictionary = game.call("_machine_definition", variation_id)
+	var geometry: Dictionary = definition.get("geometry", {})
+	var state := Solver.create_machine(_rng("capture-payout-edge"), definition, 0)
+	var coin := Solver.add_coin(state, _rng("capture-payout-edge-coin"), int(geometry.get("width", 100000)) / 2, 1, {"visible_acceptance": true})
+	coin["y"] = int(geometry.get("tray_lip_y", 8000)) + int(coin.get("radius", 2350)) - 1
+	coin["z"] = int(geometry.get("deck_z", 0))
+	coin["vy"] = -3000
+	coin["rest_state"] = "falling"
+	var body_id := str(coin.get("id", ""))
+	var records: Array = [_frame_record(state, [], body_id, [])]
+	var previous_views := Solver.body_views(state)
+	var terminal_events: Array = []
+	for tick in range(180):
+		var step: Dictionary = Solver.step_ticks_reference_for_test(state, {"motor_enabled": false}, 1)
+		var events: Array = step.get("events", [])
+		if tick == 1:
+			records.append(_frame_record(state, previous_views, body_id, events))
+		if not events.filter(func(event): return str((event as Dictionary).get("kind", "")) in ["tray", "gutter"] and str((event as Dictionary).get("body_id", "")) == body_id).is_empty():
+			terminal_events = events.duplicate(true)
+			records.append(_frame_record(state, previous_views, body_id, events))
+			break
+		previous_views = Solver.body_views(state)
+	var images: Array[Image] = []
+	for record_value in records:
+		images.append(await _render_frame(definition, variation_id, record_value, false))
+	var file_name := "quarter_falls_payout_edge_fall.png"
+	var saved := _save_sequence_strip(images, "%s/%s" % [out_dir, file_name])
+	var passed := saved and records.size() == 3 and not terminal_events.is_empty() and (state.get("bodies", []) as Array).is_empty()
+	if not passed:
+		_fail("Required payout-edge fall sequence failed.")
+	required_sequences.append({"id": "quarter_falls_payout_edge_fall", "kind": "payout_edge_fall", "capture": file_name, "body_id": body_id, "terminal_events": terminal_events, "passed": passed})
 
 
 func _frame_record(state: Dictionary, previous_views: Array, body_id: String, events: Array) -> Dictionary:
@@ -474,6 +609,18 @@ func _save_strip(images: Array[Image], path: String) -> bool:
 	return strip.save_png(path) == OK
 
 
+func _save_sequence_strip(images: Array, path: String) -> bool:
+	if images.is_empty():
+		return false
+	var strip := Image.create(CAPTURE_SIZE.x * images.size(), CAPTURE_SIZE.y, false, Image.FORMAT_RGBA8)
+	for index in range(images.size()):
+		var frame: Image = images[index]
+		if frame == null or frame.is_empty():
+			return false
+		strip.blit_rect(frame, Rect2i(Vector2i.ZERO, CAPTURE_SIZE), Vector2i(index * CAPTURE_SIZE.x, 0))
+	return strip.save_png(path) == OK
+
+
 func _valid_stage_sequence(frames: Dictionary, body_id: String) -> bool:
 	for stage in STAGES:
 		if not frames.has(stage) or str((frames[stage] as Dictionary).get("body", {}).get("id", "")) != body_id:
@@ -606,8 +753,9 @@ func _write_manifest() -> void:
 		"production_surface": true,
 		"solver_backend": "gdscript_reference_v3",
 		"stage_order": STAGES,
-		"passed": not failed and manifest_variations.size() == VARIATIONS.size(),
+		"passed": not failed and manifest_variations.size() == VARIATIONS.size() and required_sequences.all(func(sequence): return bool((sequence as Dictionary).get("passed", false))),
 		"variations": manifest_variations,
+		"required_sequences": required_sequences,
 	}
 	var file := FileAccess.open("%s/manifest.json" % out_dir, FileAccess.WRITE)
 	if file == null:
