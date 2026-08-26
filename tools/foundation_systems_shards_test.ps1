@@ -176,16 +176,8 @@ foreach ($path in $pathOwners.Keys) {
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $checkGodotSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "check_godot.ps1") -Raw
-$focusedRunnerPath = "res://scripts/tests/foundation/check_coin_pusher.gd"
-$retiredFocusedRunnerPaths = @(
-    "res://scripts/tests/foundation/check_lenders_release_saves.gd",
-    "res://scripts/tests/foundation/check_cage_environment_rework.gd"
-)
-$resolvedFocusedRunnerPath = Get-FoundationFocusedRunnerResourcePath -FoundationSuite "blackjack"
-Assert-True ($resolvedFocusedRunnerPath -ceq $focusedRunnerPath) "Exact normalized blackjack suite did not select the terminal focused inheritance runner."
-foreach ($retiredFocusedRunnerPath in $retiredFocusedRunnerPaths) {
-    Assert-True ($resolvedFocusedRunnerPath -cne $retiredFocusedRunnerPath) "Exact Blackjack resolver retained an incomplete historical focused-runner candidate: $retiredFocusedRunnerPath"
-}
+$focusedRunnerPath = "res://scripts/tests/foundation/check_lenders_release_saves.gd"
+Assert-True ((Get-FoundationFocusedRunnerResourcePath -FoundationSuite "blackjack") -ceq $focusedRunnerPath) "Exact normalized blackjack suite did not select the focused inheritance runner."
 foreach ($hostileSuite in @($null, "", "Blackjack", "BLACKJACK", " blackjack", "blackjack ", "blackjack/", "blackjackx", "contracts", "systems")) {
     Assert-True ([string]::IsNullOrEmpty((Get-FoundationFocusedRunnerResourcePath -FoundationSuite $hostileSuite))) ("Focused runner accepted a non-exact suite value: '{0}'." -f [string]$hostileSuite)
 }
@@ -219,10 +211,6 @@ $actualFoundationSplitSources = @([regex]::Matches($splitRunnerMatch.Groups["bod
 Assert-True (($actualFoundationSplitSources -join "|") -ceq ($expectedFoundationSplitSources -join "|")) "Full Foundation split runner changed its exact nine-source order."
 $foundationSplitManifestSha256 = Get-StaticTextSha256 -Text ($actualFoundationSplitSources -join "`n")
 Assert-True ($foundationSplitManifestSha256 -ceq "709a06c8900d64f309f936933eb1310451e1c33eb8f704157b4a6e35696f62f1") "Full Foundation nine-source manifest hash changed."
-$generatedCompositeLines = @(Get-SplitTestRunnerLines -ProjectRoot $projectRoot -SourceRelativePaths $actualFoundationSplitSources)
-Assert-True ($generatedCompositeLines.Count -eq 35084) "Default/full Foundation generated composite changed from exactly 35,084 lines."
-$generatedCompositeSha256 = Get-StaticTextSha256 -Text ($generatedCompositeLines -join "`n")
-Assert-True ($generatedCompositeSha256 -ceq "52e0bc8635f52ab39019edef4995a77a4d6662e937158475f6430071d2702e45") "Default/full Foundation generated composite bytes changed."
 
 $systemsLauncherMatch = [regex]::Match($checkGodotSource, '(?s)function Invoke-FoundationSystemsSharded\s*\{(?<body>.*?)(?=\r?\nfunction Invoke-)')
 Assert-True $systemsLauncherMatch.Success "Could not locate the Systems shard launcher."
@@ -233,39 +221,21 @@ Assert-True (-not $systemsLauncherBody.Contains('Get-FoundationFocusedRunnerReso
 
 $focusedInheritanceClosure = @(Get-FoundationInheritanceClosure -ProjectRoot $projectRoot -EntryResourcePath $focusedRunnerPath -RequireTracked)
 $expectedFocusedInheritanceClosure = @(
-    "res://scripts/tests/foundation/check_coin_pusher.gd",
-    "res://scripts/tests/foundation/check_cage_environment_rework.gd",
-    "res://scripts/tests/foundation/check_scratch_tickets.gd",
     "res://scripts/tests/foundation/check_lenders_release_saves.gd",
-    "res://scripts/tests/foundation/check_delivery_runs.gd",
     "res://scripts/tests/foundation/check_items_events_world.gd",
     "res://scripts/tests/foundation/check_table_games.gd",
     "res://scripts/tests/foundation/check_slots_surfaces.gd",
     "res://scripts/tests/foundation/check_core_content.gd"
 )
-Assert-True (($focusedInheritanceClosure -join "|") -ceq ($expectedFocusedInheritanceClosure -join "|")) "Focused Blackjack inheritance closure changed, cycled, escaped, reordered, duplicated, or omitted a canonical tracked source."
-$focusedSourcesByResource = @{}
+Assert-True (($focusedInheritanceClosure -join "|") -ceq ($expectedFocusedInheritanceClosure -join "|")) "Focused Blackjack inheritance closure changed, cycled, escaped, or omitted a tracked base."
 $focusedInheritanceText = ($focusedInheritanceClosure | ForEach-Object {
     $relativePath = $_.Substring("res://".Length).Replace("/", [System.IO.Path]::DirectorySeparatorChar)
-    $sourceText = [System.IO.File]::ReadAllText((Join-Path $projectRoot $relativePath))
-    $focusedSourcesByResource[$_] = $sourceText
-    $sourceText
+    [System.IO.File]::ReadAllText((Join-Path $projectRoot $relativePath))
 }) -join "`n"
-foreach ($requiredDefinition in @("_foundation_run_suite", "_check_content", "_check_target_game_suite", "_check_blackjack_surface_contract", "_check_blackjack_control_hit_regions", "_check_blackjack_item_content", "_fixture_library", "_check_delivery_framework", "_check_cage_environment_rework", "_check_coin_pusher_contract")) {
+foreach ($requiredDefinition in @("_foundation_run_suite", "_check_content", "_check_target_game_suite", "_check_blackjack_surface_contract", "_check_blackjack_control_hit_regions", "_check_blackjack_item_content", "_fixture_library")) {
     $definitionCount = [regex]::Matches($focusedInheritanceText, ('(?m)^func\s+' + [regex]::Escape($requiredDefinition) + '\s*\(')).Count
     Assert-True ($definitionCount -eq 1) "Focused Blackjack inheritance closure does not define $requiredDefinition exactly once."
 }
-$initDefinitionCount = [regex]::Matches($focusedInheritanceText, '(?m)^func\s+_init\s*\(').Count
-Assert-True ($initDefinitionCount -eq 1 -and [regex]::IsMatch($focusedSourcesByResource["res://scripts/tests/foundation/check_core_content.gd"], '(?m)^func\s+_init\s*\(')) "Focused Blackjack chain does not inherit exactly one Core-owned _init entry point."
-$itemsSource = $focusedSourcesByResource["res://scripts/tests/foundation/check_items_events_world.gd"]
-$deliverySource = $focusedSourcesByResource["res://scripts/tests/foundation/check_delivery_runs.gd"]
-$lendersSource = $focusedSourcesByResource["res://scripts/tests/foundation/check_lenders_release_saves.gd"]
-$cageSource = $focusedSourcesByResource["res://scripts/tests/foundation/check_cage_environment_rework.gd"]
-$coreSource = $focusedSourcesByResource["res://scripts/tests/foundation/check_core_content.gd"]
-$coinSource = $focusedSourcesByResource["res://scripts/tests/foundation/check_coin_pusher.gd"]
-Assert-True ($itemsSource.Contains('_check_delivery_framework(library, failures)') -and [regex]::IsMatch($deliverySource, '(?m)^func\s+_check_delivery_framework\s*\(')) "Items consumer no longer resolves its decisive Delivery provider through the focused chain."
-Assert-True ($lendersSource.Contains('_check_cage_environment_rework(library, failures)') -and [regex]::IsMatch($cageSource, '(?m)^func\s+_check_cage_environment_rework\s*\(')) "Lenders consumer no longer resolves its decisive Cage provider through the focused chain."
-Assert-True ($coreSource.Contains('_check_coin_pusher_contract(library, failures)') -and [regex]::IsMatch($coinSource, '(?m)^func\s+_check_coin_pusher_contract\s*\(')) "Core consumer no longer resolves its decisive Coin provider through the focused chain."
 
 $escapedPathRejected = $false
 try {

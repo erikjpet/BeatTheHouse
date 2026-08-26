@@ -1,4 +1,4 @@
-extends "res://scripts/tests/foundation/check_cage_environment_rework.gd"
+extends SceneTree
 
 const PUSHER_V3_PERF_TICKS := 24
 const JackpotRidgeVariationScript := preload("res://scripts/games/coin_pusher/jackpot_ridge.gd")

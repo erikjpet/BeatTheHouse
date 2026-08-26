@@ -17,7 +17,7 @@ function Get-FoundationFocusedRunnerResourcePath {
     )
 
     if ($FoundationSuite -ceq "blackjack") {
-        return "res://scripts/tests/foundation/check_coin_pusher.gd"
+        return "res://scripts/tests/foundation/check_lenders_release_saves.gd"
     }
     return ""
 }
