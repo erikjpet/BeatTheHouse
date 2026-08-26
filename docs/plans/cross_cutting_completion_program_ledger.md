@@ -756,3 +756,13 @@ their own detailed handoffs and test evidence.
   disjoint `check_godot.ps1` hunks from accepted pusher `30ee954d`; both must be
   preserved semantically at integration. Runtime remains held through commit,
   self-review and fresh exact-head independent review.
+- 2026-08-26: The bounded `fix06_4` replacement self-review completed on clean
+  exact head `449b5ca6a347b70ee433af65564e53db810405f4`. One commit changes only
+  three harness files: exact case-sensitive normalized `blackjack` routes to
+  the tracked Lenders-to-Core inheritance closure; every other/near-match suite
+  and Systems retain the unchanged nine-source runner. Hostile exact-routing,
+  tracked path, cycle, required-helper, manifest and Systems-body contracts pass,
+  as do PowerShell parsing and project validation. Product/fix assertions,
+  registrations, budgets, cache and reports are unchanged; pusher `30ee954d`
+  dry-applies cleanly at disjoint hunks. No runtime ran. Independent exact-head
+  review is active.
