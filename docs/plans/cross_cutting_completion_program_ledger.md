@@ -553,3 +553,18 @@ their own detailed handoffs and test evidence.
   AST/Node/diff/scope checks passed. Independent exact-head static review is in
   progress. Formal env06_6 acceptance, merge, board changes and host eligibility
   remain withheld.
+- 2026-08-26: Wave 1 meta passed its 52.39-second authoritative static
+  validation, then stopped during Systems. Load and three Systems shards passed;
+  `systems_core` alone found two shared profile-boundary failures: a fresh
+  profile no longer qualified for automatic tutorial start and ProfileInventory
+  failed disk save/load round-trip. Meta-owned release-content assertions
+  passed. The wrapper's 120-second shell ceiling expired while completed failing
+  shard children were transiently alive; the owner terminated only its exact
+  process tree and the host returned to zero. `HOST HOLD: META06_1` now permits
+  static diagnosis/remediation only; no runtime retry precedes commit,
+  self-review and independent exact-head review.
+- 2026-08-26: The exclusive Wave 1 host moved to balance after exact preflight:
+  `codex/cross-balance` remains at base `3d4a41da` with exactly its three owned
+  untracked audit files, clean diff check and zero Godot/compiler processes.
+  `HOST RELEASE: BALANCE06_1` authorizes only its prompt-required serial audit
+  and validation gates. Meta, pusher and depth remain held.
