@@ -521,3 +521,16 @@ their own detailed handoffs and test evidence.
   affected focused Coin Pusher/hold/accessibility and Systems confirmations are
   next; broader non-EV scheduling will be reassessed against Wave 1 before
   parity/performance work. EV remains unreleased.
+- 2026-08-26: Fresh focused Coin Pusher on `4b03f439` passed validation, load
+  and the complete 182.199-second permanent suite with zero stderr, including
+  hold/accessibility, migrations and conservation. Systems then passed all 55
+  assertions and all four shards with zero stderr but failed only its immutable
+  wrapper budget at 46.667 seconds versus 43.712. Timing comparison establishes
+  host/orchestration variance rather than changed test work: current shard times
+  differ from the prior 42.509-second accepted run by only +0.319s core,
+  -0.013s activation, +0.005s events/saves and +0.128s world/release; activation's
+  internal guard differs by +0.029s. All 4.158 seconds of wall regression are
+  outside the longest shard (8.314s wrapper overhead versus 4.143s prior).
+  One clean fresh-directory exact-head Systems retry is authorized; another
+  budget miss stops without changing the cap. Parity/visual/perf and EV remain
+  held.
