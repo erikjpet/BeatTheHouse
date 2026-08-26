@@ -253,6 +253,53 @@ static func _check_competing_augment_presentation(failures: Array) -> void:
 		if public_text.contains(private_key):
 			failures.append("Composed interaction leaked reducer-private overlay metadata %s." % private_key)
 
+	var collision_overlay := {
+		"owner_namespace": "sweep", "stable_object_id": "collision_augment", "mode": "augment",
+		"target_owner_namespace": "traveler", "target_stable_object_id": "travel:leave",
+		"available_actions": [
+			{"id": "activate", "label": "Colliding activate", "input_action": "ui_accept", "non_color_state": "ready"},
+			{"id": "sweep_unique", "label": "Sweep unique", "input_action": "ui_accept", "non_color_state": "ready"},
+		],
+	}
+	var collision_prepared := prepared.duplicate(true)
+	collision_prepared["interaction_overlays"] = [collision_overlay]
+	var collision_composed := ScenarioSemanticViewModelScript.compose([_base_record()], collision_prepared, {})
+	var collision_record := _record_by_id(_array(collision_composed.get("records", [])), "travel:leave")
+	var collision_text := JSON.stringify(collision_record)
+	if bool(collision_composed.get("ok", true)) \
+		or collision_text.contains("sweep_unique") \
+		or not _array(collision_record.get("scenario_augmented_actions", [])).is_empty() \
+		or not _array(collision_record.get("scenario_augmented_inline_actions", [])).is_empty() \
+		or not _array(collision_record.get("inline_actions", [])).is_empty() \
+		or not ScenarioSemanticViewModelScript.action_descriptor_for_token([collision_record], "scenario_action:7:sweep:collision_augment:sweep_unique").is_empty():
+		failures.append("Base activate collision leaked part of a rejected augment into public/token surfaces.")
+
+	var equal_a := {
+		"owner_namespace": "scenario", "stable_object_id": "a_equal_augment", "mode": "augment",
+		"target_owner_namespace": "traveler", "target_stable_object_id": "travel:leave",
+		"available_actions": [{"id": "duplicate_action", "label": "A duplicate", "input_action": "ui_accept", "non_color_state": "ready"}],
+	}
+	var equal_z := equal_a.duplicate(true)
+	equal_z["stable_object_id"] = "z_equal_augment"
+	equal_z["available_actions"] = [{"id": "duplicate_action", "label": "Z duplicate", "input_action": "ui_accept", "non_color_state": "ready"}]
+	var equal_forward_prepared := prepared.duplicate(true)
+	equal_forward_prepared["interaction_overlays"] = [equal_z, equal_a]
+	var equal_reverse_prepared := prepared.duplicate(true)
+	equal_reverse_prepared["interaction_overlays"] = [equal_a, equal_z]
+	var equal_forward := ScenarioSemanticViewModelScript.compose([_base_record()], equal_forward_prepared, {})
+	var equal_reverse := ScenarioSemanticViewModelScript.compose([_base_record()], equal_reverse_prepared, {})
+	var equal_record := _record_by_id(_array(equal_forward.get("records", [])), "travel:leave")
+	var a_token := "scenario_action:7:scenario:a_equal_augment:duplicate_action"
+	var z_token := "scenario_action:7:scenario:z_equal_augment:duplicate_action"
+	if JSON.stringify(equal_forward) != JSON.stringify(equal_reverse) \
+		or bool(equal_forward.get("ok", true)) \
+		or _array(equal_record.get("scenario_augmented_actions", [])).size() != 1 \
+		or _array(equal_record.get("scenario_augmented_inline_actions", [])).size() != 1 \
+		or _array(equal_record.get("inline_actions", [])).size() != 1 \
+		or ScenarioSemanticViewModelScript.action_descriptor_for_token([equal_record], a_token).is_empty() \
+		or not ScenarioSemanticViewModelScript.action_descriptor_for_token([equal_record], z_token).is_empty():
+		failures.append("Same-priority duplicate augment did not preserve one deterministic inline/token winner.")
+
 
 static func _prepared_snapshot() -> Dictionary:
 	return {
