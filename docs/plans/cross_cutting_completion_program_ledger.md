@@ -179,3 +179,12 @@ their own detailed handoffs and test evidence.
   question in the primary board edit; and replace pre-reopen prompt evidence
   before archive. Final ACCEPT and merge remain blocked on the complete clean-
   host exact-head runtime battery.
+- 2026-08-26: Exact-head builds passed for Windows debug/release and Web
+  debug/release; validation/import plus aggregate and individual parsing of all
+  245 scripts passed. Global smoke remains red on pre-existing blackjack/
+  tutorial baseline assertions, including a missing test-harness method, with
+  no pusher assertion failure. The pusher-focused suite then exposed a headless
+  visibility-fixture expectation; the author changed only that fixture and
+  advanced to clean `4c57270b1532d69a1a02671dfe57eaa8c0880f03`.
+  Independent delta review returned STATIC ACCEPT FOR RUNTIME with no new
+  P0-P3 finding; focused and clean-terminal opening reruns remain pending.
