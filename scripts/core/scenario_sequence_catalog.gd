@@ -134,17 +134,19 @@ static func package_for_scenario(scenario_id: String, catalog: Dictionary = {}) 
 	if wanted.is_empty() or not bool(source.get("ok", false)):
 		return {}
 	var match: Dictionary = {}
+	var claim_count := 0
 	for package_value in _array(source.get("packages", [])):
 		var package := _dict(package_value)
 		var scenario_ids := _array(package.get("scenario_ids", []))
-		if scenario_ids.count(wanted) != 1:
+		var package_claims := scenario_ids.count(wanted)
+		if package_claims == 0:
 			continue
-		if not match.is_empty():
-			# Arbitrary/synthetic catalogs receive the same fail-closed uniqueness
-			# guarantee as load_catalog, without assuming a singleton rollout.
-			return {}
-		match = package
-	return match
+		claim_count += package_claims
+		if package_claims == 1 and match.is_empty():
+			match = package
+	# Arbitrary/synthetic catalogs receive the same fail-closed uniqueness
+	# guarantee as load_catalog, without assuming a singleton rollout.
+	return match if claim_count == 1 else {}
 
 
 static func definition_for_id(definitions: Array, scenario_id: String) -> Dictionary:
