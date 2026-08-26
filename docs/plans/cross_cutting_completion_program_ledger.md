@@ -630,3 +630,13 @@ their own detailed handoffs and test evidence.
   of arbitrary future nested unknown fields; preservation remains intact. Meta
   stays frozen until the balance host slot ends, then requires fresh exact-head
   Systems/UI/capture gates before merge.
+- 2026-08-26: Independent exact-head review issued
+  `ACCEPT 30ee954dac4f345ddd2a1e77dc1d1409eb2c0812` for the pusher Systems
+  harness optimization with no P0-P3. The reviewer proved the sole semantic
+  delta is a multiplicity-aware exact-set launch guard, critical-path dispatch
+  order and canonical result reconstruction. The manifest, hostile tests, all
+  55 IDs/bodies, budgets, cache isolation, cleanup/finally, stderr/exit handling
+  and merge semantics remain byte-identical. Residual risk is only that the new
+  dispatch guard is not separately unit-extracted; it fails closed in production
+  and established downstream hostile contracts remain. Pusher remains frozen
+  behind the Wave 1 host sequence.
