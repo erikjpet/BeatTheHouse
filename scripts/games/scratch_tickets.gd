@@ -2040,6 +2040,12 @@ func _refresh_scalper_for_visit(run_state: RunState, environment: Dictionary, ma
 	if run_state == null:
 		return false
 	var visit_token := _scratch_visit_token(run_state, environment)
+	if _is_practice_environment(environment):
+		var practice_changed := bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false))
+		machine["scalper_present"] = false
+		machine["scalper_knows_schedule"] = false
+		machine["scalper_visit_token"] = visit_token
+		return practice_changed
 	if run_state.is_tutorial_run():
 		var tutorial_changed := bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false))
 		machine["scalper_present"] = false
