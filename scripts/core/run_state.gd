@@ -106,6 +106,20 @@ const GRAND_CASINO_STATE_SHOWDOWN_ACTIVE := "showdown-active"
 const GRAND_CASINO_STATE_VICTORY := "victory"
 const GRAND_CASINO_STATE_FAILURE := "failure"
 const GRAND_CASINO_SHOWDOWN_ROUTE := "pit_boss_showdown"
+const CREW_HEIST_ROUTE := "crew_heist"
+const TERMINAL_VICTORY_ROUTE_DEFINITIONS := [
+	{"runtime_id": GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "profile_id": "players_card_cashout", "career_label": "Players Card Cashout", "report_outcome_key": "players_card"},
+	{"runtime_id": GRAND_CASINO_SHOWDOWN_ROUTE, "profile_id": "showdown", "career_label": "Rourke Showdown", "report_outcome_key": "showdown_survived"},
+	{"runtime_id": CREW_HEIST_ROUTE, "profile_id": CREW_HEIST_ROUTE, "career_label": "Crew Heist", "report_outcome_prefix": "heist_"},
+]
+const TERMINAL_REPORT_ROUTE_ALIASES := {"tutorial_bronze_card": "players_card"}
+const TERMINAL_FAILURE_REASONS := [
+	FAILURE_BANKROLL_ZERO,
+	FAILURE_STRANDED,
+	FAILURE_POLICE_CAPTURE,
+	FAILURE_CASINO_TAKEN_OUT_BACK,
+	FAILURE_ABANDONED,
+]
 const GRAND_CASINO_SHOWDOWN_STEP_WALK := "walk"
 const GRAND_CASINO_SHOWDOWN_STEP_PAT_DOWN := "pat_down"
 const GRAND_CASINO_SHOWDOWN_STEP_INTERROGATION := "interrogation"
@@ -464,11 +478,11 @@ func act_two_seam_payload() -> Dictionary:
 	if run_status != RUN_STATUS_ENDED or not bool(narrative_flags.get("demo_victory", false)):
 		return {}
 	var demo_route := str(narrative_flags.get("demo_victory_route", "")).strip_edges()
-	var seam_route := _act_seam_route(demo_route)
+	var seam_route := profile_victory_route_for_runtime(demo_route)
 	if seam_route.is_empty():
 		return {}
 	var payload := {
-		"schema_version": 2 if seam_route == "crew_heist" else 1,
+		"schema_version": 2 if seam_route == CREW_HEIST_ROUTE else 1,
 		"source_act": act_marker(),
 		"target_act": 2,
 		"victory_route": seam_route,
@@ -492,13 +506,54 @@ static func act_seam_bankroll_band(bankroll_value: int) -> String:
 	return "house_money"
 
 
-func _act_seam_route(demo_route: String) -> String:
-	if demo_route == GRAND_CASINO_HIGH_ROLLER_EVENT_ID:
-		return "players_card_cashout"
-	if demo_route == GRAND_CASINO_SHOWDOWN_ROUTE:
-		return "showdown"
-	if demo_route == "crew_heist":
-		return "crew_heist"
+static func terminal_victory_route_definitions() -> Array:
+	return TERMINAL_VICTORY_ROUTE_DEFINITIONS.duplicate(true)
+
+
+static func terminal_failure_reasons() -> Array:
+	return TERMINAL_FAILURE_REASONS.duplicate()
+
+
+static func terminal_report_route_aliases() -> Dictionary:
+	return TERMINAL_REPORT_ROUTE_ALIASES.duplicate(true)
+
+
+static func terminal_crew_heist_outcomes() -> Array:
+	var result: Array = []
+	for outcome_value in CrewHeistModelScript.config().get("outcomes", []):
+		if typeof(outcome_value) == TYPE_DICTIONARY:
+			var outcome_id := str((outcome_value as Dictionary).get("id", "")).strip_edges()
+			if not outcome_id.is_empty():
+				result.append(outcome_id)
+	return result
+
+
+static func profile_victory_route_for_runtime(runtime_route: String) -> String:
+	var clean_route := runtime_route.strip_edges()
+	for definition_value in TERMINAL_VICTORY_ROUTE_DEFINITIONS:
+		var definition: Dictionary = definition_value
+		if str(definition.get("runtime_id", "")) == clean_route:
+			return str(definition.get("profile_id", ""))
+	return ""
+
+
+static func report_outcome_key_for_runtime(runtime_route: String, heist_outcome: String = "") -> String:
+	var clean_route := runtime_route.strip_edges()
+	if TERMINAL_REPORT_ROUTE_ALIASES.has(clean_route):
+		return str(TERMINAL_REPORT_ROUTE_ALIASES.get(clean_route, ""))
+	for definition_value in TERMINAL_VICTORY_ROUTE_DEFINITIONS:
+		var definition: Dictionary = definition_value
+		if str(definition.get("runtime_id", "")) != clean_route:
+			continue
+		var direct_key := str(definition.get("report_outcome_key", "")).strip_edges()
+		if not direct_key.is_empty():
+			return direct_key
+		var prefix := str(definition.get("report_outcome_prefix", ""))
+		var branch := heist_outcome.strip_edges()
+		var outcomes := terminal_crew_heist_outcomes()
+		if not outcomes.has(branch):
+			branch = "somebody_got_pinched"
+		return "%s%s" % [prefix, branch]
 	return ""
 
 
@@ -516,7 +571,7 @@ func _act_seam_route_payload(seam_route: String) -> Dictionary:
 				"house_attention": "watched_exit",
 				"tone": "marked",
 			}
-		"crew_heist":
+		CREW_HEIST_ROUTE:
 			var heist_payload := {
 				"hook": "town_remembers",
 				"outcome_band": str(crew_heist_state.get("outcome", "somebody_got_pinched")),
@@ -7363,7 +7418,7 @@ func _crew_heist_finish_whale_exposure(state_value: Dictionary, round_index: int
 	var message := CrewHeistModelScript.ending_line(CrewHeistModelScript.PLAN_WHALE, outcome)
 	narrative_flags["crew_heist_outcome"] = outcome
 	narrative_flags["crew_heist_plan_id"] = CrewHeistModelScript.PLAN_WHALE
-	_complete_demo_objective({"id": "crew_heist", "target_bankroll": bankroll, "victory_message": message}, message, {"finale_event_id": "heist_finale", "finale_branch": outcome, "demo_victory_route": "crew_heist"})
+	_complete_demo_objective({"id": CREW_HEIST_ROUTE, "target_bankroll": bankroll, "victory_message": message}, message, {"finale_event_id": "heist_finale", "finale_branch": outcome, "demo_victory_route": CREW_HEIST_ROUTE})
 	narrative_flags["act_two_seam_ready"] = true
 	return {"ok": true, "resolved": true, "outcome": outcome, "payout": payout, "message": message}
 
@@ -7712,7 +7767,7 @@ func _crew_heist_apply_delivery_resolution(run_id: String, succeeded: bool, reso
 	var message := CrewHeistModelScript.ending_line(str(state.get("plan_id", "")), outcome)
 	narrative_flags["crew_heist_outcome"] = outcome
 	narrative_flags["crew_heist_plan_id"] = str(state.get("plan_id", ""))
-	_complete_demo_objective({"id": "crew_heist", "target_bankroll": bankroll, "victory_message": message}, message, {"finale_event_id": "heist_finale", "finale_branch": outcome, "demo_victory_route": "crew_heist"})
+	_complete_demo_objective({"id": CREW_HEIST_ROUTE, "target_bankroll": bankroll, "victory_message": message}, message, {"finale_event_id": "heist_finale", "finale_branch": outcome, "demo_victory_route": CREW_HEIST_ROUTE})
 	narrative_flags["act_two_seam_ready"] = true
 
 
@@ -8937,6 +8992,12 @@ func _apply_delivery_resolution() -> void:
 				grievance_add({"member_id": "crew_lucky", "kind": "job_abandoned", "weight": 1, "source_ref": str(active_delivery_run.get("job_id", run_id))})
 		elif run_id.begins_with("numbers_fix_bribe:"):
 			numbers_state.fix_record_bribe(succeeded, resolution)
+	# Reporting-only counters share this existing, idempotent resolution boundary.
+	# Lookout holds and heist getaways are not package-delivery ledger entries.
+	var reporting_mode := str(active_delivery_run.get("mode", ""))
+	if reporting_mode in [DeliveryRunModelScript.MODE_PACKAGE, DeliveryRunModelScript.MODE_MULTI_STOP]:
+		var reporting_key := "profile_delivery_runs_completed" if succeeded else "profile_delivery_packages_lost"
+		narrative_flags[reporting_key] = maxi(0, int(narrative_flags.get(reporting_key, 0))) + 1
 	active_delivery_run["world_applied"] = true
 
 
