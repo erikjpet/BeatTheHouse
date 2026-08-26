@@ -103,6 +103,7 @@ func _check_pusher_v3_10_idle_queue_cups_and_stack(library: ContentLibrary, game
 		CoinPusherLiveSessionScript.advance(reopened_machine, reopen_msec)
 	var reopened_simulation: Dictionary = reopened_machine.get("simulation", {})
 	if first_reserved != 5 or second_reserved != 7 or persisted_queue.size() != 2 or reopened_queue != persisted_queue \
+			or int(persisted_snapshot.get("coin_count", -1)) != 0 or not str(persisted_snapshot.get("coin_blob", "invalid")).is_empty() \
 			or not bool(reopened_machine.get("motor_started", false)) or int(reopened_simulation.get("accepted_inserts", -1)) != 12 \
 			or not (reopened_machine.get("drop_queue", []) as Array).is_empty() or not bool((reopened_simulation.get("last_invariants", {}) as Dictionary).get("conservation_ok", false)):
 		failures.append("pusherv3_10 concurrent paid queues did not persist and resume exactly once: before=%s after=%s accepted=%d." % [JSON.stringify(persisted_queue), JSON.stringify(reopened_machine.get("drop_queue", [])), int(reopened_simulation.get("accepted_inserts", -1))])
