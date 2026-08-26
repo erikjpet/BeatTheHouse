@@ -972,3 +972,16 @@ their own detailed handoffs and test evidence.
   order, traverse from those derived roots, and pin the dispatcher body. No
   runtime or broader edit is authorized; fresh self-review and exact-head
   independent review are required.
+- 2026-08-26: Author P2-remediation self-review issued `ACCEPT` for clean exact
+  `5776893cae0c069b629e010549609a153445a7ae`. One follow-up commit changes
+  only the hostile PowerShell contract (+18/-4): it derives ordered registration
+  callables `_check_content|_check_target_game_suite`, parses the actual
+  `blackjack` arm and derives its exact ordered calls
+  `_load_surface_contract_game|_check_blackjack_surface_contract`, builds the
+  closure roots from those parsed results, rejects any reachable fatal stub,
+  and independently pins the dispatcher body. This closes the reviewer's
+  aggregate-hash-refresh counterexample without changing runner production,
+  GDScript, registration, assertion or budget code. AST, hostile contract,
+  project validation (49.2s), diff and full-range hazard review pass; worktree is
+  clean, runtime remains withheld, and fresh exact-head independent re-review
+  is active.
