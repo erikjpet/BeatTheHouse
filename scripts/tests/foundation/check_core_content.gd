@@ -4690,8 +4690,47 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 	if not old_profile.tips_seen.is_empty() or old_profile.tutorial_completed:
 		failures.append("ProfileInventory legacy profile did not default coach fields compatibly.")
 	var old_release := _copy_dict(old_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
-	if int(old_release.get("delivery_runs_completed", -1)) != 0 or int(old_release.get("numbers_hits", -1)) != 0:
+	if old_release.size() != 18 or not _release_reporting_defaults_are_zero(old_release):
 		failures.append("ProfileInventory absent 0.6 reporting fields did not default compatibly.")
+	var old_snapshot := old_profile.to_dict()
+	var old_round_trip: ProfileInventory = ProfileInventoryScript.new()
+	old_round_trip.from_dict(JSON.parse_string(JSON.stringify(old_snapshot)) as Dictionary)
+	if JSON.stringify(old_round_trip.to_dict()) != JSON.stringify(old_snapshot):
+		failures.append("ProfileInventory absent 0.6 reporting defaults were not round-trip idempotent.")
+	var malformed_release_profile: ProfileInventory = ProfileInventoryScript.new()
+	malformed_release_profile.from_dict({"schema_version": 5, "lifetime_stats": {ProfileInventoryScript.RELEASE_REPORTING_KEY: ["not", "a", "dictionary"]}})
+	var malformed_release := _copy_dict(malformed_release_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
+	if malformed_release.size() != 18 or not _release_reporting_defaults_are_zero(malformed_release):
+		failures.append("ProfileInventory malformed 0.6 reporting container did not normalize to canonical zero defaults.")
+	var hostile_release_profile: ProfileInventory = ProfileInventoryScript.new()
+	hostile_release_profile.from_dict({
+		"schema_version": 5,
+		"lifetime_stats": {
+			ProfileInventoryScript.RELEASE_REPORTING_KEY: {
+				"crew_path_runs": {"malformed": 9},
+				"crew_turn_resolutions": -4,
+				"highest_crew_standing": "not_a_standing",
+				"crew_member_ids_met": "crew_rook",
+				"numbers_hits": "9",
+				"delivery_runs_completed": true,
+				"future_release_counter": 33.0,
+				"future_nested_counters": {"kept": 41},
+			},
+		},
+	})
+	var hostile_release := _copy_dict(hostile_release_profile.lifetime_stats.get(ProfileInventoryScript.RELEASE_REPORTING_KEY, {}))
+	var hostile_nested := _copy_dict(hostile_release.get("future_nested_counters", {}))
+	if not _release_reporting_defaults_are_zero(hostile_release):
+		failures.append("ProfileInventory malformed 0.6 reporting fields produced false-positive lifetime counts.")
+	if int(hostile_release.get("future_release_counter", 0)) != 33 or int(hostile_nested.get("kept", 0)) != 41:
+		failures.append("ProfileInventory normalization lost unknown nested 0.6 reporting counters.")
+	var hostile_snapshot := hostile_release_profile.to_dict()
+	var hostile_round_trip: ProfileInventory = ProfileInventoryScript.new()
+	hostile_round_trip.from_dict(JSON.parse_string(JSON.stringify(hostile_snapshot)) as Dictionary)
+	if JSON.stringify(hostile_round_trip.to_dict()) != JSON.stringify(hostile_snapshot):
+		failures.append("ProfileInventory malformed/unknown 0.6 reporting normalization was not round-trip idempotent.")
+	if JSON.stringify(CareerStatsViewModelScript.build(hostile_release_profile).get("release_0_6", [])).contains("Turn endings"):
+		failures.append("Malformed 0.6 reporting data produced a false-positive Turn resolution row.")
 	var reporting_only_profile := ProfileInventoryScript.new()
 	reporting_only_profile.add_reference_chip()
 	var progression_before := {"items": reporting_only_profile.items.duplicate(true), "challenges": reporting_only_profile.challenge_completions.duplicate(true), "act_seam": reporting_only_profile.act_seam.duplicate(true)}
@@ -4702,6 +4741,21 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 	_check_act_two_seam_payloads(failures)
 	_remove_profile_inventory_test_file()
 	OS.set_environment(ProfileInventoryScript.INVENTORY_PATH_ENV, "")
+
+
+func _release_reporting_defaults_are_zero(release: Dictionary) -> bool:
+	if str(release.get("highest_crew_standing", "")) != "stranger" \
+			or not _copy_array(release.get("crew_member_ids_met", [])).is_empty() \
+			or int(release.get("crew_members_met_unique", -1)) != 0:
+		return false
+	for key in [
+		"crew_path_runs", "crew_members_met", "crew_jobs_completed", "crew_jobs_abandoned", "crew_turn_resolutions",
+		"nights_survived", "scenarios_experienced", "notable_aftermath_outcomes", "sweeps_encountered", "rumors_proved_true",
+		"numbers_slips_placed", "numbers_hits", "numbers_rig_runs", "delivery_runs_completed", "delivery_packages_lost",
+	]:
+		if not release.has(key) or typeof(release.get(key)) != TYPE_INT or int(release.get(key, -1)) != 0:
+			return false
+	return true
 
 
 func _check_act_two_seam_payloads(failures: Array) -> void:

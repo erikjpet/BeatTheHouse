@@ -477,8 +477,10 @@ func _normalize_lifetime_stats(value: Variant) -> Dictionary:
 		"total_bankroll_lost": maxi(0, int(source.get("total_bankroll_lost", 0))),
 		"games_played": _normalize_int_dictionary(source.get("games_played", {})),
 	}, true)
-	if source.has(RELEASE_REPORTING_KEY):
-		result[RELEASE_REPORTING_KEY] = _normalize_release_lifetime_stats(source.get(RELEASE_REPORTING_KEY, {}))
+	# Reporting fields are optional schema-5 data, not a migration boundary. Always
+	# materialize their canonical zero defaults so legacy, absent, and malformed
+	# payloads expose the same read-only reporting shape.
+	result[RELEASE_REPORTING_KEY] = _normalize_release_lifetime_stats(source.get(RELEASE_REPORTING_KEY, {}))
 	return result
 
 
@@ -535,24 +537,44 @@ static func _normalize_release_lifetime_stats(value: Variant) -> Dictionary:
 	result["highest_crew_standing"] = _normalize_crew_standing(str(source.get("highest_crew_standing", "stranger")))
 	var member_ids_met := _normalize_crew_member_ids(source.get("crew_member_ids_met", []))
 	result["crew_member_ids_met"] = member_ids_met
-	result["crew_members_met_unique"] = maxi(maxi(0, int(source.get("crew_members_met_unique", 0))), member_ids_met.size())
+	result["crew_members_met_unique"] = maxi(_normalize_reporting_count(source.get("crew_members_met_unique", 0)), member_ids_met.size())
 	for key in [
 		"crew_path_runs", "crew_members_met", "crew_jobs_completed", "crew_jobs_abandoned", "crew_turn_resolutions",
 		"nights_survived", "scenarios_experienced", "notable_aftermath_outcomes", "sweeps_encountered", "rumors_proved_true",
 		"numbers_slips_placed", "numbers_hits", "numbers_rig_runs", "delivery_runs_completed", "delivery_packages_lost",
 	]:
-		result[key] = maxi(0, int(source.get(key, 0)))
+		result[key] = _normalize_reporting_count(source.get(key, 0))
 	return result
+
+
+static func _normalize_reporting_count(value: Variant) -> int:
+	if typeof(value) != TYPE_INT and typeof(value) != TYPE_FLOAT:
+		return 0
+	return maxi(0, int(value))
 
 
 static func _normalize_whole_number_values(value: Dictionary) -> void:
 	# JSON restores numbers as floats. Lifetime dictionaries are forward-compatible,
-	# so canonicalize unknown whole-number counters too instead of losing them or
-	# allowing an otherwise identical save/load round trip to change their type.
+	# so canonicalize unknown whole-number counters (including nested counters) too
+	# instead of losing them or allowing an otherwise identical save/load round trip
+	# to change their type.
 	for key in value.keys():
-		var entry: Variant = value.get(key)
-		if typeof(entry) == TYPE_FLOAT and float(entry) == float(int(entry)):
-			value[key] = int(entry)
+		value[key] = _normalize_whole_number_value(value.get(key))
+
+
+static func _normalize_whole_number_value(value: Variant) -> Variant:
+	if typeof(value) == TYPE_FLOAT and float(value) == float(int(value)):
+		return int(value)
+	if typeof(value) == TYPE_DICTIONARY:
+		var dictionary := (value as Dictionary).duplicate(true)
+		_normalize_whole_number_values(dictionary)
+		return dictionary
+	if typeof(value) == TYPE_ARRAY:
+		var array := (value as Array).duplicate(true)
+		for index in range(array.size()):
+			array[index] = _normalize_whole_number_value(array[index])
+		return array
+	return value
 
 
 static func _normalize_crew_member_ids(value: Variant) -> Array:
