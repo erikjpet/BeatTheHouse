@@ -44,6 +44,7 @@ const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const RunReportScreenScript := preload("res://scripts/ui/run_report_screen.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
+const CareerStatsScreenScript := preload("res://scripts/ui/career_stats_screen.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
@@ -460,7 +461,106 @@ func _card_by_title(_cards: Array, _title: String) -> Dictionary:
 # SPLIT_RUNNER_OMIT_END
 
 
+func _check_career_stats_screen_component() -> bool:
+	VisualStyleScript.set_high_contrast_enabled(false)
+	var screen: CareerStatsScreen = CareerStatsScreenScript.new()
+	screen.size = Vector2(1280, 720)
+	root.add_child(screen)
+	await process_frame
+	screen.set_model({
+		"empty": false,
+		"headline": [
+			{"label": "Runs", "value": "12", "detail": "12 finished climbs"},
+			{"label": "Wins", "value": "6", "detail": "3 routes recorded"},
+			{"label": "Losses", "value": "6", "detail": "6 failed runs recorded"},
+			{"label": "Biggest Win", "value": "$720", "detail": "Largest single result stored in profile"},
+		],
+		"routes": [
+			{"id": "players_card_cashout", "label": "Players Card Cashout", "value": "2", "complete": true},
+			{"id": "showdown", "label": "Rourke Showdown", "value": "1", "complete": true},
+			{"id": "crew_heist", "label": "Crew Heist", "value": "3", "complete": true},
+		],
+		"money": [{"label": "Bankroll won", "value": "$1820"}, {"label": "Bankroll lost", "value": "$640"}],
+		"daily": {"current_streak": 2, "best_streak": 4, "last_completed_date": "2026-08-25"},
+		"release_0_6": [
+			{"id": "crew", "title": "Crew", "rows": [{"label": "Highest standing", "value": "Inner Circle"}, {"label": "Members met", "value": "7"}, {"label": "Jobs", "value": "9 completed / 2 abandoned"}]},
+			{"id": "world", "title": "World", "rows": [{"label": "Scenarios experienced", "value": "14"}, {"label": "Rumors proved true", "value": "5"}]},
+			{"id": "numbers", "title": "Numbers", "rows": [{"label": "Slips placed", "value": "11"}, {"label": "Hits", "value": "3"}, {"label": "Rig routes used", "value": "1"}]},
+			{"id": "games", "title": "Games", "rows": [{"label": "Craps", "value": "7"}, {"label": "Quarter Falls", "value": "4"}, {"label": "Back-Room Poker", "value": "5"}]},
+			{"id": "deliveries", "title": "Deliveries", "rows": [{"label": "Runs completed", "value": "6"}, {"label": "Packages lost", "value": "2"}]},
+		],
+		"challenges": [],
+		"history": [],
+		"missing_stats": ["Older profiles begin the 0.6 rows at zero."],
+	})
+	await process_frame
+	var snapshot := screen.current_snapshot()
+	if snapshot.get("route_ids", []) != ["players_card_cashout", "showdown", "crew_heist"] or int(snapshot.get("release_section_count", 0)) != 5:
+		push_error("Career ledger did not render all three victory routes and five 0.6 sections: %s." % JSON.stringify(snapshot))
+		return false
+	var ledger_text := str(snapshot.get("visible_ledger_text", ""))
+	for required in ["Inner Circle", "Members met 7", "Scenarios experienced 14", "Craps 7", "Quarter Falls 4", "Back-Room Poker 5", "Packages lost 2"]:
+		if ledger_text.find(required) == -1:
+			push_error("Career ledger truncated or omitted an essential value '%s': %s." % [required, ledger_text])
+			return false
+	if not _career_release_geometry_is_legible(snapshot, "1280x720 standard"):
+		return false
+	screen.size = Vector2(920, 540)
+	screen.set_small_screen_mode(true)
+	screen.set_reduce_motion(true)
+	await process_frame
+	var small_snapshot := screen.current_snapshot()
+	if not bool(small_snapshot.get("small_screen_mode", false)) or not bool(small_snapshot.get("reduce_motion", false)) or str(small_snapshot.get("visible_ledger_text", "")) != ledger_text:
+		push_error("Career ledger lost a value in small/reduced-motion mode: %s." % JSON.stringify(small_snapshot))
+		return false
+	if not _career_release_geometry_is_legible(small_snapshot, "920x540 small/reduced-motion"):
+		return false
+	VisualStyleScript.set_high_contrast_enabled(true)
+	await process_frame
+	var contrast_snapshot := screen.current_snapshot()
+	if str(contrast_snapshot.get("visible_ledger_text", "")) != ledger_text:
+		push_error("Career ledger changed semantic values in high-contrast/color-safe mode.")
+		return false
+	if not _career_release_geometry_is_legible(contrast_snapshot, "920x540 high-contrast/color-safe"):
+		return false
+	VisualStyleScript.set_high_contrast_enabled(false)
+	screen.queue_free()
+	await process_frame
+	return true
+
+
+func _career_release_geometry_is_legible(snapshot: Dictionary, mode_label: String) -> bool:
+	var rows: Array = snapshot.get("release_row_geometry", []) if typeof(snapshot.get("release_row_geometry", [])) == TYPE_ARRAY else []
+	if rows.size() != 13:
+		push_error("Career ledger geometry did not expose all 13 rendered rows in %s: %s." % [mode_label, JSON.stringify(rows)])
+		return false
+	var found_inner_circle := false
+	for row_value in rows:
+		if typeof(row_value) != TYPE_DICTIONARY:
+			push_error("Career ledger geometry emitted a malformed row in %s." % mode_label)
+			return false
+		var row: Dictionary = row_value
+		var value_width := float(row.get("value_width", 0.0))
+		var text_width := float(row.get("value_text_width", 0.0))
+		if value_width < VisualStyle.SPACE_9 * 4.0 - 1.0 \
+				or value_width + 1.0 < minf(text_width, VisualStyle.SPACE_9 * 4.0) \
+				or bool(row.get("clip_text", true)) \
+				or int(row.get("visible_line_count", 0)) != int(row.get("line_count", -1)):
+			push_error("Career ledger allocated a character-wide or clipped value column in %s: %s." % [mode_label, JSON.stringify(row)])
+			return false
+		if str(row.get("value", "")) == "Inner Circle":
+			found_inner_circle = true
+			if int(row.get("line_count", 0)) != 1 or value_width + 1.0 < text_width:
+				push_error("Career ledger did not keep Inner Circle legible on one rendered line in %s: %s." % [mode_label, JSON.stringify(row)])
+				return false
+	if not found_inner_circle:
+		push_error("Career ledger geometry did not include the rendered Inner Circle value in %s." % mode_label)
+		return false
+	return true
+
+
 func _check_run_report_screen_component() -> bool:
+	VisualStyleScript.set_high_contrast_enabled(false)
 	var screen: RunReportScreen = RunReportScreenScript.new()
 	screen.size = Vector2(1280, 720)
 	root.add_child(screen)
@@ -545,6 +645,14 @@ func _check_run_report_screen_component() -> bool:
 		"meta_reward": {"visible": true, "kind": "grand_casino_chips", "title": "CHIPS KEPT · Grand Casino Chips ×37", "detail": "Face value 37 · Sal offers 22 gold"},
 		"debts": [{"lender": "Sal", "amount": 20, "outcome": "redeemed", "tone": "settled"}],
 		"money_rows": [{"label": "Slots", "net": 100}, {"label": "Bar Dice", "net": -50}],
+		"release_0_6": {"summary_lines": [
+			"Crew | path walked | Made | 4 met | jobs 3 complete/1 abandoned",
+			"World | 2 nights | 3 scenarios | 2 aftermath | 1 sweep | 2 true rumors",
+			"Numbers | 4 slips | 1 hit | rig used",
+			"Deliveries | 2 complete | 1 lost",
+			"Games | Craps 3 | Quarter Falls 2 | Back-Room Poker 4",
+			"The Turn | The Turn broke the score.",
+		]},
 		"timeline": timeline,
 		"map_snapshot": report_map,
 		"seed": "REPORT-UI",
@@ -587,6 +695,15 @@ func _check_run_report_screen_component() -> bool:
 	if int(snapshot.get("timeline_install_count", 0)) != 1:
 		push_error("Run report did not precompute/install its shared timeline exactly once.")
 		return false
+	var release_ledger_text := str(snapshot.get("release_ledger_text", ""))
+	if int(snapshot.get("release_ledger_line_count", 0)) != 6 or release_ledger_text.find("path walked") == -1 or release_ledger_text.find("2 aftermath") == -1 or release_ledger_text.find("Quarter Falls 2") == -1 or release_ledger_text.find("Back-Room Poker 4") == -1 or release_ledger_text.find("The Turn broke the score") == -1:
+		push_error("Run report omitted or truncated an essential 0.6 ledger value: %s." % release_ledger_text)
+		return false
+	var result_panel_rect: Rect2 = snapshot.get("result_panel_rect", Rect2())
+	var release_ledger_rect: Rect2 = snapshot.get("release_ledger_rect", Rect2())
+	if release_ledger_rect.size.x <= 0.0 or release_ledger_rect.size.y <= 0.0 or not result_panel_rect.grow(1.0).encloses(release_ledger_rect):
+		push_error("Run report 0.6 ledger overflowed the RESULT panel at 1280x720: result=%s ledger=%s." % [str(result_panel_rect), str(release_ledger_rect)])
+		return false
 	screen.call("_on_timeline_seek", 0.1)
 	var dwell_replay: Dictionary = (screen.get("map_canvas") as Node).call("current_view_snapshot").get("run_report_replay", {})
 	if str(dwell_replay.get("kind", "")) != "dwell" or str(dwell_replay.get("node_id", "")) != "bar" or not is_zero_approx(float(dwell_replay.get("amount", -1.0))):
@@ -611,12 +728,26 @@ func _check_run_report_screen_component() -> bool:
 	if not bool(small_snapshot.get("small_screen_mode", false)) or bool(small_snapshot.get("has_scroll_container", true)):
 		push_error("Run report small-screen mode did not remain a no-scroll surface.")
 		return false
+	if str(small_snapshot.get("release_ledger_text", "")) != release_ledger_text:
+		push_error("Run report small-screen mode changed or truncated its 0.6 ledger values.")
+		return false
+	var small_result_panel_rect: Rect2 = small_snapshot.get("result_panel_rect", Rect2())
+	var small_release_ledger_rect: Rect2 = small_snapshot.get("release_ledger_rect", Rect2())
+	if not small_result_panel_rect.grow(1.0).encloses(small_release_ledger_rect):
+		push_error("Run report 0.6 ledger overflowed the RESULT panel in small-screen mode: %s." % JSON.stringify(small_snapshot))
+		return false
 	if not _world_map_markers_align_to_background((screen.get("map_canvas") as Node).call("current_view_snapshot")):
 		push_error("Run report map image and icons diverged in small-screen mode.")
 		return false
 	screen.set_reduce_motion(true)
 	if float(screen.debug_layout_snapshot().get("replay_progress", 0.0)) != 1.0:
 		push_error("Run report reduce-motion mode did not show the full path instantly.")
+		return false
+	VisualStyleScript.set_high_contrast_enabled(true)
+	var high_contrast_ledger_text := str(screen.debug_layout_snapshot().get("release_ledger_text", ""))
+	VisualStyleScript.set_high_contrast_enabled(false)
+	if high_contrast_ledger_text != release_ledger_text:
+		push_error("Run report changed its ledger values in high-contrast/color-safe mode.")
 		return false
 	screen.call("_on_timeline_seek", 0.0)
 	if float(screen.debug_layout_snapshot().get("replay_progress", -1.0)) != 0.0:
@@ -3318,6 +3449,9 @@ func _run() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_PROFILE_INVENTORY_PATH))
 	if VisualStyleScript.HOT != VisualStyleScript.PINK:
 		push_error("VisualStyle.HOT should alias the production hot/pink token.")
+		quit(1)
+		return
+	if not await _check_career_stats_screen_component():
 		quit(1)
 		return
 	if not await _check_run_report_screen_component():

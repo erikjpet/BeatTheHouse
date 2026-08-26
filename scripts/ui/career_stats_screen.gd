@@ -13,6 +13,7 @@ var headline_grid: GridContainer
 var route_grid: GridContainer
 var money_stack: VBoxContainer
 var daily_stack: VBoxContainer
+var release_grid: GridContainer
 var challenge_stack: VBoxContainer
 var history_stack: VBoxContainer
 var notes_stack: VBoxContainer
@@ -39,7 +40,9 @@ func set_small_screen_mode(enabled: bool) -> void:
 	if headline_grid != null:
 		headline_grid.columns = 1 if small_screen_mode else 2
 	if route_grid != null:
-		route_grid.columns = 1 if small_screen_mode else 2
+		route_grid.columns = 1 if small_screen_mode else 3
+	if release_grid != null:
+		release_grid.columns = 1 if small_screen_mode else 2
 
 
 func set_reduce_motion(enabled: bool) -> void:
@@ -51,6 +54,11 @@ func current_snapshot() -> Dictionary:
 		"visible": visible,
 		"empty": bool(model.get("empty", true)),
 		"headline_count": _array(model.get("headline", [])).size(),
+		"route_count": _array(model.get("routes", [])).size(),
+		"route_ids": _row_ids(_array(model.get("routes", []))),
+		"release_section_count": _array(model.get("release_0_6", [])).size(),
+		"visible_ledger_text": _ledger_text(),
+		"release_row_geometry": _release_row_geometry(),
 		"history_count": _array(model.get("history", [])).size(),
 		"challenge_count": _array(model.get("challenges", [])).size(),
 		"small_screen_mode": small_screen_mode,
@@ -113,7 +121,7 @@ func _ensure_built() -> void:
 
 	body.add_child(_section_heading("Victory Routes"))
 	route_grid = GridContainer.new()
-	route_grid.columns = 1 if small_screen_mode else 2
+	route_grid.columns = 1 if small_screen_mode else 3
 	route_grid.add_theme_constant_override("h_separation", VisualStyle.SPACE_4)
 	route_grid.add_theme_constant_override("v_separation", VisualStyle.SPACE_4)
 	route_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -128,6 +136,14 @@ func _ensure_built() -> void:
 	daily_stack = VBoxContainer.new()
 	daily_stack.add_theme_constant_override("separation", VisualStyle.SPACE_2)
 	money_stack.add_child(daily_stack)
+
+	body.add_child(_section_heading("Run Ledger"))
+	release_grid = GridContainer.new()
+	release_grid.columns = 1 if small_screen_mode else 2
+	release_grid.add_theme_constant_override("h_separation", VisualStyle.SPACE_4)
+	release_grid.add_theme_constant_override("v_separation", VisualStyle.SPACE_4)
+	release_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_child(release_grid)
 
 	body.add_child(_section_heading("Completed Challenges"))
 	challenge_stack = VBoxContainer.new()
@@ -153,6 +169,7 @@ func _render() -> void:
 	_render_headlines()
 	_render_routes()
 	_render_money()
+	_render_release_ledger()
 	_render_challenges()
 	_render_history()
 	_render_notes()
@@ -170,7 +187,10 @@ func _render_routes() -> void:
 	for entry_value in _array(model.get("routes", [])):
 		var entry := _dict(entry_value)
 		var accent := VisualStyle.role("success") if bool(entry.get("complete", false)) else VisualStyle.role("text_muted")
-		route_grid.add_child(_stat_card(str(entry.get("label", "")), str(entry.get("value", "")), "Achievement %s" % ("earned" if bool(entry.get("complete", false)) else "open"), accent))
+		var detail := "Recorded in the ledger" if bool(entry.get("complete", false)) else "No wins recorded"
+		if bool(entry.get("historical", false)):
+			detail = "Historical route entry"
+		route_grid.add_child(_stat_card(str(entry.get("label", "")), str(entry.get("value", "")), detail, accent))
 
 
 func _render_money() -> void:
@@ -183,6 +203,38 @@ func _render_money() -> void:
 	var last_date := str(daily.get("last_completed_date", "")).strip_edges()
 	if not last_date.is_empty():
 		daily_stack.add_child(FoundationWidgetsScript.muted_label("Last daily clear: %s" % last_date, VisualStyle.TYPE_SMALL))
+
+
+func _render_release_ledger() -> void:
+	FoundationWidgetsScript.clear(release_grid)
+	for section_value in _array(model.get("release_0_6", [])):
+		var section := _dict(section_value)
+		var panel := _panel(VisualStyle.role("surface_raised"), VisualStyle.role("focus"))
+		release_grid.add_child(panel)
+		var stack := VBoxContainer.new()
+		stack.add_theme_constant_override("separation", VisualStyle.SPACE_2)
+		panel.add_child(stack)
+		var title := FoundationWidgetsScript.label(str(section.get("title", "Ledger")), VisualStyle.TYPE_SUBHEAD)
+		FoundationWidgetsScript.set_control_font_color(title, VisualStyle.role("focus"))
+		stack.add_child(title)
+		for row_value in _array(section.get("rows", [])):
+			var row := _dict(row_value)
+			var line := HBoxContainer.new()
+			line.set_meta("career_release_row", true)
+			line.add_theme_constant_override("separation", VisualStyle.SPACE_3)
+			var label := FoundationWidgetsScript.muted_label(str(row.get("label", "")), VisualStyle.TYPE_SMALL)
+			label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			label.size_flags_stretch_ratio = 0.58
+			line.add_child(label)
+			var value := FoundationWidgetsScript.label(str(row.get("value", "")), VisualStyle.TYPE_SMALL)
+			value.custom_minimum_size = Vector2(VisualStyle.SPACE_9 * 4.0, 0)
+			value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			value.size_flags_stretch_ratio = 0.42
+			value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			value.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			FoundationWidgetsScript.set_control_font_color(value, VisualStyle.role("selected"))
+			line.add_child(value)
+			stack.add_child(line)
 
 
 func _render_challenges() -> void:
@@ -261,3 +313,49 @@ func _array(value: Variant) -> Array:
 
 func _dict(value: Variant) -> Dictionary:
 	return (value as Dictionary) if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _row_ids(rows: Array) -> Array:
+	var result: Array = []
+	for row_value in rows:
+		if typeof(row_value) == TYPE_DICTIONARY:
+			result.append(str((row_value as Dictionary).get("id", "")))
+	return result
+
+
+func _ledger_text() -> String:
+	var parts: Array[String] = []
+	for section_value in _array(model.get("release_0_6", [])):
+		var section := _dict(section_value)
+		parts.append(str(section.get("title", "")))
+		for row_value in _array(section.get("rows", [])):
+			var row := _dict(row_value)
+			parts.append("%s %s" % [str(row.get("label", "")), str(row.get("value", ""))])
+	return " | ".join(parts)
+
+
+func _release_row_geometry() -> Array:
+	var rows: Array = []
+	if release_grid == null:
+		return rows
+	for node in release_grid.find_children("*", "HBoxContainer", true, false):
+		if not bool(node.get_meta("career_release_row", false)) or node.get_child_count() != 2:
+			continue
+		var label := node.get_child(0) as Label
+		var value := node.get_child(1) as Label
+		if label == null or value == null:
+			continue
+		var font := value.get_theme_font("font")
+		var font_size := value.get_theme_font_size("font_size")
+		rows.append({
+			"label": label.text,
+			"value": value.text,
+			"line_width": node.size.x,
+			"label_width": label.size.x,
+			"value_width": value.size.x,
+			"value_text_width": font.get_string_size(value.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x,
+			"line_count": value.get_line_count(),
+			"visible_line_count": value.get_visible_line_count(),
+			"clip_text": value.clip_text,
+		})
+	return rows
