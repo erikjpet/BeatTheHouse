@@ -4731,6 +4731,28 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		failures.append("ProfileInventory malformed/unknown 0.6 reporting normalization was not round-trip idempotent.")
 	if JSON.stringify(CareerStatsViewModelScript.build(hostile_release_profile).get("release_0_6", [])).contains("Turn endings"):
 		failures.append("Malformed 0.6 reporting data produced a false-positive Turn resolution row.")
+	var tutorial_meta_default := {"owned_instances": [], "unopened_bags": [], "loadout": [], "gold_balance": 0, "housing_tier": "back_alley"}
+	var fresh_reporting_profile := ProfileInventoryScript.new()
+	fresh_reporting_profile.from_dict({})
+	if not TutorialFlowScript.should_auto_start(fresh_reporting_profile, tutorial_meta_default):
+		failures.append("Fresh canonical 0.6 reporting defaults falsely counted as tutorial-blocking progress.")
+	var absent_reporting_profile := ProfileInventoryScript.new()
+	absent_reporting_profile.from_dict({"schema_version": 2, "items": [], "tutorial_completed": false})
+	if not TutorialFlowScript.should_auto_start(absent_reporting_profile, tutorial_meta_default):
+		failures.append("Profile with absent 0.6 reporting did not qualify for automatic tutorial start after canonical defaulting.")
+	var absent_reporting_snapshot := absent_reporting_profile.to_dict()
+	var absent_reporting_round_trip := ProfileInventoryScript.new()
+	absent_reporting_round_trip.from_dict(JSON.parse_string(JSON.stringify(absent_reporting_snapshot)) as Dictionary)
+	if not TutorialFlowScript.should_auto_start(absent_reporting_round_trip, tutorial_meta_default):
+		failures.append("Round-tripped canonical 0.6 reporting defaults falsely counted as tutorial-blocking progress.")
+	var active_reporting_profile := ProfileInventoryScript.new()
+	active_reporting_profile.from_dict({
+		"schema_version": 5,
+		"tutorial_completed": false,
+		"lifetime_stats": {ProfileInventoryScript.RELEASE_REPORTING_KEY: {"numbers_hits": 1}},
+	})
+	if TutorialFlowScript.should_auto_start(active_reporting_profile, tutorial_meta_default):
+		failures.append("Actual 0.6 reporting activity did not block automatic tutorial start.")
 	var reporting_only_profile := ProfileInventoryScript.new()
 	reporting_only_profile.add_reference_chip()
 	var progression_before := {"items": reporting_only_profile.items.duplicate(true), "challenges": reporting_only_profile.challenge_completions.duplicate(true), "act_seam": reporting_only_profile.act_seam.duplicate(true)}

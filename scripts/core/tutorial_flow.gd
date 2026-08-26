@@ -121,7 +121,9 @@ static func should_auto_start(profile: Variant, meta_snapshot: Dictionary) -> bo
 			return false
 	for field_name in ["challenge_completions", "daily_runs", "lifetime_stats", "act_seam"]:
 		var value: Variant = profile.get(field_name)
-		if typeof(value) == TYPE_DICTIONARY and _dictionary_has_progress(value):
+		if typeof(value) == TYPE_DICTIONARY and (
+				_lifetime_stats_has_progress(value) if field_name == "lifetime_stats" else _dictionary_has_progress(value)
+		):
 			return false
 	for field_name in ["owned_instances", "unopened_bags", "loadout"]:
 		var value: Variant = meta_snapshot.get(field_name, [])
@@ -132,6 +134,22 @@ static func should_auto_start(profile: Variant, meta_snapshot: Dictionary) -> bo
 	if str(meta_snapshot.get("housing_tier", "back_alley")) != "back_alley":
 		return false
 	return true
+
+
+static func _lifetime_stats_has_progress(value: Dictionary) -> bool:
+	var remaining := value.duplicate(true)
+	var release_value: Variant = remaining.get("release_0_6", {})
+	remaining.erase("release_0_6")
+	if _dictionary_has_progress(remaining):
+		return true
+	if typeof(release_value) != TYPE_DICTIONARY:
+		return false
+	var release := (release_value as Dictionary).duplicate(true)
+	# ProfileInventory materializes this canonical schema-5 reporting value even
+	# before the player has acted. It is an enum default, not career progress.
+	if str(release.get("highest_crew_standing", "")).strip_edges() in ["", "stranger"]:
+		release.erase("highest_crew_standing")
+	return _dictionary_has_progress(release)
 
 
 static func _dictionary_has_progress(value: Dictionary) -> bool:
