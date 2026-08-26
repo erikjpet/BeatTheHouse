@@ -147,6 +147,21 @@ static func package_for_scenario(scenario_id: String, catalog: Dictionary = {}) 
 	return match
 
 
+static func definition_for_id(definitions: Array, scenario_id: String) -> Dictionary:
+	var wanted := scenario_id.strip_edges()
+	if wanted.is_empty():
+		return {}
+	var match: Dictionary = {}
+	for definition_value in definitions:
+		var definition := _dict(definition_value)
+		if str(definition.get("id", "")).strip_edges() != wanted:
+			continue
+		if not match.is_empty():
+			return {}
+		match = definition
+	return match
+
+
 static func apply_overlay(definition: Dictionary, catalog: Dictionary = {}) -> Dictionary:
 	if definition.is_empty():
 		return {}

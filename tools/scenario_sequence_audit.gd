@@ -8,6 +8,7 @@ const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_run
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 
 const AUTHORITATIVE_FAIL_THRESHOLD := 0.820
+const HOSTILE_FIXTURE_SCENARIO_ID := "corner_store_delivery_day"
 const HARD_DEFINITION_ROWS := [
 	"arrival_readable", "semantic_changes", "scenario_interaction", "action_boundaries",
 	"choice_or_failure", "material_outcomes", "revisit_coverage", "world_connection",
@@ -127,16 +128,10 @@ func _masked_explanations(definitions: Array) -> Dictionary:
 
 
 func _representative_definition(definitions: Array) -> Dictionary:
-	var ordered: Array = []
-	for definition_value in definitions:
-		if typeof(definition_value) == TYPE_DICTIONARY:
-			ordered.append((definition_value as Dictionary).duplicate(true))
-	ordered.sort_custom(func(a: Variant, b: Variant) -> bool: return str(_dict(a).get("id", "")) < str(_dict(b).get("id", "")))
-	for definition_value in ordered:
-		var definition := _dict(definition_value)
-		if SequenceSchemaScript.validate_definition(definition, OperationRegistryScript).is_empty():
-			return definition
-	return {}
+	var definition := ScenarioCatalogScript.definition_for_id(definitions, HOSTILE_FIXTURE_SCENARIO_ID)
+	if definition.is_empty() or not SequenceSchemaScript.validate_definition(definition, OperationRegistryScript).is_empty():
+		return {}
+	return definition
 
 
 func _dossier(definition: Dictionary, authority_report: Dictionary) -> Dictionary:
@@ -274,7 +269,7 @@ func _objective_rows(sequence: Dictionary) -> Array:
 
 func _hostile_fixture_report(definition: Dictionary) -> Array:
 	if definition.is_empty():
-		return [{"class": "fixture_source", "rejected": false, "diagnostic": "at least one schema-valid production definition is required"}]
+		return [{"class": "fixture_source", "rejected": false, "diagnostic": "schema-valid proof scenario %s is required" % HOSTILE_FIXTURE_SCENARIO_ID}]
 	var result: Array = []
 	var unreachable := definition.duplicate(true)
 	var unreachable_phases := _phases(unreachable)
