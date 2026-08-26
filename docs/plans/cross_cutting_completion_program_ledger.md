@@ -985,3 +985,13 @@ their own detailed handoffs and test evidence.
   project validation (49.2s), diff and full-range hazard review pass; worktree is
   clean, runtime remains withheld, and fresh exact-head independent re-review
   is active.
+- 2026-08-26: Fresh independent re-review issued
+  `ACCEPT 5776893cae0c069b629e010549609a153445a7ae` with no P0-P3. It
+  reproduced the one-path +18/-4 remediation and proved the prior omitted-fatal
+  counterexample now fails both exact dispatcher-arm call equality and the
+  independent dispatcher-body pin even if aggregate hashes are mechanically
+  refreshed. Independent AST, hostile contract (~3s), project validation
+  (~50s), diff and exact clean-head checks pass; no runtime ran. The focused
+  bundle is statically accepted. Merge remains withheld pending a missing-output
+  import-enabled focused run, expected wrong-scope failure, stable identical
+  focused rerun, Systems, Contract and Smoke on this exact head.
