@@ -1012,3 +1012,19 @@ their own detailed handoffs and test evidence.
   is deciding whether the old pusher merge must be normally reverted from Wave
   1 rather than blessing stale intermediate goldens or importing an unfinished
   pusher closure. No edit/rerun is authorized meanwhile.
+- 2026-08-26: Independent provenance/scheduling review `ACCEPT`ed Option A and
+  rejected stale-golden refresh or importing unfinished pusher. Finding P1:
+  merge `554773c6` prematurely imported now-nonfinal `a0d2b6ff`; its 34-path
+  pusher-only reverse patch intersects none of the 11 later remediation paths or
+  later integration product work. All 57 Systems failures are deterministic
+  pusher serialization drift while the other 54 checks and the 38.640s budget
+  pass. Finding P2: the separate board branch still has inconsistent reopened
+  row/prompt history and must be corrected by the board owner, not remediation.
+  The approved sequence is a normal mainline-1 revert of `554773c6` by the
+  primary on remediation, a separate mechanically rederived full-runner-pin
+  commit (focused five-source pins must remain identical), full self/independent
+  review and focused/System runtime, then non-ff remediation merge. No golden is
+  refreshed and `codex/cross-board` remains untouched. Because Git will retain
+  `a0d2b6ff` merge ancestry, final accepted pusher integration must first revert
+  this new revert before merging final pusher, or replay the complete pusher
+  content deliberately; a plain later merge would omit the original a0 base.
