@@ -696,10 +696,8 @@ static func _pick_lenders(archetype: Dictionary, rng: RngStream) -> Array:
 
 # Picks event ids that match the environment scopes.
 static func _pick_events(archetype: Dictionary, rng: RngStream, library: ContentLibrary) -> Array:
-	if library == null:
-		var fallback_events := _pick_ids(archetype.get("event_pool", []), archetype.get("event_count", 1), rng)
-		return rng.pick_many(fallback_events, fallback_events.size())
-	return EnvironmentEventResolverScript.select_ids(archetype, library.events, rng)
+	var definitions: Array = [] if library == null else library.events
+	return EnvironmentEventResolverScript.select_ids(archetype, definitions, rng)
 
 
 # Picks a fixed or ranged number of unique ids from a pool.
