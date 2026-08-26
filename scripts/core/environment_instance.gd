@@ -16,6 +16,9 @@ const PAWN_SHOP_ARCHETYPE_ID := "pawn_shop"
 var id: String = ""
 var archetype_id: String = ""
 var world_node_id: String = ""
+var environment_visit_id: String = ""
+var night_instance_id: String = ""
+var context_instance_id: String = ""
 var world_map_travel: bool = false
 var kind: String = ""
 var display_name: String = ""
@@ -158,6 +161,9 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.id = str(data.get("id", ""))
 	environment.archetype_id = str(data.get("archetype_id", ""))
 	environment.world_node_id = str(data.get("world_node_id", environment.archetype_id)).strip_edges()
+	environment.environment_visit_id = str(data.get("environment_visit_id", "")).strip_edges()
+	environment.night_instance_id = str(data.get("night_instance_id", "")).strip_edges()
+	environment.context_instance_id = str(data.get("context_instance_id", "")).strip_edges()
 	environment.world_map_travel = bool(data.get("world_map_travel", false))
 	environment.kind = str(data.get("kind", ""))
 	environment.display_name = str(data.get("display_name", ""))
@@ -286,6 +292,10 @@ func to_dict() -> Dictionary:
 		result["scenario_sequence_base_game_modifiers"] = scenario_sequence_base_game_modifiers.duplicate(true)
 	if not scenario_sequence_migration.is_empty():
 		result["scenario_sequence_migration"] = scenario_sequence_migration.duplicate(true)
+	if not environment_visit_id.is_empty() or not night_instance_id.is_empty() or not context_instance_id.is_empty():
+		result["environment_visit_id"] = environment_visit_id
+		result["night_instance_id"] = night_instance_id
+		result["context_instance_id"] = context_instance_id
 	if environment_layer_schema_version > 0 and not current_layer_id.is_empty():
 		result["environment_layer_schema_version"] = environment_layer_schema_version
 		result["current_layer_id"] = current_layer_id
