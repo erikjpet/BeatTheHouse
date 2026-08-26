@@ -5,18 +5,29 @@ extends RefCounted
 # only this host replaces table state, mutates accounts, publishes facts, or
 # advances interruption/travel requests.
 
-const SCHEMA_VERSION := 1
+const SCHEMA_VERSION := 2
 const FACT_SCHEMA_VERSION := 1
 const REQUEST_SCHEMA_VERSION := 1
+const MAPPING_MANIFEST_SCHEMA_VERSION := 1
+const PREPARED_ENVELOPE_VERSION := 1
 const ACCOUNT_DOMAINS := ["bankroll", "chips"]
 const POKER_CREW_MEMBER_IDS := ["crew_rook", "crew_velvet", "crew_knuckles", "crew_switch", "crew_mags", "crew_bishop", "crew_lucky"]
 const POKER_POLICY_OWNER_IDS := ["poker_policy_crew_rook", "poker_policy_crew_velvet", "poker_policy_crew_knuckles", "poker_policy_crew_switch", "poker_policy_crew_mags", "poker_policy_crew_bishop", "poker_policy_crew_lucky"]
 const REQUEST_KINDS := ["interruption", "travel"]
-const REQUEST_RESPONSES := ["defer", "accept"]
-const PREPARED_CONTEXT_ALLOWLIST := ["node_id", "environment_visit_id", "night_instance_id", "context_instance_id", "table_id", "table_state_digest", "accounts", "prepared_account", "rng_leases"]
+const REQUEST_RESPONSES := ["defer", "accept", "reject"]
+const TERMINAL_REQUEST_STATUSES := ["rejected", "applied", "expired"]
+const PREPARED_CONTEXT_ALLOWLIST := ["node_id", "environment_visit_id", "night_instance_id", "context_instance_id", "table_id", "table_state_digest", "accounts", "prepared_account", "rng_leases", "host_revision", "host_state_digest"]
+const KNOWN_RNG_OWNER_IDS := ["scenario", "craps_throw", "craps_recovery", "poker_cards", "poker_cues"] + POKER_POLICY_OWNER_IDS
+const FACT_CONSUMER_NAMESPACES := ["runtime.scenario", "public.system"]
+const FACT_PRIVACY_FORBIDDEN_KEYS := ["account_id", "account_balance", "accounts", "rng", "rng_state", "edge_weights", "operation_receipts", "prepared_operation_receipt_ids", "mapping_manifest_sha256", "payload_sha256", "private_runtime_state", "hole_cards", "deck", "discards", "policy", "tell", "pattern", "verification", "future_branches", "packed_turn"]
+const PREPARED_SCHEMAS := ["prepared_craps_context", "prepared_craps_interrupt", "prepared_poker_night", "prepared_poker_interrupt"]
+const PREPARED_ACK_KEYS := ["status", "ack_receipt_id", "observed_game_state_sha256", "accepted_boundary", "applied_transaction_id", "reason_code"]
+const PREPARED_ACK_STATUSES := ["unacknowledged", "accepted", "deferred", "rejected", "applied", "expired"]
+const REQUESTED_BOUNDARIES := ["immediate_safe", "after_receipt", "before_next_throw", "between_hands"]
 const MAX_FACT_LOG := 128
 const MAX_QUEUE := 256
 const MAX_RECEIPTS := 2048
+const MAX_ACTIVE_RECEIPTS := 512
 const MAX_TEXT := 512
 const MAX_DEPTH := 10
 const MAX_VALUES := 2048
@@ -30,6 +41,7 @@ static func initial_state(accounts: Dictionary = {}, table_states: Dictionary = 
 		"table_states": table_states,
 		"trust": {},
 		"tells": {},
+		"authorized_tell_patterns": [],
 		"fact_queue": [],
 		"fact_log": [],
 		"fact_receipts": {},
@@ -43,6 +55,16 @@ static func initial_state(accounts: Dictionary = {}, table_states: Dictionary = 
 		"rng_leases": rng_leases,
 		"request_delivery_serials": {},
 		"safe_boundary": 0,
+		"canonical_context": {},
+		"table_registry": {},
+		"mapping_manifests": {},
+		"staged_operation_receipts": {},
+		"runtime_records": {"room_ops": [], "travel_ops": []},
+		"travel_authorizations": {},
+		"publication_outbox": [],
+		"publication_receipts": {},
+		"receipt_order": [],
+		"receipt_archive": {},
 		"canonical_snapshot_digest": "",
 	})
 	result["canonical_snapshot_digest"] = _canonical_snapshot_digest(result)
@@ -51,13 +73,16 @@ static func initial_state(accounts: Dictionary = {}, table_states: Dictionary = 
 
 static func normalize_state(value: Variant) -> Dictionary:
 	var source := _dict(value)
+	var source_schema := int(source.get("schema_version", 1))
 	return {
 		"schema_version": SCHEMA_VERSION,
+		"schema_error": "" if source_schema in [1, SCHEMA_VERSION] else "unsupported scenario host ledger schema_version: %d" % source_schema,
 		"revision": maxi(0, int(source.get("revision", 0))),
 		"accounts": _normalize_accounts(source.get("accounts", {})),
 		"table_states": _dict(source.get("table_states", {})),
 		"trust": _int_dictionary(source.get("trust", {})),
 		"tells": _int_dictionary(source.get("tells", {})),
+		"authorized_tell_patterns": _string_array(source.get("authorized_tell_patterns", [])),
 		"fact_queue": _dictionary_array(source.get("fact_queue", [])),
 		"fact_log": _dictionary_array(source.get("fact_log", [])),
 		"fact_receipts": _dict(source.get("fact_receipts", {})),
@@ -71,13 +96,23 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"rng_leases": _dict(source.get("rng_leases", {})),
 		"request_delivery_serials": _int_dictionary(source.get("request_delivery_serials", {})),
 		"safe_boundary": maxi(0, int(source.get("safe_boundary", 0))),
+		"canonical_context": _dict(source.get("canonical_context", {})),
+		"table_registry": _dict(source.get("table_registry", {})),
+		"mapping_manifests": _dict(source.get("mapping_manifests", {})),
+		"staged_operation_receipts": _dict(source.get("staged_operation_receipts", {})),
+		"runtime_records": _normalize_runtime_records(source.get("runtime_records", {})),
+		"travel_authorizations": _dict(source.get("travel_authorizations", {})),
+		"publication_outbox": _dictionary_array(source.get("publication_outbox", [])),
+		"publication_receipts": _dict(source.get("publication_receipts", {})),
+		"receipt_order": _string_array(source.get("receipt_order", [])),
+		"receipt_archive": _dict(source.get("receipt_archive", {})),
 		"canonical_snapshot_digest": str(source.get("canonical_snapshot_digest", "")),
 	}
 
 
 static func persisted_ledger(state_value: Dictionary) -> Dictionary:
 	var state := normalize_state(state_value)
-	for key in ["accounts", "table_states", "trust", "tells", "canonical_snapshot_digest"]:
+	for key in ["accounts", "table_states", "trust", "tells", "authorized_tell_patterns", "canonical_snapshot_digest"]:
 		state.erase(key)
 	return state
 
@@ -88,6 +123,9 @@ static func bind_canonical_snapshot(ledger_value: Dictionary, snapshot: Dictiona
 	combined["table_states"] = _dict(snapshot.get("table_states", {}))
 	combined["trust"] = _dict(snapshot.get("trust", {}))
 	combined["tells"] = _dict(snapshot.get("tells", {}))
+	combined["authorized_tell_patterns"] = _string_array(snapshot.get("authorized_tell_patterns", []))
+	combined["canonical_context"] = _public_context_projection(_dict(snapshot.get("canonical_context", {})))
+	combined["runtime_records"] = _normalize_runtime_records(snapshot.get("runtime_records", combined.get("runtime_records", {})))
 	combined["canonical_snapshot_digest"] = ""
 	var result := normalize_state(combined)
 	result["canonical_snapshot_digest"] = _canonical_snapshot_digest(result)
@@ -140,6 +178,8 @@ static func prepared_game_context(state_value: Dictionary, context: Dictionary, 
 	available["accounts"] = prepared_accounts
 	available["prepared_account"] = {"account_id": prepared_account_id, "fund_domain": str(_dict(prepared_accounts.get(prepared_account_id, {})).get("fund_domain", ""))} if not prepared_account_id.is_empty() else {}
 	available["rng_leases"] = _owned_rng_lease_projection(state, producer_id)
+	available["host_revision"] = int(state.get("revision", 0))
+	available["host_state_digest"] = state_digest(state)
 	var result: Dictionary = {}
 	for key_value in keys:
 		result[str(key_value)] = _copy_variant(available.get(str(key_value)))
@@ -178,6 +218,294 @@ static func prepared_request(request_id: String, kind: String, table_id: String,
 	}
 
 
+static func mapping_manifest(manifest_id: String, mappings: Array) -> Dictionary:
+	var result := {
+		"schema": "scenario_game_mapping_manifest",
+		"version": MAPPING_MANIFEST_SCHEMA_VERSION,
+		"manifest_id": manifest_id.strip_edges(),
+		"mappings": _dictionary_array(mappings),
+		"manifest_sha256": "",
+	}
+	result["manifest_sha256"] = state_digest(_manifest_hash_body(result))
+	return result
+
+
+static func register_mapping_manifest(state_value: Dictionary, manifest_value: Dictionary, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	var state := normalize_state(state_value)
+	var manifest := manifest_value.duplicate(true)
+	var fingerprint := state_digest({"kind": "mapping_manifest_registered", "manifest": manifest})
+	var replay := _receipt_replay(state, receipt_id, fingerprint)
+	if not replay.is_empty(): return replay
+	var errors := _validate_protocol_cas(state, receipt_id, expected_revision, expected_digest)
+	errors.append_array(_validate_mapping_manifest(manifest))
+	var manifest_id := str(manifest.get("manifest_id", ""))
+	var manifests := _dict(state.get("mapping_manifests", {}))
+	if manifests.has(manifest_id) and state_digest(manifests.get(manifest_id)) != state_digest(manifest):
+		errors.append("mapping manifest id is already bound to different content.")
+	if not errors.is_empty(): return _failed(state, errors)
+	var next := state.duplicate(true)
+	manifests = _dict(next.get("mapping_manifests", {}))
+	var stored := manifest.duplicate(true)
+	stored["accepted"] = true
+	stored["registration_receipt_id"] = receipt_id
+	manifests[manifest_id] = stored
+	next["mapping_manifests"] = manifests
+	_record_receipt(next, receipt_id, fingerprint, {"kind": "mapping_manifest_registered", "manifest_id": manifest_id, "manifest_sha256": str(manifest.get("manifest_sha256", ""))})
+	_bump_revision(next)
+	return _success(next, receipt_id, {"kind": "mapping_manifest_registered", "manifest_id": manifest_id})
+
+
+# Host-owned registration is the only depth API that may add producer/game/table
+# ownership. Consumers supply opaque machine state and cannot seed owner fields.
+static func register_table(state_value: Dictionary, table_instance_id: String, producer_id: String, game_id: String, prepared_account_id: String, machine_state: Dictionary, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	var state := normalize_state(state_value)
+	var fingerprint := state_digest({"kind": "table_registered", "table_instance_id": table_instance_id, "producer_id": producer_id, "game_id": game_id, "prepared_account_id": prepared_account_id, "machine_state": machine_state})
+	var replay := _receipt_replay(state, receipt_id, fingerprint)
+	if not replay.is_empty(): return replay
+	var errors := _validate_protocol_cas(state, receipt_id, expected_revision, expected_digest)
+	if not _valid_id(table_instance_id) or producer_id not in ["craps", "poker"] or game_id != producer_id:
+		errors.append("table registration requires a valid table and known producer/game pair.")
+	if machine_state.has("producer_id") or machine_state.has("game_id") or machine_state.has("prepared_account_id"):
+		errors.append("table machine state cannot seed host-owned ownership fields.")
+	var account := _dict(_dict(state.get("accounts", {})).get(prepared_account_id, {}))
+	if prepared_account_id.is_empty() or account.is_empty() or (producer_id == "poker" and str(account.get("fund_domain", "")) != "bankroll"):
+		errors.append("table registration requires a canonical prepared account.")
+	errors.append_array(_validate_bounded("registered table state", machine_state))
+	var registry := _dict(state.get("table_registry", {}))
+	if registry.has(table_instance_id): errors.append("table instance is already registered; use the migration seam.")
+	if not errors.is_empty(): return _failed(state, errors)
+	var next := state.duplicate(true)
+	var table := machine_state.duplicate(true)
+	table["producer_id"] = producer_id
+	table["game_id"] = game_id
+	table["prepared_account_id"] = prepared_account_id
+	var tables := _dict(next.get("table_states", {}))
+	tables[table_instance_id] = table
+	next["table_states"] = tables
+	registry = _dict(next.get("table_registry", {}))
+	registry[table_instance_id] = {"producer_id": producer_id, "game_id": game_id, "prepared_account_id": prepared_account_id, "registration_receipt_id": receipt_id}
+	next["table_registry"] = registry
+	next["canonical_snapshot_digest"] = _canonical_snapshot_digest(next)
+	_record_receipt(next, receipt_id, fingerprint, {"kind": "table_registered", "table_instance_id": table_instance_id})
+	_bump_revision(next)
+	return _success(next, receipt_id, {"kind": "table_registered", "table_instance_id": table_instance_id})
+
+
+static func migrate_registered_table(state_value: Dictionary, table_instance_id: String, expected_table_digest: String, replacement_machine_state: Dictionary, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	var state := normalize_state(state_value)
+	var registry_record := _dict(_dict(state.get("table_registry", {})).get(table_instance_id, {}))
+	var table := _dict(_dict(state.get("table_states", {})).get(table_instance_id, {}))
+	var fingerprint := state_digest({"kind": "table_migrated", "table_instance_id": table_instance_id, "expected_table_digest": expected_table_digest, "replacement_machine_state": replacement_machine_state})
+	var replay := _receipt_replay(state, receipt_id, fingerprint)
+	if not replay.is_empty(): return replay
+	var errors := _validate_protocol_cas(state, receipt_id, expected_revision, expected_digest)
+	if registry_record.is_empty() or table.is_empty(): errors.append("table migration requires a registered table.")
+	if expected_table_digest != state_digest(table): errors.append("table migration expected digest is stale.")
+	if replacement_machine_state.has("producer_id") or replacement_machine_state.has("game_id") or replacement_machine_state.has("prepared_account_id"):
+		errors.append("table migration cannot replace host-owned ownership fields.")
+	errors.append_array(_validate_bounded("migrated table state", replacement_machine_state))
+	if not errors.is_empty(): return _failed(state, errors)
+	var next := state.duplicate(true)
+	var replacement := replacement_machine_state.duplicate(true)
+	for key in ["producer_id", "game_id", "prepared_account_id"]: replacement[key] = registry_record.get(key)
+	var tables := _dict(next.get("table_states", {}))
+	tables[table_instance_id] = replacement
+	next["table_states"] = tables
+	next["canonical_snapshot_digest"] = _canonical_snapshot_digest(next)
+	_record_receipt(next, receipt_id, fingerprint, {"kind": "table_migrated", "table_instance_id": table_instance_id})
+	_bump_revision(next)
+	return _success(next, receipt_id, {"kind": "table_migrated", "table_instance_id": table_instance_id})
+
+
+static func register_scoped_rng_lease(state_value: Dictionary, producer_id: String, owner_id: String, scope: Dictionary, initial_state_value: Variant, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	var state := normalize_state(state_value)
+	var scope_projection := _rng_scope_projection(scope)
+	var lease_id := "%s_%s" % [owner_id, state_digest(scope_projection).substr(0, 16)]
+	var fingerprint := state_digest({"kind": "rng_lease_registered", "producer_id": producer_id, "owner_id": owner_id, "scope": scope_projection, "initial_state": initial_state_value})
+	var replay := _receipt_replay(state, receipt_id, fingerprint)
+	if not replay.is_empty(): return replay
+	var errors := _validate_protocol_cas(state, receipt_id, expected_revision, expected_digest)
+	if owner_id not in KNOWN_RNG_OWNER_IDS or not _producer_owns_lease(producer_id, owner_id): errors.append("RNG lease registration uses an unknown or foreign owner class.")
+	if scope_projection.is_empty(): errors.append("RNG lease registration requires a table/session/hand/action/request scope.")
+	errors.append_array(_validate_bounded("RNG lease initial state", initial_state_value))
+	var leases := _dict(state.get("rng_leases", {}))
+	if leases.has(lease_id) and state_digest(_dict(leases.get(lease_id, {})).get("current_state")) != state_digest(initial_state_value):
+		errors.append("scoped RNG lease identity is already bound to different initial state.")
+	if not errors.is_empty(): return _failed(state, errors)
+	var next := state.duplicate(true)
+	leases = _dict(next.get("rng_leases", {}))
+	leases[lease_id] = {"owner_id": owner_id, "stream_id": lease_id, "scope": scope_projection, "state_type": typeof(initial_state_value), "current_state": _copy_variant(initial_state_value), "receipts": []}
+	next["rng_leases"] = leases
+	_record_receipt(next, receipt_id, fingerprint, {"kind": "rng_lease_registered", "lease_id": lease_id})
+	_bump_revision(next)
+	return _success(next, receipt_id, {"kind": "rng_lease_registered", "lease_id": lease_id})
+
+
+static func stage_prepared_operation_receipts(state_value: Dictionary, operations: Array, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	var state := normalize_state(state_value)
+	var fingerprint := state_digest({"kind": "prepared_operations_staged", "operations": operations})
+	var replay := _receipt_replay(state, receipt_id, fingerprint)
+	if not replay.is_empty(): return replay
+	var errors := _validate_protocol_cas(state, receipt_id, expected_revision, expected_digest)
+	var ids: Dictionary = {}
+	for operation_value in operations:
+		var operation := _dict(operation_value)
+		_append_unknown_keys("prepared operation", operation, ["operation_receipt_id", "request_id", "delivery_serial", "context_instance_id", "kind", "payload"], errors)
+		var operation_id := str(operation.get("operation_receipt_id", ""))
+		if not _valid_scoped_receipt(operation_id) or ids.has(operation_id): errors.append("prepared operation receipts must be unique stable scoped ids.")
+		if str(operation.get("kind", "")) not in ["room", "travel"] or typeof(operation.get("payload")) != TYPE_DICTIONARY: errors.append("prepared operation requires a room/travel kind and bounded payload.")
+		if int(operation.get("delivery_serial", 0)) <= 0 or not _valid_id(str(operation.get("request_id", ""))) or not _valid_id(str(operation.get("context_instance_id", ""))): errors.append("prepared operation requires request/context/delivery binding.")
+		errors.append_array(_validate_bounded("prepared operation payload", operation.get("payload", {})))
+		ids[operation_id] = true
+	if not errors.is_empty(): return _failed(state, errors)
+	var next := state.duplicate(true)
+	var staged := _dict(next.get("staged_operation_receipts", {}))
+	for operation_value in operations:
+		var operation := _dict(operation_value)
+		var operation_id := str(operation.get("operation_receipt_id", ""))
+		if staged.has(operation_id) and state_digest(staged.get(operation_id)) != state_digest(operation): return _failed(state, ["prepared operation receipt conflicts with staged content."])
+		var stored := operation.duplicate(true)
+		stored["consumed"] = false
+		staged[operation_id] = stored
+	next["staged_operation_receipts"] = staged
+	_record_receipt(next, receipt_id, fingerprint, {"kind": "prepared_operations_staged", "operation_receipt_ids": ids.keys()})
+	_bump_revision(next)
+	return _success(next, receipt_id, {"kind": "prepared_operations_staged", "operation_receipt_ids": ids.keys()})
+
+
+static func stage_prepared_request(state_value: Dictionary, envelope_value: Dictionary, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	var state := normalize_state(state_value)
+	var envelope := envelope_value.duplicate(true)
+	var fingerprint := state_digest({"kind": "prepared_request_staged", "envelope": envelope})
+	var replay := _receipt_replay(state, receipt_id, fingerprint)
+	if not replay.is_empty(): return replay
+	var errors := _validate_protocol_cas(state, receipt_id, expected_revision, expected_digest)
+	errors.append_array(_validate_prepared_envelope(state, envelope))
+	var request_id := _prepared_envelope_request_id(envelope)
+	var requests := _dict(state.get("prepared_requests", {}))
+	if requests.has(request_id):
+		var existing := _dict(requests.get(request_id, {}))
+		if int(existing.get("delivery_serial", 0)) == int(envelope.get("delivery_serial", 0)) and str(existing.get("payload_sha256", "")) != str(envelope.get("payload_sha256", "")):
+			errors.append("same request and delivery_serial cannot be resubmitted with divergent payload.")
+		else:
+			errors.append("prepared request id is already staged.")
+	if not errors.is_empty(): return _failed(state, errors)
+	var next := state.duplicate(true)
+	requests = _dict(next.get("prepared_requests", {}))
+	var stored := envelope.duplicate(true)
+	stored["request_id"] = request_id
+	stored["status"] = "prepared"
+	stored["prepared_receipt"] = receipt_id
+	stored["table_id"] = _prepared_envelope_table_id(envelope)
+	stored["producer_id"] = "craps" if str(envelope.get("consumer", "")) == "game.craps" else "poker"
+	stored["game_id"] = stored["producer_id"]
+	stored["context"] = _public_context_projection({"node_id": str(_dict(state.get("canonical_context", {})).get("node_id", "")), "environment_visit_id": str(envelope.get("environment_visit_id", "")), "night_instance_id": str(envelope.get("night_instance_id", "")), "context_instance_id": str(envelope.get("context_instance_id", ""))})
+	stored["table_digest"] = str(envelope.get("expected_game_state_sha256", ""))
+	requests[request_id] = stored
+	next["prepared_requests"] = requests
+	var serials := _dict(next.get("request_delivery_serials", {}))
+	serials[str(stored.get("table_id", ""))] = int(envelope.get("delivery_serial", 0))
+	next["request_delivery_serials"] = serials
+	_append_acknowledgement(next, {"ack_id": "%s_prepared" % request_id, "kind": "request_prepared", "request_id": request_id, "phase": "prepared", "receipt_id": receipt_id})
+	_record_receipt(next, receipt_id, fingerprint, {"kind": "prepared_request_staged", "request_id": request_id})
+	_bump_revision(next)
+	return _success(next, receipt_id, {"kind": "prepared_request_staged", "request_id": request_id})
+
+
+static func respond_to_staged_request(state_value: Dictionary, request_id: String, response: String, acknowledgement: Dictionary, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
+	var state := normalize_state(state_value)
+	var fingerprint := state_digest({"kind": "prepared_request_response", "request_id": request_id, "response": response, "acknowledgement": acknowledgement})
+	var replay := _receipt_replay(state, receipt_id, fingerprint)
+	if not replay.is_empty(): return replay
+	var errors := _validate_protocol_cas(state, receipt_id, expected_revision, expected_digest)
+	var requests := _dict(state.get("prepared_requests", {}))
+	var request := _dict(requests.get(request_id, {}))
+	if request.is_empty() or str(request.get("schema", "")) not in PREPARED_SCHEMAS: errors.append("typed prepared request is unknown.")
+	errors.append_array(_validate_prepared_acknowledgement(acknowledgement, response))
+	if response not in REQUEST_RESPONSES: errors.append("prepared request response must be accept, defer, or reject.")
+	if str(request.get("status", "")) not in ["prepared", "deferred"]: errors.append("prepared request cannot receive this response in its current state.")
+	var expired := _request_is_expired(state, request)
+	if expired and response == "accept": errors.append("expired prepared request cannot be accepted.")
+	if not request.is_empty() and str(acknowledgement.get("observed_game_state_sha256", "")) != state_digest(_dict(_dict(state.get("table_states", {})).get(str(request.get("table_id", "")), {}))):
+		errors.append("prepared request response observed a different game-state digest.")
+	if not errors.is_empty(): return _failed(state, errors)
+	var next := state.duplicate(true)
+	requests = _dict(next.get("prepared_requests", {}))
+	request = _dict(requests.get(request_id, {}))
+	var status := "expired" if expired else ("accepted" if response == "accept" else ("deferred" if response == "defer" else "rejected"))
+	request["status"] = status
+	request["acknowledgement"] = acknowledgement.duplicate(true)
+	request["response_receipt"] = receipt_id
+	requests[request_id] = request
+	next["prepared_requests"] = requests
+	_append_acknowledgement(next, {"ack_id": "%s_%s" % [request_id, status], "kind": "game_%s" % status, "request_id": request_id, "phase": "response", "receipt_id": receipt_id})
+	_record_receipt(next, receipt_id, fingerprint, {"kind": "prepared_request_response", "request_id": request_id, "status": status})
+	_bump_revision(next)
+	return _success(next, receipt_id, {"kind": "prepared_request_response", "request_id": request_id, "status": status})
+
+
+# Phase two is intentionally one CAS. Every effect is validated against the
+# detached input state before the first write to `next`.
+static func complete_prepared_game_request(state_value: Dictionary, completion_value: Dictionary) -> Dictionary:
+	var state := normalize_state(state_value)
+	var completion := completion_value.duplicate(true)
+	var receipt_id := str(completion.get("transaction_id", ""))
+	var fingerprint := state_digest(_completion_fingerprint_body(completion))
+	var replay := _receipt_replay(state, receipt_id, fingerprint)
+	if not replay.is_empty(): return replay
+	var errors := _validate_atomic_completion(state, completion)
+	if not errors.is_empty(): return _failed(state, errors)
+	var request_id := str(completion.get("request_id", ""))
+	var request := _dict(_dict(state.get("prepared_requests", {})).get(request_id, {}))
+	var next := state.duplicate(true)
+	var tables := _dict(next.get("table_states", {}))
+	tables[str(request.get("table_id", ""))] = _dict(completion.get("replacement_table_state", {}))
+	next["table_states"] = tables
+	_apply_account_ops(next, _dictionary_array(completion.get("account_ops", [])))
+	_apply_named_delta_ops(next, "trust", "subject_id", _dictionary_array(completion.get("trust_ops", [])))
+	_apply_named_delta_ops(next, "tells", "pattern_id", _dictionary_array(completion.get("tell_ops", [])))
+	_apply_rng_updates(next, str(request.get("producer_id", "")), receipt_id, _dictionary_array(completion.get("rng_updates", [])))
+	_commit_facts(next, _dictionary_array(completion.get("facts", [])))
+	_apply_staged_runtime_operations(next, request, _string_array(completion.get("prepared_operation_receipt_ids", [])), receipt_id)
+	var requests := _dict(next.get("prepared_requests", {}))
+	var stored := _dict(requests.get(request_id, {}))
+	stored["status"] = "applied"
+	stored["runtime_receipt"] = receipt_id
+	var acknowledgement := _dict(completion.get("acknowledgement", {}))
+	acknowledgement["status"] = "applied"
+	acknowledgement["applied_transaction_id"] = receipt_id
+	stored["acknowledgement"] = acknowledgement
+	requests[request_id] = stored
+	next["prepared_requests"] = requests
+	_append_acknowledgement(next, {"ack_id": "%s_applied" % request_id, "kind": "runtime_applied", "request_id": request_id, "phase": "atomic_phase_2", "receipt_id": receipt_id})
+	_stage_publications(next, request, completion)
+	next["canonical_snapshot_digest"] = _canonical_snapshot_digest(next)
+	var redacted := {"kind": "prepared_request_completed", "request_id": request_id, "status": "applied", "transaction_id": receipt_id, "travel_authorization_token": _travel_token_for_transaction(next, receipt_id)}
+	_record_receipt(next, receipt_id, fingerprint, redacted)
+	_bump_revision(next)
+	return _success(next, receipt_id, redacted)
+
+
+static func travel_preflight(state_value: Dictionary, transition_kind: String, target_id: String, authorization_token: String, consume: bool = false) -> Dictionary:
+	var state := normalize_state(state_value)
+	if not _has_live_host_boundary(state): return {"ok": true, "state": state, "required": false, "errors": []}
+	var authorization := _dict(_dict(state.get("travel_authorizations", {})).get(authorization_token, {}))
+	var errors: Array = []
+	if authorization.is_empty() or bool(authorization.get("consumed", false)): errors.append("live game travel requires an unused host authorization token.")
+	if str(authorization.get("transition_kind", "")) != transition_kind or str(authorization.get("target_id", "")) != target_id.strip_edges(): errors.append("travel authorization kind/target binding does not match.")
+	if _dict(authorization.get("context", {})) != _dict(state.get("canonical_context", {})): errors.append("travel authorization context is stale.")
+	if str(authorization.get("table_registry_sha256", "")) != state_digest(state.get("table_registry", {})): errors.append("travel authorization table binding is stale.")
+	if not errors.is_empty(): return _failed(state, errors)
+	if not consume: return {"ok": true, "state": state, "required": true, "errors": []}
+	var next := state.duplicate(true)
+	var authorizations := _dict(next.get("travel_authorizations", {}))
+	authorization["consumed"] = true
+	authorizations[authorization_token] = authorization
+	next["travel_authorizations"] = authorizations
+	_bump_revision(next)
+	return {"ok": true, "state": next, "required": true, "errors": []}
+
+
 static func game_command(producer_id: String, game_id: String, table_id: String, receipt_id: String, context: Dictionary, expected_table_digest: String, replacement_table_state: Dictionary, deltas: Dictionary = {}) -> Dictionary:
 	return {
 		"schema_version": SCHEMA_VERSION,
@@ -185,6 +513,7 @@ static func game_command(producer_id: String, game_id: String, table_id: String,
 		"game_id": game_id.strip_edges(),
 		"table_id": table_id.strip_edges(),
 		"receipt_id": receipt_id.strip_edges(),
+		"expected_runtime_revision": int(context.get("host_revision", -1)),
 		"context": _public_context_projection(context),
 		"expected_table_digest": expected_table_digest.strip_edges(),
 		"replacement_table_state": replacement_table_state.duplicate(true),
@@ -215,15 +544,13 @@ static func pre_travel_hook(command_value: Dictionary, request: Dictionary) -> D
 static func reduce_game_command(state_value: Dictionary, command_value: Dictionary) -> Dictionary:
 	var state := normalize_state(state_value)
 	var command := command_value.duplicate(true)
-	var errors := _validate_game_command(state, command)
-	if not errors.is_empty():
-		return {"ok": false, "errors": errors}
 	var transaction := {
 		"ok": true,
 		"schema_version": SCHEMA_VERSION,
 		"expected_revision": int(state.get("revision", 0)),
 		"expected_state_digest": state_digest(state),
 		"receipt_id": str(command.get("receipt_id", "")),
+		"command_expected_runtime_revision": int(command.get("expected_runtime_revision", -1)),
 		"fingerprint": "",
 		"producer_id": str(command.get("producer_id", "")),
 		"game_id": str(command.get("game_id", "")),
@@ -240,6 +567,13 @@ static func reduce_game_command(state_value: Dictionary, command_value: Dictiona
 		"prepared_request": _dict(command.get("prepared_request", {})),
 	}
 	transaction["fingerprint"] = _transaction_fingerprint(transaction)
+	# Command-level idempotency is checked before table/account/context staleness so
+	# a retry observes its stored result even after later canonical mutations.
+	var replay := _receipt_replay(state, str(transaction.get("receipt_id", "")), str(transaction.get("fingerprint", "")))
+	if not replay.is_empty(): return replay
+	var errors := _validate_game_command(state, command)
+	if not errors.is_empty():
+		return {"ok": false, "errors": errors}
 	return transaction
 
 
@@ -442,13 +776,15 @@ static func _validate_game_command(state: Dictionary, command: Dictionary) -> Ar
 	var errors: Array = []
 	errors.append_array(_validate_canonical_snapshot(state))
 	errors.append_array(_validate_rng_registry(state))
-	if _dict(state.get("authoritative_receipts", {})).size() >= MAX_RECEIPTS: errors.append("host transaction lifetime receipt limit reached.")
-	_append_unknown_keys("game command", command, ["schema_version", "producer_id", "game_id", "table_id", "receipt_id", "context", "expected_table_digest", "replacement_table_state", "account_ops", "trust_ops", "tell_ops", "facts", "prepared_acknowledgements", "external_warnings", "rng_updates", "prepared_request"], errors)
+	_append_unknown_keys("game command", command, ["schema_version", "producer_id", "game_id", "table_id", "receipt_id", "expected_runtime_revision", "context", "expected_table_digest", "replacement_table_state", "account_ops", "trust_ops", "tell_ops", "facts", "prepared_acknowledgements", "external_warnings", "rng_updates", "prepared_request"], errors)
 	if int(command.get("schema_version", 0)) != SCHEMA_VERSION: errors.append("game command schema_version is invalid.")
 	for key in ["producer_id", "game_id", "table_id"]:
 		if not _valid_id(str(command.get(key, ""))): errors.append("game command requires valid %s." % key)
 	if not _valid_scoped_receipt(str(command.get("receipt_id", ""))): errors.append("game command requires a stable scoped receipt_id.")
 	errors.append_array(_validate_context(_dict(command.get("context", {}))))
+	if not _dict(state.get("canonical_context", {})).is_empty() and _dict(command.get("context", {})) != _dict(state.get("canonical_context", {})): errors.append("game command context does not match the canonical host context.")
+	var command_revision := int(command.get("expected_runtime_revision", -1))
+	if command_revision >= 0 and command_revision != int(state.get("revision", 0)): errors.append("game command expected runtime revision is stale.")
 	var table_id := str(command.get("table_id", ""))
 	var tables := _dict(state.get("table_states", {}))
 	if not tables.has(table_id): errors.append("game command references an unknown table.")
@@ -481,7 +817,11 @@ static func _validate_game_command(state: Dictionary, command: Dictionary) -> Ar
 		if not _valid_id(str(acknowledgement.get("ack_id", ""))) or not _valid_id(str(acknowledgement.get("kind", ""))): errors.append("prepared acknowledgement requires ack_id and kind.")
 	for warning_value in _array(command.get("external_warnings", [])):
 		if typeof(warning_value) != TYPE_STRING or str(warning_value).strip_edges().is_empty() or str(warning_value).length() > MAX_TEXT: errors.append("external warning must be bounded public text.")
+	var updated_lease_ids: Dictionary = {}
 	for update_value in _array(command.get("rng_updates", [])):
+		var lease_id := str(_dict(update_value).get("lease_id", ""))
+		if updated_lease_ids.has(lease_id): errors.append("game command cannot update one RNG lease more than once.")
+		updated_lease_ids[lease_id] = true
 		errors.append_array(_validate_rng_update(state, str(command.get("producer_id", "")), str(command.get("receipt_id", "")), _dict(update_value)))
 	var request := _dict(command.get("prepared_request", {}))
 	if not request.is_empty(): errors.append_array(_validate_prepared_request(state, request, table_id, _dict(command.get("context", {})), _dict(command.get("replacement_table_state", {}))))
@@ -492,8 +832,7 @@ static func _validate_transaction(state: Dictionary, transaction: Dictionary) ->
 	var errors: Array = []
 	errors.append_array(_validate_canonical_snapshot(state))
 	errors.append_array(_validate_rng_registry(state))
-	if _dict(state.get("authoritative_receipts", {})).size() >= MAX_RECEIPTS: errors.append("host transaction lifetime receipt limit reached.")
-	_append_unknown_keys("game transaction", transaction, ["ok", "schema_version", "expected_revision", "expected_state_digest", "receipt_id", "fingerprint", "producer_id", "game_id", "table_id", "context", "replacement_table_state", "account_ops", "trust_ops", "tell_ops", "facts", "prepared_acknowledgements", "external_warnings", "rng_updates", "prepared_request"], errors)
+	_append_unknown_keys("game transaction", transaction, ["ok", "schema_version", "expected_revision", "expected_state_digest", "command_expected_runtime_revision", "receipt_id", "fingerprint", "producer_id", "game_id", "table_id", "context", "replacement_table_state", "account_ops", "trust_ops", "tell_ops", "facts", "prepared_acknowledgements", "external_warnings", "rng_updates", "prepared_request"], errors)
 	if not bool(transaction.get("ok", false)): errors.append("game transaction must be an accepted reducer result.")
 	if int(transaction.get("schema_version", 0)) != SCHEMA_VERSION: errors.append("game transaction schema_version is invalid.")
 	if int(transaction.get("expected_revision", -1)) != int(state.get("revision", 0)): errors.append("game transaction revision is stale.")
@@ -502,6 +841,7 @@ static func _validate_transaction(state: Dictionary, transaction: Dictionary) ->
 	for key in ["producer_id", "game_id", "table_id"]:
 		if not _valid_id(str(transaction.get(key, ""))): errors.append("game transaction requires valid %s." % key)
 	errors.append_array(_validate_context(_dict(transaction.get("context", {}))))
+	if not _dict(state.get("canonical_context", {})).is_empty() and _dict(transaction.get("context", {})) != _dict(state.get("canonical_context", {})): errors.append("game transaction context does not match the canonical host context.")
 	var table_id := str(transaction.get("table_id", ""))
 	if not _dict(state.get("table_states", {})).has(table_id): errors.append("game transaction references an unknown table.")
 	errors.append_array(_validate_table_ownership(state, str(transaction.get("producer_id", "")), str(transaction.get("game_id", "")), table_id, _dict(transaction.get("replacement_table_state", {}))))
@@ -532,7 +872,11 @@ static func _validate_transaction(state: Dictionary, transaction: Dictionary) ->
 		if not _valid_id(str(acknowledgement.get("ack_id", ""))) or not _valid_id(str(acknowledgement.get("kind", ""))): errors.append("prepared acknowledgement requires ack_id and kind.")
 	for warning_value in _array(transaction.get("external_warnings", [])):
 		if typeof(warning_value) != TYPE_STRING or str(warning_value).strip_edges().is_empty() or str(warning_value).length() > MAX_TEXT: errors.append("external warning must be bounded public text.")
+	var updated_lease_ids: Dictionary = {}
 	for update_value in _array(transaction.get("rng_updates", [])):
+		var lease_id := str(_dict(update_value).get("lease_id", ""))
+		if updated_lease_ids.has(lease_id): errors.append("game transaction cannot update one RNG lease more than once.")
+		updated_lease_ids[lease_id] = true
 		errors.append_array(_validate_rng_update(state, str(transaction.get("producer_id", "")), str(transaction.get("receipt_id", "")), _dict(update_value)))
 	var request := _dict(transaction.get("prepared_request", {}))
 	if not request.is_empty(): errors.append_array(_validate_prepared_request(state, request, table_id, _dict(transaction.get("context", {})), _dict(transaction.get("replacement_table_state", {}))))
