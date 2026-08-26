@@ -493,3 +493,13 @@ their own detailed handoffs and test evidence.
   scoped, truthfully attributed two-hash refresh with path-level proof, then
   repeat self-review and independent exact-head review before any runtime rerun.
   HOST and EV are held.
+- 2026-08-26: Pusher self-review completed for the scoped stale-golden repair at
+  clean exact head `4b03f439be46ed76b265d67a00e4e7872d37ca69`, one test-only commit
+  from accepted `4d8a789f` (one file, +8/-8, static validator and diff check
+  green). It updates exactly the two observed full-state hashes and replaces the
+  misleading single-commit provenance with split travel-scalar/full-generated-
+  state provenance. Strict canonical whole-object equality and every independent
+  travel/RNG/economy/story/choice/town assertion remain. The path-level proof
+  confines the accepted structural delta to Coin Pusher's physically settled
+  state and its visited-bar world-map copy. Independent exact-head review is in
+  progress; HOST and EV remain held.
