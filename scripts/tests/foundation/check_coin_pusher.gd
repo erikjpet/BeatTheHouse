@@ -482,6 +482,32 @@ func _check_pusher_v3_presentation_view(machine: Dictionary, failures: Array) ->
 			or JSON.stringify(reordered_previous) != reordered_before:
 		failures.append("Coin Pusher V3 renderer interpolation mutated its current/previous public view buffers.")
 
+	# Presentation serials restart for each session. Two distinct session arrays
+	# can therefore collide on serial, size, and endpoint IDs while their middle
+	# depth geometry requires a different exact order.
+	var session_a_bodies := [
+		{"id": "same_first", "y": 400, "z": 0},
+		{"id": "middle_a", "y": 300, "z": 0},
+		{"id": "middle_b", "y": 200, "z": 0},
+		{"id": "same_last", "y": 100, "z": 0},
+	]
+	var session_b_bodies := [
+		{"id": "same_first", "y": 400, "z": 0},
+		{"id": "middle_a", "y": 150, "z": 0},
+		{"id": "middle_b", "y": 350, "z": 0},
+		{"id": "same_last", "y": 100, "z": 0},
+	]
+	var session_a_before := JSON.stringify(session_a_bodies)
+	var session_b_before := JSON.stringify(session_b_bodies)
+	var session_a_order := renderer.debug_batch_body_order_for_test(session_a_bodies, 777)
+	var session_b_order := renderer.debug_batch_body_order_for_test(session_b_bodies, 777)
+	if is_same(session_a_bodies, session_b_bodies) \
+			or session_a_order != ["same_first", "middle_a", "middle_b", "same_last"] \
+			or session_b_order != ["same_first", "middle_b", "middle_a", "same_last"]:
+		failures.append("Coin Pusher V3 renderer depth cache reused stale indices across distinct session arrays with a colliding serial/key: a=%s b=%s." % [JSON.stringify(session_a_order), JSON.stringify(session_b_order)])
+	if JSON.stringify(session_a_bodies) != session_a_before or JSON.stringify(session_b_bodies) != session_b_before:
+		failures.append("Coin Pusher V3 renderer depth-cache collision guard mutated or aliased distinct session arrays.")
+
 	# Four-tick catch-up must publish only the exact final consecutive pair. The
 	# opening and published buffers remain distinct, ordered, and equivalent to
 	# canonical projection without changing save/reload results.

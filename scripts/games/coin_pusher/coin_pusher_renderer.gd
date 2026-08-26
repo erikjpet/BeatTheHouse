@@ -41,6 +41,7 @@ var _coin_multimesh: MultiMesh
 var _coin_mesh: QuadMesh
 var _sorted_body_cache: Array = []
 var _sorted_body_cache_key := ""
+var _sorted_body_cache_source: Array = []
 var _coin_instance_color_cache: Array = []
 var _palette_cache_key := ""
 var _palette_cache: Dictionary = {}
@@ -420,7 +421,11 @@ func _depth_sorted_body_indices(bodies: Array, presentation_view_serial: int) ->
 	var first_id := str((bodies[0] as Dictionary).get("id", "")) if not bodies.is_empty() and typeof(bodies[0]) == TYPE_DICTIONARY else ""
 	var last_id := str((bodies[bodies.size() - 1] as Dictionary).get("id", "")) if not bodies.is_empty() and typeof(bodies[bodies.size() - 1]) == TYPE_DICTIONARY else ""
 	var key := "%d:%d:%s:%s" % [presentation_view_serial, bodies.size(), first_id, last_id]
-	if key == _sorted_body_cache_key:
+	# Presentation serials are session-local. A different machine can have the
+	# same serial/count/end IDs while its middle bodies require another order.
+	# Retaining the exact source Array makes cache reuse session-view-specific;
+	# a changed serial on the same Array still misses through the key.
+	if key == _sorted_body_cache_key and is_same(bodies, _sorted_body_cache_source):
 		return _sorted_body_cache
 	_sorted_body_cache.resize(bodies.size())
 	for body_index in range(bodies.size()):
@@ -433,6 +438,7 @@ func _depth_sorted_body_indices(bodies: Array, presentation_view_serial: int) ->
 		return a_key > b_key if a_key != b_key else str(a.get("id", "")) < str(b.get("id", ""))
 	)
 	_sorted_body_cache_key = key
+	_sorted_body_cache_source = bodies
 	return _sorted_body_cache
 
 
