@@ -183,7 +183,7 @@ acceptance. It is an orchestration prompt, not an additional completion row.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| env06_6 | `env06_6_dynamic_scenario_runtime_prompt.md` | TODO | env06_1/2/3/5 (DONE) | env06_7, craps06_3, crew06_10 | — | — | — | Add spatial/object/actor/interactable operations, objectives, branch graphs, aftermath, reentry/cleanup, migration, and anti-cloning audits. |
+| env06_6 | `env06_6_dynamic_scenario_runtime_prompt.md` | IN_PROGRESS | env06_1/2/3/5 (DONE) | env06_7, craps06_3, crew06_10 | PM:Codex/sub:runtime-owner | 2026-08-25 | — | Static implementation and evidence tooling independently accepted at `a5ae1d8f`; formal row acceptance remains withheld pending the serialized Full/audit/determinism/native-Web parity/performance/21-image visual gates and independent visual review. |
 | env06_7 | `env06_7_all_variations_sequence_rework_prompt.md` | TODO | env06_6 | depth06_1 | — | — | — | Convert and individually accept all 55 catalog ids; every prompt checkbox has a distinct physical sequence and branch aftermath. |
 | craps06_3 | `craps06_3_craps_depth_rework_prompt.md` | TODO | craps06_1/2, env06_6 | depth06_1 | — | — | — | Tactile throw/settlement phases, complete wager controls, staffed table ritual, physical energy reactions, and deeper street sequence. |
 | crew06_10 | `crew06_10_backroom_poker_depth_rework_prompt.md` | TODO | crew06_2/5/6/9, env06_6 | depth06_1 | — | — | — | Ordered betting, real session reentry, observable tell timelines, character staging, and five changing-room poker nights. |
