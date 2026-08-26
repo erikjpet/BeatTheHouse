@@ -195,7 +195,11 @@ static func _finalized_actor_authority_errors(semantic_state: Dictionary, author
 		if str(sealed.get("visual_kind", "")) != "actor":
 			errors.append("Finalized scenario actor %s lost its sealed route authority." % identity)
 			continue
+		var owned_identity := "%s::%s" % [str(actor.get("owner_namespace", "")), str(actor.get("stable_object_id", ""))]
+		var semantic_presentation_id := identity if identity.begins_with("scenario::") else str(actor.get("presentation_object_id", sealed.get("presentation_object_id", "")))
 		for pair in [
+			["identity", owned_identity, identity],
+			["presentation_object_id", semantic_presentation_id, sealed.get("presentation_object_id", "")],
 			["normalized_hit_rect", actor.get("normalized_hit_rect", {}), sealed.get("normalized_hit_rect", {})],
 			["small_screen_rect", actor.get("small_screen_rect", {}), sealed.get("small_screen_rect", {})],
 			["route_points", actor.get("route_points", []), sealed.get("actor_route_points", [])],
@@ -486,6 +490,7 @@ static func _apply_layout_authority(record: Dictionary, authority: Dictionary, a
 	# Every production geometry consumer receives the same sealed rectangle.
 	# `normalized_rect` used to retain a producer's stale pre-sequence value and
 	# silently outrank focus_rect on PixelSceneCanvas.
+	result["object_id"] = str(authority.get("presentation_object_id", ""))
 	result["normalized_rect"] = normalized.duplicate(true)
 	result["focus_rect"] = final_rect
 	result["small_screen_rect"] = small
@@ -560,15 +565,24 @@ static func _projected_record_authority_errors(records: Array, authority: Dictio
 	if authority_digest.length() != 64 or _layout_authority_digest(authority) != authority_digest:
 		errors.append("Projected scenario records no longer match their sealed authority digest.")
 		return errors
+	var seen_identities: Dictionary = {}
+	var seen_presentation_ids: Dictionary = {}
 	for value in records:
 		var record := _dict(value)
 		var identity := str(record.get("scenario_layout_authority_identity", ""))
+		var presentation_object_id := str(record.get("object_id", ""))
 		var owned_identity := "%s::%s" % [str(record.get("owner_namespace", "")), str(record.get("stable_object_id", ""))]
 		if not bool(record.get("scenario_layout_resolved", false)) or identity.is_empty() or identity != owned_identity or not authority.has(identity) or str(record.get("scenario_layout_authority_digest", "")) != authority_digest:
 			errors.append("Projected record %s lost its correlated sealed layout authority." % str(record.get("object_id", "")))
 			continue
+		if seen_identities.has(identity) or presentation_object_id.is_empty() or seen_presentation_ids.has(presentation_object_id):
+			errors.append("Projected record %s aliases another sealed canvas identity." % presentation_object_id)
+			continue
+		seen_identities[identity] = true
+		seen_presentation_ids[presentation_object_id] = true
 		var sealed := _dict(authority.get(identity, {}))
 		for pair in [
+			["object_id", record.get("object_id", ""), sealed.get("presentation_object_id", "")],
 			["normalized_rect", record.get("normalized_rect", {}), sealed.get("normalized_hit_rect", {})],
 			["small_screen_rect", record.get("small_screen_rect", {}), sealed.get("small_screen_rect", {})],
 			["scenario_z_order", record.get("scenario_z_order", -1), sealed.get("z_order", -2)],

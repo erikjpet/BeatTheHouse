@@ -68,7 +68,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	var warnings: Array = []
 	var occupied := _base_occupied_records(base_records)
 	var base_by_identity := _base_records_by_identity(base_records)
-	var authority := _base_layout_authority(base_records)
+	var authority := _base_layout_authority(base_records, errors)
 	var collision_adjustments := 0
 	var visual_count := 0
 	var resolved_scenes: Dictionary = {}
@@ -174,6 +174,7 @@ static func failure_authority(base_records: Array = []) -> Dictionary:
 	var rect: Rect2 = placement.get("rect", authored)
 	return _authority_record(
 		"system::scenario_presentation_failure",
+		"scenario::presentation_failure",
 		_normalized_rect(rect),
 		_normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
 		MAX_VISUALS + 1,
@@ -500,8 +501,13 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 		var semantic := _dict(collection.get(identity_value, {}))
 		if semantic.is_empty() or not bool(semantic.get("present", true)) or not bool(semantic.get("layout_valid", false)):
 			continue
+		var existing := _dict(authority.get(identity, {}))
+		var presentation_object_id := identity if identity.begins_with("scenario::") else str(existing.get("presentation_object_id", semantic.get("presentation_object_id", identity))).strip_edges()
+		if presentation_object_id.is_empty():
+			presentation_object_id = identity
 		authority[identity] = _authority_record(
 			identity,
+			presentation_object_id,
 			_dict(semantic.get("normalized_hit_rect", {})),
 			_dict(semantic.get("small_screen_rect", {})),
 			int(semantic.get("z_order", 0)),
@@ -512,7 +518,7 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 		)
 
 
-static func _base_layout_authority(base_records: Array) -> Dictionary:
+static func _base_layout_authority(base_records: Array, errors: Array = []) -> Dictionary:
 	var result: Dictionary = {}
 	for value in base_records:
 		var record := _dict(value)
@@ -520,8 +526,12 @@ static func _base_layout_authority(base_records: Array) -> Dictionary:
 		var rect := _record_pixel_rect(record)
 		if identity == "::" or not rect.has_area():
 			continue
+		if result.has(identity):
+			errors.append("Base layout authority contains duplicate semantic identity %s." % identity)
+			continue
 		result[identity] = _authority_record(
 			identity,
+			str(record.get("object_id", "")).strip_edges(),
 			_normalized_rect(rect),
 			_normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
 			int(record.get("scenario_z_order", record.get("z_order", 0))),
@@ -532,9 +542,12 @@ static func _base_layout_authority(base_records: Array) -> Dictionary:
 
 
 static func _validate_authority(authority: Dictionary, errors: Array) -> void:
-	var expected_keys := ["actor_route_points", "actor_route_stage", "identity", "normalized_hit_rect", "small_screen_rect", "source", "visual_kind", "z_order"]
+	var expected_keys := ["actor_route_points", "actor_route_stage", "identity", "normalized_hit_rect", "presentation_object_id", "small_screen_rect", "source", "visual_kind", "z_order"]
 	expected_keys.sort()
-	for identity_value in authority.keys():
+	var presentation_identities: Dictionary = {}
+	var identities := authority.keys()
+	identities.sort()
+	for identity_value in identities:
 		var identity := str(identity_value)
 		var record := _dict(authority.get(identity_value, {}))
 		var keys := record.keys()
@@ -542,6 +555,19 @@ static func _validate_authority(authority: Dictionary, errors: Array) -> void:
 		if keys != expected_keys or str(record.get("identity", "")) != identity:
 			errors.append("Layout authority %s is not an exact closed semantic-identity record." % identity)
 			continue
+		var presentation_object_id := str(record.get("presentation_object_id", ""))
+		if presentation_object_id.is_empty() or presentation_object_id != presentation_object_id.strip_edges():
+			errors.append("Layout authority %s has no exact canvas presentation identity." % identity)
+		elif identity.begins_with("scenario::") and presentation_object_id != identity:
+			errors.append("Scenario layout authority %s must use its owned identity as its canvas presentation identity." % identity)
+		elif presentation_object_id.contains("::") and presentation_object_id != identity and str(record.get("visual_kind", "")) != "system_failure":
+			errors.append("Layout authority %s cannot alias a different owned identity as its canvas presentation identity." % identity)
+		elif authority.has(presentation_object_id) and presentation_object_id != identity:
+			errors.append("Layout authority %s aliases the semantic authority identity %s as a canvas presentation identity." % [identity, presentation_object_id])
+		elif presentation_identities.has(presentation_object_id):
+			errors.append("Layout authorities %s and %s collide on canvas presentation identity %s." % [str(presentation_identities.get(presentation_object_id, "")), identity, presentation_object_id])
+		else:
+			presentation_identities[presentation_object_id] = identity
 		for rect_key in ["normalized_hit_rect", "small_screen_rect"]:
 			var rect := _pixel_rect(_dict(record.get(rect_key, {})))
 			if not rect.has_area() or not Rect2(Vector2.ZERO, BOARD_SIZE).encloses(rect):
@@ -589,12 +615,13 @@ static func _validate_actor_route_authority(identity: String, authority_record: 
 		errors.append("Actor layout authority %s route geometry or timing diverges from its sealed normal/small rectangles." % identity)
 
 
-static func _authority_record(identity: String, normal: Dictionary, small: Dictionary, z_order: int, visual_kind: String, source: String, actor_route_points: Array = [], actor_route_stage: Dictionary = {}) -> Dictionary:
+static func _authority_record(identity: String, presentation_object_id: String, normal: Dictionary, small: Dictionary, z_order: int, visual_kind: String, source: String, actor_route_points: Array = [], actor_route_stage: Dictionary = {}) -> Dictionary:
 	return {
 		"actor_route_points": actor_route_points.duplicate(true),
 		"actor_route_stage": actor_route_stage.duplicate(true),
 		"identity": identity,
 		"normalized_hit_rect": normal,
+		"presentation_object_id": presentation_object_id,
 		"small_screen_rect": small,
 		"z_order": z_order,
 		"visual_kind": visual_kind,
