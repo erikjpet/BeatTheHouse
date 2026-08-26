@@ -214,3 +214,15 @@ their own detailed handoffs and test evidence.
   unsupported, in the tray or gutter, and five parked motor periods were
   byte-stable. The exclusive slot is proceeding serially through the full
   Systems foundation gate; EV remains unreleased.
+- 2026-08-26: The full Systems gate found a production save leak on
+  `7a8db775`: three shards were green, while `systems_events_saves` failed 57
+  crew-ignored deterministic goldens because every generated Coin Pusher
+  machine persisted `opening_settle_report` (about 227 additional bytes per
+  machine). The author corrected the state boundary instead of blessing the
+  shifted goldens: production still physically settles and asserts by default,
+  while only audit/foundation callers opt into diagnostic capture; a permanent
+  guard requires production state to omit the field. Commit `432c8a6c` is under
+  independent exact-head review, and all production-sensitive focused/opening
+  evidence is invalidated pending fresh reruns. Systems also exceeded its hard
+  duration budget (72.245 s versus 43.712 s); that is tracked separately for a
+  clean rerun after the golden correction. EV remains unreleased.
