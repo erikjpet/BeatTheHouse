@@ -680,3 +680,20 @@ their own detailed handoffs and test evidence.
   only residual risk is the pre-existing 325MB imported cache; it must be moved
   recoverably and replaced by a clean post-marker import before focused,
   Contracts and full-smoke timing evidence is valid.
+- 2026-08-26: Clean post-marker import reduced remediation cache inflation from
+  2,040 files/325MB to 992 files/131MB, but a second focused run remained a
+  stable hard red at 18.213 seconds versus 17.790; both Blackjack checks still
+  passed with zero failures/stderr. Independent timing diagnosis attributes the
+  remaining 0.423-second deficit to three repeated full ContentLibrary JSON
+  snapshots in the test harness. The smallest safe remediation replaces only
+  those exact snapshot values with type-sensitive `PackedByteArray`
+  `var_to_bytes` serialization while preserving the state dictionary, comparison
+  cadence, mutation/hydration guards, all assertions, suite selection and budget.
+  Runtime is held pending commit, self-review and exact-head review.
+- 2026-08-26: Depth independent exact-head review issued
+  `ACCEPT a5ae1d8f2cf843ea7be7a562aea04c38638ec6b0` with no P0/P1/P2
+  across both the focused remediation and full approved nine-path range. Static
+  validators and exact trace/map equivalence checks pass, closing the three
+  evidence-tool P1s statically. Formal env06_6 acceptance and merge remain held
+  pending its full serialized parse/suite, 21-image visual, native/Web parity,
+  determinism, performance and timing battery; board HOLD continues.
