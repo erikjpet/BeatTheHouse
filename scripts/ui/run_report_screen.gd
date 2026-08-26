@@ -26,6 +26,7 @@ var outcome_title: Label
 var outcome_how: Label
 var outcome_where: Label
 var outcome_meta_reward: Label
+var release_ledger_rows: VBoxContainer
 var score_formula: Label
 var score_detail: Label
 var map_canvas: WorldMapCanvas
@@ -89,6 +90,7 @@ func set_report(model: Dictionary) -> void:
 	score_detail.text = "Money put to work  ×  Winner's bonus  =  Final score" if bool(score.get("show_winner_bonus", false)) else "Money put to work  =  Final score"
 	seed_label.text = "Seed: %s" % str(model.get("seed", ""))
 	_render_story(model.get("money_rows", []))
+	_render_release_ledger(_dict(model.get("release_0_6", {})))
 	_render_take_home_item_reward(_dict(model.get("take_home_item_reward", {})))
 	_render_bag_reward(_dict(model.get("bag_reward", {})))
 	_render_items(_dict(model.get("items", {})))
@@ -217,6 +219,14 @@ func _build() -> void:
 	result_copy.add_child(outcome_how)
 	result_copy.add_child(outcome_where)
 	result_copy.add_child(outcome_meta_reward)
+	var ledger_separator := VSeparator.new()
+	ledger_separator.add_theme_constant_override("separation", 3)
+	result_row.add_child(ledger_separator)
+	release_ledger_rows = VBoxContainer.new()
+	release_ledger_rows.custom_minimum_size = Vector2(330, 0)
+	release_ledger_rows.add_theme_constant_override("separation", 0)
+	release_ledger_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	result_row.add_child(release_ledger_rows)
 
 	var score_stack := _section("score", "SCORE", VisualStyle.YELLOW)
 	score_formula = _label("0 = 0", 28, VisualStyle.YELLOW)
@@ -386,7 +396,7 @@ func _layout_sections() -> void:
 	var gap: float = 5.0 if small_screen_mode else 7.0
 	var margin: float = 5.0 if small_screen_mode else 8.0
 	var buttons_h: float = 58.0 if small_screen_mode else 48.0
-	var top_h: float = floor(height * 0.17)
+	var top_h: float = floor(height * (0.22 if small_screen_mode else 0.19))
 	var bottom_h: float = floor(height * 0.245)
 	var body_bottom: float = height - margin - buttons_h - gap
 	var bottom_y: float = body_bottom - bottom_h
@@ -444,6 +454,22 @@ func _render_story(rows_value: Variant) -> void:
 		story_rows.add_child(line)
 	if rows.is_empty():
 		story_rows.add_child(_label("No money moved.", 10, VisualStyle.SOFT))
+
+
+func _render_release_ledger(ledger: Dictionary) -> void:
+	_clear(release_ledger_rows)
+	var title := _label("RUN LEDGER", 9, VisualStyle.CYAN_2)
+	release_ledger_rows.add_child(title)
+	var lines: Array = ledger.get("summary_lines", []) if typeof(ledger.get("summary_lines", [])) == TYPE_ARRAY else []
+	for line_value in lines:
+		var line_text := str(line_value)
+		var line := _label(line_text, 9, VisualStyle.SOFT)
+		line.clip_text = false
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		line.tooltip_text = line_text
+		release_ledger_rows.add_child(line)
+	if lines.is_empty():
+		release_ledger_rows.add_child(_label("No new ledger entries this run.", 9, VisualStyle.SOFT))
 
 
 func _render_items(items: Dictionary) -> void:
@@ -570,7 +596,15 @@ func debug_layout_snapshot() -> Dictionary:
 	var rects := {}
 	for key in section_panels.keys():
 		rects[str(key)] = (section_panels[key] as Control).get_rect()
-	return {"size": size, "section_rects": rects, "button_rect": button_row.get_rect(), "small_screen_mode": small_screen_mode, "reduce_motion": reduce_motion, "replay_progress": replay_progress, "replay_clock_text": replay_clock_label.text, "timeline_install_count": timeline_install_count, "has_scroll_container": _has_scroll_container(self), "bag_reward_visible": bag_reward_row.visible, "bag_reward_pending": bag_claim_button.visible, "bag_reward_choice_count": bag_reward_selector.item_count, "take_home_item_reward_visible": take_home_item_reward_row.visible, "take_home_item_reward_pending": take_home_item_claim_button.visible, "take_home_item_reward_choice_count": take_home_item_reward_selector.item_count, "take_home_item_reward_label": take_home_item_reward_label.text, "meta_reward_visible": outcome_meta_reward.visible, "meta_reward_text": outcome_meta_reward.text, "new_run_disabled": new_run_button.disabled, "home_disabled": home_button.disabled}
+	return {"size": size, "section_rects": rects, "button_rect": button_row.get_rect(), "small_screen_mode": small_screen_mode, "reduce_motion": reduce_motion, "replay_progress": replay_progress, "replay_clock_text": replay_clock_label.text, "timeline_install_count": timeline_install_count, "has_scroll_container": _has_scroll_container(self), "release_ledger_text": _release_ledger_text(), "release_ledger_line_count": maxi(0, release_ledger_rows.get_child_count() - 1), "release_ledger_rect": release_ledger_rows.get_global_rect(), "result_panel_rect": (section_panels.get("result") as Control).get_global_rect(), "bag_reward_visible": bag_reward_row.visible, "bag_reward_pending": bag_claim_button.visible, "bag_reward_choice_count": bag_reward_selector.item_count, "take_home_item_reward_visible": take_home_item_reward_row.visible, "take_home_item_reward_pending": take_home_item_claim_button.visible, "take_home_item_reward_choice_count": take_home_item_reward_selector.item_count, "take_home_item_reward_label": take_home_item_reward_label.text, "meta_reward_visible": outcome_meta_reward.visible, "meta_reward_text": outcome_meta_reward.text, "new_run_disabled": new_run_button.disabled, "home_disabled": home_button.disabled}
+
+
+func _release_ledger_text() -> String:
+	var parts: Array[String] = []
+	for child in release_ledger_rows.get_children():
+		if child is Label:
+			parts.append((child as Label).text)
+	return "\n".join(parts)
 
 
 func _has_scroll_container(node: Node) -> bool:
