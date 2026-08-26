@@ -503,3 +503,12 @@ their own detailed handoffs and test evidence.
   confines the accepted structural delta to Coin Pusher's physically settled
   state and its visited-bar world-map copy. Independent exact-head review is in
   progress; HOST and EV remain held.
+- 2026-08-26: Independent exact-head review issued
+  `ACCEPT 4b03f439be46ed76b265d67a00e4e7872d37ca69` with no P0-P3. Both
+  hashes match the sole observed actual values byte-for-byte; split provenance
+  correctly retains the `9cff9b23` travel-scalar boundary and attributes the
+  full generated pusher state to `258fd9cb`. Full environment/world-map hashing,
+  inactive-delivery preconditions and every scalar/content-hash assertion remain
+  fail-closed. No production, budget, runner, timeout or suite-selection change
+  occurred. A fresh UI rerun may start only after zero-process preflight; EV
+  remains unreleased.
