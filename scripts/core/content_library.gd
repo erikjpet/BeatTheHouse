@@ -917,8 +917,13 @@ func route(route_id: String) -> Dictionary:
 # this instead of reproducing the effective-layer + legacy-mutation census.
 func scenario_target_catalog(definition: Dictionary) -> Dictionary:
 	if definition.is_empty(): return {}
-	var archetype := environment_archetype(str(definition.get("archetype_id", "")))
-	var requested_layer := str(definition.get("layer_id", ""))
+	var archetype_id := str(definition.get("archetype_id", "")).strip_edges()
+	var requested_layer := str(definition.get("layer_id", "")).strip_edges()
+	var archetype := environment_archetype(archetype_id)
+	if archetype.is_empty():
+		var invalid_id := archetype_id if not archetype_id.is_empty() else "unknown_archetype"
+		var invalid_inventory := EnvironmentSemanticInventoryScript.invalid_catalog(invalid_id, requested_layer, ["scenario target catalog references unknown archetype %s." % (archetype_id if not archetype_id.is_empty() else "<empty>")])
+		return {"schema_version": 1, "kind": "scenario_target_catalog", "inventory": invalid_inventory, "guaranteed": {}, "possible": {}, "records": [], "provenance": {}, "event_choices": {}, "diagnostics": [], "errors": EnvironmentSemanticInventoryScript.validate(invalid_inventory)}
 	var effective := EnvironmentSemanticInventoryScript.effective_archetype(archetype, requested_layer)
 	if effective.is_empty():
 		var invalid_inventory := EnvironmentSemanticInventoryScript.for_archetype(archetype, self, requested_layer)
@@ -926,9 +931,7 @@ func scenario_target_catalog(definition: Dictionary) -> Dictionary:
 	var scenario_state := ScenarioEngineScript.initial_state(definition)
 	effective = ScenarioEngineScript.apply_to_archetype(effective, scenario_state)
 	var inventory := EnvironmentSemanticInventoryScript.for_archetype(effective, self)
-	var catalog_event_ids := _string_array(effective.get("event_pool", []))
-	var exclusive_event_id := str(_as_dict(effective.get("scenario_exclusive_opportunity", {})).get("event_id", "")).strip_edges()
-	if not exclusive_event_id.is_empty() and not catalog_event_ids.has(exclusive_event_id): catalog_event_ids.append(exclusive_event_id)
+	var catalog_event_ids := EnvironmentSemanticInventoryScript.guaranteed_event_ids(effective, self)
 	var event_choice_index := EnvironmentSemanticInventoryScript.event_choice_index(catalog_event_ids, self)
 	var alternate_layers: Dictionary = {}
 	var layers := _as_dict(archetype.get("layers", {}))

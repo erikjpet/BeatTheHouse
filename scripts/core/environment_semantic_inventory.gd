@@ -12,6 +12,13 @@ const BaseSemanticRecordsScript := preload("res://scripts/core/environment_base_
 const SCHEMA_VERSION := 1
 const COLLECTION_KEYS := ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]
 const RECORD_KEYS := ["collection", "owner_namespace", "stable_object_id", "owned_identity", "presentation_object_id", "availability", "source_kind", "source_field", "source_record_id", "record"]
+const INVENTORY_KEYS := ["schema_version", "kind", "environment_id", "layer_id", "guaranteed", "possible", "records", "presentation_ids", "provenance", "errors", "digest"]
+const INSTANCE_INVENTORY_KEYS := ["schema_version", "kind", "environment_id", "layer_id", "guaranteed", "possible", "records", "presentation_ids", "provenance", "errors", "digest", "source_provenance"]
+const PROVENANCE_RECORD_KEYS := ["source_kind", "source_field", "source_record_id", "record"]
+const SOURCE_PROVENANCE_KEYS := ["world_node_id", "archetype_id", "layout_object_rects", "game_ids", "event_ids", "item_offer_authority", "shopkeeper_offer_source_present", "service_ids", "lender_ids", "layer_ids", "route_ids", "layer_transition_ids", "casino_room_target_ids", "casino_fixture_ids", "crew_presence_ids", "home_profile", "home_container_ids", "semantic_zones", "semantic_anchors", "semantic_actors", "base_interaction_authority", "base_actor_authority"]
+const ITEM_OFFER_AUTHORITY_KEYS := ["id", "object_id"]
+const BASE_INTERACTION_AUTHORITY_KEYS := ["owner_namespace", "stable_object_id", "presentation_object_id", "normalized_hit_rect", "hit_bounds", "source_kind", "source_field", "source_record_id"]
+const BASE_ACTOR_AUTHORITY_KEYS := ["owner_namespace", "stable_object_id", "actor_id", "anchor_id", "zone_id", "behavior", "source_kind", "source_field", "source_record_id"]
 const DIAGNOSTIC_CODES := ["possible_only", "wrong_collection", "wrong_owner", "layer_mismatch", "unknown_target"]
 const SOURCE_KINDS := ["environment_archetype", "scenario_selection", "environment_instance", "environment_instance_ui", "environment_event"]
 
@@ -29,6 +36,58 @@ static func event_choice_index(event_ids: Array, library: Variant) -> Dictionary
 			if not choice_id.is_empty() and not choices.has(choice_id): choices.append(choice_id)
 		result[event_id] = choices
 	return result
+
+
+# Events are guaranteed only when generation must select them. Scenario-exclusive
+# opportunities are installed after random selection and are therefore exact too.
+static func guaranteed_event_ids(archetype: Dictionary, library: Variant = null) -> Array:
+	var pool := _selectable_event_pool(archetype, library)
+	var guaranteed: Array = []
+	for event_id in _ids(archetype.get("required_event_ids", [])):
+		if pool.has(event_id) and _event_has_uncontested_unique_class(event_id, pool, library) and not guaranteed.has(event_id): guaranteed.append(event_id)
+	if not pool.is_empty() and _minimum_count(archetype.get("event_count", 1)) >= pool.size():
+		for event_id in pool:
+			if _event_has_uncontested_unique_class(event_id, pool, library) and not guaranteed.has(event_id): guaranteed.append(event_id)
+	var exclusive_event_id := str(_dict(archetype.get("scenario_exclusive_opportunity", {})).get("event_id", "")).strip_edges()
+	if not exclusive_event_id.is_empty() and not guaranteed.has(exclusive_event_id): guaranteed.append(exclusive_event_id)
+	guaranteed.sort()
+	return guaranteed
+
+
+static func _selectable_event_pool(archetype: Dictionary, library: Variant) -> Array:
+	var pool := _ids(archetype.get("event_pool", []))
+	if library == null or not library.has_method("event"): return pool
+	var scopes := _ids(archetype.get("event_scopes", []))
+	var result: Array = []
+	for event_id in pool:
+		var definition := _dict(library.call("event", event_id))
+		if definition.is_empty() or str(definition.get("interaction_mode", "interactable")) != "interactable": continue
+		var event_scopes := _ids(definition.get("scopes", []))
+		var fits := event_scopes.has("any")
+		for scope in scopes:
+			if event_scopes.has(scope): fits = true
+		if fits: result.append(event_id)
+	return result
+
+
+# EnvironmentInstance applies unique-object filtering after selection. Without
+# reproducing seed/order resolution here, only an uncontested class is a static
+# guarantee; shared-class winners remain possible-only. Exclusive opportunities
+# are installed after that filter and are added separately above.
+static func _event_has_uncontested_unique_class(event_id: String, pool: Array, library: Variant) -> bool:
+	if library == null or not library.has_method("event"): return true
+	var definition := _dict(library.call("event", event_id))
+	var unique_class := str(definition.get("unique_object_class", "")).strip_edges()
+	if unique_class.is_empty() or bool(definition.get("allow_duplicate_unique_class", false)): return true
+	for candidate_id in pool:
+		if str(candidate_id) == event_id: continue
+		var candidate := _dict(library.call("event", str(candidate_id)))
+		if not bool(candidate.get("allow_duplicate_unique_class", false)) and str(candidate.get("unique_object_class", "")).strip_edges() == unique_class: return false
+	return true
+
+
+static func invalid_catalog(environment_id: String, layer_id: String, messages: Array) -> Dictionary:
+	return _sealed("catalog", environment_id, layer_id, _empty_collections(), _empty_collections(), {}, messages, {})
 
 
 static func effective_archetype(archetype: Dictionary, layer_id: String = "") -> Dictionary:
@@ -121,10 +180,12 @@ static func for_archetype(archetype: Dictionary, library: Variant = null, layer_
 			_add_rendered_identity(guaranteed, presentation_ids, rendered_identity, presentation_id)
 			for collection_key in ["scene_objects", "interactions"]: _set_provenance(provenance, collection_key, rendered_identity, "scenario_selection", "scenario_exclusive_opportunity.game_id", exclusive_game_id)
 	elif not exclusive_game_id.is_empty(): errors.append("scenario exclusive opportunity references unknown game %s." % exclusive_game_id)
+	var guaranteed_events := guaranteed_event_ids(selected, library)
 	for event_id in _ids(selected.get("event_pool", [])):
 		if library == null or not library.has_method("event") or not _dict(library.call("event", event_id)).is_empty():
 			var rendered_identity := "event::event:%s" % event_id
-			_add_rendered_identity(possible, presentation_ids, rendered_identity, "event:%s" % event_id)
+			var event_target := guaranteed if guaranteed_events.has(event_id) else possible
+			_add_rendered_identity(event_target, presentation_ids, rendered_identity, "event:%s" % event_id)
 			for collection_key in ["scene_objects", "interactions"]: _set_provenance(provenance, collection_key, rendered_identity, "environment_archetype", "event_pool", event_id)
 	var exclusive_event_id := str(exclusive_opportunity.get("event_id", "")).strip_edges()
 	if not exclusive_event_id.is_empty() and (library == null or not library.has_method("event") or not _dict(library.call("event", exclusive_event_id)).is_empty()):
@@ -396,12 +457,12 @@ static func _closed_id_array(value: Variant) -> bool:
 
 
 static func guaranteed_collections(inventory: Dictionary) -> Dictionary:
-	if int(inventory.get("schema_version", 0)) != SCHEMA_VERSION or str(inventory.get("digest", "")) != _digest(inventory) or not _array(inventory.get("errors", [])).is_empty(): return {}
+	if not validate(inventory).is_empty(): return {}
 	return _dict(inventory.get("guaranteed", {}))
 
 
 static func possible_collections(inventory: Dictionary) -> Dictionary:
-	if int(inventory.get("schema_version", 0)) != SCHEMA_VERSION or str(inventory.get("digest", "")) != _digest(inventory) or not _array(inventory.get("errors", [])).is_empty(): return {}
+	if not validate(inventory).is_empty(): return {}
 	return _dict(inventory.get("possible", {}))
 
 
@@ -455,16 +516,31 @@ static func diagnose_declared_targets_structured(inventory: Dictionary, declared
 
 static func validate(inventory: Dictionary) -> Array:
 	var errors: Array = []
-	if int(inventory.get("schema_version", 0)) != SCHEMA_VERSION: errors.append("semantic inventory schema_version is invalid.")
-	if str(inventory.get("kind", "")) not in ["catalog", "instance"]: errors.append("semantic inventory kind is invalid.")
-	if str(inventory.get("digest", "")) != _digest(inventory): errors.append("semantic inventory digest does not match immutable content.")
-	errors.append_array(_array(inventory.get("errors", [])))
+	var kind := str(inventory.get("kind", "")) if typeof(inventory.get("kind")) == TYPE_STRING else ""
+	var expected_inventory_keys := INSTANCE_INVENTORY_KEYS if kind == "instance" else INVENTORY_KEYS
+	if not _closed_dictionary(inventory, expected_inventory_keys, []): errors.append("semantic inventory proof envelope is not closed.")
+	if typeof(inventory.get("schema_version")) != TYPE_INT or int(inventory.get("schema_version", 0)) != SCHEMA_VERSION: errors.append("semantic inventory schema_version is invalid.")
+	if typeof(inventory.get("kind")) != TYPE_STRING or kind not in ["catalog", "instance"]: errors.append("semantic inventory kind is invalid.")
+	var environment_id := str(inventory.get("environment_id", "")) if typeof(inventory.get("environment_id")) == TYPE_STRING else ""
+	if environment_id.is_empty() or environment_id != environment_id.strip_edges(): errors.append("semantic inventory environment_id is invalid.")
+	var layer_id := str(inventory.get("layer_id", "")) if typeof(inventory.get("layer_id")) == TYPE_STRING else ""
+	if typeof(inventory.get("layer_id")) != TYPE_STRING or layer_id != layer_id.strip_edges(): errors.append("semantic inventory layer_id is invalid.")
+	if typeof(inventory.get("digest")) != TYPE_STRING or str(inventory.get("digest", "")) != _digest(inventory): errors.append("semantic inventory digest does not match immutable content.")
+	if typeof(inventory.get("errors")) != TYPE_ARRAY:
+		errors.append("semantic inventory errors must be an array of strings.")
+	else:
+		for stored_error_value in inventory.get("errors", []) as Array:
+			if typeof(stored_error_value) != TYPE_STRING or str(stored_error_value).strip_edges().is_empty(): errors.append("semantic inventory errors must contain non-empty strings.")
+			else: errors.append(str(stored_error_value))
 	var collisions: Dictionary = {}
 	var expected_records: Dictionary = {}
 	for collection_name in ["guaranteed", "possible"]:
-		var collections := _dict(inventory.get(collection_name, {}))
+		var collections := _validated_collection_map(collection_name, inventory.get(collection_name), errors)
 		for collection_key in COLLECTION_KEYS:
 			for identity_value in _array(collections.get(collection_key, [])):
+				if typeof(identity_value) != TYPE_STRING:
+					errors.append("semantic inventory %s.%s must contain only strings." % [collection_name, collection_key])
+					continue
 				var identity := str(identity_value)
 				if not _valid_identity(identity): errors.append("semantic inventory contains invalid %s identity %s." % [collection_key, identity])
 				var collision_key := "%s|%s" % [collection_key, identity]
@@ -472,19 +548,41 @@ static func validate(inventory: Dictionary) -> Array:
 				collisions[collision_key] = true
 				expected_records[collision_key] = collection_name
 	if str(inventory.get("kind", "")) == "instance":
+		for collection_key in COLLECTION_KEYS:
+			if not _array(_dict(inventory.get("possible", {})).get(collection_key, [])).is_empty(): errors.append("instance semantic inventory possible collections must be empty.")
 		expected_records.clear()
 		for collection_key in COLLECTION_KEYS:
 			for identity_value in _array(_dict(inventory.get("guaranteed", {})).get(collection_key, [])):
 				expected_records["%s|%s" % [collection_key, str(identity_value)]] = "exact"
+	var presentation_ids: Dictionary = {}
+	if typeof(inventory.get("presentation_ids")) != TYPE_DICTIONARY:
+		errors.append("semantic inventory presentation_ids must be a dictionary.")
+	else:
+		presentation_ids = inventory.get("presentation_ids") as Dictionary
+		for presentation_key_value in presentation_ids.keys():
+			var presentation_key := str(presentation_key_value) if typeof(presentation_key_value) == TYPE_STRING else ""
+			var presentation_value: Variant = presentation_ids.get(presentation_key_value)
+			if presentation_key.is_empty() or not expected_records.has(presentation_key): errors.append("semantic inventory presentation_ids contains an unknown target key.")
+			if typeof(presentation_value) != TYPE_STRING or str(presentation_value).strip_edges().is_empty(): errors.append("semantic inventory presentation_ids values must be non-empty strings.")
 	var seen_records: Dictionary = {}
-	var provenance := _dict(inventory.get("provenance", {}))
+	var provenance: Dictionary = {}
+	if typeof(inventory.get("provenance")) != TYPE_DICTIONARY:
+		errors.append("semantic inventory provenance must be a dictionary.")
+	else:
+		provenance = inventory.get("provenance") as Dictionary
+		for provenance_key_value in provenance.keys():
+			if typeof(provenance_key_value) != TYPE_STRING or not expected_records.has(str(provenance_key_value)): errors.append("semantic inventory provenance contains an unknown target key.")
+	if typeof(inventory.get("records")) != TYPE_ARRAY: errors.append("semantic inventory records must be an array.")
 	for record_value in _array(inventory.get("records", [])):
+		if typeof(record_value) != TYPE_DICTIONARY:
+			errors.append("semantic inventory record must be a dictionary.")
+			continue
 		var record := _dict(record_value)
-		if record.size() != RECORD_KEYS.size():
+		if not _closed_dictionary(record, RECORD_KEYS, []):
 			errors.append("semantic inventory record is not closed.")
 			continue
-		for key in RECORD_KEYS:
-			if not record.has(key): errors.append("semantic inventory record is missing %s." % key)
+		for string_key in ["collection", "owner_namespace", "stable_object_id", "owned_identity", "presentation_object_id", "availability", "source_kind", "source_field", "source_record_id"]:
+			if typeof(record.get(string_key)) != TYPE_STRING: errors.append("semantic inventory record %s must be a string." % string_key)
 		var collection_key := str(record.get("collection", ""))
 		var identity := str(record.get("owned_identity", ""))
 		var composite_key := "%s|%s" % [collection_key, identity]
@@ -495,14 +593,68 @@ static func validate(inventory: Dictionary) -> Array:
 		if seen_records.has(composite_key): errors.append("semantic inventory records duplicate %s." % composite_key)
 		seen_records[composite_key] = true
 		var source := _dict(provenance.get(composite_key, {}))
+		if not _closed_dictionary(source, PROVENANCE_RECORD_KEYS, []): errors.append("semantic inventory provenance record %s is not closed." % composite_key)
 		for provenance_key in ["source_kind", "source_field", "source_record_id"]:
 			if typeof(record.get(provenance_key)) != TYPE_STRING or str(record.get(provenance_key, "")).is_empty() or str(record.get(provenance_key, "")) != str(source.get(provenance_key, "")):
 				errors.append("semantic inventory record %s lacks exact provenance." % composite_key)
+			if typeof(source.get(provenance_key)) != TYPE_STRING or str(source.get(provenance_key, "")).is_empty(): errors.append("semantic inventory provenance record %s has malformed %s." % [composite_key, provenance_key])
 		if not SOURCE_KINDS.has(str(record.get("source_kind", ""))): errors.append("semantic inventory record %s has an unauthorized provenance source." % composite_key)
-		if typeof(record.get("record")) != TYPE_DICTIONARY or _canonical(record.get("record")) != _canonical(source.get("record", {})):
+		if typeof(source.get("record")) != TYPE_DICTIONARY or typeof(record.get("record")) != TYPE_DICTIONARY or _canonical(record.get("record")) != _canonical(source.get("record", {})):
 			errors.append("semantic inventory record %s payload does not match provenance." % composite_key)
+		if str(record.get("presentation_object_id", "")) != str(presentation_ids.get(composite_key, "")): errors.append("semantic inventory record %s presentation id does not match presentation_ids." % composite_key)
 	if seen_records.size() != expected_records.size(): errors.append("semantic inventory records do not cover every target exactly once.")
+	if provenance.size() != expected_records.size(): errors.append("semantic inventory provenance does not cover every target exactly once.")
+	if kind == "instance": _validate_source_provenance(inventory.get("source_provenance"), errors)
 	return errors
+
+
+static func _validated_collection_map(label: String, value: Variant, errors: Array) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		errors.append("semantic inventory %s collections must be a dictionary." % label)
+		return {}
+	var collections := value as Dictionary
+	if not _closed_dictionary(collections, COLLECTION_KEYS, []): errors.append("semantic inventory %s collections are not closed." % label)
+	for collection_key in COLLECTION_KEYS:
+		if typeof(collections.get(collection_key)) != TYPE_ARRAY: errors.append("semantic inventory %s.%s must be an array." % [label, collection_key])
+	return collections
+
+
+static func _validate_source_provenance(value: Variant, errors: Array) -> void:
+	if typeof(value) != TYPE_DICTIONARY:
+		errors.append("instance semantic inventory source_provenance must be a dictionary.")
+		return
+	var source := value as Dictionary
+	if not _closed_dictionary(source, SOURCE_PROVENANCE_KEYS, []): errors.append("instance semantic inventory source_provenance is not closed.")
+	for key in ["world_node_id", "archetype_id"]:
+		if typeof(source.get(key)) != TYPE_STRING or str(source.get(key, "")) != str(source.get(key, "")).strip_edges(): errors.append("instance semantic inventory source_provenance.%s must be a trimmed string." % key)
+	for key in ["layout_object_rects", "home_profile", "semantic_zones", "semantic_anchors"]:
+		if typeof(source.get(key)) != TYPE_DICTIONARY: errors.append("instance semantic inventory source_provenance.%s must be a dictionary." % key)
+	if typeof(source.get("shopkeeper_offer_source_present")) != TYPE_BOOL: errors.append("instance semantic inventory shopkeeper offer authority must be boolean.")
+	for key in ["game_ids", "event_ids", "service_ids", "lender_ids", "layer_ids", "route_ids", "layer_transition_ids", "casino_room_target_ids", "casino_fixture_ids", "crew_presence_ids", "home_container_ids"]:
+		if not _closed_id_array(source.get(key)): errors.append("instance semantic inventory source_provenance.%s must be a unique string array." % key)
+	if typeof(source.get("semantic_actors")) != TYPE_ARRAY:
+		errors.append("instance semantic inventory source_provenance.semantic_actors must be an array.")
+	else:
+		for actor_value in source.get("semantic_actors", []) as Array:
+			if typeof(actor_value) != TYPE_DICTIONARY: errors.append("instance semantic inventory source semantic_actors must contain dictionaries.")
+	_validate_authority_records(source.get("item_offer_authority"), ITEM_OFFER_AUTHORITY_KEYS, [], "item_offer_authority", errors)
+	_validate_authority_records(source.get("base_interaction_authority"), BASE_INTERACTION_AUTHORITY_KEYS, ["normalized_hit_rect", "hit_bounds"], "base_interaction_authority", errors)
+	_validate_authority_records(source.get("base_actor_authority"), BASE_ACTOR_AUTHORITY_KEYS, [], "base_actor_authority", errors)
+
+
+static func _validate_authority_records(value: Variant, keys: Array, dictionary_keys: Array, label: String, errors: Array) -> void:
+	if typeof(value) != TYPE_ARRAY:
+		errors.append("instance semantic inventory %s must be an array." % label)
+		return
+	for record_value in value as Array:
+		if typeof(record_value) != TYPE_DICTIONARY or not _closed_dictionary(record_value as Dictionary, keys, []):
+			errors.append("instance semantic inventory %s record is not closed." % label)
+			continue
+		var record := record_value as Dictionary
+		for key in keys:
+			if dictionary_keys.has(key):
+				if typeof(record.get(key)) != TYPE_DICTIONARY: errors.append("instance semantic inventory %s.%s must be a dictionary." % [label, key])
+			elif typeof(record.get(key)) != TYPE_STRING: errors.append("instance semantic inventory %s.%s must be a string." % [label, key])
 
 
 static func _sealed(kind: String, environment_id: String, layer_id: String, guaranteed: Dictionary, possible: Dictionary, presentation_ids: Dictionary, errors: Array, provenance: Dictionary = {}) -> Dictionary:
