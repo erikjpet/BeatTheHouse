@@ -70,6 +70,8 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	snapshot["reduce_motion"] = bool(data.get("reduce_motion", false))
 	snapshot["high_contrast"] = bool(data.get("high_contrast", false))
 	snapshot["accessibility"] = data.get("accessibility", {})
+	snapshot["scenario_layout_audit"] = _copy_dict(data.get("scenario_layout_audit", {}))
+	snapshot["scenario_layout_authority_digest"] = str(data.get("scenario_layout_authority_digest", ""))
 	snapshot["alcoholic_level"] = run_state.alcoholic_level
 	snapshot["baseline_luck"] = run_state.baseline_luck
 	snapshot["luck_modifier"] = run_state.effective_luck()

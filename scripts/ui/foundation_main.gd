@@ -7184,7 +7184,8 @@ func _on_talk_dock_occupied_rect_changed(_rect: Rect2) -> void:
 func _apply_talk_dock_environment_reserve() -> void:
 	var reserved_rect := _current_talk_dock_environment_reserved_rect()
 	if environment_canvas != null:
-		environment_canvas.set_reserved_overlay_rect(reserved_rect)
+		if environment_canvas.set_reserved_overlay_rect(reserved_rect):
+			interactable_object_view_cache_valid = false
 	if world_map_overlay_controller != null:
 		if _world_map_overlay_is_visible():
 			_position_world_map_detail_popup(_world_map_snapshot())
@@ -10354,6 +10355,8 @@ func current_screen_snapshot() -> Dictionary:
 		"world_map": _world_map_snapshot() if run_state != null else {},
 		"conclusion_animation": current_conclusion_animation_snapshot(),
 		"accessibility": current_accessibility_snapshot(),
+		"scenario_layout_audit": _copy_dict(run_state.current_environment.get("scenario_layout_audit", {})),
+		"scenario_layout_authority_digest": str(run_state.current_environment.get("scenario_layout_authority_digest", "")),
 	}
 
 
@@ -11834,7 +11837,7 @@ func _environment_view_snapshot() -> Dictionary:
 	var recent_result := _recent_result_snapshot()
 	var archetype := _current_environment_archetype()
 	var world_map_visible := world_map_overlay != null and world_map_overlay.visible
-	return EnvironmentInteractionViewModelScript.environment_snapshot(run_state, {
+	var snapshot := EnvironmentInteractionViewModelScript.environment_snapshot(run_state, {
 		"recent_result": recent_result,
 		"drunk_effect_mode": _drunk_effect_mode(),
 		"reduce_motion": _reduce_motion_enabled(),
@@ -11870,6 +11873,11 @@ func _environment_view_snapshot() -> Dictionary:
 		"outcome_object_id": _outcome_object_id(recent_result),
 		"outcome_message": _outcome_message(recent_result),
 	})
+	# Interaction projection runs while the snapshot is assembled, so attach the
+	# resulting audit after that atomic projection has completed.
+	snapshot["scenario_layout_audit"] = _copy_dict(run_state.current_environment.get("scenario_layout_audit", {}))
+	snapshot["scenario_layout_authority_digest"] = str(run_state.current_environment.get("scenario_layout_authority_digest", ""))
+	return snapshot
 
 
 func _interactable_object_view_list() -> Array:

@@ -132,6 +132,8 @@ var scene_objects_by_id_cache: Dictionary = {}
 var draw_text_width_cache: Dictionary = {}
 var fit_draw_text_cache: Dictionary = {}
 var object_animation_phase_cache: Dictionary = {}
+var actor_route_started_at_cache: Dictionary = {}
+var actor_route_time := 0.0
 var drunk_distortion_overlay: DrunkDistortionOverlay
 var drunk_effect_mode: String = "distortion"
 var last_mouse_press_msec: int = -100000
@@ -206,6 +208,7 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(foundation_snapshot.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
+	_sync_actor_route_starts()
 	overlay_repositioned_object_ids.clear()
 	_clear_draw_text_caches()
 	_rebuild_scene_object_cache()
@@ -246,6 +249,23 @@ func set_reserved_overlay_rect(global_rect: Rect2) -> bool:
 	return true
 
 
+# Exact board-space reserve consumed by scenario layout validation. This is a
+# read-only presentation snapshot and never authorizes sequence behavior.
+func scenario_layout_context() -> Dictionary:
+	var local_rect := _reserved_overlay_local_rect()
+	var board_rect := Rect2()
+	if local_rect.has_area():
+		var start := _local_to_board_position(local_rect.position)
+		var finish := _local_to_board_position(local_rect.end)
+		board_rect = Rect2(start, finish - start).intersection(Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)))
+	return {
+		"reserved_overlay_board_rect": _rect_to_snapshot(board_rect),
+		"small_screen_mode": small_screen_mode,
+		"reduce_motion": reduce_motion,
+		"production_canvas": true,
+	}
+
+
 func debug_soak_snapshot() -> Dictionary:
 	return {
 		"environment_id": environment_id,
@@ -257,6 +277,8 @@ func debug_soak_snapshot() -> Dictionary:
 		"draw_text_width_cache_size": draw_text_width_cache.size(),
 		"fit_draw_text_cache_size": fit_draw_text_cache.size(),
 		"object_animation_phase_cache_size": object_animation_phase_cache.size(),
+		"actor_route_started_at_cache_size": actor_route_started_at_cache.size(),
+		"actor_route_time": actor_route_time,
 		"background_texture_loaded": background_texture != null,
 		"scene_idle_animation_redraw_count": scene_idle_animation_redraw_count,
 		"reserved_overlay_global_rect": reserved_overlay_global_rect,
@@ -393,6 +415,9 @@ func current_view_snapshot() -> Dictionary:
 		"overlay_repositioned_object_ids": overlay_repositioned_object_ids.duplicate(),
 		"objects": _copy_array(_active_scene_objects()),
 		"object_layout": _scene_object_layout_snapshot(_active_scene_objects()),
+		"scenario_layout_audit": _copy_dictionary(foundation_snapshot.get("scenario_layout_audit", {})) if uses_foundation_snapshot else {},
+		"scenario_layout_authority_digest": str(foundation_snapshot.get("scenario_layout_authority_digest", "")) if uses_foundation_snapshot else "",
+		"scenario_layout_evidence": _scenario_layout_evidence(_active_scene_objects()),
 		"selected_info": _selected_object_info_snapshot(),
 		"drunk_effect_mode": drunk_effect_mode,
 		"drunk_distortion_visible": drunk_distortion_overlay != null and drunk_distortion_overlay.visible,
@@ -552,6 +577,7 @@ func _process(delta: float) -> void:
 	# Environment animation is presentation, not simulation. It remains alive
 	# while Pal freezes tutorial clocks and game progression.
 	flicker += scaled_delta
+	actor_route_time += scaled_delta
 	_update_camera_target_if_needed()
 	var speed := FOCUS_LERP_SPEED if camera_focus_active else ROOM_LERP_SPEED
 	var weight := _camera_lerp_weight(scaled_delta, speed)
@@ -2173,9 +2199,23 @@ func _has_scene_outcome_feedback() -> bool:
 
 
 func _active_scene_objects() -> Array:
-	if uses_foundation_snapshot:
-		return foundation_scene_objects
-	return scene_objects
+	var active := foundation_scene_objects if uses_foundation_snapshot else scene_objects
+	var has_layout_authority := false
+	for value in active:
+		if typeof(value) == TYPE_DICTIONARY and bool((value as Dictionary).get("scenario_layout_resolved", false)):
+			has_layout_authority = true
+			break
+	if not has_layout_authority:
+		return active
+	var ordered := active.duplicate()
+	ordered.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left: Dictionary = left_value if typeof(left_value) == TYPE_DICTIONARY else {}
+		var right: Dictionary = right_value if typeof(right_value) == TYPE_DICTIONARY else {}
+		var left_key := _scene_object_z_key(left)
+		var right_key := _scene_object_z_key(right)
+		return left_key < right_key if left_key != right_key else str(left.get("id", "")) < str(right.get("id", ""))
+	)
+	return ordered
 
 
 func _rebuild_scene_object_cache() -> void:
@@ -2320,6 +2360,25 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"runtime_state": (record.get("runtime_state", {}) as Dictionary).duplicate(true) if typeof(record.get("runtime_state", {})) == TYPE_DICTIONARY else {},
 			"visual_state": (record.get("visual_state", {}) as Dictionary).duplicate(true) if typeof(record.get("visual_state", {})) == TYPE_DICTIONARY else {},
 			"character_actor": (record.get("character_actor", {}) as Dictionary).duplicate(true) if typeof(record.get("character_actor", {})) == TYPE_DICTIONARY else {},
+			"owner_namespace": str(record.get("owner_namespace", "")),
+			"stable_object_id": str(record.get("stable_object_id", "")),
+			"semantic_role": str(record.get("semantic_role", "")),
+			"semantic_state": str(record.get("semantic_state", "")),
+			"semantic_appearance": str(record.get("semantic_appearance", "")),
+			"anchor_id": str(record.get("anchor_id", "")),
+			"zone_id": str(record.get("zone_id", "")),
+			"actor_id": str(record.get("actor_id", "")),
+			"actor_pose": str(record.get("actor_pose", "")),
+			"actor_behavior": str(record.get("actor_behavior", "")),
+			"actor_route_id": str(record.get("actor_route_id", "")),
+			"actor_route_points": _copy_array(record.get("actor_route_points", [])),
+			"actor_route_stage": _copy_dictionary(record.get("actor_route_stage", {})),
+			"small_screen_rect": _copy_dictionary(record.get("small_screen_rect", {})),
+			"scenario_z_order": int(record.get("scenario_z_order", index)),
+			"scenario_layout_resolved": bool(record.get("scenario_layout_resolved", false)),
+			"scenario_layout_authority_identity": str(record.get("scenario_layout_authority_identity", "")),
+			"scenario_layout_authority_digest": str(record.get("scenario_layout_authority_digest", "")),
+			"source_order": index,
 			"state_badge": str(record.get("state_badge", "")),
 			"visual_key": str(record.get("visual_key", "")),
 			"prop": str(record.get("prop", "")),
@@ -2415,6 +2474,12 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 			"type": str(object_data.get("type", "")),
 			"rect": _rect_to_snapshot(object_rect),
 			"footprint": _rect_to_snapshot(footprint),
+			"interaction_rect": _rect_to_snapshot(_interaction_rect_for_object(object_data)),
+			"label_rect": _rect_to_snapshot(_label_rect_for_object(object_rect, str(object_data.get("label", "")))),
+			"z_order": int(object_data.get("scenario_z_order", object_data.get("source_order", index))),
+			"layout_authority_identity": str(object_data.get("scenario_layout_authority_identity", "")),
+			"actor_route_stage": _copy_dictionary(object_data.get("actor_route_stage", {})),
+			"actor_route_position": _actor_route_position(object_data),
 		}
 		entries.append(entry)
 	for a in range(entries.size()):
@@ -2436,6 +2501,8 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 		"overlaps": overlaps,
 		"gap": OBJECT_LAYOUT_GAP,
 		"margin": OBJECT_LAYOUT_MARGIN,
+		"small_screen_mode": small_screen_mode,
+		"deterministic_z_order": true,
 	}
 
 
@@ -3776,6 +3843,13 @@ func _update_drunk_distortion_protected_rects() -> void:
 
 
 func _board_rect_for_object(object_data: Dictionary) -> Rect2:
+	var route_position := _actor_route_position(object_data)
+	if route_position.x >= 0.0 and route_position.y >= 0.0:
+		var route_rect := _board_rect_for_object_at_position(object_data, route_position)
+		if small_screen_mode:
+			var route_size := Vector2(maxf(route_rect.size.x, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.x), maxf(route_rect.size.y, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.y))
+			return _clamp_board_rect(Rect2(route_rect.get_center() - route_size * 0.5, route_size))
+		return route_rect
 	if small_screen_mode:
 		var small_rect := _rect_from_dict(object_data.get("small_screen_rect", {}))
 		if small_rect.has_area():
@@ -3797,6 +3871,84 @@ func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 	next_position.x = clampf(next_position.x, 0.0, maxf(0.0, board_size.x - next_size.x))
 	next_position.y = clampf(next_position.y, 0.0, maxf(0.0, board_size.y - next_size.y))
 	return Rect2(next_position, next_size)
+
+
+func _actor_route_position(object_data: Dictionary) -> Vector2:
+	var stage := _copy_dictionary(object_data.get("actor_route_stage", {}))
+	var points := _copy_array(object_data.get("actor_route_points", []))
+	if stage.is_empty() or points.size() != 2:
+		return Vector2(-1.0, -1.0)
+	var start := _vector2_from_dict(points[0], Vector2(-1.0, -1.0))
+	var endpoint := _vector2_from_dict(points[1], Vector2(-1.0, -1.0))
+	if start.x < 0.0 or endpoint.x < 0.0:
+		return Vector2(-1.0, -1.0)
+	if reduce_motion:
+		return _vector2_from_dict(stage.get("reduced_motion_endpoint", points[1]), endpoint)
+	var route_key := _actor_route_cache_key(object_data)
+	var started_at := float(actor_route_started_at_cache.get(route_key, actor_route_time))
+	var duration := maxf(0.001, float(stage.get("duration_sec", 1.0)))
+	var progress := clampf((actor_route_time - started_at) / duration, 0.0, 1.0)
+	if str(stage.get("mode", "to_endpoint")) == "ping_pong":
+		progress = 1.0 - absf(fposmod((actor_route_time - started_at) / duration, 2.0) - 1.0)
+	return start.lerp(endpoint, progress)
+
+
+func _actor_route_cache_key(object_data: Dictionary) -> String:
+	return "%s:%s" % [str(object_data.get("id", "")), JSON.stringify(object_data.get("actor_route_stage", {})).sha256_text()]
+
+
+func _sync_actor_route_starts() -> void:
+	var active: Dictionary = {}
+	for value in foundation_scene_objects:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var object_data := value as Dictionary
+		if _copy_dictionary(object_data.get("actor_route_stage", {})).is_empty():
+			continue
+		var key := _actor_route_cache_key(object_data)
+		active[key] = true
+		if not actor_route_started_at_cache.has(key):
+			actor_route_started_at_cache[key] = actor_route_time
+	for key_value in actor_route_started_at_cache.keys():
+		if not active.has(str(key_value)):
+			actor_route_started_at_cache.erase(key_value)
+
+
+func _scene_object_z_key(object_data: Dictionary) -> int:
+	if bool(object_data.get("scenario_layout_resolved", false)):
+		return 10000 + int(object_data.get("scenario_z_order", 0))
+	return int(object_data.get("source_order", 0))
+
+
+func _scenario_layout_evidence(objects: Array) -> Dictionary:
+	var entries: Array = []
+	var digests: Dictionary = {}
+	for value in objects:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var object_data := value as Dictionary
+		var identity := str(object_data.get("scenario_layout_authority_identity", ""))
+		if identity.is_empty():
+			continue
+		var digest := str(object_data.get("scenario_layout_authority_digest", ""))
+		if not digest.is_empty():
+			digests[digest] = true
+		entries.append({
+			"identity": identity,
+			"draw_rect": _rect_to_snapshot(_board_rect_for_object(object_data)),
+			"hit_rect": _rect_to_snapshot(_interaction_rect_for_object(object_data)),
+			"z_order": int(object_data.get("scenario_z_order", 0)),
+			"route_stage": _copy_dictionary(object_data.get("actor_route_stage", {})),
+			"route_position": _actor_route_position(object_data),
+		})
+	return {
+		"authority_count": entries.size(),
+		"authority_digest_count": digests.size(),
+		"objects": entries,
+		"small_screen_mode": small_screen_mode,
+		"reduce_motion": reduce_motion,
+		"reserved_overlay_board_rect": scenario_layout_context().get("reserved_overlay_board_rect", {}),
+	}
 
 
 func _board_rect_for_object_at_position(object_data: Dictionary, pos_norm: Vector2) -> Rect2:

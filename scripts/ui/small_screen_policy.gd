@@ -1,6 +1,8 @@
 class_name SmallScreenPolicy
 extends RefCounted
 
+const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
+
 # Central sizing contract for the optional phone/tablet interaction mode.
 # Keep gameplay and desktop presentation independent from these values so the
 # larger-target mode can evolve with the wider 0.5 UI rework.
@@ -8,7 +10,7 @@ extends RefCounted
 const CONTROL_TOUCH_TARGET_HEIGHT := 52.0
 const MAP_NODE_TOUCH_TARGET_SIZE := 60.0
 const SURFACE_TOUCH_HIT_SIZE := Vector2(56.0, 56.0)
-const ENVIRONMENT_OBJECT_HIT_SIZE := Vector2(104.0, 76.0)
+const ENVIRONMENT_OBJECT_HIT_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
 const ENVIRONMENT_ACTION_HEIGHT := 34.0
 const ENVIRONMENT_INLINE_ACTION_HEIGHT := 34.0
 const FONT_SCALE := 1.08
