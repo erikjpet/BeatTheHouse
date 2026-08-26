@@ -204,3 +204,13 @@ their own detailed handoffs and test evidence.
   Independent delta review returned STATIC ACCEPT FOR RUNTIME with no new
   P0-P3; empty restore remains compatible and every nonempty snapshot remains
   byte-identical. Fresh focused evidence is running.
+- 2026-08-26: Exact head `7a8db775` passed the complete focused Coin Pusher
+  suite: project validation, script loading, all contract assertions, the
+  6,240-drop legal reachability/rate sweep, persisted queues, hold and
+  accessibility behavior, and focused performance. The standalone opening
+  audit then reran to an explicit zero exit with no residual Godot process and
+  passed all three machines across four seed contexts: every lower/upper and
+  left/center/right region was occupied and contacted, no body remained awake,
+  unsupported, in the tray or gutter, and five parked motor periods were
+  byte-stable. The exclusive slot is proceeding serially through the full
+  Systems foundation gate; EV remains unreleased.
