@@ -347,3 +347,10 @@ their own detailed handoffs and test evidence.
   non-Peek cases and require normal idempotent barring; an unmarked otherwise
   eligible result also bars. Hover parity remains. Exact-head independent
   re-review is in progress; runtime stays held behind pusher HOST ownership.
+- 2026-08-26: Independent remediation re-review issued
+  `ACCEPT f577e9110b1ef28a4bbc0d0fb72e37a279ba8318` with no P0-P3.
+  Authoritative live eligibility is validated at both marker emission and
+  enforcement; hostile-marker/idempotency coverage is complete, unmarked
+  eligible results still take normal backoff, and hover harness parity remains
+  correct. This is static acceptance only. Runtime gates and merge remain held
+  behind the exclusive pusher slot.
