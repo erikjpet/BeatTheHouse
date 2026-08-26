@@ -2,6 +2,7 @@ extends RefCounted
 
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
+const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 
 
 static func interactable_object_view_list(host: Variant) -> Array:
@@ -99,20 +100,32 @@ static func interactable_object_view_list(host: Variant) -> Array:
 			host.run_state.current_environment["scenario_sequence_lifecycle_errors"] = host._copy_array(finalized.get("errors", []))
 			return []
 		result = host._copy_array(finalized.get("records", []))
-		result = project_sequence_interactions(result, host.run_state.scenario_sequence_projection())
+		result = project_sequence_interactions(
+			result,
+			host.run_state.scenario_sequence_projection(),
+			host._copy_dict(host.run_state.current_environment)
+		)
 	return result
 
 
-static func project_sequence_interactions(base_records: Array, projection: Dictionary) -> Array:
-	var semantic_state := _dict(projection.get("semantic_state", {}))
-	if not semantic_state.has("interactions") and not semantic_state.has("scene_objects"): return base_records.duplicate(true)
+static func project_sequence_interactions(base_records: Array, projection: Dictionary, environment: Dictionary = {}) -> Array:
+	var prepared := ScenarioSemanticViewModelScript.prepare_projection(base_records, projection, environment)
+	var resolved_projection := _dict(prepared.get("projection", projection))
+	var semantic_state := _dict(resolved_projection.get("semantic_state", {}))
+	if not semantic_state.has("interactions") and not semantic_state.has("scene_objects") and not semantic_state.has("actors"): return base_records.duplicate(true)
 	var semantic_interactions := _dict(semantic_state.get("interactions", {}))
 	var semantic_scene_objects := _dict(semantic_state.get("scene_objects", {}))
+	var semantic_actors := _dict(semantic_state.get("actors", {}))
+	var semantic_visuals := semantic_scene_objects.duplicate(true)
+	for actor_identity_value in semantic_actors.keys():
+		var actor_identity := str(actor_identity_value)
+		if not semantic_visuals.has(actor_identity):
+			semantic_visuals[actor_identity] = _dict(semantic_actors.get(actor_identity_value, {}))
 	var projected: Array = []
 	var consumed: Dictionary = {}
 	var used_presentation_ids: Dictionary = {}
 	var scenario_presentation_ids: Dictionary = {}
-	for collection in [semantic_scene_objects, semantic_interactions]:
+	for collection in [semantic_visuals, semantic_interactions]:
 		for semantic_value in (collection as Dictionary).values():
 			var semantic := _dict(semantic_value)
 			if str(semantic.get("owner_namespace", "")) == "scenario":
@@ -124,17 +137,18 @@ static func project_sequence_interactions(base_records: Array, projection: Dicti
 		var identity := "%s::%s" % [str(record.get("owner_namespace", "")), str(record.get("stable_object_id", ""))]
 		var presentation_id := str(record.get("object_id", ""))
 		if scenario_presentation_ids.has(presentation_id) and identity != presentation_id: continue
-		var semantic_scene := _dict(semantic_scene_objects.get(identity, {}))
+		var semantic_scene := _dict(semantic_visuals.get(identity, {}))
 		var semantic_interaction := _dict(semantic_interactions.get(identity, {}))
-		if semantic_scene_objects.has(identity) and not bool(semantic_scene.get("present", true)):
+		if semantic_visuals.has(identity) and not bool(semantic_scene.get("present", true)):
 			consumed[identity] = true
 			continue
 		if semantic_interactions.has(identity) and not bool(semantic_interaction.get("present", true)):
 			consumed[identity] = true
 			continue
-		if semantic_scene_objects.has(identity): record = _merge_projected_scene_object(record, semantic_scene)
+		if semantic_visuals.has(identity) and bool(semantic_scene.get("layout_valid", true)):
+			record = _merge_projected_visual(record, semantic_scene)
 		if not semantic_interactions.has(identity):
-			if semantic_scene_objects.has(identity):
+			if semantic_visuals.has(identity) and bool(semantic_scene.get("layout_valid", true)) and str(semantic_scene.get("owner_namespace", "")) == "scenario":
 				record["interactive"] = false
 				record["scenario_sequence_actions"] = []
 			projected.append(record)
@@ -151,18 +165,22 @@ static func project_sequence_interactions(base_records: Array, projection: Dicti
 		if consumed.has(identity): continue
 		var semantic := _dict(semantic_interactions.get(identity, {}))
 		if semantic.is_empty() or not bool(semantic.get("present", true)): continue
-		var merged := _merge_projected_interaction({}, semantic)
+		if semantic_visuals.has(identity) and not bool(_dict(semantic_visuals.get(identity, {})).get("layout_valid", true)): continue
+		var visual_base: Dictionary = {}
+		if semantic_visuals.has(identity):
+			visual_base = _merge_projected_visual({}, _dict(semantic_visuals.get(identity, {})))
+		var merged := _merge_projected_interaction(visual_base, semantic)
 		var presentation_id := str(merged.get("object_id", ""))
 		if used_presentation_ids.has(presentation_id): continue
 		pending.append(merged)
 		used_presentation_ids[presentation_id] = true
 		consumed[identity] = true
-	for identity_value in semantic_scene_objects.keys():
+	for identity_value in semantic_visuals.keys():
 		var identity := str(identity_value)
 		if consumed.has(identity): continue
-		var semantic := _dict(semantic_scene_objects.get(identity, {}))
-		if semantic.is_empty() or not bool(semantic.get("present", true)): continue
-		var merged := _merge_projected_scene_object({}, semantic)
+		var semantic := _dict(semantic_visuals.get(identity, {}))
+		if semantic.is_empty() or not bool(semantic.get("present", true)) or not bool(semantic.get("layout_valid", true)): continue
+		var merged := _merge_projected_visual({}, semantic)
 		var presentation_id := str(merged.get("object_id", ""))
 		if used_presentation_ids.has(presentation_id): continue
 		pending.append(merged)
@@ -193,13 +211,13 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary)
 	result["short_description"] = str(semantic.get("prompt", result.get("short_description", "")))
 	result["action_summary"] = str(semantic.get("prompt", result.get("action_summary", "Choose an action.")))
 	result["state_label"] = str(semantic.get("state_label", result.get("state_label", "Available")))
-	result["enabled"] = bool(semantic.get("enabled", false))
+	result["enabled"] = bool(result.get("enabled", true)) and bool(semantic.get("enabled", false))
 	result["interactive"] = true
 	result["disabled_reason"] = str(semantic.get("disabled_reason", ""))
 	result["non_color_state"] = str(semantic.get("non_color_state", result.get("non_color_state", "available")))
 	result["focus_order"] = int(semantic.get("focus_order", result.get("focus_order", 0)))
 	var normalized := _dict(semantic.get("normalized_hit_rect", {}))
-	if not normalized.is_empty():
+	if not normalized.is_empty() and not bool(result.get("scenario_layout_resolved", false)):
 		result["focus_rect"] = Rect2(float(normalized.get("x", 0.0)), float(normalized.get("y", 0.0)), float(normalized.get("w", 0.0)), float(normalized.get("h", 0.0)))
 	var actions := _array(semantic.get("available_actions", []))
 	result["available_actions"] = actions
@@ -210,6 +228,12 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary)
 		if scenario_owned or not str(action.get("action_origin_receipt_key", "")).is_empty(): sequence_actions.append(action)
 	result["scenario_sequence_actions"] = sequence_actions
 	return result
+
+
+static func _merge_projected_visual(base: Dictionary, semantic: Dictionary) -> Dictionary:
+	if str(semantic.get("semantic_kind", "")) == "actor":
+		return _merge_projected_actor(base, semantic)
+	return _merge_projected_scene_object(base, semantic)
 
 
 static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary) -> Dictionary:
@@ -230,8 +254,44 @@ static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary
 	result["visible"] = bool(semantic.get("visible", result.get("visible", true)))
 	result["interactive"] = bool(result.get("interactive", false))
 	result["scenario_sequence_actions"] = _array(result.get("scenario_sequence_actions", []))
+	result["anchor_id"] = str(semantic.get("anchor_id", result.get("anchor_id", "")))
+	result["zone_id"] = str(semantic.get("zone_id", result.get("zone_id", "")))
+	result["semantic_role"] = str(semantic.get("role", result.get("semantic_role", "prop")))
+	result["semantic_state"] = str(semantic.get("state", result.get("semantic_state", "")))
+	result["semantic_appearance"] = str(semantic.get("appearance", result.get("semantic_appearance", "")))
+	result["non_color_state"] = str(semantic.get("non_color_state", result.get("non_color_state", result.get("state_label", "Present"))))
+	result["visual_state"] = {
+		"role": result["semantic_role"],
+		"state": result["semantic_state"],
+		"appearance": result["semantic_appearance"],
+	}
 	var normalized := _dict(semantic.get("normalized_hit_rect", {}))
-	if not normalized.is_empty(): result["focus_rect"] = Rect2(float(normalized.get("x", 0.0)), float(normalized.get("y", 0.0)), float(normalized.get("w", 0.0)), float(normalized.get("h", 0.0)))
+	if not normalized.is_empty():
+		result["focus_rect"] = Rect2(float(normalized.get("x", 0.0)), float(normalized.get("y", 0.0)), float(normalized.get("w", 0.0)), float(normalized.get("h", 0.0)))
+		result["scenario_layout_resolved"] = true
+	var small_screen_rect := _dict(semantic.get("small_screen_rect", {}))
+	if not small_screen_rect.is_empty(): result["small_screen_rect"] = small_screen_rect
+	return result
+
+
+static func _merge_projected_actor(base: Dictionary, semantic: Dictionary) -> Dictionary:
+	var result := _merge_projected_scene_object(base, semantic)
+	var owner := str(semantic.get("owner_namespace", result.get("owner_namespace", "")))
+	if base.is_empty() or str(result.get("object_type", "")) == "scenario_scene_object":
+		result["object_type"] = "scenario_actor" if owner == "scenario" else "character"
+	result["visual_type"] = "character"
+	result["presence"] = "character"
+	result["short_description"] = "%s; %s" % [
+		str(semantic.get("behavior", "idle")).replace("_", " ").capitalize(),
+		str(semantic.get("pose", "idle")).replace("_", " ").capitalize(),
+	]
+	result["actor_id"] = str(semantic.get("actor_id", result.get("source_id", "")))
+	result["source_id"] = result["actor_id"]
+	result["actor_pose"] = str(semantic.get("pose", "idle"))
+	result["actor_behavior"] = str(semantic.get("behavior", "idle"))
+	result["actor_route_id"] = str(semantic.get("route_id", ""))
+	result["actor_route_points"] = _array(semantic.get("route_points", []))
+	result["character_actor"] = ScenarioSemanticViewModelScript.actor_character_model(semantic)
 	return result
 
 

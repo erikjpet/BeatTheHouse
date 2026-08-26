@@ -1891,6 +1891,7 @@ func _draw_scene_objects() -> void:
 				_draw_drink_prop(rect, selected or hovered)
 			_:
 				_draw_item_prop(rect, object_data, selected or hovered, str(object_data.get("surface", "counter")))
+		_draw_scenario_semantic_state(rect, object_data)
 		if disabled:
 			_draw_disabled_scene_mark(rect)
 		if disabled and (selected or hovered):
@@ -1901,7 +1902,7 @@ func _draw_scene_objects() -> void:
 				_draw_selected_item_frame(rect, object_type)
 		elif hovered:
 			_draw_hover_scene_mark(rect)
-		elif not disabled and not low_detail:
+		elif not disabled and not low_detail and bool(object_data.get("interactive", true)):
 			_draw_hotspot_hint(rect, object_type)
 		_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered)
 	_draw_selected_object_info()
@@ -2185,7 +2186,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			continue
 		var record: Dictionary = records[index]
 		var object_id := str(record.get("object_id", ""))
-		if object_id.is_empty():
+		if object_id.is_empty() or not bool(record.get("visible", true)):
 			continue
 		var interaction_type := str(record.get("object_type", "info"))
 		var object_type := str(record.get("visual_type", interaction_type))
@@ -2223,6 +2224,19 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"runtime_state": (record.get("runtime_state", {}) as Dictionary).duplicate(true) if typeof(record.get("runtime_state", {})) == TYPE_DICTIONARY else {},
 			"visual_state": (record.get("visual_state", {}) as Dictionary).duplicate(true) if typeof(record.get("visual_state", {})) == TYPE_DICTIONARY else {},
 			"character_actor": (record.get("character_actor", {}) as Dictionary).duplicate(true) if typeof(record.get("character_actor", {})) == TYPE_DICTIONARY else {},
+			"owner_namespace": str(record.get("owner_namespace", "")),
+			"stable_object_id": str(record.get("stable_object_id", "")),
+			"semantic_role": str(record.get("semantic_role", "")),
+			"semantic_state": str(record.get("semantic_state", "")),
+			"semantic_appearance": str(record.get("semantic_appearance", "")),
+			"anchor_id": str(record.get("anchor_id", "")),
+			"zone_id": str(record.get("zone_id", "")),
+			"actor_id": str(record.get("actor_id", "")),
+			"actor_pose": str(record.get("actor_pose", "")),
+			"actor_behavior": str(record.get("actor_behavior", "")),
+			"actor_route_id": str(record.get("actor_route_id", "")),
+			"actor_route_points": _copy_array(record.get("actor_route_points", [])),
+			"small_screen_rect": _copy_dictionary(record.get("small_screen_rect", {})),
 			"state_badge": str(record.get("state_badge", "")),
 			"visual_key": str(record.get("visual_key", "")),
 			"prop": str(record.get("prop", "")),
@@ -2262,8 +2276,8 @@ func _reserved_overlay_local_rect() -> Rect2:
 	return Rect2(minimum, maximum - minimum).grow(CONVERSATION_RESERVED_FOCUS_PADDING).intersection(Rect2(Vector2.ZERO, size))
 
 
-func _object_layout_footprint(object_data: Dictionary, position: Vector2) -> Rect2:
-	var object_rect := _board_rect_for_object_at_position(object_data, position)
+func _object_layout_footprint(object_data: Dictionary) -> Rect2:
+	var object_rect := _board_rect_for_object(object_data)
 	var footprint := object_rect.grow(OBJECT_LAYOUT_GAP)
 	return _clamp_board_rect(footprint)
 
@@ -2276,7 +2290,7 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 			continue
 		var object_data: Dictionary = objects[index]
 		var object_rect := _board_rect_for_object(object_data)
-		var footprint := _object_layout_footprint(object_data, object_data.get("position", Vector2(0.5, 0.5)))
+		var footprint := _object_layout_footprint(object_data)
 		var entry := {
 			"id": str(object_data.get("id", "")),
 			"type": str(object_data.get("type", "")),
@@ -3570,6 +3584,10 @@ func _update_drunk_distortion_protected_rects() -> void:
 
 
 func _board_rect_for_object(object_data: Dictionary) -> Rect2:
+	if small_screen_mode:
+		var small_rect := _rect_from_dict(object_data.get("small_screen_rect", {}))
+		if small_rect.size.x > 0.0 and small_rect.size.y > 0.0:
+			return Rect2(small_rect.position * Vector2(BOARD_SIZE), small_rect.size * Vector2(BOARD_SIZE))
 	return _board_rect_for_object_at_position(object_data, object_data.get("position", Vector2(0.5, 0.5)))
 
 
@@ -3764,6 +3782,33 @@ func _draw_object_label(rect: Rect2, label: String, object_type: String, disable
 	)
 
 
+func _draw_scenario_semantic_state(rect: Rect2, object_data: Dictionary) -> void:
+	var state := str(object_data.get("semantic_state", "")).strip_edges()
+	var appearance := str(object_data.get("semantic_appearance", "")).strip_edges()
+	var behavior := str(object_data.get("actor_behavior", "")).strip_edges()
+	if state.is_empty() and appearance.is_empty() and behavior.is_empty():
+		return
+	var accent := _color_for_object_type(str(object_data.get("type", "item")))
+	var line_count := 1
+	if not appearance.is_empty():
+		line_count += int(abs(str(appearance).hash()) % 3)
+	var base_y := rect.end.y - 5.0
+	for line_index in range(line_count):
+		var inset := 4.0 + float(line_index) * 3.0
+		if rect.size.x - inset * 2.0 <= 0.0:
+			break
+		draw_line(
+			Vector2(rect.position.x + inset, base_y - float(line_index) * 3.0),
+			Vector2(rect.end.x - inset, base_y - float(line_index) * 3.0),
+			Color(accent.r, accent.g, accent.b, 0.38),
+			1.0
+		)
+	if not behavior.is_empty():
+		var marker := rect.position + Vector2(7.0, 7.0)
+		draw_rect(Rect2(marker, Vector2(8.0, 8.0)), Color(accent.r, accent.g, accent.b, 0.22))
+		draw_rect(Rect2(marker, Vector2(8.0, 8.0)), Color(accent.r, accent.g, accent.b, 0.68), false, 1.0)
+
+
 func _centered_icon_rect(rect: Rect2, size: float, offset: Vector2 = Vector2.ZERO) -> Rect2:
 	var icon_size := Vector2(size, size)
 	return Rect2(rect.position + rect.size * 0.5 - icon_size * 0.5 + offset, icon_size)
@@ -3945,6 +3990,9 @@ func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
 func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: bool, clock: float) -> Dictionary:
 	var model: Dictionary = member.get("model", {}) if typeof(member.get("model", {})) == TYPE_DICTIONARY else {}
 	var cycle := fposmod(clock, 4.2) / 4.2
+	var authored_pose := str(member.get("pose", actor.get("pose", ""))).strip_edges()
+	if authored_pose.is_empty():
+		authored_pose = "watching" if fposmod(clock, 2.8) > 1.9 else "idle"
 	return {
 		"name": "",
 		"skin": C_DARK_3 if faceless else _character_actor_color(model, "skin_color", Color("#c49371")),
@@ -3952,7 +4000,7 @@ func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: boo
 		"jacket": C_SHADOW if faceless else _character_actor_color(model, "jacket_color", _character_actor_color(actor, "jacket_color", C_BLUE)),
 		"accent": C_SOFT if faceless else _character_actor_color(model, "accent_color", C_CYAN_2),
 		"role": str(member.get("role", actor.get("role", "staff"))),
-		"pose": "watching" if fposmod(clock, 2.8) > 1.9 else "idle",
+		"pose": authored_pose,
 		"eye_offset": 0.0 if reduce_motion else sin(clock * 0.72) * 0.55,
 		"blink": false if reduce_motion else cycle > 0.92 and cycle < 0.975,
 		"holding_card": false,
