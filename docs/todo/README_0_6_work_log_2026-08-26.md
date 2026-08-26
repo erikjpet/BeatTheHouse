@@ -6,7 +6,7 @@ contains the historical Work Log moved verbatim by
 claim, block, completion and unblock entries append here; task state and
 the binding protocol remain on the active board.
 
-Preserved entries: **124**; current entries: **128**. Use the exact find token
+Preserved entries: **124**; current entries: **129**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -15,7 +15,7 @@ below to jump to a row's history.
 | --- | ---: | --- |
 | `art06_1` | 4 | `[art06_1]` |
 | `board` | 1 | `[board]` |
-| `board06_1` | 3 | `[board06_1]` |
+| `board06_1` | 4 | `[board06_1]` |
 | `chain06_1` | 1 | `[chain06_1]` |
 | `concurrency correction` | 1 | `[concurrency correction]` |
 | `content06_1` | 2 | `[content06_1]` |
@@ -825,6 +825,8 @@ below to jump to a row's history.
   instructions. Superseded and false-premise rows are archived, not deleted.
 
 - 2026-08-26 [board06_1] Semantic transplant preserved newer main truth and excluded the entangled source branch's polish payload; `polish06_0` remains TODO and unlanded while the source branch stays intact as provenance.
+
+- 2026-08-26 [board06_1] DONE. Independent review accepted `bf4fbc46`; the exact three-document semantic payload landed through integration `3c8139ce` to main `70eaaf80`. The split preserves 170/170 decisions and all 124 historical work entries, with current entries now 129; links, indexes, program rows and owner-question verdicts were verified. Post-land validation and corrected native-backed Smoke passed. The ignored owner UID and all owner artifacts were untouched; cleanup remains pending while evidence worktrees are retained.
 
 - 2026-08-25 [env06_6] Primary integrator claimed the dynamic scenario runtime
   on the isolated depth-program integration line. Initial runtime, catalog,
