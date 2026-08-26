@@ -672,3 +672,11 @@ their own detailed handoffs and test evidence.
   remains exactly the approved nine paths. Static validation and AST/Node/scope/
   trace-map checks pass with no author P1/P2. Fresh independent exact-head review
   is active; host, board, merge and formal acceptance remain withheld.
+- 2026-08-26: Independent exact-head review issued
+  `ACCEPT 54d8083a4faeb4d894078c6ffab3e876bcddddf0` with no P0-P3. The
+  `.gdignore` blob exactly matches accepted `e4a7be3f`, every fix06_4 blob is
+  unchanged, export scope already excluded review artifacts and exhaustive
+  consumer checks confirm Godot/offline tools use direct filesystem APIs. The
+  only residual risk is the pre-existing 325MB imported cache; it must be moved
+  recoverably and replaced by a clean post-marker import before focused,
+  Contracts and full-smoke timing evidence is valid.
