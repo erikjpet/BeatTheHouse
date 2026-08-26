@@ -209,6 +209,28 @@ the owner's playtest is expected to change.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | fix06_1 | `fix06_1_dead_event_interactions_prompt.md` | DONE | env06_2, env06_3 (landed) | crew06_5+ inherit the class guard | Codex | 2026-08-14 | 2026-08-14 | Generic synthesized-speaker fix; 99-event audit shifted only 3 beach events; permanent generated-environment guard, systems/UI/all, determinism, and visual QA PASS. |
 
+### Family 3 — Cross-cutting completion (2026-08-25)
+
+Work the board never covered: the update being visible between runs, the
+combined economy, teaching what 0.6 became, the sound of the reworked surfaces,
+whether a real 0.5 save survives all of 0.6 at once, whether it still runs on
+Web and low-end, whether the playtest gate still describes the thing being
+playtested, and what the second half of 0.6 is. Launcher:
+`cross06_0_cross_cutting_orchestration_prompt.md`.
+
+| ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| meta06_1 | `meta06_1_career_run_report_surfacing_prompt.md` | IN_PROGRESS | — | — | PM:Codex/sub:meta | 2026-08-25 | — | Wave 1 claimed on the immutable cross-cutting integration line. Reporting only; no new cross-run progression. |
+| balance06_1 | `balance06_1_cross_system_economy_audit_prompt.md` | IN_PROGRESS | — | polish balance pass | PM:Codex/sub:balance | 2026-08-25 | — | Wave 1 audit claimed. Measures and proposes only; no product tuning is authorized. |
+| board06_1 | `board06_1_board_hygiene_prompt.md` | IN_PROGRESS | — | — | PM:Codex | 2026-08-25 | — | Wave 1 claimed by the primary single-writer; structural work and merge remain coordination-gated. |
+| pusherv3_11 | `pusherv3_11_pusher_program_closure_audit_prompt.md` | TODO | pusherv3_10 | pusher closure | — | — | — | First audit of the V3 machine as a program across ten rows. Pillar 4 fidelity, EV bands, parity, code health. |
+| audio06_1 | `audio06_1_surface_sfx_pass_prompt.md` | TODO | Families 1 and 2 rituals landed | — | — | — | — | The SFX manifest holds one profile (the pusher). Music stays external; this row writes the handoff delta. |
+| integ06_1 | `integ06_1_composition_migration_soak_prompt.md` | TODO | Families 1 and 2 merged | playtest06_2 | — | — | — | 0.5→0.6 migration matrix, maximal-node composition, full-run soaks on both platforms. |
+| perf06_1 | `perf06_1_performance_platform_pass_prompt.md` | TODO | Families 1 and 2 merged | playtest06_2 | — | — | — | First project-wide pass since the pusher physics and scenario runtime. Idle 0.000 without a liveness counter is a failure. |
+| teach06_2 | `teach06_2_teaching_pass_two_prompt.md` | TODO | depth06_1, game06_8, world06_7 | — | — | — | — | Audit all 63 lessons for staleness, then teach the systems that have none. |
+| playtest06_2 | `playtest06_2_playtest_gate_refresh_prompt.md` | TODO | integ06_1, perf06_1 | owner playtest | — | — | — | Amends `playtest06_1` in place: real dependency list, named seeds, playtest script, finding-capture format. |
+| polish06_0 | `polish06_0_post_playtest_program_prompt.md` | IN_PROGRESS | — | the parked second half | PM:Codex/sub:polish | 2026-08-25 | — | Wave 1 claimed. Delivers parked prompts and a program document; performs no polish or release activity. |
+
 ### The owner playtest is the terminus of this board
 
 Superseded plan note: the playtest was originally a mid-wave
@@ -1605,6 +1627,17 @@ What happens then is the owner's, not an agent's:
   unchanged solver digest remain before integration.
 
 ## Work Log
+
+- 2026-08-25 [meta06_1] Primary integrator claimed the between-run reporting
+  row on `codex/cross-meta` and assigned an isolated implementation owner.
+- 2026-08-25 [balance06_1] Primary integrator claimed the cross-system economy
+  audit on `codex/cross-balance`; the branch may measure and propose but never
+  tune product values.
+- 2026-08-25 [board06_1] Primary integrator claimed the board-hygiene row on
+  `codex/cross-board`; active-board edits remain primary-only and the structural
+  merge remains held for the required quiet window.
+- 2026-08-25 [polish06_0] Primary integrator claimed the parked second-half
+  program on `codex/cross-polish`; no generated row may be started or scheduled.
 
 - 2026-08-18 [content06_1] Owner selected the already-verified within-run
   souvenir interpretation. PM completed and archived the row; `playtest06_1`
