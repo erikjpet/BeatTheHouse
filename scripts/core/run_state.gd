@@ -13676,9 +13676,11 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	if sequence_state.is_empty():
 		environment.erase("scenario_sequence_state")
 		environment.erase("scenario_sequence_projection")
+		environment.erase("scenario_render_snapshot")
 	else:
 		environment["scenario_sequence_state"] = sequence_state
 		environment["scenario_sequence_projection"] = _copy_dict(environment.get("scenario_sequence_projection", {}))
+		environment["scenario_render_snapshot"] = _copy_dict(environment.get("scenario_render_snapshot", {}))
 	if environment.has("scenario_sequence_migration"):
 		environment["scenario_sequence_migration"] = _copy_dict(environment.get("scenario_sequence_migration", {}))
 	_normalize_environment_layers(environment)

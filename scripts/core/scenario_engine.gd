@@ -5,6 +5,7 @@ const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_run
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const SequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 
 # Deterministic scenario overlays. Selection belongs to RunGenerator; this
 # module only builds and advances the selected node-owned state.
@@ -152,7 +153,7 @@ static func ensure_sequence_state(environment: Dictionary, definition: Dictionar
 	elif str(state.get("node_id", "")) != node_id and _sequence_state_can_bind_initial_node(state, environment):
 		state["node_id"] = node_id
 	environment["scenario_sequence_state"] = state
-	environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(state, definition)
+	_refresh_sequence_snapshots(environment, definition)
 	return state.duplicate(true)
 
 
@@ -164,7 +165,7 @@ static func sequence_command(environment: Dictionary, definition: Dictionary, co
 	var result := SequenceRuntimeScript.apply_command(state, definition, command, context)
 	var next := _copy_dict(result.get("state", state))
 	environment["scenario_sequence_state"] = next
-	environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(next, definition)
+	_refresh_sequence_snapshots(environment, definition)
 	result["state"] = next.duplicate(true)
 	return result
 
@@ -177,7 +178,7 @@ static func enqueue_sequence_fact(environment: Dictionary, definition: Dictionar
 	var result := SequenceRuntimeScript.enqueue_fact(state, definition, fact)
 	var next := _copy_dict(result.get("state", state))
 	environment["scenario_sequence_state"] = next
-	environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(next, definition)
+	_refresh_sequence_snapshots(environment, definition)
 	result["state"] = next.duplicate(true)
 	return result
 
@@ -190,7 +191,7 @@ static func flush_sequence_facts(environment: Dictionary, definition: Dictionary
 	var result := SequenceRuntimeScript.flush_facts(state, definition, boundary_serial)
 	var next := _copy_dict(result.get("state", state))
 	environment["scenario_sequence_state"] = next
-	environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(next, definition)
+	_refresh_sequence_snapshots(environment, definition)
 	result["state"] = next.duplicate(true)
 	return result
 
@@ -209,7 +210,7 @@ static func sequence_reentry(environment: Dictionary, definition: Dictionary, vi
 	var result := SequenceRuntimeScript.apply_reentry(state, definition, visit_id)
 	if bool(result.get("ok", false)):
 		environment["scenario_sequence_state"] = _copy_dict(result.get("state", state))
-		environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(environment["scenario_sequence_state"], definition)
+		_refresh_sequence_snapshots(environment, definition)
 	return result
 
 
@@ -221,7 +222,7 @@ static func sequence_expiry(environment: Dictionary, definition: Dictionary, bou
 	var result := SequenceRuntimeScript.apply_expiry(state, definition, boundary, boundary_serial)
 	if bool(result.get("ok", false)):
 		environment["scenario_sequence_state"] = _copy_dict(result.get("state", state))
-		environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(environment["scenario_sequence_state"], definition)
+		_refresh_sequence_snapshots(environment, definition)
 	return result
 
 
@@ -233,8 +234,26 @@ static func drain_sequence_transitions(environment: Dictionary, definition: Dict
 	var result := SequenceRuntimeScript.drain_transitions(state, definition, reduced_motion)
 	if bool(result.get("ok", false)):
 		environment["scenario_sequence_state"] = _copy_dict(result.get("state", state))
-		environment["scenario_sequence_projection"] = SequenceRuntimeScript.public_projection(environment["scenario_sequence_state"], definition)
+		_refresh_sequence_snapshots(environment, definition)
 	return result
+
+
+static func refresh_sequence_snapshots(environment: Dictionary, definition: Dictionary = {}) -> Dictionary:
+	definition = sequence_definition_for_environment(environment, definition)
+	return _refresh_sequence_snapshots(environment, definition)
+
+
+static func _refresh_sequence_snapshots(environment: Dictionary, definition: Dictionary) -> Dictionary:
+	var state := SequenceRuntimeScript.normalize_state(environment.get("scenario_sequence_state", {}), definition)
+	if state.is_empty():
+		environment.erase("scenario_sequence_projection")
+		environment.erase("scenario_render_snapshot")
+		return {}
+	var projection := SequenceRuntimeScript.public_projection(state, definition)
+	var render_snapshot := ScenarioLayoutResolverScript.prepare(environment, projection)
+	environment["scenario_sequence_projection"] = projection
+	environment["scenario_render_snapshot"] = render_snapshot
+	return render_snapshot.duplicate(true)
 
 
 static func validate_sequence_definition(definition: Dictionary, references: Dictionary = {}) -> Array:

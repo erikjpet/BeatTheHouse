@@ -1,5 +1,7 @@
 extends RefCounted
 
+const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
+
 
 static func interactable_object_view_list(host: Variant) -> Array:
 	if host.run_state == null or host.library == null:
@@ -57,14 +59,15 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var event_id := str((event_value as Dictionary).get("id", ""))
 		if event_id != "numbers_desk" and not contact_event_ids.has(event_id):
 			event_options.append(event_value)
-	return host.EnvironmentInteractionViewModelScript.interactable_object_view_list(host.run_state, host.library, {
+	var selection := {
+		"hover_target_id": host.hover_target_id,
+		"focus_target_id": host.focus_target_id,
+		"selected_object_id": host.selected_object_id,
+	}
+	var base_records := host.EnvironmentInteractionViewModelScript.interactable_object_view_list(host.run_state, host.library, {
 		"run_failed_without_recovery": failed,
 		"failed_reason": failed_reason,
-		"selection": {
-			"hover_target_id": host.hover_target_id,
-			"focus_target_id": host.focus_target_id,
-			"selected_object_id": host.selected_object_id,
-		},
+		"selection": selection,
 		"layout": host._current_environment_layout(),
 		"risk_cue": host._risk_cue_text(),
 		"game_sources": game_sources,
@@ -85,6 +88,12 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_locked": host._closing_time_blocks_environment_actions(),
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	})
+	var composed := ScenarioSemanticViewModelScript.compose(
+		base_records,
+		host._copy_dict(host.run_state.current_environment.get("scenario_render_snapshot", {})),
+		selection
+	)
+	return host._copy_array(composed.get("records", base_records))
 
 
 static func crew_presence_interactable_objects(host: Variant, event_options: Array = []) -> Array:

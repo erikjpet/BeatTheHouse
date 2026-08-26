@@ -43,6 +43,7 @@ const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
 const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
 const CONTEXT_MODE_NUMBERS := "numbers"
 const CONTEXT_MODE_DELIVERY := "delivery"
+const CONTEXT_MODE_SCENARIO := "scenario"
 const META_LOCATION_HOME := "home"
 const META_LOCATION_START_RUN := "start_run"
 const RUN_INFO_BAND_RATIO := 0.10
@@ -7313,6 +7314,7 @@ func _render_start_screen() -> void:
 
 func _render_environment_screen() -> void:
 	_ensure_run_ui_built()
+	var scenario_transition_message := _consume_scenario_transitions()
 	if current_screen == SCREEN_START:
 		_set_current_screen(SCREEN_ENVIRONMENT)
 	start_screen.visible = false
@@ -7349,6 +7351,8 @@ func _render_environment_screen() -> void:
 	_schedule_action_panel_refresh()
 	_refresh_world_map_overlay()
 	_update_procedural_music()
+	if not scenario_transition_message.is_empty():
+		_show_message(scenario_transition_message)
 
 
 func _refresh_world_header(selected_world_object_override: Dictionary = {}) -> void:
@@ -8113,6 +8117,30 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_context_service_actions(card, source_id)
 		CONTEXT_MODE_LENDER:
 			_add_context_lender_actions(card, source_id)
+		CONTEXT_MODE_SCENARIO:
+			_add_context_scenario_actions(card, object_data)
+	if not _copy_array(object_data.get("scenario_augmented_inline_actions", [])).is_empty():
+		_add_context_scenario_actions(card, {"inline_actions": object_data.get("scenario_augmented_inline_actions", [])})
+
+
+func _add_context_scenario_actions(card: VBoxContainer, object_data: Dictionary) -> void:
+	for action_value in _copy_array(object_data.get("inline_actions", [])):
+		var action := _copy_dict(action_value)
+		if action.is_empty():
+			continue
+		var command_id := str(action.get("scenario_command_id", action.get("id", ""))).strip_edges()
+		if command_id.is_empty():
+			continue
+		var label := str(action.get("label", command_id.replace("_", " ").capitalize()))
+		var cost := maxi(0, int(action.get("cost", 0)))
+		if cost > 0:
+			label = "%s ($%d)" % [label, cost]
+		var button := _add_card_button(card, label, Callable(self, "_activate_scenario_action").bind(
+			str(action.get("scenario_owner_namespace", object_data.get("scenario_owner_namespace", "scenario"))),
+			str(action.get("scenario_stable_object_id", object_data.get("scenario_stable_object_id", ""))),
+			command_id
+		), not bool(action.get("enabled", true)), true)
+		button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 
 
 func _add_game_object_context_details(card: VBoxContainer, game_id: String) -> void:
@@ -9830,6 +9858,8 @@ func activate_interactable_object(object_id: String) -> bool:
 		return false
 	if _is_meta_session():
 		return _activate_meta_interactable_object(object_id)
+	if object_id.begins_with("scenario_action:"):
+		return _activate_scenario_action_token(object_id)
 	if object_id == "travel:leave":
 		var direct_room_exit := _local_parent_home_door_travel_choice(_parent_home_parent_target_id())
 		if not direct_room_exit.is_empty():
@@ -9940,9 +9970,78 @@ func activate_interactable_object(object_id: String) -> bool:
 			if select_lender_hook(source_id):
 				return confirm_selected_lender_hook()
 			return false
+		CONTEXT_MODE_SCENARIO:
+			return _activate_scenario_action(
+				str(object_data.get("scenario_owner_namespace", "scenario")),
+				str(object_data.get("scenario_stable_object_id", "")),
+				str(object_data.get("scenario_command_id", object_data.get("confirm_action_id", "")))
+			)
 	_show_message("Inspect this first.")
 	_refresh()
 	return false
+
+
+func _activate_scenario_action_token(token: String) -> bool:
+	for object_value in _interactable_object_view_list():
+		var object_data := _copy_dict(object_value)
+		for action_value in _copy_array(object_data.get("inline_actions", [])):
+			var action := _copy_dict(action_value)
+			if str(action.get("emit_object_id", "")) != token:
+				continue
+			return _activate_scenario_action(
+				str(action.get("scenario_owner_namespace", object_data.get("scenario_owner_namespace", "scenario"))),
+				str(action.get("scenario_stable_object_id", object_data.get("scenario_stable_object_id", ""))),
+				str(action.get("scenario_command_id", action.get("id", "")))
+			)
+	_show_message("That room action is no longer available.")
+	_refresh()
+	return false
+
+
+func _activate_scenario_action(owner_namespace: String, stable_object_id: String, command_id: String) -> bool:
+	if run_state == null or stable_object_id.strip_edges().is_empty() or command_id.strip_edges().is_empty():
+		return false
+	var sequence_state := _copy_dict(run_state.current_environment.get("scenario_sequence_state", {}))
+	var serial := _copy_array(sequence_state.get("command_receipts", [])).size()
+	var idempotency_key := "ui:%s:%s:%s:%d" % [owner_namespace, stable_object_id, command_id, serial]
+	var result := run_state.scenario_sequence_command(command_id, idempotency_key, {}, owner_namespace, stable_object_id)
+	if not bool(result.get("ok", false)):
+		var errors := _copy_array(result.get("errors", []))
+		_show_message(str(errors[0]) if not errors.is_empty() else "That room action could not be completed.")
+		_refresh()
+		return false
+	var cost := maxi(0, int(result.get("cost", 0)))
+	run_state.advance_environment_turns(1)
+	var transition_message := _consume_scenario_transitions()
+	var projection := run_state.scenario_sequence_projection()
+	var message := transition_message
+	if message.is_empty():
+		message = str(projection.get("last_feedback", "Room state updated."))
+	if cost > 0:
+		message = "%s Paid $%d." % [message, cost]
+	clear_interaction_focus()
+	_show_message(message)
+	_autosave_foundation_run("Room sequence saved.")
+	_refresh()
+	return true
+
+
+func _consume_scenario_transitions() -> String:
+	if run_state == null or not run_state.scenario_sequence_active():
+		return ""
+	var drained := run_state.scenario_drain_transitions(_reduce_motion_enabled())
+	if not bool(drained.get("ok", false)):
+		return ""
+	var messages: Array[String] = []
+	for transition_value in _copy_array(drained.get("transitions", [])):
+		var transition := _copy_dict(transition_value)
+		var cue_id := str(transition.get("cue_id", "")).strip_edges()
+		if not cue_id.is_empty():
+			_play_environment_audio_cue(cue_id)
+		var message := str(transition.get("message", "")).strip_edges()
+		if not message.is_empty() and not messages.has(message):
+			messages.append(message)
+	return " ".join(messages)
 
 
 func _complete_delivery_handoff(node_id: String) -> bool:
