@@ -156,3 +156,11 @@ their own detailed handoffs and test evidence.
   tree was stopped and rejected, zero processes were verified, and the pusher
   task ended its long-running turn in an idle HOLD state to cancel any remaining
   task-owned queue before another observation window.
+- 2026-08-26: The active `fix06_1` task identified itself as the owner of the
+  repeated non-canonical launches and stopped all runtime work. It also exposed
+  the newer `codex/pusherv3_10-closure` line: physical-settlement correction
+  `258fd9cb`, actual-GL sequence evidence `2cc48218`, and two pusher-owned dirty
+  test/audit paths. Therefore `a0d2b6ff` is not the final audit base. Closure
+  authorship transferred to that task for a clean static commit/self-review;
+  the earlier pusher task is idle, all killed EV outputs remain rejected, and
+  HOST stays held pending exact-head independent review and integration.
