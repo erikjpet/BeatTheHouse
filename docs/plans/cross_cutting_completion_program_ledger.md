@@ -1117,3 +1117,14 @@ their own detailed handoffs and test evidence.
   This is a deterministic extension-registration lifecycle prerequisite, not a
   flaky rerun: next safe step is normal import, require the extension list to
   name the exact descriptor, then run one fresh native smoke before Contract.
+- 2026-08-26: Normal import registers exactly the generic descriptor in 21.238s;
+  fresh native smoke passes in 3.617s with `native_available=true`, backend
+  `native_v3`, all three machines and zero failures. Native-backed Foundation
+  Contract then passes at 213.999s <= 230.391 with zero stderr, proving the
+  prior timeout was the missing artifact. The overall Contract workflow stops
+  red only at its trailing UI gate (48.838s <= 124.851): inactive-delivery
+  scalars all remain exact, while expected `current_environment`/`world_map`
+  hashes `cc863d...`/`69f0ec...` differ from exact native restored-baseline
+  values `3905d124...`/`4a5dd092...`. No golden edit, rerun or top-level Smoke
+  occurred. Exact head and DLL remain clean/unchanged; host is zero/HOLD. A
+  read-only exact structural-delta review is required before any refresh.
