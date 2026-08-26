@@ -14349,7 +14349,7 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	var raw_sequence_state: Variant = environment.get("scenario_sequence_state", {})
 	var sequence_state := _copy_dict(raw_sequence_state)
 	var sequence_state_errors := ScenarioOperationRegistryScript.validate_bounded_variant("persisted scenario sequence state", raw_sequence_state) if has_persisted_sequence else []
-	var sequence_identity_valid := typeof(raw_sequence_state) == TYPE_DICTIONARY and not sequence_state.is_empty() and typeof(sequence_state.get("schema_version")) == TYPE_INT and int(sequence_state.get("schema_version", 0)) == ScenarioSequenceRuntimeScript.STATE_SCHEMA_VERSION and typeof(sequence_state.get("scenario_id")) == TYPE_STRING and not str(sequence_state.get("scenario_id", "")).strip_edges().is_empty()
+	var sequence_identity_valid := typeof(raw_sequence_state) == TYPE_DICTIONARY and not sequence_state.is_empty() and typeof(sequence_state.get("schema_version")) == TYPE_INT and int(sequence_state.get("schema_version", 0)) == ScenarioSequenceRuntimeScript.STATE_SCHEMA_VERSION and typeof(sequence_state.get("scenario_id")) == TYPE_STRING and not str(sequence_state.get("scenario_id", "")).strip_edges().is_empty() and ScenarioSequenceRuntimeScript._persisted_collections_within_limits(sequence_state)
 	if has_persisted_sequence and (not sequence_state_errors.is_empty() or not sequence_identity_valid):
 		environment.erase("scenario_sequence_state")
 		environment.erase("scenario_sequence_projection")
@@ -14418,6 +14418,20 @@ static func _normalize_environment_layers(environment: Dictionary) -> void:
 	for state_id_value in states.keys():
 		var body := _copy_dict(states.get(state_id_value, {}))
 		body.erase("layer_states")
+		if body.has("scenario_sequence_state"):
+			var raw_layer_sequence_state: Variant = body.get("scenario_sequence_state", {})
+			var layer_sequence_state := _copy_dict(raw_layer_sequence_state)
+			var layer_sequence_valid := typeof(raw_layer_sequence_state) == TYPE_DICTIONARY \
+				and not layer_sequence_state.is_empty() \
+				and ScenarioOperationRegistryScript.validate_bounded_variant("persisted layer scenario sequence state", raw_layer_sequence_state).is_empty() \
+				and typeof(layer_sequence_state.get("schema_version")) == TYPE_INT \
+				and int(layer_sequence_state.get("schema_version", 0)) == ScenarioSequenceRuntimeScript.STATE_SCHEMA_VERSION \
+				and typeof(layer_sequence_state.get("scenario_id")) == TYPE_STRING \
+				and not str(layer_sequence_state.get("scenario_id", "")).strip_edges().is_empty() \
+				and ScenarioSequenceRuntimeScript._persisted_collections_within_limits(layer_sequence_state)
+			if not layer_sequence_valid:
+				body.erase("scenario_sequence_state")
+				body["scenario_sequence_migration_error"] = "Persisted dynamic room sequence state is malformed, unsupported, or overbound; explicit migration is required."
 		states[str(state_id_value)] = body
 	environment["layer_states"] = states
 	environment["layer_ambient_lines"] = _string_array(_copy_array(environment.get("layer_ambient_lines", [])))
