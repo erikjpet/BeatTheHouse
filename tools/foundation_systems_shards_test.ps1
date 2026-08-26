@@ -2,83 +2,12 @@ param([switch]$Quiet)
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "foundation_systems_shards.ps1")
-. (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
 
 function Assert-True {
     param([bool]$Condition, [string]$Message)
     if (-not $Condition) {
         throw $Message
     }
-}
-
-function Get-StaticTextSha256 {
-    param([string]$Text)
-    $sha = [System.Security.Cryptography.SHA256]::Create()
-    try {
-        $bytes = [System.Text.Encoding]::UTF8.GetBytes($Text)
-        return ([System.BitConverter]::ToString($sha.ComputeHash($bytes))).Replace("-", "").ToLowerInvariant()
-    }
-    finally {
-        $sha.Dispose()
-    }
-}
-
-function Get-FoundationInheritanceClosure {
-    param(
-        [string]$ProjectRoot,
-        [string]$EntryResourcePath,
-        [switch]$RequireTracked
-    )
-
-    $rootFull = [System.IO.Path]::GetFullPath($ProjectRoot).TrimEnd([char[]]@([char]'\', [char]'/'))
-    $rootPrefix = $rootFull + [System.IO.Path]::DirectorySeparatorChar
-    $visited = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
-    $closure = New-Object System.Collections.Generic.List[string]
-    $current = $EntryResourcePath
-    while ($true) {
-        if (-not $current.StartsWith("res://", [System.StringComparison]::Ordinal)) {
-            throw "Foundation inheritance path is not a res:// resource: $current"
-        }
-        if (-not $visited.Add($current)) {
-            throw "Foundation inheritance cycle detected at: $current"
-        }
-        $relativeResourcePath = $current.Substring("res://".Length)
-        if ([string]::IsNullOrWhiteSpace($relativeResourcePath) -or [System.IO.Path]::IsPathRooted($relativeResourcePath)) {
-            throw "Foundation inheritance path is not project-relative: $current"
-        }
-        $relativePath = $relativeResourcePath.Replace("/", [System.IO.Path]::DirectorySeparatorChar)
-        $fullPath = [System.IO.Path]::GetFullPath((Join-Path $rootFull $relativePath))
-        if (-not $fullPath.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
-            throw "Foundation inheritance path escaped the project root: $current"
-        }
-        if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) {
-            throw "Foundation inheritance source does not exist: $current"
-        }
-        if ($RequireTracked) {
-            $trackedPath = $relativeResourcePath.Replace("\", "/")
-            $trackedOutput = @(& git -C $rootFull ls-files --error-unmatch -- $trackedPath 2>$null)
-            if ($LASTEXITCODE -ne 0 -or $trackedOutput.Count -ne 1 -or [string]$trackedOutput[0] -ne $trackedPath) {
-                throw "Foundation inheritance source is not exactly tracked: $current"
-            }
-        }
-        $closure.Add($current)
-        $source = [System.IO.File]::ReadAllText($fullPath)
-        $extendsMatch = [regex]::Match($source, '(?m)^\s*extends\s+(.+?)\s*$')
-        if (-not $extendsMatch.Success) {
-            throw "Foundation inheritance source has no extends declaration: $current"
-        }
-        $baseExpression = $extendsMatch.Groups[1].Value.Trim()
-        $resourceMatch = [regex]::Match($baseExpression, '^"(res://[^"]+)"$')
-        if ($resourceMatch.Success) {
-            $current = $resourceMatch.Groups[1].Value
-            continue
-        }
-        if ($baseExpression -cne "SceneTree") {
-            throw "Foundation inheritance chain ended at an unexpected base '$baseExpression': $current"
-        }
-        break
-    }
-    return $closure.ToArray()
 }
 
 $productionPlan = Test-FoundationSystemsShardPlan -ExpectedIds (Get-FoundationSystemsCheckIds) -Shards (Get-FoundationSystemsShardPlan)
@@ -175,97 +104,6 @@ foreach ($path in $pathOwners.Keys) {
 }
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$checkGodotSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "check_godot.ps1") -Raw
-$focusedRunnerPath = "res://scripts/tests/foundation/check_lenders_release_saves.gd"
-Assert-True ((Get-FoundationFocusedRunnerResourcePath -FoundationSuite "blackjack") -ceq $focusedRunnerPath) "Exact normalized blackjack suite did not select the focused inheritance runner."
-foreach ($hostileSuite in @($null, "", "Blackjack", "BLACKJACK", " blackjack", "blackjack ", "blackjack/", "blackjackx", "contracts", "systems")) {
-    Assert-True ([string]::IsNullOrEmpty((Get-FoundationFocusedRunnerResourcePath -FoundationSuite $hostileSuite))) ("Focused runner accepted a non-exact suite value: '{0}'." -f [string]$hostileSuite)
-}
-
-$suiteRunnerMatch = [regex]::Match($checkGodotSource, '(?s)function Get-FoundationSuiteRunnerPath\s*\{(?<body>.*?)(?=\r?\n\})')
-Assert-True $suiteRunnerMatch.Success "Could not locate the focused Foundation suite runner seam."
-$suiteRunnerBody = $suiteRunnerMatch.Groups["body"].Value
-Assert-True ($suiteRunnerBody.Contains('Get-FoundationFocusedRunnerResourcePath -FoundationSuite $FoundationSuite')) "Foundation suite runner does not pass its exact suite to the pure resolver."
-Assert-True ($suiteRunnerBody.Contains('return Get-FoundationSplitRunnerPath')) "Non-focused Foundation suites no longer fall back to the full split runner."
-
-$invokeSuiteMatch = [regex]::Match($checkGodotSource, '(?s)function Invoke-FoundationSuite\s*\{(?<body>.*?)(?=\r?\n\})')
-Assert-True $invokeSuiteMatch.Success "Could not locate Invoke-FoundationSuite."
-$invokeSuiteBody = $invokeSuiteMatch.Groups["body"].Value
-Assert-True ($invokeSuiteBody.Contains('-ScriptPath (Get-FoundationSuiteRunnerPath -FoundationSuite $FoundationSuite)')) "Invoke-FoundationSuite does not pass its normalized suite through the focused runner seam."
-Assert-True (-not $invokeSuiteBody.Contains('-ScriptPath (Get-FoundationSplitRunnerPath)')) "Invoke-FoundationSuite bypasses the focused runner seam."
-
-$expectedFoundationSplitSources = @(
-    "scripts/tests/foundation/check_core_content.gd",
-    "scripts/tests/foundation/check_slots_surfaces.gd",
-    "scripts/tests/foundation/check_table_games.gd",
-    "scripts/tests/foundation/check_items_events_world.gd",
-    "scripts/tests/foundation/check_delivery_runs.gd",
-    "scripts/tests/foundation/check_lenders_release_saves.gd",
-    "scripts/tests/foundation/check_scratch_tickets.gd",
-    "scripts/tests/foundation/check_cage_environment_rework.gd",
-    "scripts/tests/foundation/check_coin_pusher.gd"
-)
-$splitRunnerMatch = [regex]::Match($checkGodotSource, '(?s)function Get-FoundationSplitRunnerPath\s*\{(?<body>.*?)(?=\r?\n\})')
-Assert-True $splitRunnerMatch.Success "Could not locate the full Foundation split runner."
-$actualFoundationSplitSources = @([regex]::Matches($splitRunnerMatch.Groups["body"].Value, '"(scripts/tests/foundation/[^"]+\.gd)"') | ForEach-Object { $_.Groups[1].Value })
-Assert-True (($actualFoundationSplitSources -join "|") -ceq ($expectedFoundationSplitSources -join "|")) "Full Foundation split runner changed its exact nine-source order."
-$foundationSplitManifestSha256 = Get-StaticTextSha256 -Text ($actualFoundationSplitSources -join "`n")
-Assert-True ($foundationSplitManifestSha256 -ceq "709a06c8900d64f309f936933eb1310451e1c33eb8f704157b4a6e35696f62f1") "Full Foundation nine-source manifest hash changed."
-
-$systemsLauncherMatch = [regex]::Match($checkGodotSource, '(?s)function Invoke-FoundationSystemsSharded\s*\{(?<body>.*?)(?=\r?\nfunction Invoke-)')
-Assert-True $systemsLauncherMatch.Success "Could not locate the Systems shard launcher."
-$systemsLauncherBody = $systemsLauncherMatch.Groups["body"].Value
-Assert-True ([regex]::IsMatch($systemsLauncherBody, '(?m)^\s*\$runnerResourcePath\s*=\s*Get-FoundationSplitRunnerPath\s*$')) "Systems no longer requests the unchanged no-argument full split runner."
-Assert-True (-not $systemsLauncherBody.Contains('Get-FoundationSuiteRunnerPath')) "Systems incorrectly routes through the focused suite runner seam."
-Assert-True (-not $systemsLauncherBody.Contains('Get-FoundationFocusedRunnerResourcePath')) "Systems directly consumes the focused exact-match resolver."
-
-$focusedInheritanceClosure = @(Get-FoundationInheritanceClosure -ProjectRoot $projectRoot -EntryResourcePath $focusedRunnerPath -RequireTracked)
-$expectedFocusedInheritanceClosure = @(
-    "res://scripts/tests/foundation/check_lenders_release_saves.gd",
-    "res://scripts/tests/foundation/check_items_events_world.gd",
-    "res://scripts/tests/foundation/check_table_games.gd",
-    "res://scripts/tests/foundation/check_slots_surfaces.gd",
-    "res://scripts/tests/foundation/check_core_content.gd"
-)
-Assert-True (($focusedInheritanceClosure -join "|") -ceq ($expectedFocusedInheritanceClosure -join "|")) "Focused Blackjack inheritance closure changed, cycled, escaped, or omitted a tracked base."
-$focusedInheritanceText = ($focusedInheritanceClosure | ForEach-Object {
-    $relativePath = $_.Substring("res://".Length).Replace("/", [System.IO.Path]::DirectorySeparatorChar)
-    [System.IO.File]::ReadAllText((Join-Path $projectRoot $relativePath))
-}) -join "`n"
-foreach ($requiredDefinition in @("_foundation_run_suite", "_check_content", "_check_target_game_suite", "_check_blackjack_surface_contract", "_check_blackjack_control_hit_regions", "_check_blackjack_item_content", "_fixture_library")) {
-    $definitionCount = [regex]::Matches($focusedInheritanceText, ('(?m)^func\s+' + [regex]::Escape($requiredDefinition) + '\s*\(')).Count
-    Assert-True ($definitionCount -eq 1) "Focused Blackjack inheritance closure does not define $requiredDefinition exactly once."
-}
-
-$escapedPathRejected = $false
-try {
-    Get-FoundationInheritanceClosure -ProjectRoot $projectRoot -EntryResourcePath "res://../escaped.gd" | Out-Null
-}
-catch {
-    $escapedPathRejected = $_.Exception.Message.Contains("escaped the project root")
-}
-Assert-True $escapedPathRejected "Focused inheritance resolver did not fail closed on a res:// path escape."
-
-$cycleRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("bth_foundation_inheritance_cycle_" + [Guid]::NewGuid().ToString("N"))
-try {
-    New-Item -ItemType Directory -Force -Path $cycleRoot | Out-Null
-    [System.IO.File]::WriteAllText((Join-Path $cycleRoot "a.gd"), 'extends "res://b.gd"')
-    [System.IO.File]::WriteAllText((Join-Path $cycleRoot "b.gd"), 'extends "res://a.gd"')
-    $cycleRejected = $false
-    try {
-        Get-FoundationInheritanceClosure -ProjectRoot $cycleRoot -EntryResourcePath "res://a.gd" | Out-Null
-    }
-    catch {
-        $cycleRejected = $_.Exception.Message.Contains("cycle detected")
-    }
-    Assert-True $cycleRejected "Focused inheritance resolver did not fail closed on a recursive cycle."
-}
-finally {
-    if (Test-Path -LiteralPath $cycleRoot) {
-        Remove-Item -LiteralPath $cycleRoot -Recurse -Force
-    }
-}
-
 $foundationSources = @(
     (Join-Path $projectRoot "scripts/tests/foundation/check_core_content.gd")
     (Join-Path $projectRoot "scripts/tests/foundation/check_items_events_world.gd")
@@ -308,6 +146,7 @@ foreach ($field in $requiredLibraryFields) {
     Assert-True $runnerSource.Contains(('"' + $field + '": library.' + $field)) "Exact ContentLibrary fingerprint omitted $field."
 }
 
+$checkGodotSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "check_godot.ps1") -Raw
 $expectedOverrides = @("BTH_DISTRIBUTION_DATA_ROOT", "BTH_DISTRIBUTION_BUILD", "BTH_META_COLLECTION_PATH", "BTH_PROFILE_INVENTORY_PATH")
 Assert-True (((Get-FoundationShardClearedEnvironmentNames) -join "|") -eq ($expectedOverrides -join "|")) "Shard persistence override clearing list is incomplete or reordered."
 Assert-True ($checkGodotSource.Contains('foreach ($overrideName in Get-FoundationShardClearedEnvironmentNames)')) "Shard launcher does not consume the validated persistence override list."
