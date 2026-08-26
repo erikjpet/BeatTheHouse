@@ -376,21 +376,35 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	var expiry_rejected_state := _dict(expiry_recipient.get("scenario_sequence_state", {}))
 	if not expiry_is_only_progress or expiry_can_rebind or bool(expiry_ingress.get("ok", true)) or str(expiry_rejected_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or str(expiry_rejected_state.get("node_id", "")) != "bar" or SequenceRuntimeScript.content_fingerprint(expiry_rejected_state.get("expiry_boundary_records", [])) != SequenceRuntimeScript.content_fingerprint(expiry_state.get("expiry_boundary_records", [])) or not _array(expiry_rejected_state.get("command_receipt_records", [])).is_empty():
 		failures.append("Expiry-only sequence progress transplanted across nodes and authorized ingress.")
-	var projected_records := EnvironmentInteractionControllerScript.project_sequence_interactions(_array(finalized.get("records", [])), run_state.scenario_sequence_projection())
+	var production_projection := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get("records", [])), run_state.scenario_sequence_projection(), run_state.current_environment)
+	var projected_records := _array(production_projection.get("records", []))
 	var projected_console: Dictionary = {}
 	var projected_scene: Dictionary = {}
 	for projected_value in projected_records:
 		if typeof(projected_value) != TYPE_DICTIONARY: continue
 		if str((projected_value as Dictionary).get("object_id", "")) == "scenario::command_console": projected_console = projected_value as Dictionary
 		if str((projected_value as Dictionary).get("object_id", "")) == "scenario::fixture_100": projected_scene = projected_value as Dictionary
-	if projected_console.is_empty() or str(projected_console.get("object_type", "")) != "scenario_sequence" or typeof(projected_console.get("focus_rect")) != TYPE_RECT2 or _array(projected_console.get("scenario_sequence_actions", [])).size() != 2:
+	if not bool(production_projection.get("ok", false)) or projected_console.is_empty() or str(projected_console.get("object_type", "")) != "scenario_sequence" or typeof(projected_console.get("focus_rect")) != TYPE_RECT2 or projected_console.get("focus_rect", Rect2()) == Rect2(0.1, 0.1, 0.12, 0.18) or _array(projected_console.get("scenario_sequence_actions", [])).size() != 2 or str(projected_console.get("scenario_layout_authority_identity", "")) != "scenario::command_console" or str(production_projection.get("layout_authority_digest", "")).length() != 64:
 		failures.append("Final semantic interaction projection did not materialize the scenario command surface in the room UI.")
 	if projected_scene.is_empty() or str(projected_scene.get("object_type", "")) != "scenario_scene_object" or bool(projected_scene.get("interactive", true)):
 		failures.append("Final semantic projection did not materialize scenario scene objects alongside interactions.")
+	var missing_layout_projection := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get("records", [])), run_state.scenario_sequence_projection())
+	var missing_layout_records := _array(missing_layout_projection.get("records", []))
+	if bool(missing_layout_projection.get("ok", true)) or _record_by_object_id(missing_layout_records, "game:slot").is_empty() or _record_by_object_id(missing_layout_records, "scenario::presentation_failure").is_empty() or not _array(_record_by_object_id(missing_layout_records, "scenario::presentation_failure").get("scenario_sequence_actions", [])).is_empty():
+		failures.append("Validated/sealed production finalization bypassed its mandatory active room layout or did not fail visibly without scenario authority.")
+	var forged_projection := run_state.scenario_sequence_projection()
+	var forged_semantic := _dict(forged_projection.get("semantic_state", {}))
+	var forged_interactions := _dict(forged_semantic.get("interactions", {}))
+	forged_interactions["scenario::orphan_after_seal"] = _interaction_record("scenario", "orphan_after_seal", "Forged orphan", true)
+	forged_semantic["interactions"] = forged_interactions
+	forged_projection["semantic_state"] = forged_semantic
+	var forged_projection_result := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get("records", [])), forged_projection, run_state.current_environment)
+	if bool(forged_projection_result.get("ok", true)) or not _record_by_object_id(_array(forged_projection_result.get("records", [])), "scenario::orphan_after_seal").is_empty() or _record_by_object_id(_array(forged_projection_result.get("records", [])), "scenario::presentation_failure").is_empty():
+		failures.append("A post-finalization orphan rectangle escaped sealed production projection authority.")
 	var collision_record := _presentation_record("scenario::command_console", "info", "spoof", Rect2(0.2, 0.2, 0.1, 0.1))
 	collision_record["owner_namespace"] = "base"
 	collision_record["stable_object_id"] = "spoof"
-	var collision_projection := EnvironmentInteractionControllerScript.project_sequence_interactions([collision_record], run_state.scenario_sequence_projection())
+	var collision_projection := EnvironmentInteractionControllerScript.project_sequence_interactions([collision_record], run_state.scenario_sequence_projection(), run_state.current_environment)
 	var collision_count := 0
 	var collision_owner := ""
 	for collision_value in collision_projection:
@@ -2155,6 +2169,35 @@ static func _check_run_state_host_transaction_facade(failures: Array) -> void:
 static func _finalization_definition() -> Dictionary:
 	var definition := _runtime_definition()
 	var sequence := _dict(definition.get("sequence", {}))
+	var graph := _dict(sequence.get("phase_graph", {}))
+	var phases := _array(graph.get("phases", []))
+	var arrival := _dict(phases[0])
+	arrival["actor_ops"] = []
+	var command_visual := _operation_fixture("scene_ops", "spawn", 200)
+	command_visual["stable_object_id"] = "command_console"
+	command_visual["object"] = {
+		"label": "Exit command console",
+		"role": "control",
+		"anchor_id": "bar_actor",
+		"bounds": {"w": 72, "h": 56},
+		"visible": true,
+		"enabled": true,
+	}
+	var arrival_scene_ops := _array(arrival.get("scene_ops", []))
+	arrival_scene_ops.append(command_visual)
+	arrival["scene_ops"] = arrival_scene_ops
+	phases[0] = arrival
+	graph["phases"] = phases
+	sequence["phase_graph"] = graph
+	var cleanup := _dict(sequence.get("cleanup", {}))
+	var cleanup_operations := _array(cleanup.get("operations", []))
+	for cleanup_index in range(cleanup_operations.size() - 1, -1, -1):
+		var cleanup_operation := _dict(cleanup_operations[cleanup_index])
+		if str(cleanup_operation.get("family", "")) == "actor_ops" and str(cleanup_operation.get("stable_object_id", "")) == "fixture_100":
+			cleanup_operations.remove_at(cleanup_index)
+	cleanup_operations.append({"family": "scene_ops", "op": "remove", "receipt_id": "cleanup_scene_command_console", "owner_namespace": "scenario", "stable_object_id": "command_console"})
+	cleanup["operations"] = cleanup_operations
+	sequence["cleanup"] = cleanup
 	sequence["declared_targets"] = {
 		"scene_objects": ["game::game:slot"],
 		"interactions": ["game::game:slot"],
@@ -2576,6 +2619,14 @@ static func _presentation_record(object_id: String, object_type: String, source_
 		"available_actions": actions if enabled else [],
 		"focus_rect": rect,
 	}, {})
+
+
+static func _record_by_object_id(records: Array, object_id: String) -> Dictionary:
+	for value in records:
+		var record := _dict(value)
+		if str(record.get("object_id", "")) == object_id:
+			return record
+	return {}
 
 
 static func _contains_text(values: Array, needle: String) -> bool:
