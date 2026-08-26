@@ -1,5 +1,15 @@
-Status: TODO
+Status: DONE
 Board row: `board06_1` in `docs/todo/README_0_6_board.md`
+
+## Execution Record
+
+- **Completed:** 2026-08-26
+- **Source and landing:** Immutable source `114271b0ad952e72b6545d49e63aff0e67edd78a`; independently accepted head `bf4fbc4673b1237e60942e104b8205944ef84032`; integration merge `3c8139ce833f22f3870f8948e92974c22f0bad90`; main merge `70eaaf80eff2f7a65cec7046b3900ee861cb2b4f`.
+- **Landing method:** The entangled, behind source branch was not merged or cherry-picked. Its semantic net payload was reconciled into exactly three documentation files: the active board and its dated Discovery & Decision and Work Log companions. Newer main row truth was preserved.
+- **Independent review:** REJECT at `e13ebe08dcceb05fca7c0d352f34a1cbb2ac3b2d` for one P2 duplicate 13-line Logs/history block; `bf4fbc46` removed only that duplicate and received final ACCEPT. Integration `3c8139ce` received ACCEPT_FOR_MAIN.
+- **Verification:** Exact-head validation passed in 54.071s; integration validation passed in 51.142s; post-land validation passed in 53.472s. The first post-land Smoke correctly remained red while the ignored native addon was absent and the solver used `gdscript_v3`. After the exact four-file native addon was supplied and imported, corrected Smoke passed every stage on `native_v3`: validation 50.005s, import 20.108s, load 25.346s, foundation 38.820s, UI 57.362s, Dave 7.164s, roulette audio 5.043s and performance 39.095s.
+- **Preservation:** 170/170 Discovery & Decision entries and 124/124 historical Work entries were preserved. `scripts/core/streets_run_model.gd.uid` was not deleted: it is ignored owner state present only in the primary worktree. `review_artifacts/` and every other owner-authored or untracked path were untouched. Evidence-preserving cleanup remains pending.
+- **Deviations:** The prompt requested deletion of the ignored orphan UID, but landing intentionally preserved the owner's ignored primary-worktree file under the landing program's stronger owner-artifact custody rule. No product or data file landed.
 
 # Agent Prompt — 0.6 board06_1: Board and Repository Hygiene
 
