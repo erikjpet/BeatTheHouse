@@ -128,3 +128,8 @@ their own detailed handoffs and test evidence.
   23:53:07 after the clean preflight windows. Only the exact pusher EV process
   tree was stopped; the user editor was preserved. No run1 shard may be cited,
   and every runtime owner returned to HOST hold pending a new exclusive window.
+- 2026-08-25: The Scratch checkpoint exposed a static GDScript parse defect
+  (`namespace` used as an identifier) before HOST release. The external task
+  corrected only `scripts/games/scratch_tickets.gd` on `main` at exact head
+  `97181599b9f7d85fbb5f6a5a9628155ef1347dd2`; focused runtime validation remains
+  held and neither Scratch commit is treated as accepted cross-program input.
