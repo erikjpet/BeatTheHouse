@@ -114,6 +114,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 
 static func _check_generated_environment_sweep(library: ContentLibrary, covered_game_ids: Dictionary, checked_contexts: Dictionary, failures: Array) -> void:
 	var generator := RunGeneratorScript.new(library)
+	var repeated_coin_pusher_states := {}
 	for seed_index in range(SEED_COUNT):
 		for archetype_value in library.environment_archetypes:
 			if typeof(archetype_value) != TYPE_DICTIONARY:
@@ -136,10 +137,14 @@ static func _check_generated_environment_sweep(library: ContentLibrary, covered_
 					{},
 					scenario
 				).to_dict()
-				environment["game_states"] = generator._generated_game_states(
+				environment["game_states"] = _generated_game_states_for_activation_guard(
+					generator,
 					run_state,
 					environment,
-					run_state.create_rng("generated_game_states")
+					run_state.create_rng("generated_game_states"),
+					repeated_coin_pusher_states,
+					seed_index > 0,
+					scenario_id
 				)
 				run_state.set_environment(environment)
 				var fixture_label := "%s/%s/seed-%02d" % [archetype_id, scenario_id, seed_index]
@@ -162,6 +167,43 @@ static func _check_generated_environment_sweep(library: ContentLibrary, covered_
 				_check_environment(library, run_state, scenario_id, covered_game_ids, checked_contexts, failures)
 				if run_state.is_layered_environment():
 					_enter_and_check_remaining_layers(library, generator, run_state, scenario_id, covered_game_ids, checked_contexts, failures)
+
+
+static func _generated_game_states_for_activation_guard(generator: RunGenerator, run_state: RunState, environment: Dictionary, rng: RngStream, repeated_coin_pusher_states: Dictionary, allow_reuse: bool, scenario_id: String) -> Dictionary:
+	var game_ids := _string_array(environment.get("game_ids", []))
+	if not game_ids.has("coin_pusher"):
+		return generator._generated_game_states(run_state, environment, rng)
+	var fixture_counts := _dict(_dict(environment.get("layout", {})).get("game_fixture_counts", {}))
+	var cache_key := "%s|%s|%s|%d" % [
+		str(environment.get("archetype_id", "")),
+		str(environment.get("current_layer_id", "base")),
+		scenario_id,
+		maxi(1, int(fixture_counts.get("coin_pusher", 1))),
+	]
+	if allow_reuse and repeated_coin_pusher_states.has(cache_key):
+		# Repeated seeds still construct and JSON-round-trip all 235 generated
+		# environment contexts. Once this exact archetype/layer/scenario fixture has
+		# covered Coin Pusher, reuse only its immutable generated state so physical
+		# opening settlement is not redundantly recomputed nine more times. Other
+		# games retain their seed-specific production generation and every checked
+		# activation hook still receives an independent cold RunState.
+		var generation_environment := environment.duplicate(true)
+		var remaining_game_ids := game_ids.duplicate()
+		remaining_game_ids.erase("coin_pusher")
+		generation_environment["game_ids"] = remaining_game_ids
+		var reused_states: Dictionary = generator._generated_game_states(run_state, generation_environment, rng)
+		for state_key in _dict(repeated_coin_pusher_states[cache_key]):
+			reused_states[state_key] = _dict(repeated_coin_pusher_states[cache_key])[state_key].duplicate(true)
+		return reused_states
+	var generated_states: Dictionary = generator._generated_game_states(run_state, environment, rng)
+	var coin_pusher_states := {}
+	for state_key_value in generated_states:
+		var state_key := str(state_key_value)
+		if state_key == "coin_pusher" or state_key.begins_with("coin_pusher:"):
+			coin_pusher_states[state_key] = _dict(generated_states[state_key]).duplicate(true)
+	if not coin_pusher_states.is_empty():
+		repeated_coin_pusher_states[cache_key] = coin_pusher_states
+	return generated_states
 
 
 static func _enter_and_check_remaining_layers(library: ContentLibrary, generator: RunGenerator, run_state: RunState, scenario_id: String, covered_game_ids: Dictionary, checked_contexts: Dictionary, failures: Array) -> void:
