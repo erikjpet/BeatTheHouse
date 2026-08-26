@@ -171,6 +171,8 @@ static func ensure_sequence_state(environment: Dictionary, definition: Dictionar
 
 
 static func _rebuild_receipted_semantic_mutations(state_value: Dictionary, definition: Dictionary, host_semantics: Dictionary) -> Dictionary:
+	if not SequenceRuntimeScript._persisted_collections_within_limits(state_value):
+		return {"ok": false, "errors": ["persisted scenario causal collections have invalid shape; explicit migration is required"]}
 	var state := state_value.duplicate(true)
 	var errors: Array = []
 	var causal_record_total := _copy_array(state.get("command_receipt_records", [])).size() + _copy_array(state.get("fact_receipt_records", [])).size() + _copy_array(state.get("visit_receipt_records", [])).size() + _copy_array(state.get("expiry_boundary_records", [])).size()
