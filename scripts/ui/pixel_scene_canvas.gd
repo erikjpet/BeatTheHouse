@@ -1887,6 +1887,10 @@ func _draw_scene_objects() -> void:
 				_draw_event_prop(rect, object_data, selected or hovered)
 			"character":
 				_draw_character_actor(rect, object_data)
+			"scenario_actor":
+				_draw_scenario_actor(rect, object_data, selected or hovered)
+			"scenario_object":
+				_draw_scenario_prop(rect, object_data, selected or hovered)
 			"drink":
 				_draw_drink_prop(rect, selected or hovered)
 			_:
@@ -1905,6 +1909,37 @@ func _draw_scene_objects() -> void:
 			_draw_hotspot_hint(rect, object_type)
 		_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered)
 	_draw_selected_object_info()
+
+
+func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> void:
+	var role := str(object_data.get("role", "prop"))
+	var appearance := str(object_data.get("appearance", ""))
+	var accent := C_ORANGE if role == "obstacle" else C_PURPLE_2 if role == "exit" else C_CYAN_2
+	var fill := C_SHADOW.lightened(0.10) if appearance.is_empty() else accent.darkened(0.66)
+	draw_rect(rect, fill)
+	draw_rect(rect, accent.lightened(0.16) if active else accent, false, 3.0)
+	var mark := "!" if role == "obstacle" else ">" if role == "exit" else "#"
+	_neon_text(mark, rect.get_center() + Vector2(-4.0, 5.0), 14, C_WHITE)
+	if not str(object_data.get("state", "")).is_empty():
+		draw_line(rect.position + Vector2(8.0, rect.size.y - 9.0), rect.end - Vector2(8.0, 9.0), accent, 3.0)
+
+
+func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) -> void:
+	var behavior := str(object_data.get("behavior", "idle"))
+	var pose := str(object_data.get("pose", "idle"))
+	var accent := C_ORANGE if behavior in ["guard", "fight", "flee"] else C_TEAL
+	var center := rect.get_center()
+	var head_radius := clampf(rect.size.x * 0.15, 6.0, 12.0)
+	draw_circle(Vector2(center.x, rect.position.y + head_radius + 4.0), head_radius, C_SOFT.darkened(0.15))
+	var body_top := rect.position.y + head_radius * 2.0 + 6.0
+	var body := Rect2(Vector2(center.x - rect.size.x * 0.20, body_top), Vector2(rect.size.x * 0.40, maxf(16.0, rect.end.y - body_top - 8.0)))
+	draw_rect(body, accent.darkened(0.42))
+	draw_rect(body, accent.lightened(0.15) if active else accent, false, 2.0)
+	var arm_y := body.position.y + body.size.y * 0.38
+	var arm_spread := rect.size.x * (0.38 if pose in ["fight", "warning"] else 0.28)
+	draw_line(Vector2(center.x - arm_spread, arm_y), Vector2(center.x + arm_spread, arm_y), accent, 3.0)
+	if behavior in ["guard", "watch", "patrol"]:
+		_neon_text("EYE", Vector2(center.x - 10.0, rect.end.y - 4.0), 8, C_WHITE)
 
 
 func _draw_selected_object_info() -> void:
@@ -2128,32 +2163,33 @@ func _rebuild_scene_object_cache() -> void:
 
 func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 	var interactable_objects: Array = snapshot.get("interactable_objects", [])
-	if not interactable_objects.is_empty():
-		return _objects_from_interactable_records(interactable_objects)
 	var objects: Array = []
-	var games := _string_array(snapshot.get("game_ids", []))
-	for index in range(games.size()):
-		objects.append({
+	if not interactable_objects.is_empty():
+		objects = _objects_from_interactable_records(interactable_objects)
+	else:
+		var games := _string_array(snapshot.get("game_ids", []))
+		for index in range(games.size()):
+			objects.append({
 			"id": "game:%s" % games[index],
 			"type": "game",
 			"position": Vector2(0.28 + float(index % 3) * 0.18, 0.56 + float(index / 3) * 0.13),
 			"size": Vector2(118, 72),
-		})
-	var events := _string_array(snapshot.get("event_ids", []))
-	for index in range(events.size()):
-		objects.append({
+			})
+		var events := _string_array(snapshot.get("event_ids", []))
+		for index in range(events.size()):
+			objects.append({
 			"id": "event:%s" % events[index],
 			"type": "event",
 			"position": Vector2(0.68 + float(index % 2) * 0.12, 0.42 + float(index / 2) * 0.14),
 			"size": Vector2(100, 64),
-		})
-	var offers: Array = snapshot.get("item_offers", [])
-	for index in range(offers.size()):
-		if typeof(offers[index]) != TYPE_DICTIONARY:
-			continue
-		var offer: Dictionary = offers[index]
-		var item_id := str(offer.get("id", "item_%d" % index))
-		objects.append({
+			})
+		var offers: Array = snapshot.get("item_offers", [])
+		for index in range(offers.size()):
+			if typeof(offers[index]) != TYPE_DICTIONARY:
+				continue
+			var offer: Dictionary = offers[index]
+			var item_id := str(offer.get("id", "item_%d" % index))
+			objects.append({
 			"id": "item:%s" % item_id,
 			"type": "item",
 			"label": str(offer.get("display_name", item_id)),
@@ -2162,19 +2198,30 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 			"icon_key": str(offer.get("icon_key", item_id)),
 			"position": Vector2(0.30 + float(index % 4) * 0.12, 0.76),
 			"size": Vector2(90, 54),
-		})
-	var travel_targets := _string_array(snapshot.get("next_archetypes", []))
-	if travel_targets.is_empty():
-		travel_targets = _string_array(snapshot.get("travel_hooks", []))
-	if not travel_targets.is_empty():
-		objects.append({
+			})
+		var travel_targets := _string_array(snapshot.get("next_archetypes", []))
+		if travel_targets.is_empty():
+			travel_targets = _string_array(snapshot.get("travel_hooks", []))
+		if not travel_targets.is_empty():
+			objects.append({
 			"id": "travel:leave",
 			"type": "travel",
 			"label": "Leave",
 			"prop": "door",
 			"position": Vector2(0.78, 0.64),
 			"size": Vector2(118, 64),
-		})
+			})
+	var ids: Dictionary = {}
+	for object_value in objects:
+		ids[str(_copy_dict(object_value).get("id", ""))] = true
+	var render_snapshot := _copy_dict(snapshot.get("scenario_render_snapshot", {}))
+	for visual_value in _copy_array(render_snapshot.get("visual_objects", [])):
+		var visual := _copy_dict(visual_value)
+		var object_id := str(visual.get("object_id", ""))
+		if object_id.is_empty() or ids.has(object_id) or not bool(visual.get("visible", true)):
+			continue
+		objects.append_array(_objects_from_interactable_records([visual]))
+		ids[object_id] = true
 	return objects
 
 
@@ -2184,6 +2231,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 		if typeof(records[index]) != TYPE_DICTIONARY:
 			continue
 		var record: Dictionary = records[index]
+		if not bool(record.get("visible", true)):
+			continue
 		var object_id := str(record.get("object_id", ""))
 		if object_id.is_empty():
 			continue
@@ -2232,6 +2281,19 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"available_actions": _copy_array(record.get("available_actions", [])),
 			"inline_actions": _copy_array(record.get("inline_actions", [])),
 			"confirm_action_id": str(record.get("confirm_action_id", "")),
+			"owner_namespace": str(record.get("owner_namespace", "")),
+			"stable_object_id": str(record.get("stable_object_id", "")),
+			"scenario_owner_namespace": str(record.get("scenario_owner_namespace", "")),
+			"scenario_stable_object_id": str(record.get("scenario_stable_object_id", "")),
+			"scenario_command_id": str(record.get("scenario_command_id", "")),
+			"role": str(record.get("role", "")),
+			"state": str(record.get("state", "")),
+			"appearance": str(record.get("appearance", "")),
+			"pose": str(record.get("pose", "")),
+			"behavior": str(record.get("behavior", "")),
+			"route_id": str(record.get("route_id", "")),
+			"non_color_state": str(record.get("non_color_state", "")),
+			"z_order": int(record.get("z_order", 0)),
 		}
 		objects.append(_apply_draw_hints(scene_object, object_type, index))
 	return objects
