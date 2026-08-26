@@ -1076,3 +1076,16 @@ their own detailed handoffs and test evidence.
   identity checks reproduce; AST, semantic docs, hostile contract, validation
   (50.9s), and full/focused diff checks pass on a clean exact head. Runtime is
   wholly pending; old ignored generated resources remain non-evidence.
+- 2026-08-26: Serialized exact-head runtime on accepted `f072b1c3` stopped on
+  the first hard red. Fresh Blackjack run 1 passes at 17.564s <= 17.790 with
+  exact two-check scope; the bounded wrong-scope negative passes (exit 1,
+  291-byte exact stderr, zero registered/executed checks); Blackjack run 2
+  passes at 17.636s with identical focused hash/length/mtime. Systems passes at
+  37.709s <= 43.712 with all 55 checks in canonical order, zero skips/failures/
+  stderr, proving the stale 57-golden drift is removed. Contract then times out
+  at 360.048s (exit 124) against immutable 230.391s; nine preceding checks are
+  green, stderr is empty, and timeout occurs inside `foundation_contracts`
+  before its report is written. Smoke was not launched. Exact head/status stay
+  clean and the host returned to zero/HOLD. Read-only author and independent
+  causal audits are active; no rerun, budget/assertion change or golden refresh
+  is authorized. Reports: `.tmp/test_reports/fix06_4_exact_f072b1c3_*`.
