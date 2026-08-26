@@ -11,6 +11,7 @@ static func game_view_snapshot(host: Variant, read_only_render_result: bool = fa
 	var legal_actions = host._game_action_view_list("legal")
 	var cheat_actions = host._game_action_view_list("cheat")
 	var module_surface_state = {}
+	var surface_ui_state := {}
 	if host.current_game != null:
 		display_name = host.current_game.get_display_name()
 		game_id = host.current_game.get_id()
@@ -18,7 +19,8 @@ static func game_view_snapshot(host: Variant, read_only_render_result: bool = fa
 		surface_renderer = host._surface_renderer_for_game_definition(host.current_game.definition)
 		surface_life = host._surface_life_for_renderer(surface_renderer)
 		surface_cast = host._surface_cast_for_renderer(surface_renderer)
-		module_surface_state = host.current_game.surface_state(host.run_state, host.run_state.current_environment, host._current_game_surface_ui_state())
+		surface_ui_state = host._current_game_surface_ui_state()
+		module_surface_state = host.current_game.surface_state(host.run_state, host.run_state.current_environment, surface_ui_state)
 		if typeof(module_surface_state) != TYPE_DICTIONARY:
 			module_surface_state = {}
 		elif game_id != "slot" and game_id != "coin_pusher":
@@ -107,6 +109,12 @@ static func game_view_snapshot(host: Variant, read_only_render_result: bool = fa
 		# physical traces again in the same frame; the canvas treats snapshots as
 		# read-only.
 		snapshot[key] = module_surface_state[key] if game_id in ["slot", "coin_pusher"] else host._snapshot_copy_value(module_surface_state[key])
+	# The host owns the realtime clock. Modules consume these fields while building
+	# their initial surface, but they are not required to echo them. Publish the
+	# exact entry boundary so the canvas and host never begin at an absent clock.
+	for time_key in ["surface_time_msec", "surface_presentation_time_msec", "drunk_scaled_surface_time_msec"]:
+		if surface_ui_state.has(time_key):
+			snapshot[time_key] = surface_ui_state[time_key]
 	snapshot["bankroll"] = host._presented_bankroll()
 	snapshot["stake_min"] = int(stake_range.get("min", 1))
 	snapshot["stake_max"] = int(stake_range.get("max", 1))

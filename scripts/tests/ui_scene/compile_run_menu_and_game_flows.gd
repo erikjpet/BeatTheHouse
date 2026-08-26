@@ -333,6 +333,15 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var pre_action_previous_bodies: Variant = pre_action_canvas_state.get("coin_pusher_previous_bodies", [])
 	var pre_action_liveness_ticks := int(pre_action_canvas_state.get("coin_pusher_liveness_ticks", 0))
 	var pre_action_face_y := int(pre_action_canvas_state.get("coin_pusher_face_position_y", -1))
+	var pre_action_phase_fp := int(pre_action_canvas_state.get("coin_pusher_phase_fp", -1))
+	var pre_action_surface_time := int(pre_action_canvas_state.get("surface_time_msec", -1))
+	var entry_host_stamp := int(probe.get("last_game_surface_realtime_refresh_msec"))
+	var entry_run_state: RunState = probe.get("run_state")
+	var entry_live_key := str(game.call("_live_key", entry_run_state, entry_run_state.current_environment)) if entry_run_state != null else ""
+	var entry_live_machines: Dictionary = game.get("_live_machines") if typeof(game.get("_live_machines")) == TYPE_DICTIONARY else {}
+	var entry_live_machine: Dictionary = entry_live_machines.get(entry_live_key, {}) if typeof(entry_live_machines.get(entry_live_key, {})) == TYPE_DICTIONARY else {}
+	var entry_live_session: Dictionary = entry_live_machine.get("live_session", {}) if typeof(entry_live_machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var entry_session_clock := int(entry_live_session.get("last_clock_msec", -1))
 	var pre_action_tell_rung := int(pre_action_canvas_state.get("coin_pusher_tell_rung", -1))
 	var pre_action_locked := bool(pre_action_canvas_state.get("coin_pusher_locked", false))
 	var pre_action_preferences: Dictionary = probe.get("game_surface_ui_state") if typeof(probe.get("game_surface_ui_state")) == TYPE_DICTIONARY else {}
@@ -476,6 +485,11 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 				and (action_canvas_previous_bodies as Array).size() == (action_canvas_bodies as Array).size(),
 		"liveness_unchanged_until_live_tick": int(action_canvas_state.get("coin_pusher_liveness_ticks", -1)) == pre_action_liveness_ticks,
 		"face_unchanged_until_live_tick": int(action_canvas_state.get("coin_pusher_face_position_y", -2)) == pre_action_face_y,
+		# This fails closed if entry rendering ever omits the host clock or merely
+		# stamps the canvas without anchoring the production live session.
+		"entry_clock_anchored": pre_action_surface_time >= 0 \
+				and entry_host_stamp == pre_action_surface_time \
+				and entry_session_clock == pre_action_surface_time,
 		"interpolation_alpha_bounded": float(action_canvas_state.get("coin_pusher_interpolation_alpha", -1.0)) >= 0.0 \
 				and float(action_canvas_state.get("coin_pusher_interpolation_alpha", 2.0)) <= 1.0,
 		"tell_rung_unchanged": int(action_canvas_state.get("coin_pusher_tell_rung", -2)) == pre_action_tell_rung,
@@ -505,14 +519,16 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var action_view_passed := failed_invariants.is_empty()
 	var draw_soak_after: Dictionary = canvas.call("debug_soak_snapshot")
 	var draw_sample_count_after := int(draw_soak_after.get("draw_sample_count", 0))
-	var rendered_drop_hit := false
+	var rendered_hold_drop_hit := false
+	var rendered_legacy_drop_hit := false
 	var rendered_nudge_hit := false
 	var hit_regions: Array = canvas.call("_hit_region_snapshots")
 	for region_value in hit_regions:
 		if typeof(region_value) != TYPE_DICTIONARY:
 			continue
 		var hit_action := str((region_value as Dictionary).get("action", ""))
-		rendered_drop_hit = rendered_drop_hit or hit_action == "coin_pusher_drop"
+		rendered_hold_drop_hit = rendered_hold_drop_hit or hit_action == "coin_pusher_drop_charge"
+		rendered_legacy_drop_hit = rendered_legacy_drop_hit or hit_action == "coin_pusher_drop"
 		rendered_nudge_hit = rendered_nudge_hit or hit_action == "coin_pusher_nudge"
 	var render_invariants := {
 		"refresh_contract": refresh_contract_passed,
@@ -521,7 +537,10 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		"draw_snapshot_present": not draw_snapshots.is_empty(),
 		"draw_live_body_count": int(draw_state.get("coin_pusher_body_count", -1)) == int(action_canvas_state.get("coin_pusher_body_count", -2)),
 		"draw_sample_recorded": draw_sample_count_after > draw_sample_count_before,
-		"drop_hit_region": rendered_drop_hit,
+		"hold_drop_hit_region": rendered_hold_drop_hit,
+		# The one-shot compatibility command remains callable, but the production
+		# canvas must expose only the accessible press/hold/release control.
+		"no_legacy_drop_hit_region": not rendered_legacy_drop_hit,
 		"nudge_hit_region": rendered_nudge_hit,
 	}
 	for invariant_name in render_invariants.keys():
@@ -600,14 +619,17 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	var realtime_bodies: Variant = realtime_canvas_state.get("coin_pusher_bodies", [])
 	var realtime_previous_bodies: Variant = realtime_canvas_state.get("coin_pusher_previous_bodies", [])
 	var realtime_alpha := float(realtime_canvas_state.get("coin_pusher_interpolation_alpha", -1.0))
+	var realtime_ticks_advanced := int(realtime_canvas_state.get("coin_pusher_ticks_advanced", 0))
+	var realtime_phase_fp := int(realtime_canvas_state.get("coin_pusher_phase_fp", -1))
 	var realtime_passed: bool = success_preconditions_exact \
 			and realtime_clock_wait_frames < 16 \
 			and progression_wait_frames < 32 \
+			and surface_time_before >= 0 \
 			and success_stamp > surface_time_before \
 			and int(realtime_canvas_state.get("surface_time_msec", -1)) == success_stamp \
-			and (int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)) > liveness_before \
-					or not is_equal_approx(realtime_alpha, interpolation_alpha_before)) \
-			and int(realtime_canvas_state.get("coin_pusher_face_position_y", -1)) != pre_action_face_y \
+			and int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)) > liveness_before \
+			and realtime_ticks_advanced > 0 \
+			and realtime_phase_fp != pre_action_phase_fp \
 			and typeof(realtime_bodies) == TYPE_ARRAY and typeof(realtime_previous_bodies) == TYPE_ARRAY \
 			and (realtime_bodies as Array).size() == int(realtime_canvas_state.get("coin_pusher_body_count", -2)) \
 			# A queued DROP is born on this tick, so the exact previous projection
@@ -616,7 +638,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			and (realtime_previous_bodies as Array).size() <= (realtime_bodies as Array).size() \
 			and (realtime_bodies as Array).size() - (realtime_previous_bodies as Array).size() <= 1
 	if not realtime_passed:
-		push_error("FoundationMain production realtime advance did not stamp/update the live owned canvas from current machine state: preconditions=%s wait=%d progression_wait=%d before_time=%d stamp=%d canvas_time=%d live=%d->%d alpha=%s->%s bodies=%d previous=%d public=%d." % [success_preconditions_exact, realtime_clock_wait_frames, progression_wait_frames, surface_time_before, success_stamp, int(realtime_canvas_state.get("surface_time_msec", -1)), liveness_before, int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)), interpolation_alpha_before, realtime_alpha, (realtime_bodies as Array).size() if typeof(realtime_bodies) == TYPE_ARRAY else -1, (realtime_previous_bodies as Array).size() if typeof(realtime_previous_bodies) == TYPE_ARRAY else -1, int(realtime_canvas_state.get("coin_pusher_body_count", -1))])
+		push_error("FoundationMain production realtime advance did not stamp/update the live owned canvas from current machine state: preconditions=%s entry=%d/%d/%d wait=%d progression_wait=%d before_time=%d stamp=%d canvas_time=%d live=%d->%d ticks=%d phase=%d->%d alpha=%s->%s bodies=%d previous=%d public=%d." % [success_preconditions_exact, pre_action_surface_time, entry_host_stamp, entry_session_clock, realtime_clock_wait_frames, progression_wait_frames, surface_time_before, success_stamp, int(realtime_canvas_state.get("surface_time_msec", -1)), liveness_before, int(realtime_canvas_state.get("coin_pusher_liveness_ticks", -1)), realtime_ticks_advanced, pre_action_phase_fp, realtime_phase_fp, interpolation_alpha_before, realtime_alpha, (realtime_bodies as Array).size() if typeof(realtime_bodies) == TYPE_ARRAY else -1, (realtime_previous_bodies as Array).size() if typeof(realtime_previous_bodies) == TYPE_ARRAY else -1, int(realtime_canvas_state.get("coin_pusher_body_count", -1))])
 	# Replacing only the result boundary while the exact run/game/room/session stay
 	# active must stale the captured identity rather than render the wrong result.
 	var generation_before_stale := int(probe.get("deferred_embedded_refresh_generation"))
