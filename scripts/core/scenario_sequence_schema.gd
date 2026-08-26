@@ -11,6 +11,11 @@ const EXPIRY_BOUNDARIES := ["none", "leave", "visit_end", "night_end", "town_act
 const EXPIRY_POLICIES := ["resume", "fail", "ignore", "cancel", "cleanup"]
 const OBJECTIVE_OUTCOMES := ["success", "failure", "ignore", "cancel"]
 const CONDITION_TYPES := ["always", "command", "fact", "local_equals", "local_min", "objective", "outcome", "receipt"]
+const FACT_TYPES := [
+	"game_result", "event_result", "service_result", "travel_departed", "travel_arrived",
+	"crew_changed", "crew_job_changed", "heat_changed", "heat_band_changed",
+	"town_transition", "sweep_changed", "world_boundary", "scenario_command",
+]
 const ALLOWED_SEQUENCE_KEYS := [
 	"schema_version", "local_state_schema", "phase_graph", "objectives",
 	"reentry_policy", "expiry", "cleanup", "aftermath", "mechanic_tags",
@@ -47,6 +52,7 @@ static func validate_definition(definition: Dictionary, operation_registry: Vari
 	_validate_objectives(label, _array(authored.get("objectives", [])), errors)
 	_validate_reentry_expiry_cleanup(label, authored, operation_registry, errors)
 	_validate_aftermath(label, _dict(authored.get("aftermath", {})), operation_registry, errors)
+	_validate_fact_subscriptions(label, _array(authored.get("fact_subscriptions", [])), operation_registry, errors)
 	_validate_tags_and_exceptions(label, authored, errors)
 	_validate_no_executable_strings(label, authored, errors)
 	return errors
@@ -162,7 +168,7 @@ static func normalized_signature(definition: Dictionary) -> Dictionary:
 		"phases": phase_features,
 		"objectives": objective_features,
 		"aftermath_domains": aftermath_domains,
-		"fact_types": _sorted_strings(authored.get("fact_subscriptions", [])),
+		"fact_types": _fact_subscription_types(authored.get("fact_subscriptions", [])),
 		"mechanic_tags": _sorted_strings(authored.get("mechanic_tags", [])),
 		"reentry": str(_dict(authored.get("reentry_policy", {})).get("partial", "")),
 		"expiry": str(_dict(authored.get("expiry", {})).get("boundary", "")),
@@ -360,6 +366,39 @@ static func _validate_tags_and_exceptions(label: String, authored: Dictionary, e
 			errors.append("%s owner exception must name row, reason, owner, and approved_on." % label)
 
 
+static func _validate_fact_subscriptions(label: String, subscriptions: Array, operation_registry: Variant, errors: Array) -> void:
+	for subscription_value in subscriptions:
+		if typeof(subscription_value) == TYPE_STRING:
+			var fact_type := str(subscription_value).strip_edges()
+			if not FACT_TYPES.has(fact_type):
+				errors.append("%s fact subscription references unregistered fact type %s." % [label, fact_type])
+			continue
+		if typeof(subscription_value) != TYPE_DICTIONARY:
+			errors.append("%s fact subscription must be a fact id or dictionary." % label)
+			continue
+		var subscription := subscription_value as Dictionary
+		_append_unknown_keys("%s fact subscription" % label, subscription, ["fact_type", "handler", "inputs"], errors)
+		var fact_type := str(subscription.get("fact_type", "")).strip_edges()
+		if not FACT_TYPES.has(fact_type):
+			errors.append("%s fact subscription references unregistered fact type %s." % [label, fact_type])
+		var handler_id := str(subscription.get("handler", "")).strip_edges()
+		if operation_registry == null or not operation_registry.has_method("registered_handlers") or not (operation_registry.call("registered_handlers") as Dictionary).has(handler_id):
+			errors.append("%s fact subscription references unregistered handler %s." % [label, handler_id])
+		if typeof(subscription.get("inputs", {})) != TYPE_DICTIONARY:
+			errors.append("%s fact subscription inputs must be a dictionary." % label)
+
+
+static func _fact_subscription_types(value: Variant) -> Array:
+	var result: Array = []
+	for subscription_value in _array(value):
+		var fact_type := str((subscription_value as Dictionary).get("fact_type", "")) if typeof(subscription_value) == TYPE_DICTIONARY else str(subscription_value)
+		fact_type = fact_type.strip_edges()
+		if not fact_type.is_empty() and not result.has(fact_type):
+			result.append(fact_type)
+	result.sort()
+	return result
+
+
 static func _validate_condition(label: String, condition: Dictionary, errors: Array) -> void:
 	var type_id := str(condition.get("type", "")).strip_edges()
 	if not CONDITION_TYPES.has(type_id):
@@ -367,8 +406,8 @@ static func _validate_condition(label: String, condition: Dictionary, errors: Ar
 		return
 	if type_id == "command" and not _valid_id(str(condition.get("command_id", ""))):
 		errors.append("%s command condition requires command_id." % label)
-	elif type_id == "fact" and not _valid_id(str(condition.get("fact_type", ""))):
-		errors.append("%s fact condition requires fact_type." % label)
+	elif type_id == "fact" and not FACT_TYPES.has(str(condition.get("fact_type", "")).strip_edges()):
+		errors.append("%s fact condition requires a registered fact_type." % label)
 	elif ["local_equals", "local_min"].has(type_id) and not _valid_id(str(condition.get("key", ""))):
 		errors.append("%s local condition requires key." % label)
 	elif type_id == "objective" and (not _valid_id(str(condition.get("objective_id", ""))) or not _valid_id(str(condition.get("step_id", "")))):

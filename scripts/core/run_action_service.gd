@@ -941,11 +941,13 @@ func use_hook(kind: String, hook_id: String) -> Dictionary:
 	if kind == "service" and hook_id == JAZZ_SHOW_GLASSES_SERVICE_ID:
 		GameModule.apply_result(run_state, result)
 		_advance_hook_clock(kind, definition)
+		run_state.scenario_publish_service_result(kind, hook_id, result)
 		return _service_success(result)
 	_advance_hook_clock(kind, definition)
 	GameModule.apply_result(run_state, result)
 	if kind == "lender" and hook_id == "the_crew":
 		_apply_crew_loan_trust(definition)
+	run_state.scenario_publish_service_result(kind, hook_id, result)
 	return _service_success(result)
 
 

@@ -14,6 +14,7 @@ const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
@@ -1585,6 +1586,144 @@ func scenario_for_node(node_id: String) -> Dictionary:
 	return seeded_scenario_for_node(wanted)
 
 
+# Immutable authored definition for the current node. TownState owns seeded
+# identity/definition; the environment fallback exists for headless fixtures.
+func scenario_sequence_definition() -> Dictionary:
+	var node_id := current_world_node_id()
+	var definition := seeded_scenario_definition_for_node(node_id)
+	if definition.is_empty():
+		definition = _copy_dict(current_environment.get("scenario_sequence_definition", {}))
+	return definition
+
+
+func scenario_sequence_active() -> bool:
+	return not ScenarioEngineScript.sequence_projection(current_environment, scenario_sequence_definition()).is_empty()
+
+
+func scenario_sequence_projection() -> Dictionary:
+	return ScenarioEngineScript.sequence_projection(current_environment, scenario_sequence_definition())
+
+
+func scenario_sequence_command(command_id: String, idempotency_key: String, payload: Dictionary = {}, owner_namespace: String = "scenario", stable_object_id: String = "sequence") -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty():
+		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
+	var projection := scenario_sequence_projection()
+	var authored_command := ScenarioSequenceRuntimeScript.command(
+		command_id,
+		current_world_node_id(),
+		str(projection.get("phase_id", "")),
+		idempotency_key,
+		payload,
+		owner_namespace,
+		stable_object_id
+	)
+	return ScenarioEngineScript.sequence_command(current_environment, definition, authored_command, {"available_funds": bankroll})
+
+
+func scenario_enqueue_fact(fact_type: String, producer: String, payload: Dictionary = {}, fact_id: String = "", node_id: String = "") -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty():
+		return {"ok": false, "inactive": true, "errors": []}
+	var state := ScenarioEngineScript.ensure_sequence_state(current_environment, definition)
+	var target_node := current_world_node_id() if node_id.strip_edges().is_empty() else node_id.strip_edges()
+	var serial := maxi(1, int(state.get("fact_serial_next", 1)))
+	var stable_fact_id := fact_id.strip_edges()
+	if stable_fact_id.is_empty():
+		stable_fact_id = "%s:%s:%d" % [producer, fact_type, serial]
+	var typed_fact := ScenarioSequenceRuntimeScript.fact(
+		fact_type,
+		producer,
+		target_node,
+		stable_fact_id,
+		serial,
+		maxi(int(state.get("boundary_serial", 0)), _crew_action_index()),
+		payload
+	)
+	return ScenarioEngineScript.enqueue_sequence_fact(current_environment, definition, typed_fact)
+
+
+func scenario_flush_facts(boundary_serial: int = -1) -> Dictionary:
+	var definition := scenario_sequence_definition()
+	if definition.is_empty():
+		return {"ok": false, "inactive": true, "processed": [], "errors": []}
+	var target := _crew_action_index() if boundary_serial < 0 else boundary_serial
+	return ScenarioEngineScript.flush_sequence_facts(current_environment, definition, target)
+
+
+func scenario_publish_game_result(result: Dictionary, deltas: Dictionary) -> void:
+	var game_id := str(result.get("game_id", "")).strip_edges()
+	if game_id.is_empty():
+		return
+	scenario_enqueue_fact("game_result", "game", {
+		"game_id": game_id,
+		"action_id": str(result.get("action_id", "")),
+		"won": bool(result.get("won", false)),
+		"ended": bool(deltas.get("ended", result.get("ended", false))),
+		"bankroll_delta": int(deltas.get("bankroll_delta", 0)),
+		"chips_delta": int(deltas.get("chips_delta", 0)),
+		"applied_heat_delta": int(deltas.get("suspicion_delta", 0)),
+	})
+
+
+func scenario_publish_event_result(result: Dictionary) -> void:
+	var resolved := bool(result.get("resolved", false))
+	var deltas := _copy_dict(result.get("deltas", {}))
+	for hook_value in _copy_array(deltas.get("event_hooks", [])):
+		if typeof(hook_value) == TYPE_DICTIONARY and str((hook_value as Dictionary).get("type", "")) == "resolve_event":
+			resolved = true
+			break
+	scenario_enqueue_fact("event_result", "event", {
+		"event_id": str(result.get("event_id", result.get("source_id", ""))),
+		"choice_id": str(result.get("choice_id", result.get("action_id", ""))),
+		"resolved": resolved,
+		"ok": bool(result.get("ok", false)),
+	})
+
+
+func scenario_publish_service_result(kind: String, hook_id: String, result: Dictionary) -> void:
+	scenario_enqueue_fact("service_result", "service", {
+		"kind": kind,
+		"service_id": hook_id,
+		"ok": bool(result.get("ok", false)),
+		"action_id": str(result.get("action_id", "")),
+	})
+
+
+func scenario_publish_travel(fact_type: String, source_id: String, target_id: String, travel_kind: String = "world") -> void:
+	if not ["travel_departed", "travel_arrived"].has(fact_type):
+		return
+	scenario_enqueue_fact(fact_type, "travel", {"source_id": source_id, "target_id": target_id, "travel_kind": travel_kind})
+
+
+func _scenario_publish_crew_change(member_id: String, change: String, value: Variant) -> void:
+	scenario_enqueue_fact("crew_changed", "crew", {"member_id": member_id, "change": change, "value": value})
+
+
+func _scenario_publish_crew_job(job: Dictionary) -> void:
+	if job.is_empty():
+		return
+	scenario_enqueue_fact("crew_job_changed", "crew", {"job_id": str(job.get("id", "")), "definition_id": str(job.get("definition_id", "")), "member_id": str(job.get("member_id", "")), "status": str(job.get("status", "")), "outcome": str(job.get("outcome", ""))})
+
+
+func _scenario_publish_heat_change(previous_level: int, applied_delta: int, source: String) -> void:
+	if applied_delta == 0:
+		return
+	var next_level := suspicion_level()
+	scenario_enqueue_fact("heat_changed", "heat", {"previous": previous_level, "current": next_level, "applied_delta": applied_delta, "source": source})
+	var previous_band := _scenario_heat_band(previous_level)
+	var next_band := _scenario_heat_band(next_level)
+	if previous_band != next_band:
+		scenario_enqueue_fact("heat_band_changed", "heat", {"previous_band": previous_band, "current_band": next_band, "current": next_level, "source": source})
+
+
+static func _scenario_heat_band(value: int) -> String:
+	if value >= 75: return "critical"
+	if value >= 50: return "hot"
+	if value >= 25: return "caution"
+	return "quiet"
+
+
 func recent_scenario_ids(archetype_id: String) -> Array:
 	var value: Variant = scenario_recent_by_archetype.get(archetype_id, [])
 	return (value as Array).duplicate(false) if typeof(value) == TYPE_ARRAY else []
@@ -2501,6 +2640,7 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 		_apply_tutorial_heat_intervention(location_id, cue_id)
 	if applied_amount != 0 and active_location:
 		heat_changed.emit(applied_amount, suspicion_level(), cue_id, context.duplicate(true))
+		_scenario_publish_heat_change(base_level, applied_amount, cue_id)
 	_evaluate_immediate_terminal_state(defer_bankroll_zero)
 	return applied_amount
 
@@ -6353,8 +6493,11 @@ func crew_rank(member_id: String) -> String:
 func crew_add_trust(member_id: String, amount: int, _reason: String = "") -> int:
 	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or amount == 0:
 		return crew_trust(member_id)
+	var previous := crew_trust(member_id)
 	crew_trust_by_member[member_id] = maxi(0, crew_trust(member_id) + amount)
 	_reconcile_crew_recruitment_perks()
+	if crew_trust(member_id) != previous:
+		_scenario_publish_crew_change(member_id, "trust", crew_trust(member_id))
 	return crew_trust(member_id)
 
 
@@ -7811,6 +7954,7 @@ func job_accept(job_id: String) -> Dictionary:
 	job["status"] = "accepted"
 	job["accepted_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
+	_scenario_publish_crew_job(job)
 	return job.duplicate(true)
 
 
@@ -7822,6 +7966,7 @@ func job_activate(job_id: String) -> Dictionary:
 	job["status"] = "active"
 	job["active_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
+	_scenario_publish_crew_job(job)
 	return job.duplicate(true)
 
 
@@ -7860,6 +8005,7 @@ func job_resolve(job_id: String, outcome: String) -> Dictionary:
 	job["outcome"] = outcome
 	job["resolved_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
+	_scenario_publish_crew_job(job)
 	return job.duplicate(true)
 
 
@@ -10419,6 +10565,8 @@ func advance_environment_turns(amount: int = 1) -> void:
 	if current_environment.is_empty() or is_terminal():
 		return
 	var safe_amount := maxi(0, amount)
+	var town_before := JSON.stringify(town_state.public_snapshot()) if town_state != null else ""
+	var sweep_before := JSON.stringify(town_state.sweep_internal_status()) if town_state != null else ""
 	_advance_global_boundary_start(safe_amount)
 	var previous_turns := int(current_environment.get("turns", 0))
 	var next_turns := previous_turns + safe_amount
@@ -10438,6 +10586,24 @@ func advance_environment_turns(amount: int = 1) -> void:
 	_decrease_current_suspicion(next_decay_step - previous_decay_step)
 	_advance_heat_cooldown(safe_amount)
 	_advance_global_boundary_finish(safe_amount)
+	if town_state != null:
+		var town_after := town_state.public_snapshot()
+		if JSON.stringify(town_after) != town_before:
+			var happening_ids: Array = []
+			for happening_value in _copy_array(town_after.get("active_happenings", [])):
+				if typeof(happening_value) != TYPE_DICTIONARY:
+					continue
+				var happening_id := str((happening_value as Dictionary).get("id", "")).strip_edges()
+				if not happening_id.is_empty() and not happening_ids.has(happening_id):
+					happening_ids.append(happening_id)
+			happening_ids.sort()
+			scenario_enqueue_fact("town_transition", "town", {"action_index": _crew_action_index(), "weather": str(town_after.get("weather", "")), "day_type": str(town_after.get("day_type", "")), "happening_ids": happening_ids})
+		var sweep_after := town_state.sweep_internal_status()
+		if JSON.stringify(sweep_after) != sweep_before:
+			scenario_enqueue_fact("sweep_changed", "sweep", {"action_index": _crew_action_index(), "node_id": str(sweep_after.get("current_node_id", "")), "segment_index": int(sweep_after.get("segment_index", -1)), "active": bool(sweep_after.get("active", false))})
+	if safe_amount > 0:
+		scenario_enqueue_fact("world_boundary", "scenario", {"amount": safe_amount, "action_index": _crew_action_index()})
+		scenario_flush_facts(_crew_action_index())
 
 
 func _advance_global_boundary_start(safe_amount: int) -> void:
@@ -11642,6 +11808,7 @@ func _decrease_current_suspicion(amount: int) -> void:
 	suspicion["level"] = next_level
 	if next_level != previous_level:
 		_record_heat_history(false)
+		_scenario_publish_heat_change(previous_level, next_level - previous_level, "cooldown")
 	if location_id.is_empty():
 		return
 	var levels := _local_suspicion_levels()
@@ -13350,6 +13517,13 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 			environment[scenario_array_key] = _copy_array(environment.get(scenario_array_key, []))
 		for scenario_dict_key in ["scenario_game_modifiers", "scenario_presentation", "scenario_exclusive_opportunity", "scenario_hook_flags"]:
 			environment[scenario_dict_key] = _copy_dict(environment.get(scenario_dict_key, {}))
+	var sequence_state := ScenarioSequenceRuntimeScript.normalize_state(environment.get("scenario_sequence_state", {}))
+	if sequence_state.is_empty():
+		environment.erase("scenario_sequence_state")
+		environment.erase("scenario_sequence_projection")
+	else:
+		environment["scenario_sequence_state"] = sequence_state
+		environment["scenario_sequence_projection"] = _copy_dict(environment.get("scenario_sequence_projection", {}))
 	_normalize_environment_layers(environment)
 	return environment
 
