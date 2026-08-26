@@ -170,6 +170,9 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 	var duration := float(route_stage.get("duration_sec", 0.0))
 	var expected_duration := clampf(normal_start.distance_to(normal_endpoint) / 82.0, 0.75, 8.0)
 	if str(authority_record.get("presentation_object_id", "")) != "scenario::route_guard" \
+		or not bool(authority_record.get("presentation_required", false)) \
+		or not bool(authority_record.get("presentation_visible", false)) \
+		or not bool(authority_record.get("presentation_interactive", false)) \
 		or str(route_stage.get("mode", "")) != "ping_pong" \
 		or not is_equal_approx(duration, expected_duration) \
 		or not normal_endpoint.is_equal_approx(Vector2(860.0, 390.0)) \
@@ -231,19 +234,48 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 	var committed_environment := run_state.current_environment.duplicate(true)
 	var forged_canvas = PixelSceneCanvasScript.new()
 	forged_canvas.size = BOARD_SIZE
-	for projected_mutation_value in ["object_id_collision", "normalized_rect", "small_screen_rect", "scenario_z_order", "route_point_start", "route_point_endpoint", "stage_start", "stage_endpoint", "stage_reduced_endpoint", "stage_small_start", "stage_small_endpoint", "stage_duration", "stage_mode", "authority_identity", "authority_digest", "duplicate_record"]:
+	for projected_mutation_value in ["delete_route_guard", "delete_game_slot", "delete_command_console", "extra_record", "object_id_collision", "scenario_layout_resolved", "owner_namespace", "stable_object_id", "visible", "interactive", "semantic_actor_deletion", "semantic_interaction_deletion", "semantic_owner_namespace", "semantic_stable_object_id", "semantic_presence_conflict", "semantic_tombstone", "semantic_visibility", "normalized_rect", "small_screen_rect", "scenario_z_order", "route_point_start", "route_point_endpoint", "stage_start", "stage_endpoint", "stage_reduced_endpoint", "stage_small_start", "stage_small_endpoint", "stage_duration", "stage_mode", "authority_identity", "authority_digest", "duplicate_record"]:
 		var projected_mutation := str(projected_mutation_value)
 		run_state.current_environment = committed_environment.duplicate(true)
 		var forged_record_projection := projected.duplicate(true)
+		var forged_projected_records: Array = forged_record_projection["records"]
 		var forged_projected_actor := _mutable_record(forged_record_projection.get("records", []), "scenario::route_guard")
-		if projected_mutation == "duplicate_record":
-			var forged_projected_records: Array = forged_record_projection["records"]
-			forged_projected_records.append(forged_projected_actor.duplicate(true))
-		else:
-			_mutate_projected_route_actor(forged_projected_actor, projected_mutation)
+		match projected_mutation:
+			"delete_route_guard":
+				_remove_projected_record(forged_projected_records, "scenario::route_guard")
+			"delete_game_slot":
+				_remove_projected_record(forged_projected_records, "game:slot")
+			"delete_command_console":
+				_remove_projected_record(forged_projected_records, "scenario::command_console")
+			"extra_record":
+				var extra_record := forged_projected_actor.duplicate(true)
+				extra_record["object_id"] = "scenario::extra_guard"
+				extra_record["owner_namespace"] = "scenario"
+				extra_record["stable_object_id"] = "extra_guard"
+				extra_record["scenario_layout_authority_identity"] = "scenario::extra_guard"
+				forged_projected_records.append(extra_record)
+			"duplicate_record":
+				forged_projected_records.append(forged_projected_actor.duplicate(true))
+			"semantic_actor_deletion":
+				forged_record_projection["projection"]["semantic_state"]["actors"].erase("scenario::route_guard")
+			"semantic_interaction_deletion":
+				forged_record_projection["projection"]["semantic_state"]["interactions"].erase("scenario::route_guard")
+			"semantic_owner_namespace":
+				forged_record_projection["projection"]["semantic_state"]["actors"]["scenario::route_guard"]["owner_namespace"] = "base"
+			"semantic_stable_object_id":
+				forged_record_projection["projection"]["semantic_state"]["actors"]["scenario::route_guard"]["stable_object_id"] = "forged_route_guard"
+			"semantic_presence_conflict":
+				forged_record_projection["projection"]["semantic_state"]["actors"]["scenario::route_guard"]["present"] = false
+			"semantic_tombstone":
+				forged_record_projection["projection"]["semantic_state"]["actors"]["scenario::route_guard"]["present"] = false
+				forged_record_projection["projection"]["semantic_state"]["interactions"]["scenario::route_guard"]["present"] = false
+			"semantic_visibility":
+				forged_record_projection["projection"]["semantic_state"]["actors"]["scenario::route_guard"]["visible"] = false
+			_:
+				_mutate_projected_route_actor(forged_projected_actor, projected_mutation)
 		var committed_forgery := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, forged_record_projection, trusted_base)
 		var forged_records := _array(committed_forgery.get("records", []))
-		if bool(committed_forgery.get("ok", true)) or not _record(forged_records, "scenario::route_guard").is_empty() or _record(forged_records, "game:slot").is_empty() or _record(forged_records, "scenario::presentation_failure").is_empty() or _records_have_scenario_actions(forged_records):
+		if bool(committed_forgery.get("ok", true)) or not _record(forged_records, "scenario::route_guard").is_empty() or not _record(forged_records, "scenario::command_console").is_empty() or _record(forged_records, "game:slot").is_empty() or _record(forged_records, "scenario::presentation_failure").is_empty() or _records_have_scenario_actions(forged_records):
 			failures.append("Projected actor mutation %s reached presentation instead of trusted base plus disabled fallback." % projected_mutation)
 		forged_canvas.render_environment_snapshot({"id": "forged_finalized_route_%s" % projected_mutation, "archetype_id": "bar", "reduce_motion": true, "interactable_objects": forged_records})
 		var failure_rect := _canvas_object_rect(forged_canvas, "scenario::presentation_failure")
@@ -1006,6 +1038,16 @@ static func _mutate_projected_route_actor(actor: Dictionary, mutation: String) -
 	match mutation:
 		"object_id_collision":
 			actor["object_id"] = "game:slot"
+		"scenario_layout_resolved":
+			actor["scenario_layout_resolved"] = false
+		"owner_namespace":
+			actor["owner_namespace"] = "base"
+		"stable_object_id":
+			actor["stable_object_id"] = "forged_route_guard"
+		"visible":
+			actor["visible"] = false
+		"interactive":
+			actor["interactive"] = false
 		"normalized_rect", "small_screen_rect":
 			var rect := _dict(actor.get(mutation, {}))
 			rect["x"] = float(rect.get("x", 0.0)) + 0.01
@@ -1025,6 +1067,13 @@ static func _mutate_projected_route_actor(actor: Dictionary, mutation: String) -
 			var stage := _dict(actor.get("actor_route_stage", {}))
 			_mutate_route_stage(stage, mutation)
 			actor["actor_route_stage"] = stage
+
+
+static func _remove_projected_record(records: Array, object_id: String) -> void:
+	for index in range(records.size() - 1, -1, -1):
+		if str(_dict(records[index]).get("object_id", "")) == object_id:
+			records.remove_at(index)
+			return
 
 
 static func _mutate_route_stage(stage: Dictionary, mutation: String) -> void:
