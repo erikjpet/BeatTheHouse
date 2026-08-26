@@ -411,16 +411,3 @@ the entire execution history:
 Every agent must still read this board and its binding protocol in full.
 Append scope discoveries and decisions to the discovery companion, and
 append claim/block/completion/unblock entries to the work companion.
-
-## Logs and history
-
-The board protocol and live task state stay in this file. Historical logs
-are split into dated companions so agents can locate a row without loading
-the entire execution history:
-
-- [Discovery & Decision Log - through 2026-08-26](README_0_6_discovery_decision_log_2026-08-26.md)
-- [Work Log - through 2026-08-26](README_0_6_work_log_2026-08-26.md)
-
-Every agent must still read this board and its binding protocol in full.
-Append scope discoveries and decisions to the discovery companion, and
-append claim/block/completion/unblock entries to the work companion.
