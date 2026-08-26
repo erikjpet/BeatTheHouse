@@ -165,6 +165,30 @@ each stage builds on the last.
 | pusherv3_9 | `../todone/pusherv3_9_contact_bed_and_opaque_edge_prompt.md` | DONE | pusherv3_8 | touching opening bed and solid payout-edge occlusion | Codex | 2026-08-25 | 2026-08-25 | All opening stock belongs to real contact clusters; a shallow physical incline and opaque foreground apron now hold and occlude the edge prime until coins visibly clear the shelf. Focused/full regression, parity, determinism, visual, performance, and 200k-per-machine EV gates pass. |
 | pusherv3_10 | `pusherv3_10_opening_plinko_nozzles_and_stack_physics_prompt.md` | IN_PROGRESS | pusherv3_9 | full-width settled openings, full Plinko subsystem, nozzle queues, clarified stack physics | Codex | 2026-08-25 | — | Owner clarified support-only stack behavior, good/bad landing audio, consumed cups, and same-nozzle multiplier chains; implementation started. |
 
+### Owner-requested depth rework — living games and real environment sequences (2026-08-25)
+
+The shipped Craps, back-room poker, and Tonight variants satisfy their original
+contracts but do not yet satisfy the owner's experiential bar. In particular,
+scenario overlays mostly alter data/presentation and resolve a one-shot event;
+they do not reliably transform the room or give the player a unique multi-step
+task. These rows supersede no stable ids or verified rules. They deepen the
+runtime and convert every existing variation. Completion is all-or-nothing at
+`depth06_1`.
+
+Parallel execution launcher:
+`docs/todo/depth06_0_parallel_orchestration_prompt.md`. Give that prompt to one
+primary integrator; it requires isolated worktrees, sub-agent implementation
+and review, preserved logical commits, staged merges, and final exact-tree
+acceptance. It is an orchestration prompt, not an additional completion row.
+
+| ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| env06_6 | `env06_6_dynamic_scenario_runtime_prompt.md` | IN_PROGRESS | env06_1/2/3/5 (DONE) | env06_7, craps06_3, crew06_10 | PM:Codex/sub:runtime-owner | 2026-08-25 | — | Static implementation and evidence tooling independently accepted at `a5ae1d8f`; formal row acceptance remains withheld pending the serialized Full/audit/determinism/native-Web parity/performance/21-image visual gates and independent visual review. |
+| env06_7 | `env06_7_all_variations_sequence_rework_prompt.md` | TODO | env06_6 | depth06_1 | — | — | — | Convert and individually accept all 55 catalog ids; every prompt checkbox has a distinct physical sequence and branch aftermath. |
+| craps06_3 | `craps06_3_craps_depth_rework_prompt.md` | TODO | craps06_1/2, env06_6 | depth06_1 | — | — | — | Tactile throw/settlement phases, complete wager controls, staffed table ritual, physical energy reactions, and deeper street sequence. |
+| crew06_10 | `crew06_10_backroom_poker_depth_rework_prompt.md` | TODO | crew06_2/5/6/9, env06_6 | depth06_1 | — | — | — | Ordered betting, real session reentry, observable tell timelines, character staging, and five changing-room poker nights. |
+| depth06_1 | `depth06_1_games_and_scenarios_release_gate_prompt.md` | TODO | env06_7, craps06_3, crew06_10 | depth-program closure | — | — | — | Independent exact-tree audit; cannot pass with an omitted/reward-only variation or static-panel game experience. |
+
 ### Wave D — Crew depth
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |

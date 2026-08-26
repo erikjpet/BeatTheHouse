@@ -5,7 +5,7 @@ contains the historical Work Log moved verbatim by `board06_1`. Future
 claim, block, completion and unblock entries append here; task state and
 the binding protocol remain on the active board.
 
-Preserved entries: **124**; current entries: **127**. Use the exact find token
+Preserved entries: **124**; current entries: **128**. Use the exact find token
 below to jump to a row's history.
 
 ## Row/tag index
@@ -37,6 +37,7 @@ below to jump to a row's history.
 | `env06_5` | 3 | `[env06_5]` |
 | `env06_5 acceptance` | 1 | `[env06_5 acceptance]` |
 | `env06_5/fix06_2` | 1 | `[env06_5/fix06_2]` |
+| `env06_6` | 1 | `[env06_6]` |
 | `fix06_1` | 2 | `[fix06_1]` |
 | `fix06_2` | 11 | `[fix06_2]` |
 | `fix06_2 reopening` | 1 | `[fix06_2 reopening]` |
@@ -692,3 +693,7 @@ below to jump to a row's history.
 - 2026-08-26 [polish06_0] DONE after independent exact-head acceptance and
   non-fast-forward integration. The post-playtest program and its prompts and
   templates remain PARKED; this completion performed no polish or release work.
+- 2026-08-25 [env06_6] Primary integrator claimed the dynamic scenario runtime
+  on the isolated depth-program integration line. Initial runtime, catalog,
+  Craps, and poker audits precede implementation; consumer branches may not
+  base before independent acceptance and integration of the runtime head.
