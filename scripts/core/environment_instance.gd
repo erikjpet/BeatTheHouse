@@ -6,6 +6,7 @@ extends RefCounted
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioOperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
@@ -68,6 +69,7 @@ var scenario_hook_flags: Dictionary = {}
 var scenario_semantic_inventory_version: int = 0
 var scenario_semantic_digest: String = ""
 var scenario_sequence_state: Dictionary = {}
+var scenario_sequence_migration_error: String = ""
 var scenario_sequence_projection: Dictionary = {}
 var scenario_event_choices: Dictionary = {}
 var environment_layer_schema_version: int = 0
@@ -220,7 +222,11 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	if semantic_inventory_version > 0 and not semantic_digest.is_empty():
 		environment.scenario_semantic_inventory_version = semantic_inventory_version
 		environment.scenario_semantic_digest = semantic_digest
-	environment.scenario_sequence_state = _durable_sequence_state(data.get("scenario_sequence_state", {}))
+	var raw_sequence_state: Variant = data.get("scenario_sequence_state", {})
+	environment.scenario_sequence_state = _durable_sequence_state(raw_sequence_state)
+	environment.scenario_sequence_migration_error = str(data.get("scenario_sequence_migration_error", ""))
+	if data.has("scenario_sequence_state") and _persisted_sequence_state_requires_migration(raw_sequence_state, environment.scenario_sequence_state):
+		environment.scenario_sequence_migration_error = "Persisted dynamic room sequence state is malformed, unsupported, or overbound; explicit migration is required."
 	environment.scenario_sequence_projection = {}
 	environment.scenario_event_choices = {}
 	environment.environment_layer_schema_version = maxi(0, int(data.get("environment_layer_schema_version", 0)))
@@ -292,8 +298,14 @@ func to_dict() -> Dictionary:
 		result["scenario_presentation"] = scenario_presentation.duplicate(true)
 		result["scenario_exclusive_opportunity"] = scenario_exclusive_opportunity.duplicate(true)
 		result["scenario_hook_flags"] = scenario_hook_flags.duplicate(true)
+	var sequence_migration_error := scenario_sequence_migration_error
 	if not scenario_sequence_state.is_empty():
-		result["scenario_sequence_state"] = _durable_sequence_state(scenario_sequence_state)
+		var durable_sequence_state := _durable_sequence_state(scenario_sequence_state)
+		if _persisted_sequence_state_requires_migration(scenario_sequence_state, durable_sequence_state):
+			sequence_migration_error = "Persisted dynamic room sequence state is malformed, unsupported, or overbound; explicit migration is required."
+		else:
+			result["scenario_sequence_state"] = durable_sequence_state
+	if not sequence_migration_error.is_empty(): result["scenario_sequence_migration_error"] = sequence_migration_error
 	if scenario_semantic_inventory_version > 0 and not scenario_semantic_digest.strip_edges().is_empty():
 		result["scenario_semantic_inventory_version"] = scenario_semantic_inventory_version
 		result["scenario_semantic_digest"] = scenario_semantic_digest.strip_edges()
@@ -335,14 +347,26 @@ static func _durable_sequence_state(value: Variant) -> Dictionary:
 	return state
 
 
+static func _persisted_sequence_state_requires_migration(raw_value: Variant, durable_state: Dictionary) -> bool:
+	if typeof(raw_value) != TYPE_DICTIONARY or durable_state.is_empty(): return true
+	var raw := raw_value as Dictionary
+	return typeof(raw.get("schema_version")) != TYPE_INT \
+		or int(raw.get("schema_version", 0)) != ScenarioSequenceRuntimeScript.STATE_SCHEMA_VERSION \
+		or typeof(raw.get("scenario_id")) != TYPE_STRING \
+		or str(raw.get("scenario_id", "")).strip_edges().is_empty()
+
+
 static func _durable_layer_states(value: Variant) -> Dictionary:
 	var result: Dictionary = {}
 	for layer_id_value in _copy_dict(value).keys():
 		var body := _copy_dict(_copy_dict(value).get(layer_id_value, {})).duplicate(true)
 		for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_semantic_action_digest", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_event_choices", "scenario_sequence_projection", "scenario_sequence_lifecycle_errors"]: body.erase(key)
 		if body.has("scenario_sequence_state"):
-			var durable := _durable_sequence_state(body.get("scenario_sequence_state", {}))
-			if durable.is_empty(): body.erase("scenario_sequence_state")
+			var raw_sequence_state: Variant = body.get("scenario_sequence_state", {})
+			var durable := _durable_sequence_state(raw_sequence_state)
+			if _persisted_sequence_state_requires_migration(raw_sequence_state, durable):
+				body.erase("scenario_sequence_state")
+				body["scenario_sequence_migration_error"] = "Persisted dynamic room sequence state is malformed, unsupported, or overbound; explicit migration is required."
 			else: body["scenario_sequence_state"] = durable
 		body.erase("layer_states")
 		result[str(layer_id_value)] = body

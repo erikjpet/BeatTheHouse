@@ -190,6 +190,8 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 		"last_feedback": str(source.get("last_feedback", "")),
 		"performance_counters": _normalize_counters(source.get("performance_counters", {})),
 	}
+	if not definition.is_empty():
+		state["command_receipt_records"] = _migrate_command_receipt_records(state, definition)
 	if not [STATUS_ACTIVE, STATUS_AFTERMATH, STATUS_CLEANED].has(str(state.get("status", ""))):
 		state["status"] = STATUS_CLEANED
 	if not str(state.get("cleanup_content_fingerprint", "")).is_empty() and not _valid_sha256(str(state.get("cleanup_content_fingerprint", ""))):
@@ -256,8 +258,11 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 		return {"ok": false, "errors": validation, "state": state, "replayed": false}
 	var command_id := str(command_value.get("command_id", "")).strip_edges()
 	var payload := _dict(command_value.get("payload", {}))
+	var causal_descriptor := _dict(context.get("causal_action_descriptor", {}))
+	if causal_descriptor.is_empty():
+		causal_descriptor = causal_action_descriptor(state, definition, command_value)
 	var state_before := JSON.stringify(_canonical_variant(state))
-	var handler_result := _apply_registered_handler(state, definition, command_value)
+	var handler_result := _apply_registered_handler(state, definition, command_value, causal_descriptor)
 	state = _dict(handler_result.get("state", state))
 	if not bool(handler_result.get("ok", false)):
 		return {"ok": false, "errors": _array(handler_result.get("errors", [])), "state": original, "replayed": false}
@@ -270,7 +275,7 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 	_trim_dictionary_to_receipts(fingerprints, receipts)
 	state["command_fingerprints"] = fingerprints
 	var receipt_records := _array(state.get("command_receipt_records", []))
-	receipt_records.append({"receipt_key": receipt_id, "fingerprint": command_fingerprint, "cause_ordinal": _next_cause_ordinal(state), "envelope": command_value.duplicate(true)})
+	receipt_records.append({"receipt_key": receipt_id, "fingerprint": command_fingerprint, "cause_ordinal": _next_cause_ordinal(state), "envelope": command_value.duplicate(true), "causal_action_descriptor": causal_descriptor.duplicate(true), "causal_action_descriptor_fingerprint": _fingerprint(causal_descriptor)})
 	state["command_receipt_records"] = receipt_records
 	var trigger := {"kind": "command", "command_id": command_id, "receipt_id": receipt_id, "payload": payload, "cause_fingerprint": command_fingerprint}
 	var branch_result := _evaluate_branches(state, definition, trigger)
@@ -605,6 +610,20 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 	if typeof(command_value.get("payload", {})) != TYPE_DICTIONARY:
 		errors.append("scenario command payload must be a dictionary")
 	var descriptor := _command_descriptor(state, definition, owner_namespace, stable_object_id, command_id)
+	var causal_descriptor := _dict(context.get("causal_action_descriptor", {}))
+	if not causal_descriptor.is_empty():
+		errors.append_array(validate_causal_action_descriptor(state, definition, command_value, causal_descriptor))
+		descriptor = {
+			"identity_present": true,
+			"interaction_enabled": true,
+			"action_present": true,
+			"action": _dict(causal_descriptor.get("action", {})),
+			"action_origin_owner_namespace": str(_dict(causal_descriptor.get("action", {})).get("action_origin_owner_namespace", "")),
+			"action_origin_stable_object_id": str(_dict(causal_descriptor.get("action", {})).get("action_origin_stable_object_id", "")),
+			"action_origin_receipt_key": str(_dict(causal_descriptor.get("action", {})).get("action_origin_receipt_key", "")),
+			"action_origin_boundary_id": str(_dict(causal_descriptor.get("action", {})).get("action_origin_boundary_id", "")),
+			"action_origin_fingerprint": str(_dict(causal_descriptor.get("action", {})).get("action_origin_fingerprint", "")),
+		}
 	if not bool(descriptor.get("identity_present", false)):
 		errors.append("scenario command addressed an absent interaction")
 	else:
@@ -622,7 +641,7 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 	return errors
 
 
-static func _apply_registered_handler(state: Dictionary, definition: Dictionary, command_value: Dictionary) -> Dictionary:
+static func _apply_registered_handler(state: Dictionary, definition: Dictionary, command_value: Dictionary, causal_descriptor: Dictionary = {}) -> Dictionary:
 	var next := state.duplicate(true)
 	var command_id := str(command_value.get("command_id", "")).strip_edges()
 	var descriptor := _command_descriptor(
@@ -632,6 +651,7 @@ static func _apply_registered_handler(state: Dictionary, definition: Dictionary,
 		str(command_value.get("stable_object_id", "")),
 		command_id
 	)
+	if not causal_descriptor.is_empty(): descriptor["action"] = _dict(causal_descriptor.get("action", {}))
 	var action := _dict(descriptor.get("action", {}))
 	var handler_id := str(action.get("handler", "")).strip_edges()
 	if handler_id.is_empty():
@@ -639,6 +659,84 @@ static func _apply_registered_handler(state: Dictionary, definition: Dictionary,
 	if not OperationRegistryScript.registered_handlers().has(handler_id):
 		return {"ok": false, "state": state, "errors": ["scenario command handler is unregistered: %s" % handler_id]}
 	return _run_handler(next, definition, handler_id, _dict(action.get("inputs", {})), {"kind": "command", "command_id": command_id, "receipt_id": str(command_value.get("idempotency_key", "")), "payload": _dict(command_value.get("payload", {}))})
+
+
+static func causal_action_descriptor(state: Dictionary, definition: Dictionary, command_value: Dictionary) -> Dictionary:
+	var descriptor := _command_descriptor(state, definition, str(command_value.get("owner_namespace", "")), str(command_value.get("stable_object_id", "")), str(command_value.get("command_id", "")))
+	if not bool(descriptor.get("identity_present", false)) or not bool(descriptor.get("interaction_enabled", false)) or not bool(descriptor.get("action_present", false)):
+		return {}
+	return {
+		"owner_namespace": str(command_value.get("owner_namespace", "")),
+		"stable_object_id": str(command_value.get("stable_object_id", "")),
+		"command_id": str(command_value.get("command_id", "")),
+		"action": _dict(descriptor.get("action", {})),
+	}
+
+
+static func _migrate_command_receipt_records(state: Dictionary, definition: Dictionary) -> Array:
+	var records: Array = []
+	for record_value in _array(state.get("command_receipt_records", [])):
+		var record := _dict(record_value).duplicate(true)
+		if record.size() == 4:
+			var descriptor := receipt_bound_causal_action_descriptor(state, definition, _dict(record.get("envelope", {})))
+			if not descriptor.is_empty():
+				record["causal_action_descriptor"] = descriptor
+				record["causal_action_descriptor_fingerprint"] = _fingerprint(descriptor)
+		records.append(record)
+	return records
+
+
+static func receipt_bound_causal_action_descriptor(state: Dictionary, definition: Dictionary, command_value: Dictionary) -> Dictionary:
+	var receipt_key := str(command_value.get("action_origin_receipt_key", ""))
+	var boundary_id := str(command_value.get("action_origin_boundary_id", ""))
+	var operation_fingerprint := str(command_value.get("action_origin_fingerprint", ""))
+	var receipt_record: Dictionary = {}
+	for record_value in _array(_dict(state.get("semantic_state", {})).get("operation_receipt_records", [])):
+		var candidate := _dict(record_value)
+		if str(candidate.get("receipt_key", "")) == receipt_key:
+			receipt_record = candidate
+			break
+	if receipt_record.is_empty() or str(receipt_record.get("family", "")) != "interaction_ops" or str(receipt_record.get("boundary_id", "")) != boundary_id or str(receipt_record.get("fingerprint", "")) != operation_fingerprint:
+		return {}
+	for operation_value in _array(SequenceSchemaScript.phase(definition, str(command_value.get("expected_phase", ""))).get("interaction_ops", [])):
+		var operation := _dict(operation_value)
+		if str(operation.get("receipt_id", "")) != str(receipt_record.get("authored_receipt_id", "")) or OperationRegistryScript.operation_fingerprint(operation) != operation_fingerprint:
+			continue
+		var interaction := _dict(operation.get("interaction", {}))
+		for action_value in _array(interaction.get("available_actions", operation.get("available_actions", []))):
+			var action := _dict(action_value).duplicate(true)
+			if str(action.get("id", "")) != str(command_value.get("command_id", "")): continue
+			action["action_origin_owner_namespace"] = str(operation.get("owner_namespace", interaction.get("owner_namespace", "")))
+			action["action_origin_stable_object_id"] = str(operation.get("stable_object_id", interaction.get("stable_object_id", "")))
+			action["action_origin_receipt_key"] = receipt_key
+			action["action_origin_boundary_id"] = boundary_id
+			action["action_origin_fingerprint"] = operation_fingerprint
+			return {"owner_namespace": str(command_value.get("owner_namespace", "")), "stable_object_id": str(command_value.get("stable_object_id", "")), "command_id": str(command_value.get("command_id", "")), "action": action}
+	return {}
+
+
+static func validate_causal_action_descriptor(state: Dictionary, definition: Dictionary, command_value: Dictionary, descriptor: Dictionary) -> Array:
+	var errors: Array = []
+	var descriptor_closed := descriptor.size() == 4
+	for key_value in descriptor.keys():
+		if str(key_value) not in ["owner_namespace", "stable_object_id", "command_id", "action"]: descriptor_closed = false
+	if not descriptor_closed:
+		return ["scenario command causal action descriptor is not closed"]
+	for key in ["owner_namespace", "stable_object_id", "command_id"]:
+		if typeof(descriptor.get(key)) != TYPE_STRING or str(descriptor.get(key, "")) != str(command_value.get(key, "")):
+			errors.append("scenario command causal action descriptor conflicts with %s" % key)
+	var action := _dict(descriptor.get("action", {}))
+	if action.is_empty() or str(action.get("id", "")) != str(command_value.get("command_id", "")):
+		errors.append("scenario command causal action descriptor has no exact action")
+	else:
+		var authored_phase_state := state.duplicate(false)
+		authored_phase_state["phase_id"] = str(command_value.get("expected_phase", ""))
+		if not _authored_action_origin_matches(authored_phase_state, definition, str(descriptor.get("owner_namespace", "")), str(descriptor.get("stable_object_id", "")), action):
+			errors.append("scenario command causal action descriptor is not bound to an authored operation receipt")
+	for field in ["action_origin_owner_namespace", "action_origin_stable_object_id", "action_origin_receipt_key", "action_origin_boundary_id", "action_origin_fingerprint"]:
+		if str(command_value.get(field, "")) != str(action.get(field, "")):
+			errors.append("scenario command causal action descriptor conflicts with %s" % field)
+	return errors
 
 
 static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: String, inputs: Dictionary, trigger: Dictionary) -> Dictionary:
