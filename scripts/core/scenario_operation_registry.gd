@@ -32,29 +32,54 @@ const OP_FAMILIES := {
 	"route_ops": ROUTE_OPS,
 }
 const REGISTERED_HANDLERS := {
-	"set_local": {"inputs": ["key", "value"], "outputs": ["local_state"], "persistent": true, "rng": "none"},
-	"increment_local": {"inputs": ["key", "amount"], "outputs": ["local_state"], "persistent": true, "rng": "none"},
-	"complete_objective_step": {"inputs": ["objective_id", "step_id"], "outputs": ["objective_progress"], "persistent": true, "rng": "none"},
-	"resolve_objective": {"inputs": ["objective_id", "outcome"], "outputs": ["objective_progress"], "persistent": true, "rng": "none"},
-	"record_outcome": {"inputs": ["outcome"], "outputs": ["resolved_outcomes"], "persistent": true, "rng": "none"},
-	"publish_feedback": {"inputs": ["message"], "outputs": ["last_feedback", "semantic_state"], "persistent": true, "rng": "none"},
-	"request_cleanup": {"inputs": ["reason"], "outputs": ["semantic_state", "cleanup_receipts", "cleanup_receipt_records", "status"], "persistent": true, "rng": "none"},
-	"event_bridge": {"inputs": ["event_id", "resolution_id"], "outputs": ["event_request_queue", "last_feedback"], "persistent": true, "rng": "none"},
+	"set_local": {"inputs": ["key", "value"], "input_specs": {"key": "CanonicalId/local_field", "value": "LocalValue(key)"}, "fact_projection": {"input": "value", "selector": "value_from_payload"}, "allowed_sources": ["command", "fact"], "outputs": ["local_state"], "output_paths": ["local_state.<key>"], "write_algebra": "validated_replace", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "same-value state-idempotent; dispatch receipt exactly-once", "may_trigger_branch_resolution": ["local_equals", "local_min"], "external_effects": []},
+	"increment_local": {"inputs": ["key", "amount"], "input_specs": {"key": "CanonicalId/int_local_field", "amount": "int"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["local_state"], "output_paths": ["local_state.<key>"], "write_algebra": "integer_add_then_saturating_clamp", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "receipt-dependent", "may_trigger_branch_resolution": ["local_equals", "local_min"], "external_effects": []},
+	"complete_objective_step": {"inputs": ["objective_id", "step_id"], "input_specs": {"objective_id": "ObjectiveRef.objective_id", "step_id": "ObjectiveRef.step_id"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["objective_progress"], "output_paths": ["objective_progress.<objective_id>.completed_steps"], "write_algebra": "ordered_set_union_append", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "state-idempotent", "may_trigger_branch_resolution": ["objective"], "external_effects": []},
+	"resolve_objective": {"inputs": ["objective_id", "outcome"], "input_specs": {"objective_id": "ObjectiveRef.objective_id", "outcome": "ObjectiveOutcome"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["objective_progress"], "output_paths": ["objective_progress.<objective_id>.outcome"], "write_algebra": "validated_replace", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "same-value state-idempotent", "may_trigger_branch_resolution": ["objective"], "external_effects": []},
+	"record_outcome": {"inputs": ["outcome"], "input_specs": {"outcome": "OutcomeRef"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["resolved_outcomes"], "output_paths": ["resolved_outcomes"], "write_algebra": "ordered_set_union_append", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "state-idempotent", "may_trigger_branch_resolution": ["outcome"], "external_effects": []},
+	"publish_feedback": {"inputs": ["message"], "input_specs": {"message": "bounded_nonblank_path_safe_string"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["last_feedback", "semantic_state"], "output_paths": ["last_feedback", "semantic_state.transition_queue"], "write_algebra": "replace_plus_queue_append", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "dispatch receipt exactly-once", "may_trigger_branch_resolution": [], "external_effects": []},
+	"request_cleanup": {"inputs": ["reason"], "input_specs": {"reason": "CanonicalId"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["semantic_state", "cleanup_receipts", "cleanup_receipt_records", "cleanup_fingerprints", "cleanup_content_fingerprint", "status"], "output_paths": ["semantic_state", "cleanup_receipts", "cleanup_receipt_records", "cleanup_fingerprints", "cleanup_content_fingerprint", "status"], "write_algebra": "transactional_cleanup_batch", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "fingerprint-verified replay", "may_trigger_branch_resolution": [], "external_effects": []},
+	"event_bridge": {"inputs": ["event_id", "resolution_id"], "input_specs": {"event_id": "EventChoiceRef.event_id", "resolution_id": "EventChoiceRef.choice_id"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["event_request_queue", "last_feedback", "event_correlations"], "output_paths": ["event_request_queue", "last_feedback", "event_correlations"], "write_algebra": "replace_plus_ordered_set_union", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "correlation-key state-idempotent", "may_trigger_branch_resolution": [], "external_effects": [{"type": "event_correlation", "owner": "EventModule"}]},
 }
 const MAX_OPERATIONS_PER_BATCH := 32
 const MAX_ACTIONS_PER_INTERACTION := 8
 const MAX_OPERATION_RECEIPTS := 512
 const MAX_TRANSITION_QUEUE := 128
 const MAX_VARIANT_DEPTH := 12
-const MAX_VARIANT_VALUES := 4096
+# The closed runtime can retain 256 authenticated command/fact causes. Their
+# exact envelopes, replay results, fingerprints, and receipt records exceed the
+# old 4096-node aggregate traversal budget before the declared lifetime limit.
+# Depth, per-container, per-string, and authoritative receipt bounds remain the
+# controlling limits; this is only the aggregate traversal ceiling.
+const MAX_VARIANT_VALUES := 16384
 const MAX_VARIANT_TEXT := 512
 const MAX_VARIANT_COLLECTION := 512
 const MIN_TARGET_SIZE := 44.0
 const COMMON_OPERATION_KEYS := ["family", "op", "receipt_id", "owner_namespace", "stable_object_id"]
+const PUBLIC_SEMANTIC_KEYS := ["actors", "games", "interactions", "routes", "scene_objects", "services", "transition_queue"]
 
 
 static func identity(owner_namespace: String, stable_object_id: String) -> String:
-	return "%s::%s" % [owner_namespace.strip_edges(), stable_object_id.strip_edges()]
+	return "%s::%s" % [owner_namespace, stable_object_id]
+
+
+static func parse_owned_identity(value: String) -> Dictionary:
+	if value != value.strip_edges() or value.count("::") != 1:
+		return {}
+	var separator := value.find("::")
+	var owner := value.substr(0, separator)
+	var stable_object_id := value.substr(separator + 2)
+	if not OWNER_NAMESPACES.has(owner) or not _valid_semantic_object_id(stable_object_id):
+		return {}
+	return {"owner_namespace": owner, "stable_object_id": stable_object_id, "owned_identity": value}
+
+
+static func validate_owned_identity(value: String) -> Array:
+	return [] if not parse_owned_identity(value).is_empty() else ["owned identity must contain exactly one canonical owner::stable:id value."]
+
+
+static func target_key(collection: String, owner_namespace: String, stable_object_id: String) -> String:
+	return _length_prefixed(collection) + _length_prefixed(owner_namespace) + _length_prefixed(stable_object_id)
 
 
 static func identity_from(value: Dictionary, prefix: String = "") -> String:
@@ -73,6 +98,68 @@ static func registered_handlers() -> Dictionary:
 
 static func normalize_semantic_state(value: Dictionary) -> Dictionary:
 	return _normalize_semantic_state(value)
+
+
+static func validate_handler_inputs(handler_id: String, inputs: Dictionary, local_schema: Dictionary = {}, reachable_outcomes: Array = [], context: Dictionary = {}) -> Array:
+	var errors: Array = []
+	errors.append_array(validate_bounded_variant("scenario handler inputs", inputs))
+	var contract := _dict(REGISTERED_HANDLERS.get(handler_id, {}))
+	if contract.is_empty(): return ["scenario handler is unregistered: %s." % handler_id]
+	var source := str(context.get("source", "command"))
+	if not _array(contract.get("allowed_sources", [])).has(source): errors.append("scenario handler %s is not allowed from %s." % [handler_id, source])
+	var projection := inputs.has("value_from_payload")
+	var allowed_inputs := _array(contract.get("inputs", []))
+	if projection: allowed_inputs.append("value_from_payload")
+	_append_unknown_keys("scenario handler %s inputs" % handler_id, inputs, allowed_inputs, errors)
+	if projection and handler_id != "set_local": errors.append("value_from_payload is allowed only for set_local.")
+	if handler_id == "set_local":
+		if inputs.has("value") == projection: errors.append("set_local requires exactly one of value or value_from_payload.")
+		if not inputs.has("key"): errors.append("scenario handler set_local requires input key.")
+	else:
+		for input_value in _array(contract.get("inputs", [])):
+			if not inputs.has(str(input_value)): errors.append("scenario handler %s requires input %s." % [handler_id, str(input_value)])
+	if not errors.is_empty(): return errors
+	match handler_id:
+		"set_local":
+			if typeof(inputs.get("key")) != TYPE_STRING or not _canonical_id(str(inputs.get("key", ""))): return ["set_local key must be a canonical local field id."]
+			var field_id := str(inputs.get("key", ""))
+			var field := _dict(local_schema.get(field_id, {}))
+			if field.is_empty(): errors.append("set_local references an unknown local field.")
+			elif projection:
+				if typeof(inputs.get("value_from_payload")) != TYPE_STRING or not _canonical_id(str(inputs.get("value_from_payload", ""))): errors.append("set_local value_from_payload must be a canonical top-level payload key.")
+				else:
+					var selector := str(inputs.get("value_from_payload", ""))
+					var payload_types := _dict(context.get("fact_payload_types", {}))
+					if not payload_types.has(selector): errors.append("set_local value_from_payload is not registered for the selected fact type.")
+					elif not _payload_type_can_target_local(str(payload_types.get(selector, "")), str(field.get("type", ""))): errors.append("set_local fact selector type does not match the target local type.")
+			elif not _value_matches_local_type(inputs.get("value"), str(field.get("type", "")), field): errors.append("set_local value does not match the declared local field type/domain.")
+		"increment_local":
+			if typeof(inputs.get("key")) != TYPE_STRING or not _canonical_id(str(inputs.get("key", ""))): errors.append("increment_local key must be a canonical local field id.")
+			var field_id := str(inputs.get("key", ""))
+			var field_type := str(_dict(local_schema.get(field_id, {})).get("type", ""))
+			if field_type != "int": errors.append("increment_local requires a declared integer local field.")
+			elif typeof(inputs.get("amount")) != TYPE_INT: errors.append("increment_local requires an exact integer amount.")
+		"complete_objective_step":
+			if typeof(inputs.get("objective_id")) != TYPE_STRING or typeof(inputs.get("step_id")) != TYPE_STRING or not _canonical_id(str(inputs.get("objective_id", ""))) or not _canonical_id(str(inputs.get("step_id", ""))): errors.append("complete_objective_step requires canonical string ids.")
+			else:
+				var objective_id := str(inputs.get("objective_id", ""))
+				var objective_steps := _dict(context.get("objective_steps", {}))
+				if not objective_steps.is_empty() and (not objective_steps.has(objective_id) or not _dict(objective_steps.get(objective_id, {})).has(str(inputs.get("step_id", "")))): errors.append("complete_objective_step requires an exact authored objective step.")
+				if source == "command" and context.has("phase_objective_ids") and not _array(context.get("phase_objective_ids", [])).has(objective_id): errors.append("complete_objective_step objective is not owned by the containing phase.")
+		"resolve_objective":
+			if typeof(inputs.get("objective_id")) != TYPE_STRING or not _canonical_id(str(inputs.get("objective_id", ""))) or typeof(inputs.get("outcome")) != TYPE_STRING or str(inputs.get("outcome", "")) not in ["success", "failure", "ignore", "cancel"]: errors.append("resolve_objective requires an authored objective and valid outcome.")
+			elif not _dict(context.get("objective_steps", {})).has(str(inputs.get("objective_id", ""))): errors.append("resolve_objective references an unknown objective.")
+		"record_outcome":
+			if typeof(inputs.get("outcome")) != TYPE_STRING or not _canonical_id(str(inputs.get("outcome", ""))) or not reachable_outcomes.has(str(inputs.get("outcome", ""))): errors.append("record_outcome requires an authored reachable outcome with matching aftermath.")
+		"publish_feedback":
+			if typeof(inputs.get("message")) != TYPE_STRING or str(inputs.get("message", "")).strip_edges().is_empty() or str(inputs.get("message", "")).length() > MAX_VARIANT_TEXT or _contains_forbidden_path(inputs.get("message")): errors.append("publish_feedback requires bounded nonempty path-safe text.")
+		"request_cleanup":
+			if typeof(inputs.get("reason")) != TYPE_STRING or not _canonical_id(str(inputs.get("reason", ""))): errors.append("request_cleanup requires a canonical lowercase cleanup reason id.")
+		"event_bridge":
+			if typeof(inputs.get("event_id")) != TYPE_STRING or typeof(inputs.get("resolution_id")) != TYPE_STRING or not _canonical_id(str(inputs.get("event_id", ""))) or not _canonical_id(str(inputs.get("resolution_id", ""))): errors.append("event_bridge requires canonical event and resolution ids.")
+			var event_choices := _dict(context.get("event_choices", {}))
+			if event_choices.is_empty() or not _array(event_choices.get(str(inputs.get("event_id", "")), [])).has(str(inputs.get("resolution_id", ""))): errors.append("event_bridge requires a catalog-proven choice belonging to the exact event.")
+	return errors
 
 
 static func validate_any_operation(operation: Dictionary) -> Array:
@@ -96,7 +183,7 @@ static func validate_operation(family: String, operation: Dictionary) -> Array:
 		errors.append("%s operation is unregistered: %s." % [family, op_id])
 	var owner := str(operation.get("owner_namespace", "")).strip_edges()
 	var stable_id := str(operation.get("stable_object_id", "")).strip_edges()
-	if not OWNER_NAMESPACES.has(owner) or not _valid_id(stable_id):
+	if not OWNER_NAMESPACES.has(owner) or not _valid_semantic_object_id(stable_id):
 		errors.append("%s %s requires registered owner_namespace and stable_object_id." % [family, op_id])
 	if not _valid_id(str(operation.get("receipt_id", ""))):
 		errors.append("%s %s requires a stable authored receipt_id." % [family, op_id])
@@ -106,7 +193,7 @@ static func validate_operation(family: String, operation: Dictionary) -> Array:
 			errors.append("interaction %s requires matching explicit mode." % op_id)
 		var target_owner := str(operation.get("target_owner_namespace", "")).strip_edges()
 		var target_id := str(operation.get("target_stable_object_id", "")).strip_edges()
-		if not OWNER_NAMESPACES.has(target_owner) or not _valid_id(target_id):
+		if not OWNER_NAMESPACES.has(target_owner) or not _valid_semantic_object_id(target_id):
 			errors.append("interaction %s requires a valid target identity." % op_id)
 	if ["spawn", "add", "replace"].has(op_id):
 		var payload := _dict(operation.get("object", operation.get("actor", operation.get("interaction", {}))))
@@ -118,6 +205,9 @@ static func validate_operation(family: String, operation: Dictionary) -> Array:
 			_validate_interaction_payload(payload, errors)
 			if str(payload.get("owner_namespace", "")).strip_edges() != owner or str(payload.get("stable_object_id", "")).strip_edges() != stable_id:
 				errors.append("interaction payload identity must exactly match its operation identity.")
+			var expected_presentation_id := identity(owner, stable_id)
+			if payload.has("presentation_object_id") and str(payload.get("presentation_object_id", "")) != expected_presentation_id:
+				errors.append("scenario interaction presentation_object_id must equal its full owned identity %s." % expected_presentation_id)
 		elif family == "actor_ops":
 			_validate_actor_payload(payload, errors)
 		elif family in ["service_ops", "game_ops"]:
@@ -137,20 +227,24 @@ static func structural_receipt_key(boundary_id: String, family: String, authored
 	return "op_%s" % tuple.sha256_text()
 
 
+static func operation_fingerprint(operation: Dictionary) -> String:
+	return JSON.stringify(_canonical_variant(operation)).sha256_text()
+
+
 static func validate_bounded_variant(label: String, value: Variant) -> Array:
 	var errors: Array = []
 	_validate_bounded_variant(label, value, 0, {"count": 0}, [], errors)
 	return errors
 
 
-static func apply_operations(state_value: Dictionary, family: String, operations: Array, boundary_id: String) -> Dictionary:
+static func apply_operations(state_value: Dictionary, family: String, operations: Array, boundary_id: String, cleanup_restore: bool = false) -> Dictionary:
 	var state_validation := validate_bounded_variant("scenario semantic state", state_value)
 	if not state_validation.is_empty():
 		return {"ok": false, "state": state_value, "applied": [], "errors": state_validation}
 	var original := _normalize_semantic_state(state_value)
 	if not OP_FAMILIES.has(family):
 		return {"ok": false, "state": original, "applied": [], "errors": ["operation family is unregistered: %s." % family]}
-	if not _valid_boundary_scope(boundary_id):
+	if boundary_id.length() > MAX_VARIANT_TEXT or not _valid_boundary_scope(boundary_id):
 		return {"ok": false, "state": original, "applied": [], "errors": ["operation batch requires an instance/content/phase/boundary scope."]}
 	if operations.size() > MAX_OPERATIONS_PER_BATCH:
 		return {"ok": false, "state": original, "applied": [], "errors": ["operation batch exceeds %d entries." % MAX_OPERATIONS_PER_BATCH]}
@@ -176,10 +270,10 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 			authored_receipts[authored_receipt] = true
 		if not authored_receipt.is_empty() and validation.is_empty():
 			var authoritative_receipt := structural_receipt_key(boundary_id, family, authored_receipt)
-			var fingerprint := JSON.stringify(_canonical_variant(candidate))
+			var fingerprint := operation_fingerprint(candidate)
 			if fingerprints.has(authoritative_receipt) and str(fingerprints.get(authoritative_receipt, "")) != fingerprint:
 				errors.append("operation receipt %s was reused for conflicting content." % authoritative_receipt)
-			pending.append({"operation": candidate.duplicate(true), "receipt_id": authoritative_receipt, "authored_receipt_id": authored_receipt, "fingerprint": fingerprint})
+			pending.append({"operation": candidate.duplicate(true), "receipt_id": authoritative_receipt, "authored_receipt_id": authored_receipt, "fingerprint": fingerprint, "operation_index": index})
 		_validate_and_track_target(family, candidate, known_targets, errors)
 	var new_receipt_count := 0
 	for pending_value in pending:
@@ -197,9 +291,9 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 		var item := pending_value as Dictionary
 		var receipt_id := str(item.get("receipt_id", ""))
 		if existing_receipts.has(receipt_id): continue
-		var target_errors := _validate_operation_target(state, family, _dict(item.get("operation", {})))
+		var target_errors := _validate_operation_target(state, family, _dict(item.get("operation", {})), cleanup_restore)
 		if not target_errors.is_empty(): errors.append_array(target_errors)
-		else: _apply_operation(state, family, _dict(item.get("operation", {})), receipt_id)
+		else: _apply_operation(state, family, _dict(item.get("operation", {})), receipt_id, boundary_id, str(item.get("fingerprint", "")), cleanup_restore)
 	if not errors.is_empty():
 		return {"ok": false, "state": original, "applied": [], "errors": errors}
 	for pending_value in pending:
@@ -214,9 +308,22 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 		fingerprints[receipt_id] = str(item.get("fingerprint", ""))
 		state["operation_fingerprints"] = fingerprints.duplicate(true)
 		var records := _array(state.get("operation_receipt_records", []))
-		records.append({"receipt_key": receipt_id, "boundary_id": boundary_id.strip_edges(), "family": family, "authored_receipt_id": str(item.get("authored_receipt_id", "")), "fingerprint": str(item.get("fingerprint", ""))})
+		records.append({
+			"receipt_key": receipt_id,
+			"boundary_id": boundary_id.strip_edges(),
+			"boundary_kind": _boundary_kind(boundary_id),
+			"boundary_ordinal": _boundary_ordinal(records, boundary_id),
+			"family": family,
+			"authored_receipt_id": str(item.get("authored_receipt_id", "")),
+			"operation_index": int(item.get("operation_index", -1)),
+			"fingerprint": str(item.get("fingerprint", "")),
+			"source_ref": _boundary_source_ref(boundary_id),
+		})
 		state["operation_receipt_records"] = records
 		applied.append(receipt_id)
+	var result_validation := validate_bounded_variant("scenario semantic state after operation batch", state)
+	if not result_validation.is_empty():
+		return {"ok": false, "state": original, "applied": [], "errors": result_validation}
 	return {"ok": true, "state": state, "applied": applied, "errors": []}
 
 
@@ -224,6 +331,11 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 	var records: Dictionary = {}
 	var tainted: Dictionary = {}
 	var errors: Array = []
+	# Reject cycles/oversize graphs before any recursive duplicate. This direct
+	# resolver is a public ingress, not merely a helper behind operation validation.
+	var input_errors := validate_bounded_variant("base interaction records", base_records)
+	input_errors.append_array(validate_bounded_variant("overlay interaction records", overlay_records))
+	if not input_errors.is_empty(): return {"ok": false, "records": [], "errors": input_errors}
 	for source_value in base_records:
 		_ingest_interaction_record(records, tainted, errors, source_value, false)
 	for source_value in overlay_records:
@@ -317,7 +429,13 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 					continue
 				for action_value in _array(overlay.get("available_actions", [])):
 					if typeof(action_value) == TYPE_DICTIONARY:
-						actions.append((action_value as Dictionary).duplicate(true))
+						var augmented_action := (action_value as Dictionary).duplicate(true)
+						augmented_action["action_origin_owner_namespace"] = str(overlay.get("owner_namespace", ""))
+						augmented_action["action_origin_stable_object_id"] = str(overlay.get("stable_object_id", ""))
+						augmented_action["action_origin_receipt_key"] = str(overlay.get("operation_receipt_key", ""))
+						augmented_action["action_origin_boundary_id"] = str(overlay.get("operation_boundary_id", ""))
+						augmented_action["action_origin_fingerprint"] = str(overlay.get("operation_fingerprint", ""))
+						actions.append(augmented_action)
 				target["available_actions"] = actions
 				records[target_key] = target
 				records.erase(source_key)
@@ -354,6 +472,10 @@ static func _ingest_interaction_record(records: Dictionary, tainted: Dictionary,
 	if typeof(source_value) != TYPE_DICTIONARY:
 		errors.append("interaction record must be a dictionary.")
 		return
+	var bounded_errors := validate_bounded_variant("interaction record", source_value)
+	if not bounded_errors.is_empty():
+		errors.append_array(bounded_errors)
+		return
 	var source := (source_value as Dictionary).duplicate(true)
 	var key := identity_from(source)
 	var validation: Array = []
@@ -372,10 +494,21 @@ static func _ingest_interaction_record(records: Dictionary, tainted: Dictionary,
 		tainted[key] = true
 		errors.append("illegal duplicate interaction identity %s." % key)
 		return
+	var actions: Array = []
+	for action_value in _array(source.get("available_actions", [])):
+		var action := _dict(action_value)
+		action["action_origin_owner_namespace"] = str(source.get("owner_namespace", ""))
+		action["action_origin_stable_object_id"] = str(source.get("stable_object_id", ""))
+		if not str(source.get("operation_receipt_key", "")).is_empty():
+			action["action_origin_receipt_key"] = str(source.get("operation_receipt_key", ""))
+			action["action_origin_boundary_id"] = str(source.get("operation_boundary_id", ""))
+			action["action_origin_fingerprint"] = str(source.get("operation_fingerprint", ""))
+		actions.append(action)
+	source["available_actions"] = actions
 	records[key] = source
 
 
-static func _apply_operation(state: Dictionary, family: String, operation: Dictionary, receipt_id: String) -> void:
+static func _apply_operation(state: Dictionary, family: String, operation: Dictionary, receipt_id: String, boundary_id: String, fingerprint: String, cleanup_restore: bool = false) -> void:
 	var collection_key := _collection_key(family)
 	if family == "transition_ops":
 		var transitions := _array(state.get(collection_key, []))
@@ -388,6 +521,14 @@ static func _apply_operation(state: Dictionary, family: String, operation: Dicti
 	var key := identity_from(operation)
 	var op_id := str(operation.get("op", ""))
 	var payload := _dict(operation.get("object", operation.get("actor", operation.get("interaction", {}))))
+	if cleanup_restore and family == "interaction_ops" and not ["add", "remove"].has(op_id):
+		collection.erase(key)
+		state[collection_key] = collection
+		return
+	if cleanup_restore and _inventory_has(state, collection_key, key) and not (family == "scene_ops" and op_id == "spawn" or family == "interaction_ops" and op_id == "add" or family == "actor_ops" and op_id == "spawn" or family in ["service_ops", "game_ops"] and op_id == "add") and not ["remove", "despawn"].has(op_id):
+		collection.erase(key)
+		state[collection_key] = collection
+		return
 	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
 		var overlay := payload
 		overlay["owner_namespace"] = str(operation.get("owner_namespace", ""))
@@ -395,14 +536,29 @@ static func _apply_operation(state: Dictionary, family: String, operation: Dicti
 		for overlay_key in ["mode", "target_owner_namespace", "target_stable_object_id", "enabled", "disabled_reason", "source_id", "available_actions"]:
 			if operation.has(overlay_key):
 				overlay[overlay_key] = operation.get(overlay_key)
+		overlay["operation_receipt_key"] = receipt_id
+		overlay["operation_boundary_id"] = boundary_id
+		overlay["operation_fingerprint"] = fingerprint
 		collection[key] = overlay
 		state[collection_key] = collection
 		return
 	if ["remove", "despawn"].has(op_id):
 		collection.erase(key)
+		if _inventory_has(state, collection_key, key):
+			var tombstones := _dict(state.get("tombstones", {}))
+			var collection_tombstones := _dict(tombstones.get(collection_key, {}))
+			if cleanup_restore: collection_tombstones.erase(key)
+			else: collection_tombstones[key] = true
+			tombstones[collection_key] = collection_tombstones
+			state["tombstones"] = tombstones
 	elif ["spawn", "add", "replace"].has(op_id):
 		payload["owner_namespace"] = str(operation.get("owner_namespace", ""))
 		payload["stable_object_id"] = str(operation.get("stable_object_id", ""))
+		if family == "interaction_ops":
+			payload["presentation_object_id"] = key
+			payload["operation_receipt_key"] = receipt_id
+			payload["operation_boundary_id"] = boundary_id
+			payload["operation_fingerprint"] = fingerprint
 		payload["mode"] = str(operation.get("mode", "add"))
 		for target_key in ["target_owner_namespace", "target_stable_object_id"]:
 			if operation.has(target_key):
@@ -442,7 +598,7 @@ static func _apply_operation(state: Dictionary, family: String, operation: Dicti
 	state[collection_key] = collection
 
 
-static func _validate_operation_target(state: Dictionary, family: String, operation: Dictionary) -> Array:
+static func _validate_operation_target(state: Dictionary, family: String, operation: Dictionary, cleanup_restore: bool = false) -> Array:
 	if family == "transition_ops":
 		return []
 	var errors: Array = []
@@ -450,12 +606,32 @@ static func _validate_operation_target(state: Dictionary, family: String, operat
 	var collection := _dict(state.get(collection_key, {}))
 	var key := identity_from(operation)
 	var op_id := str(operation.get("op", "")).strip_edges()
+	if family in ["scene_ops", "actor_ops"]:
+		var spatial_source := _dict(operation.get("object", operation.get("actor", {}))) if op_id in ["spawn", "replace"] else operation
+		for spatial_kind in ["anchor", "zone"]:
+			var spatial_id := str(spatial_source.get("%s_id" % spatial_kind, "")).strip_edges()
+			if not spatial_id.is_empty():
+				var spatial_identity := identity("base", "%s:%s" % [spatial_kind, spatial_id])
+				var collection_name := "%ss" % spatial_kind
+				if not _target_declared(state, collection_name, spatial_identity):
+					errors.append("%s %s references undeclared or unavailable %s %s." % [family, op_id, spatial_kind, spatial_id])
+	if family == "actor_ops" and op_id == "set_route":
+		var route_id := str(operation.get("route_id", ""))
+		var route_authorized := not parse_owned_identity(route_id).is_empty() and _string_array(_dict(state.get("declared_targets", {})).get("routes", [])).has(route_id) and _inventory_has(state, "routes", route_id)
+		if not route_authorized:
+			errors.append("actor set_route requires an exact owned route identity, got %s." % route_id)
 	var create_operation := family == "scene_ops" and op_id == "spawn" or family == "interaction_ops" and op_id == "add" or family == "actor_ops" and op_id == "spawn" or family in ["service_ops", "game_ops"] and op_id == "add"
 	if create_operation:
-		if collection.has(key):
+		if str(operation.get("owner_namespace", "")) != "scenario":
+			errors.append("%s %s requires scenario ownership." % [family, op_id])
+		elif collection.has(key) or _inventory_has(state, collection_key, key):
 			errors.append("%s %s cannot create existing identity %s." % [family, op_id, key])
 		return errors
 	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
+		if cleanup_restore:
+			if not collection.has(key):
+				errors.append("interaction cleanup overlay identity is not live: %s." % key)
+			return errors
 		if collection.has(key):
 			errors.append("interaction overlay identity already exists: %s." % key)
 		var target_key := identity(str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", "")))
@@ -463,7 +639,7 @@ static func _validate_operation_target(state: Dictionary, family: String, operat
 			errors.append("interaction %s targets undeclared missing identity %s." % [key, target_key])
 		return errors
 	if ["remove", "despawn"].has(op_id):
-		if not collection.has(key):
+		if not collection.has(key) and not _target_declared(state, collection_key, key) and not (cleanup_restore and _target_authorized(state, collection_key, key)):
 			errors.append("%s %s targets missing identity %s." % [family, op_id, key])
 		return errors
 	if not collection.has(key) and not _target_declared(state, collection_key, key):
@@ -473,6 +649,10 @@ static func _validate_operation_target(state: Dictionary, family: String, operat
 
 static func _normalize_semantic_state(value: Dictionary) -> Dictionary:
 	return {
+		"base_interactions": _array(value.get("base_interactions", [])),
+		"event_choices": _dict(value.get("event_choices", {})),
+		"inventory_schema_version": maxi(0, int(value.get("inventory_schema_version", 0))),
+		"inventory_digest": str(value.get("inventory_digest", "")),
 		"scene_objects": _dict(value.get("scene_objects", {})),
 		"interactions": _dict(value.get("interactions", {})),
 		"actors": _dict(value.get("actors", {})),
@@ -482,22 +662,107 @@ static func _normalize_semantic_state(value: Dictionary) -> Dictionary:
 		"transition_queue": _array(value.get("transition_queue", [])),
 		"operation_receipts": _string_array(value.get("operation_receipts", [])),
 		"operation_receipt_records": _array(value.get("operation_receipt_records", [])),
-		"operation_fingerprints": _dict(value.get("operation_fingerprints", {})),
+		"operation_fingerprints": _normalized_operation_fingerprints(value.get("operation_fingerprints", {}), value.get("operation_receipts", [])),
+		"tombstones": _dict(value.get("tombstones", {})),
 		"declared_targets": _normalize_declared_targets(value.get("declared_targets", {})),
+		"target_inventory": _normalize_declared_targets(value.get("target_inventory", {})),
 	}
+
+
+static func resolved_semantic_state(state_value: Dictionary) -> Dictionary:
+	var state := _normalize_semantic_state(state_value)
+	var overlays: Array = []
+	for value in _dict(state.get("interactions", {})).values(): overlays.append(value)
+	var base_records: Array = []
+	var interaction_tombstones := _dict(_dict(state.get("tombstones", {})).get("interactions", {}))
+	for value in _array(state.get("base_interactions", [])):
+		if typeof(value) == TYPE_DICTIONARY and not interaction_tombstones.has(identity_from(value as Dictionary)): base_records.append(value)
+	var resolved := resolve_interactions(base_records, overlays)
+	var interactions: Dictionary = {}
+	for record_value in _array(resolved.get("records", [])):
+		var record := _dict(record_value)
+		interactions[identity_from(record)] = record
+	state["interactions"] = interactions
+	if not bool(resolved.get("ok", false)):
+		state["interaction_resolution_errors"] = _array(resolved.get("errors", []))
+	return state
+
+
+# Closed player-facing projection. Authorization catalogs, provenance digests,
+# tombstones, and replay journals remain runtime-owned even though resolving the
+# visible collections needs them internally.
+static func public_semantic_state(state_value: Dictionary) -> Dictionary:
+	var resolved := resolved_semantic_state(state_value)
+	return {
+		"actors": _dict(resolved.get("actors", {})),
+		"games": _dict(resolved.get("games", {})),
+		"interactions": _dict(resolved.get("interactions", {})),
+		"routes": _dict(resolved.get("routes", {})),
+		"scene_objects": _dict(resolved.get("scene_objects", {})),
+		"services": _dict(resolved.get("services", {})),
+		"transition_queue": _array(resolved.get("transition_queue", [])),
+	}
+
+
+static func _boundary_kind(boundary_id: String) -> String:
+	for kind in ["phase", "aftermath", "cleanup"]:
+		if boundary_id.contains(":%s:" % kind): return kind
+	return ""
+
+
+static func _boundary_source_ref(boundary_id: String) -> String:
+	var kind := _boundary_kind(boundary_id)
+	if kind.is_empty(): return ""
+	var marker := ":%s:" % kind
+	return boundary_id.substr(boundary_id.find(marker) + marker.length())
+
+
+static func _boundary_ordinal(records: Array, boundary_id: String) -> int:
+	var ordinal := 0
+	for record_value in records:
+		if str(_dict(record_value).get("boundary_id", "")) == boundary_id: ordinal += 1
+	return ordinal
 
 
 static func _normalize_declared_targets(value: Variant) -> Dictionary:
 	var result: Dictionary = {}
 	var source := _dict(value)
-	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes"]:
+	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
 		result[collection_key] = _string_array(source.get(collection_key, []))
 	return result
 
 
+static func _normalized_operation_fingerprints(value: Variant, receipts_value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	var source := _dict(value)
+	for receipt_value in _string_array(receipts_value):
+		var receipt_id := str(receipt_value)
+		var fingerprint := str(source.get(receipt_id, ""))
+		if _valid_sha256(fingerprint): result[receipt_id] = fingerprint
+	return result
+
+
+static func _valid_sha256(value: String) -> bool:
+	if value.length() != 64 or value != value.to_lower(): return false
+	for index in range(value.length()):
+		var code := value.unicode_at(index)
+		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102): return false
+	return true
+
+
 static func _target_declared(state: Dictionary, collection_key: String, target_key: String) -> bool:
 	var declared := _dict(state.get("declared_targets", {}))
-	return _string_array(declared.get(collection_key, [])).has(target_key)
+	var inventory := _dict(state.get("target_inventory", {}))
+	var tombstones := _dict(_dict(state.get("tombstones", {})).get(collection_key, {}))
+	return not tombstones.has(target_key) and _string_array(declared.get(collection_key, [])).has(target_key) and _string_array(inventory.get(collection_key, [])).has(target_key)
+
+
+static func _inventory_has(state: Dictionary, collection_key: String, target_key: String) -> bool:
+	return _string_array(_dict(state.get("target_inventory", {})).get(collection_key, [])).has(target_key)
+
+
+static func _target_authorized(state: Dictionary, collection_key: String, target_key: String) -> bool:
+	return _string_array(_dict(state.get("declared_targets", {})).get(collection_key, [])).has(target_key) and _inventory_has(state, collection_key, target_key)
 
 
 static func _collection_key(family: String) -> String:
@@ -521,7 +786,10 @@ static func _validate_scene_payload(payload: Dictionary, errors: Array) -> void:
 
 
 static func _validate_interaction_payload(payload: Dictionary, errors: Array) -> void:
-	_append_unknown_keys("interaction payload", payload, ["owner_namespace", "stable_object_id", "label", "state_label", "prompt", "enabled", "disabled_reason", "available_actions", "input_actions", "non_color_state", "focus_order", "hit_bounds", "min_target_size", "safe_exit", "mode", "target_owner_namespace", "target_stable_object_id", "source_id"], errors)
+	_append_unknown_keys("interaction payload", payload, ["owner_namespace", "stable_object_id", "presentation_object_id", "source_kind", "source_field", "source_record_id", "label", "state_label", "prompt", "enabled", "disabled_reason", "available_actions", "input_actions", "non_color_state", "focus_order", "hit_bounds", "normalized_hit_rect", "min_target_size", "safe_exit", "mode", "target_owner_namespace", "target_stable_object_id", "source_id", "operation_receipt_key", "operation_boundary_id", "operation_fingerprint"], errors)
+	for provenance_key in ["source_kind", "source_field", "source_record_id"]:
+		if payload.has(provenance_key) and str(payload.get(provenance_key, "")).strip_edges().is_empty():
+			errors.append("interaction producer provenance %s cannot be blank." % provenance_key)
 	for key in ["label", "state_label", "prompt"]:
 		if str(payload.get(key, "")).strip_edges().is_empty():
 			errors.append("interaction requires accessible %s." % key)
@@ -575,7 +843,8 @@ static func _validate_interaction_payload(payload: Dictionary, errors: Array) ->
 		if action.has("requires_local") and typeof(action.get("requires_local")) != TYPE_ARRAY:
 			errors.append("interaction local preconditions must be an array.")
 	var input_actions := _strict_id_array(payload.get("input_actions", []))
-	if input_actions.is_empty() or input_actions.size() != _array(payload.get("input_actions", [])).size() or str(payload.get("non_color_state", "")).strip_edges().is_empty():
+	var actions_empty := _array(payload.get("available_actions", [])).is_empty()
+	if (input_actions.is_empty() and not (actions_empty and not bool(payload.get("enabled", false)))) or input_actions.size() != _array(payload.get("input_actions", [])).size() or str(payload.get("non_color_state", "")).strip_edges().is_empty():
 		errors.append("interaction requires input_actions and a non-color state.")
 	for action_value in _array(payload.get("available_actions", [])):
 		if typeof(action_value) == TYPE_DICTIONARY and not input_actions.has(str((action_value as Dictionary).get("input_action", ""))):
@@ -586,6 +855,11 @@ static func _validate_interaction_payload(payload: Dictionary, errors: Array) ->
 	_append_unknown_keys("interaction hit_bounds", hit_bounds, ["w", "h"], errors)
 	if not _finite_number(hit_bounds.get("w")) or not _finite_number(hit_bounds.get("h")) or not _finite_number(payload.get("min_target_size")) or float(hit_bounds.get("w", 0.0)) < MIN_TARGET_SIZE or float(hit_bounds.get("h", 0.0)) < MIN_TARGET_SIZE or float(payload.get("min_target_size", 0.0)) < MIN_TARGET_SIZE:
 		errors.append("interaction hit bounds/min_target_size are below the accessible minimum.")
+	if payload.has("normalized_hit_rect"):
+		var normalized_rect := _dict(payload.get("normalized_hit_rect", {}))
+		_append_unknown_keys("interaction normalized_hit_rect", normalized_rect, ["x", "y", "w", "h"], errors)
+		for rect_key in ["x", "y", "w", "h"]:
+			if not _finite_number(normalized_rect.get(rect_key)): errors.append("interaction normalized_hit_rect must contain finite coordinates.")
 	if not payload.has("safe_exit") or typeof(payload.get("safe_exit")) != TYPE_BOOL:
 		errors.append("interaction must declare safe_exit semantics.")
 
@@ -669,8 +943,8 @@ static func _validate_operation_fields(family: String, op_id: String, operation:
 		"actor_ops":
 			if op_id == "set_position" and str(operation.get("anchor_id", "")).strip_edges().is_empty() and str(operation.get("zone_id", "")).strip_edges().is_empty():
 				errors.append("actor set_position requires anchor_id or zone_id.")
-			elif op_id == "set_route" and not _valid_id(str(operation.get("route_id", ""))):
-				errors.append("actor set_route requires route_id.")
+			elif op_id == "set_route" and parse_owned_identity(str(operation.get("route_id", ""))).is_empty():
+				errors.append("actor set_route requires an exact owned route identity.")
 			elif op_id == "set_pose" and not _valid_id(str(operation.get("pose", ""))):
 				errors.append("actor set_pose requires pose.")
 		"transition_ops":
@@ -705,7 +979,7 @@ static func _validate_operation_fields(family: String, op_id: String, operation:
 static func _validate_interaction_record(record: Dictionary, errors: Array, overlay: bool) -> void:
 	var owner := str(record.get("owner_namespace", "")).strip_edges()
 	var stable_id := str(record.get("stable_object_id", "")).strip_edges()
-	if not OWNER_NAMESPACES.has(owner) or not _valid_id(stable_id):
+	if not OWNER_NAMESPACES.has(owner) or not _valid_semantic_object_id(stable_id):
 		errors.append("interaction record has invalid stable owner identity.")
 		return
 	var mode := str(record.get("mode", "add")).strip_edges()
@@ -718,7 +992,7 @@ static func _validate_interaction_record(record: Dictionary, errors: Array, over
 	if overlay and mode != "add":
 		var target_owner := str(record.get("target_owner_namespace", "")).strip_edges()
 		var target_id := str(record.get("target_stable_object_id", "")).strip_edges()
-		if not OWNER_NAMESPACES.has(target_owner) or not _valid_id(target_id):
+		if not OWNER_NAMESPACES.has(target_owner) or not _valid_semantic_object_id(target_id):
 			errors.append("interaction %s has invalid target identity." % identity(owner, stable_id))
 			return
 	if mode in ["add", "replace"]:
@@ -749,6 +1023,56 @@ static func _append_unknown_keys(label: String, value: Dictionary, allowed: Arra
 	for key_value in value.keys():
 		if not allowed.has(str(key_value)):
 			errors.append("%s contains unknown key: %s." % [label, str(key_value)])
+
+
+static func _value_matches_local_type(value: Variant, type_id: String, field: Dictionary) -> bool:
+	var minimum: Variant = field.get("min")
+	var maximum: Variant = field.get("max")
+	match type_id:
+		"bool": return typeof(value) == TYPE_BOOL
+		"int":
+			return typeof(value) == TYPE_INT and (not field.has("min") or int(value) >= int(minimum)) and (not field.has("max") or int(value) <= int(maximum))
+		"float":
+			return typeof(value) in [TYPE_INT, TYPE_FLOAT] and not is_nan(float(value)) and not is_inf(float(value)) and (not field.has("min") or float(value) >= float(minimum)) and (not field.has("max") or float(value) <= float(maximum))
+		"string": return typeof(value) == TYPE_STRING and str(value).length() <= MAX_VARIANT_TEXT
+		"enum": return typeof(value) == TYPE_STRING and _array(field.get("values", [])).has(str(value))
+		"string_array":
+			if typeof(value) != TYPE_ARRAY: return false
+			var seen: Dictionary = {}
+			for item in value as Array:
+				if typeof(item) != TYPE_STRING or str(item).is_empty() or str(item) != str(item).strip_edges() or seen.has(str(item)): return false
+				seen[str(item)] = true
+			return true
+		"int_array":
+			if typeof(value) != TYPE_ARRAY: return false
+			for item in value as Array:
+				if typeof(item) != TYPE_INT: return false
+			return true
+	return false
+
+
+static func _valid_semantic_object_id(value: String) -> bool:
+	if value != value.strip_edges() or value.is_empty() or value.contains("::"): return false
+	var parts := value.split(":", true)
+	if parts.is_empty(): return false
+	for part in parts:
+		if not _canonical_id(str(part)): return false
+	return true
+
+
+static func _canonical_id(value: String) -> bool:
+	if value != value.strip_edges() or value.is_empty() or value.length() > MAX_VARIANT_TEXT: return false
+	for index in range(value.length()):
+		var code := value.unicode_at(index)
+		if not (code >= 97 and code <= 122) and not (code >= 48 and code <= 57) and code != 95 and code != 45:
+			return false
+	return true
+
+
+static func _payload_type_can_target_local(payload_type: String, local_type: String) -> bool:
+	if payload_type == "dynamic": return true
+	if local_type == "float": return payload_type in ["int", "float"]
+	return payload_type == local_type
 
 
 static func _sort_interaction_overlay(a: Variant, b: Variant) -> bool:
@@ -917,8 +1241,11 @@ static func _validate_bounded_variant(label: String, value: Variant, depth: int,
 		next_ancestors.append(value)
 		if value_type == TYPE_DICTIONARY:
 			for key_value in (value as Dictionary).keys():
-				if typeof(key_value) != TYPE_STRING or str(key_value).length() > MAX_VARIANT_TEXT:
-					errors.append("%s contains an invalid or oversized dictionary key." % label)
+				if typeof(key_value) != TYPE_STRING:
+					errors.append("%s contains a non-string dictionary key." % label)
+					continue
+				if str(key_value).length() > MAX_VARIANT_TEXT:
+					errors.append("%s contains dictionary key exceeding %d characters." % [label, MAX_VARIANT_TEXT])
 					continue
 				_validate_bounded_variant(label, (value as Dictionary).get(key_value), depth + 1, budget, next_ancestors, errors)
 		else:

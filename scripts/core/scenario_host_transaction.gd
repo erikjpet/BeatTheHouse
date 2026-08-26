@@ -268,7 +268,7 @@ static func commit_game_command(state_value: Dictionary, transaction_value: Dict
 	_commit_facts(next, _dictionary_array(transaction.get("facts", [])))
 	_commit_prepared_request(next, _dict(transaction.get("prepared_request", {})), receipt_id, str(transaction.get("producer_id", "")), str(transaction.get("game_id", "")), prepared_account_id)
 	for acknowledgement_value in _dictionary_array(transaction.get("prepared_acknowledgements", [])):
-		var acknowledgement := acknowledgement_value.duplicate(true)
+		var acknowledgement: Dictionary = acknowledgement_value.duplicate(true)
 		acknowledgement["receipt_id"] = receipt_id
 		acknowledgement["phase"] = "prepared"
 		_append_acknowledgement(next, acknowledgement)

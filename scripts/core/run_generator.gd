@@ -19,6 +19,8 @@ func _init(p_library: ContentLibrary) -> void:
 # Builds and assigns the next environment for a run. A prevalidated target is
 # reserved for the travel UI after it validates arrival hours, then advances the clock.
 func next_environment(run_state: RunState, target_archetype_id: String = "", target_prevalidated: bool = false) -> EnvironmentInstance:
+	if not run_state.current_environment.is_empty() and not bool(run_state.scenario_preflight_environment_change().get("ok", false)):
+		return EnvironmentInstance.from_dict(run_state.current_environment)
 	var rng := run_state.create_rng()
 	if run_state.has_world_map() or run_state.current_environment.is_empty():
 		return _next_world_environment(run_state, target_archetype_id, rng, target_prevalidated)
@@ -38,7 +40,8 @@ func next_environment(run_state: RunState, target_archetype_id: String = "", tar
 	run_state.scenario_publish_travel("travel_departed", source_id, destination_id, "legacy")
 	run_state.scenario_flush_facts()
 	run_state.save_rng(rng)
-	run_state.set_environment(environment_data)
+	var installed := run_state.set_environment(environment_data)
+	if not bool(installed.get("ok", false)): return EnvironmentInstance.from_dict(run_state.current_environment)
 	run_state.scenario_publish_travel("travel_arrived", source_id, run_state.current_world_node_id(), "legacy")
 	return EnvironmentInstance.from_dict(run_state.current_environment)
 
@@ -136,6 +139,8 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 	var access := run_state.grand_casino_room_access_status(target_id, int(flags.get("casino_high_limit_buy_in", 60)))
 	if not bool(access.get("available", false)):
 		return false
+	if not bool(run_state.scenario_preflight_environment_change().get("ok", false)):
+		return false
 	var source_room_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
 	if source_room_id != target_id:
 		run_state.scenario_publish_travel("travel_departed", source_room_id, target_id, "grand_room")
@@ -162,7 +167,8 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 	# rooms so itinerary rotation happens at the same revisit boundary as town.
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
-	run_state.set_environment(environment_data)
+	var installed := run_state.set_environment(environment_data)
+	if not bool(installed.get("ok", false)): return false
 	if source_room_id != target_id:
 		run_state.scenario_publish_travel("travel_arrived", source_room_id, target_id, "grand_room")
 	return true
@@ -315,13 +321,16 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	var node := WorldMap.node_by_id(map_data, target_id)
 	if node.is_empty():
 		return EnvironmentInstance.from_dict(run_state.current_environment) if not run_state.current_environment.is_empty() else _legacy_next_environment(run_state, target_archetype_id, rng)
+	if not run_state.current_environment.is_empty() and not bool(run_state.scenario_preflight_environment_change().get("ok", false)):
+		return EnvironmentInstance.from_dict(run_state.current_environment)
 	if run_state.has_world_map() and not run_state.current_environment.is_empty():
 		if current_node_id != target_id:
 			run_state.scenario_publish_travel("travel_departed", current_node_id, target_id, "world")
 			run_state.scenario_flush_facts()
 		run_state.store_current_world_node_environment()
 	var environment_data := _world_environment_data_for_node(run_state, map_data, node, rng)
-	run_state.set_environment(environment_data)
+	var installed := run_state.set_environment(environment_data)
+	if not bool(installed.get("ok", false)): return EnvironmentInstance.from_dict(run_state.current_environment)
 	run_state.enter_world_node(target_id, run_state.current_environment)
 	if not current_node_id.is_empty() and current_node_id != target_id:
 		run_state.scenario_publish_travel("travel_arrived", current_node_id, target_id, "world")
@@ -395,6 +404,8 @@ func _apply_tutorial_initial_map_targets(map_data: Dictionary, run_state: RunSta
 
 
 func _legacy_next_environment(run_state: RunState, target_archetype_id: String, rng: RngStream) -> EnvironmentInstance:
+	if not run_state.current_environment.is_empty() and not bool(run_state.scenario_preflight_environment_change().get("ok", false)):
+		return EnvironmentInstance.from_dict(run_state.current_environment)
 	var depth := run_state.environment_travel_count()
 	if not run_state.current_environment.is_empty():
 		depth += 1
@@ -407,7 +418,8 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	run_state.save_rng(rng)
-	run_state.set_environment(environment_data)
+	var installed := run_state.set_environment(environment_data)
+	if not bool(installed.get("ok", false)): return EnvironmentInstance.from_dict(run_state.current_environment)
 	return EnvironmentInstance.from_dict(run_state.current_environment)
 
 

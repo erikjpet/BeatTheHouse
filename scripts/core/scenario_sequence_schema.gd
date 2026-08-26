@@ -49,6 +49,21 @@ const FACT_PREDICATE_FIELD_TYPES := {
 	"world_boundary": {"amount": TYPE_INT, "action_index": TYPE_INT},
 	"scenario_command": {"command_id": TYPE_STRING, "receipt_id": TYPE_STRING},
 }
+const FACT_PAYLOAD_TYPES := {
+	"game_result": {"game_id": "string", "action_id": "string", "won": "bool", "ended": "bool", "bankroll_delta": "int", "chips_delta": "int", "applied_heat_delta": "int"},
+	"event_result": {"event_id": "string", "choice_id": "string", "resolution_id": "string", "resolved": "bool", "ok": "bool"},
+	"service_result": {"kind": "string", "service_id": "string", "ok": "bool", "action_id": "string"},
+	"travel_departed": {"source_id": "string", "target_id": "string", "travel_kind": "string"},
+	"travel_arrived": {"source_id": "string", "target_id": "string", "travel_kind": "string"},
+	"crew_changed": {"member_id": "string", "change": "string", "value": "dynamic"},
+	"crew_job_changed": {"job_id": "string", "status": "string", "definition_id": "string", "member_id": "string", "outcome": "string"},
+	"heat_changed": {"previous": "int", "current": "int", "applied_delta": "int", "source": "string"},
+	"heat_band_changed": {"previous_band": "string", "current_band": "string", "current": "int", "source": "string"},
+	"town_transition": {"action_index": "int", "weather": "string", "day_type": "string", "happening_ids": "string_array"},
+	"sweep_changed": {"action_index": "int", "node_id": "string", "segment_index": "int", "active": "bool"},
+	"world_boundary": {"amount": "int", "action_index": "int"},
+	"scenario_command": {"command_id": "string", "receipt_id": "string"},
+}
 const ALLOWED_SEQUENCE_KEYS := [
 	"schema_version", "local_state_schema", "phase_graph", "objectives",
 	"reentry_policy", "expiry", "cleanup", "aftermath", "mechanic_tags",
@@ -88,7 +103,7 @@ static func is_sequence(definition: Dictionary) -> bool:
 	return not sequence(definition).is_empty()
 
 
-static func validate_definition(definition: Dictionary, operation_registry: Variant = null) -> Array:
+static func validate_definition(definition: Dictionary, operation_registry: Variant = null, target_inventory: Dictionary = {}) -> Array:
 	if operation_registry == null:
 		operation_registry = DefaultOperationRegistryScript
 	var errors: Array = []
@@ -103,14 +118,14 @@ static func validate_definition(definition: Dictionary, operation_registry: Vari
 	_validate_shape_bounds(label, authored, errors)
 	if not errors.is_empty():
 		return errors
-	_validate_declared_targets(label, authored.get("declared_targets", {}), errors)
+	_validate_declared_targets(label, authored.get("declared_targets", {}), target_inventory, errors)
 	_validate_local_state_schema(label, _dict(authored.get("local_state_schema", {})), errors)
-	_validate_phase_graph(label, _dict(authored.get("phase_graph", {})), operation_registry, errors)
+	_validate_phase_graph(label, authored, _dict(authored.get("phase_graph", {})), operation_registry, errors)
 	_validate_objectives(label, _array(authored.get("objectives", [])), errors)
 	_validate_reentry_expiry_cleanup(label, authored, operation_registry, errors)
 	var reachable_outcomes := _reachable_outcomes(_dict(authored.get("phase_graph", {})))
-	_validate_cross_references(label, authored, reachable_outcomes, errors)
-	_validate_aftermath(label, authored, _dict(authored.get("aftermath", {})), reachable_outcomes, operation_registry, errors)
+	_validate_cross_references(label, authored, reachable_outcomes, operation_registry, target_inventory, errors)
+	_validate_aftermath(label, authored, _dict(authored.get("aftermath", {})), reachable_outcomes, operation_registry, target_inventory, errors)
 	_validate_fact_subscriptions(label, _array(authored.get("fact_subscriptions", [])), operation_registry, errors)
 	_validate_event_bridge_authorizers(label, authored, errors)
 	_validate_tags_and_exceptions(label, authored, errors)
@@ -157,6 +172,10 @@ static func phase_ids(definition: Dictionary) -> Array:
 			if not phase_id.is_empty() and not result.has(phase_id):
 				result.append(phase_id)
 	return result
+
+
+static func reachable_outcome_ids(definition: Dictionary) -> Array:
+	return _reachable_outcomes(_dict(sequence(definition).get("phase_graph", {})))
 
 
 static func initial_phase_id(definition: Dictionary) -> String:
@@ -236,7 +255,8 @@ static func normalized_signature(definition: Dictionary) -> Dictionary:
 		"aftermath": aftermath_features,
 		"cleanup": cleanup_features,
 		"fact_types": _fact_subscription_types(authored.get("fact_subscriptions", [])),
-		"mechanic_tags": _sorted_strings(authored.get("mechanic_tags", [])),
+		# Authored prose/tags are review labels, not calculated uniqueness evidence.
+		# Similarity is derived only from normalized executable semantics.
 		"declared_target_counts": _declared_target_counts(authored.get("declared_targets", {})),
 		"reentry": _canonical_variant(_dict(authored.get("reentry_policy", {}))),
 		"expiry": _canonical_variant(_dict(authored.get("expiry", {}))),
@@ -246,7 +266,7 @@ static func normalized_signature(definition: Dictionary) -> Dictionary:
 static func _declared_target_counts(value: Variant) -> Dictionary:
 	var result: Dictionary = {}
 	var declared := _dict(value)
-	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes"]:
+	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
 		result[collection_key] = _string_array(declared.get(collection_key, [])).size()
 	return result
 
@@ -274,7 +294,7 @@ static func signature_similarity(left: Dictionary, right: Dictionary) -> float:
 	return float(intersection) / float(maxi(1, union.size()))
 
 
-static func catalog_uniqueness_report(definitions: Array, expected_count: int, operation_registry: Variant = null, masked_visual_explanations: Dictionary = {}) -> Dictionary:
+static func catalog_uniqueness_report(definitions: Array, expected_count: int, operation_registry: Variant = null, masked_visual_explanations: Dictionary = {}, target_inventories: Dictionary = {}) -> Dictionary:
 	var failures: Array = []
 	var warnings: Array = []
 	var rows: Array = []
@@ -292,7 +312,7 @@ static func catalog_uniqueness_report(definitions: Array, expected_count: int, o
 		ids[scenario_id] = true
 		if not is_sequence(definition):
 			failures.append("scenario %s is missing its required sequence." % scenario_id)
-		var validation := validate_definition(definition, operation_registry)
+		var validation := validate_definition(definition, operation_registry, _dict(target_inventories.get(scenario_id, {})))
 		if not validation.is_empty():
 			failures.append("scenario %s is invalid: %s" % [scenario_id, JSON.stringify(validation)])
 		var authored := sequence(definition)
@@ -336,13 +356,15 @@ static func catalog_uniqueness_report(definitions: Array, expected_count: int, o
 			pair_ids.sort()
 			var pair_key := "%s::%s" % [pair_ids[0], pair_ids[1]]
 			var diagnostic := "scenario %s vs %s: %.3f (%s)." % [str(left_row.get("id", "")), str(right_row.get("id", "")), similarity, str(band.get("status", ""))]
-			var explanation := str(masked_visual_explanations.get(pair_key, "")).strip_edges()
-			pairs.append({"left_id": str(left_row.get("id", "")), "right_id": str(right_row.get("id", "")), "similarity": similarity, "equal_normalized_hash": equal_hash, "status": str(band.get("status", "")), "blocking": bool(band.get("blocking", false)), "masked_visual_explanation": explanation})
+			var evidence := _dict(masked_visual_explanations.get(pair_key, {}))
+			var explanation := str(evidence.get("explanation", "")).strip_edges()
+			var evidence_valid := not explanation.is_empty() and _valid_sha256(str(evidence.get("capture_receipt_sha256", ""))) and _valid_sha256(str(evidence.get("reviewer_receipt_sha256", "")))
+			pairs.append({"left_id": str(left_row.get("id", "")), "right_id": str(right_row.get("id", "")), "similarity": similarity, "equal_normalized_hash": equal_hash, "status": str(band.get("status", "")), "blocking": bool(band.get("blocking", false)), "masked_visual_evidence": evidence.duplicate(true), "masked_visual_evidence_valid": evidence_valid})
 			if bool(band.get("blocking", false)):
 				failures.append(diagnostic)
 			elif str(band.get("status", "")) == "warning":
-				if explanation.is_empty():
-					failures.append("%s Missing masked visual explanation." % diagnostic)
+				if not evidence_valid:
+					failures.append("%s Missing receipt-bound masked visual evidence." % diagnostic)
 				else:
 					warnings.append(diagnostic)
 	rows.sort_custom(func(a: Variant, b: Variant) -> bool: return str((a as Dictionary).get("id", "")) < str((b as Dictionary).get("id", "")))
@@ -354,7 +376,7 @@ static func catalog_uniqueness_report(definitions: Array, expected_count: int, o
 	return {"ok": failures.is_empty(), "expected_count": expected_count, "actual_count": definitions.size(), "expected_comparison_count": expected_comparisons, "comparison_count": comparison_count, "rows": rows, "pairs": pairs, "dossiers": dossiers, "failures": failures, "warnings": warnings}
 
 
-static func catalog_rollout_report(definitions: Array, expected_ids: Array, operation_registry: Variant = null, masked_visual_explanations: Dictionary = {}, required_sequence_ids: Array = []) -> Dictionary:
+static func catalog_rollout_report(definitions: Array, expected_ids: Array, operation_registry: Variant = null, masked_visual_explanations: Dictionary = {}, required_sequence_ids: Array = [], target_inventories: Dictionary = {}) -> Dictionary:
 	var expected := _sorted_strings(expected_ids)
 	var actual: Array = []
 	var by_id: Dictionary = {}
@@ -378,7 +400,7 @@ static func catalog_rollout_report(definitions: Array, expected_ids: Array, oper
 			preflight_failures.append("sequence-required scenario %s is missing its required sequence." % required_id)
 		else:
 			required_definitions.append(_dict(by_id.get(required_id, {})))
-	var report := catalog_uniqueness_report(required_definitions, required.size(), operation_registry, masked_visual_explanations)
+	var report := catalog_uniqueness_report(required_definitions, required.size(), operation_registry, masked_visual_explanations, target_inventories)
 	var failures := preflight_failures + _array(report.get("failures", []))
 	if definitions.size() != expected.size():
 		failures.append("scenario catalog manifest expected %d definitions, got %d." % [expected.size(), definitions.size()])
@@ -417,19 +439,28 @@ static func _validate_local_state_schema(label: String, fields: Dictionary, erro
 		errors.append("%s local_state_schema exceeds %d fields." % [label, MAX_LOCAL_FIELDS])
 	for field_value in _sorted_keys(fields):
 		var field_id := str(field_value)
-		if not _valid_id(field_id):
+		if typeof(field_value) != TYPE_STRING or not _valid_id(field_id):
 			errors.append("%s local_state_schema has invalid field id: %s." % [label, field_id])
-		continue
+			continue
 		var field := _dict(fields.get(field_value, {}))
-		_append_unknown_keys("%s local field %s" % [label, field_id], field, ["type", "default", "values", "min", "max"], errors)
-		var type_id := str(field.get("type", ""))
+		var type_id := str(field.get("type", "")) if typeof(field.get("type")) == TYPE_STRING else ""
+		var allowed_keys := ["type", "default"]
+		if type_id == "enum": allowed_keys.append("values")
+		if type_id in ["int", "float"] and (field.has("min") or field.has("max")): allowed_keys.append_array(["min", "max"])
+		_append_unknown_keys("%s local field %s" % [label, field_id], field, allowed_keys, errors)
 		if not LOCAL_TYPES.has(type_id):
 			errors.append("%s local field %s has unsupported type %s." % [label, field_id, type_id])
+		elif type_id in ["int", "float"] and field.has("min") != field.has("max"):
+			errors.append("%s local field %s must declare both min and max or neither." % [label, field_id])
+		elif type_id == "enum" and not _canonical_string_values(field.get("values", [])):
+			errors.append("%s local field %s requires nonempty unique string enum values." % [label, field_id])
 		elif not field.has("default") or not _local_value_matches(type_id, field.get("default"), field):
 			errors.append("%s local field %s has an invalid or missing default." % [label, field_id])
+		elif field.has("min") and (not _local_value_matches(type_id, field.get("min"), {}) or not _local_value_matches(type_id, field.get("max"), {}) or float(field.get("min")) > float(field.get("max"))):
+			errors.append("%s local field %s has invalid bounds." % [label, field_id])
 
 
-static func _validate_phase_graph(label: String, graph: Dictionary, operation_registry: Variant, errors: Array) -> void:
+static func _validate_phase_graph(label: String, authored: Dictionary, graph: Dictionary, operation_registry: Variant, errors: Array) -> void:
 	_append_unknown_keys("%s phase_graph" % label, graph, ["initial_phase", "phases"], errors)
 	var phases := _array(graph.get("phases", []))
 	if phases.is_empty():
@@ -465,7 +496,7 @@ static func _validate_phase_graph(label: String, graph: Dictionary, operation_re
 				elif operation_registry != null and operation_registry.has_method("validate_operation"):
 					for operation_error in operation_registry.call("validate_operation", family, operation_value as Dictionary):
 						errors.append("%s phase %s: %s" % [label, phase_id, str(operation_error)])
-		_validate_phase_safe_exit(label, phase_data, errors)
+		_validate_phase_safe_exit(label, authored, phase_data, errors)
 		var branches := _array(phase_data.get("branches", []))
 		if branches.is_empty():
 			errors.append("%s phase %s is a dead end without a terminal branch." % [label, phase_id])
@@ -657,12 +688,12 @@ static func _validate_reentry_expiry_cleanup(label: String, authored: Dictionary
 		_validate_operation_receipt_uniqueness("%s cleanup %s" % [label, str(family_value)], _array(cleanup_by_family.get(family_value, [])), errors)
 
 
-static func _validate_declared_targets(label: String, value: Variant, errors: Array) -> void:
+static func _validate_declared_targets(label: String, value: Variant, target_inventory: Dictionary, errors: Array) -> void:
 	if typeof(value) != TYPE_DICTIONARY:
 		errors.append("%s declared_targets must be a dictionary." % label)
 		return
 	var declared := value as Dictionary
-	var allowed := ["scene_objects", "interactions", "actors", "services", "games", "routes"]
+	var allowed := ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]
 	_append_unknown_keys("%s declared_targets" % label, declared, allowed, errors)
 	for collection_key in allowed:
 		if typeof(declared.get(collection_key, [])) != TYPE_ARRAY:
@@ -672,14 +703,30 @@ static func _validate_declared_targets(label: String, value: Variant, errors: Ar
 		if identities.size() != _array(declared.get(collection_key, [])).size():
 			errors.append("%s declared_targets.%s contains invalid or duplicate identities." % [label, collection_key])
 		for identity_value in identities:
-			var parts := str(identity_value).split("::", false)
-			if parts.size() != 2 or not _valid_id(str(parts[0])) or not _valid_id(str(parts[1])):
+			if not DefaultOperationRegistryScript.validate_owned_identity(str(identity_value)).is_empty():
 				errors.append("%s declared_targets.%s contains invalid identity %s." % [label, collection_key, str(identity_value)])
+			elif target_inventory.is_empty():
+				errors.append("%s declared_targets.%s identity %s has no independent target catalog proof." % [label, collection_key, str(identity_value)])
+			elif not _string_array(target_inventory.get(collection_key, [])).has(str(identity_value)):
+				errors.append("%s declared_targets.%s identity %s is not present in the validated archetype/base inventory." % [label, collection_key, str(identity_value)])
 
 
-static func _validate_phase_safe_exit(label: String, phase_data: Dictionary, errors: Array) -> void:
+static func verified_declared_targets(definition: Dictionary, target_inventory: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	var declared := _dict(sequence(definition).get("declared_targets", {}))
+	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
+		var available := _string_array(target_inventory.get(collection_key, []))
+		var verified: Array = []
+		for identity_value in _string_array(declared.get(collection_key, [])):
+			if available.has(str(identity_value)): verified.append(str(identity_value))
+		result[collection_key] = verified
+	return result
+
+
+static func _validate_phase_safe_exit(label: String, authored: Dictionary, phase_data: Dictionary, errors: Array) -> void:
 	var has_safe_exit := false
-	var has_authored_block := false
+	var blocked_targets: Dictionary = {}
+	var alternate_commands: Dictionary = {}
 	for operation_value in _array(phase_data.get("interaction_ops", [])):
 		var operation := _dict(operation_value)
 		var op_id := str(operation.get("op", ""))
@@ -687,16 +734,35 @@ static func _validate_phase_safe_exit(label: String, phase_data: Dictionary, err
 			var interaction := _dict(operation.get("interaction", {}))
 			if bool(interaction.get("safe_exit", false)) and bool(interaction.get("enabled", false)) and not _array(interaction.get("available_actions", [])).is_empty():
 				has_safe_exit = true
+			if bool(interaction.get("enabled", false)):
+				for action_value in _array(interaction.get("available_actions", [])):
+					alternate_commands[str(_dict(action_value).get("id", ""))] = true
 		elif op_id == "gate" and not bool(operation.get("enabled", true)) and not str(operation.get("disabled_reason", "")).strip_edges().is_empty():
-			has_authored_block = true
+			blocked_targets["%s::%s" % [str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", ""))]] = true
 	if has_safe_exit:
 		return
-	var alternate_proof := has_authored_block and not _string_array(phase_data.get("objective_ids", [])).is_empty() and not str(phase_data.get("exit_prompt", "")).strip_edges().is_empty()
+	var alternate_proof := false
+	for objective_value in _array(authored.get("objectives", [])):
+		var objective := _dict(objective_value)
+		if not _string_array(phase_data.get("objective_ids", [])).has(str(objective.get("id", ""))): continue
+		for step_value in _array(objective.get("steps", [])):
+			var step := _dict(step_value)
+			if str(step.get("kind", "")) != "command" or not alternate_commands.has(str(step.get("command_id", ""))): continue
+			for branch_value in _array(phase_data.get("branches", [])):
+				var branch := _dict(branch_value)
+				var condition := _dict(branch.get("condition", {}))
+				if (str(condition.get("type", "")) == "command" and str(condition.get("command_id", "")) == str(step.get("command_id", ""))) or (str(condition.get("type", "")) == "objective" and str(condition.get("objective_id", "")) == str(objective.get("id", "")) and str(condition.get("step_id", "")) == str(step.get("id", ""))):
+					alternate_proof = not str(branch.get("next_phase", "")).strip_edges().is_empty() or not str(branch.get("outcome", "")).strip_edges().is_empty()
+	var declared := _dict(authored.get("declared_targets", {}))
+	if blocked_targets.is_empty(): alternate_proof = false
+	for blocked_target_value in blocked_targets.keys():
+		if not _string_array(declared.get("interactions", [])).has(str(blocked_target_value)) and not _string_array(declared.get("routes", [])).has(str(blocked_target_value)):
+			alternate_proof = false
 	if not alternate_proof:
-		errors.append("%s phase %s must prove an enabled safe-exit action or an intentional readable block with an alternate objective." % [label, str(phase_data.get("id", ""))])
+		errors.append("%s phase %s must prove an enabled safe-exit action or bind each readable blocked route/exit to a reachable alternate objective action and branch." % [label, str(phase_data.get("id", ""))])
 
 
-static func _validate_aftermath(label: String, authored: Dictionary, aftermaths: Dictionary, reachable_outcomes: Array, operation_registry: Variant, errors: Array) -> void:
+static func _validate_aftermath(label: String, authored: Dictionary, aftermaths: Dictionary, reachable_outcomes: Array, operation_registry: Variant, target_inventory: Dictionary, errors: Array) -> void:
 	if aftermaths.size() < 3:
 		errors.append("%s aftermath must define at least three material outcomes." % label)
 	if aftermaths.size() > MAX_AFTERMATHS:
@@ -709,11 +775,11 @@ static func _validate_aftermath(label: String, authored: Dictionary, aftermaths:
 	var effect_signatures: Dictionary = {}
 	# Targets created during active phases are real runtime objects; external
 	# room fixtures must be named explicitly in declared_targets.
-	var known_targets := _material_targets_for_definition(authored)
+	var terminal_target_paths := _material_target_paths_by_outcome(authored, target_inventory, errors)
 	for outcome_value in _sorted_keys(aftermaths):
 		var outcome_id := str(outcome_value)
 		var aftermath := _dict(aftermaths.get(outcome_value, {}))
-		var outcome_targets := known_targets.duplicate(true)
+		var outcome_paths := _array(terminal_target_paths.get(outcome_id, []))
 		_append_unknown_keys("%s aftermath %s" % [label, outcome_id], aftermath, AFTERMATH_KEYS, errors)
 		if not _valid_id(outcome_id) or str(aftermath.get("label", "")).strip_edges().is_empty() or str(aftermath.get("revisit_feedback", "")).strip_edges().is_empty():
 			errors.append("%s aftermath %s requires valid id, label, and revisit_feedback." % [label, outcome_id])
@@ -730,15 +796,20 @@ static func _validate_aftermath(label: String, authored: Dictionary, aftermaths:
 					operation_errors = operation_registry.call("validate_operation", family, operation)
 					for operation_error in operation_errors:
 						errors.append("%s aftermath %s: %s" % [label, outcome_id, str(operation_error)])
-				if operation_errors.is_empty() and _operation_has_material_target(family, operation, outcome_targets):
+				var valid_on_every_path := not outcome_paths.is_empty()
+				for path_value in outcome_paths:
+					if not _operation_has_material_target(family, operation, _dict(path_value)):
+						valid_on_every_path = false
+						break
+				if operation_errors.is_empty() and valid_on_every_path:
 					change_count += 1
 					material_axes[family] = true
-					_apply_material_target_projection(family, operation, outcome_targets)
+					for path_value in outcome_paths: _apply_material_target_projection(family, operation, path_value as Dictionary)
 				elif operation_errors.is_empty():
-					errors.append("%s aftermath %s operation %s targets no real or declared identity." % [label, outcome_id, str(operation.get("receipt_id", ""))])
+					errors.append("%s aftermath %s operation %s is not material on every reachable terminal path." % [label, outcome_id, str(operation.get("receipt_id", ""))])
 		if change_count <= 0:
 			errors.append("%s aftermath %s has no semantic change." % [label, outcome_id])
-		var effect_signature := JSON.stringify(_normalized_aftermath_effect(aftermath))
+		var effect_signature := JSON.stringify(_canonical_variant(outcome_paths))
 		if effect_signatures.has(effect_signature):
 			errors.append("%s aftermath %s duplicates the normalized material effect of %s." % [label, outcome_id, str(effect_signatures.get(effect_signature, ""))])
 		else:
@@ -747,56 +818,241 @@ static func _validate_aftermath(label: String, authored: Dictionary, aftermaths:
 		errors.append("%s aftermath requires at least two independent material axes." % label)
 
 
-static func _material_targets_for_definition(authored: Dictionary) -> Dictionary:
+static func _material_target_seed(authored: Dictionary, target_inventory: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
 	var declared := _dict(authored.get("declared_targets", {}))
-	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes"]:
+	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
 		var keys: Dictionary = {}
 		for identity_value in _string_array(declared.get(collection_key, [])):
-			keys[str(identity_value)] = true
+			if not target_inventory.is_empty() and _string_array(target_inventory.get(collection_key, [])).has(str(identity_value)):
+				keys[str(identity_value)] = {"present": true, "source": "base", "target_identity": str(identity_value), "material_origin": "base", "material_dirty": false}
 		result[collection_key] = keys
-	for phase_value in _array(_dict(authored.get("phase_graph", {})).get("phases", [])):
-		var phase_data := _dict(phase_value)
-		for family in ["scene_ops", "interaction_ops", "actor_ops"]:
-			for operation_value in _array(phase_data.get(family, [])):
-				var operation := _dict(operation_value)
-				var op_id := str(operation.get("op", ""))
-				if op_id in ["spawn", "add"]:
-					var collection_key := _operation_collection_key(family)
-					var keys := _dict(result.get(collection_key, {}))
-					keys["%s::%s" % [str(operation.get("owner_namespace", "")), str(operation.get("stable_object_id", ""))]] = true
-					result[collection_key] = keys
-	for operation_value in _array(_dict(authored.get("cleanup", {})).get("operations", [])):
-		var operation := _dict(operation_value)
-		var family := str(operation.get("family", ""))
-		if ["remove", "despawn"].has(str(operation.get("op", ""))):
-			_apply_material_target_projection(family, operation, result)
 	return result
 
 
+static func _material_target_paths_by_outcome(authored: Dictionary, target_inventory: Dictionary, errors: Array = []) -> Dictionary:
+	var graph := _dict(authored.get("phase_graph", {}))
+	var phase_index: Dictionary = {}
+	for phase_value in _array(graph.get("phases", [])):
+		var phase_data := _dict(phase_value)
+		phase_index[str(phase_data.get("id", ""))] = phase_data
+	var pending: Array = [{"phase_id": str(graph.get("initial_phase", "")), "targets": _material_target_seed(authored, target_inventory), "visited": []}]
+	var outcomes: Dictionary = {}
+	var path_count := 0
+	var base_targets := _material_target_seed(authored, target_inventory)
+	while not pending.is_empty() and path_count < 512:
+		path_count += 1
+		var item := _dict(pending.pop_front())
+		var phase_id := str(item.get("phase_id", ""))
+		var phase_data := _dict(phase_index.get(phase_id, {}))
+		if phase_data.is_empty(): continue
+		var visited := _string_array(item.get("visited", []))
+		if visited.has(phase_id):
+			if not _contains_error(errors, "material path repeats phase %s" % phase_id): errors.append("sequence material path repeats phase %s; phase cycles are not permitted." % phase_id)
+			continue
+		visited.append(phase_id)
+		var targets := _dict(item.get("targets", {})).duplicate(true)
+		for family in ["scene_ops", "interaction_ops", "actor_ops"]:
+			for operation_value in _array(phase_data.get(family, [])):
+				var operation := _dict(operation_value)
+				if not _operation_has_material_target(family, operation, targets):
+					errors.append("sequence phase %s operation %s is duplicate or targets an object that is not live on every incoming path." % [phase_id, str(operation.get("receipt_id", ""))])
+					continue
+				_apply_material_target_projection(family, operation, targets)
+		if _phase_can_request_cleanup(authored, targets):
+			_proven_cleanup_projection(authored, targets, base_targets, "phase %s request_cleanup" % phase_id, errors)
+		for branch_value in _array(phase_data.get("branches", [])):
+			var branch := _dict(branch_value)
+			var outcome_id := str(branch.get("outcome", ""))
+			var next_phase := str(branch.get("next_phase", ""))
+			if not outcome_id.is_empty():
+				var terminal_targets := _proven_cleanup_projection(authored, targets, base_targets, "terminal path for outcome %s" % outcome_id, errors)
+				var paths := _array(outcomes.get(outcome_id, []))
+				var fingerprint := JSON.stringify(_canonical_variant(terminal_targets))
+				var duplicate := false
+				for path_value in paths:
+					if JSON.stringify(_canonical_variant(path_value)) == fingerprint: duplicate = true
+				if not duplicate: paths.append(terminal_targets)
+				outcomes[outcome_id] = paths
+			elif phase_index.has(next_phase):
+				pending.append({"phase_id": next_phase, "targets": targets.duplicate(true), "visited": visited.duplicate(false)})
+	if not pending.is_empty():
+		errors.append("sequence material path exploration exceeds the explicit 512-path limit.")
+	return outcomes
+
+
 static func _operation_has_material_target(family: String, operation: Dictionary, known_targets: Dictionary) -> bool:
+	if family == "transition_ops": return true
 	var op_id := str(operation.get("op", ""))
 	var collection_key := _operation_collection_key(family)
 	var targets := _dict(known_targets.get(collection_key, {}))
 	var source_key := "%s::%s" % [str(operation.get("owner_namespace", "")), str(operation.get("stable_object_id", ""))]
 	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
 		var target_key := "%s::%s" % [str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", ""))]
-		return not targets.has(source_key) and targets.has(target_key)
+		return not targets.has(source_key) and _material_target_live(targets, target_key)
 	if family == "scene_ops" and op_id == "spawn" or family in ["interaction_ops", "service_ops", "game_ops"] and op_id == "add" or family == "actor_ops" and op_id == "spawn":
 		return not targets.has(source_key)
-	return targets.has(source_key)
+	return _material_target_live(targets, source_key)
 
 
 static func _apply_material_target_projection(family: String, operation: Dictionary, known_targets: Dictionary) -> void:
+	if family == "transition_ops": return
 	var collection_key := _operation_collection_key(family)
 	var targets := _dict(known_targets.get(collection_key, {}))
 	var source_key := "%s::%s" % [str(operation.get("owner_namespace", "")), str(operation.get("stable_object_id", ""))]
 	var op_id := str(operation.get("op", ""))
 	if ["remove", "despawn"].has(op_id):
-		targets.erase(source_key)
+		var removed := _dict(targets.get(source_key, {})).duplicate(true)
+		if str(removed.get("material_origin", "")) == "base":
+			removed["present"] = false
+			removed["material_dirty"] = true
+			targets[source_key] = removed
+		else:
+			targets.erase(source_key)
 	elif family == "scene_ops" and op_id == "spawn" or family in ["interaction_ops", "service_ops", "game_ops"] and op_id == "add" or family == "actor_ops" and op_id == "spawn":
-		targets[source_key] = true
+		targets[source_key] = _material_created_state(family, operation, source_key)
+	elif family == "interaction_ops" and not ["add", "remove"].has(op_id):
+		var target_key := "%s::%s" % [str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", ""))]
+		var current := _dict(targets.get(target_key, {})).duplicate(true)
+		var overlay := _material_created_state(family, operation, source_key)
+		overlay["material_kind"] = "interaction_overlay"
+		overlay["overlay_target_identity"] = target_key
+		targets[source_key] = overlay
+		if op_id == "replace":
+			current["present"] = false
+			current["material_dirty"] = true
+			targets[target_key] = current
+		else:
+			_apply_material_fields(current, op_id, operation)
+			current["material_dirty"] = true
+			targets[target_key] = current
+	elif targets.has(source_key):
+		var current := _dict(targets.get(source_key, {})).duplicate(true)
+		if op_id == "replace" and str(current.get("material_origin", "")) == "base":
+			var replacement_payload := _dict(operation.get("object", operation.get("actor", operation.get("interaction", {}))))
+			for payload_key in replacement_payload.keys(): current[str(payload_key)] = replacement_payload.get(payload_key)
+		else:
+			_apply_material_fields(current, op_id, operation)
+		if str(current.get("material_origin", "")) == "base": current["material_dirty"] = true
+		targets[source_key] = current
 	known_targets[collection_key] = targets
+
+
+static func _material_created_state(family: String, operation: Dictionary, identity: String) -> Dictionary:
+	var payload := _dict(operation.get("object", operation.get("actor", operation.get("interaction", {})))).duplicate(true)
+	payload["owner_namespace"] = str(operation.get("owner_namespace", ""))
+	payload["stable_object_id"] = str(operation.get("stable_object_id", ""))
+	payload["target_identity"] = identity
+	payload["family"] = family
+	payload["present"] = true
+	payload["material_origin"] = "sequence"
+	payload["material_dirty"] = false
+	payload["requests_cleanup"] = _actions_request_cleanup(_array(payload.get("available_actions", operation.get("available_actions", []))))
+	return payload
+
+
+static func _material_target_live(targets: Dictionary, identity: String) -> bool:
+	return targets.has(identity) and bool(_dict(targets.get(identity, {})).get("present", false))
+
+
+static func _cleanup_operation_has_obligation(family: String, operation: Dictionary, known_targets: Dictionary, base_targets: Dictionary) -> bool:
+	if family == "transition_ops": return true
+	var collection_key := _operation_collection_key(family)
+	var targets := _dict(known_targets.get(collection_key, {}))
+	var baseline := _dict(base_targets.get(collection_key, {}))
+	var source_key := "%s::%s" % [str(operation.get("owner_namespace", "")), str(operation.get("stable_object_id", ""))]
+	var op_id := str(operation.get("op", ""))
+	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
+		var target_key := "%s::%s" % [str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", ""))]
+		return _material_target_live(targets, source_key) and str(_dict(targets.get(source_key, {})).get("material_kind", "")) == "interaction_overlay" and baseline.has(target_key) and bool(_dict(targets.get(target_key, {})).get("material_dirty", false))
+	var current := _dict(targets.get(source_key, {}))
+	if baseline.has(source_key): return bool(current.get("material_dirty", false))
+	return ["remove", "despawn"].has(op_id) and _material_target_live(targets, source_key) and str(current.get("material_origin", "")) == "sequence"
+
+
+static func _apply_cleanup_material_projection(family: String, operation: Dictionary, known_targets: Dictionary, base_targets: Dictionary) -> void:
+	if family == "transition_ops": return
+	var collection_key := _operation_collection_key(family)
+	var targets := _dict(known_targets.get(collection_key, {}))
+	var baseline := _dict(base_targets.get(collection_key, {}))
+	var source_key := "%s::%s" % [str(operation.get("owner_namespace", "")), str(operation.get("stable_object_id", ""))]
+	var op_id := str(operation.get("op", ""))
+	if family == "interaction_ops" and not ["add", "remove"].has(op_id):
+		var target_key := "%s::%s" % [str(operation.get("target_owner_namespace", "")), str(operation.get("target_stable_object_id", ""))]
+		targets.erase(source_key)
+		if baseline.has(target_key): targets[target_key] = _dict(baseline.get(target_key, {})).duplicate(true)
+	elif baseline.has(source_key):
+		targets[source_key] = _dict(baseline.get(source_key, {})).duplicate(true)
+	elif ["remove", "despawn"].has(op_id):
+		targets.erase(source_key)
+	known_targets[collection_key] = targets
+
+
+static func _proven_cleanup_projection(authored: Dictionary, targets_value: Dictionary, base_targets: Dictionary, path_label: String, errors: Array) -> Dictionary:
+	var cleaned := targets_value.duplicate(true)
+	for cleanup_value in _array(_dict(authored.get("cleanup", {})).get("operations", [])):
+		var cleanup := _dict(cleanup_value)
+		var family := str(cleanup.get("family", ""))
+		if not _cleanup_operation_has_obligation(family, cleanup, cleaned, base_targets):
+			errors.append("sequence %s cleanup operation %s has no exact live mutation/tombstone/overlay obligation." % [path_label, str(cleanup.get("receipt_id", ""))])
+			continue
+		_apply_cleanup_material_projection(family, cleanup, cleaned, base_targets)
+	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes"]:
+		var collection := _dict(cleaned.get(collection_key, {}))
+		for target_value in collection.values():
+			var target := _dict(target_value)
+			if str(target.get("material_origin", "")) == "sequence" and bool(target.get("present", false)):
+				errors.append("sequence %s leaks temporary %s target %s after cleanup." % [path_label, collection_key, str(target.get("target_identity", ""))])
+		var baseline_collection := _dict(base_targets.get(collection_key, {}))
+		for identity_value in baseline_collection.keys():
+			var identity := str(identity_value)
+			if not collection.has(identity) or _canonical_variant(collection.get(identity)) != _canonical_variant(baseline_collection.get(identity)):
+				errors.append("sequence %s does not restore exact base %s target %s after cleanup." % [path_label, collection_key, identity])
+	return cleaned
+
+
+static func _phase_can_request_cleanup(authored: Dictionary, known_targets: Dictionary) -> bool:
+	for subscription_value in _array(authored.get("fact_subscriptions", [])):
+		if str(_dict(subscription_value).get("handler", "")) == "request_cleanup": return true
+	for target_value in _dict(known_targets.get("interactions", {})).values():
+		var target := _dict(target_value)
+		if bool(target.get("present", false)) and bool(target.get("requests_cleanup", false)): return true
+	return false
+
+
+static func _actions_request_cleanup(actions: Array) -> bool:
+	for action_value in actions:
+		if str(_dict(action_value).get("handler", "")) == "request_cleanup": return true
+	return false
+
+
+static func _apply_material_fields(current: Dictionary, op_id: String, operation: Dictionary) -> void:
+	match op_id:
+		"move", "set_position":
+			if operation.has("anchor_id"): current["anchor_id"] = str(operation.get("anchor_id", ""))
+			if operation.has("zone_id"): current["zone_id"] = str(operation.get("zone_id", ""))
+		"reveal": current["visible"] = true
+		"hide": current["visible"] = false
+		"enable", "open":
+			current["enabled"] = true
+			current["disabled_reason"] = ""
+		"disable", "close":
+			current["enabled"] = false
+			current["disabled_reason"] = str(operation.get("disabled_reason", "Unavailable."))
+		"set_state": current["state"] = str(operation.get("state", ""))
+		"set_appearance": current["appearance"] = str(operation.get("appearance", ""))
+		"set_route": current["route_id"] = str(operation.get("route_id", ""))
+		"set_pose": current["pose"] = str(operation.get("pose", ""))
+		"set_behavior": current["behavior"] = str(operation.get("behavior", "idle"))
+		"gate":
+			current["enabled"] = bool(operation.get("enabled", false))
+			current["disabled_reason"] = str(operation.get("disabled_reason", "Unavailable.")) if not bool(current.get("enabled", false)) else ""
+		"retarget": current["source_id"] = str(operation.get("source_id", current.get("source_id", "")))
+		"augment":
+			var actions := _array(current.get("available_actions", [])).duplicate(true)
+			for action_value in _array(operation.get("available_actions", [])): actions.append(_dict(action_value).duplicate(true))
+			current["available_actions"] = actions
+		"set_modifier": current["modifier"] = _dict(operation.get("modifier", {})).duplicate(true)
 
 
 static func _operation_collection_key(family: String) -> String:
@@ -817,7 +1073,7 @@ static func _validate_operation_receipt_uniqueness(label: String, operations: Ar
 			receipts[receipt_id] = true
 
 
-static func _validate_cross_references(label: String, authored: Dictionary, reachable_outcomes: Array, errors: Array) -> void:
+static func _validate_cross_references(label: String, authored: Dictionary, reachable_outcomes: Array, operation_registry: Variant, target_inventory: Dictionary, errors: Array) -> void:
 	var local_ids := _dict(authored.get("local_state_schema", {}))
 	var subscribed_facts := _fact_subscription_types(authored.get("fact_subscriptions", []))
 	var authored_receipts: Dictionary = {}
@@ -862,11 +1118,11 @@ static func _validate_cross_references(label: String, authored: Dictionary, reac
 		for operation_value in _array(phase_data.get("interaction_ops", [])):
 			var interaction := _dict(_dict(operation_value).get("interaction", {}))
 			for action_value in _array(interaction.get("available_actions", _dict(operation_value).get("available_actions", []))):
-				_validate_action_refs("%s phase %s action" % [label, phase_id], _dict(action_value), local_ids, objective_steps, errors)
+				_validate_action_refs("%s phase %s action" % [label, phase_id], _dict(action_value), local_ids, objective_steps, reachable_outcomes, operation_registry, _string_array(phase_data.get("objective_ids", [])), _dict(target_inventory.get("event_choices", {})), errors)
 	for subscription_value in _array(authored.get("fact_subscriptions", [])):
 		var subscription := _dict(subscription_value)
 		if not subscription.is_empty():
-			_validate_handler_input_refs("%s fact subscription" % label, str(subscription.get("handler", "")), _dict(subscription.get("inputs", {})), local_ids, objective_steps, errors)
+			_validate_handler_input_refs("%s fact subscription" % label, str(subscription.get("handler", "")), _dict(subscription.get("inputs", {})), local_ids, objective_steps, reachable_outcomes, operation_registry, {"source": "fact", "fact_payload_types": _dict(FACT_PAYLOAD_TYPES.get(str(subscription.get("fact_type", "")), {})), "event_choices": _dict(target_inventory.get("event_choices", {}))}, errors)
 	for objective_value in _array(authored.get("objectives", [])):
 		for step_value in _array(_dict(objective_value).get("steps", [])):
 			var step := _dict(step_value)
@@ -880,8 +1136,13 @@ static func _validate_condition_refs(label: String, condition: Dictionary, local
 			if not subscribed_facts.has(str(condition.get("fact_type", ""))):
 				errors.append("%s references unsubscribed fact %s." % [label, str(condition.get("fact_type", ""))])
 		"local_equals", "local_min":
-			if not local_ids.has(str(condition.get("key", ""))):
+			var local_key := str(condition.get("key", ""))
+			if not local_ids.has(local_key):
 				errors.append("%s references unknown local state %s." % [label, str(condition.get("key", ""))])
+			elif str(condition.get("type", "")) == "local_min":
+				var descriptor := _dict(local_ids.get(local_key, {}))
+				if str(descriptor.get("type", "")) != "int" or not condition.has("value") or typeof(condition.get("value")) != TYPE_INT or not _local_value_matches("int", condition.get("value"), descriptor):
+					errors.append("%s local_min requires an exact integer threshold within the referenced integer local field domain." % label)
 		"objective":
 			var objective_id := str(condition.get("objective_id", ""))
 			var step_id := str(condition.get("step_id", ""))
@@ -899,7 +1160,7 @@ static func _validate_condition_refs(label: String, condition: Dictionary, local
 					errors.append("%s references unknown authored operation receipt %s/%s." % [label, family, receipt_id])
 
 
-static func _validate_action_refs(label: String, action: Dictionary, local_ids: Dictionary, objective_steps: Dictionary, errors: Array) -> void:
+static func _validate_action_refs(label: String, action: Dictionary, local_ids: Dictionary, objective_steps: Dictionary, reachable_outcomes: Array, operation_registry: Variant, phase_objective_ids: Array, event_choices: Dictionary, errors: Array) -> void:
 	for requirement_value in _array(action.get("requires_objective_steps", [])):
 		var requirement := _dict(requirement_value)
 		var objective_id := str(requirement.get("objective_id", ""))
@@ -910,10 +1171,11 @@ static func _validate_action_refs(label: String, action: Dictionary, local_ids: 
 		var requirement := _dict(requirement_value)
 		if not local_ids.has(str(requirement.get("key", ""))):
 			errors.append("%s references unknown local state %s." % [label, str(requirement.get("key", ""))])
-	_validate_handler_input_refs(label, str(action.get("handler", "")), _dict(action.get("inputs", {})), local_ids, objective_steps, errors)
+	_validate_handler_input_refs(label, str(action.get("handler", "")), _dict(action.get("inputs", {})), local_ids, objective_steps, reachable_outcomes, operation_registry, {"source": "command", "phase_objective_ids": phase_objective_ids, "event_choices": event_choices}, errors)
 
 
-static func _validate_handler_input_refs(label: String, handler_id: String, inputs: Dictionary, local_ids: Dictionary, objective_steps: Dictionary, errors: Array) -> void:
+static func _validate_handler_input_refs(label: String, handler_id: String, inputs: Dictionary, local_ids: Dictionary, objective_steps: Dictionary, reachable_outcomes: Array, operation_registry: Variant, context: Dictionary, errors: Array) -> void:
+	if handler_id.is_empty(): return
 	if handler_id in ["set_local", "increment_local"] and not local_ids.has(str(inputs.get("key", ""))):
 		errors.append("%s handler references unknown local state %s." % [label, str(inputs.get("key", ""))])
 	elif handler_id == "event_bridge" and (not _valid_id(str(inputs.get("event_id", ""))) or not _valid_id(str(inputs.get("resolution_id", "")))):
@@ -927,6 +1189,11 @@ static func _validate_handler_input_refs(label: String, handler_id: String, inpu
 			var step_id := str(inputs.get("step_id", ""))
 			if not objective_steps.has(objective_id) or not _dict(objective_steps.get(objective_id, {})).has(step_id):
 				errors.append("%s handler references unknown objective step %s/%s." % [label, objective_id, step_id])
+	if operation_registry != null and operation_registry.has_method("validate_handler_inputs"):
+		var validation_context := context.duplicate(true)
+		validation_context["objective_steps"] = objective_steps
+		for handler_error in operation_registry.call("validate_handler_inputs", handler_id, inputs, local_ids, reachable_outcomes, validation_context):
+			errors.append("%s: %s" % [label, str(handler_error)])
 
 
 static func _validate_event_bridge_authorizers(label: String, authored: Dictionary, errors: Array) -> void:
@@ -1032,31 +1299,18 @@ static func _normalized_aftermath_effect(aftermath: Dictionary) -> Dictionary:
 
 
 static func _normalized_operation_feature(family: String, operation: Dictionary) -> Dictionary:
-	var payload := _dict(operation.get("object", operation.get("actor", operation.get("interaction", {}))))
-	var result := {
-		"family": family,
-		"op": str(operation.get("op", "")),
-		"mode": str(operation.get("mode", "")),
-		"owner": str(operation.get("owner_namespace", "")),
-	}
-	for key in ["state", "appearance", "behavior", "pose", "enabled", "source_id", "channel", "duration_boundaries"]:
-		if operation.has(key):
-			result[key] = operation.get(key)
-	for key in ["role", "behavior", "enabled", "safe_exit"]:
-		if payload.has(key):
-			result["payload_%s" % key] = payload.get(key)
-	var action_features: Array = []
-	for action_value in _array(payload.get("available_actions", operation.get("available_actions", []))):
-		var action := _dict(action_value)
-		action_features.append({
-			"handler": str(action.get("handler", "")),
-			"cost_band": 0 if int(action.get("cost", 0)) <= 0 else 1 if int(action.get("cost", 0)) < 10 else 2,
-			"objective_preconditions": _array(action.get("requires_objective_steps", [])).size(),
-			"local_preconditions": _array(action.get("requires_local", [])).size(),
-		})
-	action_features.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
-	if not action_features.is_empty():
-		result["actions"] = action_features
+	var semantic_operation := _signature_identity_invariant(operation)
+	semantic_operation.erase("family")
+	return {"family": family, "effect": _canonical_variant(semantic_operation)}
+
+
+static func _signature_identity_invariant(value: Dictionary) -> Dictionary:
+	var result := value.duplicate(true)
+	for identity_key in ["receipt_id", "stable_object_id", "presentation_object_id", "target_stable_object_id"]:
+		result.erase(identity_key)
+	for payload_key in ["object", "actor", "interaction"]:
+		if typeof(result.get(payload_key)) == TYPE_DICTIONARY:
+			result[payload_key] = _signature_identity_invariant(result.get(payload_key) as Dictionary)
 	return result
 
 
@@ -1162,6 +1416,22 @@ static func _contains_error(errors: Array, needle: String) -> bool:
 		if str(error_value).contains(needle):
 			return true
 	return false
+
+
+static func _valid_sha256(value: String) -> bool:
+	if value.length() != 64 or value != value.to_lower(): return false
+	for index in range(value.length()):
+		var code := value.unicode_at(index)
+		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102): return false
+	return true
+
+
+static func _valid_semantic_object_id(value: String) -> bool:
+	var parts := value.split(":", false)
+	if parts.is_empty() or parts.size() > 2: return false
+	for part in parts:
+		if not _valid_id(str(part)): return false
+	return true
 
 
 static func _validate_tags_and_exceptions(label: String, authored: Dictionary, errors: Array) -> void:
@@ -1306,8 +1576,8 @@ static func _validate_fact_subscriptions(label: String, subscriptions: Array, op
 		errors.append("%s exceeds %d fact subscriptions." % [label, MAX_FACT_SUBSCRIPTIONS])
 	for subscription_value in subscriptions:
 		if typeof(subscription_value) == TYPE_STRING:
-			var fact_type := str(subscription_value).strip_edges()
-			if not FACT_TYPES.has(fact_type):
+			var fact_type := str(subscription_value)
+			if fact_type != fact_type.strip_edges() or not FACT_TYPES.has(fact_type):
 				errors.append("%s fact subscription references unregistered fact type %s." % [label, fact_type])
 			elif fact_type == "event_result":
 				errors.append("%s event_result fact subscription requires a dictionary with payload_equals.event_id." % label)
@@ -1317,14 +1587,14 @@ static func _validate_fact_subscriptions(label: String, subscriptions: Array, op
 			continue
 		var subscription := subscription_value as Dictionary
 		_append_unknown_keys("%s fact subscription" % label, subscription, ["fact_type", "payload_equals", "handler", "inputs"], errors)
-		var fact_type := str(subscription.get("fact_type", "")).strip_edges()
-		if not FACT_TYPES.has(fact_type):
+		var fact_type := str(subscription.get("fact_type", ""))
+		if fact_type != fact_type.strip_edges() or not FACT_TYPES.has(fact_type):
 			errors.append("%s fact subscription references unregistered fact type %s." % [label, fact_type])
 		else:
 			_validate_fact_payload_predicate("%s fact subscription" % label, fact_type, subscription.get("payload_equals", {}), errors)
-		var handler_id := str(subscription.get("handler", "")).strip_edges()
+		var handler_id := str(subscription.get("handler", ""))
 		var handlers := operation_registry.call("registered_handlers") as Dictionary if operation_registry != null and operation_registry.has_method("registered_handlers") else {}
-		if not handler_id.is_empty() and not handlers.has(handler_id):
+		if handler_id != handler_id.strip_edges() or not handlers.has(handler_id):
 			errors.append("%s fact subscription references unregistered handler %s." % [label, handler_id])
 		if typeof(subscription.get("inputs", {})) != TYPE_DICTIONARY:
 			errors.append("%s fact subscription inputs must be a dictionary." % label)
@@ -1365,6 +1635,8 @@ static func _validate_condition(label: String, condition: Dictionary, errors: Ar
 		_validate_fact_payload_predicate(label, str(condition.get("fact_type", "")), condition.get("payload_equals", {}), errors)
 	elif ["local_equals", "local_min"].has(type_id) and not _valid_id(str(condition.get("key", ""))):
 		errors.append("%s local condition requires key." % label)
+	elif type_id == "local_min" and (not condition.has("value") or typeof(condition.get("value")) != TYPE_INT):
+		errors.append("%s local_min condition requires an exact integer value." % label)
 	elif type_id == "objective" and (not _valid_id(str(condition.get("objective_id", ""))) or not _valid_id(str(condition.get("step_id", "")))):
 		errors.append("%s objective condition requires objective_id and step_id." % label)
 	elif type_id == "outcome" and not _valid_id(str(condition.get("outcome", ""))):
@@ -1449,13 +1721,18 @@ static func _local_value_matches(type_id: String, value: Variant, field: Diction
 		"int":
 			return typeof(value) == TYPE_INT and int(value) >= int(field.get("min", value)) and int(value) <= int(field.get("max", value))
 		"float":
-			return [TYPE_FLOAT, TYPE_INT].has(typeof(value)) and float(value) >= float(field.get("min", value)) and float(value) <= float(field.get("max", value))
+			return [TYPE_FLOAT, TYPE_INT].has(typeof(value)) and not is_nan(float(value)) and not is_inf(float(value)) and float(value) >= float(field.get("min", value)) and float(value) <= float(field.get("max", value))
 		"string":
 			return typeof(value) == TYPE_STRING
 		"enum":
 			return typeof(value) == TYPE_STRING and _string_array(field.get("values", [])).has(str(value))
 		"string_array":
-			return typeof(value) == TYPE_ARRAY and _all_type(value as Array, TYPE_STRING)
+			if typeof(value) != TYPE_ARRAY or not _all_type(value as Array, TYPE_STRING): return false
+			var seen: Dictionary = {}
+			for item_value in value as Array:
+				if str(item_value).is_empty() or str(item_value) != str(item_value).strip_edges() or seen.has(str(item_value)): return false
+				seen[str(item_value)] = true
+			return true
 		"int_array":
 			return typeof(value) == TYPE_ARRAY and _all_type(value as Array, TYPE_INT)
 	return false
@@ -1543,13 +1820,25 @@ static func _canonical_variant_inner(value: Variant, depth: int, ancestors: Arra
 
 
 static func _valid_id(value: String) -> bool:
-	var text := value.strip_edges()
+	var text := value
+	if text != text.strip_edges() or text.length() > MAX_TEXT_LENGTH: return false
 	if text.is_empty():
 		return false
 	for index in range(text.length()):
 		var code := text.unicode_at(index)
 		if not (code >= 97 and code <= 122) and not (code >= 48 and code <= 57) and code != 95 and code != 45:
 			return false
+	return true
+
+
+static func _canonical_string_values(value: Variant) -> bool:
+	if typeof(value) != TYPE_ARRAY or (value as Array).is_empty(): return false
+	var seen: Dictionary = {}
+	for item_value in value as Array:
+		if typeof(item_value) != TYPE_STRING: return false
+		var item := str(item_value)
+		if item.is_empty() or item != item.strip_edges() or seen.has(item): return false
+		seen[item] = true
 	return true
 
 

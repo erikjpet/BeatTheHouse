@@ -5,6 +5,8 @@ extends RefCounted
 
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const ScenarioOperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const GENERATED_LAYOUT_VERSION := 11
@@ -47,6 +49,9 @@ var suspicion_cues: Array = []
 var travel_hooks: Array = []
 var next_archetypes: Array = []
 var object_fixtures: Array = []
+var semantic_anchors: Dictionary = {}
+var semantic_zones: Dictionary = {}
+var semantic_actors: Array = []
 var local_narrative_flags: Dictionary = {}
 var mood: String = ""
 var turns: int = 0
@@ -60,6 +65,8 @@ var scenario_game_modifiers: Dictionary = {}
 var scenario_presentation: Dictionary = {}
 var scenario_exclusive_opportunity: Dictionary = {}
 var scenario_hook_flags: Dictionary = {}
+var scenario_semantic_inventory_version: int = 0
+var scenario_semantic_digest: String = ""
 var scenario_sequence_state: Dictionary = {}
 var scenario_sequence_projection: Dictionary = {}
 var scenario_render_snapshot: Dictionary = {}
@@ -68,6 +75,7 @@ var scenario_sequence_base_game_ids: Array = []
 var scenario_sequence_base_service_ids: Array = []
 var scenario_sequence_base_travel_hooks: Array = []
 var scenario_sequence_base_game_modifiers: Dictionary = {}
+var scenario_event_choices: Dictionary = {}
 var environment_layer_schema_version: int = 0
 var current_layer_id: String = ""
 var default_layer_id: String = ""
@@ -113,6 +121,8 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.game_ids = _pick_ids_with_required(game_pool, archetype.get("game_count", 1), required_games, rng)
 	environment.game_states = {}
 	environment.event_ids = _pick_events(archetype, rng.fork("events:%s" % environment.id), library)
+	if not selected_state.is_empty() and ScenarioEngineScript.SequenceSchemaScript.is_sequence(selected_scenario):
+		environment.scenario_event_choices = EnvironmentSemanticInventoryScript.event_choice_index(environment.event_ids, library)
 	environment.item_offers = _build_offers(archetype, rng, library, challenge_config)
 	for scenario_offer_value in _copy_array(archetype.get("scenario_item_offers", [])):
 		if typeof(scenario_offer_value) != TYPE_DICTIONARY:
@@ -134,6 +144,9 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.travel_hooks = _copy_array(archetype.get("travel_hooks", []))
 	environment.next_archetypes = _copy_array(archetype.get("next_archetypes", []))
 	environment.object_fixtures = _copy_array(archetype.get("object_fixtures", []))
+	environment.semantic_anchors = _copy_dict(archetype.get("semantic_anchors", {}))
+	environment.semantic_zones = _copy_dict(archetype.get("semantic_zones", {}))
+	environment.semantic_actors = _copy_array(archetype.get("semantic_actors", []))
 	var rare_route_rng := rng.fork("rare_next:%s" % environment.id)
 	_append_rare_archetypes(environment.next_archetypes, archetype, rare_route_rng)
 	environment.local_narrative_flags = _copy_dict(archetype.get("local_narrative_flags", {}))
@@ -192,6 +205,9 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.travel_hooks = _copy_array(data.get("travel_hooks", []))
 	environment.next_archetypes = _copy_array(data.get("next_archetypes", []))
 	environment.object_fixtures = _copy_array(data.get("object_fixtures", []))
+	environment.semantic_anchors = _copy_dict(data.get("semantic_anchors", {}))
+	environment.semantic_zones = _copy_dict(data.get("semantic_zones", {}))
+	environment.semantic_actors = _copy_array(data.get("semantic_actors", []))
 	environment.local_narrative_flags = _copy_dict(data.get("local_narrative_flags", {}))
 	environment.mood = str(data.get("mood", ""))
 	environment.turns = int(data.get("turns", 0))
@@ -205,7 +221,12 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.scenario_presentation = _copy_dict(data.get("scenario_presentation", {}))
 	environment.scenario_exclusive_opportunity = _copy_dict(data.get("scenario_exclusive_opportunity", {}))
 	environment.scenario_hook_flags = _copy_dict(data.get("scenario_hook_flags", {}))
-	environment.scenario_sequence_state = ScenarioEngineScript.SequenceRuntimeScript.normalize_state(data.get("scenario_sequence_state", {}))
+	var semantic_inventory_version := maxi(0, int(data.get("scenario_semantic_inventory_version", 0)))
+	var semantic_digest := str(data.get("scenario_semantic_digest", "")).strip_edges()
+	if semantic_inventory_version > 0 and not semantic_digest.is_empty():
+		environment.scenario_semantic_inventory_version = semantic_inventory_version
+		environment.scenario_semantic_digest = semantic_digest
+	environment.scenario_sequence_state = ScenarioEngineScript.SequenceRuntimeScript.normalize_state(_durable_sequence_state(data.get("scenario_sequence_state", {})))
 	environment.scenario_sequence_projection = _copy_dict(data.get("scenario_sequence_projection", {}))
 	environment.scenario_render_snapshot = _copy_dict(data.get("scenario_render_snapshot", {}))
 	environment.scenario_sequence_migration = _copy_dict(data.get("scenario_sequence_migration", {}))
@@ -213,6 +234,7 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.scenario_sequence_base_service_ids = _copy_array(data.get("scenario_sequence_base_service_ids", []))
 	environment.scenario_sequence_base_travel_hooks = _copy_array(data.get("scenario_sequence_base_travel_hooks", []))
 	environment.scenario_sequence_base_game_modifiers = _copy_dict(data.get("scenario_sequence_base_game_modifiers", {}))
+	environment.scenario_event_choices = {}
 	environment.environment_layer_schema_version = maxi(0, int(data.get("environment_layer_schema_version", 0)))
 	environment.current_layer_id = str(data.get("current_layer_id", "")).strip_edges()
 	environment.default_layer_id = str(data.get("default_layer_id", "")).strip_edges()
@@ -220,7 +242,7 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.layer_display_name = str(data.get("layer_display_name", "")).strip_edges()
 	environment.layer_transitions = _copy_array(data.get("layer_transitions", []))
 	environment.layer_discovery = _copy_dict(data.get("layer_discovery", {}))
-	environment.layer_states = _copy_dict(data.get("layer_states", {}))
+	environment.layer_states = _durable_layer_states(data.get("layer_states", {}))
 	environment.layer_ambient_lines = _string_array(data.get("layer_ambient_lines", []))
 	environment.layer_ambient_label = str(data.get("layer_ambient_label", "")).strip_edges()
 	environment.layer_ambient_prop = str(data.get("layer_ambient_prop", "")).strip_edges()
@@ -283,7 +305,7 @@ func to_dict() -> Dictionary:
 		result["scenario_exclusive_opportunity"] = scenario_exclusive_opportunity.duplicate(true)
 		result["scenario_hook_flags"] = scenario_hook_flags.duplicate(true)
 	if not scenario_sequence_state.is_empty():
-		result["scenario_sequence_state"] = scenario_sequence_state.duplicate(true)
+		result["scenario_sequence_state"] = _durable_sequence_state(scenario_sequence_state)
 		result["scenario_sequence_projection"] = scenario_sequence_projection.duplicate(true)
 		result["scenario_render_snapshot"] = scenario_render_snapshot.duplicate(true)
 		result["scenario_sequence_base_game_ids"] = scenario_sequence_base_game_ids.duplicate(true)
@@ -292,6 +314,12 @@ func to_dict() -> Dictionary:
 		result["scenario_sequence_base_game_modifiers"] = scenario_sequence_base_game_modifiers.duplicate(true)
 	if not scenario_sequence_migration.is_empty():
 		result["scenario_sequence_migration"] = scenario_sequence_migration.duplicate(true)
+	if scenario_semantic_inventory_version > 0 and not scenario_semantic_digest.strip_edges().is_empty():
+		result["scenario_semantic_inventory_version"] = scenario_semantic_inventory_version
+		result["scenario_semantic_digest"] = scenario_semantic_digest.strip_edges()
+	if not semantic_anchors.is_empty(): result["semantic_anchors"] = semantic_anchors.duplicate(true)
+	if not semantic_zones.is_empty(): result["semantic_zones"] = semantic_zones.duplicate(true)
+	if not semantic_actors.is_empty(): result["semantic_actors"] = semantic_actors.duplicate(true)
 	if not environment_visit_id.is_empty() or not night_instance_id.is_empty() or not context_instance_id.is_empty():
 		result["environment_visit_id"] = environment_visit_id
 		result["night_instance_id"] = night_instance_id
@@ -304,13 +332,40 @@ func to_dict() -> Dictionary:
 		result["layer_display_name"] = layer_display_name
 		result["layer_transitions"] = layer_transitions.duplicate(true)
 		result["layer_discovery"] = layer_discovery.duplicate(true)
-		result["layer_states"] = layer_states.duplicate(true)
+		result["layer_states"] = _durable_layer_states(layer_states)
 		result["layer_ambient_lines"] = layer_ambient_lines.duplicate(true)
 		result["layer_ambient_label"] = layer_ambient_label
 		result["layer_ambient_prop"] = layer_ambient_prop
 		result["layer_ambient_rotate_actions"] = layer_ambient_rotate_actions
 		result["layer_ambient_index"] = layer_ambient_index
 		result["layer_ambient_line"] = layer_ambient_line
+	return result
+
+
+static func _durable_sequence_state(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY: return {}
+	if (value as Dictionary).is_empty(): return {}
+	if not ScenarioOperationRegistryScript.validate_bounded_variant("persisted environment scenario sequence state", value).is_empty(): return {}
+	var state := (value as Dictionary).duplicate(true)
+	var semantic := _copy_dict(state.get("semantic_state", {}))
+	for key in ["target_inventory", "declared_targets", "base_interactions", "event_choices", "scene_objects", "interactions", "actors", "services", "games", "routes", "transition_queue", "tombstones"]: semantic.erase(key)
+	state["semantic_state"] = semantic
+	state.erase("resolved_branches")
+	state.erase("resolved_outcomes")
+	return state
+
+
+static func _durable_layer_states(value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	for layer_id_value in _copy_dict(value).keys():
+		var body := _copy_dict(_copy_dict(value).get(layer_id_value, {})).duplicate(true)
+		for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_semantic_action_digest", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_event_choices", "scenario_sequence_projection", "scenario_sequence_lifecycle_errors"]: body.erase(key)
+		if body.has("scenario_sequence_state"):
+			var durable := _durable_sequence_state(body.get("scenario_sequence_state", {}))
+			if durable.is_empty(): body.erase("scenario_sequence_state")
+			else: body["scenario_sequence_state"] = durable
+		body.erase("layer_states")
+		result[str(layer_id_value)] = body
 	return result
 
 
