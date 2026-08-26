@@ -58,6 +58,8 @@ var hovered_surface_action: String = ""
 var hovered_surface_index: int = -1
 var captured_surface_action: String = ""
 var captured_surface_index: int = -1
+var captured_surface_board_position := Vector2.ZERO
+var captured_surface_keyboard := false
 var captured_pointer_move_pending := false
 var captured_pointer_move_position := Vector2.ZERO
 var surface_animation_channels: Dictionary = {}
@@ -107,11 +109,12 @@ func set_environment_activity_paused(paused: bool) -> void:
 		return
 	environment_activity_paused = paused
 	if paused:
-		captured_pointer_move_pending = false
+		_cancel_captured_surface_pointer()
 	queue_redraw()
 
 
 func clear_runtime_state() -> void:
+	_cancel_captured_surface_pointer()
 	stop_surface_audio()
 	surface_game_module = null
 	game_id = ""
@@ -126,6 +129,8 @@ func clear_runtime_state() -> void:
 	hovered_surface_index = -1
 	captured_surface_action = ""
 	captured_surface_index = -1
+	captured_surface_board_position = Vector2.ZERO
+	captured_surface_keyboard = false
 	captured_pointer_move_pending = false
 	captured_pointer_move_position = Vector2.ZERO
 	surface_animation_channels = {}
@@ -721,6 +726,12 @@ func surface_add_drag_hit(rect: Rect2, action: String, index: int = -1) -> void:
 	hit_regions.append({"rect": rect, "action": action, "index": index, "drag": true})
 
 
+# A captured pointer target that also supports the platform-neutral confirm
+# action. Games opt in per region; the canvas never names a game or command.
+func surface_add_hold_hit(rect: Rect2, action: String, index: int = -1) -> void:
+	hit_regions.append({"rect": rect, "action": action, "index": index, "drag": true, "keyboard_hold": true})
+
+
 func surface_region_hovered(action: String, index: int = -1) -> bool:
 	return hovered_surface_action == action and (index < 0 or hovered_surface_index == index)
 
@@ -897,12 +908,22 @@ func _hit_region_hovered_rect(rect: Rect2) -> bool:
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	focus_mode = Control.FOCUS_ALL
 	clip_contents = true
 	_ensure_surface_sfx_player()
 	_ensure_drunk_distortion_overlay()
 
 
 func _gui_input(event: InputEvent) -> void:
+	if event is InputEventKey or event is InputEventJoypadButton:
+		if event is InputEventKey and (event as InputEventKey).echo:
+			return
+		var joy_confirm := event is InputEventJoypadButton and (event as InputEventJoypadButton).button_index == JOY_BUTTON_A
+		if event.is_action_pressed("ui_accept") or (joy_confirm and (event as InputEventJoypadButton).pressed):
+			_activate_keyboard_hold()
+		elif event.is_action_released("ui_accept") or (joy_confirm and not (event as InputEventJoypadButton).pressed):
+			_release_keyboard_hold()
+		return
 	var motion_event := event as InputEventMouseMotion
 	if motion_event != null:
 		_set_hovered_surface_region(motion_event.position)
@@ -982,6 +1003,10 @@ func _activate_surface_at_position(position: Vector2, confirm_requested: bool) -
 			if bool(region.get("drag", false)):
 				captured_surface_action = hovered_surface_action
 				captured_surface_index = hovered_surface_index
+				captured_surface_board_position = board_point
+				captured_surface_keyboard = false
+				if is_inside_tree():
+					grab_focus()
 				surface_pointer_action.emit(captured_surface_action, captured_surface_index, "begin", board_point)
 				accept_event()
 				return
@@ -1001,12 +1026,78 @@ func _emit_captured_surface_pointer(phase: String, screen_position: Vector2) -> 
 		return
 	var action := captured_surface_action
 	var index := captured_surface_index
-	surface_pointer_action.emit(action, index, phase, _screen_to_board(screen_position))
+	captured_surface_board_position = _screen_to_board(screen_position)
+	surface_pointer_action.emit(action, index, phase, captured_surface_board_position)
 	if phase == "end":
-		captured_surface_action = ""
-		captured_surface_index = -1
-		captured_pointer_move_pending = false
+		_clear_captured_surface_pointer_state()
 	accept_event()
+
+
+func _activate_keyboard_hold() -> void:
+	if not captured_surface_action.is_empty():
+		accept_event()
+		return
+	var selected_region: Dictionary = {}
+	for region_value in hit_regions:
+		var region: Dictionary = region_value if typeof(region_value) == TYPE_DICTIONARY else {}
+		if not bool(region.get("keyboard_hold", false)):
+			continue
+		if surface_region_hovered(str(region.get("action", "")), int(region.get("index", -1))):
+			selected_region = region
+			break
+		if selected_region.is_empty():
+			selected_region = region
+	if selected_region.is_empty():
+		return
+	var raw_action := str(selected_region.get("action", ""))
+	var raw_index := int(selected_region.get("index", -1))
+	var resolved := _resolved_surface_action_binding(raw_action, raw_index)
+	var action := str(resolved.get("action", raw_action))
+	var index := int(resolved.get("index", raw_index))
+	var block_reason := _surface_action_block_reason(action)
+	if not block_reason.is_empty():
+		surface_action_blocked.emit(action, block_reason)
+		accept_event()
+		return
+	var rect: Rect2 = selected_region.get("rect", Rect2())
+	captured_surface_action = action
+	captured_surface_index = index
+	captured_surface_board_position = rect.get_center()
+	captured_surface_keyboard = true
+	if is_inside_tree():
+		grab_focus()
+	surface_pointer_action.emit(action, index, "begin", captured_surface_board_position)
+	accept_event()
+
+
+func _release_keyboard_hold() -> void:
+	if not captured_surface_keyboard or captured_surface_action.is_empty():
+		return
+	surface_pointer_action.emit(captured_surface_action, captured_surface_index, "end", captured_surface_board_position)
+	_clear_captured_surface_pointer_state()
+	accept_event()
+
+
+func _cancel_captured_surface_pointer() -> void:
+	if captured_surface_action.is_empty():
+		return
+	surface_pointer_action.emit(captured_surface_action, captured_surface_index, "cancel", captured_surface_board_position)
+	_clear_captured_surface_pointer_state()
+
+
+func _clear_captured_surface_pointer_state() -> void:
+	captured_surface_action = ""
+	captured_surface_index = -1
+	captured_surface_board_position = Vector2.ZERO
+	captured_surface_keyboard = false
+	captured_pointer_move_pending = false
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_FOCUS_EXIT:
+		_cancel_captured_surface_pointer()
+	elif what == NOTIFICATION_VISIBILITY_CHANGED and is_node_ready() and not is_visible_in_tree():
+		_cancel_captured_surface_pointer()
 
 
 func _queue_or_emit_captured_pointer_move(screen_position: Vector2) -> void:

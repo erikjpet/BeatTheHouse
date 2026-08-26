@@ -248,6 +248,10 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 	var next_state := ui_state
 	if surface_action == DROP_CHARGE_ACTION:
 		var charge_simulation := _simulation(machine)
+		if phase == "cancel":
+			next_state.erase("coin_pusher_drop_charge_started_tick")
+			next_state["coin_pusher_drop_charge_count"] = 0
+			return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "surface_state_patch": {"coin_pusher_drop_charge_count": 0}}, true)
 		if phase == "begin":
 			next_state["coin_pusher_drop_charge_started_tick"] = int(charge_simulation.get("tick", 0))
 			next_state["coin_pusher_drop_charge_count"] = 1

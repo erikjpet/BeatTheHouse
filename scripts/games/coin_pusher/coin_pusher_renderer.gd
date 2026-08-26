@@ -569,7 +569,7 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	surface.surface_label_centered(drop_label, Rect2(538, 391, 76, 9), 8, colors["light"])
 	var drop_enabled := _binding_enabled(bindings, "coin_pusher_drop")
 	if drop_enabled:
-		surface.surface_add_drag_hit(slot_rect, "coin_pusher_drop_charge")
+		surface.surface_add_hold_hit(slot_rect, "coin_pusher_drop_charge")
 	var nudge_rect := Rect2(620, 352, 88, 48)
 	var nudge_enabled := _binding_enabled(bindings, "coin_pusher_nudge")
 	var nudge_hovered: bool = nudge_enabled and bool(surface.surface_region_hovered("coin_pusher_nudge"))

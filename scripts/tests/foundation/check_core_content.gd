@@ -310,6 +310,9 @@ class SurfaceHarness:
 	func surface_add_drag_hit(rect: Rect2, action: String, index: int = -1) -> void:
 		hit_regions.append({"rect": rect, "action": action, "index": index, "drag": true, "exact": true})
 
+	func surface_add_hold_hit(rect: Rect2, action: String, index: int = -1) -> void:
+		hit_regions.append({"rect": rect, "action": action, "index": index, "drag": true, "keyboard_hold": true, "exact": true})
+
 	func draw_rect(rect: Rect2, color: Color, filled: bool = true, width: float = -1.0, _antialiased: bool = false) -> void:
 		if record_draw_rects:
 			draw_rect_records.append({"rect": rect, "color": color, "filled": filled, "width": width})

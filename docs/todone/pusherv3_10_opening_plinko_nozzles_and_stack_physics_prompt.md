@@ -259,24 +259,27 @@ joining the pusher bed or resolving a variant-specific physical target.
   and tick. A `5X` event queues five visible bonus-origin children on the same
   stable nozzle id with parent/depth metadata, a depth cap of `3`, and a hard
   award cap of `60`; rail position is sampled at each six-tick emission.
-- **Tap/hold/nozzle controls:** The physical drop slot is a captured pointer
-  control: a tap reserves one coin, deterministic 180-tick/three-second hold
-  reserves 30, affordability truncates atomically, and FIFO releases remain
-  steerable during play. Static Ridge nozzles and Quarter/Vault rail nozzles are
-  authored data, selected visibly, and persisted with queued paid stock.
+- **Tap/hold/nozzle controls:** The physical drop slot uses the shared generic
+  captured-hold seam across mouse, touch, keyboard, and controller: a tap
+  reserves one coin, deterministic 180-tick/three-second hold reserves 30 at
+  30/60/120 FPS, affordability truncates atomically, and focus/visibility/pause
+  interruptions cancel without wagering. FIFO releases remain steerable during
+  play. Static Ridge nozzles and Quarter/Vault rail nozzles are authored data,
+  selected visibly, and persisted with queued paid stock.
 - **Stack correction and feedback:** Falling/settling upper coins have unilateral
   support response, so they resolve themselves without spreading one-, two-, or
   three-coin supports. Support anchors advect riders with the moving bed/shelf.
   The first support graph stores `bed_level_good` or `supported_bad` and produces
   exactly one positive ding or negative stack cue; persistent contact cannot
   replay either cue.
-- **Parity, performance, and visuals:** The focused production suite passes at
-  `.tmp/pusherv3_10_reachability.json`; the 300-body native solver is `4.207 ms`
-  p95 against its `12 ms` ceiling. Independent Windows native/Web reference
-  parity passes with payload
-  `17822461d5d650ef381678f414b19d4a143a3e48b68bab64cfb168b06f66a1bb`
-  at `.tmp/pusherv3_10_input_parity/manifest.json`. The actual-OpenGL normal/
-  reduced-motion capture manifest passes at
+- **Parity, performance, and visuals:** The focused production suite and the
+  permanent four-input/interruption guard pass at
+  `.tmp/test_reports/pusherv3_10_resume_input_perf_2/foundation_coin_pusher_retry5.json`;
+  the 300-body native solver is `4.007 ms` p95 against its `12 ms` ceiling.
+  Independent Windows native/Web reference parity passes again at
+  `.tmp/pusherv3_10_followup_parity/manifest.json` with payload
+  `17822461d5d650ef381678f414b19d4a143a3e48b68bab64cfb168b06f66a1bb`.
+  The actual-OpenGL normal/reduced-motion capture manifest passes at
   `review_artifacts/coin_pusher_pusherv3_10_20260825/manifest.json`.
 - **Economy accounting:** The last complete persistent audit remains the
   `pusherv3_9` 200,000-paid-drop-per-machine baseline (`0.890210/0.926025/

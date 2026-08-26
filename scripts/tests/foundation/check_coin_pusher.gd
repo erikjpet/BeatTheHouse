@@ -3,6 +3,7 @@ extends SceneTree
 const PUSHER_V3_PERF_TICKS := 24
 const JackpotRidgeVariationScript := preload("res://scripts/games/coin_pusher/jackpot_ridge.gd")
 const VaultDropVariationScript := preload("res://scripts/games/coin_pusher/vault_drop.gd")
+const PusherGameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 
 
 func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> void:
@@ -13,6 +14,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	var machine_definition: Dictionary = game_definition.get("coin_pusher_machine", {}) if typeof(game_definition.get("coin_pusher_machine", {})) == TYPE_DICTIONARY else {}
 	_check_pusher_v3_machine_data(machine_definition, failures)
 	_check_pusher_v3_10_idle_queue_cups_and_stack(library, game_definition, machine_definition, failures)
+	_check_pusher_v3_10_hold_inputs(library, game_definition, failures)
 	_check_pusher_v3_coin_scale_lower_bed_and_edge_ramp(machine_definition, failures)
 	_check_pusher_v3_played_in_opening_state(library, game_definition, failures)
 	_check_pusher_v3_plinko_bounce_and_variance(machine_definition, failures)
@@ -128,6 +130,102 @@ func _check_pusher_v3_10_idle_queue_cups_and_stack(library: ContentLibrary, game
 	var audio_events: Array = game.call("_presentation_audio_events", chain_machine, [{"kind": "impact", "first_support": true, "landing_quality": "bed_level_good"}, {"kind": "impact", "first_support": true, "landing_quality": "supported_bad"}])
 	if audio_events.filter(func(event): return str((event as Dictionary).get("kind", "")) == "good_drop").size() != 1 or audio_events.filter(func(event): return str((event as Dictionary).get("kind", "")) == "bad_drop").size() != 1:
 		failures.append("pusherv3_10 good/bad landing feedback was not classified exactly once.")
+
+
+func _check_pusher_v3_10_hold_inputs(library: ContentLibrary, game_definition: Dictionary, failures: Array) -> void:
+	# The shared canvas must expose the same captured begin/end lifecycle for
+	# mouse, touch, keyboard, and controller. It remains game-agnostic: only the
+	# renderer opts a region into confirm-action hold input.
+	var canvas: Control = PusherGameSurfaceCanvasScript.new()
+	canvas.size = Vector2(768, 432)
+	root.add_child(canvas)
+	var phases: Array = []
+	canvas.surface_pointer_action.connect(func(action: String, _index: int, phase: String, _position: Vector2) -> void:
+		if action == "fixture_hold":
+			phases.append(phase)
+	)
+	canvas.call("surface_add_hold_hit", Rect2(40, 40, 80, 60), "fixture_hold")
+	var mouse_press := InputEventMouseButton.new()
+	mouse_press.button_index = MOUSE_BUTTON_LEFT
+	mouse_press.pressed = true
+	mouse_press.position = Vector2(80, 70)
+	canvas.call("_gui_input", mouse_press)
+	var mouse_release := InputEventMouseButton.new()
+	mouse_release.button_index = MOUSE_BUTTON_LEFT
+	mouse_release.pressed = false
+	mouse_release.position = mouse_press.position
+	canvas.call("_gui_input", mouse_release)
+	canvas.set("last_mouse_press_msec", -100000)
+	var touch_press := InputEventScreenTouch.new()
+	touch_press.pressed = true
+	touch_press.position = mouse_press.position
+	canvas.call("_gui_input", touch_press)
+	var touch_release := InputEventScreenTouch.new()
+	touch_release.pressed = false
+	touch_release.position = mouse_press.position
+	canvas.call("_gui_input", touch_release)
+	var key_press := InputEventKey.new()
+	key_press.keycode = KEY_ENTER
+	key_press.pressed = true
+	canvas.call("_gui_input", key_press)
+	var key_release := InputEventKey.new()
+	key_release.keycode = KEY_ENTER
+	key_release.pressed = false
+	canvas.call("_gui_input", key_release)
+	var joy_press := InputEventJoypadButton.new()
+	joy_press.button_index = JOY_BUTTON_A
+	joy_press.pressed = true
+	canvas.call("_gui_input", joy_press)
+	var joy_release := InputEventJoypadButton.new()
+	joy_release.button_index = JOY_BUTTON_A
+	joy_release.pressed = false
+	canvas.call("_gui_input", joy_release)
+	canvas.call("_gui_input", key_press)
+	canvas.notification(Control.NOTIFICATION_FOCUS_EXIT)
+	canvas.call("_gui_input", key_release)
+	if phases != ["begin", "end", "begin", "end", "begin", "end", "begin", "end", "begin", "cancel"]:
+		failures.append("pusherv3_10 shared hold input did not preserve mouse/touch/keyboard/controller equivalence and focus-loss cancellation: %s." % JSON.stringify(phases))
+	canvas.queue_free()
+
+	var game: GameModule = load(str(game_definition.get("module_path", ""))).new()
+	game.setup(game_definition, library)
+	var run_state := RunState.new()
+	run_state.start_new("PUSHER-V3-10-HOLD", RunState.standard_challenge("PUSHER-V3-10-HOLD"))
+	run_state.bankroll = 1000
+	var environment := {"id": "pusher_v3_10_hold", "world_node_id": "pusher_v3_10_hold", "game_states": {}}
+	var generated: Dictionary = game.generate_environment_state(run_state, environment, _pusher_v3_rng("PUSHER-V3-10-HOLD-GENERATE"))
+	environment["game_states"] = {"coin_pusher": generated}
+	game.enter(run_state, environment)
+	var frame_rates := [30, 60, 120]
+	for frame_rate in frame_rates:
+		var begin: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "begin", Vector2(576, 374), {}, run_state, environment)
+		var live_map: Dictionary = game.get("_live_machines")
+		var live: Dictionary = live_map.values()[0] if not live_map.is_empty() else {}
+		var simulation: Dictionary = live.get("simulation", {}) if typeof(live.get("simulation", {})) == TYPE_DICTIONARY else {}
+		simulation["tick"] = int(simulation.get("tick", 0)) + 180
+		var ending: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "end", Vector2(576, 374), begin.get("ui_state", {}), run_state, environment)
+		if not bool(ending.get("direct_resolve", false)) or str(ending.get("action_id", "")) != "drop_quarter" or int(ending.get("set_stake", 0)) != 30:
+			failures.append("pusherv3_10 three-second hold was not exactly 30 coins at the %d FPS presentation rate: %s." % [frame_rate, JSON.stringify(ending)])
+			break
+	var tap_begin: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "begin", Vector2(576, 374), {}, run_state, environment)
+	var tap_end: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "end", Vector2(576, 374), tap_begin.get("ui_state", {}), run_state, environment)
+	if int(tap_end.get("set_stake", 0)) != 1:
+		failures.append("pusherv3_10 tap did not reserve exactly one coin.")
+	run_state.bankroll = 7
+	var limited_begin: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "begin", Vector2(576, 374), {}, run_state, environment)
+	var limited_live_map: Dictionary = game.get("_live_machines")
+	var limited_live: Dictionary = limited_live_map.values()[0] if not limited_live_map.is_empty() else {}
+	var limited_simulation: Dictionary = limited_live.get("simulation", {}) if typeof(limited_live.get("simulation", {})) == TYPE_DICTIONARY else {}
+	limited_simulation["tick"] = int(limited_simulation.get("tick", 0)) + 180
+	var limited_end: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "end", Vector2(576, 374), limited_begin.get("ui_state", {}), run_state, environment)
+	if int(limited_end.get("set_stake", 0)) != 7:
+		failures.append("pusherv3_10 hold did not truncate atomically to seven affordable coins: %s." % JSON.stringify(limited_end))
+	run_state.bankroll = 1000
+	var cancel_begin: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "begin", Vector2(576, 374), {}, run_state, environment)
+	var cancelled: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "cancel", Vector2(576, 374), cancel_begin.get("ui_state", {}), run_state, environment)
+	var cancelled_ui: Dictionary = cancelled.get("ui_state", {}) if typeof(cancelled.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	if bool(cancelled.get("direct_resolve", false)) or cancelled_ui.has("coin_pusher_drop_charge_started_tick") or int(cancelled_ui.get("coin_pusher_drop_charge_count", -1)) != 0:
+		failures.append("pusherv3_10 interrupted hold committed a wager or retained stale charge state: %s." % JSON.stringify(cancelled))
 
 
 func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary, failures: Array) -> void:

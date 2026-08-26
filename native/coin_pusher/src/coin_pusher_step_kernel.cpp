@@ -924,20 +924,37 @@ struct Kernel {
     }
   }
   void advect_supported() {
+    bool has_supported_body = false;
+    for (const Body &q : b) {
+      if (!terminal(q) && q.support == "body" && !q.carried &&
+          q.has_support_anchor && !q.support_ids.is_empty()) {
+        has_supported_body = true;
+        break;
+      }
+    }
+    if (!has_supported_body)
+      return;
+    // Support IDs are durable snapshot data, but resolving every ID by
+    // rescanning the full body list turns carried stacks into O(n^2) work.
+    // Build one immutable lookup for this tick; body erasure has already
+    // finished and advect_supported does not change vector membership.
+    Dictionary body_index;
+    for (int index = 0; index < static_cast<int>(b.size()); ++index)
+      body_index[b[index].id] = index;
     for (Body &q : b) {
       if (terminal(q) || q.support != "body" || q.carried || !q.has_support_anchor || q.support_ids.is_empty())
         continue;
       int64_t cx = 0, cy = 0, count = 0;
       for (int id_index = 0; id_index < q.support_ids.size(); ++id_index) {
         String wanted = q.support_ids[id_index];
-        for (const Body &support : b) {
-          if (support.id != wanted || terminal(support))
-            continue;
-          cx += support.x;
-          cy += support.y;
-          ++count;
-          break;
-        }
+        if (!body_index.has(wanted))
+          continue;
+        const Body &support = b[int64_t(body_index[wanted])];
+        if (terminal(support))
+          continue;
+        cx += support.x;
+        cy += support.y;
+        ++count;
       }
       if (!count)
         continue;
