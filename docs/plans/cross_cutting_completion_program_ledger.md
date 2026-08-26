@@ -255,3 +255,14 @@ their own detailed handoffs and test evidence.
   That owner is static-only under HOST HOLD; the accepted pusher branch will not
   be amended, and final global acceptance waits for an independently accepted
   remediation merge plus a green exact-merged-head smoke gate.
+- 2026-08-26: Direct exact-head state inspection confirmed that no opt-in
+  settle-report key remains in production saves. The residual 57-golden delta
+  is the intended deterministic Coin Pusher snapshot after required physical
+  settlement. The coordinator authorized only a mechanically generated,
+  exact-seed refresh whose complete diff proves no change outside that physical
+  state; manual or broad rebaselining remains prohibited. The Systems duration
+  regression was separately traced to ten repeated Coin Pusher generations in
+  the activation guard. Test-local state reuse is permitted only while all 235
+  environment traversals, JSON round trips, 11-game catalog coverage, seven
+  isolated hooks and hostile fixtures remain intact. Both corrections require
+  a new exact-head independent review; EV remains unreleased.
