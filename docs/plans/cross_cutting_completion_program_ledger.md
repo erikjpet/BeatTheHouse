@@ -456,3 +456,14 @@ their own detailed handoffs and test evidence.
   FoundationMain edit was needed. Formal `env06_6` acceptance remains withheld
   because all three evidence-harness P1s remain open; depth resumed its
   coordinated nine-file tooling change under HOST/board HOLD.
+- 2026-08-26: Pusher UI-repair self-review completed on clean exact head
+  `4d8a789fafcb9e70039e873f6d0416c0917da25a`, one commit and three files from
+  accepted `e4a7be3f` (+49/-8, clean static validator and diff check). The
+  initial action-view snapshot now retains host-owned surface clocks and the
+  realtime host applies its module patch once before first render; the UI guard
+  requires the production press/hold `coin_pusher_drop_charge` region, rejects
+  the legacy direct-drop region, and proves equal entry clocks plus later
+  liveness/tick/phase advancement. Meta's FoundationMain hunk and Scratch's
+  action-view practice-stock hunk were audited as line- and behavior-disjoint.
+  Independent exact-head review is in progress. No runtime rerun or EV is
+  permitted before its verdict.
