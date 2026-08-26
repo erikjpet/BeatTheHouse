@@ -1,6 +1,7 @@
 extends RefCounted
 
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const SequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
@@ -9,9 +10,13 @@ const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_ex
 const ScenarioPresentationContractScript := preload("res://scripts/tests/foundation/scenario_presentation_contract.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
+const DELIVERY_SCENARIO_ID := "corner_store_delivery_day"
+const DELIVERY_NODE_ID := "corner_store_delivery_day_node"
+const DELIVERY_EVENT_ID := "scenario_delivery_day_stock"
+const DELIVERY_RESOLUTION_ID := "delivery_day_stock_resolution"
 
 
-static func check(_library: ContentLibrary, failures: Array) -> void:
+static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_schema(failures)
 	_check_registered_operations(failures)
 	_check_interaction_identity(failures)
@@ -30,6 +35,7 @@ static func check(_library: ContentLibrary, failures: Array) -> void:
 	_check_definition_validation_receipt(failures)
 	_check_suppressed_sequence_compatibility(failures)
 	_check_transition_and_event_delivery(failures)
+	_check_delivery_day_production_package(library, failures)
 	_check_material_projection(failures)
 	ScenarioPresentationContractScript.check(failures)
 
@@ -770,11 +776,11 @@ static func _check_save_service_phase_matrix(failures: Array) -> void:
 				if not bool(replay.get("replayed", false)) or JSON.stringify(replay.get("state", {})) != JSON.stringify(restored): failures.append("Save/load duplicated refused branch consequences.")
 
 
-static func _save_service_round_trip_state(state: Dictionary, definition: Dictionary, label: String, failures: Array) -> Dictionary:
+static func _save_service_round_trip_state(state: Dictionary, definition: Dictionary, label: String, failures: Array, archetype_id: String = "bar", node_id: String = "bar_node") -> Dictionary:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("ENV06-6-SAVE-%s" % label, RunState.custom_challenge("env06_6_%s" % label, "ENV06-6-SAVE-%s" % label, {"fixture": true}))
 	run_state.current_environment = {
-		"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node",
+		"id": "%s_001" % archetype_id, "archetype_id": archetype_id, "world_node_id": node_id,
 		"scenario_state": ScenarioEngineScript.initial_state(definition),
 		"scenario_sequence_definition": definition.duplicate(true),
 		"scenario_sequence_state": state.duplicate(true),
@@ -1151,6 +1157,283 @@ static func _check_transition_and_event_delivery(failures: Array) -> void:
 	var mismatched_result := SequenceRuntimeScript.flush_facts(_dict(mismatched_queued.get("state", {})), bridged_definition, 1)
 	if bool(mismatched_result.get("ok", true)) or not _contains_text(_array(mismatched_result.get("errors", [])), "does not match"):
 		failures.append("Scenario event bridge accepted an unmatched event-result correlation.")
+
+
+static func _check_delivery_day_production_package(library: ContentLibrary, failures: Array) -> void:
+	var raw_package: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/environments/scenario_sequences/env06_7_shops_streets.json"))
+	if typeof(raw_package) != TYPE_DICTIONARY or int(_dict(raw_package).get("schema_version", 0)) != 1 or _dict(raw_package).keys() != ["schema_version", "package_id", "handler_pack", "renderer_id", "scenarios"]:
+		failures.append("Delivery-day JSON is not the exact schema-v1 object envelope.")
+		return
+	var catalog := SequenceCatalogScript.load_catalog()
+	var definition := library.scenario(DELIVERY_SCENARIO_ID)
+	var packages := _array(catalog.get("packages", []))
+	if not bool(catalog.get("ok", false)) or _array(catalog.get("files", [])) != ["env06_7_shops_streets.json"] or packages.size() != 1:
+		failures.append("Delivery-day proof did not load as one committed object package: %s" % JSON.stringify(catalog))
+		return
+	var package := _dict(packages[0])
+	if str(package.get("package_id", "")) != "env06_7_shops_streets" or str(package.get("handler_pack", "")) != "shops_streets" or str(package.get("renderer_id", "")) != "shops_streets" or _array(package.get("scenario_ids", [])) != [DELIVERY_SCENARIO_ID]:
+		failures.append("Delivery-day package envelope/extension identity changed: %s" % JSON.stringify(package))
+	if definition.is_empty() or str(definition.get("sequence_package_id", "")) != "env06_7_shops_streets" or str(definition.get("sequence_handler_pack", "")) != "shops_streets" or str(definition.get("sequence_renderer_id", "")) != "shops_streets":
+		failures.append("ContentLibrary did not apply the committed delivery-day package exactly.")
+		return
+	var definition_errors := SequenceSchemaScript.validate_definition(definition, OperationRegistryScript)
+	if not definition_errors.is_empty():
+		failures.append("Committed delivery-day definition failed schema/registry validation: %s" % JSON.stringify(definition_errors))
+		return
+	var sequence := SequenceSchemaScript.sequence(definition)
+	if SequenceSchemaScript.phase_ids(definition) != ["arrival", "sorting", "verification", "awaiting_stock", "resolution"]:
+		failures.append("Committed delivery-day phase graph identity/order changed.")
+	var authoring := _dict(definition.get("sequence_authoring", {}))
+	var references := _dict(authoring.get("references", {}))
+	if _array(references.get("events", [])) != [DELIVERY_EVENT_ID] \
+		or _array(references.get("services", [])) != ["cashier_tip"] \
+		or _array(references.get("items", [])) != ["delivery_twine"] \
+		or _array(references.get("actors", [])) != ["ada_corner_merchant", "priya_travel_merchant"] \
+		or _array(references.get("objects", [])) != ["event::event:scenario_delivery_day_stock", "service::shopkeeper:merchant", "service::service:cashier_tip", "base::travel:leave"]:
+		failures.append("Committed delivery-day external references changed: %s" % JSON.stringify(references))
+	var receipts := _delivery_receipts(sequence)
+	for receipt_id in ["arrival_gate_host_delivery_event", "awaiting_stock_keep_host_delivery_event_gated", "resolution_close_host_delivery_event", "cleanup_install_terminal_delivery_event_gate", "aftermath_repaired_remove_terminal_event_gate", "aftermath_broken_remove_terminal_event_gate"]:
+		if not receipts.has(receipt_id):
+			failures.append("Committed delivery-day receipt is missing: %s." % receipt_id)
+	if _array(authoring.get("capture_ids", [])).is_empty() or _dict(authoring.get("seed_evidence", {})).is_empty() or not _array(_dict(authoring.get("seed_evidence", {})).get("base_event_gate_cases", [])).has("drained_request_activates_event"):
+		failures.append("Committed delivery-day capture/seed evidence is incomplete or still claims pre-drain event authority.")
+
+	var arrival := SequenceRuntimeScript.initial_state(definition, DELIVERY_NODE_ID, "delivery_day_production")
+	var sorting_result := SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("inspect_manifest", DELIVERY_NODE_ID, "arrival", "delivery:inspect", {}, "scenario", "delivery_event_gate"), {})
+	var sorting := _dict(sorting_result.get("state", {}))
+	var verification_result := SequenceRuntimeScript.apply_command(sorting, definition, SequenceRuntimeScript.command("shift_cartons", DELIVERY_NODE_ID, "sorting", "delivery:shift", {}, "scenario", "delivery_cartons"), {})
+	var verification := _dict(verification_result.get("state", {}))
+	if not bool(sorting_result.get("ok", false)) or str(sorting.get("phase_id", "")) != "sorting" or not bool(verification_result.get("ok", false)) or str(verification.get("phase_id", "")) != "verification":
+		failures.append("Committed delivery-day inspect/shift objective path did not reach verification.")
+		return
+	var hostile_sorting := SequenceRuntimeScript._enter_phase(arrival, definition, "sorting", "hostile_precondition", false)
+	var hostile_commands := [
+		{"label": "wrong owner", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("inspect_manifest", DELIVERY_NODE_ID, "arrival", "delivery:hostile:owner", {}, "event", "delivery_event_gate"), {})},
+		{"label": "wrong object", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("inspect_manifest", DELIVERY_NODE_ID, "arrival", "delivery:hostile:object", {}, "scenario", "wrong_manifest"), {})},
+		{"label": "wrong phase", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("inspect_manifest", DELIVERY_NODE_ID, "sorting", "delivery:hostile:phase", {}, "scenario", "delivery_event_gate"), {})},
+		{"label": "unknown command", "result": SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("invent_delivery", DELIVERY_NODE_ID, "arrival", "delivery:hostile:unknown", {}, "scenario", "delivery_event_gate"), {})},
+		{"label": "missing objective precondition", "result": SequenceRuntimeScript.apply_command(hostile_sorting, definition, SequenceRuntimeScript.command("shift_cartons", DELIVERY_NODE_ID, "sorting", "delivery:hostile:precondition", {}, "scenario", "delivery_cartons"), {})},
+	]
+	for hostile_command_value in hostile_commands:
+		var hostile_command := _dict(hostile_command_value)
+		var hostile_result := _dict(hostile_command.get("result", {}))
+		if bool(hostile_result.get("ok", true)) or _array(hostile_result.get("errors", [])).is_empty():
+			failures.append("Committed delivery-day package accepted hostile command class: %s." % str(hostile_command.get("label", "")))
+	var inspect_replay := SequenceRuntimeScript.apply_command(sorting, definition, SequenceRuntimeScript.command("inspect_manifest", DELIVERY_NODE_ID, "arrival", "delivery:inspect", {}, "scenario", "delivery_event_gate"), {})
+	var inspect_conflict := SequenceRuntimeScript.apply_command(sorting, definition, SequenceRuntimeScript.command("ignore_delivery", DELIVERY_NODE_ID, "sorting", "delivery:inspect", {}, "scenario", "delivery_exit"), {})
+	if not bool(inspect_replay.get("ok", false)) or not bool(inspect_replay.get("replayed", false)) or JSON.stringify(inspect_replay.get("state", {})) != JSON.stringify(sorting) or bool(inspect_conflict.get("ok", true)) or not _contains_text(_array(inspect_conflict.get("errors", [])), "reused"):
+		failures.append("Committed delivery-day command idempotency/reuse contract changed.")
+	for phase_state_value in [arrival, sorting, verification]:
+		var phase_state := _dict(phase_state_value)
+		var event_record := _delivery_event_record(phase_state)
+		if event_record.is_empty() or bool(event_record.get("enabled", true)):
+			failures.append("Base delivery event was not gated during %s." % str(phase_state.get("phase_id", "")))
+		if not _array(phase_state.get("event_request_queue", [])).is_empty() or not _array(phase_state.get("event_request_history", [])).is_empty() or not _array(phase_state.get("fact_queue", [])).is_empty():
+			failures.append("A pre-authority delivery event click/result changed request or fact queues during %s." % str(phase_state.get("phase_id", "")))
+
+	var early_fact := SequenceRuntimeScript.fact("event_result", "event", DELIVERY_NODE_ID, "delivery:event:shared", 17, 1, {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": true, "ok": true})
+	var early_queued := SequenceRuntimeScript.enqueue_fact(arrival, definition, early_fact)
+	var early_rejected := SequenceRuntimeScript.flush_facts(_dict(early_queued.get("state", {})), definition, 1)
+	var early_rejected_state := _dict(early_rejected.get("state", {}))
+	if bool(early_rejected.get("ok", true)) or not _contains_text(_array(early_rejected.get("errors", [])), "delivered event request") or str(early_rejected_state.get("phase_id", "")) != "arrival" or not _array(early_rejected_state.get("fact_queue", [])).is_empty() or not _array(early_rejected_state.get("fact_receipts", [])).is_empty() or int(early_rejected_state.get("last_flushed_fact_serial", -1)) != int(arrival.get("last_flushed_fact_serial", -2)):
+		failures.append("Pre-authority correlated event result advanced state or consumed fact/producer authority.")
+
+	var request_result := SequenceRuntimeScript.apply_command(verification, definition, SequenceRuntimeScript.command("request_stock_check", DELIVERY_NODE_ID, "verification", "delivery:request", {}, "scenario", "sorting_shelf"), {})
+	var before_drain := _dict(request_result.get("state", {}))
+	if not bool(request_result.get("ok", false)) or str(before_drain.get("phase_id", "")) != "awaiting_stock" or _array(before_drain.get("event_request_queue", [])).size() != 1 or not _array(before_drain.get("event_request_history", [])).is_empty() or bool(_delivery_event_record(before_drain).get("enabled", true)):
+		failures.append("Delivery request did not queue once while keeping the base event gated before drain.")
+	var request_replay := SequenceRuntimeScript.apply_command(before_drain, definition, SequenceRuntimeScript.command("request_stock_check", DELIVERY_NODE_ID, "verification", "delivery:request", {}, "scenario", "sorting_shelf"), {})
+	if not bool(request_replay.get("ok", false)) or not bool(request_replay.get("replayed", false)) or JSON.stringify(request_replay.get("state", {})) != JSON.stringify(before_drain) or _array(_dict(request_replay.get("state", {})).get("event_request_queue", [])).size() != 1:
+		failures.append("Delivery request replay duplicated or changed the queued event request.")
+	var drained := SequenceRuntimeScript.drain_event_requests(before_drain, definition)
+	var delivered := _dict(drained.get("state", {}))
+	var requests := _array(drained.get("requests", []))
+	var delivered_request := _dict(requests[0] if requests.size() == 1 else {})
+	if not bool(drained.get("ok", false)) or requests.size() != 1 or str(delivered_request.get("event_id", "")) != DELIVERY_EVENT_ID or str(delivered_request.get("resolution_id", "")) != DELIVERY_RESOLUTION_ID or _array(delivered.get("event_request_history", [])).size() != 1 or not _array(delivered.get("event_request_queue", [])).is_empty() or bool(_delivery_event_record(delivered).get("enabled", true)):
+		failures.append("Delivery bridge did not emit/history the exact request while retaining the host gate.")
+	var early_recovery_sorting := _dict(SequenceRuntimeScript.apply_command(early_rejected_state, definition, SequenceRuntimeScript.command("inspect_manifest", DELIVERY_NODE_ID, "arrival", "delivery:recover:inspect", {}, "scenario", "delivery_event_gate"), {}).get("state", {}))
+	var early_recovery_verification := _dict(SequenceRuntimeScript.apply_command(early_recovery_sorting, definition, SequenceRuntimeScript.command("shift_cartons", DELIVERY_NODE_ID, "sorting", "delivery:recover:shift", {}, "scenario", "delivery_cartons"), {}).get("state", {}))
+	var early_recovery_before_drain := _dict(SequenceRuntimeScript.apply_command(early_recovery_verification, definition, SequenceRuntimeScript.command("request_stock_check", DELIVERY_NODE_ID, "verification", "delivery:recover:request", {}, "scenario", "sorting_shelf"), {}).get("state", {}))
+	var early_recovery_delivered := _dict(SequenceRuntimeScript.drain_event_requests(early_recovery_before_drain, definition).get("state", {}))
+	var drain_replay := SequenceRuntimeScript.drain_event_requests(delivered, definition)
+	if not _array(drain_replay.get("requests", [])).is_empty() or JSON.stringify(drain_replay.get("state", {})) != JSON.stringify(delivered):
+		failures.append("Delivery bridge request drain was not exactly-once/idempotent.")
+	var ui_source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	var consume_start := ui_source.find("func _consume_scenario_event_requests()")
+	var consume_end := ui_source.find("\nfunc ", consume_start + 1)
+	var consumer := ui_source.substr(consume_start, consume_end - consume_start) if consume_start >= 0 and consume_end > consume_start else ""
+	if consumer.find("scenario_drain_event_requests()") < 0 or consumer.find("_activate_event_object(event_id)") < consumer.find("scenario_drain_event_requests()"):
+		failures.append("Production UI no longer drains the scenario request before activating its event object.")
+
+	for hostile_value in [
+		{"label": "unresolved", "payload": {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": false, "ok": true}},
+		{"label": "failed", "payload": {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": true, "ok": false}},
+		{"label": "wrong_event_same_choice", "payload": {"event_id": "unrelated_delivery_event", "choice_id": "clear_the_aisle", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": true, "ok": true}},
+		{"label": "missing_resolution", "payload": {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": "", "resolved": true, "ok": true}},
+		{"label": "wrong_resolution", "payload": {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": "wrong_delivery_resolution", "resolved": true, "ok": true}},
+	]:
+		var hostile := _dict(hostile_value)
+		var hostile_fact := SequenceRuntimeScript.fact("event_result", "event", DELIVERY_NODE_ID, "delivery:event:hostile_shared", 18, 1, _dict(hostile.get("payload", {})))
+		var hostile_queued := SequenceRuntimeScript.enqueue_fact(delivered, definition, hostile_fact)
+		var hostile_result := SequenceRuntimeScript.flush_facts(_dict(hostile_queued.get("state", {})), definition, 1)
+		var hostile_state := _dict(hostile_result.get("state", {}))
+		if bool(hostile_result.get("ok", true)) or str(hostile_state.get("phase_id", "")) != "awaiting_stock" or not _array(hostile_state.get("fact_queue", [])).is_empty() or not _array(hostile_state.get("fact_receipts", [])).is_empty() or int(hostile_state.get("last_flushed_fact_serial", -1)) != int(delivered.get("last_flushed_fact_serial", -2)):
+			failures.append("Delivery %s event result poisoned or advanced the authoritative state." % str(hostile.get("label", "")))
+		var corrected_fact := SequenceRuntimeScript.fact("event_result", "event", DELIVERY_NODE_ID, "delivery:event:hostile_shared", 18, 1, {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": true, "ok": true})
+		var corrected_queued := SequenceRuntimeScript.enqueue_fact(hostile_state, definition, corrected_fact)
+		var corrected_result := SequenceRuntimeScript.flush_facts(_dict(corrected_queued.get("state", {})), definition, 1)
+		if not bool(corrected_result.get("ok", false)) or _array(_dict(corrected_result.get("state", {})).get("resolved_outcomes", [])) != ["repaired"]:
+			failures.append("Delivery %s rejection could not recover with corrected same-id content from its returned state." % str(hostile.get("label", "")))
+	var poison_fact := SequenceRuntimeScript.fact("event_result", "event", DELIVERY_NODE_ID, "delivery:event:poison", 22, 1, {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": "wrong_delivery_resolution", "resolved": true, "ok": true})
+	var future_sweep_fact := SequenceRuntimeScript.fact("sweep_changed", "sweep", DELIVERY_NODE_ID, "delivery:sweep:future", 23, 5, {"action_index": 5, "node_id": DELIVERY_NODE_ID, "segment_index": 1, "active": true})
+	var poison_queued := SequenceRuntimeScript.enqueue_fact(delivered, definition, poison_fact)
+	var future_queued := SequenceRuntimeScript.enqueue_fact(_dict(poison_queued.get("state", {})), definition, future_sweep_fact)
+	var poison_rejected := SequenceRuntimeScript.flush_facts(_dict(future_queued.get("state", {})), definition, 1)
+	var retained_after_rejection := _array(_dict(poison_rejected.get("state", {})).get("fact_queue", []))
+	if bool(poison_rejected.get("ok", true)) or retained_after_rejection.size() != 1 or str(_dict(retained_after_rejection[0] if retained_after_rejection.size() == 1 else {}).get("fact_id", "")) != "delivery:sweep:future":
+		failures.append("Rejected delivery fact did not preserve the other queued future fact exactly.")
+	var retained_flush := SequenceRuntimeScript.flush_facts(_dict(poison_rejected.get("state", {})), definition, 5)
+	var retained_flushed_state := _dict(retained_flush.get("state", {}))
+	if not bool(retained_flush.get("ok", false)) or _array(retained_flush.get("processed", [])) != ["delivery:sweep:future"] or not _array(retained_flushed_state.get("fact_queue", [])).is_empty() or _array(retained_flushed_state.get("fact_receipts", [])) != ["delivery:sweep:future"] or _dict(retained_flushed_state.get("fact_fingerprints", {})).has("delivery:event:poison"):
+		failures.append("The preserved future fact did not flush once without reviving the rejected poison identity.")
+
+	var correlated_after_rejection := SequenceRuntimeScript.enqueue_fact(early_recovery_delivered, definition, early_fact)
+	var repaired_result := SequenceRuntimeScript.flush_facts(_dict(correlated_after_rejection.get("state", {})), definition, 1)
+	var repaired := _dict(repaired_result.get("state", {}))
+	if not bool(repaired_result.get("ok", false)) or str(repaired.get("status", "")) != SequenceRuntimeScript.STATUS_AFTERMATH or _array(repaired.get("resolved_outcomes", [])) != ["repaired"] or not _array(repaired.get("fact_receipts", [])).has("delivery:event:shared"):
+		failures.append("The exact correlated fact did not succeed after the discarded pre-authority rejection transaction.")
+	var repaired_replay := SequenceRuntimeScript.enqueue_fact(repaired, definition, early_fact)
+	if not bool(repaired_replay.get("ok", false)) or not bool(repaired_replay.get("duplicate", false)) or JSON.stringify(repaired_replay.get("state", {})) != JSON.stringify(repaired):
+		failures.append("Committed delivery-day correlated result replay duplicated a consequence.")
+	var broken_fact := SequenceRuntimeScript.fact("event_result", "event", DELIVERY_NODE_ID, "delivery:event:broken", 19, 1, {"event_id": DELIVERY_EVENT_ID, "choice_id": "take_the_deal", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": true, "ok": true})
+	var broken_queued := SequenceRuntimeScript.enqueue_fact(delivered, definition, broken_fact)
+	var broken := _dict(SequenceRuntimeScript.flush_facts(_dict(broken_queued.get("state", {})), definition, 1).get("state", {}))
+	var refused := _dict(SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("refuse_sort", DELIVERY_NODE_ID, "arrival", "delivery:refuse", {}, "scenario", "delivery_exit"), {}).get("state", {}))
+	var interrupted := _dict(SequenceRuntimeScript.apply_command(arrival, definition, SequenceRuntimeScript.command("ignore_delivery", DELIVERY_NODE_ID, "arrival", "delivery:ignore", {}, "scenario", "delivery_exit"), {}).get("state", {}))
+	var expired_result := SequenceRuntimeScript.apply_expiry(arrival, definition, "night_end", 1)
+	var expired := _dict(expired_result.get("state", {}))
+	var terminals := {"repaired": repaired, "broken": broken, "refused": refused, "interrupted": interrupted}
+	var material_expectations := {
+		"repaired": {"scene": "stocked_rack", "actor": "delivery_clerk", "service_enabled": true, "route": "jazz_club", "route_enabled": true},
+		"broken": {"scene": "torn_carton", "actor": "", "service_enabled": false, "route": "bar", "route_enabled": false},
+		"refused": {"scene": "sealed_pallet", "actor": "delivery_clerk", "service_enabled": false, "route": "pawn_shop", "route_enabled": false},
+		"interrupted": {"scene": "abandoned_manifest", "actor": "", "service_enabled": true, "route": "gas_station_casino", "route_enabled": false},
+	}
+	for outcome_value in terminals.keys():
+		var outcome := str(outcome_value)
+		var terminal := _dict(terminals.get(outcome_value, {}))
+		if str(terminal.get("status", "")) != SequenceRuntimeScript.STATUS_AFTERMATH or _array(terminal.get("resolved_outcomes", [])) != [outcome] or not _array(terminal.get("event_request_queue", [])).is_empty():
+			failures.append("Delivery-day %s outcome did not terminate without a legacy event request." % outcome)
+		var terminal_fact := SequenceRuntimeScript.fact("event_result", "event", DELIVERY_NODE_ID, "delivery:event:terminal:%s" % outcome, 20, 2, {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": true, "ok": true})
+		var terminal_ingress := SequenceRuntimeScript.enqueue_fact(terminal, definition, terminal_fact)
+		var terminal_drain := SequenceRuntimeScript.drain_event_requests(terminal, definition)
+		if bool(terminal_ingress.get("ok", true)) or not _array(terminal_drain.get("requests", [])).is_empty():
+			failures.append("Delivery-day %s terminal state accepted a legacy result/request consequence." % outcome)
+		var has_terminal_gate := _has_delivery_overlay(terminal, "delivery_event_terminal_gate")
+		if outcome in ["repaired", "broken"] and has_terminal_gate:
+			failures.append("Legitimately resolved delivery outcome %s retained the terminal event overlay." % outcome)
+		elif outcome in ["refused", "interrupted"] and not has_terminal_gate:
+			failures.append("Delivery outcome %s lost durable unresolved-event suppression." % outcome)
+		_check_delivery_material_state(outcome, terminal, _dict(material_expectations.get(outcome, {})), failures)
+		var reentry := SequenceRuntimeScript.apply_reentry(terminal, definition, "delivery_terminal_%s" % outcome)
+		var reentered := _dict(reentry.get("state", {}))
+		var reentry_replay := SequenceRuntimeScript.apply_reentry(reentered, definition, "delivery_terminal_%s" % outcome)
+		if not bool(reentry.get("ok", false)) or not bool(reentry_replay.get("replayed", false)) or JSON.stringify(reentry_replay.get("state", {})) != JSON.stringify(reentered):
+			failures.append("Delivery-day %s terminal reentry was not idempotent." % outcome)
+	if not bool(expired_result.get("ok", false)) or str(expired.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or not _has_delivery_overlay(expired, "delivery_event_terminal_gate") or not _array(expired.get("resolved_outcomes", [])).is_empty() or not _array(expired.get("event_request_queue", [])).is_empty():
+		failures.append("Delivery-day ignore expiry did not clean with durable suppression and no legacy consequences.")
+	var expiry_replay := SequenceRuntimeScript.apply_expiry(expired, definition, "night_end", 1)
+	if not bool(expiry_replay.get("ok", false)) or JSON.stringify(expiry_replay.get("state", {})) != JSON.stringify(expired):
+		failures.append("Delivery-day expiry cleanup was not idempotent.")
+	var expired_ingress := SequenceRuntimeScript.enqueue_fact(expired, definition, SequenceRuntimeScript.fact("event_result", "event", DELIVERY_NODE_ID, "delivery:event:expired", 21, 2, {"event_id": DELIVERY_EVENT_ID, "choice_id": "clear_the_aisle", "resolution_id": DELIVERY_RESOLUTION_ID, "resolved": true, "ok": true}))
+	if bool(expired_ingress.get("ok", true)):
+		failures.append("Delivery-day expired state accepted a legacy event consequence.")
+
+	var coexistence_base := [
+		_delivery_base_event_record(),
+		_interaction_record("game", "game:blackjack", "Blackjack", true),
+		_interaction_record("service", "service:cashier_tip", "Cashier tip", true),
+		_interaction_record("traveler", "travel:leave", "Leave", true),
+		_interaction_record("sweep", "police:sweep", "Police sweep", true),
+	]
+	var composed := OperationRegistryScript.resolve_interactions(coexistence_base, _dict(_dict(delivered.get("semantic_state", {})).get("interactions", {})).values())
+	var composed_ids: Array = []
+	for record_value in _array(composed.get("records", [])):
+		composed_ids.append(OperationRegistryScript.identity_from(_dict(record_value)))
+	for identity in ["event::event:scenario_delivery_day_stock", "game::game:blackjack", "service::service:cashier_tip", "traveler::travel:leave", "sweep::police:sweep"]:
+		if not composed_ids.has(identity):
+			failures.append("Delivery-day composition overwrote coexisting interaction %s." % identity)
+
+	# Resolution is transaction-internal in production: accepted facts enter it
+	# and select an outcome in the same bounded graph evaluation. Enter it through
+	# the runtime's own phase transaction to prove its exact serialization shape.
+	var resolution_snapshot := SequenceRuntimeScript._enter_phase(delivered, definition, "resolution", "persistence_probe", false)
+	var checkpoints := {
+		"arrival": arrival, "sorting": sorting, "verification": verification,
+		"awaiting_before_request_drain": before_drain, "awaiting_after_request_drain": delivered,
+		"resolution_transaction": resolution_snapshot,
+		"outcome_repaired": repaired, "outcome_broken": broken,
+		"outcome_refused": refused, "outcome_interrupted": interrupted, "expired": expired,
+	}
+	for label_value in checkpoints.keys():
+		var label := str(label_value)
+		var expected := _dict(checkpoints.get(label_value, {}))
+		var restored := _save_service_round_trip_state(expected, definition, "delivery_%s" % label, failures, "corner_store", DELIVERY_NODE_ID)
+		if not restored.is_empty() and JSON.stringify(restored) != JSON.stringify(expected):
+			failures.append("SaveService changed exact committed delivery-day state at %s." % label)
+
+
+static func _delivery_base_event_record() -> Dictionary:
+	return _interaction_record("event", "event:scenario_delivery_day_stock", "Delivery stock", true)
+
+
+static func _delivery_event_record(state: Dictionary) -> Dictionary:
+	var resolved := OperationRegistryScript.resolve_interactions([_delivery_base_event_record()], _dict(_dict(state.get("semantic_state", {})).get("interactions", {})).values())
+	for record_value in _array(resolved.get("records", [])):
+		var record := _dict(record_value)
+		if OperationRegistryScript.identity_from(record) == "event::event:scenario_delivery_day_stock":
+			return record
+	return {}
+
+
+static func _has_delivery_overlay(state: Dictionary, stable_object_id: String) -> bool:
+	for operation_value in _dict(_dict(state.get("semantic_state", {})).get("interactions", {})).values():
+		if str(_dict(operation_value).get("owner_namespace", "")) == "scenario" and str(_dict(operation_value).get("stable_object_id", "")) == stable_object_id:
+			return true
+	return false
+
+
+static func _check_delivery_material_state(outcome: String, state: Dictionary, expected: Dictionary, failures: Array) -> void:
+	var semantic := _dict(state.get("semantic_state", {}))
+	var scene_key := "scenario::%s" % str(expected.get("scene", ""))
+	var actor_id := str(expected.get("actor", ""))
+	var actor_key := "scenario::%s" % actor_id
+	var service := _dict(_dict(semantic.get("services", {})).get("scenario::cashier_tip", {}))
+	var route_key := "scenario::%s" % str(expected.get("route", ""))
+	var route := _dict(_dict(semantic.get("routes", {})).get(route_key, {}))
+	if not _dict(semantic.get("scene_objects", {})).has(scene_key) \
+		or not actor_id.is_empty() and not _dict(semantic.get("actors", {})).has(actor_key) \
+		or actor_id.is_empty() and _dict(semantic.get("actors", {})).has("scenario::delivery_clerk") \
+		or service.is_empty() or bool(service.get("enabled", not bool(expected.get("service_enabled", false)))) != bool(expected.get("service_enabled", false)) \
+		or route.is_empty() or bool(route.get("enabled", not bool(expected.get("route_enabled", false)))) != bool(expected.get("route_enabled", false)):
+		failures.append("Delivery-day %s aftermath lost its exact scene/actor/service/route material state." % outcome)
+
+
+static func _delivery_receipts(sequence: Dictionary) -> Array:
+	var result: Array = []
+	for phase_value in _array(_dict(sequence.get("phase_graph", {})).get("phases", [])):
+		var phase := _dict(phase_value)
+		for family in ["scene_ops", "interaction_ops", "actor_ops", "transition_ops"]:
+			for operation_value in _array(phase.get(family, [])):
+				result.append(str(_dict(operation_value).get("receipt_id", "")))
+	for operation_value in _array(_dict(sequence.get("cleanup", {})).get("operations", [])):
+		result.append(str(_dict(operation_value).get("receipt_id", "")))
+	for aftermath_value in _dict(sequence.get("aftermath", {})).values():
+		var aftermath := _dict(aftermath_value)
+		for family in ["scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops", "route_ops"]:
+			for operation_value in _array(aftermath.get(family, [])):
+				result.append(str(_dict(operation_value).get("receipt_id", "")))
+	return result
 
 
 static func _check_material_projection(failures: Array) -> void:
