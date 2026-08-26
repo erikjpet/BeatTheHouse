@@ -861,3 +861,20 @@ their own detailed handoffs and test evidence.
   remain unchanged; acceptance timing may use only normal import-enabled runs.
   Pusher `30ee954d` remains semantically compatible but later integration must
   preserve its critical shard launch order and canonical result reconstruction.
+- 2026-08-26: Lifecycle remediation is clean at
+  `6b680ee113c42116cc0c3d7efbae1d16da96cfd8` after normal revert commits
+  `8fb64908` and `8e0c4f58` restored the accepted original composite topology.
+  Independent exact-head review issued `ACCEPT 6b680ee1` with no P0-P3. It
+  reproduced the canonical 35,084-line semantic hash
+  `52e0bc8635f52ab39019edef4995a77a4d6662e937158475f6430071d2702e45`,
+  exact 2,308,016-byte hash
+  `19b60e24a551f47a760e3b99f83d551084be051ca306c442398ec16104820f19`,
+  create/no-write/rewrite and hostile drift/failure behavior, exclusive guard
+  then single prepare then hard-gated import/load ordering, the same verified
+  accessor for ordinary Foundation and Systems, and unchanged sources,
+  registrations, baselines and multiplier. AST, hostile PowerShell contracts
+  and project validation pass; no runtime ran. Merge/runtime authorization is
+  still withheld until the author supplies the complete mandatory self-review
+  handoff omitted from its first final summary. Pusher `30ee954d` has a textual
+  overlap at the legacy runner setup; semantic integration must preserve this
+  verified accessor plus all pusher scheduling and canonical-result logic.
