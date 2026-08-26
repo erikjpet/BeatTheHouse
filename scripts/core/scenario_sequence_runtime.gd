@@ -73,24 +73,37 @@ static func initial_state(definition: Dictionary, node_id: String, seed_token: S
 		"objective_progress": _initial_objectives(definition),
 		"resolved_branches": [],
 		"resolved_outcomes": [],
-		"semantic_state": {},
+		"semantic_state": {"declared_targets": _dict(SequenceSchemaScript.sequence(definition).get("declared_targets", {}))},
 		"fact_queue": [],
 		"fact_receipts": [],
 		"command_receipts": [],
 		"command_results": {},
 		"command_fingerprints": {},
 		"transition_receipts": [],
+		"transition_receipt_records": [],
 		"cleanup_receipts": [],
+		"cleanup_receipt_records": [],
 		"visit_receipts": [],
+		"visit_receipt_records": [],
+		"expiry_progress": 0,
+		"expired": false,
 		"fact_fingerprints": {},
 		"last_feedback": "",
 		"performance_counters": {"transitions_prepared": 0, "facts_flushed": 0, "commands_applied": 0},
 	}
-	return _enter_phase(state, definition, str(state.get("phase_id", "")), "initial")
+	var entered := _enter_phase(state, definition, str(state.get("phase_id", "")), "initial", {"kind": "initial"})
+	if not bool(entered.get("ok", false)):
+		state["status"] = STATUS_CLEANED
+		state["errors"] = _array(entered.get("errors", []))
+		state["last_feedback"] = "This room sequence could not start safely."
+		return state
+	return _dict(entered.get("state", state))
 
 
 static func normalize_state(value: Variant, definition: Dictionary = {}) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	if not OperationRegistryScript.validate_bounded_variant("scenario runtime state", value).is_empty():
 		return {}
 	var source := value as Dictionary
 	if int(source.get("schema_version", 0)) != STATE_SCHEMA_VERSION or str(source.get("scenario_id", "")).strip_edges().is_empty():
@@ -110,21 +123,29 @@ static func normalize_state(value: Variant, definition: Dictionary = {}) -> Dict
 		"local_state": SequenceSchemaScript.normalize_local_state(definition, source.get("local_state", {})) if not definition.is_empty() else _dict(source.get("local_state", {})),
 		"objective_progress": _normalize_objective_progress(source.get("objective_progress", {})),
 		"resolved_branches": _bounded_strings(source.get("resolved_branches", []), MAX_RECEIPTS),
-		"resolved_outcomes": _string_array(source.get("resolved_outcomes", [])),
-		"semantic_state": _dict(source.get("semantic_state", {})),
+		"resolved_outcomes": _bounded_strings(source.get("resolved_outcomes", []), MAX_RECEIPTS),
+		"semantic_state": _dict(source.get("semantic_state", {})).duplicate(true),
 		"fact_queue": _fact_array(source.get("fact_queue", [])),
-		"fact_receipts": _string_array(source.get("fact_receipts", [])),
-		"command_receipts": _string_array(source.get("command_receipts", [])),
-		"command_results": _dict(source.get("command_results", {})),
-		"command_fingerprints": _dict(source.get("command_fingerprints", {})),
-		"transition_receipts": _string_array(source.get("transition_receipts", [])),
-		"cleanup_receipts": _string_array(source.get("cleanup_receipts", [])),
-		"visit_receipts": _string_array(source.get("visit_receipts", [])),
-		"fact_fingerprints": _dict(source.get("fact_fingerprints", {})),
+		"fact_receipts": _bounded_strings(source.get("fact_receipts", []), MAX_RECEIPTS),
+		"command_receipts": _bounded_strings(source.get("command_receipts", []), MAX_RECEIPTS),
+		"command_results": _dict(source.get("command_results", {})).duplicate(true),
+		"command_fingerprints": _dict(source.get("command_fingerprints", {})).duplicate(true),
+		"transition_receipts": _bounded_strings(source.get("transition_receipts", []), MAX_RECEIPTS),
+		"transition_receipt_records": _bounded_records(source.get("transition_receipt_records", []), MAX_RECEIPTS),
+		"cleanup_receipts": _bounded_strings(source.get("cleanup_receipts", []), MAX_RECEIPTS),
+		"cleanup_receipt_records": _bounded_records(source.get("cleanup_receipt_records", []), MAX_RECEIPTS),
+		"visit_receipts": _bounded_strings(source.get("visit_receipts", []), MAX_RECEIPTS),
+		"visit_receipt_records": _bounded_records(source.get("visit_receipt_records", []), MAX_RECEIPTS),
+		"expiry_progress": maxi(0, int(source.get("expiry_progress", 0))),
+		"expired": bool(source.get("expired", false)),
+		"fact_fingerprints": _dict(source.get("fact_fingerprints", {})).duplicate(true),
 		"last_feedback": str(source.get("last_feedback", "")),
 		"performance_counters": _normalize_counters(source.get("performance_counters", {})),
 	}
 	if not [STATUS_ACTIVE, STATUS_AFTERMATH, STATUS_CLEANED].has(str(state.get("status", ""))):
+		state["status"] = STATUS_CLEANED
+	var semantic := _dict(state.get("semantic_state", {}))
+	if _array(semantic.get("transition_queue", [])).size() > OperationRegistryScript.MAX_TRANSITION_QUEUE or _string_array(semantic.get("operation_receipts", [])).size() > OperationRegistryScript.MAX_OPERATION_RECEIPTS:
 		state["status"] = STATUS_CLEANED
 	if not definition.is_empty() and not SequenceSchemaScript.phase_ids(definition).has(str(state.get("phase_id", ""))) and str(state.get("status", "")) == STATUS_ACTIVE:
 		state["status"] = STATUS_CLEANED
@@ -140,12 +161,16 @@ static func command(command_id: String, node_id: String, phase_id: String, idemp
 		"idempotency_key": idempotency_key.strip_edges(),
 		"owner_namespace": owner_namespace.strip_edges(),
 		"stable_object_id": stable_object_id.strip_edges(),
-		"payload": payload.duplicate(true),
+		"payload": payload.duplicate(false),
 	}
 
 
 static func apply_command(state_value: Dictionary, definition: Dictionary, command_value: Dictionary, context: Dictionary = {}) -> Dictionary:
-	var state := normalize_state(state_value, definition)
+	var original := normalize_state(state_value, definition)
+	var state := original
+	var bounded_errors := OperationRegistryScript.validate_bounded_variant("scenario command", command_value)
+	if not bounded_errors.is_empty():
+		return {"ok": false, "errors": bounded_errors, "state": original, "replayed": false}
 	var receipt_id := str(command_value.get("idempotency_key", "")).strip_edges()
 	var command_fingerprint := _fingerprint(command_value)
 	if not receipt_id.is_empty() and _string_array(state.get("command_receipts", [])).has(receipt_id):
@@ -166,10 +191,13 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 	var handler_result := _apply_registered_handler(state, definition, command_value)
 	state = _dict(handler_result.get("state", state))
 	if not bool(handler_result.get("ok", false)):
-		return {"ok": false, "errors": _array(handler_result.get("errors", [])), "state": state, "replayed": false}
+		return {"ok": false, "errors": _array(handler_result.get("errors", [])), "state": original, "replayed": false}
 	state = _complete_command_objective_steps(state, definition, command_id)
 	var trigger := {"kind": "command", "command_id": command_id, "receipt_id": receipt_id, "payload": payload}
-	state = _evaluate_branches(state, definition, trigger)
+	var branch_result := _evaluate_branches(state, definition, trigger)
+	if not bool(branch_result.get("ok", false)):
+		return {"ok": false, "errors": _array(branch_result.get("errors", [])), "state": original, "replayed": false}
+	state = _dict(branch_result.get("state", state))
 	var receipts := _string_array(state.get("command_receipts", []))
 	receipts.append(receipt_id)
 	state["command_receipts"] = receipts
@@ -207,12 +235,15 @@ static func fact(fact_type: String, producer: String, node_id: String, fact_id: 
 		"fact_id": fact_id.strip_edges(),
 		"producer_serial": maxi(0, producer_serial),
 		"boundary_serial": maxi(0, boundary_serial),
-		"payload": payload.duplicate(true),
+		"payload": payload.duplicate(false),
 	}
 
 
 static func enqueue_fact(state_value: Dictionary, definition: Dictionary, fact_value: Dictionary) -> Dictionary:
 	var state := normalize_state(state_value, definition)
+	var bounded_errors := OperationRegistryScript.validate_bounded_variant("scenario fact", fact_value)
+	if not bounded_errors.is_empty():
+		return {"ok": false, "duplicate": false, "state": state, "errors": bounded_errors}
 	var errors := validate_fact(state, fact_value)
 	var fact_id := str(fact_value.get("fact_id", "")).strip_edges()
 	var fact_fingerprint := _fingerprint(fact_value)
@@ -272,7 +303,8 @@ static func validate_fact(state: Dictionary, fact_value: Dictionary) -> Array:
 
 
 static func flush_facts(state_value: Dictionary, definition: Dictionary, boundary_serial: int) -> Dictionary:
-	var state := normalize_state(state_value, definition)
+	var original := normalize_state(state_value, definition)
+	var state := original.duplicate(true)
 	if str(state.get("status", "")) == STATUS_CLEANED:
 		return {"ok": false, "state": state, "processed": [], "errors": ["scenario is cleaned"]}
 	var target_boundary := maxi(int(state.get("boundary_serial", 0)), boundary_serial)
@@ -293,10 +325,10 @@ static func flush_facts(state_value: Dictionary, definition: Dictionary, boundar
 		if _string_array(state.get("fact_receipts", [])).has(fact_id):
 			continue
 		var response := _apply_fact(state, definition, typed_fact)
-		state = _dict(response.get("state", state))
 		if not bool(response.get("ok", false)):
 			errors.append_array(_array(response.get("errors", [])))
-			continue
+			return {"ok": false, "state": original, "processed": [], "errors": errors}
+		state = _dict(response.get("state", state))
 		var receipts := _string_array(state.get("fact_receipts", []))
 		receipts.append(fact_id)
 		state["fact_receipts"] = receipts
@@ -313,6 +345,83 @@ static func flush_facts(state_value: Dictionary, definition: Dictionary, boundar
 	return {"ok": errors.is_empty(), "state": state, "processed": processed, "errors": errors}
 
 
+static func record_visit(state_value: Dictionary, definition: Dictionary, visit_id: String) -> Dictionary:
+	var state := normalize_state(state_value, definition)
+	var clean_visit_id := visit_id.strip_edges()
+	if not _valid_id(clean_visit_id):
+		return {"ok": false, "state": state, "errors": ["scenario visit requires a stable visit_id"]}
+	var receipt_key := _structural_receipt("visit", [str(state.get("scenario_id", "")), str(state.get("node_id", "")), clean_visit_id])
+	var receipts := _string_array(state.get("visit_receipts", []))
+	if receipts.has(receipt_key):
+		return {"ok": true, "state": state, "errors": [], "replayed": true}
+	if receipts.size() >= MAX_RECEIPTS:
+		return {"ok": false, "state": state, "errors": ["scenario visit lifetime receipt limit reached"]}
+	var next := state.duplicate(true)
+	receipts.append(receipt_key)
+	next["visit_receipts"] = receipts
+	var records := _array(next.get("visit_receipt_records", []))
+	records.append({"receipt_key": receipt_key, "visit_id": clean_visit_id})
+	next["visit_receipt_records"] = records
+	return {"ok": true, "state": next, "errors": [], "replayed": false}
+
+
+static func apply_reentry(state_value: Dictionary, definition: Dictionary, visit_id: String) -> Dictionary:
+	var original := normalize_state(state_value, definition)
+	var visit_result := record_visit(original, definition, visit_id)
+	if not bool(visit_result.get("ok", false)) or bool(visit_result.get("replayed", false)):
+		return visit_result
+	var state := _dict(visit_result.get("state", original))
+	var policy_key := "expired" if bool(state.get("expired", false)) else "terminal" if str(state.get("status", "")) in [STATUS_AFTERMATH, STATUS_CLEANED] else "partial"
+	var policy := str(_dict(SequenceSchemaScript.sequence(definition).get("reentry_policy", {})).get(policy_key, "resume"))
+	match policy:
+		"resume":
+			pass
+		"restart":
+			var restarted := initial_state(definition, str(state.get("node_id", "")), str(state.get("seed_token", "")))
+			if restarted.is_empty() or str(restarted.get("status", "")) == STATUS_CLEANED:
+				return {"ok": false, "state": original, "errors": ["scenario restart reentry failed"]}
+			restarted["visit_receipts"] = _array(state.get("visit_receipts", []))
+			restarted["visit_receipt_records"] = _array(state.get("visit_receipt_records", []))
+			state = restarted
+		"aftermath":
+			if _string_array(state.get("resolved_outcomes", [])).is_empty():
+				return {"ok": false, "state": original, "errors": ["scenario aftermath reentry requires a resolved outcome"]}
+			state["status"] = STATUS_AFTERMATH
+		"expired":
+			state["expired"] = true
+			state["status"] = STATUS_CLEANED
+		_:
+			return {"ok": false, "state": original, "errors": ["scenario reentry policy is invalid"]}
+	return {"ok": true, "state": state, "errors": [], "replayed": false, "policy": policy}
+
+
+static func apply_expiry_boundary(state_value: Dictionary, definition: Dictionary, boundary: String, amount: int = 1) -> Dictionary:
+	var original := normalize_state(state_value, definition)
+	var expiry := _dict(SequenceSchemaScript.sequence(definition).get("expiry", {}))
+	if str(expiry.get("boundary", "none")) == "none" or str(expiry.get("boundary", "")) != boundary:
+		return {"ok": true, "state": original, "errors": [], "expired": bool(original.get("expired", false))}
+	if bool(original.get("expired", false)):
+		return {"ok": true, "state": original, "errors": [], "expired": true, "replayed": true}
+	var next := original.duplicate(true)
+	next["expiry_progress"] = int(next.get("expiry_progress", 0)) + maxi(1, amount)
+	if int(next.get("expiry_progress", 0)) < maxi(1, int(expiry.get("after", 0))):
+		return {"ok": true, "state": next, "errors": [], "expired": false}
+	var policy := str(expiry.get("policy", "fail"))
+	next["expired"] = true
+	if policy == "resume":
+		return {"ok": true, "state": next, "errors": [], "expired": true, "policy": policy}
+	if policy == "ignore":
+		next = _set_objective_outcomes(next, definition, "ignore")
+		return {"ok": true, "state": next, "errors": [], "expired": true, "policy": policy}
+	var cleanup_result := _apply_cleanup(next, definition, "expiry:%s" % boundary)
+	if not bool(cleanup_result.get("ok", false)):
+		return {"ok": false, "state": original, "errors": _array(cleanup_result.get("errors", [])), "expired": false}
+	next = _dict(cleanup_result.get("state", next))
+	next["status"] = STATUS_CLEANED
+	next = _set_objective_outcomes(next, definition, "failure" if policy == "fail" else "cancel")
+	return {"ok": true, "state": next, "errors": [], "expired": true, "policy": policy}
+
+
 static func public_projection(state_value: Dictionary, definition: Dictionary = {}) -> Dictionary:
 	var state := normalize_state(state_value, definition)
 	if state.is_empty():
@@ -324,7 +433,7 @@ static func public_projection(state_value: Dictionary, definition: Dictionary = 
 		"status": str(state.get("status", "")),
 		"objectives": _public_objectives(state, definition),
 		"last_feedback": str(state.get("last_feedback", "")),
-		"semantic_state": _dict(state.get("semantic_state", {})),
+		"semantic_state": _dict(state.get("semantic_state", {})).duplicate(true),
 	}
 
 
@@ -350,7 +459,9 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 	if typeof(command_value.get("payload", {})) != TYPE_DICTIONARY:
 		errors.append("scenario command payload must be a dictionary")
 	var descriptor := _command_descriptor(state, definition, owner_namespace, stable_object_id, command_id)
-	if bool(descriptor.get("identity_present", false)):
+	if not bool(descriptor.get("identity_present", false)):
+		errors.append("scenario command addressed an absent interaction")
+	else:
 		if not bool(descriptor.get("interaction_enabled", false)):
 			errors.append("scenario command interaction is disabled")
 		elif not bool(descriptor.get("action_present", false)):
@@ -403,12 +514,15 @@ static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: 
 		"publish_feedback":
 			next["last_feedback"] = str(inputs.get("message", ""))
 		"request_cleanup":
-			next = _apply_cleanup(next, definition, str(inputs.get("reason", "requested")))
+			var cleanup_result := _apply_cleanup(next, definition, str(inputs.get("reason", "requested")))
+			if not bool(cleanup_result.get("ok", false)):
+				return cleanup_result
+			next = _dict(cleanup_result.get("state", next))
 			next["status"] = STATUS_CLEANED
 		"event_bridge":
 			# The bridge records correlation only. Event consequences remain owned by
 			# EventModule and arrive as a later typed event_result fact.
-			next["last_feedback"] = str(inputs.get("message", trigger.get("fact_type", "Event resolved.")))
+			next["last_feedback"] = "Event %s resolved as %s." % [str(inputs.get("event_id", "")), str(inputs.get("resolution_id", ""))]
 	return {"ok": true, "state": next}
 
 
@@ -439,13 +553,15 @@ static func _apply_fact(state: Dictionary, definition: Dictionary, fact_value: D
 	if fact_type == "world_boundary":
 		next["phase_action_counter"] = int(next.get("phase_action_counter", 0)) + maxi(1, int(payload.get("amount", 1)))
 	var trigger := {"kind": "fact", "fact_type": fact_type, "fact_id": str(fact_value.get("fact_id", "")), "payload": payload}
-	next = _evaluate_branches(next, definition, trigger)
-	return {"ok": true, "state": next}
+	var branch_result := _evaluate_branches(next, definition, trigger)
+	if not bool(branch_result.get("ok", false)):
+		return branch_result
+	return {"ok": true, "state": _dict(branch_result.get("state", next)), "errors": []}
 
 
 static func _evaluate_branches(state: Dictionary, definition: Dictionary, trigger: Dictionary) -> Dictionary:
 	if str(state.get("status", "")) != STATUS_ACTIVE:
-		return state
+		return {"ok": true, "state": state, "errors": []}
 	var current := SequenceSchemaScript.phase(definition, str(state.get("phase_id", "")))
 	for branch_value in _array(current.get("branches", [])):
 		var branch := _dict(branch_value)
@@ -455,21 +571,22 @@ static func _evaluate_branches(state: Dictionary, definition: Dictionary, trigge
 		var resolved := _string_array(state.get("resolved_branches", []))
 		if resolved.has(branch_id):
 			continue
+		var next := state.duplicate(true)
 		resolved.append(branch_id)
-		state["resolved_branches"] = resolved
+		next["resolved_branches"] = resolved
 		var target := str(branch.get("next_phase", "")).strip_edges()
 		if not target.is_empty():
-			return _enter_phase(state, definition, target, branch_id)
+			return _enter_phase(next, definition, target, branch_id, trigger)
 		var outcome := str(branch.get("outcome", "")).strip_edges()
-		return _resolve_outcome(state, definition, outcome, branch_id)
+		return _resolve_outcome(next, definition, outcome, branch_id)
 	# Compatibility lifecycle is deliberately secondary to graph branches.
 	var threshold := maxi(0, int(current.get("advance_after_actions", 0)))
 	if str(trigger.get("fact_type", "")) == "world_boundary" and threshold > 0 and int(state.get("phase_action_counter", 0)) >= threshold:
 		var ids := SequenceSchemaScript.phase_ids(definition)
 		var index := ids.find(str(state.get("phase_id", "")))
 		if index >= 0 and index + 1 < ids.size():
-			return _enter_phase(state, definition, str(ids[index + 1]), "ordered_compat")
-	return state
+			return _enter_phase(state, definition, str(ids[index + 1]), "ordered_compat", trigger)
+	return {"ok": true, "state": state, "errors": []}
 
 
 static func _condition_matches(condition: Dictionary, state: Dictionary, trigger: Dictionary) -> bool:
@@ -481,80 +598,108 @@ static func _condition_matches(condition: Dictionary, state: Dictionary, trigger
 		"local_min": return int(_dict(state.get("local_state", {})).get(str(condition.get("key", "")), 0)) >= int(condition.get("value", 0))
 		"objective": return _objective_step_complete(state, str(condition.get("objective_id", "")), str(condition.get("step_id", "")))
 		"outcome": return _string_array(state.get("resolved_outcomes", [])).has(str(condition.get("outcome", "")))
-		"receipt": return _string_array(state.get("command_receipts", [])).has(str(condition.get("receipt_id", ""))) or _string_array(state.get("fact_receipts", [])).has(str(condition.get("receipt_id", "")))
+		"receipt": return _receipt_condition_matches(condition, state)
 	return false
 
 
-static func _enter_phase(state: Dictionary, definition: Dictionary, phase_id: String, source_receipt: String) -> Dictionary:
-	var next := state.duplicate(true)
+static func _enter_phase(state: Dictionary, definition: Dictionary, phase_id: String, source_receipt: String, entry_trigger: Dictionary = {}) -> Dictionary:
 	var phase_data := SequenceSchemaScript.phase(definition, phase_id)
 	if phase_data.is_empty():
-		next["status"] = STATUS_CLEANED
-		return next
+		return {"ok": false, "state": state, "errors": ["scenario phase is missing: %s" % phase_id]}
+	var condition_trigger := entry_trigger.duplicate(true)
+	condition_trigger["source_receipt"] = source_receipt
+	for condition_value in _array(phase_data.get("entry_conditions", [])):
+		if not _condition_matches(_dict(condition_value), state, condition_trigger):
+			return {"ok": false, "state": state, "errors": ["scenario phase %s entry conditions are not satisfied" % phase_id]}
+	var next := state.duplicate(true)
+	var semantic := _dict(next.get("semantic_state", {}))
+	var transition_receipts := _string_array(next.get("transition_receipts", []))
+	var boundary_id := "%s:%s:phase:%s:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), phase_id, source_receipt]
+	var phase_receipt := _structural_receipt("transition", [str(next.get("scenario_id", "")), str(next.get("node_id", "")), phase_id, source_receipt])
+	if transition_receipts.has(phase_receipt):
+		return {"ok": true, "state": next, "errors": [], "replayed": true}
+	if transition_receipts.size() >= MAX_RECEIPTS:
+		return {"ok": false, "state": state, "errors": ["scenario transition lifetime receipt limit reached"]}
+	for family in ["scene_ops", "interaction_ops", "actor_ops", "transition_ops"]:
+		var applied := OperationRegistryScript.apply_operations(semantic, family, _array(phase_data.get(family, [])), boundary_id)
+		if not bool(applied.get("ok", false)):
+			return {"ok": false, "state": state, "errors": _array(applied.get("errors", []))}
+		semantic = _dict(applied.get("state", semantic))
 	next["phase_id"] = phase_id
 	next["phase_action_counter"] = 0
 	next["last_feedback"] = str(phase_data.get("arrival_feedback", ""))
-	var semantic := _dict(next.get("semantic_state", {}))
-	var transition_receipts := _string_array(next.get("transition_receipts", []))
-	var phase_receipt := "%s:%s:phase:%s:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), phase_id, source_receipt]
-	if transition_receipts.has(phase_receipt):
-		return next
-	for family in ["scene_ops", "interaction_ops", "actor_ops", "transition_ops"]:
-		var applied := OperationRegistryScript.apply_operations(semantic, family, _array(phase_data.get(family, [])), phase_receipt)
-		if not bool(applied.get("ok", false)):
-			next["status"] = STATUS_CLEANED
-			next["last_feedback"] = "This room sequence closed safely."
-			return next
-		semantic = _dict(applied.get("state", semantic))
 	transition_receipts.append(phase_receipt)
 	next["transition_receipts"] = transition_receipts
+	var transition_records := _array(next.get("transition_receipt_records", []))
+	transition_records.append({"receipt_key": phase_receipt, "phase_id": phase_id, "source_receipt": source_receipt, "boundary_id": boundary_id})
+	next["transition_receipt_records"] = transition_records
 	next["semantic_state"] = semantic
 	var counters := _normalize_counters(next.get("performance_counters", {}))
 	counters["transitions_prepared"] = int(counters.get("transitions_prepared", 0)) + 1
 	next["performance_counters"] = counters
-	return next
+	return {"ok": true, "state": next, "errors": [], "replayed": false}
 
 
 static func _resolve_outcome(state: Dictionary, definition: Dictionary, outcome: String, source_receipt: String) -> Dictionary:
-	var next := state.duplicate(true)
 	if outcome.is_empty():
-		return next
-	var outcomes := _string_array(next.get("resolved_outcomes", []))
-	if not outcomes.has(outcome): outcomes.append(outcome)
-	next["resolved_outcomes"] = outcomes
-	next = _apply_cleanup(next, definition, "terminal:%s" % source_receipt)
+		return {"ok": false, "state": state, "errors": ["scenario outcome is missing"]}
+	var cleanup_result := _apply_cleanup(state, definition, "terminal:%s" % source_receipt)
+	if not bool(cleanup_result.get("ok", false)):
+		return {"ok": false, "state": state, "errors": _array(cleanup_result.get("errors", []))}
+	var next := _dict(cleanup_result.get("state", state))
 	var aftermath := _dict(_dict(SequenceSchemaScript.sequence(definition).get("aftermath", {})).get(outcome, {}))
+	if aftermath.is_empty():
+		return {"ok": false, "state": state, "errors": ["scenario aftermath is missing for outcome %s" % outcome]}
 	var semantic := _dict(next.get("semantic_state", {}))
 	var aftermath_scope := "%s:%s:aftermath:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), outcome]
 	for family in ["scene_ops", "interaction_ops", "actor_ops", "service_ops", "game_ops", "route_ops"]:
 		var applied := OperationRegistryScript.apply_operations(semantic, family, _array(aftermath.get(family, [])), aftermath_scope)
 		if not bool(applied.get("ok", false)):
-			next["status"] = STATUS_CLEANED
-			return next
+			return {"ok": false, "state": state, "errors": _array(applied.get("errors", []))}
 		semantic = _dict(applied.get("state", semantic))
+	var outcomes := _string_array(next.get("resolved_outcomes", []))
+	if not outcomes.has(outcome): outcomes.append(outcome)
+	next["resolved_outcomes"] = outcomes
+	next = _set_objective_outcomes(next, definition, "")
 	next["semantic_state"] = semantic
 	next["last_feedback"] = str(aftermath.get("revisit_feedback", aftermath.get("label", "")))
 	next["status"] = STATUS_AFTERMATH
-	return next
+	return {"ok": true, "state": next, "errors": []}
 
 
 static func _apply_cleanup(state: Dictionary, definition: Dictionary, reason: String) -> Dictionary:
 	var next := state.duplicate(true)
-	var receipt_id := "%s:%s:cleanup:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), reason]
+	var boundary_id := "%s:%s:cleanup:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), reason]
+	var receipt_id := _structural_receipt("cleanup", [str(next.get("scenario_id", "")), str(next.get("node_id", "")), reason])
 	var receipts := _string_array(next.get("cleanup_receipts", []))
 	if receipts.has(receipt_id):
-		return next
+		return {"ok": true, "state": next, "errors": [], "replayed": true}
+	if receipts.size() >= MAX_RECEIPTS:
+		return {"ok": false, "state": state, "errors": ["scenario cleanup lifetime receipt limit reached"]}
 	var semantic := _dict(next.get("semantic_state", {}))
+	var by_family: Dictionary = {}
 	for operation_value in _array(_dict(SequenceSchemaScript.sequence(definition).get("cleanup", {})).get("operations", [])):
 		var operation := _dict(operation_value)
 		var family := str(operation.get("family", ""))
-		var applied := OperationRegistryScript.apply_operations(semantic, family, [operation], receipt_id)
-		if bool(applied.get("ok", false)):
-			semantic = _dict(applied.get("state", semantic))
+		if not OperationRegistryScript.OP_FAMILIES.has(family):
+			return {"ok": false, "state": state, "errors": ["scenario cleanup contains unregistered family %s" % family]}
+		var operations := _array(by_family.get(family, []))
+		operations.append(operation)
+		by_family[family] = operations
+	for family in ["scene_ops", "interaction_ops", "actor_ops", "transition_ops", "service_ops", "game_ops", "route_ops"]:
+		if not by_family.has(family):
+			continue
+		var applied := OperationRegistryScript.apply_operations(semantic, family, _array(by_family.get(family, [])), boundary_id)
+		if not bool(applied.get("ok", false)):
+			return {"ok": false, "state": state, "errors": _array(applied.get("errors", []))}
+		semantic = _dict(applied.get("state", semantic))
 	next["semantic_state"] = semantic
 	receipts.append(receipt_id)
 	next["cleanup_receipts"] = receipts
-	return next
+	var records := _array(next.get("cleanup_receipt_records", []))
+	records.append({"receipt_key": receipt_id, "reason": reason, "boundary_id": boundary_id})
+	next["cleanup_receipt_records"] = records
+	return {"ok": true, "state": next, "errors": [], "replayed": false}
 
 
 static func _complete_command_objective_steps(state: Dictionary, definition: Dictionary, command_id: String) -> Dictionary:
@@ -582,6 +727,26 @@ static func _complete_objective_step(state: Dictionary, objective_id: String, st
 
 static func _objective_step_complete(state: Dictionary, objective_id: String, step_id: String) -> bool:
 	return _string_array(_dict(_dict(state.get("objective_progress", {})).get(objective_id, {})).get("completed_steps", [])).has(step_id)
+
+
+static func _set_objective_outcomes(state: Dictionary, definition: Dictionary, forced_outcome: String) -> Dictionary:
+	var next := state.duplicate(true)
+	var progress := _normalize_objective_progress(next.get("objective_progress", {}))
+	for objective_value in _array(SequenceSchemaScript.sequence(definition).get("objectives", [])):
+		var objective := _dict(objective_value)
+		var objective_id := str(objective.get("id", ""))
+		var allowed := _string_array(objective.get("outcomes", []))
+		var objective_state := _dict(progress.get(objective_id, {}))
+		var completed := _string_array(objective_state.get("completed_steps", []))
+		var desired := forced_outcome
+		if desired.is_empty():
+			desired = "success" if completed.size() == _array(objective.get("steps", [])).size() else "failure"
+		if not allowed.has(desired):
+			desired = str(allowed[0]) if not allowed.is_empty() else ""
+		objective_state["outcome"] = desired
+		progress[objective_id] = objective_state
+	next["objective_progress"] = progress
+	return next
 
 
 static func _initial_objectives(definition: Dictionary) -> Dictionary:
@@ -623,7 +788,7 @@ static func _phase_command_ids(definition: Dictionary, phase_id: String) -> Arra
 
 
 static func state_semantics_for_definition(definition: Dictionary, phase_id: String) -> Dictionary:
-	var semantic: Dictionary = {}
+	var semantic: Dictionary = {"declared_targets": _dict(SequenceSchemaScript.sequence(definition).get("declared_targets", {}))}
 	var phase_data := SequenceSchemaScript.phase(definition, phase_id)
 	for family in ["scene_ops", "interaction_ops", "actor_ops", "transition_ops"]:
 		var applied := OperationRegistryScript.apply_operations(semantic, family, _array(phase_data.get(family, [])), "definition:preview:phase:%s" % phase_id)
@@ -694,6 +859,36 @@ static func _command_precondition_errors(state: Dictionary, action: Dictionary) 
 	return errors
 
 
+static func _receipt_condition_matches(condition: Dictionary, state: Dictionary) -> bool:
+	var receipt_kind := str(condition.get("receipt_kind", ""))
+	var receipt_id := str(condition.get("receipt_id", ""))
+	match receipt_kind:
+		"command": return _string_array(state.get("command_receipts", [])).has(receipt_id)
+		"fact": return _string_array(state.get("fact_receipts", [])).has(receipt_id)
+		"operation":
+			var records := _array(_dict(state.get("semantic_state", {})).get("operation_receipt_records", []))
+			for record_value in records:
+				var record := _dict(record_value)
+				if str(record.get("authored_receipt_id", "")) == receipt_id and str(record.get("family", "")) == str(condition.get("family", "")) and str(record.get("boundary_id", "")) == str(condition.get("boundary_id", "")):
+					return true
+		"transition":
+			for record_value in _array(state.get("transition_receipt_records", [])):
+				var record := _dict(record_value)
+				if str(record.get("receipt_key", "")) == receipt_id or str(record.get("source_receipt", "")) == receipt_id:
+					return true
+		"cleanup":
+			for record_value in _array(state.get("cleanup_receipt_records", [])):
+				var record := _dict(record_value)
+				if str(record.get("receipt_key", "")) == receipt_id or str(record.get("reason", "")) == receipt_id:
+					return true
+		"visit":
+			for record_value in _array(state.get("visit_receipt_records", [])):
+				var record := _dict(record_value)
+				if str(record.get("receipt_key", "")) == receipt_id or str(record.get("visit_id", "")) == receipt_id:
+					return true
+	return false
+
+
 static func _without_ingress(value: Dictionary) -> Dictionary:
 	var result := value.duplicate(true)
 	result.erase("ingress_serial")
@@ -702,6 +897,14 @@ static func _without_ingress(value: Dictionary) -> Dictionary:
 
 static func _fingerprint(value: Variant) -> String:
 	return JSON.stringify(_canonical_variant(value))
+
+
+static func _structural_receipt(kind: String, components: Array) -> String:
+	var encoded := "%d:%s" % [kind.length(), kind]
+	for component_value in components:
+		var component := str(component_value)
+		encoded += "%d:%s" % [component.length(), component]
+	return "%s_%s" % [kind, encoded.sha256_text()]
 
 
 static func _valid_id(value: String) -> bool:
@@ -727,6 +930,16 @@ static func _fact_array(value: Variant) -> Array:
 	return result
 
 
+static func _bounded_records(value: Variant, limit: int) -> Array:
+	var result: Array = []
+	for record_value in _array(value):
+		if typeof(record_value) == TYPE_DICTIONARY:
+			result.append((record_value as Dictionary).duplicate(true))
+	if result.size() > limit:
+		result = result.slice(result.size() - limit, result.size())
+	return result
+
+
 static func _bounded_strings(value: Variant, limit: int) -> Array:
 	var result := _string_array(value)
 	if result.size() > limit: result = result.slice(result.size() - limit, result.size())
@@ -739,15 +952,27 @@ static func _append_unique(values: Array, value: String) -> void:
 
 
 static func _canonical_variant(value: Variant) -> Variant:
+	return _canonical_variant_inner(value, 0, [])
+
+
+static func _canonical_variant_inner(value: Variant, depth: int, ancestors: Array) -> Variant:
+	if depth > OperationRegistryScript.MAX_VARIANT_DEPTH:
+		return "<depth-limit>"
+	if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY]:
+		for ancestor in ancestors:
+			if is_same(ancestor, value):
+				return "<cycle>"
+		ancestors = ancestors.duplicate(false)
+		ancestors.append(value)
 	if typeof(value) == TYPE_DICTIONARY:
 		var result: Dictionary = {}
 		var keys := (value as Dictionary).keys()
 		keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
-		for key_value in keys: result[str(key_value)] = _canonical_variant((value as Dictionary).get(key_value))
+		for key_value in keys: result[str(key_value)] = _canonical_variant_inner((value as Dictionary).get(key_value), depth + 1, ancestors)
 		return result
 	if typeof(value) == TYPE_ARRAY:
 		var result: Array = []
-		for item in value as Array: result.append(_canonical_variant(item))
+		for item in value as Array: result.append(_canonical_variant_inner(item, depth + 1, ancestors))
 		return result
 	return value
 
@@ -762,8 +987,8 @@ static func _string_array(value: Variant) -> Array:
 
 
 static func _array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+	return (value as Array).duplicate(false) if typeof(value) == TYPE_ARRAY else []
 
 
 static func _dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+	return (value as Dictionary).duplicate(false) if typeof(value) == TYPE_DICTIONARY else {}
