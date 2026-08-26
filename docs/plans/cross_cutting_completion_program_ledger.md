@@ -293,3 +293,11 @@ their own detailed handoffs and test evidence.
   post-completion unmarked negative case still proves persistent barring.
   Runtime is correctly pending under HOST HOLD. `/root/review_fix06_4` is
   performing independent exact-head review; no merge is authorized.
+- 2026-08-26: Independent delta review issued
+  `ACCEPT b1af103ffad918869d2cc60618cb56e0c78c6a4c` with no P0-P3. The
+  one-file test optimization preserves all 235 environment constructions and
+  JSON round trips, 11 catalog games, seven activation hooks and every hostile
+  assertion; cache values are deep-copied, semantic boundaries are fully keyed,
+  and non-pusher generation remains seed-specific. This verdict covers only
+  `b1af103f`; exact head has advanced to `a3ae328e`, whose golden commits remain
+  under separate cumulative review and runtime validation.
