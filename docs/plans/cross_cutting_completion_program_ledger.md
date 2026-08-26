@@ -275,3 +275,12 @@ their own detailed handoffs and test evidence.
   catalog coverage, seven cold hooks and hostile fixtures remain. Independent
   exact-delta review is in progress. The authorized mechanically generated
   golden refresh will be a separate commit and review. EV remains unreleased.
+- 2026-08-26: The scoped golden refresh is split into `07186897` (exact-seed
+  crew baseline regenerator) and `a3ae328e` (mechanically generated physical
+  opening goldens). The author's full-state audit reports an exact pattern:
+  bar checkpoints gain one Coin Pusher snapshot in current and world copies
+  (+228/+227 bytes, hence +456/+454 in RunState); ordinary travel keeps the
+  current gas-station environment byte-identical and changes only the stored
+  bar world copy. Labels, seeds, schemas and unaffected hashes are unchanged.
+  Exact head `a3ae328e8761e3efba65d03f96865f515bcf51f5` is running Systems and awaits
+  its own independent cumulative review. No runtime evidence is accepted yet.
