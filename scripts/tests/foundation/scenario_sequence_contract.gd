@@ -26,6 +26,8 @@ const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environ
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const CoachOverlayScript := preload("res://scripts/ui/coach_overlay.gd")
 const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
+const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
+const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 
 
 class LifecycleFixtureGame:
@@ -43,6 +45,9 @@ class LifecycleRejectingGenerator:
 	var install_world_destination := false
 	var unrelated_tween_host: Node
 	var unrelated_boundary_tween: Tween
+	var unrelated_boundary_control: Control
+	var environment_canvas_fixture: Control
+	var game_surface_canvas_fixture: Control
 
 	func _init(p_library: ContentLibrary) -> void:
 		super(p_library)
@@ -57,10 +62,14 @@ class LifecycleRejectingGenerator:
 		if not reject_layer:
 			return super.enter_environment_layer(run_state, _target_layer_id, _advance_action)
 		if unrelated_tween_host != null:
-			var unrelated_control := Control.new()
-			unrelated_tween_host.add_child(unrelated_control)
+			unrelated_boundary_control = Control.new()
+			unrelated_tween_host.add_child(unrelated_boundary_control)
 			unrelated_boundary_tween = unrelated_tween_host.create_tween()
-			unrelated_boundary_tween.tween_property(unrelated_control, "position", Vector2(12.0, 0.0), 4.0)
+			unrelated_boundary_tween.tween_property(unrelated_boundary_control, "position", Vector2(12.0, 0.0), 4.0)
+		if environment_canvas_fixture != null:
+			environment_canvas_fixture.call("_process", 0.25)
+		if game_surface_canvas_fixture != null:
+			game_surface_canvas_fixture.call("_process", 0.25)
 		_poison(run_state, "layer")
 		return {"ok": false, "message": "Layer caller fixture rejected."}
 
@@ -81,10 +90,17 @@ class LifecycleRejectingGenerator:
 class LifecycleDeliveryRejectRun:
 	extends RunState
 
+	var environment_canvas_fixture: Control
+	var game_surface_canvas_fixture: Control
+
 	func delivery_has_active_run() -> bool:
 		return true
 
 	func delivery_resolve_travel_arrival(_route: Dictionary = {}, _route_risk: Dictionary = {}) -> Dictionary:
+		if environment_canvas_fixture != null:
+			environment_canvas_fixture.call("_process", 0.25)
+		if game_surface_canvas_fixture != null:
+			game_surface_canvas_fixture.call("_process", 0.25)
 		bankroll += 23
 		current_environment["delivery_poison"] = true
 		world_map["delivery_poison"] = true
@@ -104,12 +120,23 @@ class LifecycleCallerProbe:
 	var forced_travel_result: Dictionary = {"ok": false, "errors": ["Forced travel caller fixture rejected."]}
 	var fixture_game := LifecycleFixtureGame.new()
 	var talk_dock_fixture_root: Control
+	var capture_transaction_attention := false
+	var failed_talk_dock_attention_tween: Tween
 
 	func _show_message(text: String) -> void:
 		message_log.append(text)
 
 	func _refresh() -> void:
 		pass
+
+	func _refresh_talk_dock() -> void:
+		var prior_tweens: Array = talk_dock.attention_tween_lifecycle_snapshot() if capture_transaction_attention and talk_dock != null else []
+		super._refresh_talk_dock()
+		if not capture_transaction_attention or talk_dock == null:
+			return
+		for tween_value in talk_dock.attention_tween_lifecycle_snapshot():
+			if tween_value is Tween and not prior_tweens.has(tween_value):
+				failed_talk_dock_attention_tween = tween_value as Tween
 
 	func _autosave_foundation_run(_status_text: String = "Autosaved.", _force: bool = false) -> bool:
 		autosave_count += 1
@@ -255,16 +282,39 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	_install_real_event_popup(layer_probe, "side_door")
 	_install_active_tutorial_presentation(layer_probe, "tutorial_family_phone", "event:side_door", "family_phone")
 	var layer_before := _public_caller_probe_state(layer_probe)
+	var layer_preexisting_talk_tweens := layer_probe.talk_dock.attention_tween_lifecycle_snapshot()
+	var layer_preexisting_coach_tween: Variant = layer_probe.coach_overlay.attention_tween_lifecycle_snapshot().get("tween", null)
 	var layer_message_start := layer_probe.message_log.size()
+	layer_probe.capture_transaction_attention = true
 	var layer_ok := layer_probe.activate_event_choice_action("side_door", "punchline_password")
+	layer_probe.capture_transaction_attention = false
 	var layer_messages := layer_probe.message_log.slice(layer_message_start)
 	var layer_rollback_equal := _public_caller_probe_state(layer_probe) == layer_before
 	layer_probe._resume_after_completed_tutorial_action("tutorial_family_phone", layer_probe.tutorial_action_resume_generation_counter)
 	layer_probe.talk_dock._position_panel()
+	layer_probe.talk_dock._process(1.0)
+	layer_probe._on_talk_dock_occupied_rect_changed(layer_probe.talk_dock.occupied_global_rect())
+	var unrelated_tween_advanced := layer_generator.unrelated_boundary_tween != null and layer_generator.unrelated_boundary_tween.custom_step(0.5)
 	var layer_stale_work_ignored := _public_caller_probe_state(layer_probe) == layer_before
+	var talk_alpha_before_step := layer_probe.talk_dock.panel.modulate.a
+	var preexisting_talk_tween_advanced := false
+	if not layer_preexisting_talk_tweens.is_empty() and layer_preexisting_talk_tweens[0] is Tween:
+		preexisting_talk_tween_advanced = (layer_preexisting_talk_tweens[0] as Tween).custom_step(0.05)
+	var preexisting_talk_tween_progressed := layer_probe.talk_dock.panel.modulate.a > talk_alpha_before_step
+	var coach_alpha_before_step := layer_probe.coach_overlay.panel.modulate.a
+	var preexisting_coach_tween_advanced := false
+	if layer_preexisting_coach_tween is Tween:
+		preexisting_coach_tween_advanced = (layer_preexisting_coach_tween as Tween).custom_step(0.05)
+	var preexisting_coach_tween_progressed := layer_probe.coach_overlay.panel.modulate.a > coach_alpha_before_step
+	var layer_preexisting_coach_survived := layer_preexisting_coach_tween is Tween and (layer_preexisting_coach_tween as Tween).is_valid()
+	var layer_rollback_checkpoint_clean := layer_probe.coach_overlay.lifecycle_protected_attention_tweens.is_empty()
 	if layer_ok or not layer_rollback_equal or not layer_stale_work_ignored or layer_probe.autosave_count != 0 or layer_probe.presentation_count != 0 \
 			or layer_messages != ["", "Selected event choice: Try the word.", "Layer caller fixture rejected."] \
-			or layer_generator.unrelated_boundary_tween == null or not layer_generator.unrelated_boundary_tween.is_valid():
+			or layer_probe.failed_talk_dock_attention_tween == null or layer_probe.failed_talk_dock_attention_tween.is_valid() \
+			or not _all_valid_tweens(layer_preexisting_talk_tweens) or not layer_preexisting_coach_survived \
+			or not preexisting_talk_tween_advanced or not preexisting_talk_tween_progressed or not preexisting_coach_tween_advanced or not preexisting_coach_tween_progressed \
+			or not unrelated_tween_advanced or layer_generator.unrelated_boundary_control == null or layer_generator.unrelated_boundary_control.position.x <= 0.0 \
+			or not layer_rollback_checkpoint_clean:
 		failures.append("Tutorial event-card completion did not restore its authoritative queue, connected coach, actual TalkDock selection/badge/layout/focus, and popup state exactly before the one terminal layer error.")
 	_free_lifecycle_presentation_probe(layer_probe)
 
@@ -275,17 +325,41 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	_install_real_world_map_popup(map_probe, "motel", "Motel")
 	_install_active_tutorial_presentation(map_probe, "tutorial_travel_corner", "travel:motel", "map_destination")
 	var map_before := _public_caller_probe_state(map_probe)
+	var map_preexisting_talk_tweens := map_probe.talk_dock.attention_tween_lifecycle_snapshot()
+	var map_preexisting_coach_tween: Variant = map_probe.coach_overlay.attention_tween_lifecycle_snapshot().get("tween", null)
 	var map_message_start := map_probe.message_log.size()
+	map_probe.capture_transaction_attention = true
 	var map_result := map_probe.confirm_world_map_travel()
+	map_probe.capture_transaction_attention = false
 	var map_messages := map_probe.message_log.slice(map_message_start)
 	var map_rollback_equal := _public_caller_probe_state(map_probe) == map_before
 	map_probe._resume_after_completed_tutorial_action("tutorial_travel_corner", map_probe.tutorial_action_resume_generation_counter)
 	map_probe.talk_dock._position_panel()
+	map_probe.talk_dock._process(1.0)
+	map_probe._on_talk_dock_occupied_rect_changed(map_probe.talk_dock.occupied_global_rect())
 	var map_stale_work_ignored := _public_caller_probe_state(map_probe) == map_before
 	if bool(map_result.get("ok", true)) or not map_rollback_equal or not map_stale_work_ignored or map_probe.autosave_count != 0 or map_probe.presentation_count != 0 \
-			or map_messages != ["", "Traveling to Motel...", "Delivery caller fixture rejected."]:
+			or map_messages != ["", "Traveling to Motel...", "Delivery caller fixture rejected."] \
+			or map_probe.failed_talk_dock_attention_tween == null or map_probe.failed_talk_dock_attention_tween.is_valid() \
+			or not _all_valid_tweens(map_preexisting_talk_tweens) or not (map_preexisting_coach_tween is Tween) or not (map_preexisting_coach_tween as Tween).is_valid() \
+			or not map_probe.coach_overlay.lifecycle_protected_attention_tweens.is_empty() \
+			or map_probe.coach_overlay.active_anchor_kind() != "hud_element" or map_probe.coach_overlay.active_anchor_id() != "travel:corner_store" or not map_probe.coach_overlay.focus_visual_enabled:
 		failures.append("Tutorial world-map acknowledgement did not restore its authoritative queue, connected coach, actual TalkDock presentation, and map controller exactly before the one terminal delivery error.")
 	_free_lifecycle_presentation_probe(map_probe)
+
+	var success_probe := _lifecycle_probe(library, _lifecycle_run(false))
+	var success_rng := RngStream.new()
+	success_rng.configure(91204)
+	success_probe.run_state.current_environment = EnvironmentInstanceScript.from_archetype(library.environment_archetype("small_underground_casino"), 1, success_rng, library).to_dict()
+	_install_real_event_popup(success_probe, "side_door")
+	_install_active_tutorial_presentation(success_probe, "tutorial_family_phone", "event:side_door", "family_phone")
+	var success_coach_tween: Variant = success_probe.coach_overlay.attention_tween_lifecycle_snapshot().get("tween", null)
+	var success_ok := success_probe.activate_event_choice_action("side_door", "punchline_password")
+	if not success_ok or not success_probe.coach_overlay.lifecycle_protected_attention_tweens.is_empty() \
+			or success_probe.coach_overlay.attention_tween != null \
+			or (success_coach_tween is Tween and (success_coach_tween as Tween).is_valid()):
+		failures.append("Successful tutorial event lifecycle did not commit and release its scoped Coach attention checkpoint.")
+	_free_lifecycle_presentation_probe(success_probe)
 
 	var meta_map_probe := LifecycleMetaEntryRejectProbe.new()
 	meta_map_probe.library = library
@@ -445,34 +519,24 @@ static func _install_real_event_popup(probe: LifecycleCallerProbe, event_id: Str
 
 static func _install_active_tutorial_presentation(probe: LifecycleCallerProbe, lesson_id: String, action_id: String, dialogue_node: String) -> void:
 	probe.run_state.challenge_config["tutorial"] = true
-	var coach := CoachOverlayScript.new()
-	probe.add_child(coach)
-	coach._build()
-	coach.lesson_seen.connect(Callable(probe, "_on_coach_lesson_seen"))
-	coach.lesson_completed.connect(Callable(probe, "_on_coach_lesson_completed"))
-	coach.dialogue_requested.connect(Callable(probe, "_on_coach_dialogue_requested"))
-	coach.set_lessons(probe.library.tutorial_lessons)
-	var lesson := probe.library.tutorial_lesson(lesson_id)
-	lesson["completion"] = {"type": "anchored_action", "action_id": action_id}
-	lesson["anchor"] = {"kind": "interactable_object", "id": action_id}
-	coach.active_lesson = lesson
-	coach.active_context = {"sentinel": "%s-context" % lesson_id}
-	coach.latest_context = {"sentinel": "%s-latest" % lesson_id}
-	coach.prepared_snapshot = {"visible": true, "lesson_id": lesson_id, "delivery": "dialogue", "anchor_kind": "interactable_object", "anchor_id": action_id}
-	coach.active_anchor_kind_value = "interactable_object"
-	coach.active_anchor_id_value = action_id
-	coach.active_dialogue_requested = true
-	coach.active_dialogue_was_requested = true
-	coach.visible = true
-	coach.panel.visible = false
-	coach.focus_layer.set_snapshot({"visible": true, "lesson_id": lesson_id, "anchor_kind": "interactable_object", "anchor_rect": {"x": 220.0, "y": 140.0, "w": 96.0, "h": 64.0}})
-	probe.coach_overlay = coach
-
 	var fixture_root := Control.new()
 	fixture_root.name = "LifecycleTalkDockFixture"
 	fixture_root.size = Vector2(960.0, 640.0)
 	var scene_tree := Engine.get_main_loop() as SceneTree
 	scene_tree.root.add_child(fixture_root)
+	var environment_canvas := PixelSceneCanvasScript.new()
+	environment_canvas.size = fixture_root.size
+	fixture_root.add_child(environment_canvas)
+	var environment_snapshot := probe.run_state.current_environment.duplicate(true)
+	environment_snapshot["event_ids"] = ["side_door"]
+	environment_snapshot["reduce_motion"] = false
+	environment_canvas.render_environment_snapshot(environment_snapshot)
+	probe.environment_canvas = environment_canvas
+	var game_surface_canvas := GameSurfaceCanvasScript.new()
+	game_surface_canvas.size = fixture_root.size
+	fixture_root.add_child(game_surface_canvas)
+	game_surface_canvas.render_game_snapshot({"game_id": "slot", "surface_time_msec": 2100.0, "surface_presentation_time_msec": 2400.0, "reduce_motion": false})
+	probe.game_surface_canvas = game_surface_canvas
 	var dock := TalkDockScript.new()
 	dock.choice_requested.connect(Callable(probe, "_on_talk_dock_choice_requested"))
 	dock.occupied_rect_changed.connect(Callable(probe, "_on_talk_dock_occupied_rect_changed"))
@@ -482,22 +546,54 @@ static func _install_active_tutorial_presentation(probe: LifecycleCallerProbe, l
 	probe.talk_dock = dock
 	if probe.generator is LifecycleRejectingGenerator:
 		(probe.generator as LifecycleRejectingGenerator).unrelated_tween_host = fixture_root
-	var guide_dialogue := probe.library.dialogue("tutorial_pal_guidance")
-	var guide_speaker := _dict(guide_dialogue.get("speaker", {}))
+		(probe.generator as LifecycleRejectingGenerator).environment_canvas_fixture = environment_canvas
+		(probe.generator as LifecycleRejectingGenerator).game_surface_canvas_fixture = game_surface_canvas
+	if probe.run_state is LifecycleDeliveryRejectRun:
+		(probe.run_state as LifecycleDeliveryRejectRun).environment_canvas_fixture = environment_canvas
+		(probe.run_state as LifecycleDeliveryRejectRun).game_surface_canvas_fixture = game_surface_canvas
+
+	var coach := CoachOverlayScript.new()
+	coach.lesson_seen.connect(Callable(probe, "_on_coach_lesson_seen"))
+	coach.lesson_completed.connect(Callable(probe, "_on_coach_lesson_completed"))
+	coach.dialogue_requested.connect(Callable(probe, "_on_coach_dialogue_requested"))
+	fixture_root.add_child(coach)
+	coach.set_lessons(probe.library.tutorial_lessons)
+	probe.coach_overlay = coach
+	var lesson := probe.library.tutorial_lesson(lesson_id)
+	lesson["completion"] = {"type": "anchored_action", "action_id": action_id}
+	lesson["dialogue_node"] = dialogue_node
+	if lesson_id != "tutorial_travel_corner":
+		lesson["anchor"] = {"kind": "interactable_object", "id": action_id}
+	var anchor := _dict(lesson.get("anchor", {}))
+	var anchor_kind := str(anchor.get("kind", "none"))
+	var anchor_id := str(anchor.get("id", ""))
+	var interactable_anchor_rects := {}
+	var hud_anchor_rects := {}
+	if anchor_kind == "interactable_object":
+		interactable_anchor_rects[anchor_id] = Rect2(210.0, 145.0, 110.0, 72.0)
+	elif anchor_kind == "hud_element":
+		hud_anchor_rects[anchor_id] = Rect2(690.0, 430.0, 150.0, 64.0)
+	var coach_context := {
+		"screen": "TRAVEL" if anchor_kind == "hud_element" and anchor_id.begins_with("travel:") else "ENVIRONMENT",
+		"viewport_rect": Rect2(Vector2.ZERO, fixture_root.size),
+		"anchor_rects": {
+			"interactable_objects": interactable_anchor_rects,
+			"hud_elements": hud_anchor_rects,
+			"surface_actions": {},
+		},
+		"run": {"tutorial": true},
+	}
+	coach.latest_context = coach_context.duplicate(true)
+	coach.queued_lessons = [{"lesson": lesson, "context": coach_context.duplicate(true)}]
+	coach.queued_ids = {lesson_id: true}
+	coach._show_next()
+
+	var followup_dialogue := probe.library.dialogue("pull_tab_clerk")
 	probe.run_state.enqueue_dialogue(
-		"tutorial_pal_guidance",
-		"tutorial_guide:%s" % lesson_id,
-		guide_speaker,
-		dialogue_node,
-		"tutorial_guide",
-		{"source": "tutorial_guide", "tutorial_lesson_id": lesson_id, "fixture": "lifecycle"}
-	)
-	var followup_dialogue := probe.library.dialogue("tutorial_blackjack_dealer_reprieve")
-	probe.run_state.enqueue_dialogue(
-		"tutorial_blackjack_dealer_reprieve",
+		"pull_tab_clerk",
 		"lifecycle_followup:%s" % lesson_id,
 		_dict(followup_dialogue.get("speaker", {})),
-		"warning",
+		"greeting",
 		"dialogue",
 		{"source": "dialogue", "fixture": "lifecycle-followup"}
 	)
@@ -514,7 +610,22 @@ static func _install_active_tutorial_presentation(probe: LifecycleCallerProbe, l
 		dock.rendered_entry_key = JSON.stringify({"entry": dock.entry, "option": dock.option, "queue_count": dock.queue_count})
 		_clear_talk_dock_choice_hierarchy(dock)
 		dock._render_choices()
+	dock._complete_body_reveal()
+	probe.selected_object_id = "event:side_door"
+	environment_canvas.set_selected_object(probe.selected_object_id, false)
 	dock.set_avoid_global_rect(Rect2(620.0, 390.0, 230.0, 170.0), "lifecycle:%s" % lesson_id, 760.0)
+	probe._apply_talk_dock_environment_reserve()
+	environment_canvas.scene_idle_animation_redraw_accumulator = 0.03125
+	environment_canvas.scene_idle_animation_redraw_count = 9
+	environment_canvas.camera_zoom = lerpf(1.0, environment_canvas.target_camera_zoom, 0.35)
+	environment_canvas.camera_offset = environment_canvas.target_camera_offset * 0.35
+	game_surface_canvas.captured_pointer_move_pending = true
+	game_surface_canvas.captured_pointer_move_position = Vector2(317.0, 229.0)
+	game_surface_canvas.surface_animation_redraw_accumulator = 0.041
+	game_surface_canvas.surface_animation_redraw_count = 7
+	game_surface_canvas.continuous_redraw_was_active = true
+	game_surface_canvas.flicker = 1.25
+	game_surface_canvas.surface_render_elapsed_sec = 2.75
 	if dock.choice_list.get_child_count() > 0:
 		var response := dock.choice_list.get_child(0)
 		for response_child in response.get_children():
@@ -531,10 +642,22 @@ static func _clear_talk_dock_choice_hierarchy(dock: TalkDock) -> void:
 		child.queue_free()
 
 
+static func _all_valid_tweens(tweens: Array) -> bool:
+	if tweens.is_empty():
+		return false
+	for tween_value in tweens:
+		if not tween_value is Tween or not (tween_value as Tween).is_valid():
+			return false
+	return true
+
+
 static func _free_lifecycle_presentation_probe(probe: LifecycleCallerProbe) -> void:
+	probe.talk_dock = null
+	probe.coach_overlay = null
+	probe.environment_canvas = null
+	probe.game_surface_canvas = null
 	if probe.talk_dock_fixture_root != null and is_instance_valid(probe.talk_dock_fixture_root):
 		probe.talk_dock_fixture_root.free()
-	probe.talk_dock = null
 	probe.talk_dock_fixture_root = null
 	probe.free()
 
@@ -589,8 +712,11 @@ static func _public_caller_probe_state(probe: FoundationMain) -> String:
 	var lifecycle_snapshot := probe._foundation_lifecycle_snapshot()
 	var coach_state := _dict(lifecycle_snapshot.get("coach", {}))
 	coach_state.erase("ref")
+	var coach_attention_state := _dict(coach_state.get("attention", {}))
+	coach_attention_state.erase("tween")
+	coach_state["attention"] = coach_attention_state
 	var talk_dock_state := _dict(lifecycle_snapshot.get("talk_dock", {}))
-	for reference_key in ["ref", "parent_ref", "focus_ref"]:
+	for reference_key in ["ref", "parent_ref", "focus_ref", "attention_tweens"]:
 		talk_dock_state.erase(reference_key)
 	var talk_dock_canvas_state := _dict(lifecycle_snapshot.get("talk_dock_canvases", {}))
 	talk_dock_canvas_state.erase("environment_ref")
@@ -616,6 +742,8 @@ static func _public_caller_probe_state(probe: FoundationMain) -> String:
 			"coach": coach_state,
 			"talk_dock": talk_dock_state,
 			"talk_dock_canvases": talk_dock_canvas_state,
+			"environment_canvas": probe.environment_canvas.current_view_snapshot() if probe.environment_canvas != null else {},
+			"game_surface_canvas": probe.game_surface_canvas.current_view_snapshot() if probe.game_surface_canvas != null else {},
 			"event_popup": popup_state,
 			"map_popup": map_popup_state,
 		}),

@@ -79,6 +79,7 @@ var eyebrow_label: Label
 var copy_label: Label
 var ok_button: Button
 var attention_tween: Tween
+var lifecycle_protected_attention_tweens: Array[Tween] = []
 
 
 func _ready() -> void:
@@ -418,6 +419,56 @@ func current_snapshot() -> Dictionary:
 	snapshot["queued_count"] = queued_lessons.size()
 	snapshot["live_anchor_change_count"] = live_anchor_change_count
 	return snapshot
+
+
+func attention_tween_lifecycle_snapshot() -> Dictionary:
+	_prune_lifecycle_protected_attention_tweens()
+	return {
+		"tween": attention_tween,
+		"panel_modulate": panel.modulate if panel != null else Color.WHITE,
+	}
+
+
+func protect_attention_tween_lifecycle_snapshot(snapshot: Dictionary) -> void:
+	var retained: Variant = snapshot.get("tween", null)
+	if retained is Tween and (retained as Tween).is_valid() and not lifecycle_protected_attention_tweens.has(retained):
+		lifecycle_protected_attention_tweens.append(retained as Tween)
+
+
+func restore_attention_tween_lifecycle_snapshot(snapshot: Dictionary) -> void:
+	var retained: Variant = snapshot.get("tween", null)
+	if attention_tween != null and attention_tween.is_valid() and attention_tween != retained:
+		attention_tween.kill()
+	attention_tween = null
+	if retained is Tween and (retained as Tween).is_valid():
+		attention_tween = retained as Tween
+	if panel != null:
+		panel.modulate = snapshot.get("panel_modulate", Color.WHITE) as Color
+	_release_lifecycle_attention_tween(retained, false)
+
+
+func commit_attention_tween_lifecycle_snapshot(snapshot: Dictionary) -> void:
+	var retained: Variant = snapshot.get("tween", null)
+	# If the action did not complete this lesson, the original animation is still
+	# current and must continue. Only retire it when the successful transaction
+	# actually stopped/replaced that presentation.
+	_release_lifecycle_attention_tween(retained, attention_tween != retained)
+
+
+func _release_lifecycle_attention_tween(tween_value: Variant, stop_retained: bool) -> void:
+	if tween_value is Tween:
+		var retained := tween_value as Tween
+		lifecycle_protected_attention_tweens.erase(retained)
+		if stop_retained and retained.is_valid():
+			retained.kill()
+	_prune_lifecycle_protected_attention_tweens()
+
+
+func _prune_lifecycle_protected_attention_tweens() -> void:
+	for index in range(lifecycle_protected_attention_tweens.size() - 1, -1, -1):
+		var tween := lifecycle_protected_attention_tweens[index]
+		if tween == null or not tween.is_valid():
+			lifecycle_protected_attention_tweens.remove_at(index)
 
 
 func _build() -> void:
@@ -797,7 +848,7 @@ func _play_attention_motion() -> void:
 
 
 func _stop_attention_motion() -> void:
-	if attention_tween != null and attention_tween.is_valid():
+	if attention_tween != null and attention_tween.is_valid() and not lifecycle_protected_attention_tweens.has(attention_tween):
 		attention_tween.kill()
 	attention_tween = null
 	if panel != null:
