@@ -61,3 +61,8 @@ their own detailed handoffs and test evidence.
 - 2026-08-25: `polish06_0` independently accepted at exact head `be14c1ce`
   with no findings and merged with `--no-ff` as `dba53fb5`. Its generated work
   remains PARKED; active-board closure awaits the coordinated primary edit.
+- 2026-08-25: The depth-program integrator identified itself and confirmed it
+  owns only `env06_6`, `env06_7`, `craps06_3`, `crew06_10`, and `depth06_1`.
+  It will pause its depth-only row/log edits for the announced `board06_1`
+  structural window, then semantically rebase them around the exact split
+  commit. Canonical companion paths will be sent only after that commit lands.
