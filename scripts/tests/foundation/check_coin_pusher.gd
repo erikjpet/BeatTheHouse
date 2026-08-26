@@ -211,6 +211,11 @@ func _check_pusher_v3_10_hold_inputs(library: ContentLibrary, game_definition: D
 	canvas.call("_gui_input", key_release)
 	canvas.call("_gui_input", key_press)
 	canvas.hide()
+	# Headless Controls do not always receive the Window-driven visibility
+	# notification synchronously. Deliver the engine notification explicitly
+	# while hidden; an interactive hide already cancels, so the second call is
+	# harmless and keeps this fixture deterministic in both environments.
+	canvas.notification(Control.NOTIFICATION_VISIBILITY_CHANGED)
 	canvas.show()
 	canvas.call("_gui_input", key_release)
 	canvas.call("_gui_input", key_press)
