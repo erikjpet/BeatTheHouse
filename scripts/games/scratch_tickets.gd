@@ -1202,8 +1202,8 @@ func _crossword_puzzle_index(generation_key: String, rng: RngStream) -> int:
 	if separator >= 0:
 		var suffix := generation_key.substr(separator + 1)
 		if suffix.is_valid_int():
-			var namespace := generation_key.left(separator)
-			var namespace_offset := posmod(RunState.text_to_seed(namespace), CROSSWORD_PUZZLE_CYCLE)
+			var purchase_namespace := generation_key.left(separator)
+			var namespace_offset := posmod(RunState.text_to_seed(purchase_namespace), CROSSWORD_PUZZLE_CYCLE)
 			return posmod(namespace_offset + int(suffix), CROSSWORD_PUZZLE_CYCLE)
 	return posmod(RunState.text_to_seed(generation_key), CROSSWORD_PUZZLE_CYCLE)
 
