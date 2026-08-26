@@ -816,3 +816,14 @@ their own detailed handoffs and test evidence.
   subject to fresh self-review, exact-head review and two sub-budget runtime
   passes. Pusher body and Systems hunks remain disjoint but the Coin line-one
   topology must be preserved at integration.
+- 2026-08-26: Superseding `fix06_4` topology self-review completed on clean
+  exact head `0009ea3e71cf272c7ee8119145d0effa87707258`. One commit changes only
+  Lenders/Coin test inheritance declarations, the exact-Blackjack terminal
+  target and hostile topology contracts. The tracked chain is now exactly Coin
+  to Cage to Scratch to Lenders to Delivery to Items to Table to Slots to Core
+  to SceneTree, with all nine canonical sources once/in order, decisive provider
+  pairs present and one inherited `_init`. The default full composite remains
+  byte-identical at 35,084 lines/SHA
+  `52e0bc8635f52ab39019edef4995a77a4d6662e937158475f6430071d2702e45`;
+  static contracts and validation pass. Pusher body/Systems patches dry-apply
+  cleanly, no runtime ran, and independent exact-head review is pending.
