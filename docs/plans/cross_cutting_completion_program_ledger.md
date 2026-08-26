@@ -266,3 +266,12 @@ their own detailed handoffs and test evidence.
   environment traversals, JSON round trips, 11-game catalog coverage, seven
   isolated hooks and hostile fixtures remain intact. Both corrections require
   a new exact-head independent review; EV remains unreleased.
+- 2026-08-26: The authorized test-local Systems timing correction was committed
+  separately as `b1af103f` (`test(activation): reuse repeated pusher fixtures`).
+  It reuses only immutable Coin Pusher generated state for matching
+  archetype/layer/scenario/fixture-count contexts after seed zero; the author
+  reports that the 10-seed outer loop, all 235 environment constructions and
+  JSON round trips, non-pusher seed generation, unique-context checks, 11-game
+  catalog coverage, seven cold hooks and hostile fixtures remain. Independent
+  exact-delta review is in progress. The authorized mechanically generated
+  golden refresh will be a separate commit and review. EV remains unreleased.
