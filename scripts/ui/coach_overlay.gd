@@ -80,6 +80,8 @@ var copy_label: Label
 var ok_button: Button
 var attention_tween: Tween
 var lifecycle_protected_attention_tweens: Array[Tween] = []
+var lifecycle_attention_checkpoints: Dictionary = {}
+var lifecycle_attention_checkpoint_counter := 0
 
 
 func _ready() -> void:
@@ -429,10 +431,17 @@ func attention_tween_lifecycle_snapshot() -> Dictionary:
 	}
 
 
-func protect_attention_tween_lifecycle_snapshot(snapshot: Dictionary) -> void:
+func protect_attention_tween_lifecycle_snapshot(snapshot: Dictionary) -> Dictionary:
+	var protected_snapshot := snapshot.duplicate(false)
 	var retained: Variant = snapshot.get("tween", null)
-	if retained is Tween and (retained as Tween).is_valid() and not lifecycle_protected_attention_tweens.has(retained):
-		lifecycle_protected_attention_tweens.append(retained as Tween)
+	if not (retained is Tween) or not (retained as Tween).is_valid():
+		return protected_snapshot
+	lifecycle_attention_checkpoint_counter += 1
+	var token := lifecycle_attention_checkpoint_counter
+	protected_snapshot["checkpoint_token"] = token
+	lifecycle_attention_checkpoints[token] = retained
+	_rebuild_lifecycle_protected_attention_tweens()
+	return protected_snapshot
 
 
 func restore_attention_tween_lifecycle_snapshot(snapshot: Dictionary) -> void:
@@ -444,7 +453,7 @@ func restore_attention_tween_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		attention_tween = retained as Tween
 	if panel != null:
 		panel.modulate = snapshot.get("panel_modulate", Color.WHITE) as Color
-	_release_lifecycle_attention_tween(retained, false)
+	_release_lifecycle_attention_tween(snapshot, false)
 
 
 func commit_attention_tween_lifecycle_snapshot(snapshot: Dictionary) -> void:
@@ -452,23 +461,33 @@ func commit_attention_tween_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	# If the action did not complete this lesson, the original animation is still
 	# current and must continue. Only retire it when the successful transaction
 	# actually stopped/replaced that presentation.
-	_release_lifecycle_attention_tween(retained, attention_tween != retained)
+	_release_lifecycle_attention_tween(snapshot, attention_tween != retained)
 
 
-func _release_lifecycle_attention_tween(tween_value: Variant, stop_retained: bool) -> void:
-	if tween_value is Tween:
-		var retained := tween_value as Tween
-		lifecycle_protected_attention_tweens.erase(retained)
-		if stop_retained and retained.is_valid():
-			retained.kill()
+func _release_lifecycle_attention_tween(snapshot: Dictionary, stop_retained: bool) -> void:
+	var token := int(snapshot.get("checkpoint_token", 0))
+	var retained: Variant = lifecycle_attention_checkpoints.get(token, snapshot.get("tween", null))
+	if token > 0:
+		lifecycle_attention_checkpoints.erase(token)
+	_rebuild_lifecycle_protected_attention_tweens()
+	if stop_retained and retained is Tween and (retained as Tween).is_valid() and not lifecycle_protected_attention_tweens.has(retained):
+		(retained as Tween).kill()
 	_prune_lifecycle_protected_attention_tweens()
 
 
+func _rebuild_lifecycle_protected_attention_tweens() -> void:
+	lifecycle_protected_attention_tweens.clear()
+	for tween_value in lifecycle_attention_checkpoints.values():
+		if tween_value is Tween and (tween_value as Tween).is_valid() and not lifecycle_protected_attention_tweens.has(tween_value):
+			lifecycle_protected_attention_tweens.append(tween_value as Tween)
+
+
 func _prune_lifecycle_protected_attention_tweens() -> void:
-	for index in range(lifecycle_protected_attention_tweens.size() - 1, -1, -1):
-		var tween := lifecycle_protected_attention_tweens[index]
-		if tween == null or not tween.is_valid():
-			lifecycle_protected_attention_tweens.remove_at(index)
+	for token_value in lifecycle_attention_checkpoints.keys():
+		var tween_value: Variant = lifecycle_attention_checkpoints.get(token_value)
+		if not (tween_value is Tween) or not (tween_value as Tween).is_valid():
+			lifecycle_attention_checkpoints.erase(token_value)
+	_rebuild_lifecycle_protected_attention_tweens()
 
 
 func _build() -> void:

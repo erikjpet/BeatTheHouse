@@ -74,6 +74,56 @@ class CoinManualDeferredProbeHost:
 		super._play_result_surface_audio_cue(result)
 
 
+class CoachLifecycleDeliveryRun:
+	extends RunState
+
+	var reject_delivery := true
+	var delivery_resolve_count := 0
+
+	func delivery_has_active_run() -> bool:
+		return true
+
+	func delivery_snapshot() -> Dictionary:
+		return {"status": "active", "route_id": "ui_lifecycle_delivery", "target_id": "motel"}
+
+	func delivery_resolve_travel_arrival(_route: Dictionary = {}, _route_risk: Dictionary = {}) -> Dictionary:
+		delivery_resolve_count += 1
+		if not reject_delivery:
+			return {"ok": true, "status": "active"}
+		bankroll += 47
+		current_environment["coach_lifecycle_delivery_poison"] = true
+		world_map["coach_lifecycle_delivery_poison"] = true
+		grand_casino_room_states["coach_lifecycle_delivery_poison"] = {"active": true}
+		return {"ok": false, "errors": ["Coach lifecycle delivery rejected."]}
+
+
+class CoachLifecycleProbeHost:
+	extends FoundationMain
+
+	var observe_lifecycle_transaction := false
+	var lifecycle_guard_count := 0
+	var lifecycle_refresh_count := 0
+	var lifecycle_refresh_active_ids: Array[String] = []
+	var lifecycle_refresh_copies: Array[String] = []
+	var lifecycle_refresh_tweens: Array = []
+	var lifecycle_refresh_parent_indexes: Array[int] = []
+
+	func _guard_player_input_route(force_closing_allowed: bool = false, coach_action_id: String = "ui:any", notify_coach: bool = true) -> bool:
+		if observe_lifecycle_transaction:
+			lifecycle_guard_count += 1
+		return super._guard_player_input_route(force_closing_allowed, coach_action_id, notify_coach)
+
+	func _refresh() -> void:
+		super._refresh()
+		if not observe_lifecycle_transaction:
+			return
+		lifecycle_refresh_count += 1
+		lifecycle_refresh_active_ids.append(coach_overlay.active_lesson_id() if coach_overlay != null else "")
+		lifecycle_refresh_copies.append(coach_overlay.copy_label.text if coach_overlay != null and coach_overlay.copy_label != null else "")
+		lifecycle_refresh_tweens.append(coach_overlay.attention_tween if coach_overlay != null else null)
+		lifecycle_refresh_parent_indexes.append(coach_overlay.get_index() if coach_overlay != null else -1)
+
+
 func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 	var probe: Control = EmbeddedCoachProbeHost.new()
 	probe.set("continuous_environment_clock_enabled", false)
@@ -139,7 +189,175 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 		push_error("Completed embedded action did not execute its real deferred coach callback and conservative full-snapshot fallback: armed=%s schedules=%d frames=%d calls=%s incremental=%d fallback=%d canvas=%s." % [str(armed_after_action), action_schedule_count, action_frames, JSON.stringify(boundary_calls), int(probe.get("embedded_incremental_snapshot_count")), int(probe.get("embedded_full_snapshot_fallback_count")), JSON.stringify(fallback_canvas_state)])
 	probe.queue_free()
 	await process_frame
-	return passed
+	var lifecycle_passed := await _check_normal_coach_lifecycle_rollback()
+	return passed and lifecycle_passed
+
+
+func _check_normal_coach_lifecycle_rollback() -> bool:
+	const OLD_TIP_ID := "tip06_tonight_changes_rooms"
+	const OLD_TIP_COPY := "Tonight changes a room. Listen before you settle in; a rumor here can sharpen another stop on the map."
+	const NEXT_TIP_ID := "tip06_delivery_route"
+	const NEXT_TIP_COPY := "That package is contraband. Every action spends the deadline. The map marks real stops; choose your route."
+	var failure_probe := await _normal_coach_lifecycle_probe(true)
+	if failure_probe == null:
+		return false
+	var failure_coach: CoachOverlay = failure_probe.get("coach_overlay")
+	var failure_run: CoachLifecycleDeliveryRun = failure_probe.get("run_state")
+	var failure_old_tween: Variant = failure_coach.attention_tween_lifecycle_snapshot().get("tween", null)
+	var failure_old_parent_index := failure_coach.get_index()
+	var failure_before := _normal_coach_lifecycle_signature(failure_probe)
+	var failure_initial_exact := failure_coach.active_lesson_id() == OLD_TIP_ID \
+			and failure_coach.copy_label.text == OLD_TIP_COPY \
+			and failure_old_tween is Tween and (failure_old_tween as Tween).is_valid() \
+			and failure_coach.ok_button != null and failure_coach.ok_button.has_focus()
+	failure_probe.set("observe_lifecycle_transaction", true)
+	var failure_ok := bool(failure_probe.call("confirm_selected_travel", true))
+	var failure_after := _normal_coach_lifecycle_signature(failure_probe)
+	var observed_next_index := (failure_probe.get("lifecycle_refresh_active_ids") as Array).find(NEXT_TIP_ID)
+	var failure_new_tween: Variant = (failure_probe.get("lifecycle_refresh_tweens") as Array)[observed_next_index] if observed_next_index >= 0 else null
+	var failure_old_alpha := failure_coach.panel.modulate.a
+	var failure_old_tween_advanced := false
+	if failure_old_tween is Tween:
+		failure_old_tween_advanced = (failure_old_tween as Tween).custom_step(0.03)
+	var failure_old_tween_progressed := failure_coach.panel.modulate.a > failure_old_alpha
+	var failure_exact := failure_initial_exact \
+			and not failure_ok \
+			and failure_before == failure_after \
+			and int(failure_probe.get("lifecycle_guard_count")) == 1 \
+			and observed_next_index >= 0 \
+			and str((failure_probe.get("lifecycle_refresh_copies") as Array)[observed_next_index]) == NEXT_TIP_COPY \
+			and int((failure_probe.get("lifecycle_refresh_parent_indexes") as Array)[observed_next_index]) != failure_old_parent_index \
+			and failure_new_tween is Tween and failure_new_tween != failure_old_tween and not (failure_new_tween as Tween).is_valid() \
+			and failure_coach.attention_tween == failure_old_tween and (failure_old_tween as Tween).is_valid() \
+			and failure_coach.lifecycle_protected_attention_tweens.is_empty() and failure_coach.lifecycle_attention_checkpoints.is_empty() \
+			and failure_coach.get_index() == failure_old_parent_index \
+			and failure_coach.ok_button.has_focus() \
+			and failure_old_tween_advanced and failure_old_tween_progressed \
+			and not failure_run.current_environment.has("coach_lifecycle_delivery_poison") \
+			and not failure_run.world_map.has("coach_lifecycle_delivery_poison") \
+			and not failure_run.grand_casino_room_states.has("coach_lifecycle_delivery_poison")
+	if not failure_exact:
+		push_error("Failed real travel did not restore the old normal Coach model, rendered controls, ordering, focus, and owned Tween exactly after rendering the queued delivery tip: initial=%s ok=%s guard=%d refresh_ids=%s refresh_copies=%s before=%s after=%s." % [str(failure_initial_exact), str(failure_ok), int(failure_probe.get("lifecycle_guard_count")), JSON.stringify(failure_probe.get("lifecycle_refresh_active_ids")), JSON.stringify(failure_probe.get("lifecycle_refresh_copies")), failure_before, failure_after])
+	failure_probe.queue_free()
+	await process_frame
+
+	var success_probe := await _normal_coach_lifecycle_probe(false)
+	if success_probe == null:
+		return false
+	var success_coach: CoachOverlay = success_probe.get("coach_overlay")
+	var success_run: CoachLifecycleDeliveryRun = success_probe.get("run_state")
+	var success_old_tween: Variant = success_coach.attention_tween_lifecycle_snapshot().get("tween", null)
+	success_probe.set("observe_lifecycle_transaction", true)
+	var success_ok := bool(success_probe.call("confirm_selected_travel", true))
+	var success_observed_next := (success_probe.get("lifecycle_refresh_active_ids") as Array).find(NEXT_TIP_ID)
+	var success_new_tween: Variant = success_coach.attention_tween
+	var success_parent := success_coach.get_parent()
+	var success_exact := success_ok \
+			and int(success_probe.get("lifecycle_guard_count")) == 1 \
+			and success_run.delivery_resolve_count == 1 \
+			and success_observed_next >= 0 \
+			and success_coach.active_lesson_id() == NEXT_TIP_ID \
+			and success_coach.copy_label.text == NEXT_TIP_COPY \
+			and bool(success_coach.seen.get(NEXT_TIP_ID, false)) \
+			and not success_coach.queued_ids.has(NEXT_TIP_ID) \
+			and success_coach.queued_lessons.is_empty() \
+			and success_new_tween is Tween and (success_new_tween as Tween).is_valid() and success_new_tween != success_old_tween \
+			and success_old_tween is Tween and not (success_old_tween as Tween).is_valid() \
+			and success_parent != null and success_coach.get_index() == success_parent.get_child_count() - 1 \
+			and success_coach.lifecycle_protected_attention_tweens.is_empty() and success_coach.lifecycle_attention_checkpoints.is_empty()
+	if not success_exact:
+		push_error("Successful real travel did not commit the queued delivery tip/new Tween while releasing the old normal-tip checkpoint: ok=%s guard=%d refresh_ids=%s active=%s copy=%s queued=%s protected=%s." % [str(success_ok), int(success_probe.get("lifecycle_guard_count")), JSON.stringify(success_probe.get("lifecycle_refresh_active_ids")), success_coach.active_lesson_id(), success_coach.copy_label.text, JSON.stringify(success_coach.queued_lessons), JSON.stringify(success_coach.lifecycle_protected_attention_tweens)])
+	success_probe.queue_free()
+	await process_frame
+	return failure_exact and success_exact
+
+
+func _normal_coach_lifecycle_probe(reject_delivery: bool) -> Control:
+	var probe: Control = CoachLifecycleProbeHost.new()
+	probe.set("continuous_environment_clock_enabled", false)
+	probe.set_process(false)
+	root.add_child(probe)
+	probe.set_process(false)
+	await process_frame
+	await process_frame
+	if not bool(probe.call("uses_foundation_runtime")):
+		push_error("Normal Coach lifecycle probe could not initialize the real Foundation UI tree.")
+		probe.queue_free()
+		await process_frame
+		return null
+	var library: ContentLibrary = probe.get("library")
+	var run := CoachLifecycleDeliveryRun.new()
+	run.reject_delivery = reject_delivery
+	run.start_new("UI-NORMAL-COACH-LIFECYCLE-%s" % ("REJECT" if reject_delivery else "SUCCESS"))
+	var rng := RngStream.new()
+	rng.configure(91827 if reject_delivery else 91828)
+	var environment := EnvironmentInstance.from_archetype(library.environment_archetype("small_underground_casino"), 1, rng, library).to_dict()
+	environment["id"] = "ui_normal_coach_lifecycle_room"
+	environment["world_node_id"] = "bar_node"
+	environment["current_layer_id"] = "club"
+	environment["scenario_id"] = "ui_normal_coach_lifecycle_scenario"
+	run.set_environment(environment)
+	run.world_map = {
+		"version": 3,
+		"seed_text": "UI-NORMAL-COACH-LIFECYCLE",
+		"start_node_id": "bar_node",
+		"current_node_id": "bar_node",
+		"nodes": [
+			{"id": "bar_node", "archetype_id": "small_underground_casino", "kind": "casino", "tier": 1, "state": "revealed", "seen": true, "environment": environment.duplicate(true)},
+			{"id": "motel", "archetype_id": "motel", "kind": "home", "tier": 1, "state": "revealed", "seen": true, "environment": {}},
+		],
+		"edges": [{"a": "bar_node", "b": "motel"}],
+		"visited_path": ["bar_node"],
+	}
+	probe.set("run_state", run)
+	probe.set("current_screen", FoundationMain.SCREEN_ENVIRONMENT)
+	probe.set("selected_action_category", FoundationMain.ACTION_CATEGORY_TRAVEL)
+	probe.set("selected_travel_target_id", "motel")
+	probe.set("selected_travel_label", "Motel")
+	probe.call("_refresh_run_action_service")
+	var coach: CoachOverlay = probe.get("coach_overlay")
+	coach.suspend()
+	coach.restore_seen({})
+	coach.set_tips_enabled(true)
+	coach.set_reduce_motion(false)
+	probe.call("_refresh")
+	if coach.active_lesson_id() != "tip06_tonight_changes_rooms":
+		push_error("Normal Coach lifecycle probe did not admit the production scenario tip first: %s." % coach.active_lesson_id())
+		probe.queue_free()
+		await process_frame
+		return null
+	var enriched_context := coach.latest_context.duplicate(true)
+	var run_context: Dictionary = enriched_context.get("run", {}) if typeof(enriched_context.get("run", {})) == TYPE_DICTIONARY else {}
+	var delivery_lesson := library.tutorial_lesson("tip06_delivery_route")
+	coach.queued_lessons.append({"lesson": delivery_lesson, "context": enriched_context})
+	coach.queued_ids["tip06_delivery_route"] = true
+	var ordering_sentinel := Control.new()
+	ordering_sentinel.name = "CoachLifecycleOrderingSentinel"
+	ordering_sentinel.visible = false
+	probe.add_child(ordering_sentinel)
+	if coach.ok_button != null:
+		coach.ok_button.grab_focus()
+	if not bool(run_context.get("delivery_active", false)) or coach.active_lesson_id() != "tip06_tonight_changes_rooms":
+		push_error("Normal Coach lifecycle probe did not preserve the enriched active-delivery context before the transaction.")
+		probe.queue_free()
+		await process_frame
+		return null
+	return probe
+
+
+func _normal_coach_lifecycle_signature(probe: Control) -> String:
+	var lifecycle_snapshot: Dictionary = probe.call("_foundation_lifecycle_snapshot")
+	var coach_state: Dictionary = lifecycle_snapshot.get("coach", {}) if typeof(lifecycle_snapshot.get("coach", {})) == TYPE_DICTIONARY else {}
+	coach_state = coach_state.duplicate(true)
+	coach_state.erase("ref")
+	coach_state.erase("parent_ref")
+	coach_state.erase("focus_ref")
+	var attention_state: Dictionary = coach_state.get("attention", {}) if typeof(coach_state.get("attention", {})) == TYPE_DICTIONARY else {}
+	attention_state = attention_state.duplicate(true)
+	attention_state.erase("tween")
+	attention_state.erase("checkpoint_token")
+	coach_state["attention"] = attention_state
+	return JSON.stringify(coach_state)
 
 
 func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
