@@ -9,6 +9,19 @@ function Get-SplitTestRunnerOmitEndMarker {
     return $script:SplitTestRunnerOmitEndMarker
 }
 
+function Get-FoundationFocusedRunnerResourcePath {
+    param(
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$FoundationSuite
+    )
+
+    if ($FoundationSuite -ceq "blackjack") {
+        return "res://scripts/tests/foundation/check_lenders_release_saves.gd"
+    }
+    return ""
+}
+
 function Remove-SplitTestRunnerOmittedBlocks {
     param(
         [AllowEmptyCollection()]

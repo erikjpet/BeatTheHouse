@@ -223,6 +223,15 @@ function Get-FoundationSplitRunnerPath {
     )
 }
 
+function Get-FoundationSuiteRunnerPath {
+    param([string]$FoundationSuite)
+    $focusedRunner = Get-FoundationFocusedRunnerResourcePath -FoundationSuite $FoundationSuite
+    if (-not [string]::IsNullOrWhiteSpace($focusedRunner)) {
+        return $focusedRunner
+    }
+    return Get-FoundationSplitRunnerPath
+}
+
 function Get-UiSceneSplitRunnerPath {
     return Convert-ProjectResourcePath (Join-Path $root "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd")
 }
@@ -543,7 +552,7 @@ function Invoke-GDScriptLoadCheck {
 function Invoke-FoundationSuite {
     param([string]$FoundationSuite, [int]$StageTimeoutSec = 0)
     $report = Convert-ReportResourcePath ("foundation_{0}.json" -f $FoundationSuite)
-    Invoke-GodotScript -Name ("foundation_{0}" -f $FoundationSuite) -ScriptPath (Get-FoundationSplitRunnerPath) -UserArgs @("--suite=$FoundationSuite", "--report=$report") -StageTimeoutSec $StageTimeoutSec
+    Invoke-GodotScript -Name ("foundation_{0}" -f $FoundationSuite) -ScriptPath (Get-FoundationSuiteRunnerPath -FoundationSuite $FoundationSuite) -UserArgs @("--suite=$FoundationSuite", "--report=$report") -StageTimeoutSec $StageTimeoutSec
 }
 
 function Enter-CheckGodotWorkspaceMutex {
